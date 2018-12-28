@@ -24,6 +24,8 @@
 
 #define MBY_PORTS_COUNT          16 // <-- REVISIT!!!
 #define MBY_FABRIC_LOG_PORTS     MBY_PORTS_COUNT
+#define MBY_MAX_FABRIC_LAG_PORT  17
+#define MBY_DEST_PORTS_COUNT     257
 
 #define MBY_REGISTER_ARRAY_SIZE  0x1800000
 
@@ -195,6 +197,12 @@ typedef enum mbyTriggerActionLearningEnum
     MBY_TRIG_ACTION_LEARNING_FORCE_LEARN
 
 } mbyTriggerActionLearning;
+
+typedef struct mbyEgressVidTableCfgStruct
+{
+  fm_byte              TRIG_ID;
+  fm_uint64            MEMBERSHIP[MBY_DMASK_REGISTERS];
+} mbyEgressVidTableCfg;
 
 // Structs:
 

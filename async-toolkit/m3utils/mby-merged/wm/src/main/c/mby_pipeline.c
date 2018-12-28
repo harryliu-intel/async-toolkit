@@ -69,6 +69,7 @@ void RxPipeline
                 trig_apply_misc_map_w,
                 fwd_misc_map,
                 fwd_misc_map_w,
+                cm_apply_map,
                 mapper_map,          &msk2trg, &trg2cgm);
 
     CongMgmt   (cm_apply_map,

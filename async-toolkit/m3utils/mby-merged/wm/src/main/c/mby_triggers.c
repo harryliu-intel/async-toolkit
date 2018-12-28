@@ -8,6 +8,57 @@
 // TODO is there a better way to include this? REVISIT
 #include "../m3/model_server/src/model_c_write.h" // pull in write_field
 
+static void dmaskClear
+(
+    fm_uint64 * const dmask_in
+)
+{
+    for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
+        dmask_in[i] = 0;
+}
+
+static void dmaskCopy
+(
+    fm_uint64 const * const dmask_in,
+    fm_uint64       * const dmask_out
+)
+{
+    for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
+        dmask_out[i] = dmask_in[i];
+}
+
+static fm_bool isDmask
+(
+    fm_uint64 const * const dmask
+)
+{
+    fm_bool is_dmask = FALSE;
+
+    for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
+    {
+        is_dmask = (dmask[i] != 0);
+        if(is_dmask) break;
+    }
+
+    return is_dmask;
+}
+
+static fm_bool isActionDropTrig
+(
+    fm_uint64 const * const dmask
+)
+{
+    fm_bool is_action_drop_trig = TRUE;
+
+    for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
+    {
+        is_action_drop_trig = (dmask[i] == 0);
+        if(!is_action_drop_trig) break;
+    }
+
+    return is_action_drop_trig;
+}
+
 static inline void incrementTrigCounter
 (
     mby_ppe_trig_apply_map       const * const trig_apply_map,
@@ -392,7 +443,7 @@ static void applyTriggers
 {
     fm_uint16                dglort;
     fm_bool                  is_pre_resolve_dmask = FALSE;
-    fm_bool                  action_drop_trig = FALSE;
+    fm_bool                  is_action_drop_trig  = TRUE;
 
     results->filterDestMask = TRUE;
 
@@ -402,23 +453,20 @@ static void applyTriggers
     switch (actions->forwardingAction)
     {
         case MBY_TRIG_ACTION_FORWARDING_FORWARD:
-            for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
-                is_pre_resolve_dmask = (pre_resolve_dmask[i] != 0);
+            is_pre_resolve_dmask = isDmask(pre_resolve_dmask);
 
             if ( is_pre_resolve_dmask )
             {
                 dglort = (pre_resolve_dglort    & ~actions->newDestGlortMask) |
                          (actions->newDestGlort & actions->newDestGlortMask);
                 results->destGlort = dglort;
-                for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
-                    results->destMask[i] = pre_resolve_dmask[i];
+                dmaskCopy(pre_resolve_dmask, results->destMask);
                 results->action    = pre_resolve_action;
             }
             else
             {
                 results->destGlort = idglort;
-                for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
-                    results->destMask[i]  = dmask[i];
+                dmaskCopy(dmask, results->destMask);
                 results->action    = action;
             }
             break;
@@ -427,13 +475,10 @@ static void applyTriggers
             dglort = (idglort & ~actions->newDestGlortMask) |
                      (actions->newDestGlort & actions->newDestGlortMask);
             results->destGlort      = dglort;
-            for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
-            {
-                results->destMask[i] = actions->newDestMask[i];
-                action_drop_trig     = (results->destMask[i] == 0);
-            }
+            dmaskCopy(actions->newDestMask, results->destMask);
+                is_action_drop_trig = isActionDropTrig(results->destMask);
             results->filterDestMask = actions->filterDestMask;
-            results->action         = (action_drop_trig) ? MBY_ACTION_DROP_TRIG : MBY_ACTION_REDIRECT_TRIG;
+            results->action         = (is_action_drop_trig) ? MBY_ACTION_DROP_TRIG : MBY_ACTION_REDIRECT_TRIG;
             break;
 
         case MBY_TRIG_ACTION_FORWARDING_DROP:
@@ -441,15 +486,14 @@ static void applyTriggers
             for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
             {
                 results->destMask[i]  = dmask[i] & ~actions->dropMask[i];
-                action_drop_trig      = ( ( dmask[i] != 0 ) && ( results->destMask[i] == 0 ) );
+                is_action_drop_trig      = is_action_drop_trig ? ( ( dmask[i] != 0 ) && ( results->destMask[i] == 0 ) ) : is_action_drop_trig;
             }
-            results->action = (action_drop_trig) ? MBY_ACTION_DROP_TRIG : action;
+            results->action = (is_action_drop_trig) ? MBY_ACTION_DROP_TRIG : action;
             break;
 
         default:
             results->destGlort = idglort;
-            for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
-                results->destMask[i]  = dmask[i];
+            dmaskCopy(dmask, results->destMask);
             results->action    = action;
             break;
     }
@@ -471,20 +515,16 @@ static void applyTriggers
             if ( action == MBY_ACTION_TRAP )
             {
                 results->action = pre_resolve_action;
-                for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
-                {
-                    results->destMask[i] = pre_resolve_dmask[i];
-                    action_drop_trig     = (results->destMask[i] == 0);
-                }
+                dmaskCopy(pre_resolve_dmask, results->destMask);
+                is_action_drop_trig = isActionDropTrig(results->destMask);
 
                 if ( actions->forwardingAction == MBY_TRIG_ACTION_FORWARDING_REDIRECT )
-                    for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
-                        results->destMask[i] = actions->newDestMask[i];
+                    dmaskCopy(actions->newDestMask, results->destMask);
                 else if ( actions->forwardingAction ==
                     MBY_TRIG_ACTION_FORWARDING_DROP )
                     for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
                         results->destMask[i] &= ~actions->dropMask[i];
-                if ( action_drop_trig )
+                if ( is_action_drop_trig )
                     results->action = MBY_ACTION_DROP_TRIG;
             }
             break;
@@ -686,6 +726,285 @@ static void tcnFifo
         write_field(fwd_misc_map_w->FWD_IP.MA_TCN, 1);
 }
 
+static void glortLookupDeterministicMode
+(
+    mby_ppe_fwd_misc_map const * const fwd_misc,
+    fm_bool                      const targeted_deterministic,
+    fm_uint32                    const hash_rot_a,
+    fm_uint32                    const hash_rot_b,
+    mbyTriggerResults    const * const triggers,
+    fm_uint64                  * const dmask_o,
+    fm_uint32                  * const action_o
+)
+{
+    // GLORT Lookup - strict targeted deterministic mode:
+    fm_bool skip_lookup
+        = (((*action_o == MBY_ACTION_REDIRECT_TRIG) && !triggers->filterDestMask) ||
+           ((*action_o != MBY_ACTION_REDIRECT_TRIG) &&  targeted_deterministic));
+
+    if (!skip_lookup && isDmask(dmask_o))
+    {
+        for (fm_uint i = 0; i < MBY_MAX_FABRIC_LAG_PORT; i++) // REVISIT !!!! MBY_MAX_FABRIC_LAG_PORT ???
+        {
+            mbyFwdLagCfg lag_cfg;
+            lag_cfg = getLagCfg(fwd_misc, i);
+            if (!lag_cfg.IN_LAG)
+                continue;
+
+            fm_uint32 hash = (lag_cfg.HASH_ROTATION) ? hash_rot_b : hash_rot_a;
+            hash %= (lag_cfg.LAG_SIZE == 0) ? 16 : lag_cfg.LAG_SIZE; //REVISIT !!!! 0..16 LAG porta???
+            if (hash != lag_cfg.INDEX)
+                dmask_o[i/64] &= ~(FM_LITERAL_U64(1) << (i % 64)); //!!!REVISIT DMAS 257bit
+        }
+
+        if (!isDmask(dmask_o))
+            *action_o = MBY_ACTION_BANK5_OTHER_DROPS;
+    }
+}
+
+static void loopbackSuppressionFiltering
+(
+    mby_ppe_cm_apply_map const * const cm_apply,
+    fm_bool                      const targeted_deterministic,
+    fm_bool                      const mark_routed,
+    fm_uint16                    const csglort,
+    fm_uint32                  * const action_o,
+    fm_uint64                  * const dmask_o
+)
+{
+    fm_bool skip_suppress = targeted_deterministic || mark_routed || (!isDmask(dmask_o));
+
+    //REVISIT!!! should be MBY_DEST_PORTS_COUNT
+    // (MBY_DEST_PORTS_COUNT - 1) It does not need to be [0..256] because the CPU port is never a member of a LAG
+    for (fm_uint i = 0; !skip_suppress && (i < MBY_FABRIC_LOG_PORTS - 1); i++)
+    {
+        cm_apply_loopback_suppress_r const * const lpbk_sup = &(cm_apply->CM_APPLY_LOOPBACK_SUPPRESS[i]);
+
+        fm_uint16 lpbk_glort_mask = lpbk_sup->GLORT_MASK;
+        fm_uint16 lpbk_glort      = lpbk_sup->GLORT;
+        if ((csglort & lpbk_glort_mask) == lpbk_glort)
+            dmask_o[i/64] &= ~(FM_LITERAL_U64(1) << (i % 64));
+    }
+
+    if (!isDmask(dmask_o))
+        *action_o = MBY_ACTION_DROP_LOOPBACK; // dropping frame
+}
+
+static void trap
+(
+    mbyFwdSysCfg1     const * const sys_cfg1,
+    fm_uint32                 const action,
+    mbyTriggerResults const * const triggers,
+    fm_uint64               * const dmask,
+    fm_bool                 * const cpu_trap_o,
+    fm_byte                 * const l2_edomain_o,
+    fm_byte                 * const l3_edomain_o,
+    fm_uint64               * const fnmask_o
+)
+{
+    fm_bool cpu_trap     = (action == MBY_ACTION_TRAP);
+
+    fm_bool trap_trap    = (triggers->trapAction == MBY_TRIG_ACTION_TRAP_TRAP);
+    fm_bool trap_revert  = (triggers->trapAction == MBY_TRIG_ACTION_TRAP_REVERT);
+    fm_bool trap_log     = (triggers->trapAction == MBY_TRIG_ACTION_TRAP_LOG);
+
+    *l2_edomain_o = (triggers->egressL2DomainAction == 0) ? *l2_edomain_o : 0;
+    *l3_edomain_o = (triggers->egressL3DomainAction == 0) ? *l3_edomain_o : 0;
+
+    if ((cpu_trap || trap_trap) && !trap_revert)
+    { /* err = HandleTraps(model) */; }
+
+    if ((sys_cfg1->ENABLE_TRAP_PLUS_LOG || !cpu_trap || trap_trap || trap_log) && !trap_revert)
+    { /* err = HandleLogging(model) */; }
+
+    dmaskCopy(fnmask_o, dmask);
+
+    // output values
+    *cpu_trap_o   = cpu_trap;
+}
+
+static void tailProcessing
+(
+    fm_uint32   const rx_length,
+    fm_uint32   const mirror0_port,
+    fm_uint32   const mirror1_port,
+    fm_bool     const pa_drop,
+    fm_bool     const pa_l3len_err,
+    fm_bool   * const mirror0_profile_v_o,
+    fm_bool   * const mirror1_profile_v_o,
+    fm_byte   * const seg_meta_err_o,
+    fm_bool   * const saf_error_o,
+    fm_bool   * const tx_drop_o,
+    fm_uint32 * const action_o,
+    fm_uint64 * const dmask_o,
+    fm_uint64 * const fnmask_o
+)
+{
+    // remove FCS bytes from array storage:
+    fm_uint32 pkt_len  = (rx_length < 4) ? 0 : (rx_length - 4);
+    fm_uint32 num_segs = 0;
+
+    // First segment is 192 bytes
+    if (pkt_len <= 192) {
+        pkt_len   = 0;
+        num_segs  = 1;
+    } else {
+        pkt_len  -= 192;
+        num_segs += 1 + (pkt_len + MBY_SEGMENT_LEN - 1) / MBY_SEGMENT_LEN; // check <-- REVISIT!!!
+    }
+
+    dmaskCopy(fnmask_o, dmask_o);
+
+    if (*mirror0_profile_v_o)
+        dmask_o[mirror0_port/64] |= ~(FM_LITERAL_U64(1) << (mirror0_port % 64));
+
+
+    if (*mirror1_profile_v_o)
+        dmask_o[mirror1_port/64] |= ~(FM_LITERAL_U64(1) << (mirror1_port % 64));
+
+    for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
+        dmask_o[i] &= ( 0xFFFFFFFFFFFF ); // 48 bit port mask ????
+
+    fm_bool saf_error    = FALSE;
+    fm_bool tx_drop      = FALSE;
+
+    // Update Action code for CSUM and L3 Length errors
+    // Applies to only single segment packets. Multi-segment packets are handled by Modify
+    if (rx_length <= 192)
+    {
+        if (*action_o == MBY_ACTION_NORMAL            ||
+            *action_o == MBY_ACTION_FLOOD             ||
+            *action_o == MBY_ACTION_GLORT_FORWARDED   ||
+            *action_o == MBY_ACTION_TRAP              ||
+            *action_o == MBY_ACTION_SPECIAL           ||
+            *action_o == MBY_ACTION_REDIRECT_TRIG     ||
+            *action_o == MBY_ACTION_DROP_CONTROL      ||
+            *action_o == MBY_ACTION_DROP_IV           ||
+            *action_o == MBY_ACTION_DROP_EV           ||
+            *action_o == MBY_ACTION_DROP_STP          ||
+            *action_o == MBY_ACTION_DROP_CAM          ||
+            *action_o == MBY_ACTION_DROP_CGRP         ||
+            *action_o == MBY_ACTION_DROP_TRIG         ||
+            *action_o == MBY_ACTION_DROP_TTL          ||
+            *action_o == MBY_ACTION_DROP_DLF          ||
+            *action_o == MBY_ACTION_BANK5_OTHER_DROPS ||
+            *action_o == MBY_ACTION_DROP_SV)
+        {
+            if (pa_drop && pa_l3len_err)
+                *action_o = MBY_ACTION_DROP_L3_PYLD_LEN;
+        }
+
+        // Drop single-segment packets with l4csum error /l3 length error:
+        if (*action_o == MBY_ACTION_DROP_L3_PYLD_LEN ||
+            *action_o == MBY_ACTION_DROP_L4_CSUM)
+        {
+            dmaskClear(fnmask_o);
+            *mirror1_profile_v_o = 0;
+            *mirror0_profile_v_o = 0;
+        }
+    }
+    else if (pa_drop && pa_l3len_err)
+        *seg_meta_err_o = 2; // framing error in multi-segment packet
+
+    // output values
+    *saf_error_o    = saf_error;
+    *tx_drop_o      = tx_drop;
+}
+
+static void maskGenUpdate
+(
+    //in
+    mby_ppe_fwd_misc_map const * const fwd_misc,
+    mby_ppe_cm_apply_map const * const cm_apply,
+    fm_bool                      const targeted_deterministic,
+    fm_uint32                    const hash_rot_a,
+    fm_uint32                    const hash_rot_b,
+    fm_bool                      const mark_routed,
+    fm_uint16                    const csglort,
+    fm_uint32                    const rx_length,
+    fm_uint32                    const mirror0_port,
+    fm_uint32                    const mirror1_port,
+    fm_bool                      const pa_drop,
+    fm_bool                      const pa_l3len_err,
+    mbyTriggerResults    const * const triggers,
+    //in-out
+    fm_uint64                  * const dmask,
+    fm_uint32                  * const action,
+    fm_uint64                  * const fnmask,
+    fm_byte                    * const seg_meta_err,
+    fm_bool                    * const mirror0_profile_v,
+    fm_bool                    * const mirror1_profile_v,
+    //out
+    fm_bool                    * const cpu_trap,
+    fm_byte                    * const l2_edomain,
+    fm_byte                    * const l3_edomain,
+    fm_bool                    * const saf_error,
+    fm_bool                    * const tx_drop
+)
+{
+    mbyFwdSysCfg1 sys_cfg1;
+    sys_cfg1 = getSysCfg1(fwd_misc);
+    dmaskCopy(dmask, fnmask);
+
+    // --------------------------------------------------------------------------------
+    // LAG (Lag Filtering):
+    // GLORT Lookup - strict targeted deterministic mode:
+    glortLookupDeterministicMode
+    (
+        fwd_misc,
+        targeted_deterministic,
+        hash_rot_a,
+        hash_rot_b,
+        triggers,
+        dmask,
+        action
+    );
+
+    // --------------------------------------------------------------------------------
+    // Loopback Suppression Filtering (Loopback_suppress(2)):
+    loopbackSuppressionFiltering
+    (
+        cm_apply,
+        targeted_deterministic,
+        mark_routed,
+        csglort,
+        action,
+        dmask
+    );
+
+    // --------------------------------------------------------------------------------
+    // Trap (Trapping):
+    trap
+    (
+        &sys_cfg1,
+        *action,
+        triggers,
+        dmask,
+        cpu_trap,
+        l2_edomain,
+        l3_edomain,
+        fnmask
+    );
+
+    // --------------------------------------------------------------------------------
+    // Tail processing (From Stats block):
+    tailProcessing
+    (
+        rx_length,
+        mirror0_port,
+        mirror1_port,
+        pa_drop,
+        pa_l3len_err,
+        mirror0_profile_v,
+        mirror1_profile_v,
+        seg_meta_err,
+        saf_error,
+        tx_drop,
+        action,
+        dmask,
+        fnmask
+    );
+}
 void Triggers
 (
     mby_ppe_trig_apply_map            const * const trig_apply_map,
@@ -694,6 +1013,7 @@ void Triggers
     mby_ppe_trig_apply_misc_map__addr const * const trig_apply_misc_map_w,
     mby_ppe_fwd_misc_map              const * const fwd_misc_map,
     mby_ppe_fwd_misc_map__addr        const * const fwd_misc_map_w,
+    mby_ppe_cm_apply_map              const * const cm_apply_map,
     mby_ppe_mapper_map                const * const mapper_map,
     mbyMaskGenToTriggers              const * const in,
     mbyTriggersToCongMgmt                   * const out
@@ -703,15 +1023,20 @@ void Triggers
     fm_bool           const learn_en                  = in->LEARNING_ENABLED;
     fm_uint16         const l2_evid1                  = in->L2_EVID1;
     fm_byte           const cgrp_trig                 = in->CGRP_TRIG;
+    fm_bool                 cpu_trap                  = in->CPU_TRAP;
+    fm_uint16         const csglort                   = in->CSGLORT;
+    fm_uint32         const hash_rot_a                = in->HASH_ROT_A;
+    fm_uint32         const hash_rot_b                = in->HASH_ROT_B;
     fm_byte           const qos_tc                    = in->QOS_TC;
     fm_uint16         const idglort                   = in->IDGLORT;
-    fm_byte           const l3_edomain                = in->L3_EDOMAIN;
-    fm_byte           const l2_edomain                = in->L2_EDOMAIN;
+    fm_byte                 l3_edomain                = in->L3_EDOMAIN;
+    fm_byte                 l2_edomain                = in->L2_EDOMAIN;
     fm_byte           const fclass                    = in->FCLASS;
     fm_bool           const mark_routed               = in->MARK_ROUTED;
     fm_uint64 const * const dmask                     = in->DMASK;
     fm_macaddr        const l2_smac                   = in->L2_SMAC;
     fm_uint32         const rx_port                   = in->RX_PORT;
+    fm_uint32         const rx_length                 = in->RX_LENGTH;
     fm_uint64         const amask                     = in->AMASK;
     fm_uint32         const action                    = in->ACTION;
     fm_uint32         const pre_resolve_action        = in->PRE_RESOLVE_ACTION;
@@ -720,10 +1045,17 @@ void Triggers
     fm_bool           const qcn_mirror0_profile_v     = in->QCN_MIRROR0_PROFILE_V;
     fm_bool           const qcn_mirror1_profile_v     = in->QCN_MIRROR1_PROFILE_V;
     fm_uint32         const mirror0_profile_idx       = in->MIRROR0_PROFILE_IDX;
-    fm_byte           const mirror0_profile_v         = in->MIRROR0_PROFILE_V;
+    fm_byte                 mirror0_profile_v         = in->MIRROR0_PROFILE_V;
     fm_uint32         const mirror1_profile_idx       = in->MIRROR1_PROFILE_IDX;
-    fm_byte           const mirror1_profile_v         = in->MIRROR1_PROFILE_V;
+    fm_byte                 mirror1_profile_v         = in->MIRROR1_PROFILE_V;
     fm_bool                 learning_enabled          = in->LEARNING_ENABLED;
+    fm_bool           const targeted_deterministic    = in->TARGETED_DETERMINISTIC;
+    fm_uint32         const mirror0_port              = in->MIRROR0_PORT;
+    fm_uint32         const mirror1_port              = in->MIRROR1_PORT;
+    fm_bool           const pa_drop                   = in->PA_DROP;
+    fm_bool           const pa_l3len_err              = in->PA_L3LEN_ERR;
+    fm_bool                 seg_meta_err              = in->SEG_META_ERR;
+
     /* no_modify action comes from triggers. */
     fm_bool                 hit;
     fm_uint64               hit_mask_hi               = FM_LITERAL_U64(0);
@@ -732,6 +1064,11 @@ void Triggers
     fm_int64                trig_hit_mask_resolved_hi = FM_LITERAL_U64(0);
     mbyTriggerActions       actions                   = { 0 };
     mbyTriggerResults       results                   = { 0 };
+
+    /* maskgen variables */
+    fm_uint64               fnmask[MBY_DMASK_REGISTERS] = { 0 };
+    fm_bool                 saf_error                   = FALSE;
+    fm_bool                 tx_drop                     = FALSE;
 
     /* EvaluateTrigger first */
     for (fm_int i = 0; i < MBY_TRIGGERS_COUNT; i++)
@@ -862,18 +1199,57 @@ void Triggers
         rx_port
     );
 
-    for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
-        out->DMASK[i] = results.destMask[i];
+    fm_uint32 msk_gen_action = results.action;
 
-    out->ACTION              = results.action;
+    maskGenUpdate
+    (
+        fwd_misc_map,
+        cm_apply_map,
+        targeted_deterministic,
+        hash_rot_a,
+        hash_rot_b,
+        mark_routed,
+        csglort,
+        rx_length,
+        mirror0_port,
+        mirror1_port,
+        pa_drop,
+        pa_l3len_err,
+        &results,
+        results.destMask,
+        &msk_gen_action,
+        fnmask,
+        &seg_meta_err,
+        &mirror0_profile_v,
+        &mirror1_profile_v,
+        &cpu_trap,
+        &l2_edomain,
+        &l3_edomain,
+        &saf_error,
+        &tx_drop
+    );
+
+    // --------------------------------------------------------------------------------
+    // Write outputs:
+
+    for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
+        out->DMASK [i] = results.destMask[i];
+
+    out->ACTION              = msk_gen_action;
     out->CPU_CODE            = results.cpuCode;
+    out->CPU_TRAP            = cpu_trap;
     out->IDGLORT             = results.destGlort;
+    out->FNMASK              = fnmask[0]; //!!! REVISIT temporary solution
     out->L2_EVID1            = results.vlan;
+    out->LEARNING_ENABLED    = learning_enabled;
     out->MIRROR0_PROFILE_IDX = results.mirror0ProfileIdx;
     out->MIRROR0_PROFILE_V   = results.mirror0ProfileV;
     out->MIRROR1_PROFILE_IDX = results.mirror1ProfileIdx;
     out->MIRROR1_PROFILE_V   = results.mirror1ProfileV;
+    out->RX_LENGTH           = rx_length;
+    out->SAF_ERROR           = saf_error;
     out->TRAP_CODE           = results.trapCode;
+    out->TX_DROP             = tx_drop;
     out->QOS_TC              = results.TC;
     out->UPDATE_L2_DOMAIN    = results.update_l2_domain;
     out->UPDATE_L3_DOMAIN    = results.update_l3_domain;
@@ -882,13 +1258,13 @@ void Triggers
     out->DROP_TTL            = in->DROP_TTL;
     out->ECN                 = in->ECN;
     out->EDGLORT             = in->EDGLORT;
-    out->FNMASK              = in->FNMASK;
     out->IS_IPV4             = in->IS_IPV4;
     out->IS_IPV6             = in->IS_IPV6;
     out->IS_TIMEOUT          = in->IS_TIMEOUT;
     out->L2_DMAC             = in->L2_DMAC;
     out->L2_IVLAN1_CNT       = in->L2_IVLAN1_CNT;
     out->MARK_ROUTED         = in->MARK_ROUTED;
+    out->MCAST_EPOCH         = in->MCAST_EPOCH;
     out->MIRTYP              = in->MIRTYP;
     out->MOD_IDX             = in->MOD_IDX;
     out->MOD_PROF_IDX        = in->MOD_PROF_IDX;
@@ -899,13 +1275,10 @@ void Triggers
     out->PM_ERR_NONSOP       = in->PM_ERR_NONSOP;
     out->QOS_L3_DSCP         = in->QOS_L3_DSCP;
     out->RX_DATA             = in->RX_DATA;
-    out->RX_LENGTH           = in->RX_LENGTH;
     out->RX_PORT             = in->RX_PORT;
-    out->SAF_ERROR           = in->SAF_ERROR;
     out->SEG_META_ERR        = in->SEG_META_ERR;
     out->TAIL_CSUM_LEN       = in->TAIL_CSUM_LEN;
     out->TRAFFIC_CLASS       = in->TRAFFIC_CLASS;
-    out->TX_DROP             = in->TX_DROP;
     out->TX_TAG              = in->TX_TAG;
     out->XCAST               = in->XCAST;
 }

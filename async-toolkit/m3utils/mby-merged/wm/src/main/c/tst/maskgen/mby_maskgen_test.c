@@ -54,11 +54,13 @@ static void maskgen_test_setup
 )
 {
     /* Set nexthopToMaskgen. */
+    for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
+        nexthopToMaskgen->GLORT_DMASK[i] = test_in->glort_dmask_in[i];
+
     nexthopToMaskgen->RX_PORT              = test_in->rx_port;
     nexthopToMaskgen->L2_SMAC              = test_in->l2_smac;
     nexthopToMaskgen->L2_DMAC              = test_in->l2_dmac;
     nexthopToMaskgen->IDGLORT              = test_in->idglort;
-    nexthopToMaskgen->GLORT_DMASK          = test_in->glort_dmask_in;
     nexthopToMaskgen->L2_IVID1             = test_in->l2_ivid1;
     nexthopToMaskgen->L2_EVID1             = test_in->l2_evid1;
     nexthopToMaskgen->AMASK                = test_in->amask;
@@ -232,11 +234,8 @@ static fm_bool maskgen_test_verify
 
     //REVISIT!!!! dmask is changed, we need to fix test
     for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
-        if (maskgenToTriggers->DMASK[i] != test_data_out->dmask)
+        if (maskgenToTriggers->DMASK[i] != test_data_out->dmask[i])
             return FALSE;
-
-    if (maskgenToTriggers->ACTION != test_data_out->action)
-        return FALSE;
 
     return TRUE;
 }

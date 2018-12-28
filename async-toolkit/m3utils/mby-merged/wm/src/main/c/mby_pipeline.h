@@ -94,6 +94,7 @@ void Triggers
     mby_ppe_trig_apply_misc_map__addr const * const trig_apply_misc_map_w,
     mby_ppe_fwd_misc_map              const * const fwd_misc_map,
     mby_ppe_fwd_misc_map__addr        const * const fwd_misc_map_w,
+    mby_ppe_cm_apply_map              const * const cm_apply_map,
     mby_ppe_mapper_map                const * const mapper_map,
     mbyMaskGenToTriggers              const * const in,
     mbyTriggersToCongMgmt                   * const out

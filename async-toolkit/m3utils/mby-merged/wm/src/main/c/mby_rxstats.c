@@ -172,7 +172,7 @@ static void handleRxBank2
         case MBY_ACTION_DROP_IV:            index += STAT_VlanIngressDrops;               break;
         case MBY_ACTION_DROP_EV:            index += STAT_VlanEgressDrops;                break;
         case MBY_ACTION_DROP_CAM:           index += STAT_GlortMissDrops;                 break;
-        case MBY_ACTION_DROP_FFU:           index += STAT_FFUDrops;                       break;
+        case MBY_ACTION_DROP_CGRP:          index += STAT_FFUDrops;                       break;
         case MBY_ACTION_DROP_TRIG:          index += STAT_TriggerDrops;                   break;
         case MBY_ACTION_DROP_L3_PYLD_LEN:   index += STAT_L3PayloadLengthValidationDrops; break;
         default:                                                                          break;

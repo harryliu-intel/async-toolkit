@@ -113,8 +113,8 @@ static void lookUpL2
         if (*da_hit && da_result->D_GLORT)
         {
             *idglort = da_result->D_GLORT;
-            if(da_result->ENTRY_TYPE == MBY_MA_LOOKUP_ENTRY_TYPE_PROVISIONAL)
-                *amask |= MBY_AMASK_DROP_PROVISIONAL;
+            //if(da_result->ENTRY_TYPE == MBY_MA_LOOKUP_ENTRY_TYPE_PROVISIONAL)
+            //    *amask |= MBY_AMASK_DROP_PROVISIONAL;
         }
         else if ((idglort != 0) && (flood_set == 1))
             /* no change to dglort */
@@ -239,6 +239,9 @@ void NextHop
     );
 
     // Write outputs:
+    for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
+        out->GLORT_DMASK[i] = in->GLORT_DMASK; //temporary, because nexthop is not adapted to 258bits DMASK
+
     out->AMASK                = amask;
     out->ARP_TABLE_INDEX      = arp_tbl_idx;
     out->DA_HIT               = da_hit;
@@ -273,7 +276,6 @@ void NextHop
     out->CSGLORT              = in->CSGLORT;
     out->DROP_TTL             = in->DROP_TTL;
     out->CGRP_FLAGS           = in->CGRP_FLAGS;
-    out->GLORT_DMASK          = in->GLORT_DMASK;
     out->HASH_ROT_A           = in->HASH_ROT_A;
     out->HASH_ROT_B           = in->HASH_ROT_B;
     out->IP_MCAST_IDX         = in->IP_MCAST_IDX;
