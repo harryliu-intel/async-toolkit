@@ -148,7 +148,7 @@ root_elem_list: { val : RdlRootElemLstRecord.T }
           BEGIN
             TYPECASE $1 OF RdlComponentDef.T(cd) =>
               $2.val.defTab.define(cd.id, cd);
-              cd.list.propTab.up := $2.val.propTab;
+              cd.list.propTab.up := NIL(*$2.val.propTab*);
               cd.list.defTab.up := $2.val.defTab;
               cd.list.defTab.arc := cd.id;
               IF cd.anonInstElems # NIL AND cd.anonInstElems.list # NIL THEN
@@ -291,7 +291,7 @@ component_def_lst: { val : RdlComponentDefLstRecord.T }
                     INC($2.val.anonCnt);
                   END;
                   $2.val.defTab.define(def.id,def);
-                  def.list.propTab.up := $2.val.propTab;
+                  def.list.propTab.up := NIL (*$2.val.propTab*);
                   def.list.defTab.up := $2.val.defTab;
                   def.list.defTab.arc := def.id;
                   <*ASSERT def.list.defTab.arc # NIL*>
