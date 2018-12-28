@@ -4,6 +4,7 @@ IMPORT OSError, Thread, Wr;
 IMPORT RdlPropertySymtab;
 IMPORT ParseError;
 IMPORT RdlPredefProperty;
+IMPORT RdlPropertyRvalueKeyword;
 
 TYPE
   T <: Public;
@@ -15,10 +16,22 @@ TYPE
   METHODS
     (*******  T defines these  *******)
 
-    getRdlTextProperty(propNm : TEXT) : TEXT RAISES { ParseError.E };
-    (* NIL if not def'd *)
+    getRdlTextProperty(propNm : TEXT; VAR r : TEXT) : BOOLEAN
+      RAISES { ParseError.E };
 
-    getRdlPredefProperty(prop : RdlPredefProperty.T) : TEXT
+    getRdlPredefTextProperty(prop : RdlPredefProperty.T; VAR r : TEXT) : BOOLEAN
+      RAISES { ParseError.E };
+    
+    getRdlIntProperty(propNm : TEXT; VAR r : INTEGER) : BOOLEAN
+      RAISES { ParseError.E };
+
+    getRdlPredefIntProperty(prop : RdlPredefProperty.T; VAR r : INTEGER) : BOOLEAN
+      RAISES { ParseError.E };
+    
+    getRdlKwProperty(propNm : TEXT; VAR r :  RdlPropertyRvalueKeyword.T) : BOOLEAN
+      RAISES { ParseError.E };
+
+    getRdlPredefKwProperty(prop : RdlPredefProperty.T; VAR r :  RdlPropertyRvalueKeyword.T) : BOOLEAN
       RAISES { ParseError.E };
     
     (*******  abstract methods below -- override  *******)

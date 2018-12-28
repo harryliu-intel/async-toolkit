@@ -40,6 +40,8 @@ module ("RegProperty")
 
 array_sort("RegField", "RegField")
 
+sequence("BigInt", "BigInt")
+
 interface ("GenViews")
 generic_module("GenViews")
 module ("GenViewsM3")

@@ -23,9 +23,7 @@ IMPORT DecoratedComponentDef;
 IMPORT RegFieldArraySort;
 IMPORT ParseError;
 IMPORT RegFieldAccess, IntelAccessType, IntelAccessTypeLookup;
-IMPORT Text;
-
-CONST DQ = '"';
+FROM RegProperty IMPORT Unquote;
 
 CONST Brand = "GenViews(" & Tgt.Brand & ")";
       
@@ -44,6 +42,7 @@ PROCEDURE ApplyFieldProperties(VAR f : RegField.T) : BOOLEAN
   VAR
     gotRdlProps := FALSE;
     gotIntelProps := FALSE;
+    str : TEXT;
   BEGIN
     f.reserved := FALSE;
     f.access := RegFieldAccess.Default;
@@ -53,25 +52,22 @@ PROCEDURE ApplyFieldProperties(VAR f : RegField.T) : BOOLEAN
        another way is using Intel AccessType annotation *)
     FOR i := FIRST(RegFieldAccess.Master) TO LAST(RegFieldAccess.Master) DO
       (* look for stated property *)
-      WITH p   = RegFieldAccess.MasterProperty[i],
-           str = f.getRdlPredefProperty(p) DO
-        IF str # NIL THEN
+      WITH p   = RegFieldAccess.MasterProperty[i] DO
+        IF f.getRdlPredefTextProperty(p,str) THEN
           gotRdlProps := TRUE;
           f.access[i] := RegFieldAccess.Parse(str)
         END
       END
     END;
 
-    WITH str = f.getRdlTextProperty(IntelAccessType.UDPName) DO
-      IF str # NIL THEN
-        WITH at = IntelAccessTypeLookup.Parse(Unquote(str)) DO
-          gotIntelProps := TRUE;
-          IF gotRdlProps THEN
-            IF at.rdlAccess # f.access THEN
-              RAISE ParseError.E("RDL / IntelAccessType mismatch")
-            END;
-            f.access := at.rdlAccess
-          END
+    IF f.getRdlTextProperty(IntelAccessType.UDPName, str) THEN
+      WITH at = IntelAccessTypeLookup.Parse(Unquote(str)) DO
+        gotIntelProps := TRUE;
+        IF gotRdlProps THEN
+          IF at.rdlAccess # f.access THEN
+            RAISE ParseError.E("RDL / IntelAccessType mismatch")
+          END;
+          f.access := at.rdlAccess
         END
       END
     END;
@@ -208,16 +204,6 @@ PROCEDURE AllocAddrmap(c         : RdlComponentDef.T; hn : TEXT) : RegAddrmap.T
       ParseError.E(txt) => RAISE ParseError.E("processing addrmap " & am.nm & " : " & txt)
     END
   END AllocAddrmap;
-
-PROCEDURE Unquote(str : TEXT) : TEXT RAISES { ParseError.E } =
-  VAR
-    len := Text.Length(str);
-  BEGIN
-    IF len < 2 OR Text.GetChar(str,0) # DQ OR Text.GetChar(str,len-1) # DQ THEN
-      RAISE ParseError.E("Not properly quoted : str")
-    END;
-    RETURN Text.Sub(str, 1, len - 2)
-  END Unquote;
 
 PROCEDURE Decorate(<*UNUSED*>t : T;
                    def         : RdlComponentDef.T;
