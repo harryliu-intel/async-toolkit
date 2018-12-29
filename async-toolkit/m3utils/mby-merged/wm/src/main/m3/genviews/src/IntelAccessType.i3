@@ -10,6 +10,7 @@ TYPE
     reserved        : BOOLEAN;
     clearOnRead     : BOOLEAN;
     (* add more interesting attributes here *)
+    deprecated      : BOOLEAN;
   END;
 
   Access = RegFieldAccess.T;
@@ -19,23 +20,23 @@ CONST
   UDPName = "AccessType";
 
 CONST
-  No = FALSE; Yes = TRUE;
+  N = FALSE; Y = TRUE;
 
 CONST
   Map = ARRAY OF T {
                        (* SW HW *)
-  T { "R"      , Access { R , R  }, No , No  }, (* mistake -- to be removed *)
-  T { "RW/P"   , Access { RW, RW }, No , No  }, (* should this be { R, RW }? *)
-  T { "RO/C"   , Access { R , RW }, No , Yes },
-  T { "RO/C/V" , Access { R , RW }, No , Yes }, (* HLP only *)
-  T { "RW/1S/V", Access { RW, RW }, No , No  },
-  T { "RW/V"   , Access { RW, RW }, No , No  },
-  T { "RSV"    , Access { R , NA }, Yes, No  },
-  T { "RO/V"   , Access { R , RW }, No , No  },
-  T { "RW/1C/V", Access { RW, RW }, No , No  },
-  T { "RO"     , Access { R , R  }, No , No  },
-  T { "WO"     , Access {  W, R  }, No , No  }, (* HLP only *)
-  T { "RW"     , Access { RW, R  }, No , No  }
+  T { "R"      , Access { R , R  }, N , N , Y  }, (* mistake -- to be removed *)
+  T { "RW/P"   , Access { RW, RW }, N , N , N  }, (* should this be { R, RW }? *)
+  T { "RO/C"   , Access { R , RW }, N , Y,  N  },
+  T { "RO/C/V" , Access { R , RW }, N , Y,  Y  }, (* HLP only *)
+  T { "RW/1S/V", Access { RW, RW }, N , N , N  },
+  T { "RW/V"   , Access { RW, RW }, N , N , N  },
+  T { "RSV"    , Access { R , NA }, Y,  N , N  },
+  T { "RO/V"   , Access { R , RW }, N , N , N  },
+  T { "RW/1C/V", Access { RW, RW }, N , N , N  },
+  T { "RO"     , Access { R , R  }, N , N , N  },
+  T { "WO"     , Access {  W, R  }, N , N , N  }, (* HLP only *)
+  T { "RW"     , Access { RW, R  }, N , N , N  }
   };
 
 END IntelAccessType.
