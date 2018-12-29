@@ -13,7 +13,7 @@ TYPE
     deprecated      : BOOLEAN;
   END;
 
-  Access = RegFieldAccess.T;
+  Acc = RegFieldAccess.T;
 
 CONST
   Brand   = "IntelAccessType";
@@ -25,18 +25,18 @@ CONST
 CONST
   Map = ARRAY OF T {
                        (* SW HW *)
-  T { "R"      , Access { R , R  }, N , N , Y  }, (* mistake -- to be removed *)
-  T { "RW/P"   , Access { RW, RW }, N , N , N  }, (* should this be { R, RW }? *)
-  T { "RO/C"   , Access { R , RW }, N , Y,  N  },
-  T { "RO/C/V" , Access { R , RW }, N , Y,  Y  }, (* HLP only *)
-  T { "RW/1S/V", Access { RW, RW }, N , N , N  },
-  T { "RW/V"   , Access { RW, RW }, N , N , N  },
-  T { "RSV"    , Access { R , NA }, Y,  N , N  },
-  T { "RO/V"   , Access { R , RW }, N , N , N  },
-  T { "RW/1C/V", Access { RW, RW }, N , N , N  },
-  T { "RO"     , Access { R , R  }, N , N , N  },
-  T { "WO"     , Access {  W, R  }, N , N , N  }, (* HLP only *)
-  T { "RW"     , Access { RW, R  }, N , N , N  }
+  T { "R"      , Acc { R , R  }, N, N, Y  }, (* mistake, remove *)
+  T { "RW/P"   , Acc { RW, RW }, N, N, N  }, 
+  T { "RO/C"   , Acc { R , RW }, N, Y, Y  },
+  T { "RO/C/V" , Acc { R , RW }, N, Y, Y  }, (* HLP only *)
+  T { "RW/1S/V", Acc { RW, RW }, N, N, N  },
+  T { "RW/V"   , Acc { RW, RW }, N, N, N  },
+  T { "RSV"    , Acc { R , NA }, Y, N, N  },
+  T { "RO/V"   , Acc { R , RW }, N, N, N  },
+  T { "RW/1C/V", Acc { RW, RW }, N, N, N  },
+  T { "RO"     , Acc { R , R  }, N, N, N  },
+  T { "WO"     , Acc {  W, R  }, N, N, Y  }, (* HLP only *)
+  T { "RW"     , Acc { RW, R  }, N, N, N  }
   };
 
 END IntelAccessType.
