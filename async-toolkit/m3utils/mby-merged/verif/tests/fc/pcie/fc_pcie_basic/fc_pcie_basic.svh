@@ -12,13 +12,6 @@ class fc_pcie_basic_seq extends fc_seq_pkg::fc_base_seq;
     `uvm_object_utils(fc_pcie_basic_seq) 
     `uvm_declare_p_sequencer(slu_sequencer)
 
-    sla_pkg::slu_sequencer virtual_seqr;
-
-    slu_status_t status;
-    sla_status_t sla_status;
-    slu_ral_data_t ral_data;
-    slu_ral_data_t wr_data;
-
     function new(string name = "fc_pcie_basic_seq");
         super.new(name);
     endfunction

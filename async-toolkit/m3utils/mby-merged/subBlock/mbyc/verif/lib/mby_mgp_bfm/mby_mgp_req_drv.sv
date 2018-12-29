@@ -18,6 +18,7 @@ class mby_mgp_req_drv  extends uvm_driver#(mby_mgp_req_seq_item);
 
    mby_mgp_mem_crdt_io   mem_crdt_io;
    mby_mgp_flow_ctrl     flow_ctrl;
+   int port_num;
    
    extern function new(string name = "", uvm_component parent = null);
    extern virtual function void build_phase(uvm_phase phase);
@@ -60,18 +61,28 @@ endfunction : start
 // Method: run
 //----------------------------------------------------------------------------------------
 task mby_mgp_req_drv::run_phase(uvm_phase phase);
-
-   if (req_agent_cfg.driver_enable) begin
-/*      fork
-         forever @(mem_crdt_io.op_vif.op_mst_cb) begin
-            if(!mem_crdt_io.op_vif.rst) begin
-               sample_rqcrdt();
-               prepare_req();
-               drive_req();
+   mby_mgp_req_seq_item  req, req_c;
+   int cnt;
+   
+   if (req_agent_cfg.driver_enable && !mem_crdt_io.rdreq_vif.reset) begin
+      fork
+         forever begin
+	    seq_item_port.get_next_item(req);
+	    if (req != null) begin
+	       req.req_id = cnt;
+               `uvm_info (this.get_name(), ("Driving request"), UVM_HIGH)
+               mem_crdt_io.drive_item(req, port_num);
+               seq_item_port.item_done();
+	       cnt++;
             end
-         end
-      join_none */
-   end 
+	    // TODO: 
+            //sample_rqcrdt();
+            //prepare_req();
+            //drive_req();
+         end 
+      join_none
+   end
+   
    
 endtask : run_phase
 

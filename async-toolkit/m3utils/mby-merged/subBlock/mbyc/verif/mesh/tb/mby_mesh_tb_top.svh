@@ -114,6 +114,7 @@ module mby_mesh_tb_top();
       .seg_ptr          (),
       .wd_sel           (),
       .valid            (),
+      .data             (),
       .sema             ()
    );
 
@@ -125,6 +126,7 @@ module mby_mesh_tb_top();
       .seg_ptr          (),
       .wd_sel           (),
       .valid            (),
+      .data             (),
       .sema             ()
    );
 
@@ -272,8 +274,15 @@ module mby_mesh_tb_top();
        .i_egr_wb_seg_ptr      (rreq_wb_if.seg_ptr),
        .i_egr_wb_sema         (rreq_wb_if.sema),
        .i_egr_wb_wd_sel       (rreq_wb_if.wd_sel),
-       .i_egr_wb_req_id       (rreq_wb_if.req_id)
-			   
-
+       .i_egr_wb_req_id       (rreq_wb_if.req_id),
+       .o_egr_wb_rrsp_valid      (rsp_wb_if.valid),
+       .o_egr_wb_rrsp_dest_block (rsp_wb_if.rrsp_dest_blk),
+       .o_egr_wb_rrsp_req_id     (rsp_wb_if.req_id),
+       .o_egr_wb_rd_data         (rsp_wb_if.data),
+       .o_egr_eb_rrsp_valid      (rsp_eb_if.valid),
+       .o_egr_eb_rrsp_dest_block (rsp_eb_if.rrsp_dest_blk),
+       .o_egr_eb_rrsp_req_id     (rsp_eb_if.req_id),
+       .o_egr_eb_rd_data         (rsp_eb_if.data)
+						      
        );
 endmodule

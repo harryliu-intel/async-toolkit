@@ -57,12 +57,12 @@ module mby_mesh_ti #(parameter string   RTL_TOP_PATH = "",             // The RT
       uvm_config_db#(virtual mby_mesh_tb_if)::set(uvm_root::get(), TB_ENV_PATH , "mby_mesh_tb_if", mby_mesh_tb_if);
       
       // Set the Mesh Req_IF in the database
-      uvm_config_db#(virtual mby_mgp_mim_req_if)::set(uvm_root::get(), TB_ENV_PATH , "mby_mgp_mim_req_if", rreq_eb_if);
-      uvm_config_db#(virtual mby_mgp_mim_req_if)::set(uvm_root::get(), TB_ENV_PATH , "mby_mgp_mim_req_if", rreq_wb_if);
-      uvm_config_db#(virtual mby_mgp_mim_req_if)::set(uvm_root::get(), TB_ENV_PATH , "mby_mgp_mim_req_if", wreq_eb_if);
-      uvm_config_db#(virtual mby_mgp_mim_req_if)::set(uvm_root::get(), TB_ENV_PATH , "mby_mgp_mim_req_if", wreq_wb_if);
-      uvm_config_db#(virtual mby_mgp_mim_rsp_if)::set(uvm_root::get(), TB_ENV_PATH , "mby_mgp_mim_rsp_if", rsp_eb_if);
-      uvm_config_db#(virtual mby_mgp_mim_rsp_if)::set(uvm_root::get(), TB_ENV_PATH , "mby_mgp_mim_rsp_if", rsp_wb_if);
+      uvm_config_db#(virtual mby_mgp_mim_req_if)::set(uvm_root::get(), TB_ENV_PATH , "rd_eb", rreq_eb_if);
+      uvm_config_db#(virtual mby_mgp_mim_req_if)::set(uvm_root::get(), TB_ENV_PATH , "rd_wb", rreq_wb_if);
+      uvm_config_db#(virtual mby_mgp_mim_req_if)::set(uvm_root::get(), TB_ENV_PATH , "wr_eb", wreq_eb_if);
+      uvm_config_db#(virtual mby_mgp_mim_req_if)::set(uvm_root::get(), TB_ENV_PATH , "wr_wb", wreq_wb_if);
+      uvm_config_db#(virtual mby_mgp_mim_rsp_if)::set(uvm_root::get(), TB_ENV_PATH , "rp_eb", rsp_eb_if);
+      uvm_config_db#(virtual mby_mgp_mim_rsp_if)::set(uvm_root::get(), TB_ENV_PATH , "rp_wb", rsp_wb_if);
    end
 
 endmodule

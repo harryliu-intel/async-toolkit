@@ -47,13 +47,14 @@
 
 class mby_mesh_env_base_seq extends shdv_base_sequence; 
 
-    // Variable: shdv_env
-    // Protected shdv_base_env
-    protected shdv_base_env                env;
+    // Variable: env
+    // mby_mesh_env handle
 
-    // Variable: dut_cfg
-    // Mesh dut cfg.
-    mby_mesh_env_pkg::mby_mesh_dut_cfg     dut_cfg;
+    mby_mesh_env_pkg::mby_mesh_env         env;
+
+    // Variable: tb_cfg
+    // Mesh tb cfg.
+    mby_mesh_env_pkg::mby_meshtb_top_cfg   tb_cfg;
 
     // Variable: vif
     // Handle to Mesh Tb interface.
@@ -69,8 +70,8 @@ class mby_mesh_env_base_seq extends shdv_base_sequence;
     //  string name   - Mesh env base sequence object name.
     // ------------------------------------------------------------------------
     function new(string name = "mby_mesh_env_base_seq");
-        super.new();
-        set_env (shdv_base_env::get_top_tb_env());
+       super.new();
+       set_env (shdv_base_env::get_top_tb_env());
     endfunction : new
 
     // ------------------------------------------------------------------------
@@ -80,11 +81,13 @@ class mby_mesh_env_base_seq extends shdv_base_sequence;
     function void set_env(shdv_base_env tb_env);
        mby_mesh_env_pkg::mby_mesh_env temp_env;
 
-        $cast(temp_env,tb_env);
+       $cast(temp_env,tb_env);
 
-        this.env    = temp_env;
-        vif         = temp_env.get_tb_vif();
-        ral         = temp_env.get_tb_ral();
+       this.env    = temp_env;
+       this.vif    = temp_env.get_tb_vif();
+       this.ral    = temp_env.get_tb_ral();
+       this.tb_cfg = temp_env.get_tb_cfg();
+  
     endfunction : set_env
  
 endclass : mby_mesh_env_base_seq

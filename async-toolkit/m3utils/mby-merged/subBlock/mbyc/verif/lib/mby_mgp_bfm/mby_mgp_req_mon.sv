@@ -18,6 +18,8 @@ class mby_mgp_req_mon  extends uvm_monitor;
 
    mby_mgp_mem_crdt_io   mem_crdt_io;
    mby_mgp_flow_ctrl     flow_ctrl;
+
+   int port_num;
    
    extern function new(string name = "", uvm_component parent = null);
    extern virtual function void build_phase(uvm_phase phase);
@@ -60,19 +62,19 @@ endfunction : start
 // Method: run
 //----------------------------------------------------------------------------------------
 task mby_mgp_req_mon::run_phase(uvm_phase phase);
+   mby_mgp_req_seq_item seq_item;
+   if (req_agent_cfg.monitor_enable && !mem_crdt_io.rdreq_vif.reset) begin
+      fork
+	 // TODO
+         /*forever begin
+	    seq_item = mem_crdt_io.sample_item(port_num);
+               //sample_req();
+               //prepare_rqcrdt();
+               //drive_rqcrdt();
 
-   if (req_agent_cfg.monitor_enable) begin
-/*      fork
-         forever @(mem_crdt_io.op_vif.op_mst_cb) begin
-            if(!mem_crdt_io.op_vif.rst) begin
-               sample_req();
-               prepare_rqcrdt();
-               drive_rqcrdt();
-            end
-         end
-      join_none*/
-   end 
-   
+         end*/
+      join_none 
+   end
 endtask : run_phase
 
 //----------------------------------------------------------------------------------------

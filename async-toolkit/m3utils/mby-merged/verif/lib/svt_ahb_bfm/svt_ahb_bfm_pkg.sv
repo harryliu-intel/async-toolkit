@@ -30,9 +30,7 @@
 //   Package:   svt_ahb_bfm_pkg
    package svt_ahb_bfm_pkg;
 
-      import sla_pkg::*;
       `include "uvm_macros.svh"
-      `include "slu_macros.svh"
       import svt_uvm_pkg::*;
       import uvm_pkg::*;
       import svt_ahb_uvm_pkg::*;

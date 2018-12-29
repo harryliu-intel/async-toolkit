@@ -91,27 +91,20 @@ class mby_mesh_hard_reset_seq extends shdv_base_reset_sequence;
     //  as well as Warm_Reset (Set)
     //------------------------------------------------------------------------------
     task body();
-        // Core hard reset
-        repeat (500) @(posedge tb_vif.fab_clk);
+        // Core/Mesh hard reset
+        repeat (200) @(posedge tb_vif.fab_clk);
        
         `uvm_info(get_name(), $sformatf("Hard_Reset Set"), UVM_NONE);
         tb_vif.chard_reset                 = 1;
+        tb_vif.mhard_reset                 = 1;
 
-        repeat (200) @(posedge tb_vif.fab_clk);
+        repeat (100) @(posedge tb_vif.fab_clk);
 
         `uvm_info(get_name(), $sformatf("Hard_Reset Cleared"), UVM_NONE);
         tb_vif.chard_reset                 = 0;
-
-        // Mesh hard reset
-        repeat (500) @(posedge tb_vif.mclk);
-       
-        `uvm_info(get_name(), $sformatf("Hard_Reset Set"), UVM_NONE);
-        tb_vif.mhard_reset                 = 1;
-
-        repeat (200) @(posedge tb_vif.mclk);
-
-        `uvm_info(get_name(), $sformatf("Hard_Reset Cleared"), UVM_NONE);
         tb_vif.mhard_reset                 = 0;
+
+        repeat (100) @(posedge tb_vif.fab_clk);
     endtask: body
 
 endclass: mby_mesh_hard_reset_seq

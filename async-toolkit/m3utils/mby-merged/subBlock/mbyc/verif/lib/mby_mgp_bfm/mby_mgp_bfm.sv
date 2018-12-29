@@ -28,6 +28,8 @@ class mby_mgp_bfm extends uvm_component;
    virtual mby_mgp_mim_req_if rdreq_vif;
    virtual mby_mgp_mim_req_if wrreq_vif;
    virtual mby_mgp_mim_rsp_if rsp_vif;
+
+   int 	   port_idx;
    
    extern function new(string name = "", uvm_component parent);
    extern virtual function void build_phase(uvm_phase phase);
@@ -37,7 +39,9 @@ class mby_mgp_bfm extends uvm_component;
    extern virtual function void start();
    extern virtual task run_phase(uvm_phase phase);
    extern virtual function void assign_cfg(mby_mgp_bfm_cfg bfm_cfg);
-   extern virtual function void assign_vi(virtual mby_mgp_mim_req_if rreq_if, virtual mby_mgp_mim_req_if wreq_if, virtual mby_mgp_mim_rsp_if rsp_if );
+   extern virtual function void assign_vi(virtual mby_mgp_mim_req_if rreq_if, 
+                                          virtual mby_mgp_mim_req_if wreq_if, 
+                                          virtual mby_mgp_mim_rsp_if rsp_if );
    
 
 endclass 
@@ -75,24 +79,39 @@ function void mby_mgp_bfm::build_phase(uvm_phase phase);
       `uvm_fatal(get_name(), "build: mgp bfm configuration handle is null.")
    end
 
-   flow_ctrl     = mby_mgp_flow_ctrl::type_id::create("flow_ctrl", this);
-   mem_crdt_io   = mby_mgp_mem_crdt_io::type_id::create("mem_crdt_io", this);
-   
-   for (int idx = 0; idx < NUM_PLANES; idx++) begin
+   //
+   // Build flow control and IO policy
+   //
+   flow_ctrl             = mby_mgp_flow_ctrl::type_id::create("flow_ctrl", this);
+   mem_crdt_io           = mby_mgp_mem_crdt_io::type_id::create("mem_crdt_io", this);
+   mem_crdt_io.port_idx  = port_idx;
+   mem_crdt_io.bfm_cfg   = bfm_cfg;
+   mem_crdt_io.rdreq_vif = rdreq_vif;
+   mem_crdt_io.wrreq_vif = wrreq_vif;
+   mem_crdt_io.rsp_vif   = rsp_vif;
+
+   //
+   // Build read, write and response agents and assign configs.
+   //
+   for (int idx = 0; idx < NUM_MSH_ROW_PORTS; idx++) begin
       rdreq_agent[idx] = mby_mgp_req_agent::type_id::create($sformatf("rdreq%0d_agent", idx), this);
       rdreq_agent[idx].req_agent_cfg  = bfm_cfg.req_agent_cfg;
-      rdreq_agent[idx].flow_ctrl     = flow_ctrl;
-      rdreq_agent[idx].mem_crdt_io   = mem_crdt_io;
+      rdreq_agent[idx].flow_ctrl      = flow_ctrl;
+      rdreq_agent[idx].mem_crdt_io    = mem_crdt_io;
+      rdreq_agent[idx].port_num       = idx;
       
       wrreq_agent[idx] = mby_mgp_req_agent::type_id::create($sformatf("wrreq%0d_agent", idx), this);
       wrreq_agent[idx].req_agent_cfg  = bfm_cfg.req_agent_cfg;
-      wrreq_agent[idx].flow_ctrl     = flow_ctrl;
-      wrreq_agent[idx].mem_crdt_io   = mem_crdt_io;
+      wrreq_agent[idx].flow_ctrl      = flow_ctrl;
+      wrreq_agent[idx].mem_crdt_io    = mem_crdt_io;
+      wrreq_agent[idx].port_num       = idx;
       
       rdrsp_agent[idx] = mby_mgp_req_agent::type_id::create($sformatf("rdrsp%0d_agent", idx), this);
       rdrsp_agent[idx].req_agent_cfg  = bfm_cfg.req_agent_cfg;
-      rdrsp_agent[idx].flow_ctrl     = flow_ctrl;
-      rdrsp_agent[idx].mem_crdt_io   = mem_crdt_io;
+      rdrsp_agent[idx].flow_ctrl      = flow_ctrl;
+      rdrsp_agent[idx].mem_crdt_io    = mem_crdt_io;
+      rdrsp_agent[idx].port_num       = idx;
+      
    end
    
       
@@ -126,7 +145,9 @@ endtask : run_phase
 // Method: assign_cfg
 //----------------------------------------------------------------------------------------
 function void mby_mgp_bfm::assign_cfg(mby_mgp_bfm_cfg bfm_cfg);
-   this.bfm_cfg = bfm_cfg;
+   this.bfm_cfg        = bfm_cfg;
+  
+   
 endfunction
 
 //----------------------------------------------------------------------------------------
@@ -137,8 +158,7 @@ function void mby_mgp_bfm::assign_vi(virtual mby_mgp_mim_req_if rreq_if, virtual
    rdreq_vif = rreq_if;
    wrreq_vif = wreq_if;
    rsp_vif   = rsp_if;
-
-  
+ 
    
 endfunction : assign_vi
 
