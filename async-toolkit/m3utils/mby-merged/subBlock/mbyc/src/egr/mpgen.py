@@ -48,16 +48,6 @@ class MyParser(argparse.ArgumentParser):
         sys.exit(2)
 
 # ##################################################
-# Functions
-# ##################################################
-def str2bool(b):
-    if b.lower() in ('yes', 'true', 't', 'y', '1'):
-        return True
-    elif b.lower() in ('no', 'false', 'f', 'n', '0'):
-        return False
-    else:
-        raise argparse.ArgumentTypeError('Boolean value expected.')
-# ##################################################
 # get_args
 # 
 # ##################################################
@@ -484,10 +474,10 @@ def rename_module(top_name,module_name):
     os.system(("sed -i s/%s/%s/g %s")%(str_find,str_replace,file_name))
 
     print_info(("Renaming %s to rtl/mem/%s")%(file_name,str_replace+".sv"))
-    os.system(("mv %s rtl/mem/%s.sv")%(file_name,str_replace))
+    os.system(("mv %s rtl/mem/%s/src/%s.sv")%(file_name,module_name/str_replace))
     
     print_info(("Renaming rtl/mem/mby_%s_if_inst.sv to rtl/mem/%s_%s_if_inst.sv")%(module_name,top_name,module_name))
-    os.system(("mv rtl/mem/mby_%s_if_inst.sv rtl/mem/%s_%s_if_inst.sv")%(module_name,top_name,module_name))
+    os.system(("mv rtl/mem/mby_%s_if_inst.sv rtl/mem/%s/src/%s_%s_if_inst.sv")%(module_name,module_name,top_name,module_name))
 
 # ##################################################
 # main
