@@ -44,12 +44,6 @@ sequence("BigInt", "BigInt")
 
 interface ("GenViews")
 generic_module("GenViews")
-module ("GenViewsM3")
-module ("GenViewsScala")
-module ("GenViewsC")
-module ("GenViewsCApi")
-module ("GenViewsScheme")
-module ("GenViewsSvHlp")
 
 module ("DecoratedComponentDef")
 
@@ -59,6 +53,7 @@ interface ("RegModula3Utils")
 
 %%%%%%%%%%%%%%%%%%%%  Modula-3 output  %%%%%%%%%%%%%%%%%%%
 
+module   ("GenViewsM3")
 module   ("RegModula3Constants")
 module   ("RegModula3")
 module   ("RegModula3Naming")
@@ -68,6 +63,7 @@ module   ("RegModula3IntfNaming")
 
 %%%%%%%%%%%%%%%%%%%%%  Scala output  %%%%%%%%%%%%%%%%%%%%%
 
+module   ("GenViewsScala")
 module   ("RegScalaConstants")
 module   ("RegScala")
 module   ("RegScalaNaming")
@@ -80,6 +76,7 @@ module   ("GenCUtils")
 
 %%%%%%%%%%%%%%%%%%%%%%  C-FM output  %%%%%%%%%%%%%%%%%%%%%%%%
 
+module   ("GenViewsC")
 module   ("RegC")
 module   ("RegCConstants")
 module   ("RegCNaming")
@@ -89,11 +86,21 @@ module   ("RegCGenState")
 
 %%%%%%%%%%%%%%%%%%%%%%  C-API output  %%%%%%%%%%%%%%%%%%%%%%%%
 
+module   ("GenViewsCApi")
 module   ("RegCApi")
-%module   ("RegCConstants") % reuse
-%module   ("RegCNaming")    % reuse
 interface("RegCApiGenerators") 
-%interface("RegCGenState") % reuse
+
+%%%%%%%%%%%%%%%%%%%%%  Scheme output  %%%%%%%%%%%%%%%%%%%%%
+
+module   ("GenViewsScheme")
+
+%%%%%%%%%%%%%  HLP-style SystemVerilog output  %%%%%%%%%%%%%
+
+module   ("GenViewsSvHlp")
+interface("TreeType")
+interface("TreeTypeStruct")
+sequence ("TreeType", "TreeType")
+table    ("RegComponentType", "RegComponent", "TreeType")
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
