@@ -56,6 +56,9 @@
 //   Project       :
 //------------------------------------------------------------------------------
 
+// Class: mby_mesh_reg_blk
+// Description
+
 class mby_mesh_reg_blk extends uvm_reg_block;
 
    `uvm_object_utils(mby_mesh_reg_blk)
@@ -65,6 +68,7 @@ class mby_mesh_reg_blk extends uvm_reg_block;
    ral_block_mby_mesh_row_map mesh_row;
 
 
+   //Variable: mesh_reg_map
    // Maps
    uvm_reg_map mesh_reg_map;
 
