@@ -26,11 +26,6 @@
 //   Author        : Dhivya Sankar
 //   Project       : Madison Bay
 //------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
-// Class: mby_mesh_dut_cfg
-//
-// This is the configuration object to control Mesh DUT configuration.
-//------------------------------------------------------------------------------
 
 `ifndef __MBY_MESH_DUT_CFG_GUARD
 `define __MBY_MESH_DUT_CFG_GUARD
@@ -38,6 +33,10 @@
 `ifndef __INSIDE_MBY_MESH_ENV_PKG
 `error "Attempt to include file outside of mby_mesh_env_pkg."
 `endif
+
+// Class: mby_mesh_dut_cfg
+//
+// This is the configuration object to control Mesh DUT configuration.
 
 class mby_mesh_dut_cfg extends shdv_base_config;
 
@@ -50,10 +49,8 @@ class mby_mesh_dut_cfg extends shdv_base_config;
     `uvm_object_utils_end
 
 
-    //---------------------------------------------------------------------------
     // Constructor: new
-    //
-    // Constructor.
+    // Create a new dut_cfg object
     //
     // Arguments:
     //    string name - mby_mesh_dut_cfg object name
