@@ -79,9 +79,11 @@ PROCEDURE Gen(t : T; tgtmap : RegAddrmap.T; outDir : Pathname.T) =
     END;
     t.put(F("((cont %s)",tgtmap.nm), 0);
 
-    EVAL TreeTypeClass.To(tgtmap, compTypeTbl);            (* size calcs etc *)
-
-    DoContainer(t, tgtmap, 1, NIL); (* emit code *)
+    WITH tree = TreeTypeClass.To(tgtmap, compTypeTbl) DO
+      tree.offset := 0;
+      TreeType.ComputeAddresses(tree, 0, NEW(AddressConverter, a := a));
+      DoContainer(t, tgtmap, 1, NIL)
+    END;
     t.put(")",0);
     (*
     WITH txt = Wx.ToText(t.wx) DO
@@ -90,10 +92,28 @@ PROCEDURE Gen(t : T; tgtmap : RegAddrmap.T; outDir : Pathname.T) =
     *)
   END Gen;
 
-PROCEDURE DoContainer(t   : T;
-                      c   : RegContainer.T;
-                      lev : CARDINAL;
-                      pfx : Arc) =
+TYPE
+  AddressConverter = TreeType.AddressConverter OBJECT
+    a : REF ARRAY OF FieldData.T;
+  OVERRIDES
+    field2bit := Field2Bit;
+  END;
+  
+PROCEDURE Field2Bit(ac : AddressConverter; field : CARDINAL) : Word.T =
+  BEGIN
+    IF field >= LAST(ac.a^) THEN
+      Debug.Error(F("field %s >= LAST(ac.a^) = %s",
+                    Int(field), Int(LAST(ac.a^))))
+    END;
+    WITH fd = ac.a[field] DO
+      RETURN Word.Plus(Word.Times(fd.byte,8),fd.lsb)
+    END
+  END Field2Bit;
+
+PROCEDURE DoContainer(t    : T;
+                      c    : RegContainer.T;
+                      lev  : CARDINAL;
+                      pfx  : Arc) =
   VAR
     skipArc := c.skipArc();
   BEGIN

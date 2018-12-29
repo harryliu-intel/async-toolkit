@@ -14,6 +14,7 @@ IMPORT GenViewsScheme;
 IMPORT Text;
 IMPORT Rd, FileRd;
 IMPORT ParseError;
+IMPORT Word;
 
 CONST TE = Text.Equal;
 
@@ -38,6 +39,7 @@ VAR
   fieldAddrRd : Rd.T := NIL;
   scmFiles : REF ARRAY OF TEXT;
   addrBits : GenViewsSvHlp.AddrBits := LAST(GenViewsSvHlp.AddrBits);
+  baseAddressBytes : Word.T := 0;
   
 BEGIN
   (* command-line args: *)
@@ -83,6 +85,9 @@ BEGIN
            and not here *)
         IF pp.keywordPresent("-bits") THEN
           addrBits := pp.getNextInt()
+        END;
+        IF pp.keywordPresent("-bits") THEN
+          baseAddressBytes := pp.getNextInt()
         END
       END;
 
@@ -158,6 +163,7 @@ BEGIN
     Lang.SvHlp =>
     NEW(GenViewsSvHlp.T,
         fieldAddrRd := fieldAddrRd,
+        baseAddressBytes := baseAddressBytes,
         addrBits := addrBits).gen(tgtmap, outDir)
   ELSE
     gv.gen(tgtmap, outDir)

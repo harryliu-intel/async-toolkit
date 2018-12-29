@@ -97,8 +97,8 @@ module   ("GenViewsScheme")
 %%%%%%%%%%%%%  HLP-style SystemVerilog output  %%%%%%%%%%%%%
 
 module   ("GenViewsSvHlp")
-interface("TreeType")
-interface("TreeTypeStruct")
+module   ("TreeType")
+interface("TreeTypeClass")
 sequence ("TreeType", "TreeType")
 table    ("RegComponentType", "RegComponent", "TreeType")
 
