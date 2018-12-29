@@ -15,9 +15,7 @@ IMPORT CardSeq;
 IMPORT BigIntSeq;
 IMPORT Word;
 IMPORT RdlPredefProperty;
-IMPORT RefSeq;
-IMPORT RdlArray;
-IMPORT RegComponentRefTbl;
+IMPORT TreeType, TreeTypeClass, RegComponentTypeTbl;
 
 <*FATAL Thread.Alerted*>
 <*FATAL BigInt.OutOfRange*>
@@ -81,7 +79,7 @@ PROCEDURE Gen(t : T; tgtmap : RegAddrmap.T; outDir : Pathname.T) =
     END;
     t.put(F("((cont %s)",tgtmap.nm), 0);
 
-    EVAL ToType(tgtmap);            (* size calcs etc *)
+    EVAL TreeTypeClass.To(tgtmap, compTypeTbl);            (* size calcs etc *)
 
     DoContainer(t, tgtmap, 1, NIL); (* emit code *)
     t.put(")",0);
@@ -305,7 +303,7 @@ PROCEDURE DoReg(t : T; r : RegReg.T; lev : CARDINAL; pfx : Arc) =
     svName := FormatNameArcsOnly(pfx);
     lim := 0;
     rst := BigInt.Zero;
-    ref : REFANY;
+    type : TreeType.T;
   BEGIN
     EmitComment(t, "Reg", pfx, lev);
 
@@ -322,9 +320,9 @@ PROCEDURE DoReg(t : T; r : RegReg.T; lev : CARDINAL; pfx : Arc) =
     <*ASSERT width  MOD 8 = 0*>
     EmitLocalParam(t, svName & "_ATOMIC_WIDTH", width DIV 8, -1, lev);
 
-    WITH haveTree = compTypeTbl.get(r, ref) DO
+    WITH haveTree = compTypeTbl.get(r, type) DO
       IF haveTree THEN
-        Debug.Out(FmtType(ref))
+        Debug.Out(TreeType.Format(type))
       END
     END;
 
@@ -458,127 +456,8 @@ PROCEDURE BigPow2(n : CARDINAL) : BigInt.T =
     RETURN bigPow2.get(n)
   END BigPow2;
 
-TYPE
-  Type = OBJECT
-    sz : CARDINAL;
-    comp : RegComponent.T;
-  END;
-
-  Array = Type OBJECT
-    n    : CARDINAL;
-    elem : Type;
-  END;
-
-  Struct = Type OBJECT
-    fields : RefSeq.T;
-  END;
-
-PROCEDURE ToType(c : RegComponent.T) : Type =
-  BEGIN
-    Debug.Out("ToType " & c.nm);
-    TYPECASE c OF
-      RegContainer.T => RETURN ContainerType(c)
-    |
-      RegReg.T       => RETURN RegType(c)
-    |
-      RegField.T     => <*ASSERT FALSE*> (* right? *)
-    ELSE
-      <*ASSERT FALSE*>
-    END
-  END ToType;
-
-VAR compTypeTbl := NEW(RegComponentRefTbl.Default).init();
+VAR compTypeTbl := NEW(RegComponentTypeTbl.Default).init();
     
-PROCEDURE ContainerType(c : RegContainer.T) : Type =
-  VAR
-    skipArc := c.skipArc();
-  BEGIN
-    IF skipArc THEN
-      <*ASSERT c.children.size() = 1*>
-      VAR
-        chld := c.children.get(0);
-        down := ChildType(chld);
-        n := BigInt.ToInteger(NARROW(chld.array,RdlArray.Single).n.x);
-      BEGIN
-        WITH arr = NEW(Array,
-                       comp := c,
-                       n    := n,
-                       sz   := n * down.sz,
-                       elem := down) DO
-          EVAL compTypeTbl.put(c, arr);
-          RETURN arr
-        END
-      END
-    ELSE
-      VAR
-        seq := NEW(RefSeq.T).init();
-        sz := 0;
-      BEGIN
-        FOR i := 0 TO c.children.size()-1 DO
-          VAR
-            chld := c.children.get(i);
-            ct := ChildType(chld);
-          BEGIN
-            IF chld.array # NIL THEN
-              WITH n = BigInt.ToInteger(
-                           NARROW(chld.array,RdlArray.Single).n.x) DO
-                ct := NEW(Array,
-                          comp := chld.comp,
-                          n  := n,
-                          sz :=  n * ct.sz,
-                          elem := ct)
-              END;
-              EVAL compTypeTbl.put(chld.comp, ct)
-            END;
-            seq.addhi(ct);
-            INC(sz, ct.sz);
-          END
-        END(*FOR*);
-
-        WITH res = NEW(Struct, sz := sz, comp := c, fields := seq) DO
-          EVAL compTypeTbl.put(c, res);
-          RETURN res
-        END
-      END
-    END;
-  END ContainerType;
-
-PROCEDURE ChildType(c : RegChild.T) : Type =
-  BEGIN
-    <*ASSERT NOT ISTYPE(c.comp, RegField.T)*>
-    RETURN ToType(c.comp)
-  END ChildType;
-
-PROCEDURE RegType(c : RegReg.T) : Type =
-  VAR
-    seq := NEW(RefSeq.T).init();
-  BEGIN
-    FOR i := 0 TO c.fields.size()-1 DO
-      seq.addhi(NEW(Type, sz := 1, comp := c.fields.get(i)))
-    END;
-    
-    WITH res = NEW(Struct,
-                   sz      := c.fields.size(),
-                   comp    := c,
-                   fields  := seq) DO
-      EVAL compTypeTbl.put(c, res);
-      RETURN res
-    END
-  END RegType;
-
-PROCEDURE FmtType(type : Type) : TEXT =
-  BEGIN
-    TYPECASE type OF
-      Array(a) =>
-      RETURN F("Array sz %s", Int(a.sz))
-    |
-      Struct(s) =>
-      RETURN F("Struct sz %s fields %s", Int(s.sz), Int(s.fields.size()))
-    ELSE
-      RETURN F("Unknown sz %s", Int(type.sz))
-    END
-  END FmtType;
-  
 BEGIN
   bigPow2.addhi(BigInt.One) (* 2^0 = 1 *)
 END GenViewsSvHlp.

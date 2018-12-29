@@ -14,6 +14,10 @@ TYPE
 
   Struct <: T; (* see TreeTypeStruct for more details *)
 
+  Field = T BRANDED OBJECT END;
+
+PROCEDURE Format(type : T) : TEXT;
+  
 CONST Brand = "TreeType";
 
 END TreeType.
