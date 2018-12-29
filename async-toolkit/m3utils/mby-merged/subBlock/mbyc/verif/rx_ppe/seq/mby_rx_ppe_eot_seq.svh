@@ -23,61 +23,50 @@
 // express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
-//   Author        : Akshay Kotian
+//   Author        : Kaleem Sheriff
 //   Project       : Madison Bay
 //------------------------------------------------------------------------------
 
-//   Class:  mby_rx_ppe_power_good_seq
+//   Class:    mby_rx_ppe_eot_seq
 //
-//   This is the main IP Power_Good Sequence. execute in Power_Good_Phase
-//
-//   Clears all Power_Good, Hard_Reset, and Warm_Reset.
-//
-//   Delay for short time and Set Power_Good.
+//   This is the rx_ppe Config sequence file.
 
-`ifndef __MBY_RX_PPE_POWER_GOOD_SEQ_GUARD
-`define __MBY_RX_PPE_POWER_GOOD_SEQ_GUARD
+`ifndef __MBY_RX_PPE_EOT_SEQ_GUARD
+`define __MBY_RX_PPE_EOT_SEQ_GUARD
 
 `ifndef __INSIDE_MBY_RX_PPE_SEQ_LIB
 `error "Attempt to include file outside of mby_rx_ppe_seq_lib."
 `endif
 
 
-class mby_rx_ppe_power_good_seq extends mby_rx_ppe_env_base_seq;
-
-   `uvm_object_utils(mby_rx_ppe_power_good_seq)
+class mby_rx_ppe_eot_seq extends uvm_sequence;
+   
 
    //------------------------------------------------------------------------------
-   //  Constructor: new
-   //  New Power_Good_Seq Object.
-   //  Gets handle to the rx_ppe ENV.
-   //
-   //  Arguments:
-   //  string name  - rx_ppe TOP power good sequence object name.
+   //  Task: new
+   //  Confiure rx ppe
    //------------------------------------------------------------------------------
-   function new(input string name = "mby_rx_ppe_power_good_seq");
-      super.new(name);
-   endfunction: new
+    function new(string name = "mby_rx_ppe_eot_seq");
+       super.new(name);
+    endfunction
+
+   //------------------------------------------------------------------------------
+   //  Task: pre_body
+   //  Confiure rx ppe
+   //------------------------------------------------------------------------------
+    virtual task pre_body();
+      
+    endtask
 
    //------------------------------------------------------------------------------
    //  Task: body
-   //  Sequence body is used to control Power_Good (Initial Clear -> Delay -> Set),
-   // as well as Hard_Reset/Warm_Reset (Initial Clear)
+   //  Confiure rx ppe
    //------------------------------------------------------------------------------
-   task body();
+    virtual task body();
+      `uvm_info(get_name(), "Eot Sequence", UVM_MEDIUM);
+	 
+    endtask : body
 
-      vif.power_good_reset           = 0;
-      vif.hard_reset                 = 0;
-      vif.warm_reset                 = 0;
+endclass : mby_rx_ppe_eot_seq
 
-      #10;
-      `uvm_info(get_name(), $sformatf("Power_Good_Reset Set"), UVM_NONE);
-      vif.power_good_reset           = 1;
-
-   endtask: body
-
-endclass: mby_rx_ppe_power_good_seq
-
-`endif // __MBY_RX_PPE_POWER_GOOD_SEQ_GUARD
-
-
+`endif // __MBY_RX_PPE_EOT_SEQ_GUARD
