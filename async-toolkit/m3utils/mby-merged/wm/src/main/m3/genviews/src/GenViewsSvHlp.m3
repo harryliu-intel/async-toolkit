@@ -2,7 +2,7 @@ MODULE GenViewsSvHlp;
 IMPORT RegReg, RegField, RegContainer, RegChild, RegAddrmap, RegRegfile;
 IMPORT Pathname;
 IMPORT Debug;
-FROM Fmt IMPORT F, Int, Pad, Align;
+FROM Fmt IMPORT F, Int;
 IMPORT Text;
 IMPORT BigInt;
 IMPORT FieldData, Rd, Pickle2;
@@ -17,6 +17,7 @@ IMPORT Word;
 IMPORT RdlPredefProperty;
 IMPORT RefSeq;
 IMPORT RdlArray;
+IMPORT RegComponentRefTbl;
 
 <*FATAL Thread.Alerted*>
 <*FATAL BigInt.OutOfRange*>
@@ -79,7 +80,10 @@ PROCEDURE Gen(t : T; tgtmap : RegAddrmap.T; outDir : Pathname.T) =
       Rd.Close(t.fieldAddrRd)
     END;
     t.put(F("((cont %s)",tgtmap.nm), 0);
-    DoContainer(t, tgtmap, 1, NIL);
+
+    EVAL ToType(tgtmap);            (* size calcs etc *)
+
+    DoContainer(t, tgtmap, 1, NIL); (* emit code *)
     t.put(")",0);
     (*
     WITH txt = Wx.ToText(t.wx) DO
@@ -96,8 +100,8 @@ PROCEDURE DoContainer(t   : T;
     skipArc := c.skipArc();
   BEGIN
     <*ASSERT c # NIL*>
-    Debug.Out("Container " & Pad(FormatNameArcsOnly(pfx),FW,align := Align.Left) &
-      " arr = " & FormatArrayArcsOnly(pfx));
+    EmitComment(t, "Container", pfx, lev);
+
     VAR tn : TEXT; BEGIN
       TYPECASE c OF
         RegAddrmap.T => tn := "addrmap"
@@ -123,6 +127,8 @@ PROCEDURE DoContainer(t   : T;
         DoChild(t, chld, lev, arc, skipArc)
       END
     END;
+    EmitComment(t, "Container", pfx, lev, TRUE);
+    Emit(t,"",lev);
   END DoContainer;
 
 PROCEDURE HasNoFurtherArcs(c : RegComponent.T) : BOOLEAN =
@@ -207,12 +213,25 @@ PROCEDURE DoChild(t       : T;
     END
   END DoChild;
 
-CONST FW = 60;
-      
+PROCEDURE EmitComment(t : T;
+                      node : TEXT;
+                      pfx : Arc;
+                      lev : CARDINAL;
+                      end := FALSE) =
+  VAR
+    endS := "";
+  BEGIN
+    IF end THEN endS := "END " END;
+    
+    Emit(t, F("  // %s%s %-60s", endS, node, FormatNameArcsOnly(pfx)), lev);
+    IF NOT end AND NOT TE(node, "Field") THEN
+      Emit(t, F("  // arr %s", FormatArrayArcsOnly(pfx)), lev)
+    END
+  END EmitComment;
+  
 PROCEDURE DoField(t : T; f : RegField.T; lev : CARDINAL; pfx : Arc) =
   BEGIN
-    Debug.Out("Field     " & Pad(FormatNameArcsOnly(pfx),FW,align := Align.Left) &
-      " arr = " & FormatArrayArcsOnly(pfx));
+    EmitComment(t, "Field", pfx, lev);
 
     IF f.lsb = RegField.Unspecified THEN
       Debug.Warning("Unspecified LSB in field " & f.nm)
@@ -231,6 +250,12 @@ PROCEDURE DoField(t : T; f : RegField.T; lev : CARDINAL; pfx : Arc) =
     END;
   END DoField;
 
+PROCEDURE Emit(t : T; str : TEXT; lev : CARDINAL) =
+  BEGIN
+    Debug.Out(str);
+    t.put(str, lev);
+  END Emit;
+  
 PROCEDURE EmitLocalParam(t       : T;
                          nm      : TEXT;
                          val     : INTEGER;
@@ -247,8 +272,7 @@ PROCEDURE EmitLocalParam(t       : T;
       valStr := F("%s'h%s", Int(hexBits), Int(val, base := 16))
     END;
     WITH str = F(LocalParamFmt, nm, valStr) DO
-      Debug.Out(str);
-      t.put(str, lev)
+      Emit(t, str, lev)
     END
   END EmitLocalParam;
 
@@ -270,8 +294,7 @@ PROCEDURE EmitBigLocalParam(t       : T;
       valStr := F("%s'h%s", Int(hexBits), BigInt.Format(val, base := 16))
     END;
     WITH str = F(LocalParamFmt, nm, valStr) DO
-      Debug.Out(str);
-      t.put(str, lev)
+      Emit(t, str, lev)
     END
   END EmitBigLocalParam;
   
@@ -282,7 +305,10 @@ PROCEDURE DoReg(t : T; r : RegReg.T; lev : CARDINAL; pfx : Arc) =
     svName := FormatNameArcsOnly(pfx);
     lim := 0;
     rst := BigInt.Zero;
+    ref : REFANY;
   BEGIN
+    EmitComment(t, "Reg", pfx, lev);
+
     WITH hadIt = r.getRdlPredefIntProperty(RdlPredefProperty.T.accesswidth,
                                            atomic) DO
       <*ASSERT hadIt*>
@@ -296,6 +322,12 @@ PROCEDURE DoReg(t : T; r : RegReg.T; lev : CARDINAL; pfx : Arc) =
     <*ASSERT width  MOD 8 = 0*>
     EmitLocalParam(t, svName & "_ATOMIC_WIDTH", width DIV 8, -1, lev);
 
+    WITH haveTree = compTypeTbl.get(r, ref) DO
+      IF haveTree THEN
+        Debug.Out(FmtType(ref))
+      END
+    END;
+
     FOR i := 0 TO r.fields.size()-1 DO
       WITH f = r.fields.get(i) DO
         lim := MAX(lim, f.lsb + f.width);
@@ -308,9 +340,6 @@ PROCEDURE DoReg(t : T; r : RegReg.T; lev : CARDINAL; pfx : Arc) =
     EmitLocalParam(t, svName & "_BITS", lim, -1, lev);
     EmitBigLocalParam(t, svName & "_DEFAULT", rst, lim, lev);
    
-    Debug.Out("Reg       " & Pad(svName,FW, align := Align.Left) &
-      " arr = " & FormatArrayArcsOnly(pfx));
-
     VAR
       arraySizes := ArraySizes(pfx);
     BEGIN
@@ -344,6 +373,8 @@ PROCEDURE DoReg(t : T; r : RegReg.T; lev : CARDINAL; pfx : Arc) =
         DoField(t, f, lev, arc)
       END
     END;
+    EmitComment(t, "Reg", pfx, lev, TRUE);
+    Emit(t,"",lev);
   END DoReg;
 
 PROCEDURE HlpName(comp : RegComponent.T; iNm : TEXT) : TEXT =
@@ -434,6 +465,7 @@ TYPE
   END;
 
   Array = Type OBJECT
+    n    : CARDINAL;
     elem : Type;
   END;
 
@@ -443,6 +475,7 @@ TYPE
 
 PROCEDURE ToType(c : RegComponent.T) : Type =
   BEGIN
+    Debug.Out("ToType " & c.nm);
     TYPECASE c OF
       RegContainer.T => RETURN ContainerType(c)
     |
@@ -454,20 +487,27 @@ PROCEDURE ToType(c : RegComponent.T) : Type =
     END
   END ToType;
 
+VAR compTypeTbl := NEW(RegComponentRefTbl.Default).init();
+    
 PROCEDURE ContainerType(c : RegContainer.T) : Type =
   VAR
     skipArc := c.skipArc();
   BEGIN
     IF skipArc THEN
+      <*ASSERT c.children.size() = 1*>
       VAR
         chld := c.children.get(0);
-        down := ChildType(chld, skipArc);
+        down := ChildType(chld);
+        n := BigInt.ToInteger(NARROW(chld.array,RdlArray.Single).n.x);
       BEGIN
-        RETURN NEW(Array,
-                   comp := c,
-                   sz   := BigInt.ToInteger(
-                               NARROW(chld.array,RdlArray.Single).n.x) *                                       down.sz,
-                   elem := down)
+        WITH arr = NEW(Array,
+                       comp := c,
+                       n    := n,
+                       sz   := n * down.sz,
+                       elem := down) DO
+          EVAL compTypeTbl.put(c, arr);
+          RETURN arr
+        END
       END
     ELSE
       VAR
@@ -477,31 +517,37 @@ PROCEDURE ContainerType(c : RegContainer.T) : Type =
         FOR i := 0 TO c.children.size()-1 DO
           VAR
             chld := c.children.get(i);
-            ct := ChildType(chld, skipArc);
+            ct := ChildType(chld);
           BEGIN
             IF chld.array # NIL THEN
-              ct := NEW(Array,
-                        comp := chld.comp,
-                        sz :=  BigInt.ToInteger(
-                                 NARROW(chld.array,RdlArray.Single).n.x) *
-                                 ct.sz,
-                        elem := ct)
+              WITH n = BigInt.ToInteger(
+                           NARROW(chld.array,RdlArray.Single).n.x) DO
+                ct := NEW(Array,
+                          comp := chld.comp,
+                          n  := n,
+                          sz :=  n * ct.sz,
+                          elem := ct)
+              END;
+              EVAL compTypeTbl.put(chld.comp, ct)
             END;
             seq.addhi(ct);
             INC(sz, ct.sz);
-            RETURN NEW(Struct, sz := sz, comp := c, fields := seq)
           END
+        END(*FOR*);
+
+        WITH res = NEW(Struct, sz := sz, comp := c, fields := seq) DO
+          EVAL compTypeTbl.put(c, res);
+          RETURN res
         END
       END
     END;
   END ContainerType;
 
-PROCEDURE ChildType(c : RegChild.T; skipArc : BOOLEAN) : Type =
+PROCEDURE ChildType(c : RegChild.T) : Type =
   BEGIN
     <*ASSERT NOT ISTYPE(c.comp, RegField.T)*>
     RETURN ToType(c.comp)
   END ChildType;
-  
 
 PROCEDURE RegType(c : RegReg.T) : Type =
   VAR
@@ -511,12 +557,27 @@ PROCEDURE RegType(c : RegReg.T) : Type =
       seq.addhi(NEW(Type, sz := 1, comp := c.fields.get(i)))
     END;
     
-    RETURN NEW(Struct,
-               sz      := c.fields.size(),
-               comp    := c,
-               fields  := seq)
+    WITH res = NEW(Struct,
+                   sz      := c.fields.size(),
+                   comp    := c,
+                   fields  := seq) DO
+      EVAL compTypeTbl.put(c, res);
+      RETURN res
+    END
   END RegType;
-  
+
+PROCEDURE FmtType(type : Type) : TEXT =
+  BEGIN
+    TYPECASE type OF
+      Array(a) =>
+      RETURN F("Array sz %s", Int(a.sz))
+    |
+      Struct(s) =>
+      RETURN F("Struct sz %s fields %s", Int(s.sz), Int(s.fields.size()))
+    ELSE
+      RETURN F("Unknown sz %s", Int(type.sz))
+    END
+  END FmtType;
   
 BEGIN
   bigPow2.addhi(BigInt.One) (* 2^0 = 1 *)

@@ -5,6 +5,7 @@ IMPORT RdlPropertySymtab;
 IMPORT ParseError;
 IMPORT RdlPredefProperty;
 IMPORT RdlPropertyRvalueKeyword;
+IMPORT Word, Refany;
 
 TYPE
   T <: Public;
@@ -49,4 +50,8 @@ TYPE
 
 CONST Brand = "RegComponent";
 
+CONST Equal = Refany.Equal;
+
+PROCEDURE Hash(a : T) : Word.T;
+  
 END RegComponent.

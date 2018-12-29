@@ -53,6 +53,8 @@ module ("GenViewsSvHlp")
 
 module ("DecoratedComponentDef")
 
+table("RegComponentRef", "RegComponent", "Refany")
+
 interface ("RegModula3Utils")
 
 %%%%%%%%%%%%%%%%%%%%  Modula-3 output  %%%%%%%%%%%%%%%%%%%

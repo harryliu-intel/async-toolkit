@@ -1,7 +1,25 @@
 #!/bin/sh -ex
 
 
-ARGS=$*
+TARG=$1
+
+if     [ "$1" = "mby"   ]; then
+    ana_map="mby_top_map"
+    mapf="mby"
+    bits=30
+elif   [ "$1" = "rx_ppe" ]; then
+    ana_map="mby_ppe_rx_top_map"
+    mapf="tx_ppe"
+    bits=28
+elif   [ "$1" = "tx_ppe" ]; then
+    ana_map="mby_ppe_tx_top_map"
+    mapf="rx_ppe"
+    bits=28
+else
+    echo "targ must be mby, rx_ppe, or tx_ppe"
+    exit 1
+fi
+     
 WD=${MODEL_ROOT}/tools/srdl/mby
 # allow security.pm to be found
 export PERL5LIB=$MODEL_ROOT/tools/srdl
@@ -32,7 +50,7 @@ for file in ${files}; do
 	${PERLFE} < work/intermediate01.rdl > work/intermediate02.rdl
 	cat work/intermediate02.rdl | (cd ${WD} ; perl) > work/intermediate03.rdl
 	mkdir -p ${GENDIR}
-	../AMD64_LINUX/genviews -L sv-hlp -top ${top_map} -o ${GENDIR} -f ../fieldvisitor/src/mby.mapfields -i work/intermediate03.rdl 
+	../AMD64_LINUX/genviews -L sv-hlp -bits ${bits} -top ${ana_map} -o ${GENDIR} -f ../fieldvisitor/src/${mapf}.mapfields -i work/intermediate03.rdl 
 done
 
 

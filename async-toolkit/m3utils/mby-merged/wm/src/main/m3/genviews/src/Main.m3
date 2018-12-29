@@ -37,6 +37,7 @@ VAR
   lang := Lang.M3;
   fieldAddrRd : Rd.T := NIL;
   scmFiles : REF ARRAY OF TEXT;
+  addrBits : GenViewsSvHlp.AddrBits := LAST(GenViewsSvHlp.AddrBits);
   
 BEGIN
   (* command-line args: *)
@@ -74,6 +75,14 @@ BEGIN
               fieldAddrRd := FileRd.Open(ifn)
             END
           END
+        END
+      END;
+
+      IF lang = Lang.SvHlp THEN
+        (* this should perhaps be processed inside GenViewsSvHlp 
+           and not here *)
+        IF pp.keywordPresent("-bits") THEN
+          addrBits := pp.getNextInt()
         END
       END;
 
@@ -148,7 +157,8 @@ BEGIN
   |
     Lang.SvHlp =>
     NEW(GenViewsSvHlp.T,
-        fieldAddrRd := fieldAddrRd).gen(tgtmap, outDir)
+        fieldAddrRd := fieldAddrRd,
+        addrBits := addrBits).gen(tgtmap, outDir)
   ELSE
     gv.gen(tgtmap, outDir)
   END

@@ -5,6 +5,7 @@ IMPORT RdlPropertyRvalueConstant;
 IMPORT RdlPredefProperty;
 IMPORT RdlPropertyRvalueKeyword;
 IMPORT BigInt;
+IMPORT Word, Text;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
@@ -124,5 +125,10 @@ PROCEDURE GetRdlKwProperty(t      : T;
       END(*IF*)
     END(*WITH*)
   END GetRdlKwProperty;
+
+PROCEDURE Hash(a : T) : Word.T =
+  BEGIN
+    RETURN Word.Plus(TYPECODE(a),Text.Hash(a.nm))
+  END Hash;
   
 BEGIN END RegComponent.
