@@ -1,3 +1,8 @@
+//----------------------------------------------------------------------------------
+// Package: mby_mgp_bfm_pkg
+//
+// Shared testbench environment components, objects and other definintions.
+//-----------------------------------------------------------------------------------
 package mby_mgp_bfm_pkg;
 
    `include "uvm_macros.svh"

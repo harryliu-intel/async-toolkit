@@ -4,6 +4,12 @@
 `include "mby_mgp_defines.svh"
 
 
+//--------------------------------------------------------------
+// Interface:    mby_mgp_mim_if
+//
+// Interface connecting EB and WB req/rsp with the mesh.
+//
+//--------------------------------------------------------------
 interface mby_mgp_mim_if (
      input  reset,
      input  cclk,

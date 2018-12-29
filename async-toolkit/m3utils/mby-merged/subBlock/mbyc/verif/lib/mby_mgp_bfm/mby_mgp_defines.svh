@@ -38,6 +38,3 @@ logic [W_WD_SEL-1:0]        wd_sel;   // Segment Word Selector type
 logic [W_SEMA-1:0]          sema;     // Semaphore Bits type
 logic                       valid;
 logic [MSH_DATA_WIDTH-1:0]  msh_data; // Mesh Data
-
-
-

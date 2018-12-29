@@ -25,6 +25,12 @@
 // Project  : Madison bay
 //------------------------------------------------------------------------------
 
+`ifndef __MBY_MESH_SHUTDOWN_SEQ_GUARD
+`define __MBY_MESH_SHUTDOWN_SEQ_GUARD
+
+`ifndef __INSIDE_MBY_MESH_SEQ_LIB
+`error "Attempt to include file outside of mby_mesh_seq_lib."
+`endif
 //------------------------------------------------------------------------------
 // Class: shdv_base_shutdown_sequence
 //
@@ -32,12 +38,6 @@
 // until all scoreboards and BFMs in the environment have completed their
 // analysis and flushed all transactions from their queues.
 //------------------------------------------------------------------------------
-`ifndef __MBY_MESH_SHUTDOWN_SEQ_GUARD
-`define __MBY_MESH_SHUTDOWN_SEQ_GUARD
-
-`ifndef __INSIDE_MBY_MESH_SEQ_LIB
-`error "Attempt to include file outside of mby_mesh_seq_lib."
-`endif
 class mby_mesh_shutdown_seq extends shdv_base_shutdown_sequence;
 
    `uvm_object_utils_begin(mby_mesh_shutdown_seq)
