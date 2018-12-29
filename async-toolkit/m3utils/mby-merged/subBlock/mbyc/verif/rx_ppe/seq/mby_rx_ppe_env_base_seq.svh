@@ -47,12 +47,14 @@
 
 class mby_rx_ppe_env_base_seq extends shdv_base_sequence;
 
+   `uvm_object_utils(mby_rx_ppe_env_base_seq)
+
    // Variable: env
    // rx_ppe Top Level Env.
    mby_rx_ppe_env_pkg::mby_rx_ppe_env         env;
 
-   // Variable: dut_cfg
-   // rx_ppe dut cfg.
+   // Variable: tb_cfg
+   // rx_ppe tb cfg.
    mby_rx_ppe_env_pkg::mby_rx_ppe_tb_top_cfg  cfg;
 
    // Variable:  tb_ral

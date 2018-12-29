@@ -41,9 +41,13 @@
 `endif
 
 
-class mby_rx_ppe_hard_reset_seq extends mby_rx_ppe_env_base_seq;
+class mby_rx_ppe_hard_reset_seq extends shdv_base_reset_sequence;
 
    `uvm_object_utils(mby_rx_ppe_hard_reset_seq)
+
+   // Variable: tb_vif
+   // Handle to rx_ppe Tb interface.
+   virtual mby_rx_ppe_tb_if                   tb_vif;
 
    //------------------------------------------------------------------------------
    //  Constructor: new
@@ -55,8 +59,29 @@ class mby_rx_ppe_hard_reset_seq extends mby_rx_ppe_env_base_seq;
    //------------------------------------------------------------------------------
    function new(input string name = "mby_rx_ppe_hard_reset_seq");
       super.new(name);
+      set_env (shdv_base_env::get_top_tb_env());
    endfunction: new
 
+
+   // ------------------------------------------------------------------------
+   //  Function: set_env
+   //  Arguments: shdv_base_env 
+   // ------------------------------------------------------------------------
+   virtual function void set_env(shdv_base_env tb_env);
+      mby_rx_ppe_env_pkg::mby_rx_ppe_env temp_env;
+      bit stat;
+
+      stat = $cast(temp_env,tb_env);
+      if(!stat) begin
+         `uvm_fatal(get_name(), "Cast of sla_tb_env failed");
+      end
+      if(temp_env == null) begin
+         `uvm_fatal(get_name(), "Could not fetch sla_tb_env handle!!!");
+      end
+
+      this.tb_vif = temp_env.get_tb_vif();
+
+   endfunction : set_env
 
    //------------------------------------------------------------------------------
    //  Task: body
@@ -67,16 +92,16 @@ class mby_rx_ppe_hard_reset_seq extends mby_rx_ppe_env_base_seq;
       
       `uvm_info(this.get_name(), ("Phase::reset_phase:mby_rx_ppe_hard_reset_seq::Starting"), UVM_LOW)    
       `uvm_info(get_name(), $sformatf("Hard_Reset  & warm_reset Set"), UVM_NONE);
-      vif.hard_reset                 = 1;
-      vif.warm_reset                 = 1;
+      tb_vif.hard_reset                 = 1;
+      tb_vif.warm_reset                 = 1;
 
-      repeat (200) @(posedge vif.fab_clk);
+      repeat (200) @(posedge tb_vif.fab_clk);
 
       `uvm_info(get_name(), $sformatf("Hard_Reset & warm_reset Cleared"), UVM_NONE);
-      vif.hard_reset                 = 0;
+      tb_vif.hard_reset                 = 0;
       
-      repeat (20) @(posedge vif.fab_clk);
-      vif.warm_reset                 = 0;
+      repeat (20) @(posedge tb_vif.fab_clk);
+      tb_vif.warm_reset                 = 0;
 
    endtask: body
 

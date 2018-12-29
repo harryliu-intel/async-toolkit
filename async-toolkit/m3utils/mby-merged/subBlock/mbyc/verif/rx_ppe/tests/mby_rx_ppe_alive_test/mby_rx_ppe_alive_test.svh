@@ -93,8 +93,6 @@ class mby_rx_ppe_alive_seq extends mby_rx_ppe_seq_lib::mby_rx_ppe_env_base_seq;
 
    `uvm_object_utils(mby_rx_ppe_alive_seq)
 
-   eth_frame      los_frames[4];
-   eth_sequencer  los_sequencers[4];
    //------------------------------------------------------------------------------
    //  Constructor: new
    //  Arguments:

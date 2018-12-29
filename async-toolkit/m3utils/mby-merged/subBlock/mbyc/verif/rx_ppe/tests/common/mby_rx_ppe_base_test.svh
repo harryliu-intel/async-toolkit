@@ -163,7 +163,7 @@ class mby_rx_ppe_base_test extends shdv_base_test;
 
       // Specifying shutdown phase sequence
       uvm_config_db#(uvm_object_wrapper)::set(this,
-         "env.tb_seqr.extract_phase",
+         "env.tb_seqr.shutdown_phase",
          "default_sequence",
          mby_rx_ppe_seq_lib::mby_rx_ppe_env_shutdown_seq::type_id::get());
 

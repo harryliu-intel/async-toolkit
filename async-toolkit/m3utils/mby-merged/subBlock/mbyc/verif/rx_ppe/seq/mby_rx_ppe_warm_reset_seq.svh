@@ -40,7 +40,7 @@
 `error "Attempt to include file outside of mby_rx_ppe_seq_lib."
 `endif
 
-class mby_rx_ppe_warm_reset_seq extends mby_rx_ppe_env_base_seq;
+class mby_rx_ppe_warm_reset_seq extends shdv_base_reset_sequence;
 
    `uvm_object_utils(mby_rx_ppe_warm_reset_seq)
 

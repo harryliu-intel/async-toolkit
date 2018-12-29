@@ -38,9 +38,25 @@
 `error "Attempt to include file outside of mby_rx_ppe_seq_lib."
 `endif
 
-class mby_rx_ppe_env_shutdown_seq extends mby_rx_ppe_env_base_seq;
+class mby_rx_ppe_env_shutdown_seq extends shdv_base_shutdown_sequence;
 
    `uvm_object_utils(mby_rx_ppe_env_shutdown_seq)
+
+   // Variable: env
+   // rx_ppe Top Level Env.
+   mby_rx_ppe_env_pkg::mby_rx_ppe_env         env;
+
+   // Variable: tb_cfg
+   // rx_ppe tb cfg.
+   mby_rx_ppe_env_pkg::mby_rx_ppe_tb_top_cfg  tb_cfg;
+   
+   // Variable:  tb_ral
+   // Handle to RX PPE RAL.
+   mby_rx_ppe_reg_pkg::mby_rx_ppe_reg_blk     ral;   
+
+   // Variable: vif
+   // Handle to rx_ppe Tb interface.
+   virtual mby_rx_ppe_tb_if                   tb_vif;   
 
    // Variable: rx_ppe_eot_seq
    // rx_ppe_eot_seq
@@ -54,7 +70,32 @@ class mby_rx_ppe_env_shutdown_seq extends mby_rx_ppe_env_base_seq;
    //------------------------------------------------------------------------------
    function new(input string name = "mby_rx_ppe_env_shutdown_seq");
       super.new(name);
+      set_env (shdv_base_env::get_top_tb_env());
    endfunction: new
+
+   // ------------------------------------------------------------------------
+   //  Function: set_env
+   //  Arguments: shdv_base_env 
+   // ------------------------------------------------------------------------
+   virtual function void set_env(shdv_base_env tb_env);
+      mby_rx_ppe_env_pkg::mby_rx_ppe_env temp_env;
+      bit stat;
+
+      stat = $cast(temp_env,tb_env);
+      if(!stat) begin
+         `uvm_fatal(get_name(), "Cast of sla_tb_env failed");
+      end
+      if(temp_env == null) begin
+         `uvm_fatal(get_name(), "Could not fetch sla_tb_env handle!!!");
+      end
+
+      this.env = temp_env;
+      this.ral = temp_env.get_tb_ral();
+      this.tb_cfg = temp_env.get_tb_cfg();      
+      this.tb_vif = temp_env.get_tb_vif();
+
+   endfunction : set_env
+
 
    //------------------------------------------------------------------------------
    //  Task: body
@@ -65,9 +106,9 @@ class mby_rx_ppe_env_shutdown_seq extends mby_rx_ppe_env_base_seq;
       `uvm_info(this.get_name(), ("Phase::shutdown_phase:mby_rx_ppe_env_shutdown_seq::Starting"), UVM_LOW)
 
 //    rx_ppe_eot_seq = mby_rx_ppe_seq_lib::mby_rx_ppe_eot_seq::type_id::create("rx_ppe_eot_seq");
-//    rx_ppe_eot_seq.env       = env;
-//    rx_ppe_eot_seq.ral_env   = env.tp_env.get_tb_ral();
-//    rx_ppe_eot_seq.dut_cfg       = env.tb_cfg.dut_cfg;
+//    rx_ppe_eot_seq.env       = this.env;
+//    rx_ppe_eot_seq.ral_env   = this.ral;
+//    rx_ppe_eot_seq.dut_cfg       = this.tb_cfg.dut_cfg;
 //    rx_ppe_eot_seq.access_type  = "FRONTDOOR";
 	
       `uvm_info(get_name(), "********** Starting rx_ppe_eot_seq **********", UVM_MEDIUM);
