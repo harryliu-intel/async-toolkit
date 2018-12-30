@@ -1,19 +1,19 @@
 MODULE TreeType EXPORTS TreeType, TreeTypeClass;
-IMPORT RegComponentTypeTbl;
 IMPORT RegContainer;
 IMPORT RegComponent, RegChild, RegReg, Debug, RegField, BigInt, RdlArray;
 IMPORT TreeTypeSeq;
 FROM Fmt IMPORT F, Int, Unsigned;
+IMPORT TreeTypeArraySeq;
 
-PROCEDURE To(c : RegComponent.T; tbl : RegComponentTypeTbl.T) : T =
+PROCEDURE To(c : RegComponent.T) : T =
   VAR
     res : T;
   BEGIN
     Debug.Out("TreeType.To " & c.nm);
     TYPECASE c OF
-      RegContainer.T => res := MarkOffset(Container(c, tbl))
+      RegContainer.T => res := MarkOffset(Container(c))
     |
-      RegReg.T       => res := MarkOffset(Reg(c, tbl))
+      RegReg.T       => res := MarkOffset(Reg(c))
     |
       RegField.T     => <*ASSERT FALSE*> (* right? *)
     ELSE
@@ -45,7 +45,7 @@ PROCEDURE MarkOffset(t : T) : T =
     RETURN t
   END MarkOffset;
 
-PROCEDURE Container(c : RegContainer.T; tbl : RegComponentTypeTbl.T) : T =
+PROCEDURE Container(c : RegContainer.T) : T =
   VAR
     skipArc := c.skipArc();
   BEGIN
@@ -53,7 +53,7 @@ PROCEDURE Container(c : RegContainer.T; tbl : RegComponentTypeTbl.T) : T =
       <*ASSERT c.children.size() = 1*>
       VAR
         chld := c.children.get(0);
-        down := Child(chld, tbl);
+        down := Child(chld);
         n := BigInt.ToInteger(NARROW(chld.array,RdlArray.Single).n.x);
       BEGIN
         WITH arr = NEW(Array,
@@ -62,75 +62,77 @@ PROCEDURE Container(c : RegContainer.T; tbl : RegComponentTypeTbl.T) : T =
                        n    := n,
                        sz   := n * down.sz,
                        elem := down) DO
-          EVAL tbl.put(c, arr);
+          down.up := arr;
           RETURN arr
         END
       END
-    ELSE
+    ELSE (* NOT skipArc *)
       VAR
         seq := NEW(TreeTypeSeq.T).init();
         sz := 0;
+        res := NEW(Struct,
+                       sz     := sz,
+                       comp   := c,
+                       fields := seq);
       BEGIN
         FOR i := 0 TO c.children.size()-1 DO
           VAR
             chld := c.children.get(i);
-            ct := Child(chld, tbl);
+            ct := Child(chld);
           BEGIN
             ct.tag := chld.nm;
-            IF chld.array # NIL THEN
+            IF chld.array = NIL THEN
+              ct.up := res
+            ELSE
               WITH n = BigInt.ToInteger(
                            NARROW(chld.array,RdlArray.Single).n.x) DO
-                ct := NEW(Array,
+                WITH a = NEW(Array,
                           tag    := chld.nm, 
                           comp   := chld.comp,
                           n      := n,
                           sz     := n * ct.sz,
-                          elem   := ct)
+                          elem   := ct,
+                          up     := res) DO
+                  ct.up := a;
+                  ct := a
+                END
               END;
-              EVAL tbl.put(chld.comp, ct)
             END;
             seq.addhi(ct);
             INC(sz, ct.sz);
           END
         END(*FOR*);
 
-        WITH res = NEW(Struct,
-                       sz     := sz,
-                       comp   := c,
-                       fields := seq) DO
-          EVAL tbl.put(c, res);
-          RETURN res
-        END
+        RETURN res
       END
     END;
   END Container;
 
-PROCEDURE Child(c : RegChild.T; tbl : RegComponentTypeTbl.T) : T =
+PROCEDURE Child(c : RegChild.T) : T = 
   BEGIN
     <*ASSERT NOT ISTYPE(c.comp, RegField.T)*>
-    RETURN To(c.comp, tbl)
+    RETURN To(c.comp)
   END Child;
 
-PROCEDURE Reg(c : RegReg.T; tbl : RegComponentTypeTbl.T) : T =
+PROCEDURE Reg(c : RegReg.T) : T = 
   VAR
     seq := NEW(TreeTypeSeq.T).init();
+    res := NEW(Struct,
+                   sz      := c.fields.size(),
+                   comp    := c,
+                   fields  := seq);
   BEGIN
     FOR i := 0 TO c.fields.size()-1 DO
       WITH f = c.fields.get(i) DO
         seq.addhi(NEW(Field,
                       tag  := f.nm,
                       sz   := 1,
-                      comp := f))
+                      comp := f,
+                      up   := res))
       END
     END;
     
-    WITH res = NEW(Struct,
-                   sz      := c.fields.size(),
-                   comp    := c,
-                   fields  := seq) DO
-      EVAL tbl.put(c, res);
-      RETURN res
-    END
+    RETURN res
   END Reg;
 
 PROCEDURE Format(type : T) : TEXT =
@@ -139,7 +141,7 @@ PROCEDURE Format(type : T) : TEXT =
   BEGIN
     TYPECASE type OF
       Array(a) =>
-      res := F("Array n %s stride %s strideb %s",
+      res := F("Array n %s stride %s strideb 16_%s",
                Int(a.n), Int(a.stride), Unsigned(a.strideBits))
     |
       Struct(s) =>
@@ -149,7 +151,7 @@ PROCEDURE Format(type : T) : TEXT =
     END;
     res := res & F(" \"%s\"", type.tag);
     res := res &
-               F(" sz %s off %s addr %s addrb %s",
+               F(" sz %s off %s addr %s addrb 16_%s",
                  Int(type.sz), Int(type.offset), Int(type.address),
                  Unsigned(type.addrBits));
     RETURN res
@@ -157,6 +159,7 @@ PROCEDURE Format(type : T) : TEXT =
 
 PROCEDURE ComputeAddresses(tree : T; base : CARDINAL; ac : AddressConverter) =
   BEGIN
+    Debug.Out("ComputeAddresses " & tree.tag);
     tree.address := base;
     tree.addrBits := ac.field2bit(tree.address);
     TYPECASE tree OF
@@ -183,5 +186,17 @@ PROCEDURE ComputeAddresses(tree : T; base : CARDINAL; ac : AddressConverter) =
     END;
     Debug.Out(Format(tree))
   END ComputeAddresses;
-  
+
+PROCEDURE GetArrays(t : T; seq : TreeTypeArraySeq.T) =
+  BEGIN
+    TYPECASE t OF
+      NULL => RETURN
+    |
+      Array(a) => seq.addhi(t)
+    ELSE
+      (* skip *)
+    END;
+    GetArrays(t.up, seq)
+  END GetArrays;
+
 BEGIN END TreeType.

@@ -1,14 +1,13 @@
 INTERFACE TreeTypeClass;
 IMPORT TreeType;
 IMPORT TreeTypeSeq;
-IMPORT RegComponentTypeTbl;
-IMPORT RegComponent;
+IMPORT TreeTypeArraySeq;
 
 REVEAL
   TreeType.Struct = TreeType.T BRANDED OBJECT
     fields : TreeTypeSeq.T;
   END;
 
-PROCEDURE To(c : RegComponent.T; tbl : RegComponentTypeTbl.T) : TreeType.T;
-      
+PROCEDURE GetArrays(t : TreeType.T; seq : TreeTypeArraySeq.T);
+
 END TreeTypeClass.

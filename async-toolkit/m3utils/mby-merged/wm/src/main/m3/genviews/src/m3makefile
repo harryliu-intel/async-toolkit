@@ -101,6 +101,8 @@ module   ("TreeType")
 interface("TreeTypeClass")
 sequence ("TreeType", "TreeType")
 table    ("RegComponentType", "RegComponent", "TreeType")
+interface("TreeTypeArray")
+sequence ("TreeTypeArray", "TreeTypeArray")
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

@@ -228,20 +228,10 @@
 
 (define zz (build-zip the-map))
 
-(cnt-sequence-by-name the-map '(mpp 0 shm FWD_TABLE0 1 0 DATA))
-
 (define the-array-tree (treemap array-marker the-map))
 
 (define the-accum-tree (tree-accum fields-tree))
 
-(dis (stringify
-      (FieldData.ArrayGet the-addresses
-                          (get-zip-seq-offset
-                           zz
-                           (cnt-sequence-by-name
-                            the-map
-                            '(mpp 0 shm FWD_TABLE_MOD 9 16383 DATA))))
-      ) dnl)
 
 (define last-entry (FieldData.ArrayGet the-addresses
                                        (- (FieldData.ArraySize the-addresses)
@@ -276,12 +266,6 @@
                     fields-tree
                     make-promise))
 
-;; the following should give the same answer
-
-(compute-offset-from-seq the-chip-offset-tree '(1 0 0 0 0 0 0))
-
-(fielddata->lsb (FieldData.ArrayGet the-addresses
-                                    (get-zip-seq-offset zz '(1 0 0 0 0 0 0))))
 
 (define (make-spaces n)
   (if (= 0 n) "" (string-append " " (make-spaces (- n 1)))))

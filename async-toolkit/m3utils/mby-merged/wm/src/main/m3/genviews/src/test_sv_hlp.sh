@@ -1,24 +1,6 @@
 #!/bin/sh -ex
 
-
-TARG=$1
-
-if     [ "$1" = "mby"   ]; then
-    ana_map="mby_top_map"
-    mapf="mby"
-    bits=30
-elif   [ "$1" = "rx_ppe" ]; then
-    ana_map="mby_ppe_rx_top_map"
-    mapf="tx_ppe"
-    bits=28
-elif   [ "$1" = "tx_ppe" ]; then
-    ana_map="mby_ppe_tx_top_map"
-    mapf="rx_ppe"
-    bits=28
-else
-    echo "targ must be mby, rx_ppe, or tx_ppe"
-    exit 1
-fi
+. sel_model.sh
      
 WD=${MODEL_ROOT}/tools/srdl/mby
 # allow security.pm to be found

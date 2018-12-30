@@ -15,7 +15,8 @@ IMPORT CardSeq;
 IMPORT BigIntSeq;
 IMPORT Word;
 IMPORT RdlPredefProperty;
-IMPORT TreeType, TreeTypeClass, RegComponentTypeTbl;
+IMPORT TreeType, TreeTypeClass;
+IMPORT TreeTypeArraySeq;
 
 <*FATAL Thread.Alerted*>
 <*FATAL BigInt.OutOfRange*>
@@ -77,19 +78,12 @@ PROCEDURE Gen(t : T; tgtmap : RegAddrmap.T; outDir : Pathname.T) =
       Debug.Out("size of b : " & Int(NUMBER(b^)));
       Rd.Close(t.fieldAddrRd)
     END;
-    t.put(F("((cont %s)",tgtmap.nm), 0);
-
-    WITH tree = TreeTypeClass.To(tgtmap, compTypeTbl) DO
+    WITH tree = TreeType.To(tgtmap) DO
       tree.offset := 0;
+      tree.up := NIL;
       TreeType.ComputeAddresses(tree, 0, NEW(AddressConverter, a := a));
-      DoContainer(t, tgtmap, 1, NIL)
+      DoContainer(t, tgtmap, 1, NIL, tree)
     END;
-    t.put(")",0);
-    (*
-    WITH txt = Wx.ToText(t.wx) DO
-      Debug.Out("Producing\n"&txt);
-    END;
-    *)
   END Gen;
 
 TYPE
@@ -101,8 +95,8 @@ TYPE
   
 PROCEDURE Field2Bit(ac : AddressConverter; field : CARDINAL) : Word.T =
   BEGIN
-    IF field >= LAST(ac.a^) THEN
-      Debug.Error(F("field %s >= LAST(ac.a^) = %s",
+    IF field > LAST(ac.a^) THEN
+      Debug.Error(F("field %s > LAST(ac.a^) = %s",
                     Int(field), Int(LAST(ac.a^))))
     END;
     WITH fd = ac.a[field] DO
@@ -113,36 +107,39 @@ PROCEDURE Field2Bit(ac : AddressConverter; field : CARDINAL) : Word.T =
 PROCEDURE DoContainer(t    : T;
                       c    : RegContainer.T;
                       lev  : CARDINAL;
-                      pfx  : Arc) =
+                      pfx  : Arc;
+                      tree : TreeType.T  ) =
   VAR
     skipArc := c.skipArc();
   BEGIN
     <*ASSERT c # NIL*>
     EmitComment(t, "Container", pfx, lev);
 
-    VAR tn : TEXT; BEGIN
-      TYPECASE c OF
-        RegAddrmap.T => tn := "addrmap"
-      |
-        RegRegfile.T => tn := "regfile"
-      ELSE
-        <*ASSERT FALSE*>
-      END;
-    END;
     FOR i := 0 TO c.children.size()-1 DO
       VAR chld := c.children.get(i);
           arc : Arc := pfx;
+          ct  : TreeType.T;
       BEGIN        
-        IF NOT skipArc THEN
-          arc := NEW(NameArc, idx := i, nm := HlpName(chld.comp, chld.nm),
-                     up := arc)
-        END;
-        IF chld.array # NIL THEN
-          arc := NEW(ArrayArc, sz := BigInt.ToInteger(chld.array.n.x),
-                     up := arc)
+        IF skipArc THEN
+          ct := NARROW(tree, TreeType.Array).elem
+        ELSE
+          arc := NEW(NameArc,
+                     idx := i,
+                     nm := HlpName(chld.comp, chld.nm),
+                     up := arc);
+          ct := NARROW(tree, TreeType.Struct).fields.get(i)
         END;
 
-        DoChild(t, chld, lev, arc, skipArc)
+        IF chld.array # NIL THEN
+          arc := NEW(ArrayArc,
+                     sz := BigInt.ToInteger(chld.array.n.x),
+                     up := arc);
+          IF NOT skipArc THEN (* confusing, cf. TreeType.Container *)
+            ct := NARROW(ct, TreeType.Array).elem
+          END;
+        END;
+
+        DoChild(t, chld, lev, arc, skipArc, ct)
       END
     END;
     EmitComment(t, "Container", pfx, lev, TRUE);
@@ -170,72 +167,29 @@ PROCEDURE DoChild(t       : T;
                   c       : RegChild.T;
                   lev     : CARDINAL;
                   pfx     : Arc;
-                  skipArc : BOOLEAN) =
+                  skipArc : BOOLEAN;
+                  tree    : TreeType.T ) =
   VAR
     tag : TEXT;
   BEGIN
-    (* this is very tricky and a bit inconsistent, but it comes from
-       the syntax of C-like languages ... :
-
-       if the thing we are processing is a possibly multi-dimensional register,
-       that is, an array of an array of.....of an array of registers,
-       we need to report the type as "reg".  It is only ever reported
-       as a container if it has any non-skip-arcs left. *)
-
-    <*ASSERT NOT ISTYPE(c.comp, RegField.T)*>
-    IF HasNoFurtherArcs(c.comp) THEN
-      tag := "cont" (*"reg"*)
-    ELSE
-      tag := "cont" (*"cont"*)
-    END;
-    
-    IF NOT skipArc THEN
-      t.put(F("((%s %s)", tag, c.nm),lev);
-      INC(lev)
-    END;
-    
-    IF c.array # NIL THEN
-      VAR extras := ""; BEGIN
-        TYPECASE c.comp OF
-          RegReg.T(reg) => extras := F(" (regheader %s)",reg.nm)
-        ELSE
-          (* skip *)
-        END;
-        t.put(F("((array %s%s)",
-                Int(BigInt.ToInteger(c.array.n.x)),
-                extras),
-              lev);
-        INC(lev)
-      END
-    END;
-      
     WITH ccomp = c.comp DO
       TYPECASE ccomp OF
-        RegContainer.T => DoContainer(t, ccomp, lev, pfx)
+        RegContainer.T => DoContainer(t, ccomp, lev, pfx, tree)
       |
-        RegReg.T       => DoReg(t, ccomp, lev, pfx)
+        RegReg.T       => DoReg(t, ccomp, lev, pfx, tree)
       |
         RegField.T     => <*ASSERT FALSE*> (* right? *)
       ELSE
         <*ASSERT FALSE*>
       END
-    END;
-
-    IF c.array # NIL THEN
-      DEC(lev);
-      t.put(F(")"),lev)
-    END;
-    IF NOT skipArc THEN
-      DEC(lev);
-      t.put(F(")"),lev)
     END
   END DoChild;
 
-PROCEDURE EmitComment(t : T;
+PROCEDURE EmitComment(t    : T;
                       node : TEXT;
-                      pfx : Arc;
-                      lev : CARDINAL;
-                      end := FALSE) =
+                      pfx  : Arc;
+                      lev  : CARDINAL;
+                      end  := FALSE) =
   VAR
     endS := "";
   BEGIN
@@ -257,7 +211,6 @@ PROCEDURE DoField(t : T; f : RegField.T; lev : CARDINAL; pfx : Arc) =
     IF f.width = RegField.Unspecified THEN
       Debug.Warning("Unspecified width in field " & f.nm)
     END;
-    t.put(F("((field %s %s %s))", f.nm, Int(f.lsb), Int(f.width)),lev);
 
     EmitLocalParam(t, FormatNameArcsOnly(pfx, "W_"), f.width, -1, lev); 
     IF f.width = 1 THEN
@@ -316,7 +269,11 @@ PROCEDURE EmitBigLocalParam(t       : T;
     END
   END EmitBigLocalParam;
   
-PROCEDURE DoReg(t : T; r : RegReg.T; lev : CARDINAL; pfx : Arc) =
+PROCEDURE DoReg(t    : T;
+                r    : RegReg.T;
+                lev  : CARDINAL;
+                pfx  : Arc;
+                tree : TreeType.Struct) =
   VAR
     atomic : INTEGER;
     width  : INTEGER;
@@ -326,6 +283,7 @@ PROCEDURE DoReg(t : T; r : RegReg.T; lev : CARDINAL; pfx : Arc) =
     type : TreeType.T;
   BEGIN
     EmitComment(t, "Reg", pfx, lev);
+    Emit(t, "  // " & TreeType.Format(tree), lev);
 
     WITH hadIt = r.getRdlPredefIntProperty(RdlPredefProperty.T.accesswidth,
                                            atomic) DO
@@ -339,12 +297,6 @@ PROCEDURE DoReg(t : T; r : RegReg.T; lev : CARDINAL; pfx : Arc) =
     <*ASSERT atomic MOD 8 = 0*>
     <*ASSERT width  MOD 8 = 0*>
     EmitLocalParam(t, svName & "_ATOMIC_WIDTH", width DIV 8, -1, lev);
-
-    WITH haveTree = compTypeTbl.get(r, type) DO
-      IF haveTree THEN
-        Debug.Out(TreeType.Format(type))
-      END
-    END;
 
     FOR i := 0 TO r.fields.size()-1 DO
       WITH f = r.fields.get(i) DO
@@ -360,23 +312,48 @@ PROCEDURE DoReg(t : T; r : RegReg.T; lev : CARDINAL; pfx : Arc) =
    
     VAR
       arraySizes := ArraySizes(pfx);
+      arrays := NEW(TreeTypeArraySeq.T).init();
     BEGIN
+      TreeTypeClass.GetArrays(tree, arrays);
+      
       CASE arraySizes.size() OF
         0 =>
       |
         1 =>
+        WITH arr = arrays.get(0),
+             strideBytes = arr.strideBits DIV 8 DO
+          Emit(t, "  // " & TreeType.Format(arr), lev);
+          <*ASSERT arraySizes.get(0) = arr.n*>
+          <*ASSERT arr.strideBits MOD 8 = 0*>
           EmitLocalParam(t,
                          svName & "_ENTRIES",
                          arraySizes.get(0),
                          -1,
-                         lev)
-      ELSE
-        FOR i := 0 TO arraySizes.size()-1 DO
+                         lev);
           EmitLocalParam(t,
-                         svName & "_ENTRIES_" & Int(i),
-                         arraySizes.get(i),
+                         svName & "_STRIDE",
+                         strideBytes,
                          -1,
                          lev)
+        END
+      ELSE
+        FOR i := 0 TO arraySizes.size()-1 DO
+          WITH arr = arrays.get(i),
+             strideBytes = arr.strideBits DIV 8 DO
+            Emit(t, "  // " & TreeType.Format(arr), lev);
+            <*ASSERT arraySizes.get(i) = arrays.get(i).n*>
+            <*ASSERT arr.strideBits MOD 8 = 0*>
+            EmitLocalParam(t,
+                           svName & "_ENTRIES_" & Int(i),
+                           arraySizes.get(i),
+                           -1,
+                           lev);
+            EmitLocalParam(t,
+                           svName & "_ENTRIES_" & Int(i),
+                           strideBytes,
+                           -1,
+                           lev)
+          END
         END
       END
     END;
@@ -476,8 +453,6 @@ PROCEDURE BigPow2(n : CARDINAL) : BigInt.T =
     RETURN bigPow2.get(n)
   END BigPow2;
 
-VAR compTypeTbl := NEW(RegComponentTypeTbl.Default).init();
-    
 BEGIN
   bigPow2.addhi(BigInt.One) (* 2^0 = 1 *)
 END GenViewsSvHlp.

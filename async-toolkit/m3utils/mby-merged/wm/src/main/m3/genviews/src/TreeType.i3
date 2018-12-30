@@ -1,6 +1,7 @@
 INTERFACE TreeType;
 IMPORT RegComponent;
 IMPORT Word;
+IMPORT RefSeq;
 
 TYPE
   T = OBJECT
@@ -10,6 +11,7 @@ TYPE
     offset   : CARDINAL; (* offset from parent -- only valid for instance *)
     address  : CARDINAL; (* global field address of first instance *)
     addrBits : Word.T;   (* global bit address of first instance *)
+    up       : T;
    END;
 
   Array = T OBJECT
@@ -19,7 +21,7 @@ TYPE
     strideBits : Word.T;
   END;
 
-  Struct <: T; (* see TreeTypeStruct for more details *)
+  Struct <: T; (* see TreeTypeClass for more details *)
 
   Field = T BRANDED OBJECT END;
 
@@ -33,5 +35,8 @@ TYPE
   AddressConverter = OBJECT METHODS
     field2bit(field : CARDINAL) : Word.T;
   END;
+
+PROCEDURE To(c : RegComponent.T) : T;
+  (* initial builder *)
 
 END TreeType.
