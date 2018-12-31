@@ -1,4 +1,3 @@
-
 // vim: noai : ts=3 : sw=3 : expandtab : ft=systemverilog
 
 //------------------------------------------------------------------------------
@@ -24,47 +23,50 @@
 // express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
-//   Author        : Akshay Kotian
+//   Author        : Kaleem Sheriff
 //   Project       : Madison Bay
 //------------------------------------------------------------------------------
 
-//   Package:    mby_rx_ppe_seq_lib
+//   Class:    mby_rx_ppe_eot_seq
 //
-//   Section: rx_ppe sequences library
-//
-//    include all rx_ppe sequences
-//
-//    <mby_rx_ppe_power_good_seq.sv>           - Power_Good sequence, is the initial sequence used to set Power_Good and clear Resets
-//
-//    <mby_rx_ppe_hard_reset_seq.sv>           - Hard_Reset sequence, drops the Hard Reset after a delay. (Ran second)
-//
-//    <mby_rx_ppe_warm_reset_seq.sv>           - Warm_Reset sequence, drops the Warm Reset after a delay. (Ran third)
+//   This is the rx_ppe Config sequence file.
+
+`ifndef __MBY_RX_PPE_EOT_SEQ_GUARD
+`define __MBY_RX_PPE_EOT_SEQ_GUARD
+
+`ifndef __INSIDE_MBY_RX_PPE_SEQ_LIB
+`error "Attempt to include file outside of mby_rx_ppe_seq_lib."
+`endif
 
 
-`ifndef __MBY_RX_PPE_SEQ_LIB_GUARD
-`define __MBY_RX_PPE_SEQ_LIB_GUARD
-
-package mby_rx_ppe_seq_lib;
-
-   import uvm_pkg::*;
-
-   import shdv_base_pkg::*;
-
-   `include "uvm_macros.svh"
-
-   `define __INSIDE_MBY_RX_PPE_SEQ_LIB
-   `include "mby_rx_ppe_cfg_seq.svh"
-   `include "mby_rx_ppe_eot_seq.svh"
+class mby_rx_ppe_eot_seq extends uvm_sequence;
    
-   `include "mby_rx_ppe_env_base_seq.svh"
-   `include "mby_rx_ppe_hard_reset_seq.svh"
-   `include "mby_rx_ppe_env_cfg_seq.svh"
-   `include "mby_rx_ppe_env_shutdown_seq.svh"
-//k`include "mby_rx_ppe_power_good_seq.svh"
-//k`include "mby_rx_ppe_warm_reset_seq.svh"
 
-   `undef  __INSIDE_MBY_RX_PPE_SEQ_LIB
+   //------------------------------------------------------------------------------
+   //  Task: new
+   //  Confiure rx ppe
+   //------------------------------------------------------------------------------
+    function new(string name = "mby_rx_ppe_eot_seq");
+       super.new(name);
+    endfunction
 
-endpackage: mby_rx_ppe_seq_lib
+   //------------------------------------------------------------------------------
+   //  Task: pre_body
+   //  Confiure rx ppe
+   //------------------------------------------------------------------------------
+    virtual task pre_body();
+      
+    endtask
 
-`endif // __MBY_RX_PPE_SEQ_LIB_GUARD
+   //------------------------------------------------------------------------------
+   //  Task: body
+   //  Confiure rx ppe
+   //------------------------------------------------------------------------------
+    virtual task body();
+      `uvm_info(get_name(), "Eot Sequence", UVM_MEDIUM);
+	 
+    endtask : body
+
+endclass : mby_rx_ppe_eot_seq
+
+`endif // __MBY_RX_PPE_EOT_SEQ_GUARD

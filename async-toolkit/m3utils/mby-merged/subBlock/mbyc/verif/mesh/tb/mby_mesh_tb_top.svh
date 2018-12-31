@@ -28,13 +28,14 @@
 //------------------------------------------------------------------------------
 
 //
+`timescale 1ps/1ps
+
+// Module: mby_mesh_tb_top
 // Mesh testbench module
 // Description :
 //   This top module will:
 //   1. Instance 1 RTL Unit
 //   2. Control Dumping features for FSDB/DVE.
-
-`timescale 1ps/1ps
 
 module mby_mesh_tb_top();
    

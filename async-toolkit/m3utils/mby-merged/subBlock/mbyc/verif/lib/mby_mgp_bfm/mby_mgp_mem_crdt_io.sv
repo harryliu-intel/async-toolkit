@@ -10,6 +10,7 @@ typedef class mby_mgp_req_seq_item;
    
 //----------------------------------------------------------------------------------------
 // Class: mby_mgp_mem_crdt_io
+// Description: Includes credit IO policy
 //----------------------------------------------------------------------------------------
 class mby_mgp_mem_crdt_io  extends uvm_component;
    `uvm_component_utils(mby_mgp_mem_crdt_io)

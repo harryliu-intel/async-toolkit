@@ -4,6 +4,12 @@
 
 import mby_mgp_bfm_pkg::*;
 
+//----------------------------------------------------------------
+// Interface:    mby_gmm_mig_op_if
+//
+//  Global interface to Mesh
+//
+//-----------------------------------------------------------------
    interface mby_gmm_mig_op_if (
      inout  reset,
      inout  cclk,

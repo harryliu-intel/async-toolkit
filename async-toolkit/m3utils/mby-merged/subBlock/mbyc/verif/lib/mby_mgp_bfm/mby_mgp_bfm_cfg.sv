@@ -9,6 +9,7 @@ typedef class mby_mgp_req_agent_cfg;
    
 //----------------------------------------------------------------------------------------
 // Class: mby_mgp_bfm_cfg
+// mby_mgp_bfm configuration class
 //----------------------------------------------------------------------------------------
 class mby_mgp_bfm_cfg extends uvm_object;
 
@@ -27,7 +28,8 @@ class mby_mgp_bfm_cfg extends uvm_object;
 endclass 
 
 //----------------------------------------------------------------------------------------
-// Constructor
+// Constructor: new
+// Create new configuration
 //----------------------------------------------------------------------------------------
 function mby_mgp_bfm_cfg::new (string name = "");
 

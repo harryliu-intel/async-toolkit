@@ -23,45 +23,55 @@
 // express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
-//   Author        : Akshay Kotian
+//   Author        : Kaleem Sheriff
 //   Project       : Madison Bay
 //------------------------------------------------------------------------------
 
-//   Class:  mby_rx_ppe_hard_reset_seq
+//   Class:    mby_rx_ppe_env_shutdown_seq
 //
-//   This is the main IP Hard Reset Sequence. execute in Hard_Reset_Phase
-//
-//   Sets both Hard and Warm Resets.   Delays for some time and drops Hard Reset.
+//   This is the rx_ppe env Shutdown sequence file.
 
-`ifndef __MBY_RX_PPE_HARD_RESET_SEQ_GUARD
-`define __MBY_RX_PPE_HARD_RESET_SEQ_GUARD
+`ifndef __MBY_RX_PPE_ENV_SHUTDOWN_SEQ_GUARD
+`define __MBY_RX_PPE_ENV_SHUTDOWN_SEQ_GUARD
 
 `ifndef __INSIDE_MBY_RX_PPE_SEQ_LIB
-`error "Attempt to include file outside of mby_rx_ppe_env_base_seq."
+`error "Attempt to include file outside of mby_rx_ppe_seq_lib."
 `endif
 
+class mby_rx_ppe_env_shutdown_seq extends shdv_base_shutdown_sequence;
 
-class mby_rx_ppe_hard_reset_seq extends shdv_base_reset_sequence;
+   `uvm_object_utils(mby_rx_ppe_env_shutdown_seq)
 
-   `uvm_object_utils(mby_rx_ppe_hard_reset_seq)
+   // Variable: env
+   // rx_ppe Top Level Env.
+   mby_rx_ppe_env_pkg::mby_rx_ppe_env         env;
 
-   // Variable: tb_vif
+   // Variable: tb_cfg
+   // rx_ppe tb cfg.
+   mby_rx_ppe_env_pkg::mby_rx_ppe_tb_top_cfg  tb_cfg;
+   
+   // Variable:  tb_ral
+   // Handle to RX PPE RAL.
+   mby_rx_ppe_reg_pkg::mby_rx_ppe_reg_blk     ral;   
+
+   // Variable: vif
    // Handle to rx_ppe Tb interface.
-   virtual mby_rx_ppe_tb_if                   tb_vif;
+   virtual mby_rx_ppe_tb_if                   tb_vif;   
+
+   // Variable: rx_ppe_eot_seq
+   // rx_ppe_eot_seq
+   mby_rx_ppe_seq_lib::mby_rx_ppe_eot_seq        rx_ppe_eot_seq;
 
    //------------------------------------------------------------------------------
    //  Constructor: new
-   //  New rx_ppe Hard Reset Sequence Object.
-   //  Gets handle to the rx_ppe ENV.
-   //
+   //  
    //  Arguments:
-   //  string name  - rx_ppe Hard Reset sequence object name.
+   //  string name  - rx_ppe env shutdown sequence object name.
    //------------------------------------------------------------------------------
-   function new(input string name = "mby_rx_ppe_hard_reset_seq");
+   function new(input string name = "mby_rx_ppe_env_shutdown_seq");
       super.new(name);
       set_env (shdv_base_env::get_top_tb_env());
    endfunction: new
-
 
    // ------------------------------------------------------------------------
    //  Function: set_env
@@ -79,32 +89,33 @@ class mby_rx_ppe_hard_reset_seq extends shdv_base_reset_sequence;
          `uvm_fatal(get_name(), "Could not fetch sla_tb_env handle!!!");
       end
 
+      this.env = temp_env;
+      this.ral = temp_env.get_tb_ral();
+      this.tb_cfg = temp_env.get_tb_cfg();      
       this.tb_vif = temp_env.get_tb_vif();
 
    endfunction : set_env
 
+
    //------------------------------------------------------------------------------
    //  Task: body
-   //  Sequence body is used to control Hard_Reset (Set -> Delay -> Clear),
-   //  as well as Warm_Reset (Set)
+   //  Check rx_ppe DUT.
    //------------------------------------------------------------------------------
-   task body();
-      
-      `uvm_info(this.get_name(), ("Phase::reset_phase:mby_rx_ppe_hard_reset_seq::Starting"), UVM_LOW)    
-      `uvm_info(get_name(), $sformatf("Hard_Reset  & warm_reset Set"), UVM_NONE);
-      tb_vif.hard_reset                 = 1;
-      tb_vif.warm_reset                 = 1;
+   virtual task     body();
 
-      repeat (200) @(posedge tb_vif.fab_clk);
+      `uvm_info(this.get_name(), ("Phase::shutdown_phase:mby_rx_ppe_env_shutdown_seq::Starting"), UVM_LOW)
 
-      `uvm_info(get_name(), $sformatf("Hard_Reset & warm_reset Cleared"), UVM_NONE);
-      tb_vif.hard_reset                 = 0;
-      
-      repeat (20) @(posedge tb_vif.fab_clk);
-      tb_vif.warm_reset                 = 0;
+//    rx_ppe_eot_seq = mby_rx_ppe_seq_lib::mby_rx_ppe_eot_seq::type_id::create("rx_ppe_eot_seq");
+//    rx_ppe_eot_seq.env       = this.env;
+//    rx_ppe_eot_seq.ral_env   = this.ral;
+//    rx_ppe_eot_seq.dut_cfg       = this.tb_cfg.dut_cfg;
+//    rx_ppe_eot_seq.access_type  = "FRONTDOOR";
+	
+      `uvm_info(get_name(), "********** Starting rx_ppe_eot_seq **********", UVM_MEDIUM);
+//    rx_ppe_eot_seq.start(sla_sequencer::pick_sequencer("ral_sequencer"));
+       
+   endtask : body
 
-   endtask: body
+endclass : mby_rx_ppe_env_shutdown_seq
 
-endclass: mby_rx_ppe_hard_reset_seq
-
-`endif // __MBY_RX_PPE_HARD_RESET_SEQ_GUARD
+`endif // __MBY_RX_PPE_ENV_SHUTDOWN_SEQ_GUARD
