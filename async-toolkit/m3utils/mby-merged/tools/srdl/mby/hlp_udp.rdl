@@ -1,0 +1,17 @@
+
+<% if ($HLP_UDP) {
+   } else {
+        $HLP_UDP = 1;
+%>
+
+// UDP for HLP name mapping
+
+property HlpName {
+    component = addrmap | regfile | reg | field;
+    type      = string;
+    default   = "";
+};
+
+<%
+   }
+%>
