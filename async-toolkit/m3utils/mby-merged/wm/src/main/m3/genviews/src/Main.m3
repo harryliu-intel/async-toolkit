@@ -38,8 +38,13 @@ VAR
   lang := Lang.M3;
   fieldAddrRd : Rd.T := NIL;
   scmFiles : REF ARRAY OF TEXT;
+
+  (* the following are specific for SvHlp, should be moved to a 
+     different file ? *)
   addrBits : GenViewsSvHlp.AddrBits := LAST(GenViewsSvHlp.AddrBits);
   baseAddressBytes : Word.T := 0;
+  packageName : TEXT := NIL;
+  outFileName : Pathname.T := NIL;
   
 BEGIN
   (* command-line args: *)
@@ -86,8 +91,18 @@ BEGIN
         IF pp.keywordPresent("-bits") THEN
           addrBits := pp.getNextInt()
         END;
-        IF pp.keywordPresent("-bits") THEN
+        IF pp.keywordPresent("-baseaddr") THEN
           baseAddressBytes := pp.getNextInt()
+        END;
+        IF pp.keywordPresent("-packagename") THEN
+          packageName := pp.getNext()
+        ELSE
+          Debug.Error("Must specify -packagename")
+        END;
+        IF pp.keywordPresent("-of") THEN
+          outFileName := pp.getNext()
+        ELSE
+          Debug.Error("Must specify -of")
         END
       END;
 
@@ -162,9 +177,11 @@ BEGIN
   |
     Lang.SvHlp =>
     NEW(GenViewsSvHlp.T,
-        fieldAddrRd := fieldAddrRd,
+        fieldAddrRd      := fieldAddrRd,
         baseAddressBytes := baseAddressBytes,
-        addrBits := addrBits).gen(tgtmap, outDir)
+        addrBits         := addrBits,
+        packageName      := packageName,
+        outFileName      := outFileName).gen(tgtmap, outDir)
   ELSE
     gv.gen(tgtmap, outDir)
   END

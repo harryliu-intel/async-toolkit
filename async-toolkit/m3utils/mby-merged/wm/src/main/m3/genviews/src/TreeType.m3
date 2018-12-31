@@ -140,8 +140,9 @@ PROCEDURE Format(type : T) : TEXT =
   BEGIN
     TYPECASE type OF
       Array(a) =>
-      res := F("Array n %s stride %s strideb 16_%s",
-               Int(a.n), Int(a.stride), Unsigned(a.strideBits))
+      res := F("Array n %s stride %s strideb 16_%s strideB %s",
+               Int(a.n), Int(a.stride), Unsigned(a.strideBits),
+               Int(a.strideBits DIV 8))
     |
       Struct(s) =>
       res := F("Struct fields %s", Int(s.fields.size()))

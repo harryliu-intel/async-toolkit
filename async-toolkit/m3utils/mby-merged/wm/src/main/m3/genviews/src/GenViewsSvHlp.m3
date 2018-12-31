@@ -19,6 +19,7 @@ IMPORT TreeType, TreeTypeClass;
 IMPORT TreeTypeArraySeq;
 IMPORT TextSetDef;
 IMPORT IndexBits;
+IMPORT Wr, FileWr;
 
 <*FATAL Thread.Alerted*>
 <*FATAL BigInt.OutOfRange*>
@@ -89,8 +90,19 @@ PROCEDURE Gen(t : T; tgtmap : RegAddrmap.T; outDir : Pathname.T) =
       t.ac := ac;
       t.nfields := NUMBER(a^);
       TreeType.ComputeAddresses(tree, 0, ac);
-      DoContainer(t, tgtmap, 1, NIL, tree)
+      <*ASSERT t.packageName # NIL*>
+      t.put("package " & t.packageName & ";", 0);
+      DoContainer(t, tgtmap, 1, NIL, tree);
+      t.put("endpackage", 0)
     END;
+    <*ASSERT outDir # NIL*>
+    <*ASSERT t.outFileName # NIL*>
+    WITH pn = outDir & "/" & t.outFileName DO
+      WITH wr = FileWr.Open(pn) DO
+        Wr.PutText(wr, Wx.ToText(t.wx));
+        Wr.Close(wr)
+      END
+    END
   END Gen;
 
 TYPE
@@ -118,32 +130,33 @@ PROCEDURE DoContainer(t    : T;
                       tree : TreeType.T  ) =
   VAR
     skipArc := c.skipArc();
-    nextb : Word.T;
     svName := FormatNameArcsOnly(pfx);
   BEGIN
     <*ASSERT c # NIL*>
     EmitComment(t, "Container", pfx, lev);
-    WITH addrB = tree.addrBits DIV 8,
-         next  = tree.address + tree.sz DO
-      <*ASSERT tree.addrBits MOD 8 = 0 *>
-      EmitLocalParam(t,
-                     svName & "_BASE",
-                     addrB,
-                     t.addrBits,
-                     lev);
-      IF next = t.nfields THEN
-        nextb := t.ac.field2bit(t.nfields-1)
-      ELSE
-        nextb := t.ac.field2bit(next)
-      END;
-      WITH szb = nextb - tree.addrBits,
-           szB = szb DIV 8 DO
-        <*ASSERT szb MOD 8 = 0*>
+
+    IF pfx # NIL THEN
+      WITH addrB = tree.addrBits DIV 8,
+           next  = tree.address + tree.sz DO
+        <*ASSERT tree.addrBits MOD 8 = 0 *>
         EmitLocalParam(t,
-                       svName & "_SIZE",
-                       szB,
+                       svName & "_BASE",
+                       addrB,
                        t.addrBits,
-                       lev)
+                       lev);
+        IF next # t.nfields THEN
+          (* we cant do this FOR the last object *)
+          WITH nextb = t.ac.field2bit(next),
+               szb = nextb - tree.addrBits,
+               szB = szb DIV 8 DO
+            <*ASSERT szb MOD 8 = 0*>
+            EmitLocalParam(t,
+                           svName & "_SIZE",
+                           szB,
+                           t.addrBits,
+                           lev)
+          END
+        END
       END
     END;
       
