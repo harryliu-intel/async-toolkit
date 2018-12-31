@@ -103,6 +103,7 @@ sequence ("TreeType", "TreeType")
 table    ("RegComponentType", "RegComponent", "TreeType")
 interface("TreeTypeArray")
 sequence ("TreeTypeArray", "TreeTypeArray")
+module   ("IndexBits")
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

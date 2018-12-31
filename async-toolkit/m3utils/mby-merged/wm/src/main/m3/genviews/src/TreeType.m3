@@ -69,11 +69,10 @@ PROCEDURE Container(c : RegContainer.T) : T =
     ELSE (* NOT skipArc *)
       VAR
         seq := NEW(TreeTypeSeq.T).init();
-        sz := 0;
         res := NEW(Struct,
-                       sz     := sz,
-                       comp   := c,
-                       fields := seq);
+                   comp   := c,
+                   sz     := 0,
+                   fields := seq);
       BEGIN
         FOR i := 0 TO c.children.size()-1 DO
           VAR
@@ -99,7 +98,7 @@ PROCEDURE Container(c : RegContainer.T) : T =
               END;
             END;
             seq.addhi(ct);
-            INC(sz, ct.sz);
+            INC(res.sz, ct.sz);
           END
         END(*FOR*);
 
@@ -146,6 +145,8 @@ PROCEDURE Format(type : T) : TEXT =
     |
       Struct(s) =>
       res := F("Struct fields %s", Int(s.fields.size()))
+    |
+      Field => res := "Field"
     ELSE
       res := F("Unknown")
     END;
@@ -169,8 +170,17 @@ PROCEDURE ComputeAddresses(tree : T; base : CARDINAL; ac : AddressConverter) =
       IF a.n <= 1 THEN
         a.strideBits := 0
       ELSE
-        a.strideBits := ac.field2bit(a.address + a.stride) - a.addrBits
-      END
+        WITH e0 = a.addrBits,
+             f1 = a.address + a.stride,
+             e1 = ac.field2bit(f1),
+             sb = e1 - e0 DO
+          Debug.Out("stride: " & tree.tag);
+          Debug.Out(F("stride: e0 %s f1 %s e1 %s sb %s mod8 %s",
+                      Int(e0),Int(f1),Int(e1),Int(sb), Int(sb MOD 8)));
+          a.strideBits := sb
+        END
+      END;
+      <*ASSERT a.strideBits MOD 8 = 0*>
     |
       Struct(s) =>
       FOR i := 0 TO s.fields.size()-1 DO

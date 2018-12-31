@@ -1,5 +1,5 @@
 MODULE GenViewsSvHlp;
-IMPORT RegReg, RegField, RegContainer, RegChild, RegAddrmap, RegRegfile;
+IMPORT RegReg, RegField, RegContainer, RegChild, RegAddrmap;
 IMPORT Pathname;
 IMPORT Debug;
 FROM Fmt IMPORT F, Int;
@@ -17,6 +17,8 @@ IMPORT Word;
 IMPORT RdlPredefProperty;
 IMPORT TreeType, TreeTypeClass;
 IMPORT TreeTypeArraySeq;
+IMPORT TextSetDef;
+IMPORT IndexBits;
 
 <*FATAL Thread.Alerted*>
 <*FATAL BigInt.OutOfRange*>
@@ -26,6 +28,8 @@ CONST TE = Text.Equal;
 REVEAL
   T = Public BRANDED OBJECT
     wx : Wx.T;
+    ac : AddressConverter;
+    nfields : CARDINAL;
   METHODS
     put(txt : TEXT; lev : CARDINAL) := Put;
   OVERRIDES
@@ -78,10 +82,13 @@ PROCEDURE Gen(t : T; tgtmap : RegAddrmap.T; outDir : Pathname.T) =
       Debug.Out("size of b : " & Int(NUMBER(b^)));
       Rd.Close(t.fieldAddrRd)
     END;
-    WITH tree = TreeType.To(tgtmap) DO
+    WITH tree = TreeType.To(tgtmap),
+         ac   = NEW(AddressConverter, a := a) DO
       tree.offset := 0;
       tree.up := NIL;
-      TreeType.ComputeAddresses(tree, 0, NEW(AddressConverter, a := a));
+      t.ac := ac;
+      t.nfields := NUMBER(a^);
+      TreeType.ComputeAddresses(tree, 0, ac);
       DoContainer(t, tgtmap, 1, NIL, tree)
     END;
   END Gen;
@@ -111,9 +118,35 @@ PROCEDURE DoContainer(t    : T;
                       tree : TreeType.T  ) =
   VAR
     skipArc := c.skipArc();
+    nextb : Word.T;
+    svName := FormatNameArcsOnly(pfx);
   BEGIN
     <*ASSERT c # NIL*>
     EmitComment(t, "Container", pfx, lev);
+    WITH addrB = tree.addrBits DIV 8,
+         next  = tree.address + tree.sz DO
+      <*ASSERT tree.addrBits MOD 8 = 0 *>
+      EmitLocalParam(t,
+                     svName & "_BASE",
+                     addrB,
+                     t.addrBits,
+                     lev);
+      IF next = t.nfields THEN
+        nextb := t.ac.field2bit(t.nfields-1)
+      ELSE
+        nextb := t.ac.field2bit(next)
+      END;
+      WITH szb = nextb - tree.addrBits,
+           szB = szb DIV 8 DO
+        <*ASSERT szb MOD 8 = 0*>
+        EmitLocalParam(t,
+                       svName & "_SIZE",
+                       szB,
+                       t.addrBits,
+                       lev)
+      END
+    END;
+      
 
     FOR i := 0 TO c.children.size()-1 DO
       VAR chld := c.children.get(i);
@@ -226,7 +259,9 @@ PROCEDURE Emit(t : T; str : TEXT; lev : CARDINAL) =
     Debug.Out(str);
     t.put(str, lev);
   END Emit;
-  
+
+VAR localParams := NEW(TextSetDef.T).init();
+    
 PROCEDURE EmitLocalParam(t       : T;
                          nm      : TEXT;
                          val     : INTEGER;
@@ -235,6 +270,9 @@ PROCEDURE EmitLocalParam(t       : T;
   VAR
     valStr : TEXT;
   BEGIN
+    IF localParams.insert(nm) THEN
+      Debug.Error("Multiple definitions for localparam \"" & nm & "\", please uniquify!")
+    END;
     IF hexBits = -1 THEN
       valStr := Int(val)
     ELSE
@@ -247,16 +285,34 @@ PROCEDURE EmitLocalParam(t       : T;
     END
   END EmitLocalParam;
 
-CONST LocalParamFmt = "  localparam %-55s = %s;";
-
-PROCEDURE EmitBigLocalParam(t       : T;
+PROCEDURE EmitTextLocalParam(t       : T;
                          nm      : TEXT;
-                         val     : BigInt.T;
-                         hexBits : [-1..LAST(CARDINAL)];
+                         val     : TEXT;
                          lev     : CARDINAL) =
   VAR
     valStr : TEXT;
   BEGIN
+    IF localParams.insert(nm) THEN
+      Debug.Error("Multiple definitions for localparam \"" & nm & "\", please uniquify!")
+    END;
+    WITH str = F(LocalParamFmt, nm, val) DO
+      Emit(t, str, lev)
+    END
+  END EmitTextLocalParam;
+
+CONST LocalParamFmt = "  localparam %-55s = %s;";
+
+PROCEDURE EmitBigLocalParam(t       : T;
+                            nm      : TEXT;
+                            val     : BigInt.T;
+                            hexBits : [-1..LAST(CARDINAL)];
+                            lev     : CARDINAL) =
+  VAR
+    valStr : TEXT;
+  BEGIN
+    IF localParams.insert(nm) THEN
+      Debug.Error("Multiple definitions for localparam \"" & nm & "\", please uniquify!")
+    END;
     IF hexBits = -1 THEN
       valStr := BigInt.Format(val)
     ELSE
@@ -313,15 +369,19 @@ PROCEDURE DoReg(t    : T;
     VAR
       arraySizes := ArraySizes(pfx);
       arrays := NEW(TreeTypeArraySeq.T).init();
+      addrB := tree.addrBits DIV 8;
     BEGIN
+      <*ASSERT tree.addrBits MOD 8 = 0 *>
       TreeTypeClass.GetArrays(tree, arrays);
       
       CASE arraySizes.size() OF
         0 =>
+        EmitLocalParam(t, svName & "_ADDR", addrB, t.addrBits, lev)
       |
         1 =>
-        WITH arr = arrays.get(0),
-             strideBytes = arr.strideBits DIV 8 DO
+        WITH arr          = arrays.get(0),
+             strideBytes  = arr.strideBits DIV 8,
+             strideBitSet = IndexBits.FromReg(lim) + IndexBits.FromArray(arr.n, strideBytes) DO
           Emit(t, "  // " & TreeType.Format(arr), lev);
           <*ASSERT arraySizes.get(0) = arr.n*>
           <*ASSERT arr.strideBits MOD 8 = 0*>
@@ -334,26 +394,72 @@ PROCEDURE DoReg(t    : T;
                          svName & "_STRIDE",
                          strideBytes,
                          -1,
-                         lev)
+                         lev);
+          EmitTextLocalParam(t,
+                             svName & "_MASK",
+                             IndexBits.FormatMask(t.addrBits, strideBitSet),
+                             lev);
+          EmitTextLocalParam(t,
+                             svName & "_BASEQ",
+                             IndexBits.FormatBaseQ(t.addrBits,
+                                                   strideBitSet,
+                                                   addrB),
+                             lev);
+          EmitLocalParam(t,
+                         svName & "_INDEX_H",
+                         IndexBits.Hi(strideBitSet),
+                         -1,
+                         lev);
+          EmitLocalParam(t,
+                         svName & "_INDEX_L",
+                         IndexBits.Lo(strideBitSet),
+                         -1,
+                         lev);
         END
       ELSE
-        FOR i := 0 TO arraySizes.size()-1 DO
-          WITH arr = arrays.get(i),
-             strideBytes = arr.strideBits DIV 8 DO
-            Emit(t, "  // " & TreeType.Format(arr), lev);
-            <*ASSERT arraySizes.get(i) = arrays.get(i).n*>
-            <*ASSERT arr.strideBits MOD 8 = 0*>
-            EmitLocalParam(t,
-                           svName & "_ENTRIES_" & Int(i),
-                           arraySizes.get(i),
-                           -1,
-                           lev);
-            EmitLocalParam(t,
-                           svName & "_ENTRIES_" & Int(i),
-                           strideBytes,
-                           -1,
-                           lev)
-          END
+        VAR
+          allStridesBitSet := IndexBits.FromReg(lim);
+        BEGIN
+          FOR i := 0 TO arraySizes.size()-1 DO
+            WITH arr         = arrays.get(i),
+                 strideBytes = arr.strideBits DIV 8,
+                 strideBitSet = IndexBits.FromArray(arr.n, strideBytes) DO
+              Emit(t, "  // " & TreeType.Format(arr), lev);
+              <*ASSERT arraySizes.get(i) = arrays.get(i).n*>
+              <*ASSERT arr.strideBits MOD 8 = 0*>
+              EmitLocalParam(t,
+                             svName & "_ENTRIES_" & Int(i),
+                             arraySizes.get(i),
+                             -1,
+                             lev);
+              EmitLocalParam(t,
+                             svName & "_STRIDE_" & Int(i),
+                             strideBytes,
+                             -1,
+                             lev);
+              EmitLocalParam(t,
+                             svName & "_INDEX_H_" & Int(i),
+                             IndexBits.Hi(strideBitSet),
+                             -1,
+                             lev);
+              EmitLocalParam(t,
+                             svName & "_INDEX_L_" & Int(i),
+                             IndexBits.Lo(strideBitSet),
+                             -1,
+                             lev);
+              allStridesBitSet := allStridesBitSet + strideBitSet;
+            END(*WITH*);
+          END(*FOR*);
+          EmitTextLocalParam(t,
+                             svName & "_MASK",
+                             IndexBits.FormatMask(t.addrBits, allStridesBitSet),
+                             lev);
+          EmitTextLocalParam(t,
+                             svName & "_BASEQ",
+                             IndexBits.FormatBaseQ(t.addrBits,
+                                                   allStridesBitSet,
+                                                   addrB),
+                             lev);
         END
       END
     END;
