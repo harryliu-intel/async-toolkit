@@ -3,13 +3,13 @@ CINCLUDES=-I.. -I../build_c_api/mby_c/src -I../../../../c
 
 CFLAGS=
 
-#CFLAGS+= -O6
+CFLAGS+= -O6
 CFLAGS+= -g
 CFLAGS+= $(INCLUDES)
 CFLAGS+= -std=c99 -Wall -pedantic -Werror
 
 # TODO : we have warnings from -Wextra to fix
-#CFLAGS+= -Wextra
+CFLAGS+= -Wextra
 
 CFLAGS+= -c $(CINCLUDES)
 

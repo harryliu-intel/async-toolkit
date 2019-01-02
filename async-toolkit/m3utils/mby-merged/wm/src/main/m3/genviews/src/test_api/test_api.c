@@ -1,6 +1,9 @@
 #include <malloc.h>
 #include <stdio.h>
+
+#define __USE_BSD /* strdup() */
 #include <string.h>
+#undef __USE_BSD
 
 #define __USE_BSD /* random() */
 #include <stdlib.h>
@@ -41,6 +44,7 @@ inc_ragged_last(raggedindex_t *seq)
 {
   /* XXX UNTESTED CODE */
   /* increment ragged in the last valid position */
+  /* not sure this is a really useful operation? */
   const arc_t **arcs;
   int p=0;
   
@@ -66,7 +70,8 @@ inc_ragged_last(raggedindex_t *seq)
 #define MATCH_COMPLETE   2 /* complete match -- matches a specific field */
 
 int
-name2ragged(const char *name, raggedindex_t *seq_a)
+name2ragged(const char       *name,
+            raggedindex_t    *seq_a)
 /* 
    convert a single dotted, arrayed name to a ragged index
 
@@ -150,7 +155,6 @@ name2ragged(const char *name, raggedindex_t *seq_a)
   *seq_a = *seq;
   return MATCH_COMPLETE;
 }
-
 
 void
 ragged2nameseq(const raggedindex_t *s, const char **seq)
@@ -267,8 +271,103 @@ test_api_struct(void)
   }
 }
 
+/**********************************************************************/
+
+typedef struct suggestion_list {
+  char *suggestion;
+  struct suggestion_list *next;
+} suggestion_list_t;
+
+suggestion_list_t *
+name2suggest(const char *name) 
+{
+  raggedindex_t qqq, *seq=&qqq;
+  const char *p=name;
+  const arc_t **arcs;
+  int k;
+
+  k = 0;
+  seq->d[k] = -1;
+
+  while(*p) {
+    arcs = ragged2arcs(seq);
+    
+    if (!arcs) {
+      if(*p)
+        return NULL; /* more string -- no match found */
+      else {
+        /* entire string consumed but arcs not */
+        /* here we need to make a list of potential matches and return that */
+        assert(0);
+        return NULL;
+      }
+    }
+
+    /* note change below from exact-match version, if the string ends,
+       i.e., if !(*p) holds, the checks for mismatch do not hold, and
+       we fall thru instead . . . */
+    
+    if (arcs && arcs[0]->arr) {
+      // array case
+      int idx = 0;
+      if (*p && *p++ != '[')
+        return NULL; /* not an array index */
+
+      /* need to look for things like partial matches if we run out 
+         of p ... */
+      
+      while ('0' <= *p && *p <= '9')
+        idx = idx * 10 + (*p++ - '0');
+
+      if (*p && *p++ != ']')
+        return NULL; /* syntax error */
+      
+      if (idx >= arcs[0]->arr->size)
+        return NULL; /* out of range */
+      
+      printf("match! [%d]\n", idx);
+      seq->d[k] = idx;
+      seq->d[++k] = -1;
+    } else {
+      // non-array case
+      int i = 0, matched = 0;
+
+      /* we need to make a complicated match here, could be several hits */
+      while(arcs[i]) {
+        size_t len;
+        assert(arcs[i]->sym);
+
+        len = strlen(arcs[i]->sym);
+        
+        printf("matching p = %s  against  arc .%s\n", p, arcs[i]->sym);
+        if (*p=='.' && strncmp(p+1, arcs[i]->sym, len) == 0) {
+          printf("match! .%s\n", arcs[i]->sym);
+          p += len+1;
+          seq->d[k] = i;
+          seq->d[++k] = -1;
+          matched = 1;
+          break;
+        }
+        ++i;
+      }/*elihw*/
+      if (!matched)
+        return NULL; /* component not found -- not sure this is right */
+    }
+  }
+  {
+    /* get here if both arcs and *p are exhausted */
+    /* perfect match -- return copy of input */
+    suggestion_list_t *s = malloc(sizeof(suggestion_list_t));
+    s->suggestion = strdup(name);
+    s->next = NULL;
+    return s;
+  }
+}
+
+/**********************************************************************/
+
 int
-main(int argc, char **argv)
+main(void/*int argc, char **argv*/)
 {
   raggedindex_t s;
   const arc_t **arcs;

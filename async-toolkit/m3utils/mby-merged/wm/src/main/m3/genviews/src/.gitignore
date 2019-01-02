@@ -3,5 +3,5 @@ build_scala
 build_c
 build_c_api
 build_scm
-build_sv-hlp
+build_sv-fulcrum
 work

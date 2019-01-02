@@ -284,7 +284,7 @@
             (dis ind "{ /* array */" dnl
                  ind "  int idx = seq->d["(c-format sp)"];" dnl
                  ind "  if (idx == -1) return arr + "(c-format b)";" dnl
-                 ind "  assert(idx >= 0 && idx < "(c-format size)");" dnl
+                 ind "  assert(idx >= 0 && idx < (int)"(c-format size)");" dnl
                  ind "  arr += idx * "(c-format stride)";" dnl
                  port )
             (helper b child (+ 1 sp))
@@ -607,7 +607,7 @@
            dnl c-stream)
       
       (compile-offset-c the-host-offset-tree nm xfmt c-stream)
-      (dis "long "nm"(const raggedindex_t *);" dnl h-stream)
+      (dis "chipaddr_t "nm"(const raggedindex_t *);" dnl h-stream)
       (close)
       )
     
@@ -696,7 +696,7 @@
     (let ((nm "ragged2inorderid"))
       (open nm)
       (compile-offset-c the-fields-offset-tree nm c-formatter c-stream)
-      (dis "long "nm"(const raggedindex_t *);" dnl h-stream)
+      (dis "chipaddr_t "nm"(const raggedindex_t *);" dnl h-stream)
       (close)
       )
 

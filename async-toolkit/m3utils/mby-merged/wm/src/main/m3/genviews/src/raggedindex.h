@@ -13,7 +13,7 @@ void init_raggedindex(raggedindex_t *p); /* sets p->d[0] to -1 */
 
 /* the memory address */
 
-typedef long chipaddr_t;
+typedef unsigned long chipaddr_t;
 
 /* make an address from a literal */
 
