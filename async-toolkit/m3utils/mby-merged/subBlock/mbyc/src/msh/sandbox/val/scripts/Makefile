@@ -19,8 +19,9 @@ SL2_LIB_IP16 ?= /p/hdk/rtl/ip_models/shdk74/sl2lib_ip16/sl2lib_ip16-srvr10nm-lat
 SVA_LIB      ?= /p/hdk/rtl/cad/x86-64_linux26/dt/sva_lib/8.1/SVA_LIB
 VCS_HOME     ?= /p/hdk/rtl/cad/x86-64_linux26/synopsys/vcsmx/L-2016.06-SP2-7
 VCS_TARGET_ARCH ?= suse64
+SNPSLMD_LICENSE_FILE ?= $(shell getLf synopsys):$(shell getLf springsoft)
 ASSERT_LIB   ?= /p/hdk/rtl/cad/x86-64_linux30/dt/sva_lib/15.4p5_shOpt64
-export LOGICROOT TBROOT SL2_LIB SL2_LIB_IP16 SVA_LIB VCS_HOME VCS_TARGET_ARCH ASSERT_LIB
+export LOGICROOT TBROOT SL2_LIB SL2_LIB_IP16 SVA_LIB VCS_HOME VCS_TARGET_ARCH ASSERT_LIB SNPSLMD_LICENSE_FILE
 
 ################################################################################
 # Other project-related options

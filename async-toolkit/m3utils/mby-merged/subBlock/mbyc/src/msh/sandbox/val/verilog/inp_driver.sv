@@ -38,6 +38,7 @@
 //`include "stimulus.sv"
 
 import mby_msh_pkg::*;
+import msh_sim_pkg::*;
 import mby_egr_pkg::*;
 class inp_driver;
 //import mby_msh_pkg::*;
@@ -383,23 +384,14 @@ end : mim_rows
             drvr_wr_data_to_dut    = mby_msh_pkg::msh_data_t'('h0000);
 
 
-//          @(posedge dut_if.mclk);
+            repeat(25) @(posedge dut_if.mclk);
 
-//          drvr_wr_data_to_dut    = mby_msh_pkg::msh_data_t'('ha5a5);
-
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-
-$display(" Here drive valid ");
             drvr_rd_req_to_dut_vld      = 1'b1;
             // drvr_rd_req_to_dut.id       = mby_msh_pkg::msh_rd_id_t'(1);
             drvr_rd_req_to_dut          = mby_msh_pkg::mshnd_addr_t'('h33);
 
             @(posedge dut_if.mclk);
 
-$display(" There undrive valid ");
             drvr_rd_req_to_dut_vld      = 1'b0;
             // drvr_rd_req_to_dut.id       = mby_msh_pkg::msh_rd_id_t'(0);
             // drvr_rd_req_to_dut.node_col = '0;

@@ -1,6 +1,8 @@
 #!/bin/sh -ex
 
+. sel_model.sh
 
+ARGS=$*
 WD=${MODEL_ROOT}/tools/srdl/mby
 # allow security.pm to be found
 export PERL5LIB=$MODEL_ROOT/tools/srdl
@@ -16,6 +18,8 @@ CM3_EXEC=`ToolConfig.pl get_tool_exec cm3`
 PATHSPEC="--path ${WD}:${NEBULON}/include"
 REGSET=mby
 GENDIR=build_scm/${REGSET}/src
+METASCMDIR=${METAROOT}/meta/src
+ARITH="${METASCMDIR}/algebra.scm ${METASCMDIR}/calculus.scm"
 
 rm -rf ${GENDIR} || true
 mkdir -p ${GENDIR}
@@ -29,7 +33,10 @@ for file in ${files}; do
 	${PERLFE} < work/intermediate01.rdl > work/intermediate02.rdl
 	cat work/intermediate02.rdl | (cd ${WD} ; perl) > work/intermediate03.rdl
 	mkdir -p ${GENDIR}
-	../AMD64_LINUX/genviews -L scheme -top ${top_map} -o ${GENDIR} -f ../fieldvisitor/src/mapfields.out -i work/intermediate03.rdl
+	../AMD64_LINUX/genviews -L scheme -top ${ana_map} -o ${GENDIR} -f ../fieldvisitor/src/${mapf}.mapfields -i work/intermediate03.rdl  ${ARGS}
 done
 
-
+cd test_api
+if [ "X${ARGS}" != "X" ]; then
+	./BUILD
+fi

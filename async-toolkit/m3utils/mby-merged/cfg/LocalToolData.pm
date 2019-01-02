@@ -72,7 +72,7 @@ $ToolConfig_tools{runtools}{OTHER}{repo_trex_output}                         = "
 #####################################################
 #    Configure Environment variables for Nebulon    #
 #####################################################
-$ToolConfig_tools{nebulon}{VERSION}                                          = 'd18ww24.4';
+$ToolConfig_tools{nebulon}{VERSION}                                          = 'd18ww49.4';
 
 #####################################################
 #    Configure Environment variables for VCS/VERDI  #
@@ -297,7 +297,6 @@ $ToolConfig_tools{"mgm"} = {
         #REPORT_DIR => "$ENV{MODEL_ROOT}/target/mgm/rtl",
         PREFIX => "mby",
 	CMO  => [
-	    "/tmp/dummy",
 	    "/nfs/sc/disks/sc_mby_00005/kits/tr3/",
 	    ],
     },

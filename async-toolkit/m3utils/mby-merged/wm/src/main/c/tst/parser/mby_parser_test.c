@@ -174,7 +174,7 @@ int main()
         exit(-1);
     }
 
-    fm_byte *rx_packet = malloc(MBY_MAX_PACKET_SIZE * sizeof(fm_byte));
+    fm_byte *rx_packet = malloc(MBY_MAX_PACKET_LEN * sizeof(fm_byte));
     if (rx_packet == NULL) {
         printf("Could not allocate heap memory for rx packet buffer -- exiting!\n");
         exit(-1);
