@@ -391,11 +391,6 @@ static void applyTriggers
 )
 {
     fm_uint16                dglort;
-    fm_uint16                pkt_meta_16;
-    fm_uint16                pkt_meta_16_src;
-    mbyTriggerActionMetadata actionMetadata;
-    fm_byte                  PKT_META_CPY[32];
-    fm_uint32              * actionMetadataMask;
     fm_bool                  is_pre_resolve_dmask = FALSE;
     fm_bool                  action_drop_trig = FALSE;
 

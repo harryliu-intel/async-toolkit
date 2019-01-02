@@ -67,7 +67,6 @@ module top
                 clk = ~clk;
     end : clk_gen
 
-//FIXME
     // instantiate DUT interface
     gpm_dut_if dut_if (
         // pass clock into this interface to make it part of the interface
@@ -75,23 +74,30 @@ module top
     );
 
     // start firing reset immediately to protect reset guarded assertions
-    initial dut_if.reset_n = 1'b0;
+    initial dut_if.sreset = 1'b0;
+    initial dut_if.hreset = 1'b0;
 
     // instantiate DUT (Design Under Test)
     mby_gpm_top dut (
-        .cclk       (dut_if.clk           ),
-        .reset_n    (dut_if.reset_n       ),
+        .cclk                    (dut_if.clk                  ),
+        .sreset                  (dut_if.sreset               ),
+        .hreset                  (dut_if.hreset               ),
 
-        // pod pointer ring interface
-        .i_pod_ring_left   (dut_if.i_pod_ring_left  ),
-        .i_pod_ring_right  (dut_if.i_pod_ring_right ),
-        .o_pod_ring_left   (dut_if.o_pod_ring_left  ),
-        .o_pod_ring_right  (dut_if.o_pod_ring_right ),
+        // Pod pointer ring interface
+        .i_pod_ring_left         (dut_if.pod_ring_left        ),
+        .i_pod_ring_right        (dut_if.pod_ring_right       ),
+        .o_pod_ring_left         (dut_if.pod_ring_left        ),
+        .o_pod_ring_right        (dut_if.pod_ring_right       ),
 
         // Signal from GPM to egress to stall egress from injecting a new dirty
         // pod
-        .o_pod_ring_stall_left   (dut_if.o_pod_ring_stall_left  ),
-        .o_pod_ring_stall_right  (dut_if.o_pod_ring_stall_right )
+        .o_pod_ring_stall_left   (dut_if.pod_ring_stall_left  ),
+        .o_pod_ring_stall_right  (dut_if.pod_ring_stall_right ),
+
+        // Dirty pod interface from MCE
+        .i_mce_seg_ptr           (dut_if.mce_seg_ptr          ),
+        .i_mce_seg_ptr_valid     (dut_if.mce_seg_ptr_valid    ),
+        .o_mce_seg_ptr_stall     (dut_if.mce_seg_ptr_stall    )
     );
 
     // instantiate testcase
@@ -101,5 +107,4 @@ module top
     );
 
 endmodule : top
-
 `endif // TOP_SV

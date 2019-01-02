@@ -52,6 +52,6 @@ package mby_rx_ppe_reg_pkg;
    `include "ral_stats.sv"
 
 
-   `include "mby_rx_ppe_reg_map.sv"
+   `include "mby_rx_ppe_reg_blk.sv"
 
 endpackage: mby_rx_ppe_reg_pkg

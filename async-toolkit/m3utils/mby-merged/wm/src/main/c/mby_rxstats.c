@@ -5,6 +5,7 @@
 #include "mby_congmgmt.h"
 #include "mby_rxstats.h"
 #include "mby_maskgen.h" // action codes
+#include <model_c_write.h> // write_field()
 
 static fm_uint16 getBankIndex(const fm_uint32 rx_port)
 {
@@ -28,65 +29,72 @@ static fm_uint64 incrRxCounter(const fm_uint64 cnt_in, const fm_uint64 inc)
 
 static void updateRxStatsBank
 (
-    MBY_STATS_IN_REGS,
-    fm_uint32              const bank,
-    fm_uint16              const index,
-    fm_uint64              const len
+    mby_ppe_rx_stats_map       const * const stats_map,
+    mby_ppe_rx_stats_map__addr const * const stats_map_w,
+    fm_uint32                          const bank,
+    fm_uint16                          const index,
+    fm_uint64                          const len
 )
 {
     // Update (read/modify/write) frame count:
-    rx_stats_bank_frame_r * const bank_frame = &(stats_map->RX_STATS_BANK_FRAME[bank][index]);
+    rx_stats_bank_frame_r       const * const bank_frame   = &(stats_map->RX_STATS_BANK_FRAME[bank][index]);
+    rx_stats_bank_frame_r__addr const * const bank_frame_w = &(stats_map_w->RX_STATS_BANK_FRAME[bank][index]);
     fm_uint64 frame_cnt = bank_frame->FRAME_COUNTER;
 
     fm_uint64 one = FM_LITERAL_U64(1);
     frame_cnt = incrRxCounter(frame_cnt, one);
 
-    bank_frame->FRAME_COUNTER = frame_cnt;
+    write_field(bank_frame_w->FRAME_COUNTER, frame_cnt);
 
     // Update (read/modify/write) byte count:
-    rx_stats_bank_byte_r * const bank_byte = &(stats_map->RX_STATS_BANK_BYTE[bank][index]);
+    rx_stats_bank_byte_r       const * const bank_byte   = &(stats_map->RX_STATS_BANK_BYTE[bank][index]);
+    rx_stats_bank_byte_r__addr const * const bank_byte_w = &(stats_map_w->RX_STATS_BANK_BYTE[bank][index]);
     fm_uint64 byte_cnt = bank_byte->BYTE_COUNTER;
 
     byte_cnt = incrRxCounter(byte_cnt, len);
 
-    bank_byte->BYTE_COUNTER = byte_cnt;
+    write_field(bank_byte_w->BYTE_COUNTER, byte_cnt);
 }
 
 static void updateRxStatsVlan
 (
-    MBY_STATS_IN_REGS,
-    fm_uint16              const index,
-    fm_uint64              const len
+    mby_ppe_rx_stats_map       const * const stats_map,
+    mby_ppe_rx_stats_map__addr const * const stats_map_w,
+    fm_uint16                          const index,
+    fm_uint64                          const len
 )
 {
     // Update (read/modify/write) frame count:
-    rx_stats_vlan_frame_r * const vlan_frame = &(stats_map->RX_STATS_VLAN_FRAME[index]);
+    rx_stats_vlan_frame_r       const * const vlan_frame   = &(stats_map->RX_STATS_VLAN_FRAME[index]);
+    rx_stats_vlan_frame_r__addr const * const vlan_frame_w = &(stats_map_w->RX_STATS_VLAN_FRAME[index]);
     fm_uint64 frame_cnt = vlan_frame->FRAME_COUNTER;
 
     fm_uint64 one = FM_LITERAL_U64(1);
     frame_cnt = incrRxCounter(frame_cnt, one);
 
-    vlan_frame->FRAME_COUNTER = frame_cnt;
+    write_field(vlan_frame_w->FRAME_COUNTER, frame_cnt);
 
     // Update (read/modify/write) byte count:
-    rx_stats_vlan_byte_r * const vlan_byte = &(stats_map->RX_STATS_VLAN_BYTE[index]);
+    rx_stats_vlan_byte_r       const * const vlan_byte   = &(stats_map->RX_STATS_VLAN_BYTE[index]);
+    rx_stats_vlan_byte_r__addr const * const vlan_byte_w = &(stats_map_w->RX_STATS_VLAN_BYTE[index]);
     fm_uint64 byte_cnt = vlan_byte->BYTE_COUNTER;
 
     byte_cnt = incrRxCounter(byte_cnt, len);
 
-    vlan_byte->BYTE_COUNTER = byte_cnt;
+    write_field(vlan_byte_w->BYTE_COUNTER, byte_cnt);
 }
 
 static void handleRxBank0
 (
-    MBY_STATS_IN_REGS,
-    fm_uint32              const rx_length,
-    fm_uint32              const rx_port,
-    fm_bool                const is_ipv4,
-    fm_bool                const is_ipv6,
-    fm_bool                const is_bcast,
-    fm_bool                const is_mcast,
-    fm_bool                const is_ucast
+    mby_ppe_rx_stats_map       const * const stats_map,
+    mby_ppe_rx_stats_map__addr const * const stats_map_w,
+    fm_uint32                          const rx_length,
+    fm_uint32                          const rx_port,
+    fm_bool                            const is_ipv4,
+    fm_bool                            const is_ipv6,
+    fm_bool                            const is_bcast,
+    fm_bool                            const is_mcast,
+    fm_bool                            const is_ucast
 )
 {
     fm_uint32 bank  = 0;
@@ -115,15 +123,16 @@ static void handleRxBank0
     else if (is_ucast)
         index += STAT_RxUcstPktsNonIP;
 
-    updateRxStatsBank(MBY_STATS_IN_REGS_P, bank, index, len);
+    updateRxStatsBank(stats_map, stats_map_w, bank, index, len);
 }
 
 static void handleRxBank1
 (
-    MBY_STATS_IN_REGS,
-    fm_uint32              const rx_length,
-    fm_uint32              const rx_port,
-    fm_byte                const traffic_class
+    mby_ppe_rx_stats_map       const * const stats_map,
+    mby_ppe_rx_stats_map__addr const * const stats_map_w,
+    fm_uint32                          const rx_length,
+    fm_uint32                          const rx_port,
+    fm_byte                            const traffic_class
 )
 {
     fm_uint32 bank  = 1;
@@ -132,15 +141,16 @@ static void handleRxBank1
 
     index += (traffic_class & 0x7);
 
-    updateRxStatsBank(MBY_STATS_IN_REGS_P, bank, index, len);
+    updateRxStatsBank(stats_map, stats_map_w, bank, index, len);
 }
 
 static void handleRxBank2
 (
-    MBY_STATS_IN_REGS,
-    fm_uint32              const rx_length,
-    fm_uint32              const rx_port,
-    fm_uint32              const action
+    mby_ppe_rx_stats_map       const * const stats_map,
+    mby_ppe_rx_stats_map__addr const * const stats_map_w,
+    fm_uint32                          const rx_length,
+    fm_uint32                          const rx_port,
+    fm_uint32                          const action
 )
 {
     fm_uint32 bank  = 2;
@@ -168,15 +178,16 @@ static void handleRxBank2
         default:                                                                          break;
     }
 
-    updateRxStatsBank(MBY_STATS_IN_REGS_P, bank, index, len);
+    updateRxStatsBank(stats_map, stats_map_w, bank, index, len);
 }
 
 static void handleRxBank3
 (
-    MBY_STATS_IN_REGS,
-    fm_uint32              const rx_length,
-    fm_uint32              const rx_port,
-    fm_uint32              const action
+    mby_ppe_rx_stats_map       const * const stats_map,
+    mby_ppe_rx_stats_map__addr const * const stats_map_w,
+    fm_uint32                          const rx_length,
+    fm_uint32                          const rx_port,
+    fm_uint32                          const action
 )
 {
     fm_uint32 bank  = 3;
@@ -204,18 +215,19 @@ static void handleRxBank3
         default:                                                                    break;
     }
 
-    updateRxStatsBank(MBY_STATS_IN_REGS_P, bank, index, len);
+    updateRxStatsBank(stats_map, stats_map_w, bank, index, len);
 }
 
 static void handleRxBankVlan
 (
-    MBY_STATS_IN_REGS,
-    fm_uint32              const rx_length,
-    fm_uint32              const action,
-    fm_uint16              const l2_ivlan1_cnt,
-    fm_bool                const is_bcast,
-    fm_bool                const is_mcast,
-    fm_bool                const is_ucast
+    mby_ppe_rx_stats_map       const * const stats_map,
+    mby_ppe_rx_stats_map__addr const * const stats_map_w,
+    fm_uint32                          const rx_length,
+    fm_uint32                          const action,
+    fm_uint16                          const l2_ivlan1_cnt,
+    fm_bool                            const is_bcast,
+    fm_bool                            const is_mcast,
+    fm_bool                            const is_ucast
 )
 {
     if (l2_ivlan1_cnt != 0)
@@ -231,15 +243,16 @@ static void handleRxBankVlan
         fm_uint16 index   = ((l2_ivlan1_cnt << 2) | l2_type ) & 0x3FFF;
         fm_uint64 len     = rx_length;
 
-        updateRxStatsVlan(MBY_STATS_IN_REGS_P, index, len);
+        updateRxStatsVlan(stats_map, stats_map_w, index, len);
     }
 }
 
 void RxStats
 (
-    MBY_STATS_IN_REGS,
-    mbyCongMgmtToRxStats const * const in,
-    mbyRxStatsToRxOut          * const out
+    mby_ppe_rx_stats_map       const * const stats_map,
+    mby_ppe_rx_stats_map__addr const * const stats_map_w,
+    mbyCongMgmtToRxStats       const * const in,
+    mbyRxStatsToRxOut                * const out
 )
 {
     // Read inputs:
@@ -257,20 +270,20 @@ void RxStats
     fm_bool is_ucast =   isUnicastMacAddress(l2_dmac);
 
     // Handle RX frame classification:
-    handleRxBank0(MBY_STATS_IN_REGS_P, rx_length, rx_port, is_ipv4, is_ipv6, is_bcast, is_mcast, is_ucast);
+    handleRxBank0(stats_map, stats_map_w, rx_length, rx_port, is_ipv4, is_ipv6, is_bcast, is_mcast, is_ucast);
 
     // Handle per-port RX TC counters:
-    handleRxBank1(MBY_STATS_IN_REGS_P, rx_length, rx_port, traffic_class);
+    handleRxBank1(stats_map, stats_map_w, rx_length, rx_port, traffic_class);
 
     // Perform RX forwarding action:
     fm_bool drop_act = ((action & 0x10) != 0);
     if (drop_act)
-        handleRxBank3(MBY_STATS_IN_REGS_P, rx_length, rx_port, action);  // drop actions
+        handleRxBank3(stats_map, stats_map_w, rx_length, rx_port, action);  // drop actions
     else
-        handleRxBank2(MBY_STATS_IN_REGS_P, rx_length, rx_port, action);
+        handleRxBank2(stats_map, stats_map_w, rx_length, rx_port, action);
 
     // Handle RX VLAN counters:
-    handleRxBankVlan(MBY_STATS_IN_REGS_P, rx_length, action, l2_ivlan1_cnt, is_bcast, is_mcast, is_ucast);
+    handleRxBankVlan(stats_map, stats_map_w, rx_length, action, l2_ivlan1_cnt, is_bcast, is_mcast, is_ucast);
 
     // Write outputs:
     out->RX_LENGTH         = rx_length;

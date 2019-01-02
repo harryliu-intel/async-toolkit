@@ -49,10 +49,17 @@ class mby_mesh_env extends shdv_base_env;
    // Variable:  tb_vif
    // Interface handle to mesh Testbench.
    virtual   mby_mesh_tb_if                                tb_vif;
-   mby_mgp_bfm_pkg::mby_mgp_bfm                            eb_mgp_bfm;
-   mby_mgp_bfm_pkg::mby_mgp_bfm                            wb_mgp_bfm;
-   mby_mgp_bfm_pkg::mby_mgp_bfm                            nb_mgp_bfm;
-   mby_mgp_bfm_pkg::mby_mgp_bfm                            sb_mgp_bfm;
+   virtual   mby_mgp_mim_if                                req_wb_if;
+   virtual   mby_mgp_mim_if                                req_eb_if;
+
+   mby_mgp_bfm_pkg::mby_mgp_bfm                            wb_mgp_bfm[mby_mgp_bfm_pkg::NUM_MSH_ROWS];
+   mby_mgp_bfm_pkg::mby_mgp_bfm                            eb_mgp_bfm[mby_mgp_bfm_pkg::NUM_MSH_ROWS];
+   mby_mgp_bfm_pkg::mby_mgp_bfm                            sb_mgp_bfm[mby_mgp_bfm_pkg::NUM_MSH_COLS];
+   mby_mgp_bfm_pkg::mby_mgp_bfm                            nb_mgp_bfm[mby_mgp_bfm_pkg::NUM_MSH_COLS];
+   
+   // Variable:  tb_ral
+   // Handle to mesh RAL.
+   mby_mesh_reg_pkg::mby_mesh_reg_blk                      tb_ral;
 
    `uvm_component_utils_begin(mby_mesh_env)
    `uvm_component_utils_end
@@ -107,7 +114,16 @@ class mby_mesh_env extends shdv_base_env;
          `uvm_fatal(get_name(),"Config_DB.get() for ENV's TB_IF was not successful!")
       end
 
+      
+      if(!uvm_config_db#(virtual mby_mgp_mim_if)::get(this, "", "mby_mgp_mim_if", req_eb_if)) begin
+         `uvm_fatal(get_name(),"Config_DB.get() for Mesh Interface was not successful!")
+      end
+      if(!uvm_config_db#(virtual mby_mgp_mim_if)::get(this, "", "mby_mgp_mim_if", req_wb_if)) begin
+         `uvm_fatal(get_name(),"Config_DB.get() for Mesh Interface was not successful!")
+      end
+
       build_mgp_bfm();
+      build_ral();
    endfunction: build_phase
 
    //---------------------------------------------------------------------------
@@ -115,21 +131,54 @@ class mby_mesh_env extends shdv_base_env;
    //  Build the 4 mgp bfms and assign interfaces and cfg objects. 
    //---------------------------------------------------------------------------
    function void build_mgp_bfm();
-      eb_mgp_bfm = mby_mgp_bfm_pkg::mby_mgp_bfm::type_id::create("eb_mgp_bfm", this);
-      wb_mgp_bfm = mby_mgp_bfm_pkg::mby_mgp_bfm::type_id::create("wb_mgp_bfm", this);
-      nb_mgp_bfm = mby_mgp_bfm_pkg::mby_mgp_bfm::type_id::create("nb_mgp_bfm", this);
-      sb_mgp_bfm = mby_mgp_bfm_pkg::mby_mgp_bfm::type_id::create("sb_mgp_bfm", this);
-      
-      eb_mgp_bfm.mst_agent_cfg = tb_cfg.env_cfg.mst_agent_cfg;
-      eb_mgp_bfm.slv_agent_cfg = tb_cfg.env_cfg.slv_agent_cfg;
-      wb_mgp_bfm.mst_agent_cfg = tb_cfg.env_cfg.mst_agent_cfg;
-      wb_mgp_bfm.slv_agent_cfg = tb_cfg.env_cfg.slv_agent_cfg;
-      nb_mgp_bfm.mst_agent_cfg = tb_cfg.env_cfg.mst_agent_cfg;
-      nb_mgp_bfm.slv_agent_cfg = tb_cfg.env_cfg.slv_agent_cfg;
-      sb_mgp_bfm.mst_agent_cfg = tb_cfg.env_cfg.mst_agent_cfg;
-      sb_mgp_bfm.slv_agent_cfg = tb_cfg.env_cfg.slv_agent_cfg;
+
+
+      for (int idx = 0; idx < mby_mgp_bfm_pkg::NUM_MSH_ROWS; idx++) begin
+	 
+         eb_mgp_bfm[idx] = mby_mgp_bfm_pkg::mby_mgp_bfm::type_id::create($sformatf("eb_mgp_bfm%0d", idx), this);
+	 wb_mgp_bfm[idx] = mby_mgp_bfm_pkg::mby_mgp_bfm::type_id::create($sformatf("wb_mgp_bfm%0d", idx), this);
+
+	 eb_mgp_bfm[idx].assign_cfg(tb_cfg.env_cfg.bfm_cfg);
+	 eb_mgp_bfm[idx].assign_vi(req_eb_if);
+	 wb_mgp_bfm[idx].assign_cfg(tb_cfg.env_cfg.bfm_cfg);
+	 wb_mgp_bfm[idx].assign_vi(req_wb_if);
+
+      end
+/*
+      for (int idx = 0; idx < mby_mgp_bfm_pkg::NUM_MSH_COLS; idx++) begin
+         sb_mgp_bfm[idx] = mby_mgp_bfm_pkg::mby_mgp_bfm::type_id::create($sformatf("sb_mgp_bfm%0d", idx), this);
+	 nb_mgp_bfm[idx] = mby_mgp_bfm_pkg::mby_mgp_bfm::type_id::create($sformatf("nb_mgp_bfm%0d", idx), this);
+
+	 sb_mgp_bfm[idx].assign_cfg(tb_cfg.env_cfg.bfm_cfg);
+	 sb_mgp_bfm[idx].assign_vi(mby_gmm_mig_rd_op_sb_if, mby_gmm_mig_rsp_op_sb_if, mby_gmm_mig_wr_op_sb_if, mby_gmm_mig_rsp_data_sb_if, mby_gmm_mig_wr_data_sb_if);
+
+	 nb_mgp_bfm[idx].assign_cfg(tb_cfg.env_cfg.bfm_cfg);
+	 nb_mgp_bfm[idx].assign_vi(mby_gmm_mig_rd_op_nb_if, mby_gmm_mig_rsp_op_nb_if, mby_gmm_mig_wr_op_nb_if, mby_gmm_mig_rsp_data_nb_if, mby_gmm_mig_wr_data_nb_if);
+	 
+      end */
    endfunction: build_mgp_bfm
    
+   //---------------------------------------------------------------------------
+   //  Function: build_ral
+   //  Builds Mesh register model.
+   //
+   //---------------------------------------------------------------------------
+   virtual function void build_ral();
+
+      // Check if ral is already set by FC
+      if (tb_ral == null) begin
+         tb_ral = mby_mesh_reg_pkg::mby_mesh_reg_blk::type_id::create("tb_ral");
+         tb_ral.build();
+         //TODO: Update the base addr.
+         tb_ral.default_map.set_base_addr(`UVM_REG_ADDR_WIDTH'h4000);
+         tb_ral.lock_model();
+         tb_ral.set_hdl_path_root("mby_mesh_tb_top.msh_node_top");
+
+       // Build the Adapter's based on agt's active        
+      end
+      
+   endfunction: build_ral
+      
    //---------------------------------------------------------------------------
    //  Function: connect_phase
    //  Connects different BFM interfaces and Scoreboard
@@ -176,6 +225,22 @@ class mby_mesh_env extends shdv_base_env;
    function mby_mesh_tb_top_cfg get_tb_cfg();
       return tb_cfg;
    endfunction : get_tb_cfg
+   
+   //---------------------------------------------------------------------------
+   // Function: get_tb_ral()
+   // Returns object handle to mesh ral (mby_mesh_reg_blk)
+   //---------------------------------------------------------------------------
+   function mby_mesh_reg_pkg::mby_mesh_reg_blk get_tb_ral();
+      return tb_ral;
+   endfunction : get_tb_ral
+   
+   //---------------------------------------------------------------------------
+   // Function: set_tb_ral()
+   // Sets handle to mesh ral (mby_mesh_reg_blk). Used to pass handle to RAL from fullchip env.
+   //---------------------------------------------------------------------------
+   function set_tb_ral(mby_mesh_reg_pkg::mby_mesh_reg_blk ral);
+      tb_ral = ral;
+   endfunction : set_tb_ral
 
 endclass
 

@@ -1,6 +1,5 @@
 GENERIC MODULE GenViews(Tgt, TgtNaming, TgtGenerators, TgtConstants);
 
-IMPORT GenViews AS Super;
 IMPORT Debug; 
 FROM Fmt IMPORT F;
 IMPORT RTName;
@@ -22,31 +21,88 @@ IMPORT Pathname;
 IMPORT FS;
 IMPORT DecoratedComponentDef;
 IMPORT RegFieldArraySort;
+IMPORT ParseError;
+IMPORT RegFieldAccess, IntelAccessType, IntelAccessTypeLookup;
+FROM RegProperty IMPORT Unquote;
 
 CONST Brand = "GenViews(" & Tgt.Brand & ")";
       
 REVEAL
-  T = Super.T BRANDED Brand OBJECT
+  T = Tgt.Gen BRANDED Brand OBJECT
   OVERRIDES
     decorate := Decorate;
     gen      := DoIt;
   END;
 
-<*FATAL Thread.Alerted*>
+  <*FATAL Thread.Alerted*>
+
+PROCEDURE ApplyFieldProperties(VAR f : RegField.T) : BOOLEAN
+  RAISES { ParseError.E } =
+  (* returns TRUE if field has access rules associated *)
+  VAR
+    gotRdlProps := FALSE;
+    gotIntelProps := FALSE;
+    str : TEXT;
+  BEGIN
+    f.reserved := FALSE;
+    f.access := RegFieldAccess.Default;
+    
+    (* there are two ways of stating access rules:
+       one way is using RDL standard hw, sw
+       another way is using Intel AccessType annotation *)
+    FOR i := FIRST(RegFieldAccess.Master) TO LAST(RegFieldAccess.Master) DO
+      (* look for stated property *)
+      WITH p   = RegFieldAccess.MasterProperty[i] DO
+        IF f.getRdlPredefTextProperty(p,str) THEN
+          gotRdlProps := TRUE;
+          f.access[i] := RegFieldAccess.Parse(str)
+        END
+      END
+    END;
+
+    IF f.getRdlTextProperty(IntelAccessType.UDPName, str) THEN
+      WITH at = IntelAccessTypeLookup.Parse(Unquote(str)) DO
+        gotIntelProps := TRUE;
+        IF gotRdlProps THEN
+          IF at.rdlAccess # f.access THEN
+            RAISE ParseError.E("RDL / IntelAccessType mismatch")
+          END;
+          f.access := at.rdlAccess
+        END
+      END
+    END;
+
+    RETURN gotRdlProps OR gotIntelProps
+  END ApplyFieldProperties;
       
-PROCEDURE AllocFields(c : RdlComponentDef.T) : RegFieldSeq.T =
+PROCEDURE AllocFields(c  : RdlComponentDef.T;
+                      hn : TEXT) : RegFieldSeq.T
+  RAISES { ParseError.E } =
   VAR
     seq := NEW(RegFieldSeq.T).init();
     p : RdlComponentInstElemList.T;
+    last : TEXT := "(NIL)";
   BEGIN
+    TRY
+    <*ASSERT c.type = RdlComponentDefType.T.field*>
     <*ASSERT c.id # NIL*> (* now ANONYMOUS-smth...? *)
     <*ASSERT c.anonInstElems # NIL*>
     p := c.anonInstElems.list;
     WHILE p # NIL DO
-      WITH i = p.head,
-           f = NEW(RegField.T, name := TgtNaming.FieldName) DO
+      VAR i := p.head;
+          f := NEW(RegField.T,
+                   name  := TgtNaming.FieldName,
+                   props := c.list.propTab
+          );
+      BEGIN
         f.nm := i.id;
+        last := f.nm;
         f.defVal := i.eq;
+
+        IF NOT ApplyFieldProperties(f) THEN
+          Debug.Warning("field " & hn & "->" & f.nm & " doesnt have access rules associated with it")
+        END;
+        
         IF i.array = NIL THEN
           f.width := 1
         ELSE
@@ -73,9 +129,14 @@ PROCEDURE AllocFields(c : RdlComponentDef.T) : RegFieldSeq.T =
       p := p.tail
     END;
     RETURN seq
+  EXCEPT
+    ParseError.E(txt) =>
+    RAISE ParseError.E("GenViews.AllocFields : processing field " & last & " : " & txt)
+  END
   END AllocFields;
   
-PROCEDURE AllocAddrmap(c         : RdlComponentDef.T) : RegAddrmap.T =
+PROCEDURE AllocAddrmap(c         : RdlComponentDef.T; hn : TEXT) : RegAddrmap.T
+  RAISES { ParseError.E } =
   VAR
     props := c.list.propTab;
     defs  := c.list.defTab;
@@ -90,6 +151,7 @@ PROCEDURE AllocAddrmap(c         : RdlComponentDef.T) : RegAddrmap.T =
     <*ASSERT c.id # NIL*>
     am.nm := c.id;
     <*ASSERT c.anonInstElems = NIL*> (* no immediate instances *)
+    TRY
     WHILE p # NIL DO
       WITH cd = p.head DO
         TYPECASE cd OF
@@ -106,7 +168,8 @@ PROCEDURE AllocAddrmap(c         : RdlComponentDef.T) : RegAddrmap.T =
             END;
             IF NOT ISTYPE(def, DecoratedComponentDef.T) THEN
               def := Decorate(NIL, def, defs.getPath(ci.componentInst.id,
-                                                     TgtConstants.PathSep));
+                                                     TgtConstants.PathSep),
+                              hn & "->" & c.id);
               defs.update(ci.componentInst.id, def)
             END;
 
@@ -137,23 +200,28 @@ PROCEDURE AllocAddrmap(c         : RdlComponentDef.T) : RegAddrmap.T =
       p := p.tail
     END;
     RETURN am
+    EXCEPT
+      ParseError.E(txt) => RAISE ParseError.E("processing addrmap " & am.nm & " : " & txt)
+    END
   END AllocAddrmap;
 
 PROCEDURE Decorate(<*UNUSED*>t : T;
                    def         : RdlComponentDef.T;
-                   path        : TEXT) : DecoratedComponentDef.T =
+                   path        : TEXT;
+                   hn          : TEXT) : DecoratedComponentDef.T
+  RAISES { ParseError.E } =
   VAR
     comp : RegComponent.T;
   BEGIN
     CASE def.type OF
       RdlComponentDefType.T.addrmap =>
-      comp := AllocAddrmap(def)
+      comp := AllocAddrmap(def, hn)
     |
       RdlComponentDefType.T.regfile =>
-      comp := AllocRegfile(def)
+      comp := AllocRegfile(def, hn)
     |
       RdlComponentDefType.T.reg =>
-      comp := AllocReg(def)
+      comp := AllocReg(def, hn)
     |
       RdlComponentDefType.T.field =>
       comp := NIL
@@ -167,7 +235,9 @@ PROCEDURE Decorate(<*UNUSED*>t : T;
     RETURN NEW(DecoratedComponentDef.T).init(def, comp)
   END Decorate;
 
-PROCEDURE AllocRegfile(c         : RdlComponentDef.T) : RegRegfile.T =
+PROCEDURE AllocRegfile(c         : RdlComponentDef.T;
+                       hn        : TEXT ) : RegRegfile.T
+  RAISES { ParseError.E } =
   VAR
     props := c.list.propTab;
     defs  := c.list.defTab;
@@ -180,6 +250,7 @@ PROCEDURE AllocRegfile(c         : RdlComponentDef.T) : RegRegfile.T =
     p : RdlComponentDefElemList.T := c.list.lst;
   BEGIN
     <*ASSERT c.anonInstElems = NIL*> (* no immediate instances *)
+    TRY
     WHILE p # NIL DO
       WITH cd = p.head DO
         TYPECASE cd OF
@@ -198,7 +269,8 @@ PROCEDURE AllocRegfile(c         : RdlComponentDef.T) : RegRegfile.T =
             END;
             IF NOT ISTYPE(def, DecoratedComponentDef.T) THEN
               def := Decorate(NIL, def, defs.getPath(ci.componentInst.id,
-                                                TgtConstants.PathSep));
+                                                     TgtConstants.PathSep),
+                              hn & "->" & c.id);
               defs.update(ci.componentInst.id, def)
             END;
             z := NARROW(def,DecoratedComponentDef.T).comp;
@@ -224,6 +296,9 @@ PROCEDURE AllocRegfile(c         : RdlComponentDef.T) : RegRegfile.T =
       p := p.tail
     END;
     RETURN regf
+    EXCEPT
+      ParseError.E(txt) => RAISE ParseError.E("processing regfile " & c.id & " : " & txt)
+    END
   END AllocRegfile;
 
 PROCEDURE SortFieldsIfAllSpecified(seq : RegFieldSeq.T) =
@@ -245,7 +320,9 @@ PROCEDURE SortFieldsIfAllSpecified(seq : RegFieldSeq.T) =
     END
   END SortFieldsIfAllSpecified;
 
-PROCEDURE AllocReg(c     : RdlComponentDef.T) : RegReg.T =
+PROCEDURE AllocReg(c     : RdlComponentDef.T;
+                   hn    : TEXT) : RegReg.T
+  RAISES { ParseError.E } =
   VAR
     props := c.list.propTab;
     reg := NEW(RegReg.T,
@@ -257,15 +334,17 @@ PROCEDURE AllocReg(c     : RdlComponentDef.T) : RegReg.T =
   BEGIN
     <*ASSERT c.anonInstElems = NIL*> (* no immediate instances *)
     reg.nm := c.id;
+    TRY
     WHILE p # NIL DO
       WITH cd = p.head DO
         TYPECASE cd OF
           RdlComponentDefElem.ComponentDef(cd) =>
           IF cd.componentDef.type # RdlComponentDefType.T.field THEN
-            Debug.Error("Unexpected component in reg " & c.id & " : " &
+            RAISE ParseError.E("Unexpected component in reg " & c.id & " : " &
               RdlComponentDefType.Names[cd.componentDef.type])
           END;
-          fields := RegFieldSeq.Cat(fields, AllocFields(cd.componentDef))
+          fields := RegFieldSeq.Cat(fields, AllocFields(cd.componentDef,
+                                                        hn & "->" & c.id))
         |
           RdlComponentDefElem.PropertyAssign =>
         |
@@ -274,7 +353,7 @@ PROCEDURE AllocReg(c     : RdlComponentDef.T) : RegReg.T =
           RdlComponentDefElem.ComponentInst(ci) =>
           WITH comp = c.list.defTab.lookup(ci.componentInst.id) DO
             IF comp.type # RdlComponentDefType.T.field THEN
-              Debug.Error("object of type RdlComponentDefElem.ComponentInst : "&
+              RAISE ParseError.E("object of type RdlComponentDefElem.ComponentInst : "&
                 ci.componentInst.id & " / " & RdlComponentDefType.Names[comp.type] )
             END
           END
@@ -288,12 +367,16 @@ PROCEDURE AllocReg(c     : RdlComponentDef.T) : RegReg.T =
     SortFieldsIfAllSpecified(fields);
     reg.fields := fields;
     RETURN reg
+    EXCEPT
+      ParseError.E(txt) => RAISE ParseError.E("processing reg " & reg.nm & " : " & txt)
+    END
   END AllocReg;
 
-PROCEDURE DoIt(<*UNUSED*>t : T; tgtmap : RegAddrmap.T; outDir : Pathname.T) =
+PROCEDURE DoIt(t : T; tgtmap : RegAddrmap.T; outDir : Pathname.T) =
   VAR
     r : Compiler := NEW(Tgt.T).init(tgtmap);
   BEGIN
+    r.gv := t;
     FOR i := FIRST(Tgt.Phase) TO LAST(Tgt.Phase) DO
       TRY
         TRY

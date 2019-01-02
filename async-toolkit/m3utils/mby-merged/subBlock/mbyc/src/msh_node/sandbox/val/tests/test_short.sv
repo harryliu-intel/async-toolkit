@@ -32,10 +32,10 @@
 program testcase (                  // a program is a system verilog testbench entry point
     msh_node_dut_if dut_if,               // mesh DUT interface 
     //-hz: 12/7/2018
-    mby_mem_msh_bank_ram_shell_4096x552_func_if mem_if_0, // defined in shared/interfaces
-    mby_mem_msh_bank_ram_shell_4096x552_func_if mem_if_1, // under subBlock/mbyc/src
-    mby_mem_msh_bank_ram_shell_4096x552_func_if mem_if_2,
-    mby_mem_msh_bank_ram_shell_4096x552_func_if mem_if_3
+    mby_mem_msh_bank_ram_shell_4096x532_func_if mem_if_0, // defined in shared/interfaces
+    mby_mem_msh_bank_ram_shell_4096x532_func_if mem_if_1, // under subBlock/mbyc/src
+    mby_mem_msh_bank_ram_shell_4096x532_func_if mem_if_2,
+    mby_mem_msh_bank_ram_shell_4096x532_func_if mem_if_3
 );     
 
 

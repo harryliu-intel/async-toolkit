@@ -93,9 +93,11 @@ ${BLD_DIR}/mby_basic_fwd_init.o: \
         mby_basic_fwd_init.c \
         mby_basic_fwd_init.h
 
+.PHONY: $(WM_LIB)
 $(WM_LIB):
 	make -C ${C_DIR}
 
+.PHONY: $(COM_LIB)
 $(COM_LIB):
 	make -C ${COM_DIR}
 

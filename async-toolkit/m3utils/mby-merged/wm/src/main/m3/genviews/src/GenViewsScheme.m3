@@ -112,23 +112,19 @@ PROCEDURE RunScheme(t    : T;
       END
     END
   END RunScheme;
-
+  
 PROCEDURE DoContainer(t   : T;
                       c   : RegContainer.T;
                       lev : CARDINAL) =
   VAR
-    skipArc : BOOLEAN;
+    skipArc := c.skipArc();
   BEGIN
     <*ASSERT c # NIL*>
     VAR tn : TEXT; BEGIN
       TYPECASE c OF
-        RegAddrmap.T =>
-        tn := "addrmap";
-        skipArc := FALSE
+        RegAddrmap.T => tn := "addrmap"
       |
-        RegRegfile.T =>
-        tn := "regfile";
-        skipArc := c.children.size() = 1
+        RegRegfile.T => tn := "regfile"
       ELSE
         <*ASSERT FALSE*>
       END;

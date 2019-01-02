@@ -461,7 +461,7 @@ int wm_pkt_push(const struct wm_pkt *pkt)
            msg, pkt->len, off, msg_len);
     LOG_HEX_DUMP(msg, msg_len, 1);
   }
-  
+
   err = wm_send(wm_server_fd, msg, msg_len, MODEL_MSG_PACKET, pkt->port);
   if (err) {
     LOG_ERROR("Could not send data to WM: %d\n", err);
@@ -755,54 +755,6 @@ static int wm_send(int fd, const uint8_t *msg, uint32_t len, uint16_t type,
 }
 
 /**
- * Dumps buffer in hex output.
- *
- * @param[in]   bytes is the buffer to dump.
- * @param[in]   nbytes is the size of the buffer.
- * @param[in]   show_ascii whether to append ascii format.
- */
-
-static uint8_t printable(const uint8_t byte)
-{
-  if ((byte < 0x20) ||
-      (byte > 0x7e))
-    return '.';
-  else
-    return byte;
-}
-
-static void hex_dump(const uint8_t *bytes, int nbytes, char show_ascii)
-{
-  FILE *fp=stdout;
-  const int group_bytes = 4;
-  const int line_groups = 2;
-  int linebytes;
-  int cnt=0;
-  const uint8_t *lim = bytes + nbytes;
-  const uint8_t *b, *p=bytes;
-  
-  do {
-    printf("%02x: ",(unsigned)(p-bytes));
-    b = p;
-    if (show_ascii) {
-      for (int g=0; g < line_groups; ++g) {
-        for (int i=0; i < group_bytes; ++i, p = (p==lim) ? lim : p+1  ) 
-          fprintf(fp, "%c", p == lim ? ' ' : printable(*p));
-        fprintf(fp, " ");
-      }
-      fprintf(fp, "| ");
-      p = b;
-    }
-    for (int g=0; g < line_groups; ++g) {
-      for (int i=0; i < group_bytes; ++i, p = (p==lim) ? lim : p+1  ) 
-        fprintf(fp, p == lim ? "   " : " %02x", p == lim? 0xbeef : *p); 
-      fprintf(fp, " ");
-    }
-    fprintf(fp, "\n");
-  } while (p!=lim);
-}
-
-/**
  * Connect to the WM server socket
  *
  * The fd of the socket is saved in a global variable and it will
@@ -1075,3 +1027,51 @@ static int wm_read_data(int socket, uint8_t *data, uint32_t data_len,
 
   return WM_OK;
 }
+
+static uint8_t printable(const uint8_t byte)
+{
+  if ((byte < 0x20) ||
+      (byte > 0x7e))
+    return '.';
+  else
+    return byte;
+}
+
+/**
+ * Dumps buffer in hex output.
+ *
+ * @param[in]   bytes is the buffer to dump.
+ * @param[in]   nbytes is the size of the buffer.
+ * @param[in]   show_ascii whether to append ascii format.
+ */
+static void hex_dump(const uint8_t *bytes, int nbytes, char show_ascii)
+{
+  FILE *fp=stdout;
+  const int group_bytes = 4;
+  const int line_groups = 2;
+  int linebytes;
+  int cnt=0;
+  const uint8_t *lim = bytes + nbytes;
+  const uint8_t *b, *p=bytes;
+
+  do {
+    printf("%02x: ", (unsigned)(p-bytes));
+    b = p;
+    if (show_ascii) {
+      for (int g = 0; g < line_groups; ++g) {
+        for (int i = 0; i < group_bytes; ++i, p = (p==lim) ? lim : p+1  )
+          fprintf(fp, "%c", p == lim ? ' ' : printable(*p));
+        fprintf(fp, " ");
+      }
+      fprintf(fp, "| ");
+      p = b;
+    }
+    for (int g = 0; g < line_groups; ++g) {
+      for (int i = 0; i < group_bytes; ++i, p = (p==lim) ? lim : p+1  )
+        fprintf(fp, p == lim ? "   " : " %02x", p == lim? 0xbeef : *p);
+      fprintf(fp, " ");
+    }
+    fprintf(fp, "\n");
+  } while (p != lim);
+}
+
