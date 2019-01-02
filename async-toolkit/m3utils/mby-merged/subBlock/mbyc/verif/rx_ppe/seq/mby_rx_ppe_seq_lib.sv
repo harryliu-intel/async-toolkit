@@ -49,6 +49,7 @@ package mby_rx_ppe_seq_lib;
    import uvm_pkg::*;
 
    import shdv_base_pkg::*;
+   import mby_wm_dpi_pkg::*; 
 
    `include "uvm_macros.svh"
 
