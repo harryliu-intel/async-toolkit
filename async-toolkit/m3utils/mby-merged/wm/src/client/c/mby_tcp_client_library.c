@@ -538,6 +538,13 @@ int wm_pkt_get(struct wm_pkt *pkt)
 int wm_parser(mbyRxMacToParser const * const in,
               mbyParserToMapper      * const out)
 {
+
+#ifdef SV_BUILD
+    printf("You are using the SV_BUILD - in->RX_DATA is fixed size array\n");
+#else
+    printf("You are NOT using the SV_BUILD - in->RX_DATA is a pointer\n");
+#endif
+
     printf("Received %d bytes on port %d\n", in->RX_LENGTH, in->RX_PORT);
     if (in->RX_LENGTH > MBY_MAX_PACKET_LEN) {
         printf("Packet len exceeds max of %d\n", MBY_MAX_PACKET_LEN);
