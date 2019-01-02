@@ -190,6 +190,12 @@ class mby_rx_ppe_env extends shdv_base_env;
    //
    //---------------------------------------------------------------------------
    virtual function void build_ral();
+      
+      //TODO: AK- Check if this is OK.
+      // UVM registers are generated with coverage disabled. When uvm reg is built it looks up for
+      //"include_coverage" in the uvm_config_db and throws a warning that it cant find that variable for
+      // every single register. Setting the "include_coverage" variable to 0 to avoid the warning.    
+      uvm_config_db#(int)::set(null, "uvm_test_top.env.tb_ral", "include_coverage", 0);
 
       // Check if ral is already set by FC
       if (tb_ral == null) begin
