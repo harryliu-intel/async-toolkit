@@ -41,6 +41,7 @@ reg mod_mirror_profile_table0_r {
   Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
   regwidth = 64;
   accesswidth = 64;
+  FulcrumName = "/$";
   
   field {
     AccessType = "RW";
@@ -153,6 +154,7 @@ reg mod_mirror_profile_table1_r {
   Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
   regwidth = 64;
   accesswidth = 64;
+  FulcrumName = "/$";
   
   field {
     AccessType = "RW";
@@ -203,6 +205,7 @@ reg mod_mirror_profile_table2_r {
   Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
   regwidth = 64;
   accesswidth = 64;
+  FulcrumName = "/$";
   
   field {
     AccessType = "RW";
@@ -284,7 +287,7 @@ reg mod_profile_group_r {
   Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
   regwidth = 64;
   accesswidth = 64;
-  
+  FulcrumName = "/$";
 
   field {
     AccessType = "RW";
@@ -339,6 +342,8 @@ reg mod_profile_command_r {
   Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
   regwidth = 64;
   accesswidth = 64;
+  FulcrumName = "/$";
+
   field {
     AccessType = "RW";
     desc = "Indicates the 2nd command.  See the HAS for the encoding.";
@@ -370,6 +375,8 @@ reg mod_profile_field_r {
   Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
   regwidth = 64;
   accesswidth = 64;
+  FulcrumName = "/$";
+
   field {
     AccessType = "RW";
     desc = "
@@ -438,6 +445,8 @@ reg mod_map_r {
   Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
   regwidth = 64;
   accesswidth = 64;
+  FulcrumName = "/$";
+
   field {
     AccessType = "RW";
     desc = "
@@ -488,6 +497,8 @@ reg mod_map_dual_r {
   Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
   regwidth = 64;
   accesswidth = 64;
+  FulcrumName = "/$";
+
   field {
     AccessType = "RW";
     desc = "
@@ -569,6 +580,7 @@ reg mod_map_cfg_r {
   Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
   regwidth = 64;
   accesswidth = 64;
+  FulcrumName = "/$";
   
   field {
     AccessType = "RW";
@@ -623,6 +635,7 @@ reg mod_map_dual_cfg_r {
   Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
   regwidth = 64;
   accesswidth = 64;
+  FulcrumName = "/$";
   
   field {
     AccessType = "RW";
@@ -673,6 +686,7 @@ reg mod_csum_cfg1_r {
   Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
   regwidth = 64;
   accesswidth = 64;
+  FulcrumName = "/$";
   
   field {
     AccessType = "RW";
@@ -731,6 +745,7 @@ reg mod_csum_cfg2_r {
   Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
   regwidth = 64;
   accesswidth = 64;
+  FulcrumName = "/$";
   
   field {
     AccessType = "RW";
@@ -792,6 +807,7 @@ reg mod_csum_en_cfg_r {
   Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
   regwidth = 64;
   accesswidth = 64;
+  FulcrumName = "/$";
   
   field {
     AccessType = "RW";
@@ -883,7 +899,8 @@ reg mod_lpp_en {
   Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
   regwidth = 64;
   accesswidth = 64;
-  
+  FulcrumName = "/$";
+
   field {
     AccessType = "RW";
     desc = "
@@ -901,6 +918,7 @@ addrmap mby_ppe_modify_map {
   Opcode = "MEM-SB";
   No_IOSF_Primary = true;
   addressing = fullalign;
+  FulcrumName = "/MOD";
 
   mod_profile_command_rf       MOD_PROFILE_COMMAND[64]       ;
   mod_profile_field_rf         MOD_PROFILE_FIELD[64]         ;

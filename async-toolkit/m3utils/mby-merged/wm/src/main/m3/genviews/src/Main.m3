@@ -9,20 +9,23 @@ IMPORT TextSetDef;
 IMPORT RegAddrmap;
 IMPORT Pathname;
 IMPORT GenViews, GenViewsM3, GenViewsScala, GenViewsC, GenViewsCApi;
+IMPORT GenViewsSvFulcrum;
 IMPORT GenViewsScheme;
 IMPORT Text;
 IMPORT Rd, FileRd;
+IMPORT ParseError;
+IMPORT Word;
 
 CONST TE = Text.Equal;
 
-CONST Usage = "-top <top map name> [-L|-language m3|scala|c[-api]|scheme] [-f -|<field-addr-file>] [-i -|<rdl-file>]";
+CONST Usage = "-top <top map name> [-L|-language m3|scala|c[-api]|scheme|sv-hlp] [-f -|<field-addr-file>] [-i -|<rdl-file>]";
 
 PROCEDURE DoUsage() : TEXT =
   BEGIN RETURN Params.Get(0) & ": usage: " & Usage END DoUsage;
 
-TYPE Lang = { M3, Scala, C, Scheme, CApi };
+TYPE Lang = { M3, Scala, C, Scheme, CApi, SvFulcrum };
 
-CONST LangNames = ARRAY Lang OF TEXT { "m3", "scala", "c", "scheme", "c-api" };
+CONST LangNames = ARRAY Lang OF TEXT { "m3", "scala", "c", "scheme", "c-api", "sv-fulcrum" };
   
 VAR
   lexer  := NEW(rdlLexExt.T, userDefProperties := NEW(TextSetDef.T).init());
@@ -35,6 +38,13 @@ VAR
   lang := Lang.M3;
   fieldAddrRd : Rd.T := NIL;
   scmFiles : REF ARRAY OF TEXT;
+
+  (* the following are specific for SvFulcrum, should be moved to a 
+     different file ? *)
+  addrBits : GenViewsSvFulcrum.AddrBits := LAST(GenViewsSvFulcrum.AddrBits);
+  baseAddressBytes : Word.T := 0;
+  packageName : TEXT := NIL;
+  outFileName : Pathname.T := NIL;
   
 BEGIN
   (* command-line args: *)
@@ -62,7 +72,7 @@ BEGIN
         END
       END;
 
-      IF lang = Lang.Scheme THEN
+      IF lang IN SET OF Lang { Lang.Scheme, Lang.SvFulcrum } THEN
         IF pp.keywordPresent("-f") THEN
           WITH ifn = pp.getNext() DO
             IF TE(ifn, "-") THEN
@@ -72,6 +82,27 @@ BEGIN
               fieldAddrRd := FileRd.Open(ifn)
             END
           END
+        END
+      END;
+
+      IF lang = Lang.SvFulcrum THEN
+        (* this should perhaps be processed inside GenViewsSvFulcrum 
+           and not here *)
+        IF pp.keywordPresent("-bits") THEN
+          addrBits := pp.getNextInt()
+        END;
+        IF pp.keywordPresent("-baseaddr") THEN
+          baseAddressBytes := pp.getNextInt()
+        END;
+        IF pp.keywordPresent("-packagename") THEN
+          packageName := pp.getNext()
+        ELSE
+          Debug.Error("Must specify -packagename")
+        END;
+        IF pp.keywordPresent("-of") THEN
+          outFileName := pp.getNext()
+        ELSE
+          Debug.Error("Must specify -of")
         END
       END;
 
@@ -113,6 +144,8 @@ BEGIN
     Lang.CApi  => gv := NEW(GenViewsCApi.T)
   |
     Lang.Scheme => gv := NEW(GenViewsM3.T)
+  |
+    Lang.SvFulcrum => gv := NEW(GenViewsM3.T)
   END;  
 
   EVAL lexer.setRd(rd);
@@ -127,7 +160,13 @@ BEGIN
     IF rdlTgt = NIL THEN
       Debug.Error("Top symbol not found")
     END;
-    tgtmap := gv.decorate(rdlTgt, "").comp
+    TRY
+      tgtmap := gv.decorate(rdlTgt, "", "").comp
+    EXCEPT
+      ParseError.E(txt) =>
+      Debug.Error("While processing \"" & tgtmapNm & "\" : ParseError.E : " &
+        txt)
+    END
   END;
 
   CASE lang OF
@@ -135,6 +174,14 @@ BEGIN
     NEW(GenViewsScheme.T,
         scmFiles := scmFiles,
         fieldAddrRd := fieldAddrRd).gen(tgtmap, outDir)
+  |
+    Lang.SvFulcrum =>
+    NEW(GenViewsSvFulcrum.T,
+        fieldAddrRd      := fieldAddrRd,
+        baseAddressBytes := baseAddressBytes,
+        addrBits         := addrBits,
+        packageName      := packageName,
+        outFileName      := outFileName).gen(tgtmap, outDir)
   ELSE
     gv.gen(tgtmap, outDir)
   END
