@@ -578,9 +578,13 @@ int wm_parser(mbyRxMacToParser const * const in,
         out->PA_HDR_PTRS.PROT_ID     [i] = 0x45;
     }
 
-    out->RX_DATA            = in->RX_DATA;
     out->RX_PORT            = in->RX_PORT;
     out->RX_LENGTH          = in->RX_LENGTH;
+#ifdef SV_BUILD
+    memcpy(out->RX_DATA, in->RX_DATA, in->RX_LENGTH);
+#else
+    out->RX_DATA            = in->RX_DATA;
+#endif
 
     return WM_OK;
 }
