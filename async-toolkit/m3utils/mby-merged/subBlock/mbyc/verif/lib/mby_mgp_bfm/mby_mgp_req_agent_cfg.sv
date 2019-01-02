@@ -8,12 +8,13 @@
 typedef enum bus_type_e;
 //----------------------------------------------------------------------------------------
 // Class: mby_mgp_req_agent_cfg
+// Configuration class for req_agent
 //----------------------------------------------------------------------------------------
 class mby_mgp_req_agent_cfg extends uvm_object;
 
    `uvm_object_utils(mby_mgp_req_agent_cfg)
-   typedef uvm_active_passive_enum act_psv_e;
-   uvm_active_passive_enum is_active = UVM_ACTIVE;
+   bit driver_enable = 1;
+   bit monitor_enable = 1;
 
    bus_type_e bus_type;
    
@@ -24,6 +25,7 @@ endclass
 
 //----------------------------------------------------------------------------------------
 // Constructor
+// Creating new req agent
 //----------------------------------------------------------------------------------------
 function mby_mgp_req_agent_cfg::new (string name = "");
 

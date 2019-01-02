@@ -28,13 +28,14 @@
 //------------------------------------------------------------------------------
 
 //
+`timescale 1ps/1ps
+
+// Module: mby_mesh_tb_top
 // Mesh testbench module
 // Description :
 //   This top module will:
 //   1. Instance 1 RTL Unit
 //   2. Control Dumping features for FSDB/DVE.
-
-`timescale 1ps/1ps
 
 module mby_mesh_tb_top();
    
@@ -47,12 +48,18 @@ module mby_mesh_tb_top();
    // ===============================================
 
    logic         fabric_clk;                             // Fabric Clock - 1.2 Ghz
+   logic         mclk; 
    shdv_clk_gen  fabric_clk_gen(fabric_clk);
+   shdv_clk_gen  mclk_gen(mclk);
+   wire          tb_reset;
+   wire          ref_clk;
+   
 
    initial begin
 
-      //fabric_clk_gen.period     = 833333fs;
-      fabric_clk_gen.period     = 555555fs;
+      mclk_gen.period           = 555555fs; //1.8 GHz mesh clock
+      mclk_gen.jitter           = 0ps;
+      fabric_clk_gen.period     = 833333fs; //1.2 GHz core clock
       fabric_clk_gen.jitter     = 0ps;
 
    end
@@ -67,14 +74,35 @@ module mby_mesh_tb_top();
    string       str;
 
    mby_mesh_tb_if mesh_tb_if();
-
+ 
  
    assign mesh_tb_if.fab_clk  = fabric_clk;
+   assign mesh_tb_if.mclk     = mclk;
 
-   shdv_base_tb_intf shdv_intf();
+   assign ref_clk  = fabric_clk;
+   assign tb_reset = mesh_tb_if.chard_reset;
+   
+   //MGP --> Msh write wb
+   mby_mgp_mim_if    req_wb_if(
+      .cclk             (ref_clk),
+      .reset            (tb_reset),
+      .req_id           (),
+      .seg_ptr          (),
+      .wd_sel           (),
+      .valid            (),
+      .sema             ()
+   );
 
-   assign   shdv_intf.ref_clk   = mesh_tb_if.fab_clk; 
-   assign   shdv_intf.ref_rst   = mesh_tb_if.hard_reset;
+   //MGP --> Msh write eb
+   mby_mgp_mim_if    req_eb_if(
+      .cclk             (ref_clk),
+      .reset            (tb_reset),
+      .req_id           (),
+      .seg_ptr          (),
+      .wd_sel           (),
+      .valid            (),
+      .sema             ()
+   );
 
    //-----------------------------------------------------------------------------
    // Verification Test Island
@@ -82,8 +110,9 @@ module mby_mesh_tb_top();
    mby_mesh_ti #(
    ) mesh_ti(
        .mby_mesh_tb_if               (mesh_tb_if),
-       .shdv_intf                    (shdv_intf)
-
+       .req_eb_if                    (req_eb_if),
+       .req_wb_if                    (req_wb_if)
+ 
    );
   
    //////////////////////////////////////////////
@@ -169,13 +198,14 @@ module mby_mesh_tb_top();
    // MBY Mesh Dut
    // ===============================================
    // ===============================================
+ 
    
-   mby_msh_node msh_node_top (
-       .mclk             (mesh_tb_if.fab_clk),
-       .mhreset         (mesh_tb_if.hard_reset),
-       .i_eb_node_col    (0),
-       .i_sb_node_row    (0)
-       
+   mby_msh #(.NUM_MSH_ROWS(3) , .NUM_MSH_COLS(3)) msh(
+       .cclk                  (mesh_tb_if.mclk),
+       .mclk                  (mesh_tb_if.fab_clk),
+       .chreset               (mesh_tb_if.chard_reset),
+       .mhreset               (mesh_tb_if.mhard_reset),
+       .i_igr_eb_wreq_valid   (req_eb_if.valid),
+       .i_igr_wb_wreq_valid   (req_wb_if.valid)
        );
-   
 endmodule

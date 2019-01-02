@@ -27,18 +27,18 @@
 //   Project       : Madison Bay
 //------------------------------------------------------------------------------
 
-//------------------------------------------------------------------------------
-//Class : mby_mesh_env
-//This is the MBY Shared memory mesh Environment file which is extended from shdv_base_env.
-//This class instantiates agents and also creates and connects scoreboards.
-//------------------------------------------------------------------------------
-
 `ifndef __MBY_MESH_ENV_GUARD
 `define __MBY_MESH_ENV_GUARD
 
 `ifndef __INSIDE_MBY_MESH_ENV_PKG
 `error "Attempt to include file outside of mby_mesh_env_pkg."
 `endif
+
+//------------------------------------------------------------------------------
+//Class : mby_mesh_env
+//This is the MBY Shared memory mesh Environment file which is extended from shdv_base_env.
+//This class instantiates agents and also creates and connects scoreboards.
+//------------------------------------------------------------------------------
 
 class mby_mesh_env extends shdv_base_env;
 
@@ -49,10 +49,30 @@ class mby_mesh_env extends shdv_base_env;
    // Variable:  tb_vif
    // Interface handle to mesh Testbench.
    virtual   mby_mesh_tb_if                                tb_vif;
-   mby_mgp_bfm_pkg::mby_mgp_bfm                            eb_mgp_bfm;
-   mby_mgp_bfm_pkg::mby_mgp_bfm                            wb_mgp_bfm;
-   mby_mgp_bfm_pkg::mby_mgp_bfm                            nb_mgp_bfm;
-   mby_mgp_bfm_pkg::mby_mgp_bfm                            sb_mgp_bfm;
+
+   // Variable:  req_wb_if
+   // Interface handle to westbount request of mesh.
+   virtual   mby_mgp_mim_if                                req_wb_if;
+
+   // Variable:  req_eb_if
+   // Interface handle to eastbount request of mesh.
+   virtual   mby_mgp_mim_if                                req_eb_if;
+
+   //Variable: wb_mgp_bfm
+   //mby_mgp_bfm  for wb of Mesh
+   mby_mgp_bfm_pkg::mby_mgp_bfm                            wb_mgp_bfm[mby_mgp_bfm_pkg::NUM_MSH_ROWS];
+
+   //Variable: eb_mgp_bfm
+   //mby_mgp_bfm  for eb of Mesh
+   mby_mgp_bfm_pkg::mby_mgp_bfm                            eb_mgp_bfm[mby_mgp_bfm_pkg::NUM_MSH_ROWS];
+
+   //Variable: sb_mgp_bfm
+   //mby_mgp_bfm  for sb of Mesh
+   mby_mgp_bfm_pkg::mby_mgp_bfm                            sb_mgp_bfm[mby_mgp_bfm_pkg::NUM_MSH_COLS];
+
+   //Variable: nb_mgp_bfm
+   //mby_mgp_bfm  for nb of Mesh
+   mby_mgp_bfm_pkg::mby_mgp_bfm                            nb_mgp_bfm[mby_mgp_bfm_pkg::NUM_MSH_COLS];
    
    // Variable:  tb_ral
    // Handle to mesh RAL.
@@ -111,6 +131,14 @@ class mby_mesh_env extends shdv_base_env;
          `uvm_fatal(get_name(),"Config_DB.get() for ENV's TB_IF was not successful!")
       end
 
+      
+      if(!uvm_config_db#(virtual mby_mgp_mim_if)::get(this, "", "mby_mgp_mim_if", req_eb_if)) begin
+         `uvm_fatal(get_name(),"Config_DB.get() for Mesh Interface was not successful!")
+      end
+      if(!uvm_config_db#(virtual mby_mgp_mim_if)::get(this, "", "mby_mgp_mim_if", req_wb_if)) begin
+         `uvm_fatal(get_name(),"Config_DB.get() for Mesh Interface was not successful!")
+      end
+
       build_mgp_bfm();
       build_ral();
    endfunction: build_phase
@@ -120,19 +148,31 @@ class mby_mesh_env extends shdv_base_env;
    //  Build the 4 mgp bfms and assign interfaces and cfg objects. 
    //---------------------------------------------------------------------------
    function void build_mgp_bfm();
-      eb_mgp_bfm = mby_mgp_bfm_pkg::mby_mgp_bfm::type_id::create("eb_mgp_bfm", this);
-      wb_mgp_bfm = mby_mgp_bfm_pkg::mby_mgp_bfm::type_id::create("wb_mgp_bfm", this);
-      nb_mgp_bfm = mby_mgp_bfm_pkg::mby_mgp_bfm::type_id::create("nb_mgp_bfm", this);
-      sb_mgp_bfm = mby_mgp_bfm_pkg::mby_mgp_bfm::type_id::create("sb_mgp_bfm", this);
-      
-      eb_mgp_bfm.mst_agent_cfg = tb_cfg.env_cfg.mst_agent_cfg;
-      eb_mgp_bfm.slv_agent_cfg = tb_cfg.env_cfg.slv_agent_cfg;
-      wb_mgp_bfm.mst_agent_cfg = tb_cfg.env_cfg.mst_agent_cfg;
-      wb_mgp_bfm.slv_agent_cfg = tb_cfg.env_cfg.slv_agent_cfg;
-      nb_mgp_bfm.mst_agent_cfg = tb_cfg.env_cfg.mst_agent_cfg;
-      nb_mgp_bfm.slv_agent_cfg = tb_cfg.env_cfg.slv_agent_cfg;
-      sb_mgp_bfm.mst_agent_cfg = tb_cfg.env_cfg.mst_agent_cfg;
-      sb_mgp_bfm.slv_agent_cfg = tb_cfg.env_cfg.slv_agent_cfg;
+
+
+      for (int idx = 0; idx < mby_mgp_bfm_pkg::NUM_MSH_ROWS; idx++) begin
+	 
+         eb_mgp_bfm[idx] = mby_mgp_bfm_pkg::mby_mgp_bfm::type_id::create($sformatf("eb_mgp_bfm%0d", idx), this);
+	 wb_mgp_bfm[idx] = mby_mgp_bfm_pkg::mby_mgp_bfm::type_id::create($sformatf("wb_mgp_bfm%0d", idx), this);
+
+	 eb_mgp_bfm[idx].assign_cfg(tb_cfg.env_cfg.bfm_cfg);
+	 eb_mgp_bfm[idx].assign_vi(req_eb_if);
+	 wb_mgp_bfm[idx].assign_cfg(tb_cfg.env_cfg.bfm_cfg);
+	 wb_mgp_bfm[idx].assign_vi(req_wb_if);
+
+      end
+/*
+      for (int idx = 0; idx < mby_mgp_bfm_pkg::NUM_MSH_COLS; idx++) begin
+         sb_mgp_bfm[idx] = mby_mgp_bfm_pkg::mby_mgp_bfm::type_id::create($sformatf("sb_mgp_bfm%0d", idx), this);
+	 nb_mgp_bfm[idx] = mby_mgp_bfm_pkg::mby_mgp_bfm::type_id::create($sformatf("nb_mgp_bfm%0d", idx), this);
+
+	 sb_mgp_bfm[idx].assign_cfg(tb_cfg.env_cfg.bfm_cfg);
+	 sb_mgp_bfm[idx].assign_vi(mby_gmm_mig_rd_op_sb_if, mby_gmm_mig_rsp_op_sb_if, mby_gmm_mig_wr_op_sb_if, mby_gmm_mig_rsp_data_sb_if, mby_gmm_mig_wr_data_sb_if);
+
+	 nb_mgp_bfm[idx].assign_cfg(tb_cfg.env_cfg.bfm_cfg);
+	 nb_mgp_bfm[idx].assign_vi(mby_gmm_mig_rd_op_nb_if, mby_gmm_mig_rsp_op_nb_if, mby_gmm_mig_wr_op_nb_if, mby_gmm_mig_rsp_data_nb_if, mby_gmm_mig_wr_data_nb_if);
+	 
+      end */
    endfunction: build_mgp_bfm
    
    //---------------------------------------------------------------------------

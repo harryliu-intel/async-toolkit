@@ -37,22 +37,17 @@
 `define __MBY_RX_PPE_HARD_RESET_SEQ_GUARD
 
 `ifndef __INSIDE_MBY_RX_PPE_SEQ_LIB
-`error "Attempt to include file outside of mby_rx_ppe_seq_lib."
+`error "Attempt to include file outside of mby_rx_ppe_env_base_seq."
 `endif
 
 
-class mby_rx_ppe_hard_reset_seq extends shdv_base_reset_seq;
-
-   // Variable: env
-   // Protected rx_ppe Top Level Env
-   protected mby_rx_ppe_env_pkg::mby_rx_ppe_env            env;
-
-   // Variable: tb_vif;
-   // Handle to rx_ppe TB interface.
-   virtual mby_rx_ppe_tb_if                            tb_vif;
+class mby_rx_ppe_hard_reset_seq extends shdv_base_reset_sequence;
 
    `uvm_object_utils(mby_rx_ppe_hard_reset_seq)
-   `uvm_declare_p_sequencer(slu_sequencer)
+
+   // Variable: tb_vif
+   // Handle to rx_ppe Tb interface.
+   virtual mby_rx_ppe_tb_if                   tb_vif;
 
    //------------------------------------------------------------------------------
    //  Constructor: new
@@ -60,31 +55,32 @@ class mby_rx_ppe_hard_reset_seq extends shdv_base_reset_seq;
    //  Gets handle to the rx_ppe ENV.
    //
    //  Arguments:
-   //  string name  - rx_ppe TOP Hard Reset sequence object name.
+   //  string name  - rx_ppe Hard Reset sequence object name.
    //------------------------------------------------------------------------------
    function new(input string name = "mby_rx_ppe_hard_reset_seq");
       super.new(name);
-      set_env(slu_tb_env::get_top_tb_env());
-
-      tb_vif = env.get_tb_vif();
+      set_env (shdv_base_env::get_top_tb_env());
    endfunction: new
 
-   //------------------------------------------------------------------------------
+
+   // ------------------------------------------------------------------------
    //  Function: set_env
-   //  Handle to rx_ppe Top Level env for use in sequences
-   //
-   //  Arguments:
-   //  slu_tb_env tb_env  -  Handle to the ENV
-   //------------------------------------------------------------------------------
-   virtual function void set_env(slu_tb_env tb_env);
+   //  Arguments: shdv_base_env 
+   // ------------------------------------------------------------------------
+   virtual function void set_env(shdv_base_env tb_env);
       mby_rx_ppe_env_pkg::mby_rx_ppe_env temp_env;
       bit stat;
 
       stat = $cast(temp_env,tb_env);
-      `slu_assert(    stat, ($psprintf("Cast of $s(type: $s) failed!!!",tb_env.get_name(),tb_env.get_type_name())));
-      `slu_assert(temp_env, ("Could not fetch slu_tb_env handle!!!"));
+      if(!stat) begin
+         `uvm_fatal(get_name(), "Cast of sla_tb_env failed");
+      end
+      if(temp_env == null) begin
+         `uvm_fatal(get_name(), "Could not fetch sla_tb_env handle!!!");
+      end
 
-      this.env    = temp_env;
+      this.tb_vif = temp_env.get_tb_vif();
+
    endfunction : set_env
 
    //------------------------------------------------------------------------------
@@ -93,16 +89,19 @@ class mby_rx_ppe_hard_reset_seq extends shdv_base_reset_seq;
    //  as well as Warm_Reset (Set)
    //------------------------------------------------------------------------------
    task body();
-
-      `uvm_info(get_name(), $sformatf("Hard_Reset Set"), UVM_NONE);
+      
+      `uvm_info(this.get_name(), ("Phase::reset_phase:mby_rx_ppe_hard_reset_seq::Starting"), UVM_LOW)    
+      `uvm_info(get_name(), $sformatf("Hard_Reset  & warm_reset Set"), UVM_NONE);
       tb_vif.hard_reset                 = 1;
-      `uvm_info(get_name(), $sformatf("Hard_Reset Set"), UVM_NONE);
       tb_vif.warm_reset                 = 1;
 
       repeat (200) @(posedge tb_vif.fab_clk);
 
-      `uvm_info(get_name(), $sformatf("Hard_Reset Cleared"), UVM_NONE);
+      `uvm_info(get_name(), $sformatf("Hard_Reset & warm_reset Cleared"), UVM_NONE);
       tb_vif.hard_reset                 = 0;
+      
+      repeat (20) @(posedge tb_vif.fab_clk);
+      tb_vif.warm_reset                 = 0;
 
    endtask: body
 

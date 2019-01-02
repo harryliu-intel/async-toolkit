@@ -47,12 +47,13 @@ package mby_smm_bfm_pkg;
    `include "uvm_macros.svh"
    `include "mby_smm_bfm_defines.svh"
    `include "mby_smm_bfm_types.svh"
+   `include "mby_smm_bfm_cfg.svh"
+   `include "mby_smm_bfm_rdrsp_seq.svh"
    `include "mby_smm_bfm_mem_node.svh"
    `include "mby_smm_bfm_mwr_req.svh"
    `include "mby_smm_bfm_mrd_req.svh"
    `include "mby_smm_bfm_row_wr_req_xaction.svh"
    `include "mby_smm_bfm_row_rd_req_xaction.svh"
-   `include "mby_smm_bfm_cfg.svh"
    `include "mby_smm_bfm.svh"
 
 endpackage : mby_smm_bfm_pkg
