@@ -77,15 +77,14 @@ class mby_rx_ppe_wm_access_seq extends mby_rx_ppe_seq_lib::mby_rx_ppe_env_base_s
 
       err_info = wm_parser(igr_pkt, parser_pkt);
 
-      `uvm_info(get_name(),  $sformatf("Received Parser pkt:Err_info: %d\n Port:%0d, length:%0d ",err_info, parser_pkt.RX_PORT, parser_pkt.RX_LENGTH),UVM_NONE)
-      for(int idx = 0; idx < parser_pkt.RX_LENGTH ; idx++)
-         `uvm_info(get_name(),  $sformatf("Received Parser pkt Data[%0d]: %0x",idx,parser_pkt.RX_DATA[idx]),UVM_NONE)
-
-
-      push_pkt.port = 1;
-      push_pkt.len = 64;
-      `uvm_info(get_name(), "Sending pkt to WM Push Pkt", UVM_NONE)
-      err_info = wm_pkt_push(push_pkt);
+      `uvm_info(get_name(),  $sformatf("Received Parser pkt:Err_info: %d\n Port:%0d, length:%0d, PA_ADJ_SEG_LEN: %d",err_info, parser_pkt.RX_PORT, parser_pkt.RX_LENGTH, parser_pkt.PA_ADJ_SEG_LEN),UVM_NONE)
+  
+//      for(int idx = 0; idx < parser_pkt.RX_LENGTH ; idx++)
+//         `uvm_info(get_name(),  $sformatf("Received Parser pkt Data[%0d]: %0x",idx,parser_pkt.RX_DATA[idx]),UVM_NONE)
+//      push_pkt.port = 1;
+//      push_pkt.len = 64;
+//      `uvm_info(get_name(), "Sending pkt to WM Push Pkt", UVM_NONE)
+//      err_info = wm_pkt_push(push_pkt);
 
    endtask
 

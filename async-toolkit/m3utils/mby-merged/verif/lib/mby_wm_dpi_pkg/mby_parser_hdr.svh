@@ -57,9 +57,10 @@ typedef struct {
    bit                     PA_L3LEN_ERR;                     ///< L3 length error
    bit [15:0]              PA_PACKET_TYPE;                   ///< Packet type (new for MBY)
    mbyParserHdrPtrs        PA_HDR_PTRS;                      ///< Parser header pointers
+   int                     RX_PORT;                          ///< Ingress port
    int                     RX_LENGTH;                        ///< Ingress packet data length [bytes]
    byte                    RX_DATA[`MAX_PKT_LEN];            ///< Ingress (receive) packet data
-   int                     RX_PORT;                          ///< Ingress port
+
 
 } mbyParserToMapper;
 
