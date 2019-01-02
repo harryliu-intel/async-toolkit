@@ -84,9 +84,11 @@ ${BLD_DIR}/mby_exactmatch_test.o: \
     mby_exactmatch_test.c \
     $(C_DIR)/mby_exactmatch.h $(C_DIR)/mby_common.h
 
+.PHONY: $(WM_LIB)
 $(WM_LIB):
 	make -C ${C_DIR}
 
+.PHONY: $(COM_LIB)
 $(COM_LIB):
 	make -C ${COM_DIR}
 
