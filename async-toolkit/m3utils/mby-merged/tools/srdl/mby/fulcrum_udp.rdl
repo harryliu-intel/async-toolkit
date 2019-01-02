@@ -1,12 +1,12 @@
 
-<% if ($HLP_UDP) {
+<% if ($FULCRUM_UDP) {
    } else {
-        $HLP_UDP = 1;
+        $FULCRUM_UDP = 1;
 %>
 
-// UDP for HLP name mapping
+// UDP for FULCRUM name mapping
 
-property HlpName {
+property FulcrumName {
     component = addrmap | regfile | reg | field;
     type      = string;
     default   = "";
