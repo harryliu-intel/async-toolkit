@@ -40,8 +40,12 @@
 `error "Attempt to include file outside of mby_mesh_seq_lib."
 `endif
 
-class mby_mesh_hard_reset_seq extends shdv_base_reset_seq;
+class mby_mesh_hard_reset_seq extends shdv_base_reset_sequence;
 
+    // Variable: shdv_env
+    // Protected shdv base env
+    protected shdv_base_env                         env;
+ 
     // Variable: env
     // Protected Mesh Top Level Env
     protected mby_mesh_env_pkg::mby_mesh_env        env;
@@ -51,7 +55,6 @@ class mby_mesh_hard_reset_seq extends shdv_base_reset_seq;
     virtual mby_mesh_tb_if                          tb_vif;
 
     `uvm_object_utils(mby_mesh_hard_reset_seq)
-    `uvm_declare_p_sequencer(slu_sequencer)
 
     //------------------------------------------------------------------------------
     //  Constructor: new
@@ -63,9 +66,7 @@ class mby_mesh_hard_reset_seq extends shdv_base_reset_seq;
     //------------------------------------------------------------------------------
     function new(input string name = "mby_mesh_hard_reset_seq");
         super.new(name);
-        set_env(slu_tb_env::get_top_tb_env());
-
-        tb_vif = env.get_tb_vif();
+        set_env(shdv_base_env::get_top_tb_env());
     endfunction: new
 
     //------------------------------------------------------------------------------
@@ -73,17 +74,15 @@ class mby_mesh_hard_reset_seq extends shdv_base_reset_seq;
     //  Handle to Mplex Top Level env for use in sequences
     //
     //  Arguments:
-    //  slu_tb_env tb_env  -  Handle to the ENV
+    //  shdv_base_env tb_env  -  Handle to the ENV
     //------------------------------------------------------------------------------
-    virtual function void set_env(slu_tb_env tb_env);
+    virtual function void set_env(shdv_base_env tb_env);
         mby_mesh_env_pkg::mby_mesh_env temp_env;
-        bit stat;
 
-        stat = $cast(temp_env,tb_env);
-        `slu_assert(    stat, ($psprintf("Cast of $s(type: $s) failed!!!",tb_env.get_name(),tb_env.get_type_name())));
-        `slu_assert(temp_env, ("Could not fetch slu_tb_env handle!!!"));
+        $cast(temp_env,tb_env);
 
         this.env    = temp_env;
+        tb_vif      = temp_env.get_tb_vif();
     endfunction : set_env
 
     //------------------------------------------------------------------------------
@@ -92,17 +91,27 @@ class mby_mesh_hard_reset_seq extends shdv_base_reset_seq;
     //  as well as Warm_Reset (Set)
     //------------------------------------------------------------------------------
     task body();
-
+        // Core hard reset
+        repeat (500) @(posedge tb_vif.fab_clk);
+       
         `uvm_info(get_name(), $sformatf("Hard_Reset Set"), UVM_NONE);
-        tb_vif.hard_reset                 = 1;
-        `uvm_info(get_name(), $sformatf("Hard_Reset Set"), UVM_NONE);
-        tb_vif.warm_reset                 = 1;
+        tb_vif.chard_reset                 = 1;
 
         repeat (200) @(posedge tb_vif.fab_clk);
 
         `uvm_info(get_name(), $sformatf("Hard_Reset Cleared"), UVM_NONE);
-        tb_vif.hard_reset                 = 0;
+        tb_vif.chard_reset                 = 0;
 
+        // Mesh hard reset
+        repeat (500) @(posedge tb_vif.mclk);
+       
+        `uvm_info(get_name(), $sformatf("Hard_Reset Set"), UVM_NONE);
+        tb_vif.mhard_reset                 = 1;
+
+        repeat (200) @(posedge tb_vif.mclk);
+
+        `uvm_info(get_name(), $sformatf("Hard_Reset Cleared"), UVM_NONE);
+        tb_vif.mhard_reset                 = 0;
     endtask: body
 
 endclass: mby_mesh_hard_reset_seq

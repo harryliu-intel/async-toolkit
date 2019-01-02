@@ -88,9 +88,11 @@ ${BLD_DIR}/mby_nexthop_test.o: \
         ${C_DIR}/mby_pipeline.h \
         ${C_DIR}/mby_common.h
 
+.PHONY: $(WM_LIB)
 $(WM_LIB):
 	make -C ${C_DIR}
 
+.PHONY: $(COM_LIB)
 $(COM_LIB):
 	make -C ${COM_DIR}
 

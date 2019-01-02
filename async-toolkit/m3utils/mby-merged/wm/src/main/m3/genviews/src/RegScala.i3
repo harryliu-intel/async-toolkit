@@ -1,10 +1,12 @@
 INTERFACE RegScala;
 IMPORT RegCompiler;
+IMPORT GenViews;
 
 CONST Brand = "RegScala";
 
 TYPE Public = RegCompiler.T;
      T      <: Public;
+     Gen    = GenViews.T;
 
 TYPE Phase = { P };
 

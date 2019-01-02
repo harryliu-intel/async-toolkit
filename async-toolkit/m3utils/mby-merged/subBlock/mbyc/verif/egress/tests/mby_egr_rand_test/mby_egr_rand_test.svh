@@ -72,7 +72,7 @@ class mby_egr_eth_simple_seq extends mby_egr_extended_base_seq;
    virtual task body();
       int count[4] = {0,0,0,0};
       this.set_name("mby_egr_eth_simple_seq");
-
+      wait_n(15);
       `uvm_info("TST", ("Starting eth simple sequence..."), UVM_LOW)
       foreach(los_sequencers[i]) begin
          assert($cast(los_sequencers[i],
@@ -116,6 +116,7 @@ class mby_egr_eth_simple_seq extends mby_egr_extended_base_seq;
       end
 
       wait fork;
+      wait_n(20);
    endtask : body
 
 endclass : mby_egr_eth_simple_seq

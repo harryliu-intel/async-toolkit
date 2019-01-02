@@ -48,9 +48,14 @@ class monitor;
     localparam NUM_INPUTS  = 4;
     localparam NUM_OUTPUTS = 4;
 
-//-hz:
-//  virtual tmpl_dut_if     dut_if;
+
     virtual msh_node_dut_if     dut_if;      
+    // -hz: 12/7/2018:
+    virtual mby_mem_msh_bank_ram_shell_4096x532_func_if mem_if_0;
+    virtual mby_mem_msh_bank_ram_shell_4096x532_func_if mem_if_1;
+    virtual mby_mem_msh_bank_ram_shell_4096x532_func_if mem_if_2;
+    virtual mby_mem_msh_bank_ram_shell_4096x532_func_if mem_if_3;
+
 
     scoreboard              sb;
 //-hz:
@@ -66,11 +71,27 @@ class monitor;
     integer                 clk_cnt;
     integer                 heartbeat;
 
+    integer		rd_rsp_cnt;
+    integer		check_rd_rsp;
+    integer		check_rd_data;
+
+    integer		after_mem_wr;
+    integer		mem_rd_cnt;
+
+    integer		wr_req_cnt;
+    integer		push_wr_data;
+
     // statistics variables
     integer                 stat_num_arb_conflicts;
 
     function new(
         virtual msh_node_dut_if dut_if,
+
+        virtual mby_mem_msh_bank_ram_shell_4096x532_func_if mem_if_0,
+        virtual mby_mem_msh_bank_ram_shell_4096x532_func_if mem_if_1,
+        virtual mby_mem_msh_bank_ram_shell_4096x532_func_if mem_if_2,
+        virtual mby_mem_msh_bank_ram_shell_4096x532_func_if mem_if_3,
+
         scoreboard          sb
 //-hz:
 //      configuration       cfg,
@@ -83,10 +104,28 @@ class monitor;
 //      this.cfg            = cfg;
 //      this.inp_drvr       = inp_drvr;
 
+	//-hz: 12/7/2018:
+        this.mem_if_0	= mem_if_0;
+        this.mem_if_1	= mem_if_1;
+        this.mem_if_2	= mem_if_2;
+        this.mem_if_3	= mem_if_3;
+
         name                    = "monitor.sv";
         clk_cnt                 = 0;
         stat_num_arb_conflicts  = 0;
         all_done                = 1'b0;
+
+//-hz:
+	rd_rsp_cnt		= 0;
+	check_rd_rsp		= 0;
+	check_rd_data		= 0;
+
+	after_mem_wr		= 0;
+        mem_rd_cnt		= 0;
+
+	wr_req_cnt		= 0;
+	push_wr_data		= 0;
+
 
         $value$plusargs("heartbeat=%d", heartbeat);     // heartbeat value comes from command line argument 
 
@@ -96,10 +135,201 @@ class monitor;
         forever begin
             @(negedge dut_if.mclk) // sample on negedge
 
-            // tell scoreboard about inputs driven to DUT
+
+	   // 12/6/2018: monitor wr req and data at mem_if:
+
+           if (mem_if_0.wr_en)  begin 
+            // $display("(time: %0d) %s: --------------------------------------------", $time, name);
+               $display("(time: %0d) %s: mem_bank0: wr_en=%0d, adr='h%0h, wdata='h%0h", 
+                         $time, name, mem_if_0.wr_en, mem_if_0.adr, mem_if_0.wr_data);
+           end
+
+           if (mem_if_1.wr_en)  begin
+            // $display("(time: %0d) %s: --------------------------------------------", $time, name);
+               $display("(time: %0d) %s: mem_bank1: wr_en=%0d, adr='h%0h, wdata='h%0h", 
+                         $time, name, mem_if_1.wr_en, mem_if_1.adr, mem_if_1.wr_data);
+           end
+
+           if (mem_if_2.wr_en)  begin
+            // $display("(time: %0d) %s: --------------------------------------------", $time, name);
+               $display("(time: %0d) %s: mem_bank2: wr_en=%0d, adr='h%0h, wdata='h%0h", 
+                         $time, name, mem_if_2.wr_en, mem_if_2.adr, mem_if_2.wr_data);
+           end
+
+           if (mem_if_3.wr_en)  begin
+            // $display("(time: %0d) %s: --------------------------------------------", $time, name);
+               $display("(time: %0d) %s: mem_bank3: wr_en=%0d, adr='h%0h, wdata='h%0h", 
+                         $time, name, mem_if_3.wr_en, mem_if_3.adr, mem_if_3.wr_data);
+           end
+
+
+
+	   // 12/7/2018: check write at memory bank 0:
+/*
+	   if (mem_if_0.wr_en) begin
+               sb.mem_bank0_wr_notification(mem_if_0.adr, mem_if_0.wr_data);
+		after_mem_wr = 1;
+	   end
+*/
+
+
+	   // 12/11/2018: push wr data at mem interface to fifo:
+/*
+	   if (mem_if_0.wr_en)
+               sb.mem_bank0_req_in_notification(mem_if_0.adr, mem_if_0.wr_data);
+*/
+
+
+	   // 12/10/2018: monitor rd data at mem_if:
+
+           // monitor rd req
+/*
+           if (mem_if_0.rd_en)  begin 
+               $display("(time: %0d) %s: --------------------------------------------", $time, name);
+		mem_rd_cnt++ ;
+           //  $display("(time: %0d) %s: mem_bank0: mem_rd_cnt=%0d, rd_en=%0d, adr='h%0h", 
+           //            $time, name, mem_rd_cnt, mem_if_0.rd_en, mem_if_0.adr);
+               $display("(time: %0d) %s: mem_bank0: rd_en=%0d, adr='h%0h", 
+                         $time, name, mem_if_0.rd_en, mem_if_0.adr);
+           end
+
+           if (mem_if_1.rd_en)  begin 
+               $display("(time: %0d) %s: --------------------------------------------", $time, name);
+		mem_rd_cnt++ ;
+               $display("(time: %0d) %s: mem_bank1: mem_rd_cnt=%0d, rd_en=%0d, adr='h%0h", 
+                         $time, name, mem_rd_cnt, mem_if_1.rd_en, mem_if_1.adr);
+           end
+
+           if (mem_if_2.rd_en)  begin 
+               $display("(time: %0d) %s: --------------------------------------------", $time, name);
+		mem_rd_cnt++ ;
+               $display("(time: %0d) %s: mem_bank2: mem_rd_cnt=%0d, rd_en=%0d, adr='h%0h", 
+                         $time, name, mem_rd_cnt, mem_if_2.rd_en, mem_if_2.adr);
+           end
+
+           if (mem_if_3.rd_en)  begin 
+               $display("(time: %0d) %s: --------------------------------------------", $time, name);
+		mem_rd_cnt++ ;
+               $display("(time: %0d) %s: mem_bank3: mem_rd_cnt=%0d, rd_en=%0d, adr='h%0h", 
+                         $time, name, mem_rd_cnt, mem_if_3.rd_en, mem_if_3.adr);
+           end
+
+
+           // monitor rd data which comes 1 cycle (should be 2 ???) after rd req
+
+           if (mem_if_0.rd_valid)  begin 
+               $display("(time: %0d) %s: --------------------------------------------", $time, name);
+           //  $display("(time: %0d) %s: mem_bank0: mem_rd_cnt=%0d, rd_valid=%0d, rdata='h%0h", 
+           //            $time, name, mem_rd_cnt, mem_if_0.rd_valid, mem_if_0.rd_data);
+               $display("(time: %0d) %s: mem_bank0: rd_valid=%0d, rdata='h%0h", 
+                         $time, name, mem_if_0.rd_valid, mem_if_0.rd_data);
+           end
+
+           if (mem_if_1.rd_valid)  begin 
+               $display("(time: %0d) %s: --------------------------------------------", $time, name);
+               $display("(time: %0d) %s: mem_bank1: mem_rd_cnt=%0d, rd_valid=%0d, rdata='h%0h", 
+                         $time, name, mem_rd_cnt, mem_if_1.rd_valid, mem_if_1.rd_data);
+           end
+
+           if (mem_if_2.rd_valid)  begin 
+               $display("(time: %0d) %s: --------------------------------------------", $time, name);
+               $display("(time: %0d) %s: mem_bank2: mem_rd_cnt=%0d, rd_valid=%0d, rdata='h%0h", 
+                         $time, name, mem_rd_cnt, mem_if_2.rd_valid, mem_if_2.rd_data);
+           end
+
+           if (mem_if_3.rd_valid)  begin 
+               $display("(time: %0d) %s: --------------------------------------------", $time, name);
+               $display("(time: %0d) %s: mem_bank3: mem_rd_cnt=%0d, rd_valid=%0d, rdata='h%0h", 
+                         $time, name, mem_rd_cnt, mem_if_3.rd_valid, mem_if_3.rd_data);
+           end
+*/
+
+
+	   // 12/10/2018: check 2nd read request at memory bank 0:
+/*
+  	   if (mem_if_0.rd_en && (mem_rd_cnt==2)) begin
+               sb.mem_bank0_rd_req_notification(mem_if_0.adr);
+  	   end
+*/
+
+	   // 12/10/2018: check 2nd read data at memory bank 0:
+/*
+  	   if (mem_if_0.rd_valid && (mem_rd_cnt==2)) begin
+                 sb.mem_bank0_rd_data_notification(mem_if_0.rd_data);
+  	   end
+*/
+
+
+
+// -----------------------------------------------------------------------------
+	   // 12/12/2018: push wr data to fifo and pop data to check when read
+// -----------------------------------------------------------------------------
+
+	// expect wr data in next 2 cycles after req vld, 
+
+	   if (dut_if.i_eb_wr_req[0].vld) 
+	   begin
+		wr_req_cnt++ ;
+	   end
+           else begin
+                if (wr_req_cnt == 3) wr_req_cnt=0;
+		else if (wr_req_cnt != 0) wr_req_cnt++;
+  	   end
+
+	   if (wr_req_cnt==3) push_wr_data = 1;
+           else push_wr_data = 0;
+
+
+	// push wr data:
+
+	   if (push_wr_data)
+               sb.eb_p0_wr_req_in_notification(dut_if.i_eb_wr_data[0]);
+
+
+
+	// expect rd data in next 2 cycles after rd rsp
 
 	   if (dut_if.o_wb_rd_rsp[0].vld) 
-                    sb.wb_p0_rsp_out_notification(dut_if.o_wb_rd_rsp[0]);
+	   begin
+                check_rd_rsp = 1;
+		rd_rsp_cnt++ ;
+	   end
+           else begin
+                check_rd_rsp = 0;
+                if (rd_rsp_cnt == 3) rd_rsp_cnt=0;
+		else if (rd_rsp_cnt != 0) rd_rsp_cnt++;
+  	   end
+
+
+	   if (rd_rsp_cnt==3) check_rd_data = 1;
+           else check_rd_data = 0;
+
+
+           // 12/11/2018: check rd data against wr fifo:
+
+           if (check_rd_data) begin
+                 $display("(time: %0d) %s: check wb rdata: rdata='h%0h",
+                           $time, name, dut_if.o_wb_rd_data[0]);
+                 sb.wb_p0_check_rd_data_notification(dut_if.o_wb_rd_data[0]);
+           end
+
+
+
+            // tell scoreboard about inputs driven to DUT
+/*
+	   if (check_rd_rsp) begin
+               sb.wb_p0_rd_rsp_out_notification(dut_if.o_wb_rd_rsp[0]);
+	   end
+
+	   if (check_rd_data) begin
+               sb.wb_p0_rd_data_out_notification(dut_if.o_wb_rd_data[0]);
+	   end
+*/
+
+//         $display("-hz: monitor: (time: %0d)  check_rd_rsp = %0d  check_rd_data = %0d  rd_rsp_cnt = %0d ", 
+//                                  $time,      check_rd_rsp,       check_rd_data,       rd_rsp_cnt);
+
+
 
 //-hz:
 //          foreach (dut_if.i_reqs[i])

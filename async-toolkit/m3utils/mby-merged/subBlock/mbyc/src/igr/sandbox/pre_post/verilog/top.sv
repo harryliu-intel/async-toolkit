@@ -118,7 +118,7 @@ import igr_sim_pkg::*;
       .mim_wreq_4_mim_wreq_credits             ( dut_if.mim_wreq_4_mim_wreq_credits ),
       .mim_wreq_5_mim_wreq_credits             ( dut_if.mim_wreq_5_mim_wreq_credits ),
 
-      .rx_ppe_igr_intf0                        ( dut_if.rx_ppe_igr_intf1 ),
+      .rx_ppe_igr_intf0                        ( dut_if.rx_ppe_igr_intf0 ),
       .rx_ppe_igr_intf1                        ( dut_if.rx_ppe_igr_intf1 ),
 
               // outputs
@@ -178,6 +178,24 @@ import igr_sim_pkg::*;
 
     );
 
+    rx_ppe_bfm  rx_ppe
+      (
+      .cclk                                    ( dut_if.clk ),
+      .rst                                     ( dut_if.rst ),
+
+      .igr_rx_ppe_intf0_ack                    ( dut_if.igr_rx_ppe_intf0_ack ),
+      .igr_rx_ppe_intf1_ack                    ( dut_if.igr_rx_ppe_intf1_ack ),
+      .igr_rx_ppe_intf0_tail                   ( dut_if.igr_rx_ppe_intf0_tail ),
+      .igr_rx_ppe_intf0_head                   ( dut_if.igr_rx_ppe_intf0_head ),
+      .igr_rx_ppe_intf1_tail                   ( dut_if.igr_rx_ppe_intf1_tail ),
+      .igr_rx_ppe_intf1_head                   ( dut_if.igr_rx_ppe_intf1_head ),
+      .rx_ppe_igr_intf0                        ( dut_if.rx_ppe_igr_intf0 ),
+      .rx_ppe_igr_intf1                        ( dut_if.rx_ppe_igr_intf1 )
+
+       );
+    
+
+    
     // instantiate testcase
     testcase test(
         dut_if                                    // pass interface dut_if into testcase

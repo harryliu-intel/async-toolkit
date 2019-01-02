@@ -93,9 +93,11 @@ ${BLD_DIR}/mby_basic_flood_init.o: \
         mby_basic_flood_init.c \
         mby_basic_flood_init.h
 
+.PHONY: $(WM_LIB)
 $(WM_LIB):
 	make -C ${C_DIR}
 
+.PHONY: $(COM_LIB)
 $(COM_LIB):
 	make -C ${COM_DIR}
 

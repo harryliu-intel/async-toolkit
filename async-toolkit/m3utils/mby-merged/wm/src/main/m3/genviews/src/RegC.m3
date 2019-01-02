@@ -3,9 +3,8 @@ IMPORT GenViewsC;
 IMPORT RegReg, RegGenState, RegRegfile, RegAddrmap;
 IMPORT OSError, Thread, Wr;
 IMPORT Pathname, RegCGenState;
-FROM RegCGenState IMPORT Section;
 IMPORT Wx;
-IMPORT RdlArray, BigInt;
+IMPORT BigInt;
 FROM Compiler IMPORT ThisFile, ThisLine;
 IMPORT Fmt;
 FROM Fmt IMPORT Int, F;
@@ -17,6 +16,10 @@ IMPORT TextTopoSort;
 IMPORT FileWr;
 IMPORT RegContainer;
 IMPORT TextSeq;
+FROM GenCUtils IMPORT FmtConstant, PutXDecls, FmtArrSz, Variant, FieldType,
+                      FmtFieldType, FmtFieldModifier, ArrSz;
+
+TYPE CGPhase = RegCGenState.Phase;
 
 <*FATAL BigInt.OutOfRange*>
 
@@ -28,37 +31,21 @@ REVEAL
     write := Write;
   END;
 
-PROCEDURE DefTypes(wr : Wr.T) RAISES { Wr.Failure, Thread.Alerted } =
-  BEGIN
-    FOR i := 1 TO 64 DO
-      CASE i OF
-        1..8 => Wr.PutText(wr, "typedef unsigned char ")
-      |
-        9..16 => Wr.PutText(wr, "typedef unsigned short ")
-      |
-        17..32 => Wr.PutText(wr, "typedef unsigned int ")
-      |
-        33..64 => Wr.PutText(wr, "typedef unsigned long ")
-      END;
-      Wr.PutText(wr, F("uint%s;\n", Int(i)))
-    END
-  END DefTypes;
-  
 PROCEDURE Write(t : T; dirPath : Pathname.T; <*UNUSED*>phase : Phase)
   RAISES { Wr.Failure, Thread.Alerted, OSError.E } =
   VAR
     wxTbl := NEW(TextRefTbl.Default).init();
-    gs : GenState := RegGenState.T.init(NEW(GenState,
-                                            wxTbl := wxTbl,
-                                            map := t.map,
-                                            topo := NEW(TextTopoSort.T).init()), dirPath);
+    gs : RegCGenState.T := NEW(RegCGenState.T,
+                               wxTbl := wxTbl,
+                               map := t.map,
+                               topo := NEW(TextTopoSort.T).init()).init(dirPath);
     intfNm := t.map.intfName(gs);
     fn := intfNm & ".h";
     path := dirPath & "/" & fn;
   BEGIN
-    FOR ph := FIRST(GenPhase) TO LAST(GenPhase) DO
+    FOR ph := FIRST(CGPhase) TO LAST(CGPhase) DO
       EVAL RegGenState.T.init(gs, gs.dirPath); (* clear symbol table *)
-      genPhase := ph;
+      gs.phase := ph;
       t.map.generate(gs);
 
       CASE ph OF
@@ -163,124 +150,17 @@ PROCEDURE Write(t : T; dirPath : Pathname.T; <*UNUSED*>phase : Phase)
   END Write;
 
   (**********************************************************************)
-  
-TYPE
-  GenState = RegCGenState.T OBJECT
-    map : RegAddrmap.T; (* do we really need this? could refer to T instead *)
-    curSym : TEXT := NIL;
-    curWx : Wx.T := NIL;
-    wxTbl : TextRefTbl.T;
-    topo : TextTopoSort.T;
-  METHODS
-    p(sec : Section; fmt : TEXT; t1, t2, t3, t4, t5 : TEXT := NIL) := GsP;
-    main(fmt : TEXT; t1, t2, t3, t4, t5 : TEXT := NIL) := GsMain;
-    noteDep(to : TEXT) :=  NoteDep;
-  OVERRIDES
-    put := PutGS;
-    newSymbol := NewSymbol;
-  END;
-
-PROCEDURE NoteDep(gs : GenState; toSym : TEXT) =
-  BEGIN
-    (* note that curSym depends on toSym *)
-    <*ASSERT gs.curSym # NIL*>
-    Debug.Out(F("%s depends on %s", gs.curSym, toSym));
-    gs.topo.addDependency(toSym, gs.curSym)
-  END NoteDep;
-      
-PROCEDURE NewSymbol(gs : GenState; nm : TEXT) : BOOLEAN
-  RAISES { OSError.E, Thread.Alerted, Wr.Failure } =
-  VAR
-    res : BOOLEAN;
-  BEGIN
-    (* is it OK to generate this symbol?  
-       if we had it before -> NOT OK
-       if we did not have it before -> OK
-     *)
-    res := RegGenState.T.newSymbol(gs, nm);
-
-    IF res AND genPhase = 0 THEN
-      gs.curWx := Wx.New();
-      WITH hadIt = gs.wxTbl.put(nm, gs.curWx) DO <*ASSERT NOT hadIt*> END
-    END;
-    gs.curSym := nm;
-    
-    RETURN res
-  END NewSymbol;
-  
-PROCEDURE PutGS(gs : GenState; <*UNUSED*>sec : Section; txt : TEXT) =
-  BEGIN
-    Wx.PutText(gs.curWx, txt)
-  END PutGS;
-
-PROCEDURE GsP(gs  : GenState;
-              sec : Section;
-              fmt : TEXT;
-              t1, t2, t3, t4, t5 : TEXT) =
-  BEGIN gs.put(sec, F(fmt, t1, t2, t3, t4, t5)) END GsP;
-
-PROCEDURE GsMain(gs : GenState; fmt : TEXT; t1, t2, t3, t4, t5 : TEXT := NIL)= 
-  BEGIN gs.p(Section.Maintype, fmt, t1, t2, t3, t4, t5) END GsMain;
-
-  (**********************************************************************)
-
-PROCEDURE FmtConstant(xDecls : TextSeq.T; val : TEXT; nm, sfx : TEXT) =
-  BEGIN
-    xDecls.addhi(F("static const unsigned int %s__%s = %s;", nm, sfx, val));
-    xDecls.addhi(F("#define %s__%sd    %s", nm, sfx, val))
-  END FmtConstant;
-  
-PROCEDURE FmtArrSz(xDecls : TextSeq.T; a : RdlArray.Single; nm : TEXT) =
-  BEGIN
-    IF a = NIL THEN
-      RETURN
-    ELSE
-      FmtConstant(xDecls, BigInt.Format(a.n.x), nm, "n")
-    END
-  END FmtArrSz;
-
-PROCEDURE PutXDecls(gs : GenState; xDecls : TextSeq.T) =
-  BEGIN
-    FOR i := 0 TO xDecls.size()-1 DO
-      gs.main(xDecls.get(i)); gs.main("\n")
-    END;
-    gs.main("\n")
-  END PutXDecls;
-
-TYPE
-  Variant = RECORD ptr : FieldType;  sfx : TEXT END;
-  FieldType = { UInt, Pointer, Id };
 
 CONST
   Phases = ARRAY OF Variant { Variant { FieldType.UInt,       "" },
-                              Variant { FieldType.Pointer, "__addr" }(*,
-                              Variant { FieldType.Id, "__api" }*) };
-
-PROCEDURE FmtFieldType(baseType : TEXT; ft : FieldType) : TEXT =
-  BEGIN
-    CASE ft OF
-      FieldType.UInt => RETURN baseType
-    |
-      FieldType.Pointer => RETURN baseType
-    |
-      FieldType.Id => RETURN "field_id"
-    END
-  END FmtFieldType;
-
-PROCEDURE FmtFieldModifier(ft : FieldType) : TEXT =
-  CONST
-    Modifier = ARRAY FieldType OF TEXT { "", "*", "" };
-  BEGIN
-    RETURN Modifier[ft]
-  END FmtFieldModifier;
-  
+                              Variant { FieldType.Pointer, "__addr" } };
 
 PROCEDURE GenRegStruct(r : RegReg.T; genState : RegGenState.T)
   RAISES { OSError.E, Thread.Alerted, Wr.Failure } =
   VAR
-    gs : GenState := genState;
-    myTn          := r.typeName(gs);
-    xDecls        := NEW(TextSeq.T).init();
+    gs : RegCGenState.T := genState;
+    myTn                := r.typeName(gs);
+    xDecls              := NEW(TextSeq.T).init();
   BEGIN
     IF NOT gs.newSymbol(myTn) THEN RETURN END;
     Debug.Out("Generating code for " & myTn);
@@ -311,17 +191,14 @@ PROCEDURE GenRegStruct(r : RegReg.T; genState : RegGenState.T)
     PutXDecls(gs, xDecls)
   END GenRegStruct;
 
-PROCEDURE SkipArcP(c : RegContainer.T) : BOOLEAN =
-  BEGIN RETURN ISTYPE(c, RegRegfile.T) AND c.children.size() = 1 END SkipArcP;
-  
 PROCEDURE GenContainerStruct(rf       : RegContainer.T;
                              genState : RegGenState.T) 
   RAISES { Wr.Failure, Thread.Alerted, OSError.E } =
   VAR
-    gs : GenState := genState;
+    gs : RegCGenState.T := genState;
     myTn := rf.typeName(gs);
     xDecls := NEW(TextSeq.T).init();
-    skipArc := SkipArcP(rf);
+    skipArc := rf.skipArc();
   BEGIN
     IF NOT gs.newSymbol(myTn) THEN RETURN END;
     gs.main("\n/* %s:%s */\n", ThisFile(), Fmt.Int(ThisLine()));
@@ -381,7 +258,7 @@ PROCEDURE GenContainerStruct(rf       : RegContainer.T;
 PROCEDURE GenProto(  r : RegComponent.T; genState : RegGenState.T)
   RAISES { } =
   VAR
-    gs : GenState := genState;
+    gs : RegCGenState.T := genState;
     myTn := r.typeName(gs);
   BEGIN
     gs.main("\nvoid\n%s__init(\n", myTn);
@@ -397,7 +274,7 @@ PROCEDURE GenProto(  r : RegComponent.T; genState : RegGenState.T)
 PROCEDURE GenRegInit(r : RegReg.T; genState : RegGenState.T)
   RAISES { OSError.E, Thread.Alerted, Wr.Failure } =
   VAR
-    gs : GenState := genState;
+    gs : RegCGenState.T := genState;
     myTn := r.typeName(gs);
 
   BEGIN
@@ -421,9 +298,9 @@ PROCEDURE GenContainerInit(rf       : RegContainer.T;
                            genState : RegGenState.T) 
   RAISES { Wr.Failure, Thread.Alerted, OSError.E } =
   VAR
-    gs : GenState := genState;
+    gs : RegCGenState.T := genState;
     myTn := rf.typeName(gs);
-    skipArc := SkipArcP(rf);
+    skipArc := rf.skipArc();
   BEGIN
     IF NOT gs.newSymbol(myTn) THEN RETURN END;
     gs.main("\n/* %s:%s */\n", ThisFile(), Fmt.Int(ThisLine()));
@@ -459,7 +336,7 @@ PROCEDURE GenContainerInit(rf       : RegContainer.T;
 PROCEDURE GenReg(r : RegReg.T; genState : RegGenState.T)
   RAISES { OSError.E, Thread.Alerted, Wr.Failure } =
   BEGIN
-    CASE genPhase OF
+    CASE NARROW(genState, RegCGenState.T).phase OF
       0 =>  GenRegStruct(r, genState)
     |
       1 =>  GenRegInit(r, genState)
@@ -469,7 +346,7 @@ PROCEDURE GenReg(r : RegReg.T; genState : RegGenState.T)
 PROCEDURE GenAddrmap(r : RegAddrmap.T; genState : RegGenState.T)
   RAISES { OSError.E, Thread.Alerted, Wr.Failure } =
   BEGIN
-    CASE genPhase OF
+    CASE NARROW(genState, RegCGenState.T).phase OF
       0 =>  GenContainerStruct(r, genState)
     |
       1 =>  GenContainerInit(r, genState)
@@ -479,7 +356,7 @@ PROCEDURE GenAddrmap(r : RegAddrmap.T; genState : RegGenState.T)
 PROCEDURE GenRegfile(r : RegRegfile.T; genState : RegGenState.T)
   RAISES { OSError.E, Thread.Alerted, Wr.Failure } =
   BEGIN
-    CASE genPhase OF
+    CASE NARROW(genState, RegCGenState.T).phase OF
       0 =>  GenContainerStruct(r, genState)
     |
       1 =>  GenContainerInit(r, genState)
@@ -487,28 +364,5 @@ PROCEDURE GenRegfile(r : RegRegfile.T; genState : RegGenState.T)
   END GenRegfile;
 
   (**********************************************************************)
-
-TYPE GenPhase = [0..1];
-     
-VAR genPhase : GenPhase;
-    
-PROCEDURE ArrSz(a : RdlArray.Single) : CARDINAL =
-  BEGIN
-    IF a = NIL THEN
-      RETURN 1
-    ELSE
-      RETURN BigInt.ToInteger(a.n.x)
-    END
-  END ArrSz;
-  
-PROCEDURE ComponentTypeName(c : RegComponent.T; gs : GenState) : TEXT =
-  BEGIN
-    TYPECASE c OF
-      RegAddrmap.T(a) =>
-      RETURN a.intfName(gs) 
-    ELSE
-      RETURN c.typeName(gs)
-    END
-  END ComponentTypeName;
 
 BEGIN END RegC.
