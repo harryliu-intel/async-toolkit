@@ -108,6 +108,28 @@
     (fielddata->lsb
      (FieldData.ArrayGet addresses x))))
 
+(define (make-promise x)
+  (list 'promise x))
+
+(define (make-do opsym)
+  (let ((op (eval opsym)))
+    (lambda(a b)
+      (if (and (number? a)(number? b))
+          (op a b)
+          (list opsym a b)))))
+
+;;(define do- (make-do '-))
+(define (do- a b)
+  (define def (make-do '-))
+  (if (equal? a b) 0 (def a b)))
+
+;;(define do+ (make-do '+))
+(define (do+ a b)
+  (define def (make-do '+))
+  (cond ((equal? a '0) b)
+        ((equal? b '0) a)
+        (else (def a b))))
+      
 (define (get-stride-bits array-spec indexer)
   ;; given a spec as follows
   ;; (base-addr elems . size)
@@ -117,10 +139,10 @@
       (let*  ((zeroth-field (car array-spec))
               (field-stride (/ (cddr array-spec)
                                (cadr array-spec)))
-              (stride-field (+ zeroth-field field-stride))
+              (stride-field (do+ zeroth-field field-stride))
               (zeroth-bit (indexer zeroth-field))
               (stride-bit (indexer stride-field)))
-        (- stride-bit zeroth-bit))
+        (do- stride-bit zeroth-bit))
       '()))
 
 (define (make-offset-tree accum-tree array-tree fields-tree indexer)
@@ -138,7 +160,7 @@
     (if (null? p)
         '()
         (let ((this-addr (indexer (caar p))))
-          (cons (cons (- this-addr b)
+          (cons (cons (do- this-addr b)
                       (cons (cadar p) (get-stride-bits (car p) indexer))
                       )
                 (map (lambda(ff)(helper ff this-addr)) (cdr p))))))
@@ -206,20 +228,10 @@
 
 (define zz (build-zip the-map))
 
-(cnt-sequence-by-name the-map '(mpp 0 shm FWD_TABLE0 1 0 DATA))
-
 (define the-array-tree (treemap array-marker the-map))
 
 (define the-accum-tree (tree-accum fields-tree))
 
-(dis (stringify
-      (FieldData.ArrayGet the-addresses
-                          (get-zip-seq-offset
-                           zz
-                           (cnt-sequence-by-name
-                            the-map
-                            '(mpp 0 shm FWD_TABLE_MOD 9 16383 DATA))))
-      ) dnl)
 
 (define last-entry (FieldData.ArrayGet the-addresses
                                        (- (FieldData.ArraySize the-addresses)
@@ -248,30 +260,32 @@
                     fields-tree
                     identity))
 
-;; the following should give the same answer
+(define the-host-offset-tree
+  (make-offset-tree the-accum-tree
+                    the-array-tree
+                    fields-tree
+                    make-promise))
 
-(compute-offset-from-seq the-chip-offset-tree '(1 0 0 0 0 0 0))
-
-(fielddata->lsb (FieldData.ArrayGet the-addresses
-                                    (get-zip-seq-offset zz '(1 0 0 0 0 0 0))))
 
 (define (make-spaces n)
   (if (= 0 n) "" (string-append " " (make-spaces (- n 1)))))
 
-(define (compile-offset-c ot nm port)
+(define (compile-offset-c ot nm c-format port)
   (define (helper b t sp)
     (let ((ind (make-spaces (* 4 (+ 1 sp)))))
       (if (has-array-child? t)
           (let* ((child  (cadr t))
                  (aspec  (cdar child))
-                 (stride (if (null? (cdr aspec)) "0xc0edbabe" (cdr aspec)))
+                 (stride (if (null? (cdr aspec))
+                             "0xc0edbabe"
+                             (cdr aspec)))
                  (size   (car aspec))
                  )
             (dis ind "{ /* array */" dnl
-                 ind "  int idx = seq->d["sp"];" dnl
-                 ind "  if (idx == -1) return arr + ADDR_LITERAL("b");" dnl
-                 ind "  assert(idx >= 0 && idx < "size");" dnl
-                 ind "  arr += idx * ADDR_LITERAL("stride");" dnl
+                 ind "  int idx = seq->d["(c-format sp)"];" dnl
+                 ind "  if (idx == -1) return arr + "(c-format b)";" dnl
+                 ind "  assert(idx >= 0 && idx < (int)"(c-format size)");" dnl
+                 ind "  arr += idx * "(c-format stride)";" dnl
                  port )
             (helper b child (+ 1 sp))
             (dis ind "}" dnl
@@ -279,16 +293,16 @@
             )
           (begin
             (dis ind "{ /*nonarray */" dnl
-                 ind "  switch(seq->d["sp"]) {" dnl
-                 ind "    case -1: return arr + ADDR_LITERAL("b"); break;" dnl
+                 ind "  switch(seq->d["(c-format sp)"]) {" dnl
+                 ind "    case -1: return arr + "(c-format b)"; break;" dnl
                  port)
             (let loop ((p     0)
                        (c     (cdr t)))
               (if (not (null? c))
                   (begin
-                    (dis ind "    case " p":" dnl
+                    (dis ind "    case " (c-format p)":" dnl
                          port)
-                    (helper (+ b (caaar c)) (car c) (+ 1 sp))
+                    (helper (do+ b (caaar c)) (car c) (+ 1 sp))
                     (loop (+ p 1) (cdr c)))
                   )
               )
@@ -300,7 +314,7 @@
           )
       )
     )
-  (dis "chipaddr_t" dnl nm"(const seqtype_t *seq)" dnl
+  (dis "chipaddr_t" dnl nm"(const raggedindex_t *seq)" dnl
        "{" dnl
        "   chipaddr_t arr=ADDR_LITERAL(0);" dnl
        port)
@@ -310,12 +324,12 @@
   #t
   )
 
-(define (compile-roffset-c ot nm port)
+(define (compile-roffset-c ot nm c-format port)
   (define (helper b t sp)
     (let ((ind (make-spaces (* 4 (+ 1 sp)))))
       (cond
        ((null? (cdr t)) ;; no children
-        (dis ind "seq->d["sp"] = -1;" dnl
+        (dis ind "seq->d["(c-format sp)"] = -1;" dnl
              ind "return a;" dnl
              port
         ))
@@ -327,9 +341,9 @@
                (size   (car aspec))
                )
           (dis ind "{ /* array */" dnl
-               ind "  const chipaddr_t stride=ADDR_LITERAL("stride");" dnl
-               ind "  const unsigned long idx = (a / stride) >= "size" ? ("size"-1):(a/stride);" dnl
-               ind "  seq->d["sp"] = idx;" dnl
+               ind "  const chipaddr_t stride="(c-format stride)";" dnl
+               ind "  const unsigned long idx = (a / stride) >= "(c-format size)" ? ("(c-format size)"-1):(a/stride);" dnl
+               ind "  seq->d["(c-format sp)"] = idx;" dnl
                
                ind "  a -= idx * stride;" dnl
                port )
@@ -349,13 +363,13 @@
                 (if (null? (cdr c))
                     (dis ind "  else {" dnl
                          port)
-                    (dis ind "  else if(a < " (caaadr c)") {" dnl
+                    (dis ind "  else if(a < " (c-format (caaadr c))") {" dnl
                          port)
                     )
-                (dis ind "    seq->d["sp"] = "p";" dnl
-                     ind "    a -= " (caaar c) ";" dnl
+                (dis ind "    seq->d["(c-format sp)"] = "p";" dnl
+                     ind "    a -= " (c-format (caaar c)) ";" dnl
                      port)
-                (helper (+ b (caaar c)) (car c) (+ 1 sp))
+                (helper (do+ b (caaar c)) (car c) (+ 1 sp))
                 (dis ind "  }" dnl port)
                 (loop (+ p 1) (cdr c)))
               )
@@ -368,7 +382,7 @@
       );;tel
     );; helper
   
-  (dis "chipaddr_t" dnl nm"(chipaddr_t a, seqtype_t *seq)" dnl
+  (dis "chipaddr_t" dnl nm"(chipaddr_t a, raggedindex_t *seq)" dnl
        "{" dnl
        port)
   (helper 0 ot 0)
@@ -486,7 +500,7 @@
           )
       )
     )
-  (dis "const arc_t **" dnl nm"(const seqtype_t *seq)" dnl
+  (dis "const arc_t **" dnl nm"(const raggedindex_t *seq)" dnl
        "{" dnl
        defer-port)
   (helper nt 0)
@@ -507,13 +521,13 @@
                (FileWr.Open (string-append *api-dir* pfx ".c")))))
     (dis "#include \""pfx".h\"" dnl
          "#include <assert.h>" dnl
-         "#include \"seqtype.h\"" dnl
+         "#include \"raggedindex.h\"" dnl
          dnl
          (cdr res))
 
     (dis "#ifndef "ifsym dnl 
          "#define "ifsym dnl
-         "#include \"seqtype.h\"" dnl
+         "#include \"raggedindex.h\"" dnl
 
          (car res))
     res))
@@ -522,51 +536,175 @@
   (dis "#endif" dnl (car files))
   (Wr.Close (car files))
   (Wr.Close (cdr files)))
-    
 
-(define (doit)
-  (let ((qqq '())
-        (ppp '()))
+(define (c-formatter x)
+  (cond ((number? x) (string-append (stringify x) "UL"))
+        ((atom? x) x)
+        (else (error (error-append "attempting to write to C : " x)))))
+
+(define (format-c-expr x)
+  (cond ((and (list? x)
+              (eq? (car x) 'promise))
+         (string-append "get_ptr_value(" (stringify (cadr x)) ")"))
+        
+        ((list? x)
+         (string-append
+          "("
+          (format-c-expr (cadr x))
+          (stringify (car x))
+          (format-c-expr (caddr x))
+          ")"))
+
+        (else (stringify x))))
+         
+
+(define (make-c-expr-formatter wr0 wr1)
+  (let ((mem '())
+        (n 0)
+        )
+    (lambda(x)
+      (if (pair? x)
+
+          (let ((have-it (assoc x mem)))
+            (if have-it
+                (cdr have-it)
+                (let ((new-var (string-append "hostptr_const" (stringify n))))
+                  (set! n (+ n 1))
+                  (dis "chipaddr_t " new-var ";" dnl wr0)
+                  (dis "  " new-var " = " (format-c-expr x) ";" dnl wr1)
+                  (set! mem (cons (cons x new-var) mem))
+                  new-var
+                  )
+                )
+            )
+          
+          (c-formatter x)))))
+
+
+(define (build-hostptr-stuff)
+  (let ((h-stream '())
+        (c-stream '())
+        (decls (TextWr.New))
+        (inits (TextWr.New))
+        (*setup-name* "hostptr_setup"))
 
     (define (open pfx)
       (let ((q (open-c-files pfx)))
-        (set! qqq (car q))
-        (set! ppp (cdr q))))
+        (set! h-stream (car q))
+        (set! c-stream (cdr q))))
 
     (define (close)
-      (close-c-files (cons qqq ppp)))
+      (close-c-files (cons h-stream c-stream)))
+    
+  (let* (
+         (xfmt (make-c-expr-formatter decls inits))
+         )
+    
+    (dis "*** compiling host offset tree..." dnl)
+    (let ((nm "ragged2ptr"))
+      (open nm)
+      (dis "#include \"hostptr_setup.h\"" dnl
+           dnl c-stream)
+      
+      (compile-offset-c the-host-offset-tree nm xfmt c-stream)
+      (dis "chipaddr_t "nm"(const raggedindex_t *);" dnl h-stream)
+      (close)
+      )
+    
+    (dis "*** compiling reverse host offset tree..." dnl)
+    (let ((nm "ptr2ragged"))
+      (open nm)
+      (dis "#include \"hostptr_setup.h\"" dnl
+           dnl c-stream)
+      
+      (compile-roffset-c the-host-offset-tree nm xfmt c-stream)
+      (dis "chipaddr_t "nm"(chipaddr_t, raggedindex_t *);" dnl h-stream)
+      (close)
+      )
+    )
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  
+  (open *setup-name*)
+  (dis (TextWr.ToText decls) h-stream)
+
+  (dis "#include <malloc.h>" dnl
+       "#include \"inorderid2ragged.h\"" dnl
+       "#include \"mby_top_map.h\"" dnl
+       "#include \"hostptr_setup.h\"" dnl
+       dnl c-stream)
+  (dis dnl
+       "static mby_top_map *proto;" dnl dnl c-stream)
+  (dis dnl
+       "static chipaddr_t" dnl
+       "get_ptr_value(const chipaddr_t inorder)"dnl
+       "{" dnl
+       "  raggedindex_t ra;" dnl
+       dnl
+       "  inorderid2ragged(inorder, &ra);" dnl
+       "  return (chipaddr_t)mby_top_map__getptr(proto, ra.d);" dnl
+       "}" dnl
+       dnl c-stream
+       )
+  
+  (dis "void init_hostptr(void);" dnl h-stream)
+  (dis "void" dnl
+       "init_hostptr(void)" dnl
+       "{" dnl
+       "  proto = malloc(sizeof(mby_top_map));" dnl
+       dnl
+       c-stream)
+  (dis (TextWr.ToText inits) c-stream)
+  (dis "  free(proto);" dnl
+       "}" dnl dnl
+       c-stream)
+  (close)
+  )
+  )
+
+(define (doit)
+  (let ((h-stream '())
+        (c-stream '()))
+
+    (define (open pfx)
+      (let ((q (open-c-files pfx)))
+        (set! h-stream (car q))
+        (set! c-stream (cdr q))))
+
+    (define (close)
+      (close-c-files (cons h-stream c-stream)))
     
     (dis "*** building C code..." dnl)
 
     (dis "*** compiling chip address offset tree..." dnl)
     (let ((nm "ragged2addr"))
       (open nm)
-      (compile-offset-c the-chip-offset-tree nm ppp)
-      (dis "chipaddr_t "nm"(const seqtype_t *);" dnl qqq)
+      (compile-offset-c the-chip-offset-tree nm c-formatter c-stream)
+      (dis "chipaddr_t "nm"(const raggedindex_t *);" dnl h-stream)
       (close)
       )
 
     (dis "*** compiling reverse chip address offset tree..." dnl)
     (let ((nm "addr2ragged"))
       (open nm)
-      (compile-roffset-c the-chip-offset-tree nm ppp)
-      (dis "chipaddr_t "nm"(chipaddr_t, seqtype_t *);" dnl qqq)
+      (compile-roffset-c the-chip-offset-tree nm c-formatter c-stream)
+      (dis "chipaddr_t "nm"(chipaddr_t, raggedindex_t *);" dnl h-stream)
       (close)
       )
 
     (dis "*** compiling in order field offset tree..." dnl)
     (let ((nm "ragged2inorderid"))
       (open nm)
-      (compile-offset-c the-fields-offset-tree nm ppp)
-      (dis "long "nm"(const seqtype_t *);" dnl qqq)
+      (compile-offset-c the-fields-offset-tree nm c-formatter c-stream)
+      (dis "chipaddr_t "nm"(const raggedindex_t *);" dnl h-stream)
       (close)
       )
 
     (dis "*** compiling reverse in order field offset tree..." dnl)
     (let ((nm "inorderid2ragged"))
       (open nm)
-      (compile-roffset-c the-fields-offset-tree nm ppp)
-      (dis "chipaddr_t "nm"(chipaddr_t, seqtype_t *);" dnl qqq)
+      (compile-roffset-c the-fields-offset-tree nm c-formatter c-stream)
+      (dis "chipaddr_t "nm"(chipaddr_t, raggedindex_t *);" dnl h-stream)
       (close)
       )
 
@@ -574,14 +712,23 @@
     (let ((nm "ragged2arcs"))
       (open nm)
       (record-symbols)
-      (dump-symbols ppp)
-      (dump-sizes ppp)
+      (dump-symbols c-stream)
+      (dump-sizes c-stream)
 
       (dis "*** compiling names tree..." dnl)
-      (compile-child-arc-c name-tree nm ppp)
-      (dis "const arc_t **"nm"(const seqtype_t *);" dnl qqq)
+      (compile-child-arc-c name-tree nm c-stream)
+      (dis "const arc_t **"nm"(const raggedindex_t *);" dnl h-stream)
       (close)
       )
-    )
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+    (build-hostptr-stuff)
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+   )
+
+
 )
 

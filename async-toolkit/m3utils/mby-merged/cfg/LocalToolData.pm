@@ -72,7 +72,7 @@ $ToolConfig_tools{runtools}{OTHER}{repo_trex_output}                         = "
 #####################################################
 #    Configure Environment variables for Nebulon    #
 #####################################################
-$ToolConfig_tools{nebulon}{VERSION}                                          = 'd18ww49.4';
+$ToolConfig_tools{nebulon}{VERSION}                                          = 'd18ww52.4';
 
 #####################################################
 #    Configure Environment variables for VCS/VERDI  #
@@ -128,7 +128,7 @@ $ToolConfig_tools{dc_shell} = {
 
 $ToolConfig_tools{meta} = {
     PATH => "$ENV{RTL_PROJ_TOOLS}/meta/nhdk/&get_tool_version()",
-    VERSION => "18.09.12",
+    VERSION => "19.01.02",
     ENV_APPEND  => {
         'PATH'  => "&get_tool_path()/bin",
     },

@@ -91,9 +91,11 @@ ${BLD_DIR}/mby_parser_test.o: \
         ${C_DIR}/mby_init.h \
         ${C_DIR}/mby_reg_ctrl.h
 
+.PHONY: $(WM_LIB)
 $(WM_LIB):
 	make -C ${C_DIR}
 
+.PHONY: $(COM_LIB)
 $(COM_LIB):
 	make -C ${COM_DIR}
 
