@@ -91,6 +91,7 @@ implementation ("Main")
 
 SchemeStubs ("FieldData")
 SchemeStubs ("Text")
+SchemeStubs ("TextUtils")
 SchemeStubs ("Wr")
 SchemeStubs ("Rd")
 SchemeStubs ("TextWr")

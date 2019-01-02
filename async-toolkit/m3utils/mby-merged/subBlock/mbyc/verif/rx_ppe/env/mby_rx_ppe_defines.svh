@@ -65,16 +65,12 @@ typedef enum int {
    PARSER            = 0,
    MAPPER            = 1,
    CLASSIFIER        = 2,
-   POLICER           = 3,
    HASH              = 4,
-   NEXT_HOP_LOOKUP   = 5,
+   NEXT_HOP          = 5,
    MASK_GEN          = 6,
    TRIGGERS          = 7,
    CONGESTION_MGT    = 8,
-   TELEMETRY         = 9,
-   MIRRORS_MCAST     = 10,
-   METADATA_GEN      = 11,
-   MGMT_INT          = 12
+   RX_STATS          = 9
 } mby_rx_ppe_topology_e ;
 
 // Per the SV LRM:

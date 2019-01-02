@@ -297,6 +297,19 @@ if {[info proc soc_hook_finalize] != ""} {
 
 print_time "RTL Assembly : END"
 
+###################################
+#     Remove OVM references
+###################################
+set vp_stubs_dir_weak ${vp_stubs_dir}_weak
+foreach stub_file [concat [glob -directory $vp_stubs_dir *.sv] [glob -directory $vp_stubs_dir_weak *.sv] ] {
+  print_info "Editing $stub_file"
+  if { [catch {exec /bin/sed -i {/ovm_pkg/d} $stub_file} result] } {
+    print_error "Failed to edit $stub_file for ovm replacement"
+    exit 1
+  }
+}
+
+
 ################################
 # exit unless debugging
 ################################

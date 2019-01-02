@@ -28,6 +28,13 @@
 //   Project       : Madison Bay
 //------------------------------------------------------------------------------
 
+`ifndef __MBY_MESH_ENV_BASE_SEQ_GUARD
+`define __MBY_MESH_ENV_BASE_SEQ_GUARD
+
+`ifndef __INSIDE_MBY_MESH_SEQ_LIB
+`error "Attempt to include file outside of mby_mesh_seq_lib."
+`endif
+
 //   Class:  mby_mesh_env_base_seq
 //
 //   This is the Mesh base seq extended from MBY Base seq which is in-turn extended 
@@ -36,14 +43,6 @@
 //
 //  All the sequences in mesh env will extend from this base sequence to inherit its
 //  functionality.  
-
-
-`ifndef __MBY_MESH_ENV_BASE_SEQ_GUARD
-`define __MBY_MESH_ENV_BASE_SEQ_GUARD
-
-`ifndef __INSIDE_MBY_MESH_SEQ_LIB
-`error "Attempt to include file outside of mby_mesh_seq_lib."
-`endif
 
 class mby_mesh_env_base_seq extends shdv_base_sequence; 
 

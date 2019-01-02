@@ -17,7 +17,7 @@
       <DUT>mby</DUT>
       <Stage>genrtl_mby</Stage>
       <Stage_Exec>bman</Stage_Exec>
-      <AdditionalArgs>-mc mby -s all +s genrtl_gen_mby_regflow_lib -nodelete_flow_data</AdditionalArgs>
+      <AdditionalArgs>-mc mby -s all +s genrtl -nodelete_flow_data</AdditionalArgs>
       <XdutStageDep>[mby].[genrtl]</XdutStageDep>
       <IsGating>1</IsGating>
       <Turnin>0</Turnin>

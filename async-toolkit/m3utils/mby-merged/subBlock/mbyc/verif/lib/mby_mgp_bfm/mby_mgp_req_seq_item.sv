@@ -6,8 +6,10 @@
 // Description: The read/write request/response item. The class represents an op/data structure.
 //----------------------------------------------------------------------------------------
 typedef enum bus_type_e;
+
 //----------------------------------------------------------------------------------------
 // Class: mby_mgp_req_seq_item
+// rd, wr req seq item
 //----------------------------------------------------------------------------------------
 class mby_mgp_req_seq_item extends uvm_sequence_item;
 
@@ -15,35 +17,37 @@ class mby_mgp_req_seq_item extends uvm_sequence_item;
 
    typedef union packed {
       struct packed {
-         logic [15:0] op_id;
-         logic        valid;        
-         logic [2:0]  node_col;
-         logic [3:0]  node_row;
-         logic [39:0] addr;
-         logic        sema_vld;
-         logic        sema_val;
-         logic [7:0]  age;
-         logic [501:0] dummy;
-      } rdrow_opbus;
+         logic [12:0]  op_id;
+         logic [19:0]  seg_ptr;
+         logic         valid;        
+         logic [3:0]   sema;
+         logic [1:0]   word_sel;  
+         logic [471:0] dummy_req;
+      } req_opbus;
 
       struct packed {
+         logic [12:0]      op_id;
+         logic [2:0]       dest_blk;  
+         logic [495:0]     dummy_rsp;
+      } rsp_opbus;
+       
+      struct packed {
          logic [511:0] data;
-         logic [63:0] ecc;
+         //logic [63:0] ecc;
       } databus;
 
    }physical_t;
 
-   rand bit [15:0] op_id;
-   rand bit        ps;
-   rand bit [3:0]  py;
-   rand bit [2:0]  mx;
-   rand bit [3:0]  my;
-   rand bit [13:0] addr;
-   rand bit [1:0]  sema;
-   rand bit [7:0]  age;
+   rand bit [12:0]  op_id;
+   rand bit [3:0]  sema;
+   rand bit        valid;
+   rand bit [19:0] seg_ptr;
    rand bit [511:0] data;
-   rand bit [459:0] dummy;
-   rand bus_type_e bus_type;
+   rand bit [1:0]   word_sel;
+   rand bit [2:0]   dest_blk;
+   rand bit [471:0] dummy_req;
+   rand bit [495:0] dummy_rsp;
+   //rand bit [63:0] ecc;
 
    extern function new(string name = "");
    extern virtual function void pack(ref physical_t phys);

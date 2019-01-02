@@ -27,14 +27,6 @@
 //   Project       : Madison Bay
 //------------------------------------------------------------------------------
 
-// Class: mby_mesh_env_cfg
-//
-//   This is the configuration object to control the Mesh env and
-//   its sub components.
-//
-//   This Class contain all the switches to control the ENV setting.
-//
-
 
 `ifndef __MBY_MESH_ENV_CFG_GUARD
 `define __MBY_MESH_ENV_CFG_GUARD
@@ -43,14 +35,23 @@
 `error "Attempt to include file outside of mby_mesh_env_pkg."
 `endif
 
+// Class: mby_mesh_env_cfg
+//
+//   This is the configuration object to control the Mesh env and
+//   its sub components.
+//
+//   This Class contain all the switches to control the ENV setting.
+
 class mby_mesh_env_cfg extends shdv_base_config;
 
 
    `uvm_object_utils_begin(mby_mesh_env_cfg)
    `uvm_object_utils_end
 
-   rand mby_mgp_bfm_pkg::mby_mgp_agent_cfg mst_agent_cfg;
-   rand mby_mgp_bfm_pkg::mby_mgp_agent_cfg slv_agent_cfg;
+   // Variable: bfm_cfg
+   //
+   // BFM configuration object.
+   rand mby_mgp_bfm_pkg::mby_mgp_bfm_cfg bfm_cfg;
    //---------------------------------------------------------------------------
    // Constructor: new
    //
@@ -61,8 +62,8 @@ class mby_mesh_env_cfg extends shdv_base_config;
    //---------------------------------------------------------------------------
    function new( string name = "mby_mesh_env_cfg");
       super.new(name);
-      mst_agent_cfg = mby_mgp_bfm_pkg::mby_mgp_agent_cfg::type_id::create("mst_agent_cfg");
-      slv_agent_cfg = mby_mgp_bfm_pkg::mby_mgp_agent_cfg::type_id::create("slv_agent_cfg");
+      bfm_cfg = mby_mgp_bfm_pkg::mby_mgp_bfm_cfg::type_id::create("bfm_cfg");
+
    endfunction: new
 
    //---------------------------------------------------------------------------
