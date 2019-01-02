@@ -1,14 +1,12 @@
-INTERFACE GenViewsSvHlp;
-IMPORT GenViews;
-IMPORT Rd;
+INTERFACE GenViewsSvFulcrum;
+IMPORT GenViewsPass2;
 IMPORT Word;
 IMPORT Pathname;
 
 TYPE
   T <: Public;
 
-  Public = GenViews.T OBJECT
-    fieldAddrRd      : Rd.T;
+  Public = GenViewsPass2.T OBJECT
     addrBits         : AddrBits;
     baseAddressBytes : Word.T;
     packageName      : TEXT;
@@ -17,4 +15,4 @@ TYPE
 
   AddrBits = [1..64];
 
-END GenViewsSvHlp.
+END GenViewsSvFulcrum.

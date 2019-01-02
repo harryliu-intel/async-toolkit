@@ -9,7 +9,7 @@ IMPORT TextSetDef;
 IMPORT RegAddrmap;
 IMPORT Pathname;
 IMPORT GenViews, GenViewsM3, GenViewsScala, GenViewsC, GenViewsCApi;
-IMPORT GenViewsSvHlp;
+IMPORT GenViewsSvFulcrum;
 IMPORT GenViewsScheme;
 IMPORT Text;
 IMPORT Rd, FileRd;
@@ -23,9 +23,9 @@ CONST Usage = "-top <top map name> [-L|-language m3|scala|c[-api]|scheme|sv-hlp]
 PROCEDURE DoUsage() : TEXT =
   BEGIN RETURN Params.Get(0) & ": usage: " & Usage END DoUsage;
 
-TYPE Lang = { M3, Scala, C, Scheme, CApi, SvHlp };
+TYPE Lang = { M3, Scala, C, Scheme, CApi, SvFulcrum };
 
-CONST LangNames = ARRAY Lang OF TEXT { "m3", "scala", "c", "scheme", "c-api", "sv-hlp" };
+CONST LangNames = ARRAY Lang OF TEXT { "m3", "scala", "c", "scheme", "c-api", "sv-fulcrum" };
   
 VAR
   lexer  := NEW(rdlLexExt.T, userDefProperties := NEW(TextSetDef.T).init());
@@ -39,9 +39,9 @@ VAR
   fieldAddrRd : Rd.T := NIL;
   scmFiles : REF ARRAY OF TEXT;
 
-  (* the following are specific for SvHlp, should be moved to a 
+  (* the following are specific for SvFulcrum, should be moved to a 
      different file ? *)
-  addrBits : GenViewsSvHlp.AddrBits := LAST(GenViewsSvHlp.AddrBits);
+  addrBits : GenViewsSvFulcrum.AddrBits := LAST(GenViewsSvFulcrum.AddrBits);
   baseAddressBytes : Word.T := 0;
   packageName : TEXT := NIL;
   outFileName : Pathname.T := NIL;
@@ -72,7 +72,7 @@ BEGIN
         END
       END;
 
-      IF lang IN SET OF Lang { Lang.Scheme, Lang.SvHlp } THEN
+      IF lang IN SET OF Lang { Lang.Scheme, Lang.SvFulcrum } THEN
         IF pp.keywordPresent("-f") THEN
           WITH ifn = pp.getNext() DO
             IF TE(ifn, "-") THEN
@@ -85,8 +85,8 @@ BEGIN
         END
       END;
 
-      IF lang = Lang.SvHlp THEN
-        (* this should perhaps be processed inside GenViewsSvHlp 
+      IF lang = Lang.SvFulcrum THEN
+        (* this should perhaps be processed inside GenViewsSvFulcrum 
            and not here *)
         IF pp.keywordPresent("-bits") THEN
           addrBits := pp.getNextInt()
@@ -145,7 +145,7 @@ BEGIN
   |
     Lang.Scheme => gv := NEW(GenViewsM3.T)
   |
-    Lang.SvHlp => gv := NEW(GenViewsM3.T)
+    Lang.SvFulcrum => gv := NEW(GenViewsM3.T)
   END;  
 
   EVAL lexer.setRd(rd);
@@ -175,8 +175,8 @@ BEGIN
         scmFiles := scmFiles,
         fieldAddrRd := fieldAddrRd).gen(tgtmap, outDir)
   |
-    Lang.SvHlp =>
-    NEW(GenViewsSvHlp.T,
+    Lang.SvFulcrum =>
+    NEW(GenViewsSvFulcrum.T,
         fieldAddrRd      := fieldAddrRd,
         baseAddressBytes := baseAddressBytes,
         addrBits         := addrBits,

@@ -1,4 +1,4 @@
-MODULE GenViewsSvHlp;
+MODULE GenViewsSvFulcrum;
 IMPORT RegReg, RegField, RegContainer, RegChild, RegAddrmap;
 IMPORT Pathname;
 IMPORT Debug;
@@ -171,7 +171,7 @@ PROCEDURE DoContainer(t    : T;
         ELSE
           arc := NEW(NameArc,
                      idx := i,
-                     nm := HlpName(chld.comp, chld.nm),
+                     nm := FulcrumName(chld.comp, chld.nm),
                      up := arc);
           ct := NARROW(tree, TreeType.Struct).fields.get(i)
         END;
@@ -481,7 +481,7 @@ PROCEDURE DoReg(t    : T;
       WITH f = r.fields.get(i),
            arc = NEW(NameArc,
                      idx := i,
-                     nm := HlpName(f, f.nm),
+                     nm := FulcrumName(f, f.nm),
                      up := pfx,
                      field := TRUE) DO
         DoField(t, f, lev, arc)
@@ -491,10 +491,10 @@ PROCEDURE DoReg(t    : T;
     Emit(t,"",lev);
   END DoReg;
 
-PROCEDURE HlpName(comp : RegComponent.T; iNm : TEXT) : TEXT =
+PROCEDURE FulcrumName(comp : RegComponent.T; iNm : TEXT) : TEXT =
   VAR
     hn : TEXT;
-    gotIt := comp.getRdlTextProperty("HlpName", hn);
+    gotIt := comp.getRdlTextProperty("FulcrumName", hn);
   BEGIN
     IF gotIt THEN
       hn := Unquote(hn);
@@ -504,7 +504,7 @@ PROCEDURE HlpName(comp : RegComponent.T; iNm : TEXT) : TEXT =
       hn := iNm
     END;
     RETURN hn
-  END HlpName;
+  END FulcrumName;
 
 PROCEDURE FormatNameArcsOnly(p : Arc; fieldPfx := "") : TEXT =
   VAR
@@ -574,4 +574,4 @@ PROCEDURE BigPow2(n : CARDINAL) : BigInt.T =
 
 BEGIN
   bigPow2.addhi(BigInt.One) (* 2^0 = 1 *)
-END GenViewsSvHlp.
+END GenViewsSvFulcrum.

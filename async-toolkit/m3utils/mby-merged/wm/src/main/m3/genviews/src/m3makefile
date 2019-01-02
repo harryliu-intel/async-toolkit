@@ -90,13 +90,17 @@ module   ("GenViewsCApi")
 module   ("RegCApi")
 interface("RegCApiGenerators") 
 
+%%%%%%%%%%%%%%%%%%%%%  Second-pass output  %%%%%%%%%%%%%%%%%%%%%
+
+interface("GenViewsPass2")
+
 %%%%%%%%%%%%%%%%%%%%%  Scheme output  %%%%%%%%%%%%%%%%%%%%%
 
 module   ("GenViewsScheme")
 
-%%%%%%%%%%%%%  HLP-style SystemVerilog output  %%%%%%%%%%%%%
+%%%%%%%%%%%%%  FULCRUM-style SystemVerilog output  %%%%%%%%%%%%%
 
-module   ("GenViewsSvHlp")
+module   ("GenViewsSvFulcrum")
 module   ("TreeType")
 interface("TreeTypeClass")
 sequence ("TreeType", "TreeType")
