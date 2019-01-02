@@ -84,7 +84,7 @@ CFLAGS += -Wno-override-init
 
 ifeq ($(DEBUG),1)
 CFLAGS += -O0 -g -ggdb3
-CFLAGS += -gstabs+ # added to support M3 debugging
+#FLAGS += -gstabs+ # initially added to aid in M3 debugging, but interferes with -ggdb3, so removed
 else
 CFLAGS += -O1
 endif
