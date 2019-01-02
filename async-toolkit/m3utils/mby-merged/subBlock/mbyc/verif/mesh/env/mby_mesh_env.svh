@@ -27,18 +27,18 @@
 //   Project       : Madison Bay
 //------------------------------------------------------------------------------
 
-//------------------------------------------------------------------------------
-//Class : mby_mesh_env
-//This is the MBY Shared memory mesh Environment file which is extended from shdv_base_env.
-//This class instantiates agents and also creates and connects scoreboards.
-//------------------------------------------------------------------------------
-
 `ifndef __MBY_MESH_ENV_GUARD
 `define __MBY_MESH_ENV_GUARD
 
 `ifndef __INSIDE_MBY_MESH_ENV_PKG
 `error "Attempt to include file outside of mby_mesh_env_pkg."
 `endif
+
+//------------------------------------------------------------------------------
+//Class : mby_mesh_env
+//This is the MBY Shared memory mesh Environment file which is extended from shdv_base_env.
+//This class instantiates agents and also creates and connects scoreboards.
+//------------------------------------------------------------------------------
 
 class mby_mesh_env extends shdv_base_env;
 
@@ -49,12 +49,29 @@ class mby_mesh_env extends shdv_base_env;
    // Variable:  tb_vif
    // Interface handle to mesh Testbench.
    virtual   mby_mesh_tb_if                                tb_vif;
+
+   // Variable:  req_wb_if
+   // Interface handle to westbount request of mesh.
    virtual   mby_mgp_mim_if                                req_wb_if;
+
+   // Variable:  req_eb_if
+   // Interface handle to eastbount request of mesh.
    virtual   mby_mgp_mim_if                                req_eb_if;
 
+   //Variable: wb_mgp_bfm
+   //mby_mgp_bfm  for wb of Mesh
    mby_mgp_bfm_pkg::mby_mgp_bfm                            wb_mgp_bfm[mby_mgp_bfm_pkg::NUM_MSH_ROWS];
+
+   //Variable: eb_mgp_bfm
+   //mby_mgp_bfm  for eb of Mesh
    mby_mgp_bfm_pkg::mby_mgp_bfm                            eb_mgp_bfm[mby_mgp_bfm_pkg::NUM_MSH_ROWS];
+
+   //Variable: sb_mgp_bfm
+   //mby_mgp_bfm  for sb of Mesh
    mby_mgp_bfm_pkg::mby_mgp_bfm                            sb_mgp_bfm[mby_mgp_bfm_pkg::NUM_MSH_COLS];
+
+   //Variable: nb_mgp_bfm
+   //mby_mgp_bfm  for nb of Mesh
    mby_mgp_bfm_pkg::mby_mgp_bfm                            nb_mgp_bfm[mby_mgp_bfm_pkg::NUM_MSH_COLS];
    
    // Variable:  tb_ral

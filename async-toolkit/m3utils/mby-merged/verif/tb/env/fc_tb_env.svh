@@ -17,7 +17,6 @@ class fc_tb_env extends slu_tb_env;
     //fc_sm_env sm;
     //
 
-    // static protected sla_ral_env ral;
     //fc_im_env tb_im;
 
     // File Name manager (contains all the settings for the File Names)
@@ -55,7 +54,6 @@ class fc_tb_env extends slu_tb_env;
             _tb_env = this;
 
         if (_level == SLA_TOP) begin
-            ral_type  = "fc_ral_env";
             sm_type   = "fc_sm_env";
             im_type   = "fc_im_env";
         end      
@@ -328,7 +326,6 @@ class fc_tb_env extends slu_tb_env;
                 #0;
 
                 if (fc_sig_if.tb_clk === 1'b1) begin
-                    ->ral.ref_clk;
                     ->sys_clk_r;
                 end      
 

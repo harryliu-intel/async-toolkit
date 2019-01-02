@@ -27,18 +27,18 @@
 //   Project       : Madison Bay
 //------------------------------------------------------------------------------
 
-//   Class:  mby_mesh_warm_reset_seq
-//
-//   This is the main IP Warm Reset Sequence. execute in Warm_Reset_Phase
-//
-//   Delays for some time and drops warm_reset.
-
 `ifndef __MBY_MESH_WARM_RESET_SEQ_GUARD
 `define __MBY_MESH_WARM_RESET_SEQ_GUARD
 
 `ifndef __INSIDE_MBY_MESH_SEQ_LIB
 `error "Attempt to include file outside of mby_mesh_seq_lib."
 `endif
+
+//   Class:  mby_mesh_warm_reset_seq
+//
+//   This is the main IP Warm Reset Sequence. execute in Warm_Reset_Phase
+//
+//   Delays for some time and drops warm_reset.
 
 class mby_mesh_warm_reset_seq extends shdv_base_reset_seq;
 

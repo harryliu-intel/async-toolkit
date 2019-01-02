@@ -13,15 +13,7 @@
 module fc_hvl_top #(
 );
     
-   import uvm_pkg::*;
-
-`ifdef XVM
-   import ovm_pkg::*;
-   import xvm_pkg::*;
-   `include "ovm_macros.svh"
-   `include "sla_macros.svh"
-   `include "xvm_macros.svh"
-`endif
+    import uvm_pkg::*;
 
     import sla_pkg::*;
     `include "uvm_macros.svh"
@@ -62,8 +54,6 @@ module fc_hvl_top #(
 
     `include "fc_forces.sv"
 
-    //Debug tracker for looking at all IP poks/masks
-    //`include "pok_trk.sv"
 
 /*    // ------------------------------------------------------------------------
     // Assertion Control Block
@@ -89,32 +79,10 @@ module fc_hvl_top #(
     // ------------------------------------------------------------------------
 
     event vintfInitDone;
-    //TbUtilsPkg::VintfBundle fc_vintfBundle;
-    //svlib_pkg::VintfBundle vintfBundle_sb;
 
     initial begin 
 
-        //sla_pkg::sla_resource_db #(virtual sig_if)::add("sig_if", fc_sig_if, `__FILE__,`__LINE__);
-
-        //uvm_config_db#(virtual sig_if)::set(uvm_root::get(), "*", "sig_if", fc_sig_if); 
         uvm_config_db#(virtual sig_if)::set(null, "*", "sig_if", fc_sig_if); 
-
-       // slu_vif_container #(virtual sig_if)  FcSigIntfWrapper;
-        //slu_vif_container #(virtual FcDutIf) FcDutIntfWrapper;
-
-        //fc_vintfBundle = new("fc_vintfBundle");
-       // assert(fc_vintfBundle) else uvm_report_fatal("TB", "Failed to create fc_vintfBundle");
-        //ssn uvm_config_object::set(null, .inst_name("*"), .field_name(FC::VINTF_BUNDLE_NAME), .value(fc_vintfBundle), .clone(0));
-       // uvm_config_object::set(null, .inst_name("*"), .field_name(FC::VINTF_BUNDLE_NAME), .value(fc_vintfBundle));
-
-        // Create all interface wrappers
-       // FcSigIntfWrapper = new("FcSigIntfWrapper");
-       // FcSigIntfWrapper.set_v_if(fc_sig_if);
-        //FcDutIntfWrapper = new("FcDutIntfWrapper");
-        //FcDutIntfWrapper.set_v_if(fc_hdl_top.fctop_dut_if);
-       // fc_vintfBundle.setData(FC::FCSIGIFNAME, FcSigIntfWrapper);
-        //fc_vintfBundle.setData(FC::FCDUTIFNAME, FcDutIntfWrapper);
-
 
         FC::apply_forces = apply_forces;
         ->vintfInitDone;
@@ -126,10 +94,7 @@ module fc_hvl_top #(
     initial begin: UVM_TEST
         $display($time, "%m: Running FC top Build");
         wait(vintfInitDone.triggered);
-
-        if ($value$plusargs("UVM_TESTNAME=%s", testname  )) begin
-             xvm_pkg::run_test("", testname,   xvm::EOP_UVM);
-        end
+        run_test();
     end      
 
     initial begin: BEACON

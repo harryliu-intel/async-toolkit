@@ -65,11 +65,6 @@ module mby_rx_ppe_tb_top ();
 
    assign rx_ppe_tb_if.fab_clk  = fabric_clk;
 
-   shdv_base_tb_intf shdv_intf();
-
-   assign   shdv_intf.ref_clk   = rx_ppe_tb_if.fab_clk;
-   assign   shdv_intf.ref_rst   = rx_ppe_tb_if.hard_reset;
-
    mby_ec_cdi_tx_intf cdi_tx_intf (rx_ppe_tb_if.hard_reset, rx_ppe_tb_if.fab_clk);
    mby_ec_cdi_rx_intf cdi_rx_intf (rx_ppe_tb_if.hard_reset, rx_ppe_tb_if.fab_clk);
    //assign cdi_rx_intf.ecc             = cdi_tx_intf.ecc;           // MJ: TODO: ecc was removed
@@ -197,7 +192,6 @@ module mby_rx_ppe_tb_top ();
       .TOPOLOGY(mby_rx_ppe_env_pkg::PARSER)
    ) rx_ppe_ti(
       .mby_rx_ppe_tb_if               (rx_ppe_tb_if),
-      .shdv_intf                      (shdv_intf),
       .eth_bfm_tx_vintf               (cdi_tx_intf),
       .eth_bfm_rx_vintf               (cdi_rx_intf)
 
