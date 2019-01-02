@@ -27,11 +27,6 @@
 //   Project       : Madison Bay
 //------------------------------------------------------------------------------
 
-//   Class:  mby_mesh_hard_reset_seq
-//
-//   This is the main IP Hard Reset Sequence. execute in Hard_Reset_Phase
-//
-//   Sets both Hard and Warm Resets.   Delays for some time and drops Hard Reset.
 
 `ifndef __MBY_MESH_HARD_RESET_SEQ_GUARD
 `define __MBY_MESH_HARD_RESET_SEQ_GUARD
@@ -40,6 +35,11 @@
 `error "Attempt to include file outside of mby_mesh_seq_lib."
 `endif
 
+//   Class:  mby_mesh_hard_reset_seq
+//
+//   This is the main IP Hard Reset Sequence. execute in Hard_Reset_Phase
+//
+//   Sets both Hard and Warm Resets.   Delays for some time and drops Hard Reset.
 class mby_mesh_hard_reset_seq extends shdv_base_reset_sequence;
 
     // Variable: shdv_env

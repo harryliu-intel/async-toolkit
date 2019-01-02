@@ -86,18 +86,6 @@ endclass : mby_rx_ppe_classifier_obj
 
 
 
-class mby_rx_ppe_policer_obj extends mby_rx_ppe_sb_obj;
-   `uvm_object_utils(mby_rx_ppe_policer_obj)
-   function new( string name = "mby_rx_ppe_policer_obj");
-      super.new(name);
-   endfunction: new
-
-   virtual function string my_type();
-      return("mby_rx_ppe_policer_obj ");
-   endfunction : my_type
-endclass : mby_rx_ppe_policer_obj 
-
-
 
 class mby_rx_ppe_hash_obj extends mby_rx_ppe_sb_obj;
    `uvm_object_utils(mby_rx_ppe_hash_obj)
@@ -112,16 +100,16 @@ endclass : mby_rx_ppe_hash_obj
 
 
 
-class mby_rx_ppe_next_hop_lookup_obj extends mby_rx_ppe_sb_obj;
-   `uvm_object_utils(mby_rx_ppe_next_hop_lookup_obj)
-   function new( string name = "mby_rx_ppe_next_hop_lookup_obj");
+class mby_rx_ppe_next_hop_obj extends mby_rx_ppe_sb_obj;
+   `uvm_object_utils(mby_rx_ppe_next_hop_obj)
+   function new( string name = "mby_rx_ppe_next_hop_obj");
       super.new(name);
    endfunction: new
 
    virtual function string my_type();
-      return("mby_rx_ppe_next_hop_lookup_obj ");
+      return("mby_rx_ppe_next_hop_obj ");
    endfunction : my_type
-endclass : mby_rx_ppe_next_hop_lookup_obj 
+endclass : mby_rx_ppe_next_hop_obj 
 
 
 
@@ -164,53 +152,14 @@ endclass : mby_rx_ppe_congestion_mgt_obj
 
 
 
-class mby_rx_ppe_telemetry_obj extends mby_rx_ppe_sb_obj;
-   `uvm_object_utils(mby_rx_ppe_telemetry_obj)
-   function new( string name = "mby_rx_ppe_telemetry_obj");
+class mby_rx_ppe_rx_stats_obj extends mby_rx_ppe_sb_obj;
+   `uvm_object_utils(mby_rx_ppe_rx_stats_obj)
+   function new( string name = "mby_rx_ppe_rx_stats_obj");
       super.new(name);
    endfunction: new
 
    virtual function string my_type();
-      return("mby_rx_ppe_telemetry_obj ");
+      return("mby_rx_ppe_rx_stats_obj ");
    endfunction : my_type
-endclass : mby_rx_ppe_telemetry_obj 
-
-
-
-class mby_rx_ppe_mirrors_mcast_obj extends mby_rx_ppe_sb_obj;
-   `uvm_object_utils(mby_rx_ppe_mirrors_mcast_obj)
-   function new( string name = "mby_rx_ppe_mirrors_mcast_obj");
-      super.new(name);
-   endfunction: new
-
-   virtual function string my_type();
-      return("mby_rx_ppe_mirrors_mcast_obj ");
-   endfunction : my_type
-endclass : mby_rx_ppe_mirrors_mcast_obj 
-
-
-
-class mby_rx_ppe_metadata_gen_obj extends mby_rx_ppe_sb_obj;
-   `uvm_object_utils(mby_rx_ppe_metadata_gen_obj)
-   function new( string name = "mby_rx_ppe_parser_obj");
-      super.new(name);
-   endfunction: new
-
-   virtual function string my_type();
-      return("mby_rx_ppe_metadata_gen_obj ");
-   endfunction : my_type
-endclass : mby_rx_ppe_metadata_gen_obj 
-
-
-
-class mby_rx_ppe_mgmt_int_obj extends mby_rx_ppe_sb_obj;
-   `uvm_object_utils(mby_rx_ppe_mgmt_int_obj)
-   function new( string name = "mby_rx_ppe_parser_obj");
-      super.new(name);
-   endfunction: new
-
-   virtual function string my_type();
-      return("mby_rx_ppe_mgmt_int_obj ");
-   endfunction : my_type
-endclass : mby_rx_ppe_mgmt_int_obj 
+endclass : mby_rx_ppe_rx_stats_obj 
 

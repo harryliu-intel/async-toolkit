@@ -9,6 +9,7 @@ typedef enum bus_type_e;
 
 //----------------------------------------------------------------------------------------
 // Class: mby_mgp_req_seq_item
+// rd, wr req seq item
 //----------------------------------------------------------------------------------------
 class mby_mgp_req_seq_item extends uvm_sequence_item;
 

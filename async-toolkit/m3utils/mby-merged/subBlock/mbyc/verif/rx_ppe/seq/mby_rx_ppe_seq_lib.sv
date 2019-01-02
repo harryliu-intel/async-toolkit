@@ -53,11 +53,15 @@ package mby_rx_ppe_seq_lib;
    `include "uvm_macros.svh"
 
    `define __INSIDE_MBY_RX_PPE_SEQ_LIB
+   `include "mby_rx_ppe_cfg_seq.svh"
+   `include "mby_rx_ppe_eot_seq.svh"
+   
    `include "mby_rx_ppe_env_base_seq.svh"
-//PJP   `include "mby_rx_ppe_power_good_seq.svh"
-//PJP   `include "mby_rx_ppe_hard_reset_seq.svh"
-//PJP   `include "mby_rx_ppe_warm_reset_seq.svh"
-//PJP   `include "mby_rx_ppe_env_cfg_seq.svh"
+   `include "mby_rx_ppe_hard_reset_seq.svh"
+   `include "mby_rx_ppe_env_cfg_seq.svh"
+   `include "mby_rx_ppe_env_shutdown_seq.svh"
+//k`include "mby_rx_ppe_power_good_seq.svh"
+//k`include "mby_rx_ppe_warm_reset_seq.svh"
 
    `undef  __INSIDE_MBY_RX_PPE_SEQ_LIB
 
