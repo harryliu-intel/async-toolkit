@@ -37,6 +37,13 @@ WM_NET_LIB=$(WM_NET_TARGDIR)/libwm_net.a
 GENVIEWS_ROOT=genviews
 GENVIEWS_TARGDIR=$(GENVIEWS_ROOT)/$(OS_TARG)
 GENVIEWS=$(GENVIEWS_TARGDIR)/genviews
+
+FIELDVISITOR_ROOT=genviews/fieldvisitor
+FIELDVISITOR_TARGDIR=$(FIELDVISITOR_ROOT)/$(OS_TARG)
+FIELDVISITOR=$(FIELDVISITOR_TARGDIR)/fieldvisitor
+
+MBY_MAPFIELDS=mby.mapfields
+
 SCALA_GEN=foo
 C_GEN=bar
 SCM_GEN=boo
@@ -112,6 +119,15 @@ wm_support: $(WM_SUPPORT)
 $(GENVIEWS): $(wildcard $(GENVIEWS_ROOT)/src/*) $(WM_SUPPORT) $(TOP)
 	pushd $(GENVIEWS_ROOT)/src && $(CM3) -x
 
+$(FIELDVISITOR): $(wildcard $(GENVIEWS_ROOT)/src/*) $(GENVIEWS) $(MBYLIB) $(HLPLIB)
+	pushd $(FIELDVISITOR_ROOT)/src && $(CM3) -x
+
+$(MBY_MAPFIELDS): $(FIELDVISITOR) $(MBYLIB)
+	$(FIELDVISITOR) -m mby -o $@
+
+mby_consts_pkt.vh: $(GENVIEWS) $(MBY_MAPFIELDS)
+	$(GENVIEWS) -L sv-fulcrum -bits 28 -top mby_top_map -o mydir -f $(MBY_MAPFIELDS) -i $(MBY_POSTPROC) -packagename mby_top_map_pkg -of $@
+
 $(STRUCTGEN): $(wildcard $(STRUCTGEN_ROOT)/src/*) $(WM_SUPPORT) $(TOP)
 	pushd $(STRUCTGEN_ROOT)/src && $(CM3) -x
 
@@ -149,7 +165,7 @@ $(MBY_POSTPROC): $(MBY_TOP_RDL) $(wildcard $(dir $(MBY_TOP_RDL))/*.rdl)
 	export PERL5LIB=$(dir $<).. && cat work/i2.rdl | perl > $@
 
 
-$(MBYLIB): $(MBY_POSTPROC) $(GENVIEWS) rpc_structs
+$(MBYLIB): $(MBY_POSTPROC) $(GENVIEWS) $(META_STRUCTS)
 	mkdir -p $(MBY_BUILD_ROOT)/src
 	$(GENVIEWS_TARGDIR)/genviews -L m3 -top mby_top_map -o $(MBY_BUILD_ROOT)/src < $<
 	cp $(GENVIEWS_ROOT)/src/boilerplate/m3overrides $(MBY_BUILD_ROOT)/src
@@ -175,8 +191,6 @@ $(MBY_C_LIB): $(C_GEN)
 $(SCM_GEN): $(MBY_POSTPROC) $(GENVIEWS)
 	mkdir -p $(MBY_BUILD_SCM_ROOT)/src
 	$(GENVIEWS_TARGDIR)/genviews -L scm -top mby_top_map -o $(MBY_BUILD_SCM_ROOT)/src < $<
-# have to run the field visitor somewhere
-# then build the API as well
 
 scmgen: $(SCM_GEN)
 
@@ -202,6 +216,7 @@ $(MODEL_SERVER): $(WM_NET_LIB) $(WM_SUPPORT) $(HLPLIB) $(MBYLIB) $(MBY_C_LIB)
 	cd model_server && $(CM3) -x
 
 model_server: $(MODEL_SERVER)
+fieldvisitor: $(FIELDVISITOR)
 
 doc:
 	$(MAKE) -C $(MBY_C_ROOT)/doc
