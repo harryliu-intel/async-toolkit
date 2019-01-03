@@ -1,13 +1,13 @@
 //-----------------------------------------------------------------------------
-// Title         : Madison Bay GCM BFM Transaction item
+// Title         : Madison Bay PCM BFM Transaction item
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : mby_gcm_bfm_wm_xaction.svh
+// File          : mby_pcm_bfm_wm_xaction.svh
 // Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
 // Created       : 01.11.2018
 //-----------------------------------------------------------------------------
 // Description :
-// This is the transaction item used by the gcm bfm
+// This is the transaction item used by the pcm bfm
 //-----------------------------------------------------------------------------
 // Copyright (c) 2018 by Intel Corporation This model is the confidential and
 // proprietary property of Intel Corporation and the possession or use of this
@@ -30,31 +30,31 @@
 // express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
-`ifndef __MBY_GCM_BFM_PKG__
-`error "Attempt to include file outside of mby_gcm_bfm_pkg."
+`ifndef __MBY_PCM_BFM_PKG__
+`error "Attempt to include file outside of mby_pcm_bfm_pkg."
 `endif
-`ifndef __MBY_GCM_BFM_WM_XACTION__
-`define __MBY_GCM_BFM_WM_XACTION__
+`ifndef __MBY_PCM_BFM_WM_XACTION__
+`define __MBY_PCM_BFM_WM_XACTION__
 //-----------------------------------------------------------------------------
-// CLASS: mby_gcm_bfm_wm_xaction
+// CLASS: mby_pcm_bfm_wm_xaction
 //
 // This is a parameterized class used by watermark agent.
 //
 // PARAMETERS:
-//     T_data     - mby_gcm_bfm_rx_wm_t
-//     T_debug    - mby_gcm_bfm_debg_t
+//     T_data     - mby_pcm_bfm_rx_wm_t
+//     T_debug    - mby_pcm_bfm_debg_t
 //
 //-----------------------------------------------------------------------------
-class mby_gcm_bfm_wm_xaction extends mby_base_sequence_item
+class mby_pcm_bfm_wm_xaction extends mby_base_sequence_item
 #(
-   .T_data (mby_gcm_bfm_rx_wm_t),
-   .T_debug(mby_gcm_bfm_debg_t)
+   .T_data (mby_pcm_bfm_rx_wm_t),
+   .T_debug(mby_pcm_bfm_debg_t)
 );
 
    // -------------------------------------------------------------------------
    // Macro for factory registration
    // -------------------------------------------------------------------------
-  `uvm_object_utils(mby_gcm_bfm_wm_xaction#(T_data, T_data_rsp, T_debug))
+  `uvm_object_utils(mby_pcm_bfm_wm_xaction#(T_data, T_data_rsp, T_debug))
 
    // -------------------------------------------------------------------------
    // CONSTRUCTOR: new
@@ -65,7 +65,7 @@ class mby_gcm_bfm_wm_xaction extends mby_base_sequence_item
    //     string name - The sequence item name
    //
    // -------------------------------------------------------------------------
-   function new (string name = "mby_gcm_bfm_wm_xaction");
+   function new (string name = "mby_pcm_bfm_wm_xaction");
       super.new(name);
    endfunction
 
@@ -95,7 +95,7 @@ class mby_gcm_bfm_wm_xaction extends mby_base_sequence_item
       // pretty print
    endfunction : do_print
 
-endclass : mby_gcm_bfm_wm_xaction
+endclass : mby_pcm_bfm_wm_xaction
 `endif
 
 

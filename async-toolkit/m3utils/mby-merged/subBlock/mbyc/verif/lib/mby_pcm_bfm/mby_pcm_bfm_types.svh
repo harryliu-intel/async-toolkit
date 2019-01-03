@@ -1,13 +1,13 @@
 //-----------------------------------------------------------------------------
-// Title         : Madison Bay GCM Bus Functional Model Types
+// Title         : Madison Bay PCM Bus Functional Model Types
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : mby_gcm_bfm_defines.sv
+// File          : mby_pcm_bfm_types.svh
 // Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
 // Created       : 01.11.2018
 //-----------------------------------------------------------------------------
 // Description :
-// These are the GCM_BFM definitions
+// These are the PCM_BFM definitions
 //-----------------------------------------------------------------------------
 // Copyright (c) 2018 by Intel Corporation This model is the confidential and
 // proprietary property of Intel Corporation and the possession or use of this
@@ -30,72 +30,72 @@
 // express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
-`ifndef __MBY_GCM_BFM_PKG__
-`error "Attempt to include file outside of mby_gcm_bfm_pkg."
+`ifndef __MBY_PCM_BFM_PKG__
+`error "Attempt to include file outside of mby_pcm_bfm_pkg."
 `endif
-`ifndef __MBY_GCM_BFM_TYPES__
-`define __MBY_GCM_BFM_TYPES__
+`ifndef __MBY_PCM_BFM_TYPES__
+`define __MBY_PCM_BFM_TYPES__
 // -------------------------------------------------------------------------
-// Main struct type definitions for GCM BFM
+// Main struct type definitions for PCM BFM
 // -------------------------------------------------------------------------
 // This is the dequeue type defined in the gmm_pkg.
-typedef mby_unicast_deque_t mby_gcm_bfm_deque_t;
-// For queue the GCM snoops the tag interface and extracts src/dst info from
+typedef mby_unicast_deque_t mby_pcm_bfm_deque_t;
+// For queue the PCM snoops the tag interface and extracts src/dst info from
 // there.
-typedef mby_tag_ring_t mby_gcm_bfm_queue_t;
-// These are the watermark types for the GCM (tx/rx) watermarks
-typedef mby_cm_rx_wm_t mby_gcm_bfm_rx_wm_t;
-typedef mby_cm_tx_wm_t mby_gcm_bfm_tx_wm_t; // TODO: is this needed?
-// These are the shared watermark types for the GCM.
-typedef mby_cm_shared_mem_rx_wm_t mby_gcm_bfm_sm_rx_wm_t;
-typedef mby_cm_shared_mem_tx_wm_t mby_gcm_bfm_sm_tx_wm_t;
+typedef mby_tag_ring_t mby_pcm_bfm_queue_t;
+// These are the watermark types for the PCM (tx/rx) watermarks
+typedef mby_cm_rx_wm_t mby_pcm_bfm_rx_wm_t;
+typedef mby_cm_tx_wm_t mby_pcm_bfm_tx_wm_t; // TODO: is this needed?
+// These are the shared watermark types for the PCM.
+typedef mby_cm_shared_mem_rx_wm_t mby_pcm_bfm_sm_rx_wm_t;
+typedef mby_cm_shared_mem_tx_wm_t mby_pcm_bfm_sm_tx_wm_t;
 // Simple logic for debug for now
-typedef logic mby_gcm_bfm_debg_t;
+typedef logic mby_pcm_bfm_debg_t;
 
-// These are the modes of operation of the GCM BFM, variable to be included in
+// These are the modes of operation of the PCM BFM, variable to be included in
 // the configuration object.
 typedef enum bit {
-   GCM_BFM_IGR_MODE,
-   GCM_BFM_EGR_MODE
-} mby_gcm_bfm_mode_t;
+   PCM_BFM_IGR_MODE,
+   PCM_BFM_EGR_MODE
+} mby_pcm_bfm_mode_t;
 
 // -------------------------------------------------------------------------
-// Main class & VIF type definitions for GCM BFM
+// Main class & VIF type definitions for PCM BFM
 // -------------------------------------------------------------------------
-// Creating a virtual interface types for the GCM.
-typedef virtual mby_gcm_bfm_queue_if    mby_gcm_bfm_queue_vif;
-typedef virtual mby_gcm_bfm_deque_if    mby_gcm_bfm_deque_vif;
-typedef virtual mby_gcm_bfm_rx_wm_if    mby_gcm_bfm_rx_wmark_vif;
-typedef virtual mby_gcm_bfm_sm_rx_wm_if mby_gcm_bfm_smem_rx_wmark_vif;
-typedef virtual mby_gcm_bfm_sm_tx_wm_if mby_gcm_bfm_smem_tx_wmark_vif;
+// Creating a virtual interface types for the PCM.
+typedef virtual mby_pcm_bfm_queue_if    mby_pcm_bfm_queue_vif;
+typedef virtual mby_pcm_bfm_deque_if    mby_pcm_bfm_deque_vif;
+typedef virtual mby_pcm_bfm_rx_wm_if    mby_pcm_bfm_rx_wmark_vif;
+typedef virtual mby_pcm_bfm_sm_rx_wm_if mby_pcm_bfm_smem_rx_wmark_vif;
+typedef virtual mby_pcm_bfm_sm_tx_wm_if mby_pcm_bfm_smem_tx_wmark_vif;
 
 // Forward declaration of the transaction classes.
-typedef class mby_gcm_bfm_queue_xaction;
-typedef class mby_gcm_bfm_deque_xaction;
-typedef class mby_gcm_bfm_sm_wm_xaction;
-typedef class mby_gcm_bfm_wm_xaction;
+typedef class mby_pcm_bfm_queue_xaction;
+typedef class mby_pcm_bfm_deque_xaction;
+typedef class mby_pcm_bfm_sm_wm_xaction;
+typedef class mby_pcm_bfm_wm_xaction;
 
-// Defining the GCM agents as parameterized base agent classes.
-// (1) The GCM queue agent, used in IGR mode
+// Defining the PCM agents as parameterized base agent classes.
+// (1) The PCM queue agent, used in IGR mode
 typedef mby_base_pkg::mby_base_agent#(
-   .T_req(mby_gcm_bfm_queue_xaction),
-   .T_vif(mby_gcm_bfm_queue_vif))         gcm_queue_bfm_agent;
-// (2) The GCM dequeue agent, used in EGR mode
+   .T_req(mby_pcm_bfm_queue_xaction),
+   .T_vif(mby_pcm_bfm_queue_vif))         pcm_queue_bfm_agent;
+// (2) The PCM dequeue agent, used in EGR mode
 typedef mby_base_pkg::mby_base_agent#(
-   .T_req(mby_gcm_bfm_deque_xaction),
-   .T_vif(mby_gcm_bfm_deque_vif))         gcm_deque_bfm_agent;
-// (3) The GCM rx watermark agent, used in IGR mode
+   .T_req(mby_pcm_bfm_deque_xaction),
+   .T_vif(mby_pcm_bfm_deque_vif))         pcm_deque_bfm_agent;
+// (3) The PCM rx watermark agent, used in IGR mode
 typedef mby_base_pkg::mby_base_agent#(
-   .T_req(mby_gcm_bfm_wm_xaction),
-   .T_vif(mby_gcm_bfm_rx_wmark_vif))      gcm_rx_wm_bfm_agent;
-// (4) The GCM rx shared memory watermark agent used in IGR mode
+   .T_req(mby_pcm_bfm_wm_xaction),
+   .T_vif(mby_pcm_bfm_rx_wmark_vif))      pcm_rx_wm_bfm_agent;
+// (4) The PCM rx shared memory watermark agent used in IGR mode
 typedef mby_base_pkg::mby_base_agent#(
-   .T_req(mby_gcm_bfm_sm_wm_xaction),
-   .T_vif(mby_gcm_bfm_smem_rx_wmark_vif)) gcm_rx_smem_wm_bfm_agent;
-// (5) The GCM tx shared memory watermark agent used in EGR mode
+   .T_req(mby_pcm_bfm_sm_wm_xaction),
+   .T_vif(mby_pcm_bfm_smem_rx_wmark_vif)) pcm_rx_smem_wm_bfm_agent;
+// (5) The PCM tx shared memory watermark agent used in EGR mode
 typedef mby_base_pkg::mby_base_agent#(
-   .T_req(mby_gcm_bfm_sm_wm_xaction),
-   .T_vif(mby_gcm_bfm_smem_tx_wmark_vif)) gcm_tx_smem_wm_bfm_agent;
+   .T_req(mby_pcm_bfm_sm_wm_xaction),
+   .T_vif(mby_pcm_bfm_smem_tx_wmark_vif)) pcm_tx_smem_wm_bfm_agent;
 
 `endif
 
