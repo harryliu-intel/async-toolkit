@@ -1,13 +1,13 @@
 //-----------------------------------------------------------------------------
-// Title         : Madison Bay GCM Interface
+// Title         : Madison Bay PCM Interface
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : mby_gcm_bfm_queue_if.sv
+// File          : mby_pcm_bfm_queue_if.sv
 // Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
 // Created       : 01.11.2018
 //-----------------------------------------------------------------------------
 // Description :
-// Madison Bay GCM BFM interface file
+// Madison Bay PCM BFM interface file
 //-----------------------------------------------------------------------------
 // Copyright (c) 2018 by Intel Corporation This model is the confidential and
 // proprietary property of Intel Corporation and the possession or use of this
@@ -30,15 +30,15 @@
 // express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
-`ifndef __MBY_GCM_BFM_QUEUE_IF__
-`define __MBY_GCM_BFM_QUEUE_IF__
+`ifndef __MBY_PCM_BFM_QUEUE_IF__
+`define __MBY_PCM_BFM_QUEUE_IF__
 //------------------------------------------------------------------------------
-// INTERFACE: mby_gcm_bfm_queue_if
+// INTERFACE: mby_pcm_bfm_queue_if
 //
-// This is the interface that connects IGR to the GCM (it is really the tag ring)
+// This is the interface that connects IGR to the PCM (it is really the tag ring)
 //
 //------------------------------------------------------------------------------
-interface mby_gcm_bfm_queue_if(input logic clk, input logic rst);
+interface mby_pcm_bfm_queue_if(input logic clk, input logic rst);
    import mby_gmm_pkg::*;
    import shared_pkg::*;
 
@@ -114,6 +114,6 @@ interface mby_gcm_bfm_queue_if(input logic clk, input logic rst);
       debg_pkt = intf_debg_pkt;
    endtask
 
-endinterface : mby_gcm_bfm_queue_if
+endinterface : mby_pcm_bfm_queue_if
 
 `endif
