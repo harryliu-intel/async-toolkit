@@ -30,7 +30,7 @@ CONST TE = Text.Equal;
 
 CONST Usage = "[-m[odel] hlp|mby] [-o -|<filename>]";
 TYPE  Models     =                      {  Hlp,   Mby,   RxPpe,    TxPpe   };
-CONST ModelNames = ARRAY Models OF TEXT { "hlp", "mby", "rx-ppe", "tx-ppe" };
+CONST ModelNames = ARRAY Models OF TEXT { "hlp", "mby", "rx_ppe", "tx_ppe" };
 
 PROCEDURE DoUsage() : TEXT =
   BEGIN
