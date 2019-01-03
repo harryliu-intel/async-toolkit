@@ -1,13 +1,13 @@
 //-----------------------------------------------------------------------------
-// Title         : Madison Bay GCM Bus Functional Model Defines
+// Title         : Madison Bay PCM Bus Functional Model Defines
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : mby_gcm_bfm_defines.sv
+// File          : mby_pcm_bfm_defines.sv
 // Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
 // Created       : 01.11.2018
 //-----------------------------------------------------------------------------
 // Description :
-// These are the GCM BFM definitions
+// These are the PCM BFM definitions
 //-----------------------------------------------------------------------------
 // Copyright (c) 2018 by Intel Corporation This model is the confidential and
 // proprietary property of Intel Corporation and the possession or use of this
@@ -30,10 +30,10 @@
 // express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
-`ifndef __MBY_GCM_BFM_PKG__
-`error "Attempt to include file outside of mby_gcm_bfm_pkg."
+`ifndef __MBY_PCM_BFM_PKG__
+`error "Attempt to include file outside of mby_pcm_bfm_pkg."
 `endif
-`ifndef __MBY_GCM_BFM_DEFINES__
-`define __MBY_GCM_BFM_DEFINES__
+`ifndef __MBY_PCM_BFM_DEFINES__
+`define __MBY_PCM_BFM_DEFINES__
 // Definitions & local parameters
 `endif

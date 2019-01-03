@@ -19,6 +19,9 @@ logic                                                o_stall_mc_mirror_pod_ring_
 mc_mirror_deque_from_mce_t                           o_mce_mc_mirror_dequeue[15:0];
 mby_mc_tag_ring_t                                    o_mc_tag_ring_out_left[3:0];
 mby_mc_tag_ring_t                                    o_mc_tag_ring_out_right[3:0];
+mby_seg_ptr_w_rmw_t                                  o_gpm_seg_ptr;
+logic                                                o_gpm_seg_ptr_valid;
+logic                                                i_gpm_seg_ptr_stall;
 
 // DUT
 mby_mce_top dut(.*);
