@@ -1,6 +1,6 @@
 // -- Author       : Jon Bagge <jon.bagge@intel.com>
 // -- Project Name : MBY
-// -- Description  : PPE shared table memory netlist.
+// -- Description  : TX-PPE shared table memory netlist.
 // -------------------------------------------------------------------
 ngen_mod_name
 

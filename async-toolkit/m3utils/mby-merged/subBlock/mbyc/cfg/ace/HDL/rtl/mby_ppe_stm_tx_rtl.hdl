@@ -1,0 +1,37 @@
+#----------*-perl-*-------------------------
+#  This is a HDL spec file - it defines the unit and how to compile it.
+#
+#
+my $SVA_LIB = &ToolConfig::get_tool_path('ipconfig/sva_lib_ip');
+
+$hdl_spec = {
+
+	# List of specific VERILOG src files
+	-vlog_files => [
+        "src/shared/rtl/shared_pkg.sv",
+        "src/shared/rtl/axi2ibus_pkg.sv",
+        "src/shared/rtl/mby_egr_pkg.sv",
+        "src/shared/interfaces/egr_ppe_stm_if.sv",
+        "src/shared/interfaces/egr_mc_table_if.sv",
+
+		"src/ppe_stm_tx/rtl/ppe_stm_tx_top.sv",
+	],
+
+  # List of verilog library src dirs ( corresponds with the VLOG '-y' parameter)
+	-vlog_lib_dirs => [
+        "src/ppe_stm_tx/rtl",
+    ],
+
+ # List of verilog library src files ( corresponds with the VLOG '-v' parameter)
+	-vlog_lib_files => [],
+
+   # List of include directories. Corresponds with the VLOG '+incdir+' parameter
+	-vlog_incdirs => [
+        "target/mby/mgm_run/ppe_stm_tx/src",
+        "target/mby/mgm_run/ppe_stm_tx/src/mem_wrap",
+	],
+
+	# Arbitrary VLOG options
+	-vlog_opts => [],
+
+};

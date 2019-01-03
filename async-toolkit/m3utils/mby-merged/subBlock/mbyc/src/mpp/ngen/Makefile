@@ -5,7 +5,8 @@ NGEN_FLAGS    = -fi=INTCNOPWR -B
 V2BBOX        = /p/hdk/rtl/proj_tools/sl2_tools/latest/scripts/v2bbox.pl
 
 V_DIRS        = -d=../../mgp/rtl \
-                -d=../../ppe_stm/rtl \
+                -d=../../ppe_stm_rx/rtl \
+                -d=../../ppe_stm_tx/rtl \
                 -d=../../shared/rtl \
                 -d=../../egr/rtl \
                 -d=../../igr/rtl \
