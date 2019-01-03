@@ -55,9 +55,9 @@
 
 module top ();
     import mby_gmm_pkg::*;
-   // import mby_gms_pkg::*;
+    import mby_gms_pkg::*;
 
-    logic clk = 0;                              // declare clock
+    logic clk = '0;                              // declare clock
 
 
     // define clock
@@ -81,19 +81,20 @@ module top ();
     mby_gcm_top dut (
         // DUT inputs
         .cclk	    	            (dut_if.cclk	    	        ),
-        .reset_n		            (dut_if.reset_n		        ),
-        .i_tag_to_gcm               (dut_if.i_tag_to_gcm           ),
-        .i_mby_deque_from_egr       (dut_if.i_mby_deque_from_egr   ),
-        .i_mby_deque_from_vp	    (dut_if.i_mby_deque_from_vp	),
-        .i_mce_mc_mirror_dequeue    (dut_if.i_mce_mc_mirror_dequeue), 
-        .o_rx_cm_wm_out_left	    (dut_if.o_rx_cm_wm_out_left	),
+        .reset_n		            (dut_if.reset_n		            ),
+        .i_mgp_enabled              (dut_if.i_mgp_enabled           ),
+        .i_gcm_tag_ring_in          (dut_if.i_tag_to_gcm            ),
+        .i_mby_deque_from_egr       (dut_if.i_mby_deque_from_egr    ),
+        .i_mby_deque_from_vp	    (dut_if.i_mby_deque_from_vp	    ),
+        .i_mce_mc_mirror_dequeue    (dut_if.i_mce_mc_mirror_dequeue ), 
+        .o_rx_cm_wm_out_left	    (dut_if.o_rx_cm_wm_out_left	    ),
         .o_rx_cm_wm_out_right	    (dut_if.o_rx_cm_wm_out_right	),
-        .o_tx_cm_wm_out_left	    (dut_if.o_tx_cm_wm_out_left	),
+        .o_tx_cm_wm_out_left	    (dut_if.o_tx_cm_wm_out_left	    ),
         .o_tx_cm_wm_out_right	    (dut_if.o_tx_cm_wm_out_right	),
         .o_rx_cm_sm_wm_out_left	    (dut_if.o_rx_cm_sm_wm_out_left	),
-        .o_rx_cm_sm_wm_out_right	(dut_if.o_rx_cm_sm_wm_out_right),
+        .o_rx_cm_sm_wm_out_right	(dut_if.o_rx_cm_sm_wm_out_right ),
         .o_tx_cm_sm_wm_out_left		(dut_if.o_tx_cm_sm_wm_out_left	),
-        .o_tx_cm_sm_wm_out_right    (dut_if.o_tx_cm_sm_wm_out_right)
+        .o_tx_cm_sm_wm_out_right    (dut_if.o_tx_cm_sm_wm_out_right )
     );
 
     // instantiate testcase
