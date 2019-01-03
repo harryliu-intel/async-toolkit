@@ -94,13 +94,13 @@ class mby_mesh_hard_reset_seq extends shdv_base_reset_sequence;
         // Core/Mesh hard reset
         repeat (200) @(posedge tb_vif.fab_clk);
        
-        `uvm_info(get_name(), $sformatf("Hard_Reset Set"), UVM_NONE);
+        `uvm_info(get_name(), $sformatf("Hard_Reset Set"), UVM_HIGH);
         tb_vif.chard_reset                 = 1;
         tb_vif.mhard_reset                 = 1;
 
         repeat (100) @(posedge tb_vif.fab_clk);
 
-        `uvm_info(get_name(), $sformatf("Hard_Reset Cleared"), UVM_NONE);
+        `uvm_info(get_name(), $sformatf("Hard_Reset Cleared"), UVM_HIGH);
         tb_vif.chard_reset                 = 0;
         tb_vif.mhard_reset                 = 0;
 

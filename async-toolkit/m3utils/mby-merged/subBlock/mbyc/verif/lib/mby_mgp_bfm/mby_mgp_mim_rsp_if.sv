@@ -6,10 +6,10 @@ import mby_mgp_bfm_pkg::*;
 interface mby_mgp_mim_rsp_if (
      input  reset,
      input  cclk,
-     inout  [W_REQ_ID-1:0]           req_id[NUM_MSH_ROWS][NUM_MSH_ROW_PORTS],
-     inout  [W_RRSP_DEST_BLOCK-1:0]  rrsp_dest_blk [NUM_MSH_ROWS][NUM_MSH_ROW_PORTS],
-     inout  [MSH_DATA_WIDTH-1:0]     data[NUM_MSH_ROWS][NUM_MSH_ROW_PORTS],
-     inout                           valid[NUM_MSH_ROWS][NUM_MSH_ROW_PORTS]
+     inout  [W_REQ_ID-1:0]           req_id[NUM_MSH_ROWS-1 : 0][NUM_MSH_ROW_PORTS-1 : 0],
+     inout  [W_RRSP_DEST_BLOCK-1:0]  rrsp_dest_blk [NUM_MSH_ROWS-1 : 0][NUM_MSH_ROW_PORTS-1 : 0],
+     inout  [MSH_DATA_WIDTH-1:0]     data[NUM_MSH_ROWS-1 : 0][NUM_MSH_ROW_PORTS-1 : 0],
+     inout                           valid[NUM_MSH_ROWS-1 : 0][NUM_MSH_ROW_PORTS-1 : 0]
      ) ;
 
    clocking rrsp_slv_cb @(posedge cclk);

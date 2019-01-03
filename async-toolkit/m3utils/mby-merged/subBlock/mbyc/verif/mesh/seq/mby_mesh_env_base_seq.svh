@@ -54,7 +54,7 @@ class mby_mesh_env_base_seq extends shdv_base_sequence;
 
     // Variable: tb_cfg
     // Mesh tb cfg.
-    mby_mesh_env_pkg::mby_meshtb_top_cfg   tb_cfg;
+    mby_mesh_env_pkg::mby_mesh_tb_top_cfg   tb_cfg;
 
     // Variable: vif
     // Handle to Mesh Tb interface.

@@ -49,7 +49,7 @@ task mby_mesh_req_seq::body();
    mby_mgp_bfm_pkg::mby_mgp_req_seqr seqr;
    
    int loop_cnt = 1;
-   `uvm_info(get_name(), "body: Starting.", UVM_NONE)
+   `uvm_info(get_name(), "body: Starting.", UVM_LOW)
 
    $cast(seqr, shdv_base_pkg::shdv_base_tb_sequencer::pick_sequencer("req_seqr"));
    

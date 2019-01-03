@@ -21,8 +21,10 @@ class mby_mgp_bfm extends uvm_component;
    mby_mgp_req_agent rdrsp_agent[NUM_MSH_ROW_PORTS];
 
    mby_mgp_flow_ctrl   flow_ctrl;
-   mby_mgp_mem_crdt_io mem_crdt_io;
-
+   mby_mgp_mem_crdt_io rdreq_io[NUM_MSH_ROW_PORTS];
+   mby_mgp_mem_crdt_io rdrsp_io[NUM_MSH_ROW_PORTS];
+   mby_mgp_mem_crdt_io wrreq_io[NUM_MSH_ROW_PORTS];
+   
    mby_mgp_bfm_cfg  bfm_cfg;
 
    virtual mby_mgp_mim_req_if rdreq_vif;
@@ -82,14 +84,36 @@ function void mby_mgp_bfm::build_phase(uvm_phase phase);
    //
    // Build flow control and IO policy
    //
+   
    flow_ctrl             = mby_mgp_flow_ctrl::type_id::create("flow_ctrl", this);
-   mem_crdt_io           = mby_mgp_mem_crdt_io::type_id::create("mem_crdt_io", this);
-   mem_crdt_io.port_idx  = port_idx;
-   mem_crdt_io.bfm_cfg   = bfm_cfg;
-   mem_crdt_io.rdreq_vif = rdreq_vif;
-   mem_crdt_io.wrreq_vif = wrreq_vif;
-   mem_crdt_io.rsp_vif   = rsp_vif;
+   for (int idx = 0; idx < NUM_MSH_ROW_PORTS; idx++) begin
+      rdreq_io[idx]      = mby_mgp_mem_crdt_io::type_id::create($sformatf("rdreq_io%0d", idx), this);
+      rdrsp_io[idx]      = mby_mgp_mem_crdt_io::type_id::create($sformatf("rdrsp_io%0d", idx), this);
+      wrreq_io[idx]      = mby_mgp_mem_crdt_io::type_id::create($sformatf("wrreq_io%0d", idx), this);
+      rdreq_io[idx].port_idx  = port_idx;
+      rdreq_io[idx].req_type  = RDREQ;
+      rdreq_io[idx].port_num  = idx;
+   
+      rdreq_io[idx].rdreq_vif = rdreq_vif;
+      rdreq_io[idx].wrreq_vif = wrreq_vif;
+      rdreq_io[idx].rsp_vif   = rsp_vif;
 
+      wrreq_io[idx].req_type  = WRREQ;
+   
+      wrreq_io[idx].port_idx  = port_idx;
+      wrreq_io[idx].port_num  = idx;
+      wrreq_io[idx].rdreq_vif = rdreq_vif;
+      wrreq_io[idx].wrreq_vif = wrreq_vif;
+      wrreq_io[idx].rsp_vif   = rsp_vif;
+
+
+      rdrsp_io[idx].req_type  = RDRSP;
+      rdrsp_io[idx].port_num  = idx;
+      rdrsp_io[idx].port_idx  = port_idx;
+      rdrsp_io[idx].rdreq_vif = rdreq_vif;
+      rdrsp_io[idx].rsp_vif   = rsp_vif;
+      rdrsp_io[idx].wrreq_vif = wrreq_vif;
+   end
    //
    // Build read, write and response agents and assign configs.
    //
@@ -97,19 +121,19 @@ function void mby_mgp_bfm::build_phase(uvm_phase phase);
       rdreq_agent[idx] = mby_mgp_req_agent::type_id::create($sformatf("rdreq%0d_agent", idx), this);
       rdreq_agent[idx].req_agent_cfg  = bfm_cfg.req_agent_cfg;
       rdreq_agent[idx].flow_ctrl      = flow_ctrl;
-      rdreq_agent[idx].mem_crdt_io    = mem_crdt_io;
+      rdreq_agent[idx].mem_crdt_io    = rdreq_io[idx];
       rdreq_agent[idx].port_num       = idx;
       
       wrreq_agent[idx] = mby_mgp_req_agent::type_id::create($sformatf("wrreq%0d_agent", idx), this);
       wrreq_agent[idx].req_agent_cfg  = bfm_cfg.req_agent_cfg;
       wrreq_agent[idx].flow_ctrl      = flow_ctrl;
-      wrreq_agent[idx].mem_crdt_io    = mem_crdt_io;
+      wrreq_agent[idx].mem_crdt_io    = wrreq_io[idx];
       wrreq_agent[idx].port_num       = idx;
       
       rdrsp_agent[idx] = mby_mgp_req_agent::type_id::create($sformatf("rdrsp%0d_agent", idx), this);
       rdrsp_agent[idx].req_agent_cfg  = bfm_cfg.req_agent_cfg;
       rdrsp_agent[idx].flow_ctrl      = flow_ctrl;
-      rdrsp_agent[idx].mem_crdt_io    = mem_crdt_io;
+      rdrsp_agent[idx].mem_crdt_io    = rdrsp_io[idx];
       rdrsp_agent[idx].port_num       = idx;
       
    end

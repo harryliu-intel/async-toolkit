@@ -211,6 +211,7 @@ class mby_mesh_env extends shdv_base_env;
          //TODO: Update the base addr.
          tb_ral.default_map.set_base_addr(`UVM_REG_ADDR_WIDTH'h4000);
          tb_ral.lock_model();
+
          tb_ral.set_hdl_path_root("mby_mesh_tb_top.msh_node_top");
 
        // Build the Adapter's based on agt's active        

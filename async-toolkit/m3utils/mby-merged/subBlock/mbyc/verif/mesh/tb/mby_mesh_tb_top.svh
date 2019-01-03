@@ -52,7 +52,7 @@ module mby_mesh_tb_top();
    shdv_clk_gen  mclk_gen(mclk);
    wire          tb_reset;
    wire          ref_clk;
-   
+
 
    initial begin
 
@@ -77,11 +77,6 @@ module mby_mesh_tb_top();
  
    assign mesh_tb_if.fab_clk  = fabric_clk;
    assign mesh_tb_if.mclk     = mclk;
-
-   shdv_base_tb_intf shdv_intf();
-
-   assign   shdv_intf.ref_clk   = mesh_tb_if.fab_clk; 
-   assign   shdv_intf.ref_rst   = mesh_tb_if.chard_reset;
 
    assign ref_clk  = fabric_clk;
    assign tb_reset = mesh_tb_if.chard_reset;
@@ -153,7 +148,6 @@ module mby_mesh_tb_top();
    mby_mesh_ti #(
    ) mesh_ti(
        .mby_mesh_tb_if               (mesh_tb_if),
-       .shdv_intf                    (shdv_intf),
        .rreq_eb_if                   (rreq_eb_if),
        .rreq_wb_if                   (rreq_wb_if),
        .wreq_eb_if                   (wreq_eb_if),
@@ -162,7 +156,8 @@ module mby_mesh_tb_top();
        .rsp_wb_if                    (rsp_wb_if)
  
    );
-  
+
+
    //////////////////////////////////////////////
    // Hierarchy-Based RTL File List Dumping ////
    /////////////////////////////////////////////
@@ -249,10 +244,12 @@ module mby_mesh_tb_top();
  
    
    mby_msh #(.NUM_MSH_ROWS(3) , .NUM_MSH_COLS(3)) msh(
-       .cclk                  (mesh_tb_if.mclk),
-       .mclk                  (mesh_tb_if.fab_clk),
+       .cclk                  (mesh_tb_if.fab_clk),
+       .mclk                  (mesh_tb_if.mclk),
        .chreset               (mesh_tb_if.chard_reset),
        .mhreset               (mesh_tb_if.mhard_reset),
+       .csreset               (mesh_tb_if.chard_reset),
+       .msreset               (mesh_tb_if.mhard_reset),
        .i_igr_eb_wreq_valid   (wreq_eb_if.valid),
        .i_igr_eb_wr_seg_ptr   (wreq_eb_if.seg_ptr),
        .i_igr_eb_wr_sema      (wreq_eb_if.sema),

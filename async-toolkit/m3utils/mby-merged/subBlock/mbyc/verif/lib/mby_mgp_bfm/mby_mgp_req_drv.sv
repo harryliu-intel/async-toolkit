@@ -25,9 +25,6 @@ class mby_mgp_req_drv  extends uvm_driver#(mby_mgp_req_seq_item);
    extern virtual function void reset();
    extern virtual function void start();
    extern virtual task run_phase(uvm_phase phase);
-   extern virtual task sample_rqcrdt();
-   extern virtual task prepare_req();
-   extern virtual task drive_req();
    
 endclass 
 
@@ -67,18 +64,23 @@ task mby_mgp_req_drv::run_phase(uvm_phase phase);
    if (req_agent_cfg.driver_enable && !mem_crdt_io.rdreq_vif.reset) begin
       fork
          forever begin
-	    seq_item_port.get_next_item(req);
-	    if (req != null) begin
-	       req.req_id = cnt;
-               `uvm_info (this.get_name(), ("Driving request"), UVM_HIGH)
-               mem_crdt_io.drive_item(req, port_num);
+	    mem_crdt_io.step();
+	    seq_item_port.try_next_item(req);
+	    mem_crdt_io.fill_idle();
+
+	    if (req == null) begin
+               req = mem_crdt_io.idle_req();
+	       mem_crdt_io.fill_req(req);
+	    end
+	       
+	    else begin
+	       mem_crdt_io.fill_req(req);
                seq_item_port.item_done();
-	       cnt++;
             end
-	    // TODO: 
-            //sample_rqcrdt();
-            //prepare_req();
-            //drive_req();
+
+	    `uvm_info (this.get_name(), ("Driving request"), UVM_LOW)
+            mem_crdt_io.drive_item();
+
          end 
       join_none
    end
@@ -86,24 +88,4 @@ task mby_mgp_req_drv::run_phase(uvm_phase phase);
    
 endtask : run_phase
 
-//----------------------------------------------------------------------------------------
-// Method: sample_rqcrdt
-//----------------------------------------------------------------------------------------
-task mby_mgp_req_drv::sample_rqcrdt();
 
-endtask : sample_rqcrdt
-
-//----------------------------------------------------------------------------------------
-// Method: prepare_req
-//----------------------------------------------------------------------------------------
-task mby_mgp_req_drv::prepare_req();
-
-endtask : prepare_req
-
-
-//----------------------------------------------------------------------------------------
-// Method: drive_req
-//----------------------------------------------------------------------------------------
-task mby_mgp_req_drv::drive_req();
-
-endtask : drive_req

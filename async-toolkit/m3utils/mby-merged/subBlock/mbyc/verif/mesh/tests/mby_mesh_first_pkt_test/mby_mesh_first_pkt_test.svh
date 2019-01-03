@@ -121,13 +121,13 @@ class mby_mesh_first_pkt_seq extends mby_mesh_seq_lib::mby_mesh_env_base_seq;
       // Sending 1 write request.
       //
       eb_req_seq.start(env.eb_mgp_bfm[0].wrreq_agent[0].req_seqr);
-      repeat (200) @(vif.fab_clk);
+      repeat (20) @(vif.fab_clk);
 
       //
       // Sending 1 read request.
       //
       eb_req_seq.start(env.eb_mgp_bfm[0].rdreq_agent[0].req_seqr);
-      repeat (200) @(vif.fab_clk);
+      repeat (100) @(vif.fab_clk);
 
    endtask
 

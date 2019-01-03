@@ -11,7 +11,7 @@
 // ----------------------------------------------------------------------------
 
 parameter  NUM_PLANES            = 2;
-parameter  NUM_MSH_ROWS          = 3;     // number of mesh rows 
+parameter  NUM_MSH_ROWS          = 3;      // number of mesh rows //TODO : update based on plusargs
 parameter  NUM_MSH_COLS          = 3;      // number of mesh columns 
 parameter  W_SEG_PTR             = 20;     // Segment Pointer Size
 parameter  W_SEMA                = 4;      // Semaphore Bits Size

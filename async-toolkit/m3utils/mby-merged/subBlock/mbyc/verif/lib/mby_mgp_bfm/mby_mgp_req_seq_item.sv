@@ -51,6 +51,7 @@ class mby_mgp_req_seq_item extends uvm_sequence_item;
 
    extern constraint c_sema;
    extern constraint c_valid;
+   extern constraint c_req_id;
    
 
    extern function new(string name = "");
@@ -67,7 +68,9 @@ constraint mby_mgp_req_seq_item::c_valid {
    valid == 1;
 }
 
-
+constraint mby_mgp_req_seq_item::c_req_id {
+   req_id == 0;
+}
 //----------------------------------------------------------------------------------------
 // Constructor
 //----------------------------------------------------------------------------------------
