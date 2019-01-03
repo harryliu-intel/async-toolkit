@@ -20,6 +20,8 @@ IMPORT TreeTypeArraySeq;
 IMPORT TextSetDef;
 IMPORT IndexBits;
 IMPORT Wr, FileWr;
+IMPORT OSError, FS, AL;
+IMPORT ParseError;
 
 <*FATAL Thread.Alerted*>
 <*FATAL BigInt.OutOfRange*>
@@ -75,13 +77,22 @@ PROCEDURE Gen(t : T; tgtmap : RegAddrmap.T; outDir : Pathname.T) =
     b : REF ARRAY OF CARDINAL := NIL;
   BEGIN
     t.wx := Wx.New();
-    IF t.fieldAddrRd # NIL THEN
-      Debug.Out("Reading field data...");
-      a := Pickle2.Read(t.fieldAddrRd);
-      Debug.Out("size of a : " & Int(NUMBER(a^)));
-      b := Pickle2.Read(t.fieldAddrRd);
-      Debug.Out("size of b : " & Int(NUMBER(b^)));
-      Rd.Close(t.fieldAddrRd)
+    TRY
+      IF t.fieldAddrRd # NIL THEN
+        Debug.Out("Reading field data...");
+        a := Pickle2.Read(t.fieldAddrRd);
+        Debug.Out("size of a : " & Int(NUMBER(a^)));
+        b := Pickle2.Read(t.fieldAddrRd);
+        Debug.Out("size of b : " & Int(NUMBER(b^)));
+        Rd.Close(t.fieldAddrRd)
+      END;
+    EXCEPT
+      Pickle2.Error => Debug.Error("Pickle.Error reading pickle from file")
+    |
+      Rd.EndOfFile => Debug.Error("short read reading pickle from file")
+    |
+      Rd.Failure(x) =>
+        Debug.Error("I/O Error reading pickle from file : Rd.Failure : " & AL.Format(x))
     END;
     WITH tree = TreeType.To(tgtmap),
          ac   = NEW(AddressConverter, a := a) DO
@@ -98,9 +109,26 @@ PROCEDURE Gen(t : T; tgtmap : RegAddrmap.T; outDir : Pathname.T) =
     <*ASSERT outDir # NIL*>
     <*ASSERT t.outFileName # NIL*>
     WITH pn = outDir & "/" & t.outFileName DO
-      WITH wr = FileWr.Open(pn) DO
-        Wr.PutText(wr, Wx.ToText(t.wx));
-        Wr.Close(wr)
+      TRY
+       TRY
+          EVAL FS.Iterate(outDir)
+        EXCEPT
+          OSError.E(x) => Debug.Error(F("Problem opening directory \"%s\" : OSError.E : %s", outDir, AL.Format(x)))
+        END;
+       
+       WITH wr = FileWr.Open(pn) DO
+         Wr.PutText(wr, Wx.ToText(t.wx));
+         Wr.Close(wr)
+       END
+      EXCEPT
+         OSError.E(x) =>
+        Debug.Error("Error in " &
+          Brand & " code generation : OSError.E : " & AL.Format(x))
+      |
+       
+        Wr.Failure(x) =>
+        Debug.Error("Error in " &
+          Brand & " code generation : Wr.Failure : " & AL.Format(x))
       END
     END
   END Gen;
@@ -213,10 +241,8 @@ PROCEDURE DoChild(t       : T;
                   c       : RegChild.T;
                   lev     : CARDINAL;
                   pfx     : Arc;
-                  skipArc : BOOLEAN;
+                  <*UNUSED*>skipArc : BOOLEAN;(*why?*)
                   tree    : TreeType.T ) =
-  VAR
-    tag : TEXT;
   BEGIN
     WITH ccomp = c.comp DO
       TYPECASE ccomp OF
@@ -299,11 +325,9 @@ PROCEDURE EmitLocalParam(t       : T;
   END EmitLocalParam;
 
 PROCEDURE EmitTextLocalParam(t       : T;
-                         nm      : TEXT;
-                         val     : TEXT;
-                         lev     : CARDINAL) =
-  VAR
-    valStr : TEXT;
+                             nm      : TEXT;
+                             val     : TEXT;
+                             lev     : CARDINAL) =
   BEGIN
     IF localParams.insert(nm) THEN
       Debug.Error("Multiple definitions for localparam \"" & nm & "\", please uniquify!")
@@ -349,18 +373,23 @@ PROCEDURE DoReg(t    : T;
     svName := FormatNameArcsOnly(pfx);
     lim := 0;
     rst := BigInt.Zero;
-    type : TreeType.T;
   BEGIN
     EmitComment(t, "Reg", pfx, lev);
     Emit(t, "  // " & TreeType.Format(tree), lev);
 
-    WITH hadIt = r.getRdlPredefIntProperty(RdlPredefProperty.T.accesswidth,
-                                           atomic) DO
-      <*ASSERT hadIt*>
-    END;
-    WITH hadIt = r.getRdlPredefIntProperty(RdlPredefProperty.T.regwidth,
-                                           width) DO
-      <*ASSERT hadIt*>
+    TRY
+      WITH hadIt = r.getRdlPredefIntProperty(RdlPredefProperty.T.accesswidth,
+                                             atomic) DO
+        <*ASSERT hadIt*>
+      END;
+      WITH hadIt = r.getRdlPredefIntProperty(RdlPredefProperty.T.regwidth,
+                                             width) DO
+        <*ASSERT hadIt*>
+      END
+    EXCEPT
+      ParseError.E(txt) =>
+      Debug.Error("Unexpected syntax in reading RDL accesswidth/regwidth properties : " &
+        txt)
     END;
 
     <*ASSERT atomic MOD 8 = 0*>
@@ -494,16 +523,24 @@ PROCEDURE DoReg(t    : T;
 PROCEDURE FulcrumName(comp : RegComponent.T; iNm : TEXT) : TEXT =
   VAR
     hn : TEXT;
-    gotIt := comp.getRdlTextProperty("FulcrumName", hn);
+    gotIt : BOOLEAN;
   BEGIN
-    IF gotIt THEN
-      hn := Unquote(hn);
-      hn := TextUtils.Replace(hn, "$", iNm)
-    END;
-    IF hn = NIL OR TE(hn, "") THEN
-      hn := iNm
-    END;
-    RETURN hn
+    TRY
+      gotIt := comp.getRdlTextProperty("FulcrumName", hn);
+      IF gotIt THEN
+        hn := Unquote(hn);
+        hn := TextUtils.Replace(hn, "$", iNm)
+      END;
+      IF hn = NIL OR TE(hn, "") THEN
+        hn := iNm
+      END;
+      RETURN hn
+    EXCEPT
+      ParseError.E(txt) =>
+      Debug.Error("Unexpected syntax in reading RDL UDP \"FulcrumName\" : " &
+        txt);
+      <*ASSERT FALSE*>
+    END
   END FulcrumName;
 
 PROCEDURE FormatNameArcsOnly(p : Arc; fieldPfx := "") : TEXT =
