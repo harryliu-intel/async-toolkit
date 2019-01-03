@@ -544,6 +544,7 @@ int wm_parser(mbyRxMacToParser const * const in,
 #else
     printf("You are NOT using the SV_BUILD - in->RX_DATA is a pointer\n");
 #endif
+    printf("Size of mbyRxMacToParser is %ld bytes\n", sizeof(mbyRxMacToParser));
 
     printf("Received %d bytes on port %d\n", in->RX_LENGTH, in->RX_PORT);
     if (in->RX_LENGTH > MBY_MAX_PACKET_LEN) {
