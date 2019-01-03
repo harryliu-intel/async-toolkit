@@ -122,11 +122,12 @@ $(GENVIEWS): $(wildcard $(GENVIEWS_ROOT)/src/*) $(WM_SUPPORT) $(TOP)
 $(FIELDVISITOR): $(wildcard $(GENVIEWS_ROOT)/src/*) $(GENVIEWS) $(MBYLIB) $(HLPLIB)
 	pushd $(FIELDVISITOR_ROOT)/src && $(CM3) -x
 
-$(MBY_MAPFIELDS): $(FIELDVISITOR) $(MBYLIB)
-	$(FIELDVISITOR) -m mby -o $@
+%.mapfields: $(FIELDVISITOR) $(MBYLIB)
+	$(FIELDVISITOR) -m $(basename $@) -o $@
 
-mby_consts_pkt.vh: $(GENVIEWS) $(MBY_MAPFIELDS)
-	$(GENVIEWS) -L sv-fulcrum -bits 28 -top mby_top_map -o mydir -f $(MBY_MAPFIELDS) -i $(MBY_POSTPROC) -packagename mby_top_map_pkg -of $@
+%_consts_pkg.vh: %.mapfields $(GENVIEWS)
+	$(eval top = $(notdir $(subst _consts_pkg.vh,,$@)))
+	$(GENVIEWS) -L sv-fulcrum -bits 28 -top $(top) -o $(dir $@) -f $< -i $(MBY_POSTPROC) -packagename $(basename $@) -of $@
 
 $(STRUCTGEN): $(wildcard $(STRUCTGEN_ROOT)/src/*) $(WM_SUPPORT) $(TOP)
 	pushd $(STRUCTGEN_ROOT)/src && $(CM3) -x
@@ -218,6 +219,10 @@ $(MODEL_SERVER): $(WM_NET_LIB) $(WM_SUPPORT) $(HLPLIB) $(MBYLIB) $(MBY_C_LIB)
 model_server: $(MODEL_SERVER)
 fieldvisitor: $(FIELDVISITOR)
 
+FULCRUM_CONSTS = mby_ppe_rx_top_map_consts_pkg.vh mby_ppe_tx_top_map_consts_pkg.vh
+
+fulcrum_consts: $(FULCRUM_CONSTS)
+
 doc:
 	$(MAKE) -C $(MBY_C_ROOT)/doc
 
@@ -232,6 +237,8 @@ clean:
 	rm -rf $(MODEL_SERVER_ROOT)/src/mby_struct
 	rm -rf $(MODEL_SERVER_ROOT)/src/wm_meta_common
 	rm -rf $(WM_NET_ROOT)/scala_generated
+	rm -rf *.mapfields
+	rm -rf *_consts_pkg.vh
 	$(MAKE) -C $(MBY_C_ROOT)/doc clean
 	find . -name $(OS_TARG) | xargs rm -rf
 	find ../c -name $(OS_TARG) | xargs rm -rf

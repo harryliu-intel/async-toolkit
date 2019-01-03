@@ -5,3 +5,4 @@ meta.version.*
 work/
 models.packetServer
 *.mapfields
+*consts_pkg.vh
