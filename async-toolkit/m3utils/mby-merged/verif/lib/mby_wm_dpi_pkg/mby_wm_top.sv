@@ -33,7 +33,7 @@ module mby_wm_top();
     initial begin
         //Temporary plus arg to enable connection to WM until the WM development is complete.
         if ($test$plusargs("WHITE_MODEL_EN")) begin
-            string model_server = "scala";
+            string model_server = "m3";
 
             //Plus arg to choose between "scala" or "M3" WM server.
             //Connects to Scala WM server by default
