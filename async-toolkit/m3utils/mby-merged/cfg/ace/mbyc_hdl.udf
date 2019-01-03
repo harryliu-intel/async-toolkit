@@ -137,7 +137,7 @@ print "MGM debug : @mbyMgmLibs\n";
 
             mby_fulcrum_legacy_rtl_lib => {
                -generated => 1,
-               -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_fulcrum_legacy_rtl.hdl', ],
+               -hdl_spec => [ 'target/gen_mby_wm_m3/mby_fulcrum_legacy_rtl.hdl', ],
                -dependent_libs => ['gen_mby_wm_m3',]
             },
 

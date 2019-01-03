@@ -223,8 +223,12 @@ fieldvisitor: $(FIELDVISITOR)
 
 CONSTS_TARGDIR = $(MODEL_ROOT)/target/gen_mby_wm_m3/
 FULCRUM_CONSTS = $(addprefix $(CONSTS_TARGDIR),mby_ppe_rx_top_map_consts_pkg.vh mby_ppe_tx_top_map_consts_pkg.vh)
+CONSTS_HDL     = $(CONSTS_TARGDIR)/mby_fulcrum_legacy_rtl.hdl
 
-fulcrum_consts: $(FULCRUM_CONSTS)
+$(CONSTS_HDL):  genviews/fieldvisitor/src/mby_fulcrum_legacy_rtl.hdl $(FULCRUM_CONSTS)
+	cp $< $@
+
+fulcrum_consts: $(FULCRUM_CONSTS) $(CONSTS_HDL)
 
 doc:
 	$(MAKE) -C $(MBY_C_ROOT)/doc
