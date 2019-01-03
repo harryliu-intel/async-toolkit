@@ -24,6 +24,8 @@ top:
 	@$(NGEN) $(NGEN_FLAGS) $(V_DIRS) $(V_LIBS) $(BLOCK)
 
 post:
+	./post_process.pl
+	mv ppe_stm_rx_top.sv ngen/ppe_stm_rx_top.sv
 	rm -f ppe_stm_rx_shells_wrapper_inc.v
 	rm -f ppe_stm_rx_shells_wrapper.v
 	rm -f ppe_stm_rx_sram_mems.v
