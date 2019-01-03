@@ -48,7 +48,6 @@ spar_cell_list =
   )
 
 ; special purpose cells
-spar_cell_list = (cons "lib.synchronous.6T.sram.SRAM_SAMPLER.0" spar_cell_list)
 spar_cell_list = (cons "lib.qdi.buffer.soft.BUF_1of-L2-R.0" spar_cell_list)
 spar_cell_list = (cons "lib.qdi.serial.funny_register.SHIFT_REG_RO-L0-R.0" spar_cell_list)
 spar_cell_list = (cons "lib.qdi.metastable.slackless_arbiter.SLACKLESS_ARBITER2.20000" spar_cell_list)
