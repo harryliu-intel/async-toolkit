@@ -123,11 +123,13 @@ $(FIELDVISITOR): $(wildcard $(GENVIEWS_ROOT)/src/*) $(GENVIEWS) $(MBYLIB) $(HLPL
 	pushd $(FIELDVISITOR_ROOT)/src && $(CM3) -x
 
 %.mapfields: $(FIELDVISITOR) $(MBYLIB)
-	$(FIELDVISITOR) -m $(basename $@) -o $@
+	mkdir -p $(dir $@)
+	$(FIELDVISITOR) -m $(notdir $(basename $@)) -o $@
 
 %_consts_pkg.vh: %.mapfields $(GENVIEWS)
 	$(eval top = $(notdir $(subst _consts_pkg.vh,,$@)))
-	$(GENVIEWS) -L sv-fulcrum -bits 28 -top $(top) -o $(dir $@) -f $< -i $(MBY_POSTPROC) -packagename $(basename $@) -of $@
+	mkdir -p $(dir $@)
+	$(GENVIEWS) -L sv-fulcrum -bits 28 -top $(top) -o $(dir $@) -f $< -i $(MBY_POSTPROC) -packagename $(notdir $(basename $@)) -of $(notdir $@)
 
 $(STRUCTGEN): $(wildcard $(STRUCTGEN_ROOT)/src/*) $(WM_SUPPORT) $(TOP)
 	pushd $(STRUCTGEN_ROOT)/src && $(CM3) -x
@@ -219,7 +221,8 @@ $(MODEL_SERVER): $(WM_NET_LIB) $(WM_SUPPORT) $(HLPLIB) $(MBYLIB) $(MBY_C_LIB)
 model_server: $(MODEL_SERVER)
 fieldvisitor: $(FIELDVISITOR)
 
-FULCRUM_CONSTS = mby_ppe_rx_top_map_consts_pkg.vh mby_ppe_tx_top_map_consts_pkg.vh
+CONSTS_TARGDIR = $(MODEL_ROOT)/target/gen_mby_wm_m3/
+FULCRUM_CONSTS = $(addprefix $(CONSTS_TARGDIR),mby_ppe_rx_top_map_consts_pkg.vh mby_ppe_tx_top_map_consts_pkg.vh)
 
 fulcrum_consts: $(FULCRUM_CONSTS)
 
