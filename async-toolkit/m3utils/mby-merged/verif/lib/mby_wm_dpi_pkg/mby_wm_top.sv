@@ -52,6 +52,7 @@ module mby_wm_top();
     final begin
         //Stop the White model server if it was started at the beginning of the test.
         if ($test$plusargs("WHITE_MODEL_EN")) begin
+            $display("mby_wm_top:  Calling wm_server_stop");
             wm_server_stop();
             $display("mby_wm_dpi_pkg/mby_wm_top.sv:: Disconnected from WM Server");
         end

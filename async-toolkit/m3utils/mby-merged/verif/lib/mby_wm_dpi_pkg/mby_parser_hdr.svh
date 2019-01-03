@@ -44,22 +44,22 @@ typedef struct {
 } mbyParserHdrPtrs;
 
 typedef struct {
-   bit [15:0]              PA_ADJ_SEG_LEN;                   ///< Adjusted segment length
-   byte                    PA_CSUM_OK;                       ///< Checksum OK result for outer (bit 0) and inner (bit 1) IPv4 headers
-   bit                     PA_DROP;                          ///< Checksum validation error, drop pkt in tail
-   bit                     PA_EX_DEPTH_EXCEED;               ///< Parser stopped: EOS exception and segment was not EOP
-   bit                     PA_EX_PARSING_DONE;               ///< Parser stopped: Parsing Done exception
-   byte                    PA_EX_STAGE;                      ///< Analyzer stage where exception occurred
-   bit                     PA_EX_TRUNC_HEADER;               ///< Parser stopped: EOS exception and segment was EOP:
-   bit                     PA_FLAGS     [`MBY_N_PARSER_FLGS]; ///< Parser flags assigned by extract
-   bit [15:0]              PA_KEYS      [`MBY_N_PARSER_KEYS]; ///< 16-bit parser keys
-   bit                     PA_KEYS_VALID[`MBY_N_PARSER_KEYS]; ///< Parser keys valid flags
-   bit                     PA_L3LEN_ERR;                     ///< L3 length error
-   bit [15:0]              PA_PACKET_TYPE;                   ///< Packet type (new for MBY)
-   mbyParserHdrPtrs        PA_HDR_PTRS;                      ///< Parser header pointers
-   int                     RX_PORT;                          ///< Ingress port
-   int                     RX_LENGTH;                        ///< Ingress packet data length [bytes]
-   byte                    RX_DATA[`MAX_PKT_LEN];            ///< Ingress (receive) packet data
+   shortint unsigned        PA_ADJ_SEG_LEN;                   ///< Adjusted segment length
+   byte                     PA_CSUM_OK;                       ///< Checksum OK result for outer (bit 0) and inner (bit 1) IPv4 headers
+   byte                     PA_DROP;                          ///< Checksum validation error, drop pkt in tail
+   byte                     PA_EX_DEPTH_EXCEED;               ///< Parser stopped: EOS exception and segment was not EOP
+   byte                     PA_EX_PARSING_DONE;               ///< Parser stopped: Parsing Done exception
+   byte                     PA_EX_STAGE;                      ///< Analyzer stage where exception occurred
+   byte                     PA_EX_TRUNC_HEADER;               ///< Parser stopped: EOS exception and segment was EOP:
+   byte                     PA_FLAGS     [`MBY_N_PARSER_FLGS]; ///< Parser flags assigned by extract
+   shortint unsigned        PA_KEYS      [`MBY_N_PARSER_KEYS]; ///< 16-bit parser keys
+   byte                     PA_KEYS_VALID[`MBY_N_PARSER_KEYS]; ///< Parser keys valid flags
+   byte                     PA_L3LEN_ERR;                     ///< L3 length error
+   shortint unsigned        PA_PACKET_TYPE;                   ///< Packet type (new for MBY)
+   mbyParserHdrPtrs         PA_HDR_PTRS;                      ///< Parser header pointers
+   int                      RX_PORT;                          ///< Ingress port
+   int                      RX_LENGTH;                        ///< Ingress packet data length [bytes]
+   byte                     RX_DATA[`MAX_PKT_LEN];            ///< Ingress (receive) packet data
 
 
 } mbyParserToMapper;
