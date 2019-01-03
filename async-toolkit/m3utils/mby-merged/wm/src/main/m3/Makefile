@@ -90,7 +90,7 @@ TOP_TEMPLATE=top_template
 # 	$(TEST_TARG)
 
 .PHONY: all
-all: mains
+all: mains fulcrum_consts
 
 .PHONY: mains
 mains: mby_mains hlp_mains model_server doc
