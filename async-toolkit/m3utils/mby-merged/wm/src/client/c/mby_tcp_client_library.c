@@ -539,43 +539,71 @@ int wm_pkt_get(struct wm_pkt *pkt)
 int wm_parser(mbyRxMacToParser const * const in,
               mbyParserToMapper      * const out)
 {
+    uint32_t const tag = 0xdeadbeef;
+    uint8_t msg[MAX_MSG_LEN];
+    uint16_t port = 0; // unused here
+    uint32_t actual_rx_len;
+    uint32_t msg_len;
+    uint16_t type;
+    int err;
 
-    printf("Received %d bytes on port %d\n", in->RX_LENGTH, in->RX_PORT);
-    if (in->RX_LENGTH > MBY_MAX_DATA_LEN) {
-        printf("Packet len exceeds max of %d\n", MBY_MAX_DATA_LEN);
-        return WM_ERR_RUNTIME;
+    if (!in || !out) {
+        LOG_ERROR("In/out struct pointer is NULL\n");
+        return WM_ERR_INVALID_ARG;
     }
+
+    if (in->RX_LENGTH > MBY_MAX_DATA_LEN) {
+        LOG_ERROR("RX_LENGTH %d exceeds max of %d\n", in->RX_LENGTH, MBY_MAX_DATA_LEN);
+        return WM_ERR_INVALID_ARG;
+    }
+
+    LOG_DEBUG("Parser() - RX_LENGTH=%d RX_PORT=%d\n", in->RX_LENGTH, in->RX_PORT);
     hex_dump(in->RX_DATA, in->RX_LENGTH, 0);
 
-    // Write outputs with totally random values:
-    out->PA_ADJ_SEG_LEN     = 0x1234;
-    out->PA_CSUM_OK         = 0x1;
-    out->PA_DROP            = 0x0;
-    out->PA_EX_DEPTH_EXCEED = 0x1;
-    out->PA_EX_PARSING_DONE = 0x0;
-    out->PA_EX_STAGE        = 0xaa;
-    out->PA_EX_TRUNC_HEADER = 0x1;
+    *((uint32_t *)&msg[0]) = htonl(tag);
+    memcpy(msg + sizeof(tag), in, sizeof(mbyRxMacToParser));
+    msg_len = sizeof(tag) + offsetof(mbyRxMacToParser, RX_DATA) + in->RX_LENGTH;
 
-    for (fm_uint i = 0; i < MBY_N_PARSER_FLGS; i++)
-        out->PA_FLAGS[i] = 0x1;
-
-    for (fm_uint i = 0; i < MBY_N_PARSER_KEYS; i++) {
-        out->PA_KEYS      [i] = 0xe3;
-        out->PA_KEYS_VALID[i] = 0x1;
+    // TODO print only when debug is enabled
+    if (1) {
+        printf("wm_parser msg 0x%p msg_len %d\n", msg, msg_len);
+        LOG_HEX_DUMP(msg, msg_len, 1);
     }
 
-    out->PA_L3LEN_ERR       = 0x1;
-    out->PA_PACKET_TYPE     = 0xabcd;
-
-    for (fm_uint i = 0; i < MBY_N_PARSER_PTRS; i++) {
-        out->PA_HDR_PTRS.OFFSET      [i] = 0x78;
-        out->PA_HDR_PTRS.OFFSET_VALID[i] = 0x1;
-        out->PA_HDR_PTRS.PROT_ID     [i] = 0x45;
+    err = wm_send(wm_server_fd, msg, msg_len, MODEL_MSG_PARSER, port);
+    if (err) {
+        LOG_ERROR("Could not send data to WM: %d\n", err);
     }
 
-    out->RX_PORT            = in->RX_PORT;
-    out->RX_LENGTH          = in->RX_LENGTH;
-    memcpy(out->RX_DATA, in->RX_DATA, in->RX_LENGTH);
+    err = wm_receive(wm_server_fd, msg, &msg_len, &type, &port);
+    if (err)
+        return err;
+
+    if (type != MODEL_MSG_PARSER) {
+        LOG_ERROR("Received unexpected message types %d\n", type);
+        return WM_ERR_RUNTIME;
+    }
+
+    if (ntohl(*((uint32_t *)&msg[0])) != tag) {
+        LOG_WARNING("Unexpected tag - something might be wrong\n");
+        // return WM_ERR_RUNTIME;
+    }
+
+    memcpy(out, msg + sizeof(tag), sizeof(mbyParserToMapper));
+
+    if (out->RX_LENGTH > MBY_MAX_DATA_LEN) {
+        LOG_ERROR("RX_LENGTH %d exceeds max of %d\n", out->RX_LENGTH, MBY_MAX_DATA_LEN);
+        return WM_ERR_RUNTIME;
+    }
+
+    actual_rx_len = msg_len - (sizeof(tag) + offsetof(mbyParserToMapper, RX_DATA));
+    if (out->RX_LENGTH != actual_rx_len) {
+        LOG_ERROR("out RX_LENGTH is %d but I received %d byte from server\n",
+                  out->RX_LENGTH, actual_rx_len);
+        // TODO is this a good idea? maybe...
+        out->RX_LENGTH = 0;
+        return WM_ERR_RUNTIME;
+    }
 
     return WM_OK;
 }
