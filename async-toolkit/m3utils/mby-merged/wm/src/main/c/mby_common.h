@@ -26,7 +26,7 @@
 #define MBY_REGISTER_ARRAY_SIZE  0x1800000
 
 // Used for tests and C client APIs for DV
-#define MBY_MAX_PACKET_LEN       32767
+#define MBY_MAX_DATA_LEN         (32 * 1024)
 
 #define MBY_SEGMENT_LEN          256
 

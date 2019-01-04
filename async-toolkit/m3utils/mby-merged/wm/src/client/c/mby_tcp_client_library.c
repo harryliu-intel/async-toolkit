@@ -547,8 +547,8 @@ int wm_parser(mbyRxMacToParser const * const in,
     printf("Size of mbyRxMacToParser is %ld bytes\n", sizeof(mbyRxMacToParser));
 
     printf("Received %d bytes on port %d\n", in->RX_LENGTH, in->RX_PORT);
-    if (in->RX_LENGTH > MBY_MAX_PACKET_LEN) {
-        printf("Packet len exceeds max of %d\n", MBY_MAX_PACKET_LEN);
+    if (in->RX_LENGTH > MBY_MAX_DATA_LEN) {
+        printf("Packet len exceeds max of %d\n", MBY_MAX_DATA_LEN);
         return WM_ERR_RUNTIME;
     }
     hex_dump(in->RX_DATA, in->RX_LENGTH, 0);

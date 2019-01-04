@@ -181,7 +181,7 @@ static fm_status receivePacket
         txs2mac.TX_DATA = packet; //points at provided buffer
 
         // Call RX pipeline:
-        TxPipeline(tx_top_map, tx_top_map_w, shm_map, &txi2mod, &txs2mac, MBY_MAX_PACKET_LEN);
+        TxPipeline(tx_top_map, tx_top_map_w, shm_map, &txi2mod, &txs2mac, MBY_MAX_DATA_LEN);
 
         // Populate output:
         *port   = txs2mac.TX_PORT;

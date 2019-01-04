@@ -125,7 +125,7 @@ typedef struct mbyRxMacToParserStruct
 #ifndef SV_BUILD
     fm_byte        * RX_DATA;             ///< Ingress packet data (pointer to)
 #else
-    fm_byte          RX_DATA[MBY_MAX_PACKET_LEN]; ///< Ingress packet data (fixed-size)
+    fm_byte          RX_DATA[MBY_MAX_DATA_LEN]; ///< Ingress packet data (fixed-size)
 #endif
 
 } mbyRxMacToParser;
@@ -150,7 +150,7 @@ typedef struct mbyParserToMapperStruct
 #ifndef SV_BUILD
     fm_byte        * RX_DATA;                          ///< Ingress packet data (pointer to)
 #else
-    fm_byte          RX_DATA[MBY_MAX_PACKET_LEN];      ///< Ingress packet data (fixed-size)
+    fm_byte          RX_DATA[MBY_MAX_DATA_LEN];        ///< Ingress packet data (fixed-size)
 #endif
 
 } mbyParserToMapper;
