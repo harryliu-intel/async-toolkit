@@ -13,9 +13,16 @@ open(TF, ">./mby_igr_pbb_gen_mem.sv") || die "can't open output file\n";
 
 while (<SF>) {
    $str = $_;
-   if ($str =~ /^logic         igr_pb.*_if;/) {
+   if ($str =~ /^\s*module\s*mby_igr_pbb_gen_mem \(/) {
+     printf TF "module mby_igr_pbb_gen_mem\n";
+     printf TF "import mby_igr_pkg::*;\n";
+     printf TF "(\n";
+   } else {
+   if ($str =~ /^\s*logic\s*igr_pbb.*_if;\s*$/) {
+
    } else {
      printf TF ("%s",$_);
    }
+  }
 }
 close (TF);
