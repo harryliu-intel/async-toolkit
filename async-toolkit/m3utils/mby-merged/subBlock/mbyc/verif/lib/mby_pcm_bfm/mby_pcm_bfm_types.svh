@@ -49,6 +49,8 @@ typedef mby_cm_tx_wm_t mby_pcm_bfm_tx_wm_t; // TODO: is this needed?
 // These are the shared watermark types for the PCM.
 typedef mby_cm_shared_mem_rx_wm_t mby_pcm_bfm_sm_rx_wm_t;
 typedef mby_cm_shared_mem_tx_wm_t mby_pcm_bfm_sm_tx_wm_t;
+// This is the policer type for the PCM. //TODO:   is this the correct type?  
+typedef mby_gpol_state_bcast_t mby_pcm_bfm_plcr_t;
 // Simple logic for debug for now
 typedef logic mby_pcm_bfm_debg_t;
 
@@ -68,12 +70,14 @@ typedef virtual mby_pcm_bfm_deque_if    mby_pcm_bfm_deque_vif;
 typedef virtual mby_pcm_bfm_rx_wm_if    mby_pcm_bfm_rx_wmark_vif;
 typedef virtual mby_pcm_bfm_sm_rx_wm_if mby_pcm_bfm_smem_rx_wmark_vif;
 typedef virtual mby_pcm_bfm_sm_tx_wm_if mby_pcm_bfm_smem_tx_wmark_vif;
+typedef virtual mby_pcm_bfm_plcr_if     mby_pcm_bfm_plcr_vif;
 
 // Forward declaration of the transaction classes.
 typedef class mby_pcm_bfm_queue_xaction;
 typedef class mby_pcm_bfm_deque_xaction;
 typedef class mby_pcm_bfm_sm_wm_xaction;
 typedef class mby_pcm_bfm_wm_xaction;
+typedef class mby_pcm_bfm_plcr_xaction;
 
 // Defining the PCM agents as parameterized base agent classes.
 // (1) The PCM queue agent, used in IGR mode
@@ -96,6 +100,10 @@ typedef mby_base_pkg::mby_base_agent#(
 typedef mby_base_pkg::mby_base_agent#(
    .T_req(mby_pcm_bfm_sm_wm_xaction),
    .T_vif(mby_pcm_bfm_smem_tx_wmark_vif)) pcm_tx_smem_wm_bfm_agent;
+// (6) The PCM policer agent used in IGR mode
+typedef mby_base_pkg::mby_base_agent#(
+   .T_req(mby_pcm_bfm_plcr_xaction),
+   .T_vif(mby_pcm_bfm_plcr_vif)) pcm_plcr_bfm_agent;
 
 `endif
 
