@@ -1,0 +1,9 @@
+#!/bin/sh -h 
+PYTHONHOME=/p/hdk/rtl/cad/x86-64_linux26/synopsys/vcsmx/N-2017.12-SP1/etc/search/pyh
+export PYTHONHOME
+PYTHONPATH=/p/hdk/rtl/cad/x86-64_linux26/synopsys/vcsmx/N-2017.12-SP1/suse64/lib/pylib27
+export PYTHONPATH
+LD_LIBRARY_PATH=/p/hdk/rtl/cad/x86-64_linux26/synopsys/vcsmx/N-2017.12-SP1/suse64/lib:/p/hdk/rtl/cad/x86-64_linux26/synopsys/vcsmx/N-2017.12-SP1/suse64/lib/pylib27
+export LD_LIBRARY_PATH
+/p/hdk/rtl/cad/x86-64_linux26/synopsys/vcsmx/N-2017.12-SP1/suse64/bin/vcsfind_create_index.exe  -z  "/nfs/sc/disks/slx_1130/edwardro/mby/work_root/mby.edr.pbb/subBlock/mbyc/src/igr_pbb/sandbox/simv.daidir/debug_dump/fsearch/./idents_mVT63g.xml.gz" "/nfs/sc/disks/slx_1130/edwardro/mby/work_root/mby.edr.pbb/subBlock/mbyc/src/igr_pbb/sandbox/simv.daidir/debug_dump/fsearch/./idents_tapi.xml.gz" -o "/nfs/sc/disks/slx_1130/edwardro/mby/work_root/mby.edr.pbb/subBlock/mbyc/src/igr_pbb/sandbox/simv.daidir/debug_dump/fsearch/fsearch.db_tmp"
+\mv "/nfs/sc/disks/slx_1130/edwardro/mby/work_root/mby.edr.pbb/subBlock/mbyc/src/igr_pbb/sandbox/simv.daidir/debug_dump/fsearch/fsearch.db_tmp" "/nfs/sc/disks/slx_1130/edwardro/mby/work_root/mby.edr.pbb/subBlock/mbyc/src/igr_pbb/sandbox/simv.daidir/debug_dump/fsearch/fsearch.db"

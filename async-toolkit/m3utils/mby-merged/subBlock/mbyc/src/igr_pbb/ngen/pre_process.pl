@@ -1,21 +1,19 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl 
 
 # -------------------------------------------------------------------
 # --                      Intel Proprietary
 # --              Copyright (C) 2013 Intel Corporation
 # --                    All Rights Reserved
 # -------------------------------------------------------------------
-# Function: Post process the Ngen output file for this block.
+# Function: Pre process the Ngen output file for this block.
 # Copied from: Jon Bagge jon.bagge@intel.com
 #--------------------------------------------------------------------            
-open(SF, "./ngen/mby_igr_pbb_gen_mem.sv") || die "can't open input file\n";
-open(TF, ">./mby_igr_pbb_gen_mem.sv") || die "can't open output file\n";
+open(SF, "../../../../../target/mby/mgm_run/igr_pbb/src/igr_pbb_shells_wrapper.v") || die "can't open input file\n";
+open(TF, ">./igr_shells_wrapper_inc.v") || die "can't open output file\n";
 
+print TF "`include        \"igr_pbb_mem.def\"\n";
 while (<SF>) {
-   $str = $_;
-   if ($str =~ /^logic         igr_pb.*_if;/) {
-   } else {
-     printf TF ("%s",$_);
-   }
+   printf TF ("%s",$_);
 }
 close (TF);
+close (SF);
