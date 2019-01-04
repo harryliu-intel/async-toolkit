@@ -472,7 +472,7 @@ reg wcm_action_cfg_idx1_r {
 
            ";
     ValRandomize = true;
-  } INDEX_23[59:55] = 5'h0;
+  } WCM_INDEX_23[59:55] = 5'h0;
 
   field {
     AccessType = "RW";
@@ -481,7 +481,7 @@ reg wcm_action_cfg_idx1_r {
 
            ";
     ValRandomize = true;
-  } INDEX_22[54:50] = 5'h0;
+  } WCM_INDEX_22[54:50] = 5'h0;
 
   field {
     AccessType = "RW";
@@ -490,7 +490,7 @@ reg wcm_action_cfg_idx1_r {
 
            ";
     ValRandomize = true;
-  } INDEX_21[49:45] = 5'h0;
+  } WCM_INDEX_21[49:45] = 5'h0;
 
   field {
     AccessType = "RW";
@@ -499,7 +499,7 @@ reg wcm_action_cfg_idx1_r {
 
            ";
     ValRandomize = true;
-  } INDEX_20[44:40] = 5'h0;
+  } WCM_INDEX_20[44:40] = 5'h0;
 
   field {
     AccessType = "RW";
@@ -508,7 +508,7 @@ reg wcm_action_cfg_idx1_r {
 
            ";
     ValRandomize = true;
-  } INDEX_19[39:35] = 5'h0;
+  } WCM_INDEX_19[39:35] = 5'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -516,7 +516,7 @@ reg wcm_action_cfg_idx1_r {
 
            ";
     ValRandomize = true;
-  } INDEX_18[34:30] = 5'h0;
+  } WCM_INDEX_18[34:30] = 5'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -524,7 +524,7 @@ reg wcm_action_cfg_idx1_r {
 
            ";
     ValRandomize = true;
-  } INDEX_17[29:25] = 5'h0;
+  } WCM_INDEX_17[29:25] = 5'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -532,7 +532,7 @@ reg wcm_action_cfg_idx1_r {
 
            ";
     ValRandomize = true;
-  } INDEX_16[24:20] = 5'h0;
+  } WCM_INDEX_16[24:20] = 5'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -540,7 +540,7 @@ reg wcm_action_cfg_idx1_r {
 
            ";
     ValRandomize = true;
-  } INDEX_15[19:15] = 5'h0;
+  } WCM_INDEX_15[19:15] = 5'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -548,7 +548,7 @@ reg wcm_action_cfg_idx1_r {
 
            ";
     ValRandomize = true;
-  } INDEX_14[14:10] = 5'h0;
+  } WCM_INDEX_14[14:10] = 5'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -556,7 +556,7 @@ reg wcm_action_cfg_idx1_r {
 
            ";
     ValRandomize = true;
-  } INDEX_13[9:5] = 5'h0;
+  } WCM_INDEX_13[9:5] = 5'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -564,7 +564,7 @@ reg wcm_action_cfg_idx1_r {
 
            ";
     ValRandomize = true;
-  } INDEX_12[4:0] = 5'h0;
+  } WCM_INDEX_12[4:0] = 5'h0;
 };
 
 
@@ -591,7 +591,7 @@ reg wcm_action_cfg_idx2_r {
 
            ";
     ValRandomize = true;
-  } INDEX_11[59:55] = 5'h0;
+  } WCM_INDEX_11[59:55] = 5'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -599,7 +599,7 @@ reg wcm_action_cfg_idx2_r {
 
            ";
     ValRandomize = true;
-  } INDEX_10[54:50] = 5'h0;
+  } WCM_INDEX_10[54:50] = 5'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -607,7 +607,7 @@ reg wcm_action_cfg_idx2_r {
 
            ";
     ValRandomize = true;
-  } INDEX_9[49:45] = 5'h0;
+  } WCM_INDEX_9[49:45] = 5'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -615,7 +615,7 @@ reg wcm_action_cfg_idx2_r {
 
            ";
     ValRandomize = true;
-  } INDEX_8[44:40] = 5'h0;
+  } WCM_INDEX_8[44:40] = 5'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -623,7 +623,7 @@ reg wcm_action_cfg_idx2_r {
 
            ";
     ValRandomize = true;
-  } INDEX_7[39:35] = 5'h0;
+  } WCM_INDEX_7[39:35] = 5'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -631,7 +631,7 @@ reg wcm_action_cfg_idx2_r {
 
            ";
     ValRandomize = true;
-  } INDEX_6[34:30] = 5'h0;
+  } WCM_INDEX_6[34:30] = 5'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -639,7 +639,7 @@ reg wcm_action_cfg_idx2_r {
 
            ";
     ValRandomize = true;
-  } INDEX_5[29:25] = 5'h0;
+  } WCM_INDEX_5[29:25] = 5'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -647,7 +647,7 @@ reg wcm_action_cfg_idx2_r {
 
            ";
     ValRandomize = true;
-  } INDEX_4[24:20] = 5'h0;
+  } WCM_INDEX_4[24:20] = 5'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -655,7 +655,7 @@ reg wcm_action_cfg_idx2_r {
 
            ";
     ValRandomize = true;
-  } INDEX_3[19:15] = 5'h0;
+  } WCM_INDEX_3[19:15] = 5'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -663,7 +663,7 @@ reg wcm_action_cfg_idx2_r {
 
            ";
     ValRandomize = true;
-  } INDEX_2[14:10] = 5'h0;
+  } WCM_INDEX_2[14:10] = 5'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -671,7 +671,7 @@ reg wcm_action_cfg_idx2_r {
 
            ";
     ValRandomize = true;
-  } INDEX_1[9:5] = 5'h0;
+  } WCM_INDEX_1[9:5] = 5'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -679,7 +679,7 @@ reg wcm_action_cfg_idx2_r {
 
            ";
     ValRandomize = true;
-  } INDEX_0[4:0] = 5'h0;
+  } WCM_INDEX_0[4:0] = 5'h0;
 };
 
 
