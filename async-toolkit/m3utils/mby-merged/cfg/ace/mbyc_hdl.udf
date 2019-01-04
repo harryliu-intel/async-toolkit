@@ -605,7 +605,7 @@ print "MGM debug : @mbyMgmLibs\n";
                         "mby_tag_bfm_lib",
                         "mby_gpm_bfm_lib",
                         "mby_pbr_bfm_lib",
-                        ## "mby_pcm_bfm_lib",
+                        "mby_pcm_bfm_lib",
                         "mby_ingress_tb_lib",
                         "mby_ingress_ti_lib",
                         "mby_ingress_env_lib",
