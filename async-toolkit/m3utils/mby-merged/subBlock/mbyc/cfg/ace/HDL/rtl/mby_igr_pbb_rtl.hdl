@@ -13,7 +13,7 @@ $hdl_spec = {
     ## need to remove the following
        "src/shared/rtl/shared_pkg.sv",
        "src/shared/rtl/mby_rx_metadata_pkg.sv",
-       "src/shared/rtl/mby_egr_pkg.sv",
+#       "src/shared/rtl/mby_egr_pkg.sv",
        "src/shared/rtl/mby_gmm_pkg.sv",
        "src/shared/interfaces/mby_1rw_if.sv",
        "src/shared/interfaces/mby_1r1w_if.sv",
@@ -24,9 +24,9 @@ $hdl_spec = {
        "src/igr/igr_pbb/rtl/mby_igr_align_wrd.sv",
        "src/igr/igr_pbb/rtl/mby_igr_align_wrds.sv",
        "src/igr/igr_pbb/rtl/mby_igr_align.sv",
+       "src/igr/igr_pbb/rtl/mby_igr_dpcp.sv",
        "src/igr/igr_pbb/rtl/mby_igr_dpc.sv",
        "src/igr/igr_pbb/rtl/mby_igr_pb_ctrl.sv",
-       "src/igr/igr_pbb/rtl/mby_igr_pb_mem_shell.sv",
        "src/igr/igr_pbb/rtl/mby_igr_pb.sv",
        "src/igr/igr_pbb/rtl/mby_igr_pb_wrap.sv",
        "src/igr/igr_pbb/rtl/mby_igr_dpc_wrap.sv",
@@ -36,10 +36,10 @@ $hdl_spec = {
     
     # List of verilog library src dirs ( corresponds with the VLOG '-y' parameter)
     -vlog_lib_dirs => [
-     "src/igr/rtl",
-     "target/mby/mgm_run/igr/src",
-     "target/mby/mgm_run/igr/src/mem_wrap",
-     "target/mby/mgm_run/rtl",
+     "src/igr_pbb/rtl",
+#     "target/mby/mgm_run/igr_pbb/src",
+#     "target/mby/mgm_run/igr_pbb/src/mem_wrap",
+#     "target/mby/mgm_run/rtl",
      "$VCS_HOME/packages/sva_cg",
      "$SHRTL/src/ecc/rtl",
      ],

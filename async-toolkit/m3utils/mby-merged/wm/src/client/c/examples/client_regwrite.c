@@ -69,7 +69,7 @@ struct connection {
 
 struct command {
     char* name;
-        int (*handler)(struct connection *, int, char**);
+    int (*handler)(struct connection *, int, char**);
     char* args;
     char* help;
 };
@@ -79,22 +79,30 @@ static char *prompt = "<0>%";
 
 static int help_handler(struct connection *con, int argc, char **argv);
 static int fd_print(struct connection *con, const char *format,  ...);
-struct command * get_cmd(const char* name);
+const struct command * get_cmd(const char* name);
 const struct fpps_reg_entry * get_reg(const char* name);
 const char* get_next_cmd_name(void** it);
 const char* get_next_reg_name(void** it);
+const char* get_next_receive_arg(void** it);
 int reg_write(struct connection *con, int argc, char **argv);
 int reg_read(struct connection *con, int argc, char **argv);
 int reg_write_read(struct connection *con, int argc, char **argv);
 int pkt_send(struct connection *con, int argc, char **argv);
 int pkt_receive(struct connection *con, int argc, char **argv);
 
+
+const char* receive_args[] = {
+    "all",
+    "raw",
+    ""
+};
+
 struct command commands[] = {
     {"write", reg_write, "[reg] [val]", "Write to register"},
     {"read", reg_read, "[reg]", "\tRead from register"},
     {"test", reg_write_read, "[reg] [val]", "Write, read and compare values"},
     {"send", pkt_send, "[port] [payload]", "\tSend a packet"},
-    {"receive", pkt_receive, "", "\tReceive a packet"},
+    {"receive", pkt_receive, "[all, raw]", "\tReceive a packet. If no args receive until EOT."},
     {"help", help_handler, "", "\t\tPrints this help"},
     {"quit", NULL, "", "\t\tExits the program"},
     {"exit", NULL, "", "\t\tExits the program"},
@@ -359,7 +367,7 @@ static void arrow_key(struct connection *con, char c, char *esc_seq)
 
 static int help_handler(struct connection *con, int argc, char **argv)
 {
-    struct command *cmd = &commands[0];
+    const struct command *cmd = &commands[0];
     int i;
 
     if(!argc) {
@@ -387,10 +395,9 @@ static int help_handler(struct connection *con, int argc, char **argv)
     return WM_OK;
 }
 
-
 static int print_cmd_help(struct connection *con, char* command)
 {
-    struct command *cmd;
+    const struct command *cmd;
     int len;
 
     len = con->blen;
@@ -423,7 +430,7 @@ static int print_reg_help(struct connection *con, char* regname)
     if(regname && strcmp(regname, "")) {
         reg = get_reg(regname);
         if (reg)
-            fd_print(con, "-> %s\n", reg->addr);
+            fd_print(con, "-> x%u\n", reg->addr);
     } else {
         fd_print(con, "\n");
         help_handler(con, 0, NULL);
@@ -478,6 +485,7 @@ static void cmd_line_to_str(char *command, int argc, char **argv, char* output)
 }
 
 // return value:
+// -1   - nothing found
 // 0	- no proposals, partial match put into proposals[0]
 // 1	- one proposal only
 // n>1	- list of proposals of length n
@@ -493,7 +501,10 @@ static int match_name(const char* name, char **proposals, const char* (*get_next
     int cnt = 0;
 
     if(!strcmp(name, ""))
-            return -1;
+        return -1;
+
+    if(!get_next_name)
+        return -1;
 
     //count matches of given name
     cur_name = get_next_name(&it);
@@ -552,13 +563,50 @@ static int match_name(const char* name, char **proposals, const char* (*get_next
     return first_cnt;
 }
 
+//This function is used to define what and how to complete.
+//It supports only two levels of completion - for command
+//or its first argument.
+//Typically, it sould be replaced with e.g. XML-based
+//command tree to support any command chain.
+static void get_completion_info(const char* command,
+                                const char* (*(*get_next_name_function))(void**),
+                                int (*(*print_help_function))(struct connection *,
+                                                              char*),
+                                bool *print_all)
+{
+    *get_next_name_function = get_next_cmd_name;
+    *print_help_function = print_cmd_help;
+    *print_all = true;
+
+    //If command, i.e. the first word is completed, then we should look for
+    //its arguments (like register name)
+    if (get_cmd(command)) {
+        if (!strcmp(command, "write") ||
+                !strcmp(command, "read") ||
+                !strcmp(command, "test")) {
+            *get_next_name_function = get_next_reg_name;
+            *print_help_function = print_reg_help;
+            *print_all = false;
+        } else if (!strcmp(command, "receive")) {
+            *get_next_name_function = get_next_receive_arg;
+            *print_help_function = NULL;
+            *print_all = true;
+        } else {
+            *get_next_name_function = NULL;
+            *print_help_function = NULL;
+            *print_all = false;
+        }
+    }
+}
+
 static void complete_command(struct connection *con)
 {
-    int (*print_help_function)(struct connection *, char*);
-    const char* (*get_next_name_function)(void**);
+    int (*print_help_function)(struct connection *, char*) = NULL;
+    const char* (*get_next_name_function)(void**) = NULL;
     char* proposals[fpps_reg_table_size];
     char command[MAX_BUF + 1];
     char* argv[COMMAND_ARGS];
+    bool print_all = false;
     char name[MAX_BUF + 1];
     const char* cur_name;
     void* it = NULL;
@@ -566,7 +614,6 @@ static void complete_command(struct connection *con)
     int argc = 0;
     int matches;
     int len;
-    int err;
 
     if (!fpps_reg_table_size) {
         fd_print(con, "error - register table empty\n");
@@ -579,9 +626,7 @@ static void complete_command(struct connection *con)
     for(cnt = 0; cnt < fpps_reg_table_size; ++cnt)
         proposals[cnt] = (char*)malloc((MAX_BUF + 1) * sizeof(char));
 
-    err = parse_line(con->buf, con->pcur, command, &argc, argv);
-    if (err)
-        fd_print(con, "error %d\n", err);
+    parse_line(con->buf, con->pcur, command, &argc, argv);
 
     if (con->debug) {
         fd_print(con, "\ncommand: \"%s\" ", command);
@@ -590,33 +635,45 @@ static void complete_command(struct connection *con)
         fd_print(con, "\n");
     }
 
-    if(argc) {
-        get_next_name_function = get_next_reg_name;
-        print_help_function = print_reg_help;
-        strncpy(name, argv[argc - 1], sizeof(name) - 1);
-        name[sizeof(name) - 1] = '\0';
-    }
-    else {
-        get_next_name_function = get_next_cmd_name;
-        print_help_function = print_cmd_help;
+    //Define what to comlete and how
+    get_completion_info(command, &get_next_name_function,
+                        &print_help_function, &print_all);
+
+    if (get_cmd(command)) {
+        //hints for arguments (e.g. registers)
+        if (argc) {
+            strncpy(name, argv[argc - 1], sizeof(name) - 1);
+            name[sizeof(name) - 1] = '\0';
+        }
+        else {
+            name[0] = '\0';
+        }
+    } else {
+        //hints for commands
         strncpy(name, command, sizeof(name) - 1);
         name[sizeof(name) - 1] = '\0';
     }
 
+    //Perform initial completion or find proposals
     matches = match_name(name, proposals, get_next_name_function);
     if (con->debug)
         fd_print(con, "\nmatches: %d ", matches);
 
-    //return only for registers (no reg found, don't
+    //return (e.g. for registers - no reg found, don't
     //print all of them)
-    if(argc && matches < 0)
+    if(!print_all && matches < 0) {
+        if (get_cmd(command))
+            print_cmd_help(con, command);
+
         return;
+    }
 
     //only one match
     if(matches >=0 && matches <= 1){
         if(matches && con->buf[con->pcur-1] == ' ') {
             //name complete, print help
-            print_help_function(con, name);
+            if (print_help_function)
+                print_help_function(con, name);
         } else {
             //complete
             len = strlen(proposals[0]) - strlen(name);
@@ -636,15 +693,15 @@ static void complete_command(struct connection *con)
         move_cursor_back(con);
     }
 
-    //print all only for commands
-    if(!argc && matches < 0 && !strcmp(name, "")) {
+    //print all (e.g. commands)
+    if(print_all && get_next_name_function && matches < 0 && !strcmp(name, "")) {
         //no command, print all commands
         fd_print(con, "\n");
 
-        cur_name = get_next_cmd_name(&it);
+        cur_name = get_next_name_function(&it);
         while (strcmp(cur_name, "")) {
             fd_print(con, " %s", cur_name);
-            cur_name = get_next_cmd_name(&it);
+            cur_name = get_next_name_function(&it);
         }
 
         fd_print(con, "\n");
@@ -660,8 +717,8 @@ static void complete_command(struct connection *con)
         free(proposals[cnt]);
 }
 
-struct command* get_cmd(const char* name) {
-    struct command *cmd = commands;
+const struct command* get_cmd(const char* name) {
+    const struct command *cmd = commands;
 
     while (strcmp(cmd->name, "")) {
         if (!strcmp(cmd->name, name))
@@ -684,6 +741,18 @@ const struct fpps_reg_entry* get_reg(const char* name) {
     return NULL;
 }
 
+const char* get_next_receive_arg(void** it) {
+    const char **arg = (const char**) *it;
+
+    if (arg)
+        ++arg;
+    else
+        arg = receive_args;
+
+    *it = (void*) arg;
+    return *arg;
+}
+
 const char* get_next_reg_name(void** it) {
     const struct fpps_reg_entry *reg = (struct fpps_reg_entry*) *it;
 
@@ -697,7 +766,7 @@ const char* get_next_reg_name(void** it) {
 }
 
 const char* get_next_cmd_name(void** it) {
-    struct command *cmd = (struct command*) *it;
+    const struct command *cmd = (struct command*) *it;
 
     if (cmd)
         ++cmd;
@@ -706,7 +775,6 @@ const char* get_next_cmd_name(void** it) {
     *it = (void*) cmd;
     return cmd->name;
 }
-
 
 int reg_write(struct connection *con, int argc, char **argv)
 {
@@ -858,43 +926,69 @@ int pkt_send(struct connection *con, int argc, char **argv)
 int pkt_receive(struct connection *con, int argc, char **argv)
 {
     struct wm_pkt rx_pkt;
+    unsigned int cnt = 0;
+    bool no_data = false;
+    bool timeout = false;
+    bool all = false;
+    bool raw = false;
     unsigned int i;
     int err;
 
-    NOT_USED(argc);
-    NOT_USED(argv);
-
-    err = wm_pkt_get(&rx_pkt);
-    if (err && err != WM_NO_DATA) {
-        fd_print(con, "Error receiving traffic: %d\n", err);
-        return err;
-    } else if (err == WM_NO_DATA) {
-        fd_print(con, "EOT packet received\n");
-        return WM_OK;
+    if (argc) {
+        if (!strcmp(argv[0], "all"))
+            all = true;
+        else if (!strcmp(argv[0], "raw"))
+            raw = true;
     }
 
-    fd_print(con, "Received %u bytes on port %u\n", rx_pkt.len, rx_pkt.port);
+    do {
+        no_data = false;
+        timeout = false;
+        err = wm_pkt_get(&rx_pkt);
+        if (err == WM_NO_DATA) {
+            fd_print(con, "EOT packet received\n");
+            no_data = true;
+        } else if (err == WM_ERR_TIMEOUT) {
+            fd_print(con, "Connection timeout\n");
+            timeout = true;
+        }
+        else if (err) {
+            fd_print(con, "Error receiving traffic: %d\n", err);
+            return err;
+        } else {
+            ++cnt;
+            fd_print(con, "Received %u bytes on port %u\n", rx_pkt.len, rx_pkt.port);
+            if (rx_pkt.len > MAX_PKT_LEN)
+                return ERR_BUFFER_FULL;
 
-    if (rx_pkt.len > MAX_PKT_LEN)
-        return ERR_BUFFER_FULL;
+            for(i = 0; i < rx_pkt.len; ++i)
+                fd_print(con, " 0x%02X", rx_pkt.data[i]);
 
-    for(i = 0; i < rx_pkt.len; ++i)
-        fd_print(con, " 0x%02X", rx_pkt.data[i]);
+            fd_print(con, "\n");
+        }
+    } while (!raw && (!err || (all && !timeout && no_data)));
 
-    fd_print(con, "\n");
+    if (!raw)
+        fd_print(con, "%u regular packets received\n", cnt);
 
-    return WM_OK;
+    if (all && timeout)
+        return WM_OK;
+
+    if (no_data)
+        return WM_OK;
+
+    return err;
 }
 
 int client_process(struct connection *con)
 {
-    struct command* cmd = NULL;
+    const struct command* cmd = NULL;
     struct termios old_options;
     char command[MAX_BUF + 1];
+    char* argv[COMMAND_ARGS];
     bool show_prompt = true;
     struct termios options;
     struct sigaction act;
-    char* argv[COMMAND_ARGS];
     char esc_seq;
     int argc = 0;
     int err;

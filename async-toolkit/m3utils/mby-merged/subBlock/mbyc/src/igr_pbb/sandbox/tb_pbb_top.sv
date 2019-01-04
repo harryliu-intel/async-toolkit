@@ -2,7 +2,7 @@
 //  `include "mby_rp_inq_pkg.sv"
 
 module TB_PBB_TOP
-  import mby_igr_pkg::*, mby_rx_metadata_pkg::*,shared_pkg::*;
+  import shared_pkg::*, mby_igr_pkg::*, mby_rx_metadata_pkg::*;
 (
 
 );
