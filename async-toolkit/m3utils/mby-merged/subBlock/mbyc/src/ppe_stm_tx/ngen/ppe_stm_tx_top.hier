@@ -1,0 +1,15 @@
+// PPE shared table memory block
+
+ppe_stm_tx_top [
+  ppe_stm_tx_logic of ppe_stm_tx_logic with ppe_stm_tx_logic.map \
+    #(.MOD_TBL_BANKS(10), \
+      .MOD_TBL_CHUNKS(8), \
+      .MOD_TBL_RDATA_WIDTH(72), \
+      .MOD_TBL_MEM_SIZE(2047), \
+      .LOG2_MOD_TBL_MEM_SIZE(11), \
+      .MOD_TBL_RPORTS(4), \
+      .MOD_TBL_ADDR_WIDTH(18), \
+      .MOD_TBL_WDATA_WIDTH(72))
+  ppe_stm_tx_shells_wrapper of ppe_stm_tx_shells_wrapper with ppe_stm_tx_shells_wrapper.map
+  ppe_stm_tx_sram_mems of ppe_stm_tx_sram_mems with ppe_stm_tx_sram_mems.map
+]

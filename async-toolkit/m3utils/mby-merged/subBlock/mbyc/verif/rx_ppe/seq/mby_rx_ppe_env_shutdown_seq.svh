@@ -105,11 +105,11 @@ class mby_rx_ppe_env_shutdown_seq extends shdv_base_shutdown_sequence;
 
       `uvm_info(this.get_name(), ("Phase::shutdown_phase:mby_rx_ppe_env_shutdown_seq::Starting"), UVM_LOW)
 
-//    rx_ppe_eot_seq = mby_rx_ppe_seq_lib::mby_rx_ppe_eot_seq::type_id::create("rx_ppe_eot_seq");
+      rx_ppe_eot_seq = mby_rx_ppe_seq_lib::mby_rx_ppe_eot_seq::type_id::create("rx_ppe_eot_seq");
 //    rx_ppe_eot_seq.env       = this.env;
 //    rx_ppe_eot_seq.ral_env   = this.ral;
 //    rx_ppe_eot_seq.dut_cfg       = this.tb_cfg.dut_cfg;
-//    rx_ppe_eot_seq.access_type  = "FRONTDOOR";
+      rx_ppe_eot_seq.access_type  = "FRONTDOOR";
 	
       `uvm_info(get_name(), "********** Starting rx_ppe_eot_seq **********", UVM_MEDIUM);
 //    rx_ppe_eot_seq.start(sla_sequencer::pick_sequencer("ral_sequencer"));

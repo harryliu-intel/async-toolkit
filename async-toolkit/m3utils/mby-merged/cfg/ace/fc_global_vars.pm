@@ -91,7 +91,7 @@ my %sip_rtl_libs = (
     'boot'               => ['mby_parclk_rtl_lib'],
     'imc'                => ['mby_imc_rtl_lib'],
 #    'epc'                => [],
-    'mpp'                => ['mby_tx_ppe_rtl_lib', 'mby_ppe_stm_rtl_lib', 'mby_igr_rtl_lib', 'mby_egr_rtl_lib', 'mby_mgp_rtl_lib', 'mby_rx_ppe_rtl_lib', 'mby_mpp_rtl_lib'],
+    'mpp'                => ['mby_tx_ppe_rtl_lib', 'mby_ppe_stm_rx_rtl_lib', 'mby_ppe_stm_tx_rtl_lib', 'mby_igr_rtl_lib', 'mby_egr_rtl_lib', 'mby_mgp_rtl_lib', 'mby_rx_ppe_rtl_lib', 'mby_mpp_rtl_lib'],
     'msh'                => ['mby_msh_rtl_lib', 'mby_msh_node_rtl_lib'],
     'gmm'                => ['mby_gms_rtl_lib', 'mby_gmn_rtl_lib'],
 

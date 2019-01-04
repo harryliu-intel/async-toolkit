@@ -94,6 +94,9 @@ simv: $(VCS_SRC) $(BUILD_DEP)
 debug: simv
 	./simv $(TRACE_FLAGS) $(SIMV_FLAGS) +TIMESTAMP_FREQUENCY=100 +TIMEOUT=1000
 
+first_packet_ms1p0 first_packet_ms2p0 first_packet_ms2p1 first_packet_ms2p5: simv
+	./simv $(TRACE_FLAGS) $(SIMV_FLAGS) +TIMESTAMP_FREQUENCY=100 +TIMEOUT=1000 +TESTNAME=$@
+
 gate: simv
 	./simv $(SIMV_FLAGS) +TIMESTAMP_FREQUENCY=100 +TIMEOUT=1000
 	rm -rf DVEfiles csrc/ simv simv.daidir/ simv.vdb/ ucli.key vc_hdrs.h *.txt *.txt.disablelog .synopsys_dve_rebuild.tcl *.vpd
