@@ -53,6 +53,7 @@ $hdl_spec = {
        "src/gmm/gms/mce/rtl",
        "src/igr/rtl/",
        "target/mby/mgm_run/igr/src",
+       "target/mby/mgm_run/igr_pbb/src",
        "target/mby/mgm_run/gpm/src",
        "target/mby/mgm_run/gpm/src/mem_wrap",
        "target/mby/mgm_run/gcm/src",

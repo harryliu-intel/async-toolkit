@@ -83,6 +83,12 @@ print "MGM debug : @mbyMgmLibs\n";
                -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_igr_rtl.hdl', ],
                -dependent_libs => ['mby_mgm_lib',],
             },
+	    
+            mby_igr_pbb_rtl_lib => {
+               -generated => 1,   # added due to mgm dependency
+               -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_igr_pbb_rtl.hdl', ],
+               -dependent_libs => ['mby_mgm_lib',],
+            },
 
             mby_egr_rtl_lib => {
                -generated => 1,   # added due to mgm dependency
@@ -599,7 +605,7 @@ print "MGM debug : @mbyMgmLibs\n";
                         "mby_tag_bfm_lib",
                         "mby_gpm_bfm_lib",
                         "mby_pbr_bfm_lib",
-                        ## "mby_pcm_bfm_lib",
+                        "mby_pcm_bfm_lib",
                         "mby_ingress_tb_lib",
                         "mby_ingress_ti_lib",
                         "mby_ingress_env_lib",
