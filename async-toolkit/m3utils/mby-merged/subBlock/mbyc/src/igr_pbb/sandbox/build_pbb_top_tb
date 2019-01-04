@@ -4,6 +4,7 @@ vcs +v2k -R -V -debug_all -full64 -sverilog +libverbose -notice -xlrm uniq_prior
 +warn=noUII-L \
 +lint=noPCTI-L \
 +lint=none \
++lint=TFIPC-L \
 +notimingchecks \
 +define+HIERREF \
 +define+VFU_CLUSTER \
@@ -40,6 +41,7 @@ vcs +v2k -R -V -debug_all -full64 -sverilog +libverbose -notice -xlrm uniq_prior
 ../../shared/rtl/mby_rx_metadata_pkg.sv \
 ../../shared/rtl/mby_egr_pkg.sv \
 ../../igr/rtl/mby_igr_pkg.sv \
+../rtl/mby_igr_pbb_mem_pkg.sv \
 ../../shared/rtl/mby_gmm_pkg.sv \
 ../../shared/rtl/mby_egr_pkg.sv \
 ../../shared/interfaces/mby_mem_1rw_if.sv \

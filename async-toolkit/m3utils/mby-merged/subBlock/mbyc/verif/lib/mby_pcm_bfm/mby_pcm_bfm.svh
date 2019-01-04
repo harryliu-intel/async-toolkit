@@ -71,7 +71,11 @@ class mby_pcm_bfm extends uvm_component;
    // This is the TX shared memory watermark agent that sends watermark
    // information to the EGR logic.
    pcm_rx_smem_wm_bfm_agent tx_sm_wm_agent;
-
+   
+   // VARIABLE: plcr_agent
+   // This is the policer agent who will help to determine the correct action with 
+   // congestion information.
+   pcm_plcr_bfm_agent  plcr_agent;
 
    // -------------------------------------------------------------------------
    // Macro to register new class type
@@ -110,6 +114,7 @@ class mby_pcm_bfm extends uvm_component;
          deque_agent    = pcm_deque_bfm_agent::type_id::create("deque_agent", this);
          tx_sm_wm_agent = pcm_tx_smem_wm_bfm_agent::type_id::create("tx_sm_wm_agent", this);
       end
+      plcr_agent = pcm_plcr_bfm_agent::type_id::create("plcr_agent", this);
    endfunction
 
    // ------------------------------------------------------------------------
