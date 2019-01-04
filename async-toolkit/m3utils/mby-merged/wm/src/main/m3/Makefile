@@ -15,7 +15,7 @@ METAVERSION=$(shell ToolConfig.pl get_tool_version meta)
 
 # override here if you want to test a new toolchain
 #CM3=/tmp/cm3-all-AMD64_LINUX-d5.10.0-Linux3.0.101-20180514/bin/cm3
-#METAROOT=/nfs/sc/disks/hlp_0015/mnystroe/git/meta-git-2
+#METAROOT=/nfs/sc/disks/hlp_0015/mnystroe/git/meta-git
 
 SVPP=${METAROOT}/rdl/svpp/$(OS_TARG)/svpp
 PERLFE=${METAROOT}/perlfe/$(OS_TARG)/perlfe
