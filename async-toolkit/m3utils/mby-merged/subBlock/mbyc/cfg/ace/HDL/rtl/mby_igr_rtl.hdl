@@ -81,7 +81,7 @@ $hdl_spec = {
      "target/mby/mgm_run/rtl",
      "$SHRTL/src/common/rtl",   
      "$SHRTL/src/fifo/rtl",   
-     "$VCS_HOME/packages/sva_cg"
+     "$VCS_HOME/packages/sva_cg",
      "target/mby/mgm_run/igr_pbb/src",
      "target/mby/mgm_run/igr_pbb/src/mem_wrap",
      ],
