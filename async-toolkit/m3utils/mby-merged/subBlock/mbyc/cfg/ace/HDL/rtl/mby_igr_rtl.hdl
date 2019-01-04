@@ -82,6 +82,8 @@ $hdl_spec = {
      "$SHRTL/src/common/rtl",   
      "$SHRTL/src/fifo/rtl",   
      "$VCS_HOME/packages/sva_cg"
+     "target/mby/mgm_run/igr_pbb/src",
+     "target/mby/mgm_run/igr_pbb/src/mem_wrap",
      ],
     
     # Arbitrary VLOG options
