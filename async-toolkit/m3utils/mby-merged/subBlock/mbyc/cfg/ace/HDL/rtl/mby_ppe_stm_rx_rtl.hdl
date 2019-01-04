@@ -10,8 +10,8 @@ $hdl_spec = {
 	-vlog_files => [
         "src/shared/rtl/shared_pkg.sv",
         "src/shared/rtl/axi2ibus_pkg.sv",
-        "src/shared/interfaces/rx_ppe_ppe_stm_if0.sv",
-        "src/shared/interfaces/rx_ppe_ppe_stm_if1.sv",
+        "src/shared/interfaces/rx_ppe_ppe_stm0_if.sv",
+        "src/shared/interfaces/rx_ppe_ppe_stm1_if.sv",
 
 		"src/ppe_stm_rx/rtl/ppe_stm_rx_top.sv",
 	],

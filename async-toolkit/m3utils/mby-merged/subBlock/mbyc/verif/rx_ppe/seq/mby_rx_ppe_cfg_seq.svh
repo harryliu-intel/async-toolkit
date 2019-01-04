@@ -40,6 +40,8 @@
 
 
 class mby_rx_ppe_cfg_seq extends uvm_sequence;
+
+   `uvm_object_utils(mby_rx_ppe_cfg_seq)
    
    // Variable: access_type
    // RAL ENV Access Type
