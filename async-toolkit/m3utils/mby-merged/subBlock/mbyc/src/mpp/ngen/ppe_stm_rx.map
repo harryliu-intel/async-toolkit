@@ -1,0 +1,11 @@
+// Placeholder
+
+sreset             >> reset
+
+rxppe0_ppestm0     >>  rx_ppe_ppe_stm0_if0
+rxppe0_ppestm1     >>  rx_ppe_ppe_stm1_if0
+rxppe1_ppestm0     >>  rx_ppe_ppe_stm0_if1
+rxppe1_ppestm1     >>  rx_ppe_ppe_stm1_if1
+
+    >> i_ibus_ctrl
+    >> o_ibus_resp

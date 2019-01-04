@@ -56,8 +56,10 @@ package mby_pcm_bfm_pkg;
    `include "mby_pcm_bfm_deque_xaction.svh"
    `include "mby_pcm_bfm_wm_xaction.svh"
    `include "mby_pcm_bfm_sm_wm_xaction.svh"
+   `include "mby_pcm_bfm_plcr_xaction.svh"
    `include "mby_pcm_bfm_cfg.svh"
    `include "mby_pcm_bfm.svh"
+
 
 endpackage : mby_pcm_bfm_pkg
 

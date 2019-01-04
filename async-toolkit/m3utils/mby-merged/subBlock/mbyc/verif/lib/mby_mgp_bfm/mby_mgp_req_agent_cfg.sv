@@ -17,6 +17,7 @@ class mby_mgp_req_agent_cfg extends uvm_object;
    bit monitor_enable = 1;
 
    bus_type_e bus_type;
+   req_type_e req_type;
    
    extern function new(string name = "");
    
