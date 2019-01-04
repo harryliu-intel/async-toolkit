@@ -112,11 +112,11 @@ class mby_rx_ppe_env_cfg_seq extends shdv_base_configure_sequence;
    virtual task     body();
       `uvm_info(this.get_name(), ("Phase::config_phase:mby_rx_ppe_env_cfg_seq::Starting"), UVM_LOW)    
 
-//    rx_ppe_cfg_seq = mby_rx_ppe_seq_lib::mby_rx_ppe_cfg_seq::type_id::create("rx_ppe_cfg_seq");
+      rx_ppe_cfg_seq = mby_rx_ppe_seq_lib::mby_rx_ppe_cfg_seq::type_id::create("rx_ppe_cfg_seq");
 //    rx_ppe_cfg_seq.env       = this.env;
 //    rx_ppe_cfg_seq.ral_env   = this.ral;
-//    rx_ppe_cfg_seq.dut_cfg       = this.tb_cfg.dut_cfg;
-//    rx_ppe_cfg_seq.access_type  = "FRONTDOOR";
+      rx_ppe_cfg_seq.dut_cfg       = this.tb_cfg.dut_cfg;
+      rx_ppe_cfg_seq.access_type  = "FRONTDOOR";
 	
       `uvm_info(get_name(), "********** Starting mby_rx_ppe_config_seq **********", UVM_LOW);
 //    rx_ppe_cfg_seq.start(sla_sequencer::pick_sequencer("ral_sequencer"));
