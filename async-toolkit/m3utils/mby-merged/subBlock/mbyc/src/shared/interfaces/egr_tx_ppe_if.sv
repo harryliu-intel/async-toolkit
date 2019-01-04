@@ -33,7 +33,8 @@
 // -------------------------------------------------------------------
 
 interface egr_tx_ppe_if
-import shared_pkg::*, mby_rx_metadata_pkg::*;
+import shared_pkg::*;
+import mby_rx_metadata_pkg::*;
 ();
 logic                                   egr_ppe_valid;  //egress to PPE valid
 logic   [0:EGR_PPE_DATA_WIDTH-1]        egr_ppe_hdr;    //header segment (pre mod)
