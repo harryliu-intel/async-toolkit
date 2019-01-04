@@ -27,23 +27,23 @@
 //   Project       : Madison Bay
 //------------------------------------------------------------------------------
 
-// Class: mby_rx_ppe_em_cfg
+// Class: mby_rx_ppe_em_a_cfg
 //
 // This is the configuration object to control RX_PPE DUT configuration.
 //
 
-`ifndef __MBY_RX_PPE_EM_CFG_GUARD
-`define __MBY_RX_PPE_EM_CFG_GUARD
+`ifndef __MBY_RX_PPE_EM_A_CFG_GUARD
+`define __MBY_RX_PPE_EM_A_CFG_GUARD
 
 `ifndef __INSIDE_MBY_RX_PPE_ENV_PKG
 `error "Attempt to include file outside of mby_rx_ppe_env_pkg."
 `endif
 
-class mby_rx_ppe_em_cfg extends shdv_base_config;
+class mby_rx_ppe_em_a_cfg extends shdv_base_config;
 
    // Variable
 
-   `uvm_object_utils_begin(mby_rx_ppe_em_cfg)
+   `uvm_object_utils_begin(mby_rx_ppe_em_a_cfg)
    `uvm_object_utils_end
 
 
@@ -53,9 +53,9 @@ class mby_rx_ppe_em_cfg extends shdv_base_config;
    // Constructor.
    //
    // Arguments:
-   //    string name - mby_rx_ppe_em_cfg object name
+   //    string name - mby_rx_ppe_em_a_cfg object name
    //---------------------------------------------------------------------------
-   function new( string name = "mby_rx_ppe_em_cfg");
+   function new( string name = "mby_rx_ppe_em_a_cfg");
       super.new(name);
 
    endfunction: new
@@ -77,6 +77,6 @@ class mby_rx_ppe_em_cfg extends shdv_base_config;
    endfunction: post_randomize
 
 
-endclass: mby_rx_ppe_em_cfg
+endclass: mby_rx_ppe_em_a_cfg
 
-`endif // __MBY_RX_PPE_EM_CFG_GUARD
+`endif // __MBY_RX_PPE_EM_A_CFG_GUARD
