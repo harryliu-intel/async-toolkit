@@ -15,4 +15,6 @@ TYPE
 
   AddrBits = [1..64];
 
+CONST Brand = "GenViewsSvFulcrum";
+
 END GenViewsSvFulcrum.

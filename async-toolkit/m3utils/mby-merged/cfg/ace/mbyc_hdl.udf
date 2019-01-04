@@ -147,6 +147,12 @@ print "MGM debug : @mbyMgmLibs\n";
                -dependent_libs => ['mby_mgm_lib','mby_regflow_lib'],
             },
 
+            mby_fulcrum_legacy_rtl_lib => {
+               -generated => 1,
+               -hdl_spec => [ 'target/gen_mby_wm_m3/mby_fulcrum_legacy_rtl.hdl', ],
+               -dependent_libs => ['gen_mby_wm_m3',]
+            },
+
             gen_mby_regflow_lib => {
                     -generated => 1,
                     -gen_config => "mby::gen_mby_regflow_lib",
@@ -529,6 +535,8 @@ print "MGM debug : @mbyMgmLibs\n";
                libs => [
                   "sva_lib",   
                   "gen_mby_mgm_lib",
+                  "gen_mby_wm_m3",
+                  "mby_fulcrum_legacy_rtl_lib",
                   "mby_rx_ppe_ti_lib",
                   "shdv_shared_lib",
                   "svt_ahb_lib",
@@ -552,8 +560,9 @@ print "MGM debug : @mbyMgmLibs\n";
                   "-lca",
                ],
 
-                xport => {
+               export => {
                   libs => [
+                     "mby_fulcrum_legacy_rtl_lib",
                      "mby_regflow_lib",
                      "mby_rx_ppe_ti_lib",
                      "mby_rx_ppe_env_lib",

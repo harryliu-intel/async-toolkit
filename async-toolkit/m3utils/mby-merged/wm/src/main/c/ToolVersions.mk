@@ -30,7 +30,7 @@ DOX = doxygen
 endif
 
 # Make Dir:
-MKDIR = /bin/mkdir
+MKDIR = /bin/mkdir -p
 
 # Symbolic Link:
 LN = /bin/ln -s
