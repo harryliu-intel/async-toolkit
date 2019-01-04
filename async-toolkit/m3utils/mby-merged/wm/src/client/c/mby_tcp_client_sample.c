@@ -35,6 +35,7 @@
 void print_help(void);
 int test_regs(void);
 int test_pkts(void);
+int test_parser(void);
 
 int main(int argc, char *argv[])
 {
@@ -85,11 +86,18 @@ int main(int argc, char *argv[])
   if (err)
     goto CLEANUP;
 
-
-  /********** Test send/receive traffic ***********/
-  err = test_pkts();
+  /********** Test parser stage  ***********/
+#ifdef SV_BUILD
+  err = test_parser();
   if (err)
     goto CLEANUP;
+#endif
+
+  /********** Test send/receive traffic ***********/
+  // TODO uncomment these
+  //err = test_pkts();
+  //if (err)
+  //  goto CLEANUP;
 
  CLEANUP:
   /********** Disconnect (or stop) from the server ***********/
@@ -106,7 +114,7 @@ void print_help(void)
 {
   printf("sample_client - C-DPI sample client application\n\n");
   printf("Start or connect to the model server and perform some basic\n");
-  printf("tests: reg access, pkt injection.\n\n");
+  printf("tests: reg access, pkt injection, parser stage.\n\n");
   printf("Options:\n");
   printf(" -s [scala/m3]  Start the specified server. By default only connect to running process\n");
   printf(" -m <path>      Path and name of existing models.packetServer used when connecting\n");
@@ -178,7 +186,7 @@ int test_pkts(void)
 
   printf("Received %d bytes on port %d\n", rx_pkt.len, rx_pkt.port);
   if (tx_pkt.len != rx_pkt.len) {
-    printf("Unexpected difference between in length between sent (%d) and received (%d) pkt\n",
+    printf("Unexpected difference in length between sent (%d) and received (%d) pkt\n",
            tx_pkt.len, tx_pkt.len);
     return WM_ERR_RUNTIME;
   }
@@ -211,3 +219,50 @@ int test_pkts(void)
 
   return WM_OK;
 }
+
+#ifdef SV_BUILD
+int test_parser(void)
+{
+  /* Hardcoded test frame with Crc */
+  uint8_t tx_pkt_data[] = {
+    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b,
+    0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+    0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20, 0x21, 0x22, 0x23,
+    0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f,
+    0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3a, 0x3b,
+    0xee, 0x7f, 0xec, 0xb0
+  };
+
+  mbyParserToMapper out = {0};
+  mbyRxMacToParser in = {0};
+  unsigned int i;
+  int err;
+
+  in.RX_PORT = 1;
+  in.RX_LENGTH = sizeof(tx_pkt_data);
+  memcpy(in.RX_DATA, tx_pkt_data, sizeof(tx_pkt_data));
+  err = wm_parser(&in, &out);
+  if (err) {
+    printf("Error calling parser stage: %d\n", err);
+    return err;
+  }
+
+  printf("Received %d bytes on port %d\n", out.RX_LENGTH, out.RX_PORT);
+  if (in.RX_LENGTH != out.RX_LENGTH) {
+    printf("Unexpected difference in length between parser in (%d) and out (%d)\n",
+           in.RX_LENGTH, out.RX_LENGTH);
+    return WM_ERR_RUNTIME;
+  }
+
+  if (memcmp(in.RX_DATA, out.RX_DATA, in.RX_LENGTH)) {
+    printf("Unexpected difference between sent and received pkt\n");
+    for (i = 0; i < in.RX_LENGTH; ++i)
+      if (in.RX_DATA[i] != out.RX_DATA[i])
+        printf("in.RX_DATA[%d] = 0x%x - out.RX_DATA[%d] = 0x%x\n",
+               i, in.RX_DATA[i], i, out.RX_DATA[i]);
+    return WM_ERR_RUNTIME;
+  }
+
+  return WM_OK;
+}
+#endif

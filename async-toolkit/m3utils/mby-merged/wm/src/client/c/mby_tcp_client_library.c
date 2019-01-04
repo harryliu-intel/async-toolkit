@@ -535,16 +535,10 @@ int wm_pkt_get(struct wm_pkt *pkt)
 }
 
 
+#ifdef SV_BUILD
 int wm_parser(mbyRxMacToParser const * const in,
               mbyParserToMapper      * const out)
 {
-
-#ifdef SV_BUILD
-    printf("You are using the SV_BUILD - in->RX_DATA is fixed size array\n");
-#else
-    printf("You are NOT using the SV_BUILD - in->RX_DATA is a pointer\n");
-#endif
-    printf("Size of mbyRxMacToParser is %ld bytes\n", sizeof(mbyRxMacToParser));
 
     printf("Received %d bytes on port %d\n", in->RX_LENGTH, in->RX_PORT);
     if (in->RX_LENGTH > MBY_MAX_DATA_LEN) {
@@ -581,14 +575,11 @@ int wm_parser(mbyRxMacToParser const * const in,
 
     out->RX_PORT            = in->RX_PORT;
     out->RX_LENGTH          = in->RX_LENGTH;
-#ifdef SV_BUILD
     memcpy(out->RX_DATA, in->RX_DATA, in->RX_LENGTH);
-#else
-    out->RX_DATA            = in->RX_DATA;
-#endif
 
     return WM_OK;
 }
+#endif
 
 /*****************************************************************************
  *************************** Auxiliary functions *****************************
