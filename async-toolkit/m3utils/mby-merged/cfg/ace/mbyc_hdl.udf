@@ -521,11 +521,12 @@ print "MGM debug : @mbyMgmLibs\n";
                        ],
 
                libs => [
+                  "sva_lib",   
                   "gen_mby_mgm_lib",
                   "mby_rx_ppe_ti_lib",
                   "shdv_shared_lib",
                   "svt_ahb_lib",
-#                 "mby_rx_ppe_rtl_lib",
+                  "mby_rx_ppe_rtl_lib",
                   "mby_rx_ppe_env_lib",
                   "mby_rx_ppe_test_lib",
                   "mby_rx_ppe_tb_top_lib",
