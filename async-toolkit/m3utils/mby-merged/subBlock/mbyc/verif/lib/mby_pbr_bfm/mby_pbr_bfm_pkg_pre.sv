@@ -31,38 +31,28 @@
 // express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
-`ifndef __MBY_PBR_BFM_PKG__
-`define __MBY_PBR_BFM_PKG__
+`ifndef __MBY_PBR_BFM_PKG_PRE__
+`define __MBY_PBR_BFM_PKG_PRE__
 //------------------------------------------------------------------------------
 //
-// PACKAGE: mby_pbr_bfm_pkg
+// PACKAGE: mby_pbr_bfm_pkg_pre
 // This is the Madison Bay pbr bfm package, currently it depends on the uvm,
 // shdv_base_pkg, mby_base_pkg verification packages and also depends on the
 // gmm rtl package, which includes defines and typedefs for the interfaces and
 // transaction classes of this agent.
 //
 //------------------------------------------------------------------------------
-package mby_pbr_bfm_pkg;
+package mby_pbr_bfm_pkg_pre;
 
    import uvm_pkg::*;
    import shdv_base_pkg::*;
    import mby_base_pkg::*;
    import mby_gmm_pkg::*;
-//   import shared_pkg::*;
-//   import mby_igr_pkg::*;
-//   import mby_msh_pkg::*;
-//   import mby_egr_pkg::*;
-   import mby_pbr_bfm_pkg_pre::*;
-   
-   `include "uvm_macros.svh"
-   `include "mby_pbr_bfm_defines.svh"
-   `include "mby_pbr_bfm_types.svh"
-   `include "mby_pbr_bfm_cptr_xaction.svh"
-   `include "mby_pbr_bfm_dptr_xaction.svh"
-   `include "mby_pbr_bfm_cfg.svh"
-   `include "mby_pbr_bfm.svh"
 
-endpackage : mby_pbr_bfm_pkg
+   `include "uvm_macros.svh"
+   `include "mby_pbr_bfm_if_types.svh"
+
+endpackage : mby_pbr_bfm_pkg_pre
 
 
 `endif

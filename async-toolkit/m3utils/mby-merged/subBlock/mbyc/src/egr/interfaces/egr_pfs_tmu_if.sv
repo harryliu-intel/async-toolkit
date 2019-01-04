@@ -28,6 +28,9 @@
 ///  ------------------------------------------------------------------------------
 
 interface egr_pfs_tmu_if import shared_pkg::*; ();
+
+localparam POP_TAG_LATENCY = 2;
+
 // signals
 
 // If TMU presents a queue as valid, it is always allowed to be popped.
@@ -37,29 +40,39 @@ interface egr_pfs_tmu_if import shared_pkg::*; ();
 // Indicates that there is a packet at the head of this queue.
 logic [N_MAX_LP_PER_EPL-1:0][MGP_TC_CNT-1:0][MGP_COUNT-1:0] queue_valid;
 
-// For each EPL, pop a specified queue.
+// One clock after pop, TMU indicates if the queue can be popped again immediately
+// This is the same as the bit in queue_valid which corresponds to the queue which was popped on the last clock.
+logic allow_fast_pop;
+
+// Pop the specified queue.
 logic pop;
 logic [$clog2(N_MAX_LP_PER_EPL)-1:0] pop_port;
 logic [$clog2(MGP_TC_CNT)-1:0] pop_tc;
 logic [$clog2(MGP_COUNT)-1:0] pop_mgp;
 
-// For each EPL, update the deficit counters for the specified queue.
-// This should be fixed latency after pop for small packets.
-logic update;
-logic [$clog2(N_MAX_LP_PER_EPL)-1:0] update_port;
-logic [$clog2(MGP_TC_CNT)-1:0] update_tc;
-logic [$clog2(MGP_COUNT)-1:0] update_mgp;
-logic [6:0] update_length; // the actual length (in multiples of 64 bytes)
+// Popped tag is valid <POP_TAG_LATENCY> clocks after pop.
+mby_tag_ring_t tag;
+// Is the current tag coming form the tail buffer or head buffer?
+logic tag_tail_buffer;
+
+logic timestamp_valid;
+logic [23:0] timestamp;
+logic [$clog2(N_MAX_LP_PER_EPL)-1:0] timestamp_port;
+logic [$clog2(MGP_TC_CNT)-1:0] timestamp_tc;
+logic [$clog2(MGP_COUNT)-1:0] timestamp_mgp;
+
 
 modport pfs(
     // port list
-    input queue_valid, update, update_port, update_tc, update_mgp, update_length,
+    input queue_valid, tag, allow_fast_pop, tag_tail_buffer,
+        timestamp_valid, timestamp, timestamp_port, timestamp_tc, timestamp_mgp,
     output pop, pop_port, pop_tc, pop_mgp
     );
 
 modport tmu(
     // port list
-    output queue_valid, update, update_port, update_tc, update_mgp, update_length,
+    output queue_valid, tag, allow_fast_pop, tag_tail_buffer,
+        timestamp_valid, timestamp, timestamp_port, timestamp_tc, timestamp_mgp,
     input pop, pop_port, pop_tc, pop_mgp
     );
 
