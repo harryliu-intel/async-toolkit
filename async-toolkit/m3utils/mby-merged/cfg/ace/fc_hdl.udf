@@ -162,12 +162,11 @@ EOF
 
              mby_parclk_rtl_lib => {
                     -vlog_files => [
-                        "src/rtl/clkstub/AW_sync.sv",
-                        "src/rtl/clkstub/AW_width_scale.sv",
+                        "&ToolConfig::get_tool_path('ipconfig/axxia_aw')/AW_sync.sv",
+                        "&ToolConfig::get_tool_path('ipconfig/axxia_aw')/AW_width_scale.sv",
                         "src/rtl/clkstub/parclk_gpreg_v2.sv",
                         "src/rtl/clkstub/mby_parclk.sv",
                         "src/rtl/clkstub/pll_stub.sv",
-                        "src/rtl/clkstub/refclk_rcvr.sv",
                         "src/rtl/clkstub/clk_mux_2to1_glitchfree.sv",
                     ],
              },
