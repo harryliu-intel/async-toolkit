@@ -109,6 +109,12 @@ run: $(TARGET)
 	@/usr/bin/time --format='Ran for %e seconds.' \
             ./$(TARGET) | tee run.log
 
+.PHONY: run_img
+run_img: $(TARGET)
+	@echo '  Running $(TARGET) -i'
+	@/usr/bin/time --format='Ran for %e seconds.' \
+            ./$(TARGET) -i | tee run.log
+
 .PHONY: valgrind
 valgrind: $(TARGET)
 	@echo '  Running $(TARGET) in Valgrind'

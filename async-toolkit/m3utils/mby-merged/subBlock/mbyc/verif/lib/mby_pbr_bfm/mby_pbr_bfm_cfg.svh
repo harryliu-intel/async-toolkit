@@ -58,29 +58,37 @@ class mby_pbr_bfm_cfg extends mby_base_config;
     // Basic configuration object for the csp_agent.
     rand mby_base_config csp_cfg;
 
+    // VARIABLE: cpb_cfg
+    // Basic configuration object for the cpb_agent.
+    rand mby_base_config cpb_cfg;
+
     // VARIABLE: bfm_mode
     // This is the PBR bfm mode of operation (igr/egr).
     rand mby_pbr_bfm_mode_t bfm_mode;
 
     // CONSTRAINT: pbr_mode_constraint
-    // Sets the dpb/dpm/csp agent's configuration settings based
+    // Sets the dpb/dpm/csp/cpb agent's configuration settings based
     // on the PBR's bfm_mode
     // FIXME: set UVM_ACTIVE
     constraint pbr_mode_constraint {
         if(bfm_mode == PBR_BFM_IGR_MODE) {
-            dpb_cfg.driver_active  == UVM_PASSIVE;
-            dpb_cfg.monitor_active == UVM_PASSIVE;
+            dpb_cfg.driver_active  == UVM_ACTIVE;
+            dpb_cfg.monitor_active == UVM_ACTIVE;
             dpm_cfg.driver_active  == UVM_PASSIVE;
             dpm_cfg.monitor_active == UVM_PASSIVE;
             csp_cfg.driver_active  == UVM_PASSIVE;
             csp_cfg.monitor_active == UVM_PASSIVE;
+            cpb_cfg.driver_active  == UVM_ACTIVE;
+            cpb_cfg.monitor_active == UVM_ACTIVE;
         } else if(bfm_mode == PBR_BFM_EGR_MODE) {
             dpb_cfg.driver_active  == UVM_PASSIVE;
             dpb_cfg.monitor_active == UVM_PASSIVE;
-            dpm_cfg.driver_active  == UVM_PASSIVE;
-            dpm_cfg.monitor_active == UVM_PASSIVE;
-            csp_cfg.driver_active  == UVM_PASSIVE;
-            csp_cfg.monitor_active == UVM_PASSIVE;
+            dpm_cfg.driver_active  == UVM_ACTIVE;
+            dpm_cfg.monitor_active == UVM_ACTIVE;
+            csp_cfg.driver_active  == UVM_ACTIVE;
+            csp_cfg.monitor_active == UVM_ACTIVE;
+            cpb_cfg.driver_active  == UVM_PASSIVE;
+            cpb_cfg.monitor_active == UVM_PASSIVE;
         }
     }
 
@@ -100,6 +108,7 @@ class mby_pbr_bfm_cfg extends mby_base_config;
         this.dpb_cfg = new("dpb_cfg");
         this.dpm_cfg = new("dpm_cfg");
         this.csp_cfg = new("csp_cfg");
+        this.cpb_cfg = new("cpb_cfg");
     endfunction : new
 
 endclass : mby_pbr_bfm_cfg

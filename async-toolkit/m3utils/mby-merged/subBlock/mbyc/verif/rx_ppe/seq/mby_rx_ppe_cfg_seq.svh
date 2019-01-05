@@ -79,9 +79,11 @@ class mby_rx_ppe_cfg_seq extends uvm_sequence;
 
       config_parser();
       config_mapper();
+      
       config_lpm();
-      config_em();
+      config_ema();
       config_wcm();
+      config_emb();      
       
       config_hash();
       config_policer();
@@ -119,13 +121,13 @@ class mby_rx_ppe_cfg_seq extends uvm_sequence;
    endtask : config_lpm
 
    //------------------------------------------------------------------------------
-   //  Task: config_em
-   //  Configures EM DUT.
+   //  Task: config_ema
+   //  Configures EM A DUT.
    //------------------------------------------------------------------------------
-   task config_em();
-      `uvm_info(get_name(), "config_em", UVM_MEDIUM);
+   task config_ema();
+      `uvm_info(get_name(), "config_ema", UVM_MEDIUM);
 
-   endtask : config_em
+   endtask : config_ema
    
    //------------------------------------------------------------------------------
    //  Task: config_wcm
@@ -135,6 +137,15 @@ class mby_rx_ppe_cfg_seq extends uvm_sequence;
       `uvm_info(get_name(), "config_wcm", UVM_MEDIUM);
 
    endtask : config_wcm
+
+   //------------------------------------------------------------------------------
+   //  Task: config_emb
+   //  Configures EM B DUT.
+   //------------------------------------------------------------------------------
+   task config_emb();
+      `uvm_info(get_name(), "config_emb", UVM_MEDIUM);
+
+   endtask : config_emb
 
    //------------------------------------------------------------------------------
    //  Task: config_hash
