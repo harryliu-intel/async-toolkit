@@ -27,7 +27,7 @@
 
     ; call cast2skill
     temp = (ConfigFileGetValue TheCDSConfigTable "TEMP")
-    dir = (sprintf nil "%s/ilnets" temp)
+    dir = (sprintf nil "%s/cast2skill" temp)
     cmd = (sprintf nil
                    (strcat "%s/cast2skill --max-heap-size=4G --cadence-name "
                            "--suppress-pins --suppress-wiring-directives "
@@ -58,6 +58,7 @@
 ; process one cell
 (defun UpdateFloorplanCore (CV indent)
   (let (netFile NetListTable rx ux uy w h instanceTable netTable termTable
+        dirFile DirectiveTable 
         lastArrayName layoutCV points realInstances prop isLeaf)
     (fprintf LOG "%sUpdate floorplan of %s\n" indent CV->cellName)
     mastersVisited[CV] = t
@@ -73,13 +74,21 @@
     termTable = (makeTable "termTable" nil)
     lastArrayName = nil
 
+    ; load directives from CAST
+    dirFile = (strcat dir "/ildirectives/" CV->cellName ".directives.il")
+    (when (fileTimeModified dirFile)
+      (load dirFile)
+
+      ; set property for routed directive
+      (dbReplaceProp CV "routed" "boolean" DirectiveTable["routed"])
+      )
+
     ; load information from CAST
     netFile = (strcat dir "/ilnets/" CV->cellName ".netlist.il")
     (dbReplaceProp CV "CastCell" "boolean" nil)
     (when (fileTimeModified netFile)
       ; mark this as a cell which exists in CAST
       (dbReplaceProp CV "CastCell" "boolean" t)
-
       ; process netlist.il
       (load netFile)
       w = NetListTable["width"]
@@ -129,13 +138,6 @@
         (dbCreatePRBoundary CV points)
         )
       )
-
-      ; set property for routed directive
-      (if (UpdateFloorplanIsRouted CV) then
-        (dbReplaceProp CV "routed" "boolean" t)
-      else
-        (dbReplaceProp CV "routed" "boolean" nil)
-        )
 
     ; save
     (dbSave CV)
@@ -301,40 +303,3 @@
 (defun UpdateFloorplanSetTotalTransistorLength   (table length) nil)
 (defun UpdateFloorplanSetCellWidth  (table width)  table["width"]  = width*1e6)
 (defun UpdateFloorplanSetCellHeight (table height) table["height"] = height*1e6)
-
-
-(defun UpdateFloorplanIsRouted (CV)
-  (let (TEMPPath DirectivesFile routed)
-
-    ; use DirectiveTable to return routed directive
-    routed = t
-    TEMPPath = (ConfigFileGetValue TheCDSConfigTable "TEMP")
-    DirectivesFile = (sprintf nil "%s/ildirectives/%s.directives.il"
-                          TEMPPath
-                          CV->cellName )
-    (if !(isFile DirectivesFile) then
-      (printf "Generating file %s.\n" DirectivesFile)
-    ExecCmd = cond( ( ( boundp( `ExecCmd ) && stringp( ExecCmd ) ) 
-                               ExecCmd )
-                    ( "" ) )
-      Command = (sprintf nil
-                "%s %s/cast2skill --cast-path=%s --cell=%s --output-dir=%s --cadence-name --root-only --suppress-pins --max-heap-size=%dM --64"
-                ExecCmd
-                (PackageGetBinRoot)
-                (ConfigFileGetValue TheCDSConfigTable "CAST_PATH")
-                CV->cellName 
-                (ConfigFileGetValue TheCDSConfigTable "TEMP")
-                (nrGetMaxHeapSize) 
-                )
-       (printf "%s\n" Command)
-       (shell Command)
-
-    else
-      (load DirectivesFile)
-      (when !(setof key DirectiveTable key=="routed")
-        routed = nil
-        )
-      )
-    routed
-    )
-  )
