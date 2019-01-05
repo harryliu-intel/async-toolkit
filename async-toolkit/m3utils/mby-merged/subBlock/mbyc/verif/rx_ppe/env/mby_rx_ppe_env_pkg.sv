@@ -24,7 +24,7 @@
 // express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
-//   Author(s)     : Nathan Mai, Kaleem Sheriff
+//   Author(s)     : Nathan Mai, Kaleem Sheriff, Lewis Sternberg
 //   Project       : Madison Bay
 //------------------------------------------------------------------------------
 
