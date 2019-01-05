@@ -39,10 +39,7 @@ input   int             cclk_cnt,
 rx_ppe_ppe_stm0_if.ppe  rx_ppe_ppe_stm0_if0,
 rx_ppe_ppe_stm1_if.ppe  rx_ppe_ppe_stm1_if0,
 rx_ppe_ppe_stm0_if.ppe  rx_ppe_ppe_stm0_if1,
-rx_ppe_ppe_stm1_if.ppe  rx_ppe_ppe_stm1_if1,
-
-egr_ppe_stm_if.egr      egr_ppe_stm_if0,
-egr_ppe_stm_if.egr      egr_ppe_stm_if1
+rx_ppe_ppe_stm1_if.ppe  rx_ppe_ppe_stm1_if1
 );
 
 logic                   q_stm0_0_lpm_rvalid;
@@ -67,15 +64,6 @@ logic   [3:0] [12:0]    q_stm1_raddr;
 logic   [3:0] [3:0]     q_stm1_cur_bank;
 logic   [3:0] [287:0]   q_stm1_em_exp_rdata;
 logic   [3:0] [3:0]     q_stm1_exp_bank;
-
-logic   [1:0]           q_mod_0_rvalid;
-logic   [1:0] [575:0]   q_mod_0_rdata;
-logic   [1:0]           q_mod_1_rvalid;
-logic   [1:0] [575:0]   q_mod_1_rdata;
-logic   [3:0] [13:0]    q_mod_raddr;
-logic   [3:0] [3:0]     q_mod_cur_bank;
-logic   [3:0] [575:0]   q_mod_exp_rdata;
-logic   [3:0] [3:0]     q_mod_exp_bank;
 
 always_ff @(posedge cclk) begin //{
     if(cclk_cnt == 1) begin //{
@@ -362,129 +350,6 @@ always_ff @(posedge cclk) begin //{
         end //}
         if(q_stm1_exp_bank[3] == 15) q_stm1_em_exp_rdata[3] <= q_stm1_em_exp_rdata[3] + 288'h1000000000000000001000000000000000001000000000000000001;
         q_stm1_exp_bank[3] <= q_stm1_exp_bank[3] + 1;
-    end //}
-end //}
-
-always_ff @(posedge cclk) begin //{
-    if(cclk_cnt == 1) begin //{
-        egr_ppe_stm_if0.ren[0]      <= 8'b0;
-        egr_ppe_stm_if0.ren[1]      <= 8'b0;
-        egr_ppe_stm_if0.raddr[0]    <= 18'h0;
-        egr_ppe_stm_if0.raddr[1]    <= 18'h0;
-        egr_ppe_stm_if1.ren[0]      <= 8'b0;
-        egr_ppe_stm_if1.ren[1]      <= 8'b0;
-        egr_ppe_stm_if1.raddr[0]    <= 18'h0;
-        egr_ppe_stm_if1.raddr[1]    <= 18'h0;
-        for(int i=0; i<4; i++) begin //{
-            q_mod_cur_bank[i]   <= i;
-            q_mod_raddr[i]      <= 14'b0;
-            q_mod_exp_bank[i]   <= i;
-        end //}
-        q_mod_exp_rdata[0] <= 576'h7000000000000000006000000000000000005000000000000000004000000000000000003000000000000000002000000000000000001000000000000000000;
-        q_mod_exp_rdata[1] <= 576'h7000000000000000006000000000000000005000000000000000004000000000000000003000000000000000002000000000000000001000000000000000000;
-        q_mod_exp_rdata[2] <= 576'h7000000000000000006000000000000000005000000000000000004000000000000000003000000000000000002000000000000000001000000000000000000;
-        q_mod_exp_rdata[3] <= 576'h7000000000000000006000000000000000005000000000000000004000000000000000003000000000000000002000000000000000001000000000000000000;
-    end //}
-    else if(cclk_cnt > 1000) begin //{
-        egr_ppe_stm_if0.ren[0] <= 8'hff;
-        egr_ppe_stm_if0.raddr[0][17:14] <= q_mod_cur_bank[0];
-        egr_ppe_stm_if0.raddr[0][13:0]  <= q_mod_raddr[0];
-        if(q_mod_cur_bank[0] == 9) begin //{
-            q_mod_raddr[0] <= q_mod_raddr[0] + 1;
-            q_mod_cur_bank[0] <= 4'b0;
-        end //}
-        else q_mod_cur_bank[0] <= q_mod_cur_bank[0] + 1;
-
-        egr_ppe_stm_if0.ren[1] <= 8'hff;
-        egr_ppe_stm_if0.raddr[1][17:14] <= q_mod_cur_bank[1];
-        egr_ppe_stm_if0.raddr[1][13:0]  <= q_mod_raddr[1];
-        if(q_mod_cur_bank[1] == 9) begin //{
-            q_mod_raddr[1] <= q_mod_raddr[1] + 1;
-            q_mod_cur_bank[1] <= 4'b0;
-        end //}
-        else q_mod_cur_bank[1] <= q_mod_cur_bank[1] + 1;
-
-        egr_ppe_stm_if1.ren[0] <= 8'hff;
-        egr_ppe_stm_if1.raddr[0][17:14] <= q_mod_cur_bank[2];
-        egr_ppe_stm_if1.raddr[0][13:0]  <= q_mod_raddr[2];
-        if(q_mod_cur_bank[2] == 9) begin //{
-            q_mod_raddr[2] <= q_mod_raddr[2] + 1;
-            q_mod_cur_bank[2] <= 4'b0;
-        end //}
-        else q_mod_cur_bank[2] <= q_mod_cur_bank[2] + 1;
-
-        egr_ppe_stm_if1.ren[1] <= 8'hff;
-        egr_ppe_stm_if1.raddr[1][17:14] <= q_mod_cur_bank[3];
-        egr_ppe_stm_if1.raddr[1][13:0]  <= q_mod_raddr[3];
-        if(q_mod_cur_bank[3] == 9) begin //{
-            q_mod_raddr[3] <= q_mod_raddr[3] + 1;
-            q_mod_cur_bank[3] <= 4'b0;
-        end //}
-        else q_mod_cur_bank[3] <= q_mod_cur_bank[3] + 1;
-    end //}
-
-    q_mod_0_rvalid  <= egr_ppe_stm_if0.rvalid;
-    q_mod_0_rdata   <= egr_ppe_stm_if0.rdata;
-
-    q_mod_1_rvalid  <= egr_ppe_stm_if1.rvalid;
-    q_mod_1_rdata   <= egr_ppe_stm_if1.rdata;
-
-    if(cclk_cnt > 1008) begin //{
-        if(q_mod_0_rvalid[0] !== 1'b1) begin //{
-            $display("ERROR, Mod Table Inteface 0 port 0 read is not valid when it was expected to be\n");
-            $finish;
-        end //}
-        if(q_mod_0_rdata[0] !== q_mod_exp_rdata[0]) begin //{
-            $display("ERROR, Mod Table Interface 0 port 0 read data miscompare\n actual   = %h\n expected = %h\n", q_mod_0_rdata[0], q_mod_exp_rdata[0]);
-            $finish;
-        end //}
-        if(q_mod_exp_bank[0] == 9) begin //{
-            q_mod_exp_rdata[0] <= q_mod_exp_rdata[0] + 576'h1000000000000000001000000000000000001000000000000000001000000000000000001000000000000000001000000000000000001000000000000000001;
-            q_mod_exp_bank[0] = 4'b0;
-        end //}
-        else q_mod_exp_bank[0] <= q_mod_exp_bank[0] + 1;
-
-        if(q_mod_0_rvalid[1] !== 1'b1) begin //{
-            $display("ERROR, Mod Table Inteface 0 port 1 read is not valid when it was expected to be\n");
-            $finish;
-        end //}
-        if(q_mod_0_rdata[1] !== q_mod_exp_rdata[1]) begin //{
-            $display("ERROR, Mod Table Interface 0 port 1 read data miscompare\n actual   = %h\n expected = %h\n", q_mod_0_rdata[1], q_mod_exp_rdata[1]);
-            $finish;
-        end //}
-        if(q_mod_exp_bank[1] == 9) begin //{
-            q_mod_exp_rdata[1] <= q_mod_exp_rdata[1] + 576'h1000000000000000001000000000000000001000000000000000001000000000000000001000000000000000001000000000000000001000000000000000001;
-            q_mod_exp_bank[1] = 4'b0;
-        end //}
-        else q_mod_exp_bank[1] <= q_mod_exp_bank[1] + 1;
-
-        if(q_mod_1_rvalid[0] !== 1'b1) begin //{
-            $display("ERROR, Mod Table Inteface 1 port 0 read is not valid when it was expected to be\n");
-            $finish;
-        end //}
-        if(q_mod_1_rdata[0] !== q_mod_exp_rdata[2]) begin //{
-            $display("ERROR, Mod Table Interface 1 port 0 read data miscompare\n actual   = %h\n expected = %h\n", q_mod_1_rdata[0], q_mod_exp_rdata[2]);
-            $finish;
-        end //}
-        if(q_mod_exp_bank[2] == 9) begin //{
-            q_mod_exp_rdata[2] <= q_mod_exp_rdata[2] + 576'h1000000000000000001000000000000000001000000000000000001000000000000000001000000000000000001000000000000000001000000000000000001;
-            q_mod_exp_bank[2] = 4'b0;
-        end //}
-        else q_mod_exp_bank[2] <= q_mod_exp_bank[2] + 1;
-
-        if(q_mod_1_rvalid[1] !== 1'b1) begin //{
-            $display("ERROR, Mod Table Inteface 1 port 1 read is not valid when it was expected to be\n");
-            $finish;
-        end //}
-        if(q_mod_1_rdata[1] !== q_mod_exp_rdata[3]) begin //{
-            $display("ERROR, Mod Table Interface 1 port 1 read data miscompare\n actual   = %h\n expected = %h\n", q_mod_1_rdata[1], q_mod_exp_rdata[3]);
-            $finish;
-        end //}
-        if(q_mod_exp_bank[3] == 9) begin //{
-            q_mod_exp_rdata[3] <= q_mod_exp_rdata[3] + 576'h1000000000000000001000000000000000001000000000000000001000000000000000001000000000000000001000000000000000001000000000000000001;
-            q_mod_exp_bank[3] = 4'b0;
-        end //}
-        else q_mod_exp_bank[3] <= q_mod_exp_bank[3] + 1;
     end //}
 end //}
 
