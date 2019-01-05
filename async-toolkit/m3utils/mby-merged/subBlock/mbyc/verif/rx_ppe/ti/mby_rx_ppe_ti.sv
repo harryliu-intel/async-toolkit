@@ -37,7 +37,7 @@ module mby_rx_ppe_ti #( parameter string   RTL_TOP_PATH = "",                   
                         parameter mby_rx_ppe_env_pkg::mby_rx_ppe_topology_e TOPOLOGY =  mby_rx_ppe_env_pkg::PARSER
    )
    (
-      mby_rx_ppe_tb_if  mby_rx_ppe_tb_if,
+      mby_rx_ppe_tb_if    mby_rx_ppe_tb_if,   // this is just clk & reset stuff
       mby_ec_cdi_tx_intf  eth_bfm_tx_vintf, 
       mby_ec_cdi_rx_intf  eth_bfm_rx_vintf
    );
@@ -55,10 +55,8 @@ module mby_rx_ppe_ti #( parameter string   RTL_TOP_PATH = "",                   
       uvm_config_db#(int)::set(null, TB_ENV_PATH, "TOPOLOGY", TOPOLOGY);
 
       // Set the MC_TB_IF in the database
-      uvm_config_db#(virtual mby_rx_ppe_tb_if)::set(uvm_root::get(), TB_ENV_PATH , "mby_rx_ppe_tb_if", mby_rx_ppe_tb_if);
-
+      uvm_config_db#(virtual mby_rx_ppe_tb_if)  ::set(uvm_root::get(), TB_ENV_PATH, "mby_rx_ppe_tb_if" , mby_rx_ppe_tb_if);
       uvm_config_db#(virtual mby_ec_cdi_tx_intf)::set(uvm_root::get(), TB_ENV_PATH, "eth_bfm_tx_vintf" , eth_bfm_tx_vintf);
-
       uvm_config_db#(virtual mby_ec_cdi_rx_intf)::set(uvm_root::get(), TB_ENV_PATH, "eth_bfm_rx_vintf" , eth_bfm_rx_vintf);
 
    end
