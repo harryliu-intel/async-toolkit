@@ -1,0 +1,20 @@
+// -- Author       : Copy from Steve Olson <steve.olson@intel.com>
+// -- Project Name : MBY
+// -- Description  : MCE memory wrapper netlist.
+// -------------------------------------------------------------------
+`include "mce_mem.def"
+
+ngen_mod_name
+
+//Mem Interface List
+mby_mem_1rw_if.mem      group_table_if,
+mby_mem_1rw_if.mem      refcnt_if,
+mby_mem_1r1w_if.mem     cur_segptr_if,
+mby_mem_1r1w_if.mem     mc_reorder_buf_if,
+mby_mem_1r1w_if.mem     mirror_reorder_buf_if,
+
+ngen_IO_list
+ngen_IO_end
+ngen_wires
+ngen_submodules
+ngen_endmodule

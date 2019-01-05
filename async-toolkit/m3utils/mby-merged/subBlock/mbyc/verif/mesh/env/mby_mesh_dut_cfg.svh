@@ -26,11 +26,6 @@
 //   Author        : Dhivya Sankar
 //   Project       : Madison Bay
 //------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
-// Class: mby_mesh_dut_cfg
-//
-// This is the configuration object to control Mesh DUT configuration.
-//------------------------------------------------------------------------------
 
 `ifndef __MBY_MESH_DUT_CFG_GUARD
 `define __MBY_MESH_DUT_CFG_GUARD
@@ -39,29 +34,30 @@
 `error "Attempt to include file outside of mby_mesh_env_pkg."
 `endif
 
+// Class: mby_mesh_dut_cfg
+//
+// This is the configuration object to control Mesh DUT configuration.
+
 class mby_mesh_dut_cfg extends shdv_base_config;
 
     // Variable: reset_type
     // Definition of the RESET type
     reset_type_e                     reset_type ;
 
-
     `uvm_object_utils_begin(mby_mesh_dut_cfg)
         `uvm_field_enum  (reset_type_e,                  reset_type,                    UVM_DEFAULT)
     `uvm_object_utils_end
 
 
-    //---------------------------------------------------------------------------
     // Constructor: new
-    //
-    // Constructor.
+    // Create a new dut_cfg object
     //
     // Arguments:
     //    string name - mby_mesh_dut_cfg object name
     //---------------------------------------------------------------------------
     function new( string name = "mby_mesh_dut_cfg");
         super.new(name);
-       
+  
     endfunction: new
 
     //---------------------------------------------------------------------------

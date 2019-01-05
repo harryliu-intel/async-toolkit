@@ -8,6 +8,31 @@
 # See $COLLAGE_ROOT/templates/ad_hoc_connections.txt for syntax
 # 
 #################################################################################
+
+### Due to physical layout, can only autoconnect for MPPs 0-3; otherwise, need to connect adhoc
+//;if {{%inst_num}<4} {
+# Connect all pins with same name between EPC & MPP
+V collage_connect_pins_same_name -iplist {mby_ec_top_{%inst_num} mby_mpp_{%inst_num}}
+//;} else {
+# Connect manually to swizzle port connections
+CRn mby_ec_top_{%inst_num}/grp_a0*     mby_mpp_{%inst_num}/grp_d1*   0
+CRn mby_ec_top_{%inst_num}/grp_b0*     mby_mpp_{%inst_num}/grp_c1*   0
+CRn mby_ec_top_{%inst_num}/grp_c0*     mby_mpp_{%inst_num}/grp_b1*   0
+CRn mby_ec_top_{%inst_num}/grp_d0*     mby_mpp_{%inst_num}/grp_a1*   0
+CRn mby_ec_top_{%inst_num}/grp_a1*     mby_mpp_{%inst_num}/grp_d0*   0
+CRn mby_ec_top_{%inst_num}/grp_b1*     mby_mpp_{%inst_num}/grp_c0*   0
+CRn mby_ec_top_{%inst_num}/grp_c1*     mby_mpp_{%inst_num}/grp_b0*   0
+CRn mby_ec_top_{%inst_num}/grp_d1*     mby_mpp_{%inst_num}/grp_a0*   0
+//;}
+     
+# Strap csr start & end values according to:
+# mpp0 (start - end) = 32'h2000_0000 - 32'h23FF_FFFF;  // for mgp0  and 1
+#    ...
+# mpp7 (start - end) = 32'h3C00_0000 - 32'h3FFF_FFFF;  // for mgp14 and 15
+V eval {set i [format 0x%x [expr ({%inst_num}<<26)+0x20000000]]} ; {create_connection -constant $i mby_mpp_{%inst_num}/i_mpp_csr_start}
+V eval {set i [format 0x%x [expr ({%inst_num}<<26)+0x23FFFFFF]]} ; {create_connection -constant $i mby_mpp_{%inst_num}/i_mpp_csr_end}
+
+
 ##################################################################
 # Ad hoc connections
 ##################################################################
@@ -102,21 +127,6 @@
 # Note: # at the beginning of the line is a comment line
 # 
 ##################################################################
-
-
-#CRn mby_ec_top_{%inst_num}/grp_*     mby_mpp_{%inst_num}/grp_*   exact_name_match
-# Connect all pins with same name between EPC & MPP
-V collage_connect_pins_same_name -iplist {mby_ec_top_{%inst_num} mby_mpp_{%inst_num}}
-
-# used to strap csr start & end values according to:
-# mpp0 (start - end) = 32'h2000_0000 - 32'h23FF_FFFF;  // for mgp0  and 1
-#    ...
-# mpp7 (start - end) = 32'h3C00_0000 - 32'h3FFF_FFFF;  // for mgp14 and 15
-V eval {set i [format 0x%x [expr ({%inst_num}<<26)+0x20000000]]} ; {create_connection -constant $i mby_mpp_{%inst_num}/i_mpp_csr_start}
-V eval {set i [format 0x%x [expr ({%inst_num}<<26)+0x23FFFFFF]]} ; {create_connection -constant $i mby_mpp_{%inst_num}/i_mpp_csr_end}
-
-
-
 
 ##############################################################################
 # Local Variables:

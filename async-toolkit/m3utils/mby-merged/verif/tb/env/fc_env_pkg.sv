@@ -13,26 +13,14 @@ package fc_env_pkg;
     import uvm_pkg::*;
     `include "uvm_macros.svh"
 
-   `ifdef XVM
-   import ovm_pkg::*;
-   import xvm_pkg::*;
-   `include "ovm_macros.svh"
-   `include "sla_macros.svh"
-   `endif
-
     import sla_pkg::*;
+    `include "sla_macros.svh"
     `include "sla_defines.svh"
     `include "slu_macros.svh"
 
     import svt_uvm_pkg::*;
     import svt_bfm_shell_uvm_pkg::*;
     import svt_amba_uvm_pkg::*;
-
-    // VTE UVM ip1 pkg (native UVM based)
-    //import ip1_uvm_pkg::*;
-
-    // VTE UVM ip3 pkg (native UVM based)
-    //import ip3_uvm_env_pkg::*;
 
     // FC UVM reg
     import fc_uvm_reg_pkg::*;
@@ -49,27 +37,7 @@ package fc_env_pkg;
     // fc file name class for managing all the files
     `include "fc_file_names.svh"
 
-    // fc config classes
-    //`include "fc_bfm_cfg_obj.svh"
-
-    // fuse classes
-//    `include "fc_fuse_env.svh"
-
-    // monitors and scoreboards
-
-    // clock checker
-    //`include "fc_clk_sig_chk.svh"
-
-    // ral env
-   `include "pmu_mmr_regs.svh"
-    `include "fc_ral_env.svh"
-
     `include "subsystem_base_env.svh"
-
-    // VTE-UVM-TR
-    `ifdef VTE_IP3_UVM_ENV_ENABLE
-        //`include "vte_ip3_uvm_integ_env.svh"
-    `endif // VTE_IP3_UVM_ENV_ENABLE
 
     // IGR 
     `ifdef IGR_ENV_ENABLE
@@ -79,7 +47,7 @@ package fc_env_pkg;
 
     // EPC 
     `ifdef EPC_ENV_ENABLE
-        import mby_ec_top_env_pkg::*;
+        import mby_ec_env_pkg::*;
         `include "epc_integ_env.svh"
     `endif // EPC_ENV_ENABLE
 
@@ -92,12 +60,8 @@ package fc_env_pkg;
         `include "pep_integ_env.svh"
     `endif
 
-    // AM, AG, SM classes
-    //`include "fc_sm_am_env.svh"
-    //`include "fc_sm_ag_env.svh"
-    `include "fc_sm_env.svh"
-
     // TB environment
+    `include "fc_sm_env.svh"
     `include "fc_tb_env.svh"
 
 endpackage

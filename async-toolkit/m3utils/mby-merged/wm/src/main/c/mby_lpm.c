@@ -7,10 +7,14 @@
 #include <string.h>
 #include "mby_lpm.h"
 
-static void lookUpLpmTcam
+/* Size of the HW memory banks are reflected in RDL */
+#define MBY_LPM_MEM_BANK_SIZE lpm_subtrie_aptr_rf_LPM_SUBTRIE_APTR__nd
+#define MBY_FWD_TABLE0_BANK_SIZE fwd_table0_rf_FWD_TABLE0__nd
+
+static void lookupLpmTcam
 (
-    MBY_LPM_IN_REGS,
-    mbyLpmTcamLookup * const tcam_lookup
+    mby_ppe_cgrp_a_map const * const cgrp_a_map,
+    mbyLpmTcamLookup         * const tcam_lookup
 )
 {
     fm_uint16 tcam_index = 0;
@@ -19,13 +23,11 @@ static void lookUpLpmTcam
 
     tcam_lookup->hit_valid = FALSE;
 
-    while (tcam_index < //MBY_LPM_REG_SIZE(LPM_MATCH_TCAM)
-           mby_ppe_cgrp_a_nested_map_LPM_MATCH_TCAM__n
-           )
+    while (tcam_index < mby_ppe_cgrp_a_nested_map_LPM_MATCH_TCAM__n)
     {
         mbyLpmTcamEntry tcam_entry;
 
-        mbyLpmGetTcamEntry(MBY_LPM_IN_REGS_P, tcam_index, &tcam_entry);
+        mbyLpmGetTcamEntry(cgrp_a_map, tcam_index, &tcam_entry);
 
         fm_uint64 cam_key_inv = tcam_entry.key_invert;
         fm_uint64 cam_key     = tcam_entry.key;
@@ -95,13 +97,13 @@ static fm_bool getSubtrieChildNode
 
 static void exploreSubtrie
 (
-    MBY_LPM_IN_REGS,
-    mbyLpmSubtrie const * const subtrie,
-    mbyLpmSubtrieLookup * const st_lookup
+    mby_ppe_cgrp_a_map  const * const cgrp_a_map,
+    mbyLpmSubtrie       const * const subtrie,
+    mbyLpmSubtrieLookup       * const st_lookup
 )
 {
     /* Exploration steps
-     * - Explore the trie 1 bit at a time
+     * - Explore the trie 1 bit at a time starting from the MSB
      * - if 1 => update the hit since we are looking for longest match
      * - Decrease the key_len at each step
      *
@@ -117,6 +119,8 @@ static void exploreSubtrie
     fm_byte key = st_lookup->key[0];
     mbyLpmSubtrieStore st_store;
     fm_byte node_idx = 0;
+    fm_uint16 entry_idx;
+    fm_uint16 bank_idx;
     fm_byte level = 0;
     fm_bool node_val;
     fm_bool key_bit;
@@ -124,7 +128,11 @@ static void exploreSubtrie
     // The key can't be longer than 16B: 20B total key len - 4B tcam key len
 //T:assert(st_lookup->key_len < 16 * 8);
 
-    mbyLpmGetSubtrieStore(MBY_LPM_IN_REGS_P, subtrie->root_ptr, &st_store);
+    /* Splits the index into 2 since the register space matches the HW
+     * implementation, i.e. 48 memory banks of 512 items each */
+    bank_idx  = subtrie->root_ptr / MBY_LPM_MEM_BANK_SIZE;
+    entry_idx = subtrie->root_ptr % MBY_LPM_MEM_BANK_SIZE;
+    mbyLpmGetSubtrieStore(cgrp_a_map, bank_idx, entry_idx, &st_store);
 
     do
     {
@@ -156,25 +164,29 @@ static void exploreSubtrie
 
     if (node_val)
     {
+        fm_byte child_idx = countOneIn64BitsArray(st_store.child_bitmap, node_idx);
+
+        /* Splits the index into 2 since the register space matches the HW
+         * implementation, i.e. 48 memory banks of 512 items each */
+        fm_uint16 st_idx    = subtrie->child_base_ptr + child_idx;
+        fm_uint16 bank_idx  = st_idx / MBY_LPM_MEM_BANK_SIZE;
+        fm_uint16 entry_idx = st_idx % MBY_LPM_MEM_BANK_SIZE;
+
         mbyLpmSubtrie child_subtrie;
-        fm_byte child_idx;
 
-        child_idx = countOneIn64BitsArray(st_store.child_bitmap, node_idx);
-
-        mbyLpmGetSubtrie(MBY_LPM_IN_REGS_P, subtrie->child_base_ptr + child_idx, &child_subtrie);
-
-        st_lookup->key = &(st_lookup->key[1]);
-
-        exploreSubtrie(MBY_LPM_IN_REGS_P, &child_subtrie, st_lookup);
+        /* Move key to the next 8b and recursively explore the next subtrie */
+        mbyLpmGetSubtrie(cgrp_a_map, bank_idx, entry_idx, &child_subtrie);
+        st_lookup->key = &(st_lookup->key[-1]);
+        exploreSubtrie(cgrp_a_map, &child_subtrie, st_lookup);
     }
 }
 
 // Internal LPM function that takes the processed key as an argument
 static void lpmSearch
 (
-    MBY_LPM_IN_REGS,
-    mbyLpmKey    const * const in,
-    mbyLpmSearchResult * const out
+    mby_ppe_cgrp_a_map const * const cgrp_a_map,
+    mbyLpmKey          const * const in,
+    mbyLpmSearchResult       * const out
 )
 {
     mbyLpmTcamLookup          tcam_lookup;
@@ -185,10 +197,13 @@ static void lpmSearch
 //T:assert(in->key_len >= 33);
 //T:assert(in->key_len < MBY_LPM_KEY_MAX_BITS_LEN);
 
-    // FIXME adjust based on how the key is stored in memory
-    tcam_lookup.key = in->key[0] | (in->key[1] << 8) | (in->key[2] << 16) | (in->key[3] << 24);
+    // TCAM key is stored in the 4 MSB
+    tcam_lookup.key = (in->key[MBY_LPM_KEY_MAX_BYTES_LEN - 1] << 24) |
+                      (in->key[MBY_LPM_KEY_MAX_BYTES_LEN - 2] << 16) |
+                      (in->key[MBY_LPM_KEY_MAX_BYTES_LEN - 3] << 8)  |
+                      in->key[MBY_LPM_KEY_MAX_BYTES_LEN - 4];
 
-    lookUpLpmTcam(MBY_LPM_IN_REGS_P, &tcam_lookup);
+    lookupLpmTcam(cgrp_a_map, &tcam_lookup);
 
     if (!tcam_lookup.hit_valid)
     {
@@ -196,25 +211,25 @@ static void lpmSearch
         return;
     }
 
-    mbyLpmGetTcamSubtrie(MBY_LPM_IN_REGS_P, tcam_lookup.hit_index, &tcam_subtrie);
+    mbyLpmGetTcamSubtrie(cgrp_a_map, tcam_lookup.hit_index, &tcam_subtrie);
 
-    st_lookup.key       = (fm_byte *) &(in->key[4]);
+    st_lookup.key       = &(in->key[MBY_LPM_KEY_MAX_BYTES_LEN - 5]);
     st_lookup.key_len   = in->key_len - 32;
     st_lookup.hit_valid = FALSE;
 
-    exploreSubtrie(MBY_LPM_IN_REGS_P, &tcam_subtrie, &st_lookup);
+    exploreSubtrie(cgrp_a_map, &tcam_subtrie, &st_lookup);
 
     out->hit_valid = st_lookup.hit_valid;
     if (out->hit_valid)
     {
-        // TODO verify alignment in SHM_FWD_TABLE0
-        out->fwd_table0_idx = st_lookup.hit_ptr * 16;
+        // TODO verify alignment in SHM_FWD_TABLE0 - should multiply x 8?
+        out->fwd_table0_idx = st_lookup.hit_ptr;
     }
 }
 
 static void lpmGenerateKey
 (
-    MBY_LPM_IN_REGS,
+    mby_ppe_cgrp_a_map   const * const cgrp_a_map,
     mbyClassifierKeys    const * const keys,
     fm_byte                            profile_id,
     mbyLpmKey                  * const lpmKey
@@ -228,44 +243,51 @@ static void lpmGenerateKey
     assert(lpmKey);
     assert(profile_id < 64); // 6 bits value
 
-    mbyLpmGetKeySels(&(MBY_LPM_IN_REGS_P->A), profile_id, &key_sels);
+    mbyLpmGetKeySels(cgrp_a_map, profile_id, &key_sels);
 
     lpmKey->key_len = 0; // remember this is in bits
     memset(lpmKey->key, 0, MBY_LPM_KEY_MAX_BYTES_LEN);
 
 #define PACK_LPM_KEY(key_type, key_size)                                       \
-    for(i = 0; i < MBY_FFU_KEY ##key_size ; ++i)                               \
+    for(i = 0; i < MBY_CGRP_KEY ##key_size ; ++i)                              \
     {                                                                          \
-        if ((key_sels.key_type ## _key ## key_size ## _sel >> i) & 0x1)      \
+        if ((key_sels.key_type ## _key ## key_size ## _sel >> i) & 0x1)        \
         {                                                                      \
-            memcpy(lpmKey->key + len, keys->key## key_size + i, key_size / 8); \
+            int offset = MBY_LPM_KEY_MAX_BYTES_LEN - len - key_size / 8;       \
+            memcpy(lpmKey->key + offset, keys->key## key_size + i, key_size / 8); \
             len += key_size / 8;                                               \
         }                                                                      \
     }
 
-    // Start from the LSB (address key8s) to the MSB (metadata key16s)
-    PACK_LPM_KEY(addr, 8);
-    PACK_LPM_KEY(addr, 16);
-    PACK_LPM_KEY(addr, 32);
-    PACK_LPM_KEY(md,   8);
+    // Start from the MSB (metadata key16s) to the LSB (address key8s)
     PACK_LPM_KEY(md,   16);
+    PACK_LPM_KEY(md,   8);
+    len = 4; // Metadata must take exactly 32 bits
+    PACK_LPM_KEY(addr, 32);
+    PACK_LPM_KEY(addr, 16);
+    PACK_LPM_KEY(addr, 8);
+
+    // Key cannot exceeds 160 bits
+    len = MIN(len, MBY_LPM_KEY_MAX_BYTES_LEN);
 
     // Apply the 160 bit mask
     for (i = 0; i < MBY_LPM_KEY_MAX_BYTES_LEN; ++i)
-        // FIXME why is the mask 20 x 64 bits long?
-        lpmKey->key_len = key_sels.key_mask[i] & 0xff;
+        // TODO key_mask should be a fm_uint8 so the last part is not required
+        lpmKey->key[i] &= key_sels.key_mask[i] & 0xff;
 
     lpmKey->key_len = len * 8;
 }
 
 static void lpmActions
 (
-    mby_shm_map                * const shm_map,
-    fm_byte                            profile_id,
-    mbyLpmSearchResult   const * const searchResult,
-    fm_uint32                          actions[MBY_LPM_MAX_ACTIONS_NUM]
+    mby_shm_map        const * const shm_map,
+    fm_byte                          profile_id,
+    mbyLpmSearchResult const * const searchResult,
+    fm_uint32                        actions[MBY_LPM_MAX_ACTIONS_NUM]
 )
 {
+    fm_uint16 entry_idx;
+    fm_uint16 bank_idx;
 
     assert(searchResult);
     assert(actions);
@@ -277,15 +299,19 @@ static void lpmActions
         return;
 
     // FIXME use profile_id to decide how many actions to read...HOW?
-    fm_uint64 fwd_table_entry = shm_map->FWD_TABLE0[searchResult->fwd_table0_idx][0].DATA;
+
+    bank_idx = searchResult->fwd_table0_idx / MBY_FWD_TABLE0_BANK_SIZE;
+    entry_idx = searchResult->fwd_table0_idx % MBY_FWD_TABLE0_BANK_SIZE;
+
+    fm_uint64 fwd_table_entry = shm_map->FWD_TABLE0[bank_idx][entry_idx].DATA;
     actions[1] = fwd_table_entry >> 32 & 0xffffffff;
     actions[0] = fwd_table_entry & 0xffffffff;
 }
 
 void mbyMatchLpm
 (
-    MBY_LPM_IN_REGS,
-    mby_shm_map                * const shm_map,
+    mby_ppe_cgrp_a_map   const * const cgrp_a_map,
+    mby_shm_map          const * const shm_map,
     mbyClassifierKeys    const * const keys,
     fm_byte                            profile_id,
     fm_uint32                          actions[MBY_LPM_MAX_ACTIONS_NUM]
@@ -294,9 +320,9 @@ void mbyMatchLpm
     mbyLpmSearchResult searchResult;
     mbyLpmKey key;
 
-    lpmGenerateKey(MBY_LPM_IN_REGS_P, keys, profile_id, &key);
+    lpmGenerateKey(cgrp_a_map, keys, profile_id, &key);
 
-    lpmSearch(MBY_LPM_IN_REGS_P, &key, &searchResult);
+    lpmSearch(cgrp_a_map, &key, &searchResult);
 
     lpmActions(shm_map, profile_id, &searchResult, actions);
 }
@@ -304,7 +330,7 @@ void mbyMatchLpm
 //#ifdef UNIT_TEST
 void mbyGetLpmStaticFuncs(struct mbyLpmStaticFuncs *funcs)
 {
-        funcs->_lookUpLpmTcam         = lookUpLpmTcam;
+        funcs->_lookUpLpmTcam         = lookupLpmTcam;
         funcs->_getBitIn64BitsArray   = getBitIn64BitsArray;
         funcs->_countOneIn64BitsArray = countOneIn64BitsArray;
         funcs->_getSubtriePrefixNode  = getSubtriePrefixNode;

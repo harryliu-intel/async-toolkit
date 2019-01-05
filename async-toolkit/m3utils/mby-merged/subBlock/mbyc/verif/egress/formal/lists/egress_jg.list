@@ -1,3 +1,0 @@
-.options -model mby -ace_args -jg_clock -none  -static_check -ace_args- -posth $JASPER_UTILS/jasper2ibi.pl -csv regression_results.log -posth-
-mby_jg -ace_args -jg_pre_prove_scripts $JASPER_UTILS/pre_prove_script.tcl -jg_post_prove_scripts $JASPER_UTILS/post_prove_script.tcl  -ace_args- -save
-

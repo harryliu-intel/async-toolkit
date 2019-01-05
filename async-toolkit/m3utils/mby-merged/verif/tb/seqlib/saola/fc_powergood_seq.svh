@@ -13,9 +13,6 @@ class fc_powergood_seq extends fc_base_seq;
     protected uvm_event       soc_group_e;
     protected uvm_event_pool  event_pool;
 
-    //pmu_mmr_file  pmu_mmr;
-
-    
     // -----------------------------------------------------------------------
     function new(string name = "fc_powergood_seq");
         super.new(name);
@@ -31,14 +28,15 @@ class fc_powergood_seq extends fc_base_seq;
     // -----------------------------------------------------------------------
     virtual task body();
 
-        slu_status_t status;
-        sla_status_t sla_status;
-        slu_ral_data_t ral_data, rd_val;
-
         super.body();
         `uvm_info(get_name(), "fc_powergood_seq started", UVM_MEDIUM);
 
-        //pmu_mmr.SBI_IP_MSG_EN_0.write(.status(sla_status), .val(32'h00000C40),.access_path("axi_slu"), .parent_seq(this));
+        //TODO: temp driving this in sequence. The powergood will be driven as part of IMC powergood sequence once its ready.
+        fc_sig_if.powergood = 0;
+        #20ns;
+        fc_sig_if.powergood = 1;
+
+        #2us;
 
         `uvm_info(get_name(), "fc_powergood_seq ends", UVM_MEDIUM);
     endtask

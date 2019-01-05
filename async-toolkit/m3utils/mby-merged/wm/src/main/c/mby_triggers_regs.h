@@ -10,8 +10,6 @@
 #include "mby_common.h"
 #include "mby_bitfield.h"
 
-#include "../m3/genviews/src/build_c/mby_c/src/mby_top_map.h"
-
 // Defines:
 
 // Enums:
@@ -56,12 +54,6 @@ typedef enum
 
 typedef enum
 {
-	MBY_TRIG_ACTION_NOMODIFY_NONE = 0,
-	MBY_TRIG_ACTION_NOMODIFY_DO_NOT_MODIFY
-} mbyTriggerActionNoModify;
-
-typedef enum
-{
     MBY_TRIG_ACTION_TYPE_FORWARD = 0,
     MBY_TRIG_ACTION_TYPE_TRAP,
     MBY_TRIG_ACTION_TYPE_MIRROR,
@@ -69,8 +61,26 @@ typedef enum
     MBY_TRIG_ACTION_TYPE_VLAN,
     MBY_TRIG_ACTION_TYPE_LEARN,
     MBY_TRIG_ACTION_TYPE_RATE
-
 } mbyTriggerActionType;
+
+typedef enum
+{
+    MBY_TRIGGER_DIRECT_MAP_CTRL_STATUS_SUCCESSFUL = 0,
+    MBY_TRIGGER_DIRECT_MAP_CTRL_STATUS_ADDRESS_OUT_OF_RANGE
+} mbyTriggerDirectMapCtrlStatus;
+
+typedef enum
+{
+    MBY_TRIGGER_DIRECT_MAP_CTRL_OP_TYPE_READ = 0,
+    MBY_TRIGGER_DIRECT_MAP_CTRL_OP_TYPE_WRITE
+} mbyTriggerDirectMapCtrlOpType;
+
+typedef enum
+{
+    MBY_TRIGGER_DIRECT_MAP_CTRL_REG_ID_TRIGGER_CONDITION_TX = 0,
+    MBY_TRIGGER_DIRECT_MAP_CTRL_REG_ID_TRIGGER_ACTION_DMASK,
+    MBY_TRIGGER_DIRECT_MAP_CTRL_REG_ID_TRIGGER_ACTION_DROP
+} mbyTriggerDirectMapCtrlRegId;
 
 // Structs:
 
@@ -93,7 +103,6 @@ typedef struct _mbyTriggerConditionParam
 {
   fm_uint16                     EGRESS_DOMAIN_MASK;
   fm_uint16                     EGRESS_DOMAIN_VALUE;
-  fm_byte                       FTYPE_MASK;
   fm_byte                       ROUTED_MASK;
   fm_byte                       FRAME_CLASS_MASK;
   fm_byte                       TC;
@@ -137,15 +146,40 @@ typedef struct _mbyTriggerStats
   fm_uint64                     COUNT;
 } mbyTriggerStats;
 
+typedef struct _mbyTriggerDirectMapCtrl
+{
+    fm_byte                       GO_COMPL;
+    mbyTriggerDirectMapCtrlStatus STATUS;
+    mbyTriggerDirectMapCtrlOpType OP_TYPE;
+    mbyTriggerDirectMapCtrlRegId  REG_ID;
+    fm_uint32                     REG_INDX;
+} mbyTriggerDirectMapCtrl;
+
+typedef struct _mbyTriggerDirectMapCtx
+{
+    fm_uint64                    DEST_PORT_MASK[5];
+} mbyTriggerDirectMapCtx;
+
+typedef struct _mbyTriggerDirectMapAdm
+{
+    fm_byte                      FILTER_DEST_MASK;
+    fm_uint64                    NEW_DEST_MASK[MBY_DMASK_REGISTERS];
+} mbyTriggerDirectMapAdm;
+
+typedef struct _mbyTriggerDirectMapAdr
+{
+    fm_uint64                    DROP_MASK[MBY_DMASK_REGISTERS];
+} mbyTriggerDirectMapAdr;
+
 typedef struct mbyTriggerActionsStruct
 {
     /** TRIGGERS forwarding action. */
     mbyTriggerActionForwarding          forwardingAction;
     fm_uint16                           newDestGlort;
     fm_uint16                           newDestGlortMask;
-    fm_uint64                           newDestMask;
+    fm_uint64                           newDestMask[5];
     fm_bool                             filterDestMask;
-    fm_uint64                           dropMask;
+    fm_uint64                           dropMask[5];
 
     /** TRIGGERS trap action. */
     mbyTriggerActionTrap                trapAction;
@@ -155,9 +189,13 @@ typedef struct mbyTriggerActionsStruct
     /** TRIGGERS mirroring action. */
     mbyTriggerActionMirroring           mirroringAction0;
     mbyTriggerActionMirroring           mirroringAction1;
+    mbyTriggerActionMirroring           mirroringAction2;
+    mbyTriggerActionMirroring           mirroringAction3;
 
     fm_byte                             mirrorProfileIndex0;
     fm_byte                             mirrorProfileIndex1;
+    fm_byte                             mirrorProfileIndex2;
+    fm_byte                             mirrorProfileIndex3;
 
     /** TRIGGERS ISL switch priority action. */
     mbyTriggerActionTC                  TCAction;
@@ -174,77 +212,68 @@ typedef struct mbyTriggerActionsStruct
     mbyTriggerActionRateLimit           rateLimitAction;
     fm_byte                             newRateLimitNum;
 
-    /** TRIGGERS metadata action */
-    fm_byte                             metadataActionSlot;
-    mbyTriggerActionMetadata            metadataAction[4];
-    fm_uint16                           metadataMask[4];
-    fm_uint16                           metadataValue[4];
-    fm_byte                             metadataOffset[4];
-    fm_byte                             metadataSource[4];
-    fm_int                              metadataTrigNum[4];
-
     /** TRIGGERS l2 domain action */
 	mbyTriggerActionEgressL2Domain      egressL2DomainAction;
     mbyTriggerActionEgressL3Domain      egressL3DomainAction;
 
     /** TRIGGERS policer action */
 	mbyTriggerActionPolicer             policerAction;
-
-    /** TRIGGERS noModify action */
-    mbyTriggerActionNoModify            noModifyAction;
-    fm_byte                             metadataMaskSel;
-    fm_uint64                           metadataRevMask[4];
-
 } mbyTriggerActions;
 
 // Functions:
 
 mbyTriggerConditionCfg mbyTrigGetConditionCfg
 (
-    mby_ppe_trig_apply_map * const trig_apply_map,
-    fm_byte                  const trig
+    mby_ppe_trig_apply_map const * const trig_apply_map,
+    fm_byte                        const trig
 );
 
 mbyTriggerConditionParam mbyTrigGetConditionParam
 (
-    mby_ppe_trig_apply_map * const trig_apply_map,
-    fm_byte                  const trig
+    mby_ppe_trig_apply_map const * const trig_apply_map,
+    fm_byte                        const trig
 );
 
 mbyTriggerConditionCGRP mbyTrigGetConditionCGRP
 (
-    mby_ppe_trig_apply_map * const trig_apply_map,
-    fm_byte                  const trig
+    mby_ppe_trig_apply_map const * const trig_apply_map,
+    fm_byte                        const trig
 );
 
 mbyTriggerConditionGlort mbyTrigGetConditionGlort
 (
-    mby_ppe_trig_apply_map * const trig_apply_map,
-    fm_byte                  const trig
+    mby_ppe_trig_apply_map const * const trig_apply_map,
+    fm_byte                        const trig
 );
 
 mbyTriggerConditionRx mbyTrigGetConditionRx
 (
-    mby_ppe_trig_apply_map * const trig_apply_map,
-    fm_byte                  const trig
+    mby_ppe_trig_apply_map const * const trig_apply_map,
+    fm_byte                        const trig
 );
 
 mbyTriggerConditionAmask1 mbyTrigGetConditionAmask1
 (
-    mby_ppe_trig_apply_map * const trig_apply_map,
-    fm_byte                  const trig
+    mby_ppe_trig_apply_map const * const trig_apply_map,
+    fm_byte                        const trig
 );
 
 mbyTriggerConditionAmask2 mbyTrigGetConditionAmask2
 (
-    mby_ppe_trig_apply_map * const trig_apply_map,
-    fm_byte                  const trig
+    mby_ppe_trig_apply_map const * const trig_apply_map,
+    fm_byte                        const trig
+);
+
+mbyTriggerDirectMapCtx mbyTrigGetDirectMapCtrlCtx
+(
+    mby_ppe_trig_apply_map const * const trig_apply_map,
+    fm_byte                        const trig
 );
 
 mbyTriggerActions mbyTriggerGetActions
 (
-    mby_ppe_trig_apply_map * const trig_apply_map,
-    fm_byte                  const trig
+    mby_ppe_trig_apply_map const * const trig_apply_map,
+    fm_byte                        const trig
 );
 
 #endif /* MBY_TRIGGERS_H */

@@ -40,10 +40,27 @@
 `ifdef FC_64
      `define NUM_IGR 16
      `define NUM_EPC 8
+     `define NUM_MPP 8
 `else
      `define NUM_IGR 4
      `define NUM_EPC 2
+     `define NUM_MPP 2
 `endif
+
+`define FORCE_SIG(rtl_mod, name, val)       \
+    force ```rtl_mod``.``name`` = ``val; \
+
+`define FORCE_SIG_N(rtl_mod, name, val)               \
+    for (int i=0; i<`NUM_MPP; i++) begin \
+        force ```rtl_mod``_``i``.``name`` = ``val; \
+    end \
+
+`define FORCE_CLK(mod, sig)               \
+    force ```mod``.``sig`` = `HVL_TOP.fc_sig_if.tmp_``sig; \
+
+`define FORCE_CLK_N(mod, idx, sig)               \
+    force ```mod``_``idx``.``sig`` = `HVL_TOP.fc_sig_if.tmp_``sig; \
+
 
 /*
  *  ----------------

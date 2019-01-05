@@ -56,6 +56,7 @@ set open_workspace_post_specify_subsystem 0
 
 set workspace_root $::env(COLLAGE_WORK)
 set install_kits_root ${workspace_root}/installed_kits
+set src_kits_root $::env(COLLAGE_COREKIT_DIR)
 
 ##############################################################################
 

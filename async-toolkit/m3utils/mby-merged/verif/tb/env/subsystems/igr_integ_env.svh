@@ -19,6 +19,9 @@ class igr_integ_env extends subsystem_base_env;
    
    // igr env
    mby_igr_env       ingress_env_inst[`NUM_IGR];
+   
+   // igr tb_cfg
+   mby_igr_tb_cfg    ingress_cfg_inst[`NUM_IGR];
  
    //
    // constructor
@@ -64,16 +67,21 @@ class igr_integ_env extends subsystem_base_env;
  
      // creating both CFG and env's 
      for (int i=0; i<`NUM_IGR; i++) begin
+         // FIXME: The ingress env needs a valid handle to an ingress testbench configuration object.  This should be created and passed down from the test but for now it is build in the integ_env and passed and passed down here.
+         ingress_cfg_inst[i] = mby_igr_tb_cfg::type_id::create($sformatf("ingress_tb_cfg_inst_%0d", i), this);
+         `uvm_info(get_name(),  $sformatf("build_igr_env: ingress_tb_cfg_inst[%0d] created",i),UVM_MEDIUM)
+
          ingress_env_inst[i] = mby_igr_env::type_id::create($sformatf("ingress_env_inst_%0d", i), this);
          //ingress_env_inst[i].set_level(SLA_SUB); // PJP: TODO: How do we do this wil pure UVM?
          `uvm_info(get_name(),  $sformatf("build_igr_env: ingress_env_inst[%0d] created",i),UVM_MEDIUM)
+
+         // set the IP3 ENV testbench cfg down ip3 subenv
+         ingress_env_inst[i].set_tb_cfg(ingress_cfg_inst[i]);
+
      end
 
      // pass-in the IP3 reg_model from FC regmodel
      //ingress_env_cfg_inst.regModel  = fc_cfg_obj_handle.reg_model._ingress_env_reg_blk;
-
-     // set the IP3 ENV cfg down ip3 subenv
-     //uvm_config_db#(ingress_env_env_cfg)::set(null, "*.ingress_env_env_inst", "ingress_env_env_cfg", ingress_env_env_cfg_inst);
 
    endfunction : build_igr_env
  

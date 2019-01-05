@@ -1,0 +1,8 @@
+`ifndef MBY_MSH_MEM_DEF
+        `define MBY_MSH_MEM_DEF
+        `include        "mby_mgm_mems.def"
+        `define MBY_MSH_MSH_BANK_RAM_FROM_MEM_WIDTH             533
+        `define MBY_MSH_MSH_BANK_RAM_TO_MEM_WIDTH       `MBY_MEM_RM_WIDTH + 549
+        `define MBY_MSH_MSH_BANK_RAM_FROM_CTL_WIDTH             10 + `MBY_MEM_RM_WIDTH + 1 + `MBY_MEM_DBG_DW_SEL_WIDTH + `MBY_MEM_DBG_RD_ADR_WIDTH + $clog2(`MBY_MEM_GEN_ECC_INST_NUM) + 2  
+        `define MBY_MSH_MSH_BANK_RAM_TO_CTL_WIDTH               54
+`endif

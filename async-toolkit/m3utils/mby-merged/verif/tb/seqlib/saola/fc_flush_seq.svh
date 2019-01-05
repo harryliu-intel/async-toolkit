@@ -10,8 +10,6 @@
 class fc_flush_seq extends fc_base_seq;
 
     const string CLASSNAME = "fc_flush_seq";
-    slu_status_t status;  
-    slu_ral_data_t ral_data;
 
     // -----------------------------------------------------------------------
     function new(string name = "fc_flush_seq");

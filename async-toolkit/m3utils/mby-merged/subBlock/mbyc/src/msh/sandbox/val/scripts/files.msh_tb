@@ -1,0 +1,7 @@
+// template tb source  (msh_sim_pkg.sv listed here explictly so it doesn't have to be included everywhere) 
++incdir+$LOGICROOT/msh/sandbox/val/verilog
+$LOGICROOT/msh/sandbox/val/verilog/msh_sim_pkg.sv
+
+// template tb interface and top
+-y $LOGICROOT/msh/sandbox/val/verilog
+

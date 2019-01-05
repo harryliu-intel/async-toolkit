@@ -23,7 +23,8 @@
 // express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
-//   Author        : Akshay Kotian
+//   Author        : Nathan Mai
+//                 : Lewis Sternberg
 //   Project       : Madison Bay
 //------------------------------------------------------------------------------
 
@@ -48,31 +49,29 @@ class mby_rx_ppe_env extends shdv_base_env;
 
    // Variable:  tb_vif
    // Interface handle to rx_ppe Testbench.
+   //FIXME: LNS: to be made into an array for each inter-block interface
    virtual   mby_rx_ppe_tb_if                                  tb_vif;
-
+   
    // Variable:  tb_ral
-   // Protected Top Level rx_ppe RAL env handle.
-   protected mby_rx_ppe_ral_env                                tb_ral;
+   // Handle to RX PPE RAL.
+   mby_rx_ppe_reg_pkg::mby_rx_ppe_reg_blk                      tb_ral;
 
-   // Variable:  eth_cdi_bfm
+   // Variable:  eth_bfms
    // MAC Client BFM agent
-   ec_env_defines::mby_ec_bfm_t eth_cdi_bfm;
+   rx_ppe_eth_bfm_t                                            eth_bfm; //ned 1 bf for both LPP & FPP
 
-   // Variable:  cdi_tx_io
-   // MAC Client BFM io policy
-   ec_env_defines::cdi_tx_io_t eth_cdi_tx_io;
-
-   // Variable:  cdi_rx_io
-   // MAC Client BFM io policy
-   ec_env_defines::cdi_rx_io_t eth_cdi_rx_io;
-
-   // Variable:  cdi_tx_vintf
+   // Variable:  eth_bfm_rx_vintf
    // MAC Client BFM virtual interface
-   ec_env_defines::cdi_tx_vintf_t cdi_tx_vintf;
+   rx_ppe_eth_bfm_rx_intf_t                                    eth_bfm_rx_vintf;//[`NUM_EPLS_PER_RX_PPE]; //just 1 EPL for RX_PPE env
 
-   // Variable:  cdi_rx_vintf
-   // MAC Client BFM virtual interface
-   ec_env_defines::cdi_rx_vintf_t cdi_rx_vintf;
+   //TODO: Add IO policy for INTF0 & INTF1 
+   //eth_bfm parser io
+
+   // Variable:  rx_ppe_sb
+   // array of scoreboards -- one per block
+   // declare as the base class (which is not mby_rx_ppe_sb, by the way), and cast as necessary
+   // TODO: use shdv_scoreboard when available
+   uvm_scoreboard                                             scoreboards[];
 
    `uvm_component_utils_begin(mby_rx_ppe_env)
       `uvm_field_object  (tb_cfg,                          UVM_ALL_ON)
@@ -80,7 +79,6 @@ class mby_rx_ppe_env extends shdv_base_env;
 
    //---------------------------------------------------------------------------
    //  Constructor: new
-   //  Set Top_cfg type in Saola
    //
    //  Arguments:
    //      string name - MBY Rx_ppe environment object name.
@@ -88,14 +86,11 @@ class mby_rx_ppe_env extends shdv_base_env;
    //---------------------------------------------------------------------------
    function new(string name = "mby_rx_ppe_env", uvm_component parent = null);
       super.new(name, parent);
-
-      ral_type = "mby_rx_ppe_env_pkg::mby_rx_ppe_ral_env";
-
    endfunction : new
 
    //---------------------------------------------------------------------------
    //  Function: build_phase
-   //  Create the agents, create the End to End scoreboards.
+   //  Create the agents and scoreboards
    //
    //  Arguments:
    //      phase - uvm_phase object.
@@ -103,50 +98,66 @@ class mby_rx_ppe_env extends shdv_base_env;
    virtual function void build_phase(uvm_phase phase);
       uvm_object tmp_cfg;
 
+      scoreboards = new[mby_rx_ppe_topology_e_num];
+
       super.build_phase(phase);
 
       if(get_config_object("mby_rx_ppe_tb_top_cfg", tmp_cfg)) begin
-         $cast(tb_cfg, tmp_cfg);
+         if (!$cast(tb_cfg, tmp_cfg)) begin
+            `uvm_fatal(get_name(), "build_phase(): cast to tb_cfg failed")
+         end
       end
 
       if (tb_cfg == null) begin
-         `uvm_fatal(get_full_name(), "Unable to acquire handle to mby_rx_ppe_tb_top_cfg object!")
+         `uvm_fatal(get_full_name(), "Unable to acquire handle to mby_rx_ppe_tb_top_cfg object")
       end
 
       `uvm_info (get_full_name , $sformatf("rx_ppe Top _cfg : %s", tb_cfg.sprint()), UVM_FULL)
 
       if(!uvm_config_db#(string)::get(this, "" , "TI_PATH", tb_cfg.ti_path)) begin
-         `uvm_fatal(get_name(),"Config_DB.get() for ENV's TI_PATH was not successful!")
+         `uvm_fatal(get_name(),"Config_DB.get() for ENV's TI_PATH was not successful")
       end
       `uvm_info(get_full_name(),$sformatf("This rx_ppe Build Phase set tb_cfg.ti_path = %s", tb_cfg.ti_path),UVM_FULL)
 
       if(!uvm_config_db#(string)::get(this, "" , "RTL_TOP_PATH", tb_cfg.rtl_top_path)) begin
-         `uvm_fatal(get_name(),"Config_DB.get() for ENV's RTL_TOP_PATH was not successful!")
+         `uvm_fatal(get_name(),"Config_DB.get() for ENV's RTL_TOP_PATH was not successful")
       end
       `uvm_info(get_full_name(),$sformatf("This rx_ppe Build Phase set tb_cfg.rtl_top_path = %s", tb_cfg.rtl_top_path),UVM_FULL)
 
-      if(!uvm_config_db#(int)::get(this, "", "TOPOLOGY", tb_cfg.topology)) begin
-         `uvm_fatal(get_name(),$sformatf("Unable to acquire valid topology value!!! "))
-      end
-      `uvm_info(get_full_name(),$sformatf("This rx_ppe Build Phase set tb_cfg.topology = %s", tb_cfg.topology),UVM_FULL)
+// FIXME LNS: if tb_cfg is an object in the env, then why are we going through the uvm_config_db to access its members?
+//      if(!uvm_config_db#(int)::get(this, "", "TOPOLOGY", tb_cfg.topology)) begin
+//         `uvm_fatal(get_name(),$sformatf("Unable to acquire valid topology value"))
+//      end
+//      `uvm_info(get_full_name(),$sformatf("This rx_ppe Build Phase set tb_cfg.topology = %s", tb_cfg.topology),UVM_FULL)
 
       if(!uvm_config_db#(virtual mby_rx_ppe_tb_if)::get(this, "", "mby_rx_ppe_tb_if", tb_vif)) begin
-         `uvm_fatal(get_name(),"Config_DB.get() for ENV's TB_IF was not successful!")
+         `uvm_fatal(get_name(),"Config_DB.get() for ENV's TB_IF was not successful")
       end
 
-      if(!uvm_config_db#(ec_env_defines::cdi_tx_vintf_t)::get(this, "", "cdi_tx_vintf", cdi_tx_vintf)) begin
-         `uvm_fatal(get_name(),"Config_DB.get() for ENV's cdi_tx_vintf was not successful!")
-      end
-      if(!uvm_config_db#(ec_env_defines::cdi_rx_vintf_t)::get(this, "", "cdi_rx_vintf", cdi_rx_vintf)) begin
-         `uvm_fatal(get_name(),"Config_DB.get() for ENV's cdi_rx_vintf was not successful!")
+      if(!uvm_config_db#(rx_ppe_eth_bfm_rx_intf_t)::get(this, "", "eth_bfm_rx_vintf", eth_bfm_rx_vintf)) begin
+         `uvm_fatal(get_name(),"Config_DB.get() for ENV's cdi_rx_vintf was not successful")
       end
 
-      $cast(tb_ral,ral);
-      if(tb_ral == null) begin
-         `ovm_fatal(get_name(),"Unable to acquire handle to TB RAL!");
-      end
-
+//TODO: AK: Uncomment this after UVM_REG_DATA_WIDTH is defined as 128.       
+//    build_ral();
       build_eth_bfm();
+
+      foreach (scoreboards[ii]) begin
+         if(tb_cfg.scoreboards[ii] != 0) begin
+            case(ii)
+               PARSER            : scoreboards[ii] = mby_rx_ppe_sb#(mby_rx_ppe_parser_obj)          ::type_id::create("rx_ppe_sb_parser"         , this);
+               MAPPER            : scoreboards[ii] = mby_rx_ppe_sb#(mby_rx_ppe_mapper_obj)          ::type_id::create("rx_ppe_sb_mapper"         , this);
+               CLASSIFIER        : scoreboards[ii] = mby_rx_ppe_sb#(mby_rx_ppe_classifier_obj)      ::type_id::create("rx_ppe_sb_classifier"     , this);
+               HASH              : scoreboards[ii] = mby_rx_ppe_sb#(mby_rx_ppe_hash_obj)            ::type_id::create("rx_ppe_sb_hash"           , this);
+               NEXT_HOP          : scoreboards[ii] = mby_rx_ppe_sb#(mby_rx_ppe_next_hop_obj)        ::type_id::create("rx_ppe_sb_next_hop"       , this);
+               MASK_GEN          : scoreboards[ii] = mby_rx_ppe_sb#(mby_rx_ppe_mask_gen_obj)        ::type_id::create("rx_ppe_sb_mask_gen"       , this);
+               TRIGGERS          : scoreboards[ii] = mby_rx_ppe_sb#(mby_rx_ppe_triggers_obj)        ::type_id::create("rx_ppe_sb_triggers"       , this);
+               CONGESTION_MGT    : scoreboards[ii] = mby_rx_ppe_sb#(mby_rx_ppe_congestion_mgt_obj)  ::type_id::create("rx_ppe_sb_congestion_mgt" , this);
+               RX_STATS          : scoreboards[ii] = mby_rx_ppe_sb#(mby_rx_ppe_rx_stats_obj)        ::type_id::create("rx_ppe_sb_rx_stats"       , this);
+               default : `uvm_fatal(get_name(), $sformatf("Unexpected scoreboard index: %0d", ii))
+            endcase
+         end
+      end
 
    endfunction: build_phase
 
@@ -156,24 +167,45 @@ class mby_rx_ppe_env extends shdv_base_env;
    //---------------------------------------------------------------------------
    function void build_eth_bfm();
 
-      eth_cdi_bfm                    = ec_env_defines::mby_ec_bfm_t::type_id::create("eth_cdi_bfm", this); // Create the bfm instance
-      eth_cdi_bfm.cfg.mode           = eth_bfm_pkg::MODE_MASTER;                                           // Configure as MASTER
-      eth_cdi_bfm.cfg.port_speed     = {eth_bfm_pkg::SPEED_400G,                                           // Configure speed.
-         eth_bfm_pkg::SPEED_OFF,
-         eth_bfm_pkg::SPEED_OFF,
-         eth_bfm_pkg::SPEED_OFF};
-
-      //eth_cdi_bfm.cfg.num_ports = 4;                                                                  // Configure num_ports.
-      eth_cdi_bfm.cfg.sop_alignment = 67;
-      //eth_cdi_bfm.cfg.ack_delay = 0;
-      //eth_cdi_bfm.cfg.enable_to_data_tx_delay = 0;
-
-      eth_cdi_tx_io = ec_env_defines::cdi_tx_io_t::type_id::create("eth_cdi_tx_io", this);
-      eth_cdi_rx_io = ec_env_defines::cdi_rx_io_t::type_id::create("eth_cdi_rx_io", this);
+      // Create the bfm instances
+      eth_bfm                   =  rx_ppe_eth_bfm_t::type_id::create("rx_ppe_eth_bfm", this);
+      eth_bfm.cfg.mode          =  eth_bfm_pkg::MODE_SLAVE;                            // Configure as SLAVE
+      eth_bfm.cfg.port_speed    =  {eth_bfm_pkg::SPEED_400G,                           // Configure speed.
+                                    eth_bfm_pkg::SPEED_OFF ,
+                                    eth_bfm_pkg::SPEED_OFF ,
+                                    eth_bfm_pkg::SPEED_OFF };
+      //eth_bfms.cfg.port_lanes    = {4,0,0,0};                                        // Configure num_ports.
+      eth_bfm.cfg.group_size    = 8;
+      eth_bfm.cfg.sop_alignment = 8;
 
    endfunction : build_eth_bfm
 
    //---------------------------------------------------------------------------
+   //  Function: build_ral
+   //  Builds Rx_PPE register model.
+   //
+   //---------------------------------------------------------------------------
+   virtual function void build_ral();
+      
+      //TODO: AK- Check if this is OK.
+      // UVM registers are generated with coverage disabled. When uvm reg is built it looks up for
+      //"include_coverage" in the uvm_config_db and throws a warning that it cant find that variable for
+      // every single register. Setting the "include_coverage" variable to 0 to avoid the warning.    
+      uvm_config_db#(int)::set(null, "uvm_test_top.env.tb_ral", "include_coverage", 0);
+
+      // Check if ral is already set by FC
+      if (tb_ral == null) begin
+         tb_ral = mby_rx_ppe_reg_pkg::mby_rx_ppe_reg_blk::type_id::create("tb_ral");
+         tb_ral.build();
+         //TODO: Update register map base address.
+         tb_ral.default_map.set_base_addr(`UVM_REG_ADDR_WIDTH'h4000);
+         tb_ral.lock_model();
+                
+      end
+      
+   endfunction: build_ral
+   
+  //---------------------------------------------------------------------------
    //  Function: connect_phase
    //  Connects different BFM interfaces and Scoreboard
    //  Arguments:
@@ -182,32 +214,20 @@ class mby_rx_ppe_env extends shdv_base_env;
    function void connect_phase(uvm_phase phase);
       super.connect_phase(phase);
 
-      if( _level == SLA_TOP ) begin
-      end
-
-      eth_cdi_tx_io.set_vintf(cdi_tx_vintf);
-      eth_cdi_rx_io.set_vintf(cdi_rx_vintf);
-      eth_cdi_bfm.set_io(eth_cdi_tx_io, eth_cdi_rx_io);   // Set the IO Policy in the CDI BFM
-      void'(this.add_sequencer("eth_agent", "tx0", eth_cdi_bfm.tx.frame_sequencer[0]));
-      void'(this.add_sequencer("eth_agent", "tx1", eth_cdi_bfm.tx.frame_sequencer[1]));
-      void'(this.add_sequencer("eth_agent", "tx2", eth_cdi_bfm.tx.frame_sequencer[2]));
-      void'(this.add_sequencer("eth_agent", "tx3", eth_cdi_bfm.tx.frame_sequencer[3]));
-
+      //eth_cdi_rx_io.set_vintf(eth_bfm_rx_vintf);
+      //eth_cdi_bfm.set_io(eth_cdi_tx_io, eth_cdi_rx_io);   // Set the IO Policy in the CDI BFM
    endfunction: connect_phase
 
    //---------------------------------------------------------------------------
    //  Function: end_of_elaboration_phase
+   //FIXME: LNS: if the super.end_of_elaboration_phase() does these things, make that clear in the following line.  If it does not, then delete the following line or insert a TODO to make it so.
    //  Randomizes the RAL objects.  Prints BFM configurations.
    //
    //  Arguments:
    //  phase - uvm_phase object.
-   //---------------------------------------------------------------------------
+   //----------------------------------------------------------------------------
    function void end_of_elaboration_phase(uvm_phase phase);
       super.end_of_elaboration_phase(phase);
-
-      if (_level == SLA_TOP) begin
-      end
-
    endfunction: end_of_elaboration_phase
 
    //---------------------------------------------------------------------------
@@ -238,11 +258,20 @@ class mby_rx_ppe_env extends shdv_base_env;
 
    //---------------------------------------------------------------------------
    // Function: get_tb_ral()
-   // Returns object handle to rx_ppe RAL env (mby_rx_ppe_ral_env)
+   // Returns object handle to rx_ppe RAL  (mby_rx_ppe_reg_blk)
    //---------------------------------------------------------------------------
-   function mby_rx_ppe_ral_env get_tb_ral();
+   function mby_rx_ppe_reg_pkg::mby_rx_ppe_reg_blk get_tb_ral();
       return tb_ral;
    endfunction : get_tb_ral
+
+   //---------------------------------------------------------------------------
+   // Function: set_tb_ral()
+   // Sets handle to rx_ppe ral (mby_rx_ppe_reg_blk). Used to pass handle to RAL from fullchip env.
+   //---------------------------------------------------------------------------
+   function set_tb_ral(mby_rx_ppe_reg_pkg::mby_rx_ppe_reg_blk ral);
+      tb_ral = ral;
+   endfunction : set_tb_ral
+
 
 endclass
 

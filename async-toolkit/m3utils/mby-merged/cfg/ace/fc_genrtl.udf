@@ -19,19 +19,27 @@ my $cmo =  join(":", @{&ToolConfig::get_tool("mgm")->{'MGM_ARGS'}->{'CMO'}});
         -add_flag_dump => { default=> 1, },
         -dump_rtl_include_prereqs => { default=> 1, },
         -enable_generate_rtl => { default=> 1, },         
-        -en__mby_mgm_lib => {
+        -en__gen_mby_mgm_lib => {
                 type => 'BOOLEAN',
                 default => 1,
                 help => {
-                    desc => "STAGE 'mby_mgm_lib' enable",
+                    desc => "STAGE 'gen_mby_mgm_lib' enable",
                     group => "GENERATE",
                 },
-        },           #en__mby_mgm_lib
+        },           #en__gen_mby_mgm_lib
         -en__gen_mby_regflow_lib => {
             type    => 'BOOLEAN',
             default => 1,
             help    => {
                 desc  => "STAGE 'gen_mby_regflow_lib' enable",
+                group => "GENERATE",
+            },
+        },
+        -en__gen_ral_regflow_lib => {
+            type    => 'BOOLEAN',
+            default => 1,
+            help    => {
+                desc  => "STAGE 'gen_ral_regflow_lib' enable",
                 group => "GENERATE",
             },
         },
@@ -56,20 +64,36 @@ my $cmo =  join(":", @{&ToolConfig::get_tool("mgm")->{'MGM_ARGS'}->{'CMO'}});
  GenRTL => {
         mby => {
             -config => {
-                 mby_mgm_lib => {
-                     enable_config => '<-en__mby_mgm_lib>',
+                 gen_mby_mgm_lib => {
+                     enable_config => '<-en__gen_mby_mgm_lib>',
                      filter => 'Synthesis',
                      gen_commands => [ 
                          #"mkdir -p $ENV{MODEL_ROOT}/target/mgm",
                          "mgm $blocks -cnfg $config_file -includes $includes -apr_struct $apr_struct -csv $ph_params -unique $prefix -clk $clock_file -rprt_dir  $report_dir -cmo $cmo -relative_path_from $ENV{MODEL_ROOT} ",
                      ],
-		 },      #mby_mgm_lib
+		 },      #gen_mby_mgm_lib
                  gen_mby_regflow_lib => {
                     enable_config => '<-en__gen_mby_regflow_lib>',
                     filter        => 'Synthesis',
                     gen_commands => [
                        "echo 'Running nebulon'",
                        "make -C $ENV{MODEL_ROOT}/tools/srdl/mby",
+                    ],
+                },
+                gen_mesh_regflow_lib => {
+                    enable_config => '<-en__gen_ral_regflow_lib>',
+                    filter        => 'Synthesis',
+                    gen_commands => [
+                       "echo 'Running nebulon for Mesh'",
+                       "make -C $ENV{MODEL_ROOT}/tools/srdl/mby mesh_ral",
+                    ],
+                },
+                gen_rx_ppe_regflow_lib => {
+                    enable_config => '<-en__gen_ral_regflow_lib>',
+                    filter        => 'Synthesis',
+                    gen_commands => [
+                       "echo 'Running nebulon for Rx_PPE'",
+                       "make -C $ENV{MODEL_ROOT}/tools/srdl/mby ppe_ral",
                     ],
                 },
                 gen_mby_wm => {

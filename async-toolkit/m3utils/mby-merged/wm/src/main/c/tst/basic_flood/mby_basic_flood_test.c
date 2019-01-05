@@ -8,6 +8,7 @@
 #include <mby_init.h>
 #include <mby_parser.h>
 #include <mby_pipeline.h>
+#include <model_c_write.h> // write_field()
 
 #include "mby_basic_flood_init.h"
 
@@ -27,7 +28,8 @@
 const int send_sw = 0;
 const int send_port = 0;
 
-static mby_top_map top_map;
+static mby_top_map       top_map;
+static mby_top_map__addr top_map_addr;
 
 static mbyRxStatsToRxOut rxs2rxo;
 
@@ -47,9 +49,10 @@ inline static int checkOk (const char * test, const fm_status status)
 
 fm_status init()
 {
+    mby_top_map__init(&top_map, &top_map_addr, mby_field_init_cb);
     // TODO verify if that's all that we need
-    mby_init_common_regs(&(top_map.mpp.mgp[0].rx_ppe));
-    basic_flood_init(&(top_map.mpp.mgp[0].rx_ppe));
+    mby_init_common_regs(&(top_map.mpp[0].mgp[0].rx_ppe), &(top_map.mpp[0].mgp[0].tx_ppe));
+    basic_flood_init(&(top_map.mpp[0].mgp[0].rx_ppe));
 
     return FM_OK;
 }
@@ -75,14 +78,14 @@ fm_status check
     }
 
     // Check RX counters
-    rx_stats_bank_frame_r * const bank_frame = &(top_map.mpp.mgp[0].rx_ppe.stats.RX_STATS_BANK_FRAME[bank][index]);
+    rx_stats_bank_frame_r * const bank_frame = &(top_map.mpp[0].mgp[0].rx_ppe.stats.RX_STATS_BANK_FRAME[bank][index]);
 
     if (bank_frame->FRAME_COUNTER != 1) {
         printf("Frame counter is invalid\n");
         return FM_FAIL;
     }
 
-    rx_stats_bank_byte_r * const bank_byte = &(top_map.mpp.mgp[0].rx_ppe.stats.RX_STATS_BANK_BYTE[bank][index]);
+    rx_stats_bank_byte_r * const bank_byte = &(top_map.mpp[0].mgp[0].rx_ppe.stats.RX_STATS_BANK_BYTE[bank][index]);
 
     if (bank_byte->BYTE_COUNTER != exp_packet_len) {
         printf("Byte counter is invalid\n");
@@ -109,8 +112,9 @@ static fm_status sendPacket
         // Top CSR map for tile 0 receive pipeline:
         // TODO use the pipeline associated to the specific ingress port
 
-        mby_ppe_rx_top_map * const rx_top_map = &(top_map.mpp.mgp[0].rx_ppe);
-        mby_shm_map        * const shm_map    = &(top_map.mpp.shm);
+        mby_ppe_rx_top_map       const * const rx_top_map   = &(top_map.mpp[0].mgp[0].rx_ppe);
+        mby_ppe_rx_top_map__addr const * const rx_top_map_w = &(top_map_addr.mpp[0].mgp[0].rx_ppe);
+        mby_shm_map              const * const shm_map      = &(top_map.mpp[0].shm);
 
         // Input struct:
         mbyRxMacToParser mac2par;
@@ -121,7 +125,7 @@ static fm_status sendPacket
         mac2par.RX_PORT   = (fm_uint32) port;
 
         // Call RX pipeline:
-        RxPipeline(rx_top_map, shm_map, &mac2par, &rxs2rxo);
+        RxPipeline(rx_top_map, rx_top_map_w, shm_map, &mac2par, &rxs2rxo);
     }
     return sts;
 }
@@ -141,20 +145,49 @@ static fm_status receivePacket
         sts = FM_ERR_UNSUPPORTED;
     else
     {
-        /* TxPipeline function will be called when modifier code is ready. */
+       mby_ppe_tx_top_map       const * const tx_top_map   = &(top_map.mpp[0].mgp[0].tx_ppe);
+       mby_ppe_tx_top_map__addr const * const tx_top_map_w = &(top_map_addr.mpp[0].mgp[0].tx_ppe);
+       mby_shm_map              const * const shm_map      = &(top_map.mpp[0].shm);
 
-        // Select egress port:
-        fm_uint32 tx_port = 0;
+        // Input struct:
+        mbyTxInToModifier txi2mod;
+        txi2mod.CONTENT_ADDR  = rxs2rxo.CONTENT_ADDR;
+        txi2mod.DROP_TTL      = rxs2rxo.DROP_TTL;
+        txi2mod.ECN           = rxs2rxo.ECN;
+        txi2mod.EDGLORT       = rxs2rxo.EDGLORT;
+        txi2mod.FNMASK        = rxs2rxo.FNMASK;
+        txi2mod.IS_TIMEOUT    = rxs2rxo.IS_TIMEOUT;
+        txi2mod.L2_DMAC       = rxs2rxo.L2_DMAC;
+        txi2mod.L2_EVID1      = rxs2rxo.L2_EVID1;
+        txi2mod.MARK_ROUTED   = rxs2rxo.MARK_ROUTED;
+        txi2mod.MIRTYP        = rxs2rxo.MIRTYP;
+        txi2mod.MOD_IDX       = rxs2rxo.MOD_IDX;
+        txi2mod.MOD_PROF_IDX  = rxs2rxo.MOD_PROF_IDX;
+        txi2mod.NO_MODIFY     = rxs2rxo.NO_MODIFY;
+        txi2mod.OOM           = rxs2rxo.OOM;
+        txi2mod.PARSER_INFO   = rxs2rxo.PARSER_INFO;
+        txi2mod.PA_HDR_PTRS   = rxs2rxo.PA_HDR_PTRS;
+        txi2mod.PM_ERR        = rxs2rxo.PM_ERR;
+        txi2mod.PM_ERR_NONSOP = rxs2rxo.PM_ERR_NONSOP;
+        txi2mod.QOS_L3_DSCP   = rxs2rxo.QOS_L3_DSCP;
+        txi2mod.RX_DATA       = rxs2rxo.RX_DATA;
+        txi2mod.RX_LENGTH     = rxs2rxo.RX_LENGTH;
+        txi2mod.SAF_ERROR     = rxs2rxo.SAF_ERROR;
+        txi2mod.TAIL_CSUM_LEN = rxs2rxo.TAIL_CSUM_LEN;
+        txi2mod.TX_DROP       = rxs2rxo.TX_DROP;
+        txi2mod.TX_TAG        = rxs2rxo.TX_TAG;
+        txi2mod.XCAST         = rxs2rxo.XCAST;
 
-        for (fm_uint i = 0; i < 18; i++)
-            if (rxs2rxo.FNMASK & (1uL << i)) {
-                tx_port = i;
-                break;
-            }
+        // Output struct:
+        mbyTxStatsToTxMac txs2mac;
+        txs2mac.TX_DATA = packet; //points at provided buffer
+
+        // Call RX pipeline:
+        TxPipeline(tx_top_map, tx_top_map_w, shm_map, &txi2mod, &txs2mac, MBY_MAX_PACKET_SIZE);
 
         // Populate output:
-        *port   = tx_port;
-        *length = rxs2rxo.RX_LENGTH;
+        *port   = txs2mac.TX_PORT;
+        *length = txs2mac.TX_LENGTH;
     }
     return sts;
 }

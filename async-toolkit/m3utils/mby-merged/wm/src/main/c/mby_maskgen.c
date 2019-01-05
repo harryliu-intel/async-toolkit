@@ -5,12 +5,10 @@
 #include "mby_nexthop.h"
 #include "mby_maskgen.h"
 
-#include "../m3/genviews/src/build_c/mby_c/src/mby_top_map.h"
-
 static mbyFwdPortCfg1 getPortCfg1
 (
-    mby_ppe_fwd_misc_map * const fwd_misc,
-    const fm_uint32              port // RX port
+    mby_ppe_fwd_misc_map const * const fwd_misc,
+    fm_uint32                    const port // RX port
 )
 {
     mbyFwdPortCfg1 cfg;
@@ -26,8 +24,8 @@ static mbyFwdPortCfg1 getPortCfg1
 
 static mbyFwdPortCfg2 getPortCfg2
 (
-    mby_ppe_fwd_misc_map * const fwd_misc,
-    const fm_uint16              l2_edomain
+    mby_ppe_fwd_misc_map const * const fwd_misc,
+    fm_uint16                    const l2_edomain
 )
 {
     mbyFwdPortCfg2 cfg;
@@ -41,7 +39,7 @@ static mbyFwdPortCfg2 getPortCfg2
 
 static mbyFwdSysCfg1 getSysCfg1
 (
-    mby_ppe_fwd_misc_map * const fwd_misc
+    mby_ppe_fwd_misc_map const * const fwd_misc
 )
 {
     mbyFwdSysCfg1 cfg;
@@ -59,7 +57,7 @@ static mbyFwdSysCfg1 getSysCfg1
 
 static mbyFwdSysCfgRouter getSysCfgRouter
 (
-    mby_ppe_fwd_misc_map * const fwd_misc
+    mby_ppe_fwd_misc_map const * const fwd_misc
 )
 {
     mbyFwdSysCfgRouter cfg;
@@ -74,8 +72,8 @@ static mbyFwdSysCfgRouter getSysCfgRouter
 
 static mbyFwdLagCfg getLagCfg
 (
-    mby_ppe_fwd_misc_map * const fwd_misc,
-    const fm_uint32              port
+    mby_ppe_fwd_misc_map const * const fwd_misc,
+    fm_uint32                    const port
 )
 {
     mbyFwdLagCfg cfg;
@@ -92,8 +90,8 @@ static mbyFwdLagCfg getLagCfg
 
 static mbyGlortCam getGlortCamEntry
 (
-    mby_ppe_mst_glort_map * const glort_map,
-    const fm_byte                 cam_index
+    mby_ppe_mst_glort_map const * const glort_map,
+    fm_byte                             cam_index
 )
 {
     mbyGlortCam cam_entry;
@@ -108,8 +106,8 @@ static mbyGlortCam getGlortCamEntry
 
 static mbyGlortDestTable getGlortDestTableEntry
 (
-    mby_ppe_mst_glort_map * const glort_map,
-    const fm_uint16               table_index
+    mby_ppe_mst_glort_map const * const glort_map,
+    fm_uint16                           table_index
 )
 {
     mbyGlortDestTable table_entry;
@@ -130,8 +128,8 @@ static mbyGlortDestTable getGlortDestTableEntry
 
 static mbyGlortRam getGlortRamEntry
 (
-    mby_ppe_mst_glort_map * const glort_map,
-    const fm_byte                 ram_index
+    mby_ppe_mst_glort_map const * const glort_map,
+    fm_byte                       const ram_index
 )
 {
     mbyGlortRam ram_entry;
@@ -151,13 +149,13 @@ static mbyGlortRam getGlortRamEntry
 
 static mbyEgressVidTable getEvidTableEntry
 (
-    mby_ppe_mst_glort_map * const mst_glort,
-    fm_uint16                     vid
+    mby_ppe_mst_glort_map const * const mst_glort,
+    fm_uint16                           vid
 )
 {
     mbyEgressVidTable entry;
 
-    egress_vid_table_r * const vid_table = &(mst_glort->EGRESS_VID_TABLE[vid][0]);
+    egress_vid_table_r const * const vid_table = &(mst_glort->EGRESS_VID_TABLE[vid][0]);
 
     entry.MEMBERSHIP = vid_table->MEMBERSHIP;
 
@@ -166,9 +164,9 @@ static mbyEgressVidTable getEvidTableEntry
 
 static fm_status lookUpRamEntry
 (
-    mby_ppe_mst_glort_map * const glort_map,
-    const fm_uint16               idglort,
-    mbyGlortRam           * const glort_ram
+    mby_ppe_mst_glort_map const * const glort_map,
+    fm_uint16                     const idglort,
+    mbyGlortRam                 * const glort_ram
 )
 {
     fm_bool cam_hit = FALSE;
@@ -210,13 +208,13 @@ static fm_status lookUpRamEntry
 
 static void lookUpDestEntry
 (
-    mby_ppe_mst_glort_map * const glort_map,
-    const fm_uint16               idglort,
-    const fm_bool                 strict_glort_routing,
-    const fm_uint32               hash_rot_a,
-    const fm_uint32               hash_rot_b,
-    const mbyGlortRam             glort_ram,
-    mbyGlortDestTable     * const glort_dest_table
+    mby_ppe_mst_glort_map const * const glort_map,
+    fm_uint16                     const idglort,
+    fm_bool                       const strict_glort_routing,
+    fm_uint32                     const hash_rot_a,
+    fm_uint32                     const hash_rot_b,
+    mbyGlortRam                   const glort_ram,
+    mbyGlortDestTable           * const glort_dest_table
 )
 {
     fm_uint16 length_a   = (glort_ram.RANGE_SUB_INDEX_A >> 4) & 0xF;
@@ -242,8 +240,8 @@ static void lookUpDestEntry
 
 static fm_bool isCpuMacAddress
 (
-    mby_ppe_fwd_misc_map * const fwd_misc,
-    const fm_macaddr mac_addr
+    mby_ppe_fwd_misc_map const * const fwd_misc,
+    fm_macaddr                   const mac_addr
 )
 {
     fm_macaddr cpu_mac_addr = 0;
@@ -259,15 +257,15 @@ static fm_bool isCpuMacAddress
 static void resolveAction
 (
     // inputs:
-    const fm_uint64   pri_amask,
-    const fm_uint32   glort_dmask,
-    const fm_byte     trap_tc,
+    fm_uint64  const pri_amask,
+    fm_uint32  const glort_dmask,
+    fm_byte    const trap_tc,
     // inouts:
     fm_uint64 * const amask,
     fm_uint32 * const dmask,
     fm_bool   * const learning_enabled,
     fm_byte   * const cpu_code,
-    fm_byte   * const qos_swpri,
+    fm_byte   * const qos_tc,
     // output
     fm_uint32 * const action
 )
@@ -307,7 +305,7 @@ static void resolveAction
             *dmask            = 0;
             *action           = MBY_ACTION_TRAP;
             *cpu_code         = MBY_CPU_CODE_RSVD_MAC;
-            *qos_swpri        = trap_tc; // <-- REVISIT!!!
+            *qos_tc           = trap_tc; // <-- REVISIT!!!
             break;
 
         case MBY_AMASK_DROP_MAC_CTRL:
@@ -393,7 +391,7 @@ static void resolveAction
         case MBY_AMASK_TRAP_TTL:
             *dmask             = 0;
             *action            = MBY_ACTION_TRAP;
-            *cpu_code         = MBY_CPU_CODE_TTL;
+            *cpu_code          = MBY_CPU_CODE_TTL;
             break;
 
         case MBY_AMASK_DROP_TTL:
@@ -460,16 +458,16 @@ static fm_byte getIfid1
 {
     switch (rx_port)
     {
-        case 0: return ingress_mst_table->STP_STATE_0;
-        case 1: return ingress_mst_table->STP_STATE_1;
-        case 2: return ingress_mst_table->STP_STATE_2;
-        case 3: return ingress_mst_table->STP_STATE_3;
-        case 4: return ingress_mst_table->STP_STATE_4;
-        case 5: return ingress_mst_table->STP_STATE_5;
-        case 6: return ingress_mst_table->STP_STATE_6;
-        case 7: return ingress_mst_table->STP_STATE_7;
-        case 8: return ingress_mst_table->STP_STATE_8;
-        case 9: return ingress_mst_table->STP_STATE_9;
+        case 0:  return ingress_mst_table->STP_STATE_0;
+        case 1:  return ingress_mst_table->STP_STATE_1;
+        case 2:  return ingress_mst_table->STP_STATE_2;
+        case 3:  return ingress_mst_table->STP_STATE_3;
+        case 4:  return ingress_mst_table->STP_STATE_4;
+        case 5:  return ingress_mst_table->STP_STATE_5;
+        case 6:  return ingress_mst_table->STP_STATE_6;
+        case 7:  return ingress_mst_table->STP_STATE_7;
+        case 8:  return ingress_mst_table->STP_STATE_8;
+        case 9:  return ingress_mst_table->STP_STATE_9;
         case 10: return ingress_mst_table->STP_STATE_10;
         case 11: return ingress_mst_table->STP_STATE_11;
         case 12: return ingress_mst_table->STP_STATE_12;
@@ -490,16 +488,16 @@ static fm_byte getMacAction
 {
     switch (action_index)
     {
-        case 0: return mac_action->ACTION_0;
-        case 1: return mac_action->ACTION_1;
-        case 2: return mac_action->ACTION_2;
-        case 3: return mac_action->ACTION_3;
-        case 4: return mac_action->ACTION_4;
-        case 5: return mac_action->ACTION_5;
-        case 6: return mac_action->ACTION_6;
-        case 7: return mac_action->ACTION_7;
-        case 8: return mac_action->ACTION_8;
-        case 9: return mac_action->ACTION_9;
+        case 0:  return mac_action->ACTION_0;
+        case 1:  return mac_action->ACTION_1;
+        case 2:  return mac_action->ACTION_2;
+        case 3:  return mac_action->ACTION_3;
+        case 4:  return mac_action->ACTION_4;
+        case 5:  return mac_action->ACTION_5;
+        case 6:  return mac_action->ACTION_6;
+        case 7:  return mac_action->ACTION_7;
+        case 8:  return mac_action->ACTION_8;
+        case 9:  return mac_action->ACTION_9;
         case 10: return mac_action->ACTION_10;
         case 11: return mac_action->ACTION_11;
         case 12: return mac_action->ACTION_12;
@@ -560,57 +558,57 @@ static fm_byte getMacAction
 
 void MaskGen
 (
-    mby_ppe_fwd_misc_map       * const fwd_misc,
-    mby_ppe_mst_glort_map      * const glort_map,
-    mby_ppe_cm_apply_map       * const cm_apply,
-    const mbyNextHopToMaskGen  * const in,
-          mbyMaskGenToTriggers * const out
+    mby_ppe_fwd_misc_map  const * const fwd_misc,
+    mby_ppe_mst_glort_map const * const glort_map,
+    mby_ppe_cm_apply_map  const * const cm_apply,
+    mbyNextHopToMaskGen   const * const in,
+    mbyMaskGenToTriggers        * const out
 )
 {
     // Read inputs:
-    const fm_uint64          amask_in               = in->AMASK;
-    const fm_uint16          csglort                = in->CSGLORT;
-    const fm_bool            da_hit                 = in->DA_HIT;
-    const fm_bool            drop_ttl               = in->DROP_TTL;
-    const mbyClassifierFlags ffu_flags              = in->FFU_FLAGS;
-    const fm_bool            flood_forwarded        = in->FLOOD_FORWARDED;
-    const fm_uint32          glort_dmask_in         = in->GLORT_DMASK;
-    const fm_bool            glort_forwarded        = in->GLORT_FORWARDED;
-    const fm_uint32          hash_rot_a             = in->HASH_ROT_A;
-    const fm_uint32          hash_rot_b             = in->HASH_ROT_B;
-    const fm_uint16          idglort                = in->IDGLORT;         // in->TRIGGERS.destGlort; // <-- REVISIT!!!
-    const fm_bool            is_ipv4                = in->IS_IPV4;
-    const fm_bool            is_ipv6                = in->IS_IPV6;
-    const fm_macaddr         l2_dmac                = in->L2_DMAC;
-    const fm_uint16          l2_edomain_in          = in->L2_EDOMAIN;
-    const fm_uint16          l2_etype               = in->L2_ETYPE;
-    const fm_uint16          l2_evid1               = in->L2_EVID1;
-    const fm_uint16          l2_ivid1               = in->L2_IVID1;
-    const fm_bool            l2_ivlan1_membership   = in->L2_IVLAN1_MEMBERSHIP;
-    const fm_bool            l2_ivlan1_reflect      = in->L2_IVLAN1_REFLECT;
-    const fm_macaddr         l2_smac                = in->L2_SMAC;
-    const fm_byte            l3_edomain_in          = in->L3_EDOMAIN;
-    const fm_bool            mark_routed            = in->MARK_ROUTED;
-    const fm_bool            mtu_violation          = in->MTU_VIOLATION;
-    const fm_bool            no_learn               = in->NO_LEARN;
-    const fm_byte            operator_id            = in->OPERATOR_ID;
-    const fm_bool            parity_error           = in->PARITY_ERROR;
-    const fm_bool            parser_window_v        = in->PARSER_WINDOW_V;
-    const fm_bool            parser_error           = in->PARSER_ERROR;
-    const fm_bool            pa_drop                = in->PA_DROP;
-    const fm_bool            pa_l3len_err           = in->PA_L3LEN_ERR;
-    const fm_byte            qos_swpri_in           = in->QOS_SWPRI;
-    const fm_uint32          rx_length              = in->RX_LENGTH;
-    const fm_bool            rx_mirror_in           = in->RX_MIRROR;
-    const fm_uint32          rx_port                = in->RX_PORT;
-    const fm_bool            sa_hit                 = in->SA_HIT;
-    const mbyMaTable         sa_result              = in->SA_RESULT;
-    const fm_byte            seg_meta_err_in        = in->SEG_META_ERR;
-    const fm_byte            sv_drop                = in->SV_DROP;
-    const fm_bool            trap_icmp              = in->TRAP_ICMP;
-    const fm_bool            trap_igmp              = in->TRAP_IGMP;
-    const fm_bool            trap_ip_options        = in->TRAP_IP_OPTIONS;
-    const mbyTriggerResults  triggers               = in->TRIGGERS;
+    const fm_uint64          amask_in             = in->AMASK;
+    const fm_uint16          csglort              = in->CSGLORT;
+    const fm_bool            da_hit               = in->DA_HIT;
+    const fm_bool            drop_ttl             = in->DROP_TTL;
+    const mbyClassifierFlags cgrp_flags           = in->CGRP_FLAGS;
+    const fm_bool            flood_forwarded      = in->FLOOD_FORWARDED;
+    const fm_uint32          glort_dmask_in       = in->GLORT_DMASK;
+    const fm_bool            glort_forwarded      = in->GLORT_FORWARDED;
+    const fm_uint32          hash_rot_a           = in->HASH_ROT_A;
+    const fm_uint32          hash_rot_b           = in->HASH_ROT_B;
+    const fm_uint16          idglort              = in->IDGLORT;         // in->TRIGGERS.destGlort; // <-- REVISIT!!!
+    const fm_bool            is_ipv4              = in->IS_IPV4;
+    const fm_bool            is_ipv6              = in->IS_IPV6;
+    const fm_macaddr         l2_dmac              = in->L2_DMAC;
+    const fm_uint16          l2_edomain_in        = in->L2_EDOMAIN;
+    const fm_uint16          l2_etype             = in->L2_ETYPE;
+    const fm_uint16          l2_evid1             = in->L2_EVID1;
+    const fm_uint16          l2_ivid1             = in->L2_IVID1;
+    const fm_bool            l2_ivlan1_membership = in->L2_IVLAN1_MEMBERSHIP;
+    const fm_bool            l2_ivlan1_reflect    = in->L2_IVLAN1_REFLECT;
+    const fm_macaddr         l2_smac              = in->L2_SMAC;
+    const fm_byte            l3_edomain_in        = in->L3_EDOMAIN;
+    const fm_bool            mark_routed          = in->MARK_ROUTED;
+    const fm_bool            mtu_violation        = in->MTU_VIOLATION;
+    const fm_bool            learn_notify         = in->LEARN_NOTIFY;
+    const fm_byte            operator_id          = in->OPERATOR_ID;
+    const fm_bool            parity_error         = in->PARITY_ERROR;
+    const fm_bool            parser_window_v      = in->PARSER_WINDOW_V;
+    const fm_bool            parser_error         = in->PARSER_ERROR;
+    const fm_bool            pa_drop              = in->PA_DROP;
+    const fm_bool            pa_l3len_err         = in->PA_L3LEN_ERR;
+    const fm_byte            qos_tc_in            = in->QOS_TC;
+    const fm_uint32          rx_length            = in->RX_LENGTH;
+    const fm_bool            rx_mirror_in         = in->RX_MIRROR;
+    const fm_uint32          rx_port              = in->RX_PORT;
+    const fm_bool            sa_hit               = in->SA_HIT;
+    const mbyMaTable         sa_result            = in->SA_RESULT;
+    const fm_byte            seg_meta_err_in      = in->SEG_META_ERR;
+    const fm_byte            sv_drop              = in->SV_DROP;
+    const fm_bool            trap_icmp            = in->TRAP_ICMP;
+    const fm_bool            trap_igmp            = in->TRAP_IGMP;
+    const fm_bool            trap_ip_options      = in->TRAP_IP_OPTIONS;
+    const mbyTriggerResults  triggers             = in->TRIGGERS;
 
     // Configurations:
     mbyFwdPortCfg1 port_cfg1;
@@ -656,15 +654,17 @@ void MaskGen
 
     // --------------------------------------------------------------------------------
     // Learning:
+    ///> Learning might need to be moved to Triggers <-- REVISIT!!!
 
     /* Perform ingress forwarding ID lookup. */
     mbyStpState l2_ifid1_state = MBY_STP_STATE_DISABLE;
-    ingress_mst_table_r * const ingress_mst_table = &(glort_map->INGRESS_MST_TABLE[l2_ivid1]);
+    ingress_mst_table_r const * const ingress_mst_table = &(glort_map->INGRESS_MST_TABLE[l2_ivid1]);
     l2_ifid1_state = getIfid1(rx_port, ingress_mst_table);
 
     fm_bool l2_ifid1_learn   = ((l2_ifid1_state == MBY_STP_STATE_LEARNING) ||
                                 (l2_ifid1_state == MBY_STP_STATE_FORWARD));
-    fm_bool learning_allowed = port_cfg1.LEARNING_ENABLE && !no_learn && l2_ifid1_learn;
+    // Below "&& !learn_notify" to be clarified. This should be learn_notify without negation <-- REVISIT!!!
+    fm_bool learning_allowed = port_cfg1.LEARNING_ENABLE && !learn_notify && l2_ifid1_learn;
     fm_bool l2_smac_is_cpu;
     l2_smac_is_cpu = isCpuMacAddress(fwd_misc, l2_smac);
     fm_bool l2_smac_is_zero  = (l2_smac == 0);
@@ -878,13 +878,13 @@ void MaskGen
     // --------------------------------------------------------------------------------
     // Classifier Flags:
 
-    if (ffu_flags.drop)
+    if (cgrp_flags.drop)
         amask |= MBY_AMASK_DROP_FFU; // dropping frame
 
-    if (ffu_flags.trap)
+    if (cgrp_flags.trap)
         amask |= MBY_AMASK_TRAP_FFU; // trapping frame
 
-    if (ffu_flags.log)
+    if (cgrp_flags.log)
         log_amask |= MBY_LOG_TYPE_FFU; // logging fram
 
     fm_bool rx_mirror           = rx_mirror_in;
@@ -893,12 +893,11 @@ void MaskGen
     fm_byte mirror0_profile_idx = 0;
     fm_byte mirror1_profile_idx = 0;
 
-    if (ffu_flags.rx_mirror)
+    if (cgrp_flags.rx_mirror)
     {
-        rx_mirror         = TRUE;  // RX mirroring frame
-        mirror1_profile_v = rx_mirror;
-        fwd_rx_mirror_cfg_r const * const rx_mirror_cfg = &(fwd_misc->FWD_RX_MIRROR_CFG);
-        mirror1_profile_idx = rx_mirror_cfg->MIRROR_PROFILE_IDX;
+        rx_mirror           = TRUE;  // RX mirroring frame
+        mirror1_profile_v   = rx_mirror;
+        mirror1_profile_idx = fwd_misc->FWD_RX_MIRROR_CFG.MIRROR_PROFILE_IDX;
     }
 
     // --------------------------------------------------------------------------------
@@ -910,25 +909,25 @@ void MaskGen
     fm_byte mirror_session     = qcn_mirror_cfg->MIRROR_SESSION;
 
     cm_apply_mirror_profile_table_r const * const mirror_prof_tbl0 = &(cm_apply->CM_APPLY_MIRROR_PROFILE_TABLE[mirror0_profile_idx]);
-    cm_apply_mirror_profile_table_r const * const mirror_prof_tbl1 = &(cm_apply->CM_APPLY_MIRROR_PROFILE_TABLE[mirror0_profile_idx]);
+    cm_apply_mirror_profile_table_r const * const mirror_prof_tbl1 = &(cm_apply->CM_APPLY_MIRROR_PROFILE_TABLE[mirror0_profile_idx]); // Should be changed to mirror1_profile_idx?? REVISIT!!!
 
     fm_uint32 mirror0_port = mirror_prof_tbl0->PORT;
-    fm_uint32 mirror1_port = mirror_prof_tbl0->PORT;
+    fm_uint32 mirror1_port = mirror_prof_tbl0->PORT; // Should be changed to mirror_prof_tbl1?? REVISIT!!!
 
 
-    fm_bool qcn_mirror0_profile_v   = FALSE;
-    fm_bool qcn_mirror1_profile_v   = FALSE;
+    fm_bool qcn_mirror0_profile_v = FALSE;
+    fm_bool qcn_mirror1_profile_v = FALSE;
 
     if (rx_mirror && (mirror_session == 2)) {
-    	qcn_mirror1_profile_v = TRUE;
+        qcn_mirror1_profile_v = TRUE;
         mirror1_profile_v     = (mirror0_port < MBY_PORTS_COUNT);
-    	mirror1_profile_idx   = mirror_profile_idx;
+        mirror1_profile_idx   = mirror_profile_idx;
     }
 
     if (mirror_session == 1) {
-    	qcn_mirror0_profile_v = TRUE;
+        qcn_mirror0_profile_v = TRUE;
         mirror0_profile_v     = (mirror0_port < MBY_PORTS_COUNT);
-    	mirror0_profile_idx   = mirror_profile_idx;
+        mirror0_profile_idx   = mirror_profile_idx;
     }
 
     // --------------------------------------------------------------------------------
@@ -936,8 +935,7 @@ void MaskGen
 
     /* Perform egress forwarding ID lookup. */
     fm_uint32 l2_efid1_state;
-    egress_mst_table_r * const egress_mst_table = &(glort_map->EGRESS_MST_TABLE[l2_evid1][0]);
-    l2_efid1_state = egress_mst_table->FORWARDING;
+    l2_efid1_state = glort_map->EGRESS_MST_TABLE[l2_evid1][0].FORWARDING; // UINT_64?? REVISIT!!!
 
     dmask = pre_resolve_dmask; // 24-bit destination mask
     if (((amask & MBY_AMASK_SPECIAL) == 0) && (dmask != 0)) {
@@ -977,10 +975,10 @@ void MaskGen
 
     fwd_ieee_reserved_mac_cfg_r const * const res_mac_cfg = &(fwd_misc->FWD_IEEE_RESERVED_MAC_CFG);
 
-    fm_byte trap_tc = res_mac_cfg->TRAP_TC;
-    fm_byte   cpu_code  = 0;
-    fm_byte   qos_swpri = qos_swpri_in;
-    fm_uint32 action    = 0;
+    fm_byte   trap_tc  = res_mac_cfg->TRAP_TC;
+    fm_byte   qos_tc   = qos_tc_in;
+    fm_byte   cpu_code = 0;
+    fm_uint32 action   = 0;
 
     resolveAction
     (
@@ -991,7 +989,7 @@ void MaskGen
         &dmask,
         &learning_enabled,
         &cpu_code,
-        &qos_swpri,
+        &qos_tc,
         &action
     );
 
@@ -1066,11 +1064,11 @@ void MaskGen
     // --------------------------------------------------------------------------------
 
     // Trap:
-    fm_bool cpu_trap    = (action == MBY_ACTION_TRAP);
+    fm_bool cpu_trap     = (action == MBY_ACTION_TRAP);
 
-    fm_bool trap_trap   = (triggers.trapAction == MBY_TRIG_ACTION_TRAP_TRAP);
-    fm_bool trap_revert = (triggers.trapAction == MBY_TRIG_ACTION_TRAP_REVERT);
-    fm_bool trap_log    = (triggers.trapAction == MBY_TRIG_ACTION_TRAP_LOG);
+    fm_bool trap_trap    = (triggers.trapAction == MBY_TRIG_ACTION_TRAP_TRAP);
+    fm_bool trap_revert  = (triggers.trapAction == MBY_TRIG_ACTION_TRAP_REVERT);
+    fm_bool trap_log     = (triggers.trapAction == MBY_TRIG_ACTION_TRAP_LOG);
 
     fm_uint16 l2_edomain = (triggers.egressL2DomainAction == 0) ? l2_edomain_in : 0;
     fm_byte   l3_edomain = (triggers.egressL3DomainAction == 0) ? l3_edomain_in : 0;
@@ -1115,21 +1113,21 @@ void MaskGen
     // Applies to only single segment packets. Multi-segment packets are handled by Modify
     if (rx_length <= 192)
     {
-        if (action == MBY_ACTION_NORMAL ||
-            action == MBY_ACTION_FLOOD ||
-            action == MBY_ACTION_GLORT_FORWARDED ||
-            action == MBY_ACTION_TRAP ||
-            action == MBY_ACTION_SPECIAL ||
-            action == MBY_ACTION_REDIRECT_TRIG ||
-            action == MBY_ACTION_DROP_CONTROL ||
-            action == MBY_ACTION_DROP_IV ||
-            action == MBY_ACTION_DROP_EV ||
-            action == MBY_ACTION_DROP_STP ||
-            action == MBY_ACTION_DROP_CAM ||
-            action == MBY_ACTION_DROP_FFU ||
-            action == MBY_ACTION_DROP_TRIG ||
-            action == MBY_ACTION_DROP_TTL ||
-            action == MBY_ACTION_DROP_DLF ||
+        if (action == MBY_ACTION_NORMAL            ||
+            action == MBY_ACTION_FLOOD             ||
+            action == MBY_ACTION_GLORT_FORWARDED   ||
+            action == MBY_ACTION_TRAP              ||
+            action == MBY_ACTION_SPECIAL           ||
+            action == MBY_ACTION_REDIRECT_TRIG     ||
+            action == MBY_ACTION_DROP_CONTROL      ||
+            action == MBY_ACTION_DROP_IV           ||
+            action == MBY_ACTION_DROP_EV           ||
+            action == MBY_ACTION_DROP_STP          ||
+            action == MBY_ACTION_DROP_CAM          ||
+            action == MBY_ACTION_DROP_FFU          ||
+            action == MBY_ACTION_DROP_TRIG         ||
+            action == MBY_ACTION_DROP_TTL          ||
+            action == MBY_ACTION_DROP_DLF          ||
             action == MBY_ACTION_BANK5_OTHER_DROPS ||
             action == MBY_ACTION_DROP_SV)
         {
@@ -1138,7 +1136,8 @@ void MaskGen
         }
 
         // Drop single-segment packets with l4csum error /l3 length error:
-        if ((action == MBY_ACTION_DROP_L3_PYLD_LEN) || (action == MBY_ACTION_DROP_L4_CSUM))
+        if (action == MBY_ACTION_DROP_L3_PYLD_LEN ||
+            action == MBY_ACTION_DROP_L4_CSUM)
         {
             fnmask            = 0;
             mirror1_profile_v = 0;
@@ -1151,12 +1150,15 @@ void MaskGen
     // --------------------------------------------------------------------------------
 
     // Write outputs:
+
+    for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
+        out->DMASK[i] = dmask; //REVISIT!!!
+
     out->ACTION                 = action;
     out->AMASK                  = amask;
     out->CPU_CODE               = cpu_code;
     out->CPU_TRAP               = cpu_trap;
     out->DA_HIT                 = da_hit;
-    out->DMASK                  = dmask;
     out->DROP_TTL               = drop_ttl;
     out->FCLASS                 = fclass;
     out->FNMASK                 = fnmask;
@@ -1169,6 +1171,7 @@ void MaskGen
     out->L2_DMAC                = l2_dmac;
     out->L2_EDOMAIN             = l2_edomain;
     out->L2_EVID1               = l2_evid1;
+    out->L2_SMAC                = l2_smac;
     out->L3_EDOMAIN             = l3_edomain;
     out->LEARNING_ENABLED       = learning_enabled;
     out->LOGGING_HIT            = logging_hit;
@@ -1184,7 +1187,7 @@ void MaskGen
     out->OPERATOR_ID            = operator_id;
     out->QCN_MIRROR0_PROFILE_V  = qcn_mirror0_profile_v;
     out->QCN_MIRROR1_PROFILE_V  = qcn_mirror1_profile_v;
-    out->QOS_SWPRI              = qos_swpri;
+    out->QOS_TC                 = qos_tc;
     out->RX_LENGTH              = rx_length;
     out->RX_MIRROR              = rx_mirror;
     out->RX_PORT                = rx_port;
@@ -1198,14 +1201,18 @@ void MaskGen
     out->XCAST                  = xcast;
 
     // Pass thru:
+    out->CGRP_TRIG              = in->CGRP_TRIG;
+    out->CONTENT_ADDR           = in->CONTENT_ADDR;
     out->ECN                    = in->ECN;
     out->EDGLORT                = in->EDGLORT;
     out->IS_TIMEOUT             = in->IS_TIMEOUT;
     out->L2_IVLAN1_CNT          = in->L2_IVLAN1_CNT;
     out->MIRTYP                 = in->MIRTYP;
     out->MOD_IDX                = in->MOD_IDX;
+    out->MOD_PROF_IDX           = in->MOD_PROF_IDX;
     out->OOM                    = in->OOM;
     out->PARSER_INFO            = in->PARSER_INFO;
+    out->PA_HDR_PTRS            = in->PA_HDR_PTRS;
     out->PM_ERR                 = in->PM_ERR;
     out->PM_ERR_NONSOP          = in->PM_ERR_NONSOP;
     out->QOS_L3_DSCP            = in->QOS_L3_DSCP;

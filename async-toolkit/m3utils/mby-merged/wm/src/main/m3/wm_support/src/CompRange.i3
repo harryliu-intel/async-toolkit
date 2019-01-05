@@ -77,6 +77,7 @@ TYPE
   END;
 
 PROCEDURE From2(lo, lim : CompAddr.T) : T;
+  (* return a T that starts at lo and has lim as lim (lim = first bit not included in range) *)
 
 PROCEDURE Bits(READONLY t : T) : CARDINAL;
 

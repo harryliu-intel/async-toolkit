@@ -1,0 +1,73 @@
+foreach $i (0..3) {
+  foreach $j (0..3) {
+   1'b0  >> PB$i$_MD_RAM_$j$_CFG_reg_sel
+   1'b0  >> PB$i$_MD_RAM_$j$_STATUS_reg_sel
+   
+   igr_pbb_pb$i$_md$j$_if.adr[0]       >> pb$i$_md_ram_$j$_adr
+   1'b0                             >> pb$i$_md_ram_$j$_mem_ls_enter
+   igr_pbb_pb$i$_md$j$_if.rd_en[0]     >> pb$i$_md_ram_$j$_rd_en
+   igr_pbb_pb$i$_md$j$_if.wr_data[0]   >> pb$i$_md_ram_$j$_wr_data
+   igr_pbb_pb$i$_md$j$_if.wr_en[0]     >> pb$i$_md_ram_$j$_wr_en
+   igr_pbb_pb$i$_md$j$_if.rd_data[0]   >> pb$i$_md_ram_$j$_rd_data
+   igr_pbb_pb$i$_md$j$_if.rd_valid[0]  >> pb$i$_md_ram_$j$_rd_valid
+                                    >> pb$i$_md_ram_$j$_ecc_uncor_err
+                                    >> pb$i$_md_ram_$j$_init_done
+   foreach $k (0..7) {
+     1'b0  >> PB$i$_PD$j$_RAM_$k$_CFG_reg_sel
+     1'b0  >> PB$i$_PD$j$_RAM_$k$_STATUS_reg_sel
+   
+     igr_pbb_pb$i$_pd$j$_$k$_if.adr[0]       >> pb$i$_pd$j$_ram_$k$_adr
+     1'b0                                 >> pb$i$_pd$j$_ram_$k$_mem_ls_enter
+     igr_pbb_pb$i$_pd$j$_$k$_if.rd_en[0]     >> pb$i$_pd$j$_ram_$k$_rd_en
+     igr_pbb_pb$i$_pd$j$_$k$_if.wr_data[0]   >> pb$i$_pd$j$_ram_$k$_wr_data
+     igr_pbb_pb$i$_pd$j$_$k$_if.wr_en[0]     >> pb$i$_pd$j$_ram_$k$_wr_en
+     igr_pbb_pb$i$_pd$j$_$k$_if.rd_data[0]   >> pb$i$_pd$j$_ram_$k$_rd_data
+     igr_pbb_pb$i$_pd$j$_$k$_if.rd_valid[0]  >> pb$i$_pd$j$_ram_$k$_rd_valid
+                                          >> pb$i$_pd$j$_ram_$k$_ecc_uncor_err
+                                          >> pb$i$_pd$j$_ram_$k$_init_done
+    }				
+  }
+}
+
+foreach $i (0..7) {
+  1'b0 >> VP_D_RF_$i$_CFG_reg_sel
+  1'b0 >> VP_D_RF_$i$_STATUS_reg_sel
+  1'b0 >> VP_MD_RF_$i$_CFG_reg_sel
+  1'b0 >> VP_MD_RF_$i$_STATUS_reg_sel
+  igr_pbb_vp_pd_$i$_if.rd_adr[0]     >> vp_d_rf_$i$_rd_adr
+   1'b0                          >> vp_d_rf_$i$_mem_ls_enter
+   igr_pbb_vp_pd_$i$_if.rd_en[0]     >> vp_d_rf_$i$_rd_en
+   igr_pbb_vp_pd_$i$_if.wr_data[0]   >> vp_d_rf_$i$_wr_data
+   igr_pbb_vp_pd_$i$_if.wr_en[0]     >> vp_d_rf_$i$_wr_en
+   igr_pbb_vp_pd_$i$_if.wr_adr[0]    >> vp_d_rf_$i$_wr_adr
+   igr_pbb_vp_pd_$i$_if.rd_data[0]   >> vp_d_rf_$i$_rd_data
+   igr_pbb_vp_pd_$i$_if.rd_valid[0]  >> vp_d_rf_$i$_rd_valid
+                                 >> vp_d_rf_$i$_ecc_uncor_err
+                                 >> vp_d_rf_$i$_init_done
+                                    
+   igr_pbb_vp_md_$i$_if.rd_adr[0]     >> vp_md_rf_$i$_rd_adr
+   1'b0                          >> vp_md_rf_$i$_mem_ls_enter
+   igr_pbb_vp_md_$i$_if.rd_en[0]     >> vp_md_rf_$i$_rd_en
+   igr_pbb_vp_md_$i$_if.wr_data[0]   >> vp_md_rf_$i$_wr_data
+   igr_pbb_vp_md_$i$_if.wr_en[0]     >> vp_md_rf_$i$_wr_en
+   igr_pbb_vp_md_$i$_if.wr_adr[0]    >> vp_md_rf_$i$_wr_adr
+   igr_pbb_vp_md_$i$_if.rd_data[0]   >> vp_md_rf_$i$_rd_data
+   igr_pbb_vp_md_$i$_if.rd_valid[0]  >> vp_md_rf_$i$_rd_valid
+                                 >> vp_md_rf_$i$_ecc_uncor_err
+                                 >> vp_md_rf_$i$_init_done
+  
+}
+
+ 1'b0 >> IGR_PBB_ECC_COR_ERR_reg_sel
+ 1'b0 >> IGR_PBB_ECC_UNCOR_ERR_reg_sel
+
+ 1'b1 >> unified_regs_rd
+ '0  >> unified_regs_wr_data
+      >> igr_pbb_ecc_int
+      >> igr_pbb_init_done
+      >> unified_regs_ack
+      >> unified_regs_rd_data
+
+cclk    >> clk
+reset_n >> reset_n
+

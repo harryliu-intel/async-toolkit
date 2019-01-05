@@ -1,0 +1,480 @@
+`include "lib_udp.rdl"
+<% use security; %>
+<% my %Security_Props = security::GetSecurityInfo(); %>
+
+// EM_HASH_LOOKUP
+
+reg em_hash_lookup_r {
+  shared;
+  HandCoded = true;
+  name = "Classifer hashing buckets.";
+  desc = "
+  In single lookup mode, there is one table with
+  [list]
+  [*] 32K buckets in CGRP_A
+  [*] 8K buckets in CGRP_B
+  [/list]
+  In split mode, the total number of buckets gets 
+  divided between the two halves of the split:[br]
+  In CGRP_A:
+  [list]
+  [*] LOOKUP0 = EM_HASH_LOOKUP[0..16383]
+  [*] LOOKUP1 = EM_HASH_LOOKUP[16384..32767]
+  [/list]
+  In CGRP_B:
+  [list]
+  [*] LOOKUP0 = EM_HASH_LOOKUP[0..4095]
+  [*] LOOKUP1 = EM_HASH_LOOKUP[4096..8191]
+  [/list]
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 128;
+  accesswidth = 128;
+  field {
+    AccessType = "RW";
+    desc = "
+    ptr*4 is the byte-location of the bucket's first entry in Hash Entry RAM.
+
+           ";
+    ValRandomize = true;
+  } PTR[83:64] = 20'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } RSVD1_[63:52] = 12'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+    selects 'more' hash bits:[br]
+    bucket_hash[i] = more_hash[select[i]]
+
+           ";
+    ValRandomize = true;
+  } SELECT_4[51:48] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+    selects 'more' hash bits:[br]
+    bucket_hash[i] = more_hash[select[i]]
+
+           ";
+    ValRandomize = true;
+  } SELECT_3[47:44] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+    selects 'more' hash bits:[br]
+    bucket_hash[i] = more_hash[select[i]]
+
+           ";
+    ValRandomize = true;
+  } SELECT_2[43:40] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+    selects 'more' hash bits:[br]
+    bucket_hash[i] = more_hash[select[i]]
+
+           ";
+    ValRandomize = true;
+  } SELECT_1[39:36] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+    selects 'more' hash bits:[br]
+    bucket_hash[i] = more_hash[select[i]]
+
+           ";
+    ValRandomize = true;
+  } SELECT_0[35:32] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+    selects which bucket_hash values have entries.
+
+           ";
+    ValRandomize = true;
+  } MASK[31:0] = 32'h0;
+};
+
+
+
+// EM_HASH_CAM[0..31,0..7]
+
+reg em_hash_cam_r {
+  shared;
+  HandCoded = true;
+  name = "CAM entries for hash overflow.";
+  desc = "
+  The second index is the entry number, and the third index
+  is the word number. The entry format is big-endian. Byte 0 is bits 63..56 of word 0.
+  [br][br]
+  In 64B entry mode, the entry is 64 bytes wide. There is a single action resolution 
+  and one or two actions from the highest-numbered matching entry are used.
+  To form a 64B entry, a key 56 bytes or less is padded with zeros to 56B and 
+  followed by up to two actions, or a key may be 60 bytes with only one action at[br]
+  EM_HASH_CAM[mgp][rule][7][31:0].
+  [br][br]
+  In 32B entry mode,[br]
+  EM_HASH_CAM[mgp][rule][0..3][br]
+  is the row0 entry, and[br]
+  EM_HASH_CAM[mgp][rule][4..7][br]
+  is the row1 entry. The two rows are resolved independently: the 1-2 actions from 
+  the highest-numbered matching entry within each row are used. To form a 32B entry, 
+  a key 24 bytes or less is padded with zeros to 24B and followed by two actions,
+  or a key may be 28 bytes with only one action.
+  [br][br]
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } DATA[63:0] = 64'h0;
+};
+regfile em_hash_cam_rf {
+  em_hash_cam_r HASH_CAM[8] += 8;
+};
+
+
+
+// EM_HASH_CAM_EN[0..1,0..31]
+
+reg em_hash_cam_en_r {
+  shared;
+  HandCoded = true;
+  name = "Select EM_HASH_CAM packet profiles.";
+  desc = "
+  When EM_HASH_CAM_EN[mgp][row][rule].mask[p] is set, then
+  EM_HASH_CAM[mgp][rule][row*4+3:row*4] is used in packet profile p.
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+    Select packet profiles for this rule. Uses little-endian bit numbering.
+
+           ";
+    ValRandomize = true;
+  } MASK[63:0] = 64'h0;
+};
+regfile em_hash_cam_en_rf {
+  em_hash_cam_en_r HASH_CAM_EN[32] += 8;
+};
+
+
+
+// EM_KEY_SEL0[0..1,0..63]
+
+reg em_key_sel0_r {
+  shared;
+  HandCoded = true;
+  name = "Configures hash value calculation";
+  desc = "
+  Configure how the exact match hash functions (hash0,hash1) should be calculated.
+  [br][br]
+  This register is indexed first by hash number 0..1, then by packet profile.
+  [br][br]
+  Before matching, the selected keys are compacted
+  in big endian form. If the result is an odd number of bytes,
+  a zero padding byte is added.
+         ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+     Selects the KEY8s to participate in hashing and matching:[br]
+     KEY8_MASK[i] selects KEY8[i].
+
+           ";
+    ValRandomize = true;
+  } KEY8_MASK[31:0] = 32'h0;
+};
+regfile em_key_sel0_rf {
+  em_key_sel0_r KEY_SEL0[64] += 8;
+};
+
+
+
+// EM_KEY_SEL1[0..1,0..63]
+
+reg em_key_sel1_r {
+  shared;
+  HandCoded = true;
+  name = "Configures hash value calculation";
+  desc = "
+  Configure how the exact match hash functions (hash0,hash1) should be calculated.
+  [br][br]
+  This register is indexed first by hash number 0..1, then by packet profile.
+  [br][br]
+  Before matching, the selected keys are compacted
+  in big endian form. If the result is an odd number of bytes,
+  a zero padding byte is added.
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+     Selects one of sixteen 128-bit masks stored in EM_KEY_MASK to 
+     apply to the key during comparison.
+           ";
+    ValRandomize = true;
+  } KEY_MASK_SEL[51:48] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Selects the KEY32s to participate in hashing and matching:[br]
+     KEY32_MASK[i] selects KEY32[i].
+
+           ";
+    ValRandomize = true;
+  } KEY32_MASK[47:32] = 16'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Selects the KEY16s to participate in hashing and matching:[br]
+     KEY16_MASK[i] selects KEY16[i].
+
+           ";
+    ValRandomize = true;
+  } KEY16_MASK[31:0] = 32'h0;
+};
+regfile em_key_sel1_rf {
+  em_key_sel1_r KEY_SEL1[64] += 8;
+};
+
+
+
+// EM_KEY_MASK[0..1,0..31]
+
+reg em_key_mask_r {
+  shared;
+  HandCoded = true;
+  name = "Hash key bit mask";
+  desc = "
+  Provides a 128 bit hash key mask for each of 16 hash key profiles.
+  Indexed first by hash number (0..1), then by:
+  [code]
+  (KEY_MASK_SEL * 2) + DW
+  [/code]
+  where there are 2 DWs per profile (128 bits)
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+     64 of the 128 bits in the mask.
+     Indicates which bits are included in the hash calculation.
+
+           ";
+    ValRandomize = true;
+  } MASK[63:0] = 64'h0;
+};
+regfile em_key_mask_rf {
+  em_key_mask_r KEY_MASK[32] += 8;
+};
+
+
+
+
+// EM_HASH_MISS[0..1,0..63]
+
+reg em_hash_miss_r {
+  shared;
+  HandCoded = true;
+  name = "Provides two hash-miss actions for each hash table row.";
+  desc = "
+  EM_HASH_MISS[r][profile] provides 2 actions for row r=0..1.
+  [br][br]
+  If there is no key match in ENTRY_RAM or CAM, then both actions are taken.
+  The format of the action is the same as EM_ACTION,
+  HASH_ENTRY_RAM, and EM_HASH_CAM.
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } ACTION1[63:32] = 32'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } ACTION0[31:0] = 32'h0;
+};
+regfile em_hash_miss_rf {
+  em_hash_miss_r HASH_MISS[64] += 8;
+};
+
+
+
+// HASH_CFG[0..63]
+
+reg em_hash_cfg_r {
+  shared;
+  HandCoded = true;
+  name = "Configure exact match hashing";
+  desc = "
+  This register is indexed by the packet profile.
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+     For the high half of split mode only, selects which hash
+     function to use:
+     [list]
+     [*] 0: Hash0 - CRC32
+     [*] 1: Hash1 - CRC32C
+     [/list]
+           ";
+    ValRandomize = true;
+  } HASH_HI[48:48] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     For non-split mode, and for the low half of split mode, selects which hash
+     function to use:
+     [list]
+     [*] 0: Hash0 - CRC32
+     [*] 1: Hash1 - CRC32C
+     [/list]
+           ";
+    ValRandomize = true;
+  } HASH_LO[47:47] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Define lookup (or entry) modes:
+     [list]
+     [*] 0: Split mode (32B per entry)
+     [*] 1: Non-split mode (64B per entry)
+     [/list]
+           ";
+    ValRandomize = true;
+  } MODE[46:46] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Start of hash table.[br]
+     Must be a multiple of 2^hash_size[ROW].
+
+           ";
+    ValRandomize = true;
+  } BASE_PTR_0[45:33] = 13'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Start of hash table.[br]
+     Must be a multiple of 2^hash_size[ROW].
+
+           ";
+    ValRandomize = true;
+  } BASE_PTR_1[32:20] = 13'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Number of hash bits to use in lookup address calculation:
+     [br][br]
+     lookup_ptr = base_ptr[ROW] + hash % 2^hash_size[ROW]
+     [br][br]
+     For example, hash_size=10 yields a table with 1024 buckets.
+
+           ";
+    ValRandomize = true;
+  } HASH_SIZE_0[19:15] = 5'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Number of hash bits to use in lookup address calculation.
+     [br][br]
+     lookup_ptr = base_ptr[ROW] + hash % 2^hash_size[ROW]
+     [br][br]
+     For example, hash_size=10 yields a table with 1024 buckets.
+
+           ";
+    ValRandomize = true;
+  } HASH_SIZE_1[14:10] = 5'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Size of each entry, given as a multiple of 4B.
+     The entry size must be a multiple of 4 in the range 8..64.
+     The entry bytes following the padded key are actions.
+     [br][br]
+     Set entry_size[r]==0 to disable row r lookups for this packet profile.
+
+           ";
+    ValRandomize = true;
+  } ENTRY_SIZE_0[9:5] = 5'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Size of each entry, given as a multiple of 4B.
+     The entry size must be a multiple of 4 in the range 8..64.
+     The entry bytes following the padded key are actions.
+     [br][br]
+     Set entry_size[r]==0 to disable row r lookups for this packet profile.
+
+           ";
+    ValRandomize = true;
+  } ENTRY_SIZE_1[4:0] = 5'h0;
+};
+
+
+
+addrmap mby_ppe_cgrp_em_map {
+  name = "mby_em";
+  desc = "Classifier Exact Match registers";
+  Space = "MSG";
+  Opcode = "MEM-SB";
+  No_IOSF_Primary = true;
+  addressing = fullalign;
+
+  em_hash_cam_rf            HASH_CAM[32]     ;
+  em_hash_cam_en_rf         HASH_CAM_EN[2]   ;
+  em_key_sel0_rf            KEY_SEL0[2]      ;
+  em_key_sel1_rf            KEY_SEL1[2]      ;
+  em_key_mask_rf            KEY_MASK[2]      ;
+  em_hash_miss_rf           HASH_MISS[2]     ;
+  em_hash_cfg_r             HASH_CFG[64]     ;
+};

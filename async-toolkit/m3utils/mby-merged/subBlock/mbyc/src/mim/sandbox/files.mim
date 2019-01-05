@@ -1,0 +1,37 @@
+
+// this file is used by msh sandbox build to specify files needed to build MIM
+
+//use ToolConfig;
+//$SHRTL          = &ToolConfig::get_tool_path('ipconfig/shrtl');
+//
+//
++define+SHRTL_LIB_MODEL
+
+
+//$SHRTL/src/common/rtl/shrtl_nbits_pkg.vh                             
+//$SHRTL/src/fifo/rtl/shrtl_async_flop_fifo.sv
+//$SHRTL/src/fifo/rtl/shrtl_flop_fifo.sv
+//$SHRTL/src/common/rtl/shrtl_flop_ram.sv
+//$SHRTL/src/sync/rtl/shrtl_sync.sv
+//$SHRTL/src/sync/rtl/shrtl_lib_sync2.sv
+//$SHRTL/src/fifo/rtl/shrtl_async_fifo_ctrl.sv
+
+
+/p/hdk/rtl/ip_models/nhdk/shrtl/shrtl-dev-x0-18ww48a/src/common/rtl/shrtl_nbits_pkg.vh
+/p/hdk/rtl/ip_models/nhdk/shrtl/shrtl-dev-x0-18ww48a/src/fifo/rtl/shrtl_async_flop_fifo.sv
+/p/hdk/rtl/ip_models/nhdk/shrtl/shrtl-dev-x0-18ww48a/src/fifo/rtl/shrtl_flop_fifo.sv
+/p/hdk/rtl/ip_models/nhdk/shrtl/shrtl-dev-x0-18ww48a/src/common/rtl/shrtl_flop_ram.sv
+/p/hdk/rtl/ip_models/nhdk/shrtl/shrtl-dev-x0-18ww48a/src/sync/rtl/shrtl_sync.sv
+/p/hdk/rtl/ip_models/nhdk/shrtl/shrtl-dev-x0-18ww48a/src/sync/rtl/shrtl_lib_sync2.sv
+/p/hdk/rtl/ip_models/nhdk/shrtl/shrtl-dev-x0-18ww48a/src/fifo/rtl/shrtl_async_fifo_ctrl.sv
+
+$LOGICROOT/mim/rtl/mby_mim_wr_cdc.sv   
+$LOGICROOT/mim/rtl/mby_mim_wr.sv   
+$LOGICROOT/mim/rtl/mby_mim_rdreq_cdc.sv   
+$LOGICROOT/mim/rtl/mby_mim_rdreq.sv   
+$LOGICROOT/mim/rtl/mby_mim_rdrsp_cdc.sv   
+$LOGICROOT/mim/rtl/mby_mim_rdrsp.sv   
+$LOGICROOT/mim/rtl/mby_mim.sv   
+$LOGICROOT/mim/rtl/mby_mig.sv   
+
+

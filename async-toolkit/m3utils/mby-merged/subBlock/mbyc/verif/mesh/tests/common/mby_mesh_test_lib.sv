@@ -1,3 +1,4 @@
+
 // vim: noai : ts=3 : sw=3 : expandtab : ft=systemverilog
 
 //------------------------------------------------------------------------------
@@ -36,40 +37,26 @@
 
 program mby_mesh_test_lib;
 
-`ifdef XVM
-    import ovm_pkg::*;
-    import xvm_pkg::*;
-   `include "ovm_macros.svh"
-   `include "sla_macros.svh"
-`endif
-
-    import sla_pkg::*;
     import uvm_pkg::*;
 
     `include "uvm_macros.svh"
-    `include "slu_macros.svh"
 
     import shdv_base_pkg::*;
     import mby_mesh_env_pkg::*;
 
+    `include "mby_mesh_req_seq.svh"
     `include "mby_mesh_base_test.svh"
     `include "mby_mesh_random_test.svh"
+    `include "mby_mesh_first_pkt_test.svh"
 
     // UVM Start test
     initial begin
         string testname;
 
         if ($value$plusargs("UVM_TESTNAME=%s", testname  )) begin
-`ifndef XVM
             $display ("MBY_tb Started Running %s in UVM mode!\n",testname);
         end
         uvm_pkg::run_test(testname);
-`else
-        $display ("MBY_tb Started Running %s in XVM mode!\n",testname);
-    end
-    xvm_pkg::run_test("", testname,   xvm::EOP_UVM);
-
-`endif
 
 end
 

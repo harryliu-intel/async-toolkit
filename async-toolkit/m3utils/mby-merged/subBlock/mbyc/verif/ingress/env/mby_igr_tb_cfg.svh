@@ -22,7 +22,7 @@
 //-----------------------------------------------------------------------------
 // Class: mby_igr_tb_cfg
 //-----------------------------------------------------------------------------
-class mby_igr_tb_cfg extends uvm_object; //PJP: TODO: Change to extend shdv_base_config once shared dv library is pure UVM.
+class mby_igr_tb_cfg extends shdv_base_config;
 
    mby_igr_env_cfg env_cfg;
    mby_igr_dut_cfg dut_cfg;
@@ -37,7 +37,6 @@ class mby_igr_tb_cfg extends uvm_object; //PJP: TODO: Change to extend shdv_base
    //--------------------------------------------------------------------------
    function new (string name = "mby_igr_tb_cfg");
       super.new(name);
-//PJP      set_parent_name(name); // Uncomment once SHDV is updated to pure UVM.
    endfunction : new
 
 endclass : mby_igr_tb_cfg

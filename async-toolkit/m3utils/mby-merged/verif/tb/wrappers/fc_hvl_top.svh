@@ -13,15 +13,7 @@
 module fc_hvl_top #(
 );
     
-   import uvm_pkg::*;
-
-`ifdef XVM
-   import ovm_pkg::*;
-   import xvm_pkg::*;
-   `include "ovm_macros.svh"
-   `include "sla_macros.svh"
-   `include "xvm_macros.svh"
-`endif
+    import uvm_pkg::*;
 
     import sla_pkg::*;
     `include "uvm_macros.svh"
@@ -30,13 +22,8 @@ module fc_hvl_top #(
     import fc_env_pkg::*;
     import fc_test_pkg::*;
 
-    //-- Temporary local signal as work around for VCS bug 
-    //-- with -debug_all option
-
     `include "hvl_ti_conns.svh"
     //`include "fc_pull_up_down.sv"
-
-    //-- work around for VCS bug with -debug_all option
 
     // -------------------------------------------------------------------------
     // Interface & Test Island
@@ -47,19 +34,26 @@ module fc_hvl_top #(
     // TB Clocks
     // -------------------------------------------------------------------------
     clkgen_if #(.PERIOD(10000), .DELAY(0), .DUTYCYCLE(50)) tb_clk();
-    clkgen_if #(.PERIOD(40000), .DELAY(0), .DUTYCYCLE(50)) xtal_25M_clk();
+    clkgen_if #(.PERIOD(833.333), .DELAY(0), .DUTYCYCLE(50)) tmp_cclk(); //1200MHz
+    clkgen_if #(.PERIOD(1250), .DELAY(0), .DUTYCYCLE(50)) tmp_clk();     //800MHz
+    clkgen_if #(.PERIOD(6400), .DELAY(0), .DUTYCYCLE(50)) ref_clk();     //156.25MHz
+    clkgen_if #(.PERIOD(555.555), .DELAY(0), .DUTYCYCLE(50)) tmp_mclk(); //1800MHz
+
     assign sig_if.tb_clk        = tb_clk.clk;
     assign sig_if.tb_rst_b      = 0; // FIXME: connect this to RTC RST
+
+    assign sig_if.tmp_cclk     = tmp_cclk.clk;
+    assign sig_if.tmp_clk      = tmp_clk.clk;
+    assign sig_if.ref_clk      = ref_clk.clk;
+    assign sig_if.tmp_mclk     = tmp_mclk.clk;
 
     // ------------------------------------------------------------------------
     // TB Forces
     // ------------------------------------------------------------------------
     force_if apply_forces();
 
-    //`include "fc_forces.sv"
+    `include "fc_forces.sv"
 
-    //Debug tracker for looking at all IP poks/masks
-    //`include "pok_trk.sv"
 
 /*    // ------------------------------------------------------------------------
     // Assertion Control Block
@@ -85,32 +79,10 @@ module fc_hvl_top #(
     // ------------------------------------------------------------------------
 
     event vintfInitDone;
-    //TbUtilsPkg::VintfBundle fc_vintfBundle;
-    //svlib_pkg::VintfBundle vintfBundle_sb;
 
     initial begin 
 
-        //sla_pkg::sla_resource_db #(virtual sig_if)::add("sig_if", fc_sig_if, `__FILE__,`__LINE__);
-
-        //uvm_config_db#(virtual sig_if)::set(uvm_root::get(), "*", "sig_if", fc_sig_if); 
         uvm_config_db#(virtual sig_if)::set(null, "*", "sig_if", fc_sig_if); 
-
-       // slu_vif_container #(virtual sig_if)  FcSigIntfWrapper;
-        //slu_vif_container #(virtual FcDutIf) FcDutIntfWrapper;
-
-        //fc_vintfBundle = new("fc_vintfBundle");
-       // assert(fc_vintfBundle) else uvm_report_fatal("TB", "Failed to create fc_vintfBundle");
-        //ssn uvm_config_object::set(null, .inst_name("*"), .field_name(FC::VINTF_BUNDLE_NAME), .value(fc_vintfBundle), .clone(0));
-       // uvm_config_object::set(null, .inst_name("*"), .field_name(FC::VINTF_BUNDLE_NAME), .value(fc_vintfBundle));
-
-        // Create all interface wrappers
-       // FcSigIntfWrapper = new("FcSigIntfWrapper");
-       // FcSigIntfWrapper.set_v_if(fc_sig_if);
-        //FcDutIntfWrapper = new("FcDutIntfWrapper");
-        //FcDutIntfWrapper.set_v_if(fc_hdl_top.fctop_dut_if);
-       // fc_vintfBundle.setData(FC::FCSIGIFNAME, FcSigIntfWrapper);
-        //fc_vintfBundle.setData(FC::FCDUTIFNAME, FcDutIntfWrapper);
-
 
         FC::apply_forces = apply_forces;
         ->vintfInitDone;
@@ -122,10 +94,7 @@ module fc_hvl_top #(
     initial begin: UVM_TEST
         $display($time, "%m: Running FC top Build");
         wait(vintfInitDone.triggered);
-
-        if ($value$plusargs("UVM_TESTNAME=%s", testname  )) begin
-             xvm_pkg::run_test("", testname,   xvm::EOP_UVM);
-        end
+        run_test();
     end      
 
     initial begin: BEACON

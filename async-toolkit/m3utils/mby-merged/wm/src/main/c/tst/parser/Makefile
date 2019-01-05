@@ -1,33 +1,38 @@
-SRC_DIR = ../..
-TST_DIR = .
+# -*- mode:Makefile -*-
 
-INC_DIR = ../../../c                                  # uint.h
-INC_DIR2 = ../../../m3/genviews/src/build_c/mby_c/src  # mby_top_map.h
+# Copyright (C) 2018 Intel Corporation
 
-INCLUDES  = -I$(SRC_DIR)
-INCLUDES += -I$(TST_DIR)
-INCLUDES += -I$(INC_DIR) -I$(INC_DIR2)
+ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
-SOURCES  = $(SRC_DIR)/mby_common.c
-SOURCES += $(SRC_DIR)/mby_crc32.c
-SOURCES += $(SRC_DIR)/mby_bitfield.c
-SOURCES += $(SRC_DIR)/mby_parser.c
-SOURCES += $(SRC_DIR)/mby_reg_ctrl.c
-SOURCES += $(SRC_DIR)/mby_init.c
+COM_DIR = ../common
+C_DIR   = ../../../c
+M3_DIR  = ../../../m3
+MAP_DIR = ${M3_DIR}/genviews/src/build_c/mby_c/src
 
+# Tool versions:
+include ${C_DIR}/ToolVersions.mk
 
-SOURCES += $(TST_DIR)/mby_parser_test.c
+INCLUDES  = -I.
+INCLUDES += -I$(COM_DIR)
+INCLUDES += -I$(MAP_DIR)
+INCLUDES += -I$(C_DIR)
 
+SOURCES += mby_parser_test.c
 
-OBJECTS = $(SOURCES:.c=.o)
+# Build dir:
+OS_TARG = AMD64_LINUX
+BLD_DIR = $(OS_TARG)
+BLD_DTS = ${BLD_DIR}/.time_stamp
 
-TARGET = mby_parser_test
+OBJECTS = $(addprefix ${BLD_DIR}/,$(SOURCES:.c=.o))
 
-# C compiler:
-CC = gcc
+# Functional Model (a.k.a. White Model) static library:
+WM_LIB   = ${C_DIR}/${BLD_DIR}/libmby_c_model.a
 
-# Linker:
-LD  = ld
+# Common test static library (includes write_field() function):
+COM_LIB  = ${COM_DIR}/${BLD_DIR}/libmodel_c_write.a
+
+TARGET   = ${BLD_DIR}/mby_parser_test
 
 ifeq ($(VERBOSE),1)
 ECHO :=
@@ -60,31 +65,43 @@ endif
 
 LDFLAGS =
 
-DELFILES  =  *.o *.log $(OBJECTS) $(TARGET)
+DELFILES = $(BLD_DIR) *.o *.so *.log
 
 .PHONY: all
-all: $(TARGET)
+all: $(BLD_DTS) $(OBJECTS) $(TARGET)
 
-$(TST_DIR)/mby_parser_test.o : $(TST_DIR)/mby_parser_test.c $(TST_DIR)/mby_parser_test.h $(SRC_DIR)/mby_parser.h $(SRC_DIR)/mby_crc32.h $(SRC_DIR)/mby_common.h $(SRC_DIR)/mby_init.h 
-$(SRC_DIR)/mby_common.o    : $(SRC_DIR)/mby_common.c     $(SRC_DIR)/mby_common.h
-$(SRC_DIR)/mby_crc32.o     : $(SRC_DIR)/mby_crc32.c      $(SRC_DIR)/mby_crc32.h
-$(SRC_DIR)/mby_bitfield.o  : $(SRC_DIR)/mby_bitfield.c   $(SRC_DIR)/mby_bitfield.h
-$(SRC_DIR)/mby_parser.o    : $(SRC_DIR)/mby_parser.c     $(SRC_DIR)/mby_parser.h
-$(SRC_DIR)/mby_reg_ctrl.o  : $(SRC_DIR)/mby_reg_ctrl.c   $(SRC_DIR)/mby_reg_ctrl.h
-$(SRC_DIR)/mby_init.o      : $(SRC_DIR)/mby_init.c       $(SRC_DIR)/mby_init.h
+$(BLD_DTS):
+	@echo '  Creating build directory'
+	$(ECHO) $(MKDIR) $(BLD_DIR) && touch ${BLD_DTS}
 
-.PHONY: clean
-clean:
-	@echo '  Cleaning'
-	$(ECHO) rm -f $(DELFILES)
-
-%.o: %.c
+${BLD_DIR}/%.o: %.c
 	@echo '  Compiling' $<
-	$(ECHO) $(CC) -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) -c $< 
+	$(ECHO) $(GCC) -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) -c $<
 
-$(TARGET): $(OBJECTS)
+# Added dependencies:
+${BLD_DIR}/mby_parser_test.o: \
+        $(BLD_DTS) \
+        Makefile \
+        mby_parser_test.c \
+        mby_parser_test.h \
+        ${C_DIR}/mby_parser.h \
+        ${C_DIR}/mby_common.h \
+        ${C_DIR}/mby_pipeline.h \
+        ${C_DIR}/mby_crc32.h \
+        ${C_DIR}/mby_init.h \
+        ${C_DIR}/mby_reg_ctrl.h
+
+.PHONY: $(WM_LIB)
+$(WM_LIB):
+	make -C ${C_DIR}
+
+.PHONY: $(COM_LIB)
+$(COM_LIB):
+	make -C ${COM_DIR}
+
+$(TARGET): $(BLD_DTS) $(OBJECTS) $(WM_LIB) $(COM_LIB)
 	@echo '  Linking' $(TARGET)
-	$(ECHO) $(CC) $(LDFLAGS) -o $(TARGET) $(OBJECTS)
+	$(ECHO) $(GCC) $(LDFLAGS) -o $(TARGET) $(OBJECTS) $(WM_LIB) $(COM_LIB)
 
 .PHONY: run
 run: $(TARGET)
@@ -92,10 +109,16 @@ run: $(TARGET)
 	@/usr/bin/time --format='Ran for %e seconds.' \
             ./$(TARGET) | tee run.log
 
+.PHONY: run_img
+run_img: $(TARGET)
+	@echo '  Running $(TARGET) -i'
+	@/usr/bin/time --format='Ran for %e seconds.' \
+            ./$(TARGET) -i | tee run.log
+
 .PHONY: valgrind
 valgrind: $(TARGET)
 	@echo '  Running $(TARGET) in Valgrind'
-	valgrind \
+	$(VAL) \
             --track-origins=yes \
             --leak-check=full \
             --show-leak-kinds=all \
@@ -104,8 +127,28 @@ valgrind: $(TARGET)
 .PHONY: callgrind
 callgrind: $(TARGET)
 	@echo '  Running $(TARGET) in Cachegrind'
-	valgrind \
+	$(VAL) \
             --tool=callgrind \
             --verbose \
             --dump-every-bb=12500000000 \
 	$(TARGET) 2>&1 | tee /cal.log
+
+.PHONY: clean
+clean:
+	@echo '  Cleaning'
+	$(ECHO) $(RM) $(DELFILES)
+
+.PHONY: show_sources
+show_sources:
+	@echo 'SOURCES :'
+	@$(foreach i, $(SOURCES), echo $(i);)
+
+.PHONY: show_includes
+show_includes:
+	@echo 'INCLUDES :'
+	@$(foreach i, $(INCLUDES), echo $(i);)
+
+.PHONY: show_objects
+show_objects:
+	@echo 'OBJECTS :'
+	@$(foreach i, $(OBJECTS), echo $(i);)

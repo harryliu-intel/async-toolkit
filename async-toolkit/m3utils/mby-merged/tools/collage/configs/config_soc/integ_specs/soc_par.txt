@@ -1,4 +1,5 @@
 #instance                       Parent Module 
 mby_parclk                      parclk                                  
-xtal_rcvr                       parclk                                  
-                                  
+eth_refclk_rcvr                 parclk 
+                                 
+mby_syscon                      parimc                                  

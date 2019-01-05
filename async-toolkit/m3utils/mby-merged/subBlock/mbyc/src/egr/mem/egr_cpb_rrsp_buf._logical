@@ -1,0 +1,12 @@
+Ram Type                                 <REGULAR, ROM, TCAM>                =    REGULAR
+Ram Ports                                <1rw, 1r1w, 2r2w>                   =    1rw
+Ram Lines Number                         <Integer Number>                    =    6
+Ram Data Width                           <Integer Number>                    =    512
+Ram Write Resolution                     <Divider of Data Width>             =    128
+Ram Protection Type                      <ECC, Parity, None>                 =    None
+Memory clock name A                      <Clock Name>                        =    cclk
+Memory clock name B                      <Clock Name>                        =    cclk
+Ram Clear-On-Reset                       <Yes, Number, No, LL>               =    No
+Memory Instances                         <Integer Number>                    =    3
+Ram Fast Clock Frequency                 <Real Number>                       =    1225
+Disable Suffix                           <Yes, No, Shells, Wrappers>         =    Both

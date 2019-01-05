@@ -1,0 +1,10 @@
+Ram Type                    <REGULAR, ROM, TCAM>    = TCAM
+TCAM Rules Number           <Integer Number>        = 1024
+TCAM Data Width             <Integer Number>        = 40
+Memory clock name A         <Write Clock Name>      = cclk
+Tcam Clear-On-Reset         <Yes, Number, No, LL>   = Yes
+TCAM Entry0 Init Value      <init value>            = 0x0
+TCAM Entry1 Init Value      <init value>            = 0xffffffffff
+Memory Instances            <Integer Number>        = 1
+Ram Fast Clock Frequency    <Real Number>           = 1225
+Disable Suffix              <Yes, No>               = Both

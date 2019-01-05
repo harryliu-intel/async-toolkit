@@ -20,10 +20,6 @@ $hdl_spec = {
     # List of include directories. Corresponds with the VLOG '+incdir+' parameter
     -vlog_incdirs => [
         
-     "$ENV{SAOLA_HOME}/verilog",
-     "$ENV{SAOLA_HOME}/verilog_uvm",
-     "$ENV{UVM_HOME}/src",
-     "$ENV{OVM_HOME}/src",
      "$ENV{ACE_HOME}/lib/Verilog",
      "verif/lib/mby_wm_dpi_pkg/",
     ],

@@ -45,10 +45,8 @@ class mby_mesh_base_test extends shdv_base_test;
     // Top level ENV
     mby_mesh_env    env;
 
-    `uvm_component_utils_begin(mby_mesh_base_test)
-        `uvm_field_object(cfg,  UVM_DEFAULT)
-        `uvm_field_object(env,      UVM_DEFAULT)
-    `uvm_component_utils_end
+    `uvm_component_utils(mby_mesh_base_test)
+    
 
     //------------------------------------------------------------------------------
     // Constructor: new
@@ -136,11 +134,42 @@ class mby_mesh_base_test extends shdv_base_test;
     //------------------------------------------------------------------------------
     virtual function void connect_phase(uvm_phase phase);
         super.connect_phase(phase);
-        env.set_test_phase_type("env", "POWER_GOOD_PHASE", "mby_mesh_power_good_seq");   // Specify the Phase to run the Power_Good sequence
-        env.set_test_phase_type("env", "HARD_RESET_PHASE", "mby_mesh_hard_reset_seq");   // Specify the Phase to run the Hard_Reset sequence
-        env.set_test_phase_type("env", "WARM_RESET_PHASE", "mby_mesh_warm_reset_seq");   // Specify the Phase to run the Warm_Reset sequence
-        env.set_test_phase_type("env", "CONFIG_PHASE",     "mby_mesh_env_cfg_seq");
+        set_default_sequences();
+
     endfunction : connect_phase
+
+    //-----------------------------------------------------------------------------
+    // Function: set_default_sequences()
+    //-----------------------------------------------------------------------------
+    virtual function void set_default_sequences();
+        
+        
+      // Specifying reset phase sequence
+      uvm_config_db#(uvm_object_wrapper)::set(this,
+         "env.tb_seqr.reset_phase",
+         "default_sequence",
+         mby_mesh_seq_lib::mby_mesh_hard_reset_seq::type_id::get());
+/*
+      // Specifying post_reset phase sequence
+      uvm_config_db#(uvm_object_wrapper)::set(this,
+         "env.tb_seqr.post_reset_phase",
+         "default_sequence",
+         mby_mesh_post_reset_seq::type_id::get());
+*/
+      // Specifying configure phase sequence
+      uvm_config_db#(uvm_object_wrapper)::set(this,
+         "env.tb_seqr.configure_phase",
+         "default_sequence",
+         mby_mesh_seq_lib::mby_mesh_cfg_seq::type_id::get());
+
+      // Specifying shutdown phase sequence
+      uvm_config_db#(uvm_object_wrapper)::set(this,
+         "env.tb_seqr.shutdown_phase",
+         "default_sequence",
+         mby_mesh_seq_lib::mby_mesh_shutdown_seq::type_id::get());
+
+
+   endfunction : set_default_sequences
 
     //------------------------------------------------------------------------------
     // Function: randomize_cfg()

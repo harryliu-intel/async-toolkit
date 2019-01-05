@@ -40,6 +40,7 @@ set ::soc_integ_suffix ""
 # warning:  No comments (lines starting with #) in the soc_subsystem definition
 set ::soc_subsystems {
     clocking    clocking      1
+    imc         imc           1
     epc_mpp     epc_mpp       8
     msh         msh           1
     gmm         gmm           1

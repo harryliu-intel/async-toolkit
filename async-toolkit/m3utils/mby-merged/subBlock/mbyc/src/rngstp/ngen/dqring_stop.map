@@ -1,0 +1,18 @@
+//Placeholder
+
+$y = $iteration;
+
+3'd$y                       >> ring_id
+
+dqring_in_up_$y$_0        >> dqring0_in_up
+dqring_out_up_$y$_0       >> dqring0_out_up
+
+dqring_in_dn_$y$_0        >> dqring0_in_dn
+dqring_out_dn_$y$_0       >> dqring0_out_dn
+
+dqring_in_up_$y$_1        >> dqring1_in_up
+dqring_out_up_$y$_1       >> dqring1_out_up
+
+dqring_in_dn_$y$_1        >> dqring1_in_dn
+dqring_out_dn_$y$_1       >> dqring1_out_dn
+

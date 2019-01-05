@@ -29,6 +29,7 @@ interface force_if;
     bit bypass_spi_desc_ss_ld = 1;
     bit bypass_fuse_sense = 1;
     bit speedup_pmu = 1;
+    bit imc_hack = 0;
 
     //-------------------------------
     //    MODEL PATCH FORCES

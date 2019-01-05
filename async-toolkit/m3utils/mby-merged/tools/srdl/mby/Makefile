@@ -25,9 +25,35 @@ SHELL_CTL_RDL   := $(MODEL_ROOT)/results/mgm/gmf/mby_shell_ctl_mgmt.rdl
 # IP_INCLUDE_ARG += $(LSM_ROOT)/tools/srdl/reg
 
 #PREREQS := $(NOC_RDL)
-UVM_RAL_BLOCKS := mby_ppe_parser_map 
+#PPE_BLOCKS  := mby_ppe_parser_map mby_ppe_mapper_map mby_ppe_cgrp_a_map mby_ppe_cgrp_b_map mby_ppe_rx_stats_map\
+#               mby_ppe_entropy_map mby_ppe_nexthop_map mby_ppe_fwd_misc_map mby_ppe_mst_glort_map mby_ppe_policers_map \
+#               mby_ppe_cm_apply_map mby_ppe_cm_usage_map mby_ppe_trig_apply_map mby_ppe_trig_apply_misc_map mby_ppe_trig_usage_map    
+#              
+#GMS_BLOCKS  := mby_freepointer_fifo_map
+#MESH_BLOCKS := mby_mesh_row_map
+ 
+UVM_RAL_BLOCKS := $(PPE_BLOCKS) $(GMS_BLOCKS) $(MESH_BLOCKS)
 
 include $(MODEL_ROOT)/tools/srdl/Makefile
 
+#PPE_RAL_TARGS := $(addprefix $(RESULTS_SUBBLOCK)/ral_,$(addsuffix .sv,$(PPE_BLOCKS)))
+#GMS_RAL_TARGS := $(addprefix $(RESULTS_SUBBLOCK)/ral_,$(addsuffix .sv,$(GMS_BLOCKS)))
+#MESH_RAL_TARGS:= $(addprefix $(RESULTS_SUBBLOCK)/ral_,$(addsuffix .sv,$(MESH_BLOCKS)))
+
+#ppe_ral : $(PPE_RAL_TARGS) ppe_ral.hdl
+#mesh_ral: $(MESH_RAL_TARGS) mesh_ral.hdl
+#gms_ral : $(GMS_RAL_TARGS) 
+
+ppe_ral : $(RESULTS_SUBBLOCK)/mby_ppe_rx_top_map.allral.done cp_ppe_rx_ral
+mesh_ral: $(RESULTS_SUBBLOCK)/mby_mesh_row_map.allral.done cp_mesh_ral
+
+cp_mesh_ral: $(RESULTS_SUBBLOCK)/mby_mesh_row_map.allral.done
+	cp $(RESULTS_SUBBLOCK)/mby_mesh_row_map.ralf_out/*.sv $(MODEL_ROOT)/subBlock/mbyc/verif/mesh/ral/
+	echo "mesh ral generated"
+	
+cp_ppe_rx_ral: $(RESULTS_SUBBLOCK)/mby_ppe_rx_top_map.allral.done
+#	$(MODEL_ROOT)/tools/srdl/ral_make_hdl.pl --dir target/GenRTL/regflow/mby/subblock/mby_ppe_rx_top_map.ralf_out/ --model_root $(MODEL_ROOT) --filename_ral mby_ppe_rx_ral.hdl
+	cp $(RESULTS_SUBBLOCK)/mby_ppe_rx_top_map.ralf_out/*.sv $(MODEL_ROOT)/subBlock/mbyc/verif/rx_ppe/ral/
+	echo "RX PPE ral generated"
 # genrdl: $(SHELL_CTL_RDL)
 

@@ -2,3 +2,229 @@
 # It should NOT include other connectivity specs
 # See $COLLAGE_ROOT/templates/ad_hoc_connections.txt for syntax
 ##############################################################################
+# 12. Pattern based Connect Pins (Pattern only for pin name not inst/ip name)
+#
+#    CRn <driver_pin_or_port_name_pattern> <receiver_pin_or_port_name_patter > ?exact_name_match?
+#    example: CRn i_socunit/psf*      i_psf/psf*
+#    Note: this line would not be supported: CRn i_soc*/psf*      i_ps*/psf*
+#    Note: it allows pattern only in pin
+
+#################################################################################
+######### NOTE:  current connectivity has been defined assuming this orientation:  
+######### Count is 0-3 on left and 4-7 on right; 0 & 7 are closest to gmn, 3 & 4 closest to gms
+### New layout after review with SD team on 12/10
+#       GMN
+#MPP 0       7
+#MPP 1       6
+#MPP 2       5
+#MPP 3       4
+#       GMS
+#################################################################################
+
+#########################################
+## Ring connections between MPPs and GMMs
+## assuming left corresponds to west side mpps and right to east
+#########################################
+## dq ring
+# left/west
+CRn mby_mpp_0/mpp_dqring_out_*          mby_mpp_1/mpp_dqring_in_*      0
+CRn mby_mpp_1/mpp_dqring_out_*          mby_mpp_2/mpp_dqring_in_*      0
+CRn mby_mpp_2/mpp_dqring_out_*          mby_mpp_3/mpp_dqring_in_*      0
+CRn mby_mpp_3/mpp_dqring_out_*          mby_gms_0/mby_deque_from_egr_* 0
+# right/east
+CRn mby_mpp_7/mpp_dqring_out_*          mby_mpp_6/mpp_dqring_in_*      0
+CRn mby_mpp_6/mpp_dqring_out_*          mby_mpp_5/mpp_dqring_in_*      0
+CRn mby_mpp_5/mpp_dqring_out_*          mby_mpp_4/mpp_dqring_in_*      0
+## assuming east side mpp connects to upper bits of gms deque, need to confirm
+//; for { set ringindx 0; set upperindx 8} {$ringindx<8} {incr ringindx; incr upperindx} {
+CRn mby_mpp_4/mpp_dqring_out_${ringindx}_*          mby_gms_0/mby_deque_from_egr_${upperindx}_* 0
+//; }
+
+## mctag ring
+# left
+CRn mby_gms_0/mc_tag_ring_out_left_*         mby_mpp_3/mpp_mctagring_in_*    0
+CRn mby_mpp_3/mpp_mctagring_out_*            mby_mpp_2/mpp_mctagring_in_*    0
+CRn mby_mpp_2/mpp_mctagring_out_*            mby_mpp_1/mpp_mctagring_in_*    0
+CRn mby_mpp_1/mpp_mctagring_out_*            mby_mpp_0/mpp_mctagring_in_*    0
+# right
+CRn mby_gms_0/mc_tag_ring_out_right_*        mby_mpp_4/mpp_mctagring_in_*    0
+CRn mby_mpp_4/mpp_mctagring_out_*            mby_mpp_5/mpp_mctagring_in_*    0
+CRn mby_mpp_5/mpp_mctagring_out_*            mby_mpp_6/mpp_mctagring_in_*    0
+CRn mby_mpp_6/mpp_mctagring_out_*            mby_mpp_7/mpp_mctagring_in_*    0
+CRn mby_mpp_7/mpp_mctagring_out_*            mby_gmn_0/mc_tag_ring_in_*      0
+
+## pod ring
+# left
+C mby_gms_0/pod_ring_left_out              mby_mpp_3/mpp_podring_in_dn
+C mby_mpp_3/mpp_podring_out_up             mby_mpp_2/mpp_podring_in_dn
+C mby_mpp_2/mpp_podring_out_up             mby_mpp_1/mpp_podring_in_dn
+C mby_mpp_1/mpp_podring_out_up             mby_mpp_0/mpp_podring_in_dn
+C mby_mpp_0/mpp_podring_out_up             mby_gmn_0/pod_ring_left_in
+C mby_gmn_0/pod_ring_left_out              mby_mpp_0/mpp_podring_in_up
+C mby_mpp_0/mpp_podring_out_dn             mby_mpp_1/mpp_podring_in_up
+C mby_mpp_1/mpp_podring_out_dn             mby_mpp_2/mpp_podring_in_up
+C mby_mpp_2/mpp_podring_out_dn             mby_mpp_3/mpp_podring_in_up
+C mby_mpp_3/mpp_podring_out_dn             mby_gms_0/pod_ring_left_in
+# right
+C mby_gms_0/pod_ring_right_out             mby_mpp_4/mpp_podring_in_dn
+C mby_mpp_4/mpp_podring_out_up             mby_mpp_5/mpp_podring_in_dn
+C mby_mpp_5/mpp_podring_out_up             mby_mpp_6/mpp_podring_in_dn
+C mby_mpp_6/mpp_podring_out_up             mby_mpp_7/mpp_podring_in_dn
+C mby_mpp_7/mpp_podring_out_up             mby_gmn_0/pod_ring_right_in
+C mby_gmn_0/pod_ring_right_out             mby_mpp_7/mpp_podring_in_up
+C mby_mpp_7/mpp_podring_out_dn             mby_mpp_6/mpp_podring_in_up
+C mby_mpp_6/mpp_podring_out_dn             mby_mpp_5/mpp_podring_in_up
+C mby_mpp_5/mpp_podring_out_dn             mby_mpp_4/mpp_podring_in_up
+C mby_mpp_4/mpp_podring_out_dn             mby_gms_0/pod_ring_right_in
+
+# pod ring stall connections
+# left
+C mby_gms_0/pod_ring_stall_left_out        mby_mpp_3/mpp_podring_stall_in_dn
+C mby_mpp_3/mpp_podring_stall_out_up       mby_mpp_2/mpp_podring_stall_in_dn
+C mby_mpp_2/mpp_podring_stall_out_up       mby_mpp_1/mpp_podring_stall_in_dn
+C mby_mpp_1/mpp_podring_stall_out_up       mby_mpp_0/mpp_podring_stall_in_dn
+C mby_mpp_0/mpp_podring_stall_out_up       mby_gmn_0/pod_ring_stall_in
+C mby_mpp_0/mpp_podring_stall_out_dn       mby_mpp_1/mpp_podring_stall_in_up
+C mby_mpp_1/mpp_podring_stall_out_dn       mby_mpp_2/mpp_podring_stall_in_up
+C mby_mpp_2/mpp_podring_stall_out_dn       mby_mpp_3/mpp_podring_stall_in_up
+# right
+C mby_gms_0/pod_ring_stall_right_out       mby_mpp_4/mpp_podring_stall_in_dn
+C mby_mpp_4/mpp_podring_stall_out_up       mby_mpp_5/mpp_podring_stall_in_dn
+C mby_mpp_5/mpp_podring_stall_out_up       mby_mpp_6/mpp_podring_stall_in_dn
+C mby_mpp_6/mpp_podring_stall_out_up       mby_mpp_7/mpp_podring_stall_in_dn
+C mby_mpp_7/mpp_podring_stall_out_dn       mby_mpp_6/mpp_podring_stall_in_up
+C mby_mpp_6/mpp_podring_stall_out_dn       mby_mpp_5/mpp_podring_stall_in_up
+C mby_mpp_5/mpp_podring_stall_out_dn       mby_mpp_4/mpp_podring_stall_in_up
+
+## mirror pod ring
+# left
+C mby_gmn_0/mc_mirror_pod_ring_left_out    mby_mpp_0/mpp_mrpodring_in_up
+C mby_mpp_0/mpp_mrpodring_out_dn           mby_mpp_1/mpp_mrpodring_in_up
+C mby_mpp_1/mpp_mrpodring_out_dn           mby_mpp_2/mpp_mrpodring_in_up
+C mby_mpp_2/mpp_mrpodring_out_dn           mby_mpp_3/mpp_mrpodring_in_up
+C mby_mpp_3/mpp_mrpodring_out_dn           mby_gms_0/mc_mirror_pod_ring_left_in
+# right
+C mby_gmn_0/mc_mirror_pod_ring_right_out   mby_mpp_7/mpp_mrpodring_in_up
+C mby_mpp_7/mpp_mrpodring_out_dn           mby_mpp_6/mpp_mrpodring_in_up
+C mby_mpp_6/mpp_mrpodring_out_dn           mby_mpp_5/mpp_mrpodring_in_up
+C mby_mpp_5/mpp_mrpodring_out_dn           mby_mpp_4/mpp_mrpodring_in_up
+C mby_mpp_4/mpp_mrpodring_out_dn           mby_gms_0/mc_mirror_pod_ring_right_in
+
+# mirror pod ring stall connections
+# left
+C mby_gms_0/stall_mc_mirror_pod_ring_left  mby_mpp_3/mpp_mrpodring_stall_in_dn
+C mby_mpp_3/mpp_mrpodring_stall_out_up     mby_mpp_2/mpp_mrpodring_stall_in_dn
+C mby_mpp_2/mpp_mrpodring_stall_out_up     mby_mpp_1/mpp_mrpodring_stall_in_dn
+C mby_mpp_1/mpp_mrpodring_stall_out_up     mby_mpp_0/mpp_mrpodring_stall_in_dn
+C mby_mpp_0/mpp_mrpodring_stall_out_up     mby_gmn_0/stall_mc_mirror_pod_ring_left
+C mby_mpp_0/mpp_mrpodring_stall_out_dn     mby_mpp_1/mpp_mrpodring_stall_in_up
+C mby_mpp_1/mpp_mrpodring_stall_out_dn     mby_mpp_2/mpp_mrpodring_stall_in_up
+C mby_mpp_2/mpp_mrpodring_stall_out_dn     mby_mpp_3/mpp_mrpodring_stall_in_up
+# right
+C mby_gms_0/stall_mc_mirror_pod_ring_right mby_mpp_4/mpp_mrpodring_stall_in_dn
+C mby_mpp_4/mpp_mrpodring_stall_out_up     mby_mpp_5/mpp_mrpodring_stall_in_dn
+C mby_mpp_5/mpp_mrpodring_stall_out_up     mby_mpp_6/mpp_mrpodring_stall_in_dn
+C mby_mpp_6/mpp_mrpodring_stall_out_up     mby_mpp_7/mpp_mrpodring_stall_in_dn
+C mby_mpp_7/mpp_mrpodring_stall_out_up     mby_gmn_0/stall_mc_mirror_pod_ring_right
+C mby_mpp_7/mpp_mrpodring_stall_out_dn     mby_mpp_6/mpp_mrpodring_stall_in_up
+C mby_mpp_6/mpp_mrpodring_stall_out_dn     mby_mpp_5/mpp_mrpodring_stall_in_up
+C mby_mpp_5/mpp_mrpodring_stall_out_dn     mby_mpp_4/mpp_mrpodring_stall_in_up
+
+### tag ring
+# left
+CRn mby_gmn_0/tag_ring_out_*               mby_mpp_0/mpp_tagring_in_up_*  0
+CRn mby_mpp_0/mpp_tagring_out_dn_*         mby_mpp_1/mpp_tagring_in_up_*  0
+CRn mby_mpp_0/mpp_tagring_out_up_*         mby_gmn_0/tag_ring_in_*        0
+CRn mby_mpp_1/mpp_tagring_out_dn_*         mby_mpp_2/mpp_tagring_in_up_*  0
+CRn mby_mpp_1/mpp_tagring_out_up_*         mby_mpp_0/mpp_tagring_in_dn_*  0
+CRn mby_mpp_2/mpp_tagring_out_dn_*         mby_mpp_3/mpp_tagring_in_up_*  0
+CRn mby_mpp_2/mpp_tagring_out_up_*         mby_mpp_1/mpp_tagring_in_dn_*  0
+CRn mby_mpp_3/mpp_tagring_out_dn_*         mby_gms_0/tag_ring_in_*        0
+CRn mby_mpp_3/mpp_tagring_out_up_*         mby_mpp_2/mpp_tagring_in_dn_*  0
+CRn mby_gms_0/tag_ring_out_*               mby_mpp_3/mpp_tagring_in_dn_*  0
+# right
+CRn mby_gmn_0/tag_ring_out_*               mby_mpp_7/mpp_tagring_in_up_*  0
+CRn mby_gms_0/tag_ring_out_*               mby_mpp_4/mpp_tagring_in_dn_*  0 
+CRn mby_mpp_4/mpp_tagring_out_up_*         mby_mpp_5/mpp_tagring_in_dn_*  0
+# gms already driven by mpp 3
+#CRn mby_mpp_4/mpp_tagring_out_dn_*         mby_gms_0/tag_ring_in_*        0
+CRn mby_mpp_5/mpp_tagring_out_up_*         mby_mpp_6/mpp_tagring_in_dn_*  0
+CRn mby_mpp_5/mpp_tagring_out_dn_*         mby_mpp_4/mpp_tagring_in_up_*  0
+CRn mby_mpp_6/mpp_tagring_out_up_*         mby_mpp_7/mpp_tagring_in_dn_*  0
+CRn mby_mpp_6/mpp_tagring_out_dn_*         mby_mpp_5/mpp_tagring_in_up_*  0
+# gmn already driven by mpp 0
+#CRn mby_mpp_7/mpp_tagring_out_up_*         mby_gmn_0/tag_ring_in_*        0
+CRn mby_mpp_7/mpp_tagring_out_dn_*         mby_mpp_6/mpp_tagring_in_up_*  0
+
+### gpol ring
+# left
+CRn mby_mpp_0/mpp_gpolring_out_*     mby_gmn_0/gpol_ring_*          0
+CRn mby_mpp_1/mpp_gpolring_out_*     mby_mpp_0/mpp_gpolring_in_*    0
+CRn mby_mpp_2/mpp_gpolring_out_*     mby_mpp_1/mpp_gpolring_in_*    0
+CRn mby_mpp_3/mpp_gpolring_out_*     mby_mpp_2/mpp_gpolring_in_*    0
+# right
+//; for { set ringindx 0; set upperindx 8} {$ringindx<8} {incr ringindx; incr upperindx} {
+CRn mby_mpp_7/mpp_gpolring_out_${ringindx}_*     mby_gmn_0/gpol_ring_${upperindx}_*          0
+//;}
+CRn mby_mpp_6/mpp_gpolring_out_*     mby_mpp_7/mpp_gpolring_in_*    0
+CRn mby_mpp_5/mpp_gpolring_out_*     mby_mpp_6/mpp_gpolring_in_*    0
+CRn mby_mpp_4/mpp_gpolring_out_*     mby_mpp_5/mpp_gpolring_in_*    0
+
+# left
+C mby_gmn_0/gpol_update_bcast_out_left     mby_mpp_0/mpp_gpolring_update_in_0
+CRn mby_mpp_0/mpp_gpolring_update_out_*    mby_mpp_1/mpp_gpolring_update_in_*    0
+CRn mby_mpp_1/mpp_gpolring_update_out_*    mby_mpp_2/mpp_gpolring_update_in_*    0
+CRn mby_mpp_2/mpp_gpolring_update_out_*    mby_mpp_3/mpp_gpolring_update_in_*    0
+# right
+C mby_gmn_0/gpol_update_bcast_out_right    mby_mpp_7/mpp_gpolring_update_in_0
+CRn mby_mpp_7/mpp_gpolring_update_out_*    mby_mpp_6/mpp_gpolring_update_in_*    0
+CRn mby_mpp_6/mpp_gpolring_update_out_*    mby_mpp_5/mpp_gpolring_update_in_*    0
+CRn mby_mpp_5/mpp_gpolring_update_out_*    mby_mpp_4/mpp_gpolring_update_in_*    0
+
+###############################
+### connections from MPP to MSH
+###############################
+## Start with MPP closest to GMN and work way towards GMS
+## From mby_msh_pkg.sv NUM_MSH_ROWS = 16; NUM_MSH_ROW_PORTS = 3
+## 4 mpp mims; 3 mpp ports
+## Connect 4 mim ports from each mpp to the 16 mshrows per side (west/east) of msh
+## WB MPPs start 0 go to 3
+## EB MPPs start 7 go to 4
+//;for {set mshside 0; set mshsidestr wb; set mppindxstart 0; set incrval 1} {$mshside<2} {incr mshside; set mshsidestr eb; set mppindxstart 7; set incrval -1} {
+//;  for {set mppcnt 0; set mppindx $mppindxstart; set mshrowindx 0} {$mppcnt<4} {incr mppcnt; incr mppindx $incrval} {
+//;    for {set mimrowindx 0} {$mimrowindx<4} {incr mimrowindx; incr mshrowindx} {
+//;      for {set port 0} {$port<3} {incr port} {
+### Write ports
+C mby_msh_0/o_igr_${mshsidestr}_wreq_credits[$mshrowindx][$port]       mby_mpp_$mppindx/mim${mimrowindx}_wr${port}_mim_wreq_credits
+C mby_mpp_$mppindx/mim${mimrowindx}_wr${port}_mim_wr_data              mby_msh_0/i_igr_${mshsidestr}_wr_data[$mshrowindx][$port]
+C mby_mpp_$mppindx/mim${mimrowindx}_wr${port}_mim_wr_seg_ptr           mby_msh_0/i_igr_${mshsidestr}_wr_seg_ptr[$mshrowindx][$port]
+C mby_mpp_$mppindx/mim${mimrowindx}_wr${port}_mim_wr_sema              mby_msh_0/i_igr_${mshsidestr}_wr_sema[$mshrowindx][$port]   
+C mby_mpp_$mppindx/mim${mimrowindx}_wr${port}_mim_wr_wd_sel            mby_msh_0/i_igr_${mshsidestr}_wr_wd_sel[$mshrowindx][$port] 
+C mby_mpp_$mppindx/mim${mimrowindx}_wr${port}_mim_wreq_id              mby_msh_0/i_igr_${mshsidestr}_wreq_id[$mshrowindx][$port]
+C mby_mpp_$mppindx/mim${mimrowindx}_wr${port}_mim_wreq_valid           mby_msh_0/i_igr_${mshsidestr}_wreq_valid[$mshrowindx][$port]
+### Read Request ports
+C mby_msh_0/o_egr_${mshsidestr}_rreq_credits[$mshrowindx][$port]        mby_mpp_$mppindx/mim${mimrowindx}_rd${port}_mim_rreq_credits
+C mby_mpp_$mppindx/mim${mimrowindx}_rd${port}_mim_rreq_valid           mby_msh_0/i_egr_${mshsidestr}_rreq_valid[$mshrowindx][$port]
+C mby_mpp_$mppindx/mim${mimrowindx}_rd${port}_mim_seg_ptr              mby_msh_0/i_egr_${mshsidestr}_seg_ptr[$mshrowindx][$port]
+C mby_mpp_$mppindx/mim${mimrowindx}_rd${port}_mim_sema                 mby_msh_0/i_egr_${mshsidestr}_sema[$mshrowindx][$port]
+C mby_mpp_$mppindx/mim${mimrowindx}_rd${port}_mim_wd_sel               mby_msh_0/i_egr_${mshsidestr}_wd_sel[$mshrowindx][$port]
+C mby_mpp_$mppindx/mim${mimrowindx}_rd${port}_mim_req_id               mby_msh_0/i_egr_${mshsidestr}_req_id[$mshrowindx][$port]
+### Read Response ports
+C mby_msh_0/o_egr_${mshsidestr}_rrsp_valid[$mshrowindx][$port]          mby_mpp_$mppindx/mim${mimrowindx}_rd${port}_mim_rrsp_valid
+C mby_msh_0/o_egr_${mshsidestr}_rrsp_dest_block[$mshrowindx][$port]     mby_mpp_$mppindx/mim${mimrowindx}_rd${port}_mim_rrsp_dest_block
+C mby_msh_0/o_egr_${mshsidestr}_rrsp_req_id[$mshrowindx][$port]         mby_mpp_$mppindx/mim${mimrowindx}_rd${port}_mim_rrsp_req_id
+C mby_msh_0/o_egr_${mshsidestr}_rd_data[$mshrowindx][$port]             mby_mpp_$mppindx/mim${mimrowindx}_rd${port}_mim_rd_data
+//;      }
+//;    }
+//;  }
+//;}
+
+
+### IMC connectivity
+# pll en/lock connection
+C   mby_syscon/pll_en        mby_parclk/pll_en1
+C   mby_parclk/core_pll_lock mby_syscon/pll_lock
+
+
+## end
+

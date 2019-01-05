@@ -46,6 +46,7 @@ use lib "$ENV{RTL_PROJ_BIN}/perllib";
 use ToolConfig;
 use Switch;
 use common::ace_lib_utils;
+my $debug = 0;
 
 @ISA = qw(Exporter);
 @EXPORT = qw(get_sip_rtl_libs get_all_sip_rtl_libs get_all_sip_verif_libs get_sip_verif_libs get_all_sip_rtl_vlogopts get_all_sip_verif_vlogopts get_all_sip_elab_opts get_func_simv_opts get_hip_liblist get_all_sip_rtl_synthopts get_top_vrf_vlogopts get_nlp_elab_opts get_nlp_sim_opts);
@@ -60,6 +61,7 @@ $COLLAGE_LIB = (&ToolConfig::get_facet("dut_type") eq "upf") ? "soc_collage_asse
 
 # for Cadance PCIe BFMs
 my $DENALI =  &ToolConfig::get_tool_path("denali");
+my $VIPCAT =  &ToolConfig::get_tool_path("vipcat");
 
 
 #################################################################
@@ -67,8 +69,8 @@ my $DENALI =  &ToolConfig::get_tool_path("denali");
 # <<< Hash table whose key defines a list of IP groups supported
 #################################################################
 my %sip_list = (
-    #'boot'       => ['amba','axi','apb','chi', 'igr'],
-    'boot'       => ['igr'],
+    'boot'       => ['imc'], #amba','axi','apb','chi', 'igr'],
+    'igr'        => ['igr'],
     'imc'        => ['imc'],
     'epc'        => ['epc'],
     'mpp'        => ['mpp'],
@@ -86,11 +88,11 @@ my %sip_list = (
 # HIP related lib should be move to HIP_RTL_LIBS (NON-SYNTH related)
 # SIP rtl lib should contain only synthesizable code (SYNTH related )
 my %sip_rtl_libs = (
-    'boot'               => ['clkstub_rtl_lib'],
-    'imc'                => [],
+    'boot'               => ['mby_parclk_rtl_lib'],
+    'imc'                => ['mby_imc_rtl_lib'],
 #    'epc'                => [],
-    'mpp'                => ['mby_tx_ppe_rtl_lib', 'mby_ppe_stm_rtl_lib', 'mby_igr_rtl_lib', 'mby_egr_rtl_lib', 'mby_mgp_rtl_lib', 'mby_rx_ppe_rtl_lib', 'mby_mpp_rtl_lib'],
-    'msh'                => ['mby_msh_rtl_lib',],
+    'mpp'                => ['mby_tx_ppe_rtl_lib', 'mby_ppe_stm_rx_rtl_lib', 'mby_ppe_stm_tx_rtl_lib', 'mby_igr_rtl_lib', 'mby_egr_rtl_lib', 'mby_mgp_rtl_lib', 'mby_rx_ppe_rtl_lib', 'mby_mpp_rtl_lib'],
+    'msh'                => ['mby_msh_rtl_lib', 'mby_msh_node_rtl_lib'],
     'gmm'                => ['mby_gms_rtl_lib', 'mby_gmn_rtl_lib'],
 
 );
@@ -206,7 +208,7 @@ sub gen_liblist {
 # <<< SIP VERIF LIBRARIES
 #############################################################
 my %sip_verif_libs = (
-    'boot'               => ["mby_ingress_ti_lib", "mby_ingress_env_lib", "mby_ec_top_env_lib", "mby_ec_top_ti_lib"
+    'boot'               => ["mby_ingress_ti_lib", "mby_ingress_env_lib", "mby_ec_env_lib", "mby_base_pkg_lib", "mby_tag_bfm_lib"
                              ],
 );
 
@@ -289,6 +291,7 @@ my %sip_elab_opts = (
                         "-CFLAGS \'-DDENALI_SV_VCS=1 -I../ -I/usr/local/include -I${DENALI} -I${DENALI}/ddvapi -O2 -c\'",
                         "-CFLAGS \'-DCDN_UVC_USING_INTELLIGEN -DDSN_USE_DYNAMIC_C_INTERFACE\'",
                         "-LDFLAGS \'-L ${DENALI}/lib -L ${DENALI}/verilog\'",  # gerards 
+                        "-LDFLAGS \'-Wl,-rpath=${VIPCAT}/tools.lnx86/lib/64bit -L ${VIPCAT}/tools.lnx86/lib/64bit\'",
                         "-LDFLAGS \'-rdynamic ${DENALI}/verilog/libcdnsv.so\'",
                         "-P ${DENALI}/verilog/cdnsv.tab",
                         "-LDFLAGS \'-rdynamic ${DENALI}/lib/libviputil.so\'",

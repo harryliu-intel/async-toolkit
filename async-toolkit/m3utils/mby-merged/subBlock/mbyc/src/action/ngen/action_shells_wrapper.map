@@ -1,0 +1,672 @@
+foreach $i (0..1) {
+    >> POL_CFG_$i$_CFG_reg_sel
+    >> POL_CFG_$i$_STATUS_reg_sel
+    >> pol_cfg_$i$_mem_ls_enter
+    >> pol_cfg_$i$_rd_adr
+    >> pol_cfg_$i$_rd_en
+    >> pol_cfg_$i$_wr_adr
+    >> pol_cfg_$i$_wr_data
+    >> pol_cfg_$i$_wr_en
+    >> pol_cfg_$i$_ecc_uncor_err
+    >> pol_cfg_$i$_init_done
+    >> pol_cfg_$i$_rd_data
+    >> pol_cfg_$i$_rd_valid
+}
+
+foreach $i (1..2) {
+    >> TRIG_ACTION_CFG_$i$_CFG_reg_sel
+    >> TRIG_ACTION_CFG_$i$_STATUS_reg_sel
+    >> trig_action_cfg_$i$_mem_ls_enter
+    >> trig_action_cfg_$i$_rd_adr
+    >> trig_action_cfg_$i$_rd_en
+    >> trig_action_cfg_$i$_wr_adr
+    >> trig_action_cfg_$i$_wr_data
+    >> trig_action_cfg_$i$_wr_en
+    >> trig_action_cfg_$i$_ecc_uncor_err
+    >> trig_action_cfg_$i$_init_done
+    >> trig_action_cfg_$i$_rd_data
+    >> trig_action_cfg_$i$_rd_valid
+
+    >> TRIG_CONDITION_AMASK$i$_CFG_reg_sel
+    >> TRIG_CONDITION_AMASK$i$_STATUS_reg_sel
+    >> trig_condition_amask$i$_mem_ls_enter
+    >> trig_condition_amask$i$_rd_adr
+    >> trig_condition_amask$i$_rd_en
+    >> trig_condition_amask$i$_wr_adr
+    >> trig_condition_amask$i$_wr_data
+    >> trig_condition_amask$i$_wr_en
+    >> trig_condition_amask$i$_ecc_uncor_err
+    >> trig_condition_amask$i$_init_done
+    >> trig_condition_amask$i$_rd_data
+    >> trig_condition_amask$i$_rd_valid
+}
+
+foreach $i (0..2) {
+    foreach $j (0..2) {
+        >> HASH_ENTROPY_HASH_CFG$j$_$i$_CFG_reg_sel
+        >> HASH_ENTROPY_HASH_CFG$j$_$i$_STATUS_reg_sel
+        >> hash_entropy_hash_cfg$j$_$i$_mem_ls_enter
+        >> hash_entropy_hash_cfg$j$_$i$_rd_adr
+        >> hash_entropy_hash_cfg$j$_$i$_rd_en
+        >> hash_entropy_hash_cfg$j$_$i$_wr_adr
+        >> hash_entropy_hash_cfg$j$_$i$_wr_data
+        >> hash_entropy_hash_cfg$j$_$i$_wr_en
+        >> hash_entropy_hash_cfg$j$_$i$_ecc_uncor_err
+        >> hash_entropy_hash_cfg$j$_$i$_init_done
+        >> hash_entropy_hash_cfg$j$_$i$_rd_data
+        >> hash_entropy_hash_cfg$j$_$i$_rd_valid
+    }
+}
+
+foreach $i (0..3) {
+    >> RX_STATS_BYTE_$i$_CFG_reg_sel
+    >> RX_STATS_BYTE_$i$_STATUS_reg_sel
+    >> rx_stats_byte_$i$_mem_ls_enter
+    >> rx_stats_byte_$i$_rd_adr
+    >> rx_stats_byte_$i$_rd_en
+    >> rx_stats_byte_$i$_wr_adr
+    >> rx_stats_byte_$i$_wr_data
+    >> rx_stats_byte_$i$_wr_en
+    >> rx_stats_byte_$i$_ecc_uncor_err
+    >> rx_stats_byte_$i$_init_done
+    >> rx_stats_byte_$i$_rd_data
+    >> rx_stats_byte_$i$_rd_valid
+
+    >> RX_STATS_PKT_$i$_CFG_reg_sel
+    >> RX_STATS_PKT_$i$_STATUS_reg_sel
+    >> rx_stats_pkt_$i$_mem_ls_enter
+    >> rx_stats_pkt_$i$_rd_adr
+    >> rx_stats_pkt_$i$_rd_en
+    >> rx_stats_pkt_$i$_wr_adr
+    >> rx_stats_pkt_$i$_wr_data
+    >> rx_stats_pkt_$i$_wr_en
+    >> rx_stats_pkt_$i$_ecc_uncor_err
+    >> rx_stats_pkt_$i$_init_done
+    >> rx_stats_pkt_$i$_rd_data
+    >> rx_stats_pkt_$i$_rd_valid
+}
+
+foreach $i (0..4) {
+    >> GM_EGRESS_MST_TABLE_$i$_CFG_reg_sel
+    >> GM_EGRESS_MST_TABLE_$i$_STATUS_reg_sel
+    >> gm_egress_mst_table_$i$_mem_ls_enter
+    >> gm_egress_mst_table_$i$_adr
+    >> gm_egress_mst_table_$i$_rd_en
+    >> gm_egress_mst_table_$i$_wr_data
+    >> gm_egress_mst_table_$i$_wr_en
+    >> gm_egress_mst_table_$i$_ecc_uncor_err
+    >> gm_egress_mst_table_$i$_init_done
+    >> gm_egress_mst_table_$i$_rd_data
+    >> gm_egress_mst_table_$i$_rd_valid
+
+    >> GM_EGRESS_VID_TABLE_$i$_CFG_reg_sel
+    >> GM_EGRESS_VID_TABLE_$i$_STATUS_reg_sel
+    >> gm_egress_vid_table_$i$_mem_ls_enter
+    >> gm_egress_vid_table_$i$_adr
+    >> gm_egress_vid_table_$i$_rd_en
+    >> gm_egress_vid_table_$i$_wr_data
+    >> gm_egress_vid_table_$i$_wr_en
+    >> gm_egress_vid_table_$i$_ecc_uncor_err
+    >> gm_egress_vid_table_$i$_init_done
+    >> gm_egress_vid_table_$i$_rd_data
+    >> gm_egress_vid_table_$i$_rd_valid
+
+    >> GM_GLORT_DEST_TABLE_$i$_CFG_reg_sel
+    >> GM_GLORT_DEST_TABLE_$i$_STATUS_reg_sel
+    >> gm_glort_dest_table_$i$_mem_ls_enter
+    >> gm_glort_dest_table_$i$_adr
+    >> gm_glort_dest_table_$i$_rd_en
+    >> gm_glort_dest_table_$i$_wr_data
+    >> gm_glort_dest_table_$i$_wr_en
+    >> gm_glort_dest_table_$i$_ecc_uncor_err
+    >> gm_glort_dest_table_$i$_init_done
+    >> gm_glort_dest_table_$i$_rd_data
+    >> gm_glort_dest_table_$i$_rd_valid
+
+    >> GM_GLORT_DIRECT_MAP_DST$i$_CFG_reg_sel
+    >> GM_GLORT_DIRECT_MAP_DST$i$_STATUS_reg_sel
+    >> gm_glort_direct_map_dst$i$_mem_ls_enter
+    >> gm_glort_direct_map_dst$i$_rd_adr
+    >> gm_glort_direct_map_dst$i$_rd_en
+    >> gm_glort_direct_map_dst$i$_wr_adr
+    >> gm_glort_direct_map_dst$i$_wr_data
+    >> gm_glort_direct_map_dst$i$_wr_en
+    >> gm_glort_direct_map_dst$i$_ecc_uncor_err
+    >> gm_glort_direct_map_dst$i$_init_done
+    >> gm_glort_direct_map_dst$i$_rd_data
+    >> gm_glort_direct_map_dst$i$_rd_valid
+
+    >> TRIG_ACTION_DMASK_$i$_CFG_reg_sel
+    >> TRIG_ACTION_DMASK_$i$_STATUS_reg_sel
+    >> trig_action_dmask_$i$_mem_ls_enter
+    >> trig_action_dmask_$i$_rd_adr
+    >> trig_action_dmask_$i$_rd_en
+    >> trig_action_dmask_$i$_wr_adr
+    >> trig_action_dmask_$i$_wr_data
+    >> trig_action_dmask_$i$_wr_en
+    >> trig_action_dmask_$i$_ecc_uncor_err
+    >> trig_action_dmask_$i$_init_done
+    >> trig_action_dmask_$i$_rd_data
+    >> trig_action_dmask_$i$_rd_valid
+
+    >> TRIG_ACTION_DROP_$i$_CFG_reg_sel
+    >> TRIG_ACTION_DROP_$i$_STATUS_reg_sel
+    >> trig_action_drop_$i$_mem_ls_enter
+    >> trig_action_drop_$i$_rd_adr
+    >> trig_action_drop_$i$_rd_en
+    >> trig_action_drop_$i$_wr_adr
+    >> trig_action_drop_$i$_wr_data
+    >> trig_action_drop_$i$_wr_en
+    >> trig_action_drop_$i$_ecc_uncor_err
+    >> trig_action_drop_$i$_init_done
+    >> trig_action_drop_$i$_rd_data
+    >> trig_action_drop_$i$_rd_valid
+
+    >> TRIG_CONDITION_TX_$i$_CFG_reg_sel
+    >> TRIG_CONDITION_TX_$i$_STATUS_reg_sel
+    >> trig_condition_tx_$i$_mem_ls_enter
+    >> trig_condition_tx_$i$_rd_adr
+    >> trig_condition_tx_$i$_rd_en
+    >> trig_condition_tx_$i$_wr_adr
+    >> trig_condition_tx_$i$_wr_data
+    >> trig_condition_tx_$i$_wr_en
+    >> trig_condition_tx_$i$_ecc_uncor_err
+    >> trig_condition_tx_$i$_init_done
+    >> trig_condition_tx_$i$_rd_data
+    >> trig_condition_tx_$i$_rd_valid
+
+    >> TRIG_RATE_LIM_CFG_2_$i$_CFG_reg_sel
+    >> TRIG_RATE_LIM_CFG_2_$i$_STATUS_reg_sel
+    >> trig_rate_lim_cfg_2_$i$_mem_ls_enter
+    >> trig_rate_lim_cfg_2_$i$_rd_adr
+    >> trig_rate_lim_cfg_2_$i$_rd_en
+    >> trig_rate_lim_cfg_2_$i$_wr_adr
+    >> trig_rate_lim_cfg_2_$i$_wr_data
+    >> trig_rate_lim_cfg_2_$i$_wr_en
+    >> trig_rate_lim_cfg_2_$i$_ecc_uncor_err
+    >> trig_rate_lim_cfg_2_$i$_init_done
+    >> trig_rate_lim_cfg_2_$i$_rd_data
+    >> trig_rate_lim_cfg_2_$i$_rd_valid
+}
+
+foreach $i (0..7) {
+    >> NH_WEIGHT_$i$_CFG_reg_sel
+    >> NH_WEIGHT_$i$_STATUS_reg_sel
+    >> nh_weight_$i$_mem_ls_enter
+    >> nh_weight_$i$_adr
+    >> nh_weight_$i$_rd_en
+    >> nh_weight_$i$_wr_data
+    >> nh_weight_$i$_wr_en
+    >> nh_weight_$i$_ecc_uncor_err
+    >> nh_weight_$i$_init_done
+    >> nh_weight_$i$_rd_data
+    >> nh_weight_$i$_rd_valid
+}
+
+foreach $i (0..15) {
+    >> CM_MISC_$i$_CFG_reg_sel
+    >> CM_MISC_$i$_STATUS_reg_sel
+    >> cm_misc_$i$_mem_ls_enter
+    >> cm_misc_$i$_rd_adr
+    >> cm_misc_$i$_rd_en
+    >> cm_misc_$i$_wr_adr
+    >> cm_misc_$i$_wr_data
+    >> cm_misc_$i$_wr_en
+    >> cm_misc_$i$_ecc_uncor_err
+    >> cm_misc_$i$_init_done
+    >> cm_misc_$i$_rd_data
+    >> cm_misc_$i$_rd_valid
+
+    >> POL_DSCP_$i$_CFG_reg_sel
+    >> POL_DSCP_$i$_STATUS_reg_sel
+    >> pol_dscp_$i$_mem_ls_enter
+    >> pol_dscp_$i$_rd_adr
+    >> pol_dscp_$i$_rd_en
+    >> pol_dscp_$i$_wr_adr
+    >> pol_dscp_$i$_wr_data
+    >> pol_dscp_$i$_wr_en
+    >> pol_dscp_$i$_ecc_uncor_err
+    >> pol_dscp_$i$_init_done
+    >> pol_dscp_$i$_rd_data
+    >> pol_dscp_$i$_rd_valid
+
+    >> POL_EXP_$i$_CFG_reg_sel
+    >> POL_EXP_$i$_STATUS_reg_sel
+    >> pol_exp_$i$_mem_ls_enter
+    >> pol_exp_$i$_rd_adr
+    >> pol_exp_$i$_rd_en
+    >> pol_exp_$i$_wr_adr
+    >> pol_exp_$i$_wr_data
+    >> pol_exp_$i$_wr_en
+    >> pol_exp_$i$_ecc_uncor_err
+    >> pol_exp_$i$_init_done
+    >> pol_exp_$i$_rd_data
+    >> pol_exp_$i$_rd_valid
+
+    >> POL_VPRI_$i$_CFG_reg_sel
+    >> POL_VPRI_$i$_STATUS_reg_sel
+    >> pol_vpri_$i$_mem_ls_enter
+    >> pol_vpri_$i$_rd_adr
+    >> pol_vpri_$i$_rd_en
+    >> pol_vpri_$i$_wr_adr
+    >> pol_vpri_$i$_wr_data
+    >> pol_vpri_$i$_wr_en
+    >> pol_vpri_$i$_ecc_uncor_err
+    >> pol_vpri_$i$_init_done
+    >> pol_vpri_$i$_rd_data
+    >> pol_vpri_$i$_rd_valid
+}
+
+    >> GM_EGRESS_VID_CFG_CFG_reg_sel
+    >> GM_EGRESS_VID_CFG_STATUS_reg_sel
+    >> gm_egress_vid_cfg_mem_ls_enter
+    >> gm_egress_vid_cfg_adr
+    >> gm_egress_vid_cfg_rd_en
+    >> gm_egress_vid_cfg_wr_data
+    >> gm_egress_vid_cfg_wr_en
+    >> gm_egress_vid_cfg_ecc_uncor_err
+    >> gm_egress_vid_cfg_init_done
+    >> gm_egress_vid_cfg_rd_data
+    >> gm_egress_vid_cfg_rd_valid
+
+    >> GM_GLORT_DIRECT_MAP_CTRL_CFG_reg_sel
+    >> GM_GLORT_DIRECT_MAP_CTRL_STATUS_reg_sel
+    >> gm_glort_direct_map_ctrl_mem_ls_enter
+    >> gm_glort_direct_map_ctrl_rd_adr
+    >> gm_glort_direct_map_ctrl_rd_en
+    >> gm_glort_direct_map_ctrl_wr_adr
+    >> gm_glort_direct_map_ctrl_wr_data
+    >> gm_glort_direct_map_ctrl_wr_en
+    >> gm_glort_direct_map_ctrl_ecc_uncor_err
+    >> gm_glort_direct_map_ctrl_init_done
+    >> gm_glort_direct_map_ctrl_rd_data
+    >> gm_glort_direct_map_ctrl_rd_valid
+
+    >> GM_GLORT_RAM_CFG_reg_sel
+    >> GM_GLORT_RAM_STATUS_reg_sel
+    >> gm_glort_ram_mem_ls_enter
+    >> gm_glort_ram_adr
+    >> gm_glort_ram_rd_en
+    >> gm_glort_ram_wr_data
+    >> gm_glort_ram_wr_en
+    >> gm_glort_ram_ecc_uncor_err
+    >> gm_glort_ram_init_done
+    >> gm_glort_ram_rd_data
+    >> gm_glort_ram_rd_valid
+
+    >> GM_INGRESS_MST_TABLE_CFG_reg_sel
+    >> GM_INGRESS_MST_TABLE_STATUS_reg_sel
+    >> gm_ingress_mst_table_mem_ls_enter
+    >> gm_ingress_mst_table_adr
+    >> gm_ingress_mst_table_rd_en
+    >> gm_ingress_mst_table_wr_data
+    >> gm_ingress_mst_table_wr_en
+    >> gm_ingress_mst_table_ecc_uncor_err
+    >> gm_ingress_mst_table_init_done
+    >> gm_ingress_mst_table_rd_data
+    >> gm_ingress_mst_table_rd_valid
+
+    >> NH_CONFIG_CFG_reg_sel
+    >> NH_CONFIG_STATUS_reg_sel
+    >> nh_config_mem_ls_enter
+    >> nh_config_rd_adr
+    >> nh_config_rd_en
+    >> nh_config_wr_adr
+    >> nh_config_wr_data
+    >> nh_config_wr_en
+    >> nh_config_ecc_uncor_err
+    >> nh_config_init_done
+    >> nh_config_rd_data
+    >> nh_config_rd_valid
+
+    >> NH_FWD_HASHING_CFG_CFG_reg_sel
+    >> NH_FWD_HASHING_CFG_STATUS_reg_sel
+    >> nh_fwd_hashing_cfg_mem_ls_enter
+    >> nh_fwd_hashing_cfg_rd_adr
+    >> nh_fwd_hashing_cfg_rd_en
+    >> nh_fwd_hashing_cfg_wr_adr
+    >> nh_fwd_hashing_cfg_wr_data
+    >> nh_fwd_hashing_cfg_wr_en
+    >> nh_fwd_hashing_cfg_ecc_uncor_err
+    >> nh_fwd_hashing_cfg_init_done
+    >> nh_fwd_hashing_cfg_rd_data
+    >> nh_fwd_hashing_cfg_rd_valid
+
+    >> NH_MTU_TABLE_CFG_reg_sel
+    >> NH_MTU_TABLE_STATUS_reg_sel
+    >> nh_mtu_table_mem_ls_enter
+    >> nh_mtu_table_rd_adr
+    >> nh_mtu_table_rd_en
+    >> nh_mtu_table_wr_adr
+    >> nh_mtu_table_wr_data
+    >> nh_mtu_table_wr_en
+    >> nh_mtu_table_ecc_uncor_err
+    >> nh_mtu_table_init_done
+    >> nh_mtu_table_rd_data
+    >> nh_mtu_table_rd_valid
+
+    >> NH_STATUS_CFG_reg_sel
+    >> NH_STATUS_STATUS_reg_sel
+    >> nh_status_mem_ls_enter
+    >> nh_status_rd_adr
+    >> nh_status_rd_en
+    >> nh_status_wr_adr
+    >> nh_status_wr_data
+    >> nh_status_wr_en
+    >> nh_status_ecc_uncor_err
+    >> nh_status_init_done
+    >> nh_status_rd_data
+    >> nh_status_rd_valid
+
+    >> TRIG_ACTION_GLORT_CFG_reg_sel
+    >> TRIG_ACTION_GLORT_STATUS_reg_sel
+    >> trig_action_glort_mem_ls_enter
+    >> trig_action_glort_rd_adr
+    >> trig_action_glort_rd_en
+    >> trig_action_glort_wr_adr
+    >> trig_action_glort_wr_data
+    >> trig_action_glort_wr_en
+    >> trig_action_glort_ecc_uncor_err
+    >> trig_action_glort_init_done
+    >> trig_action_glort_rd_data
+    >> trig_action_glort_rd_valid
+
+    >> TRIG_ACTION_MIRROR_CFG_reg_sel
+    >> TRIG_ACTION_MIRROR_STATUS_reg_sel
+    >> trig_action_mirror_mem_ls_enter
+    >> trig_action_mirror_rd_adr
+    >> trig_action_mirror_rd_en
+    >> trig_action_mirror_wr_adr
+    >> trig_action_mirror_wr_data
+    >> trig_action_mirror_wr_en
+    >> trig_action_mirror_ecc_uncor_err
+    >> trig_action_mirror_init_done
+    >> trig_action_mirror_rd_data
+    >> trig_action_mirror_rd_valid
+
+    >> TRIG_CONDITION_CFG_CFG_reg_sel
+    >> TRIG_CONDITION_CFG_STATUS_reg_sel
+    >> trig_condition_cfg_mem_ls_enter
+    >> trig_condition_cfg_rd_adr
+    >> trig_condition_cfg_rd_en
+    >> trig_condition_cfg_wr_adr
+    >> trig_condition_cfg_wr_data
+    >> trig_condition_cfg_wr_en
+    >> trig_condition_cfg_ecc_uncor_err
+    >> trig_condition_cfg_init_done
+    >> trig_condition_cfg_rd_data
+    >> trig_condition_cfg_rd_valid
+
+    >> TRIG_CONDITION_FFU_CFG_reg_sel
+    >> TRIG_CONDITION_FFU_STATUS_reg_sel
+    >> trig_condition_ffu_mem_ls_enter
+    >> trig_condition_ffu_rd_adr
+    >> trig_condition_ffu_rd_en
+    >> trig_condition_ffu_wr_adr
+    >> trig_condition_ffu_wr_data
+    >> trig_condition_ffu_wr_en
+    >> trig_condition_ffu_ecc_uncor_err
+    >> trig_condition_ffu_init_done
+    >> trig_condition_ffu_rd_data
+    >> trig_condition_ffu_rd_valid
+
+    >> TRIG_CONDITION_GLORT_CFG_reg_sel
+    >> TRIG_CONDITION_GLORT_STATUS_reg_sel
+    >> trig_condition_glort_mem_ls_enter
+    >> trig_condition_glort_rd_adr
+    >> trig_condition_glort_rd_en
+    >> trig_condition_glort_wr_adr
+    >> trig_condition_glort_wr_data
+    >> trig_condition_glort_wr_en
+    >> trig_condition_glort_ecc_uncor_err
+    >> trig_condition_glort_init_done
+    >> trig_condition_glort_rd_data
+    >> trig_condition_glort_rd_valid
+
+    >> TRIG_CONDITION_PARAM_CFG_reg_sel
+    >> TRIG_CONDITION_PARAM_STATUS_reg_sel
+    >> trig_condition_param_mem_ls_enter
+    >> trig_condition_param_rd_adr
+    >> trig_condition_param_rd_en
+    >> trig_condition_param_wr_adr
+    >> trig_condition_param_wr_data
+    >> trig_condition_param_wr_en
+    >> trig_condition_param_ecc_uncor_err
+    >> trig_condition_param_init_done
+    >> trig_condition_param_rd_data
+    >> trig_condition_param_rd_valid
+
+    >> TRIG_CONDITION_RX_CFG_reg_sel
+    >> TRIG_CONDITION_RX_STATUS_reg_sel
+    >> trig_condition_rx_mem_ls_enter
+    >> trig_condition_rx_rd_adr
+    >> trig_condition_rx_rd_en
+    >> trig_condition_rx_wr_adr
+    >> trig_condition_rx_wr_data
+    >> trig_condition_rx_wr_en
+    >> trig_condition_rx_ecc_uncor_err
+    >> trig_condition_rx_init_done
+    >> trig_condition_rx_rd_data
+    >> trig_condition_rx_rd_valid
+
+    >> TRIG_CONDITION_TYPE_CFG_reg_sel
+    >> TRIG_CONDITION_TYPE_STATUS_reg_sel
+    >> trig_condition_type_mem_ls_enter
+    >> trig_condition_type_rd_adr
+    >> trig_condition_type_rd_en
+    >> trig_condition_type_wr_adr
+    >> trig_condition_type_wr_data
+    >> trig_condition_type_wr_en
+    >> trig_condition_type_ecc_uncor_err
+    >> trig_condition_type_init_done
+    >> trig_condition_type_rd_data
+    >> trig_condition_type_rd_valid
+
+    >> TRIG_IM_CFG_reg_sel
+    >> TRIG_IM_STATUS_reg_sel
+    >> trig_im_mem_ls_enter
+    >> trig_im_rd_adr
+    >> trig_im_rd_en
+    >> trig_im_wr_adr
+    >> trig_im_wr_data
+    >> trig_im_wr_en
+    >> trig_im_ecc_uncor_err
+    >> trig_im_init_done
+    >> trig_im_rd_data
+    >> trig_im_rd_valid
+
+    >> TRIG_IP_CFG_reg_sel
+    >> TRIG_IP_STATUS_reg_sel
+    >> trig_ip_mem_ls_enter
+    >> trig_ip_rd_adr
+    >> trig_ip_rd_en
+    >> trig_ip_wr_adr
+    >> trig_ip_wr_data
+    >> trig_ip_wr_en
+    >> trig_ip_ecc_uncor_err
+    >> trig_ip_init_done
+    >> trig_ip_rd_data
+    >> trig_ip_rd_valid
+
+    >> TRIG_RATE_LIM_CFG_1_CFG_reg_sel
+    >> TRIG_RATE_LIM_CFG_1_STATUS_reg_sel
+    >> trig_rate_lim_cfg_1_mem_ls_enter
+    >> trig_rate_lim_cfg_1_rd_adr
+    >> trig_rate_lim_cfg_1_rd_en
+    >> trig_rate_lim_cfg_1_wr_adr
+    >> trig_rate_lim_cfg_1_wr_data
+    >> trig_rate_lim_cfg_1_wr_en
+    >> trig_rate_lim_cfg_1_ecc_uncor_err
+    >> trig_rate_lim_cfg_1_init_done
+    >> trig_rate_lim_cfg_1_rd_data
+    >> trig_rate_lim_cfg_1_rd_valid
+
+    >> TRIG_RATE_LIM_EMPTY_CFG_reg_sel
+    >> TRIG_RATE_LIM_EMPTY_STATUS_reg_sel
+    >> trig_rate_lim_empty_mem_ls_enter
+    >> trig_rate_lim_empty_rd_adr
+    >> trig_rate_lim_empty_rd_en
+    >> trig_rate_lim_empty_wr_adr
+    >> trig_rate_lim_empty_wr_data
+    >> trig_rate_lim_empty_wr_en
+    >> trig_rate_lim_empty_ecc_uncor_err
+    >> trig_rate_lim_empty_init_done
+    >> trig_rate_lim_empty_rd_data
+    >> trig_rate_lim_empty_rd_valid
+
+    >> TRIG_RATE_LIM_USAGE_CFG_reg_sel
+    >> TRIG_RATE_LIM_USAGE_STATUS_reg_sel
+    >> trig_rate_lim_usage_mem_ls_enter
+    >> trig_rate_lim_usage_rd_adr
+    >> trig_rate_lim_usage_rd_en
+    >> trig_rate_lim_usage_wr_adr
+    >> trig_rate_lim_usage_wr_data
+    >> trig_rate_lim_usage_wr_en
+    >> trig_rate_lim_usage_ecc_uncor_err
+    >> trig_rate_lim_usage_init_done
+    >> trig_rate_lim_usage_rd_data
+    >> trig_rate_lim_usage_rd_valid
+
+    >> TRIG_STATS_CFG_reg_sel
+    >> TRIG_STATS_STATUS_reg_sel
+    >> trig_stats_mem_ls_enter
+    >> trig_stats_rd_adr
+    >> trig_stats_rd_en
+    >> trig_stats_wr_adr
+    >> trig_stats_wr_data
+    >> trig_stats_wr_en
+    >> trig_stats_ecc_uncor_err
+    >> trig_stats_init_done
+    >> trig_stats_rd_data
+    >> trig_stats_rd_valid
+
+    >> NH_FLOOD_GLORT_TABLE_CFG_reg_sel
+    >> NH_FLOOD_GLORT_TABLE_STATUS_reg_sel
+    >> nh_flood_glort_table_mem_ls_enter
+    >> nh_flood_glort_table_adr
+    >> nh_flood_glort_table_rd_en
+    >> nh_flood_glort_table_wr_data
+    >> nh_flood_glort_table_wr_en
+    >> nh_flood_glort_table_ecc_uncor_err
+    >> nh_flood_glort_table_init_done
+    >> nh_flood_glort_table_rd_data
+    >> nh_flood_glort_table_rd_valid
+
+    >> NH_USED_CFG_reg_sel
+    >> NH_USED_STATUS_reg_sel
+    >> nh_used_mem_ls_enter
+    >> nh_used_adr
+    >> nh_used_rd_en
+    >> nh_used_wr_data
+    >> nh_used_wr_en
+    >> nh_used_ecc_uncor_err
+    >> nh_used_init_done
+    >> nh_used_rd_data
+    >> nh_used_rd_valid
+
+    >> NH_NEIGHBORS_CFG_reg_sel
+    >> NH_NEIGHBORS_STATUS_reg_sel
+    >> nh_neighbors_mem_ls_enter
+    >> nh_neighbors_adr
+    >> nh_neighbors_rd_en
+    >> nh_neighbors_wr_data
+    >> nh_neighbors_wr_en
+    >> nh_neighbors_ecc_uncor_err
+    >> nh_neighbors_init_done
+    >> nh_neighbors_rd_data
+    >> nh_neighbors_rd_valid
+
+    >> NH_PATH_CTRS_CFG_reg_sel
+    >> NH_PATH_CTRS_STATUS_reg_sel
+    >> nh_path_ctrs_mem_ls_enter
+    >> nh_path_ctrs_adr
+    >> nh_path_ctrs_rd_en
+    >> nh_path_ctrs_wr_data
+    >> nh_path_ctrs_wr_en
+    >> nh_path_ctrs_ecc_uncor_err
+    >> nh_path_ctrs_init_done
+    >> nh_path_ctrs_rd_data
+    >> nh_path_ctrs_rd_valid
+
+    >> NH_ROUTES_CFG_reg_sel
+    >> NH_ROUTES_STATUS_reg_sel
+    >> nh_routes_mem_ls_enter
+    >> nh_routes_adr
+    >> nh_routes_rd_en
+    >> nh_routes_wr_data
+    >> nh_routes_wr_en
+    >> nh_routes_ecc_uncor_err
+    >> nh_routes_init_done
+    >> nh_routes_rd_data
+    >> nh_routes_rd_valid
+
+    >> NH_GROUP_MIN_CFG_reg_sel
+    >> NH_GROUP_MIN_STATUS_reg_sel
+    >> nh_group_min_mem_ls_enter
+    >> nh_group_min_adr
+    >> nh_group_min_rd_en
+    >> nh_group_min_wr_data
+    >> nh_group_min_wr_en
+    >> nh_group_min_ecc_uncor_err
+    >> nh_group_min_init_done
+    >> nh_group_min_rd_data
+    >> nh_group_min_rd_valid
+
+    >> NH_GROUPS_CFG_reg_sel
+    >> NH_GROUPS_STATUS_reg_sel
+    >> nh_groups_mem_ls_enter
+    >> nh_groups_adr
+    >> nh_groups_rd_en
+    >> nh_groups_wr_data
+    >> nh_groups_wr_en
+    >> nh_groups_ecc_uncor_err
+    >> nh_groups_init_done
+    >> nh_groups_rd_data
+    >> nh_groups_rd_valid
+
+    >> NH_INGRESS_VID_TABLE_CFG_reg_sel
+    >> NH_INGRESS_VID_TABLE_STATUS_reg_sel
+    >> nh_ingress_vid_table_mem_ls_enter
+    >> nh_ingress_vid_table_adr
+    >> nh_ingress_vid_table_rd_en
+    >> nh_ingress_vid_table_wr_data
+    >> nh_ingress_vid_table_wr_en
+    >> nh_ingress_vid_table_ecc_uncor_err
+    >> nh_ingress_vid_table_init_done
+    >> nh_ingress_vid_table_rd_data
+    >> nh_ingress_vid_table_rd_valid
+
+    >> ACTION_ECC_COR_ERR_reg_sel
+    >> ACTION_ECC_UNCOR_ERR_reg_sel
+    >> unified_regs_rd
+    >> unified_regs_wr_data
+    >> action_ecc_int
+    >> action_init_done
+    >> unified_regs_ack
+    >> unified_regs_rd_data
+
+    >> GM_GLORT_CAM_CFG_reg_sel
+    >> GM_GLORT_CAM_STATUS_reg_sel
+    >> gm_glort_cam_adr
+    >> gm_glort_cam_chk_en
+    >> gm_glort_cam_chk_for_err_trig
+    >> gm_glort_cam_chk_key
+    >> gm_glort_cam_chk_mask
+    >> gm_glort_cam_raw_hit_in
+    >> gm_glort_cam_rd_en
+    >> gm_glort_cam_slice_en
+    >> gm_glort_cam_wr_data
+    >> gm_glort_cam_wr_en
+    >> gm_glort_cam_ecc_uncor_err
+    >> gm_glort_cam_init_done
+    >> gm_glort_cam_raw_hit_out
+    >> gm_glort_cam_rd_data
+    >> gm_glort_cam_rule_hit_num
+    >> gm_glort_cam_rule_hit_num_vld
+    >> gm_glort_cam_tcam_chk_rdy
+    >> gm_glort_cam_tcam_chk_valid
+    >> gm_glort_cam_tcam_rd_valid
+    >> gm_glort_cam_tcam_rdwr_rdy
+
+cclk    >> clk
+reset_n >> reset_n

@@ -20,6 +20,9 @@ build/
 # VS Code settings files
 .vscode/*
 
+# Gerrit command-line tool
+.gitreview
+
 # BMAN generated files
 target
 results
@@ -171,3 +174,7 @@ subIP/
 
 # RALF typically generated from RDL or Nebulon output
 *.ralf
+
+# removing Natural docs Menu files
+subBlock/mbyc/verif/doc/Menu.txt
+subBlock/mbyc/verif/doc/Menu_Backup.txt

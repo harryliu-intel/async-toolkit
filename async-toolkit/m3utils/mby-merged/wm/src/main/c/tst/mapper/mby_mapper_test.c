@@ -84,29 +84,29 @@ static void load_pa_keys(const mapper_test_packet_data* packet_data, mbyParserTo
 
 static int check_against_keys(const mapper_test_packet_data* packet_data, const mbyMapperToClassifier* mapper_to_classifier)
 {
-    if (mapper_to_classifier->FFU_KEYS.key32[0] != packet_data->src_ip)
+    if (mapper_to_classifier->CLASSIFIER_KEYS.key32[0] != packet_data->src_ip)
             printf("fail @ src IP -> key32[0]\n");
 
-    if (mapper_to_classifier->FFU_KEYS.key32[1] != packet_data->dst_ip)
+    if (mapper_to_classifier->CLASSIFIER_KEYS.key32[1] != packet_data->dst_ip)
             printf("fail @ dst IP -> key32[1]\n");
 
-    if (mapper_to_classifier->FFU_KEYS.key16[6] != ((packet_data->dst_mac >> 32) & 0xFFFF))
+    if (mapper_to_classifier->CLASSIFIER_KEYS.key16[6] != ((packet_data->dst_mac >> 32) & 0xFFFF))
                     printf("fail @ dmac#0 -> key16[6]\n");
-    if (mapper_to_classifier->FFU_KEYS.key16[7] != ((packet_data->dst_mac >> 32) & 0xFFFF))
+    if (mapper_to_classifier->CLASSIFIER_KEYS.key16[7] != ((packet_data->dst_mac >> 32) & 0xFFFF))
                     printf("fail @ dmac#1 -> key16[7]\n");
-    if (mapper_to_classifier->FFU_KEYS.key16[8] != (packet_data->dst_mac & 0xFFFF))
+    if (mapper_to_classifier->CLASSIFIER_KEYS.key16[8] != (packet_data->dst_mac & 0xFFFF))
                     printf("fail @ dmac#2 -> key16[8]\n");
 
-    if (mapper_to_classifier->FFU_KEYS.key16[9] != ((packet_data->src_mac >> 32) & 0xFFFF))
+    if (mapper_to_classifier->CLASSIFIER_KEYS.key16[9] != ((packet_data->src_mac >> 32) & 0xFFFF))
             printf("fail @ smac#0 -> key16[9]\n");
-    if (mapper_to_classifier->FFU_KEYS.key16[10] != ((packet_data->src_mac >> 16) & 0xFFFF))
+    if (mapper_to_classifier->CLASSIFIER_KEYS.key16[10] != ((packet_data->src_mac >> 16) & 0xFFFF))
             printf("fail @ smac#1 -> key16[10]\n");
-    if (mapper_to_classifier->FFU_KEYS.key16[11] != (packet_data->src_mac & 0xFFFF))
+    if (mapper_to_classifier->CLASSIFIER_KEYS.key16[11] != (packet_data->src_mac & 0xFFFF))
             printf("fail @ smac#2 -> key16[11]\n");
 
-    if (mapper_to_classifier->FFU_KEYS.key16[16] != packet_data->src_tcpudp_port)
+    if (mapper_to_classifier->CLASSIFIER_KEYS.key16[16] != packet_data->src_tcpudp_port)
             printf("fail @ L4SRC -> key16[16]\n");
-    if (mapper_to_classifier->FFU_KEYS.key16[17] != packet_data->dst_tcpudp_port)
+    if (mapper_to_classifier->CLASSIFIER_KEYS.key16[17] != packet_data->dst_tcpudp_port)
             printf("fail @ L4DST -> key16[17]\n");
 
     return 1; // FIXME return error on err msg
@@ -165,6 +165,27 @@ void fail(const char* name)
 #define SIMPLE_TCP_TEST(name, fails) {if (run_on_simple_tcp(simple_tcp_ ## name ## _test_setup, \
                 simple_tcp_ ## name ## _test_check)) pass(#name); else {++fails; fail(#name);} }
 
+static void set_map_domain_tcam_defaults
+(
+    mby_ppe_mapper_map * const mapper_map
+)
+{
+    for (fm_int i = 0 ; i < mby_ppe_mapper_map_MAP_DOMAIN_TCAM__nd; i++)
+    {
+        map_domain_tcam_r * const map_domain_tcam = &(mapper_map->MAP_DOMAIN_TCAM[i]);
+
+        map_domain_tcam->PORT_KEY_INVERT   = 0x3ffff;
+        map_domain_tcam->VID2_VALID_INVERT = 1;;
+        map_domain_tcam->VID2_KEY_INVERT   = 0xfff;
+        map_domain_tcam->VID1_VALID_INVERT = 1;
+        map_domain_tcam->VID1_KEY_INVERT   = 0xfff;
+        map_domain_tcam->PORT_KEY          = 0x3ffff;
+        map_domain_tcam->VID2_VALID        = 1;
+        map_domain_tcam->VID2_KEY          = 0xfff;
+        map_domain_tcam->VID1_VALID        = 1;
+        map_domain_tcam->VID1_KEY          = 0xfff;
+    }
+}
 static void simple_tcp_basic_test_setup
 (
     mby_ppe_mapper_map * const mapper_map,
@@ -185,6 +206,7 @@ static void simple_tcp_act24_default_test_setup
     mbyParserToMapper* inout
 )
 {
+
     //act24[0]
     // lower
     map_port_default_r * port_def = &(mapper_map->MAP_PORT_DEFAULT[0][0]);
@@ -198,7 +220,7 @@ static void simple_tcp_act24_default_test_setup
 
 static int simple_tcp_act24_default_test_check(const mbyMapperToClassifier* in)
 {
-    MAPPER_TEST_ASSERT(in->FFU_ACTIONS.act24[0].val == 0Xffabcd, "act24[0]");
+    MAPPER_TEST_ASSERT(in->CLASSIFIER_ACTIONS.act24[0].val == 0Xffabcd, "act24[0]");
 
     return 1;
 }
@@ -216,15 +238,56 @@ static void simple_tcp_act4_default_test_setup
 
 static int simple_tcp_act4_default_test_check(const mbyMapperToClassifier* in)
 {
-    MAPPER_TEST_ASSERT(in->FFU_ACTIONS.act4[0].val == 0Xb, "act4[0]");
+    MAPPER_TEST_ASSERT(in->CLASSIFIER_ACTIONS.act4[0].val == 0Xb, "act4[0]");
 
     return 1;
 }
 
+static void simple_tcp_act4_double_default_test_setup
+(
+    mby_ppe_mapper_map * const mapper_map,
+    mbyParserToMapper * inout
+)
+{
+    map_port_default_r * port_def = &(mapper_map->MAP_PORT_DEFAULT[0][0]);
+    port_def->TARGET              = 160;
+    port_def->VALUE               = 0xfe;
+}
+
+static int simple_tcp_act4_double_default_test_check(const mbyMapperToClassifier * in)
+{
+    MAPPER_TEST_ASSERT(in->CLASSIFIER_ACTIONS.act4[0].val == 0xe, "act4[0]");
+    MAPPER_TEST_ASSERT(in->CLASSIFIER_ACTIONS.act4[1].val == 0xf, "act4[1]");
+
+    return 1;
+}
+
+static void simple_tcp_act4_quad_default_test_setup
+(
+    mby_ppe_mapper_map * const mapper_map,
+    mbyParserToMapper * inout
+)
+{
+    map_port_default_r * port_def = &(mapper_map->MAP_PORT_DEFAULT[0][0]);
+    port_def->TARGET              = 129;
+    port_def->VALUE               = 0xabcd;
+}
+
+static int simple_tcp_act4_quad_default_test_check(const mbyMapperToClassifier * in)
+{
+    MAPPER_TEST_ASSERT(in->CLASSIFIER_ACTIONS.act4[1].val == 0xd, "act4[1]");
+    MAPPER_TEST_ASSERT(in->CLASSIFIER_ACTIONS.act4[2].val == 0xc, "act4[2]");
+    MAPPER_TEST_ASSERT(in->CLASSIFIER_ACTIONS.act4[3].val == 0xb, "act4[3]");
+    MAPPER_TEST_ASSERT(in->CLASSIFIER_ACTIONS.act4[4].val == 0xa, "act4[4]");
+
+    return 1;
+}
+
+
 static void simple_tcp_default0_test_setup
 (
     mby_ppe_mapper_map * const mapper_map,
-    mbyParserToMapper* inout
+    mbyParserToMapper * inout
 )
 {
     map_port_default_r * port_def = &(mapper_map->MAP_PORT_DEFAULT[0][0]);
@@ -234,7 +297,7 @@ static void simple_tcp_default0_test_setup
 
 static int simple_tcp_default0_test_check(const mbyMapperToClassifier* in)
 {
-    MAPPER_TEST_ASSERT(in->FFU_KEYS.key16[3] == 0xBA, "key16[3]");
+    MAPPER_TEST_ASSERT(in->CLASSIFIER_KEYS.key16[3] == 0xBA, "key16[3]");
 
     return 1;
 }
@@ -256,7 +319,7 @@ static void simple_tcp_RE_KEYS_OUTER_VLAN1_test_setup
 
 static int simple_tcp_RE_KEYS_OUTER_VLAN1_test_check(const mbyMapperToClassifier* in)
 {
-    MAPPER_TEST_ASSERT(in->FFU_KEYS.key16[MBY_RE_KEYS_OUTER_VLAN1] == 0xFEF, "key16[MBY_RE_KEYS_OUTER_VLAN1]");
+    MAPPER_TEST_ASSERT(in->CLASSIFIER_KEYS.key16[MBY_RE_KEYS_OUTER_VLAN1] == 0xFEF, "key16[MBY_RE_KEYS_OUTER_VLAN1]");
 
     return 1;
 }
@@ -274,7 +337,7 @@ static void simple_tcp_default_forced_test_setup
 
 static int simple_tcp_default_forced_test_check(const mbyMapperToClassifier* in)
 {
-    MAPPER_TEST_ASSERT(in->FFU_KEYS.key16[12] == 0xdede, "key16[12]");
+    MAPPER_TEST_ASSERT(in->CLASSIFIER_KEYS.key16[12] == 0xdede, "key16[12]");
 
     return 1;
 }
@@ -318,9 +381,9 @@ static void simple_tcp_map_smac_test_setup
 
 static int simple_tcp_map_smac_test_check(const mbyMapperToClassifier* in)
 {
-    MAPPER_TEST_ASSERT(in->FFU_SCENARIO       == 0x3,  "FFU_SCENARIO");
-    MAPPER_TEST_ASSERT(in->IP_OPTION[0]       == TRUE, "IP_OPTION[0]");
-    MAPPER_TEST_ASSERT(in->FFU_KEYS.key16[13] == 0x7e, "key16[13]");
+    MAPPER_TEST_ASSERT(in->PACKET_PROFILE            == 0x3,  "PACKET_PROFILE");
+    MAPPER_TEST_ASSERT(in->IP_OPTION[0]              == TRUE, "IP_OPTION[0]");
+    MAPPER_TEST_ASSERT(in->CLASSIFIER_KEYS.key16[13] == 0x7e, "key16[13]");
 
     return 1;
 }
@@ -345,7 +408,7 @@ static void simple_tcp_map_prot_test_setup
 
 static int simple_tcp_map_prot_test_check(const mbyMapperToClassifier* in)
 {
-    MAPPER_TEST_ASSERT(in->FFU_KEYS.key16[13] == 0x5, "key16[13]");
+    MAPPER_TEST_ASSERT(in->CLASSIFIER_KEYS.key16[13] == 0x5, "key16[13]");
 
     return 1;
 }
@@ -376,7 +439,7 @@ static void simple_tcp_map_l4dst_test_setup
 
 static int simple_tcp_map_l4dst_test_check(const mbyMapperToClassifier* in)
 {
-    MAPPER_TEST_ASSERT(in->FFU_KEYS.key16[13] == 0x1234, "key16[13]");
+    MAPPER_TEST_ASSERT(in->CLASSIFIER_KEYS.key16[13] == 0x1234, "key16[13]");
 
     return 1;
 }
@@ -408,6 +471,8 @@ static void simple_tcp_NO_PRI_ENC_test_setup
     mbyParserToMapper* inout
 )
 {
+    set_map_domain_tcam_defaults(mapper_map);
+
     map_domain_action0_r * domain_act0 = &(mapper_map->MAP_DOMAIN_ACTION0[0]);
     domain_act0->DEFAULT_PRI           = 0x1;
     domain_act0->PRI_SOURCE            = (TC_SOURCE_DSCP << 6);
@@ -426,6 +491,8 @@ static void simple_tcp_LEARN_MODE_test_setup
     mbyParserToMapper* inout
 )
 {
+    set_map_domain_tcam_defaults(mapper_map);
+
     map_domain_action0_r * domain_act0 = &(mapper_map->MAP_DOMAIN_ACTION0[0]);
     domain_act0->LEARN_MODE            = TRUE;
 }
@@ -443,6 +510,8 @@ static void simple_tcp_VLAN_COUNTER_test_setup
     mbyParserToMapper* inout
 )
 {
+    set_map_domain_tcam_defaults(mapper_map);
+
     map_domain_action1_r * domain_act1 = &(mapper_map->MAP_DOMAIN_ACTION1[0]);
     domain_act1->VLAN_COUNTER          = 0x805;
 }
@@ -464,6 +533,8 @@ int main()
     SIMPLE_TCP_TEST(basic,               fails); tests++;
     SIMPLE_TCP_TEST(act24_default,       fails); tests++;
     SIMPLE_TCP_TEST(act4_default,        fails); tests++;
+    SIMPLE_TCP_TEST(act4_double_default, fails); tests++;
+    SIMPLE_TCP_TEST(act4_quad_default,   fails); tests++;
     SIMPLE_TCP_TEST(default0,            fails); tests++;
     SIMPLE_TCP_TEST(RE_KEYS_OUTER_VLAN1, fails); tests++;
     SIMPLE_TCP_TEST(default_forced,      fails); tests++;

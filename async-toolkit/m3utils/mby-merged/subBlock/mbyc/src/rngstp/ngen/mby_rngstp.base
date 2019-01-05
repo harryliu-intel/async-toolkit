@@ -1,0 +1,16 @@
+// -- Author       : Mike Jarvis <michael.a.jarvis@intel.com>
+// -- Project Name : MBY
+// -- Description  : mgp (MeGaPort) netlist.
+// -------------------------------------------------------------------
+ngen_mod_name
+
+ngen_IO_list
+ngen_IO_end
+
+
+ngen_wires
+
+ngen_submodules
+
+
+ngen_endmodule

@@ -24,7 +24,7 @@
 // express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
-//   Author        : Akshay Kotian
+//   Author        : Nathan Mai
 //   Project       : Madison Bay
 //------------------------------------------------------------------------------
 
@@ -35,19 +35,8 @@
 
 module mby_rx_ppe_tb_top ();
 
-
-`ifdef XVM
-   import ovm_pkg::*;
-   import xvm_pkg::*;
-   `include "ovm_macros.svh"
-   `include "sla_macros.svh"
-`endif
-
    import uvm_pkg::*;
-   import sla_pkg::*;
    `include "uvm_macros.svh"
-   `include "slu_macros.svh"
-
 
 // ===============================================
 // Clock block instance
@@ -76,21 +65,17 @@ module mby_rx_ppe_tb_top ();
 
    assign rx_ppe_tb_if.fab_clk  = fabric_clk;
 
-   shdv_base_tb_intf shdv_intf();
-
-   assign   shdv_intf.ref_clk   = rx_ppe_tb_if.fab_clk;
-   assign   shdv_intf.ref_rst   = rx_ppe_tb_if.hard_reset;
-
    mby_ec_cdi_tx_intf cdi_tx_intf (rx_ppe_tb_if.hard_reset, rx_ppe_tb_if.fab_clk);
    mby_ec_cdi_rx_intf cdi_rx_intf (rx_ppe_tb_if.hard_reset, rx_ppe_tb_if.fab_clk);
-   assign cdi_rx_intf.ecc             = cdi_tx_intf.ecc;
+   //assign cdi_rx_intf.ecc             = cdi_tx_intf.ecc;           // MJ: TODO: ecc was removed
    assign cdi_rx_intf.port_num        = cdi_tx_intf.port_num;
    assign cdi_rx_intf.data_valid      = cdi_tx_intf.data_valid;
    assign cdi_rx_intf.metadata        = cdi_tx_intf.metadata;
-   assign cdi_rx_intf.data_w_ecc      = cdi_tx_intf.data_w_ecc;
+   //assign cdi_rx_intf.data_w_ecc      = cdi_tx_intf.data_w_ecc;  // MJ: TODO: ecc was removed
+   assign cdi_rx_intf.data            = cdi_tx_intf.data;
    assign cdi_rx_intf.pfc_xoff        = cdi_tx_intf.pfc_xoff;
    //assign cdi_rx_intf.au_credits      = cdi_tx_intf.au_credits; // PJP: TODO: au_credits no longer exists in the rx_intf. Not sure what needs to be fixed, commenting out for now.
-   assign cdi_rx_intf.flow_control_tc = cdi_tx_intf.flow_control_tc;
+   //assign cdi_rx_intf.flow_control_tc = cdi_tx_intf.flow_control_tc; // MJ: TODO: flow_control_tc was removed.
    assign cdi_tx_intf.enable          = 1;
 
 
@@ -182,33 +167,33 @@ module mby_rx_ppe_tb_top ();
 // ===============================================
 // MBY rx_ppe DUT
 // ===============================================
-   /*   igr_rx_ppe_if       igr_rx_ppe_if();
-    rx_ppe_igr_if       rx_ppe_igr_if();
-    rx_ppe_ppe_stm_if   rx_ppe_ppe_stm_if();
-    ahb_rx_ppe_if       ahb_rx_ppe_if();
-    glb_rx_ppe_if       glb_rx_ppe_if();
+   ahb_rx_ppe_if       ahb_rx_ppe_if();
+   glb_rx_ppe_if       glb_rx_ppe_if();
+   igr_rx_ppe_if       igr_rx_ppe_if();
+   rx_ppe_igr_if       rx_ppe_igr_if();
+   rx_ppe_ppe_stm0_if  rx_ppe_ppe_stm0_if();
+   rx_ppe_ppe_stm1_if  rx_ppe_ppe_stm1_if();
 
-    rx_ppe  rx_ppe (
-    .cclk               (rx_ppe_tb_if.fab_clk),
-    .reset              (rx_ppe_tb_if.hard_reset),
-    .igr_rx_ppe_if      (igr_rx_ppe_if),
-    .rx_ppe_igr_if      (rx_ppe_igr_if),
-    .rx_ppe_ppe_stm_if  (rx_ppe_ppe_stm_if),
-    .ahb_rx_ppe_if      (ahb_rx_ppe_if),
-    .glb_rx_ppe_if      (glb_rx_ppe_if)
-
-    );
-    */
+   rx_ppe  rx_ppe (
+      .cclk               (rx_ppe_tb_if.fab_clk),
+      .reset              (rx_ppe_tb_if.hard_reset),
+      .ahb_rx_ppe_if      (ahb_rx_ppe_if),    
+      .glb_rx_ppe_if      (glb_rx_ppe_if),    
+      .igr_rx_ppe_if      (igr_rx_ppe_if),
+      .rx_ppe_igr_if      (rx_ppe_igr_if),
+      .rx_ppe_ppe_stm0_if (rx_ppe_ppe_stm0_if),
+      .rx_ppe_ppe_stm1_if (rx_ppe_ppe_stm1_if)
+   );
 //-----------------------------------------------------------------------------
 // Verification Test Island
 //-----------------------------------------------------------------------------
    mby_rx_ppe_ti #(
-      .TOPOLOGY(mby_rx_ppe_env_pkg::mby_rx_ppe_defines::RX_PPE_FULL)
+      //FIXME: LNS: update to arrayed test islands
+      .TOPOLOGY(mby_rx_ppe_env_pkg::PARSER)
    ) rx_ppe_ti(
       .mby_rx_ppe_tb_if               (rx_ppe_tb_if),
-      .shdv_intf                      (shdv_intf),
-      .cdi_tx_intf                    (cdi_tx_intf),
-      .cdi_rx_intf                    (cdi_rx_intf)
+      .eth_bfm_tx_vintf               (cdi_tx_intf),
+      .eth_bfm_rx_vintf               (cdi_rx_intf)
 
    );
 

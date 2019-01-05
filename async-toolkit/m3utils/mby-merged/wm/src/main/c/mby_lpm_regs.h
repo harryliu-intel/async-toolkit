@@ -12,14 +12,6 @@
 
 // Defines:
 
-#include "../m3/genviews/src/build_c/mby_c/src/mby_top_map.h"
-
-
-
-// Input registers for all the functions in this block
-#define MBY_LPM_IN_REGS    mby_ppe_cgrp_a_map * const cgrp_a_map
-#define MBY_LPM_IN_REGS_P                             cgrp_a_map
-
 // Retrieve the constant with the number of registers
 #define MBY_LPM_REG_SIZE(reg_name) (mby_ppe_cgrp_a_map_## reg_name ##__nd)
 
@@ -27,6 +19,7 @@
 #define MBY_LPM_KEY_MAX_BITS_LEN    (MBY_LPM_KEY_MAX_BYTES_LEN * 8)
 
 #define MBY_LPM_BITMAP_SIZE         4
+#define MBY_LPM_COLUMN_SIZE         (2 * MBY_LPM_BITMAP_SIZE)
 #define MBY_LPM_NUM_PREFIXES        255
 #define MBY_LPM_NUM_CHILD           256
 
@@ -70,39 +63,39 @@ typedef struct mbyLpmSubtrieStoreStruct
 
 void mbyLpmGetKeySels
 (
- //    MBY_LPM_IN_REGS,
-     mby_ppe_cgrp_a_nested_map     * const cgrp_a_map,
-
-    fm_byte                  const profile_id,
-    mbyLpmKeySels          * const key_sels
+    mby_ppe_cgrp_a_map const * const cgrp_a_map,
+    fm_byte                    const profile_id,
+    mbyLpmKeySels            * const key_sels
 );
 
 void mbyLpmGetTcamEntry
 (
-    MBY_LPM_IN_REGS,
-    const fm_uint16                index,
-    mbyLpmTcamEntry        * const tcam_entry
+    mby_ppe_cgrp_a_map const * const cgrp_a_map,
+    fm_uint16                  const index,
+    mbyLpmTcamEntry          * const tcam_entry
 );
 
 void mbyLpmGetTcamSubtrie
 (
-    MBY_LPM_IN_REGS,
-    const fm_uint16                index,
-    mbyLpmSubtrie          * const tcam_subtrie
+    mby_ppe_cgrp_a_map const * const cgrp_a_map,
+    fm_uint16                  const index,
+    mbyLpmSubtrie            * const tcam_subtrie
 );
 
 void mbyLpmGetSubtrie
 (
-    MBY_LPM_IN_REGS,
-    const fm_uint16                index,
-    mbyLpmSubtrie          * const subtrie
+    mby_ppe_cgrp_a_map const * const cgrp_a_map,
+    fm_uint16                  const bank_index,
+    fm_uint16                  const entry_index,
+    mbyLpmSubtrie            * const subtrie
 );
 
 void mbyLpmGetSubtrieStore
 (
-    MBY_LPM_IN_REGS,
-    const fm_uint16                index,
-    mbyLpmSubtrieStore     * const st_store
+    mby_ppe_cgrp_a_map const * const cgrp_a_map,
+    fm_uint16                  const bank_index,
+    fm_uint16                  const entry_index,
+    mbyLpmSubtrieStore       * const st_store
 );
 
 #endif /* MYB_LPM_REGS_H */

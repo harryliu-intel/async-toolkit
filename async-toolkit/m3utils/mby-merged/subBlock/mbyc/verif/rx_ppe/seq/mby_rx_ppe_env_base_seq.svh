@@ -45,19 +45,21 @@
 `error "Attempt to include file outside of mby_rx_ppe_seq_lib."
 `endif
 
-class mby_rx_ppe_env_base_seq extends mby_common_pkg::mby_base_seq;
+class mby_rx_ppe_env_base_seq extends shdv_base_sequence;
+
+   `uvm_object_utils(mby_rx_ppe_env_base_seq)
 
    // Variable: env
    // rx_ppe Top Level Env.
    mby_rx_ppe_env_pkg::mby_rx_ppe_env         env;
 
-   // Variable: cfg
-   // rx_ppe environment cfg.
+   // Variable: tb_cfg
+   // rx_ppe tb cfg.
    mby_rx_ppe_env_pkg::mby_rx_ppe_tb_top_cfg  cfg;
 
-   // Variable: ral
-   // rx_ppe RAL env.
-   mby_rx_ppe_env_pkg::mby_rx_ppe_ral_env     ral;
+   // Variable:  tb_ral
+   // Handle to RX PPE RAL.
+   mby_rx_ppe_reg_pkg::mby_rx_ppe_reg_blk     ral;
 
    // Variable: vif
    // Handle to rx_ppe Tb interface.
@@ -70,19 +72,23 @@ class mby_rx_ppe_env_base_seq extends mby_common_pkg::mby_base_seq;
    // ------------------------------------------------------------------------
    function new(string name = "mby_rx_ppe_env_base_seq");
       super.new();
+      set_env (shdv_base_env::get_top_tb_env());
    endfunction : new
 
    // ------------------------------------------------------------------------
-   virtual function void set_env(slu_tb_env tb_env);
+   //  Function: set_env
+   //  Arguments: shdv_base_env 
+   // ------------------------------------------------------------------------
+   virtual function void set_env(shdv_base_env tb_env);
       mby_rx_ppe_env_pkg::mby_rx_ppe_env temp_env;
       bit stat;
 
       stat = $cast(temp_env,tb_env);
       if(!stat) begin
-         `ovm_fatal(get_name(), "Cast of sla_tb_env failed");
+         `uvm_fatal(get_name(), "Cast of sla_tb_env failed");
       end
       if(temp_env == null) begin
-         `ovm_fatal(get_name(), "Could not fetch sla_tb_env handle!!!");
+         `uvm_fatal(get_name(), "Could not fetch sla_tb_env handle!!!");
       end
 
       this.env = temp_env;
@@ -91,6 +97,7 @@ class mby_rx_ppe_env_base_seq extends mby_common_pkg::mby_base_seq;
       this.vif = temp_env.get_tb_vif();
 
    endfunction : set_env
+
 
 endclass : mby_rx_ppe_env_base_seq
 

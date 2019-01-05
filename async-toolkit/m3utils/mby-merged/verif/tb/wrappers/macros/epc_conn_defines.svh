@@ -11,153 +11,251 @@
 `define epc_conn(FC_ENV_PATH, DUT_PATH, IDX) \
     \
     mby_ec_top_ti #( \
+        .TYPE("dut"), \
         .RTL_TOP_PATH(``"DUT_PATH``.mby_ec_top_``IDX``"), \
-        .TB_ENV_PATH(``"FC_ENV_PATH``.epc_subenv.epc_env_inst_``IDX``") \
+        .TB_ENV_PATH(``"FC_ENV_PATH``.epc_subenv.epc_env_inst_``IDX``"), \
+        .ENDPOINT_ID(``IDX``) \
     ) u_epc_ti_``IDX`` ( \
-          //.grp_a0_tx_au_credits         (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_tx_au_credits), \
           .grp_a0_tx_data_valid         (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_tx_data_valid), \
-          .grp_a0_tx_data_w_ecc         ({``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_tx7_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_tx6_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_tx5_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_tx4_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_tx3_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_tx2_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_tx1_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_tx0_data_w_ecc}), \
-          .grp_a0_tx_ecc                (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_tx_ecc), \
+          .grp_a0_tx0_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_tx0_data), \
+          .grp_a0_tx1_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_tx1_data), \
+          .grp_a0_tx2_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_tx2_data), \
+          .grp_a0_tx3_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_tx3_data), \
+          .grp_a0_tx4_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_tx4_data), \
+          .grp_a0_tx5_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_tx5_data), \
+          .grp_a0_tx6_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_tx6_data), \
+          .grp_a0_tx7_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_tx7_data), \
           .grp_a0_tx_metadata           (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_tx_metadata), \
+          .grp_a0_tx_pfc_tc_sync        (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_tx_pfc_tc_sync), \
           .grp_a0_tx_pfc_xoff           (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_tx_pfc_xoff), \
-          //.grp_a0_rx_au_credits         (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_rx_au_credits), \
+          .grp_a0_tx_valid_resp         (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_tx_valid_resp), \
+          .grp_a0_tx_enable             (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_tx_enable), \
+          .grp_a0_tx_port_num           (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_tx_port_num), \
+          .grp_a0_tx_enable_port_num    (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_tx_enable_port_num), \
           .grp_a0_rx_data_valid         (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_rx_data_valid), \
-          .grp_a0_rx_data_w_ecc         ({``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_rx7_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_rx6_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_rx5_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_rx4_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_rx3_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_rx2_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_rx1_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_rx0_data_w_ecc}), \
-          .grp_a0_rx_ecc                (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_rx_ecc), \
-          .grp_a0_rx_flow_control_tc    (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_rx_flow_control_tc), \
+          .grp_a0_rx0_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_rx0_data), \
+          .grp_a0_rx1_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_rx1_data), \
+          .grp_a0_rx2_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_rx2_data), \
+          .grp_a0_rx3_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_rx3_data), \
+          .grp_a0_rx4_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_rx4_data), \
+          .grp_a0_rx5_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_rx5_data), \
+          .grp_a0_rx6_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_rx6_data), \
+          .grp_a0_rx7_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_rx7_data), \
           .grp_a0_rx_time_stamp         (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_rx_time_stamp), \
           .grp_a0_rx_metadata           (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_rx_metadata), \
           .grp_a0_rx_pfc_xoff           (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_rx_pfc_xoff), \
+          .grp_a0_rx_pfc_tc_sync        (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_rx_pfc_tc_sync), \
           .grp_a0_rx_port_num           (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_rx_port_num), \
-          .grp_a0_tx_enable             (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_tx_enable), \
-          .grp_a0_tx_flow_control_tc    (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_tx_flow_control_tc), \
-          .grp_a0_tx_port_num           (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_tx_port_num), \
-          //.grp_a1_tx_au_credits         (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_tx_au_credits), \
           .grp_a1_tx_data_valid         (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_tx_data_valid), \
-          .grp_a1_tx_data_w_ecc         ({``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_tx7_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_tx6_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_tx5_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_tx4_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_tx3_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_tx2_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_tx1_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_tx0_data_w_ecc}), \
-          .grp_a1_tx_ecc                (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_tx_ecc), \
+          .grp_a1_tx0_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_tx0_data), \
+          .grp_a1_tx1_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_tx1_data), \
+          .grp_a1_tx2_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_tx2_data), \
+          .grp_a1_tx3_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_tx3_data), \
+          .grp_a1_tx4_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_tx4_data), \
+          .grp_a1_tx5_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_tx5_data), \
+          .grp_a1_tx6_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_tx6_data), \
+          .grp_a1_tx7_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_tx7_data), \
           .grp_a1_tx_metadata           (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_tx_metadata), \
+          .grp_a1_tx_pfc_tc_sync        (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_tx_pfc_tc_sync), \
           .grp_a1_tx_pfc_xoff           (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_tx_pfc_xoff), \
-          //.grp_a1_rx_au_credits         (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_rx_au_credits), \
+          .grp_a1_tx_valid_resp         (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_tx_valid_resp), \
+          .grp_a1_tx_enable             (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_tx_enable), \
+          .grp_a1_tx_port_num           (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_tx_port_num), \
+          .grp_a1_tx_enable_port_num    (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_tx_enable_port_num), \
           .grp_a1_rx_data_valid         (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_rx_data_valid), \
-          .grp_a1_rx_data_w_ecc         ({``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_rx7_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_rx6_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_rx5_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_rx4_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_rx3_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_rx2_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_rx1_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_rx0_data_w_ecc}), \
-          .grp_a1_rx_ecc                (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_rx_ecc), \
-          .grp_a1_rx_flow_control_tc    (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_rx_flow_control_tc), \
+          .grp_a1_rx0_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_rx0_data), \
+          .grp_a1_rx1_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_rx1_data), \
+          .grp_a1_rx2_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_rx2_data), \
+          .grp_a1_rx3_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_rx3_data), \
+          .grp_a1_rx4_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_rx4_data), \
+          .grp_a1_rx5_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_rx5_data), \
+          .grp_a1_rx6_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_rx6_data), \
+          .grp_a1_rx7_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_rx7_data), \
           .grp_a1_rx_time_stamp         (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_rx_time_stamp), \
           .grp_a1_rx_metadata           (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_rx_metadata), \
           .grp_a1_rx_pfc_xoff           (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_rx_pfc_xoff), \
+          .grp_a1_rx_pfc_tc_sync        (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_rx_pfc_tc_sync), \
           .grp_a1_rx_port_num           (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_rx_port_num), \
-          .grp_a1_tx_enable             (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_tx_enable), \
-          .grp_a1_tx_flow_control_tc    (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_tx_flow_control_tc), \
-          .grp_a1_tx_port_num           (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_tx_port_num), \
-          //.grp_b0_tx_au_credits         (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_tx_au_credits), \
           .grp_b0_tx_data_valid         (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_tx_data_valid), \
-          .grp_b0_tx_data_w_ecc         ({``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_tx7_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_tx6_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_tx5_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_tx4_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_tx3_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_tx2_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_tx1_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_tx0_data_w_ecc}), \
-          .grp_b0_tx_ecc                (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_tx_ecc), \
+          .grp_b0_tx0_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_tx0_data), \
+          .grp_b0_tx1_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_tx1_data), \
+          .grp_b0_tx2_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_tx2_data), \
+          .grp_b0_tx3_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_tx3_data), \
+          .grp_b0_tx4_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_tx4_data), \
+          .grp_b0_tx5_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_tx5_data), \
+          .grp_b0_tx6_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_tx6_data), \
+          .grp_b0_tx7_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_tx7_data), \
           .grp_b0_tx_metadata           (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_tx_metadata), \
+          .grp_b0_tx_pfc_tc_sync        (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_tx_pfc_tc_sync), \
           .grp_b0_tx_pfc_xoff           (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_tx_pfc_xoff), \
-          //.grp_b0_rx_au_credits         (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_rx_au_credits), \
+          .grp_b0_tx_valid_resp         (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_tx_valid_resp), \
+          .grp_b0_tx_enable             (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_tx_enable), \
+          .grp_b0_tx_port_num           (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_tx_port_num), \
+          .grp_b0_tx_enable_port_num    (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_tx_enable_port_num), \
           .grp_b0_rx_data_valid         (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_rx_data_valid), \
-          .grp_b0_rx_data_w_ecc         ({``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_rx7_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_rx6_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_rx5_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_rx4_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_rx3_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_rx2_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_rx1_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_rx0_data_w_ecc}), \
-          .grp_b0_rx_ecc                (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_rx_ecc), \
-          .grp_b0_rx_flow_control_tc    (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_rx_flow_control_tc), \
+          .grp_b0_rx0_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_rx0_data), \
+          .grp_b0_rx1_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_rx1_data), \
+          .grp_b0_rx2_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_rx2_data), \
+          .grp_b0_rx3_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_rx3_data), \
+          .grp_b0_rx4_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_rx4_data), \
+          .grp_b0_rx5_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_rx5_data), \
+          .grp_b0_rx6_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_rx6_data), \
+          .grp_b0_rx7_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_rx7_data), \
           .grp_b0_rx_time_stamp         (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_rx_time_stamp), \
           .grp_b0_rx_metadata           (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_rx_metadata), \
           .grp_b0_rx_pfc_xoff           (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_rx_pfc_xoff), \
+          .grp_b0_rx_pfc_tc_sync        (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_rx_pfc_tc_sync), \
           .grp_b0_rx_port_num           (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_rx_port_num), \
-          .grp_b0_tx_enable             (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_tx_enable), \
-          .grp_b0_tx_flow_control_tc    (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_tx_flow_control_tc), \
-          .grp_b0_tx_port_num           (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_tx_port_num), \
-          //.grp_b1_tx_au_credits         (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_tx_au_credits), \
           .grp_b1_tx_data_valid         (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_tx_data_valid), \
-          .grp_b1_tx_data_w_ecc         ({``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_tx7_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_tx6_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_tx5_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_tx4_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_tx3_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_tx2_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_tx1_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_tx0_data_w_ecc}), \
-          .grp_b1_tx_ecc                (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_tx_ecc), \
+          .grp_b1_tx0_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_tx0_data), \
+          .grp_b1_tx1_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_tx1_data), \
+          .grp_b1_tx2_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_tx2_data), \
+          .grp_b1_tx3_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_tx3_data), \
+          .grp_b1_tx4_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_tx4_data), \
+          .grp_b1_tx5_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_tx5_data), \
+          .grp_b1_tx6_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_tx6_data), \
+          .grp_b1_tx7_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_tx7_data), \
           .grp_b1_tx_metadata           (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_tx_metadata), \
+          .grp_b1_tx_pfc_tc_sync        (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_tx_pfc_tc_sync), \
           .grp_b1_tx_pfc_xoff           (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_tx_pfc_xoff), \
-          //.grp_b1_rx_au_credits         (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_rx_au_credits), \
+          .grp_b1_tx_valid_resp         (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_tx_valid_resp), \
+          .grp_b1_tx_enable             (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_tx_enable), \
+          .grp_b1_tx_port_num           (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_tx_port_num), \
+          .grp_b1_tx_enable_port_num    (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_tx_enable_port_num), \
           .grp_b1_rx_data_valid         (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_rx_data_valid), \
-          .grp_b1_rx_data_w_ecc         ({``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_rx7_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_rx6_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_rx5_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_rx4_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_rx3_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_rx2_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_rx1_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_rx0_data_w_ecc}), \
-          .grp_b1_rx_ecc                (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_rx_ecc), \
-          .grp_b1_rx_flow_control_tc    (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_rx_flow_control_tc), \
+          .grp_b1_rx0_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_rx0_data), \
+          .grp_b1_rx1_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_rx1_data), \
+          .grp_b1_rx2_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_rx2_data), \
+          .grp_b1_rx3_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_rx3_data), \
+          .grp_b1_rx4_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_rx4_data), \
+          .grp_b1_rx5_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_rx5_data), \
+          .grp_b1_rx6_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_rx6_data), \
+          .grp_b1_rx7_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_rx7_data), \
           .grp_b1_rx_time_stamp         (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_rx_time_stamp), \
           .grp_b1_rx_metadata           (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_rx_metadata), \
           .grp_b1_rx_pfc_xoff           (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_rx_pfc_xoff), \
+          .grp_b1_rx_pfc_tc_sync        (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_rx_pfc_tc_sync), \
           .grp_b1_rx_port_num           (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_rx_port_num), \
-          .grp_b1_tx_enable             (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_tx_enable), \
-          .grp_b1_tx_flow_control_tc    (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_tx_flow_control_tc), \
-          .grp_b1_tx_port_num           (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_tx_port_num), \
-          //.grp_c0_tx_au_credits         (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_tx_au_credits), \
           .grp_c0_tx_data_valid         (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_tx_data_valid), \
-          .grp_c0_tx_data_w_ecc         ({``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_tx7_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_tx6_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_tx5_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_tx4_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_tx3_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_tx2_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_tx1_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_tx0_data_w_ecc}), \
-          .grp_c0_tx_ecc                (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_tx_ecc), \
+          .grp_c0_tx0_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_tx0_data), \
+          .grp_c0_tx1_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_tx1_data), \
+          .grp_c0_tx2_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_tx2_data), \
+          .grp_c0_tx3_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_tx3_data), \
+          .grp_c0_tx4_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_tx4_data), \
+          .grp_c0_tx5_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_tx5_data), \
+          .grp_c0_tx6_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_tx6_data), \
+          .grp_c0_tx7_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_tx7_data), \
           .grp_c0_tx_metadata           (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_tx_metadata), \
+          .grp_c0_tx_pfc_tc_sync        (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_tx_pfc_tc_sync), \
           .grp_c0_tx_pfc_xoff           (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_tx_pfc_xoff), \
-          //.grp_c0_rx_au_credits         (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_rx_au_credits), \
+          .grp_c0_tx_valid_resp         (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_tx_valid_resp), \
+          .grp_c0_tx_enable             (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_tx_enable), \
+          .grp_c0_tx_port_num           (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_tx_port_num), \
+          .grp_c0_tx_enable_port_num    (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_tx_enable_port_num), \
           .grp_c0_rx_data_valid         (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_rx_data_valid), \
-          .grp_c0_rx_data_w_ecc         ({``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_rx7_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_rx6_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_rx5_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_rx4_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_rx3_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_rx2_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_rx1_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_rx0_data_w_ecc}), \
-          .grp_c0_rx_ecc                (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_rx_ecc), \
-          .grp_c0_rx_flow_control_tc    (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_rx_flow_control_tc), \
+          .grp_c0_rx0_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_rx0_data), \
+          .grp_c0_rx1_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_rx1_data), \
+          .grp_c0_rx2_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_rx2_data), \
+          .grp_c0_rx3_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_rx3_data), \
+          .grp_c0_rx4_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_rx4_data), \
+          .grp_c0_rx5_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_rx5_data), \
+          .grp_c0_rx6_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_rx6_data), \
+          .grp_c0_rx7_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_rx7_data), \
           .grp_c0_rx_time_stamp         (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_rx_time_stamp), \
           .grp_c0_rx_metadata           (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_rx_metadata), \
           .grp_c0_rx_pfc_xoff           (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_rx_pfc_xoff), \
+          .grp_c0_rx_pfc_tc_sync        (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_rx_pfc_tc_sync), \
           .grp_c0_rx_port_num           (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_rx_port_num), \
-          .grp_c0_tx_enable             (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_tx_enable), \
-          .grp_c0_tx_flow_control_tc    (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_tx_flow_control_tc), \
-          .grp_c0_tx_port_num           (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_tx_port_num), \
-          //.grp_c1_tx_au_credits         (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_tx_au_credits), \
           .grp_c1_tx_data_valid         (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_tx_data_valid), \
-          .grp_c1_tx_data_w_ecc         ({``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_tx7_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_tx6_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_tx5_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_tx4_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_tx3_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_tx2_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_tx1_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_tx0_data_w_ecc}), \
-          .grp_c1_tx_ecc                (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_tx_ecc), \
+          .grp_c1_tx0_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_tx0_data), \
+          .grp_c1_tx1_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_tx1_data), \
+          .grp_c1_tx2_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_tx2_data), \
+          .grp_c1_tx3_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_tx3_data), \
+          .grp_c1_tx4_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_tx4_data), \
+          .grp_c1_tx5_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_tx5_data), \
+          .grp_c1_tx6_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_tx6_data), \
+          .grp_c1_tx7_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_tx7_data), \
           .grp_c1_tx_metadata           (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_tx_metadata), \
+          .grp_c1_tx_pfc_tc_sync        (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_tx_pfc_tc_sync), \
           .grp_c1_tx_pfc_xoff           (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_tx_pfc_xoff), \
-          //.grp_c1_rx_au_credits         (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_rx_au_credits), \
+          .grp_c1_tx_valid_resp         (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_tx_valid_resp), \
+          .grp_c1_tx_enable             (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_tx_enable), \
+          .grp_c1_tx_port_num           (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_tx_port_num), \
+          .grp_c1_tx_enable_port_num    (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_tx_enable_port_num), \
           .grp_c1_rx_data_valid         (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_rx_data_valid), \
-          .grp_c1_rx_data_w_ecc         ({``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_rx7_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_rx6_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_rx5_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_rx4_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_rx3_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_rx2_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_rx1_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_rx0_data_w_ecc}), \
-          .grp_c1_rx_ecc                (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_rx_ecc), \
-          .grp_c1_rx_flow_control_tc    (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_rx_flow_control_tc), \
+          .grp_c1_rx0_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_rx0_data), \
+          .grp_c1_rx1_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_rx1_data), \
+          .grp_c1_rx2_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_rx2_data), \
+          .grp_c1_rx3_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_rx3_data), \
+          .grp_c1_rx4_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_rx4_data), \
+          .grp_c1_rx5_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_rx5_data), \
+          .grp_c1_rx6_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_rx6_data), \
+          .grp_c1_rx7_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_rx7_data), \
           .grp_c1_rx_time_stamp         (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_rx_time_stamp), \
           .grp_c1_rx_metadata           (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_rx_metadata), \
           .grp_c1_rx_pfc_xoff           (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_rx_pfc_xoff), \
+          .grp_c1_rx_pfc_tc_sync        (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_rx_pfc_tc_sync), \
           .grp_c1_rx_port_num           (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_rx_port_num), \
-          .grp_c1_tx_enable             (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_tx_enable), \
-          .grp_c1_tx_flow_control_tc    (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_tx_flow_control_tc), \
-          .grp_c1_tx_port_num           (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_tx_port_num), \
-         // .grp_d0_tx_au_credits         (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_tx_au_credits), \
           .grp_d0_tx_data_valid         (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_tx_data_valid), \
-          .grp_d0_tx_data_w_ecc         ({``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_tx7_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_tx6_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_tx5_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_tx4_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_tx3_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_tx2_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_tx1_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_tx0_data_w_ecc}), \
-          .grp_d0_tx_ecc                (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_tx_ecc), \
+          .grp_d0_tx0_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_tx0_data), \
+          .grp_d0_tx1_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_tx1_data), \
+          .grp_d0_tx2_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_tx2_data), \
+          .grp_d0_tx3_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_tx3_data), \
+          .grp_d0_tx4_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_tx4_data), \
+          .grp_d0_tx5_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_tx5_data), \
+          .grp_d0_tx6_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_tx6_data), \
+          .grp_d0_tx7_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_tx7_data), \
           .grp_d0_tx_metadata           (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_tx_metadata), \
+          .grp_d0_tx_pfc_tc_sync        (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_tx_pfc_tc_sync), \
           .grp_d0_tx_pfc_xoff           (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_tx_pfc_xoff), \
-         // .grp_d0_rx_au_credits         (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_rx_au_credits), \
+          .grp_d0_tx_valid_resp         (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_tx_valid_resp), \
+          .grp_d0_tx_enable             (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_tx_enable), \
+          .grp_d0_tx_port_num           (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_tx_port_num), \
+          .grp_d0_tx_enable_port_num    (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_tx_enable_port_num), \
           .grp_d0_rx_data_valid         (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_rx_data_valid), \
-          .grp_d0_rx_data_w_ecc         ({``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_rx7_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_rx6_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_rx5_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_rx4_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_rx3_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_rx2_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_rx1_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_rx0_data_w_ecc}), \
-          .grp_d0_rx_ecc                (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_rx_ecc), \
-          .grp_d0_rx_flow_control_tc    (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_rx_flow_control_tc), \
+          .grp_d0_rx0_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_rx0_data), \
+          .grp_d0_rx1_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_rx1_data), \
+          .grp_d0_rx2_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_rx2_data), \
+          .grp_d0_rx3_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_rx3_data), \
+          .grp_d0_rx4_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_rx4_data), \
+          .grp_d0_rx5_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_rx5_data), \
+          .grp_d0_rx6_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_rx6_data), \
+          .grp_d0_rx7_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_rx7_data), \
           .grp_d0_rx_time_stamp         (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_rx_time_stamp), \
           .grp_d0_rx_metadata           (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_rx_metadata), \
           .grp_d0_rx_pfc_xoff           (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_rx_pfc_xoff), \
+          .grp_d0_rx_pfc_tc_sync        (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_rx_pfc_tc_sync), \
           .grp_d0_rx_port_num           (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_rx_port_num), \
-          .grp_d0_tx_enable             (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_tx_enable), \
-          .grp_d0_tx_flow_control_tc    (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_tx_flow_control_tc), \
-          .grp_d0_tx_port_num           (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_tx_port_num), \
-         // .grp_d1_tx_au_credits         (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_tx_au_credits), \
           .grp_d1_tx_data_valid         (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_tx_data_valid), \
-          .grp_d1_tx_data_w_ecc         ({``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_tx7_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_tx6_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_tx5_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_tx4_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_tx3_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_tx2_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_tx1_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_tx0_data_w_ecc}), \
-          .grp_d1_tx_ecc                (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_tx_ecc), \
+          .grp_d1_tx0_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_tx0_data), \
+          .grp_d1_tx1_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_tx1_data), \
+          .grp_d1_tx2_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_tx2_data), \
+          .grp_d1_tx3_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_tx3_data), \
+          .grp_d1_tx4_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_tx4_data), \
+          .grp_d1_tx5_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_tx5_data), \
+          .grp_d1_tx6_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_tx6_data), \
+          .grp_d1_tx7_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_tx7_data), \
           .grp_d1_tx_metadata           (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_tx_metadata), \
+          .grp_d1_tx_pfc_tc_sync        (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_tx_pfc_tc_sync), \
           .grp_d1_tx_pfc_xoff           (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_tx_pfc_xoff), \
-         // .grp_d1_rx_au_credits         (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_rx_au_credits), \
+          .grp_d1_tx_valid_resp         (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_tx_valid_resp), \
+          .grp_d1_tx_enable             (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_tx_enable), \
+          .grp_d1_tx_port_num           (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_tx_port_num), \
+          .grp_d1_tx_enable_port_num    (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_tx_enable_port_num), \
           .grp_d1_rx_data_valid         (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_rx_data_valid), \
-          .grp_d1_rx_data_w_ecc         ({``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_rx7_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_rx6_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_rx5_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_rx4_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_rx3_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_rx2_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_rx1_data_w_ecc,``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_rx0_data_w_ecc}), \
-          .grp_d1_rx_ecc                (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_rx_ecc), \
-          .grp_d1_rx_flow_control_tc    (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_rx_flow_control_tc), \
+          .grp_d1_rx0_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_rx0_data), \
+          .grp_d1_rx1_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_rx1_data), \
+          .grp_d1_rx2_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_rx2_data), \
+          .grp_d1_rx3_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_rx3_data), \
+          .grp_d1_rx4_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_rx4_data), \
+          .grp_d1_rx5_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_rx5_data), \
+          .grp_d1_rx6_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_rx6_data), \
+          .grp_d1_rx7_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_rx7_data), \
           .grp_d1_rx_time_stamp         (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_rx_time_stamp), \
           .grp_d1_rx_metadata           (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_rx_metadata), \
           .grp_d1_rx_pfc_xoff           (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_rx_pfc_xoff), \
+          .grp_d1_rx_pfc_tc_sync        (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_rx_pfc_tc_sync), \
           .grp_d1_rx_port_num           (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_rx_port_num), \
-          .grp_d1_tx_enable             (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_tx_enable), \
-          .grp_d1_tx_flow_control_tc    (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_tx_flow_control_tc), \
-          .grp_d1_tx_port_num           (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_tx_port_num), \
           .grp_a0_rx_raw                (``DUT_PATH``.mby_ec_top_``IDX``.grp_A.part_0.r_rx_raw), \
           .grp_a0_rx_raw_valid          (``DUT_PATH``.mby_ec_top_``IDX``.grp_A.part_0.r_rx_raw_valid), \
           .grp_a0_tx_raw                (``DUT_PATH``.mby_ec_top_``IDX``.grp_A.part_0.tx_raw), \
@@ -222,45 +320,44 @@
           .grp_d1_serdes_sia_rclk       (``DUT_PATH``.mby_ec_top_``IDX``.grp_D.part_1.serdes_sia_rclk), \
           .grp_d1_sia_serdes_tx_dat     (``DUT_PATH``.mby_ec_top_``IDX``.grp_D.part_1.sia_serdes_tx_dat), \
           .grp_d1_serdes_sia_dclk       (``DUT_PATH``.mby_ec_top_``IDX``.grp_D.part_1.serdes_sia_dclk), \
-          .grp_a0_serdes_rx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_serdes_rx_n_lx), \
-          .grp_a0_serdes_rx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_serdes_rx_p_lx), \
-          .grp_a0_serdes_tx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_tx_n_lx), \
-          .grp_a0_serdes_tx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_tx_p_lx), \
-          .grp_a1_serdes_rx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_serdes_rx_n_lx), \
-          .grp_a1_serdes_rx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_serdes_rx_p_lx), \
-          .grp_a1_serdes_tx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_tx_n_lx), \
-          .grp_a1_serdes_tx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_tx_p_lx), \
-          .grp_b0_serdes_rx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_serdes_rx_n_lx), \
-          .grp_b0_serdes_rx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_serdes_rx_p_lx), \
-          .grp_b0_serdes_tx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_tx_n_lx), \
-          .grp_b0_serdes_tx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_tx_p_lx), \
-          .grp_b1_serdes_rx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_serdes_rx_n_lx), \
-          .grp_b1_serdes_rx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_serdes_rx_p_lx), \
-          .grp_b1_serdes_tx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_tx_n_lx), \
-          .grp_b1_serdes_tx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_tx_p_lx), \
-          .grp_c0_serdes_rx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_serdes_rx_n_lx), \
-          .grp_c0_serdes_rx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_serdes_rx_p_lx), \
-          .grp_c0_serdes_tx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_tx_n_lx), \
-          .grp_c0_serdes_tx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_tx_p_lx), \
-          .grp_c1_serdes_rx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_serdes_rx_n_lx), \
-          .grp_c1_serdes_rx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_serdes_rx_p_lx), \
-          .grp_c1_serdes_tx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_tx_n_lx), \
-          .grp_c1_serdes_tx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_tx_p_lx), \
-          .grp_d0_serdes_rx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_serdes_rx_n_lx), \
-          .grp_d0_serdes_rx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_serdes_rx_p_lx), \
-          .grp_d0_serdes_tx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_tx_n_lx), \
-          .grp_d0_serdes_tx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_tx_p_lx), \
-          .grp_d1_serdes_rx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_serdes_rx_n_lx), \
-          .grp_d1_serdes_rx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_serdes_rx_p_lx), \
-          .grp_d1_serdes_tx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_tx_n_lx), \
-          .grp_d1_serdes_tx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_tx_p_lx), \
-          .serdes_ref_clk_n             (), \
-          .serdes_ref_clk_p             (), \
+          .grp_a0_serdes_rx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_serdes_rx_n), \
+          .grp_a0_serdes_rx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_serdes_rx_p), \
+          .grp_a0_serdes_tx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_serdes_tx_n), \
+          .grp_a0_serdes_tx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_serdes_tx_p), \
+          .grp_a1_serdes_rx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_serdes_rx_n), \
+          .grp_a1_serdes_rx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_serdes_rx_p), \
+          .grp_a1_serdes_tx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_serdes_tx_n), \
+          .grp_a1_serdes_tx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_serdes_tx_p), \
+          .grp_b0_serdes_rx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_serdes_rx_n), \
+          .grp_b0_serdes_rx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_serdes_rx_p), \
+          .grp_b0_serdes_tx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_serdes_tx_n), \
+          .grp_b0_serdes_tx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_serdes_tx_p), \
+          .grp_b1_serdes_rx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_serdes_rx_n), \
+          .grp_b1_serdes_rx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_serdes_rx_p), \
+          .grp_b1_serdes_tx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_serdes_tx_n), \
+          .grp_b1_serdes_tx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_serdes_tx_p), \
+          .grp_c0_serdes_rx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_serdes_rx_n), \
+          .grp_c0_serdes_rx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_serdes_rx_p), \
+          .grp_c0_serdes_tx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_serdes_tx_n), \
+          .grp_c0_serdes_tx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_serdes_tx_p), \
+          .grp_c1_serdes_rx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_serdes_rx_n), \
+          .grp_c1_serdes_rx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_serdes_rx_p), \
+          .grp_c1_serdes_tx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_serdes_tx_n), \
+          .grp_c1_serdes_tx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_serdes_tx_p), \
+          .grp_d0_serdes_rx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_serdes_rx_n), \
+          .grp_d0_serdes_rx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_serdes_rx_p), \
+          .grp_d0_serdes_tx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_serdes_tx_n), \
+          .grp_d0_serdes_tx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_serdes_tx_p), \
+          .grp_d1_serdes_rx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_serdes_rx_n), \
+          .grp_d1_serdes_rx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_serdes_rx_p), \
+          .grp_d1_serdes_tx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_serdes_tx_n), \
+          .grp_d1_serdes_tx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_serdes_tx_p), \
+          .serdes_ref_clk_n             (``DUT_PATH``.mby_ec_top_``IDX``.i_serdes_refclk_n), \
+          .serdes_ref_clk_p             (``DUT_PATH``.mby_ec_top_``IDX``.i_serdes_refclk_p), \
           .cclk                         (``DUT_PATH``.mby_ec_top_``IDX``.cclk), \
-          .mclk                         (), \
-          .pclk                         (), \
-          .powergood_rst_n              (``DUT_PATH``.mby_ec_top_``IDX``.powergood_rst_n), \
+          .eclk                         (``DUT_PATH``.mby_ec_top_``IDX``.eclk), \
           .hreset_n                     (``DUT_PATH``.mby_ec_top_``IDX``.hreset_n), \
+          .reset                        (), \
           .sreset_n                     (``DUT_PATH``.mby_ec_top_``IDX``.sreset_n) \
     ); \
     \

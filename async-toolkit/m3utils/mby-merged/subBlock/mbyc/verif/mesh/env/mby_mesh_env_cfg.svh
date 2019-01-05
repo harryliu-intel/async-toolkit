@@ -27,14 +27,6 @@
 //   Project       : Madison Bay
 //------------------------------------------------------------------------------
 
-// Class: mby_mesh_env_cfg
-//
-//   This is the configuration object to control the Mesh env and
-//   its sub components.
-//
-//   This Class contain all the switches to control the ENV setting.
-//
-
 
 `ifndef __MBY_MESH_ENV_CFG_GUARD
 `define __MBY_MESH_ENV_CFG_GUARD
@@ -43,12 +35,25 @@
 `error "Attempt to include file outside of mby_mesh_env_pkg."
 `endif
 
+// Class: mby_mesh_env_cfg
+//
+//   This is the configuration object to control the Mesh env and
+//   its sub components.
+//
+//   This Class contain all the switches to control the ENV setting.
+
 class mby_mesh_env_cfg extends shdv_base_config;
 
 
    `uvm_object_utils_begin(mby_mesh_env_cfg)
    `uvm_object_utils_end
 
+   //
+   // Variable: bfm_cfg
+   // BFM configuration object.
+   //
+   rand mby_mgp_bfm_pkg::mby_mgp_bfm_cfg eb_bfm_cfg;
+   rand mby_mgp_bfm_pkg::mby_mgp_bfm_cfg wb_bfm_cfg;
    //---------------------------------------------------------------------------
    // Constructor: new
    //
@@ -59,6 +64,8 @@ class mby_mesh_env_cfg extends shdv_base_config;
    //---------------------------------------------------------------------------
    function new( string name = "mby_mesh_env_cfg");
       super.new(name);
+      eb_bfm_cfg = mby_mgp_bfm_pkg::mby_mgp_bfm_cfg::type_id::create("eb_bfm_cfg");
+      wb_bfm_cfg = mby_mgp_bfm_pkg::mby_mgp_bfm_cfg::type_id::create("wb_bfm_cfg");
    endfunction: new
 
    //---------------------------------------------------------------------------

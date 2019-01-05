@@ -44,14 +44,16 @@
 //   All CTE's base sequences should extend from this sequence to inherit WM
 //   register access methods.
 //
-class mby_base_seq extends shdv_base_seq;
+class mby_base_seq extends shdv_base_sequence;
     `uvm_object_utils(mby_base_seq)
+/* PJP: TODO: Update to use uvm_ral.
     `uvm_declare_p_sequencer(slu_sequencer)
 
     slu_status_t status;
     slu_ral_data_t rd_val, wr_val;
     //mby_regs_file mby;
     //sla_ral_env ral;
+*/
 
     //  Constructor: new
     //  New mby_base_seq Object.
@@ -70,6 +72,7 @@ class mby_base_seq extends shdv_base_seq;
     //endfunction
 
 
+/* PJP: TODO: Update to use uvm_ral.
     //---------------------------------------------------------------------------
     // task: csr_write
     //
@@ -184,6 +187,7 @@ class mby_base_seq extends shdv_base_seq;
             end
         end
     endtask
+*/
 
 endclass
 

@@ -24,7 +24,7 @@
 // express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
-//   Author        : Akshay Kotian
+//   Author(s)     : Nathan Mai, Kaleem Sheriff
 //   Project       : Madison Bay
 //------------------------------------------------------------------------------
 
@@ -38,34 +38,41 @@
 
 package mby_rx_ppe_env_pkg;
 
-`ifdef XVM
-   import ovm_pkg::*;
-   import xvm_pkg::*;
-   `include "ovm_macros.svh"
-   `include "sla_macros.svh"
-`endif
-
    import uvm_pkg::*;
-   import sla_pkg::*;
 
    import shdv_base_pkg::*;
-
+   import mby_wm_dpi_pkg::*;
    import mby_common_pkg::*;
    import mby_ec_bfm_pkg::*;
-   import ec_env_pkg::*;
-
 
    `include "uvm_macros.svh"
-   `include "slu_macros.svh"
 
    `define __INSIDE_MBY_RX_PPE_ENV_PKG
 
    `include "mby_rx_ppe_defines.svh"
+   `include "mby_rx_ppe_types.svh"
    `include "mby_rx_ppe_env_cfg.svh"
+   
+   `include "mby_rx_ppe_parser_cfg.svh"
+   `include "mby_rx_ppe_mapper_cfg.svh"
+   `include "mby_rx_ppe_lpm_cfg.svh"
+   `include "mby_rx_ppe_em_a_cfg.svh"
+   `include "mby_rx_ppe_wcm_cfg.svh"
+   `include "mby_rx_ppe_em_b_cfg.svh"
+   `include "mby_rx_ppe_hash_cfg.svh"
+   `include "mby_rx_ppe_policer_cfg.svh"
+   `include "mby_rx_ppe_nexthop_cfg.svh"
+   `include "mby_rx_ppe_maskgen_cfg.svh"
+   `include "mby_rx_ppe_triggers_cfg.svh"   
    `include "mby_rx_ppe_dut_cfg.svh"
+   
    `include "mby_rx_ppe_tb_top_cfg.svh"
-   `include "mby_rx_ppe_ral_env.svh"
+//PJP   `include "mby_rx_ppe_ral_env.svh"
+   //FIXME: There should be one object file per object.  This is a stand-in until the objects are scoped
+   `include "mby_rx_ppe_objects.svh"
+   `include "mby_rx_ppe_sb.svh"
    `include "mby_rx_ppe_env.svh"
+
 
     `undef  __INSIDE_MBY_RX_PPE_ENV_PKG
 

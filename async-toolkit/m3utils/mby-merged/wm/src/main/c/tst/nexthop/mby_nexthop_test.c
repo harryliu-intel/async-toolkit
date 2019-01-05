@@ -6,6 +6,7 @@
 #include <mby_pipeline.h>
 
 #include <mby_top_map.h>
+#include <model_c_write.h> // write_field()
 
 #define COLOR_RED     "\x1b[31m"
 #define COLOR_GREEN   "\x1b[32m"
@@ -38,22 +39,22 @@ static void nexthop_test_setup
 {
     if(test_data_in->glort_routed)
     {
-        FM_SET_FIELD(hashToNextHop->FFU_ROUTE, MBY_FFU_ROUTE, DGLORT, test_data_in->dglort);
+        FM_SET_FIELD(hashToNextHop->FWD, MBY_CGRP_ROUTE, DGLORT, test_data_in->dglort);
     }
     else
     {
         /* Set hashToNextHop. */
-        FM_SET_BIT  (hashToNextHop->FFU_ROUTE, MBY_FFU_ROUTE, ARP_ROUTE, !test_data_in->glort_routed);
-        FM_SET_FIELD(hashToNextHop->FFU_ROUTE, MBY_FFU_ROUTE, ARP_INDEX, test_data_in->arp_index);
-        FM_SET_BIT  (hashToNextHop->FFU_ROUTE, MBY_FFU_ROUTE, GROUP_TYPE, test_data_in->group_type);
-        FM_SET_FIELD(hashToNextHop->FFU_ROUTE, MBY_FFU_ROUTE, GROUP_SIZE, test_data_in->group_size);
+        FM_SET_BIT  (hashToNextHop->FWD, MBY_CGRP_ROUTE, ARP_ROUTE, !test_data_in->glort_routed);
+        FM_SET_FIELD(hashToNextHop->FWD, MBY_CGRP_ROUTE, ARP_INDEX, test_data_in->arp_index);
+        FM_SET_BIT  (hashToNextHop->FWD, MBY_CGRP_ROUTE, GROUP_TYPE, test_data_in->group_type);
+        FM_SET_FIELD(hashToNextHop->FWD, MBY_CGRP_ROUTE, GROUP_SIZE, test_data_in->group_size);
 
         hashToNextHop->ARP_HASH[test_data_in->group_size] = test_data_in->arp_hash;
-        hashToNextHop->RAW_HASH                           = test_data_in->raw_hash;
+        hashToNextHop->ECMP_HASH                           = test_data_in->ecmp_hash;
 
         fm_byte sel_hash = (test_data_in->group_type == 0) ?
                     test_data_in->arp_hash :
-                    ((test_data_in->raw_hash << test_data_in->group_size) >> 12);
+                    ((test_data_in->ecmp_hash << test_data_in->group_size) >> 12);
         fm_uint16 arp_tbl_idx  = (test_data_in->arp_index + sel_hash) & (MBY_ARP_TABLE_ENTRIES - 1);
 
         /* Set registers. */
@@ -139,16 +140,19 @@ static fm_bool nexthop_test_verify
 
     return TRUE;
 }
+
 static void nexthop_run_test(nh_test_data * const test_data)
 {
-    mby_ppe_nexthop_map nexthop_map;
-    mbyHashToNextHop    hashToNextHop = { 0 };
-    mbyNextHopToMaskGen out  = { 0 };
-    fm_bool             pass = FALSE;
+    mby_ppe_nexthop_map       nexthop_map;
+    mby_ppe_nexthop_map__addr nexthop_map_w;
+    mbyHashToNextHop          hashToNextHop = { 0 };
+    mbyNextHopToMaskGen       out  = { 0 };
+    fm_bool                   pass = FALSE;
 
+    mby_ppe_nexthop_map__init(&nexthop_map, &nexthop_map_w, mby_field_init_cb);
     nexthop_test_setup(&nexthop_map, &hashToNextHop, &(test_data->in));
 
-    NextHop(&nexthop_map, &hashToNextHop, &out);
+    NextHop(&nexthop_map, &nexthop_map_w, &hashToNextHop, &out);
 
     pass = nexthop_test_verify(&nexthop_map, &(test_data->in), &out, &(test_data->out));
 

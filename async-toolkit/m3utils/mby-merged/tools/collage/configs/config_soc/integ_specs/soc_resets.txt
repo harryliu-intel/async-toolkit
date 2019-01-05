@@ -57,4 +57,18 @@
 #
 ##################################################################
 
+# also tmp dummy syscon connections
+Ci   /PWRGOOD              mby_syscon/pwrgood_rst_n
+## for each mpp/epc
+//;for {set mppindx 0} {$mppindx<8} {incr mppindx} {
+C    mby_syscon/sreset_n   mby_ec_top_${mppindx}/sreset_n
+C    mby_syscon/hreset_n   mby_ec_top_${mppindx}/hreset_n
+C    mby_syscon/sreset_n   mby_mpp_${mppindx}/sreset
+//;}
+C    mby_syscon/sreset_n   mby_gmn_0/reset_n
+C    mby_syscon/sreset_n   mby_gms_0/reset_n
+C    mby_syscon/sreset_n   mby_msh_0/csreset
+C    mby_syscon/sreset_n   mby_msh_0/msreset
+C    mby_syscon/hreset_n   mby_msh_0/chreset
+C    mby_syscon/hreset_n   mby_msh_0/mhreset
 
