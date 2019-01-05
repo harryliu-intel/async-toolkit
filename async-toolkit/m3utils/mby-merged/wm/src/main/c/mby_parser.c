@@ -93,13 +93,14 @@ static void lookUpPtypeTcam
 void Parser
 (
     mby_ppe_parser_map const * const parser_map,
+    varchar_t             const *       rx_data,
     mbyRxMacToParser   const * const in,
     mbyParserToMapper        * const out
 )
 {
     // Read inputs:
-    fm_byte   const * const rx_data_in = in->RX_DATA;
-    fm_uint32 const         rx_length  = in->RX_LENGTH;
+  fm_byte   const * const rx_data_in = rx_data->data;
+  fm_uint32 const         rx_length  = rx_data->length;
     fm_uint32 const         rx_port    = in->RX_PORT;
 
     // Initialize:
@@ -415,7 +416,5 @@ void Parser
         out->PA_HDR_PTRS.PROT_ID     [i] = pa_prot_id     [i];
     }
 
-    out->RX_DATA            = rx_packet;
     out->RX_PORT            = rx_port;
-    out->RX_LENGTH          = rx_length;
 }

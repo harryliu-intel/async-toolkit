@@ -9,6 +9,7 @@
 
 #include "mby_common.h"
 #include "mby_bitfield.h"
+#include "varchar.h"
 
 // Defines:
 
@@ -611,8 +612,6 @@ typedef struct mbyTxInToModifierStruct
     fm_bool                 PM_ERR;        // ECC error on PM
     fm_bool                 PM_ERR_NONSOP; //
     fm_byte                 QOS_L3_DSCP;   // 6-bit QOS Differentiated Services Code Point (DSCP)
-    fm_byte               * RX_DATA;       // ingress (receive) packet data
-    fm_uint32               RX_LENGTH;     // ingress packet data length [bytes]
     fm_bool                 SAF_ERROR;     // SAF error
     fm_uint64               TAIL_CSUM_LEN; // L4 CSUM related information
     fm_byte               * TX_DATA;       // egress (transmit) packet data
@@ -632,5 +631,15 @@ typedef struct mbyModifierToTxStatsStruct
     fm_uint32               TX_STATS_LENGTH; // egress packet data stats length [bytes]
 
 } mbyModifierToTxStats;
+
+void Modifier
+(
+    mby_ppe_modify_map    const * const mod_map,
+    mby_shm_map           const * const shm_map,
+    varchar_t            const *       rx_data_p,
+    mbyTxInToModifier     const * const in,
+    mbyModifierToTxStats        * const out,
+    fm_int                              max_pkt_size
+);
 
 #endif

@@ -55,8 +55,6 @@ typedef struct mbyTriggersToCongMgmtSruct
     fm_bool                 PM_ERR;                     ///< ECC error on PM
     fm_bool                 PM_ERR_NONSOP;
     fm_byte                 QOS_L3_DSCP;                ///< 6-bit QOS Differentiated Services Code Point (DSCP)
-    fm_byte               * RX_DATA;                    ///< ingress (receive) packet data
-    fm_uint32               RX_LENGTH;                  ///< RX packet length
     fm_uint32               RX_PORT;                    ///< RX port number
     fm_bool                 SAF_ERROR;                  ///< SAF error
     fm_bool                 SEG_META_ERR;               ///< segment error

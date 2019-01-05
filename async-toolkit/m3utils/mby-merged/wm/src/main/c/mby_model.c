@@ -11,6 +11,7 @@
 #include "mby_reg_ctrl.h"
 #include "mby_errors.h"
 #include "mby_init.h"
+#include "varchar.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -137,13 +138,17 @@ fm_status mbySendPacket
     // Input struct:
     mbyRxMacToParser mac2par;
 
+    // RX_DATA:
+    varchar_t rx_data;
+
+    rx_data.data   = packet;
+    rx_data.length = length;
+
     // Populate input:
-    mac2par.RX_DATA   = (fm_byte *) packet;
-    mac2par.RX_LENGTH = (fm_uint32) length;
     mac2par.RX_PORT   = (fm_uint32) port;
 
     // Call RX pipeline:
-    RxPipeline(rx_top_map, rx_top_map_w, shm_map, &mac2par, &rxs2rxo);
+    RxPipeline(rx_top_map, rx_top_map_w, shm_map, &rx_data, &mac2par, &rxs2rxo);
 
     return sts;
 }
@@ -152,6 +157,7 @@ fm_status mbyReceivePacket
 (
     mby_top_map       const * const r,
     mby_top_map__addr const * const w,
+    varchar_t         const *       rx_data,
     fm_uint32                 const max_pkt_size,
     fm_uint32               * const port,
     fm_byte                 * const packet,
@@ -186,8 +192,6 @@ fm_status mbyReceivePacket
     txi2mod.PM_ERR        = rxs2rxo.PM_ERR;
     txi2mod.PM_ERR_NONSOP = rxs2rxo.PM_ERR_NONSOP;
     txi2mod.QOS_L3_DSCP   = rxs2rxo.QOS_L3_DSCP;
-    txi2mod.RX_DATA       = rxs2rxo.RX_DATA;
-    txi2mod.RX_LENGTH     = rxs2rxo.RX_LENGTH;
     txi2mod.SAF_ERROR     = rxs2rxo.SAF_ERROR;
     txi2mod.TAIL_CSUM_LEN = rxs2rxo.TAIL_CSUM_LEN;
     txi2mod.TX_DATA       = packet; // points at provided buffer
@@ -199,7 +203,7 @@ fm_status mbyReceivePacket
     mbyTxStatsToTxMac txs2mac;
 
     // Call RX pipeline:
-    TxPipeline(tx_top_map, tx_top_map_w, shm_map, &txi2mod, &txs2mac, max_pkt_size);
+    TxPipeline(tx_top_map, tx_top_map_w, shm_map, rx_data, &txi2mod, &txs2mac, max_pkt_size);
 
     // Populate output:
     *port   = txs2mac.TX_PORT;

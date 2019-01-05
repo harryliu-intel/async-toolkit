@@ -5,6 +5,7 @@
 #ifndef MBY_PIPELINE_H
 #define MBY_PIPELINE_H
 
+#include "varchar.h"
 #include "mby_common.h"
 #include "mby_parser.h"
 #include "mby_mapper.h"
@@ -25,6 +26,7 @@ void RxPipeline
     mby_ppe_rx_top_map       const * const rx_top_map,
     mby_ppe_rx_top_map__addr const * const rx_top_map_w,
     mby_shm_map              const * const shm_map,
+    varchar_t                const *       rx_data,
     mbyRxMacToParser         const * const mac2par,
     mbyRxStatsToRxOut              * const rxs2rxo
 );
@@ -34,23 +36,10 @@ void TxPipeline
     mby_ppe_tx_top_map       const * const tx_top_map,
     mby_ppe_tx_top_map__addr const * const tx_top_map_w,
     mby_shm_map              const * const shm_map,
+    varchar_t                const *       rx_data,
     mbyTxInToModifier        const * const txi2mod,
     mbyTxStatsToTxMac              * const txs2mac,
     fm_uint32                        const max_pkt_size
-);
-
-void Parser
-(
-    mby_ppe_parser_map    const * const parser_map,
-    mbyRxMacToParser      const * const in,
-    mbyParserToMapper           * const out
-);
-
-void Mapper
-(
-    mby_ppe_mapper_map    const * const mapper_map,
-    mbyParserToMapper     const * const in,
-    mbyMapperToClassifier       * const out
 );
 
 void Classifier
@@ -75,15 +64,6 @@ void NextHop
     mby_ppe_nexthop_map__addr const * const nexthop_w,
     mbyHashToNextHop          const * const in,
     mbyNextHopToMaskGen             * const out
-);
-
-void MaskGen
-(
-    mby_ppe_fwd_misc_map  const * const fwd_misc,
-    mby_ppe_mst_glort_map const * const glort_map,
-    mby_ppe_cm_apply_map  const * const cm_apply,
-    mbyNextHopToMaskGen   const * const in,
-    mbyMaskGenToTriggers        * const out
 );
 
 void Triggers
@@ -113,15 +93,6 @@ void RxStats
     mby_ppe_rx_stats_map__addr const * const stats_map_w,
     mbyCongMgmtToRxStats       const * const in,
     mbyRxStatsToRxOut                * const out
-);
-
-void Modifier
-(
-    mby_ppe_modify_map    const * const mod_map,
-    mby_shm_map           const * const shm_map,
-    mbyTxInToModifier     const * const in,
-    mbyModifierToTxStats        * const out,
-    fm_int                              max_pkt_size
 );
 
 void TxStats

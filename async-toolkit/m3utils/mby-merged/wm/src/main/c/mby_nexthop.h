@@ -10,7 +10,7 @@
 #include "mby_common.h"
 #include "mby_bitfield.h"
 #include "mby_classifier.h" // mbyClassifierFlags
-#include "mby_maskgen.h"
+//#include "mby_maskgen.h"
 
 // Defines:
 
@@ -271,7 +271,6 @@ typedef struct mbyNextHopToMaskGenStruct
     fm_bool            PA_DROP;              ///< checksum validation error, drop pkt in tail proc
     fm_bool            PA_L3LEN_ERR;         ///< l3 length error
     fm_byte            QOS_TC;               ///< 4-bit switch priority
-    fm_uint32          RX_LENGTH;            ///< RX packet length
     fm_bool            RX_MIRROR;            ///< rx mirror frame
     fm_uint32          RX_PORT;              ///< receive port number
     fm_bool            SA_HIT;               ///< source MAC address lookup hit
@@ -312,7 +311,6 @@ typedef struct mbyNextHopToMaskGenStruct
     fm_bool            PM_ERR_NONSOP;        ///<
     fm_uint32          PRE_RESOLVE_DMASK;    ///< destination mask before action resolution
     fm_byte            QOS_L3_DSCP;          ///< 6-bit QOS Differentiated Services Code Point (DSCP):
-    fm_byte          * RX_DATA;              ///< ingress (receive) packet data
     fm_uint64          TAIL_CSUM_LEN;        ///< L4 CSUM related information
     fm_byte            TRAFFIC_CLASS;        ///< traffic class
     fm_byte            TX_TAG;               ///< transmit tag from Classifier

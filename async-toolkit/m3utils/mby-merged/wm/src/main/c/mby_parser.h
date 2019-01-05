@@ -8,6 +8,7 @@
 // Includes:
 
 #include "mby_bitfield.h"
+#include "varchar.h"
 
 // Defines:
 
@@ -121,13 +122,6 @@ typedef enum mbyParserPtrsIndexEnum
 typedef struct mbyRxMacToParserStruct
 {
     fm_uint32        RX_PORT;             ///< Ingress port
-    fm_uint32        RX_LENGTH;           ///< Ingress packet data length [bytes]
-#ifndef SV_BUILD
-    fm_byte        * RX_DATA;             ///< Ingress packet data (pointer to)
-#else
-    fm_byte          RX_DATA[MBY_MAX_DATA_LEN]; ///< Ingress packet data (fixed-size)
-#endif
-
 } mbyRxMacToParser;
 
 typedef struct mbyParserToMapperStruct
@@ -146,13 +140,15 @@ typedef struct mbyParserToMapperStruct
     fm_uint16        PA_PACKET_TYPE;                   ///< Packet type (new for MBY)
     mbyParserHdrPtrs PA_HDR_PTRS;                      ///< Parser header pointers
     fm_uint32        RX_PORT;                          ///< Ingress port
-    fm_uint32        RX_LENGTH;                        ///< Ingress packet data length [bytes]
-#ifndef SV_BUILD
-    fm_byte        * RX_DATA;                          ///< Ingress packet data (pointer to)
-#else
-    fm_byte          RX_DATA[MBY_MAX_DATA_LEN];        ///< Ingress packet data (fixed-size)
-#endif
-
 } mbyParserToMapper;
+
+void Parser
+(
+    mby_ppe_parser_map    const * const parser_map,
+    varchar_t             const *       rx_data,
+    mbyRxMacToParser      const * const in,
+    mbyParserToMapper           * const out
+);
+
 
 #endif

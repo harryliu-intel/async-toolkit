@@ -6,6 +6,7 @@
 #define _MBY_MODEL_H_
 
 #include "mby_common.h"
+#include "varchar.h"
 
 /* Public interfaces exposed by the MBY functional model */
 fm_status mbyResetModel
@@ -63,6 +64,7 @@ fm_status mbyReceivePacket
 (
     mby_top_map       const * const r,
     mby_top_map__addr const * const w,
+    varchar_t         const *       rx_data,
     fm_uint32                 const max_pkt_size,
     fm_uint32               * const port,
     fm_byte                 * const packet,

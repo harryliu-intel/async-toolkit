@@ -3,6 +3,7 @@
 #include <mby_top_map_main.h>
 #include <model_c_write.h> // write_field()
 #include "mby_pipeline.h"
+#include "varchar.h"
 
 // we implement the interface required of us by the model_server
 
@@ -37,11 +38,15 @@ mby_top_map_SendPacket(mby_top_map       const * r,
     // Output struct:
     mbyRxStatsToRxOut rxs2rxo;
 
+    // RX_DATA:
+    varchar_t rx_data;
+
+    rx_data.data   = packet;
+    rx_data.length = length;
+
     // Populate input:
-    mac2par.RX_DATA   = (fm_byte *) packet;
-    mac2par.RX_LENGTH = (fm_uint32) length;
     mac2par.RX_PORT   = (fm_uint32) port;
 
     // Call RX pipeline:
-    RxPipeline(rx_top_map, rx_top_map_w, shm_map, &mac2par, &rxs2rxo);
+    RxPipeline(rx_top_map, rx_top_map_w, shm_map, &rx_data, &mac2par, &rxs2rxo);
 }

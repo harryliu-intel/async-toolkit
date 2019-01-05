@@ -72,9 +72,7 @@ typedef struct mbyClassifierToHashStruct
     fm_bool            PARITY_ERROR;                                ///< parity error detected flag
     fm_bool            PA_DROP;                                     ///< checksum validation error, drop pkt in tail
     fm_bool            PA_L3LEN_ERR;                                ///< l3 length error
-    fm_byte          * RX_DATA;                                     ///< ingress (receive) packet data
     mbyParserHdrPtrs   PA_HDR_PTRS;                                 ///< parser header pointers
-    fm_uint32          RX_LENGTH;                                   ///< ingress packet data length [bytes]
     fm_uint32          RX_PORT;                                     ///< ingress port
     fm_byte            TRAFFIC_CLASS;                               ///< 3-bit traffic class
 } mbyClassifierToHash;

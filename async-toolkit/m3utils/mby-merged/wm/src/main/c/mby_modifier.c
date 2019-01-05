@@ -8,7 +8,7 @@
 
 static void initProfAct
 (
-    mby_shm_map         * const shm_map,
+    mby_shm_map         const * const shm_map,
     fm_uint32                   rx_length,
     fm_uint32                   content_addr,
     mbyModProfileAction * const prof_act
@@ -43,8 +43,8 @@ static void initProfAct
 
 static mbyModProfileGroup getProfileGroup
 (
-    mby_ppe_modify_map * const mod_map,
-    fm_byte                    mod_prof_idx)
+    mby_ppe_modify_map const * const mod_map,
+    fm_byte                          mod_prof_idx)
 {
     mbyModProfileGroup prof_grp;
 
@@ -62,8 +62,8 @@ static mbyModProfileGroup getProfileGroup
 
 static mbyModProfileField getProfileField
 (
-    mby_ppe_modify_map * const mod_map,
-    fm_byte                    mod_prof_idx
+    mby_ppe_modify_map const * const mod_map,
+    fm_byte                          mod_prof_idx
 )
 {
     mbyModProfileField prof_fld;
@@ -83,8 +83,8 @@ static mbyModProfileField getProfileField
 
 static mbyModProfileCmd getProfileCommand
 (
-    mby_ppe_modify_map * const mod_map,
-    fm_byte                    mod_prof_idx
+    mby_ppe_modify_map const * const mod_map,
+    fm_byte                          mod_prof_idx
 )
 {
     mbyModProfileCmd prof_cmd;
@@ -199,8 +199,8 @@ static void decodeCommand
 
 static void lookupProfile
 (
-    mby_ppe_modify_map        * const mod_map,
-    fm_byte                   * const rx_data,
+    mby_ppe_modify_map  const * const mod_map,
+    fm_byte             const * const rx_data,
     mbyParserHdrPtrs    const * const pa_hdr_ptrs,
     fm_byte                           mod_prof_idx,
     mbyModProfileAction       * const prof_act
@@ -366,9 +366,9 @@ static void adjustGrpCtnrOffsets
 
 static void initContainer
 (
-    mbyModProfileAction * const prof_act,
-    fm_byte             * const rx_data,
-    fm_byte             * const grp_ctnr
+    mbyModProfileAction       * const prof_act,
+    fm_byte             const * const rx_data,
+    fm_byte                   * const grp_ctnr
 )
 {
     /* Set all offsets .*/
@@ -500,12 +500,12 @@ static void buildProfileGroupList
 
 static void copyFromTo
 (
-    fm_byte * const from,
-    fm_uint         from_offset,
-    fm_byte * const to,
-    fm_uint         to_offset,
-    fm_byte         bitmask,
-    fm_uint         len
+    fm_byte const * const from,
+    fm_uint               from_offset,
+    fm_byte       * const to,
+    fm_uint               to_offset,
+    fm_byte               bitmask,
+    fm_uint               len
 )
 {
     for (fm_uint i = 0; i < len; i++)
@@ -520,7 +520,7 @@ void updateCtnrIdx(fm_uint * idx, fm_uint delta, fm_uint boundary)
 
 static fm_uint16 lookupModMap
 (
-    mby_ppe_modify_map * const mod_map,
+    mby_ppe_modify_map const * const mod_map,
     fm_byte                    lut,
     mbyModCmdLutMode           lm,
     mbyModFieldVector  * const fld_vector
@@ -887,7 +887,7 @@ static void performInsertField(mbyParserHdrPtrs       * const pa_hdr_ptrs,
             pa_hdr_ptrs->OFFSET[i] += insert_len;
 }
 
-static void performInsertFieldLut(mby_ppe_modify_map     * const mod_map,
+static void performInsertFieldLut(mby_ppe_modify_map     const * const mod_map,
                                   mbyParserHdrPtrs       * const pa_hdr_ptrs,
                                   mbyModCmdInsertFldLut  * const cmd,
                                   mbyModGroupConfig      * const grp_list,
@@ -1101,7 +1101,7 @@ static void performReplaceField(mbyModCmdReplaceFld * const cmd,
     }
 }
 
-static void performReplaceFieldLut(mby_ppe_modify_map     * const mod_map,
+static void performReplaceFieldLut(mby_ppe_modify_map     const * const mod_map,
                                    mbyModCmdReplaceFldLut * const cmd,
                                    mbyModGroupConfig      * const grp,
                                    fm_byte                * const grp_ctnr,
@@ -1142,12 +1142,12 @@ static void performReplaceFieldLut(mby_ppe_modify_map     * const mod_map,
     }
 }
 
-static void performCmds(mby_ppe_modify_map  * const mod_map,
-                        fm_byte             * const rx_data,
-                        mbyModProfileAction * const prof_act,
-                        mbyParserHdrPtrs    * const pa_hdr_ptrs,
-                        fm_byte             * const grp_ctnr,
-                        fm_uint             * const pkt_index)
+static void performCmds(mby_ppe_modify_map  const * const mod_map,
+                        fm_byte             const * const rx_data,
+                        mbyModProfileAction       * const prof_act,
+                        mbyParserHdrPtrs          * const pa_hdr_ptrs,
+                        fm_byte                   * const grp_ctnr,
+                        fm_uint                   * const pkt_index)
 {
     fm_bool deleted = 0;
 
@@ -1216,7 +1216,7 @@ static void performCmds(mby_ppe_modify_map  * const mod_map,
 static fm_uint32 packPacket(mbyModProfileAction * const prof_act,
                             fm_uint32                   rx_length,
                             fm_byte             * const grp_ctnr,
-                            fm_byte             * const rx_data,
+                            fm_byte             const * const rx_data,
                             fm_byte             * const tx_data,
                             fm_uint32                   pkt_index,
                             fm_uint32                   max_pkt_size)
@@ -1245,8 +1245,9 @@ static fm_uint32 packPacket(mbyModProfileAction * const prof_act,
 
 void Modifier
 (
-    mby_ppe_modify_map         * const mod_map,
-    mby_shm_map                * const shm_map,
+    mby_ppe_modify_map   const * const mod_map,
+    mby_shm_map          const * const shm_map,
+    varchar_t            const *       rx_data_p,
     mbyTxInToModifier    const * const in,
     mbyModifierToTxStats       * const out,
     fm_int                             max_pkt_size
@@ -1257,8 +1258,8 @@ void Modifier
     fm_uint32                   fnmask       = in->FNMASK;
     fm_byte                     mod_prof_idx = in->MOD_PROF_IDX;
     mbyParserHdrPtrs            pa_hdr_ptrs  = in->PA_HDR_PTRS;
-    fm_byte             * const rx_data      = in->RX_DATA;
-    fm_uint32                   rx_length    = in->RX_LENGTH;
+    fm_byte       const * const rx_data      = rx_data_p->data;
+    fm_uint32                   rx_length    = rx_data_p->length;
 
     fm_byte                     grp_ctnr[MBY_MOD_CTNR_SIZE];
     fm_uint                     pkt_idx   = 0;

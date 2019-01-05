@@ -251,12 +251,13 @@ void RxStats
 (
     mby_ppe_rx_stats_map       const * const stats_map,
     mby_ppe_rx_stats_map__addr const * const stats_map_w,
+    varchar_t                  const *       rx_data,
     mbyCongMgmtToRxStats       const * const in,
     mbyRxStatsToRxOut                * const out
 )
 {
     // Read inputs:
-    const fm_uint32  rx_length     = in->RX_LENGTH;
+  const fm_uint32  rx_length     = rx_data->length;
     const fm_uint32  rx_port       = in->RX_PORT;
     const fm_bool    is_ipv4       = in->IS_IPV4;
     const fm_bool    is_ipv6       = in->IS_IPV6;
@@ -285,9 +286,6 @@ void RxStats
     // Handle RX VLAN counters:
     handleRxBankVlan(stats_map, stats_map_w, rx_length, action, l2_ivlan1_cnt, is_bcast, is_mcast, is_ucast);
 
-    // Write outputs:
-    out->RX_LENGTH         = rx_length;
-
     // Pass thru:
     out->CONTENT_ADDR      = in->CONTENT_ADDR;
     out->DROP_TTL          = in->DROP_TTL;
@@ -308,7 +306,6 @@ void RxStats
     out->PM_ERR            = in->PM_ERR;
     out->PM_ERR_NONSOP     = in->PM_ERR_NONSOP;
     out->QOS_L3_DSCP       = in->QOS_L3_DSCP;
-    out->RX_DATA           = in->RX_DATA;
     out->SAF_ERROR         = in->SAF_ERROR;
     out->TAIL_CSUM_LEN     = in->TAIL_CSUM_LEN;
     out->TX_DROP           = in->TX_DROP;
