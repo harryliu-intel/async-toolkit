@@ -85,19 +85,22 @@ VCS_SRC  += $(TARGET_SRC)/mby/mgm_run/ppe_stm_tx/src/ppe_stm_tx_mem.def
 
 VCS_FLAGS = -full64 +v2k -sverilog -notice +vcs+lic+wait +warn=noUII-L \
     -timescale=10ps/10ps -debug_pp +libext+.v+.sv+.vh+.svh+.vs+.vm+.sva \
-    -assert svaext +define+VCSSIM+MBY_PARSER_BEHAVE_MEMS+MBY_CLASS_GPA_BEHAVE_MEMS+MBY_CLASS_GPB_BEHAVE_MEMS+MBY_ACTION_BEHAVE_MEMS+MBY_PPE_STM_BEHAVE_MEMS+INTEL_SVA_OFF \
+    -assert svaext +define+VCSSIM+MBY_PARSER_BEHAVE_MEMS+MBY_CLASS_GPA_BEHAVE_MEMS+MBY_CLASS_GPB_BEHAVE_MEMS+MBY_ACTION_BEHAVE_MEMS+MBY_PPE_STM_RX_BEHAVE_MEMS+MBY_PPE_STM_TX_BEHAVE_MEMS+INTEL_SVA_OFF \
     -Mdir=$(SIM_DIR)/csrc -o $(SIM_DIR)/$@
 
-default: ppe_stm
+default: ppe_stm_rx
 
-.PHONY: rx_ppe ppe_stm clean
+.PHONY: rx_ppe ppe_stm_rx ppe_stm_tx clean
 
 rx_ppe: $(SIM_DIR)
 	@vcs $(VCS_FLAGS) $(VCS_LIB) $(VCS_INC) $(VCS_SRC) $(DV_SRC)/rx_ppe_tb.sv | tee $(SIM_DIR)/rx_ppe.log
 
-ppe_stm: $(SIM_DIR)
-	@vcs $(VCS_FLAGS) $(VCS_LIB) $(VCS_INC) $(VCS_SRC) $(DV_SRC)/ppe_stm_tb.sv | tee $(SIM_DIR)/ppe_stm.log
+ppe_stm_rx: $(SIM_DIR)
+	@vcs $(VCS_FLAGS) $(VCS_LIB) $(VCS_INC) $(VCS_SRC) $(DV_SRC)/ppe_stm_rx_tb.sv | tee $(SIM_DIR)/ppe_stm_rx.log
+
+ppe_stm_tx: $(SIM_DIR)
+	@vcs $(VCS_FLAGS) $(VCS_LIB) $(VCS_INC) $(VCS_SRC) $(DV_SRC)/ppe_stm_tx_tb.sv | tee $(SIM_DIR)/ppe_stm_tx.log
 
 clean:
-	rm -rf $(SIM_DIR)/csrc $(SIM_DIR)/*.daidir $(SIM_DIR)/*.vdb $(SIM_DIR)/ppe_stm $(SIM_DIR)/*.log $(SIM_DIR)/*.vpd $(SIM_DIR)/DVEfiles $(SIM_DIR)/vc_hdrs.h $(SIM_DIR)/ucli.key $(SIM_DIR)/rx_ppe
+	rm -rf $(SIM_DIR)/csrc $(SIM_DIR)/*.daidir $(SIM_DIR)/*.vdb $(SIM_DIR)/ppe_stm_rx $(SIM_DIR)/ppe_stm_tx $(SIM_DIR)/*.log $(SIM_DIR)/*.vpd $(SIM_DIR)/DVEfiles $(SIM_DIR)/vc_hdrs.h $(SIM_DIR)/ucli.key $(SIM_DIR)/rx_ppe
 
