@@ -94,12 +94,11 @@ int main(int argc, char *argv[])
 #endif
 
   /********** Test send/receive traffic ***********/
-  // TODO uncomment these
-  //err = test_pkts();
-  //if (err)
-  //  goto CLEANUP;
+  err = test_pkts();
+  if (err)
+    goto CLEANUP;
 
- CLEANUP:
+CLEANUP:
   /********** Disconnect (or stop) from the server ***********/
   err = server_type ? wm_server_stop() : wm_disconnect();
   if (err)
