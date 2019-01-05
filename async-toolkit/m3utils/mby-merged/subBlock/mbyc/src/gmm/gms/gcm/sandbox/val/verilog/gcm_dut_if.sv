@@ -38,6 +38,7 @@
 
 interface gcm_dut_if
     import mby_gmm_pkg::*;
+    import shared_pkg::*;
     import mby_gms_pkg::*;
 (
     input cclk
@@ -61,18 +62,19 @@ interface gcm_dut_if
     //logic               o_pod_ring_stall_right;
 
 
-   mby_tag_ring_to_gcm_t       i_tag_to_gcm [MBY_MAX_NUM_MGP-1:0][1:0] ;
-   mby_unicast_deque_t         i_mby_deque_from_egr [MBY_MAX_NUM_MGP-1:0][1:0] ;
-   mby_unicast_deque_t         i_mby_deque_from_vp;
-   mc_mirror_deque_from_mce_t  i_mce_mc_mirror_dequeue [15:0]; 
-   mby_cm_rx_wm_t              o_rx_cm_wm_out_left;
-   mby_cm_rx_wm_t              o_rx_cm_wm_out_right;
-   mby_cm_tx_wm_t              o_tx_cm_wm_out_left;
-   mby_cm_tx_wm_t              o_tx_cm_wm_out_right;
-   mby_cm_shared_mem_rx_wm_t   o_rx_cm_sm_wm_out_left;
-   mby_cm_shared_mem_rx_wm_t   o_rx_cm_sm_wm_out_right;
-   mby_cm_shared_mem_tx_wm_t   o_tx_cm_sm_wm_out_left;
-   mby_cm_shared_mem_tx_wm_t   o_tx_cm_sm_wm_out_right;
+   mby_gcm_ring_t               i_tag_to_gcm            [MBY_MAX_NUM_MGP-1:0][1:0] ;
+   logic                        i_mgp_enabled           [MBY_MAX_NUM_MGP-1:0] ;
+   mby_unicast_deque_t          i_mby_deque_from_egr    [MBY_MAX_NUM_MGP-1:0][1:0] ;
+   mby_unicast_deque_t          i_mby_deque_from_vp;
+   mc_mirror_deque_from_mce_t   i_mce_mc_mirror_dequeue [15:0]; 
+   mby_cm_rx_wm_t               o_rx_cm_wm_out_left;
+   mby_cm_rx_wm_t               o_rx_cm_wm_out_right;
+   mby_cm_tx_wm_t               o_tx_cm_wm_out_left;
+   mby_cm_tx_wm_t               o_tx_cm_wm_out_right;
+   mby_cm_shared_mem_rx_wm_t    o_rx_cm_sm_wm_out_left;
+   mby_cm_shared_mem_rx_wm_t    o_rx_cm_sm_wm_out_right;
+   mby_cm_shared_mem_tx_wm_t    o_tx_cm_sm_wm_out_left;
+   mby_cm_shared_mem_tx_wm_t    o_tx_cm_sm_wm_out_right;
 
 
 endinterface : gcm_dut_if
