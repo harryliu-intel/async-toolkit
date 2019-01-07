@@ -35,22 +35,22 @@
 
 /** Error codes returned by the client APIs */
 enum wm_error {
-	/** Operation completed correctly */
-	WM_OK = 0,
-	/** No egress frame is available */
-	WM_NO_DATA = 1,
-	/** Input argument is invalid */
-	WM_ERR_INVALID_ARG,
-	/** Network error when communicating with WM */
-	WM_ERR_NETWORK,
-	/** Timeout while waiting for data from WM */
-	WM_ERR_TIMEOUT,
-	/** Resource is not available */
-	WM_ERR_NO_RESOURCE,
-	/** Invalid response received from WM */
-	WM_ERR_INVALID_RESPONSE,
-	/** General runtime error */
-	WM_ERR_RUNTIME
+    /** Operation completed correctly */
+    WM_OK = 0,
+    /** No egress frame is available */
+    WM_NO_DATA = 1,
+    /** Input argument is invalid */
+    WM_ERR_INVALID_ARG,
+    /** Network error when communicating with WM */
+    WM_ERR_NETWORK,
+    /** Timeout while waiting for data from WM */
+    WM_ERR_TIMEOUT,
+    /** Resource is not available */
+    WM_ERR_NO_RESOURCE,
+    /** Invalid response received from WM */
+    WM_ERR_INVALID_RESPONSE,
+    /** General runtime error */
+    WM_ERR_RUNTIME
 };
 
 int wm_server_start(char const * const cmd);
@@ -66,9 +66,9 @@ int wm_reg_read(const uint32_t addr, uint64_t *val);
 
 /* The pkt tx/rx from the WM */
 struct wm_pkt {
-	uint8_t data[MAX_PKT_LEN];
-	uint32_t len;
-	uint16_t port;
+    uint8_t data[MAX_PKT_LEN];
+    uint32_t len;
+    uint16_t port;
 };
 
 int wm_pkt_push(const struct wm_pkt *pkt);

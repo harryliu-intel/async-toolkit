@@ -110,115 +110,115 @@ static int wm_read_data(int socket, uint8_t *data, uint32_t data_len,
  *
  * @param[in]   type is a string with the type of server: "scala" or "m3"
  *
- * @retval              WM_OK if successful
+ * @retval      WM_OK if successful
  */
 int wm_server_start(char const * const type)
 {
-  char cmd[MAX_BUF], jar_path[MAX_BUF];
-  char *m3_exec_args[] = {cmd, "-n", "-m", "mby", /* Select the MBY model */
-                          "-ip", NULL, /* Path of models.packetServer */
-                          "-if", NULL, /* Actual name of the file */
-                          NULL};
-  char *scala_exec_args[] = {cmd, "-jar", jar_path,
-                             "--ip", NULL, /* Path of models.packetServer */
-                             "--if", NULL, /* Actual name of the file */
-                             NULL};
-  const int max_retries = 30;
-  char server_if[TMP_FILE_LEN];
-  char server_ip[TMP_FILE_LEN];
-  char *model_root;
-  int use_m3 = 0;
-  pid_t pid;
-  int i = 0;
-  int file;
-  FILE *fd;
-  int err;
+    char cmd[MAX_BUF], jar_path[MAX_BUF];
+    char *m3_exec_args[] = {cmd, "-n", "-m", "mby", /* Select the MBY model */
+        "-ip", NULL, /* Path of models.packetServer */
+        "-if", NULL, /* Actual name of the file */
+        NULL};
+    char *scala_exec_args[] = {cmd, "-jar", jar_path,
+        "--ip", NULL, /* Path of models.packetServer */
+        "--if", NULL, /* Actual name of the file */
+        NULL};
+    const int max_retries = 30;
+    char server_if[TMP_FILE_LEN];
+    char server_ip[TMP_FILE_LEN];
+    char *model_root;
+    int use_m3 = 0;
+    pid_t pid;
+    int i = 0;
+    int file;
+    FILE *fd;
+    int err;
 
-  /* Mandatory env variable set by NHDK */
-  model_root = getenv("MODEL_ROOT");
-  if (!model_root) {
-    LOG_ERROR("Env variable MODEL_ROOT is not set\n");
-    return WM_ERR_INVALID_ARG;
-  }
-
-  if (!type) {
-    LOG_ERROR("Server path string cannot be NULL\n");
-    return WM_ERR_INVALID_ARG;
-  }
-
-  /* TODO refactor this code now that m3 has become POR */
-  if (!strcasecmp(type, "scala")) {
-    /* For scala I need to retrieve the java exec path */
-    fd = popen("ToolConfig.pl get_tool_exec java", "r");
-    if (!fd) {
-      LOG_ERROR("Cannot get path of Java binaries\n");
-      return WM_ERR_RUNTIME;
+    /* Mandatory env variable set by NHDK */
+    model_root = getenv("MODEL_ROOT");
+    if (!model_root) {
+        LOG_ERROR("Env variable MODEL_ROOT is not set\n");
+        return WM_ERR_INVALID_ARG;
     }
-    if (!fgets(cmd, sizeof(cmd), fd)) {
-      LOG_INFO("Workaround: try default java %s\n", DEFAULT_JAVA);
-      strcpy(cmd, DEFAULT_JAVA);
+
+    if (!type) {
+        LOG_ERROR("Server path string cannot be NULL\n");
+        return WM_ERR_INVALID_ARG;
     }
-    pclose(fd);
-    cmd[strlen(cmd) - 1] = '\0';
-    snprintf(jar_path, MAX_BUF, "%s/%s", model_root, SCALA_SERVER_PATH);
-  } else if (!strcasecmp(type, "m3")) {
-    use_m3 = 1;
-    snprintf(cmd, MAX_BUF,  "%s/%s", model_root, M3_SERVER_PATH);
-  } else {
-    LOG_ERROR("Invalid type of server: %s\n", type);
-    return WM_ERR_INVALID_ARG;
-  }
 
-  /* Generate a temporary file name and extract directory name (infopath)
-   * and file name (infoname). Note that the functions are destructive so
-   * we need to make copies of the strings */
-  strcpy(server_tmpfile, TMP_FILE_TEMPLATE);
-  file = mkstemp(server_tmpfile);
-  close(file);
-  LOG_INFO("Using temporary file: %s\n", server_tmpfile);
-
-  pid = fork();
-  if (pid == 0) {
-    /* Child process: start m3/scala model_server */
-    strcpy(server_if, server_tmpfile);
-    strcpy(server_ip, server_tmpfile);
-
-    /* The assumption that we have a full exec path */
-    if (use_m3) {
-      m3_exec_args[5] = dirname(server_ip);
-      m3_exec_args[7] = basename(server_if);
-      execve(m3_exec_args[0], m3_exec_args, environ);
+    /* TODO refactor this code now that m3 has become POR */
+    if (!strcasecmp(type, "scala")) {
+        /* For scala I need to retrieve the java exec path */
+        fd = popen("ToolConfig.pl get_tool_exec java", "r");
+        if (!fd) {
+            LOG_ERROR("Cannot get path of Java binaries\n");
+            return WM_ERR_RUNTIME;
+        }
+        if (!fgets(cmd, sizeof(cmd), fd)) {
+            LOG_INFO("Workaround: try default java %s\n", DEFAULT_JAVA);
+            strcpy(cmd, DEFAULT_JAVA);
+        }
+        pclose(fd);
+        cmd[strlen(cmd) - 1] = '\0';
+        snprintf(jar_path, MAX_BUF, "%s/%s", model_root, SCALA_SERVER_PATH);
+    } else if (!strcasecmp(type, "m3")) {
+        use_m3 = 1;
+        snprintf(cmd, MAX_BUF,  "%s/%s", model_root, M3_SERVER_PATH);
     } else {
-      scala_exec_args[4] = dirname(server_ip);
-      scala_exec_args[6] = basename(server_if);
-      execve(scala_exec_args[0], scala_exec_args, environ);
+        LOG_ERROR("Invalid type of server: %s\n", type);
+        return WM_ERR_INVALID_ARG;
     }
-    LOG_ERROR("Could not start %s server: %s - error: %s\n",
-              use_m3 ? "m3" : "Scala", cmd, strerror(errno));
-    exit(1);
-  } else if (pid > 0) {
-    /* Parent process: wait 5sec then if child is alive try to connect */
-    sleep(5);
-    waitpid(pid, &err, WNOHANG);
-    if (WIFEXITED(err)) {
-      LOG_ERROR("Server failed to start: pid %d has exited\n", pid);
-      return WM_ERR_RUNTIME;
-    }
-    do {
-      sleep(1);
-      err = wm_connect(server_tmpfile);
-      ++i;
-    } while (err == WM_ERR_TIMEOUT && i < max_retries);
-    if (err) {
-      LOG_ERROR("Could not connect to the model_server\n");
-      return err;
-    }
-  } else {
-    LOG_ERROR("Could not start model_server: fork() failed\n");
-    return WM_ERR_RUNTIME;
-  }
 
-  return WM_OK;
+    /* Generate a temporary file name and extract directory name (infopath)
+     * and file name (infoname). Note that the functions are destructive so
+     * we need to make copies of the strings */
+    strcpy(server_tmpfile, TMP_FILE_TEMPLATE);
+    file = mkstemp(server_tmpfile);
+    close(file);
+    LOG_INFO("Using temporary file: %s\n", server_tmpfile);
+
+    pid = fork();
+    if (pid == 0) {
+        /* Child process: start m3/scala model_server */
+        strcpy(server_if, server_tmpfile);
+        strcpy(server_ip, server_tmpfile);
+
+        /* The assumption that we have a full exec path */
+        if (use_m3) {
+            m3_exec_args[5] = dirname(server_ip);
+            m3_exec_args[7] = basename(server_if);
+            execve(m3_exec_args[0], m3_exec_args, environ);
+        } else {
+            scala_exec_args[4] = dirname(server_ip);
+            scala_exec_args[6] = basename(server_if);
+            execve(scala_exec_args[0], scala_exec_args, environ);
+        }
+        LOG_ERROR("Could not start %s server: %s - error: %s\n",
+                  use_m3 ? "m3" : "Scala", cmd, strerror(errno));
+        exit(1);
+    } else if (pid > 0) {
+        /* Parent process: wait 5sec then if child is alive try to connect */
+        sleep(5);
+        waitpid(pid, &err, WNOHANG);
+        if (WIFEXITED(err)) {
+            LOG_ERROR("Server failed to start: pid %d has exited\n", pid);
+            return WM_ERR_RUNTIME;
+        }
+        do {
+            sleep(1);
+            err = wm_connect(server_tmpfile);
+            ++i;
+        } while (err == WM_ERR_TIMEOUT && i < max_retries);
+        if (err) {
+            LOG_ERROR("Could not connect to the model_server\n");
+            return err;
+        }
+    } else {
+        LOG_ERROR("Could not start model_server: fork() failed\n");
+        return WM_ERR_RUNTIME;
+    }
+
+    return WM_OK;
 }
 
 /**
@@ -232,21 +232,21 @@ int wm_server_start(char const * const type)
  */
 int wm_server_stop(void)
 {
-  int err;
+    int err;
 
-  /* Send an empty message */
-  err = wm_send(wm_server_fd, NULL, 0, MODEL_MSG_COMMAND_QUIT, 0);
-  if (err)
-    LOG_ERROR("Error while sending shutdown request to server: %d\n", err);
-
-  if (strcmp(server_tmpfile, "")) {
-    err = remove(server_tmpfile);
+    /* Send an empty message */
+    err = wm_send(wm_server_fd, NULL, 0, MODEL_MSG_COMMAND_QUIT, 0);
     if (err)
-      LOG_ERROR("Could not delete temp file %s\n", server_tmpfile);
-  }
+        LOG_ERROR("Error while sending shutdown request to server: %d\n", err);
 
-  err = wm_disconnect();
-  return err;
+    if (strcmp(server_tmpfile, "")) {
+        err = remove(server_tmpfile);
+        if (err)
+            LOG_ERROR("Could not delete temp file %s\n", server_tmpfile);
+    }
+
+    err = wm_disconnect();
+    return err;
 }
 
 /**
@@ -255,68 +255,68 @@ int wm_server_stop(void)
  * Connects to a model server that is already running in a separate session.
  *
  * @param[in]   server_file path of the file created when the model_server is
- *                              started. If NULL, the env variable "SBIOSF_SERVER" is used.
+ *              started. If NULL, the env variable "SBIOSF_SERVER" is used.
  *
  * @retval      WM_OK if successful.
  */
 int wm_connect(char const * const server_file)
 {
-  const char *filename;
-  char serv_addr[256];
-  char serv_port[256];
-  struct stat sb;
-  FILE *fd;
-  int err;
-  int i;
+    const char *filename;
+    char serv_addr[256];
+    char serv_port[256];
+    struct stat sb;
+    FILE *fd;
+    int err;
+    int i;
 
-  if (server_file) {
-    filename = server_file;
-  } else {
-    filename = getenv("SBIOSF_SERVER");
-    if (!filename) {
-      LOG_ERROR("server_file is NULL and SBIOSF_SERVER env var is not set\n");
-      return WM_ERR_INVALID_ARG;
+    if (server_file) {
+        filename = server_file;
+    } else {
+        filename = getenv("SBIOSF_SERVER");
+        if (!filename) {
+            LOG_ERROR("server_file is NULL and SBIOSF_SERVER env var is not set\n");
+            return WM_ERR_INVALID_ARG;
+        }
     }
-  }
 
-  if ((stat(filename, &sb) == 0) && !S_ISREG(sb.st_mode)) {
-    LOG_ERROR("Server path is not a valid file %s\n", filename);
-    return WM_ERR_INVALID_ARG;
-  }
+    if ((stat(filename, &sb) == 0) && !S_ISREG(sb.st_mode)) {
+        LOG_ERROR("Server path is not a valid file %s\n", filename);
+        return WM_ERR_INVALID_ARG;
+    }
 
-  fd = fopen(filename, "r");
-  if (!fd) {
-    LOG_ERROR("Unable to open file %s\n", filename);
-    return WM_ERR_INVALID_ARG;
-  }
+    fd = fopen(filename, "r");
+    if (!fd) {
+        LOG_ERROR("Unable to open file %s\n", filename);
+        return WM_ERR_INVALID_ARG;
+    }
 
-  bzero(serv_addr, sizeof(serv_addr));
-  bzero(serv_port, sizeof(serv_port));
-  err = read_host_info(fd, serv_addr, serv_port);
-  fclose(fd);
-  if (err) {
-    LOG_ERROR("Unable to get server connection info\n");
-    return err;
-  }
+    bzero(serv_addr, sizeof(serv_addr));
+    bzero(serv_port, sizeof(serv_port));
+    err = read_host_info(fd, serv_addr, serv_port);
+    fclose(fd);
+    if (err) {
+        LOG_ERROR("Unable to get server connection info\n");
+        return err;
+    }
 
-  err = connect_server(serv_addr, serv_port, &wm_server_fd);
-  if (err)
-    return err;
-
-  err = create_client_socket(&wm_client_fd, &wm_client_port);
-  if (err)
-    return err;
-
-  wm_egress_fd = -1;
-
-  for (i = 0; i < NUM_PORTS; ++i) {
-    err = connect_egress(i, wm_server_fd, wm_client_fd, wm_client_port,
-                         &wm_egress_fd);
+    err = connect_server(serv_addr, serv_port, &wm_server_fd);
     if (err)
-      return err;
-  }
+        return err;
 
-  return WM_OK;
+    err = create_client_socket(&wm_client_fd, &wm_client_port);
+    if (err)
+        return err;
+
+    wm_egress_fd = -1;
+
+    for (i = 0; i < NUM_PORTS; ++i) {
+        err = connect_egress(i, wm_server_fd, wm_client_fd, wm_client_port,
+                             &wm_egress_fd);
+        if (err)
+            return err;
+    }
+
+    return WM_OK;
 }
 
 /**
@@ -328,10 +328,10 @@ int wm_connect(char const * const server_file)
  */
 int wm_disconnect(void)
 {
-  close(wm_client_fd);
-  close(wm_egress_fd);
-  close(wm_server_fd);
-  return WM_OK;
+    close(wm_client_fd);
+    close(wm_egress_fd);
+    close(wm_server_fd);
+    return WM_OK;
 }
 
 /**
@@ -341,36 +341,36 @@ int wm_disconnect(void)
  *
  * @param[in]   addr address of the register.
  * @param[out]  val pointer to caller-allocated memory to store the result.
- * @retval              WM_OK if successful
+ * @retval      WM_OK if successful
  */
 int wm_reg_read(const uint32_t addr, uint64_t *val)
 {
-  uint32_t iosf_msg[512];
-  uint32_t iosf_len;
-  unsigned char be;
-  int err;
+    uint32_t iosf_msg[512];
+    uint32_t iosf_len;
+    unsigned char be;
+    int err;
 
-  if (!val)
-    return WM_ERR_INVALID_ARG;
+    if (!val)
+        return WM_ERR_INVALID_ARG;
 
-  /* See SB-IOSF specs for details on the message format */
-  be = addr & 0x7 ? 0xf : 0xff;
-  iosf_msg[0] = 0x40000001;
-  iosf_msg[1] = 0x00000000;
-  iosf_msg[2] = ((addr & 0xffff) << 16) | be;
-  iosf_msg[3] = addr >> 16;
-  iosf_len = 16;
+    /* See SB-IOSF specs for details on the message format */
+    be = addr & 0x7 ? 0xf : 0xff;
+    iosf_msg[0] = 0x40000001;
+    iosf_msg[1] = 0x00000000;
+    iosf_msg[2] = ((addr & 0xffff) << 16) | be;
+    iosf_msg[3] = addr >> 16;
+    iosf_len = 16;
 
-  err = iosf_send_receive((uint8_t *)iosf_msg, iosf_len,
-                          (uint8_t *)iosf_msg, &iosf_len);
-  if (err) {
-    LOG_ERROR("Error with iosf message tx/rx: %d\n", err);
-    return err;
-  }
+    err = iosf_send_receive((uint8_t *)iosf_msg, iosf_len,
+                            (uint8_t *)iosf_msg, &iosf_len);
+    if (err) {
+        LOG_ERROR("Error with iosf message tx/rx: %d\n", err);
+        return err;
+    }
 
-  *val = iosf_msg[3];
-  *val = (*val << 32) | iosf_msg[2];
-  return WM_OK;
+    *val = iosf_msg[3];
+    *val = (*val << 32) | iosf_msg[2];
+    return WM_OK;
 }
 
 
@@ -381,32 +381,32 @@ int wm_reg_read(const uint32_t addr, uint64_t *val)
  *
  * @param[in]   addr address of the register.
  * @param[in]   val is the value to be written.
- * @retval              WM_OK if successful
+ * @retval      WM_OK if successful
  */
 int wm_reg_write(const uint32_t addr, const uint64_t val)
 {
-  uint32_t iosf_msg[512];
-  uint32_t iosf_len;
-  int err;
+    uint32_t iosf_msg[512];
+    uint32_t iosf_len;
+    int err;
 
-  /* See SB-IOSF specs for details on the message format
-   * FIXME that we are using bulk write here since the m3 model_server
-   * has some issue with single register operations */
-  iosf_msg[0] = 0x40110001;
-  iosf_msg[1] = 0x00000000;
-  iosf_msg[2] = ((addr & 0xffff) << 16) | 2;
-  iosf_msg[3] = addr >> 16;
-  iosf_msg[4] = val & 0xffffffff;
-  iosf_msg[5] = val >> 32;
-  iosf_len = 24;
+    /* See SB-IOSF specs for details on the message format
+     * FIXME that we are using bulk write here since the m3 model_server
+     * has some issue with single register operations */
+    iosf_msg[0] = 0x40110001;
+    iosf_msg[1] = 0x00000000;
+    iosf_msg[2] = ((addr & 0xffff) << 16) | 2;
+    iosf_msg[3] = addr >> 16;
+    iosf_msg[4] = val & 0xffffffff;
+    iosf_msg[5] = val >> 32;
+    iosf_len = 24;
 
-  err = iosf_send_receive((uint8_t *)iosf_msg, iosf_len,
-                          (uint8_t *)iosf_msg, &iosf_len);
+    err = iosf_send_receive((uint8_t *)iosf_msg, iosf_len,
+                            (uint8_t *)iosf_msg, &iosf_len);
 
-  if (err)
-    LOG_ERROR("Error with iosf message tx/rx: %d\n", err);
+    if (err)
+        LOG_ERROR("Error with iosf message tx/rx: %d\n", err);
 
-  return err;
+    return err;
 }
 
 
@@ -418,64 +418,64 @@ int wm_reg_write(const uint32_t addr, const uint64_t val)
  * \TODO check if this is the desired behavior.
  *
  * @param[in]   pkt is the frame that will be injected in the WM
- * @retval              WM_OK if successful
+ * @retval      WM_OK if successful
  */
 int wm_pkt_push(const struct wm_pkt *pkt)
 {
-  uint8_t msg[MAX_MSG_LEN];
-  uint32_t msg_len;
-  int off = 0;
-  int err;
+    uint8_t msg[MAX_MSG_LEN];
+    uint32_t msg_len;
+    int off = 0;
+    int err;
 
-  if (!pkt) {
-    LOG_ERROR("Input pointer to pkt is NULL\n");
-    return WM_ERR_INVALID_ARG;
-  }
+    if (!pkt) {
+        LOG_ERROR("Input pointer to pkt is NULL\n");
+        return WM_ERR_INVALID_ARG;
+    }
 
-  LOG_DEBUG("Pushing packet len=%d\n", pkt->len);
-  LOG_HEX_DUMP(pkt->data, pkt->len, 0);
-  /* First TLV is the meta-data. For now I will assume this is a frame
-   * entering HLP from RMN. TODO this will need to be removed/updated
-   */
-  msg[off] = WM_DATA_TYPE_META;
-  off += WM_DATA_TYPE_SIZE;
-  *((uint32_t *)&msg[off]) = htonl(RIMMON_META_SIZE);
-  off += WM_DATA_LENGTH_SIZE;
-  msg[off++] = 0x18;
-  msg[off++] = 0xa1;
-  msg[off++] = 0xb2;
-  msg[off++] = 0xc3;
-  msg[off++] = 0xd4;
-  msg[off++] = 0xe5;
-  msg[off++] = 0xf6;
-  msg[off++] = 0x07;
+    LOG_DEBUG("Pushing packet len=%d\n", pkt->len);
+    LOG_HEX_DUMP(pkt->data, pkt->len, 0);
+    /* First TLV is the meta-data. For now I will assume this is a frame
+     * entering HLP from RMN. TODO this will need to be removed/updated
+     */
+    msg[off] = WM_DATA_TYPE_META;
+    off += WM_DATA_TYPE_SIZE;
+    *((uint32_t *)&msg[off]) = htonl(RIMMON_META_SIZE);
+    off += WM_DATA_LENGTH_SIZE;
+    msg[off++] = 0x18;
+    msg[off++] = 0xa1;
+    msg[off++] = 0xb2;
+    msg[off++] = 0xc3;
+    msg[off++] = 0xd4;
+    msg[off++] = 0xe5;
+    msg[off++] = 0xf6;
+    msg[off++] = 0x07;
 
-  /* Second TLV is the actual packet payload */
-  msg[off] = WM_DATA_TYPE_PACKET;
-  off += WM_DATA_TYPE_SIZE;
-  *((uint32_t *)&msg[off]) = htonl(pkt->len);
-  off += WM_DATA_LENGTH_SIZE;
-  msg_len = off + pkt->len;
+    /* Second TLV is the actual packet payload */
+    msg[off] = WM_DATA_TYPE_PACKET;
+    off += WM_DATA_TYPE_SIZE;
+    *((uint32_t *)&msg[off]) = htonl(pkt->len);
+    off += WM_DATA_LENGTH_SIZE;
+    msg_len = off + pkt->len;
 
-  if (msg_len > MAX_MSG_LEN) {
-    LOG_ERROR("Pkt meta-data + data length (%d + %u) exceeds max of %d\n", off, pkt->len, MAX_MSG_LEN);
-    return WM_ERR_INVALID_ARG;
-  }
+    if (msg_len > MAX_MSG_LEN) {
+        LOG_ERROR("Pkt meta-data + data length (%d + %u) exceeds max of %d\n", off, pkt->len, MAX_MSG_LEN);
+        return WM_ERR_INVALID_ARG;
+    }
 
-  memcpy(msg + off, pkt->data, pkt->len);
+    memcpy(msg + off, pkt->data, pkt->len);
 
 #if 1
-  LOG_INFO("wm_pkt_push msg 0x%p pkt->len %u off %d msg_len %u\n",
-         msg, pkt->len, off, msg_len);
-  LOG_HEX_DUMP(msg, msg_len, 1);
+    LOG_INFO("wm_pkt_push msg 0x%p pkt->len %u off %d msg_len %u\n",
+             msg, pkt->len, off, msg_len);
+    LOG_HEX_DUMP(msg, msg_len, 1);
 #endif
 
-  err = wm_send(wm_server_fd, msg, msg_len, MODEL_MSG_PACKET, pkt->port);
-  if (err) {
-    LOG_ERROR("Could not send data to WM: %d\n", err);
-  }
+    err = wm_send(wm_server_fd, msg, msg_len, MODEL_MSG_PACKET, pkt->port);
+    if (err) {
+        LOG_ERROR("Could not send data to WM: %d\n", err);
+    }
 
-  return err;
+    return err;
 }
 
 /* Receive a frame from the WM.
@@ -484,65 +484,74 @@ int wm_pkt_push(const struct wm_pkt *pkt)
  * In case no frames are available, WM_NO_DATA is returned.
  *
  * @param[out]  pkt is a pointer to caller-allocated storage that will contain
- *                              the frame received from the model
- * @retval              WM_OK if successful
- * @retval              WM_NO_DATA if there are no egress frames on any of the ports.
+ *              the frame received from the model
+ * @retval      WM_OK if successful
+ * @retval      WM_NO_DATA if there are no egress frames on any of the ports.
  */
 int wm_pkt_get(struct wm_pkt *pkt)
 {
-  uint8_t msg[MAX_MSG_LEN];
-  uint32_t msg_len;
-  uint16_t type;
-  int err;
+    uint8_t msg[MAX_MSG_LEN];
+    uint32_t msg_len;
+    uint16_t type;
+    int err;
 
-  if (wm_egress_fd == -1) {
-    LOG_ERROR("Socket not initialized, call wm_connect()\n");
-    return WM_ERR_RUNTIME;
-  }
+    if (wm_egress_fd == -1) {
+        LOG_ERROR("Socket not initialized, call wm_connect()\n");
+        return WM_ERR_RUNTIME;
+    }
 
-  if (!pkt) {
-    LOG_ERROR("Input pointer to pkt is NULL\n");
-    return WM_ERR_INVALID_ARG;
-  }
+    if (!pkt) {
+        LOG_ERROR("Input pointer to pkt is NULL\n");
+        return WM_ERR_INVALID_ARG;
+    }
 
-  err = wm_receive(wm_egress_fd, msg, &msg_len, &type, &(pkt->port));
-  if (err)
-    return err;
+    err = wm_receive(wm_egress_fd, msg, &msg_len, &type, &(pkt->port));
+    if (err)
+        return err;
 
-  if (type == MODEL_MSG_PACKET_EOT) {
-    LOG_DEBUG("Received EOT packet\n");
-    pkt->len = 0;
-    pkt->port = -1;
-    return WM_NO_DATA;
-  }
+    if (type == MODEL_MSG_PACKET_EOT) {
+        LOG_DEBUG("Received EOT packet\n");
+        pkt->len = 0;
+        pkt->port = -1;
+        return WM_NO_DATA;
+    }
 
-  if (type != MODEL_MSG_PACKET) {
-    LOG_ERROR("Received unexpected message types %d\n", type);
-    return WM_ERR_RUNTIME;
-  }
+    if (type != MODEL_MSG_PACKET) {
+        LOG_ERROR("Received unexpected message types %d\n", type);
+        return WM_ERR_RUNTIME;
+    }
 
-  /* TODO do we need to support PACKET_META? */
-  if (msg[0] != WM_DATA_TYPE_PACKET) {
-    LOG_ERROR("Unsupported data type %d\n", msg[0]);
-    return WM_ERR_RUNTIME;
-  }
+    /* TODO do we need to support PACKET_META? */
+    if (msg[0] != WM_DATA_TYPE_PACKET) {
+        LOG_ERROR("Unsupported data type %d\n", msg[0]);
+        return WM_ERR_RUNTIME;
+    }
 
-  pkt->len = ntohl(*(uint32_t *)&msg[WM_DATA_TYPE_SIZE]);
+    pkt->len = ntohl(*(uint32_t *)&msg[WM_DATA_TYPE_SIZE]);
 
-  if (pkt->len > msg_len - WM_DATA_TLV_SIZE) {
-    LOG_ERROR("Packet len is %d but I only received %d byte from server\n",
-              pkt->len, msg_len - WM_DATA_TLV_SIZE);
-    pkt->len = 0;
-    return WM_ERR_RUNTIME;
-  }
-  memcpy(pkt->data, msg + WM_DATA_TLV_SIZE, pkt->len);
+    if (pkt->len > msg_len - WM_DATA_TLV_SIZE) {
+        LOG_ERROR("Packet len is %d but I only received %d byte from server\n",
+                  pkt->len, msg_len - WM_DATA_TLV_SIZE);
+        pkt->len = 0;
+        return WM_ERR_RUNTIME;
+    }
+    memcpy(pkt->data, msg + WM_DATA_TLV_SIZE, pkt->len);
 
-  /* TODO what to do with other TLVs in the message */
+    /* TODO what to do with other TLVs in the message */
 
-  return WM_OK;
+    return WM_OK;
 }
 
-
+/* Execute the Parser stage in isolation
+ *
+ * Invokes the Parser stage in the server that is currently running.
+ * The model registers are passed to the stage function.
+ *
+ * @param[in]   in Parser input structure
+ * @param[out]  out Parser output structure
+ *
+ * @retval      WM_OK if successful
+ */
 int wm_parser(mbyRxMacToParser const * const in,
               mbyParserToMapper      * const out)
 {
@@ -629,39 +638,39 @@ int wm_parser(mbyRxMacToParser const * const in,
 static int iosf_send_receive(uint8_t *tx_msg, uint32_t tx_len,
                              uint8_t *rx_msg, uint32_t *rx_len)
 {
-  unsigned char rsp;
-  uint16_t type;
-  uint16_t port;
-  int err;
+    unsigned char rsp;
+    uint16_t type;
+    uint16_t port;
+    int err;
 
-  err = wm_send(wm_server_fd, tx_msg, tx_len, MODEL_MSG_IOSF, NONPOSTED_PORT);
-  if (err) {
-    LOG_ERROR("Could not send data to WM: %d\n", err);
-    return err;
-  }
+    err = wm_send(wm_server_fd, tx_msg, tx_len, MODEL_MSG_IOSF, NONPOSTED_PORT);
+    if (err) {
+        LOG_ERROR("Could not send data to WM: %d\n", err);
+        return err;
+    }
 
-  err = wm_receive(wm_server_fd, rx_msg, rx_len, &type, &port);
-  if (err) {
-    LOG_ERROR("Did not receive data from WM: %d\n", err);
-    return err;
-  }
+    err = wm_receive(wm_server_fd, rx_msg, rx_len, &type, &port);
+    if (err) {
+        LOG_ERROR("Did not receive data from WM: %d\n", err);
+        return err;
+    }
 
-  /* TODO there might be problems if this library is used in
-   * multi-thread applications
-   */
-  if (type != MODEL_MSG_IOSF) {
-    LOG_ERROR("Unexpected response message type: %d\n", type);
-    return WM_ERR_INVALID_RESPONSE;
-  }
+    /* TODO there might be problems if this library is used in
+     * multi-thread applications
+     */
+    if (type != MODEL_MSG_IOSF) {
+        LOG_ERROR("Unexpected response message type: %d\n", type);
+        return WM_ERR_INVALID_RESPONSE;
+    }
 
-  /* Check the rsp field to validate the content of the response */
-  rsp = (((uint8_t *)rx_msg)[3] >> 3) & 0x3;
-  if (rsp) {
-    LOG_ERROR("Register read/write operation failed - rsp=%d\n", rsp);
-    return WM_ERR_INVALID_RESPONSE;
-  }
+    /* Check the rsp field to validate the content of the response */
+    rsp = (((uint8_t *)rx_msg)[3] >> 3) & 0x3;
+    if (rsp) {
+        LOG_ERROR("Register read/write operation failed - rsp=%d\n", rsp);
+        return WM_ERR_INVALID_RESPONSE;
+    }
 
-  return WM_OK;
+    return WM_OK;
 }
 
 /**
@@ -677,62 +686,62 @@ static int iosf_send_receive(uint8_t *tx_msg, uint32_t tx_len,
 static int wm_receive(int fd, uint8_t *msg, uint32_t *len, uint16_t *type,
                       uint16_t *port)
 {
-  struct wm_msg wm_msg;
-  uint32_t wm_len;
-  int err;
+    struct wm_msg wm_msg;
+    uint32_t wm_len;
+    int err;
 
-  bzero(&wm_msg, sizeof(wm_msg));
-  /* Read the first 4 bytes to see the length of the message */
-  err = wm_read_data(fd, (uint8_t *)&wm_msg, sizeof(wm_len), READ_TIMEOUT);
-  if (err) {
-    LOG_ERROR("Could not receive message preamble from WM\n");
-    return err;
-  }
+    bzero(&wm_msg, sizeof(wm_msg));
+    /* Read the first 4 bytes to see the length of the message */
+    err = wm_read_data(fd, (uint8_t *)&wm_msg, sizeof(wm_len), READ_TIMEOUT);
+    if (err) {
+        LOG_ERROR("Could not receive message preamble from WM\n");
+        return err;
+    }
 
-  wm_len = ntohl(wm_msg.msg_length);
-  if (wm_len > sizeof(wm_msg)) {
-    LOG_ERROR("Message length %d exceeds max %ld\n", wm_len, sizeof(wm_msg));
-    return WM_ERR_INVALID_RESPONSE;
-  }
+    wm_len = ntohl(wm_msg.msg_length);
+    if (wm_len > sizeof(wm_msg)) {
+        LOG_ERROR("Message length %d exceeds max %ld\n", wm_len, sizeof(wm_msg));
+        return WM_ERR_INVALID_RESPONSE;
+    }
 
-  /* Receive the remaining bytes */
-  err = wm_read_data(fd,
-                     (uint8_t *)&wm_msg + offsetof(struct wm_msg, version),
-                     wm_len - sizeof(wm_len), READ_TIMEOUT);
-  if (err) {
-    LOG_ERROR("Could not receive message contents from WM\n");
-    return err;
-  }
+    /* Receive the remaining bytes */
+    err = wm_read_data(fd,
+                       (uint8_t *)&wm_msg + offsetof(struct wm_msg, version),
+                       wm_len - sizeof(wm_len), READ_TIMEOUT);
+    if (err) {
+        LOG_ERROR("Could not receive message contents from WM\n");
+        return err;
+    }
 
-  *len = wm_len - offsetof(struct wm_msg, data);
-  *type = ntohs(wm_msg.type);
-  *port = ntohs(wm_msg.port);
+    *len = wm_len - offsetof(struct wm_msg, data);
+    *type = ntohs(wm_msg.type);
+    *port = ntohs(wm_msg.port);
 
-  LOG_DEBUG("Received message type %d - port %d - len %d\n", *type, *port, wm_len);
-  LOG_HEX_DUMP((uint8_t *)&wm_msg, wm_len, 0);
+    LOG_DEBUG("Received message type %d - port %d - len %d\n", *type, *port, wm_len);
+    LOG_HEX_DUMP((uint8_t *)&wm_msg, wm_len, 0);
 
-  if (ntohs(wm_msg.version) != MODEL_VERSION) {
-    LOG_WARNING("Model version mismatch: received %d - expected %d\n",
-                ntohs(wm_msg.version), MODEL_VERSION);
-  }
+    if (ntohs(wm_msg.version) != MODEL_VERSION) {
+        LOG_WARNING("Model version mismatch: received %d - expected %d\n",
+                    ntohs(wm_msg.version), MODEL_VERSION);
+    }
 
-  switch (*type) {
-  case MODEL_MSG_ERROR:
-    LOG_ERROR("Received error msg: %s", wm_msg.data);
-    return WM_ERR_INVALID_RESPONSE;
-  case MODEL_MSG_IOSF:
-  case MODEL_MSG_PACKET:
-  case MODEL_MSG_PACKET_EOT:
-    break;
-  default:
-    LOG_ERROR("Unexpected msg_type 0x%04x\n", *type);
-    return WM_ERR_INVALID_RESPONSE;
-  }
+    switch (*type) {
+        case MODEL_MSG_ERROR:
+            LOG_ERROR("Received error msg: %s", wm_msg.data);
+            return WM_ERR_INVALID_RESPONSE;
+        case MODEL_MSG_IOSF:
+        case MODEL_MSG_PACKET:
+        case MODEL_MSG_PACKET_EOT:
+            break;
+        default:
+            LOG_ERROR("Unexpected msg_type 0x%04x\n", *type);
+            return WM_ERR_INVALID_RESPONSE;
+    }
 
-  memcpy(msg, wm_msg.data, *len);
-  LOG_DEBUG("Message data  - len %d\n", *len);
-  LOG_HEX_DUMP(msg, *len, 0);
-  return WM_OK;
+    memcpy(msg, wm_msg.data, *len);
+    LOG_DEBUG("Message data  - len %d\n", *len);
+    LOG_HEX_DUMP(msg, *len, 0);
+    return WM_OK;
 }
 
 /**
@@ -748,38 +757,38 @@ static int wm_receive(int fd, uint8_t *msg, uint32_t *len, uint16_t *type,
 static int wm_send(int fd, const uint8_t *msg, uint32_t len, uint16_t type,
                    uint16_t port)
 {
-  struct wm_msg wm_msg;
-  uint32_t wm_len;
-  uint32_t wr_len;
+    struct wm_msg wm_msg;
+    uint32_t wm_len;
+    uint32_t wr_len;
 
-  wm_msg.version = htons((uint16_t)MODEL_VERSION);
-  wm_msg.type = htons(type);
-  wm_msg.sw = htons(0);
-  wm_msg.port = htons(port);
+    wm_msg.version = htons((uint16_t)MODEL_VERSION);
+    wm_msg.type = htons(type);
+    wm_msg.sw = htons(0);
+    wm_msg.port = htons(port);
 
-  if (msg)
-    //memcpy_s(msg.data, sizeof(msg.data), pmsg, msg_len);
-    memcpy(wm_msg.data, msg, len);
+    if (msg)
+        //memcpy_s(msg.data, sizeof(msg.data), pmsg, msg_len);
+        memcpy(wm_msg.data, msg, len);
 
-  /* Type specific checks */
-  if (type == MODEL_MSG_IOSF && len > IOSF_MSG_MAX_LEN) {
-    LOG_ERROR("Message len %d is too large", len);
-    return WM_ERR_INVALID_ARG;
-  }
+    /* Type specific checks */
+    if (type == MODEL_MSG_IOSF && len > IOSF_MSG_MAX_LEN) {
+        LOG_ERROR("Message len %d is too large", len);
+        return WM_ERR_INVALID_ARG;
+    }
 
-  wm_len = len + MODEL_MSG_HEADER_SIZE;
-  wm_msg.msg_length = htonl(wm_len);
+    wm_len = len + MODEL_MSG_HEADER_SIZE;
+    wm_msg.msg_length = htonl(wm_len);
 
-  // LOG_HEX_DUMP((uint8_t *)&wm_msg, wm_len, 0);
+    // LOG_HEX_DUMP((uint8_t *)&wm_msg, wm_len, 0);
 
-  wr_len = write(fd, &wm_msg, wm_len);
-  if (wm_len != wr_len) {
-    LOG_ERROR("ERROR: write %d to socket. Only %d written",
-              wm_len, wr_len);
-    return WM_ERR_NETWORK;
-  }
+    wr_len = write(fd, &wm_msg, wm_len);
+    if (wm_len != wr_len) {
+        LOG_ERROR("ERROR: write %d to socket. Only %d written",
+                  wm_len, wr_len);
+        return WM_ERR_NETWORK;
+    }
 
-  return WM_OK;
+    return WM_OK;
 }
 
 /**
@@ -795,44 +804,44 @@ static int wm_send(int fd, const uint8_t *msg, uint32_t len, uint16_t type,
  */
 static int connect_server(const char *addr_str, const char *port_str, int *server_fd)
 {
-  struct addrinfo *result, *rp;
-  struct addrinfo hints;
-  int on = 1;
-  int err;
+    struct addrinfo *result, *rp;
+    struct addrinfo hints;
+    int on = 1;
+    int err;
 
-  memset(&hints, 0, sizeof(struct addrinfo));
-  hints.ai_family = AF_INET;
-  hints.ai_socktype = SOCK_STREAM;
-  hints.ai_flags = 0;
-  hints.ai_protocol = 0;          /* Any protocol */
+    memset(&hints, 0, sizeof(struct addrinfo));
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = 0;
+    hints.ai_protocol = 0;          /* Any protocol */
 
-  LOG_DEBUG("Connecting to model_server at %s:%s\n", addr_str, port_str);
-  err = getaddrinfo(addr_str, port_str, &hints, &result);
-  if (err != 0) {
-    LOG_ERROR("Error in getaddrinfo: %s\n", gai_strerror(err));
-    return WM_ERR_NETWORK;
-  }
-
-  for (rp = result; rp != NULL; rp = rp->ai_next) {
-    *server_fd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
-    if (*server_fd == -1) {
-      LOG_ERROR("Error creating socket fd: %s\n", strerror(errno));
-      freeaddrinfo(result);
-      return WM_ERR_NETWORK;
+    LOG_DEBUG("Connecting to model_server at %s:%s\n", addr_str, port_str);
+    err = getaddrinfo(addr_str, port_str, &hints, &result);
+    if (err != 0) {
+        LOG_ERROR("Error in getaddrinfo: %s\n", gai_strerror(err));
+        return WM_ERR_NETWORK;
     }
 
-    if (connect(*server_fd, rp->ai_addr, rp->ai_addrlen) != -1)
-      break; /* Success */
+    for (rp = result; rp != NULL; rp = rp->ai_next) {
+        *server_fd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+        if (*server_fd == -1) {
+            LOG_ERROR("Error creating socket fd: %s\n", strerror(errno));
+            freeaddrinfo(result);
+            return WM_ERR_NETWORK;
+        }
 
-    LOG_ERROR("Unable to connect to server at %s:%s: %s\n", addr_str,
-              port_str, strerror(errno));
-    close(*server_fd);
-  }
-  freeaddrinfo(result);
-  LOG_DEBUG("Connected to model_server at %s:%s\n", addr_str, port_str);
-  setsockopt(*server_fd, IPPROTO_TCP, TCP_NODELAY, (void *)&on, sizeof(on));
+        if (connect(*server_fd, rp->ai_addr, rp->ai_addrlen) != -1)
+            break; /* Success */
 
-  return WM_OK;
+        LOG_ERROR("Unable to connect to server at %s:%s: %s\n", addr_str,
+                  port_str, strerror(errno));
+        close(*server_fd);
+    }
+    freeaddrinfo(result);
+    LOG_DEBUG("Connected to model_server at %s:%s\n", addr_str, port_str);
+    setsockopt(*server_fd, IPPROTO_TCP, TCP_NODELAY, (void *)&on, sizeof(on));
+
+    return WM_OK;
 }
 
 /**
@@ -848,35 +857,35 @@ static int connect_server(const char *addr_str, const char *port_str, int *serve
 static int connect_egress(int phys_port, int server_fd, int client_fd,
                           uint16_t client_port, int *egress_fd)
 {
-  char hostname[MAXHOSTNAMELEN];
-  char buffer[MAXHOSTNAMELEN + 2];
-  uint32_t len;
-  int err;
+    char hostname[MAXHOSTNAMELEN];
+    char buffer[MAXHOSTNAMELEN + 2];
+    uint32_t len;
+    int err;
 
-  err = gethostname(hostname, MAXHOSTNAMELEN);
-  if (err)
-    LOG_ERROR("Problem getting hostname: %s", strerror(errno));
+    err = gethostname(hostname, MAXHOSTNAMELEN);
+    if (err)
+        LOG_ERROR("Problem getting hostname: %s", strerror(errno));
 
-  bzero(buffer, MAXHOSTNAMELEN + 2);
+    bzero(buffer, MAXHOSTNAMELEN + 2);
 
-  /* Message format is: 2B tcp client port, 510B hostname */
-  *((uint16_t *)buffer) = htons(client_port);
-  strcpy(buffer + 2, hostname);
-  len = 2 + strlen(hostname);
+    /* Message format is: 2B tcp client port, 510B hostname */
+    *((uint16_t *)buffer) = htons(client_port);
+    strcpy(buffer + 2, hostname);
+    len = 2 + strlen(hostname);
 
-  wm_send(server_fd, (uint8_t *)buffer, len, MODEL_MSG_SET_EGRESS_INFO,
-          phys_port);
+    wm_send(server_fd, (uint8_t *)buffer, len, MODEL_MSG_SET_EGRESS_INFO,
+            phys_port);
 
-  /* If socket hasn't been init before, wait for connection from server */
-  if (*egress_fd == -1)
-    *egress_fd = accept(client_fd, NULL, NULL);
+    /* If socket hasn't been init before, wait for connection from server */
+    if (*egress_fd == -1)
+        *egress_fd = accept(client_fd, NULL, NULL);
 
-  if(*egress_fd  < 0) {
-    LOG_ERROR("Error accepting connection for egress port %d: %s\n",
-              phys_port, strerror(errno));
-    return WM_ERR_NETWORK;
-  }
-  return WM_OK;
+    if(*egress_fd  < 0) {
+        LOG_ERROR("Error accepting connection for egress port %d: %s\n",
+                  phys_port, strerror(errno));
+        return WM_ERR_NETWORK;
+    }
+    return WM_OK;
 }
 
 /**
@@ -891,46 +900,46 @@ static int connect_egress(int phys_port, int server_fd, int client_fd,
  */
 static int create_client_socket(int *fd, int *port)
 {
-  struct sockaddr_in addr;
-  socklen_t addr_len;
-  int err;
+    struct sockaddr_in addr;
+    socklen_t addr_len;
+    int err;
 
-  if (!fd || !port)
-    return WM_ERR_INVALID_ARG;
+    if (!fd || !port)
+        return WM_ERR_INVALID_ARG;
 
-  *fd = socket(AF_INET, SOCK_STREAM, 0);
-  if (*fd < 0) {
-    printf("Error creating client socket: %s\n", strerror(errno));
-    return WM_ERR_NETWORK;
-  }
+    *fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (*fd < 0) {
+        printf("Error creating client socket: %s\n", strerror(errno));
+        return WM_ERR_NETWORK;
+    }
 
-  bzero(&addr, sizeof(addr));
-  addr.sin_family = AF_INET;
-  addr.sin_addr.s_addr = htonl((uint32_t)INADDR_ANY);
-  addr.sin_port = htons(0);
+    bzero(&addr, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = htonl((uint32_t)INADDR_ANY);
+    addr.sin_port = htons(0);
 
-  err = bind(*fd, (struct sockaddr *)&addr, sizeof(addr));
-  if(err == -1) {
-    printf("Error binding to port socket server: %s\n", strerror(errno));
-    return WM_ERR_NETWORK;
-  }
+    err = bind(*fd, (struct sockaddr *)&addr, sizeof(addr));
+    if(err == -1) {
+        printf("Error binding to port socket server: %s\n", strerror(errno));
+        return WM_ERR_NETWORK;
+    }
 
-  err = listen(*fd, NUM_PORTS);
-  if(err == -1) {
-    printf("Error listening on port socket server: %s\n", strerror(errno));
-    return WM_ERR_NETWORK;
-  }
+    err = listen(*fd, NUM_PORTS);
+    if(err == -1) {
+        printf("Error listening on port socket server: %s\n", strerror(errno));
+        return WM_ERR_NETWORK;
+    }
 
-  addr_len = sizeof(addr);
-  err = getsockname(*fd, (struct sockaddr *)&addr, &addr_len);
-  if(err == -1) {
-    printf("Error getting port socket server name: %s\n", strerror(errno));
-    return WM_ERR_NETWORK;
-  }
+    addr_len = sizeof(addr);
+    err = getsockname(*fd, (struct sockaddr *)&addr, &addr_len);
+    if(err == -1) {
+        printf("Error getting port socket server name: %s\n", strerror(errno));
+        return WM_ERR_NETWORK;
+    }
 
-  *port = ntohs(addr.sin_port);
-  LOG_DEBUG("Client socket created - listen on port %d\n", *port);
-  return WM_OK;
+    *port = ntohs(addr.sin_port);
+    LOG_DEBUG("Client socket created - listen on port %d\n", *port);
+    return WM_OK;
 }
 
 /**
@@ -945,49 +954,49 @@ static int create_client_socket(int *fd, int *port)
  */
 static int read_host_info(FILE *fd, char *host, char *port)
 {
-  unsigned int start, cnt;
-  char buffer[256];
+    unsigned int start, cnt;
+    char buffer[256];
 
-  if (!fd || !host || !port)
-    return WM_ERR_INVALID_ARG;
+    if (!fd || !host || !port)
+        return WM_ERR_INVALID_ARG;
 
-  if (!fgets(buffer, sizeof(buffer), fd)) {
-    LOG_ERROR("Could not read host info from file\n");
-    return WM_ERR_RUNTIME;
-  }
+    if (!fgets(buffer, sizeof(buffer), fd)) {
+        LOG_ERROR("Could not read host info from file\n");
+        return WM_ERR_RUNTIME;
+    }
 
-  start = 0;
-  cnt = 0;
-  while ((cnt < strlen(buffer)) && buffer[start + cnt] != ':')
-    cnt++;
+    start = 0;
+    cnt = 0;
+    while ((cnt < strlen(buffer)) && buffer[start + cnt] != ':')
+        cnt++;
 
-  start = start + cnt + 1;
-  cnt = 0;
-  while ((start + cnt < strlen(buffer)) &&
-         buffer[start + cnt] != ':')
-    cnt++;
-  if (start + cnt >= sizeof(buffer) || cnt == 0)
-    return WM_ERR_RUNTIME;
+    start = start + cnt + 1;
+    cnt = 0;
+    while ((start + cnt < strlen(buffer)) &&
+           buffer[start + cnt] != ':')
+        cnt++;
+    if (start + cnt >= sizeof(buffer) || cnt == 0)
+        return WM_ERR_RUNTIME;
 
-  memcpy(host, &buffer[start], cnt);
-  host[cnt] = '\0';
-  printf("cnt = %d - host = %s\n", cnt, host);
+    memcpy(host, &buffer[start], cnt);
+    host[cnt] = '\0';
+    printf("cnt = %d - host = %s\n", cnt, host);
 
-  start = start + cnt + 1;
-  cnt = 0;
-  while ((start + cnt < strlen(buffer)) &&
-         buffer[start + cnt] != ':')
-    cnt++;
-  if (start + cnt >= sizeof(buffer) || cnt == 0)
-    return WM_ERR_RUNTIME;
+    start = start + cnt + 1;
+    cnt = 0;
+    while ((start + cnt < strlen(buffer)) &&
+           buffer[start + cnt] != ':')
+        cnt++;
+    if (start + cnt >= sizeof(buffer) || cnt == 0)
+        return WM_ERR_RUNTIME;
 
-  /* Make sure to not copy the \n */
-  if (buffer[start + cnt - 1] == '\n')
-    cnt--;
+    /* Make sure to not copy the \n */
+    if (buffer[start + cnt - 1] == '\n')
+        cnt--;
 
-  memcpy(port, &buffer[start], cnt);
-  port[cnt] = '\0';
-  return WM_OK;
+    memcpy(port, &buffer[start], cnt);
+    port[cnt] = '\0';
+    return WM_OK;
 }
 
 /**
@@ -1002,70 +1011,70 @@ static int read_host_info(FILE *fd, char *host, char *port)
 static int wm_read_data(int socket, uint8_t *data, uint32_t data_len,
                         int timeout_msec)
 {
-  struct pollfd fds[1] = { {0} };
-  int remaining_len = data_len;
-  const int delay_ms = 100;
-  int num_retries = 10;
-  int fds_timeout;
-  int err_result;
-  int n;
+    struct pollfd fds[1] = { {0} };
+    int remaining_len = data_len;
+    const int delay_ms = 100;
+    int num_retries = 10;
+    int fds_timeout;
+    int err_result;
+    int n;
 
-  if (timeout_msec >= 0)
-    fds_timeout = timeout_msec;
-  else
-    fds_timeout = -1;
+    if (timeout_msec >= 0)
+        fds_timeout = timeout_msec;
+    else
+        fds_timeout = -1;
 
-  fds[0].fd = socket;
-  fds[0].events = POLLIN;
-  fds[0].revents = 0;
+    fds[0].fd = socket;
+    fds[0].events = POLLIN;
+    fds[0].revents = 0;
 
-  do {
-    err_result = poll(fds, 1, fds_timeout);
-  } while ((err_result == -1) && (errno == EINTR));
+    do {
+        err_result = poll(fds, 1, fds_timeout);
+    } while ((err_result == -1) && (errno == EINTR));
 
 
-  if (!(fds[0].revents & POLLIN)) {
-    if (timeout_msec) {
-      LOG_ERROR("Connection timeout while receiving data\n");
-      return WM_ERR_TIMEOUT;
-    } else {
+    if (!(fds[0].revents & POLLIN)) {
+        if (timeout_msec) {
+            LOG_ERROR("Connection timeout while receiving data\n");
+            return WM_ERR_TIMEOUT;
+        } else {
 
-      LOG_ERROR("Lost connection to WM\n");
-      return WM_ERR_NO_RESOURCE;
+            LOG_ERROR("Lost connection to WM\n");
+            return WM_ERR_NO_RESOURCE;
+        }
     }
-  }
 
-  while (num_retries) {
-    n = read(socket, data, data_len);
-    if (n == -1) {
-      LOG_ERROR("Error while reading data from socket %s\n",
-                strerror(errno));
-      return WM_ERR_INVALID_RESPONSE;
+    while (num_retries) {
+        n = read(socket, data, data_len);
+        if (n == -1) {
+            LOG_ERROR("Error while reading data from socket %s\n",
+                      strerror(errno));
+            return WM_ERR_INVALID_RESPONSE;
+        }
+        remaining_len -= n;
+        if (remaining_len <= 0)
+            break;
+        usleep(1000 * delay_ms);
+        data += n;
+        --num_retries;
     }
-    remaining_len -= n;
-    if (remaining_len <= 0)
-      break;
-    usleep(1000 * delay_ms);
-    data += n;
-    --num_retries;
-  }
 
-  if (remaining_len > 0) {
-    LOG_ERROR("Expected %d bytes but got %d\n", data_len,
-              data_len - remaining_len);
-    return WM_ERR_INVALID_RESPONSE;
-  }
+    if (remaining_len > 0) {
+        LOG_ERROR("Expected %d bytes but got %d\n", data_len,
+                  data_len - remaining_len);
+        return WM_ERR_INVALID_RESPONSE;
+    }
 
-  return WM_OK;
+    return WM_OK;
 }
 
 static uint8_t printable(const uint8_t byte)
 {
-  if ((byte < 0x20) ||
-      (byte > 0x7e))
-    return '.';
-  else
-    return byte;
+    if ((byte < 0x20) ||
+        (byte > 0x7e))
+        return '.';
+    else
+        return byte;
 }
 
 /**
@@ -1077,35 +1086,35 @@ static uint8_t printable(const uint8_t byte)
  */
 static void hex_dump(const uint8_t *bytes, int nbytes, char show_ascii)
 {
-  FILE *fp=stdout;
-  const int group_bytes = 4;
-  const int line_groups = 2;
-  const uint8_t *lim = bytes + nbytes;
-  const uint8_t *b, *p=bytes;
+    FILE *fp=stdout;
+    const int group_bytes = 4;
+    const int line_groups = 2;
+    const uint8_t *lim = bytes + nbytes;
+    const uint8_t *b, *p=bytes;
 
-  do {
-    printf("%02x: ", (unsigned)(p-bytes));
-    b = p;
-    if (show_ascii) {
-      for (int g = 0; g < line_groups; ++g) {
-        for (int i = 0; i < group_bytes; ++i, p = (p==lim) ? lim : p+1  )
-          fprintf(fp, "%c", p == lim ? ' ' : printable(*p));
-        fprintf(fp, " ");
-      }
-      fprintf(fp, "| ");
-      p = b;
-    }
-    for (int g = 0; g < line_groups; ++g) {
-      for (int i = 0; i < group_bytes; ++i, p = (p==lim) ? lim : p+1  ) {
-        if (p != lim)
-            fprintf(fp, " %02x", *p);
-        else
-            fprintf(fp, "   ");
-      }
+    do {
+        printf("%02x: ", (unsigned)(p-bytes));
+        b = p;
+        if (show_ascii) {
+            for (int g = 0; g < line_groups; ++g) {
+                for (int i = 0; i < group_bytes; ++i, p = (p==lim) ? lim : p+1  )
+                    fprintf(fp, "%c", p == lim ? ' ' : printable(*p));
+                fprintf(fp, " ");
+            }
+            fprintf(fp, "| ");
+            p = b;
+        }
+        for (int g = 0; g < line_groups; ++g) {
+            for (int i = 0; i < group_bytes; ++i, p = (p==lim) ? lim : p+1  ) {
+                if (p != lim)
+                    fprintf(fp, " %02x", *p);
+                else
+                    fprintf(fp, "   ");
+            }
 
-      fprintf(fp, " ");
-    }
-    fprintf(fp, "\n");
-  } while (p != lim);
+            fprintf(fp, " ");
+        }
+        fprintf(fp, "\n");
+    } while (p != lim);
 }
 
