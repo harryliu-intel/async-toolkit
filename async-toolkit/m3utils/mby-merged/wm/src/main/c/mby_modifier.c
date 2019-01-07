@@ -2,9 +2,10 @@
 
 // Copyright (C) 2018 Intel Corporation
 #include "mby_modifier.h"
+
+#include <assert.h>
 #include "mby_crc32.h"
 #include "mby_parser.h"
-#include <assert.h>
 
 static void initProfAct
 (
@@ -102,7 +103,7 @@ static mbyModProfileCmd getProfileCommand
 
 static void extractFields
 (
-    fm_byte            const * const rx_data,
+    varchar_t            const * const rx_data,
     mbyParserHdrPtrs   const * const pa_hdr_ptrs,
     mbyModProfileField const * const prof_fld,
     fm_uint                          operating_region,
@@ -122,7 +123,7 @@ static void extractFields
                 {
                     fm_uint idx = pa_hdr_ptrs->OFFSET[j] + prof_fld->offset[i];
                     if(idx < operating_region) {
-                        fld_vector->field[i] = rx_data[idx];
+                      fld_vector->field[i] = varchar_get(rx_data,idx);
                         break;
                     }
                 }
@@ -200,7 +201,7 @@ static void decodeCommand
 static void lookupProfile
 (
     mby_ppe_modify_map  const * const mod_map,
-    fm_byte             const * const rx_data,
+    varchar_t             const * const rx_data,
     mbyParserHdrPtrs    const * const pa_hdr_ptrs,
     fm_byte                           mod_prof_idx,
     mbyModProfileAction       * const prof_act
@@ -367,7 +368,7 @@ static void adjustGrpCtnrOffsets
 static void initContainer
 (
     mbyModProfileAction       * const prof_act,
-    fm_byte             const * const rx_data,
+    varchar_t           const * const rx_data,
     fm_byte                   * const grp_ctnr
 )
 {
@@ -462,7 +463,7 @@ static void initContainer
             }
 
             for (fm_uint j = 0; j < grp->pkt_size; j++)
-                grp_ctnr[offset++] = rx_data[grp->pkt_offset + j];
+              grp_ctnr[offset++] = varchar_get(rx_data, grp->pkt_offset + j);
         }
     }
 }
@@ -505,9 +506,14 @@ static void copyFromTo
     fm_byte       * const to,
     fm_uint               to_offset,
     fm_byte               bitmask,
-    fm_uint               len
+    fm_uint               len,
+    fm_int                assertlen
 )
 {
+    assert(assertlen == -1
+           ||
+           ( (fm_int)(from_offset + len) >= 0 &&
+             (fm_int)(from_offset + len) <= assertlen) );
     for (fm_uint i = 0; i < len; i++)
         to[to_offset + i] = (to[to_offset + i] & (~bitmask)) | (from[from_offset + i] & bitmask);
 }
@@ -666,12 +672,12 @@ static void performInsert(mbyParserHdrPtrs       * const pa_hdr_ptrs,
         fm_byte mask = 0xff;
         if (cmd->source == MBY_MOD_CMD_SOURCE_CONTENT_REGION)
         {
-            copyFromTo(content_ctnr->content, content_ctnr->cur_idx, grp_ctnr, grp->ctnr_offset + grp->grp_offset, mask, insert_len);
+          copyFromTo(content_ctnr->content, content_ctnr->cur_idx, grp_ctnr, grp->ctnr_offset + grp->grp_offset, mask, insert_len, -1);
             updateCtnrIdx(&content_ctnr->cur_idx, insert_len, MBY_MOD_CONTENT_SIZE - 1);
         }
         else if (cmd->source == MBY_MOD_CMD_SOURCE_FIELD_CONTAINER)
         {
-            copyFromTo(fld_vector->field, fld_vector->cur_idx, grp_ctnr, grp->ctnr_offset + grp->grp_offset, mask, insert_len);
+          copyFromTo(fld_vector->field, fld_vector->cur_idx, grp_ctnr, grp->ctnr_offset + grp->grp_offset, mask, insert_len, -1);
             updateCtnrIdx(&fld_vector->cur_idx, insert_len, MBY_MOD_FIELD_VECTOR_SIZE - 1);
         }
     }
@@ -778,7 +784,7 @@ static void performInsertField(mbyParserHdrPtrs       * const pa_hdr_ptrs,
         insert_len = cmd->len_mask;
 
         fm_byte mask = 0xff;
-        copyFromTo(fld_vector->field, fld_vector->cur_idx, grp_ctnr, grp->ctnr_offset + grp->grp_offset, mask, insert_len);
+        copyFromTo(fld_vector->field, fld_vector->cur_idx, grp_ctnr, grp->ctnr_offset + grp->grp_offset, mask, insert_len, -1);
 
         updateCtnrIdx(&fld_vector->cur_idx, insert_len, MBY_MOD_FIELD_VECTOR_SIZE - 1);
 
@@ -1005,7 +1011,7 @@ static void performReplace(mbyModCmdReplace       * const cmd,
 
     if (!skip_copy)
     {
-        copyFromTo(content_ctnr->content, content_ctnr->cur_idx, grp_ctnr, ctnr_offset, bitmask, replace_len);
+      copyFromTo(content_ctnr->content, content_ctnr->cur_idx, grp_ctnr, ctnr_offset, bitmask, replace_len, -1);
 
         updateCtnrIdx(&content_ctnr->cur_idx, replace_len, MBY_MOD_CONTENT_SIZE - 1);
     }
@@ -1095,7 +1101,7 @@ static void performReplaceField(mbyModCmdReplaceFld * const cmd,
 
     if (!skip_copy)
     {
-        copyFromTo(fld_vector->field, fld_vector->cur_idx, grp_ctnr, ctnr_offset, bitmask, replace_len);
+      copyFromTo(fld_vector->field, fld_vector->cur_idx, grp_ctnr, ctnr_offset, bitmask, replace_len, -1);
 
         updateCtnrIdx(&fld_vector->cur_idx, replace_len, MBY_MOD_FIELD_VECTOR_SIZE - 1);
     }
@@ -1143,7 +1149,7 @@ static void performReplaceFieldLut(mby_ppe_modify_map     const * const mod_map,
 }
 
 static void performCmds(mby_ppe_modify_map  const * const mod_map,
-                        fm_byte             const * const rx_data,
+                        varchar_t           const * const rx_data,
                         mbyModProfileAction       * const prof_act,
                         mbyParserHdrPtrs          * const pa_hdr_ptrs,
                         fm_byte                   * const grp_ctnr,
@@ -1159,7 +1165,7 @@ static void performCmds(mby_ppe_modify_map  const * const mod_map,
 
             /* Copy packet data to container before executing any commands for given group. */
             fm_byte mask = 0xff;
-            copyFromTo(rx_data, grp->pkt_offset, grp_ctnr, grp->ctnr_offset, mask, grp->pkt_size);
+            copyFromTo(rx_data->data, grp->pkt_offset, grp_ctnr, grp->ctnr_offset, mask, grp->pkt_size, rx_data->length);
             *pkt_index += grp->pkt_size;
 
             fm_uint grp_idx = grp->grp_idx;
@@ -1216,7 +1222,7 @@ static void performCmds(mby_ppe_modify_map  const * const mod_map,
 static fm_uint32 packPacket(mbyModProfileAction * const prof_act,
                             fm_uint32                   rx_length,
                             fm_byte             * const grp_ctnr,
-                            fm_byte             const * const rx_data,
+                            varchar_t         const * const rx_data,
                             fm_byte             * const tx_data,
                             fm_uint32                   pkt_index,
                             fm_uint32                   max_pkt_size)
@@ -1238,7 +1244,7 @@ static fm_uint32 packPacket(mbyModProfileAction * const prof_act,
     }
 
     for (fm_uint i = 0; i < (rx_length - pkt_index); i++)
-        tx_data[tx_length++] = rx_data[i + pkt_index];
+      tx_data[tx_length++] = varchar_get(rx_data, i + pkt_index);
 
     return tx_length;
 }
@@ -1247,7 +1253,7 @@ void Modifier
 (
     mby_ppe_modify_map   const * const mod_map,
     mby_shm_map          const * const shm_map,
-    varchar_t            const *       rx_data_p,
+    varchar_t            const *       rx_data,
     mbyTxInToModifier    const * const in,
     mbyModifierToTxStats       * const out,
     fm_int                             max_pkt_size
@@ -1258,8 +1264,8 @@ void Modifier
     fm_uint32                   fnmask       = in->FNMASK;
     fm_byte                     mod_prof_idx = in->MOD_PROF_IDX;
     mbyParserHdrPtrs            pa_hdr_ptrs  = in->PA_HDR_PTRS;
-    fm_byte       const * const rx_data      = rx_data_p->data;
-    fm_uint32                   rx_length    = rx_data_p->length;
+
+    fm_uint32                   rx_length    = rx_data->length;
 
     fm_byte                     grp_ctnr[MBY_MOD_CTNR_SIZE];
     fm_uint                     pkt_idx   = 0;

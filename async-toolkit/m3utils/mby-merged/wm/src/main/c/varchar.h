@@ -6,4 +6,5 @@ typedef struct {
   unsigned int   length;
 } varchar_t;
 
+unsigned char varchar_get(const varchar_t *v, unsigned int i);
 #endif

@@ -43,6 +43,7 @@ SOURCES += mby_reg_ctrl.c
 SOURCES += mby_pipeline.c
 SOURCES += mby_errors.c
 SOURCES += mby_init.c
+SOURCES += varchar.c
 
 # used by C tests:
 SOURCES += mby_model.c
