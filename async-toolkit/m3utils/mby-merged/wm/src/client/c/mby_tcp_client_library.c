@@ -3,7 +3,7 @@
  * @brief	Minimal client for reg access through model_server socket
  *
  * INTEL CONFIDENTIAL
- * Copyright 2018 Intel Corporation.  All Rights Reserved.
+ * Copyright 2018 - 2019 Intel Corporation.  All Rights Reserved.
  *
  * The source code contained or described herein and all documents related
  * to the source code ("Material") are owned by Intel Corporation or its
@@ -54,6 +54,11 @@
 //#define LOG_HEX_DUMP(a,b,c)
 #define LOG_HEX_DUMP hex_dump
 
+#define MAX_BUF      500
+
+/* Declare environ to pass the same environment to executed programs */
+extern char **environ;
+
 /* FD of the socket used to send commands to the model_server.
  * For example, it is used to send IOSF messages or inject traffic.
  */
@@ -91,7 +96,7 @@ static void hex_dump(const uint8_t *bytes, int nbytes, char show_ascii);
 static int create_client_socket(int *fd, int *port);
 static int connect_server(const char *addr_str, const char *port, int *server_fd);
 static int connect_egress(int phys_port, int server_fd, int client_fd,
-                          int client_port, int *egress_fd);
+                          uint16_t client_port, int *egress_fd);
 static int read_host_info(FILE *fd, char *host, char *port);
 static int wm_read_data(int socket, uint8_t *data, uint32_t data_len,
                         int timeout_msec);
@@ -109,7 +114,7 @@ static int wm_read_data(int socket, uint8_t *data, uint32_t data_len,
  */
 int wm_server_start(char const * const type)
 {
-  char cmd[500], jar_path[500];
+  char cmd[MAX_BUF], jar_path[MAX_BUF];
   char *m3_exec_args[] = {cmd, "-n", "-m", "mby", /* Select the MBY model */
                           "-ip", NULL, /* Path of models.packetServer */
                           "-if", NULL, /* Actual name of the file */
@@ -155,10 +160,10 @@ int wm_server_start(char const * const type)
     }
     pclose(fd);
     cmd[strlen(cmd) - 1] = '\0';
-    sprintf(jar_path, "%s/%s", model_root, SCALA_SERVER_PATH);
+    snprintf(jar_path, MAX_BUF, "%s/%s", model_root, SCALA_SERVER_PATH);
   } else if (!strcasecmp(type, "m3")) {
     use_m3 = 1;
-    sprintf(cmd, "%s/%s", model_root, M3_SERVER_PATH);
+    snprintf(cmd, MAX_BUF,  "%s/%s", model_root, M3_SERVER_PATH);
   } else {
     LOG_ERROR("Invalid type of server: %s\n", type);
     return WM_ERR_INVALID_ARG;
@@ -177,14 +182,16 @@ int wm_server_start(char const * const type)
     /* Child process: start m3/scala model_server */
     strcpy(server_if, server_tmpfile);
     strcpy(server_ip, server_tmpfile);
+
+    /* The assumption that we have a full exec path */
     if (use_m3) {
       m3_exec_args[5] = dirname(server_ip);
       m3_exec_args[7] = basename(server_if);
-      execvp(m3_exec_args[0], m3_exec_args);
+      execve(m3_exec_args[0], m3_exec_args, environ);
     } else {
       scala_exec_args[4] = dirname(server_ip);
       scala_exec_args[6] = basename(server_if);
-      execvp(scala_exec_args[0], scala_exec_args);
+      execve(scala_exec_args[0], scala_exec_args, environ);
     }
     LOG_ERROR("Could not start %s server: %s - error: %s\n",
               use_m3 ? "m3" : "Scala", cmd, strerror(errno));
@@ -225,10 +232,10 @@ int wm_server_start(char const * const type)
  */
 int wm_server_stop(void)
 {
-  unsigned char empty_msg = 0;
   int err;
 
-  err = wm_send(wm_server_fd, &empty_msg, 0, MODEL_MSG_COMMAND_QUIT, 0);
+  /* Send an empty message */
+  err = wm_send(wm_server_fd, NULL, 0, MODEL_MSG_COMMAND_QUIT, 0);
   if (err)
     LOG_ERROR("Error while sending shutdown request to server: %d\n", err);
 
@@ -425,11 +432,6 @@ int wm_pkt_push(const struct wm_pkt *pkt)
     return WM_ERR_INVALID_ARG;
   }
 
-  if (pkt->len > MAX_MSG_LEN) {
-    LOG_ERROR("Pkt length %d exceeds max of %d\n", pkt->len, MAX_MSG_LEN);
-    return WM_ERR_INVALID_ARG;
-  }
-
   LOG_DEBUG("Pushing packet len=%d\n", pkt->len);
   LOG_HEX_DUMP(pkt->data, pkt->len, 0);
   /* First TLV is the meta-data. For now I will assume this is a frame
@@ -453,14 +455,20 @@ int wm_pkt_push(const struct wm_pkt *pkt)
   off += WM_DATA_TYPE_SIZE;
   *((uint32_t *)&msg[off]) = htonl(pkt->len);
   off += WM_DATA_LENGTH_SIZE;
-  memcpy(msg + off, pkt->data, pkt->len);
   msg_len = off + pkt->len;
 
-  if (1) {
-    printf("wm_pkt_push msg 0x%p pkt->len %d off %d msg_len %d\n",
-           msg, pkt->len, off, msg_len);
-    LOG_HEX_DUMP(msg, msg_len, 1);
+  if (msg_len > MAX_MSG_LEN) {
+    LOG_ERROR("Pkt meta-data + data length (%d + %u) exceeds max of %d\n", off, pkt->len, MAX_MSG_LEN);
+    return WM_ERR_INVALID_ARG;
   }
+
+  memcpy(msg + off, pkt->data, pkt->len);
+
+#if 1
+  LOG_INFO("wm_pkt_push msg 0x%p pkt->len %u off %d msg_len %u\n",
+         msg, pkt->len, off, msg_len);
+  LOG_HEX_DUMP(msg, msg_len, 1);
+#endif
 
   err = wm_send(wm_server_fd, msg, msg_len, MODEL_MSG_PACKET, pkt->port);
   if (err) {
@@ -688,7 +696,8 @@ static int wm_receive(int fd, uint8_t *msg, uint32_t *len, uint16_t *type,
   }
 
   /* Receive the remaining bytes */
-  err = wm_read_data(fd, (uint8_t *)&wm_msg.version,
+  err = wm_read_data(fd,
+                     (uint8_t *)&wm_msg + offsetof(struct wm_msg, version),
                      wm_len - sizeof(wm_len), READ_TIMEOUT);
   if (err) {
     LOG_ERROR("Could not receive message contents from WM\n");
@@ -743,13 +752,14 @@ static int wm_send(int fd, const uint8_t *msg, uint32_t len, uint16_t type,
   uint32_t wm_len;
   uint32_t wr_len;
 
-  wm_msg.version = htons(MODEL_VERSION);
+  wm_msg.version = htons((uint16_t)MODEL_VERSION);
   wm_msg.type = htons(type);
   wm_msg.sw = htons(0);
   wm_msg.port = htons(port);
 
-  //memcpy_s(msg.data, sizeof(msg.data), pmsg, msg_len);
-  memcpy(wm_msg.data, msg, len);
+  if (msg)
+    //memcpy_s(msg.data, sizeof(msg.data), pmsg, msg_len);
+    memcpy(wm_msg.data, msg, len);
 
   /* Type specific checks */
   if (type == MODEL_MSG_IOSF && len > IOSF_MSG_MAX_LEN) {
@@ -807,6 +817,7 @@ static int connect_server(const char *addr_str, const char *port_str, int *serve
     *server_fd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
     if (*server_fd == -1) {
       LOG_ERROR("Error creating socket fd: %s\n", strerror(errno));
+      freeaddrinfo(result);
       return WM_ERR_NETWORK;
     }
 
@@ -835,7 +846,7 @@ static int connect_server(const char *addr_str, const char *port_str, int *serve
  *                              will be placed
  */
 static int connect_egress(int phys_port, int server_fd, int client_fd,
-                          int client_port, int *egress_fd)
+                          uint16_t client_port, int *egress_fd)
 {
   char hostname[MAXHOSTNAMELEN];
   char buffer[MAXHOSTNAMELEN + 2];
@@ -895,7 +906,7 @@ static int create_client_socket(int *fd, int *port)
 
   bzero(&addr, sizeof(addr));
   addr.sin_family = AF_INET;
-  addr.sin_addr.s_addr = htonl(INADDR_ANY);
+  addr.sin_addr.s_addr = htonl((uint32_t)INADDR_ANY);
   addr.sin_port = htons(0);
 
   err = bind(*fd, (struct sockaddr *)&addr, sizeof(addr));
@@ -959,6 +970,7 @@ static int read_host_info(FILE *fd, char *host, char *port)
     return WM_ERR_RUNTIME;
 
   memcpy(host, &buffer[start], cnt);
+  host[cnt] = '\0';
   printf("cnt = %d - host = %s\n", cnt, host);
 
   start = start + cnt + 1;
@@ -974,6 +986,7 @@ static int read_host_info(FILE *fd, char *host, char *port)
     cnt--;
 
   memcpy(port, &buffer[start], cnt);
+  port[cnt] = '\0';
   return WM_OK;
 }
 
@@ -1067,8 +1080,6 @@ static void hex_dump(const uint8_t *bytes, int nbytes, char show_ascii)
   FILE *fp=stdout;
   const int group_bytes = 4;
   const int line_groups = 2;
-  int linebytes;
-  int cnt=0;
   const uint8_t *lim = bytes + nbytes;
   const uint8_t *b, *p=bytes;
 
@@ -1085,8 +1096,13 @@ static void hex_dump(const uint8_t *bytes, int nbytes, char show_ascii)
       p = b;
     }
     for (int g = 0; g < line_groups; ++g) {
-      for (int i = 0; i < group_bytes; ++i, p = (p==lim) ? lim : p+1  )
-        fprintf(fp, p == lim ? "   " : " %02x", p == lim? 0xbeef : *p);
+      for (int i = 0; i < group_bytes; ++i, p = (p==lim) ? lim : p+1  ) {
+        if (p != lim)
+            fprintf(fp, " %02x", *p);
+        else
+            fprintf(fp, "   ");
+      }
+
       fprintf(fp, " ");
     }
     fprintf(fp, "\n");
