@@ -9,7 +9,6 @@
 
 #include "mby_common.h"
 #include "mby_bitfield.h"
-#include "varchar.h"
 #include "mby_nexthop.h"
 
 // Defines:
@@ -586,6 +585,7 @@ typedef struct mbyMaskGenToTriggersStruct
     fm_uint64         TAIL_CSUM_LEN;                          ///< L4 CSUM related information
     fm_byte           TRAFFIC_CLASS;                          ///< 3-bit traffic class
     fm_byte           TX_TAG;                                 ///< egress tag
+    fm_uint32         RX_LENGTH;
 } mbyMaskGenToTriggers;
 
 void MaskGen
@@ -593,7 +593,6 @@ void MaskGen
     mby_ppe_fwd_misc_map  const * const fwd_misc,
     mby_ppe_mst_glort_map const * const glort_map,
     mby_ppe_cm_apply_map  const * const cm_apply,
-    varchar_t             const *       rx_data,
     mbyNextHopToMaskGen   const * const in,
     mbyMaskGenToTriggers        * const out
 );

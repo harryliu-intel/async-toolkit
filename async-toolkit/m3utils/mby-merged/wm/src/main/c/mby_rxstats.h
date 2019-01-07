@@ -9,6 +9,8 @@
 
 #include "mby_common.h"
 #include "mby_bitfield.h"
+#include "varchar.h"
+#include "mby_congmgmt.h"
 
 // Defines:
 
@@ -150,5 +152,13 @@ typedef struct mbyRxStatsToRxOutStruct
     fm_byte                 XCAST;
 
 } mbyRxStatsToRxOut;
+
+void RxStats
+(
+    mby_ppe_rx_stats_map       const * const stats_map,
+    mby_ppe_rx_stats_map__addr const * const stats_map_w,
+    mbyCongMgmtToRxStats       const * const in,
+    mbyRxStatsToRxOut                * const out
+ );
 
 #endif

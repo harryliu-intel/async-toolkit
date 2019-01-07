@@ -302,4 +302,5 @@ void NextHop
     out->TRAP_ICMP            = in->TRAP_ICMP;
     out->TRAP_IP_OPTIONS      = in->TRAP_IP_OPTIONS;
     out->TRIGGERS             = in->TRIGGERS;
+    out->RX_LENGTH         = in->RX_LENGTH;
 }

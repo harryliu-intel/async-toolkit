@@ -314,6 +314,7 @@ typedef struct mbyNextHopToMaskGenStruct
     fm_uint64          TAIL_CSUM_LEN;        ///< L4 CSUM related information
     fm_byte            TRAFFIC_CLASS;        ///< traffic class
     fm_byte            TX_TAG;               ///< transmit tag from Classifier
+    fm_uint32          RX_LENGTH;
 } mbyNextHopToMaskGen;
 
 #endif

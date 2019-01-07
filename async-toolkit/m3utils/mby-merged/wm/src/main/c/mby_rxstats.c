@@ -2,8 +2,8 @@
 
 // Copyright (C) 2018 Intel Corporation
 
-#include "mby_congmgmt.h"
 #include "mby_rxstats.h"
+#include "mby_congmgmt.h"
 #include "mby_maskgen.h" // action codes
 #include <model_c_write.h> // write_field()
 
@@ -251,13 +251,12 @@ void RxStats
 (
     mby_ppe_rx_stats_map       const * const stats_map,
     mby_ppe_rx_stats_map__addr const * const stats_map_w,
-    varchar_t                  const *       rx_data,
     mbyCongMgmtToRxStats       const * const in,
     mbyRxStatsToRxOut                * const out
 )
 {
     // Read inputs:
-  const fm_uint32  rx_length     = rx_data->length;
+    const fm_uint32  rx_length     = in->RX_LENGTH;
     const fm_uint32  rx_port       = in->RX_PORT;
     const fm_bool    is_ipv4       = in->IS_IPV4;
     const fm_bool    is_ipv6       = in->IS_IPV6;

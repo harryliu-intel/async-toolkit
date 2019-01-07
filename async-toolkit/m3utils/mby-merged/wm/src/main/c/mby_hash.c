@@ -517,4 +517,5 @@ void Hash
     out->RX_PORT                 = in->RX_PORT;
     out->TRAFFIC_CLASS           = in->TRAFFIC_CLASS;
     out->TRAP_IGMP               = in->TRAP_IGMP;
+    out->RX_LENGTH = in->RX_LENGTH;
 }

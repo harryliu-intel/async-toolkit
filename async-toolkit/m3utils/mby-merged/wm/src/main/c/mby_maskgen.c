@@ -561,7 +561,6 @@ void MaskGen
     mby_ppe_fwd_misc_map  const * const fwd_misc,
     mby_ppe_mst_glort_map const * const glort_map,
     mby_ppe_cm_apply_map  const * const cm_apply,
-    varchar_t             const *       rx_data,
     mbyNextHopToMaskGen   const * const in,
     mbyMaskGenToTriggers        * const out
 )
@@ -599,7 +598,7 @@ void MaskGen
     const fm_bool            pa_drop              = in->PA_DROP;
     const fm_bool            pa_l3len_err         = in->PA_L3LEN_ERR;
     const fm_byte            qos_tc_in            = in->QOS_TC;
-    const fm_uint32          rx_length            = rx_data->length;
+    const fm_uint32          rx_length            = in->RX_LENGTH;
     const fm_bool            rx_mirror_in         = in->RX_MIRROR;
     const fm_uint32          rx_port              = in->RX_PORT;
     const fm_bool            sa_hit               = in->SA_HIT;
@@ -1219,4 +1218,5 @@ void MaskGen
     out->TAIL_CSUM_LEN          = in->TAIL_CSUM_LEN;
     out->TRAFFIC_CLASS          = in->TRAFFIC_CLASS;
     out->TX_TAG                 = in->TX_TAG;
+    out->RX_LENGTH              = in->RX_LENGTH;
 }

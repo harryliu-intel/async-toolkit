@@ -75,6 +75,7 @@ typedef struct mbyClassifierToHashStruct
     mbyParserHdrPtrs   PA_HDR_PTRS;                                 ///< parser header pointers
     fm_uint32          RX_PORT;                                     ///< ingress port
     fm_byte            TRAFFIC_CLASS;                               ///< 3-bit traffic class
+  fm_uint32 RX_LENGTH;
 } mbyClassifierToHash;
 
 // Function prototypes:

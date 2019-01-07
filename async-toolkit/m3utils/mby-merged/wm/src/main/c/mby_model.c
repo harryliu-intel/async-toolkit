@@ -65,56 +65,8 @@ fm_status mbyTopMapSetup
     return sts;
 }
 
-fm_status mbyReadReg
-(
-    mby_top_map       const * const r,
-    fm_uint32               * const port,
-    fm_uint32                 const addr,
-    fm_uint64               * const val
-)
-{
-    fm_status sts = FM_OK;
-
-    // FM_LOG_PRINT("Read64 register addr=0x%x\n", addr); // <--- FIXME!!!
-
-    return sts;
-}
-
-fm_status mbyWriteReg
-(
-    mby_top_map__addr const * const w,
-    fm_uint32               * const port,
-    fm_uint32                 const addr,
-    fm_uint64                 const val
-)
-{
-    fm_status sts = FM_OK;
-
-    // implementation goes here // <--- REVISIT !!!
-
-    // FM_LOG_PRINT("Write64 register addr=0x%x val=0x%llx\n", addr, val);
-
-    return sts;
-}
-
-fm_status mbyWriteRegMult
-(
-    mby_top_map       const * const r,
-    mby_top_map__addr const * const w,
-    fm_uint32               * const port,
-    fm_uint32                 const addr,
-    fm_uint64         const * const val,
-    fm_uint32                 const len
-)
-{
-    fm_status sts = FM_OK;
-
-    // implementation goes here // <--- REVISIT !!!
-
-    return sts;
-}
-
 // Persistent store for RX output and TX input:
+// THESE NEED TO GO AWAY!
 static mbyRxStatsToRxOut rxs2rxo;
 static mbyTxInToModifier txi2mod;
 
@@ -145,10 +97,14 @@ fm_status mbySendPacket
     rx_data.length = length;
 
     // Populate input:
-    mac2par.RX_PORT   = (fm_uint32) port;
+    mac2par.RX_PORT   = port;
+    mac2par.RX_LENGTH = length;
+
+    for (fm_uint i = 0; i < MBY_PA_MAX_SEG_LEN; i++)
+        mac2par.SEG_DATA[i] = (i < length) ? packet[i] : 0;
 
     // Call RX pipeline:
-    RxPipeline(rx_top_map, rx_top_map_w, shm_map, &rx_data, &mac2par, &rxs2rxo);
+    RxPipeline(rx_top_map, rx_top_map_w, shm_map, &mac2par, &rxs2rxo);
 
     return sts;
 }

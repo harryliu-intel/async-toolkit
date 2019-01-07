@@ -26,7 +26,6 @@ void RxPipeline
     mby_ppe_rx_top_map       const * const rx_top_map,
     mby_ppe_rx_top_map__addr const * const rx_top_map_w,
     mby_shm_map              const * const shm_map,
-    varchar_t                const *       rx_data,
     mbyRxMacToParser         const * const mac2par,
     mbyRxStatsToRxOut              * const rxs2rxo
 );
@@ -85,14 +84,6 @@ void CongMgmt
     mby_ppe_cm_usage_map  const * const cm_usage_map,
     mbyTriggersToCongMgmt const * const in,
     mbyCongMgmtToRxStats        * const out
-);
-
-void RxStats
-(
-    mby_ppe_rx_stats_map       const * const stats_map,
-    mby_ppe_rx_stats_map__addr const * const stats_map_w,
-    mbyCongMgmtToRxStats       const * const in,
-    mbyRxStatsToRxOut                * const out
 );
 
 void TxStats

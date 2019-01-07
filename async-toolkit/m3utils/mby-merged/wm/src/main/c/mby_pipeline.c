@@ -9,7 +9,6 @@ void RxPipeline
     mby_ppe_rx_top_map       const * const rx_top_map,
     mby_ppe_rx_top_map__addr const * const rx_top_map_w,
     mby_shm_map              const * const shm_map,
-    varchar_t                const *       rx_data,
     mbyRxMacToParser         const * const mac2par,
     mbyRxStatsToRxOut              * const rxs2rxo
 )
@@ -47,7 +46,7 @@ void RxPipeline
     mbyCongMgmtToRxStats  cgm2rxs;
 
     // RX pipeline stages:
-    Parser     (parser_map, rx_data,  mac2par, &par2map);
+    Parser     (parser_map,           mac2par, &par2map);
 
     Mapper     (mapper_map,          &par2map, &map2cla);
 
@@ -62,7 +61,7 @@ void RxPipeline
 
     MaskGen    (fwd_misc_map,
                 mst_glort_map,
-                cm_apply_map, rx_data,       &nxt2msk, &msk2trg);
+                cm_apply_map,                &nxt2msk, &msk2trg);
 
     Triggers   (trig_apply_map,
                 trig_apply_map_w,

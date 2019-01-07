@@ -48,5 +48,5 @@ mby_top_map_SendPacket(mby_top_map       const * r,
     mac2par.RX_PORT   = (fm_uint32) port;
 
     // Call RX pipeline:
-    RxPipeline(rx_top_map, rx_top_map_w, shm_map, &rx_data, &mac2par, &rxs2rxo);
+    RxPipeline(rx_top_map, rx_top_map_w, shm_map, &mac2par, &rxs2rxo);
 }

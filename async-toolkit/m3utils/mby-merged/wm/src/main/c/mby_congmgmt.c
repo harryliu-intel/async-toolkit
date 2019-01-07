@@ -46,4 +46,5 @@ void CongMgmt
     out->TX_DROP           = in->TX_DROP;
     out->TX_TAG            = in->TX_TAG;
     out->XCAST             = in->XCAST;
+    out->RX_LENGTH         = in->RX_LENGTH;
 }

@@ -25,32 +25,6 @@ fm_status mbyTopMapSetup
     mby_top_map__addr const * const w
 );
 
-fm_status mbyReadReg
-(
-    mby_top_map       const * const r,
-    fm_uint32               * const port,
-    fm_uint32                 const addr,
-    fm_uint64               * const val
-);
-
-fm_status mbyWriteReg
-(
-    mby_top_map__addr const * const w,
-    fm_uint32               * const port,
-    fm_uint32                 const addr,
-    fm_uint64                 const val
-);
-
-fm_status mbyWriteRegMult
-(
-    mby_top_map       const * const r,
-    mby_top_map__addr const * const w,
-    fm_uint32               * const port,
-    fm_uint32                 const addr,
-    fm_uint64         const * const val,
-    fm_uint32                 const len
-);
-
 fm_status mbySendPacket
 (
     mby_top_map       const * const r,
