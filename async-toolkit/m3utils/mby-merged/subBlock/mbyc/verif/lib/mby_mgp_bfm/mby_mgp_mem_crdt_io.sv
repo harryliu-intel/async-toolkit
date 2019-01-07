@@ -89,7 +89,7 @@ function void mby_mgp_mem_crdt_io::fill_req(mby_mgp_req_seq_item req);
    req.req_type = req_type;
    req.pack(req_phys);
    pline_phys = req_phys;
-   `uvm_info(this.get_name(), $sformatf("Filled pline req data : 0x%0x, req_type : %s", req.data, req_type.name), UVM_NONE)
+   
 endfunction
 
 
