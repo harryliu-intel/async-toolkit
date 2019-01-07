@@ -62,6 +62,10 @@ class mby_pbr_bfm extends uvm_component;
     // TODO: description
     mby_pbr_bfm_csp_agent csp_agent;
 
+    // VARIABLE: cpb_agent
+    // TODO: description
+    mby_pbr_bfm_cpb_agent cpb_agent;
+
     // -------------------------------------------------------------------------
     // Macro to register new class type
     // -------------------------------------------------------------------------
@@ -94,13 +98,15 @@ class mby_pbr_bfm extends uvm_component;
     function void build_phase(uvm_phase phase);
         super.build_phase(phase);
         if(cfg_obj.bfm_mode == PBR_BFM_IGR_MODE) begin
+            cpb_agent = mby_pbr_bfm_cpb_agent::type_id::create("cpb_agent", this);
+            cpb_agent.cfg_obj = this.cfg_obj.cpb_cfg;
             dpb_agent = mby_pbr_bfm_dpb_agent::type_id::create("dpb_agent", this);
             dpb_agent.cfg_obj = this.cfg_obj.dpb_cfg;
         end else if(cfg_obj.bfm_mode == PBR_BFM_EGR_MODE) begin
             csp_agent = mby_pbr_bfm_csp_agent::type_id::create("csp_agent", this);
-            csp_agent.cfg_obj = this.cfg_obj.dpptr_cfg;
+            csp_agent.cfg_obj = this.cfg_obj.csp_cfg;
             dpm_agent = mby_pbr_bfm_dpm_agent::type_id::create("dpm_agent", this);
-            dpm_agent.cfg_obj = this.cfg_obj.dpptr_cfg;
+            dpm_agent.cfg_obj = this.cfg_obj.dpm_cfg;
         end
     endfunction
 

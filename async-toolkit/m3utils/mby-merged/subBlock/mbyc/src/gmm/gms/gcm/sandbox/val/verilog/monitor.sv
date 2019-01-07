@@ -45,11 +45,13 @@ class monitor;
     //localparam FIFO_DEPTH  = tmpl_pkg::FIFO_DEPTH;
     //localparam NUM_INPUTS  = tmpl_pkg::NUM_INPUTS;
     //localparam NUM_OUTPUTS = tmpl_pkg::NUM_OUTPUTS;
+    localparam NUM_MGPS     = mby_gmm_pkg::MBY_MAX_NUM_MGP;     // Number of MGPS
+    localparam NUM_TRKS     = gcm_sim_pkg::N_TRACK_EQ;          // Number of enqueue tracks
 
-    virtual gcm_dut_if     dut_if;
+    virtual gcm_dut_if      dut_if;
     scoreboard              sb;
     configuration           cfg;
-    //inp_driver              inp_drvr        [NUM_INPUTS-1:0];
+    inp_driver              inp_drvr        [NUM_MGPS-1:0][NUM_TRKS-1:0];
 
     bit                     sb_done;
     //bit [NUM_INPUTS-1:0]    inp_drv_done;
@@ -66,14 +68,14 @@ class monitor;
     function new(
         virtual gcm_dut_if dut_if,
         scoreboard          sb,
-        configuration       cfgi/*,
-        inp_driver          inp_drvr [NUM_INPUTS-1:0]*/
+        configuration       cfgi,
+        inp_driver          inp_drvr [NUM_MGPS-1:0][NUM_TRKS-1:0]
     );
 
         this.dut_if         = dut_if;
         this.sb             = sb;
         this.cfg            = cfg;
-        //this.inp_drvr       = inp_drvr;
+        this.inp_drvr       = inp_drvr;
 
         name                    = "monitor.sv";
         clk_cnt                 = 0;

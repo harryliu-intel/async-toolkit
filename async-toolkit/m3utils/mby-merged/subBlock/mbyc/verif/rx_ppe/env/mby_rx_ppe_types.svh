@@ -20,13 +20,6 @@
 `ifndef MBY_RX_PPE_TYPES_SV
 `define MBY_RX_PPE_TYPES_SV
 
-//FIXME:  LNS: `defines are global and should be avoided whenever possible. 
-////            When it's not to avoid `defines, their name should be made unambiguously unique by using the prefix MBY_RX_PPE
-`define NUM_VPS_PER_IGR   1
-`define NUM_PORTS_PER_VP  8
-`define NUM_EPLS_PER_RX_PPE 1
-`define NUM_PORTS_PER_EPL 16
-
 
 typedef mby_ec_bfm_pkg::eth_bfm#(.MAX_PORTS(`NUM_PORTS_PER_VP))  rx_ppe_vp_bfm_t;
 typedef mby_ec_bfm_pkg::eth_bfm#(.MAX_PORTS(`NUM_PORTS_PER_EPL)) rx_ppe_eth_bfm_t;
@@ -35,8 +28,45 @@ typedef mby_ec_bfm_pkg::mby_ec_cdi_rx_io                         rx_ppe_eth_bfm_
 typedef virtual mby_ec_cdi_tx_intf                               rx_ppe_eth_bfm_tx_intf_t;
 typedef virtual mby_ec_cdi_rx_intf                               rx_ppe_eth_bfm_rx_intf_t;
 
-// for mby_rx_ppe_tb_top_cfg::get_tb_topology() -- keep current with mby_rx_ppe_defines.svh
+// for mby_rx_ppe_tb_top_cfg::get_tb_topology() 
 typedef int                          rx_ppe_topology_array_t[];
+
+// Enumeration: mby_rx_ppe_topology_e
+// Used to identify the blocks to be instantiated in RTL & in the testbench
+// For example, if the MAPPER block *alone* is instantiated:
+//              cfg.topology[MAPPER] will be 1 -- all other cfg.stages[*] will be 0
+//              scoreboard[MAPPER]   will be created for the post-mapper scoreboard
+//              agent[PARSER]        will be created with its driver enabled to drive the mapper RTL
+//              agent[MAPPER]        will be created with its monitor enabled to pass the mapper RTL output to scoreboard[MAPPER]
+//
+
+typedef enum int {
+   PARSER            = 0,
+   MAPPER            = 1,
+   CLASSIFIER        = 2,
+   HASH              = 4,
+   NEXT_HOP          = 5,
+   MASK_GEN          = 6,
+   TRIGGERS          = 7,
+   CONGESTION_MGT    = 8,
+   RX_STATS          = 9
+} mby_rx_ppe_topology_e ;
+
+// Per the SV LRM:
+//    "The num method returns the number of elements in the given enumeration."
+// However, I've yet to get this to work, thus:
+const integer mby_rx_ppe_topology_e_num = 10;
+// the above, when used in mby_rx_ppe_tb_top_cfg thus:
+//   int topology [mby_rx_ppe_topology_e_num];
+// produces:
+// -I-:Error-[TCF-CETE] Cannot evaluate the expression
+// -I-:/nfs/site/disks/sc_mby_00072/lnstern/mby/work_root/mby-mby-x0/subBlock/mbyc/verif/rx_ppe/env/mby_rx_ppe_tb_top_cfg.svh, 47
+// -I-:"(mby_rx_ppe_topology_e_num + (~1'sd0))"
+// -I-:  Cannot evaluate the expression in right dimension bound.
+// -I-:  The expression must be compile time constant.
+// 
+//stupid annoying work-around:
+`define MBY_RX_PPE_TOPOLOGY_E_NUM  10
 
 `endif // MBY_RX_PPE_TYPES_SV
 
