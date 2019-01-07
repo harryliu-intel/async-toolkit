@@ -40,15 +40,7 @@
 // -------------------------------------------------------------------------
 // Main struct type definitions for PBR BFM
 // -------------------------------------------------------------------------
-// FIXME: change logic to struct (e.g. mby_pod_ptr_ring_t)
-// Defining the cptr data type to be a simple logic for now.
-typedef logic mby_pbr_bfm_cptr_data_t;
-// Defining the ptr data type to be a simple logic for now.
-typedef logic mby_pbr_bfm_dptr_data_t;
-// Defining the ptr debug type to be a simple logic for now.
-typedef logic mby_pbr_bfm_cptr_debg_t;
-// Defining the ptr debug type to be a simple logic for now.
-typedef logic mby_pbr_bfm_dptr_debg_t;
+
 // These are the modes of operation of the PBR BFM, variable to be included in
 // the configuration object.
 typedef enum bit {
@@ -78,5 +70,8 @@ typedef mby_base_pkg::mby_base_agent#(
 typedef mby_base_pkg::mby_base_agent#(
     .T_req(mby_pbr_bfm_cptr_xaction),
     .T_vif(mby_pbr_bfm_cptr_vif)) mby_pbr_bfm_csp_agent;
+// Defining the cpb agent as a parameterized base agent.
+typedef mby_base_pkg::mby_base_agent#(
+    .T_req(mby_pbr_bfm_cptr_xaction),
+    .T_vif(mby_pbr_bfm_cptr_vif)) mby_pbr_bfm_cpb_agent;
 `endif
-

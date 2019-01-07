@@ -41,6 +41,9 @@ class env;
 
     // creating local versions of DUT parameters defined in DUT verilog directory
     //localparam NUM_INPUTS  = tmpl_pkg::NUM_INPUTS;
+    localparam NUM_MGPS     = mby_gmm_pkg::MBY_MAX_NUM_MGP;     // Number of MGPS
+    localparam NUM_TRKS     = gcm_sim_pkg::N_TRACK_EQ;          // Number of enqueue tracks
+
     //localparam NUM_OUTPUTS = tmpl_pkg::NUM_OUTPUTS;
 
     virtual gcm_dut_if dut_if;     // interface used in objects have to be declared as "virtual" 
@@ -51,7 +54,7 @@ class env;
     configuration       cfg;
     id_generator        id_gen; 
     system_driver       sys_drvr;
-    //inp_driver          inp_drvrs [NUM_INPUTS-1:0];
+    inp_driver          inp_drvrs [NUM_MGPS-1:0][NUM_TRKS-1:0];
     monitor             mntr;
     scoreboard          sb;
 
@@ -62,9 +65,7 @@ class env;
 
     function new
     (
-   
         virtual gcm_dut_if     dut_if       // testbench interface
-
         // configuration parameters
         //tmpl_sim_pkg::knob_t    knob_inp_bubble_numerator_min,
         //tmpl_sim_pkg::knob_t    knob_inp_bubble_numerator_max,
@@ -88,14 +89,18 @@ class env;
         );
         sb          = new(cfg, id_gen);
         sys_drvr    = new(dut_if,cfg);
-        //foreach (inp_drvrs[i])   
-        //    inp_drvrs[i] = new(
-        //        .iport              (i      ),
-        //        .dut_if             (dut_if   ),
-        //        .cfg                (cfg    )
-        //    );
 
-        mntr        = new(dut_if,sb,cfg/*,inp_drvrs*/);
+        foreach (inp_drvrs[i,j])
+            inp_drvrs[i][j] = new(
+                .i_eq_mgp_port      (i          ),
+                .i_eq_trk_port      (j          ),
+                .i_dq_mgp_port      (i          ),
+                .i_dq_trk_port      (j          ),
+                .dut_if             (dut_if     ),
+                .cfg                (cfg        )
+            );
+
+        mntr        = new(dut_if,sb,cfg,inp_drvrs);
 
         // connect testbench env to DUT
         connect();
@@ -113,13 +118,14 @@ class env;
         // monitoring, and responding to various concurrent events in the simulation.
         fork
             mntr.connect_to_DUT();      // connect the monitor
-            //foreach (inp_drvrs[i]) begin
-            //    // To avoid a race condition (i changing before it is doing being used), 
-            //    // each iteration gets it's own j to hold that iteration number.
-            //    automatic int j = i;            
-            //    // connect the input drivers
-            //    fork inp_drvrs[j].connect_to_DUT_inputs(); join_none
-            //end // foreach inp_drvrs[i]
+            foreach (inp_drvrs[i,j]) begin
+                // To avoid a race condition (i changing before it is doing being used), 
+                // each iteration gets it's own j to hold that iteration number.
+                automatic int x = i;            
+                automatic int y = j;            
+                // connect the input drivers
+                fork inp_drvrs[x][y].connect_to_DUT_inputs(); join_none
+            end // foreach inp_drvrs[i]
         join_none
     endtask
 
@@ -129,10 +135,11 @@ class env;
         // This outer fork makes it clear which processes are the parent and child processes 
         fork begin
             $display("(time: %0d) %s: **Resetting**", $time, name);
-            //foreach (inp_drvrs[i]) begin
-            //    automatic int j = i;
-            //    fork inp_drvrs[j].reset(); join_none
-            //end
+            foreach (inp_drvrs[i,j]) begin
+                automatic int x = i;
+                automatic int y = j;
+                fork inp_drvrs[x][y].reset(); join_none
+            end
             fork sys_drvr.reset();  join_none
             fork mntr.reset();      join_none
             fork sb.reset();        join_none
@@ -145,10 +152,11 @@ class env;
     task load_stimulus(integer num_reqs);
         fork begin
             $display("(time: %0d) %s: **Loading Stimulus**", $time, name);
-            //foreach (inp_drvrs[i]) begin
-            //    automatic int j = i;
-            //    fork inp_drvrs[j].load_stimulus(num_reqs); join_none
-            //end
+            foreach (inp_drvrs[i,j]) begin
+                automatic int x = i;
+                automatic int y = j;
+                fork inp_drvrs[x][y].load_stimulus(num_reqs); join_none
+            end
             wait fork;
         end join
     endtask
@@ -156,10 +164,11 @@ class env;
     // Drive requests into DUT (template)
     task drive_stimulus();
         $display("(time: %0d) %s: **Driving Stimulus**", $time, name);
-        //foreach (inp_drvrs[i]) begin
-        //    automatic int j = i;
-        //    fork inp_drvrs[j].drive_reqs(); join_none
-        //end
+        foreach (inp_drvrs[i,j]) begin
+            automatic int x = i;
+            automatic int y = j;
+            fork inp_drvrs[x][y].drive_reqs(); join_none
+        end
     endtask
 
     // wait for <delay> cycles after the monitor reports everythign is done
@@ -173,6 +182,16 @@ class env;
         $display("(time: %0d) %s: **End Waiting For Done plus %0d Clocks**", $time, name, delay);
     endtask
 
+    task waiting(integer delay);
+        $display("(time: %0d) %s: **Begin Waiting %0d Clocks**", $time, name, delay);
+        done_cnt = 0;
+        while (done_cnt < delay) begin
+            repeat (1) @ (posedge dut_if.cclk);
+            done_cnt = done_cnt + 1; 
+        end
+        $display("(time: %0d) %s: **End Waiting %0d Clocks**", $time, name, delay);
+    endtask
+    
     task final_state_check();
         mntr.final_state_check();
     endtask;

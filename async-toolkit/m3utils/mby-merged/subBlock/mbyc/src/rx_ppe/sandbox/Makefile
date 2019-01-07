@@ -22,11 +22,13 @@ INCS += $(RTL_SRC)/parser/rtl/hlp/tmp
 INCS += $(RTL_SRC)/class_gpa/rtl
 INCS += $(RTL_SRC)/class_gpb/rtl
 INCS += $(RTL_SRC)/action/rtl
-INCS += $(RTL_SRC)/ppe_stm/rtl
+INCS += $(RTL_SRC)/action/rtl/trigger
+INCS += $(RTL_SRC)/action/rtl/trigger/hlp
+INCS += $(RTL_SRC)/ppe_stm_rx/rtl
+INCS += $(RTL_SRC)/ppe_stm_tx/rtl
 INCS += $(SHARED_SRC)/rtl
 INCS += $(SHARED_SRC)/rtl/hlp
 INCS += $(SHARED_SRC)/interfaces
-INCS += $(SHARED_SRC)/sva/hlp
 INCS += $(TARGET_SRC)/mby/mgm_run/parser/src
 INCS += $(TARGET_SRC)/mby/mgm_run/parser/src/mem_wrap
 INCS += $(TARGET_SRC)/mby/mgm_run/class_gpa/src
@@ -35,11 +37,15 @@ INCS += $(TARGET_SRC)/mby/mgm_run/class_gpb/src
 INCS += $(TARGET_SRC)/mby/mgm_run/class_gpb/src/mem_wrap
 INCS += $(TARGET_SRC)/mby/mgm_run/action/src
 INCS += $(TARGET_SRC)/mby/mgm_run/action/src/mem_wrap
-INCS += $(TARGET_SRC)/mby/mgm_run/ppe_stm/src
-INCS += $(TARGET_SRC)/mby/mgm_run/ppe_stm/src/mem_wrap
+INCS += $(TARGET_SRC)/mby/mgm_run/ppe_stm_rx/src
+INCS += $(TARGET_SRC)/mby/mgm_run/ppe_stm_rx/src/mem_wrap
+INCS += $(TARGET_SRC)/mby/mgm_run/ppe_stm_tx/src
+INCS += $(TARGET_SRC)/mby/mgm_run/ppe_stm_tx/src/mem_wrap
 INCS += $(TARGET_SRC)/mby/mgm_run/rtl
 INCS += $(ASSERT_LIB)/SVA_LIB
+INCS += $(SHARED_SRC)/sva/hlp
 INCS += $(RTL_SRC)/parser/sva/hlp
+INCS += $(RTL_SRC)/action/sva/trigger/hlp
 INCS += /p/hdk/cad/ctech/v15ww50e/source/v
 
 VCS_INC = $(addprefix +incdir+,$(INCS))
@@ -47,16 +53,17 @@ VCS_INC = $(addprefix +incdir+,$(INCS))
 VCS_LIB = $(addprefix -y ,$(INCS))
 VCS_LIB += $(addprefix -y ,$(DV_SRC))
 
-VCS_SRC  =	$(SHARED_SRC)/rtl/shared_pkg.sv
+VCS_SRC  =	$(ASSERT_LIB)/SVA_LIB/intel_checkers.vs
+VCS_SRC  += $(ASSERT_LIB)/SVA_LIB/intel_checkers_pkg.vs
+VCS_SRC  +=	$(SHARED_SRC)/rtl/shared_pkg.sv
 VCS_SRC  +=	$(SHARED_SRC)/rtl/mby_rx_metadata_pkg.sv
 VCS_SRC  +=	$(SHARED_SRC)/rtl/hlp/hlp_register_constants_pkg.vh
 VCS_SRC  +=	$(SHARED_SRC)/rtl/hlp/hlp_pkt_pkg.vh
 VCS_SRC  +=	$(SHARED_SRC)/rtl/hlp/hlp_pkt_meta_pkg.vh
 VCS_SRC  +=	$(SHARED_SRC)/rtl/hlp/hlp_pkg.vh
 VCS_SRC  +=	$(SHARED_SRC)/rtl/hlp/hlp_ipp_pkg.vh
-VCS_SRC  +=	$(ASSERT_LIB)/SVA_LIB/intel_checkers.vs
-VCS_SRC  += $(ASSERT_LIB)/SVA_LIB/intel_checkers_pkg.vs
 VCS_SRC  += $(SHARED_SRC)/rtl/hlp/hlp_register_struct.vh
+VCS_SRC  +=	$(SHARED_SRC)/rtl/hlp/hlp_fwd_pkg.vh
 VCS_SRC  += $(SHARED_SRC)/rtl/hlp/hlp_crc_pkg.vh
 VCS_SRC  += $(SHARED_SRC)/rtl/hlp/hlp_csum_pkg.vh
 VCS_SRC  += $(RTL_SRC)/parser/rtl/hlp/hlp_pa_pkg.vh
@@ -73,23 +80,27 @@ VCS_SRC  += $(TARGET_SRC)/mby/mgm_run/parser/src/parser_mem.def
 VCS_SRC  += $(TARGET_SRC)/mby/mgm_run/class_gpa/src/class_gpa_mem.def
 VCS_SRC  += $(TARGET_SRC)/mby/mgm_run/class_gpb/src/class_gpb_mem.def
 VCS_SRC  += $(TARGET_SRC)/mby/mgm_run/action/src/action_mem.def
-VCS_SRC  += $(TARGET_SRC)/mby/mgm_run/ppe_stm/src/ppe_stm_mem.def
+VCS_SRC  += $(TARGET_SRC)/mby/mgm_run/ppe_stm_rx/src/ppe_stm_rx_mem.def
+VCS_SRC  += $(TARGET_SRC)/mby/mgm_run/ppe_stm_tx/src/ppe_stm_tx_mem.def
 
 VCS_FLAGS = -full64 +v2k -sverilog -notice +vcs+lic+wait +warn=noUII-L \
     -timescale=10ps/10ps -debug_pp +libext+.v+.sv+.vh+.svh+.vs+.vm+.sva \
-    -assert svaext +define+VCSSIM+MBY_PARSER_BEHAVE_MEMS+MBY_CLASS_GPA_BEHAVE_MEMS+MBY_CLASS_GPB_BEHAVE_MEMS+MBY_ACTION_BEHAVE_MEMS+MBY_PPE_STM_BEHAVE_MEMS \
+    -assert svaext +define+VCSSIM+MBY_PARSER_BEHAVE_MEMS+MBY_CLASS_GPA_BEHAVE_MEMS+MBY_CLASS_GPB_BEHAVE_MEMS+MBY_ACTION_BEHAVE_MEMS+MBY_PPE_STM_RX_BEHAVE_MEMS+MBY_PPE_STM_TX_BEHAVE_MEMS+INTEL_SVA_OFF \
     -Mdir=$(SIM_DIR)/csrc -o $(SIM_DIR)/$@
 
-default: ppe_stm
+default: ppe_stm_rx
 
-.PHONY: rx_ppe ppe_stm clean
+.PHONY: rx_ppe ppe_stm_rx ppe_stm_tx clean
 
 rx_ppe: $(SIM_DIR)
 	@vcs $(VCS_FLAGS) $(VCS_LIB) $(VCS_INC) $(VCS_SRC) $(DV_SRC)/rx_ppe_tb.sv | tee $(SIM_DIR)/rx_ppe.log
 
-ppe_stm: $(SIM_DIR)
-	@vcs $(VCS_FLAGS) $(VCS_LIB) $(VCS_INC) $(VCS_SRC) $(DV_SRC)/ppe_stm_tb.sv | tee $(SIM_DIR)/ppe_stm.log
+ppe_stm_rx: $(SIM_DIR)
+	@vcs $(VCS_FLAGS) $(VCS_LIB) $(VCS_INC) $(VCS_SRC) $(DV_SRC)/ppe_stm_rx_tb.sv | tee $(SIM_DIR)/ppe_stm_rx.log
+
+ppe_stm_tx: $(SIM_DIR)
+	@vcs $(VCS_FLAGS) $(VCS_LIB) $(VCS_INC) $(VCS_SRC) $(DV_SRC)/ppe_stm_tx_tb.sv | tee $(SIM_DIR)/ppe_stm_tx.log
 
 clean:
-	rm -rf $(SIM_DIR)/csrc $(SIM_DIR)/*.daidir $(SIM_DIR)/*.vdb $(SIM_DIR)/ppe_stm $(SIM_DIR)/*.log $(SIM_DIR)/*.vpd $(SIM_DIR)/DVEfiles $(SIM_DIR)/vc_hdrs.h $(SIM_DIR)/ucli.key $(SIM_DIR)/rx_ppe
+	rm -rf $(SIM_DIR)/csrc $(SIM_DIR)/*.daidir $(SIM_DIR)/*.vdb $(SIM_DIR)/ppe_stm_rx $(SIM_DIR)/ppe_stm_tx $(SIM_DIR)/*.log $(SIM_DIR)/*.vpd $(SIM_DIR)/DVEfiles $(SIM_DIR)/vc_hdrs.h $(SIM_DIR)/ucli.key $(SIM_DIR)/rx_ppe
 
