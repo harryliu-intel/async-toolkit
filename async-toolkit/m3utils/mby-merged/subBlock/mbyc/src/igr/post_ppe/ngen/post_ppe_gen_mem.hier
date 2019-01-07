@@ -1,0 +1,8 @@
+// post_ppe block
+
+post_ppe_gen_mem [
+  post_ppe_shells_wrapper of post_ppe_shells_wrapper with post_ppe_shells_wrapper.map
+  //post_ppe_sram_mems of post_ppe_sram_mems with post_ppe_sram_mems.map
+  post_ppe_rf_mems of post_ppe_rf_mems with post_ppe_rf_mems.map
+  post_ppe_ff_mems of post_ppe_ff_mems with post_ppe_ff_mems.map
+]
