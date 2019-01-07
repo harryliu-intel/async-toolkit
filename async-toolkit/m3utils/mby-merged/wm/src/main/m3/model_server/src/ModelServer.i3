@@ -51,7 +51,7 @@ TYPE
 
     (****** abstract methods, implement in child type: ******)
     
-    resetChip();
+    reset();
     (* bring the DUT to the desired reset state *)
 
     csrOp(VAR op : CsrOp.T) : CsrAccessStatus.T;

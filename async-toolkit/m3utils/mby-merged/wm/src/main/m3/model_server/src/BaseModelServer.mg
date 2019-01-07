@@ -14,18 +14,18 @@ VAR doDebug := Debug.DebugThis(ModelServer.Brand);
 REVEAL
   T = Public BRANDED Brand OBJECT
   OVERRIDES
-    resetChip    := ResetChip;
+    reset        := Reset;
     init         := Init;
     csrOp        := DoCsrOp;
     handlePacket := HandlePacket;
   END;
 
-PROCEDURE ResetChip(t : T) =
+PROCEDURE Reset(t : T) =
   BEGIN
     (* not sure this is right! *)
-    t.setupChip(t.h.read, t.h.update);
+    t.setup(t.h.read, t.h.update);
     MapAddr.Reset(t.h.read, t.h.update);
-  END ResetChip;
+  END Reset;
 
 PROCEDURE Init(t            : T;
                sharedSocket : BOOLEAN;

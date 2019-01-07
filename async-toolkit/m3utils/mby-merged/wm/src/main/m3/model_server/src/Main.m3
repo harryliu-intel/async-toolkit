@@ -108,7 +108,7 @@ BEGIN
   CASE model OF
     Models.Hlp =>
     modelServer := NEW(HlpModelServer.T,
-                       setupChip := HlpModel.SetupHlp)
+                       setup := HlpModel.Setup)
     .init(sharedSocket,
           infoPath := infoPath,
           infoFileName := infoFile,
@@ -117,7 +117,7 @@ BEGIN
   |
     Models.Mby =>
     modelServer := NEW(MbyModelServerExt.T,
-                       setupChip := MbyModel.SetupMby,
+                       setup := MbyModel.Setup,
                        reflect := doReflect)
     .init(sharedSocket,
           infoPath := infoPath,
@@ -126,7 +126,7 @@ BEGIN
           factory := MbyModelC.GetUpdaterFactory())
   END;    
     
-  modelServer.resetChip();
+  modelServer.reset();
 
   EVAL modelServer.listenFork();
 

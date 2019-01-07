@@ -9,7 +9,7 @@ TYPE
   Public = Super OBJECT
     h        : MapAddr.H;
   METHODS
-    setupChip(READONLY read : Map.T; READONLY update : MapAddr.Update);
+    setup(READONLY read : Map.T; READONLY update : MapAddr.Update);
   END;
 
 CONST Brand = Map.Brand & "/ ModelServer";

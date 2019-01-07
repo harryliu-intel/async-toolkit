@@ -103,11 +103,11 @@ PROCEDURE FloodPktHandler(READONLY hdr : FmModelMessageHdr.T;
     END
   END FloodPktHandler;
 
-PROCEDURE SetupHlp(<*UNUSED*>server : HlpModelServer.T;
+PROCEDURE Setup(<*UNUSED*>server : HlpModelServer.T;
                    <*UNUSED*>READONLY read : Map.T;
                    READONLY update : MapAddr.Update) =
   BEGIN
-    Debug.Out("SetupHlp");
+    Debug.Out("HlpModel.Setup");
     
     update.Imn.BsmScratch3[509].Data.u(16_1109);
     (* match fpps_mgmt.c:546 *)
@@ -115,6 +115,6 @@ PROCEDURE SetupHlp(<*UNUSED*>server : HlpModelServer.T;
     update.Imn.FuseData[3].Data.u(16_6);
     (* match fpps_switch.c:481 *)
     
-  END SetupHlp;
+  END Setup;
 
 BEGIN END HlpModel.

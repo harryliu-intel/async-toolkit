@@ -74,16 +74,16 @@ PROCEDURE HandlePacket(serverP          : MbyModelServer.T;
 VAR
   rp, wp : UNTRACED REF ADDRESS := NEW(UNTRACED REF ADDRESS);
   
-PROCEDURE SetupMby(<*UNUSED*>server : MbyModelServer.T;
+PROCEDURE Setup(<*UNUSED*>server : MbyModelServer.T;
                    <*UNUSED*>READONLY read : Map.T;
                    READONLY update : MapAddr.Update) =
   BEGIN
-    Debug.Out("SetupMby");
+    Debug.Out("MbyModelC.Setup");
     mby_top_map_c.BuildMain(BuildCallback, rp, wp);
     Debug.Out(F("Mapped %s fields in C struct",Int(addrSeq.size())));
     (* now call the C setup, if any *)
     mby_top_map_c.Setup(rp^, wp^)
-  END SetupMby;
+  END Setup;
 
 (* In the following we are setting up linkage to the C struct --
    we provide bidirectional linkage, so that:
@@ -156,11 +156,11 @@ PROCEDURE GetUpdaterFactory() : UpdaterFactory.T =
     RETURN NEW(MyUpdaterFactory);
   END GetUpdaterFactory;
 
-PROCEDURE MUInit(up : MyUpdater;
-                 base : REFANY;
+PROCEDURE MUInit(up        : MyUpdater;
+                 base      : REFANY;
                  fieldAddr : ADDRESS;
-                 width : CARDINAL;
-                 nm : CompPath.T) : UnsafeUpdater.T =
+                 width     : CARDINAL;
+                 nm        : CompPath.T) : UnsafeUpdater.T =
   BEGIN
     (* build a regular UnsafeUpdater but add extra linkage for the
        C struct *)
