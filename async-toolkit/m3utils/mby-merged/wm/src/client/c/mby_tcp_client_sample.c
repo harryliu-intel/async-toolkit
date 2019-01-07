@@ -81,23 +81,27 @@ int main(int argc, char *argv[])
     printf("Started/connected to WM\n");
   }
 
+#ifdef SV_BUILD
+  /********** Test parser stage  ***********/
+  printf("waiting a bit..."); fflush(stdout);
+  for(int i=0; i<5; ++i) usleep(1000*1000);
+  printf("\n");               fflush(stdout);
+  err = test_parser();
+  if (err)
+    goto CLEANUP;
+#else
   /********** Test write/read register operations ***********/
   err = test_regs();
   if (err)
     goto CLEANUP;
 
-  /********** Test parser stage  ***********/
-#ifdef SV_BUILD
-  err = test_parser();
-  if (err)
-    goto CLEANUP;
-#endif
 
   /********** Test send/receive traffic ***********/
   err = test_pkts();
   if (err)
     goto CLEANUP;
-
+#endif
+  
 CLEANUP:
   /********** Disconnect (or stop) from the server ***********/
   err = server_type ? wm_server_stop() : wm_disconnect();
