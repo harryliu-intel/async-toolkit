@@ -17,7 +17,7 @@ IMPORT Stdio;
 IMPORT Params;
 IMPORT Text;
 IMPORT Thread;
-IMPORT UnsafeUpdaterFactory;
+IMPORT UpdaterFactory, UnsafeUpdaterFactory;
 IMPORT MbyModelC;
 
 <*FATAL Thread.Alerted*>
@@ -105,26 +105,27 @@ BEGIN
 
   IF infoPath = NIL THEN infoPath := "." END;
 
-  CASE model OF
-    Models.Hlp =>
-    modelServer := NEW(HlpModelServer.T,
-                       setup := HlpModel.Setup)
-    .init(sharedSocket,
-          infoPath := infoPath,
-          infoFileName := infoFile,
-          quitOnLastClientExit := quitOnLast,
-          factory := NEW(UnsafeUpdaterFactory.T).init())
-  |
-    Models.Mby =>
-    modelServer := NEW(MbyModelServerExt.T,
-                       setup := MbyModel.Setup,
-                       reflect := doReflect)
-    .init(sharedSocket,
-          infoPath := infoPath,
-          infoFileName := infoFile,
-          quitOnLastClientExit := quitOnLast,
-          factory := MbyModelC.GetUpdaterFactory())
-  END;    
+  VAR
+    factory : UpdaterFactory.T;
+  BEGIN
+    CASE model OF
+      Models.Hlp =>
+      modelServer := NEW(HlpModelServer.T, setup := HlpModel.Setup);
+      factory := NEW(UnsafeUpdaterFactory.T).init()
+    |
+      Models.Mby =>
+      modelServer := NEW(MbyModelServerExt.T,
+                         setup := MbyModel.Setup,
+                         reflect := doReflect);
+      factory := MbyModelC.GetUpdaterFactory()
+    END;
+
+    EVAL modelServer.init(sharedSocket,
+                          infoPath             := infoPath,
+                          infoFileName         := infoFile,
+                          quitOnLastClientExit := quitOnLast,
+                          factory              := factory);
+  END;
     
   modelServer.reset();
 
