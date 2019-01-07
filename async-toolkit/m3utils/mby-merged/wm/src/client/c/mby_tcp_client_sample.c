@@ -81,7 +81,6 @@ int main(int argc, char *argv[])
     printf("Started/connected to WM\n");
   }
 
-#ifdef SV_BUILD
   /********** Test parser stage  ***********/
   printf("waiting a bit..."); fflush(stdout);
   for(int i=0; i<5; ++i) usleep(1000*1000);
@@ -89,19 +88,17 @@ int main(int argc, char *argv[])
   err = test_parser();
   if (err)
     goto CLEANUP;
-#else
+
   /********** Test write/read register operations ***********/
   err = test_regs();
   if (err)
     goto CLEANUP;
 
-
   /********** Test send/receive traffic ***********/
   err = test_pkts();
   if (err)
     goto CLEANUP;
-#endif
-  
+
 CLEANUP:
   /********** Disconnect (or stop) from the server ***********/
   err = server_type ? wm_server_stop() : wm_disconnect();
@@ -223,7 +220,6 @@ int test_pkts(void)
   return WM_OK;
 }
 
-#ifdef SV_BUILD
 int test_parser(void)
 {
   /* Hardcoded test frame with Crc */
@@ -246,7 +242,7 @@ int test_parser(void)
   memcpy(in.SEG_DATA,
          tx_pkt_data,
          MIN(sizeof(in.SEG_DATA),sizeof(tx_pkt_data)));
-         
+
   err = wm_parser(&in, &out);
   if (err) {
     printf("Error calling parser stage: %d\n", err);
@@ -262,4 +258,3 @@ int test_parser(void)
 
   return WM_OK;
 }
-#endif

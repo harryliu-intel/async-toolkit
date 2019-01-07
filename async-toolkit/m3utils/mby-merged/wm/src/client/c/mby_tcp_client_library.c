@@ -535,7 +535,6 @@ int wm_pkt_get(struct wm_pkt *pkt)
 }
 
 
-#ifdef SV_BUILD
 int wm_parser(mbyRxMacToParser const * const in,
               mbyParserToMapper      * const out)
 {
@@ -596,7 +595,6 @@ int wm_parser(mbyRxMacToParser const * const in,
 
     return WM_OK;
 }
-#endif
 
 /*****************************************************************************
  *************************** Auxiliary functions *****************************

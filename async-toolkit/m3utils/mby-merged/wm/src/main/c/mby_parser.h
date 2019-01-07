@@ -122,7 +122,7 @@ typedef struct mbyRxMacToParserStruct
 {
     fm_uint32        RX_PORT;             ///< Ingress port
     fm_uint32        RX_LENGTH;
-    fm_byte          SEG_DATA[MBY_PA_MAX_SEG_LEN]; 
+    fm_byte          SEG_DATA[MBY_PA_MAX_SEG_LEN];
 } mbyRxMacToParser;
 
 typedef struct mbyParserToMapperStruct

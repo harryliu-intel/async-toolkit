@@ -42,16 +42,6 @@ else
 CFLAGS += -O1
 endif
 
-# by default SV_BUILD=0 to disable SV-specific code:
-SV_BUILD ?= 0
-
-# if SV_BUILD=1, enable SV-specific code:
-ifeq ($(SV_BUILD),1)
-	VCS_INCLUDES = $(shell ToolConfig.pl get_tool_path vcsmx)/include
-	CFLAGS += -iquote $(VCS_INCLUDES)
-	CFLAGS += -DSV_BUILD
-endif
-
 # optionally specify a read timeout (in milliseconds):
 ifneq ($(READ_TIMEOUT),)
 	CFLAGS += -DREAD_TIMEOUT=$(READ_TIMEOUT)

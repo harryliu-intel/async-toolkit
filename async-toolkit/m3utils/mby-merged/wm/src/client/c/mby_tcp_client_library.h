@@ -75,11 +75,9 @@ int wm_pkt_push(const struct wm_pkt *pkt);
 int wm_pkt_get(struct wm_pkt *pkt);
 
 
-#ifdef SV_BUILD
 /* Individual stage interfaces */
 int wm_parser(mbyRxMacToParser const * const in,
               mbyParserToMapper      * const out);
-#endif
 
 /** @}*/
 #endif /* __MBAY_DPI_CLIENT_H_ */
