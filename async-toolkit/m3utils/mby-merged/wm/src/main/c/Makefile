@@ -102,7 +102,6 @@ all: $(BLD_DTS) $(OBJECTS) $(LIBRARIES)
 
 $(BLD_DTS):
 	@echo '  Creating build directory'
-	sleep 3
 	$(ECHO) $(MKDIR) $(BLD_DIR) && touch ${BLD_DTS}
 
 ${BLD_DIR}/%.o: %.c
