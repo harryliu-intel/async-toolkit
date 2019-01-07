@@ -32,10 +32,20 @@
 // Default path to the server file, can be overidden with -m <path>
 #define SERVER_FILE "../../main/m3/model_server/AMD64_LINUX/models.packetServer"
 
-void print_help(void);
 int test_regs(void);
 int test_pkts(void);
 int test_parser(void);
+
+void print_help(void)
+{
+  printf("sample_client - C-DPI sample client application\n\n");
+  printf("Start or connect to the model server and perform some basic\n");
+  printf("tests: reg access, pkt injection, parser stage.\n\n");
+  printf("Options:\n");
+  printf(" -s [scala/m3]  Start the specified server. By default only connect to running process\n");
+  printf(" -m <path>      Path and name of existing models.packetServer used when connecting\n");
+  printf(" -h             Print this help message and exit\n");
+}
 
 int main(int argc, char *argv[])
 {
@@ -108,17 +118,6 @@ CLEANUP:
     printf("Disconnected from model_server\n");
 
   return err;
-}
-
-void print_help(void)
-{
-  printf("sample_client - C-DPI sample client application\n\n");
-  printf("Start or connect to the model server and perform some basic\n");
-  printf("tests: reg access, pkt injection, parser stage.\n\n");
-  printf("Options:\n");
-  printf(" -s [scala/m3]  Start the specified server. By default only connect to running process\n");
-  printf(" -m <path>      Path and name of existing models.packetServer used when connecting\n");
-  printf(" -h             Print this help message and exit\n");
 }
 
 int test_regs(void)
