@@ -57,8 +57,7 @@ typedef struct mbyCongMgmtToRxStatsStruct
     fm_uint32               TX_PORT;       ///< egress port
     fm_byte                 TX_TAG;        ///< egress tag
     fm_byte                 XCAST;
-    fm_uint32               RX_LENGTH;
-
+    fm_uint32               RX_LENGTH;     ///< Ingress packet data length [bytes]
 } mbyCongMgmtToRxStats;
 
 #endif

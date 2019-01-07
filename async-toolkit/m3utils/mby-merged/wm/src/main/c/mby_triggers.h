@@ -63,7 +63,7 @@ typedef struct mbyTriggersToCongMgmtSruct
     fm_bool                 TX_DROP;                    ///< flag indicating packet drop
     fm_byte                 TX_TAG;                     ///< egress tag
     fm_byte                 XCAST;                      ///<
-    fm_uint32               RX_LENGTH;
+    fm_uint32               RX_LENGTH;                  ///< Ingress packet data length [bytes]
 } mbyTriggersToCongMgmt;
 
 #endif

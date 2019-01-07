@@ -120,9 +120,9 @@ typedef enum mbyParserPtrsIndexEnum
 
 typedef struct mbyRxMacToParserStruct
 {
-    fm_uint32        RX_PORT;             ///< Ingress port
-    fm_uint32        RX_LENGTH;
-    fm_byte          SEG_DATA[MBY_PA_MAX_SEG_LEN];
+    fm_uint32        RX_PORT;                      ///< Ingress port
+    fm_uint32        RX_LENGTH;                    ///< Ingress packet data length [bytes]
+    fm_byte          SEG_DATA[MBY_PA_MAX_SEG_LEN]; ///< Ingress segment data
 } mbyRxMacToParser;
 
 typedef struct mbyParserToMapperStruct
@@ -141,7 +141,7 @@ typedef struct mbyParserToMapperStruct
     fm_uint16        PA_PACKET_TYPE;                   ///< Packet type (new for MBY)
     mbyParserHdrPtrs PA_HDR_PTRS;                      ///< Parser header pointers
     fm_uint32        RX_PORT;                          ///< Ingress port
-    fm_uint32        RX_LENGTH;
+    fm_uint32        RX_LENGTH;                        ///< Ingress packet data length [bytes]
 } mbyParserToMapper;
 
 void Parser

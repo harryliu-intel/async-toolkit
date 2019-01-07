@@ -149,7 +149,6 @@ typedef struct mbyRxStatsToRxOutStruct
     fm_bool                 TX_DROP;       ///< flag indicating packet drop
     fm_byte                 TX_TAG;        ///< egress tag
     fm_byte                 XCAST;
-
 } mbyRxStatsToRxOut;
 
 void RxStats

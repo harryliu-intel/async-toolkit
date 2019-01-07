@@ -155,7 +155,7 @@ typedef struct mbyHashToNextHopStruct
     fm_bool            TRAP_IGMP;              ///> IGMP packet should be trapped
     fm_bool            TRAP_IP_OPTIONS;        ///> IP options present
     mbyTriggerResults  TRIGGERS;               ///> trigger results
-  fm_uint32 RX_LENGTH;
+    fm_uint32          RX_LENGTH;              ///< Ingress packet data length [bytes]
 } mbyHashToNextHop;
 
 // Consts:
