@@ -93,18 +93,15 @@ static void lookUpPtypeTcam
 void Parser
 (
     mby_ppe_parser_map const * const parser_map,
-    varchar_t             const *       rx_data,
+    varchar_t          const *       rx_data,
     mbyRxMacToParser   const * const in,
     mbyParserToMapper        * const out
 )
 {
     // Read inputs:
-  fm_byte   const * const rx_data_in = rx_data->data;
-  fm_uint32 const         rx_length  = rx_data->length;
+    fm_byte   const * const rx_data_in = rx_data->data;
+    fm_uint32 const         rx_length  = rx_data->length;
     fm_uint32 const         rx_port    = in->RX_PORT;
-
-    // Initialize:
-    fm_byte * const rx_packet = (fm_byte *) rx_data_in;
 
     // On initial entry to the parser block, read in the inital pointer, analyzer state, ALU op,
     // and word offsets from the MBY_PARSER_PORT_CFG register file:
