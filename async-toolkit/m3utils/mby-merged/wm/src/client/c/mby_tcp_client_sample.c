@@ -232,14 +232,17 @@ int test_parser(void)
     0xee, 0x7f, 0xec, 0xb0
   };
 
-  mbyParserToMapper out = {0};
   mbyRxMacToParser in = {0};
+  mbyParserToMapper out = {0};
   unsigned int i;
   int err;
 
   in.RX_PORT = 1;
   in.RX_LENGTH = sizeof(tx_pkt_data);
-  memcpy(in.RX_DATA, tx_pkt_data, sizeof(tx_pkt_data));
+  memcpy(in.SEG_DATA,
+         tx_pkt_data,
+         MIN(sizeof(in.SEG_DATA),sizeof(tx_pkt_data)));
+         
   err = wm_parser(&in, &out);
   if (err) {
     printf("Error calling parser stage: %d\n", err);
@@ -250,15 +253,6 @@ int test_parser(void)
   if (in.RX_LENGTH != out.RX_LENGTH) {
     printf("Unexpected difference in length between parser in (%d) and out (%d)\n",
            in.RX_LENGTH, out.RX_LENGTH);
-    return WM_ERR_RUNTIME;
-  }
-
-  if (memcmp(in.RX_DATA, out.RX_DATA, in.RX_LENGTH)) {
-    printf("Unexpected difference between sent and received pkt\n");
-    for (i = 0; i < in.RX_LENGTH; ++i)
-      if (in.RX_DATA[i] != out.RX_DATA[i])
-        printf("in.RX_DATA[%d] = 0x%x - out.RX_DATA[%d] = 0x%x\n",
-               i, in.RX_DATA[i], i, out.RX_DATA[i]);
     return WM_ERR_RUNTIME;
   }
 

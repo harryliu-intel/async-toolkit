@@ -558,11 +558,11 @@ int wm_parser(mbyRxMacToParser const * const in,
     }
 
     LOG_DEBUG("Parser() - RX_LENGTH=%d RX_PORT=%d\n", in->RX_LENGTH, in->RX_PORT);
-    hex_dump(in->RX_DATA, in->RX_LENGTH, 0);
+    hex_dump(in->SEG_DATA, MIN(in->RX_LENGTH,MBY_PA_MAX_SEG_LEN), 0);
 
     *((uint32_t *)&msg[0]) = htonl(tag);
     memcpy(msg + sizeof(tag), in, sizeof(mbyRxMacToParser));
-    msg_len = sizeof(tag) + offsetof(mbyRxMacToParser, RX_DATA) + in->RX_LENGTH;
+    msg_len = sizeof(tag) + sizeof(mbyRxMacToParser);
 
     // TODO print only when debug is enabled
     if (1) {
@@ -573,11 +573,14 @@ int wm_parser(mbyRxMacToParser const * const in,
     err = wm_send(wm_server_fd, msg, msg_len, MODEL_MSG_PARSER, port);
     if (err) {
         LOG_ERROR("Could not send data to WM: %d\n", err);
+        return err;
     }
 
     err = wm_receive(wm_server_fd, msg, &msg_len, &type, &port);
-    if (err)
+    if (err) {
+        LOG_ERROR("Could not receive data from WM: %d\n", err);
         return err;
+    }
 
     if (type != MODEL_MSG_PARSER) {
         LOG_ERROR("Received unexpected message types %d\n", type);
@@ -590,20 +593,6 @@ int wm_parser(mbyRxMacToParser const * const in,
     }
 
     memcpy(out, msg + sizeof(tag), sizeof(mbyParserToMapper));
-
-    if (out->RX_LENGTH > MBY_MAX_DATA_LEN) {
-        LOG_ERROR("RX_LENGTH %d exceeds max of %d\n", out->RX_LENGTH, MBY_MAX_DATA_LEN);
-        return WM_ERR_RUNTIME;
-    }
-
-    actual_rx_len = msg_len - (sizeof(tag) + offsetof(mbyParserToMapper, RX_DATA));
-    if (out->RX_LENGTH != actual_rx_len) {
-        LOG_ERROR("out RX_LENGTH is %d but I received %d byte from server\n",
-                  out->RX_LENGTH, actual_rx_len);
-        // TODO is this a good idea? maybe...
-        out->RX_LENGTH = 0;
-        return WM_ERR_RUNTIME;
-    }
 
     return WM_OK;
 }
