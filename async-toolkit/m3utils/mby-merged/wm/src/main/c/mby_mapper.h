@@ -8,7 +8,6 @@
 // Includes:
 
 #include "mby_common.h"
-#include "varchar.h"
 #include "mby_parser.h"
 
 // Defines:

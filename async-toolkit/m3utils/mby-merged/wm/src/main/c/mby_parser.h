@@ -8,7 +8,6 @@
 // Includes:
 
 #include "mby_bitfield.h"
-#include "varchar.h"
 
 // Defines:
 

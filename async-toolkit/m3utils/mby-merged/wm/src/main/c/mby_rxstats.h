@@ -9,7 +9,6 @@
 
 #include "mby_common.h"
 #include "mby_bitfield.h"
-#include "varchar.h"
 #include "mby_congmgmt.h"
 
 // Defines:
