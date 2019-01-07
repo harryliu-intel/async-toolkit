@@ -45,20 +45,7 @@ class mby_rx_ppe_sb_obj extends uvm_object;
    endfunction : my_type
 endclass : mby_rx_ppe_sb_obj
 
-
-
-class mby_rx_ppe_parser_obj extends mby_rx_ppe_sb_obj;
-   `uvm_object_utils(mby_rx_ppe_parser_obj)
-   function new( string name = "mby_rx_ppe_parser_obj");
-      super.new(name);
-   endfunction: new
-
-   virtual function string my_type();
-      return("mby_rx_ppe_parser_obj ");
-   endfunction : my_type
-endclass : mby_rx_ppe_parser_obj 
-
-
+// mby_rx_ppe_parser_obj is now in mby_rx_ppe_parser_obj.sv
 
 class mby_rx_ppe_mapper_obj extends mby_rx_ppe_sb_obj;
    `uvm_object_utils(mby_rx_ppe_mapper_obj)

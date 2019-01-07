@@ -30,9 +30,14 @@
 
 package gcm_sim_pkg;
 
+localparam N_TRACK_EQ      = 2; // Number of dequeue tracks
+localparam N_TRACK_EQ_MSB  = mby_gcm_pkg::N_TRACK_EQ - 1;  // Number of dequeue tracks
 //-----------------------------------------------------------------------------
 // simple typedefs
 //-----------------------------------------------------------------------------
+typedef logic [mby_gmm_pkg::MBY_MGP_ID_MSB:0] mby_mgp_id_t;
+typedef logic [N_TRACK_EQ_MSB:0]              mby_trk_id_t;
+
 
 //typedef int     knob_t;
 //typedef knob_t  inp_knob_t [tmpl_pkg::NUM_INPUTS-1:0];

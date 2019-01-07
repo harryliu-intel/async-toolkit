@@ -1,0 +1,57 @@
+$x=0;
+$y=0;
+foreach $i (0..79) {
+    q_mod_tbl_ren[$x][$y]          >> ppe_stm_tx_mod_tbl_$i$_rd_en
+    q_mod_tbl_wen[$x][$y]          >> ppe_stm_tx_mod_tbl_$i$_wr_en
+    mod_tbl_addr[$x][$y][10:0]     >> ppe_stm_tx_mod_tbl_$i$_adr
+    mod_tbl_rdata[$x][$y][71:0]    >> ppe_stm_tx_mod_tbl_$i$_rd_data
+    q_mod_tbl_wdata[$y][71:0]      >> ppe_stm_tx_mod_tbl_$i$_wr_data
+    if($y == 7) {
+        $x=$x+1;
+        $y=0;
+    }
+    else {
+        $y=$y+1;
+    }
+    >> PPE_STM_TX_MOD_TBL_$i$_CFG_reg_sel
+    >> PPE_STM_TX_MOD_TBL_$i$_STATUS_reg_sel
+    >> ppe_stm_tx_mod_tbl_$i$_mem_ls_enter
+    >> ppe_stm_tx_mod_tbl_$i$_ecc_uncor_err
+    >> ppe_stm_tx_mod_tbl_$i$_init_done
+    >> ppe_stm_tx_mod_tbl_$i$_rd_valid
+}
+    >> PPE_STM_TX_L3MC_TBL_CFG_reg_sel
+    >> PPE_STM_TX_L3MC_TBL_STATUS_reg_sel
+    >> ppe_stm_tx_l3mc_tbl_adr
+    >> ppe_stm_tx_l3mc_tbl_mem_ls_enter
+    >> ppe_stm_tx_l3mc_tbl_rd_en
+    >> ppe_stm_tx_l3mc_tbl_wr_data
+    >> ppe_stm_tx_l3mc_tbl_wr_en
+    >> ppe_stm_tx_l3mc_tbl_ecc_uncor_err
+    >> ppe_stm_tx_l3mc_tbl_init_done
+    >> ppe_stm_tx_l3mc_tbl_rd_data
+    >> ppe_stm_tx_l3mc_tbl_rd_valid
+
+    >> PPE_STM_TX_SHCP_TBL_CFG_reg_sel
+    >> PPE_STM_TX_SHCP_TBL_STATUS_reg_sel
+    >> ppe_stm_tx_shcp_tbl_adr
+    >> ppe_stm_tx_shcp_tbl_mem_ls_enter
+    >> ppe_stm_tx_shcp_tbl_rd_en
+    >> ppe_stm_tx_shcp_tbl_wr_data
+    >> ppe_stm_tx_shcp_tbl_wr_en
+    >> ppe_stm_tx_shcp_tbl_ecc_uncor_err
+    >> ppe_stm_tx_shcp_tbl_init_done
+    >> ppe_stm_tx_shcp_tbl_rd_data
+    >> ppe_stm_tx_shcp_tbl_rd_valid
+
+    >> PPE_STM_TX_ECC_COR_ERR_reg_sel
+    >> PPE_STM_TX_ECC_UNCOR_ERR_reg_sel
+    >> unified_regs_rd
+    >> unified_regs_wr_data
+    >> unified_regs_ack
+    >> unified_regs_rd_data
+    >> ppe_stm_tx_ecc_int
+    >> ppe_stm_tx_init_done
+
+cclk    >> clk
+reset_n >> reset_n

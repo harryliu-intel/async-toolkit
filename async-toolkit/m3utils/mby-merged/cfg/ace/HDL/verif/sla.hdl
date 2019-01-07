@@ -6,9 +6,6 @@
 $hdl_spec = {
    # List of specific VERILOG source files
    -vlog_files => [
-      "$ENV{UVM_HOME}/src/uvm_pkg.sv",
-      "$ENV{OVM_HOME}/src/ovm_pkg.sv",
-      "$ENV{XVM_HOME}/src/xvm_pkg.sv",
       "$ENV{SAOLA_HOME}/verilog/sla_pkg.sv",
    ],
 
@@ -22,9 +19,6 @@ $hdl_spec = {
    # List of include directories. Corresponds with the VLOG '+incdir+' parameter
    -vlog_incdirs => [
       "$ENV{UVM_HOME}/src",
-      "$ENV{OVM_HOME}/src",
-      "$ENV{XVM_HOME}/src",
-      "$ENV{XVM_HOME}/src/macros",
       "$ENV{SAOLA_HOME}/verilog",
       "$ENV{SAOLA_HOME}/verilog_uvm",
       "$ENV{SAOLA_HOME}/verilog_uvm/fuse"
@@ -35,7 +29,7 @@ $hdl_spec = {
     -vlog_opts => [
         #Synopsys SVT BFM is compiled with this define which required the UVM lib to be
         #compiled with it too.
-         "+define+UVM_PACKER_MAX_BYTES=1500000",
+        # "+define+UVM_PACKER_MAX_BYTES=1500000",
      ]
 
 };
