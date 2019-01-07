@@ -48,7 +48,7 @@
 #define MBY_MOD_CMD_l_LUT                       15
 #define MBY_MOD_CMD_h_LUT                       17
 #define MBY_MOD_CMD_b_S                         16
-#define MBY_MOD_CMD_b_M                         16
+#define MBY_MOD_CMD_b_M                         17
 #define MBY_MOD_CMD_l_SHIFT                     16
 #define MBY_MOD_CMD_h_SHIFT                     17
 #define MBY_MOD_CMD_b_PROT_DEL                  18
@@ -630,6 +630,7 @@ typedef struct mbyModifierToTxStatsStruct
     fm_uint32               TX_LENGTH;       // egress packet data length [bytes]
     fm_uint32               TX_PORT;         // egress port
     fm_uint32               TX_STATS_LENGTH; // egress packet data stats length [bytes]
+    mbyParserHdrPtrs        PA_HDR_PTRS;     // parser header pointers
 
 } mbyModifierToTxStats;
 
