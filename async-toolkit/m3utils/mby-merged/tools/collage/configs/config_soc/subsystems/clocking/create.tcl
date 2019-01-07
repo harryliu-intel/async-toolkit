@@ -7,7 +7,6 @@
 
 
 collage_import_component -component "mby_parclk" -files $::env(MODEL_ROOT)/src/rtl/clkstub/mby_parclk.sv -name "mby_parclk" -use_hier
-collage_import_component -component "refclk_rcvr" -files $::env(MODEL_ROOT)/src/rtl/clkstub/refclk_rcvr.sv -name "eth_refclk_rcvr" -use_hier
 #eval_in_component [collage_get_ip_hier_par -ip_name "clkstub_imc"] {
 #set_configuration_parameter -component "gpio_mux2"  NUMBER_MUXINOUT 3
 #}

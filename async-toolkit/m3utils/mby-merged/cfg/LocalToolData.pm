@@ -287,6 +287,7 @@ $ToolConfig_tools{"mgm"} = {
                     "ppe_stm_tx",
                     "igr",
 		    "igr_pbb",
+		    "post_ppe",
                     "egr",
                     "gcm",
                     "gpm",

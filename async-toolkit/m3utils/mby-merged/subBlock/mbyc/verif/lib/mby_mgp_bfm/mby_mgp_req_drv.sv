@@ -79,7 +79,6 @@ task mby_mgp_req_drv::run_phase(uvm_phase phase);
                seq_item_port.item_done();
             end
 
-	    `uvm_info (this.get_name(), ("Driving request"), UVM_LOW)
             mem_crdt_io.drive_item();
 
          end 

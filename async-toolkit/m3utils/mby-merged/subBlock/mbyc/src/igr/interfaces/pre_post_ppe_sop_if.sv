@@ -34,6 +34,8 @@ interface pre_post_ppe_sop_if ();
     logic                        valid; 
     igr_pkt_id_t                 pkt_id;
     sop_md_t                     md;
+    logic [3:0]                  src_port; 
+    logic                        src_port_vp; 
     logic [2:0]                  sll;
     seg_ptr_t                    wr_seg_ptr; //[19:0]
     sema_t                       wr_sema;    //[ 3:0]
@@ -42,6 +44,8 @@ modport src (
                  output valid,
                  output pkt_id,
                  output md,
+                 output src_port,
+                 output src_port_vp,
                  output sll,
                  output wr_seg_ptr,
                  output wr_sema
@@ -51,6 +55,8 @@ modport dest (
                  input valid,
                  input pkt_id,
                  input md,
+                 input src_port,
+                 input src_port_vp,
                  input sll,
                  input wr_seg_ptr,
                  input wr_sema
