@@ -54,6 +54,7 @@ my @fc_verif_liblist = (
     "shdv_shared_lib",
     "ext_shared_lib",
     "svt_ahb_lib",
+    "gen_mby_wm_m3",
     "mby_wm_dpi_lib",
     "mby_common_lib",
     "fc_hdl_top_lib",
