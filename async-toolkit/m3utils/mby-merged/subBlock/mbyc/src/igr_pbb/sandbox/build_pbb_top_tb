@@ -1,0 +1,65 @@
+vcs +v2k -R -V -debug_all -full64 -sverilog +libverbose -notice -xlrm uniq_prior_final +vcs+lic+wait -V -timescale=1ps/1ps \
++define+SYTB_OFF +libext+.v+.sv+.vh+.svh+.vs+.vm \
++vcs+vcdpluson +define+VCSSIM -assert svaext +define+FAKE_MEM \
++warn=noUII-L \
++lint=noPCTI-L \
++lint=none \
++lint=TFIPC-L \
++notimingchecks \
++define+HIERREF \
++define+VFU_CLUSTER \
++define+VAL4 \
++define+PKG0 \
++define+EVENTS_OFF \
++define+TBCOMP_OFF \
++define+FSDB_DISABLE \
++define+INST_ON  \
++define+SVA_OFF \
++define+INTEL_SVA_OFF \
++define+MBY_IGR_PBB_BEHAVE_MEMS \
+-ignore driver_checks \
+-assert api_event \
+-assert api \
+-assert vpiSeqFail \
+-assert print \
+-assert vpiSeqBeginTime \
+-assert enable_diag \
+-assert let \
+-assert enable_hier \
++incdir+../rtl \
++incdir+./ \
++incdir+/nfs/site/disks/ccdo.soc.cad_root.1/cad/x86-64_linux26/synopsys/designcompiler/M-2016.12-SP3/dw/sim_ver \
++incdir+../../../../../target/mby/mgm_run/igr_pbb/src \
++incdir+../../../../../target/mby/mgm_run/igr_pbb/src/mem_wrap \
++incdir+../../../../../target/mby/mgm_run/rtl \
++incdir+/p/hdk/rtl/ip_models/nhdk/shrtl/shrtl-dev-x0-18ww48a/src/common/rtl \
++incdir+/p/hdk/rtl/ip_models/nhdk/shrtl/shrtl-dev-x0-18ww48a/src/ecc/rtl \
+/p/hdk/rtl/ip_models/nhdk/shrtl/shrtl-dev-x0-18ww48a/src/fifo/rtl/shrtl_flop_fifo.sv \
+-y /p/hdk/rtl/ip_models/nhdk/shrtl/shrtl-dev-x0-18ww48a/src/ecc/rtl \
+/p/hdk/rtl/ip_models/nhdk/shrtl/shrtl-dev-x0-18ww48a/src/ecc/rtl/shrtl_ecc_gen.sv \
+../../shared/rtl/shared_pkg.sv \
+../../shared/rtl/mby_rx_metadata_pkg.sv \
+../../shared/rtl/mby_egr_pkg.sv \
+../../igr/rtl/mby_igr_pkg.sv \
+../rtl/mby_igr_pbb_mem_pkg.sv \
+../../shared/rtl/mby_gmm_pkg.sv \
+../../shared/rtl/mby_egr_pkg.sv \
+../../shared/interfaces/mby_mem_1rw_if.sv \
+../../shared/interfaces/mby_mem_1r1w_if.sv \
+../rtl/mby_igr_align_ctrl.sv \
+../rtl/mby_igr_align_wrd.sv \
+../rtl/mby_igr_align_wrds.sv \
+../rtl/mby_igr_align.sv \
+../rtl/mby_igr_dpcp.sv \
+../rtl/mby_igr_dpc.sv \
+-y ../../../../../target/mby/mgm_run/igr_pbb/src \
+-y ../../../../../target/mby/mgm_run/igr_pbb/src/mem_wrap \
+-y ../../../../../target/mby/mgm_run/rtl \
+../rtl/mby_igr_pb_ctrl.sv \
+../rtl/mby_igr_pb.sv \
+../rtl/mby_igr_dpc_wrap.sv \
+../rtl/mby_igr_pb_wrap.sv \
+../rtl/mby_igr_align_wrap.sv \
+../rtl/mby_igr_pbb.sv \
+../rtl/mby_igr_pbb_gen_mem.sv \
+./tb_pbb_top.sv
