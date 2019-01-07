@@ -91,9 +91,11 @@ ${BLD_DIR}/mby_parser_test.o: \
         ${C_DIR}/mby_init.h \
         ${C_DIR}/mby_reg_ctrl.h
 
+.PHONY: $(WM_LIB)
 $(WM_LIB):
 	make -C ${C_DIR}
 
+.PHONY: $(COM_LIB)
 $(COM_LIB):
 	make -C ${COM_DIR}
 
@@ -106,6 +108,12 @@ run: $(TARGET)
 	@echo '  Running $(TARGET)'
 	@/usr/bin/time --format='Ran for %e seconds.' \
             ./$(TARGET) | tee run.log
+
+.PHONY: run_img
+run_img: $(TARGET)
+	@echo '  Running $(TARGET) -i'
+	@/usr/bin/time --format='Ran for %e seconds.' \
+            ./$(TARGET) -i | tee run.log
 
 .PHONY: valgrind
 valgrind: $(TARGET)

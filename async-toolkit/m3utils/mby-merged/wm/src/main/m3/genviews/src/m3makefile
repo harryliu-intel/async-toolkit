@@ -16,6 +16,14 @@ sequence("RegField", "RegField")
 sequence("RegReg", "RegReg")
 sequence("RegRegfile", "RegRegfile")
 
+interface ("ParseError")
+
+generic_module("Lookup")
+
+module ("RegFieldAccess")
+interface ("IntelAccessType")
+module ("IntelAccessTypeLookup")
+
 table("TextReg", "Text", "RegReg")
 
 generic_interface("RegGenerators")
@@ -24,7 +32,7 @@ module    ("RegCompiler")
 module    ("RegGenState")
 
 interface ("RegChild")
-interface ("RegComponent")
+module ("RegComponent")
 
 sequence ("RegChild", "RegChild")
 
@@ -32,20 +40,20 @@ module ("RegProperty")
 
 array_sort("RegField", "RegField")
 
+sequence("BigInt", "BigInt")
+
 interface ("GenViews")
 generic_module("GenViews")
-module ("GenViewsM3")
-module ("GenViewsScala")
-module ("GenViewsC")
-module ("GenViewsCApi")
-module ("GenViewsScheme")
 
 module ("DecoratedComponentDef")
+
+table("RegComponentRef", "RegComponent", "Refany")
 
 interface ("RegModula3Utils")
 
 %%%%%%%%%%%%%%%%%%%%  Modula-3 output  %%%%%%%%%%%%%%%%%%%
 
+module   ("GenViewsM3")
 module   ("RegModula3Constants")
 module   ("RegModula3")
 module   ("RegModula3Naming")
@@ -55,6 +63,7 @@ module   ("RegModula3IntfNaming")
 
 %%%%%%%%%%%%%%%%%%%%%  Scala output  %%%%%%%%%%%%%%%%%%%%%
 
+module   ("GenViewsScala")
 module   ("RegScalaConstants")
 module   ("RegScala")
 module   ("RegScalaNaming")
@@ -67,6 +76,7 @@ module   ("GenCUtils")
 
 %%%%%%%%%%%%%%%%%%%%%%  C-FM output  %%%%%%%%%%%%%%%%%%%%%%%%
 
+module   ("GenViewsC")
 module   ("RegC")
 module   ("RegCConstants")
 module   ("RegCNaming")
@@ -76,11 +86,28 @@ module   ("RegCGenState")
 
 %%%%%%%%%%%%%%%%%%%%%%  C-API output  %%%%%%%%%%%%%%%%%%%%%%%%
 
+module   ("GenViewsCApi")
 module   ("RegCApi")
-%module   ("RegCConstants") % reuse
-%module   ("RegCNaming")    % reuse
 interface("RegCApiGenerators") 
-%interface("RegCGenState") % reuse
+
+%%%%%%%%%%%%%%%%%%%%%  Second-pass output  %%%%%%%%%%%%%%%%%%%%%
+
+interface("GenViewsPass2")
+
+%%%%%%%%%%%%%%%%%%%%%  Scheme output  %%%%%%%%%%%%%%%%%%%%%
+
+module   ("GenViewsScheme")
+
+%%%%%%%%%%%%%  FULCRUM-style SystemVerilog output  %%%%%%%%%%%%%
+
+module   ("GenViewsSvFulcrum")
+module   ("TreeType")
+interface("TreeTypeClass")
+sequence ("TreeType", "TreeType")
+table    ("RegComponentType", "RegComponent", "TreeType")
+interface("TreeTypeArray")
+sequence ("TreeTypeArray", "TreeTypeArray")
+module   ("IndexBits")
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

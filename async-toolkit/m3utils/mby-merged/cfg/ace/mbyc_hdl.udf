@@ -69,7 +69,7 @@ print "MGM debug : @mbyMgmLibs\n";
             mby_mpp_rtl_lib => {
                -generated => 1,   # added due to mgm dependency
                -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_mpp_rtl.hdl',],
-	       -dependent_libs => ['mby_mgp_rtl_lib','mby_ppe_stm_rtl_lib','mby_mgm_lib'],
+	       -dependent_libs => ['mby_mgp_rtl_lib','mby_ppe_stm_rx_rtl_lib','mby_ppe_stm_tx_rtl_lib','mby_mgm_lib'],
             },
 
             mby_mgp_rtl_lib => {
@@ -83,11 +83,17 @@ print "MGM debug : @mbyMgmLibs\n";
                -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_igr_rtl.hdl', ],
                -dependent_libs => ['mby_mgm_lib',],
             },
+	    
+            mby_igr_pbb_rtl_lib => {
+               -generated => 1,   # added due to mgm dependency
+               -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_igr_pbb_rtl.hdl', ],
+               -dependent_libs => ['mby_mgm_lib',],
+            },
 
             mby_egr_rtl_lib => {
                -generated => 1,   # added due to mgm dependency
                -hdl_spec        => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_egr_rtl_lib.hdl' ],
-               -dependent_libs  => [ 'mby_mgm_lib', 'sla_lib',],
+               -dependent_libs  => [ 'mby_mgm_lib',],
             },
 
             mby_gms_rtl_lib => {
@@ -117,9 +123,15 @@ print "MGM debug : @mbyMgmLibs\n";
                -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_tx_ppe_rtl.hdl', ],
             },
 
-            mby_ppe_stm_rtl_lib => {
+            mby_ppe_stm_rx_rtl_lib => {
                -generated => 1,   # added due to mgm dependency
-               -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_ppe_stm_rtl.hdl', ],
+               -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_ppe_stm_rx_rtl.hdl', ],
+               -dependent_libs => ['mby_mgm_lib',],
+            },
+
+            mby_ppe_stm_tx_rtl_lib => {
+               -generated => 1,   # added due to mgm dependency
+               -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_ppe_stm_tx_rtl.hdl', ],
                -dependent_libs => ['mby_mgm_lib',],
             },
 
@@ -133,6 +145,12 @@ print "MGM debug : @mbyMgmLibs\n";
                -generated => 1,   # added due to mgm dependency
                -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_msh_node_rtl.hdl', ],
                -dependent_libs => ['mby_mgm_lib','mby_regflow_lib'],
+            },
+
+            mby_fulcrum_legacy_rtl_lib => {
+               -generated => 1,
+               -hdl_spec => [ 'target/gen_mby_wm_m3/mby_fulcrum_legacy_rtl.hdl', ],
+               -dependent_libs => ['gen_mby_wm_m3',]
             },
 
             gen_mby_regflow_lib => {
@@ -242,8 +260,8 @@ print "MGM debug : @mbyMgmLibs\n";
                -tag             => "nonsynth",
             },
 
-            mby_gcm_bfm_lib    => {
-               -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_gcm_bfm.hdl' ],
+            mby_pcm_bfm_lib    => {
+               -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_pcm_bfm.hdl' ],
                -dependent_libs  => [ 'shdv_shared_lib', 'mby_base_pkg_lib' ],
                -tag             => "nonsynth",
             },
@@ -307,54 +325,6 @@ print "MGM debug : @mbyMgmLibs\n";
                -dependent_libs  => [ 'shdv_shared_lib', 'mby_base_pkg_lib' ],
                -tag             => "nonsynth",
             },
-
-            #mby_gms_env_lib => {
-            #  -hdl_spec        => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_gms_env.hdl' ],
-            #  -dependent_libs  => [ 'shdv_shared_lib', 'mby_common_lib' ],
-            #  -tag             => "nonsynth",
-            #,
-
-            #mby_gms_tb_lib => {
-            #   -hdl_spec        => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_gms_tb.hdl' ],
-            #   -dependent_libs  => [ 'sla_lib', 'shdv_shared_lib', 'mby_common_lib' ],
-            #   -tag             => "nonsynth",
-            #},
-
-            #mby_gms_test_lib => {
-            #   -hdl_spec       => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_gms_test.hdl', ],
-            #   -dependent_libs => [ 'sip_shared_lib', 'mby_gms_env_lib', 'mby_wm_dpi_lib' ],
-            #   -tag            => "nonsynth",
-            #},
-
-            #mby_gms_ti_lib => {
-            #   -hdl_spec       => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_gms_ti.hdl' ],
-            #   -dependent_libs => [ 'shdv_shared_lib', 'mby_mesh_env_lib' ],
-            #   -tag            => "nonsynth",
-            #},
-
-            #mby_gmn_env_lib => {
-            #  -hdl_spec        => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_gmn_env.hdl' ],
-            #  -dependent_libs  => [ 'shdv_shared_lib', 'mby_common_lib' ],
-            #  -tag             => "nonsynth",
-            #,
-
-            #mby_gmn_tb_lib => {
-            #   -hdl_spec        => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_gmn_tb.hdl' ],
-            #   -dependent_libs  => [ 'sla_lib', 'shdv_shared_lib', 'mby_common_lib' ],
-            #   -tag             => "nonsynth",
-            #},
-
-            #mby_gmn_test_lib => {
-            #   -hdl_spec       => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_gmn_test.hdl', ],
-            #   -dependent_libs => [ 'sip_shared_lib', 'mby_gmn_env_lib', 'mby_wm_dpi_lib' ],
-            #   -tag            => "nonsynth",
-            #},
-
-            #mby_gmn_ti_lib => {
-            #   -hdl_spec       => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_gmn_ti.hdl' ],
-            #   -dependent_libs => [ 'shdv_shared_lib', 'mby_mesh_env_lib' ],
-            #   -tag            => "nonsynth",
-            #},
 
             mby_env_lib => {
                -hdl_spec       => [ 'cfg/ace/HDL/verif/mby_env.hdl' ],
@@ -459,11 +429,9 @@ print "MGM debug : @mbyMgmLibs\n";
             },
 
             mby_rx_ppe_env_lib => {
-               -hdl_spec       => [#'target/GenRTL/regflow/mby/subblock/mby_ppe_rx_ral.hdl',
-                                   'subBlock/mbyc/cfg/ace/HDL/verif/mby_rx_ppe_env.hdl' ],
+               -hdl_spec       => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_rx_ppe_env.hdl' ],
                -dependent_libs => [ 'shdv_shared_lib', 'mby_wm_dpi_lib', 'mby_common_lib', 'ec_ti_lib', 'mby_ec_bfm_lib'],
                -tag            => "nonsynth",
-              # -tools          => ["-sglp_createlib",],
             },
 
             mby_rx_ppe_test_lib => {
@@ -495,19 +463,10 @@ print "MGM debug : @mbyMgmLibs\n";
 
             mplex_np_nphy => {
                top         => 'mby_mc_tb_top_np_nphy_lib.mby_mc_cfg_np_nphy',
-               #jg_elab_top => 'mby_jasper_lib.mby_top',
-
-               #enable_congruency_elab  =>  $mby_enable_congruency_elab,
-               #enable_xprop_elab       =>  $mby_enable_xprop_elab,
-               #enable_partcomp_elab    =>  $mby_enable_partcomp_elab,
 
                libs => [
                   "mby_cup_no_proc_rtl_lib",
                   "mby_cup_rtl_lib",
-                  #"mby_regflow_lib",
-                  #"gen_mby_regflow_lib",
-                  #"gen_mby_wm",
-                  #"gen_mby_wm_m3",
                   "mby_mc_ti_lib",
                   "shdv_shared_lib",
                   "svt_ahb_lib",
@@ -520,14 +479,15 @@ print "MGM debug : @mbyMgmLibs\n";
                   "mby_common_lib",
                ],
                testcase_globals => {
-                   #      -enabled_post_process_modes => "mby_test, mplex_np_nphy",
-                   #      -post_process_pattern_file => { default => "cfg/ace/mbyc_post_process.pp" },
                     },
 
                elab_opts => [
-                  "-debug_pp ", "-full64 ", "-cm cond+branch+fsm+assert+line+tgl ",
+                  "-debug_pp ",
+                  "-full64 ",
+                  "-cm cond+branch+fsm+assert+line+tgl ",
                   "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{VCS_HOME}/include\"    $ENV{UVM_HOME}/src/dpi/uvm_dpi.cc ",
-                  "$ENV{SAOLA_HOME}/libs/Linux_x86_64/libsla.so", "-kdb", "-lca",
+                  "-kdb",
+                  "-lca",
                ],
 
                export => {
@@ -553,11 +513,7 @@ print "MGM debug : @mbyMgmLibs\n";
                      "verif/mplex",
                      "verif/mplex/ral",
                      "verif/mplex/env",
-                     "$ENV{OVM_HOME}/src",
-                     "$ENV{OVM_HOME}/src",
                      "$ENV{UVM_HOME}/src",
-                     "$ENV{SAOLA_HOME}/verilog",
-                     "$ENV{SAOLA_HOME}/verilog_uvm",
                      "${MBY_IOSF_SB_VC_ROOT}/tb/seq_lib",
                   ],
                },
@@ -577,36 +533,36 @@ print "MGM debug : @mbyMgmLibs\n";
                        ],
 
                libs => [
-                  #"mby_rx_ppe_rtl_lib",
-                  ##"mby_regflow_lib",
-                  ##"gen_mby_regflow_lib",
-                  ##"gen_mby_wm",
-                  ##"gen_mby_wm_m3",
-                        "gen_mby_mgm_lib",
+                  "sva_lib",   
+                  "gen_mby_mgm_lib",
+                  "gen_mby_wm_m3",
+                  "mby_fulcrum_legacy_rtl_lib",
                   "mby_rx_ppe_ti_lib",
                   "shdv_shared_lib",
                   "svt_ahb_lib",
+                  "mby_rx_ppe_rtl_lib",
                   "mby_rx_ppe_env_lib",
                   "mby_rx_ppe_test_lib",
                   "mby_rx_ppe_tb_top_lib",
                   "mby_jasper_lib",
                   "mby_wm_dpi_lib",
                   "mby_common_lib",
-                  #"gen_rx_ppe_regflow_lib",
                ],
                testcase_globals => {
-                   #      -enabled_post_process_modes => "mby_test, rx_ppe",
-                   #      -post_process_pattern_file => { default => "cfg/ace/mby_post_process.pp" },
                     },
 
                elab_opts => [
-                  "-debug_pp ", "-full64 ", "-cm cond+branch+fsm+assert+line+tgl ",
+                  "-debug_pp ",
+                  "-full64 ",
+                  "-cm cond+branch+fsm+assert+line+tgl ",
                   "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{VCS_HOME}/include\"    $ENV{UVM_HOME}/src/dpi/uvm_dpi.cc ",
-                  "$ENV{SAOLA_HOME}/libs/Linux_x86_64/libsla.so", "-kdb", "-lca",
+                  "-kdb",
+                  "-lca",
                ],
 
-                xport => {
+               export => {
                   libs => [
+                     "mby_fulcrum_legacy_rtl_lib",
                      "mby_regflow_lib",
                      "mby_rx_ppe_ti_lib",
                      "mby_rx_ppe_env_lib",
@@ -617,8 +573,6 @@ print "MGM debug : @mbyMgmLibs\n";
                # List of full path to PLI libraries to use
                pli_libs => [ "-verdi_pli_libs", "-hier_rtl_dumper", ],
 
-               #lintra_test_list => [ "$ENV{MODEL_ROOT}/verif/mby/reglist/mby_lintra.list" ],
-
                # Specify a set of test case specific options (must be valid test options)
                testcase_globals => {
                   -test_vlog_opts    => [ -sverilog ],
@@ -627,11 +581,7 @@ print "MGM debug : @mbyMgmLibs\n";
                      "subBlock/mbyc/verif/rx_ppe/",
                      "subBlock/mbyc/verif/rx_ppe/ral",
                      "subBlock/mbyc/verif/rx_ppe/env",
-                     "$ENV{OVM_HOME}/src",
-                     "$ENV{OVM_HOME}/src",
                      "$ENV{UVM_HOME}/src",
-                     "$ENV{SAOLA_HOME}/verilog",
-                     "$ENV{SAOLA_HOME}/verilog_uvm",
                      "${MBY_IOSF_SB_VC_ROOT}/tb/seq_lib",
                   ],
                },
@@ -654,11 +604,7 @@ print "MGM debug : @mbyMgmLibs\n";
 
                libs => [
                         "shdv_shared_lib",
-                        #PJP"svt_ahb_lib",
-                        #PJP"mby_common_lib",
                         "mby_wm_dpi_lib",
-                        #"mby_rx_ppe_ti_lib",
-                        #"mby_rx_ppe_env_lib",
                         "sva_lib",
                         "gen_mby_mgm_lib",
                         "mby_mgm_lib",
@@ -668,7 +614,7 @@ print "MGM debug : @mbyMgmLibs\n";
                         "mby_tag_bfm_lib",
                         "mby_gpm_bfm_lib",
                         "mby_pbr_bfm_lib",
-                        ##  "mby_gcm_bfm_lib",
+                        "mby_pcm_bfm_lib",
                         "mby_ingress_tb_lib",
                         "mby_ingress_ti_lib",
                         "mby_ingress_env_lib",
@@ -703,10 +649,7 @@ print "MGM debug : @mbyMgmLibs\n";
                      "verif/mby",
                      "verif/mby/ral",
                      "verif/mby/env",
-                     "$ENV{OVM_HOME}/src",
                      "$ENV{UVM_HOME}/src",
-                     "$ENV{SAOLA_HOME}/verilog",
-                     "$ENV{SAOLA_HOME}/verilog_uvm",
                   ],
                },
 
@@ -750,9 +693,12 @@ print "MGM debug : @mbyMgmLibs\n";
                ],
 
                elab_opts => [
-                  "-debug_pp ", "-full64 ", "-cm cond+branch+fsm+assert+line+tgl ",
+                  "-debug_pp ",
+                  "-full64 ",
+                  "-cm cond+branch+fsm+assert+line+tgl ",
                   "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{VCS_HOME}/include\"    $ENV{UVM_HOME}/src/dpi/uvm_dpi.cc ",
-                  "$ENV{SAOLA_HOME}/libs/Linux_x86_64/libsla.so", "-kdb", "-lca",
+                  "-kdb",
+                  "-lca",
                ],
 
                export => {
@@ -774,10 +720,7 @@ print "MGM debug : @mbyMgmLibs\n";
                      "verif/mby",
                      "verif/mby/ral",
                      "verif/mby/env",
-                     "$ENV{OVM_HOME}/src",
                      "$ENV{UVM_HOME}/src",
-                     "$ENV{SAOLA_HOME}/verilog",
-                     "$ENV{SAOLA_HOME}/verilog_uvm",
                   ],
                },
 
@@ -825,9 +768,12 @@ print "MGM debug : @mbyMgmLibs\n";
                     },
 
                elab_opts => [
-                  "-debug_pp ", "-full64 ", "-cm cond+branch+fsm+assert+line+tgl ",
+                  "-debug_pp ",
+                  "-full64 ",
+                  "-cm cond+branch+fsm+assert+line+tgl ",
                   "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{VCS_HOME}/include\"    $ENV{UVM_HOME}/src/dpi/uvm_dpi.cc ",
-                  "$ENV{SAOLA_HOME}/libs/Linux_x86_64/libsla.so", "-kdb", "-lca",
+                  "-kdb",
+                  "-lca",
                ],
 
                 xport => {
@@ -852,11 +798,7 @@ print "MGM debug : @mbyMgmLibs\n";
                      "subBlock/mbyc/verif/mesh/",
                      "subBlock/mbyc/verif/mesh/ral",
                      "subBlock/mbyc/verif/mesh/env",
-                     "$ENV{OVM_HOME}/src",
-                     "$ENV{OVM_HOME}/src",
                      "$ENV{UVM_HOME}/src",
-                     "$ENV{SAOLA_HOME}/verilog",
-                     "$ENV{SAOLA_HOME}/verilog_uvm",
                      "${MBY_IOSF_SB_VC_ROOT}/tb/seq_lib",
                   ],
                },
@@ -881,15 +823,17 @@ print "MGM debug : @mbyMgmLibs\n";
                        ],
 
                libs => [
-                   "sla_lib",
                    "gen_mby_mgm_lib",
                    "mby_egr_rtl_lib"
                ],
 
                elab_opts => [
-                     "-debug_pp ", "-full64 ", "-cm cond+branch+fsm+assert+line+tgl ",
+                     "-debug_pp ",
+                     "-full64 ",
+                     "-cm cond+branch+fsm+assert+line+tgl ",
                      "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{VCS_HOME}/include\" ",
-                     "$ENV{SAOLA_HOME}/libs/Linux_x86_64/libsla.so", "-kdb", "-lca",
+                     "-kdb",
+                     "-lca",
                ],
 
                export => {
@@ -908,7 +852,6 @@ print "MGM debug : @mbyMgmLibs\n";
                      "verif/mby",
                      "verif/mby/ral",
                      "verif/mby/env",
-                     "$ENV{OVM_HOME}/src",
                      "$ENV{UVM_HOME}/src",
                   ],
                },
@@ -931,7 +874,6 @@ print "MGM debug : @mbyMgmLibs\n";
                        ],
 
                libs => [
-                  "sla_lib",
                   "shdv_shared_lib",
                   "svt_ahb_lib",
                   "mby_common_lib",
@@ -942,9 +884,12 @@ print "MGM debug : @mbyMgmLibs\n";
                ],
 
                elab_opts => [
-                     "-debug_pp ", "-full64 ", "-cm cond+branch+fsm+assert+line+tgl ",
+                     "-debug_pp ",
+                     "-full64 ",
+                     "-cm cond+branch+fsm+assert+line+tgl ",
                      "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{VCS_HOME}/include\" ",
-                     "$ENV{SAOLA_HOME}/libs/Linux_x86_64/libsla.so", "-kdb", "-lca",
+                     "-kdb",
+                     "-lca",
                ],
 
                export => {
@@ -964,10 +909,7 @@ print "MGM debug : @mbyMgmLibs\n";
                      "verif/mby",
                      "verif/mby/ral",
                      "verif/mby/env",
-                     "$ENV{OVM_HOME}/src",
                      "$ENV{UVM_HOME}/src",
-                     "$ENV{SAOLA_HOME}/verilog",
-                     "$ENV{SAOLA_HOME}/verilog_uvm",
                   ],
                },
 
@@ -985,7 +927,6 @@ print "MGM debug : @mbyMgmLibs\n";
                        ],
 
                libs => [
-                  # "sla_lib",
                    "shdv_shared_lib",
                    "svt_ahb_lib",
                    "mby_common_lib",
@@ -996,9 +937,12 @@ print "MGM debug : @mbyMgmLibs\n";
                ],
 
                elab_opts => [
-                   "-debug_pp ", "-full64 ", "-cm cond+branch+fsm+assert+line+tgl ",
+                   "-debug_pp ",
+                   "-full64 ",
+                   "-cm cond+branch+fsm+assert+line+tgl ",
                    "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{VCS_HOME}/include\" ",
-                   "$ENV{SAOLA_HOME}/libs/Linux_x86_64/libsla.so", "-kdb", "-lca",
+                   "-kdb",
+                   "-lca",
                ],
 
                export => {
@@ -1018,10 +962,7 @@ print "MGM debug : @mbyMgmLibs\n";
                      "verif/mby",
                      "verif/mby/ral",
                      "verif/mby/env",
-                     "$ENV{OVM_HOME}/src",
                      "$ENV{UVM_HOME}/src",
-                     "$ENV{SAOLA_HOME}/verilog",
-                     "$ENV{SAOLA_HOME}/verilog_uvm",
                   ],
                },
 

@@ -37,11 +37,11 @@ $hdl_spec = {
        "src/gmm/gms/gmif/rtl",
        "target/mby/mgm_run/gpm/src",
        "target/mby/mgm_run/gpm/src/mem_wrap",
-       "target/mby/mgm_run/gcm/src",
-       "target/mby/mgm_run/gcm/src/mem_wrap",
+       "src/gmm/gms/gcm/rtl/mem",
+       "src/gmm/gms/gcm/rtl/mem/mem_wrap",
        "target/mby/mgm_run/mce/src",
        "target/mby/mgm_run/mce/src/mem_wrap",
-       "target/mby/mgm_run/rtl",
+       "src/mems/rtl",
      ],
     
     # List of verilog library src files ( corresponds with the VLOG '-v' parameter)
@@ -60,11 +60,13 @@ $hdl_spec = {
        "target/mby/mgm_run/igr/src",
        "target/mby/mgm_run/gpm/src",
        "target/mby/mgm_run/gpm/src/mem_wrap",
-       "target/mby/mgm_run/gcm/src",
-       "target/mby/mgm_run/gcm/src/mem_wrap",
+       "src/gmm/gms/gcm/rtl/mem",
+       "src/gmm/gms/gcm/rtl/mem/mem_wrap",
        "target/mby/mgm_run/mce/src",
        "target/mby/mgm_run/mce/src/mem_wrap",
        "target/mby/mgm_run/rtl",
+       "src/mems/rtl",
+       "src/gmm/gms/gpl/rtl",
      ],
     
     # Arbitrary VLOG options

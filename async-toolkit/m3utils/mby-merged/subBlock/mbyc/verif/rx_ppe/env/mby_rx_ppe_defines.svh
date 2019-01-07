@@ -30,68 +30,20 @@
 
 //   Defines : types useful to mby_rx_ppe testbench
 //
-//  This file contain any PARAMETERS or Defines.  Also contains Topology
-//  configuration ENUM.
 
 `ifndef __MBY_RX_PPE_DEFINES_GUARD
 `define __MBY_RX_PPE_DEFINES_GUARD
 
+//FIXME:  LNS: `defines are global and should be avoided whenever possible. 
+////            When it's not to avoid `defines, their name should be made unambiguously unique by using the prefix MBY_RX_PPE
+`define NUM_VPS_PER_IGR   1
+`define NUM_PORTS_PER_VP  8
+`define NUM_EPLS_PER_RX_PPE 1
+`define NUM_PORTS_PER_EPL 16
+
 `ifndef __INSIDE_MBY_RX_PPE_ENV_PKG
 `error "Attempt to include file outside of mby_rx_ppe_env_pkg."
 `endif
-
-// LNS: encapsulating this as a class prevents vcs from being able to use mby_rx_ppe_topology_e_num as an array size
-
-
-// Enumeration: mby_rx_ppe_topology_e
-// Used to identify the blocks to be instantiated in RTL & in the testbench
-// For example, if the MAPPER block *alone* is instantiated:
-//              cfg.topology[MAPPER] will be 1 -- all other cfg.stages[*] will be 0
-//              scoreboard[MAPPER]   will be created for the post-mapper scoreboard
-//              agent[PARSER]        will be created with its driver enabled to drive the mapper RTL
-//              agent[MAPPER]        will be created with its monitor enabled to pass the mapper RTL output to scoreboard[MAPPER]
-//
-
-//TODO:delete this comment when no longer needed
-// LNS: for the record, this had been:
-//   typedef enum int {
-//      UNK_TOPO           = 0,
-//      RX_PPE_FULL        = 1
-//   } rx_ppe_topology_e ;
-// 
-
-// TODO: LNS: I'm not so sure about the latter stages -- review is needed
-typedef enum int {
-   PARSER            = 0,
-   MAPPER            = 1,
-   CLASSIFIER        = 2,
-   POLICER           = 3,
-   HASH              = 4,
-   NEXT_HOP_LOOKUP   = 5,
-   MASK_GEN          = 6,
-   TRIGGERS          = 7,
-   CONGESTION_MGT    = 8,
-   TELEMETRY         = 9,
-   MIRRORS_MCAST     = 10,
-   METADATA_GEN      = 11,
-   MGMT_INT          = 12
-} mby_rx_ppe_topology_e ;
-
-// Per the SV LRM:
-//    "The num method returns the number of elements in the given enumeration."
-// However, I've yet to get this to work, thus:
-const integer mby_rx_ppe_topology_e_num = 13;
-// the above, when used in mby_rx_ppe_tb_top_cfg thus:
-//   int topology [mby_rx_ppe_topology_e_num];
-// produces:
-// -I-:Error-[TCF-CETE] Cannot evaluate the expression
-// -I-:/nfs/site/disks/sc_mby_00072/lnstern/mby/work_root/mby-mby-x0/subBlock/mbyc/verif/rx_ppe/env/mby_rx_ppe_tb_top_cfg.svh, 47
-// -I-:"(mby_rx_ppe_topology_e_num + (~1'sd0))"
-// -I-:  Cannot evaluate the expression in right dimension bound.
-// -I-:  The expression must be compile time constant.
-// 
-//stupid annoying work-around:
-`define MBY_RX_PPE_TOPOLOGY_E_NUM  13
 
 
 `endif // __MBY_RX_PPE_DEFINES_GUARD

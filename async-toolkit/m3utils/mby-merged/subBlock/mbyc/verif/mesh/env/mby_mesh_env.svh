@@ -27,18 +27,18 @@
 //   Project       : Madison Bay
 //------------------------------------------------------------------------------
 
-//------------------------------------------------------------------------------
-//Class : mby_mesh_env
-//This is the MBY Shared memory mesh Environment file which is extended from shdv_base_env.
-//This class instantiates agents and also creates and connects scoreboards.
-//------------------------------------------------------------------------------
-
 `ifndef __MBY_MESH_ENV_GUARD
 `define __MBY_MESH_ENV_GUARD
 
 `ifndef __INSIDE_MBY_MESH_ENV_PKG
 `error "Attempt to include file outside of mby_mesh_env_pkg."
 `endif
+
+//------------------------------------------------------------------------------
+//Class : mby_mesh_env
+//This is the MBY Shared memory mesh Environment file which is extended from shdv_base_env.
+//This class instantiates agents and also creates and connects scoreboards.
+//------------------------------------------------------------------------------
 
 class mby_mesh_env extends shdv_base_env;
 
@@ -49,13 +49,33 @@ class mby_mesh_env extends shdv_base_env;
    // Variable:  tb_vif
    // Interface handle to mesh Testbench.
    virtual   mby_mesh_tb_if                                tb_vif;
-   virtual   mby_mgp_mim_if                                req_wb_if;
-   virtual   mby_mgp_mim_if                                req_eb_if;
 
+   // Interface handle to request/response buses.
+   virtual   mby_mgp_mim_req_if                            rreq_wb_if;
+   virtual   mby_mgp_mim_req_if                            rreq_eb_if;
+   virtual   mby_mgp_mim_req_if                            wreq_wb_if;
+   virtual   mby_mgp_mim_req_if                            wreq_eb_if;
+   virtual   mby_mgp_mim_rsp_if                            rsp_wb_if;
+   virtual   mby_mgp_mim_rsp_if                            rsp_eb_if;
+
+   // MGP Bfm instantiations
+
+   //Variable: wb_mgp_bfm
+   //mby_mgp_bfm  for wb of Mesh
    mby_mgp_bfm_pkg::mby_mgp_bfm                            wb_mgp_bfm[mby_mgp_bfm_pkg::NUM_MSH_ROWS];
+
+   //Variable: eb_mgp_bfm
+   //mby_mgp_bfm  for eb of Mesh
    mby_mgp_bfm_pkg::mby_mgp_bfm                            eb_mgp_bfm[mby_mgp_bfm_pkg::NUM_MSH_ROWS];
-   mby_mgp_bfm_pkg::mby_mgp_bfm                            sb_mgp_bfm[mby_mgp_bfm_pkg::NUM_MSH_COLS];
-   mby_mgp_bfm_pkg::mby_mgp_bfm                            nb_mgp_bfm[mby_mgp_bfm_pkg::NUM_MSH_COLS];
+
+   //Variable: sb_mgp_bfm
+   //mby_mgp_bfm  for sb of Mesh
+   mby_mgp_bfm_pkg::mby_mgp_bfm                            sb_mgp_bfm;
+
+   //Variable: nb_mgp_bfm
+   //mby_mgp_bfm  for nb of Mesh
+   mby_mgp_bfm_pkg::mby_mgp_bfm                            nb_mgp_bfm;
+
    
    // Variable:  tb_ral
    // Handle to mesh RAL.
@@ -89,6 +109,9 @@ class mby_mesh_env extends shdv_base_env;
 
       super.build_phase(phase);
 
+      //
+      // TB Cfg handle
+      //
       if(get_config_object("mby_mesh_tb_top_cfg", tmp_cfg)) begin
          $cast(tb_cfg, tmp_cfg);
       end
@@ -99,27 +122,51 @@ class mby_mesh_env extends shdv_base_env;
 
       `uvm_info (get_full_name , $sformatf("Mesh Top _cfg : %s", tb_cfg.sprint()), UVM_FULL)
 
+      //
+      // TI_PATH handle
+      //
       if(!uvm_config_db#(string)::get(this, "" , "TI_PATH", tb_cfg.ti_path)) begin
          `uvm_fatal(get_name(),"Config_DB.get() for ENV's TI_PATH was not successful!")
       end
       `uvm_info(get_full_name(),$sformatf("This Mesh Build Phase set tb_cfg.ti_path = %s", tb_cfg.ti_path),UVM_FULL)
 
+      //
+      // RTL_TOP Path handle
+      //
       if(!uvm_config_db#(string)::get(this, "" , "RTL_TOP_PATH", tb_cfg.rtl_top_path)) begin
          `uvm_fatal(get_name(),"Config_DB.get() for ENV's RTL_TOP_PATH was not successful!")
       end
       `uvm_info(get_full_name(),$sformatf("This Mesh Build Phase set tb_cfg.rtl_top_path = %s", tb_cfg.rtl_top_path),UVM_FULL)
 
-
+      //
+      // Mesh TB interface
+      //
       if(!uvm_config_db#(virtual mby_mesh_tb_if)::get(this, "", "mby_mesh_tb_if", tb_vif)) begin
          `uvm_fatal(get_name(),"Config_DB.get() for ENV's TB_IF was not successful!")
       end
 
-      
-      if(!uvm_config_db#(virtual mby_mgp_mim_if)::get(this, "", "mby_mgp_mim_if", req_eb_if)) begin
-         `uvm_fatal(get_name(),"Config_DB.get() for Mesh Interface was not successful!")
+      //
+      // TB-DUT requests/response interface
+      //
+      if(!uvm_config_db#(virtual mby_mgp_mim_req_if)::get(this, "", "rd_eb", rreq_eb_if)) begin
+         `uvm_fatal(get_name(),"Config_DB.get() for RD EB Mesh Interface was not successful!")
       end
-      if(!uvm_config_db#(virtual mby_mgp_mim_if)::get(this, "", "mby_mgp_mim_if", req_wb_if)) begin
-         `uvm_fatal(get_name(),"Config_DB.get() for Mesh Interface was not successful!")
+      if(!uvm_config_db#(virtual mby_mgp_mim_req_if)::get(this, "", "rd_wb", rreq_wb_if)) begin
+         `uvm_fatal(get_name(),"Config_DB.get() for RD WB Mesh Interface was not successful!")
+      end
+ 
+      if(!uvm_config_db#(virtual mby_mgp_mim_req_if)::get(this, "", "wr_eb", wreq_eb_if)) begin
+         `uvm_fatal(get_name(),"Config_DB.get() for WR EB Mesh Interface was not successful!")
+      end
+      if(!uvm_config_db#(virtual mby_mgp_mim_req_if)::get(this, "", "wr_wb", wreq_wb_if)) begin
+         `uvm_fatal(get_name(),"Config_DB.get() for WR WB Mesh Interface was not successful!")
+      end
+
+      if(!uvm_config_db#(virtual mby_mgp_mim_rsp_if)::get(this, "", "rp_eb", rsp_eb_if)) begin
+         `uvm_fatal(get_name(),"Config_DB.get() for RSP EB Mesh Interface was not successful!")
+      end
+      if(!uvm_config_db#(virtual mby_mgp_mim_rsp_if)::get(this, "", "rp_wb", rsp_wb_if)) begin
+         `uvm_fatal(get_name(),"Config_DB.get() for RSP WB Mesh Interface was not successful!")
       end
 
       build_mgp_bfm();
@@ -132,18 +179,23 @@ class mby_mesh_env extends shdv_base_env;
    //---------------------------------------------------------------------------
    function void build_mgp_bfm();
 
-
+      //
+      // Build EastBound, WestBound MGP_bfms and assign cfg and interface handles.
+      //
       for (int idx = 0; idx < mby_mgp_bfm_pkg::NUM_MSH_ROWS; idx++) begin
 	 
          eb_mgp_bfm[idx] = mby_mgp_bfm_pkg::mby_mgp_bfm::type_id::create($sformatf("eb_mgp_bfm%0d", idx), this);
 	 wb_mgp_bfm[idx] = mby_mgp_bfm_pkg::mby_mgp_bfm::type_id::create($sformatf("wb_mgp_bfm%0d", idx), this);
+         eb_mgp_bfm[idx].port_idx  = idx;
+	 wb_mgp_bfm[idx].port_idx  = idx;
 
-	 eb_mgp_bfm[idx].assign_cfg(tb_cfg.env_cfg.bfm_cfg);
-	 eb_mgp_bfm[idx].assign_vi(req_eb_if);
-	 wb_mgp_bfm[idx].assign_cfg(tb_cfg.env_cfg.bfm_cfg);
-	 wb_mgp_bfm[idx].assign_vi(req_wb_if);
+	 eb_mgp_bfm[idx].assign_cfg(tb_cfg.env_cfg.eb_bfm_cfg);
+	 eb_mgp_bfm[idx].assign_vi(rreq_eb_if, wreq_eb_if, rsp_wb_if);
+	 wb_mgp_bfm[idx].assign_cfg(tb_cfg.env_cfg.wb_bfm_cfg);
+	 wb_mgp_bfm[idx].assign_vi(rreq_wb_if, wreq_wb_if, rsp_eb_if);
 
-      end
+      end 
+      // TODO : NB, SB Bfm build.
 /*
       for (int idx = 0; idx < mby_mgp_bfm_pkg::NUM_MSH_COLS; idx++) begin
          sb_mgp_bfm[idx] = mby_mgp_bfm_pkg::mby_mgp_bfm::type_id::create($sformatf("sb_mgp_bfm%0d", idx), this);
@@ -172,6 +224,7 @@ class mby_mesh_env extends shdv_base_env;
          //TODO: Update the base addr.
          tb_ral.default_map.set_base_addr(`UVM_REG_ADDR_WIDTH'h4000);
          tb_ral.lock_model();
+
          tb_ral.set_hdl_path_root("mby_mesh_tb_top.msh_node_top");
 
        // Build the Adapter's based on agt's active        

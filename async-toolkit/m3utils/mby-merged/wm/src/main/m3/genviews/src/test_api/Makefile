@@ -3,10 +3,14 @@ CINCLUDES=-I.. -I../build_c_api/mby_c/src -I../../../../c
 
 CFLAGS=
 
-#CFLAGS+= -O6
+CFLAGS+= -O6
 CFLAGS+= -g
 CFLAGS+= $(INCLUDES)
-CFLAGS+= -std=c99 -Wall -pedantic
+CFLAGS+= -std=c99 -Wall -pedantic -Werror
+
+# TODO : we have warnings from -Wextra to fix
+CFLAGS+= -Wextra
+
 CFLAGS+= -c $(CINCLUDES)
 
 #
@@ -14,18 +18,25 @@ CFLAGS+= -c $(CINCLUDES)
 # performance gain is ~4X
 #
 
-AUTOGEN=addr2ragged.o inorderid2ragged.o ragged2addr.o ragged2arcs.o\
-	ragged2inorderid.o
+AUTOGEN=    addr2ragged.o inorderid2ragged.o ragged2addr.o ragged2arcs.o\
+	ragged2inorderid.o\
+	hostptr_setup.o	ragged2ptr.o ptr2ragged.o
 
+EXECS= test_api test_exceptions
+all: $(EXECS)
 
-test_api: $(AUTOGEN) mby_top_map.o test_api.o seqtype.o
-	cc -o $@ $^
+test_api: $(AUTOGEN) mby_top_map.o test_api.o raggedindex.o
 
-seqtype.o: ../seqtype.c ../seqtype.h
-	cc $(CFLAGS) ../seqtype.c
+raggedindex.o: ../raggedindex.c ../raggedindex.h
+	cc $(CFLAGS) ../raggedindex.c
 
 mby_top_map.o: ../build_c_api/mby_c/src/mby_top_map.h ../build_c_api/mby_c/src/mby_top_map.c
 	cc $(CFLAGS) ../build_c_api/mby_c/src/mby_top_map.c
 
+test_exceptions: ies_exception.o test_exceptions.o
+
 clean:
-	/bin/rm -f test_api *.o *~
+	/bin/rm -f $(EXECS) *.o *~
+
+distclean: clean
+	/bin/rm -f `echo $(AUTOGEN) | sed 's/\.o/.[hc]/g'`

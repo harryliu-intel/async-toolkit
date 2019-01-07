@@ -67,12 +67,12 @@ $ToolConfig_tools{runtools}{ENV}{JASPERGOLD_UXDB_ARGS}                       = "
 $ToolConfig_tools{runtools}{ENV}{JASPERGOLD_VER}                             = "&get_tool_version(jaspergold)/";
 $ToolConfig_tools{runtools}{ENV}{JG_VERSION_LATEST}                          = "&get_tool_version(jaspergold)";
 $ToolConfig_tools{runtools}{ENV}{DESIGNWARE_HOME}                            = "&get_tool_path(vipsvt)";
-$ToolConfig_tools{runtools}{OTHER}{repo_trex_output}                         = "$MODEL_ROOT/regression/&get_facet(dut)/tests";
+$ToolConfig_tools{runtools}{OTHER}{repo_trex_output}                         = "$MODEL_ROOT/results/&get_facet(dut)/tests";
 
 #####################################################
 #    Configure Environment variables for Nebulon    #
 #####################################################
-$ToolConfig_tools{nebulon}{VERSION}                                          = 'd18ww49.4';
+$ToolConfig_tools{nebulon}{VERSION}                                          = 'd18ww52.4';
 
 #####################################################
 #    Configure Environment variables for VCS/VERDI  #
@@ -128,7 +128,7 @@ $ToolConfig_tools{dc_shell} = {
 
 $ToolConfig_tools{meta} = {
     PATH => "$ENV{RTL_PROJ_TOOLS}/meta/nhdk/&get_tool_version()",
-    VERSION => "18.09.12",
+    VERSION => "19.01.02",
     ENV_APPEND  => {
         'PATH'  => "&get_tool_path()/bin",
     },
@@ -283,8 +283,10 @@ $ToolConfig_tools{"mgm"} = {
                     "class_gpa",
                     "class_gpb",
                     "action",
-                    "ppe_stm",
+                    "ppe_stm_rx",
+                    "ppe_stm_tx",
                     "igr",
+		    "igr_pbb",
                     "egr",
                     "gcm",
                     "gpm",

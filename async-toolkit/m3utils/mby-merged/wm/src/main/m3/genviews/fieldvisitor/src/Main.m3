@@ -3,6 +3,8 @@ IMPORT MemoryMap;
 IMPORT AddrVisitor;
 IMPORT mby_top_map_addr AS MbyMapAddr;
 IMPORT hlp_top_map_addr AS HlpMapAddr;
+IMPORT mby_ppe_rx_top_map_addr AS RxPpeMapAddr;
+IMPORT mby_ppe_tx_top_map_addr AS TxPpeMapAddr;
 IMPORT CompAddr;
 IMPORT Fmt; FROM Fmt IMPORT F;
 IMPORT Debug;
@@ -17,14 +19,21 @@ IMPORT ContainerData, FieldData;
 IMPORT FieldDataSeq;
 FROM ContainerData IMPORT Pos, Neg;
 IMPORT CardSeq;
+IMPORT OSError, AL;
+IMPORT Thread;
+
+<*FATAL Thread.Alerted*>
 
 CONST TE = Text.Equal;
 
 (* currently limited to 64-bit addresses *)
 
 CONST Usage = "[-m[odel] hlp|mby] [-o -|<filename>]";
-TYPE   Models     =                          {  Hlp,   Mby  };
-CONST  ModelNames = ARRAY Models OF TEXT     { "hlp", "mby" };
+TYPE  Models     =                      {  Hlp,   Mby,   RxPpe,    TxPpe   };
+CONST ModelNames = ARRAY Models OF TEXT { "hlp_top_map",
+                                          "mby_top_map",
+                                          "mby_ppe_rx_top_map",
+                                          "mby_ppe_tx_top_map" };
 
 PROCEDURE DoUsage() : TEXT =
   BEGIN
@@ -48,9 +57,9 @@ TYPE
   Field    = FieldData.T;
 
 PROCEDURE MakeInternal(v        : MyVisitor;
-                       name, tn : TEXT;
-                       type     : AddrVisitor.Type;
-                       array    : AddrVisitor.Array;
+                       <*UNUSED*>name, tn : TEXT;
+                       <*UNUSED*>type     : AddrVisitor.Type;
+                       <*UNUSED*>array    : AddrVisitor.Array;
                        parent   : AddrVisitor.Internal)
   : AddrVisitor.Internal =
   BEGIN
@@ -76,7 +85,8 @@ VAR doDebug := Debug.DebugThis("fieldvisitor");
 PROCEDURE MakeField(v          : MyVisitor;
                     nm         : TEXT;
                     at         : CompRange.T;
-                    lsb, width : CARDINAL;
+                    <*UNUSED*>lsb : CARDINAL;
+                    width      : CARDINAL;
                     parent     : AddrVisitor.Internal) =
   VAR
     upId := FIRST(Neg);
@@ -145,14 +155,23 @@ BEGIN
     wr := Stdio.stdout
   ELSE
     Debug.Out("Writing to " & ofn);
-    wr := FileWr.Open(ofn)
+    TRY
+      wr := FileWr.Open(ofn)
+    EXCEPT
+      OSError.E(x) =>
+      Debug.Error("Couldn't open output file \"" & ofn & "\" : OSError.E : " & AL.Format(x))
+    END
   END;
   
   Debug.Out("Building address map...");
   CASE model OF
-    Models.Hlp => map := NEW(HlpMapAddr.H).init(base)
+    Models.Hlp   => map := NEW(HlpMapAddr.H  ).init(base)
   |
-    Models.Mby => map := NEW(MbyMapAddr.H).init(base)
+    Models.Mby   => map := NEW(MbyMapAddr.H  ).init(base)
+  |
+    Models.RxPpe => map := NEW(RxPpeMapAddr.H).init(base)
+  |
+    Models.TxPpe => map := NEW(TxPpeMapAddr.H).init(base)
   END;
 
   Debug.Out("Visiting address map...");
@@ -177,11 +196,17 @@ BEGIN
         b[i] := v.internals.get(i)
       END;
 
-      Debug.Out("Writing address map... " & Fmt.Int(NUMBER(a^)));
-      Pickle.Write(wr, a);
-      Debug.Out("Writing internal tree... " & Fmt.Int(NUMBER(b^)));
-      Pickle.Write(wr, b);
-      Wr.Close(wr)
+      TRY
+        Debug.Out("Writing address map... " & Fmt.Int(NUMBER(a^)));
+        Pickle.Write(wr, a);
+        Debug.Out("Writing internal tree... " & Fmt.Int(NUMBER(b^)));
+        Pickle.Write(wr, b);
+        Wr.Close(wr)
+      EXCEPT
+        Wr.Failure(x) => Debug.Error("I/O error writing output : Wr.Failure : " & AL.Format(x))
+      |
+        Pickle.Error(x) => Debug.Error("Pickle error writing output : Pickle.Error : " & x )
+      END
     END
   END
 END Main.

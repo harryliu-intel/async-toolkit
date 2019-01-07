@@ -54,11 +54,14 @@ class mby_rx_ppe_dut_cfg extends shdv_base_config;
    // Variable: lpm_cfg
    rand mby_rx_ppe_lpm_cfg          lpm_cfg;
    
-   // Variable: em_cfg
-   rand mby_rx_ppe_em_cfg           em_cfg;
+   // Variable: ema_cfg
+   rand mby_rx_ppe_em_a_cfg         ema_cfg;
    
    // Variable: wcm_cfg
    rand mby_rx_ppe_wcm_cfg          wcm_cfg;
+
+   // Variable: emb_cfg
+   rand mby_rx_ppe_em_b_cfg         emb_cfg;
    
    // Variable: hash_cfg
    rand mby_rx_ppe_hash_cfg         hash_cfg;
@@ -96,8 +99,9 @@ class mby_rx_ppe_dut_cfg extends shdv_base_config;
       parser_cfg   = mby_rx_ppe_parser_cfg::type_id::create("parser_cfg");
       mapper_cfg   = mby_rx_ppe_mapper_cfg::type_id::create("mapper_cfg");
       lpm_cfg      = mby_rx_ppe_lpm_cfg::type_id::create("lpm_cfg");
-      em_cfg       = mby_rx_ppe_em_cfg::type_id::create("em_cfg");
+      ema_cfg     = mby_rx_ppe_em_a_cfg::type_id::create("ema_cfg");
       wcm_cfg      = mby_rx_ppe_wcm_cfg::type_id::create("wcm_cfg");
+      emb_cfg     = mby_rx_ppe_em_b_cfg::type_id::create("emb_cfg");
       
       hash_cfg     = mby_rx_ppe_hash_cfg::type_id::create("hash_cfg");
       policer_cfg  = mby_rx_ppe_policer_cfg::type_id::create("policer_cfg");

@@ -10,6 +10,7 @@ $hdl_spec = {
     -vlog_files => [
       "verif/rx_ppe/ti/mby_rx_ppe_ti.sv",
       "verif/rx_ppe/ti/mby_rx_ppe_tb_if.sv",
+      "verif/rx_ppe/ti/mby_rx_ppe_parser_if.sv",
       
     ],
 

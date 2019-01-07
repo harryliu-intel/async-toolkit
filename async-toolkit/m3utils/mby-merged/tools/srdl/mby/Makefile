@@ -44,16 +44,15 @@ include $(MODEL_ROOT)/tools/srdl/Makefile
 #mesh_ral: $(MESH_RAL_TARGS) mesh_ral.hdl
 #gms_ral : $(GMS_RAL_TARGS) 
 
-ppe_ral : $(RESULTS_SUBBLOCK)/mby_ppe_rx_top_map.allral.done mby_ppe_rx_ral.hdl
-mesh_ral: $(RESULTS_SUBBLOCK)/mby_mesh_row_map.allral.done mby_mesh_ral.hdl
+ppe_ral : $(RESULTS_SUBBLOCK)/mby_ppe_rx_top_map.allral.done cp_ppe_rx_ral
+mesh_ral: $(RESULTS_SUBBLOCK)/mby_mesh_row_map.allral.done cp_mesh_ral
 
-mby_mesh_ral.hdl: $(RESULTS_SUBBLOCK)/mby_mesh_row_map.allral.done
-	$(MODEL_ROOT)/tools/srdl/ral_make_hdl.pl --dir target/GenRTL/regflow/mby/subblock/mby_mesh_row_map.ralf_out/ --model_root $(MODEL_ROOT) --filename_ral $@ 
+cp_mesh_ral: $(RESULTS_SUBBLOCK)/mby_mesh_row_map.allral.done
 	cp $(RESULTS_SUBBLOCK)/mby_mesh_row_map.ralf_out/*.sv $(MODEL_ROOT)/subBlock/mbyc/verif/mesh/ral/
 	echo "mesh ral generated"
 	
-mby_ppe_rx_ral.hdl: $(RESULTS_SUBBLOCK)/mby_ppe_rx_top_map.allral.done
-	$(MODEL_ROOT)/tools/srdl/ral_make_hdl.pl --dir target/GenRTL/regflow/mby/subblock/mby_ppe_rx_top_map.ralf_out/ --model_root $(MODEL_ROOT) --filename_ral $@
+cp_ppe_rx_ral: $(RESULTS_SUBBLOCK)/mby_ppe_rx_top_map.allral.done
+#	$(MODEL_ROOT)/tools/srdl/ral_make_hdl.pl --dir target/GenRTL/regflow/mby/subblock/mby_ppe_rx_top_map.ralf_out/ --model_root $(MODEL_ROOT) --filename_ral mby_ppe_rx_ral.hdl
 	cp $(RESULTS_SUBBLOCK)/mby_ppe_rx_top_map.ralf_out/*.sv $(MODEL_ROOT)/subBlock/mbyc/verif/rx_ppe/ral/
 	echo "RX PPE ral generated"
 # genrdl: $(SHELL_CTL_RDL)

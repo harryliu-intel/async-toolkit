@@ -28,23 +28,54 @@ INCS += $(SRC)/egr/interfaces
 INCS += rtl
 INCS += $(SRC)/egr/cpb/rtl
 INCS += $(SRC)/egr/dpb/rtl
+INCS += $(SRC)/egr/etag/rtl
 INCS += $(SRC)/egr/lcm/rtl
 INCS += $(SRC)/egr/mri/rtl
 INCS += $(SRC)/egr/pfs/rtl
 INCS += $(SRC)/egr/prc/rtl
 INCS += $(SRC)/egr/tcu/rtl
+INCS += $(SRC)/egr/tdb/rtl
 INCS += $(SRC)/egr/tmu/rtl
 INCS += $(SRC)/egr/tqu/rtl
 INCS += $(SRC)/egr/cpb/interfaces
 INCS += $(SRC)/egr/dpb/interfaces
+INCS += $(SRC)/egr/etag/interfaces
 INCS += $(SRC)/egr/lcm/interfaces
 INCS += $(SRC)/egr/mri/interfaces
 INCS += $(SRC)/egr/pfs/interfaces
 INCS += $(SRC)/egr/prc/interfaces
 INCS += $(SRC)/egr/tcu/interfaces
+INCS += $(SRC)/egr/tdb/interfaces
 INCS += $(SRC)/egr/tmu/interfaces
 INCS += $(SRC)/egr/tqu/interfaces
+
+
 INCS += $(SRC)/egr/rtl/mem
+
+INCS += $(SRC)/egr/rtl/mem/cpb/src
+INCS += $(SRC)/egr/rtl/mem/dpb/src
+INCS += $(SRC)/egr/rtl/mem/etag/src
+INCS += $(SRC)/egr/rtl/mem/lcm/src
+INCS += $(SRC)/egr/rtl/mem/mri/src
+INCS += $(SRC)/egr/rtl/mem/pfs/src
+INCS += $(SRC)/egr/rtl/mem/prc/src
+INCS += $(SRC)/egr/rtl/mem/tcu/src
+INCS += $(SRC)/egr/rtl/mem/tdb/src
+INCS += $(SRC)/egr/rtl/mem/tmu/src
+INCS += $(SRC)/egr/rtl/mem/tqu/src
+
+INCS += $(SRC)/egr/rtl/mem/cpb/src/mem_wrap
+INCS += $(SRC)/egr/rtl/mem/dpb/src/mem_wrap
+INCS += $(SRC)/egr/rtl/mem/etag/src/mem_wrap
+INCS += $(SRC)/egr/rtl/mem/lcm/src/mem_wrap
+INCS += $(SRC)/egr/rtl/mem/mri/src/mem_wrap
+INCS += $(SRC)/egr/rtl/mem/pfs/src/mem_wrap
+INCS += $(SRC)/egr/rtl/mem/prc/src/mem_wrap
+INCS += $(SRC)/egr/rtl/mem/tcu/src/mem_wrap
+INCS += $(SRC)/egr/rtl/mem/tdb/src/mem_wrap
+INCS += $(SRC)/egr/rtl/mem/tmu/src/mem_wrap
+INCS += $(SRC)/egr/rtl/mem/tqu/src/mem_wrap
+
 INCS += $(SRC)/mems/rtl
 INCS += $(SHRTL)/src/common/rtl
 
@@ -62,6 +93,9 @@ simv: $(VCS_SRC) $(BUILD_DEP)
 
 debug: simv
 	./simv $(TRACE_FLAGS) $(SIMV_FLAGS) +TIMESTAMP_FREQUENCY=100 +TIMEOUT=1000
+
+first_packet_ms1p0 first_packet_ms2p0 first_packet_ms2p1 first_packet_ms2p5: simv
+	./simv $(TRACE_FLAGS) $(SIMV_FLAGS) +TIMESTAMP_FREQUENCY=100 +TIMEOUT=1000 +TESTNAME=$@
 
 gate: simv
 	./simv $(SIMV_FLAGS) +TIMESTAMP_FREQUENCY=100 +TIMEOUT=1000

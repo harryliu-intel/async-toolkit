@@ -8,6 +8,7 @@
 typedef enum bus_type_e;
 //----------------------------------------------------------------------------------------
 // Class: mby_mgp_req_agent_cfg
+// Configuration class for req_agent
 //----------------------------------------------------------------------------------------
 class mby_mgp_req_agent_cfg extends uvm_object;
 
@@ -16,6 +17,7 @@ class mby_mgp_req_agent_cfg extends uvm_object;
    bit monitor_enable = 1;
 
    bus_type_e bus_type;
+   req_type_e req_type;
    
    extern function new(string name = "");
    
@@ -24,6 +26,7 @@ endclass
 
 //----------------------------------------------------------------------------------------
 // Constructor
+// Creating new req agent
 //----------------------------------------------------------------------------------------
 function mby_mgp_req_agent_cfg::new (string name = "");
 
