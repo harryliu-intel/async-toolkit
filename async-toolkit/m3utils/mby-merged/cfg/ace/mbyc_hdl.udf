@@ -612,6 +612,7 @@ print "MGM debug : @mbyMgmLibs\n";
 
                libs => [
                         "shdv_shared_lib",
+                        "gen_mby_wm_m3",
                         "mby_wm_dpi_lib",
                         "sva_lib",
                         "gen_mby_mgm_lib",
@@ -695,6 +696,7 @@ print "MGM debug : @mbyMgmLibs\n";
                    "mby_egress_env_lib",
                    "mby_egress_test_lib",
                    "mby_egr_scbd_lib",
+                   "gen_mby_wm_m3",
                    "mby_wm_dpi_lib",
                    "upf",
                    "lpa"
