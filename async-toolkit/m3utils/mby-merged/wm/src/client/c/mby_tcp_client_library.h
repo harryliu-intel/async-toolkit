@@ -27,6 +27,7 @@
 #define MBY_TCP_CLIENT_LIBRARY_H
 
 #include "mby_tcp_client_types.h"
+#include "mby_parser.h"
 
 /** \defgroup c_client C Client APIs
  *  @{
@@ -72,6 +73,11 @@ struct wm_pkt {
 
 int wm_pkt_push(const struct wm_pkt *pkt);
 int wm_pkt_get(struct wm_pkt *pkt);
+
+
+/* Individual stage interfaces */
+int wm_parser(mbyRxMacToParser const * const in,
+              mbyParserToMapper      * const out);
 
 /** @}*/
 #endif /* __MBAY_DPI_CLIENT_H_ */

@@ -25,10 +25,12 @@
 //   Project       : MBY
 //   Description   : Package to import all the DPI functions to connect to the White model.
 //------------------------------------------------------------------------------
-
+ 
 package mby_wm_dpi_pkg;
 
 `define MAX_PKT_LEN 16384
+
+`include "mby_parser_hdr.svh"
 
     typedef struct  {
         byte data[`MAX_PKT_LEN];
@@ -40,10 +42,11 @@ package mby_wm_dpi_pkg;
     import "DPI-C" function wm_server_stop();
     import "DPI-C" function wm_reg_write(int addr, longint val);
     import "DPI-C" function wm_reg_read(input int addr,  output longint val);
-    import "DPI-C" function wm_pkt_push(input wm_pkt_t push_pkt );
+    import "DPI-C" function int wm_pkt_push(input wm_pkt_t push_pkt );
     import "DPI-C" function wm_pkt_get(output wm_pkt_t get_pkt);
     //This function is used for debug purpose only-- To connect directly to Idea IDE and debug Scala code.
     import "DPI-C" function wm_connect(string server_path);
+    import "DPI-C" function int wm_parser(input mbyRxMacToParser igr_pkt, output mbyParserToMapper parser_pkt);
 
 endpackage
 

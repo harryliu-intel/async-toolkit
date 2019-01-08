@@ -58,7 +58,9 @@ ifneq ($(READ_TIMEOUT),)
 	CFLAGS += -DREAD_TIMEOUT=$(READ_TIMEOUT)
 endif
 
-INCLUDES = -I.
+STAGE_STRUCT_INC = ../../main/c/
+TOP_MAP_INC      = ../../main/m3/genviews/src/build_c/mby_c/src/
+INCLUDES         = -I. -I$(STAGE_STRUCT_INC) -I$(TOP_MAP_INC)
 
 DEFINES =
 ifeq ($(DEBUG),1)
