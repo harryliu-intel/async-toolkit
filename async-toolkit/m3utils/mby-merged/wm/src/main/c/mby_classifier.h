@@ -10,6 +10,7 @@
 #include "mby_common.h"
 #include "mby_bitfield.h"
 #include "mby_cgrp_regs.h"
+#include "mby_mapper.h"
 
 // Defines:
 
@@ -78,6 +79,18 @@ typedef struct mbyClassifierToHashStruct
     fm_uint32              RX_LENGTH;                                   ///< Ingress packet data length [bytes]
 } mbyClassifierToHash;
 
+typedef mbyMapperToClassifier   Classifier_in_t;
+typedef mbyClassifierToHash     Classifier_out_t;
+
 // Function prototypes:
+
+void Classifier
+(
+    mby_ppe_cgrp_a_map    const * const cgrp_a_map,
+    mby_ppe_cgrp_b_map    const * const cgrp_b_map,
+    mby_shm_map           const * const shm_map,
+    mbyMapperToClassifier const * const in,
+    mbyClassifierToHash         * const out
+ );
 
 #endif /* MBY_CLASSIFIER_H */

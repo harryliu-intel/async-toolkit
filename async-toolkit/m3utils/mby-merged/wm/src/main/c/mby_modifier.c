@@ -1254,9 +1254,9 @@ void Modifier
     mby_ppe_modify_map   const * const mod_map,
     mby_shm_map          const * const shm_map,
     varchar_t            const *       rx_data,
+    fm_int                             max_pkt_size,
     mbyTxInToModifier    const * const in,
-    mbyModifierToTxStats       * const out,
-    fm_int                             max_pkt_size
+    mbyModifierToTxStats       * const out
 )
 {
     // Read inputs:

@@ -5,6 +5,8 @@
 #ifndef MBY_COMMON_H
 #define MBY_COMMON_H
 
+#define TOP_MAP mby_top_map
+
 // Includes:
 #include <stdlib.h>
 #include <mby_top_map.h> // header file auto-generated from RDL

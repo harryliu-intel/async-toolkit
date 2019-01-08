@@ -340,6 +340,11 @@ typedef struct mbyMapperToClassifierStruct
     fm_uint32            RX_LENGTH;         ///< Ingress packet data length [bytes]
 } mbyMapperToClassifier;
 
+typedef mby_ppe_mapper_map       Mapper_rstate_t;
+typedef NullType                 Mapper_wstate_t;
+typedef mbyParserToMapper        Mapper_in_t;
+typedef mbyMapperToClassifier    Mapper_out_t;
+
 void Mapper
 (
     mby_ppe_mapper_map    const * const mapper_map,

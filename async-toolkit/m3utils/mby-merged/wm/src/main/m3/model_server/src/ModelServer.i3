@@ -31,10 +31,10 @@ TYPE
     sharedSocket : BOOLEAN;
   METHODS
     init(sharedSocket : BOOLEAN;
-         infoPath : Pathname.T := ".";
-         factory : UpdaterFactory.T := NIL;
-         quitOnLastClientExit := FALSE;
-         infoFileName : Pathname.T := DefInfoFileName) : T;
+         infoPath     : Pathname.T       := ".";
+         factory      : UpdaterFactory.T := NIL;
+         quitOnLastClientExit            := FALSE;
+         infoFileName : Pathname.T       := DefInfoFileName) : T;
     (* initialize object.  infoPath is a directory path where
        the host:port file is created with the filename given below
        by InfoFileName *)

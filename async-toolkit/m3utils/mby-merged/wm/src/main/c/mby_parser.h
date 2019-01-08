@@ -8,6 +8,7 @@
 // Includes:
 
 #include "mby_bitfield.h"
+#include "nulltype.h"
 
 // Defines:
 
@@ -144,12 +145,19 @@ typedef struct mbyParserToMapperStruct
     fm_uint32        RX_LENGTH;                        ///< Ingress packet data length [bytes]
 } mbyParserToMapper;
 
+typedef mby_ppe_parser_map Parser_rstate_t;
+typedef NullType           Parser_wstate_t;
+typedef mbyRxMacToParser   Parser_in_t;
+typedef mbyParserToMapper  Parser_out_t;
+
 void Parser
 (
     mby_ppe_parser_map    const * const parser_map,
     mbyRxMacToParser      const * const in,
     mbyParserToMapper           * const out
 );
+
+
 
 
 #endif

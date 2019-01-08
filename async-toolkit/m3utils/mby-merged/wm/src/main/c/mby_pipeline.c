@@ -97,7 +97,7 @@ void TxPipeline
     mod2txs.TX_DATA = txs2mac->TX_DATA;
 
     // TX pipeline stages:
-    Modifier(modify_map, shm_map, rx_data, txi2mod, &mod2txs, max_pkt_size);
+    Modifier(modify_map, shm_map, rx_data, max_pkt_size, txi2mod, &mod2txs);
 
     // Setting TX length and port  will be fixed with tx stats <--REVISIT!!!
     txs2mac->TX_LENGTH = mod2txs.TX_LENGTH;
