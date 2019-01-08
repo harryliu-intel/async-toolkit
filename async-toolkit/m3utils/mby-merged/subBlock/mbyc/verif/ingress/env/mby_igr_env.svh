@@ -61,14 +61,6 @@ class mby_igr_env extends shdv_base_env;
     // MAC Client BFM io policy
     igr_eth_bfm_rx_io_t vp_bfm_rx_io[`NUM_VPS_PER_IGR];
 
-    // Variable:  eth_bfm_tx_vintf
-    // MAC Client BFM virtual interface
-    igr_eth_bfm_tx_intf_t vp_bfm_tx_vintf[`NUM_VPS_PER_IGR];
-
-    // Variable:  eth_bfm_rx_vintf
-    // MAC Client BFM virtual interface
-    igr_eth_bfm_rx_intf_t vp_bfm_rx_vintf[`NUM_VPS_PER_IGR];
-
     // Variable:  eth_bfms
     // MAC Client BFM agent
     igr_eth_bfm_t eth_bfms[`NUM_EPLS_PER_IGR];
@@ -79,16 +71,8 @@ class mby_igr_env extends shdv_base_env;
 
     // Variable:  eth_bfm_rx_io
     // MAC Client BFM io policy
-    igr_eth_bfm_rx_io_t eth_bfm_rx_io[`NUM_EPLS_PER_IGR];
-
-    // Variable:  eth_bfm_tx_vintf
-    // MAC Client BFM virtual interface
-    igr_eth_bfm_tx_intf_t eth_bfm_tx_vintf[`NUM_EPLS_PER_IGR];
-
-    // Variable:  eth_bfm_rx_vintf
-    // MAC Client BFM virtual interface
-    igr_eth_bfm_rx_intf_t eth_bfm_rx_vintf[`NUM_EPLS_PER_IGR];
-
+    igr_eth_bfm_rx_io_t eth_bfm_rx_io[`NUM_EPLS_PER_IGR]; 
+    
     // Variable: env_monitor
     // ingress env event monitor
     mby_igr_env_monitor env_monitor;
@@ -204,11 +188,11 @@ class mby_igr_env extends shdv_base_env;
     function void build_vpt_bfms();
         foreach(vp_bfms[i]) begin
             // Get the vp_bfm_vif ptrs
-            if(!uvm_config_db#(igr_eth_bfm_tx_intf_t)::get(this, "", $sformatf("igr_eth_bfm_tx_vintf%0d", i+4), vp_bfm_tx_vintf[i])) begin
-                `uvm_fatal(get_name(), $sformatf("Config_DB.get() for ENV's igr_eth_bfm_tx_vintf%0d was not successful!", i+4))
+            if(!uvm_config_db#(igr_eth_bfm_tx_io_t)::get(this, "", $sformatf("igr_vp_bfm_tx_io%0d", i), vp_bfm_tx_io[i])) begin
+                `uvm_fatal(get_name(), "Config_DB.get() for ENV's igr_vp_bfm_tx_io%0d was not successful!")
             end
-            if(!uvm_config_db#(igr_eth_bfm_rx_intf_t)::get(this, "", $sformatf("igr_eth_bfm_rx_vintf%0d", i+4), vp_bfm_rx_vintf[i])) begin
-                `uvm_fatal(get_name(),"Config_DB.get() for ENV's igr_eth_bfm_rx_intf_t was not successful!")
+            if(!uvm_config_db#(igr_eth_bfm_rx_io_t)::get(this, "", $sformatf("igr_vp_bfm_rx_io%0d", i), vp_bfm_rx_io[i])) begin
+                `uvm_fatal(get_name(),"Config_DB.get() for ENV's igr_vp_bfm_rx_io was not successful!")
             end
             // Create the vp bfm instances
             vp_bfms[i]                = igr_vp_bfm_t::type_id::create($sformatf("igr_vp_bfm%0d", i), this);
@@ -218,8 +202,6 @@ class mby_igr_env extends shdv_base_env;
                 eth_bfm_pkg::SPEED_OFF,
                 eth_bfm_pkg::SPEED_OFF};
             //vp_bfms[i].cfg.port_lanes = {4,0,0,0};                                         // Configure num_ports.
-            vp_bfm_tx_io[i] = igr_eth_bfm_tx_io_t::type_id::create($sformatf("vp_bfm_tx_io%0d", i), this);
-            vp_bfm_rx_io[i] = igr_eth_bfm_rx_io_t::type_id::create($sformatf("vp_bfm_rx_io%0d", i), this);
         end
     endfunction : build_vpt_bfms
 
@@ -230,12 +212,12 @@ class mby_igr_env extends shdv_base_env;
     //--------------------------------------------------------------------------
     function void build_eth_bfms();
         foreach(eth_bfms[i]) begin
-            // Get the eth_bfm_vif ptrs
-            if(!uvm_config_db#(igr_eth_bfm_tx_intf_t)::get(this, "", $sformatf("igr_eth_bfm_tx_vintf%0d", i),eth_bfm_tx_vintf[i])) begin
-                `uvm_fatal(get_name(),"Config_DB.get() for ENV's igr_eth_bfm_tx_intf_t was not successful!")
+            // Get the io policies
+            if(!uvm_config_db#(igr_eth_bfm_tx_io_t)::get(this, "", $sformatf("igr_eth_bfm_tx_io%0d", i), eth_bfm_tx_io[i])) begin
+                `uvm_fatal(get_name(),"Config_DB.get() for ENV's igr_eth_bfm_tx_io_t was not successful!")
             end
-            if(!uvm_config_db#(igr_eth_bfm_rx_intf_t)::get(this, "", $sformatf("igr_eth_bfm_rx_vintf%0d", i), eth_bfm_rx_vintf[i])) begin
-                `uvm_fatal(get_name(),"Config_DB.get() for ENV's igr_eth_bfm_rx_intf_t was not successful!")
+            if(!uvm_config_db#(igr_eth_bfm_rx_io_t)::get(this, "", $sformatf("igr_eth_bfm_rx_io%0d", i), eth_bfm_rx_io[i])) begin
+                `uvm_fatal(get_name(),"Config_DB.get() for ENV's igr_eth_bfm_rx_io_t was not successful!")
             end
             // Create the bfm instances
             eth_bfms[i]                   = igr_eth_bfm_t::type_id::create($sformatf("igr_eth_bfm%0d", i), this);
@@ -247,8 +229,6 @@ class mby_igr_env extends shdv_base_env;
             //eth_bfms[i].cfg.port_lanes    = {4,0,0,0};                                           // Configure num_ports.
             eth_bfms[i].cfg.group_size    = 8;
             eth_bfms[i].cfg.sop_alignment = 8;
-            eth_bfm_tx_io[i] = igr_eth_bfm_tx_io_t::type_id::create($sformatf("eth_bfm_tx_io%0d", i), this);
-            eth_bfm_rx_io[i] = igr_eth_bfm_rx_io_t::type_id::create($sformatf("eth_bfm_rx_io%0d", i), this);
         end
     endfunction : build_eth_bfms
 
@@ -281,8 +261,6 @@ class mby_igr_env extends shdv_base_env;
     //--------------------------------------------------------------------------
     function void connect_vpt_bfms();
         foreach(vp_bfms[i]) begin
-            vp_bfm_tx_io[i].set_vintf(vp_bfm_tx_vintf[i]);
-            vp_bfm_rx_io[i].set_vintf(vp_bfm_rx_vintf[i]);
             vp_bfms[i].set_io(vp_bfm_tx_io[i], vp_bfm_rx_io[i]);
             add_sequencer($sformatf("vp_bfm_%0d", i), $sformatf("vp_bfm_%0d_rx0", i), vp_bfms[i].rx.frame_sequencer[0]);
             add_sequencer($sformatf("vp_bfm_%0d", i), $sformatf("vp_bfm_%0d_rx1", i), vp_bfms[i].rx.frame_sequencer[1]);
@@ -298,8 +276,6 @@ class mby_igr_env extends shdv_base_env;
     //--------------------------------------------------------------------------
     function void connect_eth_bfms();
         foreach(eth_bfms[i]) begin
-            eth_bfm_tx_io[i].set_vintf(eth_bfm_tx_vintf[i]);
-            eth_bfm_rx_io[i].set_vintf(eth_bfm_rx_vintf[i]);
             eth_bfms[i].set_io(eth_bfm_tx_io[i], eth_bfm_rx_io[i]);
             add_sequencer($sformatf("eth_bfm_%0d", i), $sformatf("eth_bfm_%0d_rx0", i), eth_bfms[i].rx.frame_sequencer[0]);
             add_sequencer($sformatf("eth_bfm_%0d", i), $sformatf("eth_bfm_%0d_rx1", i), eth_bfms[i].rx.frame_sequencer[1]);
