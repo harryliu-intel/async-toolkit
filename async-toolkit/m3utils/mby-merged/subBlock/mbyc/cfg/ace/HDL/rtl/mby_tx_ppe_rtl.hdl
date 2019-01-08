@@ -11,6 +11,7 @@ $hdl_spec = {
         "src/shared/rtl/shared_pkg.sv",
         "src/shared/rtl/mby_rx_metadata_pkg.sv",
         "src/tx_ppe/rtl/tx_ppe_pkg.sv",
+        "$SVA_LIB/intel_checkers_pkg.sv",
 		"src/shared/interfaces/ahb_rx_ppe_if.sv",
 		"src/shared/interfaces/glb_rx_ppe_if.sv",
 		"src/shared/interfaces/egr_tx_ppe_if.sv",
@@ -31,6 +32,7 @@ $hdl_spec = {
    # List of include directories. Corresponds with the VLOG '+incdir+' parameter
 	-vlog_incdirs => [
 		"src/shared/interfaces",
+        "$SVA_LIB",
         "target/mby/mgm_run/tx_ppe/src",
         "target/mby/mgm_run/tx_ppe/src/mem_wrap",
         "target/mby/mgm_run/rtl",
