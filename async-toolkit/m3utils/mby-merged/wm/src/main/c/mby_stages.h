@@ -7,9 +7,12 @@
 #include "mby_parser.h"
 #include "mby_mapper.h"
 #include "mby_classifier.h"
+#include "mby_modifier.h"
 
 STAGE_PROTO(Parser);
 STAGE_PROTO(Mapper);
 STAGE_PROTO(Classifier);
+
+STAGE_PROTO(Modifier);
 
 #endif

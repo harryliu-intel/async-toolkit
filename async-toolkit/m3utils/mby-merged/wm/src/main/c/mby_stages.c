@@ -19,4 +19,14 @@ STAGE_PROTO(Classifier)
              in, out);
 }
 
+STAGE_PROTO(Modifier)
+{
+  Modifier(&(r->mpp[0].mgp[0].tx_ppe.modify),
+           &(r->mpp[0].shm),
+           in->rx_data,
+           in->max_pkt_size,
+           in->in,
+           out);
+}
+
 // more to come ...

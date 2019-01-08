@@ -632,6 +632,14 @@ typedef struct mbyModifierToTxStatsStruct
 
 } mbyModifierToTxStats;
 
+typedef struct {
+  varchar_t            const * rx_data;
+  fm_int                       max_pkt_size;
+  mbyTxInToModifier    const * in;
+} Modifier_in_t;
+
+typedef mbyModifierToTxStats Modifier_out_t;
+
 void Modifier
 (
     mby_ppe_modify_map    const * const mod_map,
