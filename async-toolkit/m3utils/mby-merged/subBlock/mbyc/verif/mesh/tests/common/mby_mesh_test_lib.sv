@@ -1,3 +1,4 @@
+
 // vim: noai : ts=3 : sw=3 : expandtab : ft=systemverilog
 
 //------------------------------------------------------------------------------
@@ -43,8 +44,10 @@ program mby_mesh_test_lib;
     import shdv_base_pkg::*;
     import mby_mesh_env_pkg::*;
 
+    `include "mby_mesh_req_seq.svh"
     `include "mby_mesh_base_test.svh"
     `include "mby_mesh_random_test.svh"
+    `include "mby_mesh_first_pkt_test.svh"
 
     // UVM Start test
     initial begin

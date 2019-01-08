@@ -37,7 +37,7 @@ mby_igr_pb_md_if.mem igr_pb2_md3_if,
 mby_igr_pb_md_if.mem igr_pb3_md0_if,
 mby_igr_pb_md_if.mem igr_pb3_md1_if,
 mby_igr_pb_md_if.mem igr_pb3_md2_if,
-mby_igr_pb_md_if.mem igr_pb3_md3_if,
+mby_mem_1rw_if.mem #(.W_DATA(72), .W_DEEP(1024), W_INST(01)) igr_pb3_md3_if(),
 
 
 ngen_IO_list

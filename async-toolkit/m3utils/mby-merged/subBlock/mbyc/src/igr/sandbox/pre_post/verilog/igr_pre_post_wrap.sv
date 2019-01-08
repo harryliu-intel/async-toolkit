@@ -132,10 +132,10 @@ import mby_igr_pkg::*, mby_rx_metadata_pkg::*, shared_pkg::*;
  output [W_SEMA-1:0][1:0]          o_drop_sema, 
  output [4:0]                      o_free_ptr_req,
  output [7:0]                      o_port_id, // FIXME -- what is this for?  ring_tag_t also has src & dst ports 
- output [95:0]                     o_post_ppe_tag_at_rate0, 
- output [95:0]                     o_post_ppe_tag_at_rate1, 
- output [95:0]                     o_post_ppe_tag_set_aside0, 
- output [95:0]                     o_post_ppe_tag_set_aside1                 
+ output mby_tag_ring_t             o_post_ppe_tag_at_rate0, 
+ output mby_tag_ring_t             o_post_ppe_tag_at_rate1, 
+ output mby_tag_ring_t             o_post_ppe_tag_set_aside0, 
+ output mby_tag_ring_t             o_post_ppe_tag_set_aside1                 
 );
 // collage-pragma translate_off
 

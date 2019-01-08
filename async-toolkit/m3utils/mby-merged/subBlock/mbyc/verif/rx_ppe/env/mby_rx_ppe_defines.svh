@@ -24,49 +24,26 @@
 //
 //------------------------------------------------------------------------------
 //   Author        : Nathan Mai
+//                 : Lewis Sternberg
 //   Project       : Madison Bay
 //------------------------------------------------------------------------------
 
-//   Defines : mby_rx_ppe_defines
+//   Defines : types useful to mby_rx_ppe testbench
 //
-//  This file contain any PARAMETERS or Defines.  Also contains Topology
-//  configuration ENUM.
 
 `ifndef __MBY_RX_PPE_DEFINES_GUARD
 `define __MBY_RX_PPE_DEFINES_GUARD
+
+//FIXME:  LNS: `defines are global and should be avoided whenever possible. 
+////            When it's not to avoid `defines, their name should be made unambiguously unique by using the prefix MBY_RX_PPE
+`define NUM_VPS_PER_IGR   1
+`define NUM_PORTS_PER_VP  8
+`define NUM_EPLS_PER_RX_PPE 1
+`define NUM_PORTS_PER_EPL 16
 
 `ifndef __INSIDE_MBY_RX_PPE_ENV_PKG
 `error "Attempt to include file outside of mby_rx_ppe_env_pkg."
 `endif
 
-
-class mby_rx_ppe_defines extends uvm_object;
-
-   // Enumeration: rx_ppe_topology_e
-   // Definition of different rx_ppe TB topologies.
-   //    -UNK_TOPO          -Used to detect integration error
-   //    -RX_PPE_FULL       -Complete RX PPE pipeline Testbench
-
-   typedef enum int {
-      UNK_TOPO           = 0,
-      RX_PPE_FULL        = 1
-   } rx_ppe_topology_e ;
-
-
-   `uvm_object_utils(mby_rx_ppe_env_pkg::mby_rx_ppe_defines)
-
-   //---------------------------------------------------------------------------
-   //  Constructor: new
-   //  Collect any plusargs and re-configure variables from default, if used.
-   //  Arguments:
-   //  name   - MC Defines object name.
-   //---------------------------------------------------------------------------
-   function       new(string name = "mby_rx_ppe_defines");
-      super.new(name);
-   //  $value$plusargs("DISABLE_END2END_FRAME_SB=%d",  disable_end2end_frame_sb);
-
-   endfunction: new
-
-endclass: mby_rx_ppe_defines
 
 `endif // __MBY_RX_PPE_DEFINES_GUARD

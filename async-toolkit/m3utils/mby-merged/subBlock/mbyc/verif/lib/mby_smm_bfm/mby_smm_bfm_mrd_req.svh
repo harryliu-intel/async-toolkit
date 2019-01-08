@@ -44,6 +44,9 @@
 // It consumes memory requests from the different interfaces and execute Data
 // MemWrs/MemRds to a given Mem Node in the Mesh and location in the Memory Node
 // based on Row, Col, Address coming in Request.
+//
+// PARAMETERS::
+//     type T_req - sequence item type to be handled.
 //-----------------------------------------------------------------------------
 
 class mby_smm_bfm_mrd_req
@@ -52,27 +55,23 @@ class mby_smm_bfm_mrd_req
    )
    extends uvm_pkg::uvm_subscriber #(T_req);
 
-//   T_req mem_req;
-//   T_req mem_rsp;
-   
+   // VARIABLE: rd_req_cfg_obj
+   //    The bfm's mrd request configuration objects
+   mby_smm_bfm_cfg rd_req_cfg_obj;
+
+   // VARIABLE: rd_req_agent_prt
+   //    Pointer to the SMM BFM read request agent.
    smm_bfm_row_rd_req_agent rd_req_agent_ptr;
 
-   smm_bfm_mem_node  mesh_ptr[NUM_MSH_ROWS-1:0][NUM_MSH_COLS-1:0];
+   // VARIABLE: mesh_ptr
+   //    Pointer to the SMM BFM nodes array.
+   smm_bfm_mem_node  mesh_ptr[MAX_NUM_MSH_ROWS-1:0][MAX_NUM_MSH_COLS-1:0];
    
+   // VARIABLE: rd_req_pending
+   //    Counter of the current memory read requests that are pending to be delivered to egress.
+   int rd_req_pending;
    
-//   logic [13:0]  addr;
-//   logic [3:0]   node_row;
-//   logic [2:0]   node_col;
-//   logic [511:0] wr_data;
-//   logic [511:0] rd_data;
-//   logic [12:0]  req_id;
-//   logic         rreq_valid;
-//   logic         rrsp_valid;
-//   time          rreq_delay;
-//   time          rrsp_delay;
- 
-
-// Registering class with the factory
+   // Registering class with the factory
    `uvm_component_utils(mby_smm_bfm_mrd_req#(T_req))
 
    // -------------------------------------------------------------------------
@@ -80,7 +79,7 @@ class mby_smm_bfm_mrd_req
    //
    // Constructor
    //
-   // ARGUMENTS:
+   // ARGUMENTS
    //    string name          - An instance name of the address translator.
    //    uvm_component parent - The translator's parent component.
    // -------------------------------------------------------------------------
@@ -88,18 +87,29 @@ class mby_smm_bfm_mrd_req
       super.new(name, parent);
    endfunction : new
 
-   function void set_mesh_ptr(smm_bfm_mem_node  mem_nodes_ptr[NUM_MSH_ROWS-1:0][NUM_MSH_COLS-1:0]);
-      for(int row_idx=0 ; row_idx<NUM_MSH_ROWS; row_idx++) begin
-         for(int col_idx=0 ; col_idx<NUM_MSH_COLS; col_idx++) begin
-            this.mesh_ptr[row_idx][col_idx] = mem_nodes_ptr[row_idx][col_idx];
-         end
-      end
+   // -------------------------------------------------------------------------
+   // FUNCTION: set_mesh_ptr
+   //
+   // Assigns the internal mesh pointer to be the same as the input argument.
+   //
+   // ARGUMENTS:
+   //    smm_bfm_mem_node mesh_ptr [MAX_NUM_MSH_ROWS-1:0][MAX_NUM_MSH_COLS-1:0]  - An instance name of the address translator.
+   // -------------------------------------------------------------------------
+   function void set_mesh_ptr(smm_bfm_mem_node  mesh_ptr[MAX_NUM_MSH_ROWS-1:0][MAX_NUM_MSH_COLS-1:0]);
+      this.mesh_ptr = mesh_ptr;
    endfunction : set_mesh_ptr
 
+   // -------------------------------------------------------------------------
+   // FUNCTION: set_agent_ptr
+   //
+   // Assigns the internal agent pointer to be the same as the input argument.
+   //
+   // ARGUMENTS:
+   //    smm_bfm_row_rd_req_agent rd_req_agent_ptr  - An instance name of the address translator.
+   // -------------------------------------------------------------------------
    function void set_agent_ptr(smm_bfm_row_rd_req_agent rd_req_agent_ptr);
       this.rd_req_agent_ptr = rd_req_agent_ptr;
    endfunction : set_agent_ptr
-
 
    // ------------------------------------------------------------------------
    // FUNCTION: build_phase
@@ -107,130 +117,118 @@ class mby_smm_bfm_mrd_req
    // Gets the agent's configuration object and vif from the config db.
    // Creates monitor, sequencer and driver as specified in configuration object
    //
+   // ARGUMENTS:
+   //    uvm_phase phase - phase object.
    // ------------------------------------------------------------------------
    function void build_phase(uvm_phase phase);
       super.build_phase(phase);
+      
+      rd_req_cfg_obj = new("rd_req_cfg_obj");
+      rd_req_pending = 0;
    endfunction : build_phase
 
-
-   // Function: write
+   // ------------------------------------------------------------------------
+   // FUNCTION: write
    //
    // Method that must be defined in each uvm_subscriber subclass. Access
    // to this method by outside components should be done via the
    // analysis_export.
+   //
+   // ARGUMENTS:
+   //    T_req ap_item - memory read request issued to the SMM BFM.
+   // ------------------------------------------------------------------------
    function void write(T_req ap_item);
-//      mem_req = ap_item;
-//      rreq_valid = 1;
+      start_mrd_req_rsp_task(ap_item);
+   endfunction
+
+   // ------------------------------------------------------------------------
+   // FUNCTION: start_mrd_req_rsp_task
+   //
+   // Sets up an separate context for the received memory write request and
+   // start the corresponding read request/response task.
+   //
+   // ARGUMENTS:
+   //    T_req mem_req - contains a memory read request to the SMM BFM.
+   // ------------------------------------------------------------------------
+   function void start_mrd_req_rsp_task(T_req mem_req);
+      // Have a local copy of mem_req, task can be forked safely.
       fork
-         mrd_req_rsp(ap_item);
+         mrd_req_rsp(mem_req);
       join_none
    endfunction
 
-
-//   virtual protected task automatic mrd_req();    // TODO: Change to task to make it time consuming for delay modeling
-//        `uvm_info("mby_smm_bfm_mrd_req()::mrd_req(): Got into...","",     UVM_MEDIUM);
-//     forever begin : issue_mrd_req 
-//         wait(rreq_valid == 1);
-//         req_id   = mem_req.data_pkt.mim_req_id;
-//         addr     = mem_req.data_pkt.mim_seg_ptr[13:0];
-//         node_row = mem_req.data_pkt.mim_seg_ptr[17:14];
-//         node_col = {mem_req.data_pkt.mim_seg_ptr[1:0]^mem_req.data_pkt.mim_wd_sel,mem_req.data_pkt.mim_seg_ptr[18]};
-//         rreq_delay = 833*(node_row+node_col);
-//         //#(rreq_delay);
-//         rd_data = mesh_ptr[node_row][node_col].mrd(addr);
-//         `uvm_info("mby_smm_bfm_mrd_req()::mrd_req(): Address=", $sformatf("%014h", addr),     UVM_MEDIUM);
-//         `uvm_info("mby_smm_bfm_mrd_req()::mrd_req(): NodeRow=", $sformatf("%04h",  node_row), UVM_MEDIUM);
-//         `uvm_info("mby_smm_bfm_mrd_req()::mrd_req(): NodeCol=", $sformatf("%03h",  node_col), UVM_MEDIUM);
-//         `uvm_info("mby_smm_bfm_mrd_req()::mrd_req(): rd_data=", $sformatf("%0128h",rd_data),  UVM_MEDIUM);
-//         rrsp_valid = 1;
-//         #100;
-//         rreq_valid = 0;
-//         rrsp_valid = 0;
-//     end
-//   endtask : mrd_req
-//
-//   
-//   virtual protected task automatic mrd_rsp();
-//      `uvm_info("mby_smm_bfm_mrd_req()::mrd_rsp(): Got into...","",     UVM_MEDIUM);
-//      forever begin : collect_mem_rd
-//         // Wait for a new transaction to appear
-//         wait(rrsp_valid === 1);
-//         
-//         mem_rsp = T_req::type_id::create("mem_rsp", this);
-//         mem_rsp.data_pkt.mim_rrsp_valid = 1;
-//         mem_rsp.data_pkt.mim_rd_data = rd_data;
-//         mem_rsp.data_pkt.mim_rrsp_req_id = req_id;
-//         rrsp_delay = 833*(node_row+node_col+$urandom_range(0, 16));
-//         //#(rrsp_delay);
-//         `uvm_info("mby_smm_bfm_mrd_req()::mrd_rsp(): Delay=",rrsp_delay,     UVM_MEDIUM);
-//         this.rd_req_agent_ptr.driver.vintf.drive_data(mem_rsp.data_pkt, 0, 0);
-//         // Create the seq_item
-//         `uvm_info("mby_smm_bfm_mrd_req()::mrd_rsp(): Creating the transaction for MemRd Response","", UVM_MEDIUM);
-//         #100;
-//         mem_rsp.data_pkt.mim_rrsp_valid = 0;
-//         rrsp_valid = 0;
-//      end
-//   endtask : mrd_rsp
-
+   // ------------------------------------------------------------------------
+   // FUNCTION: mrd_req_rsp
+   //
+   // Receives a memory read request, adds the request/response modeled time delays,
+   // and generate a memory read response for the model.
+   //
+   // ARGUMENTS:
+   //    T_req mem_req - contains a memory read request to the SMM BFM.
+   // ------------------------------------------------------------------------
    virtual protected task automatic mrd_req_rsp(T_req mem_req);
-      T_req          mem_rsp;
+      T_req          mem_rsp;       // Sequence item to store the generated memory response
       
-      logic [12:0]   req_id;
-      logic [13:0]   addr;
-      logic [3:0]    node_row;
-      logic [2:0]    node_col;
-      logic [511:0]  rd_data;
+      smm_bfm_rdrsp_seq  rdrsp_seq;
       
-      time           rreq_delay;
-      time           rrsp_delay;
+      // TODO: parameterize these definitions, these come from a file
+      // TODO : change logics by bits
+      logic [12:0]   req_id;        // Memory read request ID
+      logic [13:0]   addr;          // Memory read address
+      logic [511:0]  rd_data;       // Memory read data
       
+      logic [3:0]    node_row;      // SMM BFM node column
+      logic [2:0]    node_col;      // SMM BFM node row
+      
+      int unsigned   req_rsp_delay; // Modeled read request delay
+      
+      string         msg_str;
+      
+      rd_req_pending++;
+      
+      rdrsp_seq = smm_bfm_rdrsp_seq::type_id::create("rdrsp_seq", this);
+      
+      // Decode memory read request data
       req_id      = mem_req.data_pkt.mim_req_id;
       addr        = mem_req.data_pkt.mim_seg_ptr[13:0];
       node_row    = mem_req.data_pkt.mim_seg_ptr[17:14];
       node_col    = {mem_req.data_pkt.mim_seg_ptr[1:0]^mem_req.data_pkt.mim_wd_sel,mem_req.data_pkt.mim_seg_ptr[18]};
+      rd_data     = mesh_ptr[node_row][node_col].mrd(addr);
       
-      `uvm_info(get_type_name(), $sformatf("mby_smm_bfm_mrd_req::mrd_req_rsp() : Received a memory read request. ReqID = 0x%x", req_id),  UVM_MEDIUM);
-      `uvm_info(get_type_name(), $sformatf("mby_smm_bfm_mrd_req::mrd_req_rsp() : Address = 0x%0x. ReqID = 0x%x", addr, req_id),           UVM_MEDIUM);
-      `uvm_info(get_type_name(), $sformatf("mby_smm_bfm_mrd_req::mrd_req_rsp() : NodeRow = 0x%0x. ReqID = 0x%x", node_row, req_id),       UVM_MEDIUM);
-      `uvm_info(get_type_name(), $sformatf("mby_smm_bfm_mrd_req::mrd_req_rsp() : NodeCol = 0x%0x. ReqID = 0x%x", node_col, req_id),       UVM_MEDIUM);
+      msg_str     = $sformatf("mrd_req_rsp() : Received a memory read request for NodeRow = 0x%0x, NodeCol = 0x%0x, \
+                        Address = 0x%0x, RdData = 0x%0x. ReqID = 0x%x", node_row, node_col, addr, rd_data, req_id);
       
-      // Process the input memory read request
+      `uvm_info(get_type_name(), msg_str,  UVM_MEDIUM)
       
-      rreq_delay  = 833*(node_row+node_col);
-      
-      `uvm_info(get_type_name(), $sformatf("mby_smm_bfm_mrd_req::mrd_req_rsp() : Simulating read request delay of  = %0d. ReqID = 0x%x", rreq_delay, req_id),  UVM_MEDIUM);
-      
-      #(rreq_delay);
-      
-      rd_data = mesh_ptr[node_row][node_col].mrd(addr);
-      
-      `uvm_info(get_type_name(), $sformatf("mby_smm_bfm_mrd_req::mrd_req_rsp() :  RdData  = 0x%0x. ReqID = 0x%x", rd_data, req_id),  UVM_MEDIUM);
-      
-      //#100;
-      
-      // Now generate the memory read response
-      
+      // Generate the memory read response
       mem_rsp = T_req::type_id::create("mem_rsp", this);
       mem_rsp.data_pkt.mim_rrsp_valid  = 1;
       mem_rsp.data_pkt.mim_rd_data     = rd_data;
       mem_rsp.data_pkt.mim_rrsp_req_id = req_id;
       
-      rrsp_delay = 833*(node_row+node_col+$urandom_range(0, 16));
+      // TODO ;   Profile based latencies.
+      req_rsp_delay  = $urandom_range(rd_req_cfg_obj.mrd_req_rsp_delay_min,
+                                      rd_req_cfg_obj.mrd_req_rsp_delay_max) + rd_req_cfg_obj.mrd_req_rsp_delay_extra;
       
-      `uvm_info(get_type_name(), $sformatf("mby_smm_bfm_mrd_req::mrd_req_rsp() : Simulating read response delay of  = %0d. ReqID = 0x%x", rrsp_delay, req_id),  UVM_MEDIUM);
+      msg_str     = $sformatf("mrd_req_rsp() : Delay of read request/response operation is %0d clocks. ReqID = 0x%x",
+                       req_rsp_delay, req_id);
       
-      #(rrsp_delay);
+      `uvm_info(get_type_name(), msg_str,  UVM_MEDIUM)
       
-      `uvm_info(get_type_name(), $sformatf("mby_smm_bfm_mrd_req::mrd_req_rsp() : Sending response to driver. ReqID = 0x%x", req_id),  UVM_MEDIUM);
+      // Look for the driver in this agent then for a vif and then a clock in it
+      repeat(req_rsp_delay) @(posedge this.rd_req_agent_ptr.driver.vintf.clk);
       
-      // Might want to convert this into a fifo specially on highly concurrent scenarios
-      this.rd_req_agent_ptr.driver.vintf.drive_data(mem_rsp.data_pkt, 0, 0);
-      
-      //#100;
+      // Use this instead
+      rdrsp_seq.mem_rsp = mem_rsp;
+      rdrsp_seq.start(this.rd_req_agent_ptr.sequencer);
       
       mem_rsp.data_pkt.mim_rrsp_valid = 0;
       
-      `uvm_info(get_type_name(), $sformatf("mby_smm_bfm_mrd_req::mrd_req_rsp() : Request done. ReqID = 0x%x", req_id),  UVM_MEDIUM);
+      msg_str     = $sformatf("mrd_req_rsp() : Memory read request done. ReqID = 0x%x", req_id);
+      
+      `uvm_info(get_type_name(), msg_str, UVM_MEDIUM)
+      
+      rd_req_pending--;
    endtask : mrd_req_rsp
 
    // -------------------------------------------------------------------------
@@ -238,21 +236,37 @@ class mby_smm_bfm_mrd_req
    //
    // Main monitor thread starts: calls the monitor_if() virtual task
    //
+   // ARGUMENTS:
+   //    uvm_phase phase - phase object.
    // -------------------------------------------------------------------------
-  task run_phase (uvm_phase phase);
-//      fork
-//         begin : issue_req
-//            mrd_req();
-//         end
-//         begin : issue_rsp
-//            mrd_rsp();
-//         end
-//      join
+   task run_phase (uvm_phase phase);
+      bit      objection_raised = 0;
+      string   msg_str;
+      
+      forever @ (posedge this.rd_req_agent_ptr.driver.vintf.clk) begin
+         // Maintain track of the memory read requests in flight, will hold on test
+         // completion until all read requests are completed.
+         if (!objection_raised && rd_req_pending > 0) begin
+            phase.raise_objection(this, "SMM BFM: Pending memory read requests.", 1);
+            
+            msg_str = $sformatf("run_phase(): There are %0d pending memory read requests, raised phase objection.",
+                         rd_req_pending);
+            
+            `uvm_info(get_type_name(), msg_str, UVM_DEBUG)
+            
+            objection_raised = 1;
+         end else if (objection_raised && rd_req_pending == 0) begin
+            phase.drop_objection(this, "SMM BFM: No pending memory read requests.", 1);
+            
+            msg_str = $sformatf("run_phase(): There are %0d pending memory read requests, dropped phase objection.",
+                         rd_req_pending);
+            
+            `uvm_info(get_type_name(), msg_str, UVM_DEBUG)
+            
+            objection_raised = 0;
+         end
+      end
    endtask : run_phase
-
-
-
-
 endclass : mby_smm_bfm_mrd_req
 
 `endif

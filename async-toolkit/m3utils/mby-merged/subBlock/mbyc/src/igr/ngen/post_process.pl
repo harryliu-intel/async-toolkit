@@ -8,8 +8,8 @@
 # Function: Post process the Ngen output file for this block.
 # Copied from: Jon Bagge jon.bagge@intel.com
 #--------------------------------------------------------------------            
-open(SF, "./ngen/mby_igr_gen_mem.sv") || die "can't open input file\n";
-open(TF, ">./mby_igr_gen_mem.sv") || die "can't open output file\n";
+open(SF, "./ngen/mby_igr_pbb_gen_mem.sv") || die "can't open input file\n";
+open(TF, ">./mby_igr_pbb_gen_mem.sv") || die "can't open output file\n";
 
 while (<SF>) {
    $str = $_;

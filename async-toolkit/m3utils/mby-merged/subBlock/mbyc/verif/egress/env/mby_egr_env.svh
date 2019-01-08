@@ -67,11 +67,12 @@ class mby_egr_env extends mby_egr_base_env;
    mby_tag_bfm_pkg::mby_tag_bfm tag_bfm[`NUM_TAG_PORTS];
 
    mby_tag_bfm_pkg::mby_tag_bfm_uc_vif tag_bfm_intf[`NUM_TAG_PORTS];
+   
+   mby_smm_bfm_pkg::mby_smm_bfm_row_rd_req_vif smm_bfm_intf;
+   
 
    // Shared Memory Mesh (SMM) Instance
    mby_smm_bfm_t   smm_bfm;
-   mby_smm_bfm_cfg smm_bfm_igr_wr_req_cfg;
-   mby_smm_bfm_cfg smm_bfm_egr_rd_req_cfg;
 
    // Variable: env_monitor
    // egress env event monitor
@@ -114,7 +115,7 @@ class mby_egr_env extends mby_egr_base_env;
       //build_eth_bfms();
       build_tag_bfm();
       build_smm_bfm();
-      
+
 
       // Env monitor
       assert($cast(env_monitor, create_component("mby_egr_env_monitor","env_monitor")));
@@ -134,6 +135,7 @@ class mby_egr_env extends mby_egr_base_env;
       super.connect_phase(phase);
       //connect_eth_bfms();
       connect_tag_bfms();
+      connect_smm_bfm();
       
       uvm_config_db#(egr_env_if_t)::get(this, "", "egress_if", egress_if);
       if(egress_if == null) begin
@@ -208,7 +210,7 @@ class mby_egr_env extends mby_egr_base_env;
             `uvm_fatal(get_name(),$sformatf("Config_DB.get() for ENV's tag_bfm_intf%0d was not successful!", i))
          end
          uvm_config_db #(virtual mby_tag_bfm_uc_if)::set(null, $sformatf("uvm_test_top.env.tag_bfm_%0d.tag_uc_agent",i), "vintf", tag_bfm_intf[i]);
-         
+
          tag_bfm[i] = mby_tag_bfm_pkg::mby_tag_bfm::type_id::create($sformatf("tag_bfm_%0d",i), this);
          tag_bfm[i].cfg_obj.bfm_mode = TAG_BFM_EGR_MODE;
          tag_bfm[i].cfg_obj.driver_active = UVM_ACTIVE;
@@ -220,14 +222,13 @@ class mby_egr_env extends mby_egr_base_env;
 
    //--------------------------------------------------------------------------
    // Function: build_smm_bfm
-   // Builds the instance of the SMM BFM 
+   // Builds the instance of the SMM BFM
    //--------------------------------------------------------------------------
    function void build_smm_bfm();
+   /*   if(!uvm_config_db#(mby_smm_bfm_row_rd_req_if)::get(this, "", "smm_bfm_vintf", smm_bfm_intf)) begin
+         `uvm_fatal(get_name(),"Config_DB.get() for ENV's smm_bfm_intf was not successful!")
+      end */
       smm_bfm                    = mby_smm_bfm_t::type_id::create("smm_bfm", this);
-      smm_bfm_igr_wr_req_cfg     = new("smm_bfm_igr_wr_req_cfg");
-      smm_bfm.igr_wr_req_cfg_obj = smm_bfm_igr_wr_req_cfg;
-      smm_bfm_egr_rd_req_cfg     = new("smm_bfm_egr_rd_req_cfg");
-      smm_bfm.egr_rd_req_cfg_obj = smm_bfm_egr_rd_req_cfg;
    endfunction : build_smm_bfm
 
 
@@ -262,6 +263,18 @@ class mby_egr_env extends mby_egr_base_env;
          tag_bfm[i].tag_uc_agent.vintf = tag_bfm_intf[i];
       end
    endfunction: connect_tag_bfms
+
+
+   //--------------------------------------------------------------------------
+   // Function: connect_tag_bfm
+   // adds sequencer
+   //--------------------------------------------------------------------------
+   function void connect_smm_bfm();
+
+      add_sequencer("smm_bfm", "smm_bfm_wr_req", smm_bfm.igr_wr_req_agent.sequencer);
+   //   smm_bfm.egr_rd_req_agent.vintf = ;
+   endfunction: connect_smm_bfm
+
 
    //---------------------------------------------------------------------------
    // Function: get_egr_env

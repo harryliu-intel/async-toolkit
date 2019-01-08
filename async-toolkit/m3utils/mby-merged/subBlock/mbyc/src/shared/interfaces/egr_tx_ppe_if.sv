@@ -34,24 +34,34 @@
 
 interface egr_tx_ppe_if
 import shared_pkg::*;
+import mby_rx_metadata_pkg::*;
 ();
-logic                               valid;          //inputs are valid
-logic   [EGR_PPE_DATA_WIDTH-1:0]    hdr_data;       //header segment (pre mod)
-logic   [EGR_PPE_MOD_WIDTH-1:0]     mod_data;       //mod memory data
-logic   [PPE_EGR_DATA_WIDTH-1:0]    mod_hdr_data;   //modified header
+logic                                   egr_ppe_valid;  //egress to PPE valid
+logic   [0:EGR_PPE_DATA_WIDTH-1]        egr_ppe_hdr;    //header segment (pre mod)
+ppe_meta_data_t                         egr_ppe_md;     //metadata
+logic                                   ack;            //acknowledge
+logic                                   ppe_egr_valid;  //PPE to egress valid
+logic   [PPE_EGR_DATA_CNT_WIDTH-1:0]    ppe_egr_cnt;    //PPE to egress header byte count
+logic   [0:PPE_EGR_DATA_WIDTH-1]        ppe_egr_hdr;    //modified header
 
 modport egr(
-    output  valid,
-    output  hdr_data,
-    output  mod_data,
-    input   mod_hdr_data
+    output  egr_ppe_valid,
+    output  egr_ppe_hdr,
+    output  egr_ppe_md,
+    input   ack,
+    input   ppe_egr_valid,
+    input   ppe_egr_cnt,
+    input   ppe_egr_hdr
 );
 
 modport ppe(
-    input   valid,
-    input   hdr_data,
-    input   mod_data,
-    output  mod_hdr_data
+    input   egr_ppe_valid,
+    input   egr_ppe_hdr,
+    input   egr_ppe_md,
+    output  ack,
+    output  ppe_egr_valid,
+    output  ppe_egr_cnt,
+    output  ppe_egr_hdr
 );
 
 endinterface: egr_tx_ppe_if

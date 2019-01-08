@@ -80,7 +80,7 @@ interface mby_tag_bfm_uc_if(input logic clk, input logic rst);
       intf_data_pkt <= data_pkt;
       intf_debg_pkt <= debg_pkt;
       @(posedge clk)
-      intf_data_pkt <= 0;
+      intf_data_pkt.valid <= 0;
       intf_debg_pkt <= 0;
    endtask
 

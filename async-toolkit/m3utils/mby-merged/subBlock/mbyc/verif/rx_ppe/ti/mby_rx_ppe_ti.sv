@@ -31,14 +31,13 @@
 //------------------------------------------------------------------------------
 
 
-module mby_rx_ppe_ti #( parameter string   RTL_TOP_PATH = "",             // The RTL path to the top level EC IP RTL Block
-      parameter string   TB_ENV_PATH = "uvm_test_top.env",          // The hierarchy path to the environment class
-      parameter mby_rx_ppe_env_pkg::mby_rx_ppe_defines::rx_ppe_topology_e TOPOLOGY =  mby_rx_ppe_env_pkg::mby_rx_ppe_defines::RX_PPE_FULL
+module mby_rx_ppe_ti #( parameter string   RTL_TOP_PATH = "",                    // The RTL path to the top level EC IP RTL Block
+                        parameter string   TB_ENV_PATH  = "uvm_test_top.env",    // The hierarchy path to the environment class
+                        //FIXME: LNS: update to arrayed test islands
+                        parameter mby_rx_ppe_env_pkg::mby_rx_ppe_topology_e TOPOLOGY =  mby_rx_ppe_env_pkg::PARSER
    )
    (
-      mby_rx_ppe_tb_if  mby_rx_ppe_tb_if,
-
-      shdv_base_tb_intf   shdv_intf,
+      mby_rx_ppe_tb_if    mby_rx_ppe_tb_if,   // this is just clk & reset stuff
       mby_ec_cdi_tx_intf  eth_bfm_tx_vintf, 
       mby_ec_cdi_rx_intf  eth_bfm_rx_vintf
    );
@@ -56,10 +55,8 @@ module mby_rx_ppe_ti #( parameter string   RTL_TOP_PATH = "",             // The
       uvm_config_db#(int)::set(null, TB_ENV_PATH, "TOPOLOGY", TOPOLOGY);
 
       // Set the MC_TB_IF in the database
-      uvm_config_db#(virtual mby_rx_ppe_tb_if)::set(uvm_root::get(), TB_ENV_PATH , "mby_rx_ppe_tb_if", mby_rx_ppe_tb_if);
-
+      uvm_config_db#(virtual mby_rx_ppe_tb_if)  ::set(uvm_root::get(), TB_ENV_PATH, "mby_rx_ppe_tb_if" , mby_rx_ppe_tb_if);
       uvm_config_db#(virtual mby_ec_cdi_tx_intf)::set(uvm_root::get(), TB_ENV_PATH, "eth_bfm_tx_vintf" , eth_bfm_tx_vintf);
-
       uvm_config_db#(virtual mby_ec_cdi_rx_intf)::set(uvm_root::get(), TB_ENV_PATH, "eth_bfm_rx_vintf" , eth_bfm_rx_vintf);
 
    end

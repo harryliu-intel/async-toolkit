@@ -60,7 +60,7 @@ reg mce_control_reg_0 {
     ValRandomize = true;
   } MCE_Addr[16:1] = 16'h0;
   field {
-    AccessType = "R";
+    AccessType = "RO";
     desc = "
      Done bit written by HW, Read by SW
            ";

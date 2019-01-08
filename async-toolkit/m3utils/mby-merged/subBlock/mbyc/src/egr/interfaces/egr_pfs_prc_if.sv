@@ -33,22 +33,18 @@ interface egr_pfs_prc_if import shared_pkg::*; ();
 localparam DATA_TRANSMIT_QUEUE_COUNT = 8;
 // PFS tells PRC which queue to pop a packet from.
 
-// Max rate is 1 per 2 clocks per EPL, so set signals per EPL
-logic [EPL_PER_MGP-1:0] valid; // Indicates that there is a winning packet for the EPL.
-logic [EPL_PER_MGP-1:0][$clog2(N_MAX_LP_PER_EPL)-1:0] port; // Indicates the port of the winning packet for the EPL
-logic [EPL_PER_MGP-1:0][$clog2(MGP_COUNT)-1:0] mgp; // Indicates the source MGP of the winning queue
-logic [EPL_PER_MGP-1:0][$clog2(MGP_TC_CNT)-1:0] tc; // Indicates the TC of the winning queue
-logic [EPL_PER_MGP-1:0][$clog2(DATA_TRANSMIT_QUEUE_COUNT)-1:0] dtq; // Indicates the data transmit queue of the winning queue
-logic [EPL_PER_MGP-1:0][N_MAX_LP_PER_EPL-1:0][DATA_TRANSMIT_QUEUE_COUNT-1:0] ready; // Indicates that PFS is accepting a winning packet
+mby_tag_ring_t tag;
+logic [$clog2(DATA_TRANSMIT_QUEUE_COUNT)-1:0] dtq; // Indicates the data transmit queue of the winning tag
+logic [N_MAX_LP_PER_EPL-1:0][DATA_TRANSMIT_QUEUE_COUNT-1:0] fund_credit;
 
 modport pfs(
-    output valid, port, mgp, tc, dtq,
-    input ready
+    output tag, dtq,
+    input fund_credit
     );
 
 modport prc(
-    input valid, port, mgp, tc, dtq,
-    output ready
+    input tag, dtq,
+    output fund_credit
     );
 
 endinterface : egr_pfs_prc_if

@@ -8,11 +8,9 @@
 // Includes:
 #include <stdlib.h>
 #include <mby_top_map.h> // header file auto-generated from RDL
+#include <sys/param.h>   // MIN/MAX C macros
 
 // Macros:
-
-#define MAX(x, y) (((x) > (y)) ? (x) : (y))
-#define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
 #define isBroadcastMacAddress(addr) ( (addr) == FM_LITERAL_U64(0xFFFFFFFFFFFF))
 #define   isUnicastMacAddress(addr) (((addr) &  FM_LITERAL_U64(0x010000000000)) == 0)
@@ -27,7 +25,8 @@
 
 #define MBY_REGISTER_ARRAY_SIZE  0x1800000
 
-#define MBY_MAX_PACKET_SIZE      32767
+// Used for tests and C client APIs for DV
+#define MBY_MAX_PACKET_LEN       32767
 
 #define MBY_SEGMENT_LEN          256
 
@@ -49,10 +48,11 @@
 #define MBY_CGRP_ACT24                16
 #define MBY_CGRP_ACT4                 26
 #define MBY_CGRP_ACT1                 24
-#define MBY_CGRP_REMAP_ACTIONS         8
-#define MBY_CGRP_POL_ACTIONS           4  // MBY_CGRP_ACTION_POLICER[0..3]
-#define MBY_CGRP_HASH_PROFILE_ACTIONS  3  // MBY_CGRP_ACTION_HASH_PROFILE[0..2] == ECMP, MOD, LAG
-#define MBY_CGRP_META_ACTIONS          4  // MBY_CGRP_ACTION_META[0..3]
+
+#define MBY_CGRP_POLICER_ACTIONS       4 // MBY_CGRP_ACTION_POLICER[0..3]
+#define MBY_CGRP_REMAP_ACTIONS         8 // MBY_CGRP_ACTION_REMAP[0..7]
+#define MBY_CGRP_HASH_PROFILE_ACTIONS  3 // MBY_CGRP_ACTION_HASH_PROFILE[0..2] == _ECMP/_MOD/_LAG
+#define MBY_CGRP_META_ACTIONS          4 // MBY_CGRP_ACTION_META[0..3]
 
 #define MBY_PROT_TCP              6
 #define MBY_PROT_UDP             17
@@ -114,8 +114,8 @@ typedef enum mbyParserInfoIndexEnum
 
 typedef enum mbyClassifierGroupEnum
 {
-    MBY_CLA_GROUP_A = 0,
-    MBY_CLA_GROUP_B = 1
+    MBY_CGRP_A = 0,
+    MBY_CGRP_B = 1
 
 } mbyClassifierGroup;
 

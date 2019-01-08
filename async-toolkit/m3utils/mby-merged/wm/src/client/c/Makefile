@@ -8,6 +8,8 @@ include ${ROOT_DIR}/../../main/c/ToolVersions.mk
 
 MBY_TCP_CLIENT = mby_tcp_client
 
+include ../../make/Make_c.defs
+
 TARGET_LIB_O = $(MBY_TCP_CLIENT)_library.o
 TARGET_LIB   = lib$(MBY_TCP_CLIENT).so
 TARGET_SAM_O = $(MBY_TCP_CLIENT)_sample.o
@@ -56,7 +58,9 @@ ifneq ($(READ_TIMEOUT),)
 	CFLAGS += -DREAD_TIMEOUT=$(READ_TIMEOUT)
 endif
 
-INCLUDES = -I.
+STAGE_STRUCT_INC = ../../main/c/
+TOP_MAP_INC      = ../../main/m3/genviews/src/build_c/mby_c/src/
+INCLUDES         = -I. -I$(STAGE_STRUCT_INC) -I$(TOP_MAP_INC)
 
 DEFINES =
 ifeq ($(DEBUG),1)

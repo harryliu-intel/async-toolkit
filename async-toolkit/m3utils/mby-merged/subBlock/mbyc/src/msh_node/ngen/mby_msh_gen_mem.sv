@@ -31,10 +31,10 @@
 
 module mby_msh_gen_mem (
 input i_reset, 
-mby_mem_msh_bank_ram_shell_4096x552_func_if.mem msh_mem_bank0_if, 
-mby_mem_msh_bank_ram_shell_4096x552_func_if.mem msh_mem_bank1_if, 
-mby_mem_msh_bank_ram_shell_4096x552_func_if.mem msh_mem_bank2_if, 
-mby_mem_msh_bank_ram_shell_4096x552_func_if.mem msh_mem_bank3_if, 
+mby_mem_msh_bank_ram_shell_4096x532_func_if.mem msh_mem_bank0_if, 
+mby_mem_msh_bank_ram_shell_4096x532_func_if.mem msh_mem_bank1_if, 
+mby_mem_msh_bank_ram_shell_4096x532_func_if.mem msh_mem_bank2_if, 
+mby_mem_msh_bank_ram_shell_4096x532_func_if.mem msh_mem_bank3_if, 
 //Input List
 input                   fary_enblfloat_sram,                      
 input                   fary_ensleep_sram,                        
@@ -47,13 +47,13 @@ input                   fary_wakeup_sram,
 input                   fdfx_lbist_test_mode,                     
 input                   fscan_byprst_b,                           
 input                   fscan_mode,                               
-input            [3:0]  fscan_ram_awt_mode,                       
-input            [3:0]  fscan_ram_awt_ren,                        
-input            [3:0]  fscan_ram_awt_wen,                        
-input            [3:0]  fscan_ram_bypsel,                         
+input           [15:0]  fscan_ram_awt_mode,                       
+input           [15:0]  fscan_ram_awt_ren,                        
+input           [15:0]  fscan_ram_awt_wen,                        
+input           [15:0]  fscan_ram_bypsel,                         
 input                   fscan_ram_init_en,                        
 input                   fscan_ram_init_val,                       
-input            [3:0]  fscan_ram_odis_b,                         
+input           [15:0]  fscan_ram_odis_b,                         
 input                   fscan_ram_rddis_b,                        
 input                   fscan_ram_wrdis_b,                        
 input                   fscan_rstbypen,                           
@@ -63,18 +63,14 @@ input                   mclk,
 output                  aary_pwren_b_sram                         
 );
 
-logic         msh_mem_bank0_if;               
-logic         msh_mem_bank1_if;               
-logic         msh_mem_bank2_if;               
-logic         msh_mem_bank3_if;               
-logic [552:0] msh_msh_bank_ram_0_from_mem;    
-logic [572:0] msh_msh_bank_ram_0_to_mem;      
-logic [552:0] msh_msh_bank_ram_1_from_mem;    
-logic [572:0] msh_msh_bank_ram_1_to_mem;      
-logic [552:0] msh_msh_bank_ram_2_from_mem;    
-logic [572:0] msh_msh_bank_ram_2_to_mem;      
-logic [552:0] msh_msh_bank_ram_3_from_mem;    
-logic [572:0] msh_msh_bank_ram_3_to_mem;      
+logic [532:0] msh_msh_bank_ram_0_from_mem;    
+logic [552:0] msh_msh_bank_ram_0_to_mem;      
+logic [532:0] msh_msh_bank_ram_1_from_mem;    
+logic [552:0] msh_msh_bank_ram_1_to_mem;      
+logic [532:0] msh_msh_bank_ram_2_from_mem;    
+logic [552:0] msh_msh_bank_ram_2_to_mem;      
+logic [532:0] msh_msh_bank_ram_3_from_mem;    
+logic [552:0] msh_msh_bank_ram_3_to_mem;      
 logic reset_n; 
 assign reset_n = !i_reset;
 
@@ -112,10 +108,10 @@ msh_shells_wrapper    msh_shells_wrapper(
 /* Interface .rd_en      */ .msh_bank_ram_3_rd_en          (msh_mem_bank3_if.rd_en),                 
 /* Interface .wr_data    */ .msh_bank_ram_3_wr_data        (msh_mem_bank3_if.wr_data),               
 /* Interface .wr_en      */ .msh_bank_ram_3_wr_en          (msh_mem_bank3_if.wr_en),                 
-/* input  logic  [552:0] */ .msh_msh_bank_ram_0_from_mem   (msh_msh_bank_ram_0_from_mem),            
-/* input  logic  [552:0] */ .msh_msh_bank_ram_1_from_mem   (msh_msh_bank_ram_1_from_mem),            
-/* input  logic  [552:0] */ .msh_msh_bank_ram_2_from_mem   (msh_msh_bank_ram_2_from_mem),            
-/* input  logic  [552:0] */ .msh_msh_bank_ram_3_from_mem   (msh_msh_bank_ram_3_from_mem),            
+/* input  logic  [532:0] */ .msh_msh_bank_ram_0_from_mem   (msh_msh_bank_ram_0_from_mem),            
+/* input  logic  [532:0] */ .msh_msh_bank_ram_1_from_mem   (msh_msh_bank_ram_1_from_mem),            
+/* input  logic  [532:0] */ .msh_msh_bank_ram_2_from_mem   (msh_msh_bank_ram_2_from_mem),            
+/* input  logic  [532:0] */ .msh_msh_bank_ram_3_from_mem   (msh_msh_bank_ram_3_from_mem),            
 /* input  logic          */ .reset_n                       (reset_n),                                
 /* input  logic          */ .unified_regs_rd               (1'b1),                                   
 /* input  logic   [31:0] */ .unified_regs_wr_data          ('h0),                                    
@@ -137,10 +133,10 @@ msh_shells_wrapper    msh_shells_wrapper(
 /* Interface .rd_valid   */ .msh_bank_ram_3_rd_valid       (msh_mem_bank3_if.rd_valid),              
 /* output logic          */ .msh_ecc_int                   (),                                       
 /* output logic          */ .msh_init_done                 (),                                       
-/* output logic  [572:0] */ .msh_msh_bank_ram_0_to_mem     (msh_msh_bank_ram_0_to_mem),              
-/* output logic  [572:0] */ .msh_msh_bank_ram_1_to_mem     (msh_msh_bank_ram_1_to_mem),              
-/* output logic  [572:0] */ .msh_msh_bank_ram_2_to_mem     (msh_msh_bank_ram_2_to_mem),              
-/* output logic  [572:0] */ .msh_msh_bank_ram_3_to_mem     (msh_msh_bank_ram_3_to_mem),              
+/* output logic  [552:0] */ .msh_msh_bank_ram_0_to_mem     (msh_msh_bank_ram_0_to_mem),              
+/* output logic  [552:0] */ .msh_msh_bank_ram_1_to_mem     (msh_msh_bank_ram_1_to_mem),              
+/* output logic  [552:0] */ .msh_msh_bank_ram_2_to_mem     (msh_msh_bank_ram_2_to_mem),              
+/* output logic  [552:0] */ .msh_msh_bank_ram_3_to_mem     (msh_msh_bank_ram_3_to_mem),              
 /* output logic          */ .unified_regs_ack              (),                                       
 /* output logic   [31:0] */ .unified_regs_rd_data          ());                                       
 // End of module msh_shells_wrapper from msh_shells_wrapper
@@ -148,38 +144,38 @@ msh_shells_wrapper    msh_shells_wrapper(
 
 // module msh_sram_mems    from msh_sram_mems using msh_sram_mems.map 
 msh_sram_mems    msh_sram_mems(
-/* input  logic          */ .fary_ensleep_sram                  (fary_ensleep_sram),                      
 /* input  logic          */ .fary_enblfloat_sram                (fary_enblfloat_sram),                    
-/* input  logic    [1:0] */ .fary_fwen_sram                     (fary_fwen_sram),                         
 /* input  logic   [19:0] */ .fary_ffuse_data_misc_sram          (fary_ffuse_data_misc_sram),              
-/* input  logic          */ .car_raw_lan_power_good_with_byprst (1'b1),                                   
+/* input  logic    [1:0] */ .fary_fwen_sram                     (fary_fwen_sram),                         
 /* input  logic          */ .fary_pwren_b_sram                  (fary_pwren_b_sram),                      
 /* input  logic          */ .fary_stm_enable                    (fary_stm_enable),                        
+/* input  logic          */ .car_raw_lan_power_good_with_byprst (1'b1),                                   
+/* input  logic          */ .fary_ensleep_sram                  (fary_ensleep_sram),                      
 /* input  logic          */ .fary_stm_hilo                      (fary_stm_hilo),                          
 /* input  logic          */ .fary_wakeup_sram                   (fary_wakeup_sram),                       
 /* input  logic          */ .fdfx_lbist_test_mode               (fdfx_lbist_test_mode),                   
 /* input  logic          */ .fscan_byprst_b                     (fscan_byprst_b),                         
 /* input  logic          */ .fscan_mode                         (fscan_mode),                             
-/* input  logic    [3:0] */ .fscan_ram_awt_mode                 (fscan_ram_awt_mode),                     
-/* input  logic    [3:0] */ .fscan_ram_awt_ren                  (fscan_ram_awt_ren),                      
-/* input  logic    [3:0] */ .fscan_ram_awt_wen                  (fscan_ram_awt_wen),                      
-/* input  logic    [3:0] */ .fscan_ram_bypsel                   (fscan_ram_bypsel),                       
+/* input  logic   [15:0] */ .fscan_ram_awt_mode                 (fscan_ram_awt_mode),                     
+/* input  logic   [15:0] */ .fscan_ram_awt_ren                  (fscan_ram_awt_ren),                      
+/* input  logic   [15:0] */ .fscan_ram_awt_wen                  (fscan_ram_awt_wen),                      
+/* input  logic   [15:0] */ .fscan_ram_bypsel                   (fscan_ram_bypsel),                       
 /* input  logic          */ .fscan_ram_init_en                  (fscan_ram_init_en),                      
 /* input  logic          */ .fscan_ram_init_val                 (fscan_ram_init_val),                     
-/* input  logic    [3:0] */ .fscan_ram_odis_b                   (fscan_ram_odis_b),                       
+/* input  logic   [15:0] */ .fscan_ram_odis_b                   (fscan_ram_odis_b),                       
 /* input  logic          */ .fscan_ram_rddis_b                  (fscan_ram_rddis_b),                      
 /* input  logic          */ .fscan_ram_wrdis_b                  (fscan_ram_wrdis_b),                      
 /* input  logic          */ .fscan_rstbypen                     (fscan_rstbypen),                         
 /* input  logic          */ .mclk                               (mclk),                                   
-/* input  logic  [572:0] */ .msh_msh_bank_ram_0_to_mem          (msh_msh_bank_ram_0_to_mem),              
-/* input  logic  [572:0] */ .msh_msh_bank_ram_1_to_mem          (msh_msh_bank_ram_1_to_mem),              
-/* input  logic  [572:0] */ .msh_msh_bank_ram_2_to_mem          (msh_msh_bank_ram_2_to_mem),              
-/* input  logic  [572:0] */ .msh_msh_bank_ram_3_to_mem          (msh_msh_bank_ram_3_to_mem),              
+/* input  logic  [552:0] */ .msh_msh_bank_ram_0_to_mem          (msh_msh_bank_ram_0_to_mem),              
+/* input  logic  [552:0] */ .msh_msh_bank_ram_1_to_mem          (msh_msh_bank_ram_1_to_mem),              
+/* input  logic  [552:0] */ .msh_msh_bank_ram_2_to_mem          (msh_msh_bank_ram_2_to_mem),              
+/* input  logic  [552:0] */ .msh_msh_bank_ram_3_to_mem          (msh_msh_bank_ram_3_to_mem),              
 /* output logic          */ .aary_pwren_b_sram                  (aary_pwren_b_sram),                      
-/* output logic  [552:0] */ .msh_msh_bank_ram_0_from_mem        (msh_msh_bank_ram_0_from_mem),            
-/* output logic  [552:0] */ .msh_msh_bank_ram_1_from_mem        (msh_msh_bank_ram_1_from_mem),            
-/* output logic  [552:0] */ .msh_msh_bank_ram_2_from_mem        (msh_msh_bank_ram_2_from_mem),            
-/* output logic  [552:0] */ .msh_msh_bank_ram_3_from_mem        (msh_msh_bank_ram_3_from_mem));            
+/* output logic  [532:0] */ .msh_msh_bank_ram_0_from_mem        (msh_msh_bank_ram_0_from_mem),            
+/* output logic  [532:0] */ .msh_msh_bank_ram_1_from_mem        (msh_msh_bank_ram_1_from_mem),            
+/* output logic  [532:0] */ .msh_msh_bank_ram_2_from_mem        (msh_msh_bank_ram_2_from_mem),            
+/* output logic  [532:0] */ .msh_msh_bank_ram_3_from_mem        (msh_msh_bank_ram_3_from_mem));            
 // End of module msh_sram_mems from msh_sram_mems
 
 endmodule // mby_msh_gen_mem

@@ -1,6 +1,22 @@
-
-
-
+//-----------------------------------------------------------------------------
+// Title         : Egress First Packet test
+// Project       : Madison Bay
+//-----------------------------------------------------------------------------
+// File          : mby_egr_first_packet_test.svh
+// Author        : Oscar Garcia  <oscar.garcia@intel.com>
+// Created       : 14.12.2018
+// Last modified : 14.12.2018
+//-----------------------------------------------------------------------------
+// Description :
+//
+//-----------------------------------------------------------------------------
+// Copyright (c) 2018 by Intel Corporation This model is the confidential and
+// proprietary property of Intel Corporation and the possession or use of this
+// file requires a written license from Intel Corporation.
+//------------------------------------------------------------------------------
+// Modification history :
+// 14.12.2018 : created
+//-----------------------------------------------------------------------------
 
 `ifndef MBY_EGR_FIRST_PACKET_TEST__SVH
 `define MBY_EGR_FIRST_PACKET_TEST__SVH
@@ -26,7 +42,7 @@ class mby_egr_tag_seq extends mby_egr_extended_base_seq;
    //---------------------------------------------------------------------------
    virtual task body();
       this.set_name("mby_egr_tag_seq");
-      wait_n(20);
+      wait_n(22);
       
     
 

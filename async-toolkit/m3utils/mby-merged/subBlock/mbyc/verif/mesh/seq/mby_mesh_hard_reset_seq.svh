@@ -27,11 +27,6 @@
 //   Project       : Madison Bay
 //------------------------------------------------------------------------------
 
-//   Class:  mby_mesh_hard_reset_seq
-//
-//   This is the main IP Hard Reset Sequence. execute in Hard_Reset_Phase
-//
-//   Sets both Hard and Warm Resets.   Delays for some time and drops Hard Reset.
 
 `ifndef __MBY_MESH_HARD_RESET_SEQ_GUARD
 `define __MBY_MESH_HARD_RESET_SEQ_GUARD
@@ -40,6 +35,11 @@
 `error "Attempt to include file outside of mby_mesh_seq_lib."
 `endif
 
+//   Class:  mby_mesh_hard_reset_seq
+//
+//   This is the main IP Hard Reset Sequence. execute in Hard_Reset_Phase
+//
+//   Sets both Hard and Warm Resets.   Delays for some time and drops Hard Reset.
 class mby_mesh_hard_reset_seq extends shdv_base_reset_sequence;
 
     // Variable: shdv_env
@@ -91,16 +91,20 @@ class mby_mesh_hard_reset_seq extends shdv_base_reset_sequence;
     //  as well as Warm_Reset (Set)
     //------------------------------------------------------------------------------
     task body();
-        repeat (500) @(posedge tb_vif.fab_clk);
-       
-        `uvm_info(get_name(), $sformatf("Hard_Reset Set"), UVM_NONE);
-        tb_vif.hard_reset                 = 1;
-
+        // Core/Mesh hard reset
         repeat (200) @(posedge tb_vif.fab_clk);
+       
+        `uvm_info(get_name(), $sformatf("Hard_Reset Set"), UVM_HIGH);
+        tb_vif.chard_reset                 = 1;
+        tb_vif.mhard_reset                 = 1;
 
-        `uvm_info(get_name(), $sformatf("Hard_Reset Cleared"), UVM_NONE);
-        tb_vif.hard_reset                 = 0;
+        repeat (100) @(posedge tb_vif.fab_clk);
 
+        `uvm_info(get_name(), $sformatf("Hard_Reset Cleared"), UVM_HIGH);
+        tb_vif.chard_reset                 = 0;
+        tb_vif.mhard_reset                 = 0;
+
+        repeat (100) @(posedge tb_vif.fab_clk);
     endtask: body
 
 endclass: mby_mesh_hard_reset_seq

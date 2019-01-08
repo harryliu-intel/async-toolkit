@@ -254,27 +254,33 @@ static void remapKeys
 
 }   /* end remapKeys */
 
+/**
+ * MPLS_MUX Function
+ * Specified [here](https://securewiki.ith.intel.com/display/25T/RX-PPE+Actions#RX-PPEActions-MPLS_MUXFunction).
+ *
+ * @param[in]  keys         Keys coming from Mapper stage
+ * @param[in]  actions      Actions resolved
+ * @param[out] muxed_action Output ECN/TC/TTL/DSCP values
+*/
 static void populateMuxedAction
 (
     mbyClassifierKeys           const keys,
     mbyClassifierActions        const actions,
-    fm_byte                     const pri_profile,
     mbyClassifierMuxedAction  * const muxed_action
 )
 {
-    fm_byte mpls_pop  = actions.act4[MBY_CGRP_ACTION_MPLS_POP ].val;
+    // local variables
+    fm_byte exp  = 0;
+    fm_byte dscp = 0;
+
+    // Read actions.
     fm_byte ecn_ctrl  = actions.act4[MBY_CGRP_ACTION_ECN_CTRL ].val;
     fm_byte tc_ctrl   = actions.act4[MBY_CGRP_ACTION_TC_CTRL  ].val;
     fm_byte ttl_ctrl  = actions.act4[MBY_CGRP_ACTION_TTL_CTRL ].val;
     fm_byte dscp_ctrl = actions.act4[MBY_CGRP_ACTION_DSCP_CTRL].val;
+    fm_byte mpls_pop  = actions.act4[MBY_CGRP_ACTION_MPLS_POP ].val; // MPLS_POP: Should be removed? <-- REVISIT!!!
 
     // Update ECN:
-    muxed_action->ecn         = 0;
-    muxed_action->aqm_mark_en = 0;
-
-    fm_byte exp  = 0;
-    fm_byte dscp = 0;
-
     if (ecn_ctrl < 4) // FFU directly specifies ECN value:
     {
         muxed_action->ecn         = (ecn_ctrl == 2) ? 1 : ecn_ctrl;
@@ -284,16 +290,19 @@ static void populateMuxedAction
     {
         switch (ecn_ctrl & 3) // ECN
         {
+            // ECN_CTL[1:0] = 0: ECN source is outer IP
             case 0: muxed_action->ecn = FM_GET_UNNAMED_FIELD(keys.key8[MBY_CGRP_KEY8_OUTER_DS], 0, 2); break;
+            // ECN_CTL[1:0] = 1: ECN source is inner IP
             case 1: muxed_action->ecn = FM_GET_UNNAMED_FIELD(keys.key8[MBY_CGRP_KEY8_INNER_DS], 0, 2); break;
-
-            case 2: // ECN-CTRL[1:0] = 2 : ECN source is MPLS label 1, i.e. MPLS_MUX_EXP_DS[mpls_labels[0].exp].ecn
+            // ECN-CTRL[1:0] = 2 : ECN source is MPLS label 1, i.e. MPLS_MUX_EXP_DS[mpls_labels[0].exp].ecn
+            case 2:
             {
                 exp = FM_GET_UNNAMED_FIELD(keys.key16[MBY_CGRP_KEY16_MPLS_LABEL1_1], 9, 3);
                 muxed_action->ecn = 0; // FIXME!!!
                 break;
             }
-            case 3: // ECN_CTRL[1:0]=3: ECN source is MPLS label exposed after MPLS_POP
+            // ECN_CTRL[1:0]=3: ECN source is MPLS label exposed after MPLS_POP, as mapped through MPLS_MUX_EXP_DS
+            case 3:
             {
                 exp = (mpls_pop < 4) ? FM_GET_UNNAMED_FIELD(keys.key16[MBY_CGRP_KEY16_MPLS_LABEL1_1 + (mpls_pop * 2)], 9, 3) :
                       (mpls_pop < 6) ? FM_GET_UNNAMED_FIELD(keys.key8[MBY_CGRP_KEY8_MPLS_LABEL5_2 + ((mpls_pop - 4) * 4)], 1, 3) : 0;
@@ -304,17 +313,71 @@ static void populateMuxedAction
             default: break;
         }
 
-        // ECN_CTRL[3:2]=3: mark in FFU if ingress ECN is 01 or 10 (aqm_mark_en=0):
+        // ECN_CTRL[3:2]=3: mark in Classifier if ingress ECN is 01 or 10 (aqm_mark_en = 0):
         if ((((ecn_ctrl >> 2) & 3) == 3) && (muxed_action->ecn == 1 || muxed_action->ecn == 2))
             muxed_action->ecn = 3;
 
-        // ECN marking:
+        //ECN_CTL[3:2] = 1: aqm_mark_en = 0
+        //ECN_CTL[3:2] = 2: aqm_mark_en = 1
         muxed_action->aqm_mark_en = (((ecn_ctrl >> 2) & 3) == 2);
     }
 
-    // Update DSCP:
-    muxed_action->dscp = 0;
+    // Update TC:
+    switch (tc_ctrl)
+    {
+        case  0: muxed_action->tc = actions.act4[MBY_CGRP_ACTION_TC].val; break;
 
+        case  4:
+        {
+            dscp = FM_GET_UNNAMED_FIELD(keys.key8[MBY_CGRP_KEY8_OUTER_DS], 2, 6);
+            muxed_action->tc = 0; // FIXME!!!
+            break;
+        }
+        case  5:
+        {
+            dscp = FM_GET_UNNAMED_FIELD(keys.key8[MBY_CGRP_KEY8_INNER_DS], 2, 6);
+            muxed_action->tc = 0; // FIXME!!!
+            break;
+        }
+        case  6: exp = (mpls_pop < 4) ? FM_GET_UNNAMED_FIELD(keys.key16[MBY_CGRP_KEY16_MPLS_LABEL1_1 + (mpls_pop * 2)],   9, 3) :
+                       (mpls_pop < 6) ? FM_GET_UNNAMED_FIELD(keys.key8 [MBY_CGRP_KEY8_MPLS_LABEL5_2 + ((mpls_pop - 4) * 4)], 1, 3) : 0; break;
+
+        case  8: exp = FM_GET_UNNAMED_FIELD(keys.key16[MBY_CGRP_KEY16_MPLS_LABEL1_1], 9, 3); break;
+        case  9: exp = FM_GET_UNNAMED_FIELD(keys.key16[MBY_CGRP_KEY16_MPLS_LABEL2_1], 9, 3); break;
+        case 10: exp = FM_GET_UNNAMED_FIELD(keys.key16[MBY_CGRP_KEY16_MPLS_LABEL3_1], 9, 3); break;
+        case 11: exp = FM_GET_UNNAMED_FIELD(keys.key16[MBY_CGRP_KEY16_MPLS_LABEL4_1], 9, 3); break;
+
+        default: break;
+    }
+
+    if (tc_ctrl == 6 || (tc_ctrl >= 8 && tc_ctrl <= 11)) {
+        muxed_action->tc = 0; // FIXME!!!
+    }
+
+    // get TTL value based on TTL_CTRL Action:
+    fm_byte ttl = 0;
+
+    switch (ttl_ctrl)
+    {
+        case  0: ttl = keys.key8[MBY_CGRP_KEY8_OUTER_TTL]; break;
+        case  1: ttl = keys.key8[MBY_CGRP_KEY8_INNER_TTL]; break;
+        ///> This values (from MPLS labels) are not propagated.
+        case  2: ttl = (mpls_pop < 4) ? FM_GET_UNNAMED_FIELD(keys.key16[MBY_CGRP_KEY16_MPLS_LABEL1_1 + (mpls_pop * 2)], 0, 8) :
+                       (mpls_pop < 6) ? keys.key8[MBY_CGRP_KEY8_MPLS_LABEL5_3 + ((mpls_pop - 4) * 4)] : 0; break;
+        case  4: ttl = FM_GET_UNNAMED_FIELD(keys.key16[MBY_CGRP_KEY16_MPLS_LABEL1_1], 0, 8); break;
+        case  5: ttl = FM_GET_UNNAMED_FIELD(keys.key16[MBY_CGRP_KEY16_MPLS_LABEL2_1], 0, 8); break;
+        case  6: ttl = FM_GET_UNNAMED_FIELD(keys.key16[MBY_CGRP_KEY16_MPLS_LABEL3_1], 0, 8); break;
+        case  7: ttl = FM_GET_UNNAMED_FIELD(keys.key16[MBY_CGRP_KEY16_MPLS_LABEL4_1], 0, 8); break;
+
+        default: break;
+    }
+
+    muxed_action->dscp_ctl = dscp_ctrl;
+    muxed_action->ttl_ctl  = ttl_ctrl;
+    muxed_action->tc_ctl   = tc_ctrl;
+    muxed_action->ecn_ctl  = ecn_ctrl;
+
+    // Update DSCP:
     switch (dscp_ctrl)
     {
         case  0: muxed_action->dscp = (actions.act4[MBY_CGRP_ACTION_DSCP_LOW ].val & 0xF) |
@@ -338,70 +401,11 @@ static void populateMuxedAction
         muxed_action->dscp = 0; // FIXME!!!
     }
 
-    // Update TC:
-    muxed_action->tc = 0;
-
-    switch (tc_ctrl)
-    {
-        case  0: muxed_action->tc = actions.act4[MBY_CGRP_ACTION_TC].val; break;
-
-        case  4:
-        {
-            dscp = FM_GET_UNNAMED_FIELD(keys.key8[MBY_CGRP_KEY8_OUTER_DS], 2, 6);
-            muxed_action->tc = 0; // FIXME!!!
-            break;
-        }
-        case  5:
-        {
-            dscp = FM_GET_UNNAMED_FIELD(keys.key8[MBY_CGRP_KEY8_INNER_DS], 2, 6);
-            muxed_action->tc = 0; // FIXME!!!
-            break;
-        }
-    case  6: exp = (mpls_pop < 4) ? FM_GET_UNNAMED_FIELD(keys.key16[MBY_CGRP_KEY16_MPLS_LABEL1_1 + (mpls_pop * 2)],   9, 3) :
-                   (mpls_pop < 6) ? FM_GET_UNNAMED_FIELD(keys.key8 [MBY_CGRP_KEY8_MPLS_LABEL5_2 + ((mpls_pop - 4) * 4)], 1, 3) : 0; break;
-
-        case  8: exp = FM_GET_UNNAMED_FIELD(keys.key16[MBY_CGRP_KEY16_MPLS_LABEL1_1], 9, 3); break;
-        case  9: exp = FM_GET_UNNAMED_FIELD(keys.key16[MBY_CGRP_KEY16_MPLS_LABEL2_1], 9, 3); break;
-        case 10: exp = FM_GET_UNNAMED_FIELD(keys.key16[MBY_CGRP_KEY16_MPLS_LABEL3_1], 9, 3); break;
-        case 11: exp = FM_GET_UNNAMED_FIELD(keys.key16[MBY_CGRP_KEY16_MPLS_LABEL4_1], 9, 3); break;
-
-        default: break;
-    }
-
-    if (tc_ctrl == 6 || (tc_ctrl >= 8 && tc_ctrl <= 11)) {
-        muxed_action->tc = 0; // FIXME!!!
-    }
-
-    // get TTL value based on TTL_CTRL Action:
-    fm_byte ttl = 0;
-
-    switch (ttl_ctrl)
-    {
-        case  0: ttl = keys.key8[MBY_CGRP_KEY8_OUTER_TTL]; break;
-        case  1: ttl = keys.key8[MBY_CGRP_KEY8_INNER_TTL]; break;
-        case  2: ttl = (mpls_pop < 4) ? FM_GET_UNNAMED_FIELD(keys.key16[MBY_CGRP_KEY16_MPLS_LABEL1_1 + (mpls_pop * 2)], 0, 8) :
-                       (mpls_pop < 6) ? keys.key8[MBY_CGRP_KEY8_MPLS_LABEL5_3 + ((mpls_pop - 4) * 4)] : 0; break;
-        case  4: ttl = FM_GET_UNNAMED_FIELD(keys.key16[MBY_CGRP_KEY16_MPLS_LABEL1_1], 0, 8); break;
-        case  5: ttl = FM_GET_UNNAMED_FIELD(keys.key16[MBY_CGRP_KEY16_MPLS_LABEL2_1], 0, 8); break;
-        case  6: ttl = FM_GET_UNNAMED_FIELD(keys.key16[MBY_CGRP_KEY16_MPLS_LABEL3_1], 0, 8); break;
-        case  7: ttl = FM_GET_UNNAMED_FIELD(keys.key16[MBY_CGRP_KEY16_MPLS_LABEL4_1], 0, 8); break;
-
-        default: break;
-    }
-
-    muxed_action->ttl01 = 0;
-
     if (ttl == 0)
         FM_SET_UNNAMED_FIELD(muxed_action->ttl01, 0, 1, 1)
     else if (ttl == 1)
         FM_SET_UNNAMED_FIELD(muxed_action->ttl01, 1, 1, 1)
 
-    muxed_action->ttl_ctrl = ttl_ctrl;
-
-    muxed_action->vpri = (actions.act4[MBY_CGRP_ACTION_VPRI_LOW].prec >= actions.act4[MBY_CGRP_ACTION_VPRI_HIGH].prec) ?
-        actions.act4[MBY_CGRP_ACTION_VPRI_LOW].val : actions.act4[MBY_CGRP_ACTION_VPRI_HIGH].val;
-
-    muxed_action->route = (actions.act1[MBY_CGRP_ACTION_NO_ROUTE].val == 0 && actions.act24[MBY_CGRP_ACTION_FWD].val != 0);
 }
 
 static fm_macaddr extractDmac
@@ -420,10 +424,11 @@ static void transformActions
 (
     mbyClassifierKeys          const keys,
     mbyClassifierActions       const actions,
-    mbyClassifierMuxedAction   const muxed_action,
     fm_bool                    const ip_option[2],
     fm_bool                    const outer_mpls_v,
     mbyParserInfo              const parser_info,
+    mbyClassifierFunctions   * const cgrp_functions,
+    mbyClassifierFlags       * const cgrp_flags,
     fm_bool                  * const decap,
     fm_bool                  * const encap,
     fm_byte                  * const mod_idx,
@@ -443,15 +448,9 @@ static void transformActions
     fm_bool                  * const drop_ttl,
     fm_bool                  * const trap_icmp,
     fm_bool                  * const trap_igmp,
-    mbyClassifierFlags       * const cgrp_flags,
-    fm_uint32                * const cgrp_route,
-    fm_bool                  * const no_learn,
+    fm_uint32                * const fwd,
     fm_uint16                * const l2_ivid1,
     fm_byte                  * const qos_l2_vpri1,
-    fm_byte                  * const hash_profile,
-    fm_byte                  * const mod_meta,
-    fm_byte                  * const ffu_trig,
-    fm_uint32                * const policer_action,
     fm_byte                  * const mod_prof_idx,
     fm_uint32                * const content_addr
 )
@@ -464,7 +463,8 @@ static void transformActions
     *mod_prof_idx = FM_GET_FIELD(mod_prof_act_val, MBY_CGRP_ACTION_MOD_PROFILE, IDX);
     *content_addr = FM_GET_FIELD(mod_prof_act_val, MBY_CGRP_ACTION_MOD_PROFILE, ADDR);
 
-    *mpls_pop     =  actions.act4 [MBY_CGRP_ACTION_MPLS_POP].val;
+    // MPLS_POP action is removed in MBY!!! <-- REVIST!!!
+    *mpls_pop     =  actions.act4 [MBY_CGRP_ACTION_MPLS_POP   ].val;
 
     *sglort = 0;
     FM_SET_UNNAMED_FIELD64(*sglort,  0,  8, keys.key8[(MBY_RE_KEYS_SGLORT - MBY_RE_KEYS_GENERAL_8B)*2 + 1]);
@@ -506,7 +506,7 @@ static void transformActions
 
     *trap_ip_options = ip_option[*decap];
 
-    fm_bool is_ttl01 = (muxed_action.ttl01 & 1) || ((muxed_action.ttl01 >> 1) & 1);
+    fm_bool is_ttl01 = ((cgrp_functions->muxed_action.ttl01 & 0x3) > 0) ? TRUE : FALSE;
 
     *drop_ttl = is_ttl01 && (*is_ipv4 || *is_ipv6 || outer_mpls_v);
 
@@ -530,16 +530,25 @@ static void transformActions
     cgrp_flags->log       = actions.act1[MBY_CGRP_ACTION_LOG      ].val;
     cgrp_flags->no_route  = actions.act1[MBY_CGRP_ACTION_NO_ROUTE ].val;
     cgrp_flags->rx_mirror = actions.act1[MBY_CGRP_ACTION_RX_MIRROR].val;
+    cgrp_flags->tx_tag = 0;       //FIXME
+    cgrp_flags->learn_notify = 0; //FIXME
 
     // FIXME cppcheck (error) Uninitialized struct member: cgrp_flags.tx_tag
-    for (fm_uint i = 0; i <= 1; i++)
+    for (fm_uint i = 0; i < 2; i++)
         FM_SET_UNNAMED_FIELD(cgrp_flags->tx_tag, i, 1, actions.act1[i+MBY_CGRP_ACTION_TX_TAG0].val);
 
-    *cgrp_route = 0;
-    FM_SET_UNNAMED_FIELD64(*cgrp_route, 0, 22, FM_GET_UNNAMED_FIELD64(actions.act24[MBY_CGRP_ACTION_FWD].val, 0, 22));
+    *fwd = 0;
+    FM_SET_UNNAMED_FIELD64(*fwd, 0, 22, FM_GET_UNNAMED_FIELD64(actions.act24[MBY_CGRP_ACTION_FWD].val, 0, 22));
 
-    *no_learn = FALSE;
-    FM_SET_UNNAMED_FIELD(*no_learn, 0, 1, ~actions.act1[MBY_CGRP_ACTION_LEARN_NOTIFY].val);
+    /* actions.act1[MBY_CGRP_ACTION_LEARN_NOTIFY] should be set by EM_B:
+     * MBY_LEARN_NOTIFY_SMAC_HIT or MBY_LEARN_NOTIFY_SMAC_MISS
+     * This is independent of:
+     * - the per-domain learning enable flag from the domain mapper
+     * - the per-port   learning enable flag,
+     * all three flags must be propagated to the Triggers unit for final disposition.
+     * See [RX-PPEActions-Table3-1bActionFieldMappings](https://securewiki.ith.intel.com/display/25T/RX-PPE+Actions#RX-PPEActions-Table3-1bActionFieldMappings) for details.
+     */
+    cgrp_flags->learn_notify = actions.act1[MBY_CGRP_ACTION_LEARN_NOTIFY].val & 0x1;
 
     *l2_ivid1 = 0;
     if (*decap && actions.act4[MBY_CGRP_ACTION_VID_LOW].prec <= 1)
@@ -547,6 +556,9 @@ static void transformActions
     else
         for (fm_uint i = 0; i <= (MBY_CGRP_ACTION_VID_HIGH - MBY_CGRP_ACTION_VID_LOW); i++)
             FM_SET_UNNAMED_FIELD(*l2_ivid1, i * 4, 4, actions.act4[MBY_CGRP_ACTION_VID_LOW+i].val);
+
+    cgrp_functions->vpri = (actions.act4[MBY_CGRP_ACTION_VPRI_LOW].prec >= actions.act4[MBY_CGRP_ACTION_VPRI_HIGH].prec) ?
+    actions.act4[MBY_CGRP_ACTION_VPRI_LOW].val : actions.act4[MBY_CGRP_ACTION_VPRI_HIGH].val;
 
     fm_bool qos_l2_vpri1_sel = *decap
         && (actions.act4[MBY_CGRP_ACTION_VPRI_LOW ].val <= 1)
@@ -556,30 +568,33 @@ static void transformActions
            ? ((keys.key16[MBY_RE_KEYS_OUTER_VLAN1] >> 12) & 0xF)
            : ((keys.key16[MBY_RE_KEYS_INNER_VLAN1] >> 12) & 0xF);
 
-    *qos_l2_vpri1 = (qos_l2_vpri1_sel) ? qos_l2_vpri1_decap : muxed_action.vpri;
+    *qos_l2_vpri1 = (qos_l2_vpri1_sel) ? qos_l2_vpri1_decap : cgrp_functions->vpri;
 
-    hash_profile[0] = (actions.act4[MBY_CGRP_ACTION_HASH_PROFILE_ECMP_HIGH].val & 0x3) << 4 // bits 4..5
-                    | (actions.act4[MBY_CGRP_ACTION_HASH_PROFILE_ECMP_LOW ].val & 0xF);     // bits 0..3
-                     //What about bit 6? (7 is reserved) <-- REVISIT!!!
-    hash_profile[1] = (actions.act4[MBY_CGRP_ACTION_HASH_PROFILE_MOD_HIGH ].val & 0x3) << 4 // bits 4..5
-                    | (actions.act4[MBY_CGRP_ACTION_HASH_PROFILE_MOD_LOW  ].val & 0xF);     // bits 0..3
-                     //What about bit 6? (7 is reserved) <-- REVISIT!!!
-    hash_profile[2] = (actions.act4[MBY_CGRP_ACTION_HASH_PROFILE_LAG_HIGH ].val & 0x3) << 4 // bits 4..5
-                    | (actions.act4[MBY_CGRP_ACTION_HASH_PROFILE_LAG_LOW  ].val & 0xF);     // bits 0..3
-                     //What about bit 6? (7 is reserved) <-- REVISIT!!!
+    cgrp_functions->hash_profile[0] =
+        (actions.act4[MBY_CGRP_ACTION_HASH_PROFILE_ECMP_HIGH].val & 0x3) << 4 // bits 4..5
+      | (actions.act4[MBY_CGRP_ACTION_HASH_PROFILE_ECMP_LOW ].val & 0xF);     // bits 0..3
+    //What about bit 6? (7 is reserved) <-- REVISIT!!!
+    cgrp_functions->hash_profile[1] =
+        (actions.act4[MBY_CGRP_ACTION_HASH_PROFILE_MOD_HIGH ].val & 0x3) << 4 // bits 4..5
+      | (actions.act4[MBY_CGRP_ACTION_HASH_PROFILE_MOD_LOW  ].val & 0xF);     // bits 0..3
+    //What about bit 6? (7 is reserved) <-- REVISIT!!!
+    cgrp_functions->hash_profile[2] =
+        (actions.act4[MBY_CGRP_ACTION_HASH_PROFILE_LAG_HIGH ].val & 0x3) << 4 // bits 4..5
+      | (actions.act4[MBY_CGRP_ACTION_HASH_PROFILE_LAG_LOW  ].val & 0xF);     // bits 0..3
+    //What about bit 6? (7 is reserved) <-- REVISIT!!!
 
     for (fm_byte i = 0 ; i < MBY_CGRP_META_ACTIONS ; i++)
     {
-        mod_meta[i] = (actions.act4[MBY_CGRP_ACTION_META0_HIGH + 2 * i].val & 0xF) << 4 // bits 4..7
-                    | (actions.act4[MBY_CGRP_ACTION_META0_LOW  + 2 * i].val & 0xF);     // bits 0..3
+        cgrp_functions->mod_meta[i] =
+            (actions.act4[MBY_CGRP_ACTION_META0_HIGH + 2 * i].val & 0xF) << 4 // bits 4..7
+          | (actions.act4[MBY_CGRP_ACTION_META0_LOW  + 2 * i].val & 0xF);     // bits 0..3
     }
 
-    *ffu_trig = 0;
     for (fm_uint i = MBY_CGRP_ACTION_TRIGGER0; i <= MBY_CGRP_ACTION_TRIGGER7; i++)
-        FM_SET_UNNAMED_FIELD(*ffu_trig, i - MBY_CGRP_ACTION_TRIGGER0, 1, actions.act1[i].val);
+        FM_SET_UNNAMED_FIELD(cgrp_flags->trigger, i - MBY_CGRP_ACTION_TRIGGER0, 1, actions.act1[i].val);
 
     for (fm_uint i = MBY_CGRP_ACTION_POLICER0; i <= MBY_CGRP_ACTION_POLICER3; i++)
-        policer_action[i] = actions.act24[i].val;
+        cgrp_functions->policer_action[i] = actions.act24[i].val;
 }
 
 /**
@@ -621,7 +636,7 @@ void Classifier
     fm_uint32 em_a_out[MBY_EM_MAX_ACTIONS_NUM] = { 0 };
 
     mbyMatchExact(cgrp_a_map->A.EM_HASH_LOOKUP, &(cgrp_a_map->EM), shm_map,
-                  &keys, packet_profile, MBY_CLA_GROUP_A, em_a_out);
+                  &keys, packet_profile, MBY_CGRP_A, em_a_out);
 
     for (fm_uint i = 0; i < MBY_EM_MAX_ACTIONS_NUM; ++i)
         resolveActionSet(em_a_out[i], &actions);
@@ -642,14 +657,14 @@ void Classifier
     // Update packet_profile based on profile action:
     for (fm_uint s = MBY_CGRP_ACTION_PROFILE0, i = 0; s <= MBY_CGRP_ACTION_PROFILE5; s++, i++) {
         if (actions.act1[s].prec != 0)
-            FM_SET_UNNAMED_FIELD(packet_profile, i, 1, actions.act1[s].val & 1);
+            FM_SET_UNNAMED_FIELD(packet_profile, i, 1, actions.act1[s].val & 0x1);
     }
 
     // Exact match B (EM_B):
     fm_uint32 em_b_out[MBY_EM_MAX_ACTIONS_NUM] = { 0 };
 
     mbyMatchExact(cgrp_b_map->B.EM_HASH_LOOKUP, &(cgrp_b_map->EM), shm_map,
-                  &keys, packet_profile, MBY_CLA_GROUP_B, em_b_out);
+                  &keys, packet_profile, MBY_CGRP_B, em_b_out);
 
     for (fm_uint i = 0; i < MBY_EM_MAX_ACTIONS_NUM; ++i)
         resolveActionSet(em_b_out[i], &actions);
@@ -662,22 +677,23 @@ void Classifier
     for (fm_uint i = 0; i < MBY_WCM_MAX_ACTIONS_NUM; ++i)
         resolveActionSet(wcm_out[i], &actions);
 
-    // Populate muxed_action:
-    // TODO What are these? Add reference to MBY spec or remove
-    mbyClassifierMuxedAction muxed_action;
+    mbyClassifierFlags     cgrp_flags     = { 0 };
+    mbyClassifierFunctions cgrp_functions = { 0 };
+
+    // Populate muxed_action (MPLS_MUX):
+    mbyClassifierMuxedAction * const muxed_action = &(cgrp_functions.muxed_action);
 
     populateMuxedAction
     (
         keys,
         actions,
-        pri_profile,
-        &muxed_action
+        muxed_action
     );
 
     // Transform exisiting keys, actions, etc. into desired output:
 
-    fm_bool            decap           = FALSE;
-    fm_bool            encap           = FALSE;
+    fm_bool            decap           = FALSE; // REMOVED from FS <-- REVISIT!!!
+    fm_bool            encap           = FALSE; // REMOVED from FS <-- REVISIT!!!
     fm_byte            mod_idx         = 0;
     fm_uint16          l2_etype        = 0;
     fm_byte            mpls_pop        = 0;
@@ -695,26 +711,21 @@ void Classifier
     fm_bool            drop_ttl        = FALSE;
     fm_bool            trap_icmp       = FALSE;
     fm_bool            trap_igmp       = FALSE;
-    mbyClassifierFlags cgrp_flags      = { 0 };
-    fm_uint32          cgrp_route      = 0;
-    fm_bool            no_learn        = FALSE;
+    fm_uint32          fwd             = 0;
     fm_uint16          l2_ivid1        = 0;
     fm_byte            qos_l2_vpri1    = 0;
-    fm_byte            ffu_trig        = 0;
     fm_byte            mod_prof_idx    = 0;
-    fm_byte            hash_profile[MBY_CGRP_HASH_PROFILE_ACTIONS] = { 0 };
-    fm_byte            mod_meta[MBY_CGRP_META_ACTIONS]             = { 0 };
-    fm_uint32          policer_action[MBY_CGRP_POL_ACTIONS]        = { 0 };
     fm_uint32          content_addr    = 0;
 
     transformActions
     (
         keys,
         actions,
-        muxed_action,
         ip_option,
         outer_mpls_v,
         parser_info,
+        &cgrp_functions,
+        &cgrp_flags,
         &decap,
         &encap,
         &mod_idx,
@@ -734,30 +745,27 @@ void Classifier
         &drop_ttl,
         &trap_icmp,
         &trap_igmp,
-        &cgrp_flags,
-        &cgrp_route,
-        &no_learn,
+        &fwd,
         &l2_ivid1,
         &qos_l2_vpri1,
-        hash_profile,
-        mod_meta,
-        &ffu_trig,
-        policer_action,
         &mod_prof_idx,
         &content_addr
     );
 
     // Write outputs:
-    out->AQM_MARK_EN     = muxed_action.aqm_mark_en;
+    // IDEALLY those two (flags + functions) would be sufficient: <-- REVISIT!!!
+    out->CGRP_FLAGS      = cgrp_flags;
+    out->CGRP_FUNCTIONS  = cgrp_functions;
+    // and the rest would need to be removed from mbyClassifierToHash: <-- REVISIT!!!
+    out->AQM_MARK_EN     = muxed_action->aqm_mark_en;
     out->DECAP           = decap;
     out->DMAC_FROM_IPV6  = dmac_from_ipv6;
     out->DROP_TTL        = drop_ttl;
-    out->ECN             = muxed_action.ecn;
+    out->ECN             = muxed_action->ecn;
     out->ENCAP           = encap;
-    out->CGRP_FLAGS      = cgrp_flags;
-    out->CGRP_ROUTE      = cgrp_route;
-    out->CGRP_TRIG       = ffu_trig;
     out->CONTENT_ADDR    = content_addr;
+    out->FWD             = fwd;
+    out->CGRP_TRIG       = cgrp_flags.trigger;
     out->IDGLORT         = idglort;
     out->INNER_L3_LENGTH = inner_l3_length;
     out->IS_IPV4         = is_ipv4;
@@ -770,26 +778,24 @@ void Classifier
     out->MOD_IDX         = mod_idx;
     out->MOD_PROF_IDX    = mod_prof_idx;
     out->MPLS_POP        = mpls_pop;
-    out->NO_LEARN        = no_learn;
+    out->LEARN_NOTIFY    = cgrp_flags.learn_notify;
     out->OUTER_L3_LENGTH = outer_l3_length;
     out->PARSER_INFO     = parser_info;
-
-    for (fm_uint i = 0 ; i < MBY_CGRP_HASH_PROFILE_ACTIONS ; i++)
-        out->HASH_PROFILE[i] = hash_profile[i];
-    for (fm_uint i = 0 ; i < MBY_CGRP_META_ACTIONS ; i++)
-        out->MOD_META[i] = mod_meta[i];
-    for (fm_uint i = 0 ; i <= MBY_CGRP_POL_ACTIONS ; i++)
-        out->POLICER_ACTION[i] = policer_action[i];
-
     out->QOS_L2_VPRI1    = qos_l2_vpri1;
-    out->QOS_L3_DSCP     = muxed_action.dscp;
-    out->QOS_TC          = muxed_action.tc;
+    out->QOS_L3_DSCP     = muxed_action->dscp;
+    out->QOS_TC          = muxed_action->tc;
     out->SGLORT          = sglort;
     out->TRAP_ICMP       = trap_icmp;
     out->TRAP_IGMP       = trap_igmp;
     out->TRAP_IP_OPTIONS = trap_ip_options;
-    out->TTL_CTRL        = muxed_action.ttl_ctrl;
     out->TX_TAG          = cgrp_flags.tx_tag;
+    // arrays --> also could be (re)moved (from)to cgrp_functions <-- REVISIT!!!
+    for (fm_uint i = 0 ; i < MBY_CGRP_HASH_PROFILE_ACTIONS ; i++)
+        out->HASH_PROFILE[i] = cgrp_functions.hash_profile[i];
+    for (fm_uint i = 0 ; i < MBY_CGRP_META_ACTIONS ; i++)
+        out->MOD_META[i] = cgrp_functions.mod_meta[i];
+    for (fm_uint i = 0 ; i < MBY_CGRP_POLICER_ACTIONS ; i++)
+        out->POLICER_ACTION[i] = cgrp_functions.policer_action[i];
 
     // Pass thru:
     out->CLASSIFIER_KEYS = in->CLASSIFIER_KEYS;

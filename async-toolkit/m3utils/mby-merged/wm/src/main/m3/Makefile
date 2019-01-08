@@ -37,8 +37,16 @@ WM_NET_LIB=$(WM_NET_TARGDIR)/libwm_net.a
 GENVIEWS_ROOT=genviews
 GENVIEWS_TARGDIR=$(GENVIEWS_ROOT)/$(OS_TARG)
 GENVIEWS=$(GENVIEWS_TARGDIR)/genviews
+
+FIELDVISITOR_ROOT=genviews/fieldvisitor
+FIELDVISITOR_TARGDIR=$(FIELDVISITOR_ROOT)/$(OS_TARG)
+FIELDVISITOR=$(FIELDVISITOR_TARGDIR)/fieldvisitor
+
+MBY_MAPFIELDS=mby.mapfields
+
 SCALA_GEN=foo
 C_GEN=bar
+SCM_GEN=boo
 
 STRUCTGEN_ROOT=structgen
 STRUCTGEN_TARGDIR=$(STRUCTGEN_ROOT)/$(OS_TARG)
@@ -80,6 +88,11 @@ TOP_TEMPLATE=top_template
 
 # test: $(TEST_TARG)
 # 	$(TEST_TARG)
+
+.PHONY: all
+all: mains fulcrum_consts
+
+.PHONY: mains
 mains: mby_mains hlp_mains model_server doc
 
 # provide a mechanism to force rebuild on meta update
@@ -105,6 +118,18 @@ wm_support: $(WM_SUPPORT)
 
 $(GENVIEWS): $(wildcard $(GENVIEWS_ROOT)/src/*) $(WM_SUPPORT) $(TOP)
 	pushd $(GENVIEWS_ROOT)/src && $(CM3) -x
+
+$(FIELDVISITOR): $(wildcard $(GENVIEWS_ROOT)/src/*) $(GENVIEWS) $(MBYLIB) $(HLPLIB)
+	pushd $(FIELDVISITOR_ROOT)/src && $(CM3) -x
+
+%.mapfields: $(FIELDVISITOR) $(MBYLIB)
+	mkdir -p $(dir $@)
+	$(FIELDVISITOR) -m $(notdir $(basename $@)) -o $@
+
+%_consts_pkg.vh: %.mapfields $(GENVIEWS)
+	$(eval top = $(notdir $(subst _consts_pkg.vh,,$@)))
+	mkdir -p $(dir $@)
+	$(GENVIEWS) -L sv-fulcrum -bits 28 -top $(top) -o $(dir $@) -f $< -i $(MBY_POSTPROC) -packagename $(notdir $(basename $@)) -of $(notdir $@)
 
 $(STRUCTGEN): $(wildcard $(STRUCTGEN_ROOT)/src/*) $(WM_SUPPORT) $(TOP)
 	pushd $(STRUCTGEN_ROOT)/src && $(CM3) -x
@@ -143,7 +168,7 @@ $(MBY_POSTPROC): $(MBY_TOP_RDL) $(wildcard $(dir $(MBY_TOP_RDL))/*.rdl)
 	export PERL5LIB=$(dir $<).. && cat work/i2.rdl | perl > $@
 
 
-$(MBYLIB): $(MBY_POSTPROC) $(GENVIEWS) rpc_structs
+$(MBYLIB): $(MBY_POSTPROC) $(GENVIEWS) $(META_STRUCTS)
 	mkdir -p $(MBY_BUILD_ROOT)/src
 	$(GENVIEWS_TARGDIR)/genviews -L m3 -top mby_top_map -o $(MBY_BUILD_ROOT)/src < $<
 	cp $(GENVIEWS_ROOT)/src/boilerplate/m3overrides $(MBY_BUILD_ROOT)/src
@@ -164,7 +189,16 @@ $(C_GEN): $(MBY_POSTPROC) $(GENVIEWS)
 cgen: $(C_GEN)
 
 $(MBY_C_LIB): $(C_GEN)
-	cd ../c && $(CM3) -x # make -C ../c all # <-- FIXME!!!
+	make -C ../c all
+
+$(SCM_GEN): $(MBY_POSTPROC) $(GENVIEWS)
+	mkdir -p $(MBY_BUILD_SCM_ROOT)/src
+	$(GENVIEWS_TARGDIR)/genviews -L scm -top mby_top_map -o $(MBY_BUILD_SCM_ROOT)/src < $<
+
+scmgen: $(SCM_GEN)
+
+$(MBY_CAPI_LIB): $(SCM_GEN)
+	echo
 
 $(HLPLIB): $(HLP_TOP_RDL) $(GENVIEWS)
 	mkdir -p work
@@ -185,6 +219,16 @@ $(MODEL_SERVER): $(WM_NET_LIB) $(WM_SUPPORT) $(HLPLIB) $(MBYLIB) $(MBY_C_LIB)
 	cd model_server && $(CM3) -x
 
 model_server: $(MODEL_SERVER)
+fieldvisitor: $(FIELDVISITOR)
+
+CONSTS_TARGDIR = $(MODEL_ROOT)/target/gen_mby_wm_m3/
+FULCRUM_CONSTS = $(addprefix $(CONSTS_TARGDIR),mby_ppe_rx_top_map_consts_pkg.vh mby_ppe_tx_top_map_consts_pkg.vh)
+CONSTS_HDL     = $(CONSTS_TARGDIR)/mby_fulcrum_legacy_rtl.hdl
+
+$(CONSTS_HDL):  genviews/fieldvisitor/src/mby_fulcrum_legacy_rtl.hdl $(FULCRUM_CONSTS)
+	cp $< $@
+
+fulcrum_consts: $(FULCRUM_CONSTS) $(CONSTS_HDL)
 
 doc:
 	$(MAKE) -C $(MBY_C_ROOT)/doc
@@ -200,6 +244,8 @@ clean:
 	rm -rf $(MODEL_SERVER_ROOT)/src/mby_struct
 	rm -rf $(MODEL_SERVER_ROOT)/src/wm_meta_common
 	rm -rf $(WM_NET_ROOT)/scala_generated
+	rm -rf *.mapfields
+	rm -rf *_consts_pkg.vh
 	$(MAKE) -C $(MBY_C_ROOT)/doc clean
 	find . -name $(OS_TARG) | xargs rm -rf
 	find ../c -name $(OS_TARG) | xargs rm -rf

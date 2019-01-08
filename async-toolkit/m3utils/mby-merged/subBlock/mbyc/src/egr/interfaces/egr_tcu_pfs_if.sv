@@ -31,7 +31,7 @@
 interface egr_tcu_pfs_if import shared_pkg::*; ();
 
 // indicates that the corresponding tc is blocked
-logic [EPL_PER_MGP-1:0][N_MAX_LP_PER_EPL-1:0][MGP_TC_CNT-1:0] pfc;
+logic [N_MAX_LP_PER_EPL-1:0][MGP_TC_CNT-1:0] pfc;
 
 modport tcu(
     output pfc
