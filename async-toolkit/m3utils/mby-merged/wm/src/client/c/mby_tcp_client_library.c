@@ -85,6 +85,9 @@ static char server_tmpfile[TMP_FILE_LEN] = "";
 #define M3_SERVER_PATH "wm/src/main/m3/model_server/AMD64_LINUX/modelserver"
 #define SCALA_SERVER_PATH "target/GenRTL/wm/mbay_wm.jar"
 
+/* Delay (seconds) between server startup and 1st connection attempt */
+#define SERVER_STARTUP_DELAY 15
+
 /* Static functions defined at the end of the file */
 static int iosf_send_receive(uint8_t *tx_msg, uint32_t tx_len,
                              uint8_t *rx_msg, uint32_t *rx_len);
@@ -197,8 +200,8 @@ int wm_server_start(char const * const type)
                   use_m3 ? "m3" : "Scala", cmd, strerror(errno));
         exit(1);
     } else if (pid > 0) {
-        /* Parent process: wait 5sec then if child is alive try to connect */
-        sleep(5);
+        /* Parent process: wait a few sec then if child is alive try to connect */
+        sleep(SERVER_STARTUP_DELAY);
         waitpid(pid, &err, WNOHANG);
         if (WIFEXITED(err)) {
             LOG_ERROR("Server failed to start: pid %d has exited\n", pid);
@@ -208,7 +211,7 @@ int wm_server_start(char const * const type)
             sleep(1);
             err = wm_connect(server_tmpfile);
             ++i;
-        } while (err == WM_ERR_TIMEOUT && i < max_retries);
+        } while (err != WM_OK && i < max_retries);
         if (err) {
             LOG_ERROR("Could not connect to the model_server\n");
             return err;
@@ -542,10 +545,11 @@ int wm_pkt_get(struct wm_pkt *pkt)
     return WM_OK;
 }
 
-/* Execute the Parser stage in isolation
+/* Execute the Parser stage function
  *
  * Invokes the Parser stage in the server that is currently running.
- * The model registers are passed to the stage function.
+ * The register space is passed from the model server.  Use wm_reg_write to
+ * set the register values before calling this function.
  *
  * @param[in]   in Parser input structure
  * @param[out]  out Parser output structure
@@ -605,6 +609,7 @@ int wm_parser(mbyRxMacToParser const * const in,
 
     if (ntohl(*((uint32_t *)&msg[0])) != tag) {
         LOG_WARNING("Unexpected tag - something might be wrong\n");
+        // TODO uncomment here
         // return WM_ERR_RUNTIME;
     }
 
