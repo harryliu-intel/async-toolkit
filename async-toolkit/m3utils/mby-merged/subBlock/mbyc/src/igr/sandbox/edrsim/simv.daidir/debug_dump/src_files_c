@@ -1,4 +1,0 @@
-/usr/src/packages/BUILD/glibc-2.11.3/csu/../sysdeps/x86_64/elf/start.S
-/usr/src/packages/BUILD/glibc-2.11.3/csu/elf-init.c
-/usr/src/packages/BUILD/glibc-2.11.3/csu/init.c
-/usr/src/packages/BUILD/glibc-2.11.3/stdlib/atexit.c
