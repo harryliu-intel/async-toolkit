@@ -38,20 +38,20 @@ foreach $i (0..7) {
     >> mod_profile_field_$i$_init_done
     >> mod_profile_field_$i$_rd_data
     >> mod_profile_field_$i$_rd_valid
-}
 
-    >> MOD_INPUT_FIFO_CFG_reg_sel
-    >> MOD_INPUT_FIFO_STATUS_reg_sel
-    >> mod_input_fifo_mem_ls_enter
-    >> mod_input_fifo_rd_adr
-    >> mod_input_fifo_rd_en
-    >> mod_input_fifo_wr_adr
-    >> mod_input_fifo_wr_data
-    >> mod_input_fifo_wr_en
-    >> mod_input_fifo_ecc_uncor_err
-    >> mod_input_fifo_init_done
-    >> mod_input_fifo_rd_data
-    >> mod_input_fifo_rd_valid
+    >> MOD_INPUT_FIFO_$i$_CFG_reg_sel
+    >> MOD_INPUT_FIFO_$i$_STATUS_reg_sel
+    >> mod_input_fifo_$i$_mem_ls_enter
+    >> mod_input_fifo_$i$_rd_adr
+    >> mod_input_fifo_$i$_rd_en
+    >> mod_input_fifo_$i$_wr_adr
+    >> mod_input_fifo_$i$_wr_data
+    >> mod_input_fifo_$i$_wr_en
+    >> mod_input_fifo_$i$_ecc_uncor_err
+    >> mod_input_fifo_$i$_init_done
+    >> mod_input_fifo_$i$_rd_data
+    >> mod_input_fifo_$i$_rd_valid
+}
 
     >> MOD_MAP_DUAL_CFG_reg_sel
     >> MOD_MAP_DUAL_STATUS_reg_sel
