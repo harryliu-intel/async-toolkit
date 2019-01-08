@@ -119,7 +119,7 @@ module rx_ppe_bfm
   //   } rx_ppe_igr_t;
 
     always_comb begin
-        tmp = '0;
+        tmp = rx_ppe_igr_t'('0);
 
         // FIXME -- hardcoded for first packet, but some of these should either
         //            be randomized, or looked up from randomized data in inp_driver

@@ -1,0 +1,81 @@
+#----------*-perl-*-------------------------
+#  This is a HDL spec file - it defines the unit and how to compile it.
+#
+#
+use ToolConfig;
+
+my $SHRTL          = &ToolConfig::get_tool_path('ipconfig/shrtl');
+my $VCS_HOME       = $ENV{VCS_HOME};
+
+$hdl_spec = {
+    # List of specific VERILOG src files
+    -vlog_files => [
+    ## need to remove the following
+       "src/shared/rtl/shared_pkg.sv",
+       "src/shared/rtl/mby_rx_metadata_pkg.sv",
+       "src/shared/rtl/mby_egr_pkg.sv",
+       "src/shared/rtl/mby_gmm_pkg.sv",
+    ## previous files need to be removed from here once there's a shared lib and gmm lib
+       "src/shared/interfaces/igr_rx_ppe_if.sv",
+       "src/shared/interfaces/rx_ppe_igr_if.sv",
+       "src/shared/interfaces/mim_wr_if.sv",
+       "src/shared/interfaces/mim_rd_if.sv",
+       "src/igr/rtl/mby_igr_pkg.sv",
+       "src/igr/rtl/mby_igr_macros.vh",
+       "src/igr/interfaces/pre_post_ppe_tag_info_if.sv",
+       "src/igr/interfaces/pre_post_ppe_partial_data_if.sv",
+       "src/igr/interfaces/pre_post_ppe_sop_if.sv",
+       "src/igr/interfaces/pre_post_ppe_wr_data_if.sv",
+       "src/igr/interfaces/pre_ppe_header_if.sv",
+    ],
+    
+    # List of verilog library src dirs ( corresponds with the VLOG '-y' parameter)
+    -vlog_lib_dirs => [
+     "src/igr/rtl",
+     "src/igr/post_ppe/rtl",
+     "src/igr/itag/rtl",
+     "target/mby/mgm_run/igr/src",
+     "target/mby/mgm_run/igr/src/mem_wrap",
+     "target/mby/mgm_run/rtl",
+     "$VCS_HOME/packages/sva_cg"
+     ],
+    
+    # List of verilog library src files ( corresponds with the VLOG '-v' parameter)
+    -vlog_lib_files => [],
+    
+    # List of include directories. Corresponds with the VLOG '+incdir+' parameter
+    -vlog_incdirs => [
+     "src/igr/rtl",
+     "/nfs/site/disks/ccdo.soc.cad_root.1/cad/x86-64_linux26/synopsys/designcompiler/M-2016.12-SP3/dw/sim_ver",
+     "target/mby/mgm_run/igr/src",
+     "target/mby/mgm_run/igr/src/mem_wrap",
+     "target/mby/mgm_run/post_ppe/src",
+     "target/mby/mgm_run/post_ppe/src/mem_wrap",
+     "target/mby/mgm_run/rtl",
+     "$SHRTL/src/common/rtl",   
+     "$SHRTL/src/fifo/rtl",   
+     "$VCS_HOME/packages/sva_cg",
+     "target/mby/mgm_run/igr_pbb/src",
+     "target/mby/mgm_run/igr_pbb/src/mem_wrap",
+     ],
+    
+    # Arbitrary VLOG options
+    -vlog_opts => [
+      "+libext+.v+.sv+.vh+.svh+.vs+.vm+.sva",
+		  "-full64",
+		  "+v2k",
+		  "-notice",
+		  "-sverilog",
+		  "+vcs+lic+wait",
+		  "+warn=noUII-L",
+		  "-timescale=10ps/10ps",
+		  "-debug_pp",
+		  "+define+VCSSIM",
+		  "+define+INTEL_SVA_OFF",
+		  "+define+MBY_IGR_BEHAVE_MEMS",
+		  "-assert svaext",
+		],
+    
+    
+    };
+
