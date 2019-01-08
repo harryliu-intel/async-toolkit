@@ -121,6 +121,7 @@ print "MGM debug : @mbyMgmLibs\n";
             mby_tx_ppe_rtl_lib => {
                -generated => 1,   # added due to mgm dependency
                -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_tx_ppe_rtl.hdl', ],
+               -dependent_libs => ['mby_mgm_lib',],
             },
 
             mby_ppe_stm_rx_rtl_lib => {
