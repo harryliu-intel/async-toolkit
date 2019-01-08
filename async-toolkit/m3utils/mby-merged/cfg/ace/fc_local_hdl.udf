@@ -19,7 +19,8 @@
             uvm_lib => {
                -hdl_spec       => ["HDL/verif/uvm.hdl"],
                -tag            => "nonsynth",
-            },
+               -vlog_opts      => ["+define+UVM_REG_DATA_WIDTH=128",],
+           },
 
             sla_lib => {
                -hdl_spec       => ["cfg/ace/HDL/verif/sla.hdl"],
@@ -32,7 +33,7 @@
                                    "sla_lib",
                                    "shdv_lib",
                ],
-               -vlog_opts => ["+define+UVM_REG_DATA_WIDTH=128",],
+
             },
             ext_shared_lib => {
                -sub_libs       => ["svt_amba_lib",

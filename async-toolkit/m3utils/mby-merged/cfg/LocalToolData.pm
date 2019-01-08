@@ -285,6 +285,7 @@ $ToolConfig_tools{"mgm"} = {
                     "action",
                     "ppe_stm_rx",
                     "ppe_stm_tx",
+                    "tx_ppe",
                     "igr",
 		    "igr_pbb",
 		    "post_ppe",

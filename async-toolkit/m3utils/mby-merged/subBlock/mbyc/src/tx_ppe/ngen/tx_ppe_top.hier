@@ -1,0 +1,7 @@
+// TX-PPE block
+
+tx_ppe_top [
+  tx_ppe_shells_wrapper of tx_ppe_shells_wrapper with tx_ppe_shells_wrapper.map
+  tx_ppe_rf_mems of tx_ppe_rf_mems with tx_ppe_rf_mems.map
+  tx_ppe_sram_mems of tx_ppe_sram_mems with tx_ppe_sram_mems.map
+]

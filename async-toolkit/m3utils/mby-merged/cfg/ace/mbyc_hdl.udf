@@ -127,6 +127,7 @@ print "MGM debug : @mbyMgmLibs\n";
             mby_tx_ppe_rtl_lib => {
                -generated => 1,   # added due to mgm dependency
                -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_tx_ppe_rtl.hdl', ],
+               -dependent_libs => ['mby_mgm_lib',],
             },
 
             mby_ppe_stm_rx_rtl_lib => {
@@ -368,7 +369,7 @@ print "MGM debug : @mbyMgmLibs\n";
                  "-CFLAGS \" -D SV_BUILD \" ",
                ],
             },
-            
+
             cdn_pcie_lib => {
                     -hdl_spec => [
                         "cfg/ace/HDL/verif/cdn_pcie_env.hdl",
@@ -611,6 +612,7 @@ print "MGM debug : @mbyMgmLibs\n";
 
                libs => [
                         "shdv_shared_lib",
+                        "gen_mby_wm_m3",
                         "mby_wm_dpi_lib",
                         "sva_lib",
                         "gen_mby_mgm_lib",
@@ -694,6 +696,7 @@ print "MGM debug : @mbyMgmLibs\n";
                    "mby_egress_env_lib",
                    "mby_egress_test_lib",
                    "mby_egr_scbd_lib",
+                   "gen_mby_wm_m3",
                    "mby_wm_dpi_lib",
                    "upf",
                    "lpa"
