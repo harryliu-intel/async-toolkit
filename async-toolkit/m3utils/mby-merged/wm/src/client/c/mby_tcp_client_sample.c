@@ -165,7 +165,6 @@ int test_pkts(void)
     };
     struct wm_pkt tx_pkt;
     struct wm_pkt rx_pkt;
-    unsigned int i;
     int err;
 
     tx_pkt.port = 1;
@@ -192,9 +191,9 @@ int test_pkts(void)
 
     if (memcmp(tx_pkt.data, rx_pkt.data, tx_pkt.len)) {
         printf("Unexpected difference between sent and received pkt\n");
-        for (i = 0; i < tx_pkt.len; ++i)
+        for (unsigned int i = 0; i < tx_pkt.len; ++i)
             if (tx_pkt.data[i] != rx_pkt.data[i])
-                printf("tx_pkt.data[%d] = 0x%x - rx_pkt.data[%d] = 0x%x\n",
+                printf("tx_pkt.data[%u] = 0x%x - rx_pkt.data[%u] = 0x%x\n",
                        i, tx_pkt.data[i], i, rx_pkt.data[i]);
         return WM_ERR_RUNTIME;
     }
@@ -233,7 +232,6 @@ int test_parser(void)
 
     mbyRxMacToParser in = {0};
     mbyParserToMapper out = {0};
-    unsigned int i;
     int err;
 
     in.RX_PORT = 1;

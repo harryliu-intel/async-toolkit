@@ -91,6 +91,8 @@ static char server_tmpfile[TMP_FILE_LEN] = "";
 /* Static functions defined at the end of the file */
 static int iosf_send_receive(uint8_t *tx_msg, uint32_t tx_len,
                              uint8_t *rx_msg, uint32_t *rx_len);
+static int wm_do_stage(uint16_t type, void const * const in, size_t in_size,
+                       void * const out, size_t out_size);
 static int wm_send(int fd, const uint8_t *msg, uint32_t len, uint16_t type,
                    uint16_t port);
 static int wm_receive(int fd, uint8_t *msg, uint32_t *len, uint16_t *type,
@@ -551,71 +553,21 @@ int wm_pkt_get(struct wm_pkt *pkt)
  * The register space is passed from the model server.  Use wm_reg_write to
  * set the register values before calling this function.
  *
- * @param[in]   in Parser input structure
- * @param[out]  out Parser output structure
+ * @param[in]   in pointer to Parser input structure
+ * @param[out]  out pointer to Parser output structure
  *
  * @retval      WM_OK if successful
  */
 int wm_parser(mbyRxMacToParser const * const in,
               mbyParserToMapper      * const out)
 {
-    uint32_t const tag = 0xdeadbeef;
-    uint8_t msg[MAX_MSG_LEN];
-    uint16_t port = 0; // unused here
-    uint32_t actual_rx_len;
-    uint32_t msg_len;
-    uint16_t type;
-    int err;
-
-    if (!in || !out) {
-        LOG_ERROR("In/out struct pointer is NULL\n");
-        return WM_ERR_INVALID_ARG;
-    }
-
-    if (in->RX_LENGTH > MBY_MAX_DATA_LEN) {
-        LOG_ERROR("RX_LENGTH %d exceeds max of %d\n", in->RX_LENGTH, MBY_MAX_DATA_LEN);
-        return WM_ERR_INVALID_ARG;
-    }
-
     LOG_DEBUG("Parser() - RX_LENGTH=%d RX_PORT=%d\n", in->RX_LENGTH, in->RX_PORT);
     hex_dump(in->SEG_DATA, MIN(in->RX_LENGTH,MBY_PA_MAX_SEG_LEN), 0);
 
-    *((uint32_t *)&msg[0]) = htonl(tag);
-    memcpy(msg + sizeof(tag), in, sizeof(mbyRxMacToParser));
-    msg_len = sizeof(tag) + sizeof(mbyRxMacToParser);
+    return wm_do_stage(MODEL_MSG_PARSER,
+                       in, sizeof(mbyRxMacToParser),
+                       out, sizeof(mbyParserToMapper));
 
-    // TODO print only when debug is enabled
-    if (1) {
-        printf("wm_parser msg 0x%p msg_len %d\n", msg, msg_len);
-        LOG_HEX_DUMP(msg, msg_len, 1);
-    }
-
-    err = wm_send(wm_server_fd, msg, msg_len, MODEL_MSG_PARSER, port);
-    if (err) {
-        LOG_ERROR("Could not send data to WM: %d\n", err);
-        return err;
-    }
-
-    err = wm_receive(wm_server_fd, msg, &msg_len, &type, &port);
-    if (err) {
-        LOG_ERROR("Could not receive data from WM: %d\n", err);
-        return err;
-    }
-
-    if (type != MODEL_MSG_PARSER) {
-        LOG_ERROR("Received unexpected message types %d\n", type);
-        return WM_ERR_RUNTIME;
-    }
-
-    if (ntohl(*((uint32_t *)&msg[0])) != tag) {
-        LOG_WARNING("Unexpected tag - something might be wrong\n");
-        // TODO uncomment here
-        // return WM_ERR_RUNTIME;
-    }
-
-    memcpy(out, msg + sizeof(tag), sizeof(mbyParserToMapper));
-
-    return WM_OK;
 }
 
 /*****************************************************************************
@@ -674,6 +626,72 @@ static int iosf_send_receive(uint8_t *tx_msg, uint32_t tx_len,
         LOG_ERROR("Register read/write operation failed - rsp=%d\n", rsp);
         return WM_ERR_INVALID_RESPONSE;
     }
+
+    return WM_OK;
+}
+
+/* Execute a generic WM stage function
+ *
+ * @param[in]   type message type for a specific stage
+ * @param[in]   in pointer to stage input structure
+ * @param[in]   in_size size of the stage input structure
+ * @param[out]  out pointer to stage output structure
+ * @param[in]   out_size size of the stage input structure
+ *
+ * @retval      WM_OK if successful
+ */
+static int wm_do_stage(uint16_t           type,
+                       void const * const in,
+                       size_t             in_size,
+                       void       * const out,
+                       size_t             out_size)
+{
+    uint32_t const tag = 0xdeadbeef;
+    uint8_t msg[MAX_MSG_LEN];
+    uint16_t port = 0; // unused here
+    uint32_t msg_len;
+    uint16_t rx_type;
+    int err;
+
+    if (!in || !out) {
+        LOG_ERROR("In/out struct pointer is NULL\n");
+        return WM_ERR_INVALID_ARG;
+    }
+
+    *((uint32_t *)&msg[0]) = htonl(tag);
+    memcpy(msg + sizeof(tag), in, in_size);
+    msg_len = sizeof(tag) + in_size;
+
+    // TODO print only when debug is enabled
+    if (1) {
+        printf("msg 0x%p type %d msg_len %d\n", msg, type, msg_len);
+        LOG_HEX_DUMP(msg, msg_len, 1);
+    }
+
+    err = wm_send(wm_server_fd, msg, msg_len, type, port);
+    if (err) {
+        LOG_ERROR("Could not send data to WM: %d\n", err);
+        return err;
+    }
+
+    err = wm_receive(wm_server_fd, msg, &msg_len, &rx_type, &port);
+    if (err) {
+        LOG_ERROR("Could not receive data from WM: %d\n", err);
+        return err;
+    }
+
+    if (rx_type != type) {
+        LOG_ERROR("Unexpected message type: %d instead of %d\n", rx_type, type);
+        return WM_ERR_RUNTIME;
+    }
+
+    if (ntohl(*((uint32_t *)&msg[0])) != tag) {
+        LOG_WARNING("Unexpected tag - something might be wrong\n");
+        // TODO uncomment here
+        // return WM_ERR_RUNTIME;
+    }
+
+    memcpy(out, msg + sizeof(tag), out_size);
 
     return WM_OK;
 }
