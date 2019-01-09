@@ -186,11 +186,8 @@ class mby_igr_rand_test extends mby_igr_base_test;
       `uvm_info("::set_default_sequences", "Setting phase sequences", UVM_NONE)
 
       // Specifying reset phase sequence
-      uvm_config_db#(uvm_object_wrapper)::set(this,
-         "env.tb_seqr.reset_phase",
-         "default_sequence",
-         mby_igr_dummy_seq::type_id::get());
-
+      env.set_reset_sequence("mby_igr_dummy_seq");
+       
       // Specifying post_reset phase sequence
       uvm_config_db#(uvm_object_wrapper)::set(this,
          "env.tb_seqr.post_reset_phase",
@@ -198,22 +195,14 @@ class mby_igr_rand_test extends mby_igr_base_test;
          mby_igr_dummy_seq::type_id::get());
 
       // Specifying configure phase sequence
-      uvm_config_db#(uvm_object_wrapper)::set(this,
-         "env.tb_seqr.configure_phase",
-         "default_sequence",
-         mby_igr_dummy_seq::type_id::get());
+     env.set_configure_sequence("mby_igr_dummy_seq");
 
       // Specifying shutdown phase sequence
-      uvm_config_db#(uvm_object_wrapper)::set(this,
-         "env.tb_seqr.shutdown_phase",
-         "default_sequence",
-         mby_igr_dummy_seq::type_id::get());
+      env.set_shutdown_sequence("mby_igr_dummy_seq");
 
       // Specifying main phase sequence
-      uvm_config_db#(uvm_object_wrapper)::set(this,
-         "env.tb_seqr.main_phase",
-         "default_sequence",
-         mby_igr_eth_simple_seq::type_id::get());
+      env.set_main_sequence("mby_igr_eth_simple_seq");
+
    endfunction : set_default_sequences
 
    //---------------------------------------------------------------------------
