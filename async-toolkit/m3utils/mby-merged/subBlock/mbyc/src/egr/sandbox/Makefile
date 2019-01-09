@@ -14,6 +14,11 @@ $(warning SHRTL is not set. For better performance, use $ setenv SHRTL `ToolConf
 SHRTL ?= $(shell ToolConfig.pl get_tool_path ipconfig/shrtl)
 endif
 
+ifndef DESIGNCOMPILER
+$(warning DESIGNCOMPILER is not set. For better performance, use $ setenv DESIGNCOMPILER `ToolConfig.pl get_tool_path designcompiler`)
+DESIGNCOMPILER ?= $(shell ToolConfig.pl get_tool_path designcompiler)
+endif
+
 # SRC is the relative path from the including Makefile
 SRC = ../..
 
@@ -78,6 +83,7 @@ INCS += $(SRC)/egr/rtl/mem/tqu/src/mem_wrap
 
 INCS += $(SRC)/mems/rtl
 INCS += $(SHRTL)/src/common/rtl
+INCS += $(DESIGNCOMPILER)/dw/sim_ver
 
 BUILD_DEP = $(addsuffix /*,$(INCS))
 VCS_LIB = $(addprefix -y ,$(INCS))
