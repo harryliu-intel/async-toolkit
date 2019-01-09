@@ -210,7 +210,7 @@ print "MGM debug : @mbyMgmLibs\n";
             mby_mesh_env_lib => {
                -hdl_spec        => [# 'target/GenRTL/regflow/mby/subblock/mby_mesh_ral.hdl',
                                      'subBlock/mbyc/cfg/ace/HDL/verif/mby_mesh_env.hdl',],
-               -dependent_libs  => [ 'shdv_shared_lib', 'mby_common_lib', 'mby_mgp_bfm_lib',  ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'mby_mgp_bfm_lib',  ],
                -tag             => "nonsynth",
             },
 
@@ -222,13 +222,13 @@ print "MGM debug : @mbyMgmLibs\n";
 
             mby_mesh_tb_lib  => {
                -hdl_spec        => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_mesh_tb.hdl', ],
-               -dependent_libs  => [ 'shdv_shared_lib', 'mby_common_lib', 'mby_mesh_env_lib', 'mby_mesh_ti_lib', 'mby_mesh_test_lib', 'mby_mgp_bfm_lib' ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'mby_mesh_env_lib', 'mby_mesh_ti_lib', 'mby_mesh_test_lib', 'mby_mgp_bfm_lib' ],
                -tag             => "nonsynth",
             },
 
             mby_mesh_test_lib => {
                -hdl_spec       => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_mesh_test.hdl', ],
-               -dependent_libs => [ 'sip_shared_lib', 'mby_mesh_env_lib', 'mby_wm_dpi_lib' ],
+               -dependent_libs => [ 'sip_shared_lib', 'mby_mesh_env_lib'  ],
                -tag            => "nonsynth",
             },
             mby_mgp_bfm_lib => {
@@ -768,9 +768,7 @@ print "MGM debug : @mbyMgmLibs\n";
                   "mby_mesh_ti_lib",
                   "mby_mesh_test_lib",
                   "mby_jasper_lib",
-                  "mby_wm_dpi_lib",
                   "ext_shared_lib",
-                  "mby_common_lib",
                   "mby_mgp_bfm_lib",
                  # "gen_mesh_regflow_lib",
                ],
