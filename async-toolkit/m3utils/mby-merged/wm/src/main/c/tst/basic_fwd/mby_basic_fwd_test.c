@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <string.h>
 #include <stdio.h>
 
 #include <mby_common.h>
@@ -118,9 +119,9 @@ static fm_status sendPacket
         mbyRxMacToParser mac2par;
 
         // Populate input:
-        mac2par.RX_DATA   = (fm_byte *) packet;
         mac2par.RX_LENGTH = (fm_uint32) length;
         mac2par.RX_PORT   = (fm_uint32) port;
+        memcpy(mac2par.SEG_DATA, packet, MIN(length, sizeof(mac2par.SEG_DATA)));
 
         // Call RX pipeline:
         RxPipeline(rx_top_map, rx_top_map_w, shm_map, &mac2par, &rxs2rxo);

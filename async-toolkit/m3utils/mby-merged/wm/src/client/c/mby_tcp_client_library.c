@@ -562,7 +562,7 @@ int wm_parser(mbyRxMacToParser const * const in,
               mbyParserToMapper      * const out)
 {
     LOG_DEBUG("Parser() - RX_LENGTH=%d RX_PORT=%d\n", in->RX_LENGTH, in->RX_PORT);
-    hex_dump(in->SEG_DATA, MIN(in->RX_LENGTH,MBY_PA_MAX_SEG_LEN), 0);
+    hex_dump(in->SEG_DATA, MIN(in->RX_LENGTH, sizeof(in->SEG_DATA)), 0);
 
     return wm_do_stage(MODEL_MSG_PARSER,
                        in, sizeof(mbyRxMacToParser),
