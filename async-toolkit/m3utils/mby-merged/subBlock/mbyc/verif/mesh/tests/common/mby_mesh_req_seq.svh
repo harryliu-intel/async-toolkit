@@ -60,7 +60,8 @@ task mby_mesh_req_seq::body();
       item.set_item_context(this, seqr);
       addr = (cnt % 2 == 0) ? cnt : cnt - 1;
       item.randomize() with {
-         req_id  == cnt;
+// FIXME:          req_id  == cnt;
+         req_id  == 0;
          seg_ptr == addr;
          valid   == 1;
          sema    == 0;
