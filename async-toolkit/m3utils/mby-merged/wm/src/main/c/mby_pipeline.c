@@ -86,21 +86,19 @@ void TxPipeline
     varchar_t                const *       rx_data,
     mbyTxInToModifier        const * const txi2mod,
     mbyTxStatsToTxMac              * const txs2mac,
-    fm_uint32                        const max_pkt_size
+    varchar_builder_t              * const tx_data_builder
 )
 {
     // Register map structs:
     mby_ppe_modify_map const * const modify_map = &(tx_top_map->modify);
 
-    // Intermediate struct. Setting TX_DATA will be fixed with tx stats <--REVISIT!!!
+    // Intermediate struct.
     mbyModifierToTxStats mod2txs;
-    mod2txs.TX_DATA = txs2mac->TX_DATA;
 
     // TX pipeline stages:
-    Modifier(modify_map, shm_map, rx_data, max_pkt_size, txi2mod, &mod2txs);
+    Modifier(modify_map, shm_map, rx_data, txi2mod, &mod2txs, tx_data_builder);
 
-    // Setting TX length and port  will be fixed with tx stats <--REVISIT!!!
-    txs2mac->TX_LENGTH = mod2txs.TX_LENGTH;
+    // Setting TX port  will be fixed with tx stats <--REVISIT!!!
     txs2mac->TX_PORT   = mod2txs.TX_PORT;
 
 //  TxStats    (modify_map,    &mod2txs,  txs2mac);

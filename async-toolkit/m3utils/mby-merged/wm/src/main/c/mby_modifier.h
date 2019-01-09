@@ -624,19 +624,15 @@ typedef struct mbyTxInToModifierStruct
 typedef struct mbyModifierToTxStatsStruct
 {
     fm_bool                 NO_PRI_ENC;      // do not use priority encoding, use default enc.
-    fm_byte               * TX_DATA;         // egress packet data
+  //    fm_byte               * TX_DATA;         // egress packet data
     fm_uint16               TX_DISP;         // egress frame disposition
-    fm_uint32               TX_LENGTH;       // egress packet data length [bytes]
+  //    fm_uint32               TX_LENGTH;       // egress packet data length [bytes]
     fm_uint32               TX_PORT;         // egress port
     fm_uint32               TX_STATS_LENGTH; // egress packet data stats length [bytes]
 
 } mbyModifierToTxStats;
 
-typedef struct {
-  varchar_t            const * rx_data;
-  fm_int                       max_pkt_size;
-  mbyTxInToModifier    const * in;
-} Modifier_in_t;
+typedef mbyTxInToModifier Modifier_in_t;
 
 typedef mbyModifierToTxStats Modifier_out_t;
 
@@ -644,10 +640,10 @@ void Modifier
 (
     mby_ppe_modify_map    const * const mod_map,
     mby_shm_map           const * const shm_map,
-    varchar_t             const *       rx_data_p,
-    fm_int                              max_pkt_size,
+    varchar_t             const *       rx_data,
     mbyTxInToModifier     const * const in,
-    mbyModifierToTxStats        * const out
+    mbyModifierToTxStats        * const out,
+    varchar_builder_t           * const tx_data_builder
 );
 
 #endif

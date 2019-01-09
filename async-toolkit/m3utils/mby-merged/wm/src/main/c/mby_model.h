@@ -41,8 +41,7 @@ fm_status mbyReceivePacket
     varchar_t         const *       rx_data,
     fm_uint32                 const max_pkt_size,
     fm_uint32               * const port,
-    fm_byte                 * const packet,
-    fm_uint32               * const length
+    varchar_t               * const tx_data
 );
 
 #endif /* _MBY_MODEL_H_ */

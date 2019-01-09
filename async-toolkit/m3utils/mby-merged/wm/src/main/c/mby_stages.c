@@ -21,12 +21,16 @@ STAGE_PROTO(Classifier)
 
 STAGE_PROTO(Modifier)
 {
+  varchar_builder_t txd_builder;
+
+  varchar_builder_init(&txd_builder, tx_data, malloc, free);
+
   Modifier(&(r->mpp[0].mgp[0].tx_ppe.modify),
            &(r->mpp[0].shm),
-           in->rx_data,
-           in->max_pkt_size,
-           in->in,
-           out);
+           rx_data,
+           in,
+           out,
+           &txd_builder);
 }
 
 // more to come ...

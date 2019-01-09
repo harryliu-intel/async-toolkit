@@ -38,7 +38,7 @@ void TxPipeline
     varchar_t                const *       rx_data,
     mbyTxInToModifier        const * const txi2mod,
     mbyTxStatsToTxMac              * const txs2mac,
-    fm_uint32                        const max_pkt_size
+    varchar_builder_t              * const tx_data_builder
 );
 
 void Hash

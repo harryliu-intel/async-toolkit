@@ -45,6 +45,7 @@ SOURCES += mby_errors.c
 SOURCES += mby_init.c
 SOURCES += varchar.c
 SOURCES += mby_stages.c
+SOURCES += fm_alos_debughash.c
 
 # used by C tests:
 SOURCES += mby_model.c
@@ -140,6 +141,8 @@ ${BLD_DIR}/mby_errors.o        : $(BLD_DTS) Makefile mby_errors.c        mby_err
 ${BLD_DIR}/mby_init.o          : $(BLD_DTS) Makefile mby_init.c          mby_init.h
 ${BLD_DIR}/varchar.o           : $(BLD_DTS) Makefile
 ${BLD_DIR}/mby_stages.o           : $(BLD_DTS) Makefile
+${BLD_DIR}/fm_alos_debughash.o           : $(BLD_DTS) Makefile
+
 
 $(LIB_M3EXPT): $(OBJECTS)
 	@echo   '  Creating M3 library exports file'

@@ -1219,34 +1219,23 @@ static void performCmds(mby_ppe_modify_map  const * const mod_map,
     }
 }
 
-static fm_uint32 packPacket(mbyModProfileAction * const prof_act,
-                            fm_uint32                   rx_length,
-                            fm_byte             * const grp_ctnr,
-                            varchar_t         const * const rx_data,
-                            fm_byte             * const tx_data,
-                            fm_uint32                   pkt_index,
-                            fm_uint32                   max_pkt_size)
+static void packPacket(mbyModProfileAction     * const prof_act,
+                       fm_uint32                       rx_length,
+                       fm_byte                 * const grp_ctnr,
+                       varchar_t         const * const rx_data,
+                       varchar_builder_t       * const tx_data_builder,
+                       fm_uint32                       pkt_index)
 {
-    assert(max_pkt_size >= (rx_length - pkt_index + prof_act->operating_region));
-
-    fm_uint tx_length = 0;
-
     for (fm_uint i = 0; i < MBY_MOD_PROFILE_GROUPS; i++)
-    {
-        if (prof_act->grp_list[i].valid)
-        {
-            for (fm_uint j = 0; j < prof_act->grp_list[i].ctnr_size; j++)
-            {
-                fm_uint offset = prof_act->grp_list[i].ctnr_offset;
-                tx_data[tx_length++] = grp_ctnr[offset + j];
-            }
-        }
-    }
-
+      if (prof_act->grp_list[i].valid)
+        for (fm_uint j = 0; j < prof_act->grp_list[i].ctnr_size; j++)
+          {
+            fm_uint offset = prof_act->grp_list[i].ctnr_offset;
+            varchar_builder_put(tx_data_builder, grp_ctnr[offset + j]);
+          }
+    
     for (fm_uint i = 0; i < (rx_length - pkt_index); i++)
-      tx_data[tx_length++] = varchar_get(rx_data, i + pkt_index);
-
-    return tx_length;
+      varchar_builder_put(tx_data_builder, varchar_get(rx_data, i + pkt_index));
 }
 
 void Modifier
@@ -1254,9 +1243,9 @@ void Modifier
     mby_ppe_modify_map   const * const mod_map,
     mby_shm_map          const * const shm_map,
     varchar_t            const *       rx_data,
-    fm_int                             max_pkt_size,
     mbyTxInToModifier    const * const in,
-    mbyModifierToTxStats       * const out
+    mbyModifierToTxStats       * const out,
+    varchar_builder_t          * const tx_data_builder
 )
 {
     // Read inputs:
@@ -1270,8 +1259,6 @@ void Modifier
     fm_byte                     grp_ctnr[MBY_MOD_CTNR_SIZE];
     fm_uint                     pkt_idx   = 0;
     mbyModProfileAction         prof_act;
-    fm_byte             * const tx_data   = out->TX_DATA;
-    fm_uint32                   tx_length = 0;
     fm_uint32                   tx_port   = 0;
 
     // Select egress port:
@@ -1291,9 +1278,13 @@ void Modifier
 
     performCmds(mod_map, rx_data, &prof_act, &pa_hdr_ptrs, grp_ctnr, &pkt_idx);
 
-    tx_length = packPacket(&prof_act, rx_length, grp_ctnr, rx_data, tx_data, pkt_idx, max_pkt_size);
+    packPacket(&prof_act,
+               rx_length,
+               grp_ctnr,
+               rx_data,
+               tx_data_builder,
+               pkt_idx);
 
     // Write outputs:
-    out->TX_LENGTH = tx_length;
     out->TX_PORT   = tx_port;
 }

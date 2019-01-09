@@ -61,7 +61,5 @@ void TxStats
     // Write outputs:
 
     // Pass thru:
-    out->TX_DATA   = in->TX_DATA;
-    out->TX_LENGTH = in->TX_LENGTH;
     out->TX_PORT   = tx_port;
 }

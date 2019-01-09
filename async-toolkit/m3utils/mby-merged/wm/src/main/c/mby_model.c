@@ -3,18 +3,22 @@
 // Copyright (C) 2018 Intel Corporation
 
 #include <mby_top_map.h>
+
+#include <string.h>
+#include <stdio.h>
+#include <malloc.h>
+
 #include <mby_top_map_main.h>
 #include <model_c_write.h> // write_field()
+
+#include "varchar.h"
 
 #include "mby_model.h"
 #include "mby_pipeline.h"
 #include "mby_reg_ctrl.h"
 #include "mby_errors.h"
 #include "mby_init.h"
-#include "varchar.h"
 
-#include <string.h>
-#include <stdio.h>
 
 // This is the persistent state of the model registers:
 static mby_top_map top_map;
@@ -113,21 +117,24 @@ fm_status mbyReceivePacket
 (
     mby_top_map       const * const r,
     mby_top_map__addr const * const w,
-    varchar_t         const *       rx_data,
+    varchar_t         const * const rx_data,
     fm_uint32                 const max_pkt_size,
     fm_uint32               * const port,
-    fm_byte                 * const packet,
-    fm_uint32               * const length
+    varchar_t               * const tx_data
 )
 {
     fm_status sts = FM_OK;
 
     // Top CSR map for tile 0 transmit pipeline:
     // TODO use the pipeline associated to the specific egress port
-    mby_ppe_tx_top_map       const * const tx_top_map   = &(r->mpp[0].mgp[0].tx_ppe);
-    mby_ppe_tx_top_map__addr const * const tx_top_map_w = &(w->mpp[0].mgp[0].tx_ppe);
-    mby_shm_map              const * const shm_map      = &(r->mpp[0].shm);
-
+    mby_ppe_tx_top_map       const * const tx_top_map   =
+      &(r->mpp[0].mgp[0].tx_ppe);
+    mby_ppe_tx_top_map__addr const * const tx_top_map_w =
+      &(w->mpp[0].mgp[0].tx_ppe);
+    mby_shm_map              const * const shm_map      =
+      &(r->mpp[0].shm);
+    varchar_builder_t       txd_builder;
+    
     // Input struct:
     txi2mod.CONTENT_ADDR  = rxs2rxo.CONTENT_ADDR;
     txi2mod.DROP_TTL      = rxs2rxo.DROP_TTL;
@@ -150,7 +157,6 @@ fm_status mbyReceivePacket
     txi2mod.QOS_L3_DSCP   = rxs2rxo.QOS_L3_DSCP;
     txi2mod.SAF_ERROR     = rxs2rxo.SAF_ERROR;
     txi2mod.TAIL_CSUM_LEN = rxs2rxo.TAIL_CSUM_LEN;
-    txi2mod.TX_DATA       = packet; // points at provided buffer
     txi2mod.TX_DROP       = rxs2rxo.TX_DROP;
     txi2mod.TX_TAG        = rxs2rxo.TX_TAG;
     txi2mod.XCAST         = rxs2rxo.XCAST;
@@ -159,13 +165,18 @@ fm_status mbyReceivePacket
     mbyTxStatsToTxMac txs2mac;
 
     // Call RX pipeline:
-    TxPipeline(tx_top_map, tx_top_map_w, shm_map, rx_data, &txi2mod, &txs2mac, max_pkt_size);
-
+    varchar_builder_init(&txd_builder, tx_data, malloc, free);
+    
+    TxPipeline(tx_top_map,
+               tx_top_map_w,
+               shm_map,
+               rx_data,
+               &txi2mod,
+               &txs2mac,
+               &txd_builder);
+    
     // Populate output:
     *port   = txs2mac.TX_PORT;
-    *length = txs2mac.TX_LENGTH;
-
-    // assert (length <= max_pkt_size) <-- REVISIT!!!
 
     return sts;
 }
