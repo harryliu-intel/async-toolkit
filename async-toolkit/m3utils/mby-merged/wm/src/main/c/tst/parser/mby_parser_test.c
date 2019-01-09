@@ -382,7 +382,6 @@ void prepareData
 (
     struct TestData           test_struct,
     const fm_uint             test_num,
-    fm_byte           * const rx_packet,
     mbyRxMacToParser  * const mac2par,
     mbyParserToMapper * const par2map,
     mbyParserToMapper * const par2map_ref
@@ -391,6 +390,7 @@ void prepareData
     // Prepare input:
     fm_uint32 rx_port   = test_struct.in.RX_PORT;
     fm_uint32 rx_length = test_struct.in.RX_LENGTH;
+    fm_byte * rx_packet = (fm_byte *)mac2par->SEG_DATA;
 
     // Scan in SEG_DATA from string:
     const char *  pkt_str_ptr = (char *) test_struct.in.SEG_DATA;
@@ -419,7 +419,6 @@ void prepareData
 
     mac2par->RX_PORT   = rx_port;
     mac2par->RX_LENGTH = rx_length;
-    memcpy(mac2par->SEG_DATA, rx_packet, MIN(rx_length, MBY_PA_MAX_SEG_LEN));
 
     // Clear outputs:
     initOutput (par2map);
@@ -503,12 +502,6 @@ int main(int argc, char *argv[])
         exit(-1);
     }
 
-    fm_byte *rx_packet = malloc(MBY_MAX_DATA_LEN * sizeof(fm_byte));
-    if (rx_packet == NULL) {
-        printf("Could not allocate heap memory for rx packet buffer -- exiting!\n");
-        exit(-1);
-    }
-
     mby_ppe_rx_top_map rx_top_map;
     mby_ppe_tx_top_map tx_top_map;
 
@@ -548,7 +541,7 @@ int main(int argc, char *argv[])
         mbyParserToMapper par2map;     // output
         mbyParserToMapper par2map_ref; // reference output
 
-        prepareData(test_struct, test_num, rx_packet, &mac2par, &par2map, &par2map_ref);
+        prepareData(test_struct, test_num, &mac2par, &par2map, &par2map_ref);
 
         fm_status test_status = runTest
         (
@@ -575,7 +568,6 @@ int main(int argc, char *argv[])
 
     // Free up buffer memory:
     free(regs);
-    free(rx_packet);
 
     int rv = (tests_passed) ? 0 : -1;
 
