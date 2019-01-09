@@ -173,12 +173,12 @@ class mby_smm_bfm_mrd_req
       
       // TODO: parameterize these definitions, these come from a file
       // TODO : change logics by bits
-      logic [12:0]   req_id;        // Memory read request ID
-      logic [13:0]   addr;          // Memory read address
-      logic [511:0]  rd_data;       // Memory read data
+      bit [W_REQ_ID-1:0]   req_id;        // Memory read request ID
+      bit [ADDR_WIDTH-1:0]   addr;          // Memory read address
+      bit [MSH_DATA_WIDTH-1:0]  rd_data;       // Memory read data
       
-      logic [3:0]    node_row;      // SMM BFM node column
-      logic [2:0]    node_col;      // SMM BFM node row
+      bit [NUM_MSH_ROWS-1:0]    node_row;      // SMM BFM node column
+      bit [NUM_MSH_COLS-1:0]    node_col;      // SMM BFM node row
       
       int unsigned   req_rsp_delay; // Modeled read request delay
       
@@ -207,8 +207,7 @@ class mby_smm_bfm_mrd_req
       mem_rsp.data_pkt.mim_rrsp_req_id = req_id;
       
       // TODO ;   Profile based latencies.
-      req_rsp_delay  = $urandom_range(rd_req_cfg_obj.mrd_req_rsp_delay_min,
-                                      rd_req_cfg_obj.mrd_req_rsp_delay_max) + rd_req_cfg_obj.mrd_req_rsp_delay_extra;
+      req_rsp_delay  = rd_req_cfg_obj.mrd_req_rsp_delay_extra;
       
       msg_str     = $sformatf("mrd_req_rsp() : Delay of read request/response operation is %0d clocks. ReqID = 0x%x",
                        req_rsp_delay, req_id);
