@@ -4,6 +4,10 @@
 // -------------------------------------------------------------------
 ngen_mod_name
 
+tx_ppe_negh_if.stm tx_ppe_negh_if0,
+tx_ppe_negh_if.stm tx_ppe_negh_if1,
+tx_ppe_negh_if.stm tx_ppe_negh_if2,
+tx_ppe_negh_if.stm tx_ppe_negh_if3,
 ngen_IO_list
 ngen_IO_end
 

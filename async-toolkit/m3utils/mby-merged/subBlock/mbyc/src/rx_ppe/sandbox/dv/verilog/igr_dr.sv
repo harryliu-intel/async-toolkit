@@ -41,12 +41,12 @@ rx_ppe_igr_if.igr   rx_ppe_igr_if
 );
 
 logic   [31:0]  q_random;
-logic   [14:0]  q_pkt_id0;
-logic   [14:0]  q_pkt_id1;
+logic   [8:0]   q_pkt_id0;
+logic   [8:0]   q_pkt_id1;
 logic   [76:0]  q_val_dly0;
 logic   [76:0]  q_val_dly1;
-logic   [14:0]  q_exp_pkt_id0;
-logic   [14:0]  q_exp_pkt_id1;
+logic   [8:0]   q_exp_pkt_id0;
+logic   [8:0]   q_exp_pkt_id1;
 
 always_ff @(posedge cclk) begin //{
     q_random <= $urandom;

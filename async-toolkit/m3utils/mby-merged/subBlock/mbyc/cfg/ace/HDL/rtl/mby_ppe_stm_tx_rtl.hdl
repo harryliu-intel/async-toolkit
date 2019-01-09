@@ -11,7 +11,8 @@ $hdl_spec = {
         "src/shared/rtl/shared_pkg.sv",
         "src/shared/rtl/axi2ibus_pkg.sv",
         "src/shared/rtl/mby_egr_pkg.sv",
-        "src/shared/interfaces/egr_ppe_stm_if.sv",
+        "src/shared/interfaces/tx_ppe_mod_if.sv",
+        "src/shared/interfaces/tx_ppe_negh_if.sv",
         "src/shared/interfaces/egr_mc_table_if.sv",
 
 		"src/ppe_stm_tx/rtl/ppe_stm_tx_top.sv",
