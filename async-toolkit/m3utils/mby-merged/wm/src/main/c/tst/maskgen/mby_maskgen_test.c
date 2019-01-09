@@ -242,9 +242,9 @@ static fm_bool maskgen_test_verify
 
 static void maskgen_run_test(maskgen_test_data * const test_data)
 {
-    mby_ppe_fwd_misc_map  fwd_misc;
-    mby_ppe_mst_glort_map glort_map;
-    mby_ppe_cm_apply_map  cm_apply;
+    mby_ppe_fwd_misc_map  fwd_misc  = { 0 };
+    mby_ppe_mst_glort_map glort_map = { 0 };
+    mby_ppe_cm_apply_map  cm_apply  = { 0 };
 
     mbyNextHopToMaskGen  nexthopToMaskgen = { 0 };
     mbyMaskGenToTriggers out              = { 0 };
