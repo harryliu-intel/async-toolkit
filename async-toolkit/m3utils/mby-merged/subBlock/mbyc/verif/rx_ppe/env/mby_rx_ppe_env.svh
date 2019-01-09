@@ -138,8 +138,8 @@ class mby_rx_ppe_env extends shdv_base_env;
          `uvm_fatal(get_name(),"Config_DB.get() for ENV's cdi_rx_vintf was not successful")
       end
 
-//TODO: AK: Uncomment this after UVM_REG_DATA_WIDTH is defined as 128.       
-//    build_ral();
+      //AK :TODO: uncomment after register base address is defined correctly. 
+      //build_ral();
       build_eth_bfm();
 
       foreach (scoreboards[ii]) begin

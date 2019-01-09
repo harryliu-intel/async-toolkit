@@ -39,7 +39,6 @@ package mby_mesh_env_pkg;
    import uvm_pkg::*;
 
    import shdv_base_pkg::*;
-   import mby_common_pkg::*;
 
    `include "uvm_macros.svh"
 
