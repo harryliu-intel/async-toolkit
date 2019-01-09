@@ -26,7 +26,7 @@
 //-----------------------------------------------------------------------------
 // Class: mby_igr_env_base_seq
 //-----------------------------------------------------------------------------
-class mby_igr_env_base_seq extends uvm_sequence; //PJP TODO: Change the extension to mby_base_seq, once mby_base_seq is updated to be pure UVM.
+class mby_igr_env_base_seq extends shdv_base_sequence; //PJP TODO: Change the extension to mby_base_seq, once mby_base_seq is updated to be pure UVM.
 
    `uvm_object_utils(mby_igr_env_base_seq)
 

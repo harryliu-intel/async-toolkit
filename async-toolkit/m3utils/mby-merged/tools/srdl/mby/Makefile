@@ -57,3 +57,17 @@ cp_ppe_rx_ral: $(RESULTS_SUBBLOCK)/mby_ppe_rx_top_map.allral.done
 	echo "RX PPE ral generated"
 # genrdl: $(SHELL_CTL_RDL)
 
+
+# Use pattern rules rather than copy-paste-rename a separate set of rules for each block.
+# ppe and mesh will still use rules above.  Targets that match below will use rules below.
+%_ral: cp_%_ral cp_%_rtl
+	@echo "$* ral & rtl generated"
+
+cp_%_ral: $(RESULTS_SUBBLOCK)/mby_%_map.allral.done
+	cp $(RESULTS_SUBBLOCK)/mby_$*_map.ralf_out/*.sv $(MODEL_ROOT)/subBlock/mbyc/verif/$*/ral/
+
+cp_%_rtl: $(RESULTS_SUBBLOCK)/mby_%_map.allral.done
+	cp $(RESULTS_SUBBLOCK)/mby_$*_map/* $(RTLDIR)/
+
+# Set RTLDIR for each block
+cp_mce_rtl: RTLDIR = $(MODEL_ROOT)/subBlock/mbyc/src/gmm/gms/mce/rtl
