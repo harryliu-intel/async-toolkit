@@ -392,8 +392,8 @@ void prepareData
     fm_uint32 rx_port   = test_struct.in.RX_PORT;
     fm_uint32 rx_length = test_struct.in.RX_LENGTH;
 
-    // Scan in RX_DATA from string:
-    const char *  pkt_str_ptr = (char *) test_struct.in.RX_DATA;
+    // Scan in SEG_DATA from string:
+    const char *  pkt_str_ptr = (char *) test_struct.in.SEG_DATA;
     const fm_uint pkt_str_len = (fm_uint) strlen(pkt_str_ptr);
 
     for (fm_uint i = 0; i < pkt_str_len/2; i++)
@@ -419,7 +419,7 @@ void prepareData
 
     mac2par->RX_PORT   = rx_port;
     mac2par->RX_LENGTH = rx_length;
-    mac2par->RX_DATA   = rx_packet;
+    memcpy(mac2par->SEG_DATA, rx_packet, MIN(rx_length, MBY_PA_MAX_SEG_LEN));
 
     // Clear outputs:
     initOutput (par2map);

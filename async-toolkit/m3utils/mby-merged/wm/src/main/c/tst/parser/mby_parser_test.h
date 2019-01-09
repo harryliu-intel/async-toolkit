@@ -22,7 +22,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "0001020304051f1f1f1f1f1f8000",
+        .SEG_DATA = "0001020304051f1f1f1f1f1f8000",
         .RX_LENGTH = 64,
         .RX_PORT = 1
     },
@@ -42,7 +42,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbddeeffaaaa",
+        .SEG_DATA = "000102030405ccaabbddeeffaaaa",
         .RX_LENGTH = 64,
         .RX_PORT = 1
     },
@@ -62,7 +62,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "01aabbddeefff1f1f1f1f1f15555",
+        .SEG_DATA = "01aabbddeefff1f1f1f1f1f15555",
         .RX_LENGTH = 64,
         .RX_PORT = 1
     },
@@ -82,7 +82,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "f1f1f1f1f1f1ff55555515558000",
+        .SEG_DATA = "f1f1f1f1f1f1ff55555515558000",
         .RX_LENGTH = 64,
         .RX_PORT = 1
     },
@@ -102,7 +102,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "fffffffffffff1f1f1f1f1f18000",
+        .SEG_DATA = "fffffffffffff1f1f1f1f1f18000",
         .RX_LENGTH = 64,
         .RX_PORT = 1
     },
@@ -122,7 +122,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "f1f1f1f1f1f1ffffffffffff8000",
+        .SEG_DATA = "f1f1f1f1f1f1ffffffffffff8000",
         .RX_LENGTH = 64,
         .RX_PORT = 1
     },
@@ -142,7 +142,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000000000000f1f1f1f1f1f18000",
+        .SEG_DATA = "000000000000f1f1f1f1f1f18000",
         .RX_LENGTH = 64,
         .RX_PORT = 1
     },
@@ -162,7 +162,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "f1f1f1f1f1f10000000000008000",
+        .SEG_DATA = "f1f1f1f1f1f10000000000008000",
         .RX_LENGTH = 64,\
         .RX_PORT = 1
     },
@@ -181,7 +181,7 @@ struct TestData passing_tests[] = {
 },
 {
     .in = {
-        .RX_DATA = (fm_byte *) "01aabbddeefff1f1f1f1f1f10000",
+        .SEG_DATA = "01aabbddeefff1f1f1f1f1f10000",
         .RX_LENGTH = 64,
         .RX_PORT = 1
     },
@@ -201,7 +201,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "01aabbddeefff1f1f1f1f1f18000",
+        .SEG_DATA = "01aabbddeefff1f1f1f1f1f18000",
         .RX_LENGTH = 64,
         .RX_PORT = 1
     },
@@ -221,7 +221,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "01aabbddeefff1f1f1f1f1f18000",
+        .SEG_DATA = "01aabbddeefff1f1f1f1f1f18000",
         .RX_LENGTH = 128,
         .RX_PORT = 1
     },
@@ -241,7 +241,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "01aabbddeefff1f1f1f1f1f18808",
+        .SEG_DATA = "01aabbddeefff1f1f1f1f1f18808",
         .RX_LENGTH = 128,
         .RX_PORT = 1
     },
@@ -261,7 +261,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "01aabbddeefff1f1f1f1f1f188e5",
+        .SEG_DATA = "01aabbddeefff1f1f1f1f1f188e5",
         .RX_LENGTH = 128,
         .RX_PORT = 1
     },
@@ -281,7 +281,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "01aabbddeefff1f1f1f1f1f10806",
+        .SEG_DATA = "01aabbddeefff1f1f1f1f1f10806",
         .RX_LENGTH = 128,
         .RX_PORT = 1
     },
@@ -301,7 +301,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "01aabbddeefff1f1f1f1f1f18035",
+        .SEG_DATA = "01aabbddeefff1f1f1f1f1f18035",
         .RX_LENGTH = 128,
         .RX_PORT = 1
     },
@@ -321,7 +321,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "01aabbddeefff1f1f1f1f1f188cc",
+        .SEG_DATA = "01aabbddeefff1f1f1f1f1f188cc",
         .RX_LENGTH = 128,
         .RX_PORT = 1
     },
@@ -341,7 +341,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "01aabbddeefff1f1f1f1f1f18906",
+        .SEG_DATA = "01aabbddeefff1f1f1f1f1f18906",
         .RX_LENGTH = 128,
         .RX_PORT = 1
     },
@@ -361,7 +361,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "01aabbddeefff1f1f1f1f1f18914",
+        .SEG_DATA = "01aabbddeefff1f1f1f1f1f18914",
         .RX_LENGTH = 128,
         .RX_PORT = 1
     },
@@ -381,7 +381,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "01aabbddeefff1f1f1f1f1f10842",
+        .SEG_DATA = "01aabbddeefff1f1f1f1f1f10842",
         .RX_LENGTH = 128,
         .RX_PORT = 1
     },
@@ -401,7 +401,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "01aabbddeefff1f1f1f1f1f188f7",
+        .SEG_DATA = "01aabbddeefff1f1f1f1f1f188f7",
         .RX_LENGTH = 128,
         .RX_PORT = 1
     },
@@ -421,7 +421,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "01aabbddeefff1f1f1f1f1f18863",
+        .SEG_DATA = "01aabbddeefff1f1f1f1f1f18863",
         .RX_LENGTH = 128,
         .RX_PORT = 1
     },
@@ -441,7 +441,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "01aabbddeefff1f1f1f1f1f18864",
+        .SEG_DATA = "01aabbddeefff1f1f1f1f1f18864",
         .RX_LENGTH = 128,
         .RX_PORT = 1
     },
@@ -461,7 +461,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "01aabbddeefff1f1f1f1f1f122f3",
+        .SEG_DATA = "01aabbddeefff1f1f1f1f1f122f3",
         .RX_LENGTH = 128,
         .RX_PORT = 1
     },
@@ -481,7 +481,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee81002aaa8000",
+        .SEG_DATA = "000102030405ccaabbccddee81002aaa8000",
         .RX_LENGTH = 64,
         .RX_PORT = 1
     },
@@ -504,7 +504,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee810055558000",
+        .SEG_DATA = "000102030405ccaabbccddee810055558000",
         .RX_LENGTH = 64,
         .RX_PORT = 1
     },
@@ -527,7 +527,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee810000008000",
+        .SEG_DATA = "000102030405ccaabbccddee810000008000",
         .RX_LENGTH = 64,
         .RX_PORT = 1
     },
@@ -550,7 +550,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee810010008000",
+        .SEG_DATA = "000102030405ccaabbccddee810010008000",
         .RX_LENGTH = 64,
         .RX_PORT = 1
     },
@@ -573,7 +573,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8100efff8000",
+        .SEG_DATA = "000102030405ccaabbccddee8100efff8000",
         .RX_LENGTH = 64,
         .RX_PORT = 1
     },
@@ -596,7 +596,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee810010018000",
+        .SEG_DATA = "000102030405ccaabbccddee810010018000",
         .RX_LENGTH = 64,
         .RX_PORT = 1
     },
@@ -619,7 +619,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a8555588e711111111deadbeeffffffeccbedeefaa86dd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001",
+        .SEG_DATA = "000102030405ccaabbccddee88a8555588e711111111deadbeeffffffeccbedeefaa86dd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001",
         .RX_LENGTH = 152,
         .RX_PORT = 1
     },
@@ -672,7 +672,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a8555588e711111111deadbeeffffffeccbedeefaa86dd605fffff00081115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400100000c1c1c1c1c1c1c1c1",
+        .SEG_DATA = "000102030405ccaabbccddee88a8555588e711111111deadbeeffffffeccbedeefaa86dd605fffff00081115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400100000c1c1c1c1c1c1c1c1",
         .RX_LENGTH = 184,
         .RX_PORT = 1
     },
@@ -729,7 +729,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a8555588e711118847deadbeeffffffeccbedeefaa8848aaaaafff605fffff00081115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400100000c1c1c1c1c1c1c1c1",
+        .SEG_DATA = "000102030405ccaabbccddee88a8555588e711118847deadbeeffffffeccbedeefaa8848aaaaafff605fffff00081115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400100000c1c1c1c1c1c1c1c1",
         .RX_LENGTH = 192,
         .RX_PORT = 1
     },
@@ -788,7 +788,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a8555588e711118847deadbeeffffffeccbedeefaa8848aaaaaeffbbbbbdee4505001c000000001511ef33c0a0fdfefafbfcfd1194119400100000c1c1c1c1c1c1c1c1",
+        .SEG_DATA = "000102030405ccaabbccddee88a8555588e711118847deadbeeffffffeccbedeefaa8848aaaaaeffbbbbbdee4505001c000000001511ef33c0a0fdfefafbfcfd1194119400100000c1c1c1c1c1c1c1c1",
         .RX_LENGTH = 160,
         .RX_PORT = 1
     },
@@ -837,7 +837,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a8555588e711118847deadbeeffffffeccbedeefaa8848aaaaaeffbbbbbceecccccbdd4505001c000000001511ef33c0a0fdfefafbfcfd1194119400100000c1c1c1c1c1c1c1c1",
+        .SEG_DATA = "000102030405ccaabbccddee88a8555588e711118847deadbeeffffffeccbedeefaa8848aaaaaeffbbbbbceecccccbdd4505001c000000001511ef33c0a0fdfefafbfcfd1194119400100000c1c1c1c1c1c1c1c1",
         .RX_LENGTH = 168,
         .RX_PORT = 1
     },
@@ -869,7 +869,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a8555588e711118847deadbeeffffffeccbedeefaa8847aaaaaeffbbbbbceecccccbdd4505001c000000001511ef33c0a0fdfefafbfcfd1194119400100000c1c1c1c1c1c1c1c1",
+        .SEG_DATA = "000102030405ccaabbccddee88a8555588e711118847deadbeeffffffeccbedeefaa8847aaaaaeffbbbbbceecccccbdd4505001c000000001511ef33c0a0fdfefafbfcfd1194119400100000c1c1c1c1c1c1c1c1",
         .RX_LENGTH = 168,
         .RX_PORT = 1
     },
@@ -901,7 +901,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a8555588e711118847deadbeeffffffeccbedeefaa8100ff058848aaaaaeffbbbbbceecccccbdd4505001c000000001511ef33c0a0fdfefafbfcfd1194119400100000c1c1c1c1c1c1c1c1",
+        .SEG_DATA = "000102030405ccaabbccddee88a8555588e711118847deadbeeffffffeccbedeefaa8100ff058848aaaaaeffbbbbbceecccccbdd4505001c000000001511ef33c0a0fdfefafbfcfd1194119400100000c1c1c1c1c1c1c1c1",
         .RX_LENGTH = 176,
         .RX_PORT = 1
     },
@@ -935,7 +935,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a8555588e711118847deadbeeffffffeccbedeefaa88a8ff058847aaaaaeffbbbbbceecccccbdd4505001c000000001511ef33c0a0fdfefafbfcfd1194119400100000c1c1c1c1c1c1c1c1",
+        .SEG_DATA = "000102030405ccaabbccddee88a8555588e711118847deadbeeffffffeccbedeefaa88a8ff058847aaaaaeffbbbbbceecccccbdd4505001c000000001511ef33c0a0fdfefafbfcfd1194119400100000c1c1c1c1c1c1c1c1",
         .RX_LENGTH = 176,
         .RX_PORT = 1
     },
@@ -969,7 +969,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a8555588e711111111deadbeeffffffeccbedeefaa88a8ff059999",
+        .SEG_DATA = "000102030405ccaabbccddee88a8555588e711111111deadbeeffffffeccbedeefaa88a8ff059999",
         .RX_LENGTH = 80,
         .RX_PORT = 1
     },
@@ -1003,7 +1003,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a8555588e711111111deadbeeffffffeccbedeefaa88a8ff0586dd605fffff00081115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400100000c1c1c1c1c1c1c1c1",
+        .SEG_DATA = "000102030405ccaabbccddee88a8555588e711111111deadbeeffffffeccbedeefaa88a8ff0586dd605fffff00081115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400100000c1c1c1c1c1c1c1c1",
         .RX_LENGTH = 192,
         .RX_PORT = 1
     },
@@ -1062,7 +1062,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a8555588e711111111deadbeeffffffeccbedeefaa8100ff0508004505001c000000001511ef33c0a0fdfefafbfcfd1194119400100000c1c1c1c1c1c1c1c1",
+        .SEG_DATA = "000102030405ccaabbccddee88a8555588e711111111deadbeeffffffeccbedeefaa8100ff0508004505001c000000001511ef33c0a0fdfefafbfcfd1194119400100000c1c1c1c1c1c1c1c1",
         .RX_LENGTH = 152,
         .RX_PORT = 1
     },
@@ -1111,7 +1111,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a8555588e711111111deadbeeffffffeccbedeefaa88a8ff058100123486dd605fffff00081115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400100000c1c1c1c1c1c1c1c1",
+        .SEG_DATA = "000102030405ccaabbccddee88a8555588e711111111deadbeeffffffeccbedeefaa88a8ff058100123486dd605fffff00081115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400100000c1c1c1c1c1c1c1c1",
         .RX_LENGTH = 200,
         .RX_PORT = 1
     },
@@ -1173,7 +1173,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a8555588e711111111deadbeeffffffeccbedeefaa8100ff0588a8123486dd605fffff00081115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400100000c1c1c1c1c1c1c1c1",
+        .SEG_DATA = "000102030405ccaabbccddee88a8555588e711111111deadbeeffffffeccbedeefaa8100ff0588a8123486dd605fffff00081115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400100000c1c1c1c1c1c1c1c1",
         .RX_LENGTH = 200,
         .RX_PORT = 1
     },
@@ -1234,7 +1234,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a8555588e711111111deadbeeffffffeccbedeefaa8100ff0588a8123408004505001c000000001511ef33c0a0fdfefafbfcfd1194119400100000c1c1c1c1c1c1c1c1",
+        .SEG_DATA = "000102030405ccaabbccddee88a8555588e711111111deadbeeffffffeccbedeefaa8100ff0588a8123408004505001c000000001511ef33c0a0fdfefafbfcfd1194119400100000c1c1c1c1c1c1c1c1",
         .RX_LENGTH = 160,
         .RX_PORT = 1
     },
@@ -1285,7 +1285,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a8555588e711118847deadbeeffffffeccbedeefaa8100ff0588a812348847aaaaaeffbbbbbceecccccbdd4505001c000000001511ef33c0a0fdfefafbfcfd1194119400100000c1c1c1c1c1c1c1c1",
+        .SEG_DATA = "000102030405ccaabbccddee88a8555588e711118847deadbeeffffffeccbedeefaa8100ff0588a812348847aaaaaeffbbbbbceecccccbdd4505001c000000001511ef33c0a0fdfefafbfcfd1194119400100000c1c1c1c1c1c1c1c1",
         .RX_LENGTH = 184,
         .RX_PORT = 1
     },
@@ -1321,7 +1321,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a8555588e711118847deadbeeffffffeccbedeefaa8100ff0588a812348848aaaaaeffbbbbbceecccccbdd4505001c000000001511ef33c0a0fdfefafbfcfd1194119400100000c1c1c1c1c1c1c1c1",
+        .SEG_DATA = "000102030405ccaabbccddee88a8555588e711118847deadbeeffffffeccbedeefaa8100ff0588a812348848aaaaaeffbbbbbceecccccbdd4505001c000000001511ef33c0a0fdfefafbfcfd1194119400100000c1c1c1c1c1c1c1c1",
         .RX_LENGTH = 184,
         .RX_PORT = 1
     },
@@ -1357,7 +1357,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a8555588e711111111deadbeeffffffeccbedeefaa8100ff0588a812349999",
+        .SEG_DATA = "000102030405ccaabbccddee88a8555588e711111111deadbeeffffffeccbedeefaa8100ff0588a812349999",
         .RX_LENGTH = 88,
         .RX_PORT = 1
     },
@@ -1393,7 +1393,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a8555581002aaa8000",
+        .SEG_DATA = "000102030405ccaabbccddee88a8555581002aaa8000",
         .RX_LENGTH = 64,
         .RX_PORT = 1
     },
@@ -1419,7 +1419,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8100555588a82aaa8000",
+        .SEG_DATA = "000102030405ccaabbccddee8100555588a82aaa8000",
         .RX_LENGTH = 64,
         .RX_PORT = 5
     },
@@ -1445,7 +1445,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a8555581002aaa8000",
+        .SEG_DATA = "000102030405ccaabbccddee88a8555581002aaa8000",
         .RX_LENGTH = 64,
         .RX_PORT = 5
     },
@@ -1471,7 +1471,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8100555588a82aaa8000",
+        .SEG_DATA = "000102030405ccaabbccddee8100555588a82aaa8000",
         .RX_LENGTH = 64,
         .RX_PORT = 6
     },
@@ -1497,7 +1497,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8100555588a820008000",
+        .SEG_DATA = "000102030405ccaabbccddee8100555588a820008000",
         .RX_LENGTH = 64,
         .RX_PORT = 6
     },
@@ -1524,7 +1524,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85555810020008000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85555810020008000",
         .RX_LENGTH = 64,
         .RX_PORT = 5
     },
@@ -1554,7 +1554,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a82aaa810055558000",
+        .SEG_DATA = "000102030405ccaabbccddee88a82aaa810055558000",
         .RX_LENGTH = 64,
         .RX_PORT = 1
     },
@@ -1580,7 +1580,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a800008100ffff8000",
+        .SEG_DATA = "000102030405ccaabbccddee88a800008100ffff8000",
         .RX_LENGTH = 64,
         .RX_PORT = 1
     },
@@ -1607,7 +1607,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee810000008100ffff8000",
+        .SEG_DATA = "000102030405ccaabbccddee810000008100ffff8000",
         .RX_LENGTH = 64,
         .RX_PORT = 1
     },
@@ -1634,7 +1634,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a8ffff810000008000",
+        .SEG_DATA = "000102030405ccaabbccddee88a8ffff810000008000",
         .RX_LENGTH = 64,
         .RX_PORT = 1
     },
@@ -1661,7 +1661,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a8ffff8100000088e7",
+        .SEG_DATA = "000102030405ccaabbccddee88a8ffff8100000088e7",
         .RX_LENGTH = 64,
         .RX_PORT = 5
     },
@@ -1696,7 +1696,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a8555581002aaa8000",
+        .SEG_DATA = "000102030405ccaabbccddee88a8555581002aaa8000",
         .RX_LENGTH = 64,
         .RX_PORT = 3
     },
@@ -1720,7 +1720,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a8555581002aaa8000",
+        .SEG_DATA = "000102030405ccaabbccddee88a8555581002aaa8000",
         .RX_LENGTH = 64,
         .RX_PORT = 3
     },
@@ -1744,7 +1744,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8100555581002aaa8000",
+        .SEG_DATA = "000102030405ccaabbccddee8100555581002aaa8000",
         .RX_LENGTH = 64,
         .RX_PORT = 4
     },
@@ -1767,7 +1767,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a8555581002aaa8000",
+        .SEG_DATA = "000102030405ccaabbccddee88a8555581002aaa8000",
         .RX_LENGTH = 64,
         .RX_PORT = 4
     },
@@ -1790,7 +1790,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a8555581002aaa8000",
+        .SEG_DATA = "000102030405ccaabbccddee88a8555581002aaa8000",
         .RX_LENGTH = 64,
         .RX_PORT = 7
     },
@@ -1814,7 +1814,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f000000c0a800013f57fffe",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f000000c0a800013f57fffe",
         .RX_LENGTH = 68,
         .RX_PORT = 1
     },
@@ -1846,7 +1846,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014555520000fff0000c0a800013f57fffe",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014555520000fff0000c0a800013f57fffe",
         .RX_LENGTH = 68,
         .RX_PORT = 1
     },
@@ -1879,7 +1879,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014555540200fff0000c0a800013f57fffe",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014555540200fff0000c0a800013f57fffe",
         .RX_LENGTH = 68,
         .RX_PORT = 1
     },
@@ -1912,7 +1912,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8100aaaa080045000014555540000f000000c0a800013f57fffe",
+        .SEG_DATA = "000102030405ccaabbccddee8100aaaa080045000014555540000f000000c0a800013f57fffe",
         .RX_LENGTH = 76,
         .RX_PORT = 1
     },
@@ -1947,7 +1947,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8100a000080045000014555540000f000000c0a800013f57fffe",
+        .SEG_DATA = "000102030405ccaabbccddee8100a000080045000014555540000f000000c0a800013f57fffe",
         .RX_LENGTH = 76,
         .RX_PORT = 1
     },
@@ -1983,7 +1983,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8100aaaa080045000014555520000f000000c0a800013f57fffe",
+        .SEG_DATA = "000102030405ccaabbccddee8100aaaa080045000014555520000f000000c0a800013f57fffe",
         .RX_LENGTH = 76,
         .RX_PORT = 1
     },
@@ -2019,7 +2019,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8100aaaa080045000014555540200fff0000c0a800013f57fffe",
+        .SEG_DATA = "000102030405ccaabbccddee8100aaaa080045000014555540200fff0000c0a800013f57fffe",
         .RX_LENGTH = 76,
         .RX_PORT = 1
     },
@@ -2055,7 +2055,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a8aaaa81003123080045000014555540000f000000c0a800013f57fffe",
+        .SEG_DATA = "000102030405ccaabbccddee88a8aaaa81003123080045000014555540000f000000c0a800013f57fffe",
         .RX_LENGTH = 84,
         .RX_PORT = 1
     },
@@ -2094,7 +2094,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a8aaaa81003000080045000014555540000f000000c0a800013f57fffe",
+        .SEG_DATA = "000102030405ccaabbccddee88a8aaaa81003000080045000014555540000f000000c0a800013f57fffe",
         .RX_LENGTH = 84,
         .RX_PORT = 5
     },
@@ -2136,7 +2136,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a8aaaa81003123080045000014555520000fff0000c0a800013f57fffe",
+        .SEG_DATA = "000102030405ccaabbccddee88a8aaaa81003123080045000014555520000fff0000c0a800013f57fffe",
         .RX_LENGTH = 84,
         .RX_PORT = 1
     },
@@ -2175,7 +2175,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a8aaaa81003123080045000014555540200fff0000c0a800013f57fffe",
+        .SEG_DATA = "000102030405ccaabbccddee88a8aaaa81003123080045000014555540200fff0000c0a800013f57fffe",
         .RX_LENGTH = 84,
         .RX_PORT = 1
     },
@@ -2214,7 +2214,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8847aaaaafff",
+        .SEG_DATA = "000102030405ccaabbccddee8847aaaaafff",
         .RX_LENGTH = 64,
         .RX_PORT = 1
     },
@@ -2238,7 +2238,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8848aaaaafff",
+        .SEG_DATA = "000102030405ccaabbccddee8848aaaaafff",
         .RX_LENGTH = 64,
         .RX_PORT = 1
     },
@@ -2262,7 +2262,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8847aaaaaeffbbbbbdee",
+        .SEG_DATA = "000102030405ccaabbccddee8847aaaaaeffbbbbbdee",
         .RX_LENGTH = 64,
         .RX_PORT = 1
     },
@@ -2288,7 +2288,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8847aaaaaeffbbbbbceecccccbdd",
+        .SEG_DATA = "000102030405ccaabbccddee8847aaaaaeffbbbbbceecccccbdd",
         .RX_LENGTH = 64,
         .RX_PORT = 1
     },
@@ -2316,7 +2316,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8847aaaaaeffbbbbbceecccccaddddddd9cc",
+        .SEG_DATA = "000102030405ccaabbccddee8847aaaaaeffbbbbbceecccccaddddddd9cc",
         .RX_LENGTH = 64,
         .RX_PORT = 1
     },
@@ -2346,7 +2346,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8847aaaaaeffbbbbbceecccccaddddddd8cceeeee7bb",
+        .SEG_DATA = "000102030405ccaabbccddee8847aaaaaeffbbbbbceecccccaddddddd8cceeeee7bb",
         .RX_LENGTH = 68,
         .RX_PORT = 1
     },
@@ -2378,7 +2378,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8847aaaaaeffbbbbbceecccccaddddddd8cceeeee6bbfffff5aa",
+        .SEG_DATA = "000102030405ccaabbccddee8847aaaaaeffbbbbbceecccccaddddddd8cceeeee6bbfffff5aa",
         .RX_LENGTH = 76,
         .RX_PORT = 1
     },
@@ -2412,7 +2412,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8100a5558847aaaaafff",
+        .SEG_DATA = "000102030405ccaabbccddee8100a5558847aaaaafff",
         .RX_LENGTH = 64,
         .RX_PORT = 1
     },
@@ -2439,7 +2439,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8100a5558848aaaaafff",
+        .SEG_DATA = "000102030405ccaabbccddee8100a5558848aaaaafff",
         .RX_LENGTH = 64,
         .RX_PORT = 1
     },
@@ -2466,7 +2466,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a8a55581000fff8847aaaaafff",
+        .SEG_DATA = "000102030405ccaabbccddee88a8a55581000fff8847aaaaafff",
         .RX_LENGTH = 64,
         .RX_PORT = 1
     },
@@ -2496,7 +2496,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a81101810021118848aaaaaeffbbbbbceecccccaddddddd9cc",
+        .SEG_DATA = "000102030405ccaabbccddee88a81101810021118848aaaaaeffbbbbbceecccccaddddddd9cc",
         .RX_LENGTH = 76,
         .RX_PORT = 1
     },
@@ -2532,7 +2532,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a81101810020008848aaaaaeffbbbbbceecccccaddddddd9cc",
+        .SEG_DATA = "000102030405ccaabbccddee88a81101810020008848aaaaaeffbbbbbceecccccaddddddd9cc",
         .RX_LENGTH = 76,
         .RX_PORT = 5
     },
@@ -2568,7 +2568,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a8a555810000008847aaaaafff",
+        .SEG_DATA = "000102030405ccaabbccddee88a8a555810000008847aaaaafff",
         .RX_LENGTH = 64,
         .RX_PORT = 5
     },
@@ -2602,7 +2602,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8847aaaaaeffbbbbbceecccccaddddddd8cceeeee6bb000070aa12345100",
+        .SEG_DATA = "000102030405ccaabbccddee8847aaaaaeffbbbbbceecccccaddddddd8cceeeee6bb000070aa12345100",
         .RX_LENGTH = 84,
         .RX_PORT = 1
     },
@@ -2636,7 +2636,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a81101810021118847aaaaaeffbbbbbceecccccaddddddd8cceeeee6bb000070aa12345100",
+        .SEG_DATA = "000102030405ccaabbccddee88a81101810021118847aaaaaeffbbbbbceecccccaddddddd8cceeeee6bb000070aa12345100",
         .RX_LENGTH = 100,
         .RX_PORT = 1
     },
@@ -2675,7 +2675,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8847aaaaaeffbbbbbceecccccbdd450500140000000015fd0000c0a0fdfefafbfcfd",
+        .SEG_DATA = "000102030405ccaabbccddee8847aaaaaeffbbbbbceecccccbdd450500140000000015fd0000c0a0fdfefafbfcfd",
         .RX_LENGTH = 92,
         .RX_PORT = 1
     },
@@ -2715,7 +2715,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8847aaaaaeffbbbbbceecccccbdd450500145555200015fd0000c0a0fdfefafbfcfd",
+        .SEG_DATA = "000102030405ccaabbccddee8847aaaaaeffbbbbbceecccccbdd450500145555200015fd0000c0a0fdfefafbfcfd",
         .RX_LENGTH = 92,
         .RX_PORT = 1
     },
@@ -2756,7 +2756,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8847aaaaaeffbbbbbceecccccbdd450500145555402015fd0000c0a0fdfefafbfcfd",
+        .SEG_DATA = "000102030405ccaabbccddee8847aaaaaeffbbbbbceecccccbdd450500145555402015fd0000c0a0fdfefafbfcfd",
         .RX_LENGTH = 92,
         .RX_PORT = 1
     },
@@ -2797,7 +2797,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee810071118847aaaaaeffbbbbbceecccccbdd450500140000000015fd0000c0a0fdfefafbfcfd",
+        .SEG_DATA = "000102030405ccaabbccddee810071118847aaaaaeffbbbbbceecccccbdd450500140000000015fd0000c0a0fdfefafbfcfd",
         .RX_LENGTH = 100,
         .RX_PORT = 1
     },
@@ -2840,7 +2840,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a83f0f810042228847aaaaaeffbbbbbceecccccbdd450500140000000015fd0000c0a0fdfefafbfcfd",
+        .SEG_DATA = "000102030405ccaabbccddee88a83f0f810042228847aaaaaeffbbbbbceecccccbdd450500140000000015fd0000c0a0fdfefafbfcfd",
         .RX_LENGTH = 108,
         .RX_PORT = 1
     },
@@ -2886,7 +2886,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8847aaaaaeffbbbbbceecccccbdd605fffff00001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001",
+        .SEG_DATA = "000102030405ccaabbccddee8847aaaaaeffbbbbbceecccccbdd605fffff00001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001",
         .RX_LENGTH = 132,
         .RX_PORT = 1
     },
@@ -2942,7 +2942,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001",
+        .SEG_DATA = "000102030405ccaabbccddee8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001",
         .RX_LENGTH = 140,
         .RX_PORT = 1
     },
@@ -3001,7 +3001,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001",
         .RX_LENGTH = 148,
         .RX_PORT = 1
     },
@@ -3063,7 +3063,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00002c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000100ff500100000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00002c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000100ff500100000000",
         .RX_LENGTH = 164,
         .RX_PORT = 1
     },
@@ -3120,7 +3120,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00003215f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100010000020100000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00003215f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100010000020100000000",
         .RX_LENGTH = 164,
         .RX_PORT = 1
     },
@@ -3179,7 +3179,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00002c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100013b00000100000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00002c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100013b00000100000000",
         .RX_LENGTH = 164,
         .RX_PORT = 1
     },
@@ -3237,7 +3237,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00002c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100013200000100000000aabbccdd0008eeff",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00002c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100013200000100000000aabbccdd0008eeff",
         .RX_LENGTH = 180,
         .RX_PORT = 1
     },
@@ -3299,7 +3299,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00002c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100013200ff0101010101aabbccdd0008eeff",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00002c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100013200ff0101010101aabbccdd0008eeff",
         .RX_LENGTH = 180,
         .RX_PORT = 1
     },
@@ -3356,7 +3356,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00082c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012f0000010000000020000800123456ff",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00082c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012f0000010000000020000800123456ff",
         .RX_LENGTH = 180,
         .RX_PORT = 1
     },
@@ -3417,7 +3417,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00002c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111000001000000001111222200083579",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00002c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111000001000000001111222200083579",
         .RX_LENGTH = 180,
         .RX_PORT = 1
     },
@@ -3481,7 +3481,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00002c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001060000010000000022225555123456781111111f5000003300000044",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00002c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001060000010000000022225555123456781111111f5000003300000044",
         .RX_LENGTH = 204,
         .RX_PORT = 1
     },
@@ -3544,7 +3544,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00002c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001840000010000000011112222a9112285fe0b3579",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00002c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001840000010000000011112222a9112285fe0b3579",
         .RX_LENGTH = 188,
         .RX_PORT = 1
     },
@@ -3608,7 +3608,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00002c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100013a00000100000000111122220008",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00002c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100013a00000100000000111122220008",
         .RX_LENGTH = 176,
         .RX_PORT = 1
     },
@@ -3667,7 +3667,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00002c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100010400000100000000450500140000000015110000c0a0fdfefafbfcfd",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00002c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100010400000100000000450500140000000015110000c0a0fdfefafbfcfd",
         .RX_LENGTH = 204,
         .RX_PORT = 1
     },
@@ -3741,7 +3741,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00002c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012900000100000000605fffff00001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00002c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012900000100000000605fffff00001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001",
         .RX_LENGTH = 244,
         .RX_PORT = 1
     },
@@ -3825,7 +3825,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00000015f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012c00000100000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00000015f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012c00000100000000",
         .RX_LENGTH = 164,
         .RX_PORT = 1
     },
@@ -3882,7 +3882,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00000015f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000132000201000000003b00020100000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00000015f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000132000201000000003b00020100000000",
         .RX_LENGTH = 180,
         .RX_PORT = 1
     },
@@ -3942,7 +3942,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00000015f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100018400000000000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00000015f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100018400000000000000",
         .RX_LENGTH = 164,
         .RX_PORT = 1
     },
@@ -4005,7 +4005,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00000015f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012f00020100000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00000015f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012f00020100000000",
         .RX_LENGTH = 164,
         .RX_PORT = 1
     },
@@ -4065,7 +4065,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00000015f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011100020100000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00000015f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011100020100000000",
         .RX_LENGTH = 164,
         .RX_PORT = 1
     },
@@ -4128,7 +4128,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00000015f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100010600000000000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00000015f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100010600000000000000",
         .RX_LENGTH = 164,
         .RX_PORT = 1
     },
@@ -4190,7 +4190,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00000015f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100013a00000100000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00000015f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100013a00000100000000",
         .RX_LENGTH = 164,
         .RX_PORT = 1
     },
@@ -4248,7 +4248,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00000015f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012900000100000000aabbccdd0008eeff",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00000015f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012900000100000000aabbccdd0008eeff",
         .RX_LENGTH = 180,
         .RX_PORT = 1
     },
@@ -4304,7 +4304,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00000015f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100010400ff0100000000aabbccdd0008eeff",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00000015f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100010400ff0100000000aabbccdd0008eeff",
         .RX_LENGTH = 180,
         .RX_PORT = 1
     },
@@ -4360,7 +4360,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00080015f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001990000010000000020000800123456ff",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00080015f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001990000010000000020000800123456ff",
         .RX_LENGTH = 180,
         .RX_PORT = 1
     },
@@ -4416,7 +4416,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012c000001000000003200000100000000aabbccdd0008eeff",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012c000001000000003200000100000000aabbccdd0008eeff",
         .RX_LENGTH = 196,
         .RX_PORT = 1
     },
@@ -4478,7 +4478,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012c000001000000003200ff0100000000aabbccdd0008eeff",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012c000001000000003200ff0100000000aabbccdd0008eeff",
         .RX_LENGTH = 196,
         .RX_PORT = 1
     },
@@ -4536,7 +4536,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00089915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012c000001000000002f0000010000000020000800123456ff",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00089915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012c000001000000002f0000010000000020000800123456ff",
         .RX_LENGTH = 196,
         .RX_PORT = 1
     },
@@ -4597,7 +4597,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012c0000010000000011000001000000001111222200083579",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012c0000010000000011000001000000001111222200083579",
         .RX_LENGTH = 196,
         .RX_PORT = 1
     },
@@ -4661,7 +4661,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012c00000100000000060000010000000022225555123456781111111f5000003300000044",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012c00000100000000060000010000000022225555123456781111111f5000003300000044",
         .RX_LENGTH = 220,
         .RX_PORT = 1
     },
@@ -4724,7 +4724,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012c00000100000000840000010000000011112222a9112285fe0b3579",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012c00000100000000840000010000000011112222a9112285fe0b3579",
         .RX_LENGTH = 204,
         .RX_PORT = 1
     },
@@ -4788,7 +4788,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012c000001000000003a00000100000000111122220008",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012c000001000000003a00000100000000111122220008",
         .RX_LENGTH = 192,
         .RX_PORT = 1
     },
@@ -4847,7 +4847,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012c000001000000000400000100000000450500140000000015110000c0a0fdfefafbfcfd",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012c000001000000000400000100000000450500140000000015110000c0a0fdfefafbfcfd",
         .RX_LENGTH = 220,
         .RX_PORT = 1
     },
@@ -4921,7 +4921,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012c000001000000002900000100000000605fffff00001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012c000001000000002900000100000000605fffff00001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001",
         .RX_LENGTH = 260,
         .RX_PORT = 1
     },
@@ -5005,7 +5005,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012c000001000000003b00000100000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012c000001000000003b00000100000000",
         .RX_LENGTH = 180,
         .RX_PORT = 1
     },
@@ -5063,7 +5063,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012c000001000000009900000100000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012c000001000000009900000100000000",
         .RX_LENGTH = 180,
         .RX_PORT = 1
     },
@@ -5120,7 +5120,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012c000001000000009900550100000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012c000001000000009900550100000000",
         .RX_LENGTH = 180,
         .RX_PORT = 1
     },
@@ -5177,7 +5177,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000003b00000100000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000003b00000100000000",
         .RX_LENGTH = 180,
         .RX_PORT = 1
     },
@@ -5234,7 +5234,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000002c00000100000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000002c00000100000000",
         .RX_LENGTH = 180,
         .RX_PORT = 1
     },
@@ -5291,7 +5291,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000201000000003200020100000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000201000000003200020100000000",
         .RX_LENGTH = 180,
         .RX_PORT = 1
     },
@@ -5351,7 +5351,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000000000000008400000000000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000000000000008400000000000000",
         .RX_LENGTH = 180,
         .RX_PORT = 1
     },
@@ -5414,7 +5414,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000000000000002f00020100000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000000000000002f00020100000000",
         .RX_LENGTH = 180,
         .RX_PORT = 1
     },
@@ -5474,7 +5474,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000201000000001100020100000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000201000000001100020100000000",
         .RX_LENGTH = 180,
         .RX_PORT = 1
     },
@@ -5537,7 +5537,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000000000000000600000000000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000000000000000600000000000000",
         .RX_LENGTH = 180,
         .RX_PORT = 1
     },
@@ -5599,7 +5599,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000003a00000100000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000003a00000100000000",
         .RX_LENGTH = 180,
         .RX_PORT = 1
     },
@@ -5657,7 +5657,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000002900000100000000aabbccdd0008eeff",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000002900000100000000aabbccdd0008eeff",
         .RX_LENGTH = 196,
         .RX_PORT = 1
     },
@@ -5713,7 +5713,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100019800ff01000000000400ff0100000000aabbccdd0008eeff",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100019800ff01000000000400ff0100000000aabbccdd0008eeff",
         .RX_LENGTH = 196,
         .RX_PORT = 1
     },
@@ -5769,7 +5769,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00089915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100019800000100000000970000010000000020000800123456ff",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00089915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100019800000100000000970000010000000020000800123456ff",
         .RX_LENGTH = 196,
         .RX_PORT = 1
     },
@@ -5825,7 +5825,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000002c000001000000003200000100000000aabbccdd0008eeff",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000002c000001000000003200000100000000aabbccdd0008eeff",
         .RX_LENGTH = 212,
         .RX_PORT = 1
     },
@@ -5887,7 +5887,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000002c000001000000003200ff0100000000aabbccdd0008eeff",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000002c000001000000003200ff0100000000aabbccdd0008eeff",
         .RX_LENGTH = 212,
         .RX_PORT = 1
     },
@@ -5945,7 +5945,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00089915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000002c000001000000002f0000010000000020000800123456ff",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00089915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000002c000001000000002f0000010000000020000800123456ff",
         .RX_LENGTH = 212,
         .RX_PORT = 1
     },
@@ -6006,7 +6006,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000002c0000010000000011000001000000001111222200083579",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000002c0000010000000011000001000000001111222200083579",
         .RX_LENGTH = 212,
         .RX_PORT = 1
     },
@@ -6070,7 +6070,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000002c00000100000000060000010000000022225555123456781111111f5000003300000044",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000002c00000100000000060000010000000022225555123456781111111f5000003300000044",
         .RX_LENGTH = 236,
         .RX_PORT = 1
     },
@@ -6133,7 +6133,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000002c00000100000000840000010000000011112222a9112285fe0b3579",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000002c00000100000000840000010000000011112222a9112285fe0b3579",
         .RX_LENGTH = 220,
         .RX_PORT = 1
     },
@@ -6197,7 +6197,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000002c000001000000003a00000100000000111122220008",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000002c000001000000003a00000100000000111122220008",
         .RX_LENGTH = 208,
         .RX_PORT = 1
     },
@@ -6256,7 +6256,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000002c000001000000000400000100000000450500140000000015110000c0a0fdfefafbfcfd",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000002c000001000000000400000100000000450500140000000015110000c0a0fdfefafbfcfd",
         .RX_LENGTH = 236,
         .RX_PORT = 1
     },
@@ -6330,7 +6330,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000002c000001000000002900000100000000605fffff00001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000002c000001000000002900000100000000605fffff00001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001",
         .RX_LENGTH = 276,
         .RX_PORT = 1
     },
@@ -6414,7 +6414,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000002c000001000000003b00000100000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000002c000001000000003b00000100000000",
         .RX_LENGTH = 196,
         .RX_PORT = 1
     },
@@ -6472,7 +6472,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000002c000001000000009900000100000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000002c000001000000009900000100000000",
         .RX_LENGTH = 196,
         .RX_PORT = 1
     },
@@ -6529,7 +6529,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000002c000001000000009900550100000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000002c000001000000009900550100000000",
         .RX_LENGTH = 196,
         .RX_PORT = 1
     },
@@ -6586,7 +6586,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000003b00000100000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000003b00000100000000",
         .RX_LENGTH = 196,
         .RX_PORT = 1
     },
@@ -6643,7 +6643,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000002c00000100000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000002c00000100000000",
         .RX_LENGTH = 196,
         .RX_PORT = 1
     },
@@ -6700,7 +6700,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980002010000000097000001000000003200020100000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980002010000000097000001000000003200020100000000",
         .RX_LENGTH = 196,
         .RX_PORT = 1
     },
@@ -6760,7 +6760,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000000000000097000001000000008400000000000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000000000000097000001000000008400000000000000",
         .RX_LENGTH = 196,
         .RX_PORT = 1
     },
@@ -6823,7 +6823,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000000000000097000001000000002f00020100000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000000000000097000001000000002f00020100000000",
         .RX_LENGTH = 196,
         .RX_PORT = 1
     },
@@ -6883,7 +6883,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980002010000000097000001000000001100020100000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980002010000000097000001000000001100020100000000",
         .RX_LENGTH = 196,
         .RX_PORT = 1
     },
@@ -6946,7 +6946,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000000000000097000001000000000600000000000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000000000000097000001000000000600000000000000",
         .RX_LENGTH = 196,
         .RX_PORT = 1
     },
@@ -7008,7 +7008,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000003a00000100000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000003a00000100000000",
         .RX_LENGTH = 196,
         .RX_PORT = 1
     },
@@ -7066,7 +7066,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000002900000100000000aabbccdd0008eeff",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000002900000100000000aabbccdd0008eeff",
         .RX_LENGTH = 212,
         .RX_PORT = 1
     },
@@ -7122,7 +7122,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100019800ff010000000097000001000000000400ff0100000000aabbccdd0008eeff",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100019800ff010000000097000001000000000400ff0100000000aabbccdd0008eeff",
         .RX_LENGTH = 212,
         .RX_PORT = 1
     },
@@ -7178,7 +7178,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00089915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000009700000100000000960000010000000020000800123456ff",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00089915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000009700000100000000960000010000000020000800123456ff",
         .RX_LENGTH = 212,
         .RX_PORT = 1
     },
@@ -7234,7 +7234,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000002c000001000000003200000100000000aabbccdd0008eeff",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000002c000001000000003200000100000000aabbccdd0008eeff",
         .RX_LENGTH = 228,
         .RX_PORT = 1
     },
@@ -7296,7 +7296,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000002c000001000000003200ff0100000000aabbccdd0008eeff",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000002c000001000000003200ff0100000000aabbccdd0008eeff",
         .RX_LENGTH = 228,
         .RX_PORT = 1
     },
@@ -7354,7 +7354,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00089915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000002c000001000000002f0000010000000020000800123456ff",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00089915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000002c000001000000002f0000010000000020000800123456ff",
         .RX_LENGTH = 228,
         .RX_PORT = 1
     },
@@ -7415,7 +7415,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000002c0000010000000011000001000000001111222200083579",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000002c0000010000000011000001000000001111222200083579",
         .RX_LENGTH = 228,
         .RX_PORT = 1
     },
@@ -7479,7 +7479,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000002c00000100000000060000010000000022225555123456781111111f5000003300000044",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000002c00000100000000060000010000000022225555123456781111111f5000003300000044",
         .RX_LENGTH = 252,
         .RX_PORT = 1
     },
@@ -7542,7 +7542,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000002c00000100000000840000010000000011112222a9112285fe0b3579",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000002c00000100000000840000010000000011112222a9112285fe0b3579",
         .RX_LENGTH = 236,
         .RX_PORT = 1
     },
@@ -7606,7 +7606,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000002c000001000000003a00000100000000111122220008",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000002c000001000000003a00000100000000111122220008",
         .RX_LENGTH = 224,
         .RX_PORT = 1
     },
@@ -7665,7 +7665,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000002c000001000000000400000100000000450500140000000015110000c0a0fdfefafbfcfd",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000002c000001000000000400000100000000450500140000000015110000c0a0fdfefafbfcfd",
         .RX_LENGTH = 252,
         .RX_PORT = 1
     },
@@ -7739,7 +7739,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000002c000001000000002900000100000000605fffff00001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000002c000001000000002900000100000000605fffff00001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001",
         .RX_LENGTH = 292,
         .RX_PORT = 1
     },
@@ -7823,7 +7823,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000002c000001000000003b00000100000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000002c000001000000003b00000100000000",
         .RX_LENGTH = 212,
         .RX_PORT = 1
     },
@@ -7881,7 +7881,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000002c000001000000009900000100000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000002c000001000000009900000100000000",
         .RX_LENGTH = 212,
         .RX_PORT = 1
     },
@@ -7938,7 +7938,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000002c000001000000009900550100000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000002c000001000000009900550100000000",
         .RX_LENGTH = 212,
         .RX_PORT = 1
     },
@@ -7995,7 +7995,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100019800000100000000970000010000000096000001000000003b00000100000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100019800000100000000970000010000000096000001000000003b00000100000000",
         .RX_LENGTH = 212,
         .RX_PORT = 1
     },
@@ -8052,7 +8052,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100019800020100000000970000010000000096000001000000003200020100000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100019800020100000000970000010000000096000001000000003200020100000000",
         .RX_LENGTH = 212,
         .RX_PORT = 1
     },
@@ -8112,7 +8112,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100019800000000000000970000010000000096000001000000008400000000000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100019800000000000000970000010000000096000001000000008400000000000000",
         .RX_LENGTH = 212,
         .RX_PORT = 1
     },
@@ -8175,7 +8175,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100019800000000000000970000010000000096000001000000002f00020100000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100019800000000000000970000010000000096000001000000002f00020100000000",
         .RX_LENGTH = 212,
         .RX_PORT = 1
     },
@@ -8235,7 +8235,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100019800020100000000970000010000000096000001000000001100020100000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100019800020100000000970000010000000096000001000000001100020100000000",
         .RX_LENGTH = 212,
         .RX_PORT = 1
     },
@@ -8298,7 +8298,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100019800000000000000970000010000000096000001000000000600000000000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100019800000000000000970000010000000096000001000000000600000000000000",
         .RX_LENGTH = 212,
         .RX_PORT = 1
     },
@@ -8360,7 +8360,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100019800000100000000970000010000000096000001000000003a00000100000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100019800000100000000970000010000000096000001000000003a00000100000000",
         .RX_LENGTH = 212,
         .RX_PORT = 1
     },
@@ -8418,7 +8418,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100019800000100000000970000010000000096000001000000002900000100000000aabbccdd0008eeff",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100019800000100000000970000010000000096000001000000002900000100000000aabbccdd0008eeff",
         .RX_LENGTH = 228,
         .RX_PORT = 1
     },
@@ -8474,7 +8474,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100019800ff0100000000970000010000000096000001000000000400ff0100000000aabbccdd0008eeff",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100019800ff0100000000970000010000000096000001000000000400ff0100000000aabbccdd0008eeff",
         .RX_LENGTH = 228,
         .RX_PORT = 1
     },
@@ -8530,7 +8530,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00089915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000009600000100000000960000010000000020000800123456ff",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00089915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000009600000100000000960000010000000020000800123456ff",
         .RX_LENGTH = 228,
         .RX_PORT = 1
     },
@@ -8586,7 +8586,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe1194119400083579",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe1194119400083579",
         .RX_LENGTH = 84,
         .RX_PORT = 1
     },
@@ -8629,7 +8629,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee81005a5a080045000014000000000f11abdac0a800013f57fffe119411940008f1ff",
+        .SEG_DATA = "000102030405ccaabbccddee81005a5a080045000014000000000f11abdac0a800013f57fffe119411940008f1ff",
         .RX_LENGTH = 92,
         .RX_PORT = 1
     },
@@ -8675,7 +8675,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85a5a810074bb080045000014000000000f110000c0a800013f57fffe1194119400080001",
+        .SEG_DATA = "000102030405ccaabbccddee88a85a5a810074bb080045000014000000000f110000c0a800013f57fffe1194119400080001",
         .RX_LENGTH = 100,
         .RX_PORT = 1
     },
@@ -8724,7 +8724,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee86dd607fffff00001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400083579",
+        .SEG_DATA = "000102030405ccaabbccddee86dd607fffff00001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400083579",
         .RX_LENGTH = 124,
         .RX_PORT = 1
     },
@@ -8777,7 +8777,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee81005a5a86dd6070000100001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400083579",
+        .SEG_DATA = "000102030405ccaabbccddee81005a5a86dd6070000100001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400083579",
         .RX_LENGTH = 132,
         .RX_PORT = 1
     },
@@ -8833,7 +8833,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85a5a810074bb86dd6070000100001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400083579",
+        .SEG_DATA = "000102030405ccaabbccddee88a85a5a810074bb86dd6070000100001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400083579",
         .RX_LENGTH = 140,
         .RX_PORT = 1
     },
@@ -8892,7 +8892,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8847aaaaaeffbbbbbceecccccbdd450500140000000015110000c0a0fdfefafbfcfd1194119400083579",
+        .SEG_DATA = "000102030405ccaabbccddee8847aaaaaeffbbbbbceecccccbdd450500140000000015110000c0a0fdfefafbfcfd1194119400083579",
         .RX_LENGTH = 108,
         .RX_PORT = 1
     },
@@ -8943,7 +8943,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee810071118847aaaaaeffbbbbbceecccccbdd450500140000000015110000c0a0fdfefafbfcfd1194119400083579",
+        .SEG_DATA = "000102030405ccaabbccddee810071118847aaaaaeffbbbbbceecccccbdd450500140000000015110000c0a0fdfefafbfcfd1194119400083579",
         .RX_LENGTH = 116,
         .RX_PORT = 1
     },
@@ -8997,7 +8997,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a83f0f810042228847aaaaaeffbbbbbceecccccbdd450500140000000015110000c0a0fdfefafbfcfd1194119400083579",
+        .SEG_DATA = "000102030405ccaabbccddee88a83f0f810042228847aaaaaeffbbbbbceecccccbdd450500140000000015110000c0a0fdfefafbfcfd1194119400083579",
         .RX_LENGTH = 124,
         .RX_PORT = 1
     },
@@ -9054,7 +9054,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8847aaaaaeffbbbbbceecccccbdd605fffff00001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400083579",
+        .SEG_DATA = "000102030405ccaabbccddee8847aaaaaeffbbbbbceecccccbdd605fffff00001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400083579",
         .RX_LENGTH = 148,
         .RX_PORT = 1
     },
@@ -9115,7 +9115,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400083579",
+        .SEG_DATA = "000102030405ccaabbccddee8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400083579",
         .RX_LENGTH = 156,
         .RX_PORT = 1
     },
@@ -9179,7 +9179,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400083579",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400083579",
         .RX_LENGTH = 164,
         .RX_PORT = 1
     },
@@ -9246,7 +9246,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee08004500001c000000000f11abd2c0a800013f57fffe11941194001035790102030405060708",
+        .SEG_DATA = "000102030405ccaabbccddee08004500001c000000000f11abd2c0a800013f57fffe11941194001035790102030405060708",
         .RX_LENGTH = 100,
         .RX_PORT = 1
     },
@@ -9289,7 +9289,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee81001222080045000078000000000f11ab76c0a800013f57fffe11941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+        .SEG_DATA = "000102030405ccaabbccddee81001222080045000078000000000f11ab76c0a800013f57fffe11941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
         .RX_LENGTH = 292,
         .RX_PORT = 1
     },
@@ -9335,7 +9335,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a8122281004333080045000078000000000f11ab76c0a800013f57fffe11941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+        .SEG_DATA = "000102030405ccaabbccddee88a8122281004333080045000078000000000f11ab76c0a800013f57fffe11941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
         .RX_LENGTH = 300,
         .RX_PORT = 1
     },
@@ -9384,7 +9384,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8847aaaaafff45050078000000001511eed7c0a0fdfefafbfcfd11941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+        .SEG_DATA = "000102030405ccaabbccddee8847aaaaafff45050078000000001511eed7c0a0fdfefafbfcfd11941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
         .RX_LENGTH = 292,
         .RX_PORT = 1
     },
@@ -9431,7 +9431,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8847aaaaaeffbbbbbfff45050078000000001511eed7c0a0fdfefafbfcfd11941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+        .SEG_DATA = "000102030405ccaabbccddee8847aaaaaeffbbbbbfff45050078000000001511eed7c0a0fdfefafbfcfd11941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
         .RX_LENGTH = 300,
         .RX_PORT = 1
     },
@@ -9480,7 +9480,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8847aaaaaeffbbbbbeffcccccfff45050078000000001511eed7c0a0fdfefafbfcfd11941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+        .SEG_DATA = "000102030405ccaabbccddee8847aaaaaeffbbbbbeffcccccfff45050078000000001511eed7c0a0fdfefafbfcfd11941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
         .RX_LENGTH = 308,
         .RX_PORT = 1
     },
@@ -9531,7 +9531,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8847aaaaaeffbbbbbeffccccceffdddddfff45050078000000001511eed7c0a0fdfefafbfcfd11941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+        .SEG_DATA = "000102030405ccaabbccddee8847aaaaaeffbbbbbeffccccceffdddddfff45050078000000001511eed7c0a0fdfefafbfcfd11941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
         .RX_LENGTH = 316,
         .RX_PORT = 1
     },
@@ -9584,7 +9584,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee810012228847aaaaafff45050078000000001511eed7c0a0fdfefafbfcfd11941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+        .SEG_DATA = "000102030405ccaabbccddee810012228847aaaaafff45050078000000001511eed7c0a0fdfefafbfcfd11941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
         .RX_LENGTH = 300,
         .RX_PORT = 1
     },
@@ -9634,7 +9634,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee810012228847aaaaaeffbbbbbfff45050078000000001511eed7c0a0fdfefafbfcfd11941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+        .SEG_DATA = "000102030405ccaabbccddee810012228847aaaaaeffbbbbbfff45050078000000001511eed7c0a0fdfefafbfcfd11941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
         .RX_LENGTH = 308,
         .RX_PORT = 1
     },
@@ -9686,7 +9686,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee810012228847aaaaaeffbbbbbeffcccccfff45050078000000001511eed7c0a0fdfefafbfcfd11941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+        .SEG_DATA = "000102030405ccaabbccddee810012228847aaaaaeffbbbbbeffcccccfff45050078000000001511eed7c0a0fdfefafbfcfd11941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
         .RX_LENGTH = 316,
         .RX_PORT = 1
     },
@@ -9740,7 +9740,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee810012228847aaaaaeffbbbbbeffccccceffdddddfff45050078000000001511eed7c0a0fdfefafbfcfd11941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+        .SEG_DATA = "000102030405ccaabbccddee810012228847aaaaaeffbbbbbeffccccceffdddddfff45050078000000001511eed7c0a0fdfefafbfcfd11941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
         .RX_LENGTH = 324,
         .RX_PORT = 1
     },
@@ -9795,7 +9795,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a81222810043338847aaaaafff45050078000000001511eed7c0a0fdfefafbfcfd11941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+        .SEG_DATA = "000102030405ccaabbccddee88a81222810043338847aaaaafff45050078000000001511eed7c0a0fdfefafbfcfd11941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
         .RX_LENGTH = 308,
         .RX_PORT = 1
     },
@@ -9848,7 +9848,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a81222810043338847aaaaaeffbbbbbfff45050078000000001511eed7c0a0fdfefafbfcfd11941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+        .SEG_DATA = "000102030405ccaabbccddee88a81222810043338847aaaaaeffbbbbbfff45050078000000001511eed7c0a0fdfefafbfcfd11941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
         .RX_LENGTH = 316,
         .RX_PORT = 1
     },
@@ -9903,7 +9903,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a81222810043338847aaaaaeffbbbbbeffcccccfff45050078000000001511eed7c0a0fdfefafbfcfd11941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+        .SEG_DATA = "000102030405ccaabbccddee88a81222810043338847aaaaaeffbbbbbeffcccccfff45050078000000001511eed7c0a0fdfefafbfcfd11941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
         .RX_LENGTH = 324,
         .RX_PORT = 1
     },
@@ -9960,7 +9960,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a81222810043338847aaaaaeffbbbbbeffccccceffdddddfff45050078000000001511eed7c0a0fdfefafbfcfd11941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+        .SEG_DATA = "000102030405ccaabbccddee88a81222810043338847aaaaaeffbbbbbeffccccceffdddddfff45050078000000001511eed7c0a0fdfefafbfcfd11941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
         .RX_LENGTH = 332,
         .RX_PORT = 1
     },
@@ -10018,7 +10018,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee86dd607fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+        .SEG_DATA = "000102030405ccaabbccddee86dd607fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
         .RX_LENGTH = 324,
         .RX_PORT = 1
     },
@@ -10071,7 +10071,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8100122286dd607fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+        .SEG_DATA = "000102030405ccaabbccddee8100122286dd607fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
         .RX_LENGTH = 332,
         .RX_PORT = 1
     },
@@ -10127,7 +10127,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a812228100433386dd607fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+        .SEG_DATA = "000102030405ccaabbccddee88a812228100433386dd607fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
         .RX_LENGTH = 340,
         .RX_PORT = 1
     },
@@ -10186,7 +10186,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8847aaaaafff605fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+        .SEG_DATA = "000102030405ccaabbccddee8847aaaaafff605fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
         .RX_LENGTH = 332,
         .RX_PORT = 1
     },
@@ -10243,7 +10243,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8847aaaaaeffbbbbbfff605fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+        .SEG_DATA = "000102030405ccaabbccddee8847aaaaaeffbbbbbfff605fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
         .RX_LENGTH = 340,
         .RX_PORT = 1
     },
@@ -10302,7 +10302,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8847aaaaaeffbbbbbeffcccccfff605fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+        .SEG_DATA = "000102030405ccaabbccddee8847aaaaaeffbbbbbeffcccccfff605fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
         .RX_LENGTH = 348,
         .RX_PORT = 1
     },
@@ -10363,7 +10363,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8847aaaaaeffbbbbbeffccccceffdddddfff605fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+        .SEG_DATA = "000102030405ccaabbccddee8847aaaaaeffbbbbbeffccccceffdddddfff605fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
         .RX_LENGTH = 356,
         .RX_PORT = 1
     },
@@ -10426,7 +10426,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee810012228847aaaaafff605fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+        .SEG_DATA = "000102030405ccaabbccddee810012228847aaaaafff605fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
         .RX_LENGTH = 340,
         .RX_PORT = 1
     },
@@ -10486,7 +10486,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee810012228847aaaaaeffbbbbbfff605fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+        .SEG_DATA = "000102030405ccaabbccddee810012228847aaaaaeffbbbbbfff605fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
         .RX_LENGTH = 348,
         .RX_PORT = 1
     },
@@ -10548,7 +10548,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee810012228847aaaaaeffbbbbbeffcccccfff605fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+        .SEG_DATA = "000102030405ccaabbccddee810012228847aaaaaeffbbbbbeffcccccfff605fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
         .RX_LENGTH = 356,
         .RX_PORT = 1
     },
@@ -10612,7 +10612,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee810012228847aaaaaeffbbbbbeffccccceffdddddfff605fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+        .SEG_DATA = "000102030405ccaabbccddee810012228847aaaaaeffbbbbbeffccccceffdddddfff605fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
         .RX_LENGTH = 364,
         .RX_PORT = 1
     },
@@ -10677,7 +10677,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a81222810043338847aaaaafff605fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+        .SEG_DATA = "000102030405ccaabbccddee88a81222810043338847aaaaafff605fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
         .RX_LENGTH = 348,
         .RX_PORT = 1
     },
@@ -10740,7 +10740,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a81222810043338847aaaaaeffbbbbbfff605fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+        .SEG_DATA = "000102030405ccaabbccddee88a81222810043338847aaaaaeffbbbbbfff605fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
         .RX_LENGTH = 356,
         .RX_PORT = 1
     },
@@ -10805,7 +10805,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a81222810043338847aaaaaeffbbbbbeffcccccfff605fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+        .SEG_DATA = "000102030405ccaabbccddee88a81222810043338847aaaaaeffbbbbbeffcccccfff605fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
         .RX_LENGTH = 364,
         .RX_PORT = 1
     },
@@ -10872,7 +10872,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a81222810043338847aaaaaeffbbbbbeffccccceffdddddfff605fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+        .SEG_DATA = "000102030405ccaabbccddee88a81222810043338847aaaaaeffbbbbbeffccccceffdddddfff605fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
         .RX_LENGTH = 372,
         .RX_PORT = 1
     },
@@ -10940,7 +10940,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f060000c0a800013f57fffe22225555123456781111111f00000033abcd0044",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f060000c0a800013f57fffe22225555123456781111111f00000033abcd0044",
         .RX_LENGTH = 108,
         .RX_PORT = 1
     },
@@ -10977,7 +10977,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee81005a5a080045000014000000000f06abe5c0a800013f57fffe21215252123456781111111f00000033f1ff0044",
+        .SEG_DATA = "000102030405ccaabbccddee81005a5a080045000014000000000f06abe5c0a800013f57fffe21215252123456781111111f00000033f1ff0044",
         .RX_LENGTH = 116,
         .RX_PORT = 1
     },
@@ -11017,7 +11017,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85a5a810074bb080045000014000000000f060000c0a800013f57fffe11223344123456781111111f0000003300010044",
+        .SEG_DATA = "000102030405ccaabbccddee88a85a5a810074bb080045000014000000000f060000c0a800013f57fffe11223344123456781111111f0000003300010044",
         .RX_LENGTH = 124,
         .RX_PORT = 1
     },
@@ -11060,7 +11060,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee86dd607fffff00000615f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000122225555123456781111111f0000003300000044",
+        .SEG_DATA = "000102030405ccaabbccddee86dd607fffff00000615f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000122225555123456781111111f0000003300000044",
         .RX_LENGTH = 148,
         .RX_PORT = 1
     },
@@ -11107,7 +11107,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee81005a5a86dd6070000100000615f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000121215252123456781111111f00000033f1ff0044",
+        .SEG_DATA = "000102030405ccaabbccddee81005a5a86dd6070000100000615f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000121215252123456781111111f00000033f1ff0044",
         .RX_LENGTH = 156,
         .RX_PORT = 1
     },
@@ -11157,7 +11157,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85a5a810074bb86dd6070000100000615f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111223344123456781111111f00000033ffff0044",
+        .SEG_DATA = "000102030405ccaabbccddee88a85a5a810074bb86dd6070000100000615f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111223344123456781111111f00000033ffff0044",
         .RX_LENGTH = 164,
         .RX_PORT = 1
     },
@@ -11210,7 +11210,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe2222555500083579",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe2222555500083579",
         .RX_LENGTH = 84,
         .RX_PORT = 1
     },
@@ -11248,7 +11248,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee81005a5a080045000014000000000f11abdac0a800013f57fffe101088880008f1ff",
+        .SEG_DATA = "000102030405ccaabbccddee81005a5a080045000014000000000f11abdac0a800013f57fffe101088880008f1ff",
         .RX_LENGTH = 92,
         .RX_PORT = 1
     },
@@ -11289,7 +11289,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85a5a810074bb080045000014000000000f110000c0a800013f57fffe1122334400080001",
+        .SEG_DATA = "000102030405ccaabbccddee88a85a5a810074bb080045000014000000000f110000c0a800013f57fffe1122334400080001",
         .RX_LENGTH = 100,
         .RX_PORT = 1
     },
@@ -11333,7 +11333,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee86dd607fffff00001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012222555500083579",
+        .SEG_DATA = "000102030405ccaabbccddee86dd607fffff00001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012222555500083579",
         .RX_LENGTH = 124,
         .RX_PORT = 1
     },
@@ -11381,7 +11381,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee81005a5a86dd6070000100001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012121525200083579",
+        .SEG_DATA = "000102030405ccaabbccddee81005a5a86dd6070000100001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012121525200083579",
         .RX_LENGTH = 132,
         .RX_PORT = 1
     },
@@ -11432,7 +11432,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85a5a810074bb86dd6070000100001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011122334400083579",
+        .SEG_DATA = "000102030405ccaabbccddee88a85a5a810074bb86dd6070000100001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011122334400083579",
         .RX_LENGTH = 140,
         .RX_PORT = 1
     },
@@ -11486,7 +11486,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f840000c0a800013f57fffe43219876a9112285fe0b3579",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f840000c0a800013f57fffe43219876a9112285fe0b3579",
         .RX_LENGTH = 92,
         .RX_PORT = 1
     },
@@ -11524,7 +11524,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee81005a5a080045000014000000000f84ab67c0a800013f57fffe1010888870708080f1f1f1f1",
+        .SEG_DATA = "000102030405ccaabbccddee81005a5a080045000014000000000f84ab67c0a800013f57fffe1010888870708080f1f1f1f1",
         .RX_LENGTH = 100,
         .RX_PORT = 1
     },
@@ -11565,7 +11565,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85a5a810074bb080045000014000000000f840000c0a800013f57fffe11223344112111310f0c0b0d",
+        .SEG_DATA = "000102030405ccaabbccddee88a85a5a810074bb080045000014000000000f840000c0a800013f57fffe11223344112111310f0c0b0d",
         .RX_LENGTH = 108,
         .RX_PORT = 1
     },
@@ -11609,7 +11609,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee86dd6070000100008415f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111223344112111310f0c0b0d",
+        .SEG_DATA = "000102030405ccaabbccddee86dd6070000100008415f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111223344112111310f0c0b0d",
         .RX_LENGTH = 132,
         .RX_PORT = 1
     },
@@ -11657,7 +11657,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee81005aaa86dd6070000100008415f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111223344112111310f0c0b0d",
+        .SEG_DATA = "000102030405ccaabbccddee81005aaa86dd6070000100008415f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111223344112111310f0c0b0d",
         .RX_LENGTH = 140,
         .RX_PORT = 1
     },
@@ -11708,7 +11708,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa810074bb86dd6070000100008415f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111223344112111310f0c0b0d",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa810074bb86dd6070000100008415f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111223344112111310f0c0b0d",
         .RX_LENGTH = 148,
         .RX_PORT = 1
     },
@@ -11762,7 +11762,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000028000000000f04cd9fc1a2b3e41234567845000014001c00000f00abbec0a800013f57fffe",
+        .SEG_DATA = "000102030405ccaabbccddee080045000028000000000f04cd9fc1a2b3e41234567845000014001c00000f00abbec0a800013f57fffe",
         .RX_LENGTH = 108,
         .RX_PORT = 1
     },
@@ -11810,7 +11810,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000028000000000f04cd9fc1a2b3e41234567845000014001c00000f06abbec0a800013f57fffe22225555123456781111111f00000033abcd0044",
+        .SEG_DATA = "000102030405ccaabbccddee080045000028000000000f04cd9fc1a2b3e41234567845000014001c00000f06abbec0a800013f57fffe22225555123456781111111f00000033abcd0044",
         .RX_LENGTH = 148,
         .RX_PORT = 1
     },
@@ -11858,7 +11858,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000028000000000f04cd9fc1a2b3e41234567845000014001c00000f84abbec0a800013f57fffe22225555123456781111111f00000033abcd0044",
+        .SEG_DATA = "000102030405ccaabbccddee080045000028000000000f04cd9fc1a2b3e41234567845000014001c00000f84abbec0a800013f57fffe22225555123456781111111f00000033abcd0044",
         .RX_LENGTH = 148,
         .RX_PORT = 1
     },
@@ -11906,7 +11906,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000038000000000f29cd6ac1a2b3e41234567860700001002c8415f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001",
+        .SEG_DATA = "000102030405ccaabbccddee080045000038000000000f29cd6ac1a2b3e41234567860700001002c8415f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001",
         .RX_LENGTH = 148,
         .RX_PORT = 1
     },
@@ -11964,7 +11964,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000028000000000f01cda2c1a2b3e41234567845000014001c00000f00abbec0a800013f57fffe",
+        .SEG_DATA = "000102030405ccaabbccddee080045000028000000000f01cda2c1a2b3e41234567845000014001c00000f00abbec0a800013f57fffe",
         .RX_LENGTH = 108,
         .RX_PORT = 1
     },
@@ -11997,7 +11997,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000028000000000f02cda1c1a2b3e41234567845000014001c00000f00abbec0a800013f57fffe",
+        .SEG_DATA = "000102030405ccaabbccddee080045000028000000000f02cda1c1a2b3e41234567845000014001c00000f00abbec0a800013f57fffe",
         .RX_LENGTH = 108,
         .RX_PORT = 1
     },
@@ -12029,7 +12029,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000028000000000f2fcd74c1a2b3e41234567845000014001c00000f00abbec0a800013f57fffe",
+        .SEG_DATA = "000102030405ccaabbccddee080045000028000000000f2fcd74c1a2b3e41234567845000014001c00000f00abbec0a800013f57fffe",
         .RX_LENGTH = 108,
         .RX_PORT = 1
     },
@@ -12064,7 +12064,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000028000000010f32cd70c1a2b3e41234567845000014001c00000f00abbec0a800013f57fffe",
+        .SEG_DATA = "000102030405ccaabbccddee080045000028000000010f32cd70c1a2b3e41234567845000014001c00000f00abbec0a800013f57fffe",
         .RX_LENGTH = 108,
         .RX_PORT = 1
     },
@@ -12098,7 +12098,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000028000000000f32cd71c1a2b3e41234567845000014001c00000f00abbec0a800013f57fffe",
+        .SEG_DATA = "000102030405ccaabbccddee080045000028000000000f32cd71c1a2b3e41234567845000014001c00000f00abbec0a800013f57fffe",
         .RX_LENGTH = 108,
         .RX_PORT = 1
     },
@@ -12135,7 +12135,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa810074bb86dd6070000100140415f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000145000014001c00000f00abbec0a800013f57fffe",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa810074bb86dd6070000100140415f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000145000014001c00000f00abbec0a800013f57fffe",
         .RX_LENGTH = 164,
         .RX_PORT = 1
     },
@@ -12199,7 +12199,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa810074bb86dd6070000100242915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000160700001002c8415f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa810074bb86dd6070000100242915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000160700001002c8415f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001",
         .RX_LENGTH = 204,
         .RX_PORT = 1
     },
@@ -12273,7 +12273,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa810074bb86dd6070000100242915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000160700001002c0415f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000145000014001c00000f00abbec0a800013f57fffe",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa810074bb86dd6070000100242915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000160700001002c0415f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000145000014001c00000f00abbec0a800013f57fffe",
         .RX_LENGTH = 244,
         .RX_PORT = 1
     },
@@ -12343,7 +12343,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa810074bb86dd6070000100242915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000160700001002c3b15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa810074bb86dd6070000100242915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000160700001002c3b15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001",
         .RX_LENGTH = 204,
         .RX_PORT = 1
     },
@@ -12417,7 +12417,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa810074bb86dd6070000100242915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000160700001002c0615f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa810074bb86dd6070000100242915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000160700001002c0615f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001",
         .RX_LENGTH = 204,
         .RX_PORT = 1
     },
@@ -12491,7 +12491,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa810074bb86dd6070000100143a15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000145000014001c00000f00abbec0a800013f57fffe",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa810074bb86dd6070000100143a15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000145000014001c00000f00abbec0a800013f57fffe",
         .RX_LENGTH = 164,
         .RX_PORT = 1
     },
@@ -12540,7 +12540,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa810074bb86dd6070000100142f15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000145000014001c00000f00abbec0a800013f57fffe",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa810074bb86dd6070000100142f15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000145000014001c00000f00abbec0a800013f57fffe",
         .RX_LENGTH = 164,
         .RX_PORT = 1
     },
@@ -12591,7 +12591,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa810074bb86dd6070000100143b15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000145000014001c00000f00abbec0a800013f57fffe",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa810074bb86dd6070000100143b15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000145000014001c00000f00abbec0a800013f57fffe",
         .RX_LENGTH = 164,
         .RX_PORT = 1
     },
@@ -12640,7 +12640,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "0001020304051f1f1f1f1f1f8000",
+        .SEG_DATA = "0001020304051f1f1f1f1f1f8000",
         .RX_LENGTH = 64,
         .RX_PORT = 2
     },
@@ -12684,7 +12684,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "0001020304051f1f1f1f1f1f8000",
+        .SEG_DATA = "0001020304051f1f1f1f1f1f8000",
         .RX_LENGTH = 66,
         .RX_PORT = 2
     },
@@ -12729,7 +12729,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "0001020304051f1f1f1f1f1f8000",
+        .SEG_DATA = "0001020304051f1f1f1f1f1f8000",
         .RX_LENGTH = 78,
         .RX_PORT = 2
     },
@@ -12780,7 +12780,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "0001020304051f1f1f1f1f1f8000",
+        .SEG_DATA = "0001020304051f1f1f1f1f1f8000",
         .RX_LENGTH = 82,
         .RX_PORT = 2
     },
@@ -12833,7 +12833,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "0001020304051f1f1f1f1f1f8000",
+        .SEG_DATA = "0001020304051f1f1f1f1f1f8000",
         .RX_LENGTH = 128,
         .RX_PORT = 2
     },
@@ -12898,7 +12898,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f000000c0a800013f57fffe",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f000000c0a800013f57fffe",
         .RX_LENGTH = 68,
         .RX_PORT = 2
     },
@@ -12946,7 +12946,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000028000000000f02cda1c1a2b3e41234567845000014001c00000f00abbec0a800013f57fffe",
+        .SEG_DATA = "000102030405ccaabbccddee080045000028000000000f02cda1c1a2b3e41234567845000014001c00000f00abbec0a800013f57fffe",
         .RX_LENGTH = 128,
         .RX_PORT = 2
     },
@@ -13015,7 +13015,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f000000c0a800013f57fffe",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f000000c0a800013f57fffe",
         .RX_LENGTH = 128,
         .RX_PORT = 2
     },
@@ -13084,7 +13084,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe2222555500083579",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe2222555500083579",
         .RX_LENGTH = 128,
         .RX_PORT = 2
     },
@@ -13159,7 +13159,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe2222555500083579",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe2222555500083579",
         .RX_LENGTH = 84,
         .RX_PORT = 2
     },
@@ -13217,7 +13217,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f060000c0a800013f57fffe22225555123456781111111f50000033abcd0044",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f060000c0a800013f57fffe22225555123456781111111f50000033abcd0044",
         .RX_LENGTH = 64,
         .RX_PORT = 2
     },
@@ -13258,7 +13258,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f060000c0a800013f57fffe22225555123456781111111f50000033abcd0044",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f060000c0a800013f57fffe22225555123456781111111f50000033abcd0044",
         .RX_LENGTH = 66,
         .RX_PORT = 2
     },
@@ -13300,7 +13300,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f060000c0a800013f57fffe22225555123456781111111f50000033abcd0044",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f060000c0a800013f57fffe22225555123456781111111f50000033abcd0044",
         .RX_LENGTH = 68,
         .RX_PORT = 2
     },
@@ -13343,7 +13343,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f060000c0a800013f57fffe22225555123456781111111f50000033abcd0044",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f060000c0a800013f57fffe22225555123456781111111f50000033abcd0044",
         .RX_LENGTH = 164,
         .RX_PORT = 2
     },
@@ -13417,7 +13417,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f840000c0a800013f57fffe43219876a9112285fe0b3579",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f840000c0a800013f57fffe43219876a9112285fe0b3579",
         .RX_LENGTH = 64,
         .RX_PORT = 2
     },
@@ -13463,7 +13463,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f840000c0a800013f57fffe43219876a9112285fe0b3579",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f840000c0a800013f57fffe43219876a9112285fe0b3579",
         .RX_LENGTH = 66,
         .RX_PORT = 2
     },
@@ -13510,7 +13510,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f840000c0a800013f57fffe43219876a9112285fe0b3579",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f840000c0a800013f57fffe43219876a9112285fe0b3579",
         .RX_LENGTH = 128,
         .RX_PORT = 2
     },
@@ -13585,7 +13585,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f010000c1a2b3e412345678",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f010000c1a2b3e412345678",
         .RX_LENGTH = 128,
         .RX_PORT = 2
     },
@@ -13655,7 +13655,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee86dd655aaaaa0000fd15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001",
+        .SEG_DATA = "000102030405ccaabbccddee86dd655aaaaa0000fd15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001",
         .RX_LENGTH = 76,
         .RX_PORT = 2
     },
@@ -13707,7 +13707,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee86dd655aaaaa0000fd15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001",
+        .SEG_DATA = "000102030405ccaabbccddee86dd655aaaaa0000fd15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001",
         .RX_LENGTH = 128,
         .RX_PORT = 2
     },
@@ -13776,7 +13776,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee86dd607fffff00000615f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000122225555123456781111111f5000003300040044",
+        .SEG_DATA = "000102030405ccaabbccddee86dd607fffff00000615f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000122225555123456781111111f5000003300040044",
         .RX_LENGTH = 110,
         .RX_PORT = 2
     },
@@ -13840,7 +13840,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee86dd607fffff00000615f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000122225555123456781111111f5000003300040044",
+        .SEG_DATA = "000102030405ccaabbccddee86dd607fffff00000615f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000122225555123456781111111f5000003300040044",
         .RX_LENGTH = 138,
         .RX_PORT = 2
     },
@@ -13914,7 +13914,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee86dd607fffff00001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012222555500083579",
+        .SEG_DATA = "000102030405ccaabbccddee86dd607fffff00001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012222555500083579",
         .RX_LENGTH = 104,
         .RX_PORT = 2
     },
@@ -13982,7 +13982,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee86dd607fffff00001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012222555500083579",
+        .SEG_DATA = "000102030405ccaabbccddee86dd607fffff00001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012222555500083579",
         .RX_LENGTH = 130,
         .RX_PORT = 2
     },
@@ -14057,7 +14057,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee86dd6070000100008415f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111223344112111310f0c0b0d",
+        .SEG_DATA = "000102030405ccaabbccddee86dd6070000100008415f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111223344112111310f0c0b0d",
         .RX_LENGTH = 122,
         .RX_PORT = 2
     },
@@ -14132,7 +14132,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa810074bb86dd6070000100003a15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa810074bb86dd6070000100003a15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001",
         .RX_LENGTH = 128,
         .RX_PORT = 2
     },
@@ -14208,7 +14208,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee86dd605fffff00002c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100013a00000100000000",
+        .SEG_DATA = "000102030405ccaabbccddee86dd605fffff00002c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100013a00000100000000",
         .RX_LENGTH = 128,
         .RX_PORT = 2
     },
@@ -14280,7 +14280,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee86dd6070000100002c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100019900ff01000000001122334400080000",
+        .SEG_DATA = "000102030405ccaabbccddee86dd6070000100002c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100019900ff01000000001122334400080000",
         .RX_LENGTH = 166,
         .RX_PORT = 2
     },
@@ -14350,7 +14350,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe1195119500083579",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe1195119500083579",
         .RX_LENGTH = 84,
         .RX_PORT = 1
     },
@@ -14393,7 +14393,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe1196119600083579",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe1196119600083579",
         .RX_LENGTH = 84,
         .RX_PORT = 1
     },
@@ -14436,7 +14436,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe1197119700083579",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe1197119700083579",
         .RX_LENGTH = 84,
         .RX_PORT = 1
     },
@@ -14479,7 +14479,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe1198119800083579",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe1198119800083579",
         .RX_LENGTH = 84,
         .RX_PORT = 1
     },
@@ -14522,7 +14522,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe1199119900083579",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe1199119900083579",
         .RX_LENGTH = 84,
         .RX_PORT = 1
     },
@@ -14565,7 +14565,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe119a119a00083579",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe119a119a00083579",
         .RX_LENGTH = 84,
         .RX_PORT = 1
     },
@@ -14608,7 +14608,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe119b119b00083579",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe119b119b00083579",
         .RX_LENGTH = 84,
         .RX_PORT = 1
     },
@@ -14651,7 +14651,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe119c119c00083579",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe119c119c00083579",
         .RX_LENGTH = 84,
         .RX_PORT = 1
     },
@@ -14694,7 +14694,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe119d119d00083579",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe119d119d00083579",
         .RX_LENGTH = 84,
         .RX_PORT = 1
     },
@@ -14737,7 +14737,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe119e119e00083579",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe119e119e00083579",
         .RX_LENGTH = 84,
         .RX_PORT = 1
     },
@@ -14780,7 +14780,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe119f119f00083579",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe119f119f00083579",
         .RX_LENGTH = 84,
         .RX_PORT = 1
     },
@@ -14823,7 +14823,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11a011a000083579",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11a011a000083579",
         .RX_LENGTH = 84,
         .RX_PORT = 1
     },
@@ -14866,7 +14866,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11a111a100083579",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11a111a100083579",
         .RX_LENGTH = 84,
         .RX_PORT = 1
     },
@@ -14909,7 +14909,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11a211a200083579",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11a211a200083579",
         .RX_LENGTH = 84,
         .RX_PORT = 1
     },
@@ -14952,7 +14952,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11a311a300083579",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11a311a300083579",
         .RX_LENGTH = 84,
         .RX_PORT = 1
     },
@@ -14995,7 +14995,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11a411a400083579",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11a411a400083579",
         .RX_LENGTH = 84,
         .RX_PORT = 1
     },
@@ -15038,7 +15038,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11a511a500083579",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11a511a500083579",
         .RX_LENGTH = 84,
         .RX_PORT = 1
     },
@@ -15081,7 +15081,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11a611a600083579",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11a611a600083579",
         .RX_LENGTH = 84,
         .RX_PORT = 1
     },
@@ -15124,7 +15124,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11a711a700083579",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11a711a700083579",
         .RX_LENGTH = 84,
         .RX_PORT = 1
     },
@@ -15167,7 +15167,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11a811a800083579",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11a811a800083579",
         .RX_LENGTH = 84,
         .RX_PORT = 1
     },
@@ -15210,7 +15210,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11a911a900083579",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11a911a900083579",
         .RX_LENGTH = 84,
         .RX_PORT = 1
     },
@@ -15253,7 +15253,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11aa11aa00083579",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11aa11aa00083579",
         .RX_LENGTH = 84,
         .RX_PORT = 1
     },
@@ -15296,7 +15296,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11ab11ab00083579",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11ab11ab00083579",
         .RX_LENGTH = 84,
         .RX_PORT = 1
     },
@@ -15339,7 +15339,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11ac11ac00083579",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11ac11ac00083579",
         .RX_LENGTH = 84,
         .RX_PORT = 1
     },
@@ -15382,7 +15382,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11ad11ad00083579",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11ad11ad00083579",
         .RX_LENGTH = 84,
         .RX_PORT = 1
     },
@@ -15425,7 +15425,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11ae11ae00083579",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11ae11ae00083579",
         .RX_LENGTH = 84,
         .RX_PORT = 1
     },
@@ -15468,7 +15468,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11af11af00083579",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11af11af00083579",
         .RX_LENGTH = 84,
         .RX_PORT = 1
     },
@@ -15511,7 +15511,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11b011b000083579",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11b011b000083579",
         .RX_LENGTH = 84,
         .RX_PORT = 1
     },
@@ -15554,7 +15554,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11b111b100083579",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11b111b100083579",
         .RX_LENGTH = 84,
         .RX_PORT = 1
     },
@@ -15597,7 +15597,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11b211b200083579",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11b211b200083579",
         .RX_LENGTH = 84,
         .RX_PORT = 1
     },
@@ -15640,7 +15640,7 @@ struct TestData passing_tests[] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11b311b300083579",
+        .SEG_DATA = "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11b311b300083579",
         .RX_LENGTH = 84,
         .RX_PORT = 1
     },
@@ -15691,7 +15691,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a8555588e711118000",
+        .SEG_DATA = "000102030405ccaabbccddee88a8555588e711118000",
         .RX_LENGTH = 64,
         .RX_PORT = 1
     },
@@ -15721,7 +15721,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a8555588e711111111deadbeeffffffeccbedeefaa86dd605fffff00003b15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001",
+        .SEG_DATA = "000102030405ccaabbccddee88a8555588e711111111deadbeeffffffeccbedeefaa86dd605fffff00003b15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001",
         .RX_LENGTH = 152,
         .RX_PORT = 1
     },
@@ -15775,7 +15775,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a8555588e711111111deadbeeffffffeccbedeefaa0800450500140000000015990000c0a0fdfefafbfcfd",
+        .SEG_DATA = "000102030405ccaabbccddee88a8555588e711111111deadbeeffffffeccbedeefaa0800450500140000000015990000c0a0fdfefafbfcfd",
         .RX_LENGTH = 112,
         .RX_PORT = 1
     },
@@ -15819,7 +15819,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a8ffff8100000088e7",
+        .SEG_DATA = "000102030405ccaabbccddee88a8ffff8100000088e7",
         .RX_LENGTH = 64,
         .RX_PORT = 1
     },
@@ -15852,7 +15852,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee86dd655aaaaa0000fd15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001",
+        .SEG_DATA = "000102030405ccaabbccddee86dd655aaaaa0000fd15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001",
         .RX_LENGTH = 108,
         .RX_PORT = 1
     },
@@ -15894,7 +15894,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee81007aaa86dd655aaaaa0000fd15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001",
+        .SEG_DATA = "000102030405ccaabbccddee81007aaa86dd655aaaaa0000fd15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001",
         .RX_LENGTH = 116,
         .RX_PORT = 1
     },
@@ -15939,7 +15939,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a8155581005fff86dd655aaaaa0000fd15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001",
+        .SEG_DATA = "000102030405ccaabbccddee88a8155581005fff86dd655aaaaa0000fd15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001",
         .RX_LENGTH = 124,
         .RX_PORT = 1
     },
@@ -15987,7 +15987,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a815558100500086dd655aaaaa0000fd15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001",
+        .SEG_DATA = "000102030405ccaabbccddee88a815558100500086dd655aaaaa0000fd15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001",
         .RX_LENGTH = 124,
         .RX_PORT = 5
     },
@@ -16036,7 +16036,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00002c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100010000000100000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00002c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100010000000100000000",
         .RX_LENGTH = 164,
         .RX_PORT = 1
     },
@@ -16093,7 +16093,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00002b15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100010000020100000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00002b15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100010000020100000000",
         .RX_LENGTH = 164,
         .RX_PORT = 1
     },
@@ -16149,7 +16149,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00003c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100010000020100000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00003c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100010000020100000000",
         .RX_LENGTH = 164,
         .RX_PORT = 1
     },
@@ -16205,7 +16205,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00003315f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100010000020100000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00003315f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100010000020100000000",
         .RX_LENGTH = 164,
         .RX_PORT = 1
     },
@@ -16261,7 +16261,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00002c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100010000000000000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00002c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100010000000000000000",
         .RX_LENGTH = 164,
         .RX_PORT = 1
     },
@@ -16318,7 +16318,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00000015f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100013bff500100000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00000015f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100013bff500100000000",
         .RX_LENGTH = 164,
         .RX_PORT = 1
     },
@@ -16374,7 +16374,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100019800000100000000970000010000000096000001000000002c00000100000000",
+        .SEG_DATA = "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100019800000100000000970000010000000096000001000000002c00000100000000",
         .RX_LENGTH = 212,
         .RX_PORT = 1
     },
@@ -16431,7 +16431,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000064000000000f11ab8ac0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f40",
+        .SEG_DATA = "000102030405ccaabbccddee080045000064000000000f11ab8ac0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f40",
         .RX_LENGTH = 246,
         .RX_PORT = 1
     },
@@ -16448,7 +16448,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000047000000000f11aba7c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff4500001c000000000f11abd2c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c1",
+        .SEG_DATA = "000102030405ccaabbccddee080045000047000000000f11aba7c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff4500001c000000000f11abd2c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c1",
         .RX_LENGTH = 188,
         .RX_PORT = 1
     },
@@ -16481,7 +16481,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000047000020000f118ba7c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff4500001c000020000f118bd2c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c1",
+        .SEG_DATA = "000102030405ccaabbccddee080045000047000020000f118ba7c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff4500001c000020000f118bd2c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c1",
         .RX_LENGTH = 188,
         .RX_PORT = 1
     },
@@ -16514,7 +16514,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000047000040000f116ba7c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff4500001c000040000f116bd2c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c1",
+        .SEG_DATA = "000102030405ccaabbccddee080045000047000040000f116ba7c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff4500001c000040000f116bd2c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c1",
         .RX_LENGTH = 188,
         .RX_PORT = 1
     },
@@ -16547,7 +16547,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee81001222080045000047000000000f11aba7c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff4500001c000000000f11abd2c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c1",
+        .SEG_DATA = "000102030405ccaabbccddee81001222080045000047000000000f11aba7c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff4500001c000000000f11abd2c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c1",
         .RX_LENGTH = 196,
         .RX_PORT = 1
     },
@@ -16580,7 +16580,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a8122281006555080045000047000000000f11aba7c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff4500001c000000000f11abd2c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c1",
+        .SEG_DATA = "000102030405ccaabbccddee88a8122281006555080045000047000000000f11aba7c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff4500001c000000000f11abd2c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c1",
         .RX_LENGTH = 204,
         .RX_PORT = 1
     },
@@ -16613,7 +16613,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8847aaaaafff45000047000000000f11aba7c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff4500001c000000000f11abd2c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c1",
+        .SEG_DATA = "000102030405ccaabbccddee8847aaaaafff45000047000000000f11aba7c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff4500001c000000000f11abd2c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c1",
         .RX_LENGTH = 196,
         .RX_PORT = 1
     },
@@ -16646,7 +16646,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8847aaaaaeffbbbbbfff45000047000000000f11aba7c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff4500001c000000000f11abd2c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c1",
+        .SEG_DATA = "000102030405ccaabbccddee8847aaaaaeffbbbbbfff45000047000000000f11aba7c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff4500001c000000000f11abd2c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c1",
         .RX_LENGTH = 204,
         .RX_PORT = 1
     },
@@ -16679,7 +16679,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8847aaaaaeffbbbbbeffcccccfff45000047000000000f11aba7c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff4500001c000000000f11abd2c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c1",
+        .SEG_DATA = "000102030405ccaabbccddee8847aaaaaeffbbbbbeffcccccfff45000047000000000f11aba7c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff4500001c000000000f11abd2c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c1",
         .RX_LENGTH = 212,
         .RX_PORT = 1
     },
@@ -16712,7 +16712,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8847aaaaaeffbbbbbeffccccceffdddddfff45000047000000000f11aba7c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff4500001c000000000f11abd2c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c1",
+        .SEG_DATA = "000102030405ccaabbccddee8847aaaaaeffbbbbbeffccccceffdddddfff45000047000000000f11aba7c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff4500001c000000000f11abd2c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c1",
         .RX_LENGTH = 220,
         .RX_PORT = 1
     },
@@ -16745,7 +16745,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8100a5558847aaaaaeffbbbbbeffccccceffdddddfff45000047000000000f11aba7c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff4500001c000000000f11abd2c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c1",
+        .SEG_DATA = "000102030405ccaabbccddee8100a5558847aaaaaeffbbbbbeffccccceffdddddfff45000047000000000f11aba7c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff4500001c000000000f11abd2c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c1",
         .RX_LENGTH = 228,
         .RX_PORT = 1
     },
@@ -16778,7 +16778,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a8a555810012228847aaaaaeffbbbbbeffccccceffdddddfff45000047000000000f11aba7c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff4500001c000000000f11abd2c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c1",
+        .SEG_DATA = "000102030405ccaabbccddee88a8a555810012228847aaaaaeffbbbbbeffccccceffdddddfff45000047000000000f11aba7c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff4500001c000000000f11abd2c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c1",
         .RX_LENGTH = 236,
         .RX_PORT = 1
     },
@@ -16811,7 +16811,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee86dd605fffff00471115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1200086dd123456ff605fffff00081115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1",
+        .SEG_DATA = "000102030405ccaabbccddee86dd605fffff00471115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1200086dd123456ff605fffff00081115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1",
         .RX_LENGTH = 268,
         .RX_PORT = 1
     },
@@ -16854,7 +16854,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8100522286dd605fffff00471115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1200086dd123456ff605fffff00081115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1",
+        .SEG_DATA = "000102030405ccaabbccddee8100522286dd605fffff00471115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1200086dd123456ff605fffff00081115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1",
         .RX_LENGTH = 276,
         .RX_PORT = 1
     },
@@ -16897,7 +16897,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a812228100a55586dd605fffff00471115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1200086dd123456ff605fffff00081115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1",
+        .SEG_DATA = "000102030405ccaabbccddee88a812228100a55586dd605fffff00471115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1200086dd123456ff605fffff00081115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1",
         .RX_LENGTH = 284,
         .RX_PORT = 1
     },
@@ -16940,7 +16940,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8847aaaaafff605fffff00471115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1200086dd123456ff605fffff00081115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1",
+        .SEG_DATA = "000102030405ccaabbccddee8847aaaaafff605fffff00471115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1200086dd123456ff605fffff00081115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1",
         .RX_LENGTH = 276,
         .RX_PORT = 1
     },
@@ -16983,7 +16983,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8847aaaaaeffbbbbbfff605fffff00471115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1200086dd123456ff605fffff00081115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1",
+        .SEG_DATA = "000102030405ccaabbccddee8847aaaaaeffbbbbbfff605fffff00471115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1200086dd123456ff605fffff00081115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1",
         .RX_LENGTH = 284,
         .RX_PORT = 1
     },
@@ -17026,7 +17026,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8847aaaaaeffbbbbbeffcccccfff605fffff00471115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1200086dd123456ff605fffff00081115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1",
+        .SEG_DATA = "000102030405ccaabbccddee8847aaaaaeffbbbbbeffcccccfff605fffff00471115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1200086dd123456ff605fffff00081115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1",
         .RX_LENGTH = 292,
         .RX_PORT = 1
     },
@@ -17069,7 +17069,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8847aaaaaeffbbbbbeffccccceffdddddfff605fffff00471115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1200086dd123456ff605fffff00081115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1",
+        .SEG_DATA = "000102030405ccaabbccddee8847aaaaaeffbbbbbeffccccceffdddddfff605fffff00471115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1200086dd123456ff605fffff00081115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1",
         .RX_LENGTH = 300,
         .RX_PORT = 1
     },
@@ -17112,7 +17112,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee810012228847aaaaaeffbbbbbeffccccceffdddddfff605fffff00471115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1200086dd123456ff605fffff00081115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1",
+        .SEG_DATA = "000102030405ccaabbccddee810012228847aaaaaeffbbbbbeffccccceffdddddfff605fffff00471115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1200086dd123456ff605fffff00081115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1",
         .RX_LENGTH = 308,
         .RX_PORT = 1
     },
@@ -17155,7 +17155,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a81222810003338847aaaaaeffbbbbbeffccccceffdddddfff605fffff00471115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1200086dd123456ff605fffff00081115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1",
+        .SEG_DATA = "000102030405ccaabbccddee88a81222810003338847aaaaaeffbbbbbeffccccceffdddddfff605fffff00471115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1200086dd123456ff605fffff00081115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1",
         .RX_LENGTH = 316,
         .RX_PORT = 1
     },
@@ -17198,7 +17198,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee86dd4500004b000000000f11aba3c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff45000014000000000f06abe5c0a800013f57fffe22225555123456781111111f0000003300000044",
+        .SEG_DATA = "000102030405ccaabbccddee86dd4500004b000000000f11aba3c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff45000014000000000f06abe5c0a800013f57fffe22225555123456781111111f0000003300000044",
         .RX_LENGTH = 196,
         .RX_PORT = 1
     },
@@ -17231,7 +17231,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee8100a5558847aaaaaeffbbbbbeffccccceffdddddfff4500004b000000000f11aba3c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff45000014000000000f06abe5c0a800013f57fffe22225555123456781111111f0000003300000044",
+        .SEG_DATA = "000102030405ccaabbccddee8100a5558847aaaaaeffbbbbbeffccccceffdddddfff4500004b000000000f11aba3c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff45000014000000000f06abe5c0a800013f57fffe22225555123456781111111f0000003300000044",
         .RX_LENGTH = 236,
         .RX_PORT = 1
     },
@@ -17264,7 +17264,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a8a555810076668847aaaaaeffbbbbbeffccccceffdddddfff4500004b000000000f11aba3c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff45000014000000000f06abe5c0a800013f57fffe22225555123456781111111f0000003300000044",
+        .SEG_DATA = "000102030405ccaabbccddee88a8a555810076668847aaaaaeffbbbbbeffccccceffdddddfff4500004b000000000f11aba3c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff45000014000000000f06abe5c0a800013f57fffe22225555123456781111111f0000003300000044",
         .RX_LENGTH = 244,
         .RX_PORT = 1
     },
@@ -17297,7 +17297,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee86dd605fffff004b1115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1200086dd123456ff605fffff00000615f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000122225555123456781111111f0000003300000044",
+        .SEG_DATA = "000102030405ccaabbccddee86dd605fffff004b1115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1200086dd123456ff605fffff00000615f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000122225555123456781111111f0000003300000044",
         .RX_LENGTH = 276,
         .RX_PORT = 1
     },
@@ -17340,7 +17340,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee810012228847aaaaaeffbbbbbeffccccceffdddddfff605fffff004b1115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1200086dd123456ff605fffff00000615f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000122225555123456781111111f0000003300000044",
+        .SEG_DATA = "000102030405ccaabbccddee810012228847aaaaaeffbbbbbeffccccceffdddddfff605fffff004b1115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1200086dd123456ff605fffff00000615f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000122225555123456781111111f0000003300000044",
         .RX_LENGTH = 316,
         .RX_PORT = 1
     },
@@ -17383,7 +17383,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a81222810043338847aaaaaeffbbbbbeffccccceffdddddfff605fffff004b1115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1200086dd123456ff605fffff00000615f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000122225555123456781111111f0000003300000044",
+        .SEG_DATA = "000102030405ccaabbccddee88a81222810043338847aaaaaeffbbbbbeffccccceffdddddfff605fffff004b1115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1200086dd123456ff605fffff00000615f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000122225555123456781111111f0000003300000044",
         .RX_LENGTH = 324,
         .RX_PORT = 1
     },
@@ -17426,7 +17426,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a81222810043338847aaaaaeffbbbbbeffccccceffdddddfff45000057000000000f11ab97c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c1200086dd123456ff605fffff00008415f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012222555512345678abcdef12",
+        .SEG_DATA = "000102030405ccaabbccddee88a81222810043338847aaaaaeffbbbbbeffccccceffdddddfff45000057000000000f11ab97c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c1200086dd123456ff605fffff00008415f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012222555512345678abcdef12",
         .RX_LENGTH = 268,
         .RX_PORT = 1
     },
@@ -17469,7 +17469,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee88a8a555810076668847aaaaaeffbbbbbeffccccceffdddddfff605fffff002f1115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c120000800123456ff45000014000000000f84ab67c0a800013f57fffe2222555512345678abcdef12",
+        .SEG_DATA = "000102030405ccaabbccddee88a8a555810076668847aaaaaeffbbbbbeffccccceffdddddfff605fffff002f1115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c120000800123456ff45000014000000000f84ab67c0a800013f57fffe2222555512345678abcdef12",
         .RX_LENGTH = 268,
         .RX_PORT = 1
     },
@@ -17502,7 +17502,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000028000000000f04abd3c0a800013f57fffe45000014001cabe715000f00c0a800013f57fffe",
+        .SEG_DATA = "000102030405ccaabbccddee080045000028000000000f04abd3c0a800013f57fffe45000014001cabe715000f00c0a800013f57fffe",
         .RX_LENGTH = 108,
         .RX_PORT = 1
     },
@@ -17544,7 +17544,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000028000020000f048bd3c0a800013f57fffe45000014001cabe715000f00c0a800013f57fffe",
+        .SEG_DATA = "000102030405ccaabbccddee080045000028000020000f048bd3c0a800013f57fffe45000014001cabe715000f00c0a800013f57fffe",
         .RX_LENGTH = 108,
         .RX_PORT = 1
     },
@@ -17587,7 +17587,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "000102030405ccaabbccddee080045000028000028880f04834bc0a800013f57fffe45000014001cabe715000f00c0a800013f57fffe",
+        .SEG_DATA = "000102030405ccaabbccddee080045000028000028880f04834bc0a800013f57fffe45000014001cabe715000f00c0a800013f57fffe",
         .RX_LENGTH = 108,
         .RX_PORT = 1
     },
@@ -17614,7 +17614,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
 {
     .in =
     {
-        .RX_DATA = (fm_byte *) "01aabbddeefff1f1f1f1f1f188cc",
+        .SEG_DATA = "01aabbddeefff1f1f1f1f1f188cc",
         .RX_LENGTH = 64,
         .RX_PORT = 1
     },
