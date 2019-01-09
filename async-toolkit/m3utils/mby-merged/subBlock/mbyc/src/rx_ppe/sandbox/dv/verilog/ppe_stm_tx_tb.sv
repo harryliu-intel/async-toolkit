@@ -68,8 +68,14 @@ always_ff @(posedge cclk) begin //{
     end //}
 end //}
 
-egr_ppe_stm_if      egr_ppe_stm_if0();
-egr_ppe_stm_if      egr_ppe_stm_if1();
+tx_ppe_mod_if       tx_ppe_mod_if0();
+tx_ppe_mod_if       tx_ppe_mod_if1();
+tx_ppe_mod_if       tx_ppe_mod_if2();
+tx_ppe_mod_if       tx_ppe_mod_if3();
+tx_ppe_negh_if      tx_ppe_negh_if0();
+tx_ppe_negh_if      tx_ppe_negh_if1();
+tx_ppe_negh_if      tx_ppe_negh_if2();
+tx_ppe_negh_if      tx_ppe_negh_if3();
 egr_mc_table_if     mc_table_if0_0();
 egr_mc_table_if     mc_table_if0_1();
 egr_mc_table_if     mc_table_if1_0();
@@ -858,27 +864,36 @@ always @(posedge cclk) begin //{
 end //}
 
 tx_ppe_dr tx_ppe (
-    .cclk                   (cclk),
-    .cclk_cnt               (cclk_cnt),
+    .cclk           (cclk),
+    .cclk_cnt       (cclk_cnt),
 
-    .egr_ppe_stm_if0        (egr_ppe_stm_if0),
-    .egr_ppe_stm_if1        (egr_ppe_stm_if1)
+    .tx_ppe_mod_if0 (tx_ppe_mod_if0),
+    .tx_ppe_mod_if1 (tx_ppe_mod_if1),
+    .tx_ppe_mod_if2 (tx_ppe_mod_if2),
+    .tx_ppe_mod_if3 (tx_ppe_mod_if3)
 );
 
 ppe_stm_tx_top  ppe_stm_tx_top (
-    .cclk                   (cclk),
-    .reset                  (reset),
+    .cclk               (cclk),
+    .reset              (reset),
 
-    .i_ibus_ctrl            (99'b0),
-    .o_ibus_resp            (),
+    .i_ibus_ctrl        (99'b0),
+    .o_ibus_resp        (),
 
-    .egr_ppe_stm_if0        (egr_ppe_stm_if0),
-    .egr_ppe_stm_if1        (egr_ppe_stm_if1),
+    .tx_ppe_mod_if0     (tx_ppe_mod_if0),
+    .tx_ppe_mod_if1     (tx_ppe_mod_if1),
+    .tx_ppe_mod_if2     (tx_ppe_mod_if2),
+    .tx_ppe_mod_if3     (tx_ppe_mod_if3),
 
-    .mc_table_if0_0         (mc_table_if0_0),
-    .mc_table_if0_1         (mc_table_if0_1),
-    .mc_table_if1_0         (mc_table_if1_0),
-    .mc_table_if1_1         (mc_table_if1_1)
+    .tx_ppe_negh_if0    (tx_ppe_negh_if0),
+    .tx_ppe_negh_if1    (tx_ppe_negh_if1),
+    .tx_ppe_negh_if2    (tx_ppe_negh_if2),
+    .tx_ppe_negh_if3    (tx_ppe_negh_if3),
+
+    .mc_table_if0_0     (mc_table_if0_0),
+    .mc_table_if0_1     (mc_table_if0_1),
+    .mc_table_if1_0     (mc_table_if1_0),
+    .mc_table_if1_1     (mc_table_if1_1)
 );
 
 endmodule
