@@ -169,8 +169,6 @@ static fm_status receivePacket
         txi2mod.PM_ERR        = rxs2rxo.PM_ERR;
         txi2mod.PM_ERR_NONSOP = rxs2rxo.PM_ERR_NONSOP;
         txi2mod.QOS_L3_DSCP   = rxs2rxo.QOS_L3_DSCP;
-        txi2mod.RX_DATA       = rxs2rxo.RX_DATA;
-        txi2mod.RX_LENGTH     = rxs2rxo.RX_LENGTH;
         txi2mod.SAF_ERROR     = rxs2rxo.SAF_ERROR;
         txi2mod.TAIL_CSUM_LEN = rxs2rxo.TAIL_CSUM_LEN;
         txi2mod.TX_DROP       = rxs2rxo.TX_DROP;
@@ -179,10 +177,16 @@ static fm_status receivePacket
 
         // Output struct:
         mbyTxStatsToTxMac txs2mac;
-        txs2mac.TX_DATA = packet; //points at provided buffer
+        // TODO why is this commented out in the struct? REVISIT
+        //txs2mac.TX_DATA = packet; //points at provided buffer
 
         // Call RX pipeline:
-        TxPipeline(tx_top_map, tx_top_map_w, shm_map, &txi2mod, &txs2mac, MBY_MAX_DATA_LEN);
+        // TODO what do we do here with rx_data and tx_data?
+        varchar_builder_t txd_builder;
+        varchar_builder_init(&txd_builder, tx_data, malloc, free);
+
+        TxPipeline(tx_top_map, tx_top_map_w, shm_map, rx_data,
+                   &txi2mod, &txs2mac, &txd_builder);
 
         // Populate output:
         *port   = txs2mac.TX_PORT;

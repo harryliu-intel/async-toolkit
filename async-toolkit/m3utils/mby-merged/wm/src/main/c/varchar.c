@@ -13,8 +13,8 @@ static const unsigned int defsiz = 10;
 
 varchar_builder_t *
 init_varchar_builder(
-          varchar_builder_t *res,                                        
-          varchar_t     *tgt,  
+          varchar_builder_t *res,
+          varchar_t     *tgt,
           alloc_func_t   alloc,
           dealloc_func_t free         )
 {
