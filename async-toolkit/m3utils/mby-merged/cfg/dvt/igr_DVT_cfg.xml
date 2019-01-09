@@ -3,7 +3,7 @@
     -model_root        => "$ENV{MODEL_ROOT}", # used to create projects softlink
     -eclipsespace      => "/tmp/$ENV{USER}/dvt_eclipsespace",
     -workspace         => "/tmp/$ENV{USER}/$ENV{MODEL_ROOT}/dvt_workspace",
-    -waiversfile       => "$ENV{MODEL_ROOT}/cfg/dvt/igr_waivers.xml",
+    -waiversfile       => "$ENV{MODEL_ROOT}/cfg/dvt/mby_waivers.xml",
     -options           => [
                           "-lang vlog", # Required: Specifies your project nature is Verilog/SystemVerilog
                           "-perspective VLOG", # Startup with this perspective
@@ -21,6 +21,10 @@
                           "+dvt_file_compile_timeout+120", # 120sec timeout
                           "+dvt_build_log_to_file+false",
                           "+define+SHDV_DISABLE_SAOLA",
+                          # Required workaround for -liblist bug in dvt 18.01.39
+                          "+dvt_prepend_init",
+                          '+dvt_skip_directive+"-liblist *"',
+                          "+dvt_init+vcs.vlogan",
                           ],
     -build_postinclude => [
                           # Here you enter options you want at the bottom of your .build files
