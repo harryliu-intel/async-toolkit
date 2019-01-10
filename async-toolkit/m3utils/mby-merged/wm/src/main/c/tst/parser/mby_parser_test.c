@@ -392,8 +392,8 @@ void prepareData
     fm_uint32 rx_length = test_struct.in.RX_LENGTH;
     fm_byte * rx_packet = (fm_byte *)mac2par->SEG_DATA;
 
-    // Scan in SEG_DATA from string:
-    const char *  pkt_str_ptr = (char *) test_struct.in.SEG_DATA;
+    // Scan in RX_DATA from string:
+    const char *  pkt_str_ptr = (char *) test_struct.in.RX_DATA;
     const fm_uint pkt_str_len = (fm_uint) strlen(pkt_str_ptr);
 
     for (fm_uint i = 0; i < pkt_str_len/2; i++)
