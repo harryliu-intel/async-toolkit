@@ -12,11 +12,10 @@ varchar_get(const varchar_t *v, unsigned int i)
 static const unsigned int defsiz = 10;
 
 varchar_builder_t *
-init_varchar_builder(
-          varchar_builder_t *res,
-          varchar_t     *tgt,
-          alloc_func_t   alloc,
-          dealloc_func_t free         )
+varchar_builder_init(varchar_builder_t *res,
+                     varchar_t         *tgt,
+                     alloc_func_t       alloc,
+                     dealloc_func_t     free)
 {
   res->buf = (varchar_base_t *)alloc(defsiz);
   res->bufsiz = defsiz;
