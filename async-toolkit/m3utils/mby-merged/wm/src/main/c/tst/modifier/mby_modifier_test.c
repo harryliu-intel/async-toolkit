@@ -23,12 +23,14 @@ typedef void(*run_on_simple_modifier_setup_fn)
 (
     mby_ppe_modify_map * const mod_map,
     mby_shm_map        * const shm_map,
-    mbyTxInToModifier  * const tx_in
+    mbyTxInToModifier  * const tx_in,
+    varchar_t          * const rx_data
 );
 
 typedef int(*run_on_simple_modifier_check_fn)
 (
-    mbyModifierToTxStats const * const modif_out
+    mbyModifierToTxStats const * const modif_out,
+    varchar_t            const * const tx_data
 );
 
 static void pass(const char* name)
@@ -44,8 +46,7 @@ static void fail(const char* name)
 static void allocMem
 (
     mby_ppe_modify_map **mod_map,
-    mby_shm_map        **shm_map,
-    fm_byte            **tx_data
+    mby_shm_map        **shm_map
 )
 {
     *mod_map = calloc(1, sizeof(mby_ppe_modify_map));
@@ -61,55 +62,50 @@ static void allocMem
         printf("Could not allocate memory for shm_map -- exiting!\n");
         exit(-1);
     }
-
-    *tx_data = calloc(MBY_MAX_PACKET_SIZE, sizeof(fm_byte));
-    if (*tx_data == NULL)
-    {
-        printf("Could not allocate memory for tx_data -- exiting!\n");
-        exit(-1);
-    }
 }
 
 static void freeMem
 (
     mby_ppe_modify_map * const mod_map,
     mby_shm_map        * const shm_map,
-    fm_byte            * const tx_data
+    varchar_builder_t  * const txd_builder
 )
 {
     free(mod_map);
     free(shm_map);
-    free(tx_data);
+    free(txd_builder->buf);
 }
 
 static void simple_modifier_no_operation_test_setup
 (
     mby_ppe_modify_map * const mod_map,
     mby_shm_map        * const shm_map,
-    mbyTxInToModifier  * const tx_in
+    mbyTxInToModifier  * const tx_in,
+    varchar_t          * const rx_data
 )
 {
-    fm_byte test_no  = 0;
-    tx_in->RX_DATA   = modifier_tests[test_no].rx_data;
-    tx_in->RX_LENGTH = modifier_tests[test_no].rx_len;
+    fm_byte test_no = 0;
+    rx_data->data   = modifier_tests[test_no].rx_data;
+    rx_data->length = modifier_tests[test_no].rx_len;
 }
 
 static int simple_modifier_no_operation_test_check
 (
-    mbyModifierToTxStats const * const modif_out
+    mbyModifierToTxStats const * const modif_out,
+    varchar_t            const * const tx_data
 )
 {
     fm_byte test_no = 0;
 
-    if (modif_out->TX_LENGTH != modifier_tests[test_no].tx_len)
+    if (tx_data->length != modifier_tests[test_no].tx_len)
     {
         printf("TX packet length is invalid\n");
         return 1;
     }
 
-    for (fm_uint32 i = 0; i < modif_out->TX_LENGTH; i++)
+    for (fm_uint32 i = 0; i < tx_data->length; i++)
     {
-        if (modif_out->TX_DATA[i] != modifier_tests[test_no].tx_data[i])
+        if (tx_data->data[i] != modifier_tests[test_no].tx_data[i])
         {
             printf("TX packet is invalid\n");
             return 1;
@@ -123,7 +119,8 @@ static void simple_modifier_insert_vlan_test_setup
 (
     mby_ppe_modify_map * const mod_map,
     mby_shm_map        * const shm_map,
-    mbyTxInToModifier  * const tx_in
+    mbyTxInToModifier  * const tx_in,
+    varchar_t          * const rx_data
 )
 {
     fm_byte test_no        = 1;
@@ -136,8 +133,8 @@ static void simple_modifier_insert_vlan_test_setup
     for (fm_int i = 0; i < MBY_N_PARSER_PTRS; i++)
         tx_in->PA_HDR_PTRS.PROT_ID[i] = MBY_PA_PROT_ID_NOP;
 
-    tx_in->RX_DATA                          = modifier_tests[test_no].rx_data;
-    tx_in->RX_LENGTH                        = modifier_tests[test_no].rx_len;
+    rx_data->data                           = modifier_tests[test_no].rx_data;
+    rx_data->length                         = modifier_tests[test_no].rx_len;
     tx_in->MOD_PROF_IDX                     = mod_prof_idx;
     tx_in->PA_HDR_PTRS.PROT_ID[hdr_ptr_idx] = prot_id;
     tx_in->PA_HDR_PTRS.OFFSET [hdr_ptr_idx] = offset;
@@ -181,20 +178,21 @@ static void simple_modifier_insert_vlan_test_setup
 
 static int simple_modifier_insert_vlan_test_check
 (
-    mbyModifierToTxStats const * const modif_out
+    mbyModifierToTxStats const * const modif_out,
+    varchar_t            const * const tx_data
 )
 {
     fm_byte test_no = 1;
 
-    if (modif_out->TX_LENGTH != modifier_tests[test_no].tx_len)
+    if (tx_data->length != modifier_tests[test_no].tx_len)
     {
         printf("TX packet length is invalid\n");
         return 1;
     }
 
-    for (fm_uint32 i = 0; i < modif_out->TX_LENGTH; i++)
+    for (fm_uint32 i = 0; i < tx_data->length; i++)
     {
-        if (modif_out->TX_DATA[i] != modifier_tests[test_no].tx_data[i])
+        if (tx_data->data[i] != modifier_tests[test_no].tx_data[i])
         {
             printf("TX packet is invalid\n");
             return 1;
@@ -223,7 +221,8 @@ static void simple_modifier_zero_ttl_test_setup
 (
     mby_ppe_modify_map * const mod_map,
     mby_shm_map        * const shm_map,
-    mbyTxInToModifier  * const tx_in
+    mbyTxInToModifier  * const tx_in,
+    varchar_t          * const rx_data
 )
 {
     fm_byte test_no        = 2;
@@ -235,8 +234,8 @@ static void simple_modifier_zero_ttl_test_setup
     fm_byte offset         = 12;
     fm_byte offset_2       = 14;
 
-    tx_in->RX_DATA                            = modifier_tests[test_no].rx_data;
-    tx_in->RX_LENGTH                          = modifier_tests[test_no].rx_len;
+    rx_data->data                             = modifier_tests[test_no].rx_data;
+    rx_data->length                           = modifier_tests[test_no].rx_len;
     tx_in->MOD_PROF_IDX                       = mod_prof_idx;
     tx_in->PA_HDR_PTRS.PROT_ID[hdr_ptr_idx]   = prot_id;
     tx_in->PA_HDR_PTRS.OFFSET [hdr_ptr_idx]   = offset;
@@ -270,20 +269,21 @@ static void simple_modifier_zero_ttl_test_setup
 
 static int simple_modifier_zero_ttl_test_check
 (
-    mbyModifierToTxStats const * const modif_out
+    mbyModifierToTxStats const * const modif_out,
+    varchar_t            const * const tx_data
 )
 {
     fm_byte test_no = 2;
 
-    if (modif_out->TX_LENGTH != modifier_tests[test_no].tx_len)
+    if (tx_data->length != modifier_tests[test_no].tx_len)
     {
         printf("TX packet length is invalid\n");
         return 1;
     }
 
-    for (fm_uint32 i = 0; i < modif_out->TX_LENGTH; i++)
+    for (fm_uint32 i = 0; i < tx_data->length; i++)
     {
-        if (modif_out->TX_DATA[i] != modifier_tests[test_no].tx_data[i])
+        if (tx_data->data[i] != modifier_tests[test_no].tx_data[i])
         {
             printf("TX packet is invalid\n");
             return 1;
@@ -297,7 +297,8 @@ static void simple_modifier_delete_vlan_test_setup
 (
     mby_ppe_modify_map * const mod_map,
     mby_shm_map        * const shm_map,
-    mbyTxInToModifier  * const tx_in
+    mbyTxInToModifier  * const tx_in,
+    varchar_t          * const rx_data
 )
 {
     fm_byte test_no        = 3;
@@ -309,8 +310,8 @@ static void simple_modifier_delete_vlan_test_setup
     fm_byte offset         = 12;
     fm_byte offset_2       = 16;
 
-    tx_in->RX_DATA                            = modifier_tests[test_no].rx_data;
-    tx_in->RX_LENGTH                          = modifier_tests[test_no].rx_len;
+    rx_data->data                             = modifier_tests[test_no].rx_data;
+    rx_data->length                           = modifier_tests[test_no].rx_len;
     tx_in->MOD_PROF_IDX                       = mod_prof_idx;
     tx_in->PA_HDR_PTRS.PROT_ID[hdr_ptr_idx]   = prot_id;
     tx_in->PA_HDR_PTRS.OFFSET [hdr_ptr_idx]   = offset;
@@ -339,20 +340,21 @@ static void simple_modifier_delete_vlan_test_setup
 
 static int simple_modifier_delete_vlan_test_check
 (
-    mbyModifierToTxStats const * const modif_out
+    mbyModifierToTxStats const * const modif_out,
+    varchar_t            const * const tx_data
 )
 {
     fm_byte test_no = 3;
 
-    if (modif_out->TX_LENGTH != modifier_tests[test_no].tx_len)
+    if (tx_data->length != modifier_tests[test_no].tx_len)
     {
         printf("TX packet length is invalid\n");
         return 1;
     }
 
-    for (fm_uint32 i = 0; i < modif_out->TX_LENGTH; i++)
+    for (fm_uint32 i = 0; i < tx_data->length; i++)
     {
-        if (modif_out->TX_DATA[i] != modifier_tests[test_no].tx_data[i])
+        if (tx_data->data[i] != modifier_tests[test_no].tx_data[i])
         {
             printf("TX packet is invalid\n");
             return 1;
@@ -376,7 +378,8 @@ static void simple_modifier_vxlan_encap_test_setup
 (
     mby_ppe_modify_map * const mod_map,
     mby_shm_map        * const shm_map,
-    mbyTxInToModifier  * const tx_in
+    mbyTxInToModifier  * const tx_in,
+    varchar_t          * const rx_data
 )
 {
     fm_byte test_no        = 4;
@@ -393,10 +396,10 @@ static void simple_modifier_vxlan_encap_test_setup
     tx_in->PA_HDR_PTRS.PROT_ID[2] = 5;
     tx_in->PA_HDR_PTRS.OFFSET [2] = 0x22;
 
-    tx_in->RX_DATA                          = modifier_tests[test_no].rx_data;
-    tx_in->RX_LENGTH                        = modifier_tests[test_no].rx_len;
-    tx_in->MOD_PROF_IDX                     = mod_prof_idx;
-    tx_in->CONTENT_ADDR                     = content_addr;
+    rx_data->data       = modifier_tests[test_no].rx_data;
+    rx_data->length     = modifier_tests[test_no].rx_len;
+    tx_in->MOD_PROF_IDX = mod_prof_idx;
+    tx_in->CONTENT_ADDR = content_addr;
 
     mod_map->MOD_PROFILE_GROUP[mod_prof_idx].GROUP_1 = MBY_PA_PROT_ID_NOP;
     mod_map->MOD_PROFILE_GROUP[mod_prof_idx].GROUP_2 = MBY_PA_PROT_ID_NOP;
@@ -444,20 +447,21 @@ static void simple_modifier_vxlan_encap_test_setup
 
 static int simple_modifier_vxlan_encap_test_check
 (
-    mbyModifierToTxStats const * const modif_out
+    mbyModifierToTxStats const * const modif_out,
+    varchar_t            const * const tx_data
 )
 {
     fm_byte test_no = 4;
 
-    if (modif_out->TX_LENGTH != modifier_tests[test_no].tx_len)
+    if (tx_data->length != modifier_tests[test_no].tx_len)
     {
         printf("TX packet length is invalid\n");
         return 1;
     }
 
-    for (fm_uint32 i = 0; i < modif_out->TX_LENGTH; i++)
+    for (fm_uint32 i = 0; i < tx_data->length; i++)
     {
-        if (modif_out->TX_DATA[i] != modifier_tests[test_no].tx_data[i])
+        if (tx_data->data[i] != modifier_tests[test_no].tx_data[i])
         {
             printf("TX packet is invalid\n");
             return 1;
@@ -484,33 +488,37 @@ static int run_on_simple_modifier
     run_on_simple_modifier_check_fn check
 )
 {
-    mby_ppe_modify_map *mod_map   = NULL;
-    mby_shm_map        *shm_map   = NULL;
-    fm_byte            *tx_data   = NULL;
+    mby_ppe_modify_map *mod_map = NULL;
+    mby_shm_map        *shm_map = NULL;
 
-    allocMem(&mod_map, &shm_map, &tx_data);
+    allocMem(&mod_map, &shm_map);
 
     mbyTxInToModifier    modif_in     = { 0 };
     mbyModifierToTxStats modif_out    = { 0 };
     fm_int               max_pkt_size = 0;
 
-    setup(mod_map, shm_map, &modif_in);
+    varchar_t rx_data;
+    setup(mod_map, shm_map, &modif_in, &rx_data);
 
-    modif_out.TX_DATA = tx_data;
+    varchar_builder_t txd_builder;
+    varchar_t tx_data;
+
+    varchar_builder_init(&txd_builder, &tx_data, malloc, free);
 
     Modifier
     (
         mod_map,
         shm_map,
+        &rx_data,
         &modif_in,
         &modif_out,
-        MAX_MOD_TEST_PKT_LEN
+        &txd_builder
     );
 
-    int ret = check(&modif_out);
+    int ret = check(&modif_out, &tx_data);
 
     // Free up memory:
-    freeMem(mod_map, shm_map, tx_data);
+    freeMem(mod_map, shm_map, &txd_builder);
 
   return ret;
 }

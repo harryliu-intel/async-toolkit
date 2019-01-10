@@ -125,7 +125,7 @@ typedef struct mbyHashToNextHopStruct
     fm_bool            IS_IPV4;                ///> packet is IPv4
     fm_bool            IS_IPV6;                ///> packet is IPv6
     fm_uint16          L2_ETYPE;               ///> 16-bit innermost Ethernet type
-    fm_uint16          L2_IDOMAIN;
+    fm_byte            L2_IDOMAIN;
     fm_uint16          L2_IVID1;
     fm_byte            L3_IDOMAIN;
     fm_bool            LEARN_MODE;

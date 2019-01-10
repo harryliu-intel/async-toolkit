@@ -103,7 +103,7 @@ static mbyModProfileCmd getProfileCommand
 
 static void extractFields
 (
-    varchar_t            const * const rx_data,
+    varchar_t          const * const rx_data,
     mbyParserHdrPtrs   const * const pa_hdr_ptrs,
     mbyModProfileField const * const prof_fld,
     fm_uint                          operating_region,
@@ -201,7 +201,7 @@ static void decodeCommand
 static void lookupProfile
 (
     mby_ppe_modify_map  const * const mod_map,
-    varchar_t             const * const rx_data,
+    varchar_t           const * const rx_data,
     mbyParserHdrPtrs    const * const pa_hdr_ptrs,
     fm_byte                           mod_prof_idx,
     mbyModProfileAction       * const prof_act
@@ -526,9 +526,9 @@ void updateCtnrIdx(fm_uint * idx, fm_uint delta, fm_uint boundary)
 static fm_uint16 lookupModMap
 (
     mby_ppe_modify_map const * const mod_map,
-    fm_byte                    lut,
-    mbyModCmdLutMode           lm,
-    mbyModFieldVector  * const fld_vector
+    fm_byte                          lut,
+    mbyModCmdLutMode                 lm,
+    mbyModFieldVector        * const fld_vector
 )
 {
     fm_uint16  value = 0;
@@ -662,33 +662,7 @@ static void performInsert(mbyParserHdrPtrs       * const pa_hdr_ptrs,
 {
     mbyModGroupConfig * const grp = &(grp_list[grp_list_idx]);
 
-    fm_uint insert_len = 0;
-
-    if (cmd->mode == MBY_MOD_CMD_MODE_BASIC)
-    {
-        insert_len = cmd->len;
-
-        fm_byte mask = 0xff;
-        if (cmd->source == MBY_MOD_CMD_SOURCE_CONTENT_REGION)
-        {
-          copyFromTo(content_ctnr->content, content_ctnr->cur_idx, grp_ctnr, grp->ctnr_offset + grp->grp_offset, mask, insert_len, -1);
-            updateCtnrIdx(&content_ctnr->cur_idx, insert_len, MBY_MOD_CONTENT_SIZE - 1);
-        }
-        else if (cmd->source == MBY_MOD_CMD_SOURCE_FIELD_CONTAINER)
-        {
-          copyFromTo(fld_vector->field, fld_vector->cur_idx, grp_ctnr, grp->ctnr_offset + grp->grp_offset, mask, insert_len, -1);
-            updateCtnrIdx(&fld_vector->cur_idx, insert_len, MBY_MOD_FIELD_VECTOR_SIZE - 1);
-        }
-    }
-    else if (cmd->mode == MBY_MOD_CMD_MODE_ZEROES)
-    {
-        insert_len = cmd->len;
-        /* Container is already padded with 0s in initContainer function. */
-    }
-
-    grp->grp_offset += insert_len;
-
-    /* Insert/Adjust protocol ID. */
+    /* Read (protocol ID, Offset) pairs. */
     fm_byte number_of_tuples = 0;
     fm_byte prot_id[MBY_N_PARSER_PTRS] = { 0 };
     fm_byte offset [MBY_N_PARSER_PTRS] = { 0 };
@@ -721,7 +695,7 @@ static void performInsert(mbyParserHdrPtrs       * const pa_hdr_ptrs,
     }
 
     /* Perform insert. */
-
+    fm_uint insert_len = 0;
     if (cmd->mode == MBY_MOD_CMD_MODE_BASIC)
     {
         insert_len = cmd->len;
@@ -932,13 +906,13 @@ static void performInsertField(mbyParserHdrPtrs       * const pa_hdr_ptrs,
 }
 
 static void performInsertFieldLut(mby_ppe_modify_map     const * const mod_map,
-                                  mbyParserHdrPtrs       * const pa_hdr_ptrs,
-                                  mbyModCmdInsertFldLut  * const cmd,
-                                  mbyModGroupConfig      * const grp_list,
-                                  fm_int                         grp_list_idx,
-                                  fm_byte                * const grp_ctnr,
-                                  mbyModContentContainer * const content_ctnr,
-                                  mbyModFieldVector      * const fld_vector)
+                                  mbyParserHdrPtrs             * const pa_hdr_ptrs,
+                                  mbyModCmdInsertFldLut        * const cmd,
+                                  mbyModGroupConfig            * const grp_list,
+                                  fm_int                               grp_list_idx,
+                                  fm_byte                      * const grp_ctnr,
+                                  mbyModContentContainer       * const content_ctnr,
+                                  mbyModFieldVector            * const fld_vector)
 {
     mbyModGroupConfig * const grp = &(grp_list[grp_list_idx]);
 
@@ -1150,10 +1124,10 @@ static void performReplaceField(mbyModCmdReplaceFld * const cmd,
 }
 
 static void performReplaceFieldLut(mby_ppe_modify_map     const * const mod_map,
-                                   mbyModCmdReplaceFldLut * const cmd,
-                                   mbyModGroupConfig      * const grp,
-                                   fm_byte                * const grp_ctnr,
-                                   mbyModFieldVector      * const fld_vector)
+                                   mbyModCmdReplaceFldLut       * const cmd,
+                                   mbyModGroupConfig            * const grp,
+                                   fm_byte                      * const grp_ctnr,
+                                   mbyModFieldVector            * const fld_vector)
 {
     assert(grp->pkt_size != 0);
 
@@ -1322,5 +1296,6 @@ void Modifier
                tx_data_builder);
 
     // Write outputs:
-    out->TX_PORT   = tx_port;
+    out->TX_PORT     = tx_port;
+    out->PA_HDR_PTRS = pa_hdr_ptrs;
 }
