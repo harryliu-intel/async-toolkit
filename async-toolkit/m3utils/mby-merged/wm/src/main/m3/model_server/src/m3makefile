@@ -34,7 +34,7 @@ module ("ModelServerUtils")
 module("MsIosf")
 %interface ("MsIosf")
 module ("HlpModelServer")
-module ("HlpStageModelServer")
+%module ("HlpStageModelServer")
 
 module ("DataPusher")
 table ("IntDataPusher", "Integer", "DataPusher")
@@ -49,6 +49,8 @@ module ("HlpModel")
 %module ("MbyModel") % pure Modula-3 version of MbyModel
 interface ("MbyModel")
 module ("MbyModelC") % C version of MbyModel
+
+interface("MbyModelStagesC")
 
 Generic_module("BaseModelServer")
 Generic_implementation("StageModelServer")

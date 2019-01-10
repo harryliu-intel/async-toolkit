@@ -59,7 +59,7 @@ typedef void (*model_stages_voidstar_func_t)(void      const * const r      ,
                                              varchar_t const * const rx_data,
                                              varchar_t       * const tx_data);
 
-void PASTE(TOP_MAP,_model_stages_register)(
+void model_stages_register(
    const char                    * top_map_name,
    const char                    * stage_name,
    model_stages_voidstar_func_t    stage_func,
@@ -77,20 +77,20 @@ typedef struct model_stages_info {
   struct model_stages_info       * next;
 } model_stages_info_t;
 
-extern model_stages_info_t * PASTE(TOP_MAP,_stages);
+extern model_stages_info_t * model_stages;
 
 #define REGISTRAR_PROTO()                                            \
   void PASTE(model_stages_registrar_,TOP_MAP)(void)                          
 
 #define STAGE_REGISTER(nm)                                              \
-  PASTE(TOP_MAP,_model_stages_register)(                                \
-                                        STR(TOP_MAP),                   \
-                                        STR_NX(nm),                     \
-                                        nm##_stage_void,                \
-                                        sizeof(TOP_MAP),                \
-                                        sizeof(PASTE(TOP_MAP,__addr)),  \
-                                        sizeof(nm##_in_t),              \
-                                        sizeof(nm##_out_t)              \
+  model_stages_register(                                                \
+                        STR(TOP_MAP),                                   \
+                        STR_NX(nm),                                     \
+                        nm##_stage_void,                                \
+                        sizeof(TOP_MAP),                                \
+                        sizeof(PASTE(TOP_MAP,__addr)),                  \
+                        sizeof(nm##_in_t),                              \
+                        sizeof(nm##_out_t)                              \
                                                                         ) 
 
 #endif /*!_MODEL_STAGES_H*/

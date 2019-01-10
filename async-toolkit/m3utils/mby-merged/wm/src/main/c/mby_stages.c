@@ -38,4 +38,8 @@ STAGE_DEFINE(Modifier)
 REGISTRAR_PROTO()
 {
   STAGE_REGISTER(Parser);
+  STAGE_REGISTER(Mapper);
+  STAGE_REGISTER(Classifier);
+
+  STAGE_REGISTER(Modifier);
 }

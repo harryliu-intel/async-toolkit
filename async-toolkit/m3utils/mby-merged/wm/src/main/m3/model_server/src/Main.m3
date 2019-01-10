@@ -1,7 +1,11 @@
 MODULE Main;
+IMPORT ModelServerSuper;
 IMPORT ModelServer;
+IMPORT StageModelServer;
+
 IMPORT HlpModelServer, HlpModel;
-IMPORT MbyModel, MbyModelServerExt;
+IMPORT MbyModel, MbyModelServerExt, MbyStageModelServer;
+
 IMPORT Pathname, Env;
 IMPORT Debug;
 IMPORT Scheme, SchemeStubs, SchemeNavigatorEnvironment;
@@ -47,7 +51,7 @@ PROCEDURE LookupModel(str : TEXT; VAR model : Model) : BOOLEAN =
   END LookupModel;
   
 VAR
-  modelServer : ModelServer.T;
+  modelServer : ModelServerSuper.T;
   infoPath : Pathname.T := NIL;
   infoFile := ModelServer.DefInfoFileName;
   files : REF ARRAY OF TEXT;
@@ -56,7 +60,11 @@ VAR
   doRepl : BOOLEAN;
 
   doReflect, sharedSocket : BOOLEAN; (* only for fullchip *)
-  stageNm : TEXT := NIL; (* only for stages *)
+
+  stageNm : TEXT := NIL;
+  (* only for stages, we use non-NIL-ness of stageNm to indicate that
+     we want to simulate a stage, else we do a full-chip *)
+  
 BEGIN
   (* command-line args: *)
   TRY
@@ -103,9 +111,6 @@ BEGIN
         END;
         stageNm := pp.getNext();
         Debug.Out(F("Seeking model %s stage %s", ModelNames[model], stageNm));
-
-        Debug.Error("***unimplemented***");
-
       END;
         
       
@@ -130,22 +135,41 @@ BEGIN
   BEGIN
     CASE model OF
       Model.Hlp =>
+      <*ASSERT stageNm = NIL*> (* stages not supported *)
       modelServer := NEW(HlpModelServer.T, setup := HlpModel.Setup);
       factory := NEW(UnsafeUpdaterFactory.T).init()
     |
       Model.Mby =>
-      
-      modelServer := NEW(MbyModelServerExt.T,
-                         setup := MbyModel.Setup,
-                         reflect := doReflect);
+
+      IF stageNm = NIL THEN
+        modelServer := NEW(MbyModelServerExt.T,
+                           setup := MbyModel.Setup,
+                           reflect := doReflect)
+      ELSE
+        modelServer := NEW(MbyStageModelServer.T)
+      END;
       factory := MbyModelC.GetUpdaterFactory()
     END;
 
-    EVAL modelServer.init(sharedSocket,
-                          infoPath             := infoPath,
-                          infoFileName         := infoFile,
-                          quitOnLastClientExit := quitOnLast,
-                          factory              := factory);
+    IF stageNm = NIL THEN
+      WITH ms = NARROW(modelServer, ModelServer.T) DO
+        (* "full-chip" model server *)
+        EVAL ms.init(sharedSocket,
+                     infoPath             := infoPath,
+                     infoFileName         := infoFile,
+                     quitOnLastClientExit := quitOnLast,
+                     factory              := factory)
+      END
+    ELSE
+      WITH ms = NARROW(modelServer, StageModelServer.T) DO
+        (* single stage model server *)
+        EVAL ms.init(stageNm,
+                     infoPath             := infoPath,
+                     infoFileName         := infoFile,
+                     quitOnLastClientExit := quitOnLast,
+                     factory              := factory)
+      END
+    END
   END;
     
   modelServer.reset();

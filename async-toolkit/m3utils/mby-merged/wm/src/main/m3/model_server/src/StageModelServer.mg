@@ -1,4 +1,4 @@
-GENERIC MODULE StageModelServer(ModelServer, TheModel, Map, MapAddr);
+GENERIC MODULE StageModelServer(ModelServer, TheModel, Map, MapAddr, ModelStagesC);
 IMPORT CsrOp, CsrAccessStatus;
 IMPORT Pathname;
 IMPORT Debug;
@@ -48,4 +48,6 @@ PROCEDURE DoCsrOp(t : T; VAR op : CsrOp.T) : CsrAccessStatus.T =
     END
   END DoCsrOp;
 
-BEGIN END StageModelServer.
+BEGIN
+  ModelStagesC.Registrar()
+END StageModelServer.

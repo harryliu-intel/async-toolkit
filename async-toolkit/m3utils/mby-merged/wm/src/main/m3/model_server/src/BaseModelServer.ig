@@ -11,6 +11,6 @@ TYPE
     setup(READONLY read : Map.T; READONLY update : MapAddr.Update);
   END;
 
-CONST Brand = Map.Brand & "/ ModelServer";
+CONST Brand = Map.Brand & "/ " & ModelServer.Brand;
 
 END BaseModelServer.
