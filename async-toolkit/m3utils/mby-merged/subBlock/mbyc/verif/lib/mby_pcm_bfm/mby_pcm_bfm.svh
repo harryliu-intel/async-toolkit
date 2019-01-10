@@ -113,8 +113,9 @@ class mby_pcm_bfm extends uvm_component;
       end else if(cfg_obj.bfm_mode == PCM_BFM_EGR_MODE) begin
          deque_agent    = pcm_deque_bfm_agent::type_id::create("deque_agent", this);
          tx_sm_wm_agent = pcm_tx_smem_wm_bfm_agent::type_id::create("tx_sm_wm_agent", this);
+      end else if(cfg_obj.bfm_mode == PCM_BFM_PLCR_MODE) begin
+         plcr_agent = pcm_plcr_bfm_agent::type_id::create("plcr_agent", this);
       end
-      plcr_agent = pcm_plcr_bfm_agent::type_id::create("plcr_agent", this);
    endfunction
 
    // ------------------------------------------------------------------------

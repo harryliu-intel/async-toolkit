@@ -8,4 +8,6 @@ csrc
 *.vpd
 simv.daidir
 ucli.key
+.synopsys_dve_rebuild.tcl
+DVEfiles
 
