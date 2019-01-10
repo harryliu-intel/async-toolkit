@@ -1,12 +1,13 @@
 
 # Prevent Make from setting implicit rules for files that look like c/cpp.
 
+
 # tb top
-VCS_SRC  = rtl/egr_top_tb.sv
-ifdef dut
-    ifneq ($(dut),"egr_top")
-        VCS_SRC  = ../$(dut)/sandbox/rtl/$(dut)_tb.sv
-    endif
+dut ?= egr_top
+ifneq ($(dut),egr_top)
+    VCS_SRC  = ../$(dut)/sandbox/rtl/$(dut)_tb.sv
+else
+    VCS_SRC  = rtl/egr_top_tb.sv
 endif
 
 ifndef SHRTL
@@ -25,6 +26,11 @@ SRC = ../..
 include $(SRC)/shared/sandbox/Make.mby
 
 VCS_DEFS += +define+VCSSIM +define+INTEL_SVA_OFF
+
+use_gui ?= 0
+ifeq ($(use_gui),1)
+    VCS_FLAGS += -gui
+endif
 
 VCS_FLAGS += $(VCS_DEFS)
 
