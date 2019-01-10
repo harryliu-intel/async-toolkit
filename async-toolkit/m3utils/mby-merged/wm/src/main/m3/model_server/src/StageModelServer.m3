@@ -16,14 +16,19 @@ REVEAL
     init := Init;
   END;
 
-  PROCEDURE Init(t                    : T;
+PROCEDURE Init(t                    : T;
+               stageName            : TEXT;
                <*UNUSED*>factory    : UpdaterFactory.T;
                infoPath             : Pathname.T;
                quitOnLastClientExit : BOOLEAN;
                infoFile             : Pathname.T) : T =
   BEGIN
-    EVAL ModelServerSuper.T.init(t, infoPath, infoFile, handlers);
-    t.quitOnLastClientExit := quitOnLastClientExit;
+    EVAL ModelServerSuper.T.init(t,
+                                 infoPath,
+                                 infoFile,
+                                 quitOnLastClientExit,
+                                 handlers);
+    t.stageName := stageName;
     RETURN t
   END Init;
 

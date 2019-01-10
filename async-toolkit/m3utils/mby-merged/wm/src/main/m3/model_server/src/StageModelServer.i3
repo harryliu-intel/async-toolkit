@@ -27,9 +27,11 @@ TYPE
   T <: Public;
 
   Public = ModelServerSuper.T OBJECT
-    sharedSocket : BOOLEAN;
+    topMapName : TEXT;
+    stageName  : TEXT;
   METHODS
-    init(factory      : UpdaterFactory.T;
+    init(stageName    : TEXT;
+         factory      : UpdaterFactory.T;
          infoPath     : Pathname.T       := ".";
          quitOnLastClientExit            := FALSE;
          infoFileName : Pathname.T       := DefInfoFileName) : T;

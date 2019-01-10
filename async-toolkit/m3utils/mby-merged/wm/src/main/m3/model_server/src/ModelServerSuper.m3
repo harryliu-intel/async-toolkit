@@ -35,13 +35,15 @@ REVEAL
     init := Init;
   END;
 
-PROCEDURE Init(t : T;
-               infoPath, infoFile : Pathname.T;
-               READONLY handler : ARRAY FmModelMsgType.T OF MsgHandler) : T =
+PROCEDURE Init(t                    : T;
+               infoPath, infoFile   : Pathname.T;
+               quitOnLastClientExit : BOOLEAN;
+               READONLY handler     : ARRAY FmModelMsgType.T OF MsgHandler) : T =
   BEGIN
     t.infoFile := infoFile;
     t.infoPath := infoPath;
     t.handler := handler;
+    t.quitOnLastClientExit := quitOnLastClientExit;
     WITH ep   = IP.Endpoint { IP.NullAddress, IP.NullPort },
          conn = TCP.NewConnector(ep) DO
       t.port := TCP.GetEndPoint(conn).port;

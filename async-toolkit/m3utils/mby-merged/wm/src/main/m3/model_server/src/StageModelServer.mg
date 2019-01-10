@@ -26,13 +26,15 @@ PROCEDURE Reset(t : T) =
   END Reset;
 
 PROCEDURE Init(t            : T;
+               stageName    : TEXT;
                factory      : UpdaterFactory.T;
                infoPath     : Pathname.T;
                quitLast     : BOOLEAN;
                infoFile     : Pathname.T) : Super =
   BEGIN
-    EVAL Super.init(t, factory, infoPath, quitLast, infoFile);
-    Debug.Out(F("Creating %s ...",Map.Brand));
+    EVAL Super.init(t, stageName, factory, infoPath, quitLast, infoFile);
+    t.topMapName := Map.Brand;
+    Debug.Out(F("Creating %s ... stageName %s",Map.Brand, t.stageName));
     t.h := NEW(MapAddr.H).init(CompAddr.Zero, factory);
     RETURN t
   END Init;

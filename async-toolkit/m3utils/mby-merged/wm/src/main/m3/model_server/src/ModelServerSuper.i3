@@ -18,8 +18,9 @@ TYPE
     listenFork() : Listener;
     (* fork a listener on an arbitrarily chosen port *)
 
-    init(infoPath, infoFile : Pathname.T;
-         READONLY handler : ARRAY FmModelMsgType.T OF MsgHandler) : T;
+    init(infoPath, infoFile   : Pathname.T;
+         quitOnLastClientExit : BOOLEAN;
+         READONLY handler     : ARRAY FmModelMsgType.T OF MsgHandler) : T;
 
     (****** abstract methods, implement in child type: ******)
 

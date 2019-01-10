@@ -15,4 +15,6 @@ STAGE_PROTO(Classifier);
 
 STAGE_PROTO(Modifier);
 
+REGISTRAR_PROTO();
+
 #endif

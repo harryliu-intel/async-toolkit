@@ -45,6 +45,7 @@ SOURCES += mby_pipeline.c
 SOURCES += mby_errors.c
 SOURCES += mby_init.c
 SOURCES += varchar.c
+SOURCES += model_stages.c
 SOURCES += mby_stages.c
 SOURCES += fm_alos_debughash.c
 
@@ -144,7 +145,8 @@ ${BLD_DIR}/mby_init.o          : $(BLD_DTS) Makefile mby_init.c          mby_ini
 ${BLD_DIR}/varchar.o           : $(BLD_DTS) Makefile varchar.c           varchar.h
 
 ${BLD_DIR}/mby_stages.o        : $(BLD_DTS) Makefile mby_stages.c        mby_stages.h
-${BLD_DIR}/fm_alos_debughash.o : $(BLD_DTS) Makefile
+${BLD_DIR}/model_stages.o        : $(BLD_DTS) Makefile model_stages.c        model_stages.h
+${BLD_DIR}/fm_alos_debughash.o : $(BLD_DTS) Makefile fm_alos_debughash.c fm_alos_debughash.h
 
 
 $(LIB_M3EXPT): $(OBJECTS)

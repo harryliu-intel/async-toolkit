@@ -1,17 +1,17 @@
 #include "mby_common.h"
 #include "mby_stages.h"
 
-STAGE_PROTO(Parser)
+STAGE_DEFINE(Parser)
 {
   Parser(&(r->mpp[0].mgp[0].rx_ppe.parser), in, out);
 }
 
-STAGE_PROTO(Mapper)
+STAGE_DEFINE(Mapper)
 {
   Mapper(&(r->mpp[0].mgp[0].rx_ppe.mapper), in, out);
 }
 
-STAGE_PROTO(Classifier)
+STAGE_DEFINE(Classifier)
 {
   Classifier(&(r->mpp[0].mgp[0].rx_ppe.cgrp_a),
              &(r->mpp[0].mgp[0].rx_ppe.cgrp_b),
@@ -19,7 +19,7 @@ STAGE_PROTO(Classifier)
              in, out);
 }
 
-STAGE_PROTO(Modifier)
+STAGE_DEFINE(Modifier)
 {
   varchar_builder_t txd_builder;
 
@@ -34,3 +34,8 @@ STAGE_PROTO(Modifier)
 }
 
 // more to come ...
+
+REGISTRAR_PROTO()
+{
+  STAGE_REGISTER(Parser);
+}

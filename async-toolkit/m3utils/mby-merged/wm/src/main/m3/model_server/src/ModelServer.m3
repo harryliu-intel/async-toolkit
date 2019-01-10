@@ -104,13 +104,16 @@ PROCEDURE Init(t                    : T;
                quitOnLastClientExit : BOOLEAN;
                infoFile             : Pathname.T) : T =
   BEGIN
-    EVAL ModelServerSuper.T.init(t, infoPath, infoFile, handlers);
+    EVAL ModelServerSuper.T.init(t,
+                                 infoPath,
+                                 infoFile,
+                                 quitOnLastClientExit,
+                                 handlers);
     t.sharedSocket := sharedSocket;
     IF sharedSocket THEN
       t.pushers := NEW(DataPusherSetDef.T).init()
     END;
     t.mu := NEW(MUTEX);
-    t.quitOnLastClientExit := quitOnLastClientExit;
     t.egressPorts := NEW(IntDataPusherTbl.Default).init();
     t.portLinkState :=
         ARRAY [0..FmModelConstants.NPhysPorts-1] OF Byte.T {
