@@ -90,11 +90,11 @@ class mby_base_sequence_item
    //   convert2string (small)
    // -------------------------------------------------------------------------
   `uvm_object_param_utils_begin (mby_base_sequence_item#(T_data, T_data_rsp, T_debug))
-    `uvm_field_int(data_pkt, UVM_DEFAULT)
+   /* `uvm_field_int(data_pkt, UVM_DEFAULT)
     `uvm_field_int(resp_pkt, UVM_DEFAULT)
     `uvm_field_int(debug_pkt, UVM_DEFAULT)
     `uvm_field_int(delay,    UVM_DEFAULT)
-    `uvm_field_int(rsp_req,  UVM_DEFAULT)
+    `uvm_field_int(rsp_req,  UVM_DEFAULT)*/
   `uvm_object_utils_end
 
    // -------------------------------------------------------------------------
