@@ -25,8 +25,8 @@ foreach $i (0..1) {
     q_negh_tbl_ren[$i]          >> ppe_stm_tx_negh_tbl_$i$_rd_en
     q_negh_tbl_wen[$i]          >> ppe_stm_tx_negh_tbl_$i$_wr_en
     negh_tbl_addr[$i][13:0]     >> ppe_stm_tx_negh_tbl_$i$_adr
-    negh_tbl_rdata[$i][81:0]    >> ppe_stm_tx_negh_tbl_$i$_rd_data
-    q_negh_tbl_wdata[$i][81:0]  >> ppe_stm_tx_negh_tbl_$i$_wr_data
+    negh_tbl_rdata[$i][84:0]    >> ppe_stm_tx_negh_tbl_$i$_rd_data
+    q_negh_tbl_wdata[$i][84:0]  >> ppe_stm_tx_negh_tbl_$i$_wr_data
 
     >> PPE_STM_TX_NEGH_TBL_$i$_CFG_reg_sel
     >> PPE_STM_TX_NEGH_TBL_$i$_STATUS_reg_sel

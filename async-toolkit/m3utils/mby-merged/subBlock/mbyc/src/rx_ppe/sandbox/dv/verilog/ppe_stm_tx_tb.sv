@@ -860,12 +860,12 @@ always @(posedge cclk) begin //{
 end //}
 
 logic   [13:0]    q_negh_tbl_waddr;
-logic   [81:0]    q_negh_tbl_wdata;
+logic   [84:0]    q_negh_tbl_wdata;
 //Temporary for driving write data
 always @(negedge cclk) begin //{
     if(cclk_cnt == 1) begin //{
         q_negh_tbl_waddr <= 14'h3fff;
-        q_negh_tbl_wdata <= 82'h3ffffffffffffffffffff;
+        q_negh_tbl_wdata <= 85'h1fffffffffffffffffffff;
     end //}
     else if((cclk_cnt > 49) && (cclk_cnt < 1000)) begin //{
         force ppe_stm_tx_top.ppe_stm_tx_logic.q_negh_tbl_waddr[0] = q_negh_tbl_waddr;
