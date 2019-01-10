@@ -133,8 +133,7 @@ fm_status mbyReceivePacket
       &(w->mpp[0].mgp[0].tx_ppe);
     mby_shm_map              const * const shm_map      =
       &(r->mpp[0].shm);
-    varchar_builder_t       txd_builder;
-    
+
     // Input struct:
     txi2mod.CONTENT_ADDR  = rxs2rxo.CONTENT_ADDR;
     txi2mod.DROP_TTL      = rxs2rxo.DROP_TTL;
@@ -165,8 +164,9 @@ fm_status mbyReceivePacket
     mbyTxStatsToTxMac txs2mac;
 
     // Call RX pipeline:
+    varchar_builder_t txd_builder;
     varchar_builder_init(&txd_builder, tx_data, malloc, free);
-    
+
     TxPipeline(tx_top_map,
                tx_top_map_w,
                shm_map,
@@ -174,7 +174,7 @@ fm_status mbyReceivePacket
                &txi2mod,
                &txs2mac,
                &txd_builder);
-    
+
     // Populate output:
     *port   = txs2mac.TX_PORT;
 
