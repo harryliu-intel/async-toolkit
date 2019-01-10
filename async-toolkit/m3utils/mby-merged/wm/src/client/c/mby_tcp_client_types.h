@@ -44,12 +44,13 @@
 #define MODEL_MSG_VERSION_INFO          13
 #define MODEL_MSG_NVM_READ              14
 #define MODEL_MSG_COMMAND_QUIT          15
+#define MODEL_MSG_PARSER                16
 
 /* Max length of IOSF messages used for read/write operations */
 #define IOSF_MSG_MAX_LEN                512
 
 /* In HLP this is the max length of a mailbox (?) message */
-#define MAX_MSG_LEN 4096
+#define MAX_MSG_LEN (32 * 1024)
 
 /* Model server message format */
 struct wm_msg {

@@ -5,14 +5,14 @@
 #ifndef MBY_COMMON_H
 #define MBY_COMMON_H
 
+#define TOP_MAP mby_top_map
+
 // Includes:
 #include <stdlib.h>
 #include <mby_top_map.h> // header file auto-generated from RDL
+#include <sys/param.h>   // MIN/MAX C macros
 
 // Macros:
-
-#define MAX(x, y) (((x) > (y)) ? (x) : (y))
-#define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
 #define isBroadcastMacAddress(addr) ( (addr) == FM_LITERAL_U64(0xFFFFFFFFFFFF))
 #define   isUnicastMacAddress(addr) (((addr) &  FM_LITERAL_U64(0x010000000000)) == 0)
@@ -29,7 +29,8 @@
 
 #define MBY_REGISTER_ARRAY_SIZE  0x1800000
 
-#define MBY_MAX_PACKET_SIZE      32767
+// Used for tests and C client APIs for DV
+#define MBY_MAX_DATA_LEN         (32 * 1024)
 
 #define MBY_SEGMENT_LEN          256
 

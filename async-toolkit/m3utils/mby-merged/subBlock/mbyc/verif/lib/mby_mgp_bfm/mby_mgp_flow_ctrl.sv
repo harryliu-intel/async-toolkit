@@ -11,6 +11,7 @@
 
 //----------------------------------------------------------------------------------------
 // Class: mby_mgp_flow_ctrl
+// Description:
 //----------------------------------------------------------------------------------------
 class mby_mgp_flow_ctrl  extends uvm_component;
    `uvm_component_utils(mby_mgp_flow_ctrl)

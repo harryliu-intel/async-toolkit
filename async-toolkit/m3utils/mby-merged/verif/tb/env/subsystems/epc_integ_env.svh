@@ -69,13 +69,16 @@ class epc_integ_env extends subsystem_base_env;
      //for (int i=0; i<`NUM_EPC; i++) begin
      for (int i=0; i<1; i++) begin
          epc_env_inst[i] = mby_ec_top_env::type_id::create($sformatf("epc_env_inst_%0d", i), this);
-//         epc_env_inst[i].set_level(SLA_SUB); // TODO: Need to replace this with a uvm_env is_active set via the uvm resource database.
          `uvm_info(get_name(),  $sformatf("build_epc_env: epc_env_inst[%0d] created",i),UVM_MEDIUM)
 
          epc_env_cfg_inst[i] = mby_ec_top_env_cfg::type_id::create($sformatf("epc_env_cfg_inst_%0d", i), this);
          `uvm_info(get_name(),  $sformatf("build_epc_env: epc_env_cfg_inst[%0d] created",i),UVM_MEDIUM)
 
-         epc_env_cfg_inst[i].endpoint_type = "dut";
+         //Not required once 51e is available
+         //epc_env_cfg_inst[i].endpoint_type = "dut";
+         //epc_env_cfg_inst[i].local_lb_mode = eth_port_env_pkg::NO_LOCAL_LB;
+         //epc_env_cfg_inst[i].remote_lb_mode = eth_port_env_pkg::NO_REMOTE_LB;
+
          //epc_env_cfg_inst[i].is_bfm_enabled = 1; //drive pkt from CDI BFM
          //epc_env_cfg_inst[i].dut_mode = eth_port_env_pkg::ENABLE_MAC;
 

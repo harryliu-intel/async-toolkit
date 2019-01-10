@@ -1,5 +1,4 @@
-GENERIC INTERFACE BaseModelServer(Map, MapAddr);
-IMPORT ModelServer;
+GENERIC INTERFACE BaseModelServer(ModelServer, Map, MapAddr);
 
 TYPE
   T <: Public;
@@ -9,7 +8,7 @@ TYPE
   Public = Super OBJECT
     h        : MapAddr.H;
   METHODS
-    setupChip(READONLY read : Map.T; READONLY update : MapAddr.Update);
+    setup(READONLY read : Map.T; READONLY update : MapAddr.Update);
   END;
 
 CONST Brand = Map.Brand & "/ ModelServer";

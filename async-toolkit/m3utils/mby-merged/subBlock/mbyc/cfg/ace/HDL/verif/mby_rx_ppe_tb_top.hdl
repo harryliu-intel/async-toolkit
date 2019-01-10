@@ -18,7 +18,7 @@ $hdl_spec = {
 
     # List of include directories. Corresponds with the VLOG '+incdir+' parameter
     -vlog_incdirs => [
-    #"src/mby/rtl",
+#    "src/rx_ppe/rtl",
      "verif/rx_ppe",
      "verif/rx_ppe/tb",
      "verif/rx_ppe/tests",

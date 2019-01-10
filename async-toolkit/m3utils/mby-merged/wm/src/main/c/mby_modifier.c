@@ -2,13 +2,14 @@
 
 // Copyright (C) 2018 Intel Corporation
 #include "mby_modifier.h"
+
+#include <assert.h>
 #include "mby_crc32.h"
 #include "mby_parser.h"
-#include <assert.h>
 
 static void initProfAct
 (
-    mby_shm_map         * const shm_map,
+    mby_shm_map         const * const shm_map,
     fm_uint32                   rx_length,
     fm_uint32                   content_addr,
     mbyModProfileAction * const prof_act
@@ -43,8 +44,8 @@ static void initProfAct
 
 static mbyModProfileGroup getProfileGroup
 (
-    mby_ppe_modify_map * const mod_map,
-    fm_byte                    mod_prof_idx)
+    mby_ppe_modify_map const * const mod_map,
+    fm_byte                          mod_prof_idx)
 {
     mbyModProfileGroup prof_grp;
 
@@ -62,8 +63,8 @@ static mbyModProfileGroup getProfileGroup
 
 static mbyModProfileField getProfileField
 (
-    mby_ppe_modify_map * const mod_map,
-    fm_byte                    mod_prof_idx
+    mby_ppe_modify_map const * const mod_map,
+    fm_byte                          mod_prof_idx
 )
 {
     mbyModProfileField prof_fld;
@@ -83,8 +84,8 @@ static mbyModProfileField getProfileField
 
 static mbyModProfileCmd getProfileCommand
 (
-    mby_ppe_modify_map * const mod_map,
-    fm_byte                    mod_prof_idx
+    mby_ppe_modify_map const * const mod_map,
+    fm_byte                          mod_prof_idx
 )
 {
     mbyModProfileCmd prof_cmd;
@@ -102,7 +103,7 @@ static mbyModProfileCmd getProfileCommand
 
 static void extractFields
 (
-    fm_byte            const * const rx_data,
+    varchar_t            const * const rx_data,
     mbyParserHdrPtrs   const * const pa_hdr_ptrs,
     mbyModProfileField const * const prof_fld,
     fm_uint                          operating_region,
@@ -122,7 +123,7 @@ static void extractFields
                 {
                     fm_uint idx = pa_hdr_ptrs->OFFSET[j] + prof_fld->offset[i];
                     if(idx < operating_region) {
-                        fld_vector->field[i] = rx_data[idx];
+                      fld_vector->field[i] = varchar_get(rx_data,idx);
                         break;
                     }
                 }
@@ -199,8 +200,8 @@ static void decodeCommand
 
 static void lookupProfile
 (
-    mby_ppe_modify_map        * const mod_map,
-    fm_byte                   * const rx_data,
+    mby_ppe_modify_map  const * const mod_map,
+    varchar_t             const * const rx_data,
     mbyParserHdrPtrs    const * const pa_hdr_ptrs,
     fm_byte                           mod_prof_idx,
     mbyModProfileAction       * const prof_act
@@ -366,9 +367,9 @@ static void adjustGrpCtnrOffsets
 
 static void initContainer
 (
-    mbyModProfileAction * const prof_act,
-    fm_byte             * const rx_data,
-    fm_byte             * const grp_ctnr
+    mbyModProfileAction       * const prof_act,
+    varchar_t           const * const rx_data,
+    fm_byte                   * const grp_ctnr
 )
 {
     /* Set all offsets .*/
@@ -461,7 +462,7 @@ static void initContainer
             }
 
             for (fm_uint j = 0; j < grp->pkt_size; j++)
-                grp_ctnr[offset++] = rx_data[grp->pkt_offset + j];
+              grp_ctnr[offset++] = varchar_get(rx_data, grp->pkt_offset + j);
         }
     }
 }
@@ -499,14 +500,19 @@ static void buildProfileGroupList
 
 static void copyFromTo
 (
-    fm_byte * const from,
-    fm_uint         from_offset,
-    fm_byte * const to,
-    fm_uint         to_offset,
-    fm_byte         bitmask,
-    fm_uint         len
+    fm_byte const * const from,
+    fm_uint               from_offset,
+    fm_byte       * const to,
+    fm_uint               to_offset,
+    fm_byte               bitmask,
+    fm_uint               len,
+    fm_int                assertlen
 )
 {
+    assert(assertlen == -1
+           ||
+           ( (fm_int)(from_offset + len) >= 0 &&
+             (fm_int)(from_offset + len) <= assertlen) );
     for (fm_uint i = 0; i < len; i++)
         to[to_offset + i] = (to[to_offset + i] & (~bitmask)) | (from[from_offset + i] & bitmask);
 }
@@ -519,7 +525,7 @@ void updateCtnrIdx(fm_uint * idx, fm_uint delta, fm_uint boundary)
 
 static fm_uint16 lookupModMap
 (
-    mby_ppe_modify_map * const mod_map,
+    mby_ppe_modify_map const * const mod_map,
     fm_byte                    lut,
     mbyModCmdLutMode           lm,
     mbyModFieldVector  * const fld_vector
@@ -656,7 +662,33 @@ static void performInsert(mbyParserHdrPtrs       * const pa_hdr_ptrs,
 {
     mbyModGroupConfig * const grp = &(grp_list[grp_list_idx]);
 
-    /* Read (protocol ID, Offset) pairs. */
+    fm_uint insert_len = 0;
+
+    if (cmd->mode == MBY_MOD_CMD_MODE_BASIC)
+    {
+        insert_len = cmd->len;
+
+        fm_byte mask = 0xff;
+        if (cmd->source == MBY_MOD_CMD_SOURCE_CONTENT_REGION)
+        {
+          copyFromTo(content_ctnr->content, content_ctnr->cur_idx, grp_ctnr, grp->ctnr_offset + grp->grp_offset, mask, insert_len, -1);
+            updateCtnrIdx(&content_ctnr->cur_idx, insert_len, MBY_MOD_CONTENT_SIZE - 1);
+        }
+        else if (cmd->source == MBY_MOD_CMD_SOURCE_FIELD_CONTAINER)
+        {
+          copyFromTo(fld_vector->field, fld_vector->cur_idx, grp_ctnr, grp->ctnr_offset + grp->grp_offset, mask, insert_len, -1);
+            updateCtnrIdx(&fld_vector->cur_idx, insert_len, MBY_MOD_FIELD_VECTOR_SIZE - 1);
+        }
+    }
+    else if (cmd->mode == MBY_MOD_CMD_MODE_ZEROES)
+    {
+        insert_len = cmd->len;
+        /* Container is already padded with 0s in initContainer function. */
+    }
+
+    grp->grp_offset += insert_len;
+
+    /* Insert/Adjust protocol ID. */
     fm_byte number_of_tuples = 0;
     fm_byte prot_id[MBY_N_PARSER_PTRS] = { 0 };
     fm_byte offset [MBY_N_PARSER_PTRS] = { 0 };
@@ -790,7 +822,7 @@ static void performInsertField(mbyParserHdrPtrs       * const pa_hdr_ptrs,
         insert_len = cmd->len_mask;
 
         fm_byte mask = 0xff;
-        copyFromTo(fld_vector->field, fld_vector->cur_idx, grp_ctnr, grp->ctnr_offset + grp->grp_offset, mask, insert_len);
+        copyFromTo(fld_vector->field, fld_vector->cur_idx, grp_ctnr, grp->ctnr_offset + grp->grp_offset, mask, insert_len, -1);
 
         updateCtnrIdx(&fld_vector->cur_idx, insert_len, MBY_MOD_FIELD_VECTOR_SIZE - 1);
 
@@ -899,7 +931,7 @@ static void performInsertField(mbyParserHdrPtrs       * const pa_hdr_ptrs,
             pa_hdr_ptrs->OFFSET[i] += insert_len;
 }
 
-static void performInsertFieldLut(mby_ppe_modify_map     * const mod_map,
+static void performInsertFieldLut(mby_ppe_modify_map     const * const mod_map,
                                   mbyParserHdrPtrs       * const pa_hdr_ptrs,
                                   mbyModCmdInsertFldLut  * const cmd,
                                   mbyModGroupConfig      * const grp_list,
@@ -1021,7 +1053,7 @@ static void performReplace(mbyModCmdReplace       * const cmd,
 
     if (!skip_copy)
     {
-        copyFromTo(content_ctnr->content, content_ctnr->cur_idx, grp_ctnr, ctnr_offset, bitmask, replace_len);
+      copyFromTo(content_ctnr->content, content_ctnr->cur_idx, grp_ctnr, ctnr_offset, bitmask, replace_len, -1);
 
         updateCtnrIdx(&content_ctnr->cur_idx, replace_len, MBY_MOD_CONTENT_SIZE - 1);
     }
@@ -1111,13 +1143,13 @@ static void performReplaceField(mbyModCmdReplaceFld * const cmd,
 
     if (!skip_copy)
     {
-        copyFromTo(fld_vector->field, fld_vector->cur_idx, grp_ctnr, ctnr_offset, bitmask, replace_len);
+      copyFromTo(fld_vector->field, fld_vector->cur_idx, grp_ctnr, ctnr_offset, bitmask, replace_len, -1);
 
         updateCtnrIdx(&fld_vector->cur_idx, replace_len, MBY_MOD_FIELD_VECTOR_SIZE - 1);
     }
 }
 
-static void performReplaceFieldLut(mby_ppe_modify_map     * const mod_map,
+static void performReplaceFieldLut(mby_ppe_modify_map     const * const mod_map,
                                    mbyModCmdReplaceFldLut * const cmd,
                                    mbyModGroupConfig      * const grp,
                                    fm_byte                * const grp_ctnr,
@@ -1158,11 +1190,11 @@ static void performReplaceFieldLut(mby_ppe_modify_map     * const mod_map,
     }
 }
 
-static void performCmds(mby_ppe_modify_map  * const mod_map,
-                        fm_byte             * const rx_data,
-                        mbyModProfileAction * const prof_act,
-                        mbyParserHdrPtrs    * const pa_hdr_ptrs,
-                        fm_byte             * const grp_ctnr)
+static void performCmds(mby_ppe_modify_map  const * const mod_map,
+                        varchar_t           const * const rx_data,
+                        mbyModProfileAction       * const prof_act,
+                        mbyParserHdrPtrs          * const pa_hdr_ptrs,
+                        fm_byte                   * const grp_ctnr)
 {
     for (int i = 0; i < MBY_MOD_PROFILE_GROUPS; i++)
     {
@@ -1225,42 +1257,32 @@ static void performCmds(mby_ppe_modify_map  * const mod_map,
     }
 }
 
-static fm_uint32 packPacket(mbyModProfileAction * const prof_act,
-                            fm_uint32                   rx_length,
-                            fm_byte             * const grp_ctnr,
-                            fm_byte             * const rx_data,
-                            fm_byte             * const tx_data,
-                            fm_uint32                   max_pkt_size)
+static void packPacket(mbyModProfileAction     * const prof_act,
+                       fm_uint32                       rx_length,
+                       fm_byte                 * const grp_ctnr,
+                       varchar_t         const * const rx_data,
+                       varchar_builder_t       * const tx_data_builder)
 {
-    assert(max_pkt_size >= (rx_length + MBY_MOD_OPERATION_SIZE_MAX));
-
-    fm_uint tx_length = 0;
-
     for (fm_uint i = 0; i < MBY_MOD_PROFILE_GROUPS; i++)
-    {
-        if (prof_act->grp_list[i].valid)
-        {
-            for (fm_uint j = 0; j < prof_act->grp_list[i].ctnr_size; j++)
-            {
-                fm_uint offset = prof_act->grp_list[i].ctnr_offset;
-                tx_data[tx_length++] = grp_ctnr[offset + j];
-            }
-        }
-    }
-
+      if (prof_act->grp_list[i].valid)
+        for (fm_uint j = 0; j < prof_act->grp_list[i].ctnr_size; j++)
+          {
+            fm_uint offset = prof_act->grp_list[i].ctnr_offset;
+            varchar_builder_put(tx_data_builder, grp_ctnr[offset + j]);
+          }
+    
     for (fm_uint i = 0; i < (rx_length - prof_act->operating_region); i++)
-        tx_data[tx_length++] = rx_data[i + prof_act->operating_region];
-
-    return tx_length;
+      varchar_builder_put(tx_data_builder, varchar_get(rx_data, i + prof_act->operating_region));
 }
 
 void Modifier
 (
-    mby_ppe_modify_map         * const mod_map,
-    mby_shm_map                * const shm_map,
+    mby_ppe_modify_map   const * const mod_map,
+    mby_shm_map          const * const shm_map,
+    varchar_t            const *       rx_data,
     mbyTxInToModifier    const * const in,
     mbyModifierToTxStats       * const out,
-    fm_int                             max_pkt_size
+    varchar_builder_t          * const tx_data_builder
 )
 {
     // Read inputs:
@@ -1268,14 +1290,12 @@ void Modifier
     fm_uint32                   fnmask       = in->FNMASK;
     fm_byte                     mod_prof_idx = in->MOD_PROF_IDX;
     mbyParserHdrPtrs            pa_hdr_ptrs  = in->PA_HDR_PTRS;
-    fm_byte             * const rx_data      = in->RX_DATA;
-    fm_uint32                   rx_length    = in->RX_LENGTH;
+
+    fm_uint32                   rx_length    = rx_data->length;
 
     fm_byte                     grp_ctnr[MBY_MOD_CTNR_SIZE];
     fm_uint                     pkt_idx   = 0;
     mbyModProfileAction         prof_act;
-    fm_byte             * const tx_data   = out->TX_DATA;
-    fm_uint32                   tx_length = 0;
     fm_uint32                   tx_port   = 0;
 
     // Select egress port:
@@ -1295,10 +1315,12 @@ void Modifier
 
     performCmds(mod_map, rx_data, &prof_act, &pa_hdr_ptrs, grp_ctnr);
 
-    tx_length = packPacket(&prof_act, rx_length, grp_ctnr, rx_data, tx_data, max_pkt_size);
+    packPacket(&prof_act,
+               rx_length,
+               grp_ctnr,
+               rx_data,
+               tx_data_builder);
 
     // Write outputs:
-    out->TX_LENGTH   = tx_length;
-    out->TX_PORT     = tx_port;
-    out->PA_HDR_PTRS = pa_hdr_ptrs;
+    out->TX_PORT   = tx_port;
 }

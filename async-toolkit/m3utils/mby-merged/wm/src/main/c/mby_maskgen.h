@@ -10,6 +10,7 @@
 #include "mby_common.h"
 #include "mby_bitfield.h"
 #include "mby_maskgen_regs.h"
+#include "mby_nexthop.h"
 
 // Defines:
 
@@ -485,7 +486,6 @@ typedef struct mbyMaskGenToTriggersStruct
     fm_bool           QCN_MIRROR0_PROFILE_V;                  ///< qcn mirror 0 profile valid
     fm_bool           QCN_MIRROR1_PROFILE_V;                  ///< qcn mirror 1 profile valid
     fm_byte           QOS_TC;                                 ///< 4-bit switch priority
-    fm_uint32         RX_LENGTH;                              ///< RX packet length
     fm_bool           RX_MIRROR;                              ///< rx mirror frame
     fm_uint32         RX_PORT;                                ///< RX port number
     fm_byte           SEG_META_ERR;                           ///< segment error
@@ -511,10 +511,19 @@ typedef struct mbyMaskGenToTriggersStruct
     fm_bool           PM_ERR;                                 ///< ECC error on PM
     fm_bool           PM_ERR_NONSOP;
     fm_byte           QOS_L3_DSCP;                            ///< 6-bit QOS Differentiated Services Code Point (DSCP)
-    fm_byte         * RX_DATA;                                ///< ingress (receive) packet data
     fm_uint64         TAIL_CSUM_LEN;                          ///< L4 CSUM related information
     fm_byte           TRAFFIC_CLASS;                          ///< 3-bit traffic class
     fm_byte           TX_TAG;                                 ///< egress tag
+    fm_uint32         RX_LENGTH;                              ///< Ingress packet data length [bytes]
 } mbyMaskGenToTriggers;
+
+void MaskGen
+(
+    mby_ppe_fwd_misc_map  const * const fwd_misc,
+    mby_ppe_mst_glort_map const * const glort_map,
+    mby_ppe_cm_apply_map  const * const cm_apply,
+    mbyNextHopToMaskGen   const * const in,
+    mbyMaskGenToTriggers        * const out
+);
 
 #endif

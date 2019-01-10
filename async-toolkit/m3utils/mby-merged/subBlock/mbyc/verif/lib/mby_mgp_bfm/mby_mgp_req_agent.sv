@@ -10,6 +10,7 @@
 
 //----------------------------------------------------------------------------------------
 // Class: mby_mgp_req_agent
+// Agent class 
 //----------------------------------------------------------------------------------------
 class mby_mgp_req_agent extends uvm_agent;
    
@@ -31,6 +32,7 @@ endclass
 
 //----------------------------------------------------------------------------------------
 // Constructor
+// Creating new object for the agent
 //----------------------------------------------------------------------------------------
 function mby_mgp_req_agent::new(string name = "", uvm_component parent = null);
    super.new(name, parent);
@@ -38,6 +40,7 @@ endfunction : new
 
 //----------------------------------------------------------------------------------------
 // Method: build
+// Building agent components based on enable
 //----------------------------------------------------------------------------------------
 function void mby_mgp_req_agent::build_phase(uvm_phase phase);
    super.build_phase(phase);
@@ -64,6 +67,7 @@ endfunction : build_phase
 
 //----------------------------------------------------------------------------------------
 // Method: connect
+// Function connecting driver to sequencer
 //----------------------------------------------------------------------------------------
 function void mby_mgp_req_agent::connect_phase(uvm_phase phase);
    super.connect_phase(phase);

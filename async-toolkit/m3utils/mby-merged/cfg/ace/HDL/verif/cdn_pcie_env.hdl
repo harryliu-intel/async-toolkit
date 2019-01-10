@@ -8,10 +8,6 @@ $hdl_spec = {
 	-vlog_incdirs => [
 		"$ENV{UVM_HOME}/src",
 		"$ENV{OVM_HOME}/src",
-		"$ENV{XVM_HOME}/src",
-		"$ENV{XVM_HOME}/src/macros",
-		"$ENV{SAOLA_HOME}/verilog",
-		"$ENV{SAOLA_HOME}/verilog_uvm",
 		"$DENALI/ddvapi/sv/",
 		#"$DENALI/ddvapi/sv/ovm/pcie",
 		"$DENALI/ddvapi/sv/uvm/pcie",

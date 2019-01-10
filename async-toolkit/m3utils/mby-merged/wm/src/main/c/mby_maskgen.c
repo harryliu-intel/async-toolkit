@@ -1417,10 +1417,10 @@ void MaskGen
     out->PM_ERR_NONSOP          = in->PM_ERR_NONSOP;
     out->PA_L3LEN_ERR           = in->PA_L3LEN_ERR;
     out->QOS_L3_DSCP            = in->QOS_L3_DSCP;
-    out->RX_DATA                = in->RX_DATA;
     out->RX_LENGTH              = in->RX_LENGTH;
     out->SEG_META_ERR           = in->SEG_META_ERR;
     out->TAIL_CSUM_LEN          = in->TAIL_CSUM_LEN;
     out->TRAFFIC_CLASS          = in->TRAFFIC_CLASS;
     out->TX_TAG                 = in->TX_TAG;
+    out->RX_LENGTH              = in->RX_LENGTH;
 }

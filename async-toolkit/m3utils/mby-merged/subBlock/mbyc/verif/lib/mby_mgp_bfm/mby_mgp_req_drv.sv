@@ -9,6 +9,7 @@
 
 //----------------------------------------------------------------------------------------
 // Class: mby_mgp_req_drv
+// Class to send rd/wr req to mesh
 //----------------------------------------------------------------------------------------
 class mby_mgp_req_drv  extends uvm_driver#(mby_mgp_req_seq_item);
    `uvm_component_utils_begin(mby_mgp_req_drv)

@@ -1,5 +1,4 @@
-GENERIC MODULE BaseModelServer(TheModel, Map, MapAddr);
-IMPORT ModelServer;
+GENERIC MODULE BaseModelServer(ModelServer, TheModel, Map, MapAddr);
 IMPORT CsrOp, CsrAccessStatus;
 IMPORT Pathname;
 IMPORT Debug;
@@ -14,27 +13,27 @@ VAR doDebug := Debug.DebugThis(ModelServer.Brand);
 REVEAL
   T = Public BRANDED Brand OBJECT
   OVERRIDES
-    resetChip    := ResetChip;
+    reset        := Reset;
     init         := Init;
     csrOp        := DoCsrOp;
     handlePacket := HandlePacket;
   END;
 
-PROCEDURE ResetChip(t : T) =
+PROCEDURE Reset(t : T) =
   BEGIN
     (* not sure this is right! *)
-    t.setupChip(t.h.read, t.h.update);
+    t.setup(t.h.read, t.h.update);
     MapAddr.Reset(t.h.read, t.h.update);
-  END ResetChip;
+  END Reset;
 
 PROCEDURE Init(t            : T;
                sharedSocket : BOOLEAN;
-               infoPath     : Pathname.T;
                factory      : UpdaterFactory.T;
+               infoPath     : Pathname.T;
                quitLast     : BOOLEAN;
                infoFile     : Pathname.T) : Super =
   BEGIN
-    EVAL Super.init(t, sharedSocket, infoPath, factory, quitLast, infoFile);
+    EVAL Super.init(t, sharedSocket, factory, infoPath, quitLast, infoFile);
     Debug.Out(F("Creating %s ...",Map.Brand));
     t.h := NEW(MapAddr.H).init(CompAddr.Zero, factory);
     RETURN t

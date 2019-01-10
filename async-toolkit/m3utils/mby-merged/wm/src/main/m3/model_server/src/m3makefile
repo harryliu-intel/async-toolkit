@@ -15,6 +15,7 @@ import ("sstubgen")
 _exec(["../../structgen/AMD64_LINUX/structgen","../../wm_net/src/structgen_shared.scm","../../wm_net/src/structgen_m3.scm","../../wm_net/src/structs_m3.scm", "../src/actionsets.scm", "../src/enums.scm", "../src/ffu_enums.scm", "../src/mapper_constants.scm", "../src/parser_constants.scm", "exit"])
 include ("../AMD64_LINUX/derived.m3m")
 
+module ("ModelServerSuper")
 module ("ModelServer")
 
 %module ("HlpModelServer")
@@ -27,7 +28,7 @@ module ("ModelServer")
 % ... more to come ...
 %
 
-interface ("ModelServerClass")
+%interface ("ModelServerClass")
 module("MsIosf")
 %interface ("MsIosf")
 module ("HlpModelServer")
@@ -40,6 +41,7 @@ mkSet("DataPusher", "DataPusher")
 mkSetDef("DataPusher", "DataPusher")
 table("DataPusherRef", "DataPusher", "Refany")
 
+Generic_interface("Model")
 module ("HlpModel")
 %module ("MbyModel") % pure Modula-3 version of MbyModel
 interface ("MbyModel")
