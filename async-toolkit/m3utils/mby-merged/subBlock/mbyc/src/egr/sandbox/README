@@ -1,4 +1,4 @@
-# REquired for sandbox to run properly:
+# Required for sandbox to run properly:
 source /p/hdk/rtl/proj_tools/proj_binx/nhdk/latest/setnhdk.csh -w $cwd
 osetup vcsmx
 
@@ -18,6 +18,10 @@ make gate dut=<dut> # Build sandbox for <dut> e.g. dut=prc, dut=tqu, etc.
 # Generates a trace and leaves all temp files.
 make debug           # Build sandbox for EGR Top
 make debug dut=<dut> # Build sandbox for <dut> e.g. dut=prc, dut=tqu, etc.
+# Note: "make <command> dut=<dut>" assumes testbench is on egr/<dut>/sandbox/rtl/<dut>_tb.sv
+
+# Optional: the gui can be started before running the test using:
+make debug use_gui=1
 
 # Build and run alternate tests (with traces)
 # Single 64B packet, TC0, port 0
@@ -39,4 +43,3 @@ make clean
 # Open DVE to view a trace
 make dve
 
-# Note: "make <command> dut=<dut>" assumes testbench is on the path egr/partition1/<dut>/sandbox/rtl/<dut>_tb.sv
