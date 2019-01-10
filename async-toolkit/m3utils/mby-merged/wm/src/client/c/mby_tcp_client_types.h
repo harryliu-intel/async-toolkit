@@ -44,7 +44,7 @@
 #define MODEL_MSG_VERSION_INFO          13
 #define MODEL_MSG_NVM_READ              14
 #define MODEL_MSG_COMMAND_QUIT          15
-#define MODEL_MSG_PARSER                16
+#define MODEL_MSG_STAGE                 16
 
 /* Max length of IOSF messages used for read/write operations */
 #define IOSF_MSG_MAX_LEN                512

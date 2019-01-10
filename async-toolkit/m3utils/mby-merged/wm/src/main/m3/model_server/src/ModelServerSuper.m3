@@ -227,7 +227,8 @@ PROCEDURE ReceiveMessage(cl : Instance) RAISES { NetError.OutOfRange,
                         FmModelMsgType.Names[hdr.type],
                         Int(cx.rem)))
       END;
-      VAR seq := NEW(ByteSeq.T).init();
+      VAR
+        seq := NEW(ByteSeq.T).init();
       BEGIN
         FOR i := 0 TO cx.rem-1 DO
           seq.addhi(RdNet.GetU8C(cl.rd, cx));
