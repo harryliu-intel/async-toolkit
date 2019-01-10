@@ -39,7 +39,7 @@ typedef struct  {
 
 typedef struct {
     byte                    OFFSET      [`MBY_N_PARSER_PTRS]; // offsets to data of interest within packet
-    bit                     OFFSET_VALID[`MBY_N_PARSER_PTRS]; // parser offset valid flags
+    byte                    OFFSET_VALID[`MBY_N_PARSER_PTRS]; // parser offset valid flags
     byte                    PROT_ID     [`MBY_N_PARSER_PTRS]; // parser protocol IDs
 } mbyParserHdrPtrs;
 
