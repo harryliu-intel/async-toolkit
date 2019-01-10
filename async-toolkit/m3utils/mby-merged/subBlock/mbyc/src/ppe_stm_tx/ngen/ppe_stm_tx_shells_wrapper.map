@@ -20,29 +20,84 @@ foreach $i (0..79) {
     >> ppe_stm_tx_mod_tbl_$i$_init_done
     >> ppe_stm_tx_mod_tbl_$i$_rd_valid
 }
-    >> PPE_STM_TX_L3MC_TBL_CFG_reg_sel
-    >> PPE_STM_TX_L3MC_TBL_STATUS_reg_sel
-    >> ppe_stm_tx_l3mc_tbl_adr
-    >> ppe_stm_tx_l3mc_tbl_mem_ls_enter
-    >> ppe_stm_tx_l3mc_tbl_rd_en
-    >> ppe_stm_tx_l3mc_tbl_wr_data
-    >> ppe_stm_tx_l3mc_tbl_wr_en
-    >> ppe_stm_tx_l3mc_tbl_ecc_uncor_err
-    >> ppe_stm_tx_l3mc_tbl_init_done
-    >> ppe_stm_tx_l3mc_tbl_rd_data
-    >> ppe_stm_tx_l3mc_tbl_rd_valid
 
-    >> PPE_STM_TX_SHCP_TBL_CFG_reg_sel
-    >> PPE_STM_TX_SHCP_TBL_STATUS_reg_sel
-    >> ppe_stm_tx_shcp_tbl_adr
-    >> ppe_stm_tx_shcp_tbl_mem_ls_enter
-    >> ppe_stm_tx_shcp_tbl_rd_en
-    >> ppe_stm_tx_shcp_tbl_wr_data
-    >> ppe_stm_tx_shcp_tbl_wr_en
-    >> ppe_stm_tx_shcp_tbl_ecc_uncor_err
-    >> ppe_stm_tx_shcp_tbl_init_done
-    >> ppe_stm_tx_shcp_tbl_rd_data
-    >> ppe_stm_tx_shcp_tbl_rd_valid
+foreach $i (0..1) {
+    q_negh_tbl_ren[$i]          >> ppe_stm_tx_negh_tbl_$i$_rd_en
+    q_negh_tbl_wen[$i]          >> ppe_stm_tx_negh_tbl_$i$_wr_en
+    negh_tbl_addr[$i][13:0]     >> ppe_stm_tx_negh_tbl_$i$_adr
+    negh_tbl_rdata[$i][81:0]    >> ppe_stm_tx_negh_tbl_$i$_rd_data
+    q_negh_tbl_wdata[$i][81:0]  >> ppe_stm_tx_negh_tbl_$i$_wr_data
+
+    >> PPE_STM_TX_NEGH_TBL_$i$_CFG_reg_sel
+    >> PPE_STM_TX_NEGH_TBL_$i$_STATUS_reg_sel
+    >> ppe_stm_tx_negh_tbl_$i$_mem_ls_enter
+    >> ppe_stm_tx_negh_tbl_$i$_ecc_uncor_err
+    >> ppe_stm_tx_negh_tbl_$i$_init_done
+    >> ppe_stm_tx_negh_tbl_$i$_rd_valid
+}
+
+foreach $i (0..31) {
+    >> PPE_STM_TX_EACL_RAM_$i$_CFG_reg_sel
+    >> PPE_STM_TX_EACL_RAM_$i$_STATUS_reg_sel
+    >> ppe_stm_tx_eacl_ram_$i$_adr
+    >> ppe_stm_tx_eacl_ram_$i$_mem_ls_enter
+    >> ppe_stm_tx_eacl_ram_$i$_rd_en
+    >> ppe_stm_tx_eacl_ram_$i$_wr_data
+    >> ppe_stm_tx_eacl_ram_$i$_wr_en
+    >> ppe_stm_tx_eacl_ram_$i$_ecc_uncor_err
+    >> ppe_stm_tx_eacl_ram_$i$_init_done
+    >> ppe_stm_tx_eacl_ram_$i$_rd_data
+    >> ppe_stm_tx_eacl_ram_$i$_rd_valid
+
+    >> PPE_STM_TX_EACL_TCAM_$i$_CFG_reg_sel
+    >> PPE_STM_TX_EACL_TCAM_$i$_STATUS_reg_sel
+    >> ppe_stm_tx_eacl_tcam_$i$_adr
+    >> ppe_stm_tx_eacl_tcam_$i$_chk_en
+    >> ppe_stm_tx_eacl_tcam_$i$_chk_for_err_trig
+    >> ppe_stm_tx_eacl_tcam_$i$_chk_key
+    >> ppe_stm_tx_eacl_tcam_$i$_chk_mask
+    >> ppe_stm_tx_eacl_tcam_$i$_raw_hit_in
+    >> ppe_stm_tx_eacl_tcam_$i$_rd_en
+    >> ppe_stm_tx_eacl_tcam_$i$_slice_en
+    >> ppe_stm_tx_eacl_tcam_$i$_wr_data
+    >> ppe_stm_tx_eacl_tcam_$i$_wr_en
+    >> ppe_stm_tx_eacl_tcam_$i$_ecc_uncor_err
+    >> ppe_stm_tx_eacl_tcam_$i$_init_done
+    >> ppe_stm_tx_eacl_tcam_$i$_raw_hit_out
+    >> ppe_stm_tx_eacl_tcam_$i$_rd_data
+    >> ppe_stm_tx_eacl_tcam_$i$_rule_hit_num
+    >> ppe_stm_tx_eacl_tcam_$i$_rule_hit_num_vld
+    >> ppe_stm_tx_eacl_tcam_$i$_tcam_chk_rdy
+    >> ppe_stm_tx_eacl_tcam_$i$_tcam_chk_valid
+    >> ppe_stm_tx_eacl_tcam_$i$_tcam_rd_valid
+    >> ppe_stm_tx_eacl_tcam_$i$_tcam_rdwr_rdy
+}
+
+foreach $i (0..1) {
+    >> PPE_STM_TX_L3MC_TBL_$i$_CFG_reg_sel
+    >> PPE_STM_TX_L3MC_TBL_$i$_STATUS_reg_sel
+    >> ppe_stm_tx_l3mc_tbl_$i$_adr
+    >> ppe_stm_tx_l3mc_tbl_$i$_mem_ls_enter
+    >> ppe_stm_tx_l3mc_tbl_$i$_rd_en
+    >> ppe_stm_tx_l3mc_tbl_$i$_wr_data
+    >> ppe_stm_tx_l3mc_tbl_$i$_wr_en
+    >> ppe_stm_tx_l3mc_tbl_$i$_ecc_uncor_err
+    >> ppe_stm_tx_l3mc_tbl_$i$_init_done
+    >> ppe_stm_tx_l3mc_tbl_$i$_rd_data
+    >> ppe_stm_tx_l3mc_tbl_$i$_rd_valid
+
+    >> PPE_STM_TX_SHCP_TBL_$i$_CFG_reg_sel
+    >> PPE_STM_TX_SHCP_TBL_$i$_STATUS_reg_sel
+    >> ppe_stm_tx_shcp_tbl_$i$_adr
+    >> ppe_stm_tx_shcp_tbl_$i$_mem_ls_enter
+    >> ppe_stm_tx_shcp_tbl_$i$_rd_en
+    >> ppe_stm_tx_shcp_tbl_$i$_wr_data
+    >> ppe_stm_tx_shcp_tbl_$i$_wr_en
+    >> ppe_stm_tx_shcp_tbl_$i$_ecc_uncor_err
+    >> ppe_stm_tx_shcp_tbl_$i$_init_done
+    >> ppe_stm_tx_shcp_tbl_$i$_rd_data
+    >> ppe_stm_tx_shcp_tbl_$i$_rd_valid
+}
 
     >> PPE_STM_TX_ECC_COR_ERR_reg_sel
     >> PPE_STM_TX_ECC_UNCOR_ERR_reg_sel
@@ -52,6 +107,9 @@ foreach $i (0..79) {
     >> unified_regs_rd_data
     >> ppe_stm_tx_ecc_int
     >> ppe_stm_tx_init_done
+
+    >> ppe_stm_tx_ppe_stm_tx_eacl_tcam_from_tcam
+    >> ppe_stm_tx_ppe_stm_tx_eacl_tcam_to_tcam
 
 cclk    >> clk
 reset_n >> reset_n
