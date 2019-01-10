@@ -34,4 +34,10 @@ VAR model_stages : UNTRACED REF Info;
   
 CONST Brand = "ModelStagesC";
 
+PROCEDURE Lookup(top_map_name, stage_name : TEXT; VAR info : Info) : BOOLEAN;
+
+PROCEDURE CallStage(READONLY info : Info
+  (* more stuff goes here *)
+  );
+      
 END ModelStagesC.

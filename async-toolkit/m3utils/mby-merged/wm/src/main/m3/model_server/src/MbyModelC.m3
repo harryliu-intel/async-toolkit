@@ -4,7 +4,7 @@ IMPORT mby_top_map AS Map;
 IMPORT mby_top_map_addr AS MapAddr;
 IMPORT ServerPacket AS Pkt;
 IMPORT FmModelMessageHdr;
-IMPORT MbyModelServer, MbyModelServerExt;
+IMPORT MbyModelServer, MbyModelServerExt, ModelServerSuper;
 IMPORT Debug;
 IMPORT mby_top_map_c;
 IMPORT Fmt; FROM Fmt IMPORT Int, F;
@@ -70,7 +70,7 @@ VAR
   rp, wp : UNTRACED REF ADDRESS := NEW(UNTRACED REF ADDRESS);
   (* shouldnt really be globals should they *)
   
-PROCEDURE Setup(<*UNUSED*>server : MbyModelServer.T;
+PROCEDURE Setup(<*UNUSED*>server : ModelServerSuper.T;
                 <*UNUSED*>READONLY read : Map.T;
                 READONLY update : MapAddr.Update) =
   BEGIN

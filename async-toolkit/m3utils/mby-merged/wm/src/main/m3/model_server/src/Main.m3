@@ -146,7 +146,8 @@ BEGIN
                            setup := MbyModel.Setup,
                            reflect := doReflect)
       ELSE
-        modelServer := NEW(MbyStageModelServer.T)
+        modelServer := NEW(MbyStageModelServer.T,
+                           setup := MbyModel.Setup)
       END;
       factory := MbyModelC.GetUpdaterFactory()
     END;

@@ -29,7 +29,7 @@ module ("ModelServerSuper")
 module ("ModelServer")
 module ("StageModelServer")
 module ("ModelServerUtils")
-interface ("ModelStagesC")
+module ("ModelStagesC")
 
 %interface ("ModelServerClass")
 module("MsIosf")

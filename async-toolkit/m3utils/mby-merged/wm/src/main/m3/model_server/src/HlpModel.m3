@@ -5,7 +5,7 @@ IMPORT hlp_top_map_addr AS MapAddr;
 IMPORT ServerPacket AS Pkt;
 IMPORT FmModelMessageHdr;
 IMPORT FmModelConstants;
-IMPORT HlpModelServer;
+IMPORT HlpModelServer, ModelServerSuper;
 IMPORT Debug;
 IMPORT BaseModelStage;
 IMPORT Metadata;
@@ -103,7 +103,7 @@ PROCEDURE FloodPktHandler(READONLY hdr : FmModelMessageHdr.T;
     END
   END FloodPktHandler;
 
-PROCEDURE Setup(<*UNUSED*>server : HlpModelServer.T;
+PROCEDURE Setup(<*UNUSED*>server : ModelServerSuper.T;
                    <*UNUSED*>READONLY read : Map.T;
                    READONLY update : MapAddr.Update) =
   BEGIN

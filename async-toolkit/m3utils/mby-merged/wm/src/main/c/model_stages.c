@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 
-model_stages_info_t * PASTE(TOP_MAP,_stages) = NULL;
+model_stages_info_t * model_stages = NULL;
 
 void
 model_stages_register(
@@ -28,8 +28,8 @@ model_stages_register(
   new->w_size            = w_size;
   new->in_size           = in_size;
   new->out_size          = out_size;
-  new->next              = PASTE(TOP_MAP,_stages);
-  PASTE(TOP_MAP,_stages) = new;
+  new->next              = model_stages;
+  model_stages           = new;
 }
 
 static void
@@ -45,7 +45,7 @@ model_stages_destroy(void)
 {
   model_stages_info_t *p, *q;
 
-  p = PASTE(TOP_MAP,_stages);
+  p = model_stages;
   while (p) {
     q = p->next;
     destroy_one(p);

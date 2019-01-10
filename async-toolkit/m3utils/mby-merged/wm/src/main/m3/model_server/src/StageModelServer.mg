@@ -1,4 +1,8 @@
-GENERIC MODULE StageModelServer(ModelServer, TheModel, Map, MapAddr, ModelStagesC);
+GENERIC MODULE StageModelServer(ModelServer,
+                                TheModel,
+                                Map,
+                                MapAddr,
+                                TheModelStagesC);
 IMPORT CsrOp, CsrAccessStatus;
 IMPORT Pathname;
 IMPORT Debug;
@@ -7,11 +11,13 @@ FROM Fmt IMPORT F; IMPORT Fmt;
 IMPORT ServerPacket AS Pkt;
 IMPORT FmModelMessageHdr;
 IMPORT UpdaterFactory;
+IMPORT ModelStagesC;
 
 VAR doDebug := Debug.DebugThis(ModelServer.Brand);
     
 REVEAL
   T = Public BRANDED Brand OBJECT
+    cInfo : ModelStagesC.Info;
   OVERRIDES
     reset        := Reset;
     init         := Init;
@@ -33,7 +39,15 @@ PROCEDURE Init(t            : T;
                infoFile     : Pathname.T) : Super =
   BEGIN
     EVAL Super.init(t, stageName, factory, infoPath, quitLast, infoFile);
+
     t.topMapName := Map.Brand;
+    WITH foundIt = ModelStagesC.Lookup(t.topMapName, stageName, t.cInfo) DO
+      IF NOT foundIt THEN
+        Debug.Error(F("Unable to find stage model %s / %s",
+                      t.topMapName, stageName))
+      END
+    END;
+
     Debug.Out(F("Creating %s ... stageName %s",Map.Brand, t.stageName));
     t.h := NEW(MapAddr.H).init(CompAddr.Zero, factory);
     RETURN t
@@ -49,5 +63,5 @@ PROCEDURE DoCsrOp(t : T; VAR op : CsrOp.T) : CsrAccessStatus.T =
   END DoCsrOp;
 
 BEGIN
-  ModelStagesC.Registrar()
+  TheModelStagesC.Registrar()
 END StageModelServer.
