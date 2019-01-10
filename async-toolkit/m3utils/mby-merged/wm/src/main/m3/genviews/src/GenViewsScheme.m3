@@ -20,18 +20,15 @@ IMPORT RegComponent;
 
 REVEAL
   T = Public BRANDED OBJECT
-    wx : Wx.T;
-  METHODS
-    put(txt : TEXT; lev : CARDINAL) := Put;
   OVERRIDES
     gen := Gen;
   END;
 
-PROCEDURE Put(t : T; txt : TEXT; lev : CARDINAL) =
+PROCEDURE Put(wx : Wx.T; txt : TEXT; lev : CARDINAL) =
   BEGIN
-    Wx.PutText(t.wx, Spaces(lev));
-    Wx.PutText(t.wx, txt);
-    Wx.PutText(t.wx, "\n");
+    Wx.PutText(wx, Spaces(lev));
+    Wx.PutText(wx, txt);
+    Wx.PutText(wx, "\n");
   END Put;
 
 PROCEDURE Spaces(lev : CARDINAL) : TEXT =
@@ -43,13 +40,15 @@ PROCEDURE Spaces(lev : CARDINAL) : TEXT =
     END;
     RETURN Text.FromChars(a^)
   END Spaces;
+
+TYPE Version = { Tree, Sync };
   
 PROCEDURE Gen(t : T; tgtmap : RegAddrmap.T; outDir : Pathname.T) =
   VAR
-    a : REF ARRAY OF FieldData.T := NIL;
-    b : REF ARRAY OF CARDINAL := NIL;
+    a       : REF ARRAY OF FieldData.T := NIL;
+    b       : REF ARRAY OF CARDINAL := NIL;
+    treeTxt : TEXT;
   BEGIN
-    t.wx := Wx.New();
     IF t.fieldAddrRd # NIL THEN
       Debug.Out("Reading field data...");
       a := Pickle2.Read(t.fieldAddrRd);
@@ -58,13 +57,17 @@ PROCEDURE Gen(t : T; tgtmap : RegAddrmap.T; outDir : Pathname.T) =
       Debug.Out("size of b : " & Int(NUMBER(b^)));
       Rd.Close(t.fieldAddrRd)
     END;
-    t.put(F("((cont %s)",tgtmap.nm), 0);
-    DoContainer(t, tgtmap, 1);
-    t.put(")",0);
-    WITH txt = Wx.ToText(t.wx) DO
-      Debug.Out("Producing\n"&txt);
-      RunScheme(t, a, b, txt);
+
+    WITH wx = Wx.New() DO
+      Put(wx,F("((cont %s)",tgtmap.nm), 0);
+      DoContainer(wx, tgtmap, 1, Version.Tree);
+      Put(wx,")",0);
+      treeTxt := Wx.ToText(wx)
     END;
+
+    Debug.Out("Producing\n"&treeTxt);
+    RunScheme(t, a, b, treeTxt);
+
   END Gen;
 
 PROCEDURE RunScheme(t    : T;
@@ -113,9 +116,10 @@ PROCEDURE RunScheme(t    : T;
     END
   END RunScheme;
   
-PROCEDURE DoContainer(t   : T;
+PROCEDURE DoContainer(wx  : Wx.T;
                       c   : RegContainer.T;
-                      lev : CARDINAL) =
+                      lev : CARDINAL;
+                      v   : Version) =
   VAR
     skipArc := c.skipArc();
   BEGIN
@@ -128,12 +132,10 @@ PROCEDURE DoContainer(t   : T;
       ELSE
         <*ASSERT FALSE*>
       END;
-      (*t.put(F("(container %s %s",tn, c.nm), lev)*)
     END;
     FOR i := 0 TO c.children.size()-1 DO
-      DoChild(t, c.children.get(i), lev (*+1*), skipArc )
+      DoChild(wx, c.children.get(i), lev (*+1*), skipArc, v)
     END;
-    (*t.put(")", lev)*)
   END DoContainer;
 
 PROCEDURE HasNoFurtherArcs(c : RegComponent.T) : BOOLEAN =
@@ -153,7 +155,11 @@ PROCEDURE HasNoFurtherArcs(c : RegComponent.T) : BOOLEAN =
     END    
   END HasNoFurtherArcs;
   
-PROCEDURE DoChild(t : T; c : RegChild.T; lev : CARDINAL; skipArc : BOOLEAN) =
+PROCEDURE DoChild(wx : Wx.T;
+                  c : RegChild.T;
+                  lev : CARDINAL;
+                  skipArc : BOOLEAN;
+                  v : Version) =
   VAR
     tag : TEXT;
   BEGIN
@@ -173,7 +179,7 @@ PROCEDURE DoChild(t : T; c : RegChild.T; lev : CARDINAL; skipArc : BOOLEAN) =
     END;
     
     IF NOT skipArc THEN
-      t.put(F("((%s %s)", tag, c.nm),lev);
+      Put(wx,F("((%s %s)", tag, c.nm),lev);
       INC(lev)
     END;
     
@@ -184,7 +190,7 @@ PROCEDURE DoChild(t : T; c : RegChild.T; lev : CARDINAL; skipArc : BOOLEAN) =
         ELSE
           (* skip *)
         END;
-        t.put(F("((array %s%s)",
+        Put(wx,F("((array %s%s)",
                 Int(BigInt.ToInteger(c.array.n.x)),
                 extras),
               lev);
@@ -194,9 +200,9 @@ PROCEDURE DoChild(t : T; c : RegChild.T; lev : CARDINAL; skipArc : BOOLEAN) =
       
     WITH ccomp = c.comp DO
       TYPECASE ccomp OF
-        RegContainer.T => DoContainer(t, ccomp, lev)
+        RegContainer.T => DoContainer(wx, ccomp, lev, v)
       |
-        RegReg.T => DoReg(t, ccomp, lev)
+        RegReg.T => DoReg(wx, ccomp, lev, v)
       |
         RegField.T => <*ASSERT FALSE*> (* right? *)
       ELSE
@@ -206,15 +212,15 @@ PROCEDURE DoChild(t : T; c : RegChild.T; lev : CARDINAL; skipArc : BOOLEAN) =
 
     IF c.array # NIL THEN
       DEC(lev);
-      t.put(F(")"),lev)
+      Put(wx,F(")"),lev)
     END;
     IF NOT skipArc THEN
       DEC(lev);
-      t.put(F(")"),lev)
+      Put(wx,F(")"),lev)
     END
   END DoChild;
 
-PROCEDURE DoField(t : T; f : RegField.T; lev : CARDINAL) =
+PROCEDURE DoField(wx : Wx.T; f : RegField.T; lev : CARDINAL; v : Version) =
   BEGIN
     IF f.lsb = RegField.Unspecified THEN
       Debug.Warning("Unspecified LSB in field " & f.nm)
@@ -222,18 +228,14 @@ PROCEDURE DoField(t : T; f : RegField.T; lev : CARDINAL) =
     IF f.width = RegField.Unspecified THEN
       Debug.Warning("Unspecified width in field " & f.nm)
     END;
-    t.put(F("((field %s %s %s))", f.nm, Int(f.lsb), Int(f.width)),lev)
+    Put(wx,F("((field %s %s %s))", f.nm, Int(f.lsb), Int(f.width)),lev)
   END DoField;
 
-PROCEDURE DoReg(t : T; r : RegReg.T; lev : CARDINAL) =
+PROCEDURE DoReg(wx : Wx.T; r : RegReg.T; lev : CARDINAL; v : Version) =
   BEGIN
-(*
-    t.put(F("(regheader %s)", r.nm), lev);
-*)
     FOR i := 0 TO r.fields.size()-1 DO
-      DoField(t, r.fields.get(i), lev(*+1*))
+      DoField(wx, r.fields.get(i), lev(*+1*), v)
     END;
-    (*t.put(")", lev)*)
   END DoReg;
 
 BEGIN END GenViewsScheme.
