@@ -1,5 +1,4 @@
-GENERIC MODULE BaseModelServer(TheModel, Map, MapAddr);
-IMPORT ModelServer;
+GENERIC MODULE BaseModelServer(ModelServer, TheModel, Map, MapAddr);
 IMPORT CsrOp, CsrAccessStatus;
 IMPORT Pathname;
 IMPORT Debug;
