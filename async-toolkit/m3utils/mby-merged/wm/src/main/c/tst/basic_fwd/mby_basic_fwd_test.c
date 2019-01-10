@@ -33,6 +33,7 @@ static mby_top_map       top_map;
 static mby_top_map__addr top_map_addr;
 
 static mbyRxStatsToRxOut rxs2rxo;
+static varchar_t rx_data;
 
 inline static int checkOk (const char * test, const fm_status status)
 {
@@ -123,6 +124,10 @@ static fm_status sendPacket
         mac2par.RX_PORT   = (fm_uint32) port;
         memcpy(mac2par.SEG_DATA, packet, MIN(length, sizeof(mac2par.SEG_DATA)));
 
+        // Set variables for TxPipeline
+        rx_data.data   = packet;
+        rx_data.length = length;
+
         // Call RX pipeline:
         RxPipeline(rx_top_map, rx_top_map_w, shm_map, &mac2par, &rxs2rxo);
     }
@@ -183,14 +188,16 @@ static fm_status receivePacket
         // Call RX pipeline:
         // TODO what do we do here with rx_data and tx_data?
         varchar_builder_t txd_builder;
-        varchar_builder_init(&txd_builder, tx_data, malloc, free);
+        varchar_t tx_data;
 
-        TxPipeline(tx_top_map, tx_top_map_w, shm_map, rx_data,
+        varchar_builder_init(&txd_builder, &tx_data, malloc, free);
+
+        TxPipeline(tx_top_map, tx_top_map_w, shm_map, &rx_data,
                    &txi2mod, &txs2mac, &txd_builder);
 
         // Populate output:
         *port   = txs2mac.TX_PORT;
-        *length = txs2mac.TX_LENGTH;
+        *length = tx_data.length;
     }
     return sts;
 }

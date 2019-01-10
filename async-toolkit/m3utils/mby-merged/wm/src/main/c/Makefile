@@ -141,9 +141,10 @@ ${BLD_DIR}/mby_model.o         : $(BLD_DTS) Makefile mby_model.c         mby_mod
 ${BLD_DIR}/mby_model_basic.o   : $(BLD_DTS) Makefile mby_model_basic.c   mby_model_basic.h
 ${BLD_DIR}/mby_errors.o        : $(BLD_DTS) Makefile mby_errors.c        mby_errors.h         mby_model.h
 ${BLD_DIR}/mby_init.o          : $(BLD_DTS) Makefile mby_init.c          mby_init.h
-${BLD_DIR}/varchar.o           : $(BLD_DTS) Makefile
-${BLD_DIR}/mby_stages.o           : $(BLD_DTS) Makefile
-${BLD_DIR}/fm_alos_debughash.o           : $(BLD_DTS) Makefile
+${BLD_DIR}/varchar.o           : $(BLD_DTS) Makefile varchar.c           varchar.h
+
+${BLD_DIR}/mby_stages.o        : $(BLD_DTS) Makefile mby_stages.c        mby_stages.h
+${BLD_DIR}/fm_alos_debughash.o : $(BLD_DTS) Makefile
 
 
 $(LIB_M3EXPT): $(OBJECTS)
