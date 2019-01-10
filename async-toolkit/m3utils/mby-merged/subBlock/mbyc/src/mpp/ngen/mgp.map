@@ -59,8 +59,6 @@ grp_d$y                         >> egr_epl3
 glb$y$_rxppe                    >> glb_rxppe                            
 glb$y$_txppe0                   >> glb_txppe0                         
 glb$y$_txppe1                   >> glb_txppe1                         
-egr$y$_mc_table0                >> egr_mc_table0                          
-egr$y$_mc_table1                >> egr_mc_table1                          
 tx_ppe_mod_if$y$_0              >> tx_ppe_mod_if0
 tx_ppe_mod_if$y$_1              >> tx_ppe_mod_if1
 tx_ppe_negh_if$y$_0             >> tx_ppe_negh_if0

@@ -76,10 +76,6 @@ tx_ppe_negh_if      tx_ppe_negh_if0();
 tx_ppe_negh_if      tx_ppe_negh_if1();
 tx_ppe_negh_if      tx_ppe_negh_if2();
 tx_ppe_negh_if      tx_ppe_negh_if3();
-egr_mc_table_if     mc_table_if0_0();
-egr_mc_table_if     mc_table_if0_1();
-egr_mc_table_if     mc_table_if1_0();
-egr_mc_table_if     mc_table_if1_1();
 
 //Reset
 always @(posedge cclk) begin //{
@@ -864,12 +860,12 @@ always @(posedge cclk) begin //{
 end //}
 
 logic   [13:0]    q_negh_tbl_waddr;
-logic   [81:0]    q_negh_tbl_wdata;
+logic   [84:0]    q_negh_tbl_wdata;
 //Temporary for driving write data
 always @(negedge cclk) begin //{
     if(cclk_cnt == 1) begin //{
         q_negh_tbl_waddr <= 14'h3fff;
-        q_negh_tbl_wdata <= 82'h3ffffffffffffffffffff;
+        q_negh_tbl_wdata <= 85'h1fffffffffffffffffffff;
     end //}
     else if((cclk_cnt > 49) && (cclk_cnt < 1000)) begin //{
         force ppe_stm_tx_top.ppe_stm_tx_logic.q_negh_tbl_waddr[0] = q_negh_tbl_waddr;
@@ -913,12 +909,7 @@ ppe_stm_tx_top  ppe_stm_tx_top (
     .tx_ppe_negh_if0    (tx_ppe_negh_if0),
     .tx_ppe_negh_if1    (tx_ppe_negh_if1),
     .tx_ppe_negh_if2    (tx_ppe_negh_if2),
-    .tx_ppe_negh_if3    (tx_ppe_negh_if3),
-
-    .mc_table_if0_0     (mc_table_if0_0),
-    .mc_table_if0_1     (mc_table_if0_1),
-    .mc_table_if1_0     (mc_table_if1_0),
-    .mc_table_if1_1     (mc_table_if1_1)
+    .tx_ppe_negh_if3    (tx_ppe_negh_if3)
 );
 
 endmodule

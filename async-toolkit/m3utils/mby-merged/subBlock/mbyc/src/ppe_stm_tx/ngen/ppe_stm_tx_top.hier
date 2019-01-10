@@ -13,7 +13,7 @@ ppe_stm_tx_top [
       .NEGH_TBL_RPORTS(4), \
       .NEGH_TBL_DEPTH(16384), \
       .LOG2_NEGH_TBL_DEPTH(14), \
-      .NEGH_TBL_WIDTH(82))
+      .NEGH_TBL_WIDTH(85))
   ppe_stm_tx_shells_wrapper of ppe_stm_tx_shells_wrapper with ppe_stm_tx_shells_wrapper.map
   ppe_stm_tx_rf_mems of ppe_stm_tx_rf_mems with ppe_stm_tx_rf_mems.map
   ppe_stm_tx_sram_mems of ppe_stm_tx_sram_mems with ppe_stm_tx_sram_mems.map
