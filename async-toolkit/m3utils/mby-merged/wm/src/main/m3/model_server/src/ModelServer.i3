@@ -1,6 +1,5 @@
 INTERFACE ModelServer;
 IMPORT Pathname;
-IMPORT CsrOp, CsrAccessStatus;
 IMPORT ServerPacket AS Pkt;
 IMPORT FmModelMessageHdr;
 IMPORT ModelServerSuper;
@@ -46,9 +45,6 @@ TYPE
        (normally in this usage, there is only one writer) *)
 
     (****** abstract methods, implement in child type: ******)
-    
-    reset();
-    (* bring the DUT to the desired reset state *)
 
     handlePacket(READONLY hdr : FmModelMessageHdr.T; pkt : Pkt.T);
     (* should return a handle? *)

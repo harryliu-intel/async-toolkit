@@ -18,12 +18,18 @@ TYPE
     listenFork() : Listener;
     (* fork a listener on an arbitrarily chosen port *)
 
+    init(infoPath, infoFile : Pathname.T;
+         READONLY handler : ARRAY FmModelMsgType.T OF MsgHandler) : T;
+
+    (****** abstract methods, implement in child type: ******)
+
+    reset();
+    (* bring the DUT to the desired reset state *)
+
     csrOp(VAR op : CsrOp.T) : CsrAccessStatus.T;
     (* perform a CSR operation as requested.
        if a read, the read results are returned in the op itself. *)
 
-    init(infoPath, infoFile : Pathname.T;
-         READONLY handler : ARRAY FmModelMsgType.T OF MsgHandler) : T;
   END;
 
   Listener <: PubListener;
@@ -53,7 +59,10 @@ TYPE
   METHODS
     sendResponse() RAISES { Wr.Failure, Thread.Alerted };
     (* send a response packet from sp, formatted WITHOUT the outer header
-       of type FmModelMessageHdr.T *)
+       of type FmModelMessageHdr.T 
+      
+       the header will simply be copied from the request (using lastHdr)
+    *)
   END;
   
 EXCEPTION ParseError(TEXT);

@@ -4,7 +4,7 @@ IMPORT ModelServerSuper;
 IMPORT Debug;
 IMPORT Thread;
 FROM Fmt IMPORT F, Int;
-IMPORT Rd, Wr, IP;
+IMPORT Rd, IP;
 IMPORT Fmt;
 IMPORT FmModelMessageHdr;
 IMPORT Pathname;
@@ -14,7 +14,6 @@ IMPORT RdNet, WrNet;
 FROM NetTypes IMPORT U8, U16, U32;
 IMPORT Text;
 IMPORT NetContext;
-IMPORT FmModelMsgVersionHdr;
 IMPORT ServerPacket AS Pkt;
 IMPORT MsIosf;
 IMPORT FmModelSetEgressInfoHdr;
@@ -25,10 +24,11 @@ IMPORT DataPusherSet, DataPusherSetDef;
 IMPORT Byte;
 IMPORT FmModelDataType;
 IMPORT FmModelSideBandData;
-IMPORT Process;
 IMPORT UpdaterFactory;
 
-FROM ModelServerSuper IMPORT ParseError, Instance;
+FROM ModelServerSuper IMPORT ParseError, Instance, MsgHandler;
+FROM ModelServerUtils IMPORT HandleMsgVersionInfo, HandleMsgCommandQuit,
+                             GetStringC;
 
 (* may keep : *)
 <*FATAL Thread.Alerted*>
@@ -38,8 +38,6 @@ FROM ModelServerSuper IMPORT ParseError, Instance;
 <*FATAL NetContext.Short*>
 <*FATAL NetError.OutOfRange*>
 
-VAR doDebug := Debug.DebugThis(Brand);
-  
 REVEAL
   T = Public BRANDED Brand OBJECT
     egressPorts          : IntDataPusherTbl.T;
@@ -120,9 +118,6 @@ PROCEDURE Init(t                    : T;
     RETURN t
   END Init;
 
-
-TYPE MsgHandler = ModelServerSuper.MsgHandler;
-     
 VAR
   handlers :=  ARRAY FmModelMsgType.T OF MsgHandler {
   (* Packet                    *) NEW(MsgHandler,
@@ -146,7 +141,8 @@ VAR
                                       handle := HandleMsgVersionInfo),
   (* NvmRead                   *) NIL,
   (* CommandQuit               *) NEW(MsgHandler,
-                                      handle := HandleMsgCommandQuit)
+                                      handle := HandleMsgCommandQuit),
+  (* StageData                 *) NIL
   };
 
   (**********************************************************************)
@@ -373,7 +369,6 @@ PROCEDURE HandleSetEgressInfoShared(t        : T;
     END
   END HandleSetEgressInfoShared;  
 
-
 TYPE
   MyDataPusher = DataPusher.T OBJECT
     t    : T;
@@ -412,80 +407,4 @@ PROCEDURE DPEC(dp : MyDataPusher) =
     END
   END DPEC;
 
-  (**********************************************************************)
-
-PROCEDURE HandleMsgCommandQuit(<*UNUSED*>m      : MsgHandler;
-                               READONLY hdr     : FmModelMessageHdr.T;
-                               <*UNUSED*>VAR cx : NetContext.T;
-                               <*UNUSED*>inst   : Instance)
-  RAISES { }=
-  BEGIN
-    <*ASSERT hdr.type = FmModelMsgType.T.CommandQuit*>
-    (* not elegant *)
-    Debug.Out("Received CommandQuit from socket stream, going down.");
-    Process.Exit(0)
-  END HandleMsgCommandQuit;
-  
-  (**********************************************************************)
-
-PROCEDURE HandleMsgVersionInfo(<*UNUSED*>m  : MsgHandler;
-                               READONLY hdr : FmModelMessageHdr.T;
-                               VAR cx       : NetContext.T;
-                               inst         : Instance)
-  RAISES { Rd.EndOfFile, Rd.Failure, Wr.Failure }=
-  BEGIN
-    <*ASSERT hdr.type = FmModelMsgType.T.VersionInfo*>
-    WITH versionHdr = FmModelMsgVersionHdr.ReadC(inst.rd, cx),
-         remBytes   = cx.rem,
-         versionTag = GetStringC(inst.rd,remBytes, cx) DO
-
-      IF doDebug THEN
-        Debug.Out("Received FmModelMsgVersionHdr " &
-          FmModelMsgVersionHdr.Format(versionHdr));
-        Debug.Out(F("versionNum=%s remBytes=%s",
-                    Int(versionHdr.versionNum), Int(remBytes)));
-        Debug.Out(F("versionTag=%s", GetStringC(inst.rd,remBytes, cx)));
-      END;
-      
-      (* format and send return message *)
-      WrNet.PutU16G(inst.sp, Pkt.End.Back, versionHdr.versionNum);
-      PutStringS(inst.sp, Pkt.End.Back, versionTag);
-      inst.sendResponse()
-    END
-  END HandleMsgVersionInfo;
-
-PROCEDURE GetStringC(rd      : Rd.T;
-                     bufflen : CARDINAL;
-                     VAR cx  : NetContext.T) : TEXT
-  RAISES { Rd.EndOfFile, Rd.Failure } =
-  VAR
-    str := NEW(REF ARRAY OF CHAR, bufflen);
-    n := bufflen;
-  BEGIN
-    FOR i := 0 TO bufflen-1 DO
-      WITH c = VAL(RdNet.GetU8C(rd,cx),CHAR) DO
-        IF ORD(c) = 0 AND n = bufflen THEN n := i END;
-        str[i] := c
-      END
-    END;
-    RETURN Text.FromChars(SUBARRAY(str^, 0, n))
-  END GetStringC;
-  
-PROCEDURE PutStringS(sp : Pkt.T; end : Pkt.End; str : TEXT) =
-  BEGIN
-    CASE end OF
-      Pkt.End.Front =>
-      sp.addlo(0);
-      FOR i := Text.Length(str)-1 TO 0 BY -1 DO
-        sp.addlo(ORD(Text.GetChar(str,i)))
-      END
-    |
-      Pkt.End.Back =>
-      FOR i := 0 TO Text.Length(str)-1 DO
-        sp.addhi(ORD(Text.GetChar(str,i)))
-      END;
-      sp.addhi(0)
-    END
-  END PutStringS;
-  
 BEGIN END ModelServer.

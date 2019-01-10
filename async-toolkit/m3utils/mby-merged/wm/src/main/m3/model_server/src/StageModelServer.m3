@@ -46,7 +46,8 @@ VAR
   (* VersionInfo               *) NIL,
   (* NvmRead                   *) NIL,
   (* CommandQuit               *) NEW(MsgHandler,
-                                      handle := HandleMsgCommandQuit)
+                                      handle := HandleMsgCommandQuit),
+  (* StageData                 *) NIL
   };
 
 BEGIN END StageModelServer.

@@ -20,7 +20,7 @@ PROCEDURE HandleMsgCommandQuit(<*UNUSED*>m      : MsgHandler;
                                READONLY hdr     : FmModelMessageHdr.T;
                                <*UNUSED*>VAR cx : NetContext.T;
                                <*UNUSED*>inst   : Instance)
-  RAISES { }=
+  RAISES { } =
   BEGIN
     <*ASSERT hdr.type = FmModelMsgType.T.CommandQuit*>
     (* not elegant *)
