@@ -16,6 +16,7 @@ $hdl_spec = {
        "src/shared/rtl/mby_rx_metadata_pkg.sv",
        "src/shared/rtl/mby_egr_pkg.sv",
        "src/shared/rtl/mby_gmm_pkg.sv",
+       "src/csrs/mby/output/sverilog/mby_rx_pb_pkg.vh",
     ## previous files need to be removed from here once there's a shared lib and gmm lib
        "src/shared/interfaces/igr_rx_ppe_if.sv",
        "src/shared/interfaces/rx_ppe_igr_if.sv",
@@ -56,6 +57,10 @@ $hdl_spec = {
      "target/mby/mgm_run/igr/src",
      "target/mby/mgm_run/igr/src/mem_wrap",
      "target/mby/mgm_run/rtl",
+     "target/GenRTL/regflow/mby/output/chdr",
+     "target/GenRTL/regflow/mby/output/sverilog",
+     "src/csrs/mby/output",
+     "src/csrs/mby/output/sverilog",
      "src/igr/pbb/rtl",
      "src/igr/post_ppe/rtl",
      "$VCS_HOME/packages/sva_cg"
@@ -69,6 +74,7 @@ $hdl_spec = {
      "src/igr/rtl",
 #     "/nfs/site/disks/ccdo.soc.cad_root.1/cad/x86-64_linux26/synopsys/designcompiler/M-2016.12-SP3/dw/sim_ver",
      "$DW_SIM/dw/sim_ver",
+     "src/csrs/mby/output/sverilog",
      "src/igr/pbb/rtl",
      "src/igr/post_ppe/rtl",
      "target/mby/mgm_run/igr/src",
