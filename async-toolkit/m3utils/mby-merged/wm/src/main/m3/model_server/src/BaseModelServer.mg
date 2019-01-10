@@ -29,12 +29,12 @@ PROCEDURE Reset(t : T) =
 
 PROCEDURE Init(t            : T;
                sharedSocket : BOOLEAN;
-               infoPath     : Pathname.T;
                factory      : UpdaterFactory.T;
+               infoPath     : Pathname.T;
                quitLast     : BOOLEAN;
                infoFile     : Pathname.T) : Super =
   BEGIN
-    EVAL Super.init(t, sharedSocket, infoPath, factory, quitLast, infoFile);
+    EVAL Super.init(t, sharedSocket, factory, infoPath, quitLast, infoFile);
     Debug.Out(F("Creating %s ...",Map.Brand));
     t.h := NEW(MapAddr.H).init(CompAddr.Zero, factory);
     RETURN t

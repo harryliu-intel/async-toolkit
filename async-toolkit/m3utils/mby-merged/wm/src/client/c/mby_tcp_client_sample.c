@@ -91,6 +91,7 @@ int main(int argc, char *argv[])
         printf("Started/connected to WM\n");
     }
 
+#if 0
     /********** Test parser stage  ***********/
     printf("waiting a bit..."); fflush(stdout);
     for(int i=0; i<5; ++i) usleep(1000*1000);
@@ -98,6 +99,8 @@ int main(int argc, char *argv[])
     err = test_parser();
     if (err)
         goto CLEANUP;
+
+#endif
 
     /********** Test write/read register operations ***********/
     err = test_regs();

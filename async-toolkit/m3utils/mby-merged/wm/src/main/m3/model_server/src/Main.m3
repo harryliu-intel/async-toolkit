@@ -19,6 +19,7 @@ IMPORT Text;
 IMPORT Thread;
 IMPORT UpdaterFactory, UnsafeUpdaterFactory;
 IMPORT MbyModelC;
+FROM Fmt IMPORT F;
 
 <*FATAL Thread.Alerted*>
 
@@ -29,21 +30,33 @@ PROCEDURE DoUsage() : TEXT =
     RETURN Params.Get(0) & ": usage: " & Usage
   END DoUsage;
 
-TYPE   Models     =                          {  Hlp,   Mby  };
-CONST  ModelNames = ARRAY Models OF TEXT     { "hlp", "mby" };
+TYPE   Model      =                         {  Hlp,   Mby  };
+CONST  ModelNames = ARRAY Model OF TEXT     { "hlp", "mby" };
        ModelDefSharedSocket =
-                    ARRAY Models OF BOOLEAN  { FALSE, TRUE };
-       
+                    ARRAY Model OF BOOLEAN  { FALSE, TRUE };
+
+PROCEDURE LookupModel(str : TEXT; VAR model : Model) : BOOLEAN =
+  BEGIN
+    FOR m := FIRST(Model) TO LAST(Model) DO
+      IF Text.Equal(ModelNames[m], str) THEN
+        model := m;
+        RETURN TRUE
+      END
+    END;
+    RETURN FALSE
+  END LookupModel;
+  
 VAR
   modelServer : ModelServer.T;
   infoPath : Pathname.T := NIL;
   infoFile := ModelServer.DefInfoFileName;
   files : REF ARRAY OF TEXT;
   quitOnLast : BOOLEAN;
-  model := Models.Hlp;
+  model : Model;
   doRepl : BOOLEAN;
-  doReflect : BOOLEAN;
-  sharedSocket : BOOLEAN;
+
+  doReflect, sharedSocket : BOOLEAN; (* only for fullchip *)
+  stageNm : TEXT := NIL; (* only for stages *)
 BEGIN
   (* command-line args: *)
   TRY
@@ -54,8 +67,6 @@ BEGIN
         infoPath := Env.Get("WMODEL_INFO_PATH");
       END;
 
-      doReflect := pp.keywordPresent("-reflect");
-
       IF pp.keywordPresent("-if") OR pp.keywordPresent("-infofile") THEN
         infoFile := pp.getNext()
       END;
@@ -65,29 +76,38 @@ BEGIN
       doRepl := NOT (pp.keywordPresent("-norepl") OR pp.keywordPresent("-n"));
       
       IF pp.keywordPresent("-model") OR pp.keywordPresent("-m") THEN
-        VAR
-          modelStr := pp.getNext();
-          success := FALSE;
-        BEGIN
-          FOR i := FIRST(Models) TO LAST(Models) DO
-            IF Text.Equal(modelStr, ModelNames[i]) THEN
-              model := i;
-              sharedSocket := ModelDefSharedSocket[i];
-              success := TRUE
-            END
-          END;
+        
+        WITH modelStr = pp.getNext(),
+             success = LookupModel(modelStr, model) DO
           IF NOT success THEN
             Debug.Error("Unknown model \"" & modelStr & "\"")
           END
-        END
-      END;
+        END;
 
-      IF pp.keywordPresent("-nonsharedsocket") THEN
-        sharedSocket := FALSE
-      ELSIF pp.keywordPresent("-sharedsocket") THEN
-        sharedSocket := TRUE
+        sharedSocket := ModelDefSharedSocket[model];
+
+        IF pp.keywordPresent("-nonsharedsocket") THEN
+          sharedSocket := FALSE
+        ELSIF pp.keywordPresent("-sharedsocket") THEN
+          sharedSocket := TRUE
+        END;
+
+        doReflect := pp.keywordPresent("-reflect");
+
+      ELSIF pp.keywordPresent("-stage") OR pp.keywordPresent("-s") THEN
+        WITH modelStr = pp.getNext(),
+             success = LookupModel(modelStr, model) DO
+          IF NOT success THEN
+            Debug.Error("Unknown model \"" & modelStr & "\"")
+          END
+        END;
+        stageNm := pp.getNext();
+        Debug.Out(F("Seeking model %s stage %s", ModelNames[model], stageNm));
+
+        Debug.Error("***unimplemented***");
+
       END;
-      
+        
       
       pp.skipParsed();
       WITH nFiles = NUMBER(pp.arg^) - pp.next DO
@@ -109,11 +129,12 @@ BEGIN
     factory : UpdaterFactory.T;
   BEGIN
     CASE model OF
-      Models.Hlp =>
+      Model.Hlp =>
       modelServer := NEW(HlpModelServer.T, setup := HlpModel.Setup);
       factory := NEW(UnsafeUpdaterFactory.T).init()
     |
-      Models.Mby =>
+      Model.Mby =>
+      
       modelServer := NEW(MbyModelServerExt.T,
                          setup := MbyModel.Setup,
                          reflect := doReflect);

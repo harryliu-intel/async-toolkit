@@ -1,5 +1,6 @@
 GENERIC INTERFACE BaseModelServer(Map, MapAddr);
 IMPORT ModelServer;
+IMPORT UpdaterFactory, Pathname;
 
 TYPE
   T <: Public;
