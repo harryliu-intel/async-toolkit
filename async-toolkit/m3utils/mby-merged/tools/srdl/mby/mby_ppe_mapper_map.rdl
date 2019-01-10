@@ -105,6 +105,38 @@ regfile map_port_default_rf {
 };
 
 
+reg map_canonical_glort_cam_r {
+  shared;
+  HandCoded = true;
+  name = "canonical glort lookup cam";
+  desc = "canonical glort lookup cam ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+      number of lower order bits cwto clear in a source glort that matches this entry's lagglort";
+    ValRandomize = true;
+  } PORT_FIELD_SIZE[22:20] = 3'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+    Comparison to Lagglort is performed by first ANDing the source Glort by 2^(Mask size-1)";
+    ValRandomize = true;
+  } MASK_SIZE[19:16] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+    Each Source Glort will be masked and compared to this LAG Glort, if it matches the lower PortFieldSize bits will be cleared";
+    ValRandomize = true;
+  } LAG_GLORT[15:0] = 16'h0;
+};
+
+
+
 
 // MAP_LEN_LIMIT[0..17]
 //
@@ -2002,4 +2034,5 @@ addrmap mby_ppe_mapper_map {
   map_profile_action_r       MAP_PROFILE_ACTION[96]        @0x39400 += 8;
   map_domain_pol_cfg_r       MAP_DOMAIN_POL_CFG            @0x39800;
   map_rewrite_rf             MAP_REWRITE[16]               @0x3a000 += 256;
+  map_canonical_glort_cam_r  MAP_CANONICAL_GLORT_CAM[16]   @0x3b000 +=8;
 }; // final size: 0x3b000 <= 0x40000 = 8<<15
