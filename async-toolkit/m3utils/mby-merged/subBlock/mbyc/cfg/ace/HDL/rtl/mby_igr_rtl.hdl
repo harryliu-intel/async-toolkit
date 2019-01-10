@@ -59,8 +59,8 @@ $hdl_spec = {
      "target/mby/mgm_run/rtl",
      "target/GenRTL/regflow/mby/output/chdr",
      "target/GenRTL/regflow/mby/output/sverilog",
-     "subBlock/mbyc/src/csrs/mby/output",
-     "subBlock/mbyc/src/csrs/mby/output/sverilog",
+     "src/csrs/mby/output",
+     "src/csrs/mby/output/sverilog",
      "src/igr/pbb/rtl",
      "src/igr/post_ppe/rtl",
      "$VCS_HOME/packages/sva_cg"
