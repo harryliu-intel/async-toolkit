@@ -4,13 +4,8 @@ IMPORT mby_top_map AS Map;
 IMPORT mby_top_map_addr AS MapAddr;
 IMPORT ServerPacket AS Pkt;
 IMPORT FmModelMessageHdr;
-IMPORT FmModelConstants;
 IMPORT MbyModelServer, MbyModelServerExt;
 IMPORT Debug;
-IMPORT MbyParserStage;
-IMPORT BaseModelStage;
-IMPORT Metadata;
-IMPORT MbyParserStageModel;
 IMPORT mby_top_map_c;
 IMPORT Fmt; FROM Fmt IMPORT Int, F;
 IMPORT Word;
@@ -73,10 +68,11 @@ PROCEDURE HandlePacket(serverP          : MbyModelServer.T;
   
 VAR
   rp, wp : UNTRACED REF ADDRESS := NEW(UNTRACED REF ADDRESS);
+  (* shouldnt really be globals should they *)
   
 PROCEDURE Setup(<*UNUSED*>server : MbyModelServer.T;
-                   <*UNUSED*>READONLY read : Map.T;
-                   READONLY update : MapAddr.Update) =
+                <*UNUSED*>READONLY read : Map.T;
+                READONLY update : MapAddr.Update) =
   BEGIN
     Debug.Out("MbyModelC.Setup");
     mby_top_map_c.BuildMain(BuildCallback, rp, wp);
