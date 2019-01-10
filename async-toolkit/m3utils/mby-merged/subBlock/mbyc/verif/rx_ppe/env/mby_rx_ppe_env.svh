@@ -138,7 +138,8 @@ class mby_rx_ppe_env extends shdv_base_env;
          `uvm_fatal(get_name(),"Config_DB.get() for ENV's cdi_rx_vintf was not successful")
       end
 
-      build_ral();
+//TODO: AK: Uncomment this after UVM_REG_DATA_WIDTH is defined as 128.       
+//    build_ral();
       build_eth_bfm();
 
       foreach (scoreboards[ii]) begin
@@ -147,16 +148,12 @@ class mby_rx_ppe_env extends shdv_base_env;
                PARSER            : scoreboards[ii] = mby_rx_ppe_sb#(mby_rx_ppe_parser_obj)          ::type_id::create("rx_ppe_sb_parser"         , this);
                MAPPER            : scoreboards[ii] = mby_rx_ppe_sb#(mby_rx_ppe_mapper_obj)          ::type_id::create("rx_ppe_sb_mapper"         , this);
                CLASSIFIER        : scoreboards[ii] = mby_rx_ppe_sb#(mby_rx_ppe_classifier_obj)      ::type_id::create("rx_ppe_sb_classifier"     , this);
-               POLICER           : scoreboards[ii] = mby_rx_ppe_sb#(mby_rx_ppe_policer_obj)         ::type_id::create("rx_ppe_sb_policer"        , this);
                HASH              : scoreboards[ii] = mby_rx_ppe_sb#(mby_rx_ppe_hash_obj)            ::type_id::create("rx_ppe_sb_hash"           , this);
-               NEXT_HOP_LOOKUP   : scoreboards[ii] = mby_rx_ppe_sb#(mby_rx_ppe_next_hop_lookup_obj) ::type_id::create("rx_ppe_sb_next_hop_lookup", this);
+               NEXT_HOP          : scoreboards[ii] = mby_rx_ppe_sb#(mby_rx_ppe_next_hop_obj)        ::type_id::create("rx_ppe_sb_next_hop"       , this);
                MASK_GEN          : scoreboards[ii] = mby_rx_ppe_sb#(mby_rx_ppe_mask_gen_obj)        ::type_id::create("rx_ppe_sb_mask_gen"       , this);
                TRIGGERS          : scoreboards[ii] = mby_rx_ppe_sb#(mby_rx_ppe_triggers_obj)        ::type_id::create("rx_ppe_sb_triggers"       , this);
                CONGESTION_MGT    : scoreboards[ii] = mby_rx_ppe_sb#(mby_rx_ppe_congestion_mgt_obj)  ::type_id::create("rx_ppe_sb_congestion_mgt" , this);
-               TELEMETRY         : scoreboards[ii] = mby_rx_ppe_sb#(mby_rx_ppe_telemetry_obj)       ::type_id::create("rx_ppe_sb_telemetry"      , this);
-               MIRRORS_MCAST     : scoreboards[ii] = mby_rx_ppe_sb#(mby_rx_ppe_mirrors_mcast_obj)   ::type_id::create("rx_ppe_sb_mirrors_mcast"  , this);
-               METADATA_GEN      : scoreboards[ii] = mby_rx_ppe_sb#(mby_rx_ppe_metadata_gen_obj)    ::type_id::create("rx_ppe_sb_metatdata_gen"  , this);
-               MGMT_INT          : scoreboards[ii] = mby_rx_ppe_sb#(mby_rx_ppe_mgmt_int_obj)        ::type_id::create("rx_ppe_sb_mgmt_int"       , this);
+               RX_STATS          : scoreboards[ii] = mby_rx_ppe_sb#(mby_rx_ppe_rx_stats_obj)        ::type_id::create("rx_ppe_sb_rx_stats"       , this);
                default : `uvm_fatal(get_name(), $sformatf("Unexpected scoreboard index: %0d", ii))
             endcase
          end
@@ -189,6 +186,12 @@ class mby_rx_ppe_env extends shdv_base_env;
    //
    //---------------------------------------------------------------------------
    virtual function void build_ral();
+      
+      //TODO: AK- Check if this is OK.
+      // UVM registers are generated with coverage disabled. When uvm reg is built it looks up for
+      //"include_coverage" in the uvm_config_db and throws a warning that it cant find that variable for
+      // every single register. Setting the "include_coverage" variable to 0 to avoid the warning.    
+      uvm_config_db#(int)::set(null, "uvm_test_top.env.tb_ral", "include_coverage", 0);
 
       // Check if ral is already set by FC
       if (tb_ral == null) begin

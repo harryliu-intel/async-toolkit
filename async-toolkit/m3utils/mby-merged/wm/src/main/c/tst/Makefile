@@ -5,7 +5,8 @@
 .PHONY: all
 all: common_lib \
      test_parser test_mapper test_exactmatch test_wcm test_nexthop \
-     test_maskgen test_triggers test_rxstats test_basic_fwd test_basic_flood
+     test_maskgen test_triggers test_rxstats test_modifier \
+     test_basic_fwd test_basic_flood
 
 .PHONY: test_all
 test_all: all
@@ -23,6 +24,7 @@ clean:
 	make -C maskgen     clean
 	make -C triggers    clean
 	make -C rxstats     clean
+	make -C modifier    clean
 	make -C basic_fwd   clean
 	make -C basic_flood clean
 
@@ -75,6 +77,11 @@ test_triggers:
 test_rxstats:
 	@echo "Testing rxstats ..."
 	make -C rxstats run
+
+.PHONY: test_modifier
+test_modifier:
+	@echo "Testing modifier ..."
+	make -C modifier run
 
 .PHONY: test_basic_fwd
 test_basic_fwd:

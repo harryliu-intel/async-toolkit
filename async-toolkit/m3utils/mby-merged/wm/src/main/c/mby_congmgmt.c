@@ -38,8 +38,6 @@ void CongMgmt
     out->PM_ERR            = in->PM_ERR;
     out->PM_ERR_NONSOP     = in->PM_ERR_NONSOP;
     out->QOS_L3_DSCP       = in->QOS_L3_DSCP;
-    out->RX_DATA           = in->RX_DATA;
-    out->RX_LENGTH         = in->RX_LENGTH;
     out->RX_PORT           = in->RX_PORT;
     out->SAF_ERROR         = in->SAF_ERROR;
     out->SEG_META_ERR      = in->SEG_META_ERR;
@@ -48,4 +46,5 @@ void CongMgmt
     out->TX_DROP           = in->TX_DROP;
     out->TX_TAG            = in->TX_TAG;
     out->XCAST             = in->XCAST;
+    out->RX_LENGTH         = in->RX_LENGTH;
 }

@@ -27,13 +27,6 @@
 //   Project       : Madison Bay
 //------------------------------------------------------------------------------
 
-//   Class:  mby_mesh_power_good_seq
-//
-//   This is the main IP Power_Good Sequence. execute in Power_Good_Phase
-//
-//   Clears all Power_Good, Hard_Reset, and Warm_Reset.
-//
-//   Delay for short time and Set Power_Good.
 
 `ifndef __MBY_MESH_POWER_GOOD_SEQ_GUARD
 `define __MBY_MESH_POWER_GOOD_SEQ_GUARD
@@ -42,6 +35,13 @@
 `error "Attempt to include file outside of mby_mesh_seq_lib."
 `endif
 
+//   Class:  mby_mesh_power_good_seq
+//
+//   This is the main IP Power_Good Sequence. execute in Power_Good_Phase
+//
+//   Clears all Power_Good, Hard_Reset, and Warm_Reset.
+//
+//   Delay for short time and Set Power_Good.
 
 class mby_mesh_power_good_seq extends shdv_base_reset_seq;
 

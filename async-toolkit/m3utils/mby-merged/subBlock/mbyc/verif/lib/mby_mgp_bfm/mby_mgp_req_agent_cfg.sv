@@ -8,6 +8,7 @@
 typedef enum bus_type_e;
 //----------------------------------------------------------------------------------------
 // Class: mby_mgp_req_agent_cfg
+// Configuration class for req_agent
 //----------------------------------------------------------------------------------------
 class mby_mgp_req_agent_cfg extends uvm_object;
 
@@ -24,6 +25,7 @@ endclass
 
 //----------------------------------------------------------------------------------------
 // Constructor
+// Creating new req agent
 //----------------------------------------------------------------------------------------
 function mby_mgp_req_agent_cfg::new (string name = "");
 

@@ -170,7 +170,7 @@ $(C_GEN): $(MBY_POSTPROC) $(GENVIEWS)
 cgen: $(C_GEN)
 
 $(MBY_C_LIB): $(C_GEN)
-	make -C ../c all
+	$(MAKE) -C ../c DEBUG=1 VERBOSE=1 -j 30 all
 
 $(SCM_GEN): $(MBY_POSTPROC) $(GENVIEWS)
 	mkdir -p $(MBY_BUILD_SCM_ROOT)/src
@@ -204,7 +204,7 @@ $(MODEL_SERVER): $(WM_NET_LIB) $(WM_SUPPORT) $(HLPLIB) $(MBYLIB) $(MBY_C_LIB)
 model_server: $(MODEL_SERVER)
 
 doc:
-	$(MAKE) -C $(MBY_C_ROOT)/doc
+	$(MAKE) -C $(MBY_C_ROOT)/doc 
 
 $(TEST_TARG): $(GENVIEWS)
 	pushd $(GENVIEWS_ROOT)/src && ./test.sh

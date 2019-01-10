@@ -2,8 +2,8 @@
 
 // Copyright (C) 2018 Intel Corporation
 
-#include "mby_congmgmt.h"
 #include "mby_rxstats.h"
+#include "mby_congmgmt.h"
 #include "mby_maskgen.h" // action codes
 #include <model_c_write.h> // write_field()
 
@@ -172,7 +172,7 @@ static void handleRxBank2
         case MBY_ACTION_DROP_IV:            index += STAT_VlanIngressDrops;               break;
         case MBY_ACTION_DROP_EV:            index += STAT_VlanEgressDrops;                break;
         case MBY_ACTION_DROP_CAM:           index += STAT_GlortMissDrops;                 break;
-        case MBY_ACTION_DROP_FFU:           index += STAT_FFUDrops;                       break;
+        case MBY_ACTION_DROP_CGRP:          index += STAT_FFUDrops;                       break;
         case MBY_ACTION_DROP_TRIG:          index += STAT_TriggerDrops;                   break;
         case MBY_ACTION_DROP_L3_PYLD_LEN:   index += STAT_L3PayloadLengthValidationDrops; break;
         default:                                                                          break;
@@ -285,9 +285,6 @@ void RxStats
     // Handle RX VLAN counters:
     handleRxBankVlan(stats_map, stats_map_w, rx_length, action, l2_ivlan1_cnt, is_bcast, is_mcast, is_ucast);
 
-    // Write outputs:
-    out->RX_LENGTH         = rx_length;
-
     // Pass thru:
     out->CONTENT_ADDR      = in->CONTENT_ADDR;
     out->DROP_TTL          = in->DROP_TTL;
@@ -308,7 +305,6 @@ void RxStats
     out->PM_ERR            = in->PM_ERR;
     out->PM_ERR_NONSOP     = in->PM_ERR_NONSOP;
     out->QOS_L3_DSCP       = in->QOS_L3_DSCP;
-    out->RX_DATA           = in->RX_DATA;
     out->SAF_ERROR         = in->SAF_ERROR;
     out->TAIL_CSUM_LEN     = in->TAIL_CSUM_LEN;
     out->TX_DROP           = in->TX_DROP;

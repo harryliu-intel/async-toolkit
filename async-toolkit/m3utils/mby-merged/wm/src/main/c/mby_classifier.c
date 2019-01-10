@@ -807,8 +807,7 @@ void Classifier
     out->PA_DROP         = in->PA_DROP;
     out->PA_HDR_PTRS     = in->PA_HDR_PTRS;
     out->PA_L3LEN_ERR    = in->PA_L3LEN_ERR;
-    out->RX_DATA         = in->RX_DATA;
-    out->RX_LENGTH       = in->RX_LENGTH;
     out->RX_PORT         = in->RX_PORT;
     out->TRAFFIC_CLASS   = in->TRAFFIC_CLASS;
+    out->RX_LENGTH = in->RX_LENGTH;
 }
