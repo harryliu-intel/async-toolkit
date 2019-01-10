@@ -73,32 +73,6 @@ foreach $i (0..31) {
     >> ppe_stm_tx_eacl_tcam_$i$_tcam_rdwr_rdy
 }
 
-foreach $i (0..1) {
-    >> PPE_STM_TX_L3MC_TBL_$i$_CFG_reg_sel
-    >> PPE_STM_TX_L3MC_TBL_$i$_STATUS_reg_sel
-    >> ppe_stm_tx_l3mc_tbl_$i$_adr
-    >> ppe_stm_tx_l3mc_tbl_$i$_mem_ls_enter
-    >> ppe_stm_tx_l3mc_tbl_$i$_rd_en
-    >> ppe_stm_tx_l3mc_tbl_$i$_wr_data
-    >> ppe_stm_tx_l3mc_tbl_$i$_wr_en
-    >> ppe_stm_tx_l3mc_tbl_$i$_ecc_uncor_err
-    >> ppe_stm_tx_l3mc_tbl_$i$_init_done
-    >> ppe_stm_tx_l3mc_tbl_$i$_rd_data
-    >> ppe_stm_tx_l3mc_tbl_$i$_rd_valid
-
-    >> PPE_STM_TX_SHCP_TBL_$i$_CFG_reg_sel
-    >> PPE_STM_TX_SHCP_TBL_$i$_STATUS_reg_sel
-    >> ppe_stm_tx_shcp_tbl_$i$_adr
-    >> ppe_stm_tx_shcp_tbl_$i$_mem_ls_enter
-    >> ppe_stm_tx_shcp_tbl_$i$_rd_en
-    >> ppe_stm_tx_shcp_tbl_$i$_wr_data
-    >> ppe_stm_tx_shcp_tbl_$i$_wr_en
-    >> ppe_stm_tx_shcp_tbl_$i$_ecc_uncor_err
-    >> ppe_stm_tx_shcp_tbl_$i$_init_done
-    >> ppe_stm_tx_shcp_tbl_$i$_rd_data
-    >> ppe_stm_tx_shcp_tbl_$i$_rd_valid
-}
-
     >> PPE_STM_TX_ECC_COR_ERR_reg_sel
     >> PPE_STM_TX_ECC_UNCOR_ERR_reg_sel
     >> unified_regs_rd

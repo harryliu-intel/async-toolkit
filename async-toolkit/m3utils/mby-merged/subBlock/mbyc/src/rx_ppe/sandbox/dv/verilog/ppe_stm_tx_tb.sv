@@ -76,10 +76,6 @@ tx_ppe_negh_if      tx_ppe_negh_if0();
 tx_ppe_negh_if      tx_ppe_negh_if1();
 tx_ppe_negh_if      tx_ppe_negh_if2();
 tx_ppe_negh_if      tx_ppe_negh_if3();
-egr_mc_table_if     mc_table_if0_0();
-egr_mc_table_if     mc_table_if0_1();
-egr_mc_table_if     mc_table_if1_0();
-egr_mc_table_if     mc_table_if1_1();
 
 //Reset
 always @(posedge cclk) begin //{
@@ -913,12 +909,7 @@ ppe_stm_tx_top  ppe_stm_tx_top (
     .tx_ppe_negh_if0    (tx_ppe_negh_if0),
     .tx_ppe_negh_if1    (tx_ppe_negh_if1),
     .tx_ppe_negh_if2    (tx_ppe_negh_if2),
-    .tx_ppe_negh_if3    (tx_ppe_negh_if3),
-
-    .mc_table_if0_0     (mc_table_if0_0),
-    .mc_table_if0_1     (mc_table_if0_1),
-    .mc_table_if1_0     (mc_table_if1_0),
-    .mc_table_if1_1     (mc_table_if1_1)
+    .tx_ppe_negh_if3    (tx_ppe_negh_if3)
 );
 
 endmodule
