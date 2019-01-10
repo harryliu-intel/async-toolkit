@@ -303,6 +303,7 @@ typedef struct mbyNextHopToMaskGenStruct
     fm_uint32          MOD_IDX;                          ///< index into the MODIFY descriptor tables
     fm_byte            MOD_PROF_IDX;                     ///< modify profile index
     fm_byte            MTU_INDEX;
+    fm_bool            PA_L3LEN_ERR;           ///> l3 length error
     fm_bool            OOM;                  ///< out of memory
     mbyParserInfo      PARSER_INFO;          ///< parser info structure
     mbyParserHdrPtrs   PA_HDR_PTRS;          ///< parser header pointers

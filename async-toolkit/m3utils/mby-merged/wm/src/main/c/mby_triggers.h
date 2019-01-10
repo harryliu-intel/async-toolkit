@@ -58,14 +58,12 @@ typedef struct mbyTriggersToCongMgmtSruct
     fm_bool                 PM_ERR;                     ///< ECC error on PM
     fm_bool                 PM_ERR_NONSOP;
     fm_byte                 QOS_L3_DSCP;                ///< 6-bit QOS Differentiated Services Code Point (DSCP)
-    fm_uint32               RX_LENGTH;                  ///< RX packet length
     fm_uint32               RX_PORT;                    ///< RX port number
     fm_bool                 SEG_META_ERR;               ///< segment error
     fm_uint64               TAIL_CSUM_LEN;              ///< L4 CSUM related information
     fm_byte                 TRAFFIC_CLASS;              ///< 3-bit traffic class
     fm_byte                 TX_TAG;                     ///< egress tag
     fm_byte                 XCAST;                      ///<
-    fm_uint32               RX_LENGTH;                  ///< Ingress packet data length [bytes]
 } mbyTriggersToCongMgmt;
 
 #endif

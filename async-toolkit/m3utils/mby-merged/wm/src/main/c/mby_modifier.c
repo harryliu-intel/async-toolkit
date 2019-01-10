@@ -721,7 +721,7 @@ static void performInsert(mbyParserHdrPtrs       * const pa_hdr_ptrs,
     }
 
     /* Perform insert. */
-    fm_uint insert_len = 0;
+
     if (cmd->mode == MBY_MOD_CMD_MODE_BASIC)
     {
         insert_len = cmd->len;
@@ -729,12 +729,12 @@ static void performInsert(mbyParserHdrPtrs       * const pa_hdr_ptrs,
         fm_byte mask = 0xff;
         if (cmd->source == MBY_MOD_CMD_SOURCE_CONTENT_REGION)
         {
-            copyFromTo(content_ctnr->content, content_ctnr->cur_idx, grp_ctnr, grp->ctnr_offset + grp->grp_offset, mask, insert_len);
+          copyFromTo(content_ctnr->content, content_ctnr->cur_idx, grp_ctnr, grp->ctnr_offset + grp->grp_offset, mask, insert_len, -1);
             updateCtnrIdx(&content_ctnr->cur_idx, insert_len, MBY_MOD_CONTENT_SIZE - 1);
         }
         else if (cmd->source == MBY_MOD_CMD_SOURCE_FIELD_CONTAINER)
         {
-            copyFromTo(fld_vector->field, fld_vector->cur_idx, grp_ctnr, grp->ctnr_offset + grp->grp_offset, mask, insert_len);
+          copyFromTo(fld_vector->field, fld_vector->cur_idx, grp_ctnr, grp->ctnr_offset + grp->grp_offset, mask, insert_len, -1);
             updateCtnrIdx(&fld_vector->cur_idx, insert_len, MBY_MOD_FIELD_VECTOR_SIZE - 1);
         }
     }
