@@ -54,7 +54,7 @@ interface mby_tag_bfm_uc_if(input logic clk, input logic rst);
    // Initializing the interface at time 0
    //---------------------------------------------------------------------------
    initial begin : initialize_intf
-      intf_data_pkt <= 0;
+      //intf_data_pkt <= 0;
    end
 
    //---------------------------------------------------------------------------
