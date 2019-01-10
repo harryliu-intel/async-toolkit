@@ -58,6 +58,8 @@ typedef void (*model_stages_voidstar_func_t)(void      const * const r      ,
                                              void            * const out    ,
                                              varchar_t const * const rx_data,
                                              varchar_t       * const tx_data);
+// WARNING : this typedef must be kept synchronized with
+// the Modula-3 type ModelStagesC.Func
 
 void model_stages_register(
    const char                    * top_map_name,
@@ -70,6 +72,8 @@ void model_stages_register(
                            );
 
 typedef struct model_stages_info {
+  // WARNING : this typedef MUST be kept synchronized with
+  // the Modula-3 type ModelStagesC.Info
   char                           * top_map_name;
   char                           * stage_name;
   model_stages_voidstar_func_t     stage_func;
@@ -78,6 +82,8 @@ typedef struct model_stages_info {
 } model_stages_info_t;
 
 extern model_stages_info_t * model_stages;
+// WARNING : this declaration must be kept synchronized with
+// Modula-3 object ModelStagesC.model_stages
 
 #define REGISTRAR_PROTO()                                            \
   void PASTE(model_stages_registrar_,TOP_MAP)(void)                          

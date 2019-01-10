@@ -6,6 +6,8 @@
 typedef unsigned char varchar_base_t;
 
 typedef struct {
+  // WARNING : this struct MUST be kept synchronized with
+  // the Modula-3 type ModelStagesC.Varchar
   const varchar_base_t *data;
   unsigned int         length;
 } varchar_t;
