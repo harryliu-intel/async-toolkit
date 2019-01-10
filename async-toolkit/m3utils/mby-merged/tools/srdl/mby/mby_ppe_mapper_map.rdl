@@ -361,7 +361,7 @@ reg map_domain_action0_r {
 
            ";
     ValRandomize = true;
-  } L2_DOMAIN[37:30] = 8'h0;
+  } L2_DOMAIN[40:33] = 8'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -369,7 +369,7 @@ reg map_domain_action0_r {
 
            ";
     ValRandomize = true;
-  } L3_DOMAIN[29:24] = 6'h0;
+  } L3_DOMAIN[32:24] = 9'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -1606,7 +1606,7 @@ reg map_profile_key1_r {
      Provided by MAP_DOMAIN_ACTION0.
            ";
     ValRandomize = true;
-  } L3_DOMAIN[31:26] = 6'h3f;
+  } L3_DOMAIN[31:24] = 9'h3ff;
   field {
     AccessType = "RSV";
     desc = "
@@ -1614,7 +1614,7 @@ reg map_profile_key1_r {
 
            ";
     ValRandomize = true;
-  } _RSVD0_[25:22] = 4'h0;
+  } _RSVD0_[23:22] = 2'h0;
   field {
     AccessType = "RW";
     desc = "
