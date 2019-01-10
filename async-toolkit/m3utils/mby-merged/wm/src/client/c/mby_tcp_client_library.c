@@ -678,7 +678,7 @@ wm_do_stage_request(char            const *       nm,
   */
   uint8_t msg[MAX_MSG_LEN];
   size_t nm_len = MIN(strlen(nm)+1,128);
-  size_t len = WM_DATA_TYPE_SIZE + 16 + nm_len + in_size + rx_data->length;
+  size_t len = 16 + nm_len + in_size + rx_data->length;
   int off = 0;
   int err;
   
