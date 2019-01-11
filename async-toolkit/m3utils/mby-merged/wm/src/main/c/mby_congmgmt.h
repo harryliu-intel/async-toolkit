@@ -8,6 +8,7 @@
 // Includes:
 
 #include "mby_common.h"
+#include "mby_par_hdr_ptrs.h" // mbyParserHdrPtrs
 #include "mby_bitfield.h"
 
 // Defines:
@@ -58,6 +59,7 @@ typedef struct mbyCongMgmtToRxStatsStruct
     fm_byte                 TX_TAG;        ///< egress tag
     fm_byte                 XCAST;
     fm_uint32               RX_LENGTH;     ///< Ingress packet data length [bytes]
+
 } mbyCongMgmtToRxStats;
 
 #endif

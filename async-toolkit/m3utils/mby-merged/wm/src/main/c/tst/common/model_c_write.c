@@ -10,8 +10,8 @@
 #include <stdlib.h>
 
 #include <mby_top_map.h>
-#include "fm_alos_debughash.h"
-#include "fm_types.h"
+#include <fm_alos_debughash.h>
+#include <fm_types.h>
 #include "model_c_write.h"
 
 #define LOG(...)

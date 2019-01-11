@@ -9,6 +9,7 @@
 
 #include "mby_common.h"
 #include "mby_bitfield.h"
+#include "mby_par_hdr_ptrs.h" // mbyParserHdrPtrs
 #include "varchar.h"
 
 // Defines:
