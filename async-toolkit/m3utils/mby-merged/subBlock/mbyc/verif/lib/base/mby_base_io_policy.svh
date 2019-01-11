@@ -88,7 +88,7 @@ virtual class mby_base_io_policy
    //                         analysis port.
    //
    //---------------------------------------------------------------------------
-   pure virtual task mon_data(output T_req item);
+   pure virtual task mon_data(ref T_req item);
 
    //---------------------------------------------------------------------------
    // TASK: reset

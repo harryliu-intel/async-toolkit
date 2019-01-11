@@ -136,7 +136,9 @@ class mby_base_agent
       // ----------------------------------------------------------------------
       if(cfg_obj.driver_active == UVM_ACTIVE || cfg_obj.monitor_active == UVM_ACTIVE) begin
          if(!uvm_config_db #(T_iop)::get(this, "", "io_pol", io_pol)) begin
-            `uvm_fatal("IO_ERROR", {"I/O Policy must be set for: ",get_full_name(),".io_pol"})
+            if(io_pol == null) begin
+               `uvm_fatal("IO_ERROR", {"I/O Policy must be set for: ",get_full_name(),".io_pol"})
+            end
          end
       end
 

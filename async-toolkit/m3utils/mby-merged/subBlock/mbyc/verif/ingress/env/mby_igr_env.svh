@@ -77,10 +77,9 @@ class mby_igr_env extends shdv_base_env;
    // ingress env event monitor
    mby_igr_env_monitor env_monitor;
 
-   // TODO: fix configuration and I/O policy creation
-   mby_tag_bfm        tag_bfm[`NUM_TAG_PORTS];
-   mby_tag_bfm_uc_io  tag_bfm_io[`NUM_TAG_PORTS];
-   mby_tag_bfm_uc_vif tag_bfm_intf[`NUM_TAG_PORTS];
+   // Variable: tag_bfm
+   // Tag BFMs
+   mby_tag_bfm tag_bfm[`NUM_TAG_PORTS];
 
    `uvm_component_utils_begin(mby_igr_env)
    `uvm_component_utils_end
@@ -249,7 +248,8 @@ class mby_igr_env extends shdv_base_env;
           tag_bfm[i] = mby_tag_bfm::type_id::create($sformatf("tag_bfm%0d",i), this);
           tag_bfm[i].cfg_obj.bfm_mode = TAG_BFM_IGR_MODE;
           tag_bfm[i].cfg_obj.traffic_mode = TAG_BFM_UC_MODE;
-          tag_bfm[i].cfg_obj.monitor_active = UVM_PASSIVE;
+          tag_bfm[i].cfg_obj.driver_active  = UVM_PASSIVE;
+          tag_bfm[i].cfg_obj.monitor_active = UVM_ACTIVE;
       end
 
 
@@ -294,10 +294,10 @@ class mby_igr_env extends shdv_base_env;
      //  tag_bfm[i].tag_uc_agent.vintf = tag_bfm_intf[i];
      //end
      // TODO: this needs to be moved out of here
-     foreach(tag_bfm[i]) begin
-       tag_bfm_io[i] = new($sformatf("tag_bfm%0d", i), tag_bfm_intf[i]);
-       tag_bfm[i].tag_uc_agent.io_pol = tag_bfm_io[i];
-     end
+     //foreach(tag_bfm[i]) begin
+     //  tag_bfm_io[i] = new($sformatf("tag_bfm%0d", i), tag_bfm_intf[i]);
+     //  tag_bfm[i].tag_uc_agent.io_pol = tag_bfm_io[i];
+     //end
    endfunction: connect_tag_bfm
 
 

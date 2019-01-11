@@ -78,8 +78,8 @@ class mby_base_io_policy_param
    // -------------------------------------------------------------------------
    virtual task drive_data(T_req item);
       // In this case the implementation is done in the interface.
-      this.vintf.drive_data(item.data_pkt, 
-                            item.debg_pkt, 
+      this.vintf.drive_data(item.data_pkt,
+                            item.debg_pkt,
                             item.delay);
    endtask
 
@@ -108,9 +108,9 @@ class mby_base_io_policy_param
    //                         analysis port.
    //
    //---------------------------------------------------------------------------
-   virtual task mon_data(output T_req item);
+   virtual task mon_data(ref T_req item);
       // In this case the implementation is done in the interface
-      this.vintf.mon_data(item.data_pkt, 
+      this.vintf.mon_data(item.data_pkt,
                           item.debg_pkt);
    endtask
 
