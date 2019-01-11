@@ -47,6 +47,8 @@ void print_help(void)
     printf(" -h             Print this help message and exit\n");
 }
 
+#define PARSER_ONLY
+
 int main(int argc, char *argv[])
 {
     char *model_server_file = SERVER_FILE;
@@ -54,6 +56,7 @@ int main(int argc, char *argv[])
     int err = 0;
     int c = -1;
 
+    printf("%s\n",__func__); fflush(stdout);
     /********** Process command line arguments ***********/
     if (argc < 1) {
         fprintf(stderr, "Invalid command line\n!");
@@ -80,8 +83,13 @@ int main(int argc, char *argv[])
     /********** Start or connect to the server ***********/
     if (server_type)
         err = wm_server_start(server_type);
-    else
-        err = wm_connect(model_server_file);
+    else {
+#ifdef PARSER_ONLY
+      err = wm_connect_server(model_server_file);
+#else
+      err = wm_connect(model_server_file);
+#endif
+    }
 
     if (err) {
         printf("Error while connecting or starting to the WM\n");
@@ -91,16 +99,16 @@ int main(int argc, char *argv[])
         printf("Started/connected to WM\n");
     }
 
-#if 0
+#ifdef PARSER_ONLY
     /********** Test parser stage  ***********/
     printf("waiting a bit..."); fflush(stdout);
-    for(int i=0; i<5; ++i) usleep(1000*1000);
+    for(int i=0; i<5; ++i) usleep(10*1000);
     printf("\n");               fflush(stdout);
     err = test_parser();
     if (err)
         goto CLEANUP;
 
-#endif
+#else
 
     /********** Test write/read register operations ***********/
     err = test_regs();
@@ -111,6 +119,8 @@ int main(int argc, char *argv[])
     err = test_pkts();
     if (err)
         goto CLEANUP;
+
+#endif
 
 CLEANUP:
     /********** Disconnect (or stop) from the server ***********/
@@ -128,6 +138,8 @@ int test_regs(void)
     uint32_t addr;
     uint64_t val;
     int err;
+
+    printf("%s\n",__func__); fflush(stdout);
 
     /* In HLP this is BSM_SCRATCH_0[0] */
     addr = 0x0010000;
@@ -169,6 +181,8 @@ int test_pkts(void)
     struct wm_pkt tx_pkt;
     struct wm_pkt rx_pkt;
     int err;
+
+    printf("%s\n",__func__); fflush(stdout);
 
     tx_pkt.port = 1;
     tx_pkt.len = sizeof(tx_pkt_data);
@@ -236,6 +250,8 @@ int test_parser(void)
     mbyRxMacToParser in = {0};
     mbyParserToMapper out = {0};
     int err;
+
+    printf("%s\n",__func__); fflush(stdout);
 
     in.RX_PORT = 1;
     in.RX_LENGTH = sizeof(tx_pkt_data);

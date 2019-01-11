@@ -56,7 +56,8 @@ enum wm_error {
 int wm_server_start(char const * const cmd);
 int wm_server_stop(void);
 
-int wm_connect(char const * const server_file);
+int wm_connect_server(char const * const server_file); // server conn only
+int wm_connect(char const * const server_file);        // conn & egress setup
 int wm_disconnect(void);
 
 int wm_reg_write(const uint32_t addr, const uint64_t val);

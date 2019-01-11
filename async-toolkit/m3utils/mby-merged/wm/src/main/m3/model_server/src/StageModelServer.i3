@@ -1,9 +1,9 @@
 INTERFACE StageModelServer;
 IMPORT ModelServer;
 IMPORT Pathname;
-IMPORT ServerPacket AS Pkt;
 IMPORT ModelServerSuper;
 IMPORT UpdaterFactory;
+IMPORT Byte;
 
 (********************************************************************** 
  *
@@ -40,6 +40,10 @@ TYPE
        by InfoFileName *)
 
     (****** abstract methods, implement in child type: ******)
+    runStage(READONLY in     : ARRAY OF Byte.T;
+             VAR      out    : REF ARRAY OF Byte.T;
+             READONLY rxData : ARRAY OF Byte.T;
+             VAR      txData : REF ARRAY OF Byte.T);
     
   END;
 

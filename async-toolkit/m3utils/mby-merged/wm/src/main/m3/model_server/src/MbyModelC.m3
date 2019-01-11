@@ -64,11 +64,6 @@ PROCEDURE HandlePacket(serverP          : MbyModelServer.T;
       HandlePacketNormal(serverP, readA, updateA, hdr, pkt)
     END
   END HandlePacket;
-    
-  
-VAR
-  rp, wp : UNTRACED REF ADDRESS := NEW(UNTRACED REF ADDRESS);
-  (* shouldnt really be globals should they *)
   
 PROCEDURE Setup(<*UNUSED*>server : ModelServerSuper.T;
                 <*UNUSED*>READONLY read : Map.T;
@@ -207,5 +202,7 @@ PROCEDURE C2M3Callback(addr : ADDRESS; val : Word.T) =
   END C2M3Callback;
 
 BEGIN
+  rp := NEW(UNTRACED REF ADDRESS);
+  wp := NEW(UNTRACED REF ADDRESS);
   ModelCWrite.SetCallback(C2M3Callback)
 END MbyModelC.

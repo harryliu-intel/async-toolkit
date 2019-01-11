@@ -3,6 +3,7 @@ IMPORT Text;
 IMPORT M3toC;
 IMPORT Debug;
 FROM Fmt IMPORT F;
+IMPORT Byte;
 
 CONST TE = Text.Equal;
       
@@ -29,8 +30,37 @@ PROCEDURE Lookup(top_map_name, stage_name : TEXT; VAR info : Info) : BOOLEAN =
     RETURN FALSE
   END Lookup;
 
-PROCEDURE CallStage(READONLY info : Info) =
+PROCEDURE CallStage(READONLY info    : Info;
+                    r                : ADDRESS;
+                    w                : ADDRESS;
+                    READONLY in      : ARRAY OF Byte.T;
+                    VAR      out     : REF ARRAY OF Byte.T;
+                    READONLY rxDataP : ARRAY OF Byte.T;
+                    VAR      txDataP : REF ARRAY OF Byte.T)
+  RAISES { Error } =
+  VAR
+    rxData, txData := NEW(UNTRACED REF Varchar);
   BEGIN
+    IF NUMBER(in)  # info.in_size THEN RAISE Error("in size mismatch") END;
+
+    IF NUMBER(rxDataP) = 0 THEN
+      rxData^.data   := NIL;
+    ELSE
+      rxData^.data   := ADR(rxDataP[0]);
+    END;
+    rxData^.length := NUMBER(rxDataP);
+
+    out := NEW(REF ARRAY OF Byte.T, info.out_size);
+    
+    info.stage_func(r, w, ADR(in[0]), ADR(out[0]), rxData, txData);
+
+    txDataP := NEW(REF ARRAY OF Byte.T, txData.length);
+    FOR i := 0 TO txData.length-1 DO
+      txDataP[i] := LOOPHOLE(txData.data + i, UNTRACED REF Byte.T)^
+    END;
+
+    DISPOSE(rxData);
+    DISPOSE(txData)
   END CallStage;
   
 BEGIN END ModelStagesC.

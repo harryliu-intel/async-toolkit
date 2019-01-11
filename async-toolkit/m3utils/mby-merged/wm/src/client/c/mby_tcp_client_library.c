@@ -265,7 +265,7 @@ int wm_server_stop(void)
 }
 
 /**
- * Connect to the WM server.
+ * Connect to the WM server
  *
  * Connects to a model server that is already running in a separate session.
  *
@@ -274,7 +274,7 @@ int wm_server_stop(void)
  *
  * @retval      WM_OK if successful.
  */
-int wm_connect(char const * const server_file)
+int wm_connect_server(char const * const server_file)
 {
     const char *filename;
     char serv_addr[256];
@@ -318,22 +318,43 @@ int wm_connect(char const * const server_file)
     if (err)
         return err;
 
-    err = create_client_socket(&wm_client_fd, &wm_client_port);
-    if (err)
-        return err;
-
-    wm_egress_fd = -1;
-
-    for (i = 0; i < NUM_PORTS; ++i) {
-        err = connect_egress(i, wm_server_fd, wm_client_fd, wm_client_port,
-                             &wm_egress_fd);
-        if (err)
-            return err;
-    }
-
     return WM_OK;
 }
 
+
+/**
+ * Connect to the WM server for full-chip testing
+ *
+ * Connects to a model server that is already running in a separate session.
+ * Sets up egress ports also.
+ *
+ * @param[in]   server_file path of the file created when the model_server is
+ *              started. If NULL, the env variable "SBIOSF_SERVER" is used.
+ *
+ * @retval      WM_OK if successful.
+ */
+int wm_connect(char const * const server_file)
+{
+  int err;
+
+  if ((err = wm_connect_server(server_file)) != WM_OK)
+    return err;
+
+  if ((err = create_client_socket(&wm_client_fd, &wm_client_port)))
+    return err;
+  
+  wm_egress_fd = -1;
+  
+  for (int i = 0; i < NUM_PORTS; ++i) {
+    err = connect_egress(i, wm_server_fd, wm_client_fd, wm_client_port,
+                         &wm_egress_fd);
+    if (err)
+      return err;
+  }
+  
+  return WM_OK;
+}
+               
 /**
  * Disconnect from the WM server.
  *
@@ -669,7 +690,6 @@ wm_do_stage_request(char            const *       nm,
      htonl(len)                bytes : 4
      nm                        bytes : MIN(strlen(nm) + 1, 128)
      htonl(in_size)            bytes : 4
-     htonl(out_size)           bytes : 4
      in                        bytes : in_size
      htonl(rx_data.length)     bytes : 4
      rx_data.data              bytes : rx_data.length
@@ -678,7 +698,7 @@ wm_do_stage_request(char            const *       nm,
   */
   uint8_t msg[MAX_MSG_LEN];
   size_t nm_len = MIN(strlen(nm)+1,128);
-  size_t len = 16 + nm_len + in_size + rx_data->length;
+  size_t len = 12 + nm_len + in_size + (rx_data ? rx_data->length : 0);
   int off = 0;
   int err;
   
@@ -695,15 +715,17 @@ wm_do_stage_request(char            const *       nm,
 
   write_nl(msg, &off, in_size);
 
-  write_nl(msg, &off, out_size);
-
   memcpy(msg+off, in, in_size);
   off+= in_size;
 
-  write_nl(msg, &off, rx_data->length);
-
-  memcpy(msg+off, rx_data->data, rx_data->length);
-  off += rx_data->length;
+  if (rx_data) {
+    write_nl(msg, &off, rx_data->length);
+    
+    memcpy(msg+off, rx_data->data, rx_data->length);
+    off += rx_data->length;
+  } else {
+    write_nl(msg, &off, 0);
+  }
 
   assert(off == (int)len);
 
@@ -726,12 +748,11 @@ wm_do_stage_response(char            const *       nm,
      htonl(len)                bytes : 4
      nm                        bytes : MIN(strlen(nm) + 1, 128)
      htonl(out_size)           bytes : 4
-     htonl(in_size)            bytes : 4
-     out                       bytes : in_size
+     out                       bytes : out_size
      htonl(tx_data.length)     bytes : 4
      tx_data.data              bytes : tx_data.length
 
-     len = 16 + MIN(strlen(nm)+1,128) + out_size + tx_data.length
+     len = 12 + MIN(strlen(nm)+1,128) + out_size + tx_data.length
   */
   uint8_t msg[MAX_MSG_LEN];
   uint32_t len, msg_len;
@@ -773,19 +794,27 @@ wm_do_stage_response(char            const *       nm,
     return WM_ERR_RUNTIME;
   }
 
-  in_size_r = read_nl(msg, &off);
-
   memcpy(out, msg + off, out_size);
   off += out_size;
-  
-  tx_data->length = read_nl(msg, &off);
-  {
-    varchar_base_t *buff = (varchar_base_t *)malloc(tx_data->length);
-    memcpy(buff, msg, tx_data->length);
-    tx_data->data = buff;
-  }
-  off += tx_data->length;
 
+  if (tx_data) {
+    tx_data->length = read_nl(msg, &off);
+    {
+      varchar_base_t *buff = (varchar_base_t *)malloc(tx_data->length);
+      memcpy(buff, msg, tx_data->length);
+      tx_data->data = buff;
+    }
+    off += tx_data->length;
+  } else {
+    uint32_t txdlen = read_nl(msg, &off);
+
+    if (txdlen != 0) {
+      LOG_ERROR("Formatting error, TX_DATA not expected, %d bytes received\n",
+                txdlen);
+      return WM_ERR_RUNTIME;
+    }
+  }
+    
   if (off != (int)msg_len) {
     LOG_ERROR("Formatting error off = %d != %d = msg_len\n", off, msg_len);
     return WM_ERR_RUNTIME;

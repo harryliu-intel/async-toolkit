@@ -1,5 +1,6 @@
 INTERFACE ModelStagesC;
 IMPORT Ctypes;
+IMPORT Byte;
 
 (* some ugly C-matching declarations here
 
@@ -36,8 +37,15 @@ CONST Brand = "ModelStagesC";
 
 PROCEDURE Lookup(top_map_name, stage_name : TEXT; VAR info : Info) : BOOLEAN;
 
-PROCEDURE CallStage(READONLY info : Info
-  (* more stuff goes here *)
-  );
+PROCEDURE CallStage(READONLY info   : Info;
+                    r               : ADDRESS;
+                    w               : ADDRESS;
+                    READONLY in     : ARRAY OF Byte.T;
+                    VAR      out    : REF ARRAY OF Byte.T;
+                    READONLY rxData : ARRAY OF Byte.T;
+                    VAR      txData : REF ARRAY OF Byte.T)
+  RAISES { Error } ;
+
+EXCEPTION Error(TEXT);
       
 END ModelStagesC.
