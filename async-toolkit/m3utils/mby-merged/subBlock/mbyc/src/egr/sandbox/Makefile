@@ -104,13 +104,13 @@ simv: $(VCS_SRC) $(BUILD_DEP)
 	vcs $(VCS_FLAGS) $(VCS_LIB) $(VCS_INC) $(VCS_SRC) -l build.log
 
 debug: simv
-	./simv $(TRACE_FLAGS) $(SIMV_FLAGS) +TIMESTAMP_FREQUENCY=100 +TIMEOUT=1000
+	./simv $(TRACE_FLAGS) $(SIMV_FLAGS) +TIMESTAMP_FREQUENCY=100 +TIMEOUT=1000  +TESTNAME=first_packet_ms1p0
 
 first_packet_ms1p0 first_packet_ms2p0 first_packet_ms2p1 first_packet_ms2p5: simv
 	./simv $(TRACE_FLAGS) $(SIMV_FLAGS) +TIMESTAMP_FREQUENCY=100 +TIMEOUT=1000 +TESTNAME=$@
 
 gate: simv
-	./simv $(SIMV_FLAGS) +TIMESTAMP_FREQUENCY=100 +TIMEOUT=1000
+	./simv $(SIMV_FLAGS) +TIMESTAMP_FREQUENCY=100 +TIMEOUT=1000 +TESTNAME=first_packet_ms1p0
 	rm -rf DVEfiles csrc/ simv simv.daidir/ simv.vdb/ ucli.key vc_hdrs.h *.txt *.txt.disablelog .synopsys_dve_rebuild.tcl *.vpd
 
 clean:
