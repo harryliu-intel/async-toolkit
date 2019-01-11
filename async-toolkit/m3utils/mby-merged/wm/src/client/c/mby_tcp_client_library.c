@@ -46,15 +46,7 @@
 
 #include "varchar.h"
 #include "mby_tcp_client_library.h"
-
-/* TODO replace log functions placeholders with improved macros */
-#define LOG_ERROR    printf
-#define LOG_WARNING  printf
-#define LOG_INFO     printf
-//#define LOG_DEBUG(...)
-#define LOG_DEBUG    printf
-//#define LOG_HEX_DUMP(a,b,c)
-#define LOG_HEX_DUMP hex_dump
+#include "mby_tcp_client_log.h"
 
 #define MAX_BUF      500
 
