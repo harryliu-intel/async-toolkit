@@ -17,11 +17,42 @@
 #include <mby_triggers.h>
 #include <mby_txstats.h>
 
+static void convertKeysToBytes
+(
+    fm_uint32 key32[MBY_CGRP_KEY32],
+    fm_uint16 key16[MBY_CGRP_KEY16],
+    fm_byte   key8 [MBY_CGRP_KEY8],
+    fm_byte   bytes[MBY_CGRP_HASH_KEYS]
+)
+{
+    for (fm_uint i = 0; i < MBY_CGRP_KEY16; i++)
+    {
+        bytes[2*i + 1] =  key16[i]       & 0xFF;
+        bytes[2*i    ] = (key16[i] >> 8) & 0xFF;
+    }
+
+    for (fm_uint i = 0; i < MBY_CGRP_KEY8; i++)
+        bytes[MBY_CGRP_KEY16*2 + i] = key8[i];
+
+    for (fm_uint i = 0; i < MBY_CGRP_KEY32; i++)
+        for (fm_uint j = 0; j < 4; j++)
+            bytes[MBY_CGRP_KEY16*2 + MBY_CGRP_KEY8 + i*4 + (3-j)] = (key32[i] >> (j * 8 )) & 0xFF;
+}
+static fm_uint16 calculateLookupPtr
+(
+    fm_uint16       const hash_index,
+    em_hash_cfg_r * const hash_cfg
+)
+{
+    return hash_cfg->BASE_PTR_0 + (hash_index % (1uL << hash_cfg->HASH_SIZE_0));
+}
+
 void basic_fwd_init
 (
     mby_ppe_rx_top_map * const rx_top_map,
-    fm_uint32 fwd_port,
-    fm_macaddr dmac
+    mby_shm_map        * const shm_map,
+    fm_uint32                  fwd_port,
+    fm_macaddr                 dmac
 )
 {
     ingress_vid_table_r * const ivid_table = &(rx_top_map->nexthop.INGRESS_VID_TABLE[1]);
@@ -68,57 +99,67 @@ void basic_fwd_init
     map_profile_key0_r * const map_prof_key0 = &(rx_top_map->mapper.MAP_PROFILE_KEY0[1]);
     map_prof_key0->CSUM = 0x3;
 
-    fm_uint slice   = 0;
-    fm_uint profile = 1;
-    fm_uint index   = 1022;
-    fm_uint ram_num = 0;
+    fm_uint profile  = 1;
+    fm_uint hash_num = 0;
 
     map_profile_action_r * const prof_action = &(rx_top_map->mapper.MAP_PROFILE_ACTION[1]);
     prof_action->PROFILE_VALID = 1;
     prof_action->PROFILE       = profile;
 
-    wcm_tcam_cfg_r * wcm_tcam_cfg = &(rx_top_map->cgrp_b.B.WCM_TCAM_CFG[slice][profile]);
+    em_key_sel0_r * const key_sel0 = &(rx_top_map->cgrp_b.EM.KEY_SEL0[hash_num][profile]);
+    key_sel0->KEY8_MASK = 0;
 
-    wcm_tcam_cfg->START_COMPARE = 1;
-    wcm_tcam_cfg->SELECT_TOP    = 0x0;
-    wcm_tcam_cfg->SELECT0       = 0x8;
-    wcm_tcam_cfg->SELECT1       = 0x8;
-    wcm_tcam_cfg->CHUNK_MASK    = 0xffff;
+    em_key_sel1_r * const key_sel1 = &(rx_top_map->cgrp_b.EM.KEY_SEL1[hash_num][profile]);
+    key_sel1->KEY16_MASK = 0x1c0;
+    key_sel1->KEY32_MASK = 0;
 
-    wcm_tcam_cfg = &(rx_top_map->cgrp_b.B.WCM_TCAM_CFG[slice+1][profile]);
-    wcm_tcam_cfg->SELECT_TOP    = 0x0;
-    wcm_tcam_cfg->SELECT0       = 0x7;
-    wcm_tcam_cfg->SELECT1       = 0x7;
-    wcm_tcam_cfg->SELECT2       = 0x6;
-    wcm_tcam_cfg->SELECT3       = 0x6;
-    wcm_tcam_cfg->CHUNK_MASK    = 0xffff;
+    em_hash_cfg_r * const hash_cfg = &(rx_top_map->cgrp_b.EM.HASH_CFG[profile]);
+    hash_cfg->MODE         = 0;
+    hash_cfg->HASH_LO      = 0;
+    hash_cfg->HASH_HI      = 0;
+    hash_cfg->ENTRY_SIZE_0 = 8;
 
-    wcm_tcam_cfg = &(rx_top_map->cgrp_b.B.WCM_TCAM_CFG[slice+2][profile]);
-    wcm_tcam_cfg->START_COMPARE = 1;
+    fm_uint16 key16[MBY_CGRP_KEY16] = { 0 };
+    fm_byte   key8 [MBY_CGRP_KEY8]  = { 0 };
+    fm_uint32 key32[MBY_CGRP_KEY8]  = { 0 };
 
-    /* Set KEYS to DMAC. */
-    wcm_tcam_r * wcm_tcam_entry = &(rx_top_map->cgrp_b.B.WCM_TCAM[slice][index]);
-    wcm_tcam_entry->KEY            = dmac & 0xffff;
-    wcm_tcam_entry->KEY_INVERT     = ~wcm_tcam_entry->KEY;
-    wcm_tcam_entry->KEY_TOP        = 0x0;
-    wcm_tcam_entry->KEY_TOP_INVERT = 0x0;
+    key16[6] = (dmac >> 32) & 0xff;
+    key16[7] = (dmac >> 16) & 0xff;
+    key16[8] = dmac & 0xff;
 
-    wcm_tcam_entry = &(rx_top_map->cgrp_b.B.WCM_TCAM[slice+1][index]);
-    wcm_tcam_entry->KEY            = (dmac >> 16) & 0xffffffff;
-    wcm_tcam_entry->KEY_INVERT     = ~wcm_tcam_entry->KEY;
-    wcm_tcam_entry->KEY_TOP        = 0x0;
-    wcm_tcam_entry->KEY_TOP_INVERT = 0x0;
+    fm_byte hash_bytes[MBY_CGRP_HASH_KEYS] = { 0 };
+    convertKeysToBytes(key32, key16, key8, hash_bytes);
 
-    wcm_action_cfg_r * const wcm_action_cfg = &(rx_top_map->cgrp_b.B.WCM_ACTION_CFG[profile][ram_num]);
-    wcm_action_cfg->INDEX     = (slice + 1) & 0x1f;
+    fm_uint32 hash = mbyCrc32ByteSwap(hash_bytes, MBY_CGRP_HASH_KEYS);
 
-    wcm_action_cfg_en_r * const wcm_action_cfg_en = &(rx_top_map->cgrp_b.B.WCM_ACTION_CFG_EN[profile]);
-    wcm_action_cfg_en->ENABLE = (1 << ram_num);
+    fm_uint16 hash_mask  = 0x1fff;
+    fm_uint16 hash_index = hash & hash_mask;
+    fm_uint16 hash_more  = (hash >> 16) & 0xffff;
+    fm_uint16 lookup_ptr = calculateLookupPtr(hash_index, hash_cfg);
 
-    wcm_action_r * const wcm_action = &(rx_top_map->cgrp_b.B.WCM_ACTION[ram_num][index]);
-    FM_SET_FIELD(wcm_action->ACTION0, MBY_CGRP_ACTION, SET1_24B_INDEX, 4);
-    FM_SET_FIELD(wcm_action->ACTION0, MBY_CGRP_ACTION, SET1_24B_VALUE, (0x100 + fwd_port));
-    FM_SET_FIELD(wcm_action->ACTION0, MBY_CGRP_ACTION, PREC, 1);
-    FM_SET_UNNAMED_FIELD(wcm_action->ACTION0, 28, 1, 1);
+    fm_uint16 hash_lookup_ptr = 0;
 
+    em_hash_lookup_r * const hash_lookup = &(rx_top_map->cgrp_b.B.EM_HASH_LOOKUP[lookup_ptr]);
+    hash_lookup->SELECT_0 = 1;
+    hash_lookup->MASK     = 0x40000001;
+    hash_lookup->PTR      = hash_lookup_ptr;
+
+    fm_uint32 offset = 1;
+    fm_uint32 hash_lookup_addr = (hash_lookup_ptr + offset * hash_cfg->ENTRY_SIZE_0) * 4;
+
+    fm_uint32 entry_idx = (hash_lookup_addr >> 3) & 0xFFFF;
+    fm_uint16 block     = entry_idx / fwd_table0_rf_FWD_TABLE0__n;
+    fm_uint16 cell      = entry_idx % fwd_table0_rf_FWD_TABLE0__n;
+
+    fwd_table1_r * fwd_table1 = &(shm_map->FWD_TABLE1[block][cell]);
+    fwd_table1->DATA = dmac << 16;
+
+    /* Set actions. */
+    cell += 3;
+    fwd_table1 = &(shm_map->FWD_TABLE1[block][cell]);
+
+    FM_SET_FIELD(fwd_table1->DATA, MBY_CGRP_ACTION, SET1_24B_INDEX, 4);
+    FM_SET_FIELD(fwd_table1->DATA, MBY_CGRP_ACTION, SET1_24B_VALUE, (0x100 + fwd_port));
+    FM_SET_FIELD(fwd_table1->DATA, MBY_CGRP_ACTION, PREC, 1);
+    FM_SET_UNNAMED_FIELD(fwd_table1->DATA, 28, 1, 1);
 }

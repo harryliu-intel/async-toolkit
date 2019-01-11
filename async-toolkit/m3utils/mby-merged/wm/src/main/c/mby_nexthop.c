@@ -79,16 +79,13 @@ static void lookUpL2
     fm_uint32                         rx_port,
     fm_macaddr                        l2_dmac,
     fm_uint16                         ivid1,
-    fm_uint16                         evid1,
     fm_bool                           flood_set,
     fm_uint16                         l2_edomain,
-    fm_bool                           learn_mode,
+    fm_bool                           normal_fwd,
     fm_uint16                 * const idglort,
     fm_bool                   * const glort_forwarded,
     fm_bool                   * const flood_forwarded,
     fm_bool                   * const da_hit,
-    mbyMaTable                * const da_result,
-    fm_uint64                 * const amask,
     fm_bool                   * const l2_ivlan1_membership,
     fm_bool                   * const l2_ivlan1_reflect,
     fm_bool                   * const trap_igmp
@@ -104,22 +101,19 @@ static void lookUpL2
     *glort_forwarded = 0;
     *flood_forwarded = 0;
 
-    if (*idglort && !flood_set)
-        /* no change to dglort */
-        *glort_forwarded = 0;
+    if (*idglort)
+    {
+        if (flood_set)
+            *flood_forwarded = 1;
+        else if (normal_fwd)
+            *da_hit = 1;
+        else
+            *glort_forwarded = 1;
+    }
     else
     {
         flood_glort_table_r const * const flood_glort_table = &(nexthop->FLOOD_GLORT_TABLE[l2_edomain]);
-        if (*da_hit && da_result->D_GLORT)
-        {
-            *idglort = da_result->D_GLORT;
-            //if(da_result->ENTRY_TYPE == MBY_MA_LOOKUP_ENTRY_TYPE_PROVISIONAL)
-            //    *amask |= MBY_AMASK_DROP_PROVISIONAL;
-        }
-        else if ((idglort != 0) && (flood_set == 1))
-            /* no change to dglort */
-            *glort_forwarded = 1;
-        else if (isBroadcastMacAddress(l2_dmac))
+        if (isBroadcastMacAddress(l2_dmac))
             *idglort = flood_glort_table->BROADCAST_GLORT;
         else if (isMulticastMacAddress(l2_dmac))
         {
@@ -167,6 +161,7 @@ void NextHop
     fm_byte   group_size   = FM_GET_FIELD(cgrp_route, MBY_CGRP_ROUTE, GROUP_SIZE);
     fm_uint16 arp_index    = FM_GET_FIELD(cgrp_route, MBY_CGRP_ROUTE, ARP_INDEX) & 0x3fff; // 14-bits
     fm_bool   glort_routed = !FM_GET_BIT (cgrp_route, MBY_CGRP_ROUTE, ARP_ROUTE);
+    fm_bool   normal_fwd   = !FM_GET_BIT (cgrp_route, MBY_CGRP_ROUTE, GLORT_FWD);
     fm_uint16 dglort       = FM_GET_FIELD(cgrp_route, MBY_CGRP_ROUTE, DGLORT);
     fm_bool   flood_set    = (glort_routed) ? FM_GET_BIT  (cgrp_route, MBY_CGRP_ROUTE, FLOODSET) : 0;
     fm_byte   sel_hash     = (group_type == 0) ? arp_hash[group_size] : ((ecmp_hash << group_size) >> 12);
@@ -212,8 +207,6 @@ void NextHop
     fm_bool     glort_forwarded      = FALSE;
     fm_bool     flood_forwarded      = FALSE;
     fm_bool     da_hit               = FALSE;
-    mbyMaTable  da_result            = { 0 };
-    fm_uint64   amask                = 0;
     fm_bool     l2_ivlan1_membership = FALSE;
     fm_bool     l2_ivlan1_reflect    = FALSE;
 
@@ -223,16 +216,13 @@ void NextHop
         rx_port,
         l2_dmac,
         l2_ivid1,
-        l2_evid1,
         flood_set,
         l2_edomain,
-        learn_mode,
+        normal_fwd,
         &idglort,
         &glort_forwarded,
         &flood_forwarded,
         &da_hit,
-        &da_result,
-        &amask,
         &l2_ivlan1_membership,
         &l2_ivlan1_reflect,
         &trap_igmp
@@ -242,10 +232,8 @@ void NextHop
     for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
         out->GLORT_DMASK[i] = in->GLORT_DMASK; //temporary, because nexthop is not adapted to 258bits DMASK
 
-    out->AMASK                = amask;
     out->ARP_TABLE_INDEX      = arp_tbl_idx;
     out->DA_HIT               = da_hit;
-    out->DA_RESULT            = da_result;
     out->DECAP                = decap;
     out->ENCAP                = encap;
     out->FLOOD_FORWARDED      = flood_forwarded;

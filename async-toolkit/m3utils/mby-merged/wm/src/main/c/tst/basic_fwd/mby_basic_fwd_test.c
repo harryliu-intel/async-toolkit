@@ -54,7 +54,7 @@ fm_status init(fm_uint32 fwd_port, fm_macaddr dmac)
     mby_top_map__init(&top_map, &top_map_addr, mby_field_init_cb);
     // TODO verify if that's all that we need
     mby_init_common_regs(&(top_map.mpp[0].mgp[0].rx_ppe), &(top_map.mpp[0].mgp[0].tx_ppe));
-    basic_fwd_init(&(top_map.mpp[0].mgp[0].rx_ppe), fwd_port, dmac);
+    basic_fwd_init(&(top_map.mpp[0].mgp[0].rx_ppe), &(top_map.mpp[0].shm), fwd_port, dmac);
     return FM_OK;
 }
 

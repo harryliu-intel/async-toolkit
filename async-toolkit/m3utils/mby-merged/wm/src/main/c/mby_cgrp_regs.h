@@ -89,6 +89,7 @@
 #define MBY_CGRP_ROUTE_l_DGLORT        0
 #define MBY_CGRP_ROUTE_h_DGLORT        15
 #define MBY_CGRP_ROUTE_b_FLOODSET      16
+#define MBY_CGRP_ROUTE_b_GLORT_FWD     17
 
 /* Bit numbers when RouteType==ARP */
 #define MBY_CGRP_ROUTE_l_ARP_INDEX     0

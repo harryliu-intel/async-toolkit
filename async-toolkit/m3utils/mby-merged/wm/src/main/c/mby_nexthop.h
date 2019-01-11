@@ -239,7 +239,6 @@ typedef struct mbyEgressVidTableStruct
 
 typedef struct mbyNextHopToMaskGenStruct
 {
-    fm_uint64          AMASK;                            ///< action mask
     fm_uint16          CSGLORT;                          ///< 16-bit canonical source GLORT
     fm_bool            DA_HIT;                           ///< destination MAC address lookup hit
     fm_bool            DROP_TTL;                         ///< packet should be dropped
@@ -287,7 +286,6 @@ typedef struct mbyNextHopToMaskGenStruct
     fm_byte            CGRP_TRIG;                        ///< classifier action triggers
     fm_uint32          CONTENT_ADDR;                     ///< MOD Content address, expressed in 32B units
     fm_bool            CPU_TRAP;                         ///< CPU trap
-    mbyMaTable         DA_RESULT;                        ///< destination MAC address lookup result
     fm_bool            DECAP;
     fm_byte            ECN;                              ///< ECN value to use in egress packet
     fm_uint16          EDGLORT;                          ///< egress destination glort

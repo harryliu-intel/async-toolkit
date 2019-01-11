@@ -102,7 +102,7 @@ static void handleRxBank0
     fm_uint64 len   = rx_length;
 
     // IPv4 packets:
-    if      (is_ipv4 && is_bcast)
+    if (is_ipv4 && is_bcast)
         index += STAT_RxBcstPktsIPv4;
     else if (is_ipv4 && is_mcast)
         index += STAT_RxMcstPktsIPv4;

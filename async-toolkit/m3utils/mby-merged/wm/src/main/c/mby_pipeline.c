@@ -36,14 +36,14 @@ void RxPipeline
     mby_ppe_rx_stats_map__addr        const * const stats_map_w           = &(rx_top_map_w->stats);
 
     // Intermediate structs:
-    mbyParserToMapper     par2map;
-    mbyMapperToClassifier map2cla;
-    mbyClassifierToHash   cla2hsh;
-    mbyHashToNextHop      hsh2nxt;
-    mbyNextHopToMaskGen   nxt2msk;
-    mbyMaskGenToTriggers  msk2trg;
-    mbyTriggersToCongMgmt trg2cgm;
-    mbyCongMgmtToRxStats  cgm2rxs;
+    mbyParserToMapper     par2map = { 0 };
+    mbyMapperToClassifier map2cla = { 0 };
+    mbyClassifierToHash   cla2hsh = { 0 };
+    mbyHashToNextHop      hsh2nxt = { 0 };
+    mbyNextHopToMaskGen   nxt2msk = { 0 };
+    mbyMaskGenToTriggers  msk2trg = { 0 };
+    mbyTriggersToCongMgmt trg2cgm = { 0 };
+    mbyCongMgmtToRxStats  cgm2rxs = { 0 };
 
     // RX pipeline stages:
     Parser     (parser_map,           mac2par, &par2map);

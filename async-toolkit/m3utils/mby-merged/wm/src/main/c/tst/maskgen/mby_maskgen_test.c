@@ -62,7 +62,6 @@ static void maskgen_test_setup
     nexthopToMaskgen->IDGLORT              = test_in->idglort;
     nexthopToMaskgen->L2_IVID1             = test_in->l2_ivid1;
     nexthopToMaskgen->L2_EVID1             = test_in->l2_evid1;
-    nexthopToMaskgen->AMASK                = test_in->amask;
     nexthopToMaskgen->L2_IVLAN1_MEMBERSHIP = test_in->l2_ivlan1_membership;
     nexthopToMaskgen->L2_EDOMAIN           = test_in->l2_edomain_in;
     nexthopToMaskgen->MARK_ROUTED          = test_in->mark_routed;

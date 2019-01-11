@@ -1063,7 +1063,6 @@ void MaskGen
 )
 {
     // Read inputs:
-    fm_uint64                  const amask_in             = in->AMASK;
     fm_uint16                  const csglort              = in->CSGLORT;
     fm_bool                    const da_hit               = in->DA_HIT;
     fm_bool                    const drop_ttl             = in->DROP_TTL;
@@ -1163,7 +1162,8 @@ void MaskGen
 
     // --------------------------------------------------------------------------------
     // Action Mask:
-    fm_uint64 amask     = 0;
+    fm_uint64 amask_in = 0;
+    fm_uint64 amask    = 0;
     actionMaskUpdate
     (
         &sys_cfg1,

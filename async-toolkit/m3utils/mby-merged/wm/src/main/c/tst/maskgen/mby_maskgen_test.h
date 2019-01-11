@@ -111,7 +111,6 @@ typedef struct mby_maskgen_test_data_in_struct
     fm_uint16         l2_evid1;
     fm_bool           l2_ivlan1_membership;
     fm_uint16         l2_edomain_in;
-    fm_uint64         amask;
     fm_bool           mark_routed;
     fm_uint32         hash_rot_a;
     fm_uint32         hash_rot_b;
@@ -193,7 +192,6 @@ maskgen_test_data maskgen_tests[] =
             .l2_evid1                     = 1,
             .l2_ivlan1_membership         = TRUE,
             .l2_edomain_in                = 0,
-            .amask                        = 0,
             .mark_routed                  = TRUE,
             .port_cfg_1 =
             {
@@ -267,7 +265,6 @@ maskgen_test_data maskgen_tests[] =
             .l2_evid1                     = 1,
             .l2_ivlan1_membership         = TRUE,
             .l2_edomain_in                = 0,
-            .amask                        = 0,
             .mark_routed                  = FALSE,
             .hash_rot_a                   = 0,
             .hash_rot_b                   = 0,
@@ -346,7 +343,6 @@ maskgen_test_data maskgen_tests[] =
             .l2_evid1                     = 1,
             .l2_ivlan1_membership         = TRUE,
             .l2_edomain_in                = 0,
-            .amask                        = 0,
             .mark_routed                  = FALSE,
             .hash_rot_a                   = 0,
             .hash_rot_b                   = 0,
@@ -423,7 +419,6 @@ maskgen_test_data maskgen_tests[] =
             .l2_evid1                     = 1,
             .l2_ivlan1_membership         = TRUE,
             .l2_edomain_in                = 0,
-            .amask                        = 0,
             .mark_routed                  = FALSE,
             .hash_rot_a                   = 0,
             .hash_rot_b                   = 0,
