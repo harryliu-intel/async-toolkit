@@ -3,7 +3,6 @@
 
 #include <mby_maskgen_test.h>
 #include <mby_pipeline.h>
-#include <mby_reg_ctrl.h>
 
 #include <mby_top_map.h>
 

@@ -15,7 +15,6 @@
 
 #include "mby_model.h"
 #include "mby_pipeline.h"
-#include "mby_reg_ctrl.h"
 #include "mby_errors.h"
 #include "mby_init.h"
 

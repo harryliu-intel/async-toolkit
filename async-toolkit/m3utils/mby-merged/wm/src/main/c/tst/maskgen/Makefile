@@ -87,8 +87,7 @@ ${BLD_DIR}/mby_maskgen_test.o: \
         ${C_DIR}/mby_maskgen_regs.h \
         ${C_DIR}/mby_maskgen.h \
         ${C_DIR}/mby_pipeline.h \
-        ${C_DIR}/mby_common.h \
-        ${C_DIR}/mby_reg_ctrl.h
+        ${C_DIR}/mby_common.h
 
 .PHONY: $(WM_LIB)
 $(WM_LIB):

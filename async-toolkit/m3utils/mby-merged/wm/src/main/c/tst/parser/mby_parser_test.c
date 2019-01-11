@@ -7,7 +7,6 @@
 #include <mby_pipeline.h>
 #include <mby_crc32.h>
 #include <mby_init.h>
-#include <mby_reg_ctrl.h>
 #include "mby_parser_test.h"
 
 fm_bool load_img = FALSE;

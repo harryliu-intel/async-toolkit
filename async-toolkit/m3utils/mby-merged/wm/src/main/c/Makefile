@@ -40,7 +40,6 @@ SOURCES += mby_congmgmt.c
 SOURCES += mby_rxstats.c
 SOURCES += mby_modifier.c
 SOURCES += mby_txstats.c
-SOURCES += mby_reg_ctrl.c
 SOURCES += mby_pipeline.c
 SOURCES += mby_errors.c
 SOURCES += mby_init.c
@@ -137,7 +136,6 @@ ${BLD_DIR}/mby_rxstats.o       : $(BLD_DTS) Makefile mby_rxstats.c       mby_rxs
 ${BLD_DIR}/mby_modifier.o      : $(BLD_DTS) Makefile mby_modifier.c      mby_modifier.h       mby_common.h  mby_bitfield.h
 ${BLD_DIR}/mby_txstats.o       : $(BLD_DTS) Makefile mby_txstats.c       mby_txstats.h        mby_common.h  mby_bitfield.h
 ${BLD_DIR}/mby_pipeline.o      : $(BLD_DTS) Makefile mby_pipeline.c      mby_pipeline.h
-${BLD_DIR}/mby_reg_ctrl.o      : $(BLD_DTS) Makefile mby_reg_ctrl.c      mby_reg_ctrl.h
 ${BLD_DIR}/mby_model.o         : $(BLD_DTS) Makefile mby_model.c         mby_model.h
 ${BLD_DIR}/mby_model_basic.o   : $(BLD_DTS) Makefile mby_model_basic.c   mby_model_basic.h
 ${BLD_DIR}/mby_errors.o        : $(BLD_DTS) Makefile mby_errors.c        mby_errors.h         mby_model.h

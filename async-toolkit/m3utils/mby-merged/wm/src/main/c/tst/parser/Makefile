@@ -88,8 +88,7 @@ ${BLD_DIR}/mby_parser_test.o: \
         ${C_DIR}/mby_common.h \
         ${C_DIR}/mby_pipeline.h \
         ${C_DIR}/mby_crc32.h \
-        ${C_DIR}/mby_init.h \
-        ${C_DIR}/mby_reg_ctrl.h
+        ${C_DIR}/mby_init.h
 
 .PHONY: $(WM_LIB)
 $(WM_LIB):

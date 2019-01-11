@@ -3,7 +3,6 @@
 
 #include <mby_rxstats_test.h>
 #include <mby_pipeline.h>
-#include <mby_reg_ctrl.h>
 
 #include <mby_top_map.h>
 #include <model_c_write.h> // write_field()
