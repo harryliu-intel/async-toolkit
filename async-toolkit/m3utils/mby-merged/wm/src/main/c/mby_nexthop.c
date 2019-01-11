@@ -655,7 +655,6 @@ void NextHop
         out->GLORT_DMASK[i] = in->GLORT_DMASK; //temporary, because nexthop is not adapted to 258bits DMASK
 
     // out->ARP_TABLE_INDEX      = neighbor_idx;
-    out->DA_HIT               = da_hit;
     out->DECAP                = decap;
     out->ENCAP                = encap;
     out->FLOOD_FORWARDED      = flood_forwarded;

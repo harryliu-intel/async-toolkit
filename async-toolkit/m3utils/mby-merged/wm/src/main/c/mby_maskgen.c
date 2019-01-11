@@ -19,7 +19,7 @@ static fm_status lookUpRamEntry
     fm_bool cam_hit = FALSE;
 
     // The highest numbered GLORT_CAM entry has highest precendence:
-    for (fm_int i = MBY_GLORT_CAM_ENTRIES - 1; i >= 0; i--)
+    for (fm_int i = mby_ppe_mst_glort_map_GLORT_CAM__nd - 1; i >= 0; i--)
     {
         fm_byte index = i;
 
@@ -786,7 +786,7 @@ static void filtering
 
     // Ingress VLAN reflection check:
     if ( !mark_routed && !l2_ivlan1_reflect && !targeted_deterministic)
-        dmask_o[rx_port/64] &= ~(FM_LITERAL_U64(1) << (rx_port % 64)); //!!!REVISIT replace rx_port with the port specified by ([0..7][0..1][0..15])+1CPU
+        dmask_o[rx_port / 64] &= ~(FM_LITERAL_U64(1) << (rx_port % 64)); //!!!REVISIT replace rx_port with the port specified by ([0..7][0..1][0..15])+1CPU
 
     // Save pre-resolve dmask for later:
     for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
@@ -1068,7 +1068,6 @@ void MaskGen
 {
     // Read inputs:
     fm_uint16                  const csglort              = in->CSGLORT;
-    fm_bool                    const da_hit               = in->DA_HIT;
     fm_bool                    const drop_ttl             = in->DROP_TTL;
     mbyClassifierFlags         const cgrp_flags           = in->CGRP_FLAGS;
     fm_bool                    const flood_forwarded      = in->FLOOD_FORWARDED;
@@ -1090,7 +1089,6 @@ void MaskGen
     fm_bool                    const mark_routed          = in->MARK_ROUTED;
     fm_bool                    const mtu_violation        = in->MTU_VIOLATION;
     fm_bool                    const learn_notify         = in->LEARN_NOTIFY;
-    fm_byte                    const operator_id          = in->OPERATOR_ID;
     fm_bool                    const parity_error         = in->PARITY_ERROR;
     fm_bool                    const parser_window_v      = in->PARSER_WINDOW_V;
     fm_bool                    const parser_error         = in->PARSER_ERROR;
@@ -1361,7 +1359,6 @@ void MaskGen
     out->ACTION                 = action;
     out->AMASK                  = amask;
     out->CPU_CODE               = cpu_code;
-    out->DA_HIT                 = da_hit;
     out->DROP_TTL               = drop_ttl;
     out->FCLASS                 = fclass;
     out->GLORT_CAM_MISS         = glort_cam_miss;
@@ -1387,7 +1384,6 @@ void MaskGen
     out->MIRROR1_PORT           = mirror1_port;
     out->MIRROR1_PROFILE_IDX    = mirror1_profile_idx;
     out->MIRROR1_PROFILE_V      = mirror1_profile_v;
-    out->OPERATOR_ID            = operator_id;
     out->PRE_RESOLVE_ACTION     = pre_reslove_action;
     out->PRE_RESOLVE_DGLORT     = pre_resolve_dglort;
     out->QCN_MIRROR0_PROFILE_V  = qcn_mirror0_profile_v;
@@ -1414,6 +1410,7 @@ void MaskGen
     out->MOD_IDX                = in->MOD_IDX;
     out->MOD_PROF_IDX           = in->MOD_PROF_IDX;
     out->OOM                    = in->OOM;
+    out->OPERATOR_ID            = in->OPERATOR_ID;
     out->PA_DROP                = in->PA_DROP;
     out->PARSER_INFO            = in->PARSER_INFO;
     out->PA_HDR_PTRS            = in->PA_HDR_PTRS;

@@ -54,6 +54,7 @@ typedef struct mbyClassifierToHashStruct
     fm_bool                LEARN_MODE;                                  ///< learn mode: 0=SVL, 1=IVL
     fm_uint16              L2_IDOMAIN;                                  ///< ingress L2 domain
     fm_byte                L3_IDOMAIN;                                  ///< ingress L3 domain
+    fm_byte                OPERATOR_ID;                                 ///< 4-bit operator ID (NAD)
     fm_bool                PARSER_ERROR;                                ///< header parse error
     mbyParserInfo          PARSER_INFO;                                 ///< parser info structure
     fm_bool                PARITY_ERROR;                                ///< parity error detected flag

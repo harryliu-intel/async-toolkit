@@ -5,6 +5,8 @@
 #ifndef MBY_ACTION_CODES_H
 #define MBY_ACTION_CODES_H
 
+#define MBY_AMASK_WIDTH                      38
+
 // Action Codes:
 #define MBY_ACTION_NORMAL             0   /* forwarded normally */
 #define MBY_ACTION_FLOOD              1   /* flooded due to unknown destination */

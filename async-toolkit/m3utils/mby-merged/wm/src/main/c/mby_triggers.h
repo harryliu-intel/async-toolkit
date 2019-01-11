@@ -16,6 +16,8 @@
 #define MBY_TRIGGERS_COUNT         96
 #define MBY_MA_TCN_FIFO_CAPACITY  511
 
+#define MBY_TRIGGER_TRAP_ACTION_CODE (1 << 3)
+
 // Structs:
 
 // Function prototype:

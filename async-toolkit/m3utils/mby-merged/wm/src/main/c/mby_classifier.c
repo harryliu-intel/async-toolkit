@@ -802,6 +802,7 @@ void Classifier
     out->LEARN_MODE      = in->LEARN_MODE;
     out->L2_IDOMAIN      = in->L2_IDOMAIN;
     out->L3_IDOMAIN      = in->L3_IDOMAIN;
+    out->OPERATOR_ID     = in->OPERATOR_ID;
     out->PARITY_ERROR    = in->PARITY_ERROR;
     out->PARSER_ERROR    = in->PARSER_ERROR;
     out->PA_DROP         = in->PA_DROP;

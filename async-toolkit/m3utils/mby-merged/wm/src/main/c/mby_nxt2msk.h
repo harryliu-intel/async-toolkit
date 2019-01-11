@@ -16,7 +16,6 @@
 typedef struct mbyNextHopToMaskGenStruct
 {
     fm_uint16          CSGLORT;                          ///< 16-bit canonical source GLORT
-    fm_bool            DA_HIT;                           ///< destination MAC address lookup hit
     fm_bool            DROP_TTL;                         ///< packet should be dropped
     mbyClassifierFlags CGRP_FLAGS;                       ///< flags {CAPTURE-TIME, RX_MIRROR, NO_ROUTE, LOG, TRAP, DROP}
     fm_bool            FLOOD_FORWARDED;                  ///< glort is flood-forwarded
@@ -39,7 +38,7 @@ typedef struct mbyNextHopToMaskGenStruct
     fm_bool            LEARN_NOTIFY;                     ///< learning is diabled flag
     fm_bool            MARK_ROUTED;                      ///<
     fm_bool            MTU_VIOLATION;                    ///< packet violates the MTU
-    fm_byte            OPERATOR_ID;                      ///< 4-bit operator ID
+    fm_byte            OPERATOR_ID;                      ///< 4-bit operator ID (NAD)
     fm_bool            PARITY_ERROR;                     ///< memory parity error flag
     fm_bool            PARSER_WINDOW_V;                  ///< parser window valid flag
     fm_bool            PARSER_ERROR;                     ///< header parse error flag
@@ -77,18 +76,18 @@ typedef struct mbyNextHopToMaskGenStruct
     fm_uint32          MOD_IDX;                          ///< index into the MODIFY descriptor tables
     fm_byte            MOD_PROF_IDX;                     ///< modify profile index
     fm_byte            MTU_INDEX;
-    fm_bool            PA_L3LEN_ERR;           ///> l3 length error
-    fm_bool            OOM;                  ///< out of memory
-    mbyParserInfo      PARSER_INFO;          ///< parser info structure
-    mbyParserHdrPtrs   PA_HDR_PTRS;          ///< parser header pointers
-    fm_bool            PM_ERR;               ///< ECC error on PM
-    fm_bool            PM_ERR_NONSOP;        ///<
-    fm_uint32          PRE_RESOLVE_DMASK;    ///< destination mask before action resolution
-    fm_byte            QOS_L3_DSCP;          ///< 6-bit QOS Differentiated Services Code Point (DSCP):
-    fm_uint64          TAIL_CSUM_LEN;        ///< L4 CSUM related information
-    fm_byte            TRAFFIC_CLASS;        ///< traffic class
-    fm_byte            TX_TAG;               ///< transmit tag from Classifier
-    fm_uint32          RX_LENGTH;            ///< Ingress packet data length [bytes]
+    fm_bool            PA_L3LEN_ERR;                     ///> l3 length error
+    fm_bool            OOM;                              ///< out of memory
+    mbyParserInfo      PARSER_INFO;                      ///< parser info structure
+    mbyParserHdrPtrs   PA_HDR_PTRS;                      ///< parser header pointers
+    fm_bool            PM_ERR;                           ///< ECC error on PM
+    fm_bool            PM_ERR_NONSOP;                    ///<
+    fm_uint32          PRE_RESOLVE_DMASK;                ///< destination mask before action resolution
+    fm_byte            QOS_L3_DSCP;                      ///< 6-bit QOS Differentiated Services Code Point (DSCP):
+    fm_uint64          TAIL_CSUM_LEN;                    ///< L4 CSUM related information
+    fm_byte            TRAFFIC_CLASS;                    ///< traffic class
+    fm_byte            TX_TAG;                           ///< transmit tag from Classifier
+    fm_uint32          RX_LENGTH;                        ///< Ingress packet data length [bytes]
 
 } mbyNextHopToMaskGen;
 

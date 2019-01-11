@@ -60,7 +60,7 @@ typedef struct mbyHashToNextHopStruct
     fm_uint32          MIRROR0_PROFILE_IDX;    ///> mirror 0 profile index
     fm_byte            MOD_PROF_IDX;           ///> modify profile index
     fm_bool            MTU_VIOLATION;          ///> packet violates the MTU
-    fm_byte            OPERATOR_ID;            ///> 4-bit operator ID
+    fm_byte            OPERATOR_ID;            ///> 4-bit operator ID (NAD)
     fm_bool            PARITY_ERROR;           ///> memory parity error flag
     fm_bool            PARSER_ERROR;           ///> header parse error flag
     mbyParserInfo      PARSER_INFO;            ///> parser info structure

@@ -20,8 +20,8 @@ typedef struct mbyMapperToClassifierStruct
     fm_uint16            L2_IVLAN1_CNT;     ///< Ingress VLAN counter
     fm_byte              L3_IDOMAIN;        ///< L3 ingress domain
     fm_bool              LEARN_MODE;        ///< Learning mode: 0=SVL, 1=IVL
+    fm_bool              OPERATOR_ID;       ///< 4-bit operator ID (NAD)
     fm_bool              NO_PRI_ENC;        ///< Mapper priority encoding
-    fm_bool              NAD;               ///< NAD (former operator ID)
     fm_bool              OTR_MPLS_V;        ///< Parser outer MPLS packet valid
     fm_bool              PARSER_ERROR;      ///< Header parse error
     mbyParserInfo        PARSER_INFO;       ///< Parser info structure

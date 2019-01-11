@@ -47,7 +47,6 @@ typedef struct mbyMaskGenToTriggersStruct
     fm_uint32         MIRROR1_PORT;                           ///< mirror 1 port
     fm_uint32         MIRROR1_PROFILE_IDX;                    ///< mirror 1 profile index
     fm_byte           MIRROR1_PROFILE_V;                      ///< mirror 1 profile valid
-    fm_byte           OPERATOR_ID;                            ///< 4-bit operator ID
     fm_bool           PA_L3LEN_ERR;                           ///< l3 length error
     fm_uint32         PRE_RESOLVE_ACTION;
     fm_uint16         PRE_RESOLVE_DGLORT;
@@ -74,6 +73,7 @@ typedef struct mbyMaskGenToTriggersStruct
     fm_uint32         MOD_IDX;                                ///< index into the MODIFY descriptor tables
     fm_byte           MOD_PROF_IDX;                           ///< modify profile index
     fm_bool           OOM;                                    ///< out of memory
+    fm_byte           OPERATOR_ID;                            ///< 4-bit operator ID (NAD)
     fm_bool           PA_DROP;                                ///< checksum validation error, drop pkt in tail proc
     mbyParserInfo     PARSER_INFO;                            ///< parser info struct
     mbyParserHdrPtrs  PA_HDR_PTRS;                            ///< parser header pointers
