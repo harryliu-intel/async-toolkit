@@ -31,7 +31,7 @@
 //
 //-----------------------------------------------------------------------------
 `ifndef __MBY_BASE_PKG__
-`error "Attempt to include file outside of mby_igr_env_pkg."
+`error "Attempt to include file outside of mby_base_pkg."
 `endif
 `ifndef __MBY_BASE_AGENT__
 `define __MBY_BASE_AGENT__
@@ -39,13 +39,15 @@
 // CLASS: mby_base_agent
 //
 // This is a parameterized class for agent creation in Madison Bay. Uses the
-// base drv/mon/seq classes by default, but those can be changed by parameters
-// or factory overrides.
+// base io/drv/mon/seq classes by default, but those can be changed by
+// parameters or by factory overrides.
 //
 // PARAMETERS:
 //   T_req - request sequence item type to be used (defaults to uvm_sequence_item)
 //   T_rsp - response sequence item type to be used (defaults to T_req)
-//   T_vif - virtual interface type to use for driving/monitoring
+//   T_fcp - Flow control policy class to be used for driving/monitoring.
+//   T_iop - I/O policy class to be used to abstract the vintf from the driver/mon
+//    classes. This parameter must be set.
 //   T_seq - sequencer class type to be used
 //    (defaults to mby_base_sequencer#(.T_req(T_req), .T_rsp(T_rsp)))
 //   T_drv - driver class type to be used
@@ -58,10 +60,11 @@ class mby_base_agent
    #(
      type T_req = mby_base_sequence_item,
      type T_rsp = T_req,
-     type T_vif,
+     type T_fcp = mby_base_empty_flow_control,
+     type T_iop = mby_base_io_policy#(.T_req(T_req)),
      type T_seq = mby_base_sequencer#(.T_req(T_req), .T_rsp(T_rsp)),
-     type T_drv = mby_base_driver   #(.T_req(T_req), .T_rsp(T_rsp), .T_vif(T_vif)),
-     type T_mon = mby_base_monitor  #(.T_req(T_req), .T_vif(T_vif))
+     type T_drv = mby_base_driver   #(.T_req(T_req), .T_iop(T_iop), .T_fcp(T_fcp)),
+     type T_mon = mby_base_monitor  #(.T_req(T_req), .T_iop(T_iop), .T_fcp(T_fcp))
    )
    extends uvm_agent;
 
@@ -69,9 +72,13 @@ class mby_base_agent
    // The agent's configuration object
    mby_base_config cfg_obj;
 
-   // VARIABLE: vintf
-   // Virtual Interface pointer
-   T_vif vintf;
+   // VARIABLE: io_pol
+   // I/O policy to be used by the driver and monitor
+   T_iop io_pol;
+
+   // VARIABLE: fc_pol
+   // Flow control policy to be used by the driver and monitor
+   T_fcp fc_pol;
 
    // VARIABLE: sequencer
    // Base sequencer instance
@@ -90,7 +97,7 @@ class mby_base_agent
    // -------------------------------------------------------------------------
    // Macro to register new class type
    // -------------------------------------------------------------------------
-   `uvm_component_utils(mby_base_agent#(T_req, T_rsp, T_vif, T_seq, T_drv, T_mon))
+   `uvm_component_utils(mby_base_agent#(T_req, T_rsp, T_fcp, T_iop, T_seq, T_drv, T_mon))
 
    // -------------------------------------------------------------------------
    // CONSTRUCTOR: new
@@ -108,27 +115,28 @@ class mby_base_agent
    // ------------------------------------------------------------------------
    // FUNCTION: build_phase
    //
-   // Gets the agent's configuration object and vif from the config db.
+   // Gets the agent's I/O policy from the config db.
    // Creates monitor, sequencer and driver as specified in configuration object
    //
    // ------------------------------------------------------------------------
    function void build_phase(uvm_phase phase);
 
       // ----------------------------------------------------------------------
-      // Get the configuration object and virtual interface
+      // Check for the configuration object to be defined.
       // ----------------------------------------------------------------------
-      // TODO: accesses to config db has performance issues, consider adding the
-      // vif to the config object and then pass it over to the driver/mon
-      //
-      // TODO: change cfg access so it comes from the env
-      //
-      if(!uvm_config_db #(mby_base_config)::get(this, "", "cfg_obj", cfg_obj)) begin
-         `uvm_fatal("CFG_ERROR", {"Config object must be set for: ", get_full_name(), ".cfg_obj"})
+      if(cfg_obj == null) begin
+         `uvm_fatal("CFG_ERROR",
+            {"The configuration object must be set for: ",
+               get_full_name(),
+               ".cfg_obj"})
       end
-      // TODO: document why we are accessing the vif and not the cfg.
+
+      // ----------------------------------------------------------------------
+      // Get the I/O policy from the config database.
+      // ----------------------------------------------------------------------
       if(cfg_obj.driver_active == UVM_ACTIVE || cfg_obj.monitor_active == UVM_ACTIVE) begin
-         if(!uvm_config_db #(T_vif)::get(this, "", "vintf", vintf)) begin
-            `uvm_fatal("VIF_ERROR", {"Virtual interface must be set for: ",get_full_name(),".vintf"})
+         if(!uvm_config_db #(T_iop)::get(this, "", "io_pol", io_pol)) begin
+            `uvm_fatal("IO_ERROR", {"I/O Policy must be set for: ",get_full_name(),".io_pol"})
          end
       end
 
@@ -137,7 +145,7 @@ class mby_base_agent
       // ----------------------------------------------------------------------
       if(cfg_obj.monitor_active == UVM_ACTIVE) begin
          monitor = T_mon::type_id::create("monitor", this);
-         monitor.assign_vif(vintf);
+         monitor.set_io(io_pol);
       end
 
       // ----------------------------------------------------------------------
@@ -146,7 +154,7 @@ class mby_base_agent
       if(cfg_obj.driver_active == UVM_ACTIVE) begin
          sequencer = T_seq::type_id::create("sequencer", this);
          driver    = T_drv::type_id::create("driver", this);
-         driver.assign_vif(vintf);
+         driver.set_io(io_pol);
          driver.assign_cfg(cfg_obj);
       end
 
