@@ -182,9 +182,9 @@ always_ff @(posedge cclk) begin //{
 end //}
 
 logic   [3:0]           q_negh_rvalid;
-logic   [3:0] [81:0]    q_negh_rdata;
+logic   [3:0] [84:0]    q_negh_rdata;
 logic   [1:0] [13:0]    q_negh_raddr;
-logic   [1:0] [81:0]    q_negh_exp_rdata;
+logic   [1:0] [84:0]    q_negh_exp_rdata;
 
 always_ff @(posedge cclk) begin //{
     if(cclk_cnt == 1) begin //{
@@ -198,8 +198,8 @@ always_ff @(posedge cclk) begin //{
         tx_ppe_negh_if3.raddr   <= 14'h0;
         q_negh_raddr[0]         <= 14'b0;
         q_negh_raddr[1]         <= 14'b0;
-        q_negh_exp_rdata[0]     <= 82'b0;
-        q_negh_exp_rdata[1]     <= 82'h1;
+        q_negh_exp_rdata[0]     <= 85'b0;
+        q_negh_exp_rdata[1]     <= 85'h1;
     end //}
     else if(cclk_cnt > 1000) begin //{
         if((cclk_cnt % 2) == 1) begin //{
