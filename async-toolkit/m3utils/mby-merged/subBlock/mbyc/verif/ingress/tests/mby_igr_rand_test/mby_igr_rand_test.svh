@@ -194,7 +194,7 @@ class mby_igr_rand_test extends mby_igr_base_test;
          mby_igr_dummy_seq::type_id::get()); */
 
       // Specifying configure phase sequence
-     env.set_configure_sequence("mby_igr_dummy_seq");
+      env.set_configure_sequence("mby_igr_dummy_seq");
 
       // Specifying shutdown phase sequence
       env.set_shutdown_sequence("mby_igr_dummy_seq");
