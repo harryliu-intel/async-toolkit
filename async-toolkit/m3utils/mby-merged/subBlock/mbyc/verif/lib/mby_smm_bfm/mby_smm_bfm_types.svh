@@ -61,4 +61,20 @@ typedef mby_smm_bfm_mwr_req#(.T_req(mby_smm_bfm_row_wr_req_xaction)) smm_bfm_mwr
 typedef mby_smm_bfm_mrd_req#(.T_req(mby_smm_bfm_row_rd_req_xaction)) smm_bfm_mrd_req;
 typedef mby_smm_bfm_mem_node#(.ADDR_WIDTH(MSH_NODE_ADDR_WIDTH),.DATA_WIDTH(MSH_DATA_WIDTH)) smm_bfm_mem_node;
 
+typedef enum logic [3:0] {
+   NO_CONGESTION = 4'h0,
+   LOW_CONGESTION = 4'h1,
+   MEDIUM_CONGESTION = 4'h2,
+   HIGH_CONGESTION = 4'h3,
+   INSANE_CONGESTION = 4'h4
+} mesh_status_type_t;
+
+typedef enum logic [3:0] {
+   IDEAL = 4'h0,
+   LOW_DELAY = 4'h1,
+   MEDIUM_DELAY = 4'h2,
+   HIGH_DELAY = 4'h3,
+   INSANE_DELAY = 4'h4
+} delay_type_t;
+
 `endif

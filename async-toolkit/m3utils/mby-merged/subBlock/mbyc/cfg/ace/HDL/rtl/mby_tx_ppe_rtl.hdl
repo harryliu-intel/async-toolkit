@@ -14,6 +14,8 @@ $hdl_spec = {
 		"src/shared/interfaces/ahb_rx_ppe_if.sv",
 		"src/shared/interfaces/glb_rx_ppe_if.sv",
 		"src/shared/interfaces/egr_tx_ppe_if.sv",
+		"src/shared/interfaces/tx_ppe_mod_if.sv",
+		"src/shared/interfaces/tx_ppe_negh_if.sv",
         "$SVA_LIB/intel_checkers.vs",
 
 		"src/tx_ppe/rtl/tx_ppe_top.sv",

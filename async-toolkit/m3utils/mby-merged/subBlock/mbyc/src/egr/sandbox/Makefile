@@ -1,12 +1,13 @@
 
 # Prevent Make from setting implicit rules for files that look like c/cpp.
 
+
 # tb top
-VCS_SRC  = rtl/egr_top_tb.sv
-ifdef dut
-    ifneq ($(dut),"egr_top")
-        VCS_SRC  = ../$(dut)/sandbox/rtl/$(dut)_tb.sv
-    endif
+dut ?= egr_top
+ifneq ($(dut),egr_top)
+    VCS_SRC  = ../$(dut)/sandbox/rtl/$(dut)_tb.sv
+else
+    VCS_SRC  = rtl/egr_top_tb.sv
 endif
 
 ifndef SHRTL
@@ -25,6 +26,11 @@ SRC = ../..
 include $(SRC)/shared/sandbox/Make.mby
 
 VCS_DEFS += +define+VCSSIM +define+INTEL_SVA_OFF
+
+use_gui ?= 0
+ifeq ($(use_gui),1)
+    VCS_FLAGS += -gui
+endif
 
 VCS_FLAGS += $(VCS_DEFS)
 
@@ -98,13 +104,13 @@ simv: $(VCS_SRC) $(BUILD_DEP)
 	vcs $(VCS_FLAGS) $(VCS_LIB) $(VCS_INC) $(VCS_SRC) -l build.log
 
 debug: simv
-	./simv $(TRACE_FLAGS) $(SIMV_FLAGS) +TIMESTAMP_FREQUENCY=100 +TIMEOUT=1000
+	./simv $(TRACE_FLAGS) $(SIMV_FLAGS) +TIMESTAMP_FREQUENCY=100 +TIMEOUT=1000  +TESTNAME=first_packet_ms1p0 +VERBOSITY=$(VERBOSITY)
 
 first_packet_ms1p0 first_packet_ms2p0 first_packet_ms2p1 first_packet_ms2p5: simv
-	./simv $(TRACE_FLAGS) $(SIMV_FLAGS) +TIMESTAMP_FREQUENCY=100 +TIMEOUT=1000 +TESTNAME=$@
+	./simv $(TRACE_FLAGS) $(SIMV_FLAGS) +TIMESTAMP_FREQUENCY=100 +TIMEOUT=1000 +TESTNAME=$@ +VERBOSITY=$(VERBOSITY)
 
 gate: simv
-	./simv $(SIMV_FLAGS) +TIMESTAMP_FREQUENCY=100 +TIMEOUT=1000
+	./simv $(SIMV_FLAGS) +TIMESTAMP_FREQUENCY=100 +TIMEOUT=1000 +TESTNAME=first_packet_ms1p0
 	rm -rf DVEfiles csrc/ simv simv.daidir/ simv.vdb/ ucli.key vc_hdrs.h *.txt *.txt.disablelog .synopsys_dve_rebuild.tcl *.vpd
 
 clean:

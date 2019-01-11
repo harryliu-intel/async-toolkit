@@ -39,6 +39,7 @@ class mby_egr_env_cfg extends uvm_object;
     string egress_sideband_access = "sideband";
     bit    egress_chassis_rst_verbose_dbg;
     bit    egress_has_reset_pkg = 0;
+    mby_smm_bfm_cfg smm_bfm_cfg;
 
    `uvm_object_utils_begin(mby_egr_env_cfg)
       `uvm_field_string(egress_primary_access,          UVM_ALL_ON)
@@ -52,5 +53,10 @@ class mby_egr_env_cfg extends uvm_object;
    function new (string name = "mby_egr_env_cfg");
       super.new(name);
    endfunction : new
+
+   //function void build_phase(uvm_phase phase);
+   //   super.build_phase(phase);
+   //   smm_bfm_cfg = new("smm_bfm_cfg");
+   //endfunction : build_phase
 
 endclass : mby_egr_env_cfg
