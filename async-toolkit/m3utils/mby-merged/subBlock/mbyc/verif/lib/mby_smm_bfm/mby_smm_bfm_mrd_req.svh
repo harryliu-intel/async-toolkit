@@ -215,7 +215,7 @@ class mby_smm_bfm_mrd_req
       `uvm_info(get_type_name(), msg_str,  UVM_MEDIUM)
       
       // Look for the driver in this agent then for a vif and then a clock in it
-      repeat(req_rsp_delay) @(posedge this.rd_req_agent_ptr.driver.vintf.clk);
+      repeat(req_rsp_delay) @(posedge this.rd_req_agent_ptr.driver.io_pol.vintf.clk);
       
       // Use this instead
       rdrsp_seq.mem_rsp = mem_rsp;
@@ -242,7 +242,7 @@ class mby_smm_bfm_mrd_req
       bit      objection_raised = 0;
       string   msg_str;
       
-      forever @ (posedge this.rd_req_agent_ptr.driver.vintf.clk) begin
+      forever @ (posedge this.rd_req_agent_ptr.driver.io_pol.vintf.clk) begin
          // Maintain track of the memory read requests in flight, will hold on test
          // completion until all read requests are completed.
          if (!objection_raised && rd_req_pending > 0) begin

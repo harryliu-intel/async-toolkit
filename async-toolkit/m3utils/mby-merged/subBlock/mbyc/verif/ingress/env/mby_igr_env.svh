@@ -138,7 +138,6 @@ class mby_igr_env extends shdv_base_env;
       super.connect_phase(phase);
       connect_vpt_bfms();
       connect_eth_bfms();
-      connect_tag_bfm();
       uvm_config_db#(igr_env_if_t)::get(this, "", "ingress_if", ingress_if);
       if(ingress_if == null) begin
           `uvm_fatal(get_name(), $sformatf("Couldn't find ingress_if"));
@@ -224,7 +223,7 @@ class mby_igr_env extends shdv_base_env;
               eth_bfm_pkg::SPEED_OFF,
               eth_bfm_pkg::SPEED_OFF,
               eth_bfm_pkg::SPEED_OFF};
-          eth_bfms[i].cfg.port_lanes    = {4,0,0,0};                                           // Configure num_ports.
+          eth_bfms[i].cfg.port_lanes    = {4,0,0,0}; // Configure num_ports.
           //eth_bfms[i].cfg.early_justify = 0;
           //eth_bfms[i].cfg.group_size    = 8;
           //eth_bfms[i].cfg.sop_alignment = 8;
@@ -238,21 +237,13 @@ class mby_igr_env extends shdv_base_env;
    // Creates the tag_bfm using the factory
    //--------------------------------------------------------------------------
    function void build_tag_bfm();
-
       foreach(tag_bfm[i]) begin
-          // Get the eth_bfm_vif ptrs
-         // if(!uvm_config_db#(mby_tag_bfm_uc_vif)::get(this, "", $sformatf("tag_bfm_vintf%0d",i), tag_bfm_intf[i])) begin
-         //     `uvm_fatal(get_name(),$sformatf("Config_DB.get() for ENV's tag_bfm_intf%0d was not successful!", i))
-         // end
-
           tag_bfm[i] = mby_tag_bfm::type_id::create($sformatf("tag_bfm%0d",i), this);
           tag_bfm[i].cfg_obj.bfm_mode = TAG_BFM_IGR_MODE;
           tag_bfm[i].cfg_obj.traffic_mode = TAG_BFM_UC_MODE;
           tag_bfm[i].cfg_obj.driver_active  = UVM_PASSIVE;
           tag_bfm[i].cfg_obj.monitor_active = UVM_ACTIVE;
       end
-
-
    endfunction: build_tag_bfm
 
    //--------------------------------------------------------------------------
@@ -284,22 +275,6 @@ class mby_igr_env extends shdv_base_env;
          add_sequencer($sformatf("eth_bfm_%0d", i), $sformatf("eth_bfm_%0d_rx3", i), eth_bfms[i].frame_sequencer[3]);
       end
    endfunction : connect_eth_bfms
-
-   //--------------------------------------------------------------------------
-   // Function: connect_tag_bfm
-   // adds sequencer
-   //--------------------------------------------------------------------------
-   function void connect_tag_bfm();
-     //foreach(tag_bfm[i])begin
-     //  tag_bfm[i].tag_uc_agent.vintf = tag_bfm_intf[i];
-     //end
-     // TODO: this needs to be moved out of here
-     //foreach(tag_bfm[i]) begin
-     //  tag_bfm_io[i] = new($sformatf("tag_bfm%0d", i), tag_bfm_intf[i]);
-     //  tag_bfm[i].tag_uc_agent.io_pol = tag_bfm_io[i];
-     //end
-   endfunction: connect_tag_bfm
-
 
    //////////////////////////////////////////////////////////////////////////////
    // Ingress ENV functions / tasks
