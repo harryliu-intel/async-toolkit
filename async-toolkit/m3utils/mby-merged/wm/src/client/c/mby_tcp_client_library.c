@@ -85,7 +85,7 @@ static char server_tmpfile[TMP_FILE_LEN] = "";
 /* Static functions defined at the end of the file */
 static int iosf_send_receive(uint8_t *tx_msg, uint32_t tx_len,
                              uint8_t *rx_msg, uint32_t *rx_len);
-static int wm_do_stage(char            const *       nm,
+static int wm_do_stage(char            const *       name,
                        void            const * const in,
                        size_t                  const in_size,
                        varchar_t       const * const rx_data,
@@ -644,7 +644,7 @@ static uint32_t read_nl(uint8_t const *buf, int *idx)
     return x;
 }
 
-static int wm_do_stage_request(char            const *       nm,
+static int wm_do_stage_request(char            const *       name,
                                void            const * const in,
                                size_t                  const in_size,
                                size_t                  const out_size,
@@ -653,20 +653,24 @@ static int wm_do_stage_request(char            const *       nm,
     /* Packet format
      *
      *  htonl(len)                bytes : 4
-     *  nm                        bytes : MIN(strlen(nm) + 1, 128)
+     *  name                      bytes : MIN(strlen(name) + 1, 128)
      *  htonl(in_size)            bytes : 4
      *  htonl(out_size)           bytes : 4
      *  in                        bytes : in_size
-     *  htonl(rx_data.length)     bytes : 4
-     *  rx_data.data              bytes : rx_data.length
+     *  htonl(rx_data.length)     bytes : 4               [optional]
+     *  rx_data.data              bytes : rx_data.length  [optional]
      *
-     *  len = 16 + MIN(strlen(nm)+1,128) + in_size + rx_data.length
+     *  len = 16 + MIN(strlen(name)+1,128) + in_size + rx_data.length
      */
     uint8_t msg[MAX_MSG_LEN];
-    size_t nm_len = MIN(strlen(nm)+1,128);
-    size_t len = 16 + nm_len + in_size + rx_data->length;
+    size_t nm_len;
+    size_t len;
     int off = 0;
     int err;
+
+    nm_len = MIN(strlen(name) + 1, 128);
+    len = 12 + nm_len + in_size;
+    len += rx_data ? rx_data->length + 4 : 0;
 
     if (len > MAX_MSG_LEN) {
         LOG_ERROR("stage request too long : %lu\n", len);
@@ -675,7 +679,7 @@ static int wm_do_stage_request(char            const *       nm,
 
     write_nl(msg, &off, len);
 
-    memcpy(msg+off, nm, nm_len);
+    memcpy(msg+off, name, nm_len);
     off += nm_len;
     msg[off -1] = '\0'; // BSTS
 
@@ -686,10 +690,12 @@ static int wm_do_stage_request(char            const *       nm,
     memcpy(msg+off, in, in_size);
     off+= in_size;
 
-    write_nl(msg, &off, rx_data->length);
+    if (rx_data) {
+        write_nl(msg, &off, rx_data->length);
 
-    memcpy(msg+off, rx_data->data, rx_data->length);
-    off += rx_data->length;
+        memcpy(msg+off, rx_data->data, rx_data->length);
+        off += rx_data->length;
+    }
 
     assert(off == (int)len);
 
@@ -701,7 +707,7 @@ static int wm_do_stage_request(char            const *       nm,
     return err;
 }
 
-static int wm_do_stage_response(char            const *       nm,
+static int wm_do_stage_response(char            const *       name,
                                 void                  * const out,
                                 size_t                  const out_size,
                                 varchar_t             * const tx_data)
@@ -709,22 +715,22 @@ static int wm_do_stage_response(char            const *       nm,
     /* Packet format
      *
      * htonl(len)                bytes : 4
-     * nm                        bytes : MIN(strlen(nm) + 1, 128)
+     * name                      bytes : MIN(strlen(name) + 1, 128)
      * htonl(out_size)           bytes : 4
      * htonl(in_size)            bytes : 4
      * out                       bytes : in_size
      * htonl(tx_data.length)     bytes : 4
      * tx_data.data              bytes : tx_data.length
      *
-     * len = 16 + MIN(strlen(nm)+1,128) + out_size + tx_data.length
+     * len = 16 + MIN(strlen(name)+1,128) + out_size + tx_data.length
      */
+    size_t out_size_r, in_size_r;
     uint8_t msg[MAX_MSG_LEN];
     uint32_t len, msg_len;
     uint16_t type, port;
+    const char *name_r;
     int off = 0;
     int err;
-    const char *nm_r;
-    size_t out_size_r, in_size_r;
 
     err = wm_receive(wm_server_fd, msg, &msg_len, &type, &port);
 
@@ -738,7 +744,7 @@ static int wm_do_stage_response(char            const *       nm,
 
     len = read_nl(msg, &off);
 
-    nm_r = (const char *)(msg + off);
+    name_r = (const char *)(msg + off);
     while (msg[off] && off < 128) ++off;
 
     if (msg[off-1] != '\0') {
@@ -746,9 +752,9 @@ static int wm_do_stage_response(char            const *       nm,
         return WM_ERR_RUNTIME;
     }
 
-    if (strcmp(nm, nm_r))  {
+    if (strcmp(name, name_r))  {
         LOG_ERROR("Output name not matching input name : \"%s\" != \"%s\"\n",
-                  nm_r, nm);
+                  name_r, name);
         return WM_ERR_RUNTIME;
     }
 
@@ -763,13 +769,16 @@ static int wm_do_stage_response(char            const *       nm,
     memcpy(out, msg + off, out_size);
     off += out_size;
 
-    tx_data->length = read_nl(msg, &off);
-    {
-        varchar_base_t *buff = (varchar_base_t *)malloc(tx_data->length);
-        memcpy(buff, msg, tx_data->length);
-        tx_data->data = buff;
+    if (tx_data) {
+        tx_data->length = read_nl(msg, &off);
+        {
+            // TODO malloc in the client => memory leaks << REVISIT
+            varchar_base_t *buff = (varchar_base_t *)malloc(tx_data->length);
+            memcpy(buff, msg, tx_data->length);
+            tx_data->data = buff;
+        }
+        off += tx_data->length;
     }
-    off += tx_data->length;
 
     if (off != (int)msg_len) {
         LOG_ERROR("Formatting error off = %d != %d = msg_len\n", off, msg_len);
@@ -781,15 +790,17 @@ static int wm_do_stage_response(char            const *       nm,
 
 /* Execute a generic WM stage function
  *
- * @param[in]
+ * @param[in]   name string with the stage name
  * @param[in]   in pointer to stage input structure
  * @param[in]   in_size size of the stage input structure
+ * @param[in]   rx_data optional pointer to rx_data
  * @param[out]  out pointer to stage output structure
  * @param[in]   out_size size of the stage input structure
+ * @param[out]  tx_data optional pointer to tx_data
  *
  * @retval      WM_OK if successful
  */
-static int wm_do_stage(char            const *       nm,
+static int wm_do_stage(char            const *       name,
                        void            const * const in,
                        size_t                  const in_size,
                        varchar_t       const * const rx_data,
@@ -800,11 +811,11 @@ static int wm_do_stage(char            const *       nm,
 
     int err;
 
-    err = wm_do_stage_request(nm, in, in_size, out_size, rx_data);
+    err = wm_do_stage_request(name, in, in_size, out_size, rx_data);
     if (err)
         return err;
 
-    err = wm_do_stage_response(nm, out, out_size, tx_data);
+    err = wm_do_stage_response(name, out, out_size, tx_data);
     return err;
 }
 
