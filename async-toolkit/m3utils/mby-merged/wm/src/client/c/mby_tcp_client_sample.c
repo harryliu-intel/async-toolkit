@@ -49,8 +49,8 @@ void print_help(void)
     printf(" -h             Print this help message and exit\n");
 }
 
-//#define PARSER_ONLY
-#define MAPPER_ONLY
+#define PARSER_ONLY
+//#define MAPPER_ONLY
 
 int main(int argc, char *argv[])
 {
@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
 
 #if defined(PARSER_ONLY)
     /********** Test Parser stage  ***********/
-    if ((err = test_Parser())) goto CLEANUP;
+    for (int i=0; i<100*1000; ++i) if ((err = test_Parser())) goto CLEANUP;
 
 #elif defined(MAPPER_ONLY)
     /********** Test Parser stage  ***********/

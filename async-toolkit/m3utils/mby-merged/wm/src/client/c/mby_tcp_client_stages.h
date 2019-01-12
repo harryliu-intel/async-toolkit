@@ -30,4 +30,16 @@ wm_Modifier(Modifier_in_t   const * const in,
             varchar_t       const * const rx_data,
             varchar_t             * const tx_data);
 
+// a version for dv (another layer of wrapper) - use fixed-length data 
+
+#define MBY_MAX_PACKET_LEN 32*1024 // ...for example...
+
+int
+dv_Modifier(Modifier_in_t   const * const in,
+            Modifier_out_t        * const out,
+            unsigned char           const rx_data_a[MBY_MAX_PACKET_LEN],
+            unsigned int            const rx_length,
+            unsigned char                 tx_data_a[MBY_MAX_PACKET_LEN],
+            unsigned int          *       tx_length);
+
 #endif /* ! MBY_TCP_CLIENT_STAGES_H */
