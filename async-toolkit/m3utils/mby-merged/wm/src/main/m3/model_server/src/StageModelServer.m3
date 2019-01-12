@@ -60,18 +60,15 @@ TYPE
     len             : NetTypes.U32;
     nm              : TEXT;
     in              : REF ARRAY OF Byte.T;
-    out             : REF ARRAY OF Byte.T;
     rxData          : REF ARRAY OF Byte.T;
-    txData          : REF ARRAY OF Byte.T;
   END;                                
 
 PROCEDURE FmtStageData(READONLY sd : StageData) : TEXT =
   BEGIN
-    RETURN F("len %s nm \"%s\" inSz %s outSz %s rxDataSz %s",
+    RETURN F("len %s nm \"%s\" inSz %s rxDataSz %s",
              Int(sd.len),
              sd.nm,
              Int(NUMBER(sd.in^)),
-             Int(NUMBER(sd.out^)),
              Int(NUMBER(sd.rxData^)));
     
   END FmtStageData;
@@ -101,15 +98,11 @@ PROCEDURE DecodeStageData(pkt : Pkt.T;
     Debug.Out("Got stage name " & UnNil(temp.nm));
     
     VAR
-      inSz, outSz : NetTypes.U32;
+      inSz : NetTypes.U32;
     BEGIN
       IF NOT RdNet.GetU32S(pkt, p, inSz) THEN RETURN FALSE END;
 
-      IF NOT RdNet.GetU32S(pkt, p, outSz) THEN RETURN FALSE END;
-
       temp.in  := NEW(REF ARRAY OF Byte.T, inSz);
-
-      temp.out := NEW(REF ARRAY OF Byte.T, outSz);
 
       FOR i := FIRST(temp.in^) TO LAST(temp.in^) DO
         temp.in[i] := pkt.get(p); INC(p)
@@ -159,9 +152,10 @@ PROCEDURE HandleMsgStageData(<*UNUSED*>m  : MsgHandler;
       Debug.Out("stageData=\n" & FmtStageData(sd));
 
       VAR
+        out    : REF ARRAY OF Byte.T;
         txData : REF ARRAY OF Byte.T;
       BEGIN
-        t.runStage(sd.in^, sd.out, sd.rxData^, sd.txData)
+        t.runStage(sd.in^, out, sd.rxData^, txData)
       END
     END
     
