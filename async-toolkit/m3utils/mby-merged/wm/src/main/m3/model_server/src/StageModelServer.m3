@@ -12,7 +12,7 @@ IMPORT Rd, FmModelMessageHdr, NetContext;
 IMPORT MsIosf;
 IMPORT ServerPacket AS Pkt;
 IMPORT Debug; FROM Debug IMPORT UnNil;
-IMPORT RdNet;
+IMPORT RdNet, WrNet;
 IMPORT NetTypes;
 IMPORT Fmt; FROM Fmt IMPORT F, Int;
 IMPORT Byte;
@@ -154,8 +154,37 @@ PROCEDURE HandleMsgStageData(<*UNUSED*>m  : MsgHandler;
       VAR
         out    : REF ARRAY OF Byte.T;
         txData : REF ARRAY OF Byte.T;
+        nmLen := MIN(Text.Length(t.stageName)+1, 128);
+        len : CARDINAL;
       BEGIN
-        t.runStage(sd.in^, out, sd.rxData^, txData)
+        t.runStage(sd.in^, out, sd.rxData^, txData);
+
+        EVAL inst.sp.init(); (* clear out any crud from here *)
+        len := 12 + nmLen + NUMBER(out^) + NUMBER(txData^);
+        Debug.Out(F("after runStage nmLen %s outSz %s txDataSz %s len %s",
+                    Int(nmLen), Int(NUMBER(out^)), Int(NUMBER(txData^)),
+                    Int(len)));
+
+        WrNet.PutU32G(inst.sp, Pkt.End.Back, len);
+
+        FOR i := 0 TO nmLen-2 DO
+          WrNet.PutU8G(inst.sp, Pkt.End.Back, ORD(Text.GetChar(t.stageName,i)))
+        END;
+        WrNet.PutU8G(inst.sp, Pkt.End.Back, 0);
+
+        WrNet.PutU32G(inst.sp, Pkt.End.Back, NUMBER(out^));
+        FOR i := 0 TO NUMBER(out^)-1 DO
+          WrNet.PutU8G(inst.sp, Pkt.End.Back, out[i])
+        END;
+
+        WrNet.PutU32G(inst.sp, Pkt.End.Back, NUMBER(txData^));
+        FOR i := 0 TO NUMBER(txData^)-1 DO
+          WrNet.PutU8G(inst.sp, Pkt.End.Back, out[i])
+        END;
+
+        Debug.Out("inst.sp.size()=" & Int(inst.sp.size()));
+
+        inst.sendResponse()
       END
     END
     

@@ -150,7 +150,7 @@ PROCEDURE SendResponse(i : Instance) RAISES { Wr.Failure, Thread.Alerted } =
     END;
 
     IF doDebug THEN Pkt.DebugOut(i.sp) END;
-    Pkt.Transmit(i.sp,i.wr);
+    Pkt.Transmit(i.sp, i.wr);
     EVAL i.sp.init() (* clear buffer *)
   END SendResponse;
 

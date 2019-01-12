@@ -775,8 +775,12 @@ wm_do_stage_response(char            const *       nm,
   len = read_nl(msg, &off);
 
   nm_r = (const char *)(msg + off);
-  while (msg[off] && off < 128) ++off;
 
+  for (int i=0; i<127; ++i,++off)
+    if (!msg[off]) break;
+  // at a null or pos 127
+  ++off; // read the null or pos 128
+  
   if (msg[off-1] != '\0') {
     LOG_ERROR("Output name not null-terminated\n");
     return WM_ERR_RUNTIME;
@@ -911,6 +915,7 @@ static int wm_receive(int fd, uint8_t *msg, uint32_t *len, uint16_t *type,
         case MODEL_MSG_IOSF:
         case MODEL_MSG_PACKET:
         case MODEL_MSG_PACKET_EOT:
+        case MODEL_MSG_STAGE:
             break;
         default:
             LOG_ERROR("Unexpected msg_type 0x%04x\n", *type);
