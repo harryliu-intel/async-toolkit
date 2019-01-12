@@ -694,7 +694,7 @@ wm_do_stage_request(char            const *       nm,
      htonl(rx_data.length)     bytes : 4
      rx_data.data              bytes : rx_data.length
 
-     len = 16 + MIN(strlen(nm)+1,128) + in_size + rx_data.length
+     len = 12 + MIN(strlen(nm)+1,128) + in_size + rx_data.length
   */
   uint8_t msg[MAX_MSG_LEN];
   size_t nm_len = MIN(strlen(nm)+1,128);

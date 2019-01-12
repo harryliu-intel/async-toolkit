@@ -115,4 +115,4 @@ typedef enum {
 /* Number of external ports available to inject/receive traffic */
 #define NUM_PORTS 32
 
-#endif
+#endif /* MBY_TCP_CLIENT_TYPES_H */
