@@ -28,13 +28,15 @@
 #include <string.h>
 
 #include "mby_tcp_client_library.h"
+#include "mby_tcp_client_stages.h"
 
 // Default path to the server file, can be overidden with -m <path>
 #define SERVER_FILE "../../main/m3/model_server/AMD64_LINUX/models.packetServer"
 
 int test_regs(void);
 int test_pkts(void);
-int test_parser(void);
+int test_Parser(void);
+int test_Mapper(void);
 
 void print_help(void)
 {
@@ -47,7 +49,8 @@ void print_help(void)
     printf(" -h             Print this help message and exit\n");
 }
 
-#define PARSER_ONLY
+//#define PARSER_ONLY
+#define MAPPER_ONLY
 
 int main(int argc, char *argv[])
 {
@@ -84,7 +87,7 @@ int main(int argc, char *argv[])
     if (server_type)
         err = wm_server_start(server_type);
     else {
-#ifdef PARSER_ONLY
+#if defined(PARSER_ONLY) || defined(MAPPER_ONLY)
       err = wm_connect_server(model_server_file);
 #else
       err = wm_connect(model_server_file);
@@ -99,15 +102,18 @@ int main(int argc, char *argv[])
         printf("Started/connected to WM\n");
     }
 
-#ifdef PARSER_ONLY
-    /********** Test parser stage  ***********/
     printf("waiting a bit..."); fflush(stdout);
     for(int i=0; i<5; ++i) usleep(10*1000);
     printf("\n");               fflush(stdout);
-    err = test_parser();
-    if (err)
-        goto CLEANUP;
 
+#if defined(PARSER_ONLY)
+    /********** Test Parser stage  ***********/
+    if ((err = test_Parser())) goto CLEANUP;
+
+#elif defined(MAPPER_ONLY)
+    /********** Test Parser stage  ***********/
+    if ((err = test_Mapper())) goto CLEANUP;
+    
 #else
 
     /********** Test write/read register operations ***********/
@@ -235,7 +241,7 @@ int test_pkts(void)
     return WM_OK;
 }
 
-int test_parser(void)
+int test_Parser(void)
 {
     /* Hardcoded test frame with Crc */
     uint8_t tx_pkt_data[] = {
@@ -247,8 +253,8 @@ int test_parser(void)
         0xee, 0x7f, 0xec, 0xb0
     };
 
-    mbyRxMacToParser in = {0};
-    mbyParserToMapper out = {0};
+    Parser_in_t  in  = {0};
+    Parser_out_t out = {0};
     int err;
 
     printf("%s\n",__func__); fflush(stdout);
@@ -259,7 +265,44 @@ int test_parser(void)
            tx_pkt_data,
            MIN(sizeof(in.SEG_DATA),sizeof(tx_pkt_data)));
 
-    err = wm_parser(&in, &out);
+    err = wm_Parser(&in, &out);
+    if (err) {
+        printf("Error calling parser stage: %d\n", err);
+        return err;
+    }
+
+    printf("Received %d bytes on port %d\n", out.RX_LENGTH, out.RX_PORT);
+    if (in.RX_LENGTH != out.RX_LENGTH) {
+        printf("Unexpected difference in length between parser in (%d) and out (%d)\n",
+               in.RX_LENGTH, out.RX_LENGTH);
+        return WM_ERR_RUNTIME;
+    }
+
+    return WM_OK;
+}
+
+int test_Mapper(void)
+{
+    /* Hardcoded test frame with Crc */
+    uint8_t tx_pkt_data[] = {
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b,
+        0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+        0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20, 0x21, 0x22, 0x23,
+        0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f,
+        0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3a, 0x3b,
+        0xee, 0x7f, 0xec, 0xb0
+    };
+
+    Mapper_in_t  in  = {0};
+    Mapper_out_t out = {0};
+    int err;
+
+    printf("%s\n",__func__); fflush(stdout);
+
+    in.RX_PORT = 1;
+    in.RX_LENGTH = sizeof(tx_pkt_data);
+
+    err = wm_Mapper(&in, &out);
     if (err) {
         printf("Error calling parser stage: %d\n", err);
         return err;

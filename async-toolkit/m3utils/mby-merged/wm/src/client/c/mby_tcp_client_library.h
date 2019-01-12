@@ -26,8 +26,8 @@
 #ifndef MBY_TCP_CLIENT_LIBRARY_H
 #define MBY_TCP_CLIENT_LIBRARY_H
 
+#include "varchar.h"
 #include "mby_tcp_client_types.h"
-#include "mby_parser.h"
 
 /** \defgroup c_client C Client APIs
  *  @{
@@ -76,9 +76,16 @@ int wm_pkt_push(const struct wm_pkt *pkt);
 int wm_pkt_get(struct wm_pkt *pkt);
 
 
-/* Individual stage interfaces */
-int wm_parser(mbyRxMacToParser const * const in,
-              mbyParserToMapper      * const out);
+/* Individual stage interface */
+
+int wm_do_stage(char            const *       nm,
+                void            const * const in,
+                size_t                  const in_size,
+                varchar_t       const * const rx_data,
+                void                  * const out,
+                size_t                  const out_size,
+                varchar_t             * const tx_data);
+
 
 /** @}*/
-#endif /* __MBAY_DPI_CLIENT_H_ */
+#endif /* ! MBY_TCP_CLIENT_LIBRARY_H */

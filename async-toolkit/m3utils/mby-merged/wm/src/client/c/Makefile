@@ -10,6 +10,7 @@ MBY_TCP_CLIENT = mby_tcp_client
 
 include ../../make/Make_c.defs
 
+TARGET_STG_O = $(MBY_TCP_CLIENT)_stages.o
 TARGET_LIB_O = $(MBY_TCP_CLIENT)_library.o
 TARGET_LIB   = lib$(MBY_TCP_CLIENT).so
 TARGET_SAM_O = $(MBY_TCP_CLIENT)_sample.o
@@ -65,7 +66,11 @@ $(TARGET_LIB_O): $(MBY_TCP_CLIENT)_library.c $(MBY_TCP_CLIENT)_types.h $(MBY_TCP
 	@echo '  Compiling library'
 	$(ECHO) $(GCC) -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) -c $<
 
-$(TARGET_LIB): $(MBY_TCP_CLIENT)_library.o
+$(TARGET_STG_O): $(MBY_TCP_CLIENT)_stages.c $(MBY_TCP_CLIENT)_types.h $(MBY_TCP_CLIENT)_stages.h
+	@echo '  Compiling stages'
+	$(ECHO) $(GCC) -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) -c $<
+
+$(TARGET_LIB): $(TARGET_LIB_O) $(TARGET_STG_O)
 	@echo '  Linking library'
 	$(ECHO) $(GCC) $(LDFLAGS) -o $@ $^
 

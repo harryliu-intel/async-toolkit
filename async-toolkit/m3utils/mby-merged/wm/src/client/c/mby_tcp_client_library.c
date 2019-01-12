@@ -95,14 +95,6 @@ static int iosf_send_receive(uint8_t *tx_msg, uint32_t tx_len,
                              uint8_t *rx_msg, uint32_t *rx_len);
 
 
-static int wm_do_stage(char            const *       nm,
-                       void            const * const in,
-                       size_t                  const in_size,
-                       varchar_t       const * const rx_data,
-                       void                  * const out,
-                       size_t                  const out_size,
-                       varchar_t             * const tx_data);
-
 static int wm_send(int fd, const uint8_t *msg, uint32_t len, uint16_t type,
                    uint16_t port);
 static int wm_receive(int fd, uint8_t *msg, uint32_t *len, uint16_t *type,
@@ -578,30 +570,6 @@ int wm_pkt_get(struct wm_pkt *pkt)
     return WM_OK;
 }
 
-/* Execute the Parser stage function
- *
- * Invokes the Parser stage in the server that is currently running.
- * The register space is passed from the model server.  Use wm_reg_write to
- * set the register values before calling this function.
- *
- * @param[in]   in pointer to Parser input structure
- * @param[out]  out pointer to Parser output structure
- *
- * @retval      WM_OK if successful
- */
-int wm_parser(mbyRxMacToParser const * const in,
-              mbyParserToMapper      * const out)
-{
-    LOG_DEBUG("Parser() - RX_LENGTH=%d RX_PORT=%d\n", in->RX_LENGTH, in->RX_PORT);
-    hex_dump(in->SEG_DATA, MIN(in->RX_LENGTH, sizeof(in->SEG_DATA)), 0);
-
-    return wm_do_stage("Parser",
-                       in, sizeof(*in),
-                       NULL,
-                       out, sizeof(*out),
-                       NULL);
-
-}
 
 /*****************************************************************************
  *************************** Auxiliary functions *****************************
@@ -666,16 +634,16 @@ static int iosf_send_receive(uint8_t *tx_msg, uint32_t tx_len,
 static void
 write_nl(uint8_t *buf, int *idx, uint32_t x)
 {
-  *(uint32_t *)&buf[*idx] = htonl(x);
-  *idx += 4;
+    *(uint32_t *)&buf[*idx] = htonl(x);
+    *idx += 4;
 }
 
 static uint32_t
 read_nl(uint8_t const *buf, int *idx)
 {
-  uint32_t x = ntohl(*(uint32_t *)&buf[*idx]);
-  *idx += 4;
-  return x;
+    uint32_t x = ntohl(*(uint32_t *)&buf[*idx]);
+    *idx += 4;
+    return x;
 }
 
 static int
@@ -743,88 +711,88 @@ wm_do_stage_response(char            const *       nm,
                      size_t                  const out_size,
                      varchar_t             * const tx_data)
 {
-  /* packet format 
+    /* packet format 
      
-     htonl(len)                bytes : 4
-     nm                        bytes : MIN(strlen(nm) + 1, 128)
-     htonl(out_size)           bytes : 4
-     out                       bytes : out_size
-     htonl(tx_data.length)     bytes : 4
-     tx_data.data              bytes : tx_data.length
+       htonl(len)                bytes : 4
+       nm                        bytes : MIN(strlen(nm) + 1, 128)
+       htonl(out_size)           bytes : 4
+       out                       bytes : out_size
+       htonl(tx_data.length)     bytes : 4
+       tx_data.data              bytes : tx_data.length
 
-     len = 12 + MIN(strlen(nm)+1,128) + out_size + tx_data.length
-  */
-  uint8_t msg[MAX_MSG_LEN];
-  uint32_t len, msg_len;
-  uint16_t type, port;
-  int off = 0;
-  int err;
-  const char *nm_r;
-  size_t out_size_r, in_size_r;
+       len = 12 + MIN(strlen(nm)+1,128) + out_size + tx_data.length
+    */
+    uint8_t msg[MAX_MSG_LEN];
+    uint32_t len, msg_len;
+    uint16_t type, port;
+    int off = 0;
+    int err;
+    const char *nm_r;
+    size_t out_size_r, in_size_r;
 
-  err = wm_receive(wm_server_fd, msg, &msg_len, &type, &port);
+    err = wm_receive(wm_server_fd, msg, &msg_len, &type, &port);
 
-  if (err)
-    return err;
+    if (err)
+        return err;
 
-  if (type != MODEL_MSG_STAGE || port != 0) {
-    LOG_ERROR("Received unexpected message type %d port %d\n", type, port);
-    return WM_ERR_RUNTIME;
-  }
-
-  len = read_nl(msg, &off);
-
-  nm_r = (const char *)(msg + off);
-
-  for (int i=0; i<127; ++i,++off)
-    if (!msg[off]) break;
-  // at a null or pos 127
-  ++off; // read the null or pos 128
-  
-  if (msg[off-1] != '\0') {
-    LOG_ERROR("Output name not null-terminated\n");
-    return WM_ERR_RUNTIME;
-  }
-  
-  if (strcmp(nm, nm_r))  {
-    LOG_ERROR("Output name not matching input name : \"%s\" != \"%s\"\n",
-              nm_r, nm);
-    return WM_ERR_RUNTIME;
-  }
-  
-  out_size_r = read_nl(msg, &off);
-  if (out_size != out_size_r) {
-    LOG_ERROR("Output struct size mismatch %lu != %lu\n", out_size_r, out_size);
-    return WM_ERR_RUNTIME;
-  }
-
-  memcpy(out, msg + off, out_size);
-  off += out_size;
-
-  if (tx_data) {
-    tx_data->length = read_nl(msg, &off);
-    {
-      varchar_base_t *buff = (varchar_base_t *)malloc(tx_data->length);
-      memcpy(buff, msg, tx_data->length);
-      tx_data->data = buff;
+    if (type != MODEL_MSG_STAGE || port != 0) {
+        LOG_ERROR("Received unexpected message type %d port %d\n", type, port);
+        return WM_ERR_RUNTIME;
     }
-    off += tx_data->length;
-  } else {
-    uint32_t txdlen = read_nl(msg, &off);
 
-    if (txdlen != 0) {
-      LOG_ERROR("Formatting error, TX_DATA not expected, %d bytes received\n",
-                txdlen);
-      return WM_ERR_RUNTIME;
+    len = read_nl(msg, &off);
+
+    nm_r = (const char *)(msg + off);
+
+    for (int i=0; i<127; ++i,++off)
+        if (!msg[off]) break;
+    // at a null or pos 127
+    ++off; // read the null or pos 128
+  
+    if (msg[off-1] != '\0') {
+        LOG_ERROR("Output name not null-terminated\n");
+        return WM_ERR_RUNTIME;
     }
-  }
+  
+    if (strcmp(nm, nm_r))  {
+        LOG_ERROR("Output name not matching input name : \"%s\" != \"%s\"\n",
+                  nm_r, nm);
+        return WM_ERR_RUNTIME;
+    }
     
-  if (off != (int)msg_len) {
-    LOG_ERROR("Formatting error off = %d != %d = msg_len\n", off, msg_len);
-    return WM_ERR_RUNTIME;
-  }
+    out_size_r = read_nl(msg, &off);
+    if (out_size != out_size_r) {
+        LOG_ERROR("Output struct size mismatch %lu != %lu\n", out_size_r, out_size);
+        return WM_ERR_RUNTIME;
+    }
 
-  return WM_OK;
+    memcpy(out, msg + off, out_size);
+    off += out_size;
+
+    if (tx_data) {
+        tx_data->length = read_nl(msg, &off);
+        {
+            varchar_base_t *buff = (varchar_base_t *)malloc(tx_data->length);
+            memcpy(buff, msg, tx_data->length);
+            tx_data->data = buff;
+        }
+        off += tx_data->length;
+    } else {
+        uint32_t txdlen = read_nl(msg, &off);
+
+        if (txdlen != 0) {
+            LOG_ERROR("Formatting error, TX_DATA not expected, %d bytes received\n",
+                      txdlen);
+            return WM_ERR_RUNTIME;
+        }
+    }
+    
+    if (off != (int)msg_len) {
+        LOG_ERROR("Formatting error off = %d != %d = msg_len\n", off, msg_len);
+        return WM_ERR_RUNTIME;
+    }
+
+    return WM_OK;
 }
 
 /* Execute a generic WM stage function
@@ -837,23 +805,24 @@ wm_do_stage_response(char            const *       nm,
  *
  * @retval      WM_OK if successful
  */
-static int wm_do_stage(char            const *       nm,
-                       void            const * const in,
-                       size_t                  const in_size,
-                       varchar_t       const * const rx_data,
-                       void                  * const out,
-                       size_t                  const out_size,
-                       varchar_t             * const tx_data)
+int
+wm_do_stage(char            const *       nm,
+            void            const * const in,
+            size_t                  const in_size,
+            varchar_t       const * const rx_data,
+            void                  * const out,
+            size_t                  const out_size,
+            varchar_t             * const tx_data)
 {
 
   int err;
 
-  err = wm_do_stage_request(nm, in, in_size, out_size, rx_data);
-  if (err)
+  LOG_DEBUG(__func__);
+  
+  if ((err = wm_do_stage_request(nm, in, in_size, out_size, rx_data)))
     return err;
 
-  err = wm_do_stage_response(nm, out, out_size, tx_data);
-  return err;
+  return (err = wm_do_stage_response(nm, out, out_size, tx_data));
 }
 
 /**
