@@ -7,6 +7,7 @@
 
 #include "mby_modifier.h"
 
+/* a standard stage is set up for remote calling like this */
 #define SIMPLE_STAGE_PROTO(nm)                       \
   int wm_##nm ( nm##_in_t     const * const in,      \
                 nm##_out_t          * const out)
@@ -22,6 +23,7 @@ SIMPLE_STAGE_PROTO(Parser);
 SIMPLE_STAGE_PROTO(Mapper);
 SIMPLE_STAGE_PROTO(Classifier);
 
+/* modifier uses both rx_data and tx_data so it's more complicated */
 int
 wm_Modifier(Modifier_in_t   const * const in,
             Modifier_out_t        * const out,
