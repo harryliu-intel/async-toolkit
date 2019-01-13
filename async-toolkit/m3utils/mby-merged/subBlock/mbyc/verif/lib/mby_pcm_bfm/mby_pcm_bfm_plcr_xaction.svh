@@ -46,7 +46,7 @@
 //     T_debug    - set to logic for now
 //
 //-----------------------------------------------------------------------------
-class mby_pcm_bfm_plcr_xaction extends mby_base_sequence_item
+class mby_pcm_bfm_plcr_xaction extends mby_base_sequence_item_param
 #(
    .T_data (mby_pcm_bfm_plcr_t),
    .T_debug(mby_pcm_bfm_debg_t)
@@ -55,7 +55,7 @@ class mby_pcm_bfm_plcr_xaction extends mby_base_sequence_item
    // -------------------------------------------------------------------------
    // Macro for factory registration
    // -------------------------------------------------------------------------
-  `uvm_object_utils(mby_pcm_bfm_plcr_xaction#(T_data, T_data_rsp, T_debug))
+  `uvm_object_utils(mby_pcm_bfm_plcr_xaction)
 
    // -------------------------------------------------------------------------
    // CONSTRUCTOR: new

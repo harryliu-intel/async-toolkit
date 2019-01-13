@@ -113,14 +113,14 @@ class mby_tag_bfm extends uvm_component;
       // ----------------------------------------------------------------------
       if(cfg_obj.traffic_mode == TAG_BFM_UC_MODE) begin
          tag_uc_agent = mby_tag_bfm_uc_agent::type_id::create("tag_uc_agent", this);
-         uvm_config_db#(mby_base_config)::set(this, "tag_uc_agent", "cfg_obj", cfg_obj);       
+         uvm_config_db#(mby_base_config)::set(this, "tag_uc_agent", "cfg_obj", cfg_obj);
          tag_uc_agent.cfg_obj = this.cfg_obj;
          `uvm_info(this.get_full_name(),
             "Created the uni-cast tag_agent instance and assigned the cfg_obj",
             UVM_DEBUG)
       end else begin
          tag_mc_agent = mby_tag_bfm_mc_agent::type_id::create("tag_mc_agent", this);
-         uvm_config_db#(mby_base_config)::set(this, "tag_mc_agent", "cfg_obj", cfg_obj);       
+         uvm_config_db#(mby_base_config)::set(this, "tag_mc_agent", "cfg_obj", cfg_obj);
          tag_mc_agent.cfg_obj = this.cfg_obj;
          `uvm_info(this.get_full_name(),
             "Created the multi-cast tag_agent instance and assigned the cfg_obj",

@@ -31,7 +31,7 @@
 //
 //------------------------------------------------------------------------------
 `ifndef __MBY_BASE_PKG__
-`error "Attempt to include file outside of mby_igr_env_pkg."
+`error "Attempt to include file outside of mby_base_pkg."
 `endif
 `ifndef __MBY_BASE_CONFIG__
 `define __MBY_BASE_CONFIG__

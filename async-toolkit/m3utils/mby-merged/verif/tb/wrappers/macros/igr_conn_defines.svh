@@ -21,6 +21,8 @@
     mby_ec_cdi_rx_intf eth_bfm_rx_intf_igr_3_``IDX``(); \
     mby_ec_cdi_tx_intf eth_bfm_tx_intf_igr_4_``IDX``(); \
     mby_ec_cdi_rx_intf eth_bfm_rx_intf_igr_4_``IDX``(); \
+    mby_tag_bfm_uc_if tag_bfm_intf_0_``IDX``(); \
+    mby_tag_bfm_uc_if tag_bfm_intf_1_``IDX``(); \
     \
     assign eth_bfm_tx_intf_igr_0_``IDX``.port_num = ``DUT_PATH.mby_mpp_``MPP_IDX``.mgp``MGP_IDX``.igr.grp_a_rx_port_num; \
     assign eth_bfm_tx_intf_igr_0_``IDX``.data_valid = ``DUT_PATH.mby_mpp_``MPP_IDX``.mgp``MGP_IDX``.igr.grp_a_rx_data_valid; \
@@ -60,7 +62,9 @@
         .eth_bfm_tx_intf_3   (eth_bfm_tx_intf_igr_3_``IDX``), \
         .eth_bfm_rx_intf_3   (eth_bfm_rx_intf_igr_3_``IDX``), \
         .eth_bfm_tx_intf_4   (eth_bfm_tx_intf_igr_4_``IDX``), \
-        .eth_bfm_rx_intf_4   (eth_bfm_rx_intf_igr_4_``IDX``) \
+        .eth_bfm_rx_intf_4   (eth_bfm_rx_intf_igr_4_``IDX``), \
+        .tag_bfm_intf_0 (tag_bfm_intf_0_``IDX``), \
+        .tag_bfm_intf_1 (tag_bfm_intf_1_``IDX``) \
     ); \
     \
 /*

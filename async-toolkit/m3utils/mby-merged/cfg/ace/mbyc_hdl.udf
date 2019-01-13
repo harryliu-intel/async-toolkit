@@ -83,7 +83,7 @@ print "MGM debug : @mbyMgmLibs\n";
                -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_igr_rtl.hdl', ],
                -dependent_libs => ['mby_mgm_lib',],
             },
-	    
+
             mby_igr_pbb_rtl_lib => {
                -generated => 1,   # added due to mgm dependency
                -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_igr_pbb_rtl.hdl', ],
@@ -113,7 +113,7 @@ print "MGM debug : @mbyMgmLibs\n";
                -hdl_spec        => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_gmn_rtl.hdl', ],
                -dependent_libs => ['mby_mgm_lib',],
             },
-            
+
             mby_cup_rtl_lib => {
                -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_cup_rtl.hdl', ],
             },
@@ -194,7 +194,7 @@ print "MGM debug : @mbyMgmLibs\n";
 
 
             ### Verif libs
-            
+
             gen_rx_ppe_regflow_lib => {
                     -generated => 1,
                     -gen_config => "mby::gen_rx_ppe_regflow_lib",
@@ -206,7 +206,7 @@ print "MGM debug : @mbyMgmLibs\n";
                     -gen_config => "mby::gen_mesh_regflow_lib",
                     -tools => ["-vcs_createlib"],
             },
-            
+
             mby_mesh_env_lib => {
                -hdl_spec        => [# 'target/GenRTL/regflow/mby/subblock/mby_mesh_ral.hdl',
                                      'subBlock/mbyc/cfg/ace/HDL/verif/mby_mesh_env.hdl',],
@@ -233,7 +233,7 @@ print "MGM debug : @mbyMgmLibs\n";
             },
             mby_mgp_bfm_lib => {
                -hdl_spec       => [ "subBlock/mbyc/cfg/ace/HDL/verif/mby_mgp_bfm.hdl" ],
-               -dependent_libs => [ 'mby_common_lib', 'shdv_shared_lib', 
+               -dependent_libs => [ 'mby_common_lib', 'shdv_shared_lib',
                                    ],
                -tag            => "nonsynth+nonlint",
             },
@@ -286,8 +286,9 @@ print "MGM debug : @mbyMgmLibs\n";
             },
 
             mby_ingress_tb_lib  => {
+               -generated       => 1,   # added due to mgm dependency (tmp as it is needed by the rx_ppe_bfm)
                -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_ingress_tb.hdl', ],
-               -dependent_libs  => [ 'shdv_shared_lib', 'mby_ingress_env_lib', 'mby_ingress_ti_lib', 'mby_ingress_test_lib', 'common_intfs_lib', 'mby_ec_bfm_lib' ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'mby_ingress_env_lib', 'mby_ingress_ti_lib', 'mby_ingress_test_lib', 'common_intfs_lib', 'mby_ec_bfm_lib', 'mby_mgm_lib' ],
                -tag             => "nonsynth",
             },
 
@@ -541,7 +542,7 @@ print "MGM debug : @mbyMgmLibs\n";
 
                libs => [
                   "gen_mby_wm_m3",
-                  "sva_lib",   
+                  "sva_lib",
                   "gen_mby_mgm_lib",
                   "gen_mby_wm_m3",
                   "mby_fulcrum_legacy_rtl_lib",
