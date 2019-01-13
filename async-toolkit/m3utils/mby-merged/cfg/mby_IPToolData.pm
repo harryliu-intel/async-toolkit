@@ -45,7 +45,7 @@ $ToolConfig_ips{mby} = {
       SUB_SCOPES          => ["eth_port",
                               "&get_tool_var(ipconfig/eth_port, SUB_SCOPES)",
       ],
-      TEST_PATTERNS => [ "verif/mby/jasper/tests/","verif/mby/formal/tests","tools/lint/tests",],
+      TEST_PATTERNS => [ "verif/mby/jasper/tests/", "verif/mby/tests/spyglass", "verif/mby/formal/tests","tools/lint/tests",],
     },
     ENV => {
       SOC_DUT             => "&get_facet(dut)", # used in DutConnect.pl

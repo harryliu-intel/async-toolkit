@@ -247,6 +247,43 @@
                 <gkMNM_checked>1</gkMNM_checked>
         </row>
 
+        <row>
+               <DUT>mby</DUT>
+               <Cluster>mby</Cluster>
+               <Stage>sgcdc</Stage>
+               <Stage_Exec>bman</Stage_Exec>
+               <AdditionalArgs> -s all +s sgcdc -mc mby -nodelete_flow_data</AdditionalArgs>
+               <XdutStageDep></XdutStageDep>
+               <PassRate></PassRate>
+               <IsGating>1</IsGating>
+               <Turnin>1</Turnin>
+               <Release>1</Release>
+               <PostRelease>0</PostRelease>
+               <Conditional></Conditional>
+               <Rel_AdditionalArgs></Rel_AdditionalArgs>
+               <Active>1</Active>
+               <Singleton>0</Singleton>
+               <Type>build</Type>
+               <gkMNM_checked>1</gkMNM_checked>
+       </row>
+       <row>
+               <Cluster>mby</Cluster>
+               <DUT>mby</DUT>
+               <Stage>sgcdc_test</Stage>
+               <Stage_Exec>verif/tests/lists/mby_sgcdc.list</Stage_Exec>
+               <AdditionalArgs></AdditionalArgs>
+               <XdutStageDep>[mby].[sgcdc]</XdutStageDep>
+               <PassRate>100</PassRate>
+               <IsGating>1</IsGating>
+               <Turnin>1</Turnin>
+               <Release>1</Release>
+               <PostRelease>0</PostRelease>
+               <Conditional></Conditional>
+               <Rel_AdditionalArgs></Rel_AdditionalArgs>
+               <Active>0</Active>
+               <Singleton>0</Singleton>
+               <Type>regress</Type>
+        </row>
 
 </data>
 

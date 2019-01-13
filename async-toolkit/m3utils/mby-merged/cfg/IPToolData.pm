@@ -225,4 +225,6 @@ $ToolConfig_ips{VTE_TR_UVM} = {
 };
 
 
+$ToolConfig_tools{buildman}{ENV}{SPYGLASS_CDC_VER}  = "&get_tool_version(spyglass_cdc/spyglass)";
+
 1;

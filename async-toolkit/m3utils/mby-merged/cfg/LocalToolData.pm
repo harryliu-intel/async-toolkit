@@ -227,16 +227,8 @@ $ToolConfig_tools{"foo"} = {
 
 push @{$ToolConfig_tools{'buildman'}{SUB_TOOLS}{'flowbee'}{OTHER}{'modules'}}, "&get_tool_var('foo','modules')";
 
-$ToolConfig_tools{stage_bman_sgcdc} = {
-  OTHER   => {
-               enable_stage_caching => 0,
-               enable_stage_digest => 0,
-               modules => "&get_tool_path(buildman)/stages/sgcdc.pm",
-               stage_digest_rules => ["acebuild", "sgcdc"],
-             },
-  PATH    => "&get_tool_path(buildman)",
-  VERSION => "&get_tool_version(buildman)",
-};
+$ToolConfig_tools{stage_bman_sgcdc}{OTHER}{modules} = "&get_tool_path(bman_stages)/sgcdc.pm";
+push @{$ToolConfig_tools{'buildman'}{SUB_TOOLS}{'flowbee'}{OTHER}{'modules'}}, "&get_tool_var('stage_bman_sgcdc','modules')";
 
  
 push(@{$ToolConfig_tools{buildman}{SUB_TOOLS}{flowbee}{OTHER}{modules}}, "&get_tool_var(stage_bman_sglint,modules)");                                                                    
@@ -411,7 +403,7 @@ $ToolConfig_tools{buildman}{ENV}{DENALI} = "&get_tool_path(denali)";
 $ToolConfig_tools{emubuild}{VERSION} = "2.7.11";
 ###
 
-1;
+
 
 $ToolConfig_tools{intel_jasper_library}{VERSION} = 3.7;
 $ToolConfig_tools{'buildman'}{'ENV'}{'IJL_ROOT'} = "$ENV{RTL_CAD_ROOT}/jasper/intel_jasper_library/3.7";
@@ -430,5 +422,11 @@ push @{$ToolConfig_tools{'buildman'}{SUB_TOOLS}{'flowbee'}{OTHER}{'modules'}}, "
 $ToolConfig_tools{buildman}{OTHER}{UDFS} = ["&get_tool_path(buildman)/udf/buildman.udf",
 					    "&get_tool_path(bman_stages)/stages_attributes.udf"];
 
-
-
+$ToolConfig_tools{spyglass_cdc}{SUB_TOOLS}{spyglass}{ENV}{ATRENTA_LICENSE_FILE} = "&get_tool_getLf(atrenta/spyglass)";
+$ToolConfig_tools{spyglass_cdc}{VERSION} = '2.00.05';
+$ToolConfig_tools{spyglass_cdc}{SUB_TOOLS}{spyglass}{VERSION} = 'M2017.03-SP2-12';
+$ToolConfig_tools{spyglass_cdc}{ENV}{SPYGLASS_METHODOLOGY_CDC} = '2.00.05';
+$ToolConfig_tools{runtools}{ENV}{SPYGLASS_METHODOLOGY_CDC} = "$ENV{RTL_PROJ_TOOLS}/spyglass_methodology_cdc/master/&get_tool_env_var('spyglass_cdc','SPYGLASS_METHODOLOGY_CDC')";
+$ToolConfig_tools{spyglass_cdc}{SUB_TOOLS}{cdclint}{VERSION} = "1.00.06";
+$ToolConfig_tools{runtools}{ENV}{SPYGLASS_CDC_VERIFY_STRUCT_GOAL_OVERRIDE} = "/p/hdk/rtl/proj_tools/sg_overrides/master/1.00.00.beta01/sgcdc/cdc_setup_check_Override.spq";
+1;
