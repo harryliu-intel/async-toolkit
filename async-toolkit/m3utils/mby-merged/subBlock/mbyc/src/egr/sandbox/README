@@ -33,6 +33,9 @@ make first_packet_ms2p1
 # add larger packets
 make first_packet_ms2p5
 
+# Increase verbosity. Levels are 0 to 5. Works for all tests except 'make gate'
+make debug VERBOSITY=5
+
 # Build the model without running a test
 make simv           # Build model for EGR Top
 make simv dut=<dut> # Build model for <dut> e.g. dut=prc, dut=tqu, etc.
