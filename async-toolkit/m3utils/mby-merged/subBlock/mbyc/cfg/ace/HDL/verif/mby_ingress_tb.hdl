@@ -6,6 +6,11 @@
 $hdl_spec = {
     # List of specific VERILOG source files
     -vlog_files => [
+         "src/shared/rtl/shared_pkg.sv",                   ## tmp for rx_ppe_bfm
+         "src/shared/rtl/mby_rx_metadata_pkg.sv",          ## tmp for rx_ppe_bfm
+         "src/shared/rtl/mby_egr_pkg.sv",                  ## tmp for rx_ppe_bfm
+         "src/igr/rtl/mby_igr_pkg.sv",                     ## tmp for rx_ppe_bfm
+         "src/igr/sandbox/pre_post/verilog/rx_ppe_bfm.sv", ## tmp for rx_ppe_bfm
          "verif/ingress/tb/mby_igr_tb.sv",
      ],
 
@@ -25,6 +30,8 @@ $hdl_spec = {
          "src/igr/rtl",
          "$ENV{UVM_HOME}/src",
          "$ENV{ACE_HOME}/lib/Verilog",
+         "target/mby/mgm_run/igr/src", ## tmp for ppe_bfm
+         "target/mby/mgm_run/rtl",     ## tmp for ppe_bfm
      ],
 
     # Arbitrary VLOG options
