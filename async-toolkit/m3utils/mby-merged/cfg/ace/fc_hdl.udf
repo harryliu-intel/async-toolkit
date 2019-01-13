@@ -161,6 +161,13 @@ EOF
          # Define all the libraries which could be compiled
          libs => {
 
+                mby_jasper_lint => {
+                	-jg_lint_model  => "mby top mby_top",
+                	-tag            => "nonsynth",
+                },
+
+
+
              mby_parclk_rtl_lib => {
                     -vlog_files => [
                         &ToolConfig::get_tool_path('ipconfig/axxia_aw')."/AW_sync.sv",
@@ -420,7 +427,6 @@ EOF
          models => {
             fc => {
                top         => 'fc_hdl_top_lib.fc_hdl_top_cfg fc_hvl_top_lib.fc_hvl_top_cfg',
-#               jg_elab_top => 'mby_jasper_lib.mby_top',
 
                enable_congruency_elab  =>  $mby_enable_congruency_elab,
                enable_xprop_elab       =>  $mby_enable_xprop_elab,
@@ -445,7 +451,7 @@ EOF
                top_language => 'SystemVerilog',
 
                pli_libs => [
-                   "-hier_rtl_dumper",
+                    "-hier_rtl_dumper",
                ],
 
                libs => [
@@ -532,7 +538,8 @@ EOF
 
             mby => {
                top         => 'mby_tb_lib.mby_tb',
-               jg_elab_top => 'mby_jasper_lib.mby_top',
+               jg_elab_top => 'mby_rtl_lib.mby_top',
+               jg_test_list => ["$ENV{MODEL_ROOT}/verif/mby/tests/lists/mby_jg.list"],
 
                enable_congruency_elab  =>  $mby_enable_congruency_elab,
                enable_xprop_elab       =>  $mby_enable_xprop_elab,
@@ -559,6 +566,7 @@ EOF
                   "mby_wm_dpi_lib",
                   "ext_shared_lib",
                   "mby_common_lib",
+                  'mby_jasper_lint',
                ],
 
                elab_opts => [
@@ -678,5 +686,7 @@ EOF
 $audf{HDLSpec}{mby}{models}{fc_no_phy} = $audf{HDLSpec}{mby}{models}{fc};
 $audf{HDLSpec}{mby}{models}{fc_8} = $audf{HDLSpec}{mby}{models}{fc};
 $audf{HDLSpec}{mby}{models}{fc_8_no_phy} = $audf{HDLSpec}{mby}{models}{fc};
+
+
 
 

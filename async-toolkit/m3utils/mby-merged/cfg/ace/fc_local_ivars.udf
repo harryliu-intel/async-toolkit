@@ -22,6 +22,12 @@ EOF
         },
     },
     InterfaceVars => {
+
+-jg_elab_opts            => {  default => ["-L work"] },
+-jg_compile_opts            => { default => ["-mfcu"] },
+-jg_post_ijlsetup_scripts          => {  default => ["$ENV{MODEL_ROOT}/tools/fpv/common/pre_analyze.tcl"] },
+-jg_pre_analyze_scripts => {  default => ["$ENV{MODEL_ROOT}/tools/fpv/common/pre_analyze.tcl"]},
+
         -models_to_compile =>
             {
                 merging => "ASSIGN",
@@ -458,4 +464,5 @@ EOF
         },
     },
 );
+
 

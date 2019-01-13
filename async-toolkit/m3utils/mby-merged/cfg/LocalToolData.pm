@@ -186,7 +186,7 @@ $ToolConfig_tools{buildman}{OTHER}{UDFS} = ["&get_tool_path(buildman)/udf/buildm
 # Jasper
 $ToolConfig_tools{jaspergold} = {
     #VERSION => '2017.03p002',
-    VERSION => '2017.06p002__XLM17.04',
+    VERSION => '2018.09p001',
     PATH => "$RTL_CAD_ROOT/jasper/jaspergold/&get_tool_version()",
     EXEC => "&get_tool_path()/bin/jg -proj ${$}_jgproject",
     ENV_PREPEND  => {
@@ -205,13 +205,13 @@ $ToolConfig_tools{jaspergold} = {
                       'TSETUP_VENDOR' => 'jasper',
                       'TSETUP_IP_VERSIONS' => {}    },
          ENV_OVERRIDE      => {
-                'IJL_ROOT' => "/p/hdk/rtl/cad/x86-64_linux30/jasper/intel_jasper_library/3.1",
+                'IJL_ROOT' => "/p/hdk/rtl/cad/x86-64_linux30/jasper/intel_jasper_library/3.7",
                 },
 };
 
 # Adding stage foo
 $ToolConfig_tools{"bman_stages"} = {
-    VERSION => "14.06.15",
+    VERSION => "14.06.24",
     PATH => "$ENV{RTL_PROJ_TOOLS}/bman_stages/nhdk/&get_tool_version()",
 };
 $ToolConfig_tools{"foo"} = {
@@ -265,7 +265,7 @@ $ToolConfig_tools{stage_bman_sglint} = {
 $ToolConfig_tools{stage_bman_genrtl}{OTHER}{modules} = "$ENV{MODEL_ROOT}/cfg/stages/genrtl.pm";
 $ToolConfig_tools{jasper_utils} = {
   PATH    => "$ENV{RTL_PROJ_TOOLS}/jasper_utils/nhdk/&get_tool_version()",
-  VERSION => "14.06.20",
+  VERSION => "14.06.100",
 };
 
 # Added sim_init stage for automating FC collaterals generation
@@ -412,3 +412,23 @@ $ToolConfig_tools{emubuild}{VERSION} = "2.7.11";
 ###
 
 1;
+
+$ToolConfig_tools{intel_jasper_library}{VERSION} = 3.7;
+$ToolConfig_tools{'buildman'}{'ENV'}{'IJL_ROOT'} = "$ENV{RTL_CAD_ROOT}/jasper/intel_jasper_library/3.7";
+
+$ToolConfig_tools{"stage_bman_jg_lint"} = {
+   VERSION => "&get_tool_version(bman_stages)",
+   PATH => "&get_tool_path(bman_stages)",
+   OTHER   => {
+               enable_stage_caching => 0,
+               enable_stage_digest => 0,
+               modules => "&get_tool_path()/jg_lint.pm",
+               stage_digest_rules => ["acebuild", "jg_lint"],
+             },
+};
+push @{$ToolConfig_tools{'buildman'}{SUB_TOOLS}{'flowbee'}{OTHER}{'modules'}}, "&get_tool_var('stage_bman_jg_lint','modules')";
+$ToolConfig_tools{buildman}{OTHER}{UDFS} = ["&get_tool_path(buildman)/udf/buildman.udf",
+					    "&get_tool_path(bman_stages)/stages_attributes.udf"];
+
+
+
