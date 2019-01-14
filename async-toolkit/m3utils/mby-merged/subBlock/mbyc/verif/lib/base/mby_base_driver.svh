@@ -31,7 +31,7 @@
 //
 //-----------------------------------------------------------------------------
 `ifndef __MBY_BASE_PKG__
-`error "Attempt to include file outside of mby_igr_env_pkg."
+`error "Attempt to include file outside of mby_base_pkg."
 `endif
 `ifndef __MBY_BASE_DRIVER__
 `define __MBY_BASE_DRIVER__
@@ -41,15 +41,18 @@
 // This is a parameterized class used by mby_base_agent.
 //
 // PARAMETERS:
-//     T_seq - sequence item type to be used (defaults to uvm_sequence_item)
-//     T_vif - virtual interface to be used
+//     T_req - sequence item type to be used (defaults to mby_base_sequence_item)
+//     T_rsp - sequence item type for responses, same as T_req
+//     T_iop - I/O Policy class to be used by the driver
+//     T_fcp - Flow Control Policy class to be used by the driver
 //
 //-----------------------------------------------------------------------------
 class mby_base_driver
    #(
       type T_req = mby_base_sequence_item,
       type T_rsp = T_req,
-      type T_vif
+      type T_iop,
+      type T_fcp
    )
    extends uvm_driver
    #(
@@ -61,14 +64,18 @@ class mby_base_driver
    // The agent's configuration object
    mby_base_config cfg_obj;
 
-   // VARIABLE: vintf
-   // Virtual Interface
-   T_vif vintf;
+   // VARIABLE: io_pol
+   // I/O Policy to be used by the driver
+   T_iop io_pol;
+
+   // VARIABLE: fc_pol
+   // Flow control policy to be used by the driver
+   T_fcp fc_pol;
 
    // -------------------------------------------------------------------------
    // Macro to register new class type
    // -------------------------------------------------------------------------
-   `uvm_component_utils(mby_base_driver#(T_req, T_rsp, T_vif))
+   `uvm_component_utils(mby_base_driver#(T_req, T_rsp, T_iop, T_fcp))
 
    // -------------------------------------------------------------------------
    // CONSTRUCTOR: new
@@ -93,21 +100,34 @@ class mby_base_driver
    endfunction : build_phase
 
    // -------------------------------------------------------------------------
-   // FUNCTION: assign_vif()
+   // FUNCTION: set_io()
    //
    // This function is called by the agent once the driver is created and the
-   // agent has accessed the configuration database to obtain the virtual intf.
+   // agent has accessed the configuration database to obtain the I/O policy.
    // This is to reduce the number of config db accesses as it has a toll in
    // performance.
    //
    // ARGUMENTS:
-   //     T_vif vif - A pointer to the virtual interface to be used by the
-   //                 driver
+   //     T_iop io_pol - A pointer to the I/O policy to be used by the driver
    //
    // -------------------------------------------------------------------------
-   function void assign_vif(T_vif vif);
-      this.vintf = vif;
-   endfunction
+   function void set_io(T_iop io_pol);
+      this.io_pol = io_pol;
+   endfunction : set_io
+
+   // -------------------------------------------------------------------------
+   // FUNCTION: set_flow_control()
+   //
+   // This function is called by the agent once the driver is created and the
+   // agent has accessed the configuration database to obtain the fc policy.
+   //
+   // ARGUMENTS:
+   //     T_fcp io_pol - A pointer to the I/O policy to be used by the driver
+   //
+   // -------------------------------------------------------------------------
+   function void set_flow_control(T_fcp fc_pol);
+      this.fc_pol = fc_pol;
+   endfunction : set_flow_control
 
    // -------------------------------------------------------------------------
    // FUNCTION: assign_cfg()
@@ -124,7 +144,7 @@ class mby_base_driver
    // -------------------------------------------------------------------------
    function void assign_cfg(mby_base_config cfg);
       this.cfg_obj = cfg;
-   endfunction
+   endfunction : assign_cfg
 
    // -------------------------------------------------------------------------
    // FUNCTION: connect_phase()
@@ -134,6 +154,18 @@ class mby_base_driver
    function void connect_phase(uvm_phase phase);
       super.connect_phase(phase);
    endfunction : connect_phase
+
+   // -------------------------------------------------------------------------
+   // TASK: pre_get_next_item_cb
+   //
+   // User defined hook, gets called before getting the next item from the
+   // sequencer. This can be used with the flow control policy to do any
+   // credit or bus handling prior to getting the next sequence item from
+   // the sequencer. This is empty by default.
+   //
+   // -------------------------------------------------------------------------
+   virtual protected task pre_get_next_item_cb();
+   endtask : pre_get_next_item_cb
 
    // -------------------------------------------------------------------------
    // TASK: pre_drive_cb
@@ -156,12 +188,8 @@ class mby_base_driver
    //
    // Driver task passing in seq_item fields into interface task
    // -------------------------------------------------------------------------
-   virtual protected task drive_data();
-      vintf.drive_data(
-         rsp.data_pkt ,
-         rsp.debug_pkt,
-         rsp.delay
-      );
+   virtual protected task drive_data(T_rsp item);
+      this.io_pol.drive_data(item);
    endtask : drive_data
 
    // -------------------------------------------------------------------------
@@ -176,12 +204,21 @@ class mby_base_driver
    // -------------------------------------------------------------------------
    virtual protected task get_and_drive();
       forever begin : main_drive_thread
+         // Do any work necessary before getting the next item.
+         // E.g. In a shared bus: acquire the bus; in a credit based interface:
+         // initialize credits, handshakes, etc.
+         pre_get_next_item_cb();
+
          // Get the next sequence item from sequencer
          seq_item_port.get_next_item(req);
+
+         // Print sequence item information based
          if (this.get_report_verbosity_level() < UVM_HIGH) begin
-            `uvm_info("get_and_drive()::starts driving ",          req.convert2string(), UVM_MEDIUM)
+            `uvm_info("get_and_drive()::starts driving ",
+               req.convert2string(), UVM_MEDIUM)
          end else begin
-            `uvm_info("get_and_drive()::starts driving ",          req.sprint(),         UVM_HIGH)
+            `uvm_info("get_and_drive()::starts driving ",
+               req.sprint(), UVM_HIGH)
          end
 
          // Clone the req item and copy id info
@@ -189,29 +226,35 @@ class mby_base_driver
          rsp.set_id_info(req);
 
          // Call pre-drive methods (may be defined in a sub-class)
-         `uvm_info("get_and_drive()::calling pre_drive callback",  rsp.convert2string(), UVM_DEBUG)
+         `uvm_info("get_and_drive()::calling pre_drive callback",
+            rsp.convert2string(), UVM_DEBUG)
          pre_drive_cb(rsp);
 
-         // Call the interface's drive_data task
-         `uvm_info("get_and_drive()::calling drive_data",          rsp.convert2string(), UVM_DEBUG)
-         drive_data();
+         // Call the I/O policy's drive_data task
+         `uvm_info("get_and_drive()::calling drive_data",
+            rsp.convert2string(), UVM_DEBUG)
+         drive_data(rsp);
 
          // Call post-drive method (may be defined in a sub-class)
-         `uvm_info("get_and_drive()::calling post_drive callback", "",                   UVM_DEBUG)
+         `uvm_info("get_and_drive()::calling post_drive callback",
+            "", UVM_DEBUG)
          post_drive_cb(rsp);
 
          // Mark sequence item as done
-         `uvm_info("get_and_drive()::setting item done",           rsp.convert2string(), UVM_DEBUG)
+         `uvm_info("get_and_drive()::setting item done",
+            rsp.convert2string(), UVM_DEBUG)
          seq_item_port.item_done();
 
          // Send the response back
-         if (req.rsp_req || cfg_obj.rsp_req) begin
-            `uvm_info("get_and_drive()::sending back a response",  rsp.convert2string(), UVM_DEBUG)
+         if (rsp.rsp_req || cfg_obj.rsp_req) begin
+            `uvm_info("get_and_drive()::sending back a response",
+               rsp.convert2string(), UVM_DEBUG)
             seq_item_port.put(rsp);
          end
 
          // Print final debug message
-         `uvm_info("get_and_drive()::exiting!",                    rsp.convert2string(), UVM_DEBUG)
+         `uvm_info("get_and_drive()::exiting!",
+            rsp.convert2string(), UVM_DEBUG)
       end // main_drive_thread
    endtask : get_and_drive
 

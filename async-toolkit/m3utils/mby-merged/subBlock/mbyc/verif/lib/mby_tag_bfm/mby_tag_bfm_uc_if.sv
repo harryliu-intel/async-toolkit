@@ -95,6 +95,7 @@ interface mby_tag_bfm_uc_if(input logic clk, input logic rst);
    task mon_start();
       // wait for valid signal
       wait(intf_data_pkt.valid === 1);
+      #0;
    endtask
 
    //---------------------------------------------------------------------------
@@ -114,8 +115,12 @@ interface mby_tag_bfm_uc_if(input logic clk, input logic rst);
    //---------------------------------------------------------------------------
    task mon_data(output logic [DATA_WIDTH-1:0] data_pkt,
                  output logic [DEBG_WIDTH-1:0] debg_pkt);
-      data_pkt = intf_data_pkt;
-      debg_pkt = intf_debg_pkt;
+      if (intf_data_pkt.valid === 1) begin
+         data_pkt = intf_data_pkt;
+         debg_pkt = intf_debg_pkt;
+         @(posedge clk);
+         #0;
+      end
    endtask
 
 endinterface : mby_tag_bfm_uc_if

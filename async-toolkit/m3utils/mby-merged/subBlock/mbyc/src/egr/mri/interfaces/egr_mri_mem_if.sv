@@ -19,6 +19,14 @@ logic                        egr_mri_rrsp_fifo_rd_en        [EGR_MRI_RRSP_FIFO_I
 logic                        egr_mri_rrsp_fifo_wr_en        [EGR_MRI_RRSP_FIFO_INST ];
 logic                        egr_mri_rrsp_fifo_rd_valid     [EGR_MRI_RRSP_FIFO_INST ];
 
+egr_mri_rrsp_mim_stall_regs_addr_t    egr_mri_rrsp_mim_stall_regs_rd_adr       [EGR_MRI_RRSP_MIM_STALL_REGS_INST ];
+egr_mri_rrsp_mim_stall_regs_addr_t    egr_mri_rrsp_mim_stall_regs_wr_adr       [EGR_MRI_RRSP_MIM_STALL_REGS_INST ];
+egr_mri_rrsp_mim_stall_regs_data_t    egr_mri_rrsp_mim_stall_regs_rd_data      [EGR_MRI_RRSP_MIM_STALL_REGS_INST ];
+egr_mri_rrsp_mim_stall_regs_data_t    egr_mri_rrsp_mim_stall_regs_wr_data      [EGR_MRI_RRSP_MIM_STALL_REGS_INST ];
+logic                        egr_mri_rrsp_mim_stall_regs_rd_en        [EGR_MRI_RRSP_MIM_STALL_REGS_INST ];
+logic                        egr_mri_rrsp_mim_stall_regs_wr_en        [EGR_MRI_RRSP_MIM_STALL_REGS_INST ];
+logic                        egr_mri_rrsp_mim_stall_regs_rd_valid     [EGR_MRI_RRSP_MIM_STALL_REGS_INST ];
+
 modport egr_mri_rreq_fifo(
     output egr_mri_rreq_fifo_rd_adr   ,
     output egr_mri_rreq_fifo_wr_adr   ,
@@ -37,6 +45,15 @@ modport egr_mri_rrsp_fifo(
     input  egr_mri_rrsp_fifo_rd_data  ,
     input  egr_mri_rrsp_fifo_rd_valid  
 );
+modport egr_mri_rrsp_mim_stall_regs(
+    output egr_mri_rrsp_mim_stall_regs_rd_adr   ,
+    output egr_mri_rrsp_mim_stall_regs_wr_adr   ,
+    output egr_mri_rrsp_mim_stall_regs_rd_en    ,
+    output egr_mri_rrsp_mim_stall_regs_wr_data  ,
+    output egr_mri_rrsp_mim_stall_regs_wr_en    ,
+    input  egr_mri_rrsp_mim_stall_regs_rd_data  ,
+    input  egr_mri_rrsp_mim_stall_regs_rd_valid  
+);
 
 modport mem(
             input  egr_mri_rreq_fifo_rd_adr   ,
@@ -53,7 +70,15 @@ modport mem(
             input  egr_mri_rrsp_fifo_wr_data  ,
             input  egr_mri_rrsp_fifo_wr_en    ,
             output egr_mri_rrsp_fifo_rd_data  ,
-            output egr_mri_rrsp_fifo_rd_valid 
+            output egr_mri_rrsp_fifo_rd_valid ,
+
+            input  egr_mri_rrsp_mim_stall_regs_rd_adr   ,
+            input  egr_mri_rrsp_mim_stall_regs_wr_adr   ,
+            input  egr_mri_rrsp_mim_stall_regs_rd_en    ,
+            input  egr_mri_rrsp_mim_stall_regs_wr_data  ,
+            input  egr_mri_rrsp_mim_stall_regs_wr_en    ,
+            output egr_mri_rrsp_mim_stall_regs_rd_data  ,
+            output egr_mri_rrsp_mim_stall_regs_rd_valid 
 );
 
 endinterface:egr_mri_mem_if
