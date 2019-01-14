@@ -23,12 +23,13 @@
     (typedef ffu-key16  16)
     (typedef ffu-key8    8)
 
-    (typedef pkt-meta (array 32 8))
+    (constant mby-pa-max-seg-len 192)
+
+    (typedef pkt-meta (array mby-pa-max-seg-len 8))
 
     (typedef mac-to-parser
              (struct
-              ((rx-data       8)
-               (rx-length    32)
+              ((rx-length    32)
                (rx-port       8)
                (pkt-meta      pkt-meta))))
     
@@ -92,17 +93,26 @@
   '((boolean (typedef (boolean) ((m3 "BOOLEAN") (c "fm_bool") (scm boolean)))))
   )
 
+;;;;;;;;;;;;;;;;;;;;
+
 (define *languages* '(m3 c scm))
 
-(define *m3-proj* "Mby")
-(define *m3-uint-intf* "UInt")
-(define *m3-const-intf* "StructConst")
-(define *m3-lib-name* "mby_struct")
+(define *m3-uint-intf*         "UInt")
 (define *m3-common-output-dir* "wm_meta_common")
 
-(define *c-proj* "mby")
-(define *c-const-pfx* "mbyStruct_")
 (define *c-builtin-serdes-fn* "common_serdes")
+
+;;;;;;;;;;;;;;;;;;;;
+
+(define *m3-proj*              "Mby")
+(define *m3-lib-name*          "mby_struct")
+(define *m3-const-intf*        "StructConst")
+
+(define *c-proj*              "mby")
+(define *c-const-pfx*         "MBY_")
+(define *c-const-file-sfx*    "_const.h")
+
+;;;;;;;;;;;;;;;;;;;;
 
 (define (make-sym-def-data rec)
   (let* ((tag (car rec))
@@ -497,15 +507,15 @@
 
 ;; main entry points for generating M3 below ...
 
-(define (compile-m3-typedef x defs)
-  (list (compile-m3-typedef-def x defs)
+(define (compile-m3-typedef             x defs)
+  (list (compile-m3-typedef-def         x defs)
         (compile-m3-typedef-serial-size x defs)
         (compile-m3-typedef-deser-proto x defs 'ser ";")
         (compile-m3-typedef-deser-proto x defs 'deser ";")
         (compile-m3-typedef-deser-proto x defs 'fmt ";")
-        (compile-m3-typedef-deser-code x defs 'ser)
-        (compile-m3-typedef-deser-code x defs 'deser)
-        (compile-m3-typedef-deser-code x defs 'fmt)
+        (compile-m3-typedef-deser-code  x defs 'ser)
+        (compile-m3-typedef-deser-code  x defs 'deser)
+        (compile-m3-typedef-deser-code  x defs 'fmt)
         ))
 
 (define (compile-m3-constant x defs)
@@ -594,7 +604,7 @@
         (else '*not-found*)))
 
 (define (compile-c-constant x defs)
-  (let ((header-fn (sa *c-proj* "_struct.h")))
+  (let ((header-fn (sa *c-proj* *c-const-file-sfx*)))
     (if (not (eq? (car x) 'constant)) (error "not a constant : " x))
     
     (let* ((nm         (sa *c-const-pfx* (get-c-name (sym-lookup (cadr x) defs))))
@@ -605,8 +615,8 @@
     
 (define (scheme-mem->c sym)
   (IdStyles.Convert (symbol->string sym)
-                    'Lower 'LCamel
-                    'Hyphen 'None))
+                    'Lower 'Upper
+                    'Hyphen 'Underscore))
 
 (define (compile-c-typedef-def-from-data x nm defs dep-recorder)
   (let ((def-sfx (sa " " nm)))
@@ -632,10 +642,15 @@
           ((not (pair? x)) '*not-found*)
 
           ((eq? (car x) 'bits)
-           (compile-c-typedef-def-from-data (force-value (cadr x) defs) nm defs dep-recorder))
+           (compile-c-typedef-def-from-data
+            (force-value (cadr x) defs) nm defs dep-recorder))
 
           ((eq? (car x) 'array)
-           (compile-c-typedef-def-from-data (caddr x) (sa nm "[" (force-value (cadr x) defs) "]") defs dep-recorder))
+           (compile-c-typedef-def-from-data
+            (caddr x) (sa nm "["
+                          ;;(force-value (cadr x) defs)
+                          (gen-c-val-use (cadr x) defs)
+                          "]") defs dep-recorder))
                 
           ((eq? (car x) 'struct)
            (apply sa
@@ -644,7 +659,11 @@
                    (map
                     (lambda (fspec)
                       (sa "  "
-                          (compile-c-typedef-def-from-data (cadr fspec) (scheme-mem->c (car fspec)) defs dep-recorder)
+                          (compile-c-typedef-def-from-data
+                           (cadr fspec)
+                           (scheme-mem->c (car fspec))
+                           defs
+                           dep-recorder)
                           ";"
                           dnl)
                       );;adbmal
@@ -808,24 +827,35 @@
 ;; just test code, to make sure it all works
 ;;
 
-(define topo-sorter (obj-method-wrap (new-modula-object 'TextTopoSort.T ) 'TextTopoSort.T))
-(topo-sorter 'init)
-(topo-sorter 'addDependency "a" "b")
-(topo-sorter 'addDependency "a" "c")
-(topo-sorter 'addDependency "b" "d")
+(define topo-sorter '())
 
-(define s (obj-method-wrap (topo-sorter 'sort) 'TextSeq.T))
-(s 'size)
-(s 'get 0)
+(define s '())
+
+(define (test-topo-sorter)
+  
+  (set! topo-sorter
+        (obj-method-wrap (new-modula-object 'TextTopoSort.T ) 'TextTopoSort.T))
+  
+  (topo-sorter 'init)
+  (topo-sorter 'addDependency "a" "b")
+  (topo-sorter 'addDependency "a" "c")
+  (topo-sorter 'addDependency "b" "d")
+  
+  (set! s
+        (obj-method-wrap (topo-sorter 'sort) 'TextSeq.T))
+  (s 'size)
+  (s 'get 0)
+  )
+
+                                                                    ;;
+                                                                    ;;
+                                                                    ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (new-topo-sorter)
   (let ((res (obj-method-wrap (new-modula-object 'TextTopoSort.T ) 'TextTopoSort.T)))
     (obj-method-wrap (res 'init) 'TextTopoSort.T)
     ))
-                                                                    ;;
-                                                                    ;;
-                                                                    ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (compile-c-typedef x defs)
   (let ((header-fn (sa *c-proj* "_struct.h"))
@@ -935,7 +965,8 @@
        (dis "#ifndef _"bn"_H" dnl
             "#define _"bn"_H" dnl
             dnl
-            "#include \"" "uint" ".h\"" dnl 
+            "#include \"" "uint" ".h\"" dnl
+            "#include \"" *c-proj* *c-const-file-sfx* "\"" dnl
             dnl
             wr)))))
 
