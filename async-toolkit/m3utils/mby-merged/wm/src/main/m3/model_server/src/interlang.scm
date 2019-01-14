@@ -618,14 +618,21 @@
                     'Lower 'Upper
                     'Hyphen 'Underscore))
 
+(define *pad-width* 24)
+(define (padleft  str)(Fmt.Pad str *pad-width* #\  'Left))
+(define (padright str)(Fmt.Pad str *pad-width* #\  'Right))
+
 (define (compile-c-typedef-def-from-data x nm defs dep-recorder)
   (let ((def-sfx (sa " " nm)))
-    (cond ((number? x) (sa "uint" (number->string x) def-sfx))
+    (cond ((number? x) (sa
+                        (padleft (sa "uint" (number->string x)))
+                        def-sfx))
           
           ((and (symbol? x)
                 (let ((b-test (assoc x *builtins*)))
                   (if b-test
-                      (sa (get-c-name (cadr b-test)) def-sfx)
+                      (sa (padleft (sa (get-c-name (cadr b-test))))
+                          def-sfx)
                       #f))))
 
           
@@ -635,7 +642,7 @@
                       (let ((tn (sa *c-proj* "_" (get-c-name r-test))))
                         (dis "... depends on " tn dnl)
                         (dep-recorder tn)
-                        (sa tn def-sfx))
+                        (sa (padleft tn) def-sfx))
                       #f))))
 
           ;; must be type expression
@@ -647,10 +654,8 @@
 
           ((eq? (car x) 'array)
            (compile-c-typedef-def-from-data
-            (caddr x) (sa nm "["
-                          ;;(force-value (cadr x) defs)
-                          (gen-c-val-use (cadr x) defs)
-                          "]") defs dep-recorder))
+            (caddr x) (sa (padleft nm) (sa "[" (gen-c-val-use (cadr x) defs) "]"))
+            defs dep-recorder))
                 
           ((eq? (car x) 'struct)
            (apply sa
@@ -673,10 +678,17 @@
           (else '*not-found*)))
   )
 
+(define *c-deps* '())
+
 (define (compile-c-typedef-def x defs topo-sorter)
   (if (not (eq? (car x) 'typedef)) (error "not a typedef : " x))
-  (let* ((sym-nm                           (sa *c-proj* "_" (get-c-name (sym-lookup (cadr x) defs))))
-         (dep-recorder (lambda(pred)(dis pred " <- " sym-nm dnl)(topo-sorter 'addDependency pred sym-nm)))
+  (let* ((sym-nm
+          (sa *c-proj* "_" (get-c-name (sym-lookup (cadr x) defs))))
+         (dep-recorder
+          (lambda(pred)
+            (dis pred " <- " sym-nm dnl)
+            (set! *c-deps* (cons (cons sym-nm pred) *c-deps*))
+            (topo-sorter 'addDependency pred sym-nm)))
          (code
           (begin (dis "c-typedef " sym-nm dnl)
                  (sa "typedef "
@@ -858,9 +870,18 @@
     ))
 
 (define (compile-c-typedef x defs)
-  (let ((header-fn (sa *c-proj* "_struct.h"))
-        (c-code-fn (sa *c-proj* "_struct.c")))
+  (let* (
+         (c-name (sa *c-proj* "_" (get-c-name (sym-lookup (cadr x) defs))))
+         (header-fn (sa c-name ".h"))
+         (c-code-fn (sa c-name ".c"))
+;;         (header-fn (sa *c-proj* "_struct.h"))
+;;         (c-code-fn (sa *c-proj* "_struct.c"))
 
+        )
+
+    (dis (stringify x) dnl)
+    (dis c-name dnl)
+    
     (append
      ;; these should be directed to a header file
      (map (lambda(c) (cons header-fn c))
@@ -921,7 +942,8 @@
 
 (define (do-c-output lst odir)
   (let* ((files    (uniq-string-list (map car lst))) ;; uniq the filenames
-         (wrs      (map (lambda(fn) (list fn (FileWr.Open (sa odir "/src/" fn)))) files))
+         (wrs      (map (lambda(fn)
+                          (list fn (FileWr.Open (sa odir "/src/" fn)))) files))
          (untagged (filter (lambda(x)(not (cadr x))) lst))
          (seq      (obj-method-wrap (*topo-sorter* 'sort) 'TextSeq.T))
          (tagged   (filter cadr lst))
@@ -952,9 +974,18 @@
     ))
 
 (define (do-c-header fn wr)
-  (let* ((bn (TextUtils.RemoveSuffixes fn '(".c" ".h")))
-         (sfx (string->symbol
-               (TextUtils.RemovePrefix   fn (sa bn ".")))))
+
+  (dis "do-c-header " fn dnl)
+  
+  (let* ((bn    (TextUtils.RemoveSuffixes fn '(".c" ".h")))
+         (preds (uniq equal?
+                      (map cdr
+                           (filter (lambda (x)(equal? bn (car x)))
+                                   *c-deps*))))
+                         
+         (sfx   (string->symbol
+                 (TextUtils.RemovePrefix   fn (sa bn ".")))))
+    (dis "preds " preds dnl)
     (case sfx
       ((c)
        (dis "#include \"" "uint.h\"" dnl wr)
@@ -968,7 +999,13 @@
             "#include \"" "uint" ".h\"" dnl
             "#include \"" *c-proj* *c-const-file-sfx* "\"" dnl
             dnl
-            wr)))))
+            wr)
+       (map (lambda(p)
+              (dis "#include \"" p ".h\"" dnl wr))
+            preds)
+       (dis dnl wr)
+
+       ))))
 
 (define (do-c-trailer fn wr)
   (let* ((bn (TextUtils.RemoveSuffixes fn '(".c" ".h")))
@@ -1186,6 +1223,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (do-it)
+  (set! *c-deps* '())
   (let ((c-files (do-c-meta-output (compile 'c))))
     (do-m3-meta-output (compile 'm3) c-files)
     )
