@@ -2,9 +2,10 @@
 
 // Copyright (C) 2018 Intel Corporation
 
-#include "mby_classifier.h"
+#include "mby_bitfield.h"
 #include "mby_hash.h"
 #include "mby_crc32.h"
+#include "mby_cgrp_regs.h"
 
 static fm_uint16 lookUpPearsonHash(const fm_uint16 key)
 {

@@ -2,7 +2,14 @@
 
 // Copyright (C) 2018 Intel Corporation
 
-#include "mby_maskgen.h"
+#include "mby_bitfield.h"
+#include "mby_common.h"
+#include "mby_params.h"
+#include "mby_maskgen_regs.h"
+#include "mby_triggers_regs.h"
+#include "mby_action_codes.h"
+#include "mby_fclass_type.h"
+#include "mby_log_type.h"
 #include "mby_triggers.h"
 
 // TODO is there a better way to include this? REVISIT
@@ -1005,6 +1012,7 @@ static void maskGenUpdate
         fnmask
     );
 }
+
 void Triggers
 (
     mby_ppe_trig_apply_map            const * const trig_apply_map,

@@ -2,12 +2,10 @@
 
 // Copyright (C) 2018 Intel Corporation
 
-#include "mby_common.h"
-#include "mby_classifier.h"
-#include "mby_hash.h"
-#include "mby_nexthop.h"
-#include "mby_maskgen.h"
 #include <model_c_write.h> // write_field()
+
+#include "mby_common.h"
+#include "mby_nexthop.h"
 
 static fm_uint16 getNextHopGroupSize
 (
@@ -223,16 +221,16 @@ static mbyNextHopConfig getNextHopConfig
  */
 static void setNextHopUsedEntry
 (
-    mby_ppe_nexthop_map const * const nexthop_map,
-    mby_ppe_nexthop_map__addr * const nexthop_w,
-    fm_uint32                   const neighbor_idx
+    mby_ppe_nexthop_map       const * const nexthop_map,
+    mby_ppe_nexthop_map__addr const * const nexthop_w,
+    fm_uint32                         const neighbor_idx
 )
 {
     fm_byte index = FM_GET_FIELD(neighbor_idx, MBY_NH_USED, INDEX);
     fm_byte bit   = FM_GET_FIELD(neighbor_idx, MBY_NH_USED, BIT);
 
-    nexthop_used_r const * const nh_used = &(nexthop_map->NH_USED[index]);
-    nexthop_used_r__addr * const nh_used_w = &(nexthop_w->NH_USED[index]);
+    nexthop_used_r       const * const nh_used = &(nexthop_map->NH_USED[index]);
+    nexthop_used_r__addr const * const nh_used_w = &(nexthop_w->NH_USED[index]);
 
     fm_uint64 used_value = nh_used->USED;
 
@@ -243,11 +241,11 @@ static void setNextHopUsedEntry
 
 static void setNextHopStatus
 (
-    mby_ppe_nexthop_map__addr * const nexthop_w,
-    fm_uint16                   const entry_id
+    mby_ppe_nexthop_map__addr const * const nexthop_w,
+    fm_uint16                         const entry_id
 )
 {
-    nexthop_status_r__addr * const nh_status_w = &(nexthop_w->NH_STATUS);
+    nexthop_status_r__addr const * const nh_status_w = &(nexthop_w->NH_STATUS);
 
     write_field(nh_status_w->FLOWLET, entry_id & 0x3FFF);
 }
@@ -356,12 +354,12 @@ static fm_bool mtuCheck
 
 static void resetAgeCounter
 (
-    mby_ppe_nexthop_map__addr * const nexthop_w,
-    fm_uint16                   const route_bin_idx,
-    fm_byte                     const age_counter
+    mby_ppe_nexthop_map__addr const * const nexthop_w,
+    fm_uint16                         const route_bin_idx,
+    fm_byte                           const age_counter
 )
 {
-    nexthop_routes_table_r__addr * const nh_routes_w = &(nexthop_w->NH_ROUTES[route_bin_idx]);
+    nexthop_routes_table_r__addr const * const nh_routes_w = &(nexthop_w->NH_ROUTES[route_bin_idx]);
 
     write_field(nh_routes_w->AGE_COUNTER, age_counter);
 }
@@ -404,10 +402,10 @@ static void processNeighborEntry
 
 static void NextHop_Apply
 (
-    mby_ppe_nexthop_map  const * const nexthop_map,
-    mby_ppe_nexthop_map__addr  * const nexthop_w,
-    mbyNextHopApplyInput const * const in,
-    mbyNextHopApplyOutput      * const out
+    mby_ppe_nexthop_map        const * const nexthop_map,
+    mby_ppe_nexthop_map__addr  const * const nexthop_w,
+    mbyNextHopApplyInput       const * const in,
+    mbyNextHopApplyOutput            * const out
 )
 {
     fm_uint16  const ecmp_hash  = in->ecmp_hash;
@@ -493,9 +491,9 @@ static void NextHop_Apply
 
 static void NextHop_Sweep
 (
-    mby_ppe_nexthop_map  const * const nexthop_map,
-    mby_ppe_nexthop_map__addr  * const nexthop_w,
-    mbyNextHopSweepInput const * const in
+    mby_ppe_nexthop_map       const * const nexthop_map,
+    mby_ppe_nexthop_map__addr const * const nexthop_w,
+    mbyNextHopSweepInput      const * const in
 )
 {
 
@@ -525,7 +523,7 @@ static void NextHop_Usage
 void NextHop
 (
     mby_ppe_nexthop_map       const * const nexthop_map,
-    mby_ppe_nexthop_map__addr       * const nexthop_w,
+    mby_ppe_nexthop_map__addr const * const nexthop_w,
     mbyHashToNextHop          const * const in,
     mbyNextHopToMaskGen             * const out
 )

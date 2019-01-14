@@ -2,9 +2,9 @@
 
 // Copyright (C) 2018 Intel Corporation
 
-#include "mby_parser.h"
+#include "mby_common.h"
 #include "mby_mapper.h"
-#include "mby_classifier.h"
+#include "mby_ip_prot.h"
 
 static mbyMapPortCfg getPortCfg
 (

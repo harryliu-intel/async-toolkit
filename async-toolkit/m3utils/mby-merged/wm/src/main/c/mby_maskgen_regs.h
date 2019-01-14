@@ -1,14 +1,15 @@
 // -*- mode:c -*-
 
-// Copyright (C) 2018 Intel Corporation
+// Copyright (C) 2019 Intel Corporation
 
 #ifndef MBY_MASKGEN_REGS_H
 #define MBY_MASKGEN_REGS_H
 
 // Includes:
 
-#include "mby_common.h"
-#include "mby_bitfield.h"
+#include <mby_top_map.h> // header file auto-generated from RDL
+
+#include "mby_trig_results.h"
 
 // Enums:
 

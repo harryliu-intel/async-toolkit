@@ -5,7 +5,6 @@
 
 #include <mby_top_map.h>
 
-#include <mby_common.h>
 #include <mby_pipeline.h>
 
 #define COLOR_RED     "\x1b[31m"

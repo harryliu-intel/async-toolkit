@@ -7,6 +7,8 @@
 
 // Includes:
 
+#include <mby_top_map.h> // header file auto-generated from RDL
+
 #include "mby_common.h"
 #include "mby_bitfield.h"
 #include "mby_congmgmt.h"

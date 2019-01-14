@@ -2,7 +2,11 @@
 
 // Copyright (C) 2018 Intel Corporation
 
-#include "mby_nexthop.h"
+#include "mby_bitfield.h"
+#include "mby_params.h"
+#include "mby_common.h"
+#include "mby_eth_types.h"
+#include "mby_cgrp_regs.h"
 #include "mby_maskgen.h"
 
 static fm_status lookUpRamEntry

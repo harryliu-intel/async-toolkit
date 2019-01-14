@@ -7,8 +7,10 @@
 
 // Includes:
 
-#include "mby_common.h"
-#include "mby_bitfield.h"
+#include <mby_top_map.h> // header file auto-generated from RDL
+
+#include "fm_types.h"
+#include "mby_cgrp_types.h"
 
 // Defines:
 
@@ -97,14 +99,6 @@
 #define MBY_SV_MOVE_DROP_PORT         1
 #define MBY_SV_MOVE_DROP_ADDR         2
 #define MBY_SV_MOVE_DROP_STATIC       3
-
-#define MBY_LOG_TYPE_TRIG_LOG_ACTION  (1 << 0)
-#define MBY_LOG_TYPE_CGRP             (1 << 1)
-#define MBY_LOG_TYPE_RESERVED_MAC     (1 << 2)
-#define MBY_LOG_TYPE_ARP_REDIRECT     (1 << 3)
-#define MBY_LOG_TYPE_ICMP             (1 << 4)
-#define MBY_LOG_TYPE_TTL_IP_MC        (1 << 5)
-#define MBY_LOG_TYPE_IP_UCST_L2_MCST  (1 << 7) /* EAC TBR */
 
 /* Trap codes which forms lower 8-bit of CPU-glort. */
 /* See RRC Bug 22835.  Changed twice to match RTL change 271047. */
@@ -434,51 +428,6 @@ typedef struct mbyClassifierActionCfgStruct
 
 } mbyClassifierActionCfg;
 
-typedef struct mbyClassifierMuxedActionStruct
-{
-    fm_byte   dscp_ctl;    //  4b field
-    fm_byte   ttl_ctl;     //  3b field
-    fm_byte   tc_ctl;      //  4b field
-    fm_byte   ecn_ctl;     //  4b field
-    fm_byte   dscp;
-    fm_byte   ttl01;
-    fm_byte   tc;
-    fm_byte   ecn;
-//NOT_USED? aqm_mark_en <-- REVISIT!!!
-    fm_bool   aqm_mark_en;
-
-} mbyClassifierMuxedAction;
-
-typedef struct mbyClassifierFlags
-{
-    fm_bool   drop;
-    fm_bool   trap;
-    fm_bool   log;
-    fm_bool   no_route;
-    fm_bool   rx_mirror;
-    fm_byte   tx_tag;  // 2b field
-    fm_byte   trigger; // 8b field
-    fm_byte   profile; // 6b field
-    fm_bool   learn_notify;
-
-} mbyClassifierFlags;
-
-typedef struct mbyClassifierFunctionsStruct
-{
-    mbyClassifierMuxedAction muxed_action;                   // { ECN, TC, TTL, DSCP }
-    fm_uint16 vid;                                           // 12b field
-    fm_byte   vpri;                                          //  4b field
-    fm_byte   dscp;                                          //  8b field
-    fm_byte   tc;                                            //  4b field
-    fm_byte   hash_profile  [MBY_CGRP_HASH_PROFILE_ACTIONS]; // 3 x  6b fields
-    fm_byte   mod_meta      [MBY_CGRP_META_ACTIONS];         // 4 x  8b fields
-    fm_uint32 fwd;                                           // 22b field
-    fm_uint32 policer_action[MBY_CGRP_POLICER_ACTIONS];      // 4 x 24b fields
-    fm_uint32 mod_profile;                                   // 24b field
-    fm_uint32 remap         [MBY_CGRP_REMAP_ACTIONS];        // 8 x 24b fields
-    fm_uint32 used;                                          // 24b field
-} mbyClassifierFunctions;
-
 typedef struct mbyIppRxTagStruct
 {
     fm_bool   custom;
@@ -586,4 +535,4 @@ void mbyClsConvertKeysToBytes
     fm_byte                 bytes[MBY_CGRP_HASH_KEYS]
 );
 
-#endif /* MBY_CLASSIFIER_H */
+#endif // MBY_CGRP_REGS_H

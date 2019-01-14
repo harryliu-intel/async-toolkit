@@ -1,7 +1,9 @@
 #ifndef MBY_TRIGGERS_TEST_H
 #define MBY_TRIGGERS_TEST_H
 
-#include "mby_triggers.h"
+#include <fm_types.h>
+#include <mby_dmask_regs.h>
+#include <mby_log_type.h>
 
 typedef struct sys_cfg_1_struct
 {

@@ -1,6 +1,6 @@
 // -*- mode:c -*-
 
-// Copyright (C) 2018 Intel Corporation
+// Copyright (C) 2019 Intel Corporation
 
 #include "mby_pipeline.h"
 
@@ -61,7 +61,7 @@ void RxPipeline
 
     MaskGen    (fwd_misc_map,
                 mst_glort_map,
-                cm_apply_map,                &nxt2msk, &msk2trg);
+                cm_apply_map,        &nxt2msk, &msk2trg);
 
     Triggers   (trig_apply_map,
                 trig_apply_map_w,
