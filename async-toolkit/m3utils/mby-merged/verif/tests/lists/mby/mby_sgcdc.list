@@ -1,0 +1,2 @@
+spyglass_cdc/mby_top_sgcdc_test -ace_args -static_check -ASSIGN -spyglass_goals=cdc/cdc_setup_check -model_compile_results_dir $MODEL_ROOT/target/mby_top/cdc/ -ace_args- -facet -spyglass_mode cdc -facet- 
+spyglass_cdc/mby_top_sgcdc_test -ace_args -static_check -ASSIGN -spyglass_goals=cdc/cdc_verify_struct -model_compile_results_dir $MODEL_ROOT/target/mby_top/cdc/ -ace_args- -facet -spyglass_mode cdc -facet- 

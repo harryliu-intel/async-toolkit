@@ -215,6 +215,8 @@ mby_igr_top
 initial
 begin
 `include "tst"
+  repeat(1000)
+    @(posedge cclk);
   $finish;
 end
 

@@ -119,7 +119,7 @@ module rx_ppe_bfm
   //   } rx_ppe_igr_t;
 
     always_comb begin
-        tmp = '0;
+        tmp = rx_ppe_igr_t'('0);
 
         // FIXME -- hardcoded for first packet, but some of these should either
         //            be randomized, or looked up from randomized data in inp_driver
@@ -132,18 +132,18 @@ module rx_ppe_bfm
         //tmp.md.port_md.rx_port = 8'h00; // FIXME -- I might have rx_port in upper bits of ID, but that would be redundant
         //tmp.md.port_md.tx_drop = 1'b0;
         
-        tmp.md.md.uc_meta.unicast_meta.offset_hdr_ptrs              = 64'h1122334455667788;
-        tmp.md.md.uc_meta.unicast_meta.protocol_id_hdr_ptrs         = 64'haabbccddeeff0011;       
+        tmp.md.md.uc_meta.unicast_meta.header_offset                = 64'h1122334455667788;
+        tmp.md.md.uc_meta.unicast_meta.protocol_id                  = 64'haabbccddeeff0011;       
         tmp.md.md.uc_meta.unicast_meta.aqm_quantized_val            = 4'h0;          
         tmp.md.md.uc_meta.unicast_meta.aqm_mark_en                  = '0; 
         tmp.md.md.uc_meta.unicast_meta.ecn_val                      = '0;                    
         tmp.md.md.uc_meta.unicast_meta.ttl_ctl                      = 4'hf;                    
         tmp.md.md.uc_meta.unicast_meta.dscp                         = 6'h0;                       
-//edr        tmp.md.md.uc_meta.unicast_meta.tx_drop                      = 1'b0;     
-        tmp.md.md.uc_meta.unicast_meta.mirror_port_mod_profile_idx1 = 6'h0;  
-        tmp.md.md.uc_meta.unicast_meta.mirror_port_mod_profile_idx2 = 6'h0;  
+//edr        tmp.md.md.uc_meta.unicast_meta.tx_drop                 = 1'b0;     
+        tmp.md.md.uc_meta.unicast_meta.mirror_profile_idx2          = 6'h0;  
+        tmp.md.md.uc_meta.unicast_meta.mirror_profile_idx1          = 6'h0;  
         tmp.md.md.uc_meta.unicast_meta.tag_flags                    = '0;                  
-//edr        tmp.md.md.uc_meta.unicast_meta.tx_tag                       = '0;                     
+//edr        tmp.md.md.uc_meta.unicast_meta.tx_tag                  = '0;                     
         tmp.md.md.uc_meta.unicast_meta.vpri                         = '0;
         tmp.md.md.uc_meta.unicast_meta.nh_egr_negh_table_idx        = 14'h3344;              
         tmp.md.md.uc_meta.unicast_meta.l2d                          = '0;

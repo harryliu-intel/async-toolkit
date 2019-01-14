@@ -30,31 +30,38 @@
 //                  the integration level.
 //------------------------------------------------------------------------------
 
-module mby_mesh_ti #( parameter string   RTL_TOP_PATH = "",             // The RTL path to the top level EC IP RTL Block
-        parameter string TB_ENV_PATH = "uvm_test_top.env"          // The hierarchy path to the environment class
-    )
-    (
-        mby_mesh_tb_if     mby_mesh_tb_if,
-        mby_mgp_mim_if     req_eb_if,
-        mby_mgp_mim_if     req_wb_if
-    );
+module mby_mesh_ti #(parameter string   RTL_TOP_PATH = "",             // The RTL path to the top level EC IP RTL Block
+                     parameter string TB_ENV_PATH = "uvm_test_top.env"          // The hierarchy path to the environment class
+                    )
+   (
+       mby_mesh_tb_if         mby_mesh_tb_if,
+       mby_mgp_mim_req_if     rreq_eb_if,
+       mby_mgp_mim_req_if     rreq_wb_if,
+       mby_mgp_mim_req_if     wreq_eb_if,
+       mby_mgp_mim_req_if     wreq_wb_if,
+       mby_mgp_mim_rsp_if     rsp_eb_if,
+       mby_mgp_mim_rsp_if     rsp_wb_if
+   );
 
-    import uvm_pkg::*;
-    initial begin
+   import uvm_pkg::*;
+   initial begin
 
-        // Set MESH TI Path in the database
-        uvm_config_db#(string)::set(null, TB_ENV_PATH, "TI_PATH", $sformatf("%m"));
+      // Set MESH TI Path in the database
+      uvm_config_db#(string)::set(null, TB_ENV_PATH, "TI_PATH", $sformatf("%m"));
 
-        // Set MESH RTL_TOP Path in the database
-        uvm_config_db#(string)::set(null, TB_ENV_PATH, "RTL_TOP_PATH", RTL_TOP_PATH);
+      // Set MESH RTL_TOP Path in the database
+      uvm_config_db#(string)::set(null, TB_ENV_PATH, "RTL_TOP_PATH", RTL_TOP_PATH);
 
-        // Set the MESH_TB_IF in the database
-        uvm_config_db#(virtual mby_mesh_tb_if)::set(uvm_root::get(), TB_ENV_PATH , "mby_mesh_tb_if", mby_mesh_tb_if);
+      // Set the MESH_TB_IF in the database
+      uvm_config_db#(virtual mby_mesh_tb_if)::set(uvm_root::get(), TB_ENV_PATH , "mby_mesh_tb_if", mby_mesh_tb_if);
       
-        // Set the Mesh Req_IF in the database
-       uvm_config_db#(virtual mby_mgp_mim_if)::set(uvm_root::get(), TB_ENV_PATH , "mby_mgp_mim_if", req_eb_if);
-       uvm_config_db#(virtual mby_mgp_mim_if)::set(uvm_root::get(), TB_ENV_PATH , "mby_mgp_mim_if", req_wb_if);
-    end
+      // Set the Mesh Req_IF in the database
+      uvm_config_db#(virtual mby_mgp_mim_req_if)::set(uvm_root::get(), TB_ENV_PATH , "rd_eb", rreq_eb_if);
+      uvm_config_db#(virtual mby_mgp_mim_req_if)::set(uvm_root::get(), TB_ENV_PATH , "rd_wb", rreq_wb_if);
+      uvm_config_db#(virtual mby_mgp_mim_req_if)::set(uvm_root::get(), TB_ENV_PATH , "wr_eb", wreq_eb_if);
+      uvm_config_db#(virtual mby_mgp_mim_req_if)::set(uvm_root::get(), TB_ENV_PATH , "wr_wb", wreq_wb_if);
+      uvm_config_db#(virtual mby_mgp_mim_rsp_if)::set(uvm_root::get(), TB_ENV_PATH , "rp_eb", rsp_eb_if);
+      uvm_config_db#(virtual mby_mgp_mim_rsp_if)::set(uvm_root::get(), TB_ENV_PATH , "rp_wb", rsp_wb_if);
+   end
 
 endmodule
-`undef ADD_IF

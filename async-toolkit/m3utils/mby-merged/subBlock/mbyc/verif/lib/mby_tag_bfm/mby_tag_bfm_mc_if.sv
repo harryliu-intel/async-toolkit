@@ -113,6 +113,7 @@ interface mby_tag_bfm_mc_if(input logic clk, input logic rst);
                  output logic [DEBG_WIDTH-1:0] debg_pkt);
       data_pkt = intf_data_pkt;
       debg_pkt = intf_debg_pkt;
+      @(negedge clk);
    endtask
 
 endinterface : mby_tag_bfm_mc_if

@@ -140,10 +140,10 @@ logic               rst;                                // reset
  logic [1:0]                      o_drop_seg_valid; 
  logic [W_SEMA-1:0][1:0]          o_drop_sema; 
  logic [7:0]                      o_port_id; // FIXME -- what is this for?  ring_tag_t also has src & dst ports 
- logic [95:0]                     o_post_ppe_tag_at_rate0; 
- logic [95:0]                     o_post_ppe_tag_at_rate1; 
- logic [95:0]                     o_post_ppe_tag_set_aside0; 
- logic [95:0]                     o_post_ppe_tag_set_aside1;
+ mby_tag_ring_t                   o_post_ppe_tag_at_rate0; 
+ mby_tag_ring_t                   o_post_ppe_tag_at_rate1; 
+ mby_tag_ring_t                   o_post_ppe_tag_set_aside0; 
+ mby_tag_ring_t                   o_post_ppe_tag_set_aside1;
                 
 
 

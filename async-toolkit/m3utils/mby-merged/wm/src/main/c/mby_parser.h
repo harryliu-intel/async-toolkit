@@ -7,119 +7,9 @@
 
 // Includes:
 
-#include "mby_common.h"
 #include "mby_bitfield.h"
 
 // Defines:
-
-#define MBY_PARSER_BASE                                         (0x2000000)
-#define MBY_PARSER_SIZE                                         (0x0010000)
-
-#define MBY_PARSER_PORT_CFG_WIDTH                               2
-#define MBY_PARSER_PORT_CFG_ENTRIES                             24
-#define MBY_PARSER_PORT_CFG(index, word)                        ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0001000) + (MBY_PARSER_BASE))
-
-#define MBY_PARSER_PORT_CFG_l_INITIAL_W0_OFFSET                 56
-#define MBY_PARSER_PORT_CFG_h_INITIAL_W0_OFFSET                 63
-#define MBY_PARSER_PORT_CFG_l_INITIAL_W1_OFFSET                 48
-#define MBY_PARSER_PORT_CFG_h_INITIAL_W1_OFFSET                 55
-#define MBY_PARSER_PORT_CFG_l_INITIAL_W2_OFFSET                 40
-#define MBY_PARSER_PORT_CFG_h_INITIAL_W2_OFFSET                 47
-#define MBY_PARSER_PORT_CFG_l_INITIAL_PTR                       32
-#define MBY_PARSER_PORT_CFG_h_INITIAL_PTR                       39
-#define MBY_PARSER_PORT_CFG_l_INITIAL_STATE                     16
-#define MBY_PARSER_PORT_CFG_h_INITIAL_STATE                     31
-#define MBY_PARSER_PORT_CFG_l_INITIAL_OP_MASK                   4
-#define MBY_PARSER_PORT_CFG_h_INITIAL_OP_MASK                   15
-#define MBY_PARSER_PORT_CFG_l_INITIAL_OP_ROT                    0
-#define MBY_PARSER_PORT_CFG_h_INITIAL_OP_ROT                    3
-
-#define MBY_PARSER_KEY_W_WIDTH                                  2
-#define MBY_PARSER_KEY_W_ENTRIES_0                              16
-#define MBY_PARSER_KEY_W_ENTRIES_1                              32
-#define MBY_PARSER_KEY_W(index1, index0, word)                  ((0x0000080) * ((index1) - 0) + (0x0000008) * ((index0) - 0) + ((word)*4)+ (0x0002000) + (MBY_PARSER_BASE))
-
-#define MBY_PARSER_KEY_W_l_W1_VALUE                             48
-#define MBY_PARSER_KEY_W_h_W1_VALUE                             63
-#define MBY_PARSER_KEY_W_l_W1_MASK                              32
-#define MBY_PARSER_KEY_W_h_W1_MASK                              47
-#define MBY_PARSER_KEY_W_l_W0_VALUE                             16
-#define MBY_PARSER_KEY_W_h_W0_VALUE                             31
-#define MBY_PARSER_KEY_W_l_W0_MASK                              0
-#define MBY_PARSER_KEY_W_h_W0_MASK                              15
-
-#define MBY_PARSER_KEY_S_WIDTH                                  2
-#define MBY_PARSER_KEY_S_ENTRIES_0                              16
-#define MBY_PARSER_KEY_S_ENTRIES_1                              32
-#define MBY_PARSER_KEY_S(index1, index0, word)                  ((0x0000080) * ((index1) - 0) + (0x0000008) * ((index0) - 0) + ((word)*4)+ (0x0003000) + (MBY_PARSER_BASE))
-
-#define MBY_PARSER_KEY_S_l_STATE_VALUE                          16
-#define MBY_PARSER_KEY_S_h_STATE_VALUE                          31
-#define MBY_PARSER_KEY_S_l_STATE_MASK                           0
-#define MBY_PARSER_KEY_S_h_STATE_MASK                           15
-
-#define MBY_PARSER_ANA_W_WIDTH                                  2
-#define MBY_PARSER_ANA_W_ENTRIES_0                              16
-#define MBY_PARSER_ANA_W_ENTRIES_1                              32
-#define MBY_PARSER_ANA_W(index1, index0, word)                  ((0x0000080) * ((index1) - 0) + (0x0000008) * ((index0) - 0) + ((word)*4)+ (0x0004000) + (MBY_PARSER_BASE))
-
-#define MBY_PARSER_ANA_W_l_NEXT_W0_OFFSET                       24
-#define MBY_PARSER_ANA_W_h_NEXT_W0_OFFSET                       31
-#define MBY_PARSER_ANA_W_l_NEXT_W1_OFFSET                       16
-#define MBY_PARSER_ANA_W_h_NEXT_W1_OFFSET                       23
-#define MBY_PARSER_ANA_W_l_NEXT_W2_OFFSET                       8
-#define MBY_PARSER_ANA_W_h_NEXT_W2_OFFSET                       15
-#define MBY_PARSER_ANA_W_l_SKIP                                 0
-#define MBY_PARSER_ANA_W_h_SKIP                                 7
-
-#define MBY_PARSER_ANA_S_WIDTH                                  2
-#define MBY_PARSER_ANA_S_ENTRIES_0                              16
-#define MBY_PARSER_ANA_S_ENTRIES_1                              32
-#define MBY_PARSER_ANA_S(index1, index0, word)                  ((0x0000080) * ((index1) - 0) + (0x0000008) * ((index0) - 0) + ((word)*4)+ (0x0005000) + (MBY_PARSER_BASE))
-
-#define MBY_PARSER_ANA_S_l_NEXT_STATE                           32
-#define MBY_PARSER_ANA_S_h_NEXT_STATE                           47
-#define MBY_PARSER_ANA_S_l_NEXT_STATE_MASK                      16
-#define MBY_PARSER_ANA_S_h_NEXT_STATE_MASK                      31
-#define MBY_PARSER_ANA_S_l_NEXT_OP                              0
-#define MBY_PARSER_ANA_S_h_NEXT_OP                              15
-
-#define MBY_PARSER_EXC_WIDTH                                    2
-#define MBY_PARSER_EXC_ENTRIES_0                                16
-#define MBY_PARSER_EXC_ENTRIES_1                                32
-#define MBY_PARSER_EXC(index1, index0, word)                    ((0x0000080) * ((index1) - 0) + (0x0000008) * ((index0) - 0) + ((word)*4)+ (0x0006000) + (MBY_PARSER_BASE))
-
-#define MBY_PARSER_EXC_l_EX_OFFSET                              1
-#define MBY_PARSER_EXC_h_EX_OFFSET                              8
-#define MBY_PARSER_EXC_b_PARSING_DONE                           0
-
-#define MBY_PARSER_EXT_WIDTH                                    2
-#define MBY_PARSER_EXT_ENTRIES_0                                32
-#define MBY_PARSER_EXT_ENTRIES_1                                32
-#define MBY_PARSER_EXT(index1, index0, word)                    ((0x0000100) * ((index1) - 0) + (0x0000008) * ((index0) - 0) + ((word)*4)+ (0x0008000) + (MBY_PARSER_BASE))
-
-#define MBY_PARSER_EXT_l_KEY_START                              25
-#define MBY_PARSER_EXT_h_KEY_START                              31
-#define MBY_PARSER_EXT_l_KEY_LEN                                18
-#define MBY_PARSER_EXT_h_KEY_LEN                                24
-#define MBY_PARSER_EXT_l_KEY_OFFSET                             10
-#define MBY_PARSER_EXT_h_KEY_OFFSET                             17
-#define MBY_PARSER_EXT_l_FLAG_NUM                               4
-#define MBY_PARSER_EXT_h_FLAG_NUM                               9
-#define MBY_PARSER_EXT_b_FLAG_VALUE                             3
-#define MBY_PARSER_EXT_l_PTR_NUM                                0
-#define MBY_PARSER_EXT_h_PTR_NUM                                2
-
-#define MBY_PARSER_CSUM_CFG_WIDTH                               2
-#define MBY_PARSER_CSUM_CFG_ENTRIES                             24
-#define MBY_PARSER_CSUM_CFG(index, word)                        ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0001100) + (MBY_PARSER_BASE))
-
-#define MBY_PARSER_CSUM_CFG_l_VALIDATE_L4_CSUM                  4
-#define MBY_PARSER_CSUM_CFG_h_VALIDATE_L4_CSUM                  5
-#define MBY_PARSER_CSUM_CFG_b_STORE_L4_PARTIAL_CSUM             3
-#define MBY_PARSER_CSUM_CFG_b_COMPUTE_L4_CSUM                   2
-#define MBY_PARSER_CSUM_CFG_l_VALIDATE_L3_LENGTH                0
-#define MBY_PARSER_CSUM_CFG_h_VALIDATE_L3_LENGTH                1
 
 //efine MBY_PA_ANA_STAGES              32    // 32 stages
 #define MBY_PA_ANA_STAGES              mby_ppe_parser_map_PARSER_ANA_S__nd
@@ -230,30 +120,38 @@ typedef enum mbyParserPtrsIndexEnum
 
 typedef struct mbyRxMacToParserStruct
 {
-    fm_byte               * RX_DATA;   ///< Ingress packet data (pointer to)
-    fm_uint32               RX_LENGTH; ///< Ingress packet data length [bytes]
-    fm_uint32               RX_PORT;   ///< Ingress port
+    fm_uint32        RX_PORT;             ///< Ingress port
+    fm_uint32        RX_LENGTH;           ///< Ingress packet data length [bytes]
+#ifndef SV_BUILD
+    fm_byte        * RX_DATA;             ///< Ingress packet data (pointer to)
+#else
+    fm_byte          RX_DATA[MBY_MAX_PACKET_LEN]; ///< Ingress packet data (fixed-size)
+#endif
 
 } mbyRxMacToParser;
 
 typedef struct mbyParserToMapperStruct
 {
-    fm_uint16               PA_ADJ_SEG_LEN;                   ///< Adjusted segment length
-    fm_byte                 PA_CSUM_OK;                       ///< Checksum OK result for outer (bit 0) and inner (bit 1) IPv4 headers
-    fm_bool                 PA_DROP;                          ///< Checksum validation error, drop pkt in tail
-    fm_bool                 PA_EX_DEPTH_EXCEED;               ///< Parser stopped: EOS exception and segment was not EOP
-    fm_bool                 PA_EX_PARSING_DONE;               ///< Parser stopped: Parsing Done exception
-    fm_byte                 PA_EX_STAGE;                      ///< Analyzer stage where exception occurred
-    fm_bool                 PA_EX_TRUNC_HEADER;               ///< Parser stopped: EOS exception and segment was EOP:
-    fm_bool                 PA_FLAGS     [MBY_N_PARSER_FLGS]; ///< Parser flags assigned by extract
-    fm_uint16               PA_KEYS      [MBY_N_PARSER_KEYS]; ///< 16-bit parser keys
-    fm_bool                 PA_KEYS_VALID[MBY_N_PARSER_KEYS]; ///< Parser keys valid flags
-    fm_bool                 PA_L3LEN_ERR;                     ///< L3 length error
-    fm_uint16               PA_PACKET_TYPE;                   ///< Packet type (new for MBY)
-    mbyParserHdrPtrs        PA_HDR_PTRS;                      ///< Parser header pointers
-    fm_uint32               RX_LENGTH;                        ///< Ingress packet data length [bytes]
-    fm_byte               * RX_DATA;                          ///< Ingress (receive) packet data
-    fm_uint32               RX_PORT;                          ///< Ingress port
+    fm_uint16        PA_ADJ_SEG_LEN;                   ///< Adjusted segment length
+    fm_byte          PA_CSUM_OK;                       ///< Checksum OK result for outer (bit 0) and inner (bit 1) IPv4 headers
+    fm_bool          PA_DROP;                          ///< Checksum validation error, drop pkt in tail
+    fm_bool          PA_EX_DEPTH_EXCEED;               ///< Parser stopped: EOS exception and segment was not EOP
+    fm_bool          PA_EX_PARSING_DONE;               ///< Parser stopped: Parsing Done exception
+    fm_byte          PA_EX_STAGE;                      ///< Analyzer stage where exception occurred
+    fm_bool          PA_EX_TRUNC_HEADER;               ///< Parser stopped: EOS exception and segment was EOP:
+    fm_bool          PA_FLAGS     [MBY_N_PARSER_FLGS]; ///< Parser flags assigned by extract
+    fm_uint16        PA_KEYS      [MBY_N_PARSER_KEYS]; ///< 16-bit parser keys
+    fm_bool          PA_KEYS_VALID[MBY_N_PARSER_KEYS]; ///< Parser keys valid flags
+    fm_bool          PA_L3LEN_ERR;                     ///< L3 length error
+    fm_uint16        PA_PACKET_TYPE;                   ///< Packet type (new for MBY)
+    mbyParserHdrPtrs PA_HDR_PTRS;                      ///< Parser header pointers
+    fm_uint32        RX_PORT;                          ///< Ingress port
+    fm_uint32        RX_LENGTH;                        ///< Ingress packet data length [bytes]
+#ifndef SV_BUILD
+    fm_byte        * RX_DATA;                          ///< Ingress packet data (pointer to)
+#else
+    fm_byte          RX_DATA[MBY_MAX_PACKET_LEN];      ///< Ingress packet data (fixed-size)
+#endif
 
 } mbyParserToMapper;
 

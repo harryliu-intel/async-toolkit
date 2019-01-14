@@ -47,6 +47,8 @@ class mby_smm_bfm_cfg extends mby_base_config;
    
    // TODO :   add plusargs to let the test select the profile.
 
+   rand delay_type_t delay_profile;
+
    // VARIABLE: mrd_req_rsp_delay_min
    //    Defines the lower limit for memory read request/response delay randomization.
    int mrd_req_rsp_delay_min     = 8;
@@ -57,7 +59,17 @@ class mby_smm_bfm_cfg extends mby_base_config;
    
    // VARIABLE: mrd_req_rsp_delay_extra
    //    Defines the extra clocks added to memory read request/response delay randomization.
-   int mrd_req_rsp_delay_extra   = 0;
+   rand int mrd_req_rsp_delay_extra;
+   
+   // CONSTRAINT: smm_bfm constraint
+   // Sets different delay profile values
+   constraint delay_profiles_c {
+      (delay_profile == IDEAL) -> (mrd_req_rsp_delay_extra == 0);
+      (delay_profile == LOW_DELAY) -> (mrd_req_rsp_delay_extra inside {[1:10]});
+      (delay_profile == MEDIUM_DELAY) -> (mrd_req_rsp_delay_extra inside {[11:100]});
+      (delay_profile == HIGH_DELAY) -> (mrd_req_rsp_delay_extra inside {[101:1000]});
+      (delay_profile == INSANE_DELAY) -> (mrd_req_rsp_delay_extra inside {[1001:10000]});
+   }
 
    // CONSTRAINT: smm_bfm_constraint
    // Sets proper values for driver/monitor enables

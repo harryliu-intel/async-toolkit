@@ -1,3 +1,3 @@
 #!/bin/sh -x
 
-time make -j 10
+time make -j 30

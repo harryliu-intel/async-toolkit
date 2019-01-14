@@ -82,9 +82,11 @@ ${BLD_DIR}/mby_mapper_test.o: \
         mby_mapper_test.c $(C_DIR)/mby_mapper.h \
         $(C_DIR)/mby_common.h
 
+.PHONY: $(WM_LIB)
 $(WM_LIB):
 	make -C ${C_DIR}
 
+.PHONY: $(COM_LIB)
 $(COM_LIB):
 	make -C ${COM_DIR}
 

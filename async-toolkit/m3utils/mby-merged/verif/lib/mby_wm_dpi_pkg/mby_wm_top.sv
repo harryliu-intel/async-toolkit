@@ -33,7 +33,7 @@ module mby_wm_top();
     initial begin
         //Temporary plus arg to enable connection to WM until the WM development is complete.
         if ($test$plusargs("WHITE_MODEL_EN")) begin
-            string model_server = "scala";
+            string model_server = "m3";
 
             //Plus arg to choose between "scala" or "M3" WM server.
             //Connects to Scala WM server by default
@@ -52,6 +52,7 @@ module mby_wm_top();
     final begin
         //Stop the White model server if it was started at the beginning of the test.
         if ($test$plusargs("WHITE_MODEL_EN")) begin
+            $display("mby_wm_top:  Calling wm_server_stop");
             wm_server_stop();
             $display("mby_wm_dpi_pkg/mby_wm_top.sv:: Disconnected from WM Server");
         end

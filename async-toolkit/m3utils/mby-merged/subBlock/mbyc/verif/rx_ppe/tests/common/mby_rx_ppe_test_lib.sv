@@ -50,6 +50,7 @@ program mby_rx_ppe_test_lib;
     `define __INSIDE_MBY_RX_PPE_TEST_LIB
     `include "mby_rx_ppe_base_test.svh"
     `include "mby_rx_ppe_alive_test.svh"
+    `include "mby_rx_ppe_wm_access_test.svh"
 
     `undef __INSIDE_MBY_RX_PPE_TEST_LIB
 

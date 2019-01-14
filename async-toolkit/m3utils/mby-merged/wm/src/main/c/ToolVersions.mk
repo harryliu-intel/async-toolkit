@@ -12,7 +12,7 @@ GCC = gcc
 endif
 
 # Gnu C++ compiler:
-GPP = /usr/intel/pkgs/g++/7.2.0/bin/g++
+GPP = /usr/intel/pkgs/gcc/7.2.0/bin/g++
 ifeq (,$(wildcard $(GPP)))
 GPP = g++
 endif
@@ -30,7 +30,7 @@ DOX = doxygen
 endif
 
 # Make Dir:
-MKDIR = /bin/mkdir
+MKDIR = /bin/mkdir -p
 
 # Symbolic Link:
 LN = /bin/ln -s
