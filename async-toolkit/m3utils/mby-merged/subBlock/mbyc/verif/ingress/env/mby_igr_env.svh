@@ -77,11 +77,9 @@ class mby_igr_env extends shdv_base_env;
    // ingress env event monitor
    mby_igr_env_monitor env_monitor;
 
-   mby_tag_bfm_pkg::mby_tag_bfm tag_bfm[`NUM_TAG_PORTS];
-
-   mby_tag_bfm_pkg::mby_tag_bfm_uc_vif tag_bfm_intf[`NUM_TAG_PORTS];
-
-
+   // Variable: tag_bfm
+   // Tag BFMs
+   mby_tag_bfm tag_bfm[`NUM_TAG_PORTS];
 
    `uvm_component_utils_begin(mby_igr_env)
    `uvm_component_utils_end
@@ -109,12 +107,12 @@ class mby_igr_env extends shdv_base_env;
       // "get" the testbench configuration object set from the ingress base test
       uvm_config_db#(mby_igr_tb_cfg)::get(this, "", "igr_tb_cfg", tb_cfg);
       if(tb_cfg == null) begin
-         //PJP: TODO `uvm_fatal(get_name(), $sformatf("PJP: mby_igr_env:: tb_cfg is null!")); // Need to fix this as it currently breaks the fullchip integration.
-         `uvm_warning(get_name(), $sformatf("PJP: mby_igr_env:: tb_cfg is null!"));
+          //PJP: TODO `uvm_fatal(get_name(), $sformatf("PJP: mby_igr_env:: tb_cfg is null!")); // Need to fix this as it currently breaks the fullchip integration.
+          `uvm_warning(get_name(), $sformatf("PJP: mby_igr_env:: tb_cfg is null!"));
       end
 
       if(uvm_config_object::get(this, "", "ingress_ti_config",tmp_ti_cfg_obj)) begin
-         assert($cast(ti_config,tmp_ti_cfg_obj));
+          assert($cast(ti_config,tmp_ti_cfg_obj));
       end
 
       build_vpt_bfms();
@@ -124,7 +122,7 @@ class mby_igr_env extends shdv_base_env;
 
       // Env monitor
       assert($cast(env_monitor, create_component("mby_igr_env_monitor", "env_monitor")));
-//      env_monitor.set_monitor_enable(tb_cfg.get_monitors_enabled()); // PJP: TODO: get_monitors_enabled is a Saola functionkk and I'm not sure of it's usage.  I'm leaving the code here for now to either be deleted later or replaced.
+      //env_monitor.set_monitor_enable(tb_cfg.get_monitors_enabled()); // PJP: TODO: get_monitors_enabled is a Saola functionkk and I'm not sure of it's usage.  I'm leaving the code here for now to either be deleted later or replaced.
 
       // get global event pool
       ingress_epool = ingress_epool.get_global_pool();
@@ -140,14 +138,13 @@ class mby_igr_env extends shdv_base_env;
       super.connect_phase(phase);
       connect_vpt_bfms();
       connect_eth_bfms();
-      connect_tag_bfm();
       uvm_config_db#(igr_env_if_t)::get(this, "", "ingress_if", ingress_if);
       if(ingress_if == null) begin
-         `uvm_fatal(get_name(), $sformatf("Couldn't find ingress_if"));
+          `uvm_fatal(get_name(), $sformatf("Couldn't find ingress_if"));
       end
 
       if (env_monitor != null) begin
-         env_monitor.ingress_if = ingress_if;
+          env_monitor.ingress_if = ingress_if;
       end
    endfunction : connect_phase
 
@@ -165,7 +162,7 @@ class mby_igr_env extends shdv_base_env;
    // start_of_simulation  phase of mby_igr_env
    //--------------------------------------------------------------------------
    virtual function void start_of_simulation_phase (uvm_phase phase);
-      super.start_of_simulation_phase(phase);
+     super.start_of_simulation_phase(phase);
    endfunction : start_of_simulation_phase
 
    //--------------------------------------------------------------------------
@@ -187,21 +184,21 @@ class mby_igr_env extends shdv_base_env;
    //--------------------------------------------------------------------------
    function void build_vpt_bfms();
       foreach(vp_bfms[i]) begin
-         // Get the vp_bfm_vif ptrs
-         if(!uvm_config_db#(igr_eth_bfm_tx_io_t)::get(this, "", $sformatf("igr_vp_bfm_tx_io%0d", i), vp_bfm_tx_io[i])) begin
-            `uvm_fatal(get_name(), "Config_DB.get() for ENV's igr_vp_bfm_tx_io%0d was not successful!")
-         end
-         if(!uvm_config_db#(igr_eth_bfm_rx_io_t)::get(this, "", $sformatf("igr_vp_bfm_rx_io%0d", i), vp_bfm_rx_io[i])) begin
-            `uvm_fatal(get_name(),"Config_DB.get() for ENV's igr_vp_bfm_rx_io was not successful!")
-         end
-         // Create the vp bfm instances
-         vp_bfms[i]                = igr_vp_bfm_t::type_id::create($sformatf("igr_vp_bfm%0d", i), this);
-         vp_bfms[i].cfg.mode       = eth_bfm_pkg::MODE_SLAVE;                            // Configure as SLAVE
-         vp_bfms[i].cfg.port_speed = {eth_bfm_pkg::SPEED_400G,                            // Configure speed.
-            eth_bfm_pkg::SPEED_OFF,
-            eth_bfm_pkg::SPEED_OFF,
-            eth_bfm_pkg::SPEED_OFF};
-      //vp_bfms[i].cfg.port_lanes = {4,0,0,0};                                         // Configure num_ports.
+          // Get the vp_bfm_vif ptrs
+          if(!uvm_config_db#(igr_eth_bfm_tx_io_t)::get(this, "", $sformatf("igr_vp_bfm_tx_io%0d", i), vp_bfm_tx_io[i])) begin
+              `uvm_fatal(get_name(), "Config_DB.get() for ENV's igr_vp_bfm_tx_io%0d was not successful!")
+          end
+          if(!uvm_config_db#(igr_eth_bfm_rx_io_t)::get(this, "", $sformatf("igr_vp_bfm_rx_io%0d", i), vp_bfm_rx_io[i])) begin
+              `uvm_fatal(get_name(),"Config_DB.get() for ENV's igr_vp_bfm_rx_io was not successful!")
+          end
+          // Create the vp bfm instances
+          vp_bfms[i]                = igr_vp_bfm_t::type_id::create($sformatf("igr_vp_bfm%0d", i), this);
+          vp_bfms[i].cfg.mode       = eth_bfm_pkg::MODE_SLAVE;                            // Configure as SLAVE
+          vp_bfms[i].cfg.port_speed = {eth_bfm_pkg::SPEED_400G,                            // Configure speed.
+              eth_bfm_pkg::SPEED_OFF,
+              eth_bfm_pkg::SPEED_OFF,
+              eth_bfm_pkg::SPEED_OFF};
+          //vp_bfms[i].cfg.port_lanes = {4,0,0,0};                                         // Configure num_ports.
       end
    endfunction : build_vpt_bfms
 
@@ -212,23 +209,25 @@ class mby_igr_env extends shdv_base_env;
    //--------------------------------------------------------------------------
    function void build_eth_bfms();
       foreach(eth_bfms[i]) begin
-         // Get the io policies
-         if(!uvm_config_db#(igr_eth_bfm_tx_io_t)::get(this, "", $sformatf("igr_eth_bfm_tx_io%0d", i), eth_bfm_tx_io[i])) begin
-            `uvm_fatal(get_name(),"Config_DB.get() for ENV's igr_eth_bfm_tx_io_t was not successful!")
-         end
-         if(!uvm_config_db#(igr_eth_bfm_rx_io_t)::get(this, "", $sformatf("igr_eth_bfm_rx_io%0d", i), eth_bfm_rx_io[i])) begin
-            `uvm_fatal(get_name(),"Config_DB.get() for ENV's igr_eth_bfm_rx_io_t was not successful!")
-         end
-         // Create the bfm instances
-         eth_bfms[i]                   = igr_eth_bfm_t::type_id::create($sformatf("igr_eth_bfm%0d", i), this);
-         eth_bfms[i].cfg.mode          = eth_bfm_pkg::MODE_SLAVE;                            // Configure as SLAVE
-         eth_bfms[i].cfg.port_speed    = {eth_bfm_pkg::SPEED_400G,                            // Configure speed.
-            eth_bfm_pkg::SPEED_OFF,
-            eth_bfm_pkg::SPEED_OFF,
-            eth_bfm_pkg::SPEED_OFF};
-         //eth_bfms[i].cfg.port_lanes    = {4,0,0,0};                                           // Configure num_ports.
-         eth_bfms[i].cfg.group_size    = 8;
-         eth_bfms[i].cfg.sop_alignment = 8;
+          // Get the io policies
+          if(!uvm_config_db#(igr_eth_bfm_tx_io_t)::get(this, "", $sformatf("igr_eth_bfm_tx_io%0d", i), eth_bfm_tx_io[i])) begin
+              `uvm_fatal(get_name(),"Config_DB.get() for ENV's igr_eth_bfm_tx_io_t was not successful!")
+          end
+          if(!uvm_config_db#(igr_eth_bfm_rx_io_t)::get(this, "", $sformatf("igr_eth_bfm_rx_io%0d", i), eth_bfm_rx_io[i])) begin
+              `uvm_fatal(get_name(),"Config_DB.get() for ENV's igr_eth_bfm_rx_io_t was not successful!")
+          end
+          // Create the bfm instances
+          eth_bfms[i]                   = igr_eth_bfm_t::type_id::create($sformatf("igr_eth_bfm%0d", i), this);
+          eth_bfms[i].cfg.mode          = eth_bfm_pkg::MODE_SLAVE;                            // Configure as SLAVE
+          eth_bfms[i].cfg.port_speed    = {eth_bfm_pkg::SPEED_400G,                            // Configure speed.
+              eth_bfm_pkg::SPEED_OFF,
+              eth_bfm_pkg::SPEED_OFF,
+              eth_bfm_pkg::SPEED_OFF};
+          eth_bfms[i].cfg.port_lanes    = {4,0,0,0}; // Configure num_ports.
+          //eth_bfms[i].cfg.early_justify = 0;
+          //eth_bfms[i].cfg.group_size    = 8;
+          //eth_bfms[i].cfg.sop_alignment = 8;
+          eth_bfms[i].cfg.driver_self_check_enable = 0; //disabling scbd for now.
       end
    endfunction : build_eth_bfms
 
@@ -238,23 +237,13 @@ class mby_igr_env extends shdv_base_env;
    // Creates the tag_bfm using the factory
    //--------------------------------------------------------------------------
    function void build_tag_bfm();
-
       foreach(tag_bfm[i]) begin
-         // Get the tag_bfm_vif ptrs
-         // if(!uvm_config_db#(mby_tag_bfm_uc_vif)::get(this, "", $sformatf("tag_bfm_vintf%0d",i), tag_bfm_intf[i])) begin
-         //     `uvm_fatal(get_name(),$sformatf("Config_DB.get() for ENV's tag_bfm_intf%0d was not successful!", i))
-         // end
-         if(!uvm_config_db#(mby_tag_bfm_uc_vif)::get(this, "", $sformatf("tag_bfm_vintf%0d",i), tag_bfm_intf[i])) begin
-            `uvm_fatal(get_name(),$sformatf("Config_DB.get() for ENV's tag_bfm_intf%0d was not successful!", i))
-         end
-         uvm_config_db #(virtual mby_tag_bfm_uc_if)::set(null, $sformatf("uvm_test_top.env.tag_bfm_%0d.tag_uc_agent",i), "vintf", tag_bfm_intf[i]);
-         tag_bfm[i] = mby_tag_bfm::type_id::create($sformatf("tag_bfm_%0d",i), this);
-         tag_bfm[i].cfg_obj.bfm_mode = TAG_BFM_IGR_MODE;
-         tag_bfm[i].cfg_obj.traffic_mode = TAG_BFM_UC_MODE;
-      //tag_bfm[i].cfg_obj.monitor_active = UVM_PASSIVE;
+          tag_bfm[i] = mby_tag_bfm::type_id::create($sformatf("tag_bfm%0d",i), this);
+          tag_bfm[i].cfg_obj.bfm_mode = TAG_BFM_IGR_MODE;
+          tag_bfm[i].cfg_obj.traffic_mode = TAG_BFM_UC_MODE;
+          tag_bfm[i].cfg_obj.driver_active  = UVM_PASSIVE;
+          tag_bfm[i].cfg_obj.monitor_active = UVM_ACTIVE;
       end
-
-   //tag_bfm.cfg_obj.
    endfunction: build_tag_bfm
 
    //--------------------------------------------------------------------------
@@ -265,10 +254,10 @@ class mby_igr_env extends shdv_base_env;
    function void connect_vpt_bfms();
       foreach(vp_bfms[i]) begin
          vp_bfms[i].set_io(vp_bfm_tx_io[i], vp_bfm_rx_io[i]);
-         add_sequencer($sformatf("vp_bfm_%0d", i), $sformatf("vp_bfm_%0d_rx0", i), vp_bfms[i].rx.frame_sequencer[0]);
-         add_sequencer($sformatf("vp_bfm_%0d", i), $sformatf("vp_bfm_%0d_rx1", i), vp_bfms[i].rx.frame_sequencer[1]);
-         add_sequencer($sformatf("vp_bfm_%0d", i), $sformatf("vp_bfm_%0d_rx2", i), vp_bfms[i].rx.frame_sequencer[2]);
-         add_sequencer($sformatf("vp_bfm_%0d", i), $sformatf("vp_bfm_%0d_rx3", i), vp_bfms[i].rx.frame_sequencer[3]);
+         add_sequencer($sformatf("vp_bfm_%0d", i), $sformatf("vp_bfm_%0d_rx0", i), vp_bfms[i].frame_sequencer[0]);
+         add_sequencer($sformatf("vp_bfm_%0d", i), $sformatf("vp_bfm_%0d_rx1", i), vp_bfms[i].frame_sequencer[1]);
+         add_sequencer($sformatf("vp_bfm_%0d", i), $sformatf("vp_bfm_%0d_rx2", i), vp_bfms[i].frame_sequencer[2]);
+         add_sequencer($sformatf("vp_bfm_%0d", i), $sformatf("vp_bfm_%0d_rx3", i), vp_bfms[i].frame_sequencer[3]);
       end
    endfunction : connect_vpt_bfms
 
@@ -280,23 +269,12 @@ class mby_igr_env extends shdv_base_env;
    function void connect_eth_bfms();
       foreach(eth_bfms[i]) begin
          eth_bfms[i].set_io(eth_bfm_tx_io[i], eth_bfm_rx_io[i]);
-         add_sequencer($sformatf("eth_bfm_%0d", i), $sformatf("eth_bfm_%0d_rx0", i), eth_bfms[i].rx.frame_sequencer[0]);
-         add_sequencer($sformatf("eth_bfm_%0d", i), $sformatf("eth_bfm_%0d_rx1", i), eth_bfms[i].rx.frame_sequencer[1]);
-         add_sequencer($sformatf("eth_bfm_%0d", i), $sformatf("eth_bfm_%0d_rx2", i), eth_bfms[i].rx.frame_sequencer[2]);
-         add_sequencer($sformatf("eth_bfm_%0d", i), $sformatf("eth_bfm_%0d_rx3", i), eth_bfms[i].rx.frame_sequencer[3]);
+         add_sequencer($sformatf("eth_bfm_%0d", i), $sformatf("eth_bfm_%0d_rx0", i), eth_bfms[i].frame_sequencer[0]);
+         add_sequencer($sformatf("eth_bfm_%0d", i), $sformatf("eth_bfm_%0d_rx1", i), eth_bfms[i].frame_sequencer[1]);
+         add_sequencer($sformatf("eth_bfm_%0d", i), $sformatf("eth_bfm_%0d_rx2", i), eth_bfms[i].frame_sequencer[2]);
+         add_sequencer($sformatf("eth_bfm_%0d", i), $sformatf("eth_bfm_%0d_rx3", i), eth_bfms[i].frame_sequencer[3]);
       end
    endfunction : connect_eth_bfms
-
-   //--------------------------------------------------------------------------
-   // Function: connect_tag_bfm
-   // adds sequencer
-   //--------------------------------------------------------------------------
-   function void connect_tag_bfm();
-      foreach(tag_bfm[i])begin
-         tag_bfm[i].tag_uc_agent.vintf = tag_bfm_intf[i];
-      end
-   endfunction: connect_tag_bfm
-
 
    //////////////////////////////////////////////////////////////////////////////
    // Ingress ENV functions / tasks

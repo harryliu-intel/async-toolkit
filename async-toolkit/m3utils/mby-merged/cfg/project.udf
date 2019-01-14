@@ -48,7 +48,7 @@ use ToolConfig;
             -lintra_svtb
             -lintra_ol
             -verdi
-            -jg
+            -jg -jg_lint
             -FLG
             -qcdc
             -fishtail
@@ -82,9 +82,9 @@ use ToolConfig;
 
         # JasperGold options
 
-        -jg_elab_opts            => {  default => ["-L work"] },
-        -jg_compile_opts            => { default => ["-mfcu"] },
-        -jg_post_ijlsetup_scripts          => {  default => ["$ENV{MODEL_ROOT}/tools/fpv/common/pre_analyze.tcl"] },
+        #-jg -jg_lint_elab_opts            => {  default => ["-L work"] },
+        #-jg -jg_lint_compile_opts            => { default => ["-mfcu"] },
+        #-jg -jg_lint_post_ijlsetup_scripts          => {  default => ["$ENV{MODEL_ROOT}/tools/fpv/common/pre_analyze.tcl"] },
 
 
     },

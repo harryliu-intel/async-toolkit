@@ -45,16 +45,16 @@
 //     T_debug    - mby_tag_bfm_uc_debg_t
 //
 //-----------------------------------------------------------------------------
-class mby_tag_bfm_uc_xaction extends mby_base_sequence_item
-   #(
-      .T_data (mby_tag_bfm_uc_data_t),
-      .T_debug(mby_tag_bfm_uc_debg_t)
-   );
+class mby_tag_bfm_uc_xaction extends mby_base_sequence_item_param
+#(
+   .T_data (mby_tag_bfm_uc_data_t),
+   .T_debug(mby_tag_bfm_uc_debg_t)
+);
 
    // -------------------------------------------------------------------------
    // Macro for factory registration
    // -------------------------------------------------------------------------
-   `uvm_object_utils(mby_tag_bfm_uc_xaction#(T_data, T_data_rsp, T_debug))
+   `uvm_object_utils(mby_tag_bfm_uc_xaction)
 
    // -------------------------------------------------------------------------
    // CONSTRUCTOR: new
@@ -80,7 +80,7 @@ class mby_tag_bfm_uc_xaction extends mby_base_sequence_item
       string lns_str = { {8{" -------- "}}, "\n" };
       msg_str = super.convert2string();
       msg_str = { msg_str, $sformatf("tag_uc_xaction::seg_ptr = %020h\n",
-            this.data_pkt.ptr) };
+         this.data_pkt.ptr) };
       msg_str = { msg_str, lns_str };
       return msg_str;
    endfunction : convert2string
@@ -106,7 +106,7 @@ class mby_tag_bfm_uc_xaction extends mby_base_sequence_item
       else begin
          $cast(temp, p);
          this.data_pkt = temp.data_pkt;
-         this.debug_pkt = temp.debug_pkt;
+         this.debg_pkt = temp.debg_pkt;
          this.resp_pkt = temp.resp_pkt;
          this.delay = temp.delay;
          this.rsp_req = temp.rsp_req;
@@ -130,7 +130,7 @@ class mby_tag_bfm_uc_xaction extends mby_base_sequence_item
    // -------------------------------------------------------------------------
    virtual function void do_print(uvm_printer printer);
       super.do_print(printer);
-   // pretty print
+      // pretty print
    endfunction : do_print
 
 endclass : mby_tag_bfm_uc_xaction

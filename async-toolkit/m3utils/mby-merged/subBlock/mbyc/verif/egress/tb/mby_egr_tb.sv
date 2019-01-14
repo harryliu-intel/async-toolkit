@@ -30,7 +30,7 @@
 module mby_egr_tb ();
 
   import uvm_pkg::*;
-  
+
   // ===============================================
   // =                FSDB variable                =
   // ===============================================
@@ -48,13 +48,13 @@ module mby_egr_tb ();
   // Verification Test Library
   // ===============================================
   mby_egr_test_lib test();
-  
+
   // ===============================================
   // DUT RTL instance
   // ===============================================
   mby_tag_bfm_uc_if tag_bfm_intf_0 (egress_clock, egress_reset);
   mby_tag_bfm_uc_if tag_bfm_intf_1 (egress_clock, egress_reset);
-   
+
 `include "mby_egr_top_inst.v"
 
   // Parameters for interfaces
@@ -75,10 +75,6 @@ module mby_egr_tb ();
   mby_ec_cdi_tx_intf eth_bfm_tx_intf_3 (egress_reset, egress_clock);
   mby_ec_cdi_rx_intf eth_bfm_rx_intf_3 (egress_reset, egress_clock);
 
-
-
-   
-
   assign eth_bfm_tx_intf_0.enable = 1;
   assign eth_bfm_tx_intf_1.enable = 1;
   assign eth_bfm_tx_intf_2.enable = 1;
@@ -94,7 +90,6 @@ module mby_egr_tb ();
     egress_clk_gen.jitter = 0ps;
   end
 
-
   // ===============================================
   // INSTANCES
   // ===============================================
@@ -106,7 +101,6 @@ module mby_egr_tb ();
   mby_egr_env_if egress_if();
   assign egress_reset       = egress_if.reset;
   assign egress_if.clock    = egress_clock;
-
 
   //================================================
   //rbernal
@@ -122,32 +116,24 @@ module mby_egr_tb ();
   //smm_row_mrd_reqs row_mrd_reqs(.mesh_clk(egress_if.clock),.mesh_rst(egress_if.reset),.mrd_req(memrd_req_if),.i_rd_seg_ptr(w_seg_ptr),.i_rd_wd_sel(w_wd_sel));
 
 
-  initial
-     begin:mwr_gen_connection_to_msh_bfm
-        uvm_config_db #(virtual mby_smm_bfm_row_wr_req_if)::set(null, "uvm_test_top.env.smm_bfm.igr_wr_req_agent", "vintf", memwr_req_if);
-        uvm_config_db #(virtual mby_smm_bfm_row_rd_req_if)::set(null, "uvm_test_top.env.smm_bfm.egr_rd_req_agent", "vintf", memrd_req_if);
-     end
-
-
   // ===============================================
   // Test Island instance
   // ===============================================
   mby_egr_ti_high #()
     u_egress_ti_high (
-                    .egress_if           (egress_if)
-                   ,.eth_bfm_tx_intf_0   (eth_bfm_tx_intf_0)
-                   ,.eth_bfm_rx_intf_0   (eth_bfm_rx_intf_0)
-                   ,.eth_bfm_tx_intf_1   (eth_bfm_tx_intf_1)
-                   ,.eth_bfm_rx_intf_1   (eth_bfm_rx_intf_1)
-                   ,.eth_bfm_tx_intf_2   (eth_bfm_tx_intf_2)
-                   ,.eth_bfm_rx_intf_2   (eth_bfm_rx_intf_2)
-                   ,.eth_bfm_tx_intf_3   (eth_bfm_tx_intf_3)
-                   ,.eth_bfm_rx_intf_3   (eth_bfm_rx_intf_3)
-                   ,.tag_bfm_intf_0 (tag_bfm_intf_0)
-                   ,.tag_bfm_intf_1 (tag_bfm_intf_1)
-                   ,.memrd_req_if (memrd_req_if)
-                   ,.memwr_req_if (memwr_req_if)
-                   
+                    .egress_if         ( egress_if         )
+                   ,.eth_bfm_tx_intf_0 ( eth_bfm_tx_intf_0 )
+                   ,.eth_bfm_rx_intf_0 ( eth_bfm_rx_intf_0 )
+                   ,.eth_bfm_tx_intf_1 ( eth_bfm_tx_intf_1 )
+                   ,.eth_bfm_rx_intf_1 ( eth_bfm_rx_intf_1 )
+                   ,.eth_bfm_tx_intf_2 ( eth_bfm_tx_intf_2 )
+                   ,.eth_bfm_rx_intf_2 ( eth_bfm_rx_intf_2 )
+                   ,.eth_bfm_tx_intf_3 ( eth_bfm_tx_intf_3 )
+                   ,.eth_bfm_rx_intf_3 ( eth_bfm_rx_intf_3 )
+                   ,.tag_bfm_intf_0    ( tag_bfm_intf_0    )
+                   ,.tag_bfm_intf_1    ( tag_bfm_intf_1    )
+                   ,.memrd_req_if      ( memrd_req_if      )
+                   ,.memwr_req_if      ( memwr_req_if      )
                   );
 
 `include "std_ace_util.vic"
