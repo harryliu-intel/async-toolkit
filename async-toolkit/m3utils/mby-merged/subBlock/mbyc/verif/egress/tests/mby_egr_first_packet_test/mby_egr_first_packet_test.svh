@@ -57,17 +57,17 @@ class mby_egr_tag_seq extends mby_egr_extended_base_seq;
       uc_tag.randomize();
       
       
-      uc_tag.data_pkt = 0;
-      uc_tag.data_pkt.valid = 1;
-      uc_tag.data_pkt.dst_tc = 0;
-      uc_tag.data_pkt.dst_port = 0;
-      uc_tag.data_pkt.src_port = 0;
-      uc_tag.data_pkt.src_tc = 0;
-      uc_tag.data_pkt.sll = 0;
-      uc_tag.data_pkt.eop = 1'b1;
-      uc_tag.data_pkt.length = 64;
-      uc_tag.data_pkt.ptr_toggle = 4'b1;
-      uc_tag.data_pkt.ptr = 23;
+      uc_tag.data = 0;
+      uc_tag.data.valid = 1;
+      uc_tag.data.dst_tc = 0;
+      uc_tag.data.dst_port = 0;
+      uc_tag.data.src_port = 0;
+      uc_tag.data.src_tc = 0;
+      uc_tag.data.sll = 0;
+      uc_tag.data.eop = 1'b1;
+      uc_tag.data.length = 64;
+      uc_tag.data.ptr_toggle = 4'b1;
+      uc_tag.data.ptr = 23;
       
 
       
