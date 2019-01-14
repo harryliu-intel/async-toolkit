@@ -415,7 +415,7 @@ regfile cm_apply_tx_swpri_state_rf {
   cm_apply_tx_swpri_state_r CM_APPLY_TX_SWPRI_STATE[16] += 8;
 };
 
-reg cm_apply_cpu_trap_mask_r {
+reg cm_apply_cpu_trap_mask_0_r {
   Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
   Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
@@ -434,8 +434,104 @@ reg cm_apply_cpu_trap_mask_r {
             Destination mask for CPU.
            ";
     ValRandomize = true;
-  } DEST_MASK[23:0] = 24'h01;
+  } DEST_MASK[63:0] = 64'h01;
 };
+
+reg cm_apply_cpu_trap_mask_1_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "Defines the CPU mask1 for trapping";
+  desc = "
+          When a trapped frame is sent to the CPU, it is sent out on these 
+          ports. (This is a mask rather than a single port number, so that it 
+          is possible to multicast to multiple CPUs if desired.)
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Destination mask for CPU.
+           ";
+    ValRandomize = true;
+  } DEST_MASK[127:64] = 64'h00;
+};
+
+reg cm_apply_cpu_trap_mask_2_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "Defines the CPU mask2 for trapping";
+  desc = "
+          When a trapped frame is sent to the CPU, it is sent out on these 
+          ports. (This is a mask rather than a single port number, so that it 
+          is possible to multicast to multiple CPUs if desired.)
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Destination mask for CPU.
+           ";
+    ValRandomize = true;
+  } DEST_MASK[191:128] = 64'h00;
+};
+
+
+reg cm_apply_cpu_trap_mask_3_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "Defines the CPU mask3 for trapping";
+  desc = "
+          When a trapped frame is sent to the CPU, it is sent out on these 
+          ports. (This is a mask rather than a single port number, so that it 
+          is possible to multicast to multiple CPUs if desired.)
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Destination mask for CPU.
+           ";
+    ValRandomize = true;
+  } DEST_MASK[255:192] = 64'h00;
+};
+
+
+reg cm_apply_cpu_trap_mask_4_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "Defines the CPU mask3 for trapping";
+  desc = "
+          When a trapped frame is sent to the CPU, it is sent out on these 
+          ports. (This is a mask rather than a single port number, so that it 
+          is possible to multicast to multiple CPUs if desired.)
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Destination mask for CPU.
+           ";
+    ValRandomize = true;
+  } DEST_MASK[256:256] = 1'h0;
+};
+
+
+
+
+
+
 
 reg cm_apply_trap_glort_r {
   Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
@@ -752,7 +848,11 @@ addrmap mby_ppe_cm_apply_map {
   cm_apply_tc_to_smp_r                  CM_APPLY_TC_TO_SMP                    ;
   cm_apply_mcast_epoch_r                CM_APPLY_MCAST_EPOCH                  ;
   cm_apply_state_r                      CM_APPLY_STATE                        ;
-  cm_apply_cpu_trap_mask_r              CM_APPLY_CPU_TRAP_MASK                ;
+  cm_apply_cpu_trap_mask_0_r            CM_APPLY_CPU_TRAP_0_MASK                ;
+  cm_apply_cpu_trap_mask_1_r            CM_APPLY_CPU_TRAP_1_MASK                ;
+  cm_apply_cpu_trap_mask_2_r            CM_APPLY_CPU_TRAP_2_MASK                ;
+  cm_apply_cpu_trap_mask_3_r            CM_APPLY_CPU_TRAP_3_MASK                ;
+  cm_apply_cpu_trap_mask_4_r            CM_APPLY_CPU_TRAP_4_MASK                ;
   cm_apply_log_mirror_profile_r         CM_APPLY_LOG_MIRROR_PROFILE           ;
   cm_apply_qcn_cfg_r                    CM_APPLY_QCN_CFG                      ;
 };
