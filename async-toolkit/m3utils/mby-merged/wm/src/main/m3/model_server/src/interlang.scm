@@ -110,7 +110,10 @@
 
 (define *c-proj*              "mby")
 (define *c-const-pfx*         "MBY_")
-(define *c-const-file-sfx*    "_const.h")
+(define *c-const-arc*         "_const")
+(define *c-const-file-sfx*    (sa *c-const-arc* ".h"))
+
+(define *c-proj-const-dep* (sa *c-proj* *c-const-arc*))
 
 ;;;;;;;;;;;;;;;;;;;;
 
@@ -695,7 +698,7 @@
                      (compile-c-typedef-def-from-data (caddr x) sym-nm defs dep-recorder)
                      ";"
                      ))))
-
+    (set! *c-deps* (cons (cons sym-nm *c-proj-const-dep*) *c-deps*))
     (list sym-nm code)
     )
   )
@@ -997,7 +1000,7 @@
             "#define _"bn"_H" dnl
             dnl
             "#include \"" "uint" ".h\"" dnl
-            "#include \"" *c-proj* *c-const-file-sfx* "\"" dnl
+;;            "#include \"" *c-proj* *c-const-file-sfx* "\"" dnl
             dnl
             wr)
        (map (lambda(p)
