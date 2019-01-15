@@ -1,72 +1,44 @@
 (require-modules "basic-defs" "m3" "display" "hashtable" "struct" "set" "mergesort")
 (load "../../wm_net/src/structgen_m3.scm")
 (load "../../wm_net/src/structgen_shared.scm")
+(load "../../genviews/src/build_c/mby_c/src/mby_top_map.scm")
 
 (define defs
-  `((constant ffu-n-key32 16)
-    (constant ffu-n-key16 32)
-    (constant ffu-n-key8  64)
+  `((constant pa-max-seg-len 192)
 
-    (constant ffu-n-act24 16)
-    (constant ffu-n-act4  23)
-    (constant ffu-n-act1  24)
-
-    (constant n-parser-keys  84)
-    (constant n-parser-ptrs  8)
-    (constant n-parser-flags  4)
-    (constant n-realign-keys (- n-parser-keys 4))
-
-    (typedef parser-key 16)
-    (typedef pk-alias parser-key)
-
-    (typedef ffu-key32  32)
-    (typedef ffu-key16  16)
-    (typedef ffu-key8    8)
-
-    (constant mby-pa-max-seg-len 192)
-
-    (typedef pkt-meta (array mby-pa-max-seg-len 8))
-
-    (typedef mac-to-parser
+    (typedef rx-mac-to-parser
              (struct
-              ((rx-length    32)
-               (rx-port       8)
-               (pkt-meta      pkt-meta))))
+              ((rx-port 32)
+               (rx-length 32)
+               (seg-data  (array pa-max-seg-len 8)))))
+
+    (constant n-parser-keys  ,parser-extract-cfg-rf-parser-extract-cfg-n)
+    (constant n-parser-ptrs    8)
+    (constant n-parser-flags  48)
+
+    (typedef parser-hdr-ptrs
+             (struct
+              ((offset       (array n-parser-ptrs 8))
+               (offset-valid (array n-parser-ptrs boolean))
+               (prot-id      (array n-parser-ptrs 8)))))
     
     (typedef parser-to-mapper
              (struct
-              ((rx-port             8)
-               (pkt-meta            pkt-meta)
-               (rx-flags            8)
-               (pa-keys             (array  n-parser-keys     parser-key))
-               (pa-keys-valid       (array  n-parser-keys     boolean))
-               (pa-flags            (array  n-parser-flags    boolean))
-               (pa-ptrs             (array  n-parser-ptrs     8))
-               (pa-ptrs-valid       (array  n-parser-ptrs     boolean))
+              ((pa-adj-seg-len     16)
                (pa-csum-ok          2)
-               (pa-ex-stage         8)
-               (pa-ex-depth-exceed  boolean)
-               (pa-ex-trunc-header  boolean)
                (pa-drop             boolean)
+               (pa-ex-depth-exceed  boolean)
+               (pa-ex-parsing-done  boolean)
+               (pa-ex-stage         8)
+               (pa-ex-trunc-header  boolean)
+               (pa-flags            (array  n-parser-flags    boolean))
+               (pa-keys             (array  n-parser-keys     16))
+               (pa-keys-valid       (array  n-parser-keys     boolean))
                (pa-l3len-err        boolean)
-               (pa-packet-type      8))))
-    
-    (typedef classifier-keys
-             (struct 
-              ((key32 (array ffu-n-key32 ffu-key32))
-               (key16 (array ffu-n-key16 ffu-key16))
-               (key8  (array ffu-n-key8  ffu-key8)))))
-             
-    (typedef prec-val
-             (struct
-              ((prev 3)
-               (val 24))))
-
-    (typedef classifier-actions
-             (struct 
-              ((act24 (array ffu-n-act24 prec-val))
-               (act4  (array ffu-n-act4 prec-val))
-               (act1  (array ffu-n-act1 prec-val)))))
+               (pa-packet-type      16)
+               (pa-hdr-ptrs         parser-hdr-ptrs)
+               (rx-port             32)
+               (rx-length           32))))
 
     ))
 
@@ -84,9 +56,9 @@
       ((m3) (IdStyles.Convert (symbol->string sym)
                               'Lower 'Camel
                               'Hyphen 'None))
-      ((c) (IdStyles.Convert (symbol->string sym)
-                             'Lower (car c-mode)
-                             'Hyphen (cadr c-mode))))))
+      ((c)  (IdStyles.Convert (symbol->string sym)
+                              'Lower (car c-mode)
+                              'Hyphen (cadr c-mode))))))
 
 
 (define *builtins*
@@ -939,9 +911,23 @@
              (res '()))
     (if (= 0 i) res (loop (- i 1) (cons (s 'get (- i 1)) res)))))
 
+(define *last-lst*   '())
+(define *last-order* '())
+
+(define (set-diff long-lst short-lst)
+  (filter (lambda (x) (not (member? x short-lst))) long-lst))
+
 (define (rearrange-list lst order)
-  (if (not (= (length lst) (length order))) (error "length mismatch " (length lst) " " (length order)))
-  (map (lambda (o)(assoc o lst)) order))
+  (set! *last-lst*   lst)
+  (set! *last-order* order)
+;;  (if (not (= (length lst) (length order)))
+;;      (error "length mismatch " (stringify lst) " # " (stringify order)))
+
+  (let* ((all-tags  (map car lst))
+         (missing   (set-diff all-tags order))
+         (picker    (lambda (o) (assoc o lst))))
+    (append
+     (map picker missing) (map picker order))))
 
 (define (do-c-output lst odir)
   (let* ((files    (uniq-string-list (map car lst))) ;; uniq the filenames
