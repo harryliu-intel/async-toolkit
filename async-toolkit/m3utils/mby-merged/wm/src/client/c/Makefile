@@ -8,6 +8,8 @@ include ${ROOT_DIR}/../../main/c/ToolVersions.mk
 
 MBY_TCP_CLIENT = mby_tcp_client
 
+M3_DIR = ../../main/m3
+C_DIR = ../../main/c
 include ../../make/Make_c.defs
 
 TARGET_STG_O = $(MBY_TCP_CLIENT)_stages.o
@@ -50,7 +52,7 @@ endif
 
 STAGE_STRUCT_INC = ../../main/c/
 TOP_MAP_INC      = ../../main/m3/genviews/src/build_c/mby_c/src/
-INCLUDES         = -I. -I$(STAGE_STRUCT_INC) -I$(TOP_MAP_INC)
+INCLUDES         += -I. -I$(STAGE_STRUCT_INC) -I$(TOP_MAP_INC)
 
 DEFINES =
 ifeq ($(DEBUG),1)
