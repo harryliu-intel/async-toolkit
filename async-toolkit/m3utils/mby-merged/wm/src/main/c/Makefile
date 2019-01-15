@@ -6,18 +6,8 @@ ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
 C_DIR   = .
 M3_DIR  = ../m3
-MAP_DIR = ${M3_DIR}/genviews/src/build_c/mby_c/src
-SRV_DIR = ${M3_DIR}/model_server/src
 
-# set default value of DEBUG to 1
 include ../../make/Make_c.defs
-
-# Tool versions:
-include ${C_DIR}/ToolVersions.mk
-
-INCLUDES  = -I.
-INCLUDES += -I${MAP_DIR}
-INCLUDES += -I${SRV_DIR}
 
 SOURCES += mby_crc32.c
 SOURCES += mby_bitfield.c
@@ -32,6 +22,7 @@ SOURCES += mby_exactmatch.c
 SOURCES += mby_classifier.c
 SOURCES += mby_hash.c
 SOURCES += mby_nexthop.c
+SOURCES += mby_maskgen_regs.c
 SOURCES += mby_maskgen.c
 SOURCES += mby_triggers_regs.c
 SOURCES += mby_triggers.c
@@ -39,10 +30,13 @@ SOURCES += mby_congmgmt.c
 SOURCES += mby_rxstats.c
 SOURCES += mby_modifier.c
 SOURCES += mby_txstats.c
-SOURCES += mby_reg_ctrl.c
 SOURCES += mby_pipeline.c
 SOURCES += mby_errors.c
 SOURCES += mby_init.c
+SOURCES += varchar.c
+SOURCES += model_stages.c
+SOURCES += mby_stages.c
+SOURCES += fm_alos_debughash.c
 
 # used by C tests:
 SOURCES += mby_model.c
@@ -110,32 +104,38 @@ ${BLD_DIR}/%.o: %.c
 # Added dependencies:
 ${BLD_DIR}/mby_errors.o        : $(BLD_DTS) Makefile mby_errors.c        mby_errors.h
 ${BLD_DIR}/mby_crc32.o         : $(BLD_DTS) Makefile mby_crc32.c         mby_crc32.h
-${BLD_DIR}/mby_bitfield.o      : $(BLD_DTS) Makefile mby_bitfield.c                                      mby_bitfield.h
-${BLD_DIR}/mby_common.o        : $(BLD_DTS) Makefile mby_common.c        mby_common.h                    mby_bitfield.h
-${BLD_DIR}/mby_parser.o        : $(BLD_DTS) Makefile mby_parser.c        mby_parser.h      mby_common.h  mby_bitfield.h
-${BLD_DIR}/mby_mapper.o        : $(BLD_DTS) Makefile mby_mapper.c        mby_mapper.h      mby_common.h  mby_bitfield.h
-${BLD_DIR}/mby_cgrp_regs.o     : $(BLD_DTS) Makefile mby_cgrp_regs.c     mby_cgrp_regs.h   mby_common.h  mby_bitfield.h
-${BLD_DIR}/mby_clsfr_regs.o    : $(BLD_DTS) Makefile mby_cgrp_regs.c     mby_cgrp_regs.h   mby_common.h  mby_bitfield.h
-${BLD_DIR}/mby_lpm_regs.o      : $(BLD_DTS) Makefile mby_lpm_regs.c      mby_lpm_regs.h    mby_common.h  mby_bitfield.h
-${BLD_DIR}/mby_lpm.o           : $(BLD_DTS) Makefile mby_lpm.c           mby_lpm.h         mby_common.h  mby_bitfield.h
-${BLD_DIR}/mby_wcm.o           : $(BLD_DTS) Makefile mby_wcm.c           mby_wcm.h         mby_common.h  mby_bitfield.h
-${BLD_DIR}/mby_exactmatch.o    : $(BLD_DTS) Makefile mby_exactmatch.c    mby_exactmatch.h  mby_common.h  mby_bitfield.h
-${BLD_DIR}/mby_classifier.o    : $(BLD_DTS) Makefile mby_classifier.c    mby_classifier.h  mby_common.h  mby_bitfield.h
-${BLD_DIR}/mby_hash.o          : $(BLD_DTS) Makefile mby_hash.c          mby_hash.h        mby_common.h  mby_bitfield.h
-${BLD_DIR}/mby_nexthop.o       : $(BLD_DTS) Makefile mby_nexthop.c       mby_nexthop.h     mby_common.h  mby_bitfield.h
-${BLD_DIR}/mby_maskgen.o       : $(BLD_DTS) Makefile mby_maskgen.c       mby_maskgen.h     mby_common.h  mby_bitfield.h
-${BLD_DIR}/mby_triggers_regs.o : $(BLD_DTS) Makefile mby_triggers_regs.c mby_triggers.h    mby_common.h  mby_bitfield.h
-${BLD_DIR}/mby_triggers.o      : $(BLD_DTS) Makefile mby_triggers.c      mby_triggers.h    mby_common.h  mby_bitfield.h
-${BLD_DIR}/mby_congmgmt.o      : $(BLD_DTS) Makefile mby_congmgmt.c      mby_congmgmt.h    mby_common.h  mby_bitfield.h
-${BLD_DIR}/mby_rxstats.o       : $(BLD_DTS) Makefile mby_rxstats.c       mby_rxstats.h     mby_common.h  mby_bitfield.h
-${BLD_DIR}/mby_modifier.o      : $(BLD_DTS) Makefile mby_modifier.c      mby_modifier.h    mby_common.h  mby_bitfield.h
-${BLD_DIR}/mby_txstats.o       : $(BLD_DTS) Makefile mby_txstats.c       mby_txstats.h     mby_common.h  mby_bitfield.h
+${BLD_DIR}/mby_bitfield.o      : $(BLD_DTS) Makefile mby_bitfield.c                                         mby_bitfield.h
+${BLD_DIR}/mby_common.o        : $(BLD_DTS) Makefile mby_common.c        mby_common.h                       mby_bitfield.h
+${BLD_DIR}/mby_parser.o        : $(BLD_DTS) Makefile mby_parser.c        mby_parser.h         mby_common.h  mby_bitfield.h
+${BLD_DIR}/mby_mapper.o        : $(BLD_DTS) Makefile mby_mapper.c        mby_mapper.h         mby_common.h  mby_bitfield.h
+${BLD_DIR}/mby_cgrp_regs.o     : $(BLD_DTS) Makefile mby_cgrp_regs.c     mby_cgrp_regs.h      mby_common.h  mby_bitfield.h
+${BLD_DIR}/mby_clsfr_regs.o    : $(BLD_DTS) Makefile mby_cgrp_regs.c     mby_cgrp_regs.h      mby_common.h  mby_bitfield.h
+${BLD_DIR}/mby_lpm_regs.o      : $(BLD_DTS) Makefile mby_lpm_regs.c      mby_lpm_regs.h       mby_common.h  mby_bitfield.h
+${BLD_DIR}/mby_lpm.o           : $(BLD_DTS) Makefile mby_lpm.c           mby_lpm.h            mby_common.h  mby_bitfield.h
+${BLD_DIR}/mby_wcm.o           : $(BLD_DTS) Makefile mby_wcm.c           mby_wcm.h            mby_common.h  mby_bitfield.h
+${BLD_DIR}/mby_exactmatch.o    : $(BLD_DTS) Makefile mby_exactmatch.c    mby_exactmatch.h     mby_common.h  mby_bitfield.h
+${BLD_DIR}/mby_classifier.o    : $(BLD_DTS) Makefile mby_classifier.c    mby_classifier.h     mby_common.h  mby_bitfield.h
+${BLD_DIR}/mby_hash.o          : $(BLD_DTS) Makefile mby_hash.c          mby_hash.h           mby_common.h  mby_bitfield.h
+${BLD_DIR}/mby_nexthop.o       : $(BLD_DTS) Makefile mby_nexthop.c       mby_nexthop.h        mby_common.h  mby_bitfield.h
+${BLD_DIR}/mby_maskgen_regs.o  : $(BLD_DTS) Makefile mby_maskgen_regs.c  mby_maskgen_regs.h   mby_common.h  mby_bitfield.h
+${BLD_DIR}/mby_maskgen.o       : $(BLD_DTS) Makefile mby_maskgen.c       mby_maskgen.h        mby_common.h  mby_bitfield.h
+${BLD_DIR}/mby_triggers_regs.o : $(BLD_DTS) Makefile mby_triggers_regs.c mby_triggers_regs.h  mby_common.h  mby_bitfield.h
+${BLD_DIR}/mby_triggers.o      : $(BLD_DTS) Makefile mby_triggers.c      mby_triggers.h       mby_common.h  mby_bitfield.h
+${BLD_DIR}/mby_congmgmt.o      : $(BLD_DTS) Makefile mby_congmgmt.c      mby_congmgmt.h       mby_common.h  mby_bitfield.h
+${BLD_DIR}/mby_rxstats.o       : $(BLD_DTS) Makefile mby_rxstats.c       mby_rxstats.h        mby_common.h  mby_bitfield.h
+${BLD_DIR}/mby_modifier.o      : $(BLD_DTS) Makefile mby_modifier.c      mby_modifier.h       mby_common.h  mby_bitfield.h
+${BLD_DIR}/mby_txstats.o       : $(BLD_DTS) Makefile mby_txstats.c       mby_txstats.h        mby_common.h  mby_bitfield.h
 ${BLD_DIR}/mby_pipeline.o      : $(BLD_DTS) Makefile mby_pipeline.c      mby_pipeline.h
-${BLD_DIR}/mby_reg_ctrl.o      : $(BLD_DTS) Makefile mby_reg_ctrl.c      mby_reg_ctrl.h
 ${BLD_DIR}/mby_model.o         : $(BLD_DTS) Makefile mby_model.c         mby_model.h
 ${BLD_DIR}/mby_model_basic.o   : $(BLD_DTS) Makefile mby_model_basic.c   mby_model_basic.h
-${BLD_DIR}/mby_errors.o        : $(BLD_DTS) Makefile mby_errors.c        mby_errors.h      mby_model.h
+${BLD_DIR}/mby_errors.o        : $(BLD_DTS) Makefile mby_errors.c        mby_errors.h         mby_model.h
 ${BLD_DIR}/mby_init.o          : $(BLD_DTS) Makefile mby_init.c          mby_init.h
+${BLD_DIR}/varchar.o           : $(BLD_DTS) Makefile varchar.c           varchar.h
+
+${BLD_DIR}/mby_stages.o        : $(BLD_DTS) Makefile mby_stages.c        mby_stages.h
+${BLD_DIR}/model_stages.o        : $(BLD_DTS) Makefile model_stages.c        model_stages.h
+${BLD_DIR}/fm_alos_debughash.o : $(BLD_DTS) Makefile fm_alos_debughash.c fm_alos_debughash.h
+
 
 $(LIB_M3EXPT): $(OBJECTS)
 	@echo   '  Creating M3 library exports file'

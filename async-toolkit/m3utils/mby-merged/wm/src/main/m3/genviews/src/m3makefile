@@ -70,9 +70,10 @@ module   ("RegScalaNaming")
 interface("RegScalaGenerators")
 interface("RegScalaGenState")
 
-%%%%%%%%%%%%%%%%%%%%%%  C output  %%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%  C & C/SCM output  %%%%%%%%%%%%%%%%%%%%%%%%
 
 module   ("GenCUtils")
+module   ("GenScmUtils")
 
 %%%%%%%%%%%%%%%%%%%%%%  C-FM output  %%%%%%%%%%%%%%%%%%%%%%%%
 

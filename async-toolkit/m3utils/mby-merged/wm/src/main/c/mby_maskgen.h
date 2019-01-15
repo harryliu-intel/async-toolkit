@@ -9,6 +9,8 @@
 
 #include "mby_common.h"
 #include "mby_bitfield.h"
+#include "mby_maskgen_regs.h"
+#include "mby_nexthop.h"
 
 // Defines:
 
@@ -338,7 +340,7 @@
 #define MBY_ACTION_DROP_IV            10   /* dropped due to vlan ingress violation */
 #define MBY_ACTION_DROP_EV            11   /* dropped due to vlan egress violation */
 #define MBY_ACTION_DROP_CAM           12
-#define MBY_ACTION_DROP_FFU           13   /* dropped due to FFU flag */
+#define MBY_ACTION_DROP_CGRP          13   /* dropped due to CGRP flag */
 #define MBY_ACTION_DROP_TRIG          14   /* dropped due to a trigger action */
 #define MBY_ACTION_DROP_L3_PYLD_LEN   15   /* Single segment frames dropped when the L3 payload length does not agree with the actual packet length */
 #define MBY_ACTION_DROP_POLICER       16   /* dropped due the policer_drop flag from pre. */
@@ -366,16 +368,17 @@
 #define MBY_AMASK_DROP_MAC_CTRL              ( FM_LITERAL_U64(1) <<  7  )
 #define MBY_AMASK_DROP_RESERVED_MAC          ( FM_LITERAL_U64(1) <<  8  )
 #define MBY_AMASK_DROP_SMAC                  ( FM_LITERAL_U64(1) <<  10 )
-#define MBY_AMASK_DROP_SEC_ADDR              ( FM_LITERAL_U64(1) <<  11 )
-#define MBY_AMASK_DROP_SEC_PORT              ( FM_LITERAL_U64(1) <<  12 )
-#define MBY_AMASK_DROP_STATIC_ADDR           ( FM_LITERAL_U64(1) <<  13 )
-#define MBY_AMASK_DROP_PROVISIONAL           ( FM_LITERAL_U64(1) <<  14 )
+//In MBY Functional Specification Reserved <- REVISIT !!!!
+//#define MBY_AMASK_DROP_SEC_ADDR              ( FM_LITERAL_U64(1) <<  11 )
+//#define MBY_AMASK_DROP_SEC_PORT              ( FM_LITERAL_U64(1) <<  12 )
+//#define MBY_AMASK_DROP_STATIC_ADDR           ( FM_LITERAL_U64(1) <<  13 )
+//#define MBY_AMASK_DROP_PROVISIONAL           ( FM_LITERAL_U64(1) <<  14 )
 #define MBY_AMASK_TRAP_CPU_ADDR              ( FM_LITERAL_U64(1) <<  15 )
 #define MBY_AMASK_DROP_IV                    ( FM_LITERAL_U64(1) <<  16 )
 #define MBY_AMASK_DROP_INGRESS_STP_NON_LEARN ( FM_LITERAL_U64(1) <<  17 )
 #define MBY_AMASK_DROP_INGRESS_STP_LEARN     ( FM_LITERAL_U64(1) <<  18 )
-#define MBY_AMASK_DROP_FFU                   ( FM_LITERAL_U64(1) <<  19 )
-#define MBY_AMASK_TRAP_FFU                   ( FM_LITERAL_U64(1) <<  20 )
+#define MBY_AMASK_DROP_CGRP                  ( FM_LITERAL_U64(1) <<  19 )
+#define MBY_AMASK_TRAP_CGRP                  ( FM_LITERAL_U64(1) <<  20 )
 #define MBY_AMASK_TRAP_ICMP_TTL              ( FM_LITERAL_U64(1) <<  21 )
 #define MBY_AMASK_TRAP_IP_OPTION             ( FM_LITERAL_U64(1) <<  22 )
 #define MBY_AMASK_TRAP_MTU_VIO               ( FM_LITERAL_U64(1) <<  23 )
@@ -392,15 +395,15 @@
 #define MBY_AMASK_FLOOD                      ( FM_LITERAL_U64(1) <<  35 )
 #define MBY_AMASK_SWITCH_RESERVED_MAC        ( FM_LITERAL_U64(1) <<  36 )
 #define MBY_AMASK_FORWARD_NORMAL             ( FM_LITERAL_U64(1) <<  37 )
-#define MBY_AMASK_LOG_INGRESS_FFU            ( FM_LITERAL_U64(1) <<  38 )
-#define MBY_AMASK_LOG_MAC_CTRL               ( FM_LITERAL_U64(1) <<  39 )
+#define MBY_AMASK_LOG_INGRESS_CGRP           ( FM_LITERAL_U64(1) <<  38 )
+#define MBY_AMASK_LOG_RESERVED_MAC           ( FM_LITERAL_U64(1) <<  39 )
 #define MBY_AMASK_LOG_ARP_REDIRECT           ( FM_LITERAL_U64(1) <<  40 )
 #define MBY_AMASK_LOG_IP_ICMP                ( FM_LITERAL_U64(1) <<  41 )
 #define MBY_AMASK_LOG_IP_TTL                 ( FM_LITERAL_U64(1) <<  42 )
-#define MBY_AMASK_MIRROR_INGRESS_FFU         ( FM_LITERAL_U64(1) <<  43 )
+#define MBY_AMASK_MIRROR_INGRESS_CGRP        ( FM_LITERAL_U64(1) <<  43 )
 
 #define MBY_LOG_TYPE_TRIG_LOG_ACTION         (1 << 0)
-#define MBY_LOG_TYPE_FFU                     (1 << 1)
+#define MBY_LOG_TYPE_CGRP                    (1 << 1)
 #define MBY_LOG_TYPE_RESERVED_MAC            (1 << 2)
 #define MBY_LOG_TYPE_ARP_REDIRECT            (1 << 3)
 #define MBY_LOG_TYPE_ICMP                    (1 << 4)
@@ -415,19 +418,10 @@
 #define MBY_SV_MOVE_DROP_ADDR                2
 #define MBY_SV_MOVE_DROP_STATIC              3
 
-#define MBY_DEFAULT_DMASK                    0xFFFFFF
+#define MBY_DEFAULT_DMASK                    0xFFFFFFFFFFFFFFFF
 #define MBY_AMASK_WIDTH                      38
 
 // Enums:
-
-typedef enum mbyGlortRamStrictEnum
-{
-    MBY_GLORT_RAM_STRICT_HASHED                        = 0,
-    MBY_GLORT_RAM_STRICT_RSVD                          = 1,
-    MBY_GLORT_RAM_STRICT_TARGETED_DETERMINISTIC        = 2,
-    MBY_GLORT_RAM_STRICT_DETERMINISTIC                 = 3
-
-} mbyGlortRamStrict;
 
 typedef enum mbyIeeeReservedMacActionActionEnum
 {
@@ -448,86 +442,21 @@ typedef enum mbyFclassTypeEnum
 
 // Structs:
 
-typedef struct mbyFwdPortCfg1Struct
-{
-    fm_bool           LEARNING_ENABLE;
-    fm_bool           FILTER_VLAN_INGRESS;
-    fm_uint32         DESTINATION_MASK;
-
-} mbyFwdPortCfg1;
-
-typedef struct mbyFwdPortCfg2Struct
-{
-    fm_uint32         DESTINATION_MASK;
-
-} mbyFwdPortCfg2;
-
-typedef struct mbyFwdSysCfg1Struct
-{
-    fm_bool           STORE_TRAP_ACTION;
-    fm_bool           DROP_MAC_CTRL_ETHERTYPE;
-    fm_bool           DROP_INVALID_SMAC;
-    fm_bool           ENABLE_TRAP_PLUS_LOG;
-    fm_bool           TRAP_MTU_VIOLATIONS;
-
-} mbyFwdSysCfg1;
-
-typedef struct mbyFwdSysCfgRouterStruct
-{
-    fm_bool           TRAP_IP_OPTIONS;
-    fm_byte           TRAP_TTL1;
-
-} mbyFwdSysCfgRouter;
-
-typedef struct mbyFwdLagCfgStruct
-{
-    fm_bool           IN_LAG;
-    fm_bool           HASH_ROTATION;
-    fm_byte           INDEX;
-    fm_byte           LAG_SIZE;
-
-} mbyFwdLagCfg;
-
-typedef struct mbyGlortDestTableStruct
-{
-    fm_uint16         IP_MULTICAST_INDEX;
-    fm_uint32         DEST_MASK;
-
-} mbyGlortDestTable;
-
-
-typedef struct mbyGlortRamStruct
-{
-    fm_bool           SKIP_DGLORT_DEC;
-    fm_bool           HASH_ROTATION;
-    fm_byte           DEST_COUNT;
-    fm_byte           RANGE_SUB_INDEX_B;
-    fm_byte           RANGE_SUB_INDEX_A;
-    fm_uint16         DEST_INDEX;
-    mbyGlortRamStrict STRICT;
-
-} mbyGlortRam;
-
-typedef struct mbyGlortCamStruct
-{
-    fm_uint16         KEY_INVERT;
-    fm_uint16         KEY;
-
-} mbyGlortCam;
-
 typedef struct mbyMaskGenToTriggersStruct
 {
     fm_uint32         ACTION;                                 ///< resolved action
     fm_uint64         AMASK;                                  ///< 46-bit action mask
     fm_byte           CPU_CODE;                               ///< 4-bit CPU code
     fm_bool           CPU_TRAP;                               ///< flag indicating frame should be sent to CPU
+    fm_uint16         CSGLORT;                                ///< 16-bit canonical source GLORT
     fm_bool           DA_HIT;                                 ///< destination MAC address lookup hit
     fm_uint64         DMASK[MBY_DMASK_REGISTERS];             ///< 258-bit destination mask
     fm_bool           DROP_TTL;
     fm_byte           FCLASS;                                 ///< class state (Unicast, Broadcast or Multicast) detected
-    fm_uint32         FNMASK;                                 ///< 24-bit normal forwarding mask
     fm_bool           GLORT_CAM_MISS;
-    fm_uint32         GLORT_DMASK;                            ///< 24-bit GLORT-based destination mask
+    fm_uint64         GLORT_DMASK[MBY_DMASK_REGISTERS];       ///< 258-bit GLORT-based destination mask
+    fm_uint32         HASH_ROT_A;                             ///< rotation A hash value
+    fm_uint32         HASH_ROT_B;                             ///< rotation B hash value
     fm_uint16         IDGLORT;                                ///< 16-bit ingress destination GLORT
     fm_uint16         IP_MCAST_IDX;                           ///< index into the MCAST_VLAN_TABLE
     fm_bool           IS_IPV4;                                ///< packet is of type IP v4
@@ -542,6 +471,7 @@ typedef struct mbyMaskGenToTriggersStruct
     fm_byte           LOG_AMASK;                              ///< 6-bit logging action mask
     fm_bool           MAC_MOVED;                              ///< flag indicating that a non-secure MAC was found
     fm_bool           MARK_ROUTED;                            ///<
+    fm_bool           MCAST_EPOCH;                            ///< current epoch for multicast garbage collection flag
     fm_uint32         MIRROR0_PORT;                           ///< mirror 0 port
     fm_uint32         MIRROR0_PROFILE_IDX;                    ///< mirror 0 profile index
     fm_byte           MIRROR0_PROFILE_V;                      ///< mirror 0 profile valid
@@ -549,22 +479,20 @@ typedef struct mbyMaskGenToTriggersStruct
     fm_uint32         MIRROR1_PROFILE_IDX;                    ///< mirror 1 profile index
     fm_byte           MIRROR1_PROFILE_V;                      ///< mirror 1 profile valid
     fm_byte           OPERATOR_ID;                            ///< 4-bit operator ID
+    fm_bool           PA_L3LEN_ERR;                           ///< l3 length error
     fm_uint32         PRE_RESOLVE_ACTION;
     fm_uint16         PRE_RESOLVE_DGLORT;
     fm_uint64         PRE_RESOLVE_DMASK[MBY_DMASK_REGISTERS];
     fm_bool           QCN_MIRROR0_PROFILE_V;                  ///< qcn mirror 0 profile valid
     fm_bool           QCN_MIRROR1_PROFILE_V;                  ///< qcn mirror 1 profile valid
     fm_byte           QOS_TC;                                 ///< 4-bit switch priority
-    fm_uint32         RX_LENGTH;                              ///< RX packet length
     fm_bool           RX_MIRROR;                              ///< rx mirror frame
     fm_uint32         RX_PORT;                                ///< RX port number
-    fm_bool           SAF_ERROR;                              ///< SAF error
     fm_byte           SEG_META_ERR;                           ///< segment error
     fm_bool           SKIP_DGLORT_DEC;
     fm_bool           STORE_TRAP_ACTION;                      ///< flag indicating whether 4bit trap action code will be stored in metadata
     fm_bool           STRICT_GLORT_ROUTING;
     fm_bool           TARGETED_DETERMINISTIC;                 ///< mode is set to targeted deterministic
-    fm_bool           TX_DROP;                                ///< flag indicating packet drop
     fm_byte           XCAST;                                  ///< indicate Unicast, Multicast, or Broadcast
     // pass-thru:
     fm_byte           CGRP_TRIG;                              ///< classifier action triggers
@@ -577,15 +505,25 @@ typedef struct mbyMaskGenToTriggersStruct
     fm_uint32         MOD_IDX;                                ///< index into the MODIFY descriptor tables
     fm_byte           MOD_PROF_IDX;                           ///< modify profile index
     fm_bool           OOM;                                    ///< out of memory
+    fm_bool           PA_DROP;                                ///< checksum validation error, drop pkt in tail proc
     mbyParserInfo     PARSER_INFO;                            ///< parser info struct
     mbyParserHdrPtrs  PA_HDR_PTRS;                            ///< parser header pointers
     fm_bool           PM_ERR;                                 ///< ECC error on PM
     fm_bool           PM_ERR_NONSOP;
     fm_byte           QOS_L3_DSCP;                            ///< 6-bit QOS Differentiated Services Code Point (DSCP)
-    fm_byte         * RX_DATA;                                ///< ingress (receive) packet data
     fm_uint64         TAIL_CSUM_LEN;                          ///< L4 CSUM related information
     fm_byte           TRAFFIC_CLASS;                          ///< 3-bit traffic class
     fm_byte           TX_TAG;                                 ///< egress tag
+    fm_uint32         RX_LENGTH;                              ///< Ingress packet data length [bytes]
 } mbyMaskGenToTriggers;
+
+void MaskGen
+(
+    mby_ppe_fwd_misc_map  const * const fwd_misc,
+    mby_ppe_mst_glort_map const * const glort_map,
+    mby_ppe_cm_apply_map  const * const cm_apply,
+    mbyNextHopToMaskGen   const * const in,
+    mbyMaskGenToTriggers        * const out
+);
 
 #endif

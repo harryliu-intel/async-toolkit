@@ -3,4 +3,4 @@
 
 void write_field(void *field, unsigned long value);
 
-#endif /* MODEL_C_WRITE_H */
+#endif /* ~ MODEL_C_WRITE_H */

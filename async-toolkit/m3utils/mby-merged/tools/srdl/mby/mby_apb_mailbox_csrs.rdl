@@ -1,6 +1,6 @@
 //
 //
-`include "lib_udp.rdl"
+`include "mby_lib_udp.rdl"
 `include "mby_apb_mailbox_csrs.rdlh"
 
     addrmap mby_apb_mailbox_csrs {                // Start the Address Map for mby_apb_mailbox_csrs

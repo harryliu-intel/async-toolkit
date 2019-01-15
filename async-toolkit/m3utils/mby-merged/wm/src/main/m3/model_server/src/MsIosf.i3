@@ -1,6 +1,6 @@
 INTERFACE MsIosf;
 IMPORT ModelServer;
-IMPORT ModelServerClass;
+IMPORT ModelServerSuper;
 IMPORT FmModelMessageHdr;
 IMPORT NetContext;
 IMPORT Rd, Wr, Thread;
@@ -23,11 +23,11 @@ IMPORT Rd, Wr, Thread;
 *)
 
 
-PROCEDURE HandleMsg(m            : ModelServerClass.MsgHandler;
+PROCEDURE HandleMsg(m            : ModelServerSuper.MsgHandler;
                     READONLY hdr : FmModelMessageHdr.T;
                     VAR cx       : NetContext.T;
-                    inst         : ModelServerClass.Instance)
-  RAISES { Rd.EndOfFile, Rd.Failure, ModelServer.ParseError, Thread.Alerted, Wr.Failure };
+                    inst         : ModelServerSuper.Instance)
+  RAISES { Rd.EndOfFile, Rd.Failure, ModelServerSuper.ParseError, Thread.Alerted, Wr.Failure };
 
 CONST Brand = "MsIosf";
         

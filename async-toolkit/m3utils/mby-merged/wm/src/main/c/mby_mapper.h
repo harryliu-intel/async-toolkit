@@ -7,7 +7,9 @@
 
 // Includes:
 
+#include "nulltype.h"
 #include "mby_common.h"
+#include "mby_par2map.h"
 
 // Defines:
 
@@ -315,30 +317,40 @@ typedef struct mbyMapRewriteStruct
 
 typedef struct mbyMapperToClassifierStruct
 {
-    mbyClassifierActions    CLASSIFIER_ACTIONS;///< classifier actions
-    mbyClassifierKeys       CLASSIFIER_KEYS;   ///< classifier TCAM lookup keys
-    fm_byte                 PACKET_PROFILE;    ///< 6-bit packet profile ID
-    fm_bool                 IP_OPTION[2];      ///< trap_ip_iptions count
-    fm_uint16               L2_IDOMAIN;        ///< L2 ingress domain
-    fm_uint16               L2_IVLAN1_CNT;     ///< ingress VLAN counter
-    fm_byte                 L3_IDOMAIN;        ///< L3 ingress domain
-    fm_bool                 LEARN_MODE;        ///< learning mode: 0=SVL, 1=IVL
-    fm_bool                 NO_PRI_ENC;        ///< mapper priority encoding
-    fm_bool                 NAD;               ///< NAD (former operator ID)
-    fm_bool                 OTR_MPLS_V;        ///< parser outer MPLS packet valid
-    fm_bool                 PARSER_ERROR;      ///< header parse error
-    mbyParserInfo           PARSER_INFO;       ///< parser info structure
-    fm_byte                 PRIORITY_PROFILE;  ///< 5-bit classifier priority profile
-    fm_uint32               RX_PORT;           ///< ingress port
-    fm_byte                 TRAFFIC_CLASS;     ///< 3-bit traffic class
+    mbyClassifierActions CLASSIFIER_ACTIONS;///< Classifier actions
+    mbyClassifierKeys    CLASSIFIER_KEYS;   ///< Classifier TCAM lookup keys
+    fm_byte              PACKET_PROFILE;    ///< 6-bit packet profile ID
+    fm_bool              IP_OPTION[2];      ///< Trap_ip_iptions count
+    fm_uint16            L2_IDOMAIN;        ///< L2 ingress domain
+    fm_uint16            L2_IVLAN1_CNT;     ///< Ingress VLAN counter
+    fm_byte              L3_IDOMAIN;        ///< L3 ingress domain
+    fm_bool              LEARN_MODE;        ///< Learning mode: 0=SVL, 1=IVL
+    fm_bool              NO_PRI_ENC;        ///< Mapper priority encoding
+    fm_bool              NAD;               ///< NAD (former operator ID)
+    fm_bool              OTR_MPLS_V;        ///< Parser outer MPLS packet valid
+    fm_bool              PARSER_ERROR;      ///< Header parse error
+    mbyParserInfo        PARSER_INFO;       ///< Parser info structure
+    fm_byte              PRIORITY_PROFILE;  ///< 5-bit classifier priority profile
+    fm_uint32            RX_PORT;           ///< Ingress port
+    fm_byte              TRAFFIC_CLASS;     ///< 3-bit traffic class
     // pass-thru:
-    fm_bool                 PARITY_ERROR;      ///< parity error detected flag
-    fm_bool                 PA_DROP;           ///< checksum validation error, drop pkt in tail
-    mbyParserHdrPtrs        PA_HDR_PTRS;       ///< parser header pointers
-    fm_bool                 PA_L3LEN_ERR;      ///< l3 length error
-    fm_byte               * RX_DATA;           ///< ingress (receive) packet data
-    fm_uint32               RX_LENGTH;         ///< ingress packet data length [bytes]
-
+    fm_bool              PARITY_ERROR;      ///< parity error detected flag
+    fm_bool              PA_DROP;           ///< checksum validation error, drop pkt in tail
+    mbyParserHdrPtrs     PA_HDR_PTRS;       ///< parser header pointers
+    fm_bool              PA_L3LEN_ERR;      ///< l3 length error
+    fm_uint32            RX_LENGTH;         ///< Ingress packet data length [bytes]
 } mbyMapperToClassifier;
+
+typedef mby_ppe_mapper_map       Mapper_rstate_t;
+typedef NullType                 Mapper_wstate_t;
+typedef mbyParserToMapper        Mapper_in_t;
+typedef mbyMapperToClassifier    Mapper_out_t;
+
+void Mapper
+(
+    mby_ppe_mapper_map    const * const mapper_map,
+    mbyParserToMapper     const * const in,
+    mbyMapperToClassifier       * const out
+);
 
 #endif // MBY_MAPPER_H

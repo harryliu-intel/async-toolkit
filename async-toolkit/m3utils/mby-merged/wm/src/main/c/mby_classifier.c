@@ -37,14 +37,14 @@ static void resolveActionSet
     fm_byte prec   = FM_GET_FIELD        (action, MBY_CGRP_ACTION, PREC);
     fm_byte encode = FM_GET_UNNAMED_FIELD(action, MBY_CGRP_ACTION_l_ENTRYTYPE, 5);
 
-    mbyClassifierActionEntryType entryType =
+    mbyClassifierActionEntryType entry_type =
         (encode == 1)                ? MBY_CGRP_ACTION_SET4_4B  :
         (encode == 2)                ? MBY_CGRP_ACTION_SET8_1B  :
         (encode == 4)                ? MBY_CGRP_ACTION_SET3_1B  :
         (((encode >> 3) & 0x3) == 1) ? MBY_CGRP_ACTION_SET3_4B  :
         (((encode >> 4) & 0x1) == 1) ? MBY_CGRP_ACTION_SET1_24B : MBY_CGRP_ACTION_NOP;
 
-    switch (entryType)
+    switch (entry_type)
     {
         case MBY_CGRP_ACTION_SET4_4B:
         {
@@ -807,8 +807,7 @@ void Classifier
     out->PA_DROP         = in->PA_DROP;
     out->PA_HDR_PTRS     = in->PA_HDR_PTRS;
     out->PA_L3LEN_ERR    = in->PA_L3LEN_ERR;
-    out->RX_DATA         = in->RX_DATA;
-    out->RX_LENGTH       = in->RX_LENGTH;
     out->RX_PORT         = in->RX_PORT;
     out->TRAFFIC_CLASS   = in->TRAFFIC_CLASS;
+    out->RX_LENGTH = in->RX_LENGTH;
 }

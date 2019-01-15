@@ -13,7 +13,6 @@
 #include <mby_nexthop.h>
 #include <mby_parser.h>
 #include <mby_pipeline.h>
-#include <mby_reg_ctrl.h>
 #include <mby_rxstats.h>
 #include <mby_triggers.h>
 #include <mby_txstats.h>

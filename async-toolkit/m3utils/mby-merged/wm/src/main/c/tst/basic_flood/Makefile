@@ -4,69 +4,14 @@
 
 ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
-COM_DIR = ../common
-C_DIR   = ../../../c
-M3_DIR  = ../../../m3
-MAP_DIR = ${M3_DIR}/genviews/src/build_c/mby_c/src
-
-# Tool versions:
-include ${C_DIR}/ToolVersions.mk
-
-INCLUDES  = -I.
-INCLUDES += -I$(COM_DIR)
-INCLUDES += -I$(MAP_DIR)
-INCLUDES += -I$(C_DIR)
+include ../make/Make.defs
 
 SOURCES  = mby_basic_flood_test.c
 SOURCES += mby_basic_flood_init.c
 
-# Build dir:
-OS_TARG = AMD64_LINUX
-BLD_DIR = $(OS_TARG)
-BLD_DTS = ${BLD_DIR}/.time_stamp
-
 OBJECTS = $(addprefix ${BLD_DIR}/,$(SOURCES:.c=.o))
 
-# Functional Model (a.k.a. White Model) static library:
-WM_LIB   = ${C_DIR}/${BLD_DIR}/libmby_c_model.a
-
-# Common test static library (includes write_field() function):
-COM_LIB  = ${COM_DIR}/${BLD_DIR}/libmodel_c_write.a
-
 TARGET   = ${BLD_DIR}/mby_basic_flood_test
-
-ifeq ($(VERBOSE),1)
-ECHO :=
-else
-ECHO := @
-endif
-
-CFLAGS  = -std=gnu99
-CFLAGS += -Wno-long-long
-CFLAGS += -Wextra
-CFLAGS += -Wall
-CFLAGS += -Werror
-CFLAGS += -Wno-missing-field-initializers
-CFLAGS += -Wno-unused
-CFLAGS += -pedantic-errors
-CFLAGS += -fPIC
-CFLAGS += -Wno-variadic-macros
-CFLAGS += -Wno-override-init
-
-ifeq ($(DEBUG),1)
-CFLAGS += -O0 -g -ggdb3
-else
-CFLAGS += -O1
-endif
-
-DEFINES   = -D_GNU_SOURCE
-DEFINES  += -D_FM_ARCH_x86_64
-ifeq ($(DEBUG),1)
-endif
-
-LDFLAGS =
-
-DELFILES = $(BLD_DIR) *.o *.so *.log
 
 .PHONY: all
 all: $(BLD_DTS) $(OBJECTS) $(TARGET)

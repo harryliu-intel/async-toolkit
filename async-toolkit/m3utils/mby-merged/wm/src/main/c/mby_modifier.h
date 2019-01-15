@@ -9,6 +9,8 @@
 
 #include "mby_common.h"
 #include "mby_bitfield.h"
+#include "mby_par_hdr_ptrs.h" // mbyParserHdrPtrs
+#include "varchar.h"
 
 // Defines:
 
@@ -48,7 +50,7 @@
 #define MBY_MOD_CMD_l_LUT                       15
 #define MBY_MOD_CMD_h_LUT                       17
 #define MBY_MOD_CMD_b_S                         16
-#define MBY_MOD_CMD_b_M                         16
+#define MBY_MOD_CMD_b_M                         17
 #define MBY_MOD_CMD_l_SHIFT                     16
 #define MBY_MOD_CMD_h_SHIFT                     17
 #define MBY_MOD_CMD_b_PROT_DEL                  18
@@ -611,8 +613,6 @@ typedef struct mbyTxInToModifierStruct
     fm_bool                 PM_ERR;        // ECC error on PM
     fm_bool                 PM_ERR_NONSOP; //
     fm_byte                 QOS_L3_DSCP;   // 6-bit QOS Differentiated Services Code Point (DSCP)
-    fm_byte               * RX_DATA;       // ingress (receive) packet data
-    fm_uint32               RX_LENGTH;     // ingress packet data length [bytes]
     fm_bool                 SAF_ERROR;     // SAF error
     fm_uint64               TAIL_CSUM_LEN; // L4 CSUM related information
     fm_byte               * TX_DATA;       // egress (transmit) packet data
@@ -625,12 +625,27 @@ typedef struct mbyTxInToModifierStruct
 typedef struct mbyModifierToTxStatsStruct
 {
     fm_bool                 NO_PRI_ENC;      // do not use priority encoding, use default enc.
-    fm_byte               * TX_DATA;         // egress packet data
+  //    fm_byte               * TX_DATA;         // egress packet data
     fm_uint16               TX_DISP;         // egress frame disposition
-    fm_uint32               TX_LENGTH;       // egress packet data length [bytes]
+  //    fm_uint32               TX_LENGTH;       // egress packet data length [bytes]
     fm_uint32               TX_PORT;         // egress port
     fm_uint32               TX_STATS_LENGTH; // egress packet data stats length [bytes]
+    mbyParserHdrPtrs        PA_HDR_PTRS;     // parser header pointers
 
 } mbyModifierToTxStats;
+
+typedef mbyTxInToModifier Modifier_in_t;
+
+typedef mbyModifierToTxStats Modifier_out_t;
+
+void Modifier
+(
+    mby_ppe_modify_map    const * const mod_map,
+    mby_shm_map           const * const shm_map,
+    varchar_t             const *       rx_data,
+    mbyTxInToModifier     const * const in,
+    mbyModifierToTxStats        * const out,
+    varchar_builder_t           * const tx_data_builder
+);
 
 #endif

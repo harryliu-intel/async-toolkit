@@ -7,6 +7,7 @@ ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 C_DIR   = ../../../c
 M3_DIR  = ../../../m3
 MAP_DIR = ${M3_DIR}/genviews/src/build_c/mby_c/src
+SRV_DIR = ${M3_DIR}/model_server/src
 
 # Tool versions:
 include ${C_DIR}/ToolVersions.mk
@@ -14,11 +15,12 @@ include ${C_DIR}/ToolVersions.mk
 INCLUDES  = -I.
 INCLUDES += -I$(C_DIR)
 INCLUDES += -I$(MAP_DIR)
+INCLUDES += -I$(SRV_DIR)
 
 SOURCES  = ${C_DIR}/uint.c
 SOURCES += ${C_DIR}/fm_alos_debughash.c
 SOURCES += ${MAP_DIR}/mby_top_map.c
-SOURCES += model_c_write.c
+SOURCES += tst_model_c_write.c
 
 # Build dir:
 OS_TARG = AMD64_LINUX

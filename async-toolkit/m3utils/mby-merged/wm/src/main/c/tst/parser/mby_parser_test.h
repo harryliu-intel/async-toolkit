@@ -10,9 +10,21 @@
 #define COLOR_GREEN   "\x1b[32m"
 #define COLOR_RESET   "\x1b[0m"
 
+/* The Parser input struct now has a fixed-size array that stores only the
+ * first 192B of the frame.  In practice, we can't reuse the same struct also
+ * to define the test cases, so I am creating a new type that is backward
+ * compatible
+ */
+typedef struct {
+    fm_uint32   RX_PORT;
+    fm_uint32   RX_LENGTH;
+    fm_byte   * RX_DATA;
+} parserTestIn;
+
+
 struct TestData
 {
-    mbyRxMacToParser  in;
+    parserTestIn      in;
     mbyParserToMapper out;
     char *            name;
 };

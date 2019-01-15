@@ -89,6 +89,7 @@
 #define MBY_CGRP_ROUTE_l_DGLORT        0
 #define MBY_CGRP_ROUTE_h_DGLORT        15
 #define MBY_CGRP_ROUTE_b_FLOODSET      16
+#define MBY_CGRP_ROUTE_b_GLORT_FWD     17
 
 /* Bit numbers when RouteType==ARP */
 #define MBY_CGRP_ROUTE_l_ARP_INDEX     0
@@ -113,7 +114,7 @@
 #define MBY_SV_MOVE_DROP_STATIC       3
 
 #define MBY_LOG_TYPE_TRIG_LOG_ACTION  (1 << 0)
-#define MBY_LOG_TYPE_FFU              (1 << 1)
+#define MBY_LOG_TYPE_CGRP             (1 << 1)
 #define MBY_LOG_TYPE_RESERVED_MAC     (1 << 2)
 #define MBY_LOG_TYPE_ARP_REDIRECT     (1 << 3)
 #define MBY_LOG_TYPE_ICMP             (1 << 4)
@@ -123,7 +124,7 @@
 /* Trap codes which forms lower 8-bit of CPU-glort. */
 /* See RRC Bug 22835.  Changed twice to match RTL change 271047. */
 /* cpuCode changed to match RTL (src/rtl/hlp/common/hlp_pkg.vh) : */
-#define MBY_CPU_CODE_FFU              0x0;
+#define MBY_CPU_CODE_CGRP             0x0;
 #define MBY_CPU_CODE_RSVD_MAC         0x1;
 #define MBY_CPU_CODE_IGMP             0x2;
 #define MBY_CPU_CODE_ICMP             0x3;

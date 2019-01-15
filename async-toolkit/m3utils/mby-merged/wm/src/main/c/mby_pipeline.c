@@ -36,17 +36,17 @@ void RxPipeline
     mby_ppe_rx_stats_map__addr        const * const stats_map_w           = &(rx_top_map_w->stats);
 
     // Intermediate structs:
-    mbyParserToMapper     par2map;
-    mbyMapperToClassifier map2cla;
-    mbyClassifierToHash   cla2hsh;
-    mbyHashToNextHop      hsh2nxt;
-    mbyNextHopToMaskGen   nxt2msk;
-    mbyMaskGenToTriggers  msk2trg;
-    mbyTriggersToCongMgmt trg2cgm;
-    mbyCongMgmtToRxStats  cgm2rxs;
+    mbyParserToMapper     par2map = { 0 };
+    mbyMapperToClassifier map2cla = { 0 };
+    mbyClassifierToHash   cla2hsh = { 0 };
+    mbyHashToNextHop      hsh2nxt = { 0 };
+    mbyNextHopToMaskGen   nxt2msk = { 0 };
+    mbyMaskGenToTriggers  msk2trg = { 0 };
+    mbyTriggersToCongMgmt trg2cgm = { 0 };
+    mbyCongMgmtToRxStats  cgm2rxs = { 0 };
 
     // RX pipeline stages:
-    Parser     (parser_map,          mac2par, &par2map);
+    Parser     (parser_map,           mac2par, &par2map);
 
     Mapper     (mapper_map,          &par2map, &map2cla);
 
@@ -61,7 +61,7 @@ void RxPipeline
 
     MaskGen    (fwd_misc_map,
                 mst_glort_map,
-                cm_apply_map,        &nxt2msk, &msk2trg);
+                cm_apply_map,                &nxt2msk, &msk2trg);
 
     Triggers   (trig_apply_map,
                 trig_apply_map_w,
@@ -69,6 +69,7 @@ void RxPipeline
                 trig_apply_misc_map_w,
                 fwd_misc_map,
                 fwd_misc_map_w,
+                cm_apply_map,
                 mapper_map,          &msk2trg, &trg2cgm);
 
     CongMgmt   (cm_apply_map,
@@ -83,23 +84,22 @@ void TxPipeline
     mby_ppe_tx_top_map       const * const tx_top_map,
     mby_ppe_tx_top_map__addr const * const tx_top_map_w,
     mby_shm_map              const * const shm_map,
+    varchar_t                const *       rx_data,
     mbyTxInToModifier        const * const txi2mod,
     mbyTxStatsToTxMac              * const txs2mac,
-    fm_uint32                        const max_pkt_size
+    varchar_builder_t              * const tx_data_builder
 )
 {
     // Register map structs:
     mby_ppe_modify_map const * const modify_map = &(tx_top_map->modify);
 
-    // Intermediate struct. Setting TX_DATA will be fixed with tx stats <--REVISIT!!!
+    // Intermediate struct.
     mbyModifierToTxStats mod2txs;
-    mod2txs.TX_DATA = txs2mac->TX_DATA;
 
     // TX pipeline stages:
-    Modifier(modify_map, shm_map, txi2mod, &mod2txs, max_pkt_size);
+    Modifier(modify_map, shm_map, rx_data, txi2mod, &mod2txs, tx_data_builder);
 
-    // Setting TX length and port  will be fixed with tx stats <--REVISIT!!!
-    txs2mac->TX_LENGTH = mod2txs.TX_LENGTH;
+    // Setting TX port  will be fixed with tx stats <--REVISIT!!!
     txs2mac->TX_PORT   = mod2txs.TX_PORT;
 
 //  TxStats    (modify_map,    &mod2txs,  txs2mac);
