@@ -956,7 +956,7 @@
              (output-matching untagged)
 
              (do-c-trailer fn wr)
-             
+             (Wr.Close (cadr w))
              ))
          wrs)
     files
