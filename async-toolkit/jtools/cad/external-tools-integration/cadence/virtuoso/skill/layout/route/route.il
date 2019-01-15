@@ -526,7 +526,8 @@
 (defun ConvertFill (@key (CV (geGetEditCellView)))
   (foreach fig CV->shapes
            (when fig->objType=="rect" && fig->pin==nil &&
-                 (fig->net->name=="floatiss_" || (strncmp fig->net->name "syn_generated" 13)==0)
+                 (fig->net->name=="floatiss_" || (strncmp fig->net->name "syn_generated" 13)==0 ||
+                                  fig->net->name==GNDNetName || fig->net->name==VddNetName)
                  fig->lpp = (list (car fig->lpp) "fill")
                  fig->net = nil
                  )
