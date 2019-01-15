@@ -12,6 +12,7 @@ V_DIRS        = -d=../../igr/rtl \
                 -d=../../shared/rtl \
                 -d=../../shared/interfaces \
                 -d=../../../../../target/mby/mgm_run/igr/src \
+		-d=../../../../../target/mby/mgm_run/post_ppe/src \
                 -d=../../../../../target/mby/mgm_run/rtl \
                 -d=../rtl
 V_LIBS        =

@@ -139,11 +139,11 @@ class mby_smm_bfm_mwr_req
    // ------------------------------------------------------------------------
    function void mwr_req(T_req mem_req);
       // TODO: parameterize these definitions
-      logic [13:0]  addr;     // Memory write address
-      logic [511:0] wr_data;  // Memory write data
+      bit [ADDR_WIDTH-1:0]  addr;     // Memory write address
+      bit [MSH_DATA_WIDTH-1:0] wr_data;  // Memory write data
       
-      logic [3:0]   node_row; // SMM BFM node column
-      logic [2:0]   node_col; // SMM BFM node row
+      bit [NUM_MSH_ROWS-1:0]   node_row; // SMM BFM node column
+      bit [NUM_MSH_COLS-1:0]   node_col; // SMM BFM node row
       
       addr     = mem_req.data_pkt.mim_wr_seg_ptr[13:0];
       node_row = mem_req.data_pkt.mim_wr_seg_ptr[17:14];

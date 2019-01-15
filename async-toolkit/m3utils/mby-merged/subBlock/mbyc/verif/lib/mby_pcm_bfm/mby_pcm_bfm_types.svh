@@ -56,9 +56,10 @@ typedef logic mby_pcm_bfm_debg_t;
 
 // These are the modes of operation of the PCM BFM, variable to be included in
 // the configuration object.
-typedef enum bit {
+typedef enum bit[1:0]  {
    PCM_BFM_IGR_MODE,
-   PCM_BFM_EGR_MODE
+   PCM_BFM_EGR_MODE, 
+   PCM_BRM_PLCR_MODE
 } mby_pcm_bfm_mode_t;
 
 // -------------------------------------------------------------------------

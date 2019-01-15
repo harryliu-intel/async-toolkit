@@ -44,7 +44,7 @@
 //     T_data     - data type (expecting to be a struct)
 //
 //-----------------------------------------------------------------------------
-class mby_smm_bfm_row_wr_req_xaction extends mby_base_sequence_item
+class mby_smm_bfm_row_wr_req_xaction extends mby_base_sequence_item_param
 #(
    .T_data (mby_smm_bfm_row_wr_req_t)
 );

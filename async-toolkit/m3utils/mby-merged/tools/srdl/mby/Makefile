@@ -46,14 +46,34 @@ include $(MODEL_ROOT)/tools/srdl/Makefile
 
 ppe_ral : $(RESULTS_SUBBLOCK)/mby_ppe_rx_top_map.allral.done cp_ppe_rx_ral
 mesh_ral: $(RESULTS_SUBBLOCK)/mby_mesh_row_map.allral.done cp_mesh_ral
+igr_rx_pb_ral: $(RESULTS_SUBBLOCK)/mby_rx_pb_map.allral.done cp_igr_rx_pb_ral
 
 cp_mesh_ral: $(RESULTS_SUBBLOCK)/mby_mesh_row_map.allral.done
 	cp $(RESULTS_SUBBLOCK)/mby_mesh_row_map.ralf_out/*.sv $(MODEL_ROOT)/subBlock/mbyc/verif/mesh/ral/
 	echo "mesh ral generated"
 	
+cp_igr_rx_pb_ral: $(RESULTS_SUBBLOCK)/mby_rx_pb_map.allral.done
+	cp $(RESULTS_SUBBLOCK)/mby_rx_pb_map.ralf_out/*.sv $(MODEL_ROOT)/subBlock/mbyc/verif/ingress/ral/
+	cp $(RESULTS_SUBBLOCK)/mby_rx_pb_map/* $(MODEL_ROOT)/subBlock/mbyc/src/csrs/mby/output/sverilog/
+	echo "rx_pb ral rtl generated"
+
 cp_ppe_rx_ral: $(RESULTS_SUBBLOCK)/mby_ppe_rx_top_map.allral.done
 #	$(MODEL_ROOT)/tools/srdl/ral_make_hdl.pl --dir target/GenRTL/regflow/mby/subblock/mby_ppe_rx_top_map.ralf_out/ --model_root $(MODEL_ROOT) --filename_ral mby_ppe_rx_ral.hdl
 	cp $(RESULTS_SUBBLOCK)/mby_ppe_rx_top_map.ralf_out/*.sv $(MODEL_ROOT)/subBlock/mbyc/verif/rx_ppe/ral/
 	echo "RX PPE ral generated"
 # genrdl: $(SHELL_CTL_RDL)
 
+
+# Use pattern rules rather than copy-paste-rename a separate set of rules for each block.
+# ppe and mesh will still use rules above.  Targets that match below will use rules below.
+%_ral: cp_%_ral cp_%_rtl
+	@echo "$* ral & rtl generated"
+
+cp_%_ral: $(RESULTS_SUBBLOCK)/mby_%_map.allral.done
+	cp $(RESULTS_SUBBLOCK)/mby_$*_map.ralf_out/*.sv $(MODEL_ROOT)/subBlock/mbyc/verif/$*/ral/
+
+cp_%_rtl: $(RESULTS_SUBBLOCK)/mby_%_map.allral.done
+	cp $(RESULTS_SUBBLOCK)/mby_$*_map/* $(RTLDIR)/
+
+# Set RTLDIR for each block
+cp_mce_rtl: RTLDIR = $(MODEL_ROOT)/subBlock/mbyc/src/gmm/gms/mce/rtl

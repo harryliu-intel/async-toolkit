@@ -115,6 +115,68 @@ class mby_rx_ppe_alive_seq extends mby_rx_ppe_seq_lib::mby_rx_ppe_env_base_seq;
          count++;
          `uvm_info(get_name(), $sformatf("mby_rx_ppe_alive_seq: clock edge %0d",count), UVM_LOW);
       end
+
+/*{           
+      addr = 'h20000;
+      wr_data = 'haaaa;
+      wm_reg_write(addr,wr_data);
+      wm_reg_read(addr,rd_data);
+      if (rd_data != wr_data) begin
+         `uvm_error(get_name(),$sformatf("mby_rx_ppe_alive_seq: Parser Data Mismatch: addr=%0h data=%0h",addr, rd_data));
+      end else begin
+         `uvm_info(get_name(), $sformatf("mby_rx_ppe_alive_seq: Parser: addr=%0h data=%0h",addr, rd_data), UVM_LOW);      
+      end
+      
+      addr = 'h2e808;
+      wr_data = 'hbbbb;
+      wm_reg_write(addr,wr_data);
+      wm_reg_read(addr,rd_data);
+      if (rd_data != wr_data) begin
+         `uvm_error(get_name(),$sformatf("mby_rx_ppe_alive_seq: Parser Data Mismatch: addr=%0h data=%0h",addr, rd_data));
+      end else begin
+         `uvm_info(get_name(), $sformatf("mby_rx_ppe_alive_seq: Mapper: addr=%0h data=%0h",addr, rd_data), UVM_LOW);
+      end
+            
+      addr = 'h6a000;
+      wr_data = 'hcccc;
+      wm_reg_write(addr,wr_data);
+      wm_reg_read(addr,rd_data);
+      if (rd_data != wr_data) begin
+         `uvm_error(get_name(),$sformatf("mby_rx_ppe_alive_seq: Parser Data Mismatch: addr=%0h data=%0h",addr, rd_data));
+      end else begin
+         `uvm_info(get_name(), $sformatf("mby_rx_ppe_alive_seq: CGRPA: addr=%0h data=%0h",addr, rd_data), UVM_LOW); 
+      end      
+      
+      addr = 'h387000;
+      wr_data = 'hdddd;
+      wm_reg_write(addr,wr_data);
+      wm_reg_read(addr,rd_data);
+      if (rd_data != wr_data) begin
+         `uvm_error(get_name(),$sformatf("mby_rx_ppe_alive_seq: Parser Data Mismatch: addr=%0h data=%0h",addr, rd_data));
+      end else begin
+         `uvm_info(get_name(), $sformatf("mby_rx_ppe_alive_seq: CGRPB: addr=%0h data=%0h",addr, rd_data), UVM_LOW);  
+      end      
+      
+      addr = 'h4b3800;
+      wr_data = 'heeee;
+      wm_reg_write(addr,wr_data);
+      wm_reg_read(addr,rd_data);
+      if (rd_data != wr_data) begin
+         `uvm_error(get_name(),$sformatf("mby_rx_ppe_alive_seq: Parser Data Mismatch: addr=%0h data=%0h",addr, rd_data));
+      end else begin
+         `uvm_info(get_name(), $sformatf("mby_rx_ppe_alive_seq: Entropy: addr=%0h data=%0h",addr, rd_data), UVM_LOW);  
+      end      
+      
+      addr = 'h628a08;
+      wr_data = 'h2222;
+      wm_reg_write(addr,wr_data);
+      wm_reg_read(addr,rd_data);
+      if (rd_data != wr_data) begin
+         `uvm_error(get_name(),$sformatf("mby_rx_ppe_alive_seq: Parser Data Mismatch: addr=%0h data=%0h",addr, rd_data));
+      end else begin
+         `uvm_info(get_name(), $sformatf("mby_rx_ppe_alive_seq: Policers: addr=%0h data=%0h",addr, rd_data), UVM_LOW);        
+      end
+}*/
       
    endtask
 

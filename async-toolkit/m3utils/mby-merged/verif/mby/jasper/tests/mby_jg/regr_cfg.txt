@@ -1,0 +1,2 @@
+initial_prove {cover -disable *;assert -disable *; set unprocess [get_property_list -include {disabled 1}] }
+

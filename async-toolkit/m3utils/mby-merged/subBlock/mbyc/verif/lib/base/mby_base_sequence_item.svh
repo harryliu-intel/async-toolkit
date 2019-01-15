@@ -30,40 +30,29 @@
 // express and approved by Intel in writing.
 //-----------------------------------------------------------------------------
 `ifndef __MBY_BASE_PKG__
-`error "Attempt to include file outside of mby_igr_env_pkg."
+`error "Attempt to include file outside of mby_base_pkg."
 `endif
 `ifndef __MBY_BASE_SEQUENCE_ITEM__
 `define __MBY_BASE_SEQUENCE_ITEM__
 //-----------------------------------------------------------------------------
 // CLASS: mby_base_sequence_item
 //
-// This is a parameterized class used by mby_base_agent.
-//
-// PARAMETERS:
-//     T_data     - data type (expecting to be a struct)
-//     T_data_rsp - data to respond (defaults to the same as T_data)
-//     T_debug    - debug data type (optional, used for debug)
+// This is a basic sequence item class used by mby_base_agent.
 //
 //-----------------------------------------------------------------------------
-class mby_base_sequence_item
-   #(
-      type T_data     = logic[31:0],
-      type T_data_rsp = T_data,
-      type T_debug    = logic[31:0]
-    )
-   extends uvm_sequence_item; // TODO: replace with shdv_base_transaction
+class mby_base_sequence_item extends uvm_sequence_item; // TODO: replace with shdv_base_transaction
 
-   // VARIABLE: data_pkt
-   // Struct contains all the data items of this sequence item.
-   rand T_data data_pkt;
+   // VARIABLE: global_transaction_count
+   // This is a static variable that provides a unique number for each transaction
+   // created.
+   static int unsigned global_transaction_count;
 
-   // VARIABLE: resp_pkt
-   // Struct that contains all the data items of the response.
-   T_data_rsp resp_pkt;
-
-   // VARIABLE: debug_pkt
-   // Struct that contains debug data of this transaction.
-   rand T_debug debug_pkt;
+   // VARIABLE: unique_transaction_id
+   // This is initialized to this objects unique ID when the object is constructed.
+   // It is used in conjunctions with the ID field of the UVM reporting to group all
+   // messages related to this transaction regardless of where the report message was
+   // generated.
+   int unsigned unique_transaction_id;
 
    // VARIABLE: rsp_req
    // Response is required for this request.
@@ -72,9 +61,6 @@ class mby_base_sequence_item
    // VARIABLE: delay
    // Transaction delay used by the driver
    rand int delay;
-
-   // TODO: add unique identifier field
-   // start/end times (this is included in the shdv_base_transaction
 
    // CONSTRAINT: delay_constraint
    // sets initial delay parameters
@@ -85,17 +71,8 @@ class mby_base_sequence_item
 
    // -------------------------------------------------------------------------
    // Macro for factory registration
-   // TODO:
-   //   better to have manual copy/print/compare methods
-   //   convert2string (small)
    // -------------------------------------------------------------------------
-  `uvm_object_param_utils_begin (mby_base_sequence_item#(T_data, T_data_rsp, T_debug))
-    `uvm_field_int(data_pkt, UVM_DEFAULT)
-    `uvm_field_int(resp_pkt, UVM_DEFAULT)
-    `uvm_field_int(debug_pkt, UVM_DEFAULT)
-    `uvm_field_int(delay,    UVM_DEFAULT)
-    `uvm_field_int(rsp_req,  UVM_DEFAULT)
-  `uvm_object_utils_end
+  `uvm_object_utils(mby_base_sequence_item)
 
    // -------------------------------------------------------------------------
    // CONSTRUCTOR: new
@@ -107,6 +84,7 @@ class mby_base_sequence_item
    // -------------------------------------------------------------------------
    function new (string name = "mby_base_sequence_item");
       super.new(name);
+      unique_transaction_id = global_transaction_count++;
    endfunction
 
    // -------------------------------------------------------------------------
@@ -124,6 +102,15 @@ class mby_base_sequence_item
       // pretty print the sequence object
    endfunction : do_print
 
+   //------------------------------------------------------------------------------
+   // FUNCTION: convert2string()
+   //
+   // Has <unique_transaction_id>, but will need to be derived. It returns a string
+   // that can be used to print the transaction.
+   //------------------------------------------------------------------------------
+   virtual function string convert2string ();
+      return $psprintf("unique_transaction_id=0x%0h", unique_transaction_id);
+   endfunction : convert2string
 
 endclass : mby_base_sequence_item
 

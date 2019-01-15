@@ -6,6 +6,7 @@
 use ToolConfig;
 
 my $SHRTL          = &ToolConfig::get_tool_path('ipconfig/shrtl');
+my $DESIGNCOMPILER = &ToolConfig::get_tool_path('designcompiler');
 
 $hdl_spec = {
     # List of specific VERILOG src files
@@ -14,6 +15,9 @@ $hdl_spec = {
        "src/shared/rtl/mby_gmm_pkg.sv",
        "src/shared/rtl/mby_egr_pkg.sv",
        "src/egr/rtl/egr_int_pkg.sv",
+       "src/egr/mri/interfaces/egr_mri_mem_pkg.sv",
+       "src/egr/mri/rtl/egr_mri_pkg.sv",
+       "src/egr/tqu/interfaces/egr_tqu_mem_pkg.sv",
        "src/shared/rtl/mby_rx_metadata_pkg.sv",
     ## EGR External Interfaces   
        "src/shared/interfaces/egr_ppe_stm_if.sv",
@@ -74,6 +78,7 @@ $hdl_spec = {
      "src/shared/interfaces",
      "src/shared/rtl",
      "$SHRTL/src/common/rtl",
+     "$DESIGNCOMPILER/dw/sim_ver",
     ## EGR MEMORIES
         "src/egr/rtl/mem/cpb/src",
         "src/egr/rtl/mem/dpb/src",
@@ -131,6 +136,7 @@ $hdl_spec = {
      "src/shared/interfaces",
      "src/shared/rtl",
      "$SHRTL/src/common/rtl",
+     "$DESIGNCOMPILER/dw/sim_ver",
     ## EGR MEMORIES
         "src/egr/rtl/mem/cpb/src",
         "src/egr/rtl/mem/dpb/src",
