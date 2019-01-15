@@ -9,7 +9,7 @@
 #include <mby_pipeline.h>
 
 #include <mby_top_map.h>
-#include <model_c_write.h> // write_field()
+#include "tst_model_c_write.h"
 
 #define MBY_PHYSICAL_SOURCE_PORTS         17
 

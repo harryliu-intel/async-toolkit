@@ -5,8 +5,24 @@
 #ifndef MBY_PAR2MAP_H
 #define MBY_PAR2MAP_H
 
-#include "fm_types.h"
+#include "mby_parserToMapper.h"
+
 #include "mby_par_hdr_ptrs.h" // mbyParserHdrPtrs
+
+typedef mby_parserToMapper mbyParserToMapper;
+
+#define MBY_N_PARSER_FLGS MBY_N_PARSER_FLAGS
+
+
+
+
+
+
+
+
+#if 0
+
+#include "fm_types.h"
 
 #define MBY_N_PARSER_KEYS  parser_extract_cfg_rf_PARSER_EXTRACT_CFG__nd // 80
 #define MBY_N_PARSER_FLGS  48
@@ -30,5 +46,6 @@ typedef struct mbyParserToMapperStruct
     fm_uint32        RX_LENGTH;                        ///< Ingress packet data length [bytes]
 
 } mbyParserToMapper;
+#endif
 
 #endif

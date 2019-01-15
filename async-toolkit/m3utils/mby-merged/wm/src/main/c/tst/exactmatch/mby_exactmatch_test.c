@@ -9,7 +9,8 @@
 #include <mby_mapper.h>
 
 #include <mby_top_map.h>
-#include <model_c_write.h> // write_field()
+#include "tst_model_c_write.h"
+
 #include <mby_common.h>
 #include <mby_pipeline.h>
 

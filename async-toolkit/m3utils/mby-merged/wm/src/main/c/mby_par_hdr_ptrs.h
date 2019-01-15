@@ -5,6 +5,12 @@
 #ifndef MBY_PAR_HDR_PTRS_H
 #define MBY_PAR_HDR_PTRS_H
 
+#include "mby_parserHdrPtrs.h"
+
+typedef mby_parserHdrPtrs mbyParserHdrPtrs;
+
+#if 0
+
 #include "fm_types.h"
 
 #define MBY_N_PARSER_PTRS  8
@@ -16,5 +22,6 @@ typedef struct mbyParserHdrPtrsStruct
     fm_byte          PROT_ID     [MBY_N_PARSER_PTRS]; // parser protocol IDs
 
 } mbyParserHdrPtrs;
+#endif
 
 #endif
