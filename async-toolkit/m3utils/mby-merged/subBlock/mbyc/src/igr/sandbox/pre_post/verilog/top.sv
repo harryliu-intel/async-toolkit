@@ -166,15 +166,7 @@ import igr_sim_pkg::*;
       .mim_wreq_5_mim_wr_sema                  ( dut_if.mim_wreq_5_mim_wr_sema ),
       .mim_wreq_5_mim_wr_wd_sel                ( dut_if.mim_wreq_5_mim_wr_wd_sel ),
       .mim_wreq_5_mim_wreq_id                  ( dut_if.mim_wreq_5_mim_wreq_id ),
-      .mim_wreq_5_mim_wr_data                  ( dut_if.mim_wreq_5_mim_wr_data ),
-      .o_drop_seg_ptr                          ( dut_if.o_drop_seg_ptr ),
-      .o_drop_seg_valid                        ( dut_if.o_drop_seg_valid ),
-      .o_drop_sema                             ( dut_if.o_drop_sema ),
-      .o_port_id                               ( dut_if.o_port_id ),
-      .o_post_ppe_tag_at_rate0                 ( dut_if.o_post_ppe_tag_at_rate0 ),
-      .o_post_ppe_tag_at_rate1                 ( dut_if.o_post_ppe_tag_at_rate1 ),
-      .o_post_ppe_tag_set_aside0               ( dut_if.o_post_ppe_tag_set_aside0 ),
-      .o_post_ppe_tag_set_aside1               ( dut_if.o_post_ppe_tag_set_aside1 )
+      .mim_wreq_5_mim_wr_data                  ( dut_if.mim_wreq_5_mim_wr_data )
 
     );
 
@@ -201,5 +193,93 @@ import igr_sim_pkg::*;
         dut_if                                    // pass interface dut_if into testcase
     );
 
+
+    // Scott G -- this should go in monitor, but for quick hack, just putting it here...
+
+    always @( negedge dut_if.clk ) begin
+
+        for( int i=0; i<4; i++ ) begin
+            if( dut_if.i_shim_pb_v_p0[i][0] ) begin
+                $display("%0t: DEBUG MON: shim valid p0[%0d][0] sop %b eop %b data %0h ", 
+                         $realtime, i,
+                         dut_if.i_shim_pb_md_p0[i].md0.md.sop, 
+                         dut_if.i_shim_pb_md_p0[i].md0.md.eop, 
+                         dut_if.i_shim_pb_data_p0[i].seg0);
+            end
+            if( dut_if.i_shim_pb_v_p0[i][1] ) begin
+                $display("%0t: DEBUG MON: shim valid p0[%0d][1] sop %b eop %b data %0h ", 
+                         $realtime, i,
+                         dut_if.i_shim_pb_md_p0[i].md1.md.sop, 
+                         dut_if.i_shim_pb_md_p0[i].md1.md.eop, 
+                         dut_if.i_shim_pb_data_p0[i].seg1);
+            end
+            if( dut_if.i_shim_pb_v_p0[i][2] ) begin
+                $display("%0t: DEBUG MON: shim valid p0[%0d][2] sop %b eop %b data %0h ", 
+                         $realtime, i,
+                         dut_if.i_shim_pb_md_p0[i].md2.md.sop, 
+                         dut_if.i_shim_pb_md_p0[i].md2.md.eop, 
+                         dut_if.i_shim_pb_data_p0[i].seg2);
+            end
+        end
+
+        `define LPP0_PATH top.pre_post_wrap.mby_igr_post_ppe.sop_mdata_lpp0_fpp
+        if( `LPP0_PATH.valid ) begin
+            $display("%0t: DEBUG MON: lpp0 mdata valid pkt_id %0h port %0h eop %b ", 
+                     $realtime, 
+                     `LPP0_PATH.pkt_id,
+                     `LPP0_PATH.src_port,
+                     `LPP0_PATH.md.eop
+                     );
+            
+        end
+  
+        `define LPP1_PATH top.pre_post_wrap.mby_igr_post_ppe.sop_mdata_lpp1
+        if( `LPP1_PATH.valid ) begin
+            $display("%0t: DEBUG MON: lpp1 mdata valid pkt_id %0h port %0h eop %b ", 
+                     $realtime, 
+                     `LPP1_PATH.pkt_id,
+                     `LPP1_PATH.src_port,
+                     `LPP1_PATH.md.eop
+                     );
+            
+        end
+
+
+        `define EPL0_PATH top.pre_post_wrap.mby_igr_pre_ppe.tag_info_epl[0]
+        if( `EPL0_PATH.valid ) begin
+            $display("%0t: DEBUG MON: epl0 tag valid pkt_id %0h port %0h eop %b seg_ptr %0h sema %0b ", 
+                     $realtime, 
+                     `EPL0_PATH.pkt_id,
+                     `EPL0_PATH.src_port,
+                     `EPL0_PATH.md.valid,
+                     `EPL0_PATH.wr_seg_ptr,
+                     `EPL0_PATH.wr_sema
+                     );
+            // md .error, .wd_cnt, .eop_pos, .byte_pos
+        end
+
+
+        `define WRDATA0_PATH top.pre_post_wrap.mby_igr_pre_ppe.wr_data_epl[0]
+        if( `WRDATA0_PATH.valid ) begin
+            $display("%0t: DEBUG MON: wrdata valid seg_ptr %0h sema %0b, wd %0h, data ecc %0h %0h %0h %0h  %0h %0h %0h %0h ", 
+                     $realtime, 
+                     `WRDATA0_PATH.wr_seg_ptr,
+                     `WRDATA0_PATH.wr_sema,
+                     `WRDATA0_PATH.wd_sel,
+                     `WRDATA0_PATH.data_ecc[0].data,
+                     `WRDATA0_PATH.data_ecc[1].data,
+                     `WRDATA0_PATH.data_ecc[2].data,
+                     `WRDATA0_PATH.data_ecc[3].data,
+                     `WRDATA0_PATH.data_ecc[4].data,
+                     `WRDATA0_PATH.data_ecc[5].data,
+                     `WRDATA0_PATH.data_ecc[6].data,
+                     `WRDATA0_PATH.data_ecc[7].data
+                     );
+            
+        end
+
+    end
+        
+        
 endmodule
 

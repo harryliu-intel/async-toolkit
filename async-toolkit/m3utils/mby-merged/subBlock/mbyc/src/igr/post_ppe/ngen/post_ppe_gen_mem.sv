@@ -26,7 +26,7 @@
 ///------------------------------------------------------------------------------
 // -- Author       : Scott E. Greenfield <scott.e.greenfield.com> 
 // -- Project Name : MBY 
-// -- Description  : IGR memory wrapper netlist for igr_tag partition 
+// -- Description  : IGR memory wrapper netlist for post_ppe partition 
 // ------------------------------------------------------------------- 
 
 module post_ppe_gen_mem

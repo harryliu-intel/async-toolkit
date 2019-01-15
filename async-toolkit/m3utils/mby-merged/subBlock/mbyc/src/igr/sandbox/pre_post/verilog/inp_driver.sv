@@ -73,7 +73,6 @@ class inp_driver;
     seg_ptr_t [3:0]            i_free_seg_ptr;
     sema_t    [3:0]            i_free_sema;
     
-
     shim_pb_data_t [3:0]       shim_pb_data_p0_ff;
     shim_pb_data_t [3:0]       shim_pb_data_p1_ff;
     shim_pb_data_t [3:0]       shim_pb_data_p2_ff;
@@ -134,6 +133,7 @@ class inp_driver;
             i_free_ptr_valid[i]  = 1'b0;
             i_free_seg_ptr[i]    = seg_ptr_t'('0);
             i_free_sema[i]       = sema_t'('0);
+            
         end
     endtask
 
@@ -184,6 +184,8 @@ class inp_driver;
             dut_if.i_free_seg_ptr    = free_seg_ptr_ff;
             dut_if.i_free_sema       = free_sema_ff;
     
+            dut_if.i_return_id_valid = '0;
+            
         end
     endtask
 
@@ -209,25 +211,130 @@ class inp_driver;
         if (!drove_reqs) begin
             repeat (10) @(posedge dut_if.clk);
 
+            //--------------------------------------------------------
+            // first packet -- port 0
+            //   placeholder for free pointers from pointer cache
             i_free_ptr_valid          = 4'b0001;
             i_free_seg_ptr[0]         = 20'h11111;
             i_free_sema[0]            = 4'b1010;
 
-
+            // 64B word valid
             i_shim_pb_v_p0[0][0]      = 1'b1;
 
             for( int i=0; i<8; i++ ) begin
                 i_shim_pb_data_p0[0].seg0[i] = 72'(i+1);
             end
 
-            i_shim_pb_md_p0[0]        = shim_pb_md_t'('h123456);
+            i_shim_pb_md_p0[0].md0        = shim_md_t'('h123456);
             i_shim_pb_md_p0[0].md0.md.sop = 1'b1;
+            i_shim_pb_md_p0[0].md0.md.eop = 1'b1;
 
             @(posedge dut_if.clk);
             i_shim_pb_v_p0[0][0]      = 1'b0;
             i_shim_pb_data_p0[0].seg0 = {8{72'h00}};
             i_shim_pb_md_p0[0]        = shim_pb_md_t'('h0);
   
+
+            repeat (300) @(posedge dut_if.clk);
+            //--------------------------------------------------------
+            // packet #2 -- port 0
+            //   placeholder for free pointers from pointer cache
+            i_free_ptr_valid          = 4'b0001;
+            i_free_seg_ptr[0]         = 20'h22222;
+            i_free_sema[0]            = 4'b1010;
+
+            // 64B word valid
+            i_shim_pb_v_p0[0][1]      = 1'b1;
+
+            for( int i=0; i<8; i++ ) begin
+                i_shim_pb_data_p0[0].seg1[i] = 72'(i*2+1);
+            end
+
+            i_shim_pb_md_p0[0].md1        = shim_md_t'('h123422);
+            i_shim_pb_md_p0[0].md1.md.sop = 1'b1;
+            i_shim_pb_md_p0[0].md1.md.eop = 1'b1;
+
+            @(posedge dut_if.clk);
+            i_shim_pb_v_p0[0][1]      = 1'b0;
+            i_shim_pb_data_p0[0].seg1 = {8{72'h00}};
+            i_shim_pb_md_p0[0]        = shim_pb_md_t'('h0);
+  
+
+            repeat (300) @(posedge dut_if.clk);
+            //--------------------------------------------------------
+            // packet #3 -- port 0
+            //   placeholder for free pointers from pointer cache
+            i_free_ptr_valid          = 4'b0001;
+            i_free_seg_ptr[0]         = 20'h33333;
+            i_free_sema[0]            = 4'b1111;
+
+            // 64B word valid
+            i_shim_pb_v_p0[0][2]      = 1'b1;
+
+            for( int i=0; i<8; i++ ) begin
+                i_shim_pb_data_p0[0].seg2[i] = 72'(i*3+1);
+            end
+
+            i_shim_pb_md_p0[0].md2        = shim_md_t'('h123433);
+            i_shim_pb_md_p0[0].md2.md.sop = 1'b1;
+            i_shim_pb_md_p0[0].md2.md.eop = 1'b0;
+
+            @(posedge dut_if.clk);
+            // 2nd 64B of 3rd packet
+            i_shim_pb_v_p0[0][2]      = 1'b0;
+            i_shim_pb_data_p0[0].seg2 = {8{72'h00}};
+  
+            i_shim_pb_v_p0[0][0]      = 1'b1;
+
+            for( int i=0; i<8; i++ ) begin
+                i_shim_pb_data_p0[0].seg0[i] = 72'(i*4+1);
+            end
+
+            i_shim_pb_md_p0[0].md0        = shim_md_t'('haaaaa);
+            i_shim_pb_md_p0[0].md0.md.sop = 1'b0;
+            i_shim_pb_md_p0[0].md0.md.eop = 1'b0;
+
+            @(posedge dut_if.clk);
+            // 3rd 64B of 3rd packet
+            i_shim_pb_v_p0[0][0]      = 1'b0;
+            i_shim_pb_data_p0[0].seg0 = {8{72'h00}};
+  
+            i_shim_pb_v_p0[0][1]      = 1'b1;
+
+            for( int i=0; i<8; i++ ) begin
+                i_shim_pb_data_p0[0].seg1[i] = 72'(i*5+1);
+            end
+
+            i_shim_pb_md_p0[0].md1        = shim_md_t'('haaaaa);
+            i_shim_pb_md_p0[0].md1.md.sop = 1'b0;
+            i_shim_pb_md_p0[0].md1.md.eop = 1'b0;
+
+
+            @(posedge dut_if.clk);
+            // 4th 64B of 3rd packet, with EOP
+            i_shim_pb_v_p0[0][1]      = 1'b0;
+            i_shim_pb_data_p0[0].seg1 = {8{72'h00}};
+  
+            i_shim_pb_v_p0[0][2]      = 1'b1;
+
+            for( int i=0; i<8; i++ ) begin
+                i_shim_pb_data_p0[0].seg2[i] = 72'(i*6+1);
+            end
+
+            i_shim_pb_md_p0[0].md2        = shim_md_t'('haaaaa);
+            i_shim_pb_md_p0[0].md2.md.sop = 1'b0;
+            i_shim_pb_md_p0[0].md2.md.eop = 1'b1;
+
+            @(posedge dut_if.clk);
+            i_shim_pb_v_p0[0][2]      = 1'b0;
+            i_shim_pb_data_p0[0].seg2 = {8{72'h00}};
+            i_shim_pb_md_p0[0].md2        = shim_md_t'('hfffff);
+            i_shim_pb_md_p0[0].md2.md.sop = 1'b0;
+            i_shim_pb_md_p0[0].md2.md.eop = 1'b0;
+
+            
+            repeat (300) @(posedge dut_if.clk);
+
             drove_reqs = 1; 
 
         end
