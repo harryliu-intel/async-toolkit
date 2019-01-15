@@ -38,14 +38,14 @@ package mby_wm_dpi_pkg;
         bit [15:0] port;
     } wm_pkt_t;
 
-    import "DPI-C" function wm_server_start(string server_path);
-    import "DPI-C" function wm_server_stop();
-    import "DPI-C" function wm_reg_write(int addr, longint val);
-    import "DPI-C" function wm_reg_read(input int addr,  output longint val);
+    import "DPI-C" function int wm_server_start(string server_path);
+    import "DPI-C" function int wm_server_stop();
+    import "DPI-C" function int wm_reg_write(int addr, longint val);
+    import "DPI-C" function int wm_reg_read(input int addr,  output longint val);
     import "DPI-C" function int wm_pkt_push(input wm_pkt_t push_pkt );
-    import "DPI-C" function wm_pkt_get(output wm_pkt_t get_pkt);
+    import "DPI-C" function int wm_pkt_get(output wm_pkt_t get_pkt);
     //This function is used for debug purpose only-- To connect directly to Idea IDE and debug Scala code.
-    import "DPI-C" function wm_connect(string server_path);
+    import "DPI-C" function int wm_connect(string server_path);
     import "DPI-C" function int wm_parser(input mbyRxMacToParser igr_pkt, output mbyParserToMapper parser_pkt);
 
 endpackage
