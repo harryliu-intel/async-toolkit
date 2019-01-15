@@ -194,10 +194,8 @@ class mby_igr_env extends shdv_base_env;
           // Create the vp bfm instances
           vp_bfms[i]                = igr_vp_bfm_t::type_id::create($sformatf("igr_vp_bfm%0d", i), this);
           vp_bfms[i].cfg.mode       = eth_bfm_pkg::MODE_SLAVE;                            // Configure as SLAVE
-          vp_bfms[i].cfg.port_speed = {eth_bfm_pkg::SPEED_400G,                            // Configure speed.
-              eth_bfm_pkg::SPEED_OFF,
-              eth_bfm_pkg::SPEED_OFF,
-              eth_bfm_pkg::SPEED_OFF};
+          tb_cfg.randomize();
+          vp_bfms[i].cfg.port_speed = tb_cfg.speed_cfg;                                    // Configure speed.
           //vp_bfms[i].cfg.port_lanes = {4,0,0,0};                                         // Configure num_ports.
       end
    endfunction : build_vpt_bfms
@@ -219,10 +217,10 @@ class mby_igr_env extends shdv_base_env;
           // Create the bfm instances
           eth_bfms[i]                   = igr_eth_bfm_t::type_id::create($sformatf("igr_eth_bfm%0d", i), this);
           eth_bfms[i].cfg.mode          = eth_bfm_pkg::MODE_SLAVE;                            // Configure as SLAVE
-          eth_bfms[i].cfg.port_speed    = {eth_bfm_pkg::SPEED_400G,                            // Configure speed.
-              eth_bfm_pkg::SPEED_OFF,
-              eth_bfm_pkg::SPEED_OFF,
-              eth_bfm_pkg::SPEED_OFF};
+          foreach(eth_bfms[0].cfg.port_speed[j])begin
+                tb_cfg.randomize();
+                eth_bfms[i].cfg.port_speed[j]  = tb_cfg.speed_cfg[j];
+            end
           eth_bfms[i].cfg.port_lanes    = {4,0,0,0}; // Configure num_ports.
           //eth_bfms[i].cfg.early_justify = 0;
           //eth_bfms[i].cfg.group_size    = 8;
