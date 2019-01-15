@@ -807,7 +807,14 @@
 
 (define (compile-c-typedef-deser-size x defs)
   (if (not (eq? (car x) 'typedef)) (error "not a typedef : " x))
-  (list #f (sa "#define " (sa *c-proj* "_" (get-c-name (sym-lookup (cadr x) defs))) "_deser_qwords " (get-type-field-cnt (caddr x) defs) )))
+  (let* ((pfx (sa *c-proj* "_" (get-c-name (sym-lookup (cadr x) defs))) )
+         (n-nm (sa pfx "_serial_qwords"))
+         (t-nm (sa pfx "_serial_t")))
+    
+    (list #f
+          (sa "#define " n-nm " " (get-type-field-cnt (caddr x) defs) dnl
+              "typedef uint64 "t-nm"[" n-nm "];"
+              ))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
