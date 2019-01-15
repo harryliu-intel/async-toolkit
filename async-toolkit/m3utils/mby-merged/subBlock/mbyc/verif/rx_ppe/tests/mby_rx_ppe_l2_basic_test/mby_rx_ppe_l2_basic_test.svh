@@ -25,6 +25,7 @@
 //------------------------------------------------------------------------------
 //   Author        : Kaleem Sheriff
 //   Project       : Madison Bay
+//   Run Cmd       : trex mby_rx_ppe_l2_basic_test -ace_args -simv_args '"'+UVM_VERBOSITY=UVM_HIGH +fsdb +NUM_PKTS=2 +MIN_PKT_LEN=64 +MAX_PKT_LEN=64 '"' -ace_args- -seed 1 -dut mby -model rx_ppe
 //------------------------------------------------------------------------------
 
 //   Class:    mby_rx_ppe_l2_basic_test
@@ -40,7 +41,11 @@
 class mby_rx_ppe_l2_basic_seq extends mby_rx_ppe_seq_lib::mby_rx_ppe_env_base_seq;
 
    `uvm_object_utils(mby_rx_ppe_l2_basic_seq)
-
+   
+   int num_pkts;
+   int min_pkt_len;
+   int max_pkt_len;
+   
    //------------------------------------------------------------------------------
    //  Constructor: new
    //  Arguments:
@@ -48,6 +53,22 @@ class mby_rx_ppe_l2_basic_seq extends mby_rx_ppe_seq_lib::mby_rx_ppe_env_base_se
    //------------------------------------------------------------------------------
    function new (string name="mby_rx_ppe_l2_basic_seq");
       super.new (name);
+
+      if($value$plusargs("NUM_PKTS=%d", num_pkts))
+        `uvm_info(get_name(), $psprintf("plusarg: NUM_PKTS=%0d", num_pkts), UVM_NONE)
+      else
+         num_pkts = 1;
+
+     if($value$plusargs("MAX_PKT_LEN=%d", max_pkt_len))
+         `uvm_info(get_name(), $psprintf("plusarg: MAX_PKT_LEN=%0d", max_pkt_len), UVM_NONE)
+     else
+         max_pkt_len = 64; //1024
+
+     if($value$plusargs("MIN_PKT_LEN=%d", min_pkt_len))
+         `uvm_info(get_name(), $psprintf("plusarg: MIN_PKT_LEN=%0d", min_pkt_len), UVM_NONE)
+     else
+         min_pkt_len = 64;      
+      
    endfunction :  new
 
    //------------------------------------------------------------------------------
@@ -55,42 +76,48 @@ class mby_rx_ppe_l2_basic_seq extends mby_rx_ppe_seq_lib::mby_rx_ppe_env_base_se
    //  
    //------------------------------------------------------------------------------
    virtual task body();
-      int count = 0;
       pktlib_pkg::pktlib_class p,pkt2;
       bit [7:0] bytes [], ubytes [];
-      
-      `uvm_info(this.get_name(), ("Phase::main_phase:mby_rx_ppe_l2_basic_seq::Starting"), UVM_LOW) 
-      p = pktlib_class::type_id::create("p");
-      
-      // configure headers
-      p.cfg_hdr('{p.eth[0],p.data[0]});
-      
-      p.toh.min_plen = 64;
-      p.toh.max_plen = 64;
-      
-      p.randomize() with {
-                eth[0].da == 48'hbbaadeadbeef;
-		eth[0].sa == 48'hccdd55555555;
-                data[0].data_len == 46;
-			};      
-      
-      p.pack_hdr(bytes);
-      
-      `uvm_info(this.get_name(), ("Phase::main_phase:mby_rx_ppe_l2_basic_seq::pack"), UVM_LOW)
-      p.display_cfg_hdr();
-      p.display_hdr();
-      p.display_pkt(p.pkt);
-      
-      `uvm_info(this.get_name(), ("Phase::main_phase:mby_rx_ppe_l2_basic_seq::unpack"), UVM_LOW)
-      
-      ubytes = p.pkt;
-      pkt2 = pktlib_class::type_id::create("pkt2");
-      pkt2.unpack_hdr(ubytes, SMART_UNPACK);
-      
-      pkt2.display_cfg_hdr();
-      pkt2.display_hdr();
-      pkt2.display_pkt(p.pkt);
+      bit[47:0] mac_da = 48'hbbaadeadbeee;
+      bit[47:0] mac_sa = 48'hccdd55555555;      
             
+      repeat(num_pkts) begin //{
+         `uvm_info(this.get_name(), $psprintf("Phase::main_phase:mby_rx_ppe_l2_basic_seq::Starting mac_da=%0h mac_sa=%0h", mac_da,mac_sa), UVM_LOW) 
+         p = pktlib_class::type_id::create("p");
+      
+         // configure headers
+         p.cfg_hdr('{p.eth[0],p.data[0]});
+      
+         p.toh.min_plen = min_pkt_len;
+         p.toh.max_plen = max_pkt_len;
+
+         p.randomize() with {
+            eth[0].da == mac_da;
+	    eth[0].sa == mac_sa;
+	    eth[0].etype_encap == 1;
+            data[0].data_len == 46;   // Remove this constraint for larger packts.
+	 };      
+
+         p.pack_hdr(bytes);
+      
+         `uvm_info(this.get_name(), ("Phase::main_phase:mby_rx_ppe_l2_basic_seq::pack"), UVM_LOW)
+         p.display_cfg_hdr();
+         p.display_hdr();
+         p.display_pkt(p.pkt);
+      
+         `uvm_info(this.get_name(), ("Phase::main_phase:mby_rx_ppe_l2_basic_seq::unpack"), UVM_LOW)
+      
+         ubytes = p.pkt;
+         pkt2 = pktlib_class::type_id::create("pkt2");
+         pkt2.unpack_hdr(ubytes, SMART_UNPACK);
+      
+         pkt2.display_cfg_hdr();
+         pkt2.display_hdr();
+         pkt2.display_pkt(p.pkt);
+	 
+	 mac_da = mac_da + 48'h1;
+	 mac_sa = mac_sa + 48'h1;
+      end //}      
    endtask
    
 endclass : mby_rx_ppe_l2_basic_seq
