@@ -1,3 +1,11 @@
+;;
+;; inter-language data structures
+;;
+;; Author : Mika Nystrom <mika.nystroem@intel.com>
+;;
+;; June, 2018 - January, 2019
+;;
+
 (require-modules "basic-defs" "m3" "display" "hashtable" "struct" "set" "mergesort")
 (load "../../wm_net/src/structgen_m3.scm")
 (load "../../wm_net/src/structgen_shared.scm")
