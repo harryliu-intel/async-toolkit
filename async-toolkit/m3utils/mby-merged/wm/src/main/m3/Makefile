@@ -61,6 +61,8 @@ MBY_BUILD_ROOT=$(GENVIEWS_ROOT)/src/build/mby
 MBY_BUILD_C_ROOT=$(GENVIEWS_ROOT)/src/build_c/mby_c
 MBYLIB=$(MBY_BUILD_ROOT)/$(OS_TARG)/libmby.a
 
+MBY_SCM=$(GENVIEWS_ROOT)/src/build_c/mby_c/src/mby_top_map.scm
+
 MODEL_SERVER_ROOT=model_server
 MODEL_SERVER_TARGDIR=$(MODEL_SERVER_ROOT)/$(OS_TARG)
 MODEL_SERVER=$(MODEL_SERVER_TARGDIR)/modelserver
@@ -131,7 +133,7 @@ $(SCALA_STRUCTS): $(STRUCTGEN) $(STRUCTGEN_SHARED) $(STRUCTGEN_SCALA) $(STRUCTS_
 	echo "}" >> $(tmp_scala_implicits)
 	mv $(tmp_scala_implicits) $(SCALA_IMPLICITS)
 
-$(META_STRUCTS): $(STRUCTGEN) $(INTERLANG)
+$(META_STRUCTS): $(STRUCTGEN) $(INTERLANG) $(MBY_SCM) $(C_GEN)
 	mkdir -p $(MODEL_SERVER_ROOT)/src/mby_struct/src
 	mkdir -p $(MODEL_SERVER_ROOT)/src/wm_meta_common/src
 	pwd
@@ -148,12 +150,13 @@ $(MBY_POSTPROC): $(MBY_TOP_RDL) $(wildcard $(dir $(MBY_TOP_RDL))/*.rdl)
 	${PERLFE} < work/i1.rdl > work/i2.rdl
 	export PERL5LIB=$(dir $<).. && cat work/i2.rdl | perl > $@
 
-
-$(MBYLIB): $(MBY_POSTPROC) $(GENVIEWS) rpc_structs
+$(MBY_SCM): $(MBY_POSTPROC) $(GENVIEWS)
 	mkdir -p $(MBY_BUILD_ROOT)/src
 	$(GENVIEWS_TARGDIR)/genviews -L m3 -top mby_top_map -o $(MBY_BUILD_ROOT)/src < $<
 	cp $(GENVIEWS_ROOT)/src/boilerplate/m3overrides $(MBY_BUILD_ROOT)/src
 	sed 's/THELIB/mby/' $(GENVIEWS_ROOT)/src/boilerplate/m3makefile > $(MBY_BUILD_ROOT)/src/m3makefile
+
+$(MBYLIB): $(MBY_POSTPROC) $(GENVIEWS) rpc_structs $(MBY_SCM)
 	cd $(MBY_BUILD_ROOT)/src && $(CM3) -x
 
 $(SCALA_GEN): $(MBY_POSTPROC) $(GENVIEWS)
@@ -172,7 +175,7 @@ cgen: $(C_GEN)
 $(MBY_C_LIB): $(C_GEN)
 	$(MAKE) -C ../c DEBUG=1 VERBOSE=1 -j 30 all
 
-$(SCM_GEN): $(MBY_POSTPROC) $(GENVIEWS)
+$(SCM_GEN): $(MBY_POSTPROC) $(GENVIEWS) 
 	mkdir -p $(MBY_BUILD_SCM_ROOT)/src
 	$(GENVIEWS_TARGDIR)/genviews -L scm -top mby_top_map -o $(MBY_BUILD_SCM_ROOT)/src < $<
 # have to run the field visitor somewhere
@@ -213,6 +216,7 @@ clean:
 	rm -rf $(WM_SUPPORT_TARGDIR)
 	rm -rf $(GENVIEWS_TARGDIR)
 	rm -rf $(GENVIEWS_ROOT)/src/build
+	rm -rf $(GENVIEWS_ROOT)/src/build_c
 	rm -rf $(GENVIEWS_ROOT)/src/work
 	rm -rf $(MODEL_SERVER_ROOT)/src/mby_struct
 	rm -rf $(MODEL_SERVER_ROOT)/src/wm_meta_common
