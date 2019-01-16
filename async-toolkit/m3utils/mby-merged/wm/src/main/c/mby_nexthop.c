@@ -114,13 +114,13 @@ static mbyNextHopRoute getNexthopRouteEntry
 static mbyNextHopGroup getNexthopGroupEntry
 (
     mby_ppe_nexthop_map const * const nexthop_map,
-    fm_uint16                   const route_idx
+    fm_uint16                   const group_idx
 )
 {
     mbyNextHopGroup nh_group = { 0 };
 
-    nexthop_groups_table_0_r const * const nh_table_0 = &(nexthop_map->NH_GROUPS_0[route_idx]);
-    nexthop_groups_table_1_r const * const nh_table_1 = &(nexthop_map->NH_GROUPS_1[route_idx]);
+    nexthop_groups_table_0_r const * const nh_table_0 = &(nexthop_map->NH_GROUPS_0[group_idx]);
+    nexthop_groups_table_1_r const * const nh_table_1 = &(nexthop_map->NH_GROUPS_1[group_idx]);
 
     nh_group.group_type        = nh_table_0->GROUP_TYPE;
     nh_group.base_index        = nh_table_0->BASE_INDEX;
@@ -323,7 +323,7 @@ static void setForwardedType
     }
 }
 
-static fm_bool mtuCheck
+static fm_bool checkMtu
 (
     mby_ppe_nexthop_map const * const nexthop_map,
     fm_uint32                   const rx_length,
@@ -397,10 +397,64 @@ static void processNeighborEntry
 
     out->l2_evid = nh_neighbor.evid;
 
-    out->mtu_violation = mtuCheck(nexthop_map, rx_length, nh_neighbor.mtu_idx);
+    out->mtu_violation = checkMtu(nexthop_map, rx_length, nh_neighbor.mtu_idx);
 }
 
-static void NextHop_Apply
+static void performFlowletSoftwarePolicy
+(
+    mby_ppe_nexthop_map       const * const nexthop_map,
+    mby_ppe_nexthop_map__addr const * const nexthop_w,
+    fm_uint16                         const route_bin_idx
+)
+{
+    nexthop_status_r__addr const * const nh_status = &(nexthop_w->NH_STATUS);
+    write_field(nh_status->FLOWLET, route_bin_idx);
+
+    nexthop_config_r__addr const * const nh_config = &(nexthop_w->NH_CONFIG);
+    write_field(nh_config->FLOWLET_INT_EN, FALSE);
+}
+
+static void performFlowletLetFlowPolicy
+(
+    mby_ppe_nexthop_map       const * const nexthop_map,
+    mby_ppe_nexthop_map__addr const * const nexthop_w,
+    fm_uint16                         const route_bin_idx,
+    fm_uint16                         const group_base_idx,
+    fm_uint16                         const n_group_size
+)
+{
+    nexthop_routes_table_r       const * const nh_route = &(nexthop_map->NH_ROUTES[route_bin_idx]);
+    nexthop_routes_table_r__addr const * const nh_route_w = &(nexthop_w->NH_ROUTES[route_bin_idx]);
+
+    fm_uint16 neighbor_idx = nh_route->NEIGHBOR_IDX;
+    neighbor_idx = ( neighbor_idx - group_base_idx + 1 ) % n_group_size + group_base_idx;
+    write_field(nh_route_w->NEIGHBOR_IDX, neighbor_idx);
+}
+
+/* Uncomment when Packet Tail Processing is implemented
+static void performFlowletPathLoadingPolicy
+(
+    mby_ppe_nexthop_map  const * const nexthop_map,
+    mby_ppe_nexthop_map__addr  * const nexthop_w,
+    fm_uint16                    const route_bin_idx,
+    fm_uint16                    const group_min_idx
+)
+{
+    nexthop_routes_table_r__addr * const nh_route_w   = &(nexthop_w->NH_ROUTES[route_bin_idx]);
+
+    fm_uint16 bin = group_min_idx / 4;
+    fm_byte   x   = group_min_idx % 4;
+
+    nexthop_group_min_r    const * const nh_group_min = &(nexthop_map->NH_GROUP_MIN[bin]);
+
+    fm_uint16 group_mins[4] = {nh_group_min->MIN_0, nh_group_min->MIN_1, nh_group_min->MIN_2, nh_group_min->MIN_3};
+
+    fm_uint16 neighbor_idx = group_mins[x];
+    write_field(nh_route_w->NEIGHBOR_IDX, neighbor_idx);
+}
+*/
+
+static void applyNextHop
 (
     mby_ppe_nexthop_map        const * const nexthop_map,
     mby_ppe_nexthop_map__addr  const * const nexthop_w,
@@ -489,16 +543,83 @@ static void NextHop_Apply
     setNextHopUsedEntry(nexthop_map, nexthop_w, neighbor_idx);
 }
 
-static void NextHop_Sweep
+static void sweepNextHop
 (
     mby_ppe_nexthop_map       const * const nexthop_map,
     mby_ppe_nexthop_map__addr const * const nexthop_w,
     mbyNextHopSweepInput      const * const in
 )
 {
+    // HOW should walking the NH_ROUTES table be done?
+    // What about input to NextHop_Sweep stage: in->route_neighbor_idx ??
+    // fm_uint16 route_bin_idx = in->route_neighbor_idx;
 
+    /// The sweeper walks the route table looking for a bin with a non-zero Age Counter.
+    /// When one is encountered, the following steps are taken:
+    for (fm_uint16 route_bin_idx = 0 ; route_bin_idx < MBY_NH_NEIGHBORS_ENTRIES ; route_bin_idx++)
+    {
+        mbyNextHopRoute nh_route = getNexthopRouteEntry(nexthop_map, route_bin_idx);
+        if (nh_route.age_counter != 0)
+        {
+            /// 1. Group Table Index is retrieved from the bin and used to identify the corresponding group table entry.
+            fm_uint16 group_idx = nh_route.group_index;
+            mbyNextHopGroup nh_group = getNexthopGroupEntry(nexthop_map, group_idx);
+            /// 2. Group Type is retrieved from the group table entry, and if 2, processing continues with the next step, otherwise done with this bin.
+            mbyNextHopGroupType group_type = nh_group.group_type;
+            if (group_type == MBY_NH_GROUP_TYPE_ECMP_FLOWLET)
+            {
+                /// 3. The Age Counter in the bin is decremented, and if it becomes zero, processing continues with the next step, otherwise done with this bin.
+                fm_byte age_counter = nh_route.age_counter - 1;
+                write_field(nexthop_w->NH_ROUTES[route_bin_idx].AGE_COUNTER, age_counter);
+                if (age_counter == 0)
+                {
+                    /// 4. The Flowlet Policy is loaded from the group table and the specified policy performed
+                    mbyNextHopFlowletPolicy flowlet_policy = nh_group.flowlet_policy;
+                    switch (flowlet_policy)
+                    {
+                    case MBY_NH_FLOWLET_POLICY_SOFTWARE:
+                        performFlowletSoftwarePolicy(nexthop_map, nexthop_w, route_bin_idx);
+                        break;
+                    case MBY_NH_FLOWLET_POLICY_LETFLOW:
+                        performFlowletLetFlowPolicy(nexthop_map, nexthop_w, route_bin_idx, nh_group.base_index, nh_group.n_group_size);
+                        break;
+                    case MBY_NH_FLOWLET_POLICY_PATH_LOADING:
+                        /* Uncomment when Packet Tail Processing is implemented
+                        performFlowletPathLoadingPolicy(nexthop_map, nexthop_w, route_bin_idx, nh_group.group_min_index);
+                        */
+                        break;
+                    case MBY_NH_FLOWLET_POLICY_SDN_MANAGED:
+                        // This policy is not implemented
+                        // performFlowletSDNDirectedPolicy();
+                        break;
+                    case MBY_NH_FLOWLET_POLICY_LOCAL_CONGESTION:
+                        // This policy is not implemented
+                        // performFlowletLocalCongestionPolicy();
+                        break;
+                    case MBY_NH_FLOWLET_POLICY_CONGESTION_NOTIFICATION:
+                        // This policy is not implemented
+                        // performFlowletCongestionNotificationPolicy();
+                        break;
+                    case MBY_NH_FLOWLET_POLICY_POWER_AWARE:
+                        // This policy is not implemented
+                        // performFlowletPowerAwarePolicy();
+                        break;
+                    case MBY_NH_FLOWLET_POLICY_RESERVED:
+                    default:
+                        break;
+                    }
+
+                    fm_byte age_reset = nh_group.flowlet_age_reset;
+                    /// 5. Flowlet Age Reset value is retrieved from the group table and written to the Age Counter in the bin
+                    write_field(nexthop_w->NH_ROUTES[route_bin_idx].AGE_COUNTER, age_reset);
+                }
+            }
+        }
+        else
+            continue;
+    }
 }
-static void NextHop_Usage
+static void trackNextHopUsage
 (
     mby_ppe_nexthop_map const * const nexthop_map
 )
@@ -594,7 +715,7 @@ void NextHop
 
     // if NextHop_Apply stage is enabled:
     if (mark_routed){
-        NextHop_Apply(nexthop_map, nexthop_w, &apply_in, &apply_out);
+        applyNextHop(nexthop_map, nexthop_w, &apply_in, &apply_out);
 
         l2_evid1   = apply_out.l2_evid;
         idglort    = apply_out.dglort;
@@ -615,16 +736,17 @@ void NextHop
     sweep_in.flowlet_enabled_packet = apply_out.flowlet_enabled_packet;
     sweep_in.route_neighbor_idx     = apply_out.route_neighbor_idx;
     sweep_in.group_min_index        = apply_out.group_min_index;
+    sweep_in.flowlet_int_en         = nh_config.flowlet_int_en;
 
     // if NextHop_Sweep stage is enabled:
     if (flowlet_enable)
-        NextHop_Sweep(nexthop_map, nexthop_w, &sweep_in);
+        sweepNextHop(nexthop_map, nexthop_w, &sweep_in);
 
     /**
      * NextHop_Usage task need not be implemented, if the Path Loading Policy is deemed not useful.
      * See [here](https://securewiki.ith.intel.com/display/25T/RX-PPE+Next-Hop+Lookup#RX-PPENext-HopLookup-NextHop_Usage_warning).
      */
-    NextHop_Usage(nexthop_map);
+    trackNextHopUsage(nexthop_map);
 
     fm_bool     glort_forwarded      = FALSE;
     fm_bool     flood_forwarded      = FALSE;

@@ -187,6 +187,7 @@ typedef struct mbyNextHopSweepInputStruct
     fm_bool    flowlet_enabled_packet;
     fm_uint16  route_neighbor_idx;
     fm_uint16  group_min_index;
+    fm_bool    flowlet_int_en;
 
 } mbyNextHopSweepInput;
 
