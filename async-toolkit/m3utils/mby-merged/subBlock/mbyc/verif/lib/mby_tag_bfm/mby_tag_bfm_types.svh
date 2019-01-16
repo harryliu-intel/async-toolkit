@@ -74,22 +74,22 @@ typedef virtual mby_tag_bfm_mc_if mby_tag_bfm_mc_vif;
 typedef class mby_tag_bfm_uc_xaction;
 typedef class mby_tag_bfm_mc_xaction;
 // Defining the I/O policies for the tag bfm
-typedef mby_base_io_policy_param#(
+typedef shdv_base_io_policy_param#(
    .T_req(mby_tag_bfm_uc_xaction),
    .T_vif(mby_tag_bfm_uc_vif)) mby_tag_bfm_uc_io;
-typedef mby_base_io_policy_param#(
+typedef shdv_base_io_policy_param#(
    .T_req(mby_tag_bfm_mc_xaction),
    .T_vif(mby_tag_bfm_mc_vif)) mby_tag_bfm_mc_io;
 // Defining the flow control policy for the tag bfm
-typedef mby_base_empty_flow_control mby_tag_bfm_uc_fc;
-typedef mby_base_empty_flow_control mby_tag_bfm_mc_fc;
+typedef shdv_base_empty_fc_policy mby_tag_bfm_uc_fc;
+typedef shdv_base_empty_fc_policy mby_tag_bfm_mc_fc;
 // Defining the uni-cast tag agent as a parameterized base agent.
-typedef mby_base_agent#(
+typedef shdv_agent#(
    .T_req(mby_tag_bfm_uc_xaction),
    .T_fcp(mby_tag_bfm_uc_fc),
    .T_iop(mby_tag_bfm_uc_io)) mby_tag_bfm_uc_agent;
 // Defining the multi-cast tag agent as a parameterized base agent.
-typedef mby_base_agent#(
+typedef shdv_agent#(
    .T_req(mby_tag_bfm_mc_xaction),
    .T_fcp(mby_tag_bfm_mc_fc),
    .T_iop(mby_tag_bfm_mc_io)) mby_tag_bfm_mc_agent;

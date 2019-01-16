@@ -76,8 +76,7 @@ module mby_egr_ti_low #(
       // Tag bfm I/O policy constructor and uvm_config_db registration
       foreach(tag_bfm_io[i]) begin
          tag_bfm_io[i] = new($sformatf("%m.tag_bfm_uc_io%0d",i), tag_bfm_vif_array[i]);
-         uvm_config_db#(mby_tag_bfm_uc_io)::set(uvm_root::get(),
-            $sformatf("%s*tag_bfm_%0d*", IP_ENV, i), "io_pol", tag_bfm_io[i]);
+         uvm_config_db#(mby_tag_bfm_uc_io)::set(uvm_root::get(), $sformatf("%s*tag_bfm_%0d.tag_uc_agent",IP_ENV, i), "io_policy", tag_bfm_io[i]);
       end
       /////////////////////////////////////////////////////////////////////////
       // SMM BFM I/O policies constructors and uvm_config_db registration
