@@ -54,9 +54,13 @@ interface mby_tag_bfm_uc_if(input logic clk, input logic rst);
    // Initializing the interface at time 0
    //---------------------------------------------------------------------------
    initial begin : initialize_intf
-      //intf_data_pkt <= 0;
+      wait(rst===1)//intf_data_pkt <= 0;
+      clear_interface();
    end
-
+   
+   task clear_interface();
+      intf_data_pkt <= 0;
+   endtask: clear_interface
    //---------------------------------------------------------------------------
    // TASK: drive_data
    //
