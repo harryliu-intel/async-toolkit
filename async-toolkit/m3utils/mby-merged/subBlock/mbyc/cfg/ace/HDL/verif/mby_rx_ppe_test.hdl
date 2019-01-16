@@ -25,7 +25,7 @@ $hdl_spec = {
         "verif/rx_ppe/tests/common",
         "verif/rx_ppe/tests/mby_rx_ppe_alive_test",
         "verif/rx_ppe/tests/mby_rx_ppe_wm_access_test",
-        
+        "verif/rx_ppe/tests/mby_rx_ppe_l2_basic_test",
 
     ],
 
