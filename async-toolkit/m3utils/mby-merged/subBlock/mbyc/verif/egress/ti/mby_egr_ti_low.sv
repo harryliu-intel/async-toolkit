@@ -82,10 +82,10 @@ module mby_egr_ti_low #(
       // SMM BFM I/O policies constructors and uvm_config_db registration
       smm_bfm_rd_io = new("smm_bfm_rd_io", memrd_req_if);
       uvm_config_db#(smm_bfm_row_rd_io)::set(uvm_root::get(),
-         $sformatf("%s*smm_bfm*egr_rd_req_agent*", IP_ENV), "io_pol", smm_bfm_rd_io);
+         $sformatf("%s*smm_bfm*egr_rd_req_agent*", IP_ENV), "io_policy", smm_bfm_rd_io);
       smm_bfm_wr_io = new("smm_bfm_wr_io", memwr_req_if);
       uvm_config_db#(smm_bfm_row_wr_io)::set(uvm_root::get(),
-         $sformatf("%s*smm_bfm*igr_wr_req_agent*", IP_ENV), "io_pol", smm_bfm_wr_io);
+         $sformatf("%s*smm_bfm*igr_wr_req_agent*", IP_ENV), "io_policy", smm_bfm_wr_io);
 
       /////////////////////////////////////////////////////////////////////////
       // Other interfaces registration
