@@ -624,85 +624,81 @@ static int iosf_send_receive(uint8_t *tx_msg, uint32_t tx_len,
     return WM_OK;
 }
 
-static void
-write_nl(uint8_t *buf, int *idx, uint32_t x)
+static void write_nl(uint8_t *buf, int *idx, uint32_t x)
 {
     *(uint32_t *)&buf[*idx] = htonl(x);
     *idx += 4;
 }
 
-static uint32_t
-read_nl(uint8_t const *buf, int *idx)
+static uint32_t read_nl(uint8_t const *buf, int *idx)
 {
     uint32_t x = ntohl(*(uint32_t *)&buf[*idx]);
     *idx += 4;
     return x;
 }
 
-static int
-wm_do_stage_request(char            const *       nm,
-                    void            const * const in,
-                    size_t                  const in_size,
-                    size_t                  const out_size,
-                    varchar_t       const * const rx_data)
+static int wm_do_stage_request(char       const *       nm,
+                               void       const * const in,
+                               size_t             const in_size,
+                               size_t             const out_size,
+                               varchar_t  const * const rx_data)
 {
-  /* packet format
+    /* packet format
 
-     htonl(len)                bytes : 4
-     nm                        bytes : MIN(strlen(nm) + 1, 128)
-     htonl(in_size)            bytes : 4
-     in                        bytes : in_size
-     htonl(rx_data.length)     bytes : 4
-     rx_data.data              bytes : rx_data.length
+       htonl(len)                bytes : 4
+       nm                        bytes : MIN(strlen(nm) + 1, 128)
+       htonl(in_size)            bytes : 4
+       in                        bytes : in_size
+       htonl(rx_data.length)     bytes : 4
+       rx_data.data              bytes : rx_data.length
 
-     len = 12 + MIN(strlen(nm)+1,128) + in_size + rx_data.length
-  */
-  uint8_t msg[MAX_MSG_LEN];
-  size_t nm_len = MIN(strlen(nm)+1,128);
-  size_t len = 12 + nm_len + in_size + (rx_data ? rx_data->length : 0);
-  int off = 0;
-  int err;
+       len = 12 + MIN(strlen(nm)+1,128) + in_size + rx_data.length
+    */
+    uint8_t msg[MAX_MSG_LEN];
+    size_t nm_len = MIN(strlen(nm)+1,128);
+    size_t len = 12 + nm_len + in_size + (rx_data ? rx_data->length : 0);
+    int off = 0;
+    int err;
 
-  if (len > MAX_MSG_LEN) {
-    LOG_ERROR("stage request too long : %lu\n", len);
-    return WM_ERR_INVALID_ARG;
-  }
+    if (len > MAX_MSG_LEN) {
+        LOG_ERROR("stage request too long : %lu\n", len);
+        return WM_ERR_INVALID_ARG;
+    }
 
-  write_nl(msg, &off, len);
+    write_nl(msg, &off, len);
 
-  memcpy(msg+off, nm, nm_len);
-  off += nm_len;
-  msg[off -1] = '\0'; // BSTS
+    memcpy(msg+off, nm, nm_len);
+    off += nm_len;
+    msg[off -1] = '\0'; // BSTS
 
-  write_nl(msg, &off, in_size);
+    write_nl(msg, &off, in_size);
 
-  memcpy(msg+off, in, in_size);
-  off+= in_size;
+    memcpy(msg+off, in, in_size);
+    off+= in_size;
 
-  if (rx_data) {
-    write_nl(msg, &off, rx_data->length);
+    if (rx_data) {
+        write_nl(msg, &off, rx_data->length);
 
-    memcpy(msg+off, rx_data->data, rx_data->length);
-    off += rx_data->length;
-  } else {
-    write_nl(msg, &off, 0);
-  }
+        memcpy(msg+off, rx_data->data, rx_data->length);
+        off += rx_data->length;
+    } else {
+        write_nl(msg, &off, 0);
+    }
 
-  assert(off == (int)len);
+    assert(off == (int)len);
 
-  err = wm_send(wm_server_fd, msg, len, MODEL_MSG_STAGE, 0);
-  if (err) {
-    LOG_ERROR("Could not send data to WM: %d\n", err);
-  }
+    err = wm_send(wm_server_fd, msg, len, MODEL_MSG_STAGE, 0);
+    if (err) {
+        LOG_ERROR("Could not send data to WM: %d\n", err);
+    }
 
-  return err;
+    return err;
 }
 
-static int
-wm_do_stage_response(char            const *       nm,
-                     void                  * const out,
-                     size_t                  const out_size,
-                     varchar_t             * const tx_data)
+static int wm_do_stage_response(char      const *       nm,
+                                void            * const out,
+                                size_t            const out_size,
+                                varchar_t       * const tx_data)
 {
     /* packet format
 
@@ -798,24 +794,23 @@ wm_do_stage_response(char            const *       nm,
  *
  * @retval      WM_OK if successful
  */
-int
-wm_do_stage(char            const *       nm,
-            void            const * const in,
-            size_t                  const in_size,
-            varchar_t       const * const rx_data,
-            void                  * const out,
-            size_t                  const out_size,
-            varchar_t             * const tx_data)
+int wm_do_stage(char        const *       nm,
+                void        const * const in,
+                size_t              const in_size,
+                varchar_t   const * const rx_data,
+                void              * const out,
+                size_t              const out_size,
+                varchar_t         * const tx_data)
 {
 
-  int err;
+    int err;
 
-  LOG_DEBUG("Function called");
+    LOG_DEBUG("Function called");
 
-  if ((err = wm_do_stage_request(nm, in, in_size, out_size, rx_data)))
-    return err;
+    if ((err = wm_do_stage_request(nm, in, in_size, out_size, rx_data)))
+        return err;
 
-  return (err = wm_do_stage_response(nm, out, out_size, tx_data));
+    return (err = wm_do_stage_response(nm, out, out_size, tx_data));
 }
 
 /**
