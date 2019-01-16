@@ -191,6 +191,14 @@ typedef struct mbyNextHopSweepInputStruct
 
 } mbyNextHopSweepInput;
 
+typedef struct mbyNextHopUsageInputStruct
+{
+    fm_uint16  route_neighbor_idx;
+    fm_uint16  group_min_index;
+    fm_uint32  rx_length;
+
+} mbyNextHopUsageInput;
+
 // Function prototype:
 
 void NextHop

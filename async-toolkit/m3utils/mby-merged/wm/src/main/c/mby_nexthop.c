@@ -431,16 +431,15 @@ static void performFlowletLetFlowPolicy
     write_field(nh_route_w->NEIGHBOR_IDX, neighbor_idx);
 }
 
-/* Uncomment when Packet Tail Processing is implemented
 static void performFlowletPathLoadingPolicy
 (
-    mby_ppe_nexthop_map  const * const nexthop_map,
-    mby_ppe_nexthop_map__addr  * const nexthop_w,
-    fm_uint16                    const route_bin_idx,
-    fm_uint16                    const group_min_idx
+    mby_ppe_nexthop_map       const * const nexthop_map,
+    mby_ppe_nexthop_map__addr const * const nexthop_w,
+    fm_uint16                         const route_bin_idx,
+    fm_uint16                         const group_min_idx
 )
 {
-    nexthop_routes_table_r__addr * const nh_route_w   = &(nexthop_w->NH_ROUTES[route_bin_idx]);
+    nexthop_routes_table_r__addr const * const nh_route_w   = &(nexthop_w->NH_ROUTES[route_bin_idx]);
 
     fm_uint16 bin = group_min_idx / 4;
     fm_byte   x   = group_min_idx % 4;
@@ -452,14 +451,13 @@ static void performFlowletPathLoadingPolicy
     fm_uint16 neighbor_idx = group_mins[x];
     write_field(nh_route_w->NEIGHBOR_IDX, neighbor_idx);
 }
-*/
 
 static void applyNextHop
 (
-    mby_ppe_nexthop_map        const * const nexthop_map,
-    mby_ppe_nexthop_map__addr  const * const nexthop_w,
-    mbyNextHopApplyInput       const * const in,
-    mbyNextHopApplyOutput            * const out
+    mby_ppe_nexthop_map       const * const nexthop_map,
+    mby_ppe_nexthop_map__addr const * const nexthop_w,
+    mbyNextHopApplyInput      const * const in,
+    mbyNextHopApplyOutput           * const out
 )
 {
     fm_uint16  const ecmp_hash  = in->ecmp_hash;
@@ -584,9 +582,7 @@ static void sweepNextHop
                         performFlowletLetFlowPolicy(nexthop_map, nexthop_w, route_bin_idx, nh_group.base_index, nh_group.n_group_size);
                         break;
                     case MBY_NH_FLOWLET_POLICY_PATH_LOADING:
-                        /* Uncomment when Packet Tail Processing is implemented
                         performFlowletPathLoadingPolicy(nexthop_map, nexthop_w, route_bin_idx, nh_group.group_min_index);
-                        */
                         break;
                     case MBY_NH_FLOWLET_POLICY_SDN_MANAGED:
                         // This policy is not implemented
@@ -608,9 +604,8 @@ static void sweepNextHop
                     default:
                         break;
                     }
-
-                    fm_byte age_reset = nh_group.flowlet_age_reset;
                     /// 5. Flowlet Age Reset value is retrieved from the group table and written to the Age Counter in the bin
+                    fm_byte age_reset = nh_group.flowlet_age_reset;
                     write_field(nexthop_w->NH_ROUTES[route_bin_idx].AGE_COUNTER, age_reset);
                 }
             }
@@ -621,10 +616,54 @@ static void sweepNextHop
 }
 static void trackNextHopUsage
 (
-    mby_ppe_nexthop_map const * const nexthop_map
+    mby_ppe_nexthop_map       const * const nexthop_map,
+    mby_ppe_nexthop_map__addr const * const nexthop_w,
+    mbyNextHopUsageInput      const * const in
 )
 {
+    fm_uint16 neighbor_idx  = in->route_neighbor_idx;
+    fm_uint16 group_min_idx = in->group_min_index;
+    fm_uint16 bin = group_min_idx / 4;
+    fm_byte   x   = group_min_idx % 4;
 
+    nexthop_group_min_r       const * const nh_group_min = &(nexthop_map->NH_GROUP_MIN[bin]);
+    nexthop_group_min_r__addr const * const nh_group_min_w = &(nexthop_w->NH_GROUP_MIN[bin]);
+    nexthop_path_ctrs_r       const * const nh_path_ctrs = &(nexthop_map->NH_PATH_CTRS[neighbor_idx]);
+    nexthop_path_ctrs_r__addr const * const nh_path_ctrs_w = &(nexthop_w->NH_PATH_CTRS[neighbor_idx]);
+
+    fm_uint16 group_mins[4] = {nh_group_min->MIN_0, nh_group_min->MIN_1, nh_group_min->MIN_2, nh_group_min->MIN_3};
+    /// For each packet, the following actions are taken by the NextHop_Usage stage:
+
+    /// 1. NH_PATH_CTRS[Neighbor Table Index] is incremented by the number of bytes in the packet
+    fm_uint64 bytes = nh_path_ctrs->BYTES + in->rx_length;
+    write_field(nh_path_ctrs_w->BYTES, bytes);
+    /// 2. The NH_GROUP_MIN[Group Min Index] entry is retrieved and if it is not equal to Neighbor Table Index, processing continues with the next step, otherwise tail processing ends
+    if (group_mins[x] != neighbor_idx)
+    {
+        /// 3. If:
+        /// NH_PATH_CTRS[Neighbor Table Index] < NH_PATH_CTRS[NH_GROUP_MIN[Group Min Index]]
+        /// then processing continues with the next step, otherwise tail processing ends
+        nexthop_path_ctrs_r const * const nh_path_ctrs_group_min = &(nexthop_map->NH_PATH_CTRS[group_mins[x]]);
+        if (nh_path_ctrs->BYTES < nh_path_ctrs_group_min->BYTES)
+        {
+            /// 4. Neighbor Table Index is stored to NH_GROUP_MIN[Group Min Index]
+            switch (x)
+            {
+            case 0:
+                write_field(nh_group_min_w->MIN_0, neighbor_idx);
+                break;
+            case 1:
+                write_field(nh_group_min_w->MIN_1, neighbor_idx);
+                break;
+            case 2:
+                write_field(nh_group_min_w->MIN_2, neighbor_idx);
+                break;
+            case 3:
+                write_field(nh_group_min_w->MIN_3, neighbor_idx);
+                break;
+            }
+        }
+    }
 }
 
 /**
@@ -709,6 +748,7 @@ void NextHop
     apply_in.l2_ivid1       = l2_ivid1;
     apply_in.l3_idomain     = l3_idomain;
     apply_in.flowlet_enable = flowlet_enable;
+    apply_in.rx_length      = in->RX_LENGTH;
 
     apply_out.l2_dmac = l2_dmac;
     apply_out.dglort  = dglort;
@@ -731,7 +771,7 @@ void NextHop
      */
     // <-- How it should be handled in the FM? REVISIT!!!
 
-    mbyNextHopSweepInput  sweep_in;
+    mbyNextHopSweepInput sweep_in;
 
     sweep_in.flowlet_enabled_packet = apply_out.flowlet_enabled_packet;
     sweep_in.route_neighbor_idx     = apply_out.route_neighbor_idx;
@@ -746,7 +786,15 @@ void NextHop
      * NextHop_Usage task need not be implemented, if the Path Loading Policy is deemed not useful.
      * See [here](https://securewiki.ith.intel.com/display/25T/RX-PPE+Next-Hop+Lookup#RX-PPENext-HopLookup-NextHop_Usage_warning).
      */
-    trackNextHopUsage(nexthop_map);
+
+    mbyNextHopUsageInput usage_in;
+
+    usage_in.group_min_index    = apply_out.group_min_index;
+    usage_in.route_neighbor_idx = apply_out.route_neighbor_idx;
+    usage_in.rx_length          = in->RX_LENGTH;
+
+    if (apply_out.flowlet_enabled_packet)
+        trackNextHopUsage(nexthop_map, nexthop_w, &usage_in);
 
     fm_bool     glort_forwarded      = FALSE;
     fm_bool     flood_forwarded      = FALSE;
