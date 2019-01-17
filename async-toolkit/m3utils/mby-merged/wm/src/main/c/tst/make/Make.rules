@@ -1,0 +1,47 @@
+.PHONY: all
+all: $(BLD_DTS) $(OBJECTS) $(TARGET)
+
+$(BLD_DTS):
+	@echo '  Creating build directory'
+	$(ECHO) $(MKDIR) $(BLD_DIR) && touch ${BLD_DTS}
+
+$(BLD_DIR)/%.o: %.c $(BLD_DTS) $(wildcard *.h) $(MAKEFILE_LIST) $(GLOBALDEPS)
+	@echo '  Compiling' $<
+	$(ECHO) $(GCC) -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) -c $<
+
+$(WM_LIB):
+	$(MAKE) -C $(C_DIR)
+
+$(COM_LIB):
+	$(MAKE) -C $(COM_DIR)
+
+$(TARGET): $(BLD_DTS) $(OBJECTS) $(WM_LIB) $(COM_LIB)
+	@echo '  Linking' $(TARGET)
+	$(ECHO) $(GCC) $(LDFLAGS) -o $(TARGET) $(OBJECTS) $(WM_LIB) $(COM_LIB)
+
+.PHONY: run
+run: $(TARGET)
+	@echo '  Running $(TARGET)'
+	@/usr/bin/time --format='Ran for %e seconds.' \
+            ./$(TARGET)
+
+.PHONY: valgrind
+valgrind: $(TARGET)
+	@echo '  Running $(TARGET) in Valgrind'
+	$(VAL) \
+            --track-origins=yes \
+            --leak-check=full \
+            --show-leak-kinds=all \
+	$(TARGET) 2>&1 | tee val.log
+
+.PHONY: callgrind
+callgrind: $(TARGET)
+	@echo '  Running $(TARGET) in Cachegrind'
+	$(VAL) \
+            --tool=callgrind \
+            --verbose \
+            --dump-every-bb=12500000000 \
+	$(TARGET) 2>&1 | tee /cal.log
+
+
+include ../make/Make.commonrules
