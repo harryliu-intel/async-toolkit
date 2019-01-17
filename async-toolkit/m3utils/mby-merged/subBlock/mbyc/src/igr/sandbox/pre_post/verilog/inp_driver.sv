@@ -206,138 +206,212 @@ class inp_driver;
 //
 //    endtask
 //
+
+    logic [2:0] epl0_seg;
+    logic [2:0] epl0_ptr_req_cnt;
+    
+    task drive_epl0;
+        input [3:0] port;
+        input       sop;
+        input       eop;
+        input int   data_mult;
+        input [23:0] md;
+        
+        begin
+            i_shim_pb_v_p0[port][epl0_seg]      = 1'b1;
+
+            if( epl0_seg == 0 ) begin
+                for( int i=0; i<8; i++ ) begin
+                    i_shim_pb_data_p0[port].seg0[i] = 72'((i+1)*data_mult);
+                end
+                
+                i_shim_pb_md_p0[port].md0        = shim_md_t'(md);
+                i_shim_pb_md_p0[port].md0.md.sop = sop;
+                i_shim_pb_md_p0[port].md0.md.eop = eop;
+                
+                @(posedge dut_if.clk);
+                i_shim_pb_data_p0[port].seg0 = {8{72'h00}};
+            end
+            if( epl0_seg == 1 ) begin
+                for( int i=0; i<8; i++ ) begin
+                    i_shim_pb_data_p0[port].seg1[i] = 72'((i+1)*data_mult);
+                end
+                
+                i_shim_pb_md_p0[port].md1        = shim_md_t'(md);
+                i_shim_pb_md_p0[port].md1.md.sop = sop;
+                i_shim_pb_md_p0[port].md1.md.eop = eop;
+                
+                @(posedge dut_if.clk);
+                i_shim_pb_data_p0[port].seg1 = {8{72'h00}};
+            end
+            if( epl0_seg == 2 ) begin
+                for( int i=0; i<8; i++ ) begin
+                    i_shim_pb_data_p0[port].seg2[i] = 72'((i+1)*data_mult);
+                end
+                
+                i_shim_pb_md_p0[port].md2        = shim_md_t'(md);
+                i_shim_pb_md_p0[port].md2.md.sop = sop;
+                i_shim_pb_md_p0[port].md2.md.eop = eop;
+                
+                @(posedge dut_if.clk);
+                i_shim_pb_data_p0[port].seg2 = {8{72'h00}};
+            end
+            i_shim_pb_md_p0[port]        = shim_pb_md_t'('h0);
+            i_shim_pb_v_p0[port][epl0_seg]    = 1'b0;
+
+            epl0_seg = (epl0_seg) == 2 ? 0 : epl0_seg + 1;
+
+        end
+    endtask // drive_epl0
+
+   `define PRE_PPE_PATH top.pre_post_wrap.mby_igr_pre_ppe
+    task update_epl0_ptr;
+        input [19:0] seg_ptr;
+        input [3:0]  sema;
+        static logic [19:0] seg_ptr_temp;
+        static logic [3:0]  sema_temp;
+        
+        begin
+            seg_ptr_temp = seg_ptr;
+            sema_temp = sema;
+            
+            // forcing directly to pre_ppe to avoid dut_if flop delays
+            //  this is a hack for first packet 2.0/3.0 testing
+            //  priority to implementation of real pointer cache in post_ppe
+            $display("%0t update ep0 ptr req cnt %0h ", $realtime,
+                     epl0_ptr_req_cnt);
+                     
+            @(posedge dut_if.clk);
+            wait( epl0_ptr_req_cnt > 0 ) begin
+                @(posedge dut_if.clk);
+            end
+            epl0_ptr_req_cnt = epl0_ptr_req_cnt - 1;
+            
+            $display("%0t update ep0 ptr %0h %4b", $realtime, seg_ptr, sema);
+            force `PRE_PPE_PATH.i_free_ptr_valid          = 4'b0001;
+            force `PRE_PPE_PATH.i_free_seg_ptr[0]         = seg_ptr_temp;
+            force `PRE_PPE_PATH.i_free_sema[0]            = sema_temp;
+            @(posedge dut_if.clk);
+            force `PRE_PPE_PATH.i_free_ptr_valid          = 4'b0000;
+        end
+
+    endtask // update_epl1_ptr
+    
     // Drive requests into DUT (template)
     task drive_reqs();
+
+        epl0_seg = 0;
+        epl0_ptr_req_cnt = 0;
+        
+        
         if (!drove_reqs) begin
             repeat (10) @(posedge dut_if.clk);
 
-            //--------------------------------------------------------
-            // first packet -- port 0
-            //   placeholder for free pointers from pointer cache
-            i_free_ptr_valid          = 4'b0001;
-            i_free_seg_ptr[0]         = 20'h11111;
-            i_free_sema[0]            = 4'b1010;
+            fork
+                begin : ptr_cache
+                    //  FIXME -- for first packet 3.0
+                    //           this block models the ptr cache pushing free pointers to pre_ppe for EPL0
+                    //           each cycle that pre_ppe asserts free_ptr_req indicates another pointer to be sent
+                    //           epl0_ptr_req_cnt keeps track of outstanding requests
+                    //           the real pointer cache interface may be nothing like this...
+                    fork
+                        begin
+                            @(posedge dut_if.clk);
+                            i_free_ptr_valid          = 4'b0001;
+                            i_free_seg_ptr[0]         = 20'h11111;
+                            i_free_sema[0]            = 4'b1010;
+                            
+                            @(posedge dut_if.clk);
+                            i_free_ptr_valid          = 4'b0000;
+                            @(posedge dut_if.clk);
+                            
+                            @(posedge dut_if.clk);
+                            i_free_ptr_valid          = 4'b0001;
+                            i_free_seg_ptr[0]         = 20'h22222;
+                            i_free_sema[0]            = 4'b1010;
+                            
+                            @(posedge dut_if.clk);
+                            i_free_ptr_valid          = 4'b0000;
+                            @(posedge dut_if.clk);
+                            
+                            update_epl0_ptr( 20'h33333, 4'b1111);
+                            update_epl0_ptr( 20'h44444, 4'b0011);
+                            update_epl0_ptr( 20'h55555, 4'b0011);
+                            update_epl0_ptr( 20'h66666, 4'b0011);
+                            update_epl0_ptr( 20'h77777, 4'b0011);
+                            update_epl0_ptr( 20'h88888, 4'b0011);
+                            update_epl0_ptr( 20'h99999, 4'b0011);
+                        end
+                        forever begin
+                            @(negedge dut_if.clk);
+                            if( `PRE_PPE_PATH.o_free_ptr_req ) epl0_ptr_req_cnt = epl0_ptr_req_cnt + 1;
+                        end
+                    join
+                    
+                end
 
-            // 64B word valid
-            i_shim_pb_v_p0[0][0]      = 1'b1;
+                begin : pbb
+                    repeat (10) @(posedge dut_if.clk);
+                    $display("%0t #1 --------------------------------------------------------", $realtime);
+                    // first packet -- port 0
+                    //   placeholder for free pointers from pointer cache
+                    // 64B word valid
+                    drive_epl0( 0, 1, 1, 'h1, 24'h123456);
 
-            for( int i=0; i<8; i++ ) begin
-                i_shim_pb_data_p0[0].seg0[i] = 72'(i+1);
-            end
+                    repeat (300) @(posedge dut_if.clk);
 
-            i_shim_pb_md_p0[0].md0        = shim_md_t'('h123456);
-            i_shim_pb_md_p0[0].md0.md.sop = 1'b1;
-            i_shim_pb_md_p0[0].md0.md.eop = 1'b1;
+                    $display("%0t #2 --------------------------------------------------------", $realtime);
+                    // packet #2 -- port 0
+                    // 64B word valid
+                    drive_epl0( 0, 1, 1, 'h2, 24'h123422);
 
-            @(posedge dut_if.clk);
-            i_shim_pb_v_p0[0][0]      = 1'b0;
-            i_shim_pb_data_p0[0].seg0 = {8{72'h00}};
-            i_shim_pb_md_p0[0]        = shim_pb_md_t'('h0);
-  
+                    
+                    repeat (300) @(posedge dut_if.clk);
 
-            repeat (300) @(posedge dut_if.clk);
-            //--------------------------------------------------------
-            // packet #2 -- port 0
-            //   placeholder for free pointers from pointer cache
-            i_free_ptr_valid          = 4'b0001;
-            i_free_seg_ptr[0]         = 20'h22222;
-            i_free_sema[0]            = 4'b1010;
+                    $display("%0t #3 --------------------------------------------------------", $realtime);
+                    // packet #3 -- port 0
 
-            // 64B word valid
-            i_shim_pb_v_p0[0][1]      = 1'b1;
+                    drive_epl0( 0, 1, 0, 'h3, 24'h123433);
+                    drive_epl0( 0, 0, 0, 'h4, 24'haaaaaa);
+                    drive_epl0( 0, 0, 0, 'h5, 24'haaaaaa);
 
-            for( int i=0; i<8; i++ ) begin
-                i_shim_pb_data_p0[0].seg1[i] = 72'(i*2+1);
-            end
+                    // 2nd segment starts here
+                    drive_epl0( 0, 0, 1, 'h6, 24'haaaaaa);
 
-            i_shim_pb_md_p0[0].md1        = shim_md_t'('h123422);
-            i_shim_pb_md_p0[0].md1.md.sop = 1'b1;
-            i_shim_pb_md_p0[0].md1.md.eop = 1'b1;
+                    repeat (300) @(posedge dut_if.clk);
 
-            @(posedge dut_if.clk);
-            i_shim_pb_v_p0[0][1]      = 1'b0;
-            i_shim_pb_data_p0[0].seg1 = {8{72'h00}};
-            i_shim_pb_md_p0[0]        = shim_pb_md_t'('h0);
-  
+                    $display("%0t #4 --------------------------------------------------------", $realtime);
+                    // packet #4 -- port 0
 
-            repeat (300) @(posedge dut_if.clk);
-            //--------------------------------------------------------
-            // packet #3 -- port 0
-            //   placeholder for free pointers from pointer cache
-            i_free_ptr_valid          = 4'b0001;
-            i_free_seg_ptr[0]         = 20'h33333;
-            i_free_sema[0]            = 4'b1111;
+                    drive_epl0( 0, 1, 0, 'h4, 24'h123444);
+                     //  input [3:0] port;
+                     //  input       sop;
+                     //  input       eop;
+                     //  input int   data_mult;
+                     //  input [23:0] md;
+                    drive_epl0( 0, 0, 0, 'h5, 24'h123555);
+                    drive_epl0( 0, 0, 0, 'h6, 24'h123555);
 
-            // 64B word valid
-            i_shim_pb_v_p0[0][2]      = 1'b1;
+                    drive_epl0( 0, 0, 0, 'h7, 24'h123555);
+                    drive_epl0( 0, 0, 0, 'h8, 24'h123555);
+                    drive_epl0( 0, 0, 0, 'h9, 24'h123555);
+                    drive_epl0( 0, 0, 0, 'ha, 24'h123555);
 
-            for( int i=0; i<8; i++ ) begin
-                i_shim_pb_data_p0[0].seg2[i] = 72'(i*3+1);
-            end
+                    drive_epl0( 0, 0, 1, 'hb, 24'h123555);
 
-            i_shim_pb_md_p0[0].md2        = shim_md_t'('h123433);
-            i_shim_pb_md_p0[0].md2.md.sop = 1'b1;
-            i_shim_pb_md_p0[0].md2.md.eop = 1'b0;
+                    
 
-            @(posedge dut_if.clk);
-            // 2nd 64B of 3rd packet
-            i_shim_pb_v_p0[0][2]      = 1'b0;
-            i_shim_pb_data_p0[0].seg2 = {8{72'h00}};
-  
-            i_shim_pb_v_p0[0][0]      = 1'b1;
-
-            for( int i=0; i<8; i++ ) begin
-                i_shim_pb_data_p0[0].seg0[i] = 72'(i*4+1);
-            end
-
-            i_shim_pb_md_p0[0].md0        = shim_md_t'('haaaaa);
-            i_shim_pb_md_p0[0].md0.md.sop = 1'b0;
-            i_shim_pb_md_p0[0].md0.md.eop = 1'b0;
-
-            @(posedge dut_if.clk);
-            // 3rd 64B of 3rd packet
-            i_shim_pb_v_p0[0][0]      = 1'b0;
-            i_shim_pb_data_p0[0].seg0 = {8{72'h00}};
-  
-            i_shim_pb_v_p0[0][1]      = 1'b1;
-
-            for( int i=0; i<8; i++ ) begin
-                i_shim_pb_data_p0[0].seg1[i] = 72'(i*5+1);
-            end
-
-            i_shim_pb_md_p0[0].md1        = shim_md_t'('haaaaa);
-            i_shim_pb_md_p0[0].md1.md.sop = 1'b0;
-            i_shim_pb_md_p0[0].md1.md.eop = 1'b0;
-
-
-            @(posedge dut_if.clk);
-            // 4th 64B of 3rd packet, with EOP
-            i_shim_pb_v_p0[0][1]      = 1'b0;
-            i_shim_pb_data_p0[0].seg1 = {8{72'h00}};
-  
-            i_shim_pb_v_p0[0][2]      = 1'b1;
-
-            for( int i=0; i<8; i++ ) begin
-                i_shim_pb_data_p0[0].seg2[i] = 72'(i*6+1);
-            end
-
-            i_shim_pb_md_p0[0].md2        = shim_md_t'('haaaaa);
-            i_shim_pb_md_p0[0].md2.md.sop = 1'b0;
-            i_shim_pb_md_p0[0].md2.md.eop = 1'b1;
-
-            @(posedge dut_if.clk);
-            i_shim_pb_v_p0[0][2]      = 1'b0;
-            i_shim_pb_data_p0[0].seg2 = {8{72'h00}};
-            i_shim_pb_md_p0[0].md2        = shim_md_t'('hfffff);
-            i_shim_pb_md_p0[0].md2.md.sop = 1'b0;
-            i_shim_pb_md_p0[0].md2.md.eop = 1'b0;
-
+                    repeat (300) @(posedge dut_if.clk);
+                    disable ptr_cache;
+                    
+                    $display("%0t #end --------------------------------------------------------", $realtime);
+                    
+                    drove_reqs = 1; 
+                end // block: pbb
+            join
             
-            repeat (300) @(posedge dut_if.clk);
-
-            drove_reqs = 1; 
-
-        end
+        end // if (!drove_reqs)
+        
 
 //        while (something_to_do()) begin
 //            @(posedge dut_if.clk);

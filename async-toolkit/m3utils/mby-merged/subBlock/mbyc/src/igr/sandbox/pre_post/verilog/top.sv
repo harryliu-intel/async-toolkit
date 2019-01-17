@@ -76,7 +76,6 @@ import igr_sim_pkg::*;
     initial dut_if.rst = 1'b1;
 
     // instantiate DUT (Design Under Test)
-
     igr_pre_post_wrap pre_post_wrap(
 
        // inputs
@@ -195,7 +194,10 @@ import igr_sim_pkg::*;
 
 
     // Scott G -- this should go in monitor, but for quick hack, just putting it here...
-
+    //   this isn't monitoring nearly all interfaces, just a little bit for first packet work
+    //   
+    initial $display("%0t: DEBUG MON started from %m", $realtime);
+    
     always @( negedge dut_if.clk ) begin
 
         for( int i=0; i<4; i++ ) begin
@@ -224,8 +226,10 @@ import igr_sim_pkg::*;
 
         `define LPP0_PATH top.pre_post_wrap.mby_igr_post_ppe.sop_mdata_lpp0_fpp
         if( `LPP0_PATH.valid ) begin
-            $display("%0t: DEBUG MON: lpp0 mdata valid pkt_id %0h port %0h eop %b ", 
+            $display("%0t: DEBUG MON: post lpp0 md valid seg_ptr %0h sema %4b pkt_id %0h port %0h eop %b ", 
                      $realtime, 
+                     `LPP0_PATH.wr_seg_ptr,
+                     `LPP0_PATH.wr_sema,
                      `LPP0_PATH.pkt_id,
                      `LPP0_PATH.src_port,
                      `LPP0_PATH.md.eop
@@ -235,8 +239,10 @@ import igr_sim_pkg::*;
   
         `define LPP1_PATH top.pre_post_wrap.mby_igr_post_ppe.sop_mdata_lpp1
         if( `LPP1_PATH.valid ) begin
-            $display("%0t: DEBUG MON: lpp1 mdata valid pkt_id %0h port %0h eop %b ", 
+            $display("%0t: DEBUG MON: post lpp1 md valid seg_ptr %0h sema %4b pkt_id %0h port %0h eop %b ", 
                      $realtime, 
+                     `LPP1_PATH.wr_seg_ptr,
+                     `LPP1_PATH.wr_sema,
                      `LPP1_PATH.pkt_id,
                      `LPP1_PATH.src_port,
                      `LPP1_PATH.md.eop
@@ -247,13 +253,14 @@ import igr_sim_pkg::*;
 
         `define EPL0_PATH top.pre_post_wrap.mby_igr_pre_ppe.tag_info_epl[0]
         if( `EPL0_PATH.valid ) begin
-            $display("%0t: DEBUG MON: epl0 tag valid pkt_id %0h port %0h eop %b seg_ptr %0h sema %0b ", 
+            $display("%0t: DEBUG MON: pre epl0 tag valid seg_ptr %0h sema %4b pkt_id %0h port %0h eop %b wd_cnt %0d", 
                      $realtime, 
+                     `EPL0_PATH.wr_seg_ptr,
+                     `EPL0_PATH.wr_sema,
                      `EPL0_PATH.pkt_id,
                      `EPL0_PATH.src_port,
                      `EPL0_PATH.md.valid,
-                     `EPL0_PATH.wr_seg_ptr,
-                     `EPL0_PATH.wr_sema
+                     `EPL0_PATH.md.wd_cnt
                      );
             // md .error, .wd_cnt, .eop_pos, .byte_pos
         end
@@ -261,7 +268,7 @@ import igr_sim_pkg::*;
 
         `define WRDATA0_PATH top.pre_post_wrap.mby_igr_pre_ppe.wr_data_epl[0]
         if( `WRDATA0_PATH.valid ) begin
-            $display("%0t: DEBUG MON: wrdata valid seg_ptr %0h sema %0b, wd %0h, data ecc %0h %0h %0h %0h  %0h %0h %0h %0h ", 
+            $display("%0t: DEBUG MON: pre wrdata0  valid seg_ptr %0h sema %4b wd %0h data %0h %0h %0h %0h  %0h %0h %0h %0h ", 
                      $realtime, 
                      `WRDATA0_PATH.wr_seg_ptr,
                      `WRDATA0_PATH.wr_sema,
@@ -277,6 +284,53 @@ import igr_sim_pkg::*;
                      );
             
         end
+
+        `define PPE_INTF0_PATH top.rx_ppe.igr_rx_ppe_intf0_head
+        if( `PPE_INTF0_PATH.valid ) begin
+            $display("%0t: DEBUG MON: rx_ppe intf0 id %0h port %0h tc %0h data %0h ", 
+                     $realtime, 
+                     `PPE_INTF0_PATH.md.id,
+                     `PPE_INTF0_PATH.md.port,
+                     `PPE_INTF0_PATH.md.tc,
+                     `PPE_INTF0_PATH.data
+                     );
+            
+        end
+        `define PPE_INTF1_PATH top.rx_ppe.igr_rx_ppe_intf1_head
+        if( `PPE_INTF1_PATH.valid ) begin
+            $display("%0t: DEBUG MON: rx_ppe intf1 id %0h port %0h tc %0h data %0h ", 
+                     $realtime, 
+                     `PPE_INTF1_PATH.md.id,
+                     `PPE_INTF1_PATH.md.port,
+                     `PPE_INTF1_PATH.md.tc,
+                     `PPE_INTF1_PATH.data
+                     );
+            
+        end
+
+        `define PPE_OUT0_PATH top.rx_ppe.rx_ppe_igr_intf0
+        if( `PPE_OUT0_PATH.valid ) begin
+            $display("%0t: DEBUG MON: rx_ppe result id %0h dest %0h txtc %0h type %s ", 
+                     $realtime, 
+                     `PPE_OUT0_PATH.id,
+                     `PPE_OUT0_PATH.port,
+                     `PPE_OUT0_PATH.tc,
+                     `PPE_OUT0_PATH.md.pkt_type.name
+                     );
+            
+        end
+        `define MIM_WREQ_0 top.pre_post_wrap.mby_igr_post_ppe.mim_wreq_0
+         if( `MIM_WREQ_0.mim_wreq_valid ) begin
+            $display("%0t: DEBUG MON: mim wreq_0 seg_ptr %0h sema %4b wd %0h data %0h ", 
+                     $realtime, 
+                     `MIM_WREQ_0.mim_wr_seg_ptr,
+                     `MIM_WREQ_0.mim_wr_sema,
+                     `MIM_WREQ_0.mim_wr_wd_sel,
+                     `MIM_WREQ_0.mim_wr_data
+                     );
+            
+        end
+  
 
     end
         
