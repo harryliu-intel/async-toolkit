@@ -72,8 +72,8 @@ typedef struct mbyMaskGenToTriggersStruct
     mbyMirrorType     MIRTYP;                                 ///< mirror type
     fm_uint32         MOD_IDX;                                ///< index into the MODIFY descriptor tables
     fm_byte           MOD_PROF_IDX;                           ///< modify profile index
+    fm_byte           NAD;                                    ///< 4-bit NAD (network addressing domain)
     fm_bool           OOM;                                    ///< out of memory
-    fm_byte           OPERATOR_ID;                            ///< 4-bit operator ID (NAD)
     fm_bool           PA_DROP;                                ///< checksum validation error, drop pkt in tail proc
     mbyParserInfo     PARSER_INFO;                            ///< parser info struct
     mbyParserHdrPtrs  PA_HDR_PTRS;                            ///< parser header pointers

@@ -865,7 +865,7 @@ void NextHop
     out->MOD_PROF_IDX         = in->MOD_PROF_IDX;
     out->MTU_VIOLATION        = apply_out.mtu_violation;
     out->LEARN_NOTIFY         = in->LEARN_NOTIFY;
-    out->OPERATOR_ID          = in->OPERATOR_ID;
+    out->NAD                  = in->NAD;
     out->PARITY_ERROR         = in->PARITY_ERROR;
     out->PARSER_ERROR         = in->PARSER_ERROR;
     out->PARSER_INFO          = in->PARSER_INFO;

@@ -802,7 +802,7 @@ void Classifier
     out->LEARN_MODE      = in->LEARN_MODE;
     out->L2_IDOMAIN      = in->L2_IDOMAIN;
     out->L3_IDOMAIN      = in->L3_IDOMAIN;
-    out->OPERATOR_ID     = in->OPERATOR_ID;
+    out->NAD             = in->NAD;
     out->PARITY_ERROR    = in->PARITY_ERROR;
     out->PARSER_ERROR    = in->PARSER_ERROR;
     out->PA_DROP         = in->PA_DROP;
@@ -810,5 +810,5 @@ void Classifier
     out->PA_L3LEN_ERR    = in->PA_L3LEN_ERR;
     out->RX_PORT         = in->RX_PORT;
     out->TRAFFIC_CLASS   = in->TRAFFIC_CLASS;
-    out->RX_LENGTH = in->RX_LENGTH;
+    out->RX_LENGTH       = in->RX_LENGTH;
 }

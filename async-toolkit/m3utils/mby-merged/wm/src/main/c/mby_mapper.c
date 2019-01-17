@@ -92,7 +92,7 @@ static mbyMapDomainAction0 getDomainAction0
 
     domain_action.L2_DOMAIN         = map_domain_action0->L2_DOMAIN;
     domain_action.L3_DOMAIN         = map_domain_action0->L3_DOMAIN;
-    domain_action.OPERATOR_ID       = map_domain_action0->NAD;
+    domain_action.NAD               = map_domain_action0->NAD;
     domain_action.UPDATE_DOMAINS    = map_domain_action0->UPDATE_DOMAINS;
     domain_action.LEARN_EN          = map_domain_action0->LEARN_EN;
     domain_action.LEARN_MODE        = map_domain_action0->LEARN_MODE;
@@ -763,7 +763,7 @@ static void mapScalar
     fm_byte                  * const pri_profile,
     fm_bool                  * const no_pri_enc,
     fm_byte                  * const traffic_class,
-    fm_byte                  * const operator_id,
+    fm_byte                  * const nad,
     fm_uint16                * const l2_domain,
     fm_byte                  * const l3_domain,
     fm_bool                  * const learn_mode,
@@ -1059,7 +1059,7 @@ static void mapScalar
     mbyMapDomainAction0 domain_action0 = getDomainAction0(mapper_map, domain_index);
     if (domain_action0.UPDATE_DOMAINS)
     {
-        *operator_id = domain_action0.OPERATOR_ID;
+        *nad         = domain_action0.NAD;
         *l2_domain   = domain_action0.L2_DOMAIN;
         *l3_domain   = domain_action0.L3_DOMAIN;
         *pri_profile = domain_action0.PRIORITY_PROFILE;
@@ -1846,7 +1846,7 @@ void Mapper
     fm_byte   pri_profile   = 0;
     fm_bool   no_pri_enc    = FALSE;
     fm_byte   traffic_class = 0;
-    fm_byte   operator_id   = 0;
+    fm_byte   nad           = 0;
     fm_uint16 l2_domain     = 0;
     fm_byte   l3_domain     = 0;
     fm_bool   learn_mode    = FALSE;
@@ -1877,7 +1877,7 @@ void Mapper
         &pri_profile,
         &no_pri_enc,
         &traffic_class,
-        &operator_id,
+        &nad,
         &l2_domain,
         &l3_domain,
         &learn_mode,
@@ -1953,8 +1953,8 @@ void Mapper
     out->L2_IVLAN1_CNT      = l2_ivlan1_cnt;
     out->L3_IDOMAIN         = l3_domain;
     out->LEARN_MODE         = learn_mode;
+    out->NAD                = nad;
     out->NO_PRI_ENC         = no_pri_enc;
-    out->OPERATOR_ID        = operator_id;
     out->OTR_MPLS_V         = otr_mpls_v;
     out->PARSER_ERROR       = parser_error;
     out->PARSER_INFO        = parser_info;

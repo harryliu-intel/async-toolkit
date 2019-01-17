@@ -12,17 +12,17 @@ mbyTriggerConditionCfg mbyTrigGetConditionCfg
 {
     mbyTriggerConditionCfg cond_cfg;
 
-    cond_cfg.MATCH_TX               = trig_apply_map->TRIGGER_CONDITION_CFG[trig].MATCH_TX;               // [35:34]
-    cond_cfg.MATCH_RANDOM_THRESHOLD = trig_apply_map->TRIGGER_CONDITION_CFG[trig].MATCH_RANDOM_THRESHOLD; // [33:29]
-    cond_cfg.MATCH_RANDOM_IF_LESS   = trig_apply_map->TRIGGER_CONDITION_CFG[trig].MATCH_RANDOM_IF_LESS;   // [28:28]
-    cond_cfg.MATCH_RANDOM_NUMBER    = trig_apply_map->TRIGGER_CONDITION_CFG[trig].MATCH_RANDOM_NUMBER;    // [27:27]
-    cond_cfg.MATCH_BY_PRECEDENCE    = trig_apply_map->TRIGGER_CONDITION_CFG[trig].MATCH_BY_PRECEDENCE;    // [26:26]
-    cond_cfg.MATCH_EGRESS_DOMAIN    = trig_apply_map->TRIGGER_CONDITION_CFG[trig].MATCH_EGRESS_DOMAIN;    // [21:20]
-    cond_cfg.MATCH_DEST_GLORT       = trig_apply_map->TRIGGER_CONDITION_CFG[trig].MATCH_DEST_GLORT;       // [19:18]
-    cond_cfg.MATCH_TC               = trig_apply_map->TRIGGER_CONDITION_CFG[trig].MATCH_TC;               // [15:14]
-    cond_cfg.MATCH_CGRP             = trig_apply_map->TRIGGER_CONDITION_CFG[trig].MATCH_CGRP;             // [13:12]
-    cond_cfg.MATCH_VLAN             = trig_apply_map->TRIGGER_CONDITION_CFG[trig].MATCH_VLAN;             // [11:10]
-    cond_cfg.LEARN                  = trig_apply_map->TRIGGER_CONDITION_CFG[trig].LEARN;                  // [ 5: 4]
+    cond_cfg.MATCH_TX               = trig_apply_map->TRIGGER_CONDITION_CFG[trig].MATCH_TX;
+    cond_cfg.MATCH_RANDOM_THRESHOLD = trig_apply_map->TRIGGER_CONDITION_CFG[trig].MATCH_RANDOM_THRESHOLD;
+    cond_cfg.MATCH_RANDOM_IF_LESS   = trig_apply_map->TRIGGER_CONDITION_CFG[trig].MATCH_RANDOM_IF_LESS;
+    cond_cfg.MATCH_RANDOM_NUMBER    = trig_apply_map->TRIGGER_CONDITION_CFG[trig].MATCH_RANDOM_NUMBER;
+    cond_cfg.MATCH_BY_PRECEDENCE    = trig_apply_map->TRIGGER_CONDITION_CFG[trig].MATCH_BY_PRECEDENCE;
+    cond_cfg.MATCH_EGRESS_DOMAIN    = trig_apply_map->TRIGGER_CONDITION_CFG[trig].MATCH_EGRESS_DOMAIN;
+    cond_cfg.MATCH_DEST_GLORT       = trig_apply_map->TRIGGER_CONDITION_CFG[trig].MATCH_DEST_GLORT;
+    cond_cfg.MATCH_TC               = trig_apply_map->TRIGGER_CONDITION_CFG[trig].MATCH_TC;
+    cond_cfg.MATCH_CGRP             = trig_apply_map->TRIGGER_CONDITION_CFG[trig].MATCH_CGRP;
+    cond_cfg.MATCH_VLAN             = trig_apply_map->TRIGGER_CONDITION_CFG[trig].MATCH_VLAN;
+    cond_cfg.LEARN                  = trig_apply_map->TRIGGER_CONDITION_CFG[trig].LEARN;
 
     return cond_cfg;
 }
@@ -35,12 +35,12 @@ mbyTriggerConditionParam mbyTrigGetConditionParam
 {
     mbyTriggerConditionParam param_cfg;
 
-    param_cfg.EGRESS_DOMAIN_MASK  = trig_apply_map->TRIGGER_CONDITION_PARAM[trig].EGRESS_DOMAIN_MASK;  // [58:45]
-    param_cfg.EGRESS_DOMAIN_VALUE = trig_apply_map->TRIGGER_CONDITION_PARAM[trig].EGRESS_DOMAIN_VALUE; // [43:30]
-    param_cfg.ROUTED_MASK         = trig_apply_map->TRIGGER_CONDITION_PARAM[trig].ROUTED_MASK;         // [25:24]
-    param_cfg.FRAME_CLASS_MASK    = trig_apply_map->TRIGGER_CONDITION_PARAM[trig].FRAME_CLASS_MASK;    // [23:21]
-    param_cfg.TC                  = trig_apply_map->TRIGGER_CONDITION_PARAM[trig].TC;                  // [20:18]
-    param_cfg.VID_ID              = trig_apply_map->TRIGGER_CONDITION_PARAM[trig].VID_ID;              // [17:12]
+    param_cfg.EGRESS_DOMAIN_MASK  = trig_apply_map->TRIGGER_CONDITION_PARAM[trig].EGRESS_DOMAIN_MASK;
+    param_cfg.EGRESS_DOMAIN_VALUE = trig_apply_map->TRIGGER_CONDITION_PARAM[trig].EGRESS_DOMAIN_VALUE;
+    param_cfg.ROUTED_MASK         = trig_apply_map->TRIGGER_CONDITION_PARAM[trig].ROUTED_MASK;
+    param_cfg.FRAME_CLASS_MASK    = trig_apply_map->TRIGGER_CONDITION_PARAM[trig].FRAME_CLASS_MASK;
+    param_cfg.TC                  = trig_apply_map->TRIGGER_CONDITION_PARAM[trig].TC;
+    param_cfg.VID_ID              = trig_apply_map->TRIGGER_CONDITION_PARAM[trig].VID_ID;
 
     return param_cfg;
 }
@@ -53,8 +53,8 @@ mbyTriggerConditionCGRP mbyTrigGetConditionCGRP
 {
     mbyTriggerConditionCGRP cgrp_cond;
 
-    cgrp_cond.CGRP_MASK = trig_apply_map->TRIGGER_CONDITION_CGRP[trig].CGRP_MASK; // [15:8]
-    cgrp_cond.CGRP_ID   = trig_apply_map->TRIGGER_CONDITION_CGRP[trig].CGRP_ID;   // [ 7:0]
+    cgrp_cond.CGRP_MASK = trig_apply_map->TRIGGER_CONDITION_CGRP[trig].CGRP_MASK;
+    cgrp_cond.CGRP_ID   = trig_apply_map->TRIGGER_CONDITION_CGRP[trig].CGRP_ID;
 
     return cgrp_cond;
 }
@@ -67,8 +67,8 @@ mbyTriggerConditionGlort mbyTrigGetConditionGlort
 {
     mbyTriggerConditionGlort glort_cond;
 
-    glort_cond.GLORT_MASK = trig_apply_map->TRIGGER_CONDITION_GLORT[trig].GLORT_MASK;   // [31:16]
-    glort_cond.DEST_GLORT = trig_apply_map->TRIGGER_CONDITION_GLORT[trig].DEST_GLORT;   // [15: 0]
+    glort_cond.GLORT_MASK = trig_apply_map->TRIGGER_CONDITION_GLORT[trig].GLORT_MASK;
+    glort_cond.DEST_GLORT = trig_apply_map->TRIGGER_CONDITION_GLORT[trig].DEST_GLORT;
 
     return glort_cond;
 }
@@ -81,7 +81,7 @@ mbyTriggerConditionRx mbyTrigGetConditionRx
 {
     mbyTriggerConditionRx rx_cond;
 
-    rx_cond.SRC_PORT_MASK = trig_apply_map->TRIGGER_CONDITION_RX[trig].SRC_PORT_MASK;   // [17: 0]
+    rx_cond.SRC_PORT_MASK = trig_apply_map->TRIGGER_CONDITION_RX[trig].SRC_PORT_MASK;
 
     return rx_cond;
 }
@@ -94,7 +94,7 @@ mbyTriggerConditionAmask1 mbyTrigGetConditionAmask1
 {
     mbyTriggerConditionAmask1 amask1_cond;
 
-    amask1_cond.HANDLER_ACTION_MASK = trig_apply_map->TRIGGER_CONDITION_AMASK_1[trig].HANDLER_ACTION_MASK;   // [31: 0]
+    amask1_cond.HANDLER_ACTION_MASK = trig_apply_map->TRIGGER_CONDITION_AMASK_1[trig].HANDLER_ACTION_MASK;
 
     return amask1_cond;
 }
@@ -107,7 +107,7 @@ mbyTriggerConditionAmask2 mbyTrigGetConditionAmask2
 {
     mbyTriggerConditionAmask2 amask2_cond;
 
-    amask2_cond.HANDLER_ACTION_MASK = trig_apply_map->TRIGGER_CONDITION_AMASK_2[trig].HANDLER_ACTION_MASK;   // [31: 0]
+    amask2_cond.HANDLER_ACTION_MASK = trig_apply_map->TRIGGER_CONDITION_AMASK_2[trig].HANDLER_ACTION_MASK;
 
     return amask2_cond;
 }
@@ -172,25 +172,25 @@ mbyTriggerActions mbyTriggerGetActions
 {
     mbyTriggerActions trig_actions = { 0 };
 
-    trig_actions.forwardingAction     = trig_apply_map->TRIGGER_ACTION_CFG_1[trig].FORWARDING_ACTION;       // [ 1: 0]
-    trig_actions.trapAction           = trig_apply_map->TRIGGER_ACTION_CFG_1[trig].TRAP_ACTION;             // [ 3: 2]
-    trig_actions.TCAction             = trig_apply_map->TRIGGER_ACTION_CFG_1[trig].TC_ACTION;               // [ 8: 8]
-    trig_actions.vlanAction           = trig_apply_map->TRIGGER_ACTION_CFG_1[trig].VLAN_ACTION;             // [ 9: 9]
-    trig_actions.learningAction       = trig_apply_map->TRIGGER_ACTION_CFG_1[trig].LEARNING_ACTION;         // [11:10]
-    trig_actions.rateLimitAction      = trig_apply_map->TRIGGER_ACTION_CFG_1[trig].RATE_LIMIT_ACTION;       // [12:12]
-    trig_actions.egressL2DomainAction = trig_apply_map->TRIGGER_ACTION_CFG_1[trig].EGRESS_L2_DOMAIN_ACTION; // [17:17]
-    trig_actions.egressL3DomainAction = trig_apply_map->TRIGGER_ACTION_CFG_1[trig].EGRESS_L3_DOMAIN_ACTION; // [18:18]
-    trig_actions.policerAction        = trig_apply_map->TRIGGER_ACTION_CFG_1[trig].POLICER_ACTION;          // [19:19]
-    trig_actions.mirroringAction0     = trig_apply_map->TRIGGER_ACTION_CFG_1[trig].MIRRORING_ACTION0;       // [22:21]
-    trig_actions.mirroringAction1     = trig_apply_map->TRIGGER_ACTION_CFG_1[trig].MIRRORING_ACTION1;       // [24:23]
-    trig_actions.mirroringAction2     = trig_apply_map->TRIGGER_ACTION_CFG_1[trig].MIRRORING_ACTION2;       // [26:25]
-    trig_actions.mirroringAction3     = trig_apply_map->TRIGGER_ACTION_CFG_1[trig].MIRRORING_ACTION3;       // [28:27]
+    trig_actions.forwardingAction     = trig_apply_map->TRIGGER_ACTION_CFG_1[trig].FORWARDING_ACTION;
+    trig_actions.trapAction           = trig_apply_map->TRIGGER_ACTION_CFG_1[trig].TRAP_ACTION;
+    trig_actions.TCAction             = trig_apply_map->TRIGGER_ACTION_CFG_1[trig].TC_ACTION;
+    trig_actions.vlanAction           = trig_apply_map->TRIGGER_ACTION_CFG_1[trig].VLAN_ACTION;
+    trig_actions.learningAction       = trig_apply_map->TRIGGER_ACTION_CFG_1[trig].LEARNING_ACTION;
+    trig_actions.rateLimitAction      = trig_apply_map->TRIGGER_ACTION_CFG_1[trig].RATE_LIMIT_ACTION;
+    trig_actions.egressL2DomainAction = trig_apply_map->TRIGGER_ACTION_CFG_1[trig].EGRESS_L2_DOMAIN_ACTION;
+    trig_actions.egressL3DomainAction = trig_apply_map->TRIGGER_ACTION_CFG_1[trig].EGRESS_L3_DOMAIN_ACTION;
+    trig_actions.policerAction        = trig_apply_map->TRIGGER_ACTION_CFG_1[trig].POLICER_ACTION;
+    trig_actions.mirroringAction0     = trig_apply_map->TRIGGER_ACTION_CFG_1[trig].MIRRORING_ACTION0;
+    trig_actions.mirroringAction1     = trig_apply_map->TRIGGER_ACTION_CFG_1[trig].MIRRORING_ACTION1;
+    trig_actions.mirroringAction2     = trig_apply_map->TRIGGER_ACTION_CFG_1[trig].MIRRORING_ACTION2;
+    trig_actions.mirroringAction3     = trig_apply_map->TRIGGER_ACTION_CFG_1[trig].MIRRORING_ACTION3;
 
-    trig_actions.newTC                = trig_apply_map->TRIGGER_ACTION_CFG_2[trig].NEW_TC;         // [ 2: 0]
-    trig_actions.newVlan              = trig_apply_map->TRIGGER_ACTION_CFG_2[trig].NEW_EVID;       // [14: 3]
-    trig_actions.newRateLimitNum      = trig_apply_map->TRIGGER_ACTION_CFG_2[trig].RATE_LIMIT_NUM; // [18:15]
-    trig_actions.trapCode             = trig_apply_map->TRIGGER_ACTION_CFG_2[trig].TRAP_CODE;      // [21:19]
-    trig_actions.filterDestMask       = trig_apply_map->TRIGGER_DIRECT_MAP_ADM4.FILTER_DEST_MASK;  // [ 1: 0]
+    trig_actions.newTC                = trig_apply_map->TRIGGER_ACTION_CFG_2[trig].NEW_TC;
+    trig_actions.newVlan              = trig_apply_map->TRIGGER_ACTION_CFG_2[trig].NEW_EVID;
+    trig_actions.newRateLimitNum      = trig_apply_map->TRIGGER_ACTION_CFG_2[trig].RATE_LIMIT_NUM;
+    trig_actions.trapCode             = trig_apply_map->TRIGGER_ACTION_CFG_2[trig].TRAP_CODE;
+    trig_actions.filterDestMask       = trig_apply_map->TRIGGER_DIRECT_MAP_ADM4.FILTER_DEST_MASK;
 
     mbyTriggerDirectMapAdm direct_map_adm  = mbyTrigGetDirectMapCtrlAdm(trig_apply_map, trig);
     if (trig_apply_map->TRIGGER_DIRECT_MAP_CTRL.GO_COMPL == 0 && trig_apply_map->TRIGGER_DIRECT_MAP_CTRL.STATUS == 0)
@@ -200,12 +200,12 @@ mbyTriggerActions mbyTriggerGetActions
             trig_actions.newDestMask[i] = direct_map_adm.NEW_DEST_MASK[i];
     }
 
-    trig_actions.newDestGlort         = trig_apply_map->TRIGGER_ACTION_GLORT[trig].NEW_DEST_GLORT;         // [15: 0]
-    trig_actions.newDestGlortMask     = trig_apply_map->TRIGGER_ACTION_GLORT[trig].NEW_DEST_GLORT_MASK;    // [16:31]
-    trig_actions.mirrorProfileIndex0  = trig_apply_map->TRIGGER_ACTION_MIRROR[trig].MIRROR_PROFILE_INDEX0; // [ 5: 0]
-    trig_actions.mirrorProfileIndex1  = trig_apply_map->TRIGGER_ACTION_MIRROR[trig].MIRROR_PROFILE_INDEX1; // [11: 6]
-    trig_actions.mirrorProfileIndex2  = trig_apply_map->TRIGGER_ACTION_MIRROR[trig].MIRROR_PROFILE_INDEX2; // [17:12]
-    trig_actions.mirrorProfileIndex3  = trig_apply_map->TRIGGER_ACTION_MIRROR[trig].MIRROR_PROFILE_INDEX3; // [18:23]
+    trig_actions.newDestGlort         = trig_apply_map->TRIGGER_ACTION_GLORT[trig].NEW_DEST_GLORT;
+    trig_actions.newDestGlortMask     = trig_apply_map->TRIGGER_ACTION_GLORT[trig].NEW_DEST_GLORT_MASK;
+    trig_actions.mirrorProfileIndex0  = trig_apply_map->TRIGGER_ACTION_MIRROR[trig].MIRROR_PROFILE_INDEX0;
+    trig_actions.mirrorProfileIndex1  = trig_apply_map->TRIGGER_ACTION_MIRROR[trig].MIRROR_PROFILE_INDEX1;
+    trig_actions.mirrorProfileIndex2  = trig_apply_map->TRIGGER_ACTION_MIRROR[trig].MIRROR_PROFILE_INDEX2;
+    trig_actions.mirrorProfileIndex3  = trig_apply_map->TRIGGER_ACTION_MIRROR[trig].MIRROR_PROFILE_INDEX3;
 
     mbyTriggerDirectMapAdr direct_map_adr  = mbyTrigGetDirectMapCtrlAdr(trig_apply_map, trig);
     if (trig_apply_map->TRIGGER_DIRECT_MAP_CTRL.GO_COMPL == 0 && trig_apply_map->TRIGGER_DIRECT_MAP_CTRL.STATUS == 0)

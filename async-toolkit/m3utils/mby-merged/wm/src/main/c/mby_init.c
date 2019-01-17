@@ -2498,11 +2498,22 @@ void mby_init_common_regs
     /* Init some defaults for now <-- REVISIT!!! */
 
     for (fm_uint i = 0; i < 18/* Number of ports? */; i++) {
-        fwd_port_cfg_1_r * const port_cfg_1 = &(rx_top_map->fwd_misc.FWD_PORT_CFG_1[i]);
+        fwd_port_cfg_0_r * const port_cfg_0 = &(rx_top_map->fwd_misc.FWD_PORT_CFG_0[i]);
 
-        port_cfg_1->LEARNING_ENABLE     = 0x1;
-        port_cfg_1->FILTER_VLAN_INGRESS = 0x1;
-        port_cfg_1->DESTINATION_MASK    = 0x3ffff;
+        port_cfg_0->LEARNING_ENABLE     = 0x1;
+        port_cfg_0->FILTER_VLAN_INGRESS = 0x1;
+
+        fwd_port_cfg_1_0_r * const port_cfg_1_0 = &(rx_top_map->fwd_misc.FWD_PORT_CFG_1_0[i]);
+        fwd_port_cfg_1_1_r * const port_cfg_1_1 = &(rx_top_map->fwd_misc.FWD_PORT_CFG_1_1[i]);
+        fwd_port_cfg_1_2_r * const port_cfg_1_2 = &(rx_top_map->fwd_misc.FWD_PORT_CFG_1_2[i]);
+        fwd_port_cfg_1_3_r * const port_cfg_1_3 = &(rx_top_map->fwd_misc.FWD_PORT_CFG_1_3[i]);
+        fwd_port_cfg_1_4_r * const port_cfg_1_4 = &(rx_top_map->fwd_misc.FWD_PORT_CFG_1_4[i]);
+
+        port_cfg_1_0->DESTINATION_MASK = ~0uL;
+        port_cfg_1_1->DESTINATION_MASK = ~0uL;
+        port_cfg_1_2->DESTINATION_MASK = ~0uL;
+        port_cfg_1_3->DESTINATION_MASK = ~0uL;
+        port_cfg_1_4->DESTINATION_MASK = 0x1;
     }
 
     for (fm_uint i = 0; i < 256; i++) {

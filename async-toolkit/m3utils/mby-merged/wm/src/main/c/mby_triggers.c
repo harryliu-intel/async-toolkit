@@ -692,7 +692,7 @@ static void tcnFifo
 {
     fm_uint64 head           = trig_apply_misc_map->MA_TCN_PTR_HEAD.HEAD;
     fm_uint64 tail           = trig_apply_misc_map->MA_TCN_PTR_TAIL.TAIL;
-    fm_bool   port_learning  = fwd_misc_map->FWD_PORT_CFG_1[rx_port].LEARNING_ENABLE;
+    fm_bool   port_learning  = fwd_misc_map->FWD_PORT_CFG_0[rx_port].LEARNING_ENABLE;
     fm_bool   port_l2_domain = mapper_map->MAP_DOMAIN_ACTION0[l2_edomain].LEARN_EN;
     fm_uint64 usage          = trig_apply_misc_map->MA_TCN_USAGE[rx_port].USAGE;
     fm_uint64 wm             = trig_apply_misc_map->MA_TCN_WM[rx_port].WM;
@@ -800,7 +800,7 @@ static void loopbackSuppressionFiltering
 static void handleTraps
 (
     mby_ppe_cm_apply_map const * const cm_apply,
-    fm_byte                      const operator_id,
+    fm_byte                      const nad,
     fm_bool                      const store_trap_action,
     mbyTriggerResults    const * const triggers,
     fm_uint64                  * const dmask_o,
@@ -811,7 +811,11 @@ static void handleTraps
     fm_uint16                  * const ip_mcast_idx_o
 )
 {
-    *idglort_o = cm_apply->CM_APPLY_TRAP_GLORT[operator_id].TRAP_GLORT;
+
+    mbyCpuTrapMask cpu_trap_mask;
+    cpu_trap_mask = getCpuTrapMask(cm_apply);
+
+    *idglort_o = cm_apply->CM_APPLY_TRAP_GLORT[nad].TRAP_GLORT; // NAD in RDL operator ID
 
     if(triggers->trapAction == MBY_TRIG_ACTION_TRAP_TRAP)
         *cpu_code_o = MBY_TRIGGER_TRAP_ACTION_CODE | triggers->cpuCode;
@@ -820,9 +824,7 @@ static void handleTraps
     *mark_routed_o  = FALSE;
     *ip_mcast_idx_o = 0;
 
-    //!!! REVISIT RDL changes needed here
-    for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
-        dmask_o[i] = cm_apply->CM_APPLY_CPU_TRAP_MASK.DEST_MASK;
+    dmaskCopy(cpu_trap_mask.DEST_MASK, dmask_o);
 
     if(!isDmask(dmask_o))
         *action_o = MBY_ACTION_BANK5_OTHER_DROPS;
@@ -889,7 +891,7 @@ static void trap
 (
     mby_ppe_cm_apply_map const * const cm_apply,
     mbyFwdSysCfg1        const * const sys_cfg1,
-    fm_byte                      const operator_id,
+    fm_byte                      const nad,
     fm_bool                      const store_trap_action,
     mbyTriggerResults    const * const triggers,
     fm_uint64                  * const dmask,
@@ -921,7 +923,7 @@ static void trap
         handleTraps
         (
             cm_apply,
-            operator_id,
+            nad,
             store_trap_action,
             triggers,
             dmask,
@@ -1051,7 +1053,7 @@ static void maskGenUpdate
     fm_uint32                    const mirror1_port,
     fm_bool                      const pa_drop,
     fm_bool                      const pa_l3len_err,
-    fm_byte                      const operator_id,
+    fm_byte                      const nad,
     fm_bool                      const store_trap_action,
     mbyTriggerResults    const * const triggers,
     //in-out
@@ -1112,7 +1114,7 @@ static void maskGenUpdate
     (
         cm_apply,
         &sys_cfg1,
-        operator_id,
+        nad,
         store_trap_action,
         triggers,
         dmask,
@@ -1176,7 +1178,7 @@ void Triggers
     fm_uint32         const hash_rot_b                = in->HASH_ROT_B;
     fm_byte           const qos_tc                    = in->QOS_TC;
     fm_uint16               idglort                   = in->IDGLORT;
-    fm_byte           const operator_id               = in->OPERATOR_ID;
+    fm_byte           const nad                       = in->NAD;
     fm_byte                 log_amask                 = in->LOG_AMASK;
     fm_bool                 logging_hit               = in->LOGGING_HIT;
     fm_byte                 l3_edomain                = in->L3_EDOMAIN;
@@ -1366,7 +1368,7 @@ void Triggers
         mirror1_port,
         pa_drop,
         pa_l3len_err,
-        operator_id,
+        nad,
         store_trap_action,
         &results,
         results.destMask,

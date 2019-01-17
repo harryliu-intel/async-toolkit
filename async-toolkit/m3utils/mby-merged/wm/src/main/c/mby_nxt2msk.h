@@ -38,7 +38,7 @@ typedef struct mbyNextHopToMaskGenStruct
     fm_bool            LEARN_NOTIFY;                     ///< learning is diabled flag
     fm_bool            MARK_ROUTED;                      ///<
     fm_bool            MTU_VIOLATION;                    ///< packet violates the MTU
-    fm_byte            OPERATOR_ID;                      ///< 4-bit operator ID (NAD)
+    fm_byte            NAD;                              ///< 4-bit NAD (network addressing domain)
     fm_bool            PARITY_ERROR;                     ///< memory parity error flag
     fm_bool            PARSER_WINDOW_V;                  ///< parser window valid flag
     fm_bool            PARSER_ERROR;                     ///< header parse error flag

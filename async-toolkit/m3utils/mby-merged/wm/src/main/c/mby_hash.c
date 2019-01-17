@@ -510,7 +510,7 @@ void Hash
     out->LEARN_MODE              = in->LEARN_MODE;
     out->LEARN_NOTIFY            = in->LEARN_NOTIFY;
     out->MOD_PROF_IDX            = in->MOD_PROF_IDX;
-    out->OPERATOR_ID             = in->OPERATOR_ID;
+    out->NAD                     = in->NAD;
     out->PARITY_ERROR            = in->PARITY_ERROR;
     out->PARSER_ERROR            = in->PARSER_ERROR;
     out->PARSER_INFO             = in->PARSER_INFO;

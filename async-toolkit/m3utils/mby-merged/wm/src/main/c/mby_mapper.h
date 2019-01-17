@@ -151,7 +151,7 @@ typedef struct mbyMapDomainAction0Struct
 {
     fm_byte L2_DOMAIN;         //  8b field
     fm_byte L3_DOMAIN;         //  6b
-    fm_byte OPERATOR_ID;       //  4b
+    fm_byte NAD;               //  4b
     fm_bool UPDATE_DOMAINS;    //  1b
     fm_bool LEARN_EN;          //  1b
     fm_bool LEARN_MODE;        //  1b

@@ -497,7 +497,7 @@ static void learningEnabledCheck
 (
     mby_ppe_mst_glort_map const * const glort_map,
     mby_ppe_fwd_misc_map  const * const fwd_misc,
-    mbyFwdPortCfg1        const * const port_cfg1,
+    mbyFwdPortCfg         const * const port_cfg,
     fm_uint32                     const rx_port,
     fm_uint16                     const l2_ivid1,
     fm_bool                       const learn_notify,
@@ -519,7 +519,7 @@ static void learningEnabledCheck
                                 (l2_ifid1_state == MBY_STP_STATE_FORWARD));
 
     // If a frame is received with an SMAC that matches the value in CPU_MAC, there will be no SMAC learning notification.
-    fm_bool learning_allowed = port_cfg1->LEARNING_ENABLE && !learn_notify && l2_ifid1_learn;
+    fm_bool learning_allowed = port_cfg->LEARNING_ENABLE && !learn_notify && l2_ifid1_learn;
     fm_bool l2_smac_is_cpu   = isCpuMacAddress(fwd_misc, l2_smac);
     fm_bool l2_smac_is_zero  = (l2_smac == 0);
     fm_bool learning_enabled = learning_allowed && !l2_smac_is_cpu && !l2_smac_is_zero;
@@ -684,18 +684,18 @@ static void specialPacketHandlingTtlTrapDropLog
 
 static void ingressSpanningTreeCheck
 (
-    mbyFwdPortCfg1 const * const port_cfg1,
-    fm_bool                const l2_ivlan1_membership,
-    fm_bool                const sa_hit,
-    fm_uint16              const csglort,
-    fm_byte                const sv_drop,
-    mbyStpState            const l2_ifid1_state,
-    mbyMaTable             const sa_result,
-    fm_uint64            * const amask,
-    fm_bool              * const mac_moved_o
+    mbyFwdPortCfg      const * const port_cfg,
+    fm_bool                    const l2_ivlan1_membership,
+    fm_bool                    const sa_hit,
+    fm_uint16                  const csglort,
+    fm_byte                    const sv_drop,
+    mbyStpState                const l2_ifid1_state,
+    mbyMaTable                 const sa_result,
+    fm_uint64                * const amask,
+    fm_bool                  * const mac_moved_o
 )
 {
-    if (port_cfg1->FILTER_VLAN_INGRESS && !l2_ivlan1_membership)
+    if (port_cfg->FILTER_VLAN_INGRESS && !l2_ivlan1_membership)
         *amask |= MBY_AMASK_DROP_IV; // VLAN ingress violation -> dropping frame
 
     fm_bool mac_moved = (sa_hit && (sa_result.S_GLORT != csglort));
@@ -732,7 +732,7 @@ static void ingressSpanningTreeCheck
 static void filtering
 (
     mby_ppe_mst_glort_map const * const glort_map,
-    mbyFwdPortCfg1        const * const port_cfg1,
+    mbyFwdPortCfg         const * const port_cfg,
     mbyFwdPortCfg2        const * const port_cfg2,
     fm_macaddr                    const l2_dmac,
     fm_bool                       const flood_forwarded,
@@ -780,8 +780,8 @@ static void filtering
     // Perform port-based filtering for switched packets
     for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
     {
-        dmask_o[0] &= port_cfg1[0].DESTINATION_MASK; //!!!REVISIT RDL changes needed here
-        dmask_o[0] &= port_cfg2[0].DESTINATION_MASK; //!!!REVISIT RDL changes needed here
+        dmask_o[i] &= port_cfg->DESTINATION_MASK[i];
+        dmask_o[0] &= port_cfg2->DESTINATION_MASK; //!!!REVISIT RDL changes needed here
     }
 
     // Ingress VLAN reflection check:
@@ -885,11 +885,15 @@ static void qcnMirroring
     fm_byte mirror_profile_idx = qcn_mirror_cfg->MIRROR_PROFILE_IDX;
     fm_byte mirror_session     = qcn_mirror_cfg->MIRROR_SESSION;
 
-    cm_apply_mirror_profile_table_r const * const mirror_prof_tbl0 = &(cm_apply->CM_APPLY_MIRROR_PROFILE_TABLE[*mirror0_profile_idx_o]);
-    cm_apply_mirror_profile_table_r const * const mirror_prof_tbl1 = &(cm_apply->CM_APPLY_MIRROR_PROFILE_TABLE[*mirror1_profile_idx_o]); // Should be changed to mirror1_profile_idx?? REVISIT!!!
+    //!!!REVISIT How should I get the port from DMASK???
+    mbyMirrorEcmpDmask mirror_ecmp_dmask_0;
+    mirror_ecmp_dmask_0 = getMirrorEcmpDmask(cm_apply, *mirror0_profile_idx_o);
 
-    fm_uint32 mirror0_port = mirror_prof_tbl0->PORT;  //!!!REVISIT Probably should change mirror_ecmp_dmask0..4 RDL changes needed
-    fm_uint32 mirror1_port = mirror_prof_tbl1->PORT;  //!!!REVISIT Probably should change mirror_ecmp_dmask0..4 RDL changes needed
+    mbyMirrorEcmpDmask mirror_ecmp_dmask_1;
+    mirror_ecmp_dmask_1 = getMirrorEcmpDmask(cm_apply, *mirror1_profile_idx_o);
+
+    fm_uint32 mirror0_port = mirror_ecmp_dmask_0.Mirror_port_mask[0];  //!!!REVISIT How should I get the port from DMASK???
+    fm_uint32 mirror1_port = mirror_ecmp_dmask_1.Mirror_port_mask[0];  //!!!REVISIT How should I get the port from DMASK???
 
     cm_apply_mcast_epoch_r const * const mcast_epoch = &(cm_apply->CM_APPLY_MCAST_EPOCH);
     fm_bool mcst_epoch = mcast_epoch->CURRENT;
@@ -1103,8 +1107,8 @@ void MaskGen
     fm_bool                    const trap_ip_options      = in->TRAP_IP_OPTIONS;
 
     // Configurations:
-    mbyFwdPortCfg1 port_cfg1;
-    port_cfg1 = getPortCfg1(fwd_misc, rx_port);
+    mbyFwdPortCfg port_cfg;
+    port_cfg = getPortCfg(fwd_misc, rx_port);
 
     mbyFwdPortCfg2 port_cfg2;
     port_cfg2 = getPortCfg2(fwd_misc, l2_edomain_in);
@@ -1152,7 +1156,7 @@ void MaskGen
     (
         glort_map,
         fwd_misc,
-        &port_cfg1,
+        &port_cfg,
         rx_port,
         l2_ivid1,
         learn_notify,
@@ -1211,7 +1215,7 @@ void MaskGen
     fm_bool mac_moved = FALSE;
     ingressSpanningTreeCheck
     (
-        &port_cfg1,
+        &port_cfg,
         l2_ivlan1_membership,
         sa_hit,
         csglort,
@@ -1232,7 +1236,7 @@ void MaskGen
     filtering
     (
         glort_map,
-        &port_cfg1,
+        &port_cfg,
         &port_cfg2,
         l2_dmac,
         flood_forwarded,
@@ -1410,7 +1414,7 @@ void MaskGen
     out->MOD_IDX                = in->MOD_IDX;
     out->MOD_PROF_IDX           = in->MOD_PROF_IDX;
     out->OOM                    = in->OOM;
-    out->OPERATOR_ID            = in->OPERATOR_ID;
+    out->NAD                    = in->NAD;
     out->PA_DROP                = in->PA_DROP;
     out->PARSER_INFO            = in->PARSER_INFO;
     out->PA_HDR_PTRS            = in->PA_HDR_PTRS;
