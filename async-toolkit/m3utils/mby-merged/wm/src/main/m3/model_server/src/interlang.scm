@@ -29,6 +29,7 @@
               ((offset       (array n-parser-ptrs 8))
                (offset-valid (array n-parser-ptrs boolean))
                (prot-id      (array n-parser-ptrs 8)))))
+    ;; I can certainly add a comment here
     
     (typedef parser-to-mapper
              (struct
@@ -540,33 +541,6 @@
         ((and (symbol? x)
               (let ((r-test (sym-lookup x defs)))
                 (if (and r-test (eq? 'constant (car r-test)))
-                    (sa *c-const-pfx* (get-c-name r-test))
-                    #f))))
-        
-        ;; must be value expression
-        ((not (pair? x)) '*not-found*)
-
-        ((eq? (car x) 'number) (force-value x defs))
-
-        ((memq (car x) *multiops*)
-         (sa "(" (infixize (map recurse (cdr x)) (car x)) ")"))
-
-        ((let ((br (assoc (car x) *binops*)))
-           (if br
-               (sa "(" (recurse (cadr x)) " " (cadr (assoc 'c (cadr br))) " " (recurse (caddr x)) ")")
-               #f)))
-             
-        (else '*not-found*)))
-
-(define (gen-c-val-use x defs)
-
-  (define (recurse z) (gen-c-val-use z defs))
-
-  (cond ((number? x) (number->string x))
-
-        ((and (symbol? x)
-              (let ((r-test (sym-lookup x defs)))
-                (if (and r-test (eq? 'constant (car r-test)))
                     (sa *c-const-pfx* (get-c-name  r-test) )
                     #f))))
         
@@ -739,7 +713,8 @@
     (and t-rec
          (equal? (car t-rec) 'typedef)         ;; its a typedef
          (pair? (caddr (cadr t-rec)))          ;; referencing a compound type...
-         (equal? (caar (cddadr t-rec)) 'array))))
+         (equal? (caar (cddadr t-rec)) 'array) ;; and an array !
+         )))
 
 (define (make-pointer of tn defs)
   (cond ((equal? of "t") "t")         ;; t itself ALWAYS a pointer
@@ -1157,9 +1132,9 @@
 (define (make-builtins)
   (let* ((n "BOOLEAN")
          (tn n)
-         (ser-proto  (m3-deser-proto 'ser (sa "Serialize"n) 1 "" tn))
+         (ser-proto   (m3-deser-proto 'ser   (sa "Serialize"n)   1 "" tn))
          (deser-proto (m3-deser-proto 'deser (sa "Deserialize"n) 1 "" tn))
-         (fmt-proto (m3-deser-proto 'fmt (sa "FormatWx"n) 1 "" tn)))
+         (fmt-proto   (m3-deser-proto 'fmt   (sa "FormatWx"n)    1 "" tn)))
   (list
    (list "WmDeSer.i3"
          *empty-set*
