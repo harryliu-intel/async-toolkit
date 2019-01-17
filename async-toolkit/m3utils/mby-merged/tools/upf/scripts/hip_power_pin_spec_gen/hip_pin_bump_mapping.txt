@@ -1,0 +1,3 @@
+c73p1giolbggpiogppafamily vccpgppa_1p8_ehv vccpgppa_1p8 {ext_off 1.66}
+c73p1giolbggpiogppafamily vcccore1p0_lv vnnprim {ext_off 0.75}
+c73p1giolbggpiogppafamily vccpgppa_3p3_uhv vccpgppa_3p3 {ext_off 3.09}

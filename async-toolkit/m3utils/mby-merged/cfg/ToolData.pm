@@ -25,6 +25,7 @@ $onecfg{Facet} = {
                     fc_8_no_phy
 
         )],
+        dut_type => [qw(rtl gls upf no_dut)],
 	spyglass_mode => [qw( lint dft lp cdc)],
         ace_model_name => [qw( fc fc_no_phy fc_8 fc_8_no_phy fc_effm fc_nlp dft_no_dut dft_rtl_dbg dft_rtl_quick dft_gls_dbg dft_gls_quick )],
     },
@@ -44,6 +45,13 @@ $onecfg{Facet} = {
         'ace_model_name=fc_no_phy' => {
             dut => "fc_no_phy",
             ace_model_name  => "fc_no_phy",
+        },
+        'dut_type=upf' => {
+            dut_type => "upf",
+            sim_dbg_lvl => "func_def",
+            pmc_trackers  => 1,
+            vcs_parallel => "none",
+            ace_model_name  => "fc_nlp",
         },
     },
 };
