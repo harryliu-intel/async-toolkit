@@ -54,6 +54,39 @@ $ToolConfig_tools{buildman}{SUB_TOOLS}{collage} = $ToolConfig_tools{collage};
 $ToolConfig_tools{rtltools}{SUB_TOOLS}{flowbee}{OTHER}{default_dut} = "mby";
 $ToolConfig_tools{runtools}{OTHER}{default_dut} = "mby";
 
+push(@{$ToolConfig_tools{buildman}{SUB_TOOLS}{flowbee}{OTHER}{modules}}, "$MODEL_ROOT/cfg/stages/preflow_stage.pm.template");
+
+### UPF specific
+$ToolConfig_tools{collage}{ENV}{COLLAGE_NEW_UPF} = "0";
+$ToolConfig_tools{collage}{ENV}{UPF_INSTALL_DIR} = "$MODEL_ROOT/target/fc/upf/gen/fc_par";
+$ToolConfig_tools{upf_collage_cmd} = {
+      EXEC => "rm -rf $MODEL_ROOT/src/gen/collage/*; rm -rf $MODEL_ROOT/src/gen/upf/*;mkdir -p $MODEL_ROOT/src/gen/collage;mkdir -p $MODEL_ROOT/src/gen/upf; &get_tool_path('coretools')/bin/coreAssembler -timeout 5 -shell -x 
+\'source &get_tool_path(
+'collage')/core/common/tcl/collage_init.tcl\' -f $MODEL_ROOT/tools/collage/configs/config_ebg/soc/assemble/assembler.soc.tcl",
+};
+$ToolConfig_tools{upf_hpgs_gen_cmd} = {
+      EXEC => "$MODEL_ROOT/tools/collage/configs/config_ebg/soc/integ_specs/upf/hip_power_pin_spec_gen/generate_hip_supply_port_mapping.pl -pin_map 
+$MODEL_ROOT/tools/collage/configs/config_ebg/soc/integ_specs/upf/hip_power_pin_spec_gen/hip_pin_bump
+_mapping.txt -io_list $MODEL_ROOT/tools/collage/configs/config_ebg/soc/integ_specs/upf/hip_power_pin_spec_gen/ebg_io.list -out_dir $MODEL_ROOT/src/upfGen/hip_power_pins | & tee 
+$MODEL_ROOT/src/upfGen/hip_power_pins/log.hip",
+};
+
+$ToolConfig_tools{upf_merge_cmd} = {
+      EXEC => "/usr/intel/bin/tcsh $MODEL_ROOT/tools/collage/configs/config_ebg/soc/integ_specs/upf/merge_munge_upf/generate_merged_upf.csh",
+};
+push(@{$ToolConfig_tools{buildman}{SUB_TOOLS}{flowbee}{OTHER}{modules}}, "$MODEL_ROOT/cfg/stages/collage_preflow.pm");
+push(@{$ToolConfig_tools{buildman}{SUB_TOOLS}{flowbee}{OTHER}{modules}}, "$MODEL_ROOT/cfg/stages/collage_postflow.pm");
+$ToolConfig_tools{stage_bman_collage}{OTHER}{pre_flow} = { 
+                                                           "(.dut_type=upf.)" => "collage_preflow",
+                                                           "(.default.)" => "preflow_stage",
+                                                         };
+$ToolConfig_tools{stage_bman_collage}{OTHER}{post_flow} = { 
+                                                           "(.dut_type=upf.)" => "collage_postflow",
+                                                           "(.default.)" => "collage_postflow",
+                                                         };
+$ToolConfig_tools{buildman}{SUB_TOOLS}{stages}{SUB_TOOLS}{collage_postflow}{OTHER}{relevant_tools} = [qw( collage )];
+$ToolConfig_tools{buildman}{SUB_TOOLS}{flowbee}{OTHER}{USERCODE} .= ":$ENV{MODEL_ROOT}/cfg/stages/bman_preflow.pm";
+$ToolConfig_tools{buildman}{OTHER}{pre_flow} = "UserCode::bman_preflow";
 ### End collage related updates ***
 
 #####################################################
@@ -111,6 +144,23 @@ $ToolConfig_tools{buildman}{ENV}{DISABLE_ANSI_COLORS}                        = "
 # Natural Docs hook to call cfg/bin/doc_me as a preflow to vcs
 $ToolConfig_tools{'buildman'}{SUB_TOOLS}{'flowbee'}{OTHER}{USERCODE} .= ":$ENV{MODEL_ROOT}/cfg/stages/UserCode.pm";
 $ToolConfig_tools{buildman}{OTHER}{pre_flow} = "UserCode::ndocs";
+
+$ToolConfig_tools{buildman}{ENV}{ENABLE_UPF_GEN} = {
+                                                     "(.dut_type=upf.)" => '1',
+                                                     "(.default.)" => '0',
+                                                  };
+
+######################################################################
+## UPF power template 
+######################################################################
+$ToolConfig_tools{power_templates} = {
+   VERSION => "v17ww42a",
+   PATH => "/p/hdk/rtl/proj_tools/power_templates/cds/&get_tool_version()",
+};
+$ToolConfig_tools{upf_config} = {
+   VERSION => "",
+   PATH => "$MODEL_ROOT/tools/collage/configs/config_soc/integ_specs/upf",
+};
 
 $ToolConfig_tools{vipsvt} = {
     VERSION    => "O-2018.06",
@@ -269,7 +319,7 @@ push(@{$ToolConfig_tools{buildman}{SUB_TOOLS}{flowbee}{OTHER}{modules}},  "&get_
 $ToolConfig_tools{feedtools}{ENV}{JASPER_UTILS}= "&get_tool_path(jasper_utils)";
 
 $ToolConfig_tools{"mgm"} = {
-    VERSION => "2.31",
+    VERSION => "2.38",
     PATH => "$ENV{RTL_PROJ_TOOLS}/mgm/nhdk/&get_tool_version()",
     MGM_ARGS => {
         BLOCKS => {

@@ -1,6 +1,6 @@
 // -- Author       : Scott E. Greenfield <scott.e.greenfield@intel.com>
 // -- Project Name : MBY
-// -- Description  : IGR memory wrapper netlist for igr_tag partition
+// -- Description  : IGR memory wrapper netlist for post_ppe partition
 // -------------------------------------------------------------------
 ngen_mod_name
 

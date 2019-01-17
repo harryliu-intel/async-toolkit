@@ -96,16 +96,14 @@ class mby_smm_bfm extends uvm_component;
       
       // Not  really used these config objects yet, but compilation will complain if they aren't defined
       igr_wr_req_agent = smm_bfm_row_wr_req_agent::type_id::create("igr_wr_req_agent", this);
-      igr_wr_req_agent.cfg_obj = new("smm_bfm_igr_wr_req_cfg");
-      uvm_config_db#(mby_base_config)::set(this, "igr_wr_req_agent", "cfg_obj", igr_wr_req_agent.cfg_obj);
-      igr_wr_req_agent.cfg_obj.monitor_active = UVM_ACTIVE;
-      igr_wr_req_agent.cfg_obj.driver_active = UVM_ACTIVE;
+      igr_wr_req_agent.cfg = new("smm_bfm_igr_wr_req_cfg");
+      igr_wr_req_agent.cfg.monitor_enable = UVM_ACTIVE;
+      igr_wr_req_agent.cfg.driver_enable = UVM_ACTIVE;
       
       egr_rd_req_agent = smm_bfm_row_rd_req_agent::type_id::create("egr_rd_req_agent", this);
-      egr_rd_req_agent.cfg_obj = new("smm_bfm_egr_rd_req_cfg");
-      uvm_config_db#(mby_base_config)::set(this, "egr_rd_req_agent", "cfg_obj", egr_rd_req_agent.cfg_obj);
-      egr_rd_req_agent.cfg_obj.monitor_active = UVM_ACTIVE;
-      egr_rd_req_agent.cfg_obj.driver_active = UVM_ACTIVE;
+      egr_rd_req_agent.cfg = new("smm_bfm_egr_rd_req_cfg");
+      egr_rd_req_agent.cfg.monitor_enable = UVM_ACTIVE;
+      egr_rd_req_agent.cfg.driver_enable = UVM_ACTIVE;
       
       for(int row_idx=0 ; row_idx<MAX_NUM_MSH_ROWS; row_idx++) begin
          for(int col_idx=0 ; col_idx<MAX_NUM_MSH_COLS; col_idx++) begin

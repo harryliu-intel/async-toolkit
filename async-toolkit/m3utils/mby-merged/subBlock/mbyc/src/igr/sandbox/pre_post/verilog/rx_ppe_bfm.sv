@@ -65,28 +65,28 @@ module rx_ppe_bfm
   //   } pkt_type_t;                    // UC, Mirror, INT, VP
   //   
   //    
-  //   typedef struct packed {
-  //      offset_hdr_ptrs_t             offset_hdr_ptrs;            
-  //      protocol_id_hdr_ptrs_t        protocol_id_hdr_ptrs;       
-  //      aqm_quantized_val_t           aqm_quantized_val;          
-  //      logic                         aqm_mark_en;            // Active Queue Management Enable
-  //      ecn_val_t                     ecn_val;                    
-  //      ttl_ctl_t                     ttl_ctl;                    
-  //      dscp_t                        dscp;                       
-  //      logic                         tx_drop;                // Ingress indicates to Egress to drop the frame
-  //      mirror_port_mod_profile_idx_t mirror_port_mod_profile_idx1;  
-  //      mirror_port_mod_profile_idx_t mirror_port_mod_profile_idx2;  
-  //      tag_flags_t                   tag_flags;                  
-  //      tx_tag_t                      tx_tag;                     
-  //      vpri_t                        vpri;                           
-  //      nh_egr_negh_table_idx_t       nh_egr_negh_table_idx;              
-  //      l2d_t                         l2d;                            
-  //      ivid_t                        ivid;                           
-  //      logic                         route_flag;             // Indicate to Modify the packet should be routed (from Nexthop)
-  //      mod_metadata_t                mod_metadata;                   
-  //      mod_profile_t                 mod_profile;                        
-  //      pkt_type_t                    pkt_type;           
-  //   } unicast_meta_t;          
+ 
+  //  typedef struct packed {
+  //     header_offset_t           header_offset;            
+  //     protocol_id_t             protocol_id;       
+  //     aqm_quantized_val_t       aqm_quantized_val;          
+  //     logic                     aqm_mark_en;            // Active Queue Management Enable
+  //     ecn_val_t                 ecn_val;                    
+  //     ttl_ctl_t                 ttl_ctl;                    
+  //     dscp_t                    dscp;                       
+  //     nh_egr_mirror_idx_t       nh_egr_mirror_idx;
+  //     mirror_profile_idx_t      mirror_profile_idx2;  
+  //     mirror_profile_idx_t      mirror_profile_idx1;  
+  //     tag_flags_t               tag_flags;                  
+  //     iptag_t                   iptag;                     
+  //     vpri_t                    vpri;                           
+  //     nh_egr_negh_table_idx_t   nh_egr_negh_table_idx;          
+  //     l2d_t                     l2d;                            
+  //     ivid_t                    ivid;                           
+  //     logic                     route_flag;             // Indicate to Modify the packet should be routed (from Nexthop)
+  //     mod_metadata_t            mod_metadata;                   
+  //     mod_profile_t             mod_profile;                    
+  //  } unicast_meta_t;          
   //    
   //   typedef struct packed {
   //      logic [`MD_MSB-`UC_SIZE:0]   reserved;
@@ -139,11 +139,11 @@ module rx_ppe_bfm
         tmp.md.md.uc_meta.unicast_meta.ecn_val                      = '0;                    
         tmp.md.md.uc_meta.unicast_meta.ttl_ctl                      = 4'hf;                    
         tmp.md.md.uc_meta.unicast_meta.dscp                         = 6'h0;                       
-//edr        tmp.md.md.uc_meta.unicast_meta.tx_drop                 = 1'b0;     
-        tmp.md.md.uc_meta.unicast_meta.mirror_profile_idx2          = 6'h0;  
+        tmp.md.md.uc_meta.unicast_meta.nh_egr_mirror_idx            = 4'he;              
         tmp.md.md.uc_meta.unicast_meta.mirror_profile_idx1          = 6'h0;  
+        tmp.md.md.uc_meta.unicast_meta.mirror_profile_idx2          = 6'h0;  
         tmp.md.md.uc_meta.unicast_meta.tag_flags                    = '0;                  
-//edr        tmp.md.md.uc_meta.unicast_meta.tx_tag                  = '0;                     
+        tmp.md.md.uc_meta.unicast_meta.iptag                        = '0;                     
         tmp.md.md.uc_meta.unicast_meta.vpri                         = '0;
         tmp.md.md.uc_meta.unicast_meta.nh_egr_negh_table_idx        = 14'h3344;              
         tmp.md.md.uc_meta.unicast_meta.l2d                          = '0;
@@ -152,6 +152,8 @@ module rx_ppe_bfm
         tmp.md.md.uc_meta.unicast_meta.mod_metadata                 = 20'h12345;
         tmp.md.md.uc_meta.unicast_meta.mod_profile                  = 24'h123456;
         
+
+
     end
     
     

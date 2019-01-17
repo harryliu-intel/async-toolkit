@@ -25,6 +25,7 @@
 //------------------------------------------------------------------------------
 //   Author        : Kaleem Sheriff
 //   Project       : Madison Bay
+//   Run Cmd       : trex mby_rx_ppe_l2_basic_test -ace_args -simv_args '"'+UVM_VERBOSITY=UVM_HIGH +fsdb '"' -ace_args- -seed 1 -dut mby -model rx_ppe
 //------------------------------------------------------------------------------
 
 //   Class:    mby_rx_ppe_l2_basic_test
@@ -37,10 +38,48 @@
 `error "Attempt to include file outside of mby_rx_ppe_test_lib."
 `endif
 
+class mby_vars;
+
+   rand int num_pkts;
+   rand int max_pkt_len;
+   rand int min_pkt_len;
+    
+   //------------------------------------------------------------------------------
+   //  Constructor: new
+   //  Arguments:
+   //  name   - mby_rx_vars object name.
+   //------------------------------------------------------------------------------
+   function new (string name="mby_rx_vars");     
+   endfunction :  new
+   
+   constraint num_pkts_c {
+      num_pkts == 1;
+   } 
+   constraint max_pkt_len_c {
+      max_pkt_len == 64;
+   } 
+   constraint min_pkt_len_c {
+      min_pkt_len == 64;
+   }
+   
+   function void post_randomize();
+      begin
+         `uvm_info("mby_vars:",$psprintf("num_pkts=%0d max_pkt_len=%0d min_pkt_len=%0d", num_pkts,max_pkt_len,min_pkt_len), UVM_NONE)
+      end
+   endfunction :  post_randomize
+   
+endclass : mby_vars   
+
 class mby_rx_ppe_l2_basic_seq extends mby_rx_ppe_seq_lib::mby_rx_ppe_env_base_seq;
 
    `uvm_object_utils(mby_rx_ppe_l2_basic_seq)
-
+   
+   int num_pkts;
+   int min_pkt_len;
+   int max_pkt_len;
+   mby_vars my_vars;
+   
+   
    //------------------------------------------------------------------------------
    //  Constructor: new
    //  Arguments:
@@ -48,6 +87,10 @@ class mby_rx_ppe_l2_basic_seq extends mby_rx_ppe_seq_lib::mby_rx_ppe_env_base_se
    //------------------------------------------------------------------------------
    function new (string name="mby_rx_ppe_l2_basic_seq");
       super.new (name);
+      
+      my_vars = new();
+      my_vars.randomize();
+  
    endfunction :  new
 
    //------------------------------------------------------------------------------
@@ -55,42 +98,48 @@ class mby_rx_ppe_l2_basic_seq extends mby_rx_ppe_seq_lib::mby_rx_ppe_env_base_se
    //  
    //------------------------------------------------------------------------------
    virtual task body();
-      int count = 0;
       pktlib_pkg::pktlib_class p,pkt2;
       bit [7:0] bytes [], ubytes [];
-      
-      `uvm_info(this.get_name(), ("Phase::main_phase:mby_rx_ppe_l2_basic_seq::Starting"), UVM_LOW) 
-      p = pktlib_class::type_id::create("p");
-      
-      // configure headers
-      p.cfg_hdr('{p.eth[0],p.data[0]});
-      
-      p.toh.min_plen = 64;
-      p.toh.max_plen = 64;
-      
-      p.randomize() with {
-                eth[0].da == 48'hbbaadeadbeef;
-		eth[0].sa == 48'hccdd55555555;
-                data[0].data_len == 46;
-			};      
-      
-      p.pack_hdr(bytes);
-      
-      `uvm_info(this.get_name(), ("Phase::main_phase:mby_rx_ppe_l2_basic_seq::pack"), UVM_LOW)
-      p.display_cfg_hdr();
-      p.display_hdr();
-      p.display_pkt(p.pkt);
-      
-      `uvm_info(this.get_name(), ("Phase::main_phase:mby_rx_ppe_l2_basic_seq::unpack"), UVM_LOW)
-      
-      ubytes = p.pkt;
-      pkt2 = pktlib_class::type_id::create("pkt2");
-      pkt2.unpack_hdr(ubytes, SMART_UNPACK);
-      
-      pkt2.display_cfg_hdr();
-      pkt2.display_hdr();
-      pkt2.display_pkt(p.pkt);
+      bit[47:0] mac_da = 48'hbbaadeadbeee;
+      bit[47:0] mac_sa = 48'hccdd55555555;      
             
+      repeat(my_vars.num_pkts) begin //{
+         `uvm_info(this.get_name(), $psprintf("Phase::main_phase:mby_rx_ppe_l2_basic_seq::Starting mac_da=%0h mac_sa=%0h", mac_da,mac_sa), UVM_LOW) 
+         p = pktlib_class::type_id::create("p");
+      
+         // configure headers
+         p.cfg_hdr('{p.eth[0],p.data[0]});
+      
+         p.toh.min_plen = my_vars.min_pkt_len;
+         p.toh.max_plen = my_vars.max_pkt_len;
+
+         p.randomize() with {
+            eth[0].da == mac_da;
+	    eth[0].sa == mac_sa;
+	    eth[0].etype_encap == 1;
+            data[0].data_len == 46;   // Remove this constraint for larger packts.
+	 };      
+
+         p.pack_hdr(bytes);
+      
+         `uvm_info(this.get_name(), ("Phase::main_phase:mby_rx_ppe_l2_basic_seq::pack"), UVM_LOW)
+         p.display_cfg_hdr();
+         p.display_hdr();
+         p.display_pkt(p.pkt);
+      
+         `uvm_info(this.get_name(), ("Phase::main_phase:mby_rx_ppe_l2_basic_seq::unpack"), UVM_LOW)
+      
+         ubytes = p.pkt;
+         pkt2 = pktlib_class::type_id::create("pkt2");
+         pkt2.unpack_hdr(ubytes, SMART_UNPACK);
+      
+         pkt2.display_cfg_hdr();
+         pkt2.display_hdr();
+         pkt2.display_pkt(p.pkt);
+	 
+	 mac_da = mac_da + 48'h1;
+	 mac_sa = mac_sa + 48'h1;
+      end //}      
    endtask
    
 endclass : mby_rx_ppe_l2_basic_seq
