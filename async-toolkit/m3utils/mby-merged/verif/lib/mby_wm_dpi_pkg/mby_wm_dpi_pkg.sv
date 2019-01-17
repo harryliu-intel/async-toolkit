@@ -29,6 +29,7 @@
 package mby_wm_dpi_pkg;
 
 `define MAX_PKT_LEN 16384
+`define MBY_PA_MAX_SEG_LEN 192
 
 `include "mby_parser_hdr.svh"
 
