@@ -1,0 +1,198 @@
+# This is the yml file used to build a 64 port version of APR emulation
+# With real XTensa core
+
+GLOBAL:
+    NETBATCH_FILE: tools/emu/cfg/nb.yml
+    # V2K_CONFIG: apr_emu_rtl_lib.apr_fc_config_fc_emu_emu
+    TOP: mby_msh_emu_rtl_lib.mby_msh_top
+    RUNTIME_INPUT_DIR: tools/emu/runtime
+    REPOS: tools/emu/cfg/repositories.yml
+    SPARK_TOOLS_REPO: ssh://git-amr-2.devtools.intel.com:29418/pve_spark_modules-spark_tools
+    SPARK_TOOLS_TAG: spark-1.5.0
+    SETUP:
+        - GCC_HOME=/usr/intel/pkgs/gcc/4.8.1
+        - EMU_DATA=/p/hdk/rtl/proj_tools/emu_data/latest
+        - SIMICS_HOME=/nfs/site/eda/group/SYSNAME/emu/windriver/simics/5.0.142
+        - SYNOPSYS=/p/vt/tools/sim/vendor/zse/designcompiler/K-2015.06-SP4
+        - LD_LIBRARY_PATH=/usr/intel/pkgs/gcc/4.8.0/lib64/:${LD_LIBRARY_PATH}
+    ACE_METAFILES:
+        USER_ID:
+            FILE: target/emu/mesh_emu/mesh.Mmesh_emu.filelist.Emulation.pl
+            MODEL_NAME: mesh
+    USER:
+        CREATE_SVTOP:
+            ENABLE: YES
+            INPUT_FILE: subBlock/mbyc/src/msh/rtl/mby_msh.sv
+            SVTOP_FILE: target/emu/mby_msh_top.sv
+            SCRIPT: tools/emu/scripts/create_svtop
+            OVERWRITE: YES
+#        POST_RUN:
+#            ENABLE: YES
+#            SCRIPT: tools/emu/scripts/PostRun.sh -model apr_emu
+#            COMMANDS:
+#                - ${MODEL_ROOT}/tools/emu/scripts/PostRun.sh apr_emu
+            
+##############################
+# Configurations
+##############################
+CONFIGURATIONS:
+    ALL_COMMON:
+        ABSTRACT: YES
+#        RTL_CHANGES: 
+#            .*:
+#                - tools/emu/rtl_changes_zebu
+
+#        BB_MODULES:
+
+        MOD_LIBS:
+            mby_msh_emu_rtl_lib:
+                VERILOG_FILES:
+                    ADD:
+                        - target/emu/mby_msh_top.sv
+#                        - verif/tb/apr/top/apr_fc_config_fc_emu_emu.sv
+
+#           apr_cport_phy_rtl_lib:
+#               DEFINES:
+#                   ADD:
+#                       - BLACKBOX
+#           apr_cport_pcie_rtl_lib:
+#               DEFINES:
+#                   ADD:
+#                       - BLACKBOX
+#           apr_cport_rtl_lib:
+#               DEFINES:
+#                   ADD:
+#                       - BLACKBOX
+#               VERILOG_FILES:
+#                   ADD:
+#                       - src/rtl/fpga/verilog/fpga_rom_model.v
+#           .*:
+#               VERILOG_FFILES:
+#                   ADD:
+#                       - ${EMU_DATA}/emulation_defines.f
+                DEFINES:
+                    ADD:
+                        - FAKE_MEM
+                        - SVA_OFF
+                        - EMULATION
+                        - EMULATION_64
+                        - INTEL_EMULATION
+                        - TB_TOP=mby_msh_top
+                        - ZEBU
+                        - FC_RTL_PATH=mby_msh_top.mby_msh
+                        - SHRTL_LIB_MODEL
+                        #- EVENTS_OFF
+                        #- NO_PWR_PINS
+                    REMOVE:
+                        - VCSSIM
+                        - HIERREF
+                        - ASSERT_ON
+                        - INST_ON
+                        - VCS
+                        - NO_EMULATION
+                VERILOG_OPTIONS:
+                    ADD:
+                        - -kdb
+                VHDL_OPTIONS:
+                    ADD:
+                        - -kdb
+    ZSE:
+        INHERITS:
+            - ALL_COMMON
+#       OTHER_FILES:
+#           - ${MODEL_ROOT}/tools/emu/zebu/zFast.config
+#           - ${MODEL_ROOT}/tools/emu/zebu/probes.tcl
+#            - ${MODEL_ROOT}/tools/emu/zebu/apr_xtor_map.tcl
+#            - ${MODEL_ROOT}/tools/emu/zebu/zTopBuild_extra.tcl
+#       CFG_FILES:
+#            - ${MODEL_ROOT}/tools/emu/zebu/intel.utf
+#           - ${MODEL_ROOT}/tools/emu/zebu/apr_intel_64.utf
+        UNIFIED_COMPILE: 1.0
+        SETUP:
+            - VIVADO_FORCE_REPORT_TIMING=1
+            - VIVADO_ENABLE_MULTITHREADING=4
+            - ZSE_PATH=/p/vt/tools/sim/vendor/zse/release/V18.09
+    ZSE_XTORS:
+        INHERITS:
+            - ZSE
+        SETUP:                        
+            - PATH=/nfs/site/eda/group/SYSNAME/emu/intel/gecco/1.7.4/:${PATH}
+#        CFG_FILES:
+#            - ${MODEL_ROOT}/tools/emu/apr_xtors/apr_tap_xtor.utf
+#            - ${MODEL_ROOT}/tools/emu/apr_xtors/apr_uart_xtor.utf
+#            - ${MODEL_ROOT}/tools/emu/apr_xtors/apr_stl2_xtor.utf
+#            - ${MODEL_ROOT}/tools/emu/apr_xtors/apr_i2c_xtor.utf
+#            - ${MODEL_ROOT}/tools/emu/apr_xtors/apr_zclock_xtor.utf
+        MOD_LIBS:
+#           mby_msh_emu_rtl_lib:
+#               VERILOG_FILES:
+#                   ADD:
+#                       - tools/emu/apr_xtors/apr_delaygen.vs
+#                       - tools/emu/apr_xtors/apr_gategen.vs
+#                       - tools/emu/apr_xtors/apr_tap_xtor_inst.vs
+#                       - tools/emu/apr_xtors/apr_tap_clkgen.vs
+#                       - tools/emu/apr_xtors/apr_uart_xtor_inst.vs
+#                       - tools/emu/apr_xtors/apr_rom_inst.vs
+#                       - tools/emu/apr_xtors/rom_24xx512.v
+#                       - tools/emu/apr_xtors/i2c_24xx512_rom_model.v
+#                       - tools/emu/apr_xtors/lcb_init.sv
+#                       - tools/emu/apr_xtors/apr_stl2_xtor_inst.vs
+#                       - tools/emu/apr_xtors/apr_stl2_xtor_top_64.vs
+#                       - tools/emu/apr_xtors/apr_master_stl2_go.v
+#                       - tools/emu/apr_xtors/apr_i2c_xtor_inst.vs
+#                       - tools/emu/apr_xtors/apr_zclock_xtor_inst.vs
+            .*:
+                DEFINES:
+                    ADD:
+                        - EMULATION_CLOCKS=mby_msh_top.mby_zclock_xtor_inst
+                        - ZEBU_CCLK=mby_msh_top.mby_zclock_xtor_inst.ccosim_ctrl
+
+    ZSE1:
+        PLATFORM: ZSE1
+        BOARDS: 16
+        INHERITS:
+            - ZSE
+    ZSE3:
+        PLATFORM: ZSE3
+        BOARDS: 10
+        NETBATCH_CUSTOM_FILE: tools/emu/cfg/netbatch_custom.tcl
+        COMPILE_OPTIONS_FILE: tools/emu/cfg/default_compile_options.yml
+        INHERITS:
+            - ZSE
+    ZSE4:
+        PLATFORM: ZSE4
+        BOARDS: 5
+        NETBATCH_CUSTOM_FILE: tools/emu/cfg/netbatch_custom.tcl
+        COMPILE_OPTIONS_FILE: tools/emu/cfg/default_compile_options.yml
+        INHERITS:
+            - ZSE
+
+    ZSE1_XTORS:
+        INHERITS:
+            - ZSE1
+            - ZSE_XTORS
+
+    ZSE3_XTORS:
+        INHERITS:
+            - ZSE3
+            - ZSE_XTORS
+        COMPILE_OPTIONS_FILE: tools/emu/cfg/compile_options.yml
+#       ADD_LIBS:
+#           - fwc_monitor_lib
+#        MOD_LIBS:
+#            fwc_monitor_lib:
+#                VERILOG_FILES:
+#                    ADD:
+#                        - tools/emu/zebu/emu_fwc_monitor_64.sv
+    ZSE4_XTORS:
+        INHERITS:
+            - ZSE4
+            - ZSE_XTORS
+        COMPILE_OPTIONS_FILE: tools/emu/cfg/compile_options.yml
+#        ADD_LIBS:
+#            - fwc_monitor_lib
+#       MOD_LIBS:
+#           fwc_monitor_lib:
+#               VERILOG_FILES:
+#                   ADD:
+#                       - tools/emu/zebu/emu_fwc_monitor_64.sv

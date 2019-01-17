@@ -1,0 +1,13 @@
+# manually add probes file
+#source probes.tcl
+
+########################################
+#SECTION2: BEGIN
+# Add xtor related UTF comamnds
+# z_clock xtor integration
+load_edif -module z_clock -filename {/nfs/site/eda/group/SYSNAME/emu/intel/emutools/current/zse/lib/z_clock/ZEBU2014/z_clock.edf.gz}
+xtors -add {z_clock} -type zcei
+xtors -add_xtor_path {/nfs/site/eda/group/SYSNAME/emu/intel/emutools/current/zse/lib/z_clock/ZEBU2014}
+zcei -module {z_clock} -instance mby_msh_top.mby_zclock_xtor_inst.mby_z_clock -debug yes
+# SECTION2: END
+########################################
