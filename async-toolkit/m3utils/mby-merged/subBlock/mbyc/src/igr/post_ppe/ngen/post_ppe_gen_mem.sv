@@ -60,46 +60,46 @@ input                   fscan_rstbypen,
 output                  aary_pwren_b_rf                           
 );
 
-logic [73:0] post_ppe_igr_post_body_ll_ram_0_from_mem;
-logic [98:0] post_ppe_igr_post_body_ll_ram_0_to_mem;
-logic [73:0] post_ppe_igr_post_body_ll_ram_1_from_mem;
-logic [98:0] post_ppe_igr_post_body_ll_ram_1_to_mem;
-logic [74:0] post_ppe_igr_post_sop_fifo_0_ram_0_from_mem;
-logic [93:0] post_ppe_igr_post_sop_fifo_0_ram_0_to_mem;
-logic [74:0] post_ppe_igr_post_sop_fifo_0_ram_1_from_mem;
-logic [93:0] post_ppe_igr_post_sop_fifo_0_ram_1_to_mem;
-logic [74:0] post_ppe_igr_post_sop_fifo_0_ram_2_from_mem;
-logic [93:0] post_ppe_igr_post_sop_fifo_0_ram_2_to_mem;
-logic [74:0] post_ppe_igr_post_sop_fifo_0_ram_3_from_mem;
-logic [93:0] post_ppe_igr_post_sop_fifo_0_ram_3_to_mem;
-logic [74:0] post_ppe_igr_post_sop_fifo_1_ram_0_from_mem;
-logic [93:0] post_ppe_igr_post_sop_fifo_1_ram_0_to_mem;
-logic [74:0] post_ppe_igr_post_sop_fifo_1_ram_1_from_mem;
-logic [93:0] post_ppe_igr_post_sop_fifo_1_ram_1_to_mem;
-logic [74:0] post_ppe_igr_post_sop_fifo_1_ram_2_from_mem;
-logic [93:0] post_ppe_igr_post_sop_fifo_1_ram_2_to_mem;
-logic [74:0] post_ppe_igr_post_sop_fifo_1_ram_3_from_mem;
-logic [93:0] post_ppe_igr_post_sop_fifo_1_ram_3_to_mem;
-logic [74:0] post_ppe_igr_post_sop_fifo_2_ram_0_from_mem;
-logic [93:0] post_ppe_igr_post_sop_fifo_2_ram_0_to_mem;
-logic [74:0] post_ppe_igr_post_sop_fifo_2_ram_1_from_mem;
-logic [93:0] post_ppe_igr_post_sop_fifo_2_ram_1_to_mem;
-logic [74:0] post_ppe_igr_post_sop_fifo_2_ram_2_from_mem;
-logic [93:0] post_ppe_igr_post_sop_fifo_2_ram_2_to_mem;
-logic [74:0] post_ppe_igr_post_sop_fifo_2_ram_3_from_mem;
-logic [93:0] post_ppe_igr_post_sop_fifo_2_ram_3_to_mem;
-logic [74:0] post_ppe_igr_post_sop_fifo_3_ram_0_from_mem;
-logic [93:0] post_ppe_igr_post_sop_fifo_3_ram_0_to_mem;
-logic [74:0] post_ppe_igr_post_sop_fifo_3_ram_1_from_mem;
-logic [93:0] post_ppe_igr_post_sop_fifo_3_ram_1_to_mem;
-logic [74:0] post_ppe_igr_post_sop_fifo_3_ram_2_from_mem;
-logic [93:0] post_ppe_igr_post_sop_fifo_3_ram_2_to_mem;
-logic [74:0] post_ppe_igr_post_sop_fifo_3_ram_3_from_mem;
-logic [93:0] post_ppe_igr_post_sop_fifo_3_ram_3_to_mem;
-logic [56:0] post_ppe_igr_ptr_cache_ram_0_from_mem;
-logic [77:0] post_ppe_igr_ptr_cache_ram_0_to_mem;
-logic [56:0] post_ppe_igr_ptr_cache_ram_1_from_mem;
-logic [77:0] post_ppe_igr_ptr_cache_ram_1_to_mem;
+logic  [73:0] post_ppe_igr_post_body_ll_ram_0_from_mem;
+logic [171:0] post_ppe_igr_post_body_ll_ram_0_to_mem;
+logic  [73:0] post_ppe_igr_post_body_ll_ram_1_from_mem;
+logic [171:0] post_ppe_igr_post_body_ll_ram_1_to_mem;
+logic  [74:0] post_ppe_igr_post_sop_fifo_0_ram_0_from_mem;
+logic [167:0] post_ppe_igr_post_sop_fifo_0_ram_0_to_mem;
+logic  [74:0] post_ppe_igr_post_sop_fifo_0_ram_1_from_mem;
+logic [167:0] post_ppe_igr_post_sop_fifo_0_ram_1_to_mem;
+logic  [74:0] post_ppe_igr_post_sop_fifo_0_ram_2_from_mem;
+logic [167:0] post_ppe_igr_post_sop_fifo_0_ram_2_to_mem;
+logic  [74:0] post_ppe_igr_post_sop_fifo_0_ram_3_from_mem;
+logic [167:0] post_ppe_igr_post_sop_fifo_0_ram_3_to_mem;
+logic  [74:0] post_ppe_igr_post_sop_fifo_1_ram_0_from_mem;
+logic [167:0] post_ppe_igr_post_sop_fifo_1_ram_0_to_mem;
+logic  [74:0] post_ppe_igr_post_sop_fifo_1_ram_1_from_mem;
+logic [167:0] post_ppe_igr_post_sop_fifo_1_ram_1_to_mem;
+logic  [74:0] post_ppe_igr_post_sop_fifo_1_ram_2_from_mem;
+logic [167:0] post_ppe_igr_post_sop_fifo_1_ram_2_to_mem;
+logic  [74:0] post_ppe_igr_post_sop_fifo_1_ram_3_from_mem;
+logic [167:0] post_ppe_igr_post_sop_fifo_1_ram_3_to_mem;
+logic  [74:0] post_ppe_igr_post_sop_fifo_2_ram_0_from_mem;
+logic [167:0] post_ppe_igr_post_sop_fifo_2_ram_0_to_mem;
+logic  [74:0] post_ppe_igr_post_sop_fifo_2_ram_1_from_mem;
+logic [167:0] post_ppe_igr_post_sop_fifo_2_ram_1_to_mem;
+logic  [74:0] post_ppe_igr_post_sop_fifo_2_ram_2_from_mem;
+logic [167:0] post_ppe_igr_post_sop_fifo_2_ram_2_to_mem;
+logic  [74:0] post_ppe_igr_post_sop_fifo_2_ram_3_from_mem;
+logic [167:0] post_ppe_igr_post_sop_fifo_2_ram_3_to_mem;
+logic  [74:0] post_ppe_igr_post_sop_fifo_3_ram_0_from_mem;
+logic [167:0] post_ppe_igr_post_sop_fifo_3_ram_0_to_mem;
+logic  [74:0] post_ppe_igr_post_sop_fifo_3_ram_1_from_mem;
+logic [167:0] post_ppe_igr_post_sop_fifo_3_ram_1_to_mem;
+logic  [74:0] post_ppe_igr_post_sop_fifo_3_ram_2_from_mem;
+logic [167:0] post_ppe_igr_post_sop_fifo_3_ram_2_to_mem;
+logic  [74:0] post_ppe_igr_post_sop_fifo_3_ram_3_from_mem;
+logic [167:0] post_ppe_igr_post_sop_fifo_3_ram_3_to_mem;
+logic  [56:0] post_ppe_igr_ptr_cache_ram_0_from_mem;
+logic [133:0] post_ppe_igr_ptr_cache_ram_0_to_mem;
+logic  [56:0] post_ppe_igr_ptr_cache_ram_1_from_mem;
+logic [133:0] post_ppe_igr_ptr_cache_ram_1_to_mem;
 logic reset_n; 
 assign reset_n = ~i_reset;
 
@@ -114,10 +114,6 @@ post_ppe_shells_wrapper    post_ppe_shells_wrapper(
 /* input  logic             */ .IGR_POST_SOP_FIFO_0_RAM_0_STATUS_reg_sel    (1'b0),                                       
 /* input  logic             */ .IGR_POST_SOP_FIFO_0_RAM_1_CFG_reg_sel       (1'b0),                                       
 /* input  logic             */ .IGR_POST_SOP_FIFO_0_RAM_1_STATUS_reg_sel    (1'b0),                                       
-/* input  logic             */ .IGR_POST_SOP_FIFO_0_RAM_2_CFG_reg_sel       (1'b0),                                       
-/* input  logic             */ .IGR_POST_SOP_FIFO_0_RAM_2_STATUS_reg_sel    (1'b0),                                       
-/* input  logic             */ .IGR_POST_SOP_FIFO_0_RAM_3_CFG_reg_sel       (1'b0),                                       
-/* input  logic             */ .IGR_POST_SOP_FIFO_0_RAM_3_STATUS_reg_sel    (1'b0),                                       
 /* Interface .rd_adr[3]   */ .igr_post_sop_fifo_0_ram_3_rd_adr            (igr_post_sop_fifo_0_if.rd_adr[3]),         
 /* Interface .rd_en[3]    */ .igr_post_sop_fifo_0_ram_3_rd_en             (igr_post_sop_fifo_0_if.rd_en[3]),          
 /* Interface .wr_adr[3]   */ .igr_post_sop_fifo_0_ram_3_wr_adr            (igr_post_sop_fifo_0_if.wr_adr[3]),         
@@ -126,6 +122,10 @@ post_ppe_shells_wrapper    post_ppe_shells_wrapper(
 /* Interface .rd_en[1]    */ .igr_ptr_cache_ram_1_rd_en                   (igr_ptr_cache_ram_if.rd_en[1]),            
 /* Interface .wr_adr[1]   */ .igr_ptr_cache_ram_1_wr_adr                  (igr_ptr_cache_ram_if.wr_adr[1]),           
 /* Interface .wr_data[1]  */ .igr_ptr_cache_ram_1_wr_data                 (igr_ptr_cache_ram_if.wr_data[1]),          
+/* input  logic             */ .IGR_POST_SOP_FIFO_0_RAM_2_CFG_reg_sel       (1'b0),                                       
+/* input  logic             */ .IGR_POST_SOP_FIFO_0_RAM_2_STATUS_reg_sel    (1'b0),                                       
+/* input  logic             */ .IGR_POST_SOP_FIFO_0_RAM_3_CFG_reg_sel       (1'b0),                                       
+/* input  logic             */ .IGR_POST_SOP_FIFO_0_RAM_3_STATUS_reg_sel    (1'b0),                                       
 /* input  logic             */ .IGR_POST_SOP_FIFO_1_RAM_0_CFG_reg_sel       (1'b0),                                       
 /* input  logic             */ .IGR_POST_SOP_FIFO_1_RAM_0_STATUS_reg_sel    (1'b0),                                       
 /* input  logic             */ .IGR_POST_SOP_FIFO_1_RAM_1_CFG_reg_sel       (1'b0),                                       
@@ -373,26 +373,26 @@ post_ppe_shells_wrapper    post_ppe_shells_wrapper(
 /* Interface .rd_data[1]  */ .igr_ptr_cache_ram_1_rd_data                 (igr_ptr_cache_ram_if.rd_data[1]),          
 /* Interface .rd_valid[1] */ .igr_ptr_cache_ram_1_rd_valid                (igr_ptr_cache_ram_if.rd_valid[1]),         
 /* output logic             */ .post_ppe_ecc_int                            (),                                           
-/* output logic      [98:0] */ .post_ppe_igr_post_body_ll_ram_0_to_mem      (post_ppe_igr_post_body_ll_ram_0_to_mem),     
-/* output logic      [98:0] */ .post_ppe_igr_post_body_ll_ram_1_to_mem      (post_ppe_igr_post_body_ll_ram_1_to_mem),     
-/* output logic      [93:0] */ .post_ppe_igr_post_sop_fifo_0_ram_0_to_mem   (post_ppe_igr_post_sop_fifo_0_ram_0_to_mem),  
-/* output logic      [93:0] */ .post_ppe_igr_post_sop_fifo_0_ram_1_to_mem   (post_ppe_igr_post_sop_fifo_0_ram_1_to_mem),  
-/* output logic      [93:0] */ .post_ppe_igr_post_sop_fifo_0_ram_2_to_mem   (post_ppe_igr_post_sop_fifo_0_ram_2_to_mem),  
-/* output logic      [93:0] */ .post_ppe_igr_post_sop_fifo_0_ram_3_to_mem   (post_ppe_igr_post_sop_fifo_0_ram_3_to_mem),  
-/* output logic      [93:0] */ .post_ppe_igr_post_sop_fifo_1_ram_0_to_mem   (post_ppe_igr_post_sop_fifo_1_ram_0_to_mem),  
-/* output logic      [93:0] */ .post_ppe_igr_post_sop_fifo_1_ram_1_to_mem   (post_ppe_igr_post_sop_fifo_1_ram_1_to_mem),  
-/* output logic      [93:0] */ .post_ppe_igr_post_sop_fifo_1_ram_2_to_mem   (post_ppe_igr_post_sop_fifo_1_ram_2_to_mem),  
-/* output logic      [93:0] */ .post_ppe_igr_post_sop_fifo_1_ram_3_to_mem   (post_ppe_igr_post_sop_fifo_1_ram_3_to_mem),  
-/* output logic      [93:0] */ .post_ppe_igr_post_sop_fifo_2_ram_0_to_mem   (post_ppe_igr_post_sop_fifo_2_ram_0_to_mem),  
-/* output logic      [93:0] */ .post_ppe_igr_post_sop_fifo_2_ram_1_to_mem   (post_ppe_igr_post_sop_fifo_2_ram_1_to_mem),  
-/* output logic      [93:0] */ .post_ppe_igr_post_sop_fifo_2_ram_2_to_mem   (post_ppe_igr_post_sop_fifo_2_ram_2_to_mem),  
-/* output logic      [93:0] */ .post_ppe_igr_post_sop_fifo_2_ram_3_to_mem   (post_ppe_igr_post_sop_fifo_2_ram_3_to_mem),  
-/* output logic      [93:0] */ .post_ppe_igr_post_sop_fifo_3_ram_0_to_mem   (post_ppe_igr_post_sop_fifo_3_ram_0_to_mem),  
-/* output logic      [93:0] */ .post_ppe_igr_post_sop_fifo_3_ram_1_to_mem   (post_ppe_igr_post_sop_fifo_3_ram_1_to_mem),  
-/* output logic      [93:0] */ .post_ppe_igr_post_sop_fifo_3_ram_2_to_mem   (post_ppe_igr_post_sop_fifo_3_ram_2_to_mem),  
-/* output logic      [93:0] */ .post_ppe_igr_post_sop_fifo_3_ram_3_to_mem   (post_ppe_igr_post_sop_fifo_3_ram_3_to_mem),  
-/* output logic      [77:0] */ .post_ppe_igr_ptr_cache_ram_0_to_mem         (post_ppe_igr_ptr_cache_ram_0_to_mem),        
-/* output logic      [77:0] */ .post_ppe_igr_ptr_cache_ram_1_to_mem         (post_ppe_igr_ptr_cache_ram_1_to_mem),        
+/* output logic     [171:0] */ .post_ppe_igr_post_body_ll_ram_0_to_mem      (post_ppe_igr_post_body_ll_ram_0_to_mem),     
+/* output logic     [171:0] */ .post_ppe_igr_post_body_ll_ram_1_to_mem      (post_ppe_igr_post_body_ll_ram_1_to_mem),     
+/* output logic     [167:0] */ .post_ppe_igr_post_sop_fifo_0_ram_0_to_mem   (post_ppe_igr_post_sop_fifo_0_ram_0_to_mem),  
+/* output logic     [167:0] */ .post_ppe_igr_post_sop_fifo_0_ram_1_to_mem   (post_ppe_igr_post_sop_fifo_0_ram_1_to_mem),  
+/* output logic     [167:0] */ .post_ppe_igr_post_sop_fifo_0_ram_2_to_mem   (post_ppe_igr_post_sop_fifo_0_ram_2_to_mem),  
+/* output logic     [167:0] */ .post_ppe_igr_post_sop_fifo_0_ram_3_to_mem   (post_ppe_igr_post_sop_fifo_0_ram_3_to_mem),  
+/* output logic     [167:0] */ .post_ppe_igr_post_sop_fifo_1_ram_0_to_mem   (post_ppe_igr_post_sop_fifo_1_ram_0_to_mem),  
+/* output logic     [167:0] */ .post_ppe_igr_post_sop_fifo_1_ram_1_to_mem   (post_ppe_igr_post_sop_fifo_1_ram_1_to_mem),  
+/* output logic     [167:0] */ .post_ppe_igr_post_sop_fifo_1_ram_2_to_mem   (post_ppe_igr_post_sop_fifo_1_ram_2_to_mem),  
+/* output logic     [167:0] */ .post_ppe_igr_post_sop_fifo_1_ram_3_to_mem   (post_ppe_igr_post_sop_fifo_1_ram_3_to_mem),  
+/* output logic     [167:0] */ .post_ppe_igr_post_sop_fifo_2_ram_0_to_mem   (post_ppe_igr_post_sop_fifo_2_ram_0_to_mem),  
+/* output logic     [167:0] */ .post_ppe_igr_post_sop_fifo_2_ram_1_to_mem   (post_ppe_igr_post_sop_fifo_2_ram_1_to_mem),  
+/* output logic     [167:0] */ .post_ppe_igr_post_sop_fifo_2_ram_2_to_mem   (post_ppe_igr_post_sop_fifo_2_ram_2_to_mem),  
+/* output logic     [167:0] */ .post_ppe_igr_post_sop_fifo_2_ram_3_to_mem   (post_ppe_igr_post_sop_fifo_2_ram_3_to_mem),  
+/* output logic     [167:0] */ .post_ppe_igr_post_sop_fifo_3_ram_0_to_mem   (post_ppe_igr_post_sop_fifo_3_ram_0_to_mem),  
+/* output logic     [167:0] */ .post_ppe_igr_post_sop_fifo_3_ram_1_to_mem   (post_ppe_igr_post_sop_fifo_3_ram_1_to_mem),  
+/* output logic     [167:0] */ .post_ppe_igr_post_sop_fifo_3_ram_2_to_mem   (post_ppe_igr_post_sop_fifo_3_ram_2_to_mem),  
+/* output logic     [167:0] */ .post_ppe_igr_post_sop_fifo_3_ram_3_to_mem   (post_ppe_igr_post_sop_fifo_3_ram_3_to_mem),  
+/* output logic     [133:0] */ .post_ppe_igr_ptr_cache_ram_0_to_mem         (post_ppe_igr_ptr_cache_ram_0_to_mem),        
+/* output logic     [133:0] */ .post_ppe_igr_ptr_cache_ram_1_to_mem         (post_ppe_igr_ptr_cache_ram_1_to_mem),        
 /* output logic             */ .post_ppe_init_done                          (),                                           
 /* output logic             */ .unified_regs_ack                            (),                                           
 /* output logic      [31:0] */ .unified_regs_rd_data                        ());                                           
@@ -401,70 +401,70 @@ post_ppe_shells_wrapper    post_ppe_shells_wrapper(
 
 // module post_ppe_rf_mems    from post_ppe_rf_mems using post_ppe_rf_mems.map 
 post_ppe_rf_mems    post_ppe_rf_mems(
-/* input  logic   [5:0] */ .fary_ffuse_data_misc_rf                     (fary_ffuse_data_misc_rf),                    
-/* input  logic         */ .fary_pwren_b_rf                             (fary_pwren_b_rf),                            
-/* input  logic         */ .car_raw_lan_power_good_with_byprst          (1'b1),                                       
-/* input  logic         */ .cclk                                        (cclk),                                       
-/* input  logic         */ .fdfx_lbist_test_mode                        (fdfx_lbist_test_mode),                       
-/* input  logic         */ .fscan_byprst_b                              (fscan_byprst_b),                             
-/* input  logic   [3:0] */ .fscan_ram_awt_mode                          (fscan_ram_awt_mode),                         
-/* input  logic   [3:0] */ .fscan_ram_awt_ren                           (fscan_ram_awt_ren),                          
-/* input  logic   [3:0] */ .fscan_ram_awt_wen                           (fscan_ram_awt_wen),                          
-/* input  logic   [3:0] */ .fscan_ram_bypsel                            (fscan_ram_bypsel),                           
-/* input  logic         */ .fscan_ram_init_en                           (fscan_ram_init_en),                          
-/* input  logic         */ .fscan_ram_init_val                          (fscan_ram_init_val),                         
-/* input  logic   [3:0] */ .fscan_ram_odis_b                            (fscan_ram_odis_b),                           
-/* input  logic         */ .fscan_ram_rddis_b                           (fscan_ram_rddis_b),                          
-/* input  logic         */ .fscan_ram_wrdis_b                           (fscan_ram_wrdis_b),                          
-/* input  logic         */ .fscan_rstbypen                              (fscan_rstbypen),                             
-/* input  logic  [98:0] */ .post_ppe_igr_post_body_ll_ram_0_to_mem      (post_ppe_igr_post_body_ll_ram_0_to_mem),     
-/* input  logic  [98:0] */ .post_ppe_igr_post_body_ll_ram_1_to_mem      (post_ppe_igr_post_body_ll_ram_1_to_mem),     
-/* input  logic  [77:0] */ .post_ppe_igr_ptr_cache_ram_0_to_mem         (post_ppe_igr_ptr_cache_ram_0_to_mem),        
-/* input  logic  [77:0] */ .post_ppe_igr_ptr_cache_ram_1_to_mem         (post_ppe_igr_ptr_cache_ram_1_to_mem),        
-/* output logic         */ .aary_pwren_b_rf                             (aary_pwren_b_rf),                            
-/* output logic  [73:0] */ .post_ppe_igr_post_body_ll_ram_0_from_mem    (post_ppe_igr_post_body_ll_ram_0_from_mem),   
-/* output logic  [73:0] */ .post_ppe_igr_post_body_ll_ram_1_from_mem    (post_ppe_igr_post_body_ll_ram_1_from_mem),   
-/* output logic  [56:0] */ .post_ppe_igr_ptr_cache_ram_0_from_mem       (post_ppe_igr_ptr_cache_ram_0_from_mem),      
-/* output logic  [56:0] */ .post_ppe_igr_ptr_cache_ram_1_from_mem       (post_ppe_igr_ptr_cache_ram_1_from_mem));      
+/* input  logic    [5:0] */ .fary_ffuse_data_misc_rf                     (fary_ffuse_data_misc_rf),                    
+/* input  logic          */ .fary_pwren_b_rf                             (fary_pwren_b_rf),                            
+/* input  logic          */ .car_raw_lan_power_good_with_byprst          (1'b1),                                       
+/* input  logic          */ .cclk                                        (cclk),                                       
+/* input  logic          */ .fdfx_lbist_test_mode                        (fdfx_lbist_test_mode),                       
+/* input  logic          */ .fscan_byprst_b                              (fscan_byprst_b),                             
+/* input  logic    [3:0] */ .fscan_ram_awt_mode                          (fscan_ram_awt_mode),                         
+/* input  logic    [3:0] */ .fscan_ram_awt_ren                           (fscan_ram_awt_ren),                          
+/* input  logic    [3:0] */ .fscan_ram_awt_wen                           (fscan_ram_awt_wen),                          
+/* input  logic    [3:0] */ .fscan_ram_bypsel                            (fscan_ram_bypsel),                           
+/* input  logic          */ .fscan_ram_init_en                           (fscan_ram_init_en),                          
+/* input  logic          */ .fscan_ram_init_val                          (fscan_ram_init_val),                         
+/* input  logic    [3:0] */ .fscan_ram_odis_b                            (fscan_ram_odis_b),                           
+/* input  logic          */ .fscan_ram_rddis_b                           (fscan_ram_rddis_b),                          
+/* input  logic          */ .fscan_ram_wrdis_b                           (fscan_ram_wrdis_b),                          
+/* input  logic          */ .fscan_rstbypen                              (fscan_rstbypen),                             
+/* input  logic  [171:0] */ .post_ppe_igr_post_body_ll_ram_0_to_mem      (post_ppe_igr_post_body_ll_ram_0_to_mem),     
+/* input  logic  [171:0] */ .post_ppe_igr_post_body_ll_ram_1_to_mem      (post_ppe_igr_post_body_ll_ram_1_to_mem),     
+/* input  logic  [133:0] */ .post_ppe_igr_ptr_cache_ram_0_to_mem         (post_ppe_igr_ptr_cache_ram_0_to_mem),        
+/* input  logic  [133:0] */ .post_ppe_igr_ptr_cache_ram_1_to_mem         (post_ppe_igr_ptr_cache_ram_1_to_mem),        
+/* output logic          */ .aary_pwren_b_rf                             (aary_pwren_b_rf),                            
+/* output logic   [73:0] */ .post_ppe_igr_post_body_ll_ram_0_from_mem    (post_ppe_igr_post_body_ll_ram_0_from_mem),   
+/* output logic   [73:0] */ .post_ppe_igr_post_body_ll_ram_1_from_mem    (post_ppe_igr_post_body_ll_ram_1_from_mem),   
+/* output logic   [56:0] */ .post_ppe_igr_ptr_cache_ram_0_from_mem       (post_ppe_igr_ptr_cache_ram_0_from_mem),      
+/* output logic   [56:0] */ .post_ppe_igr_ptr_cache_ram_1_from_mem       (post_ppe_igr_ptr_cache_ram_1_from_mem));      
 // End of module post_ppe_rf_mems from post_ppe_rf_mems
 
 
 // module post_ppe_ff_mems    from post_ppe_ff_mems using post_ppe_ff_mems.map 
 post_ppe_ff_mems    post_ppe_ff_mems(
-/* input  logic  [93:0] */ .post_ppe_igr_post_sop_fifo_0_ram_0_to_mem   (post_ppe_igr_post_sop_fifo_0_ram_0_to_mem),  
-/* input  logic  [93:0] */ .post_ppe_igr_post_sop_fifo_0_ram_1_to_mem   (post_ppe_igr_post_sop_fifo_0_ram_1_to_mem),  
-/* input  logic         */ .car_raw_lan_power_good_with_byprst          (1'b1),                                       
-/* input  logic         */ .cclk                                        (cclk),                                       
-/* input  logic  [93:0] */ .post_ppe_igr_post_sop_fifo_0_ram_2_to_mem   (post_ppe_igr_post_sop_fifo_0_ram_2_to_mem),  
-/* input  logic  [93:0] */ .post_ppe_igr_post_sop_fifo_0_ram_3_to_mem   (post_ppe_igr_post_sop_fifo_0_ram_3_to_mem),  
-/* input  logic  [93:0] */ .post_ppe_igr_post_sop_fifo_1_ram_0_to_mem   (post_ppe_igr_post_sop_fifo_1_ram_0_to_mem),  
-/* input  logic  [93:0] */ .post_ppe_igr_post_sop_fifo_1_ram_1_to_mem   (post_ppe_igr_post_sop_fifo_1_ram_1_to_mem),  
-/* input  logic  [93:0] */ .post_ppe_igr_post_sop_fifo_1_ram_2_to_mem   (post_ppe_igr_post_sop_fifo_1_ram_2_to_mem),  
-/* input  logic  [93:0] */ .post_ppe_igr_post_sop_fifo_1_ram_3_to_mem   (post_ppe_igr_post_sop_fifo_1_ram_3_to_mem),  
-/* input  logic  [93:0] */ .post_ppe_igr_post_sop_fifo_2_ram_0_to_mem   (post_ppe_igr_post_sop_fifo_2_ram_0_to_mem),  
-/* input  logic  [93:0] */ .post_ppe_igr_post_sop_fifo_2_ram_1_to_mem   (post_ppe_igr_post_sop_fifo_2_ram_1_to_mem),  
-/* input  logic  [93:0] */ .post_ppe_igr_post_sop_fifo_2_ram_2_to_mem   (post_ppe_igr_post_sop_fifo_2_ram_2_to_mem),  
-/* input  logic  [93:0] */ .post_ppe_igr_post_sop_fifo_2_ram_3_to_mem   (post_ppe_igr_post_sop_fifo_2_ram_3_to_mem),  
-/* input  logic  [93:0] */ .post_ppe_igr_post_sop_fifo_3_ram_0_to_mem   (post_ppe_igr_post_sop_fifo_3_ram_0_to_mem),  
-/* input  logic  [93:0] */ .post_ppe_igr_post_sop_fifo_3_ram_1_to_mem   (post_ppe_igr_post_sop_fifo_3_ram_1_to_mem),  
-/* input  logic  [93:0] */ .post_ppe_igr_post_sop_fifo_3_ram_2_to_mem   (post_ppe_igr_post_sop_fifo_3_ram_2_to_mem),  
-/* input  logic  [93:0] */ .post_ppe_igr_post_sop_fifo_3_ram_3_to_mem   (post_ppe_igr_post_sop_fifo_3_ram_3_to_mem),  
-/* output logic  [74:0] */ .post_ppe_igr_post_sop_fifo_0_ram_0_from_mem (post_ppe_igr_post_sop_fifo_0_ram_0_from_mem), 
-/* output logic  [74:0] */ .post_ppe_igr_post_sop_fifo_0_ram_1_from_mem (post_ppe_igr_post_sop_fifo_0_ram_1_from_mem), 
-/* output logic  [74:0] */ .post_ppe_igr_post_sop_fifo_0_ram_2_from_mem (post_ppe_igr_post_sop_fifo_0_ram_2_from_mem), 
-/* output logic  [74:0] */ .post_ppe_igr_post_sop_fifo_0_ram_3_from_mem (post_ppe_igr_post_sop_fifo_0_ram_3_from_mem), 
-/* output logic  [74:0] */ .post_ppe_igr_post_sop_fifo_1_ram_0_from_mem (post_ppe_igr_post_sop_fifo_1_ram_0_from_mem), 
-/* output logic  [74:0] */ .post_ppe_igr_post_sop_fifo_1_ram_1_from_mem (post_ppe_igr_post_sop_fifo_1_ram_1_from_mem), 
-/* output logic  [74:0] */ .post_ppe_igr_post_sop_fifo_1_ram_2_from_mem (post_ppe_igr_post_sop_fifo_1_ram_2_from_mem), 
-/* output logic  [74:0] */ .post_ppe_igr_post_sop_fifo_1_ram_3_from_mem (post_ppe_igr_post_sop_fifo_1_ram_3_from_mem), 
-/* output logic  [74:0] */ .post_ppe_igr_post_sop_fifo_2_ram_0_from_mem (post_ppe_igr_post_sop_fifo_2_ram_0_from_mem), 
-/* output logic  [74:0] */ .post_ppe_igr_post_sop_fifo_2_ram_1_from_mem (post_ppe_igr_post_sop_fifo_2_ram_1_from_mem), 
-/* output logic  [74:0] */ .post_ppe_igr_post_sop_fifo_2_ram_2_from_mem (post_ppe_igr_post_sop_fifo_2_ram_2_from_mem), 
-/* output logic  [74:0] */ .post_ppe_igr_post_sop_fifo_2_ram_3_from_mem (post_ppe_igr_post_sop_fifo_2_ram_3_from_mem), 
-/* output logic  [74:0] */ .post_ppe_igr_post_sop_fifo_3_ram_0_from_mem (post_ppe_igr_post_sop_fifo_3_ram_0_from_mem), 
-/* output logic  [74:0] */ .post_ppe_igr_post_sop_fifo_3_ram_1_from_mem (post_ppe_igr_post_sop_fifo_3_ram_1_from_mem), 
-/* output logic  [74:0] */ .post_ppe_igr_post_sop_fifo_3_ram_2_from_mem (post_ppe_igr_post_sop_fifo_3_ram_2_from_mem), 
-/* output logic  [74:0] */ .post_ppe_igr_post_sop_fifo_3_ram_3_from_mem (post_ppe_igr_post_sop_fifo_3_ram_3_from_mem)); 
+/* input  logic  [167:0] */ .post_ppe_igr_post_sop_fifo_0_ram_0_to_mem   (post_ppe_igr_post_sop_fifo_0_ram_0_to_mem),  
+/* input  logic  [167:0] */ .post_ppe_igr_post_sop_fifo_0_ram_1_to_mem   (post_ppe_igr_post_sop_fifo_0_ram_1_to_mem),  
+/* input  logic          */ .car_raw_lan_power_good_with_byprst          (1'b1),                                       
+/* input  logic          */ .cclk                                        (cclk),                                       
+/* input  logic  [167:0] */ .post_ppe_igr_post_sop_fifo_0_ram_2_to_mem   (post_ppe_igr_post_sop_fifo_0_ram_2_to_mem),  
+/* input  logic  [167:0] */ .post_ppe_igr_post_sop_fifo_0_ram_3_to_mem   (post_ppe_igr_post_sop_fifo_0_ram_3_to_mem),  
+/* input  logic  [167:0] */ .post_ppe_igr_post_sop_fifo_1_ram_0_to_mem   (post_ppe_igr_post_sop_fifo_1_ram_0_to_mem),  
+/* input  logic  [167:0] */ .post_ppe_igr_post_sop_fifo_1_ram_1_to_mem   (post_ppe_igr_post_sop_fifo_1_ram_1_to_mem),  
+/* input  logic  [167:0] */ .post_ppe_igr_post_sop_fifo_1_ram_2_to_mem   (post_ppe_igr_post_sop_fifo_1_ram_2_to_mem),  
+/* input  logic  [167:0] */ .post_ppe_igr_post_sop_fifo_1_ram_3_to_mem   (post_ppe_igr_post_sop_fifo_1_ram_3_to_mem),  
+/* input  logic  [167:0] */ .post_ppe_igr_post_sop_fifo_2_ram_0_to_mem   (post_ppe_igr_post_sop_fifo_2_ram_0_to_mem),  
+/* input  logic  [167:0] */ .post_ppe_igr_post_sop_fifo_2_ram_1_to_mem   (post_ppe_igr_post_sop_fifo_2_ram_1_to_mem),  
+/* input  logic  [167:0] */ .post_ppe_igr_post_sop_fifo_2_ram_2_to_mem   (post_ppe_igr_post_sop_fifo_2_ram_2_to_mem),  
+/* input  logic  [167:0] */ .post_ppe_igr_post_sop_fifo_2_ram_3_to_mem   (post_ppe_igr_post_sop_fifo_2_ram_3_to_mem),  
+/* input  logic  [167:0] */ .post_ppe_igr_post_sop_fifo_3_ram_0_to_mem   (post_ppe_igr_post_sop_fifo_3_ram_0_to_mem),  
+/* input  logic  [167:0] */ .post_ppe_igr_post_sop_fifo_3_ram_1_to_mem   (post_ppe_igr_post_sop_fifo_3_ram_1_to_mem),  
+/* input  logic  [167:0] */ .post_ppe_igr_post_sop_fifo_3_ram_2_to_mem   (post_ppe_igr_post_sop_fifo_3_ram_2_to_mem),  
+/* input  logic  [167:0] */ .post_ppe_igr_post_sop_fifo_3_ram_3_to_mem   (post_ppe_igr_post_sop_fifo_3_ram_3_to_mem),  
+/* output logic   [74:0] */ .post_ppe_igr_post_sop_fifo_0_ram_0_from_mem (post_ppe_igr_post_sop_fifo_0_ram_0_from_mem), 
+/* output logic   [74:0] */ .post_ppe_igr_post_sop_fifo_0_ram_1_from_mem (post_ppe_igr_post_sop_fifo_0_ram_1_from_mem), 
+/* output logic   [74:0] */ .post_ppe_igr_post_sop_fifo_0_ram_2_from_mem (post_ppe_igr_post_sop_fifo_0_ram_2_from_mem), 
+/* output logic   [74:0] */ .post_ppe_igr_post_sop_fifo_0_ram_3_from_mem (post_ppe_igr_post_sop_fifo_0_ram_3_from_mem), 
+/* output logic   [74:0] */ .post_ppe_igr_post_sop_fifo_1_ram_0_from_mem (post_ppe_igr_post_sop_fifo_1_ram_0_from_mem), 
+/* output logic   [74:0] */ .post_ppe_igr_post_sop_fifo_1_ram_1_from_mem (post_ppe_igr_post_sop_fifo_1_ram_1_from_mem), 
+/* output logic   [74:0] */ .post_ppe_igr_post_sop_fifo_1_ram_2_from_mem (post_ppe_igr_post_sop_fifo_1_ram_2_from_mem), 
+/* output logic   [74:0] */ .post_ppe_igr_post_sop_fifo_1_ram_3_from_mem (post_ppe_igr_post_sop_fifo_1_ram_3_from_mem), 
+/* output logic   [74:0] */ .post_ppe_igr_post_sop_fifo_2_ram_0_from_mem (post_ppe_igr_post_sop_fifo_2_ram_0_from_mem), 
+/* output logic   [74:0] */ .post_ppe_igr_post_sop_fifo_2_ram_1_from_mem (post_ppe_igr_post_sop_fifo_2_ram_1_from_mem), 
+/* output logic   [74:0] */ .post_ppe_igr_post_sop_fifo_2_ram_2_from_mem (post_ppe_igr_post_sop_fifo_2_ram_2_from_mem), 
+/* output logic   [74:0] */ .post_ppe_igr_post_sop_fifo_2_ram_3_from_mem (post_ppe_igr_post_sop_fifo_2_ram_3_from_mem), 
+/* output logic   [74:0] */ .post_ppe_igr_post_sop_fifo_3_ram_0_from_mem (post_ppe_igr_post_sop_fifo_3_ram_0_from_mem), 
+/* output logic   [74:0] */ .post_ppe_igr_post_sop_fifo_3_ram_1_from_mem (post_ppe_igr_post_sop_fifo_3_ram_1_from_mem), 
+/* output logic   [74:0] */ .post_ppe_igr_post_sop_fifo_3_ram_2_from_mem (post_ppe_igr_post_sop_fifo_3_ram_2_from_mem), 
+/* output logic   [74:0] */ .post_ppe_igr_post_sop_fifo_3_ram_3_from_mem (post_ppe_igr_post_sop_fifo_3_ram_3_from_mem)); 
 // End of module post_ppe_ff_mems from post_ppe_ff_mems
 
 endmodule // post_ppe_gen_mem
