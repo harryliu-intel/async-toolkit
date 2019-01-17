@@ -40,7 +40,12 @@ input   int         cclk_cnt,
 tx_ppe_mod_if.ppe   tx_ppe_mod_if0,
 tx_ppe_mod_if.ppe   tx_ppe_mod_if1,
 tx_ppe_mod_if.ppe   tx_ppe_mod_if2,
-tx_ppe_mod_if.ppe   tx_ppe_mod_if3
+tx_ppe_mod_if.ppe   tx_ppe_mod_if3,
+
+tx_ppe_negh_if.ppe  tx_ppe_negh_if0,
+tx_ppe_negh_if.ppe  tx_ppe_negh_if1,
+tx_ppe_negh_if.ppe  tx_ppe_negh_if2,
+tx_ppe_negh_if.ppe  tx_ppe_negh_if3
 );
 
 logic   [3:0]           q_mod_rvalid;
@@ -173,6 +178,114 @@ always_ff @(posedge cclk) begin //{
             q_mod_exp_bank[3] = 4'b0;
         end //}
         else q_mod_exp_bank[3] <= q_mod_exp_bank[3] + 1;
+    end //}
+end //}
+
+logic   [3:0]           q_negh_rvalid;
+logic   [3:0] [84:0]    q_negh_rdata;
+logic   [1:0] [13:0]    q_negh_raddr;
+logic   [1:0] [84:0]    q_negh_exp_rdata;
+
+always_ff @(posedge cclk) begin //{
+    if(cclk_cnt == 1) begin //{
+        tx_ppe_negh_if0.ren     <= 1'b0;
+        tx_ppe_negh_if1.ren     <= 1'b0;
+        tx_ppe_negh_if2.ren     <= 1'b0;
+        tx_ppe_negh_if3.ren     <= 1'b0;
+        tx_ppe_negh_if0.raddr   <= 14'h0;
+        tx_ppe_negh_if1.raddr   <= 14'h0;
+        tx_ppe_negh_if2.raddr   <= 14'h0;
+        tx_ppe_negh_if3.raddr   <= 14'h0;
+        q_negh_raddr[0]         <= 14'b0;
+        q_negh_raddr[1]         <= 14'b0;
+        q_negh_exp_rdata[0]     <= 85'b0;
+        q_negh_exp_rdata[1]     <= 85'h1;
+    end //}
+    else if(cclk_cnt > 1000) begin //{
+        if((cclk_cnt % 2) == 1) begin //{
+            tx_ppe_negh_if0.ren     <= 1'b0;
+            tx_ppe_negh_if1.ren     <= 1'b1;
+            tx_ppe_negh_if1.raddr   <= q_negh_raddr[1];
+            tx_ppe_negh_if2.ren     <= 1'b0;
+            tx_ppe_negh_if3.ren     <= 1'b1;
+            tx_ppe_negh_if3.raddr   <= q_negh_raddr[1];
+            q_negh_raddr[1]         <= q_negh_raddr[1] + 1;
+        end //}
+        else begin //{
+            tx_ppe_negh_if0.ren     <= 1'b1;
+            tx_ppe_negh_if0.raddr   <= q_negh_raddr[0];
+            tx_ppe_negh_if1.ren     <= 1'b0;
+            tx_ppe_negh_if2.ren     <= 1'b1;
+            tx_ppe_negh_if2.raddr   <= q_negh_raddr[0];
+            tx_ppe_negh_if3.ren     <= 1'b0;
+            q_negh_raddr[0]         <= q_negh_raddr[0] + 1;
+        end //}
+    end //}
+
+    q_negh_rvalid[0]    <= tx_ppe_negh_if0.rvalid;
+    q_negh_rdata[0]     <= tx_ppe_negh_if0.rdata;
+    q_negh_rvalid[1]    <= tx_ppe_negh_if1.rvalid;
+    q_negh_rdata[1]     <= tx_ppe_negh_if1.rdata;
+    q_negh_rvalid[2]    <= tx_ppe_negh_if2.rvalid;
+    q_negh_rdata[2]     <= tx_ppe_negh_if2.rdata;
+    q_negh_rvalid[3]    <= tx_ppe_negh_if3.rvalid;
+    q_negh_rdata[3]     <= tx_ppe_negh_if3.rdata;
+
+    if(cclk_cnt > 1008) begin //{
+        if((cclk_cnt % 2) == 1) begin //{
+            if(q_negh_rvalid[0] !== 1'b0) begin //{
+                $display("ERROR, Neighbor Table Inteface 0 read is valid when it wasn't expected to be\n");
+                $finish;
+            end //}
+            if(q_negh_rvalid[1] !== 1'b1) begin //{
+                $display("ERROR, Neighbor Table Inteface 1 read is not valid when it was expected to be\n");
+                $finish;
+            end //}
+            if(q_negh_rdata[1] !== q_negh_exp_rdata[0]) begin //{
+                $display("ERROR, Neighbor Table Interface 1 read data miscompare\n actual   = %h\n expected = %h\n", q_negh_rdata[1], q_negh_exp_rdata[0]);
+                $finish;
+            end //}
+            if(q_negh_rvalid[2] !== 1'b0) begin //{
+                $display("ERROR, Neighbor Table Inteface 2 read is valid when it wasn't expected to be\n");
+                $finish;
+            end //}
+            if(q_negh_rvalid[3] !== 1'b1) begin //{
+                $display("ERROR, Neighbor Table Inteface 3 read is not valid when it was expected to be\n");
+                $finish;
+            end //}
+            if(q_negh_rdata[3] !== q_negh_exp_rdata[1]) begin //{
+                $display("ERROR, Neighbor Table Interface 3 read data miscompare\n actual   = %h\n expected = %h\n", q_negh_rdata[3], q_negh_exp_rdata[1]);
+                $finish;
+            end //}
+        end //}
+        else begin //{
+            if(q_negh_rvalid[0] !== 1'b1) begin //{
+                $display("ERROR, Neighbor Table Inteface 0 read is not valid when it was expected to be\n");
+                $finish;
+            end //}
+            if(q_negh_rdata[0] !== q_negh_exp_rdata[0]) begin //{
+                $display("ERROR, Neighbor Table Interface 0 read data miscompare\n actual   = %h\n expected = %h\n", q_negh_rdata[0], q_negh_exp_rdata[0]);
+                $finish;
+            end //}
+            if(q_negh_rvalid[1] !== 1'b0) begin //{
+                $display("ERROR, Neighbor Table Inteface 1 read is valid when it wasn't expected to be\n");
+                $finish;
+            end //}
+            if(q_negh_rvalid[2] !== 1'b1) begin //{
+                $display("ERROR, Neighbor Table Inteface 2 read is not valid when it was expected to be\n");
+                $finish;
+            end //}
+            if(q_negh_rdata[2] !== q_negh_exp_rdata[1]) begin //{
+                $display("ERROR, Neighbor Table Interface 2 read data miscompare\n actual   = %h\n expected = %h\n", q_negh_rdata[2], q_negh_exp_rdata[1]);
+                $finish;
+            end //}
+            if(q_negh_rvalid[3] !== 1'b0) begin //{
+                $display("ERROR, Neighbor Table Inteface 3 read is valid when it wasn't expected to be\n");
+                $finish;
+            end //}
+            q_negh_exp_rdata[0] <= q_negh_exp_rdata[0] + 1;
+            q_negh_exp_rdata[1] <= q_negh_exp_rdata[1] + 1;
+        end //}
     end //}
 end //}
 

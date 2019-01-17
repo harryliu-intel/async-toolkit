@@ -8,6 +8,8 @@ ngen_IO_list
 ngen_IO_end
 
 egr_ppe_stm_if egr_ppestm();
+egr_mc_table_if egr_mc_table0();
+egr_mc_table_if egr_mc_table1();
 
 ngen_wires
 

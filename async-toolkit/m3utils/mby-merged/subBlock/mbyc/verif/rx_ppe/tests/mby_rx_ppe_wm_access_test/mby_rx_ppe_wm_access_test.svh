@@ -105,6 +105,7 @@ class mby_rx_ppe_wm_access_test extends mby_rx_ppe_base_test;
    function void set_default_sequences();
 
       `uvm_info("::set_default_sequences", "Setting phase sequences", UVM_NONE)
+      super.set_default_sequences();
 
       // main phase sequence
       uvm_config_db#(uvm_object_wrapper)::set(this,

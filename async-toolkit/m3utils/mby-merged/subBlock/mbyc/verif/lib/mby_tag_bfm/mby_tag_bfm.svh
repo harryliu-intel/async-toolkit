@@ -58,6 +58,10 @@ class mby_tag_bfm extends uvm_component;
    //   .T_vif(mby_tag_bfm_uc_vif)) mby_tag_bfm_uc_agent;
    mby_tag_bfm_uc_agent tag_uc_agent;
 
+
+   shdv_base_agent_config tag_uc_agent_config;
+
+
    // VARIABLE: tag_mc_agent
    // This is the tag multi-cast agent instance, it interfaces with the tag ring.
    // Receives tag transactions from the frame generator and monitors the tag
@@ -113,15 +117,20 @@ class mby_tag_bfm extends uvm_component;
       // ----------------------------------------------------------------------
       if(cfg_obj.traffic_mode == TAG_BFM_UC_MODE) begin
          tag_uc_agent = mby_tag_bfm_uc_agent::type_id::create("tag_uc_agent", this);
-         uvm_config_db#(mby_base_config)::set(this, "tag_uc_agent", "cfg_obj", cfg_obj);       
-         tag_uc_agent.cfg_obj = this.cfg_obj;
+         uvm_config_db#(mby_base_config)::set(this, "tag_uc_agent", "cfg_obj", cfg_obj);
+         tag_uc_agent_config = shdv_base_agent_config::type_id::create("cfg", this);
+         tag_uc_agent.cfg = tag_uc_agent_config;
+         
          `uvm_info(this.get_full_name(),
             "Created the uni-cast tag_agent instance and assigned the cfg_obj",
             UVM_DEBUG)
       end else begin
          tag_mc_agent = mby_tag_bfm_mc_agent::type_id::create("tag_mc_agent", this);
-         uvm_config_db#(mby_base_config)::set(this, "tag_mc_agent", "cfg_obj", cfg_obj);       
-         tag_mc_agent.cfg_obj = this.cfg_obj;
+         tag_uc_agent_config = shdv_base_agent_config::type_id::create("cfg", this);
+         
+         uvm_config_db#(mby_base_config)::set(this, "tag_mc_agent", "cfg_obj", cfg_obj);
+         tag_mc_agent.cfg =   tag_uc_agent_config;
+         //this.cfg_obj;
          `uvm_info(this.get_full_name(),
             "Created the multi-cast tag_agent instance and assigned the cfg_obj",
             UVM_DEBUG)

@@ -37,7 +37,7 @@ interface tx_ppe_negh_if
 logic           ren;    //read enable
 logic   [13:0]  raddr;  //read address
 logic           rvalid; //read data valid
-logic   [81:0]  rdata;  //read data (including ECC bits)
+logic   [84:0]  rdata;  //read data (including ECC bits)
 
 modport ppe(
     output  ren,

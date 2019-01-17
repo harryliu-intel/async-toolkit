@@ -38,7 +38,16 @@
 
 // Type definitions
 typedef virtual mby_rem_app_if mby_rem_app_vif;
-typedef mby_base_pkg::mby_base_agent#(.T_req(mby_rem_app_xaction), .T_vif(mby_rem_app_vif)) rem_app_agent;
+
+// Defining the I/O policies 
+typedef shdv_base_io_policy_param#(
+   .T_req(mby_rem_app_xaction),
+   .T_vif(mby_rem_app_vif)) mby_rem_app_io;
+
+// Defining the flow control policy 
+typedef shdv_base_empty_fc_policy mby_rem_app_io;
+
+typedef shdv_base_agent#(.T_req(mby_rem_app_xaction), .T_vif(mby_rem_app_vif)) rem_app_agent;
    
 
 `endif

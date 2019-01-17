@@ -39,8 +39,8 @@
 // CLASS: mby_gpm_bfm
 //
 // This is the main gpm_bfm class, it is just a container that instantiates and
-// connects the pod pointer generator, the free pointer agent, the dirty pointer
-// agent and the mesh agent.
+// connects the pod pointer generator, the free pointer agent (IGR) and the dirty pointer
+// agent (EGR).
 //
 //-----------------------------------------------------------------------------
 class mby_gpm_bfm extends uvm_component;
@@ -63,11 +63,6 @@ class mby_gpm_bfm extends uvm_component;
    // and will receive dirty pointer information from egress.
    pod_agent dpptr_agent;
 
-   // VARIABLE: mesh_agent
-   // This is the mesh agent that is used in mesh mode to access the mesh intf.
-   // This agent is not used when the bfm is configured in ingress or egress
-   // modes.
-   msh_agent mesh_agent;
 
    // -------------------------------------------------------------------------
    // Macro to register new class type
@@ -106,9 +101,6 @@ class mby_gpm_bfm extends uvm_component;
       end else if(cfg_obj.bfm_mode == GPM_BFM_EGR_MODE) begin
          dpptr_agent = pod_agent::type_id::create("dpptr_agent", this);
          dpptr_agent.cfg_obj = this.cfg_obj.dpptr_cfg;
-      end else if(cfg_obj.bfm_mode == GPM_BFM_MSH_MODE) begin
-         mesh_agent = msh_agent::type_id::create("mesh_agent", this);
-         mesh_agent.cfg_obj = this.cfg_obj.msh_cfg;
       end
    endfunction
 
@@ -125,8 +117,6 @@ class mby_gpm_bfm extends uvm_component;
          // TODO: connect the pptr_gen to the fpptr_agent
       end else if(cfg_obj.bfm_mode == GPM_BFM_EGR_MODE) begin
          // TODO: connect the pptr_gen to the dpptr_agent
-      end else if(cfg_obj.bfm_mode == GPM_BFM_MSH_MODE) begin
-         // TODO: connect the pptr_gen to fpptr_agent and dpptr_agent
       end
    endfunction
 

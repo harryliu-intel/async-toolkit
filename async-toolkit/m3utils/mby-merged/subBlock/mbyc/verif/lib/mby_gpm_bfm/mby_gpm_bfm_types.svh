@@ -53,28 +53,21 @@ typedef logic mby_gpm_bfm_msh_debg_t;
 // the configuration object.
 typedef enum bit[1:0] {
    GPM_BFM_IGR_MODE,
-   GPM_BFM_EGR_MODE,
-   GPM_BFM_MSH_MODE
+   GPM_BFM_EGR_MODE
 } mby_gpm_bfm_mode_t;
 
 
 // -------------------------------------------------------------------------
 // Main class & VIF type definitions for TAG BFM
 // -------------------------------------------------------------------------
-// Creating the virtual interface types for pod and mesh agents.
+// Creating the virtual interface types for pod agents.
 typedef virtual mby_gpm_bfm_pod_if mby_gpm_bfm_pod_vif;
-typedef virtual mby_gpm_bfm_msh_if mby_gpm_bfm_msh_vif;
 // Forward declaration of the transaction classes (in the tag_bfm_pkg this
 // file (bfm_types) is compiled before the transaction items.
 typedef class mby_gpm_bfm_pod_xaction;
-typedef class mby_gpm_bfm_msh_xaction;
 // Defining the pod agent as a parameterized base agent.
 typedef mby_base_pkg::mby_base_agent#(
    .T_req(mby_gpm_bfm_pod_xaction),
    .T_vif(mby_gpm_bfm_pod_vif)) pod_agent;
-// Defining the mesh agent as a parameterized base agent.
-typedef mby_base_pkg::mby_base_agent#(
-   .T_req(mby_gpm_bfm_msh_xaction),
-   .T_vif(mby_gpm_bfm_msh_vif)) msh_agent;
 
 `endif

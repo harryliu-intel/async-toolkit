@@ -173,12 +173,12 @@ class mby_smm_bfm_mrd_req
       
       // TODO: parameterize these definitions, these come from a file
       // TODO : change logics by bits
-      logic [12:0]   req_id;        // Memory read request ID
-      logic [13:0]   addr;          // Memory read address
-      logic [511:0]  rd_data;       // Memory read data
+      bit [W_REQ_ID-1:0]   req_id;        // Memory read request ID
+      bit [ADDR_WIDTH-1:0]   addr;          // Memory read address
+      bit [MSH_DATA_WIDTH-1:0]  rd_data;       // Memory read data
       
-      logic [3:0]    node_row;      // SMM BFM node column
-      logic [2:0]    node_col;      // SMM BFM node row
+      bit [NUM_MSH_ROWS-1:0]    node_row;      // SMM BFM node column
+      bit [NUM_MSH_COLS-1:0]    node_col;      // SMM BFM node row
       
       int unsigned   req_rsp_delay; // Modeled read request delay
       
@@ -189,10 +189,10 @@ class mby_smm_bfm_mrd_req
       rdrsp_seq = smm_bfm_rdrsp_seq::type_id::create("rdrsp_seq", this);
       
       // Decode memory read request data
-      req_id      = mem_req.data_pkt.mim_req_id;
-      addr        = mem_req.data_pkt.mim_seg_ptr[13:0];
-      node_row    = mem_req.data_pkt.mim_seg_ptr[17:14];
-      node_col    = {mem_req.data_pkt.mim_seg_ptr[1:0]^mem_req.data_pkt.mim_wd_sel,mem_req.data_pkt.mim_seg_ptr[18]};
+      req_id      = mem_req.data.mim_req_id;
+      addr        = mem_req.data.mim_seg_ptr[13:0];
+      node_row    = mem_req.data.mim_seg_ptr[17:14];
+      node_col    = {mem_req.data.mim_seg_ptr[1:0]^mem_req.data.mim_wd_sel,mem_req.data.mim_seg_ptr[18]};
       rd_data     = mesh_ptr[node_row][node_col].mrd(addr);
       
       msg_str     = $sformatf("mrd_req_rsp() : Received a memory read request for NodeRow = 0x%0x, NodeCol = 0x%0x, \
@@ -202,13 +202,12 @@ class mby_smm_bfm_mrd_req
       
       // Generate the memory read response
       mem_rsp = T_req::type_id::create("mem_rsp", this);
-      mem_rsp.data_pkt.mim_rrsp_valid  = 1;
-      mem_rsp.data_pkt.mim_rd_data     = rd_data;
-      mem_rsp.data_pkt.mim_rrsp_req_id = req_id;
+      mem_rsp.data.mim_rrsp_valid  = 1;
+      mem_rsp.data.mim_rd_data     = rd_data;
+      mem_rsp.data.mim_rrsp_req_id = req_id;
       
       // TODO ;   Profile based latencies.
-      req_rsp_delay  = $urandom_range(rd_req_cfg_obj.mrd_req_rsp_delay_min,
-                                      rd_req_cfg_obj.mrd_req_rsp_delay_max) + rd_req_cfg_obj.mrd_req_rsp_delay_extra;
+      req_rsp_delay  = rd_req_cfg_obj.mrd_req_rsp_delay_extra;
       
       msg_str     = $sformatf("mrd_req_rsp() : Delay of read request/response operation is %0d clocks. ReqID = 0x%x",
                        req_rsp_delay, req_id);
@@ -216,13 +215,13 @@ class mby_smm_bfm_mrd_req
       `uvm_info(get_type_name(), msg_str,  UVM_MEDIUM)
       
       // Look for the driver in this agent then for a vif and then a clock in it
-      repeat(req_rsp_delay) @(posedge this.rd_req_agent_ptr.driver.vintf.clk);
+      repeat(req_rsp_delay) @(posedge this.rd_req_agent_ptr.driver.io_policy.vintf.clk);
       
       // Use this instead
       rdrsp_seq.mem_rsp = mem_rsp;
       rdrsp_seq.start(this.rd_req_agent_ptr.sequencer);
       
-      mem_rsp.data_pkt.mim_rrsp_valid = 0;
+      mem_rsp.data.mim_rrsp_valid = 0;
       
       msg_str     = $sformatf("mrd_req_rsp() : Memory read request done. ReqID = 0x%x", req_id);
       
@@ -243,7 +242,7 @@ class mby_smm_bfm_mrd_req
       bit      objection_raised = 0;
       string   msg_str;
       
-      forever @ (posedge this.rd_req_agent_ptr.driver.vintf.clk) begin
+      forever @ (posedge this.rd_req_agent_ptr.driver.io_policy.vintf.clk) begin
          // Maintain track of the memory read requests in flight, will hold on test
          // completion until all read requests are completed.
          if (!objection_raised && rd_req_pending > 0) begin

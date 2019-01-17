@@ -66,20 +66,32 @@ typedef enum bit {
 // -------------------------------------------------------------------------
 // Main class & VIF type definitions for TAG BFM
 // -------------------------------------------------------------------------
-// Creating a virtual interface types for uni-cast and multicast
+// Creating a virtual interface types for uni-cast and multi-cast
 typedef virtual mby_tag_bfm_uc_if mby_tag_bfm_uc_vif;
 typedef virtual mby_tag_bfm_mc_if mby_tag_bfm_mc_vif;
 // Forward declaration of the transaction classes (in the tag_bfm_pkg
 // these files are compiled before the transaction item.
 typedef class mby_tag_bfm_uc_xaction;
 typedef class mby_tag_bfm_mc_xaction;
-// Defining the uni-cast tag agent as a parameterized base agent.
-typedef mby_base_agent#(
+// Defining the I/O policies for the tag bfm
+typedef shdv_base_io_policy_param#(
    .T_req(mby_tag_bfm_uc_xaction),
-   .T_vif(mby_tag_bfm_uc_vif)) mby_tag_bfm_uc_agent;
-// Defining the multi-cast tag agent as a parameterized base agent.
-typedef mby_base_agent#(
+   .T_vif(mby_tag_bfm_uc_vif)) mby_tag_bfm_uc_io;
+typedef shdv_base_io_policy_param#(
    .T_req(mby_tag_bfm_mc_xaction),
-   .T_vif(mby_tag_bfm_mc_vif)) mby_tag_bfm_mc_agent;
+   .T_vif(mby_tag_bfm_mc_vif)) mby_tag_bfm_mc_io;
+// Defining the flow control policy for the tag bfm
+typedef shdv_base_empty_fc_policy mby_tag_bfm_uc_fc;
+typedef shdv_base_empty_fc_policy mby_tag_bfm_mc_fc;
+// Defining the uni-cast tag agent as a parameterized base agent.
+typedef shdv_agent#(
+   .T_req(mby_tag_bfm_uc_xaction),
+   .T_fcp(mby_tag_bfm_uc_fc),
+   .T_iop(mby_tag_bfm_uc_io)) mby_tag_bfm_uc_agent;
+// Defining the multi-cast tag agent as a parameterized base agent.
+typedef shdv_agent#(
+   .T_req(mby_tag_bfm_mc_xaction),
+   .T_fcp(mby_tag_bfm_mc_fc),
+   .T_iop(mby_tag_bfm_mc_io)) mby_tag_bfm_mc_agent;
 
 `endif
