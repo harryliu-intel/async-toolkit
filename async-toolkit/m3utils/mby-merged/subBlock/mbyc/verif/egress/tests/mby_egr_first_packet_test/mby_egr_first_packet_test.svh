@@ -83,7 +83,7 @@ class mby_egr_tag_seq extends mby_egr_extended_base_seq;
       `uvm_send(uc_tag)
       
       `uvm_info(get_name(), "Finished mby_egr_tag_seq", UVM_LOW)
-      wait_n(50);
+      wait_n(100);
    endtask : body
 
 
