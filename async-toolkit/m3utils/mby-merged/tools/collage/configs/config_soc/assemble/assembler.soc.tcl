@@ -297,6 +297,19 @@ if {[info proc soc_hook_finalize] != ""} {
 
 print_time "RTL Assembly : END"
 
+##########################################################################################
+# UPF generation   ---added 9/28/17 RJS
+##########################################################################################
+ 
+ if {[info exists ::env(ENABLE_UPF_GEN)] && ($::env(ENABLE_UPF_GEN) == "1")} {
+   # --- Load the UPF configuration file
+     ::upf::load_config ${soc_integ_specs_dir}/soc_upf_config.tcl ${soc_integ_specs_dir}/soc_upf_clamp.txt 1
+   # --- Generate the UPF files
+      ::upf::generate $::design
+          collage_batch_exit
+
+ }
+
 ###################################
 #     Remove OVM references
 ###################################

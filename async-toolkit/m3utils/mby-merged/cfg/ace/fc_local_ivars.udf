@@ -42,6 +42,7 @@ EOF
             },
         -test_in_model          => { default => 1 },
         -elab_models            => { default => 1 },
+        -enable_post_flow_hooks => { default => 1 },
 
         # simulation aliases for all scopes
         -verb_no => {
