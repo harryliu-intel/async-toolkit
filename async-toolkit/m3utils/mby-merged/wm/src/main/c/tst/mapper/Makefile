@@ -7,6 +7,8 @@ SOURCES = mby_mapper_test.c
 
 OBJECTS = $(addprefix ${BLD_DIR}/,$(SOURCES:.c=.o))
 
+TARGET   = ${BLD_DIR}/mby_mapper_test
+
 .PHONY: all
 all: $(BLD_DTS) $(OBJECTS) $(TARGET)
 
@@ -40,7 +42,7 @@ $(TARGET): $(BLD_DTS) $(OBJECTS) $(WM_LIB) $(COM_LIB)
 run: $(TARGET)
 	@echo '  Running $(TARGET)'
 	@/usr/bin/time --format='Ran for %e seconds.' \
-            ./$(TARGET) | tee run.log
+            ./$(TARGET)
 
 .PHONY: valgrind
 valgrind: $(TARGET)

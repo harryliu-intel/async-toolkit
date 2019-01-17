@@ -51,13 +51,13 @@ $(TARGET): $(BLD_DTS) $(OBJECTS) $(WM_LIB) $(COM_LIB)
 run: $(TARGET)
 	@echo '  Running $(TARGET)'
 	@/usr/bin/time --format='Ran for %e seconds.' \
-            ./$(TARGET) | tee run.log
+            ./$(TARGET)
 
 .PHONY: run_img
 run_img: $(TARGET)
 	@echo '  Running $(TARGET) -i'
 	@/usr/bin/time --format='Ran for %e seconds.' \
-            ./$(TARGET) -i | tee run.log
+            ./$(TARGET) -i
 
 .PHONY: valgrind
 valgrind: $(TARGET)
