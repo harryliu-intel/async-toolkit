@@ -1,8 +1,6 @@
 # -*- mode:Makefile -*-
 
-# Copyright (C) 2018 Intel Corporatio
+# Copyright (C) 2018 Intel Corporation
 
-SOURCES  = mby_parser_test.c
-TARGETNM = mby_parser_test
+include ../make/Make.subdir
 
-include ../make/Make.all

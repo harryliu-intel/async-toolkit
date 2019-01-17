@@ -1,6 +1,6 @@
 .PHONY: all
 all: $(BLD_DTS) $(OBJECTS) $(TARGET)
-
+     
 $(BLD_DTS):
 	@echo '  Creating build directory'
 	$(ECHO) $(MKDIR) $(BLD_DIR) && touch ${BLD_DTS}
