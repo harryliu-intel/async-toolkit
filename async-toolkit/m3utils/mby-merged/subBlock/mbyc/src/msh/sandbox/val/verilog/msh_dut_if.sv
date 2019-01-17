@@ -57,106 +57,51 @@ logic               csreset;                                // core soft reset
 logic               mhreset;                                // mesh hard reset
 logic               msreset;                                // mesh soft reset
 
-    // West Side Write Ports
-       logic           i_igr_eb_wreq_valid    [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];  // input
-       seg_ptr_t       i_igr_eb_wr_seg_ptr    [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];  // input
-       sema_t          i_igr_eb_wr_sema       [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];  // input
-       wd_sel_t        i_igr_eb_wr_wd_sel     [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];  // input
-       req_id_t        i_igr_eb_wreq_id       [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];  // input
-       msh_data_t      i_igr_eb_wr_data       [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];  // input
-           
+    ////////////////////////
+    // Mesh MGP Write Ports 
+    ////////////////////////
    
-    // East Side Write Ports
-       logic           i_igr_wb_wreq_valid    [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];  // input
-       seg_ptr_t       i_igr_wb_wr_seg_ptr    [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];  // input
-       sema_t          i_igr_wb_wr_sema       [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];  // input
-       wd_sel_t        i_igr_wb_wr_wd_sel     [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];  // input
-       req_id_t        i_igr_wb_wreq_id       [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];  // input
-       msh_data_t      i_igr_wb_wr_data       [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];  // input
+    // West Side Write Ports
+    
+    mshpt_wreq_t     i_igr_eb_wreq                       [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
 
+    msh_data_t       i_igr_eb_wr_data                    [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+           
+    logic            o_igr_eb_wr_lat_sat                 [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+    logic            o_igr_crdt_rtn_for_eb_wreq          [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+    logic            o_igr_mcast_crdt_rtn_for_eb_wreq    [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+    
+    // East Side Write Ports
+    
+    mshpt_wreq_t     i_igr_wb_wreq                       [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+
+    msh_data_t       i_igr_wb_wr_data                    [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+           
+    logic            o_igr_wb_wr_lat_sat                 [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+    logic            o_igr_crdt_rtn_for_wb_wreq          [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+    logic            o_igr_mcast_crdt_rtn_for_wb_wreq    [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+   
     
     //////////////////////////////
-    // Mesh MGP Read Request Ports      FIXME:  add _rreq to signal names
+    // Mesh MGP Read Request Ports
     //////////////////////////////
 
     // West Side Read Request Ports 
-      logic            i_egr_eb_rreq_valid    [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];  // input
-      seg_ptr_t        i_egr_eb_seg_ptr       [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];  // input
-      sema_t           i_egr_eb_sema          [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];  // input
-      wd_sel_t         i_egr_eb_wd_sel        [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];  // input
-      req_id_t         i_egr_eb_req_id        [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];  // input
-    
+   
+    mshpt_rreq_t     i_egr_eb_rreq                       [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+
+    logic            o_egr_eb_rd_lat_sat                 [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+    logic            o_egr_crdt_rtn_for_eb_rreq          [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+    logic            o_egr_mcast_crdt_rtn_for_eb_rreq    [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
         
     // East Side Read Request Ports 
-      logic            i_egr_wb_rreq_valid    [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];  // input
-      seg_ptr_t        i_egr_wb_seg_ptr       [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];  // input
-      sema_t           i_egr_wb_sema          [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];  // input
-      wd_sel_t         i_egr_wb_wd_sel        [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];  // input
-      req_id_t         i_egr_wb_req_id        [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];  // input
     
+    mshpt_rreq_t     i_egr_wb_rreq                       [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
 
-    ////////////////////////
-    // Mesh GMM Write Ports 
-    ////////////////////////
-   
-    // North Side Write Port
-       logic           i_sb_wreq_valid;  // input
-       seg_ptr_t       i_sb_wr_seg_ptr;  // input
-       sema_t          i_sb_wr_sema;     // input
-       wd_sel_t        i_sb_wr_wd_sel;   // input
-       req_id_t        i_sb_wreq_id;     // input
-       msh_data_t      i_sb_wr_data;     // input
-           
-   
-    // South Side Write Port
-       logic           i_nb_wreq_valid;  // input
-       seg_ptr_t       i_nb_wr_seg_ptr;  // input
-       sema_t          i_nb_wr_sema;     // input
-       wd_sel_t        i_nb_wr_wd_sel;   // input
-       req_id_t        i_nb_wreq_id;     // input
-       msh_data_t      i_nb_wr_data;     // input
-    
-
-    //////////////////////////////
-    // Mesh GMM Read Request Ports
-    //////////////////////////////
-
-    // North Side Read Request Port 
-      logic            i_sb_rreq_valid;     // input
-      seg_ptr_t        i_sb_rreq_seg_ptr;   // input
-      sema_t           i_sb_rreq_sema;      // input
-      wd_sel_t         i_sb_rreq_wd_sel;    // input
-      req_id_t         i_sb_rreq_id;        // input
-    
+    logic            o_egr_wb_rd_lat_sat                 [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+    logic            o_egr_crdt_rtn_for_wb_rreq          [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+    logic            o_egr_mcast_crdt_rtn_for_wb_rreq    [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
         
-    // South Side Read Request Port 
-      logic            i_nb_rreq_valid;     // input
-      seg_ptr_t        i_nb_rreq_seg_ptr;   // input
-      sema_t           i_nb_rreq_sema;      // input
-      wd_sel_t         i_nb_rreq_wd_sel;    // input
-      req_id_t         i_nb_rreq_id;        // input
-   
-   
-//
-// DUT outputs  (direction not specified in this interface)
-//
-
-    // West Side Write Ports
-     xact_credits_t   o_igr_wb_wreq_credits  [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];   //  output
-   
-    // East Side Write Ports
-     xact_credits_t   o_igr_eb_wreq_credits  [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];   //  output
-
-    
-    //////////////////////////////
-    // Mesh MGP Read Request Ports      FIXME:  add _rreq to signal names
-    //////////////////////////////
-
-    // West Side Read Request Ports 
-     xact_credits_t   o_egr_wb_rreq_credits  [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];   //  output
-        
-    // East Side Read Request Ports 
-     xact_credits_t   o_egr_eb_rreq_credits  [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];   //  output
    
    
     ///////////////////////////////
@@ -164,56 +109,94 @@ logic               msreset;                                // mesh soft reset
     ///////////////////////////////
         
     // West Side Read Response Ports
-     logic                o_egr_wb_rrsp_valid        [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];   //  output
-     rrsp_dest_block_t    o_egr_wb_rrsp_dest_block   [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];   //  output
-     req_id_t             o_egr_wb_rrsp_req_id       [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];   //  output
-     msh_data_t           o_egr_wb_rd_data           [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];   //  output
+    
+    logic            i_egr_crdt_rtn_for_wb_rrsp          [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+    logic            i_egr_mcast_crdt_rtn_for_wb_rrsp    [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+
+    mshpt_rrsp_t     o_egr_wb_rrsp                       [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+
+    msh_data_t       o_egr_wb_rd_data                    [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
     
     // East Side Read Response Ports
-     logic                o_egr_eb_rrsp_valid        [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];   //  output
-     rrsp_dest_block_t    o_egr_eb_rrsp_dest_block   [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];   //  output
-     req_id_t             o_egr_eb_rrsp_req_id       [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];   //  output
-     msh_data_t           o_egr_eb_rd_data           [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];   //  output
+    
+    logic            i_egr_crdt_rtn_for_eb_rrsp          [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+    logic            i_egr_mcast_crdt_rtn_for_eb_rrsp    [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+
+    mshpt_rrsp_t     o_egr_eb_rrsp                       [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+
+    msh_data_t       o_egr_eb_rd_data                    [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+   
+
+
 
     ////////////////////////
     // Mesh GMM Write Ports 
     ////////////////////////
    
-    // North Side Write Port
-     xact_credits_t   o_nb_wreq_credits;   //  output
+    // North Side Write Ports
+                                                                                  
+    mshpt_wreq_t     i_gmm_sb_wreq                                         [NUM_MSH_ROW_PORTS-1:0];
+
+    msh_data_t       i_gmm_sb_wr_data                                      [NUM_MSH_ROW_PORTS-1:0];
+           
+    logic            o_gmm_sb_wr_lat_sat                                   [NUM_MSH_ROW_PORTS-1:0];
+    logic            o_gmm_crdt_rtn_for_sb_wreq                            [NUM_MSH_ROW_PORTS-1:0];
+    logic            o_gmm_mcast_crdt_rtn_for_sb_wreq                      [NUM_MSH_ROW_PORTS-1:0];
    
-    // South Side Write Port
-     xact_credits_t   o_sb_wreq_credits;   //  output
+    // South Side Write Ports
+                                                                                  
+    mshpt_wreq_t     i_gmm_nb_wreq                                         [NUM_MSH_ROW_PORTS-1:0];
+
+    msh_data_t       i_gmm_nb_wr_data                                      [NUM_MSH_ROW_PORTS-1:0];
+           
+    logic            o_gmm_nb_wr_lat_sat                                   [NUM_MSH_ROW_PORTS-1:0];
+    logic            o_gmm_crdt_rtn_for_nb_wreq                            [NUM_MSH_ROW_PORTS-1:0];
+    logic            o_gmm_mcast_crdt_rtn_for_nb_wreq                      [NUM_MSH_ROW_PORTS-1:0];
+   
    
     
     //////////////////////////////
     // Mesh GMM Read Request Ports
     //////////////////////////////
 
-    // North Side Read Request Port 
-     xact_credits_t   o_nb_rreq_credits;   //  output
+    // North Side Read Request Ports 
+    
+    mshpt_rreq_t     i_gmm_sb_rreq                                         [NUM_MSH_ROW_PORTS-1:0];
+
+    logic            o_gmm_sb_rd_lat_sat                                   [NUM_MSH_ROW_PORTS-1:0];
+    logic            o_gmm_crdt_rtn_for_sb_rreq                            [NUM_MSH_ROW_PORTS-1:0];
+    logic            o_gmm_mcast_crdt_rtn_for_sb_rreq                      [NUM_MSH_ROW_PORTS-1:0];
         
-    // South Side Read Request Port 
-     xact_credits_t   o_sb_rreq_credits;   //  output
+    // South Side Read Request Ports 
+    
+    mshpt_rreq_t     i_gmm_nb_rreq                                         [NUM_MSH_ROW_PORTS-1:0];
+
+    logic            o_gmm_nb_rd_lat_sat                                   [NUM_MSH_ROW_PORTS-1:0];
+    logic            o_gmm_crdt_rtn_for_nb_rreq                            [NUM_MSH_ROW_PORTS-1:0];
+    logic            o_gmm_mcast_crdt_rtn_for_nb_rreq                      [NUM_MSH_ROW_PORTS-1:0];
         
+   
    
     ///////////////////////////////
     // Mesh GMM Read Response Ports
     ///////////////////////////////
         
-    // North Side Read Response Port
+    // North Side Read Response Ports
     
-     logic                o_nb_rrsp_valid;        //  output
-     rrsp_dest_block_t    o_nb_rrsp_dest_block;   //  output
-     req_id_t             o_nb_rrsp_req_id;       //  output
-     msh_data_t           o_nb_rd_data;           //  output
-    
-    // South Side Read Response Port
-    
-     logic                o_sb_rrsp_valid;        //  output
-     rrsp_dest_block_t    o_sb_rrsp_dest_block;   //  output
-     req_id_t             o_sb_rrsp_req_id;       //  output
-     msh_data_t           o_sb_rd_data;           //  output
+    logic            i_gmm_crdt_rtn_for_nb_rrsp                            [NUM_MSH_ROW_PORTS-1:0];
+    logic            i_gmm_mcast_crdt_rtn_for_nb_rrsp                      [NUM_MSH_ROW_PORTS-1:0];
 
+    mshpt_rrsp_t     o_gmm_nb_rrsp                                         [NUM_MSH_ROW_PORTS-1:0];
+
+    msh_data_t       o_gmm_nb_rd_data                                      [NUM_MSH_ROW_PORTS-1:0];
+    
+    // South Side Read Response Ports
+    
+    logic            i_gmm_crdt_rtn_for_sb_rrsp                            [NUM_MSH_ROW_PORTS-1:0];
+    logic            i_gmm_mcast_crdt_rtn_for_sb_rrsp                      [NUM_MSH_ROW_PORTS-1:0];
+
+    mshpt_rrsp_t     o_gmm_sb_rrsp                                         [NUM_MSH_ROW_PORTS-1:0];
+
+    msh_data_t       o_gmm_sb_rd_data                                      [NUM_MSH_ROW_PORTS-1:0];
 
 endinterface // msh_dut_if
