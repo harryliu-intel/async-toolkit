@@ -1,0 +1,264 @@
+#!/usr/intel/pkgs/perl/5.14.1-threads/bin/perl
+use UsrIntel::R1;
+use strict;
+use warnings;
+use Getopt::Long;
+use Pod::Usage;
+use Cwd;
+use Cwd 'abs_path';
+use File::Copy;
+use File::Path 'rmtree';
+use Env;
+
+
+###########################################################################
+# Initialize variables
+###########################################################################
+my $script_name             = $0;
+my $proj                    = undef;
+my $input_file              = undef;
+my $result_path             = undef;
+my $result_file_name        = undef;
+my $new_define              = undef;
+my $module_name             = undef;
+
+my %GetOpts =
+   (
+      PROJ              => undef,
+      INPUT_FILE        => undef,
+      RESULT_PATH       => undef,
+      RESULT_FILE_NAME  => undef,
+      NEW_DEFINE        => undef,
+      HELP              => 0,
+      MAN               => 0
+   );
+
+GetOptions (
+            'proj=s'              => \$GetOpts{PROJ},
+            'input_file|file=s'   => \$GetOpts{INPUT_FILE},
+            'result_path|rp=s'    => \$GetOpts{RESULT_PATH},
+            'result_file_name|rn=s'  => \$GetOpts{RESULT_FILE_NAME},
+            'new_define|define=s' => \$GetOpts{NEW_DEFINE},
+            'norun'               => \$GetOpts{NORUN},
+            'help|h'              => \$GetOpts{HELP},
+            'man'                 => \$GetOpts{MAN}
+           ) or pod2usage(-exitstatus => 2);
+
+pod2usage(-exitstatus => 1) if $GetOpts{HELP};
+
+pod2usage(-exitstatus => 0,
+          -verbose    => 2) if $GetOpts{MAN};
+
+pod2usage(-exitstatus => 2,
+          -message    => "\nERROR: Required arguments are missing\n") unless defined ($GetOpts{PROJ});
+
+###########################################################################
+# Sanity check and variable initialization
+###########################################################################
+info_log("Checking for Argument validity");
+if ($GetOpts{INPUT_FILE}) {
+    if (!-e $GetOpts{INPUT_FILE}){
+        error_log("Input file does not exist",101);
+    }
+}
+
+###########################################################################
+# Path and filename setup
+###########################################################################
+$proj = $GetOpts{PROJ};
+$input_file = $ENV{MODEL_ROOT}."/source/".$proj."/".$proj.".sv";
+$input_file = $GetOpts{INPUT_FILE} if ($GetOpts{INPUT_FILE});
+info_log("Input file is:    $input_file");
+
+$result_path = cwd();
+$result_path = $GetOpts{RESULT_PATH} if ($GetOpts{RESULT_PATH});
+info_log("Result path is:    $result_path");
+if ($GetOpts{RESULT_PATH}) {
+    if (!-e $result_path){
+        info_log("Result Path does not exist, creating...");
+        execute("mkdir -p $result_path");
+    }
+}
+$result_file_name = "$proj"."_top.vs";
+$result_file_name = $GetOpts{RESULT_FILE_NAME} if ($GetOpts{RESULT_FILE_NAME});
+$result_path = $result_path."/".$result_file_name;
+info_log("Result File is:   $result_path");
+
+###########################################################################
+# Read input and create output
+###########################################################################
+info_log("Generating Output file");
+if ($GetOpts{norun}){
+    info_log("In norun mode, exiting...");
+    exit 0;
+}
+
+
+open (FF, "<$input_file") or error_log("Can't open input file",201);
+open (FOUT, ">$result_path") or error_log("Can't open output file",201);
+
+# Print Header
+$module_name = $proj."_top";
+$new_define = uc($module_name)."_V";
+$new_define = $GetOpts{NEW_DEFINE} if ($GetOpts{NEW_DEFINE});
+print FOUT "`ifndef $new_define\n";
+print FOUT "`define $new_define 1\n\n";
+
+print FOUT "module $module_name \(\n";
+print FOUT "\)\;\n";
+
+# NOTE: Added the following wire declarations to solve some sticky bind problems
+# at the top level.
+print FOUT "wire [63:0] xt_xtor_misc_port_in;\n";
+print FOUT "wire [63:0] force_link_down;\n";
+print FOUT "wire [63:0] force_link_done;\n";
+print FOUT "wire [63:0] force_link_reinit;\n";
+print FOUT "wire [63:0] stl2_go;\n";
+print FOUT "wire        master_stl2_go;\n";
+print FOUT "wire        external_loopback;\n";
+print FOUT "wire [64:0] xtor_done_all_nodes;\n";
+print FOUT "wire [63:0] xtor_done_each_node;\n";
+print FOUT "wire        xtor_done;\n";
+print FOUT "wire        xt_pkts_done;\n";
+print FOUT "wire        cover_xtor_enable;\n";
+print FOUT "wire [31:0] cover_xtor_address;\n";
+print FOUT "wire [31:0] cover_xtor_control;\n";
+print FOUT "wire [31:0] cover_xtor_data;\n";
+print FOUT "wire  [3:0] dbg_dpi_st;\n";
+print FOUT "wire  [3:0] dbg_i2c_st;\n";
+print FOUT "wire  [2:0] dbg_rst_st;\n";
+print FOUT "wire [15:0] dbg_phase_del;\n";
+print FOUT "wire [15:0] dbg_phase_count;\n";
+print FOUT "wire  [7:0] dbg_shift_reg;\n";
+print FOUT "wire  [2:0] dbg_bit_count;\n";
+
+my $module_state= "INIT";
+
+# Print Body
+while (<FF>){
+   next if((/^\/\/.*/)&&($module_state eq "INIT"));
+   if (/^\s*module/){
+       $module_state = "STARTED";
+       next;
+   }
+   if (/^\s*\)\;/){
+       $module_state = "ENDED";
+       last;
+   }
+   if ($module_state eq "STARTED"){
+       $_ =~ s/^\s*(input|output|inout)\s*(wire|logic)*\s*(wire|logic)*\s*/wire   /g;
+       $_ =~ s/,/\;/g;
+
+       if (/^wire\s+(\[\w+:\w+\])+/){
+       }elsif (/^wire\s+/){
+           $_ =~ s/wire /wire        /g;
+       }
+
+       if (/^wire\s+/ && !/\;/){
+           if (/\/\//){
+               $_ =~ s/(\w+)(\s*)\/\//$1;$2\/\//;
+           } else {
+               $_ =~ s/\s*$/\;\n/;
+           }
+       }
+
+       print FOUT $_;
+       next;
+   }
+}
+
+# Print ending components
+print FOUT "\n";
+print FOUT "$proj $proj \(\.\*\)\;\n";
+print FOUT "\n";
+print FOUT "endmodule\n";
+print FOUT "\n";
+print FOUT "`endif \/\/$new_define";
+
+close FOUT;
+close FF;
+
+info_log("Output file $result_path generated.");
+exit 0;
+
+###########################################################################
+# Subroutines
+###########################################################################
+sub info_log {
+    my $msg = shift;
+    print STDOUT "%%INFO-$msg\n";
+}
+
+sub error_log {
+    my ($msg,$errorcode) = @_;
+    print STDERR "%%ERROR-$msg\n";
+    exit $errorcode;
+}
+
+sub execute {
+    my $cmd = shift;
+    my $exitcode = 0;
+    print STDOUT "%%EXECUTING COMMAND : $cmd\n";
+    if (!$GetOpts{NORUN}){
+        $exitcode = `$cmd`;
+    }
+    return $exitcode;
+}
+
+#################################################################################
+##End
+#################################################################################
+
+__END__
+
+################################################################################
+# HELP
+################################################################################
+
+=head1 NAME
+
+  create_svtop - Creates a sv top file converting input/output/inout logic/wire to simple wire
+
+=head1 SYNOPSIS
+
+create_svtop -proj PROJNAME [-input_file|file FILENAME] [-result_path|rp PATH] [-result_file_name|rn FILENAME] [-new_define|define TOPDEFINE] [-norun] [-help] [-man]
+
+=head1 OPTIONS
+
+=over 12
+
+=item B<-proj>
+
+*Required* This switch is used to specify the project name for the model
+
+=item B<-input_file | -file>
+
+[Optional] This switch is used to specify the input file path
+           Default: $MODEL_ROOT/source/$proj/$[rpj.sv
+
+=item B<-result_path | -rp>
+
+[Optional] This switch is used to specify the result path for the file
+           Default: cwd
+
+=item B<-result_file_name | -rn>
+
+[Optional] This switch is used to specify the result filename
+           Default: $proj_top.sv
+
+=item B<-new_define | -define>
+
+[Optional] This switch is used to specify a new top level define
+           Default: $proj_TOP_V
+
+=item B<-norun>
+
+[Optional] This switch is used if user just want to see the run commands instead of the actual run
+
+=item B<-help>
+
+[Optional] Prints a brief help message
+
+=item B<-man>
+
+[Optional] Prints a detailed man page

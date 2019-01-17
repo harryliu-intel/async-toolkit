@@ -1,0 +1,19 @@
+#REPLACE_DEFAULT_OPTIONS: YES
+ZSE:
+    ELAB:
+        PREPEND:
+            - -error=noVIPCBD
+            - -Xassa=0x50000
+        APPEND:            
+#            - fwc_monitor_lib.monitors
+            - fwc_monitor_lib.dumpvars
+            - -ignore initial_driver_checks
+            # For core bug we need these 
+            - -pvalue ENABLE_CLOCK_MUX_MODELING=0
+            - -pvalue ENABLE_METAFLOP_MODELING=0
+            - -pvalue ENABLE_CUTCDC_MODELING=0
+            - -pvalue ENABLE_CUTMCP_MODELING=0
+            - -pvalue ENABLE_GFIFO_MODELING=0
+            - -pvalue ENABLE_MCR_MODELING=0
+
+

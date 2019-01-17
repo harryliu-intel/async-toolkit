@@ -39,8 +39,8 @@
 // CLASS: mby_gpm_bfm_pptr_gen
 //
 // The pod pointer generator is the component that interfaces with all the
-// agents in the gpm_bfm. This generator has three modes of operation too:
-// ingress, mesh and egress.
+// agents in the gpm_bfm. This generator has two modes of operation too:
+// ingress and egress.
 //
 // When operating in ingress mode, a process will be creating random addresses
 // with a normal distribution. Each time there are ~85 (exact number is TBD)

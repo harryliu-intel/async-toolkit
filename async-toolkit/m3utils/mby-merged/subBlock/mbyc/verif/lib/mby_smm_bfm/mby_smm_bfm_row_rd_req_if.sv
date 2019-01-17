@@ -48,7 +48,14 @@ interface mby_smm_bfm_row_rd_req_if(input logic clk, input logic rst);
    // Initializing the interface at time 0
    //---------------------------------------------------------------------------
    initial begin : initialize_intf
-      //intf_data_pkt <= 0;
+      //intf_data_pkt = 0;
+      forever begin 
+         @(posedge clk);
+         intf_data_pkt.mim_rrsp_valid = 'z;
+         intf_data_pkt.mim_rrsp_dest_block = 'z;
+         intf_data_pkt.mim_rrsp_req_id =  'z;
+         intf_data_pkt.mim_rd_data = 'z;
+      end
    end
 
    //---------------------------------------------------------------------------

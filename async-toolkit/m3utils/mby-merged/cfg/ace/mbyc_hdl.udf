@@ -148,6 +148,13 @@ print "MGM debug : @mbyMgmLibs\n";
                -dependent_libs => ['mby_mgm_lib','mby_regflow_lib'],
             },
 
+            mby_msh_emu_rtl_lib => {
+               -generated => 1,   # added due to mgm dependency
+               -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_msh_emu_rtl.hdl', ],
+               -dependent_libs => ['mby_mgm_lib','mby_regflow_lib'],
+               # -vlog_opts => [ "+define+EMULATION" ],
+            },
+
             mby_msh_node_rtl_lib => {
                -generated => 1,   # added due to mgm dependency
                -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_msh_node_rtl.hdl', ],
@@ -224,6 +231,13 @@ print "MGM debug : @mbyMgmLibs\n";
                -hdl_spec        => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_mesh_tb.hdl', ],
                -dependent_libs  => [ 'shdv_shared_lib', 'mby_mesh_env_lib', 'mby_mesh_ti_lib', 'mby_mesh_test_lib', 'mby_mgp_bfm_lib' ],
                -tag             => "nonsynth",
+            },
+
+            mby_mesh_tb_emu_lib  => {
+               -hdl_spec        => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_mesh_tb_emu.hdl', ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'mby_mesh_env_lib', 'mby_mesh_ti_lib', 'mby_mesh_test_lib', 'mby_mgp_bfm_lib' ],
+               -tag             => "nonsynth",
+               -vlog_opts       => [ "+define+EMULATION" ],
             },
 
             mby_mesh_test_lib => {
@@ -817,9 +831,101 @@ print "MGM debug : @mbyMgmLibs\n";
             #      upf_files => ['tools/upf/mby_upf.upf'],
             #   },
             },
-
             ####################################################################
             # mby mesh model ends
+            ####################################################################
+
+            ####################################################################
+            ## mby mesh_emu model starts
+            ####################################################################
+            mesh_emu => {
+
+               top  => 'mby_mesh_tb_emu_lib.mby_mesh_tb_top_emu',
+
+               use  => [
+                        "eth_port_mby_ec:mby_ec",
+                        "eth_port_common:common"
+                       ],
+
+               libs => [
+                  "shdv_shared_lib",
+                  "svt_ahb_lib",
+                  "sva_lib",
+                  "mby_mgm_lib",
+                  "mby_mesh_env_lib",
+                  "mby_mesh_tb_emu_lib",
+                  "gen_mby_mgm_lib",
+                  "mby_msh_emu_rtl_lib",
+                  "mby_msh_node_rtl_lib",
+                  "mby_mesh_ti_lib",
+                  "mby_mesh_test_lib",
+                  "mby_jasper_lib",
+                  "ext_shared_lib",
+                  "mby_mgp_bfm_lib",
+                 # "gen_mesh_regflow_lib",
+               ],
+               testcase_globals => {
+                    },
+
+               elab_opts => [
+                  "-debug_pp ",
+                  "-full64 ",
+                  "-cm cond+branch+fsm+assert+line+tgl ",
+                  "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{VCS_HOME}/include\"    $ENV{UVM_HOME}/src/dpi/uvm_dpi.cc ",
+                  "-kdb",
+                  "-lca",
+               ],
+
+                xport => {
+                  libs => [
+                     "mby_regflow_lib",
+                     "mby_mesh_ti_lib",
+                     "mby_mesh_env_lib",
+                     "mby_jasper_lib"
+                  ],
+               },
+
+               # List of full path to PLI libraries to use
+               pli_libs => [ "-verdi_pli_libs", "-hier_rtl_dumper", ],
+
+               #lintra_test_list => [ "$ENV{MODEL_ROOT}/verif/mby/reglist/mby_lintra.list" ],
+
+               # Specify a set of test case specific options (must be valid test options)
+               testcase_globals => {
+                  -test_vlog_opts    => [ -sverilog ],
+                  -test_vlog_files   => [],
+                  -test_vlog_incdirs => [
+                     "subBlock/mbyc/verif/mesh/",
+                     "subBlock/mbyc/verif/mesh/ral",
+                     "subBlock/mbyc/verif/mesh/env",
+                     "$ENV{UVM_HOME}/src",
+                     "${MBY_IOSF_SB_VC_ROOT}/tb/seq_lib",
+                  ],
+               },
+
+            #   power_intent => {
+            #      power_top => 'mby_tb/mby_top',
+            #      upf_files => ['tools/upf/mby_upf.upf'],
+            #   },
+
+                emu_opts => [
+                   "-cfg ZSE1 -cfg-",
+                   "-no_spark",
+                   "-use_emubuild_tooldata",
+                   "-s all +s PRE_FLOW",
+                   "-target $ENV{MODEL_ROOT}/target/emu/\$MODEL",
+                   "-top mby_msh_emu_rtl_lib.mby_msh_top",
+                   "-yml $ENV{MODEL_ROOT}/tools/emu/cfg/buildProjectCfg.yml",
+                   "-inside_simbuild",
+                   "-clean_target",
+                   #-effm1= do analysis, -effm 2 = effm1+full synthesis, -effm 3 = effm 2+ loop report
+                   "-effm 1",
+                ],
+
+
+            },
+            ####################################################################
+            # mby mesh_emu model ends
             ####################################################################
 
             ####################################################################

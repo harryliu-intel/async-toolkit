@@ -9,7 +9,6 @@ $hdl_spec = {
          "src/shared/rtl/shared_pkg.sv",
 	 "src/shared/rtl/mby_gmm_pkg.sv",
          "verif/lib/mby_gpm_bfm/mby_gpm_bfm_pod_if.sv",
-         "verif/lib/mby_gpm_bfm/mby_gpm_bfm_msh_if.sv",
          "verif/lib/mby_gpm_bfm/mby_gpm_bfm_pkg.sv",
      ],
 

@@ -28,7 +28,7 @@
 //-----------------------------------------------------------------------------
 // Class: mby_igr_dut_cfg
 //-----------------------------------------------------------------------------
-class mby_igr_dut_cfg extends uvm_object;
+class mby_igr_dut_cfg extends shdv_base_config;
 
    `uvm_object_utils_begin(mby_igr_dut_cfg)
    `uvm_object_utils_end

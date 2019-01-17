@@ -26,7 +26,7 @@ class mby_egr_tag_seq extends mby_egr_extended_base_seq;
    `uvm_object_utils (mby_egr_tag_seq)
 
    mby_tag_bfm_pkg::mby_tag_bfm_uc_xaction uc_tag;
-   mby_base_pkg::mby_base_sequencer#(.T_req(mby_tag_bfm_pkg::mby_tag_bfm_uc_xaction)) tag_sequencer;
+   shdv_base_pkg::shdv_base_sequencer#(.T_req(mby_tag_bfm_uc_xaction)) tag_sequencer;
 
    //---------------------------------------------------------------------------
    // Function: new
@@ -47,27 +47,31 @@ class mby_egr_tag_seq extends mby_egr_extended_base_seq;
     
 
 
-      assert($cast(tag_sequencer, mby_egr_env_pkg::shdv_base_tb_sequencer::pick_sequencer("tag_bfm_uc_0")))
+      assert($cast(tag_sequencer, env.get_tb_seqr().pick_sequencer("tag_bfm_uc_0")))
 
       else begin
          `uvm_error(get_name(), "Could not get a pointer to the tag sequencer");
       end
       uc_tag = mby_tag_bfm_pkg::mby_tag_bfm_uc_xaction::type_id::create("uc_tag");
       uc_tag.set_item_context(this, tag_sequencer);
+      //uc_tag.data = 0;
+      
+      //`uvm_send(uc_tag)
+      
       uc_tag.randomize();
       
       
-      uc_tag.data_pkt = 0;
-      uc_tag.data_pkt.valid = 1;
-      uc_tag.data_pkt.dst_tc = 0;
-      uc_tag.data_pkt.dst_port = 0;
-      uc_tag.data_pkt.src_port = 0;
-      uc_tag.data_pkt.src_tc = 0;
-      uc_tag.data_pkt.sll = 0;
-      uc_tag.data_pkt.eop = 1'b1;
-      uc_tag.data_pkt.length = 64;
-      uc_tag.data_pkt.ptr_toggle = 4'b1;
-      uc_tag.data_pkt.ptr = 23;
+      uc_tag.data = 0;
+      uc_tag.data.valid = 1;
+      uc_tag.data.dst_tc = 0;
+      uc_tag.data.dst_port = 0;
+      uc_tag.data.src_port = 0;
+      uc_tag.data.src_tc = 0;
+      uc_tag.data.sll = 0;
+      uc_tag.data.eop = 1'b1;
+      uc_tag.data.length = 64;
+      uc_tag.data.ptr_toggle = 4'b1;
+      uc_tag.data.ptr = 23;
       
 
       
@@ -75,11 +79,11 @@ class mby_egr_tag_seq extends mby_egr_extended_base_seq;
       
 
       `uvm_info(get_name(),uc_tag.convert2string(),UVM_LOW)
-
+     
       `uvm_send(uc_tag)
       
       `uvm_info(get_name(), "Finished mby_egr_tag_seq", UVM_LOW)
-      wait_n(20);
+      wait_n(100);
    endtask : body
 
 
@@ -125,7 +129,7 @@ class mby_egr_first_packet_test extends mby_egr_base_test;
    function void set_default_sequences();
       super.set_default_sequences();
       `uvm_info("::set_default_sequences", "Setting phase sequences", UVM_NONE)
-
+/*
       // Specifying reset phase sequence
       uvm_config_db#(uvm_object_wrapper)::set(this,
          "env.mby_egr_tb_sequencer.reset_phase",
@@ -155,6 +159,26 @@ class mby_egr_first_packet_test extends mby_egr_base_test;
          "env.mby_egr_tb_sequencer.main_phase",
          "default_sequence",
          mby_egr_tag_seq::type_id::get());
+      
+     */ 
+      
+           env.set_reset_sequence("mby_egr_dummy_seq");
+
+      // Specifying post_reset phase sequence
+     /*
+      uvm_config_db#(uvm_object_wrapper)::set(this,
+         "env.tb_seqr.post_reset_phase",
+         "default_sequence",
+         mby_igr_dummy_seq::type_id::get()); */
+
+      // Specifying configure phase sequence
+      env.set_configure_sequence("mby_egr_dummy_seq");
+
+      // Specifying shutdown phase sequence
+      env.set_shutdown_sequence("mby_egr_dummy_seq");
+
+      // Specifying main phase sequence
+      env.set_main_sequence("mby_egr_tag_seq");
    endfunction : set_default_sequences
 
    //---------------------------------------------------------------------------

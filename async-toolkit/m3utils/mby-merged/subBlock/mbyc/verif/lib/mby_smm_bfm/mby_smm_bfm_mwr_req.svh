@@ -145,10 +145,10 @@ class mby_smm_bfm_mwr_req
       bit [NUM_MSH_ROWS-1:0]   node_row; // SMM BFM node column
       bit [NUM_MSH_COLS-1:0]   node_col; // SMM BFM node row
       
-      addr     = mem_req.data_pkt.mim_wr_seg_ptr[13:0];
-      node_row = mem_req.data_pkt.mim_wr_seg_ptr[17:14];
-      node_col = {mem_req.data_pkt.mim_wr_seg_ptr[1:0]^mem_req.data_pkt.mim_wr_wd_sel,mem_req.data_pkt.mim_wr_seg_ptr[18]};
-      wr_data  = mem_req.data_pkt.mim_wr_data;
+      addr     = mem_req.data.mim_wr_seg_ptr[13:0];
+      node_row = mem_req.data.mim_wr_seg_ptr[17:14];
+      node_col = {mem_req.data.mim_wr_seg_ptr[1:0]^mem_req.data.mim_wr_wd_sel,mem_req.data.mim_wr_seg_ptr[18]};
+      wr_data  = mem_req.data.mim_wr_data;
       
       `uvm_info(get_type_name(), $sformatf("mwr_req() : Received a memory write request for NodeRow = 0x%0x, NodeCol = 0x%0x, Address = 0x%0x. WrData = 0x%x", node_row, node_col, addr, wr_data),  UVM_MEDIUM)
       
