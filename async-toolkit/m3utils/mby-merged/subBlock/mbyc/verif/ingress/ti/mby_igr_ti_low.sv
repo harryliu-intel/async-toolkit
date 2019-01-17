@@ -111,7 +111,7 @@ module mby_igr_ti_low #(
       foreach(tag_bfm_io[i]) begin
          tag_bfm_io[i] = new($sformatf("%m.tag_bfm_uc_io%0d",i), tag_bfm_vif_array[i]);
          uvm_config_db#(mby_tag_bfm_uc_io)::set(uvm_root::get(),
-            $sformatf("%s*tag_bfm%0d*", IP_ENV, i), "io_pol", tag_bfm_io[i]);
+            $sformatf("%s*tag_bfm%0d*", IP_ENV, i), "io_policy", tag_bfm_io[i]);
       end
 
       /////////////////////////////////////////////////////////////////////////

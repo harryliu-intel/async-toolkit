@@ -88,18 +88,9 @@ logic   [3:0]           q_mod_tbl_cur_bank;
 logic   [9:0] [13:0]    q_mod_tbl_waddr;
 logic   [9:0] [71:0]    q_mod_tbl_wdata;
 //Temporary for driving write data
-always @(posedge cclk) begin //{
-    if(cclk_cnt == 1) begin //{
-        for(int i=0; i<10; i++) begin //{
-            q_mod_tbl_waddr[i] <= 14'h0;
-            q_mod_tbl_wdata[i] <= 72'h0;
-        end //}
-        q_mod_tbl_cur_bank <= 4'h0;
-    end //}
-    else if((cclk_cnt > 49) && (cclk_cnt < 1000)) begin //{
+always @(negedge cclk) begin //{
+    if((cclk_cnt > 49) && (cclk_cnt < 1000)) begin //{
         force ppe_stm_tx_top.ppe_stm_tx_logic.q_mod_tbl_waddr[17:14] = q_mod_tbl_cur_bank;
-        if(q_mod_tbl_cur_bank == 9) q_mod_tbl_cur_bank <= 4'b0;
-        else q_mod_tbl_cur_bank <= q_mod_tbl_cur_bank + 1;
         if((cclk_cnt % 9) == 0) begin //{
             case(q_mod_tbl_waddr[q_mod_tbl_cur_bank][2:0]) //{
                 3'h0: begin //{
@@ -192,8 +183,6 @@ always @(posedge cclk) begin //{
                 end //}
             endcase //}
             force ppe_stm_tx_top.ppe_stm_tx_logic.q_mod_tbl_waddr[13:0] = q_mod_tbl_waddr[q_mod_tbl_cur_bank];
-            q_mod_tbl_waddr[q_mod_tbl_cur_bank] <= q_mod_tbl_waddr[q_mod_tbl_cur_bank] + 1;
-            q_mod_tbl_wdata[q_mod_tbl_cur_bank] <= q_mod_tbl_wdata[q_mod_tbl_cur_bank] + 1;
         end //}
         else if((cclk_cnt % 9) == 1) begin //{
             case(q_mod_tbl_waddr[q_mod_tbl_cur_bank][2:0]) //{
@@ -287,8 +276,6 @@ always @(posedge cclk) begin //{
                 end //}
             endcase //}
             force ppe_stm_tx_top.ppe_stm_tx_logic.q_mod_tbl_waddr[13:0] = q_mod_tbl_waddr[q_mod_tbl_cur_bank];
-            q_mod_tbl_waddr[q_mod_tbl_cur_bank] <= q_mod_tbl_waddr[q_mod_tbl_cur_bank] + 2;
-            q_mod_tbl_wdata[q_mod_tbl_cur_bank] <= q_mod_tbl_wdata[q_mod_tbl_cur_bank] + 2;
         end //}
         else if((cclk_cnt % 9) == 2) begin //{
             case(q_mod_tbl_waddr[q_mod_tbl_cur_bank][2:0]) //{
@@ -382,8 +369,6 @@ always @(posedge cclk) begin //{
                 end //}
             endcase //}
             force ppe_stm_tx_top.ppe_stm_tx_logic.q_mod_tbl_waddr[13:0] = q_mod_tbl_waddr[q_mod_tbl_cur_bank];
-            q_mod_tbl_waddr[q_mod_tbl_cur_bank] <= q_mod_tbl_waddr[q_mod_tbl_cur_bank] + 3;
-            q_mod_tbl_wdata[q_mod_tbl_cur_bank] <= q_mod_tbl_wdata[q_mod_tbl_cur_bank] + 3;
         end //}
         else if((cclk_cnt % 9) == 3) begin //{
             case(q_mod_tbl_waddr[q_mod_tbl_cur_bank][2:0]) //{
@@ -477,8 +462,6 @@ always @(posedge cclk) begin //{
                 end //}
             endcase //}
             force ppe_stm_tx_top.ppe_stm_tx_logic.q_mod_tbl_waddr[13:0] = q_mod_tbl_waddr[q_mod_tbl_cur_bank];
-            q_mod_tbl_waddr[q_mod_tbl_cur_bank] <= q_mod_tbl_waddr[q_mod_tbl_cur_bank] + 4;
-            q_mod_tbl_wdata[q_mod_tbl_cur_bank] <= q_mod_tbl_wdata[q_mod_tbl_cur_bank] + 4;
         end //}
         else if((cclk_cnt % 9) == 4) begin //{
             case(q_mod_tbl_waddr[q_mod_tbl_cur_bank][2:0]) //{
@@ -572,8 +555,6 @@ always @(posedge cclk) begin //{
                 end //}
             endcase //}
             force ppe_stm_tx_top.ppe_stm_tx_logic.q_mod_tbl_waddr[13:0] = q_mod_tbl_waddr[q_mod_tbl_cur_bank];
-            q_mod_tbl_waddr[q_mod_tbl_cur_bank] <= q_mod_tbl_waddr[q_mod_tbl_cur_bank] + 5;
-            q_mod_tbl_wdata[q_mod_tbl_cur_bank] <= q_mod_tbl_wdata[q_mod_tbl_cur_bank] + 5;
         end //}
         else if((cclk_cnt % 9) == 5) begin //{
             case(q_mod_tbl_waddr[q_mod_tbl_cur_bank][2:0]) //{
@@ -667,8 +648,6 @@ always @(posedge cclk) begin //{
                 end //}
             endcase //}
             force ppe_stm_tx_top.ppe_stm_tx_logic.q_mod_tbl_waddr[13:0] = q_mod_tbl_waddr[q_mod_tbl_cur_bank];
-            q_mod_tbl_waddr[q_mod_tbl_cur_bank] <= q_mod_tbl_waddr[q_mod_tbl_cur_bank] + 6;
-            q_mod_tbl_wdata[q_mod_tbl_cur_bank] <= q_mod_tbl_wdata[q_mod_tbl_cur_bank] + 6;
         end //}
         else if((cclk_cnt % 9) == 6) begin //{
             case(q_mod_tbl_waddr[q_mod_tbl_cur_bank][2:0]) //{
@@ -762,10 +741,8 @@ always @(posedge cclk) begin //{
                 end //}
             endcase //}
             force ppe_stm_tx_top.ppe_stm_tx_logic.q_mod_tbl_waddr[13:0] = q_mod_tbl_waddr[q_mod_tbl_cur_bank];
-            q_mod_tbl_waddr[q_mod_tbl_cur_bank] <= q_mod_tbl_waddr[q_mod_tbl_cur_bank] + 7;
-            q_mod_tbl_wdata[q_mod_tbl_cur_bank] <= q_mod_tbl_wdata[q_mod_tbl_cur_bank] + 7;
         end //}
-        else if((cclk_cnt % 9) == 6) begin //{
+        else if((cclk_cnt % 9) == 7) begin //{
             force ppe_stm_tx_top.ppe_stm_tx_logic.q_mod_tbl_wen = 8'hff;
             case(q_mod_tbl_waddr[q_mod_tbl_cur_bank][2:0]) //{
                 3'h0: begin //{
@@ -786,6 +763,7 @@ always @(posedge cclk) begin //{
                     force ppe_stm_tx_top.ppe_stm_tx_logic.q_mod_tbl_wdata[4] = q_mod_tbl_wdata[q_mod_tbl_cur_bank] + 3;
                     force ppe_stm_tx_top.ppe_stm_tx_logic.q_mod_tbl_wdata[5] = q_mod_tbl_wdata[q_mod_tbl_cur_bank] + 4;
                     force ppe_stm_tx_top.ppe_stm_tx_logic.q_mod_tbl_wdata[6] = q_mod_tbl_wdata[q_mod_tbl_cur_bank] + 5;
+                    force ppe_stm_tx_top.ppe_stm_tx_logic.q_mod_tbl_wdata[7] = q_mod_tbl_wdata[q_mod_tbl_cur_bank] + 6;
                 end //}
                 3'h2: begin //{
                     force ppe_stm_tx_top.ppe_stm_tx_logic.q_mod_tbl_wdata[0] = q_mod_tbl_wdata[q_mod_tbl_cur_bank] + 6;
@@ -849,14 +827,58 @@ always @(posedge cclk) begin //{
                 end //}
             endcase //}
             force ppe_stm_tx_top.ppe_stm_tx_logic.q_mod_tbl_waddr[13:0] = q_mod_tbl_waddr[q_mod_tbl_cur_bank];
-            q_mod_tbl_waddr[q_mod_tbl_cur_bank] <= q_mod_tbl_waddr[q_mod_tbl_cur_bank] + 8;
-            q_mod_tbl_wdata[q_mod_tbl_cur_bank] <= q_mod_tbl_wdata[q_mod_tbl_cur_bank] + 8;
         end //}
         else begin //{
             force ppe_stm_tx_top.ppe_stm_tx_logic.q_mod_tbl_wen = 8'h0;
         end //}
     end //}
     else if(cclk_cnt == 1000) force ppe_stm_tx_top.ppe_stm_tx_logic.q_mod_tbl_wen = 8'h0; 
+end //}
+
+always @(posedge cclk) begin //{
+    if(cclk_cnt == 1) begin //{
+        for(int i=0; i<10; i++) begin //{
+            q_mod_tbl_waddr[i] <= 14'h0;
+            q_mod_tbl_wdata[i] <= 72'h0;
+        end //}
+        q_mod_tbl_cur_bank <= 4'h0;
+    end //}
+    else if((cclk_cnt > 50) && (cclk_cnt < 1000)) begin //{
+        if(q_mod_tbl_cur_bank == 9) q_mod_tbl_cur_bank <= 4'b0;
+        else q_mod_tbl_cur_bank <= q_mod_tbl_cur_bank + 1;
+        if((cclk_cnt % 9) == 0) begin //{
+            q_mod_tbl_waddr[q_mod_tbl_cur_bank] <= q_mod_tbl_waddr[q_mod_tbl_cur_bank] + 1;
+            q_mod_tbl_wdata[q_mod_tbl_cur_bank] <= q_mod_tbl_wdata[q_mod_tbl_cur_bank] + 1;
+        end //}
+        else if((cclk_cnt % 9) == 1) begin //{
+            q_mod_tbl_waddr[q_mod_tbl_cur_bank] <= q_mod_tbl_waddr[q_mod_tbl_cur_bank] + 2;
+            q_mod_tbl_wdata[q_mod_tbl_cur_bank] <= q_mod_tbl_wdata[q_mod_tbl_cur_bank] + 2;
+        end //}
+        else if((cclk_cnt % 9) == 2) begin //{
+            q_mod_tbl_waddr[q_mod_tbl_cur_bank] <= q_mod_tbl_waddr[q_mod_tbl_cur_bank] + 3;
+            q_mod_tbl_wdata[q_mod_tbl_cur_bank] <= q_mod_tbl_wdata[q_mod_tbl_cur_bank] + 3;
+        end //}
+        else if((cclk_cnt % 9) == 3) begin //{
+            q_mod_tbl_waddr[q_mod_tbl_cur_bank] <= q_mod_tbl_waddr[q_mod_tbl_cur_bank] + 4;
+            q_mod_tbl_wdata[q_mod_tbl_cur_bank] <= q_mod_tbl_wdata[q_mod_tbl_cur_bank] + 4;
+        end //}
+        else if((cclk_cnt % 9) == 4) begin //{
+            q_mod_tbl_waddr[q_mod_tbl_cur_bank] <= q_mod_tbl_waddr[q_mod_tbl_cur_bank] + 5;
+            q_mod_tbl_wdata[q_mod_tbl_cur_bank] <= q_mod_tbl_wdata[q_mod_tbl_cur_bank] + 5;
+        end //}
+        else if((cclk_cnt % 9) == 5) begin //{
+            q_mod_tbl_waddr[q_mod_tbl_cur_bank] <= q_mod_tbl_waddr[q_mod_tbl_cur_bank] + 6;
+            q_mod_tbl_wdata[q_mod_tbl_cur_bank] <= q_mod_tbl_wdata[q_mod_tbl_cur_bank] + 6;
+        end //}
+        else if((cclk_cnt % 9) == 6) begin //{
+            q_mod_tbl_waddr[q_mod_tbl_cur_bank] <= q_mod_tbl_waddr[q_mod_tbl_cur_bank] + 7;
+            q_mod_tbl_wdata[q_mod_tbl_cur_bank] <= q_mod_tbl_wdata[q_mod_tbl_cur_bank] + 7;
+        end //}
+        else if((cclk_cnt % 9) == 7) begin //{
+            q_mod_tbl_waddr[q_mod_tbl_cur_bank] <= q_mod_tbl_waddr[q_mod_tbl_cur_bank] + 8;
+            q_mod_tbl_wdata[q_mod_tbl_cur_bank] <= q_mod_tbl_wdata[q_mod_tbl_cur_bank] + 8;
+        end //}
+    end //}
 end //}
 
 logic   [13:0]    q_negh_tbl_waddr;

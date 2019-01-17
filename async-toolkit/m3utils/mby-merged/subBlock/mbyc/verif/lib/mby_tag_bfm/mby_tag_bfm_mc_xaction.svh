@@ -45,7 +45,7 @@
 //     T_debug    - mby_tag_bfm_mc_debg_t
 //
 //-----------------------------------------------------------------------------
-class mby_tag_bfm_mc_xaction extends mby_base_sequence_item_param
+class mby_tag_bfm_mc_xaction extends shdv_base_sequence_item_param
 #(
    .T_data (mby_tag_bfm_mc_data_t),
    .T_debug(mby_tag_bfm_mc_debg_t)
@@ -80,7 +80,7 @@ class mby_tag_bfm_mc_xaction extends mby_base_sequence_item_param
       string lns_str = { {8{" -------- "}}, "\n" };
       msg_str = super.convert2string();
       msg_str = { msg_str, $sformatf("tag_mc_xaction::seg_ptr = %020h\n",
-         this.data_pkt.ptr) };
+         this.data.ptr) };
       msg_str = { msg_str, lns_str };
       return msg_str;
    endfunction : convert2string
