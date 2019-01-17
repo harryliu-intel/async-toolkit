@@ -23,7 +23,7 @@ ${BLD_DIR}/%.o: %.c
 	@echo '  Compiling' $<
 	$(ECHO) $(GCC) -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) -c $<
 
-include ../make/Make.commonrules
+include ../make/commonrules.mk
 
 $(LIB_STATIC): $(BLD_DTS) $(OBJECTS)
 	@echo '  Creating static library'

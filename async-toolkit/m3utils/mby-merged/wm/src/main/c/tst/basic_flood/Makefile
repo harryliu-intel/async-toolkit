@@ -4,5 +4,5 @@
 
 SOURCES += mby_basic_flood_init.c
 
-include ../make/Make.subdir
+include ../make/subdir.mk
 

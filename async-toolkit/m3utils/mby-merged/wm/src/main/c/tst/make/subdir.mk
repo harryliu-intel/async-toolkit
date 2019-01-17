@@ -3,6 +3,6 @@ BASENAME      = $(shell basename `pwd`)
 SOURCES += mby_$(BASENAME)_test.c
 TARGETNM = mby_$(BASENAME)_test
 
-include ../make/Make.all
+include ../make/all.mk
 
 

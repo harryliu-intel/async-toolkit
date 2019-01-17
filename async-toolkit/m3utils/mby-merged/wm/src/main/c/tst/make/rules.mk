@@ -44,4 +44,4 @@ callgrind: $(TARGET)
 	$(TARGET) 2>&1 | tee /cal.log
 
 
-include ../make/Make.commonrules
+include ../make/commonrules.mk

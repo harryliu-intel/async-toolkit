@@ -10,5 +10,5 @@ SOURCES += tst_model_c_write.c
 
 LIB_NAME = model_c_write
 
-include ../make/Make.liball
+include ../make/liball.mk
 
