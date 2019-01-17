@@ -46,7 +46,7 @@ package mby_wm_dpi_pkg;
     import "DPI-C" function int wm_pkt_get(output wm_pkt_t get_pkt);
     //This function is used for debug purpose only-- To connect directly to Idea IDE and debug Scala code.
     import "DPI-C" function int wm_connect(string server_path);
-    import "DPI-C" function int wm_parser(input mbyRxMacToParser igr_pkt, output mbyParserToMapper parser_pkt);
+    import "DPI-C" function int wm_Parser(input mbyRxMacToParser igr_pkt, output mbyParserToMapper parser_pkt);
 
 endpackage
 

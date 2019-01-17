@@ -61,7 +61,7 @@ class mby_rx_ppe_wm_access_seq extends mby_rx_ppe_seq_lib::mby_rx_ppe_env_base_s
       `uvm_info(get_name(), "Sending pkt to WM Parser", UVM_MEDIUM)
       `uvm_info(get_name(),  $sformatf("PKT send: Port:%0d, length:%0d ",igr_pkt.RX_PORT ,igr_pkt.RX_LENGHT),UVM_HIGH)
 
-      err_info = wm_parser(igr_pkt, parser_pkt);
+      err_info = wm_Parser(igr_pkt, parser_pkt);
 
       `uvm_info(get_name(),  $sformatf("Received Parser pkt:Err_info: %d\n Port:%0d, length:%0d, \n\
             PA_ADJ_SEG_LEN: %d\n PA_PACKET_TYPE : %0d",err_info, parser_pkt.RX_PORT,
