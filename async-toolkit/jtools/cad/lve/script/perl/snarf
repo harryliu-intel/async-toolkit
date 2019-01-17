@@ -11,6 +11,8 @@ use LveStatus;
 use LveUtil;
 
 # get raw files
+my $scale=1;
+if (@ARGV && $ARGV[0] =~ /--scale-frequency=(.*)/) { $scale=$1; shift; }
 my @files = @ARGV;
 if (@files==0) {
     @files = `find . -name aspice.raw -or -name hsim.raw -or -name hspice.raw -or -name xa.raw`;
@@ -47,7 +49,7 @@ foreach my $file (@files) {
             $power{$key} += (int ($results{power} * 1e9 + 0.5))/1e9;
 	}
 	elsif (defined($results{frequency}) && is_numeric($results{frequency})) {
-            my $f = int (1000 * $results{frequency} + 0.5);
+            my $f = int (1000 * $results{frequency} + 0.5) * $scale;
             if (defined($frequency{$key})) { $frequency{$key} .= ",$f"; }
             else { $frequency{$key} = "$f"; }
 	}
@@ -55,6 +57,7 @@ foreach my $file (@files) {
 }
 
 # print master key
+print "# scale-frequency=$scale\n" if ($scale!=1);
 print "# ";
 for (my $i=0; $i<8; $i++) {
     if ($diff[$i]==0) { print "$field[$i] "; }
