@@ -2,10 +2,11 @@
 
 // Copyright (C) 2018 Intel Corporation
 
-#include "mby_rxstats.h"
-#include "mby_congmgmt.h"
-#include "mby_maskgen.h" // action codes
 #include <model_c_write.h> // write_field()
+
+#include "mby_params.h"
+#include "mby_action_codes.h"
+#include "mby_rxstats.h"
 
 static fm_uint16 getBankIndex(const fm_uint32 rx_port)
 {

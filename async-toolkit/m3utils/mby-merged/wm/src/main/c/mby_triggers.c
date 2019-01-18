@@ -2,7 +2,14 @@
 
 // Copyright (C) 2018 Intel Corporation
 
-#include "mby_maskgen.h"
+#include "mby_bitfield.h"
+#include "mby_common.h"
+#include "mby_params.h"
+#include "mby_maskgen_regs.h"
+#include "mby_triggers_regs.h"
+#include "mby_action_codes.h"
+#include "mby_fclass_type.h"
+#include "mby_log_type.h"
 #include "mby_triggers.h"
 
 // TODO is there a better way to include this? REVISIT
@@ -685,7 +692,7 @@ static void tcnFifo
 {
     fm_uint64 head           = trig_apply_misc_map->MA_TCN_PTR_HEAD.HEAD;
     fm_uint64 tail           = trig_apply_misc_map->MA_TCN_PTR_TAIL.TAIL;
-    fm_bool   port_learning  = fwd_misc_map->FWD_PORT_CFG_1[rx_port].LEARNING_ENABLE;
+    fm_bool   port_learning  = fwd_misc_map->FWD_PORT_CFG_0[rx_port].LEARNING_ENABLE;
     fm_bool   port_l2_domain = mapper_map->MAP_DOMAIN_ACTION0[l2_edomain].LEARN_EN;
     fm_uint64 usage          = trig_apply_misc_map->MA_TCN_USAGE[rx_port].USAGE;
     fm_uint64 wm             = trig_apply_misc_map->MA_TCN_WM[rx_port].WM;
@@ -754,7 +761,7 @@ static void glortLookupDeterministicMode
             fm_uint32 hash = (lag_cfg.HASH_ROTATION) ? hash_rot_b : hash_rot_a;
             hash %= (lag_cfg.LAG_SIZE == 0) ? 16 : lag_cfg.LAG_SIZE; //REVISIT !!!! 0..16 LAG porta???
             if (hash != lag_cfg.INDEX)
-                dmask_o[i/64] &= ~(FM_LITERAL_U64(1) << (i % 64)); //!!!REVISIT DMAS 257bit
+                dmask_o[i / 64] &= ~(FM_LITERAL_U64(1) << (i % 64)); //!!!REVISIT DMAS 257bit
         }
 
         if (!isDmask(dmask_o))
@@ -783,26 +790,127 @@ static void loopbackSuppressionFiltering
         fm_uint16 lpbk_glort_mask = lpbk_sup->GLORT_MASK;
         fm_uint16 lpbk_glort      = lpbk_sup->GLORT;
         if ((csglort & lpbk_glort_mask) == lpbk_glort)
-            dmask_o[i/64] &= ~(FM_LITERAL_U64(1) << (i % 64));
+            dmask_o[i / 64] &= ~(FM_LITERAL_U64(1) << (i % 64));
     }
 
     if (!isDmask(dmask_o))
         *action_o = MBY_ACTION_DROP_LOOPBACK; // dropping frame
 }
 
-static void trap
+static void handleTraps
 (
-    mbyFwdSysCfg1     const * const sys_cfg1,
-    fm_uint32                 const action,
-    mbyTriggerResults const * const triggers,
-    fm_uint64               * const dmask,
-    fm_bool                 * const cpu_trap_o,
-    fm_byte                 * const l2_edomain_o,
-    fm_byte                 * const l3_edomain_o,
-    fm_uint64               * const fnmask_o
+    mby_ppe_cm_apply_map const * const cm_apply,
+    fm_byte                      const nad,
+    fm_bool                      const store_trap_action,
+    mbyTriggerResults    const * const triggers,
+    fm_uint64                  * const dmask_o,
+    fm_uint16                  * const idglort_o,
+    fm_byte                    * const cpu_code_o,
+    fm_uint32                  * const action_o,
+    fm_bool                    * const mark_routed_o,
+    fm_uint16                  * const ip_mcast_idx_o
 )
 {
-    fm_bool cpu_trap     = (action == MBY_ACTION_TRAP);
+
+    mbyCpuTrapMask cpu_trap_mask;
+    cpu_trap_mask = getCpuTrapMask(cm_apply);
+
+    *idglort_o = cm_apply->CM_APPLY_TRAP_GLORT[nad].TRAP_GLORT; // NAD in RDL operator ID
+
+    if(triggers->trapAction == MBY_TRIG_ACTION_TRAP_TRAP)
+        *cpu_code_o = MBY_TRIGGER_TRAP_ACTION_CODE | triggers->cpuCode;
+
+    *action_o       = MBY_ACTION_TRAP;
+    *mark_routed_o  = FALSE;
+    *ip_mcast_idx_o = 0;
+
+    dmaskCopy(cpu_trap_mask.DEST_MASK, dmask_o);
+
+    if(!isDmask(dmask_o))
+        *action_o = MBY_ACTION_BANK5_OTHER_DROPS;
+}
+
+static void handleLogging
+(
+    mby_ppe_cm_apply_map const * const cm_apply,
+    mbyTriggerResults    const * const triggers,
+    fm_byte                    * const log_amask_o,
+    fm_bool                    * const logging_hit_o,
+    fm_uint32                  * const mirror0_profile_idx_o,
+    fm_byte                    * const mirror0_profile_v_o
+)
+{
+    fm_uint64 log_mask                = 0;
+    fm_uint32 log_mirror0_profile_idx = 0;
+
+    if(triggers->logAction)
+        *log_amask_o |= MBY_LOG_TYPE_TRIG_LOG_ACTION;
+
+    for (fm_uint i = 0; i < MBY_AMASK_WIDTH; i++) {
+        log_mask = FM_LITERAL_U64(1) << i;
+        if (*log_amask_o & log_mask) {
+            *log_amask_o = log_mask;
+            break;
+        }
+    }
+
+    if(log_mask != 0)
+    {
+        *logging_hit_o = TRUE;
+
+        switch(log_mask)
+        {
+            case MBY_LOG_TYPE_TRIG_LOG_ACTION:
+                log_mirror0_profile_idx = cm_apply->CM_APPLY_LOG_MIRROR_PROFILE.TRIGGER;
+                break;
+            case MBY_LOG_TYPE_CGRP:
+                log_mirror0_profile_idx = cm_apply->CM_APPLY_LOG_MIRROR_PROFILE.FFU;
+                break;
+            case MBY_LOG_TYPE_RESERVED_MAC:
+                log_mirror0_profile_idx = cm_apply->CM_APPLY_LOG_MIRROR_PROFILE.RESERVED_MAC;
+                break;
+            case MBY_LOG_TYPE_ARP_REDIRECT:
+                log_mirror0_profile_idx = cm_apply->CM_APPLY_LOG_MIRROR_PROFILE.ARP_REDIRECT;
+                break;
+            case MBY_LOG_TYPE_ICMP:
+                log_mirror0_profile_idx = cm_apply->CM_APPLY_LOG_MIRROR_PROFILE.ICMP;
+                break;
+            default:
+                *logging_hit_o = FALSE;
+        }
+    }
+
+    if((!triggers->mirror0ProfileV || (triggers->mirror0ProfileV && triggers->qcnValid0)) && *logging_hit_o)
+    {
+        *mirror0_profile_v_o   = TRUE;
+        *mirror0_profile_idx_o = log_mirror0_profile_idx;
+    }
+}
+
+static void trap
+(
+    mby_ppe_cm_apply_map const * const cm_apply,
+    mbyFwdSysCfg1        const * const sys_cfg1,
+    fm_byte                      const nad,
+    fm_bool                      const store_trap_action,
+    mbyTriggerResults    const * const triggers,
+    fm_uint64                  * const dmask,
+    fm_byte                    * const log_amask_o,
+    fm_bool                    * const logging_hit_o,
+    fm_bool                    * const cpu_trap_o,
+    fm_byte                    * const l2_edomain_o,
+    fm_byte                    * const l3_edomain_o,
+    fm_uint32                  * const mirror0_profile_idx_o,
+    fm_byte                    * const mirror0_profile_v_o,
+    fm_uint64                  * const fnmask_o,
+    fm_uint16                  * const idglort_o,
+    fm_byte                    * const cpu_code_o,
+    fm_uint32                  * const action_o,
+    fm_bool                    * const mark_routed_o,
+    fm_uint16                  * const ip_mcast_idx_o
+)
+{
+    fm_bool cpu_trap     = (*action_o == MBY_ACTION_TRAP);
 
     fm_bool trap_trap    = (triggers->trapAction == MBY_TRIG_ACTION_TRAP_TRAP);
     fm_bool trap_revert  = (triggers->trapAction == MBY_TRIG_ACTION_TRAP_REVERT);
@@ -812,10 +920,30 @@ static void trap
     *l3_edomain_o = (triggers->egressL3DomainAction == 0) ? *l3_edomain_o : 0;
 
     if ((cpu_trap || trap_trap) && !trap_revert)
-    { /* err = HandleTraps(model) */; }
+        handleTraps
+        (
+            cm_apply,
+            nad,
+            store_trap_action,
+            triggers,
+            dmask,
+            idglort_o,
+            cpu_code_o,
+            action_o,
+            mark_routed_o,
+            ip_mcast_idx_o
+        );
 
     if ((sys_cfg1->ENABLE_TRAP_PLUS_LOG || !cpu_trap || trap_trap || trap_log) && !trap_revert)
-    { /* err = HandleLogging(model) */; }
+        handleLogging
+        (
+            cm_apply,
+            triggers,
+            log_amask_o,
+            logging_hit_o,
+            mirror0_profile_idx_o,
+            mirror0_profile_v_o
+        );
 
     dmaskCopy(fnmask_o, dmask);
 
@@ -856,11 +984,11 @@ static void tailProcessing
     dmaskCopy(fnmask_o, dmask_o);
 
     if (*mirror0_profile_v_o)
-        dmask_o[mirror0_port/64] |= ~(FM_LITERAL_U64(1) << (mirror0_port % 64));
+        dmask_o[mirror0_port / 64] |= (FM_LITERAL_U64(1) << (mirror0_port % 64));
 
 
     if (*mirror1_profile_v_o)
-        dmask_o[mirror1_port/64] |= ~(FM_LITERAL_U64(1) << (mirror1_port % 64));
+        dmask_o[mirror1_port / 64] |= (FM_LITERAL_U64(1) << (mirror1_port % 64));
 
     for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
         dmask_o[i] &= ( 0xFFFFFFFFFFFF ); // 48 bit port mask ????
@@ -919,19 +1047,27 @@ static void maskGenUpdate
     fm_bool                      const targeted_deterministic,
     fm_uint32                    const hash_rot_a,
     fm_uint32                    const hash_rot_b,
-    fm_bool                      const mark_routed,
     fm_uint16                    const csglort,
     fm_uint32                    const rx_length,
     fm_uint32                    const mirror0_port,
     fm_uint32                    const mirror1_port,
     fm_bool                      const pa_drop,
     fm_bool                      const pa_l3len_err,
+    fm_byte                      const nad,
+    fm_bool                      const store_trap_action,
     mbyTriggerResults    const * const triggers,
     //in-out
     fm_uint64                  * const dmask,
     fm_uint32                  * const action,
+    fm_byte                    * const cpu_code,
+    fm_uint16                  * const idglort,
     fm_uint64                  * const fnmask,
+    fm_byte                    * const log_amask,
+    fm_bool                    * const logging_hit,
     fm_byte                    * const seg_meta_err,
+    fm_bool                    * const mark_routed,
+    fm_uint16                  * const ip_mcast_idx,
+    fm_uint32                  * const mirror0_profile_idx,
     fm_bool                    * const mirror0_profile_v,
     fm_bool                    * const mirror1_profile_v,
     //out
@@ -966,7 +1102,7 @@ static void maskGenUpdate
     (
         cm_apply,
         targeted_deterministic,
-        mark_routed,
+        *mark_routed,
         csglort,
         action,
         dmask
@@ -976,14 +1112,25 @@ static void maskGenUpdate
     // Trap (Trapping):
     trap
     (
+        cm_apply,
         &sys_cfg1,
-        *action,
+        nad,
+        store_trap_action,
         triggers,
         dmask,
+        log_amask,
+        logging_hit,
         cpu_trap,
         l2_edomain,
         l3_edomain,
-        fnmask
+        mirror0_profile_idx,
+        mirror0_profile_v,
+        fnmask,
+        idglort,
+        cpu_code,
+        action,
+        mark_routed,
+        ip_mcast_idx
     );
 
     // --------------------------------------------------------------------------------
@@ -1005,6 +1152,7 @@ static void maskGenUpdate
         fnmask
     );
 }
+
 void Triggers
 (
     mby_ppe_trig_apply_map            const * const trig_apply_map,
@@ -1023,16 +1171,21 @@ void Triggers
     fm_bool           const learn_en                  = in->LEARNING_ENABLED;
     fm_uint16         const l2_evid1                  = in->L2_EVID1;
     fm_byte           const cgrp_trig                 = in->CGRP_TRIG;
+    fm_byte                 cpu_code                  = in->CPU_CODE;
     fm_bool                 cpu_trap                  = in->CPU_TRAP;
     fm_uint16         const csglort                   = in->CSGLORT;
     fm_uint32         const hash_rot_a                = in->HASH_ROT_A;
     fm_uint32         const hash_rot_b                = in->HASH_ROT_B;
     fm_byte           const qos_tc                    = in->QOS_TC;
-    fm_uint16         const idglort                   = in->IDGLORT;
+    fm_uint16               idglort                   = in->IDGLORT;
+    fm_byte           const nad                       = in->NAD;
+    fm_byte                 log_amask                 = in->LOG_AMASK;
+    fm_bool                 logging_hit               = in->LOGGING_HIT;
     fm_byte                 l3_edomain                = in->L3_EDOMAIN;
     fm_byte                 l2_edomain                = in->L2_EDOMAIN;
+    fm_uint16               ip_mcast_idx              = in->IP_MCAST_IDX;
     fm_byte           const fclass                    = in->FCLASS;
-    fm_bool           const mark_routed               = in->MARK_ROUTED;
+    fm_bool                 mark_routed               = in->MARK_ROUTED;
     fm_uint64 const * const dmask                     = in->DMASK;
     fm_macaddr        const l2_smac                   = in->L2_SMAC;
     fm_uint32         const rx_port                   = in->RX_PORT;
@@ -1044,7 +1197,8 @@ void Triggers
     fm_uint64 const * const pre_resolve_dmask         = in->PRE_RESOLVE_DMASK;
     fm_bool           const qcn_mirror0_profile_v     = in->QCN_MIRROR0_PROFILE_V;
     fm_bool           const qcn_mirror1_profile_v     = in->QCN_MIRROR1_PROFILE_V;
-    fm_uint32         const mirror0_profile_idx       = in->MIRROR0_PROFILE_IDX;
+    fm_bool           const store_trap_action         = in->STORE_TRAP_ACTION;
+    fm_uint32               mirror0_profile_idx       = in->MIRROR0_PROFILE_IDX;
     fm_byte                 mirror0_profile_v         = in->MIRROR0_PROFILE_V;
     fm_uint32         const mirror1_profile_idx       = in->MIRROR1_PROFILE_IDX;
     fm_byte                 mirror1_profile_v         = in->MIRROR1_PROFILE_V;
@@ -1208,18 +1362,26 @@ void Triggers
         targeted_deterministic,
         hash_rot_a,
         hash_rot_b,
-        mark_routed,
         csglort,
         rx_length,
         mirror0_port,
         mirror1_port,
         pa_drop,
         pa_l3len_err,
+        nad,
+        store_trap_action,
         &results,
         results.destMask,
         &msk_gen_action,
+        &cpu_code,
+        &idglort,
         fnmask,
+        &log_amask,
+        &logging_hit,
         &seg_meta_err,
+        &mark_routed,
+        &ip_mcast_idx,
+        &mirror0_profile_idx,
         &mirror0_profile_v,
         &mirror1_profile_v,
         &cpu_trap,
@@ -1236,12 +1398,13 @@ void Triggers
         out->DMASK [i] = results.destMask[i];
 
     out->ACTION              = msk_gen_action;
-    out->CPU_CODE            = results.cpuCode;
+    out->CPU_CODE            = cpu_code;
     out->CPU_TRAP            = cpu_trap;
     out->IDGLORT             = results.destGlort;
     out->FNMASK              = fnmask[0]; //!!! REVISIT temporary solution
     out->L2_EVID1            = results.vlan;
     out->LEARNING_ENABLED    = learning_enabled;
+    out->MARK_ROUTED         = mark_routed;
     out->MIRROR0_PROFILE_IDX = results.mirror0ProfileIdx;
     out->MIRROR0_PROFILE_V   = results.mirror0ProfileV;
     out->MIRROR1_PROFILE_IDX = results.mirror1ProfileIdx;
@@ -1263,7 +1426,6 @@ void Triggers
     out->IS_TIMEOUT          = in->IS_TIMEOUT;
     out->L2_DMAC             = in->L2_DMAC;
     out->L2_IVLAN1_CNT       = in->L2_IVLAN1_CNT;
-    out->MARK_ROUTED         = in->MARK_ROUTED;
     out->MCAST_EPOCH         = in->MCAST_EPOCH;
     out->MIRTYP              = in->MIRTYP;
     out->MOD_IDX             = in->MOD_IDX;

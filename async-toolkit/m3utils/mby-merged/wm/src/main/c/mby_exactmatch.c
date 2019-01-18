@@ -5,9 +5,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "mby_common.h"
 #include "mby_exactmatch.h"
 #include "mby_crc32.h"
+#include "mby_bitfield.h"
 
 static void applyEmKeyMask
 (

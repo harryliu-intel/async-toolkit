@@ -920,11 +920,11 @@ addrmap mby_ppe_modify_map {
   addressing = fullalign;
   FulcrumName = "/MOD";
 
-  mod_profile_command_rf       MOD_PROFILE_COMMAND[64]       ;
-  mod_profile_field_rf         MOD_PROFILE_FIELD[64]         ;
+  mod_profile_command_rf       MOD_PROFILE_COMMAND[256]       ;
+  mod_profile_field_rf         MOD_PROFILE_FIELD[256]         ;
   mod_map_dual_rf              MOD_MAP_DUAL[1024]            ;
   mod_map_rf                   MOD_MAP[4]                    ;
-  mod_profile_group_r          MOD_PROFILE_GROUP[64]         ;
+  mod_profile_group_r          MOD_PROFILE_GROUP[256]         ;
   mod_mirror_profile_table0_r  MOD_MIRROR_PROFILE_TABLE0[64] ;
   mod_mirror_profile_table1_r  MOD_MIRROR_PROFILE_TABLE1[64] ;
   mod_mirror_profile_table2_r  MOD_MIRROR_PROFILE_TABLE2[64] ;

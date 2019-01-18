@@ -1,0 +1,34 @@
+
+# Libraries:
+LIB_STATIC = ${BLD_DIR}/lib${LIB_NAME}.a
+LIBRARIES  = $(LIB_STATIC)
+
+
+.PHONY: all
+all: $(BLD_DTS) $(OBJECTS) $(LIBRARIES)
+
+$(BLD_DTS):
+	@echo '  Creating build directory'
+	$(ECHO) $(MKDIR) $(BLD_DIR) && touch ${BLD_DTS}
+
+${BLD_DIR}/%.o: ${C_DIR}/%.c
+	@echo '  Compiling' $<
+	$(ECHO) $(GCC) -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) -c $<
+
+${BLD_DIR}/%.o: ${MAP_DIR}/%.c
+	@echo '  Compiling' $<
+	$(ECHO) $(GCC) -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) -c $<
+
+${BLD_DIR}/%.o: %.c
+	@echo '  Compiling' $<
+	$(ECHO) $(GCC) -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) -c $<
+
+include ../make/commonrules.mk
+
+$(LIB_STATIC): $(BLD_DTS) $(OBJECTS)
+	@echo '  Creating static library'
+	$(ECHO) $(AR) $@ $^
+	$(ECHO) $(RANLIB) $@
+
+libs: $(BLD_DTS) $(LIBRARIES)
+

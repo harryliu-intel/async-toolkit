@@ -29,6 +29,7 @@
               ((offset       (array n-parser-ptrs 8))
                (offset-valid (array n-parser-ptrs boolean))
                (prot-id      (array n-parser-ptrs 8)))))
+    ;; I can certainly add a comment here
     
     (typedef parser-to-mapper
              (struct
@@ -60,22 +61,25 @@
                    ((constant) (list 'Upper 'Underscore))))
          )
     (case lang
-      ((scm) sym)
-      ((m3) (IdStyles.Convert (symbol->string sym)
+      ((scm)   sym)
+      ((m3)   (IdStyles.Convert (symbol->string sym)
                               'Lower 'Camel
                               'Hyphen 'None))
-      ((c)  (IdStyles.Convert (symbol->string sym)
+      ((c sv) (IdStyles.Convert (symbol->string sym)
                               'Lower (car c-mode)
                               'Hyphen (cadr c-mode))))))
 
 
 (define *builtins*
-  '((boolean (typedef (boolean) ((m3 "BOOLEAN") (c "fm_bool") (scm boolean)))))
+  '((boolean (typedef (boolean) ((m3 "BOOLEAN")
+                                 (sv "c_bool")
+                                 (c "fm_bool")
+                                 (scm boolean)))))
   )
 
 ;;;;;;;;;;;;;;;;;;;;
 
-(define *languages* '(m3 c scm))
+(define *languages* '(m3 c scm sv))
 
 (define *m3-uint-intf*         "UInt")
 (define *m3-common-output-dir* "wm_meta_common")
@@ -92,8 +96,13 @@
 (define *c-const-pfx*         "MBY_")
 (define *c-const-arc*         "_const")
 (define *c-const-file-sfx*    (sa *c-const-arc* ".h"))
+(define *c-proj-const-dep*    (sa *c-proj* *c-const-arc*))
 
-(define *c-proj-const-dep* (sa *c-proj* *c-const-arc*))
+(define *sv-proj*              "mby")
+(define *sv-const-pfx*         "MBY_")
+(define *sv-const-arc*         "_const")
+(define *sv-const-file-sfx*    (sa *sv-const-arc* ".svh"))
+(define *sv-proj-const-dep*    (sa *sv-proj* *sv-const-arc*))
 
 ;;;;;;;;;;;;;;;;;;;;
 
@@ -514,9 +523,17 @@
 
 (define (compile-m3-prepare)  #t)
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define *pad-width* 24)
+(define (padleft  str)(Fmt.Pad str *pad-width* #\  'Left))
+(define (padright str)(Fmt.Pad str *pad-width* #\  'Right))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
 ;;
-;; in C, the tags will be used only to be topologically sorted before generation into a single
-;; flat file
+;; in C, the tags will be used only to be topologically sorted before generation into a file
 ;;
 ;; syntax of top-level output is
 ;; ((<tag> <fragment>) (<tag> <fragment>) ...)
@@ -530,33 +547,6 @@
 
 (define (get-c-name rec)
   (cadr (assoc 'c (caddr rec))))
-
-(define (gen-c-val-use x defs)
-
-  (define (recurse z) (gen-c-val-use z defs))
-
-  (cond ((number? x) (number->string x))
-
-        ((and (symbol? x)
-              (let ((r-test (sym-lookup x defs)))
-                (if (and r-test (eq? 'constant (car r-test)))
-                    (sa *c-const-pfx* (get-c-name r-test))
-                    #f))))
-        
-        ;; must be value expression
-        ((not (pair? x)) '*not-found*)
-
-        ((eq? (car x) 'number) (force-value x defs))
-
-        ((memq (car x) *multiops*)
-         (sa "(" (infixize (map recurse (cdr x)) (car x)) ")"))
-
-        ((let ((br (assoc (car x) *binops*)))
-           (if br
-               (sa "(" (recurse (cadr x)) " " (cadr (assoc 'c (cadr br))) " " (recurse (caddr x)) ")")
-               #f)))
-             
-        (else '*not-found*)))
 
 (define (gen-c-val-use x defs)
 
@@ -600,10 +590,6 @@
   (IdStyles.Convert (symbol->string sym)
                     'Lower 'Upper
                     'Hyphen 'Underscore))
-
-(define *pad-width* 24)
-(define (padleft  str)(Fmt.Pad str *pad-width* #\  'Left))
-(define (padright str)(Fmt.Pad str *pad-width* #\  'Right))
 
 (define (compile-c-typedef-def-from-data x nm defs dep-recorder)
   (let ((def-sfx (sa " " nm)))
@@ -739,7 +725,8 @@
     (and t-rec
          (equal? (car t-rec) 'typedef)         ;; its a typedef
          (pair? (caddr (cadr t-rec)))          ;; referencing a compound type...
-         (equal? (caar (cddadr t-rec)) 'array))))
+         (equal? (caar (cddadr t-rec)) 'array) ;; and an array !
+         )))
 
 (define (make-pointer of tn defs)
   (cond ((equal? of "t") "t")         ;; t itself ALWAYS a pointer
@@ -825,6 +812,8 @@
               ))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; just test code, to make sure it all works
 ;;
@@ -864,9 +853,6 @@
          (c-name (sa *c-proj* "_" (get-c-name (sym-lookup (cadr x) defs))))
          (header-fn (sa c-name ".h"))
          (c-code-fn (sa c-name ".c"))
-;;         (header-fn (sa *c-proj* "_struct.h"))
-;;         (c-code-fn (sa *c-proj* "_struct.c"))
-
         )
 
     (dis (stringify x) dnl)
@@ -899,6 +885,11 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define (compile-sv-prepare)
+  (set! *topo-sorter* (new-topo-sorter)) #t)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (define (make-compiler lang)
   (lambda (rec defs)
     (let* ((fn (symbol-append 'compile- lang '- (car rec)))
@@ -919,7 +910,7 @@
 
 (define (uniq-string-list L) (uniq equal? (sort-string-list L)))
 
-(define (compile-all) (map compile '(m3 c)))
+(define (compile-all) (map compile '(m3 c sv)))
 
 (define (seq-to-list s)
   (let loop ((i (s 'size))
@@ -944,7 +935,7 @@
     (append
      (map picker missing) (map picker order))))
 
-(define (do-c-output lst odir)
+(define (do-csv-output lst odir header-gen trailer-gen)
   (let* ((files    (uniq-string-list (map car lst))) ;; uniq the filenames
          (wrs      (map (lambda(fn)
                           (list fn (FileWr.Open (sa odir "/src/" fn)))) files))
@@ -960,9 +951,13 @@
            (let* ((fn (car w))
                   (wr (cadr w)))
 
-             (do-c-header fn wr)
+             (header-gen fn wr)
+             
              (define (output-matching L)
-               (map (lambda (code) (dis code dnl dnl wr)) (map caddr (filter (lambda(q)(equal? fn (car q))) L))))
+               (map (lambda (code) (dis code dnl dnl wr))
+                    (map caddr
+                         (filter (lambda(q)(equal? fn (car q)))
+                                 L))))
              
              ;; do tagged and ordered
              (output-matching ordered)
@@ -970,12 +965,20 @@
              ;; do untagged 
              (output-matching untagged)
 
-             (do-c-trailer fn wr)
+             (trailer-gen fn wr)
              (Wr.Close (cadr w))
              ))
          wrs)
     files
     ))
+
+(define (do-c-output lst odir)
+  (do-csv-output lst odir do-c-header do-c-trailer))
+
+(define (do-sv-output lst odir)
+  (do-csv-output lst odir do-sv-header do-sv-trailer))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (do-c-header fn wr)
 
@@ -1020,6 +1023,8 @@
       ((h)
        (dis "#endif /* !_"bn"_H */" dnl
             wr)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (do-c-meta-output lst)
   (do-c-output lst *m3-lib-name*))
@@ -1157,9 +1162,9 @@
 (define (make-builtins)
   (let* ((n "BOOLEAN")
          (tn n)
-         (ser-proto  (m3-deser-proto 'ser (sa "Serialize"n) 1 "" tn))
+         (ser-proto   (m3-deser-proto 'ser   (sa "Serialize"n)   1 "" tn))
          (deser-proto (m3-deser-proto 'deser (sa "Deserialize"n) 1 "" tn))
-         (fmt-proto (m3-deser-proto 'fmt (sa "FormatWx"n) 1 "" tn)))
+         (fmt-proto   (m3-deser-proto 'fmt   (sa "FormatWx"n)    1 "" tn)))
   (list
    (list "WmDeSer.i3"
          *empty-set*
@@ -1191,12 +1196,20 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (make-uint-type-names)
+(define (make-uint-type-names lang)
   (let loop ((i 64)
              (res '()))
     (if (= i 0)
         res
-        (loop (- i 1) (cons (sa "uint" i) res)))))
+        (loop (- i 1) (cons
+                       (sa
+                        
+                        (case lang
+                          ((c) "uint")
+                          ((sv) "c_uint"))
+                        
+                           i)
+                       res)))))
 
 (define *a* '())
 (define *p* '())
@@ -1215,7 +1228,7 @@
              )) '(ser deser)))
 
 (define (do-c-common-output)
-  (let* ((all-types (cons "fm_bool" (make-uint-type-names)))
+  (let* ((all-types (cons "fm_bool" (make-uint-type-names 'c)))
          (protos (map (lambda(txt)(list (sa *c-builtin-serdes-fn* ".h") #f txt))
                       (apply append (map make-c-common-protos all-types))))
          (codes (map (lambda(txt)(list (sa *c-builtin-serdes-fn* ".c") #f txt))
@@ -1224,10 +1237,24 @@
     (do-c-output (append codes protos) *m3-common-output-dir*)
     ))
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (do-sv-common-output)
+  (let ((all-types (cons "c_bool" (make-uint-type-names 'sv))))
+    (do-sv-output '() *m3-common-output-dir*)
+    ))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (do-it)
   (set! *c-deps* '())
+  (let ((sv-files (do-sv-meta-output (compile 'sv))))
+    )
+
+  (let ((sv-files (do-sv-common-output)))
+    )
+  
   (let ((c-files (do-c-meta-output (compile 'c))))
     (do-m3-meta-output (compile 'm3) c-files)
     )
@@ -1237,4 +1264,183 @@
     )
   )
 
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
+(define (do-sv-header fn wr)
+
+  (dis "do-sv-header " fn dnl)
+  
+  (let* ((bn    (TextUtils.RemoveSuffixes fn '(".sv" ".svh")))
+         (preds (uniq equal?
+                      (map cdr
+                           (filter (lambda (x)(equal? bn (car x)))
+                                   *sv-deps*))))
+                         
+         (sfx   (string->symbol
+                 (TextUtils.RemovePrefix   fn (sa bn ".")))))
+    (dis "preds " preds dnl)
+    (case sfx
+      ((sv)
+       (dis "`include \"" "uint.svh\"" dnl wr)
+       (dis "`include \"" "fm_types.svh\"" dnl wr)
+       (dis "`include \"" bn ".svh\"" dnl dnl wr))
+
+      ((svh)
+       (dis "`ifndef _"bn"_SVH" dnl
+            "`define _"bn"_SVH" dnl
+            dnl
+            "`include \"" "uint" ".svh\"" dnl
+            dnl
+            wr)
+       (map (lambda(p)
+              (dis "`include \"" p ".svh\"" dnl wr))
+            preds)
+       (dis dnl wr)
+
+       ))))
+
+(define (do-sv-trailer fn wr)
+  (let* ((bn (TextUtils.RemoveSuffixes fn '(".sv" ".svh")))
+         (sfx (string->symbol
+               (TextUtils.RemovePrefix   fn (sa bn ".")))))
+    (case sfx
+      ((sv) #t)
+      ((svh)
+       (dis "`endif /* !_"bn"_SVH */" dnl
+            wr)))))
+
+
+(define *sv-deps* '())
+
+(define (get-sv-name rec)
+  (cadr (assoc 'sv (caddr rec))))
+
+
+(define (compile-sv-typedef-def-from-data x nm defs dep-recorder)
+  (let ((def-sfx (sa " " nm)))
+    (cond ((number? x) (sa
+                        (padleft (sa "c_uint" (number->string x)))
+                        def-sfx))
+          
+          ((and (symbol? x)
+                (let ((b-test (assoc x *builtins*)))
+                  (if b-test
+                      (sa (padleft (sa (get-sv-name (cadr b-test))))
+                          def-sfx)
+                      #f))))
+
+          
+          ((and (symbol? x)
+                (let ((r-test (sym-lookup x defs)))
+                  (if (and r-test (eq? 'typedef (car r-test)))
+                      (let ((tn (sa *sv-proj* "_" (get-sv-name r-test))))
+                        (dis "... depends on " tn dnl)
+                        (dep-recorder tn)
+                        (sa (padleft tn) def-sfx))
+                      #f))))
+
+          ;; must be type expression
+          ((not (pair? x)) '*not-found*)
+
+          ((eq? (car x) 'bits)
+           (compile-sv-typedef-def-from-data
+            (force-value (cadr x) defs) nm defs dep-recorder))
+
+          ((eq? (car x) 'array)
+           (compile-sv-typedef-def-from-data
+            (caddr x) (sa (padleft nm) (sa "[" (gen-sv-val-use (cadr x) defs) "]"))
+            defs dep-recorder))
+                
+          ((eq? (car x) 'struct)
+           (apply sa
+                  (append
+                   (list "struct {" dnl)
+                   (map
+                    (lambda (fspec)
+                      (sa "  "
+                          (compile-sv-typedef-def-from-data
+                           (cadr fspec)
+                           (scheme-mem->sv (car fspec))
+                           defs
+                           dep-recorder)
+                          ";"
+                          dnl)
+                      );;adbmal
+                    (cadr x))
+                   (list "} " nm))))
+          
+          (else '*not-found*)))
+  )
+
+
+(define (compile-sv-typedef-def x defs topo-sorter)
+  (if (not (eq? (car x) 'typedef)) (error "not a typedef : " x))
+  (let* ((sym-nm
+          (sa *sv-proj* "_" (get-sv-name (sym-lookup (cadr x) defs))))
+         (dep-recorder
+          (lambda(pred)
+            (dis pred " <- " sym-nm dnl)
+            (set! *sv-deps* (cons (cons sym-nm pred) *sv-deps*))
+            (topo-sorter 'addDependency pred sym-nm)))
+         (code
+          (begin (dis "sv-typedef " sym-nm dnl)
+                 (sa "typedef "
+                     (compile-sv-typedef-def-from-data (caddr x) sym-nm defs dep-recorder)
+                     ";"
+                     ))))
+    (set! *sv-deps* (cons (cons sym-nm *sv-proj-const-dep*) *sv-deps*))
+    (list sym-nm code)
+    )
+  )
+
+
+(define (compile-sv-constant x defs)
+  (let ((header-fn (sa *sv-proj* *sv-const-file-sfx*)))
+    (if (not (eq? (car x) 'constant)) (error "not a constant : " x))
+    
+    (let* ((nm         (sa *sv-const-pfx* (get-sv-name (sym-lookup (cadr x) defs))))
+           (imports    (make-string-set 10))
+           (code       (sa "`define " nm "    " (force-value (caddr x) defs))))
+      (list (list header-fn #f code) )
+      )))
+
+
+
+(define (compile-sv-typedef x defs)
+  (let* (
+         (sv-name (sa *sv-proj* "_" (get-sv-name (sym-lookup (cadr x) defs))))
+         (header-fn (sa sv-name ".svh"))
+         (sv-code-fn (sa sv-name ".sv"))
+        )
+
+    (dis (stringify x) dnl)
+    (dis sv-name dnl)
+    
+    (append
+     ;; these should be directed to a header file
+     (map (lambda(c) (cons header-fn c))
+          (list
+           (compile-sv-typedef-def           x defs *topo-sorter*)
+           ))
+
+
+     '()
+     )
+   ))
+
+
+(define gen-sv-val-use gen-c-val-use) ;; maybe
+
+(define scheme-mem->sv scheme-mem->c)
+
+(define (do-sv-meta-output lst)
+  (do-sv-output lst *m3-lib-name*))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (do-it)
+

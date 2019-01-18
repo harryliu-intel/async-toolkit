@@ -10,27 +10,27 @@
 typedef struct mby_nh_test_data_in_struct
 {
     /* Next Hop input data. */
-    fm_bool         glort_routed;
-    fm_uint16       arp_index;
-    fm_bool         group_type;
-    fm_byte         group_size;
-    fm_byte         arp_hash;
-    fm_uint16       arp_tbl_idx;
-    fm_uint16       ecmp_hash;
+    fm_bool   glort_routed;
+    fm_uint16 route_index;
+    fm_bool   route_type;
+    fm_byte   group_size;
+    fm_byte   arp_hash;
+    fm_uint16 arp_tbl_idx;
+    fm_uint16 ecmp_hash;
 
     /* Next Hop register data. */
-    mbyArpEntryType entry_type; // 1 = MAC entry, 0 - Glort Entry
-    fm_macaddr      dmac;
-    fm_uint16       dglort;
-    fm_byte         mtu_index;
-    fm_bool         mark_routed;
-    fm_bool         ipv6_entry;
-    fm_uint16       evid;
-    fm_byte         l3_domain;
-    fm_uint16       l2_domain;
-    fm_bool         update_l3_domain;
-    fm_bool         update_l2_domain;
-    fm_uint32       mod_idx;
+    mbyNextHopNeighborEntryType entry_type; // 1 = MAC entry, 0 - Glort Entry
+    fm_macaddr                  dmac;
+    fm_uint16                   dglort;
+    fm_byte                     mtu_index;
+    fm_bool                     mark_routed;
+    fm_bool                     ipv6_entry;
+    fm_uint16                   evid;
+    fm_byte                     l3_domain;
+    fm_uint16                   l2_domain;
+    fm_bool                     update_l3_domain;
+    fm_bool                     update_l2_domain;
+    fm_uint32                   mod_idx;
 } mby_nh_test_data_in;
 
 typedef struct mby_nh_test_data_out_struct
@@ -76,12 +76,12 @@ nh_test_data nexthop_tests[] =
         .in =
         {
             .glort_routed     = FALSE,
-            .arp_index        = 16,
-            .group_type       = 0,
+            .route_index      = 16,
+            .route_type       = MBY_NH_ROUTE_TYPE_SINGLE,
             .group_size       = 4,
             .arp_hash         = 2,
-            .arp_tbl_idx      = (16 + 2) & (MBY_ARP_TABLE_ENTRIES - 1),
-            .entry_type       = MBY_ARP_TYPE_GLORT,
+            .arp_tbl_idx      = (16) & (MBY_NH_NEIGHBORS_ENTRIES - 1),
+            .entry_type       = MBY_NH_ENTRY_TYPE_GLORT_FORWARDING,
             .dmac             = 0,
             .ipv6_entry       = FALSE,
             .evid             = 2,
@@ -109,16 +109,17 @@ nh_test_data nexthop_tests[] =
         },
         .name = "Nexthop ARP routed GLORT entry type"
     },
+/*
     {
         .in =
         {
             .glort_routed     = FALSE,
-            .arp_index        = 0xBF,
-            .group_type       = 1,
+            .route_index        = 0xBF,
+            .route_type       = MBY_NH_ROUTE_TYPE_GROUP,
             .group_size       = 4,
             .ecmp_hash        = 0x400,
-            .arp_tbl_idx      = (0xBF + ((0x400 << 4) >> 12)) & (MBY_ARP_TABLE_ENTRIES - 1),//arp_tbl_idx = 0xC3
-            .entry_type       = MBY_ARP_TYPE_MAC,
+            .arp_tbl_idx      = (0xBF + ((0x400 << 4) >> 12)) & (MBY_NH_NEIGHBORS_ENTRIES - 1),//arp_tbl_idx = 0xC3
+            .entry_type       = MBY_NH_ENTRY_TYPE_IP_ROUTING,
             .dmac             = 0x0022446688aa,
             .ipv6_entry       = FALSE,
             .evid             = 12,
@@ -147,12 +148,12 @@ nh_test_data nexthop_tests[] =
         .in =
         {
             .glort_routed     = FALSE,
-            .arp_index        = 0xEF2,
-            .group_type       = 1,
+            .route_index        = 0xEF2,
+            .route_type       = MBY_NH_ROUTE_TYPE_GROUP,
             .group_size       = 8,
             .ecmp_hash        = 0xFF,
-            .arp_tbl_idx      = (0xEF2 + ((0xFF << 8) >> 12)) & (MBY_ARP_TABLE_ENTRIES - 1),//arp_tbl_idx = 0xF01
-            .entry_type       = MBY_ARP_TYPE_MAC,
+            .arp_tbl_idx      = (0xEF2 + ((0xFF << 8) >> 12)) & (MBY_NH_NEIGHBORS_ENTRIES - 1),//arp_tbl_idx = 0xF01
+            .entry_type       = MBY_NH_ENTRY_TYPE_IP_ROUTING,
             .dmac             = 0x003377fedcba,
             .ipv6_entry       = TRUE,
             .evid             = 3,
@@ -177,6 +178,7 @@ nh_test_data nexthop_tests[] =
         },
         .name = "Nexthop ARP routed MAC entry type IPV6"
     },
+    */
 };
 
 #endif

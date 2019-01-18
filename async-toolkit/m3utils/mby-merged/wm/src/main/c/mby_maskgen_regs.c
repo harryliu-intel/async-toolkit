@@ -91,19 +91,29 @@ mbyEgressVidTableCfg getEvidTableCfgEntry
     return entry;
 }
 
-mbyFwdPortCfg1 getPortCfg1
+mbyFwdPortCfg getPortCfg
 (
     mby_ppe_fwd_misc_map const * const fwd_misc,
     fm_uint32                    const port // RX port
 )
 {
-    mbyFwdPortCfg1 cfg;
+    mbyFwdPortCfg cfg;
 
-    fwd_port_cfg_1_r const * const port_cfg_1 = &(fwd_misc->FWD_PORT_CFG_1[port]);
+    fwd_port_cfg_0_r   const * const port_cfg_0   = &(fwd_misc->FWD_PORT_CFG_0[port]);
+    fwd_port_cfg_1_0_r const * const port_cfg_1_0 = &(fwd_misc->FWD_PORT_CFG_1_0[port]);
+    fwd_port_cfg_1_1_r const * const port_cfg_1_1 = &(fwd_misc->FWD_PORT_CFG_1_1[port]);
+    fwd_port_cfg_1_2_r const * const port_cfg_1_2 = &(fwd_misc->FWD_PORT_CFG_1_2[port]);
+    fwd_port_cfg_1_3_r const * const port_cfg_1_3 = &(fwd_misc->FWD_PORT_CFG_1_3[port]);
+    fwd_port_cfg_1_4_r const * const port_cfg_1_4 = &(fwd_misc->FWD_PORT_CFG_1_4[port]);
 
-    cfg.LEARNING_ENABLE     = port_cfg_1->LEARNING_ENABLE;
-    cfg.FILTER_VLAN_INGRESS = port_cfg_1->FILTER_VLAN_INGRESS;
-    cfg.DESTINATION_MASK    = port_cfg_1->DESTINATION_MASK;
+    cfg.LEARNING_ENABLE     = port_cfg_0->LEARNING_ENABLE;
+    cfg.FILTER_VLAN_INGRESS = port_cfg_0->FILTER_VLAN_INGRESS;
+
+    cfg.DESTINATION_MASK[4] = port_cfg_1_4->DESTINATION_MASK;
+    cfg.DESTINATION_MASK[3] = port_cfg_1_3->DESTINATION_MASK;
+    cfg.DESTINATION_MASK[2] = port_cfg_1_2->DESTINATION_MASK;
+    cfg.DESTINATION_MASK[1] = port_cfg_1_1->DESTINATION_MASK;
+    cfg.DESTINATION_MASK[0] = port_cfg_1_0->DESTINATION_MASK;
 
     return cfg;
 }
@@ -188,4 +198,49 @@ mbyCmApplyLoopbackSuppress getLoopbackSuppress
     loopSupp.GLORT      = loop_supp->GLORT;
 
     return loopSupp;
+}
+
+mbyCpuTrapMask getCpuTrapMask
+(
+    mby_ppe_cm_apply_map const * const cm_apply
+)
+{
+    mbyCpuTrapMask cpu_trap_mask;
+
+    cm_apply_cpu_trap_mask_0_r const * const cpu_trap_mask_0 = &(cm_apply->CM_APPLY_CPU_TRAP_0_MASK);
+    cm_apply_cpu_trap_mask_1_r const * const cpu_trap_mask_1 = &(cm_apply->CM_APPLY_CPU_TRAP_1_MASK);
+    cm_apply_cpu_trap_mask_2_r const * const cpu_trap_mask_2 = &(cm_apply->CM_APPLY_CPU_TRAP_2_MASK);
+    cm_apply_cpu_trap_mask_3_r const * const cpu_trap_mask_3 = &(cm_apply->CM_APPLY_CPU_TRAP_3_MASK);
+    cm_apply_cpu_trap_mask_4_r const * const cpu_trap_mask_4 = &(cm_apply->CM_APPLY_CPU_TRAP_4_MASK);
+
+    cpu_trap_mask.DEST_MASK[4] = cpu_trap_mask_4->DEST_MASK;
+    cpu_trap_mask.DEST_MASK[3] = cpu_trap_mask_3->DEST_MASK;
+    cpu_trap_mask.DEST_MASK[2] = cpu_trap_mask_2->DEST_MASK;
+    cpu_trap_mask.DEST_MASK[1] = cpu_trap_mask_1->DEST_MASK;
+    cpu_trap_mask.DEST_MASK[0] = cpu_trap_mask_0->DEST_MASK;
+
+    return cpu_trap_mask;
+}
+
+mbyMirrorEcmpDmask getMirrorEcmpDmask
+(
+    mby_ppe_cm_apply_map const * const cm_apply,
+    fm_uint16                    const mirror_profile_idx
+)
+{
+    mbyMirrorEcmpDmask mirror_ecmp_dmask;
+
+    cm_apply_mirror_ecmp_dmask0_r const * const mirror_ecmp_dmask_0 = &(cm_apply->CM_APPLY_MIRROR_ECMP_DMASK0[mirror_profile_idx]);
+    cm_apply_mirror_ecmp_dmask1_r const * const mirror_ecmp_dmask_1 = &(cm_apply->CM_APPLY_MIRROR_ECMP_DMASK1[mirror_profile_idx]);
+    cm_apply_mirror_ecmp_dmask2_r const * const mirror_ecmp_dmask_2 = &(cm_apply->CM_APPLY_MIRROR_ECMP_DMASK2[mirror_profile_idx]);
+    cm_apply_mirror_ecmp_dmask3_r const * const mirror_ecmp_dmask_3 = &(cm_apply->CM_APPLY_MIRROR_ECMP_DMASK3[mirror_profile_idx]);
+    cm_apply_mirror_ecmp_dmask4_r const * const mirror_ecmp_dmask_4 = &(cm_apply->CM_APPLY_MIRROR_ECMP_DMASK4[mirror_profile_idx]);
+
+    mirror_ecmp_dmask.Mirror_port_mask[4] = mirror_ecmp_dmask_4->Mirror_port_mask4;
+    mirror_ecmp_dmask.Mirror_port_mask[3] = mirror_ecmp_dmask_3->Mirror_port_mask3;
+    mirror_ecmp_dmask.Mirror_port_mask[2] = mirror_ecmp_dmask_2->Mirror_port_mask2;
+    mirror_ecmp_dmask.Mirror_port_mask[1] = mirror_ecmp_dmask_1->Mirror_port_mask1;
+    mirror_ecmp_dmask.Mirror_port_mask[0] = mirror_ecmp_dmask_0->Mirror_port_mask0;
+
+    return mirror_ecmp_dmask;
 }
