@@ -5,14 +5,15 @@
 #ifndef MBY_COMMON_H
 #define MBY_COMMON_H
 
+#define TOP_MAP mby_top_map
+
 // Includes:
 #include <stdlib.h>
 #include <mby_top_map.h> // header file auto-generated from RDL
+#include <sys/param.h>   // MIN/MAX C macros
+#include "fm_types.h"    // basic data types
 
 // Macros:
-
-#define MAX(x, y) (((x) > (y)) ? (x) : (y))
-#define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
 #define isBroadcastMacAddress(addr) ( (addr) == FM_LITERAL_U64(0xFFFFFFFFFFFF))
 #define   isUnicastMacAddress(addr) (((addr) &  FM_LITERAL_U64(0x010000000000)) == 0)
@@ -24,16 +25,15 @@
 
 #define MBY_PORTS_COUNT          16 // <-- REVISIT!!!
 #define MBY_FABRIC_LOG_PORTS     MBY_PORTS_COUNT
+#define MBY_MAX_FABRIC_LAG_PORT  17
+#define MBY_DEST_PORTS_COUNT     257
 
 #define MBY_REGISTER_ARRAY_SIZE  0x1800000
 
-#define MBY_MAX_PACKET_SIZE      32767
+// Used for tests and C client APIs for DV
+#define MBY_MAX_DATA_LEN         (32 * 1024)
 
 #define MBY_SEGMENT_LEN          256
-
-#define MBY_N_PARSER_KEYS        parser_extract_cfg_rf_PARSER_EXTRACT_CFG__nd // 80
-#define MBY_N_PARSER_FLGS        48
-#define MBY_N_PARSER_PTRS         8
 
 // Changes to these constants must be reflected also in mbyLpmKeySels
 #define MBY_CGRP_KEY8            64
@@ -44,11 +44,11 @@
 #define MBY_CGRP_KEY8_BASE       ( MBY_CGRP_KEY16_BASE + MBY_CGRP_KEY16 )
 #define MBY_CGRP_KEY32_BASE      ( MBY_CGRP_KEY8_BASE  + MBY_CGRP_KEY8 )
 
-#define MBY_CGRP_KEYS                 ( MBY_CGRP_KEY8 + MBY_CGRP_KEY16   + MBY_CGRP_KEY32   )
-#define MBY_CGRP_HASH_KEYS            ( MBY_CGRP_KEY8 + MBY_CGRP_KEY16*2 + MBY_CGRP_KEY32*4 )
-#define MBY_CGRP_ACT24                16
-#define MBY_CGRP_ACT4                 26
-#define MBY_CGRP_ACT1                 24
+#define MBY_CGRP_KEYS            ( MBY_CGRP_KEY8 + MBY_CGRP_KEY16   + MBY_CGRP_KEY32   )
+#define MBY_CGRP_HASH_KEYS       ( MBY_CGRP_KEY8 + MBY_CGRP_KEY16*2 + MBY_CGRP_KEY32*4 )
+#define MBY_CGRP_ACT24           16
+#define MBY_CGRP_ACT4            26
+#define MBY_CGRP_ACT1            24
 
 #define MBY_CGRP_POLICER_ACTIONS       4 // MBY_CGRP_ACTION_POLICER[0..3]
 #define MBY_CGRP_REMAP_ACTIONS         8 // MBY_CGRP_ACTION_REMAP[0..7]
@@ -71,32 +71,7 @@
 
 #define MAC_ADDR_BYTES           6
 
-// Basic Data Types:
-typedef char                  fm_char;
-typedef short                 fm_int16;
-typedef int                   fm_int32;
-typedef long long             fm_int64;
-typedef int                   fm_int;
-
-typedef unsigned char         fm_bool;
-typedef unsigned char         fm_byte;
-typedef unsigned int          fm_uint;
-typedef unsigned short        fm_uint16;
-typedef unsigned int          fm_uint32;
-typedef unsigned long long    fm_uint64;
-
-typedef char                 *fm_text;
-
-// FM Data Types:
-typedef fm_int                fm_status;
-typedef unsigned long long    fm_macaddr;
-
 // Constants:
-
-#define FM_OK   0
-#define FM_FAIL 1
-#define TRUE    1
-#define FALSE   0
 
 // Enums:
 
@@ -196,6 +171,12 @@ typedef enum mbyTriggerActionLearningEnum
 
 } mbyTriggerActionLearning;
 
+typedef struct mbyEgressVidTableCfgStruct
+{
+  fm_byte              TRIG_ID;
+  fm_uint64            MEMBERSHIP[MBY_DMASK_REGISTERS];
+} mbyEgressVidTableCfg;
+
 // Structs:
 
 typedef struct mbyParserInfoStruct
@@ -221,13 +202,6 @@ typedef struct mbyParserInfoStruct
     fm_bool                 inr_l4_tcp;
 
 } mbyParserInfo;
-
-typedef struct mbyParserHdrPtrsStruct
-{
-    fm_byte                 OFFSET      [MBY_N_PARSER_PTRS]; // offsets to data of interest within packet
-    fm_bool                 OFFSET_VALID[MBY_N_PARSER_PTRS]; // parser offset valid flags
-    fm_byte                 PROT_ID     [MBY_N_PARSER_PTRS]; // parser protocol IDs
-} mbyParserHdrPtrs;
 
 typedef struct mbyClassifierKeysStruct
 {

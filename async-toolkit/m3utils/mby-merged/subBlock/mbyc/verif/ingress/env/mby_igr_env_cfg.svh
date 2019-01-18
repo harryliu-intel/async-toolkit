@@ -33,7 +33,7 @@
 //-----------------------------------------------------------------------------
 // Class: mby_igr_env_cfg
 //-----------------------------------------------------------------------------
-class mby_igr_env_cfg extends uvm_object;
+class mby_igr_env_cfg extends mby_igr_dut_cfg;
 
     string ingress_primary_access  = "primary";
     string ingress_sideband_access = "sideband";

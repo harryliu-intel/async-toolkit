@@ -47,13 +47,12 @@ class mby_mgp_req_seq_item extends uvm_sequence_item;
    rand bit [495:0] dummy_rsp;
    //rand bit [63:0] ecc;
 
-   rand bus_type_e bus_type;
-   rand req_type_e req_type;
+   bus_type_e bus_type;
+   req_type_e req_type;
 
    extern constraint c_sema;
    extern constraint c_valid;
    extern constraint c_req_id;
-   
 
    extern function new(string name = "");
    extern virtual function void pack(ref physical_t phys);
@@ -70,8 +69,9 @@ constraint mby_mgp_req_seq_item::c_valid {
 }
 
 constraint mby_mgp_req_seq_item::c_req_id {
-   req_id == 0;
+   soft req_id == 0;
 }
+
 //----------------------------------------------------------------------------------------
 // Constructor
 //----------------------------------------------------------------------------------------

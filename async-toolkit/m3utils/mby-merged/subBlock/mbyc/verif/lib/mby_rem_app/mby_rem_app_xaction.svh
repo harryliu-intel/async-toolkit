@@ -54,7 +54,7 @@ class mby_rem_app_xaction extends mby_base_sequence_item
    // -------------------------------------------------------------------------
    // Macro for factory registration
    // -------------------------------------------------------------------------
-  `uvm_object_utils(mby_rem_app_xaction#(T_data, T_data_rsp, T_debug))
+  `uvm_object_utils(mby_rem_app_xaction)
 
    // -------------------------------------------------------------------------
    // CONSTRUCTOR: new

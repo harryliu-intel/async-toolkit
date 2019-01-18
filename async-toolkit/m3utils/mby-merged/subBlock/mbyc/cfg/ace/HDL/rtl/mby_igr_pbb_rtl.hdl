@@ -5,6 +5,7 @@
 use ToolConfig;
 
 my $SHRTL          = &ToolConfig::get_tool_path('ipconfig/shrtl');
+my $DW_SIM         = &ToolConfig::get_tool_path('designcompiler');
 my $VCS_HOME       = $ENV{VCS_HOME};
 
 $hdl_spec = {
@@ -51,7 +52,7 @@ $hdl_spec = {
     -vlog_incdirs => [
      "src/igr/rtl",
      "src/igr_pbb/rtl",
-     "/nfs/site/disks/ccdo.soc.cad_root.1/cad/x86-64_linux26/synopsys/designcompiler/M-2016.12-SP3/dw/sim_ver",
+     "$DW_SIM/dw/sim_ver",
      "target/mby/mgm_run/igr/src",
      "target/mby/mgm_run/igr/src/mem_wrap",
      "target/mby/mgm_run/rtl",

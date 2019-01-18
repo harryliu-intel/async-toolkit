@@ -30,7 +30,8 @@
 // ------------------------------------------------------------------- 
 
 module TB_MGP
-
+  import mby_egr_pkg::*, mby_igr_pkg::*, mby_gmm_pkg::*; 
+    
 (
   
 );
@@ -198,7 +199,9 @@ logic           [71:0]  igr1_vp_rx5_data_w_ecc;
 logic           [63:0]  grp_c0_rx7_data;                
 logic           [63:0]  grp_c1_rx7_data;                
 logic           [63:0]  grp_a1_rx0_data;                
-logic           [23:0]  grp_a0_rx_metadata;             
+//logic           [23:0]  grp_a0_rx_metadata;             
+epl_md_t  grp_a0_rx_metadata;             
+
 logic           [63:0]  grp_c1_rx3_data;                
 logic           [63:0]  grp_d0_rx4_data;                
 logic           [63:0]  grp_a1_rx1_data;                
@@ -328,20 +331,20 @@ logic  [shared_pkg::W_MGMT_DATA64-1:0]  ahb1_txppe1_ahb_rd_data;
 logic            ahb1_txppe1_ahb_rd_ack;         
 
 logic            egr0_ahb_ahb_req_p;              // Blasted Interface egr_ahb_if.egr egr0_ahb
-logic  [W_AHB_ADDR-1:0]  egr0_ahb_ahb_addr;              
+logic  [shared_pkg::W_MGMT_ADDR-1:0]  egr0_ahb_ahb_addr;              
 logic            egr0_ahb_ahb_wr;                
-logic  [W_AHB_DATA-1:0]  egr0_ahb_ahb_wr_data;           
+logic  [shared_pkg::W_MGMT_DATA64-1:0]  egr0_ahb_ahb_wr_data;           
 logic            egr0_ahb_ahb_ack_p;             
-logic  [W_AHB_DATA-1:0]  egr0_ahb_ahb_rd_data;           
+logic  [shared_pkg::W_MGMT_DATA64-1:0]  egr0_ahb_ahb_rd_data;           
 logic            egr0_ahb_dfxsignal_in;          
 logic            egr0_ahb_dfxsignal_out;         
 
 logic            egr1_ahb_ahb_req_p;              // Blasted Interface egr_ahb_if.egr egr1_ahb
-logic  [W_AHB_ADDR-1:0]  egr1_ahb_ahb_addr;              
+logic  [shared_pkg::W_MGMT_ADDR-1:0]  egr1_ahb_ahb_addr;              
 logic            egr1_ahb_ahb_wr;                
-logic  [W_AHB_DATA-1:0]  egr1_ahb_ahb_wr_data;           
+logic  [shared_pkg::W_MGMT_DATA64-1:0]  egr1_ahb_ahb_wr_data;           
 logic            egr1_ahb_ahb_ack_p;             
-logic  [W_AHB_DATA-1:0]  egr1_ahb_ahb_rd_data;           
+logic  [shared_pkg::W_MGMT_DATA64-1:0]  egr1_ahb_ahb_rd_data;           
 logic            egr1_ahb_dfxsignal_in;          
 logic            egr1_ahb_dfxsignal_out;         
 
@@ -368,7 +371,7 @@ logic            grp_a0_tx_enable;
 logic     [7:0]  grp_a0_tx_data_valid;           
 logic     [1:0]  grp_a0_tx_port_num;             
 logic            grp_a0_tx_valid_resp;           
-logic    [23:0]  grp_a0_tx_metadata;             
+logic    [27:0]  grp_a0_tx_metadata;             
 logic    [63:0]  grp_a0_tx0_data;                
 logic    [63:0]  grp_a0_tx1_data;                
 logic    [63:0]  grp_a0_tx2_data;                
@@ -385,7 +388,7 @@ logic            grp_a1_tx_enable;
 logic     [7:0]  grp_a1_tx_data_valid;           
 logic     [1:0]  grp_a1_tx_port_num;             
 logic            grp_a1_tx_valid_resp;           
-logic    [23:0]  grp_a1_tx_metadata;             
+logic    [27:0]  grp_a1_tx_metadata;             
 logic    [63:0]  grp_a1_tx0_data;                
 logic    [63:0]  grp_a1_tx1_data;                
 logic    [63:0]  grp_a1_tx2_data;                
@@ -402,7 +405,7 @@ logic            grp_b0_tx_enable;
 logic     [7:0]  grp_b0_tx_data_valid;           
 logic     [1:0]  grp_b0_tx_port_num;             
 logic            grp_b0_tx_valid_resp;           
-logic    [23:0]  grp_b0_tx_metadata;             
+logic    [27:0]  grp_b0_tx_metadata;             
 logic    [63:0]  grp_b0_tx0_data;                
 logic    [63:0]  grp_b0_tx1_data;                
 logic    [63:0]  grp_b0_tx2_data;                
@@ -419,7 +422,7 @@ logic            grp_b1_tx_enable;
 logic     [7:0]  grp_b1_tx_data_valid;           
 logic     [1:0]  grp_b1_tx_port_num;             
 logic            grp_b1_tx_valid_resp;           
-logic    [23:0]  grp_b1_tx_metadata;             
+logic    [27:0]  grp_b1_tx_metadata;             
 logic    [63:0]  grp_b1_tx0_data;                
 logic    [63:0]  grp_b1_tx1_data;                
 logic    [63:0]  grp_b1_tx2_data;                
@@ -436,7 +439,7 @@ logic            grp_c0_tx_enable;
 logic     [7:0]  grp_c0_tx_data_valid;           
 logic     [1:0]  grp_c0_tx_port_num;             
 logic            grp_c0_tx_valid_resp;           
-logic    [23:0]  grp_c0_tx_metadata;             
+logic    [27:0]  grp_c0_tx_metadata;             
 logic    [63:0]  grp_c0_tx0_data;                
 logic    [63:0]  grp_c0_tx1_data;                
 logic    [63:0]  grp_c0_tx2_data;                
@@ -453,7 +456,7 @@ logic            grp_c1_tx_enable;
 logic     [7:0]  grp_c1_tx_data_valid;           
 logic     [1:0]  grp_c1_tx_port_num;             
 logic            grp_c1_tx_valid_resp;           
-logic    [23:0]  grp_c1_tx_metadata;             
+logic    [27:0]  grp_c1_tx_metadata;             
 logic    [63:0]  grp_c1_tx0_data;                
 logic    [63:0]  grp_c1_tx1_data;                
 logic    [63:0]  grp_c1_tx2_data;                
@@ -470,7 +473,7 @@ logic            grp_d0_tx_enable;
 logic     [7:0]  grp_d0_tx_data_valid;           
 logic     [1:0]  grp_d0_tx_port_num;             
 logic            grp_d0_tx_valid_resp;           
-logic    [23:0]  grp_d0_tx_metadata;             
+logic    [27:0]  grp_d0_tx_metadata;             
 logic    [63:0]  grp_d0_tx0_data;                
 logic    [63:0]  grp_d0_tx1_data;                
 logic    [63:0]  grp_d0_tx2_data;                
@@ -487,7 +490,7 @@ logic            grp_d1_tx_enable;
 logic     [7:0]  grp_d1_tx_data_valid;           
 logic     [1:0]  grp_d1_tx_port_num;             
 logic            grp_d1_tx_valid_resp;           
-logic    [23:0]  grp_d1_tx_metadata;             
+logic    [27:0]  grp_d1_tx_metadata;             
 logic    [63:0]  grp_d1_tx0_data;                
 logic    [63:0]  grp_d1_tx1_data;                
 logic    [63:0]  grp_d1_tx2_data;                
@@ -859,9 +862,6 @@ logic          [67:0]  mpp_tagring_out_up_9_0;
 logic          [67:0]  mpp_tagring_out_up_9_1;                    
 // collage-pragma translate_off
 
-import mby_egr_pkg::*; 
-import mby_igr_pkg::*; 
-import mby_gmm_pkg::*; 
 egr_mc_table_if                  egr0_mc_table0();
 egr_mc_table_if                  egr0_mc_table1();
 egr_ppe_stm_if                   egr0_ppestm();
@@ -2196,7 +2196,7 @@ mby_mgp    mgp1(
 /* output logic             [106:0] */ .gpolring_update_out_up_0   (mpp_gpolring_update_out_0),                  
 /* output logic             [106:0] */ .gpolring_update_out_up_1   (mpp_gpolring_update_out_1),                  
 /* output logic                     */ .grp_a_tx_pfc_tc_sync       (grp_a1_tx_pfc_tc_sync),                      
-/* output logic               [3:0] */ .grp_a_tx_pfc_xoff          (grp_a1_tx_pfc_xoff),                         
+/* output logic               [3:0] */ .grp_a_tx_pfc_xoff          (xgrp_a1_tx_pfc_xoff),                         
 /* output logic                     */ .grp_b_tx_pfc_tc_sync       (grp_b1_tx_pfc_tc_sync),                      
 /* output logic               [3:0] */ .grp_b_tx_pfc_xoff          (grp_b1_tx_pfc_xoff),                         
 /* output logic                     */ .grp_c_tx_pfc_tc_sync       (grp_c1_tx_pfc_tc_sync),                      
@@ -2287,24 +2287,32 @@ mby_mgp    mgp1(
 // End of module mgp1 from mby_mgp
 
 
-// module ppestm    from ppe_stm_top using ppestm.map 
-ppe_stm_top    ppestm(
-/* input  logic                       */ .cclk                       (cclk),                                       
-/* input  logic                [98:0] */ .i_ibus_ctrl                (),                                           
-/* input  logic                       */ .reset                      (sreset),                                     
+// module ppe_stm_rx    from ppe_stm_rx_top using ppe_stm_rx.map 
+ppe_stm_rx_top    ppe_stm_rx(
+/* logic                     */ .cclk                       (cclk),                                       
+/* logic              [98:0] */ .i_ibus_ctrl                (),                                           
+/* logic                     */ .reset                      (sreset),                                     
+/* Interface rx_ppe_ppe_stm0_if.stm */ .rx_ppe_ppe_stm0_if0        (rxppe0_ppestm0),                             
+/* Interface rx_ppe_ppe_stm0_if.stm */ .rx_ppe_ppe_stm0_if1        (rxppe1_ppestm0),                             
+/* Interface rx_ppe_ppe_stm1_if.stm */ .rx_ppe_ppe_stm1_if0        (rxppe0_ppestm1),                             
+/* Interface rx_ppe_ppe_stm1_if.stm */ .rx_ppe_ppe_stm1_if1        (rxppe1_ppestm1),                             
+/* logic              [66:0] */ .o_ibus_resp                ());                                           
+// End of module ppe_stm_rx from ppe_stm_rx_top
+
+
+// module ppe_stm_tx    from ppe_stm_tx_top using ppe_stm_tx.map 
+ppe_stm_tx_top    ppe_stm_tx(
+/* logic                       */ .cclk                       (cclk),                                       
+/* logic                [98:0] */ .i_ibus_ctrl                (),                                           
+/* logic                       */ .reset                      (sreset),                                     
 /* Interface egr_ppe_stm_if.stm       */ .egr_ppe_stm_if0            (egr0_ppestm),                                
 /* Interface egr_ppe_stm_if.stm       */ .egr_ppe_stm_if1            (egr1_ppestm),                                
 /* Interface egr_mc_table_if.mc_table */ .mc_table_if0_0             (egr0_mc_table0),                             
 /* Interface egr_mc_table_if.mc_table */ .mc_table_if0_1             (egr0_mc_table1),                             
 /* Interface egr_mc_table_if.mc_table */ .mc_table_if1_0             (egr1_mc_table0),                             
 /* Interface egr_mc_table_if.mc_table */ .mc_table_if1_1             (egr1_mc_table1),                             
-/* Interface rx_ppe_ppe_stm0_if.stm   */ .rx_ppe_ppe_stm0_if0        (rxppe0_ppestm0),                             
-/* Interface rx_ppe_ppe_stm0_if.stm   */ .rx_ppe_ppe_stm0_if1        (rxppe1_ppestm0),                             
-/* Interface rx_ppe_ppe_stm1_if.stm   */ .rx_ppe_ppe_stm1_if0        (rxppe0_ppestm1),                             
-/* Interface rx_ppe_ppe_stm1_if.stm   */ .rx_ppe_ppe_stm1_if1        (rxppe1_ppestm1),                             
-/* output logic                [66:0] */ .o_ibus_resp                ());                                           
-// End of module ppestm from ppe_stm_top
-
+/* logic                [66:0] */ .o_ibus_resp                ());                                           
+// End of module ppe_stm_tx from ppe_stm_tx_top
 
 
 // module mpp_csr_shim    from mby_mpp_csr_shim using mpp_csr_shim.map 
@@ -2363,5 +2371,364 @@ ppe_stm_top    ppestm(
 
 
 // collage-pragma translate_on
+    import mby_msh_pkg::*;
+    localparam NUM_MSH_ROWS=1;
+    localparam NUM_MSH_ROW_PORTS=3;
+    
+                                                                                
+  logic           i_igr_eb_wreq_valid     [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+  seg_ptr_t       i_igr_eb_wr_seg_ptr     [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+  sema_t          i_igr_eb_wr_sema        [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+  wd_sel_t        i_igr_eb_wr_wd_sel      [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+  req_id_t        i_igr_eb_wreq_id        [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+  msh_data_t      i_igr_eb_wr_data        [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+ xact_credits_t   o_igr_wb_wreq_credits  [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+
+    // East Side Write Ports
+    
+    logic           i_igr_wb_wreq_valid    [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+    seg_ptr_t       i_igr_wb_wr_seg_ptr    [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+    sema_t          i_igr_wb_wr_sema       [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+    wd_sel_t        i_igr_wb_wr_wd_sel     [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+    req_id_t        i_igr_wb_wreq_id       [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+    msh_data_t      i_igr_wb_wr_data       [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+   
+   xact_credits_t   o_igr_eb_wreq_credits  [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+   
+    //////////////////////////////
+    // Mesh MGP Read Request Ports      FIXME:  add _rreq to signal names
+    //////////////////////////////
+
+    // West Side Read Request Ports 
+    
+     logic            i_egr_eb_rreq_valid    [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+     seg_ptr_t        i_egr_eb_seg_ptr       [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+     sema_t           i_egr_eb_sema          [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+     wd_sel_t         i_egr_eb_wd_sel        [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+     req_id_t         i_egr_eb_req_id        [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+    
+     xact_credits_t   o_egr_wb_rreq_credits  [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+
+   
+      
+    // East Side Read Request Ports 
+    
+    logic            i_egr_wb_rreq_valid    [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+    seg_ptr_t        i_egr_wb_seg_ptr       [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+    sema_t           i_egr_wb_sema          [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+    wd_sel_t         i_egr_wb_wd_sel        [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+    req_id_t         i_egr_wb_req_id        [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+   
+    xact_credits_t   o_egr_eb_rreq_credits  [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+        
+   
+    ///////////////////////////////
+    // Mesh MGP Read Response Ports
+    ///////////////////////////////
+        
+    // West Side Read Response Ports
+    
+    logic                o_egr_wb_rrsp_valid        [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+    rrsp_dest_block_t    o_egr_wb_rrsp_dest_block   [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+    req_id_t             o_egr_wb_rrsp_req_id       [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+    msh_data_t           o_egr_wb_rd_data           [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+    
+    // East Side Read Response Ports
+    
+    logic                o_egr_eb_rrsp_valid        [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+    rrsp_dest_block_t    o_egr_eb_rrsp_dest_block   [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+    req_id_t             o_egr_eb_rrsp_req_id       [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+    msh_data_t           o_egr_eb_rd_data           [NUM_MSH_ROWS-1:0][NUM_MSH_ROW_PORTS-1:0];
+   
+
+
+    ////////////////////////
+    // Mesh GMM Write Ports 
+    ////////////////////////
+   
+    // North Side Write Port
+    
+    logic           i_sb_wreq_valid;
+    seg_ptr_t       i_sb_wr_seg_ptr;
+    sema_t          i_sb_wr_sema;
+    wd_sel_t        i_sb_wr_wd_sel;
+    req_id_t        i_sb_wreq_id;
+    msh_data_t      i_sb_wr_data;
+           
+    xact_credits_t   o_nb_wreq_credits;
+   
+    // South Side Write Port
+    
+      logic           i_nb_wreq_valid;
+      seg_ptr_t       i_nb_wr_seg_ptr;
+      sema_t          i_nb_wr_sema;
+      wd_sel_t        i_nb_wr_wd_sel;
+      req_id_t        i_nb_wreq_id;
+      msh_data_t      i_nb_wr_data;
+           
+     xact_credits_t   o_sb_wreq_credits;
+   
+
+    
+    //////////////////////////////
+    // Mesh GMM Read Request Ports
+    //////////////////////////////
+
+    // North Side Read Request Port 
+    
+     logic            i_sb_rreq_valid;
+     seg_ptr_t        i_sb_rreq_seg_ptr;
+     sema_t           i_sb_rreq_sema;
+     wd_sel_t         i_sb_rreq_wd_sel;
+     req_id_t         i_sb_rreq_id;
+    
+     xact_credits_t   o_nb_rreq_credits;
+        
+    // South Side Read Request Port 
+    
+     logic            i_nb_rreq_valid;
+     seg_ptr_t        i_nb_rreq_seg_ptr;
+     sema_t           i_nb_rreq_sema;
+     wd_sel_t         i_nb_rreq_wd_sel;
+     req_id_t         i_nb_rreq_id;
+    
+     xact_credits_t   o_sb_rreq_credits;
+        
+
+ 
+   
+    ///////////////////////////////
+    // Mesh GMM Read Response Ports
+    ///////////////////////////////
+        
+    // North Side Read Response Port
+    
+     logic                o_nb_rrsp_valid;
+     rrsp_dest_block_t    o_nb_rrsp_dest_block;
+     req_id_t             o_nb_rrsp_req_id;
+     msh_data_t           o_nb_rd_data;
+    
+    // South Side Read Response Port
+    
+     logic                o_sb_rrsp_valid;
+     rrsp_dest_block_t    o_sb_rrsp_dest_block;
+     req_id_t             o_sb_rrsp_req_id;
+     msh_data_t           o_sb_rd_data;
+
+    
+    assign i_igr_eb_wreq_valid[0][2] = mim0_wr2_mim_wreq_valid;
+    assign i_igr_eb_wreq_valid[0][1] = mim0_wr1_mim_wreq_valid;
+    assign i_igr_eb_wreq_valid[0][0] = mim0_wr0_mim_wreq_valid;
+    
+    assign i_igr_eb_wr_seg_ptr[0][0] = mim0_wr0_mim_wr_seg_ptr;
+    assign i_igr_eb_wr_sema[0][0]    = mim0_wr0_mim_wr_sema;
+    assign i_igr_eb_wr_wd_sel[0][0]  = mim0_wr0_mim_wr_wd_sel;
+    assign i_igr_eb_wreq_id[0][0]    = mim0_wr0_mim_wreq_id;
+    assign i_igr_eb_wr_data[0][0]    = mim0_wr0_mim_wr_data;
+    
+    assign i_igr_eb_wr_seg_ptr[0][1] = mim0_wr1_mim_wr_seg_ptr;
+    assign i_igr_eb_wr_sema[0][1]    = mim0_wr1_mim_wr_sema;
+    assign i_igr_eb_wr_wd_sel[0][1]  = mim0_wr1_mim_wr_wd_sel;
+    assign i_igr_eb_wreq_id[0][1]    = mim0_wr1_mim_wreq_id;
+    assign i_igr_eb_wr_data[0][1]    = mim0_wr1_mim_wr_data;
+
+    assign i_igr_eb_wr_seg_ptr[0][2] = mim0_wr2_mim_wr_seg_ptr;
+    assign i_igr_eb_wr_sema[0][2]    = mim0_wr2_mim_wr_sema;
+    assign i_igr_eb_wr_wd_sel[0][2]  = mim0_wr2_mim_wr_wd_sel;
+    assign i_igr_eb_wreq_id[0][2]    = mim0_wr2_mim_wreq_id;
+    assign i_igr_eb_wr_data[0][2]    = mim0_wr2_mim_wr_data;
+
+    
+//    assign mim0_wr0_mim_wreq_valid = mim0_wr0.mim_wreq_valid;
+//    assign mim0_wr0_mim_wr_seg_ptr = mim0_wr0.mim_wr_seg_ptr;
+//    assign mim0_wr0_mim_wr_sema = mim0_wr0.mim_wr_sema;
+//    assign mim0_wr0_mim_wr_wd_sel = mim0_wr0.mim_wr_wd_sel;
+//    assign mim0_wr0_mim_wreq_id = mim0_wr0.mim_wreq_id;
+//    assign mim0_wr0_mim_wr_data = mim0_wr0.mim_wr_data;
+//    assign mim0_wr0.mim_wreq_credits = mim0_wr0_mim_wreq_credits;
+//
+    
+    initial begin
+        for( int i=0; i<3; i++ ) begin
+            i_igr_wb_wreq_valid[0][i] = '0;
+
+            i_igr_wb_wr_seg_ptr[0][i]  = seg_ptr_t'( '0 );
+            i_igr_wb_wr_sema[0][i]     = sema_t'( '0 );
+            i_igr_wb_wr_wd_sel[0][i]   = wd_sel_t'( '0 );
+            i_igr_wb_wreq_id[0][i]     = req_id_t'( '0 );
+            i_igr_wb_wr_data[0][i]     = msh_data_t'( '0 );
+
+            
+            i_egr_wb_rreq_valid[0][i] = '0;
+
+            i_egr_wb_seg_ptr[0][i]    = seg_ptr_t'( '0 );
+            i_egr_wb_sema[0][i]       = sema_t'( '0 );
+            i_egr_wb_wd_sel[0][i]     = wd_sel_t'( '0 );
+            i_egr_wb_req_id[0][i]     = req_id_t'( '0 );
+            
+            i_egr_eb_rreq_valid[0][i] = '0;
+
+            i_egr_eb_seg_ptr[0][i]    = seg_ptr_t'( '0 );
+            i_egr_eb_sema[0][i]       = sema_t'( '0 );
+            i_egr_eb_wd_sel[0][i]     = wd_sel_t'( '0 );
+            i_egr_eb_req_id[0][i]     = req_id_t'( '0 );
+            
+        end
+
+        i_sb_wreq_valid  = '0;
+ 
+        i_sb_wr_seg_ptr  = seg_ptr_t'( '0 ); 
+        i_sb_wr_sema     = sema_t'( '0 );    
+        i_sb_wr_wd_sel   = wd_sel_t'( '0 );  
+        i_sb_wreq_id     = req_id_t'( '0 );  
+        i_sb_wr_data     = msh_data_t'( '0 );
+
+        i_nb_wreq_valid  = '0;
+ 
+        i_nb_wr_seg_ptr  = seg_ptr_t'( '0 ); 
+        i_nb_wr_sema     = sema_t'( '0 );    
+        i_nb_wr_wd_sel   = wd_sel_t'( '0 );  
+        i_nb_wreq_id     = req_id_t'( '0 );  
+        i_nb_wr_data     = msh_data_t'( '0 );
+
+
+        i_sb_rreq_valid  = '0;
+ 
+        i_sb_rreq_seg_ptr  = seg_ptr_t'( '0 ); 
+        i_sb_rreq_sema     = sema_t'( '0 );    
+        i_sb_rreq_wd_sel   = wd_sel_t'( '0 );  
+        i_sb_rreq_id     = req_id_t'( '0 );  
+
+        i_nb_rreq_valid  = '0;
+ 
+        i_nb_rreq_seg_ptr  = seg_ptr_t'( '0 ); 
+        i_nb_rreq_sema     = sema_t'( '0 );    
+        i_nb_rreq_wd_sel   = wd_sel_t'( '0 );  
+        i_nb_rreq_id     = req_id_t'( '0 );  
+
+    end
+          
+
+mby_msh #(
+
+    .NUM_MSH_ROWS(1),
+    .NUM_MSH_COLS(2)
+
+) msh (
+
+    
+    .cclk(cclk),                                // core clock
+    .chreset(sreset),                  // core hard reset
+    .csreset(sreset),                  // core soft reset
+
+    .mclk(cclk),                                // mesh clock
+    .mhreset(sreset),                  // mesh hard reset
+    .msreset(sreset),                  // mesh soft reset
+
+
+     .i_igr_eb_wreq_valid   ,
+     .i_igr_eb_wr_seg_ptr   ,
+     .i_igr_eb_wr_sema      ,
+     .i_igr_eb_wr_wd_sel    ,
+     .i_igr_eb_wreq_id      ,
+     .i_igr_eb_wr_data      ,
+     .o_igr_eb_wreq_credits ,
+
+     .i_igr_wb_wreq_valid      ,
+     .i_igr_wb_wr_seg_ptr      ,
+     .i_igr_wb_wr_sema         ,
+     .i_igr_wb_wr_wd_sel       ,
+     .i_igr_wb_wreq_id         ,
+     .i_igr_wb_wr_data         ,
+     .o_igr_wb_wreq_credits    ,
+
+     .i_egr_eb_rreq_valid      ,
+     .i_egr_eb_seg_ptr         ,
+     .i_egr_eb_sema            ,
+     .i_egr_eb_wd_sel          ,
+     .i_egr_eb_req_id          ,
+     .o_egr_wb_rreq_credits    ,
+     .i_egr_wb_rreq_valid      ,
+     .i_egr_wb_seg_ptr         ,
+     .i_egr_wb_sema            ,
+     .i_egr_wb_wd_sel          ,
+     .i_egr_wb_req_id          ,
+
+     .o_egr_eb_rreq_credits    ,
+     .o_egr_wb_rrsp_valid      ,
+     .o_egr_wb_rrsp_dest_block ,
+     .o_egr_wb_rrsp_req_id     ,
+     .o_egr_wb_rd_data         ,
+     .o_egr_eb_rrsp_valid      ,
+     .o_egr_eb_rrsp_dest_block ,
+     .o_egr_eb_rrsp_req_id     ,
+     .o_egr_eb_rd_data         ,
+
+     .i_sb_wreq_valid          ,
+     .i_sb_wr_seg_ptr          ,
+     .i_sb_wr_sema             ,
+     .i_sb_wr_wd_sel           ,
+     .i_sb_wreq_id             ,
+     .i_sb_wr_data             ,
+
+     .o_nb_wreq_credits        ,
+     .i_nb_wreq_valid          ,
+     .i_nb_wr_seg_ptr          ,
+     .i_nb_wr_sema             ,
+     .i_nb_wr_wd_sel           ,
+     .i_nb_wreq_id             ,
+     .i_nb_wr_data             ,
+
+     .o_sb_wreq_credits        ,
+     .i_sb_rreq_valid          ,
+     .i_sb_rreq_seg_ptr        ,
+     .i_sb_rreq_sema           ,
+     .i_sb_rreq_wd_sel         ,
+     .i_sb_rreq_id             ,
+
+     .o_nb_rreq_credits        ,
+     .i_nb_rreq_valid          ,
+     .i_nb_rreq_seg_ptr        ,
+     .i_nb_rreq_sema           ,
+     .i_nb_rreq_wd_sel         ,
+     .i_nb_rreq_id             ,
+
+     .o_sb_rreq_credits        ,
+     .o_nb_rrsp_valid          ,
+     .o_nb_rrsp_dest_block     ,
+     .o_nb_rrsp_req_id         ,
+     .o_nb_rd_data             ,
+     .o_sb_rrsp_valid          ,
+     .o_sb_rrsp_dest_block     ,
+     .o_sb_rrsp_req_id         ,
+     .o_sb_rd_data             
+    
+);
+
+
+initial
+begin
+cclk = 1'b0;
+forever
+ #1 cclk = ~cclk;
+end
+
+    logic rst;
+    assign arst_n = ~rst;
+    assign sreset = rst;
+    
+    
+initial
+begin
+   //$vcdplusdeltacycleon;
+   //$vcdplusglitchon;    
+   $vcdpluson (0);                                // testbench with hierarchy
+   $vcdplusmemon;
+
+`include "tst_mgp.sv"
+  $finish;
+end
+
+
 
 endmodule // mby_mpp

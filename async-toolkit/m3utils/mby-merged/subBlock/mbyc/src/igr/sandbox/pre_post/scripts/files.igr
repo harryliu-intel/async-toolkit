@@ -2,10 +2,12 @@
 +incdir+$LOGICROOT/igr/rtl
 $LOGICROOT/shared/rtl/mby_egr_pkg.sv
 $LOGICROOT/igr/rtl/mby_igr_pkg.sv
+$LOGICROOT/shared/rtl/mby_gmm_pkg.sv
 $LOGICROOT/shared/rtl/mby_rx_metadata_pkg.sv
 -y $LOGICROOT/igr/rtl
 -y $LOGICROOT/igr/pre_ppe/rtl
 -y $LOGICROOT/igr/post_ppe/rtl
+-y $LOGICROOT/igr/itag/rtl
 -y $LOGICROOT/igr/interfaces
 
 //
@@ -20,10 +22,15 @@ $LOGICROOT/shared/rtl/mby_rx_metadata_pkg.sv
 //$LOGICROOT/igr/sandbox/pre_post/verilog/mgm_run/igr/src/igr_mem.def
 
 +incdir+$LOGICROOT/../../../target/mby/mgm_run/rtl
++incdir+$LOGICROOT/../../../target/mby/mgm_run/post_ppe/src
++incdir+$LOGICROOT/../../../target/mby/mgm_run/post_ppe/src/mem_wrap
 +incdir+$LOGICROOT/../../../target/mby/mgm_run/igr/src
 +incdir+$LOGICROOT/../../../target/mby/mgm_run/igr/src/mem_wrap
 -y $LOGICROOT/../../../target/mby/mgm_run/rtl
+-y $LOGICROOT/../../../target/mby/mgm_run/post_ppe/src
+-y $LOGICROOT/../../../target/mby/mgm_run/post_ppe/src/mem_wrap
 -y $LOGICROOT/../../../target/mby/mgm_run/igr/src
 -y $LOGICROOT/../../../target/mby/mgm_run/igr/src/mem_wrap
 $LOGICROOT/../../../target/mby/mgm_run/igr/src/igr_mem.def
+$LOGICROOT/../../../target/mby/mgm_run/post_ppe/src/post_ppe_mem.def
 

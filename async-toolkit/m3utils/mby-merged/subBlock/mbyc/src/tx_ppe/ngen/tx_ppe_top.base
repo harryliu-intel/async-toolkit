@@ -1,0 +1,23 @@
+// -- Author       : Jon Bagge <jon.bagge@intel.com>
+// -- Project Name : MBY
+// -- Description  : TX-PPE netlist.
+// -------------------------------------------------------------------
+ngen_mod_name
+
+input reset,
+ahb_rx_ppe_if.ppe ahb_tx_ppe_if,
+glb_rx_ppe_if.ppe glb_tx_ppe_if,
+egr_tx_ppe_if.ppe egr_tx_ppe_if,
+tx_ppe_mod_if.ppe tx_ppe_mod_if,
+tx_ppe_negh_if.ppe tx_ppe_negh_if,
+ngen_IO_list
+ngen_IO_end
+
+ngen_wires
+
+logic reset_n;
+print "assign reset_n = !reset;\n";
+
+ngen_submodules
+
+ngen_endmodule

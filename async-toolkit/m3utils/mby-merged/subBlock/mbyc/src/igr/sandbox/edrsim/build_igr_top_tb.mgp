@@ -1,0 +1,233 @@
+#!/bin/csh -vf
+setenv SVA_LIB `ToolConfig.pl get_tool_path ipconfig/sva_lib_ip`
+setenv SHRTL   `ToolConfig.pl get_tool_path ipconfig/shrtl`
+setenv MGM_RUN ../../../../../../target/mby/mgm_run
+setenv MBY_SRC ../../..
+
+vcs +v2k -R -V -debug_all -full64 -sverilog +libverbose -notice -xlrm uniq_prior_final +vcs+lic+wait -V -timescale=1ps/1ps \
+-l vcs.log +error+25\
++define+SYTB_OFF +libext+.v+.sv+.vh+.svh+.vs+.vm \
++vcs+vcdpluson +define+VCSSIM -assert svaext +define+FAKE_MEM \
++warn=noUII-L \
++lint=noPCTI-L \
++lint=none \
++notimingchecks \
++define+HIERREF \
++define+VFU_CLUSTER \
++define+VAL4 \
++define+PKG0 \
++define+EVENTS_OFF \
++define+TBCOMP_OFF \
++define+FSDB_DISABLE \
++define+INST_ON  \
++define+SVA_OFF \
++define+INTEL_SVA_OFF \
++define+MBY_IGR_BEHAVE_MEMS \
++define+MBY_MSH_BEHAVE_MEMS \
+-ignore driver_checks \
+-assert api_event \
+-assert api \
+-assert vpiSeqFail \
+-assert print \
+-assert vpiSeqBeginTime \
+-assert enable_diag \
+-assert let \
+-assert enable_hier \
++incdir+../../rtl \
++incdir+./ \
++incdir+/nfs/site/disks/ccdo.soc.cad_root.1/cad/x86-64_linux26/synopsys/designcompiler/M-2016.12-SP3/dw/sim_ver \
++incdir+$MGM_RUN/post_ppe/src \
++incdir+$MGM_RUN/post_ppe/src/mem_wrap \
++incdir+$MGM_RUN/igr/src \
++incdir+$MGM_RUN/igr/src/mem_wrap \
++incdir+$MGM_RUN/egr/src \
++incdir+$MGM_RUN/egr/src/mem_wrap \
++incdir+$MGM_RUN/rtl \
++incdir+$MGM_RUN/parser/src \
++incdir+$MGM_RUN/parser/src/mem_wrap \
++incdir+$MGM_RUN/class_gpa/src \
++incdir+$MGM_RUN/class_gpa/src/mem_wrap \
++incdir+$MGM_RUN/class_gpb/src \
++incdir+$MGM_RUN/class_gpb/src/mem_wrap \
++incdir+$MGM_RUN/action/src \
++incdir+$MGM_RUN/action/src/mem_wrap \
++incdir+$MGM_RUN/ppe_stm_rx/src \
++incdir+$MGM_RUN/ppe_stm_rx/src/mem_wrap \
++incdir+$MGM_RUN/ppe_stm_tx/src \
++incdir+$MGM_RUN/ppe_stm_tx/src/mem_wrap \
++incdir+$MGM_RUN/msh/src \
++incdir+$MGM_RUN/msh/src/mem_wrap \
++incdir+$SHRTL/src/common/rtl \
++incdir+$MBY_SRC/shared/rtl/ \
++incdir+$MBY_SRC/egr/rtl/ \
++incdir+$MBY_SRC/rx_ppe/rtl \
++incdir+$MBY_SRC/parser/rtl \
++incdir+$MBY_SRC/class_gpa/rtl \
++incdir+$MBY_SRC/class_gpb/rtl \
++incdir+$MBY_SRC/action/rtl \
++incdir+$MBY_SRC/shared/rtl \
++incdir+$MBY_SRC/shared/interfaces \
++incdir+$MBY_SRC/shared/sva/hlp \
++incdir+$MBY_SRC/action/sva/trigger/hlp \
++incdir+$MBY_SRC/msh/rtl \
++incdir+$MBY_SRC/msh_node/rtl \
++incdir+$MBY_SRC/csrs/mby/output/sverilog \
++incdir+$MBY_SRC/egr/rtl/mem/cpb/src \
++incdir+$MBY_SRC/egr/rtl/mem/mri/src \
++incdir+$MBY_SRC/egr/rtl/mem/pfs/src \
++incdir+$MBY_SRC/egr/rtl/mem/prc/src \
++incdir+$MBY_SRC/egr/rtl/mem/tcu/src \
++incdir+$MBY_SRC/egr/rtl/mem/tdb/src \
++incdir+$MBY_SRC/egr/rtl/mem/tmu/src \
++incdir+$MBY_SRC/egr/rtl/mem/tqu/src \
++incdir+$MBY_SRC/egr/rtl/mem/cpb/src/mem_wrap \
++incdir+$MBY_SRC/egr/rtl/mem/mri/src/mem_wrap \
++incdir+$MBY_SRC/egr/rtl/mem/pfs/src/mem_wrap \
++incdir+$MBY_SRC/egr/rtl/mem/prc/src/mem_wrap \
++incdir+$MBY_SRC/egr/rtl/mem/tcu/src/mem_wrap \
++incdir+$MBY_SRC/egr/rtl/mem/tdb/src/mem_wrap \
++incdir+$MBY_SRC/egr/rtl/mem/tmu/src/mem_wrap \
++incdir+$MBY_SRC/egr/rtl/mem/tqu/src/mem_wrap \
+$SVA_LIB \
+$MGM_RUN/rtl/mby_mgm_mems.def \
+$MGM_RUN/ppe_stm_tx/src/ppe_stm_tx_mem.def \
+$MGM_RUN/ppe_stm_rx/src/ppe_stm_rx_mem.def \
+$MGM_RUN/action/src/action_mem.def \
+$MGM_RUN/class_gpa/src/class_gpa_mem.def \
+$MGM_RUN/class_gpb/src/class_gpb_mem.def \
+$MGM_RUN/egr/src/egr_mem.def \
+$MGM_RUN/gcm/src/gcm_mem.def \
+$MGM_RUN/gpm/src/gpm_mem.def \
+$MGM_RUN/igr/src/igr_mem.def \
+$MGM_RUN/igr_pbb/src/igr_pbb_mem.def \
+$MGM_RUN/post_ppe/src/post_ppe_mem.def \
+$MGM_RUN/mce/src/mce_mem.def \
+$MGM_RUN/msh/src/msh_mem.def \
+$MGM_RUN/parser/src/parser_mem.def \
+$MBY_SRC/egr/rtl/mem/cpb/src/cpb_mem.def \
+$MBY_SRC/egr/rtl/mem/mri/src/mri_mem.def \
+$MBY_SRC/egr/rtl/mem/pfs/src/pfs_mem.def \
+$MBY_SRC/egr/rtl/mem/prc/src/prc_mem.def \
+$MBY_SRC/egr/rtl/mem/tcu/src/tcu_mem.def \
+$MBY_SRC/egr/rtl/mem/tdb/src/tdb_mem.def \
+$MBY_SRC/egr/rtl/mem/tmu/src/tmu_mem.def \
+$MBY_SRC/egr/rtl/mem/tqu/src/tqu_mem.def \
+$MBY_SRC/shared/rtl/shared_pkg.sv \
+$MBY_SRC/shared/rtl/mby_msh_pkg.sv \
+$MBY_SRC/shared/rtl/mby_rx_metadata_pkg.sv \
+$MBY_SRC/shared/rtl/mby_egr_pkg.sv \
+$MBY_SRC/shared/rtl/axi2ibus_pkg.sv \
+$MBY_SRC/shared/rtl/mby_gmm_pkg.sv \
+$MBY_SRC/shared/rtl/mby_egr_pkg.sv \
+$MBY_SRC/shared/rtl/hlp/hlp_register_constants_pkg.vh \
+$MBY_SRC/shared/rtl/hlp/hlp_register_struct.vh \
+$MBY_SRC/shared/rtl/hlp/hlp_pkt_pkg.vh \
+$MBY_SRC/shared/rtl/hlp/hlp_pkt_meta_pkg.vh \
+$MBY_SRC/shared/rtl/hlp/hlp_pkg.vh \
+$MBY_SRC/shared/rtl/hlp/hlp_ipp_pkg.vh \
+$MBY_SRC/shared/rtl/hlp/hlp_fwd_pkg.vh \
+$MBY_SRC/parser/rtl/parser_pkg.sv \
+$MBY_SRC/class_gpa/rtl/class_gpa_pkg.sv \
+$MBY_SRC/class_gpb/rtl/class_gpb_pkg.sv \
+$MBY_SRC/action/rtl/action_pkg.sv \
+$MBY_SRC/igr/rtl/mby_igr_pkg.sv \
+$MBY_SRC/msh_node/rtl/mby_msh_node_pkg.sv \
+$MBY_SRC/shared/interfaces/igr_rx_ppe_if.sv \
+$MBY_SRC/shared/interfaces/rx_ppe_igr_if.sv \
+$MBY_SRC/shared/interfaces/mim_rd_if.sv \
+$MBY_SRC/shared/interfaces/mim_wr_if.sv \
+-y ../../../../../../subIP/CTECH/source/v \
+-y $SHRTL/src/common/rtl \
+-y $SHRTL/src/fifo/rtl \
+-y $SHRTL/src/sync/rtl \
+-y $MBY_SRC/shared/interfaces \
+-y $MBY_SRC/shared/rtl \
+-y $MBY_SRC/shared/rtl/hlp \
+-y $MBY_SRC/egr/interfaces \
+-y $MBY_SRC/egr/cpb/interfaces \
+-y $MBY_SRC/egr/mri/interfaces \
+-y $MBY_SRC/egr/pfs/interfaces \
+-y $MBY_SRC/egr/prc/interfaces \
+-y $MBY_SRC/egr/tcu/interfaces \
+-y $MBY_SRC/egr/tmu/interfaces \
+-y $MBY_SRC/egr/tqu/interfaces \
+-y $MBY_SRC/egr/tdb/interfaces \
+-y $MBY_SRC/igr/rtl \
+-y $MBY_SRC/igr/pre_ppe/rtl \
+-y $MBY_SRC/igr/interfaces \
+-y $MBY_SRC/igr/post_ppe/rtl \
+-y $MBY_SRC/igr/sandbox/pre_post/verilog \
+-y $MBY_SRC/igr/pbb/rtl \
+-y $MBY_SRC/igr/itag/rtl \
+-y $MBY_SRC/mgp/rtl \
+-y $MBY_SRC/egr/rtl \
+-y $MBY_SRC/egr/cpb/rtl \
+-y $MBY_SRC/egr/dpb/rtl \
+-y $MBY_SRC/egr/etag/rtl \
+-y $MBY_SRC/egr/lcm/rtl \
+-y $MBY_SRC/egr/mri/rtl \
+-y $MBY_SRC/egr/pfs/rtl \
+-y $MBY_SRC/egr/prc/rtl \
+-y $MBY_SRC/egr/tcu/rtl \
+-y $MBY_SRC/egr/tdb/rtl \
+-y $MBY_SRC/egr/tmu/rtl \
+-y $MBY_SRC/egr/tqu/rtl \
+-y $MBY_SRC/egr/rtl/mem \
+-y $MBY_SRC/egr/rtl/mem/cpb/src \
+-y $MBY_SRC/egr/rtl/mem/dpb/src \
+-y $MBY_SRC/egr/rtl/mem/etag/src \
+-y $MBY_SRC/egr/rtl/mem/lcm/src \
+-y $MBY_SRC/egr/rtl/mem/mri/src \
+-y $MBY_SRC/egr/rtl/mem/pfs/src \
+-y $MBY_SRC/egr/rtl/mem/prc/src \
+-y $MBY_SRC/egr/rtl/mem/tcu/src \
+-y $MBY_SRC/egr/rtl/mem/tdb/src \
+-y $MBY_SRC/egr/rtl/mem/tmu/src \
+-y $MBY_SRC/egr/rtl/mem/tqu/src \
+-y $MBY_SRC/egr/rtl/mem/cpb/src/mem_wrap \
+-y $MBY_SRC/egr/rtl/mem/dpb/src/mem_wrap \
+-y $MBY_SRC/egr/rtl/mem/etag/src/mem_wrap \
+-y $MBY_SRC/egr/rtl/mem/lcm/src/mem_wrap \
+-y $MBY_SRC/egr/rtl/mem/mri/src/mem_wrap \
+-y $MBY_SRC/egr/rtl/mem/pfs/src/mem_wrap \
+-y $MBY_SRC/egr/rtl/mem/prc/src/mem_wrap \
+-y $MBY_SRC/egr/rtl/mem/tcu/src/mem_wrap \
+-y $MBY_SRC/egr/rtl/mem/tdb/src/mem_wrap \
+-y $MBY_SRC/egr/rtl/mem/tmu/src/mem_wrap \
+-y $MBY_SRC/egr/rtl/mem/tqu/src/mem_wrap \
+-y $MBY_SRC/ppe_stm_rx/rtl \
+-y $MBY_SRC/ppe_stm_tx/rtl \
+-y $MBY_SRC/rx_ppe/rtl \
+-y $MBY_SRC/parser/rtl \
+-y $MBY_SRC/class_gpa/rtl \
+-y $MBY_SRC/class_gpb/rtl \
+-y $MBY_SRC/action/rtl \
+-y $MBY_SRC/action/rtl/trigger \
+-y $MBY_SRC/action/rtl/trigger/hlp \
+-y $MBY_SRC/shared/rtl/hlp/fifo \
+-y $MBY_SRC/tx_ppe/rtl \
+-y $MBY_SRC/rngstp/rtl \
+-y $MBY_SRC/msh/rtl \
+-y $MBY_SRC/msh_node/rtl \
+-y $MBY_SRC/csrs/mby/output/sverilog \
+-y $MBY_SRC/mim/rtl \
+-y $MGM_RUN/post_ppe/src \
+-y $MGM_RUN/post_ppe/src/mem_wrap \
+-y $MGM_RUN/igr/src \
+-y $MGM_RUN/igr/src/mem_wrap \
+-y $MGM_RUN/rtl \
+-y $MGM_RUN/ppe_stm_rx/src \
+-y $MGM_RUN/ppe_stm_rx/src/mem_wrap \
+-y $MGM_RUN/ppe_stm_tx/src \
+-y $MGM_RUN/ppe_stm_tx/src/mem_wrap \
+-y $MGM_RUN/parser/src \
+-y $MGM_RUN/parser/src/mem_wrap \
+-y $MGM_RUN/class_gpa/src \
+-y $MGM_RUN/class_gpa/src/mem_wrap \
+-y $MGM_RUN/class_gpb/src \
+-y $MGM_RUN/class_gpb/src/mem_wrap \
+-y $MGM_RUN/action/src \
+-y $MGM_RUN/action/src/mem_wrap \
+-y $MGM_RUN/msh/src \
+-y $MGM_RUN/msh/src/mem_wrap \
+./tb_mgp.sv

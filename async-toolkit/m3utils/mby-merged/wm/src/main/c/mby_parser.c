@@ -6,7 +6,7 @@
 
 // Get 16-bit word at given index in the segment data buffer
 static inline fm_uint16 getSegDataWord(fm_byte index, fm_uint32 adj_seg_len,
-                                       fm_byte seg_data[MBY_PA_MAX_SEG_LEN])
+                                       fm_byte const seg_data[MBY_PA_MAX_SEG_LEN])
 {
     fm_uint16 value = 0;
     if ( ((fm_uint32) index) < (adj_seg_len - 1) )
@@ -16,7 +16,7 @@ static inline fm_uint16 getSegDataWord(fm_byte index, fm_uint32 adj_seg_len,
 }
 
 // Calculate generic L4 checksum (UDP/TCP)
-static fm_uint16 calcGenericChksum(fm_byte *buf, fm_uint16 len)
+static fm_uint16 calcGenericChksum(const fm_byte *buf, fm_uint16 len)
 {
     fm_uint32 chksum = 0;
     for (fm_uint k = 0; k < len; k += 2) {
@@ -43,10 +43,10 @@ static fm_uint16 calcGenericChksum(fm_byte *buf, fm_uint16 len)
 }
 
 // Verify IPv4 header checksum value
-static fm_bool checkIPv4Chksum(fm_byte seg_data[MBY_PA_MAX_SEG_LEN],
+static fm_bool checkIPv4Chksum(fm_byte const seg_data[MBY_PA_MAX_SEG_LEN],
                                fm_uint32 p_beg, fm_uint32 p_end)
 {
-    fm_byte  *buf = seg_data + p_beg;
+    fm_byte  const *buf = seg_data + p_beg;
     fm_uint16 len = (p_end > p_beg) ? (p_end - p_beg + 1) : 0;
     fm_uint32 chksum = calcGenericChksum(buf, len);
     fm_bool   chksum_ok = ((chksum & 0xffff) > 0);
@@ -98,13 +98,10 @@ void Parser
 )
 {
     // Read inputs:
-    fm_byte   const * const rx_data_in = in->RX_DATA;
-    fm_uint32 const         rx_length  = in->RX_LENGTH;
+    fm_byte   const * const seg_data = in->SEG_DATA;
     fm_uint32 const         rx_port    = in->RX_PORT;
-
-    // Initialize:
-    fm_byte * const rx_packet = (fm_byte *) rx_data_in;
-
+    fm_uint32 const         rx_length = in->RX_LENGTH;
+    
     // On initial entry to the parser block, read in the inital pointer, analyzer state, ALU op,
     // and word offsets from the MBY_PARSER_PORT_CFG register file:
     parser_port_cfg_r const * const port_cfg = &(parser_map->PARSER_PORT_CFG[rx_port]);
@@ -148,11 +145,6 @@ void Parser
         pa_adj_seg_len = (rx_length - 4);
         eop = 1;
     }
-
-    // Read in segment data:
-    fm_byte seg_data[MBY_PA_MAX_SEG_LEN];
-    for (fm_uint i = 0; i < MBY_PA_MAX_SEG_LEN; i++)
-        seg_data[i] = (i < rx_length) ? rx_data_in[i] : 0;
 
     fm_uint16 w0 = getSegDataWord(init_w0_offset, pa_adj_seg_len, seg_data);
     fm_uint16 w1 = getSegDataWord(init_w1_offset, pa_adj_seg_len, seg_data);
@@ -415,7 +407,6 @@ void Parser
         out->PA_HDR_PTRS.PROT_ID     [i] = pa_prot_id     [i];
     }
 
-    out->RX_DATA            = rx_packet;
     out->RX_PORT            = rx_port;
-    out->RX_LENGTH          = rx_length;
+    out->RX_LENGTH          = in->RX_LENGTH;
 }

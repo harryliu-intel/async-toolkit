@@ -9,6 +9,7 @@
 
 #include "mby_common.h"
 #include "mby_bitfield.h"
+#include "mby_congmgmt.h"
 
 // Defines:
 
@@ -143,14 +144,19 @@ typedef struct mbyRxStatsToRxOutStruct
     fm_bool                 PM_ERR;        ///< ECC error on PM
     fm_bool                 PM_ERR_NONSOP;
     fm_byte                 QOS_L3_DSCP;   ///< 6-bit QOS Differentiated Services Code Point (DSCP)
-    fm_byte               * RX_DATA;       ///< ingress (receive) packet data
-    fm_uint32               RX_LENGTH;     ///< ingress packet data length [bytes]
     fm_bool                 SAF_ERROR;     ///< SAF error
     fm_uint64               TAIL_CSUM_LEN; ///< L4 CSUM related information
     fm_bool                 TX_DROP;       ///< flag indicating packet drop
     fm_byte                 TX_TAG;        ///< egress tag
     fm_byte                 XCAST;
-
 } mbyRxStatsToRxOut;
+
+void RxStats
+(
+    mby_ppe_rx_stats_map       const * const stats_map,
+    mby_ppe_rx_stats_map__addr const * const stats_map_w,
+    mbyCongMgmtToRxStats       const * const in,
+    mbyRxStatsToRxOut                * const out
+ );
 
 #endif

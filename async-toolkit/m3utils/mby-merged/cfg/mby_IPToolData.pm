@@ -45,7 +45,7 @@ $ToolConfig_ips{mby} = {
       SUB_SCOPES          => ["eth_port",
                               "&get_tool_var(ipconfig/eth_port, SUB_SCOPES)",
       ],
-      TEST_PATTERNS       => ["verif/mby/formal/tests","tools/lint/tests",],
+      TEST_PATTERNS => [ "verif/mby/jasper/tests/", "verif/mby/tests/spyglass", "verif/mby/formal/tests","tools/lint/tests",],
     },
     ENV => {
       SOC_DUT             => "&get_facet(dut)", # used in DutConnect.pl
@@ -65,7 +65,7 @@ IPToolDataExtras::import_files("mby", \%ToolConfig_ips);
 #                                                    "&get_tool_var(vipcat, VIPCAT_LIBS)",
 #                                                  );
 
-my $epl_version = "eth_port-dev-x0-19ww01e";
+my $epl_version = "eth_port-dev-x0-19ww03e";
 
 $ToolConfig_ips{epc} = {
    #PATH    => "/nfs/sc/disks/sc_mby_00055/layhockk/mby/work_root/MBY/$epl_version",
@@ -77,6 +77,21 @@ $ToolConfig_ips{epc} = {
       IMPORT       => ["cfg/eth_port_IPToolData.pm",],
    },
 };
+
+my $soc_sip_base = "$ENV{IP_RELEASES}/mby/sip";
+$ToolConfig_ips{axxia_aw} = {
+    VERSION => "MBYA0P00RTL1IFC1V1",
+    PATH  => "${soc_sip_base}/axxia_aw/&get_tool_version()",
+    OTHER   => {
+      SEARCH_PATHS   => [
+          "&get_tool_path(ipconfig/axxia_aw)",
+      ],
+    },
+    ENV     => {
+          axxia_aw_ROOT => "&get_tool_path(ipconfig/axxia_aw)",
+    },
+};
+
 ######################################################################
 # Executes the import statement above
 ######################################################################

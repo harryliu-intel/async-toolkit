@@ -54,6 +54,39 @@ $ToolConfig_tools{buildman}{SUB_TOOLS}{collage} = $ToolConfig_tools{collage};
 $ToolConfig_tools{rtltools}{SUB_TOOLS}{flowbee}{OTHER}{default_dut} = "mby";
 $ToolConfig_tools{runtools}{OTHER}{default_dut} = "mby";
 
+push(@{$ToolConfig_tools{buildman}{SUB_TOOLS}{flowbee}{OTHER}{modules}}, "$MODEL_ROOT/cfg/stages/preflow_stage.pm.template");
+
+### UPF specific
+$ToolConfig_tools{collage}{ENV}{COLLAGE_NEW_UPF} = "0";
+$ToolConfig_tools{collage}{ENV}{UPF_INSTALL_DIR} = "$MODEL_ROOT/target/fc/upf/gen/fc_par";
+$ToolConfig_tools{upf_collage_cmd} = {
+      EXEC => "rm -rf $MODEL_ROOT/src/gen/collage/*; rm -rf $MODEL_ROOT/src/gen/upf/*;mkdir -p $MODEL_ROOT/src/gen/collage;mkdir -p $MODEL_ROOT/src/gen/upf; &get_tool_path('coretools')/bin/coreAssembler -timeout 5 -shell -x 
+\'source &get_tool_path(
+'collage')/core/common/tcl/collage_init.tcl\' -f $MODEL_ROOT/tools/collage/configs/config_ebg/soc/assemble/assembler.soc.tcl",
+};
+$ToolConfig_tools{upf_hpgs_gen_cmd} = {
+      EXEC => "$MODEL_ROOT/tools/collage/configs/config_ebg/soc/integ_specs/upf/hip_power_pin_spec_gen/generate_hip_supply_port_mapping.pl -pin_map 
+$MODEL_ROOT/tools/collage/configs/config_ebg/soc/integ_specs/upf/hip_power_pin_spec_gen/hip_pin_bump
+_mapping.txt -io_list $MODEL_ROOT/tools/collage/configs/config_ebg/soc/integ_specs/upf/hip_power_pin_spec_gen/ebg_io.list -out_dir $MODEL_ROOT/src/upfGen/hip_power_pins | & tee 
+$MODEL_ROOT/src/upfGen/hip_power_pins/log.hip",
+};
+
+$ToolConfig_tools{upf_merge_cmd} = {
+      EXEC => "/usr/intel/bin/tcsh $MODEL_ROOT/tools/collage/configs/config_ebg/soc/integ_specs/upf/merge_munge_upf/generate_merged_upf.csh",
+};
+push(@{$ToolConfig_tools{buildman}{SUB_TOOLS}{flowbee}{OTHER}{modules}}, "$MODEL_ROOT/cfg/stages/collage_preflow.pm");
+push(@{$ToolConfig_tools{buildman}{SUB_TOOLS}{flowbee}{OTHER}{modules}}, "$MODEL_ROOT/cfg/stages/collage_postflow.pm");
+$ToolConfig_tools{stage_bman_collage}{OTHER}{pre_flow} = { 
+                                                           "(.dut_type=upf.)" => "collage_preflow",
+                                                           "(.default.)" => "preflow_stage",
+                                                         };
+$ToolConfig_tools{stage_bman_collage}{OTHER}{post_flow} = { 
+                                                           "(.dut_type=upf.)" => "collage_postflow",
+                                                           "(.default.)" => "collage_postflow",
+                                                         };
+$ToolConfig_tools{buildman}{SUB_TOOLS}{stages}{SUB_TOOLS}{collage_postflow}{OTHER}{relevant_tools} = [qw( collage )];
+$ToolConfig_tools{buildman}{SUB_TOOLS}{flowbee}{OTHER}{USERCODE} .= ":$ENV{MODEL_ROOT}/cfg/stages/bman_preflow.pm";
+$ToolConfig_tools{buildman}{OTHER}{pre_flow} = "UserCode::bman_preflow";
 ### End collage related updates ***
 
 #####################################################
@@ -105,10 +138,29 @@ $ToolConfig_tools{buildman}{ENV_APPEND}{PATH}                                = "
 $ToolConfig_tools{buildman}{ENV}{JASPERGOLD_VER}                             = "&get_tool_version(jaspergold)/";
 $ToolConfig_tools{buildman}{ENV}{JASPERGOLD_UXDB_PATH}                       = "&get_tool_env_var(jaspergold,JASPERGOLD_UXDB_PATH)";
 $ToolConfig_tools{buildman}{ENV}{JASPERGOLD_UXDB_ARGS}                       = "&get_tool_env_var(jaspergold,JASPERGOLD_UXDB_ARGS)";
+$ToolConfig_tools{buildman}{ENV}{DISABLE_ANSI_COLORS}                        = "1"; # do not put terminal color into logfiles
+
 
 # Natural Docs hook to call cfg/bin/doc_me as a preflow to vcs
 $ToolConfig_tools{'buildman'}{SUB_TOOLS}{'flowbee'}{OTHER}{USERCODE} .= ":$ENV{MODEL_ROOT}/cfg/stages/UserCode.pm";
 $ToolConfig_tools{buildman}{OTHER}{pre_flow} = "UserCode::ndocs";
+
+$ToolConfig_tools{buildman}{ENV}{ENABLE_UPF_GEN} = {
+                                                     "(.dut_type=upf.)" => '1',
+                                                     "(.default.)" => '0',
+                                                  };
+
+######################################################################
+## UPF power template 
+######################################################################
+$ToolConfig_tools{power_templates} = {
+   VERSION => "v17ww42a",
+   PATH => "/p/hdk/rtl/proj_tools/power_templates/cds/&get_tool_version()",
+};
+$ToolConfig_tools{upf_config} = {
+   VERSION => "",
+   PATH => "$MODEL_ROOT/tools/collage/configs/config_soc/integ_specs/upf",
+};
 
 $ToolConfig_tools{vipsvt} = {
     VERSION    => "O-2018.06",
@@ -186,7 +238,7 @@ $ToolConfig_tools{buildman}{OTHER}{UDFS} = ["&get_tool_path(buildman)/udf/buildm
 # Jasper
 $ToolConfig_tools{jaspergold} = {
     #VERSION => '2017.03p002',
-    VERSION => '2017.06p002__XLM17.04',
+    VERSION => '2018.09p001',
     PATH => "$RTL_CAD_ROOT/jasper/jaspergold/&get_tool_version()",
     EXEC => "&get_tool_path()/bin/jg -proj ${$}_jgproject",
     ENV_PREPEND  => {
@@ -205,13 +257,13 @@ $ToolConfig_tools{jaspergold} = {
                       'TSETUP_VENDOR' => 'jasper',
                       'TSETUP_IP_VERSIONS' => {}    },
          ENV_OVERRIDE      => {
-                'IJL_ROOT' => "/p/hdk/rtl/cad/x86-64_linux30/jasper/intel_jasper_library/3.1",
+                'IJL_ROOT' => "/p/hdk/rtl/cad/x86-64_linux30/jasper/intel_jasper_library/3.7",
                 },
 };
 
 # Adding stage foo
 $ToolConfig_tools{"bman_stages"} = {
-    VERSION => "14.06.15",
+    VERSION => "14.06.24",
     PATH => "$ENV{RTL_PROJ_TOOLS}/bman_stages/nhdk/&get_tool_version()",
 };
 $ToolConfig_tools{"foo"} = {
@@ -227,16 +279,8 @@ $ToolConfig_tools{"foo"} = {
 
 push @{$ToolConfig_tools{'buildman'}{SUB_TOOLS}{'flowbee'}{OTHER}{'modules'}}, "&get_tool_var('foo','modules')";
 
-$ToolConfig_tools{stage_bman_sgcdc} = {
-  OTHER   => {
-               enable_stage_caching => 0,
-               enable_stage_digest => 0,
-               modules => "&get_tool_path(buildman)/stages/sgcdc.pm",
-               stage_digest_rules => ["acebuild", "sgcdc"],
-             },
-  PATH    => "&get_tool_path(buildman)",
-  VERSION => "&get_tool_version(buildman)",
-};
+$ToolConfig_tools{stage_bman_sgcdc}{OTHER}{modules} = "&get_tool_path(bman_stages)/sgcdc.pm";
+push @{$ToolConfig_tools{'buildman'}{SUB_TOOLS}{'flowbee'}{OTHER}{'modules'}}, "&get_tool_var('stage_bman_sgcdc','modules')";
 
  
 push(@{$ToolConfig_tools{buildman}{SUB_TOOLS}{flowbee}{OTHER}{modules}}, "&get_tool_var(stage_bman_sglint,modules)");                                                                    
@@ -265,7 +309,7 @@ $ToolConfig_tools{stage_bman_sglint} = {
 $ToolConfig_tools{stage_bman_genrtl}{OTHER}{modules} = "$ENV{MODEL_ROOT}/cfg/stages/genrtl.pm";
 $ToolConfig_tools{jasper_utils} = {
   PATH    => "$ENV{RTL_PROJ_TOOLS}/jasper_utils/nhdk/&get_tool_version()",
-  VERSION => "14.06.20",
+  VERSION => "14.06.100",
 };
 
 # Added sim_init stage for automating FC collaterals generation
@@ -275,7 +319,7 @@ push(@{$ToolConfig_tools{buildman}{SUB_TOOLS}{flowbee}{OTHER}{modules}},  "&get_
 $ToolConfig_tools{feedtools}{ENV}{JASPER_UTILS}= "&get_tool_path(jasper_utils)";
 
 $ToolConfig_tools{"mgm"} = {
-    VERSION => "2.31",
+    VERSION => "2.38",
     PATH => "$ENV{RTL_PROJ_TOOLS}/mgm/nhdk/&get_tool_version()",
     MGM_ARGS => {
         BLOCKS => {
@@ -285,8 +329,10 @@ $ToolConfig_tools{"mgm"} = {
                     "action",
                     "ppe_stm_rx",
                     "ppe_stm_tx",
+                    "tx_ppe",
                     "igr",
 		    "igr_pbb",
+		    "post_ppe",
                     "egr",
                     "gcm",
                     "gpm",
@@ -409,4 +455,30 @@ $ToolConfig_tools{buildman}{ENV}{DENALI} = "&get_tool_path(denali)";
 $ToolConfig_tools{emubuild}{VERSION} = "2.7.11";
 ###
 
+
+
+$ToolConfig_tools{intel_jasper_library}{VERSION} = 3.7;
+$ToolConfig_tools{'buildman'}{'ENV'}{'IJL_ROOT'} = "$ENV{RTL_CAD_ROOT}/jasper/intel_jasper_library/3.7";
+
+$ToolConfig_tools{"stage_bman_jg_lint"} = {
+   VERSION => "&get_tool_version(bman_stages)",
+   PATH => "&get_tool_path(bman_stages)",
+   OTHER   => {
+               enable_stage_caching => 0,
+               enable_stage_digest => 0,
+               modules => "&get_tool_path()/jg_lint.pm",
+               stage_digest_rules => ["acebuild", "jg_lint"],
+             },
+};
+push @{$ToolConfig_tools{'buildman'}{SUB_TOOLS}{'flowbee'}{OTHER}{'modules'}}, "&get_tool_var('stage_bman_jg_lint','modules')";
+$ToolConfig_tools{buildman}{OTHER}{UDFS} = ["&get_tool_path(buildman)/udf/buildman.udf",
+					    "&get_tool_path(bman_stages)/stages_attributes.udf"];
+
+$ToolConfig_tools{spyglass_cdc}{SUB_TOOLS}{spyglass}{ENV}{ATRENTA_LICENSE_FILE} = "&get_tool_getLf(atrenta/spyglass)";
+$ToolConfig_tools{spyglass_cdc}{VERSION} = '2.00.05';
+$ToolConfig_tools{spyglass_cdc}{SUB_TOOLS}{spyglass}{VERSION} = 'M2017.03-SP2-12';
+$ToolConfig_tools{spyglass_cdc}{ENV}{SPYGLASS_METHODOLOGY_CDC} = '2.00.05';
+$ToolConfig_tools{runtools}{ENV}{SPYGLASS_METHODOLOGY_CDC} = "$ENV{RTL_PROJ_TOOLS}/spyglass_methodology_cdc/master/&get_tool_env_var('spyglass_cdc','SPYGLASS_METHODOLOGY_CDC')";
+$ToolConfig_tools{spyglass_cdc}{SUB_TOOLS}{cdclint}{VERSION} = "1.00.06";
+$ToolConfig_tools{runtools}{ENV}{SPYGLASS_CDC_VERIFY_STRUCT_GOAL_OVERRIDE} = "/p/hdk/rtl/proj_tools/sg_overrides/master/1.00.00.beta01/sgcdc/cdc_setup_check_Override.spq";
 1;

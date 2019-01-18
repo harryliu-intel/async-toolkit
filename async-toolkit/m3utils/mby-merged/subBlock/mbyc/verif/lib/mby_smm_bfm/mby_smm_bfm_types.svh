@@ -48,9 +48,27 @@ typedef virtual mby_smm_bfm_row_rd_req_if mby_smm_bfm_row_rd_req_vif;
 typedef class mby_smm_bfm_row_wr_req_xaction;
 typedef class mby_smm_bfm_row_rd_req_xaction;
 
+// Defining the I/O policies for the smm bfm
+typedef shdv_base_io_policy_param#(
+   .T_req(mby_smm_bfm_row_wr_req_xaction),
+   .T_vif(mby_smm_bfm_row_wr_req_vif)) smm_bfm_row_wr_io;
+typedef shdv_base_io_policy_param#(
+   .T_req(mby_smm_bfm_row_rd_req_xaction),
+   .T_vif(mby_smm_bfm_row_rd_req_vif)) smm_bfm_row_rd_io;
+
+// Defining the flow control policy for the smm bfm
+typedef shdv_base_empty_fc_policy smm_bfm_row_wr_fc;
+typedef shdv_base_empty_fc_policy smm_bfm_row_rd_fc;
+
 // Defining the wr_req & rd_req/rd_rsp agents as a parameterized base agent.
-typedef mby_base_pkg::mby_base_agent#(.T_req(mby_smm_bfm_row_wr_req_xaction), .T_vif(mby_smm_bfm_row_wr_req_vif)) smm_bfm_row_wr_req_agent;
-typedef mby_base_pkg::mby_base_agent#(.T_req(mby_smm_bfm_row_rd_req_xaction), .T_vif(mby_smm_bfm_row_rd_req_vif)) smm_bfm_row_rd_req_agent;
+typedef shdv_agent#(
+   .T_req(mby_smm_bfm_row_wr_req_xaction),
+   .T_fcp(smm_bfm_row_wr_fc),
+   .T_iop(smm_bfm_row_wr_io)) smm_bfm_row_wr_req_agent;
+typedef shdv_agent#(
+   .T_req(mby_smm_bfm_row_rd_req_xaction),
+   .T_vif(smm_bfm_row_rd_fc),
+   .T_iop(smm_bfm_row_rd_io)) smm_bfm_row_rd_req_agent;
 
 typedef class mby_smm_bfm_mwr_req;
 typedef class mby_smm_bfm_mrd_req;
@@ -60,5 +78,21 @@ typedef mby_smm_bfm_rdrsp_seq#(.T_req(mby_smm_bfm_row_rd_req_xaction)) smm_bfm_r
 typedef mby_smm_bfm_mwr_req#(.T_req(mby_smm_bfm_row_wr_req_xaction)) smm_bfm_mwr_req;
 typedef mby_smm_bfm_mrd_req#(.T_req(mby_smm_bfm_row_rd_req_xaction)) smm_bfm_mrd_req;
 typedef mby_smm_bfm_mem_node#(.ADDR_WIDTH(MSH_NODE_ADDR_WIDTH),.DATA_WIDTH(MSH_DATA_WIDTH)) smm_bfm_mem_node;
+
+typedef enum logic [3:0] {
+   NO_CONGESTION = 4'h0,
+   LOW_CONGESTION = 4'h1,
+   MEDIUM_CONGESTION = 4'h2,
+   HIGH_CONGESTION = 4'h3,
+   INSANE_CONGESTION = 4'h4
+} mesh_status_type_t;
+
+typedef enum logic [3:0] {
+   IDEAL = 4'h0,
+   LOW_DELAY = 4'h1,
+   MEDIUM_DELAY = 4'h2,
+   HIGH_DELAY = 4'h3,
+   INSANE_DELAY = 4'h4
+} delay_type_t;
 
 `endif

@@ -2,7 +2,7 @@
 ///                                                                              
 ///  INTEL CONFIDENTIAL                                                          
 ///                                                                              
-///  Copyright 2018 Intel Corporation All Rights Reserved.                 
+///  Copyright 2019 Intel Corporation All Rights Reserved.                 
 ///                                                                              
 ///  The source code contained or described herein and all documents related     
 ///  to the source code ("Material") are owned by Intel Corporation or its    
@@ -41,6 +41,12 @@ import mby_igr_pkg::*, mby_rx_metadata_pkg::*, shared_pkg::*;
 //Input List
  input                             cclk, 
  input                             rst, // synchronized warm reset 
+input           [33:0]  rwc_cpodring,                             
+input                   rwc_dpodring_stall,                       
+input          [106:0]  rwc_gpolring_update0,                     
+input          [106:0]  rwc_gpolring_update1,                     
+input           [33:0]  rwc_mcpodring_pod_ptr,                    
+input                   rwc_mcpodring_stall,                      
  input [4:0]                       i_free_ptr_valid,                         
  input [4:0][19:0]                 i_free_seg_ptr,                           
  input [4:0][3:0]                  i_free_sema,                              
@@ -127,15 +133,18 @@ import mby_igr_pkg::*, mby_rx_metadata_pkg::*, shared_pkg::*;
  input rx_ppe_igr_t                rx_ppe_igr_intf1, 
 
 //Output List
- output [W_SEG_PTR-1:0][1:0]       o_drop_seg_ptr, //[19:0] 
- output [1:0]                      o_drop_seg_valid, 
- output [W_SEMA-1:0][1:0]          o_drop_sema, 
  output [4:0]                      o_free_ptr_req,
- output [7:0]                      o_port_id, // FIXME -- what is this for?  ring_tag_t also has src & dst ports 
- output [95:0]                     o_post_ppe_tag_at_rate0, 
- output [95:0]                     o_post_ppe_tag_at_rate1, 
- output [95:0]                     o_post_ppe_tag_set_aside0, 
- output [95:0]                     o_post_ppe_tag_set_aside1                 
+output                  igr_cpodring_cache_full,                  
+output          [33:0]  igr_dpodring,                             
+output          [25:0]  igr_gpolring0,                            
+output          [25:0]  igr_gpolring1,                            
+output          [33:0]  igr_mcpodring_pod_ptr,                    
+output                  igr_mcpodring_stall,                      
+output          [63:0]  igr_tag_ring_lltag0,                      
+output          [63:0]  igr_tag_ring_lltag1                       
+
+ 
+
 );
 // collage-pragma translate_off
 
@@ -281,6 +290,24 @@ mby_igr_post_ppe    mby_igr_post_ppe(
 /* Interface mim_wr_if.request                */ .mim_wreq_3                (mim_wreq_3),                             
 /* Interface mim_wr_if.request                */ .mim_wreq_4                (mim_wreq_4),                             
 /* Interface mim_wr_if.request                */ .mim_wreq_5                (mim_wreq_5),                             
+/* input  logic                         [33:0] */ .rwc_cpodring            (rwc_cpodring),                       
+/* output logic                                */ .igr_cpodring_cache_full (igr_cpodring_cache_full),            
+/* output logic                         [33:0] */ .igr_dpodring            (igr_dpodring),                       
+/* input  logic                                */ .rwc_dpodring_stall      (rwc_dpodring_stall),                 
+/* output logic                         [63:0] */ .igr_tag_ring_lltag0     (igr_tag_ring_lltag0),                
+/* output logic                         [63:0] */ .igr_tag_ring_lltag1     (igr_tag_ring_lltag1),                
+/* output logic                         [33:0] */ .igr_mcpodring_pod_ptr   (igr_mcpodring_pod_ptr),              
+/* output logic                                */ .igr_mcpodring_stall     (igr_mcpodring_stall),                
+/* input  logic                         [33:0] */ .rwc_mcpodring_pod_ptr   (rwc_mcpodring_pod_ptr),              
+/* input  logic                                */ .rwc_mcpodring_stall     (rwc_mcpodring_stall),                
+/* output logic                         [25:0] */ .igr_gpolring0           (igr_gpolring0),                      
+/* output logic                         [25:0] */ .igr_gpolring1           (igr_gpolring1),                      
+/* input  logic                        [106:0] */ .rwc_gpolring_update0    (rwc_gpolring_update0),               
+/* input  logic                        [106:0] */ .rwc_gpolring_update1    (rwc_gpolring_update1),               
+/* output logic                         [4:0] */ .o_free_ptr_valid          (),              
+/* input  logic                         [4:0] */ .i_free_ptr_req            (),                
+/* output logic                   [4:0][19:0] */ .o_free_seg_ptr            (),                
+/* output logic                    [4:0][3:0] */ .o_free_sema               (),                   
 /* Interface pre_post_ppe_partial_data_if.src */ .pdata_lpp0_fpp            (pdata_lpp0_fpp),                         
 /* Interface pre_post_ppe_partial_data_if.src */ .pdata_lpp1                (pdata_lpp1),                             
 /* Interface pre_post_ppe_sop_if.src          */ .sop_mdata_lpp0_fpp        (sop_mdata_lpp0_fpp),                     
@@ -289,15 +316,7 @@ mby_igr_post_ppe    mby_igr_post_ppe(
 /* Interface pre_post_ppe_tag_info_if.src     */ .tag_info_vp               (tag_info_vp),                            
 /* Interface pre_post_ppe_wr_data_if.src      */ .wr_data_0                 (wr_data_0),                              
 /* Interface pre_post_ppe_wr_data_if.src      */ .wr_data_1                 (wr_data_1),                              
-/* Interface pre_post_ppe_wr_data_if.src      */ .wr_data_2                 (wr_data_2),                              
-/* output logic                        [95:0] */ .o_post_ppe_tag_at_rate0   (o_post_ppe_tag_at_rate0),                
-/* output logic                        [95:0] */ .o_post_ppe_tag_at_rate1   (o_post_ppe_tag_at_rate1),                
-/* output logic                        [95:0] */ .o_post_ppe_tag_set_aside0 (o_post_ppe_tag_set_aside0),              
-/* output logic                        [95:0] */ .o_post_ppe_tag_set_aside1 (o_post_ppe_tag_set_aside1),              
-/* output logic                         [7:0] */ .o_port_id                 (o_port_id),                              // FIXME -- what is this for?  ring_tag_t also has src & dst ports 
-/* output logic                         [1:0] */ .o_drop_seg_valid          (o_drop_seg_valid),                       
-/* output logic          [W_SEG_PTR-1:0][1:0] */ .o_drop_seg_ptr            (o_drop_seg_ptr),     //[19:0] 
-/* output logic             [W_SEMA-1:0][1:0] */ .o_drop_sema               (o_drop_sema) );           
+/* Interface pre_post_ppe_wr_data_if.src      */ .wr_data_2                 (wr_data_2) );           
 // End of module mby_igr_post_ppe from mby_igr_post_ppe
 
 // collage-pragma translate_on

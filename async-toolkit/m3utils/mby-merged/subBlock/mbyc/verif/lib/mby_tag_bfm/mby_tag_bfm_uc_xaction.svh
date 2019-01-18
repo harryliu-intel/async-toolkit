@@ -45,7 +45,7 @@
 //     T_debug    - mby_tag_bfm_uc_debg_t
 //
 //-----------------------------------------------------------------------------
-class mby_tag_bfm_uc_xaction extends mby_base_sequence_item
+class mby_tag_bfm_uc_xaction extends shdv_base_sequence_item_param
 #(
    .T_data (mby_tag_bfm_uc_data_t),
    .T_debug(mby_tag_bfm_uc_debg_t)
@@ -54,7 +54,7 @@ class mby_tag_bfm_uc_xaction extends mby_base_sequence_item
    // -------------------------------------------------------------------------
    // Macro for factory registration
    // -------------------------------------------------------------------------
-  `uvm_object_utils(mby_tag_bfm_uc_xaction#(T_data, T_data_rsp, T_debug))
+   `uvm_object_utils(mby_tag_bfm_uc_xaction)
 
    // -------------------------------------------------------------------------
    // CONSTRUCTOR: new
@@ -80,10 +80,40 @@ class mby_tag_bfm_uc_xaction extends mby_base_sequence_item
       string lns_str = { {8{" -------- "}}, "\n" };
       msg_str = super.convert2string();
       msg_str = { msg_str, $sformatf("tag_uc_xaction::seg_ptr = %020h\n",
-         this.data_pkt.ptr) };
+         this.data.ptr) };
       msg_str = { msg_str, lns_str };
       return msg_str;
    endfunction : convert2string
+
+   // -------------------------------------------------------------------------
+   // FUNCTION: do_copy
+   //
+   // replaces the default copy, because we are not using the uvm field macros
+   // for performance reasons
+   //
+   // ARGUMENTS:
+   //    uvm_object p - object to be copied, if null it will error
+   //
+   // -------------------------------------------------------------------------
+
+   virtual function void do_copy(uvm_object p);
+
+      mby_tag_bfm_uc_xaction temp;
+
+      if(p == null) begin
+         `uvm_error("TAG_BFM", "Error making a copy of tag_bfm_uc_xaction");
+      end
+      else begin
+         $cast(temp, p);
+         this.data = temp.data;
+         this.debug = temp.debug;
+         this.rsp = temp.rsp;
+         this.delay = temp.delay;
+      end
+
+   endfunction: do_copy
+
+
 
    // -------------------------------------------------------------------------
    // FUNCTION: do_print

@@ -1,0 +1,26 @@
+// -- Author       : Scott E. Greenfield <scott.e.greenfield@intel.com>
+// -- Project Name : MBY
+// -- Description  : IGR memory wrapper netlist for post_ppe partition
+// -------------------------------------------------------------------
+ngen_mod_name
+
+input i_reset,
+
+mby_mem_1r1w_if.mem  igr_post_body_ll_if,
+mby_mem_1r1w_if.mem  igr_post_sop_fifo_0_if,
+mby_mem_1r1w_if.mem  igr_post_sop_fifo_1_if,
+mby_mem_1r1w_if.mem  igr_post_sop_fifo_2_if,
+mby_mem_1r1w_if.mem  igr_post_sop_fifo_3_if,
+mby_mem_1r1w_if.mem  igr_ptr_cache_ram_if,
+
+ngen_IO_list
+ngen_IO_end
+
+ngen_wires
+
+logic reset_n;
+print "assign reset_n = ~i_reset;\n";
+
+ngen_submodules
+
+ngen_endmodule

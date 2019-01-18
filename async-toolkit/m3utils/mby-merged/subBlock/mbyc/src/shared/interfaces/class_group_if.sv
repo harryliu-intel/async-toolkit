@@ -46,8 +46,8 @@ logic   [1:0]       group_data_v;   //Group data valid
 igr_rx_ppe_md_t     if0_md;         //Interface 0 metadata
 igr_rx_ppe_md_t     if1_md;         //Interface 1 metadata
 
-tail_info_t         o_tail_info;    //Tail info
-logic               o_tail_info_v;  //Tail info valid
+tail_info_t         tail_info;      //Tail info
+logic               tail_info_v;    //Tail info valid
 
 modport class_out(
     input   rpl_bkwd,
@@ -56,8 +56,8 @@ modport class_out(
     output  group_data_v,
     output  if0_md,
     output  if1_md,
-    output  o_tail_info,
-    output  o_tail_info_v
+    output  tail_info,
+    output  tail_info_v
 );
 
 modport class_in(
@@ -67,8 +67,8 @@ modport class_in(
     input   group_data_v,
     input   if0_md,
     input   if1_md,
-    input   o_tail_info,
-    input   o_tail_info_v
+    input   tail_info,
+    input   tail_info_v
 );
 
 endinterface: class_group_if

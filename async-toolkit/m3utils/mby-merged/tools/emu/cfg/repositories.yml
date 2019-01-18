@@ -1,0 +1,37 @@
+MODULES:
+   uart_xtor:
+     REPO_PATH: ssh://git-amr-2.devtools.intel.com:29418/pve_spark_modules-hsuart_xactor
+     REPO_TAG: release-3.13.21.11.0
+   tap_xtor:
+     REPO_PATH: ssh://git-amr-1.devtools.intel.com:29418/pve_spark_modules-tap_xtor
+     REPO_TAG: spark-1.1.2
+   xt_xtor:
+     REPO_PATH: ssh://git-amr-2.devtools.intel.com:29418/dcg_apr_emulation-apr_xt_xtor
+     REPO_TAG: master
+   ltb:
+     REPO_PATH: ssh://git-amr-2.devtools.intel.com:29418/pve_spark_modules-ltb
+     REPO_TAG: release-1.8.14
+   i2c_xtor:
+     LINK: tools/emu/apr_i2c_xtor
+   external_memory:
+     REPO_PATH: ssh://git-amr-2.devtools.intel.com:29418/pve_spark_modules-external_memory
+     REPO_TAG: release-2.0
+
+#   pcie_xtor:
+#     REPO_PATH: ssh://git-amr-1.devtools.intel.com:29418/pve_spark_modules-pcie_xtor
+#     REPO_TAG: release-2.6.2
+#     SETUP_CMD: rm -rf ../../zse3/simics_workspace/linux64/obj/modules/pcie_xtor/xtor_core_build/     
+#   blocking_bridge:
+#     REPO_PATH: ssh://git-amr-1.devtools.intel.com:29418/pve_spark_modules-blocking_bridge
+#     REPO_TAG: release-0.1.1 
+
+#   tracer_xactor:
+#     REPO_PATH: ssh://git-amr-2.devtools.intel.com:29418/pve_spark_modules-tracer_xactor
+#     REPO_TAG: release-2.2.5
+#   idi_xtor:
+#     REPO_PATH: ssh://git-amr-2.devtools.intel.com:29418/pve_spark_modules-idi_xtor 
+#     REPO_TAG: release-2.1.0
+#     SETUP_CMD:  perl -pi -e 's/idi_core/idi_uncore/g' xactor_build.yml; ./setup.sh --with-project=KNH --disable-optimize;
+
+#     SETUP_CMD:  perl -pi -e 's/idi_core/idi_uncore/g' xactor_build.yml; ./setup.sh TARGET=ZMIF_PATH ZEBU_PATH=/p/vt/tools/sim/vendor/zse/prerelease/release/zebu2015.03-2_fxr_06272015 --with-project=KNH --disable-optimize CC=/usr/intel/pkgs/gcc/4.2.2a/bin/gcc CXX=/usr/intel/pkgs/gcc/4.2.2a/bin/g++;
+#     SETUP_CMD: ./setup.sh TARGET=ZMIF_PATH ZEBU_PATH=/nfs/site/disks/cpuemu.fxr.models.3/tools/zse/release/V15.03/zebu_20150327 --with-project=KNH --disable-optimize CC=/usr/intel/pkgs/gcc/4.2.2a/bin/gcc CXX=/usr/intel/pkgs/gcc/4.2.2a/bin/g++

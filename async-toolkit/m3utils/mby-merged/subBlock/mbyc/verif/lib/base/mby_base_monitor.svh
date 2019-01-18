@@ -31,7 +31,7 @@
 //
 //-----------------------------------------------------------------------------
 `ifndef __MBY_BASE_PKG__
-`error "Attempt to include file outside of mby_igr_env_pkg."
+`error "Attempt to include file outside of mby_base_pkg."
 `endif
 `ifndef __MBY_BASE_MONITOR__
 `define __MBY_BASE_MONITOR__
@@ -42,13 +42,15 @@
 //
 // PARAMETERS:
 //     T_req - sequence item type to be used (defaults to mby_base_sequence_item)
-//     T_vif - virtual interface to be used
+//     T_iop  - I/O policy class to be used
+//     T_fcp - Flow Control Policy class to be used by the driver
 //
 //-----------------------------------------------------------------------------
 class mby_base_monitor
    #(
       type T_req = mby_base_sequence_item,
-      type T_vif
+      type T_iop,
+      type T_fcp
    )
    extends uvm_monitor;
 
@@ -56,16 +58,20 @@ class mby_base_monitor
    // Analysis Port TODO: can it be a fifo instead?
    uvm_analysis_port #(T_req) mon_ap;
 
-   // VARIABLE: vintf
+   // VARIABLE: io_pol
    // Virtual Interface
-   T_vif vintf;
+   T_iop io_pol;
+
+   // VARIABLE: fc_pol
+   // Flow control policy to be used by the driver
+   T_fcp fc_pol;
 
    // VARIABLE: mon_item
    // Monitor sequence item
    T_req mon_item;
 
    // Registering class with the factory
-   `uvm_component_utils(mby_base_monitor#(T_req, T_vif))
+   `uvm_component_utils(mby_base_monitor#(T_req, T_iop, T_fcp))
 
    // -------------------------------------------------------------------------
    // CONSTRUCTOR: new
@@ -93,21 +99,55 @@ class mby_base_monitor
    endfunction : build_phase
 
    // -------------------------------------------------------------------------
-   // FUNCTION: assign_vif()
+   // FUNCTION: set_io()
    //
    // This function is called by the agent once the monitor is created and the
-   // agent has accessed the configuration database to obtain the virtual intf.
+   // agent has accessed the configuration database to obtain the i/o policy.
    // This is to reduce the number of config db accesses as it has a toll in
    // performance.
    //
    // ARGUMENTS:
-   //     T_vif vif - A pointer to the virtual interface to be used by the
-   //                 monitor
+   //     T_iop io_pol - A pointer to the I/O policy to be used by the monitor
    //
    // -------------------------------------------------------------------------
-   function void assign_vif(T_vif vif);
-      this.vintf = vif;
+   function void set_io(T_iop io_pol);
+      this.io_pol = io_pol;
    endfunction
+
+   // -------------------------------------------------------------------------
+   // FUNCTION: set_flow_control()
+   //
+   // This function is called by the agent once the driver is created and the
+   // agent has accessed the configuration database to obtain the flow control
+   // policy.
+   //
+   // ARGUMENTS:
+   //     T_fcp io_pol - A pointer to the I/O policy to be used by the driver
+   //
+   // -------------------------------------------------------------------------
+   function void set_flow_control(T_fcp fc_pol);
+      this.fc_pol = fc_pol;
+   endfunction : set_flow_control
+
+   // -------------------------------------------------------------------------
+   // TASK: pre_monitor_cb
+   //
+   // User defined hook, gets called before waiting for a new transaction to
+   // appear in the bus. E.g. check credit consumption.
+   //
+   // -------------------------------------------------------------------------
+   virtual protected task pre_monitor_cb();
+   endtask : pre_monitor_cb
+
+   // -------------------------------------------------------------------------
+   // TASK: post_monitor_cb
+   //
+   // User defined hook, gets called after a new transaction has appeared in
+   // the bus. E.g. check credit release.
+   //
+   // -------------------------------------------------------------------------
+   virtual protected task post_monitor_cb();
+   endtask : post_monitor_cb
 
    // -------------------------------------------------------------------------
    // TASK: monitor
@@ -121,15 +161,18 @@ class mby_base_monitor
    // -------------------------------------------------------------------------
    virtual protected task monitor_if();
       forever begin : main_monitor_thread
+         // Do any pre-monitor work
+         pre_monitor_cb();
+
          // Wait for a new transaction to appear
-         vintf.mon_start();
+         this.io_pol.mon_start();
 
          // Create the seq_item
          `uvm_info("monitor_if()", "Creating a new transaction", UVM_DEBUG);
          mon_item = T_req::type_id::create("mon_item", this);
 
          // Get actual data pkt and debug info from the interface
-         vintf.mon_data(mon_item.data_pkt, mon_item.debug_pkt);
+         this.io_pol.mon_data(mon_item);
          if (this.get_report_verbosity_level() < UVM_HIGH) begin
             `uvm_info("monitor_if()::got: ", mon_item.convert2string(), UVM_MEDIUM);
          end else begin
@@ -139,8 +182,12 @@ class mby_base_monitor
          // Write seq_item to analysis port
          mon_ap.write(mon_item);
 
+         // Do any post-monitor work
+         post_monitor_cb();
+
          // TODO: send more info on the seq item?
          `uvm_info("monitor_if()", "Sent transaction to the analysis port", UVM_DEBUG);
+
       end
    endtask : monitor_if
 

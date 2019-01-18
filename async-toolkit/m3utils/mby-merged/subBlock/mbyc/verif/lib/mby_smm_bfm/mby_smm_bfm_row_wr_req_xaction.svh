@@ -44,7 +44,7 @@
 //     T_data     - data type (expecting to be a struct)
 //
 //-----------------------------------------------------------------------------
-class mby_smm_bfm_row_wr_req_xaction extends mby_base_sequence_item
+class mby_smm_bfm_row_wr_req_xaction extends shdv_base_sequence_item_param
 #(
    .T_data (mby_smm_bfm_row_wr_req_t)
 );
@@ -78,7 +78,7 @@ class mby_smm_bfm_row_wr_req_xaction extends mby_base_sequence_item
       string lns_str = { {8{" -------- "}}, "\n" };
       msg_str = super.convert2string();
       msg_str = { msg_str, $sformatf("row_wr_req_xaction::seg_ptr=%05h -:- wr_data=%0128h\n",
-         this.data_pkt.mim_wr_seg_ptr, this.data_pkt.mim_wr_data) };
+         this.data.mim_wr_seg_ptr, this.data.mim_wr_data) };
       msg_str = { msg_str, lns_str };
       return msg_str;
    endfunction : convert2string

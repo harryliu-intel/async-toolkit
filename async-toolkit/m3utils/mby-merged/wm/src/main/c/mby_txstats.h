@@ -35,8 +35,8 @@
 
 typedef struct mbyTxStatsToTxMacStruct
 {
-    fm_byte               * TX_DATA;   // egress packet data
-    fm_uint32               TX_LENGTH; // egress packet data length [bytes]
+  //  fm_byte               * TX_DATA;   // egress packet data
+  //    fm_uint32               TX_LENGTH; // egress packet data length [bytes]
     fm_uint32               TX_PORT;   // egress port
 
 } mbyTxStatsToTxMac;

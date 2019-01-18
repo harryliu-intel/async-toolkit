@@ -26,6 +26,17 @@ class mby_egr_tb_cfg extends shdv_base_config;
 
    mby_egr_env_cfg env_cfg;
    mby_egr_dut_cfg dut_cfg;
+   rand mesh_status_type_t mesh_status = NO_CONGESTION;
+
+   constraint mesh_status_c{
+      (mesh_status == NO_CONGESTION) -> (env_cfg.smm_bfm_cfg.delay_profile == IDEAL);
+      (mesh_status == LOW_CONGESTION) -> (env_cfg.smm_bfm_cfg.delay_profile == LOW_DELAY);
+      (mesh_status == MEDIUM_CONGESTION) -> (env_cfg.smm_bfm_cfg.delay_profile == MEDIUM_DELAY);
+      (mesh_status == HIGH_CONGESTION) -> (env_cfg.smm_bfm_cfg.delay_profile == HIGH_DELAY);
+      (mesh_status == INSANE_CONGESTION) -> (env_cfg.smm_bfm_cfg.delay_profile == INSANE_DELAY);
+      solve mesh_status before env_cfg.smm_bfm_cfg.delay_profile;
+   }
+
 
    `uvm_object_utils_begin(mby_egr_tb_cfg)
       `uvm_field_object( env_cfg, UVM_ALL_ON )

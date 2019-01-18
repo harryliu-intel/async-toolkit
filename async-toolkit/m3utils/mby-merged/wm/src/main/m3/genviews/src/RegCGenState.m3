@@ -6,11 +6,12 @@ FROM Fmt IMPORT F;
 REVEAL
   T = Public BRANDED Brand OBJECT
   OVERRIDES
-    p := GsP;
-    main := GsMain;
-    noteDep := NoteDep;
-    put := PutGS;
-    newSymbol := NewSymbol;
+    p          := GsP;
+    main       := GsMain;
+    scm        := GsScm;
+    noteDep    := NoteDep;
+    put        := PutGS;
+    newSymbol  := NewSymbol;
   END;
 
 PROCEDURE NoteDep(gs : T; toSym : TEXT) =
@@ -41,9 +42,16 @@ PROCEDURE NewSymbol(gs : T; nm : TEXT) : BOOLEAN
     RETURN res
   END NewSymbol;
   
-PROCEDURE PutGS(gs : T; <*UNUSED*>sec : Section; txt : TEXT) =
+PROCEDURE PutGS(gs : T; sec : Section; txt : TEXT) =
   BEGIN
-    Wx.PutText(gs.curWx, txt)
+    IF sec = Section.Maintype THEN
+      Wx.PutText(gs.curWx, txt)
+    ELSE
+      IF gs.wx[sec] = NIL THEN
+        gs.wx[sec] := Wx.New()
+      END;
+      Wx.PutText(gs.wx[sec], txt)
+    END
   END PutGS;
 
 PROCEDURE GsP(gs  : T;
@@ -54,6 +62,9 @@ PROCEDURE GsP(gs  : T;
 
 PROCEDURE GsMain(gs : T; fmt : TEXT; t1, t2, t3, t4, t5 : TEXT := NIL)= 
   BEGIN gs.p(Section.Maintype, fmt, t1, t2, t3, t4, t5) END GsMain;
+
+PROCEDURE GsScm(gs : T; fmt : TEXT; t1, t2, t3, t4, t5 : TEXT := NIL)= 
+  BEGIN gs.p(Section.Scheme, fmt, t1, t2, t3, t4, t5) END GsScm;
 
 
 BEGIN END RegCGenState.
