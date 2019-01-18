@@ -1,0 +1,4 @@
+pushd .
+source /p/hdk/rtl/proj_tools/proj_binx/nhdk/latest/setnhdk.csh -w $MODEL_ROOT
+osetup vcsmx
+popd
