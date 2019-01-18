@@ -1,8 +1,7 @@
 #ifndef _MBY_STAGES_H
 #define _MBY_STAGES_H
 
-#include "mby_common.h"
-#include "model_stages.h" // mby_common.h must be included BEFORE this
+#include "model_stages.h"
 
 // RX-PPE stages
 #include "mby_parser.h"

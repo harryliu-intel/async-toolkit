@@ -2,13 +2,13 @@
 
 // Copyright (C) 2018 Intel Corporation
 
-
-#include "mby_mapper.h"
+#include "mby_bitfield.h"
+#include "mby_crc32.h"
 #include "mby_lpm.h"
 #include "mby_wcm.h"
 #include "mby_exactmatch.h"
 #include "mby_classifier.h"
-#include "mby_crc32.h"
+#include "mby_ip_prot.h"
 
 /* Check precedence and set the action with the new value */
 static inline void setAct
@@ -802,6 +802,7 @@ void Classifier
     out->LEARN_MODE      = in->LEARN_MODE;
     out->L2_IDOMAIN      = in->L2_IDOMAIN;
     out->L3_IDOMAIN      = in->L3_IDOMAIN;
+    out->NAD             = in->NAD;
     out->PARITY_ERROR    = in->PARITY_ERROR;
     out->PARSER_ERROR    = in->PARSER_ERROR;
     out->PA_DROP         = in->PA_DROP;
@@ -809,5 +810,5 @@ void Classifier
     out->PA_L3LEN_ERR    = in->PA_L3LEN_ERR;
     out->RX_PORT         = in->RX_PORT;
     out->TRAFFIC_CLASS   = in->TRAFFIC_CLASS;
-    out->RX_LENGTH = in->RX_LENGTH;
+    out->RX_LENGTH       = in->RX_LENGTH;
 }

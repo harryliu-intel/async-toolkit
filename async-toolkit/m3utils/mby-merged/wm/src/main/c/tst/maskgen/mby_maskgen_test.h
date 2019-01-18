@@ -3,11 +3,16 @@
 
 #include "mby_maskgen.h"
 
-typedef struct port_cfg_1_struct
+typedef struct port_cfg_0_struct
 {
     fm_bool           learning_enable;
     fm_bool           filter_vlan_ingress;
-    fm_uint32         destination_mask;
+
+} port_cfg_0;
+
+typedef struct port_cfg_1_struct
+{
+    fm_uint64         destination_mask[MBY_DMASK_REGISTERS];
 
 } port_cfg_1;
 
@@ -121,6 +126,9 @@ typedef struct mby_maskgen_test_data_in_struct
     fm_bool           mtu_violation;
     fm_uint16         csglort;
 
+    /* Input data for FWD_PORT_CFG_0 register. */
+    port_cfg_0        port_cfg_0;
+
     /* Input data for FWD_PORT_CFG_1 register. */
     port_cfg_1        port_cfg_1;
 
@@ -193,11 +201,14 @@ maskgen_test_data maskgen_tests[] =
             .l2_ivlan1_membership         = TRUE,
             .l2_edomain_in                = 0,
             .mark_routed                  = TRUE,
-            .port_cfg_1 =
+            .port_cfg_0 =
             {
                 .learning_enable          = TRUE,
                 .filter_vlan_ingress      = TRUE,
-                .destination_mask         = 0xFFFF,
+            },
+            .port_cfg_1 =
+            {
+                .destination_mask         = { 0xFFFF, 0, 0, 0, 0 },
             },
             .port_cfg_2 =
             {
@@ -268,11 +279,14 @@ maskgen_test_data maskgen_tests[] =
             .mark_routed                  = FALSE,
             .hash_rot_a                   = 0,
             .hash_rot_b                   = 0,
-            .port_cfg_1 =
+            .port_cfg_0 =
             {
                 .learning_enable          = TRUE,
                 .filter_vlan_ingress      = TRUE,
-                .destination_mask         = 0xFFFF,
+            },
+            .port_cfg_1 =
+            {
+                .destination_mask         = { 0xFFFF, 0, 0, 0, 0 },
             },
             .port_cfg_2 =
             {
@@ -346,11 +360,14 @@ maskgen_test_data maskgen_tests[] =
             .mark_routed                  = FALSE,
             .hash_rot_a                   = 0,
             .hash_rot_b                   = 0,
-            .port_cfg_1 =
+            .port_cfg_0 =
             {
                 .learning_enable          = TRUE,
                 .filter_vlan_ingress      = TRUE,
-                .destination_mask         = 0x0,
+            },
+            .port_cfg_1 =
+            {
+                .destination_mask         = { 0xFFFF, 0, 0, 0, 0 },
             },
             .port_cfg_2 =
             {
@@ -422,11 +439,14 @@ maskgen_test_data maskgen_tests[] =
             .mark_routed                  = FALSE,
             .hash_rot_a                   = 0,
             .hash_rot_b                   = 0,
-            .port_cfg_1 =
+            .port_cfg_0 =
             {
                 .learning_enable          = TRUE,
                 .filter_vlan_ingress      = TRUE,
-                .destination_mask         = 0xFFFF,
+            },
+            .port_cfg_1 =
+            {
+                .destination_mask         = { 0xFFFF, 0, 0, 0, 0 },
             },
             .port_cfg_2 =
             {
@@ -498,11 +518,14 @@ maskgen_test_data maskgen_tests[] =
             .l2_edomain_in                = 0,
             .glort_dmask_in               = { 0 },
             .parser_error                 = TRUE,
-            .port_cfg_1 =
+            .port_cfg_0 =
             {
                 .learning_enable          = TRUE,
                 .filter_vlan_ingress      = TRUE,
-                .destination_mask         = 0xFFFF,
+            },
+            .port_cfg_1 =
+            {
+                .destination_mask         = { 0xFFFF, 0, 0, 0, 0 },
             },
             .port_cfg_2 =
             {
@@ -567,11 +590,14 @@ maskgen_test_data maskgen_tests[] =
             .glort_dmask_in               = { 0 },
             .parser_error                 = FALSE,
             .trap_igmp                    = TRUE,
-            .port_cfg_1 =
+            .port_cfg_0 =
             {
                 .learning_enable          = TRUE,
                 .filter_vlan_ingress      = TRUE,
-                .destination_mask         = 0xFFFF,
+            },
+            .port_cfg_1 =
+            {
+                .destination_mask         = { 0xFFFF, 0, 0, 0, 0 },
             },
             .port_cfg_2 =
             {
@@ -642,11 +668,14 @@ maskgen_test_data maskgen_tests[] =
             .glort_dmask_in               = { 0 },
             .parser_error                 = FALSE,
             .parity_error                 = TRUE,
-            .port_cfg_1 =
+            .port_cfg_0 =
             {
                 .learning_enable          = TRUE,
                 .filter_vlan_ingress      = TRUE,
-                .destination_mask         = 0xFFFF,
+            },
+            .port_cfg_1 =
+            {
+                .destination_mask         = { 0xFFFF, 0, 0, 0, 0 },
             },
             .port_cfg_2 =
             {
@@ -716,11 +745,14 @@ maskgen_test_data maskgen_tests[] =
             .l2_edomain_in                = 0,
             .glort_dmask_in               = { 0 },
             .parser_error                 = FALSE,
-            .port_cfg_1 =
+            .port_cfg_0 =
             {
                 .learning_enable          = TRUE,
                 .filter_vlan_ingress      = TRUE,
-                .destination_mask         = 0xFFFF,
+            },
+            .port_cfg_1 =
+            {
+                .destination_mask         = { 0xFFFF, 0, 0, 0, 0 },
             },
             .port_cfg_2 =
             {
@@ -790,11 +822,14 @@ maskgen_test_data maskgen_tests[] =
             .l2_edomain_in                = 0,
             .glort_dmask_in               = { 0 },
             .parser_error                 = FALSE,
-            .port_cfg_1 =
+            .port_cfg_0 =
             {
                 .learning_enable          = TRUE,
                 .filter_vlan_ingress      = TRUE,
-                .destination_mask         = 0xFFFF,
+            },
+            .port_cfg_1 =
+            {
+                .destination_mask         = { 0xFFFF, 0, 0, 0, 0 },
             },
             .port_cfg_2 =
             {
@@ -870,11 +905,14 @@ maskgen_test_data maskgen_tests[] =
             .parser_error                 = FALSE,
             .mark_routed                  = TRUE,
             .mtu_violation                = TRUE,
-            .port_cfg_1 =
+            .port_cfg_0 =
             {
                 .learning_enable          = TRUE,
                 .filter_vlan_ingress      = TRUE,
-                .destination_mask         = 0xFFFF,
+            },
+            .port_cfg_1 =
+            {
+                .destination_mask         = { 0xFFFF, 0, 0, 0, 0 },
             },
             .port_cfg_2 =
             {

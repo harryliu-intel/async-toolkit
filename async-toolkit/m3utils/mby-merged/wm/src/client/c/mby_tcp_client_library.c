@@ -46,15 +46,8 @@
 
 #include "varchar.h"
 #include "mby_tcp_client_library.h"
+#include "mby_tcp_client_log.h"
 
-/* TODO replace log functions placeholders with improved macros */
-#define LOG_ERROR    printf
-#define LOG_WARNING  printf
-#define LOG_INFO     printf
-//#define LOG_DEBUG(...)
-#define LOG_DEBUG    printf
-//#define LOG_HEX_DUMP(a,b,c)
-#define LOG_HEX_DUMP hex_dump
 
 #define MAX_BUF      500
 
@@ -334,19 +327,19 @@ int wm_connect(char const * const server_file)
 
   if ((err = create_client_socket(&wm_client_fd, &wm_client_port)))
     return err;
-  
+
   wm_egress_fd = -1;
-  
+
   for (int i = 0; i < NUM_PORTS; ++i) {
     err = connect_egress(i, wm_server_fd, wm_client_fd, wm_client_port,
                          &wm_egress_fd);
     if (err)
       return err;
   }
-  
+
   return WM_OK;
 }
-               
+
 /**
  * Disconnect from the WM server.
  *
@@ -631,88 +624,84 @@ static int iosf_send_receive(uint8_t *tx_msg, uint32_t tx_len,
     return WM_OK;
 }
 
-static void
-write_nl(uint8_t *buf, int *idx, uint32_t x)
+static void write_nl(uint8_t *buf, int *idx, uint32_t x)
 {
     *(uint32_t *)&buf[*idx] = htonl(x);
     *idx += 4;
 }
 
-static uint32_t
-read_nl(uint8_t const *buf, int *idx)
+static uint32_t read_nl(uint8_t const *buf, int *idx)
 {
     uint32_t x = ntohl(*(uint32_t *)&buf[*idx]);
     *idx += 4;
     return x;
 }
 
-static int
-wm_do_stage_request(char            const *       nm,
-                    void            const * const in,
-                    size_t                  const in_size,
-                    size_t                  const out_size,
-                    varchar_t       const * const rx_data)
+static int wm_do_stage_request(char       const *       nm,
+                               void       const * const in,
+                               size_t             const in_size,
+                               size_t             const out_size,
+                               varchar_t  const * const rx_data)
 {
-  /* packet format 
-     
-     htonl(len)                bytes : 4
-     nm                        bytes : MIN(strlen(nm) + 1, 128)
-     htonl(in_size)            bytes : 4
-     in                        bytes : in_size
-     htonl(rx_data.length)     bytes : 4
-     rx_data.data              bytes : rx_data.length
+    /* packet format
 
-     len = 12 + MIN(strlen(nm)+1,128) + in_size + rx_data.length
-  */
-  uint8_t msg[MAX_MSG_LEN];
-  size_t nm_len = MIN(strlen(nm)+1,128);
-  size_t len = 12 + nm_len + in_size + (rx_data ? rx_data->length : 0);
-  int off = 0;
-  int err;
-  
-  if (len > MAX_MSG_LEN) {
-    LOG_ERROR("stage request too long : %lu\n", len);
-    return WM_ERR_INVALID_ARG;
-  }
+       htonl(len)                bytes : 4
+       nm                        bytes : MIN(strlen(nm) + 1, 128)
+       htonl(in_size)            bytes : 4
+       in                        bytes : in_size
+       htonl(rx_data.length)     bytes : 4
+       rx_data.data              bytes : rx_data.length
 
-  write_nl(msg, &off, len);
-  
-  memcpy(msg+off, nm, nm_len);
-  off += nm_len;
-  msg[off -1] = '\0'; // BSTS
+       len = 12 + MIN(strlen(nm)+1,128) + in_size + rx_data.length
+    */
+    uint8_t msg[MAX_MSG_LEN];
+    size_t nm_len = MIN(strlen(nm)+1,128);
+    size_t len = 12 + nm_len + in_size + (rx_data ? rx_data->length : 0);
+    int off = 0;
+    int err;
 
-  write_nl(msg, &off, in_size);
+    if (len > MAX_MSG_LEN) {
+        LOG_ERROR("stage request too long : %lu\n", len);
+        return WM_ERR_INVALID_ARG;
+    }
 
-  memcpy(msg+off, in, in_size);
-  off+= in_size;
+    write_nl(msg, &off, len);
 
-  if (rx_data) {
-    write_nl(msg, &off, rx_data->length);
-    
-    memcpy(msg+off, rx_data->data, rx_data->length);
-    off += rx_data->length;
-  } else {
-    write_nl(msg, &off, 0);
-  }
+    memcpy(msg+off, nm, nm_len);
+    off += nm_len;
+    msg[off -1] = '\0'; // BSTS
 
-  assert(off == (int)len);
+    write_nl(msg, &off, in_size);
 
-  err = wm_send(wm_server_fd, msg, len, MODEL_MSG_STAGE, 0);
-  if (err) {
-    LOG_ERROR("Could not send data to WM: %d\n", err);
-  }
+    memcpy(msg+off, in, in_size);
+    off+= in_size;
 
-  return err;
+    if (rx_data) {
+        write_nl(msg, &off, rx_data->length);
+
+        memcpy(msg+off, rx_data->data, rx_data->length);
+        off += rx_data->length;
+    } else {
+        write_nl(msg, &off, 0);
+    }
+
+    assert(off == (int)len);
+
+    err = wm_send(wm_server_fd, msg, len, MODEL_MSG_STAGE, 0);
+    if (err) {
+        LOG_ERROR("Could not send data to WM: %d\n", err);
+    }
+
+    return err;
 }
 
-static int
-wm_do_stage_response(char            const *       nm,
-                     void                  * const out,
-                     size_t                  const out_size,
-                     varchar_t             * const tx_data)
+static int wm_do_stage_response(char      const *       nm,
+                                void            * const out,
+                                size_t            const out_size,
+                                varchar_t       * const tx_data)
 {
-    /* packet format 
-     
+    /* packet format
+
        htonl(len)                bytes : 4
        nm                        bytes : MIN(strlen(nm) + 1, 128)
        htonl(out_size)           bytes : 4
@@ -748,18 +737,18 @@ wm_do_stage_response(char            const *       nm,
         if (!msg[off]) break;
     // at a null or pos 127
     ++off; // read the null or pos 128
-  
+
     if (msg[off-1] != '\0') {
         LOG_ERROR("Output name not null-terminated\n");
         return WM_ERR_RUNTIME;
     }
-  
+
     if (strcmp(nm, nm_r))  {
         LOG_ERROR("Output name not matching input name : \"%s\" != \"%s\"\n",
                   nm_r, nm);
         return WM_ERR_RUNTIME;
     }
-    
+
     out_size_r = read_nl(msg, &off);
     if (out_size != out_size_r) {
         LOG_ERROR("Output struct size mismatch %lu != %lu\n", out_size_r, out_size);
@@ -786,7 +775,7 @@ wm_do_stage_response(char            const *       nm,
             return WM_ERR_RUNTIME;
         }
     }
-    
+
     if (off != (int)msg_len) {
         LOG_ERROR("Formatting error off = %d != %d = msg_len\n", off, msg_len);
         return WM_ERR_RUNTIME;
@@ -797,7 +786,7 @@ wm_do_stage_response(char            const *       nm,
 
 /* Execute a generic WM stage function
  *
- * @param[in]   
+ * @param[in]
  * @param[in]   in pointer to stage input structure
  * @param[in]   in_size size of the stage input structure
  * @param[out]  out pointer to stage output structure
@@ -805,24 +794,23 @@ wm_do_stage_response(char            const *       nm,
  *
  * @retval      WM_OK if successful
  */
-int
-wm_do_stage(char            const *       nm,
-            void            const * const in,
-            size_t                  const in_size,
-            varchar_t       const * const rx_data,
-            void                  * const out,
-            size_t                  const out_size,
-            varchar_t             * const tx_data)
+int wm_do_stage(char        const *       nm,
+                void        const * const in,
+                size_t              const in_size,
+                varchar_t   const * const rx_data,
+                void              * const out,
+                size_t              const out_size,
+                varchar_t         * const tx_data)
 {
 
-  int err;
+    int err;
 
-  LOG_DEBUG(__func__);
-  
-  if ((err = wm_do_stage_request(nm, in, in_size, out_size, rx_data)))
-    return err;
+    LOG_DEBUG("Function called");
 
-  return (err = wm_do_stage_response(nm, out, out_size, tx_data));
+    if ((err = wm_do_stage_request(nm, in, in_size, out_size, rx_data)))
+        return err;
+
+    return (err = wm_do_stage_response(nm, out, out_size, tx_data));
 }
 
 /**
@@ -1062,7 +1050,7 @@ static int create_client_socket(int *fd, int *port)
 
     *fd = socket(AF_INET, SOCK_STREAM, 0);
     if (*fd < 0) {
-        printf("Error creating client socket: %s\n", strerror(errno));
+        LOG_ERROR("Error creating client socket: %s\n", strerror(errno));
         return WM_ERR_NETWORK;
     }
 
@@ -1073,20 +1061,20 @@ static int create_client_socket(int *fd, int *port)
 
     err = bind(*fd, (struct sockaddr *)&addr, sizeof(addr));
     if(err == -1) {
-        printf("Error binding to port socket server: %s\n", strerror(errno));
+        LOG_ERROR("Error binding to port socket server: %s\n", strerror(errno));
         return WM_ERR_NETWORK;
     }
 
     err = listen(*fd, NUM_PORTS);
     if(err == -1) {
-        printf("Error listening on port socket server: %s\n", strerror(errno));
+        LOG_ERROR("Error listening on port socket server: %s\n", strerror(errno));
         return WM_ERR_NETWORK;
     }
 
     addr_len = sizeof(addr);
     err = getsockname(*fd, (struct sockaddr *)&addr, &addr_len);
     if(err == -1) {
-        printf("Error getting port socket server name: %s\n", strerror(errno));
+        LOG_ERROR("Error getting port socket server name: %s\n", strerror(errno));
         return WM_ERR_NETWORK;
     }
 
@@ -1133,7 +1121,7 @@ static int read_host_info(FILE *fd, char *host, char *port)
 
     memcpy(host, &buffer[start], cnt);
     host[cnt] = '\0';
-    printf("cnt = %d - host = %s\n", cnt, host);
+    LOG_DEBUG("cnt = %d - host = %s\n", cnt, host);
 
     start = start + cnt + 1;
     cnt = 0;

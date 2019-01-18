@@ -4,12 +4,13 @@
 #include <string.h>
 #include <assert.h>
 
-#include <mby_common.h>
-#include <mby_triggers_test.h>
-#include <mby_pipeline.h>
-
 #include <mby_top_map.h>
-#include "tst_model_c_write.h"
+#include <tst_model_c_write.h> // write_field()
+#include <mby_params.h>
+#include <mby_action_codes.h>
+#include <mby_triggers_regs.h>
+#include <mby_triggers.h>
+#include <mby_triggers_test.h>
 
 #define MBY_PHYSICAL_SOURCE_PORTS         17
 

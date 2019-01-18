@@ -4,22 +4,22 @@ ifeq ($(DEBUG),)
         DEBUG=1
 endif
 
-MAP_DIR = ${M3_DIR}/genviews/src/build_c/mby_c/src
-SRV_DIR = ${M3_DIR}/model_server/src
-WM_META_DIR = ${SRV_DIR}/wm_meta_common/src
-INTERLANG_DIR = ${SRV_DIR}/mby_struct/src
+MAP_DIR = $(M3_DIR)/genviews/src/build_c/mby_c/src
+SRV_DIR = $(M3_DIR)/model_server/src
+WM_META_DIR = $(SRV_DIR)/wm_meta_common/src
+INTERLANG_DIR = $(SRV_DIR)/mby_struct/src
 
 # Tool versions:
-include ${C_DIR}/ToolVersions.mk
+include $(C_DIR)/ToolVersions.mk
 
 INCLUDES  = -I.
 INCLUDES += -I$(C_DIR)
-INCLUDES += -I${MAP_DIR}
-INCLUDES += -I${SRV_DIR}
-INCLUDES += -I${WM_META_DIR}
-INCLUDES += -I${INTERLANG_DIR}
+INCLUDES += -I$(MAP_DIR)
+INCLUDES += -I$(SRV_DIR)
+INCLUDES += -I$(WM_META_DIR)
+INCLUDES += -I$(INTERLANG_DIR)
 
 # Build dir:
 OS_TARG = AMD64_LINUX
 BLD_DIR = $(OS_TARG)
-BLD_DTS = ${BLD_DIR}/.time_stamp
+BLD_DTS = $(BLD_DIR)/.time_stamp

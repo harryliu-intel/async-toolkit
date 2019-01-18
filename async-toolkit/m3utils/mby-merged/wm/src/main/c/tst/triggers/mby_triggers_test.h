@@ -1,7 +1,9 @@
 #ifndef MBY_TRIGGERS_TEST_H
 #define MBY_TRIGGERS_TEST_H
 
-#include "mby_triggers.h"
+#include <fm_types.h>
+#include <mby_dmask_regs.h>
+#include <mby_log_type.h>
 
 typedef struct sys_cfg_1_struct
 {
@@ -33,55 +35,23 @@ typedef struct mby_maskgen_test_data_in_struct
     /* Triggers input data */
     fm_uint32     action;
     fm_uint64     amask;
-    //CPU_CODE
-    //CPU_TRAP
     fm_uint16     csglort;
-    //DA_HIT
     fm_uint64     dmask[MBY_DMASK_REGISTERS];
-    //DROP_TTL
-    //FCLASS
     fm_bool       glort_cam_miss;
     fm_uint64     glort_dmask_in[MBY_DMASK_REGISTERS];
     fm_uint32     hash_rot_a;
     fm_uint32     hash_rot_b;
     fm_uint16     idglort;
     fm_uint16     ip_mcast_idx;
-    //IS_IPV4
-    //IS_IPV6
     fm_macaddr    l2_dmac;
     fm_uint16     l2_edomain_in;
     fm_uint16     l2_evid1;
     fm_macaddr    l2_smac;
-    //L3_EDOMAIN
     fm_bool       learning_enabled;
-    //LOGGING_HIT
     fm_byte       log_amask;
-    //MAC_MOVED
     fm_bool       mark_routed;
-    //MCAST_EPOCH
-    //MIRROR0_PORT
-    //MIRROR0_PROFILE_IDX
-    //MIRROR0_PROFILE_V
-    //MIRROR1_PORT
-    //MIRROR1_PROFILE_IDX
-    //MIRROR1_PROFILE_V
-    //OPERATOR_ID
-    //PA_L3LEN_ERR;
-    //PRE_RESOLVE_ACTION;
-    //PRE_RESOLVE_DGLORT;
-    //PRE_RESOLVE_DMASK[MBY_DMASK_REGISTERS];
-    //QCN_MIRROR0_PROFILE_V;
-    //QCN_MIRROR1_PROFILE_V;
-    //QOS_TC;
-    //RX_LENGTH;
-    //RX_MIRROR;
     fm_uint32     rx_port;
-    //SEG_META_ERR;
-    //SKIP_DGLORT_DEC;
-    //STORE_TRAP_ACTION;
-    //STRICT_GLORT_ROUTING;
     fm_bool       targeted_deterministic;
-    //XCAST;
 
     /* Input data for FWD_SYS_CFG_1 register. */
     sys_cfg_1     sys_cfg_1;
@@ -150,7 +120,7 @@ triggers_test_data triggers_tests[] =
         .out =
         {
             .action                       = MBY_ACTION_DROP_LOOPBACK,
-            .dmask                        = { 0x0 },
+            .dmask                        = { 0x1 },
             .learning_enabled             = FALSE,
 
         },

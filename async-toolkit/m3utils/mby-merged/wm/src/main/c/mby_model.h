@@ -2,10 +2,12 @@
 
 // Copyright (C) 2018 Intel Corporation
 
-#ifndef _MBY_MODEL_H_
-#define _MBY_MODEL_H_
+#ifndef MBY_MODEL_H
+#define MBY_MODEL_H
 
-#include "mby_common.h"
+#include <mby_top_map.h> // header file auto-generated from RDL
+
+#include "fm_types.h"
 #include "varchar.h"
 
 /* Public interfaces exposed by the MBY functional model */
@@ -44,4 +46,4 @@ fm_status mbyReceivePacket
     varchar_t               * const tx_data
 );
 
-#endif /* _MBY_MODEL_H_ */
+#endif // MBY_MODEL_H

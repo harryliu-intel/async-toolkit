@@ -1,7 +1,13 @@
-#ifndef _MODEL_STAGES_H
-#define _MODEL_STAGES_H
+// -*- mode:c -*-
+
+// Copyright (C) 2019 Intel Corporation
+
+#ifndef MODEL_STAGES_H
+#define MODEL_STAGES_H
 
 #include "varchar.h"
+
+#define TOP_MAP mby_top_map
 
 #define STAGE_PROTOX(nm)                                \
   void nm##_stage(nm##_rstate_t    const * const r  ,   \
@@ -86,7 +92,7 @@ extern model_stages_info_t * model_stages;
 // Modula-3 object ModelStagesC.model_stages
 
 #define REGISTRAR_PROTO()                                            \
-  void PASTE(model_stages_registrar_,TOP_MAP)(void)                          
+  void PASTE(model_stages_registrar_,TOP_MAP)(void)
 
 #define STAGE_REGISTER(nm)                                              \
   model_stages_register(                                                \
@@ -97,6 +103,6 @@ extern model_stages_info_t * model_stages;
                         sizeof(PASTE(TOP_MAP,__addr)),                  \
                         sizeof(nm##_in_t),                              \
                         sizeof(nm##_out_t)                              \
-                                                                        ) 
+                                                                        )
 
-#endif /*!_MODEL_STAGES_H*/
+#endif // MODEL_STAGES_H

@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <sys/param.h>   // MIN/MAX C macros
 
 #include "mby_tcp_client_library.h"
 #include "mby_tcp_client_stages.h"
@@ -113,7 +114,7 @@ int main(int argc, char *argv[])
 #elif defined(MAPPER_ONLY)
     /********** Test Parser stage  ***********/
     if ((err = test_Mapper())) goto CLEANUP;
-    
+
 #else
 
     /********** Test write/read register operations ***********/

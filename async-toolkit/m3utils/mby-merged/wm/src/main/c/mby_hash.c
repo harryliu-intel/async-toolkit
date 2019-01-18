@@ -2,9 +2,10 @@
 
 // Copyright (C) 2018 Intel Corporation
 
-#include "mby_classifier.h"
+#include "mby_bitfield.h"
 #include "mby_hash.h"
 #include "mby_crc32.h"
+#include "mby_cgrp_regs.h"
 
 static fm_uint16 lookUpPearsonHash(const fm_uint16 key)
 {
@@ -509,6 +510,7 @@ void Hash
     out->LEARN_MODE              = in->LEARN_MODE;
     out->LEARN_NOTIFY            = in->LEARN_NOTIFY;
     out->MOD_PROF_IDX            = in->MOD_PROF_IDX;
+    out->NAD                     = in->NAD;
     out->PARITY_ERROR            = in->PARITY_ERROR;
     out->PARSER_ERROR            = in->PARSER_ERROR;
     out->PARSER_INFO             = in->PARSER_INFO;
