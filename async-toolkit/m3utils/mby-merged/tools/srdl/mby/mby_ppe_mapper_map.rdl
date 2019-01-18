@@ -1606,7 +1606,7 @@ reg map_profile_key1_r {
      Provided by MAP_DOMAIN_ACTION0.
            ";
     ValRandomize = true;
-  } L3_DOMAIN[31:24] = 9'h3ff;
+  } L3_DOMAIN[31:23] = 9'h1ff;
   field {
     AccessType = "RSV";
     desc = "
@@ -1614,7 +1614,7 @@ reg map_profile_key1_r {
 
            ";
     ValRandomize = true;
-  } _RSVD0_[23:22] = 2'h0;
+  } _RSVD0_[22:22] = 1'h0;
   field {
     AccessType = "RW";
     desc = "
