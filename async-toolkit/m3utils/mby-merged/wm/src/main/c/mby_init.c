@@ -2472,7 +2472,7 @@ void mby_init_common_regs
     flood_glort_table->FLOOD_MULTICAST_GLORT = 0x0400;
     flood_glort_table->FLOOD_UNICAST_GLORT   = 0x0400;
 
-    for (fm_uint i = 0; i < 18/* Number of ports? */; i++) {
+    for (fm_uint i = 0; i < mby_ppe_mapper_map_MAP_PORT_DEFAULT__nd; i++) {
         map_port_default_r * map_port_default = &(rx_top_map->mapper.MAP_PORT_DEFAULT[i][0]);
 
         map_port_default->TARGET = 0x52;
