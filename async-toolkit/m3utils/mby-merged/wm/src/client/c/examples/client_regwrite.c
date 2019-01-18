@@ -3,7 +3,7 @@
  * @brief	Simple reg write/read application for get_next_reg_name library
  *
  * INTEL CONFIDENTIAL
- * Copyright 2005 - 2018 Intel Corporation.  All Rights Reserved.
+ * Copyright 2005 - 2019 Intel Corporation.  All Rights Reserved.
  *
  * The source code contained or described herein and all documents related
  * to the source code ("Material") are owned by Intel Corporation or its
@@ -77,18 +77,18 @@ struct command {
 static struct connection *sig_handler_con;
 static char *prompt = "<0>%";
 
-static int help_handler(struct connection *con, int argc, char **argv);
+static int help_handler(struct connection *con, int argc, char *argv[]);
 static int fd_print(struct connection *con, const char *format,  ...);
 const struct command * get_cmd(const char* name);
 const struct fpps_reg_entry * get_reg(const char* name);
 const char* get_next_cmd_name(void** it);
 const char* get_next_reg_name(void** it);
 const char* get_next_receive_arg(void** it);
-int reg_write(struct connection *con, int argc, char **argv);
-int reg_read(struct connection *con, int argc, char **argv);
-int reg_write_read(struct connection *con, int argc, char **argv);
-int pkt_send(struct connection *con, int argc, char **argv);
-int pkt_receive(struct connection *con, int argc, char **argv);
+int reg_write(struct connection *con, int argc, char *argv[]);
+int reg_read(struct connection *con, int argc, char *argv[]);
+int reg_write_read(struct connection *con, int argc, char *argv[]);
+int pkt_send(struct connection *con, int argc, char *argv[]);
+int pkt_receive(struct connection *con, int argc, char *argv[]);
 
 
 const char* receive_args[] = {
@@ -99,10 +99,10 @@ const char* receive_args[] = {
 
 struct command commands[] = {
     {"write", reg_write, "[reg] [val]", "Write to register"},
-    {"read", reg_read, "[reg]", "\tRead from register"},
-    {"test", reg_write_read, "[reg] [val]", "Write, read and compare values"},
-    {"send", pkt_send, "[port] [payload]", "\tSend a packet"},
-    {"receive", pkt_receive, "[all, raw]", "\tReceive a packet. If no args receive until EOT."},
+    {"read", reg_read, " [reg]", "\tRead from register"},
+    {"test", reg_write_read, " [reg] [val]", "Write, read and compare values"},
+    {"send", pkt_send, " [port] [payload]", "Send a packet"},
+    {"receive", pkt_receive, "[all, raw]", "Receive a packet. If no args receive until EOT."},
     {"help", help_handler, "", "\t\tPrints this help"},
     {"quit", NULL, "", "\t\tExits the program"},
     {"exit", NULL, "", "\t\tExits the program"},
@@ -365,7 +365,7 @@ static void arrow_key(struct connection *con, char c, char *esc_seq)
     *esc_seq = 0;
 }
 
-static int help_handler(struct connection *con, int argc, char **argv)
+static int help_handler(struct connection *con, int argc, char *argv[])
 {
     const struct command *cmd = &commands[0];
     int i;
@@ -443,7 +443,7 @@ static int print_reg_help(struct connection *con, char* regname)
     return WM_OK;
 }
 
-static int parse_line(char *line, int len, char *command, int *argc, char **argv)
+static int parse_line(char *line, size_t len, char *command, int *argc, char *argv[], size_t str_len)
 {
     const char *delim = " \n";
     char temp_line[MAX_BUF + 1];
@@ -457,19 +457,23 @@ static int parse_line(char *line, int len, char *command, int *argc, char **argv
     memcpy(temp_line, line, len);
     temp_line[len] = '\0';
 
-    strcpy(command, "");
+    //change the single string length to make a space for the NULL character
+    --str_len;
+
+    command[0] = '\n';
     token = strtok(temp_line, delim);
     if(!token)
         return WM_ERR_INVALID_ARG;
-    strcpy(command, token);
-
+    strncpy(command, token, str_len);
+    command[str_len] = '\n';
 
     token = strtok(NULL, delim);
     while (token) {
         if ((*argc) >= COMMAND_ARGS)
             return ERR_BUFFER_FULL;
 
-        strcpy(argv[(*argc)++], token);
+        strncpy(argv[*argc], token, str_len);
+        argv[(*argc)++][str_len] = '\n';
         token = strtok(NULL, delim);
     }
 
@@ -477,7 +481,7 @@ static int parse_line(char *line, int len, char *command, int *argc, char **argv
 
 }
 
-static void cmd_line_to_str(char *command, int argc, char **argv, char* output)
+static void cmd_line_to_str(char *command, int argc, char *argv[], char* output)
 {
     sprintf(output, "%s", command);
     for (int i = 0; i < argc; ++i)
@@ -489,7 +493,7 @@ static void cmd_line_to_str(char *command, int argc, char **argv, char* output)
 // 0	- no proposals, partial match put into proposals[0]
 // 1	- one proposal only
 // n>1	- list of proposals of length n
-static int match_name(const char* name, char **proposals, const char* (*get_next_name)(void** it))
+static int match_name(const char* name, char *proposals[], size_t str_len, const char* (*get_next_name)(void** it))
 {
     const char* first_name = NULL;
     char temp_name[MAX_BUF + 1];
@@ -503,15 +507,16 @@ static int match_name(const char* name, char **proposals, const char* (*get_next
     if(!strcmp(name, ""))
         return -1;
 
-    if(!get_next_name)
-        return -1;
+    //change the single string length to make a space for the NULL character
+    --str_len;
 
     //count matches of given name
     cur_name = get_next_name(&it);
     while (strcmp(cur_name, "")) {
         if (cur_name == strstr(cur_name, name)) {
             first_name = cur_name;
-            strcpy(proposals[cnt++], cur_name);
+            strncpy(proposals[cnt], cur_name, str_len);
+            proposals[cnt++][str_len] = '\n';
         }
         cur_name = get_next_name(&it);
     }
@@ -555,7 +560,8 @@ static int match_name(const char* name, char **proposals, const char* (*get_next
 
     //some letters added - return a partial match
     if (len > init_len) {
-        strcpy(proposals[0], temp_name);
+        strncpy(proposals[0], temp_name, str_len);
+        proposals[0][str_len] = '\0';
         return 0;
     }
 
@@ -626,7 +632,7 @@ static void complete_command(struct connection *con)
     for(cnt = 0; cnt < fpps_reg_table_size; ++cnt)
         proposals[cnt] = (char*)malloc((MAX_BUF + 1) * sizeof(char));
 
-    parse_line(con->buf, con->pcur, command, &argc, argv);
+    parse_line(con->buf, con->pcur, command, &argc, argv, MAX_BUF + 1);
 
     if (con->debug) {
         fd_print(con, "\ncommand: \"%s\" ", command);
@@ -654,8 +660,7 @@ static void complete_command(struct connection *con)
         name[sizeof(name) - 1] = '\0';
     }
 
-    //Perform initial completion or find proposals
-    matches = match_name(name, proposals, get_next_name_function);
+    matches = match_name(name, proposals, MAX_BUF + 1, get_next_name_function);
     if (con->debug)
         fd_print(con, "\nmatches: %d ", matches);
 
@@ -776,7 +781,7 @@ const char* get_next_cmd_name(void** it) {
     return cmd->name;
 }
 
-int reg_write(struct connection *con, int argc, char **argv)
+int reg_write(struct connection *con, int argc, char *argv[])
 {
     const struct fpps_reg_entry *reg;
     uint32_t addr;
@@ -812,7 +817,7 @@ int reg_write(struct connection *con, int argc, char **argv)
     return WM_OK;
 }
 
-int reg_read_int(struct connection *con, int argc, char **argv, uint64_t *ret_val)
+int reg_read_int(struct connection *con, int argc, char *argv[], uint64_t *ret_val)
 {
     const struct fpps_reg_entry *reg;
     uint32_t addr;
@@ -849,13 +854,13 @@ int reg_read_int(struct connection *con, int argc, char **argv, uint64_t *ret_va
 }
 
 
-int reg_read(struct connection *con, int argc, char **argv)
+int reg_read(struct connection *con, int argc, char *argv[])
 {
     return reg_read_int(con, argc, argv, NULL);
 
 }
 
-int reg_write_read(struct connection *con, int argc, char **argv)
+int reg_write_read(struct connection *con, int argc, char *argv[])
 {
     uint64_t ret_val;
     int err = WM_OK;
@@ -881,7 +886,7 @@ int reg_write_read(struct connection *con, int argc, char **argv)
     return err;
 }
 
-int pkt_send(struct connection *con, int argc, char **argv)
+int pkt_send(struct connection *con, int argc, char *argv[])
 {
     struct wm_pkt tx_pkt;
     uint32_t val = 0;
@@ -923,7 +928,7 @@ int pkt_send(struct connection *con, int argc, char **argv)
     return WM_OK;
 }
 
-int pkt_receive(struct connection *con, int argc, char **argv)
+int pkt_receive(struct connection *con, int argc, char *argv[])
 {
     struct wm_pkt rx_pkt;
     unsigned int cnt = 0;
@@ -1073,7 +1078,7 @@ int client_process(struct connection *con)
         else if (c == '\t') {
             complete_command(con);
         } else if (c == '?') {
-            parse_line(con->buf, con->pcur, command, &argc, argv);
+            parse_line(con->buf, con->pcur, command, &argc, argv, MAX_BUF + 1);
             print_cmd_help(con, command);
         } else if (isprint(c)) {
             add_char_to_buf(con, c);
@@ -1122,7 +1127,7 @@ int client_process(struct connection *con)
         }
 
         if (len > 0) {
-            err = parse_line(con->buf, con->blen, command, &argc, argv);
+            err = parse_line(con->buf, con->blen, command, &argc, argv, MAX_BUF + 1);
 
             if (err) {
                 fd_print(con, "Could not parse the command, error %d\n", err);
@@ -1162,7 +1167,7 @@ int client_process(struct connection *con)
     return WM_OK;
 }
 
-int main(int argc, char **argv)
+int main(int argc, char *argv[])
 {
     char *model_server_file = SERVER_FILE;
     struct connection console_con = {0};

@@ -1,4 +1,4 @@
-`include "lib_udp.rdl"
+`include "mby_lib_udp.rdl"
 <% use security; %>
 <% my %Security_Props = security::GetSecurityInfo(); %>
 
@@ -289,7 +289,7 @@ reg wcm_action_cfg_r {
 
 regfile wcm_action_cfg_rf {
   desc = "Two registers for configuring entries in action RAM.  Reg 0 configures N=0..11, Reg 1 configures N=12..23.";
-  wcm_action_cfg_r IDX[2];
+  wcm_action_cfg_r WCM_IDX[2];
 };
 
 reg wcm_ip_r {

@@ -7,7 +7,6 @@
 #include <mby_pipeline.h>
 #include <mby_crc32.h>
 #include <mby_init.h>
-#include <mby_reg_ctrl.h>
 #include "mby_parser_test.h"
 
 fm_bool load_img = FALSE;
@@ -382,7 +381,6 @@ void prepareData
 (
     struct TestData           test_struct,
     const fm_uint             test_num,
-    fm_byte           * const rx_packet,
     mbyRxMacToParser  * const mac2par,
     mbyParserToMapper * const par2map,
     mbyParserToMapper * const par2map_ref
@@ -391,6 +389,7 @@ void prepareData
     // Prepare input:
     fm_uint32 rx_port   = test_struct.in.RX_PORT;
     fm_uint32 rx_length = test_struct.in.RX_LENGTH;
+    fm_byte * rx_packet = (fm_byte *)mac2par->SEG_DATA;
 
     // Scan in RX_DATA from string:
     const char *  pkt_str_ptr = (char *) test_struct.in.RX_DATA;
@@ -419,7 +418,6 @@ void prepareData
 
     mac2par->RX_PORT   = rx_port;
     mac2par->RX_LENGTH = rx_length;
-    mac2par->RX_DATA   = rx_packet;
 
     // Clear outputs:
     initOutput (par2map);
@@ -496,19 +494,6 @@ int main(int argc, char *argv[])
             load_img = TRUE;
     }
 
-    // Allocate storage for registers on the heap:
-    fm_uint32 *regs = malloc(MBY_REGISTER_ARRAY_SIZE * sizeof(fm_uint32));
-    if (regs == NULL) {
-        printf("Could not allocate heap memory for register buffer -- exiting!\n");
-        exit(-1);
-    }
-
-    fm_byte *rx_packet = malloc(MBY_MAX_PACKET_LEN * sizeof(fm_byte));
-    if (rx_packet == NULL) {
-        printf("Could not allocate heap memory for rx packet buffer -- exiting!\n");
-        exit(-1);
-    }
-
     mby_ppe_rx_top_map rx_top_map;
     mby_ppe_tx_top_map tx_top_map;
 
@@ -548,7 +533,7 @@ int main(int argc, char *argv[])
         mbyParserToMapper par2map;     // output
         mbyParserToMapper par2map_ref; // reference output
 
-        prepareData(test_struct, test_num, rx_packet, &mac2par, &par2map, &par2map_ref);
+        prepareData(test_struct, test_num, &mac2par, &par2map, &par2map_ref);
 
         fm_status test_status = runTest
         (
@@ -572,10 +557,6 @@ int main(int argc, char *argv[])
     printf("  %3d/%3d - Parser tests\n" COLOR_RESET, pass_num, TEST_PASS_MAX);
 
     printf("--------------------------------------------------------------------------------\n");
-
-    // Free up buffer memory:
-    free(regs);
-    free(rx_packet);
 
     int rv = (tests_passed) ? 0 : -1;
 

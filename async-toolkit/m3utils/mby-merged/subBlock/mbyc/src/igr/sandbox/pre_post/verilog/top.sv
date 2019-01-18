@@ -332,6 +332,25 @@ import igr_sim_pkg::*;
         end
   
 
+        `define TAG_RING_0 top.pre_post_wrap.mby_igr_post_ppe.igr_tag_ring_lltag0
+         if( `TAG_RING_0.valid ) begin
+            $display("%0t: DEBUG MON: tag seg_ptr %0h sema %4b txport %0h txtc %0h sop %b eop %b len %0d rxport %0h rxtc %0h ", 
+                     $realtime, 
+                     `TAG_RING_0.ptr,
+                     `TAG_RING_0.ptr_toggle,
+                     `TAG_RING_0.dst_port,
+                     `TAG_RING_0.dst_tc,
+                     `TAG_RING_0.sop,
+                     `TAG_RING_0.eop,
+                     `TAG_RING_0.length,
+                     `TAG_RING_0.src_port,
+                     `TAG_RING_0.src_tc
+                     
+                     );
+            
+        end
+  
+
     end
         
         

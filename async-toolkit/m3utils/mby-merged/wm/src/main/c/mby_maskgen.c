@@ -2,165 +2,12 @@
 
 // Copyright (C) 2018 Intel Corporation
 
-#include "mby_nexthop.h"
+#include "mby_bitfield.h"
+#include "mby_params.h"
+#include "mby_common.h"
+#include "mby_eth_types.h"
+#include "mby_cgrp_regs.h"
 #include "mby_maskgen.h"
-
-static mbyFwdPortCfg1 getPortCfg1
-(
-    mby_ppe_fwd_misc_map const * const fwd_misc,
-    fm_uint32                    const port // RX port
-)
-{
-    mbyFwdPortCfg1 cfg;
-
-    fwd_port_cfg_1_r const * const port_cfg_1 = &(fwd_misc->FWD_PORT_CFG_1[port]);
-
-    cfg.LEARNING_ENABLE     = port_cfg_1->LEARNING_ENABLE;
-    cfg.FILTER_VLAN_INGRESS = port_cfg_1->FILTER_VLAN_INGRESS;
-    cfg.DESTINATION_MASK    = port_cfg_1->DESTINATION_MASK;
-
-    return cfg;
-}
-
-static mbyFwdPortCfg2 getPortCfg2
-(
-    mby_ppe_fwd_misc_map const * const fwd_misc,
-    fm_uint16                    const l2_edomain
-)
-{
-    mbyFwdPortCfg2 cfg;
-
-    fwd_port_cfg_2_r const * const port_cfg_2 = &(fwd_misc->FWD_PORT_CFG_2[l2_edomain]);
-
-    cfg.DESTINATION_MASK = port_cfg_2->DESTINATION_MASK;
-
-    return cfg;
-}
-
-static mbyFwdSysCfg1 getSysCfg1
-(
-    mby_ppe_fwd_misc_map const * const fwd_misc
-)
-{
-    mbyFwdSysCfg1 cfg;
-
-    fwd_sys_cfg_1_r const * const sys_cfg_1 = &(fwd_misc->FWD_SYS_CFG_1);
-
-    cfg.STORE_TRAP_ACTION       = sys_cfg_1->STORE_TRAP_ACTION;
-    cfg.DROP_MAC_CTRL_ETHERTYPE = sys_cfg_1->DROP_MAC_CTRL_ETHERTYPE;
-    cfg.DROP_INVALID_SMAC       = sys_cfg_1->DROP_INVALID_SMAC;
-    cfg.ENABLE_TRAP_PLUS_LOG    = sys_cfg_1->ENABLE_TRAP_PLUS_LOG;
-    cfg.TRAP_MTU_VIOLATIONS     = sys_cfg_1->TRAP_MTU_VIOLATIONS;
-
-    return cfg;
-}
-
-static mbyFwdSysCfgRouter getSysCfgRouter
-(
-    mby_ppe_fwd_misc_map const * const fwd_misc
-)
-{
-    mbyFwdSysCfgRouter cfg;
-
-    fwd_sys_cfg_router_r const * const sys_cfg_router = &(fwd_misc->FWD_SYS_CFG_ROUTER);
-
-    cfg.TRAP_IP_OPTIONS = sys_cfg_router->TRAP_IP_OPTIONS;
-    cfg.TRAP_TTL1       = sys_cfg_router->TRAP_TTL1;
-
-    return cfg;
-}
-
-static mbyFwdLagCfg getLagCfg
-(
-    mby_ppe_fwd_misc_map const * const fwd_misc,
-    fm_uint32                    const port
-)
-{
-    mbyFwdLagCfg cfg;
-
-    fwd_lag_cfg_r const * const lag_cfg = &(fwd_misc->FWD_LAG_CFG[port]);
-
-    cfg.IN_LAG        = lag_cfg->IN_LAG;
-    cfg.HASH_ROTATION = lag_cfg->HASH_ROTATION;
-    cfg.INDEX         = lag_cfg->INDEX;
-    cfg.LAG_SIZE      = lag_cfg->LAG_SIZE;
-
-    return cfg;
-}
-
-static mbyGlortCam getGlortCamEntry
-(
-    mby_ppe_mst_glort_map const * const glort_map,
-    fm_byte                             cam_index
-)
-{
-    mbyGlortCam cam_entry;
-
-    glort_cam_r const * const glort_cam = &(glort_map->GLORT_CAM[cam_index]);
-
-    cam_entry.KEY_INVERT = glort_cam->KEY_INVERT;
-    cam_entry.KEY        = glort_cam->KEY;
-
-    return cam_entry;
-}
-
-static mbyGlortDestTable getGlortDestTableEntry
-(
-    mby_ppe_mst_glort_map const * const glort_map,
-    fm_uint16                           table_index
-)
-{
-    mbyGlortDestTable table_entry;
-
-    /* Temporary use only two proxy registers
-     * - GLORT_DIRECT_MAP_DST0 - for DEST_MASK
-     * - GLORT_DIRECT_MAP_DST4 - for IP_MULTICAST_INDEX
-     * <-- REVISIT!!!
-     */
-    glort_direct_map_dst0_r const * const map_dst0 = &(glort_map->GLORT_DIRECT_MAP_DST0);
-    glort_direct_map_dst4_r const * const map_dst4 = &(glort_map->GLORT_DIRECT_MAP_DST4);
-
-    table_entry.IP_MULTICAST_INDEX = map_dst4->IP_MULTICAST_INDEX;
-    table_entry.DEST_MASK          = map_dst0->DEST_MASK;
-
-    return table_entry;
-}
-
-static mbyGlortRam getGlortRamEntry
-(
-    mby_ppe_mst_glort_map const * const glort_map,
-    fm_byte                       const ram_index
-)
-{
-    mbyGlortRam ram_entry;
-
-    glort_ram_r const * const glort_ram = &(glort_map->GLORT_RAM[ram_index]);
-
-    ram_entry.SKIP_DGLORT_DEC   = glort_ram->SKIP_DGLORT_DEC;
-    ram_entry.HASH_ROTATION     = glort_ram->HASH_ROTATION;
-    ram_entry.DEST_COUNT        = glort_ram->DEST_COUNT;
-    ram_entry.RANGE_SUB_INDEX_A = glort_ram->RANGE_SUB_INDEX_A;
-    ram_entry.RANGE_SUB_INDEX_B = glort_ram->RANGE_SUB_INDEX_B;
-    ram_entry.DEST_INDEX        = glort_ram->DEST_INDEX;
-    ram_entry.STRICT            = glort_ram->STRICT;
-
-    return ram_entry;
-}
-
-static mbyEgressVidTable getEvidTableEntry
-(
-    mby_ppe_mst_glort_map const * const mst_glort,
-    fm_uint16                           vid
-)
-{
-    mbyEgressVidTable entry;
-
-    egress_vid_table_r const * const vid_table = &(mst_glort->EGRESS_VID_TABLE[vid][0]);
-
-    entry.MEMBERSHIP = vid_table->MEMBERSHIP;
-
-    return entry;
-}
 
 static fm_status lookUpRamEntry
 (
@@ -172,7 +19,7 @@ static fm_status lookUpRamEntry
     fm_bool cam_hit = FALSE;
 
     // The highest numbered GLORT_CAM entry has highest precendence:
-    for (fm_int i = MBY_GLORT_CAM_ENTRIES - 1; i >= 0; i--)
+    for (fm_int i = mby_ppe_mst_glort_map_GLORT_CAM__nd - 1; i >= 0; i--)
     {
         fm_byte index = i;
 
@@ -254,15 +101,50 @@ static fm_bool isCpuMacAddress
     return result;
 }
 
+static void dmaskClear
+(
+    fm_uint64 * const dmask
+)
+{
+    for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
+        dmask[i] = 0;
+}
+
+static void dmaskCopy
+(
+    fm_uint64 * const dmask_in,
+    fm_uint64 * const dmask_out
+)
+{
+    for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
+        dmask_out[i] = dmask_in[i];
+}
+
+static fm_bool isDmask
+(
+    fm_uint64 * const dmask
+)
+{
+    fm_bool is_dmask = FALSE;
+
+    for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
+    {
+        is_dmask = (dmask[i] != 0);
+        if(is_dmask) break;
+    }
+
+    return is_dmask;
+}
+
 static void resolveAction
 (
     // inputs:
-    fm_uint64  const pri_amask,
-    fm_uint32  const glort_dmask,
-    fm_byte    const trap_tc,
+    fm_uint64   const pri_amask,
+    fm_uint64 * const glort_dmask,
+    fm_byte     const trap_tc,
     // inouts:
     fm_uint64 * const amask,
-    fm_uint32 * const dmask,
+    fm_uint64 * const dmask,
     fm_bool   * const learning_enabled,
     fm_byte   * const cpu_code,
     fm_byte   * const qos_tc,
@@ -278,156 +160,161 @@ static void resolveAction
             break;
 
         case MBY_AMASK_DROP_PERR:
-            *dmask            = 0;
+            dmaskClear(dmask);
             *action           = MBY_ACTION_DROP_PARITY;
             *learning_enabled = FALSE;
             break;
 
         case MBY_AMASK_SPECIAL:
-            *dmask            = glort_dmask;
+            dmaskCopy(glort_dmask, dmask);
             *action           = MBY_ACTION_SPECIAL;
             *learning_enabled = FALSE;
             break;
 
         case MBY_AMASK_DROP_PARSER_ERR:
-            *dmask            = 0;
+            dmaskClear(dmask);
             *action           = MBY_ACTION_DROP_PARSE;
             *learning_enabled = FALSE;
             break;
 
         case MBY_AMASK_TRAP_RESERVED_MAC:
-            *dmask            = 0;
+            dmaskClear(dmask);
             *action           = MBY_ACTION_TRAP;
             *cpu_code         = MBY_CPU_CODE_RSVD_MAC;
             break;
 
         case MBY_AMASK_TRAP_RESERVED_MAC_REMAP:
-            *dmask            = 0;
+            dmaskClear(dmask);
             *action           = MBY_ACTION_TRAP;
             *cpu_code         = MBY_CPU_CODE_RSVD_MAC;
             *qos_tc           = trap_tc; // <-- REVISIT!!!
             break;
 
         case MBY_AMASK_DROP_MAC_CTRL:
-            *dmask            = 0;
+            dmaskClear(dmask);
             *action           = MBY_ACTION_DROP_CONTROL;
             *learning_enabled = FALSE;
             break;
 
         case MBY_AMASK_DROP_RESERVED_MAC:
         case MBY_AMASK_DROP_SMAC:
-        case MBY_AMASK_DROP_PROVISIONAL:
-            *dmask            = 0;
+            dmaskClear(dmask);
+            *action           = MBY_ACTION_BANK5_OTHER_DROPS;
+            *learning_enabled = FALSE;
+            break;
+        //In MBY Functional Specification Reserved <- REVISIT !!!!
+        /*case MBY_AMASK_DROP_PROVISIONAL:
+            dmaskClear(dmask);
             *action           = MBY_ACTION_BANK5_OTHER_DROPS;
             *learning_enabled = FALSE;
             break;
 
-        case MBY_AMASK_DROP_SEC_ADDR :
-        case MBY_AMASK_DROP_SEC_PORT :
-        case MBY_AMASK_DROP_STATIC_ADDR :
-            *dmask            = 0;
+        case MBY_AMASK_DROP_SEC_ADDR:
+        case MBY_AMASK_DROP_SEC_PORT:
+        case MBY_AMASK_DROP_STATIC_ADDR:
+            dmaskClear(dmask);
             *action           = MBY_ACTION_DROP_SV;
             break;
-
+        */
         case MBY_AMASK_TRAP_CPU_ADDR:
-            *dmask            = 0;
+            dmaskClear(dmask);
             *action           = MBY_ACTION_TRAP;
             *cpu_code         = MBY_CPU_CODE_CPU_ADDRESS;
             break;
 
         case MBY_AMASK_DROP_IV:
-            *dmask            = 0;
+            dmaskClear(dmask);
             *action           = MBY_ACTION_DROP_IV;
             *learning_enabled = FALSE;
             break;
 
         case MBY_AMASK_DROP_INGRESS_STP_NON_LEARN:
-            *dmask            = 0;
+            dmaskClear(dmask);
             *action           = MBY_ACTION_DROP_STP;
             *learning_enabled = FALSE;
             break;
 
         case MBY_AMASK_DROP_INGRESS_STP_LEARN:
-            *dmask            = 0;
+            dmaskClear(dmask);
             *action           = MBY_ACTION_DROP_STP;
             break;
 
-        case MBY_AMASK_DROP_FFU:
-            *dmask            = 0;
-            *action           = MBY_ACTION_DROP_FFU;
+        case MBY_AMASK_DROP_CGRP:
+            dmaskClear(dmask);
+            *action           = MBY_ACTION_DROP_CGRP;
             *learning_enabled = FALSE;
             break;
 
-        case MBY_AMASK_TRAP_FFU:
-            *dmask            = 0;
+        case MBY_AMASK_TRAP_CGRP:
+            dmaskClear(dmask);
             *action           = MBY_ACTION_TRAP;
-            *cpu_code         = MBY_CPU_CODE_FFU;
+            *cpu_code         = MBY_CPU_CODE_CGRP;
             break;
 
         case MBY_AMASK_TRAP_ICMP_TTL:
-            *dmask            = 0;
+            dmaskClear(dmask);
             *action           = MBY_ACTION_TRAP;
             *cpu_code         = MBY_CPU_CODE_ICMP;
             break;
 
         case MBY_AMASK_TRAP_IP_OPTION:
-            *dmask            = 0;
+            dmaskClear(dmask);
             *action           = MBY_ACTION_TRAP;
             *cpu_code         = MBY_CPU_CODE_IP_OPTION;
             break;
 
         case MBY_AMASK_TRAP_MTU_VIO:
-            *dmask            = 0;
+            dmaskClear(dmask);
             *action           = MBY_ACTION_TRAP;
             *cpu_code         = MBY_CPU_CODE_MTU;
             break;
 
         case MBY_AMASK_TRAP_IGMP:
-            *dmask            = 0;
+            dmaskClear(dmask);
             *action           = MBY_ACTION_TRAP;
             *cpu_code         = MBY_CPU_CODE_IGMP;
             break;
 
         case MBY_AMASK_TRAP_TTL:
-            *dmask             = 0;
+            dmaskClear(dmask);
             *action            = MBY_ACTION_TRAP;
             *cpu_code          = MBY_CPU_CODE_TTL;
             break;
 
         case MBY_AMASK_DROP_TTL:
-            *dmask             = 0;
+            dmaskClear(dmask);
             *action            = MBY_ACTION_DROP_TTL;
             break;
 
         case MBY_AMASK_DROP_NULL_GLORTDEST:
-            *dmask             = 0;
+            dmaskClear(dmask);
             *action            = MBY_ACTION_BANK5_OTHER_DROPS;
             break;
 
         case MBY_AMASK_DROP_EV:
-            *dmask             = 0;
+            dmaskClear(dmask);
             *action            = MBY_ACTION_DROP_EV;
             break;
 
         case MBY_AMASK_DROP_DLF:
-            *dmask            = 0;
+            dmaskClear(dmask);
             *action           = MBY_ACTION_DROP_DLF;
             *learning_enabled = FALSE;
             break;
 
         case MBY_AMASK_DROP_CAM_MISS:
-            *dmask            = 0;
+            dmaskClear(dmask);
             *action           = MBY_ACTION_DROP_CAM;
             *learning_enabled = 0;
             break;
 
         case MBY_AMASK_DROP_EGRESS_STP:
-            *dmask            = 0;
+            dmaskClear(dmask);
             *action           = MBY_ACTION_DROP_STP;
             break;
 
         case MBY_AMASK_DROP_LOOPBACK:
-            *dmask            = 0;
+            dmaskClear(dmask);
             *action           = MBY_ACTION_DROP_LOOPBACK;
             break;
 
@@ -444,7 +331,7 @@ static void resolveAction
             break;
 
         default:
-            *dmask            = 0;
+            dmaskClear(dmask);
             *action           = MBY_ACTION_BANK5_OTHER_DROPS;
             break;
     }
@@ -556,78 +443,22 @@ static fm_byte getMacAction
     }
 }
 
-void MaskGen
+static void glortLookup
 (
-    mby_ppe_fwd_misc_map  const * const fwd_misc,
     mby_ppe_mst_glort_map const * const glort_map,
-    mby_ppe_cm_apply_map  const * const cm_apply,
-    mbyNextHopToMaskGen   const * const in,
-    mbyMaskGenToTriggers        * const out
+    fm_uint16                     const idglort,
+    fm_uint32                     const hash_rot_a,
+    fm_uint32                     const hash_rot_b,
+    fm_uint64             const * const glort_dmask_in,
+    fm_bool                     * const glort_cam_miss_o,
+    fm_bool                     * const strict_glort_routing_o,
+    fm_bool                     * const targeted_deterministic_o,
+    fm_bool                     * const skip_dglort_dec_o,
+    fm_uint64                   * const glort_dmask_o,
+    fm_uint16                   * const ip_mcast_idx_o,
+    mbyGlortDestTable           * const glort_dest_table_o
 )
 {
-    // Read inputs:
-    const fm_uint64          amask_in             = in->AMASK;
-    const fm_uint16          csglort              = in->CSGLORT;
-    const fm_bool            da_hit               = in->DA_HIT;
-    const fm_bool            drop_ttl             = in->DROP_TTL;
-    const mbyClassifierFlags cgrp_flags           = in->CGRP_FLAGS;
-    const fm_bool            flood_forwarded      = in->FLOOD_FORWARDED;
-    const fm_uint32          glort_dmask_in       = in->GLORT_DMASK;
-    const fm_bool            glort_forwarded      = in->GLORT_FORWARDED;
-    const fm_uint32          hash_rot_a           = in->HASH_ROT_A;
-    const fm_uint32          hash_rot_b           = in->HASH_ROT_B;
-    const fm_uint16          idglort              = in->IDGLORT;         // in->TRIGGERS.destGlort; // <-- REVISIT!!!
-    const fm_bool            is_ipv4              = in->IS_IPV4;
-    const fm_bool            is_ipv6              = in->IS_IPV6;
-    const fm_macaddr         l2_dmac              = in->L2_DMAC;
-    const fm_uint16          l2_edomain_in        = in->L2_EDOMAIN;
-    const fm_uint16          l2_etype             = in->L2_ETYPE;
-    const fm_uint16          l2_evid1             = in->L2_EVID1;
-    const fm_uint16          l2_ivid1             = in->L2_IVID1;
-    const fm_bool            l2_ivlan1_membership = in->L2_IVLAN1_MEMBERSHIP;
-    const fm_bool            l2_ivlan1_reflect    = in->L2_IVLAN1_REFLECT;
-    const fm_macaddr         l2_smac              = in->L2_SMAC;
-    const fm_byte            l3_edomain_in        = in->L3_EDOMAIN;
-    const fm_bool            mark_routed          = in->MARK_ROUTED;
-    const fm_bool            mtu_violation        = in->MTU_VIOLATION;
-    const fm_bool            learn_notify         = in->LEARN_NOTIFY;
-    const fm_byte            operator_id          = in->OPERATOR_ID;
-    const fm_bool            parity_error         = in->PARITY_ERROR;
-    const fm_bool            parser_window_v      = in->PARSER_WINDOW_V;
-    const fm_bool            parser_error         = in->PARSER_ERROR;
-    const fm_bool            pa_drop              = in->PA_DROP;
-    const fm_bool            pa_l3len_err         = in->PA_L3LEN_ERR;
-    const fm_byte            qos_tc_in            = in->QOS_TC;
-    const fm_uint32          rx_length            = in->RX_LENGTH;
-    const fm_bool            rx_mirror_in         = in->RX_MIRROR;
-    const fm_uint32          rx_port              = in->RX_PORT;
-    const fm_bool            sa_hit               = in->SA_HIT;
-    const mbyMaTable         sa_result            = in->SA_RESULT;
-    const fm_byte            seg_meta_err_in      = in->SEG_META_ERR;
-    const fm_byte            sv_drop              = in->SV_DROP;
-    const fm_bool            trap_icmp            = in->TRAP_ICMP;
-    const fm_bool            trap_igmp            = in->TRAP_IGMP;
-    const fm_bool            trap_ip_options      = in->TRAP_IP_OPTIONS;
-    const mbyTriggerResults  triggers             = in->TRIGGERS;
-
-    // Configurations:
-    mbyFwdPortCfg1 port_cfg1;
-    port_cfg1 = getPortCfg1(fwd_misc, rx_port);
-
-    mbyFwdPortCfg2 port_cfg2;
-    port_cfg2 = getPortCfg2(fwd_misc, l2_edomain_in);
-
-    mbyFwdSysCfg1 sys_cfg1;
-    sys_cfg1 = getSysCfg1(fwd_misc);
-
-    mbyFwdSysCfgRouter sys_cfg_router;
-    sys_cfg_router = getSysCfgRouter(fwd_misc);
-
-    // Logging:
-    fm_bool logging_hit = FALSE;
-
-    // --------------------------------------------------------------------------------
-    // GLORT:
     mbyGlortRam glort_ram;
     fm_bool glort_cam_miss = FALSE;
 
@@ -638,21 +469,44 @@ void MaskGen
     fm_bool strict_glort_routing   = (glort_ram.STRICT == 2) || (glort_ram.STRICT == 3);
     fm_bool targeted_deterministic = (glort_ram.STRICT == 2);
 
-    fm_bool   skip_dglort_dec = FALSE;
-    fm_uint32 glort_dmask     = glort_dmask_in;
+    fm_bool skip_dglort_dec = FALSE;
+
     fm_uint16 ip_mcast_idx    = 0;
+    for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
+        glort_dmask_o[i] = glort_dmask_in[i];
 
     if (!glort_cam_miss)
     {
-        mbyGlortDestTable glort_dest_table;
-        lookUpDestEntry(glort_map, idglort, strict_glort_routing, hash_rot_a, hash_rot_b, glort_ram, &glort_dest_table);
+        lookUpDestEntry(glort_map, idglort, strict_glort_routing, hash_rot_a, hash_rot_b, glort_ram, glort_dest_table_o);
 
         skip_dglort_dec = glort_ram.SKIP_DGLORT_DEC;
-        glort_dmask     = glort_dest_table.DEST_MASK;
-        ip_mcast_idx    = glort_dest_table.IP_MULTICAST_INDEX;
+        ip_mcast_idx    = glort_dest_table_o->IP_MULTICAST_INDEX;
+        dmaskCopy(glort_dest_table_o->DEST_MASK, glort_dmask_o);
     }
 
-    // --------------------------------------------------------------------------------
+    // output values
+    *glort_cam_miss_o         = glort_cam_miss;
+    *strict_glort_routing_o   = strict_glort_routing;
+    *targeted_deterministic_o = targeted_deterministic;
+    *skip_dglort_dec_o        = skip_dglort_dec;
+    *ip_mcast_idx_o           = ip_mcast_idx;
+}
+
+
+static void learningEnabledCheck
+(
+    mby_ppe_mst_glort_map const * const glort_map,
+    mby_ppe_fwd_misc_map  const * const fwd_misc,
+    mbyFwdPortCfg         const * const port_cfg,
+    fm_uint32                     const rx_port,
+    fm_uint16                     const l2_ivid1,
+    fm_bool                       const learn_notify,
+    fm_macaddr                    const l2_smac,
+    fm_bool                     * const l2_smac_is_zero_o,
+    fm_bool                     * const learning_enabled_o,
+    mbyStpState                 * const l2_ifid1_state_o
+)
+{
     // Learning:
     ///> Learning might need to be moved to Triggers <-- REVISIT!!!
 
@@ -663,18 +517,36 @@ void MaskGen
 
     fm_bool l2_ifid1_learn   = ((l2_ifid1_state == MBY_STP_STATE_LEARNING) ||
                                 (l2_ifid1_state == MBY_STP_STATE_FORWARD));
-    // Below "&& !learn_notify" to be clarified. This should be learn_notify without negation <-- REVISIT!!!
-    fm_bool learning_allowed = port_cfg1.LEARNING_ENABLE && !learn_notify && l2_ifid1_learn;
-    fm_bool l2_smac_is_cpu;
-    l2_smac_is_cpu = isCpuMacAddress(fwd_misc, l2_smac);
+
+    // If a frame is received with an SMAC that matches the value in CPU_MAC, there will be no SMAC learning notification.
+    fm_bool learning_allowed = port_cfg->LEARNING_ENABLE && !learn_notify && l2_ifid1_learn;
+    fm_bool l2_smac_is_cpu   = isCpuMacAddress(fwd_misc, l2_smac);
     fm_bool l2_smac_is_zero  = (l2_smac == 0);
     fm_bool learning_enabled = learning_allowed && !l2_smac_is_cpu && !l2_smac_is_zero;
 
-    // --------------------------------------------------------------------------------
-    // Action Masks:
+    // output values
+    *l2_smac_is_zero_o  = l2_smac_is_zero;
+    *learning_enabled_o = learning_enabled;
+    *l2_ifid1_state_o   = l2_ifid1_state;
+}
 
+static void actionMaskUpdate
+(
+    mbyFwdSysCfg1 const * const sys_cfg1,
+    fm_uint64             const amask_in,
+    fm_bool               const parser_error,
+    fm_bool               const trap_igmp,
+    fm_bool               const parity_error,
+    fm_uint16             const l2_etype,
+    fm_macaddr            const l2_smac,
+    fm_bool               const parser_window_v,
+    fm_bool               const glort_cam_miss,
+    fm_bool               const targeted_deterministic,
+    fm_bool               const l2_smac_is_zero,
+    fm_uint64           * const amask_o
+)
+{
     fm_uint64 amask     = amask_in; // from lookUpL2() in NextHop
-    fm_byte   log_amask = 0;
 
     if (glort_cam_miss)
         amask |= MBY_AMASK_DROP_CAM_MISS;   // CAM miss -> drop frame
@@ -691,10 +563,10 @@ void MaskGen
     if (parity_error)
         amask |= MBY_AMASK_DROP_PERR;       // parity err -> drop frame
 
-    if ((sys_cfg1.DROP_MAC_CTRL_ETHERTYPE == TRUE) && (l2_etype == MBY_ETYPE_MAC_CONTROL))
+    if ((sys_cfg1->DROP_MAC_CTRL_ETHERTYPE == TRUE) && (l2_etype == MBY_ETYPE_MAC_CONTROL))
         amask |= MBY_AMASK_DROP_MAC_CTRL;   // MAC CTRL Eth type 0x8808 Frame -> drop frame
 
-    fm_bool drop_invalid_smac  = sys_cfg1.DROP_INVALID_SMAC;
+    fm_bool drop_invalid_smac  = sys_cfg1->DROP_INVALID_SMAC;
     fm_bool l2_smac_is_invalid = l2_smac_is_zero && !parser_window_v;
     fm_bool l2_smac_is_broad   = isBroadcastMacAddress(l2_smac);
     fm_bool l2_smac_is_multi   = isMulticastMacAddress(l2_smac);
@@ -702,18 +574,41 @@ void MaskGen
     if (drop_invalid_smac && (l2_smac_is_invalid || l2_smac_is_broad || l2_smac_is_multi))
         amask |= MBY_AMASK_DROP_SMAC;       // SMAC frame -> drop frame
 
-    // --------------------------------------------------------------------------------
-    // Traps:
+    // output values
+    *amask_o = amask;
+}
 
-    fm_bool store_trap_action = sys_cfg1.STORE_TRAP_ACTION;
+static void specialPacketHandlingTtlTrapDropLog
+(
+    mby_ppe_fwd_misc_map const * const fwd_misc,
+    mbyFwdSysCfg1        const * const sys_cfg1,
+    mbyFwdSysCfgRouter   const * const sys_cfg_router,
+    fm_macaddr                   const l2_dmac,
+    fm_bool                      const parser_window_v,
+    fm_bool                      const drop_ttl,
+    fm_bool                      const trap_icmp,
+    fm_uint16                    const ip_mcast_idx,
+    fm_uint16                    const l2_ivid1,
+    fm_uint16                    const l2_evid1,
+    fm_bool                      const mark_routed,
+    fm_bool                      const trap_ip_options,
+    fm_bool                      const is_ipv4,
+    fm_bool                      const is_ipv6,
+    fm_bool                      const mtu_violation,
+    fm_uint64                  * const amask_o,
+    fm_byte                    * const log_amask_o,
+    fm_bool                    * const store_trap_action_o
+)
+{
+    fm_byte log_amask         = 0;
+    fm_bool store_trap_action = sys_cfg1->STORE_TRAP_ACTION;
     // TODO Variable 'log_ip_mc_ttl' is assigned a value that is never used.
     fm_bool log_ip_mc_ttl     = FALSE;
-    fm_bool l2_dmac_cpu;
-    l2_dmac_cpu       = isCpuMacAddress(fwd_misc, l2_dmac);
+    fm_bool l2_dmac_cpu       = isCpuMacAddress(fwd_misc, l2_dmac);
     fm_bool l2_dmac_zero      = (l2_dmac == 0);
 
     if (l2_dmac_cpu && !(l2_dmac_zero && parser_window_v))
-        amask |= MBY_AMASK_TRAP_CPU_ADDR; // Trapping CPU addressed frame
+        *amask_o |= MBY_AMASK_TRAP_CPU_ADDR; // Trapping CPU addressed frame
 
     // Special packet handling:
     if ((l2_dmac & MBY_SPECIAL_DMASK) == (MBY_DMAC_IEEE_PREFIX & MBY_SPECIAL_DMASK))
@@ -731,20 +626,20 @@ void MaskGen
         switch (mac_action)
         {
             case MBY_IEEE_RESERVED_MAC_ACTION_ACTION_SWITCHNORMALLY:
-                amask |= MBY_AMASK_SWITCH_RESERVED_MAC;
+                *amask_o |= MBY_AMASK_SWITCH_RESERVED_MAC;
                 break;
 
             case MBY_IEEE_RESERVED_MAC_ACTION_ACTION_TRAP:
-                amask |= (trap_pri) ? MBY_AMASK_TRAP_RESERVED_MAC_REMAP : MBY_AMASK_TRAP_RESERVED_MAC;
+                *amask_o |= (trap_pri) ? MBY_AMASK_TRAP_RESERVED_MAC_REMAP : MBY_AMASK_TRAP_RESERVED_MAC;
                 break;
 
             case MBY_IEEE_RESERVED_MAC_ACTION_ACTION_DROP:
-                amask |= MBY_AMASK_DROP_RESERVED_MAC;
+                *amask_o |= MBY_AMASK_DROP_RESERVED_MAC;
                 break;
 
             default:
             case MBY_IEEE_RESERVED_MAC_ACTION_ACTION_LOG:
-                amask |= MBY_AMASK_LOG_MAC_CTRL;
+                *amask_o  |= MBY_AMASK_LOG_RESERVED_MAC;
                 log_amask |= MBY_LOG_TYPE_RESERVED_MAC;
                 break;
         }
@@ -757,71 +652,115 @@ void MaskGen
     {
         if (ip_mcast_idx == 0)
         {
-            if      (sys_cfg_router.TRAP_TTL1 == 0)
-                amask |= MBY_AMASK_DROP_TTL;
-            else if (sys_cfg_router.TRAP_TTL1 == 1 )
-                amask |= (trap_icmp) ? MBY_AMASK_TRAP_ICMP_TTL : MBY_AMASK_DROP_TTL;
-            else if (sys_cfg_router.TRAP_TTL1 == 2 )
-                amask |= (trap_icmp) ? MBY_AMASK_TRAP_ICMP_TTL : MBY_AMASK_TRAP_TTL;
+            if (sys_cfg_router->TRAP_TTL1 == 0)
+                *amask_o |= MBY_AMASK_DROP_TTL;
+            else if (sys_cfg_router->TRAP_TTL1 == 1 )
+                *amask_o |= (trap_icmp) ? MBY_AMASK_TRAP_ICMP_TTL : MBY_AMASK_DROP_TTL;
+            else if (sys_cfg_router->TRAP_TTL1 == 2 )
+                *amask_o |= (trap_icmp) ? MBY_AMASK_TRAP_ICMP_TTL : MBY_AMASK_TRAP_TTL;
         }
         else // Frame is IP multicast
         {
-            if ((sys_cfg_router.TRAP_TTL1 == 1) && trap_icmp) {
+            if ((sys_cfg_router->TRAP_TTL1 == 1) && trap_icmp) {
                 log_amask |= MBY_LOG_TYPE_ICMP;
                 log_ip_mc_ttl = TRUE;
-            } else if (sys_cfg_router.TRAP_TTL1 == 2) {
+            } else if (sys_cfg_router->TRAP_TTL1 == 2) {
                 log_amask |= (trap_icmp) ? MBY_LOG_TYPE_ICMP : MBY_LOG_TYPE_TTL_IP_MC;
                 log_ip_mc_ttl = TRUE;
             }
         }
     }
 
-    if (sys_cfg_router.TRAP_IP_OPTIONS && trap_ip_options && (is_ipv4 || is_ipv6))
-        amask |= MBY_AMASK_TRAP_IP_OPTION;
+    if (sys_cfg_router->TRAP_IP_OPTIONS && trap_ip_options && (is_ipv4 || is_ipv6))
+        *amask_o |= MBY_AMASK_TRAP_IP_OPTION;
 
-    if (sys_cfg1.TRAP_MTU_VIOLATIONS && mtu_violation && mark_routed)
-        amask |= MBY_AMASK_TRAP_MTU_VIO; // MTU violation -> trapping frame
+    if (sys_cfg1->TRAP_MTU_VIOLATIONS && mtu_violation && mark_routed)
+        *amask_o |= MBY_AMASK_TRAP_MTU_VIO; // MTU violation -> trapping frame
 
-    // --------------------------------------------------------------------------------
-    // Port Security:
+    // output values
+    *log_amask_o         = log_amask;
+    *store_trap_action_o = store_trap_action;
+}
 
-    if (port_cfg1.FILTER_VLAN_INGRESS && !l2_ivlan1_membership)
-        amask |= MBY_AMASK_DROP_IV; // VLAN ingress violation -> dropping frame
+static void ingressSpanningTreeCheck
+(
+    mbyFwdPortCfg      const * const port_cfg,
+    fm_bool                    const l2_ivlan1_membership,
+    fm_bool                    const sa_hit,
+    fm_uint16                  const csglort,
+    fm_byte                    const sv_drop,
+    mbyStpState                const l2_ifid1_state,
+    mbyMaTable                 const sa_result,
+    fm_uint64                * const amask,
+    fm_bool                  * const mac_moved_o
+)
+{
+    if (port_cfg->FILTER_VLAN_INGRESS && !l2_ivlan1_membership)
+        *amask |= MBY_AMASK_DROP_IV; // VLAN ingress violation -> dropping frame
 
     fm_bool mac_moved = (sa_hit && (sa_result.S_GLORT != csglort));
 
-    switch (sv_drop)
+    //In MBY Functional Specification Reserved <- REVISIT !!!!
+    /*switch (sv_drop)
     {
         case MBY_SV_MOVE_DROP_ADDR:   // secure addr violation -> dropping frame
-            amask |= MBY_AMASK_DROP_SEC_ADDR; break;
+            *amask |= MBY_AMASK_DROP_SEC_ADDR; break;
         case MBY_SV_MOVE_DROP_PORT:   // secure port violation -> dropping frame
-            amask |= MBY_AMASK_DROP_SEC_PORT; break;
+            *amask |= MBY_AMASK_DROP_SEC_PORT; break;
         case MBY_SV_MOVE_DROP_STATIC: // static addr violation -> dropping frame
-            amask |= MBY_AMASK_DROP_STATIC_ADDR; break;
+            *amask |= MBY_AMASK_DROP_STATIC_ADDR; break;
         default: break;
-    }
+    }*/
 
     switch (l2_ifid1_state) // Ingress spanning tree check
     {
         case MBY_STP_STATE_DISABLE:
         case MBY_STP_STATE_LISTENING: // STP ingress (non-learning) violation -> dropping frame
-            amask |= MBY_AMASK_DROP_INGRESS_STP_NON_LEARN; break;
+            *amask |= MBY_AMASK_DROP_INGRESS_STP_NON_LEARN;
+            break;
         case MBY_STP_STATE_LEARNING:  // STP ingress (learning) violation -> dropping frame
-            amask |= MBY_AMASK_DROP_INGRESS_STP_LEARN; break;
+            *amask |= MBY_AMASK_DROP_INGRESS_STP_LEARN;
+            break;
         default: break;
     }
 
-    // --------------------------------------------------------------------------------
-    // Filtering:
+    // output values
+    *mac_moved_o = mac_moved;
 
+}
+
+static void filtering
+(
+    mby_ppe_mst_glort_map const * const glort_map,
+    mbyFwdPortCfg         const * const port_cfg,
+    mbyFwdPortCfg2        const * const port_cfg2,
+    fm_macaddr                    const l2_dmac,
+    fm_bool                       const flood_forwarded,
+    fm_bool                       const glort_forwarded,
+    fm_bool                       const targeted_deterministic,
+    fm_bool                       const mark_routed,
+    fm_bool                       const l2_ivlan1_reflect,
+    fm_uint64                   * const glort_dmask,
+    fm_uint32                     const rx_port,
+    fm_uint16                     const l2_evid1,
+    fm_uint64                   * const amask_o,
+    fm_uint64                   * const pre_resolve_dmask_o,
+    fm_uint64                   * const dmask_o,
+    fm_byte                     * const fclass_o,
+    fm_byte                     * const xcast_o
+)
+{
     fm_bool l2_dmac_is_broad = isBroadcastMacAddress(l2_dmac);
     fm_bool l2_dmac_is_multi = isMulticastMacAddress(l2_dmac);
-    fm_bool l2_dmac_is_uni   =   isUnicastMacAddress(l2_dmac);
+    fm_bool l2_dmac_is_uni   = isUnicastMacAddress  (l2_dmac);
 
-    fm_byte fclass = 0;
-    fm_byte xcast  = 0;
+    fm_byte fclass               = 0;
+    fm_byte xcast                = 0;
+    fm_bool is_pre_resolve_dmask = FALSE;
+    fm_bool is_dmask             = FALSE;
+    fm_bool is_glort_dmask       = FALSE;
 
-    if        (l2_dmac_is_broad) {
+    if (l2_dmac_is_broad) {
         fclass = MBY_FCLASS_BROADCAST;
         xcast  = 2;
     } else if (l2_dmac_is_multi) {
@@ -832,143 +771,240 @@ void MaskGen
         xcast  = 0;
     }
 
-    fm_uint32 dmask = MBY_DEFAULT_DMASK;
-
     if (flood_forwarded)
-        amask |= MBY_AMASK_FLOOD;
+        *amask_o |= MBY_AMASK_FLOOD;
 
     if (glort_forwarded)
-        amask |= MBY_AMASK_GLORT;
+        *amask_o |= MBY_AMASK_GLORT;
 
     // Perform port-based filtering for switched packets
-    dmask &= port_cfg1.DESTINATION_MASK;
-    dmask &= port_cfg2.DESTINATION_MASK;
+    for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
+    {
+        dmask_o[i] &= port_cfg->DESTINATION_MASK[i];
+        dmask_o[0] &= port_cfg2->DESTINATION_MASK; //!!!REVISIT RDL changes needed here
+    }
 
     // Ingress VLAN reflection check:
     if ( !mark_routed && !l2_ivlan1_reflect && !targeted_deterministic)
-        dmask &= ~(FM_LITERAL_U64(1) << rx_port);
-
-    // Prevent reflection: drop frame
-    if (dmask == 0)
-        amask |= MBY_AMASK_DROP_LOOPBACK;
+        dmask_o[rx_port / 64] &= ~(FM_LITERAL_U64(1) << (rx_port % 64)); //!!!REVISIT replace rx_port with the port specified by ([0..7][0..1][0..15])+1CPU
 
     // Save pre-resolve dmask for later:
-    fm_uint32 pre_resolve_dmask = dmask & glort_dmask;
+    for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
+        pre_resolve_dmask_o[i] = dmask_o[i] & glort_dmask[i];
 
-    if (pre_resolve_dmask == 0)
+    is_pre_resolve_dmask = isDmask(pre_resolve_dmask_o);
+    is_dmask             = isDmask(dmask_o);
+    is_glort_dmask       = isDmask(glort_dmask);
+
+    // Prevent reflection: drop frame
+    if (!is_dmask)
+        *amask_o |= MBY_AMASK_DROP_LOOPBACK;
+
+    if (!is_pre_resolve_dmask)
     {
         // Egress VLAN membership check:
-        if (glort_dmask == 0) { // Null Glort Dest: dropping frame
-            amask |= MBY_AMASK_DROP_NULL_GLORTDEST;
+        if (!is_glort_dmask) { // Null Glort Dest: dropping frame
+            *amask_o |= MBY_AMASK_DROP_NULL_GLORTDEST;
             if (flood_forwarded) // Null Glort Dest & Flood Forwarded: dropping frame (DLF)
-                amask |= MBY_AMASK_DROP_DLF;
+                *amask_o |= MBY_AMASK_DROP_DLF;
         }
         else { // do not set amask loopback when also setting null dest.
-            amask |= MBY_AMASK_DROP_LOOPBACK; // Loopback (port or VLAN refl. dis.): dropping frame
+            *amask_o |= MBY_AMASK_DROP_LOOPBACK; // Loopback (port or VLAN refl. dis.): dropping frame
         }
     }
     else if (!targeted_deterministic)
     {
-        mbyEgressVidTable evidTable = getEvidTableEntry(glort_map, l2_evid1);
-        pre_resolve_dmask &= evidTable.MEMBERSHIP; // VLAN egress filtering
-        if (pre_resolve_dmask == 0)
-            amask |= MBY_AMASK_DROP_EV; // VLAN egress violation: dropping frame
+        mbyEgressVidTableCfg evidTable = getEvidTableCfgEntry(glort_map, l2_evid1);
+        for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
+            pre_resolve_dmask_o[i] &= evidTable.MEMBERSHIP[i]; // VLAN egress filtering
+        if (!is_pre_resolve_dmask)
+            *amask_o |= MBY_AMASK_DROP_EV; // VLAN egress violation: dropping frame
     }
 
-    // --------------------------------------------------------------------------------
-    // Classifier Flags:
+    // output values
+    *fclass_o = fclass;
+    *xcast_o  = xcast;
+}
 
-    if (cgrp_flags.drop)
-        amask |= MBY_AMASK_DROP_FFU; // dropping frame
+static void classifierFlags
+(
+    mby_ppe_fwd_misc_map const * const fwd_misc,
+    mbyClassifierFlags   const * const cgrp_flags,
+    fm_uint64                  * const amask,
+    fm_byte                    * const log_amask,
+    fm_bool                      const rx_mirror_in,
+    fm_bool                    * const rx_mirror_o,
+    fm_bool                    * const mirror1_profile_v_o,
+    fm_byte                    * const mirror1_profile_idx_o
+)
+{
+    if (cgrp_flags->drop)
+        *amask |= MBY_AMASK_DROP_CGRP; // dropping frame
 
-    if (cgrp_flags.trap)
-        amask |= MBY_AMASK_TRAP_FFU; // trapping frame
+    if (cgrp_flags->trap)
+        *amask |= MBY_AMASK_TRAP_CGRP; // trapping frame
 
-    if (cgrp_flags.log)
-        log_amask |= MBY_LOG_TYPE_FFU; // logging fram
+    if (cgrp_flags->log)
+        *log_amask |= MBY_LOG_TYPE_CGRP; // logging frame
 
     fm_bool rx_mirror           = rx_mirror_in;
-    fm_bool mirror0_profile_v   = FALSE;
     fm_bool mirror1_profile_v   = FALSE;
-    fm_byte mirror0_profile_idx = 0;
     fm_byte mirror1_profile_idx = 0;
 
-    if (cgrp_flags.rx_mirror)
+    if (cgrp_flags->rx_mirror)
     {
         rx_mirror           = TRUE;  // RX mirroring frame
         mirror1_profile_v   = rx_mirror;
         mirror1_profile_idx = fwd_misc->FWD_RX_MIRROR_CFG.MIRROR_PROFILE_IDX;
     }
 
-    // --------------------------------------------------------------------------------
-    // QCN:
+    // output values
+    *rx_mirror_o           = rx_mirror;
+    *mirror1_profile_v_o   = mirror1_profile_v;
+    *mirror1_profile_idx_o = mirror1_profile_idx;
+}
 
+static void qcnMirroring
+(
+    mby_ppe_fwd_misc_map const * const fwd_misc,
+    mby_ppe_cm_apply_map const * const cm_apply,
+    fm_bool                      const rx_mirror,
+    fm_bool                    * const mcst_epoch_o,
+    fm_byte                    * const mirror0_profile_idx_o,
+    fm_bool                    * const mirror0_profile_v_o,
+    fm_byte                    * const mirror1_profile_idx_o,
+    fm_bool                    * const mirror1_profile_v_o,
+    fm_uint32                  * const mirror0_port_o,
+    fm_uint32                  * const mirror1_port_o,
+    fm_bool                    * const qcn_mirror0_profile_v_o,
+    fm_bool                    * const qcn_mirror1_profile_v_o
+)
+{
     fwd_qcn_mirror_cfg_r const * const qcn_mirror_cfg = &(fwd_misc->FWD_QCN_MIRROR_CFG);
 
     fm_byte mirror_profile_idx = qcn_mirror_cfg->MIRROR_PROFILE_IDX;
     fm_byte mirror_session     = qcn_mirror_cfg->MIRROR_SESSION;
 
-    cm_apply_mirror_profile_table_r const * const mirror_prof_tbl0 = &(cm_apply->CM_APPLY_MIRROR_PROFILE_TABLE[mirror0_profile_idx]);
-    cm_apply_mirror_profile_table_r const * const mirror_prof_tbl1 = &(cm_apply->CM_APPLY_MIRROR_PROFILE_TABLE[mirror0_profile_idx]); // Should be changed to mirror1_profile_idx?? REVISIT!!!
+    //!!!REVISIT How should I get the port from DMASK???
+    mbyMirrorEcmpDmask mirror_ecmp_dmask_0;
+    mirror_ecmp_dmask_0 = getMirrorEcmpDmask(cm_apply, *mirror0_profile_idx_o);
 
-    fm_uint32 mirror0_port = mirror_prof_tbl0->PORT;
-    fm_uint32 mirror1_port = mirror_prof_tbl0->PORT; // Should be changed to mirror_prof_tbl1?? REVISIT!!!
+    mbyMirrorEcmpDmask mirror_ecmp_dmask_1;
+    mirror_ecmp_dmask_1 = getMirrorEcmpDmask(cm_apply, *mirror1_profile_idx_o);
 
+    fm_uint32 mirror0_port = mirror_ecmp_dmask_0.Mirror_port_mask[0];  //!!!REVISIT How should I get the port from DMASK???
+    fm_uint32 mirror1_port = mirror_ecmp_dmask_1.Mirror_port_mask[0];  //!!!REVISIT How should I get the port from DMASK???
 
+    cm_apply_mcast_epoch_r const * const mcast_epoch = &(cm_apply->CM_APPLY_MCAST_EPOCH);
+    fm_bool mcst_epoch = mcast_epoch->CURRENT;
+
+    fm_bool mirror0_profile_v     = FALSE;
+    fm_byte mirror0_profile_idx   = 0;
     fm_bool qcn_mirror0_profile_v = FALSE;
     fm_bool qcn_mirror1_profile_v = FALSE;
 
     if (rx_mirror && (mirror_session == 2)) {
-        qcn_mirror1_profile_v = TRUE;
-        mirror1_profile_v     = (mirror0_port < MBY_PORTS_COUNT);
-        mirror1_profile_idx   = mirror_profile_idx;
+        qcn_mirror1_profile_v  = TRUE;
+        *mirror1_profile_v_o   = (mirror0_port < MBY_PORTS_COUNT); //!!!REVISIT Probably should be 257 after change mirror_ecmp_dmask0..4 RDL changes needed
+        *mirror1_profile_idx_o = mirror_profile_idx;
     }
 
     if (mirror_session == 1) {
-        qcn_mirror0_profile_v = TRUE;
-        mirror0_profile_v     = (mirror0_port < MBY_PORTS_COUNT);
-        mirror0_profile_idx   = mirror_profile_idx;
+        qcn_mirror0_profile_v  = TRUE;
+        mirror0_profile_v      = (mirror1_port < MBY_PORTS_COUNT); //!!!REVISIT Probably should be 257 after change mirror_ecmp_dmask0..4 RDL changes needed
+        mirror0_profile_idx    = mirror_profile_idx;
     }
 
-    // --------------------------------------------------------------------------------
-    // Egress STP state:
+    // output values
+    *mcst_epoch_o            = mcst_epoch;
+    *mirror0_port_o          = mirror0_port;
+    *mirror1_port_o          = mirror1_port;
+    *mirror0_profile_v_o     = mirror0_profile_v;
+    *mirror0_profile_idx_o   = mirror0_profile_idx;
+    *qcn_mirror0_profile_v_o = qcn_mirror0_profile_v;
+    *qcn_mirror1_profile_v_o = qcn_mirror1_profile_v;
+}
+
+static void egressSTP
+(
+    mby_ppe_mst_glort_map const * const glort_map,
+    fm_uint64                   * const amask,
+    fm_uint16                     const l2_evid1,
+    fm_uint64                   * const pre_resolve_dmask,
+    fm_uint64                   * const dmask_o
+)
+{
+    fm_bool egress_stp         = FALSE;
+    fm_bool egress_stp_changed = FALSE;
 
     /* Perform egress forwarding ID lookup. */
-    fm_uint32 l2_efid1_state;
-    l2_efid1_state = glort_map->EGRESS_MST_TABLE[l2_evid1][0].FORWARDING; // UINT_64?? REVISIT!!!
-
-    dmask = pre_resolve_dmask; // 24-bit destination mask
-    if (((amask & MBY_AMASK_SPECIAL) == 0) && (dmask != 0)) {
-        dmask &= l2_efid1_state; // STP egress filtering: DMASK
-        if (dmask == 0)
-            amask |= MBY_AMASK_DROP_EGRESS_STP; // STP egress violation
+    for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
+    {
+        dmask_o[i] = pre_resolve_dmask[i]; // 257-bit destination mask
+        fm_uint64 l2_efid1_state = glort_map->EGRESS_MST_TABLE[l2_evid1][i].FORWARDING;
+        if (((*amask & MBY_AMASK_SPECIAL) == 0) && (dmask_o[i] != 0))
+        {
+            if(!egress_stp_changed)
+            {
+                egress_stp         = TRUE;
+                egress_stp_changed = TRUE;
+            }
+            dmask_o[i] &= l2_efid1_state; // STP egress filtering: DMASK
+            if(dmask_o[i] != 0 && egress_stp)
+                egress_stp = FALSE;
+        }
     }
 
-    // --------------------------------------------------------------------------------
-    // Pre-Resolve:
+    if (egress_stp)
+        *amask |= MBY_AMASK_DROP_EGRESS_STP; // STP egress violation
+}
 
+static void preResolveActionDmaskDglort
+(
+    fm_uint64   const amask,
+    fm_uint64 * const glort_dmask,
+    fm_uint16   const idglort,
+    fm_uint64 * const dmask_o,
+    fm_uint64 * const pre_resolve_dmask_o,
+    fm_uint16 * const pre_resolve_dglort_o,
+    fm_uint32 * const pre_resolve_action_o
+)
+{
     fm_uint32 pre_resolve_action = 0; // How does this affect 'action'? <-- REVISIT!!!
 
     if (amask & MBY_AMASK_SPECIAL) {
         pre_resolve_action = MBY_ACTION_SPECIAL;
-        pre_resolve_dmask  = glort_dmask;
-        dmask              = glort_dmask;
+        dmaskCopy(glort_dmask, pre_resolve_dmask_o);
+        dmaskCopy(glort_dmask, dmask_o);
     }
     else if (amask & MBY_AMASK_FLOOD)
         pre_resolve_action = MBY_ACTION_FLOOD;
     else
         pre_resolve_action = MBY_ACTION_NORMAL;
 
-    fm_uint16 pre_resolve_dglort = idglort; // Ditto for 'dglort' <-- REVISIT!!!
+    // Output values
+    *pre_resolve_dglort_o = idglort;
+    *pre_resolve_action_o = pre_resolve_action;
+}
 
-    // --------------------------------------------------------------------------------
-    // Resolve Action:
-
+static void actionResolution
+(
+    mby_ppe_fwd_misc_map const * const fwd_misc,
+    fm_uint64                  * const amask,
+    fm_byte                      const qos_tc_in,
+    fm_uint64                  * const glort_dmask,
+    fm_bool                    * const learning_enabled,
+    fm_uint64                  * const dmask_o,
+    fm_byte                    * const qos_tc_o,
+    fm_uint32                  * const action_o,
+    fm_byte                    * const cpu_code_o
+)
+{
     fm_uint64 pri_amask = 0; // bitmask representing the index of the highest priority bit
     for (fm_uint i = 0; i < MBY_AMASK_WIDTH; i++) {
         pri_amask = FM_LITERAL_U64(1) << i;
-        if (amask & pri_amask) {
-            amask = pri_amask;
+        if (*amask & pri_amask) {
+            *amask = pri_amask;
             break;
         }
     }
@@ -982,242 +1018,414 @@ void MaskGen
 
     resolveAction
     (
-        amask,
+        *amask,
         glort_dmask,
         trap_tc,
-        &amask,
-        &dmask,
-        &learning_enabled,
+        amask,
+        dmask_o,
+        learning_enabled,
         &cpu_code,
         &qos_tc,
         &action
     );
 
-    fm_uint32 fnmask = dmask; // normal forwarding mask - is this correct? <-- REVISIT!!!
+    // output values
+    *action_o   = action;
+    *qos_tc_o   = qos_tc;
+    *cpu_code_o = cpu_code;
+}
 
-    // --------------------------------------------------------------------------------
-    // Update Action Mask
-
-    if (log_amask & MBY_LOG_TYPE_FFU)
-        amask |= MBY_AMASK_LOG_INGRESS_FFU;
+static void updateActionMask
+(
+    fm_uint64   const log_amask,
+    fm_bool     const rx_mirror,
+    fm_uint64 * const amask_o
+)
+{
+    if (log_amask & MBY_LOG_TYPE_CGRP)
+        *amask_o |= MBY_AMASK_LOG_INGRESS_CGRP;
 
     if (log_amask & MBY_LOG_TYPE_RESERVED_MAC)
-        amask |= MBY_AMASK_LOG_MAC_CTRL;
+        *amask_o |= MBY_AMASK_LOG_RESERVED_MAC;
 
     if (log_amask & MBY_LOG_TYPE_ARP_REDIRECT)
-        amask |= MBY_AMASK_LOG_ARP_REDIRECT;
+        *amask_o |= MBY_AMASK_LOG_ARP_REDIRECT;
 
     if (log_amask & MBY_LOG_TYPE_ICMP)
-        amask |= MBY_AMASK_LOG_IP_ICMP;
+        *amask_o |= MBY_AMASK_LOG_IP_ICMP;
 
     if (log_amask & MBY_LOG_TYPE_TTL_IP_MC)
-        amask |= MBY_AMASK_LOG_IP_TTL;
+        *amask_o |= MBY_AMASK_LOG_IP_TTL;
 
     if (rx_mirror)
-        amask |= MBY_AMASK_MIRROR_INGRESS_FFU;
+        *amask_o |= MBY_AMASK_MIRROR_INGRESS_CGRP;
+}
+
+void MaskGen
+(
+    mby_ppe_fwd_misc_map  const * const fwd_misc,
+    mby_ppe_mst_glort_map const * const glort_map,
+    mby_ppe_cm_apply_map  const * const cm_apply,
+    mbyNextHopToMaskGen   const * const in,
+    mbyMaskGenToTriggers        * const out
+)
+{
+    // Read inputs:
+    fm_uint16                  const csglort              = in->CSGLORT;
+    fm_bool                    const drop_ttl             = in->DROP_TTL;
+    mbyClassifierFlags         const cgrp_flags           = in->CGRP_FLAGS;
+    fm_bool                    const flood_forwarded      = in->FLOOD_FORWARDED;
+    fm_uint64          const * const glort_dmask_in       = in->GLORT_DMASK;
+    fm_bool                    const glort_forwarded      = in->GLORT_FORWARDED;
+    fm_uint32                  const hash_rot_a           = in->HASH_ROT_A;
+    fm_uint32                  const hash_rot_b           = in->HASH_ROT_B;
+    fm_uint16                  const idglort              = in->IDGLORT;
+    fm_bool                    const is_ipv4              = in->IS_IPV4;
+    fm_bool                    const is_ipv6              = in->IS_IPV6;
+    fm_macaddr                 const l2_dmac              = in->L2_DMAC;
+    fm_uint16                  const l2_edomain_in        = in->L2_EDOMAIN;
+    fm_uint16                  const l2_etype             = in->L2_ETYPE;
+    fm_uint16                  const l2_evid1             = in->L2_EVID1;
+    fm_uint16                  const l2_ivid1             = in->L2_IVID1;
+    fm_bool                    const l2_ivlan1_membership = in->L2_IVLAN1_MEMBERSHIP;
+    fm_bool                    const l2_ivlan1_reflect    = in->L2_IVLAN1_REFLECT;
+    fm_macaddr                 const l2_smac              = in->L2_SMAC;
+    fm_bool                    const mark_routed          = in->MARK_ROUTED;
+    fm_bool                    const mtu_violation        = in->MTU_VIOLATION;
+    fm_bool                    const learn_notify         = in->LEARN_NOTIFY;
+    fm_bool                    const parity_error         = in->PARITY_ERROR;
+    fm_bool                    const parser_window_v      = in->PARSER_WINDOW_V;
+    fm_bool                    const parser_error         = in->PARSER_ERROR;
+    fm_byte                    const qos_tc_in            = in->QOS_TC;
+    fm_bool                    const rx_mirror_in         = in->RX_MIRROR;
+    fm_uint32                  const rx_port              = in->RX_PORT;
+    fm_bool                    const sa_hit               = in->SA_HIT;
+    mbyMaTable                 const sa_result            = in->SA_RESULT;
+    fm_byte                    const sv_drop              = in->SV_DROP;
+    fm_bool                    const trap_icmp            = in->TRAP_ICMP;
+    fm_bool                    const trap_igmp            = in->TRAP_IGMP;
+    fm_bool                    const trap_ip_options      = in->TRAP_IP_OPTIONS;
+
+    // Configurations:
+    mbyFwdPortCfg port_cfg;
+    port_cfg = getPortCfg(fwd_misc, rx_port);
+
+    mbyFwdPortCfg2 port_cfg2;
+    port_cfg2 = getPortCfg2(fwd_misc, l2_edomain_in);
+
+    mbyFwdSysCfg1 sys_cfg1;
+    sys_cfg1 = getSysCfg1(fwd_misc);
+
+    mbyFwdSysCfgRouter sys_cfg_router;
+    sys_cfg_router = getSysCfgRouter(fwd_misc);
+
+    // Logging:
+    fm_bool logging_hit = FALSE;
 
     // --------------------------------------------------------------------------------
-    // LAG:
-
-    // GLORT Lookup - strict targeted deterministic mode:
-    fm_bool skip_lookup
-        = (((action == MBY_ACTION_REDIRECT_TRIG) && !triggers.filterDestMask) ||
-           ((action != MBY_ACTION_REDIRECT_TRIG) &&  targeted_deterministic));
-
-    if (!skip_lookup && (dmask != 0))
-    {
-        for (fm_uint i = 0; i < MBY_FABRIC_LOG_PORTS; i++)
-        {
-            mbyFwdLagCfg lag_cfg;
-            lag_cfg = getLagCfg(fwd_misc, i);
-            if (!lag_cfg.IN_LAG)
-                continue;
-
-            fm_uint32 hash = (lag_cfg.HASH_ROTATION) ? hash_rot_b : hash_rot_a;
-            hash %= (lag_cfg.LAG_SIZE == 0) ? 16 : lag_cfg.LAG_SIZE;
-            if (hash != lag_cfg.INDEX)
-                dmask &= ~(FM_LITERAL_U64(1) << i);
-        }
-
-        if (dmask == 0)
-            action = MBY_ACTION_BANK5_OTHER_DROPS;
-    }
+    // GLORT:
+    fm_bool glort_cam_miss                     = FALSE;
+    fm_bool strict_glort_routing               = FALSE;
+    fm_bool targeted_deterministic             = FALSE;
+    fm_bool skip_dglort_dec                    = FALSE;
+    fm_uint16 ip_mcast_idx                     =   0  ;
+    mbyGlortDestTable glort_dest_table         = { 0 };
+    fm_uint64 glort_dmask[MBY_DMASK_REGISTERS] = { 0 };
+    glortLookup
+    (
+        glort_map,
+        idglort,
+        hash_rot_a,
+        hash_rot_b,
+        glort_dmask_in,
+        &glort_cam_miss,
+        &strict_glort_routing,
+        &targeted_deterministic,
+        &skip_dglort_dec,
+        glort_dmask,
+        &ip_mcast_idx,
+        &glort_dest_table
+    );
 
     // --------------------------------------------------------------------------------
-    // Loopback Suppression Filtering:
-
-    fm_bool skip_suppress = targeted_deterministic || mark_routed || (dmask == 0);
-
-    for (fm_uint i = 0; !skip_suppress && (i < MBY_FABRIC_LOG_PORTS); i++)
-    {
-        cm_apply_loopback_suppress_r const * const lpbk_sup = &(cm_apply->CM_APPLY_LOOPBACK_SUPPRESS[i]);
-
-        fm_uint16 lpbk_glort_mask = lpbk_sup->GLORT_MASK;
-        fm_uint16 lpbk_glort      = lpbk_sup->GLORT;
-        if ((csglort & lpbk_glort_mask) == lpbk_glort)
-            dmask &= ~(FM_LITERAL_U64(1) << i);
-    }
-
-    if (dmask == 0 )
-        action = MBY_ACTION_DROP_LOOPBACK; // dropping frame
-
-    // --------------------------------------------------------------------------------
-
-    // Trap:
-    fm_bool cpu_trap     = (action == MBY_ACTION_TRAP);
-
-    fm_bool trap_trap    = (triggers.trapAction == MBY_TRIG_ACTION_TRAP_TRAP);
-    fm_bool trap_revert  = (triggers.trapAction == MBY_TRIG_ACTION_TRAP_REVERT);
-    fm_bool trap_log     = (triggers.trapAction == MBY_TRIG_ACTION_TRAP_LOG);
-
-    fm_uint16 l2_edomain = (triggers.egressL2DomainAction == 0) ? l2_edomain_in : 0;
-    fm_byte   l3_edomain = (triggers.egressL3DomainAction == 0) ? l3_edomain_in : 0;
-
-    if ((cpu_trap || trap_trap) && !trap_revert)
-    { /* err = HandleTraps(model) */; }
-
-    if ((sys_cfg1.ENABLE_TRAP_PLUS_LOG || !cpu_trap || trap_trap || trap_log) && !trap_revert)
-    { /* err = HandleLogging(model) */; }
+    // Learning (Ingress VLAN and STP Filters):
+    fm_bool learning_enabled   = FALSE;
+    fm_bool l2_smac_is_zero    = FALSE;
+    mbyStpState l2_ifid1_state = MBY_STP_STATE_DISABLE;
+    learningEnabledCheck
+    (
+        glort_map,
+        fwd_misc,
+        &port_cfg,
+        rx_port,
+        l2_ivid1,
+        learn_notify,
+        l2_smac,
+        &l2_smac_is_zero,
+        &learning_enabled,
+        &l2_ifid1_state
+    );
 
     // --------------------------------------------------------------------------------
-    // Tail processing:
-
-    // remove FCS bytes from array storage:
-    fm_uint32 pkt_len  = (rx_length < 4) ? 0 : (rx_length - 4);
-    fm_uint32 num_segs = 0;
-
-    // First segment is 192 bytes
-    if (pkt_len <= 192) {
-        pkt_len   = 0;
-        num_segs  = 1;
-    } else {
-        pkt_len  -= 192;
-        num_segs += 1 + (pkt_len + MBY_SEGMENT_LEN - 1) / MBY_SEGMENT_LEN; // check <-- REVISIT!!!
-    }
-
-    dmask = fnmask; // recall stored mask <-- REVISIT!!!!
-
-    if (mirror0_profile_v)
-        dmask |= (FM_LITERAL_U64(1) << mirror0_port);
-
-    if (mirror1_profile_v)
-        dmask |= (FM_LITERAL_U64(1) << mirror1_port);
-
-    dmask &= ( 0xFFFFFFFFFFFF ); // 48 bit port mask
-
-    fm_byte seg_meta_err = seg_meta_err_in;
-    fm_bool saf_error    = FALSE;
-    fm_bool tx_drop      = FALSE;
-
-    // Update Action code for CSUM and L3 Length errors
-    // Applies to only single segment packets. Multi-segment packets are handled by Modify
-    if (rx_length <= 192)
-    {
-        if (action == MBY_ACTION_NORMAL            ||
-            action == MBY_ACTION_FLOOD             ||
-            action == MBY_ACTION_GLORT_FORWARDED   ||
-            action == MBY_ACTION_TRAP              ||
-            action == MBY_ACTION_SPECIAL           ||
-            action == MBY_ACTION_REDIRECT_TRIG     ||
-            action == MBY_ACTION_DROP_CONTROL      ||
-            action == MBY_ACTION_DROP_IV           ||
-            action == MBY_ACTION_DROP_EV           ||
-            action == MBY_ACTION_DROP_STP          ||
-            action == MBY_ACTION_DROP_CAM          ||
-            action == MBY_ACTION_DROP_FFU          ||
-            action == MBY_ACTION_DROP_TRIG         ||
-            action == MBY_ACTION_DROP_TTL          ||
-            action == MBY_ACTION_DROP_DLF          ||
-            action == MBY_ACTION_BANK5_OTHER_DROPS ||
-            action == MBY_ACTION_DROP_SV)
-        {
-            if (pa_drop && pa_l3len_err)
-                action = MBY_ACTION_DROP_L3_PYLD_LEN;
-        }
-
-        // Drop single-segment packets with l4csum error /l3 length error:
-        if (action == MBY_ACTION_DROP_L3_PYLD_LEN ||
-            action == MBY_ACTION_DROP_L4_CSUM)
-        {
-            fnmask            = 0;
-            mirror1_profile_v = 0;
-            mirror0_profile_v = 0;
-        }
-    }
-    else if (pa_drop && pa_l3len_err)
-        seg_meta_err = 2; // framing error in multi-segment packet
+    // Action Mask:
+    fm_uint64 amask_in = 0;
+    fm_uint64 amask    = 0;
+    actionMaskUpdate
+    (
+        &sys_cfg1,
+        amask_in,
+        parser_error,
+        trap_igmp,
+        parity_error,
+        l2_etype,
+        l2_smac,
+        parser_window_v,
+        glort_cam_miss,
+        targeted_deterministic,
+        l2_smac_is_zero,
+        &amask
+    );
 
     // --------------------------------------------------------------------------------
+    // Special Packet Handling and Ttl Trap Log Drop (ActionMask set):
+    fm_byte log_amask         = 0;
+    fm_bool store_trap_action = FALSE;
+    specialPacketHandlingTtlTrapDropLog
+    (
+        fwd_misc,
+        &sys_cfg1,
+        &sys_cfg_router,
+        l2_dmac, parser_window_v,
+        drop_ttl, trap_icmp,
+        ip_mcast_idx,
+        l2_ivid1,
+        l2_evid1,
+        mark_routed,
+        trap_ip_options,
+        is_ipv4,
+        is_ipv6,
+        mtu_violation,
+        &amask,
+        &log_amask,
+        &store_trap_action
+    );
 
+    // --------------------------------------------------------------------------------
+    // Ingress spanning tree check (Ingress VLAN and STP Filters):
+    fm_bool mac_moved = FALSE;
+    ingressSpanningTreeCheck
+    (
+        &port_cfg,
+        l2_ivlan1_membership,
+        sa_hit,
+        csglort,
+        sv_drop,
+        l2_ifid1_state,
+        sa_result,
+        &amask,
+        &mac_moved
+    );
+
+    // --------------------------------------------------------------------------------
+    // Filtering (PreResolution DMASK for targeted_deterministic, Loopback_suppress(1)
+    //            STP Filtering, PreResolution DMASK):
+    fm_uint64 pre_resolve_dmask[MBY_DMASK_REGISTERS] = { 0,                };
+    fm_uint64 dmask[MBY_DMASK_REGISTERS]             = { MBY_DEFAULT_DMASK };
+    fm_byte fclass                                   =   0;
+    fm_byte xcast                                    =   0;
+    filtering
+    (
+        glort_map,
+        &port_cfg,
+        &port_cfg2,
+        l2_dmac,
+        flood_forwarded,
+        glort_forwarded,
+        targeted_deterministic,
+        mark_routed,
+        l2_ivlan1_reflect,
+        glort_dmask,
+        rx_port,
+        l2_evid1,
+        &amask,
+        pre_resolve_dmask,
+        dmask,
+        &fclass,
+        &xcast
+    );
+
+    // --------------------------------------------------------------------------------
+    // Classifier Flags (Trapping, Logging, Mirroring):
+    fm_bool rx_mirror           = FALSE;
+    fm_bool mirror1_profile_v   = FALSE;
+    fm_byte mirror1_profile_idx = 0    ;
+    classifierFlags
+    (
+        fwd_misc,
+        &cgrp_flags,
+        &amask,
+        &log_amask,
+        rx_mirror_in,
+        &rx_mirror,
+        &mirror1_profile_v,
+        &mirror1_profile_idx
+    );
+
+    // --------------------------------------------------------------------------------
+    // QCN Mirroring:
+    fm_bool   mcst_epoch              = FALSE;
+    fm_bool   mirror0_profile_v       = FALSE;
+    fm_byte   mirror0_profile_idx     = 0    ;
+    fm_uint32 mirror0_port            = 0    ;
+    fm_uint32 mirror1_port            = 0    ;
+    fm_bool   qcn_mirror0_profile_v   = FALSE;
+    fm_bool   qcn_mirror1_profile_v   = FALSE;
+    qcnMirroring
+    (
+        fwd_misc,
+        cm_apply,
+        rx_mirror,
+        &mcst_epoch,
+        &mirror0_profile_idx,
+        &mirror0_profile_v,
+        &mirror1_profile_idx,
+        &mirror1_profile_v,
+        &mirror0_port,
+        &mirror1_port,
+        &qcn_mirror0_profile_v,
+        &qcn_mirror1_profile_v
+    );
+
+    // --------------------------------------------------------------------------------
+    // Egress STP state (Egress VLAN Filtering):
+    egressSTP
+    (
+        glort_map,
+        &amask,
+        l2_evid1,
+        pre_resolve_dmask,
+        dmask
+    );
+
+    // --------------------------------------------------------------------------------
+    // Pre-Resolve (PreResolution Action, PreResolution DMASK, PreResolution DGLORT):
+    fm_uint16 pre_resolve_dglort = 0;
+    fm_uint32 pre_reslove_action = 0;
+    preResolveActionDmaskDglort
+    (
+        amask,
+        glort_dmask,
+        idglort,
+        dmask,
+        pre_resolve_dmask,
+        &pre_resolve_dglort,
+        &pre_reslove_action
+    );
+
+    // --------------------------------------------------------------------------------
+    // Resolve Action (Action Resolution):
+    fm_uint32 action   = 0;
+    fm_byte   qos_tc   = 0;
+    fm_byte   cpu_code = 0;
+    actionResolution
+    (
+        fwd_misc,
+        &amask,
+        qos_tc_in,
+        glort_dmask,
+        &learning_enabled,
+        dmask,
+        &qos_tc,
+        &action,
+        &cpu_code
+    );
+
+    // --------------------------------------------------------------------------------
+    // Update Action Mask (Action Mask)
+    updateActionMask
+    (
+        log_amask,
+        rx_mirror,
+        &amask
+    );
+
+    // --------------------------------------------------------------------------------
     // Write outputs:
 
     for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
-        out->DMASK[i] = dmask; //REVISIT!!!
+    {
+        //REVISIT!!!
+        out->PRE_RESOLVE_DMASK[i] = pre_resolve_dmask[i];
+        out->DMASK            [i] = dmask            [i];
+        out->GLORT_DMASK      [i] = glort_dmask      [i];
+    }
 
     out->ACTION                 = action;
     out->AMASK                  = amask;
     out->CPU_CODE               = cpu_code;
-    out->CPU_TRAP               = cpu_trap;
-    out->DA_HIT                 = da_hit;
     out->DROP_TTL               = drop_ttl;
     out->FCLASS                 = fclass;
-    out->FNMASK                 = fnmask;
     out->GLORT_CAM_MISS         = glort_cam_miss;
-    out->GLORT_DMASK            = glort_dmask;
+    out->HASH_ROT_A             = hash_rot_a;
+    out->HASH_ROT_B             = hash_rot_b;
     out->IDGLORT                = idglort;
     out->IP_MCAST_IDX           = ip_mcast_idx;
     out->IS_IPV4                = is_ipv4;
     out->IS_IPV6                = is_ipv6;
     out->L2_DMAC                = l2_dmac;
-    out->L2_EDOMAIN             = l2_edomain;
+    out->L2_EDOMAIN             = l2_edomain_in;
     out->L2_EVID1               = l2_evid1;
     out->L2_SMAC                = l2_smac;
-    out->L3_EDOMAIN             = l3_edomain;
     out->LEARNING_ENABLED       = learning_enabled;
     out->LOGGING_HIT            = logging_hit;
     out->LOG_AMASK              = log_amask;
     out->MAC_MOVED              = mac_moved;
     out->MARK_ROUTED            = mark_routed;
+    out->MCAST_EPOCH            = mcst_epoch;
     out->MIRROR0_PORT           = mirror0_port;
     out->MIRROR0_PROFILE_IDX    = mirror0_profile_idx;
     out->MIRROR0_PROFILE_V      = mirror0_profile_v;
     out->MIRROR1_PORT           = mirror1_port;
     out->MIRROR1_PROFILE_IDX    = mirror1_profile_idx;
     out->MIRROR1_PROFILE_V      = mirror1_profile_v;
-    out->OPERATOR_ID            = operator_id;
+    out->PRE_RESOLVE_ACTION     = pre_reslove_action;
+    out->PRE_RESOLVE_DGLORT     = pre_resolve_dglort;
     out->QCN_MIRROR0_PROFILE_V  = qcn_mirror0_profile_v;
     out->QCN_MIRROR1_PROFILE_V  = qcn_mirror1_profile_v;
     out->QOS_TC                 = qos_tc;
-    out->RX_LENGTH              = rx_length;
     out->RX_MIRROR              = rx_mirror;
     out->RX_PORT                = rx_port;
-    out->SAF_ERROR              = saf_error;
-    out->SEG_META_ERR           = seg_meta_err;
     out->SKIP_DGLORT_DEC        = skip_dglort_dec;
     out->STORE_TRAP_ACTION      = store_trap_action;
     out->STRICT_GLORT_ROUTING   = strict_glort_routing;
     out->TARGETED_DETERMINISTIC = targeted_deterministic;
-    out->TX_DROP                = tx_drop;
     out->XCAST                  = xcast;
 
     // Pass thru:
     out->CGRP_TRIG              = in->CGRP_TRIG;
     out->CONTENT_ADDR           = in->CONTENT_ADDR;
+    out->CPU_TRAP               = in->CPU_TRAP;
     out->ECN                    = in->ECN;
     out->EDGLORT                = in->EDGLORT;
     out->IS_TIMEOUT             = in->IS_TIMEOUT;
     out->L2_IVLAN1_CNT          = in->L2_IVLAN1_CNT;
+    out->L3_EDOMAIN             = in->L3_EDOMAIN;
     out->MIRTYP                 = in->MIRTYP;
     out->MOD_IDX                = in->MOD_IDX;
     out->MOD_PROF_IDX           = in->MOD_PROF_IDX;
     out->OOM                    = in->OOM;
+    out->NAD                    = in->NAD;
+    out->PA_DROP                = in->PA_DROP;
     out->PARSER_INFO            = in->PARSER_INFO;
     out->PA_HDR_PTRS            = in->PA_HDR_PTRS;
     out->PM_ERR                 = in->PM_ERR;
     out->PM_ERR_NONSOP          = in->PM_ERR_NONSOP;
+    out->PA_L3LEN_ERR           = in->PA_L3LEN_ERR;
     out->QOS_L3_DSCP            = in->QOS_L3_DSCP;
-    out->RX_DATA                = in->RX_DATA;
+    out->RX_LENGTH              = in->RX_LENGTH;
+    out->SEG_META_ERR           = in->SEG_META_ERR;
     out->TAIL_CSUM_LEN          = in->TAIL_CSUM_LEN;
     out->TRAFFIC_CLASS          = in->TRAFFIC_CLASS;
     out->TX_TAG                 = in->TX_TAG;
+    out->RX_LENGTH              = in->RX_LENGTH;
 }

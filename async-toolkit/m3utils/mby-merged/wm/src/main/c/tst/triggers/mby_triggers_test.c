@@ -4,11 +4,13 @@
 #include <string.h>
 #include <assert.h>
 
-#include <mby_common.h>
-#include <mby_pipeline.h>
-
 #include <mby_top_map.h>
-#include <model_c_write.h> // write_field()
+#include <tst_model_c_write.h> // write_field()
+#include <mby_params.h>
+#include <mby_action_codes.h>
+#include <mby_triggers_regs.h>
+#include <mby_triggers.h>
+#include <mby_triggers_test.h>
 
 #define MBY_PHYSICAL_SOURCE_PORTS         17
 
@@ -318,9 +320,11 @@ static void initMbyTrigInputs
     mbyMaskGenToTriggers * const msg2trig
 )
 {
+    for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
+        msg2trig->GLORT_DMASK[i] = MASK_GEN_GLORT_DMASK;
+
     msg2trig->ACTION                   = MASK_GEN_ACTION;
     msg2trig->AMASK                    = MASK_GEN_AMASK;
-    msg2trig->GLORT_DMASK              = MASK_GEN_GLORT_DMASK;
     msg2trig->IDGLORT                  = MASK_GEN_IDGLORT;
     msg2trig->IP_MCAST_IDX             = MASK_GEN_IP_MCAST_IDX;
     msg2trig->IS_IPV4                  = MASK_GEN_IS_IPV4;
@@ -483,6 +487,7 @@ static int runOnSimpleTrigger
     mby_ppe_trig_apply_map            trig_apply_map        = { 0 };
     mby_ppe_trig_apply_misc_map       trig_apply_misc_map   = { 0 };
     mby_ppe_fwd_misc_map              fwd_misc_map          = { 0 };
+    mby_ppe_cm_apply_map              cm_apply_map          = { 0 };
     mby_ppe_mapper_map                mapper_map            = { 0 };
 
     mby_ppe_trig_apply_map__addr      trig_apply_map_w      = { 0 };
@@ -516,6 +521,7 @@ static int runOnSimpleTrigger
         &trig_apply_misc_map_w,
         &fwd_misc_map,
         &fwd_misc_map_w,
+        &cm_apply_map,
         &mapper_map,
         in,
         out
@@ -526,6 +532,132 @@ static int runOnSimpleTrigger
     return ret;
 }
 
+static void maskgen_update_test_setup
+(
+    mby_ppe_fwd_misc_map      * const fwd_misc,
+    mby_ppe_cm_apply_map      * const cm_apply,
+    mbyMaskGenToTriggers      * const maskGenToTriggers,
+    mby_triggers_test_data_in * const test_in
+)
+{
+    /* Set maskGenToTriggers. */
+    for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
+    {
+        maskGenToTriggers->DMASK[i]       = test_in->dmask[i];
+        maskGenToTriggers->GLORT_DMASK[i] = test_in->glort_dmask_in[i];
+    }
+
+    maskGenToTriggers->ACTION                 = test_in->action;
+    maskGenToTriggers->AMASK                  = test_in->amask;
+    maskGenToTriggers->CSGLORT                = test_in->csglort;
+    maskGenToTriggers->HASH_ROT_A             = test_in->hash_rot_a;
+    maskGenToTriggers->HASH_ROT_B             = test_in->hash_rot_b;
+    maskGenToTriggers->IDGLORT                = test_in->idglort;
+    maskGenToTriggers->IP_MCAST_IDX           = test_in->ip_mcast_idx;
+    maskGenToTriggers->L2_DMAC                = test_in->l2_dmac;
+    maskGenToTriggers->L2_EDOMAIN             = test_in->l2_edomain_in;
+    maskGenToTriggers->L2_EVID1               = test_in->l2_evid1;
+    maskGenToTriggers->L2_SMAC                = test_in->l2_smac;
+    maskGenToTriggers->LEARNING_ENABLED       = test_in->learning_enabled;
+    maskGenToTriggers->LOG_AMASK              = test_in->log_amask;
+    maskGenToTriggers->MARK_ROUTED            = test_in->mark_routed;
+    maskGenToTriggers->RX_PORT                = test_in->rx_port;
+    maskGenToTriggers->TARGETED_DETERMINISTIC = test_in->targeted_deterministic;
+
+    /* Set FWD_SYS_CFG_1 register. */
+    fwd_sys_cfg_1_r * const sys_cfg_1 = &(fwd_misc->FWD_SYS_CFG_1);
+
+    sys_cfg_1->STORE_TRAP_ACTION       = test_in->sys_cfg_1.store_trap_action;
+    sys_cfg_1->DROP_MAC_CTRL_ETHERTYPE = test_in->sys_cfg_1.drop_mac_ctrl_ethertype;
+    sys_cfg_1->DROP_INVALID_SMAC       = test_in->sys_cfg_1.drop_invalid_smac;
+    sys_cfg_1->ENABLE_TRAP_PLUS_LOG    = test_in->sys_cfg_1.enable_trap_plus_log;
+    sys_cfg_1->TRAP_MTU_VIOLATIONS     = test_in->sys_cfg_1.trap_mtu_violations;
+
+    /* Set FWD_LAG_CFG register. */
+    for (fm_uint i = 0; i < MBY_FABRIC_LOG_PORTS; i++)
+    {
+        fwd_lag_cfg_r * const lag_cfg = &(fwd_misc->FWD_LAG_CFG[i]);
+
+        lag_cfg->IN_LAG        = test_in->fwd_lag_cfg.in_lag;
+        lag_cfg->HASH_ROTATION = test_in->fwd_lag_cfg.hash_rotation;
+        lag_cfg->INDEX         = test_in->fwd_lag_cfg.index;
+        lag_cfg->LAG_SIZE      = test_in->fwd_lag_cfg.lag_size;
+    }
+
+    /* Set CM_APPLY_LOOPBACK_SUPPRESS register. */
+    for (fm_uint i = 0; i < MBY_FABRIC_LOG_PORTS; i++)
+    {
+        cm_apply_loopback_suppress_r * const lpbk_sup = &(cm_apply->CM_APPLY_LOOPBACK_SUPPRESS[i]);
+
+        lpbk_sup->GLORT_MASK = test_in->lpbk_suppress.glort_mask;
+        lpbk_sup->GLORT      = test_in->lpbk_suppress.glort;
+    }
+}
+
+static fm_bool maskgen_update_test_verify
+(
+    mbyTriggersToCongMgmt      * const triggersToCongMgmt,
+    mby_triggers_test_data_out * const test_data_out
+)
+{
+    if (triggersToCongMgmt->ACTION != test_data_out->action)
+        return FALSE;
+
+    //REVISIT!!!! dmask is changed, we need to fix test
+    for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
+        if (triggersToCongMgmt->DMASK[i] != test_data_out->dmask[i])
+            return FALSE;
+
+    if (triggersToCongMgmt->LEARNING_ENABLED != test_data_out->learning_enabled)
+        return FALSE;
+
+    return TRUE;
+}
+
+static fm_bool maskgen_update_run_test(triggers_test_data * const test_data)
+{
+    mby_ppe_trig_apply_map            trig_apply_map        = { 0 };
+    mby_ppe_trig_apply_misc_map       trig_apply_misc_map   = { 0 };
+    mby_ppe_fwd_misc_map              fwd_misc_map          = { 0 };
+    mby_ppe_cm_apply_map              cm_apply_map          = { 0 };
+    mby_ppe_mapper_map                mapper_map            = { 0 };
+
+    mby_ppe_trig_apply_map__addr      trig_apply_map_w      = { 0 };
+    mby_ppe_trig_apply_misc_map__addr trig_apply_misc_map_w = { 0 };
+    mby_ppe_fwd_misc_map__addr        fwd_misc_map_w        = { 0 };
+
+    mbyMaskGenToTriggers  gen2trig          = { 0 };
+    mbyTriggersToCongMgmt trig2con          = { 0 };
+    mbyMaskGenToTriggers  const * const in  = &gen2trig;
+    mbyTriggersToCongMgmt       * const out = &trig2con;
+
+    mby_ppe_trig_apply_map__init(&trig_apply_map, &trig_apply_map_w,
+                                 mby_field_init_cb);
+    mby_ppe_trig_apply_misc_map__init(&trig_apply_misc_map, &trig_apply_misc_map_w,
+                                      mby_field_init_cb);
+    mby_ppe_fwd_misc_map__init(&fwd_misc_map, &fwd_misc_map_w, mby_field_init_cb);
+
+
+    maskgen_update_test_setup(&fwd_misc_map, &cm_apply_map, &gen2trig, &(test_data->in));
+
+    Triggers
+    (
+        &trig_apply_map,
+        &trig_apply_map_w,
+        &trig_apply_misc_map,
+        &trig_apply_misc_map_w,
+        &fwd_misc_map,
+        &fwd_misc_map_w,
+        &cm_apply_map,
+        &mapper_map,
+        in,
+        out
+    );
+
+    fm_bool pass = maskgen_update_test_verify(out, &(test_data->out));
+
+    return pass;
+}
 
 int main(void)
 {
@@ -536,6 +668,22 @@ int main(void)
     // default values
     SIMPLE_TRIGGER_TEST(Basic,           fails); tests++;
     SIMPLE_TRIGGER_TEST(MatchOnVlanTC,   fails); tests++;
+
+    // maskGenUpdate
+    fm_uint tests_num = sizeof(triggers_tests) / sizeof(triggers_test_data);
+
+    for (fm_uint test_num = 0; test_num < tests_num; test_num++)
+    {
+        if(!maskgen_update_run_test(&triggers_tests[test_num]))
+        {
+            fail(triggers_tests[test_num].name);
+            fails++;
+        }
+        else
+            pass(triggers_tests[test_num].name);
+
+        tests++;
+    }
 
     fm_uint passes = (tests > fails) ? tests - fails : 0;
 

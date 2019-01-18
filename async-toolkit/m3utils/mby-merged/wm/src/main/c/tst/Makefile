@@ -2,10 +2,21 @@
 
 # Copyright (C) 2018 Intel Corporation
 
+.SUFFIXES:
+
+ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+
+C_DIR   = ../../c
+M3_DIR  = ../../m3
+
+include ../../../make/Make_c.defs
+
+COMMONLIB= common/$(BLD_DIR)/libmodel_c_write.a
+
 .PHONY: all
-all: common_lib \
-     test_parser test_mapper test_exactmatch test_wcm test_nexthop \
-     test_maskgen test_triggers test_rxstats test_basic_fwd test_basic_flood
+all: test_parser test_mapper test_exactmatch test_wcm test_nexthop \
+     test_maskgen test_triggers test_rxstats test_modifier \
+     test_basic_fwd test_basic_flood
 
 .PHONY: test_all
 test_all: all
@@ -13,75 +24,82 @@ test_all: all
 .PHONY: clean
 clean:
 	@echo "Cleaning ..."
-	make -C common      clean
-	make -C parser      clean
-	make -C mapper      clean
-	make -C classifier  clean
-	make -C exactmatch  clean
-	make -C wcm         clean
-	make -C nexthop     clean
-	make -C maskgen     clean
-	make -C triggers    clean
-	make -C rxstats     clean
-	make -C basic_fwd   clean
-	make -C basic_flood clean
+	$(MAKE) -C common      clean
+	$(MAKE) -C parser      clean
+	$(MAKE) -C mapper      clean
+	$(MAKE) -C classifier  clean
+	$(MAKE) -C exactmatch  clean
+	$(MAKE) -C wcm         clean
+	$(MAKE) -C nexthop     clean
+	$(MAKE) -C maskgen     clean
+	$(MAKE) -C triggers    clean
+	$(MAKE) -C rxstats     clean
+	$(MAKE) -C modifier    clean
+	$(MAKE) -C basic_fwd   clean
+	$(MAKE) -C basic_flood clean
 
-.PHONY: common_lib
-common_lib:
+
+
+$(COMMONLIB):
 	@echo "Building common library ..."
-	make -C common all
+	$(MAKE) -C common all
 
 .PHONY: test_parser
-test_parser:
+test_parser: $(COMMONLIB)
 	@echo "Testing parser ..."
-	make -C parser run
+	$(MAKE) -C parser run
 
 .PHONY: test_mapper
-test_mapper:
+test_mapper: $(COMMONLIB)
 	@echo "Testing mapper ..."
-	make -C mapper run
+	$(MAKE) -C mapper run
 
 .PHONY: test_classifier
 test_classifier:
 	@echo "Testing classifier ..."
-	make -C classifier run
+	$(MAKE) -C classifier run
 
 .PHONY: test_exactmatch
-test_exactmatch:
+test_exactmatch: $(COMMONLIB)
 	@echo "Testing exactmatch ..."
-	make -C exactmatch run
+	$(MAKE) -C exactmatch run
 
 .PHONY: test_wcm
-test_wcm:
+test_wcm: $(COMMONLIB)
 	@echo "Testing wcm ..."
-	make -C wcm run
+	$(MAKE) -C wcm run
 
 .PHONY: test_nexthop
-test_nexthop:
+test_nexthop: $(COMMONLIB)
 	@echo "Testing nexthop ..."
-	make -C nexthop run
+	$(MAKE) -C nexthop run
 
 .PHONY: test_maskgen
-test_maskgen:
+test_maskgen: $(COMMONLIB)
 	@echo "Testing maskgen ..."
-	make -C maskgen run
+	$(MAKE) -C maskgen run
 
 .PHONY: test_maskgen
-test_triggers:
+test_triggers: $(COMMONLIB)
 	@echo "Testing triggers ..."
-	make -C triggers run
+	$(MAKE) -C triggers run
 
 .PHONY: test_rxstats
-test_rxstats:
+test_rxstats: $(COMMONLIB)
 	@echo "Testing rxstats ..."
-	make -C rxstats run
+	$(MAKE) -C rxstats run
+
+.PHONY: test_modifier
+test_modifier: $(COMMONLIB)
+	@echo "Testing modifier ..."
+	$(MAKE) -C modifier run
 
 .PHONY: test_basic_fwd
-test_basic_fwd:
+test_basic_fwd: $(COMMONLIB)
 	@echo "Testing basic forwarding ..."
-	make -C basic_fwd run
+	$(MAKE) -C basic_fwd run
 
 .PHONY: test_basic_flood
-test_basic_flood:
+test_basic_flood: $(COMMONLIB)
 	@echo "Testing basic flooding ..."
-	make -C basic_flood run
+	$(MAKE) -C basic_flood run

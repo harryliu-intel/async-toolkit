@@ -15,7 +15,7 @@ METAVERSION=$(shell ToolConfig.pl get_tool_version meta)
 
 # override here if you want to test a new toolchain
 #CM3=/tmp/cm3-all-AMD64_LINUX-d5.10.0-Linux3.0.101-20180514/bin/cm3
-#METAROOT=/nfs/sc/disks/hlp_0015/mnystroe/git/meta-git-2
+#METAROOT=/nfs/sc/disks/hlp_0015/mnystroe/git/meta-git
 
 SVPP=${METAROOT}/rdl/svpp/$(OS_TARG)/svpp
 PERLFE=${METAROOT}/perlfe/$(OS_TARG)/perlfe
@@ -67,6 +67,8 @@ MBY_TOP_RDL=../../../../tools/srdl/mby/mby_top_map.rdl
 MBY_BUILD_ROOT=$(GENVIEWS_ROOT)/src/build/mby
 MBY_BUILD_C_ROOT=$(GENVIEWS_ROOT)/src/build_c/mby_c
 MBYLIB=$(MBY_BUILD_ROOT)/$(OS_TARG)/libmby.a
+
+MBY_SCM=$(GENVIEWS_ROOT)/src/build_c/mby_c/src/mby_top_map.scm
 
 MODEL_SERVER_ROOT=model_server
 MODEL_SERVER_TARGDIR=$(MODEL_SERVER_ROOT)/$(OS_TARG)
@@ -150,7 +152,7 @@ $(SCALA_STRUCTS): $(STRUCTGEN) $(STRUCTGEN_SHARED) $(STRUCTGEN_SCALA) $(STRUCTS_
 	echo "}" >> $(tmp_scala_implicits)
 	mv $(tmp_scala_implicits) $(SCALA_IMPLICITS)
 
-$(META_STRUCTS): $(STRUCTGEN) $(INTERLANG)
+$(META_STRUCTS): $(STRUCTGEN) $(INTERLANG) $(MBY_SCM) $(C_GEN)
 	mkdir -p $(MODEL_SERVER_ROOT)/src/mby_struct/src
 	mkdir -p $(MODEL_SERVER_ROOT)/src/wm_meta_common/src
 	pwd
@@ -167,12 +169,13 @@ $(MBY_POSTPROC): $(MBY_TOP_RDL) $(wildcard $(dir $(MBY_TOP_RDL))/*.rdl)
 	${PERLFE} < work/i1.rdl > work/i2.rdl
 	export PERL5LIB=$(dir $<).. && cat work/i2.rdl | perl > $@
 
-
-$(MBYLIB): $(MBY_POSTPROC) $(GENVIEWS) $(META_STRUCTS)
+$(MBY_SCM): $(MBY_POSTPROC) $(GENVIEWS) rpc_structs $(META_STRUCTS)
 	mkdir -p $(MBY_BUILD_ROOT)/src
 	$(GENVIEWS_TARGDIR)/genviews -L m3 -top mby_top_map -o $(MBY_BUILD_ROOT)/src < $<
 	cp $(GENVIEWS_ROOT)/src/boilerplate/m3overrides $(MBY_BUILD_ROOT)/src
 	sed 's/THELIB/mby/' $(GENVIEWS_ROOT)/src/boilerplate/m3makefile > $(MBY_BUILD_ROOT)/src/m3makefile
+
+$(MBYLIB): $(MBY_POSTPROC) $(GENVIEWS) rpc_structs $(MBY_SCM)
 	cd $(MBY_BUILD_ROOT)/src && $(CM3) -x
 
 $(SCALA_GEN): $(MBY_POSTPROC) $(GENVIEWS)
@@ -189,9 +192,9 @@ $(C_GEN): $(MBY_POSTPROC) $(GENVIEWS)
 cgen: $(C_GEN)
 
 $(MBY_C_LIB): $(C_GEN)
-	make -C ../c all
+	$(MAKE) -C ../c DEBUG=1 VERBOSE=1 -j 30 all
 
-$(SCM_GEN): $(MBY_POSTPROC) $(GENVIEWS)
+$(SCM_GEN): $(MBY_POSTPROC) $(GENVIEWS) 
 	mkdir -p $(MBY_BUILD_SCM_ROOT)/src
 	$(GENVIEWS_TARGDIR)/genviews -L scm -top mby_top_map -o $(MBY_BUILD_SCM_ROOT)/src < $<
 
@@ -231,7 +234,7 @@ $(CONSTS_HDL):  genviews/fieldvisitor/src/mby_fulcrum_legacy_rtl.hdl $(FULCRUM_C
 fulcrum_consts: $(FULCRUM_CONSTS) $(CONSTS_HDL)
 
 doc:
-	$(MAKE) -C $(MBY_C_ROOT)/doc
+	$(MAKE) -C $(MBY_C_ROOT)/doc 
 
 $(TEST_TARG): $(GENVIEWS)
 	pushd $(GENVIEWS_ROOT)/src && ./test.sh
@@ -240,6 +243,7 @@ clean:
 	rm -rf $(WM_SUPPORT_TARGDIR)
 	rm -rf $(GENVIEWS_TARGDIR)
 	rm -rf $(GENVIEWS_ROOT)/src/build
+	rm -rf $(GENVIEWS_ROOT)/src/build_c
 	rm -rf $(GENVIEWS_ROOT)/src/work
 	rm -rf $(MODEL_SERVER_ROOT)/src/mby_struct
 	rm -rf $(MODEL_SERVER_ROOT)/src/wm_meta_common

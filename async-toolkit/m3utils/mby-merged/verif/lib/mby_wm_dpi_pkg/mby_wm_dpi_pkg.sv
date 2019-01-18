@@ -29,6 +29,7 @@
 package mby_wm_dpi_pkg;
 
 `define MAX_PKT_LEN 16384
+`define MBY_PA_MAX_SEG_LEN 192
 
 `include "mby_parser_hdr.svh"
 
@@ -46,7 +47,7 @@ package mby_wm_dpi_pkg;
     import "DPI-C" function int wm_pkt_get(output wm_pkt_t get_pkt);
     //This function is used for debug purpose only-- To connect directly to Idea IDE and debug Scala code.
     import "DPI-C" function int wm_connect(string server_path);
-    import "DPI-C" function int wm_parser(input mbyRxMacToParser igr_pkt, output mbyParserToMapper parser_pkt);
+    import "DPI-C" function int wm_Parser(input mbyRxMacToParser igr_pkt, output mbyParserToMapper parser_pkt);
 
 endpackage
 

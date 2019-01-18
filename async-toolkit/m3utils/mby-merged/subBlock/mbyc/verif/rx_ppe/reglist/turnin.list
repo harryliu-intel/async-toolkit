@@ -1,2 +1,2 @@
 mby_rx_ppe_alive_test  -seed 1
-mby_rx_ppe_wm_access_test  -seed 1
+# mby_rx_ppe_wm_access_test  -seed 1
