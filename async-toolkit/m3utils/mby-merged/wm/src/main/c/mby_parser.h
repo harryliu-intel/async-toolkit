@@ -7,7 +7,10 @@
 
 // Includes:
 
+#include "nulltype.h"
 #include "mby_bitfield.h"
+#include "mby_mac2par.h"
+#include "mby_par2map.h"
 
 // Defines:
 
@@ -19,7 +22,6 @@
 
 #define MBY_PA_PTYPE_ENTRIES           parser_ptype_tcam_rf_PARSER_PTYPE_TCAM__nd
 
-#define MBY_PA_MAX_SEG_LEN             192
 #define MBY_PA_MAX_PTR_LEN             255
 #define MBY_PA_MAX_DATA_SZ             16384
 #define MBY_PSEUDOHEADER_SIZE          40
@@ -118,41 +120,16 @@ typedef enum mbyParserPtrsIndexEnum
 
 } mbyParserPtrsIndex;
 
-typedef struct mbyRxMacToParserStruct
-{
-    fm_uint32        RX_PORT;             ///< Ingress port
-    fm_uint32        RX_LENGTH;           ///< Ingress packet data length [bytes]
-#ifndef SV_BUILD
-    fm_byte        * RX_DATA;             ///< Ingress packet data (pointer to)
-#else
-    fm_byte          RX_DATA[MBY_MAX_PACKET_LEN]; ///< Ingress packet data (fixed-size)
-#endif
+typedef mby_ppe_parser_map Parser_rstate_t;
+typedef NullType           Parser_wstate_t;
+typedef mbyRxMacToParser   Parser_in_t;
+typedef mbyParserToMapper  Parser_out_t;
 
-} mbyRxMacToParser;
+void Parser
+(
+    mby_ppe_parser_map    const * const parser_map,
+    mbyRxMacToParser      const * const in,
+    mbyParserToMapper           * const out
+);
 
-typedef struct mbyParserToMapperStruct
-{
-    fm_uint16        PA_ADJ_SEG_LEN;                   ///< Adjusted segment length
-    fm_byte          PA_CSUM_OK;                       ///< Checksum OK result for outer (bit 0) and inner (bit 1) IPv4 headers
-    fm_bool          PA_DROP;                          ///< Checksum validation error, drop pkt in tail
-    fm_bool          PA_EX_DEPTH_EXCEED;               ///< Parser stopped: EOS exception and segment was not EOP
-    fm_bool          PA_EX_PARSING_DONE;               ///< Parser stopped: Parsing Done exception
-    fm_byte          PA_EX_STAGE;                      ///< Analyzer stage where exception occurred
-    fm_bool          PA_EX_TRUNC_HEADER;               ///< Parser stopped: EOS exception and segment was EOP:
-    fm_bool          PA_FLAGS     [MBY_N_PARSER_FLGS]; ///< Parser flags assigned by extract
-    fm_uint16        PA_KEYS      [MBY_N_PARSER_KEYS]; ///< 16-bit parser keys
-    fm_bool          PA_KEYS_VALID[MBY_N_PARSER_KEYS]; ///< Parser keys valid flags
-    fm_bool          PA_L3LEN_ERR;                     ///< L3 length error
-    fm_uint16        PA_PACKET_TYPE;                   ///< Packet type (new for MBY)
-    mbyParserHdrPtrs PA_HDR_PTRS;                      ///< Parser header pointers
-    fm_uint32        RX_PORT;                          ///< Ingress port
-    fm_uint32        RX_LENGTH;                        ///< Ingress packet data length [bytes]
-#ifndef SV_BUILD
-    fm_byte        * RX_DATA;                          ///< Ingress packet data (pointer to)
-#else
-    fm_byte          RX_DATA[MBY_MAX_PACKET_LEN];      ///< Ingress packet data (fixed-size)
-#endif
-
-} mbyParserToMapper;
-
-#endif
+#endif // MBY_PARSER_H

@@ -125,7 +125,7 @@ typedef struct mbyHashToNextHopStruct
     fm_bool            IS_IPV4;                ///> packet is IPv4
     fm_bool            IS_IPV6;                ///> packet is IPv6
     fm_uint16          L2_ETYPE;               ///> 16-bit innermost Ethernet type
-    fm_uint16          L2_IDOMAIN;
+    fm_byte            L2_IDOMAIN;
     fm_uint16          L2_IVID1;
     fm_byte            L3_IDOMAIN;
     fm_bool            LEARN_MODE;
@@ -143,8 +143,6 @@ typedef struct mbyHashToNextHopStruct
     mbyParserHdrPtrs   PA_HDR_PTRS;            ///> parser header pointers
     fm_uint32          PRE_RESOLVE_DMASK;      ///> destination mask before action resolution
     fm_byte            QOS_TC;                 ///> 4-bit switch priority
-    fm_byte          * RX_DATA;                ///> ingress (receive) packet data
-    fm_uint32          RX_LENGTH;              ///> RX packet length
     fm_bool            RX_MIRROR;              ///> rx mirror frame
     fm_uint32          RX_PORT;                ///> receive port number
     fm_bool            SA_HIT;                 ///> source MAC address lookup hit
@@ -157,7 +155,7 @@ typedef struct mbyHashToNextHopStruct
     fm_bool            TRAP_IGMP;              ///> IGMP packet should be trapped
     fm_bool            TRAP_IP_OPTIONS;        ///> IP options present
     mbyTriggerResults  TRIGGERS;               ///> trigger results
-
+    fm_uint32          RX_LENGTH;              ///< Ingress packet data length [bytes]
 } mbyHashToNextHop;
 
 // Consts:

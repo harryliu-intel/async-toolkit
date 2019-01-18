@@ -10,6 +10,7 @@
 #include "mby_common.h"
 #include "mby_bitfield.h"
 #include "mby_cgrp_regs.h"
+#include "mby_mapper.h"
 
 // Defines:
 
@@ -63,22 +64,33 @@ typedef struct mbyClassifierToHashStruct
     fm_byte                TTL_CTRL;                                    ///< controls update of TTL field of egress packet
     fm_byte                TX_TAG;                                      ///< transmit tag
     // pass-thru:
-    mbyClassifierKeys  CLASSIFIER_KEYS;                             ///< classifier TCAM lookup keys
-    fm_bool            LEARN_MODE;                                  ///< learn mode: 0=SVL, 1=IVL
-    fm_uint16          L2_IDOMAIN;                                  ///< ingress L2 domain
-    fm_byte            L3_IDOMAIN;                                  ///< ingress L3 domain
-    fm_bool            PARSER_ERROR;                                ///< header parse error
-    mbyParserInfo      PARSER_INFO;                                 ///< parser info structure
-    fm_bool            PARITY_ERROR;                                ///< parity error detected flag
-    fm_bool            PA_DROP;                                     ///< checksum validation error, drop pkt in tail
-    fm_bool            PA_L3LEN_ERR;                                ///< l3 length error
-    fm_byte          * RX_DATA;                                     ///< ingress (receive) packet data
-    mbyParserHdrPtrs   PA_HDR_PTRS;                                 ///< parser header pointers
-    fm_uint32          RX_LENGTH;                                   ///< ingress packet data length [bytes]
-    fm_uint32          RX_PORT;                                     ///< ingress port
-    fm_byte            TRAFFIC_CLASS;                               ///< 3-bit traffic class
+    mbyClassifierKeys      CLASSIFIER_KEYS;                             ///< classifier TCAM lookup keys
+    fm_bool                LEARN_MODE;                                  ///< learn mode: 0=SVL, 1=IVL
+    fm_uint16              L2_IDOMAIN;                                  ///< ingress L2 domain
+    fm_byte                L3_IDOMAIN;                                  ///< ingress L3 domain
+    fm_bool                PARSER_ERROR;                                ///< header parse error
+    mbyParserInfo          PARSER_INFO;                                 ///< parser info structure
+    fm_bool                PARITY_ERROR;                                ///< parity error detected flag
+    fm_bool                PA_DROP;                                     ///< checksum validation error, drop pkt in tail
+    fm_bool                PA_L3LEN_ERR;                                ///< l3 length error
+    mbyParserHdrPtrs       PA_HDR_PTRS;                                 ///< parser header pointers
+    fm_uint32              RX_PORT;                                     ///< ingress port
+    fm_byte                TRAFFIC_CLASS;                               ///< 3-bit traffic class
+    fm_uint32              RX_LENGTH;                                   ///< Ingress packet data length [bytes]
 } mbyClassifierToHash;
 
+typedef mbyMapperToClassifier   Classifier_in_t;
+typedef mbyClassifierToHash     Classifier_out_t;
+
 // Function prototypes:
+
+void Classifier
+(
+    mby_ppe_cgrp_a_map    const * const cgrp_a_map,
+    mby_ppe_cgrp_b_map    const * const cgrp_b_map,
+    mby_shm_map           const * const shm_map,
+    mbyMapperToClassifier const * const in,
+    mbyClassifierToHash         * const out
+ );
 
 #endif /* MBY_CLASSIFIER_H */

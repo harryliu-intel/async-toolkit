@@ -1,6 +1,5 @@
 MODULE MsIosf;
-IMPORT ModelServer;
-IMPORT ModelServerClass;
+IMPORT ModelServerSuper;
 IMPORT Rd;
 IMPORT NetContext;
 IMPORT ServerPacket AS Pkt;
@@ -26,15 +25,18 @@ IMPORT IosfRegBlkData;
 
 EXCEPTION ParseError;
 
-TYPE Instance = ModelServerClass.Instance;
+TYPE Instance = ModelServerSuper.Instance;
 
 VAR doDebug := Debug.DebugThis(Brand);
           
-PROCEDURE HandleMsg(<*UNUSED*>m  : ModelServerClass.MsgHandler;
+PROCEDURE HandleMsg(<*UNUSED*>m  : ModelServerSuper.MsgHandler;
                     READONLY hdr : FmModelMessageHdr.T;
                     VAR cx       : NetContext.T;
                     inst         : Instance)
-  RAISES { Rd.EndOfFile, Rd.Failure, ModelServer.ParseError, Thread.Alerted,
+  RAISES { Rd.EndOfFile,
+           Rd.Failure,
+           ModelServerSuper.ParseError,
+           Thread.Alerted,
            Wr.Failure } =
   BEGIN
     <*ASSERT hdr.type = FmModelMsgType.T.Iosf*>
@@ -65,7 +67,7 @@ PROCEDURE HandleMsg(<*UNUSED*>m  : ModelServerClass.MsgHandler;
         END
       END
     EXCEPT
-      ParseError => RAISE ModelServer.ParseError(Brand)
+      ParseError => RAISE ModelServerSuper.ParseError(Brand)
     END
   END HandleMsg;
 

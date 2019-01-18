@@ -111,7 +111,9 @@
                 (ctrl                          )
                 (version-info                  )
                 (nvm-read                      )
-                (command-quit                  ))
+                (command-quit                  )
+                (stage-data                    )
+                )
                )
     
     (enum fm-model-attr-type

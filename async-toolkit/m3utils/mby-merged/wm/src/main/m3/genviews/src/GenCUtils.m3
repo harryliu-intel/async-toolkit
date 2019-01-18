@@ -30,11 +30,11 @@ PROCEDURE PutXDecls(gs : RegCGenState.T; xDecls : TextSeq.T) =
 PROCEDURE FmtFieldType(baseType : TEXT; ft : FieldType) : TEXT =
   BEGIN
     CASE ft OF
-      FieldType.UInt => RETURN baseType
+      FieldType.UInt    => RETURN baseType
     |
       FieldType.Pointer => RETURN baseType
     |
-      FieldType.Id => RETURN "field_id"
+      FieldType.Id      => RETURN "field_id"
     END
   END FmtFieldType;
 

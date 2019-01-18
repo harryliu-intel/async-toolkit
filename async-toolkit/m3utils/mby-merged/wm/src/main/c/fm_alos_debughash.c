@@ -32,6 +32,8 @@
  *
  *************************************************************************/
 
+#include "fm_alos_debughash.h" /* should be first #include */
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -41,8 +43,6 @@
 
 #include <assert.h>
 #include <stdio.h>
-
-#include "fm_alos_debughash.h"
 
 typedef struct hashtable_bucket_t {
     void *data;
@@ -57,8 +57,8 @@ struct hashtable_t {
     hashtable_bucket_t **buckets;            /* array of root buckets     */
     unsigned  (*hash_func  )(const void *);
     unsigned  (*comp_func  )(const void *, const void *);
-    void     *(*alloc      )(size_t);
-    void      (*dealloc    )(void *);
+    alloc_func_t alloc;
+    dealloc_func_t dealloc;
 };
 
 /* private prototypes -- needed? */
@@ -94,8 +94,8 @@ hashtable_hash_string (const char *name)
 static hashtable_t *
 hashtable_init_(unsigned  (*hash_func  )(const void *),
                 unsigned  (*comp_func  )(const void *, const void *),
-                void     *(*allocator  )(size_t),
-                void      ( deallocator)(void *),
+                alloc_func_t allocator,
+                dealloc_func_t deallocator,
                 int         nbuckets)
 {
     hashtable_t *res;
@@ -117,8 +117,8 @@ hashtable_init_(unsigned  (*hash_func  )(const void *),
 hashtable_t *
 hashtable_init(unsigned  (*hash_func  )(const void *),
                unsigned  (*comp_func  )(const void *, const void *),
-               void     *(*allocator  )(size_t),
-               void      ( deallocator)(void *))
+               alloc_func_t allocator,
+               dealloc_func_t deallocator)
 {
     return hashtable_init_(hash_func, comp_func, allocator, deallocator, 2);
 }
@@ -207,7 +207,7 @@ hashtable_get(hashtable_t *h, void *search, void **find)
 }
 
 void
-hashtable_del(hashtable_t *h, void *search, void (*destructor)(void *))
+hashtable_del(hashtable_t *h, void *search, dealloc_func_t destructor)
 {
     unsigned hv = (h->hash_func)(search);
     unsigned idx = hv % h->nbuckets;

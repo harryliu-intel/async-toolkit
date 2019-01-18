@@ -138,6 +138,8 @@ $ToolConfig_tools{buildman}{ENV_APPEND}{PATH}                                = "
 $ToolConfig_tools{buildman}{ENV}{JASPERGOLD_VER}                             = "&get_tool_version(jaspergold)/";
 $ToolConfig_tools{buildman}{ENV}{JASPERGOLD_UXDB_PATH}                       = "&get_tool_env_var(jaspergold,JASPERGOLD_UXDB_PATH)";
 $ToolConfig_tools{buildman}{ENV}{JASPERGOLD_UXDB_ARGS}                       = "&get_tool_env_var(jaspergold,JASPERGOLD_UXDB_ARGS)";
+$ToolConfig_tools{buildman}{ENV}{DISABLE_ANSI_COLORS}                        = "1"; # do not put terminal color into logfiles
+
 
 # Natural Docs hook to call cfg/bin/doc_me as a preflow to vcs
 $ToolConfig_tools{'buildman'}{SUB_TOOLS}{'flowbee'}{OTHER}{USERCODE} .= ":$ENV{MODEL_ROOT}/cfg/stages/UserCode.pm";
