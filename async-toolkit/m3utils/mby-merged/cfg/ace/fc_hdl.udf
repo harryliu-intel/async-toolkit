@@ -416,12 +416,6 @@ EOF
                     "$ENV{ACE_HOME}/lib/Verilog",
                 ],},
 
-#              fc_emul_top_lib => {
-#                  -hdl_spec => [
-#                      "emul/wrappers/fc_emul_top.hdl",
-#                  ],
-#              },
-
          },
 
          models => {
@@ -508,14 +502,14 @@ EOF
             },
 
             fc_effm => {
-               top         => 'fc_top_lib.soc',
+               top         => 'fc_hdl_top_lib.fc_hdl_top_cfg',
                top_language => 'SystemVerilog',
                use => \@models_use,
                       
                effm_opts => [   
                     "-cfg ZSE -cfg-",
                     "-use_emubuild_tooldata",  # Remove this when we use HDK greater than 1.4.7
-                    "-top fc_top_lib.soc",
+                    "-top fc_hdl_top_lib.fc_hdl_top_cfg",
                     "-effm 2",
                     "-target $ENV{MODEL_ROOT}/target/".&ToolConfig::get_facet("dut")."/emu/",
                     "-yml $ENV{MODEL_ROOT}/tools/effm/cfg/buildProjectCfg.yml",
@@ -525,12 +519,14 @@ EOF
                pli_libs => [ "-hier_rtl_dumper", ],
 
                libs => [
-                  "mby_mgm_lib",
                   @fc_collage_build_liblist,
                   $fc_global_vars::COLLAGE_LIB,
-                  "fc_top_lib",
+                  @fc_rtl_liblist,
+                  @fc_verif_liblist,        # should not be needed, but to satisfy some dependencies in libs included elsewhere
+                  "generated_collateral_lib",
                   @all_sip_rtl_liblist,
-                  @all_hip_liblist,   
+                  @all_sip_verif_liblist,   # should not be needed, but to satisfy some dependencies in libs included elsewhere
+                  @all_hip_liblist,
                   'dump_filelist_lib',
                ],
  

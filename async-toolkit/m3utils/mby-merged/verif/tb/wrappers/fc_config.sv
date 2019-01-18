@@ -28,18 +28,7 @@ config fc_hdl_top_cfg;
         `include "fc_config_include.svh";
     `endif
 
-    `ifdef MPP_8
-        instance `soc.mby_mpp_0 liblist mby_mpp_rtl_lib;
-        instance `soc.mby_mpp_1 liblist mby_mpp_rtl_lib;
-        instance `soc.mby_mpp_2 liblist mby_mpp_rtl_lib;
-        instance `soc.mby_mpp_3 liblist mby_mpp_rtl_lib;
-        instance `soc.mby_mpp_4 liblist mby_mpp_rtl_lib;
-        instance `soc.mby_mpp_5 liblist mby_mpp_rtl_lib;
-        instance `soc.mby_mpp_6 liblist mby_mpp_rtl_lib;
-        instance `soc.mby_mpp_7 liblist mby_mpp_rtl_lib;
-    `elsif MPP_2
-        instance `soc.mby_mpp_0 liblist mby_mpp_rtl_lib;
-        instance `soc.mby_mpp_1 liblist mby_mpp_rtl_lib;
+    `ifdef MPP_2
         instance `soc.mby_mpp_2 liblist soc_ip_stub_lib;
         instance `soc.mby_mpp_3 liblist soc_ip_stub_lib;
         instance `soc.mby_mpp_4 liblist soc_ip_stub_lib;
@@ -48,18 +37,7 @@ config fc_hdl_top_cfg;
         instance `soc.mby_mpp_7 liblist soc_ip_stub_lib;
     `endif
 
-    `ifdef EPC_8
-        instance `soc.mby_ec_top_0 liblist mby_ec_top_rtl_lib;
-        instance `soc.mby_ec_top_1 liblist mby_ec_top_rtl_lib;
-        instance `soc.mby_ec_top_2 liblist mby_ec_top_rtl_lib;
-        instance `soc.mby_ec_top_3 liblist mby_ec_top_rtl_lib;
-        instance `soc.mby_ec_top_4 liblist mby_ec_top_rtl_lib;
-        instance `soc.mby_ec_top_5 liblist mby_ec_top_rtl_lib;
-        instance `soc.mby_ec_top_6 liblist mby_ec_top_rtl_lib;
-        instance `soc.mby_ec_top_7 liblist mby_ec_top_rtl_lib;
-    `elsif EPC_2
-        instance `soc.mby_ec_top_0 liblist mby_ec_top_rtl_lib;
-        instance `soc.mby_ec_top_1 liblist mby_ec_top_rtl_lib;
+    `ifdef EPC_2
         instance `soc.mby_ec_top_2 liblist soc_ip_stub_lib;
         instance `soc.mby_ec_top_3 liblist soc_ip_stub_lib;
         instance `soc.mby_ec_top_4 liblist soc_ip_stub_lib;

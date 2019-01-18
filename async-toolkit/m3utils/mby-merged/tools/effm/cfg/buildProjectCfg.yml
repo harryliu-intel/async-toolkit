@@ -22,14 +22,11 @@ GLOBAL:
      - common_intfs_lib
      - ext_shared_lib
 # extra libs may need to be removed if using fc model, instead of fc_effm
-#     - mby_common_lib
-#     - svt_ahb_lib
-#     - shdv_shared_lib
-#     - csr_bfm_lib
-#     - mby_wm_dpi_lib
-#     #- ovm_lib 
-#     #- sip_shared_lib
-#     #- sla_lib
+     - mby_common_lib
+     - svt_ahb_lib
+     - fc_seq_lib
+     - fc_tests_lib
+     - fc_hvl_top_lib
    MOD_LIBS:
       .*:
           DEFINES:
@@ -37,6 +34,12 @@ GLOBAL:
                - INTEL_EMULATION
                - EMULATION
                - SYNTHESIS
+               - INTEL_SVA_OFF
+               # defining this due to shrtl_cdc_mux.sv; some of shrtl files being included in mby_msh_rtl.hdl, but missing some of the dependencies;  can remove this if fixed
+               - CDC_MUX_BYPASS
+   BB_MODULES:
+      # this module in rsfec_core_rtl_lib, not synthesizable, but no defines available to exclude this
+      - ip7581hs2p11rf_256x48m1b4s0_t0r0p0d0a1l
 ############################
 # EFFM Configurations Starts
 ############################
@@ -51,9 +54,10 @@ CONFIGURATIONS:
       SETUP:
          - ZSE_PATH=/p/vt/tools/sim/vendor/zse/release/V17.03-6-SP1-2
          - SYNOPSYS=/p/hdk/rtl/cad/x86-64_linux26/synopsys/designcompiler/M-2016.12-SP3
-      USER:
-         VCS_ELAB_APPEND:
-            - -Xzebu_opt=enable_hwtop_ports
+      #USER:
+      #   VCS_ELAB_APPEND:
+      #      # this option may be necessary if using a top that has ports
+      #      - -Xzebu_opt=enable_hwtop_ports
       CFG_FILES:
          - $ENV{EMUL_CFG_DIR}/zebu/zse.utf
    VELOCE:
