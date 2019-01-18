@@ -37,6 +37,11 @@ GLOBAL:
                - INTEL_SVA_OFF
                # defining this due to shrtl_cdc_mux.sv; some of shrtl files being included in mby_msh_rtl.hdl, but missing some of the dependencies;  can remove this if fixed
                - CDC_MUX_BYPASS
+      fc_hdl_top_lib.*:
+          DEFINES:
+             REMOVE:
+               - MPP_8
+               - EPC_8
    BB_MODULES:
       # this module in rsfec_core_rtl_lib, not synthesizable, but no defines available to exclude this
       - ip7581hs2p11rf_256x48m1b4s0_t0r0p0d0a1l
