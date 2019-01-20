@@ -25,7 +25,7 @@
 //
 // CSRS Include:  mby_rx_pb_csr_include.sv
 // Creator:       edwardro
-// Time:          Thu Jan 10 09:39:20 2019
+// Time:          Sun Jan 20 05:36:06 2019
 //
 // Created from:  mby_rx_pb.sv
 // Created by:    ../i_csrs/csrs_include.pl
@@ -85,7 +85,7 @@ mby_rx_pb mby_rx_pb_inst (
     .gated_clk(cclk),
 
     // Resets
-    .rst_n(rst),
+    .rst_n(q2_sreset_n),
 
 
     // Register Inputs
