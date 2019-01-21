@@ -106,8 +106,8 @@ module mby_egr_tb ();
   //rbernal
   //Temporal stuff to validate smm_bfm
   //================================================
-  mby_smm_bfm_row_wr_req_if memwr_req_if(.clk(egress_if.clock),.rst(egress_if.reset));
-  mby_smm_bfm_row_rd_req_if memrd_req_if(.clk(egress_if.clock),.rst(egress_if.reset));
+  mby_smm_bfm_mwr_req_if memwr_req_if(.clk(egress_if.clock),.rst(egress_if.reset));
+  mby_smm_bfm_mrd_req_if memrd_req_if(.clk(egress_if.clock),.rst(egress_if.reset));
 
   logic [19:0] w_seg_ptr;
   logic [1:0] w_wd_sel;

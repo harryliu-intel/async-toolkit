@@ -45,7 +45,7 @@
 // MemWrs/MemRds to a given Mem Node in the Mesh and location in the Memory Node
 // based on Row, Col, Address coming in Request.
 //
-// PARAMETERS::
+// PARAMETERS:
 //     type T_req - sequence item type to be handled.
 //-----------------------------------------------------------------------------
 
@@ -167,69 +167,70 @@ class mby_smm_bfm_mrd_req
    //    T_req mem_req - contains a memory read request to the SMM BFM.
    // ------------------------------------------------------------------------
    virtual protected task automatic mrd_req_rsp(T_req mem_req);
-      T_req          mem_rsp;       // Sequence item to store the generated memory response
+      smm_bfm_mrd_seq   rdrsp_seq;  // Sequence object used to drive the generated memory response
+      T_req             mem_rsp;    // Sequence item to store the generated memory response
       
-      smm_bfm_rdrsp_seq  rdrsp_seq;
+      bit [SMM_BFM_W_REQ_ID-1:0]          req_id;     // Memory read request ID
+      bit [SMM_BFM_ADDR_WIDTH-1:0]        addr;       // Memory read address
+      bit [SMM_BFM_DATA_WIDTH-1:0]        rd_data;    // Memory read data
+      bit [SMM_BFM_W_RRSP_DEST_BLOCK-1:0] dest_block; // Memory read response Dest Block
+      bit [SMM_BFM_NUM_MSH_ROWS-1:0]      node_row;   // SMM BFM node column
+      bit [SMM_BFM_NUM_MSH_COLS-1:0]      node_col;   // SMM BFM node row
       
-      // TODO: parameterize these definitions, these come from a file
-      // TODO : change logics by bits
-      bit [W_REQ_ID-1:0]   req_id;        // Memory read request ID
-      bit [ADDR_WIDTH-1:0]   addr;          // Memory read address
-      bit [MSH_DATA_WIDTH-1:0]  rd_data;       // Memory read data
-      bit [W_RRSP_DEST_BLOCK-1:0]    dest_block;    // Memory read response Dest Block
+      int unsigned   req_rsp_delay;    // Modeled read request delay
       
-      bit [NUM_MSH_ROWS-1:0]    node_row;      // SMM BFM node column
-      bit [NUM_MSH_COLS-1:0]    node_col;      // SMM BFM node row
+      string         msg_str = "";
       
-      int unsigned   req_rsp_delay; // Modeled read request delay
-      
-      string         msg_str;
-      
+      // Immediately increase the number of pending read requests so the main thread can raise an objection to let
+      // this task finish properly
       rd_req_pending++;
       
-      rdrsp_seq = smm_bfm_rdrsp_seq::type_id::create("rdrsp_seq", this);
+      rdrsp_seq   = smm_bfm_mrd_seq::type_id::create("rdrsp_seq", this);
+      mem_rsp     = T_req::type_id::create("mem_rsp", this);
       
       // Decode memory read request data
       req_id      = mem_req.data.mim_req_id;
-      dest_block  = mem_req.data.mim_wd_sel;
+      dest_block  = mem_req.data.mim_wd_sel;   //TODO: what is dest block? - for now assigned with wd_sel
       addr        = mem_req.data.mim_seg_ptr[13:0];
       node_row    = mem_req.data.mim_seg_ptr[17:14];
       node_col    = {mem_req.data.mim_seg_ptr[1:0]^mem_req.data.mim_wd_sel,mem_req.data.mim_seg_ptr[18]};
       rd_data     = mesh_ptr[node_row][node_col].mrd(addr);
       
-      msg_str     = $sformatf("mrd_req_rsp() : Received a memory read request for NodeRow = 0x%0x, NodeCol = 0x%0x, \
-                        Address = 0x%020x, RdData = 0x%0512x, ReqID = 0x%0x", node_row, node_col, addr, rd_data, req_id);
+      msg_str     = {msg_str, "mrd_req_rsp() : Received a memory read request for "};
+      msg_str     = {msg_str, $sformatf("NodeRow = 0x%0x, NodeCol = 0x%0x, Address = 0x%04x, RdData = 0x%0128x. ReqID = 0x%x",
+                        node_row, node_col, addr, rd_data, req_id)};
       
       `uvm_info(get_type_name(), msg_str,  UVM_MEDIUM)
       
-      // Generate the memory read response
-      mem_rsp = T_req::type_id::create("mem_rsp", this);
-      mem_rsp.data.mim_rrsp_valid      = 1;
-      mem_rsp.data.mim_rd_data         = rd_data;
-      mem_rsp.data.mim_rrsp_req_id     = req_id;
-      mem_rsp.data.mim_rrsp_dest_block = dest_block;
+      // Generate the memory read response accordingly
+      mem_rsp.data.mim_rrsp_valid        = 1;
+      mem_rsp.data.mim_rd_data           = rd_data;
+      mem_rsp.data.mim_rrsp_req_id       = req_id;
+      mem_rsp.data.mim_rrsp_dest_block   = dest_block;
       
-      // TODO ;   Profile based latencies.
-      req_rsp_delay  = $urandom_range(rd_req_cfg_obj.mrd_req_rsp_delay_max,rd_req_cfg_obj.mrd_req_rsp_delay_min) + rd_req_cfg_obj.mrd_req_rsp_delay_extra;
-
-      msg_str     = $sformatf("mrd_req_rsp() : Delay of read request/response operation is %0d clocks. ReqID = 0x%x",
-                       req_rsp_delay, req_id);
+      // Generate profile based latencies, min and max got adjusted based on the configured profile.
+      req_rsp_delay = $urandom_range(rd_req_cfg_obj.mrd_req_rsp_delay_min, rd_req_cfg_obj.mrd_req_rsp_delay_max);
+      
+      msg_str = $sformatf("mrd_req_rsp() : Delay of read request/response operation is %0d clocks. Address = 0x%04x, ReqID = 0x%x",
+                  req_rsp_delay, addr, req_id);
       
       `uvm_info(get_type_name(), msg_str,  UVM_MEDIUM)
       
-      // Look for the driver in this agent then for a vif and then a clock in it
+      // Simulate read request/response latency
       repeat(req_rsp_delay) @(posedge this.rd_req_agent_ptr.driver.io_policy.vintf.clk);
       
-      // Use this instead
+      // Once the delay got simulated, the memory read response gets sent through the sequencer
       rdrsp_seq.mem_rsp = mem_rsp;
       rdrsp_seq.start(this.rd_req_agent_ptr.sequencer);
       
       mem_rsp.data.mim_rrsp_valid = 0;
       
-      msg_str     = $sformatf("mrd_req_rsp() : Memory read request done. ReqID = 0x%x", req_id);
+      msg_str     = $sformatf("mrd_req_rsp() : Memory read request done.Address = 0x%04x, ReqID = 0x%x", addr, req_id);
       
       `uvm_info(get_type_name(), msg_str, UVM_MEDIUM)
       
+      // Finally decrease the number of pending read requests, so the main thread can drop the objection if there aren't
+      // more pending read requests
       rd_req_pending--;
    endtask : mrd_req_rsp
 

@@ -4,7 +4,7 @@ module smm_row_mwr_reqs #(parameter TIME_DELAY = 625,parameter ADDRESS_BITS=20, 
     input [ADDRESS_BITS-1:0] seg_ptr,
     input mesh_clk,
     input mesh_rst,
-    mby_smm_bfm_row_wr_req_if mwr_req
+    mby_smm_bfm_mwr_req_if mwr_req
     );
 
     logic [7:0] data_ctr;

@@ -2,7 +2,7 @@
 // Title         : Madison Bay SMM Interface
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : mby_smm_bfm_row_rd_req_if.sv
+// File          : mby_smm_bfm_mrd_req_if.sv
 // Author        : Roman Bernal <r.bernal@intel.com>
 // Created       : 01.11.2018
 //-----------------------------------------------------------------------------
@@ -30,20 +30,27 @@
 // express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
-`ifndef __MBY_SMM_BFM_ROW_RD_REQ_IF__
-`define __MBY_SMM_BFM_ROW_RD_REQ_IF__
+`ifndef __MBY_SMM_BFM_MRD_REQ_IF__
+`define __MBY_SMM_BFM_MRD_REQ_IF__
 
-interface mby_smm_bfm_row_rd_req_if(input logic clk, input logic rst);
+interface mby_smm_bfm_mrd_req_if(input logic clk, input logic rst);
    import mby_smm_bfm_pkg_pre::*;
 
+   // VARIABLE:
+   //    Packet interface used to drive read responses data.
    mby_smm_bfm_row_rd_req_t intf_data_pkt;
+   
+   // VARIABLE:
+   //    TODO : not used within the class, any usage intended?
    logic                    intf_val_pkt;
+   
+   // VARIABLE:
+   //    Packet interface used to flag? debug data. TODO : confirm this
    logic                    intf_debg_pkt;
 
    localparam DATA_WIDTH = $bits(mby_smm_bfm_row_rd_req_t);
    localparam DEBG_WIDTH = 1;
    
-
    //---------------------------------------------------------------------------
    // Initializing the interface at time 0
    //---------------------------------------------------------------------------
@@ -117,7 +124,7 @@ interface mby_smm_bfm_row_rd_req_if(input logic clk, input logic rst);
        @(posedge clk);
    endtask
 
-endinterface : mby_smm_bfm_row_rd_req_if
+endinterface : mby_smm_bfm_mrd_req_if
 
 
 `endif
