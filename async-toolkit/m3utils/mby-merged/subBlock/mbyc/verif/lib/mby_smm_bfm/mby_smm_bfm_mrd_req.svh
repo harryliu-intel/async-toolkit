@@ -198,7 +198,7 @@ class mby_smm_bfm_mrd_req
       rd_data     = mesh_ptr[node_row][node_col].mrd(addr);
       
       msg_str     = $sformatf("mrd_req_rsp() : Received a memory read request for NodeRow = 0x%0x, NodeCol = 0x%0x, \
-                        Address = 0x%0x, RdData = 0x%0x. ReqID = 0x%x", node_row, node_col, addr, rd_data, req_id);
+                        Address = 0x%020x, RdData = 0x%0512x, ReqID = 0x%0x", node_row, node_col, addr, rd_data, req_id);
       
       `uvm_info(get_type_name(), msg_str,  UVM_MEDIUM)
       
@@ -211,7 +211,7 @@ class mby_smm_bfm_mrd_req
       
       // TODO ;   Profile based latencies.
       req_rsp_delay  = $urandom_range(rd_req_cfg_obj.mrd_req_rsp_delay_max,rd_req_cfg_obj.mrd_req_rsp_delay_min) + rd_req_cfg_obj.mrd_req_rsp_delay_extra;
-      
+
       msg_str     = $sformatf("mrd_req_rsp() : Delay of read request/response operation is %0d clocks. ReqID = 0x%x",
                        req_rsp_delay, req_id);
       
