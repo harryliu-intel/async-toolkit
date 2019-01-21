@@ -66,16 +66,12 @@ class mby_gpm_bfm_cfg extends mby_base_config;
          fpptr_cfg.driver_active  == UVM_ACTIVE;
          fpptr_cfg.monitor_active == UVM_ACTIVE;
          dpptr_cfg.driver_active  == UVM_PASSIVE;
-         dpptr_cfg.monitor_active == UVM_PASSIVE;
-         msh_cfg.driver_active    == UVM_PASSIVE;
-         msh_cfg.monitor_active   == UVM_PASSIVE;
+         dpptr_cfg.monitor_active == UVM_ACTIVE;
       } else if(bfm_mode == GPM_BFM_EGR_MODE) {
          fpptr_cfg.driver_active  == UVM_PASSIVE;
          fpptr_cfg.monitor_active == UVM_PASSIVE;
          dpptr_cfg.driver_active  == UVM_PASSIVE;
-         dpptr_cfg.monitor_active == UVM_ACTIVE;
-         msh_cfg.driver_active    == UVM_PASSIVE;
-         msh_cfg.monitor_active   == UVM_PASSIVE;
+         dpptr_cfg.monitor_active == UVM_PASSIVE;
       } 
    }
 

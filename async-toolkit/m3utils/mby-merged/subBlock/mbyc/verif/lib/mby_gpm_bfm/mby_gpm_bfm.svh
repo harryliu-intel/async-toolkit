@@ -98,7 +98,6 @@ class mby_gpm_bfm extends uvm_component;
       if(cfg_obj.bfm_mode == GPM_BFM_IGR_MODE) begin
          fpptr_agent = pod_agent::type_id::create("fpptr_agent", this);
          fpptr_agent.cfg_obj = this.cfg_obj.fpptr_cfg;
-      end else if(cfg_obj.bfm_mode == GPM_BFM_EGR_MODE) begin
          dpptr_agent = pod_agent::type_id::create("dpptr_agent", this);
          dpptr_agent.cfg_obj = this.cfg_obj.dpptr_cfg;
       end
