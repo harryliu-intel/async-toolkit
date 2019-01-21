@@ -177,6 +177,39 @@ import msh_node_sim_pkg::*;
     );
 
 
+    outside_node outside_node (
+
+        .mclk                           (clk),
+        .mhreset                        (dut_if.mhreset),
+        .msreset                        (dut_if.msreset),
+
+        .i_nb_wr_req                    (dut_if.o_nb_wr_req),
+        .i_sb_wr_req                    (dut_if.o_sb_wr_req),
+        .i_eb_wr_req                    (dut_if.o_eb_wr_req),
+        .i_wb_wr_req                    (dut_if.o_wb_wr_req),
+
+        .i_nb_wr_data                   (dut_if.o_nb_wr_data),
+        .i_sb_wr_data                   (dut_if.o_sb_wr_data),
+        .i_eb_wr_data                   (dut_if.o_eb_wr_data),
+        .i_wb_wr_data                   (dut_if.o_wb_wr_data),
+
+        .i_nb_rd_req                    (dut_if.o_nb_rd_req),
+        .i_sb_rd_req                    (dut_if.o_sb_rd_req),
+        .i_eb_rd_req                    (dut_if.o_eb_rd_req),
+        .i_wb_rd_req                    (dut_if.o_wb_rd_req),
+
+        .o_nb_rd_rsp                    (dut_if.i_nb_rd_rsp),
+        .o_sb_rd_rsp                    (dut_if.i_sb_rd_rsp),
+        .o_eb_rd_rsp                    (dut_if.i_eb_rd_rsp),
+        .o_wb_rd_rsp                    (dut_if.i_wb_rd_rsp),
+
+        .o_nb_rd_data                   (dut_if.i_nb_rd_data),
+        .o_sb_rd_data                   (dut_if.i_sb_rd_data),
+        .o_eb_rd_data                   (dut_if.i_eb_rd_data),
+        .o_wb_rd_data                   (dut_if.i_wb_rd_data)
+    );
+
+
 
 
     // instantiate testcase
