@@ -44,6 +44,7 @@ package mby_reset_pkg;
    `include "mby_reset_if_types.svh"
    `include "mby_reset_cfg.svh"
    `include "mby_reset_driver.svh"
+   `include "mby_reset_monitor.svh"
    `include "mby_reset_agent.svh"
 endpackage : mby_reset_pkg
 

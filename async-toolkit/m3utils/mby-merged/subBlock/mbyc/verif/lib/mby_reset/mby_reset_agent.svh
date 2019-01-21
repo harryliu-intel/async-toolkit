@@ -35,6 +35,7 @@ class mby_reset_agent extends shdv_reset_pkg::shdv_reset_agent;
 
    mby_reset_cfg           cfg_obj;
    mby_reset_driver        rst_driver;
+   mby_reset_monitor       rst_monitor;
    // -------------------------------------------------------------------------
    // Macro to register new class type
    // -------------------------------------------------------------------------
@@ -44,13 +45,23 @@ class mby_reset_agent extends shdv_reset_pkg::shdv_reset_agent;
       super.new(name, parent);
       cfg_obj     = mby_reset_cfg::type_id::create("cfg_obj", this);
       rst_driver  = mby_reset_driver::type_id::create("rst_driver",this);
+      rst_monitor = mby_reset_monitor::type_id::create("rst_monitor",this);
    endfunction
 
    function void build_phase(uvm_phase phase);
-      uvm_config_db#(mby_reset_cfg)::get(this, "reset_agent", "cfg_obj", cfg_obj);
+      //uvm_config_db#(mby_reset_cfg)::get(this, "reset_agent", "cfg_obj", cfg_obj);
+
+      cfg_obj.randomize() with {reset_mode == RESET_EGR_MODE;};
 
       if(cfg_obj.driver_active == UVM_ACTIVE) begin
          rst_driver.assign_cfg(cfg_obj);
+         rst_driver.cfg_obj.driver_active = UVM_ACTIVE;
+
+      end
+      if(cfg_obj.monitor_active == UVM_ACTIVE) begin
+         rst_monitor.assign_cfg(cfg_obj);
+         rst_monitor.cfg_obj.monitor_active = UVM_ACTIVE;
+
       end
 
    endfunction : build_phase

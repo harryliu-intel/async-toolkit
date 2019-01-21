@@ -31,18 +31,19 @@
 // express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
-class mby_reset_driver extends shdv_reset_pkg::shdv_reset_driver;
-   
-   mby_egr_env_if_h vintf;
-   
-   // VARIABLE: cfg_obj
-   // The agent's configuration object
-   mby_base_config cfg_obj;
-   
+class mby_reset_monitor extends shdv_reset_pkg::shdv_reset_monitor;
+
+   mby_egr_env_if_h     vintf;
+   mby_base_config      cfg_obj;
+
+   shdv_reset_event     reset_event;
+   shdv_reset_manager   reset_manager;
+   shdv_reset_data      reset_data;
+
    // -------------------------------------------------------------------------
    // Macro to register new class type
    // -------------------------------------------------------------------------
-   `uvm_component_utils(mby_reset_driver)
+   `uvm_component_utils(mby_reset_monitor)
 
    function new(string name, uvm_component parent);
       super.new(name, parent);
@@ -51,54 +52,66 @@ class mby_reset_driver extends shdv_reset_pkg::shdv_reset_driver;
    function void connect_phase(uvm_phase phase);
       super.connect_phase(phase);
 
-      //Register reset events in the reset manager related to this driver
-      add_reset("reset");
-      //add_reset("egr_soft_reset");
+   //Register reset events in the reset manager related to this driver
+   //add_reset("egr_hard_reset");
+   //add_reset("egr_soft_reset");
    endfunction
-
-   //Whenever the right event is asserted, set_reset() method is executed.
-   task set_reset(shdv_reset_data data);
-      //egr_hard_reset
-      if(data.rst_type == "hard" && data.rst_domain == "egr")begin
-         vintf.reset = 1;
-         vintf.egress_int_wire = 1;
-      end
-   endtask:set_reset
-
-   //Whenever the right event is de-asserted, clear_reset() method is executed.
-   task clear_reset(shdv_reset_data data);
-      //egr_hard_reset
-      if(data.rst_type == "hard" && data.rst_domain == "egr")begin
-         vintf.reset = 0;
-         vintf.egress_int_wire = 0;
-      end
-   endtask : clear_reset
 
    function void assign_vintf(mby_egr_env_if_h vintf);
-      this.vintf = vintf;   
+      this.vintf = vintf;
    endfunction
-   
+
+   // This task will be looking at the different type of resets and will create
+   // a new event accordingly
+   task monitor_reset();
+      wait(vintf.power_good_reset === 0);
+      
+      forever begin
+         begin //Looking at "H_RESET"
+            @(posedge vintf.reset);
+            `uvm_info(get_name(), "jesusalo: RESET asserted. Creating a new event to notify all components.", UVM_NONE);
+            reset_event = reset_manager.get_global("egr_hard_reset");
+            reset_data = shdv_reset_data::type_id::create("reset_data");
+            reset_data.rst_domain = "egr";
+            reset_data.rst_type   = "hard";
+            // Rst_mode shouldnt matter. Its on the test's sequence
+            //reset_data.rst_mode   = CLEAN_RESET;
+            reset_event.set(reset_data);
+
+            @(negedge vintf.reset);
+            `uvm_info(get_name(), "jesusalo: RESET de-asserted. About to clear the reset event.", UVM_NONE);
+            reset_event.clear();
+         end
+
+         begin //Looking at "S_RESET"
+
+         end
+      end
+   endtask : monitor_reset
+
+
+
    task run_phase(uvm_phase phase);
       super.run_phase(phase);
    endtask : run_phase
 
-   // -------------------------------------------------------------------------
-   // FUNCTION: assign_cfg()
-   //
-   // This function is called by the agent once the driver is created and the
-   // agent has accessed the configuration database to obtain the config obj.
-   // This is to reduce the number of config db accesses as it has a toll in
-   // performance.
-   //
-   // ARGUMENTS:
-   //     mby_base_config cfg - A pointer to the config obj to be used by the
-   //                 driver
-   //
-   // -------------------------------------------------------------------------
+// -------------------------------------------------------------------------
+// FUNCTION: assign_cfg()
+//
+// This function is called by the agent once the driver is created and the
+// agent has accessed the configuration database to obtain the config obj.
+// This is to reduce the number of config db accesses as it has a toll in
+// performance.
+//
+// ARGUMENTS:
+//     mby_base_config cfg - A pointer to the config obj to be used by the
+//                 driver
+//
+// -------------------------------------------------------------------------
    function void assign_cfg(mby_base_config cfg);
       this.cfg_obj = cfg;
    endfunction : assign_cfg
-   
-endclass:mby_reset_driver
+
+endclass:mby_reset_monitor
 
 

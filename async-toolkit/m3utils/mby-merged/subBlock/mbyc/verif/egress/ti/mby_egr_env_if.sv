@@ -27,7 +27,7 @@ interface mby_egr_env_if();
    logic reset;
    logic clock;
 
-  
+
    // Dummy interrupt wire for monitoring.
    logic egress_int_wire;
 
@@ -39,5 +39,11 @@ interface mby_egr_env_if();
       power_good_reset = 0;
       reset = 0;
    end
+
+   task mon_start();
+      // wait for valid signal
+      wait(egress_int_wire === 1);
+      #0;
+   endtask
 
 endinterface : mby_egr_env_if

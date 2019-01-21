@@ -148,8 +148,9 @@ class mby_egr_env extends mby_egr_base_env;
       end
       
       if(rst_agent != null)begin
-         `uvm_info(get_name(), "jesusalo: RESET_AGENT.driver was assigned to the reset if.", UVM_LOW)
+         `uvm_info(get_name(), "jesusalo: RESET_AGENT.driver/monitor were assigned to the reset if.", UVM_LOW)
          rst_agent.rst_driver.assign_vintf(egress_if);
+         rst_agent.rst_monitor.assign_vintf(egress_if);
       end 
    endfunction : connect_phase
 
