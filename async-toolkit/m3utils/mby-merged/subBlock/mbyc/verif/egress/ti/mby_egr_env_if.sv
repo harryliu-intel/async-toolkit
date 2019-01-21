@@ -26,7 +26,8 @@ interface mby_egr_env_if();
    // Primary interface clk & reset
    logic reset;
    logic clock;
-	
+
+  
    // Dummy interrupt wire for monitoring.
    logic egress_int_wire;
 
@@ -38,5 +39,5 @@ interface mby_egr_env_if();
       power_good_reset = 0;
       reset = 0;
    end
-  
+
 endinterface : mby_egr_env_if
