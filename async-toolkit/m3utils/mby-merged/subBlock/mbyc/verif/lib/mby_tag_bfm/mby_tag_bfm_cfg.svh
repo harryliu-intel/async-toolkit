@@ -56,7 +56,7 @@
 // (end)
 //
 //-----------------------------------------------------------------------------
-class mby_tag_bfm_cfg extends mby_base_config;
+class mby_tag_bfm_cfg extends shdv_base_config;
 
    // VARIABLE: frame_gen_active
    // Agent is configured to be active or passive
