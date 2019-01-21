@@ -2,7 +2,7 @@
 // Title         : Madison Bay SMM BFM Read/Response Sequence Class
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : mby_smm_bfm_rdrsp_seq.svh
+// File          : mby_smm_bfm_mrd_seq.svh
 // Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
 // Created       : 18.12.2018
 //-----------------------------------------------------------------------------
@@ -29,11 +29,11 @@
 // otherwise. Any license under such intellectual property rights must be
 // express and approved by Intel in writing.
 //-----------------------------------------------------------------------------
-`ifndef __MBY_SMM_BFM_RDRSP_SEQ__
-`define __MBY_SMM_BFM_RDRSP_SEQ__
+`ifndef __MBY_SMM_BFM_MRD_SEQ__
+`define __MBY_SMM_BFM_MRD_SEQ__
 
 //-----------------------------------------------------------------------------
-// CLASS: mby_smm_bfm_rdrsp_seq
+// CLASS: mby_smm_bfm_mrd_seq
 //
 // This is a parameterized class used by smm_bfm.
 //
@@ -41,9 +41,9 @@
 //     T_req      - sequence item type to be handled
 //
 //-----------------------------------------------------------------------------
-class mby_smm_bfm_rdrsp_seq
+class mby_smm_bfm_mrd_seq
    #(
-      type T_req = mby_smm_bfm_row_rd_req_xaction
+      type T_req = mby_smm_bfm_mrd_req_xaction
     )
    extends shdv_base_sequence;
 
@@ -57,7 +57,7 @@ class mby_smm_bfm_rdrsp_seq
    //   better to have manual copy/print/compare methods
    //   convert2string (small)
    // -------------------------------------------------------------------------
-  `uvm_object_param_utils_begin (mby_smm_bfm_rdrsp_seq#(T_req))
+  `uvm_object_param_utils_begin (mby_smm_bfm_mrd_seq#(T_req))
     `uvm_field_object(mem_rsp, UVM_DEFAULT)
   `uvm_object_utils_end
 
@@ -69,7 +69,7 @@ class mby_smm_bfm_rdrsp_seq
    // ARGUMENTS:
    //     string name - The sequence item name
    // -------------------------------------------------------------------------
-   function new (string name = "mby_smm_bfm_rdrsp_seq");
+   function new (string name = "mby_smm_bfm_mrd_seq");
       super.new(name);
    endfunction
 
@@ -97,6 +97,6 @@ class mby_smm_bfm_rdrsp_seq
    virtual task body();
       `uvm_send(mem_rsp)
    endtask
-endclass : mby_smm_bfm_rdrsp_seq
+endclass : mby_smm_bfm_mrd_seq
 
 `endif

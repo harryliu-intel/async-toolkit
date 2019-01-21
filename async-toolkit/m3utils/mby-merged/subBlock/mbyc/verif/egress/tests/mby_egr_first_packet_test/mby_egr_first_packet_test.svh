@@ -26,10 +26,10 @@ class mby_egr_tag_seq extends mby_egr_extended_base_seq;
    `uvm_object_utils (mby_egr_tag_seq)
 
    mby_tag_bfm_pkg::mby_tag_bfm_uc_xaction uc_tag;
-   mby_smm_bfm_pkg::mby_smm_bfm_row_wr_req_xaction smm_wr;
+   mby_smm_bfm_pkg::mby_smm_bfm_mwr_req_xaction smm_wr;
    
    shdv_base_pkg::shdv_base_sequencer#(.T_req(mby_tag_bfm_uc_xaction)) tag_sequencer;
-   shdv_base_pkg::shdv_base_sequencer#(.T_req(mby_smm_bfm_pkg::mby_smm_bfm_row_wr_req_xaction)) smm_sequencer;
+   shdv_base_pkg::shdv_base_sequencer#(.T_req(mby_smm_bfm_pkg::mby_smm_bfm_mwr_req_xaction)) smm_sequencer;
 
    //---------------------------------------------------------------------------
    // Function: new
@@ -49,7 +49,7 @@ class mby_egr_tag_seq extends mby_egr_extended_base_seq;
       
       
       
-      smm_wr = mby_smm_bfm_pkg::mby_smm_bfm_row_wr_req_xaction::type_id::create("smm_wr");
+      smm_wr = mby_smm_bfm_pkg::mby_smm_bfm_mwr_req_xaction::type_id::create("smm_wr");
       assert($cast(smm_sequencer, env.get_tb_seqr().pick_sequencer("smm_bfm_wr_req")))
 
       else begin

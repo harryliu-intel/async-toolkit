@@ -39,36 +39,37 @@
 // CLASS: mby_smm_bfm_cfg
 //
 // This is the configuration class used by the smm_bfm. It contains fields to
-// control the smm agent's driver/monitor behavior.
+// control the smm agent's driver/monitor behavior and to set up congestion profiles
+// for the smm_bfm.
 //-----------------------------------------------------------------------------
 class mby_smm_bfm_cfg extends mby_base_config;
-   // TODO ;   WIP: Mesh Configuration Options - Profile based latencies.
-   //          Different delay types: good condition, congestion levels (low, medium, high, super high), write lost,
-   
-   // TODO :   add plusargs to let the test select the profile.
+   // TODO : once global config gets enabled the constraints for profile randomization will be applied, in the meantime
+   //        only the default values will be used owing to no profile selection will take place.
 
-   rand delay_type_t delay_profile;
+   rand delay_type_e delay_profile;
 
    // VARIABLE: mrd_req_rsp_delay_min
    //    Defines the lower limit for memory read request/response delay randomization.
-   int mrd_req_rsp_delay_min     = 8;
+   int mrd_req_rsp_delay_min = 8;
    
    // VARIABLE: mrd_req_rsp_delay_max
    //    Defines the upper limit for memory read request/response delay randomization.
-   int mrd_req_rsp_delay_max     = 64;
-   
-   // VARIABLE: mrd_req_rsp_delay_extra
-   //    Defines the extra clocks added to memory read request/response delay randomization.
-   rand int mrd_req_rsp_delay_extra;
+   int mrd_req_rsp_delay_max = 64;
    
    // CONSTRAINT: smm_bfm constraint
-   // Sets different delay profile values
-   constraint delay_profiles_c {
-      (delay_profile == IDEAL) -> (mrd_req_rsp_delay_extra == 0);
-      (delay_profile == LOW_DELAY) -> (mrd_req_rsp_delay_extra inside {[1:10]});
-      (delay_profile == MEDIUM_DELAY) -> (mrd_req_rsp_delay_extra inside {[11:100]});
-      (delay_profile == HIGH_DELAY) -> (mrd_req_rsp_delay_extra inside {[101:1000]});
-      (delay_profile == INSANE_DELAY) -> (mrd_req_rsp_delay_extra inside {[1001:10000]});
+   // Sets different delay ranges based on the selected delay profile
+   // TODO : Values were arbitrarily chosen, check spec to update accordingly.
+   constraint delay_profiles_constraint {
+      if (delay_profile == IDEAL_DELAY) {
+         mrd_req_rsp_delay_min == 8;
+         mrd_req_rsp_delay_max == 64;
+      } else if (delay_profile == MEDIUM_DELAY) {
+         mrd_req_rsp_delay_min == 32;
+         mrd_req_rsp_delay_max == 128;
+      } else if (delay_profile == HIGH_DELAY) {
+         mrd_req_rsp_delay_min == 48;
+         mrd_req_rsp_delay_max == 256;
+      }
    }
 
    // CONSTRAINT: smm_bfm_constraint

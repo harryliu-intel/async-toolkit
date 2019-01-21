@@ -138,19 +138,23 @@ class mby_smm_bfm_mwr_req
    //    T_req mem_req - memory write request issued to the SMM BFM.
    // ------------------------------------------------------------------------
    function void mwr_req(T_req mem_req);
-      // TODO: parameterize these definitions
-      bit [ADDR_WIDTH-1:0]  addr;     // Memory write address
-      bit [MSH_DATA_WIDTH-1:0] wr_data;  // Memory write data
+      bit [SMM_BFM_ADDR_WIDTH-1:0]     addr;     // Memory write address
+      bit [SMM_BFM_DATA_WIDTH-1:0]     wr_data;  // Memory write data
+      bit [SMM_BFM_NUM_MSH_ROWS-1:0]   node_row; // SMM BFM node column
+      bit [SMM_BFM_NUM_MSH_COLS-1:0]   node_col; // SMM BFM node row
       
-      bit [NUM_MSH_ROWS-1:0]   node_row; // SMM BFM node column
-      bit [NUM_MSH_COLS-1:0]   node_col; // SMM BFM node row
+      string msg_str = "";
       
       addr     = mem_req.data.mim_wr_seg_ptr[13:0];
       node_row = mem_req.data.mim_wr_seg_ptr[17:14];
       node_col = {mem_req.data.mim_wr_seg_ptr[1:0]^mem_req.data.mim_wr_wd_sel,mem_req.data.mim_wr_seg_ptr[18]};
       wr_data  = mem_req.data.mim_wr_data;
       
-      `uvm_info(get_type_name(), $sformatf("mwr_req() : Received a memory write request for NodeRow = 0x%0x, NodeCol = 0x%0x, Address = 0x%0x. WrData = 0x%x", node_row, node_col, addr, wr_data),  UVM_MEDIUM)
+      msg_str  = {msg_str, "mwr_req() : Received a memory write request for "};
+      msg_str  = {msg_str, $sformatf("NodeRow = 0x%0x, NodeCol = 0x%0x, Address = 0x%04x. WrData = 0x%0128x",
+                     node_row, node_col, addr, wr_data)};
+      
+      `uvm_info(get_type_name(), msg_str, UVM_MEDIUM)
       
       mesh_ptr[node_row][node_col].mwr(addr,wr_data);
    endfunction
