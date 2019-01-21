@@ -3,10 +3,9 @@
 
 #include <mby_rxstats_test.h>
 #include <mby_pipeline.h>
-#include <mby_reg_ctrl.h>
 
 #include <mby_top_map.h>
-#include <model_c_write.h> // write_field()
+#include "tst_model_c_write.h"
 
 #define COLOR_RED     "\x1b[31m"
 #define COLOR_GREEN   "\x1b[32m"

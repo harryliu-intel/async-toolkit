@@ -78,38 +78,33 @@ class mby_egr_tag_seq extends mby_egr_extended_base_seq;
       else begin
          `uvm_error(get_name(), "Could not get a pointer to the tag sequencer");
       end
-      uc_tag = mby_tag_bfm_pkg::mby_tag_bfm_uc_xaction::type_id::create("uc_tag");
-      uc_tag.set_item_context(this, tag_sequencer);
-      //uc_tag.data = 0;
-      
-      //`uvm_send(uc_tag)
-      
-      uc_tag.randomize();
-      
-      
-      uc_tag.data = 0;
-      uc_tag.data.valid = 1;
-      uc_tag.data.dst_tc = 0;
-      uc_tag.data.dst_port = 0;
-      uc_tag.data.src_port = 0;
-      uc_tag.data.src_tc = 0;
-      uc_tag.data.sll = 0;
-      uc_tag.data.eop = 1'b1;
-      uc_tag.data.length = 64;
-      uc_tag.data.ptr_toggle = 4'b1;
-      uc_tag.data.ptr = 23;
-      
-
-      
-      
-      
-
-      `uvm_info(get_name(),uc_tag.convert2string(),UVM_LOW)
-     
-      `uvm_send(uc_tag)
-      
+      for (int i = 0; i < 10; i++) begin
+         uc_tag = mby_tag_bfm_pkg::mby_tag_bfm_uc_xaction::type_id::create("uc_tag");
+         uc_tag.set_item_context(this, tag_sequencer);
+         
+         uc_tag.randomize();
+         
+         uc_tag.data = 0;
+         uc_tag.data.valid = 1;
+         uc_tag.data.dst_tc = 0;
+         uc_tag.data.dst_port = 0;
+         uc_tag.data.src_port = 0;
+         uc_tag.data.src_tc = 0;
+         uc_tag.data.sll = 0;
+         uc_tag.data.eop = 1'b1;
+         uc_tag.data.length = 64;
+         uc_tag.data.ptr_toggle = 4'b1;
+         uc_tag.data.ptr = $urandom_range(0, 2 ** 19 - 1);
+         
+         `uvm_info(get_name(),uc_tag.convert2string(),UVM_LOW)
+         
+         `uvm_send(uc_tag)
+         uc_tag.data = 0;
+         `uvm_send(uc_tag)
+         //wait_n(1);
+       end
       `uvm_info(get_name(), "Finished mby_egr_tag_seq", UVM_LOW)
-      wait_n(50);
+      wait_n(100);
    endtask : body
 
 

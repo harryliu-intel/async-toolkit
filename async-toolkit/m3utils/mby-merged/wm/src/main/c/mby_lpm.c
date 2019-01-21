@@ -5,6 +5,8 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/param.h>   // MIN/MAX C macros
+
 #include "mby_lpm.h"
 
 /* Size of the HW memory banks are reflected in RDL */

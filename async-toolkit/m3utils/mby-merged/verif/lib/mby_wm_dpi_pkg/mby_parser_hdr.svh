@@ -32,9 +32,9 @@
 `define MBY_N_PARSER_PTRS         8
 
 typedef struct  {
-   bit [15:0] RX_PORT;
-   int  RX_LENGHT;
-   byte RX_DATA[`MAX_PKT_LEN];
+   bit [31:0] RX_PORT;
+   int  RX_LENGTH;
+   byte RX_DATA[`MBY_PA_MAX_SEG_LEN];
 } mbyRxMacToParser;
 
 typedef struct {
@@ -59,8 +59,5 @@ typedef struct {
    mbyParserHdrPtrs         PA_HDR_PTRS;                      ///< Parser header pointers
    int                      RX_PORT;                          ///< Ingress port
    int                      RX_LENGTH;                        ///< Ingress packet data length [bytes]
-   byte                     RX_DATA[`MAX_PKT_LEN];            ///< Ingress (receive) packet data
-
-
 } mbyParserToMapper;
 

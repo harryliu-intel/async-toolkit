@@ -45,9 +45,6 @@
 //-----------------------------------------------------------------------------
 class mby_gpm_bfm_cfg extends mby_base_config;
 
-   // VARIABLE: msh_cfg
-   // Basic configuration object for the mesh agent.
-   rand mby_base_config msh_cfg;
 
    // VARIABLE: fpptr_cfg
    // Basic configuration object for the free pod pointer agent.
@@ -58,11 +55,11 @@ class mby_gpm_bfm_cfg extends mby_base_config;
    rand mby_base_config dpptr_cfg;
 
    // VARIABLE: bfm_mode
-   // This is the GPM bfm mode of operation (igr/egr/msh).
+   // This is the GPM bfm mode of operation (igr/egr).
    rand mby_gpm_bfm_mode_t bfm_mode;
 
    // CONSTRAINT: gpm_mode_constraint
-   // Sets the fpptr/dpptr/msh agent's configuration settings based
+   // Sets the fpptr/dpptr agent's configuration settings based
    // on the GPM's bfm_mode
    constraint gpm_mode_constraint {
       if(bfm_mode == GPM_BFM_IGR_MODE) {
@@ -79,14 +76,7 @@ class mby_gpm_bfm_cfg extends mby_base_config;
          dpptr_cfg.monitor_active == UVM_ACTIVE;
          msh_cfg.driver_active    == UVM_PASSIVE;
          msh_cfg.monitor_active   == UVM_PASSIVE;
-      } else if(bfm_mode == GPM_BFM_MSH_MODE) {
-         fpptr_cfg.driver_active  == UVM_ACTIVE;
-         fpptr_cfg.monitor_active == UVM_ACTIVE;
-         dpptr_cfg.driver_active  == UVM_PASSIVE;
-         dpptr_cfg.monitor_active == UVM_ACTIVE;
-         msh_cfg.driver_active    == UVM_ACTIVE;
-         msh_cfg.monitor_active   == UVM_ACTIVE;
-      }
+      } 
    }
 
    // UVM object utils macro

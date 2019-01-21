@@ -8,6 +8,7 @@
 
 
 #include <stddef.h>
+#include "alloc_dealloc.h"
 
 typedef struct hashtable_t hashtable_t;
 
@@ -23,8 +24,8 @@ typedef struct hashtable_t hashtable_t;
 #ifndef SWIGPERL /* Bugzilla 32216 */
 hashtable_t *hashtable_init(unsigned  (*hash_func  )(const void *),
                             unsigned  (*comp_func  )(const void *, const void *),
-                            void     *(*allocator  )(size_t),
-                            void      (*deallocator)(void *));
+                            alloc_func_t allocator,
+                            dealloc_func_t deallocator);
 #endif
 /* return a new generic hash table
 

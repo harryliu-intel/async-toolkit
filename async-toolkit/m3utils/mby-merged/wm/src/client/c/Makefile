@@ -8,8 +8,11 @@ include ${ROOT_DIR}/../../main/c/ToolVersions.mk
 
 MBY_TCP_CLIENT = mby_tcp_client
 
+M3_DIR = ../../main/m3
+C_DIR = ../../main/c
 include ../../make/Make_c.defs
 
+TARGET_STG_O = $(MBY_TCP_CLIENT)_stages.o
 TARGET_LIB_O = $(MBY_TCP_CLIENT)_library.o
 TARGET_LIB   = lib$(MBY_TCP_CLIENT).so
 TARGET_SAM_O = $(MBY_TCP_CLIENT)_sample.o
@@ -42,17 +45,6 @@ else
 CFLAGS += -O1
 endif
 
-# by default NO_SV=1 to disable SV-specific code:
-NO_SV ?= 1
-
-# if NO_SV=1, disable SV-specific code:
-ifeq ($(NO_SV),1)
-	CFLAGS += -DNO_SV
-else
-	VCS_INCLUDES = $(shell ToolConfig.pl get_tool_path vcsmx)/include
-	CFLAGS += -iquote $(VCS_INCLUDES)
-endif
-
 # optionally specify a read timeout (in milliseconds):
 ifneq ($(READ_TIMEOUT),)
 	CFLAGS += -DREAD_TIMEOUT=$(READ_TIMEOUT)
@@ -60,7 +52,7 @@ endif
 
 STAGE_STRUCT_INC = ../../main/c/
 TOP_MAP_INC      = ../../main/m3/genviews/src/build_c/mby_c/src/
-INCLUDES         = -I. -I$(STAGE_STRUCT_INC) -I$(TOP_MAP_INC)
+INCLUDES         += -I. -I$(STAGE_STRUCT_INC) -I$(TOP_MAP_INC)
 
 DEFINES =
 ifeq ($(DEBUG),1)
@@ -76,7 +68,11 @@ $(TARGET_LIB_O): $(MBY_TCP_CLIENT)_library.c $(MBY_TCP_CLIENT)_types.h $(MBY_TCP
 	@echo '  Compiling library'
 	$(ECHO) $(GCC) -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) -c $<
 
-$(TARGET_LIB): $(MBY_TCP_CLIENT)_library.o
+$(TARGET_STG_O): $(MBY_TCP_CLIENT)_stages.c $(MBY_TCP_CLIENT)_types.h $(MBY_TCP_CLIENT)_stages.h
+	@echo '  Compiling stages'
+	$(ECHO) $(GCC) -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) -c $<
+
+$(TARGET_LIB): $(TARGET_LIB_O) $(TARGET_STG_O)
 	@echo '  Linking library'
 	$(ECHO) $(GCC) $(LDFLAGS) -o $@ $^
 

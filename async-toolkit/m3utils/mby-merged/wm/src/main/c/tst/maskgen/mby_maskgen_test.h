@@ -3,11 +3,16 @@
 
 #include "mby_maskgen.h"
 
-typedef struct port_cfg_1_struct
+typedef struct port_cfg_0_struct
 {
     fm_bool           learning_enable;
     fm_bool           filter_vlan_ingress;
-    fm_uint32         destination_mask;
+
+} port_cfg_0;
+
+typedef struct port_cfg_1_struct
+{
+    fm_uint64         destination_mask[MBY_DMASK_REGISTERS];
 
 } port_cfg_1;
 
@@ -106,12 +111,11 @@ typedef struct mby_maskgen_test_data_in_struct
     fm_macaddr        l2_smac;
     fm_macaddr        l2_dmac;
     fm_uint16         idglort;
-    fm_uint32         glort_dmask_in;
+    fm_uint64         glort_dmask_in[MBY_DMASK_REGISTERS];
     fm_uint16         l2_ivid1;
     fm_uint16         l2_evid1;
     fm_bool           l2_ivlan1_membership;
     fm_uint16         l2_edomain_in;
-    fm_uint64         amask;
     fm_bool           mark_routed;
     fm_uint32         hash_rot_a;
     fm_uint32         hash_rot_b;
@@ -121,6 +125,9 @@ typedef struct mby_maskgen_test_data_in_struct
     fm_bool           parity_error;
     fm_bool           mtu_violation;
     fm_uint16         csglort;
+
+    /* Input data for FWD_PORT_CFG_0 register. */
+    port_cfg_0        port_cfg_0;
 
     /* Input data for FWD_PORT_CFG_1 register. */
     port_cfg_1        port_cfg_1;
@@ -167,7 +174,7 @@ typedef struct mby_maskgen_test_data_out_struct
     fm_uint64 amask;
     fm_byte   log_amask;
     fm_bool   store_trap_action;
-    fm_uint32 dmask;
+    fm_uint64 dmask[MBY_DMASK_REGISTERS];
     fm_uint32 action;
 
 } mby_maskgen_test_data_out;
@@ -188,18 +195,20 @@ maskgen_test_data maskgen_tests[] =
             .l2_smac                      = 0x001122334455,
             .l2_dmac                      = 0x0022446688AA,
             .idglort                      = 0x100,
-            .glort_dmask_in               = 0xFFFF,
+            .glort_dmask_in               = { 0xFFFF },
             .l2_ivid1                     = 1,
             .l2_evid1                     = 1,
             .l2_ivlan1_membership         = TRUE,
             .l2_edomain_in                = 0,
-            .amask                        = 0,
             .mark_routed                  = TRUE,
-            .port_cfg_1 =
+            .port_cfg_0 =
             {
                 .learning_enable          = TRUE,
                 .filter_vlan_ingress      = TRUE,
-                .destination_mask         = 0xFFFF,
+            },
+            .port_cfg_1 =
+            {
+                .destination_mask         = { 0xFFFF, 0, 0, 0, 0 },
             },
             .port_cfg_2 =
             {
@@ -250,7 +259,7 @@ maskgen_test_data maskgen_tests[] =
                                               MBY_AMASK_LOG_ARP_REDIRECT ),
             .log_amask                    = MBY_LOG_TYPE_ARP_REDIRECT,
             .store_trap_action            = TRUE,
-            .dmask                        = 0,
+            .dmask                        = { 0 },
             .action                       = MBY_ACTION_DROP_LOOPBACK,
         },
         .name = "GLORT CAM miss log_amask ARP_REDIRECT"
@@ -262,20 +271,22 @@ maskgen_test_data maskgen_tests[] =
             .l2_smac                      = 0x001122334455,
             .l2_dmac                      = 0x0022446688AA,
             .idglort                      = 0x200,
-            .glort_dmask_in               = 0,
+            .glort_dmask_in               = { 0 },
             .l2_ivid1                     = 1,
             .l2_evid1                     = 1,
             .l2_ivlan1_membership         = TRUE,
             .l2_edomain_in                = 0,
-            .amask                        = 0,
             .mark_routed                  = FALSE,
             .hash_rot_a                   = 0,
             .hash_rot_b                   = 0,
-            .port_cfg_1 =
+            .port_cfg_0 =
             {
                 .learning_enable          = TRUE,
                 .filter_vlan_ingress      = TRUE,
-                .destination_mask         = 0xFFFF,
+            },
+            .port_cfg_1 =
+            {
+                .destination_mask         = { 0xFFFF, 0, 0, 0, 0 },
             },
             .port_cfg_2 =
             {
@@ -329,7 +340,7 @@ maskgen_test_data maskgen_tests[] =
             .amask                       = MBY_AMASK_FORWARD_NORMAL,
             .log_amask                   = 0,
             .store_trap_action           = TRUE,
-            .dmask                       = 0xFFFD,
+            .dmask                       = { 0xFFFD },
             .action                      = MBY_ACTION_NORMAL,
         },
         .name = "GLORT CAM hit mask FORWARD_NORMAL"
@@ -341,20 +352,22 @@ maskgen_test_data maskgen_tests[] =
             .l2_smac                      = 0x001122334455,
             .l2_dmac                      = 0x0022446688AA,
             .idglort                      = 0x200,
-            .glort_dmask_in               = 0,
+            .glort_dmask_in               = { 0 },
             .l2_ivid1                     = 1,
             .l2_evid1                     = 1,
             .l2_ivlan1_membership         = TRUE,
             .l2_edomain_in                = 0,
-            .amask                        = 0,
             .mark_routed                  = FALSE,
             .hash_rot_a                   = 0,
             .hash_rot_b                   = 0,
-            .port_cfg_1 =
+            .port_cfg_0 =
             {
                 .learning_enable          = TRUE,
                 .filter_vlan_ingress      = TRUE,
-                .destination_mask         = 0x0,
+            },
+            .port_cfg_1 =
+            {
+                .destination_mask         = { 0xFFFF, 0, 0, 0, 0 },
             },
             .port_cfg_2 =
             {
@@ -406,7 +419,7 @@ maskgen_test_data maskgen_tests[] =
             .amask                       = MBY_AMASK_DROP_LOOPBACK,
             .log_amask                   = 0,
             .store_trap_action           = TRUE,
-            .dmask                       = 0,
+            .dmask                       = { 0 },
             .action                      = MBY_ACTION_DROP_LOOPBACK,
         },
         .name = "GLORT CAM hit dmask 0 amask DROP_LOOPBACK"
@@ -418,20 +431,22 @@ maskgen_test_data maskgen_tests[] =
             .l2_smac                      = 0x001122334455,
             .l2_dmac                      = 0x0022446688AA,
             .idglort                      = 0x200,
-            .glort_dmask_in               = 0,
+            .glort_dmask_in               = { 0 },
             .l2_ivid1                     = 1,
             .l2_evid1                     = 1,
             .l2_ivlan1_membership         = TRUE,
             .l2_edomain_in                = 0,
-            .amask                        = 0,
             .mark_routed                  = FALSE,
             .hash_rot_a                   = 0,
             .hash_rot_b                   = 0,
-            .port_cfg_1 =
+            .port_cfg_0 =
             {
                 .learning_enable          = TRUE,
                 .filter_vlan_ingress      = TRUE,
-                .destination_mask         = 0xFFFF,
+            },
+            .port_cfg_1 =
+            {
+                .destination_mask         = { 0xFFFF, 0, 0, 0, 0 },
             },
             .port_cfg_2 =
             {
@@ -485,7 +500,7 @@ maskgen_test_data maskgen_tests[] =
             .amask                       = MBY_AMASK_SPECIAL,
             .log_amask                   = 0,
             .store_trap_action           = TRUE,
-            .dmask                       = 0xFFFF,
+            .dmask                       = { 0xFFFF },
             .action                      = MBY_ACTION_SPECIAL,
         },
         .name = "GLORT CAM hit TARGETED_DETERMINISTIC 0 amask SPECIAL"
@@ -501,13 +516,16 @@ maskgen_test_data maskgen_tests[] =
             .l2_evid1                     = 1,
             .l2_ivlan1_membership         = TRUE,
             .l2_edomain_in                = 0,
-            .glort_dmask_in               = 0,
+            .glort_dmask_in               = { 0 },
             .parser_error                 = TRUE,
-            .port_cfg_1 =
+            .port_cfg_0 =
             {
                 .learning_enable          = TRUE,
                 .filter_vlan_ingress      = TRUE,
-                .destination_mask         = 0xFFFF,
+            },
+            .port_cfg_1 =
+            {
+                .destination_mask         = { 0xFFFF, 0, 0, 0, 0 },
             },
             .port_cfg_2 =
             {
@@ -553,7 +571,7 @@ maskgen_test_data maskgen_tests[] =
             .amask                       = MBY_AMASK_DROP_PARSER_ERR,
             .log_amask                   = 0,
             .store_trap_action           = TRUE,
-            .dmask                       = 0,
+            .dmask                       = { 0 },
             .action                      = MBY_ACTION_DROP_LOOPBACK,
         },
         .name = "GLORT CAM miss PARSER_ERROR"
@@ -569,14 +587,17 @@ maskgen_test_data maskgen_tests[] =
             .l2_evid1                     = 1,
             .l2_ivlan1_membership         = TRUE,
             .l2_edomain_in                = 0,
-            .glort_dmask_in               = 0,
+            .glort_dmask_in               = { 0 },
             .parser_error                 = FALSE,
             .trap_igmp                    = TRUE,
-            .port_cfg_1 =
+            .port_cfg_0 =
             {
                 .learning_enable          = TRUE,
                 .filter_vlan_ingress      = TRUE,
-                .destination_mask         = 0xFFFF,
+            },
+            .port_cfg_1 =
+            {
+                .destination_mask         = { 0xFFFF, 0, 0, 0, 0 },
             },
             .port_cfg_2 =
             {
@@ -628,7 +649,7 @@ maskgen_test_data maskgen_tests[] =
             .amask                       = MBY_AMASK_TRAP_IGMP,
             .log_amask                   = 0,
             .store_trap_action           = TRUE,
-            .dmask                       = 0,
+            .dmask                       = { 0 },
             .action                      = MBY_ACTION_DROP_LOOPBACK,
         },
         .name = "GLORT CAM hit TRAP_IGMP"
@@ -644,14 +665,17 @@ maskgen_test_data maskgen_tests[] =
             .l2_evid1                     = 1,
             .l2_ivlan1_membership         = TRUE,
             .l2_edomain_in                = 0,
-            .glort_dmask_in               = 0,
+            .glort_dmask_in               = { 0 },
             .parser_error                 = FALSE,
             .parity_error                 = TRUE,
-            .port_cfg_1 =
+            .port_cfg_0 =
             {
                 .learning_enable          = TRUE,
                 .filter_vlan_ingress      = TRUE,
-                .destination_mask         = 0xFFFF,
+            },
+            .port_cfg_1 =
+            {
+                .destination_mask         = { 0xFFFF, 0, 0, 0, 0 },
             },
             .port_cfg_2 =
             {
@@ -703,7 +727,7 @@ maskgen_test_data maskgen_tests[] =
             .amask                       = MBY_AMASK_DROP_PERR,
             .log_amask                   = 0,
             .store_trap_action           = TRUE,
-            .dmask                       = 0,
+            .dmask                       = { 0 },
             .action                      = MBY_ACTION_DROP_LOOPBACK,
         },
         .name = "GLORT CAM hit DROP_PARITY_ERR"
@@ -719,13 +743,16 @@ maskgen_test_data maskgen_tests[] =
             .l2_evid1                     = 1,
             .l2_ivlan1_membership         = TRUE,
             .l2_edomain_in                = 0,
-            .glort_dmask_in               = 0,
+            .glort_dmask_in               = { 0 },
             .parser_error                 = FALSE,
-            .port_cfg_1 =
+            .port_cfg_0 =
             {
                 .learning_enable          = TRUE,
                 .filter_vlan_ingress      = TRUE,
-                .destination_mask         = 0xFFFF,
+            },
+            .port_cfg_1 =
+            {
+                .destination_mask         = { 0xFFFF, 0, 0, 0, 0 },
             },
             .port_cfg_2 =
             {
@@ -777,7 +804,7 @@ maskgen_test_data maskgen_tests[] =
             .amask                       = MBY_AMASK_DROP_SMAC,
             .log_amask                   = 0,
             .store_trap_action           = TRUE,
-            .dmask                       = 0,
+            .dmask                       = { 0 },
             .action                      = MBY_ACTION_DROP_LOOPBACK,
         },
         .name = "GLORT CAM hit DROP_INVALID_SMAC"
@@ -793,13 +820,16 @@ maskgen_test_data maskgen_tests[] =
             .l2_evid1                     = 1,
             .l2_ivlan1_membership         = TRUE,
             .l2_edomain_in                = 0,
-            .glort_dmask_in               = 0,
+            .glort_dmask_in               = { 0 },
             .parser_error                 = FALSE,
-            .port_cfg_1 =
+            .port_cfg_0 =
             {
                 .learning_enable          = TRUE,
                 .filter_vlan_ingress      = TRUE,
-                .destination_mask         = 0xFFFF,
+            },
+            .port_cfg_1 =
+            {
+                .destination_mask         = { 0xFFFF, 0, 0, 0, 0 },
             },
             .port_cfg_2 =
             {
@@ -855,7 +885,7 @@ maskgen_test_data maskgen_tests[] =
             .amask                       = MBY_AMASK_TRAP_CPU_ADDR,
             .log_amask                   = 0,
             .store_trap_action           = TRUE,
-            .dmask                       = 0,
+            .dmask                       = { 0 },
             .action                      = MBY_ACTION_DROP_LOOPBACK,
         },
         .name = "GLORT CAM hit TRAP_CPU"
@@ -871,15 +901,18 @@ maskgen_test_data maskgen_tests[] =
             .l2_evid1                     = 1,
             .l2_ivlan1_membership         = TRUE,
             .l2_edomain_in                = 0,
-            .glort_dmask_in               = 0,
+            .glort_dmask_in               = { 0 },
             .parser_error                 = FALSE,
             .mark_routed                  = TRUE,
             .mtu_violation                = TRUE,
-            .port_cfg_1 =
+            .port_cfg_0 =
             {
                 .learning_enable          = TRUE,
                 .filter_vlan_ingress      = TRUE,
-                .destination_mask         = 0xFFFF,
+            },
+            .port_cfg_1 =
+            {
+                .destination_mask         = { 0xFFFF, 0, 0, 0, 0 },
             },
             .port_cfg_2 =
             {
@@ -932,7 +965,7 @@ maskgen_test_data maskgen_tests[] =
             .amask                       = MBY_AMASK_TRAP_MTU_VIO,
             .log_amask                   = 0,
             .store_trap_action           = TRUE,
-            .dmask                       = 0,
+            .dmask                       = { 0 },
             .action                      = MBY_ACTION_DROP_LOOPBACK,
             .ip_mcast_idx                = 1,
         },

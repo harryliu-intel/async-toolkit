@@ -35,9 +35,19 @@ class system_driver;
 
     string name;
 
-    function new(virtual msh_node_dut_if dut_if);
+    integer     knob_dut_row;
+    integer     knob_dut_col;
+
+    function new(
+	virtual msh_node_dut_if dut_if,
+        integer  knob_dut_row,
+        integer  knob_dut_col
+    );
 
         this.dut_if = dut_if;
+
+        this.knob_dut_row = knob_dut_row;
+        this.knob_dut_col = knob_dut_col;
 
         name = "System Driver";
 
@@ -47,8 +57,15 @@ class system_driver;
     task reset();
         dut_if.mhreset = 1;
         dut_if.msreset = 1;
-        dut_if.i_eb_node_col = 0;   // eventually should be set via knob 
-        dut_if.i_sb_node_row = 0;   // eventually should be set via knob
+
+//      dut_if.i_eb_node_col = 0;   // eventually should be set via knob 
+//      dut_if.i_sb_node_row = 0;   // eventually should be set via knob
+        dut_if.i_eb_node_col = knob_dut_col;
+        dut_if.i_sb_node_row = knob_dut_row;
+
+	$display("(time: %0d) %s: ** dut(row, col) = (%0d, %0d) ** ", $time, name, knob_dut_row, knob_dut_col);
+
+
         $readmemh ("../../tests/mem_bank_0.txt",top.msh_node.mby_msh_gen_mem.msh_sram_mems.msh_wrap_mem_msh_bank_ram_shell_4096x532_0.behave_mem.sram);
         $readmemh ("../../tests/mem_bank_1.txt",top.msh_node.mby_msh_gen_mem.msh_sram_mems.msh_wrap_mem_msh_bank_ram_shell_4096x532_1.behave_mem.sram);
         $readmemh ("../../tests/mem_bank_2.txt",top.msh_node.mby_msh_gen_mem.msh_sram_mems.msh_wrap_mem_msh_bank_ram_shell_4096x532_2.behave_mem.sram);

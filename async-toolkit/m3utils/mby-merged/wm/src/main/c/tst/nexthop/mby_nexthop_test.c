@@ -6,7 +6,7 @@
 #include <mby_pipeline.h>
 
 #include <mby_top_map.h>
-#include <model_c_write.h> // write_field()
+#include "tst_model_c_write.h"
 
 #define COLOR_RED     "\x1b[31m"
 #define COLOR_GREEN   "\x1b[32m"
@@ -39,23 +39,23 @@ static void nexthop_test_setup
 {
     if(test_data_in->glort_routed)
     {
-        FM_SET_FIELD(hashToNextHop->FWD, MBY_CGRP_ROUTE, DGLORT, test_data_in->dglort);
+        FM_SET_FIELD(hashToNextHop->FWD, MBY_FWD_GLORT, DGLORT, test_data_in->dglort);
     }
     else
     {
         /* Set hashToNextHop. */
-        FM_SET_BIT  (hashToNextHop->FWD, MBY_CGRP_ROUTE, ARP_ROUTE, !test_data_in->glort_routed);
-        FM_SET_FIELD(hashToNextHop->FWD, MBY_CGRP_ROUTE, ARP_INDEX, test_data_in->arp_index);
-        FM_SET_BIT  (hashToNextHop->FWD, MBY_CGRP_ROUTE, GROUP_TYPE, test_data_in->group_type);
-        FM_SET_FIELD(hashToNextHop->FWD, MBY_CGRP_ROUTE, GROUP_SIZE, test_data_in->group_size);
+        FM_SET_BIT  (hashToNextHop->FWD, MBY_FWD, SUBTYPE, !test_data_in->glort_routed);
+        FM_SET_FIELD(hashToNextHop->FWD, MBY_FWD_ARP, ROUTE_INDEX, test_data_in->route_index);
+        FM_SET_BIT  (hashToNextHop->FWD, MBY_FWD_ARP, ROUTE_TYPE, test_data_in->route_type);
+        // FM_SET_FIELD(hashToNextHop->FWD, MBY_FWD, GROUP_SIZE, test_data_in->group_size);
 
-        hashToNextHop->ARP_HASH[test_data_in->group_size] = test_data_in->arp_hash;
-        hashToNextHop->ECMP_HASH                           = test_data_in->ecmp_hash;
+        // hashToNextHop->ARP_HASH[test_data_in->group_size] = test_data_in->arp_hash;
+        hashToNextHop->ECMP_HASH                          = test_data_in->ecmp_hash;
 
-        fm_byte sel_hash = (test_data_in->group_type == 0) ?
-                    test_data_in->arp_hash :
-                    ((test_data_in->ecmp_hash << test_data_in->group_size) >> 12);
-        fm_uint16 arp_tbl_idx  = (test_data_in->arp_index + sel_hash) & (MBY_ARP_TABLE_ENTRIES - 1);
+        fm_byte sel_hash = (test_data_in->route_type == MBY_NH_ROUTE_TYPE_SINGLE)
+                            ? test_data_in->arp_hash
+                            : ((test_data_in->ecmp_hash << test_data_in->group_size) >> 12);
+        fm_uint16 arp_tbl_idx  = (test_data_in->route_index ) & (MBY_NH_NEIGHBORS_ENTRIES - 1);
 
         /* Set registers. */
         nexthop_neighbors_table_0_r * const nh_table_0 = &(nexthop_map->NH_NEIGHBORS_0[arp_tbl_idx]);
@@ -71,7 +71,7 @@ static void nexthop_test_setup
         nh_table_1->UPDATE_L3_DOMAIN = test_data_in->update_l3_domain;
         nh_table_1->UPDATE_L2_DOMAIN = test_data_in->update_l2_domain;
 
-        if (test_data_in->entry_type == MBY_ARP_TYPE_MAC) {
+        if (test_data_in->entry_type == MBY_NH_ENTRY_TYPE_IP_ROUTING) {
             if (test_data_in->ipv6_entry)
                 hashToNextHop->DMAC_FROM_IPV6 = test_data_in->dmac;
             else
@@ -101,7 +101,7 @@ static fm_bool nexthop_test_verify
     }
     else
     {
-        if (test_data_in->entry_type == MBY_ARP_TYPE_MAC)
+        if (test_data_in->entry_type == MBY_NH_ENTRY_TYPE_IP_ROUTING)
         {
             if (nexthopToMaskGen->L2_DMAC != test_data_out->dmac)
                 return FALSE;
@@ -123,19 +123,6 @@ static fm_bool nexthop_test_verify
 
         if (nexthopToMaskGen->L2_EVID1 != test_data_out->evid)
             return FALSE;
-
-        if (nexthopToMaskGen->MTU_INDEX != test_data_out->mtu_idx)
-            return FALSE;
-
-        if (nexthopToMaskGen->MOD_IDX != test_data_out->mod_idx)
-            return FALSE;
-
-        if (nexthopToMaskGen->DECAP != test_data_out->decap)
-            return FALSE;
-
-        if (nexthopToMaskGen->ENCAP != test_data_out->encap)
-            return FALSE;
-
     }
 
     return TRUE;

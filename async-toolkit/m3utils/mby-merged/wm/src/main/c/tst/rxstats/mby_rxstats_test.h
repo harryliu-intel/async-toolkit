@@ -431,7 +431,7 @@ rxstats_test_data rxstats_tests[] =
             .l2_dmac       = 0x001122334455,
             .l2_ivlan1_cnt = 1,
             .traffic_class = 0,
-            .action        = MBY_ACTION_DROP_FFU,
+            .action        = MBY_ACTION_DROP_CGRP,
         },
         .out =
         {
@@ -446,7 +446,7 @@ rxstats_test_data rxstats_tests[] =
             .vlan_index    = 7,
             .exp_vlan_val  = 1,
         },
-        .name = "Non-IP ucast TC 0 ACTION_DROP_FFU"
+        .name = "Non-IP ucast TC 0 ACTION_DROP_CGRP"
     },
     {
         .in =

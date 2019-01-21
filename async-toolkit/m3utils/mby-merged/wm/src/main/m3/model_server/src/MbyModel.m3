@@ -104,13 +104,13 @@ PROCEDURE FloodPktHandler(READONLY hdr : FmModelMessageHdr.T;
     END
   END FloodPktHandler;
 
-PROCEDURE SetupMby(<*UNUSED*>server : MbyModelServer.T;
+PROCEDURE Setup(<*UNUSED*>server : MbyModelServer.T;
                    <*UNUSED*>READONLY read : Map.T;
                    READONLY update : MapAddr.Update) =
   BEGIN
-    Debug.Out("SetupMby");
+    Debug.Out("MbyModel.Setup");
     
     (* fill this in *)
-  END SetupMby;
+  END Setup;
 
 BEGIN END MbyModel.

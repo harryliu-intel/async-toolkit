@@ -29,7 +29,7 @@
 //------------------------------------------------------------------------------
 
 
-`include "lib_udp.rdl"
+`include "mby_lib_udp.rdl"
 `include "mby_apb_mailbox_csrs.rdl"
 <% use security; %>
 <% my %Security_Props = security::GetSecurityInfo(); %>

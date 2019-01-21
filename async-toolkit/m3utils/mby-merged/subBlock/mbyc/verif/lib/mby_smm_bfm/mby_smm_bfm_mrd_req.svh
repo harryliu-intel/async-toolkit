@@ -176,6 +176,7 @@ class mby_smm_bfm_mrd_req
       bit [W_REQ_ID-1:0]   req_id;        // Memory read request ID
       bit [ADDR_WIDTH-1:0]   addr;          // Memory read address
       bit [MSH_DATA_WIDTH-1:0]  rd_data;       // Memory read data
+      bit [W_RRSP_DEST_BLOCK-1:0]    dest_block;    // Memory read response Dest Block
       
       bit [NUM_MSH_ROWS-1:0]    node_row;      // SMM BFM node column
       bit [NUM_MSH_COLS-1:0]    node_col;      // SMM BFM node row
@@ -190,25 +191,27 @@ class mby_smm_bfm_mrd_req
       
       // Decode memory read request data
       req_id      = mem_req.data.mim_req_id;
+      dest_block  = mem_req.data.mim_wd_sel;
       addr        = mem_req.data.mim_seg_ptr[13:0];
       node_row    = mem_req.data.mim_seg_ptr[17:14];
       node_col    = {mem_req.data.mim_seg_ptr[1:0]^mem_req.data.mim_wd_sel,mem_req.data.mim_seg_ptr[18]};
       rd_data     = mesh_ptr[node_row][node_col].mrd(addr);
       
       msg_str     = $sformatf("mrd_req_rsp() : Received a memory read request for NodeRow = 0x%0x, NodeCol = 0x%0x, \
-                        Address = 0x%0x, RdData = 0x%0x. ReqID = 0x%x", node_row, node_col, addr, rd_data, req_id);
+                        Address = 0x%020x, RdData = 0x%0512x, ReqID = 0x%0x", node_row, node_col, addr, rd_data, req_id);
       
       `uvm_info(get_type_name(), msg_str,  UVM_MEDIUM)
       
       // Generate the memory read response
       mem_rsp = T_req::type_id::create("mem_rsp", this);
-      mem_rsp.data.mim_rrsp_valid  = 1;
-      mem_rsp.data.mim_rd_data     = rd_data;
-      mem_rsp.data.mim_rrsp_req_id = req_id;
+      mem_rsp.data.mim_rrsp_valid      = 1;
+      mem_rsp.data.mim_rd_data         = rd_data;
+      mem_rsp.data.mim_rrsp_req_id     = req_id;
+      mem_rsp.data.mim_rrsp_dest_block = dest_block;
       
       // TODO ;   Profile based latencies.
-      req_rsp_delay  = rd_req_cfg_obj.mrd_req_rsp_delay_extra;
-      
+      req_rsp_delay  = $urandom_range(rd_req_cfg_obj.mrd_req_rsp_delay_max,rd_req_cfg_obj.mrd_req_rsp_delay_min) + rd_req_cfg_obj.mrd_req_rsp_delay_extra;
+
       msg_str     = $sformatf("mrd_req_rsp() : Delay of read request/response operation is %0d clocks. ReqID = 0x%x",
                        req_rsp_delay, req_id);
       

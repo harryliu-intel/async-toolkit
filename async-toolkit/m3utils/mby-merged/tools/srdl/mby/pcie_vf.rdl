@@ -1,6 +1,6 @@
 <% use security; %>
 <% my %Security_Props = security::GetSecurityInfo(); %>
-`include "lib_udp.rdl"
+`include "mby_lib_udp.rdl"
 
 enum pcie_vfrxdctl_drop_on_empty_enum {
   DROP = 1'd1 { desc = " Drop the frame if queue has no descriptors"; };

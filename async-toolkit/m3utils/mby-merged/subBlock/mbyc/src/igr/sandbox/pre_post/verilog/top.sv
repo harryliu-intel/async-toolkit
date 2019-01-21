@@ -76,7 +76,6 @@ import igr_sim_pkg::*;
     initial dut_if.rst = 1'b1;
 
     // instantiate DUT (Design Under Test)
-
     igr_pre_post_wrap pre_post_wrap(
 
        // inputs
@@ -166,15 +165,7 @@ import igr_sim_pkg::*;
       .mim_wreq_5_mim_wr_sema                  ( dut_if.mim_wreq_5_mim_wr_sema ),
       .mim_wreq_5_mim_wr_wd_sel                ( dut_if.mim_wreq_5_mim_wr_wd_sel ),
       .mim_wreq_5_mim_wreq_id                  ( dut_if.mim_wreq_5_mim_wreq_id ),
-      .mim_wreq_5_mim_wr_data                  ( dut_if.mim_wreq_5_mim_wr_data ),
-      .o_drop_seg_ptr                          ( dut_if.o_drop_seg_ptr ),
-      .o_drop_seg_valid                        ( dut_if.o_drop_seg_valid ),
-      .o_drop_sema                             ( dut_if.o_drop_sema ),
-      .o_port_id                               ( dut_if.o_port_id ),
-      .o_post_ppe_tag_at_rate0                 ( dut_if.o_post_ppe_tag_at_rate0 ),
-      .o_post_ppe_tag_at_rate1                 ( dut_if.o_post_ppe_tag_at_rate1 ),
-      .o_post_ppe_tag_set_aside0               ( dut_if.o_post_ppe_tag_set_aside0 ),
-      .o_post_ppe_tag_set_aside1               ( dut_if.o_post_ppe_tag_set_aside1 )
+      .mim_wreq_5_mim_wr_data                  ( dut_if.mim_wreq_5_mim_wr_data )
 
     );
 
@@ -201,5 +192,167 @@ import igr_sim_pkg::*;
         dut_if                                    // pass interface dut_if into testcase
     );
 
+
+    // Scott G -- this should go in monitor, but for quick hack, just putting it here...
+    //   this isn't monitoring nearly all interfaces, just a little bit for first packet work
+    //   
+    initial $display("%0t: DEBUG MON started from %m", $realtime);
+    
+    always @( negedge dut_if.clk ) begin
+
+        for( int i=0; i<4; i++ ) begin
+            if( dut_if.i_shim_pb_v_p0[i][0] ) begin
+                $display("%0t: DEBUG MON: shim valid p0[%0d][0] sop %b eop %b data %0h ", 
+                         $realtime, i,
+                         dut_if.i_shim_pb_md_p0[i].md0.md.sop, 
+                         dut_if.i_shim_pb_md_p0[i].md0.md.eop, 
+                         dut_if.i_shim_pb_data_p0[i].seg0);
+            end
+            if( dut_if.i_shim_pb_v_p0[i][1] ) begin
+                $display("%0t: DEBUG MON: shim valid p0[%0d][1] sop %b eop %b data %0h ", 
+                         $realtime, i,
+                         dut_if.i_shim_pb_md_p0[i].md1.md.sop, 
+                         dut_if.i_shim_pb_md_p0[i].md1.md.eop, 
+                         dut_if.i_shim_pb_data_p0[i].seg1);
+            end
+            if( dut_if.i_shim_pb_v_p0[i][2] ) begin
+                $display("%0t: DEBUG MON: shim valid p0[%0d][2] sop %b eop %b data %0h ", 
+                         $realtime, i,
+                         dut_if.i_shim_pb_md_p0[i].md2.md.sop, 
+                         dut_if.i_shim_pb_md_p0[i].md2.md.eop, 
+                         dut_if.i_shim_pb_data_p0[i].seg2);
+            end
+        end
+
+        `define LPP0_PATH top.pre_post_wrap.mby_igr_post_ppe.sop_mdata_lpp0_fpp
+        if( `LPP0_PATH.valid ) begin
+            $display("%0t: DEBUG MON: post lpp0 md valid seg_ptr %0h sema %4b pkt_id %0h port %0h eop %b ", 
+                     $realtime, 
+                     `LPP0_PATH.wr_seg_ptr,
+                     `LPP0_PATH.wr_sema,
+                     `LPP0_PATH.pkt_id,
+                     `LPP0_PATH.src_port,
+                     `LPP0_PATH.md.eop
+                     );
+            
+        end
+  
+        `define LPP1_PATH top.pre_post_wrap.mby_igr_post_ppe.sop_mdata_lpp1
+        if( `LPP1_PATH.valid ) begin
+            $display("%0t: DEBUG MON: post lpp1 md valid seg_ptr %0h sema %4b pkt_id %0h port %0h eop %b ", 
+                     $realtime, 
+                     `LPP1_PATH.wr_seg_ptr,
+                     `LPP1_PATH.wr_sema,
+                     `LPP1_PATH.pkt_id,
+                     `LPP1_PATH.src_port,
+                     `LPP1_PATH.md.eop
+                     );
+            
+        end
+
+
+        `define EPL0_PATH top.pre_post_wrap.mby_igr_pre_ppe.tag_info_epl[0]
+        if( `EPL0_PATH.valid ) begin
+            $display("%0t: DEBUG MON: pre epl0 tag valid seg_ptr %0h sema %4b pkt_id %0h port %0h eop %b wd_cnt %0d", 
+                     $realtime, 
+                     `EPL0_PATH.wr_seg_ptr,
+                     `EPL0_PATH.wr_sema,
+                     `EPL0_PATH.pkt_id,
+                     `EPL0_PATH.src_port,
+                     `EPL0_PATH.md.valid,
+                     `EPL0_PATH.md.wd_cnt
+                     );
+            // md .error, .wd_cnt, .eop_pos, .byte_pos
+        end
+
+
+        `define WRDATA0_PATH top.pre_post_wrap.mby_igr_pre_ppe.wr_data_epl[0]
+        if( `WRDATA0_PATH.valid ) begin
+            $display("%0t: DEBUG MON: pre wrdata0  valid seg_ptr %0h sema %4b wd %0h data %0h %0h %0h %0h  %0h %0h %0h %0h ", 
+                     $realtime, 
+                     `WRDATA0_PATH.wr_seg_ptr,
+                     `WRDATA0_PATH.wr_sema,
+                     `WRDATA0_PATH.wd_sel,
+                     `WRDATA0_PATH.data_ecc[0].data,
+                     `WRDATA0_PATH.data_ecc[1].data,
+                     `WRDATA0_PATH.data_ecc[2].data,
+                     `WRDATA0_PATH.data_ecc[3].data,
+                     `WRDATA0_PATH.data_ecc[4].data,
+                     `WRDATA0_PATH.data_ecc[5].data,
+                     `WRDATA0_PATH.data_ecc[6].data,
+                     `WRDATA0_PATH.data_ecc[7].data
+                     );
+            
+        end
+
+        `define PPE_INTF0_PATH top.rx_ppe.igr_rx_ppe_intf0_head
+        if( `PPE_INTF0_PATH.valid ) begin
+            $display("%0t: DEBUG MON: rx_ppe intf0 id %0h port %0h tc %0h data %0h ", 
+                     $realtime, 
+                     `PPE_INTF0_PATH.md.id,
+                     `PPE_INTF0_PATH.md.port,
+                     `PPE_INTF0_PATH.md.tc,
+                     `PPE_INTF0_PATH.data
+                     );
+            
+        end
+        `define PPE_INTF1_PATH top.rx_ppe.igr_rx_ppe_intf1_head
+        if( `PPE_INTF1_PATH.valid ) begin
+            $display("%0t: DEBUG MON: rx_ppe intf1 id %0h port %0h tc %0h data %0h ", 
+                     $realtime, 
+                     `PPE_INTF1_PATH.md.id,
+                     `PPE_INTF1_PATH.md.port,
+                     `PPE_INTF1_PATH.md.tc,
+                     `PPE_INTF1_PATH.data
+                     );
+            
+        end
+
+        `define PPE_OUT0_PATH top.rx_ppe.rx_ppe_igr_intf0
+        if( `PPE_OUT0_PATH.valid ) begin
+            $display("%0t: DEBUG MON: rx_ppe result id %0h dest %0h txtc %0h type %s ", 
+                     $realtime, 
+                     `PPE_OUT0_PATH.id,
+                     `PPE_OUT0_PATH.port,
+                     `PPE_OUT0_PATH.tc,
+                     `PPE_OUT0_PATH.md.pkt_type.name
+                     );
+            
+        end
+        `define MIM_WREQ_0 top.pre_post_wrap.mby_igr_post_ppe.mim_wreq_0
+         if( `MIM_WREQ_0.mim_wreq_valid ) begin
+            $display("%0t: DEBUG MON: mim wreq_0 seg_ptr %0h sema %4b wd %0h data %0h ", 
+                     $realtime, 
+                     `MIM_WREQ_0.mim_wr_seg_ptr,
+                     `MIM_WREQ_0.mim_wr_sema,
+                     `MIM_WREQ_0.mim_wr_wd_sel,
+                     `MIM_WREQ_0.mim_wr_data
+                     );
+            
+        end
+  
+
+        `define TAG_RING_0 top.pre_post_wrap.mby_igr_post_ppe.igr_tag_ring_lltag0
+         if( `TAG_RING_0.valid ) begin
+            $display("%0t: DEBUG MON: tag seg_ptr %0h sema %4b txport %0h txtc %0h sop %b eop %b len %0d rxport %0h rxtc %0h ", 
+                     $realtime, 
+                     `TAG_RING_0.ptr,
+                     `TAG_RING_0.ptr_toggle,
+                     `TAG_RING_0.dst_port,
+                     `TAG_RING_0.dst_tc,
+                     `TAG_RING_0.sop,
+                     `TAG_RING_0.eop,
+                     `TAG_RING_0.length,
+                     `TAG_RING_0.src_port,
+                     `TAG_RING_0.src_tc
+                     
+                     );
+            
+        end
+  
+
+    end
+        
+        
 endmodule
 

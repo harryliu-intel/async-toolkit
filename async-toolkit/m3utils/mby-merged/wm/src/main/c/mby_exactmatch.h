@@ -11,6 +11,7 @@
 
 // Defines:
 
+#define MBY_EM_MAX_HASH_NUM                mby_ppe_cgrp_em_map_KEY_SEL0__nd
 #define MBY_EM_MAX_ACTIONS_NUM             4
 #define MBY_CGRP_MAX_HASH_ENTRY_SIZE      64
 #define MBY_CGRP_HASH_CAM_ETY_7_BITS_31_0  0

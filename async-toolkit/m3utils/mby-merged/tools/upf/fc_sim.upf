@@ -1,0 +1,110 @@
+## Set Design Top
+#set_design_top  <top-level-design_module_name>
+
+## 1. Create top-level power domain
+create_power_domain PD_TOP
+
+## 2. Create Supply Ports
+create_supply_port PDCORTEXA53
+create_supply_port PDCPU
+create_supply_port PDL2
+create_supply_port PVCCIN
+create_supply_port VCCSRAM
+create_supply_port VDD
+create_supply_port VDDA
+create_supply_port VDDCK
+create_supply_port VDDHV
+create_supply_port VDDIO
+create_supply_port VDDPOST
+create_supply_port VDDREF
+create_supply_port VDDRX
+create_supply_port VDDTX
+create_supply_port VNN
+create_supply_port pll_vdd
+create_supply_port vdd
+create_supply_port vddq
+create_supply_port vp
+create_supply_port vpdig
+create_supply_port vph
+create_supply_port vptxX
+create_supply_port VSS
+
+## 3. Create Supply Nets 
+create_supply_net PDCORTEXA53
+create_supply_net PDCPU
+create_supply_net PDL2
+create_supply_net PVCCIN
+create_supply_net VCCSRAM
+create_supply_net VDD
+create_supply_net VDDA
+create_supply_net VDDCK
+create_supply_net VDDHV
+create_supply_net VDDIO
+create_supply_net VDDPOST
+create_supply_net VDDREF
+create_supply_net VDDRX
+create_supply_net VDDTX
+create_supply_net VNN
+create_supply_net pll_vdd
+create_supply_net vdd
+create_supply_net vddq
+create_supply_net vp
+create_supply_net vpdig
+create_supply_net vph
+create_supply_net vptxX
+create_supply_net VSS
+
+## 4. Connect Supply Nets
+connect_supply_net PDCORTEXA53 -ports { PDCORTEXA53 }
+connect_supply_net PDCPU -ports { PDCPU }
+connect_supply_net PDL2 -ports { PDL2 }
+connect_supply_net PVCCIN -ports { PVCCIN }
+connect_supply_net VCCSRAM -ports { VCCSRAM }
+connect_supply_net VDD -ports { VDD }
+connect_supply_net VDDA -ports { VDDA }
+connect_supply_net VDDCK -ports { VDDCK }
+connect_supply_net VDDHV -ports { VDDHV }
+connect_supply_net VDDIO -ports { VDDIO }
+connect_supply_net VDDPOST -ports { VDDPOST} 
+connect_supply_net VDDREF -ports { VDDREF }
+connect_supply_net VDDRX -ports { VDDRX }
+connect_supply_net VDDTX -ports { VDDTX }
+connect_supply_net VNN -ports { VNN }
+connect_supply_net pll_vdd -ports { pll_vdd }
+connect_supply_net vdd -ports { vdd }
+connect_supply_net vddq -ports { vddq }
+connect_supply_net vp -ports { vp }
+connect_supply_net vpdig -ports { vpdig }
+connect_supply_net vph -ports { vph }
+connect_supply_net vptxX -ports { vptxX }
+connect_supply_net VSS -ports { VSS }
+
+
+## 5. Connect Primary Power and Ground for the power domains
+set_domain_supply_net PD_TOP  \
+    -primary_power_net VDD  \
+    -primary_ground_net VSS
+
+## 6. Add Supply Port States
+add_port_state VDD -state {ON 0.75}  \
+                   -state {OFF off}
+
+add_port_state PDCORTEXA53  -state {ON 0.75}  \
+                            -state {OFF off}
+
+add_port_state PDCPU -state {ON 0.75}  \
+                     -state {OFF off}
+
+add_port_state PDL2 -state {ON 0.75}  \
+                    -state {OFF off}
+
+add_port_state VSS -state {ON 0}  \
+                    -state {OFF off}
+
+
+##6. Create Power State Table
+create_pst top_pst -supplies         { VDD  PDCORTEXA53  PDCPU  PDL2  VSS }
+add_pst_state S0 -pst top_pst -state { ON   ON           ON     ON    ON  }
+add_pst_state S1 -pst top_pst -state { ON   ON           ON     OFF   ON  }
+add_pst_state S2 -pst top_pst -state { ON   ON           OFF    OFF   ON  }
+add_pst_state S3 -pst top_pst -state { ON   OFF          OFF    OFF   ON  }

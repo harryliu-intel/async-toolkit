@@ -1,0 +1,21 @@
+#REPLACE_DEFAULT_OPTIONS: YES
+#VELOCE:
+#    FE:
+#    BE:
+#    TB:
+#CADENCE:
+#    FE:
+#    BE:
+#    TB:
+#VCS:
+#    FE:
+#    BE:
+#    TB:
+ZSE:
+#    FE:
+#    BE:
+#    TB:
+    ELAB:
+#        APPEND:
+        PREPEND:
+            - -Xassa=0x50000

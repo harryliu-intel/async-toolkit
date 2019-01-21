@@ -12,25 +12,30 @@ import ("modula3scheme")
 import ("netobj")
 import ("sstubgen")
 
-_exec(["../../structgen/AMD64_LINUX/structgen","../../wm_net/src/structgen_shared.scm","../../wm_net/src/structgen_m3.scm","../../wm_net/src/structs_m3.scm", "../src/actionsets.scm", "../src/enums.scm", "../src/ffu_enums.scm", "../src/mapper_constants.scm", "../src/parser_constants.scm", "exit"])
+_exec(["../../structgen/AMD64_LINUX/structgen",
+	"../../wm_net/src/structgen_shared.scm",
+	"../../wm_net/src/structgen_m3.scm",
+	"../../wm_net/src/structs_m3.scm",
+	"../src/actionsets.scm",
+	"../src/enums.scm",
+	"../src/ffu_enums.scm",
+	"../src/mapper_constants.scm",
+	"../src/parser_constants.scm",
+	"exit"])
+
 include ("../AMD64_LINUX/derived.m3m")
 
+module ("ModelServerSuper")
 module ("ModelServer")
+module ("StageModelServer")
+module ("ModelServerUtils")
+module ("ModelStagesC")
 
-%module ("HlpModelServer")
-% NO -- CANT PULL THIS IN HERE!  The reason is that this will pull in
-% the entire register def of HLP into the Scheme name mangling, which
-% is too big for us to handle (at least with any speed).
-%
-% Instead, if we want to get at the HLP regs from Scheme,
-% we have to do so in some roundabout way.  (not as yet defined)
-% ... more to come ...
-%
-
-interface ("ModelServerClass")
+%interface ("ModelServerClass")
 module("MsIosf")
 %interface ("MsIosf")
 module ("HlpModelServer")
+%module ("HlpStageModelServer")
 
 module ("DataPusher")
 table ("IntDataPusher", "Integer", "DataPusher")
@@ -40,13 +45,18 @@ mkSet("DataPusher", "DataPusher")
 mkSetDef("DataPusher", "DataPusher")
 table("DataPusherRef", "DataPusher", "Refany")
 
+Generic_interface("Model")
 module ("HlpModel")
 %module ("MbyModel") % pure Modula-3 version of MbyModel
 interface ("MbyModel")
 module ("MbyModelC") % C version of MbyModel
 
+interface("MbyModelStagesC")
+
 Generic_module("BaseModelServer")
+Generic_implementation("StageModelServer")
 module("MbyModelServer")
+module("MbyStageModelServer")
 interface ("MbyModelServerExt")
 
 interface("BaseModelStage")
@@ -59,34 +69,34 @@ module ("ModelStageResult")
 interface ("ModelStageResultClass")
 
 
-interface ("MbyTypes")
+%interface ("MbyTypes")
 %interface ("MbyMeta")
-interface ("MbyParserTypes")
+%interface ("MbyParserTypes")
 %interface ("MbyParserSizes")
 %interface ("MbyMacToParserMeta")
-interface ("MbyMacToParser")
-metadata ("MbyMacToParser", "MbyMacToParser")
+%interface ("MbyMacToParser")
+%metadata ("MbyMacToParser", "MbyMacToParser")
 %interface ("MbyParserToMapperMeta")
-interface ("MbyParserToMapper")
-metadata("MbyParserToMapper", "MbyParserToMapper")
+%interface ("MbyParserToMapper")
+%metadata("MbyParserToMapper", "MbyParserToMapper")
 
-interface ("MbyParserToModifierMeta")
-interface ("MbyParserInfo")
-interface ("MbyMapperToClassifier")
-metadata ("MbyMapperToClassifier", "MbyMapperToClassifier")
-interface ("MbyFfuTypes")
+%interface ("MbyParserToModifierMeta")
+%interface ("MbyParserInfo")
+%interface ("MbyMapperToClassifier")
+%metadata ("MbyMapperToClassifier", "MbyMapperToClassifier")
+%interface ("MbyFfuTypes")
 
-module ("MbyParserStage")
-module ("MbyParserStageModel")
+%module ("MbyParserStage")
+%module ("MbyParserStageModel")
 %interface ("MbyParserMeta")
 
 %interface ("MbyMapperSizes")
 %module ("MbyMapperStage")
 %module ("MbyMapperStageModel")
-module ("MbyDoRealignKeys")
-interface ("MbyMapProfKey1")
-interface ("MbyMapProfKey0")
-interface ("MbyMappedKey")
+%module ("MbyDoRealignKeys")
+%interface ("MbyMapProfKey1")
+%interface ("MbyMapProfKey0")
+%interface ("MbyMappedKey")
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % just testing stuff
@@ -107,6 +117,5 @@ SchemeStubs ("ModelServer")
 
 ExportSchemeStubs("model_server")
 importSchemeStubs()              % import ALL scheme stubs
-
 
 program ("modelserver")
