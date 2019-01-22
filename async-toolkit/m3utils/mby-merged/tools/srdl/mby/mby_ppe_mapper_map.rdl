@@ -105,6 +105,38 @@ regfile map_port_default_rf {
 };
 
 
+reg map_canonical_glort_cam_r {
+  shared;
+  HandCoded = true;
+  name = "canonical glort lookup cam";
+  desc = "canonical glort lookup cam ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+      number of lower order bits cwto clear in a source glort that matches this entry's lagglort";
+    ValRandomize = true;
+  } PORT_FIELD_SIZE[22:20] = 3'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+    Comparison to Lagglort is performed by first ANDing the source Glort by 2^(Mask size-1)";
+    ValRandomize = true;
+  } MASK_SIZE[19:16] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+    Each Source Glort will be masked and compared to this LAG Glort, if it matches the lower PortFieldSize bits will be cleared";
+    ValRandomize = true;
+  } LAG_GLORT[15:0] = 16'h0;
+};
+
+
+
 
 // MAP_LEN_LIMIT[0..17]
 //
@@ -329,7 +361,7 @@ reg map_domain_action0_r {
 
            ";
     ValRandomize = true;
-  } L2_DOMAIN[37:30] = 8'h0;
+  } L2_DOMAIN[40:33] = 8'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -337,7 +369,7 @@ reg map_domain_action0_r {
 
            ";
     ValRandomize = true;
-  } L3_DOMAIN[29:24] = 6'h0;
+  } L3_DOMAIN[32:24] = 9'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -1574,7 +1606,7 @@ reg map_profile_key1_r {
      Provided by MAP_DOMAIN_ACTION0.
            ";
     ValRandomize = true;
-  } L3_DOMAIN[31:26] = 6'h3f;
+  } L3_DOMAIN[31:23] = 9'h1ff;
   field {
     AccessType = "RSV";
     desc = "
@@ -1582,7 +1614,7 @@ reg map_profile_key1_r {
 
            ";
     ValRandomize = true;
-  } _RSVD0_[25:22] = 4'h0;
+  } _RSVD0_[22:22] = 1'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -1976,14 +2008,14 @@ addrmap mby_ppe_mapper_map {
   No_IOSF_Primary = true;
   addressing = fullalign;
 
-  map_port_cfg_r             MAP_PORT_CFG[18]              @0x0 += 8;
-  map_port_default_rf        MAP_PORT_DEFAULT[18]          @0x200 += 64;
+  map_port_cfg_r             MAP_PORT_CFG[17]              @0x0 += 8;
+  map_port_default_rf        MAP_PORT_DEFAULT[17]          @0x200 += 64;
 //  map_len_limit_r            MAP_LEN_LIMIT[18]             @0x1100 += 8;
   map_domain_tcam_r          MAP_DOMAIN_TCAM[4096]         @0x10000 += 16;
   map_domain_action0_r       MAP_DOMAIN_ACTION0[4096]      @0x20000 += 8;
   map_domain_action1_r       MAP_DOMAIN_ACTION1[4096]      @0x28000 += 8;
   map_domain_profile_r       MAP_DOMAIN_PROFILE[256]       @0x30000 += 8;
-  map_port_r                 MAP_PORT[18]                  @0x31000 += 8;
+  map_port_r                 MAP_PORT[17]                  @0x31000 += 8;
   map_mac_r                  MAP_MAC[96]                   @0x31800 += 16;
   map_ip_lo_r                MAP_IP_LO[16]                 @0x32080 += 8;
   map_ip_hi_r                MAP_IP_HI[16]                 @0x32100 += 8;
@@ -2002,4 +2034,5 @@ addrmap mby_ppe_mapper_map {
   map_profile_action_r       MAP_PROFILE_ACTION[96]        @0x39400 += 8;
   map_domain_pol_cfg_r       MAP_DOMAIN_POL_CFG            @0x39800;
   map_rewrite_rf             MAP_REWRITE[16]               @0x3a000 += 256;
+  map_canonical_glort_cam_r  MAP_CANONICAL_GLORT_CAM[16]   @0x3b000 +=8;
 }; // final size: 0x3b000 <= 0x40000 = 8<<15

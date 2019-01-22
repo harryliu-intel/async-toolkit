@@ -9,6 +9,11 @@ repeat(10)
   sreset <= 1'b0;
  repeat(100)  // wait for behave mem init done
   @(posedge cclk);
+ csrw(48'h0, 64'h00000000_0303_0303);
+ repeat(1)  @(posedge cclk);
+ csr0;
+ repeat(10)  // wait for behave mem init done
+  @(posedge cclk);  
   grp_a_rx_data_valid[7:0] <= '1;
   grp_a_rx_data[0] <= {8{8'hff}};
   grp_a_rx_data[1] <= {8{8'h11}};

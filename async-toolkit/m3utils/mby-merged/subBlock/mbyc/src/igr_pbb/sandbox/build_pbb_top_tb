@@ -2,9 +2,7 @@ vcs +v2k -R -V -debug_all -full64 -sverilog +libverbose -notice -xlrm uniq_prior
 +define+SYTB_OFF +libext+.v+.sv+.vh+.svh+.vs+.vm \
 +vcs+vcdpluson +define+VCSSIM -assert svaext +define+FAKE_MEM \
 +warn=noUII-L \
-+lint=noPCTI-L \
-+lint=none \
-+lint=TFIPC-L \
++lint=all,noPCTI-L,noVCDE,noUI,noONGS \
 +notimingchecks \
 +define+HIERREF \
 +define+VFU_CLUSTER \
@@ -34,6 +32,7 @@ vcs +v2k -R -V -debug_all -full64 -sverilog +libverbose -notice -xlrm uniq_prior
 +incdir+../../../../../target/mby/mgm_run/rtl \
 +incdir+/p/hdk/rtl/ip_models/nhdk/shrtl/shrtl-dev-x0-18ww48a/src/common/rtl \
 +incdir+/p/hdk/rtl/ip_models/nhdk/shrtl/shrtl-dev-x0-18ww48a/src/ecc/rtl \
++incdir+../../csrs/mby/output/sverilog \
 /p/hdk/rtl/ip_models/nhdk/shrtl/shrtl-dev-x0-18ww48a/src/fifo/rtl/shrtl_flop_fifo.sv \
 -y /p/hdk/rtl/ip_models/nhdk/shrtl/shrtl-dev-x0-18ww48a/src/ecc/rtl \
 /p/hdk/rtl/ip_models/nhdk/shrtl/shrtl-dev-x0-18ww48a/src/ecc/rtl/shrtl_ecc_gen.sv \
@@ -41,6 +40,7 @@ vcs +v2k -R -V -debug_all -full64 -sverilog +libverbose -notice -xlrm uniq_prior
 ../../shared/rtl/mby_rx_metadata_pkg.sv \
 ../../shared/rtl/mby_egr_pkg.sv \
 ../../igr/rtl/mby_igr_pkg.sv \
+../../csrs/mby/output/sverilog/mby_rx_pb_pkg.vh \
 ../rtl/mby_igr_pbb_mem_pkg.sv \
 ../../shared/rtl/mby_gmm_pkg.sv \
 ../../shared/rtl/mby_egr_pkg.sv \
@@ -52,9 +52,11 @@ vcs +v2k -R -V -debug_all -full64 -sverilog +libverbose -notice -xlrm uniq_prior
 ../rtl/mby_igr_align.sv \
 ../rtl/mby_igr_dpcp.sv \
 ../rtl/mby_igr_dpc.sv \
+-y ../../csrs/mby/output/sverilog \
 -y ../../../../../target/mby/mgm_run/igr_pbb/src \
 -y ../../../../../target/mby/mgm_run/igr_pbb/src/mem_wrap \
 -y ../../../../../target/mby/mgm_run/rtl \
+../rtl/mby_igr_pb_ctrlp.sv \
 ../rtl/mby_igr_pb_ctrl.sv \
 ../rtl/mby_igr_pb.sv \
 ../rtl/mby_igr_dpc_wrap.sv \

@@ -2,9 +2,9 @@
 
 // Copyright (C) 2018 Intel Corporation
 
-#include "mby_parser.h"
+#include "mby_common.h"
 #include "mby_mapper.h"
-#include "mby_classifier.h"
+#include "mby_ip_prot.h"
 
 static mbyMapPortCfg getPortCfg
 (
@@ -763,7 +763,7 @@ static void mapScalar
     fm_byte                  * const pri_profile,
     fm_bool                  * const no_pri_enc,
     fm_byte                  * const traffic_class,
-    fm_byte                  * const operator_id,
+    fm_byte                  * const nad,
     fm_uint16                * const l2_domain,
     fm_byte                  * const l3_domain,
     fm_bool                  * const learn_mode,
@@ -1059,7 +1059,7 @@ static void mapScalar
     mbyMapDomainAction0 domain_action0 = getDomainAction0(mapper_map, domain_index);
     if (domain_action0.UPDATE_DOMAINS)
     {
-        *operator_id = domain_action0.NAD;
+        *nad         = domain_action0.NAD;
         *l2_domain   = domain_action0.L2_DOMAIN;
         *l3_domain   = domain_action0.L3_DOMAIN;
         *pri_profile = domain_action0.PRIORITY_PROFILE;
@@ -1953,8 +1953,8 @@ void Mapper
     out->L2_IVLAN1_CNT      = l2_ivlan1_cnt;
     out->L3_IDOMAIN         = l3_domain;
     out->LEARN_MODE         = learn_mode;
-    out->NO_PRI_ENC         = no_pri_enc;
     out->NAD                = nad;
+    out->NO_PRI_ENC         = no_pri_enc;
     out->OTR_MPLS_V         = otr_mpls_v;
     out->PARSER_ERROR       = parser_error;
     out->PARSER_INFO        = parser_info;

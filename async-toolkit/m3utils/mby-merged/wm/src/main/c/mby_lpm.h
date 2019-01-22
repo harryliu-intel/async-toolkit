@@ -7,7 +7,8 @@
 
 // Includes:
 
-#include "mby_common.h"
+#include "fm_types.h"
+#include "mby_cgrp_types.h"
 #include "mby_lpm_regs.h"
 
 // Defines:

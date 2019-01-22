@@ -5,8 +5,6 @@
 #ifndef MBY_PIPELINE_H
 #define MBY_PIPELINE_H
 
-#include "varchar.h"
-#include "mby_common.h"
 #include "mby_parser.h"
 #include "mby_mapper.h"
 #include "mby_classifier.h"
@@ -18,6 +16,7 @@
 #include "mby_rxstats.h"
 #include "mby_modifier.h"
 #include "mby_txstats.h"
+#include "varchar.h"
 
 // Function prototypes:
 
@@ -39,50 +38,6 @@ void TxPipeline
     mbyTxInToModifier        const * const txi2mod,
     mbyTxStatsToTxMac              * const txs2mac,
     varchar_builder_t              * const tx_data_builder
-);
-
-void Hash
-(
-    mby_ppe_entropy_map   const * const entropy_map,
-    mbyClassifierToHash   const * const in,
-    mbyHashToNextHop            * const out
-);
-
-void NextHop
-(
-    mby_ppe_nexthop_map       const * const nexthop,
-    mby_ppe_nexthop_map__addr const * const nexthop_w,
-    mbyHashToNextHop          const * const in,
-    mbyNextHopToMaskGen             * const out
-);
-
-void Triggers
-(
-    mby_ppe_trig_apply_map            const * const trig_apply_map,
-    mby_ppe_trig_apply_map__addr      const * const trig_apply_map_w,
-    mby_ppe_trig_apply_misc_map       const * const trig_apply_misc_map,
-    mby_ppe_trig_apply_misc_map__addr const * const trig_apply_misc_map_w,
-    mby_ppe_fwd_misc_map              const * const fwd_misc_map,
-    mby_ppe_fwd_misc_map__addr        const * const fwd_misc_map_w,
-    mby_ppe_cm_apply_map              const * const cm_apply_map,
-    mby_ppe_mapper_map                const * const mapper_map,
-    mbyMaskGenToTriggers              const * const in,
-    mbyTriggersToCongMgmt                   * const out
-);
-
-void CongMgmt
-(
-    mby_ppe_cm_apply_map  const * const cm_apply_map,
-    mby_ppe_cm_usage_map  const * const cm_usage_map,
-    mbyTriggersToCongMgmt const * const in,
-    mbyCongMgmtToRxStats        * const out
-);
-
-void TxStats
-(
-    fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
-    mbyModifierToTxStats  const * const in,
-    mbyTxStatsToTxMac           * const out
 );
 
 #endif

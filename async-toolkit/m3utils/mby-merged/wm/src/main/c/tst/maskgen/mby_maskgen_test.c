@@ -71,12 +71,23 @@ static void maskgen_test_setup
     nexthopToMaskgen->MTU_VIOLATION        = test_in->mtu_violation;
     nexthopToMaskgen->CSGLORT              = test_in->csglort;
 
-    /* Set FWD_PORT_CFG_1 register. */
-    fwd_port_cfg_1_r * const port_cfg_1 = &(fwd_misc->FWD_PORT_CFG_1[test_in->rx_port]);
+    /* Set FWD_PORT_CFG_0 and FWD_PORT_CFG_1 register. */
+    fwd_port_cfg_0_r * const port_cfg_0 = &(fwd_misc->FWD_PORT_CFG_0[test_in->rx_port]);
 
-    port_cfg_1->LEARNING_ENABLE     = test_in->port_cfg_1.learning_enable;
-    port_cfg_1->FILTER_VLAN_INGRESS = test_in->port_cfg_1.filter_vlan_ingress;
-    port_cfg_1->DESTINATION_MASK    = test_in->port_cfg_1.destination_mask;
+    port_cfg_0->LEARNING_ENABLE     = test_in->port_cfg_0.learning_enable;
+    port_cfg_0->FILTER_VLAN_INGRESS = test_in->port_cfg_0.filter_vlan_ingress;
+
+    fwd_port_cfg_1_0_r * const port_cfg_1_0 = &(fwd_misc->FWD_PORT_CFG_1_0[test_in->rx_port]);
+    fwd_port_cfg_1_1_r * const port_cfg_1_1 = &(fwd_misc->FWD_PORT_CFG_1_1[test_in->rx_port]);
+    fwd_port_cfg_1_2_r * const port_cfg_1_2 = &(fwd_misc->FWD_PORT_CFG_1_2[test_in->rx_port]);
+    fwd_port_cfg_1_3_r * const port_cfg_1_3 = &(fwd_misc->FWD_PORT_CFG_1_3[test_in->rx_port]);
+    fwd_port_cfg_1_4_r * const port_cfg_1_4 = &(fwd_misc->FWD_PORT_CFG_1_4[test_in->rx_port]);
+
+    port_cfg_1_0->DESTINATION_MASK = test_in->port_cfg_1.destination_mask[0];
+    port_cfg_1_1->DESTINATION_MASK = test_in->port_cfg_1.destination_mask[1];
+    port_cfg_1_2->DESTINATION_MASK = test_in->port_cfg_1.destination_mask[2];
+    port_cfg_1_3->DESTINATION_MASK = test_in->port_cfg_1.destination_mask[3];
+    port_cfg_1_4->DESTINATION_MASK = test_in->port_cfg_1.destination_mask[4];
 
     /* Set FWD_PORT_CFG_2 register. */
     fwd_port_cfg_2_r * const port_cfg_2 = &(fwd_misc->FWD_PORT_CFG_2[test_in->l2_edomain_in]);

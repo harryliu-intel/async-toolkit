@@ -171,20 +171,27 @@ reg lpm_match_action_r {
     ValRandomize = true;
   } CHILD_PTR_LEN[39:32] = 8'h0;
   field {
+    AccessType = "RSV";
+    desc = "
+	    Reserved
+           ";
+    ValRandomize = true;
+  } _RSVD0_[31:30] = 2'h0;
+  field {
     AccessType = "RW";
     desc = "
     An index into LPM_SUBTRIE_CPTR selecting the child pointer list associated with the
     subtrie in ROOT_PTR.
            ";
     ValRandomize = true;
-  } CHILD_BASE_PTR[31:16] = 16'h0;
+  } CHILD_BASE_PTR[29:15] = 15'h0;
   field {
     AccessType = "RW";
     desc = "
     An index into LPM_SUBTRIE_{BITMAPS,APTR} selecting the root subtrie to search into.
            ";
     ValRandomize = true;
-  } ROOT_PTR[15:0] = 16'h0;
+  } ROOT_PTR[14:0] = 15'h0;
 };
 
 
@@ -252,19 +259,26 @@ reg lpm_subtrie_cptr_r {
     ValRandomize = true;
   } CHILD_PTR_LEN[39:32] = 8'h0;
   field {
+    AccessType = "RSV";
+    desc = "
+	    Reserved
+           ";
+    ValRandomize = true;
+  } _RSVD0_[31:30] = 2'h0;
+  field {
     AccessType = "RW";
     desc = "
     Pointer into LPM_SUBTRIE_CPTR for this child.
            ";
     ValRandomize = true;
-  } CHILD_BASE_PTR[31:16] = 16'h0;
+  } CHILD_BASE_PTR[29:15] = 15'h0;
   field {
     AccessType = "RW";
     desc = "
     Pointer into LPM_SUBTRIE_BITMAPS for this child.
            ";
     ValRandomize = true;
-  } SUBTRIE_PTR[15:0] = 16'h0;
+  } SUBTRIE_PTR[14:0] = 15'h0;
 };
 regfile lpm_subtrie_cptr_rf {
   lpm_subtrie_cptr_r LPM_SUBTRIE_CPTR[512] += 8;

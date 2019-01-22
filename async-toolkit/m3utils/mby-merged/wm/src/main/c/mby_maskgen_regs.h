@@ -1,14 +1,15 @@
 // -*- mode:c -*-
 
-// Copyright (C) 2018 Intel Corporation
+// Copyright (C) 2019 Intel Corporation
 
 #ifndef MBY_MASKGEN_REGS_H
 #define MBY_MASKGEN_REGS_H
 
 // Includes:
 
-#include "mby_common.h"
-#include "mby_bitfield.h"
+#include <mby_top_map.h> // header file auto-generated from RDL
+
+#include "mby_trig_results.h"
 
 // Enums:
 
@@ -75,13 +76,13 @@ typedef struct mbyFwdSysCfg1Struct
 
 } mbyFwdSysCfg1;
 
-typedef struct mbyFwdPortCfg1Struct
+typedef struct mbyFwdPortCfgStruct
 {
     fm_bool           LEARNING_ENABLE;
     fm_bool           FILTER_VLAN_INGRESS;
-    fm_uint32         DESTINATION_MASK;
+    fm_uint32         DESTINATION_MASK[MBY_DMASK_REGISTERS];
 
-} mbyFwdPortCfg1;
+} mbyFwdPortCfg;
 
 typedef struct mbyFwdPortCfg2Struct
 {
@@ -95,6 +96,18 @@ typedef struct mbyCmApplyLoopbackSuppressStruct
     fm_uint16         GLORT;
 
 } mbyCmApplyLoopbackSuppress;
+
+typedef struct mbyCpuTrapMaskStruct
+{
+    fm_uint64         DEST_MASK[MBY_DMASK_REGISTERS];
+
+} mbyCpuTrapMask;
+
+typedef struct mbyMirrorEcmpDmaskStruct
+{
+    fm_uint64         Mirror_port_mask[MBY_DMASK_REGISTERS];
+
+} mbyMirrorEcmpDmask;
 
 // Functions:
 
@@ -122,7 +135,7 @@ mbyEgressVidTableCfg getEvidTableCfgEntry
     fm_uint16                           vid
 );
 
-mbyFwdPortCfg1 getPortCfg1
+mbyFwdPortCfg getPortCfg
 (
     mby_ppe_fwd_misc_map const * const fwd_misc,
     fm_uint32                    const port // RX port
@@ -154,6 +167,17 @@ mbyCmApplyLoopbackSuppress getLoopbackSuppress
 (
     mby_ppe_cm_apply_map const * const cm_apply,
     fm_uint32                    const port // logical port
+);
+
+mbyCpuTrapMask getCpuTrapMask
+(
+    mby_ppe_cm_apply_map const * const cm_apply
+);
+
+mbyMirrorEcmpDmask getMirrorEcmpDmask
+(
+    mby_ppe_cm_apply_map const * const cm_apply,
+    fm_uint16                    const mirror_profile_idx
 );
 
 #endif /* MBY_MASKGEN_REGS_H */

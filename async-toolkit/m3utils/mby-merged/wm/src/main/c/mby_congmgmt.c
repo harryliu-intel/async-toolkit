@@ -2,15 +2,14 @@
 
 // Copyright (C) 2018 Intel Corporation
 
-#include "mby_triggers.h"
 #include "mby_congmgmt.h"
 
 void CongMgmt
 (
-    mby_ppe_cm_apply_map        * const cm_apply_map,
-    mby_ppe_cm_usage_map        * const cm_usage_map,
-    const mbyTriggersToCongMgmt * const in,
-          mbyCongMgmtToRxStats  * const out
+    mby_ppe_cm_apply_map  const * const cm_apply_map,
+    mby_ppe_cm_usage_map  const * const cm_usage_map,
+    mbyTriggersToCongMgmt const * const in,
+    mbyCongMgmtToRxStats        * const out
 )
 {
     // Note: this stage is empty for now. Will be coded up in the next sprint. <-- REVISIT!!!

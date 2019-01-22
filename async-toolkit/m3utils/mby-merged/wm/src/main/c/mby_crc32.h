@@ -6,7 +6,7 @@
  * Description:     This file contains definitions used to support bit arrays
  *
  * INTEL CONFIDENTIAL
- * Copyright 2006 - 2012 Intel Corporation. All Rights Reserved. 
+ * Copyright 2006 - 2012 Intel Corporation. All Rights Reserved.
  *
  * The source code contained or described herein and all documents related
  * to the source code ("Material") are owned by Intel Corporation or its
@@ -20,7 +20,7 @@
  * express written permission.
  *
  * No license under any patent, copyright, trade secret or other intellectual
- * property right is granted to or conferred upon you by disclosure or 
+ * property right is granted to or conferred upon you by disclosure or
  * delivery of the Materials, either expressly, by implication, inducement,
  * estoppel or otherwise. Any license under such intellectual property rights
  * must be express and approved by Intel in writing.
@@ -29,7 +29,7 @@
 #ifndef MBY_CRC32_H
 #define MBY_CRC32_H
 
-#include "mby_common.h"
+#include "fm_types.h"
 
 // Function prototypes:
 fm_uint32 mbyCrc32          (const fm_byte * const buf, const fm_uint32 len);
@@ -44,4 +44,3 @@ fm_uint32 mbyCrc32KByteSwap (const fm_byte * const buf, const fm_uint32 len);
 fm_uint32 mbyCrc32Q         (const fm_byte * const buf, const fm_uint32 len);
 
 #endif
-

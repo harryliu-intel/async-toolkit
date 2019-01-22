@@ -1,6 +1,12 @@
 
 # common defs for all the tests
 
+.DEFAULT_GOAL := all
+
+.SUFFIXES:
+
+ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+
 C_DIR   = ../../../c
 M3_DIR  = ../../../m3
 
@@ -11,10 +17,10 @@ COM_DIR = ../common
 INCLUDES += -I$(COM_DIR)
 
 # Functional Model (a.k.a. White Model) static library:
-WM_LIB   = ${C_DIR}/${BLD_DIR}/libmby_c_model.a
+WM_LIB   = $(C_DIR)/$(BLD_DIR)/libmby_c_model.a
 
 # Common test static library (includes write_field() function):
-COM_LIB  = ${COM_DIR}/${BLD_DIR}/libmodel_c_write.a
+COM_LIB  = $(COM_DIR)/$(BLD_DIR)/libmodel_c_write.a
 
 CFLAGS  = -std=gnu99
 CFLAGS += -Wno-long-long
@@ -39,11 +45,6 @@ DEFINES  += -D_FM_ARCH_x86_64
 ifeq ($(DEBUG),1)
 endif
 
-${BLD_DIR}/%.o: %.c
-	@echo '  Compiling' $<
-	$(ECHO) $(GCC) -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) -c $<
-
-
 ifeq ($(VERBOSE),1)
 ECHO :=
 else
@@ -54,3 +55,10 @@ endif
 LDFLAGS =
 
 DELFILES = $(BLD_DIR) *.o *.so *.log
+
+OBJECTS = $(addprefix $(BLD_DIR)/,$(notdir $(SOURCES:.c=.o)))
+
+TARGET = $(BLD_DIR)/$(TARGETNM)
+
+GLOBALDEPS = $(C_DIR)/mby_pipeline.h $(C_DIR)/mby_common.h	
+

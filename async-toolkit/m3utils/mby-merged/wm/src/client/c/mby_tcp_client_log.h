@@ -46,7 +46,7 @@
 #define LOG_COLOR_CYN  "\x1B[36m"
 #define LOG_COLOR_WHT  "\x1B[37m"
 
-#ifndef LOG_NO_COLOR
+#ifdef LOG_COLOR
 // Define the format of all log prints with or without colors
 # define LOG(level, color, ...)\
     do { \

@@ -494,13 +494,6 @@ int main(int argc, char *argv[])
             load_img = TRUE;
     }
 
-    // Allocate storage for registers on the heap:
-    fm_uint32 *regs = malloc(MBY_REGISTER_ARRAY_SIZE * sizeof(fm_uint32));
-    if (regs == NULL) {
-        printf("Could not allocate heap memory for register buffer -- exiting!\n");
-        exit(-1);
-    }
-
     mby_ppe_rx_top_map rx_top_map;
     mby_ppe_tx_top_map tx_top_map;
 
@@ -564,9 +557,6 @@ int main(int argc, char *argv[])
     printf("  %3d/%3d - Parser tests\n" COLOR_RESET, pass_num, TEST_PASS_MAX);
 
     printf("--------------------------------------------------------------------------------\n");
-
-    // Free up buffer memory:
-    free(regs);
 
     int rv = (tests_passed) ? 0 : -1;
 

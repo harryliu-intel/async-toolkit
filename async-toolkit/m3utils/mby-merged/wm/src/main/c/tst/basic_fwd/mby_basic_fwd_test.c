@@ -2,14 +2,10 @@
 #include <string.h>
 #include <stdio.h>
 
-#include <mby_common.h>
 #include <mby_errors.h>
-#include <mby_model.h>
-#include <mby_rxstats.h>
 #include <mby_init.h>
-#include <mby_parser.h>
 #include <mby_pipeline.h>
-#include "tst_model_c_write.h"
+#include <tst_model_c_write.h> // write_field()
 
 #include "mby_basic_fwd_init.h"
 
