@@ -1,6 +1,12 @@
 // INTEL TOP SECRET
 // Copyright 2014 Intel Corporation. All Rights Reserved.
 //
+
+<% if ($MBY_WCM_MISC) {
+   } else {
+   $MBY_WCM_MISC = 1;
+%>
+
 <% use security; %>
 <% my %Security_Props = security::GetSecurityInfo(); %>
 
@@ -122,3 +128,8 @@ addrmap mby_ppe_wcm_misc_map {
   wcm_ip_r                              WCM_IP                              @0x00000;
   wcm_im_r                              WCM_IM                              @0x00008;
 };
+
+<%
+   }
+%>
+

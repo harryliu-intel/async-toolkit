@@ -1,5 +1,9 @@
-//
-//
+
+<% if ($MBY_APB_MAILBOX_CSRS) {
+   } else {
+   $MBY_APB_MAILBOX_CSRS = 1;
+%>
+
 `include "mby_lib_udp.rdl"
 `include "mby_apb_mailbox_csrs.rdlh"
 
@@ -34,3 +38,7 @@
         apb_lm_trig_f00           apb_lm_trig_f00                    @0x000000000200;
     };            // End of Address Map for mby_apb_mailbox_csrs
 
+
+<%
+   }
+%>

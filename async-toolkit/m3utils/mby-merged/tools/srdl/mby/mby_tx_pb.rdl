@@ -1,4 +1,9 @@
 
+<% if ($MBY_TX_PB) {
+   } else {
+   $MBY_TX_PB = 1;
+%>
+
 `include "mby_port_cfg.rdl"
 
 
@@ -172,3 +177,8 @@ addrmap mby_tx_pb_map {
   // tx_pb_data_jitter_r TX_PB_DATA_JITTER[16];
   // tx_pb_tag_jitter_r  TX_PB_TAG_JITTER[16];
 };
+
+<%
+   }
+%>
+

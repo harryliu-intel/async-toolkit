@@ -1,3 +1,8 @@
+<% if ($PCIE_PF) {
+   } else {
+   $PCIE_PF = 1;
+%>
+
 <% use security; %>
 <% my %Security_Props = security::GetSecurityInfo(); %>
 `include "mby_lib_udp.rdl"
@@ -10600,3 +10605,8 @@ addrmap PCIE_PF_map {
   pcie_host_lane_ctrl_r      PCIE_HOST_LANE_CTRL           @0x444448;
   pcie_serdes_ctrl_r         PCIE_SERDES_CTRL[8]           @0x444480 += 8;
 }; // final size: 0x4444c0 <= 0x800000 = 8<<20
+
+<%
+   }
+%>
+

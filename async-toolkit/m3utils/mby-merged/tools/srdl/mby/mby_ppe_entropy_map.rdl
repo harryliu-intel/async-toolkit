@@ -1,3 +1,9 @@
+
+<% if ($MBY_PPE_ENTROPY_MAP) {
+   } else {
+   $MBY_PPE_ENTROPY_MAP = 1;
+%>
+
 <% use security; %>
 <% my %Security_Props = security::GetSecurityInfo(); %>
 `include "mby_lib_udp.rdl"
@@ -461,3 +467,7 @@ addrmap mby_ppe_entropy_map {
   entropy_hash_key_mask_rf   ENTROPY_HASH_KEY_MASK[3]      ;
   entropy_fwd_hashing_cfg_r  ENTROPY_FWD_HASHING_CFG[64]   ;
 }; // final size: 0xe00 <= 0x1000 = 8<<9
+
+<%
+   }
+%>

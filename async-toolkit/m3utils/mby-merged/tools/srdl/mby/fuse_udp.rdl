@@ -1,7 +1,7 @@
 // Temporary UDP file to mimick properties that we need and is already
 // defined by Nebulon.
 
-<% if ($LIB_UDP) { 
+<% if ($LIB_UDP) {
    } else {
    $LIB_UDP = 1;
 %>

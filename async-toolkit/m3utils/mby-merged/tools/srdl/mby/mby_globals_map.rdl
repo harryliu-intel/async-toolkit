@@ -1,3 +1,8 @@
+<% if ($MBY_GLOBALS_MAP) {
+   } else {
+   $MBY_GLOBALS_MAP = 1;
+%>
+
 `include "mby_lib_udp.rdl"
 `include "mby_ip.rdl"
 
@@ -18,3 +23,6 @@ addrmap mby_globals_map {
   //mby_amba_top_map        amba;
 };
 
+<%
+   }
+%>

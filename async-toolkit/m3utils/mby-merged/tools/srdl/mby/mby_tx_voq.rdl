@@ -1,4 +1,9 @@
 
+<% if ($MBY_TX_VOQ) {
+   } else {
+   $MBY_TX_VOQ = 1;
+%>
+
 `include "mby_port_cfg.rdl"
 
 
@@ -55,3 +60,7 @@ addrmap mby_tx_voq_map {
 
   tx_voq_port_cfg_r TX_VOQ_PORT_CFG;
 };
+
+<%
+   }
+%>
