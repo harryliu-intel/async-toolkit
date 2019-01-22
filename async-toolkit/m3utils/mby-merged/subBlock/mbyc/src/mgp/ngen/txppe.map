@@ -1,9 +1,10 @@
 // Placeholder
 
 sreset                       >> reset
-ahb_txppe$iteration          >> ahb_tx_ppe_if
-glb_txppe$iteration          >> glb_tx_ppe_if
 egr_txppe$iteration          >> egr_tx_ppe_if
 
 tx_ppe_mod_if$iteration     >> tx_ppe_mod_if
 tx_ppe_negh_if$iteration    >> tx_ppe_negh_if
+
+    >> i_ibus_ctrl
+    >> o_ibus_resp

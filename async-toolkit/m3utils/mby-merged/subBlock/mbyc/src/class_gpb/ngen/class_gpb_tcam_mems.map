@@ -12,3 +12,4 @@ foreach $i (0..19) {
     >>  fscan_mode
     >>  fscan_shiften
     >>  aary_pwren_b_tcam
+    >>  car_raw_lan_power_good_with_byprst
