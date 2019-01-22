@@ -45,7 +45,7 @@
 //     T_debug    - set to logic for now
 //
 //-----------------------------------------------------------------------------
-class mby_pcm_bfm_queue_xaction extends mby_base_sequence_item_param
+class mby_pcm_bfm_queue_xaction extends shdv_base_sequence_item_param
 #(
    .T_data (mby_pcm_bfm_queue_t),
    .T_debug(mby_pcm_bfm_debg_t)
