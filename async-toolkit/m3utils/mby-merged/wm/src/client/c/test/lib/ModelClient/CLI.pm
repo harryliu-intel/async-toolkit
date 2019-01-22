@@ -1,9 +1,14 @@
 package ModelClient::CLI;
 
+use Exporter qw(import);
 use Term::ANSIColor;
+use Readonly;
 use Expect;
 use Moose;
 use Carp;
+
+our @EXPORT_OK = qw($EOT);
+Readonly our $EOT => -1;
 
 has 'client' => ( is => 'ro', isa => 'Expect' );
 has 'timeout' => ( is => 'rw', isa => 'Int', default => 8 );
@@ -89,29 +94,22 @@ sub write_value {
 
 # Read the value from register and compare with the expected one
 sub read_value {
-    my ( $self, $reg, $val ) = @_;
+    my ( $self, $reg ) = @_;
 
     print { $self->client } "read $reg\n";
     $self->client->expect( $self->timeout, '-re', '\-\> (0x[a-f0-9]+)\s' )
       or croak colored( "Could not read from register $reg\n", 'bold red' );
     $self->expect_prompt;
 
-    my $output = hex( ( $self->client->matchlist() )[0] );
-    ( $output == $val )
-      or croak colored( "Expected $val, but got $output\n", 'bold red' );
-
-    print colored( 'Read value correct', 'green' );
-    print { $self->client } "\n";
-    $self->expect_prompt;
-
-    return;
+    return hex $self->client->matchlist->[0];
 }
 
 # Send a packet to WM
 sub send_packet {
-    my ( $self, $port, @packet ) = @_;
-    print { $self->client } "send $port @packet\n";
+    my ( $self, $packet, $port ) = @_;
+    print { $self->client } "send $port @{$packet}\n";
     $self->expect_prompt;
+
     return;
 }
 
@@ -121,42 +119,20 @@ sub receive_packet {
 
     print { $self->client } "receive raw\n";
 
-    if ( !defined $port || $port >= 0 ) {
-
-        # Receive regular packet
-        $self->client->expect( $self->timeout, '-re',
-            'Received (\d+) .* port (\d+)\s' )
-          or croak colored( "Could not receive a frame\n", 'bold red' );
-    }
-    else {
-        # Receive EOT packet
-        $self->client->expect( $self->timeout, 'EOT packet received' )
-          or carp colored( "EOT packet expected\n", 'yellow' );
-    }
-
-    # Arguments provided, validate the packet
-    if ( defined $port && $port >= 0 ) {
-        my $rx_port = int( ( $self->client->matchlist() )[1] );
-        ( $rx_port == $port )
-          or croak colored(
-            "Packet received on port $rx_port, but expected on $port\n",
-            'bold red' );
-    }
-
-    if (@packet) {
-        my $bytes = int( ( $self->client->matchlist() )[0] );
-        ( $bytes == scalar @packet )
-          or croak colored(
-"Expected packet size ${\scalar @packet} but received $bytes bytes\n",
-            'bold red'
-          );
-    }
-
-    $self->expect_prompt;
-    print colored( 'Received packet correct', 'green' );
-    print { $self->client } "\n";
+    $self->client->expect( $self->timeout, '-re',
+        'Received (\d+) .* port (\d+)\s|EOT packet received' )
+      or croak colored( "Could not receive a frame\n", 'bold red' );
     $self->expect_prompt;
 
-    return;
+    my $rx_bytes = $EOT;
+    my $rx_port  = $EOT;
+
+    $rx_bytes = int $self->client->matchlist->[0]
+      if ( defined $self->client->matchlist->[0] );
+    $rx_port = int $self->client->matchlist->[1]
+      if ( defined $self->client->matchlist->[1] );
+
+    return ( $rx_port, $rx_bytes );
 }
+
 1;

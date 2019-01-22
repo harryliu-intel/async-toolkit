@@ -14,11 +14,10 @@ use Readonly;
 use Expect;
 use Carp;
 
-use ModelClient::CLI;
+use ModelClient::CLI qw($EOT);
 
 Readonly my $MAX_PORT => 22;
 Readonly my $TIMEOUT => 8;
-Readonly my $EOT => -1;
 
 # Evaluate all paths and run the application
 my @params = qw(-m ../../../main/m3/model_server/AMD64_LINUX/models.packetServer);
@@ -65,18 +64,30 @@ my $value = 0xBEEF;
 # Write and read from each register
 foreach my $reg (@registers) {
 	$client->write_value($reg, $value);
-	$client->read_value($reg, $value);
-	++$value;
 
+	my $output = $client->read_value($reg, $value);
+	($output == $value) or die colored( "Expected $value, but got $output\n", 'bold red' );
+
+	print colored( 'Read value correct', 'green' );
 	$client->empty_line;
+	$client->empty_line;
+
+	++$value;
 }
 
 # Send and receive a packet to some ports, then wait for EOT packet
 foreach my $port (0..$MAX_PORT) {
-	$client->send_packet($port, @packet);
-	$client->receive_packet($port, @packet);
-	$client->receive_packet($EOT);
+	$client->send_packet(\@packet => $port);
 
+	my ($rx_port, $rx_bytes) = $client->receive_packet;
+        ($rx_port == $port) or croak colored( "Packet received on port $rx_port, but expected on $port\n", 'bold red' );
+        ($rx_bytes == scalar @packet) or croak colored( "Expected packet size ${\scalar @packet} but received $rx_bytes bytes\n", 'bold red');
+
+	$rx_port = $client->receive_packet;
+        ($rx_port == $EOT) or croak colored( "EOT packet expected\n", 'bold red' );
+
+	print colored( 'Received packet correct', 'green' );
+	$client->empty_line;
 	$client->empty_line;
 }
 
