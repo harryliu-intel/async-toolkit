@@ -16,3 +16,4 @@ ragged2inorderid.h
 ragged2ptr.c
 ragged2ptr.h
 test_exceptions
+test_if

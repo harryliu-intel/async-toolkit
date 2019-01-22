@@ -22,7 +22,7 @@ AUTOGEN=    addr2ragged.o inorderid2ragged.o ragged2addr.o ragged2arcs.o\
 	ragged2inorderid.o\
 	hostptr_setup.o	ragged2ptr.o ptr2ragged.o
 
-EXECS= test_api test_exceptions
+EXECS= test_api test_exceptions test_if
 all: $(EXECS)
 
 test_api: $(AUTOGEN) mby_top_map.o test_api.o raggedindex.o
@@ -40,3 +40,9 @@ clean:
 
 distclean: clean
 	/bin/rm -f `echo $(AUTOGEN) | sed 's/\.o/.[hc]/g'`
+
+test_if: test_if.o
+
+test_if.o: test_if.c
+# test_if has some silly comma code in it just for testing
+	cc $(CFLAGS) -Wno-unused $<
