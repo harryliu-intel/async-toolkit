@@ -45,7 +45,7 @@
 //     T_debug    - mby_gpm_bfm_pod_debg_t
 //
 //-----------------------------------------------------------------------------
-class mby_gpm_bfm_pod_xaction extends mby_base_sequence_item_param
+class mby_gpm_bfm_pod_xaction extends shdv_base_sequence_item_param
 #(
    .T_data (mby_gpm_bfm_pod_data_t),
    .T_debug(mby_gpm_bfm_pod_debg_t)
