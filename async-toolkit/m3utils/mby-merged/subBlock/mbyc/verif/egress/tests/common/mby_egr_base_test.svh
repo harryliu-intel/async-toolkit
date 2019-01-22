@@ -107,7 +107,7 @@ function void mby_egr_base_test::set_default_sequences();
    // Set up default cold reset sequence
 //PJP: TODO Uncomment the following code once reset and configuration sequences are developed.
 /*
-   uvm_config_db#(uvm_object_wrapper)::set(this, "env.mby_egr_tb_sequencer.reset_phase", "default_sequence", egr_env_pkg::mby_egr_hard_reset_seq::type_id::get());
+   env.set_reset_sequence("mby_egr_hard_reset_seq");
    uvm_config_db#(int unsigned)::set(this, "env.mby_egr_tb_sequencer.reset_phase", "default_sequence.min_random_count", 1);
    uvm_config_db#(int unsigned)::set(this, "env.mby_egr_tb_sequencer.reset_phase", "default_sequence.max_random_count", 1);
 
@@ -117,12 +117,12 @@ function void mby_egr_base_test::set_default_sequences();
    uvm_config_db#(int unsigned)::set(this, "env.mby_egr_tb_sequencer.post_reset_phase", "default_sequence.max_random_count", 1);
 
    // Set up default CSR configuration sequence
-   uvm_config_db#(uvm_object_wrapper)::set(this, "env.mby_egr_tb_sequencer.configure_phase", "default_sequence", egr_env_pkg::mby_egr_config_seq::type_id::get());
+   env.set_configure_sequence("mby_egr_config_seq");
    uvm_config_db#(int unsigned)::set(this, "env.mby_egr_tb_sequencer.configure_phase", "default_sequence.min_random_count", 1);
    uvm_config_db#(int unsigned)::set(this, "env.mby_egr_tb_sequencer.configure_phase", "default_sequence.max_random_count", 1);
 
    // Set up default shutdown sequence
-   uvm_config_db#(uvm_object_wrapper)::set(this, "env.mby_egr_tb_sequencer.shutdown_phase", "default_sequence", egr_env_pkg::mby_egr_shutdown_seq::type_id::get());
+   env.set_shutdown_sequence("mby_egr_shutdown_seq");
    uvm_config_db#(int unsigned)::set(this, "env.mby_egr_tb_sequencer.shutdown_phase", "default_sequence.min_random_count", 1);
    uvm_config_db#(int unsigned)::set(this, "env.mby_egr_tb_sequencer.shutdown_phase", "default_sequence.max_random_count", 1);
 */
