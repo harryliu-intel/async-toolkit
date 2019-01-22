@@ -33,7 +33,7 @@ interface pre_ppe_header_if ();
 
     logic                          sop_ack;
 
-    logic [3:0]                    sop_valid; 
+    logic                          sop_valid; 
     igr_pkt_id_t                   sop_pkt_id;
     sop_md_t                       sop_md;  
     epl_ts_t                       sop_ts;

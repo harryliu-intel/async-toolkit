@@ -3,7 +3,6 @@
 
 #include <mby_maskgen_test.h>
 #include <mby_pipeline.h>
-#include <mby_reg_ctrl.h>
 
 #include <mby_top_map.h>
 
@@ -54,14 +53,15 @@ static void maskgen_test_setup
 )
 {
     /* Set nexthopToMaskgen. */
+    for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
+        nexthopToMaskgen->GLORT_DMASK[i] = test_in->glort_dmask_in[i];
+
     nexthopToMaskgen->RX_PORT              = test_in->rx_port;
     nexthopToMaskgen->L2_SMAC              = test_in->l2_smac;
     nexthopToMaskgen->L2_DMAC              = test_in->l2_dmac;
     nexthopToMaskgen->IDGLORT              = test_in->idglort;
-    nexthopToMaskgen->GLORT_DMASK          = test_in->glort_dmask_in;
     nexthopToMaskgen->L2_IVID1             = test_in->l2_ivid1;
     nexthopToMaskgen->L2_EVID1             = test_in->l2_evid1;
-    nexthopToMaskgen->AMASK                = test_in->amask;
     nexthopToMaskgen->L2_IVLAN1_MEMBERSHIP = test_in->l2_ivlan1_membership;
     nexthopToMaskgen->L2_EDOMAIN           = test_in->l2_edomain_in;
     nexthopToMaskgen->MARK_ROUTED          = test_in->mark_routed;
@@ -71,12 +71,23 @@ static void maskgen_test_setup
     nexthopToMaskgen->MTU_VIOLATION        = test_in->mtu_violation;
     nexthopToMaskgen->CSGLORT              = test_in->csglort;
 
-    /* Set FWD_PORT_CFG_1 register. */
-    fwd_port_cfg_1_r * const port_cfg_1 = &(fwd_misc->FWD_PORT_CFG_1[test_in->rx_port]);
+    /* Set FWD_PORT_CFG_0 and FWD_PORT_CFG_1 register. */
+    fwd_port_cfg_0_r * const port_cfg_0 = &(fwd_misc->FWD_PORT_CFG_0[test_in->rx_port]);
 
-    port_cfg_1->LEARNING_ENABLE     = test_in->port_cfg_1.learning_enable;
-    port_cfg_1->FILTER_VLAN_INGRESS = test_in->port_cfg_1.filter_vlan_ingress;
-    port_cfg_1->DESTINATION_MASK    = test_in->port_cfg_1.destination_mask;
+    port_cfg_0->LEARNING_ENABLE     = test_in->port_cfg_0.learning_enable;
+    port_cfg_0->FILTER_VLAN_INGRESS = test_in->port_cfg_0.filter_vlan_ingress;
+
+    fwd_port_cfg_1_0_r * const port_cfg_1_0 = &(fwd_misc->FWD_PORT_CFG_1_0[test_in->rx_port]);
+    fwd_port_cfg_1_1_r * const port_cfg_1_1 = &(fwd_misc->FWD_PORT_CFG_1_1[test_in->rx_port]);
+    fwd_port_cfg_1_2_r * const port_cfg_1_2 = &(fwd_misc->FWD_PORT_CFG_1_2[test_in->rx_port]);
+    fwd_port_cfg_1_3_r * const port_cfg_1_3 = &(fwd_misc->FWD_PORT_CFG_1_3[test_in->rx_port]);
+    fwd_port_cfg_1_4_r * const port_cfg_1_4 = &(fwd_misc->FWD_PORT_CFG_1_4[test_in->rx_port]);
+
+    port_cfg_1_0->DESTINATION_MASK = test_in->port_cfg_1.destination_mask[0];
+    port_cfg_1_1->DESTINATION_MASK = test_in->port_cfg_1.destination_mask[1];
+    port_cfg_1_2->DESTINATION_MASK = test_in->port_cfg_1.destination_mask[2];
+    port_cfg_1_3->DESTINATION_MASK = test_in->port_cfg_1.destination_mask[3];
+    port_cfg_1_4->DESTINATION_MASK = test_in->port_cfg_1.destination_mask[4];
 
     /* Set FWD_PORT_CFG_2 register. */
     fwd_port_cfg_2_r * const port_cfg_2 = &(fwd_misc->FWD_PORT_CFG_2[test_in->l2_edomain_in]);
@@ -232,20 +243,17 @@ static fm_bool maskgen_test_verify
 
     //REVISIT!!!! dmask is changed, we need to fix test
     for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
-        if (maskgenToTriggers->DMASK[i] != test_data_out->dmask)
+        if (maskgenToTriggers->DMASK[i] != test_data_out->dmask[i])
             return FALSE;
-
-    if (maskgenToTriggers->ACTION != test_data_out->action)
-        return FALSE;
 
     return TRUE;
 }
 
 static void maskgen_run_test(maskgen_test_data * const test_data)
 {
-    mby_ppe_fwd_misc_map  fwd_misc;
-    mby_ppe_mst_glort_map glort_map;
-    mby_ppe_cm_apply_map  cm_apply;
+    mby_ppe_fwd_misc_map  fwd_misc  = { 0 };
+    mby_ppe_mst_glort_map glort_map = { 0 };
+    mby_ppe_cm_apply_map  cm_apply  = { 0 };
 
     mbyNextHopToMaskGen  nexthopToMaskgen = { 0 };
     mbyMaskGenToTriggers out              = { 0 };

@@ -1,7 +1,7 @@
 // INTEL TOP SECRET
 // Copyright 2014 Intel Corporation. All Rights Reserved.
 //
-`include "lib_udp.rdl"
+`include "mby_lib_udp.rdl"
 <% use security; %>
 <% my %Security_Props = security::GetSecurityInfo(); %>
 
@@ -415,7 +415,7 @@ regfile cm_apply_tx_swpri_state_rf {
   cm_apply_tx_swpri_state_r CM_APPLY_TX_SWPRI_STATE[16] += 8;
 };
 
-reg cm_apply_cpu_trap_mask_r {
+reg cm_apply_cpu_trap_mask_0_r {
   Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
   Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
@@ -431,11 +431,107 @@ reg cm_apply_cpu_trap_mask_r {
   field {
     AccessType = "RW";
     desc = "
-            Destination mask for CPU.
+            Destination mask for CPU [63:0].
            ";
     ValRandomize = true;
-  } DEST_MASK[23:0] = 24'h01;
+  } DEST_MASK[63:0] = 64'h01;
 };
+
+reg cm_apply_cpu_trap_mask_1_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "Defines the CPU mask1 for trapping";
+  desc = "
+          When a trapped frame is sent to the CPU, it is sent out on these 
+          ports. (This is a mask rather than a single port number, so that it 
+          is possible to multicast to multiple CPUs if desired.)
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Destination mask for CPU [127:64].
+           ";
+    ValRandomize = true;
+  } DEST_MASK[63:0] = 64'h00;
+};
+
+reg cm_apply_cpu_trap_mask_2_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "Defines the CPU mask2 for trapping";
+  desc = "
+          When a trapped frame is sent to the CPU, it is sent out on these 
+          ports. (This is a mask rather than a single port number, so that it 
+          is possible to multicast to multiple CPUs if desired.)
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Destination mask for CPU [191:128].
+           ";
+    ValRandomize = true;
+  } DEST_MASK[63:0] = 64'h00;
+};
+
+
+reg cm_apply_cpu_trap_mask_3_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "Defines the CPU mask3 for trapping";
+  desc = "
+          When a trapped frame is sent to the CPU, it is sent out on these 
+          ports. (This is a mask rather than a single port number, so that it 
+          is possible to multicast to multiple CPUs if desired.)
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Destination mask for CPU [255:192].
+           ";
+    ValRandomize = true;
+  } DEST_MASK[63:0] = 64'h00;
+};
+
+
+reg cm_apply_cpu_trap_mask_4_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "Defines the CPU mask3 for trapping";
+  desc = "
+          When a trapped frame is sent to the CPU, it is sent out on these 
+          ports. (This is a mask rather than a single port number, so that it 
+          is possible to multicast to multiple CPUs if desired.)
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Destination mask for CPU [256].
+           ";
+    ValRandomize = true;
+  } DEST_MASK[0:0] = 1'h0;
+};
+
+
+
+
+
+
 
 reg cm_apply_trap_glort_r {
   Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
@@ -514,7 +610,29 @@ reg cm_apply_log_mirror_profile_r {
   } FFU[5:0] = 6'h00;
 };
 
-reg cm_apply_mirror_profile_table_r {
+//reg cm_apply_mirror_profile_table_r {
+//  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+//  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+//  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+//  shared;
+//  HandCoded = true;
+//  name = "Mirror profile entries for frame handler";
+//  desc = "
+//  Mirror profile entries for frame handler
+//         ";
+//  regwidth = 64;
+//  accesswidth = 64;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//            Destination port for the mirror profile entry
+//           ";
+//    ValRandomize = true;
+//  } PORT[4:0] = 5'h00;
+//};
+
+
+reg cm_apply_mirror_ecmp_dmask0_r {
   Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
   Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
@@ -532,8 +650,100 @@ reg cm_apply_mirror_profile_table_r {
             Destination port for the mirror profile entry
            ";
     ValRandomize = true;
-  } PORT[4:0] = 5'h00;
+  } Mirror_port_mask0[63:0] = 64'b0;
 };
+
+
+reg cm_apply_mirror_ecmp_dmask1_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Mirror profile entries for frame handler";
+  desc = "
+  Mirror profile entries for frame handler
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Destination port for the mirror profile entry
+           ";
+    ValRandomize = true;
+  } Mirror_port_mask1[63:0] = 64'b0;
+};
+
+
+reg cm_apply_mirror_ecmp_dmask2_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Mirror profile entries for frame handler";
+  desc = "
+  Mirror profile entries for frame handler
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Destination port for the mirror profile entry
+           ";
+    ValRandomize = true;
+  } Mirror_port_mask2[63:0] = 64'b0;
+};
+
+reg cm_apply_mirror_ecmp_dmask3_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Mirror profile entries for frame handler";
+  desc = "
+  Mirror profile entries for frame handler
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Destination port for the mirror profile entry
+           ";
+    ValRandomize = true;
+  } Mirror_port_mask3[63:0] = 64'b0;
+};
+
+
+reg cm_apply_mirror_ecmp_dmask4_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Mirror profile entries for frame handler";
+  desc = "
+  Mirror profile entries for frame handler
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Destination port for the mirror profile entry
+           ";
+    ValRandomize = true;
+  } Mirror_port_mask4[0:0] = 1'h0;
+};
+
+
+
+
+
 
 reg cm_apply_qcn_cfg_r {
   Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
@@ -624,16 +834,25 @@ addrmap mby_ppe_cm_apply_map {
   cm_apply_tx_tc_state_rf               CM_APPLY_TX_TC_STATE[64]              ;
   cm_apply_tx_tc_qcn_wm_threshold_rf    CM_APPLY_TX_TC_QCN_WM_THRESHOLD[64]   ;
   cm_apply_rx_smp_state_rf              CM_APPLY_RX_SMP_STATE[32]             ;
-  cm_apply_mirror_profile_table_r       CM_APPLY_MIRROR_PROFILE_TABLE[64]     ;
+//   cm_apply_mirror_profile_table_r       CM_APPLY_MIRROR_PROFILE_TABLE[64]     ;
+  cm_apply_mirror_ecmp_dmask0_r         CM_APPLY_MIRROR_ECMP_DMASK0[64];
+  cm_apply_mirror_ecmp_dmask1_r         CM_APPLY_MIRROR_ECMP_DMASK1[64];
+  cm_apply_mirror_ecmp_dmask2_r         CM_APPLY_MIRROR_ECMP_DMASK2[64];
+  cm_apply_mirror_ecmp_dmask3_r         CM_APPLY_MIRROR_ECMP_DMASK3[64];
+  cm_apply_mirror_ecmp_dmask4_r         CM_APPLY_MIRROR_ECMP_DMASK4[64];
   cm_apply_drop_count_r                 CM_APPLY_DROP_COUNT[32]               ;
-  cm_apply_loopback_suppress_r          CM_APPLY_LOOPBACK_SUPPRESS[32]        ;
+  cm_apply_loopback_suppress_r          CM_APPLY_LOOPBACK_SUPPRESS[257]        ;
   cm_apply_softdrop_cfg_r               CM_APPLY_SOFTDROP_CFG[8]              ;
   cm_apply_softdrop_state_r             CM_APPLY_SOFTDROP_STATE[8]            ;
   cm_apply_trap_glort_r                 CM_APPLY_TRAP_GLORT[16]               ;
   cm_apply_tc_to_smp_r                  CM_APPLY_TC_TO_SMP                    ;
   cm_apply_mcast_epoch_r                CM_APPLY_MCAST_EPOCH                  ;
   cm_apply_state_r                      CM_APPLY_STATE                        ;
-  cm_apply_cpu_trap_mask_r              CM_APPLY_CPU_TRAP_MASK                ;
+  cm_apply_cpu_trap_mask_0_r            CM_APPLY_CPU_TRAP_0_MASK                ;
+  cm_apply_cpu_trap_mask_1_r            CM_APPLY_CPU_TRAP_1_MASK                ;
+  cm_apply_cpu_trap_mask_2_r            CM_APPLY_CPU_TRAP_2_MASK                ;
+  cm_apply_cpu_trap_mask_3_r            CM_APPLY_CPU_TRAP_3_MASK                ;
+  cm_apply_cpu_trap_mask_4_r            CM_APPLY_CPU_TRAP_4_MASK                ;
   cm_apply_log_mirror_profile_r         CM_APPLY_LOG_MIRROR_PROFILE           ;
   cm_apply_qcn_cfg_r                    CM_APPLY_QCN_CFG                      ;
 };

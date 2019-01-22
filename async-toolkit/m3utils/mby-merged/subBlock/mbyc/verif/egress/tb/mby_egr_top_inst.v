@@ -74,13 +74,13 @@ always_comb ahb_if.ahb_wr_data = 0;
 
 
 
-always_ff @(posedge egress_clock) epl_if0.tx_enable_port_num <= egress_reset ? (epl_if0.tx_enable_port_num + 2'b1) : 2'b0;
+always_ff @(posedge egress_clock) epl_if0.tx_enable_port_num <= (!egress_reset) ? (epl_if0.tx_enable_port_num + 2'b1) : 2'b0;
 always_comb epl_if0.tx_enable = 1'b1;
-always_ff @(posedge egress_clock) epl_if1.tx_enable_port_num <= egress_reset ? (epl_if1.tx_enable_port_num + 2'b1) : 2'b0;
+always_ff @(posedge egress_clock) epl_if1.tx_enable_port_num <= (!egress_reset) ? (epl_if1.tx_enable_port_num + 2'b1) : 2'b0;
 always_comb epl_if1.tx_enable = 1'b1;
-always_ff @(posedge egress_clock) epl_if2.tx_enable_port_num <= egress_reset ? (epl_if2.tx_enable_port_num + 2'b1) : 2'b0;
+always_ff @(posedge egress_clock) epl_if2.tx_enable_port_num <= (!egress_reset) ? (epl_if2.tx_enable_port_num + 2'b1) : 2'b0;
 always_comb epl_if2.tx_enable = 1'b1;
-always_ff @(posedge egress_clock) epl_if3.tx_enable_port_num <= egress_reset ? (epl_if3.tx_enable_port_num + 2'b1) : 2'b0;
+always_ff @(posedge egress_clock) epl_if3.tx_enable_port_num <= (!egress_reset) ? (epl_if3.tx_enable_port_num + 2'b1) : 2'b0;
 always_comb epl_if3.tx_enable = 1'b1;
 
 egr_top egress (

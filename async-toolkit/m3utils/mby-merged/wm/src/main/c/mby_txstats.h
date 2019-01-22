@@ -1,16 +1,21 @@
 // -*- mode:c -*-
 
-// Copyright (C) 2018 Intel Corporation
+// Copyright (C) 2019 Intel Corporation
 
 #ifndef MBY_TXSTATS_H
 #define MBY_TXSTATS_H
 
 // Includes:
 
-#include "mby_common.h"
-#include "mby_bitfield.h"
+#include <mby_top_map.h> // header file auto-generated from RDL
+
+#include "mby_mod2txs.h"
+#include "mby_txs2mac.h"
 
 // Defines:
+
+#define MBY_REGISTER_ARRAY_SIZE  0x1800000 // obsolete, need to get rid of old regs <-- REVISIT!!!
+
 /******** MOD_BASE *******/
 #define MBY_MOD_BASE                                            (0x4000000)
 #define MBY_MOD_SIZE                                            (0x0800000)
@@ -33,12 +38,13 @@
 
 // Structs:
 
-typedef struct mbyTxStatsToTxMacStruct
-{
-    fm_byte               * TX_DATA;   // egress packet data
-    fm_uint32               TX_LENGTH; // egress packet data length [bytes]
-    fm_uint32               TX_PORT;   // egress port
+// Function prototype:
 
-} mbyTxStatsToTxMac;
+void TxStats
+(
+    fm_uint32                          regs[MBY_REGISTER_ARRAY_SIZE],
+    mbyModifierToTxStats const * const in,
+    mbyTxStatsToTxMac          * const out
+);
 
-#endif
+#endif // MBY_TXSTATS_H

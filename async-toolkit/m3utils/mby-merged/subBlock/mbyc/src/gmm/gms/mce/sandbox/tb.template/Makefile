@@ -37,7 +37,7 @@ run: simv
 	@(grep -q -i -P '(error|fatal|fail)' $(TEST).log && (echo FAIL) || (echo PASS)) | tee -a $(TEST).log
 
 clean:
-	rm -rf $(wildcard csrc simv* *.log ucli.key *.vpd ##* unifiedInference.log xprop.log)
+	rm -rf $(wildcard csrc simv* *.log ucli.key *.vpd ##* unifiedInference.log xprop.log vc_hdrs.h)
 
 ################################################################################
 # Targets for Makefile debug

@@ -117,20 +117,19 @@ class mby_tag_bfm extends uvm_component;
       // ----------------------------------------------------------------------
       if(cfg_obj.traffic_mode == TAG_BFM_UC_MODE) begin
          tag_uc_agent = mby_tag_bfm_uc_agent::type_id::create("tag_uc_agent", this);
-         uvm_config_db#(mby_base_config)::set(this, "tag_uc_agent", "cfg_obj", cfg_obj);
-         tag_uc_agent_config = shdv_base_agent_config::type_id::create("cfg", this);
-         tag_uc_agent.cfg = tag_uc_agent_config;
+         tag_uc_agent.cfg = new("tag_uc_agent_config");
+         tag_uc_agent.cfg.monitor_enable = cfg_obj.monitor_active;
+         tag_uc_agent.cfg.driver_enable = cfg_obj.driver_active;
          
          `uvm_info(this.get_full_name(),
             "Created the uni-cast tag_agent instance and assigned the cfg_obj",
             UVM_DEBUG)
       end else begin
          tag_mc_agent = mby_tag_bfm_mc_agent::type_id::create("tag_mc_agent", this);
-         tag_uc_agent_config = shdv_base_agent_config::type_id::create("cfg", this);
+         tag_mc_agent.cfg =   new("tag_mc_agent_config");
+         tag_mc_agent.cfg.monitor_enable = cfg_obj.monitor_active;
+         tag_mc_agent.cfg.driver_enable = cfg_obj.driver_active;
          
-         uvm_config_db#(mby_base_config)::set(this, "tag_mc_agent", "cfg_obj", cfg_obj);
-         tag_mc_agent.cfg =   tag_uc_agent_config;
-         //this.cfg_obj;
          `uvm_info(this.get_full_name(),
             "Created the multi-cast tag_agent instance and assigned the cfg_obj",
             UVM_DEBUG)

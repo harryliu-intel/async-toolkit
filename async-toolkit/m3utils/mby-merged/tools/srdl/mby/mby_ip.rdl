@@ -1,4 +1,4 @@
-`include "lib_udp.rdl"
+`include "mby_lib_udp.rdl"
 
 addrmap mby_regs{
 	`include "mby_cfg.rdl"

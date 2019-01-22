@@ -2,10 +2,10 @@
 
 // Copyright (C) 2018 Intel Corporation
 
-#include "mby_common.h"
-
 #ifndef MBY_BITFIELD_H
 #define MBY_BITFIELD_H
+
+#include "fm_types.h"
 
 // Macros:
 #define FM_LITERAL_U64(x) (x ## ULL)

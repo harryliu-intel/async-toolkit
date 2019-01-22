@@ -7,8 +7,9 @@
 
 // Includes:
 
-#include "mby_common.h"
-#include "mby_bitfield.h"
+#include <mby_top_map.h> // header file auto-generated from RDL
+
+#include "fm_types.h"
 
 // Defines:
 
@@ -50,6 +51,7 @@ typedef struct mbyLpmSubtrieStruct
     fm_uint16             root_ptr;
     fm_uint16             child_base_ptr;
     fm_byte               child_ptr_len;
+
 } mbyLpmSubtrie;
 
 typedef struct mbyLpmSubtrieStoreStruct
@@ -57,6 +59,7 @@ typedef struct mbyLpmSubtrieStoreStruct
     fm_uint64               prefix_bitmap[MBY_LPM_BITMAP_SIZE]; // 255b
     fm_uint64               child_bitmap[MBY_LPM_BITMAP_SIZE];  // 256b
     fm_uint32               action_base_ptr; // 19 (or 20?) bits
+
 } mbyLpmSubtrieStore;
 
 // Functions:

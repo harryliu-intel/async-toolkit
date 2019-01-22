@@ -28,7 +28,7 @@
 // -- Description  : This is RDL for the MAC block.
 //------------------------------------------------------------------------------
 
-`include "lib_udp.rdl"
+`include "mby_lib_udp.rdl"
 <% use security; %>
 <% my %Security_Props = security::GetSecurityInfo(); %>
 

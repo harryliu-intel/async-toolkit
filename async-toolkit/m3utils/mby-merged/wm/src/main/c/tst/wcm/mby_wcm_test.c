@@ -1,15 +1,16 @@
+// -*- mode:c -*-
+
+// Copyright (C) 2019 Intel Corporation
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-
 #include <string.h>
 #include <assert.h>
-#include <mby_wcm.h>
-#include <mby_mapper.h>
 
 #include <mby_top_map.h>
-
-#include <mby_common.h>
+#include <mby_wcm.h>
+#include <mby_mapper.h>
 #include <mby_pipeline.h>
 
 #define COLOR_RED     "\x1b[31m"

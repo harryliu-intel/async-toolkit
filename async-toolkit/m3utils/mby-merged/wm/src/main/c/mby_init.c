@@ -2,7 +2,6 @@
 
 #include <mby_bitfield.h>
 #include <mby_classifier.h>
-#include <mby_common.h>
 #include <mby_congmgmt.h>
 #include <mby_crc32.h>
 #include <mby_hash.h>
@@ -13,7 +12,6 @@
 #include <mby_nexthop.h>
 #include <mby_parser.h>
 #include <mby_pipeline.h>
-#include <mby_reg_ctrl.h>
 #include <mby_rxstats.h>
 #include <mby_triggers.h>
 #include <mby_txstats.h>
@@ -203,42 +201,350 @@ static void init_parser_regs
         set_parser_csum_cfg_reg(0x0, 0x0, 0x0, 0x0, &(parser_map->PARSER_CSUM_CFG[i]));
     }
 
-    set_parser_extract_cfg(0, 0, &parser_map->PARSER_EXTRACT_CFG[0][6]);
-    set_parser_extract_cfg(0, 2, &parser_map->PARSER_EXTRACT_CFG[0][7]);
-    set_parser_extract_cfg(0, 4, &parser_map->PARSER_EXTRACT_CFG[0][8]);
-    set_parser_extract_cfg(0, 6, &parser_map->PARSER_EXTRACT_CFG[0][9]);
-    set_parser_extract_cfg(0, 8, &parser_map->PARSER_EXTRACT_CFG[0][10]);
-    set_parser_extract_cfg(0, 10, &parser_map->PARSER_EXTRACT_CFG[0][11]);
-    set_parser_extract_cfg(0, 12, &parser_map->PARSER_EXTRACT_CFG[0][12]);
+    set_parser_extract_cfg(0x0, 0x0, &parser_map->PARSER_EXTRACT_CFG[0][6]);
+    set_parser_extract_cfg(0x1, 0x0, &parser_map->PARSER_EXTRACT_CFG[0][12]);
+    set_parser_extract_cfg(0x0, 0x2, &parser_map->PARSER_EXTRACT_CFG[0][7]);
+    set_parser_extract_cfg(0x0, 0x4, &parser_map->PARSER_EXTRACT_CFG[0][8]);
+    set_parser_extract_cfg(0x0, 0x6, &parser_map->PARSER_EXTRACT_CFG[0][9]);
+    set_parser_extract_cfg(0x0, 0x8, &parser_map->PARSER_EXTRACT_CFG[0][10]);
+    set_parser_extract_cfg(0x0, 0xa, &parser_map->PARSER_EXTRACT_CFG[0][11]);
+    set_parser_extract_cfg(0x0, 0xe, &parser_map->PARSER_EXTRACT_CFG[0][14]);
+    set_parser_extract_cfg(0x0, 0x12, &parser_map->PARSER_EXTRACT_CFG[0][15]);
 
-    set_parser_extract_cfg(1, 0, &parser_map->PARSER_EXTRACT_CFG[1][6]);
-    set_parser_extract_cfg(1, 2, &parser_map->PARSER_EXTRACT_CFG[1][7]);
-    set_parser_extract_cfg(1, 4, &parser_map->PARSER_EXTRACT_CFG[1][8]);
-    set_parser_extract_cfg(1, 6, &parser_map->PARSER_EXTRACT_CFG[1][9]);
-    set_parser_extract_cfg(1, 8, &parser_map->PARSER_EXTRACT_CFG[1][10]);
-    set_parser_extract_cfg(1, 10, &parser_map->PARSER_EXTRACT_CFG[1][11]);
-    set_parser_extract_cfg(1, 16, &parser_map->PARSER_EXTRACT_CFG[1][12]);
-    set_parser_extract_cfg(1, 14, &parser_map->PARSER_EXTRACT_CFG[1][14]);
-    set_parser_extract_cfg(1, 14, &parser_map->PARSER_EXTRACT_CFG[1][31]);
+    set_parser_extract_cfg(0x0, 0x0, &parser_map->PARSER_EXTRACT_CFG[1][6]);
+    set_parser_extract_cfg(0x3, 0x0, &parser_map->PARSER_EXTRACT_CFG[1][12]);
+    set_parser_extract_cfg(0x5, 0x0, &parser_map->PARSER_EXTRACT_CFG[1][16]);
+    set_parser_extract_cfg(0x0, 0x2, &parser_map->PARSER_EXTRACT_CFG[1][7]);
+    set_parser_extract_cfg(0x3, 0x2, &parser_map->PARSER_EXTRACT_CFG[1][42]);
+    set_parser_extract_cfg(0x5, 0x2, &parser_map->PARSER_EXTRACT_CFG[1][17]);
+    set_parser_extract_cfg(0x0, 0x4, &parser_map->PARSER_EXTRACT_CFG[1][8]);
+    set_parser_extract_cfg(0x3, 0x4, &parser_map->PARSER_EXTRACT_CFG[1][43]);
+    set_parser_extract_cfg(0x0, 0x6, &parser_map->PARSER_EXTRACT_CFG[1][9]);
+    set_parser_extract_cfg(0x0, 0x8, &parser_map->PARSER_EXTRACT_CFG[1][10]);
+    set_parser_extract_cfg(0x3, 0x8, &parser_map->PARSER_EXTRACT_CFG[1][45]);
+    set_parser_extract_cfg(0x0, 0xa, &parser_map->PARSER_EXTRACT_CFG[1][11]);
+    set_parser_extract_cfg(0x3, 0xa, &parser_map->PARSER_EXTRACT_CFG[1][46]);
+    set_parser_extract_cfg(0x0, 0xe, &parser_map->PARSER_EXTRACT_CFG[1][14]);
+    set_parser_extract_cfg(0x3, 0xe, &parser_map->PARSER_EXTRACT_CFG[1][48]);
+    set_parser_extract_cfg(0x3, 0x10, &parser_map->PARSER_EXTRACT_CFG[1][49]);
+    set_parser_extract_cfg(0x0, 0x12, &parser_map->PARSER_EXTRACT_CFG[1][15]);
+    set_parser_extract_cfg(0x3, 0x12, &parser_map->PARSER_EXTRACT_CFG[1][56]);
+    set_parser_extract_cfg(0x3, 0x14, &parser_map->PARSER_EXTRACT_CFG[1][57]);
 
-    set_parser_ptype_tcam_ram(0xFFFFFFFF, 0x0, 0, 0, &parser_map->PARSER_PTYPE_TCAM[0][0],
-                              &parser_map->PARSER_PTYPE_RAM[0][0]);
-    set_parser_ptype_tcam_ram(0xFFFBFFFF, 0x40000, 1, 1, &parser_map->PARSER_PTYPE_TCAM[0][1],
-                              &parser_map->PARSER_PTYPE_RAM[0][1]);
+    set_parser_extract_cfg(0x0, 0x0, &parser_map->PARSER_EXTRACT_CFG[2][6]);
+    set_parser_extract_cfg(0x3, 0x0, &parser_map->PARSER_EXTRACT_CFG[2][12]);
+    set_parser_extract_cfg(0x5, 0x0, &parser_map->PARSER_EXTRACT_CFG[2][16]);
+    set_parser_extract_cfg(0x6, 0x0, &parser_map->PARSER_EXTRACT_CFG[2][0]);
+    set_parser_extract_cfg(0x8, 0x0, &parser_map->PARSER_EXTRACT_CFG[2][18]);
+    set_parser_extract_cfg(0xa, 0x0, &parser_map->PARSER_EXTRACT_CFG[2][22]);
+    set_parser_extract_cfg(0x0, 0x2, &parser_map->PARSER_EXTRACT_CFG[2][7]);
+    set_parser_extract_cfg(0x3, 0x2, &parser_map->PARSER_EXTRACT_CFG[2][42]);
+    set_parser_extract_cfg(0x5, 0x2, &parser_map->PARSER_EXTRACT_CFG[2][17]);
+    set_parser_extract_cfg(0x6, 0x2, &parser_map->PARSER_EXTRACT_CFG[2][1]);
+    set_parser_extract_cfg(0x8, 0x2, &parser_map->PARSER_EXTRACT_CFG[2][36]);
+    set_parser_extract_cfg(0xa, 0x2, &parser_map->PARSER_EXTRACT_CFG[2][23]);
+    set_parser_extract_cfg(0x0, 0x4, &parser_map->PARSER_EXTRACT_CFG[2][8]);
+    set_parser_extract_cfg(0x3, 0x4, &parser_map->PARSER_EXTRACT_CFG[2][43]);
+    set_parser_extract_cfg(0x6, 0x4, &parser_map->PARSER_EXTRACT_CFG[2][2]);
+    set_parser_extract_cfg(0x8, 0x4, &parser_map->PARSER_EXTRACT_CFG[2][37]);
+    set_parser_extract_cfg(0x0, 0x6, &parser_map->PARSER_EXTRACT_CFG[2][9]);
+    set_parser_extract_cfg(0x6, 0x6, &parser_map->PARSER_EXTRACT_CFG[2][3]);
+    set_parser_extract_cfg(0x0, 0x8, &parser_map->PARSER_EXTRACT_CFG[2][10]);
+    set_parser_extract_cfg(0x3, 0x8, &parser_map->PARSER_EXTRACT_CFG[2][45]);
+    set_parser_extract_cfg(0x6, 0x8, &parser_map->PARSER_EXTRACT_CFG[2][4]);
+    set_parser_extract_cfg(0x8, 0x8, &parser_map->PARSER_EXTRACT_CFG[2][39]);
+    set_parser_extract_cfg(0x0, 0xa, &parser_map->PARSER_EXTRACT_CFG[2][11]);
+    set_parser_extract_cfg(0x3, 0xa, &parser_map->PARSER_EXTRACT_CFG[2][46]);
+    set_parser_extract_cfg(0x6, 0xa, &parser_map->PARSER_EXTRACT_CFG[2][5]);
+    set_parser_extract_cfg(0x8, 0xa, &parser_map->PARSER_EXTRACT_CFG[2][40]);
+    set_parser_extract_cfg(0x5, 0xc, &parser_map->PARSER_EXTRACT_CFG[2][28]);
+    set_parser_extract_cfg(0x0, 0xe, &parser_map->PARSER_EXTRACT_CFG[2][14]);
+    set_parser_extract_cfg(0x3, 0xe, &parser_map->PARSER_EXTRACT_CFG[2][48]);
+    set_parser_extract_cfg(0x5, 0xe, &parser_map->PARSER_EXTRACT_CFG[2][29]);
+    set_parser_extract_cfg(0x6, 0xe, &parser_map->PARSER_EXTRACT_CFG[2][20]);
+    set_parser_extract_cfg(0x8, 0xe, &parser_map->PARSER_EXTRACT_CFG[2][65]);
+    set_parser_extract_cfg(0x3, 0x10, &parser_map->PARSER_EXTRACT_CFG[2][49]);
+    set_parser_extract_cfg(0x8, 0x10, &parser_map->PARSER_EXTRACT_CFG[2][66]);
+    set_parser_extract_cfg(0x0, 0x12, &parser_map->PARSER_EXTRACT_CFG[2][15]);
+    set_parser_extract_cfg(0x3, 0x12, &parser_map->PARSER_EXTRACT_CFG[2][56]);
+    set_parser_extract_cfg(0x6, 0x12, &parser_map->PARSER_EXTRACT_CFG[2][21]);
+    set_parser_extract_cfg(0x8, 0x12, &parser_map->PARSER_EXTRACT_CFG[2][72]);
+    set_parser_extract_cfg(0x3, 0x14, &parser_map->PARSER_EXTRACT_CFG[2][57]);
+    set_parser_extract_cfg(0x8, 0x14, &parser_map->PARSER_EXTRACT_CFG[2][73]);
+
+    set_parser_ptype_tcam_ram
+    (
+        0xffffffff, 0xffffffff, 0, 0x1,
+        &parser_map->PARSER_PTYPE_TCAM[0][0],
+        &parser_map->PARSER_PTYPE_RAM[0][0]
+    );
+
+    set_parser_ptype_tcam_ram
+    (
+        0x00000040, 0x00400000, 1, 0x2,
+        &parser_map->PARSER_PTYPE_TCAM[0][1],
+        &parser_map->PARSER_PTYPE_RAM[0][1]
+    );
+
+    set_parser_ptype_tcam_ram
+    (
+        0x00000040, 0x00400020, 1, 0x4,
+        &parser_map->PARSER_PTYPE_TCAM[0][2],
+        &parser_map->PARSER_PTYPE_RAM[0][2]
+    );
+
+    set_parser_ptype_tcam_ram
+    (
+        0x00000040, 0x00400010, 1, 0x3,
+        &parser_map->PARSER_PTYPE_TCAM[0][3],
+        &parser_map->PARSER_PTYPE_RAM[0][3]
+    );
+
+    set_parser_ptype_tcam_ram
+    (
+        0x01000000, 0x42000010, 2, 0x5,
+        &parser_map->PARSER_PTYPE_TCAM[0][4],
+        &parser_map->PARSER_PTYPE_RAM[0][4]
+    );
 
     set_parser_key_s_reg(0x0, 0x3f, &parser_map->PARSER_KEY_S[0][0]);
     set_parser_key_w_reg(0x0, 0x0, 0x0, 0x0, &parser_map->PARSER_KEY_W[0][0]);
-    set_parser_ana_s_reg(0x6, 0x1ff, 0x0, &parser_map->PARSER_ANA_S[0][0]);
+    set_parser_ana_s_reg(0x3, 0x3f, 0x0, &parser_map->PARSER_ANA_S[0][0]);
     set_parser_ana_w_reg(0xc, 0x0, 0x0, 0xc, &parser_map->PARSER_ANA_W[0][0]);
-    set_parser_exc_reg(0xc, 0, &parser_map->PARSER_EXC[0][0]);
-    set_parser_ext_reg(0x0, 0x0, 0x0, 0, 0x0, &parser_map->PARSER_EXT[0][0]);
-
-    set_parser_key_s_reg(0x2000, 0x203f, &parser_map->PARSER_KEY_S[0][2]);
+    set_parser_exc_reg(0xc, 0x0, &parser_map->PARSER_EXC[0][0]);
+    set_parser_ext_reg(0x0, 0x0, 0x0, 0x0, 0x0, &parser_map->PARSER_EXT[0][0]);
+    set_parser_key_s_reg(0x0, 0x3f, &parser_map->PARSER_KEY_S[0][1]);
+    set_parser_key_w_reg(0x0, 0x0, 0x88a8, 0xffff, &parser_map->PARSER_KEY_W[0][1]);
+    set_parser_ana_s_reg(0x1, 0x3f, 0x0, &parser_map->PARSER_ANA_S[0][1]);
+    set_parser_ana_w_reg(0x10, 0x0, 0x0, 0xc, &parser_map->PARSER_ANA_W[0][1]);
+    set_parser_exc_reg(0x10, 0x0, &parser_map->PARSER_EXC[0][1]);
+    set_parser_ext_reg(0x0, 0x0, 0x1, 0x1, 0x0, &parser_map->PARSER_EXT[0][1]);
+    set_parser_key_s_reg(0x0, 0x3f, &parser_map->PARSER_KEY_S[0][2]);
     set_parser_key_w_reg(0x0, 0x0, 0x8100, 0xffff, &parser_map->PARSER_KEY_W[0][2]);
-    set_parser_ana_s_reg(0x81, 0x1ff, 0x0, &parser_map->PARSER_ANA_S[0][2]);
-    set_parser_ana_w_reg(0x10, 0x12, 0x0, 0xc, &parser_map->PARSER_ANA_W[0][2]);
-    set_parser_exc_reg(0x10, 0, &parser_map->PARSER_EXC[0][2]);
-    set_parser_ext_reg(0x1, 0x0, 0x12, 1, 0x0, &parser_map->PARSER_EXT[0][2]);
+    set_parser_ana_s_reg(0x1, 0x3f, 0x0, &parser_map->PARSER_ANA_S[0][2]);
+    set_parser_ana_w_reg(0x10, 0x0, 0x0, 0xc, &parser_map->PARSER_ANA_W[0][2]);
+    set_parser_exc_reg(0x10, 0x0, &parser_map->PARSER_EXC[0][2]);
+    set_parser_ext_reg(0x0, 0x0, 0x1, 0x1, 0x0, &parser_map->PARSER_EXT[0][2]);
+    set_parser_key_s_reg(0x1, 0x3f, &parser_map->PARSER_KEY_S[1][0]);
+    set_parser_key_w_reg(0x0, 0x0, 0x0, 0x0, &parser_map->PARSER_KEY_W[1][0]);
+    set_parser_ana_s_reg(0x3, 0x3f, 0x0, &parser_map->PARSER_ANA_S[1][0]);
+    set_parser_ana_w_reg(0x4, 0x0, 0x0, 0x4, &parser_map->PARSER_ANA_W[1][0]);
+    set_parser_key_s_reg(0x1, 0x3f, &parser_map->PARSER_KEY_S[1][1]);
+    set_parser_key_w_reg(0x0, 0x0, 0x88a8, 0xffff, &parser_map->PARSER_KEY_W[1][1]);
+    set_parser_ana_s_reg(0x3, 0x3f, 0x0, &parser_map->PARSER_ANA_S[1][1]);
+    set_parser_ana_w_reg(0x8, 0x0, 0x0, 0x8, &parser_map->PARSER_ANA_W[1][1]);
+    set_parser_exc_reg(0x8, 0x0, &parser_map->PARSER_EXC[1][1]);
+    set_parser_ext_reg(0xff, 0x0, 0x2, 0x1, 0x0, &parser_map->PARSER_EXT[1][1]);
+    set_parser_key_s_reg(0x1, 0x3f, &parser_map->PARSER_KEY_S[1][2]);
+    set_parser_key_w_reg(0x0, 0x0, 0x8100, 0xffff, &parser_map->PARSER_KEY_W[1][2]);
+    set_parser_ana_s_reg(0x3, 0x3f, 0x0, &parser_map->PARSER_ANA_S[1][2]);
+    set_parser_ana_w_reg(0x8, 0x0, 0x0, 0x8, &parser_map->PARSER_ANA_W[1][2]);
+    set_parser_exc_reg(0x8, 0x0, &parser_map->PARSER_EXC[1][2]);
+    set_parser_ext_reg(0xff, 0x0, 0x2, 0x1, 0x0, &parser_map->PARSER_EXT[1][2]);
+    set_parser_key_s_reg(0x3, 0x3f, &parser_map->PARSER_KEY_S[2][0]);
+    set_parser_key_w_reg(0x0, 0x0, 0x0, 0x0, &parser_map->PARSER_KEY_W[2][0]);
+    set_parser_ana_s_reg(0x1f, 0x3f, 0x0, &parser_map->PARSER_ANA_S[2][0]);
+    set_parser_ana_w_reg(0x0, 0x0, 0x0, 0x0, &parser_map->PARSER_ANA_W[2][0]);
+    set_parser_exc_reg(0x2, 0x1, &parser_map->PARSER_EXC[2][0]);
+    set_parser_ext_reg(0x1, 0x0, 0x0, 0x0, 0x1, &parser_map->PARSER_EXT[2][0]);
+    set_parser_key_s_reg(0x3, 0x3f, &parser_map->PARSER_KEY_S[2][1]);
+    set_parser_key_w_reg(0x0, 0x0, 0x8847, 0xffff, &parser_map->PARSER_KEY_W[2][1]);
+    set_parser_ana_s_reg(0x2, 0x3f, 0x0, &parser_map->PARSER_ANA_S[2][1]);
+    set_parser_ana_w_reg(0x0, 0x0, 0x0, 0x0, &parser_map->PARSER_ANA_W[2][1]);
+    set_parser_exc_reg(0x2, 0x0, &parser_map->PARSER_EXC[2][1]);
+    set_parser_key_s_reg(0x3, 0x3f, &parser_map->PARSER_KEY_S[2][2]);
+    set_parser_key_w_reg(0x0, 0x0, 0x8848, 0xffff, &parser_map->PARSER_KEY_W[2][2]);
+    set_parser_ana_s_reg(0x2, 0x3f, 0x0, &parser_map->PARSER_ANA_S[2][2]);
+    set_parser_ana_w_reg(0x0, 0x0, 0x0, 0x0, &parser_map->PARSER_ANA_W[2][2]);
+    set_parser_exc_reg(0x2, 0x0, &parser_map->PARSER_EXC[2][2]);
+    set_parser_key_s_reg(0x3, 0x3f, &parser_map->PARSER_KEY_S[2][3]);
+    set_parser_key_w_reg(0x0, 0x0, 0x800, 0xffff, &parser_map->PARSER_KEY_W[2][3]);
+    set_parser_ana_s_reg(0x4, 0x3f, 0x0, &parser_map->PARSER_ANA_S[2][3]);
+    set_parser_ana_w_reg(0x8, 0x0, 0x0, 0x0, &parser_map->PARSER_ANA_W[2][3]);
+    set_parser_exc_reg(0x2, 0x0, &parser_map->PARSER_EXC[2][3]);
+    set_parser_key_s_reg(0x3, 0x3f, &parser_map->PARSER_KEY_S[2][4]);
+    set_parser_key_w_reg(0x0, 0x0, 0x86dd, 0xffff, &parser_map->PARSER_KEY_W[2][4]);
+    set_parser_ana_s_reg(0x5, 0x3f, 0x0, &parser_map->PARSER_ANA_S[2][4]);
+    set_parser_ana_w_reg(0x0, 0x0, 0x0, 0x0, &parser_map->PARSER_ANA_W[2][4]);
+    set_parser_exc_reg(0x2, 0x0, &parser_map->PARSER_EXC[2][4]);
+    set_parser_key_s_reg(0x6, 0x3f, &parser_map->PARSER_KEY_S[3][0]);
+    set_parser_key_w_reg(0x0, 0x0, 0x0, 0x0, &parser_map->PARSER_KEY_W[3][0]);
+    set_parser_ana_s_reg(0x2, 0x3f, 0x0, &parser_map->PARSER_ANA_S[3][0]);
+    set_parser_ana_w_reg(0x4, 0x8, 0x0, 0x2, &parser_map->PARSER_ANA_W[3][0]);
+    set_parser_exc_reg(0x2, 0x0, &parser_map->PARSER_EXC[3][0]);
+    set_parser_ext_reg(0xff, 0x0, 0x15, 0x1, 0x0, &parser_map->PARSER_EXT[3][0]);
+    set_parser_key_s_reg(0x4, 0x3f, &parser_map->PARSER_KEY_S[3][1]);
+    set_parser_key_w_reg(0x0, 0x0, 0x0, 0x0, &parser_map->PARSER_KEY_W[3][1]);
+    set_parser_ana_s_reg(0x87, 0xbf, 0x603c, &parser_map->PARSER_ANA_S[3][1]);
+    set_parser_ana_w_reg(0x2, 0xa, 0x2, 0x2, &parser_map->PARSER_ANA_W[3][1]);
+    set_parser_exc_reg(0x2, 0x0, &parser_map->PARSER_EXC[3][1]);
+    set_parser_ext_reg(0x3, 0x0, 0xb, 0x1, 0x2, &parser_map->PARSER_EXT[3][1]);
+    set_parser_key_s_reg(0x4, 0x3f, &parser_map->PARSER_KEY_S[3][2]);
+    set_parser_key_w_reg(0x0, 0x0, 0x0, 0x3fff, &parser_map->PARSER_KEY_W[3][2]);
+    set_parser_ana_s_reg(0x7, 0xbf, 0x603c, &parser_map->PARSER_ANA_S[3][2]);
+    set_parser_ana_w_reg(0x2, 0xa, 0x2, 0x2, &parser_map->PARSER_ANA_W[3][2]);
+    set_parser_exc_reg(0x2, 0x0, &parser_map->PARSER_EXC[3][2]);
+    set_parser_ext_reg(0x3, 0x0, 0x0, 0x0, 0x2, &parser_map->PARSER_EXT[3][2]);
+    set_parser_key_s_reg(0x4, 0x3f, &parser_map->PARSER_KEY_S[3][3]);
+    set_parser_key_w_reg(0x0, 0x0, 0x2000, 0x3fff, &parser_map->PARSER_KEY_W[3][3]);
+    set_parser_ana_s_reg(0x7, 0xbf, 0x603c, &parser_map->PARSER_ANA_S[3][3]);
+    set_parser_ana_w_reg(0x2, 0xa, 0x2, 0x2, &parser_map->PARSER_ANA_W[3][3]);
+    set_parser_exc_reg(0x2, 0x0, &parser_map->PARSER_EXC[3][3]);
+    set_parser_ext_reg(0x3, 0x0, 0xa, 0x1, 0x2, &parser_map->PARSER_EXT[3][3]);
+    set_parser_key_s_reg(0x5, 0x3f, &parser_map->PARSER_KEY_S[3][4]);
+    set_parser_key_w_reg(0x0, 0x0, 0x0, 0x0, &parser_map->PARSER_KEY_W[3][4]);
+    set_parser_ana_s_reg(0x8, 0x3f, 0x0, &parser_map->PARSER_ANA_S[3][4]);
+    set_parser_ana_w_reg(0x2, 0x8, 0x0, 0x2, &parser_map->PARSER_ANA_W[3][4]);
+    set_parser_exc_reg(0x2, 0x0, &parser_map->PARSER_EXC[3][4]);
+    set_parser_key_s_reg(0x7, 0x3f, &parser_map->PARSER_KEY_S[9][0]);
+    set_parser_key_w_reg(0x0, 0x0, 0x0, 0x0, &parser_map->PARSER_KEY_W[9][0]);
+    set_parser_ana_s_reg(0x0, 0x0, 0x0, &parser_map->PARSER_ANA_S[9][0]);
+    set_parser_ana_w_reg(0x0, 0x0, 0x0, 0x0, &parser_map->PARSER_ANA_W[9][0]);
+    set_parser_exc_reg(0x14, 0x1, &parser_map->PARSER_EXC[9][0]);
+    set_parser_ext_reg(0xff, 0x0, 0x16, 0x1, 0x0, &parser_map->PARSER_EXT[9][0]);
+    set_parser_key_s_reg(0x7, 0xbf, &parser_map->PARSER_KEY_S[9][1]);
+    set_parser_key_w_reg(0x6, 0xff, 0x0, 0x0, &parser_map->PARSER_KEY_W[9][1]);
+    set_parser_ana_s_reg(0x9, 0x3f, 0x0, &parser_map->PARSER_ANA_S[9][1]);
+    set_parser_ana_w_reg(0x0, 0x0, 0x0, 0x0, &parser_map->PARSER_ANA_W[9][1]);
+    set_parser_exc_reg(0x14, 0x0, &parser_map->PARSER_EXC[9][1]);
+    set_parser_ext_reg(0xff, 0x0, 0x16, 0x1, 0x0, &parser_map->PARSER_EXT[9][1]);
+    set_parser_key_s_reg(0x7, 0xbf, &parser_map->PARSER_KEY_S[9][2]);
+    set_parser_key_w_reg(0x11, 0xff, 0x0, 0x0, &parser_map->PARSER_KEY_W[9][2]);
+    set_parser_ana_s_reg(0xa, 0x3f, 0x0, &parser_map->PARSER_ANA_S[9][2]);
+    set_parser_ana_w_reg(0x0, 0x2, 0x0, 0x0, &parser_map->PARSER_ANA_W[9][2]);
+    set_parser_exc_reg(0x14, 0x0, &parser_map->PARSER_EXC[9][2]);
+    set_parser_ext_reg(0xff, 0x0, 0x16, 0x1, 0x0, &parser_map->PARSER_EXT[9][2]);
+    set_parser_key_s_reg(0x9, 0x3f, &parser_map->PARSER_KEY_S[21][0]);
+    set_parser_key_w_reg(0x0, 0x0, 0x0, 0x0, &parser_map->PARSER_KEY_W[21][0]);
+    set_parser_ana_s_reg(0x0, 0x0, 0x0, &parser_map->PARSER_ANA_S[21][0]);
+    set_parser_ana_w_reg(0x0, 0x0, 0x0, 0x0, &parser_map->PARSER_ANA_W[21][0]);
+    set_parser_exc_reg(0x12, 0x1, &parser_map->PARSER_EXC[21][0]);
+    set_parser_ext_reg(0x5, 0x0, 0x17, 0x1, 0x3, &parser_map->PARSER_EXT[21][0]);
+    set_parser_ext_reg(0xff, 0x0, 0x5, 0x1, 0x0, &parser_map->PARSER_EXT[21][16]);
+    set_parser_key_s_reg(0xa, 0x3f, &parser_map->PARSER_KEY_S[21][1]);
+    set_parser_key_w_reg(0x0, 0x0, 0x0, 0x0, &parser_map->PARSER_KEY_W[21][1]);
+    set_parser_ana_s_reg(0x0, 0x0, 0x0, &parser_map->PARSER_ANA_S[21][1]);
+    set_parser_ana_w_reg(0x0, 0x0, 0x0, 0x0, &parser_map->PARSER_ANA_W[21][1]);
+    set_parser_exc_reg(0x8, 0x1, &parser_map->PARSER_EXC[21][1]);
+    set_parser_ext_reg(0xff, 0x0, 0x17, 0x1, 0x0, &parser_map->PARSER_EXT[21][17]);
+    set_parser_ext_reg(0x5, 0x0, 0x4, 0x1, 0x3, &parser_map->PARSER_EXT[21][1]);
+    set_parser_key_s_reg(0xa, 0x3f, &parser_map->PARSER_KEY_S[21][2]);
+    set_parser_key_w_reg(0x12b5, 0xffff, 0x0, 0x0, &parser_map->PARSER_KEY_W[21][2]);
+    set_parser_ana_s_reg(0x10, 0x3f, 0x0, &parser_map->PARSER_ANA_S[21][2]);
+    set_parser_ana_w_reg(0x1c, 0x0, 0x0, 0x10, &parser_map->PARSER_ANA_W[21][2]);
+    set_parser_exc_reg(0x10, 0x0, &parser_map->PARSER_EXC[21][2]);
+    set_parser_ext_reg(0xff, 0x0, 0x4, 0x1, 0x0, &parser_map->PARSER_EXT[21][18]);
+    set_parser_ext_reg(0x5, 0x0, 0x17, 0x1, 0x3, &parser_map->PARSER_EXT[21][2]);
+    set_parser_key_s_reg(0x10, 0x3f, &parser_map->PARSER_KEY_S[23][0]);
+    set_parser_key_w_reg(0x0, 0x0, 0x0, 0x0, &parser_map->PARSER_KEY_W[23][0]);
+    set_parser_ana_s_reg(0x14, 0x3f, 0x0, &parser_map->PARSER_ANA_S[23][0]);
+    set_parser_ana_w_reg(0xc, 0x0, 0x0, 0xc, &parser_map->PARSER_ANA_W[23][0]);
+    set_parser_exc_reg(0xc, 0x0, &parser_map->PARSER_EXC[23][0]);
+    set_parser_ext_reg(0x6, 0x0, 0x19, 0x1, 0x4, &parser_map->PARSER_EXT[23][0]);
+    set_parser_key_s_reg(0x10, 0x3f, &parser_map->PARSER_KEY_S[23][1]);
+    set_parser_key_w_reg(0x0, 0x0, 0x88a8, 0xffff, &parser_map->PARSER_KEY_W[23][1]);
+    set_parser_ana_s_reg(0x11, 0x3f, 0x0, &parser_map->PARSER_ANA_S[23][1]);
+    set_parser_ana_w_reg(0x10, 0x0, 0x0, 0xc, &parser_map->PARSER_ANA_W[23][1]);
+    set_parser_exc_reg(0xc, 0x0, &parser_map->PARSER_EXC[23][1]);
+    set_parser_ext_reg(0xff, 0x0, 0x1a, 0x1, 0x0, &parser_map->PARSER_EXT[23][17]);
+    set_parser_ext_reg(0x6, 0x0, 0x19, 0x1, 0x4, &parser_map->PARSER_EXT[23][1]);
+    set_parser_key_s_reg(0x10, 0x3f, &parser_map->PARSER_KEY_S[23][2]);
+    set_parser_key_w_reg(0x0, 0x0, 0x8100, 0xffff, &parser_map->PARSER_KEY_W[23][2]);
+    set_parser_ana_s_reg(0x11, 0x3f, 0x0, &parser_map->PARSER_ANA_S[23][2]);
+    set_parser_ana_w_reg(0x10, 0x0, 0x0, 0xc, &parser_map->PARSER_ANA_W[23][2]);
+    set_parser_exc_reg(0xc, 0x0, &parser_map->PARSER_EXC[23][2]);
+    set_parser_ext_reg(0xff, 0x0, 0x1a, 0x1, 0x0, &parser_map->PARSER_EXT[23][18]);
+    set_parser_ext_reg(0x6, 0x0, 0x19, 0x1, 0x4, &parser_map->PARSER_EXT[23][2]);
+    set_parser_key_s_reg(0x11, 0x3f, &parser_map->PARSER_KEY_S[24][0]);
+    set_parser_key_w_reg(0x0, 0x0, 0x0, 0x0, &parser_map->PARSER_KEY_W[24][0]);
+    set_parser_ana_s_reg(0x14, 0x3f, 0x0, &parser_map->PARSER_ANA_S[24][0]);
+    set_parser_ana_w_reg(0x4, 0x0, 0x0, 0x4, &parser_map->PARSER_ANA_W[24][0]);
+    set_parser_key_s_reg(0x11, 0x3f, &parser_map->PARSER_KEY_S[24][1]);
+    set_parser_key_w_reg(0x0, 0x0, 0x88a8, 0xffff, &parser_map->PARSER_KEY_W[24][1]);
+    set_parser_ana_s_reg(0x3, 0x3f, 0x0, &parser_map->PARSER_ANA_S[24][1]);
+    set_parser_ana_w_reg(0x8, 0x0, 0x0, 0x8, &parser_map->PARSER_ANA_W[24][1]);
+    set_parser_exc_reg(0x8, 0x0, &parser_map->PARSER_EXC[24][1]);
+    set_parser_ext_reg(0xff, 0x0, 0x1b, 0x1, 0x0, &parser_map->PARSER_EXT[24][1]);
+    set_parser_key_s_reg(0x11, 0x3f, &parser_map->PARSER_KEY_S[24][2]);
+    set_parser_key_w_reg(0x0, 0x0, 0x8100, 0xffff, &parser_map->PARSER_KEY_W[24][2]);
+    set_parser_ana_s_reg(0x3, 0x3f, 0x0, &parser_map->PARSER_ANA_S[24][2]);
+    set_parser_ana_w_reg(0x8, 0x0, 0x0, 0x8, &parser_map->PARSER_ANA_W[24][2]);
+    set_parser_exc_reg(0x8, 0x0, &parser_map->PARSER_EXC[24][2]);
+    set_parser_ext_reg(0xff, 0x0, 0x1b, 0x1, 0x0, &parser_map->PARSER_EXT[24][2]);
+    set_parser_key_s_reg(0x14, 0x3f, &parser_map->PARSER_KEY_S[25][0]);
+    set_parser_key_w_reg(0x0, 0x0, 0x0, 0x0, &parser_map->PARSER_KEY_W[25][0]);
+    set_parser_ana_s_reg(0x1f, 0x3f, 0x0, &parser_map->PARSER_ANA_S[25][0]);
+    set_parser_ana_w_reg(0x0, 0x0, 0x0, 0x0, &parser_map->PARSER_ANA_W[25][0]);
+    set_parser_exc_reg(0x2, 0x1, &parser_map->PARSER_EXC[25][0]);
+    set_parser_ext_reg(0x7, 0x0, 0x0, 0x0, 0x5, &parser_map->PARSER_EXT[25][0]);
+    set_parser_key_s_reg(0x14, 0x3f, &parser_map->PARSER_KEY_S[25][1]);
+    set_parser_key_w_reg(0x0, 0x0, 0x8847, 0xffff, &parser_map->PARSER_KEY_W[25][1]);
+    set_parser_ana_s_reg(0x2, 0x3f, 0x0, &parser_map->PARSER_ANA_S[25][1]);
+    set_parser_ana_w_reg(0x0, 0x0, 0x0, 0x0, &parser_map->PARSER_ANA_W[25][1]);
+    set_parser_exc_reg(0x2, 0x0, &parser_map->PARSER_EXC[25][1]);
+    set_parser_key_s_reg(0x14, 0x3f, &parser_map->PARSER_KEY_S[25][2]);
+    set_parser_key_w_reg(0x0, 0x0, 0x8848, 0xffff, &parser_map->PARSER_KEY_W[25][2]);
+    set_parser_ana_s_reg(0x2, 0x3f, 0x0, &parser_map->PARSER_ANA_S[25][2]);
+    set_parser_ana_w_reg(0x0, 0x0, 0x0, 0x0, &parser_map->PARSER_ANA_W[25][2]);
+    set_parser_exc_reg(0x2, 0x0, &parser_map->PARSER_EXC[25][2]);
+    set_parser_key_s_reg(0x14, 0x3f, &parser_map->PARSER_KEY_S[25][3]);
+    set_parser_key_w_reg(0x0, 0x0, 0x800, 0xffff, &parser_map->PARSER_KEY_W[25][3]);
+    set_parser_ana_s_reg(0x15, 0x3f, 0x0, &parser_map->PARSER_ANA_S[25][3]);
+    set_parser_ana_w_reg(0x8, 0x0, 0x0, 0x0, &parser_map->PARSER_ANA_W[25][3]);
+    set_parser_exc_reg(0x2, 0x0, &parser_map->PARSER_EXC[25][3]);
+    set_parser_key_s_reg(0x14, 0x3f, &parser_map->PARSER_KEY_S[25][4]);
+    set_parser_key_w_reg(0x0, 0x0, 0x86dd, 0xffff, &parser_map->PARSER_KEY_W[25][4]);
+    set_parser_ana_s_reg(0x16, 0x3f, 0x0, &parser_map->PARSER_ANA_S[25][4]);
+    set_parser_ana_w_reg(0x0, 0x0, 0x0, 0x0, &parser_map->PARSER_ANA_W[25][4]);
+    set_parser_exc_reg(0x2, 0x0, &parser_map->PARSER_EXC[25][4]);
+    set_parser_key_s_reg(0x17, 0x3f, &parser_map->PARSER_KEY_S[26][0]);
+    set_parser_key_w_reg(0x0, 0x0, 0x0, 0x0, &parser_map->PARSER_KEY_W[26][0]);
+    set_parser_ana_s_reg(0x13, 0x3f, 0x0, &parser_map->PARSER_ANA_S[26][0]);
+    set_parser_ana_w_reg(0x4, 0x8, 0x0, 0x2, &parser_map->PARSER_ANA_W[26][0]);
+    set_parser_exc_reg(0x2, 0x1, &parser_map->PARSER_EXC[26][0]);
+    set_parser_ext_reg(0xff, 0x0, 0x15, 0x1, 0x0, &parser_map->PARSER_EXT[26][0]);
+    set_parser_key_s_reg(0x15, 0x3f, &parser_map->PARSER_KEY_S[26][1]);
+    set_parser_key_w_reg(0x0, 0x0, 0x0, 0x0, &parser_map->PARSER_KEY_W[26][1]);
+    set_parser_ana_s_reg(0x18, 0x3f, 0x603c, &parser_map->PARSER_ANA_S[26][1]);
+    set_parser_ana_w_reg(0x2, 0xa, 0x2, 0x2, &parser_map->PARSER_ANA_W[26][1]);
+    set_parser_exc_reg(0x2, 0x0, &parser_map->PARSER_EXC[26][1]);
+    set_parser_ext_reg(0x8, 0x0, 0x0, 0x0, 0x6, &parser_map->PARSER_EXT[26][1]);
+    set_parser_key_s_reg(0x16, 0x3f, &parser_map->PARSER_KEY_S[26][2]);
+    set_parser_key_w_reg(0x0, 0x0, 0x0, 0x0, &parser_map->PARSER_KEY_W[26][2]);
+    set_parser_ana_s_reg(0x19, 0x3f, 0x0, &parser_map->PARSER_ANA_S[26][2]);
+    set_parser_ana_w_reg(0x2, 0x8, 0x0, 0x2, &parser_map->PARSER_ANA_W[26][2]);
+    set_parser_exc_reg(0x2, 0x1, &parser_map->PARSER_EXC[26][2]);
+    set_parser_ext_reg(0x9, 0x0, 0x0, 0x0, 0x6, &parser_map->PARSER_EXT[26][2]);
+    set_parser_key_s_reg(0x18, 0x3f, &parser_map->PARSER_KEY_S[27][0]);
+    set_parser_key_w_reg(0x0, 0x0, 0x0, 0x0, &parser_map->PARSER_KEY_W[27][0]);
+    set_parser_ana_s_reg(0x0, 0x0, 0x0, &parser_map->PARSER_ANA_S[27][0]);
+    set_parser_ana_w_reg(0x0, 0x0, 0x0, 0x0, &parser_map->PARSER_ANA_W[27][0]);
+    set_parser_exc_reg(0x14, 0x1, &parser_map->PARSER_EXC[27][0]);
+    set_parser_ext_reg(0xff, 0x0, 0x1e, 0x1, 0x0, &parser_map->PARSER_EXT[27][0]);
+    set_parser_key_s_reg(0x18, 0x3f, &parser_map->PARSER_KEY_S[27][1]);
+    set_parser_key_w_reg(0x6, 0xff, 0x0, 0x0, &parser_map->PARSER_KEY_W[27][1]);
+    set_parser_ana_s_reg(0x9, 0x3f, 0x0, &parser_map->PARSER_ANA_S[27][1]);
+    set_parser_ana_w_reg(0x0, 0x0, 0x0, 0x0, &parser_map->PARSER_ANA_W[27][1]);
+    set_parser_exc_reg(0x14, 0x0, &parser_map->PARSER_EXC[27][1]);
+    set_parser_ext_reg(0xff, 0x0, 0x1e, 0x1, 0x0, &parser_map->PARSER_EXT[27][1]);
+    set_parser_key_s_reg(0x18, 0x3f, &parser_map->PARSER_KEY_S[27][2]);
+    set_parser_key_w_reg(0x11, 0xff, 0x0, 0x0, &parser_map->PARSER_KEY_W[27][2]);
+    set_parser_ana_s_reg(0xa, 0x3f, 0x0, &parser_map->PARSER_ANA_S[27][2]);
+    set_parser_ana_w_reg(0x0, 0x2, 0x0, 0x0, &parser_map->PARSER_ANA_W[27][2]);
+    set_parser_exc_reg(0x14, 0x0, &parser_map->PARSER_EXC[27][2]);
+    set_parser_ext_reg(0xff, 0x0, 0x1e, 0x1, 0x0, &parser_map->PARSER_EXT[27][2]);
+    set_parser_key_s_reg(0x9, 0x3f, &parser_map->PARSER_KEY_S[28][0]);
+    set_parser_key_w_reg(0x0, 0x0, 0x0, 0x0, &parser_map->PARSER_KEY_W[28][0]);
+    set_parser_ana_s_reg(0x1f, 0x3f, 0x0, &parser_map->PARSER_ANA_S[28][0]);
+    set_parser_ana_w_reg(0x0, 0x0, 0x0, 0x0, &parser_map->PARSER_ANA_W[28][0]);
+    set_parser_exc_reg(0x12, 0x1, &parser_map->PARSER_EXC[28][0]);
+    set_parser_ext_reg(0xa, 0x0, 0x1f, 0x1, 0x7, &parser_map->PARSER_EXT[28][0]);
+    set_parser_key_s_reg(0xa, 0x3f, &parser_map->PARSER_KEY_S[28][1]);
+    set_parser_key_w_reg(0x0, 0x0, 0x0, 0x0, &parser_map->PARSER_KEY_W[28][1]);
+    set_parser_ana_s_reg(0x1f, 0x3f, 0x0, &parser_map->PARSER_ANA_S[28][1]);
+    set_parser_ana_w_reg(0x0, 0x0, 0x0, 0x0, &parser_map->PARSER_ANA_W[28][1]);
+    set_parser_exc_reg(0x8, 0x1, &parser_map->PARSER_EXC[28][1]);
+    set_parser_ext_reg(0xa, 0x0, 0x1f, 0x1, 0x7, &parser_map->PARSER_EXT[28][1]);
 
     // Keep old parser config for now
 #if 0
@@ -2166,7 +2472,7 @@ void mby_init_common_regs
     flood_glort_table->FLOOD_MULTICAST_GLORT = 0x0400;
     flood_glort_table->FLOOD_UNICAST_GLORT   = 0x0400;
 
-    for (fm_uint i = 0; i < 18/* Number of ports? */; i++) {
+    for (fm_uint i = 0; i < mby_ppe_mapper_map_MAP_PORT_DEFAULT__nd; i++) {
         map_port_default_r * map_port_default = &(rx_top_map->mapper.MAP_PORT_DEFAULT[i][0]);
 
         map_port_default->TARGET = 0x52;
@@ -2192,11 +2498,22 @@ void mby_init_common_regs
     /* Init some defaults for now <-- REVISIT!!! */
 
     for (fm_uint i = 0; i < 18/* Number of ports? */; i++) {
-        fwd_port_cfg_1_r * const port_cfg_1 = &(rx_top_map->fwd_misc.FWD_PORT_CFG_1[i]);
+        fwd_port_cfg_0_r * const port_cfg_0 = &(rx_top_map->fwd_misc.FWD_PORT_CFG_0[i]);
 
-        port_cfg_1->LEARNING_ENABLE     = 0x1;
-        port_cfg_1->FILTER_VLAN_INGRESS = 0x1;
-        port_cfg_1->DESTINATION_MASK    = 0x3ffff;
+        port_cfg_0->LEARNING_ENABLE     = 0x1;
+        port_cfg_0->FILTER_VLAN_INGRESS = 0x1;
+
+        fwd_port_cfg_1_0_r * const port_cfg_1_0 = &(rx_top_map->fwd_misc.FWD_PORT_CFG_1_0[i]);
+        fwd_port_cfg_1_1_r * const port_cfg_1_1 = &(rx_top_map->fwd_misc.FWD_PORT_CFG_1_1[i]);
+        fwd_port_cfg_1_2_r * const port_cfg_1_2 = &(rx_top_map->fwd_misc.FWD_PORT_CFG_1_2[i]);
+        fwd_port_cfg_1_3_r * const port_cfg_1_3 = &(rx_top_map->fwd_misc.FWD_PORT_CFG_1_3[i]);
+        fwd_port_cfg_1_4_r * const port_cfg_1_4 = &(rx_top_map->fwd_misc.FWD_PORT_CFG_1_4[i]);
+
+        port_cfg_1_0->DESTINATION_MASK = ~0uL;
+        port_cfg_1_1->DESTINATION_MASK = ~0uL;
+        port_cfg_1_2->DESTINATION_MASK = ~0uL;
+        port_cfg_1_3->DESTINATION_MASK = ~0uL;
+        port_cfg_1_4->DESTINATION_MASK = 0x1;
     }
 
     for (fm_uint i = 0; i < 256; i++) {

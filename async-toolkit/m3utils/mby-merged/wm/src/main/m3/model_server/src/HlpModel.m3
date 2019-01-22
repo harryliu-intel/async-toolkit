@@ -5,7 +5,7 @@ IMPORT hlp_top_map_addr AS MapAddr;
 IMPORT ServerPacket AS Pkt;
 IMPORT FmModelMessageHdr;
 IMPORT FmModelConstants;
-IMPORT HlpModelServer;
+IMPORT HlpModelServer, ModelServerSuper;
 IMPORT Debug;
 IMPORT BaseModelStage;
 IMPORT Metadata;
@@ -103,11 +103,11 @@ PROCEDURE FloodPktHandler(READONLY hdr : FmModelMessageHdr.T;
     END
   END FloodPktHandler;
 
-PROCEDURE SetupHlp(<*UNUSED*>server : HlpModelServer.T;
+PROCEDURE Setup(<*UNUSED*>server : ModelServerSuper.T;
                    <*UNUSED*>READONLY read : Map.T;
                    READONLY update : MapAddr.Update) =
   BEGIN
-    Debug.Out("SetupHlp");
+    Debug.Out("HlpModel.Setup");
     
     update.Imn.BsmScratch3[509].Data.u(16_1109);
     (* match fpps_mgmt.c:546 *)
@@ -115,6 +115,6 @@ PROCEDURE SetupHlp(<*UNUSED*>server : HlpModelServer.T;
     update.Imn.FuseData[3].Data.u(16_6);
     (* match fpps_switch.c:481 *)
     
-  END SetupHlp;
+  END Setup;
 
 BEGIN END HlpModel.

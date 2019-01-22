@@ -1,7 +1,7 @@
 // INTEL TOP SECRET
 // Copyright 2014 Intel Corporation. All Rights Reserved.
 //
-`include "lib_udp.rdl"
+`include "mby_lib_udp.rdl"
 <% use security; %>
 <% my %Security_Props = security::GetSecurityInfo(); %>
 
@@ -426,7 +426,7 @@ reg trigger_condition_rx_r {
             from.
            ";
     ValRandomize = true;
-  } SRC_PORT_MASK[17:0] = 18'h000;
+  } SRC_PORT_MASK[16:0] = 17'h000;
 };
 
 

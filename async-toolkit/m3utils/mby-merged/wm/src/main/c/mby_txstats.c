@@ -2,7 +2,6 @@
 
 // Copyright (C) 2018 Intel Corporation
 
-#include "mby_modifier.h"
 #include "mby_txstats.h"
 
 static fm_uint64 incrTxCounter(const fm_uint64 cnt_in, const fm_uint64 inc)
@@ -24,6 +23,7 @@ static void updateTxStatsBank
     const fm_uint16 index
 )
 {
+#ifdef USE_OLD_CSRS // FIXME!!!
     // Update (read/modify/write) frame count:
     fm_uint64 mod_stats_bank_frame_reg = 0;
     mbyModelReadCSR64(regs, MBY_MOD_STATS_BANK_FRAME(index, 0), &mod_stats_bank_frame_reg);
@@ -40,15 +40,17 @@ static void updateTxStatsBank
     byte_cnt = incrTxCounter(byte_cnt, len);
     FM_SET_FIELD64(mod_stats_bank_byte_reg, MBY_MOD_STATS_BANK_BYTE, BYTE_COUNTER, byte_cnt);
     mbyModelWriteCSR64(regs, MBY_MOD_STATS_BANK_BYTE(index, 0), mod_stats_bank_byte_reg);
+#endif
 }
 
 void TxStats
 (
     fm_uint32                          regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyModifierToTxStats * const in,
-          mbyTxStatsToTxMac    * const out
+    mbyModifierToTxStats const * const in,
+    mbyTxStatsToTxMac          * const out
 )
 {
+#ifdef USE_OLD_CSRS // FIXME!!!
     // Read inputs:
     const fm_uint32 tx_port         = in->TX_PORT;
     const fm_uint16 tx_disp         = in->TX_DISP;
@@ -61,7 +63,6 @@ void TxStats
     // Write outputs:
 
     // Pass thru:
-    out->TX_DATA   = in->TX_DATA;
-    out->TX_LENGTH = in->TX_LENGTH;
     out->TX_PORT   = tx_port;
+#endif
 }

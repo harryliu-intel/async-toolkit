@@ -1,7 +1,7 @@
 // INTEL TOP SECRET
 // Copyright 2014 Intel Corporation. All Rights Reserved.
 //
-`include "lib_udp.rdl"
+`include "mby_lib_udp.rdl"
 <% use security; %>
 <% my %Security_Props = security::GetSecurityInfo(); %>
 
@@ -489,15 +489,15 @@ reg glort_direct_map_dst4_r {
             RXQ_MCAST_DEST_TABLE.
            ";
     ValRandomize = true;
-  } IP_MULTICAST_INDEX[13:2] = 12'h00;
+  } IP_MULTICAST_INDEX[12:1] = 12'h00;
   field {
     AccessType = "RW";
     desc = "
-            Contains bits 256..257 of the 258-bit destination port mask (not 
+            Contains bits 256.. of the 257-bit destination port mask (not 
             including logged or mirrored copies of the packet).
            ";
     ValRandomize = true;
-  } DEST_MASK[1:0] = 2'h00;
+  } DEST_MASK[0:0] = 1'h0;
 };
 
 
@@ -689,8 +689,8 @@ addrmap mby_ppe_mst_glort_map {
   glort_direct_map_dst2_r GLORT_DIRECT_MAP_DST2   ;
   glort_direct_map_dst3_r GLORT_DIRECT_MAP_DST3   ;
   glort_direct_map_dst4_r GLORT_DIRECT_MAP_DST4   ;
-  glort_ram_r             GLORT_RAM[64]           ;
-  glort_cam_r             GLORT_CAM[64]           ;
+  glort_ram_r             GLORT_RAM[512]           ;
+  glort_cam_r             GLORT_CAM[512]           ;
   cgrp_used_table_r       CGRP_USED_TABLE[65]     ;
 };
 

@@ -12,7 +12,7 @@ BUILD_OPTS += -timescale=1ps/1ps
 #BUILD_OPTS += +define+VCSSIM
 #BUILD_OPTS += +define+SHRTL_LIB_MODEL
 BUILD_OPTS += +define+MBY_IGR_BEHAVE_MEMS
-BUILD_OPTS += +define+MBY_IGR_TAG_BEHAVE_MEMS
+BUILD_OPTS += +define+MBY_POST_PPE_BEHAVE_MEMS
 BUILD_OPTS += +define+MBY_MSH_BEHAVE_MEMS
 
 # Use Fake Mem for speedy simulation

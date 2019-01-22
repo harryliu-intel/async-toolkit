@@ -4,7 +4,6 @@ IMPORT RegReg, RegGenState, RegRegfile, RegAddrmap;
 IMPORT OSError, Thread, Wr;
 IMPORT Pathname, RegCGenState;
 IMPORT Wx;
-IMPORT BigInt;
 FROM Compiler IMPORT ThisFile, ThisLine;
 IMPORT Fmt;
 FROM Fmt IMPORT Int, F;
@@ -16,14 +15,15 @@ IMPORT TextTopoSort;
 IMPORT FileWr;
 IMPORT RegContainer;
 IMPORT TextSeq;
-FROM GenCUtils IMPORT FmtConstant, PutXDecls, FmtArrSz, Variant, FieldType,
-                      FmtFieldType, FmtFieldModifier, ArrSz;
+IMPORT GenCUtils, GenScmUtils;
+FROM GenScmUtils IMPORT PutSDecls;
+FROM GenCUtils   IMPORT PutXDecls, Variant, FieldType,
+                        FmtFieldType, FmtFieldModifier, ArrSz;
+
 
 TYPE CGPhase = RegCGenState.Phase;
 
-<*FATAL BigInt.OutOfRange*>
-
-VAR doDebug := Debug.DebugThis("REGC");
+VAR doDebug := Debug.DebugThis("REGC");<*NOWARN*>
 
 REVEAL
   T = GenViewsC.Compiler BRANDED Brand OBJECT
@@ -31,17 +31,20 @@ REVEAL
     write := Write;
   END;
 
-PROCEDURE Write(t : T; dirPath : Pathname.T; <*UNUSED*>phase : Phase)
+PROCEDURE Write(t               : T;
+                dirPath         : Pathname.T;
+                <*UNUSED*>phase : Phase)
   RAISES { Wr.Failure, Thread.Alerted, OSError.E } =
   VAR
-    wxTbl := NEW(TextRefTbl.Default).init();
+    wxTbl               := NEW(TextRefTbl.Default).init();
     gs : RegCGenState.T := NEW(RegCGenState.T,
-                               wxTbl := wxTbl,
-                               map := t.map,
-                               topo := NEW(TextTopoSort.T).init()).init(dirPath);
-    intfNm := t.map.intfName(gs);
-    fn := intfNm & ".h";
-    path := dirPath & "/" & fn;
+                               wxTbl  := wxTbl,
+                               map    := t.map,
+                               topo   := NEW(TextTopoSort.T).init()).
+                                                           init(dirPath);
+    intfNm              := t.map.intfName(gs);
+    fn                  := intfNm & ".h";
+    path                := dirPath & "/" & fn;
   BEGIN
     FOR ph := FIRST(CGPhase) TO LAST(CGPhase) DO
       EVAL RegGenState.T.init(gs, gs.dirPath); (* clear symbol table *)
@@ -116,9 +119,9 @@ PROCEDURE Write(t : T; dirPath : Pathname.T; <*UNUSED*>phase : Phase)
       Wr.Close(wr)
     END;
 
-    WITH fn = intfNm & "_build.c",
+    WITH fn   = intfNm & "_build.c",
          path = dirPath & "/" & fn,
-         wr = FileWr.Open(path) DO
+         wr   = FileWr.Open(path) DO
       Wr.PutText(wr, F("#include \"%s.h\"\n", intfNm));
       Wr.PutText(wr, F("#include <stdlib.h>\n\n"));     
       Wr.PutText(wr, F("void\n"));
@@ -134,10 +137,17 @@ PROCEDURE Write(t : T; dirPath : Pathname.T; <*UNUSED*>phase : Phase)
       Wr.PutText(wr, F("}\n"));
       Wr.Close(wr)
     END;
-    
-    WITH fn = "m3makefile",
+
+    WITH fn   = intfNm & ".scm",
          path = dirPath & "/" & fn,
-         wr = FileWr.Open(path) DO
+         wr   = FileWr.Open(path) DO
+      Wr.PutText(wr, Wx.ToText(gs.wx[RegCGenState.Section.Scheme]));
+      Wr.Close(wr)
+    END;
+    
+    WITH fn   = "m3makefile",
+         path = dirPath & "/" & fn,
+         wr   = FileWr.Open(path) DO
       Wr.PutText(wr, F("SYSTEM_CC = SYSTEM_CC & \" -I../../../../../../c -std=gnu99\"\n"));
       Wr.PutText(wr, F("import(\"libm3\")\n"));
       Wr.PutText(wr, F("c_source(\"%s\")\n",intfNm));
@@ -155,12 +165,14 @@ CONST
   Phases = ARRAY OF Variant { Variant { FieldType.UInt,       "" },
                               Variant { FieldType.Pointer, "__addr" } };
 
-PROCEDURE GenRegStruct(r : RegReg.T; genState : RegGenState.T)
+PROCEDURE GenRegStruct(r        : RegReg.T;
+                       genState : RegGenState.T)
   RAISES { OSError.E, Thread.Alerted, Wr.Failure } =
   VAR
     gs : RegCGenState.T := genState;
     myTn                := r.typeName(gs);
     xDecls              := NEW(TextSeq.T).init();
+    sDecls              := NEW(TextSeq.T).init();
   BEGIN
     IF NOT gs.newSymbol(myTn) THEN RETURN END;
     Debug.Out("Generating code for " & myTn);
@@ -177,7 +189,11 @@ PROCEDURE GenRegStruct(r : RegReg.T; genState : RegGenState.T)
                     FmtFieldModifier(v.ptr),
                     nm);
             IF p = FIRST(Phases) THEN
-              FmtConstant(xDecls, Int(f.width), F("%s_%s", myTn, nm), "n");
+              WITH ws = Int(f.width),
+                   nm = F("%s_%s", myTn, nm) DO
+                GenCUtils.  FmtConstant(xDecls, ws, nm, "n");
+                GenScmUtils.FmtConstant(sDecls, ws, nm, "n")
+              END;
               xDecls.addhi(F("typedef %s %s_%s_t;\n", tn, myTn, nm))
             END
           END
@@ -188,7 +204,8 @@ PROCEDURE GenRegStruct(r : RegReg.T; genState : RegGenState.T)
     GenProto(r, gs);
     gs.main(";\n\n");
 
-    PutXDecls(gs, xDecls)
+    PutXDecls(gs, xDecls);
+    PutSDecls(gs, sDecls);
   END GenRegStruct;
 
 PROCEDURE GenContainerStruct(rf       : RegContainer.T;
@@ -197,7 +214,7 @@ PROCEDURE GenContainerStruct(rf       : RegContainer.T;
   VAR
     gs : RegCGenState.T := genState;
     myTn := rf.typeName(gs);
-    xDecls := NEW(TextSeq.T).init();
+    xDecls, sDecls := NEW(TextSeq.T).init();
     skipArc := rf.skipArc();
   BEGIN
     IF NOT gs.newSymbol(myTn) THEN RETURN END;
@@ -223,7 +240,10 @@ PROCEDURE GenContainerStruct(rf       : RegContainer.T;
             END;
             IF c.array # NIL THEN
               (* constants for the array size *)
-              IF p = 0 THEN FmtArrSz(xDecls, c.array, myTn & "_" & nm) END
+              IF p = 0 THEN
+                GenCUtils  .FmtArrSz(xDecls, c.array, myTn & "_" & nm);
+                GenScmUtils.FmtArrSz(sDecls, c.array, myTn & "_" & nm)
+              END
             END;
             IF p = 0 AND NOT skipArc THEN
               (* convenience typedef *)
@@ -244,6 +264,7 @@ PROCEDURE GenContainerStruct(rf       : RegContainer.T;
     gs.main(";\n\n");
 
     PutXDecls(gs, xDecls);
+    PutSDecls(gs, sDecls);
     
     FOR i := 0 TO rf.children.size()-1 DO
       WITH c = rf.children.get(i) DO
