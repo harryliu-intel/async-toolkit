@@ -45,7 +45,7 @@
 //     T_debug    - set to logic for now
 //
 //-----------------------------------------------------------------------------
-class mby_net_man_xaction extends mby_base_sequence_item
+class mby_net_man_xaction extends shdv_base_sequence_item
 #(
    .T_data (),
    .T_debug()
