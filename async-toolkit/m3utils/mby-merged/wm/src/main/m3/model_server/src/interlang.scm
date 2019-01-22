@@ -11,6 +11,9 @@
 (load "../../wm_net/src/structgen_shared.scm")
 (load "../../genviews/src/build_c/mby_c/src/mby_top_map.scm")
 
+
+;; we need to add documentation output of some kind
+
 (define defs
   `((constant pa-max-seg-len 192)
 
@@ -29,7 +32,6 @@
               ((offset       (array n-parser-ptrs 8))
                (offset-valid (array n-parser-ptrs boolean))
                (prot-id      (array n-parser-ptrs 8)))))
-    ;; I can certainly add a comment here
     
     (typedef parser-to-mapper
              (struct
@@ -51,7 +53,15 @@
 
     ))
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                                                                  ;;
+;;                                                                  ;;
+;;                       COMPILER BELOW HERE                        ;;
+;;                                                                  ;;
+;;                                                                  ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 (define (lang-name kind lang obj)
   (let* ((db (caddr obj))
@@ -533,7 +543,8 @@
 
 
 ;;
-;; in C, the tags will be used only to be topologically sorted before generation into a file
+;; in C, the tags will be used only to be topologically sorted
+;; before generation into a file
 ;;
 ;; syntax of top-level output is
 ;; ((<tag> <fragment>) (<tag> <fragment>) ...)
@@ -844,7 +855,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (new-topo-sorter)
-  (let ((res (obj-method-wrap (new-modula-object 'TextTopoSort.T ) 'TextTopoSort.T)))
+  (let ((res (obj-method-wrap (new-modula-object 'TextTopoSort.T )
+                              'TextTopoSort.T)))
     (obj-method-wrap (res 'init) 'TextTopoSort.T)
     ))
 
@@ -1210,10 +1222,6 @@
                         
                            i)
                        res)))))
-
-(define *a* '())
-(define *p* '())
-(define *c* '())
 
 (define (make-c-common-protos type)
   (map (lambda(whch)(sa (c-deser-proto-for-type whch type "*t") ";"))
