@@ -58,6 +58,12 @@ typedef enum bit[1:0] {
 
 
 // -------------------------------------------------------------------------
+// Main class type definitions for GPM BFM
+// -------------------------------------------------------------------------
+// Defining the pod pointer generator type
+typedef mby_gpm_bfm_pptr_gen #(.T(mby_gpm_bfm_pod_xaction)) gpm_bfm_pptr_gen_t;
+
+// -------------------------------------------------------------------------
 // Main class & VIF type definitions for TAG BFM
 // -------------------------------------------------------------------------
 // Creating the virtual interface types for pod agents.

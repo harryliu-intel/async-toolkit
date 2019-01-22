@@ -51,7 +51,7 @@ class mby_gpm_bfm extends uvm_component;
 
    // VARIBLE: pptr_gen
    // This is the pod pointer generator class.
-   mby_gpm_bfm_pptr_gen pptr_gen;
+   gpm_bfm_pptr_gen_t pptr_gen;
 
    // VARIABLE: fpptr_agent
    // This is the free pointer agent that will be used in ingress and mesh modes
@@ -93,7 +93,7 @@ class mby_gpm_bfm extends uvm_component;
    // ------------------------------------------------------------------------
    function void build_phase(uvm_phase phase);
       super.build_phase(phase);
-      pptr_gen = mby_gpm_bfm_pptr_gen::type_id::create("pptr_gen", this);
+      pptr_gen = gpm_bfm_pptr_gen::type_id::create("pptr_gen", this);
       pptr_gen.cfg_obj = this.cfg_obj;
       if(cfg_obj.bfm_mode == GPM_BFM_IGR_MODE) begin
          fpptr_agent = pod_agent::type_id::create("fpptr_agent", this);
@@ -114,8 +114,10 @@ class mby_gpm_bfm extends uvm_component;
       super.connect_phase(phase);
       if(cfg_obj.bfm_mode == GPM_BFM_IGR_MODE) begin
          // TODO: connect the pptr_gen to the fpptr_agent
-      end else if(cfg_obj.bfm_mode == GPM_BFM_EGR_MODE) begin
          // TODO: connect the pptr_gen to the dpptr_agent
+         dpptr_agent.monitor.mon_ap.connect(pptr_gen.analysis_export);
+      end else if(cfg_obj.bfm_mode == GPM_BFM_EGR_MODE) begin
+         
       end
    endfunction
 
