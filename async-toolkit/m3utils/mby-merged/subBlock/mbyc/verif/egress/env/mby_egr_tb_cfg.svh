@@ -30,6 +30,15 @@ class mby_egr_tb_cfg extends shdv_base_config;
    mby_egr_env_cfg env_cfg;
    mby_egr_dut_cfg dut_cfg;
    rand mesh_status_type_e mesh_status = NO_CONGESTION;
+   rand eth_bfm_pkg::speed_e speed_cfg[4]; 
+   bit randomize_speed_cfg = $test$plusargs("RAND_SPEED_CFG"); 
+       
+   constraint allowed_cfg{
+      if(randomize_speed_cfg) 
+         foreach(speed_cfg[i]) (i==0) ? speed_cfg[i] inside {eth_bfm_pkg::SPEED_400G,eth_bfm_pkg::SPEED_200G,eth_bfm_pkg::SPEED_100G} : speed_cfg[i] == eth_bfm_pkg::SPEED_OFF;
+      else 
+         foreach(speed_cfg[i]) (i==0) ? speed_cfg[i] inside {eth_bfm_pkg::SPEED_400G} : speed_cfg[i] == eth_bfm_pkg::SPEED_OFF;
+   } 
 
    constraint mesh_status_c{
       (mesh_status == NO_CONGESTION)      -> (env_cfg.smm_bfm_cfg.delay_profile == IDEAL_DELAY);

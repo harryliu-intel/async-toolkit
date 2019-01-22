@@ -218,9 +218,9 @@ class mby_igr_env extends shdv_base_env;
           eth_bfms[i]                   = igr_eth_bfm_t::type_id::create($sformatf("igr_eth_bfm%0d", i), this);
           eth_bfms[i].cfg.mode          = eth_bfm_pkg::MODE_SLAVE;                            // Configure as SLAVE
           foreach(eth_bfms[0].cfg.port_speed[j])begin
-                tb_cfg.randomize();
-                eth_bfms[i].cfg.port_speed[j]  = tb_cfg.speed_cfg[j];
-            end
+            tb_cfg.randomize();
+            eth_bfms[i].cfg.port_speed[j]  = tb_cfg.speed_cfg[j];
+          end
           eth_bfms[i].cfg.port_lanes    = {4,0,0,0}; // Configure num_ports.
           //eth_bfms[i].cfg.early_justify = 0;
           //eth_bfms[i].cfg.group_size    = 8;

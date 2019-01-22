@@ -28,6 +28,7 @@ $hdl_spec = {
          "verif/egress",
          "verif/egress/ti",
          "verif/egress/tb",
+         "verif/egress/env",
      ],
 
     # Arbitrary VLOG options
