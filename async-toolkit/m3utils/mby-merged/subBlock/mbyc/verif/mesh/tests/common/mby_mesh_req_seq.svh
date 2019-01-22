@@ -18,6 +18,8 @@ class mby_mesh_req_seq extends uvm_sequence#(mby_mgp_bfm_pkg::mby_mgp_req_seq_it
    `uvm_object_utils(mby_mesh_req_seq)
 
    int cnt = 10;
+   int rd_cnt = 1;
+   
    extern function new(string name = "");
    extern virtual task pre_body();
    extern virtual task body();
@@ -59,15 +61,15 @@ task mby_mesh_req_seq::body();
       item = mby_mgp_bfm_pkg::mby_mgp_req_seq_item::type_id::create("item");
       item.set_item_context(this, seqr);
       addr = (cnt % 2 == 0) ? cnt : cnt - 1;
+      
       item.randomize() with {
-// FIXME:          req_id  == cnt;
-         req_id  == 0;
+         req_id  == rd_cnt;
          seg_ptr == addr;
          valid   == 1;
          sema    == 0;
       };
       `uvm_send(item)
-      
+      rd_cnt++;
       cnt++;
       #10ns;
    end

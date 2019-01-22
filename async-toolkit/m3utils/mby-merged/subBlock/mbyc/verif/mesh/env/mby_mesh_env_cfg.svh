@@ -54,6 +54,8 @@ class mby_mesh_env_cfg extends shdv_base_config;
    //
    rand mby_mgp_bfm_pkg::mby_mgp_bfm_cfg eb_bfm_cfg;
    rand mby_mgp_bfm_pkg::mby_mgp_bfm_cfg wb_bfm_cfg;
+   rand mby_mgp_bfm_pkg::mby_mgp_bfm_cfg sb_bfm_cfg;
+   rand mby_mgp_bfm_pkg::mby_mgp_bfm_cfg nb_bfm_cfg;
    //---------------------------------------------------------------------------
    // Constructor: new
    //
@@ -66,6 +68,8 @@ class mby_mesh_env_cfg extends shdv_base_config;
       super.new(name);
       eb_bfm_cfg = mby_mgp_bfm_pkg::mby_mgp_bfm_cfg::type_id::create("eb_bfm_cfg");
       wb_bfm_cfg = mby_mgp_bfm_pkg::mby_mgp_bfm_cfg::type_id::create("wb_bfm_cfg");
+      sb_bfm_cfg = mby_mgp_bfm_pkg::mby_mgp_bfm_cfg::type_id::create("sb_bfm_cfg");
+      nb_bfm_cfg = mby_mgp_bfm_pkg::mby_mgp_bfm_cfg::type_id::create("nb_bfm_cfg");
    endfunction: new
 
    //---------------------------------------------------------------------------

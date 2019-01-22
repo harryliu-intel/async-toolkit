@@ -81,68 +81,147 @@ module mby_mesh_tb_top();
 
    assign ref_clk  = fabric_clk;
    assign tb_reset = mesh_tb_if.chard_reset;
+
+
    
    //MGP --> Msh write wb
-   mby_mgp_mim_req_if   rreq_wb_if(
+   mby_mgp_rreq_if      rreq_wb_if (
       .cclk             (ref_clk),
       .reset            (tb_reset),
-      .req_id           (),
-      .seg_ptr          (),
-      .wd_sel           (),
-      .valid            (),
-      .sema             ()
+      .rd_req           ()
+   );
+
+   //MGP --> Msh Read eb
+   mby_mgp_rreq_if      rreq_eb_if (
+      .cclk             (ref_clk),
+      .reset            (tb_reset),
+      .rd_req           ()
+   );
+   // MGP --> Msh write wb
+   mby_mgp_wreq_if      wreq_wb_if (
+      .cclk             (ref_clk),
+      .reset            (tb_reset),
+      .wr_req           ()
    );
 
    //MGP --> Msh write eb
-   mby_mgp_mim_req_if   rreq_eb_if(
+   mby_mgp_wreq_if      wreq_eb_if (
       .cclk             (ref_clk),
       .reset            (tb_reset),
-      .req_id           (),
-      .seg_ptr          (),
-      .wd_sel           (),
-      .valid            (),
-      .sema             ()
-   );
-   mby_mgp_mim_req_if   wreq_wb_if(
-      .cclk             (ref_clk),
-      .reset            (tb_reset),
-      .req_id           (),
-      .seg_ptr          (),
-      .wd_sel           (),
-      .valid            (),
-      .data             (),
-      .sema             ()
+      .wr_req           ()
    );
 
-   //MGP --> Msh write eb
-   mby_mgp_mim_req_if   wreq_eb_if(
+   //MGP --> Msh rsp wb
+   mby_mgp_rsp_if       rsp_wb_if (
       .cclk             (ref_clk),
       .reset            (tb_reset),
-      .req_id           (),
-      .seg_ptr          (),
-      .wd_sel           (),
-      .valid            (),
-      .data             (),
-      .sema             ()
+      .rd_rsp           ()
    );
 
-   mby_mgp_mim_rsp_if    rsp_wb_if(
+   //MGP --> Msh rsp eb
+   mby_mgp_rsp_if       rsp_eb_if (
       .cclk             (ref_clk),
       .reset            (tb_reset),
-      .req_id           (),
-      .rrsp_dest_blk    (),
-      .data             ()
+      .rd_rsp           ()
    );
 
-   //MGP --> Msh write eb
-   mby_mgp_mim_rsp_if    rsp_eb_if(
+
+   //MGP --> Msh read sb
+   mby_mgp_rreq_if      rreq_sb_if (
       .cclk             (ref_clk),
       .reset            (tb_reset),
-      .req_id           (),
-      .rrsp_dest_blk    (),
-      .data             ()
+      .rd_req           ()
    );
 
+   //MGP --> Msh Read nb
+   mby_mgp_rreq_if      rreq_nb_if (
+      .cclk             (ref_clk),
+      .reset            (tb_reset),
+      .rd_req           ()
+   );
+   // MGP --> Msh write sb
+   mby_mgp_wreq_if      wreq_sb_if (
+      .cclk             (ref_clk),
+      .reset            (tb_reset),
+      .wr_req           ()
+   );
+
+   //MGP --> Msh write nb
+   mby_mgp_wreq_if      wreq_nb_if (
+      .cclk             (ref_clk),
+      .reset            (tb_reset),
+      .wr_req           ()
+   );
+
+   //MGP --> Msh rsp sb
+   mby_mgp_rsp_if       rsp_sb_if (
+      .cclk             (ref_clk),
+      .reset            (tb_reset),
+      .rd_rsp           ()
+   );
+
+   //MGP --> Msh rsp nb
+   mby_mgp_rsp_if       rsp_nb_if (
+      .cclk             (ref_clk),
+      .reset            (tb_reset),
+      .rd_rsp           ()
+   );
+
+   //MGP --> Msh wrdata eb
+   mby_mgp_data_if      wrdata_eb_if (
+      .cclk             (ref_clk),
+      .reset            (tb_reset),
+      .req_data         ()
+   );
+
+   //MGP --> Msh wrdata wb
+   mby_mgp_data_if      wrdata_wb_if (
+      .cclk             (ref_clk),
+      .reset            (tb_reset),
+      .req_data         ()
+   );
+
+   //MGP --> Msh wrdata sb
+   mby_mgp_data_if      wrdata_sb_if (
+      .cclk             (ref_clk),
+      .reset            (tb_reset),
+      .req_data         ()
+   );
+
+   //MGP --> Msh wrdata nb
+   mby_mgp_data_if      wrdata_nb_if (
+      .cclk             (ref_clk),
+      .reset            (tb_reset),
+      .req_data         ()
+   );
+
+   //MGP --> Msh rddata eb
+   mby_mgp_data_if      rddata_eb_if (
+      .cclk             (ref_clk),
+      .reset            (tb_reset),
+      .req_data         ()
+   );
+
+   //MGP --> Msh rddata wb
+   mby_mgp_data_if      rddata_wb_if (
+      .cclk             (ref_clk),
+      .reset            (tb_reset),
+      .req_data         ()
+   );
+
+   //MGP --> Msh rddata sb
+   mby_mgp_data_if      rddata_sb_if (
+      .cclk             (ref_clk),
+      .reset            (tb_reset),
+      .req_data          ()
+   );
+
+   //MGP --> Msh rddata nb
+   mby_mgp_data_if      rddata_nb_if (
+      .cclk             (ref_clk),
+      .reset            (tb_reset),
+      .req_data         ()
+   );
    //-----------------------------------------------------------------------------
    // Verification Test Island
    //-----------------------------------------------------------------------------
@@ -154,7 +233,21 @@ module mby_mesh_tb_top();
        .wreq_eb_if                   (wreq_eb_if),
        .wreq_wb_if                   (wreq_wb_if),
        .rsp_eb_if                    (rsp_eb_if),
-       .rsp_wb_if                    (rsp_wb_if)
+       .rsp_wb_if                    (rsp_wb_if),
+       .rreq_sb_if                   (rreq_sb_if),
+       .rreq_nb_if                   (rreq_nb_if),
+       .wreq_sb_if                   (wreq_sb_if),
+       .wreq_nb_if                   (wreq_nb_if),
+       .rsp_sb_if                    (rsp_sb_if),
+       .rsp_nb_if                    (rsp_nb_if),
+       .wrdata_eb_if                 (wrdata_eb_if),
+       .wrdata_wb_if                 (wrdata_wb_if),
+       .wrdata_sb_if                 (wrdata_sb_if),
+       .wrdata_nb_if                 (wrdata_nb_if),
+       .rddata_eb_if                 (rddata_eb_if),
+       .rddata_wb_if                 (rddata_wb_if),
+       .rddata_sb_if                 (rddata_sb_if),
+       .rddata_nb_if                 (rddata_nb_if)
  
    );
 
@@ -242,41 +335,73 @@ module mby_mesh_tb_top();
    // MBY Mesh Dut
    // ===============================================
    // ===============================================
- 
-   
-   mby_msh #(.NUM_MSH_ROWS(3) , .NUM_MSH_COLS(3)) msh(
+  
+   wire       w_dummy [mby_mgp_bfm_pkg::NUM_MSH_ROWS-1:0][mby_msh_pkg::NUM_MSH_ROW_PORTS-1:0];
+   generate
+   for (genvar gv_row=0; gv_row < mby_mgp_bfm_pkg::NUM_MSH_ROWS; gv_row++) begin
+       for (genvar ports=0; ports < mby_msh_pkg::NUM_MSH_ROW_PORTS; ports++) begin
+	  assign w_dummy[gv_row][ports] = 0;
+       end
+   end
+   endgenerate
+   mby_msh #(.NUM_MSH_ROWS(mby_mgp_bfm_pkg::NUM_MSH_ROWS) , .NUM_MSH_COLS(mby_mgp_bfm_pkg::NUM_MSH_COLS)) msh(
        .cclk                    (mesh_tb_if.fab_clk),
        .mclk                    (mesh_tb_if.mclk),
        .chreset                 (mesh_tb_if.chard_reset),
        .mhreset                 (mesh_tb_if.mhard_reset),
        .csreset                 (mesh_tb_if.chard_reset),
        .msreset                 (mesh_tb_if.mhard_reset),
-//       .i_igr_eb_wreq_valid     (wreq_eb_if.valid),
-//       .i_igr_eb_wreq_seg_ptr   (wreq_eb_if.seg_ptr),
-//       .i_igr_eb_wreq_sema      (wreq_eb_if.sema),
-//       .i_igr_eb_wreq_wd_sel    (wreq_eb_if.wd_sel),
-       .i_igr_eb_wr_data        (wreq_eb_if.data),
-//       .i_igr_wb_wreq_valid     (wreq_wb_if.valid),
-//       .i_igr_wb_wreq_seg_ptr   (wreq_wb_if.seg_ptr),
-//       .i_igr_wb_wreq_sema      (wreq_wb_if.sema),
-//       .i_igr_wb_wreq_wd_sel    (wreq_wb_if.wd_sel),
-       .i_igr_wb_wr_data        (wreq_wb_if.data),
-//       .i_egr_eb_rreq_valid     (rreq_eb_if.valid),
-//       .i_egr_eb_rreq_seg_ptr   (rreq_eb_if.seg_ptr),
-//       .i_egr_eb_rreq_sema      (rreq_eb_if.sema),
-//       .i_egr_eb_rreq_wd_sel    (rreq_eb_if.wd_sel),
-//       .i_egr_eb_rreq_id        (rreq_eb_if.req_id),
-//       .i_egr_wb_rreq_valid     (rreq_wb_if.valid),
-//       .i_egr_wb_rreq_seg_ptr   (rreq_wb_if.seg_ptr),
-//       .i_egr_wb_rreq_sema      (rreq_wb_if.sema),
-//       .i_egr_wb_rreq_wd_sel    (rreq_wb_if.wd_sel),
-//       .i_egr_wb_rreq_id        (rreq_wb_if.req_id),
-//       .o_egr_wb_rrsp_valid     (rsp_wb_if.valid),
-//       .o_egr_wb_rrsp_id        (rsp_wb_if.req_id),
-       .o_egr_wb_rd_data        (rsp_wb_if.data),
-//       .o_egr_eb_rrsp_valid     (rsp_eb_if.valid),
-//       .o_egr_eb_rrsp_id        (rsp_eb_if.req_id),
-       .o_egr_eb_rd_data        (rsp_eb_if.data)
-						      
+       .i_igr_eb_wreq           (wreq_eb_if.wr_req),
+       .i_igr_eb_wr_data        (wrdata_eb_if.req_data),
+       .i_igr_wb_wreq           (wreq_wb_if.wr_req),
+       .i_igr_wb_wr_data        (wrdata_wb_if.req_data),
+       .i_egr_eb_rreq           (rreq_eb_if.rd_req),
+       .i_egr_wb_rreq           (rreq_wb_if.rd_req),
+       .i_gmm_sb_wreq           (wreq_sb_if.wr_req[0]),
+       .i_gmm_sb_wr_data        (wrdata_sb_if.req_data[0]),
+       .i_gmm_nb_wreq           (wreq_nb_if.wr_req[0]),
+       .i_gmm_nb_wr_data        (wrdata_nb_if.req_data[0]),
+       .i_gmm_sb_rreq           (rreq_sb_if.rd_req[0]),
+       .i_gmm_nb_rreq           (rreq_nb_if.rd_req[0]),
+       .o_egr_wb_rrsp		(),			      
+       .o_egr_wb_rd_data        (),
+       .o_egr_eb_rrsp           (),
+       .o_egr_eb_rd_data        (),
+       .o_gmm_nb_rrsp           (),
+       .o_gmm_nb_rd_data        (),
+       .o_gmm_sb_rrsp           (),
+       .o_gmm_sb_rd_data        (),
+       .o_igr_eb_wr_lat_sat     (),
+       .o_igr_crdt_rtn_for_eb_wreq (),
+       .o_igr_mcast_crdt_rtn_for_eb_wreq (),
+       .o_igr_wb_wr_lat_sat     (),
+       .o_igr_crdt_rtn_for_wb_wreq (),
+       .o_igr_mcast_crdt_rtn_for_wb_wreq (),
+       .o_egr_eb_rd_lat_sat     (),
+       .o_egr_crdt_rtn_for_eb_rreq (),
+       .o_egr_mcast_crdt_rtn_for_eb_rreq (),
+       .o_egr_wb_rd_lat_sat     (),
+       .o_egr_crdt_rtn_for_wb_rreq (),
+       .o_egr_mcast_crdt_rtn_for_wb_rreq (),
+       .i_egr_crdt_rtn_for_wb_rrsp (w_dummy),
+       .i_egr_mcast_crdt_rtn_for_wb_rrsp (w_dummy),
+       .i_egr_crdt_rtn_for_eb_rrsp (w_dummy),
+       .i_egr_mcast_crdt_rtn_for_eb_rrsp (w_dummy),
+       .o_gmm_sb_wr_lat_sat (),
+       .o_gmm_crdt_rtn_for_sb_wreq (),
+       .o_gmm_mcast_crdt_rtn_for_sb_wreq (),
+       .o_gmm_nb_wr_lat_sat (),
+       .o_gmm_crdt_rtn_for_nb_wreq (),
+       .o_gmm_mcast_crdt_rtn_for_nb_wreq (),
+       .o_gmm_sb_rd_lat_sat (),
+       .o_gmm_crdt_rtn_for_sb_rreq (),
+       .o_gmm_mcast_crdt_rtn_for_sb_rreq (),
+       .o_gmm_nb_rd_lat_sat (),
+       .o_gmm_crdt_rtn_for_nb_rreq (),
+       .o_gmm_mcast_crdt_rtn_for_nb_rreq (),
+       .i_gmm_crdt_rtn_for_nb_rrsp (w_dummy[0]),
+       .i_gmm_mcast_crdt_rtn_for_nb_rrsp (w_dummy[0]),
+       .i_gmm_crdt_rtn_for_sb_rrsp (w_dummy[0]),
+       .i_gmm_mcast_crdt_rtn_for_sb_rrsp (w_dummy[0])		      
        );
 endmodule
