@@ -1,0 +1,84 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use File::Spec::Functions qw(catdir);
+use File::Basename qw(dirname);
+use English qw(-no_match_vars);
+use Cwd qw(abs_path);
+use Term::ANSIColor;
+use FindBin::libs;
+use FileHandle;
+use Readonly;
+use Expect;
+use Carp;
+
+use ModelClient::CLI;
+
+Readonly my $MAX_PORT => 22;
+Readonly my $TIMEOUT => 8;
+Readonly my $EOT => -1;
+
+# Evaluate all paths and run the application
+my @params = qw(-m ../../../main/m3/model_server/AMD64_LINUX/models.packetServer);
+@params = @ARGV if @ARGV;
+my $path = catdir($ENV{'MODEL_ROOT'}, 'wm/src/client/c/examples/client_regwrite');
+$path = catdir(dirname(dirname(abs_path($PROGRAM_NAME))), 'examples/client_regwrite') if not -e $path;
+my $reg_file = catdir(dirname($path), 'fpps_reg_table.c');
+
+
+my $client = ModelClient::CLI->new(path => $path, params => \@params, lib_dir => dirname(dirname(abs_path($PROGRAM_NAME))));
+
+$client->timeout($TIMEOUT);
+
+sub get_reg_list {
+	my ($reg_table) = @_;
+	my @registers;
+
+	open my $fh, '<', $reg_table or croak colored("Could not open register table: $reg_table", 'bold red');
+
+	while (<$fh>) {
+		if (/\s[{]\"(\w+)\".*[}]/xms) {
+			push @registers, $1;
+		}
+	}
+
+	close $fh or croak colored("Could not close register table: $reg_table", 'bold red');
+	return @registers;
+}
+
+# Test variables
+my @packet = qw(
+    0x00 0x01 0x02 0x03 0x04 0x05 0x06 0x07 0x08 0x09 0x0a 0x0b
+    0x0c 0x0d 0x0e 0x0f 0x10 0x11 0x12 0x13 0x14 0x15 0x16 0x17
+    0x18 0x19 0x1a 0x1b 0x1c 0x1d 0x1e 0x1f 0x20 0x21 0x22 0x23
+    0x24 0x25 0x26 0x27 0x28 0x29 0x2a 0x2b 0x2c 0x2d 0x2e 0x2f
+    0x30 0x31 0x32 0x33 0x34 0x35 0x36 0x37 0x38 0x39 0x3a 0x3b
+    0xee 0x7f 0xec 0xb0
+    );
+my @registers = get_reg_list($reg_file);
+my $value = 0xBEEF;
+
+# The application is running, perform tests
+
+# Write and read from each register
+foreach my $reg (@registers) {
+	$client->write_value($reg, $value);
+	$client->read_value($reg, $value);
+	++$value;
+
+	$client->empty_line;
+}
+
+# Send and receive a packet to some ports, then wait for EOT packet
+foreach my $port (0..$MAX_PORT) {
+	$client->send_packet($port, @packet);
+	$client->receive_packet($port, @packet);
+	$client->receive_packet($EOT);
+
+	$client->empty_line;
+}
+
+# Disconnect
+$client->disconnect;
