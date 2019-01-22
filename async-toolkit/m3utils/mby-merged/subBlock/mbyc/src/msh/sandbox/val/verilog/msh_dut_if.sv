@@ -135,23 +135,23 @@ logic               msreset;                                // mesh soft reset
    
     // North Side Write Ports
                                                                                   
-    mshpt_wreq_t     i_gmm_sb_wreq                                         [NUM_MSH_ROW_PORTS-1:0];
+    mshpt_wreq_t     i_gmn_sb_wreq                                         [NUM_GMN_PORTS-1:0];
 
-    msh_data_t       i_gmm_sb_wr_data                                      [NUM_MSH_ROW_PORTS-1:0];
+    msh_data_t       i_gmn_sb_wr_data                                      [NUM_GMN_PORTS-1:0];
            
-    logic            o_gmm_sb_wr_lat_sat                                   [NUM_MSH_ROW_PORTS-1:0];
-    logic            o_gmm_crdt_rtn_for_sb_wreq                            [NUM_MSH_ROW_PORTS-1:0];
-    logic            o_gmm_mcast_crdt_rtn_for_sb_wreq                      [NUM_MSH_ROW_PORTS-1:0];
+    logic            o_gmn_sb_wr_lat_sat                                   [NUM_GMN_PORTS-1:0];
+    logic            o_gmn_crdt_rtn_for_sb_wreq                            [NUM_GMN_PORTS-1:0];
+    logic            o_gmn_mcast_crdt_rtn_for_sb_wreq                      [NUM_GMN_PORTS-1:0];
    
     // South Side Write Ports
                                                                                   
-    mshpt_wreq_t     i_gmm_nb_wreq                                         [NUM_MSH_ROW_PORTS-1:0];
+    mshpt_wreq_t     i_gms_nb_wreq                                         [NUM_GMS_PORTS-1:0];
 
-    msh_data_t       i_gmm_nb_wr_data                                      [NUM_MSH_ROW_PORTS-1:0];
+    msh_data_t       i_gms_nb_wr_data                                      [NUM_GMS_PORTS-1:0];
            
-    logic            o_gmm_nb_wr_lat_sat                                   [NUM_MSH_ROW_PORTS-1:0];
-    logic            o_gmm_crdt_rtn_for_nb_wreq                            [NUM_MSH_ROW_PORTS-1:0];
-    logic            o_gmm_mcast_crdt_rtn_for_nb_wreq                      [NUM_MSH_ROW_PORTS-1:0];
+    logic            o_gms_nb_wr_lat_sat                                   [NUM_GMS_PORTS-1:0];
+    logic            o_gms_crdt_rtn_for_nb_wreq                            [NUM_GMS_PORTS-1:0];
+    logic            o_gms_mcast_crdt_rtn_for_nb_wreq                      [NUM_GMS_PORTS-1:0];
    
    
     
@@ -161,19 +161,19 @@ logic               msreset;                                // mesh soft reset
 
     // North Side Read Request Ports 
     
-    mshpt_rreq_t     i_gmm_sb_rreq                                         [NUM_MSH_ROW_PORTS-1:0];
+    mshpt_rreq_t     i_gmn_sb_rreq                                         [NUM_GMN_PORTS-1:0];
 
-    logic            o_gmm_sb_rd_lat_sat                                   [NUM_MSH_ROW_PORTS-1:0];
-    logic            o_gmm_crdt_rtn_for_sb_rreq                            [NUM_MSH_ROW_PORTS-1:0];
-    logic            o_gmm_mcast_crdt_rtn_for_sb_rreq                      [NUM_MSH_ROW_PORTS-1:0];
+    logic            o_gmn_sb_rd_lat_sat                                   [NUM_GMN_PORTS-1:0];
+    logic            o_gmn_crdt_rtn_for_sb_rreq                            [NUM_GMN_PORTS-1:0];
+    logic            o_gmn_mcast_crdt_rtn_for_sb_rreq                      [NUM_GMN_PORTS-1:0];
         
     // South Side Read Request Ports 
     
-    mshpt_rreq_t     i_gmm_nb_rreq                                         [NUM_MSH_ROW_PORTS-1:0];
+    mshpt_rreq_t     i_gms_nb_rreq                                         [NUM_GMS_PORTS-1:0];
 
-    logic            o_gmm_nb_rd_lat_sat                                   [NUM_MSH_ROW_PORTS-1:0];
-    logic            o_gmm_crdt_rtn_for_nb_rreq                            [NUM_MSH_ROW_PORTS-1:0];
-    logic            o_gmm_mcast_crdt_rtn_for_nb_rreq                      [NUM_MSH_ROW_PORTS-1:0];
+    logic            o_gms_nb_rd_lat_sat                                   [NUM_GMS_PORTS-1:0];
+    logic            o_gms_crdt_rtn_for_nb_rreq                            [NUM_GMS_PORTS-1:0];
+    logic            o_gms_mcast_crdt_rtn_for_nb_rreq                      [NUM_GMS_PORTS-1:0];
         
    
    
@@ -183,20 +183,20 @@ logic               msreset;                                // mesh soft reset
         
     // North Side Read Response Ports
     
-    logic            i_gmm_crdt_rtn_for_nb_rrsp                            [NUM_MSH_ROW_PORTS-1:0];
-    logic            i_gmm_mcast_crdt_rtn_for_nb_rrsp                      [NUM_MSH_ROW_PORTS-1:0];
+    logic            i_gmn_crdt_rtn_for_nb_rrsp                            [NUM_GMN_PORTS-1:0];
+    logic            i_gmn_mcast_crdt_rtn_for_nb_rrsp                      [NUM_GMN_PORTS-1:0];
 
-    mshpt_rrsp_t     o_gmm_nb_rrsp                                         [NUM_MSH_ROW_PORTS-1:0];
+    mshpt_rrsp_t     o_gmn_nb_rrsp                                         [NUM_GMN_PORTS-1:0];
 
-    msh_data_t       o_gmm_nb_rd_data                                      [NUM_MSH_ROW_PORTS-1:0];
+    msh_data_t       o_gmn_nb_rd_data                                      [NUM_GMN_PORTS-1:0];
     
     // South Side Read Response Ports
     
-    logic            i_gmm_crdt_rtn_for_sb_rrsp                            [NUM_MSH_ROW_PORTS-1:0];
-    logic            i_gmm_mcast_crdt_rtn_for_sb_rrsp                      [NUM_MSH_ROW_PORTS-1:0];
+    logic            i_gms_crdt_rtn_for_sb_rrsp                            [NUM_GMS_PORTS-1:0];
+    logic            i_gms_mcast_crdt_rtn_for_sb_rrsp                      [NUM_GMS_PORTS-1:0];
 
-    mshpt_rrsp_t     o_gmm_sb_rrsp                                         [NUM_MSH_ROW_PORTS-1:0];
+    mshpt_rrsp_t     o_gms_sb_rrsp                                         [NUM_GMS_PORTS-1:0];
 
-    msh_data_t       o_gmm_sb_rd_data                                      [NUM_MSH_ROW_PORTS-1:0];
+    msh_data_t       o_gms_sb_rd_data                                      [NUM_GMS_PORTS-1:0];
 
 endinterface // msh_dut_if
