@@ -29,50 +29,55 @@
 // =====================================================================================================================
 
 interface mim_rd_if ();
-  import mby_egr_pkg::*;
+    import mby_msh_pkg::*;
+
+    mshpt_rreq_t     msh_rreq;
+
+    logic            msh_rd_lat_sat;
+    logic            msh_crdt_rtn_for_rreq;
+    logic            msh_mcast_crdt_rtn_for_rreq;
+    
+    logic            msh_crdt_rtn_for_rrsp;
+    logic            msh_mcast_crdt_rtn_for_rrsp;
+
+    mshpt_rrsp_t     msh_rrsp;
+
+    msh_data_t       msh_rd_data;
     
 
-  logic                    mim_rreq_valid;
-  logic [W_SEG_PTR-1:0]    mim_seg_ptr;      //[19:0]
-  logic [W_SEMA-1:0]       mim_sema;         //[ 3:0]
-  logic [W_WD_SEL-1:0]     mim_wd_sel;       //[ 2:0]
-  logic [W_REQ_ID-1:0]     mim_req_id;       //[12:0]
-  
-  logic [W_XACT_CREDITS-1:0] mim_rreq_credits; // temp value   
-  
-  
-  logic                         mim_rrsp_valid;
-  logic [W_RRSP_DEST_BLOCK-1:0] mim_rrsp_dest_block;  //[2:0]
-  logic [W_REQ_ID-1:0]          mim_rrsp_req_id;      //[12:0]
-  logic [W_WORD_BITS-1:0]       mim_rd_data;          //64 x 8
 
+    modport request(
 
-  
-modport request(
-    output mim_rreq_valid,
-    output mim_seg_ptr,
-    output mim_sema,
-    output mim_wd_sel,
-    output mim_req_id,
-    input  mim_rreq_credits,
-    input  mim_rrsp_valid,
-    input  mim_rrsp_dest_block,
-    input  mim_rrsp_req_id,    
-    input  mim_rd_data        
-    );  
-   
-modport receive(
-    input  mim_rreq_valid,
-    input  mim_seg_ptr,
-    input  mim_sema,
-    input  mim_wd_sel,
-    input  mim_req_id,
-    output mim_rreq_credits,
-    output mim_rrsp_valid,
-    output mim_rrsp_dest_block,
-    output mim_rrsp_req_id,    
-    output mim_rd_data        
+        output msh_rreq,
+
+        input  msh_rd_lat_sat,
+        input  msh_crdt_rtn_for_rreq,
+        input  msh_mcast_crdt_rtn_for_rreq,
+    
+        output msh_crdt_rtn_for_rrsp,
+        output msh_mcast_crdt_rtn_for_rrsp,
+
+        input  msh_rrsp,
+
+        input  msh_rd_data
+    
+        );  
+
+    modport receive(
+
+        input  msh_rreq,
+
+        output msh_rd_lat_sat,
+        output msh_crdt_rtn_for_rreq,
+        output msh_mcast_crdt_rtn_for_rreq,
+    
+        input  msh_crdt_rtn_for_rrsp,
+        input  msh_mcast_crdt_rtn_for_rrsp,
+
+        output msh_rrsp,
+
+        output msh_rd_data
+    
     );
-
 
 endinterface : mim_rd_if
