@@ -344,7 +344,8 @@ sub find_cells {
 #       |
 #      (viewdir)
 #   hdrc.raw drc.raw,lvs.raw,frc.raw
-#       |
+#       extC
+#       extT
 #      spice dir (estimated/extracted)
 #       |
 #      /|\
@@ -374,16 +375,13 @@ sub find_rawfiles {
                 push @rawfiles, @l;
             }            
 
-            opendir(VIEWDIR, "$viewdir") 
-                or warn "Cannot open $viewdir\n";
-            my @viewfiles = grep { $_ ne '.' and $_ ne '..'} readdir VIEWDIR;
-            foreach my $modedir(@viewfiles){
-                $modedir = "$viewdir/$modedir";
-                 if(-d $modedir){
-                     
-                     @l = get_rawfile("$modedir", 0, "extract.raw");
-                     push @rawfiles, @l;
-                     
+            # find extract.raw
+            my @extractraw=get_rawfile("$viewdir",3,"extract.raw");
+            foreach my $x (@extractraw) {
+                push @rawfiles, $x;
+                my $modedir = $x;
+                $modedir =~ s/\/extract\.raw$//g;
+                if(-d $modedir){
                      if(-d "$modedir/aspice"){
                          @l = get_rawfile("$modedir/aspice", 6, "aspice.raw");
                          push @rawfiles, @l;
@@ -393,6 +391,10 @@ sub find_rawfiles {
                          @l = get_rawfile("$modedir/hsim", 5, "hsim.raw");
                          push @rawfiles, @l;
                          @l = get_rawfile("$modedir/hsim", 5, "totem.raw");
+                         push @rawfiles, @l;
+                     }
+                     if(-d "$modedir/xa"){
+                         @l = get_rawfile("$modedir/xa", 5, "xa.raw");
                          push @rawfiles, @l;
                      }
                      if(-d "$modedir/alint"){

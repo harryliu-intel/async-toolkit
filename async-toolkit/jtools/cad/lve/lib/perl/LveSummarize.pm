@@ -190,27 +190,29 @@ sub start_page {
     my ($file,$title,$task,$status, $dotdot) = @_;
     my $fh = start_simple_page($file,$title,$dotdot);
     return 0 if $fh == 0;
-    
+
     # add task specific title
     my $ASPICE_DIR_LEN = 6;
     my $HSIM_DIR_LEN = 5;
     my $ALINT_DIR_LEN = 3;
     $task = "" if(!defined $task);
     if($task eq "aspice" ){
-        if($title =~ /(\S+)\/([^\/]+)\/([^\/]+)\/aspice\/(\S+)/ ) {
+        if($title =~ /(\S+)\/([^\/]+)\/([^\/]+)\/([^\/]+)\/([^\/]+)\/aspice\/(\S+)/ ) {
             
             my $cellname = get_cellname($1);
             centered_title($fh,$status,"ASPICE",$cellname);
             
-            my @conditions = split('/', $4);
+            my @conditions = split('/', $6);
             if(scalar(@conditions) == $ASPICE_DIR_LEN){
                 push @conditions, $2;
                 push @conditions, $3;
+                push @conditions, $4;
+                push @conditions, $5;
                 print_2col_table($fh,"Parameters",
                                  ["Environment","Corner","Voltage",
                                   "Temperature","Simulation Duration",
                                   "Time Delay Range",
-                                  "View","Mode"], \@conditions);
+                                  "View","Extract Corner","Extract Temperature","Mode"], \@conditions);
             }
             else {
                 print $fh "<h1>A: $title</h1>\n";
@@ -221,17 +223,20 @@ sub start_page {
         }
     }
     elsif($task eq "asta" ) {
-        if($title =~ /(\S+)\/([^\/]+)\/([^\/]+)\/alint\/(\S+)/ ) {
+        if($title =~ /(\S+)\/([^\/]+)\/([^\/]+)\/([^\/]+)\/([^\/]+)\/alint\/(\S+)/ ) {
             
             my $cellname = get_cellname($1);
             centered_title($fh,$status,"ASTA",$cellname);
             
-            my @conditions = split('/', $4);
+            my @conditions = split('/', $6);
             if(scalar(@conditions) == $ALINT_DIR_LEN){
                 push @conditions, $2;
                 push @conditions, $3;
+                push @conditions, $4;
+                push @conditions, $5;
                 print_2col_table($fh,"Parameters",
                                  ["Corner","Voltage","Temperature","View",
+                                  "Extract Corner","Extract Temperature",
                                   "Mode"], \@conditions);
             }
             else {
@@ -243,18 +248,20 @@ sub start_page {
         }
     }
     elsif($task eq "slint" ) {
-        if($title =~ /(\S+)\/([^\/]+)\/([^\/]+)\/alint\/(\S+)/ ) {
+        if($title =~ /(\S+)\/([^\/]+)\/([^\/]+)\/([^\/]+)\/([^\/]+)\/alint\/(\S+)/ ) {
             
             my $cellname = get_cellname($1);
             centered_title($fh,$status,"SLINT",$cellname);
             
-            my @conditions = split('/', $4);
+            my @conditions = split('/', $6);
             if(scalar(@conditions) == $ALINT_DIR_LEN){
                 push @conditions, $2;
                 push @conditions, $3;
+                push @conditions, $4;
+                push @conditions, $5;
                 print_2col_table($fh,"Parameters",
                                  ["Corner","Voltage","Temperature","View",
-                                  "Mode"], \@conditions);
+                                  "Extract Corner","Extract Temperature","Mode"], \@conditions);
             }
             else {
                 print $fh "<h1>A: $title</h1>\n";
@@ -264,20 +271,22 @@ sub start_page {
             print $fh "<h1>$title</h1>\n";
         }
     }
-    elsif($task eq "hsim" ){
-        if($title =~ /(\S+)\/([^\/]+)\/([^\/]+)\/hsim\/(\S+)/ ) {
+    elsif($task eq "hsim" || $task eq "xa"){
+        if($title =~ /(\S+)\/([^\/]+)\/([^\/]+)\/([^\/]+)\/([^\/]+)\/$task\/(\S+)/ ) {
             
             my $cellname = get_cellname($1);
-            centered_title($fh,$status,"HSIM",$cellname);
+            centered_title($fh,$status,uc($task),$cellname);
             
-            my @conditions = split('/', $4);
+            my @conditions = split('/', $6);
             if(scalar(@conditions) == $HSIM_DIR_LEN){
                 push @conditions, $2;
                 push @conditions, $3;
+                push @conditions, $4;
+                push @conditions, $5;
                 print_2col_table($fh,"Parameters",
                                  ["Environment","Corner","Voltage",
                                   "Temperature","Simulation Duration",
-                                  "View","Mode"], \@conditions);
+                                  "View","Extract Corner","Extract Temperature","Mode"], \@conditions);
             }
             else {
                 print $fh "<h1>A: $title</h1>\n";
@@ -288,16 +297,19 @@ sub start_page {
         }
     }
     elsif($task eq "alint"){
-        if($title =~ /(\S+)\/([^\/]+)\/([^\/]+)\/alint\/(\S+)/){
+        if($title =~ /(\S+)\/([^\/]+)\/([^\/]+)\/([^\/]+)\/([^\/]+)\/alint\/(\S+)/){
             my $cellname = get_cellname($1);
             centered_title($fh,$status,"ALINT",$cellname);
             
-            my @conditions = split('/', $4);
+            my @conditions = split('/', $6);
             if(scalar(@conditions) == $ALINT_DIR_LEN){
                 push @conditions, $2;
                 push @conditions, $3;
+                push @conditions, $4;
+                push @conditions, $5;
                 print_2col_table($fh,"Parameters", 
-                                 ["Corner","Voltage","Temperature","View","Mode"], 
+                                 ["Corner","Voltage","Temperature",
+                                  "View","Extract Corner","Extract Temperature","Mode"], 
                                  \@conditions);
             }
             else {
@@ -311,12 +323,15 @@ sub start_page {
             my $cellname = get_cellname($1);
             centered_title($fh,$status,"LIB",$cellname);
             
-            my @conditions = split('/', $4);
+            my @conditions = split('/', $6);
             if(scalar(@conditions) == $ALINT_DIR_LEN){
                 push @conditions, $2;
                 push @conditions, $3;
+                push @conditions, $4;
+                push @conditions, $5;
                 print_2col_table($fh,"Parameters", 
-                                 ["Corner","Voltage","Temperature","View","Mode"], 
+                                 ["Corner","Voltage","Temperature",
+                                  "View","Extract Corner","Extract Temperature","Mode"], 
                                  \@conditions);
             }
             else {
@@ -349,11 +364,12 @@ sub start_page {
         }
     }
     elsif($task eq "extract") {
-        if($title =~ /(\S+)\/([^\/]+)\/([^\/]+)/){
+        if($title =~ /(\S+)\/([^\/]+)\/([^\/]+)\/([^\/]+)\/([^\/]+)/){
             my $cellname = get_cellname($1);
             centered_title($fh,$status,"EXTRACT",$cellname);
-            my @conditions = ($2, $3);
-            print_2col_table($fh,"Parameters", ["View","Mode"], \@conditions);
+            my @conditions = ($2, $3, $4, $5);
+            print_2col_table($fh,"Parameters",
+                             ["View","Extract Corner","Extract Temperature","Mode"], \@conditions);
         }
     }
     elsif($task eq "jlvs") {
@@ -399,7 +415,7 @@ sub print_2col_table {
 
     foreach my $value(@{$values}){
         print $fh "<TR BGCOLOR=\"white\" CLASS=\"TableRowColor\">"
-            ."<TD ALIGN=\"right\" VALIGN=\"top\" WIDTH=\"1%\">"
+            ."<TD ALIGN=\"right\" VALIGN=\"top\" WIDTH=\"10%\">"
             ."<CODE> @{$keys}[$i] </CODE></TD>\n";
         if (defined @{$values}[$i]) {
             print $fh "<TD><CODE><B> @{$values}[$i] </B></CODE>\n";
@@ -694,7 +710,7 @@ sub lve_summarize {
         
         # transient aspice simulation
         my $overall_status = get_status(@raw);
-        my $dotdot = get_dotdot($dir,9);
+        my $dotdot = get_dotdot($dir,11);
         my $fh = start_page("$dir/$task.html",$dir,$task,$overall_status, $dotdot);
 
         # report power, deadlock, cosim failure
@@ -786,7 +802,7 @@ sub lve_summarize {
     } elsif ($task eq "asta") {
 
         my $overall_status = get_status(@raw);
-        my $dotdot = get_dotdot($dir,9);
+        my $dotdot = get_dotdot($dir,11);
         my $fh = start_page("$dir/$task.html",$dir,$task,$overall_status, $dotdot);
         @raw = sort(@raw);
         start_table($fh,"Tau (ps)","Input slew (ps)", "Output cap (fF)",
@@ -823,7 +839,7 @@ sub lve_summarize {
     } elsif ($task eq "slint") {
 
         my $overall_status = get_status(@raw);
-        my $dotdot = get_dotdot($dir,9);
+        my $dotdot = get_dotdot($dir,11);
         my $fh = start_page("$dir/$task.html",$dir,$task,$overall_status, $dotdot);
         @raw = sort(@raw);
         start_table($fh, "All Violations",
@@ -848,7 +864,7 @@ sub lve_summarize {
         return if (! -e "$dir/alint.done");
         # alint aspice simulation
         my $overall_status = get_status(@raw);
-        my $dotdot = get_dotdot($dir,6);
+        my $dotdot = get_dotdot($dir,8);
         my $fh = start_page("$dir/$task.html",$dir,$task,$overall_status, $dotdot);
         @raw = sort(@raw);
 
@@ -984,7 +1000,7 @@ sub lve_summarize {
         return if ! $ok;
         # lib aspice simulation
         my $overall_status = get_status(@raw);
-        my $dotdot = get_dotdot($dir,6);
+        my $dotdot = get_dotdot($dir,8);
         my $fh = start_page("$dir/$task.html",$dir,$task,$overall_status, $dotdot);
         @raw = sort(@raw);
 
@@ -1075,19 +1091,19 @@ sub lve_summarize {
         alint_delay_table($dir,$fh,0,@parsed_delay_raw);
         finish_simple_page($fh);
 
-    } elsif ($task eq "hsim") {
+    } elsif ($task eq "hsim" || $task eq "xa") {
 
         # hsim transient simulation
         my $overall_status = get_status(@raw);
-        my $dotdot = get_dotdot($dir,8);
+        my $dotdot = get_dotdot($dir,10);
         my $fh = start_page("$dir/$task.html",$dir,$task,$overall_status, $dotdot);
 
         print $fh "<h3>Warnings/Notices:</h3>\n"
             unless $fh == 0;
         foreach my $line (sort @raw) {
             my ($status, $task, $cell, $path, %results) = parse_raw_line($line);
-            if ($task eq "hsim" && defined $results{power} && defined $results{supply}) {
-                print $fh "[$status] Supply=$results{supply} Power=$results{power}W<br>\n"
+            if (($task eq "hsim" || $task eq "xa") && defined $results{power} && defined $results{node}) {
+                print $fh "[$status] Supply=$results{node} Power=$results{power}W<br>\n"
                     unless $fh == 0;
             }
         }
@@ -1098,7 +1114,8 @@ sub lve_summarize {
         start_table($fh,"Node","Frequency (GHz)","Measured Cycles");
         foreach my $line (sort @raw) {
             my ($status, $task, $cell, $path, %results) = parse_raw_line($line);
-            if ($task eq "hsim" && defined $results{node}) {
+            if (($task eq "hsim" || $task eq "xa") && defined $results{node}) {
+                if (defined $results{power}) { next; }
                 if (!defined $results{frequency}) { $results{frequency} = MISSING; }
                 if (!defined $results{cycles})    { $results{cycles}    = MISSING; }
                 my $node = $results{node};
@@ -1110,8 +1127,8 @@ sub lve_summarize {
         
         print $fh "<h3>Files:</h3>\n"
             unless $fh == 0;
-        link_files($fh,$dir,"hsim.raw","hsim.out","hsim.log","hsim.err");
-        sim_diagnostics($fh, $dir, "hsim.out.diag");
+        link_files($fh,$dir,"${task}.raw","${task}.out","${task}.log","${task}.err");
+        sim_diagnostics($fh, $dir, "${task}.out.diag");
         finish_page($fh);
 
     } elsif ($task eq "hlvs") {
@@ -1182,7 +1199,7 @@ sub lve_summarize {
 
         # extract
         my $overall_status = get_status(@raw);
-        my $dotdot = get_dotdot($dir,2);
+        my $dotdot = get_dotdot($dir,4);
         my $fh = start_page("$dir/$task.html",$dir,$task,$overall_status, $dotdot);
         print $fh "<h3>Files:</h3>\n"
             unless $fh == 0;
@@ -1358,13 +1375,14 @@ sub lve_summarize {
         if(scalar(keys %{$tests{"alint"}}) > 0){
             my $alint_status;
             table($fh,1,"100%",1,1);
-            write_row($fh,"#CCCCFF", "ALINT", "View Name", "Mode", "Process Corner",
+            write_row($fh,"#CCCCFF", "ALINT", "View Name", 
+                      "Extract Corner", "Extract Temperature", "Mode", "Process Corner",
                       "Voltage", "Temperature");
             foreach my $key (sort keys %{$tests{"alint"}}) {
-                if($key =~ /([^\/]+)\/([^\/]+)\/alint\/([^\/]+)\/([^\/]+)\/([^\/]+)\/alint/){
+                if($key =~ /([^\/]+)\/([^\/]+)\/([^\/]+)\/([^\/]+)\/alint\/([^\/]+)\/([^\/]+)\/([^\/]+)\/alint/){
                     write_row($fh,$color_palette{$tests{"alint"}{$key}},
                               "<a href=\"$key.html\"> $tests{\"alint\"}{$key} </a>",
-                              $1,$2,$3,$4,$5);
+                              $1,$2,$3,$4,$5,$6,$7);
                     $alint_status = combine_status($alint_status,$tests{"alint"}{$key});
                 }
             }
@@ -1382,13 +1400,14 @@ sub lve_summarize {
         if(scalar(keys %{$tests{"lib"}}) > 0){
             my $lib_status;
             table($fh,1,"100%",1,1);
-            write_row($fh,"#CCCCFF", "LIB", "View Name", "Mode", "Process Corner",
+            write_row($fh,"#CCCCFF", "LIB", "View Name",
+                      "Extract Corner", "Extract Temperature", "Mode", "Process Corner",
                       "Voltage", "Temperature");
             foreach my $key (sort keys %{$tests{"lib"}}) {
-                if($key =~ /([^\/]+)\/([^\/]+)\/alint\/([^\/]+)\/([^\/]+)\/([^\/]+)\/lib/){
+                if($key =~ /([^\/]+)\/([^\/]+)\/([^\/]+)\/([^\/]+)\/alint\/([^\/]+)\/([^\/]+)\/([^\/]+)\/lib/){
                     write_row($fh,$color_palette{$tests{"lib"}{$key}},
                               "<a href=\"$key.html\"> $tests{\"lib\"}{$key} </a>",
-                              $1,$2,$3,$4,$5);
+                              $1,$2,$3,$4,$5,$6,$7);
                     $lib_status = combine_status($lib_status,$tests{"lib"}{$key});
                 }
             }
@@ -1406,13 +1425,14 @@ sub lve_summarize {
         if(scalar(keys %{$tests{"aspice"}}) > 0){
             my $aspice_status;
             table($fh,1,"100%",1,1);
-            write_row($fh,"#CCCCFF", "ASPICE", "View Name", "Mode", "Environment" ,"Process Corner",
+            write_row($fh,"#CCCCFF", "ASPICE", "View Name",
+                      "Extract Corner", "Extract Temperature", "Mode", "Environment" ,"Process Corner",
                       "Voltage", "Temperature", "Duration", "Timed Delay");
             foreach my $key (sort keys %{$tests{"aspice"}}) {
-                if($key =~ /([^\/]+)\/([^\/]+)\/aspice\/([^\/]+)\/([^\/]+)\/([^\/]+)\/([^\/]+)\/([^\/]+)\/([^\/]+)\/aspice/){
+                if($key =~ /([^\/]+)\/([^\/]+)\/([^\/]+)\/([^\/]+)\/aspice\/([^\/]+)\/([^\/]+)\/([^\/]+)\/([^\/]+)\/([^\/]+)\/([^\/]+)\/aspice/){
                     write_row($fh,$color_palette{$tests{"aspice"}{$key}},
                               "<a href=\"$key.html\"> $tests{\"aspice\"}{$key} </a>",
-                              $1,$2,$3,$4,$5,$6,$7,$8);
+                              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10);
                     $aspice_status = combine_status($aspice_status,$tests{"aspice"}{$key});
                 }
             }
@@ -1438,13 +1458,14 @@ sub lve_summarize {
         if(scalar(keys %{$tests{"hsim"}}) > 0){
             my $hsim_status;
             table($fh,1,"100%",1,1);
-            write_row($fh,"#CCCCFF", "HSIM", "View Name", "Mode", "Environment" ,"Process Corner",
+            write_row($fh,"#CCCCFF", "HSIM", "View Name",
+                      "Extract Corner", "Extract Temperature", "Mode", "Environment" ,"Process Corner",
                       "Voltage", "Temperature", "Duration");
             foreach my $key (sort keys %{$tests{"hsim"}}) {
-                if($key =~ /([^\/]+)\/([^\/]+)\/hsim\/([^\/]+)\/([^\/]+)\/([^\/]+)\/([^\/]+)\/([^\/]+)\/hsim/){
+                if($key =~ /([^\/]+)\/([^\/]+)\/([^\/]+)\/([^\/]+)\/hsim\/([^\/]+)\/([^\/]+)\/([^\/]+)\/([^\/]+)\/([^\/]+)\/hsim/){
                     write_row($fh,$color_palette{$tests{"hsim"}{$key}},
                               "<a href=\"$key.html\"> $tests{\"hsim\"}{$key} </a>",
-                              $1,$2,$3,$4,$5,$6,$7);
+                              $1,$2,$3,$4,$5,$6,$7,$8,$9);
                     $hsim_status = combine_status($hsim_status,$tests{"hsim"}{$key});
                 }
             }
@@ -1454,16 +1475,37 @@ sub lve_summarize {
                 unless $fh == 0;
         }
 
+       if(scalar(keys %{$tests{"xa"}}) > 0){
+            my $xa_status;
+            table($fh,1,"100%",1,1);
+            write_row($fh,"#CCCCFF", "XA", "View Name",
+                      "Extract Corner", "Extract Temperature", "Mode", "Environment" ,"Process Corner",
+                      "Voltage", "Temperature", "Duration");
+            foreach my $key (sort keys %{$tests{"xa"}}) {
+                if($key =~ /([^\/]+)\/([^\/]+)\/([^\/]+)\/([^\/]+)\/xa\/([^\/]+)\/([^\/]+)\/([^\/]+)\/([^\/]+)\/([^\/]+)\/xa/){
+                    write_row($fh,$color_palette{$tests{"xa"}{$key}},
+                              "<a href=\"$key.html\"> $tests{\"xa\"}{$key} </a>",
+                              $1,$2,$3,$4,$5,$6,$7,$8,$9);
+                    $xa_status = combine_status($xa_status,$tests{"xa"}{$key});
+                }
+            }
+            $status_str = $status_str."XA:=$xa_status ";
+            finish_table($fh); 
+            print $fh "<br>\n"
+                unless $fh == 0;
+        }
+
         if(scalar(keys %{$tests{"asta"}}) > 0){
             my $asta_status;
             table($fh,1,"100%",1,1);
-            write_row($fh,"#CCCCFF", "ASTA", "View Name", "Mode", "Process Corner",
+            write_row($fh,"#CCCCFF", "ASTA", "View Name",
+                      "Extract Corner", "Extract Temperature", "Mode", "Process Corner",
                       "Voltage", "Temperature");
             foreach my $key (sort keys %{$tests{"asta"}}) {
-                if($key =~ /([^\/]+)\/([^\/]+)\/alint\/([^\/]+)\/([^\/]+)\/([^\/]+)/){
+                if($key =~ /([^\/]+)\/([^\/]+)\/([^\/]+)\/([^\/]+)\/alint\/([^\/]+)\/([^\/]+)\/([^\/]+)/){
                     write_row($fh,$color_palette{$tests{"asta"}{$key}},
                               "<a href=\"$key.html\"> $tests{\"asta\"}{$key} </a>",
-                              $1,$2,$3,$4,$5);
+                              $1,$2,$3,$4,$5,$6,$7);
                     $asta_status = combine_status($asta_status,$tests{"asta"}{$key});
                 }
             }
@@ -1479,13 +1521,14 @@ sub lve_summarize {
         if(scalar(keys %{$tests{"slint"}}) > 0){
             my $slint_status;
             table($fh,1,"100%",1,1);
-            write_row($fh,"#CCCCFF", "SLINT", "View Name", "Mode", "Process Corner",
+            write_row($fh,"#CCCCFF", "SLINT", "View Name",
+                      "Extract Corner", "Extract Temperature", "Mode", "Process Corner",
                       "Voltage", "Temperature");
             foreach my $key (sort keys %{$tests{"slint"}}) {
-                if($key =~ /([^\/]+)\/([^\/]+)\/alint\/([^\/]+)\/([^\/]+)\/([^\/]+)/){
+                if($key =~ /([^\/]+)\/([^\/]+)\/([^\/]+)\/([^\/]+)\/alint\/([^\/]+)\/([^\/]+)\/([^\/]+)/){
                     write_row($fh,$color_palette{$tests{"slint"}{$key}},
                               "<a href=\"$key.html\"> $tests{\"slint\"}{$key} </a>",
-                              $1,$2,$3,$4,$5);
+                              $1,$2,$3,$4,$5,$6,$7);
                     $slint_status = combine_status($slint_status,$tests{"slint"}{$key});
                 }
             }

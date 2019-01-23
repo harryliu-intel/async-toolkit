@@ -55,7 +55,7 @@ EOF
 die "$usage";
 }
 
-my $working_dir;
+my $working_dir=".";
 my $index_table;
 my $index_file;
 my @master_cell_list=();

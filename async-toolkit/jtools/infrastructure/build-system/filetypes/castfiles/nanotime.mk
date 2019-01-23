@@ -11,9 +11,9 @@ $(SPICE_DIR)/%/cell.lib $(SPICE_DIR)/%/cell.paths: \
 				 --spef='$(word 3,$+)' \
 				 --dpf='$(word 4,$+)' \
 				 --cell='$(call GET_GDS2_CDL_NAME,$(@D))' \
-				 --corner='$(call GET_NTH_FROM_LAST_DIR,$(@D),3)' \
-				 --true='$(call GET_NTH_FROM_LAST_DIR,$(@D),2)' \
-				 --temp='$(call GET_NTH_FROM_LAST_DIR,$(@D),1)' \
+				 --corner='$(call GET_CORNER,$(@D))' \
+				 --true='$(call GET_VOLTAGE,$(@D))' \
+				 --temp='$(call GET_TEMP,$(@D))' \
 				 --node-props='$<' \
 				 --fulcrum-pdk-root='$(FULCRUM_PDK_PACKAGE_EXTRACT_ROOT)' \
 				 --working-dir="$$working_dir" >nanotime.log 2>&1 && \

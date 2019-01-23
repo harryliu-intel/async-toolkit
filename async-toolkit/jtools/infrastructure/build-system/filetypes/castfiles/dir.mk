@@ -228,7 +228,7 @@ $(CURR_CELL_DIR)/%/slurp.mk : $(CURR_SLURP_DIR)/%/df2.d \
 	echo 'include $$(BUILD)/filetypes/castfiles/slurp_cell_view.mk' >> '$@'	
 
 $(CURR_CELL_DIR)/%/df2.d: $(CURR_CELL_DFII_DIR)/%/layout.oa
-	#TASK=layout_deps CELL=$(call GET_CAST_FULL_NAME,$(@D)) VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),1)
+	#TASK=layout_deps CELL=$(call GET_CAST_FULL_NAME,$(@D)) VIEW=$(call GET_VIEW,$(@D))
 	mkdir -p '$(@D)'; \
 	task=layout_deps && $(CASTFILES_ENQUEUE_TASK) && \
 	if [[ ( -n "$(call LVE_SKIP,deps)" ) && ( -e '$@' ) ]] ; then exit; fi; \
@@ -236,24 +236,24 @@ $(CURR_CELL_DIR)/%/df2.d: $(CURR_CELL_DFII_DIR)/%/layout.oa
 	  $(EXEC_PACKAGE) df2d \
 	    --dfII-dir '$(DFII_DIR)' \
 	    --cell '$(call GET_CAST_FULL_NAME,$(@D))' \
-	    --view $(call GET_NTH_FROM_LAST_DIR,$(@D),1) \
+	    --view $(call GET_VIEW,$(@D)) \
 	    --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_ROOT) \
 	    --target '$@' > '$@.tmp' && \
 	mv '$@.tmp' '$@'; \
 	$(CASTFILES_DEQUEUE_TASK)
 	: < '$@'
 
-$(CURR_CELL_DIR)/%/nanotime$(EXTRACT_DIR)/analog.mk: $(CURR_CELL_DIR)/cast.d
+$(CURR_CELL_DIR)/%/nanotime/analog.mk: $(CURR_CELL_DIR)/cast.d
 	mkdir -p '$(@D)' && \
-	(echo 'SPICE_DIR := $(subst $(ROOT_TARGET_DIR),$$(ROOT_TARGET_DIR),$(@D))' && \
-	 echo 'GDS_DIR := $(subst $(ROOT_TARGET_DIR),$$(ROOT_TARGET_DIR),$(call CANONICALIZE_PATH,$(@D)/..))' && \
-	 echo 'CELL_DIR := $(subst $(ROOT_TARGET_DIR),$$(ROOT_TARGET_DIR),$(call CANONICALIZE_PATH,$(@D)/../..))' && \
+	(echo 'SPICE_DIR := $(call GET_EXTRACT_DIR,$(@D))' \
+	 echo 'GDS_DIR := $(call GET_VIEW_DIR,$(@D))' && \
+	 echo 'CELL_DIR := $(cell GET_CELL_DIR,$(@D))' && \
 	 echo 'include $$(BUILD)/filetypes/castfiles/nanotime.mk') > '$@'
 
 $(CURR_CELL_DIR)/%/analog.mk: $(CURR_CELL_DIR)/cast.d
 	mkdir -p '$(@D)'
-	echo 'SPICE_DIR := $(subst $(ROOT_TARGET_DIR),$$(ROOT_TARGET_DIR),$(@D))' > '$@'
-	echo 'CELL_DIR := $(subst $(ROOT_TARGET_DIR),$$(ROOT_TARGET_DIR),$(call CONONICALIZE_PATH,$(@D)/../..))' >> '$@'
+	echo 'SPICE_DIR := $(call GET_EXTRACT_DIR,$(@D))' > '$@'
+	echo 'CELL_DIR := $(call GET_CELL_DIR,$(@D))' >> '$@'
 	for env in $$(find '$(<D)/jflat$(ROUTED_SUFFIX)/aspice' -noleaf -mindepth 1 -type d -printf "%P\n"); do \
 	  echo "ENV := $$env" >> '$@'; \
 	  echo 'include $$(BUILD)/filetypes/castfiles/env.mk' >> '$@'; \

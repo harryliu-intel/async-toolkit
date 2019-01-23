@@ -1023,12 +1023,21 @@ if ($usedb) {
 foreach my $pvtval (@pvt) {
     my @f=split(/:/, $pvtval);
     my $err=0;
-    $err=1 if ( $#f != 2);
-    $err=2 if ( ! $err and ! ($f[0] =~ /^[a-zA-Z_\d]+$/));
-    $err=3 if ( ! $err and ! ($f[1] =~ /^[\d\.]+$/));
-    $err=4 if ( ! $err and ! ($f[2] =~ /^-?\d+$/));
+    if (@f==3) { # corner:true:temp
+        $err=1 unless ($f[0] =~ /^[a-zA-Z_\d]+$/);
+        $err=1 unless ($f[1] =~ /^[\d\.]+$/);
+        $err=1 unless ($f[2] =~ /^-?\d+$/);
+    } elsif (@f==5) { # extC:extT:corner:true:temp
+        $err=1 unless ($f[0] =~ /^[a-zA-Z_\d]+$/);
+        $err=1 unless ($f[1] =~ /^-?\d+$/);
+        $err=1 unless ($f[2] =~ /^[a-zA-Z_\d]+$/);
+        $err=1 unless ($f[3] =~ /^[\d\.]+$/);
+        $err=1 unless ($f[4] =~ /^-?\d+$/);
+    } else {
+        $err=1;
+    }
     if ($err) {
-        print STDERR "--pvt malformed ".join(",", @pvt)."\n";
+        print STDERR "--pvt malformed $pvtval\n";
         exit 1;
     }
 }
@@ -1213,23 +1222,8 @@ if (!($namedResistorLayers eq "")) {
     $namedResistorArg = "--named-resistor-layers $namedResistorLayers";
 }
 
-my @mode_order=("custom", "accurate",  "extracted",  "estimated",  "nogeometry");
-#my @mode_s = sort {$mode_order{$a}<=>$mode_order{$b}} @mode;
-#foreach my $mode (@mode_s) {
-#  foreach my $view (get_views($mode)) {
-#    push @view_modes, "$view/$mode";
-#  }
-#}
-if(scalar(@view_mode_order)==0){
-  foreach my $mode (@mode_order){
-    foreach my $view (get_views($mode)) {
-      my $dir = ($mode eq 'extracted' || $mode eq 'accurate') ? "${mode}-${extract_corner}-${extractTemp}"
-                                                              : $mode;
-      push @view_mode_order, "$view/$dir";
-    }  
-  }
-}
-
+# alternate extract directories for hierarchical extract
+@view_mode_order = ("floorplan/estimated") unless (@view_mode_order);
 
 # pass parameters to makefile system
 {
@@ -1275,7 +1269,6 @@ KEEP_DRC_DIR                     := $keepDrcDir
 KEEP_FRC_DIR                     := $keepFrcDir
 KEEP_TOTEM_DIR                   := $keepTotemDir
 KEEP_NANOTIME_DIR                := $keepNanotimeDir
-TEMPERATURE                      := $extractTemp
 EXTRA_TEMPERATURE                := @extraExtractTemp
 REDUCED_DSPF                     := $reduced_dspf
 REDUCE_MODE                      := $reduce_mode
@@ -1363,8 +1356,6 @@ FULCRUM_PDK_PACKAGE_EXTRACT_ROOT := $pdk_extract_root
 EXTRACT_STARRC                   := $extract_starrc
 CUSTOM_SPICE                     := $customSpice
 CUSTOM_SPICE_INCLUDE             := $customSpiceInc
-EXTRACT_CORNER                   := $extract_corner
-EXTRACT_DIR                      := -${extract_corner}-${extractTemp}
 CCP                              := $ccp
 LIBTRANSLATE                     := $libtranslate
 FAKESIZE                         := $fakesize
@@ -1863,11 +1854,6 @@ sub enumerate_targets {
     # include makefiles for cell
     addInclude("$cellpath/cell.mk");
     my $validexview = "";
-    my $corner_extension="";
-    foreach my $mode (@mode) {
-        $hasextracted=1 if ($mode eq "extracted" or $mode eq "accurate");
-    }
-    $corner_extension="-${extract_corner}-${extractTemp}" if ($hasextracted);
     my @checkedFiles;
     foreach my $view (get_views("extracted")) {
         my $path="$dfIIPath/$view/layout.oa";
@@ -1886,28 +1872,31 @@ sub enumerate_targets {
         return;
     }
     foreach my $mode (@mode) {
-        foreach my $view (get_views($mode)) {
-            $view = $validexview if (($mode eq "extracted") or ($mode eq "accurate"));
-            if ($mode ne "nogeometry" and $mode ne "custom") {
-                my $path="$dfIIPath/$view/layout.oa";
-                if (! -s "$path") {
-                    error("Missing DFII(layout) file: $path");
+        foreach my $pvt (list_pvt()) {
+            my ($extC,$extT,$corner,$true,$temp) = split_pvt($pvt);
+            foreach my $view (get_views($mode)) {
+                $view = $validexview if (($mode eq "extracted") or ($mode eq "accurate"));
+                if ($mode ne "nogeometry" and $mode ne "custom") {
+                    my $path="$dfIIPath/$view/layout.oa";
+                    if (! -s "$path") {
+                        error("Missing DFII(layout) file: $path");
+                    }
                 }
-            }
-            addInclude("$cellpath/$view/$mode$corner_extension/analog.mk");
-            addInclude("$cellpath/$view/totem$corner_extension/analog.mk")
-                if $hastotem;
-            addInclude("$cellpath/$view/nanotime$corner_extension/analog.mk")
-                if $hasnanotime;
-            addInclude("$cellpath/$view/df2.d") if ($mode ne "nogeometry" and
-                                                    $mode ne "custom");
-            # if all the dependencies are there, include slurp.mk
-            if ($slurp and $slurp_dir and
-               ( -e "$slurp_dir/$shortPath/cell.cdl" ) and
-               ( -e "$slurp_dir/$shortPath/$view/df2.d" )) {
-                my_system("rm -f '$cellpath/$view/slurp.mk'");
-                my_system("rm -f '$cellpath/cell.mk'");
-                addInclude("$cellpath/$view/slurp.mk");
+                addInclude("$cellpath/$view/$extC/${extT}C/$mode/analog.mk");
+                addInclude("$cellpath/$view/$extC/${extT}C/totem/analog.mk")
+                    if $hastotem;
+                addInclude("$cellpath/$view/$extC/${extT}C/nanotime/analog.mk")
+                    if $hasnanotime;
+                addInclude("$cellpath/$view/df2.d") if ($mode ne "nogeometry" and
+                                                        $mode ne "custom");
+                # if all the dependencies are there, include slurp.mk
+                if ($slurp and $slurp_dir and
+                    ( -e "$slurp_dir/$shortPath/cell.cdl" ) and
+                    ( -e "$slurp_dir/$shortPath/$view/df2.d" )) {
+                    my_system("rm -f '$cellpath/$view/slurp.mk'");
+                    my_system("rm -f '$cellpath/cell.mk'");
+                    addInclude("$cellpath/$view/slurp.mk");
+                }
             }
         }
     }
@@ -1922,12 +1911,15 @@ sub enumerate_targets {
         }
         if ($task eq "spef") {
             foreach my $mode (@mode) {
-                if ($mode eq "extracted" or $mode eq "accurate") {
-                    addTarget($cell,"spef","$cellpath/$validexview/$mode$corner_extension/cell.spef");
-                }
-                else {
-                    foreach my $view (get_views($mode)) {
-                        addTarget($cell,"spef","$cellpath/$view/$mode$corner_extension/cell.spef");
+                foreach my $pvt (list_pvt()) {
+                    my ($extC,$extT,$corner,$true,$temp) = split_pvt($pvt);
+                    if ($mode eq "extracted" or $mode eq "accurate") {
+                        addTarget($cell,"spef","$cellpath/$validexview/$extC/${extT}C/$mode/cell.spef");
+                    }
+                    else {
+                        foreach my $view (get_views($mode)) {
+                            addTarget($cell,"spef","$cellpath/$view/$extC/${extT}C/$mode/cell.spef");
+                        }
                     }
                 }
             }
@@ -1935,22 +1927,25 @@ sub enumerate_targets {
     }
     if ($needExtract) {
         foreach my $mode (@mode) {
-            if ($mode eq "extracted" or $mode eq "accurate") {
-                my $targ;
-                foreach my $task (@task) {
-                    next if defined($noextracttask{$task});
-                    my $md=$mode;
-                    $md = "totem" if $task eq "totem" or $task eq "cmm";
-                    $md = "nanotime" if $task eq "nanotime";
-                    $targ = "$cellpath/$validexview/$md$corner_extension/extract.raw";
-                    addTarget($cell,"extract",$targ, __LINE__);
-                }
-            }
-            else {
-                foreach my $view (get_views($mode)) {
+            foreach my $pvt (list_pvt()) {
+                my ($extC,$extT,$corner,$true,$temp) = split_pvt($pvt);
+                if ($mode eq "extracted" or $mode eq "accurate") {
                     my $targ;
-                    $targ = "$cellpath/$view/$mode$corner_extension/extract.raw";
-                    addTarget($cell,"extract",$targ, __LINE__);
+                    foreach my $task (@task) {
+                        next if defined($noextracttask{$task});
+                        my $md=$mode;
+                        $md = "totem" if $task eq "totem" or $task eq "cmm";
+                        $md = "nanotime" if $task eq "nanotime";
+                        $targ = "$cellpath/$validexview/$extC/${extT}C/$md/extract.raw";
+                        addTarget($cell,"extract",$targ, __LINE__);
+                    }
+                }
+                else {
+                    foreach my $view (get_views($mode)) {
+                        my $targ;
+                        $targ = "$cellpath/$view/$extC/${extT}C/$mode/extract.raw";
+                        addTarget($cell,"extract",$targ, __LINE__);
+                    }
                 }
             }
         }
@@ -1964,7 +1959,7 @@ sub enumerate_targets {
                     next if ($view ne $validexview and
                         ($mode eq "extracted" or $mode eq "accurate"));
                     foreach my $pvt (list_pvt()) {
-                        my ($corner,$true,$temp) = split(":",$pvt);
+                        my ($extC,$extT,$corner,$true,$temp) = split_pvt($pvt);
                         if ($mode   eq "" or
                             $corner eq "" or
                             $true   eq "" or
@@ -1974,7 +1969,7 @@ sub enumerate_targets {
                             my $targ;
                             if($alint_incr){
                               #alint incremental. Generate new alint.in file and rerun aspice incrementally
-                              my $alint_path="$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C";
+                              my $alint_path="$cellpath/$view/$extC/${extT}C/$mode/$task/$corner/${true}V/${temp}C";
                               if(-d $alint_path ){
                                 opendir(D,  "$alint_path");
                                 my @bin_dirs= grep {$_ =~ /(alint|alint_PO)\.bin\.\d+$/} readdir(D);
@@ -2037,14 +2032,14 @@ sub enumerate_targets {
                               dounlink("$alint_path/threshresp.result");
                             }
                             if($alint_raw){ 
-                                $targ = "$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/alint.raw";
+                                $targ = "$cellpath/$view/$extC/${extT}C/$mode/$task/$corner/${true}V/${temp}C/alint.raw";
                                 addTarget($cell,$task,$targ);
                                 dounlink($targ) if ($alint_incr);
                                 if($force{"alint_raw"}){
                                     dounlink($targ);
-                                    system "rm -f '$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/alint_parallel/alint.raw'.*";
-                                    if(-d "$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/alint_parallel"){
-                                      opendir(D,  "$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/alint_parallel");
+                                    system "rm -f '$cellpath/$view/$extC/${extT}C/$mode/$task/$corner/${true}V/${temp}C/alint_parallel/alint.raw'.*";
+                                    if(-d "$cellpath/$view/$extC/${extT}C/$mode/$task/$corner/${true}V/${temp}C/alint_parallel"){
+                                      opendir(D,  "$cellpath/$view/$extC/${extT}C/$mode/$task/$corner/${true}V/${temp}C/alint_parallel");
                                       my @infiles= grep {$_ =~ /alint\.in\.\d+$/} readdir(D);
                                       closedir(D);
                                       if(scalar(@infiles) > 0){
@@ -2055,42 +2050,42 @@ sub enumerate_targets {
                                 }
                                 if($force{"alint_PO"}){
                                     dounlink($targ);
-                                    system "rm -f '$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/alint_parallel/alint.raw'.*";
-                                    $targ = "$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/threshresp_PO.result";
+                                    system "rm -f '$cellpath/$view/$extC/${extT}C/$mode/$task/$corner/${true}V/${temp}C/alint_parallel/alint.raw'.*";
+                                    $targ = "$cellpath/$view/$extC/${extT}C/$mode/$task/$corner/${true}V/${temp}C/threshresp_PO.result";
                                     addTarget($cell,$task,$targ);
                                     dounlink($targ);
-                                    system "rm -rf '$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/alint_PO'*";
+                                    system "rm -rf '$cellpath/$view/$extC/${extT}C/$mode/$task/$corner/${true}V/${temp}C/alint_PO'*";
                                 }
-                                $targ = "$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/threshresp_PO.result";
+                                $targ = "$cellpath/$view/$extC/${extT}C/$mode/$task/$corner/${true}V/${temp}C/threshresp_PO.result";
                                 addTarget($cell,$task,$targ);
-                                $targ = "$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/directives.0";
+                                $targ = "$cellpath/$view/$extC/${extT}C/$mode/$task/$corner/${true}V/${temp}C/directives.0";
                                 addTarget($cell,$task,$targ);
                                 dounlink($targ) if ($alint_incr);
-                                $targ = "$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/threshresp.result";
+                                $targ = "$cellpath/$view/$extC/${extT}C/$mode/$task/$corner/${true}V/${temp}C/threshresp.result";
                                 addTarget($cell,$task,$targ);
                             }else{
-                                $targ = "$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/threshresp.result";
+                                $targ = "$cellpath/$view/$extC/${extT}C/$mode/$task/$corner/${true}V/${temp}C/threshresp.result";
                                 addTarget($cell,$task,$targ);
-                                $targ = "$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/threshresp_PO.result";
+                                $targ = "$cellpath/$view/$extC/${extT}C/$mode/$task/$corner/${true}V/${temp}C/threshresp_PO.result";
                                 addTarget($cell,$task,$targ);
                                 if($force{"alint_PO"}){
                                     dounlink($targ);
-                                    system "rm -rf '$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/alint_PO'*";
+                                    system "rm -rf '$cellpath/$view/$extC/${extT}C/$mode/$task/$corner/${true}V/${temp}C/alint_PO'*";
                                 }
                             }
                             if ($redonodes ne "") {
                                 # !FORCE running this
-                                $targ = "$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/alint_parallel/alint.in.$redonodes";
+                                $targ = "$cellpath/$view/$extC/${extT}C/$mode/$task/$corner/${true}V/${temp}C/alint_parallel/alint.in.$redonodes";
                                 unlink $targ;
                                 addTarget($cell,$task,$targ);
-                                $targ = "$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/alint_parallel/alint_aspice.done.$redonodes";
+                                $targ = "$cellpath/$view/$extC/${extT}C/$mode/$task/$corner/${true}V/${temp}C/alint_parallel/alint_aspice.done.$redonodes";
                                 unlink $targ;
                                 addTarget($cell,$task,$targ);
-                                $targ = "$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/alint_parallel/threshresp.result.$redonodes";
+                                $targ = "$cellpath/$view/$extC/${extT}C/$mode/$task/$corner/${true}V/${temp}C/alint_parallel/threshresp.result.$redonodes";
                                 unlink $targ;
                                 addTarget($cell,$task,$targ);
                                 if($alint_raw){ 
-                                    $targ = "$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/alint_parallel/alint.raw.$redonodes";
+                                    $targ = "$cellpath/$view/$extC/${extT}C/$mode/$task/$corner/${true}V/${temp}C/alint_parallel/alint.raw.$redonodes";
                                     unlink $targ;
                                     addTarget($cell,$task,$targ);
                                 }
@@ -2106,17 +2101,17 @@ sub enumerate_targets {
                     next if ($view ne $validexview and
                         ($mode eq "extracted" or $mode eq "accurate"));
                     foreach my $pvt (list_pvt()) {
-                        my ($corner,$true,$temp) = split(":",$pvt);
+                        my ($extC,$extT,$corner,$true,$temp) = split_pvt($pvt);
                         if ($mode   eq "" or
                             $corner eq "" or
                             $true   eq "" or
                             $temp   eq "") {
                             error("empty list element");
                         } else {
-                            my $targ = "$cellpath/$view/$mode$corner_extension/alint/$corner/${true}V/${temp}C/asta.raw";
+                            my $targ = "$cellpath/$view/$extC/${extT}C/$mode/alint/$corner/${true}V/${temp}C/asta.raw";
                             addTarget($cell,$task,$targ);
                             foreach my $tau (@astaTau) {
-                                $targ = "$cellpath/$view/$mode$corner_extension/alint/$corner/${true}V/${temp}C/asta/$tau/in";
+                                $targ = "$cellpath/$view/$extC/${extT}C/$mode/alint/$corner/${true}V/${temp}C/asta/$tau/in";
                                 addTarget($cell,$task,$targ);
                             }
                         }
@@ -2130,14 +2125,14 @@ sub enumerate_targets {
                     next if ($view ne $validexview and
                         ($mode eq "extracted" or $mode eq "accurate"));
                     foreach my $pvt (list_pvt()) {
-                        my ($corner,$true,$temp) = split(":",$pvt);
+                        my ($extC,$extT,$corner,$true,$temp) = split_pvt($pvt);
                         if ($mode   eq "" or
                             $corner eq "" or
                             $true   eq "" or
                             $temp   eq "") {
                             error("empty list element");
                         } else {
-                            my $targ = "$cellpath/$view/$mode$corner_extension/alint/$corner/${true}V/${temp}C/slint.raw";
+                            my $targ = "$cellpath/$view/$extC/${extT}C/$mode/alint/$corner/${true}V/${temp}C/slint.raw";
                             addTarget($cell,$task,$targ);
                         }
                     }
@@ -2150,14 +2145,14 @@ sub enumerate_targets {
                     next if ($view ne $validexview and
                         ($mode eq "extracted" or $mode eq "accurate"));
                     foreach my $pvt (list_pvt()) {
-                        my ($corner,$true,$temp) = split(":",$pvt);
+                        my ($extC,$extT,$corner,$true,$temp) = split_pvt($pvt);
                         if ($mode   eq "" or
                             $corner eq "" or
                             $true   eq "" or
                             $temp   eq "") {
                             error("empty list element");
                         } else {
-                            my $targprefix = "$cellpath/$view/$mode$corner_extension/alint/$corner/${true}V/${temp}C";
+                            my $targprefix = "$cellpath/$view/$extC/${extT}C/$mode/alint/$corner/${true}V/${temp}C";
                             my $targ = "$targprefix/lib.raw";
                             addTarget($cell,$task,$targ);
                             $targ = "$targprefix/cell.timing";
@@ -2177,14 +2172,14 @@ sub enumerate_targets {
                     next if ($view ne $validexview and
                         ($mode eq "extracted" or $mode eq "accurate"));
                     foreach my $pvt (list_pvt()) {
-                        my ($corner,$true,$temp) = split(":",$pvt);
+                        my ($extC,$extT,$corner,$true,$temp) = split_pvt($pvt);
                         if ($mode   eq "" or
                             $corner eq "" or
                             $true   eq "" or
                             $temp   eq "") {
                             error("empty list element");
                         } else {
-                            my $targprefix = "$cellpath/$view/$mode$corner_extension/alint/$corner/${true}V/${temp}C";
+                            my $targprefix = "$cellpath/$view/$extC/${extT}C/$mode/alint/$corner/${true}V/${temp}C";
                             my $targ = "$targprefix/cell.fakelib";
                             addTarget($cell,$task,$targ);
                         }
@@ -2199,7 +2194,7 @@ sub enumerate_targets {
                         ($mode eq "extracted" or $mode eq "accurate"));
                     foreach my $env (@env) {
                         foreach my $pvt (list_pvt()) {
-                            my ($corner,$true,$temp) = split(":",$pvt);
+                            my ($extC,$extT,$corner,$true,$temp) = split_pvt($pvt);
                             foreach my $time (@time) {
                                 foreach my $minmax (@timed_delay) {
                                     my $min_max = join("_", split(":",$minmax));
@@ -2212,7 +2207,7 @@ sub enumerate_targets {
                                         $env    eq "") {
                                         error("empty list element");
                                     } else {
-                                        my $targ = "$cellpath/$view/$mode$corner_extension/$task/$env/$corner/${true}V/${temp}C/${time}ns/${min_max}/aspice.raw";
+                                        my $targ = "$cellpath/$view/$extC/${extT}C/$mode/$task/$env/$corner/${true}V/${temp}C/${time}ns/${min_max}/aspice.raw";
                                         addTarget($cell,$task,$targ);
                                         dounlink($targ) if($force{"aspice_raw"});
                                     }
@@ -2230,7 +2225,7 @@ sub enumerate_targets {
                         ($mode eq "extracted" or $mode eq "accurate"));
                     foreach my $env (@env) {
                         foreach my $pvt (list_pvt()) {
-                            my ($corner,$true,$temp) = split(":",$pvt);
+                            my ($extC,$extT,$corner,$true,$temp) = split_pvt($pvt);
                             foreach my $time (@time) {
                                 if ($mode   eq "" or
                                     $corner eq "" or
@@ -2240,7 +2235,7 @@ sub enumerate_targets {
                                     $env    eq "") {
                                     error("empty list element");
                                 } else {
-                                    my $targ = "$cellpath/$view/$mode$corner_extension/$task/$env/$corner/${true}V/${temp}C/${time}ns/$task.raw";
+                                    my $targ = "$cellpath/$view/$extC/${extT}C/$mode/$task/$env/$corner/${true}V/${temp}C/${time}ns/$task.raw";
                                     addTarget($cell,$task,$targ);
                                 }
                             }
@@ -2255,7 +2250,7 @@ sub enumerate_targets {
                     next if ($view ne $validexview and
                         ($mode eq "extracted" or $mode eq "accurate" or $mode eq "totem"));
                     foreach my $pvt (list_pvt()) {
-                        my ($corner,$true,$temp) = split(":",$pvt);
+                        my ($extC,$extT,$corner,$true,$temp) = split_pvt($pvt);
                         foreach my $env (@env) {
                             foreach my $time (@time) {
                                 if ($mode   eq "" or
@@ -2266,13 +2261,13 @@ sub enumerate_targets {
                                     $env    eq "") {
                                     error("empty list element");
                                 } else {
-                                    my $targ = "$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/$env/$task.raw";
+                                    my $targ = "$cellpath/$view/$extC/${extT}C/$mode/$task/$corner/${true}V/${temp}C/$env/$task.raw";
                                     addTarget($cell,$task,$targ);
                                     push(@rtedeps,$targ);
                                 }
                             }
                         }
-                        my $summtarg = "$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/$task.raw.summary";
+                        my $summtarg = "$cellpath/$view/$extC/${extT}C/$mode/$task/$corner/${true}V/${temp}C/$task.raw.summary";
 #                        print "The total target is :",$summtarg;
                         addTarget($cell,$task,$summtarg);
                     }
@@ -2284,7 +2279,7 @@ sub enumerate_targets {
                 next if ($view ne $validexview);
                 foreach my $env (@env) {
                     foreach my $pvt (list_pvt()) {
-                        my ($corner,$true,$temp) = split(":",$pvt);
+                        my ($extC,$extT,$corner,$true,$temp) = split_pvt($pvt);
                         foreach my $time (@time) {
                             if ($corner eq "" or
                                 $true   eq "" or
@@ -2293,14 +2288,14 @@ sub enumerate_targets {
                                 $env    eq "") {
                                 error("empty list element");
                             } else {
-                                my $targ = "$cellpath/$view/totem$corner_extension/hsim/$env/$corner/${true}V/${temp}C/${time}ns/$task.out";
+                                my $targ = "$cellpath/$view/$extC/${extT}C/totem/hsim/$env/$corner/${true}V/${temp}C/${time}ns/$task.out";
                                 addTarget($cell,$task,$targ);
                                 if ($task eq "totem") {
-                                    $targ = "$cellpath/$view/totem$corner_extension/hsim/$env/$corner/${true}V/${temp}C/${time}ns/$task.raw";
+                                    $targ = "$cellpath/$view/$extC/${extT}C/totem/hsim/$env/$corner/${true}V/${temp}C/${time}ns/$task.raw";
                                     addTarget($cell,$task,$targ);
                                 }
                                 elsif ($task eq "cmm") {
-                                    $targ = "$cellpath/$view/totem$corner_extension/hsim/$env/$corner/${true}V/${temp}C/${time}ns/$task.out";
+                                    $targ = "$cellpath/$view/$extC/${extT}C/totem/hsim/$env/$corner/${true}V/${temp}C/${time}ns/$task.out";
                                     addTarget($cell,$task,$targ);
                                 }
                             }
@@ -2363,16 +2358,19 @@ sub enumerate_targets {
         } elsif ($task eq "captally") {
             if (@view_extracted and $validexview ne "") {
                 foreach my $mode (@mode) {
-                    if ($mode eq "extracted" or $mode eq "accurate") {
-                        my $targ;
-                        $targ = "$cellpath/$validexview/$mode$corner_extension/cell.captally";
-                        addTarget($cell,"captally",$targ);
-                    }
-                    else {
-                        foreach my $view (get_views($mode)) {
+                    foreach my $pvt (list_pvt()) {
+                        my ($extC,$extT,$corner,$true,$temp) = split_pvt($pvt);
+                        if ($mode eq "extracted" or $mode eq "accurate") {
                             my $targ;
-                            $targ = "$cellpath/$view/$mode$corner_extension/cell.captally";
+                            $targ = "$cellpath/$validexview/$extC/${extT}C/$mode/cell.captally";
                             addTarget($cell,"captally",$targ);
+                        }
+                        else {
+                            foreach my $view (get_views($mode)) {
+                                my $targ;
+                                $targ = "$cellpath/$view/$extC/${extT}C/$mode/cell.captally";
+                                addTarget($cell,"captally",$targ);
+                            }
                         }
                     }
                 }
@@ -2383,18 +2381,18 @@ sub enumerate_targets {
                     next if ($view ne $validexview and
                         ($mode eq "extracted" or $mode eq "accurate"));
                     foreach my $pvt (list_pvt()) {
-                        my ($corner,$true,$temp) = split(":",$pvt);
+                        my ($extC,$extT,$corner,$true,$temp) = split_pvt($pvt);
                         if ($mode   eq "" or
                             $corner eq "" or
                             $true   eq "" or
                             $temp   eq "") {
                             error("empty list element");
                         } else {
-                            my $targ = "$cellpath/$view/$mode$corner_extension/alint/$corner/${true}V/${temp}C/plt.raw";
+                            my $targ = "$cellpath/$view/$extC/${extT}C/$mode/alint/$corner/${true}V/${temp}C/plt.raw";
                             addTarget($cell,$task,$targ);
-                            $targ = "$cellpath/$view/$mode$corner_extension/alint/$corner/${true}V/${temp}C/threshresp.result";
+                            $targ = "$cellpath/$view/$extC/${extT}C/$mode/alint/$corner/${true}V/${temp}C/threshresp.result";
                             addTarget($cell,$task,$targ);
-                            $targ = "$cellpath/$view/$mode$corner_extension/alint/$corner/${true}V/${temp}C/threshresp_PO.result";
+                            $targ = "$cellpath/$view/$extC/${extT}C/$mode/alint/$corner/${true}V/${temp}C/threshresp_PO.result";
                             addTarget($cell,$task,$targ);
                         }
                     }
@@ -2406,7 +2404,7 @@ sub enumerate_targets {
                     next if ($view ne $validexview and
                         ($mode eq "extracted" or $mode eq "accurate"));
                     foreach my $pvt ("pwr:0.945:115") {
-                        my ($corner,$true,$temp) = split(":",$pvt);
+                        my ($extC,$extT,$corner,$true,$temp) = split_pvt($pvt);
                         if ($mode   eq "" or
                             $corner eq "" or
                             $true   eq "" or
@@ -2415,13 +2413,13 @@ sub enumerate_targets {
                         } else {
                             my $time="10";
                             my $min_max="0.95_1.05";
-                            my $targ = "$cellpath/$view/$mode$corner_extension/aspice/redhawk/$corner/${true}V/${temp}C/${time}ns/${min_max}/aspice.raw";
+                            my $targ = "$cellpath/$view/$extC/${extT}C/$mode/aspice/redhawk/$corner/${true}V/${temp}C/${time}ns/${min_max}/aspice.raw";
                             addTarget($cell,$task,$targ);
                             dounlink($targ) if($force{"aspice_raw"});
-                            $targ = "$cellpath/$view/$mode$corner_extension/aspice/leakage/$corner/${true}V/${temp}C/${time}ns/${min_max}/aspice.raw";
+                            $targ = "$cellpath/$view/$extC/${extT}C/$mode/aspice/leakage/$corner/${true}V/${temp}C/${time}ns/${min_max}/aspice.raw";
                             addTarget($cell,$task,$targ);
                             dounlink($targ) if($force{"aspice_raw"});
-                            $targ = "$cellpath/$view/$mode$corner_extension/aspice/redhawk/$corner/${true}V/${temp}C/${time}ns/${min_max}/cell.spiprof";
+                            $targ = "$cellpath/$view/$extC/${extT}C/$mode/aspice/redhawk/$corner/${true}V/${temp}C/${time}ns/${min_max}/cell.spiprof";
                             addTarget($cell,$task,$targ);
                         }
                     }
@@ -2431,14 +2429,14 @@ sub enumerate_targets {
             foreach my $view (get_views("extracted")) {
                 next if ($view ne $validexview);
                 foreach my $pvt (list_pvt()) {
-                    my ($corner,$true,$temp) = split(":",$pvt);
+                    my ($extC,$extT,$corner,$true,$temp) = split_pvt($pvt);
                     foreach my $time (@time) {
                         if ($corner eq "" or
                             $true   eq "" or
                             $temp   eq "") {
                             error("empty list element");
                         } else {
-                            my $targ = "$cellpath/$view/nanotime$corner_extension/$corner/${true}V/${temp}C/cell.lib";
+                            my $targ = "$cellpath/$view/$extC/${extT}C/nanotime/$corner/${true}V/${temp}C/cell.lib";
                             addTarget($cell,$task,$targ);
                         }
                     }
@@ -3326,7 +3324,7 @@ sub processOption {
         elsif ($key eq "task")               { @task    = split(",",$value); }
         elsif ($key eq "skip")               { @skip    = split(",",$value); }
         elsif ($key eq "time")               { @time    = split(",",$value); }
-        elsif ($key eq "pvt")                { @pvt     = split(",",$value); }
+        elsif ($key eq "pvt")                { foreach my $x (split(",",$value)) { push @pvt, $x; } }
         elsif ($key eq "true")               { @true    = split(",",$value); }
         elsif ($key eq "corner")             { @corner  = split(",",$value); }
         elsif ($key eq "temp")               { @temp    = split(",",$value); }
@@ -3522,13 +3520,30 @@ sub list_pvt {
     }
     my @t2;
     foreach my $pvt (@t1) {
-        if ($monte_carlo>0 && $pvt =~ /^(\S+)g:(\S+):(\S+)$/ ) {
+        if ($monte_carlo>0 && $pvt =~ /(.*)(\S+)g:(\S+):(\S+)$/ ) {
             for (my $seed=1; $seed<=$monte_carlo; $seed++) {
-                push @t2, "${1}g_${seed}:$2:$3";
+                push @t2, "${1}${2}g_${seed}:$3:$4";
             }
         } else { push @t2, $pvt; }
     }
     return @t2;
+}
+
+# split a 3 field or 5 field pvt 
+sub split_pvt {
+    my ($pvt) = @_;
+    my @f = split(":",$pvt);
+    my $extC=$extract_corner;
+    my $extT=$extractTemp;
+    if (@f==5) { $extC=shift(@f); $extT=shift(@f); }
+    if (@f!=3) {
+        print STDERR "--pvt malformed $pvt\n";
+        exit 1;
+    }
+    my $p=shift(@f);
+    my $v=shift(@f);
+    my $t=shift(@f);
+    return ($extC,$extT,$p,$v,$t);
 }
 
 sub defaultOptions {
