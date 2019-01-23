@@ -49,17 +49,17 @@ endclass : ral_reg_mby_rx_pb_map_RX_PB_WM
 
 class ral_block_mby_rx_pb_map extends uvm_reg_block;
 	rand ral_reg_mby_rx_pb_map_RX_PB_PORT_CFG RX_PB_PORT_CFG;
-	rand ral_reg_mby_rx_pb_map_RX_PB_WM RX_PB_WM[18][0:7];
+	rand ral_reg_mby_rx_pb_map_RX_PB_WM RX_PB_WM[17][0:7];
 	uvm_reg_field RX_PB_PORT_CFG_RSVD0;
 	rand uvm_reg_field RX_PB_PORT_CFG_PORT;
 	rand uvm_reg_field PORT;
-	uvm_reg_field RX_PB_WM_RSVD0[18][0:7];
-	rand uvm_reg_field RX_PB_WM_LOSSLESS[18][0:7];
-	rand uvm_reg_field LOSSLESS[18][0:7];
-	rand uvm_reg_field RX_PB_WM_XON[18][0:7];
-	rand uvm_reg_field XON[18][0:7];
-	rand uvm_reg_field RX_PB_WM_XOFF_OR_DROP[18][0:7];
-	rand uvm_reg_field XOFF_OR_DROP[18][0:7];
+	uvm_reg_field RX_PB_WM_RSVD0[17][0:7];
+	rand uvm_reg_field RX_PB_WM_LOSSLESS[17][0:7];
+	rand uvm_reg_field LOSSLESS[17][0:7];
+	rand uvm_reg_field RX_PB_WM_XON[17][0:7];
+	rand uvm_reg_field XON[17][0:7];
+	rand uvm_reg_field RX_PB_WM_XOFF_OR_DROP[17][0:7];
+	rand uvm_reg_field XOFF_OR_DROP[17][0:7];
 
 	function new(string name = "mby_rx_pb_map");
 		super.new(name, build_coverage(UVM_NO_COVERAGE));
