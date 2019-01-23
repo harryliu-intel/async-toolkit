@@ -38,7 +38,19 @@
 
 // Type definitions
 typedef virtual mby_net_man_if mby_net_man_vif;
-typedef mby_base_pkg::mby_base_agent#(.T_req(mby_net_man_xaction), .T_vif(mby_net_man_vif)) net_man_agent;
+
+typedef shdv_base_io_policy_param#(
+   .T_req(mby_net_man_xaction),
+   .T_vif(mby_net_man_vif)) mby_net_man_io;
+
+
+// Defining the flow control policy for the tag bfm
+typedef shdv_base_empty_fc_policy mby_net_man_fc;
+
+typedef mby_base_pkg::mby_base_agent#(
+   .T_req(mby_net_man_xaction),
+   .T_fcp(mby_net_man_fc),
+   .T_iop(mby_net_man_io)) net_man_agent;
    
 
 `endif

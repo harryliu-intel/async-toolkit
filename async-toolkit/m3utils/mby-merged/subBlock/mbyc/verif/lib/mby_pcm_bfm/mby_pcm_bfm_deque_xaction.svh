@@ -45,7 +45,7 @@
 //     T_debug    - mby_pcm_bfm_debg_t
 //
 //-----------------------------------------------------------------------------
-class mby_pcm_bfm_deque_xaction extends mby_base_sequence_item_param
+class mby_pcm_bfm_deque_xaction extends shdv_base_sequence_item_param
 #(
    .T_data (mby_pcm_bfm_deque_t),
    .T_debug(mby_pcm_bfm_debg_t)

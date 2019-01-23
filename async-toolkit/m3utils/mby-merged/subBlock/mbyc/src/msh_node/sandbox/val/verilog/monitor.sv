@@ -345,6 +345,9 @@ class monitor;
     mby_msh_pkg::msh_data_t	last_i_p1_sb_wdata;
 
 
+    integer	en_mem_check;
+
+
 
     // statistics variables
     integer                 stat_num_arb_conflicts;
@@ -647,6 +650,8 @@ class monitor;
 	last_i_p1_nb_wdata	= '0;
 	last_i_p1_sb_wdata	= '0;
 
+
+	en_mem_check 	= 0;
 
 
         $value$plusargs("heartbeat=%d", heartbeat);     // heartbeat value comes from command line argument 
@@ -1767,7 +1772,7 @@ class monitor;
 	   end
            else if (exp_o_p1_nb_rreq_valid_from_eb) begin
                  exp_row_to_col_rreq.vld         = dut_if.i_eb_rd_req[1].vld;
-                 exp_row_to_col_rreq.id          = dut_if.i_eb_rd_req[1].vld;
+                 exp_row_to_col_rreq.id          = dut_if.i_eb_rd_req[1].id;
                  exp_row_to_col_rreq.port_row    = dut_if.i_sb_node_row;  // source row
                  exp_row_to_col_rreq.port_side   = 2'd3 ;                 // source side: 0=north,1=s,2=e,3=w
                  exp_row_to_col_rreq.node_row    = dut_if.i_eb_rd_req[1].node_row;
@@ -1782,7 +1787,7 @@ class monitor;
            end
            else if (exp_o_p1_nb_rreq_valid_from_wb) begin
                  exp_row_to_col_rreq.vld         = dut_if.i_wb_rd_req[1].vld;
-                 exp_row_to_col_rreq.id          = dut_if.i_wb_rd_req[1].vld;
+                 exp_row_to_col_rreq.id          = dut_if.i_wb_rd_req[1].id;
                  exp_row_to_col_rreq.port_row    = dut_if.i_sb_node_row;  // source row
                  exp_row_to_col_rreq.port_side   = 2'd2 ;                 // source side: 0=north,1=s,2=e,3=w
                  exp_row_to_col_rreq.node_row    = dut_if.i_wb_rd_req[1].node_row;
@@ -2052,8 +2057,8 @@ class monitor;
 */
 
 
-	// check rreq.addr at mem interface
 
+	if (en_mem_check) begin
            if (mem_if_0.rd_en) begin
                $display("(time: %0d) %s: --------", $time, name);
                $display("(time: %0d) %s: A RD req to memory bank_0 is detected", $time, name);
@@ -2074,6 +2079,19 @@ class monitor;
                $display("(time: %0d) %s: A RD req to memory bank_3 is detected", $time, name);
                sb.check_mem_rreq_notification(mem_if_3.adr);
 	   end
+	end
+
+
+
+        // check rreq.addr at mem interface
+
+        if (dut_if.i_eb_rd_req[0].vld || dut_if.i_wb_rd_req[0].vld ||
+            dut_if.i_nb_rd_req[0].vld || dut_if.i_sb_rd_req[0].vld ||
+            dut_if.i_eb_rd_req[1].vld || dut_if.i_wb_rd_req[1].vld ||
+            dut_if.i_nb_rd_req[1].vld || dut_if.i_sb_rd_req[1].vld )  en_mem_check = 1;
+	else if (mem_if_0.rd_en || mem_if_1.rd_en ||
+	         mem_if_2.rd_en || mem_if_3.rd_en )  en_mem_check = 0;
+
 
 
 
@@ -2782,6 +2800,11 @@ class monitor;
            if (o_p0_sb_rsp_valid) begin
                $display("(time: %0d) %s: --------", $time, name);
                $display("(time: %0d) %s: A P0 SB RD rsp OUTPUT is detected", $time, name);
+               $display("(time: %0d) %s: p0.o_sb_rsp.vld      =", $time, name, dut_if.o_sb_rd_rsp[0].vld);
+               $display("(time: %0d) %s: p0.o_sb_rsp.id       =", $time, name, dut_if.o_sb_rd_rsp[0].id);
+               $display("(time: %0d) %s: p0.o_sb_rsp.port_side=", $time, name, dut_if.o_sb_rd_rsp[0].port_side);
+               $display("(time: %0d) %s: p0.o_sb_rsp.port_row =", $time, name, dut_if.o_sb_rd_rsp[0].port_row);
+
                sb.check_p0_sb_rsp_notification(dut_if.o_sb_rd_rsp[0]);
 	   end
 
