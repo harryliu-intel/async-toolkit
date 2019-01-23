@@ -174,4 +174,4 @@ mem_pb3_pd1_ram_shell_1024x72,pb3_pd1_ram,igr_pbb,1rw,SRAM,1225,1024,72,None,0,7
 mem_pb3_pd2_ram_shell_1024x72,pb3_pd2_ram,igr_pbb,1rw,SRAM,1225,1024,72,None,0,72,8,No,1,,72,72,SRAM,1024,72,1,1,4,CR,1,1,8,saduls0g4l1p1024x72m4b4w0c0p0d0l2rm3sdrw19
 mem_pb3_pd3_ram_shell_1024x72,pb3_pd3_ram,igr_pbb,1rw,SRAM,1225,1024,72,None,0,72,8,No,1,,72,72,SRAM,1024,72,1,1,4,CR,1,1,8,saduls0g4l1p1024x72m4b4w0c0p0d0l2rm3sdrw20
 mem_vp_d_rf_shell_320x72,vp_d_rf,igr_pbb,1r1w,RF,1225,320,72,None,0,72,8,No,1,,72,72,RF,320,72,1,1,4,C,1,8,8,
-mem_vp_md_rf_shell_8x72,vp_md_rf,igr_pbb,1r1w,FLOPS,1225,8,72,None,0,72,8,No,1,,72,72,FLOPS,8,72,1,1,4,none,1,8,1,
+mem_vp_md_rf_shell_8x72,vp_md_rf,igr_pbb,1r1w,FLOPS,1225,8,72,None,0,72,8,No,1,,72,72,FLOPS,8,72,1,1,1,0,1,1,8,0
