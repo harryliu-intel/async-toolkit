@@ -6,6 +6,10 @@ V2BBOX        = /p/hdk/rtl/proj_tools/sl2_tools/latest/scripts/v2bbox.pl
 
 V_DIRS        = -d=../../igr/rtl \
                 -d=../../egr/rtl \
+                -d=../../egr/tqu/interfaces \
+                -d=../../egr/mri/rtl \
+                -d=../../egr/mri/interfaces \
+                -d=../../egr/prc/interfaces \
                 -d=../../tx_ppe/rtl \
                 -d=../../rx_ppe/rtl \
                 -d=../../rngstp/rtl \

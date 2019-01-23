@@ -50,6 +50,7 @@ module mby_egr_ti_low #(
 
    `include "mby_egr_params.sv"
    `include "mby_egr_defines.sv"
+   `include "mby_egr_types.svh"
 
    initial begin
       /////////////////////////////////////////////////////////////////////////
@@ -58,21 +59,45 @@ module mby_egr_ti_low #(
       mby_tag_bfm_uc_io          tag_bfm_io[2];
       smm_bfm_row_rd_io          smm_bfm_rd_io;
       smm_bfm_row_wr_io          smm_bfm_wr_io;
+      
+      // MAC Client BFM io policy
+      egr_eth_bfm_tx_io_t eth_bfm_tx_io[`NUM_EPLS_PER_EGR];
+      // MAC Client BFM io policy
+      egr_eth_bfm_rx_io_t eth_bfm_rx_io[`NUM_EPLS_PER_EGR];
+      // MAC Client BFM io policy
 
       /////////////////////////////////////////////////////////////////////////
       // virtual interface array declarations to simplify assignments
       /////////////////////////////////////////////////////////////////////////
       virtual mby_tag_bfm_uc_if  tag_bfm_vif_array[2];
-
+      egr_eth_bfm_tx_intf_t eth_bfm_tx_intf_array[4];
+      egr_eth_bfm_rx_intf_t eth_bfm_rx_intf_array[4];
+      
       /////////////////////////////////////////////////////////////////////////
       // virtual interface array assignments
       /////////////////////////////////////////////////////////////////////////
       tag_bfm_vif_array = '{tag_bfm_intf_0, tag_bfm_intf_1};
+      
+      eth_bfm_tx_intf_array = '{eth_bfm_tx_intf_0, eth_bfm_tx_intf_1, eth_bfm_tx_intf_2,
+                                eth_bfm_tx_intf_3};
+
+      eth_bfm_rx_intf_array = '{eth_bfm_rx_intf_0, eth_bfm_rx_intf_1, eth_bfm_rx_intf_2,
+                                eth_bfm_rx_intf_3};
+      
 
       /////////////////////////////////////////////////////////////////////////
       // Creating I/O policies and registering them in the cfg_db
       //
       /////////////////////////////////////////////////////////////////////////
+      // Eth BFM
+      foreach(eth_bfm_tx_io[i])begin
+          eth_bfm_tx_io[i] = new($sformatf("%m.eth_bfm_tx_io%0d",i), eth_bfm_tx_intf_array[i]);
+          eth_bfm_rx_io[i] = new($sformatf("%m.eth_bfm_rx_io%0d",i), eth_bfm_rx_intf_array[i]);
+          uvm_config_db#(egr_eth_bfm_tx_io_t)::set(uvm_root::get(),
+             $sformatf("%s*",IP_ENV), $sformatf("igr_eth_bfm_tx_io%0d",i) , eth_bfm_tx_io[i]);
+          uvm_config_db#(egr_eth_bfm_rx_io_t)::set(uvm_root::get(),
+             $sformatf("%s*",IP_ENV), $sformatf("igr_eth_bfm_rx_io%0d",i) , eth_bfm_rx_io[i]);
+      end
       // Tag bfm I/O policy constructor and uvm_config_db registration
       foreach(tag_bfm_io[i]) begin
          tag_bfm_io[i] = new($sformatf("%m.tag_bfm_uc_io%0d",i), tag_bfm_vif_array[i]);
@@ -89,15 +114,8 @@ module mby_egr_ti_low #(
 
       /////////////////////////////////////////////////////////////////////////
       // Other interfaces registration
+      /////////////////////////////////////////////////////////////////////////
       uvm_config_db#(virtual mby_egr_env_if)::set(uvm_root::get(),     $sformatf("%s*",IP_ENV), "egress_if", egress_if);
-      uvm_config_db#(virtual mby_ec_cdi_tx_intf)::set(uvm_root::get(), $sformatf("%s*",IP_ENV), "egr_eth_bfm_tx_vintf0" , eth_bfm_tx_intf_0);
-      uvm_config_db#(virtual mby_ec_cdi_rx_intf)::set(uvm_root::get(), $sformatf("%s*",IP_ENV), "egr_eth_bfm_rx_vintf0" , eth_bfm_rx_intf_0);
-      uvm_config_db#(virtual mby_ec_cdi_tx_intf)::set(uvm_root::get(), $sformatf("%s*",IP_ENV), "egr_eth_bfm_tx_vintf1" , eth_bfm_tx_intf_1);
-      uvm_config_db#(virtual mby_ec_cdi_rx_intf)::set(uvm_root::get(), $sformatf("%s*",IP_ENV), "egr_eth_bfm_rx_vintf1" , eth_bfm_rx_intf_1);
-      uvm_config_db#(virtual mby_ec_cdi_tx_intf)::set(uvm_root::get(), $sformatf("%s*",IP_ENV), "egr_eth_bfm_tx_vintf2" , eth_bfm_tx_intf_2);
-      uvm_config_db#(virtual mby_ec_cdi_rx_intf)::set(uvm_root::get(), $sformatf("%s*",IP_ENV), "egr_eth_bfm_rx_vintf2" , eth_bfm_rx_intf_2);
-      uvm_config_db#(virtual mby_ec_cdi_tx_intf)::set(uvm_root::get(), $sformatf("%s*",IP_ENV), "egr_eth_bfm_tx_vintf3" , eth_bfm_tx_intf_3);
-      uvm_config_db#(virtual mby_ec_cdi_rx_intf)::set(uvm_root::get(), $sformatf("%s*",IP_ENV), "egr_eth_bfm_rx_vintf3" , eth_bfm_rx_intf_3);
       uvm_config_db#(virtual mby_smm_bfm_mwr_req_if)::set(uvm_root::get(), $sformatf("%s*egr_wr_req_agent*",IP_ENV), "vintf", memwr_req_if);
       uvm_config_db#(virtual mby_smm_bfm_mrd_req_if)::set(uvm_root::get(), $sformatf("%s*egr_rd_req_agent*",IP_ENV), "vintf", memrd_req_if);
    end

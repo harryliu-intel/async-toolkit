@@ -58,16 +58,32 @@ typedef enum bit[1:0] {
 
 
 // -------------------------------------------------------------------------
-// Main class & VIF type definitions for TAG BFM
+// Main class & VIF type definitions for GPM BFM
 // -------------------------------------------------------------------------
 // Creating the virtual interface types for pod agents.
 typedef virtual mby_gpm_bfm_pod_if mby_gpm_bfm_pod_vif;
 // Forward declaration of the transaction classes (in the tag_bfm_pkg this
 // file (bfm_types) is compiled before the transaction items.
+
 typedef class mby_gpm_bfm_pod_xaction;
-// Defining the pod agent as a parameterized base agent.
-typedef mby_base_pkg::mby_base_agent#(
+
+
+typedef shdv_base_io_policy_param#(
    .T_req(mby_gpm_bfm_pod_xaction),
-   .T_vif(mby_gpm_bfm_pod_vif)) pod_agent;
+   .T_vif(mby_gpm_bfm_pod_vif)) mby_gpm_bfm_pod_io;
+
+// Defining the flow control policy for the tag bfm
+typedef shdv_base_empty_fc_policy mby_gpm_bfm_pod_fc;
+
+
+// Defining the pod agent as a parameterized base agent.
+typedef shdv_base_pkg::shdv_agent#(
+   .T_req(mby_gpm_bfm_pod_xaction),
+   .T_iop(mby_gpm_bfm_pod_io),
+   .T_fcp(mby_gpm_bfm_pod_fc)) pod_agent;
+
+// Defining the pod pointer generator type
+typedef class mby_gpm_bfm_pptr_gen;
+typedef mby_gpm_bfm_pptr_gen#(.T_req(mby_gpm_bfm_pod_xaction)) gpm_bfm_pptr_gen_t;
 
 `endif

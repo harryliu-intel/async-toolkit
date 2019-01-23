@@ -167,8 +167,6 @@ module mby_rx_ppe_tb_top ();
 // ===============================================
 // MBY rx_ppe DUT
 // ===============================================
-   ahb_rx_ppe_if       ahb_rx_ppe_if();
-   glb_rx_ppe_if       glb_rx_ppe_if();
    igr_rx_ppe_if       igr_rx_ppe_if();
    rx_ppe_igr_if       rx_ppe_igr_if();
    rx_ppe_ppe_stm0_if  rx_ppe_ppe_stm0_if();
@@ -177,8 +175,8 @@ module mby_rx_ppe_tb_top ();
    rx_ppe  rx_ppe (
       .cclk               (rx_ppe_tb_if.fab_clk),
       .reset              (rx_ppe_tb_if.hard_reset),
-      .ahb_rx_ppe_if      (ahb_rx_ppe_if),    
-      .glb_rx_ppe_if      (glb_rx_ppe_if),    
+      .i_ibus_ctrl        (99'b0),    
+      .o_ibus_resp        (),    
       .igr_rx_ppe_if      (igr_rx_ppe_if),
       .rx_ppe_igr_if      (rx_ppe_igr_if),
       .rx_ppe_ppe_stm0_if (rx_ppe_ppe_stm0_if),

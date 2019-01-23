@@ -68,8 +68,8 @@ program testcase (                  // a program is a system verilog testbench e
         .knob_req_row (16),   
         .knob_req_col (8),
 
-  //    .knob_rreq_port_row ($urandom_range(0, 16)), // random target node row num, 16=random
-  //    .knob_rreq_port_side ($urandom_range(0, 4))   // random target node col num, 4=random
+  //    .knob_rreq_port_row ($urandom_range(0, 16)), // 16=random
+  //    .knob_rreq_port_side ($urandom_range(0, 4))  // 0=n, 1=s, 2=e, 3=w, 4=random
         .knob_rreq_port_row (16),   
         .knob_rreq_port_side (4),
 
