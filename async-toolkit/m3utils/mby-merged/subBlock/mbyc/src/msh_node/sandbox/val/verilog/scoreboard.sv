@@ -431,7 +431,7 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
         exp_o_p0_eb_wreq_Q = exp_o_p0_eb_wreq_fifo.pop_front();
         $display("(time: %0d) %s: exp_o_p0_eb_wreq=(%0h)", $time, name, exp_o_p0_eb_wreq_Q);
         $display("(time: %0d) %s: det_o_p0_eb_wreq=(%0h)", $time, name, det_o_wreq);
-        if (det_o_wreq != exp_o_p0_eb_wreq_Q) begin
+        if (det_o_wreq !== exp_o_p0_eb_wreq_Q) begin
 
            $display("(time: %0d) %s: check eb output wreq:", $time, name);
            $display("(time: %0d) %s: exp_o_p0_eb_wreq.vld     =(%0h)", $time, name, exp_o_p0_eb_wreq_Q.vld);
@@ -459,7 +459,7 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
         exp_o_p0_eb_wdata_Q = exp_o_p0_eb_wdata_fifo.pop_front();
         $display("(time: %0d) %s: exp_o_p0_eb_wdata=(%0h)", $time, name, exp_o_p0_eb_wdata_Q);
         $display("(time: %0d) %s: det_o_p0_eb_wdata=(%0h)", $time, name, det_o_wdata);
-        if (det_o_wdata != exp_o_p0_eb_wdata_Q) begin
+        if (det_o_wdata !== exp_o_p0_eb_wdata_Q) begin
            $display("(time: %0d) %s: exp_o_p0_eb_wdata=(%0h)", $time, name, exp_o_p0_eb_wdata_Q);
            $display("(time: %0d) %s: det_o_p0_eb_wdata=(%0h)", $time, name, det_o_wdata);
 
@@ -475,7 +475,7 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
         exp_o_p0_wb_wreq_Q = exp_o_p0_wb_wreq_fifo.pop_front();
         $display("(time: %0d) %s: exp_o_p0_wb_wreq=(%0h)", $time, name, exp_o_p0_wb_wreq_Q);
         $display("(time: %0d) %s: det_o_p0_wb_wreq=(%0h)", $time, name, det_o_wreq);
-        if (det_o_wreq != exp_o_p0_wb_wreq_Q) begin
+        if (det_o_wreq !== exp_o_p0_wb_wreq_Q) begin
            $display("(time: %0d) %s: exp_o_p0_wb_wreq.vld     =(%0h)", $time, name, exp_o_p0_wb_wreq_Q.vld);
            $display("(time: %0d) %s: exp_o_p0_wb_wreq.node_col=(%0h)", $time, name, exp_o_p0_wb_wreq_Q.node_col);
            $display("(time: %0d) %s: exp_o_p0_wb_wreq.node_row=(%0h)", $time, name, exp_o_p0_wb_wreq_Q.node_row);
@@ -501,7 +501,7 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
         exp_o_p0_wb_wdata_Q = exp_o_p0_wb_wdata_fifo.pop_front();
         $display("(time: %0d) %s: exp_o_p0_wb_wdata=(%0h)", $time, name, exp_o_p0_wb_wdata_Q);
         $display("(time: %0d) %s: det_o_p0_wb_wdata=(%0h)", $time, name, det_o_wdata);
-        if (det_o_wdata != exp_o_p0_wb_wdata_Q) begin
+        if (det_o_wdata !== exp_o_p0_wb_wdata_Q) begin
            $display("(time: %0d) %s: exp_o_p0_wb_wdata=(%0h)", $time, name, exp_o_p0_wb_wdata_Q);
            $display("(time: %0d) %s: det_o_p0_wb_wdata=(%0h)", $time, name, det_o_wdata);
            $display("ERROR:  (time: %0d)  p0 wb wr data error", $time);
@@ -517,7 +517,7 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
         $display("(time: %0d) %s: exp_o_p0_nb_wreq=(%0h)", $time, name, exp_o_p0_nb_wreq_Q);
         $display("(time: %0d) %s: det_o_p0_nb_wreq=(%0h)", $time, name, det_o_wreq);
 
-        if (det_o_wreq != exp_o_p0_nb_wreq_Q) begin
+        if (det_o_wreq !== exp_o_p0_nb_wreq_Q) begin
 
            $display("(time: %0d) %s: check nb output wreq:", $time, name);
            $display("(time: %0d) %s: exp_o_p0_nb_wreq.vld     =(%0h)", $time, name, exp_o_p0_nb_wreq_Q.vld);
@@ -543,7 +543,7 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
         exp_o_p0_nb_wdata_Q = exp_o_p0_nb_wdata_fifo.pop_front();
         $display("(time: %0d) %s: exp_o_p0_nb_wdata=(%0h)", $time, name, exp_o_p0_nb_wdata_Q);
         $display("(time: %0d) %s: det_o_p0_nb_wdata=(%0h)", $time, name, det_o_wdata);
-        if (det_o_wdata != exp_o_p0_nb_wdata_Q) begin
+        if (det_o_wdata !== exp_o_p0_nb_wdata_Q) begin
            $display("(time: %0d) %s: exp_o_p0_nb_wdata=(%0h)", $time, name, exp_o_p0_nb_wdata_Q);
            $display("(time: %0d) %s: det_o_p0_nb_wdata=(%0h)", $time, name, det_o_wdata);
 
@@ -560,7 +560,7 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
         $display("(time: %0d) %s: exp_o_p0_sb_wreq=(%0h)", $time, name, exp_o_p0_sb_wreq_Q);
         $display("(time: %0d) %s: det_o_p0_sb_wreq=(%0h)", $time, name, det_o_wreq);
 
-        if (det_o_wreq != exp_o_p0_sb_wreq_Q) begin
+        if (det_o_wreq !== exp_o_p0_sb_wreq_Q) begin
 
            $display("(time: %0d) %s: check sb output wreq:", $time, name);
            $display("(time: %0d) %s: exp_o_p0_sb_wreq.vld     =(%0h)", $time, name, exp_o_p0_sb_wreq_Q.vld);
@@ -586,7 +586,7 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
         exp_o_p0_sb_wdata_Q = exp_o_p0_sb_wdata_fifo.pop_front();
         $display("(time: %0d) %s: exp_o_p0_sb_wdata=(%0h)", $time, name, exp_o_p0_sb_wdata_Q);
         $display("(time: %0d) %s: det_o_p0_sb_wdata=(%0h)", $time, name, det_o_wdata);
-        if (det_o_wdata != exp_o_p0_sb_wdata_Q) begin
+        if (det_o_wdata !== exp_o_p0_sb_wdata_Q) begin
            $display("(time: %0d) %s: exp_o_p0_sb_wdata=(%0h)", $time, name, exp_o_p0_sb_wdata_Q);
            $display("(time: %0d) %s: det_o_p0_sb_wdata=(%0h)", $time, name, det_o_wdata);
 
@@ -604,7 +604,7 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
         $display("(time: %0d) %s: exp_o_p1_eb_wreq=(%0h)", $time, name, exp_o_p1_eb_wreq_Q);
         $display("(time: %0d) %s: det_o_p1_eb_wreq=(%0h)", $time, name, det_o_wreq);
 
-        if (det_o_wreq != exp_o_p1_eb_wreq_Q) begin
+        if (det_o_wreq !== exp_o_p1_eb_wreq_Q) begin
 
            $display("(time: %0d) %s: exp_o_p1_eb_wreq.vld     =(%0h)", $time, name, exp_o_p1_eb_wreq_Q.vld);
            $display("(time: %0d) %s: exp_o_p1_eb_wreq.node_col=(%0h)", $time, name, exp_o_p1_eb_wreq_Q.node_col);
@@ -632,7 +632,7 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
         $display("(time: %0d) %s: exp_o_p1_eb_wdata=(%0h)", $time, name, exp_o_p1_eb_wdata_Q);
         $display("(time: %0d) %s: det_o_p1_eb_wdata=(%0h)", $time, name, det_o_wdata);
 
-        if (det_o_wdata != exp_o_p1_eb_wdata_Q) begin
+        if (det_o_wdata !== exp_o_p1_eb_wdata_Q) begin
            $display("(time: %0d) %s: exp_o_p1_eb_wdata=(%0h)", $time, name, exp_o_p1_eb_wdata_Q);
            $display("(time: %0d) %s: det_o_p1_eb_wdata=(%0h)", $time, name, det_o_wdata);
 
@@ -648,7 +648,7 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
         $display("(time: %0d) %s: exp_o_p1_wb_wreq=(%0h)", $time, name, exp_o_p1_wb_wreq_Q);
         $display("(time: %0d) %s: det_o_p1_wb_wreq=(%0h)", $time, name, det_o_wreq);
 
-        if (det_o_wreq != exp_o_p1_wb_wreq_Q) begin
+        if (det_o_wreq !== exp_o_p1_wb_wreq_Q) begin
 
            $display("(time: %0d) %s: exp_o_p1_wb_wreq.vld     =(%0h)", $time, name, exp_o_p1_wb_wreq_Q.vld);
            $display("(time: %0d) %s: exp_o_p1_wb_wreq.node_col=(%0h)", $time, name, exp_o_p1_wb_wreq_Q.node_col);
@@ -675,7 +675,7 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
         exp_o_p1_wb_wdata_Q = exp_o_p1_wb_wdata_fifo.pop_front();
         $display("(time: %0d) %s: exp_o_p1_wb_wdata=(%0h)", $time, name, exp_o_p1_wb_wdata_Q);
         $display("(time: %0d) %s: det_o_p1_wb_wdata=(%0h)", $time, name, det_o_wdata);
-        if (det_o_wdata != exp_o_p1_wb_wdata_Q) begin
+        if (det_o_wdata !== exp_o_p1_wb_wdata_Q) begin
            $display("(time: %0d) %s: exp_o_p1_wb_wdata=(%0h)", $time, name, exp_o_p1_wb_wdata_Q);
            $display("(time: %0d) %s: det_o_p1_wb_wdata=(%0h)", $time, name, det_o_wdata);
 
@@ -692,7 +692,7 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
         $display("(time: %0d) %s: exp_o_p1_nb_wreq=(%0h)", $time, name, exp_o_p1_nb_wreq_Q);
         $display("(time: %0d) %s: det_o_p1_nb_wreq=(%0h)", $time, name, det_o_wreq);
 
-        if (det_o_wreq != exp_o_p1_nb_wreq_Q) begin
+        if (det_o_wreq !== exp_o_p1_nb_wreq_Q) begin
 
            $display("(time: %0d) %s: check nb output wreq:", $time, name);
            $display("(time: %0d) %s: exp_o_p1_nb_wreq.vld     =(%0h)", $time, name, exp_o_p1_nb_wreq_Q.vld);
@@ -719,7 +719,7 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
         $display("(time: %0d) %s: exp_o_p1_nb_wdata=(%0h)", $time, name, exp_o_p1_nb_wdata_Q);
         $display("(time: %0d) %s: det_o_p1_nb_wdata=(%0h)", $time, name, det_o_wdata);
 
-        if (det_o_wdata != exp_o_p1_nb_wdata_Q) begin
+        if (det_o_wdata !== exp_o_p1_nb_wdata_Q) begin
            $display("(time: %0d) %s: exp_o_p1_nb_wdata=(%0h)", $time, name, exp_o_p1_nb_wdata_Q);
            $display("(time: %0d) %s: det_o_p1_nb_wdata=(%0h)", $time, name, det_o_wdata);
 
@@ -734,7 +734,7 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
         $display("(time: %0d) %s: exp_o_p1_sb_wreq=(%0h)", $time, name, exp_o_p1_sb_wreq_Q);
         $display("(time: %0d) %s: det_o_p1_sb_wreq=(%0h)", $time, name, det_o_wreq);
 
-        if (det_o_wreq != exp_o_p1_sb_wreq_Q) begin
+        if (det_o_wreq !== exp_o_p1_sb_wreq_Q) begin
 
            $display("(time: %0d) %s: check sb output wreq:", $time, name);
            $display("(time: %0d) %s: exp_o_p1_sb_wreq.vld     =(%0h)", $time, name, exp_o_p1_sb_wreq_Q.vld);
@@ -761,7 +761,7 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
         $display("(time: %0d) %s: exp_o_p1_sb_wdata=(%0h)", $time, name, exp_o_p1_sb_wdata_Q);
         $display("(time: %0d) %s: det_o_p1_sb_wdata=(%0h)", $time, name, det_o_wdata);
 
-        if (det_o_wdata != exp_o_p1_sb_wdata_Q) begin
+        if (det_o_wdata !== exp_o_p1_sb_wdata_Q) begin
            $display("(time: %0d) %s: exp_o_p1_sb_wdata=(%0h)", $time, name, exp_o_p1_sb_wdata_Q);
            $display("(time: %0d) %s: det_o_p1_sb_wdata=(%0h)", $time, name, det_o_wdata);
 
@@ -780,16 +780,16 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
         $display("(time: %0d) %s: exp_mem_addr=(%0h), exp_mem_wdata=(%0h)", $time, name, exp_mem_wreq_Q, exp_mem_wdata_Q);
         $display("(time: %0d) %s: det_mem_addr=(%0h), det_mem_wdata=(%0h)", $time, name, det_adr, det_wdata);
 
-     // if ((adr != exp_mem_wreq_Q[11:0]) || (wdata != exp_mem_wdata_Q)) begin
-     // if (det_adr != exp_mem_wreq_Q[11:0]) begin
-        if (det_adr != exp_mem_wreq_Q) begin
+     // if ((adr !== exp_mem_wreq_Q[11:0]) || (wdata != exp_mem_wdata_Q)) begin
+     // if (det_adr !== exp_mem_wreq_Q[11:0]) begin
+        if (det_adr !== exp_mem_wreq_Q) begin
            $display("(time: %0d) %s: exp_mem_addr=(%0h)", $time, name, exp_mem_wreq_Q);
            $display("(time: %0d) %s: det_mem_addr=(%0h)", $time, name, det_adr);
            $display("ERROR:  (time: %0d)  mem wr addr error", $time);
            $assertoff;
            $finish;
         end
-        else if (det_wdata != exp_mem_wdata_Q) begin
+        else if (det_wdata !== exp_mem_wdata_Q) begin
            $display("(time: %0d) %s: exp_mem_wdata=(%0h)", $time, name, exp_o_p0_sb_wdata_Q);
            $display("(time: %0d) %s: det_mem_wdata=(%0h)", $time, name, det_wdata);
            $display("ERROR:  (time: %0d)  mem wr data error", $time);
@@ -849,7 +849,7 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
         $display("(time: %0d) %s: exp_mem_rreq.adr=(%0h)", $time, name, exp_mem_rreq_Q[11:0]);
         $display("(time: %0d) %s: det_mem_rreq.adr=(%0h)", $time, name, det_adr);
 
-        if (det_adr != exp_mem_rreq_Q[11:0]) begin
+        if (det_adr !== exp_mem_rreq_Q[11:0]) begin
            $display("ERROR:  (time: %0d)  mem rd addr error", $time);
            $assertoff;
            $finish;
@@ -862,7 +862,7 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
         $display("(time: %0d) %s: exp_o_p0_eb_rreq=(%0h)", $time, name, exp_o_p0_eb_rreq_Q);
         $display("(time: %0d) %s: det_o_p0_eb_rreq=(%0h)", $time, name, det_o_rreq);
 
-        if (det_o_rreq != exp_o_p0_eb_rreq_Q) begin
+        if (det_o_rreq !== exp_o_p0_eb_rreq_Q) begin
 
            $display("(time: %0d) %s: -------------------------------", $time, name);
            $display("(time: %0d) %s: exp_o_p0_eb_rreq.vld     =(%0h)", $time, name, exp_o_p0_eb_rreq_Q.vld);
@@ -894,7 +894,7 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
         $display("(time: %0d) %s: exp_o_p0_wb_rreq=(%0h)", $time, name, exp_o_p0_wb_rreq_Q);
         $display("(time: %0d) %s: det_o_p0_wb_rreq=(%0h)", $time, name, det_o_rreq);
 
-        if (det_o_rreq != exp_o_p0_wb_rreq_Q) begin
+        if (det_o_rreq !== exp_o_p0_wb_rreq_Q) begin
            $display("ERROR:  (time: %0d)  p0 wb output rd req error", $time);
            $assertoff;
            $finish;
@@ -906,7 +906,7 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
         $display("(time: %0d) %s: exp_o_p0_nb_rreq=(%0h)", $time, name, exp_o_p0_nb_rreq_Q);
         $display("(time: %0d) %s: det_o_p0_nb_rreq=(%0h)", $time, name, det_o_rreq);
 
-        if (det_o_rreq != exp_o_p0_nb_rreq_Q) begin
+        if (det_o_rreq !== exp_o_p0_nb_rreq_Q) begin
            $display("ERROR:  (time: %0d)  p0 nb output rd req error", $time);
            $assertoff;
            $finish;
@@ -918,7 +918,7 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
         $display("(time: %0d) %s: exp_o_p0_sb_rreq=(%0h)", $time, name, exp_o_p0_sb_rreq_Q);
         $display("(time: %0d) %s: det_o_p0_sb_rreq=(%0h)", $time, name, det_o_rreq);
 
-        if (det_o_rreq != exp_o_p0_sb_rreq_Q) begin
+        if (det_o_rreq !== exp_o_p0_sb_rreq_Q) begin
            $display("ERROR:  (time: %0d)  p0 sb output rd req error", $time);
            $assertoff;
            $finish;
@@ -931,7 +931,7 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
         $display("(time: %0d) %s: exp_o_p1_eb_rreq=(%0h)", $time, name, exp_o_p1_eb_rreq_Q);
         $display("(time: %0d) %s: det_o_p1_eb_rreq=(%0h)", $time, name, det_o_rreq);
 
-        if (det_o_rreq != exp_o_p1_eb_rreq_Q) begin
+        if (det_o_rreq !== exp_o_p1_eb_rreq_Q) begin
            $display("ERROR:  (time: %0d)  p1 eb output rd req error", $time);
            $assertoff;
            $finish;
@@ -943,7 +943,7 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
         $display("(time: %0d) %s: exp_o_p1_wb_rreq=(%0h)", $time, name, exp_o_p1_wb_rreq_Q);
         $display("(time: %0d) %s: det_o_p1_wb_rreq=(%0h)", $time, name, det_o_rreq);
 
-        if (det_o_rreq != exp_o_p1_wb_rreq_Q) begin
+        if (det_o_rreq !== exp_o_p1_wb_rreq_Q) begin
            $display("ERROR:  (time: %0d)  p1 wb output rd req error", $time);
            $assertoff;
            $finish;
@@ -955,7 +955,28 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
         $display("(time: %0d) %s: exp_o_p1_nb_rreq=(%0h)", $time, name, exp_o_p1_nb_rreq_Q);
         $display("(time: %0d) %s: det_o_p1_nb_rreq=(%0h)", $time, name, det_o_rreq);
 
-        if (det_o_rreq != exp_o_p1_nb_rreq_Q) begin
+        if (det_o_rreq !== exp_o_p1_nb_rreq_Q) begin
+           $display("(time: %0d) %s: --------------------------", $time, name);
+           $display("(time: %0d) %s: exp_o_p1_nb_rreq.vld      =(%0d)", $time, name, exp_o_p1_nb_rreq_Q.vld);
+           $display("(time: %0d) %s: exp_o_p1_nb_rreq.id       =(%0h)", $time, name, exp_o_p1_nb_rreq_Q.id);
+           $display("(time: %0d) %s: exp_o_p1_nb_rreq.port_row =(%0h)", $time, name, exp_o_p1_nb_rreq_Q.port_row);
+           $display("(time: %0d) %s: exp_o_p1_nb_rreq.port_side=(%0h)", $time, name, exp_o_p1_nb_rreq_Q.port_side);
+           $display("(time: %0d) %s: exp_o_p1_nb_rreq.node_row =(%0h)", $time, name, exp_o_p1_nb_rreq_Q.node_row);
+           $display("(time: %0d) %s: exp_o_p1_nb_rreq.csr      =(%0d)", $time, name, exp_o_p1_nb_rreq_Q.csr);
+           $display("(time: %0d) %s: exp_o_p1_nb_rreq.addr     =(%0h)", $time, name, exp_o_p1_nb_rreq_Q.addr);
+           $display("(time: %0d) %s: exp_o_p1_nb_rreq.sema_val =(%0d)", $time, name, exp_o_p1_nb_rreq_Q.sema_val);
+           $display("(time: %0d) %s: exp_o_p1_nb_rreq.age      =(%0h)", $time, name, exp_o_p1_nb_rreq_Q.age);
+           $display("(time: %0d) %s: --------------------------", $time, name);
+           $display("(time: %0d) %s: det_o_p1_nb_rreq.vld      =(%0d)", $time, name, det_o_rreq.vld);
+           $display("(time: %0d) %s: det_o_p1_nb_rreq.id       =(%0h)", $time, name, det_o_rreq.id);
+           $display("(time: %0d) %s: det_o_p1_nb_rreq.port_row =(%0h)", $time, name, det_o_rreq.port_row);
+           $display("(time: %0d) %s: det_o_p1_nb_rreq.port_side=(%0h)", $time, name, det_o_rreq.port_side);
+           $display("(time: %0d) %s: det_o_p1_nb_rreq.node_row =(%0h)", $time, name, det_o_rreq.node_row);
+           $display("(time: %0d) %s: det_o_p1_nb_rreq.csr      =(%0d)", $time, name, det_o_rreq.csr);
+           $display("(time: %0d) %s: det_o_p1_nb_rreq.addr     =(%0h)", $time, name, det_o_rreq.addr);
+           $display("(time: %0d) %s: det_o_p1_nb_rreq.sema_val =(%0d)", $time, name, det_o_rreq.sema_val);
+           $display("(time: %0d) %s: det_o_p1_nb_rreq.age      =(%0h)", $time, name, det_o_rreq.age);
+
            $display("ERROR:  (time: %0d)  p1 nb output rd req error", $time);
            $assertoff;
            $finish;
@@ -967,7 +988,7 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
         $display("(time: %0d) %s: exp_o_p1_sb_rreq=(%0h)", $time, name, exp_o_p1_sb_rreq_Q);
         $display("(time: %0d) %s: det_o_p1_sb_rreq=(%0h)", $time, name, det_o_rreq);
 
-        if (det_o_rreq != exp_o_p1_sb_rreq_Q) begin
+        if (det_o_rreq !== exp_o_p1_sb_rreq_Q) begin
            $display("ERROR:  (time: %0d)  p1 sb output rd req error", $time);
            $assertoff;
            $finish;
@@ -1059,7 +1080,7 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
         $display("(time: %0d) %s: exp_o_p0_eb_rsp=(%0h)", $time, name, exp_o_p0_eb_rsp_Q);
         $display("(time: %0d) %s: det_o_p0_eb_rsp=(%0h)", $time, name, det_o_rsp);
 
-        if (det_o_rsp != exp_o_p0_eb_rsp_Q) begin
+        if (det_o_rsp !== exp_o_p0_eb_rsp_Q) begin
            $display("ERROR:  (time: %0d)  p0 eb rsp output error", $time);
            $assertoff;
            $finish;
@@ -1073,7 +1094,7 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
           $display("(time: %0d) %s: exp_o_p0_wb_rsp=(%0h)", $time, name, exp_o_p0_wb_rsp_Q);
           $display("(time: %0d) %s: det_o_p0_wb_rsp=(%0h)", $time, name, det_o_rsp);
 
-        if (det_o_rsp != exp_o_p0_wb_rsp_Q) begin
+        if (det_o_rsp !== exp_o_p0_wb_rsp_Q) begin
 
            $display("(time: %0d) %s: exp_o_p0_wb_rsp.vld=(%0h)", $time, name, exp_o_p0_wb_rsp_Q.vld);
            $display("(time: %0d) %s: exp_o_p0_wb_rsp.id=(%0h)",  $time, name, exp_o_p0_wb_rsp_Q.id);
@@ -1093,7 +1114,7 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
         $display("(time: %0d) %s: exp_o_p0_nb_rsp=(%0h)", $time, name, exp_o_p0_nb_rsp_Q);
         $display("(time: %0d) %s: det_o_p0_nb_rsp=(%0h)", $time, name, det_o_rsp);
 
-        if (det_o_rsp != exp_o_p0_nb_rsp_Q) begin
+        if (det_o_rsp !== exp_o_p0_nb_rsp_Q) begin
            $display("ERROR:  (time: %0d)  p0 nb rsp output error", $time);
            $assertoff;
            $finish;
@@ -1106,7 +1127,7 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
         $display("(time: %0d) %s: exp_o_p0_sb_rsp=(%0h)", $time, name, exp_o_p0_sb_rsp_Q);
         $display("(time: %0d) %s: det_o_p0_sb_rsp=(%0h)", $time, name, det_o_rsp);
 
-        if (det_o_rsp != exp_o_p0_sb_rsp_Q) begin
+        if (det_o_rsp !== exp_o_p0_sb_rsp_Q) begin
            $display("ERROR:  (time: %0d)  p0 sb rsp output error", $time);
            $assertoff;
            $finish;
@@ -1120,7 +1141,7 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
         $display("(time: %0d) %s: exp_o_p1_eb_rsp=(%0h)", $time, name, exp_o_p1_eb_rsp_Q);
         $display("(time: %0d) %s: det_o_p1_eb_rsp=(%0h)", $time, name, det_o_rsp);
 
-        if (det_o_rsp != exp_o_p1_eb_rsp_Q) begin
+        if (det_o_rsp !== exp_o_p1_eb_rsp_Q) begin
            $display("ERROR:  (time: %0d)  p1 eb rsp output error", $time);
            $assertoff;
            $finish;
@@ -1132,7 +1153,7 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
         $display("(time: %0d) %s: exp_o_p1_wb_rsp=(%0h)", $time, name, exp_o_p1_wb_rsp_Q);
         $display("(time: %0d) %s: det_o_p1_wb_rsp=(%0h)", $time, name, det_o_rsp);
 
-        if (det_o_rsp != exp_o_p1_wb_rsp_Q) begin
+        if (det_o_rsp !== exp_o_p1_wb_rsp_Q) begin
            $display("ERROR:  (time: %0d)  p1 wb rsp output error", $time);
            $assertoff;
            $finish;
@@ -1145,7 +1166,7 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
         $display("(time: %0d) %s: exp_o_p1_nb_rsp=(%0h)", $time, name, exp_o_p1_nb_rsp_Q);
         $display("(time: %0d) %s: det_o_p1_nb_rsp=(%0h)", $time, name, det_o_rsp);
 
-        if (det_o_rsp != exp_o_p1_nb_rsp_Q) begin
+        if (det_o_rsp !== exp_o_p1_nb_rsp_Q) begin
            $display("ERROR:  (time: %0d)  p1 nb rsp output error", $time);
            $assertoff;
            $finish;
@@ -1158,7 +1179,7 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
         $display("(time: %0d) %s: exp_o_p1_sb_rsp=(%0h)", $time, name, exp_o_p1_sb_rsp_Q);
         $display("(time: %0d) %s: det_o_p1_sb_rsp=(%0h)", $time, name, det_o_rsp);
 
-        if (det_o_rsp != exp_o_p1_sb_rsp_Q) begin
+        if (det_o_rsp !== exp_o_p1_sb_rsp_Q) begin
            $display("ERROR:  (time: %0d)  p1 sb rsp output error", $time);
            $assertoff;
            $finish; 
@@ -1176,7 +1197,7 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
         $display("(time: %0d) %s: det_o_p0_eb_rdata=(%0h)", $time, name, det_o_rdata);
         $display("(time: %0d) %s: --------", $time, name);
 
-        if (det_o_rdata != exp_o_p0_eb_rdata_Q) begin
+        if (det_o_rdata !== exp_o_p0_eb_rdata_Q) begin
            $display("ERROR:  (time: %0d)  p0 eb rdata output error", $time);
            $assertoff;
            $finish;
@@ -1201,12 +1222,12 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
 //	else
 //         $display("(time: %0d) %s: WARNING: 2nd CHECK (if ===): exp_o_rdata and det_o_rdata are NOT equal !!!", $time,name);
 //
-//      if (det_o_rdata != exp_o_p0_wb_rdata_Q) 
+//      if (det_o_rdata !== exp_o_p0_wb_rdata_Q) 
 //         $display("(time: %0d) %s: WARNING: 3rd CHECK (if != ): exp_o_rdata and det_o_rdata are NOT equal !!!", $time,name);
 //	else
 //         $display("(time: %0d) %s: WARNING: 3rd CHECK (if != ): exp_o_rdata and det_o_rdata are     equal !!!", $time,name);
 //
-//      if (det_o_rdata !== exp_o_p0_wb_rdata_Q) 
+//      if (det_o_rdata !=== exp_o_p0_wb_rdata_Q) 
 //         $display("(time: %0d) %s: WARNING: 4th CHECK (if !==): exp_o_rdata and det_o_rdata are NOT equal !!!", $time,name);
 //	else
 //         $display("(time: %0d) %s: WARNING: 4th CHECK (if !==): exp_o_rdata and det_o_rdata are     equal !!!", $time,name);
@@ -1237,7 +1258,7 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
         $display("(time: %0d) %s: det_o_p0_nb_rdata=(%0h)", $time, name, det_o_rdata);
         $display("(time: %0d) %s: --------", $time, name);
 
-        if (det_o_rdata != exp_o_p0_nb_rdata_Q) begin
+        if (det_o_rdata !== exp_o_p0_nb_rdata_Q) begin
            $display("ERROR:  (time: %0d)  p0 nb rdata output error", $time);
            $assertoff;
            $finish;
@@ -1250,7 +1271,7 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
         $display("(time: %0d) %s: det_o_p0_sb_rdata=(%0h)", $time, name, det_o_rdata);
         $display("(time: %0d) %s: --------", $time, name);
 
-        if (det_o_rdata != exp_o_p0_sb_rdata_Q) begin
+        if (det_o_rdata !== exp_o_p0_sb_rdata_Q) begin
            $display("ERROR:  (time: %0d)  p0 sb rdata output error", $time);
            $assertoff;
            $finish;
@@ -1265,7 +1286,7 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
         $display("(time: %0d) %s: det_o_p1_eb_rdata=(%0h)", $time, name, det_o_rdata);
         $display("(time: %0d) %s: --------", $time, name);
 
-        if (det_o_rdata != exp_o_p1_eb_rdata_Q) begin
+        if (det_o_rdata !== exp_o_p1_eb_rdata_Q) begin
            $display("ERROR:  (time: %0d)  p1 eb rdata output error", $time);
            $assertoff;
            $finish;
@@ -1278,7 +1299,7 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
         $display("(time: %0d) %s: det_o_p1_wb_rdata=(%0h)", $time, name, det_o_rdata);
         $display("(time: %0d) %s: --------", $time, name);
 
-        if (det_o_rdata != exp_o_p1_wb_rdata_Q) begin
+        if (det_o_rdata !== exp_o_p1_wb_rdata_Q) begin
            $display("ERROR:  (time: %0d)  p1 wb rdata output error", $time);
            $assertoff;
            $finish;
@@ -1291,7 +1312,7 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
         $display("(time: %0d) %s: det_o_p1_nb_rdata=(%0h)", $time, name, det_o_rdata);
         $display("(time: %0d) %s: --------", $time, name);
 
-        if (det_o_rdata != exp_o_p1_nb_rdata_Q) begin
+        if (det_o_rdata !== exp_o_p1_nb_rdata_Q) begin
            $display("ERROR:  (time: %0d)  p1 nb rdata output error", $time);
            $assertoff;
            $finish;
@@ -1304,7 +1325,7 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
         $display("(time: %0d) %s: det_o_p1_sb_rdata=(%0h)", $time, name, det_o_rdata);
         $display("(time: %0d) %s: --------", $time, name);
 
-        if (det_o_rdata != exp_o_p1_sb_rdata_Q) begin
+        if (det_o_rdata !== exp_o_p1_sb_rdata_Q) begin
            $display("ERROR:  (time: %0d)  p1 sb rdata output error", $time);
            $assertoff;
            $finish;

@@ -175,29 +175,23 @@ class mby_egr_env extends mby_egr_base_env;
    //--------------------------------------------------------------------------
    function void build_eth_bfms();
       foreach(eth_bfms[i]) begin
-         // Get the eth_bfm_vif ptrs
-         if(!uvm_config_db#(egr_eth_bfm_tx_intf_t)::get(this, "",
-            $sformatf("egr_eth_bfm_tx_vintf%0d", i),eth_bfm_tx_vintf[i])) begin
-            `uvm_fatal(get_name(),
-               "Config_DB.get() for ENV's egr_eth_bfm_tx_intf_t was not successful!")
-         end
-         if(!uvm_config_db#(egr_eth_bfm_rx_intf_t)::get(this, "",
-            $sformatf("egr_eth_bfm_rx_vintf%0d", i), eth_bfm_rx_vintf[i])) begin
-            `uvm_fatal(get_name(),
-               "Config_DB.get() for ENV's egr_eth_bfm_rx_intf_t was not successful!")
-         end
+         // Get the io policies
+          if(!uvm_config_db#(egr_eth_bfm_tx_io_t)::get(this, "", $sformatf("igr_eth_bfm_tx_io%0d", i), eth_bfm_tx_io[i])) begin
+              `uvm_fatal(get_name(),"Config_DB.get() for ENV's igr_eth_bfm_tx_io_t was not successful!")
+          end
+          if(!uvm_config_db#(egr_eth_bfm_rx_io_t)::get(this, "", $sformatf("igr_eth_bfm_rx_io%0d", i), eth_bfm_rx_io[i])) begin
+              `uvm_fatal(get_name(),"Config_DB.get() for ENV's igr_eth_bfm_rx_io_t was not successful!")
+          end
          // Create the bfm instances
          eth_bfms[i]                = egr_eth_bfm_t::type_id::create($sformatf("egr_eth_bfm%0d", i), this);
          eth_bfms[i].cfg.mode       = eth_bfm_pkg::MODE_SLAVE;   // Configure as SLAVE
-         eth_bfms[i].cfg.port_speed = {eth_bfm_pkg::SPEED_400G,  // Configure speed.
-            eth_bfm_pkg::SPEED_OFF,
-            eth_bfm_pkg::SPEED_OFF,
-            eth_bfm_pkg::SPEED_OFF};
+         foreach(eth_bfms[0].cfg.port_speed[j])begin
+            tb_cfg.randomize();
+            eth_bfms[i].cfg.port_speed[j]  = tb_cfg.speed_cfg[j];
+         end
          //eth_bfms[i].cfg.port_lanes    = {4,0,0,0};   // Configure num_ports.
          eth_bfms[i].cfg.group_size    = 8;
          eth_bfms[i].cfg.sop_alignment = 8;
-         eth_bfm_tx_io[i] = egr_eth_bfm_tx_io_t::type_id::create($sformatf("eth_bfm_tx_io%0d", i), this);
-         eth_bfm_rx_io[i] = egr_eth_bfm_rx_io_t::type_id::create($sformatf("eth_bfm_rx_io%0d", i), this);
       end
    endfunction : build_eth_bfms
 
@@ -228,8 +222,6 @@ class mby_egr_env extends mby_egr_base_env;
    //--------------------------------------------------------------------------
    function void connect_eth_bfms();
       foreach(eth_bfms[i]) begin
-         eth_bfm_tx_io[i].set_vintf(eth_bfm_tx_vintf[i]);
-         eth_bfm_rx_io[i].set_vintf(eth_bfm_rx_vintf[i]);
          eth_bfms[i].set_io(eth_bfm_tx_io[i], eth_bfm_rx_io[i]);
          add_sequencer($sformatf("eth_bfm_%0d", i), $sformatf("eth_bfm_%0d_rx0", i), eth_bfms[i].rx.frame_sequencer[0]);
          add_sequencer($sformatf("eth_bfm_%0d", i), $sformatf("eth_bfm_%0d_rx1", i), eth_bfms[i].rx.frame_sequencer[1]);

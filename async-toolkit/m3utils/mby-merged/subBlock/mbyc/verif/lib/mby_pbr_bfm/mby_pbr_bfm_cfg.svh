@@ -44,23 +44,23 @@
 // frame generator capabilities.
 //
 //-----------------------------------------------------------------------------
-class mby_pbr_bfm_cfg extends mby_base_config;
+class mby_pbr_bfm_cfg extends shdv_base_config;
 
     // VARIABLE: dpb_cfg
     // Basic configuration object for the dpb_agent.
-    rand mby_base_config dpb_cfg;
+    rand shdv_base_config dpb_cfg;
 
     // VARIABLE: dpm_cfg
     // Basic configuration object for the dpm_agent.
-    rand mby_base_config dpm_cfg;
+    rand shdv_base_config dpm_cfg;
 
     // VARIABLE: csp_cfg
     // Basic configuration object for the csp_agent.
-    rand mby_base_config csp_cfg;
+    rand shdv_base_config csp_cfg;
 
     // VARIABLE: cpb_cfg
     // Basic configuration object for the cpb_agent.
-    rand mby_base_config cpb_cfg;
+    rand shdv_base_config cpb_cfg;
 
     // VARIABLE: bfm_mode
     // This is the PBR bfm mode of operation (igr/egr).

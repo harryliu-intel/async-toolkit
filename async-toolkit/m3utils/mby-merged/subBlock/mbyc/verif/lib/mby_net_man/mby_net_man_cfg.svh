@@ -43,7 +43,7 @@
 // frame generator capabilities.
 //
 //-----------------------------------------------------------------------------
-class mby_net_man_cfg extends mby_base_config;
+class mby_net_man_cfg extends shdv_base_config;
 
    // VARIABLE: frame_gen_active
    // Agent is configured to be active or passive

@@ -1110,10 +1110,10 @@ class inp_driver;
 
 
 		if (knob_rreq_port_row < 16) 	col_rreq_port_row = knob_rreq_port_row;
-	        else	col_rreq_port_row = $urandom();
+	        else	col_rreq_port_row = $urandom_range(0, 15);
 
 		if (knob_rreq_port_side < 4) 	col_rreq_port_side = knob_rreq_port_side;
-	        else	col_rreq_port_side = $urandom();
+	        else	col_rreq_port_side = $urandom_range(0, 3);
 
 
 

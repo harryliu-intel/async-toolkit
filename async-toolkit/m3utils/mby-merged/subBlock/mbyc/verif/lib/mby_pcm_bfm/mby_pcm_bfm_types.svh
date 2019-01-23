@@ -80,31 +80,92 @@ typedef class mby_pcm_bfm_sm_wm_xaction;
 typedef class mby_pcm_bfm_wm_xaction;
 typedef class mby_pcm_bfm_plcr_xaction;
 
+// Queue io and flow control policies
+typedef shdv_base_io_policy_param#(
+   .T_req(mby_pcm_bfm_queue_xaction),
+   .T_vif(mby_pcm_bfm_queue_vif)) mby_pcm_bfm_queue_io;
+   
+typedef shdv_base_empty_fc_policy mby_pcm_bfm_queue_fc;
+
+
+// Dequeue io and flow control policies
+typedef shdv_base_io_policy_param#(
+   .T_req(mby_pcm_bfm_deque_vif),
+   .T_vif(mby_pcm_bfm_deque_xaction)) mby_pcm_bfm_deque_io;
+   
+typedef shdv_base_empty_fc_policy mby_pcm_bfm_deque_fc;
+
+
+// plcr io and flow control policies
+typedef shdv_base_io_policy_param#(
+   .T_req(mby_pcm_bfm_plcr_xaction),
+   .T_vif(mby_pcm_bfm_plcr_vif)) mby_pcm_bfm_plcr_io;
+   
+typedef shdv_base_empty_fc_policy mby_pcm_bfm_plcr_fc;
+
+// Rx White model policy and interface
+typedef shdv_base_io_policy_param#(
+   .T_req(mby_pcm_bfm_wm_xaction),
+   .T_vif(mby_pcm_bfm_rx_wmark_vif)) mby_pcm_bfm_rx_wm_io;
+   
+typedef shdv_base_empty_fc_policy mby_pcm_bfm_rx_wm_fc;
+
+// Rx smem wm policy and flow control
+typedef shdv_base_io_policy_param#(
+   .T_req(mby_pcm_bfm_sm_wm_xaction),
+   .T_vif(mby_pcm_bfm_smem_rx_wmark_vif)) mby_pcm_bfm_rx_smem_wm_io;
+   
+typedef shdv_base_empty_fc_policy mby_pcm_bfm_rx_smem_wm_fc;
+
+//
+typedef shdv_base_io_policy_param#(
+   .T_req(mby_pcm_bfm_sm_wm_xaction),
+   .T_vif(mby_pcm_bfm_smem_tx_wmark_vif)) mby_pcm_bfm_tx_smem_wm_io;
+   
+typedef shdv_base_empty_fc_policy mby_pcm_bfm_tx_smem_wm_fc;
+
+
+
+
+
+
+
 // Defining the PCM agents as parameterized base agent classes.
 // (1) The PCM queue agent, used in IGR mode
-typedef mby_base_pkg::mby_base_agent#(
+typedef shdv_base_pkg::shdv_agent#(
    .T_req(mby_pcm_bfm_queue_xaction),
-   .T_vif(mby_pcm_bfm_queue_vif))         pcm_queue_bfm_agent;
+   .T_fcp(mby_pcm_bfm_queue_fc),
+   .T_iop(mby_pcm_bfm_queue_io))         pcm_queue_bfm_agent;
+   
 // (2) The PCM dequeue agent, used in EGR mode
-typedef mby_base_pkg::mby_base_agent#(
+typedef shdv_base_pkg::shdv_agent#(
    .T_req(mby_pcm_bfm_deque_xaction),
-   .T_vif(mby_pcm_bfm_deque_vif))         pcm_deque_bfm_agent;
+   .T_fcp(mby_pcm_bfm_deque_fc),
+   .T_iop(mby_pcm_bfm_deque_io))         pcm_deque_bfm_agent;
+      
 // (3) The PCM rx watermark agent, used in IGR mode
-typedef mby_base_pkg::mby_base_agent#(
+typedef shdv_base_pkg::shdv_agent#(
    .T_req(mby_pcm_bfm_wm_xaction),
-   .T_vif(mby_pcm_bfm_rx_wmark_vif))      pcm_rx_wm_bfm_agent;
+   .T_fcp(mby_pcm_bfm_rx_wm_fc),
+   .T_iop(mby_pcm_bfm_rx_wm_io))      pcm_rx_wm_bfm_agent;
+   
 // (4) The PCM rx shared memory watermark agent used in IGR mode
-typedef mby_base_pkg::mby_base_agent#(
+typedef shdv_base_pkg::shdv_agent#(
    .T_req(mby_pcm_bfm_sm_wm_xaction),
-   .T_vif(mby_pcm_bfm_smem_rx_wmark_vif)) pcm_rx_smem_wm_bfm_agent;
+   .T_fcp(mby_pcm_bfm_rx_smem_wm_fc),
+   .T_iop(mby_pcm_bfm_rx_smem_wm_io)) pcm_rx_smem_wm_bfm_agent;
+   
 // (5) The PCM tx shared memory watermark agent used in EGR mode
-typedef mby_base_pkg::mby_base_agent#(
+typedef shdv_base_pkg::shdv_agent#(
    .T_req(mby_pcm_bfm_sm_wm_xaction),
-   .T_vif(mby_pcm_bfm_smem_tx_wmark_vif)) pcm_tx_smem_wm_bfm_agent;
+   .T_fcp(mby_pcm_bfm_tx_smem_wm_fc),
+   .T_iop(mby_pcm_bfm_tx_smem_wm_io)) pcm_tx_smem_wm_bfm_agent;
+   
 // (6) The PCM policer agent used in IGR mode
-typedef mby_base_pkg::mby_base_agent#(
+typedef shdv_base_pkg::shdv_agent#(
    .T_req(mby_pcm_bfm_plcr_xaction),
-   .T_vif(mby_pcm_bfm_plcr_vif)) pcm_plcr_bfm_agent;
+   .T_fcp(mby_pcm_bfm_plcr_fc),
+   .T_iop(mby_pcm_bfm_plcr_io)) pcm_plcr_bfm_agent;
 
 `endif
 
