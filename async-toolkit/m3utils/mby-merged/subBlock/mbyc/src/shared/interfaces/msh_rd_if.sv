@@ -20,41 +20,17 @@
 ///  estoppel or otherwise. Any license under such intellectual property rights
 ///  must be express and approved by Intel in writing.
 ///
-// ---------------------------------------------------------------------------------------------------------------------
-// -- Author : Scott Hussong 
-// -- Project Name : Madison Bay (MBY) 
-// -- Description  : MIM read interface
-//
+// ----------------------------------------------------------------------------
+// -- Author : Alberto (Beto) Del Rio Ruiz (alberto.del.rio.ruiz@intel.com)
+// -- Project Name : Madison Bay (MBY)
+// -- Description  : MSH read interface
+// ============================================================================
+`ifndef MSH_RD_IF_SV
+`define MSH_RD_IF_SV
 
-// =====================================================================================================================
+interface msh_rd_if ();
+    import mby_msh_pkg::*;
 
-// FIXME:  use msh_rd_if and get rid of this file 
-
-interface mim_rd_if ();
-  // old interface
-  import mby_egr_pkg::*;
-  // new interface
-  import mby_msh_pkg::*;
-
-
-
-  // old interface
-  logic                    mim_rreq_valid;
-  logic [W_SEG_PTR-1:0]    mim_seg_ptr;      //[19:0]
-  logic [W_SEMA-1:0]       mim_sema;         //[ 3:0]
-  logic [W_WD_SEL-1:0]     mim_wd_sel;       //[ 2:0]
-  logic [W_REQ_ID-1:0]     mim_req_id;       //[12:0]
-  
-  logic [W_XACT_CREDITS-1:0] mim_rreq_credits; // temp value   
-  
-  
-  logic                         mim_rrsp_valid;
-  logic [W_RRSP_DEST_BLOCK-1:0] mim_rrsp_dest_block;  //[2:0]
-  logic [W_REQ_ID-1:0]          mim_rrsp_req_id;      //[12:0]
-  logic [W_WORD_BITS-1:0]       mim_rd_data;          //64 x 8
-
-
-    // new interface
     mshpt_rreq_t     msh_rreq;
 
     logic            msh_rd_lat_sat;
@@ -68,21 +44,10 @@ interface mim_rd_if ();
 
     msh_data_t       msh_rd_data;
     
+
+
     modport request(
 
-        // old interface
-    output mim_rreq_valid,
-    output mim_seg_ptr,
-    output mim_sema,
-    output mim_wd_sel,
-    output mim_req_id,
-    input  mim_rreq_credits,
-    input  mim_rrsp_valid,
-    input  mim_rrsp_dest_block,
-    input  mim_rrsp_req_id,    
-    input  mim_rd_data,
-
-        // new interface
         output msh_rreq,
 
         input  msh_rd_lat_sat,
@@ -100,19 +65,6 @@ interface mim_rd_if ();
 
     modport receive(
 
-        // old interface
-    input  mim_rreq_valid,
-    input  mim_seg_ptr,
-    input  mim_sema,
-    input  mim_wd_sel,
-    input  mim_req_id,
-    output mim_rreq_credits,
-    output mim_rrsp_valid,
-    output mim_rrsp_dest_block,
-    output mim_rrsp_req_id,    
-    output mim_rd_data,
-
-        // new interface
         input  msh_rreq,
 
         output msh_rd_lat_sat,
@@ -128,4 +80,6 @@ interface mim_rd_if ();
     
     );
 
-endinterface : mim_rd_if
+endinterface : msh_rd_if
+`endif  // MSH_RD_IF_SV
+

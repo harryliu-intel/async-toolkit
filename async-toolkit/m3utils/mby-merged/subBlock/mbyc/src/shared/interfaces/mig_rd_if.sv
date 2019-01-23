@@ -28,6 +28,8 @@
 `ifndef MIG_RD_IF_SV
 `define MIG_RD_IF_SV
 
+// FIXME:  use msh_rd_if and get rid of this file 
+k
 interface mig_rd_if ();
     import mby_msh_pkg::*;
 

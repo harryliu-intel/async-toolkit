@@ -3,13 +3,14 @@
 // -- Description  : mpp (MegaPort Pair) netlist.
 // -------------------------------------------------------------------
 ngen_mod_name
+import mby_egr_pkg::*;
 
 ngen_IO_list
 
 ngen_IO_end
-import mby_egr_pkg::*;
 import mby_igr_pkg::*;
 import mby_gmm_pkg::*;
+import mby_msh_pkg::*;
 
 
 ngen_wires

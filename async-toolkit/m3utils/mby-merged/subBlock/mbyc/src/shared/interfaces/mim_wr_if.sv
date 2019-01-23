@@ -28,7 +28,7 @@
 
 // =====================================================================================================================
 
-// FIXME:  remove old lines 
+// FIXME:  use msh_wr_if and get rid of this file 
 
 interface mim_wr_if ();
     // old interface

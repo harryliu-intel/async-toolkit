@@ -23,14 +23,12 @@
 // ----------------------------------------------------------------------------
 // -- Author : Alberto (Beto) Del Rio Ruiz (alberto.del.rio.ruiz@intel.com)
 // -- Project Name : Madison Bay (MBY)
-// -- Description  : MIG write interface
+// -- Description  : MSH write interface
 // ============================================================================
-`ifndef MIG_WR_IF_SV
-`define MIG_WR_IF_SV
+`ifndef MSH_WR_IF_SV
+`define MSH_WR_IF_SV
 
-// FIXME:  use msh_wr_if and get rid of this file 
-
-interface mig_wr_if ();
+interface msh_wr_if ();
     import mby_msh_pkg::*;
 
     mshpt_wreq_t     msh_wreq;
@@ -62,6 +60,6 @@ interface mig_wr_if ();
         output msh_mcast_crdt_rtn_for_wreq
     );
 
-endinterface : mig_wr_if
-`endif  // MIG_WR_IF_SV
+endinterface : msh_wr_if
+`endif  // MSH_WR_IF_SV
 
