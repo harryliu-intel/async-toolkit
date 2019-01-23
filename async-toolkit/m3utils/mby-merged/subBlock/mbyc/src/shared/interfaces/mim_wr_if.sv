@@ -28,9 +28,25 @@
 
 // =====================================================================================================================
 
+// FIXME:  remove old lines 
+
 interface mim_wr_if ();
+    // old interface
+    import mby_egr_pkg::*;
+    // new interface
     import mby_msh_pkg::*;
 
+    // old interface
+  logic                   mim_wreq_valid; 
+  logic [W_SEG_PTR-1:0]   mim_wr_seg_ptr; //[19:0]
+  logic [W_SEMA-1:0]      mim_wr_sema;    //[ 3:0]
+  logic [W_WD_SEL-1:0]    mim_wr_wd_sel;  //[ 2:0]
+  logic [W_REQ_ID-1:0]    mim_wreq_id;    //[12:0]
+  logic [W_WORD_BITS-1:0] mim_wr_data;    // 64*8
+  
+  logic [W_XACT_CREDITS-1:0] mim_wreq_credits; // temp value
+  
+    // new interface
     mshpt_wreq_t     msh_wreq;
 
     msh_data_t       msh_wr_data;
@@ -40,6 +56,15 @@ interface mim_wr_if ();
     logic            msh_mcast_crdt_rtn_for_wreq;
 
     modport request(
+    // old interface
+    output mim_wreq_valid,
+    output mim_wr_seg_ptr,
+    output mim_wr_sema,   
+    output mim_wr_wd_sel, 
+    output mim_wreq_id,
+    output mim_wr_data,  
+    input  mim_wreq_credits,
+    // new interface
         output msh_wreq,
 
         output msh_wr_data,
@@ -50,6 +75,15 @@ interface mim_wr_if ();
     );
 
     modport receive(
+    // old interface
+    input  mim_wreq_valid,
+    input  mim_wr_seg_ptr,
+    input  mim_wr_sema,   
+    input  mim_wr_wd_sel, 
+    input  mim_wreq_id,   
+    input  mim_wr_data,  
+    output mim_wreq_credits,       
+    // new interface
         input  msh_wreq,
 
         input  msh_wr_data,

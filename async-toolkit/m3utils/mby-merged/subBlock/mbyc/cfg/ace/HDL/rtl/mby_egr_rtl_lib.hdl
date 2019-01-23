@@ -14,6 +14,7 @@ $hdl_spec = {
        "src/shared/rtl/shared_pkg.sv",
        "src/shared/rtl/mby_gmm_pkg.sv",
        "src/shared/rtl/mby_egr_pkg.sv",
+       "src/shared/rtl/mby_msh_pkg.sv",
        "src/egr/rtl/egr_int_pkg.sv",
        "src/egr/mri/interfaces/egr_mri_mem_pkg.sv",
        "src/egr/mri/rtl/egr_mri_pkg.sv",
