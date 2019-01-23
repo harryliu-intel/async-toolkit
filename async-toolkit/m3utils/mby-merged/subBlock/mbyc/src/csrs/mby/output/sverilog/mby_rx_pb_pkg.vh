@@ -24,14 +24,14 @@
 //                                                                             
 // File:            mby_rx_pb_pkg.vh                                           
 // Creator:         edwardro                                                   
-// Time:            Thursday Jan 10, 2019 [9:36:30 am]                         
+// Time:            Wednesday Jan 23, 2019 [5:27:04 am]                        
 //                                                                             
-// Path:            /tmp/edwardro/nebulon_run/125997128493_2019-01-10.09:36:03 
+// Path:            /tmp/edwardro/nebulon_run/211708214340_2019-01-23.05:26:34 
 // Arguments:       -I                                                         
 //                  /nfs/site/disks/slx_1130/edwardro/mby/work_root/mby.edr.pbb/tools/srdl
 //                  -sv_no_sai_checks -sverilog -crif -expand_handcoded_arrays 
 //                  -maximize_crif -input mby_rx_pb_map.rdl -timeout 60000     
-//                  -out_dir /tmp/tmp.1KG8pEf9RG -log_file                     
+//                  -out_dir /tmp/tmp.QONdsBBv97 -log_file                     
 //                  /nfs/site/disks/slx_1130/edwardro/mby/work_root/mby.edr.pbb/target/GenRTL/regflow/mby/subblock/mby_rx_pb_map_crif.xml.log
 //                                                                             
 // MRE:             5.2018.3.p1                                                
@@ -181,8 +181,8 @@ typedef struct packed {
 localparam RX_PB_WM_REG_STRIDE = 48'h8;
 localparam RX_PB_WM_REG_ENTRIES = 8;
 localparam RX_PB_WM_REGFILE_STRIDE = 48'h40;
-localparam RX_PB_WM_REGFILE_ENTRIES = 18;
-localparam RX_PB_WM_CR_ADDR = 48'h800;
+localparam RX_PB_WM_REGFILE_ENTRIES = 17;
+localparam [16:0][7:0][47:0] RX_PB_WM_CR_ADDR = {{48'hC38, 48'hC30, 48'hC28, 48'hC20, 48'hC18, 48'hC10, 48'hC08, 48'hC00}, {48'hBF8, 48'hBF0, 48'hBE8, 48'hBE0, 48'hBD8, 48'hBD0, 48'hBC8, 48'hBC0}, {48'hBB8, 48'hBB0, 48'hBA8, 48'hBA0, 48'hB98, 48'hB90, 48'hB88, 48'hB80}, {48'hB78, 48'hB70, 48'hB68, 48'hB60, 48'hB58, 48'hB50, 48'hB48, 48'hB40}, {48'hB38, 48'hB30, 48'hB28, 48'hB20, 48'hB18, 48'hB10, 48'hB08, 48'hB00}, {48'hAF8, 48'hAF0, 48'hAE8, 48'hAE0, 48'hAD8, 48'hAD0, 48'hAC8, 48'hAC0}, {48'hAB8, 48'hAB0, 48'hAA8, 48'hAA0, 48'hA98, 48'hA90, 48'hA88, 48'hA80}, {48'hA78, 48'hA70, 48'hA68, 48'hA60, 48'hA58, 48'hA50, 48'hA48, 48'hA40}, {48'hA38, 48'hA30, 48'hA28, 48'hA20, 48'hA18, 48'hA10, 48'hA08, 48'hA00}, {48'h9F8, 48'h9F0, 48'h9E8, 48'h9E0, 48'h9D8, 48'h9D0, 48'h9C8, 48'h9C0}, {48'h9B8, 48'h9B0, 48'h9A8, 48'h9A0, 48'h998, 48'h990, 48'h988, 48'h980}, {48'h978, 48'h970, 48'h968, 48'h960, 48'h958, 48'h950, 48'h948, 48'h940}, {48'h938, 48'h930, 48'h928, 48'h920, 48'h918, 48'h910, 48'h908, 48'h900}, {48'h8F8, 48'h8F0, 48'h8E8, 48'h8E0, 48'h8D8, 48'h8D0, 48'h8C8, 48'h8C0}, {48'h8B8, 48'h8B0, 48'h8A8, 48'h8A0, 48'h898, 48'h890, 48'h888, 48'h880}, {48'h878, 48'h870, 48'h868, 48'h860, 48'h858, 48'h850, 48'h848, 48'h840}, {48'h838, 48'h830, 48'h828, 48'h820, 48'h818, 48'h810, 48'h808, 48'h800}};
 localparam RX_PB_WM_SIZE = 64;
 localparam RX_PB_WM_LOSSLESS_LO = 20;
 localparam RX_PB_WM_LOSSLESS_HI = 20;
@@ -200,6 +200,7 @@ localparam RX_PB_WM_RESET = 64'h80200;
 
 typedef struct packed {
     RX_PB_PORT_CFG_t  RX_PB_PORT_CFG;
+    RX_PB_WM_t [16:0][7:0] RX_PB_WM;
 } mby_rx_pb_registers_t;
 
 // ===================================================
@@ -218,36 +219,6 @@ typedef struct packed {
 // HandCoded Control structure
 //   (used by project HandCoded specified registers)
 
-typedef logic [7:0] we_RX_PB_WM_t;
-
-typedef struct packed {
-    we_RX_PB_WM_t RX_PB_WM;
-} mby_rx_pb_handcoded_t;
-
-typedef logic [7:0] re_RX_PB_WM_t;
-
-typedef struct packed {
-    re_RX_PB_WM_t RX_PB_WM;
-} mby_rx_pb_hc_re_t;
-
-typedef logic handcode_rvalid_RX_PB_WM_t;
-
-typedef struct packed {
-    handcode_rvalid_RX_PB_WM_t RX_PB_WM;
-} mby_rx_pb_hc_rvalid_t;
-
-typedef logic handcode_wvalid_RX_PB_WM_t;
-
-typedef struct packed {
-    handcode_wvalid_RX_PB_WM_t RX_PB_WM;
-} mby_rx_pb_hc_wvalid_t;
-
-typedef logic handcode_error_RX_PB_WM_t;
-
-typedef struct packed {
-    handcode_error_RX_PB_WM_t RX_PB_WM;
-} mby_rx_pb_hc_error_t;
-
 // ===================================================
 // HandCoded Read/Write Structure
 //    (used by project HandCoded specified registers)
@@ -255,14 +226,6 @@ typedef struct packed {
 // ===================================================
 // HandCoded Read/Write Structure
 //    (used by project HandCoded specified registers)
-
-typedef struct packed {
-    RX_PB_WM_t RX_PB_WM;
-} mby_rx_pb_hc_reg_read_t;
-
-typedef struct packed {
-    RX_PB_WM_t RX_PB_WM;
-} mby_rx_pb_hc_reg_write_t;
 
 // ===================================================
 // RW/V2 Structure

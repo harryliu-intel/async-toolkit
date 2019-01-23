@@ -24,14 +24,14 @@
 //                                                                             
 // File:            mby_rx_pb.sv                                               
 // Creator:         edwardro                                                   
-// Time:            Thursday Jan 10, 2019 [9:36:30 am]                         
+// Time:            Wednesday Jan 23, 2019 [5:27:04 am]                        
 //                                                                             
-// Path:            /tmp/edwardro/nebulon_run/125997128493_2019-01-10.09:36:03 
+// Path:            /tmp/edwardro/nebulon_run/211708214340_2019-01-23.05:26:34 
 // Arguments:       -I                                                         
 //                  /nfs/site/disks/slx_1130/edwardro/mby/work_root/mby.edr.pbb/tools/srdl
 //                  -sv_no_sai_checks -sverilog -crif -expand_handcoded_arrays 
 //                  -maximize_crif -input mby_rx_pb_map.rdl -timeout 60000     
-//                  -out_dir /tmp/tmp.1KG8pEf9RG -log_file                     
+//                  -out_dir /tmp/tmp.QONdsBBv97 -log_file                     
 //                  /nfs/site/disks/slx_1130/edwardro/mby/work_root/mby.edr.pbb/target/GenRTL/regflow/mby/subblock/mby_rx_pb_map_crif.xml.log
 //                                                                             
 // MRE:             5.2018.3.p1                                                
@@ -345,26 +345,14 @@ module mby_rx_pb ( //lintra s-2096
 
 
     // Register Inputs
-    handcode_reg_rdata_RX_PB_WM,
-
-    handcode_rvalid_RX_PB_WM,
-
-    handcode_wvalid_RX_PB_WM,
-
-    handcode_error_RX_PB_WM,
 
 
     // Register Outputs
     RX_PB_PORT_CFG,
+    RX_PB_WM,
 
 
     // Register signals for HandCoded registers
-    handcode_reg_wdata_RX_PB_WM,
-
-    we_RX_PB_WM,
-
-    re_RX_PB_WM,
-
 
 
 
@@ -383,7 +371,9 @@ parameter [MBY_RX_PB_MEM_ADDR_MSB:0] MBY_RX_PB_MAP_OFFSET = {MBY_RX_PB_MEM_ADDR_
 parameter [2:0] MBY_RX_PB_MAP_SB_BAR = 3'b0;
 parameter [7:0] MBY_RX_PB_MAP_SB_FID = 8'b0;
 localparam  ADDR_LSB_BUS_ALIGN = 3;
+`define RX_PB_WM_CR_ADDR_def(INDEX) RX_PB_WM_CR_ADDR``INDEX``[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] + MBY_RX_PB_MAP_OFFSET[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN]
 localparam [MBY_RX_PB_MEM_ADDR_MSB-ADDR_LSB_BUS_ALIGN:0] RX_PB_PORT_CFG_DECODE_ADDR = RX_PB_PORT_CFG_CR_ADDR[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] + MBY_RX_PB_MAP_OFFSET[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN];
+localparam [16:0][7:0][MBY_RX_PB_MEM_ADDR_MSB-ADDR_LSB_BUS_ALIGN:0] RX_PB_WM_DECODE_ADDR = {{`RX_PB_WM_CR_ADDR_def([16][7]),`RX_PB_WM_CR_ADDR_def([16][6]),`RX_PB_WM_CR_ADDR_def([16][5]),`RX_PB_WM_CR_ADDR_def([16][4]),`RX_PB_WM_CR_ADDR_def([16][3]),`RX_PB_WM_CR_ADDR_def([16][2]),`RX_PB_WM_CR_ADDR_def([16][1]),`RX_PB_WM_CR_ADDR_def([16][0])},{`RX_PB_WM_CR_ADDR_def([15][7]),`RX_PB_WM_CR_ADDR_def([15][6]),`RX_PB_WM_CR_ADDR_def([15][5]),`RX_PB_WM_CR_ADDR_def([15][4]),`RX_PB_WM_CR_ADDR_def([15][3]),`RX_PB_WM_CR_ADDR_def([15][2]),`RX_PB_WM_CR_ADDR_def([15][1]),`RX_PB_WM_CR_ADDR_def([15][0])},{`RX_PB_WM_CR_ADDR_def([14][7]),`RX_PB_WM_CR_ADDR_def([14][6]),`RX_PB_WM_CR_ADDR_def([14][5]),`RX_PB_WM_CR_ADDR_def([14][4]),`RX_PB_WM_CR_ADDR_def([14][3]),`RX_PB_WM_CR_ADDR_def([14][2]),`RX_PB_WM_CR_ADDR_def([14][1]),`RX_PB_WM_CR_ADDR_def([14][0])},{`RX_PB_WM_CR_ADDR_def([13][7]),`RX_PB_WM_CR_ADDR_def([13][6]),`RX_PB_WM_CR_ADDR_def([13][5]),`RX_PB_WM_CR_ADDR_def([13][4]),`RX_PB_WM_CR_ADDR_def([13][3]),`RX_PB_WM_CR_ADDR_def([13][2]),`RX_PB_WM_CR_ADDR_def([13][1]),`RX_PB_WM_CR_ADDR_def([13][0])},{`RX_PB_WM_CR_ADDR_def([12][7]),`RX_PB_WM_CR_ADDR_def([12][6]),`RX_PB_WM_CR_ADDR_def([12][5]),`RX_PB_WM_CR_ADDR_def([12][4]),`RX_PB_WM_CR_ADDR_def([12][3]),`RX_PB_WM_CR_ADDR_def([12][2]),`RX_PB_WM_CR_ADDR_def([12][1]),`RX_PB_WM_CR_ADDR_def([12][0])},{`RX_PB_WM_CR_ADDR_def([11][7]),`RX_PB_WM_CR_ADDR_def([11][6]),`RX_PB_WM_CR_ADDR_def([11][5]),`RX_PB_WM_CR_ADDR_def([11][4]),`RX_PB_WM_CR_ADDR_def([11][3]),`RX_PB_WM_CR_ADDR_def([11][2]),`RX_PB_WM_CR_ADDR_def([11][1]),`RX_PB_WM_CR_ADDR_def([11][0])},{`RX_PB_WM_CR_ADDR_def([10][7]),`RX_PB_WM_CR_ADDR_def([10][6]),`RX_PB_WM_CR_ADDR_def([10][5]),`RX_PB_WM_CR_ADDR_def([10][4]),`RX_PB_WM_CR_ADDR_def([10][3]),`RX_PB_WM_CR_ADDR_def([10][2]),`RX_PB_WM_CR_ADDR_def([10][1]),`RX_PB_WM_CR_ADDR_def([10][0])},{`RX_PB_WM_CR_ADDR_def([9][7]),`RX_PB_WM_CR_ADDR_def([9][6]),`RX_PB_WM_CR_ADDR_def([9][5]),`RX_PB_WM_CR_ADDR_def([9][4]),`RX_PB_WM_CR_ADDR_def([9][3]),`RX_PB_WM_CR_ADDR_def([9][2]),`RX_PB_WM_CR_ADDR_def([9][1]),`RX_PB_WM_CR_ADDR_def([9][0])},{`RX_PB_WM_CR_ADDR_def([8][7]),`RX_PB_WM_CR_ADDR_def([8][6]),`RX_PB_WM_CR_ADDR_def([8][5]),`RX_PB_WM_CR_ADDR_def([8][4]),`RX_PB_WM_CR_ADDR_def([8][3]),`RX_PB_WM_CR_ADDR_def([8][2]),`RX_PB_WM_CR_ADDR_def([8][1]),`RX_PB_WM_CR_ADDR_def([8][0])},{`RX_PB_WM_CR_ADDR_def([7][7]),`RX_PB_WM_CR_ADDR_def([7][6]),`RX_PB_WM_CR_ADDR_def([7][5]),`RX_PB_WM_CR_ADDR_def([7][4]),`RX_PB_WM_CR_ADDR_def([7][3]),`RX_PB_WM_CR_ADDR_def([7][2]),`RX_PB_WM_CR_ADDR_def([7][1]),`RX_PB_WM_CR_ADDR_def([7][0])},{`RX_PB_WM_CR_ADDR_def([6][7]),`RX_PB_WM_CR_ADDR_def([6][6]),`RX_PB_WM_CR_ADDR_def([6][5]),`RX_PB_WM_CR_ADDR_def([6][4]),`RX_PB_WM_CR_ADDR_def([6][3]),`RX_PB_WM_CR_ADDR_def([6][2]),`RX_PB_WM_CR_ADDR_def([6][1]),`RX_PB_WM_CR_ADDR_def([6][0])},{`RX_PB_WM_CR_ADDR_def([5][7]),`RX_PB_WM_CR_ADDR_def([5][6]),`RX_PB_WM_CR_ADDR_def([5][5]),`RX_PB_WM_CR_ADDR_def([5][4]),`RX_PB_WM_CR_ADDR_def([5][3]),`RX_PB_WM_CR_ADDR_def([5][2]),`RX_PB_WM_CR_ADDR_def([5][1]),`RX_PB_WM_CR_ADDR_def([5][0])},{`RX_PB_WM_CR_ADDR_def([4][7]),`RX_PB_WM_CR_ADDR_def([4][6]),`RX_PB_WM_CR_ADDR_def([4][5]),`RX_PB_WM_CR_ADDR_def([4][4]),`RX_PB_WM_CR_ADDR_def([4][3]),`RX_PB_WM_CR_ADDR_def([4][2]),`RX_PB_WM_CR_ADDR_def([4][1]),`RX_PB_WM_CR_ADDR_def([4][0])},{`RX_PB_WM_CR_ADDR_def([3][7]),`RX_PB_WM_CR_ADDR_def([3][6]),`RX_PB_WM_CR_ADDR_def([3][5]),`RX_PB_WM_CR_ADDR_def([3][4]),`RX_PB_WM_CR_ADDR_def([3][3]),`RX_PB_WM_CR_ADDR_def([3][2]),`RX_PB_WM_CR_ADDR_def([3][1]),`RX_PB_WM_CR_ADDR_def([3][0])},{`RX_PB_WM_CR_ADDR_def([2][7]),`RX_PB_WM_CR_ADDR_def([2][6]),`RX_PB_WM_CR_ADDR_def([2][5]),`RX_PB_WM_CR_ADDR_def([2][4]),`RX_PB_WM_CR_ADDR_def([2][3]),`RX_PB_WM_CR_ADDR_def([2][2]),`RX_PB_WM_CR_ADDR_def([2][1]),`RX_PB_WM_CR_ADDR_def([2][0])},{`RX_PB_WM_CR_ADDR_def([1][7]),`RX_PB_WM_CR_ADDR_def([1][6]),`RX_PB_WM_CR_ADDR_def([1][5]),`RX_PB_WM_CR_ADDR_def([1][4]),`RX_PB_WM_CR_ADDR_def([1][3]),`RX_PB_WM_CR_ADDR_def([1][2]),`RX_PB_WM_CR_ADDR_def([1][1]),`RX_PB_WM_CR_ADDR_def([1][0])},{`RX_PB_WM_CR_ADDR_def([0][7]),`RX_PB_WM_CR_ADDR_def([0][6]),`RX_PB_WM_CR_ADDR_def([0][5]),`RX_PB_WM_CR_ADDR_def([0][4]),`RX_PB_WM_CR_ADDR_def([0][3]),`RX_PB_WM_CR_ADDR_def([0][2]),`RX_PB_WM_CR_ADDR_def([0][1]),`RX_PB_WM_CR_ADDR_def([0][0])}};
 
     // Clocks
 input logic  gated_clk;
@@ -393,26 +383,14 @@ input logic  rst_n;
 
 
     // Register Inputs
-input RX_PB_WM_t  handcode_reg_rdata_RX_PB_WM;
-
-input handcode_rvalid_RX_PB_WM_t  handcode_rvalid_RX_PB_WM;
-
-input handcode_wvalid_RX_PB_WM_t  handcode_wvalid_RX_PB_WM;
-
-input handcode_error_RX_PB_WM_t  handcode_error_RX_PB_WM;
 
 
     // Register Outputs
 output RX_PB_PORT_CFG_t  RX_PB_PORT_CFG;
+output RX_PB_WM_t [16:0][7:0] RX_PB_WM;
 
 
     // Register signals for HandCoded registers
-output RX_PB_WM_t  handcode_reg_wdata_RX_PB_WM;
-
-output we_RX_PB_WM_t  we_RX_PB_WM;
-
-output re_RX_PB_WM_t  re_RX_PB_WM;
-
 
 
 
@@ -574,29 +552,3040 @@ end
 `RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_PORT_CFG_PORT[2], nxt_RX_PB_PORT_CFG_PORT[23:16], RX_PB_PORT_CFG.PORT[23:16])
 `RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_PORT_CFG_PORT[3], nxt_RX_PB_PORT_CFG_PORT[31:24], RX_PB_PORT_CFG.PORT[31:24])
 
-// ----------------------------------------------------------------------
-// RX_PB_WM using HANDCODED_REG template.
-logic addr_decode_RX_PB_WM;
-logic write_req_RX_PB_WM;
-logic read_req_RX_PB_WM;
-
-always_comb begin 
-   unique casez (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN]) 
-      {40'b10??,4'h?,1'b?},
-      {40'hC,4'b0???,1'b?}:
-          addr_decode_RX_PB_WM = req.valid;
-      default: 
-         addr_decode_RX_PB_WM = 1'b0; 
-   endcase
+//---------------------------------------------------------------------
+// RX_PB_WM Address Decode
+logic [16:0][7:0] addr_decode_RX_PB_WM;
+logic [16:0][7:0] write_req_RX_PB_WM;
+always_comb begin
+   addr_decode_RX_PB_WM[0][0] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[0][0]) && req.valid ;
+   addr_decode_RX_PB_WM[0][1] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[0][1]) && req.valid ;
+   addr_decode_RX_PB_WM[0][2] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[0][2]) && req.valid ;
+   addr_decode_RX_PB_WM[0][3] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[0][3]) && req.valid ;
+   addr_decode_RX_PB_WM[0][4] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[0][4]) && req.valid ;
+   addr_decode_RX_PB_WM[0][5] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[0][5]) && req.valid ;
+   addr_decode_RX_PB_WM[0][6] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[0][6]) && req.valid ;
+   addr_decode_RX_PB_WM[0][7] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[0][7]) && req.valid ;
+   addr_decode_RX_PB_WM[1][0] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[1][0]) && req.valid ;
+   addr_decode_RX_PB_WM[1][1] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[1][1]) && req.valid ;
+   addr_decode_RX_PB_WM[1][2] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[1][2]) && req.valid ;
+   addr_decode_RX_PB_WM[1][3] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[1][3]) && req.valid ;
+   addr_decode_RX_PB_WM[1][4] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[1][4]) && req.valid ;
+   addr_decode_RX_PB_WM[1][5] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[1][5]) && req.valid ;
+   addr_decode_RX_PB_WM[1][6] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[1][6]) && req.valid ;
+   addr_decode_RX_PB_WM[1][7] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[1][7]) && req.valid ;
+   addr_decode_RX_PB_WM[2][0] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[2][0]) && req.valid ;
+   addr_decode_RX_PB_WM[2][1] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[2][1]) && req.valid ;
+   addr_decode_RX_PB_WM[2][2] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[2][2]) && req.valid ;
+   addr_decode_RX_PB_WM[2][3] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[2][3]) && req.valid ;
+   addr_decode_RX_PB_WM[2][4] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[2][4]) && req.valid ;
+   addr_decode_RX_PB_WM[2][5] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[2][5]) && req.valid ;
+   addr_decode_RX_PB_WM[2][6] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[2][6]) && req.valid ;
+   addr_decode_RX_PB_WM[2][7] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[2][7]) && req.valid ;
+   addr_decode_RX_PB_WM[3][0] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[3][0]) && req.valid ;
+   addr_decode_RX_PB_WM[3][1] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[3][1]) && req.valid ;
+   addr_decode_RX_PB_WM[3][2] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[3][2]) && req.valid ;
+   addr_decode_RX_PB_WM[3][3] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[3][3]) && req.valid ;
+   addr_decode_RX_PB_WM[3][4] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[3][4]) && req.valid ;
+   addr_decode_RX_PB_WM[3][5] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[3][5]) && req.valid ;
+   addr_decode_RX_PB_WM[3][6] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[3][6]) && req.valid ;
+   addr_decode_RX_PB_WM[3][7] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[3][7]) && req.valid ;
+   addr_decode_RX_PB_WM[4][0] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[4][0]) && req.valid ;
+   addr_decode_RX_PB_WM[4][1] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[4][1]) && req.valid ;
+   addr_decode_RX_PB_WM[4][2] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[4][2]) && req.valid ;
+   addr_decode_RX_PB_WM[4][3] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[4][3]) && req.valid ;
+   addr_decode_RX_PB_WM[4][4] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[4][4]) && req.valid ;
+   addr_decode_RX_PB_WM[4][5] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[4][5]) && req.valid ;
+   addr_decode_RX_PB_WM[4][6] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[4][6]) && req.valid ;
+   addr_decode_RX_PB_WM[4][7] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[4][7]) && req.valid ;
+   addr_decode_RX_PB_WM[5][0] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[5][0]) && req.valid ;
+   addr_decode_RX_PB_WM[5][1] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[5][1]) && req.valid ;
+   addr_decode_RX_PB_WM[5][2] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[5][2]) && req.valid ;
+   addr_decode_RX_PB_WM[5][3] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[5][3]) && req.valid ;
+   addr_decode_RX_PB_WM[5][4] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[5][4]) && req.valid ;
+   addr_decode_RX_PB_WM[5][5] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[5][5]) && req.valid ;
+   addr_decode_RX_PB_WM[5][6] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[5][6]) && req.valid ;
+   addr_decode_RX_PB_WM[5][7] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[5][7]) && req.valid ;
+   addr_decode_RX_PB_WM[6][0] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[6][0]) && req.valid ;
+   addr_decode_RX_PB_WM[6][1] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[6][1]) && req.valid ;
+   addr_decode_RX_PB_WM[6][2] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[6][2]) && req.valid ;
+   addr_decode_RX_PB_WM[6][3] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[6][3]) && req.valid ;
+   addr_decode_RX_PB_WM[6][4] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[6][4]) && req.valid ;
+   addr_decode_RX_PB_WM[6][5] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[6][5]) && req.valid ;
+   addr_decode_RX_PB_WM[6][6] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[6][6]) && req.valid ;
+   addr_decode_RX_PB_WM[6][7] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[6][7]) && req.valid ;
+   addr_decode_RX_PB_WM[7][0] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[7][0]) && req.valid ;
+   addr_decode_RX_PB_WM[7][1] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[7][1]) && req.valid ;
+   addr_decode_RX_PB_WM[7][2] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[7][2]) && req.valid ;
+   addr_decode_RX_PB_WM[7][3] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[7][3]) && req.valid ;
+   addr_decode_RX_PB_WM[7][4] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[7][4]) && req.valid ;
+   addr_decode_RX_PB_WM[7][5] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[7][5]) && req.valid ;
+   addr_decode_RX_PB_WM[7][6] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[7][6]) && req.valid ;
+   addr_decode_RX_PB_WM[7][7] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[7][7]) && req.valid ;
+   addr_decode_RX_PB_WM[8][0] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[8][0]) && req.valid ;
+   addr_decode_RX_PB_WM[8][1] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[8][1]) && req.valid ;
+   addr_decode_RX_PB_WM[8][2] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[8][2]) && req.valid ;
+   addr_decode_RX_PB_WM[8][3] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[8][3]) && req.valid ;
+   addr_decode_RX_PB_WM[8][4] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[8][4]) && req.valid ;
+   addr_decode_RX_PB_WM[8][5] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[8][5]) && req.valid ;
+   addr_decode_RX_PB_WM[8][6] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[8][6]) && req.valid ;
+   addr_decode_RX_PB_WM[8][7] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[8][7]) && req.valid ;
+   addr_decode_RX_PB_WM[9][0] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[9][0]) && req.valid ;
+   addr_decode_RX_PB_WM[9][1] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[9][1]) && req.valid ;
+   addr_decode_RX_PB_WM[9][2] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[9][2]) && req.valid ;
+   addr_decode_RX_PB_WM[9][3] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[9][3]) && req.valid ;
+   addr_decode_RX_PB_WM[9][4] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[9][4]) && req.valid ;
+   addr_decode_RX_PB_WM[9][5] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[9][5]) && req.valid ;
+   addr_decode_RX_PB_WM[9][6] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[9][6]) && req.valid ;
+   addr_decode_RX_PB_WM[9][7] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[9][7]) && req.valid ;
+   addr_decode_RX_PB_WM[10][0] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[10][0]) && req.valid ;
+   addr_decode_RX_PB_WM[10][1] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[10][1]) && req.valid ;
+   addr_decode_RX_PB_WM[10][2] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[10][2]) && req.valid ;
+   addr_decode_RX_PB_WM[10][3] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[10][3]) && req.valid ;
+   addr_decode_RX_PB_WM[10][4] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[10][4]) && req.valid ;
+   addr_decode_RX_PB_WM[10][5] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[10][5]) && req.valid ;
+   addr_decode_RX_PB_WM[10][6] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[10][6]) && req.valid ;
+   addr_decode_RX_PB_WM[10][7] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[10][7]) && req.valid ;
+   addr_decode_RX_PB_WM[11][0] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[11][0]) && req.valid ;
+   addr_decode_RX_PB_WM[11][1] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[11][1]) && req.valid ;
+   addr_decode_RX_PB_WM[11][2] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[11][2]) && req.valid ;
+   addr_decode_RX_PB_WM[11][3] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[11][3]) && req.valid ;
+   addr_decode_RX_PB_WM[11][4] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[11][4]) && req.valid ;
+   addr_decode_RX_PB_WM[11][5] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[11][5]) && req.valid ;
+   addr_decode_RX_PB_WM[11][6] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[11][6]) && req.valid ;
+   addr_decode_RX_PB_WM[11][7] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[11][7]) && req.valid ;
+   addr_decode_RX_PB_WM[12][0] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[12][0]) && req.valid ;
+   addr_decode_RX_PB_WM[12][1] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[12][1]) && req.valid ;
+   addr_decode_RX_PB_WM[12][2] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[12][2]) && req.valid ;
+   addr_decode_RX_PB_WM[12][3] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[12][3]) && req.valid ;
+   addr_decode_RX_PB_WM[12][4] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[12][4]) && req.valid ;
+   addr_decode_RX_PB_WM[12][5] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[12][5]) && req.valid ;
+   addr_decode_RX_PB_WM[12][6] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[12][6]) && req.valid ;
+   addr_decode_RX_PB_WM[12][7] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[12][7]) && req.valid ;
+   addr_decode_RX_PB_WM[13][0] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[13][0]) && req.valid ;
+   addr_decode_RX_PB_WM[13][1] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[13][1]) && req.valid ;
+   addr_decode_RX_PB_WM[13][2] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[13][2]) && req.valid ;
+   addr_decode_RX_PB_WM[13][3] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[13][3]) && req.valid ;
+   addr_decode_RX_PB_WM[13][4] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[13][4]) && req.valid ;
+   addr_decode_RX_PB_WM[13][5] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[13][5]) && req.valid ;
+   addr_decode_RX_PB_WM[13][6] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[13][6]) && req.valid ;
+   addr_decode_RX_PB_WM[13][7] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[13][7]) && req.valid ;
+   addr_decode_RX_PB_WM[14][0] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[14][0]) && req.valid ;
+   addr_decode_RX_PB_WM[14][1] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[14][1]) && req.valid ;
+   addr_decode_RX_PB_WM[14][2] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[14][2]) && req.valid ;
+   addr_decode_RX_PB_WM[14][3] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[14][3]) && req.valid ;
+   addr_decode_RX_PB_WM[14][4] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[14][4]) && req.valid ;
+   addr_decode_RX_PB_WM[14][5] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[14][5]) && req.valid ;
+   addr_decode_RX_PB_WM[14][6] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[14][6]) && req.valid ;
+   addr_decode_RX_PB_WM[14][7] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[14][7]) && req.valid ;
+   addr_decode_RX_PB_WM[15][0] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[15][0]) && req.valid ;
+   addr_decode_RX_PB_WM[15][1] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[15][1]) && req.valid ;
+   addr_decode_RX_PB_WM[15][2] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[15][2]) && req.valid ;
+   addr_decode_RX_PB_WM[15][3] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[15][3]) && req.valid ;
+   addr_decode_RX_PB_WM[15][4] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[15][4]) && req.valid ;
+   addr_decode_RX_PB_WM[15][5] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[15][5]) && req.valid ;
+   addr_decode_RX_PB_WM[15][6] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[15][6]) && req.valid ;
+   addr_decode_RX_PB_WM[15][7] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[15][7]) && req.valid ;
+   addr_decode_RX_PB_WM[16][0] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[16][0]) && req.valid ;
+   addr_decode_RX_PB_WM[16][1] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[16][1]) && req.valid ;
+   addr_decode_RX_PB_WM[16][2] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[16][2]) && req.valid ;
+   addr_decode_RX_PB_WM[16][3] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[16][3]) && req.valid ;
+   addr_decode_RX_PB_WM[16][4] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[16][4]) && req.valid ;
+   addr_decode_RX_PB_WM[16][5] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[16][5]) && req.valid ;
+   addr_decode_RX_PB_WM[16][6] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[16][6]) && req.valid ;
+   addr_decode_RX_PB_WM[16][7] = (req_addr[MBY_RX_PB_MEM_ADDR_MSB:ADDR_LSB_BUS_ALIGN] == RX_PB_WM_DECODE_ADDR[16][7]) && req.valid ;
+   write_req_RX_PB_WM[0][0] = IsMEMWr && addr_decode_RX_PB_WM[0][0] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[0][1] = IsMEMWr && addr_decode_RX_PB_WM[0][1] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[0][2] = IsMEMWr && addr_decode_RX_PB_WM[0][2] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[0][3] = IsMEMWr && addr_decode_RX_PB_WM[0][3] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[0][4] = IsMEMWr && addr_decode_RX_PB_WM[0][4] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[0][5] = IsMEMWr && addr_decode_RX_PB_WM[0][5] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[0][6] = IsMEMWr && addr_decode_RX_PB_WM[0][6] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[0][7] = IsMEMWr && addr_decode_RX_PB_WM[0][7] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[1][0] = IsMEMWr && addr_decode_RX_PB_WM[1][0] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[1][1] = IsMEMWr && addr_decode_RX_PB_WM[1][1] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[1][2] = IsMEMWr && addr_decode_RX_PB_WM[1][2] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[1][3] = IsMEMWr && addr_decode_RX_PB_WM[1][3] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[1][4] = IsMEMWr && addr_decode_RX_PB_WM[1][4] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[1][5] = IsMEMWr && addr_decode_RX_PB_WM[1][5] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[1][6] = IsMEMWr && addr_decode_RX_PB_WM[1][6] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[1][7] = IsMEMWr && addr_decode_RX_PB_WM[1][7] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[2][0] = IsMEMWr && addr_decode_RX_PB_WM[2][0] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[2][1] = IsMEMWr && addr_decode_RX_PB_WM[2][1] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[2][2] = IsMEMWr && addr_decode_RX_PB_WM[2][2] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[2][3] = IsMEMWr && addr_decode_RX_PB_WM[2][3] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[2][4] = IsMEMWr && addr_decode_RX_PB_WM[2][4] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[2][5] = IsMEMWr && addr_decode_RX_PB_WM[2][5] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[2][6] = IsMEMWr && addr_decode_RX_PB_WM[2][6] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[2][7] = IsMEMWr && addr_decode_RX_PB_WM[2][7] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[3][0] = IsMEMWr && addr_decode_RX_PB_WM[3][0] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[3][1] = IsMEMWr && addr_decode_RX_PB_WM[3][1] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[3][2] = IsMEMWr && addr_decode_RX_PB_WM[3][2] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[3][3] = IsMEMWr && addr_decode_RX_PB_WM[3][3] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[3][4] = IsMEMWr && addr_decode_RX_PB_WM[3][4] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[3][5] = IsMEMWr && addr_decode_RX_PB_WM[3][5] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[3][6] = IsMEMWr && addr_decode_RX_PB_WM[3][6] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[3][7] = IsMEMWr && addr_decode_RX_PB_WM[3][7] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[4][0] = IsMEMWr && addr_decode_RX_PB_WM[4][0] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[4][1] = IsMEMWr && addr_decode_RX_PB_WM[4][1] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[4][2] = IsMEMWr && addr_decode_RX_PB_WM[4][2] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[4][3] = IsMEMWr && addr_decode_RX_PB_WM[4][3] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[4][4] = IsMEMWr && addr_decode_RX_PB_WM[4][4] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[4][5] = IsMEMWr && addr_decode_RX_PB_WM[4][5] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[4][6] = IsMEMWr && addr_decode_RX_PB_WM[4][6] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[4][7] = IsMEMWr && addr_decode_RX_PB_WM[4][7] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[5][0] = IsMEMWr && addr_decode_RX_PB_WM[5][0] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[5][1] = IsMEMWr && addr_decode_RX_PB_WM[5][1] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[5][2] = IsMEMWr && addr_decode_RX_PB_WM[5][2] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[5][3] = IsMEMWr && addr_decode_RX_PB_WM[5][3] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[5][4] = IsMEMWr && addr_decode_RX_PB_WM[5][4] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[5][5] = IsMEMWr && addr_decode_RX_PB_WM[5][5] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[5][6] = IsMEMWr && addr_decode_RX_PB_WM[5][6] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[5][7] = IsMEMWr && addr_decode_RX_PB_WM[5][7] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[6][0] = IsMEMWr && addr_decode_RX_PB_WM[6][0] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[6][1] = IsMEMWr && addr_decode_RX_PB_WM[6][1] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[6][2] = IsMEMWr && addr_decode_RX_PB_WM[6][2] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[6][3] = IsMEMWr && addr_decode_RX_PB_WM[6][3] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[6][4] = IsMEMWr && addr_decode_RX_PB_WM[6][4] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[6][5] = IsMEMWr && addr_decode_RX_PB_WM[6][5] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[6][6] = IsMEMWr && addr_decode_RX_PB_WM[6][6] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[6][7] = IsMEMWr && addr_decode_RX_PB_WM[6][7] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[7][0] = IsMEMWr && addr_decode_RX_PB_WM[7][0] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[7][1] = IsMEMWr && addr_decode_RX_PB_WM[7][1] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[7][2] = IsMEMWr && addr_decode_RX_PB_WM[7][2] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[7][3] = IsMEMWr && addr_decode_RX_PB_WM[7][3] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[7][4] = IsMEMWr && addr_decode_RX_PB_WM[7][4] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[7][5] = IsMEMWr && addr_decode_RX_PB_WM[7][5] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[7][6] = IsMEMWr && addr_decode_RX_PB_WM[7][6] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[7][7] = IsMEMWr && addr_decode_RX_PB_WM[7][7] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[8][0] = IsMEMWr && addr_decode_RX_PB_WM[8][0] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[8][1] = IsMEMWr && addr_decode_RX_PB_WM[8][1] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[8][2] = IsMEMWr && addr_decode_RX_PB_WM[8][2] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[8][3] = IsMEMWr && addr_decode_RX_PB_WM[8][3] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[8][4] = IsMEMWr && addr_decode_RX_PB_WM[8][4] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[8][5] = IsMEMWr && addr_decode_RX_PB_WM[8][5] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[8][6] = IsMEMWr && addr_decode_RX_PB_WM[8][6] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[8][7] = IsMEMWr && addr_decode_RX_PB_WM[8][7] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[9][0] = IsMEMWr && addr_decode_RX_PB_WM[9][0] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[9][1] = IsMEMWr && addr_decode_RX_PB_WM[9][1] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[9][2] = IsMEMWr && addr_decode_RX_PB_WM[9][2] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[9][3] = IsMEMWr && addr_decode_RX_PB_WM[9][3] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[9][4] = IsMEMWr && addr_decode_RX_PB_WM[9][4] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[9][5] = IsMEMWr && addr_decode_RX_PB_WM[9][5] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[9][6] = IsMEMWr && addr_decode_RX_PB_WM[9][6] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[9][7] = IsMEMWr && addr_decode_RX_PB_WM[9][7] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[10][0] = IsMEMWr && addr_decode_RX_PB_WM[10][0] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[10][1] = IsMEMWr && addr_decode_RX_PB_WM[10][1] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[10][2] = IsMEMWr && addr_decode_RX_PB_WM[10][2] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[10][3] = IsMEMWr && addr_decode_RX_PB_WM[10][3] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[10][4] = IsMEMWr && addr_decode_RX_PB_WM[10][4] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[10][5] = IsMEMWr && addr_decode_RX_PB_WM[10][5] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[10][6] = IsMEMWr && addr_decode_RX_PB_WM[10][6] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[10][7] = IsMEMWr && addr_decode_RX_PB_WM[10][7] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[11][0] = IsMEMWr && addr_decode_RX_PB_WM[11][0] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[11][1] = IsMEMWr && addr_decode_RX_PB_WM[11][1] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[11][2] = IsMEMWr && addr_decode_RX_PB_WM[11][2] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[11][3] = IsMEMWr && addr_decode_RX_PB_WM[11][3] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[11][4] = IsMEMWr && addr_decode_RX_PB_WM[11][4] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[11][5] = IsMEMWr && addr_decode_RX_PB_WM[11][5] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[11][6] = IsMEMWr && addr_decode_RX_PB_WM[11][6] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[11][7] = IsMEMWr && addr_decode_RX_PB_WM[11][7] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[12][0] = IsMEMWr && addr_decode_RX_PB_WM[12][0] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[12][1] = IsMEMWr && addr_decode_RX_PB_WM[12][1] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[12][2] = IsMEMWr && addr_decode_RX_PB_WM[12][2] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[12][3] = IsMEMWr && addr_decode_RX_PB_WM[12][3] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[12][4] = IsMEMWr && addr_decode_RX_PB_WM[12][4] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[12][5] = IsMEMWr && addr_decode_RX_PB_WM[12][5] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[12][6] = IsMEMWr && addr_decode_RX_PB_WM[12][6] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[12][7] = IsMEMWr && addr_decode_RX_PB_WM[12][7] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[13][0] = IsMEMWr && addr_decode_RX_PB_WM[13][0] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[13][1] = IsMEMWr && addr_decode_RX_PB_WM[13][1] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[13][2] = IsMEMWr && addr_decode_RX_PB_WM[13][2] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[13][3] = IsMEMWr && addr_decode_RX_PB_WM[13][3] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[13][4] = IsMEMWr && addr_decode_RX_PB_WM[13][4] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[13][5] = IsMEMWr && addr_decode_RX_PB_WM[13][5] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[13][6] = IsMEMWr && addr_decode_RX_PB_WM[13][6] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[13][7] = IsMEMWr && addr_decode_RX_PB_WM[13][7] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[14][0] = IsMEMWr && addr_decode_RX_PB_WM[14][0] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[14][1] = IsMEMWr && addr_decode_RX_PB_WM[14][1] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[14][2] = IsMEMWr && addr_decode_RX_PB_WM[14][2] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[14][3] = IsMEMWr && addr_decode_RX_PB_WM[14][3] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[14][4] = IsMEMWr && addr_decode_RX_PB_WM[14][4] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[14][5] = IsMEMWr && addr_decode_RX_PB_WM[14][5] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[14][6] = IsMEMWr && addr_decode_RX_PB_WM[14][6] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[14][7] = IsMEMWr && addr_decode_RX_PB_WM[14][7] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[15][0] = IsMEMWr && addr_decode_RX_PB_WM[15][0] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[15][1] = IsMEMWr && addr_decode_RX_PB_WM[15][1] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[15][2] = IsMEMWr && addr_decode_RX_PB_WM[15][2] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[15][3] = IsMEMWr && addr_decode_RX_PB_WM[15][3] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[15][4] = IsMEMWr && addr_decode_RX_PB_WM[15][4] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[15][5] = IsMEMWr && addr_decode_RX_PB_WM[15][5] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[15][6] = IsMEMWr && addr_decode_RX_PB_WM[15][6] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[15][7] = IsMEMWr && addr_decode_RX_PB_WM[15][7] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[16][0] = IsMEMWr && addr_decode_RX_PB_WM[16][0] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[16][1] = IsMEMWr && addr_decode_RX_PB_WM[16][1] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[16][2] = IsMEMWr && addr_decode_RX_PB_WM[16][2] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[16][3] = IsMEMWr && addr_decode_RX_PB_WM[16][3] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[16][4] = IsMEMWr && addr_decode_RX_PB_WM[16][4] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[16][5] = IsMEMWr && addr_decode_RX_PB_WM[16][5] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[16][6] = IsMEMWr && addr_decode_RX_PB_WM[16][6] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
+   write_req_RX_PB_WM[16][7] = IsMEMWr && addr_decode_RX_PB_WM[16][7] && sb_fid_cond_mby_rx_pb_map && sb_bar_cond_mby_rx_pb_map;
 end
 
-always_comb write_req_RX_PB_WM = f_IsMEMWr(req_opcode) && addr_decode_RX_PB_WM ;
-always_comb read_req_RX_PB_WM  = f_IsMEMRd(req_opcode) && addr_decode_RX_PB_WM ;
+// ----------------------------------------------------------------------
+// RX_PB_WM.XOFF_OR_DROP x2 RW, using RW template.
+logic [16:0][7:0][1:0] up_RX_PB_WM_XOFF_OR_DROP;
+always_comb begin
+ up_RX_PB_WM_XOFF_OR_DROP[0][0] =
+    ({2{write_req_RX_PB_WM[0][0] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[0][1] =
+    ({2{write_req_RX_PB_WM[0][1] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[0][2] =
+    ({2{write_req_RX_PB_WM[0][2] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[0][3] =
+    ({2{write_req_RX_PB_WM[0][3] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[0][4] =
+    ({2{write_req_RX_PB_WM[0][4] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[0][5] =
+    ({2{write_req_RX_PB_WM[0][5] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[0][6] =
+    ({2{write_req_RX_PB_WM[0][6] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[0][7] =
+    ({2{write_req_RX_PB_WM[0][7] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[1][0] =
+    ({2{write_req_RX_PB_WM[1][0] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[1][1] =
+    ({2{write_req_RX_PB_WM[1][1] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[1][2] =
+    ({2{write_req_RX_PB_WM[1][2] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[1][3] =
+    ({2{write_req_RX_PB_WM[1][3] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[1][4] =
+    ({2{write_req_RX_PB_WM[1][4] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[1][5] =
+    ({2{write_req_RX_PB_WM[1][5] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[1][6] =
+    ({2{write_req_RX_PB_WM[1][6] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[1][7] =
+    ({2{write_req_RX_PB_WM[1][7] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[2][0] =
+    ({2{write_req_RX_PB_WM[2][0] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[2][1] =
+    ({2{write_req_RX_PB_WM[2][1] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[2][2] =
+    ({2{write_req_RX_PB_WM[2][2] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[2][3] =
+    ({2{write_req_RX_PB_WM[2][3] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[2][4] =
+    ({2{write_req_RX_PB_WM[2][4] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[2][5] =
+    ({2{write_req_RX_PB_WM[2][5] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[2][6] =
+    ({2{write_req_RX_PB_WM[2][6] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[2][7] =
+    ({2{write_req_RX_PB_WM[2][7] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[3][0] =
+    ({2{write_req_RX_PB_WM[3][0] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[3][1] =
+    ({2{write_req_RX_PB_WM[3][1] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[3][2] =
+    ({2{write_req_RX_PB_WM[3][2] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[3][3] =
+    ({2{write_req_RX_PB_WM[3][3] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[3][4] =
+    ({2{write_req_RX_PB_WM[3][4] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[3][5] =
+    ({2{write_req_RX_PB_WM[3][5] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[3][6] =
+    ({2{write_req_RX_PB_WM[3][6] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[3][7] =
+    ({2{write_req_RX_PB_WM[3][7] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[4][0] =
+    ({2{write_req_RX_PB_WM[4][0] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[4][1] =
+    ({2{write_req_RX_PB_WM[4][1] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[4][2] =
+    ({2{write_req_RX_PB_WM[4][2] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[4][3] =
+    ({2{write_req_RX_PB_WM[4][3] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[4][4] =
+    ({2{write_req_RX_PB_WM[4][4] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[4][5] =
+    ({2{write_req_RX_PB_WM[4][5] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[4][6] =
+    ({2{write_req_RX_PB_WM[4][6] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[4][7] =
+    ({2{write_req_RX_PB_WM[4][7] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[5][0] =
+    ({2{write_req_RX_PB_WM[5][0] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[5][1] =
+    ({2{write_req_RX_PB_WM[5][1] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[5][2] =
+    ({2{write_req_RX_PB_WM[5][2] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[5][3] =
+    ({2{write_req_RX_PB_WM[5][3] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[5][4] =
+    ({2{write_req_RX_PB_WM[5][4] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[5][5] =
+    ({2{write_req_RX_PB_WM[5][5] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[5][6] =
+    ({2{write_req_RX_PB_WM[5][6] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[5][7] =
+    ({2{write_req_RX_PB_WM[5][7] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[6][0] =
+    ({2{write_req_RX_PB_WM[6][0] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[6][1] =
+    ({2{write_req_RX_PB_WM[6][1] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[6][2] =
+    ({2{write_req_RX_PB_WM[6][2] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[6][3] =
+    ({2{write_req_RX_PB_WM[6][3] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[6][4] =
+    ({2{write_req_RX_PB_WM[6][4] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[6][5] =
+    ({2{write_req_RX_PB_WM[6][5] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[6][6] =
+    ({2{write_req_RX_PB_WM[6][6] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[6][7] =
+    ({2{write_req_RX_PB_WM[6][7] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[7][0] =
+    ({2{write_req_RX_PB_WM[7][0] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[7][1] =
+    ({2{write_req_RX_PB_WM[7][1] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[7][2] =
+    ({2{write_req_RX_PB_WM[7][2] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[7][3] =
+    ({2{write_req_RX_PB_WM[7][3] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[7][4] =
+    ({2{write_req_RX_PB_WM[7][4] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[7][5] =
+    ({2{write_req_RX_PB_WM[7][5] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[7][6] =
+    ({2{write_req_RX_PB_WM[7][6] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[7][7] =
+    ({2{write_req_RX_PB_WM[7][7] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[8][0] =
+    ({2{write_req_RX_PB_WM[8][0] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[8][1] =
+    ({2{write_req_RX_PB_WM[8][1] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[8][2] =
+    ({2{write_req_RX_PB_WM[8][2] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[8][3] =
+    ({2{write_req_RX_PB_WM[8][3] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[8][4] =
+    ({2{write_req_RX_PB_WM[8][4] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[8][5] =
+    ({2{write_req_RX_PB_WM[8][5] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[8][6] =
+    ({2{write_req_RX_PB_WM[8][6] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[8][7] =
+    ({2{write_req_RX_PB_WM[8][7] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[9][0] =
+    ({2{write_req_RX_PB_WM[9][0] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[9][1] =
+    ({2{write_req_RX_PB_WM[9][1] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[9][2] =
+    ({2{write_req_RX_PB_WM[9][2] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[9][3] =
+    ({2{write_req_RX_PB_WM[9][3] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[9][4] =
+    ({2{write_req_RX_PB_WM[9][4] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[9][5] =
+    ({2{write_req_RX_PB_WM[9][5] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[9][6] =
+    ({2{write_req_RX_PB_WM[9][6] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[9][7] =
+    ({2{write_req_RX_PB_WM[9][7] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[10][0] =
+    ({2{write_req_RX_PB_WM[10][0] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[10][1] =
+    ({2{write_req_RX_PB_WM[10][1] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[10][2] =
+    ({2{write_req_RX_PB_WM[10][2] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[10][3] =
+    ({2{write_req_RX_PB_WM[10][3] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[10][4] =
+    ({2{write_req_RX_PB_WM[10][4] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[10][5] =
+    ({2{write_req_RX_PB_WM[10][5] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[10][6] =
+    ({2{write_req_RX_PB_WM[10][6] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[10][7] =
+    ({2{write_req_RX_PB_WM[10][7] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[11][0] =
+    ({2{write_req_RX_PB_WM[11][0] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[11][1] =
+    ({2{write_req_RX_PB_WM[11][1] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[11][2] =
+    ({2{write_req_RX_PB_WM[11][2] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[11][3] =
+    ({2{write_req_RX_PB_WM[11][3] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[11][4] =
+    ({2{write_req_RX_PB_WM[11][4] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[11][5] =
+    ({2{write_req_RX_PB_WM[11][5] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[11][6] =
+    ({2{write_req_RX_PB_WM[11][6] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[11][7] =
+    ({2{write_req_RX_PB_WM[11][7] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[12][0] =
+    ({2{write_req_RX_PB_WM[12][0] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[12][1] =
+    ({2{write_req_RX_PB_WM[12][1] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[12][2] =
+    ({2{write_req_RX_PB_WM[12][2] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[12][3] =
+    ({2{write_req_RX_PB_WM[12][3] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[12][4] =
+    ({2{write_req_RX_PB_WM[12][4] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[12][5] =
+    ({2{write_req_RX_PB_WM[12][5] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[12][6] =
+    ({2{write_req_RX_PB_WM[12][6] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[12][7] =
+    ({2{write_req_RX_PB_WM[12][7] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[13][0] =
+    ({2{write_req_RX_PB_WM[13][0] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[13][1] =
+    ({2{write_req_RX_PB_WM[13][1] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[13][2] =
+    ({2{write_req_RX_PB_WM[13][2] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[13][3] =
+    ({2{write_req_RX_PB_WM[13][3] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[13][4] =
+    ({2{write_req_RX_PB_WM[13][4] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[13][5] =
+    ({2{write_req_RX_PB_WM[13][5] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[13][6] =
+    ({2{write_req_RX_PB_WM[13][6] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[13][7] =
+    ({2{write_req_RX_PB_WM[13][7] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[14][0] =
+    ({2{write_req_RX_PB_WM[14][0] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[14][1] =
+    ({2{write_req_RX_PB_WM[14][1] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[14][2] =
+    ({2{write_req_RX_PB_WM[14][2] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[14][3] =
+    ({2{write_req_RX_PB_WM[14][3] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[14][4] =
+    ({2{write_req_RX_PB_WM[14][4] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[14][5] =
+    ({2{write_req_RX_PB_WM[14][5] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[14][6] =
+    ({2{write_req_RX_PB_WM[14][6] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[14][7] =
+    ({2{write_req_RX_PB_WM[14][7] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[15][0] =
+    ({2{write_req_RX_PB_WM[15][0] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[15][1] =
+    ({2{write_req_RX_PB_WM[15][1] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[15][2] =
+    ({2{write_req_RX_PB_WM[15][2] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[15][3] =
+    ({2{write_req_RX_PB_WM[15][3] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[15][4] =
+    ({2{write_req_RX_PB_WM[15][4] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[15][5] =
+    ({2{write_req_RX_PB_WM[15][5] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[15][6] =
+    ({2{write_req_RX_PB_WM[15][6] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[15][7] =
+    ({2{write_req_RX_PB_WM[15][7] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[16][0] =
+    ({2{write_req_RX_PB_WM[16][0] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[16][1] =
+    ({2{write_req_RX_PB_WM[16][1] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[16][2] =
+    ({2{write_req_RX_PB_WM[16][2] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[16][3] =
+    ({2{write_req_RX_PB_WM[16][3] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[16][4] =
+    ({2{write_req_RX_PB_WM[16][4] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[16][5] =
+    ({2{write_req_RX_PB_WM[16][5] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[16][6] =
+    ({2{write_req_RX_PB_WM[16][6] }} &
+    be[1:0]);
+ up_RX_PB_WM_XOFF_OR_DROP[16][7] =
+    ({2{write_req_RX_PB_WM[16][7] }} &
+    be[1:0]);
+end
 
-always_comb we_RX_PB_WM = {8{write_req_RX_PB_WM}} & be;
-always_comb re_RX_PB_WM = {8{read_req_RX_PB_WM}} & be;
-always_comb handcode_reg_wdata_RX_PB_WM = write_data;
+logic [16:0][7:0][9:0] nxt_RX_PB_WM_XOFF_OR_DROP;
+always_comb begin
+ nxt_RX_PB_WM_XOFF_OR_DROP[0][0] = write_data[9:0];
 
+ nxt_RX_PB_WM_XOFF_OR_DROP[0][1] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[0][2] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[0][3] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[0][4] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[0][5] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[0][6] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[0][7] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[1][0] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[1][1] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[1][2] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[1][3] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[1][4] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[1][5] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[1][6] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[1][7] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[2][0] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[2][1] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[2][2] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[2][3] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[2][4] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[2][5] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[2][6] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[2][7] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[3][0] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[3][1] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[3][2] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[3][3] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[3][4] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[3][5] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[3][6] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[3][7] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[4][0] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[4][1] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[4][2] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[4][3] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[4][4] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[4][5] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[4][6] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[4][7] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[5][0] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[5][1] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[5][2] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[5][3] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[5][4] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[5][5] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[5][6] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[5][7] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[6][0] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[6][1] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[6][2] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[6][3] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[6][4] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[6][5] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[6][6] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[6][7] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[7][0] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[7][1] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[7][2] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[7][3] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[7][4] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[7][5] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[7][6] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[7][7] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[8][0] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[8][1] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[8][2] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[8][3] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[8][4] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[8][5] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[8][6] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[8][7] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[9][0] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[9][1] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[9][2] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[9][3] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[9][4] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[9][5] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[9][6] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[9][7] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[10][0] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[10][1] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[10][2] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[10][3] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[10][4] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[10][5] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[10][6] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[10][7] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[11][0] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[11][1] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[11][2] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[11][3] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[11][4] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[11][5] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[11][6] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[11][7] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[12][0] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[12][1] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[12][2] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[12][3] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[12][4] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[12][5] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[12][6] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[12][7] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[13][0] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[13][1] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[13][2] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[13][3] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[13][4] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[13][5] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[13][6] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[13][7] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[14][0] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[14][1] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[14][2] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[14][3] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[14][4] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[14][5] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[14][6] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[14][7] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[15][0] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[15][1] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[15][2] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[15][3] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[15][4] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[15][5] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[15][6] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[15][7] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[16][0] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[16][1] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[16][2] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[16][3] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[16][4] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[16][5] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[16][6] = write_data[9:0];
+
+ nxt_RX_PB_WM_XOFF_OR_DROP[16][7] = write_data[9:0];
+
+end
+
+
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[0][0][0], nxt_RX_PB_WM_XOFF_OR_DROP[0][0][7:0], RX_PB_WM[0][0].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[0][0][1], nxt_RX_PB_WM_XOFF_OR_DROP[0][0][9:8], RX_PB_WM[0][0].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[0][1][0], nxt_RX_PB_WM_XOFF_OR_DROP[0][1][7:0], RX_PB_WM[0][1].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[0][1][1], nxt_RX_PB_WM_XOFF_OR_DROP[0][1][9:8], RX_PB_WM[0][1].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[0][2][0], nxt_RX_PB_WM_XOFF_OR_DROP[0][2][7:0], RX_PB_WM[0][2].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[0][2][1], nxt_RX_PB_WM_XOFF_OR_DROP[0][2][9:8], RX_PB_WM[0][2].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[0][3][0], nxt_RX_PB_WM_XOFF_OR_DROP[0][3][7:0], RX_PB_WM[0][3].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[0][3][1], nxt_RX_PB_WM_XOFF_OR_DROP[0][3][9:8], RX_PB_WM[0][3].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[0][4][0], nxt_RX_PB_WM_XOFF_OR_DROP[0][4][7:0], RX_PB_WM[0][4].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[0][4][1], nxt_RX_PB_WM_XOFF_OR_DROP[0][4][9:8], RX_PB_WM[0][4].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[0][5][0], nxt_RX_PB_WM_XOFF_OR_DROP[0][5][7:0], RX_PB_WM[0][5].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[0][5][1], nxt_RX_PB_WM_XOFF_OR_DROP[0][5][9:8], RX_PB_WM[0][5].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[0][6][0], nxt_RX_PB_WM_XOFF_OR_DROP[0][6][7:0], RX_PB_WM[0][6].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[0][6][1], nxt_RX_PB_WM_XOFF_OR_DROP[0][6][9:8], RX_PB_WM[0][6].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[0][7][0], nxt_RX_PB_WM_XOFF_OR_DROP[0][7][7:0], RX_PB_WM[0][7].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[0][7][1], nxt_RX_PB_WM_XOFF_OR_DROP[0][7][9:8], RX_PB_WM[0][7].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[1][0][0], nxt_RX_PB_WM_XOFF_OR_DROP[1][0][7:0], RX_PB_WM[1][0].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[1][0][1], nxt_RX_PB_WM_XOFF_OR_DROP[1][0][9:8], RX_PB_WM[1][0].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[1][1][0], nxt_RX_PB_WM_XOFF_OR_DROP[1][1][7:0], RX_PB_WM[1][1].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[1][1][1], nxt_RX_PB_WM_XOFF_OR_DROP[1][1][9:8], RX_PB_WM[1][1].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[1][2][0], nxt_RX_PB_WM_XOFF_OR_DROP[1][2][7:0], RX_PB_WM[1][2].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[1][2][1], nxt_RX_PB_WM_XOFF_OR_DROP[1][2][9:8], RX_PB_WM[1][2].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[1][3][0], nxt_RX_PB_WM_XOFF_OR_DROP[1][3][7:0], RX_PB_WM[1][3].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[1][3][1], nxt_RX_PB_WM_XOFF_OR_DROP[1][3][9:8], RX_PB_WM[1][3].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[1][4][0], nxt_RX_PB_WM_XOFF_OR_DROP[1][4][7:0], RX_PB_WM[1][4].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[1][4][1], nxt_RX_PB_WM_XOFF_OR_DROP[1][4][9:8], RX_PB_WM[1][4].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[1][5][0], nxt_RX_PB_WM_XOFF_OR_DROP[1][5][7:0], RX_PB_WM[1][5].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[1][5][1], nxt_RX_PB_WM_XOFF_OR_DROP[1][5][9:8], RX_PB_WM[1][5].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[1][6][0], nxt_RX_PB_WM_XOFF_OR_DROP[1][6][7:0], RX_PB_WM[1][6].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[1][6][1], nxt_RX_PB_WM_XOFF_OR_DROP[1][6][9:8], RX_PB_WM[1][6].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[1][7][0], nxt_RX_PB_WM_XOFF_OR_DROP[1][7][7:0], RX_PB_WM[1][7].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[1][7][1], nxt_RX_PB_WM_XOFF_OR_DROP[1][7][9:8], RX_PB_WM[1][7].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[2][0][0], nxt_RX_PB_WM_XOFF_OR_DROP[2][0][7:0], RX_PB_WM[2][0].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[2][0][1], nxt_RX_PB_WM_XOFF_OR_DROP[2][0][9:8], RX_PB_WM[2][0].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[2][1][0], nxt_RX_PB_WM_XOFF_OR_DROP[2][1][7:0], RX_PB_WM[2][1].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[2][1][1], nxt_RX_PB_WM_XOFF_OR_DROP[2][1][9:8], RX_PB_WM[2][1].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[2][2][0], nxt_RX_PB_WM_XOFF_OR_DROP[2][2][7:0], RX_PB_WM[2][2].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[2][2][1], nxt_RX_PB_WM_XOFF_OR_DROP[2][2][9:8], RX_PB_WM[2][2].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[2][3][0], nxt_RX_PB_WM_XOFF_OR_DROP[2][3][7:0], RX_PB_WM[2][3].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[2][3][1], nxt_RX_PB_WM_XOFF_OR_DROP[2][3][9:8], RX_PB_WM[2][3].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[2][4][0], nxt_RX_PB_WM_XOFF_OR_DROP[2][4][7:0], RX_PB_WM[2][4].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[2][4][1], nxt_RX_PB_WM_XOFF_OR_DROP[2][4][9:8], RX_PB_WM[2][4].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[2][5][0], nxt_RX_PB_WM_XOFF_OR_DROP[2][5][7:0], RX_PB_WM[2][5].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[2][5][1], nxt_RX_PB_WM_XOFF_OR_DROP[2][5][9:8], RX_PB_WM[2][5].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[2][6][0], nxt_RX_PB_WM_XOFF_OR_DROP[2][6][7:0], RX_PB_WM[2][6].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[2][6][1], nxt_RX_PB_WM_XOFF_OR_DROP[2][6][9:8], RX_PB_WM[2][6].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[2][7][0], nxt_RX_PB_WM_XOFF_OR_DROP[2][7][7:0], RX_PB_WM[2][7].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[2][7][1], nxt_RX_PB_WM_XOFF_OR_DROP[2][7][9:8], RX_PB_WM[2][7].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[3][0][0], nxt_RX_PB_WM_XOFF_OR_DROP[3][0][7:0], RX_PB_WM[3][0].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[3][0][1], nxt_RX_PB_WM_XOFF_OR_DROP[3][0][9:8], RX_PB_WM[3][0].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[3][1][0], nxt_RX_PB_WM_XOFF_OR_DROP[3][1][7:0], RX_PB_WM[3][1].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[3][1][1], nxt_RX_PB_WM_XOFF_OR_DROP[3][1][9:8], RX_PB_WM[3][1].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[3][2][0], nxt_RX_PB_WM_XOFF_OR_DROP[3][2][7:0], RX_PB_WM[3][2].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[3][2][1], nxt_RX_PB_WM_XOFF_OR_DROP[3][2][9:8], RX_PB_WM[3][2].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[3][3][0], nxt_RX_PB_WM_XOFF_OR_DROP[3][3][7:0], RX_PB_WM[3][3].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[3][3][1], nxt_RX_PB_WM_XOFF_OR_DROP[3][3][9:8], RX_PB_WM[3][3].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[3][4][0], nxt_RX_PB_WM_XOFF_OR_DROP[3][4][7:0], RX_PB_WM[3][4].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[3][4][1], nxt_RX_PB_WM_XOFF_OR_DROP[3][4][9:8], RX_PB_WM[3][4].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[3][5][0], nxt_RX_PB_WM_XOFF_OR_DROP[3][5][7:0], RX_PB_WM[3][5].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[3][5][1], nxt_RX_PB_WM_XOFF_OR_DROP[3][5][9:8], RX_PB_WM[3][5].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[3][6][0], nxt_RX_PB_WM_XOFF_OR_DROP[3][6][7:0], RX_PB_WM[3][6].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[3][6][1], nxt_RX_PB_WM_XOFF_OR_DROP[3][6][9:8], RX_PB_WM[3][6].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[3][7][0], nxt_RX_PB_WM_XOFF_OR_DROP[3][7][7:0], RX_PB_WM[3][7].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[3][7][1], nxt_RX_PB_WM_XOFF_OR_DROP[3][7][9:8], RX_PB_WM[3][7].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[4][0][0], nxt_RX_PB_WM_XOFF_OR_DROP[4][0][7:0], RX_PB_WM[4][0].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[4][0][1], nxt_RX_PB_WM_XOFF_OR_DROP[4][0][9:8], RX_PB_WM[4][0].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[4][1][0], nxt_RX_PB_WM_XOFF_OR_DROP[4][1][7:0], RX_PB_WM[4][1].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[4][1][1], nxt_RX_PB_WM_XOFF_OR_DROP[4][1][9:8], RX_PB_WM[4][1].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[4][2][0], nxt_RX_PB_WM_XOFF_OR_DROP[4][2][7:0], RX_PB_WM[4][2].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[4][2][1], nxt_RX_PB_WM_XOFF_OR_DROP[4][2][9:8], RX_PB_WM[4][2].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[4][3][0], nxt_RX_PB_WM_XOFF_OR_DROP[4][3][7:0], RX_PB_WM[4][3].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[4][3][1], nxt_RX_PB_WM_XOFF_OR_DROP[4][3][9:8], RX_PB_WM[4][3].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[4][4][0], nxt_RX_PB_WM_XOFF_OR_DROP[4][4][7:0], RX_PB_WM[4][4].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[4][4][1], nxt_RX_PB_WM_XOFF_OR_DROP[4][4][9:8], RX_PB_WM[4][4].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[4][5][0], nxt_RX_PB_WM_XOFF_OR_DROP[4][5][7:0], RX_PB_WM[4][5].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[4][5][1], nxt_RX_PB_WM_XOFF_OR_DROP[4][5][9:8], RX_PB_WM[4][5].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[4][6][0], nxt_RX_PB_WM_XOFF_OR_DROP[4][6][7:0], RX_PB_WM[4][6].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[4][6][1], nxt_RX_PB_WM_XOFF_OR_DROP[4][6][9:8], RX_PB_WM[4][6].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[4][7][0], nxt_RX_PB_WM_XOFF_OR_DROP[4][7][7:0], RX_PB_WM[4][7].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[4][7][1], nxt_RX_PB_WM_XOFF_OR_DROP[4][7][9:8], RX_PB_WM[4][7].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[5][0][0], nxt_RX_PB_WM_XOFF_OR_DROP[5][0][7:0], RX_PB_WM[5][0].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[5][0][1], nxt_RX_PB_WM_XOFF_OR_DROP[5][0][9:8], RX_PB_WM[5][0].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[5][1][0], nxt_RX_PB_WM_XOFF_OR_DROP[5][1][7:0], RX_PB_WM[5][1].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[5][1][1], nxt_RX_PB_WM_XOFF_OR_DROP[5][1][9:8], RX_PB_WM[5][1].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[5][2][0], nxt_RX_PB_WM_XOFF_OR_DROP[5][2][7:0], RX_PB_WM[5][2].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[5][2][1], nxt_RX_PB_WM_XOFF_OR_DROP[5][2][9:8], RX_PB_WM[5][2].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[5][3][0], nxt_RX_PB_WM_XOFF_OR_DROP[5][3][7:0], RX_PB_WM[5][3].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[5][3][1], nxt_RX_PB_WM_XOFF_OR_DROP[5][3][9:8], RX_PB_WM[5][3].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[5][4][0], nxt_RX_PB_WM_XOFF_OR_DROP[5][4][7:0], RX_PB_WM[5][4].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[5][4][1], nxt_RX_PB_WM_XOFF_OR_DROP[5][4][9:8], RX_PB_WM[5][4].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[5][5][0], nxt_RX_PB_WM_XOFF_OR_DROP[5][5][7:0], RX_PB_WM[5][5].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[5][5][1], nxt_RX_PB_WM_XOFF_OR_DROP[5][5][9:8], RX_PB_WM[5][5].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[5][6][0], nxt_RX_PB_WM_XOFF_OR_DROP[5][6][7:0], RX_PB_WM[5][6].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[5][6][1], nxt_RX_PB_WM_XOFF_OR_DROP[5][6][9:8], RX_PB_WM[5][6].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[5][7][0], nxt_RX_PB_WM_XOFF_OR_DROP[5][7][7:0], RX_PB_WM[5][7].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[5][7][1], nxt_RX_PB_WM_XOFF_OR_DROP[5][7][9:8], RX_PB_WM[5][7].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[6][0][0], nxt_RX_PB_WM_XOFF_OR_DROP[6][0][7:0], RX_PB_WM[6][0].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[6][0][1], nxt_RX_PB_WM_XOFF_OR_DROP[6][0][9:8], RX_PB_WM[6][0].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[6][1][0], nxt_RX_PB_WM_XOFF_OR_DROP[6][1][7:0], RX_PB_WM[6][1].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[6][1][1], nxt_RX_PB_WM_XOFF_OR_DROP[6][1][9:8], RX_PB_WM[6][1].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[6][2][0], nxt_RX_PB_WM_XOFF_OR_DROP[6][2][7:0], RX_PB_WM[6][2].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[6][2][1], nxt_RX_PB_WM_XOFF_OR_DROP[6][2][9:8], RX_PB_WM[6][2].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[6][3][0], nxt_RX_PB_WM_XOFF_OR_DROP[6][3][7:0], RX_PB_WM[6][3].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[6][3][1], nxt_RX_PB_WM_XOFF_OR_DROP[6][3][9:8], RX_PB_WM[6][3].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[6][4][0], nxt_RX_PB_WM_XOFF_OR_DROP[6][4][7:0], RX_PB_WM[6][4].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[6][4][1], nxt_RX_PB_WM_XOFF_OR_DROP[6][4][9:8], RX_PB_WM[6][4].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[6][5][0], nxt_RX_PB_WM_XOFF_OR_DROP[6][5][7:0], RX_PB_WM[6][5].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[6][5][1], nxt_RX_PB_WM_XOFF_OR_DROP[6][5][9:8], RX_PB_WM[6][5].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[6][6][0], nxt_RX_PB_WM_XOFF_OR_DROP[6][6][7:0], RX_PB_WM[6][6].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[6][6][1], nxt_RX_PB_WM_XOFF_OR_DROP[6][6][9:8], RX_PB_WM[6][6].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[6][7][0], nxt_RX_PB_WM_XOFF_OR_DROP[6][7][7:0], RX_PB_WM[6][7].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[6][7][1], nxt_RX_PB_WM_XOFF_OR_DROP[6][7][9:8], RX_PB_WM[6][7].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[7][0][0], nxt_RX_PB_WM_XOFF_OR_DROP[7][0][7:0], RX_PB_WM[7][0].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[7][0][1], nxt_RX_PB_WM_XOFF_OR_DROP[7][0][9:8], RX_PB_WM[7][0].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[7][1][0], nxt_RX_PB_WM_XOFF_OR_DROP[7][1][7:0], RX_PB_WM[7][1].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[7][1][1], nxt_RX_PB_WM_XOFF_OR_DROP[7][1][9:8], RX_PB_WM[7][1].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[7][2][0], nxt_RX_PB_WM_XOFF_OR_DROP[7][2][7:0], RX_PB_WM[7][2].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[7][2][1], nxt_RX_PB_WM_XOFF_OR_DROP[7][2][9:8], RX_PB_WM[7][2].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[7][3][0], nxt_RX_PB_WM_XOFF_OR_DROP[7][3][7:0], RX_PB_WM[7][3].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[7][3][1], nxt_RX_PB_WM_XOFF_OR_DROP[7][3][9:8], RX_PB_WM[7][3].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[7][4][0], nxt_RX_PB_WM_XOFF_OR_DROP[7][4][7:0], RX_PB_WM[7][4].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[7][4][1], nxt_RX_PB_WM_XOFF_OR_DROP[7][4][9:8], RX_PB_WM[7][4].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[7][5][0], nxt_RX_PB_WM_XOFF_OR_DROP[7][5][7:0], RX_PB_WM[7][5].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[7][5][1], nxt_RX_PB_WM_XOFF_OR_DROP[7][5][9:8], RX_PB_WM[7][5].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[7][6][0], nxt_RX_PB_WM_XOFF_OR_DROP[7][6][7:0], RX_PB_WM[7][6].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[7][6][1], nxt_RX_PB_WM_XOFF_OR_DROP[7][6][9:8], RX_PB_WM[7][6].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[7][7][0], nxt_RX_PB_WM_XOFF_OR_DROP[7][7][7:0], RX_PB_WM[7][7].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[7][7][1], nxt_RX_PB_WM_XOFF_OR_DROP[7][7][9:8], RX_PB_WM[7][7].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[8][0][0], nxt_RX_PB_WM_XOFF_OR_DROP[8][0][7:0], RX_PB_WM[8][0].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[8][0][1], nxt_RX_PB_WM_XOFF_OR_DROP[8][0][9:8], RX_PB_WM[8][0].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[8][1][0], nxt_RX_PB_WM_XOFF_OR_DROP[8][1][7:0], RX_PB_WM[8][1].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[8][1][1], nxt_RX_PB_WM_XOFF_OR_DROP[8][1][9:8], RX_PB_WM[8][1].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[8][2][0], nxt_RX_PB_WM_XOFF_OR_DROP[8][2][7:0], RX_PB_WM[8][2].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[8][2][1], nxt_RX_PB_WM_XOFF_OR_DROP[8][2][9:8], RX_PB_WM[8][2].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[8][3][0], nxt_RX_PB_WM_XOFF_OR_DROP[8][3][7:0], RX_PB_WM[8][3].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[8][3][1], nxt_RX_PB_WM_XOFF_OR_DROP[8][3][9:8], RX_PB_WM[8][3].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[8][4][0], nxt_RX_PB_WM_XOFF_OR_DROP[8][4][7:0], RX_PB_WM[8][4].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[8][4][1], nxt_RX_PB_WM_XOFF_OR_DROP[8][4][9:8], RX_PB_WM[8][4].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[8][5][0], nxt_RX_PB_WM_XOFF_OR_DROP[8][5][7:0], RX_PB_WM[8][5].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[8][5][1], nxt_RX_PB_WM_XOFF_OR_DROP[8][5][9:8], RX_PB_WM[8][5].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[8][6][0], nxt_RX_PB_WM_XOFF_OR_DROP[8][6][7:0], RX_PB_WM[8][6].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[8][6][1], nxt_RX_PB_WM_XOFF_OR_DROP[8][6][9:8], RX_PB_WM[8][6].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[8][7][0], nxt_RX_PB_WM_XOFF_OR_DROP[8][7][7:0], RX_PB_WM[8][7].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[8][7][1], nxt_RX_PB_WM_XOFF_OR_DROP[8][7][9:8], RX_PB_WM[8][7].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[9][0][0], nxt_RX_PB_WM_XOFF_OR_DROP[9][0][7:0], RX_PB_WM[9][0].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[9][0][1], nxt_RX_PB_WM_XOFF_OR_DROP[9][0][9:8], RX_PB_WM[9][0].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[9][1][0], nxt_RX_PB_WM_XOFF_OR_DROP[9][1][7:0], RX_PB_WM[9][1].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[9][1][1], nxt_RX_PB_WM_XOFF_OR_DROP[9][1][9:8], RX_PB_WM[9][1].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[9][2][0], nxt_RX_PB_WM_XOFF_OR_DROP[9][2][7:0], RX_PB_WM[9][2].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[9][2][1], nxt_RX_PB_WM_XOFF_OR_DROP[9][2][9:8], RX_PB_WM[9][2].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[9][3][0], nxt_RX_PB_WM_XOFF_OR_DROP[9][3][7:0], RX_PB_WM[9][3].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[9][3][1], nxt_RX_PB_WM_XOFF_OR_DROP[9][3][9:8], RX_PB_WM[9][3].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[9][4][0], nxt_RX_PB_WM_XOFF_OR_DROP[9][4][7:0], RX_PB_WM[9][4].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[9][4][1], nxt_RX_PB_WM_XOFF_OR_DROP[9][4][9:8], RX_PB_WM[9][4].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[9][5][0], nxt_RX_PB_WM_XOFF_OR_DROP[9][5][7:0], RX_PB_WM[9][5].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[9][5][1], nxt_RX_PB_WM_XOFF_OR_DROP[9][5][9:8], RX_PB_WM[9][5].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[9][6][0], nxt_RX_PB_WM_XOFF_OR_DROP[9][6][7:0], RX_PB_WM[9][6].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[9][6][1], nxt_RX_PB_WM_XOFF_OR_DROP[9][6][9:8], RX_PB_WM[9][6].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[9][7][0], nxt_RX_PB_WM_XOFF_OR_DROP[9][7][7:0], RX_PB_WM[9][7].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[9][7][1], nxt_RX_PB_WM_XOFF_OR_DROP[9][7][9:8], RX_PB_WM[9][7].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[10][0][0], nxt_RX_PB_WM_XOFF_OR_DROP[10][0][7:0], RX_PB_WM[10][0].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[10][0][1], nxt_RX_PB_WM_XOFF_OR_DROP[10][0][9:8], RX_PB_WM[10][0].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[10][1][0], nxt_RX_PB_WM_XOFF_OR_DROP[10][1][7:0], RX_PB_WM[10][1].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[10][1][1], nxt_RX_PB_WM_XOFF_OR_DROP[10][1][9:8], RX_PB_WM[10][1].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[10][2][0], nxt_RX_PB_WM_XOFF_OR_DROP[10][2][7:0], RX_PB_WM[10][2].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[10][2][1], nxt_RX_PB_WM_XOFF_OR_DROP[10][2][9:8], RX_PB_WM[10][2].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[10][3][0], nxt_RX_PB_WM_XOFF_OR_DROP[10][3][7:0], RX_PB_WM[10][3].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[10][3][1], nxt_RX_PB_WM_XOFF_OR_DROP[10][3][9:8], RX_PB_WM[10][3].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[10][4][0], nxt_RX_PB_WM_XOFF_OR_DROP[10][4][7:0], RX_PB_WM[10][4].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[10][4][1], nxt_RX_PB_WM_XOFF_OR_DROP[10][4][9:8], RX_PB_WM[10][4].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[10][5][0], nxt_RX_PB_WM_XOFF_OR_DROP[10][5][7:0], RX_PB_WM[10][5].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[10][5][1], nxt_RX_PB_WM_XOFF_OR_DROP[10][5][9:8], RX_PB_WM[10][5].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[10][6][0], nxt_RX_PB_WM_XOFF_OR_DROP[10][6][7:0], RX_PB_WM[10][6].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[10][6][1], nxt_RX_PB_WM_XOFF_OR_DROP[10][6][9:8], RX_PB_WM[10][6].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[10][7][0], nxt_RX_PB_WM_XOFF_OR_DROP[10][7][7:0], RX_PB_WM[10][7].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[10][7][1], nxt_RX_PB_WM_XOFF_OR_DROP[10][7][9:8], RX_PB_WM[10][7].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[11][0][0], nxt_RX_PB_WM_XOFF_OR_DROP[11][0][7:0], RX_PB_WM[11][0].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[11][0][1], nxt_RX_PB_WM_XOFF_OR_DROP[11][0][9:8], RX_PB_WM[11][0].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[11][1][0], nxt_RX_PB_WM_XOFF_OR_DROP[11][1][7:0], RX_PB_WM[11][1].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[11][1][1], nxt_RX_PB_WM_XOFF_OR_DROP[11][1][9:8], RX_PB_WM[11][1].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[11][2][0], nxt_RX_PB_WM_XOFF_OR_DROP[11][2][7:0], RX_PB_WM[11][2].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[11][2][1], nxt_RX_PB_WM_XOFF_OR_DROP[11][2][9:8], RX_PB_WM[11][2].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[11][3][0], nxt_RX_PB_WM_XOFF_OR_DROP[11][3][7:0], RX_PB_WM[11][3].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[11][3][1], nxt_RX_PB_WM_XOFF_OR_DROP[11][3][9:8], RX_PB_WM[11][3].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[11][4][0], nxt_RX_PB_WM_XOFF_OR_DROP[11][4][7:0], RX_PB_WM[11][4].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[11][4][1], nxt_RX_PB_WM_XOFF_OR_DROP[11][4][9:8], RX_PB_WM[11][4].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[11][5][0], nxt_RX_PB_WM_XOFF_OR_DROP[11][5][7:0], RX_PB_WM[11][5].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[11][5][1], nxt_RX_PB_WM_XOFF_OR_DROP[11][5][9:8], RX_PB_WM[11][5].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[11][6][0], nxt_RX_PB_WM_XOFF_OR_DROP[11][6][7:0], RX_PB_WM[11][6].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[11][6][1], nxt_RX_PB_WM_XOFF_OR_DROP[11][6][9:8], RX_PB_WM[11][6].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[11][7][0], nxt_RX_PB_WM_XOFF_OR_DROP[11][7][7:0], RX_PB_WM[11][7].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[11][7][1], nxt_RX_PB_WM_XOFF_OR_DROP[11][7][9:8], RX_PB_WM[11][7].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[12][0][0], nxt_RX_PB_WM_XOFF_OR_DROP[12][0][7:0], RX_PB_WM[12][0].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[12][0][1], nxt_RX_PB_WM_XOFF_OR_DROP[12][0][9:8], RX_PB_WM[12][0].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[12][1][0], nxt_RX_PB_WM_XOFF_OR_DROP[12][1][7:0], RX_PB_WM[12][1].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[12][1][1], nxt_RX_PB_WM_XOFF_OR_DROP[12][1][9:8], RX_PB_WM[12][1].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[12][2][0], nxt_RX_PB_WM_XOFF_OR_DROP[12][2][7:0], RX_PB_WM[12][2].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[12][2][1], nxt_RX_PB_WM_XOFF_OR_DROP[12][2][9:8], RX_PB_WM[12][2].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[12][3][0], nxt_RX_PB_WM_XOFF_OR_DROP[12][3][7:0], RX_PB_WM[12][3].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[12][3][1], nxt_RX_PB_WM_XOFF_OR_DROP[12][3][9:8], RX_PB_WM[12][3].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[12][4][0], nxt_RX_PB_WM_XOFF_OR_DROP[12][4][7:0], RX_PB_WM[12][4].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[12][4][1], nxt_RX_PB_WM_XOFF_OR_DROP[12][4][9:8], RX_PB_WM[12][4].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[12][5][0], nxt_RX_PB_WM_XOFF_OR_DROP[12][5][7:0], RX_PB_WM[12][5].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[12][5][1], nxt_RX_PB_WM_XOFF_OR_DROP[12][5][9:8], RX_PB_WM[12][5].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[12][6][0], nxt_RX_PB_WM_XOFF_OR_DROP[12][6][7:0], RX_PB_WM[12][6].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[12][6][1], nxt_RX_PB_WM_XOFF_OR_DROP[12][6][9:8], RX_PB_WM[12][6].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[12][7][0], nxt_RX_PB_WM_XOFF_OR_DROP[12][7][7:0], RX_PB_WM[12][7].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[12][7][1], nxt_RX_PB_WM_XOFF_OR_DROP[12][7][9:8], RX_PB_WM[12][7].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[13][0][0], nxt_RX_PB_WM_XOFF_OR_DROP[13][0][7:0], RX_PB_WM[13][0].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[13][0][1], nxt_RX_PB_WM_XOFF_OR_DROP[13][0][9:8], RX_PB_WM[13][0].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[13][1][0], nxt_RX_PB_WM_XOFF_OR_DROP[13][1][7:0], RX_PB_WM[13][1].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[13][1][1], nxt_RX_PB_WM_XOFF_OR_DROP[13][1][9:8], RX_PB_WM[13][1].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[13][2][0], nxt_RX_PB_WM_XOFF_OR_DROP[13][2][7:0], RX_PB_WM[13][2].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[13][2][1], nxt_RX_PB_WM_XOFF_OR_DROP[13][2][9:8], RX_PB_WM[13][2].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[13][3][0], nxt_RX_PB_WM_XOFF_OR_DROP[13][3][7:0], RX_PB_WM[13][3].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[13][3][1], nxt_RX_PB_WM_XOFF_OR_DROP[13][3][9:8], RX_PB_WM[13][3].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[13][4][0], nxt_RX_PB_WM_XOFF_OR_DROP[13][4][7:0], RX_PB_WM[13][4].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[13][4][1], nxt_RX_PB_WM_XOFF_OR_DROP[13][4][9:8], RX_PB_WM[13][4].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[13][5][0], nxt_RX_PB_WM_XOFF_OR_DROP[13][5][7:0], RX_PB_WM[13][5].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[13][5][1], nxt_RX_PB_WM_XOFF_OR_DROP[13][5][9:8], RX_PB_WM[13][5].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[13][6][0], nxt_RX_PB_WM_XOFF_OR_DROP[13][6][7:0], RX_PB_WM[13][6].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[13][6][1], nxt_RX_PB_WM_XOFF_OR_DROP[13][6][9:8], RX_PB_WM[13][6].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[13][7][0], nxt_RX_PB_WM_XOFF_OR_DROP[13][7][7:0], RX_PB_WM[13][7].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[13][7][1], nxt_RX_PB_WM_XOFF_OR_DROP[13][7][9:8], RX_PB_WM[13][7].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[14][0][0], nxt_RX_PB_WM_XOFF_OR_DROP[14][0][7:0], RX_PB_WM[14][0].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[14][0][1], nxt_RX_PB_WM_XOFF_OR_DROP[14][0][9:8], RX_PB_WM[14][0].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[14][1][0], nxt_RX_PB_WM_XOFF_OR_DROP[14][1][7:0], RX_PB_WM[14][1].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[14][1][1], nxt_RX_PB_WM_XOFF_OR_DROP[14][1][9:8], RX_PB_WM[14][1].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[14][2][0], nxt_RX_PB_WM_XOFF_OR_DROP[14][2][7:0], RX_PB_WM[14][2].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[14][2][1], nxt_RX_PB_WM_XOFF_OR_DROP[14][2][9:8], RX_PB_WM[14][2].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[14][3][0], nxt_RX_PB_WM_XOFF_OR_DROP[14][3][7:0], RX_PB_WM[14][3].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[14][3][1], nxt_RX_PB_WM_XOFF_OR_DROP[14][3][9:8], RX_PB_WM[14][3].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[14][4][0], nxt_RX_PB_WM_XOFF_OR_DROP[14][4][7:0], RX_PB_WM[14][4].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[14][4][1], nxt_RX_PB_WM_XOFF_OR_DROP[14][4][9:8], RX_PB_WM[14][4].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[14][5][0], nxt_RX_PB_WM_XOFF_OR_DROP[14][5][7:0], RX_PB_WM[14][5].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[14][5][1], nxt_RX_PB_WM_XOFF_OR_DROP[14][5][9:8], RX_PB_WM[14][5].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[14][6][0], nxt_RX_PB_WM_XOFF_OR_DROP[14][6][7:0], RX_PB_WM[14][6].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[14][6][1], nxt_RX_PB_WM_XOFF_OR_DROP[14][6][9:8], RX_PB_WM[14][6].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[14][7][0], nxt_RX_PB_WM_XOFF_OR_DROP[14][7][7:0], RX_PB_WM[14][7].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[14][7][1], nxt_RX_PB_WM_XOFF_OR_DROP[14][7][9:8], RX_PB_WM[14][7].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[15][0][0], nxt_RX_PB_WM_XOFF_OR_DROP[15][0][7:0], RX_PB_WM[15][0].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[15][0][1], nxt_RX_PB_WM_XOFF_OR_DROP[15][0][9:8], RX_PB_WM[15][0].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[15][1][0], nxt_RX_PB_WM_XOFF_OR_DROP[15][1][7:0], RX_PB_WM[15][1].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[15][1][1], nxt_RX_PB_WM_XOFF_OR_DROP[15][1][9:8], RX_PB_WM[15][1].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[15][2][0], nxt_RX_PB_WM_XOFF_OR_DROP[15][2][7:0], RX_PB_WM[15][2].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[15][2][1], nxt_RX_PB_WM_XOFF_OR_DROP[15][2][9:8], RX_PB_WM[15][2].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[15][3][0], nxt_RX_PB_WM_XOFF_OR_DROP[15][3][7:0], RX_PB_WM[15][3].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[15][3][1], nxt_RX_PB_WM_XOFF_OR_DROP[15][3][9:8], RX_PB_WM[15][3].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[15][4][0], nxt_RX_PB_WM_XOFF_OR_DROP[15][4][7:0], RX_PB_WM[15][4].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[15][4][1], nxt_RX_PB_WM_XOFF_OR_DROP[15][4][9:8], RX_PB_WM[15][4].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[15][5][0], nxt_RX_PB_WM_XOFF_OR_DROP[15][5][7:0], RX_PB_WM[15][5].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[15][5][1], nxt_RX_PB_WM_XOFF_OR_DROP[15][5][9:8], RX_PB_WM[15][5].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[15][6][0], nxt_RX_PB_WM_XOFF_OR_DROP[15][6][7:0], RX_PB_WM[15][6].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[15][6][1], nxt_RX_PB_WM_XOFF_OR_DROP[15][6][9:8], RX_PB_WM[15][6].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[15][7][0], nxt_RX_PB_WM_XOFF_OR_DROP[15][7][7:0], RX_PB_WM[15][7].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[15][7][1], nxt_RX_PB_WM_XOFF_OR_DROP[15][7][9:8], RX_PB_WM[15][7].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[16][0][0], nxt_RX_PB_WM_XOFF_OR_DROP[16][0][7:0], RX_PB_WM[16][0].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[16][0][1], nxt_RX_PB_WM_XOFF_OR_DROP[16][0][9:8], RX_PB_WM[16][0].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[16][1][0], nxt_RX_PB_WM_XOFF_OR_DROP[16][1][7:0], RX_PB_WM[16][1].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[16][1][1], nxt_RX_PB_WM_XOFF_OR_DROP[16][1][9:8], RX_PB_WM[16][1].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[16][2][0], nxt_RX_PB_WM_XOFF_OR_DROP[16][2][7:0], RX_PB_WM[16][2].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[16][2][1], nxt_RX_PB_WM_XOFF_OR_DROP[16][2][9:8], RX_PB_WM[16][2].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[16][3][0], nxt_RX_PB_WM_XOFF_OR_DROP[16][3][7:0], RX_PB_WM[16][3].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[16][3][1], nxt_RX_PB_WM_XOFF_OR_DROP[16][3][9:8], RX_PB_WM[16][3].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[16][4][0], nxt_RX_PB_WM_XOFF_OR_DROP[16][4][7:0], RX_PB_WM[16][4].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[16][4][1], nxt_RX_PB_WM_XOFF_OR_DROP[16][4][9:8], RX_PB_WM[16][4].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[16][5][0], nxt_RX_PB_WM_XOFF_OR_DROP[16][5][7:0], RX_PB_WM[16][5].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[16][5][1], nxt_RX_PB_WM_XOFF_OR_DROP[16][5][9:8], RX_PB_WM[16][5].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[16][6][0], nxt_RX_PB_WM_XOFF_OR_DROP[16][6][7:0], RX_PB_WM[16][6].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[16][6][1], nxt_RX_PB_WM_XOFF_OR_DROP[16][6][9:8], RX_PB_WM[16][6].XOFF_OR_DROP[9:8])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 8'h0, up_RX_PB_WM_XOFF_OR_DROP[16][7][0], nxt_RX_PB_WM_XOFF_OR_DROP[16][7][7:0], RX_PB_WM[16][7].XOFF_OR_DROP[7:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 2'h2, up_RX_PB_WM_XOFF_OR_DROP[16][7][1], nxt_RX_PB_WM_XOFF_OR_DROP[16][7][9:8], RX_PB_WM[16][7].XOFF_OR_DROP[9:8])
+
+// ----------------------------------------------------------------------
+// RX_PB_WM.XON x4 RW, using RW template.
+logic [16:0][7:0][1:0] up_RX_PB_WM_XON;
+always_comb begin
+ up_RX_PB_WM_XON[0][0] =
+    ({2{write_req_RX_PB_WM[0][0] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[0][1] =
+    ({2{write_req_RX_PB_WM[0][1] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[0][2] =
+    ({2{write_req_RX_PB_WM[0][2] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[0][3] =
+    ({2{write_req_RX_PB_WM[0][3] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[0][4] =
+    ({2{write_req_RX_PB_WM[0][4] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[0][5] =
+    ({2{write_req_RX_PB_WM[0][5] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[0][6] =
+    ({2{write_req_RX_PB_WM[0][6] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[0][7] =
+    ({2{write_req_RX_PB_WM[0][7] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[1][0] =
+    ({2{write_req_RX_PB_WM[1][0] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[1][1] =
+    ({2{write_req_RX_PB_WM[1][1] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[1][2] =
+    ({2{write_req_RX_PB_WM[1][2] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[1][3] =
+    ({2{write_req_RX_PB_WM[1][3] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[1][4] =
+    ({2{write_req_RX_PB_WM[1][4] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[1][5] =
+    ({2{write_req_RX_PB_WM[1][5] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[1][6] =
+    ({2{write_req_RX_PB_WM[1][6] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[1][7] =
+    ({2{write_req_RX_PB_WM[1][7] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[2][0] =
+    ({2{write_req_RX_PB_WM[2][0] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[2][1] =
+    ({2{write_req_RX_PB_WM[2][1] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[2][2] =
+    ({2{write_req_RX_PB_WM[2][2] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[2][3] =
+    ({2{write_req_RX_PB_WM[2][3] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[2][4] =
+    ({2{write_req_RX_PB_WM[2][4] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[2][5] =
+    ({2{write_req_RX_PB_WM[2][5] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[2][6] =
+    ({2{write_req_RX_PB_WM[2][6] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[2][7] =
+    ({2{write_req_RX_PB_WM[2][7] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[3][0] =
+    ({2{write_req_RX_PB_WM[3][0] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[3][1] =
+    ({2{write_req_RX_PB_WM[3][1] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[3][2] =
+    ({2{write_req_RX_PB_WM[3][2] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[3][3] =
+    ({2{write_req_RX_PB_WM[3][3] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[3][4] =
+    ({2{write_req_RX_PB_WM[3][4] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[3][5] =
+    ({2{write_req_RX_PB_WM[3][5] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[3][6] =
+    ({2{write_req_RX_PB_WM[3][6] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[3][7] =
+    ({2{write_req_RX_PB_WM[3][7] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[4][0] =
+    ({2{write_req_RX_PB_WM[4][0] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[4][1] =
+    ({2{write_req_RX_PB_WM[4][1] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[4][2] =
+    ({2{write_req_RX_PB_WM[4][2] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[4][3] =
+    ({2{write_req_RX_PB_WM[4][3] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[4][4] =
+    ({2{write_req_RX_PB_WM[4][4] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[4][5] =
+    ({2{write_req_RX_PB_WM[4][5] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[4][6] =
+    ({2{write_req_RX_PB_WM[4][6] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[4][7] =
+    ({2{write_req_RX_PB_WM[4][7] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[5][0] =
+    ({2{write_req_RX_PB_WM[5][0] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[5][1] =
+    ({2{write_req_RX_PB_WM[5][1] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[5][2] =
+    ({2{write_req_RX_PB_WM[5][2] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[5][3] =
+    ({2{write_req_RX_PB_WM[5][3] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[5][4] =
+    ({2{write_req_RX_PB_WM[5][4] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[5][5] =
+    ({2{write_req_RX_PB_WM[5][5] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[5][6] =
+    ({2{write_req_RX_PB_WM[5][6] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[5][7] =
+    ({2{write_req_RX_PB_WM[5][7] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[6][0] =
+    ({2{write_req_RX_PB_WM[6][0] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[6][1] =
+    ({2{write_req_RX_PB_WM[6][1] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[6][2] =
+    ({2{write_req_RX_PB_WM[6][2] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[6][3] =
+    ({2{write_req_RX_PB_WM[6][3] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[6][4] =
+    ({2{write_req_RX_PB_WM[6][4] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[6][5] =
+    ({2{write_req_RX_PB_WM[6][5] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[6][6] =
+    ({2{write_req_RX_PB_WM[6][6] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[6][7] =
+    ({2{write_req_RX_PB_WM[6][7] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[7][0] =
+    ({2{write_req_RX_PB_WM[7][0] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[7][1] =
+    ({2{write_req_RX_PB_WM[7][1] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[7][2] =
+    ({2{write_req_RX_PB_WM[7][2] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[7][3] =
+    ({2{write_req_RX_PB_WM[7][3] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[7][4] =
+    ({2{write_req_RX_PB_WM[7][4] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[7][5] =
+    ({2{write_req_RX_PB_WM[7][5] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[7][6] =
+    ({2{write_req_RX_PB_WM[7][6] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[7][7] =
+    ({2{write_req_RX_PB_WM[7][7] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[8][0] =
+    ({2{write_req_RX_PB_WM[8][0] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[8][1] =
+    ({2{write_req_RX_PB_WM[8][1] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[8][2] =
+    ({2{write_req_RX_PB_WM[8][2] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[8][3] =
+    ({2{write_req_RX_PB_WM[8][3] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[8][4] =
+    ({2{write_req_RX_PB_WM[8][4] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[8][5] =
+    ({2{write_req_RX_PB_WM[8][5] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[8][6] =
+    ({2{write_req_RX_PB_WM[8][6] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[8][7] =
+    ({2{write_req_RX_PB_WM[8][7] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[9][0] =
+    ({2{write_req_RX_PB_WM[9][0] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[9][1] =
+    ({2{write_req_RX_PB_WM[9][1] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[9][2] =
+    ({2{write_req_RX_PB_WM[9][2] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[9][3] =
+    ({2{write_req_RX_PB_WM[9][3] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[9][4] =
+    ({2{write_req_RX_PB_WM[9][4] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[9][5] =
+    ({2{write_req_RX_PB_WM[9][5] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[9][6] =
+    ({2{write_req_RX_PB_WM[9][6] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[9][7] =
+    ({2{write_req_RX_PB_WM[9][7] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[10][0] =
+    ({2{write_req_RX_PB_WM[10][0] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[10][1] =
+    ({2{write_req_RX_PB_WM[10][1] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[10][2] =
+    ({2{write_req_RX_PB_WM[10][2] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[10][3] =
+    ({2{write_req_RX_PB_WM[10][3] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[10][4] =
+    ({2{write_req_RX_PB_WM[10][4] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[10][5] =
+    ({2{write_req_RX_PB_WM[10][5] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[10][6] =
+    ({2{write_req_RX_PB_WM[10][6] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[10][7] =
+    ({2{write_req_RX_PB_WM[10][7] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[11][0] =
+    ({2{write_req_RX_PB_WM[11][0] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[11][1] =
+    ({2{write_req_RX_PB_WM[11][1] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[11][2] =
+    ({2{write_req_RX_PB_WM[11][2] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[11][3] =
+    ({2{write_req_RX_PB_WM[11][3] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[11][4] =
+    ({2{write_req_RX_PB_WM[11][4] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[11][5] =
+    ({2{write_req_RX_PB_WM[11][5] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[11][6] =
+    ({2{write_req_RX_PB_WM[11][6] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[11][7] =
+    ({2{write_req_RX_PB_WM[11][7] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[12][0] =
+    ({2{write_req_RX_PB_WM[12][0] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[12][1] =
+    ({2{write_req_RX_PB_WM[12][1] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[12][2] =
+    ({2{write_req_RX_PB_WM[12][2] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[12][3] =
+    ({2{write_req_RX_PB_WM[12][3] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[12][4] =
+    ({2{write_req_RX_PB_WM[12][4] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[12][5] =
+    ({2{write_req_RX_PB_WM[12][5] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[12][6] =
+    ({2{write_req_RX_PB_WM[12][6] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[12][7] =
+    ({2{write_req_RX_PB_WM[12][7] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[13][0] =
+    ({2{write_req_RX_PB_WM[13][0] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[13][1] =
+    ({2{write_req_RX_PB_WM[13][1] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[13][2] =
+    ({2{write_req_RX_PB_WM[13][2] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[13][3] =
+    ({2{write_req_RX_PB_WM[13][3] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[13][4] =
+    ({2{write_req_RX_PB_WM[13][4] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[13][5] =
+    ({2{write_req_RX_PB_WM[13][5] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[13][6] =
+    ({2{write_req_RX_PB_WM[13][6] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[13][7] =
+    ({2{write_req_RX_PB_WM[13][7] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[14][0] =
+    ({2{write_req_RX_PB_WM[14][0] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[14][1] =
+    ({2{write_req_RX_PB_WM[14][1] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[14][2] =
+    ({2{write_req_RX_PB_WM[14][2] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[14][3] =
+    ({2{write_req_RX_PB_WM[14][3] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[14][4] =
+    ({2{write_req_RX_PB_WM[14][4] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[14][5] =
+    ({2{write_req_RX_PB_WM[14][5] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[14][6] =
+    ({2{write_req_RX_PB_WM[14][6] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[14][7] =
+    ({2{write_req_RX_PB_WM[14][7] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[15][0] =
+    ({2{write_req_RX_PB_WM[15][0] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[15][1] =
+    ({2{write_req_RX_PB_WM[15][1] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[15][2] =
+    ({2{write_req_RX_PB_WM[15][2] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[15][3] =
+    ({2{write_req_RX_PB_WM[15][3] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[15][4] =
+    ({2{write_req_RX_PB_WM[15][4] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[15][5] =
+    ({2{write_req_RX_PB_WM[15][5] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[15][6] =
+    ({2{write_req_RX_PB_WM[15][6] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[15][7] =
+    ({2{write_req_RX_PB_WM[15][7] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[16][0] =
+    ({2{write_req_RX_PB_WM[16][0] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[16][1] =
+    ({2{write_req_RX_PB_WM[16][1] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[16][2] =
+    ({2{write_req_RX_PB_WM[16][2] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[16][3] =
+    ({2{write_req_RX_PB_WM[16][3] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[16][4] =
+    ({2{write_req_RX_PB_WM[16][4] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[16][5] =
+    ({2{write_req_RX_PB_WM[16][5] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[16][6] =
+    ({2{write_req_RX_PB_WM[16][6] }} &
+    be[2:1]);
+ up_RX_PB_WM_XON[16][7] =
+    ({2{write_req_RX_PB_WM[16][7] }} &
+    be[2:1]);
+end
+
+logic [16:0][7:0][9:0] nxt_RX_PB_WM_XON;
+always_comb begin
+ nxt_RX_PB_WM_XON[0][0] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[0][1] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[0][2] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[0][3] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[0][4] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[0][5] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[0][6] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[0][7] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[1][0] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[1][1] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[1][2] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[1][3] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[1][4] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[1][5] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[1][6] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[1][7] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[2][0] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[2][1] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[2][2] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[2][3] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[2][4] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[2][5] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[2][6] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[2][7] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[3][0] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[3][1] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[3][2] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[3][3] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[3][4] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[3][5] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[3][6] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[3][7] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[4][0] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[4][1] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[4][2] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[4][3] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[4][4] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[4][5] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[4][6] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[4][7] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[5][0] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[5][1] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[5][2] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[5][3] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[5][4] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[5][5] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[5][6] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[5][7] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[6][0] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[6][1] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[6][2] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[6][3] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[6][4] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[6][5] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[6][6] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[6][7] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[7][0] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[7][1] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[7][2] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[7][3] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[7][4] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[7][5] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[7][6] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[7][7] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[8][0] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[8][1] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[8][2] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[8][3] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[8][4] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[8][5] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[8][6] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[8][7] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[9][0] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[9][1] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[9][2] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[9][3] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[9][4] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[9][5] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[9][6] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[9][7] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[10][0] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[10][1] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[10][2] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[10][3] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[10][4] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[10][5] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[10][6] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[10][7] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[11][0] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[11][1] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[11][2] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[11][3] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[11][4] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[11][5] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[11][6] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[11][7] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[12][0] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[12][1] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[12][2] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[12][3] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[12][4] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[12][5] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[12][6] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[12][7] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[13][0] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[13][1] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[13][2] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[13][3] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[13][4] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[13][5] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[13][6] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[13][7] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[14][0] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[14][1] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[14][2] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[14][3] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[14][4] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[14][5] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[14][6] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[14][7] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[15][0] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[15][1] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[15][2] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[15][3] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[15][4] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[15][5] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[15][6] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[15][7] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[16][0] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[16][1] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[16][2] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[16][3] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[16][4] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[16][5] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[16][6] = write_data[19:10];
+
+ nxt_RX_PB_WM_XON[16][7] = write_data[19:10];
+
+end
+
+
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[0][0][0], nxt_RX_PB_WM_XON[0][0][5:0], RX_PB_WM[0][0].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[0][0][1], nxt_RX_PB_WM_XON[0][0][9:6], RX_PB_WM[0][0].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[0][1][0], nxt_RX_PB_WM_XON[0][1][5:0], RX_PB_WM[0][1].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[0][1][1], nxt_RX_PB_WM_XON[0][1][9:6], RX_PB_WM[0][1].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[0][2][0], nxt_RX_PB_WM_XON[0][2][5:0], RX_PB_WM[0][2].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[0][2][1], nxt_RX_PB_WM_XON[0][2][9:6], RX_PB_WM[0][2].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[0][3][0], nxt_RX_PB_WM_XON[0][3][5:0], RX_PB_WM[0][3].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[0][3][1], nxt_RX_PB_WM_XON[0][3][9:6], RX_PB_WM[0][3].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[0][4][0], nxt_RX_PB_WM_XON[0][4][5:0], RX_PB_WM[0][4].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[0][4][1], nxt_RX_PB_WM_XON[0][4][9:6], RX_PB_WM[0][4].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[0][5][0], nxt_RX_PB_WM_XON[0][5][5:0], RX_PB_WM[0][5].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[0][5][1], nxt_RX_PB_WM_XON[0][5][9:6], RX_PB_WM[0][5].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[0][6][0], nxt_RX_PB_WM_XON[0][6][5:0], RX_PB_WM[0][6].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[0][6][1], nxt_RX_PB_WM_XON[0][6][9:6], RX_PB_WM[0][6].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[0][7][0], nxt_RX_PB_WM_XON[0][7][5:0], RX_PB_WM[0][7].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[0][7][1], nxt_RX_PB_WM_XON[0][7][9:6], RX_PB_WM[0][7].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[1][0][0], nxt_RX_PB_WM_XON[1][0][5:0], RX_PB_WM[1][0].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[1][0][1], nxt_RX_PB_WM_XON[1][0][9:6], RX_PB_WM[1][0].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[1][1][0], nxt_RX_PB_WM_XON[1][1][5:0], RX_PB_WM[1][1].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[1][1][1], nxt_RX_PB_WM_XON[1][1][9:6], RX_PB_WM[1][1].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[1][2][0], nxt_RX_PB_WM_XON[1][2][5:0], RX_PB_WM[1][2].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[1][2][1], nxt_RX_PB_WM_XON[1][2][9:6], RX_PB_WM[1][2].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[1][3][0], nxt_RX_PB_WM_XON[1][3][5:0], RX_PB_WM[1][3].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[1][3][1], nxt_RX_PB_WM_XON[1][3][9:6], RX_PB_WM[1][3].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[1][4][0], nxt_RX_PB_WM_XON[1][4][5:0], RX_PB_WM[1][4].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[1][4][1], nxt_RX_PB_WM_XON[1][4][9:6], RX_PB_WM[1][4].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[1][5][0], nxt_RX_PB_WM_XON[1][5][5:0], RX_PB_WM[1][5].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[1][5][1], nxt_RX_PB_WM_XON[1][5][9:6], RX_PB_WM[1][5].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[1][6][0], nxt_RX_PB_WM_XON[1][6][5:0], RX_PB_WM[1][6].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[1][6][1], nxt_RX_PB_WM_XON[1][6][9:6], RX_PB_WM[1][6].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[1][7][0], nxt_RX_PB_WM_XON[1][7][5:0], RX_PB_WM[1][7].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[1][7][1], nxt_RX_PB_WM_XON[1][7][9:6], RX_PB_WM[1][7].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[2][0][0], nxt_RX_PB_WM_XON[2][0][5:0], RX_PB_WM[2][0].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[2][0][1], nxt_RX_PB_WM_XON[2][0][9:6], RX_PB_WM[2][0].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[2][1][0], nxt_RX_PB_WM_XON[2][1][5:0], RX_PB_WM[2][1].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[2][1][1], nxt_RX_PB_WM_XON[2][1][9:6], RX_PB_WM[2][1].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[2][2][0], nxt_RX_PB_WM_XON[2][2][5:0], RX_PB_WM[2][2].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[2][2][1], nxt_RX_PB_WM_XON[2][2][9:6], RX_PB_WM[2][2].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[2][3][0], nxt_RX_PB_WM_XON[2][3][5:0], RX_PB_WM[2][3].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[2][3][1], nxt_RX_PB_WM_XON[2][3][9:6], RX_PB_WM[2][3].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[2][4][0], nxt_RX_PB_WM_XON[2][4][5:0], RX_PB_WM[2][4].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[2][4][1], nxt_RX_PB_WM_XON[2][4][9:6], RX_PB_WM[2][4].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[2][5][0], nxt_RX_PB_WM_XON[2][5][5:0], RX_PB_WM[2][5].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[2][5][1], nxt_RX_PB_WM_XON[2][5][9:6], RX_PB_WM[2][5].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[2][6][0], nxt_RX_PB_WM_XON[2][6][5:0], RX_PB_WM[2][6].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[2][6][1], nxt_RX_PB_WM_XON[2][6][9:6], RX_PB_WM[2][6].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[2][7][0], nxt_RX_PB_WM_XON[2][7][5:0], RX_PB_WM[2][7].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[2][7][1], nxt_RX_PB_WM_XON[2][7][9:6], RX_PB_WM[2][7].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[3][0][0], nxt_RX_PB_WM_XON[3][0][5:0], RX_PB_WM[3][0].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[3][0][1], nxt_RX_PB_WM_XON[3][0][9:6], RX_PB_WM[3][0].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[3][1][0], nxt_RX_PB_WM_XON[3][1][5:0], RX_PB_WM[3][1].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[3][1][1], nxt_RX_PB_WM_XON[3][1][9:6], RX_PB_WM[3][1].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[3][2][0], nxt_RX_PB_WM_XON[3][2][5:0], RX_PB_WM[3][2].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[3][2][1], nxt_RX_PB_WM_XON[3][2][9:6], RX_PB_WM[3][2].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[3][3][0], nxt_RX_PB_WM_XON[3][3][5:0], RX_PB_WM[3][3].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[3][3][1], nxt_RX_PB_WM_XON[3][3][9:6], RX_PB_WM[3][3].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[3][4][0], nxt_RX_PB_WM_XON[3][4][5:0], RX_PB_WM[3][4].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[3][4][1], nxt_RX_PB_WM_XON[3][4][9:6], RX_PB_WM[3][4].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[3][5][0], nxt_RX_PB_WM_XON[3][5][5:0], RX_PB_WM[3][5].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[3][5][1], nxt_RX_PB_WM_XON[3][5][9:6], RX_PB_WM[3][5].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[3][6][0], nxt_RX_PB_WM_XON[3][6][5:0], RX_PB_WM[3][6].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[3][6][1], nxt_RX_PB_WM_XON[3][6][9:6], RX_PB_WM[3][6].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[3][7][0], nxt_RX_PB_WM_XON[3][7][5:0], RX_PB_WM[3][7].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[3][7][1], nxt_RX_PB_WM_XON[3][7][9:6], RX_PB_WM[3][7].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[4][0][0], nxt_RX_PB_WM_XON[4][0][5:0], RX_PB_WM[4][0].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[4][0][1], nxt_RX_PB_WM_XON[4][0][9:6], RX_PB_WM[4][0].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[4][1][0], nxt_RX_PB_WM_XON[4][1][5:0], RX_PB_WM[4][1].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[4][1][1], nxt_RX_PB_WM_XON[4][1][9:6], RX_PB_WM[4][1].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[4][2][0], nxt_RX_PB_WM_XON[4][2][5:0], RX_PB_WM[4][2].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[4][2][1], nxt_RX_PB_WM_XON[4][2][9:6], RX_PB_WM[4][2].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[4][3][0], nxt_RX_PB_WM_XON[4][3][5:0], RX_PB_WM[4][3].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[4][3][1], nxt_RX_PB_WM_XON[4][3][9:6], RX_PB_WM[4][3].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[4][4][0], nxt_RX_PB_WM_XON[4][4][5:0], RX_PB_WM[4][4].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[4][4][1], nxt_RX_PB_WM_XON[4][4][9:6], RX_PB_WM[4][4].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[4][5][0], nxt_RX_PB_WM_XON[4][5][5:0], RX_PB_WM[4][5].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[4][5][1], nxt_RX_PB_WM_XON[4][5][9:6], RX_PB_WM[4][5].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[4][6][0], nxt_RX_PB_WM_XON[4][6][5:0], RX_PB_WM[4][6].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[4][6][1], nxt_RX_PB_WM_XON[4][6][9:6], RX_PB_WM[4][6].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[4][7][0], nxt_RX_PB_WM_XON[4][7][5:0], RX_PB_WM[4][7].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[4][7][1], nxt_RX_PB_WM_XON[4][7][9:6], RX_PB_WM[4][7].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[5][0][0], nxt_RX_PB_WM_XON[5][0][5:0], RX_PB_WM[5][0].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[5][0][1], nxt_RX_PB_WM_XON[5][0][9:6], RX_PB_WM[5][0].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[5][1][0], nxt_RX_PB_WM_XON[5][1][5:0], RX_PB_WM[5][1].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[5][1][1], nxt_RX_PB_WM_XON[5][1][9:6], RX_PB_WM[5][1].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[5][2][0], nxt_RX_PB_WM_XON[5][2][5:0], RX_PB_WM[5][2].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[5][2][1], nxt_RX_PB_WM_XON[5][2][9:6], RX_PB_WM[5][2].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[5][3][0], nxt_RX_PB_WM_XON[5][3][5:0], RX_PB_WM[5][3].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[5][3][1], nxt_RX_PB_WM_XON[5][3][9:6], RX_PB_WM[5][3].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[5][4][0], nxt_RX_PB_WM_XON[5][4][5:0], RX_PB_WM[5][4].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[5][4][1], nxt_RX_PB_WM_XON[5][4][9:6], RX_PB_WM[5][4].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[5][5][0], nxt_RX_PB_WM_XON[5][5][5:0], RX_PB_WM[5][5].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[5][5][1], nxt_RX_PB_WM_XON[5][5][9:6], RX_PB_WM[5][5].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[5][6][0], nxt_RX_PB_WM_XON[5][6][5:0], RX_PB_WM[5][6].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[5][6][1], nxt_RX_PB_WM_XON[5][6][9:6], RX_PB_WM[5][6].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[5][7][0], nxt_RX_PB_WM_XON[5][7][5:0], RX_PB_WM[5][7].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[5][7][1], nxt_RX_PB_WM_XON[5][7][9:6], RX_PB_WM[5][7].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[6][0][0], nxt_RX_PB_WM_XON[6][0][5:0], RX_PB_WM[6][0].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[6][0][1], nxt_RX_PB_WM_XON[6][0][9:6], RX_PB_WM[6][0].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[6][1][0], nxt_RX_PB_WM_XON[6][1][5:0], RX_PB_WM[6][1].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[6][1][1], nxt_RX_PB_WM_XON[6][1][9:6], RX_PB_WM[6][1].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[6][2][0], nxt_RX_PB_WM_XON[6][2][5:0], RX_PB_WM[6][2].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[6][2][1], nxt_RX_PB_WM_XON[6][2][9:6], RX_PB_WM[6][2].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[6][3][0], nxt_RX_PB_WM_XON[6][3][5:0], RX_PB_WM[6][3].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[6][3][1], nxt_RX_PB_WM_XON[6][3][9:6], RX_PB_WM[6][3].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[6][4][0], nxt_RX_PB_WM_XON[6][4][5:0], RX_PB_WM[6][4].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[6][4][1], nxt_RX_PB_WM_XON[6][4][9:6], RX_PB_WM[6][4].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[6][5][0], nxt_RX_PB_WM_XON[6][5][5:0], RX_PB_WM[6][5].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[6][5][1], nxt_RX_PB_WM_XON[6][5][9:6], RX_PB_WM[6][5].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[6][6][0], nxt_RX_PB_WM_XON[6][6][5:0], RX_PB_WM[6][6].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[6][6][1], nxt_RX_PB_WM_XON[6][6][9:6], RX_PB_WM[6][6].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[6][7][0], nxt_RX_PB_WM_XON[6][7][5:0], RX_PB_WM[6][7].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[6][7][1], nxt_RX_PB_WM_XON[6][7][9:6], RX_PB_WM[6][7].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[7][0][0], nxt_RX_PB_WM_XON[7][0][5:0], RX_PB_WM[7][0].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[7][0][1], nxt_RX_PB_WM_XON[7][0][9:6], RX_PB_WM[7][0].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[7][1][0], nxt_RX_PB_WM_XON[7][1][5:0], RX_PB_WM[7][1].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[7][1][1], nxt_RX_PB_WM_XON[7][1][9:6], RX_PB_WM[7][1].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[7][2][0], nxt_RX_PB_WM_XON[7][2][5:0], RX_PB_WM[7][2].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[7][2][1], nxt_RX_PB_WM_XON[7][2][9:6], RX_PB_WM[7][2].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[7][3][0], nxt_RX_PB_WM_XON[7][3][5:0], RX_PB_WM[7][3].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[7][3][1], nxt_RX_PB_WM_XON[7][3][9:6], RX_PB_WM[7][3].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[7][4][0], nxt_RX_PB_WM_XON[7][4][5:0], RX_PB_WM[7][4].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[7][4][1], nxt_RX_PB_WM_XON[7][4][9:6], RX_PB_WM[7][4].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[7][5][0], nxt_RX_PB_WM_XON[7][5][5:0], RX_PB_WM[7][5].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[7][5][1], nxt_RX_PB_WM_XON[7][5][9:6], RX_PB_WM[7][5].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[7][6][0], nxt_RX_PB_WM_XON[7][6][5:0], RX_PB_WM[7][6].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[7][6][1], nxt_RX_PB_WM_XON[7][6][9:6], RX_PB_WM[7][6].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[7][7][0], nxt_RX_PB_WM_XON[7][7][5:0], RX_PB_WM[7][7].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[7][7][1], nxt_RX_PB_WM_XON[7][7][9:6], RX_PB_WM[7][7].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[8][0][0], nxt_RX_PB_WM_XON[8][0][5:0], RX_PB_WM[8][0].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[8][0][1], nxt_RX_PB_WM_XON[8][0][9:6], RX_PB_WM[8][0].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[8][1][0], nxt_RX_PB_WM_XON[8][1][5:0], RX_PB_WM[8][1].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[8][1][1], nxt_RX_PB_WM_XON[8][1][9:6], RX_PB_WM[8][1].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[8][2][0], nxt_RX_PB_WM_XON[8][2][5:0], RX_PB_WM[8][2].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[8][2][1], nxt_RX_PB_WM_XON[8][2][9:6], RX_PB_WM[8][2].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[8][3][0], nxt_RX_PB_WM_XON[8][3][5:0], RX_PB_WM[8][3].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[8][3][1], nxt_RX_PB_WM_XON[8][3][9:6], RX_PB_WM[8][3].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[8][4][0], nxt_RX_PB_WM_XON[8][4][5:0], RX_PB_WM[8][4].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[8][4][1], nxt_RX_PB_WM_XON[8][4][9:6], RX_PB_WM[8][4].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[8][5][0], nxt_RX_PB_WM_XON[8][5][5:0], RX_PB_WM[8][5].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[8][5][1], nxt_RX_PB_WM_XON[8][5][9:6], RX_PB_WM[8][5].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[8][6][0], nxt_RX_PB_WM_XON[8][6][5:0], RX_PB_WM[8][6].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[8][6][1], nxt_RX_PB_WM_XON[8][6][9:6], RX_PB_WM[8][6].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[8][7][0], nxt_RX_PB_WM_XON[8][7][5:0], RX_PB_WM[8][7].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[8][7][1], nxt_RX_PB_WM_XON[8][7][9:6], RX_PB_WM[8][7].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[9][0][0], nxt_RX_PB_WM_XON[9][0][5:0], RX_PB_WM[9][0].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[9][0][1], nxt_RX_PB_WM_XON[9][0][9:6], RX_PB_WM[9][0].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[9][1][0], nxt_RX_PB_WM_XON[9][1][5:0], RX_PB_WM[9][1].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[9][1][1], nxt_RX_PB_WM_XON[9][1][9:6], RX_PB_WM[9][1].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[9][2][0], nxt_RX_PB_WM_XON[9][2][5:0], RX_PB_WM[9][2].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[9][2][1], nxt_RX_PB_WM_XON[9][2][9:6], RX_PB_WM[9][2].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[9][3][0], nxt_RX_PB_WM_XON[9][3][5:0], RX_PB_WM[9][3].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[9][3][1], nxt_RX_PB_WM_XON[9][3][9:6], RX_PB_WM[9][3].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[9][4][0], nxt_RX_PB_WM_XON[9][4][5:0], RX_PB_WM[9][4].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[9][4][1], nxt_RX_PB_WM_XON[9][4][9:6], RX_PB_WM[9][4].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[9][5][0], nxt_RX_PB_WM_XON[9][5][5:0], RX_PB_WM[9][5].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[9][5][1], nxt_RX_PB_WM_XON[9][5][9:6], RX_PB_WM[9][5].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[9][6][0], nxt_RX_PB_WM_XON[9][6][5:0], RX_PB_WM[9][6].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[9][6][1], nxt_RX_PB_WM_XON[9][6][9:6], RX_PB_WM[9][6].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[9][7][0], nxt_RX_PB_WM_XON[9][7][5:0], RX_PB_WM[9][7].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[9][7][1], nxt_RX_PB_WM_XON[9][7][9:6], RX_PB_WM[9][7].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[10][0][0], nxt_RX_PB_WM_XON[10][0][5:0], RX_PB_WM[10][0].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[10][0][1], nxt_RX_PB_WM_XON[10][0][9:6], RX_PB_WM[10][0].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[10][1][0], nxt_RX_PB_WM_XON[10][1][5:0], RX_PB_WM[10][1].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[10][1][1], nxt_RX_PB_WM_XON[10][1][9:6], RX_PB_WM[10][1].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[10][2][0], nxt_RX_PB_WM_XON[10][2][5:0], RX_PB_WM[10][2].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[10][2][1], nxt_RX_PB_WM_XON[10][2][9:6], RX_PB_WM[10][2].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[10][3][0], nxt_RX_PB_WM_XON[10][3][5:0], RX_PB_WM[10][3].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[10][3][1], nxt_RX_PB_WM_XON[10][3][9:6], RX_PB_WM[10][3].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[10][4][0], nxt_RX_PB_WM_XON[10][4][5:0], RX_PB_WM[10][4].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[10][4][1], nxt_RX_PB_WM_XON[10][4][9:6], RX_PB_WM[10][4].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[10][5][0], nxt_RX_PB_WM_XON[10][5][5:0], RX_PB_WM[10][5].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[10][5][1], nxt_RX_PB_WM_XON[10][5][9:6], RX_PB_WM[10][5].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[10][6][0], nxt_RX_PB_WM_XON[10][6][5:0], RX_PB_WM[10][6].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[10][6][1], nxt_RX_PB_WM_XON[10][6][9:6], RX_PB_WM[10][6].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[10][7][0], nxt_RX_PB_WM_XON[10][7][5:0], RX_PB_WM[10][7].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[10][7][1], nxt_RX_PB_WM_XON[10][7][9:6], RX_PB_WM[10][7].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[11][0][0], nxt_RX_PB_WM_XON[11][0][5:0], RX_PB_WM[11][0].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[11][0][1], nxt_RX_PB_WM_XON[11][0][9:6], RX_PB_WM[11][0].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[11][1][0], nxt_RX_PB_WM_XON[11][1][5:0], RX_PB_WM[11][1].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[11][1][1], nxt_RX_PB_WM_XON[11][1][9:6], RX_PB_WM[11][1].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[11][2][0], nxt_RX_PB_WM_XON[11][2][5:0], RX_PB_WM[11][2].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[11][2][1], nxt_RX_PB_WM_XON[11][2][9:6], RX_PB_WM[11][2].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[11][3][0], nxt_RX_PB_WM_XON[11][3][5:0], RX_PB_WM[11][3].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[11][3][1], nxt_RX_PB_WM_XON[11][3][9:6], RX_PB_WM[11][3].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[11][4][0], nxt_RX_PB_WM_XON[11][4][5:0], RX_PB_WM[11][4].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[11][4][1], nxt_RX_PB_WM_XON[11][4][9:6], RX_PB_WM[11][4].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[11][5][0], nxt_RX_PB_WM_XON[11][5][5:0], RX_PB_WM[11][5].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[11][5][1], nxt_RX_PB_WM_XON[11][5][9:6], RX_PB_WM[11][5].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[11][6][0], nxt_RX_PB_WM_XON[11][6][5:0], RX_PB_WM[11][6].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[11][6][1], nxt_RX_PB_WM_XON[11][6][9:6], RX_PB_WM[11][6].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[11][7][0], nxt_RX_PB_WM_XON[11][7][5:0], RX_PB_WM[11][7].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[11][7][1], nxt_RX_PB_WM_XON[11][7][9:6], RX_PB_WM[11][7].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[12][0][0], nxt_RX_PB_WM_XON[12][0][5:0], RX_PB_WM[12][0].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[12][0][1], nxt_RX_PB_WM_XON[12][0][9:6], RX_PB_WM[12][0].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[12][1][0], nxt_RX_PB_WM_XON[12][1][5:0], RX_PB_WM[12][1].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[12][1][1], nxt_RX_PB_WM_XON[12][1][9:6], RX_PB_WM[12][1].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[12][2][0], nxt_RX_PB_WM_XON[12][2][5:0], RX_PB_WM[12][2].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[12][2][1], nxt_RX_PB_WM_XON[12][2][9:6], RX_PB_WM[12][2].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[12][3][0], nxt_RX_PB_WM_XON[12][3][5:0], RX_PB_WM[12][3].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[12][3][1], nxt_RX_PB_WM_XON[12][3][9:6], RX_PB_WM[12][3].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[12][4][0], nxt_RX_PB_WM_XON[12][4][5:0], RX_PB_WM[12][4].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[12][4][1], nxt_RX_PB_WM_XON[12][4][9:6], RX_PB_WM[12][4].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[12][5][0], nxt_RX_PB_WM_XON[12][5][5:0], RX_PB_WM[12][5].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[12][5][1], nxt_RX_PB_WM_XON[12][5][9:6], RX_PB_WM[12][5].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[12][6][0], nxt_RX_PB_WM_XON[12][6][5:0], RX_PB_WM[12][6].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[12][6][1], nxt_RX_PB_WM_XON[12][6][9:6], RX_PB_WM[12][6].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[12][7][0], nxt_RX_PB_WM_XON[12][7][5:0], RX_PB_WM[12][7].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[12][7][1], nxt_RX_PB_WM_XON[12][7][9:6], RX_PB_WM[12][7].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[13][0][0], nxt_RX_PB_WM_XON[13][0][5:0], RX_PB_WM[13][0].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[13][0][1], nxt_RX_PB_WM_XON[13][0][9:6], RX_PB_WM[13][0].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[13][1][0], nxt_RX_PB_WM_XON[13][1][5:0], RX_PB_WM[13][1].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[13][1][1], nxt_RX_PB_WM_XON[13][1][9:6], RX_PB_WM[13][1].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[13][2][0], nxt_RX_PB_WM_XON[13][2][5:0], RX_PB_WM[13][2].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[13][2][1], nxt_RX_PB_WM_XON[13][2][9:6], RX_PB_WM[13][2].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[13][3][0], nxt_RX_PB_WM_XON[13][3][5:0], RX_PB_WM[13][3].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[13][3][1], nxt_RX_PB_WM_XON[13][3][9:6], RX_PB_WM[13][3].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[13][4][0], nxt_RX_PB_WM_XON[13][4][5:0], RX_PB_WM[13][4].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[13][4][1], nxt_RX_PB_WM_XON[13][4][9:6], RX_PB_WM[13][4].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[13][5][0], nxt_RX_PB_WM_XON[13][5][5:0], RX_PB_WM[13][5].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[13][5][1], nxt_RX_PB_WM_XON[13][5][9:6], RX_PB_WM[13][5].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[13][6][0], nxt_RX_PB_WM_XON[13][6][5:0], RX_PB_WM[13][6].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[13][6][1], nxt_RX_PB_WM_XON[13][6][9:6], RX_PB_WM[13][6].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[13][7][0], nxt_RX_PB_WM_XON[13][7][5:0], RX_PB_WM[13][7].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[13][7][1], nxt_RX_PB_WM_XON[13][7][9:6], RX_PB_WM[13][7].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[14][0][0], nxt_RX_PB_WM_XON[14][0][5:0], RX_PB_WM[14][0].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[14][0][1], nxt_RX_PB_WM_XON[14][0][9:6], RX_PB_WM[14][0].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[14][1][0], nxt_RX_PB_WM_XON[14][1][5:0], RX_PB_WM[14][1].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[14][1][1], nxt_RX_PB_WM_XON[14][1][9:6], RX_PB_WM[14][1].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[14][2][0], nxt_RX_PB_WM_XON[14][2][5:0], RX_PB_WM[14][2].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[14][2][1], nxt_RX_PB_WM_XON[14][2][9:6], RX_PB_WM[14][2].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[14][3][0], nxt_RX_PB_WM_XON[14][3][5:0], RX_PB_WM[14][3].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[14][3][1], nxt_RX_PB_WM_XON[14][3][9:6], RX_PB_WM[14][3].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[14][4][0], nxt_RX_PB_WM_XON[14][4][5:0], RX_PB_WM[14][4].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[14][4][1], nxt_RX_PB_WM_XON[14][4][9:6], RX_PB_WM[14][4].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[14][5][0], nxt_RX_PB_WM_XON[14][5][5:0], RX_PB_WM[14][5].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[14][5][1], nxt_RX_PB_WM_XON[14][5][9:6], RX_PB_WM[14][5].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[14][6][0], nxt_RX_PB_WM_XON[14][6][5:0], RX_PB_WM[14][6].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[14][6][1], nxt_RX_PB_WM_XON[14][6][9:6], RX_PB_WM[14][6].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[14][7][0], nxt_RX_PB_WM_XON[14][7][5:0], RX_PB_WM[14][7].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[14][7][1], nxt_RX_PB_WM_XON[14][7][9:6], RX_PB_WM[14][7].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[15][0][0], nxt_RX_PB_WM_XON[15][0][5:0], RX_PB_WM[15][0].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[15][0][1], nxt_RX_PB_WM_XON[15][0][9:6], RX_PB_WM[15][0].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[15][1][0], nxt_RX_PB_WM_XON[15][1][5:0], RX_PB_WM[15][1].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[15][1][1], nxt_RX_PB_WM_XON[15][1][9:6], RX_PB_WM[15][1].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[15][2][0], nxt_RX_PB_WM_XON[15][2][5:0], RX_PB_WM[15][2].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[15][2][1], nxt_RX_PB_WM_XON[15][2][9:6], RX_PB_WM[15][2].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[15][3][0], nxt_RX_PB_WM_XON[15][3][5:0], RX_PB_WM[15][3].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[15][3][1], nxt_RX_PB_WM_XON[15][3][9:6], RX_PB_WM[15][3].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[15][4][0], nxt_RX_PB_WM_XON[15][4][5:0], RX_PB_WM[15][4].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[15][4][1], nxt_RX_PB_WM_XON[15][4][9:6], RX_PB_WM[15][4].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[15][5][0], nxt_RX_PB_WM_XON[15][5][5:0], RX_PB_WM[15][5].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[15][5][1], nxt_RX_PB_WM_XON[15][5][9:6], RX_PB_WM[15][5].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[15][6][0], nxt_RX_PB_WM_XON[15][6][5:0], RX_PB_WM[15][6].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[15][6][1], nxt_RX_PB_WM_XON[15][6][9:6], RX_PB_WM[15][6].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[15][7][0], nxt_RX_PB_WM_XON[15][7][5:0], RX_PB_WM[15][7].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[15][7][1], nxt_RX_PB_WM_XON[15][7][9:6], RX_PB_WM[15][7].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[16][0][0], nxt_RX_PB_WM_XON[16][0][5:0], RX_PB_WM[16][0].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[16][0][1], nxt_RX_PB_WM_XON[16][0][9:6], RX_PB_WM[16][0].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[16][1][0], nxt_RX_PB_WM_XON[16][1][5:0], RX_PB_WM[16][1].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[16][1][1], nxt_RX_PB_WM_XON[16][1][9:6], RX_PB_WM[16][1].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[16][2][0], nxt_RX_PB_WM_XON[16][2][5:0], RX_PB_WM[16][2].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[16][2][1], nxt_RX_PB_WM_XON[16][2][9:6], RX_PB_WM[16][2].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[16][3][0], nxt_RX_PB_WM_XON[16][3][5:0], RX_PB_WM[16][3].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[16][3][1], nxt_RX_PB_WM_XON[16][3][9:6], RX_PB_WM[16][3].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[16][4][0], nxt_RX_PB_WM_XON[16][4][5:0], RX_PB_WM[16][4].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[16][4][1], nxt_RX_PB_WM_XON[16][4][9:6], RX_PB_WM[16][4].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[16][5][0], nxt_RX_PB_WM_XON[16][5][5:0], RX_PB_WM[16][5].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[16][5][1], nxt_RX_PB_WM_XON[16][5][9:6], RX_PB_WM[16][5].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[16][6][0], nxt_RX_PB_WM_XON[16][6][5:0], RX_PB_WM[16][6].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[16][6][1], nxt_RX_PB_WM_XON[16][6][9:6], RX_PB_WM[16][6].XON[9:6])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 6'h0, up_RX_PB_WM_XON[16][7][0], nxt_RX_PB_WM_XON[16][7][5:0], RX_PB_WM[16][7].XON[5:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 4'h8, up_RX_PB_WM_XON[16][7][1], nxt_RX_PB_WM_XON[16][7][9:6], RX_PB_WM[16][7].XON[9:6])
+
+// ----------------------------------------------------------------------
+// RX_PB_WM.LOSSLESS x1 RW, using RW template.
+logic [16:0][7:0][0:0] up_RX_PB_WM_LOSSLESS;
+always_comb begin
+ up_RX_PB_WM_LOSSLESS[0][0] =
+    ({1{write_req_RX_PB_WM[0][0] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[0][1] =
+    ({1{write_req_RX_PB_WM[0][1] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[0][2] =
+    ({1{write_req_RX_PB_WM[0][2] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[0][3] =
+    ({1{write_req_RX_PB_WM[0][3] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[0][4] =
+    ({1{write_req_RX_PB_WM[0][4] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[0][5] =
+    ({1{write_req_RX_PB_WM[0][5] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[0][6] =
+    ({1{write_req_RX_PB_WM[0][6] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[0][7] =
+    ({1{write_req_RX_PB_WM[0][7] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[1][0] =
+    ({1{write_req_RX_PB_WM[1][0] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[1][1] =
+    ({1{write_req_RX_PB_WM[1][1] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[1][2] =
+    ({1{write_req_RX_PB_WM[1][2] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[1][3] =
+    ({1{write_req_RX_PB_WM[1][3] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[1][4] =
+    ({1{write_req_RX_PB_WM[1][4] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[1][5] =
+    ({1{write_req_RX_PB_WM[1][5] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[1][6] =
+    ({1{write_req_RX_PB_WM[1][6] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[1][7] =
+    ({1{write_req_RX_PB_WM[1][7] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[2][0] =
+    ({1{write_req_RX_PB_WM[2][0] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[2][1] =
+    ({1{write_req_RX_PB_WM[2][1] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[2][2] =
+    ({1{write_req_RX_PB_WM[2][2] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[2][3] =
+    ({1{write_req_RX_PB_WM[2][3] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[2][4] =
+    ({1{write_req_RX_PB_WM[2][4] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[2][5] =
+    ({1{write_req_RX_PB_WM[2][5] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[2][6] =
+    ({1{write_req_RX_PB_WM[2][6] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[2][7] =
+    ({1{write_req_RX_PB_WM[2][7] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[3][0] =
+    ({1{write_req_RX_PB_WM[3][0] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[3][1] =
+    ({1{write_req_RX_PB_WM[3][1] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[3][2] =
+    ({1{write_req_RX_PB_WM[3][2] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[3][3] =
+    ({1{write_req_RX_PB_WM[3][3] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[3][4] =
+    ({1{write_req_RX_PB_WM[3][4] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[3][5] =
+    ({1{write_req_RX_PB_WM[3][5] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[3][6] =
+    ({1{write_req_RX_PB_WM[3][6] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[3][7] =
+    ({1{write_req_RX_PB_WM[3][7] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[4][0] =
+    ({1{write_req_RX_PB_WM[4][0] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[4][1] =
+    ({1{write_req_RX_PB_WM[4][1] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[4][2] =
+    ({1{write_req_RX_PB_WM[4][2] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[4][3] =
+    ({1{write_req_RX_PB_WM[4][3] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[4][4] =
+    ({1{write_req_RX_PB_WM[4][4] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[4][5] =
+    ({1{write_req_RX_PB_WM[4][5] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[4][6] =
+    ({1{write_req_RX_PB_WM[4][6] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[4][7] =
+    ({1{write_req_RX_PB_WM[4][7] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[5][0] =
+    ({1{write_req_RX_PB_WM[5][0] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[5][1] =
+    ({1{write_req_RX_PB_WM[5][1] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[5][2] =
+    ({1{write_req_RX_PB_WM[5][2] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[5][3] =
+    ({1{write_req_RX_PB_WM[5][3] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[5][4] =
+    ({1{write_req_RX_PB_WM[5][4] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[5][5] =
+    ({1{write_req_RX_PB_WM[5][5] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[5][6] =
+    ({1{write_req_RX_PB_WM[5][6] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[5][7] =
+    ({1{write_req_RX_PB_WM[5][7] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[6][0] =
+    ({1{write_req_RX_PB_WM[6][0] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[6][1] =
+    ({1{write_req_RX_PB_WM[6][1] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[6][2] =
+    ({1{write_req_RX_PB_WM[6][2] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[6][3] =
+    ({1{write_req_RX_PB_WM[6][3] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[6][4] =
+    ({1{write_req_RX_PB_WM[6][4] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[6][5] =
+    ({1{write_req_RX_PB_WM[6][5] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[6][6] =
+    ({1{write_req_RX_PB_WM[6][6] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[6][7] =
+    ({1{write_req_RX_PB_WM[6][7] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[7][0] =
+    ({1{write_req_RX_PB_WM[7][0] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[7][1] =
+    ({1{write_req_RX_PB_WM[7][1] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[7][2] =
+    ({1{write_req_RX_PB_WM[7][2] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[7][3] =
+    ({1{write_req_RX_PB_WM[7][3] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[7][4] =
+    ({1{write_req_RX_PB_WM[7][4] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[7][5] =
+    ({1{write_req_RX_PB_WM[7][5] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[7][6] =
+    ({1{write_req_RX_PB_WM[7][6] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[7][7] =
+    ({1{write_req_RX_PB_WM[7][7] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[8][0] =
+    ({1{write_req_RX_PB_WM[8][0] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[8][1] =
+    ({1{write_req_RX_PB_WM[8][1] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[8][2] =
+    ({1{write_req_RX_PB_WM[8][2] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[8][3] =
+    ({1{write_req_RX_PB_WM[8][3] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[8][4] =
+    ({1{write_req_RX_PB_WM[8][4] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[8][5] =
+    ({1{write_req_RX_PB_WM[8][5] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[8][6] =
+    ({1{write_req_RX_PB_WM[8][6] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[8][7] =
+    ({1{write_req_RX_PB_WM[8][7] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[9][0] =
+    ({1{write_req_RX_PB_WM[9][0] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[9][1] =
+    ({1{write_req_RX_PB_WM[9][1] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[9][2] =
+    ({1{write_req_RX_PB_WM[9][2] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[9][3] =
+    ({1{write_req_RX_PB_WM[9][3] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[9][4] =
+    ({1{write_req_RX_PB_WM[9][4] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[9][5] =
+    ({1{write_req_RX_PB_WM[9][5] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[9][6] =
+    ({1{write_req_RX_PB_WM[9][6] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[9][7] =
+    ({1{write_req_RX_PB_WM[9][7] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[10][0] =
+    ({1{write_req_RX_PB_WM[10][0] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[10][1] =
+    ({1{write_req_RX_PB_WM[10][1] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[10][2] =
+    ({1{write_req_RX_PB_WM[10][2] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[10][3] =
+    ({1{write_req_RX_PB_WM[10][3] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[10][4] =
+    ({1{write_req_RX_PB_WM[10][4] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[10][5] =
+    ({1{write_req_RX_PB_WM[10][5] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[10][6] =
+    ({1{write_req_RX_PB_WM[10][6] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[10][7] =
+    ({1{write_req_RX_PB_WM[10][7] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[11][0] =
+    ({1{write_req_RX_PB_WM[11][0] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[11][1] =
+    ({1{write_req_RX_PB_WM[11][1] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[11][2] =
+    ({1{write_req_RX_PB_WM[11][2] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[11][3] =
+    ({1{write_req_RX_PB_WM[11][3] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[11][4] =
+    ({1{write_req_RX_PB_WM[11][4] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[11][5] =
+    ({1{write_req_RX_PB_WM[11][5] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[11][6] =
+    ({1{write_req_RX_PB_WM[11][6] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[11][7] =
+    ({1{write_req_RX_PB_WM[11][7] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[12][0] =
+    ({1{write_req_RX_PB_WM[12][0] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[12][1] =
+    ({1{write_req_RX_PB_WM[12][1] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[12][2] =
+    ({1{write_req_RX_PB_WM[12][2] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[12][3] =
+    ({1{write_req_RX_PB_WM[12][3] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[12][4] =
+    ({1{write_req_RX_PB_WM[12][4] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[12][5] =
+    ({1{write_req_RX_PB_WM[12][5] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[12][6] =
+    ({1{write_req_RX_PB_WM[12][6] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[12][7] =
+    ({1{write_req_RX_PB_WM[12][7] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[13][0] =
+    ({1{write_req_RX_PB_WM[13][0] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[13][1] =
+    ({1{write_req_RX_PB_WM[13][1] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[13][2] =
+    ({1{write_req_RX_PB_WM[13][2] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[13][3] =
+    ({1{write_req_RX_PB_WM[13][3] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[13][4] =
+    ({1{write_req_RX_PB_WM[13][4] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[13][5] =
+    ({1{write_req_RX_PB_WM[13][5] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[13][6] =
+    ({1{write_req_RX_PB_WM[13][6] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[13][7] =
+    ({1{write_req_RX_PB_WM[13][7] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[14][0] =
+    ({1{write_req_RX_PB_WM[14][0] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[14][1] =
+    ({1{write_req_RX_PB_WM[14][1] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[14][2] =
+    ({1{write_req_RX_PB_WM[14][2] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[14][3] =
+    ({1{write_req_RX_PB_WM[14][3] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[14][4] =
+    ({1{write_req_RX_PB_WM[14][4] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[14][5] =
+    ({1{write_req_RX_PB_WM[14][5] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[14][6] =
+    ({1{write_req_RX_PB_WM[14][6] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[14][7] =
+    ({1{write_req_RX_PB_WM[14][7] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[15][0] =
+    ({1{write_req_RX_PB_WM[15][0] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[15][1] =
+    ({1{write_req_RX_PB_WM[15][1] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[15][2] =
+    ({1{write_req_RX_PB_WM[15][2] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[15][3] =
+    ({1{write_req_RX_PB_WM[15][3] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[15][4] =
+    ({1{write_req_RX_PB_WM[15][4] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[15][5] =
+    ({1{write_req_RX_PB_WM[15][5] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[15][6] =
+    ({1{write_req_RX_PB_WM[15][6] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[15][7] =
+    ({1{write_req_RX_PB_WM[15][7] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[16][0] =
+    ({1{write_req_RX_PB_WM[16][0] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[16][1] =
+    ({1{write_req_RX_PB_WM[16][1] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[16][2] =
+    ({1{write_req_RX_PB_WM[16][2] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[16][3] =
+    ({1{write_req_RX_PB_WM[16][3] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[16][4] =
+    ({1{write_req_RX_PB_WM[16][4] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[16][5] =
+    ({1{write_req_RX_PB_WM[16][5] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[16][6] =
+    ({1{write_req_RX_PB_WM[16][6] }} &
+    be[2:2]);
+ up_RX_PB_WM_LOSSLESS[16][7] =
+    ({1{write_req_RX_PB_WM[16][7] }} &
+    be[2:2]);
+end
+
+logic [16:0][7:0][0:0] nxt_RX_PB_WM_LOSSLESS;
+always_comb begin
+ nxt_RX_PB_WM_LOSSLESS[0][0] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[0][1] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[0][2] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[0][3] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[0][4] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[0][5] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[0][6] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[0][7] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[1][0] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[1][1] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[1][2] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[1][3] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[1][4] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[1][5] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[1][6] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[1][7] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[2][0] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[2][1] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[2][2] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[2][3] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[2][4] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[2][5] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[2][6] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[2][7] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[3][0] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[3][1] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[3][2] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[3][3] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[3][4] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[3][5] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[3][6] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[3][7] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[4][0] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[4][1] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[4][2] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[4][3] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[4][4] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[4][5] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[4][6] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[4][7] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[5][0] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[5][1] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[5][2] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[5][3] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[5][4] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[5][5] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[5][6] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[5][7] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[6][0] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[6][1] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[6][2] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[6][3] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[6][4] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[6][5] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[6][6] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[6][7] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[7][0] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[7][1] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[7][2] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[7][3] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[7][4] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[7][5] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[7][6] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[7][7] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[8][0] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[8][1] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[8][2] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[8][3] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[8][4] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[8][5] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[8][6] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[8][7] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[9][0] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[9][1] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[9][2] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[9][3] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[9][4] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[9][5] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[9][6] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[9][7] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[10][0] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[10][1] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[10][2] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[10][3] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[10][4] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[10][5] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[10][6] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[10][7] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[11][0] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[11][1] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[11][2] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[11][3] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[11][4] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[11][5] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[11][6] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[11][7] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[12][0] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[12][1] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[12][2] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[12][3] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[12][4] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[12][5] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[12][6] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[12][7] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[13][0] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[13][1] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[13][2] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[13][3] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[13][4] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[13][5] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[13][6] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[13][7] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[14][0] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[14][1] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[14][2] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[14][3] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[14][4] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[14][5] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[14][6] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[14][7] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[15][0] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[15][1] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[15][2] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[15][3] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[15][4] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[15][5] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[15][6] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[15][7] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[16][0] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[16][1] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[16][2] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[16][3] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[16][4] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[16][5] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[16][6] = write_data[20:20];
+
+ nxt_RX_PB_WM_LOSSLESS[16][7] = write_data[20:20];
+
+end
+
+
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[0][0][0], nxt_RX_PB_WM_LOSSLESS[0][0][0:0], RX_PB_WM[0][0].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[0][1][0], nxt_RX_PB_WM_LOSSLESS[0][1][0:0], RX_PB_WM[0][1].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[0][2][0], nxt_RX_PB_WM_LOSSLESS[0][2][0:0], RX_PB_WM[0][2].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[0][3][0], nxt_RX_PB_WM_LOSSLESS[0][3][0:0], RX_PB_WM[0][3].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[0][4][0], nxt_RX_PB_WM_LOSSLESS[0][4][0:0], RX_PB_WM[0][4].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[0][5][0], nxt_RX_PB_WM_LOSSLESS[0][5][0:0], RX_PB_WM[0][5].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[0][6][0], nxt_RX_PB_WM_LOSSLESS[0][6][0:0], RX_PB_WM[0][6].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[0][7][0], nxt_RX_PB_WM_LOSSLESS[0][7][0:0], RX_PB_WM[0][7].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[1][0][0], nxt_RX_PB_WM_LOSSLESS[1][0][0:0], RX_PB_WM[1][0].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[1][1][0], nxt_RX_PB_WM_LOSSLESS[1][1][0:0], RX_PB_WM[1][1].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[1][2][0], nxt_RX_PB_WM_LOSSLESS[1][2][0:0], RX_PB_WM[1][2].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[1][3][0], nxt_RX_PB_WM_LOSSLESS[1][3][0:0], RX_PB_WM[1][3].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[1][4][0], nxt_RX_PB_WM_LOSSLESS[1][4][0:0], RX_PB_WM[1][4].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[1][5][0], nxt_RX_PB_WM_LOSSLESS[1][5][0:0], RX_PB_WM[1][5].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[1][6][0], nxt_RX_PB_WM_LOSSLESS[1][6][0:0], RX_PB_WM[1][6].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[1][7][0], nxt_RX_PB_WM_LOSSLESS[1][7][0:0], RX_PB_WM[1][7].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[2][0][0], nxt_RX_PB_WM_LOSSLESS[2][0][0:0], RX_PB_WM[2][0].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[2][1][0], nxt_RX_PB_WM_LOSSLESS[2][1][0:0], RX_PB_WM[2][1].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[2][2][0], nxt_RX_PB_WM_LOSSLESS[2][2][0:0], RX_PB_WM[2][2].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[2][3][0], nxt_RX_PB_WM_LOSSLESS[2][3][0:0], RX_PB_WM[2][3].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[2][4][0], nxt_RX_PB_WM_LOSSLESS[2][4][0:0], RX_PB_WM[2][4].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[2][5][0], nxt_RX_PB_WM_LOSSLESS[2][5][0:0], RX_PB_WM[2][5].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[2][6][0], nxt_RX_PB_WM_LOSSLESS[2][6][0:0], RX_PB_WM[2][6].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[2][7][0], nxt_RX_PB_WM_LOSSLESS[2][7][0:0], RX_PB_WM[2][7].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[3][0][0], nxt_RX_PB_WM_LOSSLESS[3][0][0:0], RX_PB_WM[3][0].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[3][1][0], nxt_RX_PB_WM_LOSSLESS[3][1][0:0], RX_PB_WM[3][1].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[3][2][0], nxt_RX_PB_WM_LOSSLESS[3][2][0:0], RX_PB_WM[3][2].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[3][3][0], nxt_RX_PB_WM_LOSSLESS[3][3][0:0], RX_PB_WM[3][3].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[3][4][0], nxt_RX_PB_WM_LOSSLESS[3][4][0:0], RX_PB_WM[3][4].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[3][5][0], nxt_RX_PB_WM_LOSSLESS[3][5][0:0], RX_PB_WM[3][5].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[3][6][0], nxt_RX_PB_WM_LOSSLESS[3][6][0:0], RX_PB_WM[3][6].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[3][7][0], nxt_RX_PB_WM_LOSSLESS[3][7][0:0], RX_PB_WM[3][7].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[4][0][0], nxt_RX_PB_WM_LOSSLESS[4][0][0:0], RX_PB_WM[4][0].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[4][1][0], nxt_RX_PB_WM_LOSSLESS[4][1][0:0], RX_PB_WM[4][1].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[4][2][0], nxt_RX_PB_WM_LOSSLESS[4][2][0:0], RX_PB_WM[4][2].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[4][3][0], nxt_RX_PB_WM_LOSSLESS[4][3][0:0], RX_PB_WM[4][3].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[4][4][0], nxt_RX_PB_WM_LOSSLESS[4][4][0:0], RX_PB_WM[4][4].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[4][5][0], nxt_RX_PB_WM_LOSSLESS[4][5][0:0], RX_PB_WM[4][5].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[4][6][0], nxt_RX_PB_WM_LOSSLESS[4][6][0:0], RX_PB_WM[4][6].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[4][7][0], nxt_RX_PB_WM_LOSSLESS[4][7][0:0], RX_PB_WM[4][7].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[5][0][0], nxt_RX_PB_WM_LOSSLESS[5][0][0:0], RX_PB_WM[5][0].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[5][1][0], nxt_RX_PB_WM_LOSSLESS[5][1][0:0], RX_PB_WM[5][1].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[5][2][0], nxt_RX_PB_WM_LOSSLESS[5][2][0:0], RX_PB_WM[5][2].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[5][3][0], nxt_RX_PB_WM_LOSSLESS[5][3][0:0], RX_PB_WM[5][3].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[5][4][0], nxt_RX_PB_WM_LOSSLESS[5][4][0:0], RX_PB_WM[5][4].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[5][5][0], nxt_RX_PB_WM_LOSSLESS[5][5][0:0], RX_PB_WM[5][5].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[5][6][0], nxt_RX_PB_WM_LOSSLESS[5][6][0:0], RX_PB_WM[5][6].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[5][7][0], nxt_RX_PB_WM_LOSSLESS[5][7][0:0], RX_PB_WM[5][7].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[6][0][0], nxt_RX_PB_WM_LOSSLESS[6][0][0:0], RX_PB_WM[6][0].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[6][1][0], nxt_RX_PB_WM_LOSSLESS[6][1][0:0], RX_PB_WM[6][1].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[6][2][0], nxt_RX_PB_WM_LOSSLESS[6][2][0:0], RX_PB_WM[6][2].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[6][3][0], nxt_RX_PB_WM_LOSSLESS[6][3][0:0], RX_PB_WM[6][3].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[6][4][0], nxt_RX_PB_WM_LOSSLESS[6][4][0:0], RX_PB_WM[6][4].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[6][5][0], nxt_RX_PB_WM_LOSSLESS[6][5][0:0], RX_PB_WM[6][5].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[6][6][0], nxt_RX_PB_WM_LOSSLESS[6][6][0:0], RX_PB_WM[6][6].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[6][7][0], nxt_RX_PB_WM_LOSSLESS[6][7][0:0], RX_PB_WM[6][7].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[7][0][0], nxt_RX_PB_WM_LOSSLESS[7][0][0:0], RX_PB_WM[7][0].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[7][1][0], nxt_RX_PB_WM_LOSSLESS[7][1][0:0], RX_PB_WM[7][1].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[7][2][0], nxt_RX_PB_WM_LOSSLESS[7][2][0:0], RX_PB_WM[7][2].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[7][3][0], nxt_RX_PB_WM_LOSSLESS[7][3][0:0], RX_PB_WM[7][3].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[7][4][0], nxt_RX_PB_WM_LOSSLESS[7][4][0:0], RX_PB_WM[7][4].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[7][5][0], nxt_RX_PB_WM_LOSSLESS[7][5][0:0], RX_PB_WM[7][5].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[7][6][0], nxt_RX_PB_WM_LOSSLESS[7][6][0:0], RX_PB_WM[7][6].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[7][7][0], nxt_RX_PB_WM_LOSSLESS[7][7][0:0], RX_PB_WM[7][7].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[8][0][0], nxt_RX_PB_WM_LOSSLESS[8][0][0:0], RX_PB_WM[8][0].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[8][1][0], nxt_RX_PB_WM_LOSSLESS[8][1][0:0], RX_PB_WM[8][1].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[8][2][0], nxt_RX_PB_WM_LOSSLESS[8][2][0:0], RX_PB_WM[8][2].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[8][3][0], nxt_RX_PB_WM_LOSSLESS[8][3][0:0], RX_PB_WM[8][3].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[8][4][0], nxt_RX_PB_WM_LOSSLESS[8][4][0:0], RX_PB_WM[8][4].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[8][5][0], nxt_RX_PB_WM_LOSSLESS[8][5][0:0], RX_PB_WM[8][5].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[8][6][0], nxt_RX_PB_WM_LOSSLESS[8][6][0:0], RX_PB_WM[8][6].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[8][7][0], nxt_RX_PB_WM_LOSSLESS[8][7][0:0], RX_PB_WM[8][7].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[9][0][0], nxt_RX_PB_WM_LOSSLESS[9][0][0:0], RX_PB_WM[9][0].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[9][1][0], nxt_RX_PB_WM_LOSSLESS[9][1][0:0], RX_PB_WM[9][1].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[9][2][0], nxt_RX_PB_WM_LOSSLESS[9][2][0:0], RX_PB_WM[9][2].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[9][3][0], nxt_RX_PB_WM_LOSSLESS[9][3][0:0], RX_PB_WM[9][3].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[9][4][0], nxt_RX_PB_WM_LOSSLESS[9][4][0:0], RX_PB_WM[9][4].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[9][5][0], nxt_RX_PB_WM_LOSSLESS[9][5][0:0], RX_PB_WM[9][5].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[9][6][0], nxt_RX_PB_WM_LOSSLESS[9][6][0:0], RX_PB_WM[9][6].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[9][7][0], nxt_RX_PB_WM_LOSSLESS[9][7][0:0], RX_PB_WM[9][7].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[10][0][0], nxt_RX_PB_WM_LOSSLESS[10][0][0:0], RX_PB_WM[10][0].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[10][1][0], nxt_RX_PB_WM_LOSSLESS[10][1][0:0], RX_PB_WM[10][1].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[10][2][0], nxt_RX_PB_WM_LOSSLESS[10][2][0:0], RX_PB_WM[10][2].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[10][3][0], nxt_RX_PB_WM_LOSSLESS[10][3][0:0], RX_PB_WM[10][3].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[10][4][0], nxt_RX_PB_WM_LOSSLESS[10][4][0:0], RX_PB_WM[10][4].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[10][5][0], nxt_RX_PB_WM_LOSSLESS[10][5][0:0], RX_PB_WM[10][5].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[10][6][0], nxt_RX_PB_WM_LOSSLESS[10][6][0:0], RX_PB_WM[10][6].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[10][7][0], nxt_RX_PB_WM_LOSSLESS[10][7][0:0], RX_PB_WM[10][7].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[11][0][0], nxt_RX_PB_WM_LOSSLESS[11][0][0:0], RX_PB_WM[11][0].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[11][1][0], nxt_RX_PB_WM_LOSSLESS[11][1][0:0], RX_PB_WM[11][1].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[11][2][0], nxt_RX_PB_WM_LOSSLESS[11][2][0:0], RX_PB_WM[11][2].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[11][3][0], nxt_RX_PB_WM_LOSSLESS[11][3][0:0], RX_PB_WM[11][3].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[11][4][0], nxt_RX_PB_WM_LOSSLESS[11][4][0:0], RX_PB_WM[11][4].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[11][5][0], nxt_RX_PB_WM_LOSSLESS[11][5][0:0], RX_PB_WM[11][5].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[11][6][0], nxt_RX_PB_WM_LOSSLESS[11][6][0:0], RX_PB_WM[11][6].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[11][7][0], nxt_RX_PB_WM_LOSSLESS[11][7][0:0], RX_PB_WM[11][7].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[12][0][0], nxt_RX_PB_WM_LOSSLESS[12][0][0:0], RX_PB_WM[12][0].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[12][1][0], nxt_RX_PB_WM_LOSSLESS[12][1][0:0], RX_PB_WM[12][1].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[12][2][0], nxt_RX_PB_WM_LOSSLESS[12][2][0:0], RX_PB_WM[12][2].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[12][3][0], nxt_RX_PB_WM_LOSSLESS[12][3][0:0], RX_PB_WM[12][3].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[12][4][0], nxt_RX_PB_WM_LOSSLESS[12][4][0:0], RX_PB_WM[12][4].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[12][5][0], nxt_RX_PB_WM_LOSSLESS[12][5][0:0], RX_PB_WM[12][5].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[12][6][0], nxt_RX_PB_WM_LOSSLESS[12][6][0:0], RX_PB_WM[12][6].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[12][7][0], nxt_RX_PB_WM_LOSSLESS[12][7][0:0], RX_PB_WM[12][7].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[13][0][0], nxt_RX_PB_WM_LOSSLESS[13][0][0:0], RX_PB_WM[13][0].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[13][1][0], nxt_RX_PB_WM_LOSSLESS[13][1][0:0], RX_PB_WM[13][1].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[13][2][0], nxt_RX_PB_WM_LOSSLESS[13][2][0:0], RX_PB_WM[13][2].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[13][3][0], nxt_RX_PB_WM_LOSSLESS[13][3][0:0], RX_PB_WM[13][3].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[13][4][0], nxt_RX_PB_WM_LOSSLESS[13][4][0:0], RX_PB_WM[13][4].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[13][5][0], nxt_RX_PB_WM_LOSSLESS[13][5][0:0], RX_PB_WM[13][5].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[13][6][0], nxt_RX_PB_WM_LOSSLESS[13][6][0:0], RX_PB_WM[13][6].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[13][7][0], nxt_RX_PB_WM_LOSSLESS[13][7][0:0], RX_PB_WM[13][7].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[14][0][0], nxt_RX_PB_WM_LOSSLESS[14][0][0:0], RX_PB_WM[14][0].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[14][1][0], nxt_RX_PB_WM_LOSSLESS[14][1][0:0], RX_PB_WM[14][1].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[14][2][0], nxt_RX_PB_WM_LOSSLESS[14][2][0:0], RX_PB_WM[14][2].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[14][3][0], nxt_RX_PB_WM_LOSSLESS[14][3][0:0], RX_PB_WM[14][3].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[14][4][0], nxt_RX_PB_WM_LOSSLESS[14][4][0:0], RX_PB_WM[14][4].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[14][5][0], nxt_RX_PB_WM_LOSSLESS[14][5][0:0], RX_PB_WM[14][5].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[14][6][0], nxt_RX_PB_WM_LOSSLESS[14][6][0:0], RX_PB_WM[14][6].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[14][7][0], nxt_RX_PB_WM_LOSSLESS[14][7][0:0], RX_PB_WM[14][7].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[15][0][0], nxt_RX_PB_WM_LOSSLESS[15][0][0:0], RX_PB_WM[15][0].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[15][1][0], nxt_RX_PB_WM_LOSSLESS[15][1][0:0], RX_PB_WM[15][1].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[15][2][0], nxt_RX_PB_WM_LOSSLESS[15][2][0:0], RX_PB_WM[15][2].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[15][3][0], nxt_RX_PB_WM_LOSSLESS[15][3][0:0], RX_PB_WM[15][3].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[15][4][0], nxt_RX_PB_WM_LOSSLESS[15][4][0:0], RX_PB_WM[15][4].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[15][5][0], nxt_RX_PB_WM_LOSSLESS[15][5][0:0], RX_PB_WM[15][5].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[15][6][0], nxt_RX_PB_WM_LOSSLESS[15][6][0:0], RX_PB_WM[15][6].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[15][7][0], nxt_RX_PB_WM_LOSSLESS[15][7][0:0], RX_PB_WM[15][7].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[16][0][0], nxt_RX_PB_WM_LOSSLESS[16][0][0:0], RX_PB_WM[16][0].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[16][1][0], nxt_RX_PB_WM_LOSSLESS[16][1][0:0], RX_PB_WM[16][1].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[16][2][0], nxt_RX_PB_WM_LOSSLESS[16][2][0:0], RX_PB_WM[16][2].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[16][3][0], nxt_RX_PB_WM_LOSSLESS[16][3][0:0], RX_PB_WM[16][3].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[16][4][0], nxt_RX_PB_WM_LOSSLESS[16][4][0:0], RX_PB_WM[16][4].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[16][5][0], nxt_RX_PB_WM_LOSSLESS[16][5][0:0], RX_PB_WM[16][5].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[16][6][0], nxt_RX_PB_WM_LOSSLESS[16][6][0:0], RX_PB_WM[16][6].LOSSLESS[0:0])
+`RTLGEN_MBY_RX_PB_EN_FF(gated_clk, rst_n, 1'h0, up_RX_PB_WM_LOSSLESS[16][7][0], nxt_RX_PB_WM_LOSSLESS[16][7][0:0], RX_PB_WM[16][7].LOSSLESS[0:0])
 // Shared registers assignments
 
 
@@ -616,13 +3605,819 @@ always_comb begin : MISS_VALID_BLOCK
                  default: ack.read_miss = ack.read_valid;
               endcase
            end
-           {40'b10??,4'h?,1'b?},
-           {40'hC,4'b0???,1'b?}: begin
+           RX_PB_WM_DECODE_ADDR[0][0]: begin
               unique casez ({req_fid,req_bar})
-                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: begin
-                    ack.read_valid = req.valid && (handcode_rvalid_RX_PB_WM || ~(|re_RX_PB_WM));
-                    ack.read_miss = handcode_error_RX_PB_WM;
-                 end
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[0][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[0][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[0][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[0][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[0][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[0][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[0][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[1][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[1][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[1][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[1][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[1][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[1][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[1][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[1][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[2][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[2][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[2][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[2][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[2][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[2][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[2][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[2][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[3][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[3][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[3][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[3][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[3][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[3][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[3][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[3][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[4][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[4][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[4][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[4][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[4][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[4][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[4][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[4][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[5][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[5][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[5][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[5][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[5][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[5][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[5][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[5][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[6][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[6][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[6][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[6][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[6][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[6][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[6][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[6][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[7][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[7][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[7][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[7][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[7][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[7][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[7][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[7][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[8][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[8][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[8][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[8][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[8][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[8][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[8][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[8][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[9][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[9][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[9][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[9][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[9][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[9][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[9][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[9][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[10][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[10][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[10][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[10][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[10][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[10][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[10][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[10][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[11][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[11][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[11][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[11][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[11][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[11][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[11][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[11][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[12][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[12][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[12][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[12][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[12][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[12][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[12][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[12][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[13][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[13][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[13][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[13][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[13][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[13][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[13][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[13][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[14][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[14][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[14][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[14][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[14][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[14][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[14][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[14][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[15][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[15][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[15][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[15][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[15][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[15][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[15][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[15][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[16][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[16][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[16][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[16][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[16][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[16][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[16][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
+                 default: ack.read_miss = ack.read_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[16][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.read_miss = 1'b0;
                  default: ack.read_miss = ack.read_valid;
               endcase
            end
@@ -640,13 +4435,819 @@ always_comb begin : MISS_VALID_BLOCK
                  default: ack.write_miss = ack.write_valid;
               endcase
            end
-           {40'b10??,4'h?,1'b?},
-           {40'hC,4'b0???,1'b?}: begin
+           RX_PB_WM_DECODE_ADDR[0][0]: begin
               unique casez ({req_fid,req_bar})
-                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: begin
-                    ack.write_valid = req.valid && (handcode_wvalid_RX_PB_WM || ~(|we_RX_PB_WM));
-                    ack.write_miss = handcode_error_RX_PB_WM;
-                 end
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[0][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[0][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[0][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[0][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[0][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[0][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[0][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[1][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[1][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[1][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[1][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[1][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[1][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[1][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[1][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[2][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[2][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[2][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[2][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[2][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[2][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[2][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[2][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[3][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[3][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[3][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[3][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[3][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[3][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[3][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[3][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[4][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[4][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[4][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[4][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[4][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[4][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[4][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[4][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[5][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[5][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[5][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[5][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[5][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[5][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[5][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[5][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[6][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[6][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[6][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[6][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[6][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[6][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[6][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[6][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[7][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[7][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[7][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[7][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[7][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[7][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[7][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[7][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[8][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[8][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[8][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[8][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[8][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[8][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[8][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[8][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[9][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[9][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[9][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[9][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[9][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[9][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[9][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[9][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[10][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[10][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[10][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[10][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[10][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[10][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[10][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[10][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[11][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[11][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[11][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[11][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[11][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[11][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[11][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[11][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[12][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[12][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[12][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[12][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[12][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[12][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[12][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[12][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[13][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[13][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[13][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[13][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[13][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[13][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[13][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[13][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[14][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[14][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[14][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[14][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[14][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[14][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[14][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[14][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[15][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[15][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[15][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[15][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[15][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[15][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[15][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[15][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[16][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[16][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[16][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[16][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[16][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[16][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[16][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
+                 default: ack.write_miss = ack.write_valid;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[16][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: ack.write_miss = 1'b0;
                  default: ack.write_miss = ack.write_valid;
               endcase
            end
@@ -683,10 +5284,819 @@ always_comb begin : READ_DATA_BLOCK
                  default: read_data = '0;
               endcase
            end
-           {40'b10??,4'h?,1'b?},
-           {40'hC,4'b0???,1'b?}: begin
+           RX_PB_WM_DECODE_ADDR[0][0]: begin
               unique casez ({req_fid,req_bar})
-                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = handcode_reg_rdata_RX_PB_WM;
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[0][0]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[0][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[0][1]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[0][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[0][2]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[0][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[0][3]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[0][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[0][4]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[0][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[0][5]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[0][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[0][6]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[0][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[0][7]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[1][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[1][0]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[1][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[1][1]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[1][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[1][2]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[1][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[1][3]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[1][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[1][4]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[1][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[1][5]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[1][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[1][6]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[1][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[1][7]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[2][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[2][0]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[2][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[2][1]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[2][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[2][2]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[2][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[2][3]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[2][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[2][4]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[2][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[2][5]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[2][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[2][6]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[2][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[2][7]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[3][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[3][0]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[3][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[3][1]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[3][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[3][2]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[3][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[3][3]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[3][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[3][4]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[3][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[3][5]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[3][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[3][6]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[3][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[3][7]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[4][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[4][0]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[4][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[4][1]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[4][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[4][2]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[4][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[4][3]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[4][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[4][4]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[4][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[4][5]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[4][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[4][6]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[4][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[4][7]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[5][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[5][0]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[5][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[5][1]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[5][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[5][2]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[5][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[5][3]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[5][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[5][4]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[5][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[5][5]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[5][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[5][6]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[5][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[5][7]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[6][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[6][0]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[6][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[6][1]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[6][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[6][2]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[6][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[6][3]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[6][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[6][4]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[6][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[6][5]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[6][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[6][6]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[6][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[6][7]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[7][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[7][0]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[7][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[7][1]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[7][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[7][2]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[7][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[7][3]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[7][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[7][4]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[7][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[7][5]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[7][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[7][6]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[7][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[7][7]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[8][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[8][0]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[8][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[8][1]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[8][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[8][2]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[8][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[8][3]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[8][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[8][4]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[8][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[8][5]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[8][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[8][6]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[8][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[8][7]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[9][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[9][0]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[9][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[9][1]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[9][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[9][2]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[9][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[9][3]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[9][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[9][4]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[9][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[9][5]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[9][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[9][6]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[9][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[9][7]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[10][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[10][0]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[10][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[10][1]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[10][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[10][2]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[10][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[10][3]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[10][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[10][4]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[10][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[10][5]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[10][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[10][6]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[10][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[10][7]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[11][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[11][0]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[11][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[11][1]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[11][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[11][2]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[11][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[11][3]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[11][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[11][4]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[11][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[11][5]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[11][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[11][6]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[11][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[11][7]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[12][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[12][0]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[12][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[12][1]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[12][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[12][2]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[12][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[12][3]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[12][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[12][4]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[12][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[12][5]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[12][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[12][6]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[12][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[12][7]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[13][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[13][0]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[13][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[13][1]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[13][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[13][2]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[13][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[13][3]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[13][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[13][4]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[13][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[13][5]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[13][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[13][6]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[13][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[13][7]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[14][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[14][0]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[14][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[14][1]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[14][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[14][2]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[14][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[14][3]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[14][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[14][4]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[14][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[14][5]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[14][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[14][6]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[14][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[14][7]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[15][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[15][0]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[15][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[15][1]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[15][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[15][2]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[15][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[15][3]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[15][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[15][4]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[15][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[15][5]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[15][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[15][6]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[15][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[15][7]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[16][0]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[16][0]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[16][1]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[16][1]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[16][2]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[16][2]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[16][3]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[16][3]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[16][4]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[16][4]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[16][5]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[16][5]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[16][6]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[16][6]};
+                 default: read_data = '0;
+              endcase
+           end
+           RX_PB_WM_DECODE_ADDR[16][7]: begin
+              unique casez ({req_fid,req_bar})
+                 {MBY_RX_PB_MAP_SB_FID,MBY_RX_PB_MAP_SB_BAR}: read_data = {RX_PB_WM[16][7]};
                  default: read_data = '0;
               endcase
            end
@@ -726,6 +6136,142 @@ end
 // begin register RSVD init section {
 always_comb begin
     RX_PB_PORT_CFG.reserved0 = '0;
+    RX_PB_WM[0][0].reserved0 = '0;
+    RX_PB_WM[0][1].reserved0 = '0;
+    RX_PB_WM[0][2].reserved0 = '0;
+    RX_PB_WM[0][3].reserved0 = '0;
+    RX_PB_WM[0][4].reserved0 = '0;
+    RX_PB_WM[0][5].reserved0 = '0;
+    RX_PB_WM[0][6].reserved0 = '0;
+    RX_PB_WM[0][7].reserved0 = '0;
+    RX_PB_WM[1][0].reserved0 = '0;
+    RX_PB_WM[1][1].reserved0 = '0;
+    RX_PB_WM[1][2].reserved0 = '0;
+    RX_PB_WM[1][3].reserved0 = '0;
+    RX_PB_WM[1][4].reserved0 = '0;
+    RX_PB_WM[1][5].reserved0 = '0;
+    RX_PB_WM[1][6].reserved0 = '0;
+    RX_PB_WM[1][7].reserved0 = '0;
+    RX_PB_WM[2][0].reserved0 = '0;
+    RX_PB_WM[2][1].reserved0 = '0;
+    RX_PB_WM[2][2].reserved0 = '0;
+    RX_PB_WM[2][3].reserved0 = '0;
+    RX_PB_WM[2][4].reserved0 = '0;
+    RX_PB_WM[2][5].reserved0 = '0;
+    RX_PB_WM[2][6].reserved0 = '0;
+    RX_PB_WM[2][7].reserved0 = '0;
+    RX_PB_WM[3][0].reserved0 = '0;
+    RX_PB_WM[3][1].reserved0 = '0;
+    RX_PB_WM[3][2].reserved0 = '0;
+    RX_PB_WM[3][3].reserved0 = '0;
+    RX_PB_WM[3][4].reserved0 = '0;
+    RX_PB_WM[3][5].reserved0 = '0;
+    RX_PB_WM[3][6].reserved0 = '0;
+    RX_PB_WM[3][7].reserved0 = '0;
+    RX_PB_WM[4][0].reserved0 = '0;
+    RX_PB_WM[4][1].reserved0 = '0;
+    RX_PB_WM[4][2].reserved0 = '0;
+    RX_PB_WM[4][3].reserved0 = '0;
+    RX_PB_WM[4][4].reserved0 = '0;
+    RX_PB_WM[4][5].reserved0 = '0;
+    RX_PB_WM[4][6].reserved0 = '0;
+    RX_PB_WM[4][7].reserved0 = '0;
+    RX_PB_WM[5][0].reserved0 = '0;
+    RX_PB_WM[5][1].reserved0 = '0;
+    RX_PB_WM[5][2].reserved0 = '0;
+    RX_PB_WM[5][3].reserved0 = '0;
+    RX_PB_WM[5][4].reserved0 = '0;
+    RX_PB_WM[5][5].reserved0 = '0;
+    RX_PB_WM[5][6].reserved0 = '0;
+    RX_PB_WM[5][7].reserved0 = '0;
+    RX_PB_WM[6][0].reserved0 = '0;
+    RX_PB_WM[6][1].reserved0 = '0;
+    RX_PB_WM[6][2].reserved0 = '0;
+    RX_PB_WM[6][3].reserved0 = '0;
+    RX_PB_WM[6][4].reserved0 = '0;
+    RX_PB_WM[6][5].reserved0 = '0;
+    RX_PB_WM[6][6].reserved0 = '0;
+    RX_PB_WM[6][7].reserved0 = '0;
+    RX_PB_WM[7][0].reserved0 = '0;
+    RX_PB_WM[7][1].reserved0 = '0;
+    RX_PB_WM[7][2].reserved0 = '0;
+    RX_PB_WM[7][3].reserved0 = '0;
+    RX_PB_WM[7][4].reserved0 = '0;
+    RX_PB_WM[7][5].reserved0 = '0;
+    RX_PB_WM[7][6].reserved0 = '0;
+    RX_PB_WM[7][7].reserved0 = '0;
+    RX_PB_WM[8][0].reserved0 = '0;
+    RX_PB_WM[8][1].reserved0 = '0;
+    RX_PB_WM[8][2].reserved0 = '0;
+    RX_PB_WM[8][3].reserved0 = '0;
+    RX_PB_WM[8][4].reserved0 = '0;
+    RX_PB_WM[8][5].reserved0 = '0;
+    RX_PB_WM[8][6].reserved0 = '0;
+    RX_PB_WM[8][7].reserved0 = '0;
+    RX_PB_WM[9][0].reserved0 = '0;
+    RX_PB_WM[9][1].reserved0 = '0;
+    RX_PB_WM[9][2].reserved0 = '0;
+    RX_PB_WM[9][3].reserved0 = '0;
+    RX_PB_WM[9][4].reserved0 = '0;
+    RX_PB_WM[9][5].reserved0 = '0;
+    RX_PB_WM[9][6].reserved0 = '0;
+    RX_PB_WM[9][7].reserved0 = '0;
+    RX_PB_WM[10][0].reserved0 = '0;
+    RX_PB_WM[10][1].reserved0 = '0;
+    RX_PB_WM[10][2].reserved0 = '0;
+    RX_PB_WM[10][3].reserved0 = '0;
+    RX_PB_WM[10][4].reserved0 = '0;
+    RX_PB_WM[10][5].reserved0 = '0;
+    RX_PB_WM[10][6].reserved0 = '0;
+    RX_PB_WM[10][7].reserved0 = '0;
+    RX_PB_WM[11][0].reserved0 = '0;
+    RX_PB_WM[11][1].reserved0 = '0;
+    RX_PB_WM[11][2].reserved0 = '0;
+    RX_PB_WM[11][3].reserved0 = '0;
+    RX_PB_WM[11][4].reserved0 = '0;
+    RX_PB_WM[11][5].reserved0 = '0;
+    RX_PB_WM[11][6].reserved0 = '0;
+    RX_PB_WM[11][7].reserved0 = '0;
+    RX_PB_WM[12][0].reserved0 = '0;
+    RX_PB_WM[12][1].reserved0 = '0;
+    RX_PB_WM[12][2].reserved0 = '0;
+    RX_PB_WM[12][3].reserved0 = '0;
+    RX_PB_WM[12][4].reserved0 = '0;
+    RX_PB_WM[12][5].reserved0 = '0;
+    RX_PB_WM[12][6].reserved0 = '0;
+    RX_PB_WM[12][7].reserved0 = '0;
+    RX_PB_WM[13][0].reserved0 = '0;
+    RX_PB_WM[13][1].reserved0 = '0;
+    RX_PB_WM[13][2].reserved0 = '0;
+    RX_PB_WM[13][3].reserved0 = '0;
+    RX_PB_WM[13][4].reserved0 = '0;
+    RX_PB_WM[13][5].reserved0 = '0;
+    RX_PB_WM[13][6].reserved0 = '0;
+    RX_PB_WM[13][7].reserved0 = '0;
+    RX_PB_WM[14][0].reserved0 = '0;
+    RX_PB_WM[14][1].reserved0 = '0;
+    RX_PB_WM[14][2].reserved0 = '0;
+    RX_PB_WM[14][3].reserved0 = '0;
+    RX_PB_WM[14][4].reserved0 = '0;
+    RX_PB_WM[14][5].reserved0 = '0;
+    RX_PB_WM[14][6].reserved0 = '0;
+    RX_PB_WM[14][7].reserved0 = '0;
+    RX_PB_WM[15][0].reserved0 = '0;
+    RX_PB_WM[15][1].reserved0 = '0;
+    RX_PB_WM[15][2].reserved0 = '0;
+    RX_PB_WM[15][3].reserved0 = '0;
+    RX_PB_WM[15][4].reserved0 = '0;
+    RX_PB_WM[15][5].reserved0 = '0;
+    RX_PB_WM[15][6].reserved0 = '0;
+    RX_PB_WM[15][7].reserved0 = '0;
+    RX_PB_WM[16][0].reserved0 = '0;
+    RX_PB_WM[16][1].reserved0 = '0;
+    RX_PB_WM[16][2].reserved0 = '0;
+    RX_PB_WM[16][3].reserved0 = '0;
+    RX_PB_WM[16][4].reserved0 = '0;
+    RX_PB_WM[16][5].reserved0 = '0;
+    RX_PB_WM[16][6].reserved0 = '0;
+    RX_PB_WM[16][7].reserved0 = '0;
 end
 
 // end register RSVD init section }
