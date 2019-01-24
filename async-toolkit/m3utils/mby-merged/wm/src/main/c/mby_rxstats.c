@@ -295,7 +295,7 @@ void RxStats
     out->IS_TIMEOUT        = in->IS_TIMEOUT;
     out->L2_DMAC           = in->L2_DMAC;
     out->L2_EVID1          = in->L2_EVID1;
-    out->MARK_ROUTED       = in->MARK_ROUTED;
+    out->ROUTED            = in->ROUTED;
     out->MIRTYP            = in->MIRTYP;
     out->MOD_IDX           = in->MOD_IDX;
     out->MOD_PROF_IDX      = in->MOD_PROF_IDX;

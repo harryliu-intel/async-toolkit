@@ -89,7 +89,7 @@ static fm_bool nexthop_test_verify
         if (nexthopToMaskGen->IDGLORT != test_data_out->dglort)
             return FALSE;
 
-        if (nexthopToMaskGen->MARK_ROUTED != FALSE)
+        if (nexthopToMaskGen->ROUTED != FALSE)
             return FALSE;
     }
     else
@@ -105,7 +105,7 @@ static fm_bool nexthop_test_verify
                 return FALSE;
         }
 
-        if (nexthopToMaskGen->MARK_ROUTED != test_data_out->routed)
+        if (nexthopToMaskGen->ROUTED != test_data_out->routed)
             return FALSE;
 
         if (nexthopToMaskGen->L2_EDOMAIN != test_data_out->l2_domain)

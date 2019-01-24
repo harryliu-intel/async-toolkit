@@ -10,6 +10,7 @@ $hdl_spec = {
     -vlog_files => [
          # these are addded to resolve dependencies that are missing from collage generated code
 	 "subBlock/mbyc/src/shared/rtl/mby_gmm_pkg.sv",
+	 "subBlock/mbyc/src/shared/rtl/mby_msh_pkg.sv",
      ],
 	
 	# List of verilog library src dirs ( corresponds with the VLOG '-y' parameter)

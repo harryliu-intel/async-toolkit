@@ -6,11 +6,14 @@
 $hdl_spec = {
     # List of specific VERILOG source files
     -vlog_files => [
+         "src/shared/rtl/shared_pkg.sv",
+         "src/shared/rtl/mby_msh_pkg.sv",
+         "src/shared/rtl/mby_egr_pkg.sv",
          "verif/lib/mby_mgp_bfm/mby_mgp_bfm_pkg.sv",
-         "verif/lib/mby_mgp_bfm/mby_mgp_mim_req_if.sv",
-         "verif/lib/mby_mgp_bfm/mby_mgp_mim_rsp_if.sv",
-         "verif/lib/mby_mgp_bfm/mby_gmm_mig_op_if.sv",
-         "verif/lib/mby_mgp_bfm/mby_gmm_mig_data_if.sv",
+         "verif/lib/mby_mgp_bfm/mby_mgp_rreq_if.sv",
+         "verif/lib/mby_mgp_bfm/mby_mgp_rsp_if.sv",
+         "verif/lib/mby_mgp_bfm/mby_mgp_wreq_if.sv",
+         "verif/lib/mby_mgp_bfm/mby_mgp_data_if.sv",
      ],
 
     # List of verilog library source dirs ( corresponds with the VLOG '-y' parameter)
