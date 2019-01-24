@@ -197,14 +197,14 @@ CRn mby_mpp_5/mpp_gpolring_update_out_*    mby_mpp_4/mpp_gpolring_update_in_*   
 ### Write ports
 C mby_mpp_$mppindx/mim${mimrowindx}_wr${port}_msh_wreq                          mby_msh_0/i_igr_${mshsidestr}_wreq[$mshrowindx][$port]
 C mby_mpp_$mppindx/mim${mimrowindx}_wr${port}_msh_wr_data                       mby_msh_0/i_igr_${mshsidestr}_wr_data[$mshrowindx][$port]
-C mby_msh_0/o_igr_${mshsidestr}_wr_lat_sat[$mshrowindx][$port]                  mby_mpp_$mppindx/mim${mimrowindx}_wr${port}_wr_lat_sat
+C mby_msh_0/o_igr_${mshsidestr}_wr_lat_sat[$mshrowindx][$port]                  mby_mpp_$mppindx/mim${mimrowindx}_wr${port}_msh_wr_lat_sat
 C mby_msh_0/o_igr_crdt_rtn_for_${mshsidestr}_wreq[$mshrowindx][$port]           mby_mpp_$mppindx/mim${mimrowindx}_wr${port}_msh_crdt_rtn_for_wreq
 C mby_msh_0/o_igr_mcast_crdt_rtn_for_${mshsidestr}_wreq[$mshrowindx][$port]     mby_mpp_$mppindx/mim${mimrowindx}_wr${port}_msh_mcast_crdt_rtn_for_wreq
 ### Read Request ports
 C mby_mpp_$mppindx/mim${mimrowindx}_rd${port}_msh_rreq                          mby_msh_0/i_egr_${mshsidestr}_rreq[$mshrowindx][$port]
-C mby_msh_0/o_egr_${mshsidestr}_rd_lat_sat[$mshrowindx][$port]                  mby_mpp_$mppindx/mim${mimrowindx}_wr${port}_rd_lat_sat
-C mby_msh_0/o_egr_crdt_rtn_for_${mshsidestr}_rreq[$mshrowindx][$port]           mby_mpp_$mppindx/mim${mimrowindx}_wr${port}_msh_crdt_rtn_for_rreq
-C mby_msh_0/o_egr_mcast_crdt_rtn_for_${mshsidestr}_rreq[$mshrowindx][$port]     mby_mpp_$mppindx/mim${mimrowindx}_wr${port}_msh_mcast_crdt_rtn_for_rreq
+C mby_msh_0/o_egr_${mshsidestr}_rd_lat_sat[$mshrowindx][$port]                  mby_mpp_$mppindx/mim${mimrowindx}_rd${port}_msh_rd_lat_sat
+C mby_msh_0/o_egr_crdt_rtn_for_${mshsidestr}_rreq[$mshrowindx][$port]           mby_mpp_$mppindx/mim${mimrowindx}_rd${port}_msh_crdt_rtn_for_rreq
+C mby_msh_0/o_egr_mcast_crdt_rtn_for_${mshsidestr}_rreq[$mshrowindx][$port]     mby_mpp_$mppindx/mim${mimrowindx}_rd${port}_msh_mcast_crdt_rtn_for_rreq
 ### Read Response ports
 C mby_mpp_$mppindx/mim${mimrowindx}_rd${port}_msh_crdt_rtn_for_rrsp             mby_msh_0/i_egr_crdt_rtn_for_${mshsidestr}_rrsp[$mshrowindx][$port]           
 C mby_mpp_$mppindx/mim${mimrowindx}_rd${port}_msh_mcast_crdt_rtn_for_rrsp       mby_msh_0/i_egr_mcast_crdt_rtn_for_${mshsidestr}_rrsp[$mshrowindx][$port]           
