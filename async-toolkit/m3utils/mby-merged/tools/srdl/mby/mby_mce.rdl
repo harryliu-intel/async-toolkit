@@ -1,3 +1,8 @@
+<% if ($MBY_MCE) {
+   } else {
+   $MBY_MCE = 1;
+%>
+
 <% use security; %>
 <% my %Security_Props = security::GetSecurityInfo(); %>
 
@@ -81,7 +86,9 @@ reg mce_control_reg_0 {
 // RdData Register[0..8] = Total 258 bits,bit 257 = parity bit, 256:0 = Port bits
 
 
-
+<%
+   }
+%>
 
 
  

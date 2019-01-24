@@ -28,9 +28,11 @@ class mby_mgp_bfm extends uvm_component;
    
    mby_mgp_bfm_cfg  bfm_cfg;
 
-   virtual mby_mgp_mim_req_if rdreq_vif;
-   virtual mby_mgp_mim_req_if wrreq_vif;
-   virtual mby_mgp_mim_rsp_if rsp_vif;
+   virtual mby_mgp_rreq_if rdreq_vif;
+   virtual mby_mgp_wreq_if wrreq_vif;
+   virtual mby_mgp_rsp_if  rsp_vif;
+   virtual mby_mgp_data_if rddata_vif;
+   virtual mby_mgp_data_if wrdata_vif;
 
    int 	   port_idx;
    
@@ -42,9 +44,12 @@ class mby_mgp_bfm extends uvm_component;
    extern virtual function void start();
    extern virtual task run_phase(uvm_phase phase);
    extern virtual function void assign_cfg(mby_mgp_bfm_cfg bfm_cfg);
-   extern virtual function void assign_vi(virtual mby_mgp_mim_req_if rreq_if, 
-                                          virtual mby_mgp_mim_req_if wreq_if, 
-                                          virtual mby_mgp_mim_rsp_if rsp_if );
+   extern virtual function void assign_vi(virtual mby_mgp_rreq_if rreq_if, 
+                                          virtual mby_mgp_wreq_if wreq_if,
+					  virtual mby_mgp_data_if wrdata_if,
+                                          virtual mby_mgp_rsp_if  rsp_if,
+                                          virtual mby_mgp_data_if rddata_if 
+                                          );
    
 
 endclass 
@@ -91,29 +96,37 @@ function void mby_mgp_bfm::build_phase(uvm_phase phase);
       rdreq_io[idx]      = mby_mgp_mem_crdt_io::type_id::create($sformatf("rdreq_io%0d", idx), this);
       rdrsp_io[idx]      = mby_mgp_mem_crdt_io::type_id::create($sformatf("rdrsp_io%0d", idx), this);
       wrreq_io[idx]      = mby_mgp_mem_crdt_io::type_id::create($sformatf("wrreq_io%0d", idx), this);
-      rdreq_io[idx].port_idx  = port_idx;
+      
       rdreq_io[idx].req_type  = RDREQ;
       rdreq_io[idx].port_num  = idx;
+      rdreq_io[idx].port_idx  = port_idx;
    
-      rdreq_io[idx].rdreq_vif = rdreq_vif;
-      rdreq_io[idx].wrreq_vif = wrreq_vif;
-      rdreq_io[idx].rsp_vif   = rsp_vif;
+      rdreq_io[idx].rdreq_vif  = rdreq_vif;
+      rdreq_io[idx].wrreq_vif  = wrreq_vif;
+      rdreq_io[idx].rsp_vif    = rsp_vif;
+      rdreq_io[idx].rddata_vif = rddata_vif;
+      rdreq_io[idx].wrdata_vif = wrdata_vif;
 
       wrreq_io[idx].req_type  = WRREQ;
-   
       wrreq_io[idx].port_idx  = port_idx;
       wrreq_io[idx].port_num  = idx;
-      wrreq_io[idx].rdreq_vif = rdreq_vif;
-      wrreq_io[idx].wrreq_vif = wrreq_vif;
-      wrreq_io[idx].rsp_vif   = rsp_vif;
-
+      
+      wrreq_io[idx].rdreq_vif  = rdreq_vif;
+      wrreq_io[idx].wrreq_vif  = wrreq_vif;
+      wrreq_io[idx].rsp_vif    = rsp_vif;
+      wrreq_io[idx].rddata_vif = rddata_vif;
+      wrreq_io[idx].wrdata_vif = wrdata_vif;
 
       rdrsp_io[idx].req_type  = RDRSP;
       rdrsp_io[idx].port_num  = idx;
       rdrsp_io[idx].port_idx  = port_idx;
-      rdrsp_io[idx].rdreq_vif = rdreq_vif;
-      rdrsp_io[idx].rsp_vif   = rsp_vif;
-      rdrsp_io[idx].wrreq_vif = wrreq_vif;
+      
+      rdrsp_io[idx].rdreq_vif  = rdreq_vif;
+      rdrsp_io[idx].rsp_vif    = rsp_vif;
+      rdrsp_io[idx].wrreq_vif  = wrreq_vif;
+      rdrsp_io[idx].rddata_vif = rddata_vif;
+      rdrsp_io[idx].wrdata_vif = wrdata_vif;
+      
    end
    //
    // Build read, write and response agents and assign configs.
@@ -178,12 +191,18 @@ endfunction
 //----------------------------------------------------------------------------------------
 // Method: assign_vi
 //----------------------------------------------------------------------------------------
-function void mby_mgp_bfm::assign_vi(virtual mby_mgp_mim_req_if rreq_if, virtual mby_mgp_mim_req_if wreq_if, virtual mby_mgp_mim_rsp_if rsp_if);
+function void mby_mgp_bfm::assign_vi(virtual mby_mgp_rreq_if rreq_if, 
+                                     virtual mby_mgp_wreq_if wreq_if,
+				     virtual mby_mgp_data_if wrdata_if,
+                                     virtual mby_mgp_rsp_if  rsp_if,
+                                     virtual mby_mgp_data_if rddata_if 
+                                     );
       
-   rdreq_vif = rreq_if;
-   wrreq_vif = wreq_if;
-   rsp_vif   = rsp_if;
- 
+   rdreq_vif  = rreq_if;
+   wrreq_vif  = wreq_if;
+   rsp_vif    = rsp_if;
+   rddata_vif = rddata_if;
+   wrdata_vif = wrdata_if;
    
 endfunction : assign_vi
 

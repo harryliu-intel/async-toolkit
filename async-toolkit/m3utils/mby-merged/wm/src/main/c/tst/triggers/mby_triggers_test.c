@@ -25,7 +25,7 @@
 #define MASK_GEN_L2_EVID1                 0x7
 #define MASK_GEN_L2_SMAC                  101010101
 #define MASK_GEN_LEARNING_ENABLED         0x1
-#define MASK_GEN_MARK_ROUTED              0x1
+#define MASK_GEN_ROUTED                   0x1
 #define MASK_GEN_PRE_RESOLVE_ACTION       0x1
 #define MASK_GEN_PRE_RESOLVE_DGLORT       0x400
 #define MASK_GEN_DMASK_0                  0x4
@@ -332,7 +332,7 @@ static void initMbyTrigInputs
     msg2trig->L2_EVID1                 = MASK_GEN_L2_EVID1;
     msg2trig->L2_SMAC                  = MASK_GEN_L2_SMAC;
     msg2trig->LEARNING_ENABLED         = MASK_GEN_LEARNING_ENABLED;
-    msg2trig->MARK_ROUTED              = MASK_GEN_MARK_ROUTED;
+    msg2trig->ROUTED                   = MASK_GEN_ROUTED;
     msg2trig->PRE_RESOLVE_ACTION       = MASK_GEN_PRE_RESOLVE_ACTION;
     msg2trig->PRE_RESOLVE_DGLORT       = MASK_GEN_PRE_RESOLVE_DGLORT;
     msg2trig->DMASK[0]                 = MASK_GEN_DMASK_0;
@@ -560,7 +560,7 @@ static void maskgen_update_test_setup
     maskGenToTriggers->L2_SMAC                = test_in->l2_smac;
     maskGenToTriggers->LEARNING_ENABLED       = test_in->learning_enabled;
     maskGenToTriggers->LOG_AMASK              = test_in->log_amask;
-    maskGenToTriggers->MARK_ROUTED            = test_in->mark_routed;
+    maskGenToTriggers->ROUTED                 = test_in->routed;
     maskGenToTriggers->RX_PORT                = test_in->rx_port;
     maskGenToTriggers->TARGETED_DETERMINISTIC = test_in->targeted_deterministic;
 

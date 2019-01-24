@@ -33,6 +33,13 @@
 // intel_end_of_header
 // ##########################################################################
 
+
+<% if ($GDR_RSFEC_CORE) {
+   } else {
+   $GDR_RSFEC_CORE = 1;
+%>
+
+
 // User defined properties --------------------------------------------------
 // Describe indexing of tables. Syntax of the string is the same as the desc
 // property.
@@ -734,3 +741,7 @@ addrmap gdr_rsfec_core_block {
 
 
 default roots = "gdr_rsfec_core_block";
+
+<%
+   }
+%>

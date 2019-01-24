@@ -1,5 +1,10 @@
 // DEPRECATED - This storage is now in the mesh.
 
+<% if ($MBY_LOCAL_STORE) {
+   } else {
+   $MBY_LOCAL_STORE = 1;
+%>
+
 <% use security; %>
 <% my %Security_Props = security::GetSecurityInfo(); %>
 
@@ -42,3 +47,7 @@ addrmap mby_local_store_map {
 
   local_store_rf    LOCAL_STORE[49152];
 }; 
+
+<%
+   }
+%>

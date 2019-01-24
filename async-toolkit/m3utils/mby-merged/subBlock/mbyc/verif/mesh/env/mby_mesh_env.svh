@@ -51,12 +51,26 @@ class mby_mesh_env extends shdv_base_env;
    virtual   mby_mesh_tb_if                                tb_vif;
 
    // Interface handle to request/response buses.
-   virtual   mby_mgp_mim_req_if                            rreq_wb_if;
-   virtual   mby_mgp_mim_req_if                            rreq_eb_if;
-   virtual   mby_mgp_mim_req_if                            wreq_wb_if;
-   virtual   mby_mgp_mim_req_if                            wreq_eb_if;
-   virtual   mby_mgp_mim_rsp_if                            rsp_wb_if;
-   virtual   mby_mgp_mim_rsp_if                            rsp_eb_if;
+   virtual   mby_mgp_rreq_if  rreq_wb_if;
+   virtual   mby_mgp_rreq_if  rreq_eb_if;
+   virtual   mby_mgp_wreq_if  wreq_wb_if;
+   virtual   mby_mgp_wreq_if  wreq_eb_if;
+   virtual   mby_mgp_rsp_if   rsp_wb_if;
+   virtual   mby_mgp_rsp_if   rsp_eb_if;
+   virtual   mby_mgp_rreq_if  rreq_sb_if;
+   virtual   mby_mgp_rreq_if  rreq_nb_if;
+   virtual   mby_mgp_wreq_if  wreq_sb_if;
+   virtual   mby_mgp_wreq_if  wreq_nb_if;
+   virtual   mby_mgp_rsp_if   rsp_sb_if;
+   virtual   mby_mgp_rsp_if   rsp_nb_if;
+   virtual   mby_mgp_data_if  wrdata_wb_if;
+   virtual   mby_mgp_data_if  wrdata_eb_if;
+   virtual   mby_mgp_data_if  wrdata_sb_if;
+   virtual   mby_mgp_data_if  wrdata_nb_if;
+   virtual   mby_mgp_data_if  rddata_wb_if;
+   virtual   mby_mgp_data_if  rddata_eb_if;
+   virtual   mby_mgp_data_if  rddata_sb_if;
+   virtual   mby_mgp_data_if  rddata_nb_if;
 
    // MGP Bfm instantiations
 
@@ -148,27 +162,75 @@ class mby_mesh_env extends shdv_base_env;
       //
       // TB-DUT requests/response interface
       //
-      if(!uvm_config_db#(virtual mby_mgp_mim_req_if)::get(this, "", "rd_eb", rreq_eb_if)) begin
+      if(!uvm_config_db#(virtual mby_mgp_rreq_if)::get(this, "", "rd_eb", rreq_eb_if)) begin
          `uvm_fatal(get_name(),"Config_DB.get() for RD EB Mesh Interface was not successful!")
       end
-      if(!uvm_config_db#(virtual mby_mgp_mim_req_if)::get(this, "", "rd_wb", rreq_wb_if)) begin
+      if(!uvm_config_db#(virtual mby_mgp_rreq_if)::get(this, "", "rd_wb", rreq_wb_if)) begin
          `uvm_fatal(get_name(),"Config_DB.get() for RD WB Mesh Interface was not successful!")
       end
  
-      if(!uvm_config_db#(virtual mby_mgp_mim_req_if)::get(this, "", "wr_eb", wreq_eb_if)) begin
+      if(!uvm_config_db#(virtual mby_mgp_wreq_if)::get(this, "", "wr_eb", wreq_eb_if)) begin
          `uvm_fatal(get_name(),"Config_DB.get() for WR EB Mesh Interface was not successful!")
       end
-      if(!uvm_config_db#(virtual mby_mgp_mim_req_if)::get(this, "", "wr_wb", wreq_wb_if)) begin
+      if(!uvm_config_db#(virtual mby_mgp_wreq_if)::get(this, "", "wr_wb", wreq_wb_if)) begin
          `uvm_fatal(get_name(),"Config_DB.get() for WR WB Mesh Interface was not successful!")
       end
 
-      if(!uvm_config_db#(virtual mby_mgp_mim_rsp_if)::get(this, "", "rp_eb", rsp_eb_if)) begin
+      if(!uvm_config_db#(virtual mby_mgp_rsp_if)::get(this, "", "rp_eb", rsp_eb_if)) begin
          `uvm_fatal(get_name(),"Config_DB.get() for RSP EB Mesh Interface was not successful!")
       end
-      if(!uvm_config_db#(virtual mby_mgp_mim_rsp_if)::get(this, "", "rp_wb", rsp_wb_if)) begin
+      if(!uvm_config_db#(virtual mby_mgp_rsp_if)::get(this, "", "rp_wb", rsp_wb_if)) begin
          `uvm_fatal(get_name(),"Config_DB.get() for RSP WB Mesh Interface was not successful!")
       end
 
+      if(!uvm_config_db#(virtual mby_mgp_rreq_if)::get(this, "", "rd_sb", rreq_sb_if)) begin
+         `uvm_fatal(get_name(),"Config_DB.get() for RD EB Mesh Interface was not successful!")
+      end
+      if(!uvm_config_db#(virtual mby_mgp_rreq_if)::get(this, "", "rd_nb", rreq_nb_if)) begin
+         `uvm_fatal(get_name(),"Config_DB.get() for RD WB Mesh Interface was not successful!")
+      end
+ 
+      if(!uvm_config_db#(virtual mby_mgp_wreq_if)::get(this, "", "wr_sb", wreq_sb_if)) begin
+         `uvm_fatal(get_name(),"Config_DB.get() for WR EB Mesh Interface was not successful!")
+      end
+      if(!uvm_config_db#(virtual mby_mgp_wreq_if)::get(this, "", "wr_nb", wreq_nb_if)) begin
+         `uvm_fatal(get_name(),"Config_DB.get() for WR WB Mesh Interface was not successful!")
+      end
+
+      if(!uvm_config_db#(virtual mby_mgp_rsp_if)::get(this, "", "rp_sb", rsp_sb_if)) begin
+         `uvm_fatal(get_name(),"Config_DB.get() for RSP EB Mesh Interface was not successful!")
+      end
+      if(!uvm_config_db#(virtual mby_mgp_rsp_if)::get(this, "", "rp_nb", rsp_nb_if)) begin
+         `uvm_fatal(get_name(),"Config_DB.get() for RSP WB Mesh Interface was not successful!")
+      end
+
+      if(!uvm_config_db#(virtual mby_mgp_data_if)::get(this, "", "rddata_sb", rddata_sb_if)) begin
+         `uvm_fatal(get_name(),"Config_DB.get() for RD EB Mesh Interface was not successful!")
+      end
+      if(!uvm_config_db#(virtual mby_mgp_data_if)::get(this, "", "rddata_nb", rddata_nb_if)) begin
+         `uvm_fatal(get_name(),"Config_DB.get() for RD WB Mesh Interface was not successful!")
+      end
+ 
+      if(!uvm_config_db#(virtual mby_mgp_data_if)::get(this, "", "wrdata_sb", wrdata_sb_if)) begin
+         `uvm_fatal(get_name(),"Config_DB.get() for WR EB Mesh Interface was not successful!")
+      end
+      if(!uvm_config_db#(virtual mby_mgp_data_if)::get(this, "", "wrdata_nb", wrdata_nb_if)) begin
+         `uvm_fatal(get_name(),"Config_DB.get() for WR WB Mesh Interface was not successful!")
+      end
+
+      if(!uvm_config_db#(virtual mby_mgp_data_if)::get(this, "", "rddata_eb", rddata_eb_if)) begin
+         `uvm_fatal(get_name(),"Config_DB.get() for RSP EB Mesh Interface was not successful!")
+      end
+      if(!uvm_config_db#(virtual mby_mgp_data_if)::get(this, "", "rddata_wb", rddata_wb_if)) begin
+         `uvm_fatal(get_name(),"Config_DB.get() for RSP WB Mesh Interface was not successful!")
+      end
+
+      if(!uvm_config_db#(virtual mby_mgp_data_if)::get(this, "", "wrdata_eb", wrdata_eb_if)) begin
+         `uvm_fatal(get_name(),"Config_DB.get() for WR EB Mesh Interface was not successful!")
+      end
+      if(!uvm_config_db#(virtual mby_mgp_data_if)::get(this, "", "wrdata_wb", wrdata_wb_if)) begin
+         `uvm_fatal(get_name(),"Config_DB.get() for WR WB Mesh Interface was not successful!")
+      end
       build_mgp_bfm();
       build_ral();
    endfunction: build_phase
@@ -184,30 +246,28 @@ class mby_mesh_env extends shdv_base_env;
       //
       for (int idx = 0; idx < mby_mgp_bfm_pkg::NUM_MSH_ROWS; idx++) begin
 	 
-         eb_mgp_bfm[idx] = mby_mgp_bfm_pkg::mby_mgp_bfm::type_id::create($sformatf("eb_mgp_bfm%0d", idx), this);
-	 wb_mgp_bfm[idx] = mby_mgp_bfm_pkg::mby_mgp_bfm::type_id::create($sformatf("wb_mgp_bfm%0d", idx), this);
+         eb_mgp_bfm[idx] = mby_mgp_bfm_pkg::mby_mgp_bfm::type_id::create($sformatf("eb_mgp_bfm%0d", idx),  this);
+	 wb_mgp_bfm[idx] = mby_mgp_bfm_pkg::mby_mgp_bfm::type_id::create($sformatf("wb_mgp_bfm", idx), this);
          eb_mgp_bfm[idx].port_idx  = idx;
 	 wb_mgp_bfm[idx].port_idx  = idx;
 
 	 eb_mgp_bfm[idx].assign_cfg(tb_cfg.env_cfg.eb_bfm_cfg);
-	 eb_mgp_bfm[idx].assign_vi(rreq_eb_if, wreq_eb_if, rsp_wb_if);
+	 eb_mgp_bfm[idx].assign_vi(rreq_eb_if, wreq_eb_if, wrdata_eb_if, rsp_wb_if, rddata_wb_if);
 	 wb_mgp_bfm[idx].assign_cfg(tb_cfg.env_cfg.wb_bfm_cfg);
-	 wb_mgp_bfm[idx].assign_vi(rreq_wb_if, wreq_wb_if, rsp_eb_if);
+	 wb_mgp_bfm[idx].assign_vi(rreq_wb_if, wreq_wb_if, wrdata_wb_if, rsp_eb_if, rddata_eb_if);
 
       end 
-      // TODO : NB, SB Bfm build.
-/*
-      for (int idx = 0; idx < mby_mgp_bfm_pkg::NUM_MSH_COLS; idx++) begin
-         sb_mgp_bfm[idx] = mby_mgp_bfm_pkg::mby_mgp_bfm::type_id::create($sformatf("sb_mgp_bfm%0d", idx), this);
-	 nb_mgp_bfm[idx] = mby_mgp_bfm_pkg::mby_mgp_bfm::type_id::create($sformatf("nb_mgp_bfm%0d", idx), this);
+ 
+      sb_mgp_bfm = mby_mgp_bfm_pkg::mby_mgp_bfm::type_id::create("sb_mgp_bfm", this);
+      nb_mgp_bfm = mby_mgp_bfm_pkg::mby_mgp_bfm::type_id::create("nb_mgp_bfm", this);
 
-	 sb_mgp_bfm[idx].assign_cfg(tb_cfg.env_cfg.bfm_cfg);
-	 sb_mgp_bfm[idx].assign_vi(mby_gmm_mig_rd_op_sb_if, mby_gmm_mig_rsp_op_sb_if, mby_gmm_mig_wr_op_sb_if, mby_gmm_mig_rsp_data_sb_if, mby_gmm_mig_wr_data_sb_if);
+      sb_mgp_bfm.assign_cfg(tb_cfg.env_cfg.sb_bfm_cfg);
+      sb_mgp_bfm.assign_vi(rreq_sb_if, wreq_sb_if, wrdata_sb_if, rsp_nb_if, rddata_nb_if);
 
-	 nb_mgp_bfm[idx].assign_cfg(tb_cfg.env_cfg.bfm_cfg);
-	 nb_mgp_bfm[idx].assign_vi(mby_gmm_mig_rd_op_nb_if, mby_gmm_mig_rsp_op_nb_if, mby_gmm_mig_wr_op_nb_if, mby_gmm_mig_rsp_data_nb_if, mby_gmm_mig_wr_data_nb_if);
+      nb_mgp_bfm.assign_cfg(tb_cfg.env_cfg.nb_bfm_cfg);
+      nb_mgp_bfm.assign_vi(rreq_nb_if, wreq_nb_if, wrdata_nb_if, rsp_sb_if, rddata_sb_if);
 	 
-      end */
+
    endfunction: build_mgp_bfm
    
    //---------------------------------------------------------------------------

@@ -32,6 +32,5 @@ $LOGICROOT/mim/rtl/mby_mim_rdreq.sv
 $LOGICROOT/mim/rtl/mby_mim_rdrsp_cdc.sv   
 $LOGICROOT/mim/rtl/mby_mim_rdrsp.sv   
 $LOGICROOT/mim/rtl/mby_mim.sv   
-$LOGICROOT/mim/rtl/mby_mig.sv   
 
 

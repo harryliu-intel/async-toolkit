@@ -136,21 +136,21 @@ class inp_driver;
 //
 //
 //
-            dut_if.i_igr_eb_wreq_valid    [0][0]  = drvr_wr_req_to_dut_vld_p1;
-            dut_if.i_igr_eb_wr_seg_ptr    [0][0]  = drvr_wr_req_to_dut_p1;
-            dut_if.i_igr_eb_wr_sema       [0][0]  = '0;
-            dut_if.i_igr_eb_wr_wd_sel     [0][0]  = '0;
-            dut_if.i_igr_eb_wreq_id       [0][0]  = '0;
-            dut_if.i_igr_eb_wr_data       [0][0]  = drvr_wr_data_to_dut_p1;
+//            dut_if.i_igr_eb_wreq_valid    [0][0]  = drvr_wr_req_to_dut_vld_p1;
+//            dut_if.i_igr_eb_wr_seg_ptr    [0][0]  = drvr_wr_req_to_dut_p1;
+//            dut_if.i_igr_eb_wr_sema       [0][0]  = '0;
+//            dut_if.i_igr_eb_wr_wd_sel     [0][0]  = '0;
+//            dut_if.i_igr_eb_wreq_id       [0][0]  = '0;
+//            dut_if.i_igr_eb_wr_data       [0][0]  = drvr_wr_data_to_dut_p1;
            
    
     // East Side Write Ports
-            dut_if.i_igr_wb_wreq_valid    [0][0]  = '0;
-            dut_if.i_igr_wb_wr_seg_ptr    [0][0]  = '0;
-            dut_if.i_igr_wb_wr_sema       [0][0]  = '0;
-            dut_if.i_igr_wb_wr_wd_sel     [0][0]  = '0;
-            dut_if.i_igr_wb_wreq_id       [0][0]  = '0;
-            dut_if.i_igr_wb_wr_data       [0][0]  = '0;
+//            dut_if.i_igr_wb_wreq_valid    [0][0]  = '0;
+//            dut_if.i_igr_wb_wr_seg_ptr    [0][0]  = '0;
+//            dut_if.i_igr_wb_wr_sema       [0][0]  = '0;
+//            dut_if.i_igr_wb_wr_wd_sel     [0][0]  = '0;
+//            dut_if.i_igr_wb_wreq_id       [0][0]  = '0;
+//            dut_if.i_igr_wb_wr_data       [0][0]  = '0;
 
     
     //////////////////////////////
@@ -158,38 +158,38 @@ class inp_driver;
     //////////////////////////////
 
     // West Side Read Request Ports 
-            dut_if.i_egr_eb_rreq_valid    [0][0]  = drvr_rd_req_to_dut_vld_p1;
-            dut_if.i_egr_eb_seg_ptr       [0][0]  = drvr_rd_req_to_dut_p1;
-            dut_if.i_egr_eb_sema          [0][0]  = '0;
-            dut_if.i_egr_eb_wd_sel        [0][0]  = '0;
-            dut_if.i_egr_eb_req_id        [0][0]  = '0;
+//            dut_if.i_egr_eb_rreq_valid    [0][0]  = drvr_rd_req_to_dut_vld_p1;
+//            dut_if.i_egr_eb_seg_ptr       [0][0]  = drvr_rd_req_to_dut_p1;
+//            dut_if.i_egr_eb_sema          [0][0]  = '0;
+//            dut_if.i_egr_eb_wd_sel        [0][0]  = '0;
+//            dut_if.i_egr_eb_req_id        [0][0]  = '0;
     
         
     // East Side Read Request Ports 
-            dut_if.i_egr_wb_rreq_valid    [0][0]  = '0;
-            dut_if.i_egr_wb_seg_ptr       [0][0]  = '0;
-            dut_if.i_egr_wb_sema          [0][0]  = '0;
-            dut_if.i_egr_wb_wd_sel        [0][0]  = '0;
-            dut_if.i_egr_wb_req_id        [0][0]  = '0;
+//            dut_if.i_egr_wb_rreq_valid    [0][0]  = '0;
+//            dut_if.i_egr_wb_seg_ptr       [0][0]  = '0;
+//            dut_if.i_egr_wb_sema          [0][0]  = '0;
+//            dut_if.i_egr_wb_wd_sel        [0][0]  = '0;
+//            dut_if.i_egr_wb_req_id        [0][0]  = '0;
     
 //
 // Port 1
 //
-            dut_if.i_igr_eb_wreq_valid    [0][1]  = '0;
-            dut_if.i_igr_eb_wr_seg_ptr    [0][1]  = '0;
-            dut_if.i_igr_eb_wr_sema       [0][1]  = '0;
-            dut_if.i_igr_eb_wr_wd_sel     [0][1]  = '0;
-            dut_if.i_igr_eb_wreq_id       [0][1]  = '0;
-            dut_if.i_igr_eb_wr_data       [0][1]  = '0;
+//            dut_if.i_igr_eb_wreq_valid    [0][1]  = '0;
+//            dut_if.i_igr_eb_wr_seg_ptr    [0][1]  = '0;
+//            dut_if.i_igr_eb_wr_sema       [0][1]  = '0;
+//            dut_if.i_igr_eb_wr_wd_sel     [0][1]  = '0;
+//            dut_if.i_igr_eb_wreq_id       [0][1]  = '0;
+//            dut_if.i_igr_eb_wr_data       [0][1]  = '0;
            
    
     // East Side Write Ports
-            dut_if.i_igr_wb_wreq_valid    [0][1]  = '0;
-            dut_if.i_igr_wb_wr_seg_ptr    [0][1]  = '0;
-            dut_if.i_igr_wb_wr_sema       [0][1]  = '0;
-            dut_if.i_igr_wb_wr_wd_sel     [0][1]  = '0;
-            dut_if.i_igr_wb_wreq_id       [0][1]  = '0;
-            dut_if.i_igr_wb_wr_data       [0][1]  = '0;
+//            dut_if.i_igr_wb_wreq_valid    [0][1]  = '0;
+//            dut_if.i_igr_wb_wr_seg_ptr    [0][1]  = '0;
+//            dut_if.i_igr_wb_wr_sema       [0][1]  = '0;
+//            dut_if.i_igr_wb_wr_wd_sel     [0][1]  = '0;
+//            dut_if.i_igr_wb_wreq_id       [0][1]  = '0;
+//            dut_if.i_igr_wb_wr_data       [0][1]  = '0;
 
     
     //////////////////////////////
@@ -197,37 +197,37 @@ class inp_driver;
     //////////////////////////////
 
     // West Side Read Request Ports 
-            dut_if.i_egr_eb_rreq_valid    [0][1]  = '0;
-            dut_if.i_egr_eb_seg_ptr       [0][1]  = '0;
-            dut_if.i_egr_eb_sema          [0][1]  = '0;
-            dut_if.i_egr_eb_wd_sel        [0][1]  = '0;
-            dut_if.i_egr_eb_req_id        [0][1]  = '0;
+//            dut_if.i_egr_eb_rreq_valid    [0][1]  = '0;
+//            dut_if.i_egr_eb_seg_ptr       [0][1]  = '0;
+//            dut_if.i_egr_eb_sema          [0][1]  = '0;
+//            dut_if.i_egr_eb_wd_sel        [0][1]  = '0;
+//            dut_if.i_egr_eb_req_id        [0][1]  = '0;
     
         
     // East Side Read Request Ports 
-            dut_if.i_egr_wb_rreq_valid    [0][1]  = '0;
-            dut_if.i_egr_wb_seg_ptr       [0][1]  = '0;
-            dut_if.i_egr_wb_sema          [0][1]  = '0;
-            dut_if.i_egr_wb_wd_sel        [0][1]  = '0;
-            dut_if.i_egr_wb_req_id        [0][1]  = '0;
+//            dut_if.i_egr_wb_rreq_valid    [0][1]  = '0;
+//            dut_if.i_egr_wb_seg_ptr       [0][1]  = '0;
+//            dut_if.i_egr_wb_sema          [0][1]  = '0;
+//            dut_if.i_egr_wb_wd_sel        [0][1]  = '0;
+//            dut_if.i_egr_wb_req_id        [0][1]  = '0;
 //
 // Port 2
 //
-            dut_if.i_igr_eb_wreq_valid    [0][2]  = '0;
-            dut_if.i_igr_eb_wr_seg_ptr    [0][2]  = '0;
-            dut_if.i_igr_eb_wr_sema       [0][2]  = '0;
-            dut_if.i_igr_eb_wr_wd_sel     [0][2]  = '0;
-            dut_if.i_igr_eb_wreq_id       [0][2]  = '0;
-            dut_if.i_igr_eb_wr_data       [0][2]  = '0;
+//            dut_if.i_igr_eb_wreq_valid    [0][2]  = '0;
+//            dut_if.i_igr_eb_wr_seg_ptr    [0][2]  = '0;
+//            dut_if.i_igr_eb_wr_sema       [0][2]  = '0;
+//            dut_if.i_igr_eb_wr_wd_sel     [0][2]  = '0;
+//            dut_if.i_igr_eb_wreq_id       [0][2]  = '0;
+//            dut_if.i_igr_eb_wr_data       [0][2]  = '0;
            
    
     // East Side Write Ports
-            dut_if.i_igr_wb_wreq_valid    [0][2]  = '0;
-            dut_if.i_igr_wb_wr_seg_ptr    [0][2]  = '0;
-            dut_if.i_igr_wb_wr_sema       [0][2]  = '0;
-            dut_if.i_igr_wb_wr_wd_sel     [0][2]  = '0;
-            dut_if.i_igr_wb_wreq_id       [0][2]  = '0;
-            dut_if.i_igr_wb_wr_data       [0][2]  = '0;
+//            dut_if.i_igr_wb_wreq_valid    [0][2]  = '0;
+//            dut_if.i_igr_wb_wr_seg_ptr    [0][2]  = '0;
+//            dut_if.i_igr_wb_wr_sema       [0][2]  = '0;
+//            dut_if.i_igr_wb_wr_wd_sel     [0][2]  = '0;
+//            dut_if.i_igr_wb_wreq_id       [0][2]  = '0;
+//            dut_if.i_igr_wb_wr_data       [0][2]  = '0;
 
     
     //////////////////////////////
@@ -235,39 +235,39 @@ class inp_driver;
     //////////////////////////////
 
     // West Side Read Request Ports 
-            dut_if.i_egr_eb_rreq_valid    [0][2]  = '0;
-            dut_if.i_egr_eb_seg_ptr       [0][2]  = '0;
-            dut_if.i_egr_eb_sema          [0][2]  = '0;
-            dut_if.i_egr_eb_wd_sel        [0][2]  = '0;
-            dut_if.i_egr_eb_req_id        [0][2]  = '0;
+//            dut_if.i_egr_eb_rreq_valid    [0][2]  = '0;
+//            dut_if.i_egr_eb_seg_ptr       [0][2]  = '0;
+//            dut_if.i_egr_eb_sema          [0][2]  = '0;
+//            dut_if.i_egr_eb_wd_sel        [0][2]  = '0;
+//            dut_if.i_egr_eb_req_id        [0][2]  = '0;
     
         
     // East Side Read Request Ports 
-            dut_if.i_egr_wb_rreq_valid    [0][2]  = '0;
-            dut_if.i_egr_wb_seg_ptr       [0][2]  = '0;
-            dut_if.i_egr_wb_sema          [0][2]  = '0;
-            dut_if.i_egr_wb_wd_sel        [0][2]  = '0;
-            dut_if.i_egr_wb_req_id        [0][2]  = '0;
+//            dut_if.i_egr_wb_rreq_valid    [0][2]  = '0;
+//            dut_if.i_egr_wb_seg_ptr       [0][2]  = '0;
+//            dut_if.i_egr_wb_sema          [0][2]  = '0;
+//            dut_if.i_egr_wb_wd_sel        [0][2]  = '0;
+//            dut_if.i_egr_wb_req_id        [0][2]  = '0;
     
 //generate
   for (int gv_row=1; gv_row < NUM_MSH_ROWS; gv_row++) begin : mim_rows
     for (int gv_port=0; gv_port < 3; gv_port++) begin : mim_ports
     // West Side Write Ports
-            dut_if.i_igr_eb_wreq_valid    [gv_row][gv_port]  = '0;
-            dut_if.i_igr_eb_wr_seg_ptr    [gv_row][gv_port]  = '0;
-            dut_if.i_igr_eb_wr_sema       [gv_row][gv_port]  = '0;
-            dut_if.i_igr_eb_wr_wd_sel     [gv_row][gv_port]  = '0;
-            dut_if.i_igr_eb_wreq_id       [gv_row][gv_port]  = '0;
-            dut_if.i_igr_eb_wr_data       [gv_row][gv_port]  = '0;
+//            dut_if.i_igr_eb_wreq_valid    [gv_row][gv_port]  = '0;
+//            dut_if.i_igr_eb_wr_seg_ptr    [gv_row][gv_port]  = '0;
+//            dut_if.i_igr_eb_wr_sema       [gv_row][gv_port]  = '0;
+//            dut_if.i_igr_eb_wr_wd_sel     [gv_row][gv_port]  = '0;
+//            dut_if.i_igr_eb_wreq_id       [gv_row][gv_port]  = '0;
+//            dut_if.i_igr_eb_wr_data       [gv_row][gv_port]  = '0;
            
    
     // East Side Write Ports
-            dut_if.i_igr_wb_wreq_valid    [gv_row][gv_port]  = '0;
-            dut_if.i_igr_wb_wr_seg_ptr    [gv_row][gv_port]  = '0;
-            dut_if.i_igr_wb_wr_sema       [gv_row][gv_port]  = '0;
-            dut_if.i_igr_wb_wr_wd_sel     [gv_row][gv_port]  = '0;
-            dut_if.i_igr_wb_wreq_id       [gv_row][gv_port]  = '0;
-            dut_if.i_igr_wb_wr_data       [gv_row][gv_port]  = '0;
+//            dut_if.i_igr_wb_wreq_valid    [gv_row][gv_port]  = '0;
+//            dut_if.i_igr_wb_wr_seg_ptr    [gv_row][gv_port]  = '0;
+//            dut_if.i_igr_wb_wr_sema       [gv_row][gv_port]  = '0;
+//            dut_if.i_igr_wb_wr_wd_sel     [gv_row][gv_port]  = '0;
+//            dut_if.i_igr_wb_wreq_id       [gv_row][gv_port]  = '0;
+//            dut_if.i_igr_wb_wr_data       [gv_row][gv_port]  = '0;
 
     
     //////////////////////////////
@@ -275,19 +275,19 @@ class inp_driver;
     //////////////////////////////
 
     // West Side Read Request Ports 
-            dut_if.i_egr_eb_rreq_valid    [gv_row][gv_port]  = '0;
-            dut_if.i_egr_eb_seg_ptr       [gv_row][gv_port]  = '0;
-            dut_if.i_egr_eb_sema          [gv_row][gv_port]  = '0;
-            dut_if.i_egr_eb_wd_sel        [gv_row][gv_port]  = '0;
-            dut_if.i_egr_eb_req_id        [gv_row][gv_port]  = '0;
+//            dut_if.i_egr_eb_rreq_valid    [gv_row][gv_port]  = '0;
+//            dut_if.i_egr_eb_seg_ptr       [gv_row][gv_port]  = '0;
+//            dut_if.i_egr_eb_sema          [gv_row][gv_port]  = '0;
+//            dut_if.i_egr_eb_wd_sel        [gv_row][gv_port]  = '0;
+//            dut_if.i_egr_eb_req_id        [gv_row][gv_port]  = '0;
     
         
     // East Side Read Request Ports 
-            dut_if.i_egr_wb_rreq_valid    [gv_row][gv_port]  = '0;
-            dut_if.i_egr_wb_seg_ptr       [gv_row][gv_port]  = '0;
-            dut_if.i_egr_wb_sema          [gv_row][gv_port]  = '0;
-            dut_if.i_egr_wb_wd_sel        [gv_row][gv_port]  = '0;
-            dut_if.i_egr_wb_req_id        [gv_row][gv_port]  = '0;
+//            dut_if.i_egr_wb_rreq_valid    [gv_row][gv_port]  = '0;
+//            dut_if.i_egr_wb_seg_ptr       [gv_row][gv_port]  = '0;
+//            dut_if.i_egr_wb_sema          [gv_row][gv_port]  = '0;
+//            dut_if.i_egr_wb_wd_sel        [gv_row][gv_port]  = '0;
+//            dut_if.i_egr_wb_req_id        [gv_row][gv_port]  = '0;
     
   end : mim_ports
 end : mim_rows
@@ -298,21 +298,21 @@ end : mim_rows
     ////////////////////////
    
     // North Side Write Port
-            dut_if.i_sb_wreq_valid   = '0;
-            dut_if.i_sb_wr_seg_ptr   = '0;
-            dut_if.i_sb_wr_sema      = '0;
-            dut_if.i_sb_wr_wd_sel    = '0;
-            dut_if.i_sb_wreq_id      = '0;
-            dut_if.i_sb_wr_data      = '0;
+//            dut_if.i_sb_wreq_valid   = '0;
+//            dut_if.i_sb_wr_seg_ptr   = '0;
+//            dut_if.i_sb_wr_sema      = '0;
+//            dut_if.i_sb_wr_wd_sel    = '0;
+//            dut_if.i_sb_wreq_id      = '0;
+//            dut_if.i_sb_wr_data      = '0;
            
    
     // South Side Write Port
-            dut_if.i_nb_wreq_valid   = '0;
-            dut_if.i_nb_wr_seg_ptr   = '0;
-            dut_if.i_nb_wr_sema      = '0;
-            dut_if.i_nb_wr_wd_sel    = '0;
-            dut_if.i_nb_wreq_id      = '0;
-            dut_if.i_nb_wr_data      = '0;
+//            dut_if.i_nb_wreq_valid   = '0;
+//            dut_if.i_nb_wr_seg_ptr   = '0;
+//            dut_if.i_nb_wr_sema      = '0;
+//            dut_if.i_nb_wr_wd_sel    = '0;
+//            dut_if.i_nb_wreq_id      = '0;
+//            dut_if.i_nb_wr_data      = '0;
     
 
     //////////////////////////////
@@ -320,19 +320,19 @@ end : mim_rows
     //////////////////////////////
 
     // North Side Read Request Port 
-            dut_if.i_sb_rreq_valid   = '0;
-            dut_if.i_sb_rreq_seg_ptr = '0;
-            dut_if.i_sb_rreq_sema    = '0;
-            dut_if.i_sb_rreq_wd_sel  = '0;
-            dut_if.i_sb_rreq_id      = '0;
+//            dut_if.i_sb_rreq_valid   = '0;
+//            dut_if.i_sb_rreq_seg_ptr = '0;
+//            dut_if.i_sb_rreq_sema    = '0;
+//            dut_if.i_sb_rreq_wd_sel  = '0;
+//            dut_if.i_sb_rreq_id      = '0;
     
         
     // South Side Read Request Port 
-            dut_if.i_nb_rreq_valid   = '0;
-            dut_if.i_nb_rreq_seg_ptr = '0;
-            dut_if.i_nb_rreq_sema    = '0;
-            dut_if.i_nb_rreq_wd_sel  = '0;
-            dut_if.i_nb_rreq_id      = '0;
+//            dut_if.i_nb_rreq_valid   = '0;
+//            dut_if.i_nb_rreq_seg_ptr = '0;
+//            dut_if.i_nb_rreq_sema    = '0;
+//            dut_if.i_nb_rreq_wd_sel  = '0;
+//            dut_if.i_nb_rreq_id      = '0;
    
 //
 //

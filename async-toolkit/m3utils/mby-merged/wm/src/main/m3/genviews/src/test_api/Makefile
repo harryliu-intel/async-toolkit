@@ -22,8 +22,22 @@ AUTOGEN=    addr2ragged.o inorderid2ragged.o ragged2addr.o ragged2arcs.o\
 	ragged2inorderid.o\
 	hostptr_setup.o	ragged2ptr.o ptr2ragged.o
 
-EXECS= test_api test_exceptions
+AUTOSRCS=$(AUTOGEN:.o=.c)
+
+EXECS= test_api test_exceptions test_if
 all: $(EXECS)
+
+$(AUTOSRCS): ragged.made
+
+ragged.made: mapfields.made
+	cd .. ;  ./make_ragged.sh mby doit.scm exit
+	touch ragged.made
+
+mapfields.made:
+	cd ../../fieldvisitor/src ; ./run.sh
+	touch mapfields.made
+
+test_api.o: $(AUTOGEN)
 
 test_api: $(AUTOGEN) mby_top_map.o test_api.o raggedindex.o
 
@@ -40,3 +54,10 @@ clean:
 
 distclean: clean
 	/bin/rm -f `echo $(AUTOGEN) | sed 's/\.o/.[hc]/g'`
+	/bin/rm -f ragged.made mapfields.made	
+
+test_if: test_if.o
+
+test_if.o: test_if.c
+# test_if has some silly comma code in it just for testing
+	cc $(CFLAGS) -Wno-unused $<

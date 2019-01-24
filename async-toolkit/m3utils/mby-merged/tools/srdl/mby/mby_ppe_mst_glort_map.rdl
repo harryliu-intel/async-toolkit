@@ -1,6 +1,12 @@
 // INTEL TOP SECRET
 // Copyright 2014 Intel Corporation. All Rights Reserved.
 //
+
+<% if ($MBY_PPE_MST_GLORT_MAP) {
+   } else {
+   $MBY_PPE_MST_GLORT_MAP = 1;
+%>
+
 `include "mby_lib_udp.rdl"
 <% use security; %>
 <% my %Security_Props = security::GetSecurityInfo(); %>
@@ -694,3 +700,6 @@ addrmap mby_ppe_mst_glort_map {
   cgrp_used_table_r       CGRP_USED_TABLE[65]     ;
 };
 
+<%
+   }
+%>

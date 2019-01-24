@@ -1,3 +1,8 @@
+<% if ($MBY_PPE_MAPPER_MAP) {
+   } else {
+   $MBY_PPE_MAPPER_MAP = 1;
+%>
+
 `include "mby_lib_udp.rdl"
 `include "mby_ip.rdl"
 
@@ -2036,3 +2041,8 @@ addrmap mby_ppe_mapper_map {
   map_rewrite_rf             MAP_REWRITE[16]               @0x3a000 += 256;
   map_canonical_glort_cam_r  MAP_CANONICAL_GLORT_CAM[16]   @0x3b000 +=8;
 }; // final size: 0x3b000 <= 0x40000 = 8<<15
+
+<%
+   }
+%>
+
