@@ -49,7 +49,7 @@ typedef struct mby_maskgen_test_data_in_struct
     fm_macaddr    l2_smac;
     fm_bool       learning_enabled;
     fm_byte       log_amask;
-    fm_bool       mark_routed;
+    fm_bool       routed;
     fm_uint32     rx_port;
     fm_bool       targeted_deterministic;
 
@@ -101,7 +101,7 @@ triggers_test_data triggers_tests[] =
             .l2_smac                      = 0x001122334455,
             .learning_enabled             = FALSE,
             .log_amask                    = MBY_LOG_TYPE_ARP_REDIRECT,
-            .mark_routed                  = TRUE,
+            .routed                       = TRUE,
             .targeted_deterministic       = FALSE,
             .sys_cfg_1 =
              {
@@ -144,7 +144,7 @@ triggers_test_data triggers_tests[] =
             .l2_smac                      = 0x001122334455,
             .learning_enabled             = TRUE,
             .log_amask                    = 0,
-            .mark_routed                  = FALSE,
+            .routed                       = FALSE,
             .rx_port                      = 1,
             .targeted_deterministic       = FALSE,
             .sys_cfg_1 =
@@ -187,7 +187,7 @@ triggers_test_data triggers_tests[] =
             .l2_smac                      = 0x001122334455,
             .learning_enabled             = TRUE,
             .log_amask                    = 0,
-            .mark_routed                  = FALSE,
+            .routed                       = FALSE,
             .rx_port                      = 1,
             .targeted_deterministic       = FALSE,
             .sys_cfg_1 =
@@ -230,7 +230,7 @@ triggers_test_data triggers_tests[] =
             .l2_smac                      = 0x001122334455,
             .learning_enabled             = FALSE,
             .log_amask                    = 0,
-            .mark_routed                  = FALSE,
+            .routed                       = FALSE,
             .rx_port                      = 1,
             .targeted_deterministic      = TRUE,
             .sys_cfg_1 =
@@ -466,7 +466,7 @@ triggers_test_data triggers_tests[] =
             .l2_smac                      = 0x001122334455,
             .learning_enabled             = TRUE,
             .log_amask                    = 0,
-            .mark_routed                  = TRUE,
+            .routed                       = TRUE,
             .rx_port                      = 1,
             .targeted_deterministic       = FALSE,
             .sys_cfg_1 =

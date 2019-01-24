@@ -36,7 +36,7 @@ typedef struct mbyNextHopToMaskGenStruct
     fm_macaddr         L2_SMAC;                          ///< layer 2 source MAC address
     fm_byte            L3_EDOMAIN;                       ///< egress L3 domain
     fm_bool            LEARN_NOTIFY;                     ///< learning is diabled flag
-    fm_bool            MARK_ROUTED;                      ///<
+    fm_bool            ROUTED;                           ///< flag indicating the frame was routed (ROUTE_ARP and (EntryType==1 or MarkRouted==1))
     fm_bool            MTU_VIOLATION;                    ///< packet violates the MTU
     fm_byte            NAD;                              ///< 4-bit NAD (network addressing domain)
     fm_bool            PARITY_ERROR;                     ///< memory parity error flag

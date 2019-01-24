@@ -20,7 +20,7 @@ typedef struct mbyTxInToModifierStruct
     fm_bool                 IS_TIMEOUT;    //
     fm_macaddr              L2_DMAC;       // L2 destination MAC address
     fm_uint16               L2_EVID1;      // 12-bit egress VLAN ID
-    fm_bool                 MARK_ROUTED;   //
+    fm_bool                 ROUTED;        //
     mbyMirrorType           MIRTYP;        // mirror type
     fm_uint32               MOD_IDX;       // index into the MODIFY descriptor tables
     fm_byte                 MOD_PROF_IDX;  // modify profile index

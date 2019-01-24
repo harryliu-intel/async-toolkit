@@ -25,7 +25,7 @@ typedef struct mbyCongMgmtToRxStatsStruct
     fm_macaddr              L2_DMAC;       ///< layer 2 destination address
     fm_uint16               L2_EVID1;      ///< 12-bit egress VLAN ID
     fm_uint16               L2_IVLAN1_CNT; ///< ingress VLAN counter
-    fm_bool                 MARK_ROUTED;
+    fm_bool                 ROUTED;
     mbyMirrorType           MIRTYP;        ///< mirror type
     fm_uint32               MOD_IDX;       ///< index into the MODIFY descriptor tables
     fm_byte                 MOD_PROF_IDX;  ///< modify profile index
