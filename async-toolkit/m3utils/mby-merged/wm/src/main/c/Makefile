@@ -21,6 +21,7 @@ SOURCES += mby_wcm.c
 SOURCES += mby_exactmatch.c
 SOURCES += mby_classifier.c
 SOURCES += mby_hash.c
+SOURCES += mby_nexthop_regs.c
 SOURCES += mby_nexthop.c
 SOURCES += mby_maskgen_regs.c
 SOURCES += mby_maskgen.c
@@ -116,6 +117,7 @@ ${BLD_DIR}/mby_wcm.o           : $(BLD_DTS) Makefile mby_wcm.c           mby_wcm
 ${BLD_DIR}/mby_exactmatch.o    : $(BLD_DTS) Makefile mby_exactmatch.c    mby_exactmatch.h     mby_common.h  mby_bitfield.h
 ${BLD_DIR}/mby_classifier.o    : $(BLD_DTS) Makefile mby_classifier.c    mby_classifier.h     mby_common.h  mby_bitfield.h
 ${BLD_DIR}/mby_hash.o          : $(BLD_DTS) Makefile mby_hash.c          mby_hash.h           mby_common.h  mby_bitfield.h
+${BLD_DIR}/mby_nexthop_regs.o  : $(BLD_DTS) Makefile mby_nexthop_regs.c  mby_nexthop_regs.h   mby_common.h  mby_bitfield.h
 ${BLD_DIR}/mby_nexthop.o       : $(BLD_DTS) Makefile mby_nexthop.c       mby_nexthop.h        mby_common.h  mby_bitfield.h
 ${BLD_DIR}/mby_maskgen_regs.o  : $(BLD_DTS) Makefile mby_maskgen_regs.c  mby_maskgen_regs.h   mby_common.h  mby_bitfield.h
 ${BLD_DIR}/mby_maskgen.o       : $(BLD_DTS) Makefile mby_maskgen.c       mby_maskgen.h        mby_common.h  mby_bitfield.h
@@ -133,12 +135,12 @@ ${BLD_DIR}/mby_init.o          : $(BLD_DTS) Makefile mby_init.c          mby_ini
 ${BLD_DIR}/varchar.o           : $(BLD_DTS) Makefile varchar.c           varchar.h
 
 ${BLD_DIR}/mby_stages.o        : $(BLD_DTS) Makefile mby_stages.c        mby_stages.h
-${BLD_DIR}/model_stages.o        : $(BLD_DTS) Makefile model_stages.c        model_stages.h
+${BLD_DIR}/model_stages.o      : $(BLD_DTS) Makefile model_stages.c      model_stages.h
 ${BLD_DIR}/fm_alos_debughash.o : $(BLD_DTS) Makefile fm_alos_debughash.c fm_alos_debughash.h
 
 
 $(LIB_M3EXPT): $(OBJECTS)
-	@echo   '  Creating M3 library exports file'
+	@echo '  Creating M3 library exports file'
 	$(ECHO) echo '_define_lib("mby_c_model")'                       >  $@
 	$(ECHO) echo '_import_m3lib("mby_c_model", "c", "AMD64_LINUX")' >> $@
 
