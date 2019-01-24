@@ -39,7 +39,7 @@ typedef struct mbyMaskGenToTriggersStruct
     fm_bool           LOGGING_HIT;                            ///< flag indicating whether logging was hit
     fm_byte           LOG_AMASK;                              ///< 6-bit logging action mask
     fm_bool           MAC_MOVED;                              ///< flag indicating that a non-secure MAC was found
-    fm_bool           MARK_ROUTED;                            ///<
+    fm_bool           ROUTED;                                 ///<
     fm_bool           MCAST_EPOCH;                            ///< current epoch for multicast garbage collection flag
     fm_uint32         MIRROR0_PORT;                           ///< mirror 0 port
     fm_uint32         MIRROR0_PROFILE_IDX;                    ///< mirror 0 profile index
