@@ -14,6 +14,7 @@ vcs +v2k -R -V -debug_all -full64 -sverilog +libverbose -notice -xlrm uniq_prior
 +define+INST_ON  \
 +define+SVA_OFF \
 +define+INTEL_SVA_OFF \
++define+INTEL_SIMONLY \
 +define+MBY_IGR_PBB_BEHAVE_MEMS \
 -ignore driver_checks \
 -assert api_event \
