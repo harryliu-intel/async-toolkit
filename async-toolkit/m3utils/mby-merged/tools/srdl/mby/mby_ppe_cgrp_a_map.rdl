@@ -1,3 +1,8 @@
+<% if ($MBY_PPE_CGRP_A_MAP) {
+   } else {
+   $MBY_PPE_CGRP_A_MAP = 1;
+%>
+
 `include "mby_lib_udp.rdl"
 <% use security; %>
 <% my %Security_Props = security::GetSecurityInfo(); %>
@@ -373,3 +378,7 @@ addrmap mby_ppe_cgrp_a_map {
   mby_ppe_cgrp_em_map         EM;
   mby_ppe_cgrp_a_nested_map   A;
 }; // final size: 0x22600 <= 0x40000 = 8<<15
+
+<%
+   }
+%>

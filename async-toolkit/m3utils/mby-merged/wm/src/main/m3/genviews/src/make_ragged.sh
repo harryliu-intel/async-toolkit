@@ -1,6 +1,8 @@
 #!/bin/sh -ex
 
+. sel_model.sh
 
+ARGS=$*
 WD=${MODEL_ROOT}/tools/srdl/mby
 # allow security.pm to be found
 export PERL5LIB=$MODEL_ROOT/tools/srdl
@@ -14,17 +16,15 @@ PERLFE=${METAROOT}/perlfe/AMD64_LINUX/perlfe
 NEBULON=`ToolConfig.pl get_tool_path nebulon`
 CM3_EXEC=`ToolConfig.pl get_tool_exec cm3`
 PATHSPEC="--path ${WD}:${NEBULON}/include"
-
-GENROOT=build_c_api
-
 REGSET=mby
-GENDIR=${GENROOT}/${REGSET}_c/src
-rm -f ${GENDIR}/*
+GENDIR=build_scm/${REGSET}/src
+METASCMDIR=${METAROOT}/meta/src
+ARITH="${METASCMDIR}/algebra.scm ${METASCMDIR}/calculus.scm"
 
-CFLAGS="-g -c -I../../../../../../c -std=c99"
+rm -rf ${GENDIR} || true
+mkdir -p ${GENDIR}
 
-mkdir -p $GENDIR
-
+rm -rf work || true
 mkdir -p work
 for file in ${files}; do
 	echo ${file}
@@ -32,14 +32,7 @@ for file in ${files}; do
 	${SVPP} ${PATHSPEC} < ${file} > work/intermediate01.rdl
 	${PERLFE} < work/intermediate01.rdl > work/intermediate02.rdl
 	cat work/intermediate02.rdl | (cd ${WD} ; perl) > work/intermediate03.rdl
-	../AMD64_LINUX/genviews -L c-api -top ${top_map} -o ${GENDIR} < work/intermediate03.rdl
-	cd ${GENDIR}
-	cc ${CFLAGS} mby_top_map.c
-#	cc ${CFLAGS} mby_top_map_build.c
-	cd -
+	mkdir -p ${GENDIR}
+	../AMD64_LINUX/genviews -L scheme -top ${ana_map} -o ${GENDIR} -f ../fieldvisitor/src/${ana_map}.mapfields -i work/intermediate03.rdl  ${ARGS}
 done
-
-cd test_api
-make clean
-make -j 30
 

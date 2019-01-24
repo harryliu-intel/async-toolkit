@@ -1,3 +1,8 @@
+<% if ($MBY_MPP_MAP) {
+   } else {
+   $MBY_MPP_MAP = 1;
+%>
+
 `include "mby_lib_udp.rdl"
 `include "fulcrum_udp.rdl"
 `include "mby_ip.rdl"
@@ -17,6 +22,7 @@
 `include "mby_ppe_trig_apply_map.rdl"
 `include "mby_ppe_trig_apply_misc_map.rdl"
 `include "mby_ppe_trig_usage_map.rdl"
+`include "mby_ppe_rx_top_map.rdl"
 `include "mby_ppe_rx_stats_map.rdl"
 `include "mby_modify.rdl"
 `include "mby_shm.rdl"
@@ -25,23 +31,6 @@
 `include "mby_rx_pb.rdl"
 `include "mby_tx_pb.rdl"
 
-addrmap mby_ppe_rx_top_map {
-  mby_ppe_parser_map            parser;
-  mby_ppe_mapper_map            mapper;
-  mby_ppe_cgrp_a_map            cgrp_a;
-  mby_ppe_cgrp_b_map            cgrp_b;
-  mby_ppe_entropy_map           entropy;
-  mby_ppe_nexthop_map           nexthop;
-  mby_ppe_fwd_misc_map          fwd_misc;
-  mby_ppe_mst_glort_map         mst_glort;
-  mby_ppe_policers_map          policers;
-  mby_ppe_rx_stats_map          stats;
-  mby_ppe_cm_apply_map          cm_apply;
-  mby_ppe_cm_usage_map          cm_usage;
-  mby_ppe_trig_apply_map        trig_apply;
-  mby_ppe_trig_apply_misc_map   trig_apply_misc;
-  mby_ppe_trig_usage_map        trig_usage;
-};
 
 addrmap mby_ppe_tx_top_map {
   mby_ppe_modify_map            modify;
@@ -67,3 +56,6 @@ addrmap mby_mpp_map {
   mby_shm_map     shm;
 };
 
+<%
+   }
+%>

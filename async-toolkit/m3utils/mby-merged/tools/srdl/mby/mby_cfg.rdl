@@ -1,3 +1,8 @@
+<% if ($MBY_CFG) {
+   } else {
+   $MBY_CFG = 1;
+%>
+
 addrmap mby_cfg {
  
    name = "MBY_CFG";
@@ -49,3 +54,7 @@ reg_DEVVENDID DEVVENDID @0x000000;
 reg_BASE_ADDR_0 BASE_ADDR_0 @0x000010;      	
 
 };
+
+<%
+   }
+%>

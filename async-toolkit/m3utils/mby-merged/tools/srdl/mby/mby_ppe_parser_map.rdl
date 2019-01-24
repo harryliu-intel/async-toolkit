@@ -1,3 +1,8 @@
+<% if ($MBY_PPE_PARSER_MAP) {
+   } else {
+   $MBY_PPE_PARSER_MAP = 1;
+%>
+
 `include "mby_lib_udp.rdl"
 `include "mby_ip.rdl"
 
@@ -749,3 +754,7 @@ addrmap mby_ppe_parser_map {
   parser_extract_cfg_rf      PARSER_EXTRACT_CFG[16];
   parser_counters_r          PARSER_COUNTERS;
 }; 
+
+<%
+   }
+%>

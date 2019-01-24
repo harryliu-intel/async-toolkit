@@ -28,6 +28,11 @@
 // -- Description  : This is RDL for the MAC block.
 //------------------------------------------------------------------------------
 
+<%
+  if ($AMBA_COMPLEX) {
+  } else {
+    $AMBA_COMPLEX = 1;
+%>
 
 `include "mby_lib_udp.rdl"
 `include "mby_apb_mailbox_csrs.rdl"
@@ -44,3 +49,6 @@ addrmap imc {
   
 };
 
+<%
+  };
+%>

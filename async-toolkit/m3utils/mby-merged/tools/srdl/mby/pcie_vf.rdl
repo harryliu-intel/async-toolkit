@@ -1,3 +1,8 @@
+<% if ($PCIE_VF) {
+   } else {
+   $PCIE_VF = 1;
+%>
+
 <% use security; %>
 <% my %Security_Props = security::GetSecurityInfo(); %>
 `include "mby_lib_udp.rdl"
@@ -1981,3 +1986,8 @@ addrmap PCIE_VF_map {
   pcie_vfvtctl_r             PCIE_VFVTCTL                  @0x6e0;
   pcie_vftx_desc_rff         PCIE_VFTX_DESC[256]           @0x200000 += 8192;
 }; // final size: 0x400000 <= 0x400000 = 8<<19
+
+<%
+   }
+%>
+
