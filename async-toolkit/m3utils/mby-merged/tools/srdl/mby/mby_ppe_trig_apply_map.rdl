@@ -1,6 +1,13 @@
 // INTEL TOP SECRET
 // Copyright 2014 Intel Corporation. All Rights Reserved.
 //
+
+<% if ($MBY_PPE_TRIG_APPLY_MAP) {
+   } else {
+   $MBY_PPE_TRIG_APPLY_MAP = 1;
+%>
+
+
 `include "mby_lib_udp.rdl"
 <% use security; %>
 <% my %Security_Props = security::GetSecurityInfo(); %>
@@ -1355,3 +1362,6 @@ addrmap mby_ppe_trig_apply_map {
   trigger_direct_map_adr4_r           TRIGGER_DIRECT_MAP_ADR4   	   += 8;
 };
 
+<%
+   }
+%>

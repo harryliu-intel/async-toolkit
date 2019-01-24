@@ -23,6 +23,11 @@
 //
 //------------------------------------------------------------------------------
 
+<% if ($MBY_MODIFY) {
+   } else {
+   $MBY_MODIFY = 1;
+%>
+
 <% use security; %>
 <% my %Security_Props = security::GetSecurityInfo(); %>
 
@@ -935,4 +940,6 @@ addrmap mby_ppe_modify_map {
   mod_csum_en_cfg_r            MOD_CSUM_EN_CFG;
 };
 
-
+<%
+   }
+%>

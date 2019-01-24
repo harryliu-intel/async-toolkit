@@ -6,7 +6,12 @@
 ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 include ${ROOT_DIR}/../../../main/c/ToolVersions.mk
 
-include ../../../make/Make_c.defs
+C_DIR := ${ROOT_DIR}/../../../main/c
+include ${ROOT_DIR}/../../../make/Make_c.defs
+
+STAGE_STRUCT_INC = ${ROOT_DIR}/../../../main/c/
+TOP_MAP_INC      = ${ROOT_DIR}/../../../main/m3/genviews/src/build_c/mby_c/src/
+
 
 LIB_DIR = ..
 EXEC = client_regwrite
@@ -14,7 +19,7 @@ SRCS = client_regwrite.c fpps_reg_table.c
 OBJS = $(SRCS:.c=.o)
 
 CFLAGS = -fPIC -Wall -Wextra -O2 -g -Wno-unused-function
-CPPFLAGS = -I. -I ${LIB_DIR}
+CPPFLAGS = -I. -I ${LIB_DIR} -I$(STAGE_STRUCT_INC) -I$(TOP_MAP_INC)
 LDFLAGS = -L $(LIB_DIR) -lmby_tcp_client
 
 .PHONY: all

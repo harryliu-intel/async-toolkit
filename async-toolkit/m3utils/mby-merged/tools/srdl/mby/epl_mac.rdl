@@ -28,6 +28,12 @@
 // -- Description  : This is RDL for the MAC block.
 //------------------------------------------------------------------------------
 
+<%
+  if ($EPL_MAC) {
+  } else {
+    $EPL_MAC = 1;
+%>
+
 `include "mby_lib_udp.rdl"
 <% use security; %>
 <% my %Security_Props = security::GetSecurityInfo(); %>
@@ -3160,3 +3166,6 @@ addrmap epl_mac_map_regs {
   mac_stat_link_remote_fault_r   MAC_STAT_LINK_REMOTE_FAULT    ;
 };
 
+<%
+  };
+%>

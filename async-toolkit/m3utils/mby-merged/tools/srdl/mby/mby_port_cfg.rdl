@@ -1,4 +1,9 @@
 
+<% if ($MBY_PORT_CFG) {
+   } else {
+   $MBY_PORT_CFG = 1;
+%>
+
 //`ifndef mby_port_cfg
 //`define mby_port_cfg
 
@@ -16,3 +21,7 @@ enum mby_port_cfg_enum {
 };
 
 //`endif
+
+<%
+   }
+%>
