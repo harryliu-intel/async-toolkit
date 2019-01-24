@@ -25,7 +25,7 @@
 //
 // CSRS Include:  mby_rx_pb_csr_include.sv
 // Creator:       edwardro
-// Time:          Thu Jan 10 09:39:20 2019
+// Time:          Wed Jan 23 05:27:31 2019
 //
 // Created from:  mby_rx_pb.sv
 // Created by:    ../i_csrs/csrs_include.pl
@@ -50,26 +50,14 @@ import rtlgen_pkg_mby_rx_pb_map::*;
 
 
 // Register Inputs
-RX_PB_WM_t                                                             handcode_reg_rdata_RX_PB_WM;
-
-handcode_rvalid_RX_PB_WM_t                                             handcode_rvalid_RX_PB_WM;
-
-handcode_wvalid_RX_PB_WM_t                                             handcode_wvalid_RX_PB_WM;
-
-handcode_error_RX_PB_WM_t                                              handcode_error_RX_PB_WM;
 
 
 // Register Outputs
 RX_PB_PORT_CFG_t                                                       RX_PB_PORT_CFG;
+RX_PB_WM_t                                                             [16:0][7:0] RX_PB_WM;
 
 
 // Register signals for HandCoded registers
-RX_PB_WM_t                                                             handcode_reg_wdata_RX_PB_WM;
-
-we_RX_PB_WM_t                                                          we_RX_PB_WM;
-
-re_RX_PB_WM_t                                                          re_RX_PB_WM;
-
 
 
 
@@ -85,30 +73,18 @@ mby_rx_pb mby_rx_pb_inst (
     .gated_clk(cclk),
 
     // Resets
-    .rst_n(rst),
+    .rst_n(q2_sreset_n),
 
 
     // Register Inputs
-    .handcode_reg_rdata_RX_PB_WM(handcode_reg_rdata_RX_PB_WM),
-
-    .handcode_rvalid_RX_PB_WM(handcode_rvalid_RX_PB_WM),
-
-    .handcode_wvalid_RX_PB_WM(handcode_wvalid_RX_PB_WM),
-
-    .handcode_error_RX_PB_WM(handcode_error_RX_PB_WM),
 
 
     // Register Outputs
     .RX_PB_PORT_CFG(RX_PB_PORT_CFG),
+    .RX_PB_WM(RX_PB_WM),
 
 
     // Register signals for HandCoded registers
-    .handcode_reg_wdata_RX_PB_WM(handcode_reg_wdata_RX_PB_WM),
-
-    .we_RX_PB_WM(we_RX_PB_WM),
-
-    .re_RX_PB_WM(re_RX_PB_WM),
-
 
 
 

@@ -2,7 +2,7 @@
 // Title         : Madison Bay SMM BFM Transaction item
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : mby_smm_bfm_row_rd_req_xaction.svh
+// File          : mby_smm_bfm_mrd_req_xaction.svh
 // Author        : Roman Bernal <r.bernal@intel.com>
 // Created       : 01.11.2018
 //-----------------------------------------------------------------------------
@@ -33,10 +33,10 @@
 `ifndef __MBY_SMM_BFM_PKG__
 `error "Attempt to include file outside of mby_smm_bfm_pkg."
 `endif
-`ifndef __MBY_SMM_BFM_ROW_RD_REQ_XACTION__
-`define __MBY_SMM_BFM_ROW_RD_REQ_XACTION__
+`ifndef __MBY_SMM_BFM_MRD_REQ_XACTION__
+`define __MBY_SMM_BFM_MRD_REQ_XACTION__
 //-----------------------------------------------------------------------------
-// CLASS: mby_smm_bfm_row_rd_req_xaction
+// CLASS: mby_smm_bfm_mrd_req_xaction
 //
 // This is a parameterized class used by mby_base_agent.
 //
@@ -44,7 +44,7 @@
 //     T_data     - data type (expecting to be a struct)
 //
 //-----------------------------------------------------------------------------
-class mby_smm_bfm_row_rd_req_xaction extends shdv_base_sequence_item_param
+class mby_smm_bfm_mrd_req_xaction extends shdv_base_sequence_item_param
 #(
    .T_data (mby_smm_bfm_row_rd_req_t)
 );
@@ -52,7 +52,7 @@ class mby_smm_bfm_row_rd_req_xaction extends shdv_base_sequence_item_param
    // -------------------------------------------------------------------------
    // Macro for factory registration
    // -------------------------------------------------------------------------
-  `uvm_object_utils(mby_smm_bfm_row_rd_req_xaction)
+  `uvm_object_utils(mby_smm_bfm_mrd_req_xaction)
 
    // -------------------------------------------------------------------------
    // CONSTRUCTOR: new
@@ -63,7 +63,7 @@ class mby_smm_bfm_row_rd_req_xaction extends shdv_base_sequence_item_param
    //     string name - The sequence item name
    //
    // -------------------------------------------------------------------------
-   function new (string name = "mby_smm_bfm_row_rd_req_xaction");
+   function new (string name = "mby_smm_bfm_mrd_req_xaction");
       super.new(name);
    endfunction
 
@@ -99,5 +99,5 @@ class mby_smm_bfm_row_rd_req_xaction extends shdv_base_sequence_item_param
       super.do_print(printer);
    endfunction : do_print
 
-endclass : mby_smm_bfm_row_rd_req_xaction
+endclass : mby_smm_bfm_mrd_req_xaction
 `endif

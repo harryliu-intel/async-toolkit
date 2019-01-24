@@ -104,7 +104,8 @@ MDIR ?= $(BINDIR)/csrc
 #BUILD_OPTS += -sverilog +systemverilogext+.v+.sv+.svh+.sva -M -Mupdate -PP \
 #              +vcs+lic+wait +notimingcheck -Mdir=$(MDIR) -o $(BINDIR)/simv \
 #              -l $(BINDIR)/compile.log $(BUILD_USER) -bom $(PKG_TOP) -bfl $(BINROOT)/$(PKG_FILE_LIST_NAME) -bom $(DUT_TOP) -bfl $(BINROOT)/$(DUT_FILE_LIST_NAME)
-BUILD_OPTS += -sverilog +systemverilogext+.v+.sv+.svh+.sva -M -Mupdate -PP \
+BUILD_OPTS += -sverilog +systemverilogext+.v+.sv+.svh+.sva -M -Mupdate \
+	          -debug_access+all \
               +vcs+lic+wait +notimingcheck -Mdir=$(MDIR) -o $(BINDIR)/simv \
               -l $(BINDIR)/compile.log $(BUILD_USER)
 #BUILD_OPTS += -sverilog +systemverilogext+.v+.sv+.svh+.sva -M -Mupdate -PP \

@@ -72,8 +72,6 @@ igr_rx_ppe_if       igr_rx_ppe_if();
 rx_ppe_igr_if       rx_ppe_igr_if();
 rx_ppe_ppe_stm0_if  rx_ppe_ppe_stm0_if();
 rx_ppe_ppe_stm1_if  rx_ppe_ppe_stm1_if();
-ahb_rx_ppe_if       ahb_rx_ppe_if();
-glb_rx_ppe_if       glb_rx_ppe_if();
 
 //Reset
 always @(posedge cclk) begin //{
@@ -97,12 +95,12 @@ igr_dr igr_dr (
 rx_ppe  rx_ppe (
     .cclk               (cclk),
     .reset              (reset),
+    .i_ibus_ctrl        (99'b0),
+    .o_ibus_resp        (),
     .igr_rx_ppe_if      (igr_rx_ppe_if),
     .rx_ppe_igr_if      (rx_ppe_igr_if),
     .rx_ppe_ppe_stm0_if (rx_ppe_ppe_stm0_if),
-    .rx_ppe_ppe_stm1_if (rx_ppe_ppe_stm1_if),
-    .ahb_rx_ppe_if      (ahb_rx_ppe_if),
-    .glb_rx_ppe_if      (glb_rx_ppe_if)
+    .rx_ppe_ppe_stm1_if (rx_ppe_ppe_stm1_if)
 );
 
 endmodule

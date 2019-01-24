@@ -437,7 +437,7 @@ reg cm_apply_cpu_trap_mask_0_r {
   field {
     AccessType = "RW";
     desc = "
-            Destination mask for CPU.
+            Destination mask for CPU [63:0].
            ";
     ValRandomize = true;
   } DEST_MASK[63:0] = 64'h01;
@@ -459,10 +459,10 @@ reg cm_apply_cpu_trap_mask_1_r {
   field {
     AccessType = "RW";
     desc = "
-            Destination mask for CPU.
+            Destination mask for CPU [127:64].
            ";
     ValRandomize = true;
-  } DEST_MASK[127:64] = 64'h00;
+  } DEST_MASK[63:0] = 64'h00;
 };
 
 reg cm_apply_cpu_trap_mask_2_r {
@@ -481,10 +481,10 @@ reg cm_apply_cpu_trap_mask_2_r {
   field {
     AccessType = "RW";
     desc = "
-            Destination mask for CPU.
+            Destination mask for CPU [191:128].
            ";
     ValRandomize = true;
-  } DEST_MASK[191:128] = 64'h00;
+  } DEST_MASK[63:0] = 64'h00;
 };
 
 
@@ -504,10 +504,10 @@ reg cm_apply_cpu_trap_mask_3_r {
   field {
     AccessType = "RW";
     desc = "
-            Destination mask for CPU.
+            Destination mask for CPU [255:192].
            ";
     ValRandomize = true;
-  } DEST_MASK[255:192] = 64'h00;
+  } DEST_MASK[63:0] = 64'h00;
 };
 
 
@@ -527,10 +527,10 @@ reg cm_apply_cpu_trap_mask_4_r {
   field {
     AccessType = "RW";
     desc = "
-            Destination mask for CPU.
+            Destination mask for CPU [256].
            ";
     ValRandomize = true;
-  } DEST_MASK[256:256] = 1'h0;
+  } DEST_MASK[0:0] = 1'h0;
 };
 
 

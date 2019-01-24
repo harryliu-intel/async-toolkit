@@ -2,7 +2,7 @@
 // Title         : Madison Bay SMM Interface
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : mby_smm_bfm_row_wr_req_if.sv
+// File          : mby_smm_bfm_mwr_req_if.sv
 // Author        : Roman Bernal <r.bernal@intel.com>
 // Created       : 01.11.2018
 //-----------------------------------------------------------------------------
@@ -30,10 +30,10 @@
 // express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
-`ifndef __MBY_SMM_BFM_ROW_WR_REQ_IF__
-`define __MBY_SMM_BFM_ROW_WR_REQ_IF__
+`ifndef __MBY_SMM_BFM_MWR_REQ_IF__
+`define __MBY_SMM_BFM_MWR_REQ_IF__
 
-interface mby_smm_bfm_row_wr_req_if(input logic clk, input logic rst);
+interface mby_smm_bfm_mwr_req_if(input logic clk, input logic rst);
    import mby_smm_bfm_pkg_pre::*;
 
    mby_smm_bfm_row_wr_req_t intf_data_pkt;
@@ -106,7 +106,7 @@ interface mby_smm_bfm_row_wr_req_if(input logic clk, input logic rst);
        @(posedge clk);
    endtask
 
-endinterface : mby_smm_bfm_row_wr_req_if
+endinterface : mby_smm_bfm_mwr_req_if
 
 
 `endif

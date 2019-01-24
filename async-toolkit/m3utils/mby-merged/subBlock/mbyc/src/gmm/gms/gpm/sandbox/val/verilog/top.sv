@@ -84,10 +84,10 @@ module top
         .hreset                  (dut_if.hreset               ),
 
         // Pod pointer ring interface
-        .i_pod_ring_left         (dut_if.pod_ring_left        ),
-        .i_pod_ring_right        (dut_if.pod_ring_right       ),
-        .o_pod_ring_left         (dut_if.pod_ring_left        ),
-        .o_pod_ring_right        (dut_if.pod_ring_right       ),
+        .i_pod_ring_left         (dut_if.i_pod_ring_left      ),
+        .i_pod_ring_right        (dut_if.i_pod_ring_right     ),
+        .o_pod_ring_left         (dut_if.o_pod_ring_left      ),
+        .o_pod_ring_right        (dut_if.o_pod_ring_right     ),
 
         // Signal from GPM to egress to stall egress from injecting a new dirty
         // pod

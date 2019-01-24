@@ -32,14 +32,14 @@
 //-----------------------------------------------------------------------------
 class mby_smm_bfm_mem_node 
 #(
-   int ADDR_WIDTH = 14, 
-   int DATA_WIDTH = 64*8 
+   int ADDR_WIDTH = SMM_BFM_ADDR_WIDTH, 
+   int DATA_WIDTH = SMM_BFM_DATA_WIDTH 
 ) extends uvm_component;
    
    `uvm_component_utils(mby_smm_bfm_mem_node#(ADDR_WIDTH, DATA_WIDTH))
    
    // VARIABLE: MEMORY_DEPTH
-   //    ???
+   //    TODO : what is this? Not used anywhere else
    localparam MEMORY_DEPTH = 1 << ADDR_WIDTH;
    
    // VARIABLE: MEM
@@ -70,15 +70,20 @@ class mby_smm_bfm_mem_node
    //     logic [ADDR_WIDTH-1:0] wr_data - Data being stored in Memory.
    // -------------------------------------------------------------------------
    function mwr(logic [ADDR_WIDTH-1:0] address, logic [DATA_WIDTH-1:0] wr_data);
-      //TODO: Look for Mrd Req in Cache. If there, then service request otherwise do Data MWr into MEM 
+      string msg_str;
+      
+      //TODO : Look for Mrd Req in Cache. If there, then service request otherwise do Data MWr into MEM 
       if(!MEM.exists(address)) begin
          MEM[address] = wr_data;
          
-         `uvm_info(get_type_name(), $sformatf("mwr(): SMM BFM node memory write issued at Address = 0x%0x, Data = 0x%0x", address, wr_data), UVM_DEBUG)
+         msg_str = $sformatf("mwr(): SMM BFM node memory write issued at Address = 0x%04x, Data = 0x%0128x", address, wr_data);
       end else begin
          // TODO : Should we worry about this?
-         `uvm_info(get_type_name(), $sformatf("mwr(): Attempted to write SMM BFM node Address = 0x%0x with Data = 0x%0x, but the write wasn't completed due to memory address already contains data.", address, wr_data), UVM_DEBUG)
+         msg_str = $sformatf("mwr(): Attempted to write SMM BFM node Address = 0x%04x with Data = 0x%0128x, ", address, wr_data);
+         msg_str = {msg_str, "but the write wasn't completed due to memory address already contains data."};
       end
+      
+      `uvm_info(get_type_name(), msg_str, UVM_DEBUG)
    endfunction : mwr
 
    // -------------------------------------------------------------------------
@@ -93,22 +98,24 @@ class mby_smm_bfm_mem_node
    //    logic [DATA_WIDTH-1:0]          - Data read from Memory.
    // -------------------------------------------------------------------------
    function logic [DATA_WIDTH-1:0] mrd(logic [ADDR_WIDTH-1:0] address);
-      logic [DATA_WIDTH-1:0] rd_data;
+      string msg_str;
+      logic    [DATA_WIDTH-1:0] rd_data;
       
       if(MEM.exists(address)) begin
          rd_data = MEM[address];
          MEM.delete(address);
          
-         `uvm_info(get_type_name(), $sformatf("mrd(): SMM BFM node memory read at Address = 0x%0x, Data = 0x%0x", address, rd_data), UVM_DEBUG);
+         msg_str = $sformatf("mrd(): SMM BFM node memory read at Address = 0x%04x, Data = 0x%0128x", address, rd_data);
       end else begin
          // TODO : Should we worry about this?
-         `uvm_info(get_type_name(), $sformatf("mrd(): Attempted to read SMM BFM node memory Address = 0x%0x, but that memory location hasn't been set.", address, rd_data), UVM_DEBUG);
+         msg_str = $sformatf("mrd(): Attempted to read SMM BFM node memory Address = 0x%04x, ", address, rd_data);
+         msg_str = {msg_str, "but that memory location hasn't been set."};
       end
       //TODO: If Data Write has not arrived, store MRd Req in Cache - Not yet defined.
+      `uvm_info(get_type_name(), msg_str, UVM_DEBUG)
       
       return rd_data;
    endfunction : mrd
-      
 endclass : mby_smm_bfm_mem_node
 
 `endif

@@ -16,7 +16,7 @@
 
 reg rx_pb_port_cfg_r {
   shared;
-//  HandCoded = true;
+//edr  HandCoded = true;
   name = "Rx PB Port Configuration.";
   desc = "
       Port configuration for the Rx Packet Buffer.
@@ -56,7 +56,7 @@ reg rx_pb_port_cfg_r {
 
  reg rx_pb_wm_r {
    shared;
-   HandCoded = true;
+//edr   HandCoded = true;
    desc = "
        Watermarks for pause and drop.
        First index is Rx logical port (0..17; includes virtual ports).
@@ -104,7 +104,7 @@ addrmap mby_rx_pb_map {
   addressing = fullalign;
 
   rx_pb_port_cfg_r RX_PB_PORT_CFG;
-  rx_pb_wm_rf      RX_PB_WM[18];
+  rx_pb_wm_rf      RX_PB_WM[17];
 };
 
 <%

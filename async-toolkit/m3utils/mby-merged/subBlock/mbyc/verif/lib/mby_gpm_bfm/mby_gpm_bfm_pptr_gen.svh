@@ -66,8 +66,16 @@
 // then parse this data, filter out any invalid addresses and then will
 // 'convert' the dirty pointers into clean free pointers and eventually
 // send them out again in port (5).
+//
+// PARAMETERS::
+//    type T_req - sequence item type to be handled.
 //-----------------------------------------------------------------------------
-class mby_gpm_bfm_pptr_gen extends uvm_component;
+
+class mby_gpm_bfm_pptr_gen 
+   #(
+      type T_req = mby_base_sequence_item
+   )
+   extends uvm_pkg::uvm_subscriber#(.T(T_req));
 
    //--------------------------------------------------------------------------
    //
@@ -96,5 +104,18 @@ class mby_gpm_bfm_pptr_gen extends uvm_component;
       super.new(name, parent);
    endfunction : new
 
+   // ------------------------------------------------------------------------
+   // FUNCTION: write
+   //
+   // Method that must be defined in each uvm_subscriber subclass. Access
+   // to this method by outside components should be done via the
+   // analysis_export.
+   //
+   // ARGUMENTS:
+   //    T_req ap_item - Dirty pod pointer issued to the GPM BFM.
+   // ------------------------------------------------------------------------
+   function void write(T_req ap_item);
+      //TODO: What to do when a dirty pod pointer arrives
+   endfunction
 endclass : mby_gpm_bfm_pptr_gen
 `endif

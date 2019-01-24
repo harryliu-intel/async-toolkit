@@ -58,20 +58,40 @@ typedef virtual mby_pbr_bfm_dptr_if mby_pbr_bfm_dptr_vif;
 // file (bfm_types) is compiled before the transaction items.
 typedef class mby_pbr_bfm_cptr_xaction;
 typedef class mby_pbr_bfm_dptr_xaction;
+
+
+typedef shdv_base_io_policy_param#(
+   .T_req(mby_pbr_bfm_cptr_xaction),
+   .T_vif(mby_pbr_bfm_cptr_vif)) mby_ptr_bfm_cptr_io;
+
+typedef shdv_base_io_policy_param#(
+   .T_req(mby_pbr_bfm_dptr_xaction),
+   .T_vif(mby_pbr_bfm_dptr_vif)) mby_ptr_bfm_dptr_io;
+// Defining the flow control policy for the tag bfm
+
+typedef shdv_base_empty_fc_policy mby_ptr_bfm_cptr_fc;
+typedef shdv_base_empty_fc_policy mby_ptr_bfm_dptr_fc;
+
+
+
 // Defining the dpb agent as a parameterized base agent.
 typedef mby_base_pkg::mby_base_agent#(
     .T_req(mby_pbr_bfm_dptr_xaction),
-    .T_vif(mby_pbr_bfm_dptr_vif)) mby_pbr_bfm_dpb_agent;
+    .T_iop(mby_ptr_bfm_dptr_io),
+    .T_fcp(mby_ptr_bfm_dptr_fc)) mby_pbr_bfm_dpb_agent;
 // Defining the dpm agent as a parameterized base agent.
 typedef mby_base_pkg::mby_base_agent#(
     .T_req(mby_pbr_bfm_dptr_xaction),
-    .T_vif(mby_pbr_bfm_dptr_vif)) mby_pbr_bfm_dpm_agent;
+    .T_iop(mby_ptr_bfm_dptr_io),
+    .T_fcp(mby_ptr_bfm_dptr_fc)) mby_pbr_bfm_dpm_agent;
 // Defining the csp agent as a parameterized base agent.
 typedef mby_base_pkg::mby_base_agent#(
     .T_req(mby_pbr_bfm_cptr_xaction),
-    .T_vif(mby_pbr_bfm_cptr_vif)) mby_pbr_bfm_csp_agent;
+    .T_fcp(mby_ptr_bfm_cptr_fc),
+    .T_iop(mby_ptr_bfm_cptr_io)) mby_pbr_bfm_csp_agent;
 // Defining the cpb agent as a parameterized base agent.
 typedef mby_base_pkg::mby_base_agent#(
     .T_req(mby_pbr_bfm_cptr_xaction),
-    .T_vif(mby_pbr_bfm_cptr_vif)) mby_pbr_bfm_cpb_agent;
+    .T_fcp(mby_ptr_bfm_cptr_fc),
+    .T_iop(mby_ptr_bfm_cptr_io)) mby_pbr_bfm_cpb_agent;
 `endif
