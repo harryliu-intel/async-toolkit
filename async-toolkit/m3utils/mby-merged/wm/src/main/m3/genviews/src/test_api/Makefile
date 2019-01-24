@@ -29,9 +29,13 @@ all: $(EXECS)
 
 $(AUTOSRCS): ragged.made
 
-ragged.made:
+ragged.made: mapfields.made
 	cd .. ;  ./make_ragged.sh mby doit.scm exit
 	touch ragged.made
+
+mapfields.made:
+	cd ../../fieldvisitor/src ; ./run.sh
+	touch mapfields.made
 
 test_api.o: $(AUTOGEN)
 
@@ -50,7 +54,7 @@ clean:
 
 distclean: clean
 	/bin/rm -f `echo $(AUTOGEN) | sed 's/\.o/.[hc]/g'`
-	/bin/rm -f ragged.made	
+	/bin/rm -f ragged.made mapfields.made	
 
 test_if: test_if.o
 
