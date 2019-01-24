@@ -86,4 +86,8 @@ typedef shdv_base_pkg::shdv_agent#(
 typedef class mby_gpm_bfm_pptr_gen;
 typedef mby_gpm_bfm_pptr_gen#(.T_req(mby_gpm_bfm_pod_xaction)) gpm_bfm_pptr_gen_t;
 
+// Defining the pod sequence type
+typedef class mby_gpm_bfm_pod_seq;
+typedef mby_gpm_bfm_pod_seq#(.T_rsp(mby_gpm_bfm_pod_xaction)) gpm_bfm_pod_seq_t;
+
 `endif

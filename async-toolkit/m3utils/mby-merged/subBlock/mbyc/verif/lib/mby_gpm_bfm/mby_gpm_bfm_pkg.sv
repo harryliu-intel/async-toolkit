@@ -53,6 +53,7 @@ package mby_gpm_bfm_pkg;
    `include "mby_gpm_bfm_types.svh"
    `include "mby_gpm_bfm_pod_xaction.svh"
    `include "mby_gpm_bfm_cfg.svh"
+   `include "mby_gpm_bfm_pod_seq.svh"
    `include "mby_gpm_bfm_pptr_gen.svh"
    `include "mby_gpm_bfm.svh"
 
