@@ -22,8 +22,18 @@ AUTOGEN=    addr2ragged.o inorderid2ragged.o ragged2addr.o ragged2arcs.o\
 	ragged2inorderid.o\
 	hostptr_setup.o	ragged2ptr.o ptr2ragged.o
 
+AUTOSRCS=$(AUTOGEN:.o=.c)
+
 EXECS= test_api test_exceptions test_if
 all: $(EXECS)
+
+$(AUTOSRCS): ragged.made
+
+ragged.made:
+	cd .. ;  ./make_ragged.sh mby doit.scm exit
+	touch ragged.made
+
+test_api.o: $(AUTOGEN)
 
 test_api: $(AUTOGEN) mby_top_map.o test_api.o raggedindex.o
 
@@ -40,6 +50,7 @@ clean:
 
 distclean: clean
 	/bin/rm -f `echo $(AUTOGEN) | sed 's/\.o/.[hc]/g'`
+	/bin/rm -f ragged.made	
 
 test_if: test_if.o
 

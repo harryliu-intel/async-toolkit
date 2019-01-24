@@ -83,5 +83,8 @@ main(void)
   
   ifdebug2 ( a + b > zero, "is it greater than zero = %d?", zero )
     printf("greater than 0.\n");
-  
+
+  ifdebug2 ( a + b > zero, "%d + %d > %d?", a, b, zero )
+    printf("greater than 0.\n");
+
 }
