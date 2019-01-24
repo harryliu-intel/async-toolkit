@@ -23,64 +23,43 @@
 // ----------------------------------------------------------------------------
 // -- Author : Alberto (Beto) Del Rio Ruiz (alberto.del.rio.ruiz@intel.com)
 // -- Project Name : Madison Bay (MBY)
-// -- Description  : MIG read interface
+// -- Description  : MSH write interface
 // ============================================================================
-`ifndef MIG_RD_IF_SV
-`define MIG_RD_IF_SV
+`ifndef MSH_WR_IF_SV
+`define MSH_WR_IF_SV
 
-// FIXME:  use msh_rd_if and get rid of this file 
-interface mig_rd_if ();
+interface msh_wr_if ();
     import mby_msh_pkg::*;
 
-    mshpt_rreq_t     msh_rreq;
+    mshpt_wreq_t     msh_wreq;
 
-    logic            msh_rd_lat_sat;
-    logic            msh_crdt_rtn_for_rreq;
-    logic            msh_mcast_crdt_rtn_for_rreq;
-    
-    logic            msh_crdt_rtn_for_rrsp;
-    logic            msh_mcast_crdt_rtn_for_rrsp;
-
-    mshpt_rrsp_t     msh_rrsp;
-
-    msh_data_t       msh_rd_data;
-    
-
+    msh_data_t       msh_wr_data;
+           
+    logic            msh_wr_lat_sat;
+    logic            msh_crdt_rtn_for_wreq;
+    logic            msh_mcast_crdt_rtn_for_wreq;
+  
 
     modport request(
+        output msh_wreq,
 
-        output msh_rreq,
-
-        input  msh_rd_lat_sat,
-        input  msh_crdt_rtn_for_rreq,
-        input  msh_mcast_crdt_rtn_for_rreq,
-    
-        output msh_crdt_rtn_for_rrsp,
-        output msh_mcast_crdt_rtn_for_rrsp,
-
-        input  msh_rrsp,
-
-        input  msh_rd_data
-    
-        );  
-
-    modport receive(
-
-        input  msh_rreq,
-
-        output msh_rd_lat_sat,
-        output msh_crdt_rtn_for_rreq,
-        output msh_mcast_crdt_rtn_for_rreq,
-    
-        input  msh_crdt_rtn_for_rrsp,
-        input  msh_mcast_crdt_rtn_for_rrsp,
-
-        output msh_rrsp,
-
-        output msh_rd_data
-    
+        output msh_wr_data,
+           
+        input  msh_wr_lat_sat,
+        input  msh_crdt_rtn_for_wreq,
+        input  msh_mcast_crdt_rtn_for_wreq
     );
 
-endinterface : mig_rd_if
-`endif  // MIG_RD_IF_SV
+    modport receive(
+        input  msh_wreq,
+
+        input  msh_wr_data,
+           
+        output msh_wr_lat_sat,
+        output msh_crdt_rtn_for_wreq,
+        output msh_mcast_crdt_rtn_for_wreq
+    );
+
+endinterface : msh_wr_if
+`endif  // MSH_WR_IF_SV
 

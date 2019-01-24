@@ -16,7 +16,7 @@ V_LIBS        =
 
 .PHONY: ngen pre top post rtl copy clean diff
 
-ngen: clean top 
+ngen: clean top post
 
 pre:
 	./pre_process.pl
@@ -27,8 +27,8 @@ top:
 	@$(NGEN) $(NGEN_FLAGS) $(V_DIRS) $(V_LIBS) $(BLOCK)
 
 post:
-	#./post_process.pl	
-	#mv ngen/mby_mpp_fixed.sv ngen/mby_mpp.sv
+	./post_process.pl	
+	mv ngen/mby_mpp_fixed.sv ngen/mby_mpp.sv
 
 rtl copy:
 	cp ngen/$(BLOCK).sv ../rtl/$(BLOCK).sv
