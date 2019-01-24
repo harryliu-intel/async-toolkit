@@ -41,23 +41,18 @@
 //    T_rsp       sequence item type to be handled
 //
 //-----------------------------------------------------------------------------
-class mby_gpm_bfm_pod_seq
-   #(
-      type T_rsp = shdv_base_pkg::shdv_base_sequence_item
-   )
-   extends shdv_base_pkg::shdv_base_sequence;
+class mby_gpm_bfm_pod_seq#(
+      type REQ = shdv_base_pkg::shdv_base_sequence_item,
+      type RSP = REQ
+   ) extends shdv_base_pkg::shdv_base_sequence#(.REQ(REQ), .RSP(RSP));
 
-   // VARIABLE: fpod_rsp
-   // Struct contains all the data items of this sequence item.
-   rand T_rsp pod_rsp;
-   
    // -------------------------------------------------------------------------
    // Macro for factory registration
    // TODO:
    //   better to have manual copy/print/compare methods
    //   convert2string (small)
    // -------------------------------------------------------------------------
-   `uvm_object_param_utils_begin (mby_gpm_bfm_pod_seq#(T_rsp))
+   `uvm_object_param_utils_begin (mby_gpm_bfm_pod_seq)
       `uvm_field_object(fpod_rsp, UVM_DEFAULT)
    `uvm_object_utils_end
    
@@ -94,7 +89,7 @@ class mby_gpm_bfm_pod_seq
    // The body task is used to send the sequence item to the sequencer
    // -------------------------------------------------------------------------
    virtual task body();
-      `uvm_send(pod_rsp)
+      `uvm_send(req)
    endtask : body
    
 endclass : mby_gpm_bfm_pod_seq

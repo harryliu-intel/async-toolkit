@@ -104,7 +104,7 @@ class mby_gpm_bfm_pptr_gen
       super.new(name, parent);
    endfunction : new
 
-   // ------------------------------------------------------------------------
+   // -------------------------------------------------------------------------
    // FUNCTION: write
    //
    // Method that must be defined in each uvm_subscriber subclass. Access
@@ -113,9 +113,26 @@ class mby_gpm_bfm_pptr_gen
    //
    // ARGUMENTS:
    //    T_req ap_item - Dirty pod pointer issued to the GPM BFM.
-   // ------------------------------------------------------------------------
+   // -------------------------------------------------------------------------
    function void write(T_req ap_item);
       //TODO: What to do when a dirty pod pointer arrives
    endfunction
+   
+   // -------------------------------------------------------------------------
+   // TASK: run_phase
+   //
+   // Main pod pointer generator task
+   //
+   // ARGUMENTS:
+   //    uvm_phase phase - phase object.
+   // -------------------------------------------------------------------------
+   task run_phase(uvm_phase phase);
+      string msg_str;
+      
+      gpm_bfm_pod_seq_t fpod_rsp_seq;
+      
+      
+   endtask : run_phase
+   
 endclass : mby_gpm_bfm_pptr_gen
 `endif

@@ -88,6 +88,6 @@ typedef mby_gpm_bfm_pptr_gen#(.T_req(mby_gpm_bfm_pod_xaction)) gpm_bfm_pptr_gen_
 
 // Defining the pod sequence type
 typedef class mby_gpm_bfm_pod_seq;
-typedef mby_gpm_bfm_pod_seq#(.T_rsp(mby_gpm_bfm_pod_xaction)) gpm_bfm_pod_seq_t;
+typedef mby_gpm_bfm_pod_seq#(.REQ(mby_gpm_bfm_pod_xaction)) gpm_bfm_pod_seq_t;
 
 `endif
