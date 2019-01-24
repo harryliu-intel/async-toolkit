@@ -27,7 +27,7 @@ void CongMgmt
     out->L2_DMAC           = in->L2_DMAC;
     out->L2_EVID1          = in->L2_EVID1;
     out->L2_IVLAN1_CNT     = in->L2_IVLAN1_CNT;
-    out->MARK_ROUTED       = in->MARK_ROUTED;
+    out->ROUTED            = in->ROUTED;
     out->MIRTYP            = in->MIRTYP;
     out->MOD_IDX           = in->MOD_IDX;
     out->MOD_PROF_IDX      = in->MOD_PROF_IDX;

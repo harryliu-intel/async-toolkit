@@ -64,7 +64,7 @@ static void maskgen_test_setup
     nexthopToMaskgen->L2_EVID1             = test_in->l2_evid1;
     nexthopToMaskgen->L2_IVLAN1_MEMBERSHIP = test_in->l2_ivlan1_membership;
     nexthopToMaskgen->L2_EDOMAIN           = test_in->l2_edomain_in;
-    nexthopToMaskgen->MARK_ROUTED          = test_in->mark_routed;
+    nexthopToMaskgen->ROUTED               = test_in->routed;
     nexthopToMaskgen->PARSER_ERROR         = test_in->parser_error;
     nexthopToMaskgen->TRAP_IGMP            = test_in->trap_igmp;
     nexthopToMaskgen->PARITY_ERROR         = test_in->parity_error;

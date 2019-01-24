@@ -6,6 +6,8 @@
 
 #include "mby_nexthop_regs.h"
 
+// Helpers:
+
 fm_uint16 getNextHopGroupSize
 (
     mbyNextHopGroupSizeType const group_size_type,
@@ -50,80 +52,39 @@ fm_uint16 setNextHopGroupSize
     return x_group_size;
 }
 
-void getNexthopWeights
+// Getters:
+
+mbyIngressVidTable getIvidTableEntry
 (
     mby_ppe_nexthop_map const * const nexthop_map,
-    fm_uint16                   const group_size,
-    fm_uint16                   const weight_row,
-    fm_byte                     const weight_row_offset,
-    fm_byte                           weights[MBY_NH_MAX_WCMP_GROUP_SIZE]
+    fm_uint16                   const vid
 )
 {
-    nexthop_weights_table_rf const * const nh_table = &(nexthop_map->NH_WEIGHTS[weight_row]);
+    mbyIngressVidTable entry;
 
-    fm_byte bank   = weight_row_offset / 8;
-    fm_byte offset = weight_row_offset % 8;
-    fm_int16 remaining_bytes = group_size;
-    fm_byte copied_weights = 0;
+    ingress_vid_table_r const * const vid_table = &(nexthop_map->INGRESS_VID_TABLE[vid]);
 
-    while (remaining_bytes > 0)
-    {
-        // temporary array of weights
-        fm_byte temp[8] = { 0 };
+    entry.TRAP_IGMP  = vid_table->TRAP_IGMP;
+    entry.REFLECT    = vid_table->REFLECT;
+    entry.MEMBERSHIP = vid_table->MEMBERSHIP;
 
-        temp[0] = nh_table[bank]->WEIGHT_0;
-        temp[1] = nh_table[bank]->WEIGHT_1;
-        temp[2] = nh_table[bank]->WEIGHT_2;
-        temp[3] = nh_table[bank]->WEIGHT_3;
-        temp[4] = nh_table[bank]->WEIGHT_4;
-        temp[5] = nh_table[bank]->WEIGHT_5;
-        temp[6] = nh_table[bank]->WEIGHT_6;
-        temp[7] = nh_table[bank]->WEIGHT_7;
-
-        for( ; offset < 8 ; offset++)
-        {
-            // copy valid entries to output struct
-            weights[copied_weights++] = temp[offset];
-
-            remaining_bytes--;
-            if (remaining_bytes == 0)
-                break;
-        }
-
-        offset = 0;
-        bank++;
-    }
+    return entry;
 }
 
-mbyNextHopRoute getNextHopRouteEntry
+mbyNextHopConfig getNextHopConfig
 (
-    mby_ppe_nexthop_map const * const nexthop_map,
-    fm_uint16                   const route_bin_idx
+    mby_ppe_nexthop_map const * const nexthop_map
 )
 {
-    mbyNextHopRoute nh_route = { 0 };
+    mbyNextHopConfig nh_config;
 
-    nexthop_routes_table_r const * const nh_table = &(nexthop_map->NH_ROUTES[route_bin_idx]);
+    nexthop_config_r const * const nh_config_reg = &(nexthop_map->NH_CONFIG);
 
-    nh_route.age_counter    = nh_table->AGE_COUNTER;
-    nh_route.group_index    = nh_table->GROUP_IDX;
-    nh_route.neighbor_index = nh_table->NEIGHBOR_IDX;
+    nh_config.sweeper_rate   = nh_config_reg->SWEEPER_RATE;
+    nh_config.flowlet_int_en = nh_config_reg->FLOWLET_INT_EN;
+    nh_config.flowlet_enable = nh_config_reg->FLOWLET_ENABLE;
 
-    return nh_route;
-}
-
-void setNextHopRouteEntry
-(
-    mby_ppe_nexthop_map__addr const * const nexthop_w,
-    fm_uint16                         const route_idx,
-    mbyNextHopRoute           const * const nh_route
-)
-{
-    nexthop_routes_table_r__addr const * const nh_table = &(nexthop_w->NH_ROUTES[route_idx]);
-
-    write_field(nh_table->AGE_COUNTER  , nh_route->age_counter   );
-    write_field(nh_table->GROUP_IDX    , nh_route->group_index   );
-    write_field(nh_table->NEIGHBOR_IDX , nh_route->neighbor_index);
+    return nh_config;
 }
 
 mbyNextHopGroup getNextHopGroupEntry
@@ -171,6 +132,97 @@ mbyNextHopGroup getNextHopGroupEntry
     return nh_group;
 }
 
+mbyNextHopNeighbor getNextHopNeighborEntry
+(
+    mby_ppe_nexthop_map const * const nexthop_map,
+    fm_uint16                   const neighbor_idx
+)
+{
+    mbyNextHopNeighbor nh_neigbor;
+
+    nexthop_neighbors_table_0_r const * const nh_table_0 = &(nexthop_map->NH_NEIGHBORS_0[neighbor_idx]);
+    nexthop_neighbors_table_1_r const * const nh_table_1 = &(nexthop_map->NH_NEIGHBORS_1[neighbor_idx]);
+
+    nh_neigbor.dglort          = nh_table_0->DGLORT;
+    nh_neigbor.dmac            = nh_table_0->DST_MAC;
+    nh_neigbor.entry_type      = nh_table_1->ENTRY_TYPE;
+    nh_neigbor.evid            = nh_table_1->EVID;
+    nh_neigbor.ipv6_entry      = nh_table_1->IPV6_ENTRY;
+    nh_neigbor.l2domain        = nh_table_1->L2_DOMAIN;
+    nh_neigbor.l3domain        = nh_table_1->L3_DOMAIN;
+    nh_neigbor.mark_routed     = nh_table_1->MARK_ROUTED;
+    nh_neigbor.mod_idx         = nh_table_1->MOD_IDX;
+    nh_neigbor.mtu_idx         = nh_table_1->MTU_INDEX;
+    nh_neigbor.update_l2domain = nh_table_1->UPDATE_L2_DOMAIN;
+    nh_neigbor.update_l3domain = nh_table_1->UPDATE_L3_DOMAIN;
+
+    return nh_neigbor;
+}
+
+mbyNextHopRoute getNextHopRouteEntry
+(
+    mby_ppe_nexthop_map const * const nexthop_map,
+    fm_uint16                   const route_bin_idx
+)
+{
+    mbyNextHopRoute nh_route = { 0 };
+
+    nexthop_routes_table_r const * const nh_table = &(nexthop_map->NH_ROUTES[route_bin_idx]);
+
+    nh_route.age_counter    = nh_table->AGE_COUNTER;
+    nh_route.group_index    = nh_table->GROUP_IDX;
+    nh_route.neighbor_index = nh_table->NEIGHBOR_IDX;
+
+    return nh_route;
+}
+
+void getNexthopWeights
+(
+    mby_ppe_nexthop_map const * const nexthop_map,
+    fm_uint16                   const group_size,
+    fm_uint16                   const weight_row,
+    fm_byte                     const weight_row_offset,
+    fm_byte                           weights[MBY_NH_MAX_WCMP_GROUP_SIZE]
+)
+{
+    nexthop_weights_table_rf const * const nh_table = &(nexthop_map->NH_WEIGHTS[weight_row]);
+
+    fm_byte bank   = weight_row_offset / 8;
+    fm_byte offset = weight_row_offset % 8;
+    fm_int16 remaining_bytes = group_size;
+    fm_byte copied_weights = 0;
+
+    while (remaining_bytes > 0)
+    {
+        // temporary array of weights
+        fm_byte temp[8] = { 0 };
+
+        temp[0] = nh_table[bank]->WEIGHT_0;
+        temp[1] = nh_table[bank]->WEIGHT_1;
+        temp[2] = nh_table[bank]->WEIGHT_2;
+        temp[3] = nh_table[bank]->WEIGHT_3;
+        temp[4] = nh_table[bank]->WEIGHT_4;
+        temp[5] = nh_table[bank]->WEIGHT_5;
+        temp[6] = nh_table[bank]->WEIGHT_6;
+        temp[7] = nh_table[bank]->WEIGHT_7;
+
+        for( ; offset < 8 ; offset++)
+        {
+            // copy valid entries to output struct
+            weights[copied_weights++] = temp[offset];
+
+            remaining_bytes--;
+            if (remaining_bytes == 0)
+                break;
+        }
+
+        offset = 0;
+        bank++;
+    }
+}
+
+// Setters:
+
 void setNextHopGroupEntry
 (
     mby_ppe_nexthop_map__addr const * const nexthop_w,
@@ -197,48 +249,6 @@ void setNextHopGroupEntry
     write_field(nh_table_1->R_GROUP_SIZE      , r_group_size               );
 }
 
-mbyNextHopNeighbor getNextHopNeighborEntry
-(
-    mby_ppe_nexthop_map const * const nexthop_map,
-    fm_uint16                   const neighbor_idx
-)
-{
-    mbyNextHopNeighbor nh_neigbor;
-
-    nexthop_neighbors_table_0_r const * const nh_table_0 = &(nexthop_map->NH_NEIGHBORS_0[neighbor_idx]);
-    nexthop_neighbors_table_1_r const * const nh_table_1 = &(nexthop_map->NH_NEIGHBORS_1[neighbor_idx]);
-
-    nh_neigbor.entry_type      = nh_table_1->ENTRY_TYPE;
-    nh_neigbor.update_l3domain = nh_table_1->UPDATE_L3_DOMAIN;
-    nh_neigbor.update_l2domain = nh_table_1->UPDATE_L2_DOMAIN;
-    nh_neigbor.l3domain        = nh_table_1->L3_DOMAIN;
-    nh_neigbor.l2domain        = nh_table_1->L2_DOMAIN;
-    nh_neigbor.mod_idx         = nh_table_1->MOD_IDX;
-    nh_neigbor.mtu_idx         = nh_table_1->MTU_INDEX;
-    nh_neigbor.dglort          = nh_table_0->DGLORT;
-
-    fm_bool type_glort  = (nh_neigbor.entry_type == MBY_NH_ENTRY_TYPE_GLORT_FORWARDING);
-    fm_bool type_ip     = (nh_neigbor.entry_type == MBY_NH_ENTRY_TYPE_IP_ROUTING);
-
-    fm_macaddr dmac        = nh_table_0->DST_MAC;
-    fm_uint16  evid        = nh_table_1->EVID;
-    fm_bool    ipv6_entry  = nh_table_1->IPV6_ENTRY;
-    fm_bool    mark_routed = nh_table_1->MARK_ROUTED;
-
-    nh_neigbor.dmac       = dmac;
-    nh_neigbor.evid       = evid;
-    nh_neigbor.ipv6_entry = ipv6_entry;
-    nh_neigbor.mark_routed = mark_routed;
-    // if (type_glort)
-    // {
-    // }
-    // else if (type_ip)
-    // {
-    // }
-
-    return nh_neigbor;
-}
-
 void setNextHopNeighborEntry
 (
     mby_ppe_nexthop_map__addr const * const nexthop_w,
@@ -263,20 +273,29 @@ void setNextHopNeighborEntry
     write_field(nh_table_1->MARK_ROUTED      , nh_neigbor->mark_routed    );
 }
 
-mbyNextHopConfig getNextHopConfig
+void setNextHopRouteEntry
 (
-    mby_ppe_nexthop_map const * const nexthop_map
+    mby_ppe_nexthop_map__addr const * const nexthop_w,
+    fm_uint16                         const route_idx,
+    mbyNextHopRoute           const * const nh_route
 )
 {
-    mbyNextHopConfig nh_config;
+    nexthop_routes_table_r__addr const * const nh_table = &(nexthop_w->NH_ROUTES[route_idx]);
 
-    nexthop_config_r const * const nh_config_reg = &(nexthop_map->NH_CONFIG);
+    write_field(nh_table->AGE_COUNTER  , nh_route->age_counter   );
+    write_field(nh_table->GROUP_IDX    , nh_route->group_index   );
+    write_field(nh_table->NEIGHBOR_IDX , nh_route->neighbor_index);
+}
 
-    nh_config.sweeper_rate   = nh_config_reg->SWEEPER_RATE;
-    nh_config.flowlet_int_en = nh_config_reg->FLOWLET_INT_EN;
-    nh_config.flowlet_enable = nh_config_reg->FLOWLET_ENABLE;
+void setNextHopStatus
+(
+    mby_ppe_nexthop_map__addr const * const nexthop_w,
+    fm_uint16                         const entry_id
+)
+{
+    nexthop_status_r__addr const * const nh_status_w = &(nexthop_w->NH_STATUS);
 
-    return nh_config;
+    write_field(nh_status_w->FLOWLET, entry_id & 0x3FFF);
 }
 
 /**
@@ -302,32 +321,4 @@ void setNextHopUsedEntry
     used_value |= (FM_LITERAL_U64(1) << bit);
 
     write_field(nh_used_w->USED, used_value);
-}
-
-void setNextHopStatus
-(
-    mby_ppe_nexthop_map__addr const * const nexthop_w,
-    fm_uint16                         const entry_id
-)
-{
-    nexthop_status_r__addr const * const nh_status_w = &(nexthop_w->NH_STATUS);
-
-    write_field(nh_status_w->FLOWLET, entry_id & 0x3FFF);
-}
-
-mbyIngressVidTable getIvidTableEntry
-(
-    mby_ppe_nexthop_map const * const nexthop_map,
-    fm_uint16                         vid
-)
-{
-    mbyIngressVidTable entry;
-
-    ingress_vid_table_r const * const vid_table = &(nexthop_map->INGRESS_VID_TABLE[vid]);
-
-    entry.TRAP_IGMP  = vid_table->TRAP_IGMP;
-    entry.REFLECT    = vid_table->REFLECT;
-    entry.MEMBERSHIP = vid_table->MEMBERSHIP;
-
-    return entry;
 }

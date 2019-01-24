@@ -162,7 +162,7 @@ static fm_status receivePacket
         txi2mod.IS_TIMEOUT    = rxs2rxo.IS_TIMEOUT;
         txi2mod.L2_DMAC       = rxs2rxo.L2_DMAC;
         txi2mod.L2_EVID1      = rxs2rxo.L2_EVID1;
-        txi2mod.MARK_ROUTED   = rxs2rxo.MARK_ROUTED;
+        txi2mod.ROUTED        = rxs2rxo.ROUTED;
         txi2mod.MIRTYP        = rxs2rxo.MIRTYP;
         txi2mod.MOD_IDX       = rxs2rxo.MOD_IDX;
         txi2mod.MOD_PROF_IDX  = rxs2rxo.MOD_PROF_IDX;

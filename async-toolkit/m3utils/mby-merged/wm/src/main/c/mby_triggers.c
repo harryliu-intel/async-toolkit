@@ -95,7 +95,7 @@ static inline void incrementTrigCounter
  * @param[in] l3_edomain     L3_SMAC coming from MaskGen stage
  * @param[in] l2_edomain     L2_SMAC coming from MaskGen stage
  * @param[in] fclass         FCLASS coming from MaskGen stage
- * @param[in] mark_routed    MARK_ROUTED coming from MaskGen stage
+ * @param[in] routed         ROUTED coming from MaskGen stage
  * @param[in] dmask          DMASK coming from MaskGen stage
  * @param[in] rx_port        RX_PORT coming from MaskGen stage
  * @param[in] amask          AMASK coming from MaskGen stage
@@ -114,7 +114,7 @@ static fm_bool evaluateTrigger
     fm_byte                        const l3_edomain,
     fm_byte                        const l2_edomain,
     fm_byte                        const fclass,
-    fm_bool                        const mark_routed,
+    fm_bool                        const routed,
     fm_uint64              const * const dmask,
     fm_uint32                      const rx_port,
     fm_uint64                      const amask
@@ -228,8 +228,8 @@ static fm_bool evaluateTrigger
     }
 
     /* Match on the packet's route status. */
-    hit &= ( ( !mark_routed && ( (cond_param.ROUTED_MASK & 0x1) != 0 ) ) ||
-             (  mark_routed && ( (cond_param.ROUTED_MASK & 0x2) != 0 ) ) );
+    hit &= ( ( !routed && ( (cond_param.ROUTED_MASK & 0x1) != 0 ) ) ||
+             (  routed && ( (cond_param.ROUTED_MASK & 0x2) != 0 ) ) );
 
     /* Match on one or more bits of the frame handler action mask. */
     action_mask  = cond_amask1.HANDLER_ACTION_MASK;
@@ -773,13 +773,13 @@ static void loopbackSuppressionFiltering
 (
     mby_ppe_cm_apply_map const * const cm_apply,
     fm_bool                      const targeted_deterministic,
-    fm_bool                      const mark_routed,
+    fm_bool                      const routed,
     fm_uint16                    const csglort,
     fm_uint32                  * const action_o,
     fm_uint64                  * const dmask_o
 )
 {
-    fm_bool skip_suppress = targeted_deterministic || mark_routed || (!isDmask(dmask_o));
+    fm_bool skip_suppress = targeted_deterministic || routed || (!isDmask(dmask_o));
 
     //REVISIT!!! should be MBY_DEST_PORTS_COUNT
     // (MBY_DEST_PORTS_COUNT - 1) It does not need to be [0..256] because the CPU port is never a member of a LAG
@@ -807,7 +807,7 @@ static void handleTraps
     fm_uint16                  * const idglort_o,
     fm_byte                    * const cpu_code_o,
     fm_uint32                  * const action_o,
-    fm_bool                    * const mark_routed_o,
+    fm_bool                    * const routed_o,
     fm_uint16                  * const ip_mcast_idx_o
 )
 {
@@ -821,7 +821,7 @@ static void handleTraps
         *cpu_code_o = MBY_TRIGGER_TRAP_ACTION_CODE | triggers->cpuCode;
 
     *action_o       = MBY_ACTION_TRAP;
-    *mark_routed_o  = FALSE;
+    *routed_o       = FALSE;
     *ip_mcast_idx_o = 0;
 
     dmaskCopy(cpu_trap_mask.DEST_MASK, dmask_o);
@@ -906,7 +906,7 @@ static void trap
     fm_uint16                  * const idglort_o,
     fm_byte                    * const cpu_code_o,
     fm_uint32                  * const action_o,
-    fm_bool                    * const mark_routed_o,
+    fm_bool                    * const routed_o,
     fm_uint16                  * const ip_mcast_idx_o
 )
 {
@@ -930,7 +930,7 @@ static void trap
             idglort_o,
             cpu_code_o,
             action_o,
-            mark_routed_o,
+            routed_o,
             ip_mcast_idx_o
         );
 
@@ -1065,7 +1065,7 @@ static void maskGenUpdate
     fm_byte                    * const log_amask,
     fm_bool                    * const logging_hit,
     fm_byte                    * const seg_meta_err,
-    fm_bool                    * const mark_routed,
+    fm_bool                    * const routed,
     fm_uint16                  * const ip_mcast_idx,
     fm_uint32                  * const mirror0_profile_idx,
     fm_bool                    * const mirror0_profile_v,
@@ -1102,7 +1102,7 @@ static void maskGenUpdate
     (
         cm_apply,
         targeted_deterministic,
-        *mark_routed,
+        *routed,
         csglort,
         action,
         dmask
@@ -1129,7 +1129,7 @@ static void maskGenUpdate
         idglort,
         cpu_code,
         action,
-        mark_routed,
+        routed,
         ip_mcast_idx
     );
 
@@ -1185,7 +1185,7 @@ void Triggers
     fm_byte                 l2_edomain                = in->L2_EDOMAIN;
     fm_uint16               ip_mcast_idx              = in->IP_MCAST_IDX;
     fm_byte           const fclass                    = in->FCLASS;
-    fm_bool                 mark_routed               = in->MARK_ROUTED;
+    fm_bool                 routed                    = in->ROUTED;
     fm_uint64 const * const dmask                     = in->DMASK;
     fm_macaddr        const l2_smac                   = in->L2_SMAC;
     fm_uint32         const rx_port                   = in->RX_PORT;
@@ -1239,7 +1239,7 @@ void Triggers
                     l3_edomain,
                     l2_edomain,
                     fclass,
-                    mark_routed,
+                    routed,
                     dmask,
                     rx_port,
                     amask
@@ -1379,7 +1379,7 @@ void Triggers
         &log_amask,
         &logging_hit,
         &seg_meta_err,
-        &mark_routed,
+        &routed,
         &ip_mcast_idx,
         &mirror0_profile_idx,
         &mirror0_profile_v,
@@ -1404,7 +1404,7 @@ void Triggers
     out->FNMASK              = fnmask[0]; //!!! REVISIT temporary solution
     out->L2_EVID1            = results.vlan;
     out->LEARNING_ENABLED    = learning_enabled;
-    out->MARK_ROUTED         = mark_routed;
+    out->ROUTED              = routed;
     out->MIRROR0_PROFILE_IDX = results.mirror0ProfileIdx;
     out->MIRROR0_PROFILE_V   = results.mirror0ProfileV;
     out->MIRROR1_PROFILE_IDX = results.mirror1ProfileIdx;
