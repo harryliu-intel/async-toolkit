@@ -1,3 +1,10 @@
+
+<% if ($MBY_SHM) {
+   } else {
+   $MBY_SHM = 1;
+%>
+
+
 <% use security; %>
 <% my %Security_Props = security::GetSecurityInfo(); %>
 
@@ -108,3 +115,7 @@ addrmap mby_shm_map {
   fwd_table1_rf       FWD_TABLE1[16];
   fwd_table_mod_rf    FWD_TABLE_MOD[10];
 }; 
+
+<%
+   }
+%>

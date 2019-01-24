@@ -28,6 +28,10 @@
 // -- Description  : This is RDL for the MAC block.
 //------------------------------------------------------------------------------
 
+<% if ($PCIE) {
+   } else {
+   $PCIE = 1;
+%>
 
 `include "mby_lib_udp.rdl"
 `include "pcie_pf.rdl"
@@ -50,3 +54,6 @@ addrmap pep {
 
 };
 
+<%
+   }
+%>

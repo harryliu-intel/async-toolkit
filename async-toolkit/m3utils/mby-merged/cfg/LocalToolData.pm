@@ -346,6 +346,7 @@ $ToolConfig_tools{"mgm"} = {
         PREFIX => "mby",
 	CMO  => [
 	    "/nfs/sc/disks/sc_mby_00005/kits/tr3/",
+	    "/nfs/sc/disks/slx_1341/jvenepal/mby/work_root/snps_memory/mby/",
 	    ],
     },
     EXEC => "&get_tool_path()/bin/mgm",

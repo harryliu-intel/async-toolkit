@@ -1,3 +1,8 @@
+<% if ($MBY_PPE_CGRP_EM_MAP) {
+   } else {
+   $MBY_PPE_CGRP_EM_MAP = 1;
+%>
+
 `include "mby_lib_udp.rdl"
 <% use security; %>
 <% my %Security_Props = security::GetSecurityInfo(); %>
@@ -478,3 +483,7 @@ addrmap mby_ppe_cgrp_em_map {
   em_hash_miss_rf           HASH_MISS[2]     ;
   em_hash_cfg_r             HASH_CFG[64]     ;
 };
+
+<%
+   }
+%>

@@ -1,3 +1,9 @@
+<% if ($MBY_RX_PB_MAP) {
+   } else {
+   $MBY_RX_PB_MAP = 1;
+%>
+
+
 `include "lib_udp.rdl"
 <% use security; %>
 <% my %Security_Props = security::GetSecurityInfo(); %>
@@ -100,3 +106,7 @@ addrmap mby_rx_pb_map {
   rx_pb_port_cfg_r RX_PB_PORT_CFG;
   rx_pb_wm_rf      RX_PB_WM[17];
 };
+
+<%
+   }
+%>

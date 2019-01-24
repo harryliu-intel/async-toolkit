@@ -1,3 +1,8 @@
+<% if ($MBY_PPE_POLICERS_MAP) {
+   } else {
+   $MBY_PPE_POLICERS_MAP = 1;
+%>
+
 `include "mby_lib_udp.rdl"
 <% use security; %>
 <% my %Security_Props = security::GetSecurityInfo(); %>
@@ -878,3 +883,7 @@ addrmap mby_ppe_policers_map {
   pol_sweep_last_r           POL_SWEEP_LAST           @0x4858;
   pol_sweep_period_max_r     POL_SWEEP_PERIOD_MAX     @0x4860;
 };
+
+<%
+   }
+%>

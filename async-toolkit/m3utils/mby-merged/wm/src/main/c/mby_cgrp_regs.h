@@ -188,13 +188,6 @@ typedef enum mbyClassifierEmBLearnNotifyEnum
     MBY_LEARN_NOTIFY_SMAC_MISS
 } mbyClassifierEmBLearnNotify;
 
-typedef enum mbyClassifierFwdSubtypeEnum
-{
-    MBY_FWD_SUBTYPE_FWD_GLORT = 0,
-    MBY_FWD_SUBTYPE_ROUTE_ARP
-
-} mbyClassifierFwdSubtype;
-
 typedef enum mbyClassifierActionEntryTypeEnum
 {
     MBY_CGRP_ACTION_NOP = 0,

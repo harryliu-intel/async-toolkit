@@ -1,6 +1,12 @@
 // INTEL TOP SECRET
 // Copyright 2014 Intel Corporation. All Rights Reserved.
 //
+
+<% if ($MBY_PPE_RX_STATS_MAP) {
+   } else {
+   $MBY_PPE_RX_STATS_MAP = 1;
+%>
+
 `include "mby_lib_udp.rdl"
 <% use security; %>
 <% my %Security_Props = security::GetSecurityInfo(); %>
@@ -208,3 +214,6 @@ addrmap mby_ppe_rx_stats_map {
   rx_stats_vlan_byte_r      RX_STATS_VLAN_BYTE[16128]     @0x28000 += 8;
 };
 
+<%
+   }
+%>

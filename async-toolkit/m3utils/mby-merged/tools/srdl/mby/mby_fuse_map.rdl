@@ -15,6 +15,11 @@
 //
 //=============================================================================
 
+<% if ($MBY_FUSE_MAP) {
+   } else {
+   $MBY_FUSE_MAP = 1;
+%>
+
 `include "fuse_udp.rdl"
 
 `include "mby_fuse.rdl"
@@ -61,3 +66,8 @@
     
     mby_fuse mby_fuse;
   };
+  
+<%
+   }
+%>
+

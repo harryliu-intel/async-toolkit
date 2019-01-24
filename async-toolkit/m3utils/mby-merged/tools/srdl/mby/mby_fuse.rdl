@@ -5,6 +5,11 @@
 //SOCFuseGen Timestamp: Wed Jan 15 09:54:10 2014
 //SOCFuseGen
 
+<% if ($MBY_FUSE) {
+   } else {
+   $MBY_FUSE = 1;
+%>
+
 `include "fuse_udp.rdl"
 
   addrmap mby_fuse {
@@ -154,3 +159,7 @@
 
   };
 
+
+<%
+   }
+%>
