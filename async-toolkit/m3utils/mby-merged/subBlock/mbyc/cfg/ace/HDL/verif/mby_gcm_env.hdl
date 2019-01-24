@@ -1,0 +1,39 @@
+#----------*-perl-*-------------------------
+#  This is a HDL spec file - it defines the unit and how to compile it.
+#
+#
+
+$hdl_spec = {
+
+    # List of specific VERILOG source files
+    -vlog_files => [
+         "verif/gcm/ral/mby_gcm_reg_pkg.sv",
+         "verif/gcm/env/mby_gcm_env_pkg.sv",
+         "verif/gcm/seq/mby_gcm_seq_lib.sv",
+     ],
+
+    # List of verilog library source dirs ( corresponds with the VLOG '-y' parameter)
+    -vlog_lib_dirs => [
+     ],
+
+    # List of verilog library source files ( corresponds with the VLOG '-v' parameter)
+    -vlog_lib_files => [],
+
+    # List of include directories. Corresponds with the VLOG '+incdir+' parameter
+    -vlog_incdirs => [
+        "$ENV{UVM_HOME}/src",
+        "$ENV{OVM_HOME}/src",
+        "$ENV{SAOLA_HOME}/verilog",
+        "$ENV{SAOLA_HOME}/verilog_uvm",
+        "verif/gcm/",
+        "verif/gcm/tb",
+        "verif/gcm/seq",
+        "verif/gcm/ral",
+        "verif/gcm/ti",
+        "verif/gcm/env",
+     ],
+
+    # Arbitrary VLOG options
+    # -vlog_opts => ['-sverilog +libext+.v+.sv -override_timescale=1ps/1ps',]
+
+};
