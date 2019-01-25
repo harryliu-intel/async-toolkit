@@ -5,16 +5,13 @@ $SVA_LIB/intel_checkers_pkg.vs
 $SVA_LIB/intel_checkers.vs
 +incdir+$SVA_LIB
 
-$MBY_SRC/shared/rtl/shared_pkg.sv
-$MBY_SRC/shared/rtl/mby_gmm_pkg.sv
-
 -y      $MGM/rtl
 +incdir+$MGM/rtl
--y      $MGM/gpl/src
-+incdir+$MGM/gpl/src
--y      $MGM/gpl/src/mem_wrap
+-y      $MGM/vep/src
++incdir+$MGM/vep/src
+-y      $MGM/vep/src/mem_wrap
 
--y $MBY_SRC/gmm/gmn/gpl/rtl
+-y $MBY_SRC/gmm/gmn/vep/rtl
 
 -y .
 top.sv
