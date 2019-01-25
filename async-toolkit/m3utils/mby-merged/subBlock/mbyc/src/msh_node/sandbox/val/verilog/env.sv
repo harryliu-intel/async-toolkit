@@ -77,15 +77,16 @@ class env;
 	virtual mby_mem_msh_bank_ram_shell_4096x532_func_if mem_if_3,
    	
         integer  knob_inp_req_num,
+	integer  knob_dut_row,
+	integer  knob_dut_col,
 	integer  knob_plane,
 	integer  knob_req_toward,
+	integer	 knob_legal_only,
 	integer  knob_req_row,
 	integer  knob_req_col,
 	integer	 knob_rreq_port_row,
-	integer	 knob_rreq_port_side,
+	integer	 knob_rreq_port_side
 
-	integer  knob_dut_row,
-	integer  knob_dut_col
     );
 
         name = "env.sv";
@@ -103,7 +104,7 @@ class env;
 
 
         sys_drvr    = new(dut_if, knob_dut_row, knob_dut_col);
-        inp_driver  = new(dut_if, knob_inp_req_num, knob_plane, knob_req_toward, 
+        inp_driver  = new(dut_if, knob_inp_req_num, knob_plane, knob_req_toward, knob_legal_only,
                           knob_req_row, knob_req_col, knob_rreq_port_row, knob_rreq_port_side);
 
         sb  = new();
