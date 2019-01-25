@@ -198,6 +198,7 @@ class inp_driver;
     integer  knob_inp_req_num;
     integer  knob_plane;
     integer  knob_req_toward;
+    integer  knob_legal_only;
     integer  knob_req_row;
     integer  knob_req_col;
     integer  knob_rreq_port_row;
@@ -213,6 +214,7 @@ class inp_driver;
 	integer  knob_inp_req_num,
 	integer  knob_plane,
 	integer  knob_req_toward,
+        integer  knob_legal_only,
 	integer  knob_req_row,
 	integer  knob_req_col,
 	integer  knob_rreq_port_row,
@@ -225,6 +227,7 @@ class inp_driver;
 	this.knob_inp_req_num = knob_inp_req_num;
 	this.knob_plane = knob_plane;
 	this.knob_req_toward = knob_req_toward;
+	this.knob_legal_only = knob_legal_only;
 	this.knob_req_row = knob_req_row;
 	this.knob_req_col = knob_req_col;
 	this.knob_rreq_port_row = knob_rreq_port_row;
@@ -569,391 +572,6 @@ class inp_driver;
 
             @(posedge dut_if.mclk);
 
-	// 1st wr req
-            drvr_wr_req_to_dut.vld      = 1'b1;
-            drvr_wr_req_to_dut.node_col = '0;
-            drvr_wr_req_to_dut.node_row = '0;
-            drvr_wr_req_to_dut.csr      = '0;
-<<<<<<< HEAD
-            drvr_wr_req_to_dut.addr     = mby_msh_pkg::mshnd_addr_t'('h33);
-            drvr_wr_req_to_dut.sema_val = '0; 
-            drvr_wr_req_to_dut.age      = mby_msh_pkg::msh_trans_age_t'('h55);
-||||||| merged common ancestors
-            drvr_wr_req_to_dut.addr     = mby_msh_pkg::mshnd_addr_t'('h33);
-            drvr_wr_req_to_dut.age      = mby_msh_pkg::msh_trans_age_t'('h55);
-=======
-         // drvr_wr_req_to_dut.addr     = mby_msh_pkg::mshnd_addr_t'('h10);
-            drvr_wr_req_to_dut.addr     = adr_1;
-            drvr_wr_req_to_dut.age      = mby_msh_pkg::msh_trans_age_t'('h51);
->>>>>>> 5f35c9fd9da8518ade9e64379f06b8e469242b15
-
-            @(posedge dut_if.mclk);
-
-            drvr_wr_req_to_dut.vld      = 1'b0;
-            drvr_wr_req_to_dut.node_col = '0;
-            drvr_wr_req_to_dut.node_row = '0;
-            drvr_wr_req_to_dut.csr      = '0;
-            drvr_wr_req_to_dut.addr     = mby_msh_pkg::mshnd_addr_t'(0);
-            drvr_wr_req_to_dut.sema_val = '0;
-            drvr_wr_req_to_dut.age      = mby_msh_pkg::msh_trans_age_t'(0);
-
-            @(posedge dut_if.mclk);
-
-	// 1st wr data
-         // drvr_wr_data_to_dut    = mby_msh_pkg::msh_data_t'('ha1a1);
-            drvr_wr_data_to_dut    = $urandom();
-
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-
-	// 1st rd req
-            drvr_rd_req_to_dut.vld      = 1'b1;
-            drvr_rd_req_to_dut.id       = mby_msh_pkg::msh_rd_id_t'(1);
-            drvr_rd_req_to_dut.node_col = '0;
-            drvr_rd_req_to_dut.node_row = '0;
-            drvr_rd_req_to_dut.csr      = '0;
-         // drvr_rd_req_to_dut.addr     = mby_msh_pkg::mshnd_addr_t'('h10);
-            drvr_rd_req_to_dut.addr     = adr_1;
-            drvr_rd_req_to_dut.sema_val = 1'b0;
-            drvr_rd_req_to_dut.age      = mby_msh_pkg::msh_trans_age_t'('h15);
-
-            @(posedge dut_if.mclk);
-
-            drvr_rd_req_to_dut.vld      = 1'b0;
-            drvr_rd_req_to_dut.id       = mby_msh_pkg::msh_rd_id_t'(0);
-            drvr_rd_req_to_dut.node_col = '0;
-            drvr_rd_req_to_dut.node_row = '0;
-            drvr_rd_req_to_dut.csr      = '0;
-            drvr_rd_req_to_dut.addr     = mby_msh_pkg::mshnd_addr_t'(0);
-            drvr_rd_req_to_dut.sema_val = 1'b0;
-            drvr_rd_req_to_dut.age      = mby_msh_pkg::msh_trans_age_t'(0);
-
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-
-	// 2nd wr req, wr data and rd req:
-
-            drvr_wr_req_to_dut.vld      = 1'b1;
-            drvr_wr_req_to_dut.node_col = '0;
-            drvr_wr_req_to_dut.node_row = '0;
-            drvr_wr_req_to_dut.csr      = '0;
-         // drvr_wr_req_to_dut.addr     = mby_msh_pkg::mshnd_addr_t'('h20);
-            drvr_wr_req_to_dut.addr     = adr_2;
-            drvr_wr_req_to_dut.age      = mby_msh_pkg::msh_trans_age_t'('h52);
-            @(posedge dut_if.mclk);
-
-            drvr_wr_req_to_dut.vld      = 1'b0;
-            drvr_wr_req_to_dut.node_col = '0;
-            drvr_wr_req_to_dut.node_row = '0;
-            drvr_wr_req_to_dut.csr      = '0;
-            drvr_wr_req_to_dut.addr     = mby_msh_pkg::mshnd_addr_t'(0);
-            drvr_wr_req_to_dut.age      = mby_msh_pkg::msh_trans_age_t'(0);
-            @(posedge dut_if.mclk);
-
-         // drvr_wr_data_to_dut    = mby_msh_pkg::msh_data_t'('ha2a2);
-            drvr_wr_data_to_dut    = $urandom();
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-
-            drvr_rd_req_to_dut.vld      = 1'b1;
-            drvr_rd_req_to_dut.id       = mby_msh_pkg::msh_rd_id_t'(1);
-            drvr_rd_req_to_dut.node_col = '0;
-            drvr_rd_req_to_dut.node_row = '0;
-            drvr_rd_req_to_dut.csr      = '0;
-         // drvr_rd_req_to_dut.addr     = mby_msh_pkg::mshnd_addr_t'('h20);
-            drvr_rd_req_to_dut.addr     = adr_2;
-            drvr_rd_req_to_dut.sema_val = 1'b0;
-            drvr_rd_req_to_dut.age      = mby_msh_pkg::msh_trans_age_t'('h25);
-            @(posedge dut_if.mclk);
-
-            drvr_rd_req_to_dut.vld      = 1'b0;
-            drvr_rd_req_to_dut.id       = mby_msh_pkg::msh_rd_id_t'(0);
-            drvr_rd_req_to_dut.node_col = '0;
-            drvr_rd_req_to_dut.node_row = '0;
-            drvr_rd_req_to_dut.csr      = '0;
-            drvr_rd_req_to_dut.addr     = mby_msh_pkg::mshnd_addr_t'(0);
-            drvr_rd_req_to_dut.sema_val = 1'b0;
-            drvr_rd_req_to_dut.age      = mby_msh_pkg::msh_trans_age_t'(0);
-
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-
-	// 3rd wr req, wr data and rd req:
-
-            drvr_wr_req_to_dut.vld      = 1'b1;
-            drvr_wr_req_to_dut.node_col = '0;
-            drvr_wr_req_to_dut.node_row = '0;
-            drvr_wr_req_to_dut.csr      = '0;
-         // drvr_wr_req_to_dut.addr     = mby_msh_pkg::mshnd_addr_t'('h30);
-            drvr_wr_req_to_dut.addr     = adr_3;
-            drvr_wr_req_to_dut.age      = mby_msh_pkg::msh_trans_age_t'('h53);
-            @(posedge dut_if.mclk);
-
-            drvr_wr_req_to_dut.vld      = 1'b0;
-            drvr_wr_req_to_dut.node_col = '0;
-            drvr_wr_req_to_dut.node_row = '0;
-            drvr_wr_req_to_dut.csr      = '0;
-            drvr_wr_req_to_dut.addr     = mby_msh_pkg::mshnd_addr_t'(0);
-            drvr_wr_req_to_dut.age      = mby_msh_pkg::msh_trans_age_t'(0);
-            @(posedge dut_if.mclk);
-
-         // drvr_wr_data_to_dut    = mby_msh_pkg::msh_data_t'('ha3a3);
-            drvr_wr_data_to_dut    = $urandom();
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-
-            drvr_rd_req_to_dut.vld      = 1'b1;
-            drvr_rd_req_to_dut.id       = mby_msh_pkg::msh_rd_id_t'(1);
-            drvr_rd_req_to_dut.node_col = '0;
-            drvr_rd_req_to_dut.node_row = '0;
-            drvr_rd_req_to_dut.csr      = '0;
-         // drvr_rd_req_to_dut.addr     = mby_msh_pkg::mshnd_addr_t'('h30);
-            drvr_rd_req_to_dut.addr     = adr_3;
-            drvr_rd_req_to_dut.sema_val = 1'b0;
-            drvr_rd_req_to_dut.age      = mby_msh_pkg::msh_trans_age_t'('h35);
-            @(posedge dut_if.mclk);
-
-            drvr_rd_req_to_dut.vld      = 1'b0;
-            drvr_rd_req_to_dut.id       = mby_msh_pkg::msh_rd_id_t'(0);
-            drvr_rd_req_to_dut.node_col = '0;
-            drvr_rd_req_to_dut.node_row = '0;
-            drvr_rd_req_to_dut.csr      = '0;
-            drvr_rd_req_to_dut.addr     = mby_msh_pkg::mshnd_addr_t'(0);
-            drvr_rd_req_to_dut.sema_val = 1'b0;
-            drvr_rd_req_to_dut.age      = mby_msh_pkg::msh_trans_age_t'(0);
-
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-
-	// 4th & 5th: 2 wr reqs and wr data first, then 2 read followed
-
-	    // 4th wr
-            drvr_wr_req_to_dut.vld      = 1'b1;
-            drvr_wr_req_to_dut.node_col = '0;
-            drvr_wr_req_to_dut.node_row = '0;
-            drvr_wr_req_to_dut.csr      = '0;
-         // drvr_wr_req_to_dut.addr     = mby_msh_pkg::mshnd_addr_t'('h40);
-            drvr_wr_req_to_dut.addr     = adr_4;
-            drvr_wr_req_to_dut.age      = mby_msh_pkg::msh_trans_age_t'('h54);
-            @(posedge dut_if.mclk);
-
-            drvr_wr_req_to_dut.vld      = 1'b0;
-            @(posedge dut_if.mclk);
-
-         // drvr_wr_data_to_dut    = mby_msh_pkg::msh_data_t'('ha4a4);
-            drvr_wr_data_to_dut    = $urandom();
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-
-	    // 5th wr
-            drvr_wr_req_to_dut.vld      = 1'b1;
-         // drvr_wr_req_to_dut.addr     = mby_msh_pkg::mshnd_addr_t'('h50);
-            drvr_wr_req_to_dut.addr     = adr_5;
-            drvr_wr_req_to_dut.age      = mby_msh_pkg::msh_trans_age_t'('h55);
-            @(posedge dut_if.mclk);
-
-            drvr_wr_req_to_dut.vld      = 1'b0;
-            @(posedge dut_if.mclk);
-
-         // drvr_wr_data_to_dut    = mby_msh_pkg::msh_data_t'('ha5a5);
-            drvr_wr_data_to_dut    = $urandom();
-
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-
-	    // 4th rd
-            drvr_rd_req_to_dut.vld      = 1'b1;
-            drvr_rd_req_to_dut.id       = mby_msh_pkg::msh_rd_id_t'(1);
-         // drvr_rd_req_to_dut.addr     = mby_msh_pkg::mshnd_addr_t'('h40);
-            drvr_rd_req_to_dut.addr     = adr_4;
-            drvr_rd_req_to_dut.age      = mby_msh_pkg::msh_trans_age_t'('h45);
-            @(posedge dut_if.mclk);
-
-            drvr_rd_req_to_dut.vld      = 1'b0;
-            @(posedge dut_if.mclk);
-
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-
-	    // 5th rd
-            drvr_rd_req_to_dut.vld      = 1'b1;
-            drvr_rd_req_to_dut.id       = mby_msh_pkg::msh_rd_id_t'(1);
-         // drvr_rd_req_to_dut.addr     = mby_msh_pkg::mshnd_addr_t'('h50);
-            drvr_rd_req_to_dut.addr     = adr_5;
-            drvr_rd_req_to_dut.age      = mby_msh_pkg::msh_trans_age_t'('h55);
-            @(posedge dut_if.mclk);
-
-            drvr_rd_req_to_dut.vld      = 1'b0;
-            @(posedge dut_if.mclk);
-
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-
-        // 6th wr req, wr data and rd req:
-
-            drvr_wr_req_to_dut.vld      = 1'b1;
-            drvr_wr_req_to_dut.node_col = '0;
-            drvr_wr_req_to_dut.node_row = '0;
-            drvr_wr_req_to_dut.csr      = '0;
-         // drvr_wr_req_to_dut.addr     = mby_msh_pkg::mshnd_addr_t'('h60);
-            drvr_wr_req_to_dut.addr     = adr_6;
-            drvr_wr_req_to_dut.age      = mby_msh_pkg::msh_trans_age_t'('h63);
-            @(posedge dut_if.mclk);
-
-            drvr_wr_req_to_dut.vld      = 1'b0;
-            drvr_wr_req_to_dut.node_col = '0;
-            drvr_wr_req_to_dut.node_row = '0;
-            drvr_wr_req_to_dut.csr      = '0;
-            drvr_wr_req_to_dut.addr     = mby_msh_pkg::mshnd_addr_t'(0);
-            drvr_wr_req_to_dut.age      = mby_msh_pkg::msh_trans_age_t'(0);
-            @(posedge dut_if.mclk);
-
-         // drvr_wr_data_to_dut    = mby_msh_pkg::msh_data_t'('ha6a6);
-            drvr_wr_data_to_dut    = $urandom();
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-
-            drvr_rd_req_to_dut.vld      = 1'b1;
-            drvr_rd_req_to_dut.id       = mby_msh_pkg::msh_rd_id_t'(1);
-            drvr_rd_req_to_dut.node_col = '0;
-            drvr_rd_req_to_dut.node_row = '0;
-            drvr_rd_req_to_dut.csr      = '0;
-         // drvr_rd_req_to_dut.addr     = mby_msh_pkg::mshnd_addr_t'('h60);
-            drvr_rd_req_to_dut.addr     = adr_6;
-            drvr_rd_req_to_dut.sema_val = 1'b0;
-            drvr_rd_req_to_dut.age      = mby_msh_pkg::msh_trans_age_t'('h65);
-            @(posedge dut_if.mclk);
-
-            drvr_rd_req_to_dut.vld      = 1'b0;
-            drvr_rd_req_to_dut.id       = mby_msh_pkg::msh_rd_id_t'(0);
-            drvr_rd_req_to_dut.node_col = '0;
-            drvr_rd_req_to_dut.node_row = '0;
-            drvr_rd_req_to_dut.csr      = '0;
-            drvr_rd_req_to_dut.addr     = mby_msh_pkg::mshnd_addr_t'(0);
-            drvr_rd_req_to_dut.sema_val = 1'b0;
-            drvr_rd_req_to_dut.age      = mby_msh_pkg::msh_trans_age_t'(0);
-
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-            @(posedge dut_if.mclk);
-
-            drove_reqs = 1; 
-
         end
 
 //        while (something_to_do()) begin
@@ -976,93 +594,6 @@ class inp_driver;
 */
 
 
-/*
-
-    // Drive requests into DUT (template)
-    task drive_reqs();
-
-        if (!drove_reqs) begin
-
-            @(posedge dut_if.mclk);
-
-
-            drvr_wr_req_to_dut.node_col = '0;
-            drvr_wr_req_to_dut.node_row = '0;
-            drvr_wr_req_to_dut.csr      = '0;
-            drvr_rd_req_to_dut.sema_val = 1'b0;
-
-
-            for (integer req_loop = 0; req_loop < knob_inp_req_num; req_loop++) begin
-
-	       wadr = $urandom();
-	       wdata = $urandom();
- 	       rid = $urandom();
-
-               // wr req, wr data:
-
-               @(posedge dut_if.mclk);
-               drvr_wr_req_to_dut.vld      = 1'b1;
-               drvr_wr_req_to_dut.addr     = wadr;
-               drvr_wr_req_to_dut.age      = $urandom();
-
-               @(posedge dut_if.mclk);
-               drvr_wr_req_to_dut.vld      = 1'b0;
-
-               @(posedge dut_if.mclk);
-               drvr_wr_data_to_dut    = wdata;
-
-               @(posedge dut_if.mclk);
-               @(posedge dut_if.mclk);
-               @(posedge dut_if.mclk);
-               @(posedge dut_if.mclk);
-            
-               // rd req
-               @(posedge dut_if.mclk);
-               drvr_rd_req_to_dut.vld      = 1'b1;
-               drvr_rd_req_to_dut.id       = rid;
-               drvr_rd_req_to_dut.addr     = wadr;
-               drvr_rd_req_to_dut.age      = $urandom();
-
-               @(posedge dut_if.mclk);
-               drvr_rd_req_to_dut.vld      = 1'b0;
-
-               @(posedge dut_if.mclk);
-               @(posedge dut_if.mclk);
-               @(posedge dut_if.mclk);
-               @(posedge dut_if.mclk);
-               @(posedge dut_if.mclk);
-               @(posedge dut_if.mclk);
-               @(posedge dut_if.mclk);
-               @(posedge dut_if.mclk);
-               @(posedge dut_if.mclk);
-               @(posedge dut_if.mclk);
-               @(posedge dut_if.mclk);
-               @(posedge dut_if.mclk);
-               @(posedge dut_if.mclk);
-               @(posedge dut_if.mclk);
-               @(posedge dut_if.mclk);
-               @(posedge dut_if.mclk);
-               @(posedge dut_if.mclk);
-               @(posedge dut_if.mclk);
-               @(posedge dut_if.mclk);
-               @(posedge dut_if.mclk);
-
-               $display("(time: %0d) %s: ** (req num = %0d) ** ", $time, name, req_loop);
-
-            end		// end loop 
- 
-            drove_reqs = 1;
-
-        end
-
-        $display("(time: %0d) %s: ** Done Driving Requests to Inputs ** ", $time, name);
-
-        @(posedge dut_if.mclk);
-
-        drv_done = 1'b1;
-    endtask
-
-*/
 
 
     // Drive requests into DUT
@@ -1109,14 +640,6 @@ class inp_driver;
                 // req_toward = 2;
 
 
-		if (knob_rreq_port_row < 16) 	col_rreq_port_row = knob_rreq_port_row;
-	        else	col_rreq_port_row = $urandom_range(0, 15);
-
-		if (knob_rreq_port_side < 4) 	col_rreq_port_side = knob_rreq_port_side;
-	        else	col_rreq_port_side = $urandom_range(0, 3);
-
-
-
             //  $display("(time: %0d) %s: !!! knob_req_toward=%0d, req_toward=%0d !!! ", $time, name, knob_req_toward, req_toward);
 
 
@@ -1128,6 +651,91 @@ class inp_driver;
 
                // node_row = 2;
                // node_col = 4;
+
+
+
+                // $display("(time: %0d) %s: knob_legal_only=%0d ", $time, name, knob_legal_only);
+                // $display("(time: %0d) %s: req_node_row=%0d, col=%0d ", $time, name, node_row, node_col);
+                // $display("(time: %0d) %s: dut_node_row=%0d, col=%0d ", $time, name, dut_if.i_sb_node_row, dut_if.i_eb_node_col);
+
+
+
+		// make sure req_row and req_col are legal
+
+	 	if (knob_legal_only == 1) begin
+
+		   if ((knob_req_toward != 0) && (req_toward == 0) && (node_col < dut_if.i_eb_node_col)) begin
+		      node_col = $urandom_range(dut_if.i_eb_node_col, 7);
+                   // $display("(time: %0d) %s: Legalized EB wreq, req_node_col=%0d ", $time, name, node_col);
+	  	   end
+
+		   else if ((knob_req_toward != 1) && (req_toward == 1) && (node_col > dut_if.i_eb_node_col)) begin
+		      node_col = $urandom_range(0, dut_if.i_eb_node_col);
+                   // $display("(time: %0d) %s: Legalized WB wreq, req_node_col=%0d ", $time, name, node_col);
+	 	   end
+
+		   else if ((knob_req_toward != 2) && (req_toward == 2) && (node_row > dut_if.i_sb_node_row)) begin
+		      node_row = $urandom_range(0, dut_if.i_sb_node_row);
+                   // $display("(time: %0d) %s: Legalized NB wreq, req_node_row=%0d ", $time, name, node_row);
+		   end
+
+		   else if ((knob_req_toward != 3) && (req_toward == 3) && (node_row < dut_if.i_sb_node_row)) begin
+		      node_row = $urandom_range(dut_if.i_sb_node_row, 15);
+                   // $display("(time: %0d) %s: Legalized SB wreq, req_node_row=%0d ", $time, name, node_row);
+		   end
+		end
+
+
+
+		if (knob_rreq_port_row < 16) 	col_rreq_port_row = knob_rreq_port_row;
+	        else	col_rreq_port_row = $urandom_range(0, 15);
+
+		if (knob_rreq_port_side < 4) 	col_rreq_port_side = knob_rreq_port_side;
+	        else	col_rreq_port_side = $urandom_range(0, 3);
+
+
+
+                // $display("(time: %0d) %s: col_rreq_port_row =%0d", $time, name, col_rreq_port_row);
+                // $display("(time: %0d) %s: col_rreq_port_side=%0d", $time, name, col_rreq_port_side);
+
+
+
+		// make sure port_row is legal
+
+	 	if (knob_legal_only == 1) begin
+		   if ((req_toward == 2) && (knob_rreq_port_row >= 16) && (col_rreq_port_row <= dut_if.i_sb_node_row)) begin
+		      if (dut_if.i_sb_node_row == 15)
+		         col_rreq_port_row = 15;
+		      else
+		         col_rreq_port_row = $urandom_range(dut_if.i_sb_node_row+1, 15);
+
+                   // $display("(time: %0d) %s: Legalized NB rreq, rreq_port_row=%0d", $time, name, col_rreq_port_row);
+	  	   end
+	 	   else if ((req_toward == 3) && (knob_rreq_port_row >= 16) && (col_rreq_port_row >= dut_if.i_sb_node_row)) begin
+		      if (dut_if.i_sb_node_row == 0)
+		         col_rreq_port_row = 0;
+		      else
+		         col_rreq_port_row = $urandom_range(0, dut_if.i_sb_node_row-1);
+
+                    //$display("(time: %0d) %s: Legalized SB rreq, rreq_port_row=%0d", $time, name, col_rreq_port_row);
+		   end
+	   	end
+
+
+		// make sure port_side is legal
+
+	 	if (knob_legal_only == 1) begin
+		   if ((req_toward == 2) && (knob_rreq_port_side >= 4) && (col_rreq_port_side == 0)) begin
+		      col_rreq_port_side = 1; // south, east or west are ok
+                   // $display("(time: %0d) %s: Legalized NB rreq, rreq_port_side=%0d", $time, name, col_rreq_port_side);
+	 	   end
+	 	   else if ((req_toward == 3) && (knob_rreq_port_side >= 4) && (col_rreq_port_side == 1)) begin
+		      col_rreq_port_side = 0; // north, east or west are ok
+                   // $display("(time: %0d) %s: Legalized SB rreq, rreq_port_side=%0d", $time, name, col_rreq_port_side);
+		   end
+		end
+
+
 
 
                 // display target of request
