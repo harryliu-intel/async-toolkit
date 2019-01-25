@@ -95,6 +95,7 @@ class mby_gpm_bfm extends uvm_component;
       super.build_phase(phase);
       pptr_gen = gpm_bfm_pptr_gen_t::type_id::create("pptr_gen", this);
       pptr_gen.cfg_obj = this.cfg_obj;
+      pptr_gen.set_fpptr_agent(fpptr_agent);
       if(cfg_obj.bfm_mode == GPM_BFM_IGR_MODE) begin
          fpptr_agent = pod_agent::type_id::create("fpptr_agent", this);
          fpptr_agent.cfg_obj = this.cfg_obj.fpptr_cfg;

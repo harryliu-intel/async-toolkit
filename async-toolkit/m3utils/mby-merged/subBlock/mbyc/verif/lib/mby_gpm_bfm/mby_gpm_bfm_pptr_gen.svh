@@ -87,6 +87,10 @@ class mby_gpm_bfm_pptr_gen
    // VARIABLE: cfg_obj
    // The bfm's configuration object
    mby_gpm_bfm_cfg cfg_obj;
+   
+   // VARIABLE: fpptr_agent_ptr
+   //    Handler to the GPM BFM free pod pointer agent
+   pod_agent fpptr_agent_h;
 
    // Registering class with the factory
    `uvm_component_utils(mby_gpm_bfm_pptr_gen)
@@ -119,6 +123,18 @@ class mby_gpm_bfm_pptr_gen
    endfunction
    
    // -------------------------------------------------------------------------
+   // FUNCTION: set_agent_ptr
+   //
+   // Assings the internal agent pointer to be the same as the input argument.
+   //
+   // ARGUMENTS:
+   //    pod_agent fpptr_agent_ptr  - An instance name of the free pod pointer agent
+   // -------------------------------------------------------------------------
+   function void set_fpptr_agent(pod_agent fpptr_agent);
+      this.fpptr_agent= fpptr_agent;
+   endfunction : set_fpptr_agent
+   
+   // -------------------------------------------------------------------------
    // TASK: run_phase
    //
    // Main pod pointer generator task
@@ -130,8 +146,15 @@ class mby_gpm_bfm_pptr_gen
       string msg_str;
       
       gpm_bfm_pod_seq_t fpod_rsp_seq;
-      
-      
+      phase.raise_objection(this, "GPM BFM: Starting sending free pointers.", 1);
+      fpod_rsp_seq.req.data.valid = 0;
+      fpod_rsp_seq.req.data.pod_ptr = 0;
+      fpod_rsp_seq.req.data.pod_ptr_toggle = 0;
+      fpod_rsp_seq.req.data.slot = 0;
+      fpod_rsp_seq.req.data.rsvrd = 0;
+      fpod_rsp_seq.req.data.parity = 1;
+      fpod_rsp_seq.start(this.fpptr_agent.sequencer);
+      phase.drop_objection(this, "GPM BFM: All free pointers sent.", 1);
    endtask : run_phase
    
 endclass : mby_gpm_bfm_pptr_gen
