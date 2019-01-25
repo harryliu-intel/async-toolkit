@@ -617,9 +617,10 @@ sub pipe_stderr{
 sub get_coverage_sources_from_dir{
   my ($source_dir, $vdb_name)=@_;
   my @urg_sources=();
-  
+ 
   if ($source_dir =~/vdb$/) {
-    push @urg_sources, $source_dir;
+    my $abs_dir = File::Spec->rel2abs( $source_dir ) ;
+    push @urg_sources, $abs_dir;
     return @urg_sources;
   }
   debug_print(0, "***Infromation: merging coverage from $source_dir\n");
@@ -840,7 +841,7 @@ sub merge_coverage
     debug_print(1, "***Infromation: Saved run file $run_file\n");
     print FH $cmd;
     close(FH);
-    system("chmod +x $run_file; cd $output_dir; run");
+    system("chmod +x $run_file; cd $output_dir; ./run");
 
     debug_print(0, "***Infromation: End URG\n");
 }   # end coverage_report
@@ -889,7 +890,7 @@ sub merge_coverage_sub
     debug_print(1, "***Infromation: Saved run file $run_file\n");
     print FH $cmd;
     close(FH);
-    system("chmod +x $run_file; cd $output_dir; run.$idx ");
+    system("chmod +x $run_file; cd $output_dir; ./run.$idx ");
     debug_print(1, "***Infromation: End URG sub process $idx\n");
 
 
