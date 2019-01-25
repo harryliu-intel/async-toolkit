@@ -1,0 +1,65 @@
+# Subsystem = Dual Digital Domain + Analog: EPL
+
+# Note:  RTL within EPL is expected to be partitioned into Vcc1 partitions and Vcc2 partitions. Expecting level shifters to be inserted inside the partitions at the inputs where the ports are being shifted (LH or HL).
+
+################################################################
+# Create module power domain
+################################################################
+create_power_domain epc_sub_domain
+
+################################################################
+# Create supply nets and ports at HIP power domain level
+################################################################
+create_supply_port vcc1 -domain epc_sub_domain -direction in
+create_supply_net vcc1 -domain epc_sub_domain
+connect_supply_net vcc1 -ports {vcc1}
+
+create_supply_port vcc2 -domain epc_sub_domain -direction in
+create_supply_net vcc2 -domain epc_sub_domain
+connect_supply_net vcc2 -ports {vcc2}
+
+create_supply_port vcc1p2 -domain epc_sub_domain -direction in
+create_supply_net vcc1p2 -domain epc_sub_domain
+connect_supply_net vcc1p2 -ports {vcc1p2}
+
+create_supply_port vss -domain epc_sub_domain -direction in
+create_supply_net vss -domain epc_sub_domain
+connect_supply_net vss -ports {vss}
+
+################################################################
+# Signal grouping
+################################################################
+set vcc1_collection [ list port1 port2 ]
+set vcc2_collection [ list port3 port4 ]
+set vcc1p2_collection [ list port5 port6 ]
+
+################################################################
+# Set related supply nets for ports
+################################################################
+set_related_supply_net -power vcc1 -ground vss -object_list $vcc1_collection
+set_related_supply_net -power vcc2 -ground vss -object_list $vcc2_collection
+set_related_supply_net -power vcc1p2 -ground vss -object_list $vcc1p2_collection
+
+#################################################################
+# Power States - per supply net or port
+#################################################################
+add_supply_state vcc1 -state {dig1_high 0.75} 
+-state {dig1_low 0.72} 
+-state {dig1_nom 0.75}
+add_supply_state vcc2 -state {dig2_high 0.86} 
+-state {dig2_low 0.72} 
+-state {dig2_nom 0.75} 
+add_supply_state vcc1p2 -state {ana_fixed 1.2} 
+#################################################################
+# Power State Table (legacy commands need to be replaced)
+#################################################################
+create_pst   pd_mby_top_PST  -supplies {vcc1 vcc2}   
+add_pst_state HL -pst pd_mby_top_PST -state {dig1_high dig2_low ana_fixed}
+add_pst_state LH -pst pd_mby_top_PST -state {dig1_low dig2_high ana_fixed}
+
+#################################################################
+# Level Shifter Rule - soft constraint for LS placement
+#################################################################
+set_level_shifter top_ls  -domain pd_mby_top  -rule both  -applies_to 
+inputs -location self
+
