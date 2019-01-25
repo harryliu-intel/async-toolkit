@@ -464,7 +464,7 @@ void NextHop
     fm_byte                  l2_edomain     = l2_idomain;
     fm_byte                  l3_edomain     = l3_idomain;
     fm_uint16                l2_evid1       = l2_ivid1;
-    fm_bool                  mark_routed    = FALSE;
+    fm_bool                  routed         = FALSE;
     // Verify if these are still necessary? <-- REVISIT!!!
     fm_byte    const * const arp_hash       = in->ARP_HASH; // [16]
     fm_bool                  decap          = in->DECAP;
@@ -490,33 +490,32 @@ void NextHop
 
     if (fwd_glort)
     {
-        idglort     = dglort;
-        mark_routed = FALSE;
+        idglort = dglort;
+        routed  = FALSE;
     }
+
+    mbyNextHopApplyInput  apply_in;
+    mbyNextHopApplyOutput apply_out = { 0 };
 
     /**
      * NextHop lookup is only performed if in addition to the FWD action indicating a ROUTE_ARP subtype,
      * the NO_ROUTE action flag is not set by the Classifier.
      */
-    mark_routed  = route_arp && !no_route;
+    if (route_arp && !no_route){
 
-    mbyNextHopApplyInput  apply_in;
-    mbyNextHopApplyOutput apply_out = { 0 };
 
-    apply_in.fwd            = fwd;
-    apply_in.ecmp_hash      = ecmp_hash;
-    apply_in.dmac_from_ipv6 = dmac_from_ipv6;
-    apply_in.l2_idomain     = l2_idomain;
-    apply_in.l2_ivid1       = l2_ivid1;
-    apply_in.l3_idomain     = l3_idomain;
-    apply_in.flowlet_enable = flowlet_enable;
-    apply_in.rx_length      = in->RX_LENGTH;
+        apply_in.fwd            = fwd;
+        apply_in.ecmp_hash      = ecmp_hash;
+        apply_in.dmac_from_ipv6 = dmac_from_ipv6;
+        apply_in.l2_idomain     = l2_idomain;
+        apply_in.l2_ivid1       = l2_ivid1;
+        apply_in.l3_idomain     = l3_idomain;
+        apply_in.flowlet_enable = flowlet_enable;
+        apply_in.rx_length      = in->RX_LENGTH;
 
-    apply_out.l2_dmac = l2_dmac;
-    apply_out.dglort  = dglort;
+        apply_out.l2_dmac = l2_dmac;
+        apply_out.dglort  = dglort;
 
-    // if NextHop_Apply stage is enabled:
-    if (mark_routed){
         applyNextHop(nexthop_map, nexthop_w, &apply_in, &apply_out);
 
         l2_evid1    = apply_out.l2_evid;
@@ -525,25 +524,25 @@ void NextHop
         l2_edomain  = apply_out.l2_edomain;
         l2_evid1    = apply_out.l2_evid;
         l3_edomain  = apply_out.l3_edomain;
-        mark_routed = apply_out.route;
+        routed      = apply_out.route;
     }
 
+    mbyNextHopSweepInput sweep_in;
 
     /**
      * NextHop_Sweep stage will be scheduled only during packet idle periods to avoid contention.
      */
     // <-- How it should be handled in the FM? REVISIT!!!
-
-    mbyNextHopSweepInput sweep_in;
-
-    sweep_in.flowlet_enabled_packet = apply_out.flowlet_enabled_packet;
-    sweep_in.route_neighbor_idx     = apply_out.route_neighbor_idx;
-    sweep_in.group_min_index        = apply_out.group_min_index;
-    sweep_in.flowlet_int_en         = nh_config.flowlet_int_en;
-
     // if NextHop_Sweep stage is enabled:
     if (flowlet_enable)
+    {
+        sweep_in.flowlet_enabled_packet = apply_out.flowlet_enabled_packet;
+        sweep_in.route_neighbor_idx     = apply_out.route_neighbor_idx;
+        sweep_in.group_min_index        = apply_out.group_min_index;
+        sweep_in.flowlet_int_en         = nh_config.flowlet_int_en;
+
         sweepNextHop(nexthop_map, nexthop_w, &sweep_in);
+    }
 
     /**
      * NextHop_Usage task need not be implemented, if the Path Loading Policy is deemed not useful.
@@ -552,12 +551,14 @@ void NextHop
 
     mbyNextHopUsageInput usage_in;
 
-    usage_in.group_min_index    = apply_out.group_min_index;
-    usage_in.route_neighbor_idx = apply_out.route_neighbor_idx;
-    usage_in.rx_length          = in->RX_LENGTH;
-
     if (apply_out.flowlet_enabled_packet)
+    {
+        usage_in.group_min_index    = apply_out.group_min_index;
+        usage_in.route_neighbor_idx = apply_out.route_neighbor_idx;
+        usage_in.rx_length          = in->RX_LENGTH;
+
         trackNextHopUsage(nexthop_map, nexthop_w, &usage_in);
+    }
 
     fm_bool     glort_forwarded      = FALSE;
     fm_bool     flood_forwarded      = FALSE;
@@ -604,7 +605,7 @@ void NextHop
     out->L2_SMAC              = l2_smac;
     out->L3_EDOMAIN           = l3_edomain;
     out->L3_IDOMAIN           = l3_idomain;
-    out->MARK_ROUTED          = mark_routed;
+    out->ROUTED               = routed;
     // out->MOD_IDX              = in->mod_index;
     // out->MTU_INDEX            = mtu_index;
     out->RX_PORT              = rx_port;

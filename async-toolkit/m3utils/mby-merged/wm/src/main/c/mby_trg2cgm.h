@@ -42,7 +42,7 @@ typedef struct mbyTriggersToCongMgmtSruct
     fm_bool                 IS_TIMEOUT;
     fm_macaddr              L2_DMAC;                    ///< layer 2 destination address
     fm_uint16               L2_IVLAN1_CNT;              ///< ingress VLAN counter
-    fm_bool                 MARK_ROUTED;
+    fm_bool                 ROUTED;
     fm_bool                 MCAST_EPOCH;                ///< current epoch for multicast garbage collection flag
     mbyMirrorType           MIRTYP;                     ///< mirror type
     fm_uint32               MOD_IDX;                    ///< index into the MODIFY descriptor tables

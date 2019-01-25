@@ -590,7 +590,7 @@ static void specialPacketHandlingTtlTrapDropLog
     fm_uint16                    const ip_mcast_idx,
     fm_uint16                    const l2_ivid1,
     fm_uint16                    const l2_evid1,
-    fm_bool                      const mark_routed,
+    fm_bool                      const routed,
     fm_bool                      const trap_ip_options,
     fm_bool                      const is_ipv4,
     fm_bool                      const is_ipv6,
@@ -645,7 +645,7 @@ static void specialPacketHandlingTtlTrapDropLog
         }
     }
 
-    if (mark_routed && (ip_mcast_idx == 0) && (l2_ivid1 == (l2_evid1 & 0xFFF)))
+    if (routed && (ip_mcast_idx == 0) && (l2_ivid1 == (l2_evid1 & 0xFFF)))
         log_amask |= MBY_LOG_TYPE_ARP_REDIRECT;
 
     if (drop_ttl)
@@ -674,7 +674,7 @@ static void specialPacketHandlingTtlTrapDropLog
     if (sys_cfg_router->TRAP_IP_OPTIONS && trap_ip_options && (is_ipv4 || is_ipv6))
         *amask_o |= MBY_AMASK_TRAP_IP_OPTION;
 
-    if (sys_cfg1->TRAP_MTU_VIOLATIONS && mtu_violation && mark_routed)
+    if (sys_cfg1->TRAP_MTU_VIOLATIONS && mtu_violation && routed)
         *amask_o |= MBY_AMASK_TRAP_MTU_VIO; // MTU violation -> trapping frame
 
     // output values
@@ -738,7 +738,7 @@ static void filtering
     fm_bool                       const flood_forwarded,
     fm_bool                       const glort_forwarded,
     fm_bool                       const targeted_deterministic,
-    fm_bool                       const mark_routed,
+    fm_bool                       const routed,
     fm_bool                       const l2_ivlan1_reflect,
     fm_uint64                   * const glort_dmask,
     fm_uint32                     const rx_port,
@@ -785,7 +785,7 @@ static void filtering
     }
 
     // Ingress VLAN reflection check:
-    if ( !mark_routed && !l2_ivlan1_reflect && !targeted_deterministic)
+    if ( !routed && !l2_ivlan1_reflect && !targeted_deterministic)
         dmask_o[rx_port / 64] &= ~(FM_LITERAL_U64(1) << (rx_port % 64)); //!!!REVISIT replace rx_port with the port specified by ([0..7][0..1][0..15])+1CPU
 
     // Save pre-resolve dmask for later:
@@ -1090,7 +1090,7 @@ void MaskGen
     fm_bool                    const l2_ivlan1_membership = in->L2_IVLAN1_MEMBERSHIP;
     fm_bool                    const l2_ivlan1_reflect    = in->L2_IVLAN1_REFLECT;
     fm_macaddr                 const l2_smac              = in->L2_SMAC;
-    fm_bool                    const mark_routed          = in->MARK_ROUTED;
+    fm_bool                    const routed               = in->ROUTED;
     fm_bool                    const mtu_violation        = in->MTU_VIOLATION;
     fm_bool                    const learn_notify         = in->LEARN_NOTIFY;
     fm_bool                    const parity_error         = in->PARITY_ERROR;
@@ -1200,7 +1200,7 @@ void MaskGen
         ip_mcast_idx,
         l2_ivid1,
         l2_evid1,
-        mark_routed,
+        routed,
         trap_ip_options,
         is_ipv4,
         is_ipv6,
@@ -1242,7 +1242,7 @@ void MaskGen
         flood_forwarded,
         glort_forwarded,
         targeted_deterministic,
-        mark_routed,
+        routed,
         l2_ivlan1_reflect,
         glort_dmask,
         rx_port,
@@ -1380,7 +1380,7 @@ void MaskGen
     out->LOGGING_HIT            = logging_hit;
     out->LOG_AMASK              = log_amask;
     out->MAC_MOVED              = mac_moved;
-    out->MARK_ROUTED            = mark_routed;
+    out->ROUTED                 = routed;
     out->MCAST_EPOCH            = mcst_epoch;
     out->MIRROR0_PORT           = mirror0_port;
     out->MIRROR0_PROFILE_IDX    = mirror0_profile_idx;

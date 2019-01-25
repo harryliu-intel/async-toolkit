@@ -28,40 +28,38 @@
 `ifndef MIG_WR_IF_SV
 `define MIG_WR_IF_SV
 
+// FIXME:  use msh_wr_if and get rid of this file 
+
 interface mig_wr_if ();
-    //
-    // FIXME: remove dependency from egr pkg. This should be part of msh pkg
-    //        or some pkg for mesh clients
-    //
-    import mby_egr_pkg::*;
+    import mby_msh_pkg::*;
 
-    logic                      mig_wreq_valid;
-    logic [W_SEG_PTR-1:0]      mig_wr_seg_ptr; //[19:0]
-    logic [W_SEMA-1:0]         mig_wr_sema;    //[ 3:0]
-    logic [W_WD_SEL-1:0]       mig_wr_wd_sel;  //[ 2:0]
-    logic [W_REQ_ID-1:0]       mig_wreq_id;    //[12:0]
-    logic [W_WORD_BITS-1:0]    mig_wr_data;    // 64*8
+    mshpt_wreq_t     msh_wreq;
 
-    logic [W_XACT_CREDITS-1:0] mig_wreq_credits; // temp value
+    msh_data_t       msh_wr_data;
+           
+    logic            msh_wr_lat_sat;
+    logic            msh_crdt_rtn_for_wreq;
+    logic            msh_mcast_crdt_rtn_for_wreq;
+  
 
     modport request(
-        output mig_wreq_valid,
-        output mig_wr_seg_ptr,
-        output mig_wr_sema,
-        output mig_wr_wd_sel,
-        output mig_wreq_id,
-        output mig_wr_data,
-        input  mig_wreq_credits
+        output msh_wreq,
+
+        output msh_wr_data,
+           
+        input  msh_wr_lat_sat,
+        input  msh_crdt_rtn_for_wreq,
+        input  msh_mcast_crdt_rtn_for_wreq
     );
 
     modport receive(
-        input  mig_wreq_valid,
-        input  mig_wr_seg_ptr,
-        input  mig_wr_sema,
-        input  mig_wr_wd_sel,
-        input  mig_wreq_id,
-        input  mig_wr_data,
-        output mig_wreq_credits
+        input  msh_wreq,
+
+        input  msh_wr_data,
+           
+        output msh_wr_lat_sat,
+        output msh_crdt_rtn_for_wreq,
+        output msh_mcast_crdt_rtn_for_wreq
     );
 
 endinterface : mig_wr_if

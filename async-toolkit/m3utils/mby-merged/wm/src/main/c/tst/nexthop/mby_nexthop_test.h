@@ -48,15 +48,16 @@ typedef struct mby_nh_test_data_out_struct
 
 typedef struct test_data_struct
 {
+    char *               name;
     mby_nh_test_data_in  in;
     mby_nh_test_data_out out;
-    char *               name;
 } nh_test_data;
 
 nh_test_data nexthop_tests[] =
 {
 
     {
+        .name = "GLORT forwarded",
         .in =
         {
             .glort_routed = TRUE,
@@ -66,10 +67,10 @@ nh_test_data nexthop_tests[] =
         {
             .dglort = 0x100,
             .routed = FALSE,
-        },
-        .name = "Nexthop GLORT routed"
+        }
     },
     {
+        .name = "ARP routed single GLORT non-IPv6",
         .in =
         {
             .glort_routed                = FALSE,
@@ -101,10 +102,10 @@ nh_test_data nexthop_tests[] =
             .dglort    = 0x101,
             .routed    = TRUE,
             .nh_used   = 0x40000,
-        },
-        .name = "Nexthop ARP single GLORT non-IPv6"
+        }
     },
     {
+        .name = "ARP routed group  MAC   non-IPv6",
         .in =
         {
             .glort_routed                = FALSE,
@@ -150,10 +151,10 @@ nh_test_data nexthop_tests[] =
             .dmac      = 0x0022446688aa,
             .routed    = TRUE,
             .nh_used   = 0x1,
-        },
-        .name = "Nexthop ARP group MAC non-IPv6"
+        }
     },
     {
+        .name = "ARP routed group  MAC   IPv6",
         .in =
         {
             .glort_routed                = FALSE,
@@ -192,8 +193,7 @@ nh_test_data nexthop_tests[] =
             .dmac      = 0x003377fedcba,
             .routed    = TRUE,
             .nh_used   = 0x2,// (1 << 1)
-        },
-        .name = "Nexthop ARP routed MAC entry type IPV6"
+        }
     }
 };
 

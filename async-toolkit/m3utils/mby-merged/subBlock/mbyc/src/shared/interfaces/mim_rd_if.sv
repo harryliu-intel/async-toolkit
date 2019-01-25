@@ -28,10 +28,17 @@
 
 // =====================================================================================================================
 
-interface mim_rd_if ();
-  import mby_egr_pkg::*;
-    
+// FIXME:  use msh_rd_if and get rid of this file 
 
+interface mim_rd_if ();
+  // old interface
+  import mby_egr_pkg::*;
+  // new interface
+  import mby_msh_pkg::*;
+
+
+
+  // old interface
   logic                    mim_rreq_valid;
   logic [W_SEG_PTR-1:0]    mim_seg_ptr;      //[19:0]
   logic [W_SEMA-1:0]       mim_sema;         //[ 3:0]
@@ -47,8 +54,23 @@ interface mim_rd_if ();
   logic [W_WORD_BITS-1:0]       mim_rd_data;          //64 x 8
 
 
-  
-modport request(
+    // new interface
+    mshpt_rreq_t     msh_rreq;
+
+    logic            msh_rd_lat_sat;
+    logic            msh_crdt_rtn_for_rreq;
+    logic            msh_mcast_crdt_rtn_for_rreq;
+    
+    logic            msh_crdt_rtn_for_rrsp;
+    logic            msh_mcast_crdt_rtn_for_rrsp;
+
+    mshpt_rrsp_t     msh_rrsp;
+
+    msh_data_t       msh_rd_data;
+    
+    modport request(
+
+        // old interface
     output mim_rreq_valid,
     output mim_seg_ptr,
     output mim_sema,
@@ -58,10 +80,27 @@ modport request(
     input  mim_rrsp_valid,
     input  mim_rrsp_dest_block,
     input  mim_rrsp_req_id,    
-    input  mim_rd_data        
-    );  
-   
-modport receive(
+    input  mim_rd_data,
+
+        // new interface
+        output msh_rreq,
+
+        input  msh_rd_lat_sat,
+        input  msh_crdt_rtn_for_rreq,
+        input  msh_mcast_crdt_rtn_for_rreq,
+    
+        output msh_crdt_rtn_for_rrsp,
+        output msh_mcast_crdt_rtn_for_rrsp,
+
+        input  msh_rrsp,
+
+        input  msh_rd_data
+    
+        );  
+
+    modport receive(
+
+        // old interface
     input  mim_rreq_valid,
     input  mim_seg_ptr,
     input  mim_sema,
@@ -71,8 +110,22 @@ modport receive(
     output mim_rrsp_valid,
     output mim_rrsp_dest_block,
     output mim_rrsp_req_id,    
-    output mim_rd_data        
-    );
+    output mim_rd_data,
 
+        // new interface
+        input  msh_rreq,
+
+        output msh_rd_lat_sat,
+        output msh_crdt_rtn_for_rreq,
+        output msh_mcast_crdt_rtn_for_rreq,
+    
+        input  msh_crdt_rtn_for_rrsp,
+        input  msh_mcast_crdt_rtn_for_rrsp,
+
+        output msh_rrsp,
+
+        output msh_rd_data
+    
+    );
 
 endinterface : mim_rd_if

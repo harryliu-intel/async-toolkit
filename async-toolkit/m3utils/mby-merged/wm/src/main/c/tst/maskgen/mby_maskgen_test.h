@@ -116,7 +116,7 @@ typedef struct mby_maskgen_test_data_in_struct
     fm_uint16         l2_evid1;
     fm_bool           l2_ivlan1_membership;
     fm_uint16         l2_edomain_in;
-    fm_bool           mark_routed;
+    fm_bool           routed;
     fm_uint32         hash_rot_a;
     fm_uint32         hash_rot_b;
     fm_uint32         rx_port;
@@ -200,7 +200,7 @@ maskgen_test_data maskgen_tests[] =
             .l2_evid1                     = 1,
             .l2_ivlan1_membership         = TRUE,
             .l2_edomain_in                = 0,
-            .mark_routed                  = TRUE,
+            .routed                       = TRUE,
             .port_cfg_0 =
             {
                 .learning_enable          = TRUE,
@@ -276,7 +276,7 @@ maskgen_test_data maskgen_tests[] =
             .l2_evid1                     = 1,
             .l2_ivlan1_membership         = TRUE,
             .l2_edomain_in                = 0,
-            .mark_routed                  = FALSE,
+            .routed                       = FALSE,
             .hash_rot_a                   = 0,
             .hash_rot_b                   = 0,
             .port_cfg_0 =
@@ -357,7 +357,7 @@ maskgen_test_data maskgen_tests[] =
             .l2_evid1                     = 1,
             .l2_ivlan1_membership         = TRUE,
             .l2_edomain_in                = 0,
-            .mark_routed                  = FALSE,
+            .routed                       = FALSE,
             .hash_rot_a                   = 0,
             .hash_rot_b                   = 0,
             .port_cfg_0 =
@@ -436,7 +436,7 @@ maskgen_test_data maskgen_tests[] =
             .l2_evid1                     = 1,
             .l2_ivlan1_membership         = TRUE,
             .l2_edomain_in                = 0,
-            .mark_routed                  = FALSE,
+            .routed                       = FALSE,
             .hash_rot_a                   = 0,
             .hash_rot_b                   = 0,
             .port_cfg_0 =
@@ -903,7 +903,7 @@ maskgen_test_data maskgen_tests[] =
             .l2_edomain_in                = 0,
             .glort_dmask_in               = { 0 },
             .parser_error                 = FALSE,
-            .mark_routed                  = TRUE,
+            .routed                       = TRUE,
             .mtu_violation                = TRUE,
             .port_cfg_0 =
             {
