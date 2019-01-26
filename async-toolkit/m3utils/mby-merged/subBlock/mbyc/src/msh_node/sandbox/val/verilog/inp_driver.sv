@@ -50,6 +50,8 @@ class inp_driver;
     integer                 clk_cnt;        // counts clocks
 //    integer                 num_reqs;       // number of input requests
     bit                     drv_done;       // set when driver is done
+    integer                 drv_corr;       // set when driver is done
+
     string                  name;           // input driver name used in $display statements
     integer                 drove_reqs;
 
@@ -187,22 +189,31 @@ class inp_driver;
     mby_msh_pkg::msh_col_rd_req_t    drvr_col_rreq;
 
     mby_msh_pkg::msh_data_t          drvr_wdata;        // wr data
+    mby_msh_pkg::msh_data_t          drvr_rdata;        // wr data
+
+    mby_msh_pkg::msh_row_rd_rsp_t    drvr_row_rsp;
+    mby_msh_pkg::msh_col_rd_rsp_t    drvr_col_rsp;
+
 
     integer     which_plane;
-    integer     req_toward;
+    integer     drv_toward;
     integer     node_col;
     integer     node_row;
-    integer	col_rreq_port_row;
-    integer	col_rreq_port_side;
+    integer	rreq_port_row;
+    integer	rreq_port_side;
+    integer	rsp_port_row;
+    integer	rsp_port_side;
     
     integer  knob_inp_req_num;
     integer  knob_plane;
-    integer  knob_req_toward;
+    integer  knob_drv_toward;
     integer  knob_legal_only;
     integer  knob_req_row;
     integer  knob_req_col;
     integer  knob_rreq_port_row;
     integer  knob_rreq_port_side;
+    integer  knob_rsp_port_row;
+    integer  knob_rsp_port_side;
 
 
 
@@ -213,12 +224,14 @@ class inp_driver;
         virtual msh_node_dut_if     dut_if,
 	integer  knob_inp_req_num,
 	integer  knob_plane,
-	integer  knob_req_toward,
+	integer  knob_drv_toward,
         integer  knob_legal_only,
 	integer  knob_req_row,
 	integer  knob_req_col,
 	integer  knob_rreq_port_row,
-	integer  knob_rreq_port_side
+	integer  knob_rreq_port_side,
+	integer  knob_rsp_port_row,
+	integer  knob_rsp_port_side
     );
 
         this.dut_if = dut_if;
@@ -226,12 +239,14 @@ class inp_driver;
 
 	this.knob_inp_req_num = knob_inp_req_num;
 	this.knob_plane = knob_plane;
-	this.knob_req_toward = knob_req_toward;
+	this.knob_drv_toward = knob_drv_toward;
 	this.knob_legal_only = knob_legal_only;
 	this.knob_req_row = knob_req_row;
 	this.knob_req_col = knob_req_col;
 	this.knob_rreq_port_row = knob_rreq_port_row;
 	this.knob_rreq_port_side = knob_rreq_port_side;
+	this.knob_rsp_port_row = knob_rsp_port_row;
+	this.knob_rsp_port_side = knob_rsp_port_side;
 
         name        = "inp_driver.sv";
 //        stim = new(
@@ -249,7 +264,8 @@ class inp_driver;
     // reset input driver
     task reset();
         drv_done        = 1'b0;
-//        req_fifo        = {};           // initialize to empty queue
+        drv_corr        = 1'b0;
+//      req_fifo        = {};           // initialize to empty queue
 
         drvr_rd_req_to_dut = '0;
         drvr_rd_req_to_dut_p1 = '0;
@@ -442,105 +458,75 @@ class inp_driver;
 
             // drive DUT inputs 
 
-/*
-            dut_if.i_nb_wr_req[0]   = '0;
-            dut_if.i_nb_wr_data[0]  = '0;
-            dut_if.i_nb_rd_req[0]   = '0;
-            dut_if.i_nb_rd_rsp[0]   = '0;
-            dut_if.i_nb_rd_data[0]  = '0;
-
-            dut_if.i_sb_wr_req[0]   = '0;
-            dut_if.i_sb_wr_data[0]  = '0;
-            dut_if.i_sb_rd_req[0]   = '0;
-            dut_if.i_sb_rd_rsp[0]   = '0;
-            dut_if.i_sb_rd_data[0]  = '0;
-
-            dut_if.i_eb_wr_req[0]   = drvr_wr_req_to_dut_p1;
-            dut_if.i_eb_wr_data[0]  = drvr_wr_data_to_dut_p1;
-            dut_if.i_eb_rd_req[0]   = drvr_rd_req_to_dut_p1;
-            dut_if.i_eb_rd_rsp[0]   = '0;
-            dut_if.i_eb_rd_data[0]  = '0;
-
-            dut_if.i_wb_wr_req[0]   = '0;
-            dut_if.i_wb_wr_data[0]  = '0;
-            dut_if.i_wb_rd_req[0]   = '0;
-            dut_if.i_wb_rd_rsp[0]   = '0;
-            dut_if.i_wb_rd_data[0]  = '0;
-
-            dut_if.i_nb_wr_req[1]   = '0;
-            dut_if.i_nb_wr_data[1]  = '0;
-            dut_if.i_nb_rd_req[1]   = '0;
-            dut_if.i_nb_rd_rsp[1]   = '0;
-            dut_if.i_nb_rd_data[1]  = '0;
-
-            dut_if.i_sb_wr_req[1]   = '0;
-            dut_if.i_sb_wr_data[1]  = '0;
-            dut_if.i_sb_rd_req[1]   = '0;
-            dut_if.i_sb_rd_rsp[1]   = '0;
-            dut_if.i_sb_rd_data[1]  = '0;
-
-            dut_if.i_eb_wr_req[1]   = '0;
-            dut_if.i_eb_wr_data[1]  = '0;
-            dut_if.i_eb_rd_req[1]   = '0;
-            dut_if.i_eb_rd_rsp[1]   = '0;
-            dut_if.i_eb_rd_data[1]  = '0;
-
-            dut_if.i_wb_wr_req[1]   = '0;
-            dut_if.i_wb_wr_data[1]  = '0;
-            dut_if.i_wb_rd_req[1]   = '0;
-            dut_if.i_wb_rd_rsp[1]   = '0;
-            dut_if.i_wb_rd_data[1]  = '0;
-*/
 
             dut_if.i_nb_wr_req[0]   = drvr_p0_nb_wr_req_to_dut_q1;
             dut_if.i_nb_wr_data[0]  = drvr_p0_nb_wr_data_to_dut_q1;
             dut_if.i_nb_rd_req[0]   = drvr_p0_nb_rd_req_to_dut_q1;
-        //  dut_if.i_nb_rd_rsp[0]   = drvr_p0_nb_rd_rsp_to_dut_q1;
-        //  dut_if.i_nb_rd_data[0]  = drvr_p1_nb_rd_data_to_dut_q1;
+
+//          $display("(time: %0d) %s: ** inside connect drv_corr = (%0d) ** ", $time, name, drv_corr);
+
+	    if (drv_corr == 0) begin
+              dut_if.i_nb_rd_rsp[0]   = drvr_p0_nb_rd_rsp_to_dut_q1;
+              dut_if.i_nb_rd_data[0]  = drvr_p1_nb_rd_data_to_dut_q1;
+	    end
 
             dut_if.i_sb_wr_req[0]   = drvr_p0_sb_wr_req_to_dut_q1;
             dut_if.i_sb_wr_data[0]  = drvr_p0_sb_wr_data_to_dut_q1;
             dut_if.i_sb_rd_req[0]   = drvr_p0_sb_rd_req_to_dut_q1;
-        //  dut_if.i_sb_rd_rsp[0]   = drvr_p0_sb_rd_rsp_to_dut_q1;
-        //  dut_if.i_sb_rd_data[0]  = drvr_p0_sb_rd_data_to_dut_q1;
+	    if (drv_corr == 0) begin
+              dut_if.i_sb_rd_rsp[0]   = drvr_p0_sb_rd_rsp_to_dut_q1;
+              dut_if.i_sb_rd_data[0]  = drvr_p0_sb_rd_data_to_dut_q1;
+	    end
 
             dut_if.i_eb_wr_req[0]   = drvr_p0_eb_wr_req_to_dut_q1;
             dut_if.i_eb_wr_data[0]  = drvr_p0_eb_wr_data_to_dut_q1;
             dut_if.i_eb_rd_req[0]   = drvr_p0_eb_rd_req_to_dut_q1;
-        //  dut_if.i_eb_rd_rsp[0]   = drvr_p0_eb_rd_rsp_to_dut_q1;
-        //  dut_if.i_eb_rd_data[0]  = drvr_p0_eb_rd_data_to_dut_q1;
+	    if (drv_corr == 0) begin
+              dut_if.i_eb_rd_rsp[0]   = drvr_p0_eb_rd_rsp_to_dut_q1;
+              dut_if.i_eb_rd_data[0]  = drvr_p0_eb_rd_data_to_dut_q1;
+	    end
 
             dut_if.i_wb_wr_req[0]   = drvr_p0_wb_wr_req_to_dut_q1;
             dut_if.i_wb_wr_data[0]  = drvr_p0_wb_wr_data_to_dut_q1;
             dut_if.i_wb_rd_req[0]   = drvr_p0_wb_rd_req_to_dut_q1;
-        //  dut_if.i_wb_rd_rsp[0]   = drvr_p0_wb_rd_rsp_to_dut_q1;
-        //  dut_if.i_wb_rd_data[0]  = drvr_p0_wb_rd_data_to_dut_q1;
+	    if (drv_corr == 0) begin
+              dut_if.i_wb_rd_rsp[0]   = drvr_p0_wb_rd_rsp_to_dut_q1;
+              dut_if.i_wb_rd_data[0]  = drvr_p0_wb_rd_data_to_dut_q1;
+	    end
 
         // plane1
             dut_if.i_nb_wr_req[1]   = drvr_p1_nb_wr_req_to_dut_q1;
             dut_if.i_nb_wr_data[1]  = drvr_p1_nb_wr_data_to_dut_q1;
             dut_if.i_nb_rd_req[1]   = drvr_p1_nb_rd_req_to_dut_q1;
-        //  dut_if.i_nb_rd_rsp[1]   = drvr_p1_nb_rd_rsp_to_dut_q1;
-        //  dut_if.i_nb_rd_data[1]  = drvr_p1_nb_rd_data_to_dut_q1;
+	    if (drv_corr == 0) begin
+              dut_if.i_nb_rd_rsp[1]   = drvr_p1_nb_rd_rsp_to_dut_q1;
+              dut_if.i_nb_rd_data[1]  = drvr_p1_nb_rd_data_to_dut_q1;
+	    end
 
             dut_if.i_sb_wr_req[1]   = drvr_p1_sb_wr_req_to_dut_q1;
             dut_if.i_sb_wr_data[1]  = drvr_p1_sb_wr_data_to_dut_q1;
             dut_if.i_sb_rd_req[1]   = drvr_p1_sb_rd_req_to_dut_q1;
-       //   dut_if.i_sb_rd_rsp[1]   = drvr_p1_sb_rd_rsp_to_dut_q1;
-       //   dut_if.i_sb_rd_data[1]  = drvr_p1_sb_rd_data_to_dut_q1;
+	    if (drv_corr == 0) begin
+              dut_if.i_sb_rd_rsp[1]   = drvr_p1_sb_rd_rsp_to_dut_q1;
+              dut_if.i_sb_rd_data[1]  = drvr_p1_sb_rd_data_to_dut_q1;
+	    end
 
             dut_if.i_eb_wr_req[1]   = drvr_p1_eb_wr_req_to_dut_q1;
             dut_if.i_eb_wr_data[1]  = drvr_p1_eb_wr_data_to_dut_q1;
             dut_if.i_eb_rd_req[1]   = drvr_p1_eb_rd_req_to_dut_q1;
-       //   dut_if.i_eb_rd_rsp[1]   = drvr_p1_eb_rd_rsp_to_dut_q1;
-       //   dut_if.i_eb_rd_data[1]  = drvr_p1_eb_rd_data_to_dut_q1;
+	    if (drv_corr == 0) begin
+              dut_if.i_eb_rd_rsp[1]   = drvr_p1_eb_rd_rsp_to_dut_q1;
+              dut_if.i_eb_rd_data[1]  = drvr_p1_eb_rd_data_to_dut_q1;
+	    end
 
 
             dut_if.i_wb_wr_req[1]   = drvr_p1_wb_wr_req_to_dut_q1;
             dut_if.i_wb_wr_data[1]  = drvr_p1_wb_wr_data_to_dut_q1;
             dut_if.i_wb_rd_req[1]   = drvr_p1_wb_rd_req_to_dut_q1;
-       //   dut_if.i_wb_rd_rsp[1]   = drvr_p1_wb_rd_rsp_to_dut_q1;
-       //   dut_if.i_wb_rd_data[1]  = drvr_p1_wb_rd_data_to_dut_q1;
+	    if (drv_corr == 0) begin
+              dut_if.i_wb_rd_rsp[1]   = drvr_p1_wb_rd_rsp_to_dut_q1;
+              dut_if.i_wb_rd_data[1]  = drvr_p1_wb_rd_data_to_dut_q1;
+	    end
     
         end
     endtask
@@ -607,6 +593,9 @@ class inp_driver;
             //drvr_rd_req_to_dut.sema_val = 1'b0;
 
 
+	    // drv_corr = 1;
+
+
             for (integer req_loop = 0; req_loop < knob_inp_req_num; req_loop++) begin
 
 	       $display("(time: %0d) %s: ****************************", $time, name);
@@ -626,21 +615,21 @@ class inp_driver;
 
                 // which_plane = 0;
 
-                // req_toward: 0 -> EB
+                // drv_toward: 0 -> EB
                 //             1 -> WB
                 //             2 -> NB
                 //             3 -> SB
 
-		if (knob_req_toward == 0) 	req_toward = 0;
-		else if (knob_req_toward == 1) 	req_toward = 1;
-		else if (knob_req_toward == 2) 	req_toward = 2;
-		else if (knob_req_toward == 3) 	req_toward = 3;
-		else 		req_toward = $urandom_range(0, 3) ;
+		if (knob_drv_toward == 0) 	drv_toward = 0;
+		else if (knob_drv_toward == 1) 	drv_toward = 1;
+		else if (knob_drv_toward == 2) 	drv_toward = 2;
+		else if (knob_drv_toward == 3) 	drv_toward = 3;
+		else 		drv_toward = $urandom_range(0, 3) ;
 
-                // req_toward = 2;
+                // drv_toward = 2;
 
 
-            //  $display("(time: %0d) %s: !!! knob_req_toward=%0d, req_toward=%0d !!! ", $time, name, knob_req_toward, req_toward);
+            //  $display("(time: %0d) %s: !!! knob_drv_toward=%0d, drv_toward=%0d !!! ", $time, name, knob_drv_toward, drv_toward);
 
 
 		if (knob_req_row < 16)  node_row = knob_req_row;
@@ -664,22 +653,22 @@ class inp_driver;
 
 	 	if (knob_legal_only == 1) begin
 
-		   if ((knob_req_toward != 0) && (req_toward == 0) && (node_col < dut_if.i_eb_node_col)) begin
+		   if ((knob_drv_toward != 0) && (drv_toward == 0) && (node_col < dut_if.i_eb_node_col)) begin
 		      node_col = $urandom_range(dut_if.i_eb_node_col, 7);
                    // $display("(time: %0d) %s: Legalized EB wreq, req_node_col=%0d ", $time, name, node_col);
 	  	   end
 
-		   else if ((knob_req_toward != 1) && (req_toward == 1) && (node_col > dut_if.i_eb_node_col)) begin
+		   else if ((knob_drv_toward != 1) && (drv_toward == 1) && (node_col > dut_if.i_eb_node_col)) begin
 		      node_col = $urandom_range(0, dut_if.i_eb_node_col);
                    // $display("(time: %0d) %s: Legalized WB wreq, req_node_col=%0d ", $time, name, node_col);
 	 	   end
 
-		   else if ((knob_req_toward != 2) && (req_toward == 2) && (node_row > dut_if.i_sb_node_row)) begin
+		   else if ((knob_drv_toward != 2) && (drv_toward == 2) && (node_row > dut_if.i_sb_node_row)) begin
 		      node_row = $urandom_range(0, dut_if.i_sb_node_row);
                    // $display("(time: %0d) %s: Legalized NB wreq, req_node_row=%0d ", $time, name, node_row);
 		   end
 
-		   else if ((knob_req_toward != 3) && (req_toward == 3) && (node_row < dut_if.i_sb_node_row)) begin
+		   else if ((knob_drv_toward != 3) && (drv_toward == 3) && (node_row < dut_if.i_sb_node_row)) begin
 		      node_row = $urandom_range(dut_if.i_sb_node_row, 15);
                    // $display("(time: %0d) %s: Legalized SB wreq, req_node_row=%0d ", $time, name, node_row);
 		   end
@@ -687,53 +676,107 @@ class inp_driver;
 
 
 
-		if (knob_rreq_port_row < 16) 	col_rreq_port_row = knob_rreq_port_row;
-	        else	col_rreq_port_row = $urandom_range(0, 15);
+		if (knob_rreq_port_row < 16) 	rreq_port_row = knob_rreq_port_row;
+	        else	rreq_port_row = $urandom_range(0, 15);
 
-		if (knob_rreq_port_side < 4) 	col_rreq_port_side = knob_rreq_port_side;
-	        else	col_rreq_port_side = $urandom_range(0, 3);
-
-
-
-                // $display("(time: %0d) %s: col_rreq_port_row =%0d", $time, name, col_rreq_port_row);
-                // $display("(time: %0d) %s: col_rreq_port_side=%0d", $time, name, col_rreq_port_side);
+		if (knob_rreq_port_side < 4) 	rreq_port_side = knob_rreq_port_side;
+	        else	rreq_port_side = $urandom_range(0, 3);
 
 
 
-		// make sure port_row is legal
+                // $display("(time: %0d) %s: rreq_port_row =%0d", $time, name, rreq_port_row);
+                // $display("(time: %0d) %s: rreq_port_side=%0d", $time, name, rreq_port_side);
+
+
+
+		// make sure rreq port_row is legal
 
 	 	if (knob_legal_only == 1) begin
-		   if ((req_toward == 2) && (knob_rreq_port_row >= 16) && (col_rreq_port_row <= dut_if.i_sb_node_row)) begin
+		   if ((drv_toward == 2) && (knob_rreq_port_row >= 16) // indicating knob selects random
+					 && (rreq_port_row <= dut_if.i_sb_node_row)) // impossible case
+		   begin
 		      if (dut_if.i_sb_node_row == 15)
-		         col_rreq_port_row = 15;
+		         rreq_port_row = 15;
 		      else
-		         col_rreq_port_row = $urandom_range(dut_if.i_sb_node_row+1, 15);
+		         rreq_port_row = $urandom_range(dut_if.i_sb_node_row+1, 15);
 
-                   // $display("(time: %0d) %s: Legalized NB rreq, rreq_port_row=%0d", $time, name, col_rreq_port_row);
+                   // $display("(time: %0d) %s: Legalized NB rreq, rreq_port_row=%0d", $time, name, rreq_port_row);
 	  	   end
-	 	   else if ((req_toward == 3) && (knob_rreq_port_row >= 16) && (col_rreq_port_row >= dut_if.i_sb_node_row)) begin
+	 	   else if ((drv_toward == 3) && (knob_rreq_port_row >= 16) && (rreq_port_row >= dut_if.i_sb_node_row)) begin
 		      if (dut_if.i_sb_node_row == 0)
-		         col_rreq_port_row = 0;
+		         rreq_port_row = 0;
 		      else
-		         col_rreq_port_row = $urandom_range(0, dut_if.i_sb_node_row-1);
+		         rreq_port_row = $urandom_range(0, dut_if.i_sb_node_row-1);
 
-                    //$display("(time: %0d) %s: Legalized SB rreq, rreq_port_row=%0d", $time, name, col_rreq_port_row);
+                    //$display("(time: %0d) %s: Legalized SB rreq, rreq_port_row=%0d", $time, name, rreq_port_row);
 		   end
 	   	end
 
 
-		// make sure port_side is legal
+		// make sure rreq port_side is legal
 
 	 	if (knob_legal_only == 1) begin
-		   if ((req_toward == 2) && (knob_rreq_port_side >= 4) && (col_rreq_port_side == 0)) begin
-		      col_rreq_port_side = 1; // south, east or west are ok
-                   // $display("(time: %0d) %s: Legalized NB rreq, rreq_port_side=%0d", $time, name, col_rreq_port_side);
+		   if ((drv_toward == 2) && (knob_rreq_port_side >= 4) && (rreq_port_side == 0)) begin
+		      rreq_port_side = 1; // south, east or west are ok
+                   // $display("(time: %0d) %s: Legalized NB rreq, rreq_port_side=%0d", $time, name, rreq_port_side);
 	 	   end
-	 	   else if ((req_toward == 3) && (knob_rreq_port_side >= 4) && (col_rreq_port_side == 1)) begin
-		      col_rreq_port_side = 0; // north, east or west are ok
-                   // $display("(time: %0d) %s: Legalized SB rreq, rreq_port_side=%0d", $time, name, col_rreq_port_side);
+	 	   else if ((drv_toward == 3) && (knob_rreq_port_side >= 4) && (rreq_port_side == 1)) begin
+		      rreq_port_side = 0; // north, east or west are ok
+                   // $display("(time: %0d) %s: Legalized SB rreq, rreq_port_side=%0d", $time, name, rreq_port_side);
 		   end
 		end
+
+
+
+
+		// rsp:
+
+
+                if (knob_rsp_port_row < 16)    rsp_port_row = knob_rsp_port_row;
+                else    rsp_port_row = $urandom_range(0, 15);
+
+                if (knob_rsp_port_side < 4)    rsp_port_side = knob_rsp_port_side;
+                else    rsp_port_side = $urandom_range(0, 3);
+
+
+
+		// make sure rsp port_row is legal
+
+
+                if (knob_legal_only == 1) begin
+                   if ((drv_toward == 2) && (knob_rsp_port_row >= 16) && (rsp_port_row >= dut_if.i_sb_node_row)) begin
+                      if (dut_if.i_sb_node_row == 0)
+                         rsp_port_row = 0;
+                      else
+                         rsp_port_row = $urandom_range(0, dut_if.i_sb_node_row-1);
+
+                   // $display("(time: %0d) %s: Legalized NB rsp, rsp_port_row=%0d", $time, name, rsp_port_row);
+                   end
+                   else if ((drv_toward == 3) && (knob_rsp_port_row >= 16) && (rsp_port_row <= dut_if.i_sb_node_row)) begin
+                      if (dut_if.i_sb_node_row == 15)
+                         rsp_port_row = 15;
+                      else
+                         rsp_port_row = $urandom_range(dut_if.i_sb_node_row+1, 15);
+
+                    //$display("(time: %0d) %s: Legalized SB rsp, rsp_port_row=%0d", $time, name, rsp_port_row);
+                   end
+                end
+
+
+                // make sure rsp port_side is legal
+
+                if (knob_legal_only == 1) begin
+                   if ((drv_toward == 2) && (knob_rsp_port_side >= 4) && (rsp_port_side == 1)) begin
+                      rsp_port_side = 0; // north, east or west are ok
+                   // $display("(time: %0d) %s: Legalized NB rsp, rsp_port_side=%0d", $time, name, rsp_port_side);
+                   end
+                   else if ((drv_toward == 3) && (knob_rsp_port_side >= 4) && (rsp_port_side == 0)) begin
+                      rsp_port_side = 1; // south, east or west are ok
+                   // $display("(time: %0d) %s: Legalized SB rsp, rsp_port_side=%0d", $time, name, rsp_port_side);
+                   end
+                end
+
+
 
 
 
@@ -741,31 +784,39 @@ class inp_driver;
                 // display target of request
 
 		if (which_plane == 0) 
-                   if (req_toward == 0)
+                   if (drv_toward == 0)
                      $display("(time: %0d) %s: *** P0 EB req to (row, col) = (%0d, %0d) *** ", $time, name, node_row, node_col);
 
-                   else if (req_toward == 1)
+                   else if (drv_toward == 1)
                      $display("(time: %0d) %s: *** P0 WB req to (row, col) = (%0d, %0d) *** ", $time, name, node_row, node_col);
 
-                   else if (req_toward == 2)
-                     $display("(time: %0d) %s: *** P0 NB req to row = (%0d), port_row = (%0d), port_side = (%0d) *** ", 
-                               $time, name, node_row, col_rreq_port_row, col_rreq_port_side);
-                   else
-                     $display("(time: %0d) %s: *** P0 SB req to row = (%0d), port_row = (%0d), port_side = (%0d) *** ", 
-                               $time, name, node_row, col_rreq_port_row, col_rreq_port_side);
+                   else if (drv_toward == 2) begin
+                     $display("(time: %0d) %s: *** P0 NB req to row = (%0d) *** ", $time, name, node_row);
+                     $display("(time: %0d) %s: req port_row=(%0d), port_side=(%0d)", $time,name,rreq_port_row,rreq_port_side);
+                     $display("(time: %0d) %s: rsp port_row=(%0d), port_side=(%0d)", $time,name,rsp_port_row ,rsp_port_side);
+		   end
+                   else begin
+                     $display("(time: %0d) %s: *** P0 SB req to row = (%0d) *** ", $time, name, node_row);
+                     $display("(time: %0d) %s: req port_row=(%0d), port_side=(%0d)", $time,name,rreq_port_row,rreq_port_side);
+                     $display("(time: %0d) %s: rsp port_row=(%0d), port_side=(%0d)", $time,name,rsp_port_row ,rsp_port_side);
+		   end
 		else
-                   if (req_toward == 0)
+                   if (drv_toward == 0)
                      $display("(time: %0d) %s: *** P1 EB req to (row, col) = (%0d, %0d) *** ", $time, name, node_row, node_col);
 
-                   else if (req_toward == 1)
+                   else if (drv_toward == 1)
                      $display("(time: %0d) %s: *** P1 WB req to (row, col) = (%0d, %0d) *** ", $time, name, node_row, node_col);
 
-                   else if (req_toward == 2)
-                     $display("(time: %0d) %s: *** P1 NB req to row = (%0d), port_row = (%0d), port_side = (%0d)  *** ", 
-                               $time, name, node_row, col_rreq_port_row, col_rreq_port_side);
-                   else
-                     $display("(time: %0d) %s: *** P1 SB req to row = (%0d), port_row = (%0d), port_side = (%0d) *** ", 
-                               $time, name, node_row, col_rreq_port_row, col_rreq_port_side);
+                   else if (drv_toward == 2) begin
+                     $display("(time: %0d) %s: *** P1 NB req to row = (%0d) *** ", $time, name, node_row);
+                     $display("(time: %0d) %s: req port_row=(%0d), port_side=(%0d)", $time,name,rreq_port_row,rreq_port_side);
+                     $display("(time: %0d) %s: rsp port_row=(%0d), port_side=(%0d)", $time,name,rsp_port_row ,rsp_port_side);
+		   end
+                   else begin
+                     $display("(time: %0d) %s: *** P1 SB req to row = (%0d) *** ", $time, name, node_row);
+                     $display("(time: %0d) %s: req port_row=(%0d), port_side=(%0d)", $time,name,rreq_port_row,rreq_port_side);
+                     $display("(time: %0d) %s: rsp port_row=(%0d), port_side=(%0d)", $time,name,rsp_port_row ,rsp_port_side);
+		   end
 
 
 
@@ -799,8 +850,8 @@ class inp_driver;
         drvr_col_rreq.id        = $urandom();
     //  drvr_col_rreq.port_row  = $urandom();
     //  drvr_col_rreq.port_side = $urandom();
-        drvr_col_rreq.port_row  = col_rreq_port_row;
-        drvr_col_rreq.port_side = col_rreq_port_side;
+        drvr_col_rreq.port_row  = rreq_port_row;
+        drvr_col_rreq.port_side = rreq_port_side;
         drvr_col_rreq.node_row  = node_row;
         drvr_col_rreq.csr       = $urandom_range(0, 1);
         drvr_col_rreq.addr      = $urandom();
@@ -808,20 +859,29 @@ class inp_driver;
         drvr_col_rreq.age       = $urandom();
 
 
+	drvr_row_rsp.id		= $urandom();
+
+	drvr_col_rsp.id		= $urandom();
+	drvr_col_rsp.port_side	= rsp_port_side;
+	drvr_col_rsp.port_row	= rsp_port_row;
+
+               drvr_rdata       = $urandom();
+
+
                // p0 wr req, wr data:
 
                @(posedge dut_if.mclk);
 
                if (which_plane == 0) // plane 0
-                   if (req_toward == 0) begin  // EB
+                   if (drv_toward == 0) begin  // EB
                         drvr_p0_eb_wr_req_to_dut        = drvr_row_wreq;
                         drvr_p0_eb_wr_req_to_dut.vld    = 1'b1;
                    end
-                   else if (req_toward == 1) begin // WB
+                   else if (drv_toward == 1) begin // WB
                         drvr_p0_wb_wr_req_to_dut        = drvr_row_wreq;
                         drvr_p0_wb_wr_req_to_dut.vld    = 1'b1;
                    end
-                   else if (req_toward == 2) begin // NB
+                   else if (drv_toward == 2) begin // NB
                         drvr_p0_nb_wr_req_to_dut        = drvr_col_wreq;
                         drvr_p0_nb_wr_req_to_dut.vld    = 1'b1;
                    end
@@ -830,15 +890,15 @@ class inp_driver;
                         drvr_p0_sb_wr_req_to_dut.vld    = 1'b1;
                    end
                else
-                   if (req_toward == 0) begin      
+                   if (drv_toward == 0) begin      
                         drvr_p1_eb_wr_req_to_dut        = drvr_row_wreq;
                         drvr_p1_eb_wr_req_to_dut.vld    = 1'b1;
                    end
-                   else if (req_toward == 1) begin
+                   else if (drv_toward == 1) begin
                         drvr_p1_wb_wr_req_to_dut        = drvr_row_wreq;
                         drvr_p1_wb_wr_req_to_dut.vld    = 1'b1;
                    end
-                   else if (req_toward == 2) begin
+                   else if (drv_toward == 2) begin
                         drvr_p1_nb_wr_req_to_dut        = drvr_col_wreq;
                         drvr_p1_nb_wr_req_to_dut.vld    = 1'b1;
                    end
@@ -862,20 +922,20 @@ class inp_driver;
                @(posedge dut_if.mclk);
 
                if (which_plane == 0) // plane 0
-                   if (req_toward == 0)
+                   if (drv_toward == 0)
                         drvr_p0_eb_wr_data_to_dut    = drvr_wdata;
-                   else if (req_toward == 1)
+                   else if (drv_toward == 1)
                         drvr_p0_wb_wr_data_to_dut    = drvr_wdata;
-                   else if (req_toward == 2)
+                   else if (drv_toward == 2)
                         drvr_p0_nb_wr_data_to_dut    = drvr_wdata;
                    else
                         drvr_p0_sb_wr_data_to_dut    = drvr_wdata;
                else 
-                   if (req_toward == 0)
+                   if (drv_toward == 0)
                         drvr_p1_eb_wr_data_to_dut    = drvr_wdata;
-                   else if (req_toward == 1)
+                   else if (drv_toward == 1)
                         drvr_p1_wb_wr_data_to_dut    = drvr_wdata;
-                   else if (req_toward == 2)
+                   else if (drv_toward == 2)
                         drvr_p1_nb_wr_data_to_dut    = drvr_wdata;
                    else
                         drvr_p1_sb_wr_data_to_dut    = drvr_wdata;
@@ -917,19 +977,19 @@ class inp_driver;
                @(posedge dut_if.mclk);
 
                if (which_plane == 0)            // plane 0
-                  if (req_toward == 0) begin    // EB
+                  if (drv_toward == 0) begin    // EB
                      drvr_p0_eb_rd_req_to_dut           = drvr_row_rreq;
                      drvr_p0_eb_rd_req_to_dut.vld       = 1'b1;
                      drvr_p0_eb_rd_req_to_dut.csr       = drvr_row_wreq.csr;  // same as wr_req
                      drvr_p0_eb_rd_req_to_dut.addr      = drvr_row_wreq.addr; // same as wr_req
                   end
-                  else if (req_toward == 1) begin       // WB
+                  else if (drv_toward == 1) begin       // WB
                      drvr_p0_wb_rd_req_to_dut           = drvr_row_rreq;
                      drvr_p0_wb_rd_req_to_dut.vld       = 1'b1;
                      drvr_p0_wb_rd_req_to_dut.csr       = drvr_row_wreq.csr;
                      drvr_p0_wb_rd_req_to_dut.addr      = drvr_row_wreq.addr;
                   end
-                  else if (req_toward == 2) begin       // NB
+                  else if (drv_toward == 2) begin       // NB
                      drvr_p0_nb_rd_req_to_dut           = drvr_col_rreq;
                      drvr_p0_nb_rd_req_to_dut.vld       = 1'b1;
                      drvr_p0_nb_rd_req_to_dut.csr       = drvr_col_wreq.csr;
@@ -942,19 +1002,19 @@ class inp_driver;
                      drvr_p0_sb_rd_req_to_dut.addr      = drvr_col_wreq.addr;
                   end
                else // plane 1
-                  if (req_toward == 0) begin    // EB
+                  if (drv_toward == 0) begin    // EB
                      drvr_p1_eb_rd_req_to_dut           = drvr_row_rreq;
                      drvr_p1_eb_rd_req_to_dut.vld       = 1'b1;
                      drvr_p1_eb_rd_req_to_dut.csr       = drvr_row_wreq.csr;
                      drvr_p1_eb_rd_req_to_dut.addr      = drvr_row_wreq.addr;
                   end
-                  else if (req_toward == 1) begin       // WB
+                  else if (drv_toward == 1) begin       // WB
                      drvr_p1_wb_rd_req_to_dut           = drvr_row_rreq;
                      drvr_p1_wb_rd_req_to_dut.vld       = 1'b1;
                      drvr_p1_wb_rd_req_to_dut.csr       = drvr_row_wreq.csr;
                      drvr_p1_wb_rd_req_to_dut.addr      = drvr_row_wreq.addr;
                   end
-                  else if (req_toward == 2) begin       // NB
+                  else if (drv_toward == 2) begin       // NB
                      drvr_p1_nb_rd_req_to_dut           = drvr_col_rreq;
                      drvr_p1_nb_rd_req_to_dut.vld       = 1'b1;
                      drvr_p1_nb_rd_req_to_dut.csr       = drvr_col_wreq.csr;
@@ -1000,6 +1060,92 @@ class inp_driver;
                @(posedge dut_if.mclk);
                @(posedge dut_if.mclk);
 
+
+               // rd rsp
+
+               @(posedge dut_if.mclk);
+
+	       if (drv_corr == 0) begin
+                if (which_plane == 0)            // plane 0
+                  if (drv_toward == 0) begin    // EB
+                     drvr_p0_eb_rd_rsp_to_dut           = drvr_row_rsp;
+                     drvr_p0_eb_rd_rsp_to_dut.vld       = 1'b1;
+                  end
+                  else if (drv_toward == 1) begin       // WB
+                     drvr_p0_wb_rd_rsp_to_dut           = drvr_row_rsp;
+                     drvr_p0_wb_rd_rsp_to_dut.vld       = 1'b1;
+                  end
+                  else if (drv_toward == 2) begin       // NB
+                     drvr_p0_nb_rd_rsp_to_dut           = drvr_col_rsp;
+                     drvr_p0_nb_rd_rsp_to_dut.vld       = 1'b1;
+                  end
+                  else begin
+                     drvr_p0_sb_rd_rsp_to_dut           = drvr_col_rsp;
+                     drvr_p0_sb_rd_rsp_to_dut.vld       = 1'b1;
+                  end
+                else // plane 1
+                  if (drv_toward == 0) begin    // EB
+                     drvr_p1_eb_rd_rsp_to_dut           = drvr_row_rsp;
+                     drvr_p1_eb_rd_rsp_to_dut.vld       = 1'b1;
+                  end
+                  else if (drv_toward == 1) begin       // WB
+                     drvr_p1_wb_rd_rsp_to_dut           = drvr_row_rsp;
+                     drvr_p1_wb_rd_rsp_to_dut.vld       = 1'b1;
+                  end
+                  else if (drv_toward == 2) begin       // NB
+                     drvr_p1_nb_rd_rsp_to_dut           = drvr_col_rsp;
+                     drvr_p1_nb_rd_rsp_to_dut.vld       = 1'b1;
+                  end
+                  else begin
+                     drvr_p1_sb_rd_rsp_to_dut           = drvr_col_rsp;
+                     drvr_p1_sb_rd_rsp_to_dut.vld       = 1'b1;
+                  end
+	       end
+
+
+               @(posedge dut_if.mclk);
+
+	       if (drv_corr == 0) begin
+                  drvr_p0_eb_rd_rsp_to_dut      = '0;
+                  drvr_p0_wb_rd_rsp_to_dut      = '0;
+                  drvr_p0_nb_rd_rsp_to_dut      = '0;
+                  drvr_p0_sb_rd_rsp_to_dut      = '0;
+                  drvr_p1_eb_rd_rsp_to_dut      = '0;
+                  drvr_p1_wb_rd_rsp_to_dut      = '0;
+                  drvr_p1_nb_rd_rsp_to_dut      = '0;
+                  drvr_p1_sb_rd_rsp_to_dut      = '0;
+	       end
+
+
+               @(posedge dut_if.mclk);
+
+	       if (drv_corr == 0) begin
+                 if (which_plane == 0) // plane 0
+                   if (drv_toward == 0) 	drvr_p0_eb_rd_data_to_dut    = drvr_rdata;
+                   else if (drv_toward == 1) 	drvr_p0_wb_rd_data_to_dut    = drvr_rdata;
+                   else if (drv_toward == 2) 	drvr_p0_nb_rd_data_to_dut    = drvr_rdata;
+                   else 			drvr_p0_sb_rd_data_to_dut    = drvr_rdata;
+                 else
+                   if (drv_toward == 0) 	drvr_p1_eb_rd_data_to_dut    = drvr_rdata;
+                   else if (drv_toward == 1) 	drvr_p1_wb_rd_data_to_dut    = drvr_rdata;
+                   else if (drv_toward == 2) 	drvr_p1_nb_rd_data_to_dut    = drvr_rdata;
+                   else 			drvr_p1_sb_rd_data_to_dut    = drvr_rdata;
+	       end
+
+               @(posedge dut_if.mclk);
+
+	       if (drv_corr == 0) begin
+                  drvr_p0_eb_rd_data_to_dut    = '0;
+                  drvr_p0_wb_rd_data_to_dut    = '0;
+                  drvr_p0_nb_rd_data_to_dut    = '0;
+                  drvr_p0_sb_rd_data_to_dut    = '0;
+                  drvr_p1_eb_rd_data_to_dut    = '0;
+                  drvr_p1_wb_rd_data_to_dut    = '0;
+                  drvr_p1_nb_rd_data_to_dut    = '0;
+                  drvr_p1_sb_rd_data_to_dut    = '0;
+	       end
+
+
                @(posedge dut_if.mclk);
                @(posedge dut_if.mclk);
                @(posedge dut_if.mclk);
@@ -1020,6 +1166,29 @@ class inp_driver;
                @(posedge dut_if.mclk);
                @(posedge dut_if.mclk);
                @(posedge dut_if.mclk);
+
+               @(posedge dut_if.mclk);
+               @(posedge dut_if.mclk);
+               @(posedge dut_if.mclk);
+               @(posedge dut_if.mclk);
+               @(posedge dut_if.mclk);
+               @(posedge dut_if.mclk);
+               @(posedge dut_if.mclk);
+               @(posedge dut_if.mclk);
+               @(posedge dut_if.mclk);
+               @(posedge dut_if.mclk);
+               @(posedge dut_if.mclk);
+               @(posedge dut_if.mclk);
+               @(posedge dut_if.mclk);
+               @(posedge dut_if.mclk);
+               @(posedge dut_if.mclk);
+               @(posedge dut_if.mclk);
+               @(posedge dut_if.mclk);
+               @(posedge dut_if.mclk);
+               @(posedge dut_if.mclk);
+               @(posedge dut_if.mclk);
+
+
 
             // $display("(time: %0d) %s: ** (current req loop = %0d) ** ", $time, name, req_loop);
 
