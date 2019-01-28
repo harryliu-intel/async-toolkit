@@ -41,7 +41,6 @@ soc \
 hip \
 $::env(MODEL_ROOT)/tools/collage/configs/config_soc/integ_specs/upf/soc_pin_power_spec.txt
 ##++++++++++++++++++++++++++++++++++++++++++##
-default_island mby          vinf_island
 default_island soc          vinf_island
 
 
