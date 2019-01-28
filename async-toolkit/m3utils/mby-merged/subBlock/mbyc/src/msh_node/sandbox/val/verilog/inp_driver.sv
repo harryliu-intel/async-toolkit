@@ -1202,7 +1202,22 @@ class inp_driver;
 
         @(posedge dut_if.mclk);
 
+
+/*
+	// give enough time before assigning dvr_done to 1 to allow scoreboard empty, otherwise ERROR
+	// let's say 30 cycles should be enough
+
+        for (integer drv_done_delay = 0; drv_done_delay < 60; drv_done_delay++) begin
+           @(posedge dut_if.mclk);
+           $display("(time: %0d) %s: drv_done_delay ", $time, name, drv_done_delay);
+	end
+*/
+
         drv_done = 1'b1;
+
+
+        $display("(time: %0d) %s: drv_done = (%0d)", $time, name, drv_done);
+
     endtask
 
 

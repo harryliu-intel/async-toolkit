@@ -183,11 +183,16 @@ class env;
         while (done_cnt < delay) begin
             repeat (1) @ (posedge dut_if.mclk);
 //-hz:
-            done_cnt = (inp_driver.drv_done) ? done_cnt + 1 : '0;
-//          done_cnt = (mntr.all_done) ? done_cnt + 1 : '0;
+//          done_cnt = (inp_driver.drv_done) ? done_cnt + 1 : '0;
+            done_cnt = (mntr.all_done) ? done_cnt + 1 : '0;
+
+//	    if (inp_driver.drv_done == 1) 
+//             $display("(time: %0d) %s: done_cnt = (%0d)", $time, name, done_cnt);
         end
         $display("(time: %0d) %s: **End Waiting For Done plus %0d Clocks**", $time, name, delay);
+
     endtask
+
 
 endclass
 
