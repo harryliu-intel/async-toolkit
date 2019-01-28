@@ -60,7 +60,8 @@ class monitor;
     scoreboard              sb;
 //-hz:
 //  configuration           cfg;
-    inp_driver              inp_drvr        [NUM_INPUTS-1:0];
+//  inp_driver              inp_drvr        [NUM_INPUTS-1:0];
+    inp_driver              inp_drvr;
 
     bit                     sb_done;
     bit [NUM_INPUTS-1:0]    inp_drv_done;
@@ -347,6 +348,157 @@ class monitor;
 
     integer	en_mem_check;
 
+    integer	drv_corr;
+
+    integer     exp_o_p0_eb_rsp_from_i_eb_rsp_valid;
+    integer     exp_o_p0_eb_rsp_from_i_eb_rsp_valid_q1;
+    integer     exp_o_p0_eb_rdata_from_i_eb_rdata;
+
+    integer     exp_o_p0_wb_rsp_from_i_wb_rsp_valid;
+    integer     exp_o_p0_wb_rsp_from_i_wb_rsp_valid_q1;
+    integer     exp_o_p0_wb_rdata_from_i_wb_rdata;
+
+    integer     exp_o_p0_nb_rsp_from_i_nb_rsp_less_Prow;
+    integer     exp_o_p0_nb_rsp_from_i_nb_rsp_less_Prow_q1;
+    integer     exp_o_p0_nb_rdata_from_i_nb_rdata_less_Prow;
+
+    integer     exp_o_p0_eb_rsp_from_i_nb_rsp_same_Prow_Eside;
+    integer     exp_o_p0_eb_rsp_from_i_nb_rsp_same_Prow_Eside_q1;
+    integer     exp_o_p0_eb_rdata_from_i_nb_rdata_same_Prow_Eside;
+
+    integer     exp_o_p0_wb_rsp_from_i_nb_rsp_same_Prow_Wside;
+    integer     exp_o_p0_wb_rsp_from_i_nb_rsp_same_Prow_Wside_q1;
+    integer     exp_o_p0_wb_rdata_from_i_nb_rdata_same_Prow_Wside;
+
+    integer     exp_o_p0_nb_rsp_from_i_nb_rsp_same_Prow_Nside;
+    integer     exp_o_p0_nb_rsp_from_i_nb_rsp_same_Prow_Nside_q1;
+    integer     exp_o_p0_nb_rdata_from_i_nb_rdata_same_Prow_Nside;
+
+    integer     exp_o_p0_sb_rsp_from_i_nb_rsp_same_Prow_Sside;
+    integer     exp_o_p0_sb_rsp_from_i_nb_rsp_same_Prow_Sside_q1;
+    integer     exp_o_p0_sb_rdata_from_i_nb_rdata_same_Prow_Sside;
+
+    integer     exp_o_p0_sb_rsp_from_i_nb_rsp_bigger_Prow;
+    integer     exp_o_p0_sb_rsp_from_i_nb_rsp_bigger_Prow_q1;
+    integer     exp_o_p0_sb_rdata_from_i_nb_rdata_bigger_Prow;
+
+    integer     exp_o_p0_nb_rsp_from_i_sb_rsp_less_Prow;
+    integer     exp_o_p0_nb_rsp_from_i_sb_rsp_less_Prow_q1;
+    integer     exp_o_p0_nb_rdata_from_i_sb_rdata_less_Prow;
+
+    integer     exp_o_p0_eb_rsp_from_i_sb_rsp_same_Prow_Eside;
+    integer     exp_o_p0_eb_rsp_from_i_sb_rsp_same_Prow_Eside_q1;
+    integer     exp_o_p0_eb_rdata_from_i_sb_rdata_same_Prow_Eside;
+
+    integer     exp_o_p0_wb_rsp_from_i_sb_rsp_same_Prow_Wside;
+    integer     exp_o_p0_wb_rsp_from_i_sb_rsp_same_Prow_Wside_q1;
+    integer     exp_o_p0_wb_rdata_from_i_sb_rdata_same_Prow_Wside;
+
+    integer     exp_o_p0_nb_rsp_from_i_sb_rsp_same_Prow_Nside;
+    integer     exp_o_p0_nb_rsp_from_i_sb_rsp_same_Prow_Nside_q1;
+    integer     exp_o_p0_nb_rdata_from_i_sb_rdata_same_Prow_Nside;
+
+    integer     exp_o_p0_sb_rsp_from_i_sb_rsp_same_Prow_Sside;
+    integer     exp_o_p0_sb_rsp_from_i_sb_rsp_same_Prow_Sside_q1;
+    integer     exp_o_p0_sb_rdata_from_i_sb_rdata_same_Prow_Sside;
+
+    integer     exp_o_p0_sb_rsp_from_i_sb_rsp_bigger_Prow;
+    integer     exp_o_p0_sb_rsp_from_i_sb_rsp_bigger_Prow_q1;
+    integer     exp_o_p0_sb_rdata_from_i_sb_rdata_bigger_Prow;
+
+
+        // p1:
+
+    integer     exp_o_p1_eb_rsp_from_i_eb_rsp_valid;
+    integer     exp_o_p1_eb_rsp_from_i_eb_rsp_valid_q1;
+    integer     exp_o_p1_eb_rdata_from_i_eb_rdata;
+
+    integer     exp_o_p1_wb_rsp_from_i_wb_rsp_valid;
+    integer     exp_o_p1_wb_rsp_from_i_wb_rsp_valid_q1;
+    integer     exp_o_p1_wb_rdata_from_i_wb_rdata;
+
+    integer     exp_o_p1_nb_rsp_from_i_nb_rsp_less_Prow;
+    integer     exp_o_p1_nb_rsp_from_i_nb_rsp_less_Prow_q1;
+    integer     exp_o_p1_nb_rdata_from_i_nb_rdata_less_Prow;
+
+    integer     exp_o_p1_eb_rsp_from_i_nb_rsp_same_Prow_Eside;
+    integer     exp_o_p1_eb_rsp_from_i_nb_rsp_same_Prow_Eside_q1;
+    integer     exp_o_p1_eb_rdata_from_i_nb_rdata_same_Prow_Eside;
+
+    integer     exp_o_p1_wb_rsp_from_i_nb_rsp_same_Prow_Wside;
+    integer     exp_o_p1_wb_rsp_from_i_nb_rsp_same_Prow_Wside_q1;
+    integer     exp_o_p1_wb_rdata_from_i_nb_rdata_same_Prow_Wside;
+
+    integer     exp_o_p1_nb_rsp_from_i_nb_rsp_same_Prow_Nside;
+    integer     exp_o_p1_nb_rsp_from_i_nb_rsp_same_Prow_Nside_q1;
+    integer     exp_o_p1_nb_rdata_from_i_nb_rdata_same_Prow_Nside;
+
+    integer     exp_o_p1_sb_rsp_from_i_nb_rsp_same_Prow_Sside;
+    integer     exp_o_p1_sb_rsp_from_i_nb_rsp_same_Prow_Sside_q1;
+    integer     exp_o_p1_sb_rdata_from_i_nb_rdata_same_Prow_Sside;
+
+    integer     exp_o_p1_sb_rsp_from_i_nb_rsp_bigger_Prow;
+    integer     exp_o_p1_sb_rsp_from_i_nb_rsp_bigger_Prow_q1;
+    integer     exp_o_p1_sb_rdata_from_i_nb_rdata_bigger_Prow;
+
+    integer     exp_o_p1_nb_rsp_from_i_sb_rsp_less_Prow;
+    integer     exp_o_p1_nb_rsp_from_i_sb_rsp_less_Prow_q1;
+    integer     exp_o_p1_nb_rdata_from_i_sb_rdata_less_Prow;
+
+    integer     exp_o_p1_eb_rsp_from_i_sb_rsp_same_Prow_Eside;
+    integer     exp_o_p1_eb_rsp_from_i_sb_rsp_same_Prow_Eside_q1;
+    integer     exp_o_p1_eb_rdata_from_i_sb_rdata_same_Prow_Eside;
+
+    integer     exp_o_p1_wb_rsp_from_i_sb_rsp_same_Prow_Wside;
+    integer     exp_o_p1_wb_rsp_from_i_sb_rsp_same_Prow_Wside_q1;
+    integer     exp_o_p1_wb_rdata_from_i_sb_rdata_same_Prow_Wside;
+
+    integer     exp_o_p1_nb_rsp_from_i_sb_rsp_same_Prow_Nside;
+    integer     exp_o_p1_nb_rsp_from_i_sb_rsp_same_Prow_Nside_q1;
+    integer     exp_o_p1_nb_rdata_from_i_sb_rdata_same_Prow_Nside;
+
+    integer     exp_o_p1_sb_rsp_from_i_sb_rsp_same_Prow_Sside;
+    integer     exp_o_p1_sb_rsp_from_i_sb_rsp_same_Prow_Sside_q1;
+    integer     exp_o_p1_sb_rdata_from_i_sb_rdata_same_Prow_Sside;
+
+    integer     exp_o_p1_sb_rsp_from_i_sb_rsp_bigger_Prow;
+    integer     exp_o_p1_sb_rsp_from_i_sb_rsp_bigger_Prow_q1;
+    integer     exp_o_p1_sb_rdata_from_i_sb_rdata_bigger_Prow;
+
+
+
+    mby_msh_pkg::msh_row_rd_rsp_t  exp_o_p0_eb_rsp_from_i_eb_rsp;
+    mby_msh_pkg::msh_row_rd_rsp_t  exp_o_p0_wb_rsp_from_i_wb_rsp;
+    mby_msh_pkg::msh_col_rd_rsp_t  exp_o_p0_nb_rsp_from_i_nb_rsp;
+    mby_msh_pkg::msh_row_rd_rsp_t  exp_o_p0_eb_rsp_from_i_nb_rsp;
+    mby_msh_pkg::msh_row_rd_rsp_t  exp_o_p0_wb_rsp_from_i_nb_rsp;
+//  mby_msh_pkg::msh_col_rd_rsp_t  exp_o_p0_nb_rsp_from_i_nb_rsp;
+    mby_msh_pkg::msh_col_rd_rsp_t  exp_o_p0_sb_rsp_from_i_nb_rsp;
+//  mby_msh_pkg::msh_col_rd_rsp_t  exp_o_p0_sb_rsp_from_i_nb_rsp;
+    mby_msh_pkg::msh_col_rd_rsp_t  exp_o_p0_nb_rsp_from_i_sb_rsp;
+    mby_msh_pkg::msh_row_rd_rsp_t  exp_o_p0_eb_rsp_from_i_sb_rsp;
+    mby_msh_pkg::msh_row_rd_rsp_t  exp_o_p0_wb_rsp_from_i_sb_rsp;
+//  mby_msh_pkg::msh_col_rd_rsp_t  exp_o_p0_nb_rsp_from_i_sb_rsp;
+    mby_msh_pkg::msh_col_rd_rsp_t  exp_o_p0_sb_rsp_from_i_sb_rsp;
+//  mby_msh_pkg::msh_col_rd_rsp_t  exp_o_p0_sb_rsp_from_i_sb_rsp;
+
+    mby_msh_pkg::msh_row_rd_rsp_t  exp_o_p1_eb_rsp_from_i_eb_rsp;
+    mby_msh_pkg::msh_row_rd_rsp_t  exp_o_p1_wb_rsp_from_i_wb_rsp;
+    mby_msh_pkg::msh_col_rd_rsp_t  exp_o_p1_nb_rsp_from_i_nb_rsp;
+    mby_msh_pkg::msh_row_rd_rsp_t  exp_o_p1_eb_rsp_from_i_nb_rsp;
+    mby_msh_pkg::msh_row_rd_rsp_t  exp_o_p1_wb_rsp_from_i_nb_rsp;
+//  mby_msh_pkg::msh_col_rd_rsp_t  exp_o_p1_nb_rsp_from_i_nb_rsp;
+    mby_msh_pkg::msh_col_rd_rsp_t  exp_o_p1_sb_rsp_from_i_nb_rsp;
+//  mby_msh_pkg::msh_col_rd_rsp_t  exp_o_p1_sb_rsp_from_i_nb_rsp;
+    mby_msh_pkg::msh_col_rd_rsp_t  exp_o_p1_nb_rsp_from_i_sb_rsp;
+    mby_msh_pkg::msh_row_rd_rsp_t  exp_o_p1_eb_rsp_from_i_sb_rsp;
+    mby_msh_pkg::msh_row_rd_rsp_t  exp_o_p1_wb_rsp_from_i_sb_rsp;
+//  mby_msh_pkg::msh_col_rd_rsp_t  exp_o_p1_nb_rsp_from_i_sb_rsp;
+    mby_msh_pkg::msh_col_rd_rsp_t  exp_o_p1_sb_rsp_from_i_sb_rsp;
+//  mby_msh_pkg::msh_col_rd_rsp_t  exp_o_p1_sb_rsp_from_i_sb_rsp;
+
+
+
 
 
     // statistics variables
@@ -360,17 +512,20 @@ class monitor;
         virtual mby_mem_msh_bank_ram_shell_4096x532_func_if mem_if_2,
         virtual mby_mem_msh_bank_ram_shell_4096x532_func_if mem_if_3,
 
-        scoreboard          sb
+        scoreboard          sb,
 //-hz:
 //      configuration       cfg,
 //      inp_driver          inp_drvr [NUM_INPUTS-1:0]
+
+        inp_driver          inp_drvr
     );
 
         this.dut_if         = dut_if;
         this.sb             = sb;
 //-hz:
 //      this.cfg            = cfg;
-//      this.inp_drvr       = inp_drvr;
+
+        this.inp_drvr       = inp_drvr;
 
 	//-hz: 12/7/2018:
         this.mem_if_0	= mem_if_0;
@@ -653,143 +808,168 @@ class monitor;
 
 	en_mem_check 	= 0;
 
+	drv_corr 	= 0;
+
+        // p0
+
+        exp_o_p0_eb_rsp_from_i_eb_rsp_valid = 0 ;
+        exp_o_p0_eb_rsp_from_i_eb_rsp_valid_q1 = 0 ;
+        exp_o_p0_eb_rdata_from_i_eb_rdata = 0;
+
+        exp_o_p0_wb_rsp_from_i_wb_rsp_valid = 0 ;
+        exp_o_p0_wb_rsp_from_i_wb_rsp_valid_q1 = 0 ;
+        exp_o_p0_wb_rdata_from_i_wb_rdata = 0;
+
+        exp_o_p0_nb_rsp_from_i_nb_rsp_less_Prow = 0 ;
+        exp_o_p0_nb_rsp_from_i_nb_rsp_less_Prow_q1 = 0 ;
+        exp_o_p0_nb_rdata_from_i_nb_rdata_less_Prow = 0 ;
+
+        exp_o_p0_eb_rsp_from_i_nb_rsp_same_Prow_Eside = 0 ;
+        exp_o_p0_eb_rsp_from_i_nb_rsp_same_Prow_Eside_q1 = 0 ;
+        exp_o_p0_eb_rdata_from_i_nb_rdata_same_Prow_Eside = 0 ;
+
+        exp_o_p0_wb_rsp_from_i_nb_rsp_same_Prow_Wside = 0 ;
+        exp_o_p0_wb_rsp_from_i_nb_rsp_same_Prow_Wside_q1 = 0 ;
+        exp_o_p0_wb_rdata_from_i_nb_rdata_same_Prow_Wside = 0 ;
+
+        exp_o_p0_nb_rsp_from_i_nb_rsp_same_Prow_Nside = 0 ;
+        exp_o_p0_nb_rsp_from_i_nb_rsp_same_Prow_Nside_q1 = 0 ;
+        exp_o_p0_nb_rdata_from_i_nb_rdata_same_Prow_Nside = 0 ;
+
+        exp_o_p0_sb_rsp_from_i_nb_rsp_same_Prow_Sside = 0 ;
+        exp_o_p0_sb_rsp_from_i_nb_rsp_same_Prow_Sside_q1 = 0 ;
+        exp_o_p0_sb_rdata_from_i_nb_rdata_same_Prow_Sside = 0 ;
+
+        exp_o_p0_sb_rsp_from_i_nb_rsp_bigger_Prow = 0 ;
+        exp_o_p0_sb_rsp_from_i_nb_rsp_bigger_Prow_q1 = 0 ;
+        exp_o_p0_sb_rdata_from_i_nb_rdata_bigger_Prow = 0 ;
+
+        exp_o_p0_nb_rsp_from_i_sb_rsp_less_Prow = 0 ;
+        exp_o_p0_nb_rsp_from_i_sb_rsp_less_Prow_q1 = 0 ;
+        exp_o_p0_nb_rdata_from_i_sb_rdata_less_Prow = 0 ;
+
+        exp_o_p0_eb_rsp_from_i_sb_rsp_same_Prow_Eside = 0 ;
+        exp_o_p0_eb_rsp_from_i_sb_rsp_same_Prow_Eside_q1 = 0 ;
+        exp_o_p0_eb_rdata_from_i_sb_rdata_same_Prow_Eside = 0 ;
+
+        exp_o_p0_wb_rsp_from_i_sb_rsp_same_Prow_Wside = 0 ;
+        exp_o_p0_wb_rsp_from_i_sb_rsp_same_Prow_Wside_q1 = 0 ;
+        exp_o_p0_wb_rdata_from_i_sb_rdata_same_Prow_Wside = 0 ;
+
+        exp_o_p0_nb_rsp_from_i_sb_rsp_same_Prow_Nside = 0 ;
+        exp_o_p0_nb_rsp_from_i_sb_rsp_same_Prow_Nside_q1 = 0 ;
+        exp_o_p0_nb_rdata_from_i_sb_rdata_same_Prow_Nside = 0 ;
+
+        exp_o_p0_sb_rsp_from_i_sb_rsp_same_Prow_Sside = 0 ;
+        exp_o_p0_sb_rsp_from_i_sb_rsp_same_Prow_Sside_q1 = 0 ;
+        exp_o_p0_sb_rdata_from_i_sb_rdata_same_Prow_Sside = 0 ;
+
+        exp_o_p0_sb_rsp_from_i_sb_rsp_bigger_Prow = 0 ;
+        exp_o_p0_sb_rsp_from_i_sb_rsp_bigger_Prow_q1 = 0 ;
+        exp_o_p0_sb_rdata_from_i_sb_rdata_bigger_Prow = 0 ;
+
+        // p1
+
+        exp_o_p0_eb_rsp_from_i_eb_rsp_valid = 0 ;
+        exp_o_p0_eb_rsp_from_i_eb_rsp_valid_q1 = 0 ;
+        exp_o_p0_eb_rdata_from_i_eb_rdata = 0;
+
+        exp_o_p0_wb_rsp_from_i_wb_rsp_valid = 0 ;
+        exp_o_p0_wb_rsp_from_i_wb_rsp_valid_q1 = 0 ;
+        exp_o_p0_wb_rdata_from_i_wb_rdata = 0;
+
+        exp_o_p0_nb_rsp_from_i_nb_rsp_less_Prow = 0 ;
+        exp_o_p0_nb_rsp_from_i_nb_rsp_less_Prow_q1 = 0 ;
+        exp_o_p0_nb_rdata_from_i_nb_rdata_less_Prow = 0 ;
+
+        exp_o_p0_eb_rsp_from_i_nb_rsp_same_Prow_Eside = 0 ;
+        exp_o_p0_eb_rsp_from_i_nb_rsp_same_Prow_Eside_q1 = 0 ;
+        exp_o_p0_eb_rdata_from_i_nb_rdata_same_Prow_Eside = 0 ;
+
+        exp_o_p0_wb_rsp_from_i_nb_rsp_same_Prow_Wside = 0 ;
+        exp_o_p0_wb_rsp_from_i_nb_rsp_same_Prow_Wside_q1 = 0 ;
+        exp_o_p0_wb_rdata_from_i_nb_rdata_same_Prow_Wside = 0 ;
+
+        exp_o_p0_nb_rsp_from_i_nb_rsp_same_Prow_Nside = 0 ;
+        exp_o_p0_nb_rsp_from_i_nb_rsp_same_Prow_Nside_q1 = 0 ;
+        exp_o_p0_nb_rdata_from_i_nb_rdata_same_Prow_Nside = 0 ;
+
+        exp_o_p0_sb_rsp_from_i_nb_rsp_same_Prow_Sside = 0 ;
+        exp_o_p0_sb_rsp_from_i_nb_rsp_same_Prow_Sside_q1 = 0 ;
+        exp_o_p0_sb_rdata_from_i_nb_rdata_same_Prow_Sside = 0 ;
+
+        exp_o_p0_sb_rsp_from_i_nb_rsp_bigger_Prow = 0 ;
+        exp_o_p0_sb_rsp_from_i_nb_rsp_bigger_Prow_q1 = 0 ;
+        exp_o_p0_sb_rdata_from_i_nb_rdata_bigger_Prow = 0 ;
+
+        exp_o_p0_nb_rsp_from_i_sb_rsp_less_Prow = 0 ;
+        exp_o_p0_nb_rsp_from_i_sb_rsp_less_Prow_q1 = 0 ;
+        exp_o_p0_nb_rdata_from_i_sb_rdata_less_Prow = 0 ;
+
+        exp_o_p0_eb_rsp_from_i_sb_rsp_same_Prow_Eside = 0 ;
+        exp_o_p0_eb_rsp_from_i_sb_rsp_same_Prow_Eside_q1 = 0 ;
+        exp_o_p0_eb_rdata_from_i_sb_rdata_same_Prow_Eside = 0 ;
+
+        exp_o_p0_wb_rsp_from_i_sb_rsp_same_Prow_Wside = 0 ;
+        exp_o_p0_wb_rsp_from_i_sb_rsp_same_Prow_Wside_q1 = 0 ;
+        exp_o_p0_wb_rdata_from_i_sb_rdata_same_Prow_Wside = 0 ;
+
+        exp_o_p0_nb_rsp_from_i_sb_rsp_same_Prow_Nside = 0 ;
+        exp_o_p0_nb_rsp_from_i_sb_rsp_same_Prow_Nside_q1 = 0 ;
+        exp_o_p0_nb_rdata_from_i_sb_rdata_same_Prow_Nside = 0 ;
+
+        exp_o_p0_sb_rsp_from_i_sb_rsp_same_Prow_Sside = 0 ;
+        exp_o_p0_sb_rsp_from_i_sb_rsp_same_Prow_Sside_q1 = 0 ;
+        exp_o_p0_sb_rdata_from_i_sb_rdata_same_Prow_Sside = 0 ;
+
+        exp_o_p0_sb_rsp_from_i_sb_rsp_bigger_Prow = 0 ;
+        exp_o_p0_sb_rsp_from_i_sb_rsp_bigger_Prow_q1 = 0 ;
+        exp_o_p0_sb_rdata_from_i_sb_rdata_bigger_Prow = 0 ;
+
+
+
+        exp_o_p0_eb_rsp_from_i_eb_rsp = '0 ;
+        exp_o_p0_wb_rsp_from_i_wb_rsp = '0 ;
+        exp_o_p0_nb_rsp_from_i_nb_rsp = '0 ;
+        exp_o_p0_eb_rsp_from_i_nb_rsp = '0 ;
+        exp_o_p0_wb_rsp_from_i_nb_rsp = '0 ;
+        exp_o_p0_sb_rsp_from_i_nb_rsp = '0 ;
+        exp_o_p0_nb_rsp_from_i_sb_rsp = '0 ;
+        exp_o_p0_eb_rsp_from_i_sb_rsp = '0 ;
+        exp_o_p0_wb_rsp_from_i_sb_rsp = '0 ;
+        exp_o_p0_sb_rsp_from_i_sb_rsp = '0 ;
+
+        exp_o_p1_eb_rsp_from_i_eb_rsp = '0 ;
+        exp_o_p1_wb_rsp_from_i_wb_rsp = '0 ;
+        exp_o_p1_nb_rsp_from_i_nb_rsp = '0 ;
+        exp_o_p1_eb_rsp_from_i_nb_rsp = '0 ;
+        exp_o_p1_wb_rsp_from_i_nb_rsp = '0 ;
+        exp_o_p1_sb_rsp_from_i_nb_rsp = '0 ;
+        exp_o_p1_nb_rsp_from_i_sb_rsp = '0 ;
+        exp_o_p1_eb_rsp_from_i_sb_rsp = '0 ;
+        exp_o_p1_wb_rsp_from_i_sb_rsp = '0 ;
+        exp_o_p1_sb_rsp_from_i_sb_rsp = '0 ;
+
+
+
+
 
         $value$plusargs("heartbeat=%d", heartbeat);     // heartbeat value comes from command line argument 
 
     endfunction
 
+
     task connect_to_DUT();
         forever begin
             @(negedge dut_if.mclk) // sample on negedge
 
-/*
-	   // 12/6/2018: monitor wr req and data at mem_if:
 
-           if (mem_if_0.wr_en)  begin 
-            // $display("(time: %0d) %s: --------------------------------------------", $time, name);
-               $display("(time: %0d) %s: mem_bank0: wr_en=%0d, adr='h%0h, wdata='h%0h", 
-                         $time, name, mem_if_0.wr_en, mem_if_0.adr, mem_if_0.wr_data);
-           end
-
-           if (mem_if_1.wr_en)  begin
-            // $display("(time: %0d) %s: --------------------------------------------", $time, name);
-               $display("(time: %0d) %s: mem_bank1: wr_en=%0d, adr='h%0h, wdata='h%0h", 
-                         $time, name, mem_if_1.wr_en, mem_if_1.adr, mem_if_1.wr_data);
-           end
-
-           if (mem_if_2.wr_en)  begin
-            // $display("(time: %0d) %s: --------------------------------------------", $time, name);
-               $display("(time: %0d) %s: mem_bank2: wr_en=%0d, adr='h%0h, wdata='h%0h", 
-                         $time, name, mem_if_2.wr_en, mem_if_2.adr, mem_if_2.wr_data);
-           end
-
-           if (mem_if_3.wr_en)  begin
-            // $display("(time: %0d) %s: --------------------------------------------", $time, name);
-               $display("(time: %0d) %s: mem_bank3: wr_en=%0d, adr='h%0h, wdata='h%0h", 
-                         $time, name, mem_if_3.wr_en, mem_if_3.adr, mem_if_3.wr_data);
-           end
+	    drv_corr = inp_drvr.drv_corr;
 
 
-
-	   // 12/7/2018: check write at memory bank 0:
-
-	   if (mem_if_0.wr_en) begin
-               sb.mem_bank0_wr_notification(mem_if_0.adr, mem_if_0.wr_data);
-		after_mem_wr = 1;
-	   end
-
-
-
-	   // 12/11/2018: push wr data at mem interface to fifo:
-
-	   if (mem_if_0.wr_en)
-               sb.mem_bank0_req_in_notification(mem_if_0.adr, mem_if_0.wr_data);
-
-
-
-	   // 12/10/2018: monitor rd data at mem_if:
-
-           // monitor rd req
-
-           if (mem_if_0.rd_en)  begin 
-               $display("(time: %0d) %s: --------------------------------------------", $time, name);
-		mem_rd_cnt++ ;
-               $display("(time: %0d) %s: mem_bank0: rd_en=%0d, adr='h%0h", 
-                         $time, name, mem_if_0.rd_en, mem_if_0.adr);
-           end
-
-           if (mem_if_1.rd_en)  begin 
-               $display("(time: %0d) %s: --------------------------------------------", $time, name);
-		mem_rd_cnt++ ;
-               $display("(time: %0d) %s: mem_bank1: mem_rd_cnt=%0d, rd_en=%0d, adr='h%0h", 
-                         $time, name, mem_rd_cnt, mem_if_1.rd_en, mem_if_1.adr);
-           end
-
-           if (mem_if_2.rd_en)  begin 
-               $display("(time: %0d) %s: --------------------------------------------", $time, name);
-		mem_rd_cnt++ ;
-               $display("(time: %0d) %s: mem_bank2: mem_rd_cnt=%0d, rd_en=%0d, adr='h%0h", 
-                         $time, name, mem_rd_cnt, mem_if_2.rd_en, mem_if_2.adr);
-           end
-
-           if (mem_if_3.rd_en)  begin 
-               $display("(time: %0d) %s: --------------------------------------------", $time, name);
-		mem_rd_cnt++ ;
-               $display("(time: %0d) %s: mem_bank3: mem_rd_cnt=%0d, rd_en=%0d, adr='h%0h", 
-                         $time, name, mem_rd_cnt, mem_if_3.rd_en, mem_if_3.adr);
-           end
-
-
-           // monitor rd data which comes 1 cycle (should be 2 ???) after rd req
-
-           if (mem_if_0.rd_valid)  begin 
-               $display("(time: %0d) %s: --------------------------------------------", $time, name);
-           //  $display("(time: %0d) %s: mem_bank0: mem_rd_cnt=%0d, rd_valid=%0d, rdata='h%0h", 
-           //            $time, name, mem_rd_cnt, mem_if_0.rd_valid, mem_if_0.rd_data);
-               $display("(time: %0d) %s: mem_bank0: rd_valid=%0d, rdata='h%0h", 
-                         $time, name, mem_if_0.rd_valid, mem_if_0.rd_data);
-           end
-
-           if (mem_if_1.rd_valid)  begin 
-               $display("(time: %0d) %s: --------------------------------------------", $time, name);
-               $display("(time: %0d) %s: mem_bank1: mem_rd_cnt=%0d, rd_valid=%0d, rdata='h%0h", 
-                         $time, name, mem_rd_cnt, mem_if_1.rd_valid, mem_if_1.rd_data);
-           end
-
-           if (mem_if_2.rd_valid)  begin 
-               $display("(time: %0d) %s: --------------------------------------------", $time, name);
-               $display("(time: %0d) %s: mem_bank2: mem_rd_cnt=%0d, rd_valid=%0d, rdata='h%0h", 
-                         $time, name, mem_rd_cnt, mem_if_2.rd_valid, mem_if_2.rd_data);
-           end
-
-           if (mem_if_3.rd_valid)  begin 
-               $display("(time: %0d) %s: --------------------------------------------", $time, name);
-               $display("(time: %0d) %s: mem_bank3: mem_rd_cnt=%0d, rd_valid=%0d, rdata='h%0h", 
-                         $time, name, mem_rd_cnt, mem_if_3.rd_valid, mem_if_3.rd_data);
-           end
-
-
-
-	   // 12/10/2018: check 2nd read request at memory bank 0:
-
-  	   if (mem_if_0.rd_en && (mem_rd_cnt==2)) begin
-               sb.mem_bank0_rd_req_notification(mem_if_0.adr);
-  	   end
-
-
-	   // 12/10/2018: check 2nd read data at memory bank 0:
-
-  	   if (mem_if_0.rd_valid && (mem_rd_cnt==2)) begin
-                 sb.mem_bank0_rd_data_notification(mem_if_0.rd_data);
-  	   end
-
-*/
-
-
-
-// -----------------------------------------------------------------------------
-// 12/12/2018: push wrreq and data to fifo and pop to check when req goes out node or at memory
-// -----------------------------------------------------------------------------
+	// -----------------------------------------------------------------------------
+	// push wrreq and data to fifo and pop to check when req goes out node or at memory
+	// -----------------------------------------------------------------------------
 
 
         // p0:
@@ -1537,9 +1717,9 @@ class monitor;
 
 
 
-// -----------------------------------------------------------------------------------
-// 1/10/2019: push rreq to fifo and pop to check when rreq goes out node or to memory
-// -----------------------------------------------------------------------------------
+	// ------------------------------------------------------------------------
+	// push rreq to fifo and pop to check when rreq goes out node or to memory
+	// ------------------------------------------------------------------------
 
 
 	// p0
@@ -2193,13 +2373,15 @@ class monitor;
 
 
 
+	if (drv_corr == 1) begin
 
-	// push expected rsp //////////////////////////////////////
+
+	   // push expected rsp //////////////////////////////////////
 
 
-	// p0:
+	   // p0:
 
-	// for EB rreq to expect a WB rsp output:
+	   // for EB rreq to expect a WB rsp output:
 
            if (dut_if.i_eb_rd_req[0].vld && (dut_if.i_eb_rd_req[0].node_col >= dut_if.i_eb_node_col)) begin
                $display("(time: %0d) %s: --------", $time, name);
@@ -2736,6 +2918,683 @@ class monitor;
                sb.exp_o_p1_sb_rdata_notification(last_i_p1_sb_wdata);
 
 
+	end	// end if (drv_corr == 1)
+
+
+
+        // push expected rsp output for random rsp input  //////////////////////////////////////
+
+        // check this table:
+        // 
+        // i_row_rd_rsp         |  exp o_row_rd_rsp 
+        // ---------------------|-------------------
+        // i_eb_rd_rsp          |  o_eb_rd_rsp  
+        // ---------------------|-------------------
+        // i_wb_rd_rsp          |  o_wb_rd_rsp  
+        // ---------------------|-------------------
+
+        // input                                             | exp output  | legal?
+        // --------------------------------------------------|-------------|-------
+        // i_nb_rd_rsp | port_row < node.row | port_side = e | o_nb_rd_rsp | yes
+        //             |                     | port_side = w | o_nb_rd_rsp |
+        // (col)       |                     | port_side = n | o_nb_rd_rsp |
+        //             |                     | port_side = s | o_nb_rd_rsp |
+        //             |---------------------|---------------|-------------|-------
+        //             | port_row = node.row | port_side = e | o_eb_rd_rsp | yes
+        //             |                     |---------------|-------------|
+        //             |                     | port_side = w | o_wb_rd_rsp |
+        //             |                     |---------------|-------------|
+        //             |                     | port_side = n | o_nb_rd_rsp |
+        //             |                     |---------------|-------------|
+        //             |                     | port_side = s | o_sb_rd_rsp |
+        //             |---------------------|---------------|-------------|-------
+        //             | port_row > node.row | port_side = e | ?           | no
+        //             |                     | port_side = w | ?           |
+        //             |                     | port_side = n | ?           |
+        //             |                     | port_side = s | ?           |
+        // ------------|-------------------------------------|---------------------
+
+        // input                                             | exp output  | legal?
+        // --------------------------------------------------|-------------|-------
+        // i_sb_rd_rsp | port_row < node.row | port_side = e | ?           | no
+        //             |                     | port_side = w | ?           |
+        // (col)       |                     | port_side = n | ?           |
+        //             |                     | port_side = s | ?           |
+        //             |-------------------------------------|-------------|-------
+        //             | port_row = node.row | port_side = e | o_eb_rd_rsp | yes
+        //             |                     |---------------|-------------|
+        //             |                     | port_side = w | o_wb_rd_rsp |
+        //             |                     |---------------|-------------|
+        //             |                     | port_side = n | o_nb_rd_rsp |
+        //             |                     |---------------|-------------|
+        //             |                     | port_side = s | o_sb_rd_rsp |
+        //             |-------------------------------------|-------------|-------
+        //             | port_row > node.row | port_side = e | o_sb_rd_rsp | yes
+        //             |                     | port_side = w | o_sb_rd_rsp |
+        //             |                     | port_side = n | o_sb_rd_rsp |
+        //             |                     | port_side = s | o_sb_rd_rsp |
+        // ------------|-------------------------------------|---------------------
+
+
+	
+        if (drv_corr == 0) begin
+
+
+           // i p0 eb rsp to o eb rsp:
+
+           exp_o_p0_eb_rdata_from_i_eb_rdata      = exp_o_p0_eb_rsp_from_i_eb_rsp_valid_q1;
+           exp_o_p0_eb_rsp_from_i_eb_rsp_valid_q1 = exp_o_p0_eb_rsp_from_i_eb_rsp_valid;
+
+           if (dut_if.i_eb_rd_rsp[0].vld) begin
+               $display("(time: %0d) %s: --------", $time, name);
+               $display("(time: %0d) %s: A P0 EB rsp to expect a EB rsp output", $time, name);
+                  exp_o_p0_eb_rsp_from_i_eb_rsp.vld     = dut_if.i_eb_rd_rsp[0].vld;
+                  exp_o_p0_eb_rsp_from_i_eb_rsp.id      = dut_if.i_eb_rd_rsp[0].id;
+               sb.exp_o_p0_eb_rsp_notification(exp_o_p0_eb_rsp_from_i_eb_rsp);
+                exp_o_p0_eb_rsp_from_i_eb_rsp_valid = 1;
+           end
+           else exp_o_p0_eb_rsp_from_i_eb_rsp_valid = 0;
+
+
+           // i p0 wb rsp to o wb rsp:
+
+           exp_o_p0_wb_rdata_from_i_wb_rdata      = exp_o_p0_wb_rsp_from_i_wb_rsp_valid_q1;
+           exp_o_p0_wb_rsp_from_i_wb_rsp_valid_q1 = exp_o_p0_wb_rsp_from_i_wb_rsp_valid;
+
+           if (dut_if.i_wb_rd_rsp[0].vld) begin
+               $display("(time: %0d) %s: --------", $time, name);
+               $display("(time: %0d) %s: A P0 WB rsp to expect a WB rsp output", $time, name);
+                  exp_o_p0_wb_rsp_from_i_wb_rsp.vld     = dut_if.i_wb_rd_rsp[0].vld;
+                  exp_o_p0_wb_rsp_from_i_wb_rsp.id      = dut_if.i_wb_rd_rsp[0].id;
+               sb.exp_o_p0_wb_rsp_notification(exp_o_p0_wb_rsp_from_i_wb_rsp);
+                exp_o_p0_wb_rsp_from_i_wb_rsp_valid = 1;
+           end
+           else exp_o_p0_wb_rsp_from_i_wb_rsp_valid = 0;
+
+
+           // i p0 nb rsp to o nb rsp: (port_row < node_row) (Prow is port row as below) 
+
+           exp_o_p0_nb_rdata_from_i_nb_rdata_less_Prow = exp_o_p0_nb_rsp_from_i_nb_rsp_less_Prow_q1;
+           exp_o_p0_nb_rsp_from_i_nb_rsp_less_Prow_q1 = exp_o_p0_nb_rsp_from_i_nb_rsp_less_Prow;
+
+           if ((dut_if.i_nb_rd_rsp[0].vld) && (dut_if.i_nb_rd_rsp[0].port_row < dut_if.i_sb_node_row)) begin
+               $display("(time: %0d) %s: --------", $time, name);
+               $display("(time: %0d) %s: A P0 NB rsp to expect a NB rsp output for (port_row < node_row)", $time, name);
+                  exp_o_p0_nb_rsp_from_i_nb_rsp.vld       = dut_if.i_nb_rd_rsp[0].vld;
+                  exp_o_p0_nb_rsp_from_i_nb_rsp.id        = dut_if.i_nb_rd_rsp[0].id;
+                  exp_o_p0_nb_rsp_from_i_nb_rsp.port_side = dut_if.i_nb_rd_rsp[0].port_side;
+                  exp_o_p0_nb_rsp_from_i_nb_rsp.port_row  = dut_if.i_nb_rd_rsp[0].port_row ;
+               sb.exp_o_p0_nb_rsp_notification(exp_o_p0_nb_rsp_from_i_nb_rsp);
+                exp_o_p0_nb_rsp_from_i_nb_rsp_less_Prow = 1;
+           end
+           else exp_o_p0_nb_rsp_from_i_nb_rsp_less_Prow = 0;
+
+
+           // i p0 nb rsp to o eb rsp: (port_row = node_row) and (port_side = east) (Eside is east side)
+
+           exp_o_p0_eb_rdata_from_i_nb_rdata_same_Prow_Eside = exp_o_p0_eb_rsp_from_i_nb_rsp_same_Prow_Eside_q1;
+           exp_o_p0_eb_rsp_from_i_nb_rsp_same_Prow_Eside_q1 = exp_o_p0_eb_rsp_from_i_nb_rsp_same_Prow_Eside;
+
+           if ((dut_if.i_nb_rd_rsp[0].vld) && 
+               (dut_if.i_nb_rd_rsp[0].port_row == dut_if.i_sb_node_row) &&
+               (dut_if.i_nb_rd_rsp[0].port_side == mby_msh_pkg::msh_east_side)) begin
+               $display("(time: %0d) %s: --------", $time, name);
+               $display("(time: %0d) %s: A P0 NB rsp to expect a EB rsp output for (port_row = node_row)", $time, name);
+                  exp_o_p0_eb_rsp_from_i_nb_rsp.vld       = dut_if.i_nb_rd_rsp[0].vld;
+                  exp_o_p0_eb_rsp_from_i_nb_rsp.id        = dut_if.i_nb_rd_rsp[0].id;
+               sb.exp_o_p0_eb_rsp_notification(exp_o_p0_eb_rsp_from_i_nb_rsp);
+                exp_o_p0_eb_rsp_from_i_nb_rsp_same_Prow_Eside = 1;
+           end
+           else exp_o_p0_eb_rsp_from_i_nb_rsp_same_Prow_Eside = 0;
+
+
+           // i p0 nb rsp to o wb rsp: (port_row = node_row), (port_side = west)
+
+           exp_o_p0_wb_rdata_from_i_nb_rdata_same_Prow_Wside = exp_o_p0_wb_rsp_from_i_nb_rsp_same_Prow_Wside_q1;
+           exp_o_p0_wb_rsp_from_i_nb_rsp_same_Prow_Wside_q1 = exp_o_p0_wb_rsp_from_i_nb_rsp_same_Prow_Wside;
+
+           if ((dut_if.i_nb_rd_rsp[0].vld) && 
+               (dut_if.i_nb_rd_rsp[0].port_row == dut_if.i_sb_node_row) &&
+               (dut_if.i_nb_rd_rsp[0].port_side == mby_msh_pkg::msh_west_side)) begin
+               $display("(time: %0d) %s: --------", $time, name);
+               $display("(time: %0d) %s: A P0 NB rsp to expect a WB rsp output for (port_row = node_row)", $time, name);
+                  exp_o_p0_wb_rsp_from_i_nb_rsp.vld       = dut_if.i_nb_rd_rsp[0].vld;
+                  exp_o_p0_wb_rsp_from_i_nb_rsp.id        = dut_if.i_nb_rd_rsp[0].id;
+               sb.exp_o_p0_wb_rsp_notification(exp_o_p0_wb_rsp_from_i_nb_rsp);
+                exp_o_p0_wb_rsp_from_i_nb_rsp_same_Prow_Wside = 1;
+           end
+           else exp_o_p0_wb_rsp_from_i_nb_rsp_same_Prow_Wside = 0;
+
+
+           // i p0 nb rsp to o nb rsp: (port_row = node_row), (port_side = north)
+
+           exp_o_p0_nb_rdata_from_i_nb_rdata_same_Prow_Nside = exp_o_p0_nb_rsp_from_i_nb_rsp_same_Prow_Nside_q1;
+           exp_o_p0_nb_rsp_from_i_nb_rsp_same_Prow_Nside_q1 = exp_o_p0_nb_rsp_from_i_nb_rsp_same_Prow_Nside;
+
+           if ((dut_if.i_nb_rd_rsp[0].vld) && 
+               (dut_if.i_nb_rd_rsp[0].port_row == dut_if.i_sb_node_row) &&
+               (dut_if.i_nb_rd_rsp[0].port_side == mby_msh_pkg::msh_north_side)) begin
+               $display("(time: %0d) %s: --------", $time, name);
+               $display("(time: %0d) %s: A P0 NB rsp to expect a NB rsp output for (port_row = node_row)", $time, name);
+                  exp_o_p0_nb_rsp_from_i_nb_rsp.vld       = dut_if.i_nb_rd_rsp[0].vld;
+                  exp_o_p0_nb_rsp_from_i_nb_rsp.id        = dut_if.i_nb_rd_rsp[0].id;
+                  exp_o_p0_nb_rsp_from_i_nb_rsp.port_side = dut_if.i_nb_rd_rsp[0].port_side;
+                  exp_o_p0_nb_rsp_from_i_nb_rsp.port_row  = dut_if.i_nb_rd_rsp[0].port_row ;
+               sb.exp_o_p0_nb_rsp_notification(exp_o_p0_nb_rsp_from_i_nb_rsp);
+                exp_o_p0_nb_rsp_from_i_nb_rsp_same_Prow_Nside = 1;
+           end
+           else exp_o_p0_nb_rsp_from_i_nb_rsp_same_Prow_Nside = 0;
+
+
+           // i p0 nb rsp to o sb rsp: (port_row = node_row), (port_side = south)
+
+           exp_o_p0_sb_rdata_from_i_nb_rdata_same_Prow_Sside = exp_o_p0_sb_rsp_from_i_nb_rsp_same_Prow_Sside_q1;
+           exp_o_p0_sb_rsp_from_i_nb_rsp_same_Prow_Sside_q1 = exp_o_p0_sb_rsp_from_i_nb_rsp_same_Prow_Sside;
+
+           if ((dut_if.i_nb_rd_rsp[0].vld) && 
+               (dut_if.i_nb_rd_rsp[0].port_row == dut_if.i_sb_node_row) &&
+               (dut_if.i_nb_rd_rsp[0].port_side == mby_msh_pkg::msh_south_side)) begin
+               $display("(time: %0d) %s: --------", $time, name);
+               $display("(time: %0d) %s: A P0 NB rsp to expect a SB rsp output for (port_row = node_row)", $time, name);
+                  exp_o_p0_sb_rsp_from_i_nb_rsp.vld       = dut_if.i_nb_rd_rsp[0].vld;
+                  exp_o_p0_sb_rsp_from_i_nb_rsp.id        = dut_if.i_nb_rd_rsp[0].id;
+                  exp_o_p0_sb_rsp_from_i_nb_rsp.port_side = dut_if.i_nb_rd_rsp[0].port_side;
+                  exp_o_p0_sb_rsp_from_i_nb_rsp.port_row  = dut_if.i_nb_rd_rsp[0].port_row ;
+               sb.exp_o_p0_sb_rsp_notification(exp_o_p0_sb_rsp_from_i_nb_rsp);
+                exp_o_p0_sb_rsp_from_i_nb_rsp_same_Prow_Sside = 1;
+           end
+           else exp_o_p0_sb_rsp_from_i_nb_rsp_same_Prow_Sside = 0;
+
+
+           // i p0 nb rsp to o sb rsp: (port_row > node_row)
+
+           exp_o_p0_sb_rdata_from_i_nb_rdata_bigger_Prow = exp_o_p0_sb_rsp_from_i_nb_rsp_bigger_Prow_q1;
+           exp_o_p0_sb_rsp_from_i_nb_rsp_bigger_Prow_q1 = exp_o_p0_sb_rsp_from_i_nb_rsp_bigger_Prow;
+
+           if ((dut_if.i_nb_rd_rsp[0].vld) && (dut_if.i_nb_rd_rsp[0].port_row > dut_if.i_sb_node_row)) begin
+               $display("(time: %0d) %s: --------", $time, name);
+               $display("(time: %0d) %s: A P0 NB rsp to expect a SB rsp output ", $time, name);
+                  exp_o_p0_sb_rsp_from_i_nb_rsp.vld       = dut_if.i_nb_rd_rsp[0].vld;
+                  exp_o_p0_sb_rsp_from_i_nb_rsp.id        = dut_if.i_nb_rd_rsp[0].id;
+                  exp_o_p0_sb_rsp_from_i_nb_rsp.port_side = dut_if.i_nb_rd_rsp[0].port_side;
+                  exp_o_p0_sb_rsp_from_i_nb_rsp.port_row  = dut_if.i_nb_rd_rsp[0].port_row ;
+               sb.exp_o_p0_sb_rsp_notification(exp_o_p0_sb_rsp_from_i_nb_rsp);
+                exp_o_p0_sb_rsp_from_i_nb_rsp_bigger_Prow = 1;
+           end
+           else exp_o_p0_sb_rsp_from_i_nb_rsp_bigger_Prow = 0;
+
+
+           // i p0 sb rsp to o nb rsp ? (port_row < node.row)
+
+           exp_o_p0_nb_rdata_from_i_sb_rdata_less_Prow = exp_o_p0_nb_rsp_from_i_sb_rsp_less_Prow_q1;
+           exp_o_p0_nb_rsp_from_i_sb_rsp_less_Prow_q1 = exp_o_p0_nb_rsp_from_i_sb_rsp_less_Prow;
+
+           if ((dut_if.i_sb_rd_rsp[0].vld) && (dut_if.i_sb_rd_rsp[0].port_row < dut_if.i_sb_node_row)) begin
+               $display("(time: %0d) %s: --------", $time, name);
+               $display("(time: %0d) %s: A P0 SB rsp to expect a NB rsp output for (port_row < node_row)", $time, name);
+                  exp_o_p0_nb_rsp_from_i_sb_rsp.vld       = dut_if.i_sb_rd_rsp[0].vld;
+                  exp_o_p0_nb_rsp_from_i_sb_rsp.id        = dut_if.i_sb_rd_rsp[0].id;
+                  exp_o_p0_nb_rsp_from_i_sb_rsp.port_side = dut_if.i_sb_rd_rsp[0].port_side;
+                  exp_o_p0_nb_rsp_from_i_sb_rsp.port_row  = dut_if.i_sb_rd_rsp[0].port_row ;
+               sb.exp_o_p0_nb_rsp_notification(exp_o_p0_nb_rsp_from_i_sb_rsp);
+                exp_o_p0_nb_rsp_from_i_sb_rsp_less_Prow = 1;
+           end
+           else exp_o_p0_nb_rsp_from_i_sb_rsp_less_Prow = 0;
+
+
+           // i p0 sb rsp to o eb rsp: (port_row = node_row), (port_side = east)
+
+           exp_o_p0_eb_rdata_from_i_sb_rdata_same_Prow_Eside = exp_o_p0_eb_rsp_from_i_sb_rsp_same_Prow_Eside_q1;
+           exp_o_p0_eb_rsp_from_i_sb_rsp_same_Prow_Eside_q1 = exp_o_p0_eb_rsp_from_i_sb_rsp_same_Prow_Eside;
+
+           if ((dut_if.i_sb_rd_rsp[0].vld) && 
+               (dut_if.i_sb_rd_rsp[0].port_row == dut_if.i_sb_node_row) &&
+               (dut_if.i_sb_rd_rsp[0].port_side == mby_msh_pkg::msh_east_side)) begin
+               $display("(time: %0d) %s: --------", $time, name);
+               $display("(time: %0d) %s: A P0 SB rsp to expect a EB rsp output for (port_row = node_row)", $time, name);
+                  exp_o_p0_eb_rsp_from_i_sb_rsp.vld       = dut_if.i_sb_rd_rsp[0].vld;
+                  exp_o_p0_eb_rsp_from_i_sb_rsp.id        = dut_if.i_sb_rd_rsp[0].id;
+               sb.exp_o_p0_eb_rsp_notification(exp_o_p0_eb_rsp_from_i_sb_rsp);
+                exp_o_p0_eb_rsp_from_i_sb_rsp_same_Prow_Eside = 1;
+           end
+           else exp_o_p0_eb_rsp_from_i_sb_rsp_same_Prow_Eside = 0;
+
+
+           // i p0 sb rsp to o wb rsp: (port_row = node_row), (port_side = west)
+
+           exp_o_p0_wb_rdata_from_i_sb_rdata_same_Prow_Wside = exp_o_p0_wb_rsp_from_i_sb_rsp_same_Prow_Wside_q1;
+           exp_o_p0_wb_rsp_from_i_sb_rsp_same_Prow_Wside_q1 = exp_o_p0_wb_rsp_from_i_sb_rsp_same_Prow_Wside;
+
+           if ((dut_if.i_sb_rd_rsp[0].vld) && 
+               (dut_if.i_sb_rd_rsp[0].port_row == dut_if.i_sb_node_row) &&
+               (dut_if.i_sb_rd_rsp[0].port_side == mby_msh_pkg::msh_west_side)) begin
+               $display("(time: %0d) %s: --------", $time, name);
+               $display("(time: %0d) %s: A P0 SB rsp to expect a WB rsp output for (port_row = node_row)", $time, name);
+                  exp_o_p0_wb_rsp_from_i_sb_rsp.vld       = dut_if.i_sb_rd_rsp[0].vld;
+                  exp_o_p0_wb_rsp_from_i_sb_rsp.id        = dut_if.i_sb_rd_rsp[0].id;
+               sb.exp_o_p0_wb_rsp_notification(exp_o_p0_wb_rsp_from_i_sb_rsp);
+                exp_o_p0_wb_rsp_from_i_sb_rsp_same_Prow_Wside = 1;
+           end
+           else exp_o_p0_wb_rsp_from_i_sb_rsp_same_Prow_Wside = 0;
+
+
+           // i p0 sb rsp to o nb rsp: (port_row = node_row), (port_side = north)
+
+           exp_o_p0_nb_rdata_from_i_sb_rdata_same_Prow_Nside = exp_o_p0_nb_rsp_from_i_sb_rsp_same_Prow_Nside_q1;
+           exp_o_p0_nb_rsp_from_i_sb_rsp_same_Prow_Nside_q1 = exp_o_p0_nb_rsp_from_i_sb_rsp_same_Prow_Nside;
+
+           if ((dut_if.i_sb_rd_rsp[0].vld) && 
+               (dut_if.i_sb_rd_rsp[0].port_row == dut_if.i_sb_node_row) &&
+               (dut_if.i_sb_rd_rsp[0].port_side == mby_msh_pkg::msh_north_side)) begin
+               $display("(time: %0d) %s: --------", $time, name);
+               $display("(time: %0d) %s: A P0 SB rsp to expect a NB rsp output for (port_row = node_row)", $time, name);
+                  exp_o_p0_nb_rsp_from_i_sb_rsp.vld       = dut_if.i_sb_rd_rsp[0].vld;
+                  exp_o_p0_nb_rsp_from_i_sb_rsp.id        = dut_if.i_sb_rd_rsp[0].id;
+                  exp_o_p0_nb_rsp_from_i_sb_rsp.port_side = dut_if.i_sb_rd_rsp[0].port_side;
+                  exp_o_p0_nb_rsp_from_i_sb_rsp.port_row  = dut_if.i_sb_rd_rsp[0].port_row ;
+               sb.exp_o_p0_nb_rsp_notification(exp_o_p0_nb_rsp_from_i_sb_rsp);
+                exp_o_p0_nb_rsp_from_i_sb_rsp_same_Prow_Nside = 1;
+           end
+           else exp_o_p0_nb_rsp_from_i_sb_rsp_same_Prow_Nside = 0;
+
+
+           // i p0 sb rsp to o sb rsp: (port_row = node_row), (port_side = south)
+
+           exp_o_p0_sb_rdata_from_i_sb_rdata_same_Prow_Sside = exp_o_p0_sb_rsp_from_i_sb_rsp_same_Prow_Sside_q1;
+           exp_o_p0_sb_rsp_from_i_sb_rsp_same_Prow_Sside_q1 = exp_o_p0_sb_rsp_from_i_sb_rsp_same_Prow_Sside;
+
+           if ((dut_if.i_sb_rd_rsp[0].vld) && 
+               (dut_if.i_sb_rd_rsp[0].port_row == dut_if.i_sb_node_row) &&
+               (dut_if.i_sb_rd_rsp[0].port_side == mby_msh_pkg::msh_south_side)) begin
+               $display("(time: %0d) %s: --------", $time, name);
+               $display("(time: %0d) %s: A P0 SB rsp to expect a SB rsp output for (port_row = node_row)", $time, name);
+                  exp_o_p0_sb_rsp_from_i_sb_rsp.vld       = dut_if.i_sb_rd_rsp[0].vld;
+                  exp_o_p0_sb_rsp_from_i_sb_rsp.id        = dut_if.i_sb_rd_rsp[0].id;
+                  exp_o_p0_sb_rsp_from_i_sb_rsp.port_side = dut_if.i_sb_rd_rsp[0].port_side;
+                  exp_o_p0_sb_rsp_from_i_sb_rsp.port_row  = dut_if.i_sb_rd_rsp[0].port_row ;
+               sb.exp_o_p0_sb_rsp_notification(exp_o_p0_sb_rsp_from_i_sb_rsp);
+                exp_o_p0_sb_rsp_from_i_sb_rsp_same_Prow_Sside = 1;
+           end
+           else exp_o_p0_sb_rsp_from_i_sb_rsp_same_Prow_Sside = 0;
+
+
+           // i p0 sb rsp to o sb rsp ? (port_row > node.row)
+
+           exp_o_p0_sb_rdata_from_i_sb_rdata_bigger_Prow = exp_o_p0_sb_rsp_from_i_sb_rsp_bigger_Prow_q1;
+           exp_o_p0_sb_rsp_from_i_sb_rsp_bigger_Prow_q1 = exp_o_p0_sb_rsp_from_i_sb_rsp_bigger_Prow;
+
+           if ((dut_if.i_sb_rd_rsp[0].vld) && (dut_if.i_sb_rd_rsp[0].port_row > dut_if.i_sb_node_row)) begin
+               $display("(time: %0d) %s: --------", $time, name);
+               $display("(time: %0d) %s: A P0 SB rsp to expect a SB rsp output ", $time, name);
+                  exp_o_p0_sb_rsp_from_i_sb_rsp.vld       = dut_if.i_sb_rd_rsp[0].vld;
+                  exp_o_p0_sb_rsp_from_i_sb_rsp.id        = dut_if.i_sb_rd_rsp[0].id;
+                  exp_o_p0_sb_rsp_from_i_sb_rsp.port_side = dut_if.i_sb_rd_rsp[0].port_side;
+                  exp_o_p0_sb_rsp_from_i_sb_rsp.port_row  = dut_if.i_sb_rd_rsp[0].port_row ;
+               sb.exp_o_p0_sb_rsp_notification(exp_o_p0_sb_rsp_from_i_sb_rsp);
+                exp_o_p0_sb_rsp_from_i_sb_rsp_bigger_Prow = 1;
+           end
+           else exp_o_p0_sb_rsp_from_i_sb_rsp_bigger_Prow = 0;
+
+
+           // p1
+
+
+           // i p1 eb rsp to o eb rsp:
+
+           exp_o_p1_eb_rdata_from_i_eb_rdata      = exp_o_p1_eb_rsp_from_i_eb_rsp_valid_q1;
+           exp_o_p1_eb_rsp_from_i_eb_rsp_valid_q1 = exp_o_p1_eb_rsp_from_i_eb_rsp_valid;
+
+           if (dut_if.i_eb_rd_rsp[1].vld) begin
+               $display("(time: %0d) %s: --------", $time, name);
+               $display("(time: %0d) %s: A P1 EB rsp to expect a EB rsp output", $time, name);
+                  exp_o_p1_eb_rsp_from_i_eb_rsp.vld     = dut_if.i_eb_rd_rsp[1].vld;
+                  exp_o_p1_eb_rsp_from_i_eb_rsp.id      = dut_if.i_eb_rd_rsp[1].id;
+               sb.exp_o_p1_eb_rsp_notification(exp_o_p1_eb_rsp_from_i_eb_rsp);
+                exp_o_p1_eb_rsp_from_i_eb_rsp_valid = 1;
+           end
+           else exp_o_p1_eb_rsp_from_i_eb_rsp_valid = 0;
+
+
+
+           // i p1 wb rsp to o wb rsp:
+
+           exp_o_p1_wb_rdata_from_i_wb_rdata      = exp_o_p1_wb_rsp_from_i_wb_rsp_valid_q1;
+           exp_o_p1_wb_rsp_from_i_wb_rsp_valid_q1 = exp_o_p1_wb_rsp_from_i_wb_rsp_valid;
+
+           if (dut_if.i_wb_rd_rsp[1].vld) begin
+               $display("(time: %0d) %s: --------", $time, name);
+               $display("(time: %0d) %s: A P1 WB rsp to expect a WB rsp output", $time, name);
+                  exp_o_p1_wb_rsp_from_i_wb_rsp.vld     = dut_if.i_wb_rd_rsp[1].vld;
+                  exp_o_p1_wb_rsp_from_i_wb_rsp.id      = dut_if.i_wb_rd_rsp[1].id;
+               sb.exp_o_p1_wb_rsp_notification(exp_o_p1_wb_rsp_from_i_wb_rsp);
+                exp_o_p1_wb_rsp_from_i_wb_rsp_valid = 1;
+           end
+           else exp_o_p1_wb_rsp_from_i_wb_rsp_valid = 0;
+
+
+           // i p1 nb rsp to o nb rsp: (port_row < node_row)
+
+           exp_o_p1_nb_rdata_from_i_nb_rdata_less_Prow = exp_o_p1_nb_rsp_from_i_nb_rsp_less_Prow_q1;
+           exp_o_p1_nb_rsp_from_i_nb_rsp_less_Prow_q1 = exp_o_p1_nb_rsp_from_i_nb_rsp_less_Prow;
+
+           if ((dut_if.i_nb_rd_rsp[1].vld) && (dut_if.i_nb_rd_rsp[1].port_row < dut_if.i_sb_node_row)) begin
+               $display("(time: %0d) %s: --------", $time, name);
+               $display("(time: %0d) %s: A P1 NB rsp to expect a NB rsp output for (port_row < node_row)", $time, name);
+                  exp_o_p1_nb_rsp_from_i_nb_rsp.vld       = dut_if.i_nb_rd_rsp[1].vld;
+                  exp_o_p1_nb_rsp_from_i_nb_rsp.id        = dut_if.i_nb_rd_rsp[1].id;
+                  exp_o_p1_nb_rsp_from_i_nb_rsp.port_side = dut_if.i_nb_rd_rsp[1].port_side;
+                  exp_o_p1_nb_rsp_from_i_nb_rsp.port_row  = dut_if.i_nb_rd_rsp[1].port_row ;
+               sb.exp_o_p1_nb_rsp_notification(exp_o_p1_nb_rsp_from_i_nb_rsp);
+                exp_o_p1_nb_rsp_from_i_nb_rsp_less_Prow = 1;
+           end
+           else exp_o_p1_nb_rsp_from_i_nb_rsp_less_Prow = 0;
+
+
+           // i p1 nb rsp to o eb rsp: (port_row = node_row), (port_side = east)
+
+           exp_o_p1_eb_rdata_from_i_nb_rdata_same_Prow_Eside = exp_o_p1_eb_rsp_from_i_nb_rsp_same_Prow_Eside_q1;
+           exp_o_p1_eb_rsp_from_i_nb_rsp_same_Prow_Eside_q1 = exp_o_p1_eb_rsp_from_i_nb_rsp_same_Prow_Eside;
+
+           if ((dut_if.i_nb_rd_rsp[1].vld) && 
+               (dut_if.i_nb_rd_rsp[1].port_row == dut_if.i_sb_node_row) &&
+               (dut_if.i_nb_rd_rsp[1].port_side == mby_msh_pkg::msh_east_side)) begin
+               $display("(time: %0d) %s: --------", $time, name);
+               $display("(time: %0d) %s: A P1 NB rsp to expect a EB rsp output for (port_row = node_row)", $time, name);
+                  exp_o_p1_eb_rsp_from_i_nb_rsp.vld       = dut_if.i_nb_rd_rsp[1].vld;
+                  exp_o_p1_eb_rsp_from_i_nb_rsp.id        = dut_if.i_nb_rd_rsp[1].id;
+               sb.exp_o_p1_eb_rsp_notification(exp_o_p1_eb_rsp_from_i_nb_rsp);
+                exp_o_p1_eb_rsp_from_i_nb_rsp_same_Prow_Eside = 1;
+           end
+           else exp_o_p1_eb_rsp_from_i_nb_rsp_same_Prow_Eside = 0;
+
+
+           // i p1 nb rsp to o wb rsp: (port_row = node_row), (port_side = west)
+
+           exp_o_p1_wb_rdata_from_i_nb_rdata_same_Prow_Wside = exp_o_p1_wb_rsp_from_i_nb_rsp_same_Prow_Wside_q1;
+           exp_o_p1_wb_rsp_from_i_nb_rsp_same_Prow_Wside_q1 = exp_o_p1_wb_rsp_from_i_nb_rsp_same_Prow_Wside;
+
+           if ((dut_if.i_nb_rd_rsp[1].vld) && 
+               (dut_if.i_nb_rd_rsp[1].port_row == dut_if.i_sb_node_row) &&
+               (dut_if.i_nb_rd_rsp[1].port_side == mby_msh_pkg::msh_west_side)) begin
+               $display("(time: %0d) %s: --------", $time, name);
+               $display("(time: %0d) %s: A P1 NB rsp to expect a WB rsp output for (port_row = node_row)", $time, name);
+                  exp_o_p1_wb_rsp_from_i_nb_rsp.vld       = dut_if.i_nb_rd_rsp[1].vld;
+                  exp_o_p1_wb_rsp_from_i_nb_rsp.id        = dut_if.i_nb_rd_rsp[1].id;
+               sb.exp_o_p1_wb_rsp_notification(exp_o_p1_wb_rsp_from_i_nb_rsp);
+                exp_o_p1_wb_rsp_from_i_nb_rsp_same_Prow_Wside = 1;
+           end
+           else exp_o_p1_wb_rsp_from_i_nb_rsp_same_Prow_Wside = 0;
+
+
+           // i p1 nb rsp to o nb rsp: (port_row = node_row), (port_side = north)
+
+           exp_o_p1_nb_rdata_from_i_nb_rdata_same_Prow_Nside = exp_o_p1_nb_rsp_from_i_nb_rsp_same_Prow_Nside_q1;
+           exp_o_p1_nb_rsp_from_i_nb_rsp_same_Prow_Nside_q1 = exp_o_p1_nb_rsp_from_i_nb_rsp_same_Prow_Nside;
+
+           if ((dut_if.i_nb_rd_rsp[1].vld) && 
+               (dut_if.i_nb_rd_rsp[1].port_row == dut_if.i_sb_node_row) &&
+               (dut_if.i_nb_rd_rsp[1].port_side == mby_msh_pkg::msh_north_side)) begin
+               $display("(time: %0d) %s: --------", $time, name);
+               $display("(time: %0d) %s: A P1 NB rsp to expect a NB rsp output for (port_row = node_row)", $time, name);
+                  exp_o_p1_nb_rsp_from_i_nb_rsp.vld       = dut_if.i_nb_rd_rsp[1].vld;
+                  exp_o_p1_nb_rsp_from_i_nb_rsp.id        = dut_if.i_nb_rd_rsp[1].id;
+                  exp_o_p1_nb_rsp_from_i_nb_rsp.port_side = dut_if.i_nb_rd_rsp[1].port_side;
+                  exp_o_p1_nb_rsp_from_i_nb_rsp.port_row  = dut_if.i_nb_rd_rsp[1].port_row ;
+               sb.exp_o_p1_nb_rsp_notification(exp_o_p1_nb_rsp_from_i_nb_rsp);
+                exp_o_p1_nb_rsp_from_i_nb_rsp_same_Prow_Nside = 1;
+           end
+           else exp_o_p1_nb_rsp_from_i_nb_rsp_same_Prow_Nside = 0;
+
+
+           // i p1 nb rsp to o sb rsp: (port_row = node_row), (port_side = south)
+
+           exp_o_p1_sb_rdata_from_i_nb_rdata_same_Prow_Sside = exp_o_p1_sb_rsp_from_i_nb_rsp_same_Prow_Sside_q1;
+           exp_o_p1_sb_rsp_from_i_nb_rsp_same_Prow_Sside_q1 = exp_o_p1_sb_rsp_from_i_nb_rsp_same_Prow_Sside;
+
+           if ((dut_if.i_nb_rd_rsp[1].vld) && 
+               (dut_if.i_nb_rd_rsp[1].port_row == dut_if.i_sb_node_row) &&
+               (dut_if.i_nb_rd_rsp[1].port_side == mby_msh_pkg::msh_south_side)) begin
+               $display("(time: %0d) %s: --------", $time, name);
+               $display("(time: %0d) %s: A P1 NB rsp to expect a SB rsp output for (port_row = node_row)", $time, name);
+                  exp_o_p1_sb_rsp_from_i_nb_rsp.vld       = dut_if.i_nb_rd_rsp[1].vld;
+                  exp_o_p1_sb_rsp_from_i_nb_rsp.id        = dut_if.i_nb_rd_rsp[1].id;
+                  exp_o_p1_sb_rsp_from_i_nb_rsp.port_side = dut_if.i_nb_rd_rsp[1].port_side;
+                  exp_o_p1_sb_rsp_from_i_nb_rsp.port_row  = dut_if.i_nb_rd_rsp[1].port_row ;
+               sb.exp_o_p1_sb_rsp_notification(exp_o_p1_sb_rsp_from_i_nb_rsp);
+                exp_o_p1_sb_rsp_from_i_nb_rsp_same_Prow_Sside = 1;
+           end
+           else exp_o_p1_sb_rsp_from_i_nb_rsp_same_Prow_Sside = 0;
+
+
+           // i p1 nb rsp to o sb rsp: (port_row > node_row)
+
+           exp_o_p1_sb_rdata_from_i_nb_rdata_bigger_Prow = exp_o_p1_sb_rsp_from_i_nb_rsp_bigger_Prow_q1;
+           exp_o_p1_sb_rsp_from_i_nb_rsp_bigger_Prow_q1 = exp_o_p1_sb_rsp_from_i_nb_rsp_bigger_Prow;
+
+           if ((dut_if.i_nb_rd_rsp[1].vld) && (dut_if.i_nb_rd_rsp[1].port_row > dut_if.i_sb_node_row)) begin
+               $display("(time: %0d) %s: --------", $time, name);
+               $display("(time: %0d) %s: A P1 NB rsp to expect a SB rsp output ", $time, name);
+                  exp_o_p1_sb_rsp_from_i_nb_rsp.vld       = dut_if.i_nb_rd_rsp[1].vld;
+                  exp_o_p1_sb_rsp_from_i_nb_rsp.id        = dut_if.i_nb_rd_rsp[1].id;
+                  exp_o_p1_sb_rsp_from_i_nb_rsp.port_side = dut_if.i_nb_rd_rsp[1].port_side;
+                  exp_o_p1_sb_rsp_from_i_nb_rsp.port_row  = dut_if.i_nb_rd_rsp[1].port_row ;
+               sb.exp_o_p1_sb_rsp_notification(exp_o_p1_sb_rsp_from_i_nb_rsp);
+                exp_o_p1_sb_rsp_from_i_nb_rsp_bigger_Prow = 1;
+           end
+           else exp_o_p1_sb_rsp_from_i_nb_rsp_bigger_Prow = 0;
+
+
+           // i p1 sb rsp to o nb rsp ? (port_row < node.row)
+
+           exp_o_p1_nb_rdata_from_i_sb_rdata_less_Prow = exp_o_p1_nb_rsp_from_i_sb_rsp_less_Prow_q1;
+           exp_o_p1_nb_rsp_from_i_sb_rsp_less_Prow_q1 = exp_o_p1_nb_rsp_from_i_sb_rsp_less_Prow;
+
+           if ((dut_if.i_sb_rd_rsp[1].vld) && (dut_if.i_sb_rd_rsp[1].port_row < dut_if.i_sb_node_row)) begin
+               $display("(time: %0d) %s: --------", $time, name);
+               $display("(time: %0d) %s: A P1 SB rsp to expect a NB rsp output for (port_row < node_row)", $time, name);
+                  exp_o_p1_nb_rsp_from_i_sb_rsp.vld       = dut_if.i_sb_rd_rsp[1].vld;
+                  exp_o_p1_nb_rsp_from_i_sb_rsp.id        = dut_if.i_sb_rd_rsp[1].id;
+                  exp_o_p1_nb_rsp_from_i_sb_rsp.port_side = dut_if.i_sb_rd_rsp[1].port_side;
+                  exp_o_p1_nb_rsp_from_i_sb_rsp.port_row  = dut_if.i_sb_rd_rsp[1].port_row ;
+               sb.exp_o_p1_nb_rsp_notification(exp_o_p1_nb_rsp_from_i_sb_rsp);
+                exp_o_p1_nb_rsp_from_i_sb_rsp_less_Prow = 1;
+           end
+           else exp_o_p1_nb_rsp_from_i_sb_rsp_less_Prow = 0;
+
+
+           // i p1 sb rsp to o eb rsp: (port_row = node_row), (port_side = east)
+
+           exp_o_p1_eb_rdata_from_i_sb_rdata_same_Prow_Eside = exp_o_p1_eb_rsp_from_i_sb_rsp_same_Prow_Eside_q1;
+           exp_o_p1_eb_rsp_from_i_sb_rsp_same_Prow_Eside_q1 = exp_o_p1_eb_rsp_from_i_sb_rsp_same_Prow_Eside;
+
+           if ((dut_if.i_sb_rd_rsp[1].vld) && 
+               (dut_if.i_sb_rd_rsp[1].port_row == dut_if.i_sb_node_row) &&
+               (dut_if.i_sb_rd_rsp[1].port_side == mby_msh_pkg::msh_east_side)) begin
+               $display("(time: %0d) %s: --------", $time, name);
+               $display("(time: %0d) %s: A P1 SB rsp to expect a EB rsp output for (port_row = node_row)", $time, name);
+                  exp_o_p1_eb_rsp_from_i_sb_rsp.vld       = dut_if.i_sb_rd_rsp[1].vld;
+                  exp_o_p1_eb_rsp_from_i_sb_rsp.id        = dut_if.i_sb_rd_rsp[1].id;
+               sb.exp_o_p1_eb_rsp_notification(exp_o_p1_eb_rsp_from_i_sb_rsp);
+                exp_o_p1_eb_rsp_from_i_sb_rsp_same_Prow_Eside = 1;
+           end
+           else exp_o_p1_eb_rsp_from_i_sb_rsp_same_Prow_Eside = 0;
+
+
+           // i p1 sb rsp to o wb rsp: (port_row = node_row), (port_side = west)
+
+
+           exp_o_p1_wb_rdata_from_i_sb_rdata_same_Prow_Wside = exp_o_p1_wb_rsp_from_i_sb_rsp_same_Prow_Wside_q1;
+           exp_o_p1_wb_rsp_from_i_sb_rsp_same_Prow_Wside_q1 = exp_o_p1_wb_rsp_from_i_sb_rsp_same_Prow_Wside;
+
+           if ((dut_if.i_sb_rd_rsp[1].vld) && 
+               (dut_if.i_sb_rd_rsp[1].port_row == dut_if.i_sb_node_row) &&
+               (dut_if.i_sb_rd_rsp[1].port_side == mby_msh_pkg::msh_west_side)) begin
+               $display("(time: %0d) %s: --------", $time, name);
+               $display("(time: %0d) %s: A P1 SB rsp to expect a WB rsp output for (port_row = node_row)", $time, name);
+                  exp_o_p1_wb_rsp_from_i_sb_rsp.vld       = dut_if.i_sb_rd_rsp[1].vld;
+                  exp_o_p1_wb_rsp_from_i_sb_rsp.id        = dut_if.i_sb_rd_rsp[1].id;
+               sb.exp_o_p1_wb_rsp_notification(exp_o_p1_wb_rsp_from_i_sb_rsp);
+                exp_o_p1_wb_rsp_from_i_sb_rsp_same_Prow_Wside = 1;
+           end
+           else exp_o_p1_wb_rsp_from_i_sb_rsp_same_Prow_Wside = 0;
+
+
+           // i p1 sb rsp to o nb rsp: (port_row = node_row), (port_side = north)
+
+           exp_o_p1_nb_rdata_from_i_sb_rdata_same_Prow_Nside = exp_o_p1_nb_rsp_from_i_sb_rsp_same_Prow_Nside_q1;
+           exp_o_p1_nb_rsp_from_i_sb_rsp_same_Prow_Nside_q1 = exp_o_p1_nb_rsp_from_i_sb_rsp_same_Prow_Nside;
+
+           if ((dut_if.i_sb_rd_rsp[1].vld) && 
+               (dut_if.i_sb_rd_rsp[1].port_row == dut_if.i_sb_node_row) &&
+               (dut_if.i_sb_rd_rsp[1].port_side == mby_msh_pkg::msh_north_side)) begin
+               $display("(time: %0d) %s: --------", $time, name);
+               $display("(time: %0d) %s: A P1 SB rsp to expect a NB rsp output for (port_row = node_row)", $time, name);
+                  exp_o_p1_nb_rsp_from_i_sb_rsp.vld       = dut_if.i_sb_rd_rsp[1].vld;
+                  exp_o_p1_nb_rsp_from_i_sb_rsp.id        = dut_if.i_sb_rd_rsp[1].id;
+                  exp_o_p1_nb_rsp_from_i_sb_rsp.port_side = dut_if.i_sb_rd_rsp[1].port_side;
+                  exp_o_p1_nb_rsp_from_i_sb_rsp.port_row  = dut_if.i_sb_rd_rsp[1].port_row ;
+               sb.exp_o_p1_nb_rsp_notification(exp_o_p1_nb_rsp_from_i_sb_rsp);
+                exp_o_p1_nb_rsp_from_i_sb_rsp_same_Prow_Nside = 1;
+           end
+           else exp_o_p1_nb_rsp_from_i_sb_rsp_same_Prow_Nside = 0;
+
+
+           // i p1 sb rsp to o sb rsp: (port_row = node_row), (port_side = south)
+
+           exp_o_p1_sb_rdata_from_i_sb_rdata_same_Prow_Sside = exp_o_p1_sb_rsp_from_i_sb_rsp_same_Prow_Sside_q1;
+           exp_o_p1_sb_rsp_from_i_sb_rsp_same_Prow_Sside_q1 = exp_o_p1_sb_rsp_from_i_sb_rsp_same_Prow_Sside;
+
+           if ((dut_if.i_sb_rd_rsp[1].vld) && 
+               (dut_if.i_sb_rd_rsp[1].port_row == dut_if.i_sb_node_row) &&
+               (dut_if.i_sb_rd_rsp[1].port_side == mby_msh_pkg::msh_south_side)) begin
+               $display("(time: %0d) %s: --------", $time, name);
+               $display("(time: %0d) %s: A P1 SB rsp to expect a SB rsp output for (port_row = node_row)", $time, name);
+                  exp_o_p1_sb_rsp_from_i_sb_rsp.vld       = dut_if.i_sb_rd_rsp[1].vld;
+                  exp_o_p1_sb_rsp_from_i_sb_rsp.id        = dut_if.i_sb_rd_rsp[1].id;
+                  exp_o_p1_sb_rsp_from_i_sb_rsp.port_side = dut_if.i_sb_rd_rsp[1].port_side;
+                  exp_o_p1_sb_rsp_from_i_sb_rsp.port_row  = dut_if.i_sb_rd_rsp[1].port_row ;
+               sb.exp_o_p1_sb_rsp_notification(exp_o_p1_sb_rsp_from_i_sb_rsp);
+                exp_o_p1_sb_rsp_from_i_sb_rsp_same_Prow_Sside = 1;
+           end
+           else exp_o_p1_sb_rsp_from_i_sb_rsp_same_Prow_Sside = 0;
+
+
+
+           // i p1 sb rsp to o sb rsp ? (port_row > node.row)
+
+           exp_o_p1_sb_rdata_from_i_sb_rdata_bigger_Prow = exp_o_p1_sb_rsp_from_i_sb_rsp_bigger_Prow_q1;
+           exp_o_p1_sb_rsp_from_i_sb_rsp_bigger_Prow_q1 = exp_o_p1_sb_rsp_from_i_sb_rsp_bigger_Prow;
+
+           if ((dut_if.i_sb_rd_rsp[1].vld) && (dut_if.i_sb_rd_rsp[1].port_row > dut_if.i_sb_node_row)) begin
+               $display("(time: %0d) %s: --------", $time, name);
+               $display("(time: %0d) %s: A P1 SB rsp to expect a SB rsp output ", $time, name);
+                  exp_o_p1_sb_rsp_from_i_sb_rsp.vld       = dut_if.i_sb_rd_rsp[1].vld;
+                  exp_o_p1_sb_rsp_from_i_sb_rsp.id        = dut_if.i_sb_rd_rsp[1].id;
+                  exp_o_p1_sb_rsp_from_i_sb_rsp.port_side = dut_if.i_sb_rd_rsp[1].port_side;
+                  exp_o_p1_sb_rsp_from_i_sb_rsp.port_row  = dut_if.i_sb_rd_rsp[1].port_row ;
+               sb.exp_o_p1_sb_rsp_notification(exp_o_p1_sb_rsp_from_i_sb_rsp);
+                exp_o_p1_sb_rsp_from_i_sb_rsp_bigger_Prow = 1;
+           end
+           else exp_o_p1_sb_rsp_from_i_sb_rsp_bigger_Prow = 0;
+
+
+        end	// end if (drv_corr == 0)
+
+
+
+	if (drv_corr == 0) begin
+
+	   // push exp rd data
+
+	   if (exp_o_p0_eb_rdata_from_i_eb_rdata == 1) 
+	      sb.exp_o_p0_eb_rdata_notification(dut_if.i_eb_rd_data[0]);
+
+	   if (exp_o_p0_wb_rdata_from_i_wb_rdata == 1)
+	      sb.exp_o_p0_wb_rdata_notification(dut_if.i_wb_rd_data[0]);
+
+	   if (exp_o_p0_nb_rdata_from_i_nb_rdata_less_Prow == 1)
+	      sb.exp_o_p0_nb_rdata_notification(dut_if.i_nb_rd_data[0]);
+
+	   if (exp_o_p0_eb_rdata_from_i_nb_rdata_same_Prow_Eside == 1)
+	      sb.exp_o_p0_eb_rdata_notification(dut_if.i_nb_rd_data[0]);
+
+	   if (exp_o_p0_wb_rdata_from_i_nb_rdata_same_Prow_Wside == 1)
+	      sb.exp_o_p0_wb_rdata_notification(dut_if.i_nb_rd_data[0]);
+
+	   if (exp_o_p0_nb_rdata_from_i_nb_rdata_same_Prow_Nside == 1)
+	      sb.exp_o_p0_nb_rdata_notification(dut_if.i_nb_rd_data[0]);
+
+	   if (exp_o_p0_sb_rdata_from_i_nb_rdata_same_Prow_Sside == 1)
+	      sb.exp_o_p0_sb_rdata_notification(dut_if.i_nb_rd_data[0]);
+
+	   if (exp_o_p0_sb_rdata_from_i_nb_rdata_bigger_Prow == 1)
+	      sb.exp_o_p0_sb_rdata_notification(dut_if.i_nb_rd_data[0]);
+
+	   if (exp_o_p0_nb_rdata_from_i_sb_rdata_less_Prow == 1)
+	      sb.exp_o_p0_nb_rdata_notification(dut_if.i_sb_rd_data[0]);
+
+	   if (exp_o_p0_eb_rdata_from_i_sb_rdata_same_Prow_Eside == 1)
+	      sb.exp_o_p0_eb_rdata_notification(dut_if.i_sb_rd_data[0]);
+
+	   if (exp_o_p0_wb_rdata_from_i_sb_rdata_same_Prow_Wside == 1)
+	      sb.exp_o_p0_wb_rdata_notification(dut_if.i_sb_rd_data[0]);
+
+	   if (exp_o_p0_nb_rdata_from_i_sb_rdata_same_Prow_Nside == 1)
+	      sb.exp_o_p0_nb_rdata_notification(dut_if.i_sb_rd_data[0]);
+
+	   if (exp_o_p0_sb_rdata_from_i_sb_rdata_same_Prow_Sside == 1)
+	      sb.exp_o_p0_sb_rdata_notification(dut_if.i_sb_rd_data[0]);
+
+	   if (exp_o_p0_sb_rdata_from_i_sb_rdata_bigger_Prow == 1)
+	      sb.exp_o_p0_sb_rdata_notification(dut_if.i_sb_rd_data[0]);
+
+	   // p1:
+
+	   if (exp_o_p1_eb_rdata_from_i_eb_rdata == 1)
+               sb.exp_o_p1_eb_rdata_notification(dut_if.i_eb_rd_data[1]);
+ 
+           if (exp_o_p1_wb_rdata_from_i_wb_rdata == 1)
+               sb.exp_o_p1_wb_rdata_notification(dut_if.i_wb_rd_data[1]);
+ 
+           if (exp_o_p1_nb_rdata_from_i_nb_rdata_less_Prow == 1)
+               sb.exp_o_p1_nb_rdata_notification(dut_if.i_nb_rd_data[1]);
+ 
+           if (exp_o_p1_eb_rdata_from_i_nb_rdata_same_Prow_Eside == 1)
+               sb.exp_o_p1_eb_rdata_notification(dut_if.i_nb_rd_data[1]);
+ 
+           if (exp_o_p1_wb_rdata_from_i_nb_rdata_same_Prow_Wside == 1)
+               sb.exp_o_p1_wb_rdata_notification(dut_if.i_nb_rd_data[1]);
+ 
+           if (exp_o_p1_nb_rdata_from_i_nb_rdata_same_Prow_Nside == 1)
+               sb.exp_o_p1_nb_rdata_notification(dut_if.i_nb_rd_data[1]);
+ 
+           if (exp_o_p1_sb_rdata_from_i_nb_rdata_same_Prow_Sside == 1)
+               sb.exp_o_p1_sb_rdata_notification(dut_if.i_nb_rd_data[1]);
+ 
+           if (exp_o_p1_sb_rdata_from_i_nb_rdata_bigger_Prow == 1)
+               sb.exp_o_p1_sb_rdata_notification(dut_if.i_nb_rd_data[1]);
+ 
+           if (exp_o_p1_nb_rdata_from_i_sb_rdata_less_Prow == 1)
+               sb.exp_o_p1_nb_rdata_notification(dut_if.i_sb_rd_data[1]);
+ 
+           if (exp_o_p1_eb_rdata_from_i_sb_rdata_same_Prow_Eside == 1)
+               sb.exp_o_p1_eb_rdata_notification(dut_if.i_sb_rd_data[1]);
+ 
+           if (exp_o_p1_wb_rdata_from_i_sb_rdata_same_Prow_Wside == 1)
+               sb.exp_o_p1_wb_rdata_notification(dut_if.i_sb_rd_data[1]);
+ 
+           if (exp_o_p1_nb_rdata_from_i_sb_rdata_same_Prow_Nside == 1)
+               sb.exp_o_p1_nb_rdata_notification(dut_if.i_sb_rd_data[1]);
+ 
+           if (exp_o_p1_sb_rdata_from_i_sb_rdata_same_Prow_Sside == 1)
+               sb.exp_o_p1_sb_rdata_notification(dut_if.i_sb_rd_data[1]);
+ 
+           if (exp_o_p1_sb_rdata_from_i_sb_rdata_bigger_Prow == 1)
+               sb.exp_o_p1_sb_rdata_notification(dut_if.i_sb_rd_data[1]);
+
+	end 	// end if (drv_corr == 0)
+
+
 
 
 	// check rsp output against expected rsp //////////////////////////////////////
@@ -2882,7 +3741,6 @@ class monitor;
                $display("(time: %0d) %s: A P1 SB RD data OUTPUT is detected", $time, name);
                sb.check_p1_sb_rdata_notification(dut_if.o_sb_rd_data[1]);
 	   end
-
 
 
 // ----------------------------------------------------------------------------

@@ -71,6 +71,11 @@ import mby_msh_node_pkg::*;                                        // import dec
 //-----------------------------------------------------------------------------
 // Declarations 
 //-----------------------------------------------------------------------------
+
+
+// `define DRV_CORR;
+
+
   logic mhsreset;  
   assign mhsreset   =  mhreset | msreset;
 
@@ -316,12 +321,13 @@ always_ff @(posedge mclk) begin
     end
 end
 
-assign o_wb_rd_rsp[0] = wb_rd_rsp_q1[0];
-assign o_wb_rd_rsp[1] = wb_rd_rsp_q1[1];
+`ifdef DRV_CORR
+  assign o_wb_rd_rsp[0] = wb_rd_rsp_q1[0];
+  assign o_wb_rd_rsp[1] = wb_rd_rsp_q1[1];
 
-assign o_wb_rd_data[0] = (wb_rd_rsp_q3[0].vld) ? eb_wr_data_save[0] : '0;
-assign o_wb_rd_data[1] = (wb_rd_rsp_q3[1].vld) ? eb_wr_data_save[1] : '0;
-
+  assign o_wb_rd_data[0] = (wb_rd_rsp_q3[0].vld) ? eb_wr_data_save[0] : '0;
+  assign o_wb_rd_data[1] = (wb_rd_rsp_q3[1].vld) ? eb_wr_data_save[1] : '0;
+`endif
 
 // register wb_rd_req
 
@@ -378,11 +384,13 @@ always_ff @(posedge mclk) begin
     end
 end
 
-assign o_eb_rd_rsp[0] = eb_rd_rsp_q1[0];
-assign o_eb_rd_rsp[1] = eb_rd_rsp_q1[1];
+`ifdef DRV_CORR
+  assign o_eb_rd_rsp[0] = eb_rd_rsp_q1[0];
+  assign o_eb_rd_rsp[1] = eb_rd_rsp_q1[1];
 
-assign o_eb_rd_data[0] = (eb_rd_rsp_q3[0].vld) ? wb_wr_data_save[0] : '0;
-assign o_eb_rd_data[1] = (eb_rd_rsp_q3[1].vld) ? wb_wr_data_save[1] : '0;
+  assign o_eb_rd_data[0] = (eb_rd_rsp_q3[0].vld) ? wb_wr_data_save[0] : '0;
+  assign o_eb_rd_data[1] = (eb_rd_rsp_q3[1].vld) ? wb_wr_data_save[1] : '0;
+`endif
 
 
 // register nb_rd_req
@@ -446,11 +454,13 @@ always_ff @(posedge mclk) begin
     end
 end
 
-assign o_sb_rd_rsp[0] = sb_rd_rsp_q1[0];
-assign o_sb_rd_rsp[1] = sb_rd_rsp_q1[1];
+`ifdef DRV_CORR
+  assign o_sb_rd_rsp[0] = sb_rd_rsp_q1[0];
+  assign o_sb_rd_rsp[1] = sb_rd_rsp_q1[1];
 
-assign o_sb_rd_data[0] = (sb_rd_rsp_q3[0].vld) ? nb_wr_data_save[0] : '0;
-assign o_sb_rd_data[1] = (sb_rd_rsp_q3[1].vld) ? nb_wr_data_save[1] : '0;
+  assign o_sb_rd_data[0] = (sb_rd_rsp_q3[0].vld) ? nb_wr_data_save[0] : '0;
+  assign o_sb_rd_data[1] = (sb_rd_rsp_q3[1].vld) ? nb_wr_data_save[1] : '0;
+`endif
 
 
 // register sb_rd_req
@@ -514,11 +524,13 @@ always_ff @(posedge mclk) begin
     end
 end
 
-assign o_nb_rd_rsp[0] = nb_rd_rsp_q1[0];
-assign o_nb_rd_rsp[1] = nb_rd_rsp_q1[1];
+`ifdef DRV_CORR
+  assign o_nb_rd_rsp[0] = nb_rd_rsp_q1[0];
+  assign o_nb_rd_rsp[1] = nb_rd_rsp_q1[1];
 
-assign o_nb_rd_data[0] = (nb_rd_rsp_q3[0].vld) ? sb_wr_data_save[0] : '0;
-assign o_nb_rd_data[1] = (nb_rd_rsp_q3[1].vld) ? sb_wr_data_save[1] : '0;
+  assign o_nb_rd_data[0] = (nb_rd_rsp_q3[0].vld) ? sb_wr_data_save[0] : '0;
+  assign o_nb_rd_data[1] = (nb_rd_rsp_q3[1].vld) ? sb_wr_data_save[1] : '0;
+`endif
 
 
 

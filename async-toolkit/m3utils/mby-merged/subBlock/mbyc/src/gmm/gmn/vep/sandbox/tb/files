@@ -1,0 +1,17 @@
+$NEBULON/include/rtlgen_pkg_v12.vh
++incdir+$NEBULON/include
+
+$SVA_LIB/intel_checkers_pkg.vs
+$SVA_LIB/intel_checkers.vs
++incdir+$SVA_LIB
+
+-y      $MGM/rtl
++incdir+$MGM/rtl
+-y      $MGM/vep/src
++incdir+$MGM/vep/src
+-y      $MGM/vep/src/mem_wrap
+
+-y $MBY_SRC/gmm/gmn/vep/rtl
+
+-y .
+top.sv

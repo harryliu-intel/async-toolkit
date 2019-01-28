@@ -80,12 +80,14 @@ class env;
 	integer  knob_dut_row,
 	integer  knob_dut_col,
 	integer  knob_plane,
-	integer  knob_req_toward,
+	integer  knob_drv_toward,
 	integer	 knob_legal_only,
 	integer  knob_req_row,
 	integer  knob_req_col,
 	integer	 knob_rreq_port_row,
-	integer	 knob_rreq_port_side
+	integer	 knob_rreq_port_side,
+	integer	 knob_rsp_port_row,
+	integer	 knob_rsp_port_side
 
     );
 
@@ -104,11 +106,19 @@ class env;
 
 
         sys_drvr    = new(dut_if, knob_dut_row, knob_dut_col);
-        inp_driver  = new(dut_if, knob_inp_req_num, knob_plane, knob_req_toward, knob_legal_only,
-                          knob_req_row, knob_req_col, knob_rreq_port_row, knob_rreq_port_side);
+        inp_driver  = new(dut_if, 	knob_inp_req_num, 
+					knob_plane, 
+					knob_drv_toward, 
+					knob_legal_only,
+                          		knob_req_row, 
+					knob_req_col, 
+					knob_rreq_port_row, 
+					knob_rreq_port_side,
+					knob_rsp_port_row, 
+					knob_rsp_port_side);
 
         sb  = new();
-        mntr  = new(dut_if, mem_if_0, mem_if_1, mem_if_2, mem_if_3, sb);
+        mntr  = new(dut_if, mem_if_0, mem_if_1, mem_if_2, mem_if_3, sb, inp_driver);
 
         connect();
 
