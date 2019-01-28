@@ -47,6 +47,7 @@ package mby_gpm_bfm_pkg;
    import shdv_base_pkg::*;
    import mby_base_pkg::*;
    import mby_gmm_pkg::*;
+   import mby_smm_bfm_pkg::*;
 
    `include "uvm_macros.svh"
    `include "mby_gpm_bfm_defines.svh"

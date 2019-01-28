@@ -91,6 +91,10 @@ class mby_gpm_bfm_pptr_gen
    // VARIABLE: fpptr_agent_ptr
    //    Handler to the GPM BFM free pod pointer agent
    pod_agent fpptr_agent_h;
+   
+   // VARIABLE: smm_mwr_port
+   // This port is used to send memory write requests to SMM BFM
+   gpm_bfm_smm_mwr_port smm_mwr_port;
 
    // Registering class with the factory
    `uvm_component_utils(mby_gpm_bfm_pptr_gen)
@@ -143,19 +147,20 @@ class mby_gpm_bfm_pptr_gen
    //    uvm_phase phase - phase object.
    // -------------------------------------------------------------------------
    task run_phase(uvm_phase phase);
-      string msg_str;
-      
-      gpm_bfm_pod_seq_t fpod_rsp_seq;
-      phase.raise_objection(this, "GPM BFM: Starting sending free pointers.", 1);
-      fpod_rsp_seq.req.data.valid = 0;
-      fpod_rsp_seq.req.data.pod_ptr = 0;
-      fpod_rsp_seq.req.data.pod_ptr_toggle = 0;
-      fpod_rsp_seq.req.data.slot = 0;
-      fpod_rsp_seq.req.data.rsvrd = 0;
-      fpod_rsp_seq.req.data.parity = 1;
-      fpod_rsp_seq.start(this.fpptr_agent.sequencer);
-      phase.drop_objection(this, "GPM BFM: All free pointers sent.", 1);
+      // Real stuff should happen here
    endtask : run_phase
+   
+   // ------------------------------------------------------------------------
+   // FUNCTION: build_phase
+   //
+   // All the analysis ports are created
+   //
+   // ------------------------------------------------------------------------
+   function void build_phase(uvm_phase phase);
+      if(cfg_obj.bfm_mode == GPM_BFM_IGR_MODE) begin
+         smm_mwr_port = new("smm_mwr_port", this);
+      end
+   endfunction : build_phase
    
 endclass : mby_gpm_bfm_pptr_gen
 `endif
