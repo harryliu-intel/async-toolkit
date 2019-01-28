@@ -69,23 +69,23 @@ program testcase (                  // a program is a system verilog testbench e
 	.knob_drv_toward(4),	
 
 	.knob_legal_only(1),	// when 'legal_only' is 1, 
-				// random generated req_row, col, port_row and side 
-				// will be under constraints to make sure a case legal
+				// req_row, req_col, port_row and port_side are
+				// generated under constraints to make sure test legal
 
-  //    .knob_req_row ($urandom_range(0, 16)), // [0,15]=target node row, 16=random
-  //    .knob_req_col ($urandom_range(0, 8))   // [0,15]=target node col, 8=random
-        .knob_req_row (16),   
-        .knob_req_col (8),
+        .knob_req_row ($urandom_range(0, 16)), // [0,15]=target node row, 16=random
+        .knob_req_col ($urandom_range(0, 8)),  // [0,7]=target node col, 8=random
+//      .knob_req_row (16),   
+//      .knob_req_col (8),
 
-  //    .knob_rreq_port_row ($urandom_range(0, 16)), // [0,15]=assigned port_row, 16=random
-  //    .knob_rreq_port_side ($urandom_range(0, 4))  // [0,3]=assigned side: 0=n,1=s,2=e,3=w, and 4=random
-        .knob_rreq_port_row (16),   
-        .knob_rreq_port_side (4),
+        .knob_rreq_port_row ($urandom_range(0, 16)), // [0,15]=assigned port_row, 16=random
+        .knob_rreq_port_side ($urandom_range(0, 4)), // [0,3]=assigned side: 0=n,1=s,2=e,3=w, and 4=random
+//      .knob_rreq_port_row (16),   
+//      .knob_rreq_port_side (4),
 
-  //    .knob_rsp_port_row ($urandom_range(0, 16)), // [0,15]=assigned port_row, 16=random
-  //    .knob_rsp_port_side ($urandom_range(0, 4))  // [0,3]=assigned side: 0=n,1=s,2=e,3=w, and 4=random
-        .knob_rsp_port_row (16),   
-        .knob_rsp_port_side (4)
+        .knob_rsp_port_row ($urandom_range(0, 16)), // [0,15]=assigned port_row, 16=random
+        .knob_rsp_port_side ($urandom_range(0, 4))  // [0,3]=assigned side: 0=n,1=s,2=e,3=w, and 4=random
+//      .knob_rsp_port_row (16),   
+//      .knob_rsp_port_side (4)
 
     );
 
