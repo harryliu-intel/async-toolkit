@@ -497,7 +497,7 @@ EOF
 
                power_intent => {
                   power_top => 'mby_tb/mby_top',
-                  upf_files => ['tools/upf/mby_top.upf'],
+                  upf_files => ['target/mby/upf/gen/fc_par/soc.sim.upf'],
                },
             },
 
@@ -605,7 +605,7 @@ EOF
 
                power_intent => {
                   power_top => 'mby_tb/mby_top',
-                  upf_files => ['tools/upf/mby_top.upf'],
+                  upf_files => ['target/mby/upf/gen/fc_par/soc.sim.upf'],
                },
             },
 
@@ -670,7 +670,7 @@ EOF
 
                power_intent => {
                   power_top => 'mby_tb/mby_top',
-                  upf_files => [ 'tools/upf/mby_top.upf' ],
+                  upf_files => [ 'target/mby/upf/gen/fc_par/soc.sim.upf' ],
                },
             },
 

@@ -14,7 +14,7 @@ unalias cp
 #############################
 #if {  ![info exists $env{CHASSIS_ID} ] } {
 ##    set env(CHASSIS_ID) config_$::env(DUT)       
-#    set $env{CHASSIS_ID} config_mst
+#    set $env{CHASSIS_ID} config_mby
 #}
 
 #set chassis_config_id $::env(CHASSIS_ID) 
@@ -31,4 +31,4 @@ endif
 
 mkdir -p $MODEL_ROOT/target/mby/upf/gen/hip_power_pins
 
-$HPPSGDIR/generate_hip_supply_port_mapping.pl -pin_map $HPPSGDIR/hip_pin_bump_mapping.txt -io_list $HPPSGDIR/mst_io.list -out_dir $MODEL_ROOT/target/mby/upf/gen/hip_power_pins | & tee $MODEL_ROOT/target/mby/upf/gen/hip_power_pins/log.hip
+$HPPSGDIR/generate_hip_supply_port_mapping.pl -pin_map $HPPSGDIR/hip_pin_bump_mapping.txt -io_list $HPPSGDIR/mby_io.list -out_dir $MODEL_ROOT/target/mby/upf/gen/hip_power_pins | & tee $MODEL_ROOT/target/mby/upf/gen/hip_power_pins/log.hip
