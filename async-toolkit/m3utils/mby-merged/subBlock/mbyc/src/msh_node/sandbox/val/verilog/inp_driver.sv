@@ -653,22 +653,26 @@ class inp_driver;
 
 	 	if (knob_legal_only == 1) begin
 
-		   if ((knob_drv_toward != 0) && (drv_toward == 0) && (node_col < dut_if.i_eb_node_col)) begin
+		 //if ((knob_drv_toward != 0) && (drv_toward == 0) && (node_col < dut_if.i_eb_node_col)) begin
+		   if ( (drv_toward == 0) && (node_col < dut_if.i_eb_node_col)) begin
 		      node_col = $urandom_range(dut_if.i_eb_node_col, 7);
                    // $display("(time: %0d) %s: Legalized EB wreq, req_node_col=%0d ", $time, name, node_col);
 	  	   end
 
-		   else if ((knob_drv_toward != 1) && (drv_toward == 1) && (node_col > dut_if.i_eb_node_col)) begin
+		 //else if ((knob_drv_toward != 1) && (drv_toward == 1) && (node_col > dut_if.i_eb_node_col)) begin
+		   else if ( (drv_toward == 1) && (node_col > dut_if.i_eb_node_col)) begin
 		      node_col = $urandom_range(0, dut_if.i_eb_node_col);
                    // $display("(time: %0d) %s: Legalized WB wreq, req_node_col=%0d ", $time, name, node_col);
 	 	   end
 
-		   else if ((knob_drv_toward != 2) && (drv_toward == 2) && (node_row > dut_if.i_sb_node_row)) begin
+		 //else if ((knob_drv_toward != 2) && (drv_toward == 2) && (node_row > dut_if.i_sb_node_row)) begin
+		   else if ( (drv_toward == 2) && (node_row > dut_if.i_sb_node_row)) begin
 		      node_row = $urandom_range(0, dut_if.i_sb_node_row);
                    // $display("(time: %0d) %s: Legalized NB wreq, req_node_row=%0d ", $time, name, node_row);
 		   end
 
-		   else if ((knob_drv_toward != 3) && (drv_toward == 3) && (node_row < dut_if.i_sb_node_row)) begin
+		 //else if ((knob_drv_toward != 3) && (drv_toward == 3) && (node_row < dut_if.i_sb_node_row)) begin
+		   else if ( (drv_toward == 3) && (node_row < dut_if.i_sb_node_row)) begin
 		      node_row = $urandom_range(dut_if.i_sb_node_row, 15);
                    // $display("(time: %0d) %s: Legalized SB wreq, req_node_row=%0d ", $time, name, node_row);
 		   end
@@ -692,8 +696,9 @@ class inp_driver;
 		// make sure rreq port_row is legal
 
 	 	if (knob_legal_only == 1) begin
-		   if ((drv_toward == 2) && (knob_rreq_port_row >= 16) // indicating knob selects random
-					 && (rreq_port_row <= dut_if.i_sb_node_row)) // impossible case
+		 //if ((drv_toward == 2) && (knob_rreq_port_row >= 16) // indicating knob selects random
+		 //			 && (rreq_port_row <= dut_if.i_sb_node_row)) // impossible case
+		   if ((drv_toward == 2) && (rreq_port_row <= dut_if.i_sb_node_row)) // impossible case
 		   begin
 		      if (dut_if.i_sb_node_row == 15)
 		         rreq_port_row = 15;
@@ -702,7 +707,8 @@ class inp_driver;
 
                    // $display("(time: %0d) %s: Legalized NB rreq, rreq_port_row=%0d", $time, name, rreq_port_row);
 	  	   end
-	 	   else if ((drv_toward == 3) && (knob_rreq_port_row >= 16) && (rreq_port_row >= dut_if.i_sb_node_row)) begin
+	 	 //else if ((drv_toward == 3) && (knob_rreq_port_row >= 16) && (rreq_port_row >= dut_if.i_sb_node_row)) begin
+	 	   else if ((drv_toward == 3) && (rreq_port_row >= dut_if.i_sb_node_row)) begin
 		      if (dut_if.i_sb_node_row == 0)
 		         rreq_port_row = 0;
 		      else
@@ -716,11 +722,13 @@ class inp_driver;
 		// make sure rreq port_side is legal
 
 	 	if (knob_legal_only == 1) begin
-		   if ((drv_toward == 2) && (knob_rreq_port_side >= 4) && (rreq_port_side == 0)) begin
+		 //if ((drv_toward == 2) && (knob_rreq_port_side >= 4) && (rreq_port_side == 0)) begin
+		   if ((drv_toward == 2) && (rreq_port_side == 0)) begin
 		      rreq_port_side = 1; // south, east or west are ok
                    // $display("(time: %0d) %s: Legalized NB rreq, rreq_port_side=%0d", $time, name, rreq_port_side);
 	 	   end
-	 	   else if ((drv_toward == 3) && (knob_rreq_port_side >= 4) && (rreq_port_side == 1)) begin
+	 	 //else if ((drv_toward == 3) && (knob_rreq_port_side >= 4) && (rreq_port_side == 1)) begin
+	 	   else if ((drv_toward == 3) && (rreq_port_side == 1)) begin
 		      rreq_port_side = 0; // north, east or west are ok
                    // $display("(time: %0d) %s: Legalized SB rreq, rreq_port_side=%0d", $time, name, rreq_port_side);
 		   end
@@ -744,7 +752,8 @@ class inp_driver;
 
 
                 if (knob_legal_only == 1) begin
-                   if ((drv_toward == 2) && (knob_rsp_port_row >= 16) && (rsp_port_row >= dut_if.i_sb_node_row)) begin
+                 //if ((drv_toward == 2) && (knob_rsp_port_row >= 16) && (rsp_port_row >= dut_if.i_sb_node_row)) begin
+                   if ((drv_toward == 2) && (rsp_port_row >= dut_if.i_sb_node_row)) begin
                       if (dut_if.i_sb_node_row == 0)
                          rsp_port_row = 0;
                       else
@@ -752,7 +761,8 @@ class inp_driver;
 
                    // $display("(time: %0d) %s: Legalized NB rsp, rsp_port_row=%0d", $time, name, rsp_port_row);
                    end
-                   else if ((drv_toward == 3) && (knob_rsp_port_row >= 16) && (rsp_port_row <= dut_if.i_sb_node_row)) begin
+                 //else if ((drv_toward == 3) && (knob_rsp_port_row >= 16) && (rsp_port_row <= dut_if.i_sb_node_row)) begin
+                   else if ((drv_toward == 3) && (rsp_port_row <= dut_if.i_sb_node_row)) begin
                       if (dut_if.i_sb_node_row == 15)
                          rsp_port_row = 15;
                       else
@@ -766,11 +776,13 @@ class inp_driver;
                 // make sure rsp port_side is legal
 
                 if (knob_legal_only == 1) begin
-                   if ((drv_toward == 2) && (knob_rsp_port_side >= 4) && (rsp_port_side == 1)) begin
+                 //if ((drv_toward == 2) && (knob_rsp_port_side >= 4) && (rsp_port_side == 1)) begin
+                   if ((drv_toward == 2) && (rsp_port_side == 1)) begin
                       rsp_port_side = 0; // north, east or west are ok
                    // $display("(time: %0d) %s: Legalized NB rsp, rsp_port_side=%0d", $time, name, rsp_port_side);
                    end
-                   else if ((drv_toward == 3) && (knob_rsp_port_side >= 4) && (rsp_port_side == 0)) begin
+                 //else if ((drv_toward == 3) && (knob_rsp_port_side >= 4) && (rsp_port_side == 0)) begin
+                   else if ((drv_toward == 3) && (rsp_port_side == 0)) begin
                       rsp_port_side = 1; // south, east or west are ok
                    // $display("(time: %0d) %s: Legalized SB rsp, rsp_port_side=%0d", $time, name, rsp_port_side);
                    end
