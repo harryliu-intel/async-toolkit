@@ -94,23 +94,14 @@ public abstract class BufferedNodeBDChannel implements Statusable, ChannelStatus
                                   numPossibleValues);
     }
     
-    private Node findNodeOrDie(final String name) {
-        final Node node = DSim.get().findNode(name);
-        if (node == null) {
-            System.err.println("Can't find " + name);
-            throw new NoSuchNodeException(name);
-        }
-        return node;
-    }
-
     /**
      * @throws NoSuchNodeException
      **/
     protected void instantiateNM() {
         resetNode = DSimUtil.getResetNode();
         final String fullname = StringUtil.replaceSubstring(name, "][", ",");
-        ack = findNodeOrDie(fullname + (data.length == 0 ? "" : ".C") + ".a");
-        req = findNodeOrDie(fullname + (data.length == 0 ? "" : ".C") + ".q");
+        ack = DSim.get().findOrAddNode(fullname + (data.length == 0 ? "" : ".C") + ".a");
+        req = DSim.get().findOrAddNode(fullname + (data.length == 0 ? "" : ".C") + ".q");
         for (int i = 0; i < data.length; ++i) {
             data[i] = DSim.get().findOrAddNode(fullname + ".D[" + i + "]");
         }
