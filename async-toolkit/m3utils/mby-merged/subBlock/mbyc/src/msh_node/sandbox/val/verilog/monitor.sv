@@ -70,6 +70,7 @@ class monitor;
     string                  name;
 
     integer                 clk_cnt;
+    integer                 done_cnt;
     integer                 heartbeat;
 
     integer		after_mem_wr;
@@ -535,6 +536,7 @@ class monitor;
 
         name                    = "monitor.sv";
         clk_cnt                 = 0;
+        done_cnt                 = 0;
         stat_num_arb_conflicts  = 0;
         all_done                = 1'b0;
 
@@ -3749,18 +3751,35 @@ class monitor;
 
 
 
-
-
-
             clk_cnt++;
 
 //-hz:
-//          sb_done = sb.all_empty();      // scoreboard has no unmatched qflits
-            if (dut_if.o_wb_rd_rsp[0].vld) 
-                sb_done = 1;
+            sb_done = sb.all_empty();      // scoreboard has no unmatched qflits
 
-//          foreach (inp_drvr[i]) inp_drv_done[i] = inp_drvr[i].drv_done;
-//          if (&inp_drv_done && sb_done) all_done = 1;
+
+            if (inp_drvr.drv_done && sb_done) all_done = 1;
+
+
+
+	    // after drv_done, wait for a certain period (e.g. 30 cycles) to terminate if sb not all empty:
+	    // later would make the wait period programmable
+
+            if (inp_drvr.drv_done) begin
+             // $display($time," %s  drv_done=(%0d), done_cnt=(%0d)", name, inp_drvr.drv_done, done_cnt);
+
+  		if (sb_done) all_done = 1;
+
+		else if (done_cnt == 30) begin
+             	   $display("ERROR: (time: %0d) %s: one of scoreboard buffers is not empty", $time, name);
+          	   $assertoff;
+          	   $finish;
+  	   	end
+		else  done_cnt++;
+  	    end
+
+
+
+
 
 `ifdef HEARTBEAT_ON
             if ((clk_cnt % heartbeat)==0) $display($time," %s  Heart Beat...", name);
@@ -3776,12 +3795,27 @@ class monitor;
 
 /*
     task final_state_check();
-        begin
+        forever begin
             @(negedge dut_if.mclk) // sample on negedge
+	    final_done = 0;
 
+	    if (inp_drvr.drv_done) begin
+               for (integer final_done_check = 0; final_done_check < 50; final_done_check++) begin
+                  @(posedge dut_if.mclk);
+                  $display("(time: %0d) %s: final_done_check=(%0d) ", $time, name, final_done_check);
+		  if (sb_done) final_done = 1;
+
+		  if (final_done_check == 20) begin  // 
+             	     $display("ERROR: (time: %0d) %s: sb buf is not empty", $time, name);
+          	     $assertoff;
+          	     $finish;
+                  end
+	       end
+	    end
         end
     endtask
 */
+
 
     task print_stats(string prepend);
         $display("%s %s: stat_num_arb_conflicts = %0d", prepend, name, stat_num_arb_conflicts);

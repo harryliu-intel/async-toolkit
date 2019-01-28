@@ -21,8 +21,8 @@ class scoreboard;
 
 
 
-mby_msh_pkg::msh_data_t		wr_req_in_fifo[$];	// wdata
-mby_msh_pkg::msh_data_t		data_fromQ;
+//mby_msh_pkg::msh_data_t		wr_req_in_fifo[$];	// wdata
+//mby_msh_pkg::msh_data_t		data_fromQ;
 
 mby_msh_pkg::msh_row_wr_req_t	exp_o_p0_eb_wreq_fifo[$];
 mby_msh_pkg::msh_row_wr_req_t	exp_o_p0_wb_wreq_fifo[$];
@@ -46,6 +46,26 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_wdata_fifo[$]; // wdata
 
 logic[13:0] 	exp_mem_wreq_fifo[$];    // addr
 logic[531:0]    exp_mem_wdata_fifo[$];   // wdata
+
+bit 	exp_o_p0_eb_wreq_fifo_empty;
+bit	exp_o_p0_wb_wreq_fifo_empty;
+bit	exp_o_p0_nb_wreq_fifo_empty;
+bit	exp_o_p0_sb_wreq_fifo_empty;
+bit 	exp_o_p1_eb_wreq_fifo_empty;
+bit	exp_o_p1_wb_wreq_fifo_empty;
+bit	exp_o_p1_nb_wreq_fifo_empty;
+bit	exp_o_p1_sb_wreq_fifo_empty;
+bit	exp_o_p0_eb_wdata_fifo_empty;
+bit	exp_o_p0_wb_wdata_fifo_empty;
+bit	exp_o_p0_nb_wdata_fifo_empty;
+bit	exp_o_p0_sb_wdata_fifo_empty;
+bit	exp_o_p1_eb_wdata_fifo_empty;
+bit	exp_o_p1_wb_wdata_fifo_empty;
+bit	exp_o_p1_nb_wdata_fifo_empty;
+bit	exp_o_p1_sb_wdata_fifo_empty;
+bit	exp_mem_wreq_fifo_empty;
+bit	exp_mem_wdata_fifo_empty;
+
 
 mby_msh_pkg::msh_row_wr_req_t    exp_o_p0_eb_wreq_Q;
 mby_msh_pkg::msh_row_wr_req_t    exp_o_p0_wb_wreq_Q;
@@ -83,6 +103,16 @@ mby_msh_pkg::msh_col_rd_req_t   exp_o_p1_sb_rreq_fifo[$];
 logic[13:0]    exp_mem_rreq_fifo[$];    // addr
 logic[13:0]    exp_mem_rreq_Q;
 
+bit     exp_o_p0_eb_rreq_fifo_empty;
+bit     exp_o_p0_wb_rreq_fifo_empty;
+bit     exp_o_p0_nb_rreq_fifo_empty;
+bit     exp_o_p0_sb_rreq_fifo_empty;
+bit     exp_o_p1_eb_rreq_fifo_empty;
+bit     exp_o_p1_wb_rreq_fifo_empty;
+bit     exp_o_p1_nb_rreq_fifo_empty;
+bit     exp_o_p1_sb_rreq_fifo_empty;
+bit     exp_mem_rreq_fifo_empty;
+
 mby_msh_pkg::msh_row_rd_req_t   exp_o_p0_eb_rreq_Q;
 mby_msh_pkg::msh_row_rd_req_t   exp_o_p0_wb_rreq_Q;
 mby_msh_pkg::msh_col_rd_req_t   exp_o_p0_nb_rreq_Q;
@@ -103,6 +133,14 @@ mby_msh_pkg::msh_row_rd_rsp_t exp_o_p1_wb_rsp_fifo[$];
 mby_msh_pkg::msh_col_rd_rsp_t exp_o_p1_nb_rsp_fifo[$];
 mby_msh_pkg::msh_col_rd_rsp_t exp_o_p1_sb_rsp_fifo[$];
 
+bit     exp_o_p0_eb_rsp_fifo_empty;
+bit     exp_o_p0_wb_rsp_fifo_empty;
+bit     exp_o_p0_nb_rsp_fifo_empty;
+bit     exp_o_p0_sb_rsp_fifo_empty;
+bit     exp_o_p1_eb_rsp_fifo_empty;
+bit     exp_o_p1_wb_rsp_fifo_empty;
+bit     exp_o_p1_nb_rsp_fifo_empty;
+bit     exp_o_p1_sb_rsp_fifo_empty;
 
 mby_msh_pkg::msh_row_rd_rsp_t	exp_o_p0_eb_rsp_Q;
 mby_msh_pkg::msh_row_rd_rsp_t	exp_o_p0_wb_rsp_Q;
@@ -125,6 +163,15 @@ mby_msh_pkg::msh_data_t    exp_o_p1_wb_rdata_fifo[$]; // rdata
 mby_msh_pkg::msh_data_t    exp_o_p1_nb_rdata_fifo[$]; // rdata
 mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_fifo[$]; // rdata
 
+bit	exp_o_p0_eb_rdata_fifo_empty;
+bit	exp_o_p0_wb_rdata_fifo_empty;
+bit	exp_o_p0_nb_rdata_fifo_empty;
+bit	exp_o_p0_sb_rdata_fifo_empty;
+bit	exp_o_p1_eb_rdata_fifo_empty;
+bit	exp_o_p1_wb_rdata_fifo_empty;
+bit	exp_o_p1_nb_rdata_fifo_empty;
+bit	exp_o_p1_sb_rdata_fifo_empty;
+
 mby_msh_pkg::msh_data_t    exp_o_p0_eb_rdata_Q;
 mby_msh_pkg::msh_data_t    exp_o_p0_wb_rdata_Q;
 mby_msh_pkg::msh_data_t    exp_o_p0_nb_rdata_Q;
@@ -146,8 +193,8 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
 
         name                    = "scoreboard.sv";
 
-	wr_req_in_fifo = {};
-	data_fromQ = '0;
+//	wr_req_in_fifo = {};
+//	data_fromQ = '0;
 
         exp_o_p0_eb_wreq_fifo = {};
         exp_o_p0_wb_wreq_fifo = {};
@@ -265,6 +312,119 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
 //      foreach (req_in_fifo[i])
 //          if (req_in_fifo[i].size() != 0)
 //              all_empty = 1'b0;
+
+	exp_o_p0_eb_wreq_fifo_empty = (exp_o_p0_eb_wreq_fifo.size() == 0);
+	exp_o_p0_wb_wreq_fifo_empty = (exp_o_p0_wb_wreq_fifo.size() == 0);
+	exp_o_p0_nb_wreq_fifo_empty = (exp_o_p0_nb_wreq_fifo.size() == 0);
+	exp_o_p0_sb_wreq_fifo_empty = (exp_o_p0_sb_wreq_fifo.size() == 0);
+	exp_o_p1_eb_wreq_fifo_empty = (exp_o_p1_eb_wreq_fifo.size() == 0);
+	exp_o_p1_wb_wreq_fifo_empty = (exp_o_p1_wb_wreq_fifo.size() == 0);
+	exp_o_p1_nb_wreq_fifo_empty = (exp_o_p1_nb_wreq_fifo.size() == 0);
+	exp_o_p1_sb_wreq_fifo_empty = (exp_o_p1_sb_wreq_fifo.size() == 0);
+
+//      $display("(time: %0d) %s: exp_o_p0_eb_wreq_fifo_empty=(%0d)", $time,name,exp_o_p0_eb_wreq_fifo_empty);
+//      $display("(time: %0d) %s: exp_o_p0_wb_wreq_fifo_empty=(%0d)", $time,name,exp_o_p0_wb_wreq_fifo_empty);
+//      $display("(time: %0d) %s: exp_o_p0_nb_wreq_fifo_empty=(%0d)", $time,name,exp_o_p0_nb_wreq_fifo_empty);
+//      $display("(time: %0d) %s: exp_o_p0_sb_wreq_fifo_empty=(%0d)", $time,name,exp_o_p0_sb_wreq_fifo_empty);
+//      $display("(time: %0d) %s: exp_o_p1_eb_wreq_fifo_empty=(%0d)", $time,name,exp_o_p1_eb_wreq_fifo_empty);
+//      $display("(time: %0d) %s: exp_o_p1_wb_wreq_fifo_empty=(%0d)", $time,name,exp_o_p1_wb_wreq_fifo_empty);
+//      $display("(time: %0d) %s: exp_o_p1_nb_wreq_fifo_empty=(%0d)", $time,name,exp_o_p1_nb_wreq_fifo_empty);
+//      $display("(time: %0d) %s: exp_o_p1_sb_wreq_fifo_empty=(%0d)", $time,name,exp_o_p1_sb_wreq_fifo_empty);
+
+	exp_o_p0_eb_wdata_fifo_empty = (exp_o_p0_eb_wdata_fifo.size() == 0);
+	exp_o_p0_wb_wdata_fifo_empty = (exp_o_p0_wb_wdata_fifo.size() == 0);
+	exp_o_p0_nb_wdata_fifo_empty = (exp_o_p0_nb_wdata_fifo.size() == 0);
+	exp_o_p0_sb_wdata_fifo_empty = (exp_o_p0_sb_wdata_fifo.size() == 0);
+	exp_o_p1_eb_wdata_fifo_empty = (exp_o_p1_eb_wdata_fifo.size() == 0);
+	exp_o_p1_wb_wdata_fifo_empty = (exp_o_p1_wb_wdata_fifo.size() == 0);
+	exp_o_p1_nb_wdata_fifo_empty = (exp_o_p1_nb_wdata_fifo.size() == 0);
+	exp_o_p1_sb_wdata_fifo_empty = (exp_o_p1_sb_wdata_fifo.size() == 0);
+
+	exp_mem_wreq_fifo_empty = (exp_mem_wreq_fifo.size() == 0);
+	exp_mem_wdata_fifo_empty = (exp_mem_wdata_fifo.size() == 0);
+
+	exp_o_p0_eb_rreq_fifo_empty = (exp_o_p0_eb_rreq_fifo.size() == 0);
+	exp_o_p0_wb_rreq_fifo_empty = (exp_o_p0_wb_rreq_fifo.size() == 0);
+	exp_o_p0_nb_rreq_fifo_empty = (exp_o_p0_nb_rreq_fifo.size() == 0);
+	exp_o_p0_sb_rreq_fifo_empty = (exp_o_p0_sb_rreq_fifo.size() == 0);
+	exp_o_p1_eb_rreq_fifo_empty = (exp_o_p1_eb_rreq_fifo.size() == 0);
+	exp_o_p1_wb_rreq_fifo_empty = (exp_o_p1_wb_rreq_fifo.size() == 0);
+	exp_o_p1_nb_rreq_fifo_empty = (exp_o_p1_nb_rreq_fifo.size() == 0);
+	exp_o_p1_sb_rreq_fifo_empty = (exp_o_p1_sb_rreq_fifo.size() == 0);
+
+	exp_mem_rreq_fifo_empty = (exp_mem_rreq_fifo.size() == 0);
+
+	exp_o_p0_eb_rsp_fifo_empty = (exp_o_p0_eb_rsp_fifo.size() == 0);
+	exp_o_p0_wb_rsp_fifo_empty = (exp_o_p0_wb_rsp_fifo.size() == 0);
+	exp_o_p0_nb_rsp_fifo_empty = (exp_o_p0_nb_rsp_fifo.size() == 0);
+	exp_o_p0_sb_rsp_fifo_empty = (exp_o_p0_sb_rsp_fifo.size() == 0);
+	exp_o_p1_eb_rsp_fifo_empty = (exp_o_p1_eb_rsp_fifo.size() == 0);
+	exp_o_p1_wb_rsp_fifo_empty = (exp_o_p1_wb_rsp_fifo.size() == 0);
+	exp_o_p1_nb_rsp_fifo_empty = (exp_o_p1_nb_rsp_fifo.size() == 0);
+	exp_o_p1_sb_rsp_fifo_empty = (exp_o_p1_sb_rsp_fifo.size() == 0);
+
+	exp_o_p0_eb_rdata_fifo_empty = (exp_o_p0_eb_rdata_fifo.size() == 0);
+	exp_o_p0_wb_rdata_fifo_empty = (exp_o_p0_wb_rdata_fifo.size() == 0);
+	exp_o_p0_nb_rdata_fifo_empty = (exp_o_p0_nb_rdata_fifo.size() == 0);
+	exp_o_p0_sb_rdata_fifo_empty = (exp_o_p0_sb_rdata_fifo.size() == 0);
+	exp_o_p1_eb_rdata_fifo_empty = (exp_o_p1_eb_rdata_fifo.size() == 0);
+	exp_o_p1_wb_rdata_fifo_empty = (exp_o_p1_wb_rdata_fifo.size() == 0);
+	exp_o_p1_nb_rdata_fifo_empty = (exp_o_p1_nb_rdata_fifo.size() == 0);
+	exp_o_p1_sb_rdata_fifo_empty = (exp_o_p1_sb_rdata_fifo.size() == 0);
+
+
+	all_empty = 	exp_o_p0_eb_wreq_fifo_empty && 
+        		exp_o_p0_wb_wreq_fifo_empty && 
+        		exp_o_p0_nb_wreq_fifo_empty && 
+        		exp_o_p0_sb_wreq_fifo_empty && 
+        		exp_o_p1_eb_wreq_fifo_empty && 
+        		exp_o_p1_wb_wreq_fifo_empty && 
+        		exp_o_p1_nb_wreq_fifo_empty && 
+        		exp_o_p1_sb_wreq_fifo_empty && 
+
+        		exp_o_p0_eb_wdata_fifo_empty &&
+        		exp_o_p0_wb_wdata_fifo_empty &&
+        		exp_o_p0_nb_wdata_fifo_empty &&
+        		exp_o_p0_sb_wdata_fifo_empty &&
+        		exp_o_p1_eb_wdata_fifo_empty &&
+        		exp_o_p1_wb_wdata_fifo_empty &&
+        		exp_o_p1_nb_wdata_fifo_empty &&
+        		exp_o_p1_sb_wdata_fifo_empty &&
+
+        		exp_mem_wreq_fifo_empty &&
+        		exp_mem_wdata_fifo_empty &&
+
+        		exp_o_p0_eb_rreq_fifo_empty &&
+        		exp_o_p0_wb_rreq_fifo_empty &&
+        		exp_o_p0_nb_rreq_fifo_empty &&
+        		exp_o_p0_sb_rreq_fifo_empty &&
+        		exp_o_p1_eb_rreq_fifo_empty &&
+        		exp_o_p1_wb_rreq_fifo_empty &&
+        		exp_o_p1_nb_rreq_fifo_empty &&
+        		exp_o_p1_sb_rreq_fifo_empty &&
+
+        		exp_mem_rreq_fifo_empty &&
+
+        		exp_o_p0_eb_rsp_fifo_empty && 
+        		exp_o_p0_wb_rsp_fifo_empty && 
+        		exp_o_p0_nb_rsp_fifo_empty && 
+        		exp_o_p0_sb_rsp_fifo_empty && 
+        		exp_o_p1_eb_rsp_fifo_empty && 
+        		exp_o_p1_wb_rsp_fifo_empty && 
+        		exp_o_p1_nb_rsp_fifo_empty && 
+        		exp_o_p1_sb_rsp_fifo_empty && 
+		
+        		exp_o_p0_eb_rdata_fifo_empty && 
+        		exp_o_p0_wb_rdata_fifo_empty && 
+        		exp_o_p0_nb_rdata_fifo_empty && 
+        		exp_o_p0_sb_rdata_fifo_empty && 
+        		exp_o_p1_eb_rdata_fifo_empty && 
+        		exp_o_p1_wb_rdata_fifo_empty && 
+        		exp_o_p1_nb_rdata_fifo_empty && 
+        		exp_o_p1_sb_rdata_fifo_empty ;
+
+        // $display("(time: %0d) %s: all_empty=(%0d)", $time,name,all_empty);
+
         return all_empty; 
     endfunction
 
