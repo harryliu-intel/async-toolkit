@@ -1,17 +1,4 @@
 foreach $i (0..31) {
-    >> PARSER_ANA_CAM_$i$_CFG_reg_sel
-    >> PARSER_ANA_CAM_$i$_STATUS_reg_sel
-    >> parser_ana_cam_$i$_mem_ls_enter
-    >> parser_ana_cam_$i$_rd_adr
-    >> parser_ana_cam_$i$_rd_en
-    >> parser_ana_cam_$i$_wr_adr
-    >> parser_ana_cam_$i$_wr_data
-    >> parser_ana_cam_$i$_wr_en
-    >> parser_ana_cam_$i$_ecc_uncor_err
-    >> parser_ana_cam_$i$_init_done
-    >> parser_ana_cam_$i$_rd_data
-    >> parser_ana_cam_$i$_rd_valid
-
     >> PARSER_ANA_EXC_$i$_CFG_reg_sel
     >> PARSER_ANA_EXC_$i$_STATUS_reg_sel
     >> parser_ana_exc_$i$_mem_ls_enter
@@ -134,24 +121,54 @@ foreach $i (0..1) {
     >> parser_port_cfg_$i$_rd_valid
 }
 
-    >> PARSER_METADATA_FIFO_CFG_reg_sel
-    >> PARSER_METADATA_FIFO_STATUS_reg_sel
-    >> parser_metadata_fifo_mem_ls_enter
-    >> parser_metadata_fifo_rd_adr
-    >> parser_metadata_fifo_rd_en
-    >> parser_metadata_fifo_wr_adr
-    >> parser_metadata_fifo_wr_data
-    >> parser_metadata_fifo_wr_en
-    >> parser_metadata_fifo_ecc_uncor_err
-    >> parser_metadata_fifo_init_done
-    >> parser_metadata_fifo_rd_data
-    >> parser_metadata_fifo_rd_valid
+    >> PARSER_MD_DELAY_FIFO_CFG_reg_sel
+    >> PARSER_MD_DELAY_FIFO_STATUS_reg_sel
+    >> parser_md_delay_fifo_mem_ls_enter
+    >> parser_md_delay_fifo_rd_adr
+    >> parser_md_delay_fifo_rd_en
+    >> parser_md_delay_fifo_wr_adr
+    >> parser_md_delay_fifo_wr_data
+    >> parser_md_delay_fifo_wr_en
+    >> parser_md_delay_fifo_ecc_uncor_err
+    >> parser_md_delay_fifo_init_done
+    >> parser_md_delay_fifo_rd_data
+    >> parser_md_delay_fifo_rd_valid
+    >> parser_md_delay_fifo_mem_ls_enter
+    >> parser_md_delay_fifo_rd_en
+    >> parser_md_delay_fifo_wr_data
+    >> parser_md_delay_fifo_wr_en
+    >> parser_md_delay_fifo_ecc_uncor_err
+    >> parser_md_delay_fifo_init_done
+    >> parser_md_delay_fifo_rd_data
+    >> parser_md_delay_fifo_rd_valid
+
+    >> PARSER_TAIL_DELAY_FIFO_CFG_reg_sel
+    >> PARSER_TAIL_DELAY_FIFO_STATUS_reg_sel
+    >> parser_tail_delay_fifo_mem_ls_enter
+    >> parser_tail_delay_fifo_rd_adr
+    >> parser_tail_delay_fifo_rd_en
+    >> parser_tail_delay_fifo_wr_adr
+    >> parser_tail_delay_fifo_wr_data
+    >> parser_tail_delay_fifo_wr_en
+    >> parser_tail_delay_fifo_ecc_uncor_err
+    >> parser_tail_delay_fifo_init_done
+    >> parser_tail_delay_fifo_rd_data
+    >> parser_tail_delay_fifo_rd_valid
+    >> parser_tail_delay_fifo_mem_ls_enter
+    >> parser_tail_delay_fifo_rd_en
+    >> parser_tail_delay_fifo_wr_data
+    >> parser_tail_delay_fifo_wr_en
+    >> parser_tail_delay_fifo_ecc_uncor_err
+    >> parser_tail_delay_fifo_init_done
+    >> parser_tail_delay_fifo_rd_data
+    >> parser_tail_delay_fifo_rd_valid
 
     >> PARSER_PTYPE_RAM_CFG_reg_sel
     >> PARSER_PTYPE_RAM_STATUS_reg_sel
-    >> parser_ptype_ram_adr
     >> parser_ptype_ram_mem_ls_enter
+    >> parser_ptype_ram_rd_adr
     >> parser_ptype_ram_rd_en
+    >> parser_ptype_ram_wr_adr
     >> parser_ptype_ram_wr_data
     >> parser_ptype_ram_wr_en
     >> parser_ptype_ram_ecc_uncor_err
@@ -166,30 +183,6 @@ foreach $i (0..1) {
     >> parser_ptype_ram_init_done
     >> parser_ptype_ram_rd_data
     >> parser_ptype_ram_rd_valid
-
-
-    >> PARSER_PTYPE_CAM_CFG_reg_sel
-    >> PARSER_PTYPE_CAM_STATUS_reg_sel
-    >> parser_ptype_cam_adr
-    >> parser_ptype_cam_chk_en
-    >> parser_ptype_cam_chk_for_err_trig
-    >> parser_ptype_cam_chk_key
-    >> parser_ptype_cam_chk_mask
-    >> parser_ptype_cam_raw_hit_in
-    >> parser_ptype_cam_rd_en
-    >> parser_ptype_cam_slice_en
-    >> parser_ptype_cam_wr_data
-    >> parser_ptype_cam_wr_en
-    >> parser_ptype_cam_ecc_uncor_err
-    >> parser_ptype_cam_init_done
-    >> parser_ptype_cam_raw_hit_out
-    >> parser_ptype_cam_rd_data
-    >> parser_ptype_cam_rule_hit_num
-    >> parser_ptype_cam_rule_hit_num_vld
-    >> parser_ptype_cam_tcam_chk_rdy
-    >> parser_ptype_cam_tcam_chk_valid
-    >> parser_ptype_cam_tcam_rd_valid
-    >> parser_ptype_cam_tcam_rdwr_rdy
 
     >> PARSER_ECC_COR_ERR_reg_sel
     >> PARSER_ECC_UNCOR_ERR_reg_sel

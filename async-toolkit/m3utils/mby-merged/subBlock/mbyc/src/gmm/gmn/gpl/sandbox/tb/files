@@ -10,9 +10,9 @@ $MBY_SRC/shared/rtl/mby_gmm_pkg.sv
 
 -y      $MGM/rtl
 +incdir+$MGM/rtl
--y      $MGM/mce/src
-+incdir+$MGM/mce/src
--y      $MGM/mce/src/mem_wrap
+-y      $MGM/gpl/src
++incdir+$MGM/gpl/src
+-y      $MGM/gpl/src/mem_wrap
 
 -y $MBY_SRC/gmm/gmn/gpl/rtl
 
