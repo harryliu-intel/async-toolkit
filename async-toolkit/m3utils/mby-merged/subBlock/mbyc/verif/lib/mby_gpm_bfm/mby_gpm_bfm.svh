@@ -66,6 +66,10 @@ class mby_gpm_bfm extends uvm_component;
    // VARIABLE: smm_mwr_port
    // This port is used to send memory write requests to SMM BFM
    gpm_bfm_smm_mwr_port smm_mwr_port;
+   
+   // VARIABLE: tag_fptr_port
+   // This port is used to send free pointers to TAG BFM
+   gpm_bfm_tag_fptr_port tag_fptr_port;
 
 
    // -------------------------------------------------------------------------
@@ -106,6 +110,8 @@ class mby_gpm_bfm extends uvm_component;
          dpptr_agent = pod_agent::type_id::create("dpptr_agent", this);
          dpptr_agent.cfg_obj = this.cfg_obj.dpptr_cfg;
          smm_mwr_port = new("smm_mwr_port", this);
+      end else if(cfg_obj.bfm_mode == GPM_BFM_EGR_MODE) begin
+         tag_fptr_port = new("tag_fptr_port", this);
       end
    endfunction
 
@@ -124,7 +130,7 @@ class mby_gpm_bfm extends uvm_component;
          dpptr_agent.monitor.mon_ap.connect(pptr_gen.analysis_export);
          pptr_gen.smm_mwr_port.connect(smm_mwr_port);
       end else if(cfg_obj.bfm_mode == GPM_BFM_EGR_MODE) begin
-         
+         pptr_gen.tag_fptr_port.connect(tag_fptr_port);
       end
    endfunction
 

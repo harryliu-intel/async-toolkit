@@ -95,6 +95,10 @@ class mby_gpm_bfm_pptr_gen
    // VARIABLE: smm_mwr_port
    // This port is used to send memory write requests to SMM BFM
    gpm_bfm_smm_mwr_port smm_mwr_port;
+   
+   // VARIABLE: tag_fptr_port
+   // This port is used to send free pointers to TAG BFM
+   gpm_bfm_tag_fptr_port tag_fptr_port;
 
    // Registering class with the factory
    `uvm_component_utils(mby_gpm_bfm_pptr_gen)
@@ -159,6 +163,8 @@ class mby_gpm_bfm_pptr_gen
    function void build_phase(uvm_phase phase);
       if(cfg_obj.bfm_mode == GPM_BFM_IGR_MODE) begin
          smm_mwr_port = new("smm_mwr_port", this);
+      end else if(cfg_obj.bfm_mode == GPM_BFM_EGR_MODE) begin
+         tag_fptr_port = new("tag_fptr_port", this);
       end
    endfunction : build_phase
    
