@@ -161,6 +161,7 @@ class mby_gpm_bfm_pptr_gen
    //
    // ------------------------------------------------------------------------
    function void build_phase(uvm_phase phase);
+      super.build_phase(phase);
       if(cfg_obj.bfm_mode == GPM_BFM_IGR_MODE) begin
          smm_mwr_port = new("smm_mwr_port", this);
       end else if(cfg_obj.bfm_mode == GPM_BFM_EGR_MODE) begin
