@@ -1507,44 +1507,56 @@ class monitor;
 	   end
 
 
+	   // push mem_wdata, and expected rdata for a following rreq
+
+
            if      (exp_p0_eb_wr_to_mem_valid_q2) begin
                $display("(time: %0d) %s: i_p0_eb_wdata=(%0h)", $time, name, dut_if.i_eb_wr_data[0]);
                sb.exp_mem_wdata_notification(dut_if.i_eb_wr_data[0]);
+		// note: exp rd
+	       sb.exp_o_p0_wb_rdata_notification(dut_if.i_eb_wr_data[0]);
 	   end
 
            else if (exp_p0_wb_wr_to_mem_valid_q2) begin
                $display("(time: %0d) %s: i_p0_wb_wdata=(%0h)", $time, name, dut_if.i_wb_wr_data[0]);
                sb.exp_mem_wdata_notification(dut_if.i_wb_wr_data[0]);
+	       sb.exp_o_p0_eb_rdata_notification(dut_if.i_wb_wr_data[0]);
 	   end
 
            else if (exp_p0_nb_wr_to_mem_valid_q2) begin
                $display("(time: %0d) %s: i_p0_nb_wdata=(%0h)", $time, name, dut_if.i_nb_wr_data[0]);
                sb.exp_mem_wdata_notification(dut_if.i_nb_wr_data[0]);
+	       sb.exp_o_p0_sb_rdata_notification(dut_if.i_nb_wr_data[0]);
 	   end
 
            else if (exp_p0_sb_wr_to_mem_valid_q2) begin
                $display("(time: %0d) %s: i_p0_sb_wdata=(%0h)", $time, name, dut_if.i_sb_wr_data[0]);
                sb.exp_mem_wdata_notification(dut_if.i_sb_wr_data[0]);
+	       sb.exp_o_p0_nb_rdata_notification(dut_if.i_sb_wr_data[0]);
 	   end
 
            else if (exp_p1_eb_wr_to_mem_valid_q2) begin
                $display("(time: %0d) %s: i_p1_eb_wdata=(%0h)", $time, name, dut_if.i_eb_wr_data[1]);
                sb.exp_mem_wdata_notification(dut_if.i_eb_wr_data[1]);
+	       sb.exp_o_p1_wb_rdata_notification(dut_if.i_eb_wr_data[1]);
 	   end
 
            else if (exp_p1_wb_wr_to_mem_valid_q2) begin
                $display("(time: %0d) %s: i_p1_wb_wdata=(%0h)", $time, name, dut_if.i_wb_wr_data[1]);
                sb.exp_mem_wdata_notification(dut_if.i_wb_wr_data[1]);
+	       sb.exp_o_p1_eb_rdata_notification(dut_if.i_wb_wr_data[1]);
 	   end
 
            else if (exp_p1_nb_wr_to_mem_valid_q2) begin
                $display("(time: %0d) %s: i_p1_nb_wdata=(%0h)", $time, name, dut_if.i_nb_wr_data[1]);
                sb.exp_mem_wdata_notification(dut_if.i_nb_wr_data[1]);
+	       sb.exp_o_p1_sb_rdata_notification(dut_if.i_nb_wr_data[1]);
 	   end
 
            else if (exp_p1_sb_wr_to_mem_valid_q2) begin
                $display("(time: %0d) %s: i_p1_sb_wdata=(%0h)", $time, name, dut_if.i_sb_wr_data[1]);
                sb.exp_mem_wdata_notification(dut_if.i_sb_wr_data[1]);
+	       sb.exp_o_p1_nb_rdata_notification(dut_if.i_sb_wr_data[1]);
 	   end
 
 
@@ -2083,23 +2095,95 @@ class monitor;
 	   else exp_p1_sb_rreq_to_mem_valid = 0;
 
 
-                // push rreq addr to mem;
-           if (exp_p0_eb_rreq_to_mem_valid)
+                // push rreq addr to mem; and generated exp_rsp
+
+           if (exp_p0_eb_rreq_to_mem_valid) begin
                sb.exp_mem_rreq_notification(dut_if.i_eb_rd_req[0].addr);
-           else if (exp_p0_wb_rreq_to_mem_valid)
+
+               $display("(time: %0d) %s: --------", $time, name);
+               $display("(time: %0d) %s: A P0 EB rreq to mem to expect a WB rsp output", $time, name);
+                  exp_o_p0_wb_rsp_from_i_eb_rreq.vld     = dut_if.i_eb_rd_req[0].vld;
+                  exp_o_p0_wb_rsp_from_i_eb_rreq.id      = dut_if.i_eb_rd_req[0].id;
+               sb.exp_o_p0_wb_rsp_notification(exp_o_p0_wb_rsp_from_i_eb_rreq);
+	   end
+
+           else if (exp_p0_wb_rreq_to_mem_valid) begin
                sb.exp_mem_rreq_notification(dut_if.i_wb_rd_req[0].addr);
-           else if (exp_p0_nb_rreq_to_mem_valid)
+
+               $display("(time: %0d) %s: --------", $time, name);
+               $display("(time: %0d) %s: A P0 WB rreq to mem to expect a EB rsp output", $time, name);
+                  exp_o_p0_eb_rsp_from_i_wb_rreq.vld     = dut_if.i_wb_rd_req[0].vld;
+                  exp_o_p0_eb_rsp_from_i_wb_rreq.id      = dut_if.i_wb_rd_req[0].id;
+               sb.exp_o_p0_eb_rsp_notification(exp_o_p0_eb_rsp_from_i_wb_rreq);
+	   end
+
+           else if (exp_p0_nb_rreq_to_mem_valid) begin
                sb.exp_mem_rreq_notification(dut_if.i_nb_rd_req[0].addr);
-           else if (exp_p0_sb_rreq_to_mem_valid)
+
+               $display("(time: %0d) %s: --------", $time, name);
+               $display("(time: %0d) %s: A P0 NB rreq to mem to expect a SB rsp output", $time, name);
+                exp_o_p0_sb_rsp_from_i_nb_rreq.vld       = dut_if.i_nb_rd_req[0].vld;
+                exp_o_p0_sb_rsp_from_i_nb_rreq.id        = dut_if.i_nb_rd_req[0].id;
+                exp_o_p0_sb_rsp_from_i_nb_rreq.port_side = dut_if.i_nb_rd_req[0].port_side;
+                exp_o_p0_sb_rsp_from_i_nb_rreq.port_row  = dut_if.i_nb_rd_req[0].port_row;
+               sb.exp_o_p0_sb_rsp_notification(exp_o_p0_sb_rsp_from_i_nb_rreq);
+	   end
+
+           else if (exp_p0_sb_rreq_to_mem_valid) begin
                sb.exp_mem_rreq_notification(dut_if.i_sb_rd_req[0].addr);
-           else if (exp_p1_eb_rreq_to_mem_valid)
+
+               $display("(time: %0d) %s: --------", $time, name);
+               $display("(time: %0d) %s: A P0 SB rreq to mem to expect a NB rsp output", $time, name);
+                exp_o_p0_nb_rsp_from_i_sb_rreq.vld       = dut_if.i_sb_rd_req[0].vld;
+                exp_o_p0_nb_rsp_from_i_sb_rreq.id        = dut_if.i_sb_rd_req[0].id;
+                exp_o_p0_nb_rsp_from_i_sb_rreq.port_side = dut_if.i_sb_rd_req[0].port_side;
+                exp_o_p0_nb_rsp_from_i_sb_rreq.port_row  = dut_if.i_sb_rd_req[0].port_row;
+               sb.exp_o_p0_nb_rsp_notification(exp_o_p0_nb_rsp_from_i_sb_rreq);
+	   end
+
+           else if (exp_p1_eb_rreq_to_mem_valid) begin
                sb.exp_mem_rreq_notification(dut_if.i_eb_rd_req[1].addr);
-           else if (exp_p1_wb_rreq_to_mem_valid)
+
+               $display("(time: %0d) %s: --------", $time, name);
+               $display("(time: %0d) %s: A P0 EB rreq to mem to expect a WB rsp output", $time, name);
+                  exp_o_p1_wb_rsp_from_i_eb_rreq.vld     = dut_if.i_eb_rd_req[1].vld;
+                  exp_o_p1_wb_rsp_from_i_eb_rreq.id      = dut_if.i_eb_rd_req[1].id;
+               sb.exp_o_p1_wb_rsp_notification(exp_o_p1_wb_rsp_from_i_eb_rreq);
+	   end
+
+           else if (exp_p1_wb_rreq_to_mem_valid) begin
                sb.exp_mem_rreq_notification(dut_if.i_wb_rd_req[1].addr);
-           else if (exp_p1_nb_rreq_to_mem_valid)
+
+               $display("(time: %0d) %s: --------", $time, name);
+               $display("(time: %0d) %s: A P0 WB rreq to mem to expect a EB rsp output", $time, name);
+                  exp_o_p1_eb_rsp_from_i_wb_rreq.vld     = dut_if.i_wb_rd_req[1].vld;
+                  exp_o_p1_eb_rsp_from_i_wb_rreq.id      = dut_if.i_wb_rd_req[1].id;
+               sb.exp_o_p1_eb_rsp_notification(exp_o_p1_eb_rsp_from_i_wb_rreq);
+	   end
+
+           else if (exp_p1_nb_rreq_to_mem_valid) begin
                sb.exp_mem_rreq_notification(dut_if.i_nb_rd_req[1].addr);
-           else if (exp_p1_sb_rreq_to_mem_valid)
+
+               $display("(time: %0d) %s: --------", $time, name);
+               $display("(time: %0d) %s: A P0 NB rreq to mem to expect a SB rsp output", $time, name);
+                exp_o_p1_sb_rsp_from_i_nb_rreq.vld       = dut_if.i_nb_rd_req[1].vld;
+                exp_o_p1_sb_rsp_from_i_nb_rreq.id        = dut_if.i_nb_rd_req[1].id;
+                exp_o_p1_sb_rsp_from_i_nb_rreq.port_side = dut_if.i_nb_rd_req[1].port_side;
+                exp_o_p1_sb_rsp_from_i_nb_rreq.port_row  = dut_if.i_nb_rd_req[1].port_row;
+               sb.exp_o_p1_sb_rsp_notification(exp_o_p1_sb_rsp_from_i_nb_rreq);
+	   end
+
+           else if (exp_p1_sb_rreq_to_mem_valid) begin
                sb.exp_mem_rreq_notification(dut_if.i_sb_rd_req[1].addr);
+
+               $display("(time: %0d) %s: --------", $time, name);
+               $display("(time: %0d) %s: A P0 SB rreq to mem to expect a NB rsp output", $time, name);
+                exp_o_p1_nb_rsp_from_i_sb_rreq.vld       = dut_if.i_sb_rd_req[1].vld;
+                exp_o_p1_nb_rsp_from_i_sb_rreq.id        = dut_if.i_sb_rd_req[1].id;
+                exp_o_p1_nb_rsp_from_i_sb_rreq.port_side = dut_if.i_sb_rd_req[1].port_side;
+                exp_o_p1_nb_rsp_from_i_sb_rreq.port_row  = dut_if.i_sb_rd_req[1].port_row;
+               sb.exp_o_p1_nb_rsp_notification(exp_o_p1_nb_rsp_from_i_sb_rreq);
+	   end
 
 
 
