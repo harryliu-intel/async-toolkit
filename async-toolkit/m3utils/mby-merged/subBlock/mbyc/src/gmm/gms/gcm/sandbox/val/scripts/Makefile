@@ -14,13 +14,14 @@ LOGICROOT    ?= $(shell pwd | sed 's/\/gmm\/gms\/gcm\/sandbox\/val//')
 #SL2_LIB      ?= $(shell ToolConfig.pl get_tool_var ipconfig/sl2_library INC_PATH)
 #SL2_LIB_IP16 ?= $(shell ToolConfig.pl get_tool_var ipconfig/sl2lib_ip16 INC_PATH)
 #SVA_LIB      ?= $(shell ToolConfig.pl get_tool_var sva_lib INC_PATH)
+PHY_MEMS     ?= /nfs/sc/disks/sc_mby_00033/souravba/mby/work_root/TR/mem_gen/ww02p4_2/MBY_TEST_2/compout/views
 SL2_LIB      ?= /p/hdk/rtl/ip_models/shdk74/sl2_library/sl2_library-srvr10nm-apr_a0-latest
 SL2_LIB_IP16 ?= /p/hdk/rtl/ip_models/shdk74/sl2lib_ip16/sl2lib_ip16-srvr10nm-latest
 SVA_LIB      ?= /p/hdk/rtl/cad/x86-64_linux26/dt/sva_lib/8.1/SVA_LIB
 VCS_HOME     ?= /p/hdk/rtl/cad/x86-64_linux26/synopsys/vcsmx/L-2016.06-SP2-7
 VCS_TARGET_ARCH ?= suse64
 ASSERT_LIB   ?= /p/hdk/rtl/cad/x86-64_linux30/dt/sva_lib/15.4p5_shOpt64
-export LOGICROOT TBROOT SL2_LIB SL2_LIB_IP16 SVA_LIB VCS_HOME VCS_TARGET_ARCH ASSERT_LIB
+export LOGICROOT TBROOT SL2_LIB SL2_LIB_IP16 SVA_LIB VCS_HOME VCS_TARGET_ARCH ASSERT_LIB PHY_MEMS
 
 ################################################################################
 # Other project-related options
