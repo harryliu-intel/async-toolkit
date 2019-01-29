@@ -257,6 +257,29 @@ print "MGM debug : @mbyMgmLibs\n";
                -tag             => "nonsynth",
             },
 
+            mby_mce_env_lib => {
+               -hdl_spec        => ['subBlock/mbyc/cfg/ace/HDL/verif/mby_mce_env.hdl',],
+               -dependent_libs  => [ 'shdv_shared_lib',  ],
+               -tag             => "nonsynth",
+            },
+
+            mby_mce_ti_lib => {
+               -hdl_spec       => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_mce_ti.hdl' ],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_mce_env_lib', ],
+               -tag            => "nonsynth",
+            },
+
+            mby_mce_tb_lib  => {
+               -hdl_spec        => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_mce_tb.hdl', ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'mby_mce_env_lib', 'mby_mce_ti_lib', 'mby_mce_test_lib',  ],
+               -tag             => "nonsynth",
+            },
+
+            mby_mce_test_lib => {
+               -hdl_spec       => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_mce_test.hdl', ],
+               -dependent_libs => [ 'sip_shared_lib', 'mby_mce_env_lib'  ],
+               -tag            => "nonsynth",
+            },
 
             mby_gcm_env_lib => {
                -hdl_spec        => ['subBlock/mbyc/cfg/ace/HDL/verif/mby_gcm_env.hdl',],
@@ -977,6 +1000,73 @@ print "MGM debug : @mbyMgmLibs\n";
             # mby mesh_emu model ends
             ####################################################################
 
+            ####################################################################
+            ## mby MCE model starts
+            ####################################################################
+            mce => {
+
+               top  => 'mby_mce_tb_lib.mby_mce_tb_top',
+
+               libs => [
+                  "shdv_shared_lib",
+                  "svt_ahb_lib",
+                  "sva_lib",
+                  "mby_mgm_lib",
+                  "gen_mby_mgm_lib",
+                  "mby_mce_env_lib",
+                  "mby_mce_tb_lib",
+                  "mby_mce_ti_lib",
+                  "mby_mce_test_lib",
+                  "mby_jasper_lib",
+                  "ext_shared_lib",
+               ],
+               testcase_globals => {
+                    },
+
+               elab_opts => [
+                  "-debug_pp ",
+                  "-full64 ",
+                  "-cm cond+branch+fsm+assert+line+tgl ",
+                  "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{VCS_HOME}/include\"    $ENV{UVM_HOME}/src/dpi/uvm_dpi.cc ",
+                  "-kdb",
+                  "-lca",
+               ],
+
+                xport => {
+                  libs => [
+                     "mby_regflow_lib",
+                     "mby_mce_ti_lib",
+                     "mby_mce_env_lib",
+                     "mby_jasper_lib"
+                  ],
+               },
+
+               # List of full path to PLI libraries to use
+               pli_libs => [ "-verdi_pli_libs", "-hier_rtl_dumper", ],
+
+               #lintra_test_list => [ "$ENV{MODEL_ROOT}/verif/mby/reglist/mby_lintra.list" ],
+
+               # Specify a set of test case specific options (must be valid test options)
+               testcase_globals => {
+                  -test_vlog_opts    => [ -sverilog ],
+                  -test_vlog_files   => [],
+                  -test_vlog_incdirs => [
+                     "subBlock/mbyc/verif/mce/",
+                     "subBlock/mbyc/verif/mce/ral",
+                     "subBlock/mbyc/verif/mce/env",
+                     "$ENV{UVM_HOME}/src",
+                     "${MBY_IOSF_SB_VC_ROOT}/tb/seq_lib",
+                  ],
+               },
+
+            #   power_intent => {
+            #      power_top => 'mby_tb/mby_top',
+            #      upf_files => ['tools/upf/mby_upf.upf'],
+            #   },
+            },
+            ####################################################################
+            # mby MCE model ends
+            ####################################################################
     
             ####################################################################
             ## mby GCM model starts

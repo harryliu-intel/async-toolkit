@@ -87,6 +87,18 @@ class mby_gpm_bfm_pptr_gen
    // VARIABLE: cfg_obj
    // The bfm's configuration object
    mby_gpm_bfm_cfg cfg_obj;
+   
+   // VARIABLE: fpptr_agent_ptr
+   //    Handler to the GPM BFM free pod pointer agent
+   pod_agent fpptr_agent_h;
+   
+   // VARIABLE: smm_mwr_port
+   // This port is used to send memory write requests to SMM BFM
+   gpm_bfm_smm_mwr_port smm_mwr_port;
+   
+   // VARIABLE: tag_fptr_port
+   // This port is used to send free pointers to TAG BFM
+   gpm_bfm_tag_fptr_port tag_fptr_port;
 
    // Registering class with the factory
    `uvm_component_utils(mby_gpm_bfm_pptr_gen)
@@ -104,7 +116,7 @@ class mby_gpm_bfm_pptr_gen
       super.new(name, parent);
    endfunction : new
 
-   // ------------------------------------------------------------------------
+   // -------------------------------------------------------------------------
    // FUNCTION: write
    //
    // Method that must be defined in each uvm_subscriber subclass. Access
@@ -113,9 +125,48 @@ class mby_gpm_bfm_pptr_gen
    //
    // ARGUMENTS:
    //    T_req ap_item - Dirty pod pointer issued to the GPM BFM.
-   // ------------------------------------------------------------------------
+   // -------------------------------------------------------------------------
    function void write(T_req ap_item);
       //TODO: What to do when a dirty pod pointer arrives
    endfunction
+   
+   // -------------------------------------------------------------------------
+   // FUNCTION: set_agent_ptr
+   //
+   // Assings the internal agent pointer to be the same as the input argument.
+   //
+   // ARGUMENTS:
+   //    pod_agent fpptr_agent_ptr  - An instance name of the free pod pointer agent
+   // -------------------------------------------------------------------------
+   function void set_fpptr_agent(pod_agent fpptr_agent);
+      this.fpptr_agent= fpptr_agent;
+   endfunction : set_fpptr_agent
+   
+   // -------------------------------------------------------------------------
+   // TASK: run_phase
+   //
+   // Main pod pointer generator task
+   //
+   // ARGUMENTS:
+   //    uvm_phase phase - phase object.
+   // -------------------------------------------------------------------------
+   task run_phase(uvm_phase phase);
+      // Real stuff should happen here
+   endtask : run_phase
+   
+   // ------------------------------------------------------------------------
+   // FUNCTION: build_phase
+   //
+   // All the analysis ports are created
+   //
+   // ------------------------------------------------------------------------
+   function void build_phase(uvm_phase phase);
+      if(cfg_obj.bfm_mode == GPM_BFM_IGR_MODE) begin
+         smm_mwr_port = new("smm_mwr_port", this);
+      end else if(cfg_obj.bfm_mode == GPM_BFM_EGR_MODE) begin
+         tag_fptr_port = new("tag_fptr_port", this);
+      end
+   endfunction : build_phase
+   
 endclass : mby_gpm_bfm_pptr_gen
 `endif

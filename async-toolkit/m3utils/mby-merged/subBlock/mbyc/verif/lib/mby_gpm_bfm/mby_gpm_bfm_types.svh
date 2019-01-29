@@ -86,4 +86,15 @@ typedef shdv_base_pkg::shdv_agent#(
 typedef class mby_gpm_bfm_pptr_gen;
 typedef mby_gpm_bfm_pptr_gen#(.T_req(mby_gpm_bfm_pod_xaction)) gpm_bfm_pptr_gen_t;
 
+// Defining the pod sequence type
+typedef class mby_gpm_bfm_pod_seq;
+typedef mby_gpm_bfm_pod_seq#(.REQ(mby_gpm_bfm_pod_xaction)) gpm_bfm_pod_seq_t;
+
+// Defining the port type for smm bfm write interface
+typedef uvm_analysis_port#(.T(mby_smm_bfm_mwr_req_xaction)) gpm_bfm_smm_mwr_port;
+
+// Defining the port type for tag bfm free pointer interface
+//Fixme: Temporary parametized as int, change to actual tag bfm data type
+typedef uvm_analysis_port#(.T(int)) gpm_bfm_tag_fptr_port;
+
 `endif

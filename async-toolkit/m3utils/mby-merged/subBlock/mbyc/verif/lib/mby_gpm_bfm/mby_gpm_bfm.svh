@@ -62,6 +62,14 @@ class mby_gpm_bfm extends uvm_component;
    // This is the dirty pointer agent that will be used in egress and mesh modes
    // and will receive dirty pointer information from egress.
    pod_agent dpptr_agent;
+   
+   // VARIABLE: smm_mwr_port
+   // This port is used to send memory write requests to SMM BFM
+   gpm_bfm_smm_mwr_port smm_mwr_port;
+   
+   // VARIABLE: tag_fptr_port
+   // This port is used to send free pointers to TAG BFM
+   gpm_bfm_tag_fptr_port tag_fptr_port;
 
 
    // -------------------------------------------------------------------------
@@ -95,11 +103,15 @@ class mby_gpm_bfm extends uvm_component;
       super.build_phase(phase);
       pptr_gen = gpm_bfm_pptr_gen_t::type_id::create("pptr_gen", this);
       pptr_gen.cfg_obj = this.cfg_obj;
+      pptr_gen.set_fpptr_agent(fpptr_agent);
       if(cfg_obj.bfm_mode == GPM_BFM_IGR_MODE) begin
          fpptr_agent = pod_agent::type_id::create("fpptr_agent", this);
          fpptr_agent.cfg_obj = this.cfg_obj.fpptr_cfg;
          dpptr_agent = pod_agent::type_id::create("dpptr_agent", this);
          dpptr_agent.cfg_obj = this.cfg_obj.dpptr_cfg;
+         smm_mwr_port = new("smm_mwr_port", this);
+      end else if(cfg_obj.bfm_mode == GPM_BFM_EGR_MODE) begin
+         tag_fptr_port = new("tag_fptr_port", this);
       end
    endfunction
 
@@ -116,8 +128,9 @@ class mby_gpm_bfm extends uvm_component;
          // TODO: connect the pptr_gen to the fpptr_agent
          // TODO: connect the pptr_gen to the dpptr_agent
          dpptr_agent.monitor.mon_ap.connect(pptr_gen.analysis_export);
+         pptr_gen.smm_mwr_port.connect(smm_mwr_port);
       end else if(cfg_obj.bfm_mode == GPM_BFM_EGR_MODE) begin
-         
+         pptr_gen.tag_fptr_port.connect(tag_fptr_port);
       end
    endfunction
 
