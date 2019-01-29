@@ -319,7 +319,7 @@ push(@{$ToolConfig_tools{buildman}{SUB_TOOLS}{flowbee}{OTHER}{modules}},  "&get_
 $ToolConfig_tools{feedtools}{ENV}{JASPER_UTILS}= "&get_tool_path(jasper_utils)";
 
 $ToolConfig_tools{"mgm"} = {
-    VERSION => "2.38",
+    VERSION => "2.40",
     PATH => "$ENV{RTL_PROJ_TOOLS}/mgm/nhdk/&get_tool_version()",
     MGM_ARGS => {
         BLOCKS => {
@@ -347,6 +347,7 @@ $ToolConfig_tools{"mgm"} = {
 	CMO  => [
 	    "/nfs/sc/disks/sc_mby_00005/kits/tr3/",
 	    "/nfs/sc/disks/slx_1341/jvenepal/mby/work_root/snps_memory/mby/",
+       "/nfs/sc/disks/sc_mby_00033/souravba/mby/work_root/TR/mem_gen/ww02p4_2/MBY_TEST_2/compout/views/", # GCM physical memories
 	    ],
     },
     EXEC => "&get_tool_path()/bin/mgm",
