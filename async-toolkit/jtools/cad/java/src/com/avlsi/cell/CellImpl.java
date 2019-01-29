@@ -713,22 +713,22 @@ public class CellImpl implements CellInterface {
     /**
      * Returns the non-inlined port subcell pairs.
      **/
-    public Iterator getPortSubcellPairs() {
-        return new FilteringIterator(getSubcellPairs(),
-            new UnaryPredicate() {
-                public boolean evaluate(final Object o) {
-                    return isPortSubcell((HierName) ((Pair) o).getFirst());
+    public Iterator<Pair<HierName,CellInterface>> getPortSubcellPairs() {
+        return new FilteringIterator<Pair<HierName,CellInterface>>(getSubcellPairs(),
+            new UnaryPredicate<Pair<HierName,CellInterface>>() {
+                public boolean evaluate(final Pair<HierName,CellInterface> o) {
+                    return isPortSubcell(o.getFirst());
                 }});
     }
 
     /**
      * Returns the non-inlined local subcell pairs.
      **/
-    public Iterator getLocalSubcellPairs() {
-        return new FilteringIterator(getSubcellPairs(),
-            new UnaryPredicate() {
-                public boolean evaluate(final Object o) {
-                    return !isPortSubcell((HierName) ((Pair) o).getFirst());
+    public Iterator<Pair<HierName,CellInterface>> getLocalSubcellPairs() {
+        return new FilteringIterator<Pair<HierName,CellInterface>>(getSubcellPairs(),
+            new UnaryPredicate<Pair<HierName,CellInterface>>() {
+                public boolean evaluate(final Pair<HierName,CellInterface> o) {
+                    return !isPortSubcell(o.getFirst());
                 }});
     }
 

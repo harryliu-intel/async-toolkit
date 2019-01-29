@@ -122,13 +122,13 @@ public interface CellInterface extends HierarchyInterface {
      * Returns an Iterator of Pairs of HierName and CellInterface
      * that are port subcells, excluding inlined subcells.
      **/
-    Iterator/*<Pair<HierName,CellInterface>>*/ getPortSubcellPairs();
+    Iterator<Pair<HierName,CellInterface>> getPortSubcellPairs();
 
     /**
      * Returns an Iterator of Pairs of HierName and CellInterface
      * that are local subcells, excluding inlined subcells.
      **/
-    Iterator/*<Pair<HierName,CellInterface>>*/ getLocalSubcellPairs();
+    Iterator<Pair<HierName,CellInterface>> getLocalSubcellPairs();
 
     boolean isPortSubcell(final HierName n);
 
