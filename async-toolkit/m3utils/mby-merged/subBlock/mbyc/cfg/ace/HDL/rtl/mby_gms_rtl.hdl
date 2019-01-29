@@ -82,7 +82,7 @@ $hdl_spec = {
          "-debug_pp",
          "+define+VCSSIM",
          "+define+INTEL_SVA_OFF",
-         "+define+MBY_IGR_BEHAVE_MEMS",
+         "+define+MBY_GCM_BEHAVE_MEMS",
          "-assert svaext",
     ],
     
