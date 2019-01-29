@@ -93,6 +93,21 @@ foreach $i (0..15) {
     >> parser_extract_cfg_$i$_rd_valid
 }
 
+foreach $i (0..7) {
+    >> PARSER_INPUT_FIFO_$i$_CFG_reg_sel
+    >> PARSER_INPUT_FIFO_$i$_STATUS_reg_sel
+    >> parser_input_fifo_$i$_mem_ls_enter
+    >> parser_input_fifo_$i$_rd_adr
+    >> parser_input_fifo_$i$_rd_en
+    >> parser_input_fifo_$i$_wr_adr
+    >> parser_input_fifo_$i$_wr_data
+    >> parser_input_fifo_$i$_wr_en
+    >> parser_input_fifo_$i$_ecc_uncor_err
+    >> parser_input_fifo_$i$_init_done
+    >> parser_input_fifo_$i$_rd_data
+    >> parser_input_fifo_$i$_rd_valid
+}
+
 foreach $i (0..1) {
     >> PARSER_CSUM_CFG_$i$_CFG_reg_sel
     >> PARSER_CSUM_CFG_$i$_STATUS_reg_sel
