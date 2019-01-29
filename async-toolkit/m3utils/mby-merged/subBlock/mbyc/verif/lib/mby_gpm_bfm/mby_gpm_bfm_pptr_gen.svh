@@ -152,7 +152,30 @@ class mby_gpm_bfm_pptr_gen
    // -------------------------------------------------------------------------
    task run_phase(uvm_phase phase);
       // Real stuff should happen here
+      phase.raise_objection(this, "GPM BFM: Pending fpptrs.", 1);
+      fork
+         generate_fpptrs();
+      join
+      phase.drop_objection(this, "GPM BFM: No more fpptrs pending",1);
+      
    endtask : run_phase
+   
+   task automatic generate_fpptrs();
+      mby_gpm_bfm_pod_data_t data;
+      data.valid = 1;
+      data.pod_ptr = 1;
+      data.pod_ptr_toggle = 1;
+      data.slot = 1;
+      data.rsvd = 0;
+      data.parity = 0;
+      send_fpptr(data);
+   endtask : generate_fpptrs
+   
+   function send_fpptr(mby_gpm_bfm_pod_data_t data);
+      gpm_bfm_pod_seq_t fpod_rsp_seq = gpm_bfm_pod_seq_t::type_id::create("fpod_rsp_seq");
+      fpod_rsp_seq.req.data = data;
+      fpod_rsp_seq.start(this.fpptr_agent_h.sequencer);
+   endfunction : send_fpptr
    
    // ------------------------------------------------------------------------
    // FUNCTION: build_phase
