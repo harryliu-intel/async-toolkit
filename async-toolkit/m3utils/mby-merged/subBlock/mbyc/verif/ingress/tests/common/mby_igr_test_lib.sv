@@ -29,6 +29,7 @@ program mby_igr_test_lib;
    `include "uvm_macros.svh"
    `include "mby_igr_base_test.svh"
    `include "mby_igr_rand_test.svh"
+   `include "mby_igr_pbr_bfm_test.svh"
 
    // UVM Start test
    initial begin

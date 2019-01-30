@@ -71,6 +71,10 @@ class mby_egr_env extends mby_egr_base_env;
    // Shared Memory Mesh (SMM) Instance
    mby_smm_bfm_t smm_bfm;
 
+   // Variable: egr_pbr_bfm
+   // PBR BFM Instance
+   mby_pbr_bfm_pkg::mby_pbr_bfm   egr_pbr_bfm;
+   
    // Variable: env_monitor
    // egress env event monitor
    mby_egr_env_monitor env_monitor;
@@ -112,6 +116,7 @@ class mby_egr_env extends mby_egr_base_env;
       //build_eth_bfms();
       build_tag_bfm();
       build_smm_bfm();
+      build_pbr_bfm();
 
       // Env monitor
       assert($cast(env_monitor, create_component("mby_egr_env_monitor","env_monitor")));
@@ -132,6 +137,7 @@ class mby_egr_env extends mby_egr_base_env;
       //connect_eth_bfms();
       connect_tag_bfms();
       connect_smm_bfm();
+      connect_pbr_bfm();
 
       uvm_config_db#(egr_env_if_t)::get(this, "", "egress_if", egress_if);
       if(egress_if == null) begin
@@ -216,6 +222,20 @@ class mby_egr_env extends mby_egr_base_env;
    endfunction : build_smm_bfm
 
    //--------------------------------------------------------------------------
+   // Function: build_pbr_bfm
+   // Builds the instance of the pbr BFM
+   //--------------------------------------------------------------------------
+   function void build_pbr_bfm();
+      egr_pbr_bfm = mby_pbr_bfm_pkg::mby_pbr_bfm::type_id::create("egr_pbr_bfm_name", this);
+      if(!egr_pbr_bfm.cfg_obj.randomize() with {
+               bfm_mode == PBR_BFM_EGR_MODE;
+            })begin
+         `uvm_error(get_name(), "Unable to randomize egr_pbr_bfm.cfg_obj PBR_BFM_EGR_MODE");
+      end
+      `uvm_info(get_name(), ("DBG_ALF: Done building egr pbr bfm in the ENV..."), UVM_DEBUG)
+   endfunction : build_pbr_bfm
+
+   //--------------------------------------------------------------------------
    // Function: connect_eth_bfms
    // Sets VIF to the IO policies, adds IO policy class to the BFM and adds sequencer
    // pointer to SLA vsqr
@@ -253,6 +273,16 @@ class mby_egr_env extends mby_egr_base_env;
    function void connect_smm_bfm();
       add_sequencer("smm_bfm", "smm_bfm_wr_req", smm_bfm.igr_wr_req_agent.sequencer);
    endfunction: connect_smm_bfm
+
+   //--------------------------------------------------------------------------
+   // Function: connect_pbr_bfm
+   // adds sequencer
+   //--------------------------------------------------------------------------
+   function void connect_pbr_bfm();
+      add_sequencer("egr_pbr_bfm_name", "egr_pbr_bfm_csp_sequencer", egr_pbr_bfm.csp_agent.sequencer);
+      add_sequencer("egr_pbr_bfm_name", "egr_pbr_bfm_dpm_sequencer", egr_pbr_bfm.dpm_agent.sequencer);
+      `uvm_info(get_name(), ("DBG_ALF: Done connecting egr pbr bfm..."), UVM_DEBUG)
+   endfunction: connect_pbr_bfm
 
    //---------------------------------------------------------------------------
    // Function: get_egr_env

@@ -77,6 +77,12 @@ module mby_igr_tb ();
   mby_tag_bfm_uc_if  tag_bfm_intf_0    (ingress_clock, ingress_reset);
   mby_tag_bfm_uc_if  tag_bfm_intf_1    (ingress_clock, ingress_reset);
 
+   mby_pbr_bfm_cptr_slave_if  pbr_bfm_cptr_slave_intf_0(.clk(ingress_clock),.rst(ingress_reset));
+   mby_pbr_bfm_dptr_master_if pbr_bfm_dptr_master_intf_0(.clk(ingress_clock),.rst(ingress_reset));
+// TODO: raalfaro - assign in top tb
+//   assign pbr_bfm_dptr_slave_intf_0.intf_data_pkt.pod_put_req = pbr_bfm_dptr_master_intf_0.intf_data_pkt.pod_put_req;
+//   assign pbr_bfm_dptr_master_intf_0.intf_data_pkt.schedule_stall = pbr_bfm_dptr_slave_intf_0.intf_data_pkt.schedule_stall;
+
   // ===============================================
   // Clock block instance
   // ===============================================
@@ -123,6 +129,8 @@ module mby_igr_tb ();
                    ,.eth_bfm_rx_intf_4   (eth_bfm_rx_intf_4)
                    ,.tag_bfm_intf_0      (tag_bfm_intf_0)
                    ,.tag_bfm_intf_1      (tag_bfm_intf_1)
+                   ,.pbr_bfm_cptr_slave_if  (pbr_bfm_cptr_slave_intf_0)
+                   ,.pbr_bfm_dptr_master_if (pbr_bfm_dptr_master_intf_0)
                   );
 
 `include "std_ace_util.vic"
