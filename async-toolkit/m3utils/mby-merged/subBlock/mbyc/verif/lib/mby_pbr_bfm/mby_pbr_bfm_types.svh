@@ -44,54 +44,76 @@
 // These are the modes of operation of the PBR BFM, variable to be included in
 // the configuration object.
 typedef enum bit {
-    PBR_BFM_IGR_MODE,
-    PBR_BFM_EGR_MODE
+   PBR_BFM_IGR_MODE,
+   PBR_BFM_EGR_MODE
 } mby_pbr_bfm_mode_t;
 
 // -------------------------------------------------------------------------
-// Main class & VIF type definitions for TAG BFM
+// Main class & VIF type definitions for PBR BFM
 // -------------------------------------------------------------------------
 // Creating the virtual interface types for agents.
-typedef virtual mby_pbr_bfm_cptr_if mby_pbr_bfm_cptr_vif;
-typedef virtual mby_pbr_bfm_dptr_if mby_pbr_bfm_dptr_vif;
+typedef virtual mby_pbr_bfm_cptr_master_if mby_pbr_bfm_cptr_master_vif;
+typedef virtual mby_pbr_bfm_cptr_slave_if  mby_pbr_bfm_cptr_slave_vif;
+typedef virtual mby_pbr_bfm_dptr_master_if mby_pbr_bfm_dptr_master_vif;
+typedef virtual mby_pbr_bfm_dptr_slave_if  mby_pbr_bfm_dptr_slave_vif;
+
 // Forward declaration of the transaction classes (in the bfm_pkg this
 // file (bfm_types) is compiled before the transaction items.
 typedef class mby_pbr_bfm_cptr_xaction;
 typedef class mby_pbr_bfm_dptr_xaction;
+typedef class mby_pbr_bfm_cptr_rsp_seq;
+typedef class mby_pbr_bfm_cptr_req;
+typedef class mby_pbr_bfm_dptr_rsp_seq;
+typedef class mby_pbr_bfm_dptr_req;
 
+// Defining the io policies for the pbr bfm
+typedef shdv_base_io_policy_param#(
+   .T_req(mby_pbr_bfm_cptr_xaction),
+   .T_vif(mby_pbr_bfm_cptr_master_vif)) mby_pbr_bfm_cptr_master_io;
 
 typedef shdv_base_io_policy_param#(
    .T_req(mby_pbr_bfm_cptr_xaction),
-   .T_vif(mby_pbr_bfm_cptr_vif)) mby_ptr_bfm_cptr_io;
+   .T_vif(mby_pbr_bfm_cptr_slave_vif)) mby_pbr_bfm_cptr_slave_io;
 
 typedef shdv_base_io_policy_param#(
    .T_req(mby_pbr_bfm_dptr_xaction),
-   .T_vif(mby_pbr_bfm_dptr_vif)) mby_ptr_bfm_dptr_io;
-// Defining the flow control policy for the tag bfm
+   .T_vif(mby_pbr_bfm_dptr_master_vif)) mby_pbr_bfm_dptr_master_io;
 
-typedef shdv_base_empty_fc_policy mby_ptr_bfm_cptr_fc;
-typedef shdv_base_empty_fc_policy mby_ptr_bfm_dptr_fc;
+typedef shdv_base_io_policy_param#(
+   .T_req(mby_pbr_bfm_dptr_xaction),
+   .T_vif(mby_pbr_bfm_dptr_slave_vif)) mby_pbr_bfm_dptr_slave_io;
 
-
+// Defining the flow control policy for the pbr bfm
+typedef shdv_base_empty_fc_policy mby_pbr_bfm_cptr_master_fc;
+typedef shdv_base_empty_fc_policy mby_pbr_bfm_cptr_slave_fc;
+typedef shdv_base_empty_fc_policy mby_pbr_bfm_dptr_master_fc;
+typedef shdv_base_empty_fc_policy mby_pbr_bfm_dptr_slave_fc;
 
 // Defining the dpb agent as a parameterized base agent.
-typedef mby_base_pkg::mby_base_agent#(
-    .T_req(mby_pbr_bfm_dptr_xaction),
-    .T_iop(mby_ptr_bfm_dptr_io),
-    .T_fcp(mby_ptr_bfm_dptr_fc)) mby_pbr_bfm_dpb_agent;
+typedef shdv_agent#(
+   .T_req(mby_pbr_bfm_dptr_xaction),
+   .T_iop(mby_pbr_bfm_dptr_master_io),
+   .T_fcp(mby_pbr_bfm_dptr_master_fc)) mby_pbr_bfm_dpb_agent;
 // Defining the dpm agent as a parameterized base agent.
-typedef mby_base_pkg::mby_base_agent#(
-    .T_req(mby_pbr_bfm_dptr_xaction),
-    .T_iop(mby_ptr_bfm_dptr_io),
-    .T_fcp(mby_ptr_bfm_dptr_fc)) mby_pbr_bfm_dpm_agent;
+typedef shdv_agent#(
+   .T_req(mby_pbr_bfm_dptr_xaction),
+   .T_iop(mby_pbr_bfm_dptr_slave_io),
+   .T_fcp(mby_pbr_bfm_dptr_slave_fc)) mby_pbr_bfm_dpm_agent;
 // Defining the csp agent as a parameterized base agent.
-typedef mby_base_pkg::mby_base_agent#(
-    .T_req(mby_pbr_bfm_cptr_xaction),
-    .T_fcp(mby_ptr_bfm_cptr_fc),
-    .T_iop(mby_ptr_bfm_cptr_io)) mby_pbr_bfm_csp_agent;
+typedef shdv_agent#(
+   .T_req(mby_pbr_bfm_cptr_xaction),
+   .T_fcp(mby_pbr_bfm_cptr_master_fc),
+   .T_iop(mby_pbr_bfm_cptr_master_io)) mby_pbr_bfm_csp_agent;
 // Defining the cpb agent as a parameterized base agent.
-typedef mby_base_pkg::mby_base_agent#(
-    .T_req(mby_pbr_bfm_cptr_xaction),
-    .T_fcp(mby_ptr_bfm_cptr_fc),
-    .T_iop(mby_ptr_bfm_cptr_io)) mby_pbr_bfm_cpb_agent;
+typedef shdv_agent#(
+   .T_req(mby_pbr_bfm_cptr_xaction),
+   .T_fcp(mby_pbr_bfm_cptr_slave_fc),
+   .T_iop(mby_pbr_bfm_cptr_slave_io)) mby_pbr_bfm_cpb_agent;
+
+// Defining the response sequences and the subscribers
+typedef mby_pbr_bfm_cptr_rsp_seq#(.T_req(mby_pbr_bfm_cptr_xaction)) mby_pbr_bfm_cptr_response_seq;
+typedef mby_pbr_bfm_cptr_req#(.T_req(mby_pbr_bfm_cptr_xaction)) mby_pbr_bfm_cptr_sub;
+typedef mby_pbr_bfm_dptr_rsp_seq#(.T_req(mby_pbr_bfm_dptr_xaction)) mby_pbr_bfm_dptr_response_seq;
+typedef mby_pbr_bfm_dptr_req#(.T_req(mby_pbr_bfm_dptr_xaction)) mby_pbr_bfm_dptr_sub;
+
 `endif

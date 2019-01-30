@@ -36,6 +36,7 @@ program testcase (                   // a program is a system verilog testbench 
     // declare testcase variables
     integer loops;
     integer num_reqs;
+    integer len;
 
     // instantiate testbench environment 
     env env = new(
@@ -49,12 +50,33 @@ program testcase (                   // a program is a system verilog testbench 
 
     // testcase execution
 
-    initial begin                   // an "initial" procedure is executed at the beginning of a simulation
+    initial begin                  // an "initial" procedure is executed at the beginning of a simulation
 
-        loops    = 1;               // number of times to run the test loop 
-        num_reqs = 10;              // number of requests to be sent to each port for each iteration 
-
+        loops    = 1;              // number of times to run the test loop 
+        num_reqs = 3;              // number of requests to be sent to each port for each iteration 
+        
         //env.cfg.randomize();        // randomize configuration
+        `ifdef INTEL_SIMONLY
+            `ifdef MBY_GCM_BEHAVE_MEMS //FIXME: What is the best method for doing this?
+                   top.dut.gcm_gen_mem_inst.gcm_sram_mems.gcm_wrap_mem_rx_uc_wm_shell_128x68_0.memory_init("/nfs/sc/disks/sc_mby_00023/abisaira/mby/work_root/mby-mby-x0/subBlock/mbyc/src/gmm/gms/gcm/sandbox/val/tests/rxuc_wm_0.mem");
+                   top.dut.gcm_gen_mem_inst.gcm_sram_mems.gcm_wrap_mem_rx_uc_wm_shell_128x68_1.memory_init("/nfs/sc/disks/sc_mby_00023/abisaira/mby/work_root/mby-mby-x0/subBlock/mbyc/src/gmm/gms/gcm/sandbox/val/tests/rxuc_wm_0.mem" );
+                   top.dut.gcm_gen_mem_inst.gcm_sram_mems.gcm_wrap_mem_rx_uc_wm_shell_128x68_2.memory_init("/nfs/sc/disks/sc_mby_00023/abisaira/mby/work_root/mby-mby-x0/subBlock/mbyc/src/gmm/gms/gcm/sandbox/val/tests/rxuc_wm_0.mem" );
+                   top.dut.gcm_gen_mem_inst.gcm_sram_mems.gcm_wrap_mem_rx_uc_wm_shell_128x68_3.memory_init("/nfs/sc/disks/sc_mby_00023/abisaira/mby/work_root/mby-mby-x0/subBlock/mbyc/src/gmm/gms/gcm/sandbox/val/tests/rxuc_wm_0.mem" );
+                   top.dut.gcm_gen_mem_inst.gcm_sram_mems.gcm_wrap_mem_rx_uc_wm_shell_128x68_4.memory_init("/nfs/sc/disks/sc_mby_00023/abisaira/mby/work_root/mby-mby-x0/subBlock/mbyc/src/gmm/gms/gcm/sandbox/val/tests/rxuc_wm_0.mem" );
+                   top.dut.gcm_gen_mem_inst.gcm_sram_mems.gcm_wrap_mem_rx_uc_wm_shell_128x68_5.memory_init("/nfs/sc/disks/sc_mby_00023/abisaira/mby/work_root/mby-mby-x0/subBlock/mbyc/src/gmm/gms/gcm/sandbox/val/tests/rxuc_wm_0.mem" );
+                   top.dut.gcm_gen_mem_inst.gcm_sram_mems.gcm_wrap_mem_rx_uc_wm_shell_128x68_6.memory_init("/nfs/sc/disks/sc_mby_00023/abisaira/mby/work_root/mby-mby-x0/subBlock/mbyc/src/gmm/gms/gcm/sandbox/val/tests/rxuc_wm_0.mem" );
+                   top.dut.gcm_gen_mem_inst.gcm_sram_mems.gcm_wrap_mem_rx_uc_wm_shell_128x68_7.memory_init("/nfs/sc/disks/sc_mby_00023/abisaira/mby/work_root/mby-mby-x0/subBlock/mbyc/src/gmm/gms/gcm/sandbox/val/tests/rxuc_wm_0.mem" );
+                   top.dut.gcm_gen_mem_inst.gcm_sram_mems.gcm_wrap_mem_rx_uc_wm_shell_128x68_8.memory_init("/nfs/sc/disks/sc_mby_00023/abisaira/mby/work_root/mby-mby-x0/subBlock/mbyc/src/gmm/gms/gcm/sandbox/val/tests/rxuc_wm_0.mem" );
+                   top.dut.gcm_gen_mem_inst.gcm_sram_mems.gcm_wrap_mem_rx_uc_wm_shell_128x68_9.memory_init("/nfs/sc/disks/sc_mby_00023/abisaira/mby/work_root/mby-mby-x0/subBlock/mbyc/src/gmm/gms/gcm/sandbox/val/tests/rxuc_wm_0.mem" );
+                   top.dut.gcm_gen_mem_inst.gcm_sram_mems.gcm_wrap_mem_rx_uc_wm_shell_128x68_10.memory_init("/nfs/sc/disks/sc_mby_00023/abisaira/mby/work_root/mby-mby-x0/subBlock/mbyc/src/gmm/gms/gcm/sandbox/val/tests/rxuc_wm_0.mem" );
+                   top.dut.gcm_gen_mem_inst.gcm_sram_mems.gcm_wrap_mem_rx_uc_wm_shell_128x68_11.memory_init("/nfs/sc/disks/sc_mby_00023/abisaira/mby/work_root/mby-mby-x0/subBlock/mbyc/src/gmm/gms/gcm/sandbox/val/tests/rxuc_wm_0.mem" );
+                   top.dut.gcm_gen_mem_inst.gcm_sram_mems.gcm_wrap_mem_rx_uc_wm_shell_128x68_12.memory_init("/nfs/sc/disks/sc_mby_00023/abisaira/mby/work_root/mby-mby-x0/subBlock/mbyc/src/gmm/gms/gcm/sandbox/val/tests/rxuc_wm_0.mem" );
+                   top.dut.gcm_gen_mem_inst.gcm_sram_mems.gcm_wrap_mem_rx_uc_wm_shell_128x68_13.memory_init("/nfs/sc/disks/sc_mby_00023/abisaira/mby/work_root/mby-mby-x0/subBlock/mbyc/src/gmm/gms/gcm/sandbox/val/tests/rxuc_wm_0.mem" );
+                   top.dut.gcm_gen_mem_inst.gcm_sram_mems.gcm_wrap_mem_rx_uc_wm_shell_128x68_14.memory_init("/nfs/sc/disks/sc_mby_00023/abisaira/mby/work_root/mby-mby-x0/subBlock/mbyc/src/gmm/gms/gcm/sandbox/val/tests/rxuc_wm_0.mem" );
+                   top.dut.gcm_gen_mem_inst.gcm_sram_mems.gcm_wrap_mem_rx_uc_wm_shell_128x68_15.memory_init("/nfs/sc/disks/sc_mby_00023/abisaira/mby/work_root/mby-mby-x0/subBlock/mbyc/src/gmm/gms/gcm/sandbox/val/tests/rxuc_wm_0.mem" );
+            `endif
+        `endif //  `ifdef INTEL_SIMONLY
+
 
         // Run test
         `include "test_loop_include.sv"     // the test loop (see sandbox/verilog/test_loop_include.sv)

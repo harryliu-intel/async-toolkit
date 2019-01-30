@@ -41,12 +41,15 @@ module mby_egr_ti_low #(
     ,mby_tag_bfm_uc_if         tag_bfm_intf_1
     ,mby_smm_bfm_mrd_req_if    memrd_req_if
     ,mby_smm_bfm_mwr_req_if    memwr_req_if
+    ,mby_pbr_bfm_cptr_master_if pbr_bfm_cptr_master_if
+    ,mby_pbr_bfm_dptr_slave_if  pbr_bfm_dptr_slave_if
    );
 
    import uvm_pkg::*;
    import mby_egr_env_pkg::*;
    import mby_tag_bfm_pkg::*;
    import mby_smm_bfm_pkg::*;
+   import mby_pbr_bfm_pkg::*;
 
    `include "mby_egr_params.sv"
    `include "mby_egr_defines.sv"
@@ -59,6 +62,9 @@ module mby_egr_ti_low #(
       mby_tag_bfm_uc_io          tag_bfm_io[2];
       smm_bfm_row_rd_io          smm_bfm_rd_io;
       smm_bfm_row_wr_io          smm_bfm_wr_io;
+      
+      mby_pbr_bfm_cptr_master_io pbr_bfm_cptr_master_io;
+      mby_pbr_bfm_dptr_slave_io  pbr_bfm_dptr_slave_io;
       
       // MAC Client BFM io policy
       egr_eth_bfm_tx_io_t eth_bfm_tx_io[`NUM_EPLS_PER_EGR];
@@ -111,6 +117,13 @@ module mby_egr_ti_low #(
       smm_bfm_wr_io = new("smm_bfm_wr_io", memwr_req_if);
       uvm_config_db#(smm_bfm_row_wr_io)::set(uvm_root::get(),
          $sformatf("%s*smm_bfm*igr_wr_req_agent*", IP_ENV), "io_policy", smm_bfm_wr_io);
+      // PBR BFM I/O policies constructors and uvm_config_db registration
+      pbr_bfm_cptr_master_io = new("pbr_bfm_cptr_master_io", pbr_bfm_cptr_master_if);
+      pbr_bfm_dptr_slave_io  = new("pbr_bfm_dptr_slave_io", pbr_bfm_dptr_slave_if);
+      uvm_config_db#(mby_pbr_bfm_cptr_master_io)::set(uvm_root::get(),
+         $sformatf("%s*pbr_bfm*csp_agent*", IP_ENV), "io_policy", pbr_bfm_cptr_master_io);
+      uvm_config_db#(mby_pbr_bfm_dptr_slave_io)::set(uvm_root::get(),
+         $sformatf("%s*pbr_bfm*dpm_agent*", IP_ENV), "io_policy", pbr_bfm_dptr_slave_io);
 
       /////////////////////////////////////////////////////////////////////////
       // Other interfaces registration
