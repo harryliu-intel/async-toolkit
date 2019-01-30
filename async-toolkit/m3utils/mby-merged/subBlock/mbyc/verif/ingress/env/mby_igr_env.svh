@@ -81,10 +81,6 @@ class mby_igr_env extends shdv_base_env;
    // Tag BFMs
    mby_tag_bfm tag_bfm[`NUM_TAG_PORTS];
 
-   // Variable:  tb_ral
-   // Handle to igr RAL.
-   mby_igr_reg_pkg::mby_igr_reg_blk tb_ral;
-
    `uvm_component_utils_begin(mby_igr_env)
    `uvm_component_utils_end
 
@@ -122,7 +118,7 @@ class mby_igr_env extends shdv_base_env;
       build_vpt_bfms();
       build_eth_bfms();
       build_tag_bfm();
-      build_ral();
+
 
       // Env monitor
       assert($cast(env_monitor, create_component("mby_igr_env_monitor", "env_monitor")));
@@ -277,42 +273,6 @@ class mby_igr_env extends shdv_base_env;
          add_sequencer($sformatf("eth_bfm_%0d", i), $sformatf("eth_bfm_%0d_rx3", i), eth_bfms[i].frame_sequencer[3]);
       end
    endfunction : connect_eth_bfms
-
-   //---------------------------------------------------------------------------
-   //  Function: build_ral
-   //  Builds igr register model.
-   //
-   //---------------------------------------------------------------------------
-   virtual function void build_ral();
-      // Check if ral is already set by FC
-      if (tb_ral == null) begin
-         tb_ral = mby_igr_reg_pkg::mby_igr_reg_blk::type_id::create("tb_ral");
-         tb_ral.build();
-         //TODO: Update the base addr.
-         tb_ral.default_map.set_base_addr(`UVM_REG_ADDR_WIDTH'h20000);
-         tb_ral.lock_model();
-
-         tb_ral.set_hdl_path_root("mby_igr_tb.igr_top_i");
-
-         //Build the Adapter's based on agt's active
-      end
-   endfunction: build_ral
-
-   //---------------------------------------------------------------------------
-   // Function: get_tb_ral()
-   // Returns object handle to igr ral (mby_igr_reg_blk)
-   //---------------------------------------------------------------------------
-   function mby_igr_reg_pkg::mby_igr_reg_blk get_tb_ral();
-      return tb_ral;
-   endfunction : get_tb_ral
-
-   //---------------------------------------------------------------------------
-   // Function: set_tb_ral()
-   // Sets handle to igr ral (mby_igr_reg_blk). Used to pass handle to RAL from fullchip env.
-   //---------------------------------------------------------------------------
-   function set_tb_ral(mby_igr_reg_pkg::mby_igr_reg_blk ral);
-      tb_ral = ral;
-   endfunction : set_tb_ral
 
    //////////////////////////////////////////////////////////////////////////////
    // Ingress ENV functions / tasks
