@@ -25,8 +25,10 @@ class mby_egr_tag_seq extends mby_egr_extended_base_seq;
    `uvm_object_utils (mby_egr_tag_seq)
 
    mby_tag_bfm_pkg::mby_tag_bfm_uc_xaction uc_tag;
-
+   mby_smm_bfm_pkg::mby_smm_bfm_mwr_req_xaction smm_wr;
+   
    shdv_base_pkg::shdv_base_sequencer#(.T_req(mby_tag_bfm_uc_xaction)) tag_sequencer;
+   shdv_base_pkg::shdv_base_sequencer#(.T_req(mby_smm_bfm_pkg::mby_smm_bfm_mwr_req_xaction)) smm_sequencer;
 
    //---------------------------------------------------------------------------
    // Function: new
@@ -41,6 +43,27 @@ class mby_egr_tag_seq extends mby_egr_extended_base_seq;
 
    virtual protected task body_thread();
       this.set_name("mby_egr_tag_seq");
+      
+      
+      
+      
+      smm_wr = mby_smm_bfm_pkg::mby_smm_bfm_mwr_req_xaction::type_id::create("smm_wr");
+      assert($cast(smm_sequencer, shdv_base_pkg::shdv_base_tb_sequencer::pick_sequencer("smm_bfm_wr_req")))
+
+      else begin
+         `uvm_error(get_name(), "Could not get a pointer to the smm sequencer");
+      end
+
+      smm_wr.set_item_context(this, smm_sequencer);
+      smm_wr.data = 0;
+      smm_wr.data.mim_wreq_valid = 1;
+      smm_wr.data.mim_wr_seg_ptr = 23;
+      smm_wr.data.mim_wr_data = 'h00000CAFE;
+      `uvm_send(smm_wr);
+      smm_wr.data =0;
+      `uvm_send(smm_wr);
+      
+      
       wait_n(22);
 
       assert($cast(tag_sequencer, shdv_base_pkg::shdv_base_tb_sequencer::pick_sequencer("tag_bfm_uc_0")))
@@ -64,8 +87,7 @@ class mby_egr_tag_seq extends mby_egr_extended_base_seq;
          uc_tag.data.eop = 1'b1;
          uc_tag.data.length = 64;
          uc_tag.data.ptr_toggle = 4'b1;
-         //uc_tag.data.ptr = $urandom_range(0, 2 ** 19 - 1);
-         uc_tag.data.ptr = 20 + i;
+         uc_tag.data.ptr = $urandom_range(0, 2 ** 19 - 1);
 
          `uvm_info(get_name(),uc_tag.convert2string(),UVM_LOW)
 
