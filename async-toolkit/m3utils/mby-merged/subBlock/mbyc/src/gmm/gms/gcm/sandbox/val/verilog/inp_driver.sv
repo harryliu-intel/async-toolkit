@@ -121,11 +121,20 @@ class inp_driver;
     task load_stimulus(integer num_reqs);
         this.num_reqs = num_reqs;
 
-        while (this.num_reqs > 0) begin
-            stim.randomize();               // create a random request 
-            req_fifo_eq.push_back(stim.req_eq);   // put random request into FIFO
-            req_fifo_dq.push_back(stim.req_dq);   // put random request into FIFO
-            this.num_reqs--;
+        //while (this.num_reqs > 0) begin
+        while (this.num_reqs >= 0) begin
+            if (this.num_reqs == 0) begin
+                stim.randomize();               // create a random request 
+                req_fifo_eq.push_back('0);   // put random request into FIFO
+                req_fifo_dq.push_back('0);   // put random request into FIFO
+                this.num_reqs--;
+            end
+            else begin                
+                stim.randomize();               // create a random request 
+                req_fifo_eq.push_back(stim.req_eq);   // put random request into FIFO
+                req_fifo_dq.push_back(stim.req_dq);   // put random request into FIFO
+                this.num_reqs--;
+            end
         end
 
 `ifdef INP_DRIVER_DEBUG
@@ -165,8 +174,8 @@ class inp_driver;
 
     // figure out if input driver is done or not
     function bit something_to_do();
-        something_to_do = 0;
-        if ( (req_fifo_eq.size() != 0) ||  (req_fifo_dq.size() != 0) ) something_to_do = 1;
+        something_to_do = '0;
+        if ( (req_fifo_eq.size() != 0) ||  (req_fifo_dq.size() != 0) ) something_to_do = '1;
         //if (drvr_req_eq_to_dut.vld || drvr_req_eq_to_dut_p1.vld) something_to_do = 1;
         return something_to_do;
     endfunction

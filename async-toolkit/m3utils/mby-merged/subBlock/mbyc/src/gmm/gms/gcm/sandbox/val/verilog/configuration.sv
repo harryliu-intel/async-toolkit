@@ -31,7 +31,9 @@
 
 class configuration;
 
-    //// declare knob input variables 
+    //// declare knob input variables
+    //TODO: define variables with file names 
+    
     //tmpl_sim_pkg::knob_t            knob_inp_bubble_numerator_min;
     //tmpl_sim_pkg::knob_t            knob_inp_bubble_numerator_max;
     //tmpl_sim_pkg::knob_t            knob_inp_bubble_denominator;
@@ -59,6 +61,12 @@ class configuration;
    //     foreach (inp_bubble_numerators[i])
    //         inp_bubble_numerators[i] dist {[knob_inp_bubble_numerator_min:knob_inp_bubble_numerator_max] := 1};
    // }
+    
+    // This function is called for memory initialization
+    function void load_mems(input string files);
+       // TODO: follow here 
+    endfunction
+    
 
     // this function is called by default immediately after randomize()
     function void post_randomize();

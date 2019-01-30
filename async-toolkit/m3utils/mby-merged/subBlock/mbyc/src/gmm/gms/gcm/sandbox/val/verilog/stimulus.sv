@@ -60,12 +60,10 @@ class stimulus;
     //    };
     //}
     constraint req_eq_constraint {
-        // request valid bit is determined by config kno:bs
         req_eq.src_port inside {0};
         req_eq.valid inside {1};
     }
     constraint req_dq_constraint {
-        // request valid bit is determined by config kno:bs
         req_dq.src_port_id inside {0};
         req_dq.src_tc inside {0};
         req_dq.valid inside {1};
