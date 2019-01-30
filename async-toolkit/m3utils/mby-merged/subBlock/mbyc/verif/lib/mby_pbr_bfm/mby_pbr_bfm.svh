@@ -46,76 +46,110 @@
 //-----------------------------------------------------------------------------
 class mby_pbr_bfm extends uvm_component;
 
-    // VARIABLE: cfg_obj
-    // The bfm's configuration object
-    mby_pbr_bfm_cfg cfg_obj;
+   // VARIABLE: cfg_obj
+   // The bfm's configuration object
+   mby_pbr_bfm_cfg cfg_obj;
 
-    // VARIABLE: dpb_agent
-    // TODO: description
-    mby_pbr_bfm_dpb_agent dpb_agent;
+   // VARIABLE: dpb_agent
+   // TODO: description
+   mby_pbr_bfm_dpb_agent dpb_agent;
 
-    // VARIABLE: dpm_agent
-    // TODO: description
-    mby_pbr_bfm_dpm_agent dpm_agent;
+   // VARIABLE: dpm_agent
+   // TODO: description
+   mby_pbr_bfm_dpm_agent dpm_agent;
 
-    // VARIABLE: csp_agent
-    // TODO: description
-    mby_pbr_bfm_csp_agent csp_agent;
+   // VARIABLE: csp_agent
+   // TODO: description
+   mby_pbr_bfm_csp_agent csp_agent;
 
-    // VARIABLE: cpb_agent
-    // TODO: description
-    mby_pbr_bfm_cpb_agent cpb_agent;
+   // VARIABLE: cpb_agent
+   // TODO: description
+   mby_pbr_bfm_cpb_agent cpb_agent;
 
-    // -------------------------------------------------------------------------
-    // Macro to register new class type
-    // -------------------------------------------------------------------------
-    `uvm_component_param_utils_begin(mby_pbr_bfm)
-    `uvm_component_utils_end
+   mby_pbr_bfm_cptr_sub cptr_req;
+   mby_pbr_bfm_dptr_sub dptr_req;
 
-    // -------------------------------------------------------------------------
-    // CONSTRUCTOR: new
-    //
-    // Constructor
-    //
-    // ARGUMENTS:
-    //    string name          - An instance name of the agent.
-    //    uvm_component parent - The agent's parent component pointer.
-    // -------------------------------------------------------------------------
-    function new(string name, uvm_component parent);
-        super.new(name, parent);
-    endfunction : new
+   // -------------------------------------------------------------------------
+   // Macro to register new class type
+   // -------------------------------------------------------------------------
+   `uvm_component_param_utils_begin(mby_pbr_bfm)
+   `uvm_component_utils_end
 
-    // ------------------------------------------------------------------------
-    // FUNCTION: build_phase
-    // The dpb, dpm and csp agents are created and the configuration object
-    // is assigned to them.
-    // When operating in ingress mode, it models the egress' dirty pointer
-    // broker module.
-    // When operating in egress mode it models the ingress clean segment
-    // pointer cache that sends read requests to the egress' clean pointer
-    // broker module, it also models the ingress' dirty pod manager.
-    // ------------------------------------------------------------------------
-    function void build_phase(uvm_phase phase);
-        super.build_phase(phase);
-        if(cfg_obj.bfm_mode == PBR_BFM_IGR_MODE) begin
-            cpb_agent = mby_pbr_bfm_cpb_agent::type_id::create("cpb_agent", this);
-            cpb_agent.cfg_obj = this.cfg_obj.cpb_cfg;
-            dpb_agent = mby_pbr_bfm_dpb_agent::type_id::create("dpb_agent", this);
-            dpb_agent.cfg_obj = this.cfg_obj.dpb_cfg;
-        end else if(cfg_obj.bfm_mode == PBR_BFM_EGR_MODE) begin
-            csp_agent = mby_pbr_bfm_csp_agent::type_id::create("csp_agent", this);
-            csp_agent.cfg_obj = this.cfg_obj.csp_cfg;
-            dpm_agent = mby_pbr_bfm_dpm_agent::type_id::create("dpm_agent", this);
-            dpm_agent.cfg_obj = this.cfg_obj.dpm_cfg;
-        end
-    endfunction
+   // -------------------------------------------------------------------------
+   // CONSTRUCTOR: new
+   //
+   // Constructor
+   //
+   // ARGUMENTS:
+   //    string name          - An instance name of the agent.
+   //    uvm_component parent - The agent's parent component pointer.
+   // -------------------------------------------------------------------------
+   function new(string name, uvm_component parent);
+      super.new(name, parent);
+      cfg_obj = mby_pbr_bfm_cfg::type_id::create("cfg_obj", this);
+   endfunction : new
 
-    // ------------------------------------------------------------------------
-    // FUNCTION: connect_phase
-    // ------------------------------------------------------------------------
-    function void connect_phase(uvm_phase phase);
-        super.connect_phase(phase);
-    endfunction
+   // ------------------------------------------------------------------------
+   // FUNCTION: build_phase
+   // The dpb, dpm and csp agents are created and the configuration object
+   // is assigned to them.
+   // When operating in ingress mode, it models the egress' dirty pointer
+   // broker module.
+   // When operating in egress mode it models the ingress clean segment
+   // pointer cache that sends read requests to the egress' clean pointer
+   // broker module, it also models the ingress' dirty pod manager.
+   // ------------------------------------------------------------------------
+   function void build_phase(uvm_phase phase);
+      
+      super.build_phase(phase);
+      // ----------------------------------------------------------------------
+      // Creating the proper pbr_bfm_agent based on the igr/egr mode and
+      // assigning configuration object
+      // ----------------------------------------------------------------------
+      if(cfg_obj.bfm_mode == PBR_BFM_IGR_MODE) begin
+         
+         cpb_agent = mby_pbr_bfm_cpb_agent::type_id::create("cpb_agent", this);
+         cpb_agent.cfg = new("cpb_agent_cfg");
+         cpb_agent.cfg.monitor_enable = this.cfg_obj.cpb_monitor_is_active;
+         cpb_agent.cfg.driver_enable = this.cfg_obj.cpb_driver_is_active;
+
+         dpb_agent = mby_pbr_bfm_dpb_agent::type_id::create("dpb_agent", this);
+         dpb_agent.cfg = new("dpb_agent_cfg");
+         dpb_agent.cfg.monitor_enable = this.cfg_obj.dpb_monitor_is_active;
+         dpb_agent.cfg.driver_enable = this.cfg_obj.dpb_driver_is_active;
+
+         cptr_req = mby_pbr_bfm_cptr_sub::type_id::create("cptr_req", this);
+         cptr_req.set_agent_ptr(cpb_agent);
+         `uvm_info(get_name(), ("DBG_ALF: Done building pbr bfm: IGR MODE"), UVM_LOW);
+      end else if(cfg_obj.bfm_mode == PBR_BFM_EGR_MODE) begin
+         csp_agent = mby_pbr_bfm_csp_agent::type_id::create("csp_agent", this);
+         csp_agent.cfg = new("csp_agent_cfg");
+         csp_agent.cfg.monitor_enable = this.cfg_obj.csp_monitor_is_active;
+         csp_agent.cfg.driver_enable = this.cfg_obj.csp_driver_is_active;
+
+         dpm_agent = mby_pbr_bfm_dpm_agent::type_id::create("dpm_agent", this);
+         dpm_agent.cfg = new("dpm_agent_cfg");
+         dpm_agent.cfg.monitor_enable = this.cfg_obj.dpm_monitor_is_active;
+         dpm_agent.cfg.driver_enable = this.cfg_obj.dpm_driver_is_active;
+
+         dptr_req = mby_pbr_bfm_dptr_sub::type_id::create("dptr_req", this);
+         dptr_req.set_agent_ptr(dpm_agent);
+         `uvm_info(get_name(), ("DBG_ALF: Done building pbr bfm: EGR MODE"), UVM_LOW);
+
+      end
+   endfunction
+
+   // ------------------------------------------------------------------------
+   // FUNCTION: connect_phase
+   // ------------------------------------------------------------------------
+   function void connect_phase(uvm_phase phase);
+      super.connect_phase(phase);
+      if(cfg_obj.bfm_mode == PBR_BFM_IGR_MODE) begin
+         cpb_agent.monitor.mon_ap.connect(cptr_req.analysis_export);
+      end else if(cfg_obj.bfm_mode == PBR_BFM_EGR_MODE) begin
+         dpm_agent.monitor.mon_ap.connect(dptr_req.analysis_export);
+      end
+   endfunction
 
 endclass : mby_pbr_bfm
 `endif

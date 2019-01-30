@@ -46,70 +46,63 @@
 //-----------------------------------------------------------------------------
 class mby_pbr_bfm_cfg extends shdv_base_config;
 
-    // VARIABLE: dpb_cfg
-    // Basic configuration object for the dpb_agent.
-    rand shdv_base_config dpb_cfg;
+   // VARIABLE: driver_is_active
+   // Agent is configured to be active or passive
+   rand uvm_active_passive_enum dpb_driver_is_active;
+   rand uvm_active_passive_enum dpm_driver_is_active;
+   rand uvm_active_passive_enum csp_driver_is_active;
+   rand uvm_active_passive_enum cpb_driver_is_active;
 
-    // VARIABLE: dpm_cfg
-    // Basic configuration object for the dpm_agent.
-    rand shdv_base_config dpm_cfg;
+   // VARIABLE: monitor_is_active
+   // Agent is configured to be active or passive
+   rand uvm_active_passive_enum dpb_monitor_is_active;
+   rand uvm_active_passive_enum dpm_monitor_is_active;
+   rand uvm_active_passive_enum csp_monitor_is_active;
+   rand uvm_active_passive_enum cpb_monitor_is_active;
 
-    // VARIABLE: csp_cfg
-    // Basic configuration object for the csp_agent.
-    rand shdv_base_config csp_cfg;
+   // VARIABLE: bfm_mode
+   // This is the PBR bfm mode of operation (igr/egr).
+   rand mby_pbr_bfm_mode_t bfm_mode;
 
-    // VARIABLE: cpb_cfg
-    // Basic configuration object for the cpb_agent.
-    rand shdv_base_config cpb_cfg;
+   // CONSTRAINT: pbr_mode_constraint
+   // Sets the dpb/dpm/csp/cpb agent's configuration settings based
+   // on the PBR's bfm_mode
+   constraint pbr_mode_constraint {
+      if(bfm_mode == PBR_BFM_IGR_MODE) {
+         dpb_driver_is_active  == UVM_ACTIVE;
+         dpb_monitor_is_active == UVM_ACTIVE;
+         dpm_driver_is_active  == UVM_PASSIVE;
+         dpm_monitor_is_active == UVM_PASSIVE;
+         csp_driver_is_active  == UVM_PASSIVE;
+         csp_monitor_is_active == UVM_PASSIVE;
+         cpb_driver_is_active  == UVM_ACTIVE;
+         cpb_monitor_is_active == UVM_ACTIVE;
+      } else if(bfm_mode == PBR_BFM_EGR_MODE) {
+         dpb_driver_is_active  == UVM_PASSIVE;
+         dpb_monitor_is_active == UVM_PASSIVE;
+         dpm_driver_is_active  == UVM_ACTIVE;
+         dpm_monitor_is_active == UVM_ACTIVE;
+         csp_driver_is_active  == UVM_ACTIVE;
+         csp_monitor_is_active == UVM_ACTIVE;
+         cpb_driver_is_active  == UVM_PASSIVE;
+         cpb_monitor_is_active == UVM_PASSIVE;
+      }
+   }
 
-    // VARIABLE: bfm_mode
-    // This is the PBR bfm mode of operation (igr/egr).
-    rand mby_pbr_bfm_mode_t bfm_mode;
+   // UVM object utils macro
+   `uvm_object_utils(mby_pbr_bfm_cfg)
 
-    // CONSTRAINT: pbr_mode_constraint
-    // Sets the dpb/dpm/csp/cpb agent's configuration settings based
-    // on the PBR's bfm_mode
-    // FIXME: set UVM_ACTIVE
-    constraint pbr_mode_constraint {
-        if(bfm_mode == PBR_BFM_IGR_MODE) {
-            dpb_cfg.driver_active  == UVM_ACTIVE;
-            dpb_cfg.monitor_active == UVM_ACTIVE;
-            dpm_cfg.driver_active  == UVM_PASSIVE;
-            dpm_cfg.monitor_active == UVM_PASSIVE;
-            csp_cfg.driver_active  == UVM_PASSIVE;
-            csp_cfg.monitor_active == UVM_PASSIVE;
-            cpb_cfg.driver_active  == UVM_ACTIVE;
-            cpb_cfg.monitor_active == UVM_ACTIVE;
-        } else if(bfm_mode == PBR_BFM_EGR_MODE) {
-            dpb_cfg.driver_active  == UVM_PASSIVE;
-            dpb_cfg.monitor_active == UVM_PASSIVE;
-            dpm_cfg.driver_active  == UVM_ACTIVE;
-            dpm_cfg.monitor_active == UVM_ACTIVE;
-            csp_cfg.driver_active  == UVM_ACTIVE;
-            csp_cfg.monitor_active == UVM_ACTIVE;
-            cpb_cfg.driver_active  == UVM_PASSIVE;
-            cpb_cfg.monitor_active == UVM_PASSIVE;
-        }
-    }
-
-    // UVM object utils macro
-    `uvm_object_utils(mby_pbr_bfm_cfg)
-
-    // -------------------------------------------------------------------------
-    // CONSTRUCTOR: new
-    //
-    // Constructor
-    //
-    // ARGUMENTS:
-    //    string name - An identifier for this configuration object.
-    // -------------------------------------------------------------------------
-    function new(string name = "mby_pbr_bfm_cfg");
-        super.new(name);
-        this.dpb_cfg = new("dpb_cfg");
-        this.dpm_cfg = new("dpm_cfg");
-        this.csp_cfg = new("csp_cfg");
-        this.cpb_cfg = new("cpb_cfg");
-    endfunction : new
+   // -------------------------------------------------------------------------
+   // CONSTRUCTOR: new
+   //
+   // Constructor
+   //
+   // ARGUMENTS:
+   //    string name - An identifier for this configuration object.
+   // -------------------------------------------------------------------------
+   function new(string name = "mby_pbr_bfm_cfg");
+      super.new(name);
+   endfunction : new
 
 endclass : mby_pbr_bfm_cfg
 `endif

@@ -55,6 +55,9 @@ module mby_egr_tb ();
   mby_tag_bfm_uc_if tag_bfm_intf_0 (egress_clock, egress_reset);
   mby_tag_bfm_uc_if tag_bfm_intf_1 (egress_clock, egress_reset);
 
+   mby_pbr_bfm_cptr_master_if pbr_bfm_cptr_master_intf_0(.clk(egress_clock),.rst(egress_reset));
+   mby_pbr_bfm_dptr_slave_if  pbr_bfm_dptr_slave_intf_0(.clk(egress_clock),.rst(egress_reset));
+   
 `include "mby_egr_top_inst.v"
 
   // Parameters for interfaces
@@ -134,6 +137,8 @@ module mby_egr_tb ();
                    ,.tag_bfm_intf_1    ( tag_bfm_intf_1    )
                    ,.memrd_req_if      ( memrd_req_if      )
                    ,.memwr_req_if      ( memwr_req_if      )
+                   ,.pbr_bfm_cptr_master_if (pbr_bfm_cptr_master_intf_0)
+                   ,.pbr_bfm_dptr_slave_if  (pbr_bfm_dptr_slave_intf_0)
                   );
 
 `include "std_ace_util.vic"
