@@ -343,7 +343,7 @@ print "MGM debug : @mbyMgmLibs\n";
 
             mby_gpm_bfm_lib    => {
                -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_gpm_bfm.hdl' ],
-               -dependent_libs  => [ 'shdv_shared_lib', 'mby_base_pkg_lib' ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'mby_base_pkg_lib' , 'mby_smm_bfm_lib' ],
                -tag             => "nonsynth",
             },
 
@@ -708,6 +708,7 @@ print "MGM debug : @mbyMgmLibs\n";
                         "mby_base_pkg_lib",
                         ## jjgodine: removing bfm library compiles for now
                         "mby_tag_bfm_lib",
+                        "mby_smm_bfm_lib",
                         "mby_gpm_bfm_lib",
                         "mby_pbr_bfm_lib",
                         "mby_pcm_bfm_lib",
