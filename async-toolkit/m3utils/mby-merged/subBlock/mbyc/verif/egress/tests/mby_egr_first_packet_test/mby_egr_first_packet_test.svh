@@ -44,6 +44,13 @@ class mby_egr_tag_seq extends mby_egr_extended_base_seq;
    // Task: body()
    //---------------------------------------------------------------------------
    virtual task body();
+       
+      uvm_status_e status;
+      uvm_path_e access_type = UVM_BACKDOOR;
+      uvm_reg_data_t read_data;
+      mby_egr_reg_pkg::mby_egr_reg_blk ral;
+      ral = env.tb_ral;
+       
       this.set_name("mby_egr_tag_seq");
       
       
@@ -67,11 +74,32 @@ class mby_egr_tag_seq extends mby_egr_extended_base_seq;
       
       
       wait_n(22);
-      
 
-
-
-
+/*
+      // Waiting for register to be implemented on RTL block
+      `uvm_info(get_name(), "CSR backdoor access", UVM_LOW);
+      ral.tx_pb_block.TX_PB_PORT_CFG.read(status, read_data, access_type);
+      if (read_data != '0)
+      begin
+         `uvm_warning(get_name(), "TX_PB_PORT_CFG: Read data is different from zero");
+      end else
+      begin
+         `uvm_info(get_name(), "TX_PB_PORT_CFG: Read data is zero", UVM_LOW);
+      end
+      wait_n(10);
+      ral.tx_pb_block.TX_PB_PORT_CFG.write(status, '1, access_type);
+      `uvm_info(get_name(), "TX_PB_PORT_CFG: Written data is 0xFFFFFFFF", UVM_LOW);
+      wait_n(10);
+      ral.tx_pb_block.TX_PB_PORT_CFG.read(status, read_data, access_type);
+      if (read_data != 'hffffffff)
+      begin
+         `uvm_warning(get_name(), "TX_PB_PORT_CFG: Read data is different written data");
+      end else
+      begin
+         `uvm_info(get_name(), "TX_PB_PORT_CFG: Read data is equal to written data", UVM_LOW);
+      end
+      wait_n(10);
+*/
 
       assert($cast(tag_sequencer, env.get_tb_seqr().pick_sequencer("tag_bfm_uc_0")))
 

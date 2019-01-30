@@ -75,6 +75,10 @@ class mby_egr_env extends mby_egr_base_env;
    // egress env event monitor
    mby_egr_env_monitor env_monitor;
 
+   // Variable:  tb_ral
+   // Handle to egr RAL.
+   mby_egr_reg_pkg::mby_egr_reg_blk tb_ral;
+
    `uvm_component_utils_begin(mby_egr_env)
    `uvm_component_utils_end
 
@@ -112,6 +116,7 @@ class mby_egr_env extends mby_egr_base_env;
       //build_eth_bfms();
       build_tag_bfm();
       build_smm_bfm();
+      build_ral();
 
       // Env monitor
       assert($cast(env_monitor, create_component("mby_egr_env_monitor","env_monitor")));
@@ -253,6 +258,42 @@ class mby_egr_env extends mby_egr_base_env;
    function void connect_smm_bfm();
       add_sequencer("smm_bfm", "smm_bfm_wr_req", smm_bfm.igr_wr_req_agent.sequencer);
    endfunction: connect_smm_bfm
+
+   //---------------------------------------------------------------------------
+   //  Function: build_ral
+   //  Builds egr register model.
+   //
+   //---------------------------------------------------------------------------
+   virtual function void build_ral();
+      // Check if ral is already set by FC
+      if (tb_ral == null) begin
+         tb_ral = mby_egr_reg_pkg::mby_egr_reg_blk::type_id::create("tb_ral");
+         tb_ral.build();
+         //TODO: Update the base addr.
+         tb_ral.default_map.set_base_addr(`UVM_REG_ADDR_WIDTH'h20000);
+         tb_ral.lock_model();
+
+         tb_ral.set_hdl_path_root("mby_egr_tb.egr_top_i");
+
+         //Build the Adapter's based on agt's active
+      end
+   endfunction: build_ral
+
+   //---------------------------------------------------------------------------
+   // Function: get_tb_ral()
+   // Returns object handle to egr ral (mby_egr_reg_blk)
+   //---------------------------------------------------------------------------
+   function mby_egr_reg_pkg::mby_egr_reg_blk get_tb_ral();
+      return tb_ral;
+   endfunction : get_tb_ral
+
+   //---------------------------------------------------------------------------
+   // Function: set_tb_ral()
+   // Sets handle to egr ral (mby_egr_reg_blk). Used to pass handle to RAL from fullchip env.
+   //---------------------------------------------------------------------------
+   function set_tb_ral(mby_egr_reg_pkg::mby_egr_reg_blk ral);
+      tb_ral = ral;
+   endfunction : set_tb_ral
 
    //---------------------------------------------------------------------------
    // Function: get_egr_env

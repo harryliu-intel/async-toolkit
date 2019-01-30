@@ -17,6 +17,7 @@
 reg rx_pb_port_cfg_r {
   shared;
 //edr  HandCoded = true;
+  DefaultValRTLSignal = "mby_rx_pb_inst.%REG_NAME%.%FIELD_NAME%";
   name = "Rx PB Port Configuration.";
   desc = "
       Port configuration for the Rx Packet Buffer.
@@ -57,6 +58,7 @@ reg rx_pb_port_cfg_r {
  reg rx_pb_wm_r {
    shared;
 //edr   HandCoded = true;
+   DefaultValRTLSignal = "mby_rx_pb_inst.%REG_NAME%.%FIELD_NAME%";
    desc = "
        Watermarks for pause and drop.
        First index is Rx logical port (0..17; includes virtual ports).

@@ -22,17 +22,17 @@
 ///
 
 //                                                                             
-// File:            rtlgen_pkg_mby_rx_pb_map.vh                                
+// File:            rtlgen_pkg_mby_tx_pb_map.vh                                
 // Creator:         ggomezde                                                   
-// Time:            Wednesday Jan 30, 2019 [10:27:46 am]                       
+// Time:            Wednesday Jan 30, 2019 [10:29:56 am]                       
 //                                                                             
-// Path:            /tmp/ggomezde/nebulon_run/2768731022_2019-01-30.10:27:12   
+// Path:            /tmp/ggomezde/nebulon_run/2289325233_2019-01-30.10:29:27   
 // Arguments:       -I                                                         
 //                  /nfs/site/disks/sc_mby_00088/ggomezde/mby/work_root/models/mby_ww05_ral_TI/tools/srdl
 //                  -sv_no_sai_checks -sverilog -crif -expand_handcoded_arrays 
-//                  -maximize_crif -input mby_rx_pb_map.rdl -timeout 60000     
-//                  -out_dir /tmp/tmp.C8ZQyTQrjK -log_file                     
-//                  /nfs/site/disks/sc_mby_00088/ggomezde/mby/work_root/models/mby_ww05_ral_TI/target/GenRTL/regflow/mby/subblock/mby_rx_pb_map_crif.xml.log
+//                  -maximize_crif -input mby_tx_pb_map.rdl -timeout 60000     
+//                  -out_dir /tmp/tmp.0b1MJL16ua -log_file                     
+//                  /nfs/site/disks/sc_mby_00088/ggomezde/mby/work_root/models/mby_ww05_ral_TI/target/GenRTL/regflow/mby/subblock/mby_tx_pb_map_crif.xml.log
 //                                                                             
 // MRE:             5.2018.3.p1                                                
 // Machine:         sccj004303                                                 
@@ -47,8 +47,8 @@
 //                                                                             
 
 
-`ifndef CFGPKG_mby_rx_pb_map
-`define CFGPKG_mby_rx_pb_map
+`ifndef CFGPKG_mby_tx_pb_map
+`define CFGPKG_mby_tx_pb_map
 
 
 // HEY!  Whenever we change this file, we must also change the name of the
@@ -62,7 +62,7 @@
 // 2.	Add symlinks to ./nebulon_qa/tests/RTL_tests/src/
 // 3.	Add symlinks to ./nebulon_qa/tests/RTL_tests/common/
 
-package rtlgen_pkg_mby_rx_pb_map;
+package rtlgen_pkg_mby_tx_pb_map;
 
 function automatic logic [7:0] f_sai_sb_to_cr (
    input logic [7:0] sai_sb
@@ -216,7 +216,7 @@ typedef struct packed {
 
 // ==========================================================================
 
-endpackage: rtlgen_pkg_mby_rx_pb_map
+endpackage: rtlgen_pkg_mby_tx_pb_map
 
 `endif
 

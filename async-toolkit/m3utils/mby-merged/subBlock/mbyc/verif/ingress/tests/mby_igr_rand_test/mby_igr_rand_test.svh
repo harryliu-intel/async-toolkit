@@ -72,8 +72,39 @@ class mby_igr_eth_simple_seq extends mby_igr_extended_base_seq;
    //---------------------------------------------------------------------------
    virtual task body();
       int count[4] = {0,0,0,0};
+
+      uvm_status_e status;
+      uvm_path_e access_type = UVM_BACKDOOR;
+      uvm_reg_data_t read_data;
+      mby_igr_reg_pkg::mby_igr_reg_blk ral;
+      ral = env.tb_ral;
+
       this.set_name("mby_igr_eth_simple_seq");
       wait_n(50);
+
+      `uvm_info(get_name(), "CSR backdoor access", UVM_LOW);
+      ral.rx_pb_block.RX_PB_PORT_CFG.read(status, read_data, access_type);
+      if (read_data != '0)
+      begin
+         `uvm_warning(get_name(), "RX_PB_PORT_CFG: Read data is different from zero");
+      end else
+      begin
+         `uvm_info(get_name(), "RX_PB_PORT_CFG: Read data is zero", UVM_LOW);
+      end
+      wait_n(10);
+      ral.rx_pb_block.RX_PB_PORT_CFG.write(status, '1, access_type);
+      `uvm_info(get_name(), "RX_PB_PORT_CFG: Written data is 0xFFFFFFFF", UVM_LOW);
+      wait_n(10);
+      ral.rx_pb_block.RX_PB_PORT_CFG.read(status, read_data, access_type);
+      if (read_data != 'hffffffff)
+      begin
+         `uvm_warning(get_name(), "RX_PB_PORT_CFG: Read data is different written data");
+      end else
+      begin
+         `uvm_info(get_name(), "RX_PB_PORT_CFG: Read data is equal to written data", UVM_LOW);
+      end
+      wait_n(10);
+
       `uvm_info("TST", ("Starting eth simple sequence..."), UVM_LOW)
       foreach(los_sequencers[i]) begin
          assert($cast(los_sequencers[i],

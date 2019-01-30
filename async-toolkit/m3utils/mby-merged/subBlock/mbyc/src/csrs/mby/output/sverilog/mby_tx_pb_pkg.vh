@@ -22,17 +22,17 @@
 ///
 
 //                                                                             
-// File:            mby_rx_pb_pkg.vh                                           
+// File:            mby_tx_pb_pkg.vh                                           
 // Creator:         ggomezde                                                   
-// Time:            Wednesday Jan 30, 2019 [10:27:46 am]                       
+// Time:            Wednesday Jan 30, 2019 [10:29:56 am]                       
 //                                                                             
-// Path:            /tmp/ggomezde/nebulon_run/2768731022_2019-01-30.10:27:12   
+// Path:            /tmp/ggomezde/nebulon_run/2289325233_2019-01-30.10:29:27   
 // Arguments:       -I                                                         
 //                  /nfs/site/disks/sc_mby_00088/ggomezde/mby/work_root/models/mby_ww05_ral_TI/tools/srdl
 //                  -sv_no_sai_checks -sverilog -crif -expand_handcoded_arrays 
-//                  -maximize_crif -input mby_rx_pb_map.rdl -timeout 60000     
-//                  -out_dir /tmp/tmp.C8ZQyTQrjK -log_file                     
-//                  /nfs/site/disks/sc_mby_00088/ggomezde/mby/work_root/models/mby_ww05_ral_TI/target/GenRTL/regflow/mby/subblock/mby_rx_pb_map_crif.xml.log
+//                  -maximize_crif -input mby_tx_pb_map.rdl -timeout 60000     
+//                  -out_dir /tmp/tmp.0b1MJL16ua -log_file                     
+//                  /nfs/site/disks/sc_mby_00088/ggomezde/mby/work_root/models/mby_ww05_ral_TI/target/GenRTL/regflow/mby/subblock/mby_tx_pb_map_crif.xml.log
 //                                                                             
 // MRE:             5.2018.3.p1                                                
 // Machine:         sccj004303                                                 
@@ -49,23 +49,23 @@
 
 // The NEBULON_RTLGEN_TEMPLATE env was: /nfs/site/disks/ccdo.soc.cad_root.0/cad/x86-64_linux26/dt/nebulon/d18ww52.4/generators/rtltemplates:/nfs/site/disks/ccdo.soc.cad_root.0/cad/x86-64_linux26/dt/nebulon/d18ww52.4/generators/overhead_templates:/nfs/site/disks/ccdo.soc.cad_root.0/cad/x86-64_linux26/dt/nebulon/d18ww52.4/generators/rtlgen_include_template:/nfs/site/disks/ccdo.soc.cad_root.0/cad/x86-64_linux26/dt/nebulon/d18ww52.4/generators/rtlgen_pkg_template
 
-`ifndef MBY_RX_PB_PKG_VH
-`define MBY_RX_PB_PKG_VH
+`ifndef MBY_TX_PB_PKG_VH
+`define MBY_TX_PB_PKG_VH
 
-`include "rtlgen_include_mby_rx_pb_map.vh"
-`include "rtlgen_pkg_mby_rx_pb_map.vh"
+`include "rtlgen_include_mby_tx_pb_map.vh"
+`include "rtlgen_pkg_mby_tx_pb_map.vh"
 
-package mby_rx_pb_pkg;
+package mby_tx_pb_pkg;
 
-import rtlgen_pkg_mby_rx_pb_map::*;
+import rtlgen_pkg_mby_tx_pb_map::*;
 
-typedef cfg_req_64bit_t mby_rx_pb_cr_req_t;
-typedef cfg_ack_64bit_t mby_rx_pb_cr_ack_t;
+typedef cfg_req_64bit_t mby_tx_pb_cr_req_t;
+typedef cfg_ack_64bit_t mby_tx_pb_cr_ack_t;
 typedef struct packed {
    logic treg_trdy; 
    logic treg_cerr;   
    logic [63:0] treg_rdata;
-} mby_rx_pb_sb_ack_t;
+} mby_tx_pb_sb_ack_t;
 
 // Comments were moved out of macro, due to collage failure
 // treg_data 
@@ -157,51 +157,36 @@ typedef struct packed {
 typedef struct packed {
     logic [31:0] reserved0;  // RSVD
     logic [31:0] PORT;  // RW
-} RX_PB_PORT_CFG_t;
+} TX_PB_PORT_CFG_t;
 
-localparam RX_PB_PORT_CFG_REG_STRIDE = 48'h8;
-localparam RX_PB_PORT_CFG_REG_ENTRIES = 1;
-localparam [47:0] RX_PB_PORT_CFG_CR_ADDR = 48'h0;
-localparam RX_PB_PORT_CFG_SIZE = 64;
-localparam RX_PB_PORT_CFG_PORT_LO = 0;
-localparam RX_PB_PORT_CFG_PORT_HI = 31;
-localparam RX_PB_PORT_CFG_PORT_RESET = 32'h0;
-localparam RX_PB_PORT_CFG_USEMASK = 64'hFFFFFFFF;
-localparam RX_PB_PORT_CFG_RO_MASK = 64'h0;
-localparam RX_PB_PORT_CFG_WO_MASK = 64'h0;
-localparam RX_PB_PORT_CFG_RESET = 64'h0;
-
-typedef struct packed {
-    logic [42:0] reserved0;  // RSVD
-    logic  [0:0] LOSSLESS;  // RW
-    logic  [9:0] XON;  // RW
-    logic  [9:0] XOFF_OR_DROP;  // RW
-} RX_PB_WM_t;
-
-localparam RX_PB_WM_REG_STRIDE = 48'h8;
-localparam RX_PB_WM_REG_ENTRIES = 8;
-localparam RX_PB_WM_REGFILE_STRIDE = 48'h40;
-localparam RX_PB_WM_REGFILE_ENTRIES = 17;
-localparam [16:0][7:0][47:0] RX_PB_WM_CR_ADDR = {{48'hC38, 48'hC30, 48'hC28, 48'hC20, 48'hC18, 48'hC10, 48'hC08, 48'hC00}, {48'hBF8, 48'hBF0, 48'hBE8, 48'hBE0, 48'hBD8, 48'hBD0, 48'hBC8, 48'hBC0}, {48'hBB8, 48'hBB0, 48'hBA8, 48'hBA0, 48'hB98, 48'hB90, 48'hB88, 48'hB80}, {48'hB78, 48'hB70, 48'hB68, 48'hB60, 48'hB58, 48'hB50, 48'hB48, 48'hB40}, {48'hB38, 48'hB30, 48'hB28, 48'hB20, 48'hB18, 48'hB10, 48'hB08, 48'hB00}, {48'hAF8, 48'hAF0, 48'hAE8, 48'hAE0, 48'hAD8, 48'hAD0, 48'hAC8, 48'hAC0}, {48'hAB8, 48'hAB0, 48'hAA8, 48'hAA0, 48'hA98, 48'hA90, 48'hA88, 48'hA80}, {48'hA78, 48'hA70, 48'hA68, 48'hA60, 48'hA58, 48'hA50, 48'hA48, 48'hA40}, {48'hA38, 48'hA30, 48'hA28, 48'hA20, 48'hA18, 48'hA10, 48'hA08, 48'hA00}, {48'h9F8, 48'h9F0, 48'h9E8, 48'h9E0, 48'h9D8, 48'h9D0, 48'h9C8, 48'h9C0}, {48'h9B8, 48'h9B0, 48'h9A8, 48'h9A0, 48'h998, 48'h990, 48'h988, 48'h980}, {48'h978, 48'h970, 48'h968, 48'h960, 48'h958, 48'h950, 48'h948, 48'h940}, {48'h938, 48'h930, 48'h928, 48'h920, 48'h918, 48'h910, 48'h908, 48'h900}, {48'h8F8, 48'h8F0, 48'h8E8, 48'h8E0, 48'h8D8, 48'h8D0, 48'h8C8, 48'h8C0}, {48'h8B8, 48'h8B0, 48'h8A8, 48'h8A0, 48'h898, 48'h890, 48'h888, 48'h880}, {48'h878, 48'h870, 48'h868, 48'h860, 48'h858, 48'h850, 48'h848, 48'h840}, {48'h838, 48'h830, 48'h828, 48'h820, 48'h818, 48'h810, 48'h808, 48'h800}};
-localparam RX_PB_WM_SIZE = 64;
-localparam RX_PB_WM_LOSSLESS_LO = 20;
-localparam RX_PB_WM_LOSSLESS_HI = 20;
-localparam RX_PB_WM_LOSSLESS_RESET = 'h0;
-localparam RX_PB_WM_XON_LO = 10;
-localparam RX_PB_WM_XON_HI = 19;
-localparam RX_PB_WM_XON_RESET = 'h200;
-localparam RX_PB_WM_XOFF_OR_DROP_LO = 0;
-localparam RX_PB_WM_XOFF_OR_DROP_HI = 9;
-localparam RX_PB_WM_XOFF_OR_DROP_RESET = 'h200;
-localparam RX_PB_WM_USEMASK = 64'h1FFFFF;
-localparam RX_PB_WM_RO_MASK = 64'h0;
-localparam RX_PB_WM_WO_MASK = 64'h0;
-localparam RX_PB_WM_RESET = 64'h80200;
+localparam TX_PB_PORT_CFG_REG_STRIDE = 48'h8;
+localparam TX_PB_PORT_CFG_REG_ENTRIES = 1;
+localparam TX_PB_PORT_CFG_CR_ADDR = 48'h0;
+localparam TX_PB_PORT_CFG_SIZE = 64;
+localparam TX_PB_PORT_CFG_PORT_LO = 0;
+localparam TX_PB_PORT_CFG_PORT_HI = 31;
+localparam TX_PB_PORT_CFG_PORT_RESET = 'h0;
+localparam TX_PB_PORT_CFG_USEMASK = 64'hFFFFFFFF;
+localparam TX_PB_PORT_CFG_RO_MASK = 64'h0;
+localparam TX_PB_PORT_CFG_WO_MASK = 64'h0;
+localparam TX_PB_PORT_CFG_RESET = 64'h0;
 
 typedef struct packed {
-    RX_PB_PORT_CFG_t  RX_PB_PORT_CFG;
-    RX_PB_WM_t [16:0][7:0] RX_PB_WM;
-} mby_rx_pb_registers_t;
+    logic [55:0] reserved0;  // RSVD
+    logic  [7:0] BUF_SIZE;  // RW
+} TX_PB_PREFETCH_t;
+
+localparam TX_PB_PREFETCH_REG_STRIDE = 48'h8;
+localparam TX_PB_PREFETCH_REG_ENTRIES = 16;
+localparam TX_PB_PREFETCH_CR_ADDR = 48'h80;
+localparam TX_PB_PREFETCH_SIZE = 64;
+localparam TX_PB_PREFETCH_BUF_SIZE_LO = 0;
+localparam TX_PB_PREFETCH_BUF_SIZE_HI = 7;
+localparam TX_PB_PREFETCH_BUF_SIZE_RESET = 'h0;
+localparam TX_PB_PREFETCH_USEMASK = 64'hFF;
+localparam TX_PB_PREFETCH_RO_MASK = 64'h0;
+localparam TX_PB_PREFETCH_WO_MASK = 64'h0;
+localparam TX_PB_PREFETCH_RESET = 64'h0;
 
 // ===================================================
 // load
@@ -219,6 +204,51 @@ typedef struct packed {
 // HandCoded Control structure
 //   (used by project HandCoded specified registers)
 
+typedef logic [7:0] we_TX_PB_PORT_CFG_t;
+
+typedef logic [7:0] we_TX_PB_PREFETCH_t;
+
+typedef struct packed {
+    we_TX_PB_PORT_CFG_t TX_PB_PORT_CFG;
+    we_TX_PB_PREFETCH_t TX_PB_PREFETCH;
+} mby_tx_pb_handcoded_t;
+
+typedef logic [7:0] re_TX_PB_PORT_CFG_t;
+
+typedef logic [7:0] re_TX_PB_PREFETCH_t;
+
+typedef struct packed {
+    re_TX_PB_PORT_CFG_t TX_PB_PORT_CFG;
+    re_TX_PB_PREFETCH_t TX_PB_PREFETCH;
+} mby_tx_pb_hc_re_t;
+
+typedef logic handcode_rvalid_TX_PB_PORT_CFG_t;
+
+typedef logic handcode_rvalid_TX_PB_PREFETCH_t;
+
+typedef struct packed {
+    handcode_rvalid_TX_PB_PORT_CFG_t TX_PB_PORT_CFG;
+    handcode_rvalid_TX_PB_PREFETCH_t TX_PB_PREFETCH;
+} mby_tx_pb_hc_rvalid_t;
+
+typedef logic handcode_wvalid_TX_PB_PORT_CFG_t;
+
+typedef logic handcode_wvalid_TX_PB_PREFETCH_t;
+
+typedef struct packed {
+    handcode_wvalid_TX_PB_PORT_CFG_t TX_PB_PORT_CFG;
+    handcode_wvalid_TX_PB_PREFETCH_t TX_PB_PREFETCH;
+} mby_tx_pb_hc_wvalid_t;
+
+typedef logic handcode_error_TX_PB_PORT_CFG_t;
+
+typedef logic handcode_error_TX_PB_PREFETCH_t;
+
+typedef struct packed {
+    handcode_error_TX_PB_PORT_CFG_t TX_PB_PORT_CFG;
+    handcode_error_TX_PB_PREFETCH_t TX_PB_PREFETCH;
+} mby_tx_pb_hc_error_t;
+
 // ===================================================
 // HandCoded Read/Write Structure
 //    (used by project HandCoded specified registers)
@@ -226,6 +256,16 @@ typedef struct packed {
 // ===================================================
 // HandCoded Read/Write Structure
 //    (used by project HandCoded specified registers)
+
+typedef struct packed {
+    TX_PB_PORT_CFG_t TX_PB_PORT_CFG;
+    TX_PB_PREFETCH_t TX_PB_PREFETCH;
+} mby_tx_pb_hc_reg_read_t;
+
+typedef struct packed {
+    TX_PB_PORT_CFG_t TX_PB_PORT_CFG;
+    TX_PB_PREFETCH_t TX_PB_PREFETCH;
+} mby_tx_pb_hc_reg_write_t;
 
 // ===================================================
 // RW/V2 Structure
@@ -237,6 +277,6 @@ typedef struct packed {
 // Watch Signals Structure
 
 
-endpackage: mby_rx_pb_pkg
+endpackage: mby_tx_pb_pkg
 
-`endif // MBY_RX_PB_PKG_VH
+`endif // MBY_TX_PB_PKG_VH

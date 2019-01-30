@@ -22,17 +22,17 @@
 ///
 
 //                                                                             
-// File:            rtlgen_include_mby_rx_pb_map.vh                            
+// File:            rtlgen_include_mby_tx_pb_map.vh                            
 // Creator:         ggomezde                                                   
-// Time:            Wednesday Jan 30, 2019 [10:27:46 am]                       
+// Time:            Wednesday Jan 30, 2019 [10:29:56 am]                       
 //                                                                             
-// Path:            /tmp/ggomezde/nebulon_run/2768731022_2019-01-30.10:27:12   
+// Path:            /tmp/ggomezde/nebulon_run/2289325233_2019-01-30.10:29:27   
 // Arguments:       -I                                                         
 //                  /nfs/site/disks/sc_mby_00088/ggomezde/mby/work_root/models/mby_ww05_ral_TI/tools/srdl
 //                  -sv_no_sai_checks -sverilog -crif -expand_handcoded_arrays 
-//                  -maximize_crif -input mby_rx_pb_map.rdl -timeout 60000     
-//                  -out_dir /tmp/tmp.C8ZQyTQrjK -log_file                     
-//                  /nfs/site/disks/sc_mby_00088/ggomezde/mby/work_root/models/mby_ww05_ral_TI/target/GenRTL/regflow/mby/subblock/mby_rx_pb_map_crif.xml.log
+//                  -maximize_crif -input mby_tx_pb_map.rdl -timeout 60000     
+//                  -out_dir /tmp/tmp.0b1MJL16ua -log_file                     
+//                  /nfs/site/disks/sc_mby_00088/ggomezde/mby/work_root/models/mby_ww05_ral_TI/target/GenRTL/regflow/mby/subblock/mby_tx_pb_map_crif.xml.log
 //                                                                             
 // MRE:             5.2018.3.p1                                                
 // Machine:         sccj004303                                                 
@@ -47,8 +47,8 @@
 //                                                                             
 
 
-`ifndef RTLGEN_INC_mby_rx_pb_map
-`define RTLGEN_INC_mby_rx_pb_map
+`ifndef RTLGEN_INC_mby_tx_pb_map
+`define RTLGEN_INC_mby_tx_pb_map
 
 //lintra push -68094
 
@@ -149,7 +149,7 @@ always_comb gate_clk = clock & enable;
 `endif // RTLGEN_ASSERT
 
 `ifndef IMPORT_RTLGEN_LATEST_PKG
-`define IMPORT_RTLGEN_LATEST_PKG import rtlgen_pkg_mby_rx_pb_map::*; 
+`define IMPORT_RTLGEN_LATEST_PKG import rtlgen_pkg_mby_tx_pb_map::*; 
 `endif
 
 //lintra pop
