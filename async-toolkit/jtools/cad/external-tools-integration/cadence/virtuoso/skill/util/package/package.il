@@ -10,3 +10,6 @@
 
 (defun PackageGetBinRootForArch ( ArchString )
   ( sprintf nil "%s/%s/bin" ( PackageGetPackageRoot ) ArchString ) )
+
+(defun LoadProjSW ( filename )
+  (load (strcat VirtuosoHome "/share/skill/proj/" filename) ) )
