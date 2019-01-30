@@ -57,6 +57,13 @@ package mby_pbr_bfm_pkg;
    `include "uvm_macros.svh"
    `include "mby_pbr_bfm_defines.svh"
    `include "mby_pbr_bfm_types.svh"
+   `include "mby_pbr_bfm_cfg.svh"
+   
+   `include "mby_pbr_bfm_cptr_rsp_seq.svh"
+   `include "mby_pbr_bfm_dptr_rsp_seq.svh"
+   `include "mby_pbr_bfm_cptr_req.svh"
+   `include "mby_pbr_bfm_dptr_req.svh"
+   
    `include "mby_pbr_bfm_cptr_xaction.svh"
    `include "mby_pbr_bfm_dptr_xaction.svh"
    `include "mby_pbr_bfm_cfg.svh"

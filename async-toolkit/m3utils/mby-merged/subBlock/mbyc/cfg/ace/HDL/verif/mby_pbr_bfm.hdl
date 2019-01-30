@@ -9,8 +9,10 @@ $hdl_spec = {
          "src/shared/rtl/shared_pkg.sv",
          "src/shared/rtl/mby_gmm_pkg.sv",
          "verif/lib/mby_pbr_bfm/mby_pbr_bfm_pkg_pre.sv",
-         "verif/lib/mby_pbr_bfm/mby_pbr_bfm_cptr_if.sv",
-         "verif/lib/mby_pbr_bfm/mby_pbr_bfm_dptr_if.sv",
+         "verif/lib/mby_pbr_bfm/mby_pbr_bfm_cptr_master_if.sv",
+         "verif/lib/mby_pbr_bfm/mby_pbr_bfm_cptr_slave_if.sv",
+         "verif/lib/mby_pbr_bfm/mby_pbr_bfm_dptr_master_if.sv",
+         "verif/lib/mby_pbr_bfm/mby_pbr_bfm_dptr_slave_if.sv",
          "verif/lib/mby_pbr_bfm/mby_pbr_bfm_pkg.sv",
      ],
 

@@ -44,6 +44,8 @@ module mby_igr_ti_high #(
    ,mby_ec_cdi_rx_intf  eth_bfm_rx_intf_4
    ,mby_tag_bfm_uc_if   tag_bfm_intf_0
    ,mby_tag_bfm_uc_if   tag_bfm_intf_1
+   ,mby_pbr_bfm_cptr_slave_if  pbr_bfm_cptr_slave_if
+   ,mby_pbr_bfm_dptr_master_if pbr_bfm_dptr_master_if
   );
 
    import uvm_pkg::*;
@@ -69,6 +71,8 @@ module mby_igr_ti_high #(
                        ,.eth_bfm_rx_intf_4 (eth_bfm_rx_intf_4)
                        ,.tag_bfm_intf_0    (tag_bfm_intf_0)
                        ,.tag_bfm_intf_1    (tag_bfm_intf_1)
+                       ,.pbr_bfm_cptr_slave_if    (pbr_bfm_cptr_slave_if)
+                       ,.pbr_bfm_dptr_master_if   (pbr_bfm_dptr_master_if)
                        );
 
 endmodule
