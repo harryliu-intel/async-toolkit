@@ -1,4 +1,4 @@
-(load "~/cds_wd/N2/n2/reroute.il")
+(LoadProjSW "n2/reroute.il")
 (RouteLeaf "lib.bd.standard.split.SPLIT_CTRL-L2-R.0" 2)
 (RouteLeaf "lib.bd.standard.split.ALT_SPLIT_CTRL-L2-R.0" 2)
 (RouteLeaf "lib.bd.standard.merge.MERGE_CTRL-L2-R.0" 2)

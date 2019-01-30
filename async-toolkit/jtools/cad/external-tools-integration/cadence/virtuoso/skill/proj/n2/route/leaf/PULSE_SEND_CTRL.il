@@ -1,4 +1,4 @@
-(load "~/cds_wd/N2/n2/reroute.il")
+(LoadProjSW "n2/reroute.il")
 (RouteLeaf "lib.bd.standard.send.PULSE_SEND_CTRL_CORE-Lfalse-R.0" 2)
 (RouteLeaf "lib.bd.standard.send.PULSE_SEND_CTRL_CORE-Ltrue-R.0" 2)
 (for i 0 8

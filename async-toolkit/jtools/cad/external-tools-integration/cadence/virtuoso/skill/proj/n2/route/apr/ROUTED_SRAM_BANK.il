@@ -1,4 +1,4 @@
-(load "~/cds_wd/dev/n2/reroute.il")
+(LoadProjSW "n2/reroute.il")
 (RouteProteus "lib.bd.6T.bank.ROUTED_SRAM_BANK-L512_24-R.2100"
               "lib.bd.6T.bank.ROUTED_SRAM_BANK-L512_24-R.2101"
               "lib.bd.6T.bank.ABSTRACT_SRAM_BANK-L512_24-R" ?topMetal 6)
