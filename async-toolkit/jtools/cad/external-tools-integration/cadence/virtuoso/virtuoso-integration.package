@@ -420,6 +420,7 @@ share/skill/proj/n1/export_apr.il                     skill/proj/n1/export_apr.i
 share/skill/proj/n1/fix_spc.il                        skill/proj/n1/fix_spc.il                        664 p
 share/skill/proj/n2/plc_pwr.il                        skill/proj/n2/plc_pwr.il                        664 p
 share/skill/proj/n2/reroute.il                        skill/proj/n2/reroute.il                        664 p
+share/skill/proj/n2/nominal_controllers.il            skill/proj/n2/nominal_controllers.il            664 p
 
 
 #new gds2cdl script
