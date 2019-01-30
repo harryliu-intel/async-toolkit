@@ -28,6 +28,7 @@ $hdl_spec = {
      "verif/egress/tests/mby_egr_rand_test",
      "verif/egress/tests/mby_egr_first_packet_test",
      "verif/egress/tests/mby_egr_lintra_test",
+     "verif/egress/tests/mby_egr_reset_test",
      ],
 
     # Arbitrary VLOG options

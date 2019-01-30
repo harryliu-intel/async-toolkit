@@ -22,16 +22,25 @@
 // Class: mby_egr_hard_reset_seq
 //-----------------------------------------------------------------------------
 import shdv_reset_pkg::*;
-class mby_egr_hard_reset_seq extends mby_egr_extended_base_seq;
+class mby_egr_mid_reset_seq extends mby_egr_extended_base_seq;
 
    shdv_reset_event        reset_event;
    shdv_reset_manager      reset_manager;
    shdv_reset_data         reset_data;
 
-   `uvm_object_utils(mby_egr_hard_reset_seq)
+   `uvm_object_utils(mby_egr_mid_reset_seq)
+
+   typedef enum {
+      HARD_RESET,
+      SOFT_RESET,
+      POWER_GOOD
+   }reset_type;
+
    rand int delay, duration;
-   
+   rand reset_type rst_type;
+
    constraint reset_select{
+      soft rst_type == POWER_GOOD;
       soft duration  inside {[80:100]};
       soft delay     inside {[0:5]};
    }
@@ -40,13 +49,24 @@ class mby_egr_hard_reset_seq extends mby_egr_extended_base_seq;
    //--------------------------------------------------------------------------
    task body();
 
-
-      randomize();
+      virtual mby_egr_env_if  env_if;
+      
       reset_data              = shdv_reset_data::type_id::create("reset_data");
       reset_data.rst_domain   = "egr";
 
-      reset_data.rst_type  = "power_good";
-      reset_event          = reset_manager.get_global("egr_power_good");
+      `uvm_info(get_name(), $sformatf("jesusalo: reset scenario type = %s, delay = %0d, duration = %0d", rst_type.name(),delay,duration), UVM_NONE)
+      case (rst_type)
+         POWER_GOOD  : begin
+            reset_data.rst_type  = "power_good";
+            reset_event          = reset_manager.get_global("egr_power_good");
+         end
+         HARD_RESET  : begin
+            reset_data.rst_type   = "hard";
+            reset_event          = reset_manager.get_global("egr_reset");
+         end
+         SOFT_RESET  : reset_data.rst_type   = "soft";
+         default  :  ;
+      endcase
 
       wait_n(delay);
       reset_event.set(reset_data);
@@ -57,4 +77,4 @@ class mby_egr_hard_reset_seq extends mby_egr_extended_base_seq;
 
    endtask : body
 
-endclass : mby_egr_hard_reset_seq
+endclass : mby_egr_mid_reset_seq

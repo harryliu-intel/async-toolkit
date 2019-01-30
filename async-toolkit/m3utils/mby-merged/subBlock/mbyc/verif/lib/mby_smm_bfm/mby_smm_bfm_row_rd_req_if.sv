@@ -117,6 +117,14 @@ interface mby_smm_bfm_row_rd_req_if(input logic clk, input logic rst);
        @(posedge clk);
    endtask
 
+   task hard_reset();
+      $display("Executing hard reset in the interface.");
+   endtask
+
+   task soft_reset();
+      $display("Executing soft reset in the interface.");
+   endtask
+
 endinterface : mby_smm_bfm_row_rd_req_if
 
 

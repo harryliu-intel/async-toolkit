@@ -31,7 +31,7 @@ interface mby_egr_env_if();
    // Dummy interrupt wire for monitoring.
    logic egress_int_wire;
 
-   initial begin
+ /*  initial begin
       egress_int_wire = 0;
       power_good_reset = 1;
       reset = 1;
@@ -39,11 +39,24 @@ interface mby_egr_env_if();
       power_good_reset = 0;
       reset = 0;
    end
-
+*/
+   initial begin
+      reset             = 0;
+      power_good_reset  = 0;
+      egress_int_wire   = 0;
+   end 
+   
    task mon_start();
       // wait for valid signal
       wait(egress_int_wire === 1);
       #0;
+   endtask
+
+   task drive_data(logic rst_data);
+      // If we have a posedge clock, signal is delayed by 1 clk
+      // since the reset event was originally triggered.
+      // @(posedge clock);
+      reset = rst_data;
    endtask
 
 endinterface : mby_egr_env_if

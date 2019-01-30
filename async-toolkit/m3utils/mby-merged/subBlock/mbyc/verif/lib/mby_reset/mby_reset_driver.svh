@@ -32,13 +32,13 @@
 //
 //------------------------------------------------------------------------------
 class mby_reset_driver extends shdv_reset_pkg::shdv_reset_driver;
-   
+
    mby_egr_env_if_h vintf;
-   
+
    // VARIABLE: cfg_obj
    // The agent's configuration object
    mby_base_config cfg_obj;
-   
+
    // -------------------------------------------------------------------------
    // Macro to register new class type
    // -------------------------------------------------------------------------
@@ -52,32 +52,66 @@ class mby_reset_driver extends shdv_reset_pkg::shdv_reset_driver;
       super.connect_phase(phase);
 
       //Register reset events in the reset manager related to this driver
-      add_reset("reset");
-      //add_reset("egr_soft_reset");
+      add_reset("egr_reset");
+      add_reset("egr_power_good");
    endfunction
 
    //Whenever the right event is asserted, set_reset() method is executed.
    task set_reset(shdv_reset_data data);
-      //egr_hard_reset
-      if(data.rst_type == "hard" && data.rst_domain == "egr")begin
-         vintf.reset = 1;
-         vintf.egress_int_wire = 1;
+
+      // ========= EGRESS =========
+      if(data.rst_domain == "egr") begin
+         case (data.rst_type)
+            "hard"         : begin
+               vintf.reset             <= 1;
+               vintf.egress_int_wire   <= 1;
+            end
+            "power_good"   : begin
+               vintf.power_good_reset  <= 1;
+               //vintf.egress_int_wire   <= 1;
+            end
+            default  : ;
+         endcase
+      // RESET_EVENT: hard_reset
       end
+
+      // ========= INGRESS =========
+      if(data.rst_domain == "igr") begin
+
+      end
+
    endtask:set_reset
 
    //Whenever the right event is de-asserted, clear_reset() method is executed.
    task clear_reset(shdv_reset_data data);
-      //egr_hard_reset
-      if(data.rst_type == "hard" && data.rst_domain == "egr")begin
-         vintf.reset = 0;
-         vintf.egress_int_wire = 0;
+
+      // ========= EGRESS =========
+      if(data.rst_domain == "egr") begin
+         case (data.rst_type)
+            "hard"         : begin
+               vintf.reset             <= 0;
+               vintf.egress_int_wire   <= 0;
+            end
+            "power_good"   : begin
+               vintf.power_good_reset  <= 0;
+               //vintf.egress_int_wire   <= 0;
+            end
+            default  : ;
+         endcase
+      // RESET_EVENT: hard_reset
       end
+
+      // ========= INGRESS =========
+      if(data.rst_domain == "igr") begin
+
+      end
+
    endtask : clear_reset
 
    function void assign_vintf(mby_egr_env_if_h vintf);
-      this.vintf = vintf;   
+      this.vintf = vintf;
    endfunction
-   
+
    task run_phase(uvm_phase phase);
       super.run_phase(phase);
    endtask : run_phase
@@ -98,7 +132,7 @@ class mby_reset_driver extends shdv_reset_pkg::shdv_reset_driver;
    function void assign_cfg(mby_base_config cfg);
       this.cfg_obj = cfg;
    endfunction : assign_cfg
-   
+
 endclass:mby_reset_driver
 
 

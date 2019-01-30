@@ -1,14 +1,14 @@
 //-----------------------------------------------------------------------------
-// Title         : Madison Bay SMM Bus Functional Model Package
+// Title         : Madison Bay Reset Monitor
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : mby_reset_driver.svh
+// File          : mby_reset_monitor.svh
 // Author        : Jesus Alfonso Lopez Chin <jesus.a.lopez.chin@intel.com>
 // Created       : 01.17.2019
 //-----------------------------------------------------------------------------
 // Description :
-// This is the MBY RESET DRIVER. It's in charge of listening to reset events and
-// drive the right type of reset to the reset interface.
+// This is the MBY RESET MONITOR. It's in charge of listening to reset events and
+// notifying other components through more events.
 //-----------------------------------------------------------------------------
 // Copyright (c) 2018 by Intel Corporation This model is the confidential and
 // proprietary property of Intel Corporation and the possession or use of this
@@ -51,10 +51,6 @@ class mby_reset_monitor extends shdv_reset_pkg::shdv_reset_monitor;
 
    function void connect_phase(uvm_phase phase);
       super.connect_phase(phase);
-
-   //Register reset events in the reset manager related to this driver
-   //add_reset("egr_hard_reset");
-   //add_reset("egr_soft_reset");
    endfunction
 
    function void assign_vintf(mby_egr_env_if_h vintf);
@@ -65,27 +61,28 @@ class mby_reset_monitor extends shdv_reset_pkg::shdv_reset_monitor;
    // a new event accordingly
    task monitor_reset();
       wait(vintf.power_good_reset === 0);
-      
+
       forever begin
-         begin //Looking at "H_RESET"
-            @(posedge vintf.reset);
-            `uvm_info(get_name(), "jesusalo: RESET asserted. Creating a new event to notify all components.", UVM_NONE);
-            reset_event = reset_manager.get_global("egr_hard_reset");
-            reset_data = shdv_reset_data::type_id::create("reset_data");
-            reset_data.rst_domain = "egr";
-            reset_data.rst_type   = "hard";
-            // Rst_mode shouldnt matter. Its on the test's sequence
-            //reset_data.rst_mode   = CLEAN_RESET;
-            reset_event.set(reset_data);
+         fork
+            begin //Looking at "H_RESET"
+               @(posedge vintf.reset);
+               `uvm_info(get_name(), "jesusalo: RESET asserted. Creating a new event to notify all components.", UVM_NONE);
+               reset_event             = reset_manager.get_global("egr_hard_reset");
+               reset_data              = shdv_reset_data::type_id::create("reset_data");
+               reset_data.rst_domain   = "egr";
+               reset_data.rst_type     = "hard";
 
-            @(negedge vintf.reset);
-            `uvm_info(get_name(), "jesusalo: RESET de-asserted. About to clear the reset event.", UVM_NONE);
-            reset_event.clear();
-         end
+               reset_event.set(reset_data);
 
-         begin //Looking at "S_RESET"
+               @(negedge vintf.reset);
+               `uvm_info(get_name(), "jesusalo: RESET de-asserted. About to clear the reset event.", UVM_NONE);
+               reset_event.clear();
+            end
 
-         end
+            begin //Looking at "S_RESET"
+
+            end
+         join
       end
    endtask : monitor_reset
 

@@ -120,14 +120,16 @@ class mby_tag_bfm extends uvm_component;
          uvm_config_db#(mby_base_config)::set(this, "tag_uc_agent", "cfg_obj", cfg_obj);
          tag_uc_agent_config = shdv_base_agent_config::type_id::create("cfg", this);
          tag_uc_agent.cfg = tag_uc_agent_config;
-         
+         tag_uc_agent.add_reset("egr_hard_reset");
+         tag_uc_agent.add_reset("egr_dummy_reset");
+
          `uvm_info(this.get_full_name(),
             "Created the uni-cast tag_agent instance and assigned the cfg_obj",
             UVM_DEBUG)
       end else begin
          tag_mc_agent = mby_tag_bfm_mc_agent::type_id::create("tag_mc_agent", this);
          tag_uc_agent_config = shdv_base_agent_config::type_id::create("cfg", this);
-         
+
          uvm_config_db#(mby_base_config)::set(this, "tag_mc_agent", "cfg_obj", cfg_obj);
          tag_mc_agent.cfg =   tag_uc_agent_config;
          //this.cfg_obj;
@@ -155,6 +157,7 @@ class mby_tag_bfm extends uvm_component;
    // ------------------------------------------------------------------------
    function void connect_phase(uvm_phase phase);
       super.connect_phase(phase);
+
       // ----------------------------------------------------------------------
       // Connect the frame_gen only when the bfm is in egress mode
       // When operating in IGR mode, the bmf is just monitoring the tag ring,
@@ -163,15 +166,15 @@ class mby_tag_bfm extends uvm_component;
       if(cfg_obj.bfm_mode == TAG_BFM_EGR_MODE) begin
          // TODO: add the connection(s) here
          if(cfg_obj.traffic_mode == TAG_BFM_UC_MODE) begin
-            // TODO: add connections to uni-cast agent
+         // TODO: add connections to uni-cast agent
          end else begin
-            // TODO: add connections to multi-cast agent
+         // TODO: add connections to multi-cast agent
          end
          `uvm_info(this.get_full_name(),
             "Done connecting the frame generator",
             UVM_DEBUG)
       end
-    endfunction : connect_phase
+   endfunction : connect_phase
 
 endclass : mby_tag_bfm
 `endif
