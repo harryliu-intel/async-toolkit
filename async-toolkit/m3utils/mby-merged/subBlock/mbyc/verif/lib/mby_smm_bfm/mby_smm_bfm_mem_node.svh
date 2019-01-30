@@ -47,6 +47,14 @@ class mby_smm_bfm_mem_node
    //    address as key, which points to the data stored in it.
    reg [DATA_WIDTH-1:0] MEM [logic];
    
+   // VARIABLE: node_row
+   //    Node row index in SMM.
+   bit [SMM_BFM_NUM_MSH_ROWS - 1:0] node_row;
+   
+   // VARIABLE: node_col
+   //    Node column index in SMM.
+   bit [SMM_BFM_NUM_MSH_COLS - 1:0] node_col;
+   
    // -------------------------------------------------------------------------
    // CONSTRUCTOR: new
    //
@@ -61,6 +69,19 @@ class mby_smm_bfm_mem_node
    endfunction : new
 
    // -------------------------------------------------------------------------
+   // FUNCTION: set_row_col
+   //
+   // Assigns the node_row, node_col values for this node.
+   //
+   // ARGUMENTS:
+   //    smm_bfm_rd_req_agent rd_req_agent_ptr  - An instance name of the address translator.
+   // -------------------------------------------------------------------------
+   function void set_row_col(bit [SMM_BFM_NUM_MSH_ROWS - 1:0] node_row, bit [SMM_BFM_NUM_MSH_COLS - 1:0] node_col);
+      this.node_row = node_row;
+      this.node_col = node_col;
+   endfunction : set_row_col
+
+   // -------------------------------------------------------------------------
    // FUNCTION: mwr()
    //
    // Issues memory writes made to this SMM node.
@@ -71,15 +92,17 @@ class mby_smm_bfm_mem_node
    // -------------------------------------------------------------------------
    function mwr(logic [ADDR_WIDTH-1:0] address, logic [DATA_WIDTH-1:0] wr_data);
       string msg_str;
+      string mwr_req_str = $sformatf("NodeRow = 0x%0x, NodeCol = 0x%0x, Address = 0x%04x", node_row, node_col, address);
       
       //TODO : Look for Mrd Req in Cache. If there, then service request otherwise do Data MWr into MEM 
       if(!MEM.exists(address)) begin
          MEM[address] = wr_data;
          
-         msg_str = $sformatf("mwr(): SMM BFM node memory write issued at Address = 0x%04x, Data = 0x%0128x", address, wr_data);
+         msg_str = $sformatf("mwr(): SMM BFM node memory write issued at %s, Data = 0x%0128x", mwr_req_str, wr_data);
       end else begin
          // TODO : Should we worry about this?
-         msg_str = $sformatf("mwr(): Attempted to write SMM BFM node Address = 0x%04x with Data = 0x%0128x, ", address, wr_data);
+         msg_str = $sformatf("mwr(): Attempted to write SMM BFM %s with Data = 0x%0128x, ",
+            mwr_req_str, wr_data);
          msg_str = {msg_str, "but the write wasn't completed due to memory address already contains data."};
       end
       
@@ -99,16 +122,18 @@ class mby_smm_bfm_mem_node
    // -------------------------------------------------------------------------
    function logic [DATA_WIDTH-1:0] mrd(logic [ADDR_WIDTH-1:0] address);
       string msg_str;
+      string mrd_req_str = $sformatf("NodeRow = 0x%0x, NodeCol = 0x%0x, Address = 0x%04x", node_row, node_col, address);
+      
       logic    [DATA_WIDTH-1:0] rd_data;
       
       if(MEM.exists(address)) begin
          rd_data = MEM[address];
          MEM.delete(address);
          
-         msg_str = $sformatf("mrd(): SMM BFM node memory read at Address = 0x%04x, Data = 0x%0128x", address, rd_data);
+         msg_str = $sformatf("mrd(): SMM BFM node memory read at %s, Data = 0x%0128x", mrd_req_str, rd_data);
       end else begin
          // TODO : Should we worry about this?
-         msg_str = $sformatf("mrd(): Attempted to read SMM BFM node memory Address = 0x%04x, ", address, rd_data);
+         msg_str = $sformatf("mrd(): Attempted to read SMM BFM %s, ", mrd_req_str);
          msg_str = {msg_str, "but that memory location hasn't been set."};
       end
       //TODO: If Data Write has not arrived, store MRd Req in Cache - Not yet defined.

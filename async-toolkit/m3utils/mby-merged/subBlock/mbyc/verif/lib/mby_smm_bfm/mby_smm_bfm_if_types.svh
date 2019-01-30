@@ -30,7 +30,7 @@
 // express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
-//`ifndef __MBY_SMM_BFM_PKG__  TODO : shouldn't have commented out code, remove this?
+//`ifndef __MBY_SMM_BFM_PKG__
 //`error "Attempt to include file outside of mby_smm_bfm_pkg."
 //`endif
 `ifndef __MBY_SMM_BFM_IF_TYPES__
@@ -44,7 +44,7 @@
 // The struct format defined here is a copy from the Mesh West Side Interface from: subBlock/mbyc/src/msh/rtl/mby_msh.sv 
 
 // TODO : types defined for SMM BFM aren't included yet at this point, need to later replace these global
-// parameters with the local ones
+//        parameters with the local ones
 typedef struct packed {  // Copy of: subBlock/mbyc/src/shared/interfaces/mim_wr_if.sv
   logic                       mim_wreq_valid;
   logic [W_SEG_PTR-1:0]       mim_wr_seg_ptr; //[19:0]
@@ -53,7 +53,7 @@ typedef struct packed {  // Copy of: subBlock/mbyc/src/shared/interfaces/mim_wr_
   logic [W_REQ_ID-1:0]        mim_wreq_id;    //[12:0]
   logic [W_WORD_BITS-1:0]     mim_wr_data;    // 64*8
 
-  logic [W_XACT_CREDITS-1:0]  mim_wreq_credits; // temp value  FIXME : why mentioned as temp value?
+  logic [W_XACT_CREDITS-1:0]  mim_wreq_credits; // temp value
 } mby_smm_bfm_row_wr_req_t;
 
 typedef struct packed {   // Copy of: subBlock/mbyc/src/shared/interfaces/mim_rd_if.sv
@@ -63,12 +63,12 @@ typedef struct packed {   // Copy of: subBlock/mbyc/src/shared/interfaces/mim_rd
   logic [W_WD_SEL-1:0]        mim_wd_sel;       //[ 2:0]
   logic [W_REQ_ID-1:0]        mim_req_id;       //[12:0]
 
-  logic [W_XACT_CREDITS-1:0]   mim_rreq_credits; // temp value  FIXME : why mentioned as temp value?
+  logic [W_XACT_CREDITS-1:0]   mim_rreq_credits; // temp value
 
   logic                         mim_rrsp_valid;
   logic [W_RRSP_DEST_BLOCK-1:0] mim_rrsp_dest_block;  //[2:0]
   logic [W_REQ_ID-1:0]          mim_rrsp_req_id;  //[12:0]
-  logic [W_WORD_BITS-1:0]       mim_rd_data;      //64 x 8 FIXME : is this the same as data width? can replace with SMM_BFM_ADDR_WIDTH
+  logic [W_WORD_BITS-1:0]       mim_rd_data;      //64 x 8
 } mby_smm_bfm_row_rd_req_t;
 
 // Defining the debug types to be simple logic for now.

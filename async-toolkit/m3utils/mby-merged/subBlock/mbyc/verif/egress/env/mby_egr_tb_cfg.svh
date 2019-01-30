@@ -29,7 +29,7 @@ class mby_egr_tb_cfg extends shdv_base_config;
 
    mby_egr_env_cfg env_cfg;
    mby_egr_dut_cfg dut_cfg;
-   rand mesh_status_type_e mesh_status = NO_CONGESTION;
+   rand mesh_status_e mesh_status = NO_CONGESTION;
    rand eth_bfm_pkg::speed_e speed_cfg[4]; 
    bit randomize_speed_cfg = $test$plusargs("RAND_SPEED_CFG"); 
        
@@ -58,6 +58,9 @@ class mby_egr_tb_cfg extends shdv_base_config;
    //--------------------------------------------------------------------------
    function new (string name = "mby_egr_tb_cfg");
       super.new(name);
+      
+      env_cfg = new();
+      dut_cfg = new();
    endfunction : new
 
 endclass : mby_egr_tb_cfg

@@ -116,8 +116,8 @@ module mby_egr_ti_low #(
       // Other interfaces registration
       /////////////////////////////////////////////////////////////////////////
       uvm_config_db#(virtual mby_egr_env_if)::set(uvm_root::get(),     $sformatf("%s*",IP_ENV), "egress_if", egress_if);
-      uvm_config_db#(virtual mby_smm_bfm_mwr_req_if)::set(uvm_root::get(), $sformatf("%s*egr_wr_req_agent*",IP_ENV), "vintf", memwr_req_if);
-      uvm_config_db#(virtual mby_smm_bfm_mrd_req_if)::set(uvm_root::get(), $sformatf("%s*egr_rd_req_agent*",IP_ENV), "vintf", memrd_req_if);
+      //uvm_config_db#(virtual mby_smm_bfm_mwr_req_if)::set(uvm_root::get(), $sformatf("%s*egr_wr_req_agent*",IP_ENV), "vintf", memwr_req_if);
+      //uvm_config_db#(virtual mby_smm_bfm_mrd_req_if)::set(uvm_root::get(), $sformatf("%s*egr_rd_req_agent*",IP_ENV), "vintf", memrd_req_if);
    end
 
    mby_egr_ti_cfg ti_config;
