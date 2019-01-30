@@ -284,11 +284,15 @@ task mby_first_packet_seq:: traffic_rst_traffic();
       pause_all_traffic();
       //Wait for IDLE
       wait_n(200);
-   end else if ($test$plusargs("DIRTY_RESET"))begin
+      pull_reset();
+   end else if($test$plusargs("DIRTY_RESET"))begin
       `uvm_info(get_name(), "[RST_DBG]: Dirty Reset flow", UVM_NONE)
+      fork
+         pause_all_traffic();
+         pull_reset();
+      join
    end
 
-   pull_reset();
 
    //TODO: Replace with CONFIG_PHASE
    `uvm_warning(get_type_name(), "Waiting for 500 cycles. Simulating the CONFIG_PHASE. Replace the wait for the actual config sequence once it's available.")

@@ -66,7 +66,7 @@ class mby_reset_monitor extends shdv_reset_pkg::shdv_reset_monitor;
          fork
             begin //Looking at "H_RESET"
                @(posedge vintf.reset);
-               `uvm_info(get_name(), "jesusalo: RESET asserted. Creating a new event to notify all components.", UVM_NONE);
+               `uvm_info(get_type_name(), "[RST_DBG]: RESET asserted. Creating a new event to notify all components.", UVM_NONE);
                reset_event             = reset_manager.get_global("egr_hard_reset");
                reset_data              = shdv_reset_data::type_id::create("reset_data");
                reset_data.rst_domain   = "egr";
@@ -75,7 +75,7 @@ class mby_reset_monitor extends shdv_reset_pkg::shdv_reset_monitor;
                reset_event.set(reset_data);
 
                @(negedge vintf.reset);
-               `uvm_info(get_name(), "jesusalo: RESET de-asserted. About to clear the reset event.", UVM_NONE);
+               `uvm_info(get_type_name(), "[RST_DBG]: RESET de-asserted. About to clear the reset event.", UVM_NONE);
                reset_event.clear();
             end
 

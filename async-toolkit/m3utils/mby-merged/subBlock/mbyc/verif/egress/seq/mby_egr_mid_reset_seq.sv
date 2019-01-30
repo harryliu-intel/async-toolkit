@@ -50,11 +50,11 @@ class mby_egr_mid_reset_seq extends mby_egr_extended_base_seq;
    task body();
 
       virtual mby_egr_env_if  env_if;
-      
+
       reset_data              = shdv_reset_data::type_id::create("reset_data");
       reset_data.rst_domain   = "egr";
 
-      `uvm_info(get_name(), $sformatf("jesusalo: reset scenario type = %s, delay = %0d, duration = %0d", rst_type.name(),delay,duration), UVM_NONE)
+      `uvm_info(get_name(), $sformatf("[RST_DBG]: reset scenario type = %s, delay = %0d, duration = %0d", rst_type.name(),delay,duration), UVM_NONE)
       case (rst_type)
          POWER_GOOD  : begin
             reset_data.rst_type  = "power_good";
@@ -69,9 +69,11 @@ class mby_egr_mid_reset_seq extends mby_egr_extended_base_seq;
       endcase
 
       wait_n(delay);
+      `uvm_info(get_name(), "[RST_DBG]: Reset event triggered", UVM_LOW)
       reset_event.set(reset_data);
 
       wait_n(duration);
+      `uvm_info(get_name(), "[RST_DBG]: Reset event cleared", UVM_LOW)
       reset_event.clear();
 
 
