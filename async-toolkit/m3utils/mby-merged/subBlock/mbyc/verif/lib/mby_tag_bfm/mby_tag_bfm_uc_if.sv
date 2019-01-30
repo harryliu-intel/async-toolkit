@@ -41,7 +41,7 @@
 interface mby_tag_bfm_uc_if(input logic clk, input logic rst);
    import shared_pkg::*;
    import mby_gmm_pkg::*; // TODO: change this once the lltformat_t is placed in
-                          //       the right place.
+   //       the right place.
 
    mby_tag_ring_t intf_data_pkt;
    logic          intf_debg_pkt;
@@ -57,7 +57,7 @@ interface mby_tag_bfm_uc_if(input logic clk, input logic rst);
       wait(rst===1)//intf_data_pkt <= 0;
       clear_interface();
    end
-   
+
    task clear_interface();
       intf_data_pkt <= 0;
    endtask: clear_interface
@@ -78,13 +78,13 @@ interface mby_tag_bfm_uc_if(input logic clk, input logic rst);
    //
    //---------------------------------------------------------------------------
    task drive_data(logic [DATA_WIDTH-1:0] data_pkt,
-                   logic [DEBG_WIDTH-1:0] debg_pkt,
-                   logic [DLAY_WIDTH-1:0] delay);
+         logic [DEBG_WIDTH-1:0] debg_pkt,
+         logic [DLAY_WIDTH-1:0] delay);
       @(posedge clk);
       intf_data_pkt <= data_pkt;
       intf_debg_pkt <= debg_pkt;
       @(posedge clk)
-      intf_data_pkt.valid <= 0;
+         intf_data_pkt.valid <= 0;
       intf_debg_pkt <= 0;
    endtask
 
@@ -118,7 +118,7 @@ interface mby_tag_bfm_uc_if(input logic clk, input logic rst);
    //
    //---------------------------------------------------------------------------
    task mon_data(output logic [DATA_WIDTH-1:0] data_pkt,
-                 output logic [DEBG_WIDTH-1:0] debg_pkt);
+         output logic [DEBG_WIDTH-1:0] debg_pkt);
       if (intf_data_pkt.valid === 1) begin
          data_pkt = intf_data_pkt;
          debg_pkt = intf_debg_pkt;
@@ -127,6 +127,15 @@ interface mby_tag_bfm_uc_if(input logic clk, input logic rst);
       end
    endtask
 
+   task hard_reset();
+      $display("Executing hard reset in the interface.");
+      intf_data_pkt  <= 0;
+      intf_debg_pkt  <= 0;
+   endtask
+
+   task soft_reset();
+      $display("Executing soft reset in the interface.");
+   endtask
 endinterface : mby_tag_bfm_uc_if
 
 `endif

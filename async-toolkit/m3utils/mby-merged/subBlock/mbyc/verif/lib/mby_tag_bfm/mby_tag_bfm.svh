@@ -120,6 +120,8 @@ class mby_tag_bfm extends uvm_component;
          tag_uc_agent.cfg = new("tag_uc_agent_config");
          tag_uc_agent.cfg.monitor_enable = cfg_obj.monitor_active;
          tag_uc_agent.cfg.driver_enable = cfg_obj.driver_active;
+         tag_uc_agent.add_reset("egr_hard_reset");
+         tag_uc_agent.add_reset("egr_dummy_reset");
          
          `uvm_info(this.get_full_name(),
             "Created the uni-cast tag_agent instance and assigned the cfg_obj",
@@ -129,7 +131,7 @@ class mby_tag_bfm extends uvm_component;
          tag_mc_agent.cfg =   new("tag_mc_agent_config");
          tag_mc_agent.cfg.monitor_enable = cfg_obj.monitor_active;
          tag_mc_agent.cfg.driver_enable = cfg_obj.driver_active;
-         
+
          `uvm_info(this.get_full_name(),
             "Created the multi-cast tag_agent instance and assigned the cfg_obj",
             UVM_DEBUG)
@@ -162,15 +164,15 @@ class mby_tag_bfm extends uvm_component;
       if(cfg_obj.bfm_mode == TAG_BFM_EGR_MODE) begin
          // TODO: add the connection(s) here
          if(cfg_obj.traffic_mode == TAG_BFM_UC_MODE) begin
-            // TODO: add connections to uni-cast agent
+         // TODO: add connections to uni-cast agent
          end else begin
-            // TODO: add connections to multi-cast agent
+         // TODO: add connections to multi-cast agent
          end
          `uvm_info(this.get_full_name(),
             "Done connecting the frame generator",
             UVM_DEBUG)
       end
-    endfunction : connect_phase
+   endfunction : connect_phase
 
 endclass : mby_tag_bfm
 `endif

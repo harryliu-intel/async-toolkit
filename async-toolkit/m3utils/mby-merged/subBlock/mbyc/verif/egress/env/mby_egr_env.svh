@@ -75,6 +75,8 @@ class mby_egr_env extends mby_egr_base_env;
    // egress env event monitor
    mby_egr_env_monitor env_monitor;
 
+   mby_reset_agent rst_agent;
+
    `uvm_component_utils_begin(mby_egr_env)
    `uvm_component_utils_end
 
@@ -120,6 +122,9 @@ class mby_egr_env extends mby_egr_base_env;
       // get global event pool
       egress_epool = egress_epool.get_global_pool();
 
+      //RESET AGENT
+      assert($cast(rst_agent, create_component("mby_reset_agent","rst_agent")));
+
    endfunction : build_phase
 
    //--------------------------------------------------------------------------
@@ -141,6 +146,12 @@ class mby_egr_env extends mby_egr_base_env;
       if (env_monitor != null) begin
          env_monitor.egress_if = egress_if;
       end
+      
+      if(rst_agent != null)begin
+         `uvm_info(get_name(), "jesusalo: RESET_AGENT.driver/monitor were assigned to the reset if.", UVM_LOW)
+         rst_agent.rst_driver.assign_vintf(egress_if);
+         rst_agent.rst_monitor.assign_vintf(egress_if);
+      end 
    endfunction : connect_phase
 
    //--------------------------------------------------------------------------
@@ -182,6 +193,18 @@ class mby_egr_env extends mby_egr_base_env;
           if(!uvm_config_db#(egr_eth_bfm_rx_io_t)::get(this, "", $sformatf("igr_eth_bfm_rx_io%0d", i), eth_bfm_rx_io[i])) begin
               `uvm_fatal(get_name(),"Config_DB.get() for ENV's igr_eth_bfm_rx_io_t was not successful!")
           end
+         // Get the eth_bfm_vif ptrs
+         if(!uvm_config_db#(egr_eth_bfm_tx_intf_t)::get(this, "",
+            $sformatf("egr_eth_bfm_tx_vintf%0d", i),eth_bfm_tx_vintf[i])) begin
+            `uvm_fatal(get_name(),
+               "Config_DB.get() for ENV's egr_eth_bfm_tx_intf_t was not successful!")
+         end
+         if(!uvm_config_db#(egr_eth_bfm_rx_intf_t)::get(this, "",
+            $sformatf("egr_eth_bfm_rx_vintf%0d", i), eth_bfm_rx_vintf[i])) begin
+            `uvm_fatal(get_name(),
+               "Config_DB.get() for ENV's egr_eth_bfm_rx_intf_t was not successful!")
+         end
+
          // Create the bfm instances
          eth_bfms[i]                = egr_eth_bfm_t::type_id::create($sformatf("egr_eth_bfm%0d", i), this);
          eth_bfms[i].cfg.mode       = eth_bfm_pkg::MODE_SLAVE;   // Configure as SLAVE
@@ -203,7 +226,7 @@ class mby_egr_env extends mby_egr_base_env;
          tag_bfm[i].cfg_obj.driver_active  = UVM_ACTIVE;
          tag_bfm[i].cfg_obj.monitor_active = UVM_ACTIVE;
          tag_bfm[i].cfg_obj.traffic_mode   = TAG_BFM_UC_MODE;
-         //tag_bfm[i].cfg_obj.frame_gen_active = UVM_PASSIVE;
+      //tag_bfm[i].cfg_obj.frame_gen_active = UVM_PASSIVE;
       end
    endfunction : build_tag_bfm
 
