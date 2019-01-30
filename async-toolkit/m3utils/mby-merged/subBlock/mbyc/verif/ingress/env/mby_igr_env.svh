@@ -81,6 +81,10 @@ class mby_igr_env extends shdv_base_env;
    // Tag BFMs
    mby_tag_bfm tag_bfm[`NUM_TAG_PORTS];
 
+   // Variable: igr_pbr_bfm
+   // PBR BFM Instance
+   mby_pbr_bfm_pkg::mby_pbr_bfm   igr_pbr_bfm;
+
    `uvm_component_utils_begin(mby_igr_env)
    `uvm_component_utils_end
 
@@ -118,7 +122,7 @@ class mby_igr_env extends shdv_base_env;
       build_vpt_bfms();
       build_eth_bfms();
       build_tag_bfm();
-
+      build_pbr_bfm();
 
       // Env monitor
       assert($cast(env_monitor, create_component("mby_igr_env_monitor", "env_monitor")));
@@ -138,6 +142,8 @@ class mby_igr_env extends shdv_base_env;
       super.connect_phase(phase);
       connect_vpt_bfms();
       connect_eth_bfms();
+      connect_pbr_bfm();
+
       uvm_config_db#(igr_env_if_t)::get(this, "", "ingress_if", ingress_if);
       if(ingress_if == null) begin
           `uvm_fatal(get_name(), $sformatf("Couldn't find ingress_if"));
@@ -245,6 +251,20 @@ class mby_igr_env extends shdv_base_env;
    endfunction: build_tag_bfm
 
    //--------------------------------------------------------------------------
+   // Function: build_pbr_bfm
+   // Builds the instance of the pbr BFM
+   //--------------------------------------------------------------------------
+   function void build_pbr_bfm();
+      igr_pbr_bfm = mby_pbr_bfm_pkg::mby_pbr_bfm::type_id::create("igr_pbr_bfm_name", this);
+      if(!igr_pbr_bfm.cfg_obj.randomize() with {
+               bfm_mode == PBR_BFM_IGR_MODE;
+            })begin
+         `uvm_error(get_name(), "Unable to randomize igr_pbr_bfm.cfg_obj PBR_BFM_IGR_MODE");
+      end
+      `uvm_info(get_name(), ("DBG_ALF: Done building igr pbr bfm in the ENV..."), UVM_DEBUG)
+   endfunction : build_pbr_bfm
+
+   //--------------------------------------------------------------------------
    // Function: connect_vpt_bfms
    // Sets VIF to the IO policies, adds IO policy class to the BFM and adds sequencer
    // pointer to SLA vsqr
@@ -273,6 +293,16 @@ class mby_igr_env extends shdv_base_env;
          add_sequencer($sformatf("eth_bfm_%0d", i), $sformatf("eth_bfm_%0d_rx3", i), eth_bfms[i].frame_sequencer[3]);
       end
    endfunction : connect_eth_bfms
+
+   //--------------------------------------------------------------------------
+   // Function: connect_pbr_bfm
+   // adds sequencer
+   //--------------------------------------------------------------------------
+   function void connect_pbr_bfm();
+      add_sequencer("igr_pbr_bfm_name", "igr_pbr_bfm_cpb_sequencer", igr_pbr_bfm.cpb_agent.sequencer); //2nd arg is the seqr name used in seq - test
+      add_sequencer("igr_pbr_bfm_name", "igr_pbr_bfm_dpb_sequencer", igr_pbr_bfm.dpb_agent.sequencer);
+      `uvm_info(get_name(), ("DBG_ALF: Done connecting igr pbr bfm..."), UVM_DEBUG)
+   endfunction: connect_pbr_bfm
 
    //////////////////////////////////////////////////////////////////////////////
    // Ingress ENV functions / tasks

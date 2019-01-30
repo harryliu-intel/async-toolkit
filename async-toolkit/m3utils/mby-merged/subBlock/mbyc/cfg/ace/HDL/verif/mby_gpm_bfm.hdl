@@ -8,12 +8,6 @@ $hdl_spec = {
     -vlog_files => [
          "src/shared/rtl/shared_pkg.sv",
          "src/shared/rtl/mby_gmm_pkg.sv",
-         "src/shared/rtl/mby_msh_pkg.sv",    #Belongs to smm_bfm
-         "src/shared/rtl/mby_egr_pkg.sv",    #Belongs to smm_bfm
-         "verif/lib/mby_smm_bfm/mby_smm_bfm_pkg_pre.sv",    #Belongs to smm_bfm
-         "verif/lib/mby_smm_bfm/mby_smm_bfm_mwr_req_if.sv", #Belongs to smm_bfm
-         "verif/lib/mby_smm_bfm/mby_smm_bfm_mrd_req_if.sv", #Belongs to smm_bfm
-         "verif/lib/mby_smm_bfm/mby_smm_bfm_pkg.sv",        #Belongs to smm_bfm
          "verif/lib/mby_gpm_bfm/mby_gpm_bfm_pod_if.sv",
          "verif/lib/mby_gpm_bfm/mby_gpm_bfm_pkg.sv",
      ],
@@ -29,7 +23,6 @@ $hdl_spec = {
     -vlog_incdirs => [
          "$ENV{UVM_HOME}/src",
          "verif/lib/mby_gpm_bfm",
-         "verif/lib/mby_smm_bfm",
      ],
 
     # Arbitrary VLOG options

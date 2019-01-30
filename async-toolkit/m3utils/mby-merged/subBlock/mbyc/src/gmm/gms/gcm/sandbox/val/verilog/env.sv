@@ -106,6 +106,12 @@ class env;
         connect();
 
     endfunction
+    
+    //task load_cfg_to_mem(input string files);   
+    //    $display("(time: %0d) %s: **Initializing memories**", $time, name);
+    //    cfg.load_mems(files);
+    //endtask
+
 
     // connect testbench env to DUT
     //   - Note that a task is needed instead of a function because tasks can contain time-control
@@ -155,7 +161,14 @@ class env;
             foreach (inp_drvrs[i,j]) begin
                 automatic int x = i;
                 automatic int y = j;
-                fork inp_drvrs[x][y].load_stimulus(num_reqs); join_none
+                //fork inp_drvrs[x][y].load_stimulus(num_reqs); join_none
+                if (i==0 & j==0) begin
+                    fork inp_drvrs[x][y].load_stimulus(num_reqs); join_none
+                end
+                else begin
+                    fork inp_drvrs[x][y].reset(); join_none
+                end
+
             end
             wait fork;
         end join

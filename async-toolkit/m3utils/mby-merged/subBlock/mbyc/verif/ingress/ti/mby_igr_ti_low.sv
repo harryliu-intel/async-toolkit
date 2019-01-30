@@ -42,11 +42,14 @@ module mby_igr_ti_low #(
     ,mby_ec_cdi_rx_intf  eth_bfm_rx_intf_4
     ,mby_tag_bfm_uc_if   tag_bfm_intf_0
     ,mby_tag_bfm_uc_if   tag_bfm_intf_1
+    ,mby_pbr_bfm_cptr_slave_if  pbr_bfm_cptr_slave_if
+    ,mby_pbr_bfm_dptr_master_if pbr_bfm_dptr_master_if
    );
 
    import uvm_pkg::*;
    import mby_igr_env_pkg::*;
    import mby_tag_bfm_pkg::*;
+   import mby_pbr_bfm_pkg::*;
 
    `include "mby_igr_params.sv"
    `include "mby_igr_defines.sv"
@@ -66,7 +69,10 @@ module mby_igr_ti_low #(
       igr_eth_bfm_rx_io_t vp_bfm_rx_io[`NUM_VPS_PER_IGR];
       // Tag BFM io policy
       mby_tag_bfm_uc_io tag_bfm_io[`NUM_TAG_PORTS];
-
+      
+      mby_pbr_bfm_cptr_slave_io  pbr_bfm_cptr_slave_io;
+      mby_pbr_bfm_dptr_master_io pbr_bfm_dptr_master_io;
+      
       /////////////////////////////////////////////////////////////////////////
       // virtual interface array declarations to simplify assignments
       /////////////////////////////////////////////////////////////////////////
@@ -113,6 +119,13 @@ module mby_igr_ti_low #(
          uvm_config_db#(mby_tag_bfm_uc_io)::set(uvm_root::get(),
             $sformatf("%s*tag_bfm%0d*", IP_ENV, i), "io_policy", tag_bfm_io[i]);
       end
+      // PBR BFM I/O policies constructors and uvm_config_db registration
+      pbr_bfm_dptr_master_io = new("pbr_bfm_dptr_master_io", pbr_bfm_dptr_master_if);
+      pbr_bfm_cptr_slave_io  = new("pbr_bfm_cptr_slave_io", pbr_bfm_cptr_slave_if);
+      uvm_config_db#(mby_pbr_bfm_cptr_slave_io)::set(uvm_root::get(),
+         $sformatf("%s*pbr_bfm*cpb_agent*", IP_ENV), "io_policy", pbr_bfm_cptr_slave_io);
+      uvm_config_db#(mby_pbr_bfm_dptr_master_io)::set(uvm_root::get(),
+         $sformatf("%s*pbr_bfm*dpb_agent*", IP_ENV), "io_policy", pbr_bfm_dptr_master_io);
 
       /////////////////////////////////////////////////////////////////////////
       // Other interfaces registration

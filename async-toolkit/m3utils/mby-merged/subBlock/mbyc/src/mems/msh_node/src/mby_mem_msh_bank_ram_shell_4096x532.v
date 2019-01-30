@@ -1,40 +1,58 @@
 //------------------------------------------------------------------------------
-//  INTEL CONFIDENTIAL
-//
-//  Copyright 2006 - 2017 Intel Corporation All Rights Reserved.
-//
-//  The source code contained or described herein and all documents related
-//  to the source code ("Material") are owned by Intel Corporation or its
-//  suppliers or licensors. Title to the Material remains with Intel
-//  Corporation or its suppliers and licensors. The Material contains trade
-//  secrets and proprietary and confidential information of Intel or its
-//  suppliers and licensors. The Material is protected by worldwide copyright
-//  and trade secret laws and treaty provisions. No part of the Material may
-//  be used, copied, reproduced, modified, published, uploaded, posted,
-//  transmitted, distributed, or disclosed in any way without Intel's prior
-//  express written permission.
-//
-//  No license under any patent, copyright, trade secret or other intellectual
-//  property right is granted to or conferred upon you by disclosure or
-//  delivery of the Materials, either expressly, by implication, inducement,
-//  estoppel or otherwise. Any license under such intellectual property rights
-//  must be express and approved by Intel in writing.
-//
+///  INTEL TOP SECRET
+
+///
+
+///  Copyright 2018 Intel Corporation All Rights Reserved.
+
+///
+
+///  The source code contained or described herein and all documents related
+
+///  to the source code ("Material") are owned by Intel Corporation or its
+
+///  suppliers or licensors. Title to the Material remains with Intel
+
+///  Corporation or its suppliers and licensors. The Material contains trade
+
+///  secrets and proprietary and confidential information of Intel or its
+
+///  suppliers and licensors. The Material is protected by worldwide copyright
+
+///  and trade secret laws and treaty provisions. No part of the Material may
+
+///  be used, copied, reproduced, modified, published, uploaded, posted,
+
+///  transmitted, distributed, or disclosed in any way without Intel's prior
+
+///  express written permission.
+
+///
+
+///  No license under any patent, copyright, trade secret or other intellectual
+
+///  property right is granted to or conferred upon you by disclosure or
+
+///  delivery of the Materials, either expressly, by implication, inducement,
+
+///  estoppel or otherwise. Any license under such intellectual property rights
+
+///  must be express and approved by Intel in writing.
 //------------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////
 //
 //                      Automated Memory Shell Creator
 //
-//      Created by solson with create_memories script version 2.31 on NA
+//      Created by solson with create_memories script version 2.40 on NA
 //
 //                          Logical File Details
 //
 //              
-//                      Author's name   : Mccormick, Jim
-//                      Author's email  : jim.mccormick@intel.com
-//                      Commited on     : Tue Oct 30 11:35:04 2018 -0700
+//                      Author's name   : Olson, Steve
+//                      Author's email  : steve.olson@intel.com
+//                      Commited on     : Tue Dec 18 08:34:10 2018 -0800
 //                      Commit tag      : 
-//                      Hash            : 92f1a9b52c141ce961b1302be8bc68915dd3487e
+//                      Hash            : d72ff1d74c33bd8ab161f67eb939d8a0ce81dbf0
 //
 //////////////////////////////////////////////////////////////////////
 `include        "msh_mem.def"
@@ -87,7 +105,7 @@ module  mby_mem_msh_bank_ram_shell_4096x532(
                 .FROM_MEM_WIDTH         (`MBY_MSH_MSH_BANK_RAM_FROM_MEM_WIDTH),
                 .TO_MEM_WIDTH           (`MBY_MSH_MSH_BANK_RAM_TO_MEM_WIDTH)     
         )
-        u_master_1rw_shell(
+        u_master_shell(
                 //------------------- clock and reset -------------------
                 .clk                    (clk)                           ,
                 .reset_n                (reset_n)                       ,

@@ -94,11 +94,11 @@ class mby_gpm_bfm_pptr_gen
    
    // VARIABLE: smm_mwr_port
    // This port is used to send memory write requests to SMM BFM
-   gpm_bfm_smm_mwr_port smm_mwr_port;
+   gpm_bfm_smm_mwr_port_t smm_mwr_port;
    
    // VARIABLE: tag_fptr_port
    // This port is used to send free pointers to TAG BFM
-   gpm_bfm_tag_fptr_port tag_fptr_port;
+   gpm_bfm_tag_fptr_port_t tag_fptr_port;
 
    // Registering class with the factory
    `uvm_component_utils(mby_gpm_bfm_pptr_gen)
