@@ -544,26 +544,32 @@ public final class ArrayValue
         return new ArrayValue(vals, spec, newInstanceName, wideChannelP);
     }
 
-    public String getMetaParamString() throws InvalidOperationException {
-        final StringBuffer sb = new StringBuffer();
+    private void getMetaParamString(ArrayMetaParam param, StringBuilder sb)
+        throws InvalidOperationException {
         sb.append('{');
-
-        for (int i = 0; i < vals.length; ++i) {
-            final Value v = vals[i];
-
-            if (i > 0)
+        boolean first = true;
+        for (int i = param.getMinIndex(); i <= param.getMaxIndex(); ++i) {
+            final MetaParamTypeInterface v = param.get(i);
+            if (!first)
                 sb.append(",");
 
             // code similiar to UserDefinedValue.getTypeName
-            if (v instanceof IntValue)
+            if (v instanceof ArrayMetaParam)
+                getMetaParamString((ArrayMetaParam) v, sb);
+            else if (v instanceof IntValue)
                 sb.append(((IntValue) v).getValue());
             else if (v instanceof BoolValue)
                 sb.append(((BoolValue) v).getValue());
             else
                 throw new AssertionFailure("bad meta-param type");
+            first = false;
         }
-
         sb.append('}');
+    }
+
+    public String getMetaParamString() throws InvalidOperationException {
+        final StringBuilder sb = new StringBuilder();
+        getMetaParamString((ArrayMetaParam) toMetaParam(), sb);
         return sb.toString();
     }
 
