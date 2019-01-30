@@ -31,6 +31,7 @@ package mby_igr_env_pkg;
    import mby_ec_bfm_pkg::*;
    import mby_tag_bfm_pkg::*;
    import mby_pbr_bfm_pkg::*;
+   import mby_gpm_bfm_pkg::*;
     
     
    `include "uvm_macros.svh"
