@@ -1143,9 +1143,9 @@ public final class CellUtils {
 
     public static AliasedSet
     getChannelConnection(final CellInterface cell,
-                         final Collection nodeConnections,
-                         final Collection narrowConnections,
-                         final Collection wideConnections,
+                         final Collection<Pair<Channel,Channel>> nodeConnections,
+                         final Collection<Pair<Channel,Channel>> narrowConnections,
+                         final Collection<Pair<Channel,Channel>> wideConnections,
                          final AliasedSet nodeAliases,
                          final AliasedSet narrowAliases,
                          final AliasedSet wideAliases,
@@ -1160,9 +1160,9 @@ public final class CellUtils {
 
     public static AliasedSet
     getChannelConnection(final CellInterface cell,
-                         final Collection nodeConnections,
-                         final Collection narrowConnections,
-                         final Collection wideConnections,
+                         final Collection<Pair<Channel,Channel>> nodeConnections,
+                         final Collection<Pair<Channel,Channel>> narrowConnections,
+                         final Collection<Pair<Channel,Channel>> wideConnections,
                          final AliasedSet nodeAliases,
                          final AliasedSet narrowAliases,
                          final AliasedSet wideAliases,
@@ -1179,9 +1179,9 @@ public final class CellUtils {
 
     public static AliasedSet
     getChannelConnection(final CellInterface cell,
-                         final Collection nodeConnections,
-                         final Collection narrowConnections,
-                         final Collection wideConnections,
+                         final Collection<Pair<Channel,Channel>> nodeConnections,
+                         final Collection<Pair<Channel,Channel>> narrowConnections,
+                         final Collection<Pair<Channel,Channel>> wideConnections,
                          final AliasedSet nodeAliases,
                          final AliasedSet narrowAliases,
                          final AliasedSet wideAliases,

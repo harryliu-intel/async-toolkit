@@ -837,10 +837,10 @@ public class Cast2Verilog {
         if (beh == CoSimParameters.DIGITAL) {
             boolean prs = true;
             if (cell.containsSubcells()) { // mid-level cells
-                for (Iterator i = cell.getSubcellPairs(); i.hasNext(); ) {
-                    final Pair p = (Pair) i.next();
-                    final HierName subinst = (HierName) p.getFirst();
-                    final CellInterface subcell = (CellInterface) p.getSecond();
+                for (Pair<HierName,CellInterface> p :
+                        new IterableIterator<>(cell.getSubcellPairs())) {
+                    final HierName subinst = p.getFirst();
+                    final CellInterface subcell = p.getSecond();
                     prs &=
                         cellBehavior(subcell,
                                      HierName.append(prefix, subinst));
@@ -875,12 +875,12 @@ public class Cast2Verilog {
                 wrapperAdded = true;
             }
             if (cell.containsSubcells()) { // mid-level cells
-                for (Iterator i = cell.getSubcellPairs(); i.hasNext(); ) {
-                    final Pair p = (Pair) i.next();
-                    final CellInterface subcell = (CellInterface) p.getSecond();
+                for (Pair<HierName,CellInterface> p :
+                        new IterableIterator<>(cell.getSubcellPairs())) {
+                    final CellInterface subcell = p.getSecond();
                     if (subcell.isNode() || subcell.isChannel()) continue;
 
-                    final HierName subinst = (HierName) p.getFirst();
+                    final HierName subinst = p.getFirst();
                     final InstanceData newInstData =
                         instData.translate(cell, subcell, subinst, cad);
                     populateLeafDelaybias(subcell,
@@ -1073,7 +1073,7 @@ public class Cast2Verilog {
             " behavior = " + (beh == null ? "null" : beh.toString());
         logger.info("begin convert " + logstr);
 
-        final Map<HierName,String> tbNets = new TreeMap<HierName,String>();
+        final Map<HierName,String> tbNets = new TreeMap<>();
         if (topLevel && generateTb) {
             final AliasedSet aliases =
                 getCadencize(false).convert(cell).getLocalNodes();
@@ -1097,12 +1097,10 @@ public class Cast2Verilog {
         if (beh == Mode.SUBCELLS) {
             // map from instance name to converted module name
             final Map<HierName,String> subcells =
-                new TreeMap<HierName,String>(
-                    NaturalStringComparator.getInstance());
+                new TreeMap<>(NaturalStringComparator.getInstance());
 
             // map from instance name to whether its port should be narrow
-            final Set/*<HierName>*/ narrowInstances =
-                new HashSet/*<HierName>*/();
+            final Set<HierName> narrowInstances = new HashSet<>();
 
             final boolean narrowSubcell;
             if (prefix == null) {
@@ -1110,13 +1108,12 @@ public class Cast2Verilog {
                 // environment; if either requsted narrow ports, use narrow
                 // ports here as well
                 boolean narrowRequsted = false;
-                for (Iterator i = cell.getSubcellPairs(); i.hasNext(); ) {
-                    final Pair p = (Pair) i.next();
-                    final CellInterface subcell = (CellInterface) p.getSecond();
+                for (Pair<HierName,CellInterface> p :
+                        new IterableIterator<>(cell.getSubcellPairs())) {
+                    final CellInterface subcell = p.getSecond();
                     if (subcell.isNode() || subcell.isChannel()) continue;
                     narrowRequsted |=
-                        params.isNarrowSubcell(
-                            ((HierName) p.getFirst()).getAsString('.'));
+                        params.isNarrowSubcell(p.getFirst().getAsString('.'));
                 }
                 narrowSubcell = narrowRequsted;
             } else {
@@ -1126,14 +1123,14 @@ public class Cast2Verilog {
             if (narrowPort || (narrowSubcell && topLevel))
                 narrowInstances.add(null);
 
-            for (Iterator i = cell.getSubcellPairs(); i.hasNext(); ) {
-                final Pair/*<HierName,CellInterface>*/ pair = (Pair) i.next();
-                final CellInterface subcell = (CellInterface) pair.getSecond();
+            for (Pair<HierName,CellInterface> pair :
+                    new IterableIterator<>(cell.getSubcellPairs())) {
+                final CellInterface subcell = pair.getSecond();
 
                 // ignore node and channel subcells
                 if (subcell.isNode() || subcell.isChannel()) continue;
 
-                final HierName instance = (HierName) pair.getFirst();
+                final HierName instance = pair.getFirst();
                 final HierName complete = HierName.append(prefix, instance);
 
                 final Mode subbeh = getBehavior(complete);
@@ -2473,7 +2470,7 @@ public class Cast2Verilog {
             final Map<HierName,String> subcells, 
             final boolean topLevel,
             final Map<HierName,String> tbNets,
-            final Set/*<HierName>*/ narrowInstances,
+            final Set<HierName> narrowInstances,
             PrintWriter out) {
 
         // write out header for module
@@ -2508,12 +2505,12 @@ public class Cast2Verilog {
         }
 
         final Map flattenNodes = new HashMap();
-        for (Iterator i = cell.getSubcellPairs(); i.hasNext(); ) {
-            final Pair p = (Pair) i.next();
-            final CellInterface subcell = (CellInterface) p.getSecond();
+        for (Pair<HierName,CellInterface> p :
+                new IterableIterator<>(cell.getSubcellPairs())) {
+            final CellInterface subcell = p.getSecond();
             if (subcell.isNode() || subcell.isChannel()) continue;
 
-            final HierName instanceName = (HierName) p.getFirst();
+            final HierName instanceName = p.getFirst();
             final HierName complete = HierName.append(prefix, instanceName);
             final Mode m = getBehavior(complete);
             if (m instanceof Mode.VerilogMode || m == Mode.PRS) {
@@ -2843,15 +2840,15 @@ public class Cast2Verilog {
     private Map<CellUtils.Channel,CellUtils.Channel> processPortConnections(
             final CellInterface cell,
             final Map flattenNodes,
-            final Set narrowInstances,
+            final Set<HierName> narrowInstances,
             final Set<CellUtils.Channel> nodeNarrowConverters,
             final Set<CellUtils.Channel> narrowWideConverters,
             final PrintWriter out) {
         final Map<CellUtils.Channel,CellUtils.Channel> portMap = new HashMap<>();
 
-        final Collection nodeConnections = new ArrayList();
-        final Collection narrowConnections = new ArrayList();
-        final Collection wideConnections = new ArrayList();
+        final Collection<Pair<CellUtils.Channel,CellUtils.Channel>> nodeConnections = new ArrayList<>();
+        final Collection<Pair<CellUtils.Channel,CellUtils.Channel>> narrowConnections = new ArrayList<>();
+        final Collection<Pair<CellUtils.Channel,CellUtils.Channel>> wideConnections = new ArrayList<>();
 
         CellUtils.getChannelConnection(cell,
                 nodeConnections, narrowConnections, wideConnections,
@@ -2861,17 +2858,18 @@ public class Cast2Verilog {
 
         // convert a wide connection to narrow connections if either the source
         // or the sink instance is supposed to be narrow
-        for (Iterator i = wideConnections.iterator(); i.hasNext(); ) {
-            final Pair p = (Pair) i.next();
-            final CellUtils.Channel source = (CellUtils.Channel) p.getFirst();
-            final CellUtils.Channel sink = (CellUtils.Channel) p.getSecond();
+        for (Iterator<Pair<CellUtils.Channel,CellUtils.Channel>> i = wideConnections.iterator(); i.hasNext(); ) {
+            final Pair<CellUtils.Channel,CellUtils.Channel> p = i.next();
+            final CellUtils.Channel source = p.getFirst();
+            final CellUtils.Channel sink = p.getSecond();
             if (narrowInstances.contains(source.getInstance()) ||
                 narrowInstances.contains(sink.getInstance())) {
-                for (Iterator srcIter = source.getChildren().iterator(),
-                              snkIter = sink.getChildren().iterator();
+                for (Iterator<CellUtils.Channel>
+                        srcIter = source.getChildren().iterator(),
+                        snkIter = sink.getChildren().iterator();
                      srcIter.hasNext() && snkIter.hasNext(); ) {
-                    narrowConnections.add(new Pair(srcIter.next(),
-                                                   snkIter.next()));
+                    narrowConnections.add(new Pair<>(srcIter.next(),
+                                                     snkIter.next()));
                 }
 
                 // add additional converters that might be necessary because
@@ -2888,8 +2886,8 @@ public class Cast2Verilog {
 
         // remove narrow to wide converters for narrow instances as they are
         // not necessary
-        for (Iterator i = narrowWideConverters.iterator(); i.hasNext(); ) {
-            final CellUtils.Channel chan = (CellUtils.Channel) i.next();
+        for (Iterator<CellUtils.Channel> i = narrowWideConverters.iterator(); i.hasNext(); ) {
+            final CellUtils.Channel chan = i.next();
             if (narrowInstances.contains(chan.getInstance())) i.remove();
         }
 
@@ -2898,17 +2896,15 @@ public class Cast2Verilog {
         // Signals that need to be connected via assign statements
         final Collection needAssign = new HashSet();
 
-        for (Iterator i =
-                new FlatteningIterator(
-                    Arrays.asList(
-                        new Iterator[] {
-                            nodeConnections.iterator(),
-                            narrowConnections.iterator(),
-                            wideConnections.iterator() }).iterator());
+        for (Iterator<Pair<CellUtils.Channel,CellUtils.Channel>> i =
+                new FlatteningIterator<>(
+                    nodeConnections.iterator(),
+                    narrowConnections.iterator(),
+                    wideConnections.iterator());
                 i.hasNext(); ) {
-            final Pair p = (Pair) i.next();
-            final CellUtils.Channel source = (CellUtils.Channel) p.getFirst();
-            final CellUtils.Channel sink = (CellUtils.Channel) p.getSecond();
+            final Pair<CellUtils.Channel,CellUtils.Channel> p = i.next();
+            final CellUtils.Channel source = p.getFirst();
+            final CellUtils.Channel sink = p.getSecond();
             addLocalName(source, sink, portMap, alreadyDeclared, flattenNodes,
                          needAssign, out);
             if (source.getInstance() == null && sink.getInstance() == null)
