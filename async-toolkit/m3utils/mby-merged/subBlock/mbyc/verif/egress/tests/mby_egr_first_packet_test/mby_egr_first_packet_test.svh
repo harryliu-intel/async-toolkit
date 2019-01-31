@@ -49,7 +49,7 @@ class mby_egr_tag_seq extends mby_egr_extended_base_seq;
       uvm_path_e access_type = UVM_BACKDOOR;
       uvm_reg_data_t read_data;
       mby_egr_reg_pkg::mby_egr_reg_blk ral;
-      ral = env.tb_ral;
+      this.ral = env.get_tb_ral;
        
       this.set_name("mby_egr_tag_seq");
       

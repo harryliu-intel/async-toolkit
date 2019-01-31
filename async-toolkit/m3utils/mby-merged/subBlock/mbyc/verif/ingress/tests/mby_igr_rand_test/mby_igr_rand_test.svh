@@ -77,7 +77,7 @@ class mby_igr_eth_simple_seq extends mby_igr_extended_base_seq;
       uvm_path_e access_type = UVM_BACKDOOR;
       uvm_reg_data_t read_data;
       mby_igr_reg_pkg::mby_igr_reg_blk ral;
-      ral = env.tb_ral;
+      this.ral = env.get_tb_ral;
 
       this.set_name("mby_igr_eth_simple_seq");
       wait_n(50);
