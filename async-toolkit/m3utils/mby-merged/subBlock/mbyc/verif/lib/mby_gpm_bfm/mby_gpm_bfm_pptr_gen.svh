@@ -160,6 +160,11 @@ class mby_gpm_bfm_pptr_gen
       
    endtask : run_phase
    
+   //--------------------------------------------------------------------------
+   // TASK: generate_fpptrs
+   //
+   // This task generate free pod pointers to be sent to the ring interface
+   //--------------------------------------------------------------------------
    task automatic generate_fpptrs();
       mby_gpm_bfm_pod_data_t data;
       data.valid = 1;
@@ -171,6 +176,14 @@ class mby_gpm_bfm_pptr_gen
       send_fpptr(data);
    endtask : generate_fpptrs
    
+   //--------------------------------------------------------------------------
+   // TASK: send_fpptr
+   //
+   // This task sends a free pod pointer transaction to the sequencer in fpptr_agent
+   //
+   // ARGUMENTS:
+   //    mby_gpm_bfm_pod_data_t data - The free pod pointer structure to be sent to the sequencer
+   //--------------------------------------------------------------------------
    task send_fpptr(mby_gpm_bfm_pod_data_t data);
       gpm_bfm_pod_seq_t fpod_rsp_seq = gpm_bfm_pod_seq_t::type_id::create("fpod_rsp_seq", this);
       fpod_rsp_seq.req.data = data;

@@ -32,6 +32,14 @@
 //------------------------------------------------------------------------------
 `ifndef __MBY_SMM_BFM_PKG_PRE__
 `define __MBY_SMM_BFM_PKG_PRE__
+//------------------------------------------------------------------------------
+//
+// PACKAGE: mby_smm_bfm_pkg_pre
+//
+// This is the Madison Bay SMM BFM package pre, it loads the basic requirements for
+// mby_smm_bfm_if_types definitions.
+//
+//------------------------------------------------------------------------------
 
 package mby_smm_bfm_pkg_pre;
 
