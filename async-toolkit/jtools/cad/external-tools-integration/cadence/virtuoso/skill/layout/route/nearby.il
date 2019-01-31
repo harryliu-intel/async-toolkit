@@ -7,6 +7,7 @@
     n=0
     (unless nets nets=(setof a CV->nets (member a->name PowerGroundNets)==nil))
     (foreach net nets n=n+(RouteNearbyNet net ?CV CV ?topShapes topShapes ?offGrid offGrid))
+    (printf "Note that RouteNearby only connects abutting pins between locked instances.") 
     n
     )
   )
