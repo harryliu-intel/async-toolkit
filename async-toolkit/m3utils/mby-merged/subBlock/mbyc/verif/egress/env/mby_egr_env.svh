@@ -223,7 +223,8 @@ class mby_egr_env extends mby_egr_base_env;
    // Builds the instance of the SMM BFM
    //--------------------------------------------------------------------------
    function void build_smm_bfm();
-      smm_bfm = mby_smm_bfm_t::type_id::create("smm_bfm", this);
+      smm_bfm           = mby_smm_bfm_t::type_id::create("smm_bfm", this);
+      smm_bfm.cfg_obj   = mby_smm_bfm_cfg::type_id::create("smm_bfm_cfg_obj", this);
    endfunction : build_smm_bfm
 
    //--------------------------------------------------------------------------
