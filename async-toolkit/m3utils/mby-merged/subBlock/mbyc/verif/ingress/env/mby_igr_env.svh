@@ -80,6 +80,11 @@ class mby_igr_env extends shdv_base_env;
    // Variable: tag_bfm
    // Tag BFMs
    mby_tag_bfm tag_bfm[`NUM_TAG_PORTS];
+   
+   
+   // Variable: gpm_bfm
+   // GPM BFM
+   igr_gpm_bfm_t gpm_bfm;
 
    // Variable: igr_pbr_bfm
    // PBR BFM Instance
@@ -254,7 +259,16 @@ class mby_igr_env extends shdv_base_env;
           tag_bfm[i].cfg_obj.monitor_active = UVM_ACTIVE;
       end
    endfunction: build_tag_bfm
-
+   
+   //--------------------------------------------------------------------------
+   // Function: build_gpm_bfm
+   // Creates the gpm_bfm using the factory
+   //--------------------------------------------------------------------------
+   function void build_gmp_bfm();
+      gpm_bfm = igr_gpm_bfm_t::type_id::create("gpm_bfm", this);
+      gpm_bfm.cfg.bfm_mode = GPM_BFM_IGR_MODE;
+   endfunction : build_gmp_bfm
+   
    //--------------------------------------------------------------------------
    // Function: build_pbr_bfm
    // Builds the instance of the pbr BFM
@@ -334,6 +348,15 @@ class mby_igr_env extends shdv_base_env;
          add_sequencer($sformatf("eth_bfm_%0d", i), $sformatf("eth_bfm_%0d_rx3", i), eth_bfms[i].frame_sequencer[3]);
       end
    endfunction : connect_eth_bfms
+   
+   //--------------------------------------------------------------------------
+   // Function: connect_gpm_bfms
+   // Sets VIF to the IO policies, adds IO policy class to the BFM and adds sequencer
+   // pointer to SLA vsqr
+   //--------------------------------------------------------------------------
+   function void connect_gpm_bfm();
+      add_sequencer("gpm_bfm", "gpm_bfm_fpptr_agent", gpm_bfm.fpptr_agent.sequencer);
+   endfunction : connect_gpm_bfm
 
    //--------------------------------------------------------------------------
    // Function: connect_pbr_bfm

@@ -208,8 +208,8 @@ sub gen_liblist {
 # <<< SIP VERIF LIBRARIES
 #############################################################
 my %sip_verif_libs = (
-    'boot'               => ["mby_ingress_ti_lib", "mby_ingress_env_lib", "mby_ec_env_lib", "mby_base_pkg_lib", "mby_tag_bfm_lib", "mby_pbr_bfm_lib"
-                             ],
+    'boot'               => ["mby_ingress_ti_lib", "mby_ingress_env_lib", "mby_ec_env_lib", "mby_base_pkg_lib", 
+    "mby_tag_bfm_lib", "mby_pbr_bfm_lib", "mby_gpm_bfm_lib", "mby_smm_bfm_lib" ],
 );
 
 sub get_sip_verif_libs {
