@@ -291,7 +291,8 @@ class mby_igr_env extends shdv_base_env;
    virtual function void build_ral();
       // Check if ral is already set by FC
       if (tb_ral == null) begin
-         tb_ral = mby_igr_reg_pkg::mby_igr_reg_blk::type_id::create("tb_ral");
+
+         tb_ral = mby_igr_reg_pkg::mby_igr_reg_blk::type_id::create({get_name(),"tb_ral"});
          tb_ral.build();
          //TODO: Update the base addr.
          tb_ral.default_map.set_base_addr(`UVM_REG_ADDR_WIDTH'h20000);

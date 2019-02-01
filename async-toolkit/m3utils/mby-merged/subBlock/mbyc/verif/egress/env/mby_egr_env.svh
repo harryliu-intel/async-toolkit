@@ -75,9 +75,9 @@ class mby_egr_env extends mby_egr_base_env;
    // PBR BFM Instance
    mby_pbr_bfm_pkg::mby_pbr_bfm   egr_pbr_bfm;
 
-   // Variable:  egr_tb_ral
+   // Variable:  tb_ral
    // Handle to egr RAL.
-   mby_egr_reg_pkg::mby_egr_reg_blk egr_tb_ral;
+   mby_egr_reg_pkg::mby_egr_reg_blk tb_ral;
 
    // Variable: env_monitor
    // egress env event monitor
@@ -248,14 +248,14 @@ class mby_egr_env extends mby_egr_base_env;
    //---------------------------------------------------------------------------
    virtual function void build_ral();
       // Check if ral is already set by FC
-      if (egr_tb_ral == null) begin
-         egr_tb_ral = mby_egr_reg_pkg::mby_egr_reg_blk::type_id::create("egr_tb_ral");
-         egr_tb_ral.build();
+      if (tb_ral == null) begin
+         tb_ral = mby_egr_reg_pkg::mby_egr_reg_blk::type_id::create("tb_ral");
+         tb_ral.build();
          //TODO: Update the base addr.
-         egr_tb_ral.default_map.set_base_addr(`UVM_REG_ADDR_WIDTH'h20000);
-         egr_tb_ral.lock_model();
+         tb_ral.default_map.set_base_addr(`UVM_REG_ADDR_WIDTH'h20000);
+         tb_ral.lock_model();
 
-         egr_tb_ral.set_hdl_path_root("mby_egr_tb.egr_top_i");
+         tb_ral.set_hdl_path_root("mby_egr_tb.egr_top_i");
 
          //Build the Adapter's based on agt's active
       end
@@ -266,7 +266,7 @@ class mby_egr_env extends mby_egr_base_env;
    // Returns object handle to egr ral (mby_egr_reg_blk)
    //---------------------------------------------------------------------------
    function mby_egr_reg_pkg::mby_egr_reg_blk get_tb_ral();
-      return egr_tb_ral;
+      return tb_ral;
    endfunction : get_tb_ral
 
    //---------------------------------------------------------------------------
@@ -274,7 +274,7 @@ class mby_egr_env extends mby_egr_base_env;
    // Sets handle to egr ral (mby_egr_reg_blk). Used to pass handle to RAL from fullchip env.
    //---------------------------------------------------------------------------
    function set_tb_ral(mby_egr_reg_pkg::mby_egr_reg_blk ral);
-      egr_tb_ral = ral;
+      tb_ral = ral;
    endfunction : set_tb_ral
 
    //--------------------------------------------------------------------------
