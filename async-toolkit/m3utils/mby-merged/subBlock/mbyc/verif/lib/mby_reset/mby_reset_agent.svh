@@ -36,6 +36,7 @@ class mby_reset_agent extends shdv_reset_pkg::shdv_reset_agent;
    mby_reset_cfg           cfg_obj;
    mby_reset_driver        rst_driver;
    mby_reset_monitor       rst_monitor;
+   mby_egr_env_if_h        vintf;
    // -------------------------------------------------------------------------
    // Macro to register new class type
    // -------------------------------------------------------------------------
@@ -56,19 +57,33 @@ class mby_reset_agent extends shdv_reset_pkg::shdv_reset_agent;
       if(cfg_obj.driver_active == UVM_ACTIVE) begin
          rst_driver.assign_cfg(cfg_obj);
          rst_driver.cfg_obj.driver_active = UVM_ACTIVE;
-
       end
       if(cfg_obj.monitor_active == UVM_ACTIVE) begin
          rst_monitor.assign_cfg(cfg_obj);
          rst_monitor.cfg_obj.monitor_active = UVM_ACTIVE;
-
       end
 
    endfunction : build_phase
 
    function void connect_phase(uvm_phase phase);
+     // rst_driver.assign_vintf(vintf);
+     // rst_monitor.assign_vintf(vintf);
    endfunction : connect_phase
 
+   // -------------------------------------------------------------------------
+   // FUNCTION: assign_vintf()
+   //
+   // This function is called by the env once the reset agent is created and
+   // assigns the right virtual interface to the agent.
+   //
+   // ARGUMENTS:
+   //     mby_egr_env_if_h vintf - A pointer to the vintf to drive
+   //
+   // -------------------------------------------------------------------------
+   function void assign_vintf(mby_egr_env_if_h vintf);
+      rst_driver.assign_vintf(vintf);
+      rst_monitor.assign_vintf(vintf);
+   endfunction
 
    task run_phase(uvm_phase phase);
       super.run_phase(phase);

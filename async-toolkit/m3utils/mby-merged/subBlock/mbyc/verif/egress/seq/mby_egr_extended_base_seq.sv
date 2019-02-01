@@ -28,7 +28,7 @@ class mby_egr_extended_base_seq extends mby_egr_env_base_seq;
 
    string process_name;
    shdv_synchronization_pkg::shdv_process_manager    traffic_manager;
-   mby_egr_env    env;
+   //mby_egr_env    env;
 
 //PJP  `uvm_declare_p_sequencer(slu_sequencer)
 
@@ -38,8 +38,8 @@ class mby_egr_extended_base_seq extends mby_egr_env_base_seq;
    function new(input string name = "mby_egr_extended_base_seq",
          uvm_sequencer_base sequencer=null, uvm_sequence parent_seq=null);
       super.new(name /*, sequencer, parent_seq*/);
-      env = mby_egr_env::get_egr_env();
-
+      //env = mby_egr_env::get_egr_env();
+      set_process_name({name,"_process"});
    endfunction
 
    function void build_phase(uvm_phase phase);
@@ -53,9 +53,9 @@ class mby_egr_extended_base_seq extends mby_egr_env_base_seq;
    // ARGUMENTS:
    //   int n - number of cycles to wait for
    //---------------------------------------------------------------------------
-   task wait_n(int n);
-      repeat(n) @(posedge this.env.egress_if.clock);
-   endtask : wait_n
+   //task wait_n(int n);
+   //   repeat(n) @(posedge this.env.egress_if.clock);
+   //endtask : wait_n
 
    //---------------------------------------------------------------------------
    // Function: set_name
@@ -63,11 +63,11 @@ class mby_egr_extended_base_seq extends mby_egr_env_base_seq;
    // User should define the name of the sequence in the test sequence inside
    // new method. For print purposes.
    //---------------------------------------------------------------------------
-   virtual task set_process_name(string s);
+   virtual function void set_process_name(string s);
       this.process_name = s;
       traffic_manager = new(process_name);
       `uvm_info(get_name(), $sformatf("[RST_DBG]: process_name = %s ", process_name), UVM_NONE)
-   endtask
+   endfunction
 
    //---------------------------------------------------------------------------
    // Task: body_thread
@@ -87,19 +87,18 @@ class mby_egr_extended_base_seq extends mby_egr_env_base_seq;
    // delay by default.
    //---------------------------------------------------------------------------
    virtual task body();
-      if($test$plusargs("RESET"))begin
-         `uvm_info(get_name(), $sformatf("[RST_DBG]: process name = %s", process_name), UVM_NONE)
-         traffic_manager.process_started(process_name);
-
-         while(!traffic_manager.is_killed(process_name))begin
-            traffic_manager.wait_if_paused(process_name);
+      
+      fork
+         begin
+            traffic_manager.process_started(process_name);
             body_thread();
-         end
-
-         traffic_manager.process_finished(process_name);
-      end else begin
-         body_thread();
-      end
+            traffic_manager.process_finished(process_name);
+         end 
+         begin
+            traffic_manager.wait_until_killed(process_name);
+            `uvm_info(get_type_name(), $sformatf("Process: %s has been killed", process_name),UVM_NONE)
+         end 
+      join_any
    endtask
 
 endclass : mby_egr_extended_base_seq

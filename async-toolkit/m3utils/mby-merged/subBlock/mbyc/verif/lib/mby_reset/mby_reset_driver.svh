@@ -56,7 +56,12 @@ class mby_reset_driver extends shdv_reset_pkg::shdv_reset_driver;
       add_reset("egr_power_good");
    endfunction
 
-   //Whenever the right event is asserted, set_reset() method is executed.
+   // -------------------------------------------------------------------------
+   // TASK: set_reset
+   //
+   // Whenever the right event is asserted, set_reset() method is executed.
+   //
+   // -------------------------------------------------------------------------
    task set_reset(shdv_reset_data data);
 
       // ========= EGRESS =========
@@ -84,7 +89,12 @@ class mby_reset_driver extends shdv_reset_pkg::shdv_reset_driver;
 
    endtask:set_reset
 
-   //Whenever the right event is de-asserted, clear_reset() method is executed.
+   // -------------------------------------------------------------------------
+   // TASK: clear_reset
+   //
+   // Whenever the right event is de-asserted, clear_reset() is executed.
+   //
+   // -------------------------------------------------------------------------
    task clear_reset(shdv_reset_data data);
 
       // ========= EGRESS =========
@@ -112,6 +122,16 @@ class mby_reset_driver extends shdv_reset_pkg::shdv_reset_driver;
 
    endtask : clear_reset
 
+   // -------------------------------------------------------------------------
+   // FUNCTION: assign_vintf()
+   //
+   // This function is called by the agent once the driver is created and 
+   // assigns the right virtual interface to the driver 
+   //
+   // ARGUMENTS:
+   //     mby_egr_env_if_h vintf - A pointer to the vintf to drive
+   //
+   // -------------------------------------------------------------------------
    function void assign_vintf(mby_egr_env_if_h vintf);
       this.vintf = vintf;
    endfunction

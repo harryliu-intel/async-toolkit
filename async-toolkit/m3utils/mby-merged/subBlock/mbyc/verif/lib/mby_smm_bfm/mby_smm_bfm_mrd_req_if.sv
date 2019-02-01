@@ -39,24 +39,24 @@ interface mby_smm_bfm_mrd_req_if(input logic clk, input logic rst);
    // VARIABLE:
    //    Packet interface used to drive read responses data.
    mby_smm_bfm_row_rd_req_t intf_data_pkt;
-   
+
    // VARIABLE:
    //    TODO : not used within the class, any usage intended?
    logic                    intf_val_pkt;
-   
+
    // VARIABLE:
    //    Packet interface used to flag? debug data. TODO : confirm this
    logic                    intf_debg_pkt;
 
    localparam DATA_WIDTH = $bits(mby_smm_bfm_row_rd_req_t);
    localparam DEBG_WIDTH = 1;
-   
+
    //---------------------------------------------------------------------------
    // Initializing the interface at time 0
    //---------------------------------------------------------------------------
    initial begin : initialize_intf
       //intf_data_pkt = 0;
-      forever begin 
+      forever begin
          @(posedge clk);
          intf_data_pkt.mim_rrsp_valid = 'z;
          intf_data_pkt.mim_rrsp_dest_block = 'z;
@@ -121,7 +121,7 @@ interface mby_smm_bfm_mrd_req_if(input logic clk, input logic rst);
    task mon_data(output logic [DATA_WIDTH-1:0] data_pkt, output logic [DEBG_WIDTH-1:0] debug_pkt);
       data_pkt = intf_data_pkt;
       debug_pkt = intf_debg_pkt;
-       @(posedge clk);
+      @(posedge clk);
    endtask
 
 

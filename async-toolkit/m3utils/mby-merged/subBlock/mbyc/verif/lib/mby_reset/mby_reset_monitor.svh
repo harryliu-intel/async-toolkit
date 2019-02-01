@@ -60,7 +60,7 @@ class mby_reset_monitor extends shdv_reset_pkg::shdv_reset_monitor;
    // This task will be looking at the different type of resets and will create
    // a new event accordingly
    task monitor_reset();
-      wait(vintf.power_good_reset === 0);
+      @(negedge vintf.power_good_reset);
 
       forever begin
          fork
@@ -85,8 +85,6 @@ class mby_reset_monitor extends shdv_reset_pkg::shdv_reset_monitor;
          join
       end
    endtask : monitor_reset
-
-
 
    task run_phase(uvm_phase phase);
       super.run_phase(phase);

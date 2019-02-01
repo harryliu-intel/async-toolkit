@@ -8,7 +8,8 @@
 // Last modified : 14.12.2018
 //-----------------------------------------------------------------------------
 // Description :
-//
+// TODO: Test development stopped while working on RESET testing. This test 
+// needs to be enhanced. 
 //-----------------------------------------------------------------------------
 // Copyright (c) 2018 by Intel Corporation This model is the confidential and
 // proprietary property of Intel Corporation and the possession or use of this
@@ -22,13 +23,14 @@ import shdv_reset_pkg::*;
 `ifndef MBY_EGR_FIRST_PACKET_TEST__SVH
 `define MBY_EGR_FIRST_PACKET_TEST__SVH
 
-class mby_first_packet_seq extends mby_egr_extended_base_seq;
+class mby_first_packet_seq extends mby_egr_env_base_seq;
    `uvm_object_utils (mby_first_packet_seq)
 
    // ============= TEST SEQUENCES =============
    mby_egr_tag_seq   egr_tag_seq;
    // ==========================================
 
+   //TODO: Create another sequence/class to contain the traffic managers
    shdv_synchronization_pkg::shdv_process_manager  traffic_managers[$];
    mby_egr_extended_base_seq                       test_seqs[$];
    mby_egr_mid_reset_seq                           reset_seq;
@@ -44,6 +46,7 @@ class mby_first_packet_seq extends mby_egr_extended_base_seq;
 
    virtual task body();
       create_sequences();
+      update_traffic_manager();
 
       if ($test$plusargs("RESET"))begin
          traffic_rst_traffic();
@@ -59,6 +62,7 @@ class mby_first_packet_seq extends mby_egr_extended_base_seq;
    extern protected task send_traffic();
    extern protected task pull_reset();
    extern protected task traffic_rst_traffic();
+   extern protected task config_phase();
    extern protected task pause_all_traffic();
    extern protected task resume_all_traffic();
    extern protected task kill_all_traffic();
@@ -216,8 +220,11 @@ endtask
 //---------------------------------------------------------------------------
 task mby_first_packet_seq::resume_all_traffic();
    foreach (traffic_managers[idx]) begin
-      `uvm_info(get_name(), $sformatf("[RST_DBG]: Resuming traffic for TRAFFIC_MANAGER(%s)",traffic_managers[idx].name), UVM_LOW)
-      traffic_managers[idx].resume_process(traffic_managers[idx].name);
+      begin
+         `uvm_info(get_name(), $sformatf("[RST_DBG]: Resuming traffic for TRAFFIC_MANAGER(%s)",traffic_managers[idx].name), UVM_LOW)
+         traffic_managers[idx].resume_process(traffic_managers[idx].name);
+         traffic_managers[idx].wait_until_finished(traffic_managers[idx].name);
+      end
    end
 endtask
 
@@ -265,6 +272,7 @@ task mby_first_packet_seq:: pull_reset();
 
    reset_seq.randomize() with {
       reset_seq.rst_type == HARD_RESET;
+      reset_seq.duration inside {[400:500]};
    };
    `uvm_info(get_type_name(), $sformatf("[RST_DBG]: Pulling %s", reset_seq.rst_type.name()), UVM_NONE)
    `uvm_send(reset_seq)
@@ -272,7 +280,7 @@ task mby_first_packet_seq:: pull_reset();
 endtask : pull_reset
 
 task mby_first_packet_seq:: traffic_rst_traffic();
-   update_traffic_manager();
+
 
    fork
       send_traffic();
@@ -282,25 +290,30 @@ task mby_first_packet_seq:: traffic_rst_traffic();
    if($test$plusargs("CLEAN_RESET"))begin
       `uvm_info(get_name(), "[RST_DBG]: Clean Reset flow", UVM_NONE)
       pause_all_traffic();
-      //Wait for IDLE
+      
+      //TODO: Replace with shutdown_seq();  
       wait_n(200);
+      
       pull_reset();
+      config_phase();
+      resume_all_traffic();
    end else if($test$plusargs("DIRTY_RESET"))begin
       `uvm_info(get_name(), "[RST_DBG]: Dirty Reset flow", UVM_NONE)
       fork
-         pause_all_traffic();
+         kill_all_traffic();
          pull_reset();
       join
+      config_phase();
+      create_sequences();
+      update_traffic_manager();
+      send_traffic();
    end
 
-
+endtask : traffic_rst_traffic
+task mby_first_packet_seq:: config_phase();
    //TODO: Replace with CONFIG_PHASE
    `uvm_warning(get_type_name(), "Waiting for 500 cycles. Simulating the CONFIG_PHASE. Replace the wait for the actual config sequence once it's available.")
    wait_n(200);
-
-   resume_all_traffic();
-
-   kill_all_traffic();
-endtask : traffic_rst_traffic
+endtask : config_phase
 `endif
 

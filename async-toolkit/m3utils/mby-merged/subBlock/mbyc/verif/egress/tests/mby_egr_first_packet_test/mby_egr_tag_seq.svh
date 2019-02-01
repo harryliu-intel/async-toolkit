@@ -26,7 +26,7 @@ class mby_egr_tag_seq extends mby_egr_extended_base_seq;
 
    mby_tag_bfm_pkg::mby_tag_bfm_uc_xaction uc_tag;
    mby_smm_bfm_pkg::mby_smm_bfm_mwr_req_xaction smm_wr;
-   
+
    shdv_base_pkg::shdv_base_sequencer#(.T_req(mby_tag_bfm_uc_xaction)) tag_sequencer;
    shdv_base_pkg::shdv_base_sequencer#(.T_req(mby_smm_bfm_pkg::mby_smm_bfm_mwr_req_xaction)) smm_sequencer;
 
@@ -37,16 +37,12 @@ class mby_egr_tag_seq extends mby_egr_extended_base_seq;
       super.new(name);
       // raise objection by default
       this.set_automatic_phase_objection(1);
-      set_process_name(name);
 
    endfunction : new
 
    virtual protected task body_thread();
       this.set_name("mby_egr_tag_seq");
-      
-      
-      
-      
+
       smm_wr = mby_smm_bfm_pkg::mby_smm_bfm_mwr_req_xaction::type_id::create("smm_wr");
       assert($cast(smm_sequencer, shdv_base_pkg::shdv_base_tb_sequencer::pick_sequencer("smm_bfm_wr_req")))
 
@@ -62,8 +58,8 @@ class mby_egr_tag_seq extends mby_egr_extended_base_seq;
       `uvm_send(smm_wr);
       smm_wr.data =0;
       `uvm_send(smm_wr);
-      
-      
+
+
       wait_n(22);
 
       assert($cast(tag_sequencer, shdv_base_pkg::shdv_base_tb_sequencer::pick_sequencer("tag_bfm_uc_0")))
@@ -88,14 +84,18 @@ class mby_egr_tag_seq extends mby_egr_extended_base_seq;
          uc_tag.data.length = 64;
          uc_tag.data.ptr_toggle = 4'b1;
          uc_tag.data.ptr = $urandom_range(0, 2 ** 19 - 1);
-
+         
          `uvm_info(get_name(),uc_tag.convert2string(),UVM_LOW)
 
          `uvm_send(uc_tag)
          uc_tag.data = 0;
+
          `uvm_send(uc_tag)
-      //wait_n(1);
+
+         traffic_manager.wait_if_paused(process_name);
+
       end
+
       `uvm_info(get_name(), "Finished mby_egr_tag_seq", UVM_LOW)
       wait_n(100);
    endtask
