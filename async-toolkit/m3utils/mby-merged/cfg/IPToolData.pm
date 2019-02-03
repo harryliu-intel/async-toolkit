@@ -187,8 +187,7 @@ $ToolConfig_ips{sva_lib_ip} = {
 };
 
 $ToolConfig_ips{shdv} = {
-#   PATH => "$ENV{IP_MODELS}/shdv/&get_tool_version()",
-   PATH => "/nfs/sc/disks/sc_mby_00091/jesusalo/mby/work_root/shdv",   
+   PATH => "$ENV{IP_MODELS}/shdv/&get_tool_version()",
    VERSION => "shdv-dev-x0-19ww02b",
    OTHER   => {
       SEARCH_PATHS   => ["&get_tool_path()",],
