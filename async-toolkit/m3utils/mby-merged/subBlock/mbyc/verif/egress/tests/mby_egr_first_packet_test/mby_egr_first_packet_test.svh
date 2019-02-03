@@ -45,8 +45,10 @@ class mby_first_packet_seq extends mby_egr_env_base_seq;
    endfunction : new
 
    virtual task body();
+
       create_sequences();
       update_traffic_manager();
+
 
       if ($test$plusargs("RESET"))begin
          traffic_rst_traffic();
@@ -54,7 +56,9 @@ class mby_first_packet_seq extends mby_egr_env_base_seq;
          send_traffic();
       end
 
+
       `uvm_info(get_name(), "Finished mby_egr_first_packet_seq", UVM_NONE)
+
    endtask : body
 
    extern protected task create_sequences();

@@ -1,40 +1,59 @@
 //------------------------------------------------------------------------------
-//  INTEL CONFIDENTIAL
-//
-//  Copyright 2006 - 2017 Intel Corporation All Rights Reserved.
-//
-//  The source code contained or described herein and all documents related
-//  to the source code ("Material") are owned by Intel Corporation or its
-//  suppliers or licensors. Title to the Material remains with Intel
-//  Corporation or its suppliers and licensors. The Material contains trade
-//  secrets and proprietary and confidential information of Intel or its
-//  suppliers and licensors. The Material is protected by worldwide copyright
-//  and trade secret laws and treaty provisions. No part of the Material may
-//  be used, copied, reproduced, modified, published, uploaded, posted,
-//  transmitted, distributed, or disclosed in any way without Intel's prior
-//  express written permission.
-//
-//  No license under any patent, copyright, trade secret or other intellectual
-//  property right is granted to or conferred upon you by disclosure or
-//  delivery of the Materials, either expressly, by implication, inducement,
-//  estoppel or otherwise. Any license under such intellectual property rights
-//  must be express and approved by Intel in writing.
+///  INTEL TOP SECRET
+
+///
+
+///  Copyright 2018 Intel Corporation All Rights Reserved.
+
+///
+
+///  The source code contained or described herein and all documents related
+
+///  to the source code ("Material") are owned by Intel Corporation or its
+
+///  suppliers or licensors. Title to the Material remains with Intel
+
+///  Corporation or its suppliers and licensors. The Material contains trade
+
+///  secrets and proprietary and confidential information of Intel or its
+
+///  suppliers and licensors. The Material is protected by worldwide copyright
+
+///  and trade secret laws and treaty provisions. No part of the Material may
+
+///  be used, copied, reproduced, modified, published, uploaded, posted,
+
+///  transmitted, distributed, or disclosed in any way without Intel's prior
+
+///  express written permission.
+
+///
+
+///  No license under any patent, copyright, trade secret or other intellectual
+
+///  property right is granted to or conferred upon you by disclosure or
+
+///  delivery of the Materials, either expressly, by implication, inducement,
+
+///  estoppel or otherwise. Any license under such intellectual property rights
+
+///  must be express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////
 //
 //              Automated Memory Shells Controller Creater
 //
-//      Created by solson with create_memories script version 2.31 on NA
+//      Created by solson with create_memories script version 2.40 on NA
 //
 //                          Logical File Details
 //
 //              
-//                      Author's name   : Mccormick, Jim
-//                      Author's email  : jim.mccormick@intel.com
-//                      Commited on     : Tue Oct 30 11:35:04 2018 -0700
+//                      Author's name   : Olson, Steve
+//                      Author's email  : steve.olson@intel.com
+//                      Commited on     : Tue Dec 18 08:34:10 2018 -0800
 //                      Commit tag      : 
-//                      Hash            : 92f1a9b52c141ce961b1302be8bc68915dd3487e
+//                      Hash            : d72ff1d74c33bd8ab161f67eb939d8a0ce81dbf0
 //
 //////////////////////////////////////////////////////////////////////
 `include        "msh_mem.def"
@@ -86,6 +105,15 @@ module  msh_shell_ctl   #(
 //      MEM_CFG_CSRs
 
 
+`ifndef MBY_MGM_EMU_FPGA;          
+  `ifdef INTEL_FPGA            
+     `define    MBY_MGM_EMU_FPGA      
+  `else                        
+     `ifdef INTEL_EMULATION    
+        `define  MBY_MGM_EMU_FPGA   
+     `endif                       
+  `endif                       
+`endif                         
         reg     [3:0] mem_cfg_ecc_en;
         reg     [3:0] mem_cfg_ecc_invert_1;
         reg     [3:0] mem_cfg_ecc_invert_2;
@@ -107,7 +135,7 @@ always_comb
         mem_cfg_reg_sel[1]      = MSH_BANK_RAM_1_CFG_reg_sel;
         mem_cfg_reg_sel[2]      = MSH_BANK_RAM_2_CFG_reg_sel;
         mem_cfg_reg_sel[3]      = MSH_BANK_RAM_3_CFG_reg_sel;
-  `ifdef INTEL_FPGA 
+  `ifdef INTEL_EMULATION 
       `ifndef MBY_MGM_EMU_DO_ECC_MEM_DBG 
         mem_cfg_reg_sel =  0;
       `endif
@@ -117,7 +145,7 @@ always_comb
 
         always_ff @(posedge clk or negedge reset_n)
                 if (!reset_n) begin
-  `ifdef INTEL_FPGA 
+  `ifdef INTEL_EMULATION 
       `ifndef MBY_MGM_EMU_DO_ECC_MEM_DBG 
                         mem_cfg_ecc_en[3:0]             <= 0 ;
       `else
@@ -145,7 +173,7 @@ always_comb
                 else begin
                         for (int i=0;i<4;i++)
                                 if (mem_cfg_reg_sel[i] && (!unified_regs_rd)) begin
-  `ifdef INTEL_FPGA 
+  `ifdef INTEL_EMULATION 
       `ifndef MBY_MGM_EMU_DO_ECC_MEM_DBG 
                                         mem_cfg_ecc_en[i]                               <= 0 ;
       `else
@@ -261,12 +289,12 @@ always_comb
         always_ff @(posedge clk or negedge reset_n)
                 if (!reset_n)
                    begin
+                        mem_dbg_rd_ctl_rd_en                            <= 0;
+                        mem_dbg_rd_ctl_done                             <= {(4){1'b1}};
                         for (int i=0;i<4;i++)
                                 begin
-                                        mem_dbg_rd_ctl_rd_en[i]                                 <= 1'b0;
                                         mem_dbg_rd_ctl_adr[i][MEM_DBG_RD_ADR_WIDTH-1:0]         <= {(MEM_DBG_RD_ADR_WIDTH){1'b0}};
                                         mem_dbg_rd_ctl_dw_sel[i][MEM_DBG_DW_SEL_WIDTH-1:0]      <= {(MEM_DBG_DW_SEL_WIDTH){1'b0}};
-                                        mem_dbg_rd_ctl_done[i]                                  <= 1'b1;
                                 end
                    end
                 else

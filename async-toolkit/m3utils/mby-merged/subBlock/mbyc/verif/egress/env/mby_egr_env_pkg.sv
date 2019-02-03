@@ -32,7 +32,8 @@ package mby_egr_env_pkg;
    import mby_tag_bfm_pkg::*;
    import mby_smm_bfm_pkg::*;
    import mby_reset_pkg::*;
-   
+   import mby_pbr_bfm_pkg::*;
+
    `include "uvm_macros.svh"
 
    `include "mby_egr_types.svh"

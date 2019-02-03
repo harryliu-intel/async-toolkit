@@ -80,6 +80,19 @@ class mby_igr_env extends shdv_base_env;
    // Variable: tag_bfm
    // Tag BFMs
    mby_tag_bfm tag_bfm[`NUM_TAG_PORTS];
+   
+   
+   // Variable: gpm_bfm
+   // GPM BFM
+   igr_gpm_bfm_t gpm_bfm;
+
+   // Variable: igr_pbr_bfm
+   // PBR BFM Instance
+   mby_pbr_bfm_pkg::mby_pbr_bfm   igr_pbr_bfm;
+
+   // Variable:  tb_ral
+   // Handle to igr RAL.
+   mby_igr_reg_pkg::mby_igr_reg_blk tb_ral;
 
    `uvm_component_utils_begin(mby_igr_env)
    `uvm_component_utils_end
@@ -118,7 +131,8 @@ class mby_igr_env extends shdv_base_env;
       build_vpt_bfms();
       build_eth_bfms();
       build_tag_bfm();
-
+      build_pbr_bfm();
+      build_ral();
 
       // Env monitor
       assert($cast(env_monitor, create_component("mby_igr_env_monitor", "env_monitor")));
@@ -138,6 +152,8 @@ class mby_igr_env extends shdv_base_env;
       super.connect_phase(phase);
       connect_vpt_bfms();
       connect_eth_bfms();
+      connect_pbr_bfm();
+
       uvm_config_db#(igr_env_if_t)::get(this, "", "ingress_if", ingress_if);
       if(ingress_if == null) begin
           `uvm_fatal(get_name(), $sformatf("Couldn't find ingress_if"));
@@ -243,6 +259,66 @@ class mby_igr_env extends shdv_base_env;
           tag_bfm[i].cfg_obj.monitor_active = UVM_ACTIVE;
       end
    endfunction: build_tag_bfm
+   
+   //--------------------------------------------------------------------------
+   // Function: build_gpm_bfm
+   // Creates the gpm_bfm using the factory
+   //--------------------------------------------------------------------------
+   function void build_gmp_bfm();
+      gpm_bfm = igr_gpm_bfm_t::type_id::create("gpm_bfm", this);
+      gpm_bfm.cfg.bfm_mode = GPM_BFM_IGR_MODE;
+   endfunction : build_gmp_bfm
+   
+   //--------------------------------------------------------------------------
+   // Function: build_pbr_bfm
+   // Builds the instance of the pbr BFM
+   //--------------------------------------------------------------------------
+   function void build_pbr_bfm();
+      igr_pbr_bfm = mby_pbr_bfm_pkg::mby_pbr_bfm::type_id::create("igr_pbr_bfm_name", this);
+      if(!igr_pbr_bfm.cfg_obj.randomize() with {
+               bfm_mode == PBR_BFM_IGR_MODE;
+            })begin
+         `uvm_error(get_name(), "Unable to randomize igr_pbr_bfm.cfg_obj PBR_BFM_IGR_MODE");
+      end
+      `uvm_info(get_name(), ("DBG_ALF: Done building igr pbr bfm in the ENV..."), UVM_DEBUG)
+   endfunction : build_pbr_bfm
+
+   //---------------------------------------------------------------------------
+   //  Function: build_ral
+   //  Builds igr register model.
+   //
+   //---------------------------------------------------------------------------
+   virtual function void build_ral();
+      // Check if ral is already set by FC
+      if (tb_ral == null) begin
+
+         tb_ral = mby_igr_reg_pkg::mby_igr_reg_blk::type_id::create({get_name(),"tb_ral"});
+         tb_ral.build();
+         //TODO: Update the base addr.
+         tb_ral.default_map.set_base_addr(`UVM_REG_ADDR_WIDTH'h20000);
+         tb_ral.lock_model();
+
+         tb_ral.set_hdl_path_root("mby_igr_tb.igr_top_i");
+
+         //Build the Adapter's based on agt's active
+      end
+   endfunction: build_ral
+
+   //---------------------------------------------------------------------------
+   // Function: get_tb_ral()
+   // Returns object handle to igr ral (mby_igr_reg_blk)
+   //---------------------------------------------------------------------------
+   function mby_igr_reg_pkg::mby_igr_reg_blk get_tb_ral();
+      return tb_ral;
+   endfunction : get_tb_ral
+
+   //---------------------------------------------------------------------------
+   // Function: set_tb_ral()
+   // Sets handle to igr ral (mby_igr_reg_blk). Used to pass handle to RAL from fullchip env.
+   //---------------------------------------------------------------------------
+   function set_tb_ral(mby_igr_reg_pkg::mby_igr_reg_blk ral);
+      tb_ral = ral;
+   endfunction : set_tb_ral
 
    //--------------------------------------------------------------------------
    // Function: connect_vpt_bfms
@@ -273,6 +349,25 @@ class mby_igr_env extends shdv_base_env;
          add_sequencer($sformatf("eth_bfm_%0d", i), $sformatf("eth_bfm_%0d_rx3", i), eth_bfms[i].frame_sequencer[3]);
       end
    endfunction : connect_eth_bfms
+   
+   //--------------------------------------------------------------------------
+   // Function: connect_gpm_bfms
+   // Sets VIF to the IO policies, adds IO policy class to the BFM and adds sequencer
+   // pointer to SLA vsqr
+   //--------------------------------------------------------------------------
+   function void connect_gpm_bfm();
+      add_sequencer("gpm_bfm", "gpm_bfm_fpptr_agent", gpm_bfm.fpptr_agent.sequencer);
+   endfunction : connect_gpm_bfm
+
+   //--------------------------------------------------------------------------
+   // Function: connect_pbr_bfm
+   // adds sequencer
+   //--------------------------------------------------------------------------
+   function void connect_pbr_bfm();
+      add_sequencer("igr_pbr_bfm_name", "igr_pbr_bfm_cpb_sequencer", igr_pbr_bfm.cpb_agent.sequencer); //2nd arg is the seqr name used in seq - test
+      add_sequencer("igr_pbr_bfm_name", "igr_pbr_bfm_dpb_sequencer", igr_pbr_bfm.dpb_agent.sequencer);
+      `uvm_info(get_name(), ("DBG_ALF: Done connecting igr pbr bfm..."), UVM_DEBUG)
+   endfunction: connect_pbr_bfm
 
    //////////////////////////////////////////////////////////////////////////////
    // Ingress ENV functions / tasks

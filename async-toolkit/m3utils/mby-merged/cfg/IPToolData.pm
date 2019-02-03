@@ -188,7 +188,7 @@ $ToolConfig_ips{sva_lib_ip} = {
 
 $ToolConfig_ips{shdv} = {
    PATH => "$ENV{IP_MODELS}/shdv/&get_tool_version()",
-   VERSION => "shdv-dev-x0-19ww02b",
+   VERSION => "shdv-dev-x0-19ww05d",
    OTHER   => {
       SEARCH_PATHS   => ["&get_tool_path()",],
       IMPORT         => ["cfg/shdv_IPToolData.pm",],

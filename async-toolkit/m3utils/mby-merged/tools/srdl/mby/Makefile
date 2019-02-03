@@ -47,6 +47,7 @@ include $(MODEL_ROOT)/tools/srdl/Makefile
 ppe_ral : $(RESULTS_SUBBLOCK)/mby_ppe_rx_top_map.allral.done cp_ppe_rx_ral
 mesh_ral: $(RESULTS_SUBBLOCK)/mby_mesh_row_map.allral.done cp_mesh_ral
 igr_rx_pb_ral: $(RESULTS_SUBBLOCK)/mby_rx_pb_map.allral.done cp_igr_rx_pb_ral
+egr_tx_pb_ral: $(RESULTS_SUBBLOCK)/mby_tx_pb_map.allral.done cp_egr_tx_pb_ral
 
 cp_mesh_ral: $(RESULTS_SUBBLOCK)/mby_mesh_row_map.allral.done
 	cp $(RESULTS_SUBBLOCK)/mby_mesh_row_map.ralf_out/*.sv $(MODEL_ROOT)/subBlock/mbyc/verif/mesh/ral/
@@ -56,6 +57,11 @@ cp_igr_rx_pb_ral: $(RESULTS_SUBBLOCK)/mby_rx_pb_map.allral.done
 	cp $(RESULTS_SUBBLOCK)/mby_rx_pb_map.ralf_out/*.sv $(MODEL_ROOT)/subBlock/mbyc/verif/ingress/ral/
 	cp $(RESULTS_SUBBLOCK)/mby_rx_pb_map/* $(MODEL_ROOT)/subBlock/mbyc/src/csrs/mby/output/sverilog/
 	echo "rx_pb ral rtl generated"
+
+cp_egr_tx_pb_ral: $(RESULTS_SUBBLOCK)/mby_tx_pb_map.allral.done
+	cp $(RESULTS_SUBBLOCK)/mby_tx_pb_map.ralf_out/*.sv $(MODEL_ROOT)/subBlock/mbyc/verif/egress/ral/
+	cp $(RESULTS_SUBBLOCK)/mby_tx_pb_map/* $(MODEL_ROOT)/subBlock/mbyc/src/csrs/mby/output/sverilog/
+	echo "tx_pb ral rtl generated"
 
 cp_ppe_rx_ral: $(RESULTS_SUBBLOCK)/mby_ppe_rx_top_map.allral.done
 #	$(MODEL_ROOT)/tools/srdl/ral_make_hdl.pl --dir target/GenRTL/regflow/mby/subblock/mby_ppe_rx_top_map.ralf_out/ --model_root $(MODEL_ROOT) --filename_ral mby_ppe_rx_ral.hdl

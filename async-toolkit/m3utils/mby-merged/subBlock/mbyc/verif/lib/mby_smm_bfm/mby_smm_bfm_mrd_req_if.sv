@@ -32,6 +32,12 @@
 //------------------------------------------------------------------------------
 `ifndef __MBY_SMM_BFM_MRD_REQ_IF__
 `define __MBY_SMM_BFM_MRD_REQ_IF__
+//------------------------------------------------------------------------------
+// INTERFACE: mby_smm_bfm_mrd_req_if
+//
+// This is the interface used to handle memory read requests to the SMM BFM.
+//
+//------------------------------------------------------------------------------
 
 interface mby_smm_bfm_mrd_req_if(input logic clk, input logic rst);
    import mby_smm_bfm_pkg_pre::*;
@@ -45,7 +51,8 @@ interface mby_smm_bfm_mrd_req_if(input logic clk, input logic rst);
    logic                    intf_val_pkt;
 
    // VARIABLE:
-   //    Packet interface used to flag? debug data. TODO : confirm this
+   //    Packet interface that can direct data from the driver to the scoreboard (via a monitor). Can be helpful on
+   //    checkers. Current usage not defined net.
    logic                    intf_debg_pkt;
 
    localparam DATA_WIDTH = $bits(mby_smm_bfm_row_rd_req_t);

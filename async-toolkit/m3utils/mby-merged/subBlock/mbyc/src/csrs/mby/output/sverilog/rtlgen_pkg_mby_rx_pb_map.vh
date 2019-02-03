@@ -23,19 +23,19 @@
 
 //                                                                             
 // File:            rtlgen_pkg_mby_rx_pb_map.vh                                
-// Creator:         edwardro                                                   
-// Time:            Wednesday Jan 23, 2019 [5:27:04 am]                        
+// Creator:         ggomezde                                                   
+// Time:            Wednesday Jan 30, 2019 [10:27:46 am]                       
 //                                                                             
-// Path:            /tmp/edwardro/nebulon_run/211708214340_2019-01-23.05:26:34 
+// Path:            /tmp/ggomezde/nebulon_run/2768731022_2019-01-30.10:27:12   
 // Arguments:       -I                                                         
-//                  /nfs/site/disks/slx_1130/edwardro/mby/work_root/mby.edr.pbb/tools/srdl
+//                  /nfs/site/disks/sc_mby_00088/ggomezde/mby/work_root/models/mby_ww05_ral_TI/tools/srdl
 //                  -sv_no_sai_checks -sverilog -crif -expand_handcoded_arrays 
 //                  -maximize_crif -input mby_rx_pb_map.rdl -timeout 60000     
-//                  -out_dir /tmp/tmp.QONdsBBv97 -log_file                     
-//                  /nfs/site/disks/slx_1130/edwardro/mby/work_root/mby.edr.pbb/target/GenRTL/regflow/mby/subblock/mby_rx_pb_map_crif.xml.log
+//                  -out_dir /tmp/tmp.C8ZQyTQrjK -log_file                     
+//                  /nfs/site/disks/sc_mby_00088/ggomezde/mby/work_root/models/mby_ww05_ral_TI/target/GenRTL/regflow/mby/subblock/mby_rx_pb_map_crif.xml.log
 //                                                                             
 // MRE:             5.2018.3.p1                                                
-// Machine:         sccj019434                                                 
+// Machine:         sccj004303                                                 
 // OS:              Linux 3.0.101-108.13.1.14249.0.PTF-default                 
 // Nebulon version: d18ww52.4                                                  
 // Description:                                                                
