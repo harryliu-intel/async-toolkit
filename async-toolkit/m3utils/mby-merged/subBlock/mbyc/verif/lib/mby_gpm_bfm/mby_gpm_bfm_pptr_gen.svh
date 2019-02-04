@@ -84,9 +84,9 @@ class mby_gpm_bfm_pptr_gen
    //
    //--------------------------------------------------------------------------
 
-   // VARIABLE: cfg_obj
+   // VARIABLE: cfg
    // The bfm's configuration object
-   mby_gpm_bfm_cfg cfg_obj;
+   mby_gpm_bfm_cfg cfg;
    
    // VARIABLE: fpptr_agent_ptr
    //    Handler to the GPM BFM free pod pointer agent
@@ -94,14 +94,14 @@ class mby_gpm_bfm_pptr_gen
    
    // VARIABLE: smm_mwr_port
    // This port is used to send memory write requests to SMM BFM
-   gpm_bfm_smm_mwr_port smm_mwr_port;
+   gpm_bfm_smm_mwr_port_t smm_mwr_port;
    
    // VARIABLE: tag_fptr_port
    // This port is used to send free pointers to TAG BFM
-   gpm_bfm_tag_fptr_port tag_fptr_port;
+   gpm_bfm_tag_fptr_port_t tag_fptr_port;
 
    // Registering class with the factory
-   `uvm_component_utils(mby_gpm_bfm_pptr_gen)
+   `uvm_component_utils(mby_gpm_bfm_pptr_gen#(T_req))
 
    //--------------------------------------------------------------------------
    // CONSTRUCTOR: new
@@ -139,7 +139,7 @@ class mby_gpm_bfm_pptr_gen
    //    pod_agent fpptr_agent_ptr  - An instance name of the free pod pointer agent
    // -------------------------------------------------------------------------
    function void set_fpptr_agent(pod_agent fpptr_agent);
-      this.fpptr_agent= fpptr_agent;
+      this.fpptr_agent_h = fpptr_agent;
    endfunction : set_fpptr_agent
    
    // -------------------------------------------------------------------------
@@ -152,7 +152,43 @@ class mby_gpm_bfm_pptr_gen
    // -------------------------------------------------------------------------
    task run_phase(uvm_phase phase);
       // Real stuff should happen here
+      phase.raise_objection(this, "GPM BFM: Pending fpptrs.", 1);
+      fork
+         generate_fpptrs();
+      join
+      phase.drop_objection(this, "GPM BFM: No more fpptrs pending",1);
+      
    endtask : run_phase
+   
+   //--------------------------------------------------------------------------
+   // TASK: generate_fpptrs
+   //
+   // This task generate free pod pointers to be sent to the ring interface
+   //--------------------------------------------------------------------------
+   task automatic generate_fpptrs();
+      mby_gpm_bfm_pod_data_t data;
+      data.valid = 1;
+      data.pod_ptr = 1;
+      data.pod_ptr_toggle = 1;
+      data.slot = 1;
+      data.rsvrd = 0;
+      data.parity = 0;
+      send_fpptr(data);
+   endtask : generate_fpptrs
+   
+   //--------------------------------------------------------------------------
+   // TASK: send_fpptr
+   //
+   // This task sends a free pod pointer transaction to the sequencer in fpptr_agent
+   //
+   // ARGUMENTS:
+   //    mby_gpm_bfm_pod_data_t data - The free pod pointer structure to be sent to the sequencer
+   //--------------------------------------------------------------------------
+   task send_fpptr(mby_gpm_bfm_pod_data_t data);
+      gpm_bfm_pod_seq_t fpod_rsp_seq = gpm_bfm_pod_seq_t::type_id::create("fpod_rsp_seq", this);
+      fpod_rsp_seq.req.data = data;
+      fpod_rsp_seq.start(this.fpptr_agent_h.sequencer);
+   endtask : send_fpptr
    
    // ------------------------------------------------------------------------
    // FUNCTION: build_phase
@@ -161,9 +197,10 @@ class mby_gpm_bfm_pptr_gen
    //
    // ------------------------------------------------------------------------
    function void build_phase(uvm_phase phase);
-      if(cfg_obj.bfm_mode == GPM_BFM_IGR_MODE) begin
+      super.build_phase(phase);
+      if(cfg.bfm_mode == GPM_BFM_IGR_MODE) begin
          smm_mwr_port = new("smm_mwr_port", this);
-      end else if(cfg_obj.bfm_mode == GPM_BFM_EGR_MODE) begin
+      end else if(cfg.bfm_mode == GPM_BFM_EGR_MODE) begin
          tag_fptr_port = new("tag_fptr_port", this);
       end
    endfunction : build_phase

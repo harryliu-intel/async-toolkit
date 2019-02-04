@@ -32,6 +32,12 @@
 //------------------------------------------------------------------------------
 `ifndef __MBY_SMM_BFM_MWR_REQ_IF__
 `define __MBY_SMM_BFM_MWR_REQ_IF__
+//------------------------------------------------------------------------------
+// INTERFACE: mby_smm_bfm_mwr_req_if
+//
+// This is the interface used to handle memory write requests to the SMM BFM.
+//
+//------------------------------------------------------------------------------
 
 interface mby_smm_bfm_mwr_req_if(input logic clk, input logic rst);
    import mby_smm_bfm_pkg_pre::*;
@@ -106,6 +112,14 @@ interface mby_smm_bfm_mwr_req_if(input logic clk, input logic rst);
        @(posedge clk);
    endtask
 
+
+   task hard_reset();
+      $display("Executing hard reset in the interface.");
+   endtask
+
+   task soft_reset();
+      $display("Executing soft reset in the interface.");
+   endtask
 endinterface : mby_smm_bfm_mwr_req_if
 
 

@@ -37,7 +37,7 @@
 `define __MBY_SMM_BFM_TYPES__
 
 // -------------------------------------------------------------------------
-// Main class & VIF type definitions for TAG BFM
+// Main class & VIF type definitions for SMM BFM
 // -------------------------------------------------------------------------
 // Creating a virtual interface types for wr_req & rd_req/rd_rsp
 typedef virtual mby_smm_bfm_mwr_req_if mby_smm_bfm_row_wr_req_vif;
@@ -61,14 +61,14 @@ typedef shdv_base_empty_fc_policy smm_bfm_row_wr_fc;
 typedef shdv_base_empty_fc_policy smm_bfm_row_rd_fc;
 
 // Defining the wr_req & rd_req/rd_rsp agents as a parameterized base agent.
-typedef shdv_agent#(
+typedef shdv_base_pkg::shdv_agent#(
    .T_req(mby_smm_bfm_mwr_req_xaction),
    .T_fcp(smm_bfm_row_wr_fc),
-   .T_iop(smm_bfm_row_wr_io)) smm_bfm_row_wr_req_agent;
-typedef shdv_agent#(
+   .T_iop(smm_bfm_row_wr_io)) smm_bfm_wr_req_agent;
+typedef shdv_base_pkg::shdv_agent#(
    .T_req(mby_smm_bfm_mrd_req_xaction),
    .T_vif(smm_bfm_row_rd_fc),
-   .T_iop(smm_bfm_row_rd_io)) smm_bfm_row_rd_req_agent;
+   .T_iop(smm_bfm_row_rd_io)) smm_bfm_rd_req_agent;
 
 typedef class mby_smm_bfm_mwr_req;
 typedef class mby_smm_bfm_mrd_req;
@@ -79,16 +79,29 @@ typedef mby_smm_bfm_mwr_req#(.T_req(mby_smm_bfm_mwr_req_xaction)) smm_bfm_mwr_re
 typedef mby_smm_bfm_mrd_req#(.T_req(mby_smm_bfm_mrd_req_xaction)) smm_bfm_mrd_req;
 typedef mby_smm_bfm_mem_node#(.ADDR_WIDTH(SMM_BFM_ADDR_WIDTH),.DATA_WIDTH(SMM_BFM_DATA_WIDTH)) smm_bfm_mem_node;
 
-typedef enum logic [1:0] {
+// Enumerations to control/select delay profiles for SMM BFM
+typedef enum bit [1:0] {
    NO_CONGESTION     = 2'h0,
    MEDIUM_CONGESTION = 2'h1,
    HIGH_CONGESTION   = 2'h2
-} mesh_status_type_e;
+} mesh_status_e;
 
-typedef enum logic [1:0] {
+typedef enum bit [1:0] {
    IDEAL_DELAY    = 2'h0,
    MEDIUM_DELAY   = 2'h1,
    HIGH_DELAY     = 2'h2
 } delay_type_e;
+
+// Enumerations to adjust the mode of operation for SMM BFM subscribers
+typedef enum bit {
+   WITHOUT_DELAY_SIMULATION   = 1'b0,
+   WITH_DELAY_SIMULATION      = 1'b1
+} delay_simulation_e;
+
+typedef enum bit [1:0] {
+   INGRESS_MODE   = 2'h0,
+   EGRESS_MODE    = 2'h1,
+   GPM_MODE       = 2'h2
+} operation_mode_e;
 
 `endif

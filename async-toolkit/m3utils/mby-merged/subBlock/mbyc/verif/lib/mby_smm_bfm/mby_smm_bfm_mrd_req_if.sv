@@ -32,6 +32,12 @@
 //------------------------------------------------------------------------------
 `ifndef __MBY_SMM_BFM_MRD_REQ_IF__
 `define __MBY_SMM_BFM_MRD_REQ_IF__
+//------------------------------------------------------------------------------
+// INTERFACE: mby_smm_bfm_mrd_req_if
+//
+// This is the interface used to handle memory read requests to the SMM BFM.
+//
+//------------------------------------------------------------------------------
 
 interface mby_smm_bfm_mrd_req_if(input logic clk, input logic rst);
    import mby_smm_bfm_pkg_pre::*;
@@ -39,24 +45,25 @@ interface mby_smm_bfm_mrd_req_if(input logic clk, input logic rst);
    // VARIABLE:
    //    Packet interface used to drive read responses data.
    mby_smm_bfm_row_rd_req_t intf_data_pkt;
-   
+
    // VARIABLE:
    //    TODO : not used within the class, any usage intended?
    logic                    intf_val_pkt;
-   
+
    // VARIABLE:
-   //    Packet interface used to flag? debug data. TODO : confirm this
+   //    Packet interface that can direct data from the driver to the scoreboard (via a monitor). Can be helpful on
+   //    checkers. Current usage not defined net.
    logic                    intf_debg_pkt;
 
    localparam DATA_WIDTH = $bits(mby_smm_bfm_row_rd_req_t);
    localparam DEBG_WIDTH = 1;
-   
+
    //---------------------------------------------------------------------------
    // Initializing the interface at time 0
    //---------------------------------------------------------------------------
    initial begin : initialize_intf
       //intf_data_pkt = 0;
-      forever begin 
+      forever begin
          @(posedge clk);
          intf_data_pkt.mim_rrsp_valid = 'z;
          intf_data_pkt.mim_rrsp_dest_block = 'z;
@@ -121,10 +128,19 @@ interface mby_smm_bfm_mrd_req_if(input logic clk, input logic rst);
    task mon_data(output logic [DATA_WIDTH-1:0] data_pkt, output logic [DEBG_WIDTH-1:0] debug_pkt);
       data_pkt = intf_data_pkt;
       debug_pkt = intf_debg_pkt;
-       @(posedge clk);
+      @(posedge clk);
    endtask
 
+
+   task hard_reset();
+      $display("Executing hard reset in the interface.");
+   endtask
+
+   task soft_reset();
+      $display("Executing soft reset in the interface.");
+   endtask
 endinterface : mby_smm_bfm_mrd_req_if
+
 
 
 `endif

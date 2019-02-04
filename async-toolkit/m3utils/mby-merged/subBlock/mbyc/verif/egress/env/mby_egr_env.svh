@@ -71,9 +71,19 @@ class mby_egr_env extends mby_egr_base_env;
    // Shared Memory Mesh (SMM) Instance
    mby_smm_bfm_t smm_bfm;
 
+   // Variable: egr_pbr_bfm
+   // PBR BFM Instance
+   mby_pbr_bfm_pkg::mby_pbr_bfm   egr_pbr_bfm;
+
+   // Variable:  tb_ral
+   // Handle to egr RAL.
+   mby_egr_reg_pkg::mby_egr_reg_blk tb_ral;
+
    // Variable: env_monitor
    // egress env event monitor
    mby_egr_env_monitor env_monitor;
+
+   mby_reset_agent rst_agent;
 
    `uvm_component_utils_begin(mby_egr_env)
    `uvm_component_utils_end
@@ -112,6 +122,8 @@ class mby_egr_env extends mby_egr_base_env;
       //build_eth_bfms();
       build_tag_bfm();
       build_smm_bfm();
+      build_pbr_bfm();
+      build_ral();
 
       // Env monitor
       assert($cast(env_monitor, create_component("mby_egr_env_monitor","env_monitor")));
@@ -119,6 +131,9 @@ class mby_egr_env extends mby_egr_base_env;
 
       // get global event pool
       egress_epool = egress_epool.get_global_pool();
+
+      //RESET AGENT
+      assert($cast(rst_agent, create_component("mby_reset_agent","rst_agent")));
 
    endfunction : build_phase
 
@@ -132,6 +147,7 @@ class mby_egr_env extends mby_egr_base_env;
       //connect_eth_bfms();
       connect_tag_bfms();
       connect_smm_bfm();
+      connect_pbr_bfm();
 
       uvm_config_db#(egr_env_if_t)::get(this, "", "egress_if", egress_if);
       if(egress_if == null) begin
@@ -141,6 +157,12 @@ class mby_egr_env extends mby_egr_base_env;
       if (env_monitor != null) begin
          env_monitor.egress_if = egress_if;
       end
+      
+      if(rst_agent != null)begin
+         `uvm_info(get_name(), "jesusalo: RESET_AGENT.driver/monitor were assigned to the reset if.", UVM_LOW)
+         rst_agent.assign_vintf(egress_if);
+         rst_agent.assign_vintf(egress_if);
+      end 
    endfunction : connect_phase
 
    //--------------------------------------------------------------------------
@@ -182,6 +204,18 @@ class mby_egr_env extends mby_egr_base_env;
           if(!uvm_config_db#(egr_eth_bfm_rx_io_t)::get(this, "", $sformatf("igr_eth_bfm_rx_io%0d", i), eth_bfm_rx_io[i])) begin
               `uvm_fatal(get_name(),"Config_DB.get() for ENV's igr_eth_bfm_rx_io_t was not successful!")
           end
+         // Get the eth_bfm_vif ptrs
+         if(!uvm_config_db#(egr_eth_bfm_tx_intf_t)::get(this, "",
+            $sformatf("egr_eth_bfm_tx_vintf%0d", i),eth_bfm_tx_vintf[i])) begin
+            `uvm_fatal(get_name(),
+               "Config_DB.get() for ENV's egr_eth_bfm_tx_intf_t was not successful!")
+         end
+         if(!uvm_config_db#(egr_eth_bfm_rx_intf_t)::get(this, "",
+            $sformatf("egr_eth_bfm_rx_vintf%0d", i), eth_bfm_rx_vintf[i])) begin
+            `uvm_fatal(get_name(),
+               "Config_DB.get() for ENV's egr_eth_bfm_rx_intf_t was not successful!")
+         end
+
          // Create the bfm instances
          eth_bfms[i]                = egr_eth_bfm_t::type_id::create($sformatf("egr_eth_bfm%0d", i), this);
          eth_bfms[i].cfg.mode       = eth_bfm_pkg::MODE_SLAVE;   // Configure as SLAVE
@@ -203,7 +237,7 @@ class mby_egr_env extends mby_egr_base_env;
          tag_bfm[i].cfg_obj.driver_active  = UVM_ACTIVE;
          tag_bfm[i].cfg_obj.monitor_active = UVM_ACTIVE;
          tag_bfm[i].cfg_obj.traffic_mode   = TAG_BFM_UC_MODE;
-         //tag_bfm[i].cfg_obj.frame_gen_active = UVM_PASSIVE;
+      //tag_bfm[i].cfg_obj.frame_gen_active = UVM_PASSIVE;
       end
    endfunction : build_tag_bfm
 
@@ -212,8 +246,59 @@ class mby_egr_env extends mby_egr_base_env;
    // Builds the instance of the SMM BFM
    //--------------------------------------------------------------------------
    function void build_smm_bfm();
-      smm_bfm = mby_smm_bfm_t::type_id::create("smm_bfm", this);
+      smm_bfm           = mby_smm_bfm_t::type_id::create("smm_bfm", this);
+      smm_bfm.cfg_obj   = mby_smm_bfm_cfg::type_id::create("smm_bfm_cfg_obj", this);
    endfunction : build_smm_bfm
+
+   //--------------------------------------------------------------------------
+   // Function: build_pbr_bfm
+   // Builds the instance of the pbr BFM
+   //--------------------------------------------------------------------------
+   function void build_pbr_bfm();
+      egr_pbr_bfm = mby_pbr_bfm_pkg::mby_pbr_bfm::type_id::create("egr_pbr_bfm_name", this);
+      if(!egr_pbr_bfm.cfg_obj.randomize() with {
+               bfm_mode == PBR_BFM_EGR_MODE;
+            })begin
+         `uvm_error(get_name(), "Unable to randomize egr_pbr_bfm.cfg_obj PBR_BFM_EGR_MODE");
+      end
+      `uvm_info(get_name(), ("DBG_ALF: Done building egr pbr bfm in the ENV..."), UVM_DEBUG)
+   endfunction : build_pbr_bfm
+
+   //---------------------------------------------------------------------------
+   //  Function: build_ral
+   //  Builds egr register model.
+   //
+   //---------------------------------------------------------------------------
+   virtual function void build_ral();
+      // Check if ral is already set by FC
+      if (tb_ral == null) begin
+         tb_ral = mby_egr_reg_pkg::mby_egr_reg_blk::type_id::create("tb_ral");
+         tb_ral.build();
+         //TODO: Update the base addr.
+         tb_ral.default_map.set_base_addr(`UVM_REG_ADDR_WIDTH'h20000);
+         tb_ral.lock_model();
+
+         tb_ral.set_hdl_path_root("mby_egr_tb.egr_top_i");
+
+         //Build the Adapter's based on agt's active
+      end
+   endfunction: build_ral
+
+   //---------------------------------------------------------------------------
+   // Function: get_tb_ral()
+   // Returns object handle to egr ral (mby_egr_reg_blk)
+   //---------------------------------------------------------------------------
+   function mby_egr_reg_pkg::mby_egr_reg_blk get_tb_ral();
+      return tb_ral;
+   endfunction : get_tb_ral
+
+   //---------------------------------------------------------------------------
+   // Function: set_tb_ral()
+   // Sets handle to egr ral (mby_egr_reg_blk). Used to pass handle to RAL from fullchip env.
+   //---------------------------------------------------------------------------
+   function set_tb_ral(mby_egr_reg_pkg::mby_egr_reg_blk ral);
+      tb_ral = ral;
+   endfunction : set_tb_ral
 
    //--------------------------------------------------------------------------
    // Function: connect_eth_bfms
@@ -253,6 +338,16 @@ class mby_egr_env extends mby_egr_base_env;
    function void connect_smm_bfm();
       add_sequencer("smm_bfm", "smm_bfm_wr_req", smm_bfm.igr_wr_req_agent.sequencer);
    endfunction: connect_smm_bfm
+
+   //--------------------------------------------------------------------------
+   // Function: connect_pbr_bfm
+   // adds sequencer
+   //--------------------------------------------------------------------------
+   function void connect_pbr_bfm();
+      add_sequencer("egr_pbr_bfm_name", "egr_pbr_bfm_csp_sequencer", egr_pbr_bfm.csp_agent.sequencer);
+      add_sequencer("egr_pbr_bfm_name", "egr_pbr_bfm_dpm_sequencer", egr_pbr_bfm.dpm_agent.sequencer);
+      `uvm_info(get_name(), ("DBG_ALF: Done connecting egr pbr bfm..."), UVM_DEBUG)
+   endfunction: connect_pbr_bfm
 
    //---------------------------------------------------------------------------
    // Function: get_egr_env

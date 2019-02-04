@@ -48,67 +48,38 @@ localparam MBY_POD_64B_WORD_WIDTH    = 24;
 localparam MBY_POD_64B_WORD_MSB      = (MBY_POD_64B_WORD_WIDTH - 1);
 
 //----------------------------------------------------------------------------------
-// pod_fetch_data
-//----------------------------------------------------------------------------------
-typedef struct {
-   logic [2:0] valid;
-   logic [2:0] clean_ptr[MBY_SEG_PTR_MSB:0];
-   logic [2:0] word[1:0];
-   logic [2:0] semaph;
-} mby_pod_fetch_data_t;
-//----------------------------------------------------------------------------------
-// pod_fetch_ID_ack
-//----------------------------------------------------------------------------------
-typedef struct {
-   logic valid;
-   logic id[4:0];
-} mby_pod_fetch_id_ack_t;
-//----------------------------------------------------------------------------------
-// pod_fetch_fifo_ack
-//----------------------------------------------------------------------------------
-typedef struct {
-   logic valid;
-   logic id[4:0];
-} mby_pod_fetch_fifo_ack_t;
-//----------------------------------------------------------------------------------
-// pod_fetch_req
-//----------------------------------------------------------------------------------
-typedef struct {
-   logic valid;
-   logic id[4:0];
-   logic seg_ptr[MBY_POD_64B_WORD_MSB:0];
-} mby_pod_fetch_req_t;
-
-//----------------------------------------------------------------------------------
 // mby_pbr_bfm_cptr_data_t
 //----------------------------------------------------------------------------------
-typedef struct {
-   mby_pod_fetch_data_t     data;
-   mby_pod_fetch_id_ack_t   id_ack;
-   mby_pod_fetch_fifo_ack_t fifo_ack;
-   mby_pod_fetch_req_t      req;
-} mby_pod_fetch_t;
+typedef struct packed { // pod_fetch prefix in diagram
+   logic  data_valid; //FIXME: [2:0]
+   logic [MBY_SEG_PTR_MSB:0] data_clean_ptr; //[2:0]
+//   logic [1:0] data_word; //[2:0]
+//   logic  data_semaph; //[2:0]
+   logic       id_ack_valid;
+   logic [4:0] id_ack_id;
+   logic       fifo_ack;
 
-//******************
+   logic       req_valid;
+   logic [4:0] req_id;
+   logic [MBY_POD_64B_WORD_MSB:0] req_seg_ptr;
+} mby_pbr_bfm_cptr_local_t;
+
 //----------------------------------------------------------------------------------
-// pod_fetch_data
+// mby_pbr_bfm_dptr_local_t
 //----------------------------------------------------------------------------------
-typedef struct {
-   logic [2:0] valid;
-   logic [2:0] dirty_ptr[MBY_SEG_PTR_MSB:0]; //6x seg_ptr?  2x or 3x
-   
+typedef struct packed{
+   logic [MBY_SEG_PTR_MSB:0] data_dirty_ptr; // 2x or 3x seg_ptr
    logic       pod_put_req;
-   logic       put_type;
-    
+   logic       pod_put_type;
    logic       pod_put_ack;
    logic       schedule_stall;
-} mby_egr_dpm_t;
+} mby_pbr_bfm_dptr_local_t;
 
-// Defining the cptr data type to be mby_pod_fetch_t(local struct) for now.
-typedef mby_pod_fetch_t mby_pbr_bfm_cptr_data_t;
+// Defining the cptr data type to be mby_pbr_bfm_cptr_local_t(local struct) for now.
+typedef mby_pbr_bfm_cptr_local_t mby_pbr_bfm_cptr_data_t;
 // FIXME: change logics to structs (e.g. mby_pod_ptr_ring_t)
 // Defining the ptr data type to be mby_egr_dpm_t(local struct) for now.
-typedef mby_egr_dpm_t mby_pbr_bfm_dptr_data_t;
+typedef mby_pbr_bfm_dptr_local_t mby_pbr_bfm_dptr_data_t;
 // Defining the ptr debug type to be a simple logic for now.
 typedef logic mby_pbr_bfm_cptr_debg_t;
 // Defining the ptr debug type to be a simple logic for now.

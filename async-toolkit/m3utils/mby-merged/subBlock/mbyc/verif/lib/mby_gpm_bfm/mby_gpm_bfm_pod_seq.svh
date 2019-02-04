@@ -52,9 +52,9 @@ class mby_gpm_bfm_pod_seq#(
    //   better to have manual copy/print/compare methods
    //   convert2string (small)
    // -------------------------------------------------------------------------
-   `uvm_object_param_utils_begin (mby_gpm_bfm_pod_seq)
-      `uvm_field_object(fpod_rsp, UVM_DEFAULT)
-   `uvm_object_utils_end
+   //`uvm_object_param_utils_begin (mby_gpm_bfm_pod_seq#(REQ, RSP))
+   //`uvm_object_utils_end
+   `uvm_object_param_utils(mby_gpm_bfm_pod_seq#(REQ,RSP))
    
    // -------------------------------------------------------------------------
    // CONSTRUCTOR: new

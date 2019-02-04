@@ -71,8 +71,7 @@ class ral_block_mby_rx_pb_map extends uvm_reg_block;
       this.RX_PB_PORT_CFG.configure(this, null, "");
       this.RX_PB_PORT_CFG.build();
          this.RX_PB_PORT_CFG.add_hdl_path('{
-
-            '{"RX_PB_PORT_CFG", -1, -1}
+            '{"mby_rx_pb_inst.RX_PB_PORT_CFG.PORT", 0, 32}
          });
       this.default_map.add_reg(this.RX_PB_PORT_CFG, `UVM_REG_ADDR_WIDTH'h0, "RW", 0);
 		this.RX_PB_PORT_CFG_RSVD0 = this.RX_PB_PORT_CFG.RSVD0;
@@ -85,8 +84,9 @@ class ral_block_mby_rx_pb_map extends uvm_reg_block;
          this.RX_PB_WM[J][K].configure(this, null, "");
          this.RX_PB_WM[J][K].build();
          this.RX_PB_WM[J][K].add_hdl_path('{
-
-            '{$psprintf("RX_PB_WM[%0d]", J), -1, -1}
+            '{$psprintf("mby_rx_pb_inst.RX_PB_WM[%0d].LOSSLESS", J), 20, 1},
+            '{$psprintf("mby_rx_pb_inst.RX_PB_WM[%0d].XON", J), 10, 10},
+            '{$psprintf("mby_rx_pb_inst.RX_PB_WM[%0d].XOFF_OR_DROP", J), 0, 10}
          });
          this.default_map.add_reg(this.RX_PB_WM[J][K], `UVM_REG_ADDR_WIDTH'h800+J*`UVM_REG_ADDR_WIDTH'h40+K*`UVM_REG_ADDR_WIDTH'h8, "RW", 0);
 			this.RX_PB_WM_RSVD0[J][K] = this.RX_PB_WM[J][K].RSVD0;

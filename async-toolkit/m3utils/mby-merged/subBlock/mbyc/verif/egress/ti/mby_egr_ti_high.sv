@@ -43,6 +43,8 @@ module mby_egr_ti_high #(
    ,mby_tag_bfm_uc_if         tag_bfm_intf_1
    ,mby_smm_bfm_mrd_req_if    memrd_req_if
    ,mby_smm_bfm_mwr_req_if    memwr_req_if
+   ,mby_pbr_bfm_cptr_master_if pbr_bfm_cptr_master_if
+   ,mby_pbr_bfm_dptr_slave_if  pbr_bfm_dptr_slave_if
   );
 
    import uvm_pkg::*;
@@ -68,6 +70,8 @@ module mby_egr_ti_high #(
                       ,.tag_bfm_intf_1    (tag_bfm_intf_1)
                       ,.memrd_req_if      (memrd_req_if)
                       ,.memwr_req_if      (memwr_req_if)
+                      ,.pbr_bfm_cptr_master_if   (pbr_bfm_cptr_master_if)
+                      ,.pbr_bfm_dptr_slave_if    (pbr_bfm_dptr_slave_if)
                      );
 
 endmodule : mby_egr_ti_high

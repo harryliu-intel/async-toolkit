@@ -950,7 +950,7 @@ mby_msh_pkg::msh_data_t    exp_o_p1_sb_rdata_Q;
            $finish;
         end
         else if (det_wdata !== exp_mem_wdata_Q) begin
-           $display("(time: %0d) %s: exp_mem_wdata=(%0h)", $time, name, exp_o_p0_sb_wdata_Q);
+           $display("(time: %0d) %s: exp_mem_wdata=(%0h)", $time, name, exp_mem_wdata_Q);
            $display("(time: %0d) %s: det_mem_wdata=(%0h)", $time, name, det_wdata);
            $display("ERROR:  (time: %0d)  mem wr data error", $time);
            $assertoff;

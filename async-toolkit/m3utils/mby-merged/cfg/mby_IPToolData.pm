@@ -65,7 +65,7 @@ IPToolDataExtras::import_files("mby", \%ToolConfig_ips);
 #                                                    "&get_tool_var(vipcat, VIPCAT_LIBS)",
 #                                                  );
 
-my $epl_version = "eth_port-dev-x0-19ww05b";
+my $epl_version = "eth_port-dev-x0-19ww05e";
 
 $ToolConfig_ips{epc} = {
    #PATH    => "/nfs/sc/disks/sc_mby_00055/layhockk/mby/work_root/MBY/$epl_version",
@@ -96,5 +96,10 @@ $ToolConfig_ips{axxia_aw} = {
 # Executes the import statement above
 ######################################################################
 IPToolDataExtras::import_files("epc", \%ToolConfig_ips);
+
+# hack so ToolConfig.pl show_tool_path shows ip_models path instead of real path -- not sure why import_files above screws it up
+# < /nfs/site/disks/nhdk.sc.ipm.002/eth_port/eth_port-dev-x0-19ww05e
+# > "/p/hdk/rtl/ip_models/nhdk/eth_port/eth_port-dev-x0-19ww05e
+$ToolConfig_ips{eth_port}{PATH} = "$ENV{IP_MODELS}/eth_port/$epl_version";
 
 1;

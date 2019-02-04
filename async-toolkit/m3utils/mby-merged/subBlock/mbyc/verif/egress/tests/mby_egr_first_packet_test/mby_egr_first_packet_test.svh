@@ -8,7 +8,8 @@
 // Last modified : 14.12.2018
 //-----------------------------------------------------------------------------
 // Description :
-//
+// TODO: Test development stopped while working on RESET testing. This test 
+// needs to be enhanced. 
 //-----------------------------------------------------------------------------
 // Copyright (c) 2018 by Intel Corporation This model is the confidential and
 // proprietary property of Intel Corporation and the possession or use of this
@@ -17,100 +18,60 @@
 // Modification history :
 // 14.12.2018 : created
 //-----------------------------------------------------------------------------
+import shdv_reset_pkg::*;
 
 `ifndef MBY_EGR_FIRST_PACKET_TEST__SVH
 `define MBY_EGR_FIRST_PACKET_TEST__SVH
 
-class mby_egr_tag_seq extends mby_egr_extended_base_seq;
+class mby_first_packet_seq extends mby_egr_env_base_seq;
+   `uvm_object_utils (mby_first_packet_seq)
 
-   `uvm_object_utils (mby_egr_tag_seq)
+   // ============= TEST SEQUENCES =============
+   mby_egr_tag_seq   egr_tag_seq;
+   // ==========================================
 
-   mby_tag_bfm_pkg::mby_tag_bfm_uc_xaction uc_tag;
-   mby_smm_bfm_pkg::mby_smm_bfm_mwr_req_xaction smm_wr;
-   
-   shdv_base_pkg::shdv_base_sequencer#(.T_req(mby_tag_bfm_uc_xaction)) tag_sequencer;
-   shdv_base_pkg::shdv_base_sequencer#(.T_req(mby_smm_bfm_pkg::mby_smm_bfm_mwr_req_xaction)) smm_sequencer;
+   //TODO: Create another sequence/class to contain the traffic managers
+   shdv_synchronization_pkg::shdv_process_manager  traffic_managers[$];
+   mby_egr_extended_base_seq                       test_seqs[$];
+   mby_egr_mid_reset_seq                           reset_seq;
 
    //---------------------------------------------------------------------------
    // Function: new
    //---------------------------------------------------------------------------
-   function new(string name = "mby_egr_tag_seq", uvm_component parent = null);
+   function new(string name = "mby_first_packet_seq", uvm_component parent = null);
       super.new(name);
       // raise objection by default
       this.set_automatic_phase_objection(1);
    endfunction : new
 
-   //---------------------------------------------------------------------------
-   // Task: body()
-   //---------------------------------------------------------------------------
    virtual task body();
-      this.set_name("mby_egr_tag_seq");
-      
-      
-      
-      
-      smm_wr = mby_smm_bfm_pkg::mby_smm_bfm_mwr_req_xaction::type_id::create("smm_wr");
-      assert($cast(smm_sequencer, env.get_tb_seqr().pick_sequencer("smm_bfm_wr_req")))
 
-      else begin
-         `uvm_error(get_name(), "Could not get a pointer to the smm sequencer");
+      create_sequences();
+      update_traffic_manager();
+
+
+      if ($test$plusargs("RESET"))begin
+         traffic_rst_traffic();
+      end else begin
+         send_traffic();
       end
 
-      smm_wr.set_item_context(this, smm_sequencer);
-      smm_wr.data = 0;
-      smm_wr.data.mim_wreq_valid = 1;
-      smm_wr.data.mim_wr_seg_ptr = 23;
-      smm_wr.data.mim_wr_data = 'h00000CAFE;
-      `uvm_send(smm_wr);
-      smm_wr.data =0;
-      `uvm_send(smm_wr);
-      
-      
-      wait_n(22);
-      
 
+      `uvm_info(get_name(), "Finished mby_egr_first_packet_seq", UVM_NONE)
 
-
-
-
-      assert($cast(tag_sequencer, env.get_tb_seqr().pick_sequencer("tag_bfm_uc_0")))
-
-      else begin
-         `uvm_error(get_name(), "Could not get a pointer to the tag sequencer");
-      end
-      for (int i = 0; i < 10; i++) begin
-         uc_tag = mby_tag_bfm_pkg::mby_tag_bfm_uc_xaction::type_id::create("uc_tag");
-         uc_tag.set_item_context(this, tag_sequencer);
-         
-         uc_tag.randomize();
-         
-         uc_tag.data = 0;
-         uc_tag.data.valid = 1;
-         uc_tag.data.dst_tc = 0;
-         uc_tag.data.dst_port = 0;
-         uc_tag.data.src_port = 0;
-         uc_tag.data.src_tc = 0;
-         uc_tag.data.sll = 0;
-         uc_tag.data.eop = 1'b1;
-         uc_tag.data.length = 64;
-         uc_tag.data.ptr_toggle = 4'b1;
-         uc_tag.data.ptr = $urandom_range(0, 2 ** 19 - 1);
-         
-         `uvm_info(get_name(),uc_tag.convert2string(),UVM_LOW)
-         
-         `uvm_send(uc_tag)
-         uc_tag.data = 0;
-         `uvm_send(uc_tag)
-         //wait_n(1);
-       end
-      `uvm_info(get_name(), "Finished mby_egr_tag_seq", UVM_LOW)
-      wait_n(100);
    endtask : body
 
+   extern protected task create_sequences();
+   extern protected task update_traffic_manager();
+   extern protected task send_traffic();
+   extern protected task pull_reset();
+   extern protected task traffic_rst_traffic();
+   extern protected task config_phase();
+   extern protected task pause_all_traffic();
+   extern protected task resume_all_traffic();
+   extern protected task kill_all_traffic();
 
-
-endclass : mby_egr_tag_seq
-
+endclass : mby_first_packet_seq
 
 //-----------------------------------------------------------------------------
 // Class: mby_egr_first_packet_test
@@ -150,47 +111,47 @@ class mby_egr_first_packet_test extends mby_egr_base_test;
    function void set_default_sequences();
       super.set_default_sequences();
       `uvm_info("::set_default_sequences", "Setting phase sequences", UVM_NONE)
-/*
-      // Specifying reset phase sequence
-      uvm_config_db#(uvm_object_wrapper)::set(this,
-         "env.mby_egr_tb_sequencer.reset_phase",
-         "default_sequence",
-         mby_egr_dummy_seq::type_id::get());
+      /*
+       // Specifying reset phase sequence
+       uvm_config_db#(uvm_object_wrapper)::set(this,
+       "env.mby_egr_tb_sequencer.reset_phase",
+       "default_sequence",
+       mby_egr_dummy_seq::type_id::get());
+
+       // Specifying post_reset phase sequence
+       uvm_config_db#(uvm_object_wrapper)::set(this,
+       "env.mby_egr_tb_sequencer.post_reset_phase",
+       "default_sequence",
+       mby_egr_dummy_seq::type_id::get());
+
+       // Specifying configure phase sequence
+       uvm_config_db#(uvm_object_wrapper)::set(this,
+       "env.mby_egr_tb_sequencer.configure_phase",
+       "default_sequence",
+       mby_egr_dummy_seq::type_id::get());
+
+       // Specifying shutdown phase sequence
+       uvm_config_db#(uvm_object_wrapper)::set(this,
+       "env.mby_egr_tb_sequencer.shutdown_phase",
+       "default_sequence",
+       mby_egr_dummy_seq::type_id::get());
+
+       // Specifying main phase sequence
+       uvm_config_db#(uvm_object_wrapper)::set(this,
+       "env.mby_egr_tb_sequencer.main_phase",
+       "default_sequence",
+       mby_egr_tag_seq::type_id::get());
+
+       */
+
+      env.set_reset_sequence("mby_egr_hard_reset_seq");
 
       // Specifying post_reset phase sequence
-      uvm_config_db#(uvm_object_wrapper)::set(this,
-         "env.mby_egr_tb_sequencer.post_reset_phase",
-         "default_sequence",
-         mby_egr_dummy_seq::type_id::get());
-
-      // Specifying configure phase sequence
-      uvm_config_db#(uvm_object_wrapper)::set(this,
-         "env.mby_egr_tb_sequencer.configure_phase",
-         "default_sequence",
-         mby_egr_dummy_seq::type_id::get());
-
-      // Specifying shutdown phase sequence
-      uvm_config_db#(uvm_object_wrapper)::set(this,
-         "env.mby_egr_tb_sequencer.shutdown_phase",
-         "default_sequence",
-         mby_egr_dummy_seq::type_id::get());
-
-      // Specifying main phase sequence
-      uvm_config_db#(uvm_object_wrapper)::set(this,
-         "env.mby_egr_tb_sequencer.main_phase",
-         "default_sequence",
-         mby_egr_tag_seq::type_id::get());
-      
-     */ 
-      
-           env.set_reset_sequence("mby_egr_dummy_seq");
-
-      // Specifying post_reset phase sequence
-     /*
-      uvm_config_db#(uvm_object_wrapper)::set(this,
-         "env.tb_seqr.post_reset_phase",
-         "default_sequence",
-         mby_igr_dummy_seq::type_id::get()); */
+      /*
+       uvm_config_db#(uvm_object_wrapper)::set(this,
+       "env.tb_seqr.post_reset_phase",
+       "default_sequence",
+       mby_igr_dummy_seq::type_id::get()); */
 
       // Specifying configure phase sequence
       env.set_configure_sequence("mby_egr_dummy_seq");
@@ -199,7 +160,7 @@ class mby_egr_first_packet_test extends mby_egr_base_test;
       env.set_shutdown_sequence("mby_egr_dummy_seq");
 
       // Specifying main phase sequence
-      env.set_main_sequence("mby_egr_tag_seq");
+      env.set_main_sequence("mby_first_packet_seq");
    endfunction : set_default_sequences
 
    //---------------------------------------------------------------------------
@@ -229,4 +190,134 @@ class mby_egr_first_packet_test extends mby_egr_base_test;
 endclass : mby_egr_first_packet_test
 
 
+
+//=================================================
+//--------------EXTERN METHODS/TASKS---------------
+//=================================================
+
+//---------------------------------------------------------------------------
+// Task: pause_all_traffic
+//
+// This task will pause the traffic being sent. Blocked until the
+// process was correctly paused.
+//---------------------------------------------------------------------------
+task mby_first_packet_seq::pause_all_traffic();
+   foreach (traffic_managers[idx]) begin
+      if(traffic_managers[idx].is_started(traffic_managers[idx].name))begin
+         `uvm_info(get_name(), $sformatf("[RST_DBG]: Pausing traffic for TRAFFIC_MANAGER(%s)",traffic_managers[idx].name), UVM_LOW)
+         traffic_managers[idx].pause_process(traffic_managers[idx].name);
+
+         if(!traffic_managers[idx].is_paused(traffic_managers[idx].name))begin
+            `uvm_fatal(get_name(), "[RST_DBG]: Process was not paused correctly.")
+         end
+
+      end else begin
+         `uvm_fatal(get_name(), $sformatf("[RST_DBG]: Traffic for process = %s can't be paused because the process hasn't started yet.",traffic_managers[idx].name))
+      end
+   end
+endtask
+
+//---------------------------------------------------------------------------
+// Task: resume_all_traffic
+//
+// This task will force the process to resume the traffic.
+//---------------------------------------------------------------------------
+task mby_first_packet_seq::resume_all_traffic();
+   foreach (traffic_managers[idx]) begin
+      begin
+         `uvm_info(get_name(), $sformatf("[RST_DBG]: Resuming traffic for TRAFFIC_MANAGER(%s)",traffic_managers[idx].name), UVM_LOW)
+         traffic_managers[idx].resume_process(traffic_managers[idx].name);
+         traffic_managers[idx].wait_until_finished(traffic_managers[idx].name);
+      end
+   end
+endtask
+
+//---------------------------------------------------------------------------
+// Task: kill_all_traffic
+//
+// This task will force the process to stop sending traffic. This allows the
+// test to finish.
+//---------------------------------------------------------------------------
+task mby_first_packet_seq::kill_all_traffic();
+   foreach (traffic_managers[idx]) begin
+      traffic_managers[idx].kill_process(traffic_managers[idx].name);
+   end
+endtask
+
+task mby_first_packet_seq::create_sequences();
+   egr_tag_seq = mby_egr_tag_seq::type_id::create("egr_tag_seq");
+   test_seqs.push_back(egr_tag_seq);
+
+   if($test$plusargs("RESET"))begin
+      reset_seq = mby_egr_mid_reset_seq::type_id::create("reset_seq");
+   end
+endtask
+
+task mby_first_packet_seq:: update_traffic_manager();
+   foreach(test_seqs[idx])begin
+      traffic_managers.push_back(test_seqs[idx].traffic_manager);
+   end
+endtask : update_traffic_manager
+
+task mby_first_packet_seq:: send_traffic();
+
+   foreach(test_seqs[idx])begin
+      `uvm_info(get_name(), $sformatf("[RST_DBG]: Sending sequence = %s", test_seqs[idx].get_name()), UVM_NONE)
+      fork
+         begin
+            `uvm_send(test_seqs.pop_back());
+         end
+      join_none
+   end
+   wait fork;
+endtask : send_traffic
+
+task mby_first_packet_seq:: pull_reset();
+
+   reset_seq.randomize() with {
+      reset_seq.rst_type == HARD_RESET;
+      reset_seq.duration inside {[400:500]};
+   };
+   `uvm_info(get_type_name(), $sformatf("[RST_DBG]: Pulling %s", reset_seq.rst_type.name()), UVM_NONE)
+   `uvm_send(reset_seq)
+
+endtask : pull_reset
+
+task mby_first_packet_seq:: traffic_rst_traffic();
+
+
+   fork
+      send_traffic();
+   join_none
+
+   wait_n(50);
+   if($test$plusargs("CLEAN_RESET"))begin
+      `uvm_info(get_name(), "[RST_DBG]: Clean Reset flow", UVM_NONE)
+      pause_all_traffic();
+      
+      //TODO: Replace with shutdown_seq();  
+      wait_n(200);
+      
+      pull_reset();
+      config_phase();
+      resume_all_traffic();
+   end else if($test$plusargs("DIRTY_RESET"))begin
+      `uvm_info(get_name(), "[RST_DBG]: Dirty Reset flow", UVM_NONE)
+      fork
+         kill_all_traffic();
+         pull_reset();
+      join
+      config_phase();
+      create_sequences();
+      update_traffic_manager();
+      send_traffic();
+   end
+
+endtask : traffic_rst_traffic
+task mby_first_packet_seq:: config_phase();
+   //TODO: Replace with CONFIG_PHASE
+   `uvm_warning(get_type_name(), "Waiting for 500 cycles. Simulating the CONFIG_PHASE. Replace the wait for the actual config sequence once it's available.")
+   wait_n(200);
+endtask : config_phase
 `endif
+

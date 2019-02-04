@@ -1,5 +1,6 @@
 -file $LOGICROOT/gmm/gms/gcm/sandbox/val/scripts/files.common
 -file $LOGICROOT/gmm/gms/gcm/sandbox/val/scripts/files.gcm
+-file $LOGICROOT/gmm/gms/gcm/sandbox/val/scripts/files.phy_mems
 
 -file $LOGICROOT/gmm/gms/gcm/sandbox/val/scripts/files.gcm_tb
 $LOGICROOT/gmm/gms/gcm/sandbox/val/verilog/top.sv

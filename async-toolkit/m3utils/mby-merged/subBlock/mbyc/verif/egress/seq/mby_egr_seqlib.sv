@@ -21,3 +21,4 @@
 `include "mby_egr_env_base_seq.sv"
 `include "mby_egr_extended_base_seq.sv"
 `include "mby_egr_hard_reset_seq.sv"
+`include "mby_egr_mid_reset_seq.sv"

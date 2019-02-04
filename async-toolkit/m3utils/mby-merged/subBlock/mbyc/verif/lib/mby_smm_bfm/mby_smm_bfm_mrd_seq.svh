@@ -35,7 +35,8 @@
 //-----------------------------------------------------------------------------
 // CLASS: mby_smm_bfm_mrd_seq
 //
-// This is a parameterized class used by smm_bfm.
+// This is a parameterized class used by smm_bfm to generate memory read responses
+// for Egress..
 //
 // PARAMETERS:
 //     T_req      - sequence item type to be handled
@@ -47,8 +48,8 @@ class mby_smm_bfm_mrd_seq
     )
    extends shdv_base_sequence;
 
-   // VARIABLE: data_pkt
-   // Struct contains all the data items of this sequence item.
+   // VARIABLE: mem_rsp
+   //    Struct contains all the data items of this sequence item.
    rand T_req mem_rsp;
 
    // -------------------------------------------------------------------------

@@ -1350,7 +1350,7 @@ class monitor;
 	   end
            else if (exp_o_p1_sb_wr_valid_from_eb) begin
                $display("(time: %0d) %s: --------", $time, name);
-               $display("(time: %0d) %s: A P1 EB ER req is expected to go to SB output !!!", $time, name); 
+               $display("(time: %0d) %s: A P1 EB WR req is expected to go to SB output !!!", $time, name); 
                $display("(time: %0d) %s: i_p0_eb_wreq=(%0h)", $time, name, dut_if.i_eb_wr_req[0]);
                  exp_row_to_col_wreq.vld         = dut_if.i_eb_wr_req[1].vld;
                  exp_row_to_col_wreq.node_row    = dut_if.i_eb_wr_req[1].node_row;
@@ -1362,7 +1362,7 @@ class monitor;
            end
            else if (exp_o_p1_sb_wr_valid_from_wb) begin
                $display("(time: %0d) %s: --------", $time, name);
-               $display("(time: %0d) %s: A P1 WB ER req is expected to go to SB output !!!", $time, name); 
+               $display("(time: %0d) %s: A P1 WB WR req is expected to go to SB output !!!", $time, name); 
                $display("(time: %0d) %s: i_p0_wb_wreq=(%0h)", $time, name, dut_if.i_wb_wr_req[0]);
                  exp_row_to_col_wreq.vld         = dut_if.i_wb_wr_req[1].vld;
                  exp_row_to_col_wreq.node_row    = dut_if.i_wb_wr_req[1].node_row;
