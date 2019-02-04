@@ -13,7 +13,7 @@ ppe_stm_rx_top [
       .FWD_TBL1_BANKS(16), \
       .FWD_TBL1_CHUNKS(4), \
       .FWD_TBL1_RDATA_WIDTH(72), \
-      .FWD_TBL1_MEM_SIZE(2047), \
+      .FWD_TBL1_MEM_SIZE(2048), \
       .LOG2_FWD_TBL1_MEM_SIZE(11), \
       .FWD_TBL1_RPORTS(4), \
       .FWD_TBL1_ADDR_WIDTH(17), \
