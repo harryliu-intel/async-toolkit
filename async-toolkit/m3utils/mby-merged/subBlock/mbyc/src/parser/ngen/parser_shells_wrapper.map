@@ -1,3 +1,64 @@
+$x=0;
+foreach $i (0..7) {
+    if($i < 4) {
+        input_fifo_rd_en[0] >> parser_input_data_fifo_$i$_rd_en
+        input_fifo_wr_en[0] >> parser_input_data_fifo_$i$_wr_en
+
+        input_fifo_rd_adr[0][2:0]   >> parser_input_data_fifo_$i$_rd_adr
+        input_fifo_wr_adr[0][2:0]   >> parser_input_data_fifo_$i$_wr_adr
+
+        input_data_fifo_wr_data[0][(($i*274)+273):($i*274)] >> parser_input_data_fifo_$i$_wr_data
+        input_data_fifo_rd_data[0][(($i*274)+273):($i*274)] >> parser_input_data_fifo_$i$_rd_data
+    }
+    else {
+        input_fifo_rd_en[1] >> parser_input_data_fifo_$i$_rd_en
+        input_fifo_wr_en[1] >> parser_input_data_fifo_$i$_wr_en
+
+        input_fifo_rd_adr[1][2:0]   >> parser_input_data_fifo_$i$_rd_adr
+        input_fifo_wr_adr[1][2:0]   >> parser_input_data_fifo_$i$_wr_adr
+
+        input_data_fifo_wr_data[1][((($i-4)*274)+273):(($i-4)*274)] >> parser_input_data_fifo_$i$_wr_data
+        input_data_fifo_rd_data[1][((($i-4)*274)+273):(($i-4)*274)] >> parser_input_data_fifo_$i$_rd_data
+    }
+
+    >> PARSER_INPUT_DATA_FIFO_$i$_CFG_reg_sel
+    >> PARSER_INPUT_DATA_FIFO_$i$_STATUS_reg_sel
+    >> parser_input_data_fifo_$i$_mem_ls_enter
+    >> parser_input_data_fifo_$i$_ecc_uncor_err
+    >> parser_input_data_fifo_$i$_init_done
+    >> parser_input_data_fifo_$i$_rd_valid
+}
+
+foreach $i (0..1) {
+    if($i < 1) {
+        input_fifo_rd_en[0] >> parser_input_md_fifo_$i$_rd_en
+        input_fifo_wr_en[0] >> parser_input_md_fifo_$i$_wr_en
+
+        input_fifo_rd_adr[0][2:0]   >> parser_input_md_fifo_$i$_rd_adr
+        input_fifo_wr_adr[0][2:0]   >> parser_input_md_fifo_$i$_wr_adr
+
+        input_md_fifo_wr_data[0][123:0] >> parser_input_md_fifo_$i$_wr_data
+        input_md_fifo_rd_data[0][123:0] >> parser_input_md_fifo_$i$_rd_data
+    }
+    else {
+        input_fifo_rd_en[1] >> parser_input_md_fifo_$i$_rd_en
+        input_fifo_wr_en[1] >> parser_input_md_fifo_$i$_wr_en
+
+        input_fifo_rd_adr[1][2:0]   >> parser_input_md_fifo_$i$_rd_adr
+        input_fifo_wr_adr[1][2:0]   >> parser_input_md_fifo_$i$_wr_adr
+
+        input_md_fifo_wr_data[1][123:0] >> parser_input_md_fifo_$i$_wr_data
+        input_md_fifo_rd_data[1][123:0] >> parser_input_md_fifo_$i$_rd_data
+    }
+    >> PARSER_INPUT_MD_FIFO_$i$_CFG_reg_sel
+    >> PARSER_INPUT_MD_FIFO_$i$_STATUS_reg_sel
+    >> parser_input_md_fifo_$i$_mem_ls_enter
+    >> parser_input_md_fifo_$i$_ecc_uncor_err
+    >> parser_input_md_fifo_$i$_init_done
+    >> parser_input_md_fifo_$i$_rd_valid
+}
+
+
 foreach $i (0..31) {
     >> PARSER_ANA_EXC_$i$_CFG_reg_sel
     >> PARSER_ANA_EXC_$i$_STATUS_reg_sel
@@ -91,21 +152,6 @@ foreach $i (0..15) {
     >> parser_extract_cfg_$i$_init_done
     >> parser_extract_cfg_$i$_rd_data
     >> parser_extract_cfg_$i$_rd_valid
-}
-
-foreach $i (0..7) {
-    >> PARSER_INPUT_FIFO_$i$_CFG_reg_sel
-    >> PARSER_INPUT_FIFO_$i$_STATUS_reg_sel
-    >> parser_input_fifo_$i$_mem_ls_enter
-    >> parser_input_fifo_$i$_rd_adr
-    >> parser_input_fifo_$i$_rd_en
-    >> parser_input_fifo_$i$_wr_adr
-    >> parser_input_fifo_$i$_wr_data
-    >> parser_input_fifo_$i$_wr_en
-    >> parser_input_fifo_$i$_ecc_uncor_err
-    >> parser_input_fifo_$i$_init_done
-    >> parser_input_fifo_$i$_rd_data
-    >> parser_input_fifo_$i$_rd_valid
 }
 
 foreach $i (0..1) {
