@@ -627,6 +627,8 @@ print "MGM debug : @mbyMgmLibs\n";
                top         => 'mby_rx_ppe_tb_top_lib.mby_rx_ppe_tb_top',
 
                use  => [
+                        "CTECH:CTECH_model",
+                        "CTECH_EXP:CTECH_EXP_model",
                         "eth_port_mby_ec:mby_ec",
                         "eth_port_common:common"
                        ],
