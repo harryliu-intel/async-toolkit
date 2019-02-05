@@ -5,7 +5,7 @@ ppe_stm_tx_top [
     #(.MOD_TBL_BANKS(10), \
       .MOD_TBL_CHUNKS(8), \
       .MOD_TBL_RDATA_WIDTH(72), \
-      .MOD_TBL_MEM_SIZE(2047), \
+      .MOD_TBL_MEM_SIZE(2048), \
       .LOG2_MOD_TBL_MEM_SIZE(11), \
       .MOD_TBL_RPORTS(4), \
       .MOD_TBL_ADDR_WIDTH(18), \
