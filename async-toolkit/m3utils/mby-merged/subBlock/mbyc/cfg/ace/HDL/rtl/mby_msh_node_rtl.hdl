@@ -3,6 +3,7 @@
 #
 #
 
+my $DW_SIM         = &ToolConfig::get_tool_path('designcompiler');
 
 $hdl_spec = {
     # List of specific VERILOG src files
@@ -10,7 +11,6 @@ $hdl_spec = {
     ## need to remove the following
        "src/shared/rtl/shared_pkg.sv",
        "src/shared/rtl/mby_msh_pkg.sv",
-       "src/shared/interfaces/mby_mem_msh_bank_ram_shell_4096x532_func_if.sv",
     ## previous files need to be removed from here once there's a shared lib and gmm lib
        "src/msh_node/rtl/mby_msh_node_pkg.sv",
        "src/msh_node/rtl/mby_msh_node_defines.vh",
@@ -20,6 +20,9 @@ $hdl_spec = {
        "src/msh_node/rtl/mby_msh_dp.sv",
        "src/msh_node/rtl/mby_msh_mem.sv",
        "src/msh_node/rtl/mby_msh_mem_dp.sv",
+       "src/msh_node/rtl/mby_msh_mem_slice.sv",
+       "src/msh_node/rtl/mby_msh_mem_if.sv",
+       "src/msh_node/rtl/mby_msh_gen_mem.sv",
        "src/msh_node/rtl/mby_msh_node.sv",
        "src/msh_node/rtl/mby_msh_rd_route.sv",
        "src/msh_node/rtl/mby_msh_rsp_route.sv",
@@ -27,8 +30,7 @@ $hdl_spec = {
        "src/msh_node/rtl/mby_msh_req_route.sv",
        "src/msh_node/rtl/mby_msh_mem_ctrl.sv",
        "src/msh_node/rtl/mby_msh_arb.sv",
-       "src/msh_node/rtl/mby_msh_cb.sv",
-       "src/msh_node/rtl/mby_msh_cba.sv",
+       "src/msh_node/rtl/mby_msh_cb_cba.sv",
        "src/msh_node/rtl/mby_msh_cp_rtap.sv",
        "src/msh_node/rtl/mby_msh_crdts.sv",
        "src/msh_node/rtl/mby_msh_dp_rtap.sv",
@@ -37,11 +39,13 @@ $hdl_spec = {
        "src/msh_node/rtl/mby_msh_dp_ib.sv",
        "src/msh_node/rtl/mby_msh_dp_cba.sv",
        "src/msh_node/rtl/mby_msh_rd_req_cam.sv",
+       "DW_ecc.v",
      ],
     
     # List of verilog library src dirs ( corresponds with the VLOG '-y' parameter)
     -vlog_lib_dirs => [
      "src/msh_node/rtl",
+     "$DW_SIM/dw/sim_ver",
      "target/mby/mgm_run/msh/src",
      "target/mby/mgm_run/msh/src/mem_wrap",
      "target/mby/mgm_run/rtl",
@@ -57,6 +61,7 @@ $hdl_spec = {
     # List of include directories. Corresponds with the VLOG '+incdir+' parameter
     -vlog_incdirs => [
      "src/msh_node/rtl",
+     "$DW_SIM/dw/sim_ver",
      "target/mby/mgm_run/msh/src",
      "target/mby/mgm_run/msh/src/mem_wrap",
      "target/mby/mgm_run/rtl",
