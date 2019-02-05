@@ -23,6 +23,10 @@
 //
 //------------------------------------------------------------------------------
 
+`ifndef INTEL_SVA_OFF
+import intel_checkers_pkg::*;
+`endif
+
 // Assumptions
 `ASSUMES_MUTEXED 
   (assm_pa_port_cfg_in_v, {i_core_v,i_mgmt_v}, clk, rst_n!==1,

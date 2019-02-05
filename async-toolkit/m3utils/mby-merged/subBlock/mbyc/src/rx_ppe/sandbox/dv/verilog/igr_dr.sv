@@ -52,8 +52,26 @@ always_ff @(posedge cclk) begin //{
     q_random <= $urandom;
 
     if(cclk_cnt == 1) begin //{
-        igr_rx_ppe_if.intf0_head.valid  <= 1'b0;
-        igr_rx_ppe_if.intf1_head.valid  <= 1'b0;
+        igr_rx_ppe_if.intf0_head.valid          <= 1'b0;
+        igr_rx_ppe_if.intf0_head.data           <= 1024'b0;
+        igr_rx_ppe_if.intf0_head.ecc            <= 72'b0;
+        igr_rx_ppe_if.intf0_head.md.cpp_md      <= 23'b0;
+        igr_rx_ppe_if.intf0_head.md.ts          <= 64'b0;
+        igr_rx_ppe_if.intf0_head.md.tc          <= 4'b0;
+        igr_rx_ppe_if.intf0_head.md.port        <= 5'b0;
+        igr_rx_ppe_if.intf0_head.md.eop         <= 1'b0;
+        igr_rx_ppe_if.intf0_head.md.len         <= 8'b0;
+        igr_rx_ppe_if.intf0_head.md.next_len    <= 2'b0;
+        igr_rx_ppe_if.intf1_head.valid          <= 1'b0;
+        igr_rx_ppe_if.intf1_head.data           <= 1024'b0;
+        igr_rx_ppe_if.intf1_head.ecc            <= 72'b0;
+        igr_rx_ppe_if.intf1_head.md.cpp_md      <= 23'b0;
+        igr_rx_ppe_if.intf1_head.md.ts          <= 64'b0;
+        igr_rx_ppe_if.intf1_head.md.tc          <= 4'b0;
+        igr_rx_ppe_if.intf1_head.md.port        <= 5'b0;
+        igr_rx_ppe_if.intf1_head.md.eop         <= 1'b0;
+        igr_rx_ppe_if.intf1_head.md.len         <= 8'b0;
+        igr_rx_ppe_if.intf1_head.md.next_len    <= 2'b0;
         q_pkt_id0 <= 0;
         q_pkt_id1 <= 0;
         q_exp_pkt_id0 <= 0;
@@ -66,12 +84,12 @@ always_ff @(posedge cclk) begin //{
         igr_rx_ppe_if.intf0_head.md.id  <= q_pkt_id0;
         if(q_random[0]) q_pkt_id0 <= q_pkt_id0 + 1;
 
-        igr_rx_ppe_if.intf1_head.valid  <= q_random[1];
+        igr_rx_ppe_if.intf1_head.valid  <= q_random[0] | q_random[1];
         igr_rx_ppe_if.intf1_head.md.id  <= q_pkt_id1;
-        if(q_random[1]) q_pkt_id1 <= q_pkt_id1 + 1;
+        if(q_random[0] || q_random[1]) q_pkt_id1 <= q_pkt_id1 + 1;
 
         q_val_dly0 <= {q_val_dly0[75:0],q_random[0]};
-        q_val_dly1 <= {q_val_dly1[75:0],q_random[1]};
+        q_val_dly1 <= {q_val_dly1[75:0],(q_random[0] | q_random[1])};
     end //}
 
     if(cclk_cnt > 25) begin //{

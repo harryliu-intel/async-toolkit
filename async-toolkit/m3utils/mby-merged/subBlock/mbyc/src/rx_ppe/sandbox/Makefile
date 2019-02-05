@@ -11,13 +11,15 @@
 RTL_SRC = ../..
 TARGET_SRC = ../../../../../target
 DV_SRC = ../sandbox/dv/verilog
+#ASSERT_LIB = /nfs/site/disks/hdk.cad.1/linux_2.6.16_x86-64/sva_lib/6.0p1
 ASSERT_LIB = /p/hdk/rtl/cad/x86-64_linux30/dt/sva_lib/15.4p5_shOpt64
 SHARED_SRC = ../../shared
+SHRTL_SRC = /p/hdk/rtl/ip_models/nhdk/shrtl/shrtl-dev-x0-18ww48a
 SIM_DIR = dv/run
 
 INCS = $(RTL_SRC)/rx_ppe/rtl
 INCS += $(RTL_SRC)/parser/rtl
-#INCS += $(RTL_SRC)/parser/rtl/hlp
+INCS += $(RTL_SRC)/parser/rtl/hlp
 #INCS += $(RTL_SRC)/parser/rtl/hlp/tmp
 INCS += $(RTL_SRC)/class_gpa/rtl
 INCS += $(RTL_SRC)/class_gpb/rtl
@@ -28,7 +30,13 @@ INCS += $(RTL_SRC)/ppe_stm_rx/rtl
 INCS += $(RTL_SRC)/ppe_stm_tx/rtl
 INCS += $(SHARED_SRC)/rtl
 INCS += $(SHARED_SRC)/rtl/hlp
-INCS += $(SHARED_SRC)/rtl/hlp/fifo
+INCS += $(SHARED_SRC)/rtl/hlp/common
+#INCS += $(SHARED_SRC)/rtl/hlp/common/intr_junc
+#INCS += $(SHARED_SRC)/rtl/hlp/lib/crc
+INCS += $(SHARED_SRC)/rtl/hlp/lib/csum
+INCS += $(SHARED_SRC)/rtl/hlp/lib/fifo
+#INCS += $(SHARED_SRC)/rtl/hlp/lib/interrupt
+#INCS += $(SHARED_SRC)/rtl/hlp/lib/mux
 INCS += $(SHARED_SRC)/interfaces
 INCS += $(TARGET_SRC)/mby/mgm_run/parser/src
 INCS += $(TARGET_SRC)/mby/mgm_run/parser/src/mem_wrap
@@ -45,8 +53,9 @@ INCS += $(TARGET_SRC)/mby/mgm_run/ppe_stm_tx/src/mem_wrap
 INCS += $(TARGET_SRC)/mby/mgm_run/rtl
 INCS += $(ASSERT_LIB)/SVA_LIB
 INCS += $(SHARED_SRC)/sva/hlp
-#INCS += $(RTL_SRC)/parser/sva/hlp
+INCS += $(RTL_SRC)/parser/sva/hlp
 INCS += $(RTL_SRC)/action/sva/trigger/hlp
+INCS += $(SHRTL_SRC)/src/ecc/rtl
 INCS += /p/hdk/cad/ctech/v15ww50e/source/v
 
 VCS_INC = $(addprefix +incdir+,$(INCS))
@@ -55,21 +64,22 @@ VCS_LIB = $(addprefix -y ,$(INCS))
 VCS_LIB += $(addprefix -y ,$(DV_SRC))
 
 VCS_SRC  =	$(ASSERT_LIB)/SVA_LIB/intel_checkers.vs
-VCS_SRC  += $(ASSERT_LIB)/SVA_LIB/intel_checkers_pkg.vs
+VCS_SRC  +=	$(ASSERT_LIB)/SVA_LIB/intel_checkers_pkg.vs
 VCS_SRC  +=	$(SHARED_SRC)/rtl/shared_pkg.sv
 VCS_SRC  +=	$(SHARED_SRC)/rtl/mby_rx_metadata_pkg.sv
-VCS_SRC  +=	$(SHARED_SRC)/rtl/hlp/hlp_register_constants_pkg.vh
-VCS_SRC  +=	$(SHARED_SRC)/rtl/hlp/hlp_pkt_pkg.vh
-VCS_SRC  +=	$(SHARED_SRC)/rtl/hlp/hlp_pkt_meta_pkg.vh
-VCS_SRC  +=	$(SHARED_SRC)/rtl/hlp/hlp_pkg.vh
-VCS_SRC  +=	$(SHARED_SRC)/rtl/hlp/hlp_ipp_pkg.vh
-VCS_SRC  += $(SHARED_SRC)/rtl/hlp/hlp_register_struct.vh
+VCS_SRC  +=	$(SHARED_SRC)/rtl/hlp/common/hlp_register_constants_pkg.vh
+VCS_SRC  +=	$(SHARED_SRC)/rtl/hlp/lib/pkt/hlp_pkt_pkg.vh
+VCS_SRC  +=	$(SHARED_SRC)/rtl/hlp/common/hlp_pkt_meta_pkg.vh
+VCS_SRC  +=	$(SHARED_SRC)/rtl/hlp/common/hlp_pkg.vh
+VCS_SRC  +=	$(SHARED_SRC)/rtl/hlp/common/hlp_ipp_pkg.vh
+VCS_SRC  += $(SHARED_SRC)/rtl/hlp/common/hlp_register_struct.vh
 VCS_SRC  +=	$(SHARED_SRC)/rtl/hlp/hlp_fwd_pkg.vh
-#VCS_SRC  += $(SHARED_SRC)/rtl/hlp/hlp_crc_pkg.vh
-#VCS_SRC  += $(SHARED_SRC)/rtl/hlp/hlp_csum_pkg.vh
-#VCS_SRC  += $(RTL_SRC)/parser/rtl/hlp/hlp_pa_pkg.vh
+VCS_SRC  += $(SHARED_SRC)/rtl/hlp/lib/crc/hlp_crc_pkg.vh
+VCS_SRC  += $(SHARED_SRC)/rtl/hlp/lib/csum/hlp_csum_pkg.vh
+VCS_SRC  += $(RTL_SRC)/parser/rtl/hlp/hlp_pa_pkg.vh
 VCS_SRC  +=	$(SHARED_SRC)/rtl/mby_egr_pkg.sv
 VCS_SRC  +=	$(SHARED_SRC)/rtl/axi2ibus_pkg.sv
+VCS_SRC  += $(RTL_SRC)/parser/rtl/parser_pkg.sv
 VCS_SRC  += $(SHARED_SRC)/interfaces/ahb_rx_ppe_if.sv
 VCS_SRC  += $(SHARED_SRC)/interfaces/glb_rx_ppe_if.sv
 VCS_SRC  +=	$(SHARED_SRC)/interfaces/igr_rx_ppe_if.sv
@@ -86,7 +96,7 @@ VCS_SRC  += $(TARGET_SRC)/mby/mgm_run/ppe_stm_tx/src/ppe_stm_tx_mem.def
 
 VCS_FLAGS = -full64 +v2k -sverilog -notice +vcs+lic+wait +warn=noUII-L \
     -timescale=10ps/10ps -debug_pp +libext+.v+.sv+.vh+.svh+.vs+.vm+.sva \
-    -assert svaext +define+VCSSIM+MBY_PARSER_BEHAVE_MEMS+MBY_CLASS_GPA_BEHAVE_MEMS+MBY_CLASS_GPB_BEHAVE_MEMS+MBY_ACTION_BEHAVE_MEMS+MBY_PPE_STM_RX_BEHAVE_MEMS+MBY_PPE_STM_TX_BEHAVE_MEMS+INTEL_SVA_OFF \
+    -assert svaext -assert enable_hier +define+VCSSIM+MBY_PARSER_BEHAVE_MEMS+MBY_CLASS_GPA_BEHAVE_MEMS+MBY_CLASS_GPB_BEHAVE_MEMS+MBY_ACTION_BEHAVE_MEMS+MBY_PPE_STM_RX_BEHAVE_MEMS+MBY_PPE_STM_TX_BEHAVE_MEMS \
     -Mdir=$(SIM_DIR)/csrc -o $(SIM_DIR)/$@
 
 default: ppe_stm_rx

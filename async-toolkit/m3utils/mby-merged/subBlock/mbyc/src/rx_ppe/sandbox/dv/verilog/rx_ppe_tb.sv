@@ -52,6 +52,9 @@ end //}
 
 initial $value$plusargs("start_dumping=%d",start_dumping);
 
+//delay assertion until reset propagates
+initial $assertoff();
+
 always @(posedge cclk) begin //{
     cclk_cnt <= cclk_cnt + 1;
 end //}
@@ -77,7 +80,10 @@ rx_ppe_ppe_stm1_if  rx_ppe_ppe_stm1_if();
 always @(posedge cclk) begin //{
     if(cclk_cnt == 5) reset <= 1'b0;
     else if(cclk_cnt == 10) reset <= 1'b1;
-    else if(cclk_cnt == 15) reset <= 1'b0;
+    else if(cclk_cnt == 15) begin //{
+        reset <= 1'b0;
+        $asserton();
+    end //}
 
 //Temporary forces for TCAM errors
     force rx_ppe.parser_top.reset_n = 1'b0;
