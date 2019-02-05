@@ -39,7 +39,10 @@ for (my $i = 0; $i < @ARGV; $i++) {
 print "MGM debug : @mbyMgmLibs\n";
 
 %audf = (
-   Includes => [],
+   Includes => [
+         "CTECH:cfg/ctech/CTECH_hdl.udf",
+         "CTECH_EXP:cfg/ctech_exp/CTECH_EXP_hdl.udf",
+   ],
    HDLSpec  => {
      mby => {
          # Define all the libraries which could be compiled
