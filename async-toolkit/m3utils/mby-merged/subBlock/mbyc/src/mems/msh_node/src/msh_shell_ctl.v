@@ -84,6 +84,30 @@ module  msh_shell_ctl   #(
         input                           MSH_BANK_RAM_2_STATUS_reg_sel,
         input                           MSH_BANK_RAM_3_CFG_reg_sel,
         input                           MSH_BANK_RAM_3_STATUS_reg_sel,
+        input                           MSH_BANK_RAM_4_CFG_reg_sel,
+        input                           MSH_BANK_RAM_4_STATUS_reg_sel,
+        input                           MSH_BANK_RAM_5_CFG_reg_sel,
+        input                           MSH_BANK_RAM_5_STATUS_reg_sel,
+        input                           MSH_BANK_RAM_6_CFG_reg_sel,
+        input                           MSH_BANK_RAM_6_STATUS_reg_sel,
+        input                           MSH_BANK_RAM_7_CFG_reg_sel,
+        input                           MSH_BANK_RAM_7_STATUS_reg_sel,
+        input                           MSH_BANK_RAM_8_CFG_reg_sel,
+        input                           MSH_BANK_RAM_8_STATUS_reg_sel,
+        input                           MSH_BANK_RAM_9_CFG_reg_sel,
+        input                           MSH_BANK_RAM_9_STATUS_reg_sel,
+        input                           MSH_BANK_RAM_10_CFG_reg_sel,
+        input                           MSH_BANK_RAM_10_STATUS_reg_sel,
+        input                           MSH_BANK_RAM_11_CFG_reg_sel,
+        input                           MSH_BANK_RAM_11_STATUS_reg_sel,
+        input                           MSH_BANK_RAM_12_CFG_reg_sel,
+        input                           MSH_BANK_RAM_12_STATUS_reg_sel,
+        input                           MSH_BANK_RAM_13_CFG_reg_sel,
+        input                           MSH_BANK_RAM_13_STATUS_reg_sel,
+        input                           MSH_BANK_RAM_14_CFG_reg_sel,
+        input                           MSH_BANK_RAM_14_STATUS_reg_sel,
+        input                           MSH_BANK_RAM_15_CFG_reg_sel,
+        input                           MSH_BANK_RAM_15_STATUS_reg_sel,
 // Interface for shell: msh_bank_ram_0
         input           [`MBY_MSH_MSH_BANK_RAM_TO_CTL_WIDTH-1:0]                        msh_msh_bank_ram_0_to_ctl,
         output  wire    [`MBY_MSH_MSH_BANK_RAM_FROM_CTL_WIDTH-1:0]                      msh_msh_bank_ram_0_from_ctl,
@@ -96,6 +120,42 @@ module  msh_shell_ctl   #(
 // Interface for shell: msh_bank_ram_3
         input           [`MBY_MSH_MSH_BANK_RAM_TO_CTL_WIDTH-1:0]                        msh_msh_bank_ram_3_to_ctl,
         output  wire    [`MBY_MSH_MSH_BANK_RAM_FROM_CTL_WIDTH-1:0]                      msh_msh_bank_ram_3_from_ctl,
+// Interface for shell: msh_bank_ram_4
+        input           [`MBY_MSH_MSH_BANK_RAM_TO_CTL_WIDTH-1:0]                        msh_msh_bank_ram_4_to_ctl,
+        output  wire    [`MBY_MSH_MSH_BANK_RAM_FROM_CTL_WIDTH-1:0]                      msh_msh_bank_ram_4_from_ctl,
+// Interface for shell: msh_bank_ram_5
+        input           [`MBY_MSH_MSH_BANK_RAM_TO_CTL_WIDTH-1:0]                        msh_msh_bank_ram_5_to_ctl,
+        output  wire    [`MBY_MSH_MSH_BANK_RAM_FROM_CTL_WIDTH-1:0]                      msh_msh_bank_ram_5_from_ctl,
+// Interface for shell: msh_bank_ram_6
+        input           [`MBY_MSH_MSH_BANK_RAM_TO_CTL_WIDTH-1:0]                        msh_msh_bank_ram_6_to_ctl,
+        output  wire    [`MBY_MSH_MSH_BANK_RAM_FROM_CTL_WIDTH-1:0]                      msh_msh_bank_ram_6_from_ctl,
+// Interface for shell: msh_bank_ram_7
+        input           [`MBY_MSH_MSH_BANK_RAM_TO_CTL_WIDTH-1:0]                        msh_msh_bank_ram_7_to_ctl,
+        output  wire    [`MBY_MSH_MSH_BANK_RAM_FROM_CTL_WIDTH-1:0]                      msh_msh_bank_ram_7_from_ctl,
+// Interface for shell: msh_bank_ram_8
+        input           [`MBY_MSH_MSH_BANK_RAM_TO_CTL_WIDTH-1:0]                        msh_msh_bank_ram_8_to_ctl,
+        output  wire    [`MBY_MSH_MSH_BANK_RAM_FROM_CTL_WIDTH-1:0]                      msh_msh_bank_ram_8_from_ctl,
+// Interface for shell: msh_bank_ram_9
+        input           [`MBY_MSH_MSH_BANK_RAM_TO_CTL_WIDTH-1:0]                        msh_msh_bank_ram_9_to_ctl,
+        output  wire    [`MBY_MSH_MSH_BANK_RAM_FROM_CTL_WIDTH-1:0]                      msh_msh_bank_ram_9_from_ctl,
+// Interface for shell: msh_bank_ram_10
+        input           [`MBY_MSH_MSH_BANK_RAM_TO_CTL_WIDTH-1:0]                        msh_msh_bank_ram_10_to_ctl,
+        output  wire    [`MBY_MSH_MSH_BANK_RAM_FROM_CTL_WIDTH-1:0]                      msh_msh_bank_ram_10_from_ctl,
+// Interface for shell: msh_bank_ram_11
+        input           [`MBY_MSH_MSH_BANK_RAM_TO_CTL_WIDTH-1:0]                        msh_msh_bank_ram_11_to_ctl,
+        output  wire    [`MBY_MSH_MSH_BANK_RAM_FROM_CTL_WIDTH-1:0]                      msh_msh_bank_ram_11_from_ctl,
+// Interface for shell: msh_bank_ram_12
+        input           [`MBY_MSH_MSH_BANK_RAM_TO_CTL_WIDTH-1:0]                        msh_msh_bank_ram_12_to_ctl,
+        output  wire    [`MBY_MSH_MSH_BANK_RAM_FROM_CTL_WIDTH-1:0]                      msh_msh_bank_ram_12_from_ctl,
+// Interface for shell: msh_bank_ram_13
+        input           [`MBY_MSH_MSH_BANK_RAM_TO_CTL_WIDTH-1:0]                        msh_msh_bank_ram_13_to_ctl,
+        output  wire    [`MBY_MSH_MSH_BANK_RAM_FROM_CTL_WIDTH-1:0]                      msh_msh_bank_ram_13_from_ctl,
+// Interface for shell: msh_bank_ram_14
+        input           [`MBY_MSH_MSH_BANK_RAM_TO_CTL_WIDTH-1:0]                        msh_msh_bank_ram_14_to_ctl,
+        output  wire    [`MBY_MSH_MSH_BANK_RAM_FROM_CTL_WIDTH-1:0]                      msh_msh_bank_ram_14_from_ctl,
+// Interface for shell: msh_bank_ram_15
+        input           [`MBY_MSH_MSH_BANK_RAM_TO_CTL_WIDTH-1:0]                        msh_msh_bank_ram_15_to_ctl,
+        output  wire    [`MBY_MSH_MSH_BANK_RAM_FROM_CTL_WIDTH-1:0]                      msh_msh_bank_ram_15_from_ctl,
 //      Global Indications
         output  reg                     msh_ecc_int,
         output  wire                    msh_init_done
@@ -114,27 +174,39 @@ module  msh_shell_ctl   #(
      `endif                       
   `endif                       
 `endif                         
-        reg     [3:0] mem_cfg_ecc_en;
-        reg     [3:0] mem_cfg_ecc_invert_1;
-        reg     [3:0] mem_cfg_ecc_invert_2;
-        reg     [3:0] mem_cfg_ls_force;
-        reg     [3:0] mem_cfg_ls_bypass;
-        reg     [3:0] mem_cfg_mask_int;
-        reg     [3:0] mem_cfg_fix_cnt;
-        reg     [3:0] mem_cfg_err_cnt;
-        reg     [3:0] mem_cfg_rme;
-        reg     [3:0] mem_cfg_tcam_check_err_dis;
-        reg     [3:0] mem_cfg_tcam_update_dis;
-        reg     [MEM_RM_WIDTH-1:0] mem_cfg_rm[3:0];
-        reg     [MEM_GEN_ECC_INST_NUM_WIDTH-1:0] mem_cfg_gen_ecc_inst_num[3:0];
-        reg     [3:0] mem_cfg_pwren_b;
-        logic   [3:0] mem_cfg_reg_sel;
+        reg     [15:0] mem_cfg_ecc_en;
+        reg     [15:0] mem_cfg_ecc_invert_1;
+        reg     [15:0] mem_cfg_ecc_invert_2;
+        reg     [15:0] mem_cfg_ls_force;
+        reg     [15:0] mem_cfg_ls_bypass;
+        reg     [15:0] mem_cfg_mask_int;
+        reg     [15:0] mem_cfg_fix_cnt;
+        reg     [15:0] mem_cfg_err_cnt;
+        reg     [15:0] mem_cfg_rme;
+        reg     [15:0] mem_cfg_tcam_check_err_dis;
+        reg     [15:0] mem_cfg_tcam_update_dis;
+        reg     [MEM_RM_WIDTH-1:0] mem_cfg_rm[15:0];
+        reg     [MEM_GEN_ECC_INST_NUM_WIDTH-1:0] mem_cfg_gen_ecc_inst_num[15:0];
+        reg     [15:0] mem_cfg_pwren_b;
+        logic   [15:0] mem_cfg_reg_sel;
 always_comb 
  begin 
         mem_cfg_reg_sel[0]      = MSH_BANK_RAM_0_CFG_reg_sel;
         mem_cfg_reg_sel[1]      = MSH_BANK_RAM_1_CFG_reg_sel;
         mem_cfg_reg_sel[2]      = MSH_BANK_RAM_2_CFG_reg_sel;
         mem_cfg_reg_sel[3]      = MSH_BANK_RAM_3_CFG_reg_sel;
+        mem_cfg_reg_sel[4]      = MSH_BANK_RAM_4_CFG_reg_sel;
+        mem_cfg_reg_sel[5]      = MSH_BANK_RAM_5_CFG_reg_sel;
+        mem_cfg_reg_sel[6]      = MSH_BANK_RAM_6_CFG_reg_sel;
+        mem_cfg_reg_sel[7]      = MSH_BANK_RAM_7_CFG_reg_sel;
+        mem_cfg_reg_sel[8]      = MSH_BANK_RAM_8_CFG_reg_sel;
+        mem_cfg_reg_sel[9]      = MSH_BANK_RAM_9_CFG_reg_sel;
+        mem_cfg_reg_sel[10]     = MSH_BANK_RAM_10_CFG_reg_sel;
+        mem_cfg_reg_sel[11]     = MSH_BANK_RAM_11_CFG_reg_sel;
+        mem_cfg_reg_sel[12]     = MSH_BANK_RAM_12_CFG_reg_sel;
+        mem_cfg_reg_sel[13]     = MSH_BANK_RAM_13_CFG_reg_sel;
+        mem_cfg_reg_sel[14]     = MSH_BANK_RAM_14_CFG_reg_sel;
+        mem_cfg_reg_sel[15]     = MSH_BANK_RAM_15_CFG_reg_sel;
   `ifdef INTEL_EMULATION 
       `ifndef MBY_MGM_EMU_DO_ECC_MEM_DBG 
         mem_cfg_reg_sel =  0;
@@ -147,31 +219,31 @@ always_comb
                 if (!reset_n) begin
   `ifdef INTEL_EMULATION 
       `ifndef MBY_MGM_EMU_DO_ECC_MEM_DBG 
-                        mem_cfg_ecc_en[3:0]             <= 0 ;
+                        mem_cfg_ecc_en[15:0]            <= 0 ;
       `else
-                        mem_cfg_ecc_en[3:0]             <= {4{1'b1}};
+                        mem_cfg_ecc_en[15:0]            <= {16{1'b1}};
       `endif
    `else
-                        mem_cfg_ecc_en[3:0]             <= {4{1'b1}};
+                        mem_cfg_ecc_en[15:0]            <= {16{1'b1}};
   `endif
-                        mem_cfg_ecc_invert_1[3:0]       <= {4{1'b0}};
-                        mem_cfg_ecc_invert_2[3:0]       <= {4{1'b0}};
-                        mem_cfg_ls_force[3:0]           <= {4{1'b0}};
-                        mem_cfg_ls_bypass[3:0]          <= {4{1'b1}};
-                        mem_cfg_mask_int[3:0]           <= {4{1'b0}};
-                        mem_cfg_fix_cnt[3:0]            <= {4{1'b1}};
-                        mem_cfg_pwren_b[3:0]            <= {4{1'b0}};
-                        mem_cfg_err_cnt[3:0]            <= {4{1'b1}};
-                        mem_cfg_rme[3:0]                <= {4{1'b0}};
-                        mem_cfg_tcam_check_err_dis[3:0]         <= {4{1'b0}};
-                        mem_cfg_tcam_update_dis[3:0]            <= {4{1'b0}};
-                        for (int i=0;i<4;i++) begin
+                        mem_cfg_ecc_invert_1[15:0]      <= {16{1'b0}};
+                        mem_cfg_ecc_invert_2[15:0]      <= {16{1'b0}};
+                        mem_cfg_ls_force[15:0]          <= {16{1'b0}};
+                        mem_cfg_ls_bypass[15:0]         <= {16{1'b1}};
+                        mem_cfg_mask_int[15:0]          <= {16{1'b0}};
+                        mem_cfg_fix_cnt[15:0]           <= {16{1'b1}};
+                        mem_cfg_pwren_b[15:0]           <= {16{1'b0}};
+                        mem_cfg_err_cnt[15:0]           <= {16{1'b1}};
+                        mem_cfg_rme[15:0]               <= {16{1'b0}};
+                        mem_cfg_tcam_check_err_dis[15:0]                <= {16{1'b0}};
+                        mem_cfg_tcam_update_dis[15:0]           <= {16{1'b0}};
+                        for (int i=0;i<16;i++) begin
                                 mem_cfg_rm[i][MEM_RM_WIDTH-1:0] <= {{(MEM_RM_WIDTH-2){1'b0}},2'h2};
                                 mem_cfg_gen_ecc_inst_num[i][MEM_GEN_ECC_INST_NUM_WIDTH-1:0] <= {(MEM_GEN_ECC_INST_NUM_WIDTH){1'b0}};
                         end
                 end
                 else begin
-                        for (int i=0;i<4;i++)
+                        for (int i=0;i<16;i++)
                                 if (mem_cfg_reg_sel[i] && (!unified_regs_rd)) begin
   `ifdef INTEL_EMULATION 
       `ifndef MBY_MGM_EMU_DO_ECC_MEM_DBG 
@@ -201,35 +273,47 @@ always_comb
 //      MEM_STAT_CSRs
 
 
-        wire    [3:0] mem_init_done;
-        wire    [3:0] mem_ecc_uncor_err;
-        wire    [3:0] mem_ecc_cor_err;
-        reg     [3:0] rd_ecc_fix;
-        reg     [3:0] rd_ecc_err;
+        wire    [15:0] mem_init_done;
+        wire    [15:0] mem_ecc_uncor_err;
+        wire    [15:0] mem_ecc_cor_err;
+        reg     [15:0] rd_ecc_fix;
+        reg     [15:0] rd_ecc_err;
 
-        reg     [3:0] mem_status_ecc_err;
-        reg     [3:0] mem_status_ecc_fix;
-        reg     [3:0] mem_status_init_done;
+        reg     [15:0] mem_status_ecc_err;
+        reg     [15:0] mem_status_ecc_fix;
+        reg     [15:0] mem_status_init_done;
         reg     mem_status_global_init_done;
 
-        wire    [3:0] mem_status_reg_sel;
+        wire    [15:0] mem_status_reg_sel;
         assign          mem_status_reg_sel[0]   = MSH_BANK_RAM_0_STATUS_reg_sel;
         assign          mem_status_reg_sel[1]   = MSH_BANK_RAM_1_STATUS_reg_sel;
         assign          mem_status_reg_sel[2]   = MSH_BANK_RAM_2_STATUS_reg_sel;
         assign          mem_status_reg_sel[3]   = MSH_BANK_RAM_3_STATUS_reg_sel;
+        assign          mem_status_reg_sel[4]   = MSH_BANK_RAM_4_STATUS_reg_sel;
+        assign          mem_status_reg_sel[5]   = MSH_BANK_RAM_5_STATUS_reg_sel;
+        assign          mem_status_reg_sel[6]   = MSH_BANK_RAM_6_STATUS_reg_sel;
+        assign          mem_status_reg_sel[7]   = MSH_BANK_RAM_7_STATUS_reg_sel;
+        assign          mem_status_reg_sel[8]   = MSH_BANK_RAM_8_STATUS_reg_sel;
+        assign          mem_status_reg_sel[9]   = MSH_BANK_RAM_9_STATUS_reg_sel;
+        assign          mem_status_reg_sel[10]  = MSH_BANK_RAM_10_STATUS_reg_sel;
+        assign          mem_status_reg_sel[11]  = MSH_BANK_RAM_11_STATUS_reg_sel;
+        assign          mem_status_reg_sel[12]  = MSH_BANK_RAM_12_STATUS_reg_sel;
+        assign          mem_status_reg_sel[13]  = MSH_BANK_RAM_13_STATUS_reg_sel;
+        assign          mem_status_reg_sel[14]  = MSH_BANK_RAM_14_STATUS_reg_sel;
+        assign          mem_status_reg_sel[15]  = MSH_BANK_RAM_15_STATUS_reg_sel;
 
 
         always_ff  @(posedge clk or negedge reset_n)
                 if (!reset_n) begin
-                        mem_status_ecc_err[3:0]         <= {4{1'b0}};
-                        mem_status_ecc_fix[3:0]         <= {4{1'b0}};
-                        mem_status_init_done[3:0]               <= {4{1'b0}};
+                        mem_status_ecc_err[15:0]                <= {16{1'b0}};
+                        mem_status_ecc_fix[15:0]                <= {16{1'b0}};
+                        mem_status_init_done[15:0]              <= {16{1'b0}};
                         mem_status_global_init_done             <= 1'b0;
-                        rd_ecc_fix[3:0]         <= {4{1'b0}};
-                        rd_ecc_err[3:0]         <= {4{1'b0}};
+                        rd_ecc_fix[15:0]                <= {16{1'b0}};
+                        rd_ecc_err[15:0]                <= {16{1'b0}};
                 end
                 else begin
-                        for (int i=0;i<4;i++) begin
+                        for (int i=0;i<16;i++) begin
                                         mem_status_ecc_err[i]   <= (rd_ecc_err[i])?1'b1:(unified_regs_rd&&mem_status_reg_sel[i])?1'b0:mem_status_ecc_err[i];
                                         mem_status_ecc_fix[i]   <= (rd_ecc_fix[i])?1'b1:(unified_regs_rd&&mem_status_reg_sel[i])?1'b0:mem_status_ecc_fix[i];
                                         mem_status_init_done[i] <= mem_init_done[i];
@@ -242,8 +326,8 @@ always_comb
 //      GLOBAL_ECC_COUNTERS CSRs
 
 
-        wire    [3:0] rd_ecc_err_cnt; 
-        wire    [3:0] rd_ecc_fix_cnt; 
+        wire    [15:0] rd_ecc_err_cnt; 
+        wire    [15:0] rd_ecc_fix_cnt; 
         assign   rd_ecc_err_cnt = mem_cfg_err_cnt & rd_ecc_err;
         assign   rd_ecc_fix_cnt = mem_cfg_fix_cnt & rd_ecc_fix;
         reg     [12-1:0]                msh_ecc_uncor_cnt;
@@ -261,22 +345,22 @@ always_comb
                       msh_ecc_cor_cnt   <= (msh_ecc_cor_cnt!=12'hFFF)?msh_ecc_cor_cnt+{11'd0,(|rd_ecc_fix_cnt)}:msh_ecc_cor_cnt;
                    end
 
-        logic   [MEM_DBG_RD_ADR_WIDTH-1:0] mem_ecc_err_adr[3:0];
-        logic   [3:0] mem_is_tcam   ;
+        logic   [MEM_DBG_RD_ADR_WIDTH-1:0] mem_ecc_err_adr[15:0];
+        logic   [15:0] mem_is_tcam   ;
 
 //      DEBUG_READ CSRs
 
 
-        wire    [3:0] mem_dbg_rd_ctl_done_int;
-        wire    [32-1:0] mem_dbg_rd_data_rd_data_int[3:0];
-        reg     [3:0] mem_dbg_rd_ctl_rd_en;
-        reg     [MEM_DBG_RD_ADR_WIDTH-1:0] mem_dbg_rd_ctl_adr[3:0];
-        reg     [MEM_DBG_DW_SEL_WIDTH-1:0] mem_dbg_rd_ctl_dw_sel[3:0];
-        reg     [32-1:0] mem_dbg_rd_data_rd_data[3:0];
-        reg     [3:0] mem_dbg_rd_ctl_done;
+        wire    [15:0] mem_dbg_rd_ctl_done_int;
+        wire    [32-1:0] mem_dbg_rd_data_rd_data_int[15:0];
+        reg     [15:0] mem_dbg_rd_ctl_rd_en;
+        reg     [MEM_DBG_RD_ADR_WIDTH-1:0] mem_dbg_rd_ctl_adr[15:0];
+        reg     [MEM_DBG_DW_SEL_WIDTH-1:0] mem_dbg_rd_ctl_dw_sel[15:0];
+        reg     [32-1:0] mem_dbg_rd_data_rd_data[15:0];
+        reg     [15:0] mem_dbg_rd_ctl_done;
 
-        wire    [3:0] mem_dbg_rd_ctl_reg_sel;
-        wire    [3:0] mem_dbg_rd_data_reg_sel;
+        wire    [15:0] mem_dbg_rd_ctl_reg_sel;
+        wire    [15:0] mem_dbg_rd_data_reg_sel;
         assign          mem_dbg_rd_ctl_reg_sel[0]       = 1'b0;
         assign          mem_dbg_rd_data_reg_sel[0]      = 1'b0;
         assign          mem_dbg_rd_ctl_reg_sel[1]       = 1'b0;
@@ -285,13 +369,37 @@ always_comb
         assign          mem_dbg_rd_data_reg_sel[2]      = 1'b0;
         assign          mem_dbg_rd_ctl_reg_sel[3]       = 1'b0;
         assign          mem_dbg_rd_data_reg_sel[3]      = 1'b0;
+        assign          mem_dbg_rd_ctl_reg_sel[4]       = 1'b0;
+        assign          mem_dbg_rd_data_reg_sel[4]      = 1'b0;
+        assign          mem_dbg_rd_ctl_reg_sel[5]       = 1'b0;
+        assign          mem_dbg_rd_data_reg_sel[5]      = 1'b0;
+        assign          mem_dbg_rd_ctl_reg_sel[6]       = 1'b0;
+        assign          mem_dbg_rd_data_reg_sel[6]      = 1'b0;
+        assign          mem_dbg_rd_ctl_reg_sel[7]       = 1'b0;
+        assign          mem_dbg_rd_data_reg_sel[7]      = 1'b0;
+        assign          mem_dbg_rd_ctl_reg_sel[8]       = 1'b0;
+        assign          mem_dbg_rd_data_reg_sel[8]      = 1'b0;
+        assign          mem_dbg_rd_ctl_reg_sel[9]       = 1'b0;
+        assign          mem_dbg_rd_data_reg_sel[9]      = 1'b0;
+        assign          mem_dbg_rd_ctl_reg_sel[10]      = 1'b0;
+        assign          mem_dbg_rd_data_reg_sel[10]     = 1'b0;
+        assign          mem_dbg_rd_ctl_reg_sel[11]      = 1'b0;
+        assign          mem_dbg_rd_data_reg_sel[11]     = 1'b0;
+        assign          mem_dbg_rd_ctl_reg_sel[12]      = 1'b0;
+        assign          mem_dbg_rd_data_reg_sel[12]     = 1'b0;
+        assign          mem_dbg_rd_ctl_reg_sel[13]      = 1'b0;
+        assign          mem_dbg_rd_data_reg_sel[13]     = 1'b0;
+        assign          mem_dbg_rd_ctl_reg_sel[14]      = 1'b0;
+        assign          mem_dbg_rd_data_reg_sel[14]     = 1'b0;
+        assign          mem_dbg_rd_ctl_reg_sel[15]      = 1'b0;
+        assign          mem_dbg_rd_data_reg_sel[15]     = 1'b0;
 
         always_ff @(posedge clk or negedge reset_n)
                 if (!reset_n)
                    begin
                         mem_dbg_rd_ctl_rd_en                            <= 0;
-                        mem_dbg_rd_ctl_done                             <= {(4){1'b1}};
-                        for (int i=0;i<4;i++)
+                        mem_dbg_rd_ctl_done                             <= {(16){1'b1}};
+                        for (int i=0;i<16;i++)
                                 begin
                                         mem_dbg_rd_ctl_adr[i][MEM_DBG_RD_ADR_WIDTH-1:0]         <= {(MEM_DBG_RD_ADR_WIDTH){1'b0}};
                                         mem_dbg_rd_ctl_dw_sel[i][MEM_DBG_DW_SEL_WIDTH-1:0]      <= {(MEM_DBG_DW_SEL_WIDTH){1'b0}};
@@ -299,7 +407,7 @@ always_comb
                    end
                 else
                    begin
-                        for (int i=0;i<4;i++)
+                        for (int i=0;i<16;i++)
                                 if (mem_dbg_rd_ctl_reg_sel[i] && (!unified_regs_rd) && mem_dbg_rd_ctl_done[i])
                                         begin
                                                 mem_dbg_rd_ctl_rd_en[i]                                 <= unified_regs_wr_data[30];
@@ -317,12 +425,12 @@ always_comb
         always_ff @(posedge clk or negedge reset_n)
                 if (!reset_n)
                    begin
-                        for (int i=0;i<4;i++)
+                        for (int i=0;i<16;i++)
                                 mem_dbg_rd_data_rd_data[i][31:0]        <= 32'h0;
                    end
                 else
                    begin
-                        for (int i=0;i<4;i++)
+                        for (int i=0;i<16;i++)
                                 if (mem_dbg_rd_ctl_done_int[i])
                                         mem_dbg_rd_data_rd_data[i][31:0]        <= mem_dbg_rd_data_rd_data_int[i][31:0];
                    end
@@ -330,19 +438,19 @@ always_comb
 //      GLOBAL Indicatiions
 
 
-        wire    [3:0]   rd_ecc_int;
+        wire    [15:0]  rd_ecc_int;
         generate
                 if ((INT_ON_CORR_ECC==0) && (INT_FROM_STATUS==0)) begin: UNCOR_ERR_PULSE
-                        assign                          rd_ecc_int[3:0] = (~mem_cfg_mask_int) & rd_ecc_err;
+                        assign                          rd_ecc_int[15:0] = (~mem_cfg_mask_int) & rd_ecc_err;
                 end
                 else if ((INT_ON_CORR_ECC==0) && (INT_FROM_STATUS!=0)) begin: UNCOR_ERR_LVL
-                        assign                          rd_ecc_int[3:0] = (~mem_cfg_mask_int) & mem_status_ecc_err;
+                        assign                          rd_ecc_int[15:0] = (~mem_cfg_mask_int) & mem_status_ecc_err;
                 end
                 else if ((INT_ON_CORR_ECC!=0) && (INT_FROM_STATUS==0)) begin: COR_AND_UNCOR_ERR_PULSE
-                        assign                          rd_ecc_int[3:0] = (~mem_cfg_mask_int) & (rd_ecc_err | rd_ecc_fix);
+                        assign                          rd_ecc_int[15:0] = (~mem_cfg_mask_int) & (rd_ecc_err | rd_ecc_fix);
                 end
                 else begin: COR_AND_UNCOR_ERR_LVL
-                        assign                          rd_ecc_int[3:0] = (~mem_cfg_mask_int) & (mem_status_ecc_err | mem_status_ecc_fix);
+                        assign                          rd_ecc_int[15:0] = (~mem_cfg_mask_int) & (mem_status_ecc_err | mem_status_ecc_fix);
                 end
         endgenerate
         assign          msh_init_done   = mem_status_global_init_done;
@@ -362,7 +470,7 @@ always_comb
                         unified_regs_rd_data_int        = 32'h0;
                         case(rd_reg_sel)
                                 7'b1000001:     begin   // MEM_CFG
-                                                        for (int i=0;i<4;i++)
+                                                        for (int i=0;i<16;i++)
                                                                 if (!mem_is_tcam[i]) begin // not tcam
                                                                         if (mem_cfg_reg_sel[i])
                                                                                 unified_regs_rd_data_int        =  {
@@ -407,7 +515,7 @@ always_comb
                                                                 end
                                 end// MEM_CFG
                                 7'b1000010:     begin   // MEM_STATUS
-                                                        for (int i=0;i<4;i++)
+                                                        for (int i=0;i<16;i++)
                                                                 if (mem_status_reg_sel[i])
                                                                         unified_regs_rd_data_int        =  {
                                                                                                         2'h0,
@@ -420,12 +528,12 @@ always_comb
                                                                                                     };
                                 end// MEM_STATUS
                                 7'b1000100:     begin   // DBG_READ_DATA
-                                                        for (int i=0;i<4;i++)
+                                                        for (int i=0;i<16;i++)
                                                                 if (mem_dbg_rd_data_reg_sel[i])
                                                                         unified_regs_rd_data_int        =  mem_dbg_rd_data_rd_data[i];
                                 end// DBG_READ_DATA
                                 7'b1001000:     begin   // DBG_READ_CTL
-                                                        for (int i=0;i<4;i++)
+                                                        for (int i=0;i<16;i++)
                                                                 if (mem_dbg_rd_ctl_reg_sel[i])
                                                                         unified_regs_rd_data_int        =  {
                                                                                                         mem_dbg_rd_ctl_done[i],
@@ -495,7 +603,7 @@ always_comb
                 logic                                                   tcam_check_err_dis;
                 logic                                                   tcam_update_dis ;
         } from_ctl_t;                                                                   
-        from_ctl_t   [3:0]        from_ctl_bus    ;
+        from_ctl_t   [15:0]        from_ctl_bus    ;
 
         assign          from_ctl_bus[0].ecc_en          = mem_cfg_ecc_en[0];
         assign          from_ctl_bus[0].ecc_invert_1    = mem_cfg_ecc_invert_1[0];
@@ -569,6 +677,222 @@ always_comb
         assign          from_ctl_bus[3].stat_rd_ind     = unified_regs_rd & mem_status_reg_sel[3];
         assign          from_ctl_bus[3].dbg_wr_ind      = !unified_regs_rd & mem_dbg_rd_ctl_reg_sel[3];
 
+        assign          from_ctl_bus[4].ecc_en          = mem_cfg_ecc_en[4];
+        assign          from_ctl_bus[4].ecc_invert_1    = mem_cfg_ecc_invert_1[4];
+        assign          from_ctl_bus[4].ecc_invert_2    = mem_cfg_ecc_invert_2[4];
+        assign          from_ctl_bus[4].gen_ecc_inst_num= mem_cfg_gen_ecc_inst_num[4];
+        assign          from_ctl_bus[4].tcam_check_err_dis= mem_cfg_tcam_check_err_dis[4];
+        assign          from_ctl_bus[4].tcam_update_dis= mem_cfg_tcam_update_dis[4];
+        assign          from_ctl_bus[4].pwren_b         = mem_cfg_pwren_b[4];
+        assign          from_ctl_bus[4].rm_e            = mem_cfg_rme[4];
+        assign          from_ctl_bus[4].rm              = mem_cfg_rm[4];
+        assign          from_ctl_bus[4].ls_bypass       = mem_cfg_ls_bypass[4];
+        assign          from_ctl_bus[4].ls_force        = mem_cfg_ls_force[4];
+        assign          from_ctl_bus[4].dbg_rd_en       = mem_dbg_rd_ctl_rd_en[4];
+        assign          from_ctl_bus[4].dbg_adr         = mem_dbg_rd_ctl_adr[4];
+        assign          from_ctl_bus[4].dbg_dw_sel      = mem_dbg_rd_ctl_dw_sel[4];
+        assign          from_ctl_bus[4].cfg_wr_ind      = !unified_regs_rd & mem_cfg_reg_sel[4];
+        assign          from_ctl_bus[4].stat_rd_ind     = unified_regs_rd & mem_status_reg_sel[4];
+        assign          from_ctl_bus[4].dbg_wr_ind      = !unified_regs_rd & mem_dbg_rd_ctl_reg_sel[4];
+
+        assign          from_ctl_bus[5].ecc_en          = mem_cfg_ecc_en[5];
+        assign          from_ctl_bus[5].ecc_invert_1    = mem_cfg_ecc_invert_1[5];
+        assign          from_ctl_bus[5].ecc_invert_2    = mem_cfg_ecc_invert_2[5];
+        assign          from_ctl_bus[5].gen_ecc_inst_num= mem_cfg_gen_ecc_inst_num[5];
+        assign          from_ctl_bus[5].tcam_check_err_dis= mem_cfg_tcam_check_err_dis[5];
+        assign          from_ctl_bus[5].tcam_update_dis= mem_cfg_tcam_update_dis[5];
+        assign          from_ctl_bus[5].pwren_b         = mem_cfg_pwren_b[5];
+        assign          from_ctl_bus[5].rm_e            = mem_cfg_rme[5];
+        assign          from_ctl_bus[5].rm              = mem_cfg_rm[5];
+        assign          from_ctl_bus[5].ls_bypass       = mem_cfg_ls_bypass[5];
+        assign          from_ctl_bus[5].ls_force        = mem_cfg_ls_force[5];
+        assign          from_ctl_bus[5].dbg_rd_en       = mem_dbg_rd_ctl_rd_en[5];
+        assign          from_ctl_bus[5].dbg_adr         = mem_dbg_rd_ctl_adr[5];
+        assign          from_ctl_bus[5].dbg_dw_sel      = mem_dbg_rd_ctl_dw_sel[5];
+        assign          from_ctl_bus[5].cfg_wr_ind      = !unified_regs_rd & mem_cfg_reg_sel[5];
+        assign          from_ctl_bus[5].stat_rd_ind     = unified_regs_rd & mem_status_reg_sel[5];
+        assign          from_ctl_bus[5].dbg_wr_ind      = !unified_regs_rd & mem_dbg_rd_ctl_reg_sel[5];
+
+        assign          from_ctl_bus[6].ecc_en          = mem_cfg_ecc_en[6];
+        assign          from_ctl_bus[6].ecc_invert_1    = mem_cfg_ecc_invert_1[6];
+        assign          from_ctl_bus[6].ecc_invert_2    = mem_cfg_ecc_invert_2[6];
+        assign          from_ctl_bus[6].gen_ecc_inst_num= mem_cfg_gen_ecc_inst_num[6];
+        assign          from_ctl_bus[6].tcam_check_err_dis= mem_cfg_tcam_check_err_dis[6];
+        assign          from_ctl_bus[6].tcam_update_dis= mem_cfg_tcam_update_dis[6];
+        assign          from_ctl_bus[6].pwren_b         = mem_cfg_pwren_b[6];
+        assign          from_ctl_bus[6].rm_e            = mem_cfg_rme[6];
+        assign          from_ctl_bus[6].rm              = mem_cfg_rm[6];
+        assign          from_ctl_bus[6].ls_bypass       = mem_cfg_ls_bypass[6];
+        assign          from_ctl_bus[6].ls_force        = mem_cfg_ls_force[6];
+        assign          from_ctl_bus[6].dbg_rd_en       = mem_dbg_rd_ctl_rd_en[6];
+        assign          from_ctl_bus[6].dbg_adr         = mem_dbg_rd_ctl_adr[6];
+        assign          from_ctl_bus[6].dbg_dw_sel      = mem_dbg_rd_ctl_dw_sel[6];
+        assign          from_ctl_bus[6].cfg_wr_ind      = !unified_regs_rd & mem_cfg_reg_sel[6];
+        assign          from_ctl_bus[6].stat_rd_ind     = unified_regs_rd & mem_status_reg_sel[6];
+        assign          from_ctl_bus[6].dbg_wr_ind      = !unified_regs_rd & mem_dbg_rd_ctl_reg_sel[6];
+
+        assign          from_ctl_bus[7].ecc_en          = mem_cfg_ecc_en[7];
+        assign          from_ctl_bus[7].ecc_invert_1    = mem_cfg_ecc_invert_1[7];
+        assign          from_ctl_bus[7].ecc_invert_2    = mem_cfg_ecc_invert_2[7];
+        assign          from_ctl_bus[7].gen_ecc_inst_num= mem_cfg_gen_ecc_inst_num[7];
+        assign          from_ctl_bus[7].tcam_check_err_dis= mem_cfg_tcam_check_err_dis[7];
+        assign          from_ctl_bus[7].tcam_update_dis= mem_cfg_tcam_update_dis[7];
+        assign          from_ctl_bus[7].pwren_b         = mem_cfg_pwren_b[7];
+        assign          from_ctl_bus[7].rm_e            = mem_cfg_rme[7];
+        assign          from_ctl_bus[7].rm              = mem_cfg_rm[7];
+        assign          from_ctl_bus[7].ls_bypass       = mem_cfg_ls_bypass[7];
+        assign          from_ctl_bus[7].ls_force        = mem_cfg_ls_force[7];
+        assign          from_ctl_bus[7].dbg_rd_en       = mem_dbg_rd_ctl_rd_en[7];
+        assign          from_ctl_bus[7].dbg_adr         = mem_dbg_rd_ctl_adr[7];
+        assign          from_ctl_bus[7].dbg_dw_sel      = mem_dbg_rd_ctl_dw_sel[7];
+        assign          from_ctl_bus[7].cfg_wr_ind      = !unified_regs_rd & mem_cfg_reg_sel[7];
+        assign          from_ctl_bus[7].stat_rd_ind     = unified_regs_rd & mem_status_reg_sel[7];
+        assign          from_ctl_bus[7].dbg_wr_ind      = !unified_regs_rd & mem_dbg_rd_ctl_reg_sel[7];
+
+        assign          from_ctl_bus[8].ecc_en          = mem_cfg_ecc_en[8];
+        assign          from_ctl_bus[8].ecc_invert_1    = mem_cfg_ecc_invert_1[8];
+        assign          from_ctl_bus[8].ecc_invert_2    = mem_cfg_ecc_invert_2[8];
+        assign          from_ctl_bus[8].gen_ecc_inst_num= mem_cfg_gen_ecc_inst_num[8];
+        assign          from_ctl_bus[8].tcam_check_err_dis= mem_cfg_tcam_check_err_dis[8];
+        assign          from_ctl_bus[8].tcam_update_dis= mem_cfg_tcam_update_dis[8];
+        assign          from_ctl_bus[8].pwren_b         = mem_cfg_pwren_b[8];
+        assign          from_ctl_bus[8].rm_e            = mem_cfg_rme[8];
+        assign          from_ctl_bus[8].rm              = mem_cfg_rm[8];
+        assign          from_ctl_bus[8].ls_bypass       = mem_cfg_ls_bypass[8];
+        assign          from_ctl_bus[8].ls_force        = mem_cfg_ls_force[8];
+        assign          from_ctl_bus[8].dbg_rd_en       = mem_dbg_rd_ctl_rd_en[8];
+        assign          from_ctl_bus[8].dbg_adr         = mem_dbg_rd_ctl_adr[8];
+        assign          from_ctl_bus[8].dbg_dw_sel      = mem_dbg_rd_ctl_dw_sel[8];
+        assign          from_ctl_bus[8].cfg_wr_ind      = !unified_regs_rd & mem_cfg_reg_sel[8];
+        assign          from_ctl_bus[8].stat_rd_ind     = unified_regs_rd & mem_status_reg_sel[8];
+        assign          from_ctl_bus[8].dbg_wr_ind      = !unified_regs_rd & mem_dbg_rd_ctl_reg_sel[8];
+
+        assign          from_ctl_bus[9].ecc_en          = mem_cfg_ecc_en[9];
+        assign          from_ctl_bus[9].ecc_invert_1    = mem_cfg_ecc_invert_1[9];
+        assign          from_ctl_bus[9].ecc_invert_2    = mem_cfg_ecc_invert_2[9];
+        assign          from_ctl_bus[9].gen_ecc_inst_num= mem_cfg_gen_ecc_inst_num[9];
+        assign          from_ctl_bus[9].tcam_check_err_dis= mem_cfg_tcam_check_err_dis[9];
+        assign          from_ctl_bus[9].tcam_update_dis= mem_cfg_tcam_update_dis[9];
+        assign          from_ctl_bus[9].pwren_b         = mem_cfg_pwren_b[9];
+        assign          from_ctl_bus[9].rm_e            = mem_cfg_rme[9];
+        assign          from_ctl_bus[9].rm              = mem_cfg_rm[9];
+        assign          from_ctl_bus[9].ls_bypass       = mem_cfg_ls_bypass[9];
+        assign          from_ctl_bus[9].ls_force        = mem_cfg_ls_force[9];
+        assign          from_ctl_bus[9].dbg_rd_en       = mem_dbg_rd_ctl_rd_en[9];
+        assign          from_ctl_bus[9].dbg_adr         = mem_dbg_rd_ctl_adr[9];
+        assign          from_ctl_bus[9].dbg_dw_sel      = mem_dbg_rd_ctl_dw_sel[9];
+        assign          from_ctl_bus[9].cfg_wr_ind      = !unified_regs_rd & mem_cfg_reg_sel[9];
+        assign          from_ctl_bus[9].stat_rd_ind     = unified_regs_rd & mem_status_reg_sel[9];
+        assign          from_ctl_bus[9].dbg_wr_ind      = !unified_regs_rd & mem_dbg_rd_ctl_reg_sel[9];
+
+        assign          from_ctl_bus[10].ecc_en         = mem_cfg_ecc_en[10];
+        assign          from_ctl_bus[10].ecc_invert_1   = mem_cfg_ecc_invert_1[10];
+        assign          from_ctl_bus[10].ecc_invert_2   = mem_cfg_ecc_invert_2[10];
+        assign          from_ctl_bus[10].gen_ecc_inst_num= mem_cfg_gen_ecc_inst_num[10];
+        assign          from_ctl_bus[10].tcam_check_err_dis= mem_cfg_tcam_check_err_dis[10];
+        assign          from_ctl_bus[10].tcam_update_dis= mem_cfg_tcam_update_dis[10];
+        assign          from_ctl_bus[10].pwren_b                = mem_cfg_pwren_b[10];
+        assign          from_ctl_bus[10].rm_e           = mem_cfg_rme[10];
+        assign          from_ctl_bus[10].rm             = mem_cfg_rm[10];
+        assign          from_ctl_bus[10].ls_bypass      = mem_cfg_ls_bypass[10];
+        assign          from_ctl_bus[10].ls_force       = mem_cfg_ls_force[10];
+        assign          from_ctl_bus[10].dbg_rd_en      = mem_dbg_rd_ctl_rd_en[10];
+        assign          from_ctl_bus[10].dbg_adr                = mem_dbg_rd_ctl_adr[10];
+        assign          from_ctl_bus[10].dbg_dw_sel     = mem_dbg_rd_ctl_dw_sel[10];
+        assign          from_ctl_bus[10].cfg_wr_ind     = !unified_regs_rd & mem_cfg_reg_sel[10];
+        assign          from_ctl_bus[10].stat_rd_ind    = unified_regs_rd & mem_status_reg_sel[10];
+        assign          from_ctl_bus[10].dbg_wr_ind     = !unified_regs_rd & mem_dbg_rd_ctl_reg_sel[10];
+
+        assign          from_ctl_bus[11].ecc_en         = mem_cfg_ecc_en[11];
+        assign          from_ctl_bus[11].ecc_invert_1   = mem_cfg_ecc_invert_1[11];
+        assign          from_ctl_bus[11].ecc_invert_2   = mem_cfg_ecc_invert_2[11];
+        assign          from_ctl_bus[11].gen_ecc_inst_num= mem_cfg_gen_ecc_inst_num[11];
+        assign          from_ctl_bus[11].tcam_check_err_dis= mem_cfg_tcam_check_err_dis[11];
+        assign          from_ctl_bus[11].tcam_update_dis= mem_cfg_tcam_update_dis[11];
+        assign          from_ctl_bus[11].pwren_b                = mem_cfg_pwren_b[11];
+        assign          from_ctl_bus[11].rm_e           = mem_cfg_rme[11];
+        assign          from_ctl_bus[11].rm             = mem_cfg_rm[11];
+        assign          from_ctl_bus[11].ls_bypass      = mem_cfg_ls_bypass[11];
+        assign          from_ctl_bus[11].ls_force       = mem_cfg_ls_force[11];
+        assign          from_ctl_bus[11].dbg_rd_en      = mem_dbg_rd_ctl_rd_en[11];
+        assign          from_ctl_bus[11].dbg_adr                = mem_dbg_rd_ctl_adr[11];
+        assign          from_ctl_bus[11].dbg_dw_sel     = mem_dbg_rd_ctl_dw_sel[11];
+        assign          from_ctl_bus[11].cfg_wr_ind     = !unified_regs_rd & mem_cfg_reg_sel[11];
+        assign          from_ctl_bus[11].stat_rd_ind    = unified_regs_rd & mem_status_reg_sel[11];
+        assign          from_ctl_bus[11].dbg_wr_ind     = !unified_regs_rd & mem_dbg_rd_ctl_reg_sel[11];
+
+        assign          from_ctl_bus[12].ecc_en         = mem_cfg_ecc_en[12];
+        assign          from_ctl_bus[12].ecc_invert_1   = mem_cfg_ecc_invert_1[12];
+        assign          from_ctl_bus[12].ecc_invert_2   = mem_cfg_ecc_invert_2[12];
+        assign          from_ctl_bus[12].gen_ecc_inst_num= mem_cfg_gen_ecc_inst_num[12];
+        assign          from_ctl_bus[12].tcam_check_err_dis= mem_cfg_tcam_check_err_dis[12];
+        assign          from_ctl_bus[12].tcam_update_dis= mem_cfg_tcam_update_dis[12];
+        assign          from_ctl_bus[12].pwren_b                = mem_cfg_pwren_b[12];
+        assign          from_ctl_bus[12].rm_e           = mem_cfg_rme[12];
+        assign          from_ctl_bus[12].rm             = mem_cfg_rm[12];
+        assign          from_ctl_bus[12].ls_bypass      = mem_cfg_ls_bypass[12];
+        assign          from_ctl_bus[12].ls_force       = mem_cfg_ls_force[12];
+        assign          from_ctl_bus[12].dbg_rd_en      = mem_dbg_rd_ctl_rd_en[12];
+        assign          from_ctl_bus[12].dbg_adr                = mem_dbg_rd_ctl_adr[12];
+        assign          from_ctl_bus[12].dbg_dw_sel     = mem_dbg_rd_ctl_dw_sel[12];
+        assign          from_ctl_bus[12].cfg_wr_ind     = !unified_regs_rd & mem_cfg_reg_sel[12];
+        assign          from_ctl_bus[12].stat_rd_ind    = unified_regs_rd & mem_status_reg_sel[12];
+        assign          from_ctl_bus[12].dbg_wr_ind     = !unified_regs_rd & mem_dbg_rd_ctl_reg_sel[12];
+
+        assign          from_ctl_bus[13].ecc_en         = mem_cfg_ecc_en[13];
+        assign          from_ctl_bus[13].ecc_invert_1   = mem_cfg_ecc_invert_1[13];
+        assign          from_ctl_bus[13].ecc_invert_2   = mem_cfg_ecc_invert_2[13];
+        assign          from_ctl_bus[13].gen_ecc_inst_num= mem_cfg_gen_ecc_inst_num[13];
+        assign          from_ctl_bus[13].tcam_check_err_dis= mem_cfg_tcam_check_err_dis[13];
+        assign          from_ctl_bus[13].tcam_update_dis= mem_cfg_tcam_update_dis[13];
+        assign          from_ctl_bus[13].pwren_b                = mem_cfg_pwren_b[13];
+        assign          from_ctl_bus[13].rm_e           = mem_cfg_rme[13];
+        assign          from_ctl_bus[13].rm             = mem_cfg_rm[13];
+        assign          from_ctl_bus[13].ls_bypass      = mem_cfg_ls_bypass[13];
+        assign          from_ctl_bus[13].ls_force       = mem_cfg_ls_force[13];
+        assign          from_ctl_bus[13].dbg_rd_en      = mem_dbg_rd_ctl_rd_en[13];
+        assign          from_ctl_bus[13].dbg_adr                = mem_dbg_rd_ctl_adr[13];
+        assign          from_ctl_bus[13].dbg_dw_sel     = mem_dbg_rd_ctl_dw_sel[13];
+        assign          from_ctl_bus[13].cfg_wr_ind     = !unified_regs_rd & mem_cfg_reg_sel[13];
+        assign          from_ctl_bus[13].stat_rd_ind    = unified_regs_rd & mem_status_reg_sel[13];
+        assign          from_ctl_bus[13].dbg_wr_ind     = !unified_regs_rd & mem_dbg_rd_ctl_reg_sel[13];
+
+        assign          from_ctl_bus[14].ecc_en         = mem_cfg_ecc_en[14];
+        assign          from_ctl_bus[14].ecc_invert_1   = mem_cfg_ecc_invert_1[14];
+        assign          from_ctl_bus[14].ecc_invert_2   = mem_cfg_ecc_invert_2[14];
+        assign          from_ctl_bus[14].gen_ecc_inst_num= mem_cfg_gen_ecc_inst_num[14];
+        assign          from_ctl_bus[14].tcam_check_err_dis= mem_cfg_tcam_check_err_dis[14];
+        assign          from_ctl_bus[14].tcam_update_dis= mem_cfg_tcam_update_dis[14];
+        assign          from_ctl_bus[14].pwren_b                = mem_cfg_pwren_b[14];
+        assign          from_ctl_bus[14].rm_e           = mem_cfg_rme[14];
+        assign          from_ctl_bus[14].rm             = mem_cfg_rm[14];
+        assign          from_ctl_bus[14].ls_bypass      = mem_cfg_ls_bypass[14];
+        assign          from_ctl_bus[14].ls_force       = mem_cfg_ls_force[14];
+        assign          from_ctl_bus[14].dbg_rd_en      = mem_dbg_rd_ctl_rd_en[14];
+        assign          from_ctl_bus[14].dbg_adr                = mem_dbg_rd_ctl_adr[14];
+        assign          from_ctl_bus[14].dbg_dw_sel     = mem_dbg_rd_ctl_dw_sel[14];
+        assign          from_ctl_bus[14].cfg_wr_ind     = !unified_regs_rd & mem_cfg_reg_sel[14];
+        assign          from_ctl_bus[14].stat_rd_ind    = unified_regs_rd & mem_status_reg_sel[14];
+        assign          from_ctl_bus[14].dbg_wr_ind     = !unified_regs_rd & mem_dbg_rd_ctl_reg_sel[14];
+
+        assign          from_ctl_bus[15].ecc_en         = mem_cfg_ecc_en[15];
+        assign          from_ctl_bus[15].ecc_invert_1   = mem_cfg_ecc_invert_1[15];
+        assign          from_ctl_bus[15].ecc_invert_2   = mem_cfg_ecc_invert_2[15];
+        assign          from_ctl_bus[15].gen_ecc_inst_num= mem_cfg_gen_ecc_inst_num[15];
+        assign          from_ctl_bus[15].tcam_check_err_dis= mem_cfg_tcam_check_err_dis[15];
+        assign          from_ctl_bus[15].tcam_update_dis= mem_cfg_tcam_update_dis[15];
+        assign          from_ctl_bus[15].pwren_b                = mem_cfg_pwren_b[15];
+        assign          from_ctl_bus[15].rm_e           = mem_cfg_rme[15];
+        assign          from_ctl_bus[15].rm             = mem_cfg_rm[15];
+        assign          from_ctl_bus[15].ls_bypass      = mem_cfg_ls_bypass[15];
+        assign          from_ctl_bus[15].ls_force       = mem_cfg_ls_force[15];
+        assign          from_ctl_bus[15].dbg_rd_en      = mem_dbg_rd_ctl_rd_en[15];
+        assign          from_ctl_bus[15].dbg_adr                = mem_dbg_rd_ctl_adr[15];
+        assign          from_ctl_bus[15].dbg_dw_sel     = mem_dbg_rd_ctl_dw_sel[15];
+        assign          from_ctl_bus[15].cfg_wr_ind     = !unified_regs_rd & mem_cfg_reg_sel[15];
+        assign          from_ctl_bus[15].stat_rd_ind    = unified_regs_rd & mem_status_reg_sel[15];
+        assign          from_ctl_bus[15].dbg_wr_ind     = !unified_regs_rd & mem_dbg_rd_ctl_reg_sel[15];
+
 
         typedef struct packed{                                                          
                 logic                                                   ecc_uncor_err   ;       
@@ -578,7 +902,7 @@ always_comb
                 logic                                                   dbg_done        ;       
                 logic   [                 MEM_DBG_RD_ADR_WIDTH-1:0]     ecc_err_adr     ;       
         } to_ctl_t;                                                                             
-        to_ctl_t     [3:0]        to_ctl_bus      ;
+        to_ctl_t     [15:0]        to_ctl_bus      ;
 
                 //msh_bank_ram_0
         assign          mem_ecc_uncor_err[0]            = to_ctl_bus[0].ecc_uncor_err;
@@ -616,6 +940,114 @@ always_comb
         assign          mem_init_done[3]                = to_ctl_bus[3].init_done;
         assign          mem_is_tcam[3]                  = 1'b0;
 
+                //msh_bank_ram_4
+        assign          mem_ecc_uncor_err[4]            = to_ctl_bus[4].ecc_uncor_err;
+        assign          mem_ecc_cor_err[4]              = to_ctl_bus[4].ecc_cor_err;
+        assign          mem_dbg_rd_data_rd_data_int[4]  = to_ctl_bus[4].dbg_rd_data;
+        assign          mem_dbg_rd_ctl_done_int[4]      = to_ctl_bus[4].dbg_done;
+        assign          mem_ecc_err_adr[4]              = to_ctl_bus[4].ecc_err_adr;
+        assign          mem_init_done[4]                = to_ctl_bus[4].init_done;
+        assign          mem_is_tcam[4]                  = 1'b0;
+
+                //msh_bank_ram_5
+        assign          mem_ecc_uncor_err[5]            = to_ctl_bus[5].ecc_uncor_err;
+        assign          mem_ecc_cor_err[5]              = to_ctl_bus[5].ecc_cor_err;
+        assign          mem_dbg_rd_data_rd_data_int[5]  = to_ctl_bus[5].dbg_rd_data;
+        assign          mem_dbg_rd_ctl_done_int[5]      = to_ctl_bus[5].dbg_done;
+        assign          mem_ecc_err_adr[5]              = to_ctl_bus[5].ecc_err_adr;
+        assign          mem_init_done[5]                = to_ctl_bus[5].init_done;
+        assign          mem_is_tcam[5]                  = 1'b0;
+
+                //msh_bank_ram_6
+        assign          mem_ecc_uncor_err[6]            = to_ctl_bus[6].ecc_uncor_err;
+        assign          mem_ecc_cor_err[6]              = to_ctl_bus[6].ecc_cor_err;
+        assign          mem_dbg_rd_data_rd_data_int[6]  = to_ctl_bus[6].dbg_rd_data;
+        assign          mem_dbg_rd_ctl_done_int[6]      = to_ctl_bus[6].dbg_done;
+        assign          mem_ecc_err_adr[6]              = to_ctl_bus[6].ecc_err_adr;
+        assign          mem_init_done[6]                = to_ctl_bus[6].init_done;
+        assign          mem_is_tcam[6]                  = 1'b0;
+
+                //msh_bank_ram_7
+        assign          mem_ecc_uncor_err[7]            = to_ctl_bus[7].ecc_uncor_err;
+        assign          mem_ecc_cor_err[7]              = to_ctl_bus[7].ecc_cor_err;
+        assign          mem_dbg_rd_data_rd_data_int[7]  = to_ctl_bus[7].dbg_rd_data;
+        assign          mem_dbg_rd_ctl_done_int[7]      = to_ctl_bus[7].dbg_done;
+        assign          mem_ecc_err_adr[7]              = to_ctl_bus[7].ecc_err_adr;
+        assign          mem_init_done[7]                = to_ctl_bus[7].init_done;
+        assign          mem_is_tcam[7]                  = 1'b0;
+
+                //msh_bank_ram_8
+        assign          mem_ecc_uncor_err[8]            = to_ctl_bus[8].ecc_uncor_err;
+        assign          mem_ecc_cor_err[8]              = to_ctl_bus[8].ecc_cor_err;
+        assign          mem_dbg_rd_data_rd_data_int[8]  = to_ctl_bus[8].dbg_rd_data;
+        assign          mem_dbg_rd_ctl_done_int[8]      = to_ctl_bus[8].dbg_done;
+        assign          mem_ecc_err_adr[8]              = to_ctl_bus[8].ecc_err_adr;
+        assign          mem_init_done[8]                = to_ctl_bus[8].init_done;
+        assign          mem_is_tcam[8]                  = 1'b0;
+
+                //msh_bank_ram_9
+        assign          mem_ecc_uncor_err[9]            = to_ctl_bus[9].ecc_uncor_err;
+        assign          mem_ecc_cor_err[9]              = to_ctl_bus[9].ecc_cor_err;
+        assign          mem_dbg_rd_data_rd_data_int[9]  = to_ctl_bus[9].dbg_rd_data;
+        assign          mem_dbg_rd_ctl_done_int[9]      = to_ctl_bus[9].dbg_done;
+        assign          mem_ecc_err_adr[9]              = to_ctl_bus[9].ecc_err_adr;
+        assign          mem_init_done[9]                = to_ctl_bus[9].init_done;
+        assign          mem_is_tcam[9]                  = 1'b0;
+
+                //msh_bank_ram_10
+        assign          mem_ecc_uncor_err[10]           = to_ctl_bus[10].ecc_uncor_err;
+        assign          mem_ecc_cor_err[10]             = to_ctl_bus[10].ecc_cor_err;
+        assign          mem_dbg_rd_data_rd_data_int[10] = to_ctl_bus[10].dbg_rd_data;
+        assign          mem_dbg_rd_ctl_done_int[10]     = to_ctl_bus[10].dbg_done;
+        assign          mem_ecc_err_adr[10]             = to_ctl_bus[10].ecc_err_adr;
+        assign          mem_init_done[10]               = to_ctl_bus[10].init_done;
+        assign          mem_is_tcam[10]                 = 1'b0;
+
+                //msh_bank_ram_11
+        assign          mem_ecc_uncor_err[11]           = to_ctl_bus[11].ecc_uncor_err;
+        assign          mem_ecc_cor_err[11]             = to_ctl_bus[11].ecc_cor_err;
+        assign          mem_dbg_rd_data_rd_data_int[11] = to_ctl_bus[11].dbg_rd_data;
+        assign          mem_dbg_rd_ctl_done_int[11]     = to_ctl_bus[11].dbg_done;
+        assign          mem_ecc_err_adr[11]             = to_ctl_bus[11].ecc_err_adr;
+        assign          mem_init_done[11]               = to_ctl_bus[11].init_done;
+        assign          mem_is_tcam[11]                 = 1'b0;
+
+                //msh_bank_ram_12
+        assign          mem_ecc_uncor_err[12]           = to_ctl_bus[12].ecc_uncor_err;
+        assign          mem_ecc_cor_err[12]             = to_ctl_bus[12].ecc_cor_err;
+        assign          mem_dbg_rd_data_rd_data_int[12] = to_ctl_bus[12].dbg_rd_data;
+        assign          mem_dbg_rd_ctl_done_int[12]     = to_ctl_bus[12].dbg_done;
+        assign          mem_ecc_err_adr[12]             = to_ctl_bus[12].ecc_err_adr;
+        assign          mem_init_done[12]               = to_ctl_bus[12].init_done;
+        assign          mem_is_tcam[12]                 = 1'b0;
+
+                //msh_bank_ram_13
+        assign          mem_ecc_uncor_err[13]           = to_ctl_bus[13].ecc_uncor_err;
+        assign          mem_ecc_cor_err[13]             = to_ctl_bus[13].ecc_cor_err;
+        assign          mem_dbg_rd_data_rd_data_int[13] = to_ctl_bus[13].dbg_rd_data;
+        assign          mem_dbg_rd_ctl_done_int[13]     = to_ctl_bus[13].dbg_done;
+        assign          mem_ecc_err_adr[13]             = to_ctl_bus[13].ecc_err_adr;
+        assign          mem_init_done[13]               = to_ctl_bus[13].init_done;
+        assign          mem_is_tcam[13]                 = 1'b0;
+
+                //msh_bank_ram_14
+        assign          mem_ecc_uncor_err[14]           = to_ctl_bus[14].ecc_uncor_err;
+        assign          mem_ecc_cor_err[14]             = to_ctl_bus[14].ecc_cor_err;
+        assign          mem_dbg_rd_data_rd_data_int[14] = to_ctl_bus[14].dbg_rd_data;
+        assign          mem_dbg_rd_ctl_done_int[14]     = to_ctl_bus[14].dbg_done;
+        assign          mem_ecc_err_adr[14]             = to_ctl_bus[14].ecc_err_adr;
+        assign          mem_init_done[14]               = to_ctl_bus[14].init_done;
+        assign          mem_is_tcam[14]                 = 1'b0;
+
+                //msh_bank_ram_15
+        assign          mem_ecc_uncor_err[15]           = to_ctl_bus[15].ecc_uncor_err;
+        assign          mem_ecc_cor_err[15]             = to_ctl_bus[15].ecc_cor_err;
+        assign          mem_dbg_rd_data_rd_data_int[15] = to_ctl_bus[15].dbg_rd_data;
+        assign          mem_dbg_rd_ctl_done_int[15]     = to_ctl_bus[15].dbg_done;
+        assign          mem_ecc_err_adr[15]             = to_ctl_bus[15].ecc_err_adr;
+        assign          mem_init_done[15]               = to_ctl_bus[15].init_done;
+        assign          mem_is_tcam[15]                 = 1'b0;
+
 //      To/FROM_CTL BUSES Generation
 
 
@@ -623,10 +1055,34 @@ always_comb
         assign          to_ctl_bus[1]           = msh_msh_bank_ram_1_to_ctl;
         assign          to_ctl_bus[2]           = msh_msh_bank_ram_2_to_ctl;
         assign          to_ctl_bus[3]           = msh_msh_bank_ram_3_to_ctl;
+        assign          to_ctl_bus[4]           = msh_msh_bank_ram_4_to_ctl;
+        assign          to_ctl_bus[5]           = msh_msh_bank_ram_5_to_ctl;
+        assign          to_ctl_bus[6]           = msh_msh_bank_ram_6_to_ctl;
+        assign          to_ctl_bus[7]           = msh_msh_bank_ram_7_to_ctl;
+        assign          to_ctl_bus[8]           = msh_msh_bank_ram_8_to_ctl;
+        assign          to_ctl_bus[9]           = msh_msh_bank_ram_9_to_ctl;
+        assign          to_ctl_bus[10]          = msh_msh_bank_ram_10_to_ctl;
+        assign          to_ctl_bus[11]          = msh_msh_bank_ram_11_to_ctl;
+        assign          to_ctl_bus[12]          = msh_msh_bank_ram_12_to_ctl;
+        assign          to_ctl_bus[13]          = msh_msh_bank_ram_13_to_ctl;
+        assign          to_ctl_bus[14]          = msh_msh_bank_ram_14_to_ctl;
+        assign          to_ctl_bus[15]          = msh_msh_bank_ram_15_to_ctl;
         assign          msh_msh_bank_ram_0_from_ctl     = from_ctl_bus[0];
         assign          msh_msh_bank_ram_1_from_ctl     = from_ctl_bus[1];
         assign          msh_msh_bank_ram_2_from_ctl     = from_ctl_bus[2];
         assign          msh_msh_bank_ram_3_from_ctl     = from_ctl_bus[3];
+        assign          msh_msh_bank_ram_4_from_ctl     = from_ctl_bus[4];
+        assign          msh_msh_bank_ram_5_from_ctl     = from_ctl_bus[5];
+        assign          msh_msh_bank_ram_6_from_ctl     = from_ctl_bus[6];
+        assign          msh_msh_bank_ram_7_from_ctl     = from_ctl_bus[7];
+        assign          msh_msh_bank_ram_8_from_ctl     = from_ctl_bus[8];
+        assign          msh_msh_bank_ram_9_from_ctl     = from_ctl_bus[9];
+        assign          msh_msh_bank_ram_10_from_ctl    = from_ctl_bus[10];
+        assign          msh_msh_bank_ram_11_from_ctl    = from_ctl_bus[11];
+        assign          msh_msh_bank_ram_12_from_ctl    = from_ctl_bus[12];
+        assign          msh_msh_bank_ram_13_from_ctl    = from_ctl_bus[13];
+        assign          msh_msh_bank_ram_14_from_ctl    = from_ctl_bus[14];
+        assign          msh_msh_bank_ram_15_from_ctl    = from_ctl_bus[15];
 
 
 endmodule

@@ -218,9 +218,9 @@ import msh_node_sim_pkg::*;
       dut_if,
       // -hz: 12/7/2018:
       mby_msh_node.msh_mem_bank_if[0],
-      mby_msh_node.msh_mem_bank_if[1],
       mby_msh_node.msh_mem_bank_if[2],
-      mby_msh_node.msh_mem_bank_if[3]
+      mby_msh_node.msh_mem_bank_if[4],
+      mby_msh_node.msh_mem_bank_if[6]
   );
 
 
