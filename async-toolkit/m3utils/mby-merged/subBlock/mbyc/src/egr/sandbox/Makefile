@@ -89,6 +89,8 @@ INCS += $(SRC)/egr/rtl/mem/tqu/src/mem_wrap
 
 INCS += $(SRC)/mems/rtl
 INCS += $(SHRTL)/src/common/rtl
+INCS += $(SHRTL)/src/fifo/rtl
+INCS += $(VCS_HOME)/packages/sva_cg
 INCS += $(DESIGNCOMPILER)/dw/sim_ver
 
 BUILD_DEP = $(addsuffix /*,$(INCS))
