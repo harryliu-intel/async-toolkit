@@ -91,6 +91,8 @@ $hdl_spec = {
 	],
 
 	# Arbitrary VLOG options
-	-vlog_opts => [],
+	-vlog_opts => [
+        "+define+INTEL_SVA_OFF",
+    ],
 
 };
