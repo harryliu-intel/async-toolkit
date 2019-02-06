@@ -6,3 +6,9 @@ input_data_fifo_wr_data >> o_q_input_data_fifo_wr_data
 input_data_fifo_rd_data >> i_input_data_fifo_rd_data
 input_md_fifo_wr_data   >> o_q_input_md_fifo_wr_data
 input_md_fifo_rd_data   >> i_input_md_fifo_rd_data
+md_delay_fifo_rd_en    >> o_q_md_delay_fifo_rd_en
+md_delay_fifo_wr_en    >> o_q_md_delay_fifo_wr_en
+md_delay_fifo_rd_adr   >> o_q_md_delay_fifo_rd_adr
+md_delay_fifo_wr_adr   >> o_q_md_delay_fifo_wr_adr
+md_delay_fifo_wr_data >> o_q_md_delay_fifo_wr_data
+md_delay_fifo_rd_data >> i_md_delay_fifo_rd_data

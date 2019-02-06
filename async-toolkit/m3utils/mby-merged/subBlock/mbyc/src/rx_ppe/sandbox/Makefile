@@ -14,7 +14,7 @@ DV_SRC = ../sandbox/dv/verilog
 #ASSERT_LIB = /nfs/site/disks/hdk.cad.1/linux_2.6.16_x86-64/sva_lib/6.0p1
 ASSERT_LIB = /p/hdk/rtl/cad/x86-64_linux30/dt/sva_lib/15.4p5_shOpt64
 SHARED_SRC = ../../shared
-SHRTL_SRC = /p/hdk/rtl/ip_models/nhdk/shrtl/shrtl-dev-x0-18ww48a
+SHRTL_SRC = /p/hdk/rtl/ip_models/nhdk/shrtl/shrtl-dev-x0-19ww06a
 SIM_DIR = dv/run
 
 INCS = $(RTL_SRC)/rx_ppe/rtl
