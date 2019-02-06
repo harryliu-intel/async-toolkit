@@ -39,7 +39,10 @@ for (my $i = 0; $i < @ARGV; $i++) {
 print "MGM debug : @mbyMgmLibs\n";
 
 %audf = (
-   Includes => [],
+   Includes => [
+         "CTECH:cfg/ctech/CTECH_hdl.udf",
+         "CTECH_EXP:cfg/ctech_exp/CTECH_EXP_hdl.udf",
+   ],
    HDLSpec  => {
      mby => {
          # Define all the libraries which could be compiled
@@ -627,6 +630,8 @@ print "MGM debug : @mbyMgmLibs\n";
                top         => 'mby_rx_ppe_tb_top_lib.mby_rx_ppe_tb_top',
 
                use  => [
+                        "CTECH:CTECH_model",
+                        "CTECH_EXP:CTECH_EXP_model",
                         "eth_port_mby_ec:mby_ec",
                         "eth_port_common:common"
                        ],

@@ -21,6 +21,8 @@ $SL2_LIB_IP16/shrtl_lmemc/verilog/shrtl_lmemc_pkg.vh
 //+incdir+$SL2_LIB_IP16/shrtl_lmemc/verilog_behavioral
 //-y      $SL2_LIB_IP16/shrtl_ctech/behavioral
 //+incdir+$SL2_LIB_IP16/shrtl_ctech/behavioral
+-y      /nfs/site/disks/ccdo.soc.cad_root.1/cad/x86-64_linux26/synopsys/designcompiler/M-2016.12-SP3/dw/sim_ver
++incdir+/nfs/site/disks/ccdo.soc.cad_root.1/cad/x86-64_linux26/synopsys/designcompiler/M-2016.12-SP3/dw/sim_ver
 
 // sl2_lib common
 //+incdir+$SL2_LIB/shrtl_common/verilog

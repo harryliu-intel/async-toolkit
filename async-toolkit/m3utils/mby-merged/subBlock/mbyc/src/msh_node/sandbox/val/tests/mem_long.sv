@@ -55,15 +55,15 @@ program testcase (                  // a program is a system verilog testbench e
 
 	// num of input request
 //	.knob_inp_req_num (25),	// number of input request for request loop
-	.knob_inp_req_num (1),
+	.knob_inp_req_num (1000),
 
-        .knob_dut_row ($urandom_range(0, 15)), // random dut node row num
-        .knob_dut_col ($urandom_range(0, 7)),   // random dut node col num
-//      .knob_dut_row (7),   
-//      .knob_dut_col (3),
+//        .knob_dut_row ($urandom_range(0, 15)), // random dut node row num
+//        .knob_dut_col ($urandom_range(0, 7)),   // random dut node col num
+      .knob_dut_row (1),   
+      .knob_dut_col (1),
 
 //      .knob_plane($urandom_range(0,2)), // 0:plane0, 1:plane1, other:random
-        .knob_plane(2),
+        .knob_plane(0),
 
 //	.knob_drv_toward($urandom_range(0,4)),	// 0:EB, 1:WB, 2:NB; 3:SB; other:random
 	.knob_drv_toward(4),	
@@ -72,20 +72,22 @@ program testcase (                  // a program is a system verilog testbench e
 				// req_row, req_col, port_row and port_side are
 				// generated under constraints to make sure test legal
 
-        .knob_req_row ($urandom_range(0, 16)), // [0,15]=target node row, 16=random
-        .knob_req_col ($urandom_range(0, 8)),  // [0,7]=target node col, 8=random
-//      .knob_req_row (16),   
-//      .knob_req_col (8),
+//        .knob_req_row ($urandom_range(0, 16)), // [0,15]=target node row, 16=random
+//        .knob_req_col ($urandom_range(0, 8)),  // [0,7]=target node col, 8=random
+      .knob_req_row (1),   
+      .knob_req_col (1),
 
-        .knob_rreq_port_row ($urandom_range(0, 16)), // [0,15]=assigned port_row, 16=random
-        .knob_rreq_port_side ($urandom_range(0, 4)), // [0,3]=assigned side: 0=n,1=s,2=e,3=w, and 4=random
+//        .knob_rreq_port_row ($urandom_range(0, 16)), // [0,15]=assigned port_row, 16=random
+//        .knob_rreq_port_side ($urandom_range(0, 4)), // [0,3]=assigned side: 0=n,1=s,2=e,3=w, and 4=random
+        .knob_rreq_port_row ($urandom_range(0, 2)), // [0,15]=assigned port_row, 16=random
 //      .knob_rreq_port_row (16),   
-//      .knob_rreq_port_side (4),
+      .knob_rreq_port_side (4),
 
-        .knob_rsp_port_row ($urandom_range(0, 16)), // [0,15]=assigned port_row, 16=random
-        .knob_rsp_port_side ($urandom_range(0, 4))  // [0,3]=assigned side: 0=n,1=s,2=e,3=w, and 4=random
+//        .knob_rsp_port_row ($urandom_range(0, 16)), // [0,15]=assigned port_row, 16=random
+//        .knob_rsp_port_side ($urandom_range(0, 4))  // [0,3]=assigned side: 0=n,1=s,2=e,3=w, and 4=random
+        .knob_rsp_port_row ($urandom_range(0, 2)), // [0,15]=assigned port_row, 16=random
 //      .knob_rsp_port_row (16),   
-//      .knob_rsp_port_side (4)
+      .knob_rsp_port_side (4)
 
     );
 

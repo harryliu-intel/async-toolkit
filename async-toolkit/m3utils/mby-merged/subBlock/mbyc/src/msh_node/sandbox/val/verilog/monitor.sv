@@ -50,11 +50,11 @@ class monitor;
 
 
     virtual msh_node_dut_if     dut_if;      
-    // -hz: 12/7/2018:
-    virtual mby_mem_msh_bank_ram_shell_4096x532_func_if mem_if_0;
-    virtual mby_mem_msh_bank_ram_shell_4096x532_func_if mem_if_1;
-    virtual mby_mem_msh_bank_ram_shell_4096x532_func_if mem_if_2;
-    virtual mby_mem_msh_bank_ram_shell_4096x532_func_if mem_if_3;
+
+    virtual mby_msh_mem_if mem_if_0;
+    virtual mby_msh_mem_if mem_if_1;
+    virtual mby_msh_mem_if mem_if_2;
+    virtual mby_msh_mem_if mem_if_3;
 
 
     scoreboard              sb;
@@ -508,10 +508,10 @@ class monitor;
     function new(
         virtual msh_node_dut_if dut_if,
 
-        virtual mby_mem_msh_bank_ram_shell_4096x532_func_if mem_if_0,
-        virtual mby_mem_msh_bank_ram_shell_4096x532_func_if mem_if_1,
-        virtual mby_mem_msh_bank_ram_shell_4096x532_func_if mem_if_2,
-        virtual mby_mem_msh_bank_ram_shell_4096x532_func_if mem_if_3,
+        virtual mby_msh_mem_if mem_if_0,
+        virtual mby_msh_mem_if mem_if_1,
+        virtual mby_msh_mem_if mem_if_2,
+        virtual mby_msh_mem_if mem_if_3,
 
         scoreboard          sb,
 //-hz:

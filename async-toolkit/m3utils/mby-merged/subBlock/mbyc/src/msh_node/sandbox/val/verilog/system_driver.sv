@@ -66,10 +66,10 @@ class system_driver;
 	$display("(time: %0d) %s: ** dut(row, col) = (%0d, %0d) ** ", $time, name, knob_dut_row, knob_dut_col);
 
 
-        $readmemh ("../../tests/mem_bank_0.txt",top.msh_node.mby_msh_gen_mem.msh_sram_mems.msh_wrap_mem_msh_bank_ram_shell_4096x532_0.behave_mem.sram);
-        $readmemh ("../../tests/mem_bank_1.txt",top.msh_node.mby_msh_gen_mem.msh_sram_mems.msh_wrap_mem_msh_bank_ram_shell_4096x532_1.behave_mem.sram);
-        $readmemh ("../../tests/mem_bank_2.txt",top.msh_node.mby_msh_gen_mem.msh_sram_mems.msh_wrap_mem_msh_bank_ram_shell_4096x532_2.behave_mem.sram);
-        $readmemh ("../../tests/mem_bank_3.txt",top.msh_node.mby_msh_gen_mem.msh_sram_mems.msh_wrap_mem_msh_bank_ram_shell_4096x532_3.behave_mem.sram);
+//        $readmemh ("../../tests/mem_bank_0.txt",top.msh_node.mby_msh_gen_mem.msh_sram_mems.msh_wrap_mem_msh_bank_ram_shell_4096x532_0.behave_mem.sram);
+//        $readmemh ("../../tests/mem_bank_1.txt",top.msh_node.mby_msh_gen_mem.msh_sram_mems.msh_wrap_mem_msh_bank_ram_shell_4096x532_1.behave_mem.sram);
+//        $readmemh ("../../tests/mem_bank_2.txt",top.msh_node.mby_msh_gen_mem.msh_sram_mems.msh_wrap_mem_msh_bank_ram_shell_4096x532_2.behave_mem.sram);
+//        $readmemh ("../../tests/mem_bank_3.txt",top.msh_node.mby_msh_gen_mem.msh_sram_mems.msh_wrap_mem_msh_bank_ram_shell_4096x532_3.behave_mem.sram);
         // If the MGM BFM model has INTEL_SIMONLY set, the following task call is available
         //  top.msh_node.mby_msh_gen_mem.msh_sram_mems.msh_wrap_mem_msh_bank_ram_shell_4096x532_0.memory_init("../../tests/mem_bank_0.txt");
         //  top.msh_node.mby_msh_gen_mem.msh_sram_mems.msh_wrap_mem_msh_bank_ram_shell_4096x532_1.memory_init("../../tests/mem_bank_1.txt");
