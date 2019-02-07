@@ -80,8 +80,8 @@ $hdl_spec = {
      "src/shared/rtl",
      "$SHRTL/src/common/rtl",
      "$DESIGNCOMPILER/dw/sim_ver",
-     "$SHRTL/src/fifo/rtl", 
-     "
+     "$SHRTL/src/fifo/rtl",
+     "/p/hdk/rtl/cad/x86-64_linux30/synopsys/vcsmx/N-2017.12-SP2-3/packages/sva_cg", 
     ## EGR MEMORIES
         "src/egr/rtl/mem/cpb/src",
         "src/egr/rtl/mem/dpb/src",
