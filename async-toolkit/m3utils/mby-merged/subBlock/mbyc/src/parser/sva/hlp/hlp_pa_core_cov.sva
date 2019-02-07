@@ -1,0 +1,98 @@
+//------------------------------------------------------------------------------
+//
+//  INTEL CONFIDENTIAL
+//
+//  Copyright 2006 - 2017 Intel Corporation All Rights Reserved.
+//
+//  The source code contained or described herein and all documents related
+//  to the source code ("Material") are owned by Intel Corporation or its
+//  suppliers or licensors. Title to the Material remains with Intel
+//  Corporation or its suppliers and licensors. The Material contains trade
+//  secrets and proprietary and confidential information of Intel or its
+//  suppliers and licensors. The Material is protected by worldwide copyright
+//  and trade secret laws and treaty provisions. No part of the Material may
+//  be used, copied, reproduced, modified, published, uploaded, posted,
+//  transmitted, distributed, or disclosed in any way without Intel's prior
+//  express written permission.
+//
+//  No license under any patent, copyright, trade secret or other intellectual
+//  property right is granted to or conferred upon you by disclosure or
+//  delivery of the Materials, either expressly, by implication, inducement,
+//  estoppel or otherwise. Any license under such intellectual property rights
+//  must be express and approved by Intel in writing.
+//
+//------------------------------------------------------------------------------
+
+covergroup hlp_pa_core_in_cg @(posedge clk iff ((rst_n===1'b1) & i_core_v));
+
+  // Regular mode
+  coverpoint i_core_ctrl.rx_port { 
+    bins valid[]   = { [0:23] };
+    illegal_bins x = { [24:$] };
+  }
+  coverpoint i_core_ctrl.hdr_len {
+    bins valid[]   = { [1:192] };
+    illegal_bins x = { [193:$] };
+  }
+
+endgroup
+
+covergroup hlp_pa_core_out_cg @(posedge clk iff ((rst_n===1'b1) & o_result_v));
+
+  // Check csum_ok and error conditions
+  coverpoint o_result.csum_ok[0];
+  coverpoint o_result.csum_ok[1];
+  coverpoint o_result.ex_depth_exceed;
+  coverpoint o_result.ex_trunc_header;
+  coverpoint o_result.ex_parsing_done;
+  coverpoint o_result.ex_stage;
+
+  // Check output to pa_chksum
+  coverpoint o_csum_ctrl.ipv6_v;
+  coverpoint o_csum_ctrl.payload_frag_v;
+  coverpoint o_csum_ctrl.head_frag_v;
+  coverpoint o_csum_ctrl.tcp_v;
+  coverpoint o_csum_ctrl.udp_v;
+  coverpoint o_csum_ctrl.sctp_v;
+  coverpoint o_csum_ctrl.l3_ptr_v;
+  coverpoint o_csum_ctrl.l4_ptr_v;
+  coverpoint o_csum_ctrl.ipv4_len_v;
+  coverpoint o_csum_ctrl.ipv6_len_v;
+  coverpoint o_csum_ctrl.ip_addrs_v { bins valid[] = { 0, 16'hF000, 16'hFFFF }; }
+  coverpoint o_csum_ctrl.l4_csum_v;
+  coverpoint o_csum_ctrl.udp_len_v;
+
+endgroup
+
+// Check that all keys, flags, ptrs are set/clear
+covergroup hlp_pa_core_keys_cg (input int i) @(posedge clk);
+  cp_keys_v: coverpoint o_result.keys_valid[i] iff((rst_n===1'b1) & o_result_v);
+endgroup
+
+covergroup hlp_pa_core_flags_cg (input int i) @(posedge clk);
+  cp_keys_v: coverpoint o_result.flags[i] iff((rst_n===1'b1) & o_result_v);
+endgroup
+
+covergroup hlp_pa_core_ptrs_cg (input int i) @(posedge clk);
+  cp_keys_v: coverpoint o_result.ptrs_valid[i] iff((rst_n===1'b1) & o_result_v);
+endgroup
+
+
+// Instantiate the covergroups
+`HLP_PLUSARGS_COV_GRP_NEW( hlp_pa_core_in_cg )
+`HLP_PLUSARGS_COV_GRP_NEW( hlp_pa_core_out_cg )
+
+generate
+  for (genvar i=0; i<hlp_pkg::N_PARSER_KEYS; i++) begin: keys_covers
+    `HLP_PLUSARGS_COV_GRP_NEW( hlp_pa_core_keys_cg, i, (i) )
+  end
+  for (genvar i=0; i<hlp_pkg::N_PARSER_FLAGS; i++) begin: flags_covers
+    `HLP_PLUSARGS_COV_GRP_NEW( hlp_pa_core_flags_cg, i, (i) )
+  end
+  for (genvar i=0; i<hlp_pkg::N_PARSER_PTRS; i++) begin: ptrs_covers
+    `HLP_PLUSARGS_COV_GRP_NEW( hlp_pa_core_ptrs_cg, i, (i) )
+  end
+endgenerate
+
+
+

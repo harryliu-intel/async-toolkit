@@ -1,1 +1,1 @@
-ppe_stm_tx +vcs+lic+wait +ntb_random_seed=2875591401 +vpdfile+ppe_stm_tx.vpd +start_dumping=0 | tee run_seed.log
+ppe_stm_tx +vcs+lic+wait +ntb_random_seed=2875591401 +vpdfile+ppe_stm_tx.vpd -assert finish_maxfail=1 +start_dumping=0 | tee run_seed.log

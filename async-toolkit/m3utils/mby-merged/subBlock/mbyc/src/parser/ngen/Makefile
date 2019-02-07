@@ -6,7 +6,12 @@ V2BBOX        = /p/hdk/rtl/proj_tools/sl2_tools/latest/scripts/v2bbox.pl
 
 V_DIRS        = -d=../rtl \
                 -d=../../shared/interfaces \
-                -d=../../shared/rtl
+                -d=../../shared/rtl \
+                -d=../../shared/rtl/hlp/common \
+                -d=../../shared/rtl/hlp/lib/pkt \
+                -d=../../shared/rtl/hlp/lib/crc \
+                -d=../../../../../target/mby/mgm_run/rtl \
+                -d=../../../../../target/mby/mgm_run/parser/src
 V_LIBS        =
 
 .PHONY: ngen pre top post rtl copy clean diff
@@ -23,6 +28,8 @@ top:
 	@$(NGEN) $(NGEN_FLAGS) $(V_DIRS) $(V_LIBS) $(BLOCK)
 
 post:
+	./post_process.pl
+	mv parser_top.sv ngen/parser_top.sv
 	rm -f parser_shells_wrapper_inc.v
 	rm -f parser_shells_wrapper.v
 	rm -f parser_ff_mems.v

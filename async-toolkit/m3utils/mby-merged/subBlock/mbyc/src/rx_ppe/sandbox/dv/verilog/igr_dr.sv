@@ -43,8 +43,8 @@ rx_ppe_igr_if.igr   rx_ppe_igr_if
 logic   [31:0]  q_random;
 logic   [8:0]   q_pkt_id0;
 logic   [8:0]   q_pkt_id1;
-logic   [76:0]  q_val_dly0;
-logic   [76:0]  q_val_dly1;
+logic   [84:0]  q_val_dly0;
+logic   [84:0]  q_val_dly1;
 logic   [8:0]   q_exp_pkt_id0;
 logic   [8:0]   q_exp_pkt_id1;
 
@@ -52,8 +52,26 @@ always_ff @(posedge cclk) begin //{
     q_random <= $urandom;
 
     if(cclk_cnt == 1) begin //{
-        igr_rx_ppe_if.intf0_head.valid  <= 1'b0;
-        igr_rx_ppe_if.intf1_head.valid  <= 1'b0;
+        igr_rx_ppe_if.intf0_head.valid          <= 1'b0;
+        igr_rx_ppe_if.intf0_head.data           <= 1024'b0;
+        igr_rx_ppe_if.intf0_head.ecc            <= 72'b0;
+        igr_rx_ppe_if.intf0_head.md.cpp_md      <= 23'b0;
+        igr_rx_ppe_if.intf0_head.md.ts          <= 64'b0;
+        igr_rx_ppe_if.intf0_head.md.tc          <= 4'b0;
+        igr_rx_ppe_if.intf0_head.md.port        <= 5'b0;
+        igr_rx_ppe_if.intf0_head.md.eop         <= 1'b0;
+        igr_rx_ppe_if.intf0_head.md.len         <= 8'b0;
+        igr_rx_ppe_if.intf0_head.md.next_len    <= 2'b0;
+        igr_rx_ppe_if.intf1_head.valid          <= 1'b0;
+        igr_rx_ppe_if.intf1_head.data           <= 1024'b0;
+        igr_rx_ppe_if.intf1_head.ecc            <= 72'b0;
+        igr_rx_ppe_if.intf1_head.md.cpp_md      <= 23'b0;
+        igr_rx_ppe_if.intf1_head.md.ts          <= 64'b0;
+        igr_rx_ppe_if.intf1_head.md.tc          <= 4'b0;
+        igr_rx_ppe_if.intf1_head.md.port        <= 5'b0;
+        igr_rx_ppe_if.intf1_head.md.eop         <= 1'b0;
+        igr_rx_ppe_if.intf1_head.md.len         <= 8'b0;
+        igr_rx_ppe_if.intf1_head.md.next_len    <= 2'b0;
         q_pkt_id0 <= 0;
         q_pkt_id1 <= 0;
         q_exp_pkt_id0 <= 0;
@@ -66,16 +84,16 @@ always_ff @(posedge cclk) begin //{
         igr_rx_ppe_if.intf0_head.md.id  <= q_pkt_id0;
         if(q_random[0]) q_pkt_id0 <= q_pkt_id0 + 1;
 
-        igr_rx_ppe_if.intf1_head.valid  <= q_random[1];
+        igr_rx_ppe_if.intf1_head.valid  <= q_random[0] | q_random[1];
         igr_rx_ppe_if.intf1_head.md.id  <= q_pkt_id1;
-        if(q_random[1]) q_pkt_id1 <= q_pkt_id1 + 1;
+        if(q_random[0] || q_random[1]) q_pkt_id1 <= q_pkt_id1 + 1;
 
-        q_val_dly0 <= {q_val_dly0[75:0],q_random[0]};
-        q_val_dly1 <= {q_val_dly1[75:0],q_random[1]};
+        q_val_dly0 <= {q_val_dly0[83:0],q_random[0]};
+        q_val_dly1 <= {q_val_dly1[83:0],(q_random[0] | q_random[1])};
     end //}
 
     if(cclk_cnt > 25) begin //{
-        if(q_val_dly0[34]) begin //{
+        if(q_val_dly0[43]) begin //{
             if(igr_rx_ppe_if.intf0_ack !== 1'b1) begin //{
                 $display("ERROR, Interface 0 acknowledge is cleared when it should be set\n");
                 $finish;
@@ -88,7 +106,7 @@ always_ff @(posedge cclk) begin //{
             end //}
         end //}
 
-        if(q_val_dly1[34]) begin //{
+        if(q_val_dly1[43]) begin //{
             if(igr_rx_ppe_if.intf1_ack !== 1'b1) begin //{
                 $display("ERROR, Interface 1 acknowledge is cleared when it should be set\n");
                 $finish;
@@ -101,7 +119,7 @@ always_ff @(posedge cclk) begin //{
             end //}
         end //}
 
-        if(q_val_dly0[76]) begin //{
+        if(q_val_dly0[84]) begin //{
             if(rx_ppe_igr_if.intf0.valid !== 1'b1) begin //{
                 $display("ERROR, Interface 0 valid is cleared when it should be set\n");
                 $finish;
@@ -119,7 +137,7 @@ always_ff @(posedge cclk) begin //{
             end //}
         end //}
 
-        if(q_val_dly1[76]) begin //{
+        if(q_val_dly1[84]) begin //{
             if(rx_ppe_igr_if.intf1.valid !== 1'b1) begin //{
                 $display("ERROR, Interface 1 valid is cleared when it should be set\n");
                 $finish;
