@@ -1,11 +1,5 @@
 spar_cell_list =
   (list
-   ; gen 3 controllers
-   "lib.bd.standard.nopipe.RECV_CTRL.0"
-   "lib.bd.standard.nopipe.SEND_CTRL.0"
-   "lib.bd.convert.qdi.BD_TO_QDI_CTRL.0"
-   "lib.bd.convert.qdi.QDI_TO_BD_CTRL.0"
-
    ; 4GBD controller components
    "lib.util.widget.DIVERTER.0"
    "lib.util.widget.STD_DIVERTER.0"
