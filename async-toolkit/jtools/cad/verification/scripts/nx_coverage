@@ -29,6 +29,12 @@ my $DEBUG_LEVEL=0;
 my %validtasks=("merge"  => 1,
                 "publish"=> 2);
 
+my $user_urg_options = undef;
+
+#cast path
+my $cast_dir = "";
+
+
 my %task=();
 my $task_str="";
 my $invalid_task="";
@@ -57,18 +63,14 @@ my $urgFile=undef;
 # -map xxx
 # comma-seperated string will be unrolled
 # into individual -map xxx arguments
-my $urgMergeMapping = undef; # comma-sep string
 #This is for -map options
-my @defaultMergeMap=qw/
-chip.n2.BASE_N2$narrow
-core.neuro.neuron.v2.BASE_NEURON$narrow
-/;
+#my @defaultMergeMap=qw/
+#chip.n2.BASE_N2$narrow
+#core.neuro.neuron.v2.BASE_NEURON$narrow
+#/;
 
 #user input files
-my $user_hvp_file=undef;
 my $user_exclude_file=undef;
-my $user_hier_file=undef;
-my $user_urg_options=undef;
 
 #coverage sources
 my @cov_sources=();
@@ -93,11 +95,6 @@ my $vcs_tool="vcs";
 my $vcs_version="vcs-mx.2017.12sp1";
 
 
-# module
-# This is to create +moduletree
-my @modules=qw/
-chip.n2.BASE_N2$narrow
-/;
 
 
 #sql database
@@ -152,8 +149,28 @@ my $archive_path = "/nfs/site/disks/mrl138/coverage_archive";
 
 
 die usage() if (!keys %task);
+
+
+my $hier_file = undef;
+my $config_file = undef;
+my $hvp_file = undef;
+my @urgConfig;
 if($task_str =~ /merge/){
     die usage() if (! defined ($urgFile) and ! defined ($source_dir));
+    die usage() if (!-e $cast_dir);
+    $hier_file = "$cast_dir/chip/n2/urg/hier.config";
+    $config_file = "$cast_dir/chip/n2/urg/urg.config";
+    $hvp_file = "$cast_dir/chip/n2/urg/nx.hvp";
+    if (! -e $hier_file) {
+      die "Cannot fine hier file $hier_file\n";
+    }
+    if (! -e $config_file) {
+      die "Cannot fine config file $config_file\n";
+    }
+    if (! -e $hvp_file) {
+      die "Cannot fine config file $config_file\n";
+    }
+    @urgConfig = parse_config($config_file);
 }
 
 
@@ -212,25 +229,34 @@ if(defined $task{"merge"}){
     }
     
     # hvp file
-    my $urg_hvp_file = undef;
-    if(defined $user_hvp_file){
-        if(-e $user_hvp_file){
-            my ($vol,$dir,$file)= File::Spec->splitpath($user_hvp_file);
-            $urg_hvp_file = catfile($output_dir, $file);
-            system("rsync -H $user_hvp_file $urg_hvp_file");
-            debug_print(0, "***Infromation: Copy hvp file $user_hvp_file to $urg_hvp_file\n");
-        }else{
-            die "Cannot fine user defined hvp file $urg_hvp_file\n";
-        }
-    }
+#    my $urg_hvp_file = undef;
+#    if(defined $user_hvp_file){
+#        if(-e $user_hvp_file){
+#            my ($vol,$dir,$file)= File::Spec->splitpath($user_hvp_file);
+#            $urg_hvp_file = catfile($output_dir, $file);
+#            system("rsync -H $user_hvp_file $urg_hvp_file");
+#            debug_print(0, "***Infromation: Copy hvp file $user_hvp_file to $urg_hvp_file\n");
+#        }else{
+#            die "Cannot fine user defined hvp file $urg_hvp_file\n";
+#        }
+#    }
+     if(-e $hvp_file){
+         my ($vol,$dir,$file)= File::Spec->splitpath($hvp_file);
+         my $local_hvp_file = catfile($output_dir, $file);
+         system("rsync -H $hvp_file $local_hvp_file");
+         debug_print(0, "***Infromation: Copy hvp file $hvp_file to $local_hvp_file\n");
+     }
+     if(-e $hier_file){
+         my ($vol,$dir,$file)= File::Spec->splitpath($hier_file);
+         my $local_hier_file = catfile($output_dir, $file);
+         system("rsync -H $hier_file $local_hier_file");
+         debug_print(0, "***Infromation: Copy hier file $hier_file to $local_hier_file\n");
+     }
     
-    #prepare exclude file to exclude coverage of modules.
-    # hier file
-    my $urg_hier_file = generate_urg_hierfile($output_dir, $user_hier_file);
     #call urg to generate coverage
     debug_print(0, "\n================= Generate Coverage Report ======================\n");
 
-    merge_coverage($output_dir, \@cov_sources, $urg_hier_file, $urg_exclude_file, $urg_hvp_file);
+    merge_coverage($output_dir, \@cov_sources, $hier_file, $urg_exclude_file, $hvp_file);
 
 
 }
@@ -461,6 +487,8 @@ sub parseArgs() {
                 $vcsCoverageMetrics = $value;
             } elsif($key eq "vdb-name") {
                 $vdb_name = $value;
+            } elsif($key eq "cast-dir") {
+                $cast_dir = $value;
             } elsif($key eq "dir") {
                 $source_dir = $value;
             } elsif($key eq "urg-file") {
@@ -469,10 +497,6 @@ sub parseArgs() {
                 $DEBUG_LEVEL = $value;
             } elsif($key eq "elfile") {
                 $user_exclude_file=$value;
-            } elsif($key eq "hier") {
-                $user_hier_file=$value;
-            } elsif($key eq "hvp") {
-                $user_hvp_file=$value;
             } elsif($key eq "output-dir") {
                 $user_output_dir=$value;
             } elsif($key eq "nb-qslot") {
@@ -483,8 +507,6 @@ sub parseArgs() {
                 $nb_class=$value;
             } elsif($key eq "runlocal") {
                 $runlocal=$value;
-            } elsif($key eq "map") {
-                $urgMergeMapping=$value;
             } elsif($key eq "max-vdb") {
                 $max_vdb=$value;
             } elsif($key eq "urg-options") {
@@ -505,34 +527,29 @@ sub usage {
     local $"=",";
     my $source_dir_str = (defined $source_dir) ? $source_dir:"";
     my $urgfile_str = (defined $urgFile) ? $urgFile:"";
-    my $user_hvp_file_str=(defined $user_hvp_file) ? $user_hvp_file:"";
-    my $user_hier_file_str=(defined $user_hier_file) ? $user_hier_file:"";
     my $user_exclude_file_str=(defined $user_exclude_file) ? $user_exclude_file:"";
     my $user_urg_options_str=(defined $user_urg_options) ? $user_urg_options:"";
     my $output_dir_str = (defined $user_output_dir) ? $user_output_dir:"";
-    my $urgMergeMapping_str = (defined $urgMergeMapping) ? $urgMergeMapping: "";
 
     my $usages = <<ET;
 
 Report Coverage. 
     Report coverage contain 3 steps: merge, report and publish.
-    User can use --task=[merge|report|publish] or concate by "," to execute each step.
+    User can use --task=[mege|report|publish] or concate by "," to execute each step.
     
 USAGE: $0 [options]
 
   Options:
     --help\t\t(display this usage manual)
+    --cast-dir=[$cast_dir]\n\t\t\t(The cast path)
     --task=[$task_str]\n\t\t\t([merge|publish] Execute the step. User should flow the sequence to execute the report coverage.)
 
-    --dir=[$source_dir_str]\n\t\t\t(URG will merged all $vdb_name.vdb directories it can find under this.\n\t\t\tIf dir is a vdb directory, URG will just use it.)
+    --dir=[$source_dir_str]\n\t\t\t(URG will merged all $vdb_name.vdb directories it can find under this.\n\t\t\tIf dir is a vdb directory, URG will just use it. "seperated by ,")
     --vdb-name=[$vdb_name]\n\t\t\t(URG will find the vdb based on this prefix)
     --urg-file=[$urgfile_str]\n\t\t\t(A file contains a vcs coverage source list)\n\t\t\t(User need to specify dir or urg-file. Two setting can be used simultaneously)
-    --map=[$urgMergeMapping_str]\n\t\t\t(merge mapping. seperated by :)
     --metric=[$vcsCoverageMetrics]\n\t\t\t(Optional. vcs coverage metrics. Note: urg map merging does not support assert and group metrics)
     --output-dir=[$output_dir_str]\n\t\t\t(Optional. The default output directory is nx_coverage.XXXX)
-    --hier=[$user_hier_file_str]\n\t\t\t(Optional. URG hier file format)
     --elfile=[$user_exclude_file_str]\n\t\t\t(Optional. URG exclude file format)
-    --hvp=[$user_hvp_file_str]\n\t\t\t(Optional. URG exclude file format)
     --urg-options=[$user_urg_options_str]\n\t\t\t(Optional. URG options. User can specify any user options by --urg-options="<options>")
     --max-vdb=[$max_vdb]\n\t\t\t(Optional. Max vdb sources that URG runs in one process.)
     --nb-pool=[$nb_pool]\n\t\t\t(netbatch --target option)
@@ -617,20 +634,22 @@ sub pipe_stderr{
 sub get_coverage_sources_from_dir{
   my ($source_dir, $vdb_name)=@_;
   my @urg_sources=();
- 
-  if ($source_dir =~/vdb$/) {
-    my $abs_dir = File::Spec->rel2abs( $source_dir ) ;
-    push @urg_sources, $abs_dir;
-    return @urg_sources;
+  my @source_dirs = split(",", $source_dir);
+  foreach my $sd (@source_dirs) {
+    if ($sd =~/vdb$/) {
+      my $abs_dir = File::Spec->rel2abs( $sd ) ;
+      push @urg_sources, $abs_dir;
+    } else {
+      my @dirs = `find -L $sd -type d -name $vdb_name.vdb`;
+      foreach my $dir (@dirs) {
+        my $abs_dir  = File::Spec->rel2abs( $dir );
+        chomp $abs_dir;
+        debug_print(1, "***Infromation: get vdb $abs_dir\n");
+        push @urg_sources, $abs_dir;
+      }
+    }
   }
   debug_print(0, "***Infromation: merging coverage from $source_dir\n");
-  my @dirs = `find -L $source_dir -type d -name $vdb_name.vdb`;
-  foreach my $dir (@dirs) {
-    my $abs_dir  = File::Spec->rel2abs( $dir );
-    chomp $abs_dir;
-    debug_print(1, "***Infromation: get vdb $abs_dir\n");
-    push @urg_sources, $abs_dir;
-  }
   return @urg_sources;
 }
 sub get_coverage_sources{
@@ -638,7 +657,23 @@ sub get_coverage_sources{
     open(UF, "<$urg_file") or die "CANNOT open $urg_file\n";
     my @sources=<UF>;
     chomp(@sources);
-    return @sources;
+    my @urg_sources=();
+    foreach my $sd (@sources) {
+      my $abs_dir = File::Spec->rel2abs( $sd ) ;
+      if ($sd =~/vdb$/) {
+        my $abs_dir = File::Spec->rel2abs( $sd ) ;
+        push @urg_sources, $abs_dir;
+      } else {
+        my @dirs = `find -L $sd -type d -name $vdb_name.vdb`;
+        foreach my $dir (@dirs) {
+          my $abs_dir  = File::Spec->rel2abs( $dir );
+          chomp $abs_dir;
+          debug_print(1, "***Infromation: get vdb $abs_dir\n");
+          push @urg_sources, $abs_dir;
+        }
+      }
+    }
+    return @urg_sources;
 }
 
 
@@ -666,37 +701,6 @@ sub debug_print{
     print $string if ($level <= $DEBUG_LEVEL);
 }
 
-sub generate_urg_hierfile{
-    my ($dir, $user_file)=@_;
-
-    my $urgHierFile=catfile($dir,"hier.config");
-    debug_print(0, "***Infromation: Saved hier file $urgHierFile\n");
-
-    open (OF, ">$urgHierFile") or die "CANNOT write $urgHierFile\n";   
-    #generate coverage only on specified module
-    foreach my $module (@modules) {
-      my $tag = "+moduletree";
-      if ($module=~/^-/) {
-        $tag = "-moduletree";
-      }
-
-      my $m_tr = $module;
-      $m_tr = "\\".$module if ($module =~ /\./);
-      print OF "$tag $m_tr\n";
-    }
-
-    if(defined $user_file){
-        debug_print(0, "***Infromation: Appened hier file $user_file to $urgHierFile\n");
-        open (UF, "<$user_file") or die "CANNOT open $user_file\n";
-        while(<UF>){
-            print OF $_;
-        }
-        close(UF);
-    }
-    
-    close(OF);
-    return  $urgHierFile;
-}
 
 # generates a merged coverage report from all passing tests using urg
 #merge_coverage($output_dir, $urg_source_file, $urg_hier_file, $urg_exclude_file, $urg_hvp_file);
@@ -771,7 +775,6 @@ sub merge_coverage
 
 
 
-
     my $urgCoverageRpt="coverage_report";
     my $urgMergedCoverage="merged_coverage";
     my $urgLogFile="urg.log";
@@ -791,7 +794,6 @@ sub merge_coverage
     $cmd .= "\t\\\n\t$user_urg_options " if (defined $user_urg_options);
     $cmd .= "\t\\\n\t-group instcov_for_score -group flex_merge_drop -group merge_across_scopes -group ratio";    
 
-
     my $rpt_cmd = $cmd; 
     $cmd .= "\t\\\n\t-hier $hier_file";
     my ($v,$dirs, $fname) = File::Spec->splitpath($hier_file);
@@ -806,20 +808,28 @@ sub merge_coverage
       ($v,$dirs, $fname) = File::Spec->splitpath($hvp_file);
       $rpt_cmd .= "\t\\\n\t-plan $fname";
     }
-
-    my $map_cmd = "";
-    if ($total_vdb > 1) {
-      #only when we merge more than one vdb databases, we need to provide map option.
-      my @additionalMaps = ();
-      @additionalMaps = split /\s*,\s*/, $urgMergeMapping if (defined $urgMergeMapping);
-
-      foreach my $map (@defaultMergeMap, @additionalMaps)
-      {
-        $map=~s/\$/\\\$/g;
-        $map_cmd .= "\t\\\n\t-map \'$map\'";
+    
+    my @map_cmd;
+    foreach my $c (@urgConfig) {
+      if ($c =~/-map /) {
+        push @map_cmd, $c;
+      } else {
+        $cmd .= "\t\\\n\t$c";
+        $rpt_cmd .= "\t\\\n\t$c";
       }
     }
-    $cmd .=$map_cmd;
+    print "map command:\n";
+    print @map_cmd;
+
+    my $map_cmds = "";
+    if ($total_vdb > 1) {
+      #only when we merge more than one vdb databases, we need to provide map option.
+      foreach my $map (@map_cmd)
+      {
+         $map_cmds .= "\t\\\n\t$map";
+      }
+    }
+    $cmd .=$map_cmds;
     $cmd .="\t\\\n\t-f $urg_source_file";
     $cmd .="\t\\\n\t-dbname $urgMergedCoverage";
     $rpt_cmd .="\t\\\n\t-dir $urgMergedCoverage.vdb";
@@ -846,6 +856,24 @@ sub merge_coverage
     debug_print(0, "***Infromation: End URG\n");
 }   # end coverage_report
 
+sub parse_config
+{
+  my($config)=@_;
+  my @cfg;
+  open (F, "<$config") or die "Cannot open $config\n";
+  while(<F>){
+    chomp($_);
+    $_=~s/^\s*//;
+    $_=~s/^\s$//;
+    $_=~s/^\\$//;
+    if ($_ ne"") {
+      push @cfg, $_;
+    }
+  }
+  close(F);
+  return @cfg;
+
+}
 
 sub merge_coverage_sub 
 {
@@ -868,15 +896,23 @@ sub merge_coverage_sub
 \t-dbname $urgMergedCoverage\t\\
 \t-hier $hier_file";
 
-    my @additionalMaps = ();
-    @additionalMaps = split /\s*,\s*/, $urgMergeMapping if (defined $urgMergeMapping);
-    foreach my $map (@defaultMergeMap, @additionalMaps)
+    my @map_cmd;
+    foreach my $c (@urgConfig) {
+      if ($c =~/-map /) {
+        push @map_cmd, $c;
+      } else {
+        $cmd .= "\t\\\n\t$c";
+      }
+    }
+
+    my $map_cmds = "";
+    foreach my $map (@map_cmd)
     {
-        $map=~s/\$/\\\$/g;
-        $cmd .= "\t\\\n\t-map \'$map\'";
+       $map_cmds .= "\t\\\n\t$map";
     }
 
 
+    $cmd .= $map_cmds;
     $cmd .= "\t\\\n\t-elfile $exclude_file -excl_bypass_checks " if (defined $exclude_file);
     $cmd .= "\t\\\n\t$user_urg_options " if (defined $user_urg_options);
     $cmd .= "\t\\\n\t-group instcov_for_score -group flex_merge_drop -group merge_across_scopes -group ratio";    
