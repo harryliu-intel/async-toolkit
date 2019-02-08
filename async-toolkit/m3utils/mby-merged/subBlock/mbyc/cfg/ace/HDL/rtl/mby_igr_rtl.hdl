@@ -23,6 +23,7 @@ $hdl_spec = {
        "src/shared/interfaces/rx_ppe_igr_if.sv",
        "src/shared/interfaces/mim_wr_if.sv",
        "src/shared/interfaces/mim_rd_if.sv",
+       "src/shared/interfaces/igr_egr_cpod_if.sv",
        "src/shared/interfaces/mby_mem_1r1w_if.sv",
        "src/igr/rtl/mby_igr_pkg.sv",
        "src/igr/rtl/mby_igr_macros.vh",
@@ -49,7 +50,24 @@ $hdl_spec = {
        "src/igr/post_ppe/rtl/mby_igr_post_merge.sv",
        "src/igr/post_ppe/rtl/mby_igr_post_tag_arb.sv",
        "src/igr/post_ppe/rtl/mby_igr_post_tag_seq.sv",
-       "src/igr/post_ppe/rtl/mby_igr_write_queue.sv"
+       "src/igr/post_ppe/rtl/mby_igr_write_queue.sv",
+       
+       "target/mby/mgm_run/post_ppe/src/post_ppe_shell_ctl.v",
+       "target/mby/mgm_run/post_ppe/src/post_ppe_shells_wrapper.v",
+       "target/mby/mgm_run/post_ppe/src/mby_mem_igr_post_body_ll_ram_shell_340x73.v",
+       "target/mby/mgm_run/post_ppe/src/mby_mem_igr_post_sop_fifo_0_ram_shell_40x74.v",
+       "target/mby/mgm_run/post_ppe/src/mby_mem_igr_post_sop_fifo_1_ram_shell_40x74.v",
+       "target/mby/mgm_run/post_ppe/src/mby_mem_igr_post_sop_fifo_2_ram_shell_40x74.v",
+       "target/mby/mgm_run/post_ppe/src/mby_mem_igr_post_sop_fifo_3_ram_shell_40x74.v",
+       "target/mby/mgm_run/post_ppe/src/mby_mem_igr_ptr_cache_ram_shell_64x72.v",
+       "target/mby/mgm_run/post_ppe/src/mem_wrap/post_ppe_wrap_mem_igr_post_body_ll_ram_shell_340x73.v",
+       "target/mby/mgm_run/post_ppe/src/mem_wrap/post_ppe_wrap_mem_igr_post_sop_fifo_0_ram_shell_40x74.v",
+       "target/mby/mgm_run/post_ppe/src/mem_wrap/post_ppe_wrap_mem_igr_post_sop_fifo_1_ram_shell_40x74.v",
+       "target/mby/mgm_run/post_ppe/src/mem_wrap/post_ppe_wrap_mem_igr_post_sop_fifo_2_ram_shell_40x74.v",
+       "target/mby/mgm_run/post_ppe/src/mem_wrap/post_ppe_wrap_mem_igr_post_sop_fifo_3_ram_shell_40x74.v",
+       "target/mby/mgm_run/post_ppe/src/mem_wrap/post_ppe_wrap_mem_igr_ptr_cache_ram_shell_64x72.v",
+       "target/mby/mgm_run/post_ppe/src/mem_wrap/post_ppe_rf_mems.v",
+       "target/mby/mgm_run/post_ppe/src/mem_wrap/post_ppe_ff_mems.v"
     ],
     
     # List of verilog library src dirs ( corresponds with the VLOG '-y' parameter)

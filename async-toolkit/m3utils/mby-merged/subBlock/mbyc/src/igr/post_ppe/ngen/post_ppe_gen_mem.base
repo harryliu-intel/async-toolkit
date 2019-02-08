@@ -18,8 +18,8 @@ ngen_IO_end
 
 ngen_wires
 
-logic reset_n;
-print "assign reset_n = ~i_reset;\n";
+//logic reset_n;
+print "//assign reset_n = ~i_reset;\n";
 
 ngen_submodules
 

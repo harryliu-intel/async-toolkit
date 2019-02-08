@@ -39,7 +39,7 @@ foreach $i (0..3) {
 }
 
 
-foreach $i (0..1) {
+foreach $i (0..2) {
    1'b0  >> IGR_PTR_CACHE_RAM_$i$_CFG_reg_sel
    1'b0  >> IGR_PTR_CACHE_RAM_$i$_STATUS_reg_sel
    

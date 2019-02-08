@@ -18,16 +18,17 @@
 // 21.08.2018 : created
 //-----------------------------------------------------------------------------
 
-rx_ppe_igr_if rx_ppe_igr_if_i   ();
-igr_rx_ppe_if igr_rx_ppe_if_i   ();
-mim_wr_if     egr_igr_wreq_if_i ();
-mim_rd_if     igr_egr_rreq_if_i ();
-mim_wr_if     mim_wreq_0_if_i   ();
-mim_wr_if     mim_wreq_1_if_i   ();
-mim_wr_if     mim_wreq_2_if_i   ();
-mim_wr_if     mim_wreq_3_if_i   ();
-mim_wr_if     mim_wreq_4_if_i   ();
-mim_wr_if     mim_wreq_5_if_i   ();
+rx_ppe_igr_if    rx_ppe_igr_if_i    ();
+igr_rx_ppe_if    igr_rx_ppe_if_i    ();
+mim_wr_if        egr_igr_wreq_if_i  ();
+mim_rd_if        igr_egr_rreq_if_i  ();
+mim_wr_if        mim_wreq_0_if_i    ();
+mim_wr_if        mim_wreq_1_if_i    ();
+mim_wr_if        mim_wreq_2_if_i    ();
+mim_wr_if        mim_wreq_3_if_i    ();
+mim_wr_if        mim_wreq_4_if_i    ();
+mim_wr_if        mim_wreq_5_if_i    ();
+//igr_egr_cpod_if  igr_egr_cptr_req_i ();
 
 mby_igr_top igr_top_i (
    .cclk                  ( ingress_clock                 ),
@@ -73,6 +74,7 @@ mby_igr_top igr_top_i (
    .igr_rx_ppe            ( igr_rx_ppe_if_i.igr           ),
    .egr_igr_wreq          ( egr_igr_wreq_if_i.receive     ),
    .igr_egr_rreq          ( igr_egr_rreq_if_i.request     ),
+   //.igr_egr_cptr_req      ( igr_egr_cptr_req_i.igr        ),
    .mim_wreq_0            ( mim_wreq_0_if_i.request       ),
    .mim_wreq_1            ( mim_wreq_1_if_i.request       ),
    .mim_wreq_2            ( mim_wreq_2_if_i.request       ),
