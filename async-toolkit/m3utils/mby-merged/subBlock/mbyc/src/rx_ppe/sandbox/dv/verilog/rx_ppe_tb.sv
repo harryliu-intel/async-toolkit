@@ -91,6 +91,31 @@ always @(posedge cclk) begin //{
     force rx_ppe.action_top.reset_n = 1'b0;
 end //}
 
+always @(posedge cclk) begin //{
+    if(cclk_cnt > 15) begin //{
+        if(rx_ppe.parser_top.parser_func_logic.q_input_fifo_rd_en_sg0[0]) begin //{
+            if((|rx_ppe.parser_top.parser_func_logic.input_data_fifo_sbe[0]) || (|rx_ppe.parser_top.parser_func_logic.input_data_fifo_mbe[0])) begin //{
+                $display("ERROR, Read data FIFO0 SECDED error\n");
+                $finish;
+            end //}
+            if(rx_ppe.parser_top.parser_func_logic.input_md_fifo_sbe[0] || rx_ppe.parser_top.parser_func_logic.input_md_fifo_mbe[0]) begin //{
+                $display("ERROR, Read MD FIFO0 SECDED error\n");
+                $finish;
+            end //}
+        end //}
+        if(rx_ppe.parser_top.parser_func_logic.q_input_fifo_rd_en_sg0[1]) begin //{
+            if((|rx_ppe.parser_top.parser_func_logic.input_data_fifo_sbe[1]) || (|rx_ppe.parser_top.parser_func_logic.input_data_fifo_mbe[1])) begin //{
+                $display("ERROR, Read data FIFO1 SECDED error\n");
+                $finish;
+            end //}
+            if(rx_ppe.parser_top.parser_func_logic.input_md_fifo_sbe[1] || rx_ppe.parser_top.parser_func_logic.input_md_fifo_mbe[1]) begin //{
+                $display("ERROR, Read MD FIFO1 SECDED error\n");
+                $finish;
+            end //}
+        end //}
+    end //}
+end //}
+
 igr_dr igr_dr (
     .cclk           (cclk),
     .cclk_cnt       (cclk_cnt),

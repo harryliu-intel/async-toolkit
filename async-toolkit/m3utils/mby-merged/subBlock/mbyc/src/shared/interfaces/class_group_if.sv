@@ -37,16 +37,18 @@ import shared_pkg::*;
 import hlp_pkg::*;
 import hlp_ipp_pkg::*;
 ();
-imn_rpl_frwd_t          rpl_bkwd;       //Management status from downstream blocks
-imn_rpl_frwd_t          rpl_frwd;       //Managment to downstream blocks
+imn_rpl_frwd_t                      rpl_bkwd;       //Management status from downstream blocks
+imn_rpl_frwd_t                      rpl_frwd;       //Managment to downstream blocks
 
-group_data_t            group_data;     //Classifier group data
-logic   [1:0]           group_data_v;   //Group data valid
+group_data_t                        group_data;     //Classifier group data
+logic   [1:0]                       group_data_v;   //Group data valid
 
-igr_rx_ppe_md_t         if0_md;         //Interface 0 metadata
-igr_rx_ppe_md_t         if1_md;         //Interface 1 metadata
+igr_rx_ppe_md_t                     if0_md;         //Interface 0 metadata
+logic   [IGR_PPE_MD_ECC_WIDTH-1:0]  if0_md_ecc;     //Interface 0 metadata ECC bits
+igr_rx_ppe_md_t                     if1_md;         //Interface 1 metadata
+logic   [IGR_PPE_MD_ECC_WIDTH-1:0]  if1_md_ecc;     //Interface 0 metadata ECC bits
 
-igr_rx_ppe_tail_t [1:0] tail_info;      //Tail info
+igr_rx_ppe_tail_t [1:0]             tail_info;      //Tail info
 
 modport class_out(
     input   rpl_bkwd,
@@ -54,7 +56,9 @@ modport class_out(
     output  group_data,
     output  group_data_v,
     output  if0_md,
+    output  if0_md_ecc,
     output  if1_md,
+    output  if1_md_ecc,
     output  tail_info
 );
 
@@ -64,7 +68,9 @@ modport class_in(
     input   group_data,
     input   group_data_v,
     input   if0_md,
+    input   if0_md_ecc,
     input   if1_md,
+    input   if1_md_ecc,
     input   tail_info
 );
 

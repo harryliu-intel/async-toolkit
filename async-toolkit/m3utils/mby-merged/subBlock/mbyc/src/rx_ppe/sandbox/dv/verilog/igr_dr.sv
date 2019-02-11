@@ -48,13 +48,47 @@ logic   [84:0]  q_val_dly1;
 logic   [8:0]   q_exp_pkt_id0;
 logic   [8:0]   q_exp_pkt_id1;
 
+generate //{
+    for(genvar g_i=0; g_i<8; g_i++) begin:gen_data_ecc //{
+        shrtl_ecc_gen #(
+            .DATA(120),
+            .CHK(8)
+        ) gen_data_ecc_0 (
+            .i_data (igr_rx_ppe_if.intf0_head.data[(g_i*120):((g_i*120)+119)]),
+            .o_chk  (igr_rx_ppe_if.intf0_head.ecc[(g_i*8):((g_i*8)+7)])
+        );
+
+        shrtl_ecc_gen #(
+            .DATA(120),
+            .CHK(8)
+        ) gen_data_ecc_1 (
+            .i_data (igr_rx_ppe_if.intf1_head.data[(g_i*120):((g_i*120)+119)]),
+            .o_chk  (igr_rx_ppe_if.intf1_head.ecc[(g_i*8):((g_i*8)+7)])
+        );
+    end //}
+endgenerate //}
+
+shrtl_ecc_gen #(
+    .DATA(64),
+    .CHK(8)
+) gen_data_ecc_0_8 (
+    .i_data (igr_rx_ppe_if.intf0_head.data[960:1023]),
+    .o_chk  (igr_rx_ppe_if.intf0_head.ecc[64:71])
+);
+
+shrtl_ecc_gen #(
+    .DATA(64),
+    .CHK(8)
+) gen_data_ecc_1_8 (
+    .i_data (igr_rx_ppe_if.intf1_head.data[960:1023]),
+    .o_chk  (igr_rx_ppe_if.intf1_head.ecc[64:71])
+);
+
 always_ff @(posedge cclk) begin //{
     q_random <= $urandom;
 
     if(cclk_cnt == 1) begin //{
         igr_rx_ppe_if.intf0_head.valid          <= 1'b0;
-        igr_rx_ppe_if.intf0_head.data           <= 1024'b0;
-        igr_rx_ppe_if.intf0_head.ecc            <= 72'b0;
         igr_rx_ppe_if.intf0_head.md.cpp_md      <= 23'b0;
         igr_rx_ppe_if.intf0_head.md.ts          <= 64'b0;
         igr_rx_ppe_if.intf0_head.md.tc          <= 4'b0;
@@ -63,8 +97,6 @@ always_ff @(posedge cclk) begin //{
         igr_rx_ppe_if.intf0_head.md.len         <= 8'b0;
         igr_rx_ppe_if.intf0_head.md.next_len    <= 2'b0;
         igr_rx_ppe_if.intf1_head.valid          <= 1'b0;
-        igr_rx_ppe_if.intf1_head.data           <= 1024'b0;
-        igr_rx_ppe_if.intf1_head.ecc            <= 72'b0;
         igr_rx_ppe_if.intf1_head.md.cpp_md      <= 23'b0;
         igr_rx_ppe_if.intf1_head.md.ts          <= 64'b0;
         igr_rx_ppe_if.intf1_head.md.tc          <= 4'b0;
@@ -81,10 +113,22 @@ always_ff @(posedge cclk) begin //{
     end //}
     else if(cclk_cnt > 25) begin //{
         igr_rx_ppe_if.intf0_head.valid  <= q_random[0];
+        if(q_random[0]) begin //{
+            igr_rx_ppe_if.intf0_head.data   <= {$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,
+                                                $urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,
+                                                $urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,
+                                                $urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom};
+        end //}
         igr_rx_ppe_if.intf0_head.md.id  <= q_pkt_id0;
         if(q_random[0]) q_pkt_id0 <= q_pkt_id0 + 1;
 
         igr_rx_ppe_if.intf1_head.valid  <= q_random[0] | q_random[1];
+        if(q_random[0] || q_random[1]) begin //{
+            igr_rx_ppe_if.intf1_head.data   <= {$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,
+                                                $urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,
+                                                $urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,
+                                                $urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom};
+        end //}
         igr_rx_ppe_if.intf1_head.md.id  <= q_pkt_id1;
         if(q_random[0] || q_random[1]) q_pkt_id1 <= q_pkt_id1 + 1;
 
