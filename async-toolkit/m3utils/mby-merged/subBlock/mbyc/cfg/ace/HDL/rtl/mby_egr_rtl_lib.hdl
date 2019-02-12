@@ -26,6 +26,8 @@ $hdl_spec = {
        "src/shared/interfaces/egr_epl_if.sv",
        "src/shared/interfaces/mim_rd_if.sv",
        "src/shared/interfaces/mim_wr_if.sv",
+       "src/shared/interfaces/igr_egr_cpod_if.sv",
+       "src/shared/interfaces/egr_igr_dpod_if.sv",
        "src/shared/interfaces/egr_ahb_if.sv",
        "src/shared/interfaces/egr_mc_table_if.sv",
        "src/shared/interfaces/egr_pod_if.sv",
