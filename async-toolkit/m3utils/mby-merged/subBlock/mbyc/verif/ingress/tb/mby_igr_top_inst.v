@@ -20,8 +20,8 @@
 
 rx_ppe_igr_if    rx_ppe_igr_if_i    ();
 igr_rx_ppe_if    igr_rx_ppe_if_i    ();
-mim_wr_if        egr_igr_wreq_if_i  ();
-mim_rd_if        igr_egr_rreq_if_i  ();
+egr_igr_dpod_if  egr_dirtypod_if_i  ();
+igr_egr_cpod_if  egr_cleanpod_if_i  ();
 mim_wr_if        mim_wreq_0_if_i    ();
 mim_wr_if        mim_wreq_1_if_i    ();
 mim_wr_if        mim_wreq_2_if_i    ();
@@ -72,8 +72,8 @@ mby_igr_top igr_top_i (
    .vp_rx_flow_control_tc ( vp_rx_flow_control_tc         ),
    .rx_ppe_igr            ( rx_ppe_igr_if_i.igr           ),
    .igr_rx_ppe            ( igr_rx_ppe_if_i.igr           ),
-   .egr_igr_wreq          ( egr_igr_wreq_if_i.receive     ),
-   .igr_egr_rreq          ( igr_egr_rreq_if_i.request     ),
+   .egr_dirtypod_if       ( egr_dirtypod_if_i.igr         ),
+   .egr_cleanpod_if       ( egr_cleanpod_if_i.igr         ),
    //.igr_egr_cptr_req      ( igr_egr_cptr_req_i.igr        ),
    .mim_wreq_0            ( mim_wreq_0_if_i.request       ),
    .mim_wreq_1            ( mim_wreq_1_if_i.request       ),

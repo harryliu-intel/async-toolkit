@@ -18,8 +18,8 @@
 // 21.08.2018 : created
 //-----------------------------------------------------------------------------
 
-mim_wr_if         igr_dirtypod_if(); //IGR Dirty Pod Write Interface //TODO Modify port names to similar of IGR
-mim_rd_if         igr_cleanpod_if(); //IGR Clean Pod Read Req/Rsp Interface
+egr_igr_dpod_if   igr_dirtypod_if(); //IGR Dirty Pod Write Interface //TODO Modify port names to similar of IGR
+igr_egr_cpod_if   igr_cleanpod_if(); //IGR Clean Pod Read Req/Rsp Interface
 
 mim_rd_if            mim_rd_if0_0(); //MIM Read Request Row0 Plane 0
 mim_rd_if            mim_rd_if0_1(); //MIM Read Request Row0 Plane 1
