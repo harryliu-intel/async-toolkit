@@ -40,13 +40,14 @@ igr_rx_ppe_if.igr   igr_rx_ppe_if,
 rx_ppe_igr_if.igr   rx_ppe_igr_if
 );
 
-logic   [31:0]  q_random;
-logic   [8:0]   q_pkt_id0;
-logic   [8:0]   q_pkt_id1;
-logic   [84:0]  q_val_dly0;
-logic   [84:0]  q_val_dly1;
-logic   [8:0]   q_exp_pkt_id0;
-logic   [8:0]   q_exp_pkt_id1;
+logic   [31:0]          q_random;
+logic   [2:0] [31:0]    q_random_md;
+logic   [8:0]           q_pkt_id0;
+logic   [8:0]           q_pkt_id1;
+logic   [84:0]          q_val_dly0;
+logic   [84:0]          q_val_dly1;
+logic   [8:0]           q_exp_pkt_id0;
+logic   [8:0]           q_exp_pkt_id1;
 
 generate //{
     for(genvar g_i=0; g_i<8; g_i++) begin:gen_data_ecc //{
@@ -85,25 +86,14 @@ shrtl_ecc_gen #(
 );
 
 always_ff @(posedge cclk) begin //{
-    q_random <= $urandom;
+    q_random        <= $urandom;
+    q_random_md[0]  <= $urandom;
+    q_random_md[1]  <= $urandom;
+    q_random_md[2]  <= $urandom;
 
     if(cclk_cnt == 1) begin //{
         igr_rx_ppe_if.intf0_head.valid          <= 1'b0;
-        igr_rx_ppe_if.intf0_head.md.cpp_md      <= 23'b0;
-        igr_rx_ppe_if.intf0_head.md.ts          <= 64'b0;
-        igr_rx_ppe_if.intf0_head.md.tc          <= 4'b0;
-        igr_rx_ppe_if.intf0_head.md.port        <= 5'b0;
-        igr_rx_ppe_if.intf0_head.md.eop         <= 1'b0;
-        igr_rx_ppe_if.intf0_head.md.len         <= 8'b0;
-        igr_rx_ppe_if.intf0_head.md.next_len    <= 2'b0;
         igr_rx_ppe_if.intf1_head.valid          <= 1'b0;
-        igr_rx_ppe_if.intf1_head.md.cpp_md      <= 23'b0;
-        igr_rx_ppe_if.intf1_head.md.ts          <= 64'b0;
-        igr_rx_ppe_if.intf1_head.md.tc          <= 4'b0;
-        igr_rx_ppe_if.intf1_head.md.port        <= 5'b0;
-        igr_rx_ppe_if.intf1_head.md.eop         <= 1'b0;
-        igr_rx_ppe_if.intf1_head.md.len         <= 8'b0;
-        igr_rx_ppe_if.intf1_head.md.next_len    <= 2'b0;
         q_pkt_id0 <= 0;
         q_pkt_id1 <= 0;
         q_exp_pkt_id0 <= 0;
@@ -114,20 +104,70 @@ always_ff @(posedge cclk) begin //{
     else if(cclk_cnt > 25) begin //{
         igr_rx_ppe_if.intf0_head.valid  <= q_random[0];
         if(q_random[0]) begin //{
-            igr_rx_ppe_if.intf0_head.data   <= {$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,
-                                                $urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,
-                                                $urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,
-                                                $urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom};
+            igr_rx_ppe_if.intf0_head.md.cpp_md      <= q_random_md[0][22:0];
+            igr_rx_ppe_if.intf0_head.md.ts          <= {$urandom,$urandom};
+            igr_rx_ppe_if.intf0_head.md.tc          <= q_random_md[0][26:23];
+            igr_rx_ppe_if.intf0_head.md.port        <= q_random_md[0][31] ? 5'h10 : q_random_md[0][31:27];
+            igr_rx_ppe_if.intf0_head.md.eop         <= q_random_md[1][0];
+            if(q_random_md[1][0]) begin //{
+                if(q_random_md[1][8:1] >= 4) begin //{
+                    if((q_random_md[1][8:1]) <= 196) igr_rx_ppe_if.intf0_head.md.len <= q_random_md[1][8:1];
+                    else if(q_random_md[1][7:1] >= 4) igr_rx_ppe_if.intf0_head.md.len <= {1'b0,q_random_md[1][7:1]};
+                    else igr_rx_ppe_if.intf0_head.md.len <= {1'b0,q_random_md[1][8:1]};
+                end //}
+                else igr_rx_ppe_if.intf0_head.md.len <= q_random_md[1][8:1];
+            end //}
+            else if(~(|q_random_md[1][15:11]) && (|q_random_md[1][10:9])) begin //{
+                if(q_random_md[1][8:1] >= (4 - q_random_md[1][10:9])) begin //{
+                    if((q_random_md[1][8:1] - (4 - q_random_md[1][10:9])) <= 192) igr_rx_ppe_if.intf0_head.md.len <= q_random_md[1][8:1];
+                    else igr_rx_ppe_if.intf0_head.md.len <= {1'b0,q_random_md[1][8:2]};
+                end //}
+                else igr_rx_ppe_if.intf0_head.md.len <= 4 - q_random_md[1][10:9];
+            end //}
+            else begin //{
+                if((q_random_md[1][8:1]) <= 192) igr_rx_ppe_if.intf0_head.md.len <= q_random_md[1][8:1];
+                else igr_rx_ppe_if.intf0_head.md.len <= {1'b0,q_random_md[1][8:2]};
+            end //}
+            igr_rx_ppe_if.intf0_head.md.next_len    <= {2{~(|q_random_md[1][15:11])}} & q_random_md[1][10:9];
+            igr_rx_ppe_if.intf0_head.data           <= {$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,
+                                                        $urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,
+                                                        $urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,
+                                                        $urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom};
         end //}
         igr_rx_ppe_if.intf0_head.md.id  <= q_pkt_id0;
         if(q_random[0]) q_pkt_id0 <= q_pkt_id0 + 1;
 
         igr_rx_ppe_if.intf1_head.valid  <= q_random[0] | q_random[1];
         if(q_random[0] || q_random[1]) begin //{
-            igr_rx_ppe_if.intf1_head.data   <= {$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,
-                                                $urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,
-                                                $urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,
-                                                $urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom};
+            igr_rx_ppe_if.intf1_head.md.cpp_md      <= q_random_md[2][22:0];
+            igr_rx_ppe_if.intf1_head.md.ts          <= {$urandom,$urandom};
+            igr_rx_ppe_if.intf1_head.md.tc          <= q_random_md[2][26:23];
+            igr_rx_ppe_if.intf1_head.md.port        <= q_random_md[2][31] ? 5'h10 : q_random_md[2][31:27];
+            igr_rx_ppe_if.intf1_head.md.eop         <= q_random_md[1][16];
+            if(q_random_md[1][16]) begin //{
+                if(q_random_md[1][24:17] >= 4) begin //{
+                    if((q_random_md[1][24:17]) <= 196) igr_rx_ppe_if.intf1_head.md.len <= q_random_md[1][24:17];
+                    else if(q_random_md[1][23:17] >= 4) igr_rx_ppe_if.intf1_head.md.len <= {1'b0,q_random_md[1][23:17]};
+                    else igr_rx_ppe_if.intf1_head.md.len <= {1'b0,q_random_md[1][24:17]};
+                end //}
+                else igr_rx_ppe_if.intf1_head.md.len <= q_random_md[1][24:17];
+            end //}
+            else if(~(|q_random_md[1][31:27]) && (|q_random_md[1][26:25])) begin //{
+                if(q_random_md[1][24:17] >= (4 - q_random_md[1][26:25])) begin //{
+                    if((q_random_md[1][24:17] - (4 - q_random_md[1][26:25])) <= 192) igr_rx_ppe_if.intf1_head.md.len <= q_random_md[1][24:17];
+                    else igr_rx_ppe_if.intf1_head.md.len <= {1'b0,q_random_md[1][24:18]};
+                end //}
+                else igr_rx_ppe_if.intf1_head.md.len <= 4 - q_random_md[1][26:25];
+            end //}
+            else begin //{
+                if((q_random_md[1][24:17]) <= 192) igr_rx_ppe_if.intf1_head.md.len <= q_random_md[1][24:17];
+                else igr_rx_ppe_if.intf1_head.md.len <= {1'b0,q_random_md[1][24:18]};
+            end //}
+            igr_rx_ppe_if.intf1_head.md.next_len    <= {2{~(|q_random_md[1][31:27])}} & q_random_md[1][26:25];
+            igr_rx_ppe_if.intf1_head.data           <= {$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,
+                                                        $urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,
+                                                        $urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,
+                                                        $urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom,$urandom};
         end //}
         igr_rx_ppe_if.intf1_head.md.id  <= q_pkt_id1;
         if(q_random[0] || q_random[1]) q_pkt_id1 <= q_pkt_id1 + 1;
