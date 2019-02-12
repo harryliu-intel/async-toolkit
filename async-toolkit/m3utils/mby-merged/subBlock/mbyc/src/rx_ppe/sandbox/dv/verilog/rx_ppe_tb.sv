@@ -91,6 +91,38 @@ always @(posedge cclk) begin //{
     force rx_ppe.action_top.reset_n = 1'b0;
 end //}
 
+//Set configuration CSRs
+generate //{
+    for(genvar g_i=0; g_i < 17; g_i++) begin //{
+        always @(negedge cclk) begin //{
+            if(cclk_cnt == 25) begin //{
+                force rx_ppe.parser_top.parser_func_logic.hlp_pa_core.u_pa_port_cfg.c_port_cfg_q[g_i] = {$urandom,$urandom} & 64'h0f0f0f0fffff0000;
+            end //}
+        end //}
+    end //}
+endgenerate //}
+
+generate //{
+    for(genvar g_i=0; g_i < 32; g_i++) begin //{
+        for(genvar g_j=0; g_j < 16; g_j++) begin //{
+            always @(negedge cclk) begin //{
+                if(cclk_cnt == 25) begin //{
+                    force rx_ppe.parser_top.parser_func_logic.hlp_pa_core.ana_stage[g_i].u_pa_ana.c_pa_ana_w[g_j] = $urandom & 32'h0f0f0f0f;
+                    force rx_ppe.parser_top.parser_func_logic.hlp_pa_core.ana_stage[g_i].u_pa_ana.c_pa_ana_s[g_j] = {$urandom,$urandom} & 64'h0000ffffffff0000;
+                    force rx_ppe.parser_top.parser_func_logic.hlp_pa_core.ana_stage[g_i].u_pa_ana.c_pa_key_w[g_j].w0_mask = $urandom & 16'h003f;
+                    force rx_ppe.parser_top.parser_func_logic.hlp_pa_core.ana_stage[g_i].u_pa_ana.c_pa_key_w[g_j].w1_mask = $urandom & 16'h0fc0;
+                    force rx_ppe.parser_top.parser_func_logic.hlp_pa_core.ana_stage[g_i].u_pa_ana.c_pa_key_s[g_j].state_mask = $urandom & 16'hf000;
+                end //}
+                if(cclk_cnt == 26) begin //{
+                    force rx_ppe.parser_top.parser_func_logic.hlp_pa_core.ana_stage[g_i].u_pa_ana.c_pa_key_w[g_j].w0_value = $urandom & rx_ppe.parser_top.parser_func_logic.hlp_pa_core.ana_stage[g_i].u_pa_ana.c_pa_key_w[g_j].w0_mask;
+                    force rx_ppe.parser_top.parser_func_logic.hlp_pa_core.ana_stage[g_i].u_pa_ana.c_pa_key_w[g_j].w1_value = $urandom & rx_ppe.parser_top.parser_func_logic.hlp_pa_core.ana_stage[g_i].u_pa_ana.c_pa_key_w[g_j].w1_mask;
+                    force rx_ppe.parser_top.parser_func_logic.hlp_pa_core.ana_stage[g_i].u_pa_ana.c_pa_key_s[g_j].state_value = $urandom & rx_ppe.parser_top.parser_func_logic.hlp_pa_core.ana_stage[g_i].u_pa_ana.c_pa_key_s[g_j].state_mask;
+                end //}
+            end //}
+        end //}
+    end //}
+endgenerate //}
+
 always @(posedge cclk) begin //{
     if(cclk_cnt > 15) begin //{
         if(rx_ppe.parser_top.parser_func_logic.q_input_fifo_rd_en_sg0[0]) begin //{
