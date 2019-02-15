@@ -365,7 +365,7 @@
           .cclk                         (``DUT_PATH``.mby_ec_top_``IDX``.cclk), \
           .eclk                         (``DUT_PATH``.mby_ec_top_``IDX``.eclk), \
           .hreset_n                     (``DUT_PATH``.mby_ec_top_``IDX``.hreset_n), \
-          .ext_lport_reset,             (), \
+          .ext_lport_reset              (``DUT_PATH``.mby_ec_top_``IDX``.i_ext_lport_reset), \
           .sreset_n                     (``DUT_PATH``.mby_ec_top_``IDX``.sreset_n) \
     ); \
     \
