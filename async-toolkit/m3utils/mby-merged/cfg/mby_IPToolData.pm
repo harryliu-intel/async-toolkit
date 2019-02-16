@@ -65,7 +65,7 @@ IPToolDataExtras::import_files("mby", \%ToolConfig_ips);
 #                                                    "&get_tool_var(vipcat, VIPCAT_LIBS)",
 #                                                  );
 
-my $epl_version = "eth_port-dev-x0-19ww07f";
+my $epl_version = "eth_port-dev-x0-19ww07g";
 
 $ToolConfig_ips{epc} = {
    #PATH    => "/nfs/sc/disks/sc_mby_00055/layhockk/mby/work_root/MBY/$epl_version",
