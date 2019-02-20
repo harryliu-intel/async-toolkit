@@ -93,11 +93,11 @@ foreach $key (sort keys %power) {
         my @f = split(",",$frequency{$key});
         my $freq = join(",",sort(@f));
         my $e = int(0.5 + 1e15*$power{$key}/($f[0]*1e6))/1000;
-        print_field("$power{$key}W",$field_length[8]);
-        print_field("${e}pJ",$field_length[9]);
-        print_field("${freq}MHz",$field_length[10]);
+        print_field("$power{$key}W",$field_length[10]);
+        print_field("${e}pJ",$field_length[11]);
+        print_field("${freq}MHz",$field_length[12]);
     } else {
-        print_field("$power{$key}W",$field_length[8]);
+        print_field("$power{$key}W",$field_length[10]);
     }
     print "\n";
 }
