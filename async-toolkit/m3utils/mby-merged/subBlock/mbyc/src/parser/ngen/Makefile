@@ -28,8 +28,6 @@ top:
 	@$(NGEN) $(NGEN_FLAGS) $(V_DIRS) $(V_LIBS) $(BLOCK)
 
 post:
-	./post_process.pl
-	mv parser_top.sv ngen/parser_top.sv
 	rm -f parser_shells_wrapper_inc.v
 	rm -f parser_shells_wrapper.v
 	rm -f parser_ff_mems.v

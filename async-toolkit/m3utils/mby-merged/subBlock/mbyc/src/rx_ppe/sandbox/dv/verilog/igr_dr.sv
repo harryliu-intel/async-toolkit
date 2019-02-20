@@ -44,8 +44,8 @@ logic   [31:0]          q_random;
 logic   [2:0] [31:0]    q_random_md;
 logic   [8:0]           q_pkt_id0;
 logic   [8:0]           q_pkt_id1;
-logic   [84:0]          q_val_dly0;
-logic   [84:0]          q_val_dly1;
+logic   [88:0]          q_val_dly0;
+logic   [88:0]          q_val_dly1;
 logic   [8:0]           q_exp_pkt_id0;
 logic   [8:0]           q_exp_pkt_id1;
 
@@ -172,12 +172,12 @@ always_ff @(posedge cclk) begin //{
         igr_rx_ppe_if.intf1_head.md.id  <= q_pkt_id1;
         if(q_random[0] || q_random[1]) q_pkt_id1 <= q_pkt_id1 + 1;
 
-        q_val_dly0 <= {q_val_dly0[83:0],q_random[0]};
-        q_val_dly1 <= {q_val_dly1[83:0],(q_random[0] | q_random[1])};
+        q_val_dly0 <= {q_val_dly0[87:0],q_random[0]};
+        q_val_dly1 <= {q_val_dly1[87:0],(q_random[0] | q_random[1])};
     end //}
 
     if(cclk_cnt > 25) begin //{
-        if(q_val_dly0[43]) begin //{
+        if(q_val_dly0[47]) begin //{
             if(igr_rx_ppe_if.intf0_ack !== 1'b1) begin //{
                 $display("ERROR, Interface 0 acknowledge is cleared when it should be set\n");
                 $finish;
@@ -190,7 +190,7 @@ always_ff @(posedge cclk) begin //{
             end //}
         end //}
 
-        if(q_val_dly1[43]) begin //{
+        if(q_val_dly1[47]) begin //{
             if(igr_rx_ppe_if.intf1_ack !== 1'b1) begin //{
                 $display("ERROR, Interface 1 acknowledge is cleared when it should be set\n");
                 $finish;
@@ -203,7 +203,7 @@ always_ff @(posedge cclk) begin //{
             end //}
         end //}
 
-        if(q_val_dly0[84]) begin //{
+        if(q_val_dly0[88]) begin //{
             if(rx_ppe_igr_if.intf0.valid !== 1'b1) begin //{
                 $display("ERROR, Interface 0 valid is cleared when it should be set\n");
                 $finish;
@@ -221,7 +221,7 @@ always_ff @(posedge cclk) begin //{
             end //}
         end //}
 
-        if(q_val_dly1[84]) begin //{
+        if(q_val_dly1[88]) begin //{
             if(rx_ppe_igr_if.intf1.valid !== 1'b1) begin //{
                 $display("ERROR, Interface 1 valid is cleared when it should be set\n");
                 $finish;

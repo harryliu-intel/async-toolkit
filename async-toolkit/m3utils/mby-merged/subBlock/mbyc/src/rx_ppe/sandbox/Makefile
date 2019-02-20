@@ -56,6 +56,7 @@ INCS += $(SHARED_SRC)/sva/hlp
 INCS += $(RTL_SRC)/parser/sva/hlp
 INCS += $(RTL_SRC)/action/sva/trigger/hlp
 INCS += $(SHRTL_SRC)/src/ecc/rtl
+INCS += $(SHRTL_SRC)/src/common/rtl
 INCS += /p/hdk/cad/ctech/v15ww50e/source/v
 
 VCS_INC = $(addprefix +incdir+,$(INCS))

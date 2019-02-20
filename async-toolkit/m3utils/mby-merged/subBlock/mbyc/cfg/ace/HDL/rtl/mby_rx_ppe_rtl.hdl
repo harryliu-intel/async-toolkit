@@ -51,6 +51,7 @@ $hdl_spec = {
         "src/shared/rtl/hlp/lib/crc",
         "src/shared/rtl/hlp/lib/csum",
         "$SHRTL/src/ecc/rtl",
+        "$SHRTL/src/common/rtl",
         "target/mby/mgm_run/parser/src",
 		"target/mby/mgm_run/parser/src/mem_wrap",
 		"target/mby/mgm_run/class_gpa/src",
