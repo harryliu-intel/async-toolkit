@@ -89,6 +89,7 @@ $hdl_spec = {
 		"target/mby/mgm_run/action/src",
 		"target/mby/mgm_run/action/src/mem_wrap",
 		"target/mby/mgm_run/rtl",
+        "$SHRTL/src/common/rtl",
 	],
 
 	# Arbitrary VLOG options
