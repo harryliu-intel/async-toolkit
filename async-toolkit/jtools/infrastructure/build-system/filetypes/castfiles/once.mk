@@ -855,9 +855,9 @@ endif # "$(NOEXTRACTDEPS)" ne "1" 26 lines back
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/estimated/extract.result
 $(ROOT_TARGET_DIR)/%/estimated/cell.spice \
 $(ROOT_TARGET_DIR)/%/estimated/extract.result: \
-		$$(call GET_CELL_DIR,$$(@D))/cast.changed \
+		$$(call GET_CELL_DIR,$$(@D))/cell.cdl \
 		$$(call GET_DF2D,$$(@D)) \
-		$ROOT_TARGET_DIR)/%/estimated/instances/.instances
+		$(ROOT_TARGET_DIR)/%/estimated/instances/.instances
 	#TASK=extract VIEW=$(call GET_VIEW,$(@D)) MODE=estimated CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	if [[ ( -n "$(call LVE_SKIP,extract)" ) && ( -e '$@' ) ]] ; then exit; fi; \
 	task=extract && $(CASTFILES_ENQUEUE_TASK) && \
@@ -906,7 +906,8 @@ $(ROOT_TARGET_DIR)/%/estimated/extract.result: \
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/nogeometry/cell.spice
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/nogeometry/extract.result
 $(ROOT_TARGET_DIR)/%/nogeometry/cell.spice \
-$(ROOT_TARGET_DIR)/%/nogeometry/extract.result: $(ROOT_TARGET_DIR)/%/cast.changed
+$(ROOT_TARGET_DIR)/%/nogeometry/extract.result: \
+	$$(call GET_CELL_DIR,$$(@D))/cell.cdl
 	#TASK=extract VIEW=$(call GET_VIEW,$(@D)) MODE=nogeometry CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	mkdir -p '$(@D)'
 	if [[ ( -n "$(call LVE_SKIP,extract)" ) && ( -e '$@' ) ]] ; then exit; fi; \
@@ -1871,7 +1872,7 @@ $(ROOT_TARGET_DIR)/%/nanotime/extract.raw: $(ROOT_TARGET_DIR)/%/nanotime/extract
 
 $(ROOT_TARGET_DIR)/%/extract.raw: $(ROOT_TARGET_DIR)/%/extract.result \
 	                          $(ROOT_TARGET_DIR)/%/cell.aspice
-	#TASK=extract_raw MODE=$(call GET_EXTRCT_MODE,$(@D)) VIEW=$(call GET_VIEW,$(@D)) CELL=$(call GET_CAST_FULL_NAME,$(@D))
+	#TASK=extract_raw MODE=$(call GET_EXTRACT_MODE,$(@D)) VIEW=$(call GET_VIEW,$(@D)) CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	$(RAWIFY) --use-db=$(USEDB) --task=extract --root='$(ROOT_TARGET_DIR)' --dir='$(@D)' --cell="$(call GET_CAST_FULL_NAME,$(@D))"
 
 $(ROOT_TARGET_DIR)/%/jlvs.raw: $(ROOT_TARGET_DIR)/%/jlvs.out $(ROOT_TARGET_DIR)/%/jlvs.err

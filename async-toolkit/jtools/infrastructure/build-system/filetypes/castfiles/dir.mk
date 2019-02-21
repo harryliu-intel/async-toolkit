@@ -32,18 +32,13 @@ endif # "$(strip $(CDL_NAME_MAP))" eq ""
 .PRECIOUS: $(CURR_CELL_DIR)/cell.scenarios$(ROUTED_SUFFIX)
 .PRECIOUS: $(CURR_CELL_DIR)/jflat$(ROUTED_SUFFIX)/env-ntpc/%.nodes
 .PRECIOUS: $(CURR_CELL_DIR)/jflat$(ROUTED_SUFFIX)/env-ntpc/%.nodes.latest
-.PRECIOUS: $(CURR_CELL_DIR)/%/cast.changed
 .PRECIOUS: $(CURR_CELL_DIR)/cell.cdl
-.PRECIOUS: $(CURR_CELL_DIR)/cast.changed
 .PRECIOUS: $(CURR_CELL_DIR)/jflat$(ROUTED_SUFFIX)/%
 .PRECIOUS: $(CURR_CELL_DIR)/jflat$(ROUTED_SUFFIX)/%.latest
 
 # stuff from jflat, all signatured
 $(CURR_CELL_DIR)/jflat$(ROUTED_SUFFIX)/% : $(CURR_CELL_DIR)/jflat$(ROUTED_SUFFIX)/%.latest
 	$(CASTFILES_UPDATE_SIGNATURE)
-
-$(CURR_CELL_DIR)/%/cast.changed: $(CURR_CELL_DIR)/cell.cdl
-	touch '$@'
 
 $(CURR_CELL_DIR)/jflat$(ROUTED_SUFFIX)/%.latest: $(CURR_CELL_DIR)/cast.d
 
