@@ -137,6 +137,109 @@ generate //{
     end //}
 endgenerate //}
 
+generate //{
+    for(genvar g_i=0; g_i < 64; g_i++) begin //{
+        always @(negedge cclk) begin //{
+            if(cclk_cnt == 25) begin //{
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_ptype_ram_shell_64x14.behave_mem.sram[g_i] = $urandom;
+                force rx_ppe.parser_top.parser_func_logic.parser_extract.q_ptype_tcam[g_i][31:0] = $urandom & $urandom & $urandom;
+            end //}
+            if(cclk_cnt == 26) begin //{
+                force rx_ppe.parser_top.parser_func_logic.parser_extract.q_ptype_tcam[g_i][63:32] = $urandom & $urandom & $urandom & ~rx_ppe.parser_top.parser_func_logic.parser_extract.q_ptype_tcam[g_i][31:0];
+            end //}
+        end //}
+    end //}
+endgenerate //}
+
+generate //{
+    for(genvar g_i=0; g_i < 16; g_i++) begin //{
+        always @(negedge cclk) begin //{
+            if(cclk_cnt == 25) begin //{
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_0.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_1.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_2.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_3.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_4.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_5.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_6.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_7.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_8.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_9.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_10.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_11.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_12.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_13.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_14.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_15.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_16.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_17.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_18.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_19.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_20.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_21.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_22.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_23.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_24.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_25.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_26.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_27.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_28.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_29.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_30.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_31.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_32.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_33.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_34.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_35.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_36.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_37.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_38.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_39.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_40.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_41.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_42.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_43.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_44.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_45.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_46.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_47.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_48.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_49.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_50.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_51.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_52.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_53.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_54.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_55.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_56.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_57.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_58.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_59.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_60.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_61.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_62.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_63.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_64.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_65.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_66.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_67.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_68.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_69.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_70.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_71.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_72.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_73.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_74.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_75.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_76.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_77.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_78.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+                force rx_ppe.parser_top.parser_ff_mems.parser_wrap_mem_parser_extract_cfg_shell_16x16_79.behave_mem.sram[g_i] = $urandom & 16'h3ff;
+            end //}
+        end //}
+    end //}
+endgenerate //}
+
 //Check input FIFO SECDED
 always @(posedge cclk) begin //{
     if(cclk_cnt > 15) begin //{
