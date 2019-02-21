@@ -1,6 +1,6 @@
 Ram Type                    <REGULAR, ROM, TCAM>    = REGULAR
 Ram Ports                   <1rw, 1r1w, 2rw>        = 1r1w
-Ram Lines Number            <Integer Number>        = 39
+Ram Lines Number            <Integer Number>        = 38
 Ram Data Width              <Integer Number>        = 124
 Ram Protection Type         <ECC, Parity, None>     = None
 Memory clock name A         <Write Clock Name>      = cclk

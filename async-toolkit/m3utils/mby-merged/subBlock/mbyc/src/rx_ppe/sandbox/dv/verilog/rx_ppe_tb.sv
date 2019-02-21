@@ -123,6 +123,21 @@ generate //{
     end //}
 endgenerate //}
 
+generate //{
+    for(genvar g_i=0; g_i < 32; g_i++) begin //{
+        for(genvar g_j=0; g_j < 16; g_j++) begin //{
+            always @(negedge cclk) begin //{
+                if(cclk_cnt == 25) begin //{
+                    force rx_ppe.parser_top.parser_func_logic.hlp_pa_core.u_pa_xal.stages[g_i].u_pa_xal_stage.c_pa_exc[g_j] = {($urandom & 8'h07),(($urandom & 32'hff) == 8'h0)};
+                    force rx_ppe.parser_top.parser_func_logic.hlp_pa_core.u_pa_xal.stages[g_i].u_pa_xal_stage.c_pa_ext[g_j] = $urandom & 26'h3fc0fff;
+                    force rx_ppe.parser_top.parser_func_logic.hlp_pa_core.u_pa_xal.stages[g_i].u_pa_xal_stage.c_pa_ext[g_j+16] = $urandom & 26'h3fc0fff;
+                end //}
+            end //}
+        end //}
+    end //}
+endgenerate //}
+
+//Check input FIFO SECDED
 always @(posedge cclk) begin //{
     if(cclk_cnt > 15) begin //{
         if(rx_ppe.parser_top.parser_func_logic.q_input_fifo_rd_en_sg0[0]) begin //{
