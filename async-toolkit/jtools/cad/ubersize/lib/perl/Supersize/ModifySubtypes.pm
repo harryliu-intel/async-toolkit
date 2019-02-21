@@ -473,7 +473,7 @@ sub resubtype_match {
 
         # Create new subtype file, preferring spec-dir if it exists there
         if (!-e fqcn_to_file("$wdir/cast", $new_subtype) &&
-            !subtype_exists_in_path("$GS_r->{SPEC_DIR}:$GS_r->{CAST_DIR}", $new_subtype)) {
+            !subtype_readonly_in_path("$GS_r->{SPEC_DIR}:$GS_r->{CAST_DIR}", $new_subtype)) {
             my $src;
             if (-e fqcn_to_file("$wdir/cast", $subtype)) {
                 $src = "$wdir/cast";
@@ -509,11 +509,12 @@ sub resubtype_match {
     return ($basetype, $new_subtype, $instname);
 }
     
-# check for an existing subtype given a CAST_PATH and FQCN
-sub subtype_exists_in_path {
+# check for an existing readonly subtype given a CAST_PATH and FQCN
+sub subtype_readonly_in_path {
     my ($path,$fqcn) = @_;
     foreach my $dir (split(":",$path)) {
-        return 1 if (-e fqcn_to_file($dir, $fqcn));
+        my $file = fqcn_to_file($dir, $fqcn);
+        return 1 if (-e $file && !(-w $file));
     }
     return 0;
 }

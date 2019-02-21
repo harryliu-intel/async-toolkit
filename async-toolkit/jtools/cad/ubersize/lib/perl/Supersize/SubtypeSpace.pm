@@ -156,7 +156,7 @@ sub get_module_data {
           "the subtypes that are NOT instantiated under TOP (--unused), ".
           "or all subtypes (--all).  If --in-spec is given with the --used ".
           "option, then only the subtypes that are instantiated under TOP ".
-          "AND also exist under SPEC_DIR will be deleted.\n\n" .
+          "AND exist but are not writable in SPEC_DIR will be deleted.\n\n" .
           "Obviously, much care should be exercised when running this " .
           "command.  However, if you make a mistake, the old hierarchy " .
           "will be saved in WORK_DIR/cast.save, whether or not SAVE_BACKUPS ".
@@ -1392,7 +1392,7 @@ sub clean_subtypes {
         }
         elsif ($clean_used) {
             # Delete those that are used
-            if ($clean_if_in_spec && -e $spec_file || !$clean_if_in_spec) {
+            if (!$clean_if_in_spec || -e $spec_file && !(-w $spec_file)) {
                 print "Deleting $cell.\n" if ($SS_r->{GS}{VERBOSE});
                 unlink $dest_file;
             }
