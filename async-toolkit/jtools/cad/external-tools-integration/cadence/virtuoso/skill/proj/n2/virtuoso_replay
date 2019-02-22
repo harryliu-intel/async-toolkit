@@ -6,6 +6,7 @@ use warnings;
 my $MEM = 16*1024;
 my $count = 0;
 foreach my $file (@ARGV) {
+    (-r $file) or die "cannot read file $file\n";
     my $base = $file;
     $base =~ s/\.il$//g;
     system("mkdir -p ${base}.cdswd");
