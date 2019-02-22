@@ -76,6 +76,7 @@
         TopPinNet
         TopPin
         PinLabel PinShape
+        pinList
         )
 
     ; candidate pin figures
@@ -83,11 +84,20 @@
              InPlacePinList = (append InPlacePinList pin->figs)
              )
 
+    ; restrict candidates to M1 and above
+    pinList=nil
+    (foreach fig InPlacePinList
+             (for m 1 TopMetal
+                  (when fig->layerName==Metal[m]
+                    topMetal=(max topMetal m)
+                    pinList=(cons fig pinList)
+                    )
+                  )
+             )
+    InPlacePinList=pinList
+
     ; limit the candidates to those on the top metal layer among the set for power nets
     (when (member PinName PowerGroundNets)!=nil
-          (foreach fig InPlacePinList
-                   (for m 0 TopMetal (when fig->layerName==Metal[m] topMetal=(max topMetal m)))
-                   )
           InPlacePinList = (setof x InPlacePinList x->layerName==Metal[topMetal])
           )
 
