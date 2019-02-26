@@ -2043,7 +2043,7 @@ public final class CellUtils {
 
     /**
      * Returns a map from canonical port name to port direction.  If aliases of
-     * a port include both input and output ports, then inout will be returned.
+     * a port include both input and output ports, then input will be returned.
      **/
     public static Map<HierName,Integer>
     getCanonicalDir(final Map<HierName,Integer> portDirs,
@@ -2058,15 +2058,14 @@ public final class CellUtils {
             if (prev == null) {
                 portDirs.put(canon, curr);
             } else {
-                final boolean in  = prev == PortDefinition.IN    ||
-                                    prev == PortDefinition.INOUT ||
-                                    curr == PortDefinition.IN    ||
-                                    curr == PortDefinition.INOUT;
-                final boolean out = prev == PortDefinition.OUT   ||
-                                    prev == PortDefinition.INOUT ||
-                                    curr == PortDefinition.OUT   ||
-                                    curr == PortDefinition.INOUT;
-                if (in && out) {
+                final boolean in  =
+                    prev == PortDefinition.IN || curr == PortDefinition.IN;
+                final boolean out =
+                    prev == PortDefinition.OUT || curr == PortDefinition.OUT;
+                final boolean inout =
+                    prev == PortDefinition.INOUT || curr == PortDefinition.INOUT;
+
+                if (inout) {
                     portDirs.put(canon, PortDefinition.INOUT);
                 } else if (in) {
                     portDirs.put(canon, PortDefinition.IN);

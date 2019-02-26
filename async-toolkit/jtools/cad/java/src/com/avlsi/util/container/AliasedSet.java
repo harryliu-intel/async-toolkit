@@ -129,6 +129,19 @@ public final class AliasedSet {
         }
     }
 
+    /**
+     * Adds all aliases from <code>other</code>.
+     **/
+    public void addAll(final AliasedSet other) {
+        for (Iterator i = other.getCanonicalKeys(); i.hasNext(); ) {
+            final Object key = i.next();
+            for (Iterator j = other.getAliases(key); j.hasNext(); ) {
+                final Object alias = j.next();
+                makeEquivalent(key, alias);
+            }
+        }
+    }
+
     public boolean contains(final Object key) {
         final Object o = aliasedMap.getValue(key);
         
@@ -189,6 +202,13 @@ public final class AliasedSet {
      **/
     public Iterator getCanonicalKeys() {
         return aliasedMap.getCanonicalKeys();
+    }
+
+    /**
+     * Returns the comparator in use.
+     **/
+    public Comparator getComparator() {
+        return aliasedMap.getComparator();
     }
 
     public String toString() {

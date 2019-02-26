@@ -3136,6 +3136,7 @@ public final class JFlat {
         private String Vdd;
         private final static Pattern RSOURCE = Pattern.compile("standard\\.random\\.rsource_([ae])1of\\(?(\\d+)\\)?");
         private final static Pattern BD_RSOURCE = Pattern.compile("standard\\.bd\\.rsource_bd\\((\\d+)\\)");
+        private final static String ENV_INSTANCE = "env";
         private final Random random;
 
         HSIMFormatter( final PrintWriter pw,
@@ -3382,14 +3383,17 @@ public final class JFlat {
             return null;
         }
 
-        private void copyAliases(final AliasedMap from, final AliasedSet to) {
-            for (Iterator i = from.getCanonicalKeys(); i.hasNext(); ) {
-                final Object key = i.next();
-                for (Iterator j = from.getAliases(key); j.hasNext(); ) {
-                    final Object alias = j.next();
-                    to.makeEquivalent(key, alias);
-                }
-            }
+        /**
+         * Returns aliases for an environment augmented with port aliases from the
+         * DUT.
+         **/
+        private AliasedSet combineAliases(final AliasedSet as1,
+                                          final AliasedSet as2) {
+            final AliasedSet result = new AliasedSet(as2.getComparator(),
+                    Comparator.<HierName>naturalOrder());
+            result.addAll(as2);
+            result.addAll(as1);
+            return result;
         }
 
         private String[] getActuals(final CellInterface cell,
@@ -3402,6 +3406,7 @@ public final class JFlat {
         }
 
         private String getAliases(final AliasedSet aliases,
+                                  final HierName prefix,
                                   final HierName key) {
             final HierName canon = (HierName) aliases.getCanonicalKey(key);
             final Iterable<HierName> alias = CollectionUtils.iterable(
@@ -3410,45 +3415,58 @@ public final class JFlat {
                                  StreamSupport.stream(alias.spliterator(),
                                                       false)
                                               .filter(p -> p != canon))
-                         .map(p -> printNode(p))
+                         .map(p -> (prefix == null ? ""
+                                                   : (printInstance(prefix) + ".")) +
+                                   printNode(p))
                          .collect(Collectors.joining("="));
         }
 
-        private Stream<HierName> getNetDirectives(final CellInterface cell,
-                                                  final AliasedSet aliases,
-                                                  final String directive) {
-            return ((Set<HierName>) DirectiveUtils.canonize(
-                           aliases,
-                           DirectiveUtils.getExplicitTrues(
-                               DirectiveUtils.getTopLevelDirective(cell,
-                                   directive, DirectiveConstants.NODE_TYPE))))
-                       .stream()
-                       .filter(p -> aliases.getCanonicalKey(p) != null);
-        }
-
-        private Stream<String> getNetString(final CellInterface cell,
-                                            final AliasedSet aliases,
+        private Stream<String> getNetString(final CellInterface dutCell,
+                                            final CellInterface envCell,
+                                            final AliasedSet topAliases,
+                                            final AliasedSet envAliases,
                                             final String directive) {
-            return getNetDirectives(cell, aliases, directive).map(
-                    p -> directive + ":" + getAliases(aliases, p));
+            final Set<HierName> ports = new HashSet<>();
+            final Set<HierName> nodes = new HashSet<>();
+
+            DirectiveUtils.getNetDirectives(dutCell, envCell,
+                    cadencizer.convert(dutCell).getLocalNodes(), envAliases,
+                    directive,
+                    ports, ports, nodes);
+
+            return Stream.concat(
+                    ports.stream()
+                         .map(n -> directive + ":" + getAliases(topAliases, null, n)),
+                    nodes.stream()
+                         .map(n -> directive + ":" + getAliases(envAliases, HierName.makeHierName(ENV_INSTANCE), n)));
         }
 
-        private Stream<String> getNetString(final CellInterface cell,
-                                            final AliasedSet aliases) {
-            return Stream.of(
-                    getNetString(cell, aliases, DirectiveConstants.GROUND_NET),
-                    getNetString(cell, aliases, DirectiveConstants.POWER_NET),
-                    getNetString(cell, aliases, DirectiveConstants.RESET_NET))
-                  .reduce(Stream.empty(), Stream::concat);
+        private Stream<String> getNetString(final CellInterface dutCell,
+                                            final CellInterface envCell,
+                                            final AliasedSet topAliases,
+                                            final AliasedSet envAliases) {
+            final Stream<String> power =
+                Stream.of(DirectiveConstants.GROUND_NET,
+                          DirectiveConstants.POWER_NET)
+                      .map(dir -> getNetString(dutCell, null, topAliases, null, dir))
+                      .reduce(Stream.empty(), Stream::concat);
+            final Stream<String> reset =
+                Stream.of(DirectiveConstants.RESET_NET,
+                          DirectiveConstants.DELAY_NET,
+                          DirectiveConstants.START_NET)
+                      .map(dir -> getNetString(dutCell, envCell, topAliases, envAliases, dir))
+                      .reduce(Stream.empty(), Stream::concat);
+            return Stream.concat(power, reset);
         }
 
         private String pickSupplyName(final CellInterface cell,
                                       final AliasedSet aliases,
                                       final String directive,
                                       final String def) {
-            final TreeSet<HierName> candidates =
-                getNetDirectives(cell, aliases, directive).collect(
-                        Collectors.toCollection(TreeSet::new));
+            final TreeSet<HierName> candidates = new TreeSet<>();
+            DirectiveUtils.getNetDirectives(
+                    cell, null, aliases, null, directive,
+                    candidates, candidates, candidates);
             final String result;
             if (candidates.isEmpty()) {
                 result = def;
@@ -3494,14 +3512,18 @@ public final class JFlat {
             if (parentCell != null) {
                 final AliasedMap dutPorts =
                     cadencizer.convert(parentCell).getPortNodes();
+                final AliasedSet envNodes =
+                    cadencizer.convert(cell).getLocalNodes();
                 final AliasedMap envPorts =
                     cadencizer.convert(cell).getPortNodes();
-                combined = new AliasedSet(dutPorts.getComparator());
-                copyAliases(dutPorts, combined);
-                copyAliases(envPorts, combined);
+                combined = combineAliases(new AliasedSet(dutPorts),
+                                          new AliasedSet(envPorts));
 
+                final AliasedSet combinedEnv = combineAliases(
+                        new AliasedSet(dutPorts),
+                        envNodes);
                 w.println("** JFlat:begin");
-                w.print(getNetString(parentCell, combined)
+                w.print(getNetString(parentCell, cell, combined, combinedEnv)
                             .map(s -> "** JFlat:" + s + "\n")
                             .collect(Collectors.joining("")));
                 w.println("** JFlat:end");
@@ -3598,7 +3620,7 @@ public final class JFlat {
                 pw.X("dut", getActuals(parentCell, combined),
                      printCell(parentCell.getFullyQualifiedType()),
                      new String[0]);
-                pw.X("env", getActuals(cell, combined), printCell(envName),
+                pw.X(ENV_INSTANCE, getActuals(cell, combined), printCell(envName),
                      new String[0]);
             }
         }

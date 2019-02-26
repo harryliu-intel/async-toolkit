@@ -24,9 +24,11 @@ import com.avlsi.cast2.directive.DirectiveConstants;
 import com.avlsi.cast2.directive.DirectiveInterface;
 import com.avlsi.cast2.directive.UnknownDirectiveException;
 import com.avlsi.cell.CellInterface;
+import com.avlsi.cell.CellUtils;
 import com.avlsi.fast.BlockInterface;
 import com.avlsi.fast.BlockIterator;
 import com.avlsi.fast.DirectiveBlock;
+import com.avlsi.fast.ports.PortDefinition;
 import com.avlsi.file.common.HierName;
 import com.avlsi.file.common.InvalidHierNameException;
 import com.avlsi.layout.LayerCallback;
@@ -34,6 +36,7 @@ import com.avlsi.tools.cadencize.Cadencize;
 import com.avlsi.tools.cosim.ChannelTimingInfo;
 import com.avlsi.util.container.AliasedSet;
 import com.avlsi.util.container.Pair;
+import com.avlsi.util.container.IterableIterator;
 
 import com.avlsi.util.debug.Debug;
 import com.avlsi.util.functions.BinaryFunction;
@@ -1041,5 +1044,87 @@ public final class DirectiveUtils {
         getIdleState(null, namespace, prsDirs, result);
 
         return result;
+    }
+
+    /**
+     * Returns (reset|power|ground|start|delay)_net directives for simulation,
+     * optionally recursing into defchans in the port list.
+     **/
+    public static void getNetDirectives(final CellInterface cell,
+                                        final AliasedSet aliases,
+                                        final String directive,
+                                        final boolean isEnv,
+                                        final Set<HierName> result,
+                                        final HierName prefix) {
+        // top-level directives have the highest priority
+        for (Pair<HierName,CellInterface> p :
+                new IterableIterator<>(cell.getPortSubcellPairs())) {
+            getNetDirectives(p.getSecond(), aliases, directive, false,
+                    result, HierName.append(prefix, p.getFirst()));
+        }
+
+        Map<HierName,Boolean> dirs;
+        if (isEnv) {
+            if (cell.containsSubcells()) {
+                dirs = (Map<HierName,Boolean>)
+                    DirectiveUtils.getSubcellDirective(cell, directive,
+                            DirectiveConstants.NODE_TYPE);
+            } else {
+                dirs = Collections.emptyMap();
+            }
+        } else {
+            dirs = (Map<HierName,Boolean>) DirectiveUtils.getTopLevelDirective(cell,
+                    directive, DirectiveConstants.NODE_TYPE);
+        }
+
+        for (Map.Entry<HierName,Boolean> entry : dirs.entrySet()) {
+            final HierName full = HierName.append(prefix, entry.getKey());
+            final HierName canon = (HierName) aliases.getCanonicalKey(full);
+            if (canon != null) {
+                if (entry.getValue()) {
+                    result.add(canon);
+                } else {
+                    result.remove(canon);
+                }
+            }
+        }
+    }
+
+    public static void getNetDirectives(final CellInterface dutCell,
+                                        final CellInterface envCell,
+                                        final AliasedSet dutNodes,
+                                        final AliasedSet envNodes,
+                                        final String directive,
+                                        final Set<HierName> impliedPorts,
+                                        final Set<HierName> ports,
+                                        final Set<HierName> internalNodes) {
+        final Set<HierName> topDirs = new HashSet<>();
+        getNetDirectives(dutCell, dutNodes, directive, false, topDirs, null);
+
+        final Map<HierName,Integer> canonPortDir = new HashMap<>();
+        final Set<HierName> dirs;
+        if (envCell == null) {
+            dirs = topDirs;
+            CellUtils.getCanonicalDir(canonPortDir, dutCell, dutNodes);
+        } else {
+            dirs = new HashSet<>();
+            for (HierName topDir : topDirs) {
+                dirs.add((HierName) envNodes.getCanonicalKey(topDir));
+            }
+            getNetDirectives(envCell, envNodes, directive, true, dirs, null);
+            CellUtils.getCanonicalDir(canonPortDir, envCell, envNodes);
+        }
+
+        for (HierName dir : dirs) {
+            final Integer portDir = canonPortDir.get(dir);
+            final boolean implied = dutCell.isImpliedPort(dir.getCadenceString());
+            if (portDir == null) {
+                internalNodes.add(dir);
+            } else if (implied && portDir == PortDefinition.IN) {
+                impliedPorts.add(dir);
+            } else if (!implied && portDir == (envCell == null ? PortDefinition.IN : PortDefinition.OUT)) {
+                ports.add(dir);
+            }
+        }
     }
 }

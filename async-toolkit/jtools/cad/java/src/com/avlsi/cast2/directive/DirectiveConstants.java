@@ -159,6 +159,8 @@ public interface DirectiveConstants {
     String EXCLCC = "exclcc";
     String NOCC_NODES = "nocc_nodes";
     String RESET_NET = "reset_net";
+    String DELAY_NET = "delay_net";
+    String START_NET = "start_net";
     String STATICIZER_RATIO = "staticizer_ratio";
     String STATICIZER_TYPE = "staticizer_type";
     String PHANTOM_PORT_SIGNOFF = "phantom_port_signoff";

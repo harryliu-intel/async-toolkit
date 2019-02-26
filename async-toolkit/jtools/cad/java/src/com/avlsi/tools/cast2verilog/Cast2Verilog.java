@@ -32,6 +32,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.logging.Level;
@@ -142,6 +144,11 @@ public class Cast2Verilog {
         "`CAST2VERILOG_GLOBAL_RESET";
     private static final String dutInstance = "x";
     private static final String envInstance = "_env";
+    private static final String[] tbDirectives = new String[] {
+        DirectiveConstants.RESET_NET,
+        DirectiveConstants.START_NET,
+        DirectiveConstants.DELAY_NET
+    };
 
     private final Map subcellNames;
 
@@ -994,8 +1001,32 @@ public class Cast2Verilog {
         }
         populateLeafDelaybias(cell, prefix, instData, null, cad, false);
 
+        final Map<HierName,Map<HierName,TbDir>> tbNets = new HashMap<>();
+        if (generateTb) {
+            final CellInterface dut, env;
+            final HierName driverPrefix;
+            if (prefix == null) {
+                driverPrefix = HierName.makeHierName(envInstance);
+                dut = cell.getSubcell(HierName.makeHierName(dutInstance));
+                env = cell.getSubcell(driverPrefix);
+            } else {
+                driverPrefix = prefix;
+                dut = cell;
+                env = null;
+            }
+
+            Stream.of(DirectiveConstants.POWER_NET,
+                      DirectiveConstants.GROUND_NET)
+                  .forEach(dir ->
+                      getTbDirective(dut, null, driverPrefix, cad, dir, tbNets));
+
+            Arrays.stream(tbDirectives)
+                  .forEach(dir ->
+                      getTbDirective(dut, env, driverPrefix, cad, dir, tbNets));
+        }
+
         final String topName = convert(cell, prefix, out, behOut, true, true,
-                                       false, theArgs);
+                                       false, tbNets, theArgs);
         if (probFilter != null && probFilter.hasError()) {
             warningWriter.println("Fatal CSP errors found.\n");
             warningWriter.flush();
@@ -1026,30 +1057,41 @@ public class Cast2Verilog {
         }
     }
 
-    private void getTbDirective(final CellInterface cell,
-                                final AliasedSet aliases,
-                                final AliasedSet localAliases,
-                                final HierName prefix,
-                                final String directive,
-                                final Map<HierName,String> result) {
-        final Set<HierName> nodes = (Set<HierName>)
-            DirectiveUtils.getExplicitTrues(
-                DirectiveUtils.getTopLevelDirective(cell,
-                    directive, DirectiveConstants.NODE_TYPE));
-        nodes.stream()
-             .filter(h -> aliases.getCanonicalKey(HierName.append(prefix, h)) != null)
-             .map(h -> (HierName) localAliases.getCanonicalKey(h))
-             .forEach(h -> result.put(h, directive));
+    static class TbDir {
+        String directive;
+        boolean top;
+        public TbDir(String directive, boolean top) {
+            this.directive = directive;
+            this.top = top;
+        }
     }
 
-    private void getTbDirective(final CellInterface cell,
-                                final AliasedSet aliases,
-                                final AliasedSet localAliases,
-                                final HierName prefix,
-                                final Map<HierName,String> result) {
-        getTbDirective(cell, aliases, localAliases, prefix, DirectiveConstants.GROUND_NET, result);
-        getTbDirective(cell, aliases, localAliases, prefix, DirectiveConstants.POWER_NET, result);
-        getTbDirective(cell, aliases, localAliases, prefix, DirectiveConstants.RESET_NET, result);
+    private void getTbDirective(final CellInterface dut,
+                                final CellInterface env,
+                                final HierName driverPrefix,
+                                final Cadencize cad,
+                                final String directive,
+                                final Map<HierName,Map<HierName,TbDir>> result) {
+        final Set<HierName> impliedPorts = new HashSet<>();
+        final Set<HierName> ports = new HashSet<>();
+        final Set<HierName> internalNodes = new HashSet<>();
+        DirectiveUtils.getNetDirectives(
+                dut, env,
+                cad.convert(dut).getLocalNodes(),
+                env == null ? null : cad.convert(env).getLocalNodes(),
+                directive, impliedPorts, ports, internalNodes);
+        final Stream<HierName> top =
+            env == null ? Stream.concat(impliedPorts.stream(), ports.stream())
+                        : impliedPorts.stream();
+        final Stream<HierName> bot =
+            env == null ? internalNodes.stream()
+                        : Stream.concat(ports.stream(), internalNodes.stream());
+        top.forEach(h ->
+            result.computeIfAbsent(null, k -> new HashMap<HierName,TbDir>())
+                  .put(h, new TbDir(directive, true)));
+        bot.forEach(h ->
+            result.computeIfAbsent(driverPrefix, k -> new HashMap<HierName,TbDir>())
+                  .put(h, new TbDir(directive, false)));
     }
 
     // Convert cell to verilog and emit to file 
@@ -1060,6 +1102,7 @@ public class Cast2Verilog {
                            final boolean emitSlackWrappers,
                            final boolean topLevel,
                            final boolean narrowPort,
+                           final Map<HierName,Map<HierName,TbDir>> tbNets,
                            final CommandLineArgs theArgs)
         throws SemanticException {
 
@@ -1072,27 +1115,6 @@ public class Cast2Verilog {
             " prefix = " + (prefix == null ? "null" : prefix.getAsString('.')) +
             " behavior = " + (beh == null ? "null" : beh.toString());
         logger.info("begin convert " + logstr);
-
-        final Map<HierName,String> tbNets = new TreeMap<>();
-        if (topLevel && generateTb) {
-            final AliasedSet aliases =
-                getCadencize(false).convert(cell).getLocalNodes();
-            getTbDirective(cell, aliases, aliases, null, tbNets);
-            if (tbNets.isEmpty()) {
-                // TODO: need to look at the environment as well
-                final HierName hDut = HierName.makeHierName(dutInstance);
-                final CellInterface dut = cell.getSubcell(hDut);
-                if (dut != null) {
-                    final AliasedSet localAliases =
-                        getCadencize(false).convert(dut).getLocalNodes();
-                    // use TESTBENCH aliases to make sure the node in the
-                    // directive is a port, but store canonical name in the
-                    // context of the DUT -- the implied port name will be the
-                    // local net name in TESTBENCH
-                    getTbDirective(dut, aliases, localAliases, hDut, tbNets);
-                }
-            }
-        }
 
         if (beh == Mode.SUBCELLS) {
             // map from instance name to converted module name
@@ -1150,7 +1172,7 @@ public class Cast2Verilog {
                 // get the subcell's converted module name
                 final String converted =
                     convert(subcell, complete, out, behOut, emitSlackWrappers,
-                            false, narrowSubcell, theArgs);
+                            false, narrowSubcell, tbNets, theArgs);
 
                 subcells.put(instance, converted);
             }
@@ -1162,8 +1184,10 @@ public class Cast2Verilog {
             if (convertedCells.add(result)) {
                 ifdef(result, out);
                 emitModuleForCellWithSubcells(cell, prefix, result, subcells,
-                                              topLevel, tbNets, narrowInstances,
-                                              out);
+                                              topLevel,
+                                              tbNets.getOrDefault(prefix,
+                                                  Collections.emptyMap()),
+                                              narrowInstances, out);
                 endif(out);
             }
         } else if (beh == Mode.CSP) {
@@ -2469,7 +2493,7 @@ public class Cast2Verilog {
             final String moduleName,
             final Map<HierName,String> subcells, 
             final boolean topLevel,
-            final Map<HierName,String> tbNets,
+            final Map<HierName,TbDir> tbNets,
             final Set<HierName> narrowInstances,
             PrintWriter out) {
 
@@ -2483,25 +2507,15 @@ public class Cast2Verilog {
             .mark(cell.getCSPInfo().getPortDefinitions());
         out.println(");");
 
-        final List<String> resets = new ArrayList<>();
-        for (Map.Entry<HierName,String> tbNet : tbNets.entrySet()) {
+        for (Map.Entry<HierName,TbDir> tbNet : tbNets.entrySet()) {
             final String net =
                 VerilogUtil.escapeIfNeeded(tbNet.getKey().getAsString('.'));
-            if (tbNet.getValue().equals(DirectiveConstants.GROUND_NET)) {
+            final String directive = tbNet.getValue().directive;
+            if (directive.equals(DirectiveConstants.GROUND_NET)) {
                 out.println("supply0 " + net + ";");
-            } else if (tbNet.getValue().equals(DirectiveConstants.POWER_NET)) {
+            } else if (directive.equals(DirectiveConstants.POWER_NET)) {
                 out.println("supply1 " + net + ";");
-            } else if (tbNet.getValue().equals(DirectiveConstants.RESET_NET)) {
-                out.println("wire " + net + ";");
-                resets.add(net);
             }
-        }
-        if (!resets.isEmpty()) {
-            out.println("`CAST2VERILOG_RESET #(.RESETS(" + resets.size() + ")) " +
-                        VerilogUtil.escapeIfNeeded("cast2verilog$reset") +
-                        "(.reset_n(" +
-                        resets.stream().collect(Collectors.joining(", ", "{", "}")) +
-                        "));");
         }
 
         final Map flattenNodes = new HashMap();
@@ -2527,10 +2541,41 @@ public class Cast2Verilog {
         // First, process all port connections, identify split src and snk 
         // ports, and create mapping between narrow/wide channels and local 
         // variables/ports. Emit declaration of new local variables as needed
+        final Map<CellUtils.Channel,TbDir> tbChannels = new HashMap<>();
         final Map portToLocalMap =
             processPortConnections(cell, flattenNodes, narrowInstances,
                                    nodeNarrowConverters, narrowWideConverters,
-                                   out); 
+                                   tbNets, tbChannels, out); 
+        final Map<String,List<CellUtils.Channel>> resets =
+            tbChannels.keySet()
+                      .stream()
+                      .collect(Collectors.groupingBy(k -> tbChannels.get(k).directive));
+        int tbCount = 0;
+        final List<Integer> params = new ArrayList<>();
+        for (String dir : tbDirectives) {
+            final int l =
+                resets.getOrDefault(dir, Collections.emptyList()).size();
+            tbCount += l;
+            params.add(l);
+        }
+        if (tbCount > 0) {
+            final Stream<String> args =
+                CollectionUtils.reverseStream(tbDirectives)
+                    .flatMap(dir -> resets.getOrDefault(
+                                        dir, Collections.emptyList()).stream())
+                    .map(chan -> nodeVerilogName(chan));
+
+            out.println("`CAST2VERILOG_RESET " +
+                        params.stream()
+                              .map(s -> Integer.toString(s))
+                              .collect(Collectors.joining(",", "#(", ") ")) +
+                        VerilogUtil.escapeIfNeeded("cast2verilog$reset") +
+                        "(.reset_n(" +
+                        args.collect(Collectors.joining(", ", "{", "}")) +
+                        "));");
+        } else if (topLevel && generateTb) {
+            out.println("`CAST2VERILOG_RESET cast2verilog$reset(.reset_n());");
+        }
 
         // Unconnected wide nodes that have already been declared
         final Set unconnectedWideNodes = new HashSet();
@@ -2843,6 +2888,8 @@ public class Cast2Verilog {
             final Set<HierName> narrowInstances,
             final Set<CellUtils.Channel> nodeNarrowConverters,
             final Set<CellUtils.Channel> narrowWideConverters,
+            final Map<HierName,TbDir> tbNets,
+            final Map<CellUtils.Channel,TbDir> tbChannels,
             final PrintWriter out) {
         final Map<CellUtils.Channel,CellUtils.Channel> portMap = new HashMap<>();
 
@@ -2850,11 +2897,45 @@ public class Cast2Verilog {
         final Collection<Pair<CellUtils.Channel,CellUtils.Channel>> narrowConnections = new ArrayList<>();
         final Collection<Pair<CellUtils.Channel,CellUtils.Channel>> wideConnections = new ArrayList<>();
 
+        final AliasedSet nodeAliases = new AliasedSet();
         CellUtils.getChannelConnection(cell,
                 nodeConnections, narrowConnections, wideConnections,
-                new AliasedSet(), new AliasedSet(), new AliasedSet(),
+                nodeAliases, new AliasedSet(), new AliasedSet(),
                 nodeNarrowConverters, narrowWideConverters, flattenNodes,
                 false, false, getCadencize(false), getCadencize(true));
+
+        final Collection<Pair<CellUtils.Channel,CellUtils.Channel>> tbConnections =
+            new ArrayList<>();
+        final AliasedSet nodes = getCadencize(false).convert(cell).getLocalNodes();
+        for (Iterator i = nodeAliases.getCanonicalKeys(); i.hasNext(); ) {
+            final CellUtils.Channel chan = (CellUtils.Channel) i.next();
+            final HierName canon = (HierName)
+                nodes.getCanonicalKey(HierName.makeHierNameUnchecked(chan.getFullName(), '.'));
+            final TbDir dir = tbNets.get(canon);
+            if (dir != null) {
+                final SortedMap<HierName,CellUtils.Channel> candidates = new TreeMap<>();
+                for (Iterator j = nodeAliases.getAliases(chan); j.hasNext(); ) {
+                    final CellUtils.Channel alias = (CellUtils.Channel) j.next();
+                    if (alias.getInstance() == null && (dir.top != alias.isInput())) {
+                        candidates.put(
+                            HierName.makeHierNameUnchecked(alias.getFullName(), '.'),
+                            alias);
+                    }
+                }
+                if (!candidates.isEmpty()) {
+                    final CellUtils.Channel output = candidates.get(candidates.firstKey());
+                    if (!dir.top) {
+                        for (Iterator j = nodeAliases.getAliases(chan); j.hasNext(); ) {
+                            final CellUtils.Channel alias = (CellUtils.Channel) j.next();
+                            if (alias != output) {
+                                tbConnections.add(new Pair<>(output, alias));
+                            }
+                        }
+                    }
+                    tbChannels.put(output, dir);
+                }
+            }
+        }
 
         // convert a wide connection to narrow connections if either the source
         // or the sink instance is supposed to be narrow
@@ -2900,7 +2981,8 @@ public class Cast2Verilog {
                 new FlatteningIterator<>(
                     nodeConnections.iterator(),
                     narrowConnections.iterator(),
-                    wideConnections.iterator());
+                    wideConnections.iterator(),
+                    tbConnections.iterator());
                 i.hasNext(); ) {
             final Pair<CellUtils.Channel,CellUtils.Channel> p = i.next();
             final CellUtils.Channel source = p.getFirst();
@@ -3449,8 +3531,8 @@ public class Cast2Verilog {
      * @param cell cell to process
      * @return name of the reset node, escaped if necessary
      **/
-    private static String getResetName(final CellInterface cell) {
-        final String name = getResetName(cell, null);
+    private String getResetName(final CellInterface cell) {
+        final String name = getResetName(cell, getCadencize(false));
         if (name == null) {
             return globalResetName;
         } else {
@@ -3459,19 +3541,42 @@ public class Cast2Verilog {
     }
 
     /**
-     * Return the reset node for a cell.  The reset node is an implied node
-     * that connects to <code>_RESET</code> in the parent.  If that node does
-     * not exists and <code>portMap</code> is not null, look for a node called
-     * <code>_RESET</code> in the current cell, and if it exists, return the
-     * proper name associated with that node.
+     * Return the reset node for a cell.  The reset node is specified by the
+     * reset_net directive.  If no net has this directive, look for an implied
+     * node that connects to <code>_RESET</code> in the parent.
      *
      * @param cell cell to process
-     * @param portMap mapping from source and sinks to local names generated by
-     * {@link processPortConnections}
      * @return name of the reset node, escaped if necessary
      **/
     private static String getResetName(final CellInterface cell,
-                                       final Map portMap) {
+                                       final Cadencize cad) {
+        if (cad != null) {
+            final SortedSet<HierName> resetNets = new TreeSet<>();
+            final AliasedSet locals = cad.convert(cell).getLocalNodes();
+            DirectiveUtils.getNetDirectives(
+                    cell, null,
+                    locals, null,
+                    DirectiveConstants.RESET_NET,
+                    resetNets, resetNets, resetNets);
+            if (!resetNets.isEmpty()) {
+                final SortedSet<CellUtils.Channel> resetChans = new TreeSet<>();
+				(new CellUtils.ChannelCreator(null) {
+					protected void setResult(final CellUtils.Channel c) {
+                        if (c.getType() instanceof NodeType &&
+                            !((NodeType) c.getType()).isArrayed() &&
+                            c.isOutput()) {
+                            final HierName canon = (HierName) locals.getCanonicalKey(
+                                    HierName.makeHierNameUnchecked(c.getFullName(), '.'));
+                            if (canon != null && resetNets.contains(canon)) {
+                                resetChans.add(c);
+                            }
+                        }
+					}
+				}).mark(cell);
+                if (!resetChans.isEmpty()) return nodeVerilogName(resetChans.first());
+            }
+        }
+
         boolean found = false;
         for (Iterator i = cell.getPortDefinitions(); i.hasNext(); ) {
             final PortDefinition port = (PortDefinition) i.next();
@@ -3482,29 +3587,7 @@ public class Cast2Verilog {
             if (resetNodeName.equals(port.getName())) found = true;
         }
 
-        if (portMap == null) {
-            if (found) return VerilogUtil.escapeIfNeeded(resetNodeName);
-        } else {
-            // _RESET may not be in the map directly, because the map only
-            // contains sources and sinks, but one of its aliases should be in
-            // the map, if _RESET is in fact connected correctly
-            final HierName hierReset = HierName.makeHierName(resetNodeName);
-            final Iterator i = cell.getConnectedNodes(hierReset);
-            if (i != null) {
-                while (i.hasNext()) {
-                    final String alias = ((HierName) i.next()).getAsString('.');
-                    final CellUtils.Channel candidate =
-                        new CellUtils.Channel(null, alias, null, new NodeType(),
-                                              -1, -1);
-                    final CellUtils.Channel reset =
-                        (CellUtils.Channel) portMap.get(candidate);
-                    if (reset != null)
-                        return nodeVerilogName(reset);
-                }
-            }
-        }
-
-        return null;
+        return found ? VerilogUtil.escapeIfNeeded(resetNodeName) : null;
     }
 
     private void annotateDelaybias(final PrintWriter out,

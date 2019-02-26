@@ -376,6 +376,11 @@ public class CollectionUtils {
         return result;
     }
 
+    public static<T> Stream<T> reverseStream(final T[] array) {
+        final int l = array.length - 1;
+        return IntStream.rangeClosed(0, l).mapToObj(i -> array[l - i]);
+    }
+
     private static void swap(byte[] x, int i, int j) {
         byte v = x[i];
         x[i] = x[j];
