@@ -185,11 +185,11 @@ if(not defined $user_output_dir){
 
 #### Prepare directory & log ##################
 system("mkdir -p $output_dir") if (!-e $output_dir);
-debug_print(0, "***Infromation: running at $output_dir\n");
+debug_print(0, "***Information: running at $output_dir\n");
 my $lognum=get_log_postfix($output_dir, "nx_coverage");
 my $logfilename=sprintf("$output_dir/nx_coverage.log.%04d", $lognum);
 open ($LOG, ">$logfilename");
-debug_print(0, "***Infromation: nx_coverage log file is $logfilename\n");
+debug_print(0, "***Information: nx_coverage log file is $logfilename\n");
 print $LOG `date`;
 print $LOG usage(1);
 print $LOG "=================================================================\n";
@@ -222,7 +222,7 @@ if(defined $task{"merge"}){
             my ($vol,$dir,$file)= File::Spec->splitpath($user_exclude_file);
             $urg_exclude_file = catfile($output_dir, $file);
             system("rsync -H $user_exclude_file $urg_exclude_file");
-            debug_print(0, "***Infromation: Copy exclude file $user_exclude_file to $urg_exclude_file\n");
+            debug_print(0, "***Information: Copy exclude file $user_exclude_file to $urg_exclude_file\n");
         }else{
             die "Cannot fine user defined excluded file $user_exclude_file\n";
         }
@@ -235,7 +235,7 @@ if(defined $task{"merge"}){
 #            my ($vol,$dir,$file)= File::Spec->splitpath($user_hvp_file);
 #            $urg_hvp_file = catfile($output_dir, $file);
 #            system("rsync -H $user_hvp_file $urg_hvp_file");
-#            debug_print(0, "***Infromation: Copy hvp file $user_hvp_file to $urg_hvp_file\n");
+#            debug_print(0, "***Information: Copy hvp file $user_hvp_file to $urg_hvp_file\n");
 #        }else{
 #            die "Cannot fine user defined hvp file $urg_hvp_file\n";
 #        }
@@ -244,13 +244,13 @@ if(defined $task{"merge"}){
          my ($vol,$dir,$file)= File::Spec->splitpath($hvp_file);
          my $local_hvp_file = catfile($output_dir, $file);
          system("rsync -H $hvp_file $local_hvp_file");
-         debug_print(0, "***Infromation: Copy hvp file $hvp_file to $local_hvp_file\n");
+         debug_print(0, "***Information: Copy hvp file $hvp_file to $local_hvp_file\n");
      }
      if(-e $hier_file){
          my ($vol,$dir,$file)= File::Spec->splitpath($hier_file);
          my $local_hier_file = catfile($output_dir, $file);
          system("rsync -H $hier_file $local_hier_file");
-         debug_print(0, "***Infromation: Copy hier file $hier_file to $local_hier_file\n");
+         debug_print(0, "***Information: Copy hier file $hier_file to $local_hier_file\n");
      }
     
     #call urg to generate coverage
@@ -292,7 +292,7 @@ umask($umask);
 ######################## FUNCTIONS ################################
 sub checkin_coverage_database{
     my($coverage_data, $archive_file_path)=@_;
-    debug_print(0, "***Infromation: Update SQL database ...\n");
+    debug_print(0, "***Information: Update SQL database ...\n");
     my @cov;
     foreach my $entry (@coverage_table_entry) {
       $entry=~s/^\s*//;
@@ -644,12 +644,12 @@ sub get_coverage_sources_from_dir{
       foreach my $dir (@dirs) {
         my $abs_dir  = File::Spec->rel2abs( $dir );
         chomp $abs_dir;
-        debug_print(1, "***Infromation: get vdb $abs_dir\n");
+        debug_print(1, "***Information: get vdb $abs_dir\n");
         push @urg_sources, $abs_dir;
       }
     }
   }
-  debug_print(0, "***Infromation: merging coverage from $source_dir\n");
+  debug_print(0, "***Information: merging coverage from $source_dir\n");
   return @urg_sources;
 }
 sub get_coverage_sources{
@@ -668,7 +668,7 @@ sub get_coverage_sources{
         foreach my $dir (@dirs) {
           my $abs_dir  = File::Spec->rel2abs( $dir );
           chomp $abs_dir;
-          debug_print(1, "***Infromation: get vdb $abs_dir\n");
+          debug_print(1, "***Information: get vdb $abs_dir\n");
           push @urg_sources, $abs_dir;
         }
       }
@@ -732,12 +732,12 @@ sub merge_coverage
             #fork a seperate process to run urg
             my $source_file = catfile($output_dir_sub, "merge.$sub_idx.conf");
             open(FH, ">$source_file") or die "Cannot write $source_file\n";
-            debug_print(1, "***Infromation: Saved urgfile $source_file\n");
+            debug_print(1, "***Information: Saved urgfile $source_file\n");
             print FH join("\n",@sub_sources);
             close(FH);
             if(my $pid=fork()) {
                push @pidlist, $pid;
-               debug_print(0, "***Infromation: Fork urg sub process $pid\n");
+               debug_print(0, "***Information: Fork urg sub process $pid\n");
             } else {
                merge_coverage_sub($output_dir_sub, $sub_idx, $source_file, $hier_file, $exclude_file);
                exit 0;
@@ -751,12 +751,12 @@ sub merge_coverage
        foreach my $pid (@pidlist) {
          waitpid $pid,0;
        }
-       debug_print(0, "***Infromation: All urg sub processes finished.\n");
-       debug_print(0, "***Infromation: Start to merge all sub urg reports\n");
+       debug_print(0, "***Information: All urg sub processes finished.\n");
+       debug_print(0, "***Information: Start to merge all sub urg reports\n");
 
        #prepare urg config file for vdb sources
        open(FH, ">$urg_source_file") or die "Cannot write $urg_source_file\n";
-       debug_print(1, "***Infromation: Saved urgfile $urg_source_file\n");
+       debug_print(1, "***Information: Saved urgfile $urg_source_file\n");
        for(my $i=0;$i<$total_vdb;$i++) {
          my $vdb = "$output_dir_sub/merged.$i.vdb";
          if (-d $vdb) {
@@ -779,8 +779,8 @@ sub merge_coverage
     my $urgMergedCoverage="merged_coverage";
     my $urgLogFile="urg.log";
 
-    debug_print(0, "***Infromation: Saved urg log file $urgLogFile\n");
-    debug_print(0, "***Infromation: Writing coverage report to $output_dir\n");
+    debug_print(0, "***Information: Saved urg log file $urgLogFile\n");
+    debug_print(0, "***Information: Writing coverage report to $output_dir\n");
     
     my $urg                 = "fulcrum --wrapper $vcs_version $vcs_tool urg";
     my $cmd = "$urg -full64\t\\
@@ -835,7 +835,7 @@ sub merge_coverage
     $rpt_cmd .="\t\\\n\t-dir $urgMergedCoverage.vdb";
 
 
-    debug_print(0, "***Infromation: Running URG command :\n$cmd\n");
+    debug_print(0, "***Information: Running URG command :\n$cmd\n");
     my $nb_cmd_t = $nb_cmd; $nb_cmd_t =~ s/NB_LOG_FILE/nb.log/;
     $cmd = $runlocal ? "$cmd" : "$nb_cmd_t \"$cmd\"";
     $rpt_cmd = $runlocal ? "$rpt_cmd" : "$nb_cmd_t \"$rpt_cmd\"";
@@ -848,12 +848,12 @@ sub merge_coverage
 
     my $run_file =catfile($output_dir, "run");
     open(FH, ">$run_file") or die "Cannot write $run_file\n";
-    debug_print(1, "***Infromation: Saved run file $run_file\n");
+    debug_print(1, "***Information: Saved run file $run_file\n");
     print FH $cmd;
     close(FH);
     system("chmod +x $run_file; cd $output_dir; ./run");
 
-    debug_print(0, "***Infromation: End URG\n");
+    debug_print(0, "***Information: End URG\n");
 }   # end coverage_report
 
 sub parse_config
@@ -883,8 +883,8 @@ sub merge_coverage_sub
     my $urgMergedCoverage="merged.$idx";
     my $urgLogFile="$idx.log";
 
-    debug_print(1, "***Infromation: Saved urg merge config file $source_file\n");
-    debug_print(1, "***Infromation: Saved urg log file $urgLogFile\n");
+    debug_print(1, "***Information: Saved urg merge config file $source_file\n");
+    debug_print(1, "***Information: Saved urg log file $urgLogFile\n");
     my $urg                 = "fulcrum --wrapper $vcs_version $vcs_tool urg";
     my $cmd = "$urg -full64\t\\
 \t-f $source_file\t\\
@@ -916,18 +916,18 @@ sub merge_coverage_sub
     $cmd .= "\t\\\n\t-elfile $exclude_file -excl_bypass_checks " if (defined $exclude_file);
     $cmd .= "\t\\\n\t$user_urg_options " if (defined $user_urg_options);
     $cmd .= "\t\\\n\t-group instcov_for_score -group flex_merge_drop -group merge_across_scopes -group ratio";    
-    debug_print(1, "***Infromation: Running URG sub process $idx command :\n$cmd\n");
+    debug_print(1, "***Information: Running URG sub process $idx command :\n$cmd\n");
     my $nb_cmd_t = $nb_cmd; $nb_cmd_t =~ s/NB_LOG_FILE/nb.$idx.log/;
 
     $cmd = $runlocal ? "$cmd" : "$nb_cmd_t \"$cmd\"";
     
     my $run_file =catfile($output_dir, "run.$idx");
     open(FH, ">$run_file") or die "Cannot write $run_file\n";
-    debug_print(1, "***Infromation: Saved run file $run_file\n");
+    debug_print(1, "***Information: Saved run file $run_file\n");
     print FH $cmd;
     close(FH);
     system("chmod +x $run_file; cd $output_dir; ./run.$idx ");
-    debug_print(1, "***Infromation: End URG sub process $idx\n");
+    debug_print(1, "***Information: End URG sub process $idx\n");
 
 
 }
