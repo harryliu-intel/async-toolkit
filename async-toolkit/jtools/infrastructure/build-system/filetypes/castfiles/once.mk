@@ -1030,8 +1030,8 @@ EXTRACT_COMMON_OPTIONS=--64bit=$(BIT64) \
 
 $(ROOT_TARGET_DIR)/%/extracted/cell.spef_gds2 \
 $(ROOT_TARGET_DIR)/%/extracted/spef.err: \
-        $$(call GET_VIEW_DIR,$(@D))/cell.gds2 \
-        $$(call GET_VIEW_DIR,$(@D))/cell.cdl_gds2 \
+        $$(call GET_VIEW_DIR,$$(@D))/cell.gds2 \
+        $$(call GET_VIEW_DIR,$$(@D))/cell.cdl_gds2 \
         $(ROOT_TARGET_DIR)/%/extracted/graybox_list \
         $(ROOT_TARGET_DIR)/%/extracted/cdl.aliases \
         $(ROOT_TARGET_DIR)/%/extracted/cdl.aliases.routed \
@@ -1235,8 +1235,8 @@ else # "$(GRAYBOX_MODE)" eq "" 262 lines back
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/extracted/cell.spice_topcell
 $(ROOT_TARGET_DIR)/%/extracted/cell.spice_topcell \
 $(ROOT_TARGET_DIR)/%/extracted/extract.err: \
-        $$(call GET_VIEW_DIR,$(@D))/cell.gds2 \
-        $$(call GET_VIEW_DIR,$(@D))/cell.cdl_gds2 \
+        $$(call GET_VIEW_DIR,$$(@D))/cell.gds2 \
+        $$(call GET_VIEW_DIR,$$(@D))/cell.cdl_gds2 \
         $(ROOT_TARGET_DIR)/%/extracted/graybox_list \
         $$(call GET_CELL_DIR,$$(@D))/cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX)
 	if [[ ( -n "$(call LVE_SKIP,extract)" ) && ( -e '$@' ) ]] ; then exit; fi; \
