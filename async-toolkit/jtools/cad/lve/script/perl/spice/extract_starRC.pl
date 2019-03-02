@@ -1153,12 +1153,12 @@ if($stage4a){
 
                 if ( $dir ne "" and -d "$dir") {
                     foreach my $view (@validviews) {
-                        if(-s "$dir/$cell_dir/$view/$extract_dir/cell.aspice" ){
+                        if(-s "$dir/$cell_dir/$view/$extractCorner/${temperature}C/$extract_dir/cell.aspice" ){
                             if (! $doflat) {
-                                my_system("echo \".inc '$dir/$cell_dir/$view/$extract_dir/cell.spice_gds2'\" >> '$cell_total_filename' ");
+                                my_system("echo \".inc '$dir/$cell_dir/$view/$extractCorner/${temperature}C/$extract_dir/cell.spice_gds2'\" >> '$cell_total_filename' ");
                             }
                             else {
-                                my_system("cat '$dir/$cell_dir/$view/$extract_dir/cell.spice_gds2' >> '$cell_total_filename' ");
+                                my_system("cat '$dir/$cell_dir/$view/$extractCorner/${temperature}C/$extract_dir/cell.spice_gds2' >> '$cell_total_filename' ");
                             }
                             print "FOUND: subckt $cell cell.aspice file in $dir.\n";
                             $includedcells{$cell}=1;
@@ -1203,7 +1203,7 @@ if($stage4a){
                 $dfiicn =~ s/-/#2d/g;
                 foreach my $view (@validviews) {
                     if ( -s "$dfIIdir/$libdir/$dfiicn/$view/layout.oa" ) {
-                        my_system("echo \".inc '$root_target_dir/$cell_dir/$view/$extract_dir/cell.spice_gds2'\" >> '$cell_total_filename' ");
+                        my_system("echo \".inc '$root_target_dir/$cell_dir/$view/$extractCorner/${temperature}C/$extract_dir/cell.spice_gds2'\" >> '$cell_total_filename' ");
                         $includedcells{$cell}=1;
                         $found=1;
                         last;
