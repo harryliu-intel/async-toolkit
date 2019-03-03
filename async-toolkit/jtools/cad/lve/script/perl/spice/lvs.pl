@@ -121,7 +121,7 @@ my $cell_name = shift;
 if ($threads < 1) {
     $threads=1;
 }
--d $working_dir ne "" or $working_dir = `mktemp -d /scratch/lvs.XXXXXX`;
+-d $working_dir or $working_dir = `mktemp -d /scratch/lvs.XXXXXX`;
 chomp $working_dir;
 $cdl_cell_name ne "" or $cdl_cell_name=$cell_name;
 $pdk_root="$ENV{FULCRUM_PDK_ROOT}" if ( ! ( -d $pdk_root ) and -d $ENV{FULCRUM_PDK_ROOT});
