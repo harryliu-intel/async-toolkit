@@ -71,7 +71,7 @@ class epc_integ_env extends subsystem_base_env;
          epc_env_inst[i] = mby_ec_top_env::type_id::create($sformatf("epc_env_inst_%0d", i), this);
          `uvm_info(get_name(),  $sformatf("build_epc_env: epc_env_inst[%0d] created",i),UVM_MEDIUM)
 
-         epc_env_cfg_inst[i] = mby_ec_top_env_cfg::type_id::create($sformatf("epc_env_cfg_inst_%0d", i), this);
+         epc_env_cfg_inst[i] = mby_ec_top_env_cfg#()::type_id::create($sformatf("epc_env_cfg_inst_%0d", i), this);
          `uvm_info(get_name(),  $sformatf("build_epc_env: epc_env_cfg_inst[%0d] created",i),UVM_MEDIUM)
 
          //Not required once 51e is available
