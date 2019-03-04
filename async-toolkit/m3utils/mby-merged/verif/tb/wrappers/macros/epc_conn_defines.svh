@@ -13,7 +13,7 @@
     mby_ec_top_ti #( \
         .TYPE("dut"), \
         .RTL_TOP_PATH(``"DUT_PATH``.mby_ec_top_``IDX``"), \
-        .TB_ENV_PATH(``"FC_ENV_PATH``.epc_subenv.epc_env_inst_``IDX``"), \
+        .TOP_ENV_PATH(``"FC_ENV_PATH``.epc_subenv.epc_env_inst_``IDX``"), \
         .ENDPOINT_ID(``IDX``) \
     ) u_epc_ti_``IDX`` ( \
           .grp_a0_tx_data_valid         (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_tx_data_valid), \
