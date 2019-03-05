@@ -3123,7 +3123,7 @@ public final class JFlat {
      * all the other formatters in this class.  The names that are output
      * are canonical.
      **/
-    private static class HSIMFormatter extends SimpleCellFormatter {
+    private static class HSIMFormatter implements CellFormatterInterface {
         final CDLWriter pw;
         final PrintWriter w;
         private final CastFileParser cfp;
@@ -3138,6 +3138,7 @@ public final class JFlat {
         private final static Pattern BD_RSOURCE = Pattern.compile("standard\\.bd\\.rsource_bd\\((\\d+)\\)");
         private final static String ENV_INSTANCE = "env";
         private final Random random;
+        private CellInterface unrouted;
 
         HSIMFormatter( final PrintWriter pw,
                        final CastFileParser cfp, 
@@ -3194,8 +3195,9 @@ public final class JFlat {
             return "env" + Integer.toString(++deviceId);
         }
 
-        public CellInterface prepCell(CellInterface cell) {
-            return cell;
+        public CellInterface prepCell(CellInterface cell, CellInterface routed) {
+            unrouted = cell;
+            return routed;
         }
 
         /**
@@ -3429,7 +3431,7 @@ public final class JFlat {
             final Set<HierName> ports = new HashSet<>();
             final Set<HierName> nodes = new HashSet<>();
 
-            DirectiveUtils.getNetDirectives(dutCell, envCell,
+            DirectiveUtils.getNetDirectives(unrouted, envCell,
                     cadencizer.convert(dutCell).getLocalNodes(), envAliases,
                     directive,
                     ports, ports, nodes);
