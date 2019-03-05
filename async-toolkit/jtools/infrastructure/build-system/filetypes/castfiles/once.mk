@@ -1233,6 +1233,7 @@ else # "$(GRAYBOX_MODE)" eq "" 262 lines back
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/accurate/cell.spice_topcell
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/extracted/cell.spice_gds2
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/extracted/cell.spice_topcell
+$(ROOT_TARGET_DIR)/%/extracted/cell.spice_gds2 \
 $(ROOT_TARGET_DIR)/%/extracted/cell.spice_topcell \
 $(ROOT_TARGET_DIR)/%/extracted/extract.err: \
         $$(call GET_VIEW_DIR,$$(@D))/cell.gds2 \
