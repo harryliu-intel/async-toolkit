@@ -237,7 +237,7 @@ class mby_igr_env extends shdv_base_env;
             tb_cfg.randomize();
             eth_bfms[i].cfg.port_speed[j]  = tb_cfg.speed_cfg[j];
           end
-          eth_bfms[i].cfg.port_lanes    = {4,0,0,0}; // Configure num_ports.
+          //eth_bfms[i].cfg.port_lanes    = {4,0,0,0}; // Configure num_ports.
           //eth_bfms[i].cfg.early_justify = 0;
           //eth_bfms[i].cfg.group_size    = 8;
           //eth_bfms[i].cfg.sop_alignment = 8;
