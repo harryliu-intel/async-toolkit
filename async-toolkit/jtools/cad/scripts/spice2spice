@@ -340,7 +340,9 @@ while ($line) {
         $newtype = $names[0];
         $newname = $names[1];
         @nodes = split /\s+/, $line;
-        pop @nodes; # FIXME: find a better way to take last / out of nodes list
+        if ($nodes[@nodes-1] eq "/") {
+            pop @nodes; # take last / out of nodes list
+        }
         fix_names(@nodes);
         fix_parms(@parameters);
         print ASPICE $indent . "X$newname ";
