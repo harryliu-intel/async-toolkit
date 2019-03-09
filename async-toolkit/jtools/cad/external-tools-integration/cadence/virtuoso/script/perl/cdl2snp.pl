@@ -31,6 +31,7 @@ while (defined $ARGV[0] && $ARGV[0] =~ /^--(.*)/) {
     $flag = $1;
     if ($flag eq "length") {
         $length = $ARGV[1];
+        shift @ARGV;
     } elsif ($flag eq "gridW") {
         $gridW = $ARGV[1];
         shift @ARGV;
