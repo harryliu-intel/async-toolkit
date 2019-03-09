@@ -310,8 +310,12 @@ while ($line) {
             $parameters{"ad"} = eval("($w) * ($diffusionOverhang)");
             $parameters{"pd"} = eval("($w) * 2*($diffusionOverhang)");
         }
-        print ASPICE "M$nextM ";
-        $nextM++;
+        if ($rename) {
+            print ASPICE "M$nextM ";
+            $nextM++;
+        } else {
+            print ASPICE "M$name ";
+        }
         foreach $i (@nodes) {
             print ASPICE "$i ";
         }
