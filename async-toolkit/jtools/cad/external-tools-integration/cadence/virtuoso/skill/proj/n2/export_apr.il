@@ -5,6 +5,7 @@ spar_cell_list =
    "lib.util.widget.STD_DIVERTER.0"
    "lib.util.widget.ALTVERTER.0"
    "lib.util.widget.STD_ALTVERTER.0"
+   "lib.util.operator.CUT_BUF.0"
 
    ; TOP_HALO (physical only but very common)
    "globals.TOP_HALO.n"
