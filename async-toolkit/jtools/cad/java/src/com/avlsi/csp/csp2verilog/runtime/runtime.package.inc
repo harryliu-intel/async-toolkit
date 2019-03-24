@@ -15,5 +15,6 @@ share/cast2verilog/new-timingbuffer.v  new-timingbuffer.v  644  p
 share/cast2verilog/nodeconverter.v     nodeconverter.v     644  p
 share/cast2verilog/nwwn.sv             nwwn.sv             644  p
 share/cast2verilog/readhexint.sv       readhexint.sv       644  p
+share/cast2verilog/readhexint.c        readhexint.c        644  p
 share/cast2verilog/runtime.vcfg        runtime.vcfg        644  p
 share/cast2verilog/time.v              time.v              644  p

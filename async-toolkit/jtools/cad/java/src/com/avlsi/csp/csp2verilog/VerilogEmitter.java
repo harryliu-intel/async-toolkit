@@ -1897,7 +1897,7 @@ public class VerilogEmitter extends CommonEmitter {
                     final ExpressionInterface file = i.next();
                     final ExpressionInterface mode = i.next();
                     lhs.accept(this);
-                    out.print(" = $fopen(");
+                    out.print(" = ReadHexInts#()::fopen(");
                     out.print("__csp_to_sv_string(");
                     file.accept(this);
                     out.print("), __csp_to_sv_string(");
@@ -1906,11 +1906,10 @@ public class VerilogEmitter extends CommonEmitter {
                 } else if (name.equals(RefinementResolver.BuiltIn.FCLOSE)) { 
                     final Iterator<ExpressionInterface> i = e.getActuals();
                     final ExpressionInterface stream = i.next();
-                    out.print("$fclose(integer'(");
+                    lhs.accept(this);
+                    out.print(" = ReadHexInts#()::fclose(int'(");
                     stream.accept(this);
                     out.println("));");
-                    lhs.accept(this);
-                    out.println(" = 1'b0;");
                 } else if (name.equals(RefinementResolver.BuiltIn.FREAD)) {
                     final Iterator<ExpressionInterface> i = e.getActuals();
                     final ExpressionInterface ptr = i.next();
@@ -1931,6 +1930,13 @@ public class VerilogEmitter extends CommonEmitter {
                     out.print("::fwrite(");
                     commaSeperated(ptr, size, nmemb, stream, lhs);
                     out.println(");");
+                } else if (name.equals(RefinementResolver.BuiltIn.FPOLL)) { 
+                    final Iterator<ExpressionInterface> i = e.getActuals();
+                    final ExpressionInterface stream = i.next();
+                    lhs.accept(this);
+                    out.print(" = ReadHexInts#()::fpoll(int'(");
+                    stream.accept(this);
+                    out.println("));");
                 } else {
                     // not supported: eventQueueIsEmpty, stable, enableDSimErrors
                     throw new VisitorException(

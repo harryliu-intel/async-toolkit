@@ -42,6 +42,7 @@ public class RefinementResolver extends VisitorByCategory {
         String FCLOSE = "fclose";
         String FREAD = "fread";
         String FWRITE = "fwrite";
+        String FPOLL = "fpoll";
         String WALLTIME = "walltime";
         String GETARGVALUE = "getArgValue";
         String FP_MUL32 = "fp_mul32";
@@ -242,6 +243,13 @@ public class RefinementResolver extends VisitorByCategory {
                                                 Declarator.IN),
                                             getDeclaration("size"),
                                             getDeclaration("nmemb"),
+                                            getDeclaration("stream")
+                                        }),
+                                        new IntegerType(),
+                                        new SequentialStatement()),
+                BuiltIn.FPOLL,
+                new FunctionDeclaration(BuiltIn.FPOLL,
+                                        getDeclarations(new Declaration[] {
                                             getDeclaration("stream")
                                         }),
                                         new IntegerType(),
