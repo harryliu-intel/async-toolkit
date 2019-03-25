@@ -7,6 +7,9 @@
 
 package com.avlsi.tools.prs2verilog.verilog;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 import com.avlsi.tools.prs2verilog.verilog.VerilogObject;
 import com.avlsi.tools.prs2verilog.verilog.VerilogVisitor;
 
@@ -17,5 +20,10 @@ public class ConcatOp implements VerilogObject {
     }
     public void accept(VerilogVisitor v) {
         v.concatOp(elements);
+    }
+    public String toString() {
+        return Arrays.stream(elements)
+                     .map(Object::toString)
+                     .collect(Collectors.joining(".","{","}"));
     }
 }

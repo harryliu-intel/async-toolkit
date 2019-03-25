@@ -23,4 +23,7 @@ public class Ident implements VerilogObject {
     public void accept(VerilogVisitor v) {
         v.ident(ident, escape);
     }
+    public String toString() {
+        return ident;
+    }
 }

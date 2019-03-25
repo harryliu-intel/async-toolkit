@@ -20,4 +20,7 @@ public class NamedPort implements VerilogObject {
     public void accept(VerilogVisitor v) {
         v.namedPort(portName, port);
     }
+    public String toString() {
+        return "." + portName + "(" + port + ")";
+    }
 }
