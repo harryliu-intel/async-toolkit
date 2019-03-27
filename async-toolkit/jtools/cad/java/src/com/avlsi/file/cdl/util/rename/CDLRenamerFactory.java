@@ -496,6 +496,25 @@ public class CDLRenamerFactory implements CDLFactoryInterface {
         }
     }
 
+    public void include(String inc) {
+        if ( m_Error == null ) {
+            try {
+                final Iterator outputInfoIter =
+                    m_OutputInfos.iterator();
+                while ( outputInfoIter.hasNext() ) {
+                    final OutputInfo currInfo = ( OutputInfo ) outputInfoIter.next();
+                    currInfo.print( ".INCLUDE" );
+                    currInfo.printws( "'" + inc + "'" );
+                    currInfo.println();
+                    currInfo.flush();
+                }
+            }
+            catch( IOException e ) {
+                m_Error = e;
+            }
+        }
+    }
+
     public void closeOutputs( ) {
         if ( m_Error == null ) {
             try {

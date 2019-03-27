@@ -127,4 +127,10 @@ public interface CDLFactoryInterface {
      * @param env Current environment
      **/
     void endSubcircuit(String subName, Environment env);
+
+    /**
+     * Called by the parser after processing a .include statement
+     * @param inc Name of the include file
+     **/
+    default void include(String inc) {}
 }

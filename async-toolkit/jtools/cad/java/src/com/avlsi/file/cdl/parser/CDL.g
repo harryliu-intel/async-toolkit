@@ -437,6 +437,9 @@ TOKEN
         |   ".param" {
                 $setType(PARAM);
             }
+        |   ".include" {
+                $setType(INCLUDE);
+            }
         |   device:DEVICE {
                 $setToken(device);
                 $setType(device.getType());
@@ -751,6 +754,15 @@ param
     :   PARAM^ parameterList
     ;
 
+include
+    :   INCLUDE^ t:NODE {
+        if (!(t instanceof CDLLexer.MathExprToken)) {
+            throw new SemanticException(
+                ".include expects a string as filename at " +
+                t.getFilename() + ":" + t.getLine() + ":" + t.getColumn());
+        }
+    }
+    ;
 subcircuit
     :   subcircuitStart deviceList subcircuitEnd
     ;
@@ -778,6 +790,7 @@ device
     |   IF_BEGIN^ deviceList IF_END!
     |   subcircuit
     |   param
+    |   include
     ;
 
 startDeviceList
@@ -799,6 +812,7 @@ expr
     |   SUBCELL^ parameterList
     |   subcircuitStart
     |   subcircuitEnd
+    |   include
     |   EOF!
     ;
 
@@ -984,6 +998,7 @@ expr[ Environment env, CDLFactoryInterface factory ]
     |   param[ env ]
     |   subcircuitStart[ env, factory ]
     |   subcircuitEnd[ env, factory ]
+    |   include[ env, factory ]
     ;
 
 goal [ Environment env, CDLFactoryInterface factory ]
@@ -997,6 +1012,12 @@ param [ Environment env ]
     }
     :   #( PARAM parameterList[ env, param, binding ] {
             bindParams(binding, env);
+        })
+    ;
+
+include [ Environment env, CDLFactoryInterface factory ]
+    :   #( INCLUDE inc:NODE {
+            factory.include(inc.getToken().getText());
         })
     ;
 
@@ -1110,6 +1131,7 @@ device[ Environment env, CDLFactoryInterface factory ]
         }
     |   subcircuit[ env, factory ]
     |   param[ env ]
+    |   include[ env, factory ]
     ;
 
 resistor[Environment env,  CDLFactoryInterface factory]
