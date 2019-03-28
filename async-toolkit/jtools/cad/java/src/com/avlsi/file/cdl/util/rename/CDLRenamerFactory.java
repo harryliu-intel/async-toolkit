@@ -38,6 +38,7 @@ import com.avlsi.file.cdl.util.rename.CDLNameInterface;
  **/
 public class CDLRenamerFactory implements CDLFactoryInterface {
    
+    private String extensionIn, extensionOut;
 
     private static final class OutputInfo {
         private final Writer m_CDLOutput;
@@ -157,11 +158,16 @@ public class CDLRenamerFactory implements CDLFactoryInterface {
     public void addNameInterface( final Writer cdlOutput,
                                   final CDLNameInterface nameInterface,
                                   final int maxLineSize,
-                                  final String callDelimiter ) {
+                                  final String callDelimiter,
+                                  final String extensionIn,
+                                  final String extensionOut
+                                  ) {
         final OutputInfo newInfo = new OutputInfo( cdlOutput,
                                                    nameInterface,
                                                    maxLineSize,
                                                    callDelimiter );
+        this.extensionIn=extensionIn;
+        this.extensionOut=extensionOut;
         m_OutputInfos.add( newInfo );
     }
 
@@ -497,6 +503,10 @@ public class CDLRenamerFactory implements CDLFactoryInterface {
     }
 
     public void include(String inc) {
+        // rename include file extensions
+        if (extensionIn!=null && extensionOut!=null && inc.endsWith(extensionIn))
+            inc = inc.substring(0,inc.length()-extensionIn.length()) + extensionOut;
+
         if ( m_Error == null ) {
             try {
                 final Iterator outputInfoIter =

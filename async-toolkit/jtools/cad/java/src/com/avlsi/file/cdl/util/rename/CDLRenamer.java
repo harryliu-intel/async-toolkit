@@ -140,6 +140,7 @@ public class CDLRenamer  {
             "   --name-in=cast|gds2|cadence|pmc_hack|rcx_hack\n" + 
             "   --name-out=cast|gds2|cadence|pmc_hack|rcx_hack\n" + 
             "   --translated-cdl=file\n" +
+            "   [--extension-in=string] [--extension-out=string]\n" +
             "   [--rcx-cell-map=file]\n" +
             "   [--rcx-pipo-map=file]\n" +
             "   [--translated-nmap=file]\n" +
@@ -173,6 +174,7 @@ public class CDLRenamer  {
                             "   --name-in=cast|gds2|cadence|pmc_hack|rcx_hack\n" + 
                             "   --name-out=cast|gds2|cadence|pmc_hack|rcx_hack\n" + 
                             "   --translated-cdl=file\n" +
+                            "   [--extension-in=string] [--extension-out=string]\n" +
                             "   [--rcx-cell-map=file]\n" +
                             "   [--rcx-pipo-map=file]\n" +
                             "   [--translated-nmap=file]\n" +
@@ -212,6 +214,12 @@ public class CDLRenamer  {
 
         final String nameOut = 
             theArgs.getArgValue( "name-out", null );
+
+        final String extensionIn = 
+            theArgs.getArgValue( "extension-in", null );
+
+        final String extensionOut = 
+            theArgs.getArgValue( "extension-out", null );
 
         final String translatedCDLFileName = 
             theArgs.getArgValue( "translated-cdl", null );
@@ -373,7 +381,8 @@ public class CDLRenamer  {
                         cdlFactory.addNameInterface( cdlWriter,
                                                      reloadableNameInterface,
                                                      76,
-                                                     callDelimiter );
+                                                     callDelimiter,
+                                                     extensionIn, extensionOut );
 
                         ReadCDLIntoFactory.readCDL( sourceCDLReader,
                                                     cdlFactory );
@@ -391,7 +400,9 @@ public class CDLRenamer  {
                         cdlFactory.addNameInterface( cdlWriter,
                                                      filteredInterface,
                                                      76,
-                                                     callDelimiter );                            
+                                                     callDelimiter,
+                                                     extensionIn, extensionOut );
+
                         ReadCDLIntoFactory.readCDLSimple( sourceCDLReader,
                                                           cdlFactory );
                     }
