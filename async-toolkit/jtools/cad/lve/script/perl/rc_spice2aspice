@@ -545,16 +545,15 @@ while ($line) {
             print ASPICE "}\n";
         }
 
-    } elsif ($line =~ /^\.include\s+"(.*)"/i ) {
+    } elsif ($line =~ /^\.include\s+'(.*)'/i ) {
 
         #
         # include file -- assumes there will be an aspice file with same base name
         #
         
         my $file = $1;
-        if    ($file =~ /(.*)\.spice_gds2/) { $file = $1; }
-        elsif ($file =~ /(.*)\.spice/)      { $file = $1; }
-        print ASPICE ".include \"${file}.aspice\";\n";
+        $file =~ s/\.spice$/\.aspice/; # rename file extension
+        print ASPICE ".include \"$file\";\n";
         
     } elsif ($line =~ s/^M//i) {
 

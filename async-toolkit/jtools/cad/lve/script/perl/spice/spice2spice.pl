@@ -65,6 +65,12 @@ $f_out = "$ARGV[1]";
 open IN,  "<$f_in"  or die "Can't open '$f_in' for reading.\n";
 open OUT, ">$f_out" or die "Can't open '$f_out' for writing.\n";
 
+# auto-detect file extensiones to rename include files
+my $extension_in;
+my $extension_out;
+if ($f_in  =~ /\.([^\.]*)$/ ) { $extension_in=$1;  }
+if ($f_out =~ /\.([^\.]*)$/ ) { $extension_out=$1; }
+
 # skip unsupported transistor parameters
 my %skip_parms;
 foreach $parm (split(",",$skip_parms)) {
@@ -75,7 +81,7 @@ foreach $parm (split(",",$skip_parms)) {
 # Save options in header
 #
 
-print OUT "* rename_spice --top=$top --icf=$icf --rename=$rename --flatten-top=$flatten_top --probe-top-ports=$probe_ports --probe-ports=$probe_ports --probe-gates=$probe_gates --skip-parms=$skip_parms $f_in $f_out\n";
+print OUT "* spice2spice --top=$top --icf=$icf --rename=$rename --flatten-top=$flatten_top --probe-top-ports=$probe_ports --probe-ports=$probe_ports --probe-gates=$probe_gates --skip-parms=$skip_parms $f_in $f_out\n";
 
 #
 # Do linewise translation of SPICE to SPICE
@@ -250,6 +256,18 @@ while ($line) {
         node_names($pos,$neg);
         print OUT "R$name $pos $neg $line";
 
+    } elsif ($line =~ /^\.INCLUDE\s+'(.*)'/i) {
+
+        #
+        # Include
+        #
+
+        my $file=$1;
+        if (defined($extension_in) && defined($extension_out)) {
+            $file =~ s/\.$extension_in$/\.$extension_out/g;
+        }
+        print OUT ".INCLUDE '$file'\n";
+
     } elsif ($line =~ m/^\*/) {
         # comment line, do nothing
     } elsif ($line =~ s/^\s*\n//i ) {
@@ -263,7 +281,7 @@ while ($line) {
 
 # usage banner
 sub usage {
-    die "Usage: rename_spice\n" .
+    die "Usage: spice2spice\n" .
         " [--icf=$icf] [--rename=$rename]\n" .
         " [--top=$top] [--flatten-top=$flatten_top]\n" .
         " [--probe-top-ports=$probe_ports] [--probe-ports=$probe_ports] [--probe-gates=$probe_gates]\n" .

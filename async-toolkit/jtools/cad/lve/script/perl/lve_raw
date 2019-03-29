@@ -1565,7 +1565,7 @@ elsif ($task eq "slint") {
 elsif ($task eq "extract") {
     my $status = "FAIL";
     my $warning;
-    my $spicefile="cell.aspice";
+    my $spicefile="cell.hspice";
     $spicefile="cell.spf" if $mode eq "totem";
     if (! -e "$dir/extract.result") {
         $status = "NOT_TESTED";

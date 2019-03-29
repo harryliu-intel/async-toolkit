@@ -1477,7 +1477,7 @@ endif # "$(HSIM_PRS_MAX_RES)" eq ""
 .PRECIOUS: $(SPICE_DIR)/hsim/$(ENV)/%/hsim.names
 .PRECIOUS: $(SPICE_DIR)/hsim/$(ENV)/%/hsim.trace
 
-$(SPICE_DIR)/hsim/$(ENV)/%/hsim.out: $(SPICE_DIR)/cell.spice_hsim \
+$(SPICE_DIR)/hsim/$(ENV)/%/hsim.out: $(SPICE_DIR)/cell.hspice \
 			             $(CELL_DIR)/jflat$(ROUTED_SUFFIX)/hsim/$(ENV) \
 			             $(CELL_DIR)/jflat$(ROUTED_SUFFIX)/env-ntpc/$(ENV)
 	#TASK=hsim ENV=$(call GET_ENV,$(@D)) CELL=$(call GET_CAST_FULL_NAME,$(@D))
@@ -1552,7 +1552,7 @@ $(SPICE_DIR)/hsim/$(ENV)/%/hsim.raw: $(CELL_DIR)/jflat$(ROUTED_SUFFIX)/env-ntpc/
 .PRECIOUS: $(SPICE_DIR)/xa/$(ENV)/%/xa.names
 .PRECIOUS: $(SPICE_DIR)/xa/$(ENV)/%/xa.trace
 
-$(SPICE_DIR)/xa/$(ENV)/%/xa.out: $(SPICE_DIR)/cell.spice_hsim \
+$(SPICE_DIR)/xa/$(ENV)/%/xa.out: $(SPICE_DIR)/cell.hspice \
 			             $(CELL_DIR)/jflat$(ROUTED_SUFFIX)/hsim/$(ENV) \
 			             $(CELL_DIR)/jflat$(ROUTED_SUFFIX)/env-ntpc/$(ENV)
 	#TASK=xa ENV=$(call GET_ENV,$(@D)) CELL=$(call GET_CAST_FULL_NAME,$(@D))
@@ -1626,7 +1626,7 @@ $(SPICE_DIR)/xa/$(ENV)/%/xa.raw: $(CELL_DIR)/jflat$(ROUTED_SUFFIX)/env-ntpc/$(EN
 .PRECIOUS: $(SPICE_DIR)/hspice/$(ENV)/%/hspice.names
 .PRECIOUS: $(SPICE_DIR)/hspice/$(ENV)/%/hspice.trace
 
-$(SPICE_DIR)/hspice/$(ENV)/%/hspice.out: $(SPICE_DIR)/cell.spice_hsim \
+$(SPICE_DIR)/hspice/$(ENV)/%/hspice.out: $(SPICE_DIR)/cell.hspice \
 			             $(CELL_DIR)/jflat$(ROUTED_SUFFIX)/hsim/$(ENV) \
 			             $(CELL_DIR)/jflat$(ROUTED_SUFFIX)/env-ntpc/$(ENV)
 	#TASK=hspice ENV=$(call GET_ENV,$(@D)) CELL=$(call GET_CAST_FULL_NAME,$(@D))

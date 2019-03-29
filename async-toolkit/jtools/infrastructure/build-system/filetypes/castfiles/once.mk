@@ -310,6 +310,8 @@ $(ROOT_TARGET_DIR)/%/extracted/cell.spice: $(ROOT_TARGET_DIR)/%/extracted/cell.s
 	  --source-cdl-file='$<' \
 	  --name-in=gds2 \
 	  --name-out=cast \
+	  --extension-in=.spice_gds2 \
+	  --extension-out=.spice \
 	  --translated-cdl='$@' \
 	task=renamer && $(CASTFILES_DEQUEUE_TASK)
 
@@ -321,6 +323,8 @@ $(ROOT_TARGET_DIR)/%/totem/cell.spice: $(ROOT_TARGET_DIR)/%/totem/cell.spice_gds
 	  --source-cdl-file='$<' \
 	  --name-in=gds2 \
 	  --name-out=cast \
+	  --extension-in=.spice_gds2 \
+	  --extension-out=.spice \
 	  --translated-cdl='$@' \
 	task=renamer && $(CASTFILES_DEQUEUE_TASK)
 
@@ -328,7 +332,6 @@ ifneq ("$(NOEXTRACTDEPS)", "1")
 $(ROOT_TARGET_DIR)/%/extracted/cell.aspice: $(ROOT_TARGET_DIR)/%/extracted/cell.spice \
 	$(ROOT_TARGET_DIR)/%/extracted/cdl.aliases
 	if [[ ( -n "$(call LVE_SKIP,extract)" ) && ( -e '$@' ) ]] ; then exit; fi; \
-	if [ -s '$<' ] ; then \
 	task=rc_spice2aspice && $(CASTFILES_ENQUEUE_TASK) && \
 	QB_DIAG_FILE='$@.spice2aspice.diag' QB_RUN_NAME='lve_spice2aspice' \
 	  $(EXEC_PACKAGE) $(SPICE2ASPICE) \
@@ -340,14 +343,12 @@ $(ROOT_TARGET_DIR)/%/extracted/cell.aspice: $(ROOT_TARGET_DIR)/%/extracted/cell.
 	  --alias-file '$(@D)/cdl.aliases' \
 	  $(SPICE2ASPICE_OPTS) '$(@D)/cell.spice' '$@.tmp' \
 	  1> '$(@D)/rc_spice2aspice.out' 2> '$(@D)/rc_spice2aspice.err' && \
-	mv -f '$@.tmp' '$@'; \
-	else rm -f '$@' && touch '$@'; fi; \
+	  mv -f '$@.tmp' '$@' && \
 	task=rc_spice2aspice && $(CASTFILES_DEQUEUE_TASK)
 
 $(ROOT_TARGET_DIR)/%/totem/cell.aspice: $(ROOT_TARGET_DIR)/%/totem/cell.spice \
 	$(ROOT_TARGET_DIR)/%/totem/cdl.aliases
 	if [[ ( -n "$(call LVE_SKIP,extract)" ) && ( -e '$@' ) ]] ; then exit; fi; \
-	if [ -s '$<' ] ; then \
 	task=rc_spice2aspice && $(CASTFILES_ENQUEUE_TASK) && \
 	QB_DIAG_FILE='$@.spice2aspice.diag' QB_RUN_NAME='lve_spice2aspice' \
 	  $(EXEC_PACKAGE) $(SPICE2ASPICE) \
@@ -359,15 +360,13 @@ $(ROOT_TARGET_DIR)/%/totem/cell.aspice: $(ROOT_TARGET_DIR)/%/totem/cell.spice \
 	  --alias-file '$(@D)/cdl.aliases' \
 	  $(SPICE2ASPICE_OPTS) '$(@D)/cell.spice' '$@.tmp' \
 	  1> '$(@D)/rc_spice2aspice.out' 2> '$(@D)/rc_spice2aspice.err' && \
-	mv -f '$@.tmp' '$@'; \
-	else rm -f '$@' && touch '$@'; fi; \
+	  mv -f '$@.tmp' '$@' && \
 	task=rc_spice2aspice && $(CASTFILES_DEQUEUE_TASK)
 endif # "$(NOEXTRACTDEPS)" ne "1" 36 lines back
 # note depends on the extracted directory for the results
 $(ROOT_TARGET_DIR)/%/accurate/cell.aspice: $(ROOT_TARGET_DIR)/%/extracted/cell.spice \
 	$(ROOT_TARGET_DIR)/%/extracted/cdl.aliases
 	if [[ ( -n "$(call LVE_SKIP,extract)" ) && ( -e '$@' ) ]] ; then exit; fi; \
-	if [ -s '$<' ] ; then \
 	task=rc_spice2aspice && $(CASTFILES_ENQUEUE_TASK) && \
 	QB_DIAG_FILE='$@.spice2aspice.diag' QB_RUN_NAME='lve_spice2aspice' \
 	  $(EXEC_PACKAGE) $(SPICE2ASPICE) \
@@ -380,13 +379,12 @@ $(ROOT_TARGET_DIR)/%/accurate/cell.aspice: $(ROOT_TARGET_DIR)/%/extracted/cell.s
 	  --alias-file '$(@D)/cdl.aliases' \
 	  $(SPICE2ASPICE_OPTS) '$<' '$@.tmp' \
 	  1> '$(@D)/rc_spice2aspice.out' 2> '$(@D)/rc_spice2aspice.err' && \
-	mv -f '$@.tmp' '$@'; \
-	else rm -f '$@' && touch '$@'; fi; \
+	  mv -f '$@.tmp' '$@' && \
 	task=rc_spice2aspice && $(CASTFILES_DEQUEUE_TASK)
 
 else # "$(GRAYBOX_MODE)" eq "" 80 lines back
 
-$(ROOT_TARGET_DIR)/%/extracted/cell.spice: $(ROOT_TARGET_DIR)/%/extracted/cell.spice_topcell
+$(ROOT_TARGET_DIR)/%/extracted/cell.spice: $(ROOT_TARGET_DIR)/%/extracted/cell.spice_gds2
 	if [[ ( -n "$(call LVE_SKIP,extract)" ) && ( -e '$@' ) ]] ; then exit; fi; \
 	task=renamer && $(CASTFILES_ENQUEUE_TASK) && \
 	QB_DIAG_FILE='$@.renamer.diag' QB_RUN_NAME='lve_gds2spice' \
@@ -394,6 +392,8 @@ $(ROOT_TARGET_DIR)/%/extracted/cell.spice: $(ROOT_TARGET_DIR)/%/extracted/cell.s
 	  --source-cdl-file='$<' \
 	  --name-in=gds2 \
 	  --name-out=cast \
+	  --extension-in=.spice_gds2 \
+	  --extension-out=.spice \
 	  --translated-cdl='$@' \
 	task=renamer && $(CASTFILES_DEQUEUE_TASK)
 
@@ -401,7 +401,6 @@ ifneq ("$(NOEXTRACTDEPS)", "1")
 $(ROOT_TARGET_DIR)/%/extracted/cell.aspice: $(ROOT_TARGET_DIR)/%/extracted/cell.spice \
 	$(ROOT_TARGET_DIR)/%/extracted/cdl.aliases
 	if [[ ( -n "$(call LVE_SKIP,extract)" ) && ( -e '$@' ) ]] ; then exit; fi; \
-	if [ -s '$<' ] ; then \
 	task=rc_spice2aspice && $(CASTFILES_ENQUEUE_TASK) && \
 	QB_DIAG_FILE='$@.spice2aspice.diag' QB_RUN_NAME='lve_spice2aspice' \
 	  $(EXEC_PACKAGE) $(SPICE2ASPICE) \
@@ -413,16 +412,12 @@ $(ROOT_TARGET_DIR)/%/extracted/cell.aspice: $(ROOT_TARGET_DIR)/%/extracted/cell.
 	  --alias-file '$(@D)/cdl.aliases' \
 	  $(SPICE2ASPICE_OPTS) '$<' '$@.tmp' \
 	  1> '$(@D)/rc_spice2aspice.out' 2> '$(@D)/rc_spice2aspice.err' && \
-	  touch '$(<D)/cell.spice_include' && \
-	  sed -e '/^\*/d' -e 's:$(ROOT_TARGET_DIR)/::' -e 's/^.inc[^ ]*/.include/i' -e "s/'/"\""/g" -e 's/\.spice_gds2/.aspice/' '$(<D)/cell.spice_include' > '$@' && \
-	  cat '$@.tmp' >> '$@' && rm -f '$@.tmp'; \
-	else rm -f '$@' && touch '$@'; fi; \
+	  mv -f '$@.tmp' '$@' && \
 	task=rc_spice2aspice && $(CASTFILES_DEQUEUE_TASK)
 
 $(ROOT_TARGET_DIR)/%/totem/cell.aspice: $(ROOT_TARGET_DIR)/%/totem/cell.spice \
 	$(ROOT_TARGET_DIR)/%/totem/cdl.aliases
 	if [[ ( -n "$(call LVE_SKIP,extract)" ) && ( -e '$@' ) ]] ; then exit; fi; \
-	if [ -s '$<' ] ; then \
 	task=rc_spice2aspice && $(CASTFILES_ENQUEUE_TASK) && \
 	QB_DIAG_FILE='$@.spice2aspice.diag' QB_RUN_NAME='lve_spice2aspice' \
 	  $(EXEC_PACKAGE) $(SPICE2ASPICE) \
@@ -434,17 +429,13 @@ $(ROOT_TARGET_DIR)/%/totem/cell.aspice: $(ROOT_TARGET_DIR)/%/totem/cell.spice \
 	  --alias-file '$(@D)/cdl.aliases' \
 	  $(SPICE2ASPICE_OPTS) '$<' '$@.tmp' \
 	  1> '$(@D)/rc_spice2aspice.out' 2> '$(@D)/rc_spice2aspice.err' && \
-	  touch '$(<D)/cell.spice_include' && \
-	  sed -e '/^\*/d' -e 's:$(ROOT_TARGET_DIR)/::' -e 's/^.inc[^ ]*/.include/i' -e "s/'/"\""/g" -e 's/\.spice_gds2/.aspice/' '$(<D)/cell.spice_include' > '$@' && \
-	  cat '$@.tmp' >> '$@' && rm -f '$@.tmp'; \
-	else rm -f '$@' && touch '$@'; fi; \
+	  mv -f '$@.tmp' '$@' && \
 	task=rc_spice2aspice && $(CASTFILES_DEQUEUE_TASK)
 endif # "$(NOEXTRACTDEPS)" ne "1" 40 lines back
 
 $(ROOT_TARGET_DIR)/%/accurate/cell.aspice: $(ROOT_TARGET_DIR)/%/extracted/cell.spice \
 	$(ROOT_TARGET_DIR)/%/extracted/cdl.aliases
 	if [[ ( -n "$(call LVE_SKIP,extract)" ) && ( -e '$@' ) ]] ; then exit; fi; \
-	if [ -s '$<' ] ; then \
 	task=rc_spice2aspice && $(CASTFILES_ENQUEUE_TASK) && \
 	QB_DIAG_FILE='$@.spice2aspice.diag' QB_RUN_NAME='lve_spice2aspice' \
 	  $(EXEC_PACKAGE) $(SPICE2ASPICE) \
@@ -457,10 +448,7 @@ $(ROOT_TARGET_DIR)/%/accurate/cell.aspice: $(ROOT_TARGET_DIR)/%/extracted/cell.s
 	  --alias-file '$(@D)/cdl.aliases' \
 	  $(SPICE2ASPICE_OPTS) '$<' '$@.tmp' \
 	  1> '$(@D)/rc_spice2aspice.out' 2> '$(@D)/rc_spice2aspice.err' && \
-	  touch '$(<D)/cell.spice_include' && \
-	  sed -e '/^\*/d' -e 's:$(ROOT_TARGET_DIR)/::' -e 's/extracted/accurate/' -e 's/^.inc[^ ]*/.include/i' -e "s/'/"\""/g" -e 's/\.spice_gds2/.aspice/' '$(<D)/cell.spice_include' > '$@' && \
-	  cat '$@.tmp' >> '$@' && rm -f '$@.tmp'; \
-	else rm -f '$@' && touch '$@'; fi; \
+	  mv -f '$@.tmp' '$@' && \
 	task=rc_spice2aspice && $(CASTFILES_DEQUEUE_TASK)
 
 endif # "$(GRAYBOX_MODE)" eq "" 156 lines back
@@ -471,7 +459,6 @@ $(ROOT_TARGET_DIR)/%/accurate/cell.aspice: $(ROOT_TARGET_DIR)/%/extracted/cell.s
 	$(ROOT_TARGET_DIR)/%/extracted/cdl.aliases
 	#TASK=rc_spice2aspice MODE=accurate CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	if [[ ( -n "$(call LVE_SKIP,extract)" ) && ( -e '$@' ) ]] ; then exit; fi; \
-	if [ -s '$<' ] ; then \
 	task=rc_spice2aspice && $(CASTFILES_ENQUEUE_TASK) && \
 	QB_DIAG_FILE='$@.spice2aspice.diag' QB_RUN_NAME='lve_spice2aspice' \
 	  $(EXEC_PACKAGE) $(SPICE2ASPICE) \
@@ -484,16 +471,13 @@ $(ROOT_TARGET_DIR)/%/accurate/cell.aspice: $(ROOT_TARGET_DIR)/%/extracted/cell.s
 	  --alias-file '$(@D)/cdl.aliases' \
 	  $(SPICE2ASPICE_OPTS) '$<' '$@.tmp' \
 	  1> '$(@D)/rc_spice2aspice.out' 2> '$(@D)/rc_spice2aspice.err' && \
-	mv -f '$@.tmp' '$@'; \
-	else rm -f '$@' && touch '$@'; fi; \
+	  mv -f '$@.tmp' '$@' && \
 	task=rc_spice2aspice && $(CASTFILES_DEQUEUE_TASK)
 else # "$(GRAYBOX_MODE)" eq ""
 $(ROOT_TARGET_DIR)/%/accurate/cell.aspice: $(ROOT_TARGET_DIR)/%/extracted/cell.spice \
-	$(ROOT_TARGET_DIR)/%/extracted/cdl.aliases \
-	$(ROOT_TARGET_DIR)/%/extracted/cell.spice_include
+	$(ROOT_TARGET_DIR)/%/extracted/cdl.aliases
 	#TASK=rc_spice2aspice MODE=accurate CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	if [[ ( -n "$(call LVE_SKIP,extract)" ) && ( -e '$@' ) ]] ; then exit; fi; \
-	if [ -s '$<' ] ; then \
 	task=rc_spice2aspice && $(CASTFILES_ENQUEUE_TASK) && \
 	QB_DIAG_FILE='$@.spice2aspice.diag' QB_RUN_NAME='lve_spice2aspice' \
 	  $(EXEC_PACKAGE) $(SPICE2ASPICE) \
@@ -506,9 +490,7 @@ $(ROOT_TARGET_DIR)/%/accurate/cell.aspice: $(ROOT_TARGET_DIR)/%/extracted/cell.s
 	  --alias-file '$(@D)/cdl.aliases' \
 	  $(SPICE2ASPICE_OPTS) '$<' '$@.tmp' \
 	  1> '$(@D)/rc_spice2aspice.out' 2> '$(@D)/rc_spice2aspice.err' && \
-	sed -e '/^\*/d' -e 's:$(ROOT_TARGET_DIR)/::' -e 's/extracted/accurate/' -e 's:$(ROOT_SLURP_DIR)/::' -e 's/^.inc[^ ]*/.include/i' -e "s/'/"\""/g" -e 's/\.spice_gds2/.aspice/' '$(<D)/cell.spice_include' > '$@' && \
-	cat '$@.tmp' >> '$@' && rm -f '$@.tmp'; \
-	else rm -f '$@' && touch '$@'; fi; \
+	  mv -f '$@.tmp' '$@' && \
 	task=rc_spice2aspice && $(CASTFILES_DEQUEUE_TASK)
 endif # "$(GRAYBOX_MODE)" eq "" 41 lines back
 
@@ -516,7 +498,6 @@ endif # "$(GRAYBOX_MODE)" eq "" 41 lines back
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/cell.aspice
 $(ROOT_TARGET_DIR)/%/cell.aspice: $(ROOT_TARGET_DIR)/%/cell.spice $$(call GET_CELL_DIR,$$(@D))/cell.cdl
 	if [[ ( -n "$(call LVE_SKIP,extract)" ) && ( -e '$@' ) ]] ; then exit; fi; \
-	if [ -s '$<' ] ; then \
 	task=rc_spice2aspice && $(CASTFILES_ENQUEUE_TASK) && \
 	QB_DIAG_FILE='$@.diag' QB_RUN_NAME='lve_spice2aspice' \
 	  $(EXEC_PACKAGE) $(SPICE2ASPICE) \
@@ -527,10 +508,7 @@ $(ROOT_TARGET_DIR)/%/cell.aspice: $(ROOT_TARGET_DIR)/%/cell.spice $$(call GET_CE
 	  --estimated \
 	  $(SPICE2ASPICE_OPTS) '$<' '$@.tmp' \
 	  1> '$(@D)/rc_spice2aspice.out' 2> '$(@D)/rc_spice2aspice.err' && \
-	  touch '$(@D)/cell.spice_include' && \
-	  sed -e '/^\*/d' -e 's:$(ROOT_TARGET_DIR)/::' -e 's/^.inc[^ ]*/.include/i' -e "s/'/"\""/g" -e 's/\.spice\(_gds2\)\?/.aspice/' '$(@D)/cell.spice_include' > '$@' && \
-	  cat '$@.tmp' >> '$@' && rm -f '$@.tmp'; \
-	else rm -f '$@' && touch '$@'; fi; \
+	  mv -f '$@.tmp' '$@' && \
 	task=rc_spice2aspice && $(CASTFILES_DEQUEUE_TASK)
 
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/cell.gds2_bias
@@ -952,14 +930,12 @@ $(ROOT_TARGET_DIR)/%/nogeometry/extract.result: \
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/custom/cell.spice
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/custom/extract.result
 $(ROOT_TARGET_DIR)/%/custom/cell.spice \
-$(ROOT_TARGET_DIR)/%/custom/cell.spice_include \
 $(ROOT_TARGET_DIR)/%/custom/extract.result: $(CUSTOM_SPICE)
 	#TASK=extract VIEW=$(call GET_VIEW,$(@D)) MODE=custom CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	mkdir -p '$(@D)'
 	if [[ ( -n "$(call LVE_SKIP,extract)" ) && ( -e '$@' ) ]] ; then exit; fi; \
 	task=extract && $(CASTFILES_ENQUEUE_TASK) && \
 	cp '$(CUSTOM_SPICE)' '$(@D)/cell.spice' && \
-	cp '$(CUSTOM_SPICE_INCLUDE)' '$(@D)/cell.spice_include' && \
 	echo PASS > '$(@D)/extract.result' || \
 	echo FAIL > '$(@D)/extract.result'; \
 	task=extract && $(CASTFILES_DEQUEUE_TASK)
@@ -1008,7 +984,6 @@ EXTRACT_COMMON_OPTIONS=--64bit=$(BIT64) \
 	--ccp=$(CCP) \
 	--cdl-cell-name="$$cell" \
 	--cdl-file='$(call GET_VIEW_DIR,$(@D))/cell.cdl_gds2' \
-	--dfII-dir='$(DFII_DIR)' \
 	--extract-corner='$(call GET_EXTRACT_CORNER,$(@D))' \
 	--extract-power=$(EXTRACTPOWER) \
 	--extracted-view='$(EXTRACTED_VIEW)' \
@@ -1105,10 +1080,8 @@ $(ROOT_TARGET_DIR)/%/extracted/spef.err: \
 ifeq ("$(GRAYBOX_MODE)", "")
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/accurate/extract.err
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/accurate/cell.spice_gds2
-.PRECIOUS: $(ROOT_TARGET_DIR)/%/accurate/cell.spice_topcell
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/extracted/extract.err
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/extracted/cell.spice_gds2
-.PRECIOUS: $(ROOT_TARGET_DIR)/%/extracted/cell.spice_topcell
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/totem/extract.err
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/totem/cell.spice_gds2
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/totem/cell.spf
@@ -1215,10 +1188,6 @@ $(ROOT_TARGET_DIR)/%/extracted/extract.err: \
 		grep "\<Error" "$(@D)/extract.err" >&2 ; \
 		rm -f "$(@D)/cell.spice_gds2"; touch "$(@D)/cell.spice_gds2"; \
 	fi; \
-	mkdir -p "$(ROOT_TARGET_DIR)/spicelib"; \
-	QRSH_FLAGS="$(PACKAGE_LOW_FLAGS) $(EXTRACT_FLAGS)" \
-	  QB_DIAG_FILE='$(@D)/cell.include.diag' QB_RUN_NAME='lve_geninc' \
-	  $(QB) $(SPICE_REDUCE) --infile="$(@D)/cell.spice_gds2" --outfile="$(ROOT_TARGET_DIR)/spicelib/$(call GET_GDS2_CDL_NAME,$(@D)).inc"; \
 	task=extract && $(CASTFILES_DEQUEUE_TASK) ;\
 	st=$$status; \
 	exit $$st
@@ -1230,11 +1199,8 @@ else # "$(GRAYBOX_MODE)" eq "" 262 lines back
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/extracted/extract.err
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/accurate/extract.err
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/accurate/cell.spice_gds2
-.PRECIOUS: $(ROOT_TARGET_DIR)/%/accurate/cell.spice_topcell
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/extracted/cell.spice_gds2
-.PRECIOUS: $(ROOT_TARGET_DIR)/%/extracted/cell.spice_topcell
 $(ROOT_TARGET_DIR)/%/extracted/cell.spice_gds2 \
-$(ROOT_TARGET_DIR)/%/extracted/cell.spice_topcell \
 $(ROOT_TARGET_DIR)/%/extracted/extract.err: \
         $$(call GET_VIEW_DIR,$$(@D))/cell.gds2 \
         $$(call GET_VIEW_DIR,$$(@D))/cell.cdl_gds2 \
@@ -1381,11 +1347,7 @@ $(ROOT_TARGET_DIR)/%/extracted/extract.err: \
 		grep "\<Error" "$(@D)/extract.err" >&2 ; \
 		rm -f "$(@D)/cell.spice_gds2"; touch "$(@D)/cell.spice_gds2"; \
 	fi; \
-	mkdir -p "$(ROOT_TARGET_DIR)/spicelib"; \
-	QRSH_FLAGS="$(PACKAGE_LOW_FLAGS) $(EXTRACT_FLAGS)" \
-	  QB_DIAG_FILE='$(@D)/cell.include.diag' QB_RUN_NAME='lvegeninc' \
-	  $(QB) $(SPICE_REDUCE) --infile="$(@D)/cell.spice_topcell" --outfile="$(ROOT_TARGET_DIR)/spicelib/$(call GET_GDS2_CDL_NAME,$(@D)).inc"; \
-	task=extract && $(CASTFILES_DEQUEUE_TASK) && \
+	task=extract && $(CASTFILES_DEQUEUE_TASK) ;\
 	st=$$status; \
 	exit $$st
 
@@ -1451,9 +1413,8 @@ $(ROOT_TARGET_DIR)/%/totem/extract.err $(ROOT_TARGET_DIR)/%/totem/cell.spf: \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
 	  --task='stage2c' \
-	   '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/extract.err' && \
-	  rm -f "$(@D)/cell.spice_gds2.tmp" "$(@D)/cell.spice_gds2" "$(@D)/cell.spice_topcell"; \
-	$(SPICE_REDUCE) --mode=totem \
+	   '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/extract.err' \
+	&& $(SPICE_REDUCE) --mode=totem \
 	  --infile="$$extract_dir/starRC/cell.spf" \
 	  --outfile='$(@D)/cell.spf'; \
 	cp "$$extract_dir/starRC/cell.placement_info" '$(@D)/cell.placement_info' ; \
@@ -1461,7 +1422,6 @@ $(ROOT_TARGET_DIR)/%/totem/extract.err $(ROOT_TARGET_DIR)/%/totem/cell.spf: \
 	if ( grep -q "\<Error" "$(@D)/extract.err" ) ; then \
 		grep "\<Error" "$(@D)/extract.err" >&2 ; \
 	fi; \
-	mkdir -p "$(ROOT_TARGET_DIR)/spicelib"; \
 	task=extract && $(CASTFILES_DEQUEUE_TASK) ;\
 	st=$$status; \
 	exit $$st
@@ -1536,6 +1496,8 @@ $(ROOT_TARGET_DIR)/%/estimated/cell.spice_gds2: $(ROOT_TARGET_DIR)/%/estimated/c
 	  --source-cdl-file='$<' \
 	  --name-in=cast \
 	  --name-out=gds2 \
+	  --extension-in=.spice \
+	  --extension-out=.spice_gds2 \
 	  --translated-cdl='$@'; \
 	$(CASTFILES_DEQUEUE_TASK)
 
@@ -1548,26 +1510,16 @@ $(ROOT_TARGET_DIR)/%/nogeometry/cell.spice_gds2: $(ROOT_TARGET_DIR)/%/nogeometry
 	  --source-cdl-file='$<' \
 	  --name-in=cast \
 	  --name-out=gds2 \
+	  --extension-in=.spice \
+	  --extension-out=.spice_gds2 \
 	  --translated-cdl='$@'
 	$(CASTFILES_DEQUEUE_TASK)
 
-# post-process spice file
-.PRECIOUS: $(ROOT_TARGET_DIR)/%/cell.spice_rename
-$(ROOT_TARGET_DIR)/%/cell.spice_rename: $(ROOT_TARGET_DIR)/%/cell.spice_gds2
+# post-process spice file to add probes
+.PRECIOUS: $(ROOT_TARGET_DIR)/%/cell.hspice
+$(ROOT_TARGET_DIR)/%/cell.hspice: $(ROOT_TARGET_DIR)/%/cell.spice_gds2
 	#TASK=spice2spice CELL=$(call GET_CAST_FULL_NAME,$(@D))
-	mkdir -p '$(@D)'
-	if [ -s '$(@D)/cell.spice_topcell' ]; then \
-	   $(SPICE2SPICE) --top='$(call GET_GDS2_CDL_NAME,$(@D))' "$(@D)/cell.spice_topcell" "$@"; \
-	else \
-	   $(SPICE2SPICE) --top='$(call GET_GDS2_CDL_NAME,$(@D))' "$?" "$@" ;\
-	fi
-
-# delete resistor size info for hsim
-.PRECIOUS: $(ROOT_TARGET_DIR)/%/cell.spice_hsim
-$(ROOT_TARGET_DIR)/%/cell.spice_hsim: $(ROOT_TARGET_DIR)/%/cell.spice_rename
-	#TASK=spice_reduce CELL=$(call GET_CAST_FULL_NAME,$(@D))
-	mkdir -p '$(@D)'
-	$(SPICE_REDUCE) --infile="$?" --outfile="$@"
+	$(SPICE2SPICE) --top='$(call GET_GDS2_CDL_NAME,$(@D))' "$?" "$@" ;\
 
 # summarize starRC extract results
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/extracted/extract.result
@@ -1576,7 +1528,7 @@ $(ROOT_TARGET_DIR)/%/cell.spice_hsim: $(ROOT_TARGET_DIR)/%/cell.spice_rename
 $(ROOT_TARGET_DIR)/%/extracted/extract.result: \
 				$$(call GET_DF2D,$$(@D)) \
 				$(ROOT_TARGET_DIR)/%/extracted/extract.err \
-				$(ROOT_TARGET_DIR)/%/extracted/cell.aspice
+				$(ROOT_TARGET_DIR)/%/extracted/cell.hspice
 	if (grep -q "NVN FAILED" '$(word 2,$^)') ; then \
 		echo FAIL > '$@'; \
 	elif [[ ! ( -s '$(word 3,$^)' ) ]] ; then \
@@ -1608,7 +1560,7 @@ $(ROOT_TARGET_DIR)/%/nanotime/extract.result: \
 $(ROOT_TARGET_DIR)/%/accurate/extract.result: \
 				$$(call GET_DF2D,$$(@D)) \
 				$(ROOT_TARGET_DIR)/%/extracted/extract.err \
-				$(ROOT_TARGET_DIR)/%/accurate/cell.aspice
+				$(ROOT_TARGET_DIR)/%/extracted/cell.hspice
 	if (grep -q "NVN FAILED" '$(word 2,$^)') ; then \
 		echo FAIL > '$@'; \
 	elif [[ ! ( -s '$(word 3,$^)' ) ]] ; then \
@@ -1872,7 +1824,8 @@ $(ROOT_TARGET_DIR)/%/nanotime/extract.raw: $(ROOT_TARGET_DIR)/%/nanotime/extract
 	touch '$@'
 
 $(ROOT_TARGET_DIR)/%/extract.raw: $(ROOT_TARGET_DIR)/%/extract.result \
-	                          $(ROOT_TARGET_DIR)/%/cell.aspice
+				  $(ROOT_TARGET_DIR)/%/cell.aspice \
+				  $(ROOT_TARGET_DIR)/%/cell.hspice
 	#TASK=extract_raw MODE=$(call GET_EXTRACT_MODE,$(@D)) VIEW=$(call GET_VIEW,$(@D)) CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	$(RAWIFY) --use-db=$(USEDB) --task=extract --root='$(ROOT_TARGET_DIR)' --dir='$(@D)' --cell="$(call GET_CAST_FULL_NAME,$(@D))"
 

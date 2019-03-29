@@ -69,7 +69,6 @@ sub usage() {
     $usage .= "    --maxF=value (default 1e12)\n";
     $usage .= "    --fulcrum-pdk-root=<path name> default()\n\n";
     $usage .= "    --flat (do flat extract, not really used)\n";
-    $usage .= "    --dfII-dir=value (the dfII dir, used to find if subcells exist)\n";
     $usage .= "    HERCULES OPTIONS\n";
     $usage .= "    --fixbulk (extract ignorning missing well plugs\n";
     $usage .= "    ICV OPTIONS\n";
@@ -138,25 +137,22 @@ my $task;
 my $graycell_list="";
 my $blackbox=0;
 my $fixbulk=0;
-my $doflat=0;
 my $extractReduce="NO_EXTRA_LOOPS";
 my $genspef=0;
 my $merge_paths=0;
-my $dfIIdir;
 my $threads=2;
 my $nt_mode=0;
 my $totem_mode=0;
 my $instancePort='CONDUCTIVE';
 my $nodeprops;
 my $ccp=0;
+my $grayboxFile="cell.spice_gds2";
 
 while (defined $ARGV[0] and $ARGV[0] =~ /^--(.*)/) {
     my ($flag, $value) = split("=",$1);
     $value=1 if ! defined $value;
     if ($flag eq "fixbulk") {
             $fixbulk = $value;
-    } elsif ($flag eq "flat") {
-            $doflat = $value;
     } elsif ($flag eq "working-dir") {
             $working_dir = $value;
     } elsif ($flag eq "root-target-dir") {
@@ -221,8 +217,6 @@ while (defined $ARGV[0] and $ARGV[0] =~ /^--(.*)/) {
         $extractReduce = $value;
     } elsif ($flag eq "spef") {
         $genspef = $value;
-    } elsif ($flag eq "dfII-dir") {
-        $dfIIdir = $value;
     } elsif ($flag eq "threads") {
         $threads = $value;
     } elsif ($flag eq "extra-extract-equiv") {
@@ -803,195 +797,142 @@ sub reformat_spice {
     my $next_line="";
     my %layer;
     while ($line) {
-      $next_line = <SOURCE>;
-
-      #Read in Layer Map
-      if( $line=~/^\*LAYER_MAP/ ){
-        $line= $next_line;
-        while($line=~/^\s+$/ or $line=~/^\*([\d]+)\s+([0-9a-zA-Z_]+)\s*$/){
-          if($line !~/^\s+$/){$layer{$1}="\U$2";}
-          $line= <SOURCE>;
-        }
         $next_line = <SOURCE>;
-      }
-
-
-      $line=~ s/@/_D_/g;
-      $line=~ s/\\M/_U_M/g;
-      $line=~ s/\\/@/g;
-      if ($line =~ /^X/i) {
-          # concatenate any continued lines
-          while (defined $next_line and $next_line =~ s/^\+/ /) {
-            chomp $line;
-            $line .= $next_line;
-            $next_line = <SOURCE>;
-          }
-          $line =~s/\n\+/ /g; $line=~s/\s\// /g; $line=~s/\s+/ /g;
-          my ($oldName, $temp)=split(/ /,$line, 2);
-          $oldName=~s/^X//;
-          my $newName=convertInstName( $oldName );
-          my @pin_list=split(/ /, $temp);
-          my $cellName=$pin_list[$#pin_list];
-          $cellName = $reversegraylist{$cellName} if defined ($reversegraylist{$cellName});
-          print TARGET "X$newName\n";
-          for(my $k=0; $k<$#pin_list; $k++){
-            if($pin_list[$k]=~/^$oldName/ && $pin_list[$k]!~/^${oldName}_D_/){
-              $pin_list[$k]=~s/$oldName//;
-              $pin_list[$k]=substr($pin_list[$k], 1, length($pin_list[$k])-1);
-              $pin_list[$k]="${newName}_D_$pin_list[$k]";
-            } else {
-              $pin_list[$k]=convertNetName($pin_list[$k]);
+        
+        # Read in Layer Map
+        if ($line=~/^\*LAYER_MAP/ ){
+            $line= $next_line;
+            while ($line=~/^\s+$/ or $line=~/^\*([\d]+)\s+([0-9a-zA-Z_]+)\s*/){
+                if ($line !~/^\s+$/) { $layer{$1}=lc($2); }
+                $line= <SOURCE>;
             }
-            print TARGET "+$pin_list[$k]\n";
-          }
-          print TARGET "+$cellName\n";
-      }
-      elsif ($line =~ /^M/i) {
-          # concatenate any continued lines
-          while (defined $next_line and $next_line =~ s/^\+/ /) {
-            chomp $line;
-            $line .= $next_line;
             $next_line = <SOURCE>;
-          }
-          $line =~s/\n\+/ /g; $line=~s/\s+/ /g;
+        }
 
-        # process transistor
-          my @fields = split(' ',$line, 7);
-          my $name =$fields[0];
-          my $term1=$fields[1];
-          my $term2=$fields[2];
-          my $term3=$fields[3];
-          my $term4=$fields[4];
-          my $type =$fields[5];
-          my $rest =$fields[6];
-          $name=~s/^M//;
-          if ($fixbulk) {
-              if ($type =~ /^n/) {
-                $term4="$GND";
-              }
-              if ($type =~ /^p/) {
-                $term4="$Vdd";
-              }
-          }
-          $term1 =~ /^\S+/ or print STDERR "Transistor has no terminals\n";
-          $term2 =~ /^\S+/ or print STDERR "Transistor has only one terminal\n";
-          $term3 =~ /^\S+/ or print STDERR "Transistor has only two terminals\n";
-          $term4 =~ /^\S+/ or print STDERR "Transsitor has only three terminal\n";
-          $name = convertInstName( $name );
-          $term1 = convertNetName( $term1 );
-          $term2 = convertNetName( $term2 );
-          $term3 = convertNetName( $term3 );
-          $term4 = convertNetName( $term4 );
-          print TARGET "M$name $term1 $term2 $term3 $term4 $type $rest\n";
-      }
-      elsif ($line =~ /^D/i) {
-          # concatenate any continued lines
-          while (defined $next_line and $next_line =~ s/^\+/ /) {
+        $line=~ s/@/_D_/g;
+        $line=~ s/\\M/_U_M/g;
+        $line=~ s/\\/@/g;
+        
+        # concatenate continued lines
+        while (defined $next_line and $next_line =~ /^\+\s*(.*)$/) {
             chomp $line;
-            $line .= $next_line;
+            $line = "$line $1";
             $next_line = <SOURCE>;
-          }
-          $line =~s/\n\+/ /g; $line=~s/\s+/ /g;
+        }
+        chomp($line);
 
-        # process diode
-          my @fields = split(' ',$line, 5);
-          my $name=$fields[0];
-          my $term1=$fields[1];
-          my $term2=$fields[2];
-          my $device=$fields[3];
-          my $rest=$fields[4];
-          $name=~s/^D//;
-          $term1 =~ /^\S+/ or print STDERR "Diode has no terminals\n";
-          $term2 =~ /^\S+/ or print STDERR "Diode has only one terminal\n";
-          $device =~ /^\S+/ or print STDERR "Diode has no name\n";
-          $name = convertInstName( $name );
-          $term1 = convertNetName( $term1 );
-          $term2 = convertNetName( $term2 );
-          # in lieu of changing bind.rul file, and so spice will work
-          # this really should be a rule in the PDK or in STARRC
-          $device = $bind->{$device} if defined $bind->{$device};
-          print TARGET "D$name $term1 $term2 $device $rest\n";
-      }
-      elsif ($line =~ /^C/i) {
-          # concatenate any continued lines
-          while (defined $next_line and $next_line =~ s/^\+/ /) {
-            chomp $line;
-            $line .= $next_line;
-            $next_line = <SOURCE>;
-          }
-          $line =~s/\n\+/ /g; $line=~s/\s+/ /g;
-
-        # process capacitor
-          my @fields = split(' ',$line, 4);
-          my $name=$fields[0];
-          my $term1=$fields[1];
-          my $term2=$fields[2];
-          my $rest=$fields[3];
-          $term1 =~ /^\S+/ or print STDERR "Capacitor has no terminals\n";
-          $term2 =~ /^\S+/ or print STDERR "Capacitor has only one terminal\n";
-          $term1 = convertNetName( $term1 );
-          $term2 = convertNetName( $term2 );
-          print TARGET "$name $term1 $term2 $rest\n";
-      }
-      elsif ($line =~ /^R/i) {
-
-          # concatenate any continued lines
-          while (defined $next_line and $next_line =~ s/^\+/ /) {
-            chomp $line;
-            $line .= $next_line;
-            $next_line = <SOURCE>;
-          }
-          $line =~s/\n\+/ /g; $line=~s/\s+/ /g;
-
-        # process resistor
-          my @fields = split(' ',$line);
-          my $name=$fields[0];
-          my $term1=$fields[1];
-          my $term2=$fields[2];
-          $term1 =~ /^\S+/ or print STDERR "Resistor has no terminals\n";
-          $term2 =~ /^\S+/ or print STDERR "Resistor has only one terminal\n";
-          $term1 = convertNetName( $term1 );
-          $term2 = convertNetName( $term2 );
-          my $res=sprintf("%f", $fields[3]);
-          # NOTE: temperature corrections assume that STARRC extracts
-          # at 90C
-          if( $#fields >= 5){
-            my ($foo, $length)= split('=', $fields[4]);
-            if($foo =~ /\$a/){
-              my ($foo, $layerNum)= split('=', $fields[5]);
-              print TARGET "$name $term1 $term2 $layer{$layerNum} $res A=$length W=0.001\n";
-            } else {
-              my ($foo1, $width)= split('=', $fields[5]);
-              my ($foo2, $layerNum)= split('=', $fields[6]);
-              print TARGET "$name $term1 $term2 $layer{$layerNum} $res L=$length W=$width\n";
+        if ($line =~ /^X/i) {
+            my ($oldName, $temp)=split(/ /,$line, 2);
+            $oldName=~s/^X//;
+            my $newName=convertInstName( $oldName );
+            my @pin_list=split(/ /, $temp);
+            my $cellName=$pin_list[$#pin_list];
+            $cellName = $reversegraylist{$cellName} if defined ($reversegraylist{$cellName});
+            print TARGET "X$newName\n";
+            for(my $k=0; $k<$#pin_list; $k++){
+                if($pin_list[$k]=~/^$oldName/ && $pin_list[$k]!~/^${oldName}_D_/){
+                    $pin_list[$k]=~s/$oldName//;
+                    $pin_list[$k]=substr($pin_list[$k], 1, length($pin_list[$k])-1);
+                    $pin_list[$k]="${newName}_D_$pin_list[$k]";
+                } else {
+                    $pin_list[$k]=convertNetName($pin_list[$k]);
+                }
+                print TARGET "+$pin_list[$k]\n";
             }
-          } else {
-            my $term1x = $term1;
-            $term1x =~ s/:.*//;
-            my $term2x = $term2;
-            $term2x =~ s/:.*//;
-            print TARGET "$name $term1 $term2 $res";
-            if ($term1x ne $term2x) {
-                my ($a,$dev)=split(/=/, $fields[4]);
-                $dev = $bind->{$dev} if defined $bind->{$dev};
-                $fields[4] = "$a=$dev";
-                print TARGET " $fields[4]" if $term1x ne $term2x;
+            print TARGET "+$cellName\n";
+        }
+        elsif ($line =~ /^M/i) {
+            # process transistor
+            my @fields = split(' ',$line, 7);
+            my $name =$fields[0];
+            my $term1=$fields[1];
+            my $term2=$fields[2];
+            my $term3=$fields[3];
+            my $term4=$fields[4];
+            my $type =$fields[5];
+            my $rest =$fields[6];
+            $name=~s/^M//;
+            if ($fixbulk) {
+                if ($type =~ /^n/) {
+                    $term4="$GND";
+                }
+                if ($type =~ /^p/) {
+                    $term4="$Vdd";
+                }
             }
-            print TARGET "\n";
-          }
-      } elsif ($line !~ /^\*/) {
-
-        # pass through non-resistor lines
-        $line =~ s/$topcell/$cell_name/ if $longcellnametop;
-        print TARGET $line;
-      }
-      $line = $next_line;
+            $term1 =~ /^\S+/ or print STDERR "Transistor has no terminals\n";
+            $term2 =~ /^\S+/ or print STDERR "Transistor has only one terminal\n";
+            $term3 =~ /^\S+/ or print STDERR "Transistor has only two terminals\n";
+            $term4 =~ /^\S+/ or print STDERR "Transsitor has only three terminal\n";
+            $name = convertInstName( $name );
+            $term1 = convertNetName( $term1 );
+            $term2 = convertNetName( $term2 );
+            $term3 = convertNetName( $term3 );
+            $term4 = convertNetName( $term4 );
+            print TARGET "M$name $term1 $term2 $term3 $term4 $type $rest\n";
+        }
+        elsif ($line =~ /^D/i) {
+            # process diode
+            my @fields = split(' ',$line, 5);
+            my $name=$fields[0];
+            my $term1=$fields[1];
+            my $term2=$fields[2];
+            my $device=$fields[3];
+            my $rest=$fields[4];
+            $name=~s/^D//;
+            $term1 =~ /^\S+/ or print STDERR "Diode has no terminals\n";
+            $term2 =~ /^\S+/ or print STDERR "Diode has only one terminal\n";
+            $device =~ /^\S+/ or print STDERR "Diode has no name\n";
+            $name = convertInstName( $name );
+            $term1 = convertNetName( $term1 );
+            $term2 = convertNetName( $term2 );
+            # in lieu of changing bind.rul file, and so spice will work
+            # this really should be a rule in the PDK or in STARRC
+            $device = $bind->{$device} if defined $bind->{$device};
+            print TARGET "D$name $term1 $term2 $device $rest\n";
+        }
+        elsif ($line =~ /^C/i) {
+            # process capacitor
+            my @fields = split(' ',$line, 4);
+            my $name=$fields[0];
+            my $term1=$fields[1];
+            my $term2=$fields[2];
+            my $rest=$fields[3];
+            $term1 =~ /^\S+/ or print STDERR "Capacitor has no terminals\n";
+            $term2 =~ /^\S+/ or print STDERR "Capacitor has only one terminal\n";
+            $term1 = convertNetName( $term1 );
+            $term2 = convertNetName( $term2 );
+            print TARGET "$name $term1 $term2 $rest\n";
+        }
+        elsif ($line =~ /^R/i) {
+            # process resistor
+            my @fields = split(' ',$line);
+            my $name=$fields[0];
+            my $term1=$fields[1];
+            my $term2=$fields[2];
+            $term1 =~ /^\S+/ or print STDERR "Resistor has no terminals\n";
+            $term2 =~ /^\S+/ or print STDERR "Resistor has only one terminal\n";
+            $term1 = convertNetName( $term1 );
+            $term2 = convertNetName( $term2 );
+            my $res=sprintf("%f", $fields[3]);
+            print TARGET "$name $term1 $term2 $res\n";
+            # TODO: handle parameters like $lvl=# $l=# $w=#
+        }
+        elsif ($line =~ /^.SUBCKT\s+(\S+)\s+(.*)/i) {
+            # process SUBCKT
+            my $cell=$1;
+            my $rest=$2;
+            $cell =~ s/$topcell/$cell_name/ if $longcellnametop;
+            print TARGET ".SUBCKT $cell $rest\n";
+        }
+        elsif ($line =~ /^.ENDS/i) {
+            print TARGET "$line\n";
+        }
+        $line = $next_line;
     }
-
     close(SOURCE);
     close(TARGET);
 }
-
 
 ##########################################################################
 #                             Flat Mode                                  #
@@ -1112,10 +1053,9 @@ if($stage4a){
     print "Checking all SubCkts ...\n";
 
     my $cell_total_filename="$working_dir/cell_total";
+    open TARGET, ">$cell_total_filename" or die "Can't write $cell_total_filename";
+    print TARGET "* $spice_target for $cdl_cell_name\n";
 
-    if(-e $cell_total_filename){ my_system("rm '$cell_total_filename'");}
-
-    my_system("echo '* cell.spice_gds2 for $cdl_cell_name' > '$cell_total_filename'");
     open( SOURCE, "<$graycell_file") or die "Can't open cell list file $graycell_file for read";
     my @cellname_list=<SOURCE>;
     close( SOURCE );
@@ -1139,7 +1079,6 @@ if($stage4a){
     undef @lve_dir;
     my %subckt_list=();
     my %includedcells=();
-    my $dfiifound=1;
     foreach my $cell (@cellname_list)  {
         $cell=~s/\s+//g;
         my $cell_dir=$cell;
@@ -1148,37 +1087,14 @@ if($stage4a){
             my $found = 0;
             my @dirs=("$current_target_dir");
       	    push @dirs, split(":", $root_target_dir);
-	 		
             foreach my $dir (@dirs) {
-
                 if ( $dir ne "" and -d "$dir") {
                     foreach my $view (@validviews) {
-                        if(-s "$dir/$cell_dir/$view/$extractCorner/${temperature}C/$extract_dir/cell.aspice" ){
-                            if (! $doflat) {
-                                my_system("echo \".inc '$dir/$cell_dir/$view/$extractCorner/${temperature}C/$extract_dir/cell.spice_gds2'\" >> '$cell_total_filename' ");
-                            }
-                            else {
-                                my_system("cat '$dir/$cell_dir/$view/$extractCorner/${temperature}C/$extract_dir/cell.spice_gds2' >> '$cell_total_filename' ");
-                            }
-                            print "FOUND: subckt $cell cell.aspice file in $dir.\n";
-                            $includedcells{$cell}=1;
-                            $found=1;
-                            last;
-                        }
-                        # routed-estimate mode as Andrew's request, bug 20302
-                        if(-s "$dir/$cell_dir/$view/estimated/cell.spice" ){
-                            if( ! -s "$dir/$cell_dir/$view/estimated/cell.spice_gds2" ){
-                                print "Creating $dir/$cell_dir/$view/estimated/cell.spice_gds2\n";
-                                system("$ENV{FULCRUM} cdl_renamer --name-in=cast --name-out=gds2 --source-cdl-file='$dir/$cell_dir/$view/estimated/cell.spice' " .
-                                    "--translated-cdl='$dir/$cell_dir/$view/estimated/cell.spice_gds2'");
-                            }
-                            if (! $doflat) {
-                                my_system("echo \".inc '$dir/$cell_dir/$view/estimated/cell.spice_gds2'\" >> '$cell_total_filename' ");
-                            }
-                            else {
-                                my_system("cat '$dir/$cell_dir/$view/estimated/cell.spice_gds2' >> '$cell_total_filename' ");
-                            }
-                            print "FOUND: estimated subckt $cell cell.spice file in $dir.\n";
+                        my $mode_dir = $extract_dir;
+                        $mode_dir="estimated" if ($view eq "floorplan");                        
+                        if (-s "$dir/$cell_dir/$view/$extractCorner/${temperature}C/$mode_dir/$grayboxFile" ) {
+                            print TARGET ".INCLUDE '$cell_dir/$view/$extractCorner/${temperature}C/$mode_dir/$grayboxFile'\n";
+                            print "FOUND: subckt $cell $grayboxFile file in $dir.\n";
                             $includedcells{$cell}=1;
                             $found=1;
                             last;
@@ -1188,39 +1104,20 @@ if($stage4a){
                 last if $found;
             }
             if ( ! $found ) {
-                print "Error: SubCkt Not Found: ($cell) $root_target_dir/$cell_dir/*/$extract_dir/cell.aspice does not exist.\n";
+                print "Error: SubCkt Not Found: ($cell) $root_target_dir/$cell_dir/*/$extract_dir/$grayboxFile does not exist.\n";
                 $subckt_incomplete=1;
                 $subckt_list{"$cell"}="$cell_dir";
             }
-            if ( ! $doflat and ! $found and defined($dfIIdir) and -d $dfIIdir) {
-                # look to see which view would be used if extract were done on subcell
-                my $libdir=$cell_dir;
-                $libdir =~ s:/[^/]*/[^/]*$::;
-                my $dfiicn=$cell;
-                $dfiicn = `echo "$cell" | rename --type=cell --from=cast --to=cast`;
-                chomp $dfiicn;
-                $dfiicn =~ s/\./#2e/g;
-                $dfiicn =~ s/-/#2d/g;
-                foreach my $view (@validviews) {
-                    if ( -s "$dfIIdir/$libdir/$dfiicn/$view/layout.oa" ) {
-                        my_system("echo \".inc '$root_target_dir/$cell_dir/$view/$extractCorner/${temperature}C/$extract_dir/cell.spice_gds2'\" >> '$cell_total_filename' ");
-                        $includedcells{$cell}=1;
-                        $found=1;
-                        last;
-                    }
-                }
-            }
-            $dfiifound = 0 if ! $found;
         }
     }
     my $includefile = $spice_target;
     $includefile =~ s/\.[^\/]*$/.spice_include/;
+    close TARGET;
     my_system ("cp '$cell_total_filename' '$includefile'");
     if ($subckt_incomplete){
-        printf "%s: Can not Generate cell_total due to error in generating subckt spice files:\n",
-            $dfiifound ? "Warning" : "Error";
+        printf "Error: Can not Generate cell_total due to error in generating subckt spice files:\n";
         foreach my $cell (keys %subckt_list){
-            print "  Error in extracting $cell cell.spice_gds2 file.\n";
+            print "  Error in extracting $cell $spice_target file.\n";
         }
         if($del==1)
         {
@@ -1233,46 +1130,7 @@ if($stage4a){
         die "Error: Subckt spice file missing.\n";;
     }
 
-    if ($doflat) {
-        #Delete redundant spice subckt definitions.
-        open( SOURCE, "<$cell_total_filename") or die "Can't open '$cell_total_filename' for reading.\n";
-        open( TARGET, ">$spice_target") or die "Can't open '$spice_target' for writing.\n";
-        $. = 0;
-        my %cell_total=();
-        while (my $line=<SOURCE>) {
-            my $skip=0;
-            if ($line =~ /^\*/){ $skip=1; }
-            if ($line =~ /^\.SUBCKT/i) {
-                my $temp=$line;
-                while($line =~/^\+/){$temp.=$line; $line=<SOURCE>;}
-                my $temp1=$temp;
-                $temp=~s/\n\+/ /g; $temp=~s/\s+/ /g; $temp=~s/^\.SUBCKT //g;
-                my ($cellname, $rest)= split(/ /, $temp, 2);
-                if( !defined $cell_total{$cellname} or $cell_total{$cellname} eq ""){
-                  $cell_total{$cellname}=$rest;
-                  $skip=1;
-                  print TARGET $temp1;
-                } else {
-                  printf( "Delete Duplicated SUBCKT %s in cell_total...\n", $cellname);
-                  if($cell_total{$cellname} ne $rest){
-                     printf( "Pin Mis-match: %s\n", $cell_total{$cellname});
-                     printf( "             : %s\n", $rest);
-                  }
-                  while($line !~/^\.ENDS/){$line=<SOURCE>;}
-                  $skip=1;
-                }
-            }
-            if ( $skip==0 ){
-                print TARGET $line;
-            }
-        }
-        close(SOURCE);
-        close(TARGET);
-    }
-    else {
-        my_system("mv '$cell_total_filename' '$spice_target'");
-    }
-
+    my_system("mv '$cell_total_filename' '$spice_target'");
     my_system("sed -e '/^\$/d' -e 's/  */ /g' '$spice_topcell' >> '$spice_target'");
 
     print "Spice Generation Success: $spice_target created with no error!\n";

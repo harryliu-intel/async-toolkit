@@ -328,11 +328,11 @@ EOF
 if ($sim eq "xa") { print RUN_FILE ".option XA_CMD=\"set_sim_case -case sensitive\"\n"; }
 
 # spice file search paths
-if (defined($lve_root_dir) and -d "$lve_root_dir/spicelib") {
-    print RUN_FILE ".option search='$lve_root_dir/spicelib'\n";
+if (defined($lve_root_dir) and -d "$lve_root_dir") {
+    print RUN_FILE ".option search='$lve_root_dir'\n";
 }
-if (defined($sub_lve_root_dir) and -d "$sub_lve_root_dir/spicelib") {
-    print RUN_FILE ".option search='$sub_lve_root_dir/spicelib'\n";
+if (defined($sub_lve_root_dir) and -d "$sub_lve_root_dir") {
+    print RUN_FILE ".option search='$sub_lve_root_dir'\n";
 }
 
 # capacitive load on outputs

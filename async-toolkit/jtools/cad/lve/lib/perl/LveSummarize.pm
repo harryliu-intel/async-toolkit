@@ -1208,7 +1208,7 @@ sub lve_summarize {
                    "nvn.log","nvn2.log","extract.tar.bz2", 
                    "cell.spice","cell.aspice",
                    "rc_spice2aspice.out","rc_spice2aspice.err",
-                   "cell.spice_gds2","cell.spice_hsim",
+                   "cell.spice_gds2","cell.hspice",
                    "electromigration_localnets.debug",
                    "electromigration_operators.debug",
                    "wires.debug", "lib.lef", "graybox_list");
