@@ -25,6 +25,7 @@ import com.avlsi.csp.util.RefinementResolver;
 import com.avlsi.csp.util.VariableAnalyzer;
 import com.avlsi.csp.util.VariableAnalysisException;
 import com.avlsi.util.math.BigIntegerUtil;
+import static com.avlsi.csp.util.VerilogFlags.*;
 
 public class FunctionPreprocessor extends VisitorByCategory {
     private class Usage {
@@ -1090,6 +1091,7 @@ public class FunctionPreprocessor extends VisitorByCategory {
         final IdentifierList idlist = new IdentifierList();
         idlist.addIdentifier((IdentifierExpression) temp);
         final Type cloned = Type.clone(type);
+        cloned.setFlag(DISABLE_COVERAGE, true);
         return(new VarStatement(new Declaration(idlist, cloned))); 
     }
  

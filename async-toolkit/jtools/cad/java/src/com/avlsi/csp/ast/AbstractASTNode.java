@@ -23,6 +23,7 @@ public abstract class AbstractASTNode
     implements AbstractASTNodeInterface {
     private ParseRange parseRange=ParseRange.EMPTY;
     private Exception whereInstantiated=null;
+    private int flags=0;
 
     /* IMPORTANT: Change to false before submitting: */
     static final boolean debugParseRange=false;
@@ -96,6 +97,19 @@ public abstract class AbstractASTNode
     public AbstractASTNode epr(AbstractASTNodeInterface x, Token t) {
         epr(x);
         return epr(t);
+    }
+
+    public boolean getFlag(int flag) {
+        return (flags & flag) != 0;
+    }
+
+    public AbstractASTNode setFlag(int flag, boolean value) {
+        if (value) {
+            flags |= flag;
+        } else {
+            flags &= ~flag;
+        }
+        return this;
     }
 
 // never used:

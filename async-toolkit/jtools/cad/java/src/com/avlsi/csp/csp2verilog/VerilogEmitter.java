@@ -52,6 +52,7 @@ import com.avlsi.util.container.Pair;
 import com.avlsi.util.container.Triplet;
 import com.avlsi.util.math.BigIntegerUtil;
 import com.avlsi.util.text.StringUtil;
+import static com.avlsi.csp.util.VerilogFlags.*;
 
 /**
  * Visitor pattern to emit Verilog from csp.
@@ -353,6 +354,27 @@ public class VerilogEmitter extends CommonEmitter {
             }
             return buf.toString();
         }
+    }
+
+    private boolean coverage_off(boolean off) {
+        if (off) out.disableCoverage();
+        return off;
+    }
+    
+    private boolean coverage_off(AbstractASTNodeInterface node) {
+        return coverage_off(node.getFlag(DISABLE_COVERAGE));
+    }
+
+    private boolean coverage_off() {
+        return coverage_off(true);
+    }
+
+    private void coverage_on(boolean off) {
+        if (off) out.enableCoverage();
+    }
+
+    private void coverage_on() {
+        coverage_on(true);
     }
 
     private String getLoopVarType(final Range r) {
@@ -758,7 +780,7 @@ public class VerilogEmitter extends CommonEmitter {
                           final boolean strictVars,
                           final boolean implicitInit,
                           final ProblemFilter problems) { 
-        super(out, registerBitWidth);
+        super(out, registerBitWidth, true);
         this.cellInfo = cellInfo;
         this.inputPorts = inputPorts;
         this.warningWriter = warningWriter;
@@ -868,9 +890,11 @@ public class VerilogEmitter extends CommonEmitter {
         // handle initializer statement to deal with top-level constants
         // TODO: Share top-level constants, as this wastes memory
         if (e.getInitializerStatement() != null) {
+            coverage_off();
             final FilterInitializers filter =
                 new FilterInitializers(analysisResults, allUsedTokens);
             filter.filter(e.getInitializerStatement()).accept(this);
+            coverage_on();
         }
 
         // csp body
@@ -1485,11 +1509,15 @@ public class VerilogEmitter extends CommonEmitter {
             complexAccess = null;
 
             final Type t = (Type) analysisResults.getType(lhs);
+            boolean cov = coverage_off(t);
             emitAssignment(lca, rca, t);
+            coverage_on(cov);
         } else {
+            final Type lty = (Type) analysisResults.getType(lhs);
+            boolean cov = coverage_off(lty);
             final boolean lstr =
                 stmt != null && stmt.getKind() == AssignmentStatement.ADD &&
-                (analysisResults.getType(lhs) instanceof StringType);
+                (lty instanceof StringType);
             final boolean rstr =
                 lstr && !(analysisResults.getType(rhs) instanceof StringType);
 
@@ -1512,6 +1540,7 @@ public class VerilogEmitter extends CommonEmitter {
             if (rstr) out.print(", 10)");
             if (op) out.print(" )");
             out.println(';');
+            coverage_on(cov);
 
             if (false) {
                 // debugging display
@@ -1596,7 +1625,9 @@ public class VerilogEmitter extends CommonEmitter {
             for (int i = 0; i < indices; ++i) {
                 comma[0] = true;
                 final String var = "i$" + num + "$" + i;
-                declareVariable("input ", var, new IntegerType(), ",");
+                final Type ity =
+                    (Type) new IntegerType().setFlag(DISABLE_COVERAGE, true);
+                declareVariable("input ", var, ity, ",");
                 if (i < indices - 1) out.println(",");
                 fixed.accessArray(var);
             }
@@ -1830,7 +1861,11 @@ public class VerilogEmitter extends CommonEmitter {
         for (Iterator arg = e.getActuals(); arg.hasNext(); ) {
             lvalues.add((ExpressionInterface) arg.next());
         }
-        if (lhs != null) lvalues.add(lhs);
+        Type lty = null;
+        if (lhs != null) {
+            lvalues.add(lhs);
+            lty = (Type) analysisResults.getType(lhs);
+        }
 
         final Pair/*<CSPProgram,FunctionDeclaration>*/ p =
             (Pair) resolver.getResolvedFunctions().get(e);
@@ -1850,16 +1885,20 @@ public class VerilogEmitter extends CommonEmitter {
                            name.equals("log4") || name.equals("time") ||
                            name.equals("ord") || name.equals("chr") ||
                            name.equals("getArgValue")) {
+                    boolean cov = coverage_off(lty);
                     lhs.accept(this);
                     out.print(" = ");
                     visitFunctionCallExpression(e); // process builtin funcs 
                     out.println(" ; ");
+                    coverage_on(cov);
                 } else if (name.equals("pack")) {
+                    boolean cov = coverage_off(lty);
                     lhs.accept(this);
                     out.print(" = { ");
                     final Iterator<ExpressionInterface> i = e.getActuals();
                     emitPack(i.next());
                     out.println(" }; ");
+                    coverage_on(cov);
                 } else if (name.equals("unpack")) {
                     out.print("{ ");
                     final Iterator i = e.getActuals();
@@ -1880,6 +1919,7 @@ public class VerilogEmitter extends CommonEmitter {
                     final ArrayType ty =
                         (ArrayType) analysisResults.getType(array);
 
+                    boolean cov = coverage_off(lty);
                     readHexInts(ty);
                     out.print("::readHexInts(");
                     out.print("__csp_to_sv_string(");
@@ -1887,6 +1927,7 @@ public class VerilogEmitter extends CommonEmitter {
                     out.print("),");
                     commaSeperated(array, count, lhs);
                     out.println(");");
+                    coverage_on(cov);
                 } else if (name.equals("dumpOn")) {
                     out.println("`CAST2VERILOG_DUMP_ON");
                 } else if (name.equals("dumpOff")) {
@@ -1896,6 +1937,7 @@ public class VerilogEmitter extends CommonEmitter {
                     final Iterator<ExpressionInterface> i = e.getActuals();
                     final ExpressionInterface file = i.next();
                     final ExpressionInterface mode = i.next();
+                    boolean cov = coverage_off(lty);
                     lhs.accept(this);
                     out.print(" = ReadHexInts#()::fopen(");
                     out.print("__csp_to_sv_string(");
@@ -1903,40 +1945,49 @@ public class VerilogEmitter extends CommonEmitter {
                     out.print("), __csp_to_sv_string(");
                     mode.accept(this);
                     out.println("));");
+                    coverage_on(cov);
                 } else if (name.equals(RefinementResolver.BuiltIn.FCLOSE)) { 
                     final Iterator<ExpressionInterface> i = e.getActuals();
                     final ExpressionInterface stream = i.next();
+                    boolean cov = coverage_off(lty);
                     lhs.accept(this);
                     out.print(" = ReadHexInts#()::fclose(int'(");
                     stream.accept(this);
                     out.println("));");
+                    coverage_on(cov);
                 } else if (name.equals(RefinementResolver.BuiltIn.FREAD)) {
                     final Iterator<ExpressionInterface> i = e.getActuals();
                     final ExpressionInterface ptr = i.next();
                     final ExpressionInterface size = i.next();
                     final ExpressionInterface nmemb = i.next();
                     final ExpressionInterface stream = i.next();
+                    boolean cov = coverage_off(lty);
                     readHexInts((ArrayType) analysisResults.getType(ptr));
                     out.print("::fread(");
                     commaSeperated(ptr, size, nmemb, stream, lhs);
                     out.println(");");
+                    coverage_on(cov);
                 } else if (name.equals(RefinementResolver.BuiltIn.FWRITE)) {
                     final Iterator<ExpressionInterface> i = e.getActuals();
                     final ExpressionInterface ptr = i.next();
                     final ExpressionInterface size = i.next();
                     final ExpressionInterface nmemb = i.next();
                     final ExpressionInterface stream = i.next();
+                    boolean cov = coverage_off(lty);
                     readHexInts((ArrayType) analysisResults.getType(ptr));
                     out.print("::fwrite(");
                     commaSeperated(ptr, size, nmemb, stream, lhs);
                     out.println(");");
+                    coverage_on(cov);
                 } else if (name.equals(RefinementResolver.BuiltIn.FPOLL)) { 
                     final Iterator<ExpressionInterface> i = e.getActuals();
                     final ExpressionInterface stream = i.next();
+                    boolean cov = coverage_off(lty);
                     lhs.accept(this);
                     out.print(" = ReadHexInts#()::fpoll(int'(");
                     stream.accept(this);
                     out.println("));");
+                    coverage_on(cov);
                 } else {
                     // not supported: eventQueueIsEmpty, stable, enableDSimErrors
                     throw new VisitorException(
@@ -2127,12 +2178,14 @@ public class VerilogEmitter extends CommonEmitter {
              // emit error checking code for more than 1 guard being true
              // in deterministic case
              if (isDeterministic) {
-                  out.println("// error checking code"); 
-                  out.println("if (" + numTrueGuards + " > 1) begin");
-                  out.println("`CAST2VERILOG_MULTIPLE_GUARDS_TRUE_ERROR2(\"" +
-                              s.getParseRange().fullString() + "\", " +
-                              numTrueGuards + ", " + trueGuards + ")");
-                  out.println("end // error checking code"); 
+                 coverage_off();
+                 out.println("// error checking code"); 
+                 out.println("if (" + numTrueGuards + " > 1) begin");
+                 out.println("`CAST2VERILOG_MULTIPLE_GUARDS_TRUE_ERROR2(\"" +
+                             s.getParseRange().fullString() + "\", " +
+                             numTrueGuards + ", " + trueGuards + ")");
+                 out.println("end // error checking code"); 
+                 coverage_on();
             }
 
             // pick guard randomly among true guards
@@ -2384,8 +2437,10 @@ public class VerilogEmitter extends CommonEmitter {
 
     private void declareVariable(final String id, final Type t)
         throws VisitorException {
+        boolean cov = coverage_off(t);
         declareVariable("", id, t, ";");
         out.println(";");
+        coverage_on(cov);
     }
 
     private void declareVariable(final String inout, final String id,
@@ -2459,7 +2514,9 @@ public class VerilogEmitter extends CommonEmitter {
         ident.accept(this);
         final ComplexAccess access = complexAccess;
         complexAccess = null;
+        boolean cov = dims == 0 && coverage_off(t);
         initVar(t, access, dims, init);
+        coverage_on(cov);
     }
 
     private void initVar(final Type t, final ComplexAccess ident,

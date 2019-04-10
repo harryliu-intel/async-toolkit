@@ -86,4 +86,21 @@ public interface AbstractASTNodeInterface {
     /** same as epr(x).epr(t)
         @see #epr(Token) @see #epr(AbstractASTNodeInterface) **/
     AbstractASTNode epr(AbstractASTNodeInterface x, Token t);
+
+    /**
+     * Returns the value of flag.
+     *
+     * @param flag Which flag
+     * @return flag
+     **/
+    boolean getFlag(int flag);
+
+    /**
+     * Sets flag to <code>value</code>.
+     *
+     * @param flag Which flag
+     * @param value Flag value
+     * @return this
+     **/
+    AbstractASTNode setFlag(int flag, boolean value);
 }

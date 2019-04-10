@@ -21,10 +21,15 @@ abstract class CommonEmitter implements VisitorInterface {
      **/
     final String registerType;
 
-    CommonEmitter(final PrintWriter out, final int registerBitWidth) {
-        this.out = new LengthAwareWriter(1000, out);
+    CommonEmitter(final PrintWriter out, final int registerBitWidth,
+                  final boolean enableCoveragePragma) {
+        this.out = new LengthAwareWriter(1000, enableCoveragePragma, out);
         this.registerBitWidth = registerBitWidth;
         this.registerType = "bit signed [" + (registerBitWidth - 1) + ":0]";
+    }
+
+    CommonEmitter(final PrintWriter out, final int registerBitWidth) {
+        this(out, registerBitWidth, false);
     }
 
     protected int getRegisterWidth(final IntegerType t)
@@ -164,10 +169,20 @@ abstract class CommonEmitter implements VisitorInterface {
 
     static class LengthAwareWriter extends IndentPrintWriter {
         private final int limit;
+        private final boolean enableCoveragePragma;
         private int length = 0;
-        public LengthAwareWriter(final int limit, Writer out) {
+        private boolean coverage = true;
+        private boolean nextCoverage = true;
+        private boolean writingCoverage = false;
+        public LengthAwareWriter(final int limit,
+                                 final boolean enableCoveragePragma,
+                                 final Writer out) {
             super(out);
             this.limit = limit;
+            this.enableCoveragePragma = enableCoveragePragma;
+        }
+        public LengthAwareWriter(final int limit, final Writer out) {
+            this(limit, false, out);
         }
         public void println() {
             super.println();
@@ -178,14 +193,17 @@ abstract class CommonEmitter implements VisitorInterface {
             else print(' ');
         }
         public void write(int c) {
+            writeCoverage();
             super.write(c);
             ++length;
         }
         public void write(char buf[], int off, int len) {
+            writeCoverage();
             super.write(buf, off, len);
             length += len;
         }
         public void write(String s, int off, int len) {
+            writeCoverage();
             super.write(s, off, len);
             length += len;
         }
@@ -194,6 +212,21 @@ abstract class CommonEmitter implements VisitorInterface {
         }
         public void prevLevel(int x) {
             for (int i = 0; i < x; ++i) prevLevel();
+        }
+        public void enableCoverage() {
+            nextCoverage = true;
+        }
+        public void disableCoverage() {
+            nextCoverage = false;
+        }
+        private void writeCoverage() {
+            if (enableCoveragePragma && !writingCoverage &&
+                nextCoverage != coverage) {
+                writingCoverage = true;
+                super.println("// VCS coverage " + (nextCoverage ? "on" : "off"));
+                writingCoverage = false;
+                coverage = nextCoverage;
+            }
         }
     }
 
