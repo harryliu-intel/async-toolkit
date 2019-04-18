@@ -138,7 +138,7 @@ my $sql_host = "mrlf1.sc.intel.com";
 my $sql_database = "mrlnx";
 my $sql_user = "mrlnx";
 my $sql_pw = "neuron";
-my $sql_port = 6000;
+my $sql_port = 3306;
 
 #Archive path
 my $archive_site = "sc";
