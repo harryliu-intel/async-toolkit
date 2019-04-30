@@ -210,12 +210,14 @@ public class CDLFactoryEmitter implements CDLFactoryInterface, CDLSimpleInterfac
         }
         printws(new_type);
         if (widthGrid>0) {
-            double x = Double.parseDouble(getTokenVal(w,env));
-            printws("w='" + Math.round(x/widthGrid) + "*TRANSISTOR_WIDTH_GRID'");
+            double x = Math.round(Double.parseDouble(getTokenVal(w,env))/widthGrid);
+            if (x==1) printws("w=WG");
+            else      printws("w='" + x + "*WG'");
         } else printws("w=" + getTokenVal(w, env));
         if (lengthGrid>0) {
-            double x = Double.parseDouble(getTokenVal(l,env));
-            printws("l='" + Math.round(x/lengthGrid) + "*TRANSISTOR_LENGTH_GRID'");
+            double x = Math.round(Double.parseDouble(getTokenVal(l,env))/lengthGrid);
+            if (x==1) printws("l=LG");
+            else      printws("l='" + x + "*LG'");
         } else printws("l=" + getTokenVal(l, env));
         keypair(parameters, env);
         println();
