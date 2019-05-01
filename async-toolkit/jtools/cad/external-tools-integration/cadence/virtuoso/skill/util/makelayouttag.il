@@ -164,15 +164,15 @@
              (dbDeleteObject shape)
              )
 
-    ; label GND substrate and Vdd nwell (TODO: using pdkinfo.il)
+    ; label GND substrate and Vdd nwell
     (unless doHalo
       (for r 0 rows
            y = y0+(cadr align)*r
-           (MakeLayoutTagLabel CV (list "pwellSubIso" "id") x0+(car align)/2:y GNDNetName ?addrect nil)
+           (MakeLayoutTagLabel CV PWellIsoLPP x0+(car align)/2:y GNDNetName ?addrect nil)
            )
       (for r 0 rows-1
            y = y0+(cadr align)*(r+0.5)
-           (MakeLayoutTagLabel CV (list "nwell" "drawing") x0+(car align)/2:y VddNetName)
+           (MakeLayoutTagLabel CV NWellLPP x0+(car align)/2:y VddNetName)
            )
       )
     )

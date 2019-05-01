@@ -113,7 +113,7 @@ LaygenNetMap[LaygenVccName] = VddNetName
 ; label the pwell for LVS
 (defun LaygenLabelPwell (@key (CV (geGetEditCellView)) (netName GNDNetName))
   (let (lpp xy)
-    lpp = (list "pwellSubIso" "id")
+    lpp = PWellIsoLPP
     (foreach shape CV->shapes (when shape->lpp==lpp (dbDeleteObject shape)))
     (when CV->prBoundary
       xy = (car (SortVertices CV->prBoundary->points))
@@ -126,7 +126,7 @@ LaygenNetMap[LaygenVccName] = VddNetName
 ; label the nwell for LVS
 (defun LaygenLabelNwell (@key (CV (geGetEditCellView)) (netName VddNetName))
   (let (lpp xy points)
-    lpp = (list "nwell" "drawing")
+    lpp = NWellLPP
     (foreach shape (setof x CV->shapes x->objType=="label" && x->lpp==lpp)
              (dbDeleteObject shape)
              )
