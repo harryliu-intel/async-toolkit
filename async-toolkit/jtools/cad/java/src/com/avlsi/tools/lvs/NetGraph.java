@@ -2944,23 +2944,24 @@ public final class NetGraph {
     /** Find a vanBerkel version of a gate with a staticizer */
     private String vanBerkelGate(final NetGraph [] gates, String gateType) {
         // TODO: query van_berkel directive
-        if (gateType.startsWith("gate.C2.")) {
+        if        (gateType.startsWith("gate.C2."))
             return gateType.replaceAll("gate\\.C2\\.","gate.C2_STAT.");
-        } else if  (gateType.startsWith("gate.2AND2C2.")) {
+        else if   (gateType.startsWith("gate.C3."))
+            return gateType.replaceAll("gate\\.C3\\.","gate.C3_STAT.");
+        else if   (gateType.startsWith("gate.2AND2C2."))
             return gateType.replaceAll("gate\\.2AND2C2\\.","gate.2AND2C2_STAT.");
-        } else if  (gateType.startsWith("gate.AND2C2.")) {
+        else if   (gateType.startsWith("gate.AND2C2."))
             return gateType.replaceAll("gate\\.AND2C2\\.","gate.AND2C2_STAT.");
-        } else if  (gateType.startsWith("gate.AND2C2_ALT.")) {
+        else if   (gateType.startsWith("gate.AND2C2_ALT."))
             return gateType.replaceAll("gate\\.AND2C2_ALT\\.","gate.AND2C2_STAT.");
-        } else if (gateType.startsWith("gate.C2_RHI.")) {
+        else if   (gateType.startsWith("gate.C2_RHI."))
             return gateType.replaceAll("gate\\.C2_RHI\\.","gate.C2_RHI_STAT.");
-        } else if  (gateType.startsWith("gate.2AND2C2_RHI.")) {
+        else if   (gateType.startsWith("gate.2AND2C2_RHI."))
             return gateType.replaceAll("gate\\.2AND2C2_RHI\\.","gate.2AND2C2_RHI_STAT.");
-        } else if  (gateType.startsWith("gate.AND2C2_RHI.")) {
+        else if   (gateType.startsWith("gate.AND2C2_RHI."))
             return gateType.replaceAll("gate\\.AND2C2_RHI\\.","gate.AND2C2_RHI_STAT.");
-        } else if  (gateType.startsWith("gate.AND2C2_RHI_ALT.")) {
+        else if   (gateType.startsWith("gate.AND2C2_RHI_ALT."))
             return gateType.replaceAll("gate\\.AND2C2_RHI_ALT\\.","gate.AND2C2_RHI_STAT.");
-        }
         return null;
     }
 
@@ -2978,7 +2979,7 @@ public final class NetGraph {
             NetGraph vbGraph = CastDesign.getGateNetGraph(cfp,vb,Vdd.name,GND.name,cad);
             if (addInv || node.inverse==null) addSmallInverter(node,smallInv);
             TreeMap map = new TreeMap(node.gate.map);
-            map.put(HierName.makeHierName("c"),node.inverse.name); // TODO: directive
+            map.put(HierName.makeHierName("i"),node.inverse.name); // TODO: directive
             node.deleteEdges(); // delete old edges
             node.gate = new GateInstance(map,vbGraph);
             addNetGraph(vbGraph,map,true);
