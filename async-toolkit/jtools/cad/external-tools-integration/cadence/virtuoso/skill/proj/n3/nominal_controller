@@ -1,0 +1,28 @@
+#!/usr/intel/bin/perl -w
+#
+# Script to create nominal threshold versions of SPEC files
+# according to simple expression matching rules.
+
+while (my $file = shift @ARGV) {
+    if ( $file =~ /c(\S+)\.cast/ ) {
+        my $subtype = $1;
+        print "$subtype\n";
+        open IN, "<$file";
+        open OUT, ">b${subtype}.cast";
+        while (my $line = <IN>) {
+            if ($line =~ /^(.*vendor\.intel\.e08\..*)c\.(.*)$/ ) { # remap E08 cells
+                $line = "${1}b.${2}\n";
+            }
+            elsif ($line =~ /^(.*\")c(\S+)(\".*)$/ ) { # remap cell name
+                $line = "${1}b${2}${3}\n";
+            }
+            elsif ($line =~ /^(.*\S+\.)c(\S+\s+\S+.*)$/) { # remap subcell types
+                $line = "${1}b${2}\n";
+            }
+            print OUT $line;
+        }
+        close IN;
+        close OUT;
+        system("p4 -c $ENV{HW_CLIENT} add \"b${subtype}.cast\"");
+    }
+}
