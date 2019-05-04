@@ -69,7 +69,7 @@ cell_list=
 no_sync=
 p4_user=
 p4_passwd=
-p4_server_host=ssl:p4proxy07.devtools.intel.com
+p4_server_host=ssl:p4proxy17.devtools.intel.com
 p4_server_port=2510
 argname=
 
