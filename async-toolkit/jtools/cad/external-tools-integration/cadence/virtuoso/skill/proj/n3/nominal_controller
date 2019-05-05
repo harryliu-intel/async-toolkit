@@ -4,25 +4,41 @@
 # according to simple expression matching rules.
 
 while (my $file = shift @ARGV) {
-    if ( $file =~ /c(\S+)\.cast/ ) {
-        my $subtype = $1;
-        print "$subtype\n";
+    if ( $file =~ /(.*\/)c([^\.]+)\.cast/ ) {
+        my $subtype = $2;
+        my $out = "${1}b${2}.cast";
+        print "$out\n";
         open IN, "<$file";
-        open OUT, ">b${subtype}.cast";
+        open OUT, ">$out";
         while (my $line = <IN>) {
-            if ($line =~ /^(.*vendor\.intel\.e08\..*)c\.(.*)$/ ) { # remap E08 cells
-                $line = "${1}b.${2}\n";
-            }
-            elsif ($line =~ /^(.*\")c(\S+)(\".*)$/ ) { # remap cell name
+            if ($line =~ /^(.*\")c([^\.]+)(\".*)$/ ) { # remap CAST cell definition
                 $line = "${1}b${2}${3}\n";
             }
-            elsif ($line =~ /^(.*\S+\.)c(\S+\s+\S+.*)$/) { # remap subcell types
+            elsif ($line =~ /^(.*vendor\.intel\.e08\..*)c\.(.*)$/ ) { # remap E08 subcells
+                $line = "${1}b.${2}\n";
+            }
+            elsif ($line =~ /^(.*\s+stack\.\S+\()1(\)\s+.*$)/) { # remap stack
+                $line = "${1}2${2}\n";
+            }
+            elsif ($line =~ /^(.*\s+gate\.\S+\()1,1(\)\s+.*$)/) { # remap gate
+                $line = "${1}2,2${2}\n";
+            }
+            elsif ($line =~ /^(.*\S+\.)c([^\.]+)$/) { # remap CAST subcells
                 $line = "${1}b${2}\n";
+            }
+            elsif ($line =~ /^(.*) N\[1\] (.*)$/) { # rename transistors
+                $line = "${1} N[2] ${2}\n";
+            }
+            elsif ($line =~ /^(.*) P\[1\] (.*)$/) { # rename transistors
+                $line = "${1} P[2] ${2}\n";
+            }
+            elsif ($line =~ /^(.*transistor_type\s*=\s*)1(;.*)$/) { # fix directive
+                $line = "${1}2${2}\n";
             }
             print OUT $line;
         }
         close IN;
         close OUT;
-        system("p4 -c $ENV{HW_CLIENT} add \"b${subtype}.cast\"");
+        system("p4 -c $ENV{HW_CLIENT} add \"$out\"");
     }
 }
