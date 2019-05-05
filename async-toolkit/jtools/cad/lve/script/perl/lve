@@ -1198,8 +1198,8 @@ if(!(grep {/env/} @skip)) {
     $jflat_tools = "$jflat_tools,new-aspice,env-ntpc,node-props,leaky-nodes,".
                    "alint-scenarios,fanout,fanin";
 }
-if (defined($taskSet{hsim}) or defined($taskSet{hspice}) or defined($taskSet{xa}) or
-    defined($taskSet{totem}) or defined($taskSet{cmm})) {
+if (defined($taskSet{"hsim"}) or defined($taskSet{"hspice"}) or defined($taskSet{"xa"}) or
+    defined($taskSet{"totem"}) or defined($taskSet{"cmm"})) {
     $jflat_tools = "$jflat_tools,hsim";
 }
 
