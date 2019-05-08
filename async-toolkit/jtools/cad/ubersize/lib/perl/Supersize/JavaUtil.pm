@@ -156,6 +156,7 @@ our $SEL;
 our $SERVER_CAST_PATH;
 our $SERVER_CAST_PATH_OVERRIDE;
 our $SERVER_ERROR = 0;
+our $SERVER_DEFINES;
 
 #
 # Initialize CastFileServer interface
@@ -191,7 +192,8 @@ sub initialize_cast_server {
     $cmd .= " --jre-args=$SS_r->{GS}{JRE_ARGS} \\\n" 
                 unless (!$SS_r->{GS}{JRE_ARGS});
     $cmd .= "'--cast-path=$SERVER_CAST_PATH' ";
-    $cmd .= get_cast_defines($SS_r);
+    $SERVER_DEFINES = get_cast_defines($SS_r);
+    $cmd .= $SERVER_DEFINES;
 
     print STDERR "  Running $cmd\n" if ($SS_r->{GS}{DEBUG});
     $SERVER_PID = open3(*In, *Out, *Err, $cmd);
@@ -464,7 +466,9 @@ sub refresh_cast_server {
         defined $SERVER_CAST_PATH_OVERRIDE &&
             $SERVER_CAST_PATH ne $SERVER_CAST_PATH_OVERRIDE ||
         !defined $SERVER_CAST_PATH_OVERRIDE &&
-            $SERVER_CAST_PATH ne get_cast_path($SS_r)) {
+            $SERVER_CAST_PATH ne get_cast_path($SS_r) ||
+        !defined $SERVER_DEFINES ||
+        $SERVER_DEFINES ne get_cast_defines($SS_r)) {
         $restart = 1;
     }
 
