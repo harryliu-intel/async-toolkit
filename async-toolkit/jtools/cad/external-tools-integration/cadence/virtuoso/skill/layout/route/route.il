@@ -80,6 +80,7 @@
         (metalFill t)            ; add metal fill
         (noPowerFill nil)
         (doPowerGates nil)       ; optionally skip export of placed pillars
+        (powerGrid t)            ; add a powergrid to flatten view
         (colorGrid t)            ; add a color grid to flatten view
         (timingDriven t)         ; timing driven custom routing
         (softMacro nil)          ; run APR
@@ -124,7 +125,7 @@
     (when (or CV->viewName=="floorplan" CV->viewName=="prelayout")
       CV = (MakeFlatten ?CV CV ?topMetal topMetal ?hookupLaygen hookupLaygen ?hookupD04 hookupD04
                         ?noPowerFill noPowerFill ?doPowerGates doPowerGates
-                        ?colorGrid colorGrid ?softMacro softMacro))
+                        ?powerGrid powerGrid ?colorGrid colorGrid ?softMacro softMacro))
 
     ; write proteus.config
     (ProteusConfig ?CV CV ?botMetal botMetal ?topMetal topMetal ?metalFill metalFill
