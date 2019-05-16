@@ -8,6 +8,7 @@
 use FileHandle;
 use IPC::Open2;
 use POSIX;
+use Data::Dumper qw(Dumper);
 
 # Output record separator
 $" = " ";
@@ -63,6 +64,11 @@ sub map_nodes {
         elsif ($node eq "GND") { $node = "vss"; }
     }
 }
+
+# Translate top cell name to library format
+my @stuff = split /\//, $f_out;
+my @stuff2 = split /\./, $stuff[-1];
+my $newtop = $stuff2[0];
 
 # Do linewise translation of CDL to SNP
 open IN,  "<$f_in"  or die "Can't read $f_in\n";
@@ -215,17 +221,38 @@ while ($line) {
 }
 close IN;
 
-# output
-open OUT, ">$f_out" or die "Can't write $f_out\n";
-print OUT ".GLOBAL vcc vss\n";
+# determine pin directions
 my @ports;
+my @inports;
+my @outports;
+
 foreach my $node (keys %portnodes) {
     unless ($node eq "vcc" || $node eq "vss") { push @ports, $node; }
 }
-print OUT "\$\$.MACRO $top @ports\n";
-print OUT "\$ CELL: $top (default L = 0.028)\n";
-print OUT "\$\$.INPUT @ports\n";
-print OUT "\$\$.OUTPUT\n";
+my $cmd = "fulcrum cast_query --cast-path=\$CAST_PATH --task=external_nodes=direction --cell=" . $top;
+my $ports_query = `$cmd`;
+my @portslist = split("\n", $ports_query);
+
+foreach my $port (@ports) {
+    foreach my $elem (@portslist) {
+    if (substr($elem, 1) eq $port && $elem =~ m/\+/) {
+	    #print "\noutput " . $elem . "\n";
+	    push @outports, $port;
+	} elsif (substr($elem,1) eq $port && $elem =~ m/\-/) {
+	    #print "\ninput " . $elem . "\n";
+	    push @inports, $port;
+	}
+    }
+}
+
+
+# output
+open OUT, ">$f_out" or die "Can't write $f_out\n";
+print OUT ".GLOBAL vcc vss\n";
+print OUT "\$\$.MACRO $newtop @ports\n";
+print OUT "\$ CELL: $newtop (default L = 0.028)\n";
+print OUT "\$\$.INPUT @inports\n";
+print OUT "\$\$.OUTPUT @outports\n";
 print OUT "\$\$.IOPUT\n";
 my $num_localnodes = 0;
 my @nodes;
