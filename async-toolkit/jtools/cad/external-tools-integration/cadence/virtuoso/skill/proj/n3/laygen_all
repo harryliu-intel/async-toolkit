@@ -1,0 +1,20 @@
+#!/usr/bin/csh
+
+laygen_run lib.util.ctree.CTREE2.c0
+laygen_run lib.util.ctree.CTREE2.c1
+laygen_run lib.util.ctree.CTREE2.c2
+laygen_run lib.util.ctree.CTREE2.c3
+laygen_run lib.util.ctree.CTREE3.c0
+laygen_run lib.util.ctree.CTREE3.c1
+laygen_run lib.util.ctree.CTREE3.c2
+laygen_run lib.util.ctree.CTREE3.c3
+laygen_run lib.util.ctree.RHI_CTREE2.c1
+laygen_run lib.util.ctree.RLO_CTREE2.c1
+laygen_run lib.util.delay.tunable.WEAKENER.c0
+laygen_run lib.util.delay.tunable.WEAK_BUF.c0
+laygen_run lib.util.delay.tunable.WEAK_QUAD_INV.c0
+laygen_run lib.util.widget.XOR_LATCH.c0
+laygen_run lib.util.widget.ALTVERTER_LATCH.c0
+laygen_run lib.qdi.metastable.filter.HALF_FILTER.c0
+laygen_run core.noc.crossbar.datapath.TAIL_CONTROL_La.c0
+laygen_run core.noc.crossbar.datapath.TAIL_CONTROL_y.c0
