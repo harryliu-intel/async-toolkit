@@ -1,6 +1,5 @@
 #!/usr/bin/csh
 
-alias laygen_prep '$WD/laygen/script/laygen_prep'
 
 laygen_prep lib.util.ctree.CTREE2.b0
 laygen_prep lib.util.ctree.CTREE2.c0
