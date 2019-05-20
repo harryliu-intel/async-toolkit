@@ -16,5 +16,5 @@ fulcrum --latest --pdk=$PDK --pdkhome=$TOOLHOME --toolhome=$TOOLHOME inliner \
 set out=`grep -w $1 $WD/laygen/script/N3_cells.config | cut -d " " -f1`
 echo $out
 $WD/laygen/script/cdl2snp.pl \
---length 20e-9 --gridW 34e-9 --maxNmosW 68e-9 --maxPmosW 68e-9 \
+--length 20e-9 --gridW 34e-9 --maxNmosW 102e-9 --maxPmosW 102e-9 \
 $1 flat.cdl $out.snp
