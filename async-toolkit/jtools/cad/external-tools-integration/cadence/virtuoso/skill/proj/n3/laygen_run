@@ -53,18 +53,19 @@ EOF
         my $place_lgf = "out/lib_p${n}.lgf";
         next if (!-e "$rundir/$place_lgf");
         print "ROUTE: $rundir/$place_lgf\n";
-        open OUT, ">$rundir/route.${n}.lsh" or die;
+        system("mkdir $rundir/route.${n}");
+        open OUT, ">$rundir/route.${n}/route.lsh" or die;
         print OUT <<EOF;
 $lsf
 set_option option "Option name=undesired_pattern_report_filename value=undesired_patterns.${n}.txt"
 set_option option "Option name=dump_final_rpg_file value=0"
 set_option option "Option name=show_invisible_layout value=0"
 set_option route yes
-set_netlist $place_lgf
+set_netlist ../$place_lgf
 run_main
 exit
 EOF
         close OUT;
-        system("cd $rundir; $ENV{LAYGENWARD}/bin/laygen_shell -nogui -file route.${n}.lsh > route.${n}.log");
+        system("cd $rundir/route.${n}; $ENV{LAYGENWARD}/bin/laygen_shell -nogui -file route.lsh > route.log");
     }
 }
