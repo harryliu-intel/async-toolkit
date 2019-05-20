@@ -45,7 +45,7 @@ spar_cell_list =
 ; special purpose cells
 spar_cell_list = (cons "lib.qdi.buffer.soft.BUF_1of-L2-R.0" spar_cell_list)
 spar_cell_list = (cons "lib.qdi.serial.funny_register.SHIFT_REG_RO.0" spar_cell_list)
-spar_cell_list = (cons "lib.qdi.metastable.slackless_arbiter.SLACKLESS_ARBITER2.20000" spar_cell_list)
+spar_cell_list = (cons "lib.qdi.metastable.slackless_arbiter.SLACKLESS_ARBITER2.0" spar_cell_list)
 spar_cell_list = (cons "core.noc.crossbar.datapath.TAIL_CONTROL.1000" spar_cell_list)
 
 ; add nominal threshold versions if they exist
