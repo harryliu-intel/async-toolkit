@@ -1,14 +1,16 @@
 #!/usr/intel/bin/perl -w
 
-my $placements=10;
+my $LAYGENWARD="/nfs/site/disks/laygen_release_001/dev_rel/bhmiller/n3lib_may17";
+my $COLLATERAL="$LAYGENWARD/collateral/arch/e08";
+my $placements=100;
 my $height=1;
 my $area="min";
 
 my $lsf =
-    "set_architecture_file $ENV{COLLATERAL}/arch/e08/e08.arch\n" .
-    "set_rpg_file $ENV{COLLATERAL}/arch/e08/e08_rpg_all.txt\n" .
-    "set_tcl_container_file $ENV{COLLATERAL}/arch/e08/e08_container.tcl\n" .
-    "set_option layer_file $ENV{COLLATERAL}/arch/e08/e08.layer\n" .
+    "set_architecture_file $COLLATERAL/e08.arch\n" .
+    "set_rpg_file $COLLATERAL/e08_rpg_all.txt\n" .
+    "set_tcl_container_file $COLLATERAL/e08_container.tcl\n" .
+    "set_option layer_file $COLLATERAL/e08.layer\n" .
     "set_option fabric e08\n" .
     "set_option use_assumptions yes\n" .
     "set_option upperlayer m2\n" .
@@ -26,7 +28,7 @@ foreach my $cell (@ARGV) {
            "$ENV{FULCRUM} cdl2snp " .
            "--length 20e-9 --gridW 34e-9 --maxNmosW 102e-9 --maxPmosW 102e-9 " .
            "$cell $cell.flat.cdl $cell.snp; " .
-           "$ENV{LAYGENWARD}/tcl/snp_to_lgf.tcl $cell.snp $cell.lgf");
+           "$LAYGENWARD/tcl/snp_to_lgf.tcl $cell.snp $cell.lgf");
     my $lgf="$cell.lgf";
 
     # place
@@ -46,7 +48,7 @@ set_netlist $lgf
 run_main
 exit
 EOF
-    system("cd $rundir; $ENV{LAYGENWARD}/bin/laygen_shell -nogui -file place.lsh > place.log");
+    system("cd $rundir; $LAYGENWARD/bin/laygen_shell -nogui -file place.lsh > place.log");
 
     # route
     for (my $n=0; $n<$placements; $n++) {
@@ -66,6 +68,6 @@ run_main
 exit
 EOF
         close OUT;
-        system("cd $rundir/route.${n}; $ENV{LAYGENWARD}/bin/laygen_shell -nogui -file route.lsh > route.log");
+        system("cd $rundir/route.${n}; nbq $LAYGENWARD/bin/laygen_shell -nogui -file route.lsh");
     }
 }
