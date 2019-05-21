@@ -66,9 +66,8 @@ sub map_nodes {
 }
 
 # Translate top cell name to library format
-my @stuff = split /\//, $f_out;
-my @stuff2 = split /\./, $stuff[-1];
-my $newtop = $stuff2[0];
+my $newtop = $f_out;
+$newtop =~ s/\.snp$//g;
 
 # Do linewise translation of CDL to SNP
 open IN,  "<$f_in"  or die "Can't read $f_in\n";

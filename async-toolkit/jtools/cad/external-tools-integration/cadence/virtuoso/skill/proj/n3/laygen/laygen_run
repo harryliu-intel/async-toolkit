@@ -38,11 +38,11 @@ system("$ENV{FULCRUM} cast2cdl " .
        "--cast-path=$ENV{CAST_PATH} --cadence-name " .
        "--cell=$cell --output=hier.cdl");
 system("$ENV{FULCRUM} inliner " .
-       "--cdl=hier.cdl --library=hier.cdl > $cell.flat.cdl");
+       "--cdl=hier.cdl --library=hier.cdl > flat.cdl");
 system("$ENV{FULCRUM} cdl2snp " .
        "--length 20e-9 --gridW 34e-9 --maxNmosW 102e-9 --maxPmosW 102e-9 " .
-       "$cell $cell.flat.cdl $cell.snp");
-system("$LAYGENWARD/tcl/snp_to_lgf.tcl $cell.snp $e08.lgf");
+       "$cell flat.cdl $e08.snp");
+system("$LAYGENWARD/tcl/snp_to_lgf.tcl $e08.snp $e08.lgf");
 
 my $lgf="$e08.lgf";
 
@@ -69,7 +69,7 @@ my @files = split("\n",`ls out/*.lgf`);
 foreach my $place_lgf (@files) {
     print "ROUTE: $place_lgf\n";
     my $routedir=$place_lgf;
-    $routedir =~ s/\.lgf/\.route/;
+    $routedir =~ s/\.lgf//;
     system("mkdir $routedir");
     open OUT, ">$routedir/route.lsh" or die;
     print OUT <<EOF;
