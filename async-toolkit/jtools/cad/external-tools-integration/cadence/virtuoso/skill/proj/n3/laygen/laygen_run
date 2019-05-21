@@ -57,12 +57,13 @@ set_option run_hazel_placement_engine 1
 set_option placement_effort 1
 set_option target_area $area
 set_option target_height $height
+set_option option "Option name=plan_device_y value=1 push_out=0 push_devices_to_default=1,0"
 set_option route no
 set_netlist $lgf
 run_main
 exit
 EOF
-system("$LAYGENWARD/bin/laygen_shell -nogui -file place.lsh > place.log");
+system("$LAYGENWARD/bin/laygen_shell -nogui -file place.lsh >& place.log");
 
 # route all placements
 my @files = split("\n",`ls out/*.lgf`);
@@ -84,5 +85,5 @@ run_main
 exit
 EOF
     close OUT;
-    system("cd $routedir; nbq $LAYGENWARD/bin/laygen_shell -nogui -file route.lsh");
+    system("cd $routedir; nbq $LAYGENWARD/bin/laygen_shell -nogui -file route.lsh >& route.log ");
 }
