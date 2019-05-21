@@ -1,0 +1,20 @@
+#!/usr/bin/csh
+
+laygen_run lib.util.ctree.CTREE2.c0 e08ctree2ac1n03x5
+laygen_run lib.util.ctree.CTREE2.c1 e08ctree2ac1n06x5
+laygen_run lib.util.ctree.CTREE2.c2 e08ctree2ac1n09x5
+laygen_run lib.util.ctree.CTREE2.c3 e08ctree2ac1n12x5
+laygen_run lib.util.ctree.CTREE3.c0 e08ctree3ac1n03x5
+laygen_run lib.util.ctree.CTREE3.c1 e08ctree3ac1n06x5
+laygen_run lib.util.ctree.CTREE3.c2 e08ctree3ac1n09x5
+laygen_run lib.util.ctree.CTREE3.c3 e08ctree3ac1n12x5
+laygen_run lib.util.ctree.RHI_CTREE2.c1 e08ctrhi2ac1n09x5
+laygen_run lib.util.ctree.RLO_CTREE2.c1 e08ctrlo2ac1n06x5
+laygen_run lib.util.delay.tunable.WEAKENER.c0 e08weakenac1d03x5
+laygen_run lib.util.delay.tunable.WEAK_BUF.c0 e08wekbufac1d02x5
+laygen_run lib.util.delay.tunable.WEAK_QUAD_INV.c0 e08wkqinvac1d02x5
+laygen_run lib.util.widget.XOR_LATCH.c0 e08xorltcac1n03x5
+laygen_run lib.util.widget.ALTVERTER_LATCH.c0 e08atvltcac1n03x5
+laygen_run lib.qdi.metastable.filter.HALF_FILTER.c0 e08hffiltac1n03x5
+laygen_run core.noc.crossbar.datapath.TAIL_CONTROL_La.c0 e08xbrtclac1n03x5
+laygen_run core.noc.crossbar.datapath.TAIL_CONTROL_y.c0 e08xbrtcyac1n03x5
