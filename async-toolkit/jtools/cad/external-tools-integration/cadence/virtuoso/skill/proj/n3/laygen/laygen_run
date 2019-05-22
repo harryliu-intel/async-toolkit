@@ -1,6 +1,6 @@
 #!/usr/intel/bin/perl -w
 
-my $LAYGENWARD="/nfs/site/disks/laygen_release_001/dev_rel/bhmiller/n3lib_may17";
+my $LAYGENWARD="/nfs/site/disks/laygen_release_001/dev_rel/bhmiller/n3lib_may18";
 my $COLLATERAL="$LAYGENWARD/collateral/arch/e08";
 my $placements=100;
 my $height=1;
@@ -27,7 +27,7 @@ my $lsf =
 
 my $place="";
 if (-e "${e08}.place") {
-    $place="set_option Option name=manual_placement_file value=../../../${e08}.place\n";
+    $place="set_option option \"Option name=manual_placement_file value=../${e08}.place\"";
 }
 
 my $rundir="${cell}.run";
@@ -51,6 +51,7 @@ print "PLACE: $lgf\n";
 open OUT, ">place.lsh" or die;
 print OUT <<EOF;
 $lsf
+$place
 set_option placement_result_idx $placements
 set_option generate_snp yes
 set_option run_hazel_placement_engine 1
@@ -75,10 +76,10 @@ foreach my $place_lgf (@files) {
     open OUT, ">$routedir/route.lsh" or die;
     print OUT <<EOF;
 $lsf
-$place
 set_option option "Option name=undesired_pattern_report_filename value=undesired_patterns.txt"
 set_option option "Option name=dump_final_rpg_file value=0"
 set_option option "Option name=show_invisible_layout value=0"
+set_option option "Option name=allow_opens value=1"
 set_option route yes
 set_netlist ../../$place_lgf
 run_main
