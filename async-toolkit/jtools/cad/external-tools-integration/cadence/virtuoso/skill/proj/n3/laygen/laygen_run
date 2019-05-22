@@ -4,9 +4,16 @@ my $LAYGENWARD="/nfs/site/disks/laygen_release_001/dev_rel/bhmiller/n3lib_may18"
 my $COLLATERAL="$LAYGENWARD/collateral/arch/e08";
 my $placements=100;
 my $height=1;
-my $area="min";
+my $width="min";
 
-(@ARGV>=1) or die "USAGE: laygen_run fqcn [e08name]\n";
+while (@ARGV && $ARGV[0] =~ /^--(\S+)=(\S+)/) {
+    if    ($1 eq "width") { $width=$2; }
+    elsif ($1 eq "height") { $height=$2; }
+    else { last; }
+    shift;
+}
+
+(@ARGV>=1) or die "USAGE: laygen_run [--width=w] [--height=h] fqcn [e08name]\n";
 my $cell=$ARGV[0];
 my $e08=$cell;
 if (@ARGV>1) {
@@ -56,7 +63,7 @@ set_option placement_result_idx $placements
 set_option generate_snp yes
 set_option run_hazel_placement_engine 1
 set_option placement_effort 1
-set_option target_area $area
+set_option target_area $width
 set_option target_height $height
 set_option option "Option name=plan_device_y value=1 push_out=0 push_devices_to_default=1,0"
 set_option route no
