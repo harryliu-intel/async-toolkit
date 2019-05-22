@@ -27,25 +27,37 @@ LaygenLayerMap = (makeTable "layerMap" nil)
 LaygenLayerMap["nwell"]    = (list (list "nwell" "drawing"))
 LaygenLayerMap["wirepoly"] = (list (list "poly"  "drawing"))
 LaygenLayerMap["diffcon"]  = (list (list "tcn"   "drawing"))
-LaygenLayerMap["polycon"]  = (list (list "gcn"   "drawing"))
-LaygenLayerMap["viacn"]    = (list (list "vcn"   "drawing"))
+LaygenLayerMap["vcg"]      = (list (list "vg"    "drawing"))
+LaygenLayerMap["vct"]      = (list (list "vt"    "drawing"))
+LaygenLayerMap["fti"]      = (list (list "FTI"   "drawing"))
 
 LaygenLayerMap["metal0"]   = (list (list "m0"  "drawing"))
+LaygenLayerMap["metalc0"]  = (list (list "m0"  "drawing"))
+LaygenLayerMap["metals0"]  = (list (list "m0"  "drawing"))
 LaygenLayerMap["via0"]     = (list (list "v0"  "drawing"))
 LaygenLayerMap["metal1"]   = (list (list "m1"  "drawing"))
 LaygenLayerMap["via1"]     = (list (list "v1"  "drawing"))
 LaygenLayerMap["metal2"]   = (list (list "m2"  "drawing"))
+LaygenLayerMap["metalc2"]  = (list (list "m2"  "drawing"))
 
-LaygenLayerMap["n"]    = (list (list "ndiff" "drawing"))
-LaygenLayerMap["p"]    = (list (list "pdiff" "drawing"))
-LaygenLayerMap["nuv1"] = (list (list "ndiff" "drawing")
-                               (list "NV1" "drawing" UV_dx UV_dy))
-LaygenLayerMap["puv1"] = (list (list "pdiff" "drawing")
-                               (list "PV1" "drawing" UV_dx UV_dy))
-LaygenLayerMap["nuv2"] = (list (list "ndiff" "drawing")
-                               (list "NV2" "drawing" UV_dx UV_dy))
-LaygenLayerMap["puv2"] = (list (list "pdiff" "drawing")
-                               (list "PV2" "drawing" UV_dx UV_dy))
+LaygenLayerMap["nv1"]      = (list (list "NV1" "drawing"))
+LaygenLayerMap["pv1"]      = (list (list "PV1" "drawing"))
+LaygenLayerMap["nv2"]      = (list (list "NV2" "drawing"))
+LaygenLayerMap["pv2"]      = (list (list "PV2" "drawing"))
+LaygenLayerMap["nv3"]      = (list (list "NV3" "drawing"))
+LaygenLayerMap["pv3"]      = (list (list "PV3" "drawing"))
+;LaygenLayerMap["nuv1"] = (list (list "ndiff" "drawing")
+;                               (list "nv1" "drawing" UV_dx UV_dy))
+;LaygenLayerMap["puv1"] = (list (list "pdiff" "drawing")
+;                               (list "pv1" "drawing" UV_dx UV_dy))
+;LaygenLayerMap["nv2"] = (list (list "ndiff" "drawing")
+;                               (list "nv2" "drawing" UV_dx UV_dy))
+;LaygenLayerMap["pv2"] = (list (list "pdiff" "drawing")
+;                               (list "PV2" "drawing" UV_dx UV_dy))
+LaygenLayerMap["slinomn"]    = (list (list "sliNOMN" "drawing"))
+LaygenLayerMap["slinomp"]    = (list (list "sliNOMP" "drawing"))
+LaygenLayerMap["N"]    = (list (list "ndiff" "drawing"))
+LaygenLayerMap["P"]    = (list (list "pdiff" "drawing"))
 
 ; Laygen pin direction mapping
 LaygenPinMap = (makeTable "pinMap" nil)
@@ -69,12 +81,13 @@ LaygenPinPurposeExists["metal2"] = t
 
 ; map net names
 LaygenNetMap = (makeTable "netMap" nil)
+
 LaygenNetMap[LaygenVssName] = GNDNetName
 LaygenNetMap[LaygenVccName] = VddNetName
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Top Level Function ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; Import a *.gen file into a Virtuoso cell
+; Import a *.lgf file into a Virtuoso cell
 (defun LaygenImport (filename libName cellName @key (viewName "layout"))
   (let (file fields type pins CV)
     file = (infile filename)
@@ -88,18 +101,19 @@ LaygenNetMap[LaygenVccName] = VddNetName
       fields = (parseString line " \n")
       type = (car fields)
       fields = (cdr fields)
-      (cond (type=="Bbox"  (LaygenBbox  CV fields))
-            (type=="Track" (LaygenTrack CV fields))
+      (cond (type=="Cell"  (LaygenBbox  CV fields))
+            ;(type=="Track" (LaygenTrack CV fields))
             (type=="Wire"  (LaygenWire  CV fields pins))
             (type=="Pin"   (LaygenPin   CV fields pins))
             (type=="Device"
-                   (LaygenDevice CV (append fields (parseString (gets line file) " \n"))))
+                   ;(LaygenDevice CV (append fields (parseString (gets line file) " \n"))))
+		   (LaygenDevice CV fields))
             )
       )
     (close file)
 
     ; add power hookup shapes
-    (LaygenFixPowerHookup ?CV CV)
+    ;(LaygenFixPowerHookup ?CV CV)
 
     ; set LaygenVersion property, save and return
     (dbReplaceProp CV "LaygenVersion" "string" LaygenVersion)
@@ -142,12 +156,14 @@ LaygenNetMap[LaygenVccName] = VddNetName
 
 ; Define PRBoundary of cell
 (defun LaygenBbox (CV fields)
-  (let (xl yl xh yh)
-    vars = (LaygenParseVars fields)
-    xl = (LaygenCoord vars["xl"])
-    xh = (LaygenCoord vars["xh"])
-    yl = (LaygenCoord vars["yl"])
-    yh = (LaygenCoord vars["yh"])
+  (let (xl yl xh yh coords points)
+    vars = (LaygenParseVars (cdr fields))
+    coords = vars["bbox"]
+    points = (parseString coords ":")
+    xl = (LaygenCoord (car points))
+    yl = (LaygenCoord (cadr points))
+    xh = (LaygenCoord (caddr points))
+    yh = (LaygenCoord (cadddr points))
     (when (and xl xh yl yh)
       (dbCreatePRBoundary CV (list xl:yl xl:yh xh:yh xh:yl xl:yl))
       (LaygenLabelPwell ?CV CV)
@@ -160,10 +176,11 @@ LaygenNetMap[LaygenVccName] = VddNetName
 (defun LaygenWire (CV fields pins)
   (let (vars xl yl xh yh lpps net)
     vars = (LaygenParseVars fields)
-    xl = (LaygenCoord vars["xl"])
-    xh = (LaygenCoord vars["xh"])
-    yl = (LaygenCoord vars["yl"])
-    yh = (LaygenCoord vars["yh"])
+    rect = (parseString vars["rect"] ":")
+    xl = (Ru_StringToInt (car rect)) * LaygenUnits
+    yl = (Ru_StringToInt (cadr rect)) * LaygenUnits
+    xh = (Ru_StringToInt (caddr rect)) * LaygenUnits
+    yh = (Ru_StringToInt (cadddr rect)) * LaygenUnits
     lpps = LaygenLayerMap[vars["layer"]]
     pin = (if vars["net"] && (vars["net"]==LaygenVssName || vars["net"]==LaygenVccName)
               (if LaygenPowerLayers[vars["layer"]] pins[vars["net"]] nil)
@@ -182,20 +199,44 @@ LaygenNetMap[LaygenVccName] = VddNetName
 ; Identify pins
 (defun LaygenPin (CV fields pins)
   (let (vars)
-    vars = (LaygenParseVars fields)
-    pins[vars["name"]] = LaygenPinMap[vars["dir"]]
+    vars = (LaygenParseVars (cdr fields))
+    ;pins[vars["name"]] = LaygenPinMap[vars["dir"]]
+    pins[(car fields)] = LaygenPinMap[vars["direction"]]
     )
   )
 
 ; Draw a transistor
 (defun LaygenDevice (CV fields)
-  (let (vars lpps xl yl xh yh)
+  (let (vars );name lpps xl yl xh yh offsets)
     vars = (LaygenParseVars fields)
-    xl = (LaygenCoord vars["xl"])
-    xh = (LaygenCoord vars["xh"])
-    yl = (LaygenCoord vars["yl"])
-    yh = (LaygenCoord vars["yh"])
+    name = (car fields)
+
+    x = (atoi vars["x"])
+    y = (atoi vars["y"])
+    r = (atoi vars["r"])
+    w = (LaygenCoord vars["w"])
+    l = (LaygenCoord vars["l"])
+
+    xo = 0.054 + x*GridPolyPitch*0.9 ; laygen layout not yet scaled to 60nm poly pitch
+    ; This is super hackish. I hope to come back around and compute this
+    ; in a more direct fashion
+    offsets = (makeTable "yoffsets" nil)
+    offsets["N340y1r0"] = 0.119
+    offsets["N680y1r0"] = 0.102
+    offsets["P340y0r0"] = 0.221
+    offsets["P680y0r0"] = 0.238
+    offsets["P340y0r1"] = 0.459
+    offsets["P680y0r1"] = 0.442
+    offsets["N340y0r1"] = 0.527
+    offsets["N340y1r1"] = 0.527
+    offsets["N680y0r1"] = 0.544
+    offsets["N680y1r1"] = 0.544
+    yl = offsets[(sprintf nil "%s%sy%dr%d" vars["model"] vars["w"] y r)] - w/2
+    xl = xo - 0.044
+    xh = xo + 0.044
+    yh = yl + w
     lpps = LaygenLayerMap[vars["model"]]
+    (printf "Making Device %s x=%d y=%d r=%d xl=%f yl=%f \n" name x y r xl yl)
     (LaygenRect CV lpps nil nil nil xl yl xh yh)
     t
     )
@@ -228,7 +269,9 @@ LaygenNetMap[LaygenVccName] = VddNetName
              (unless dx dx=0)
              dy = (cadddr lppxy)
              (unless dy dy=0)
-             (when fill && (cadr lpp)=="drawing" lpp = (list (car lpp) "fill"))
+	     ; FIXME. I commented out this "fill" purpose translation
+             ;(when fill && (cadr lpp)=="drawing" lpp = (list (car lpp) "fill"))
+	     ;(printf "Making rect lpp=%s %s %f,%f %f,%f\n" (car lpp) (cadr lpp) xl yl xh yh)
              rect = (dbCreateRect CV lpp (list xl-dx:yl-dy xh+dx:yh+dy))
              (when net && !fill
                net = (if LaygenNetMap[net] LaygenNetMap[net] net)
@@ -314,3 +357,4 @@ LaygenNetMap[LaygenVccName] = VddNetName
     CV
     )
   )
+
