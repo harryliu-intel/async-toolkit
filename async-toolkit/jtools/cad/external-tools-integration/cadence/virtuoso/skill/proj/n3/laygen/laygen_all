@@ -8,7 +8,7 @@ laygen_run lib.util.ctree.CTREE3.c0 e08ctree3ac1n03x5
 laygen_run lib.util.ctree.CTREE3.c1 e08ctree3ac1n06x5
 laygen_run lib.util.ctree.CTREE3.c2 e08ctree3ac1n09x5
 laygen_run lib.util.ctree.CTREE3.c3 e08ctree3ac1n12x5
-laygen_run lib.util.ctree.RHI_CTREE2.c1 e08ctrhi2ac1n09x5
+laygen_run lib.util.ctree.RHI_CTREE2.c1 e08ctrhi2ac1n06x5
 laygen_run lib.util.ctree.RLO_CTREE2.c1 e08ctrlo2ac1n06x5
 laygen_run lib.util.delay.tunable.WEAKENER.c0 e08weakenac1d03x5
 laygen_run lib.util.delay.tunable.WEAK_BUF.c0 e08wekbufac1d02x5
