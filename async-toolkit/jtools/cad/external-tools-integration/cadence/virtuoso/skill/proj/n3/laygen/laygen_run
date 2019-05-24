@@ -1,8 +1,8 @@
 #!/usr/intel/bin/perl -w
 
-my $LAYGENWARD="/nfs/site/disks/laygen_release_001/dev_rel/bhmiller/n3lib_may18";
+my $LAYGENWARD="$ENV{LAYGENWARD}";
 my $COLLATERAL="$LAYGENWARD/collateral/arch/e08";
-my $placements=100;
+my $placements=20;
 my $height=1;
 my $width="min";
 
