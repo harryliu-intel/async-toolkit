@@ -29,8 +29,6 @@ spar_cell_list =
 ; TDL
 (for i 1 8
   spar_cell_list = (cons (sprintf nil "lib.util.tdl.TDL-L%d-R.0" i) spar_cell_list)
-  )
-(for i 1 16
   spar_cell_list = (cons (sprintf nil "lib.util.tdl.TDL-L%d-R.1" i) spar_cell_list)
   )
 
