@@ -712,11 +712,13 @@ sub merge_coverage
     my $urg_source_file = catfile($output_dir, "merge.conf");
     my $total_vdb = 0;
 
-    if (scalar(@cov_sources) > 1 ) {
+    my $lev_idx = 0;
+    while (scalar(@cov_sources) > 1 ) {
        #merges vdbs
        my $sub_idx = 0;
        my @sub_sources;
        my @pidlist;
+       my @merged_sources = ();
        my $output_dir_sub = catdir($output_dir,"sub");
        system("mkdir -p $output_dir_sub") if (!-e $output_dir_sub);
        for(my $i=0; $i< scalar(@cov_sources);$i++) {
@@ -730,16 +732,18 @@ sub merge_coverage
                push @sub_sources, $source;
             }
             #fork a seperate process to run urg
-            my $source_file = catfile($output_dir_sub, "merge.$sub_idx.conf");
+            my $idx = "$lev_idx.$sub_idx";
+            my $source_file = catfile($output_dir_sub, "merge.$idx.conf");
             open(FH, ">$source_file") or die "Cannot write $source_file\n";
             debug_print(1, "***Information: Saved urgfile $source_file\n");
             print FH join("\n",@sub_sources);
             close(FH);
+            push @merged_sources, "$output_dir_sub/merged.$idx.vdb";
             if(my $pid=fork()) {
                push @pidlist, $pid;
-               debug_print(0, "***Information: Fork urg sub process $pid\n");
+               debug_print(0, "***Information: Fork urg sub process $idx $pid\n");
             } else {
-               merge_coverage_sub($output_dir_sub, $sub_idx, $source_file, $hier_file, $exclude_file);
+               merge_coverage_sub($output_dir_sub, $idx, $source_file, $hier_file, $exclude_file);
                exit 0;
             }
        
@@ -751,27 +755,27 @@ sub merge_coverage
        foreach my $pid (@pidlist) {
          waitpid $pid,0;
        }
-       debug_print(0, "***Information: All urg sub processes finished.\n");
+       debug_print(0, "***Information: All level $lev_idx urg sub processes finished.\n");
        debug_print(0, "***Information: Start to merge all sub urg reports\n");
 
        #prepare urg config file for vdb sources
        open(FH, ">$urg_source_file") or die "Cannot write $urg_source_file\n";
        debug_print(1, "***Information: Saved urgfile $urg_source_file\n");
-       for(my $i=0;$i<$total_vdb;$i++) {
-         my $vdb = "$output_dir_sub/merged.$i.vdb";
+       @cov_sources = ();
+       foreach my $vdb (@merged_sources) {
          if (-d $vdb) {
-           print FH "$vdb\n";
+           push @cov_sources, $vdb;
          } else {
            debug_print(0, "***Error: sub process vdb database cannot be found $vdb\nThe merge process may not merge all tests\n");    
          }
        }
        close(FH);
-    } else {
-       $total_vdb = 1;
-       open(FH, ">$urg_source_file") or die "Cannot write $urg_source_file\n";
-       print FH "$cov_sources[0]\n";
-       close FH;
+       $lev_idx++;
     }
+    $total_vdb = 1;
+    open(FH, ">$urg_source_file") or die "Cannot write $urg_source_file\n";
+    print FH "$cov_sources[0]\n";
+    close FH;
 
 
 
@@ -889,9 +893,7 @@ sub merge_coverage_sub
     my $cmd = "$urg -full64\t\\
 \t-f $source_file\t\\
 \t-metric $vcsCoverageMetrics\t\\
-\t-report $urgCoverageRpt\t\\
-\t-format both\t\\
-\t-show ratios\t\\
+\t-noreport\t\\
 \t-log $urgLogFile\t\\
 \t-dbname $urgMergedCoverage\t\\
 \t-hier $hier_file";
