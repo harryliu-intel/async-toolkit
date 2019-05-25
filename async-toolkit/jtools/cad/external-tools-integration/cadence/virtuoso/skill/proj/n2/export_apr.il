@@ -33,7 +33,7 @@ spar_cell_list =
   )
 
 ; BD CTRL
-(for i 4 16
+(for i 4 8
   spar_cell_list = (cons (sprintf nil "lib.bd.standard.pipeline.CTRL-L%d_false_false-R.0" i) spar_cell_list)
   spar_cell_list = (cons (sprintf nil "lib.bd.standard.pipeline.CTRL-L%d_true_false-R.0" i) spar_cell_list)
   spar_cell_list = (cons (sprintf nil "lib.bd.standard.pipeline.CTRL-L%d_false_true-R.0" i) spar_cell_list)
