@@ -1,2 +1,2 @@
-P: D _S  S R Reset _R _R Reset Reset _R
-N: D  S _S R Reset _R _R Reset _     _
+P: D _S  S R _R _R _RESET
+N: D  S _S R _R _R _
