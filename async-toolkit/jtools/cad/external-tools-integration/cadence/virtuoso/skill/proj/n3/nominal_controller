@@ -11,31 +11,32 @@ while (my $file = shift @ARGV) {
         open IN, "<$file";
         open OUT, ">$out";
         while (my $line = <IN>) {
+            chomp($line);
             if ($line =~ /^(.*\")c([^\.]+)(\".*)$/ ) { # remap CAST cell definition
-                $line = "${1}b${2}${3}\n";
+                $line = "${1}b${2}${3}";
             }
             elsif ($line =~ /^(.*vendor\.intel\.e08\..*)c\.(.*)$/ ) { # remap E08 subcells
-                $line = "${1}b.${2}\n";
+                $line = "${1}b.${2}";
             }
-            elsif ($line =~ /^(.*\s+stack\.\S+\()1(\)\s+.*$)/) { # remap stack
-                $line = "${1}2${2}\n";
+            elsif ($line =~ /^(.*\s+stack\.\S+\()1(\)\s+.*)$/) { # remap stack
+                $line = "${1}2${2}";
             }
-            elsif ($line =~ /^(.*\s+gate\.\S+\()1,1(\)\s+.*$)/) { # remap gate
-                $line = "${1}2,2${2}\n";
+            elsif ($line =~ /^(.*\s+gate\.\S+\()1,1(\)\s+.*)$/) { # remap gate
+                $line = "${1}2,2${2}";
             }
             elsif ($line =~ /^(.*\S+\.)c([^\.]+)$/) { # remap CAST subcells
-                $line = "${1}b${2}\n";
+                $line = "${1}b${2}";
             }
             elsif ($line =~ /^(.*) N\[1\] (.*)$/) { # rename transistors
-                $line = "${1} N[2] ${2}\n";
+                $line = "${1} N[2] ${2}";
             }
             elsif ($line =~ /^(.*) P\[1\] (.*)$/) { # rename transistors
-                $line = "${1} P[2] ${2}\n";
+                $line = "${1} P[2] ${2}";
             }
             elsif ($line =~ /^(.*transistor_type\s*=\s*)1(;.*)$/) { # fix directive
-                $line = "${1}2${2}\n";
+                $line = "${1}2${2}";
             }
-            print OUT $line;
+            print OUT "$line\n";
         }
         close IN;
         close OUT;
