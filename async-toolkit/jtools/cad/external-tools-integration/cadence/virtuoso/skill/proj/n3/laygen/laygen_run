@@ -40,6 +40,8 @@ if (-e "${e08}.place") {
 my $rundir="${cell}.run";
 system("mkdir -p $rundir");
 chdir($rundir);
+system("$ENV{FULCRUM} graph_netlist --format=eps " .
+       "--cast-path=$ENV{CAST_PATH} --include-all $cell");
 system("$ENV{FULCRUM} cast2cdl " . 
        "--process-dependent-name --cdl-mos-parameters=m " .
        "--cast-path=$ENV{CAST_PATH} --cadence-name " .
@@ -66,6 +68,7 @@ set_option placement_effort 1
 set_option target_area $width
 set_option target_height $height
 set_option option "Option name=plan_device_y value=1 push_out=0 push_devices_to_default=1,0"
+set_option option "Option name=max_y value=3,2"
 set_option route no
 set_netlist $lgf
 run_main
