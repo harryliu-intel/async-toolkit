@@ -1,0 +1,4 @@
+N: L _ _L R[1] xl[0]._R0  L _S  S R[0] xl[0]._R1 xl[0]._R1 _      _ _RESET S nobS.nob.n1
+P: L _  L R[1] xl[0]._R0 _L  S _S R[0] xl[0]._R1 xl[0]._R1 _RESET _ _RESET S nobS.nob.n1
+P: L _  L R[0] xl[1]._R0 _L _S  S R[1] xl[1]._R1 xl[1]._R1 _RESET _ _      S nobS.nob.n1
+N: L _ _L R[0] xl[1]._R0  L  S _S R[1] xl[1]._R1 xl[1]._R1 _      _ _      S nobS.nob.n1
