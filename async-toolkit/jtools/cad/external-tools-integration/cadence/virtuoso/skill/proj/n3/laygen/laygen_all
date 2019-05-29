@@ -13,8 +13,8 @@ laygen_run lib.util.ctree.RLO_CTREE2.c1 e08ctrlo2ac1n06x5
 laygen_run lib.util.tdl.WEAKENER.c0 e08weakenac1d03x5
 laygen_run --width=3 lib.util.tdl.WEAK_BUF.c0 e08wekbufac1d02x5
 laygen_run lib.util.tdl.WEAK_QUAD_INV.c0 e08wkqinvac1d02x5
-laygen_run lib.util.widget.XOR_LATCH.c0 e08xorltcac1n03x5
-laygen_run lib.util.widget.ALTVERTER_LATCH.c0 e08atvltcac1n03x5
+laygen_run lib.util.widget.XOR_LATCH.c0 e08xorltcac1n06x5
+laygen_run lib.util.widget.ALTVERTER_LATCH.c0 e08atvltcac1n06x5
 laygen_run lib.qdi.metastable.filter.HALF_FILTER.c0 e08hffiltac1n03x5
 laygen_run core.noc.crossbar.datapath.TAIL_CONTROL_La.c0 e08xbrtclac1n03x5
 laygen_run core.noc.crossbar.datapath.TAIL_CONTROL_y.c0 e08xbrtcyac1n03x5
