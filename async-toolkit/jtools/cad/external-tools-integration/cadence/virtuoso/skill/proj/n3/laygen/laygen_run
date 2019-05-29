@@ -46,13 +46,11 @@ system("$ENV{FULCRUM} cast2cdl " .
        "--process-dependent-name --cdl-mos-parameters=m " .
        "--cast-path=$ENV{CAST_PATH} --cadence-name " .
        "--cell=$cell --output=hier.cdl");
-system("$ENV{FULCRUM} inliner " .
+system("$ENV{FULCRUM} inliner --flatten " .
        "--cdl=hier.cdl --library=hier.cdl > flat.cdl");
-system("$ENV{FULCRUM} inliner " .
-       "--cdl=flat.cdl --library=hier.cdl > flatter.cdl");
 system("$ENV{FULCRUM} cdl2snp " .
        "--length 20e-9 --gridW 34e-9 --maxNmosW 102e-9 --maxPmosW 102e-9 " .
-       "$cell flatter.cdl $e08.snp");
+       "$cell flat.cdl $e08.snp");
 system("$LAYGENWARD/tcl/snp_to_lgf.tcl $e08.snp $e08.lgf");
 
 my $lgf="$e08.lgf";
