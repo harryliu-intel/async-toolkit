@@ -1,7 +1,7 @@
 #!/usr/bin/csh
 
 laygen_run --width=17 lib.util.widget.DIVERTER.c0  e08divertac1d06x5
-laygen_run --width=14 lib.util.widget.ALTVERTER.c0 e08toggleac1d06x5
+laygen_run --width=13 lib.util.widget.ALTVERTER.c0 e08toggleac1d06x5
 
 laygen_run lib.util.ctree.CTREE2.c0 e08ctree2ac1n03x5
 laygen_run lib.util.ctree.CTREE2.c1 e08ctree2ac1n06x5
