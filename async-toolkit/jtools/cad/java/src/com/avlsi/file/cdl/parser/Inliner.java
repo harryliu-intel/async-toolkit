@@ -43,9 +43,10 @@ public class Inliner {
 
         final String cdlFile = theArgs.getArgValue("cdl", null);
         final String cdlLibrary = theArgs.getArgValue("library", null);
+        final boolean flatten = theArgs.argExists("flatten");
         if (cdlFile == null || cdlLibrary == null) usage();
 
-        final CDLInlineFactory iline = new CDLInlineFactory(true);
+        final CDLInlineFactory iline = new CDLInlineFactory(true, null, flatten);
         final Reader libraryReader = new FileReader(cdlLibrary);
         final String cells = theArgs.getArgValue("cells", null);
         if (cells == null) {
