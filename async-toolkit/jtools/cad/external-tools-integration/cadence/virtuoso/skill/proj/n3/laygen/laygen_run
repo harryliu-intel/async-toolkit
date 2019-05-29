@@ -2,13 +2,14 @@
 
 my $LAYGENWARD="$ENV{LAYGENWARD}";
 my $COLLATERAL="$LAYGENWARD/collateral/arch/e08";
-my $placements=20;
+my $placements=1;
 my $height=1;
 my $width="min";
 
 while (@ARGV && $ARGV[0] =~ /^--(\S+)=(\S+)/) {
     if    ($1 eq "width") { $width=$2; }
     elsif ($1 eq "height") { $height=$2; }
+    elsif ($1 eq "placements") { $placements=$2; }
     else { last; }
     shift;
 }
