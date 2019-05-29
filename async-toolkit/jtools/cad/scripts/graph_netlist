@@ -174,7 +174,7 @@ close CDL;
 #
 # Flatten the cell definition
 #
-$cmd = "$inliner --cdl='$tempDir/withgates.cdl' --library=$tempDir/stacks.cdl ".
+$cmd = "$inliner --flatten --cdl='$tempDir/withgates.cdl' --library=$tempDir/stacks.cdl ".
        "> '$tempDir/cell.cdl'";
 system($cmd) && die "ERROR: CDL Inliner failed.\n";
 
