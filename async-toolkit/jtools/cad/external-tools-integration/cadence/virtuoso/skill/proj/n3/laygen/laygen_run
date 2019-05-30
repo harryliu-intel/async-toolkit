@@ -90,7 +90,6 @@ $lsf
 set_option option "Option name=undesired_pattern_report_filename value=undesired_patterns.txt"
 set_option option "Option name=dump_final_rpg_file value=0"
 set_option option "Option name=show_invisible_layout value=0"
-set_option option "Option name=allow_opens value=1"
 set_option upperlayer m$top
 set_option route yes
 set_netlist ../../$place_lgf
