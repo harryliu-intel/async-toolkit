@@ -80,9 +80,9 @@ system("$LAYGENWARD/bin/laygen_shell -nogui -file place.lsh >& place.log");
 my @files = split("\n",`ls out/*.lgf`);
 for (my $top=1; $top<=2; $top++) {
     foreach my $place_lgf (@files) {
-        print "ROUTE: $place_lgf\n";
         my $routedir=$place_lgf;
         $routedir =~ s/\.lgf/\.m$top/;
+        print "ROUTE: $routedir\n";
         system("mkdir $routedir");
         open OUT, ">$routedir/route.lsh" or die;
         print OUT <<EOF;
@@ -98,6 +98,7 @@ run_main
 exit
 EOF
         close OUT;
-        system("cd $routedir; nbq $LAYGENWARD/bin/laygen_shell -nogui -file route.lsh >& route.log ");
+        system("cd $routedir; nbq -j \"Laygen $routedir\" $LAYGENWARD/bin/laygen_shell " . 
+               "-nogui -file route.lsh >& route.log ");
     }
 }
