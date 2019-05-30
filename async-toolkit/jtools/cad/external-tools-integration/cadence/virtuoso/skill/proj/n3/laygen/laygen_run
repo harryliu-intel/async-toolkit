@@ -30,7 +30,7 @@ my $lsf =
     "set_option fabric e08\n" .
     "set_option use_assumptions yes\n" .
     "set_option upperlayer m2\n" .
-    "set_option max_num_cores 4\n" .
+    "set_option max_num_cores 1\n" .
     "set_log_level status";
 
 my $place="";
