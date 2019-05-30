@@ -98,7 +98,7 @@ run_main
 exit
 EOF
         close OUT;
-        system("cd $routedir; nbq -j \"Laygen $routedir\" $LAYGENWARD/bin/laygen_shell " . 
-               "-nogui -file route.lsh >& route.log ");
+        system("cd $routedir; nbq -j route.log $LAYGENWARD/bin/laygen_shell " . 
+               "-nogui -file route.lsh");
     }
 }
