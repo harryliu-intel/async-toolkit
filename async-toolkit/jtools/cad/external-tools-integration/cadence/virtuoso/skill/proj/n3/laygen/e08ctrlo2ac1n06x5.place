@@ -1,2 +1,2 @@
-P: A[0] A[1] A[0] _RESET _      A[1] X
+P: A[0] A[1] A[0] _RESET |      A[1] X
 N: A[0] A[1] A[0] _RESET _RESET A[1] X
