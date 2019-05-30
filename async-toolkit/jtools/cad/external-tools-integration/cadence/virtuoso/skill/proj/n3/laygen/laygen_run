@@ -29,7 +29,6 @@ my $lsf =
     "set_option layer_file $COLLATERAL/e08.layer\n" .
     "set_option fabric e08\n" .
     "set_option use_assumptions yes\n" .
-    "set_option upperlayer m2\n" .
     "set_option max_num_cores 1\n" .
     "set_log_level status";
 
@@ -43,7 +42,7 @@ system("mkdir -p $rundir");
 chdir($rundir);
 system("$ENV{FULCRUM} graph_netlist --format=eps " .
        "--cast-path=$ENV{CAST_PATH} --include-all $cell");
-system("$ENV{FULCRUM} cast2cdl " . 
+system("$ENV{FULCRUM} cast2cdl " .
        "--process-dependent-name --cdl-mos-parameters=m " .
        "--cast-path=$ENV{CAST_PATH} --cadence-name " .
        "--cell=$cell --output=hier.cdl");
@@ -77,25 +76,28 @@ exit
 EOF
 system("$LAYGENWARD/bin/laygen_shell -nogui -file place.lsh >& place.log");
 
-# route all placements
+# route all placements using top metal 1 and 2
 my @files = split("\n",`ls out/*.lgf`);
-foreach my $place_lgf (@files) {
-    print "ROUTE: $place_lgf\n";
-    my $routedir=$place_lgf;
-    $routedir =~ s/\.lgf//;
-    system("mkdir $routedir");
-    open OUT, ">$routedir/route.lsh" or die;
-    print OUT <<EOF;
+for (my $top=1; $top<=2; $top++) {
+    foreach my $place_lgf (@files) {
+        print "ROUTE: $place_lgf\n";
+        my $routedir=$place_lgf;
+        $routedir =~ s/\.lgf/\.m$top/;
+        system("mkdir $routedir");
+        open OUT, ">$routedir/route.lsh" or die;
+        print OUT <<EOF;
 $lsf
 set_option option "Option name=undesired_pattern_report_filename value=undesired_patterns.txt"
 set_option option "Option name=dump_final_rpg_file value=0"
 set_option option "Option name=show_invisible_layout value=0"
 set_option option "Option name=allow_opens value=1"
+set_option upperlayer m$top
 set_option route yes
 set_netlist ../../$place_lgf
 run_main
 exit
 EOF
-    close OUT;
-    system("cd $routedir; nbq $LAYGENWARD/bin/laygen_shell -nogui -file route.lsh >& route.log ");
+        close OUT;
+        system("cd $routedir; nbq $LAYGENWARD/bin/laygen_shell -nogui -file route.lsh >& route.log ");
+    }
 }
