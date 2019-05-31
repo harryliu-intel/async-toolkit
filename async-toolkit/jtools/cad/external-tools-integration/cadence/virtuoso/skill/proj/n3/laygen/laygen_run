@@ -34,7 +34,7 @@ my $lsf =
 
 my $place="";
 if (-e "${e08}.place") {
-    $place="set_option option \"Option name=manual_placement_file value=../${e08}.place\"";
+    $place="set_option option {Option name=manual_placement_file value=../${e08}.place}";
 }
 
 my $rundir="${cell}.run";
@@ -67,8 +67,8 @@ set_option run_hazel_placement_engine 1
 set_option placement_effort 1
 set_option target_area $width
 set_option target_height $height
-set_option option "Option name=plan_device_y value=1 push_out=0 push_devices_to_default=1,0"
-set_option option "Option name=max_y value=3,2"
+set_option option {Option name=plan_device_y value=1 push_out=0 push_devices_to_default=1,0}
+set_option option {Option name=max_y value=3,2}
 set_option route no
 set_netlist $lgf
 run_main
@@ -76,28 +76,44 @@ exit
 EOF
 system("$LAYGENWARD/bin/laygen_shell -nogui -file place.lsh >& place.log");
 
-# route all placements using top metal 1 and 2
+# route all placements
 my @files = split("\n",`ls out/*.lgf`);
-for (my $top=1; $top<=2; $top++) {
-    foreach my $place_lgf (@files) {
-        my $routedir=$place_lgf;
-        $routedir =~ s/\.lgf/\.m$top/;
-        print "ROUTE: $routedir\n";
-        system("mkdir $routedir");
-        open OUT, ">$routedir/route.lsh" or die;
-        print OUT <<EOF;
+foreach my $place_lgf (@files) {
+    # restrict use of M2 on internal nets at highest priority
+    my $internal_m2="";
+    open LGF, "<$place_lgf" or die;
+    while (my $line=<LGF>) {
+        if ($line =~ /Nets type=Internal \[(.*)\]/) {
+            foreach my $net (sort(split(" ",$1))) {
+                my $priority=2;
+                $priority=1 if ($net =~ /#/ );
+                $internal_m2 .= "set_option option {Option name=control_net_tracks " .
+                    "action=at_most target=0 net=\"$net\" priority=$priority layer=metal2}\n";
+            }
+        }
+    }
+    close LGF;
+    
+    # route
+    my $routedir=$place_lgf;
+    $routedir =~ s/\.lgf//;
+    print "ROUTE: $routedir\n";
+    system("mkdir $routedir");
+    open OUT, ">$routedir/route.lsh" or die;
+    print OUT <<EOF;
 $lsf
-set_option option "Option name=undesired_pattern_report_filename value=undesired_patterns.txt"
-set_option option "Option name=dump_final_rpg_file value=0"
-set_option option "Option name=show_invisible_layout value=0"
-set_option upperlayer m$top
+set_option option {Option name=undesired_pattern_report_filename value=undesired_patterns.txt}
+set_option option {Option name=dump_final_rpg_file value=0}
+set_option option {Option name=show_invisible_layout value=0}
+set_option option {Option name=eliminate_undesired_subties value=0}
+$internal_m2
+set_option upperlayer m2
 set_option route yes
 set_netlist ../../$place_lgf
 run_main
 exit
 EOF
-        close OUT;
-        system("cd $routedir; nbq -j route.log $LAYGENWARD/bin/laygen_shell " . 
+    close OUT;
+    system("cd $routedir; nbq -j route.log $LAYGENWARD/bin/laygen_shell " . 
                "-nogui -file route.lsh");
-    }
 }
