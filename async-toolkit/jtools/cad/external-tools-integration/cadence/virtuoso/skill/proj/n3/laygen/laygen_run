@@ -5,11 +5,13 @@ my $COLLATERAL="$LAYGENWARD/collateral/arch/e08";
 my $placements=1;
 my $height=1;
 my $width="min";
+my $allow_opens=0;
 
 while (@ARGV && $ARGV[0] =~ /^--(\S+)=(\S+)/) {
     if    ($1 eq "width") { $width=$2; }
     elsif ($1 eq "height") { $height=$2; }
     elsif ($1 eq "placements") { $placements=$2; }
+    elsif ($1 eq "allow-opens") { $allow_opens=$2; }
     else { last; }
     shift;
 }
@@ -128,6 +130,7 @@ set_option option {Option name=undesired_pattern_report_filename value=undesired
 set_option option {Option name=dump_final_rpg_file value=0}
 set_option option {Option name=show_invisible_layout value=0}
 set_option option {Option name=eliminate_undesired_subties value=0}
+set_option option {Option name=allow_opens value=$allow_opens}
 $internal_m2
 set_option upperlayer m2
 set_option route yes
