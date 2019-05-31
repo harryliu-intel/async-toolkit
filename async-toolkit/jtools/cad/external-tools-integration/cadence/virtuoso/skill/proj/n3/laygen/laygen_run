@@ -79,21 +79,43 @@ system("$LAYGENWARD/bin/laygen_shell -nogui -file place.lsh >& place.log");
 # route all placements
 my @files = split("\n",`ls out/*.lgf`);
 foreach my $place_lgf (@files) {
-    # restrict use of M2 on internal nets at highest priority
-    my $internal_m2="";
+    # detect internal nets and nets that are transitor gates
+    my @lines;
+    my %internal;
+    my %transistor_gate;
     open LGF, "<$place_lgf" or die;
     while (my $line=<LGF>) {
-        if ($line =~ /Nets type=Internal \[(.*)\]/) {
+        if ($line =~ /^Nets type=Internal \[\s+(.*)\s+\]/) {
             foreach my $net (sort(split(" ",$1))) {
-                my $priority=2;
-                $priority=1 if ($net =~ /#/ );
-                $internal_m2 .= "set_option option {Option name=control_net_tracks " .
-                    "action=at_most target=0 net=\"$net\" priority=$priority layer=metal2}\n";
+                $internal{$net}=1;
             }
         }
+        elsif ($line =~ /^Device \S+ nets=\[ (\S+) (\S+) (\S+) (\S+) \] type=(\S+)/) {
+            $transistor_gate{$2}=1;
+            # HACK: patch y
+            if ($5 eq "n") { $line=~ s/y=(\d+)/y=1/g; }
+            else           { $line=~ s/y=(\d+)/y=0/g; }
+        }
+        push @lines, $line;
     }
     close LGF;
-    
+
+    # write patched LGF file back again
+    open LGF, ">$place_lgf" or die;
+    foreach my $line (@lines) {
+        print LGF "$line";
+    }
+    close LGF;
+
+    # restrict m2 routing of internal nets
+    my $internal_m2="";
+    foreach my $net (sort keys %internal) {
+        my $priority=1;
+        $priority=2 if (defined($transistor_gate{$net}));
+        $internal_m2 .= "set_option option {Option name=control_net_tracks " .
+            "action=at_most target=0 net=\"$net\" priority=$priority layer=metal2}\n";
+    }
+
     # route
     my $routedir=$place_lgf;
     $routedir =~ s/\.lgf//;
