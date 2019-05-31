@@ -462,12 +462,23 @@ def dump_graph_list(nametemplate, list):
             file.close()
             count = count + 1
 
+def uncontinue(cdl):
+    last = None
+    for line in cdl:
+        if line[0] == '+':
+            last = last.rstrip() + ' ' + line[1:]
+        else:
+            if last is not None:
+                yield last
+            last = line
+    yield last
+
 def main():
     input, nametemplate, bindFileName = parse_options()
     bindFile = None
     if ( bindFileName ):
         bindFile = BindFile( bindFileName )
-    for i in input.readlines():
+    for i in uncontinue(input):
         if handle_line(bindFile,i.rstrip()):
             return 1
     calc_nsps()
