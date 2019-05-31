@@ -1,0 +1,30 @@
+Shrink from 14nm D04 to 10nm E08pp60
+  Nominal shrink is 0.69 from scaling pg and dg pitches
+  Or 0.73 from scaling pg and standard cell row height
+  10nm has other density improvements
+  E08 improves density by using single height cells more often
+  E08 avoids spacers in mid-level cells by not needing power hookups
+
+10nm 4GBD improvements
+  Transistors all manually placed using new Laygen feature
+  CTREE3 circuit is now 12T, down from 16T
+  ALTVERTER, DIVERTER are single Laygen cells instead of mid-level with fragments
+  ALTVERTER, DIVERTER have better reset transistors
+  Drive strengths still default to 6dg
+
+                10nm    14nm    shrink
+CTREE2.c0       163200  335160  0.49
+CTREE2.c1       183600  391020  0.47
+CTREE2.c2       204000  391020  0.52
+CTREE2.c3       224400  558600  0.40
+CTREE3.c0       163200  614460  0.27
+CTREE3.c1       183600  670320  0.27
+CTREE3.c2       265200  670320  0.40
+CTREE3.c3       285600  726180  0.39
+RLO_CTREE2.c1   224400  N/A
+RHI_CTREE2.c1   224400  558600  0.40
+ALTVERTER       530400 1675800  0.32
+DIVERTER        693600 2681280  0.26
+WEAKENER        204000  335160  0.61
+WEAK_QUAD_INV   122400  223440  0.55
+WEAK_BUF        122400  167580  0.73
