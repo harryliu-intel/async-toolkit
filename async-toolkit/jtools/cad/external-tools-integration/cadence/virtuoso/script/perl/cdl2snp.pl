@@ -228,7 +228,7 @@ my @outports;
 foreach my $node (keys %portnodes) {
     unless ($node eq "vcc" || $node eq "vss") { push @ports, $node; }
 }
-my $cmd = "fulcrum cast_query --cast-path=\$CAST_PATH --task=external_nodes=direction --cell=" . $top;
+my $cmd = "fulcrum cast_query --cast-path=\$CAST_PATH --task=external_nodes=di:im --cell=" . $top;
 my $ports_query = `$cmd`;
 my @portslist = split("\n", $ports_query);
 
