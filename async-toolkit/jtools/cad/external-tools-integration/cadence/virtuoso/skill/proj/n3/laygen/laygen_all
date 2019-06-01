@@ -1,7 +1,7 @@
 #!/usr/bin/csh
 
-laygen_run --placements=10 --width=17 lib.util.widget.DIVERTER.c0  e08divertac1d06x5
-laygen_run --placements=10 --width=13 lib.util.widget.ALTVERTER.c0 e08toggleac1d06x5
+laygen_run --placements=10 lib.util.widget.DIVERTER.c0  e08divertac1d06x5
+laygen_run --placements=10 lib.util.widget.ALTVERTER.c0 e08toggleac1d06x5
 laygen_run --placements=10 core.noc.crossbar.datapath.TAIL_CONTROL.c0 e08xbrctlac1d06x5
 
 laygen_run --placements=10 lib.util.ctree.CTREE2.c0 e08ctree2ac1n03x5
