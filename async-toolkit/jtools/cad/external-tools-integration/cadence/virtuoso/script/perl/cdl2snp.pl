@@ -60,7 +60,7 @@ sub error_msg {
 # map nodes
 sub map_nodes {
     foreach $node (@_) {
-        if ($node eq "Vdd") { $node = "vcc"; }
+        if    ($node eq "Vdd") { $node = "vcc"; }
         elsif ($node eq "GND") { $node = "vss"; }
     }
 }
@@ -77,6 +77,9 @@ my $cell;
 my @out;
 my %portnodes;
 my %localnodes;
+my %g_nodes;
+my %sd_nodes;
+my %b_nodes;
 my $num_mos = 0;
 while ($line) {
     $next_line = <IN>;
@@ -93,28 +96,20 @@ while ($line) {
 
         $line =~ s/(\S+)\s+//;
         $cell = $1;
-        $type = $1;
-        #push @out, ".SUBCKT $type" if ($cell eq $top);
         while ($line =~ s/(\S+)\s*//) {
             $arg = $1;
             if ($arg =~ /(\S+)=(\S+)/) {
-                # Parameter and default.
-                # Default value saved in subc_arg will be used 
-                # if an instance fails to provide all parameters
-                #push @out, " $1=$2" if ($cell eq $top);
+                # Ignore parameters
             } else {
                 # Node argument
-                #push @out, " $arg" if ($cell eq $top);
                 map_nodes($arg);
-                $portnodes{$arg}=1  if ($cell eq $top);
+                $portnodes{$arg}=1 if ($cell eq $top);
             }
         }
-        #push @out, "\n" if ($cell eq $top);
 
     } elsif ($line =~ s/^\.ENDS//i) {
 
         $cell = "";
-        #push @out, ".ENDS\n" if ($cell eq $top);
 
     } elsif ($line =~ s/^M//i) {
 
@@ -136,6 +131,10 @@ while ($line) {
             $localnodes{$source}=1;
             $localnodes{$gate}=1;
             $localnodes{$bulk}=1;
+            $g_nodes{$gate}=1;
+            $sd_nodes{$drain}=1;
+            $sd_nodes{$source}=1;
+            $b_nodes{$bulk}=1;
         }
 
         # create parameter list in aspice order
@@ -185,28 +184,7 @@ while ($line) {
 
     } elsif ($line =~ s/^X//i) {
 
-        # Call to Subcircuit
-        my %parms = ();
-        my @parms = ();
-        my @nodes = ();
-        $line =~ s/^(\S+)\s*// or error_msg "Call lacks instance name: $full";
-        $name = $1;
-        while ($line =~ s/(\S+)=(\S+)\s*//) {
-            $parms{$1}=$2;
-            push @parms, $1;
-        }
-        $line =~ s/(\S+)\s*$// or error_msg "Call lacks SUBCKT name: $full";
-        $type = $1;
-        @nodes = split /\s+/, $line;
-        my $slash = pop @nodes; # FIXME: find better way to remove last "/"
-        if ($slash ne "/") { # slash is optional before subcircuit name
-            push @nodes, $slash;
-        }
-        push @out,  "X$name @nodes $type" if ($cell eq $top);
-        foreach my $parm (@parms) {
-            push @out,  " $parm=$parms{$parm}" if ($cell eq $top);
-        }
-        push @out,  "\n" if ($cell eq $top);
+        die "must flatted SUBCKT's\n";
 
     } elsif ($line =~ m/^\*/) {
         # comment line, do nothing
@@ -224,35 +202,24 @@ close IN;
 my @ports;
 my @inports;
 my @outports;
-
+my @ioports;
 foreach my $node (keys %portnodes) {
-    unless ($node eq "vcc" || $node eq "vss") { push @ports, $node; }
-}
-my $cmd = "fulcrum cast_query --cast-path=\$CAST_PATH --task=external_nodes=di:im --cell=" . $top;
-my $ports_query = `$cmd`;
-my @portslist = split("\n", $ports_query);
-
-foreach my $port (@ports) {
-    foreach my $elem (@portslist) {
-    if (substr($elem, 1) eq $port && $elem =~ m/\+/) {
-	    #print "\noutput " . $elem . "\n";
-	    push @outports, $port;
-	} elsif (substr($elem,1) eq $port && $elem =~ m/\-/) {
-	    #print "\ninput " . $elem . "\n";
-	    push @inports, $port;
-	}
+    unless ($node eq "vcc" || $node eq "vss") {
+        push @ports, $node;
+        if (defined($g_nodes{$node}) && defined($sd_nodes{$node})) { push @ioports, $node; }
+        elsif (defined($g_nodes{$node})) { push @inports, $node; }
+        elsif (defined($sd_nodes{$node})) { push @outports, $node; }
     }
 }
-
 
 # output
 open OUT, ">$f_out" or die "Can't write $f_out\n";
 print OUT ".GLOBAL vcc vss\n";
 print OUT "\$\$.MACRO $newtop @ports\n";
-print OUT "\$ CELL: $newtop (default L = 0.028)\n";
+print OUT "\$ CELL: $newtop\n";
 print OUT "\$\$.INPUT @inports\n";
 print OUT "\$\$.OUTPUT @outports\n";
-print OUT "\$\$.IOPUT\n";
+print OUT "\$\$.IOPUT @ioports\n";
 my $num_localnodes = 0;
 my @nodes;
 foreach my $node (keys %localnodes) {
