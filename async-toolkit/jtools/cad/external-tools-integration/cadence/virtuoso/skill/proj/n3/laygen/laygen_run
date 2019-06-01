@@ -80,7 +80,6 @@ system("$LAYGENWARD/bin/laygen_shell -nogui -file place.lsh >& place.log");
 my @files = split("\n",`ls out/*.lgf`);
 foreach my $place_lgf (@files) {
     # detect internal nets and nets that are transitor gates
-    my @lines;
     my %internal;
     my %transistor_gate;
     open LGF, "<$place_lgf" or die;
@@ -92,18 +91,7 @@ foreach my $place_lgf (@files) {
         }
         elsif ($line =~ /^Device \S+ nets=\[ (\S+) (\S+) (\S+) (\S+) \] type=(\S+)/) {
             $transistor_gate{$2}=1;
-            # HACK: patch y
-            if ($5 eq "n") { $line=~ s/y=(\d+)/y=1/g; }
-            else           { $line=~ s/y=(\d+)/y=0/g; }
         }
-        push @lines, $line;
-    }
-    close LGF;
-
-    # write patched LGF file back again
-    open LGF, ">$place_lgf" or die;
-    foreach my $line (@lines) {
-        print LGF "$line";
     }
     close LGF;
 
