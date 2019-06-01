@@ -40,6 +40,7 @@ if (-e "${e08}.place") {
 }
 
 my $rundir="${cell}.run";
+my $lgf="$e08.lgf";
 system("mkdir -p $rundir");
 chdir($rundir);
 system("$ENV{FULCRUM} graph_netlist --format=eps " .
@@ -50,12 +51,9 @@ system("$ENV{FULCRUM} cast2cdl " .
        "--cell=$cell --output=hier.cdl");
 system("$ENV{FULCRUM} inliner --flatten " .
        "--cdl=hier.cdl --library=hier.cdl > flat.cdl");
-system("$ENV{FULCRUM} cdl2snp " .
+system("$ENV{FULCRUM} cdl2lgf " .
        "--length 20e-9 --gridW 34e-9 --maxNmosW 102e-9 --maxPmosW 102e-9 " .
-       "$cell flat.cdl $e08.snp");
-system("$LAYGENWARD/tcl/snp_to_lgf.tcl $e08.snp $e08.lgf");
-
-my $lgf="$e08.lgf";
+       "$cell flat.cdl $lgf");
 
 # place
 print "PLACE: $lgf\n";
