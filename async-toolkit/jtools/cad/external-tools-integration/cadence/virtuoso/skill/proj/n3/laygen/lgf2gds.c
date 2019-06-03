@@ -35,11 +35,29 @@ layer_map map[] = {
   {"",0,0} // terminate
 };
 
-/** translate layer name to layer:purpose **/
-layer_map *translate_layer(char *name) {
+/** Alternate table used for fill shapes **/
+layer_map fill_map[]= {
+  {"wirepoly",2,250},
+  {"diffcon",5,250},
+  {"metal0",120,250},
+  {"metals0",120,250},
+  {"metalc0",120,250},
+  {"metal1",4,250},
+  {"metal2",14,250},
+  {"metalc2",14,250},
+  {"",0,0} // terminate
+};
+
+/** translate layer name to layer:purpose pair **/
+layer_map *translate_layer(char *name, int fill) {
+  if (fill) {
+    for (layer_map *p=fill_map; p->name[0]!=0; p++)
+      if (strcmp(p->name,name)==0) return p;
+  }
   for (layer_map *p=map; p->name[0]!=0; p++)
     if (strcmp(p->name,name)==0) return p;
-  return NULL;
+  fprintf(stderr,"ERROR: unknown layer %s\n",name);
+  exit(1);
 }
 
 /** Write 1 byte **/
@@ -109,10 +127,7 @@ void start_gds(FILE *fout, char *libName, char *cellName) {
 }
 
 /** write rectangle  **/
-void write_rect(FILE *fout, char *layer, int x0, int y0, int x1, int y1) {
-  layer_map *lpp=translate_layer(layer);
-  if (!lpp) { fprintf(stderr,"ERROR: unknown layer %s\n",layer); exit(1); }
-
+void write_rect(FILE *fout, layer_map *lpp, int x0, int y0, int x1, int y1) {
   // boundary, no_data
   write_record(fout,0x8,0,0);
 
@@ -142,10 +157,8 @@ void write_rect(FILE *fout, char *layer, int x0, int y0, int x1, int y1) {
 }
 
 /** write label **/
-void write_label(FILE *fout, char *net, char *layer, int x, int y) {
+void write_label(FILE *fout, char *net, layer_map *lpp, int x, int y) {
   uint8_t mag[8] = {0x3f,0x51,0xeb,0x85,0x1e,0xb8,0x51,0xec}; // 0.02
-  layer_map *lpp=translate_layer(layer);
-  if (!lpp) { fprintf(stderr,"ERROR: unknown layer %s\n",layer); exit(1); }
   write_record(fout,0xc,0x0,0); // text, no_data
   write_record(fout,0x10,0x3,8); // xy, int4
   write4(fout,x);
@@ -191,7 +204,8 @@ int main(int argc, char **argv) {
     int x0,y0,x1,y1,invisible,r,x,y,w,l;
     if (sscanf(line,"Cell %s bbox=%d:%d:%d:%d",cell,&x0,&y0,&x1,&y1)==5) {
       start_gds(fout,"laygen",cell);
-      write_rect(fout,"prb",x0,y0,x1,y1);
+      layer_map *lpp=translate_layer("prb",0);
+      write_rect(fout,lpp,x0,y0,x1,y1);
     }
     else if (sscanf(line,"Device %s nets=[ %s %s %s %s ] type=%c model=%s w=%d l=%d r=%d x=%d y=%d f=%c",
                     device,drn,gate,src,bulk,&type,model,&w,&l,&r,&x,&y,&f)==13) {
@@ -200,12 +214,14 @@ int main(int argc, char **argv) {
       x1 = (x+1)*540+440;
       y0 = r*3400 + 1700 + y*340*(type=='p' ? 1 : -1) + 340*(type=='p' ? 1 : 0);
       y1 = y0 + w*(type=='p' ? 1 : -1);
-      write_rect(fout,(type=='p' ? "pdiff" : "ndiff"),x0,y0,x1,y1);
+      layer_map *lpp=translate_layer(type=='p' ? "pdiff" : "ndiff",0);
+      write_rect(fout,lpp,x0,y0,x1,y1);
     }
     else if (sscanf(line,"Wire net=%s layer=%s rect=%d:%d:%d:%d payload=%s invisible=%d",
                     net,layer,&x0,&y0,&x1,&y1,payload,&invisible)==7) {
-      write_rect(fout,layer,x0,y0,x1,y1);
-      write_label(fout,net,layer,(x0+x1)/2,(y0+y1)/2);
+      layer_map *lpp=translate_layer(layer,net[0]=='!');
+      write_rect(fout,lpp,x0,y0,x1,y1);
+      if (net[0]!='!') write_label(fout,net,lpp,(x0+x1)/2,(y0+y1)/2);
     }
   }
 
