@@ -26,7 +26,7 @@
 
 ; Convert a nominal pp54 CellView into a pp60 cell with selected M1 variant
 (defun MakeVariant (variant @key (CV (geGetEditCellView)))
-  (let (points m1v)
+  (let (points m1xw x0 y0 x1 y1 prbx0 prbx1)
     ; m1 patterns with xoffset and width
     (cond (variant==1 m1xw=(list 0.000:0.032 0.002:0.020 0.001:0.026 0.00:0.020 -0.001:0.026 -0.002:0.020))
           (variant==2 m1xw=(list 0.021:0.026 0.02:0.020 0.019:0.026 0.018:0.020 0.02:0.032 0.022:0.020))
@@ -34,6 +34,8 @@
           (variant==4 m1xw=(list 0.018:0.020 0.02:0.032 0.022:0.020 0.021:0.026 0.02:0.020 0.019:0.026))
           (t (error "variant %d not supported\n" variant))
           )
+    
+    ; stretch poly pitch and shift m1
     (foreach xy CV->prBoundary->points points=(append points (list (StretchPoint nil 0 m1xw xy))))
     (dbDeleteObject CV->prBoundary)
     (dbCreatePRBoundary CV points)
@@ -44,8 +46,34 @@
                    (obj->objType=="label"  obj->xy=(StretchPoint obj->layerName 2 m1xw obj->xy))
                    )
              )
+
+    ; delete out-of-bounds v0/m1/v1
+    prbx0 = (car (car  CV->prBoundary->bBox))
+    prbx1 = (car (cadr CV->prBoundary->bBox))
+    (foreach obj (setof x CV->shapes x->layerName=="m1" || x->layerName=="v0" || x->layerName=="v1")
+             (cond (obj->objType=="rect"  x0=(car (car obj->bBox)) x1=(car (cadr obj->bBox)))
+                   (obj->objType=="label" x0=(car obj->xy) x1=x0)
+                   (t x0=nil x1=nil)
+                   )
+             (when x0!=nil && x1!=nil && (x0>prbx1 || x1<prbx0) (dbDeleteObject obj))
+             )
+
+    ; trim m2,nwell overhang
+    (foreach obj (setof x CV->shapes x->objType=="rect" && (x->layerName=="m2" || x->layerName=="nwell"))
+             x0=(car  (car  obj->bBox))
+             y0=(cadr (car  obj->bBox))
+             x1=(car  (cadr obj->bBox))
+             y1=(cadr (cadr obj->bBox))
+             overhang=(if obj->layerName=="m2" 0.026 0.09)
+             x0=(max x0 prbx0-overhang)
+             x1=(min x1 prbx1+overhang)
+             obj->bBox=(list x0:y0 x1:y1)
+             )
     )
+
+  ; save and purge
   (dbSave CV)
+  (dbPurge CV)
   CV
   )
 
@@ -54,6 +82,7 @@
   (let (nCV)
     (for n 1 4
          nCV = (dbCopyCellView CV libName (sprintf nil "%sv%d" cellName n) "layout" nil nil t)
+         (dbReopen nCV "a")
          (MakeVariant n ?CV nCV)
          )
     )
