@@ -11,8 +11,8 @@ typedef struct {
   int purpose;
 } layer_map;
 
-/** Table of GDS layer:purpose for 1274.13 **/
-layer_map map[] = {
+/** Table of GDS layer:purpose for 1274.13 shapes **/
+layer_map draw_map[] = {
   {"nwell",11,0},
   {"ndiff",1,0},
   {"pdiff",8,0},
@@ -29,9 +29,9 @@ layer_map map[] = {
   {"fti",184,0},
   {"vcg",32,0},
   {"vct",31,0},
-  {"metal0",120,0},
-  {"metals0",120,0},
-  {"metalc0",120,0},
+  {"metal0",55,0},
+  {"metals0",55,0},
+  {"metalc0",55,0},
   {"via0",56,0},
   {"metal1",4,0},
   {"via1",13,0},
@@ -41,29 +41,37 @@ layer_map map[] = {
   {"",0,0} // terminate
 };
 
+
 /** Alternate table used for fill shapes **/
 layer_map fill_map[]= {
   {"wirepoly",2,250},
   {"diffcon",5,250},
-  {"metal0",120,250},
-  {"metals0",120,250},
-  {"metalc0",120,250},
+  {"metal0",55,250},
+  {"metals0",55,250},
+  {"metalc0",55,250},
   {"metal1",4,250},
   {"metal2",14,250},
   {"metalc2",14,250},
   {"",0,0} // terminate
 };
 
+/** Alternate table used for pin shapes **/
+layer_map pin_map[]= {
+  {"metal0",55,2},
+  {"metals0",55,2},
+  {"metalc0",55,2},
+  {"metal1",4,2},
+  {"metal2",14,2},
+  {"metalc2",14,2},
+  {"",0,0} // terminate
+};
+
 /** translate layer name to layer:purpose pair **/
-layer_map *translate_layer(char *name, int fill) {
-  if (fill) {
-    for (layer_map *p=fill_map; p->name[0]!=0; p++)
-      if (strcmp(p->name,name)==0) return p;
-  }
+layer_map *find_layer(layer_map *map, char *name) {
+  // NOTE: linear search is inefficient
   for (layer_map *p=map; p->name[0]!=0; p++)
     if (strcmp(p->name,name)==0) return p;
-  fprintf(stderr,"ERROR: unknown layer %s\n",name);
-  exit(1);
+  return NULL;
 }
 
 /** Write 1 byte **/
@@ -141,7 +149,7 @@ void write_rect(FILE *fout, layer_map *lpp, int x0, int y0, int x1, int y1) {
   write_record(fout,0xd,0x2,2);
   write2(fout,lpp->layer);
 
-  // purpose, int16
+  // datatype, int16
   write_record(fout,0xe,0x2,2);
   write2(fout,lpp->purpose);
 
@@ -166,12 +174,9 @@ void write_rect(FILE *fout, layer_map *lpp, int x0, int y0, int x1, int y1) {
 void write_label(FILE *fout, char *net, layer_map *lpp, int x, int y) {
   uint8_t mag[8] = {0x3f,0x51,0xeb,0x85,0x1e,0xb8,0x51,0xec}; // 0.02
   write_record(fout,0xc,0x0,0); // text, no_data
-  write_record(fout,0x10,0x3,8); // xy, int4
-  write4(fout,x);
-  write4(fout,y);
   write_record(fout,0xd,0x2,2);  // layer, int16
   write2(fout,lpp->layer);
-  write_record(fout,0xe,0x2,2);  // purpose, int16
+  write_record(fout,0x16,0x2,2);  // texttype, int16
   write2(fout,lpp->purpose);
   write_record(fout,0x17,0x1,2); // presentation, bitfield
   write2(fout,0x5); // center
@@ -180,6 +185,9 @@ void write_label(FILE *fout, char *net, layer_map *lpp, int x, int y) {
   int len=2*((strlen(net)+1)/2);
   write_record(fout,0x19,0x6,len); // string, string
   fwrite(net,1,len,fout);
+  write_record(fout,0x10,0x3,8); // xy, int4
+  write4(fout,x);
+  write4(fout,y);
   write_record(fout,0x11,0x0,0);  // endel, no_data
 }
 
@@ -201,16 +209,17 @@ int main(int argc, char **argv) {
   if (!fin) { fprintf(stderr,"ERROR: can't read %s\n",argv[1]); exit(1); }
   fout = fopen(argv[2],"wb");
   if (!fout) { fprintf(stderr,"ERROR: can't write %s\n",argv[2]); exit(1); }
-
+  
   // process LGF line by line
   char line[MAX_STR];
   while (fgets(line,MAX_STR,fin)) {
     char cell[MAX_STR],net[MAX_STR],layer[MAX_STR],model[MAX_STR],type,f;
     char device[MAX_STR],drn[MAX_STR],gate[MAX_STR],src[MAX_STR],bulk[MAX_STR],payload[MAX_STR];
-    int x0,y0,x1,y1,invisible,r,x,y,w,l;
+    int x0,y0,x1,y1,invisible,ported,r,x,y,w,l;
     if (sscanf(line,"Cell %s bbox=%d:%d:%d:%d",cell,&x0,&y0,&x1,&y1)==5) {
       start_gds(fout,"laygen",cell);
-      layer_map *lpp=translate_layer("prb",0);
+      layer_map *lpp=find_layer(draw_map,"prb");
+      if (!lpp) { fprintf(stderr,"ERROR: prb layer not mapped\n"); exit(1); }
       write_rect(fout,lpp,x0,y0,x1,y1);
     }
     else if (sscanf(line,"Device %s nets=[ %s %s %s %s ] type=%c model=%s w=%d l=%d r=%d x=%d y=%d f=%c",
@@ -220,14 +229,35 @@ int main(int argc, char **argv) {
       x1 = (x+1)*540+440;
       y0 = r*3400 + 1700 + y*340*(type=='p' ? 1 : -1) + 340*(type=='p' ? 1 : 0);
       y1 = y0 + w*(type=='p' ? 1 : -1);
-      layer_map *lpp=translate_layer(type=='p' ? "pdiff" : "ndiff",0);
+      char *layer=type=='p' ? "pdiff" : "ndiff";
+      layer_map *lpp=find_layer(draw_map,layer);
+      if (!lpp) { fprintf(stderr,"ERROR: %s layer not mapped\n",layer); exit(1); }
       write_rect(fout,lpp,x0,y0,x1,y1);
     }
+    else if (sscanf(line,"Wire net=%s layer=%s rect=%d:%d:%d:%d payload=%s ported=%d invisible=%d",
+                    net,layer,&x0,&y0,&x1,&y1,payload,&ported,&invisible)==9);
     else if (sscanf(line,"Wire net=%s layer=%s rect=%d:%d:%d:%d payload=%s invisible=%d",
-                    net,layer,&x0,&y0,&x1,&y1,payload,&invisible)==7) {
-      layer_map *lpp=translate_layer(layer,net[0]=='!');
-      write_rect(fout,lpp,x0,y0,x1,y1);
-      if (net[0]!='!') write_label(fout,net,lpp,(x0+x1)/2,(y0+y1)/2);
+                    net,layer,&x0,&y0,&x1,&y1,payload,&invisible)==8);
+    else if (sscanf(line,"Wire net=%s layer=%s rect=%d:%d:%d:%d payload=%s ported=%d",
+                    net,layer,&x0,&y0,&x1,&y1,payload,&ported)==8) {
+      layer_map *lpp=find_layer(draw_map,layer);
+      if (!lpp) { fprintf(stderr,"ERROR: %s layer not mapped\n",layer); exit(1); }
+      layer_map *pin_lpp=find_layer(pin_map,layer);
+      write_rect(fout,lpp,x0,y0,x1,y1); // always create drawing shape
+      write_label(fout,net,pin_lpp,(x0+x1)/2,(y0+y1)/2); // label it
+      if (pin_lpp) write_rect(fout,pin_lpp,x0,y0,x1,y1);
+    }
+    else if (sscanf(line,"Wire net=%s layer=%s rect=%d:%d:%d:%d payload=%s",
+                    net,layer,&x0,&y0,&x1,&y1,payload)==7) {
+      layer_map *lpp=find_layer(draw_map,layer);
+      if (!lpp) { fprintf(stderr,"ERROR: %s layer not mapped\n",layer); exit(1); }
+      if (net[0]=='!') { // prefer fill purpose, no label
+        layer_map *fill_lpp=find_layer(fill_map,layer);
+        write_rect(fout,fill_lpp?fill_lpp:lpp,x0,y0,x1,y1);
+      } else {
+        write_rect(fout,lpp,x0,y0,x1,y1); // always create drawing shape
+        write_label(fout,net,lpp,(x0+x1)/2,(y0+y1)/2);
+      }
     }
   }
 
