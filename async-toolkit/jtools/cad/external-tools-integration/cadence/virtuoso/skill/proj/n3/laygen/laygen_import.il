@@ -31,7 +31,8 @@ laygen_cells =
 (defun ImportLaygenCell (fqcn cell @key
                               (dir "laygen")
                               (placements 10)
-                              (action (lambda (CV) (cdsp4add ?CV CV))))
+                              (pre_action  (lambda (CV) (cdsp4edit ?CV CV)))
+                              (post_action (lambda (CV) (cdsp4add ?CV CV))))
   (let (CV libName cellName done base log lgf gds cmd)
     libName = (GetCastLibName fqcn)
     (for n 0 placements-1
@@ -47,7 +48,7 @@ laygen_cells =
              CV=(ImportGDS gds libName cell ?suffix (sprintf nill ".%d" n)
                            ?setCopyExact (lambda (CV) t))
              (unless done ; make variants from the first one that routes clean
-               (MakeVariants libName fqcn ?CV CV ?action action)
+               (MakeVariants libName fqcn ?CV CV ?pre_action pre_action ?post_action post_action)
                done=t
                )
              )
@@ -58,12 +59,16 @@ laygen_cells =
   )
 
 ; Import all laygen cells
-(defun ImportLaygenCells (@key (dir "laygen") (placements 10) (action (lambda (CV) (cdsp4add ?CV CV))))
+(defun ImportLaygenCells (@key (dir "laygen")
+                               (placements 10)
+                               (pre_action  (lambda (CV) (cdsp4edit ?CV CV)))
+                               (post_action (lambda (CV) (cdsp4add ?CV CV))))
   (let (fqcn cell)
     (foreach fqcn_cell laygen_cells
              fqcn = (car fqcn_cell)
              cell = (cadr fqcn_cell)
-             (ImportLaygenCell fqcn cell ?dir dir ?placements placements ?action action)
+             (ImportLaygenCell fqcn cell ?dir dir ?placements placements
+                               ?pre_action pre_action ?post_action post_action)
              )
     )
   t

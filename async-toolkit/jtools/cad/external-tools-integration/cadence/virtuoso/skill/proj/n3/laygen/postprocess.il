@@ -25,7 +25,7 @@
   )
 
 ; Convert a nominal pp54 CellView into a pp60 cell with selected M1 variant
-(defun MakeVariant (variant @key (CV (geGetEditCellView)) (action nil))
+(defun MakeVariant (variant @key (CV (geGetEditCellView)))
   (let (points m1xw x0 y0 x1 y1 prbx0 prbx1)
     ; m1 patterns with xoffset and width
     (cond (variant==1 m1xw=(list 0.000:0.032 0.002:0.020 0.001:0.026 0.00:0.020 -0.001:0.026 -0.002:0.020))
@@ -71,20 +71,25 @@
              )
     )
 
-  ; save and purge
+  ; save
   (dbSave CV)
-  (when action (apply action (list CV)))
-  (dbPurge CV)
   CV
   )
 
 ; Make all 4 M1 variants given the nominal pp54 CellView
-(defun MakeVariants (libName cellName @key (CV (geGetEditCellView)) (action nil))
-  (let (nCV)
+(defun MakeVariants (libName cellName @key (CV (geGetEditCellView)) (pre_action nil) (post_action nil))
+  (let (nCV varName)
     (for n 1 4
-         nCV = (dbCopyCellView CV libName (sprintf nil "%sv%d" cellName n) "layout" nil nil t)
+         varName = (sprintf nil "%sv%d" cellName n)
+         nCV = (when (ddGetObj libName varName "layout")
+                 (dbOpenCellViewByType libName varName "layout"))
+         (when nCV && pre_action (apply pre_action (list nCV)))
+         (dbPurge nCV)
+         nCV = (dbCopyCellView CV libName varName "layout" nil nil t)
          (dbReopen nCV "a")
-         (MakeVariant n ?CV nCV ?action action)
+         nCV = (MakeVariant n ?CV nCV)
+         (when post_action (apply post_action (list nCV)))
+         (dbPurge nCV)
          )
     )
   t
