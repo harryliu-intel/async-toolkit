@@ -5,6 +5,10 @@
 
 #define MAX_STR 1024
 
+// NOTE: ought to just be ported=1 shapes
+char PowerNet[MAX_STR]="vcc";
+char GroundNet[MAX_STR]="vss";
+
 typedef struct {
   char name[MAX_STR];
   int layer;
@@ -108,8 +112,9 @@ void write_record(FILE *fout, uint8_t type, uint8_t datatype, uint16_t len) {
 /** write preamble records **/
 void start_gds(FILE *fout, char *libName, char *cellName) {
   uint16_t d;
-  uint16_t time[6] = {0,0,0,0,0,0}; // TODO?
-  uint8_t units[16] = {0x3e,0x41,0x89,0x37,0x4b,0xc6,0xa7,0xf0,0x38,0x6d,0xf3,0x7f,0x67,0x5e,0xf6,0x48};
+  uint16_t time[6] = {0,0,0,0,0,0}; // ignore timestamp
+  uint8_t units[16] = {0x3e,0x41,0x89,0x37,0x4b,0xc6,0xa7,0xf0,  // 1e-3
+                       0x38,0x6d,0xf3,0x7f,0x67,0x5e,0xf6,0x48}; // 1e-10
 
   // header, int16
   write_record(fout,0x0,0x2,sizeof(uint16_t));
@@ -215,7 +220,7 @@ int main(int argc, char **argv) {
   while (fgets(line,MAX_STR,fin)) {
     char cell[MAX_STR],net[MAX_STR],layer[MAX_STR],model[MAX_STR],type,f;
     char device[MAX_STR],drn[MAX_STR],gate[MAX_STR],src[MAX_STR],bulk[MAX_STR],payload[MAX_STR];
-    int x0,y0,x1,y1,invisible,ported,r,x,y,w,l;
+    int x0,y0,x1,y1,invisible=0,ported=0,r,x,y,w,l;
     if (sscanf(line,"Cell %s bbox=%d:%d:%d:%d",cell,&x0,&y0,&x1,&y1)==5) {
       start_gds(fout,"laygen",cell);
       layer_map *lpp=find_layer(draw_map,"prb");
@@ -235,27 +240,29 @@ int main(int argc, char **argv) {
       write_rect(fout,lpp,x0,y0,x1,y1);
     }
     else if (sscanf(line,"Wire net=%s layer=%s rect=%d:%d:%d:%d payload=%s ported=%d invisible=%d",
-                    net,layer,&x0,&y0,&x1,&y1,payload,&ported,&invisible)==9);
-    else if (sscanf(line,"Wire net=%s layer=%s rect=%d:%d:%d:%d payload=%s invisible=%d",
-                    net,layer,&x0,&y0,&x1,&y1,payload,&invisible)==8);
-    else if (sscanf(line,"Wire net=%s layer=%s rect=%d:%d:%d:%d payload=%s ported=%d",
-                    net,layer,&x0,&y0,&x1,&y1,payload,&ported)==8) {
-      layer_map *lpp=find_layer(draw_map,layer);
-      if (!lpp) { fprintf(stderr,"ERROR: %s layer not mapped\n",layer); exit(1); }
-      layer_map *pin_lpp=find_layer(pin_map,layer);
-      write_rect(fout,lpp,x0,y0,x1,y1); // always create drawing shape
-      write_label(fout,net,pin_lpp,(x0+x1)/2,(y0+y1)/2); // label it
-      if (pin_lpp) write_rect(fout,pin_lpp,x0,y0,x1,y1);
-    }
-    else if (sscanf(line,"Wire net=%s layer=%s rect=%d:%d:%d:%d payload=%s",
+                    net,layer,&x0,&y0,&x1,&y1,payload,&ported,&invisible)==9 ||
+             sscanf(line,"Wire net=%s layer=%s rect=%d:%d:%d:%d payload=%s invisible=%d",
+                    net,layer,&x0,&y0,&x1,&y1,payload,&invisible)==8 ||
+             sscanf(line,"Wire net=%s layer=%s rect=%d:%d:%d:%d payload=%s ported=%d",
+                    net,layer,&x0,&y0,&x1,&y1,payload,&ported)==8 ||
+             sscanf(line,"Wire net=%s layer=%s rect=%d:%d:%d:%d payload=%s",
                     net,layer,&x0,&y0,&x1,&y1,payload)==7) {
       layer_map *lpp=find_layer(draw_map,layer);
       if (!lpp) { fprintf(stderr,"ERROR: %s layer not mapped\n",layer); exit(1); }
-      if (net[0]=='!') { // prefer fill purpose, no label
+      // HACK: translate power nets
+      if      (strcmp(net,PowerNet)==0) { strcpy(net,"Vdd"); ported=1; }
+      else if (strcmp(net,GroundNet)==0) { strcpy(net,"GND"); ported=1; }
+      if (invisible);
+      else if (ported) {
+        layer_map *pin_lpp=find_layer(pin_map,layer);
+        write_rect(fout,lpp,x0,y0,x1,y1); // always create drawing shape
+        write_label(fout,net,pin_lpp?pin_lpp:lpp,(x0+x1)/2,(y0+y1)/2); // label it
+        if (pin_lpp) write_rect(fout,pin_lpp?pin_lpp:lpp,x0,y0,x1,y1);
+      } else if (net[0]=='!') { // prefer fill purpose, no label
         layer_map *fill_lpp=find_layer(fill_map,layer);
         write_rect(fout,fill_lpp?fill_lpp:lpp,x0,y0,x1,y1);
-      } else {
-        write_rect(fout,lpp,x0,y0,x1,y1); // always create drawing shape
+      } else { // drawing shape with label
+        write_rect(fout,lpp,x0,y0,x1,y1);
         write_label(fout,net,lpp,(x0+x1)/2,(y0+y1)/2);
       }
     }
