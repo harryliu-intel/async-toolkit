@@ -21,6 +21,7 @@ while (my $file = shift @ARGV) {
             print OUT "module ${module};\n";
             print OUT "define \"${subtype}v${v}\" <: ${module}.${subtype} {}\n";
             close OUT;
+            system("p4 -c $ENV{HW_CLIENT} add \"$out\"");
         }
     }
 }
