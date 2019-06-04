@@ -5,17 +5,51 @@
 
 #define MAX_STR 1024
 
-// NOTE: ought to just be ported=1 shapes
+/** Translate power supply names and make them pins **/
+#define HACK_SUPPLY
+#ifdef  HACK_SUPPLY
 char PowerNet[MAX_STR]="vcc";
 char GroundNet[MAX_STR]="vss";
+char NewPowerNet[MAX_STR]="Vdd";
+char NewGroundNet[MAX_STR]="GND";
+#endif
 
+/** GDS record constants **/
+#define GDS_HEADER       0x00
+#define GDS_BGNLIB       0x01
+#define GDS_LIBNAME      0x02
+#define GDS_UNITS        0x03
+#define GDS_ENDLIB       0x04
+#define GDS_BGNSTR       0x05
+#define GDS_STRNAME      0x06
+#define GDS_ENDSTR       0x07
+#define GDS_BOUNDARY     0x08
+#define GDS_TEXT         0x0C
+#define GDS_LAYER        0x0D
+#define GDS_DATATYPE     0x0E
+#define GDS_XY           0x10
+#define GDS_ENDEL        0x11
+#define GDS_TEXTTYPE     0x16
+#define GDS_PRESENTATION 0x17
+#define GDS_LABEL        0x19
+#define GDS_MAG          0x1B
+
+/** GDS datatype constants **/
+#define GDS_NODATA   0x0
+#define GDS_BITFIELD 0x1
+#define GDS_INT2     0x2
+#define GDS_INT4     0x3
+#define GDS_REAL8    0x5
+#define GDS_STRING   0x6
+
+/** Map a layer name to GDS layer:purpose **/
 typedef struct {
   char name[MAX_STR];
   int layer;
   int purpose;
 } layer_map;
 
-/** Table of GDS layer:purpose for 1274.13 shapes **/
+/** Table of GDS layer:purpose mappings for 1274.13 shapes **/
 layer_map draw_map[] = {
   {"nwell",11,0},
   {"ndiff",1,0},
@@ -45,7 +79,6 @@ layer_map draw_map[] = {
   {"",0,0} // terminate
 };
 
-
 /** Alternate table used for fill shapes **/
 layer_map fill_map[]= {
   {"wirepoly",2,250},
@@ -70,12 +103,24 @@ layer_map pin_map[]= {
   {"",0,0} // terminate
 };
 
-/** translate layer name to layer:purpose pair **/
+/** Translate layer name to layer:purpose pair **/
 layer_map *find_layer(layer_map *map, char *name) {
+  layer_map *p;
   // NOTE: linear search is inefficient
-  for (layer_map *p=map; p->name[0]!=0; p++)
+  for (p=map; p->name[0]!=0; p++)
     if (strcmp(p->name,name)==0) return p;
   return NULL;
+}
+
+/** fwrite that swaps endianness of each element **/
+size_t big_fwrite(void *ptr, size_t size, size_t nmemb, FILE *stream) {
+  int i,j;
+  size_t n=0;
+  for (i=0; i<nmemb; i++) {
+    for (j=0; j<size; j++) n+=fwrite(&((char *)ptr)[size-1-j],1,1,stream);
+    ptr+=size;
+  }
+  return n;
 }
 
 /** Write 1 byte **/
@@ -85,81 +130,58 @@ void write1(FILE *fout, uint8_t d) {
 
 /** Write 2 bytes (big-endian) **/
 void write2(FILE *fout, uint16_t d) {
-  uint16_t d2=(d>>8) | (d<<8);
-  fwrite(&d2,sizeof(uint16_t),1,fout);
+  big_fwrite(&d,sizeof(uint16_t),1,fout);
 }
 
 /** Write 4 bytes (big-endian) **/
 void write4(FILE *fout, uint32_t d) {
-  uint32_t d2=(d>>24)&0xFF | ((d>>16)&0xFF)<<8 | ((d>>8)&0xFF)<<16 | (d&0xFF)<<24;
-  fwrite(&d2,sizeof(uint32_t),1,fout);
+  big_fwrite(&d,sizeof(uint32_t),1,fout);
 }
 
 /** Write 8 bytes (big-endian) **/
 void write8(FILE *fout, uint64_t d) {
-  uint64_t d2=(d>>56)&0xFF | ((d>>48)&0xFF)<<8 | ((d>>40)&0xFF)<<16 | ((d>>32)&0xFF)<<24 |
-    ((d>>24)&0xFF)<<32 | ((d>>16)&0xFF)<<40 | ((d>>8)&0xFF)<<48 | (d&0xFF)<<56;
-  fwrite(&d2,sizeof(uint64_t),1,fout);
+  big_fwrite(&d,sizeof(uint64_t),1,fout);
 }
 
 /** Write 4B record header **/
 void write_record(FILE *fout, uint8_t type, uint8_t datatype, uint16_t len) {
-  write2(fout,len+4);
+  write2(fout,len+4); // NOTE: len includes length of header
   write1(fout,type);
   write1(fout,datatype);
 }
 
-/** write preamble records **/
+/** Create a GDS library and start a GDS structure **/
 void start_gds(FILE *fout, char *libName, char *cellName) {
   uint16_t d;
   uint16_t time[6] = {0,0,0,0,0,0}; // ignore timestamp
   uint8_t units[16] = {0x3e,0x41,0x89,0x37,0x4b,0xc6,0xa7,0xf0,  // 1e-3
                        0x38,0x6d,0xf3,0x7f,0x67,0x5e,0xf6,0x48}; // 1e-10
-
-  // header, int16
-  write_record(fout,0x0,0x2,sizeof(uint16_t));
+  write_record(fout,GDS_HEADER,GDS_INT2,sizeof(uint16_t));
   write2(fout,5); // version 5
-
-  // bgnlib, int16
-  write_record(fout,0x1,0x2,24);
+  write_record(fout,GDS_BGNLIB,GDS_INT2,24);
   fwrite(time,sizeof(uint16_t),6,fout); // modified
   fwrite(time,sizeof(uint16_t),6,fout); // accessed
-
-  // libname, string
   int len=2*((strlen(libName)+1)/2);
-  write_record(fout,0x2,0x6,len);
+  write_record(fout,GDS_LIBNAME,GDS_STRING,len);
   fwrite(libName,1,len,fout);
-
-  // units, double
-  write_record(fout,0x3,0x5,16);
+  write_record(fout,GDS_UNITS,GDS_REAL8,16);
   fwrite(units,1,16,fout);
-
-  // bgnstr, int16
-  write_record(fout,0x5,0x2,24);
+  write_record(fout,GDS_BGNSTR,GDS_INT2,24);
   fwrite(time,sizeof(uint16_t),6,fout); // modified
   fwrite(time,sizeof(uint16_t),6,fout); // accessed
-
-  // strname, string
   len=2*((strlen(cellName)+1)/2);
-  write_record(fout,0x6,0x6,len);
+  write_record(fout,GDS_STRNAME,GDS_STRING,len);
   fwrite(cellName,1,len,fout);
 }
 
-/** write rectangle  **/
+/** Write GDS rectangle  **/
 void write_rect(FILE *fout, layer_map *lpp, int x0, int y0, int x1, int y1) {
-  // boundary, no_data
-  write_record(fout,0x8,0,0);
-
-  // layer, int16
-  write_record(fout,0xd,0x2,2);
+  write_record(fout,GDS_BOUNDARY,GDS_NODATA,0);
+  write_record(fout,GDS_LAYER,GDS_INT2,2);
   write2(fout,lpp->layer);
-
-  // datatype, int16
-  write_record(fout,0xe,0x2,2);
+  write_record(fout,GDS_DATATYPE,GDS_INT2,2);
   write2(fout,lpp->purpose);
-
-  // xy, int32
-  write_record(fout,0x10,0x3,10*sizeof(uint32_t));
+  write_record(fout,GDS_XY,GDS_INT4,10*sizeof(uint32_t));
   write4(fout,x0);
   write4(fout,y0);
   write4(fout,x1);
@@ -170,51 +192,47 @@ void write_rect(FILE *fout, layer_map *lpp, int x0, int y0, int x1, int y1) {
   write4(fout,y1);
   write4(fout,x0);
   write4(fout,y0);
-
-  // endel, no_data
-  write_record(fout,0x11,0x0,0);
+  write_record(fout,GDS_ENDEL,GDS_NODATA,0);
 }
 
-/** write label **/
+/** Write GDS label **/
 void write_label(FILE *fout, char *net, layer_map *lpp, int x, int y) {
   uint8_t mag[8] = {0x3f,0x51,0xeb,0x85,0x1e,0xb8,0x51,0xec}; // 0.02
-  write_record(fout,0xc,0x0,0); // text, no_data
-  write_record(fout,0xd,0x2,2);  // layer, int16
+  write_record(fout,GDS_TEXT,GDS_NODATA,0);
+  write_record(fout,GDS_LAYER,GDS_INT2,2);
   write2(fout,lpp->layer);
-  write_record(fout,0x16,0x2,2);  // texttype, int16
+  write_record(fout,GDS_TEXTTYPE,GDS_INT2,2);
   write2(fout,lpp->purpose);
-  write_record(fout,0x17,0x1,2); // presentation, bitfield
+  write_record(fout,GDS_PRESENTATION,GDS_BITFIELD,2);
   write2(fout,0x5); // center
-  write_record(fout,0x1b,0x5,8); // mag, double
+  write_record(fout,GDS_MAG,GDS_REAL8,8);
   fwrite(mag,1,8,fout);
   int len=2*((strlen(net)+1)/2);
-  write_record(fout,0x19,0x6,len); // string, string
+  write_record(fout,GDS_LABEL,GDS_STRING,len);
   fwrite(net,1,len,fout);
-  write_record(fout,0x10,0x3,8); // xy, int4
+  write_record(fout,GDS_XY,GDS_INT4,8);
   write4(fout,x);
   write4(fout,y);
-  write_record(fout,0x11,0x0,0);  // endel, no_data
+  write_record(fout,GDS_ENDEL,GDS_NODATA,0);
 }
 
-/** finish GDS file **/
+/** Finish GDS structure and GDS library file **/
 void finish_gds(FILE *fout) {
-  // endstr, no_data
-  write_record(fout,0x7,0,0);
-
-  // endlib, no_data
-  write_record(fout,0x4,0,0);
+  write_record(fout,GDS_ENDSTR,GDS_NODATA,0);
+  write_record(fout,GDS_ENDLIB,GDS_NODATA,0);
 }
 
-/** user interface **/
+/** Convert LGF to GDS **/
 int main(int argc, char **argv) {
-  // parse command-line arguments
   FILE *fin,*fout;
+
+  // parse command-line arguments
   if (argc!=3) { fprintf(stderr,"USAGE: lgf2gds in.lgf out.gds\n"); exit(1); }
   fin  = fopen(argv[1],"rt");
   if (!fin) { fprintf(stderr,"ERROR: can't read %s\n",argv[1]); exit(1); }
   fout = fopen(argv[2],"wb");
   if (!fout) { fprintf(stderr,"ERROR: can't write %s\n",argv[2]); exit(1); }
-  
+
   // process LGF line by line
   char line[MAX_STR];
   while (fgets(line,MAX_STR,fin)) {
@@ -249,9 +267,10 @@ int main(int argc, char **argv) {
                     net,layer,&x0,&y0,&x1,&y1,payload)==7) {
       layer_map *lpp=find_layer(draw_map,layer);
       if (!lpp) { fprintf(stderr,"ERROR: %s layer not mapped\n",layer); exit(1); }
-      // HACK: translate power nets
-      if      (strcmp(net,PowerNet)==0) { strcpy(net,"Vdd"); ported=1; }
-      else if (strcmp(net,GroundNet)==0) { strcpy(net,"GND"); ported=1; }
+#ifdef HACK_SUPPLY
+      if      (strcmp(net,PowerNet)==0)  { strcpy(net,NewPowerNet);  ported=1; }
+      else if (strcmp(net,GroundNet)==0) { strcpy(net,NewGroundNet); ported=1; }
+#endif
       if (invisible);
       else if (ported) {
         layer_map *pin_lpp=find_layer(pin_map,layer);
