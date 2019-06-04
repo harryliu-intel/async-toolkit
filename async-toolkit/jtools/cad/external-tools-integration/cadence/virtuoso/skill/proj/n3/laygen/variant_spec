@@ -1,0 +1,26 @@
+#!/usr/intel/bin/perl -w
+#
+# Script to create M1 variants of SPEC files.
+
+while (my $file = shift @ARGV) {
+    if ($file =~ /(.*\/)([^\.]+)\.cast/ ) {
+        my $subtype = $2;
+        next if ($2 =~ /v[1-4]$/); # don't add v1-v4 suffix twice
+        my $module;
+        open IN, "<$file" or die "can't read $file";
+        while (my $line = <IN>) {
+            if ($line =~ /^\s*module (\S+);/) {
+                $module = $1;
+            }
+        }
+        close IN;
+        next unless (defined($module));
+        for (my $v=1; $v<=4; $v++) {
+            my $out = "${1}${subtype}v${v}.cast";
+            open  OUT, ">$out" or die "can't open $out\n";
+            print OUT "module ${module};\n";
+            print OUT "define \"${subtype}v${v}\" <: ${module}.${subtype} {}\n";
+            close OUT;
+        }
+    }
+}
