@@ -5,13 +5,11 @@
 
 #define MAX_STR 1024
 
-/** Translate power supply names and make them pins **/
-#define HACK_SUPPLY
-#ifdef  HACK_SUPPLY
-char PowerNet[MAX_STR]="vcc";
-char GroundNet[MAX_STR]="vss";
-char NewPowerNet[MAX_STR]="Vdd";
-char NewGroundNet[MAX_STR]="GND";
+/** Make power supplies ports **/
+#define PORT_SUPPLY
+#ifdef  PORT_SUPPLY
+char PowerNet[MAX_STR] ="Vdd";
+char GroundNet[MAX_STR]="GND";
 #endif
 
 /** GDS record constants **/
@@ -267,9 +265,8 @@ int main(int argc, char **argv) {
                     net,layer,&x0,&y0,&x1,&y1,payload)==7) {
       layer_map *lpp=find_layer(draw_map,layer);
       if (!lpp) { fprintf(stderr,"ERROR: %s layer not mapped\n",layer); exit(1); }
-#ifdef HACK_SUPPLY
-      if      (strcmp(net,PowerNet)==0)  { strcpy(net,NewPowerNet);  ported=1; }
-      else if (strcmp(net,GroundNet)==0) { strcpy(net,NewGroundNet); ported=1; }
+#ifdef PORT_SUPPLY
+      if ((strcmp(net,PowerNet)==0) || (strcmp(net,GroundNet)==0)) ported=1;
 #endif
       if (invisible);
       else if (ported) {

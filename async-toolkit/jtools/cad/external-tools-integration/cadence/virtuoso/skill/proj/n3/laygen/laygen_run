@@ -32,7 +32,9 @@ my $lsf =
     "set_option fabric e08\n" .
     "set_option use_assumptions yes\n" .
     "set_option max_num_cores 1\n" .
-    "set_log_level status";
+    "set_log_level status\n" .
+    "set_option option {Option name=net_name type=vcc value=Vdd main=1}\n".
+    "set_option option {Option name=net_name type=vss value=GND main=1}\n";
 
 my $place="";
 if (-e "${e08}.place") {
