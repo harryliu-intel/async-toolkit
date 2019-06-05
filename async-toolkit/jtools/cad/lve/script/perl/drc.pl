@@ -20,7 +20,7 @@ my $mem=1;
 my $jobs=0;
 my $flow="drcd";
 my $pdk_root="";
-my $icv_runset_path="/nfs/sc/proj/ctg/mrl108/mrl/tools/rdt/kits/p1273_14.2.1/runsets/icvalidator/verification_runsets/latest";
+my $icv_runset_path="/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/ncl/collateral/cpdk/latest/runsets/icvtdr";
 my $oasis = 0;
 my $format = "GDSII";
 
@@ -96,7 +96,7 @@ $format = "OASIS" if ($oasis);
 my %drc_runsets;
 my @flows=split(',',$flow);
 foreach my $f (@flows) {
-  my $runset="$icv_runset_path/StandAlone/dotOne/$f.1.rs";
+  my $runset="$icv_runset_path/StandAlone/dotTwelve/$f.12.rs";
   if ( -e $runset) {
     $drc_runsets{$f}=$runset;
   }else{
@@ -138,7 +138,7 @@ $ENV{'ICV_SCRIPT'} 'icv' -I . \\
 -I $pdk_root/share/Fulcrum/icv/lvs \\
 -I $icv_runset_path/PXL_ovrd \\
 -I $icv_runset_path/PXL \\
--I $icv_runset_path/StandAlone/dotOne \\
+-I $icv_runset_path/StandAlone/dotTwelve \\
 -I $icv_runset_path/util/dot1/HIP \\
 -I $icv_runset_path/util/Cadnav \\
 -I $icv_runset_path/util/denplot \\
