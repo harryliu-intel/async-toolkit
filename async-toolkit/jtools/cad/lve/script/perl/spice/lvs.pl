@@ -29,7 +29,7 @@ my $extra_extract_equiv="";
 my $blackbox=0;
 my $icv_options;
 my $threads=2;
-my $icv_runset_path="/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/ncl/collateral/cpdk/latest/runsets/icvtdr";
+my $icv_runset_path="/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/ncl/1274/cpdk/latest/runsets/icvtdr";
 my $rc_database=0;
 my $nodeprops='';
 
