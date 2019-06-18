@@ -12,6 +12,8 @@ class Graph:
     def __init__(self):
         self.edges = []
         self.nodes = {}
+        self.gates = set()
+        self.ports = set()
 
     # has slight "bug": I don't know why the marked line is necessary
     # FIXME: either stops should take names, or startnames should instead
@@ -66,6 +68,7 @@ class Edge:
         graph.edges.append(self)
         child.parents.append(self)
         parent.children.append(self)
+        graph.gates.add(info.gatelabel)
 
     def flip(self):
         self.child.parents.remove(self)
@@ -183,6 +186,8 @@ def handle_line(bindFile,line):
                 bindings = bindFile.getCellBindings( name )
             else:
                 bindings = None
+            for port in splitline[2:]:
+                thegraph.ports.add(canonize_node_name(bindings, port))
         elif (".ENDS" == splitline[0]):
             0 # nothing yet
         elif ("M" == line[0]):
@@ -287,15 +292,18 @@ def find_edge_direction(t):
 def make_ambiguous(t):
     t.info.ambiguous = 1
 
-allnumbers = re.compile("^[0-9]*$");
-
 def is_port(node):
-    return 0; # TODO for BUG 28655
+    return node.label in thegraph.ports
+
+def is_gate(node):
+    return node.label in thegraph.gates
+
+def is_supply(node):
+    return node.label == Vdd or node.label == GND
 
 def is_target(node):
-    return ((node.info.num_ns and node.info.num_ps)
-            and not (is_port(node))
-            and not (node.label == Vdd or node.label == GND))
+    return ((node.info.num_ns and node.info.num_ps) or
+           ((is_port(node) or is_gate(node)) and not is_supply(node)))
 
 def extract_targets():
     for node in thegraph.nodes.values():
@@ -316,12 +324,12 @@ def print_edge(file, edge):
         color = "red"
         gate = "~" + edge.info.gatelabel
 
-    if (p == Vdd or p == GND):
+    if is_supply(edge.parent):
         op = p
         p = gensym(p)
         file.write( '{ rank="%s" %s [label="%s",shape=box] }\n' % \
                 (rank[op], p, op));
-    if (c == Vdd or c == GND):
+    if is_supply(edge.child):
         oc = c
         c = gensym(c)
         file.write( '{ rank="%s" %s [label="%s",shape=box] }\n' % \
