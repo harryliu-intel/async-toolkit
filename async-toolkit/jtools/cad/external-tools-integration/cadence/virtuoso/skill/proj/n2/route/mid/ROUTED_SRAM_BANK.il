@@ -1,5 +1,0 @@
-(LoadProjSW "n2/reroute.il")
-(RouteCell "lib.bd.6T.bank.ROUTED_SRAM_BANK-L512_24-R.1000" 8 ?timingDriven nil)
-(RouteCell "lib.bd.6T.bank.ROUTED_SRAM_BANK-L1024_64-R.1000" 8 ?timingDriven nil)
-(RouteCell "lib.bd.6T.bank.ROUTED_SRAM_BANK-L4096_40-R.1000" 8 ?timingDriven nil)
-(exit)

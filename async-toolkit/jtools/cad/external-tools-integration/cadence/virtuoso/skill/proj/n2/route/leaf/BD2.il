@@ -1,5 +1,0 @@
-(LoadProjSW "n2/reroute.il")
-(RouteLeaf "lib.bd.standard.send.SEND_CTRL.0" 2)
-(RouteLeaf "lib.bd.standard.receive.RECV_CTRL.0" 2)
-(RouteLeaf "lib.bd.metastable.arbiter.ARBITER_CTRL.0" 2)
-(exit)

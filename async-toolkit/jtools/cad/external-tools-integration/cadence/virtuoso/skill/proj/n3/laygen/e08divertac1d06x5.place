@@ -1,4 +1,0 @@
-N: L | _L R[1] x[0]._R0  L _S  S R[0] x[0]._R1 x[0]._R1 |      | _RESET Reset S
-P: L |  L R[1] x[0]._R0 _L  S _S R[0] x[0]._R1 x[0]._R1 _RESET | _RESET Reset S
-P: L |  L R[0] x[1]._R0 _L _S  S R[1] x[1]._R1 x[1]._R1 _RESET | |      Reset S
-N: L | _L R[0] x[1]._R0  L  S _S R[1] x[1]._R1 x[1]._R1 |      | |      Reset S

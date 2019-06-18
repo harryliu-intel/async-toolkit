@@ -1,4 +1,0 @@
-N: |    L[0]  DLY  DLY
-P: |    L[0] _DLY _DLY
-P: DLY  L[1] L[1]  DLY
-N: DLY  L[1] L[1] _DLY

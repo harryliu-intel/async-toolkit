@@ -1,5 +1,0 @@
-(LoadProjSW "n2/reroute.il")
-CV = (RouteLeaf "lib.util.widget.STD_DIVERTER.0" 2)
-(LoadProjSW "n2/nominal_controllers.il")
-(MakeNominalController ?CV CV)
-(exit)

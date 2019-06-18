@@ -1,5 +1,0 @@
-(LoadProjSW "n2/reroute.il")
-(for w 8 16
-     (RouteLeaf (sprintf nil "lib.qdi.serial.funny_register.SHIFT_FIFO-L%d_0-R.0"  w) 3)
-     )
-(exit)
