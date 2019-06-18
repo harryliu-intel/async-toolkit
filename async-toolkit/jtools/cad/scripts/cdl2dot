@@ -89,7 +89,7 @@ class TranInfo:
         self.gatelabel = gatelabel
         self.type = type
         self.ambiguous = 0
-        self.width = float(width) / 1E-6
+        self.width = int(0.5 + float(width) / 1E-9)
 
 class CellBindings:
     def __init__(self, layoutName, schematicName):
