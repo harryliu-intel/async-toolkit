@@ -288,16 +288,14 @@ def make_ambiguous(t):
     t.info.ambiguous = 1
 
 allnumbers = re.compile("^[0-9]*$");
-hashash = re.compile("#");
-number_dash_H = re.compile("^[0-9]*-H$");
 
-def is_auto_generated_name(label):
-    return allnumbers.search(label) or \
-        hashash.search(label) or \
-        number_dash_H.search(label);
+def is_port(node):
+    return 0; # TODO for BUG 28655
 
 def is_target(node):
-    return ((node.info.num_ns and node.info.num_ps) or (not is_auto_generated_name(node.label) and not (node.label == Vdd or node.label == GND)))
+    return ((node.info.num_ns and node.info.num_ps)
+            and not (is_port(node))
+            and not (node.label == Vdd or node.label == GND))
 
 def extract_targets():
     for node in thegraph.nodes.values():
