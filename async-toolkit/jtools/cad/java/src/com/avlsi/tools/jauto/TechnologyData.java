@@ -482,6 +482,11 @@ public final class TechnologyData {
     public double unitWireResistance=0; // in Ohm/sq
 
     /**
+     * Manufacturing grid for transistor geometry.
+     **/
+    public final double mfgGrid;
+
+    /**
      * Minimum transistor width allowed in the design flow.
      **/
     //@ invariant minimumTransistorWidth >= 0.0;
@@ -993,6 +998,7 @@ public final class TechnologyData {
             throw new InvalidCommandLineArgException
                 ("Cannot specify both wireResistance and unitWireResistance",null);
 
+        mfgGrid = CommandLineArgsUtil.getRequiredNonNegativeDoubleArgValue(args,"mfggrid");
         minimumTransistorWidth =
             CommandLineArgsUtil.getRequiredNonNegativeDoubleArgValue(args,
                     "minimumTransistorWidth");
@@ -1255,6 +1261,16 @@ public final class TechnologyData {
         return unitWireResistance;
     }
 
+    //@ ensures \result >= 0.0;
+    public final double getMfgGrid()
+    {
+        return mfgGrid;
+    }
+
+    /** Convert a geometry distance into an integer number of MfgGrid **/
+    public final int convertToMfgGrid(double v) {
+        return (int) (v+0.5);
+    }
 
     //@ ensures \result >= 0.0;
     public final double getMinimumTransistorWidth()

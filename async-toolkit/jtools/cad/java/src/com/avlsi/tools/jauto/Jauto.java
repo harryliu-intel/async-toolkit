@@ -421,15 +421,6 @@ public class Jauto {
         double scaleR=doubleArg(theArgs.getArgValue("scaleR",null),1);
         double scaleM=doubleArg(theArgs.getArgValue("scaleM",null),1);
 
-        Double mfggrid = null;
-        final String mfggridstr = theArgs.getArgValue("mfggrid", null);
-        try {
-            if (mfggridstr != null)
-                mfggrid = Double.valueOf(mfggridstr);
-        } catch (NumberFormatException e) {
-            System.err.println("Invalid manufacturing grid \"" + mfggridstr + "\"!");
-        }
-
         float minWidth = Float.NaN;
         final String minWidthStr = theArgs.getArgValue("minGateWidth", null);
         try {
@@ -573,6 +564,7 @@ public class Jauto {
             System.err.println(e.toString());
             usage();
         }
+        Double mfggrid = Double.valueOf(tdata.getMfgGrid());
 
         final float fixedDelaybias =
             floatArg(theArgs.getArgValue("fixedSizeDelayBias",null),1);

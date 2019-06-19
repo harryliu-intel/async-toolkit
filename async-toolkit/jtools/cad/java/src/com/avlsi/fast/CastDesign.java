@@ -853,20 +853,20 @@ public final class CastDesign {
     }
 
     private boolean checkTransistorLength(final HalfOperator op) {
-        final double l =
-            op.subType.design.getTechnologyData().getDefaultGateLength();
+        TechnologyData td = op.subType.design.getTechnologyData();
+        final double l = td.getDefaultGateLength();
         boolean nonDefaultLength = false;
         for (NetGraph.NetEdge nea : op.transistors) {
-            if (nea.length != l) nonDefaultLength = true;
-        }
-        if (nonDefaultLength) {
-            final String dir =
-                op.driveDirection ==
+            if (td.convertToMfgGrid(nea.length)!=td.convertToMfgGrid(l)) {
+                nonDefaultLength = true;
+                final String dir =
+                    op.driveDirection ==
                     HalfOperator.DriveDirection.PULL_DOWN ? "-" : "+";
-            System.out.println(
-                    "INFO: half-operator " + op.subType.typeName + "/" +
-                    op.outputNode.name + dir +
-                    " contains transistors with non-default length.");
+                System.out.println("INFO: half-operator " + op.subType.typeName + "/" +
+                                   op.outputNode.name + dir +
+                                   " contains transistors with non-default length " +
+                                   nea.length + " != " + l);
+            }
         }
         return nonDefaultLength;
     }
