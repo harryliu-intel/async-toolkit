@@ -4,7 +4,6 @@
 # $DateTime$
 # $Author$
 
-
 use strict;
 
 # strip all cadence related libs!
@@ -21,40 +20,42 @@ foreach my $lib (@libs) {
 }
 undef @libs;
 undef @newlib;
+
+# variables
 my $cast2cdl = "cast2cdl";
 my $inliner  = "inliner";
 my $cdl2dot  = "cdl2dot";
 my $dot      = "/usr/intel/bin/dot";
-
 my $inline_gates = 0;
 my $inline_staticizers = 0;
 my $no_cleanup = 0;
-my $format = "ps";
+my $format = "eps";
 my $gnd = "GND";
 my $vdd = "Vdd";
+my $cast_path;
+my $cell;
+my $config;
+my $gsize = "8,10.5";
+my $grotate = "0";
 
+# usage
 my $usage_string = "Usage: graph_netlist \n" .
 "    [--config=<file>]              Standard config file option\n" .
 "    [--cast-path=<path>]           Standard cast path, including sized subtypes\n" .
 "    [--include-gates]              Include gates in the circuit graph\n" .
 "    [--include-all]                Include everything in the circuit graph\n" .
 "    [--no-cleanup]                 Leave temporary files in /scratch\n" .
-"    [--format=<format>]            Output format (ps, gif, etc.)\n" .
-"    [--gnd=<node>]                 Ground (defaults to GND)\n" .
-"    [--vdd=<node>]                 Power (defaults to Vdd)\n" .
+"    [--format=<format>]            Output format [eps|png|...]\n" .
+"    [--size=<w,h>]                 Paper size in inches\n" .
+"    [--rotate=degrees]             Rotate output for eps\n" .
+"    [--gnd=<node>]                 Ground (defaults to $gnd)\n" .
+"    [--vdd=<node>]                 Power (defaults to $vdd)\n" .
 "    fully.qualified.cell.NUM       Cell to graph\n\n" .
-"Outputs a graph of the cell's transistor netlist to \n" .
-"fully.qualified.cell.NUM.ps (extension subject to change if the --format\n" .
-"option is specified.)  The specified cell must be a leaf cell with a\n" .
-"netlist block.  By default, gates and staticizers are not included in\n" .
-"the graph.\n";
+"Outputs a graph of the cell's transistor netlist to fully.qualified.cell.NUM.$format.\n" .
+"The specified cell must be a leaf cell with a netlist block.  By default, gates and\n" . 
+"staticizers are not included in the graph.\n";
 
-my $cast_path;
-my $cell;
-my $config;
-my $gsize = "8,10.5";
-my $grotate = "90";
-
+# parse arguments
 while ($ARGV[0]) {
     if ($ARGV[0] =~ /^--(.*)/) {
         my ($option,$val) = split(/=/,$1);
@@ -101,11 +102,10 @@ while ($ARGV[0]) {
 }
 die $usage_string if (!defined($cell));
 
+# create temporary directory
 my $tempDir=`mktemp -d /tmp/graph_netlist.XXXXXX` ; chomp $tempDir;
 
-#
 # Generate temporary cdl file
-#
 my $cmd = "$cast2cdl ";
 $cmd .= "--config=$config " if ( ! $config eq "" );
 $cmd .= "--cast-path=\"$cast_path\" " if (! $cast_path eq "" );
@@ -113,10 +113,7 @@ $cmd .= "--output=\"$tempDir/all.cdl\" ";
 $cmd .= "--cell=\"$cell\" ";
 system($cmd) && die "ERROR: Couldn't run cast2cdl.\n";
 
-#
-# Separate the CDL file into stacks and
-# the cell definition
-#
+# Separate the CDL file into stacks and cell definition
 open (ALLCDL, "<$tempDir/all.cdl");
 open (STACKS, ">$tempDir/stacks.cdl");
 open (CDL,   ">$tempDir/withgates.cdl");
@@ -166,66 +163,25 @@ close ALLCDL;
 close STACKS;
 close CDL;
 
-
-
-
-
-
-#
 # Flatten the cell definition
-#
 $cmd = "$inliner --flatten --cdl='$tempDir/withgates.cdl' --library=$tempDir/stacks.cdl ".
-       "> '$tempDir/cell.cdl'";
+    "> '$tempDir/cell.cdl'";
 system($cmd) && die "ERROR: CDL Inliner failed.\n";
 
-#
 # Run cdl2dot
-#
-if ( $format eq "ps" ) { 
-    $cmd = $cdl2dot . " -v '$vdd' -g '$gnd' -o $tempDir/%i.dot '$tempDir/cell.cdl'";
-}
-else {
-    $cmd = $cdl2dot . " -v '$vdd' -g '$gnd' '$tempDir/cell.cdl' >$tempDir/0.dot";
-}
+$cmd = $cdl2dot . " -v '$vdd' -g '$gnd' '$tempDir/cell.cdl' >$tempDir/0.dot";
+system($cmd) && die "ERROR: cdl2dot failed.\n";
 
-system($cmd) && warn "(WARNING): cdl2dot failed.\n";
+# Run dot
+$cmd = "$dot -T$format -Grotate=$grotate -Gsize=$gsize -o \"$cell.$format\" \"$tempDir/0.dot\"";
+system($cmd) && die "ERROR: dot failed.\n";
 
-opendir( TEMPDIR, "$tempDir" );
-my @dotFiles = grep { /\.dot$/ } readdir TEMPDIR;
-closedir TEMPDIR;
-
-foreach my $dotFile ( @dotFiles ) {
-  #
-  # Convert to postscript
-  #
-  $cmd = "$dot -T$format -Grotate=$grotate -Gsize=$gsize -o \"$tempDir/$dotFile.$format\" " .
-         "\"$tempDir/$dotFile\"";
-  system($cmd) && die "ERROR: dot failed.\n";
-}
-
-if ( $format eq "ps" ) {
-    opendir( TEMPDIR, "$tempDir" );
-    my @psFiles = grep { /\.ps$/ } readdir TEMPDIR;
-    closedir TEMPDIR;
-
-    $cmd = "gs -dNOPAUSE -sDEVICE=pswrite \"-sOutputFile=$cell.ps\" -dBATCH";
-
-    foreach my $psFile ( @psFiles ) {
-        $cmd = $cmd . " $tempDir/$psFile";
-    }
-    system($cmd) && die "ERROR: \"$cmd\" failed.\n";
-}
-else {
-    `cp "$tempDir/0.dot.$format" "$cell.$format"`;
-}
-
-#
 # Clean up
-#
-if (! $no_cleanup) {
+unless ($no_cleanup) {
     `rm -rf $tempDir`;
 }
 
+# Convert CAST name to CDL name
 sub cast2cdl_rename_cellname {
     my ($cast_name) = @_;
     $cast_name =~ s/[\(\{]/-L/g;
@@ -233,4 +189,3 @@ sub cast2cdl_rename_cellname {
     $cast_name =~ s/,/_/g;
     return $cast_name;
 }
-
