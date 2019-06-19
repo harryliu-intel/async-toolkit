@@ -63,14 +63,21 @@ public class FullTable implements LinearInterpolatable {
         return index;
     }
 
+    /** Handle out-of-bounds extrapolation, especially for 1x1 tables **/
+    private int clipIndex(final int dimension, final int index) {
+        int len=chooseDimension(dimension).length;
+        if (index<len) return index;
+        return len-1;
+    }
+
     public double getEntry(final int dimension, final int index) {
         final double[] vals = chooseDimension(dimension);
-        return vals[index];
+        return vals[clipIndex(dimension,index)];
     }
 
     public double getEntry(final int[] indices) {
         assert indices.length == 2;
-        return table[indices[0]][indices[1]];
+        return table[clipIndex(0,indices[0])][clipIndex(1,indices[1])];
     }
 
     public static class IncompleteException extends RuntimeException {

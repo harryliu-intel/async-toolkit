@@ -12,26 +12,27 @@ public class Interpolate {
 
         final double x1 = data.getEntry(0, indices[0]);
         final double y1 = data.getEntry(1, indices[1]);
-
         final double Q11 = data.getEntry(indices);
         indices[0]++;
         final double Q21 = data.getEntry(indices);
         indices[1]++;
-
         final double x2 = data.getEntry(0, indices[0]);
         final double y2 = data.getEntry(1, indices[1]);
-
         final double Q22 = data.getEntry(indices);
         indices[0]--;
         final double Q12 = data.getEntry(indices);
 
-        final double R1 = Q11 * (x2 - x) / (x2 - x1) +
-                          Q21 * (x - x1) / (x2 - x1);
-        final double R2 = Q12 * (x2 - x) / (x2 - x1) +
-                          Q22 * (x - x1) / (x2 - x1);
+        final double R1,R2;
+        if (x==x1) {
+            R1 = Q11;
+            R2 = Q12;
+        } else {
+            R1 = Q11 * (x2 - x) / (x2 - x1) + Q21 * (x - x1) / (x2 - x1);
+            R2 = Q12 * (x2 - x) / (x2 - x1) + Q22 * (x - x1) / (x2 - x1);
+        }
 
-        return R1 * (y2 - y) / (y2 - y1) +
-               R2 * (y - y1) / (y2 - y1);
+        if (y==y1) return R1;
+        else       return R1 * (y2 - y) / (y2 - y1) + R2 * (y - y1) / (y2 - y1);
     }
 
     public static class ExtropolateException extends RuntimeException {
