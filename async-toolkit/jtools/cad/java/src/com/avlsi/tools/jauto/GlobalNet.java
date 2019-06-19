@@ -710,7 +710,7 @@ public class GlobalNet {
                              (ms >= 0.0 ? ms : ml));
             }
         }
-        assert estimatedWireSpan > 0;
+        assert estimatedWireSpan >= 0;
         return estimatedWireSpan;
     }
 
