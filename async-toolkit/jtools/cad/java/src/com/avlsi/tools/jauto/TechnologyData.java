@@ -1268,8 +1268,9 @@ public final class TechnologyData {
     }
 
     /** Convert a geometry distance into an integer number of MfgGrid **/
-    public final int convertToMfgGrid(double v) {
-        return (int) (v+0.5);
+    public final long convertToMfgGrid(double v)
+    {
+        return Math.round(v/mfgGrid);
     }
 
     //@ ensures \result >= 0.0;
