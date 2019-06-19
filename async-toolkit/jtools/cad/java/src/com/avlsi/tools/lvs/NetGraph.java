@@ -1209,9 +1209,7 @@ public final class NetGraph {
             // set foldingFactor of edges
             for (Iterator ei=edges.iterator(); ei.hasNext();) {
                 NetEdge edge = (NetEdge) ei.next();
-                assert (edge.foldingFactor == -1 || 
-                        edge.foldingFactor == foldingFactor);
-                edge.foldingFactor = foldingFactor;
+                edge.foldingFactor=Math.max(edge.foldingFactor,foldingFactor);
             }
             return foldingFactor;
         }

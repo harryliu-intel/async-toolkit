@@ -675,7 +675,7 @@ public class GlobalNet {
                                       getMinWireSpan()));
             }
         }
-        assert estimatedWireLength > 0;
+        assert estimatedWireLength >= 0;
         return estimatedWireLength;
     }
 
