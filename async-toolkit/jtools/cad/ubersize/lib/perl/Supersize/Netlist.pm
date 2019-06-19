@@ -146,7 +146,7 @@ sub graph_netlist {
     my $SS_r = shift;
     my $cells_lr = [];
     my $wdir = get_work_dir($SS_r);
-    my $args = "--format=ps2";
+    my $args = "";
 
     # parse args
     while (num_args(\@_)) {
