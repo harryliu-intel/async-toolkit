@@ -23,9 +23,9 @@ $maxPmosW = 3*$gridW; # maximum fold width for PMOS
 # usage banner
 sub usage() {
     die "Usage: $0\n" . 
-        " [--grid $grid]\n " .
-        " [--length $length] [--gridW $gridW]\n" .
-        " [--maxNmosW $maxNmosW] [--maxPmosW $maxPmosW]\n" .
+        " [--grid=$grid]\n " .
+        " [--length=$length] [--gridW=$gridW]\n" .
+        " [--maxNmosW=$maxNmosW] [--maxPmosW=$maxPmosW]\n" .
         " <top_cell> <cdl_in> <snp_out>\n";
 }
 
@@ -143,10 +143,10 @@ while ($line) {
         $x *= $parameters{"m"} if (defined($parameters{"m"}));
         
         # compute folds
-        my $w = POSIX::ceil($parameters{"w"}/$gridW);
+        my $w = POSIX::floor($parameters{"w"}/$gridW+0.5);
         my $maxW = $maxPmosW;
         $maxW = $maxNmosW if ($type =~ /^n/);
-        $maxW = POSIX::ceil($maxW/$gridW);
+        $maxW = POSIX::floor($maxW/$gridW+0.5);
         my $folds = POSIX::ceil($w/$maxW);
         my $small = 0;
         my $mod = $w%$maxW;
