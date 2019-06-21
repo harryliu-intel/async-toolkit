@@ -14,37 +14,31 @@ use Data::Dumper qw(Dumper);
 $" = " ";
 
 # options and defaults
-$length   = 20e-9; # transistor length
-$gridW    = 34e-9; # rounding grid for width
+$grid     = 1e-10;    # convert to Laygen units
+$length   = 14e-9;    # transistor length
+$gridW    = 30e-9;    # rounding grid for width
 $maxNmosW = 3*$gridW; # maximum fold width for NMOS
 $maxPmosW = 3*$gridW; # maximum fold width for PMOS
 
 # usage banner
 sub usage() {
     die "Usage: $0\n" . 
-        " [--length $length] [--gridW gridW]\n" .
-        " [--maxNmosW nw] [--maxPmosW pw]\n" .
+        " [--grid $grid]\n " .
+        " [--length $length] [--gridW $gridW]\n" .
+        " [--maxNmosW $maxNmosW] [--maxPmosW $maxPmosW]\n" .
         " <top_cell> <cdl_in> <snp_out>\n";
 }
 
 # parse arguments
-while (defined $ARGV[0] && $ARGV[0] =~ /^--(.*)/) {
+while (defined $ARGV[0] && $ARGV[0] =~ /^--(.*)=(.*)/) {
     $flag = $1;
-    if ($flag eq "length") {
-        $length = $ARGV[1];
-        shift @ARGV;
-    } elsif ($flag eq "gridW") {
-        $gridW = $ARGV[1];
-        shift @ARGV;
-    } elsif ($flag eq "maxNmosW") {
-        $maxNmosW = $ARGV[1];
-        shift @ARGV;
-    } elsif ($flag eq "maxPmosW") {
-        $maxPmosW = $ARGV[1];
-        shift @ARGV;
-    } else {
-        usage();
-    }
+    $val = $2;
+    if    ($flag eq "length")   { $length = $val; }
+    elsif ($flag eq "grid")     { $grid = $val; }
+    elsif ($flag eq "gridW")    { $gridW = $val; }
+    elsif ($flag eq "maxNmosW") { $maxNmosW = $val; }
+    elsif ($flag eq "maxPmosW") { $maxPmosW = $val; }
+    else { usage(); }
     shift @ARGV;
 }
 @ARGV == 3 or usage();
@@ -165,8 +159,8 @@ while ($line) {
                 $suffix = "_${f}";
                 $parameters{"w"} = ($maxW-($f<$small)) * $gridW;
             }
-            $w2 = $parameters{"w"}*1e10; # coordinates in Angstroms
-            $l2 = $parameters{"l"}*1e10; # coordinates in Angstroms
+            $w2 = $parameters{"w"}/$grid;
+            $l2 = $parameters{"l"}/$grid;
             $type =~ /^(.)/;
             my $tc = $1;
             $num_mos++ if ($cell eq $top);
