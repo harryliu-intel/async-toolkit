@@ -29,7 +29,7 @@ my $extra_extract_equiv="";
 my $blackbox=0;
 my $icv_options;
 my $threads=2;
-my $icv_runset_path="/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/ncl/1274/cpdk/latest/runsets/icvtdr";
+my $icv_runset_path="/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/ncl/1276/cpdk/latest/runsets/icvtdr";
 my $rc_database=0;
 my $nodeprops='';
 
@@ -264,7 +264,7 @@ sub prepare_clf_file {
 -I $pdk_root/share/Fulcrum/icv/lvs
 -I $icv_runset_path/PXL_ovrd
 -I $icv_runset_path/PXL
--I $icv_runset_path/StandAlone/dotTwelve
+-I $icv_runset_path/StandAlone/dotTwentyOne
 -I $icv_runset_path/util/dot1/HIP
 -I $icv_runset_path/util/Cadnav
 -I $icv_runset_path/util/denplot
@@ -276,7 +276,7 @@ sub prepare_clf_file {
 -turbo
 -D _drMaxError=100000000
 -D _drUSENDG=_drNO
--D _drUSERDEFINESUIN
+#-D _drUSERDEFINESUIN
 -D _drMSR
 -D _drCaseSensitive
 -D _drTOPCHECK=_drmixed
@@ -293,7 +293,7 @@ ET
     print LVS_CLF "-e $equivlance_file\n" if (-r $equivlance_file);
     print LVS_CLF "$icv_options\n" if (defined $icv_options and $icv_options ne "");
 
-    my $ilvs_deck="$icv_runset_path/StandAlone/dotTwelve/trclvs.12.rs";
+    my $ilvs_deck="$icv_runset_path/StandAlone/dotTwentyOne/trclvs.21.rs";
     print LVS_CLF "$ilvs_deck\n";
     close(LVS_CLF);
     return $lvs_clf_file;
