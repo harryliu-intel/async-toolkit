@@ -225,7 +225,7 @@ strmFile                           "GDSIINAME"
 strmVersion                        "5"
 summaryFile                        ""
 # FIXME
-techLib                            "1274"
+techLib                            "1276"
 topCell                            "CELLNAME"
 userSkillFile                      ""
 viaMap                             ""
