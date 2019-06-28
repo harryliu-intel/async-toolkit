@@ -118,6 +118,7 @@
     MaxHeapSize = (nrGetMaxHeapSize)
     (csh (strcat "rm -rf " WDIR))
     (csh (strcat "mkdir -p " WDIR))
+    (csh (strcat "mkdir -p " LEFDEF_DIR))
 
 
     ; make flatten view automatically
@@ -206,9 +207,9 @@
                                 nil
                                 nil))
                )
-      (unless doPowerGates
-        (DeletePwrGateCells ?CV ExportCV)
-        )
+;      (unless doPowerGates
+;        (DeletePwrGateCells ?CV ExportCV)
+;        )
       (CheckPinsForExport ?CV ExportCV)
 
       (dbSave ExportCV)
