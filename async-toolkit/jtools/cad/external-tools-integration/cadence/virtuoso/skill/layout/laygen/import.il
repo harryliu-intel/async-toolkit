@@ -132,6 +132,7 @@ LaygenNetMap[LaygenVccName] = VddNetName
     (when CV->prBoundary
       xy = (car (SortVertices CV->prBoundary->points))
       (dbCreateLabel CV lpp xy netName "lowerLeft" "R0" "stick" 0.02)
+      (dbCreateRect CV lpp (list xy (car xy)+GridPolyPitch:(cadr xy)+GridDiffPitch))
       )
     )
   t
