@@ -264,7 +264,7 @@ sub prepare_clf_file {
 -I $pdk_root/share/Fulcrum/icv/lvs
 -I $icv_runset_path/PXL_ovrd
 -I $icv_runset_path/PXL
--I $icv_runset_path/StandAlone/dotTwentyOne
+-I $icv_runset_path/StandAlone/dotTwentyTwo
 -I $icv_runset_path/util/dot1/HIP
 -I $icv_runset_path/util/Cadnav
 -I $icv_runset_path/util/denplot
@@ -293,7 +293,7 @@ ET
     print LVS_CLF "-e $equivlance_file\n" if (-r $equivlance_file);
     print LVS_CLF "$icv_options\n" if (defined $icv_options and $icv_options ne "");
 
-    my $ilvs_deck="$icv_runset_path/StandAlone/dotTwentyOne/trclvs.21.rs";
+    my $ilvs_deck="$icv_runset_path/StandAlone/dotTwentyTwo/trclvs.22.rs";
     print LVS_CLF "$ilvs_deck\n";
     close(LVS_CLF);
     return $lvs_clf_file;
