@@ -315,7 +315,6 @@ print RUN_FILE "\n";
 print RUN_FILE<<EOF;
 * Settings
 .param true=$vdd
-.param temp=$temp
 .temp $temp
 
 * Model
