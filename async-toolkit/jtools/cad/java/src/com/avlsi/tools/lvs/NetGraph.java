@@ -589,7 +589,7 @@ public final class NetGraph {
                  interferingInverseOf.name.toString() : "") +
                 (feedbackFrom!=null ? " feedbackFrom=" + feedbackFrom.name.toString() : "") +
                 (nonFeedback ? " nonFeedback=" + nonFeedback : "") +
-                (passgate ? "passgate=" + passgate : "");
+                (passgate ? " passgate=" + passgate : "");
         }
 
         /** Recursively search for paths from current node to rail/output NetNodes. */
@@ -1511,9 +1511,15 @@ public final class NetGraph {
         Iterator t = netgraph.getEdges().iterator();
         while (t.hasNext()) {
             NetEdge edge = (NetEdge) t.next();
-            new NetEdge( mapNetNode( edge.source.name, map ),
-                         mapNetNode( edge.gate.name  , map ),
-                         mapNetNode( edge.drain.name , map ),
+            NetNode source = mapNetNode(edge.source.name, map);
+            NetNode gate   = mapNetNode(edge.gate.name,   map);
+            NetNode drain  = mapNetNode(edge.drain.name,  map);
+            source.passgate |= edge.source.passgate;
+            gate.passgate   |= edge.gate.passgate;
+            drain.passgate  |= edge.drain.passgate;
+            new NetEdge( source,
+                         gate,
+                         drain,
                          edge.type,
                          edge.fold,
                          edge.width,
@@ -2087,9 +2093,10 @@ public final class NetGraph {
                         if (node.gate == null) {
                             node.gate = inst;
                         } else {
-                            System.err.println("A gate of type " + node.gate.getType() + 
-                                               " already attached to " + node.name + 
-                                               ", ignoring gate of type " + subName);
+                            throw new RuntimeException
+                                ("A gate of type " + node.gate.getType() + 
+                                 " already attached to " + node.name + 
+                                 ", cannot attach a gate of type " + subName);
                         }
                     }
                 }
