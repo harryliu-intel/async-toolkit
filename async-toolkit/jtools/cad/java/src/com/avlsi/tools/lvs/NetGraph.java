@@ -588,7 +588,8 @@ public final class NetGraph {
                 (interferingInverseOf!=null ? " interferingInverseOf=" +
                  interferingInverseOf.name.toString() : "") +
                 (feedbackFrom!=null ? " feedbackFrom=" + feedbackFrom.name.toString() : "") +
-                " nonFeedback=" + nonFeedback;
+                (nonFeedback ? " nonFeedback=" + nonFeedback : "") +
+                (passgate ? "passgate=" + passgate : "");
         }
 
         /** Recursively search for paths from current node to rail/output NetNodes. */
