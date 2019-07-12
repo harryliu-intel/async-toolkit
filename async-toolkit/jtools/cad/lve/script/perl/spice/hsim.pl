@@ -505,6 +505,8 @@ close(RUN_FILE);
 ################################# Create run script #####################################
 
 system("cp \"$pdk_root/share/Fulcrum/spice/run.sh\" run"); # default UPF paths
+system("chmod +w run");
+
 open SCRIPT,">>run" or die "Can't append to run script";
 if ($sim eq "hspice") {
     my $hsim_mc = "";
