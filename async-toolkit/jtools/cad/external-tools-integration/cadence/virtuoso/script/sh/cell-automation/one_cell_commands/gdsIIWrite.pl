@@ -225,7 +225,7 @@ strmFile                           "GDSIINAME"
 strmVersion                        "5"
 summaryFile                        ""
 # FIXME
-techLib                            "1276"
+techLib                            "PDKLIB"
 topCell                            "CELLNAME"
 userSkillFile                      ""
 viaMap                             ""
@@ -939,6 +939,12 @@ if ($flattenvias) {
 else {
     $myrsf =~ s/COMMENTVIAS/#/;
 }
+my $pdk = "";
+if ($pdkroot=~/fulcrum-(\S+)-pdk/) {
+  $pdk=$1;
+}
+
+$myrsf =~ s:PDKLIB:$pdk:g;
 my $dfcell=cconvert($cell);
 close CWR;
 close CRD;
@@ -966,7 +972,7 @@ if (@skip_libs) {
 #        close $fl;
         print $fr "gate";
         print $fr "stack";
-        print $fr "731";
+        print $fr "$pdk";
     }
     else {
         print $fr join("\n", @skip_libs);
