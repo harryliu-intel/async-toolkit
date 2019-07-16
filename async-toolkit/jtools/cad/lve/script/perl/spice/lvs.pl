@@ -257,6 +257,23 @@ sub prepare_clf_file {
       close($options_fh);
    }
 
+   my $clf_config="$pdk_root/share/Fulcrum/icv/lvs/lvs_clf.config";
+   my $rs_path="";
+   my $lvs_rs="";
+   open(CLF_CFG, "$clf_config") or die "Cannot read $clf_config\n";
+   while(my $line=<CLF_CFG>) {
+       chomp;
+       my @data = split("=", $line);
+       if( $data[0] =~ "RUNSET_PATH") {
+	   $rs_path=$data[1];
+       } elsif( $data[0] =~ "ILVS_DECK") {
+	   $lvs_rs=$data[1];
+       }
+   }
+   chomp $rs_path;
+   chomp $lvs_rs;
+   close(CLF_CFG);
+
    my $lvs_clf_file="$working_dir/lvs.clf";
    open(LVS_CLF, ">$lvs_clf_file") or die "Cannot write to $lvs_clf_file\n";
    print LVS_CLF <<ET;
@@ -264,7 +281,7 @@ sub prepare_clf_file {
 -I $pdk_root/share/Fulcrum/icv/lvs
 -I $icv_runset_path/PXL_ovrd
 -I $icv_runset_path/PXL
--I $icv_runset_path/StandAlone/dotTwentyTwo
+-I $icv_runset_path/$rs_path
 -I $icv_runset_path/util/dot1/HIP
 -I $icv_runset_path/util/Cadnav
 -I $icv_runset_path/util/denplot
@@ -276,7 +293,7 @@ sub prepare_clf_file {
 -turbo
 -D _drMaxError=100000000
 -D _drUSENDG=_drNO
-#-D _drUSERDEFINESUIN
+-D _drUSERDEFINESUIN
 -D _drMSR
 -D _drCaseSensitive
 -D _drTOPCHECK=_drmixed
@@ -293,7 +310,7 @@ ET
     print LVS_CLF "-e $equivlance_file\n" if (-r $equivlance_file);
     print LVS_CLF "$icv_options\n" if (defined $icv_options and $icv_options ne "");
 
-    my $ilvs_deck="$icv_runset_path/StandAlone/dotTwentyTwo/trclvs.22.rs";
+    my $ilvs_deck=$icv_runset_path . "/" . $rs_path . "/" . $lvs_rs;
     print LVS_CLF "$ilvs_deck\n";
     close(LVS_CLF);
     return $lvs_clf_file;
