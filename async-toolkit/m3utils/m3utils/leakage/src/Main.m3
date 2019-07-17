@@ -3,8 +3,9 @@ IMPORT Pathname;
 IMPORT FileRd, Rd;
 IMPORT CSVParse;
 IMPORT Debug;
-FROM Fmt IMPORT F, Int, LongReal;
+FROM Fmt IMPORT F, Int, LongReal, Pad;
 IMPORT Text;
+IMPORT TextUtils;
 IMPORT LongRealSeq;
 IMPORT FloatMode, Lex;
 IMPORT Scan;
@@ -22,6 +23,7 @@ PROCEDURE ReadTableFrom(READONLY col, row : CARDINAL) =
     vseq, tseq := NEW(LongRealSeq.T).init();
     r, c : CARDINAL;
     str : TEXT;
+    data : REF ARRAY OF ARRAY OF LONGREAL;
   BEGIN
     Debug.Out(F("Reading table from magic at %s %s", Int(col), Int(row)));
 
@@ -62,11 +64,11 @@ PROCEDURE ReadTableFrom(READONLY col, row : CARDINAL) =
     
     (* fill in data *)
     VAR
-      data := NEW(REF ARRAY OF ARRAY OF LONGREAL,
-                  c-1-col, r-1-row);
       lst : TEXT;
       lsti, lstj : CARDINAL;
     BEGIN
+      data := NEW(REF ARRAY OF ARRAY OF LONGREAL,
+                  c-1-col, r-1-row);
       TRY
         FOR i := col+1 TO c-1 DO
           FOR j := row+1 TO r-1 DO
@@ -80,9 +82,98 @@ PROCEDURE ReadTableFrom(READONLY col, row : CARDINAL) =
         FloatMode.Trap, Lex.Error =>
         Debug.Error(F("error at %s %s : %s", Int(lsti), Int(lstj), lst))
       END
+    END;
+
+    (* now search for headers *)
+    VAR
+      bars := 0;
+      r : [0..LAST(CARDINAL) ] := row-1;
+      hcnt : CARDINAL := 0;
+    CONST
+      Done = "**DONE**";
+      QS = SET OF CHAR { '"' };
+    BEGIN
+      LOOP
+        WITH cell = TextUtils.FilterOut(Get(col, r, Done),QS)
+         DO
+          Debug.Out(F("Check header cell %s", cell));
+          IF TE(cell,Done) THEN
+            EXIT
+          ELSIF IsBar(cell) THEN
+            Debug.Out(F("bar at %s %s", Int(col), Int(r)));
+            INC(bars)
+          ELSIF NOT IsWhiteSpace(cell) THEN
+            ParseHeaderCell(cell, hcnt)
+          END
+        END;
+        
+        IF bars = 2 THEN EXIT END;
+
+        DEC(r)
+      END
     END
     
   END ReadTableFrom;
+
+CONST WS = SET OF CHAR { ' ', '\t', '\n', '\r' };
+      
+PROCEDURE IsBar(txt : TEXT) : BOOLEAN =
+  VAR
+    mayBeBar := FALSE;
+  BEGIN
+    FOR i := 0 TO Text.Length(txt)-1 DO
+      WITH c = Text.GetChar(txt,i) DO
+        IF c = '#' THEN
+          mayBeBar := TRUE 
+        ELSIF NOT c IN WS THEN
+          RETURN FALSE
+        END;
+      END
+    END;
+    RETURN mayBeBar
+  END IsBar;
+
+PROCEDURE IsWhiteSpace(txt : TEXT) : BOOLEAN =
+  BEGIN
+    RETURN Text.Length(TextUtils.FilterOut(txt, WS)) = 0
+  END IsWhiteSpace;
+
+PROCEDURE ParseHeaderCell(txt : TEXT; VAR cnt : CARDINAL) =
+  VAR
+    beg, end : TEXT;
+  BEGIN
+    (* equals separated *)
+    IF TextUtils.CountCharOccurences(txt, '=') = 1 THEN
+      TextUtils.SplitText(txt, '=', beg, end);
+      beg := TextUtils.FilterOut(beg, WS);
+      end := TextUtils.FilterOut(end, WS);
+      Debug.Out(F("binding %s :=: %s", beg, end));
+      RETURN
+    END;
+
+    (* not comma separated *)
+    IF TextUtils.CountCharOccurences(txt, ',') = 0 THEN
+      TextUtils.SplitText(txt, ' ', beg, end);
+      beg := TextUtils.FilterOut(beg, WS);
+      end := TextUtils.FilterOut(end, WS);
+      Debug.Out(F("binding %s :=: %s", beg, end));
+      RETURN
+    END;
+    
+    (* comma separated *)
+    VAR lst := TextUtils.Shatter(txt,",");
+        p := lst;
+    BEGIN
+      WHILE p # NIL DO
+        beg := "PARAM" & Pad(Int(cnt), 4, '0');
+        end := p.head;
+        end := TextUtils.FilterOut(end, WS);
+        Debug.Out(F("binding %s :=: %s", beg, end));
+        p := p.tail;
+        INC(cnt)
+      END
+    END;
+  END ParseHeaderCell;
       
 PROCEDURE Do(rd : Rd.T) =
   VAR
@@ -97,7 +188,7 @@ PROCEDURE Do(rd : Rd.T) =
       LOOP
         Debug.Out("==================    LINE    ==================");
         parser.startLine();
-        WHILE parser.cellB(cell) DO
+        WHILE parser.cellB(cell, handleQuotes := TRUE) DO
           Debug.Out("cell " & cell);
           Set(c, r, cell);
           INC(c)
@@ -130,8 +221,12 @@ VAR
   rd : ARRAY [0..NUMBER(Files)-1] OF Rd.T;
   arr : REF ARRAY OF ARRAY OF TEXT;
 
-PROCEDURE Get(col, row : CARDINAL; empty : TEXT) : TEXT =
+PROCEDURE Get(col, row : INTEGER; empty : TEXT) : TEXT =
   BEGIN
+    IF col < 0 OR row < 0 THEN
+      RETURN empty
+    END;
+    
     IF col > LAST(arr^) THEN
       RETURN empty
     ELSIF row > LAST(arr[0]) THEN
