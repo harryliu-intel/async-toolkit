@@ -20,7 +20,7 @@ my $mem=1;
 my $jobs=0;
 my $flow="drcd";
 my $pdk_root="";
-my $icv_runset_path="/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/ncl/1274/cpdk/latest/runsets/icvtdr";
+my $icv_runset_path="/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/ncl/1276/cpdk/latest/runsets/icvtdr";
 my $oasis = 0;
 my $format = "GDSII";
 
@@ -81,6 +81,8 @@ while (defined $ARGV[0] and $ARGV[0] =~ /^--(.*)/) {
     shift @ARGV;
 }
 
+my %drc_runsets;
+my @flows=split(',',$flow);
 
 @ARGV == 1 or usage("No Cell");
 my $cell_name = shift;
@@ -92,17 +94,6 @@ $gdsii = $cell_name . ".gds" if (!$oasis && $gdsii eq "" && $gdsii_list eq "");
 $gdsii = $cell_name . ".oas" if ( $oasis && $gdsii eq "" && $gdsii_list eq "");
 $format = "OASIS" if ($oasis);
 
-#check if flow is valid
-my %drc_runsets;
-my @flows=split(',',$flow);
-foreach my $f (@flows) {
-  my $runset="$icv_runset_path/StandAlone/dotTwelve/$f.12.rs";
-  if ( -e $runset) {
-    $drc_runsets{$f}=$runset;
-  }else{
-    die "ERROR: Cannot find DRC runset:$runset\n";
-  }
-}
 ##########################################################################
 #                               DRC                                      #
 ##########################################################################
@@ -117,7 +108,7 @@ sub main{
   foreach my $f (@flows) {
     my $drc_run_dir="$working_dir/$f";
     system('mkdir', '-p', "$drc_run_dir"); 
-    run_drc($drc_run_dir, $drc_runsets{$f});
+    run_drc($drc_run_dir, $icv_runset_path, $drc_runsets{$f});
   }
 }
 
@@ -125,10 +116,41 @@ sub main{
 
 
 sub run_drc {
-   my ($run_dir,$runset)=@_;
+   my ($run_dir,$icv_runset_path,$runset)=@_;
    system('cp','-rp', "$icv_runset_path/CPYDB","$run_dir");
    my $cmd_file="$run_dir/drc.cmd";
    open(CF, ">$cmd_file") or die "Cannot write to $cmd_file\n";
+
+   my $cmd_config="$pdk_root/share/Fulcrum/icv/drc/drc_cmd.config";
+   my $rs_path="";
+   my $rs_num="1";
+   my $runset="";
+   open(CMD_CFG, "$cmd_config") or die "Cannot read $cmd_config\n";
+   while(my $line=<CMD_CFG>) {
+       my @data = split("=", $line);
+       if( $data[0] =~ "RUNSET_PATH") {
+	   $rs_path=$data[1];
+       } elsif( $data[0] =~ "RUNSET_NUM") {
+	   $rs_num=$data[1];
+       }
+   }
+   chomp $rs_path;
+   chomp $rs_num;
+   close(CMD_CFG);
+
+   #check if flow is valid
+   my %drc_runsets;
+   my @flows=split(',',$flow);
+   foreach my $f (@flows) {
+       $runset=$icv_runset_path . "/" . $rs_path . "/" . $f . "." . $rs_num . ".rs";
+       print "\npigfucker! " . $runset;
+       if ( -e $runset) {
+	   $drc_runsets{$f}=$runset;
+       }else{
+	   die "ERROR: Cannot find DRC runset:$runset\n";
+       }
+   }
+
    print CF <<ET;
 #!/usr/intel/bin/tcsh -f
 setenv DR_CPYDB $run_dir/CPYDB
@@ -138,7 +160,7 @@ $ENV{'ICV_SCRIPT'} 'icv' -I . \\
 -I $pdk_root/share/Fulcrum/icv/lvs \\
 -I $icv_runset_path/PXL_ovrd \\
 -I $icv_runset_path/PXL \\
--I $icv_runset_path/StandAlone/dotTwelve \\
+-I $icv_runset_path/$rs_path \\
 -I $icv_runset_path/util/dot1/HIP \\
 -I $icv_runset_path/util/Cadnav \\
 -I $icv_runset_path/util/denplot \\
@@ -149,7 +171,7 @@ $ENV{'ICV_SCRIPT'} 'icv' -I . \\
 -D _drCOVER_BY_BCID=_drYES \\
 -D _drICFBCIDEXCEPTION=_drYES \\
 -D _drUSENDG=_drNO \\
--D _drUSERDEFINESUIN \\
+#-D _drUSERDEFINESUIN \\
 -D _drCaseSensitive \\
 -f $format \\
 ET
