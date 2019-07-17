@@ -6,6 +6,9 @@ use strict;
 
 BEGIN {
     unshift @INC, "$ENV{'FULCRUM_PACKAGE_ROOT'}/lib/perl";
+    if (!exists($ENV{CPDK_PATH}) && $ENV{'FULCRUM_PDK_ROOT'}!~/731/) {
+       exec 'csh', '-c', "source $ENV{FULCRUM_PDK_ROOT}/share/Fulcrum/starrcxt/env.setup; exec " . join(' ', map("\Q$_\E", $0, @ARGV)); 
+    }
 }
 
 my $doc = <<DOC;
@@ -155,6 +158,7 @@ while (defined $ARGV[0] and $ARGV[0] =~ /^--(.*)/) {
             $fixbulk = $value;
     } elsif ($flag eq "working-dir") {
             $working_dir = $value;
+print "working dir $working_dir\n";
     } elsif ($flag eq "root-target-dir") {
             $root_target_dir = $value;
     } elsif ($flag eq "current-target-dir") {
@@ -531,6 +535,9 @@ if ($stage2b) {
     if ( -f "$conf_dir/$upf_version.$extractCorner.nxtgrd") {
         $cmd{"TCAD_GRD_FILE"} = "$conf_dir/$upf_version.$extractCorner.nxtgrd";
     }
+    if ($ENV{FULCRUM_PDK_ROOT}!~/731/) {
+        $cmd{"TCAD_GRD_FILE"} = "$ENV{CPDK_PATH}/extraction/starrc/techfiles/$extractCorner.nxtgrd";
+    }
     my $skip_cell_cmd="";
     if(-s $graycell_file) {
         $cmd{"SKIP_CELLS_FILE"} = $graybox_list_file;
@@ -610,6 +617,9 @@ if ($stage2b) {
     $cmd{"REDUCTION"} = $reduction;
     $cmd{"NETLIST_GROUND_NODE_NAME"} = $netlist_gnd;
     $cmd{"VIA_COVERAGE_OPTION_FILE"} = "$conf_dir/$upf_version.via_coverage.custom";
+    if ($ENV{FULCRUM_PDK_ROOT}!~/731/) {
+        $cmd{"VIA_COVERAGE_OPTION_FILE"} = "$ENV{CPDK_PATH}/extraction/starrc/techfiles/$extractCorner.via_coverage.custom";
+    }
 
     # setup up SMC (only SPEF output supported for now)
     if ($netlist_format eq 'SPEF' && @extra_temperature) {
@@ -637,12 +647,16 @@ EOF
     if ($ccp) {
         my %ccpcmd = ();
         read_starcmd("$conf_dir/ccp.cmd", \%ccpcmd);
-        $ccpcmd{'DEVICE_MODEL_MAP_FILE'} = "$conf_dir/$upf_version.device_map";
-        $ccpcmd{'RCMODEL_MAP_FILE'} = "$conf_dir/$upf_version.rc_map";
-        $ccpcmd{'STARRCXT_CCP_EXECUTABLE'} = "$ENV{CCP_INSTALL_PATH}/ccp";
-        $ccpcmd{'STARRCXT_CCP_VERSION'} = "$ENV{CCP_VERSION}";
-        $ccpcmd{'UPF_FILE'} = "$conf_dir/$upf_version.be.upf";
-        $ccpcmd{'VIA_FILE'} = "$conf_dir/$upf_version.via_table.ctf";
+        if ($ENV{FULCRUM_PDK_ROOT}=~/731/) {
+          $ccpcmd{'DEVICE_MODEL_MAP_FILE'} = "$conf_dir/$upf_version.device_map";
+          $ccpcmd{'RCMODEL_MAP_FILE'} = "$conf_dir/$upf_version.rc_map";
+          $ccpcmd{'STARRCXT_CCP_EXECUTABLE'} = "$ENV{CCP_INSTALL_PATH}/ccp";
+          $ccpcmd{'STARRCXT_CCP_VERSION'} = "$ENV{CCP_VERSION}";
+          $ccpcmd{'UPF_FILE'} = "$conf_dir/$upf_version.be.upf";
+          $ccpcmd{'VIA_FILE'} = "$conf_dir/$upf_version.via_table.ctf";
+        }
+
+
         $ccpcmd{'NUM_THREADS'} = $threads;
         open my $fh, '>', 'ccp.cmd' or die "Can't create ccp.cmd: $!";
         print $fh join('', map { "$_: $ccpcmd{$_}\n" } sort keys %ccpcmd);
