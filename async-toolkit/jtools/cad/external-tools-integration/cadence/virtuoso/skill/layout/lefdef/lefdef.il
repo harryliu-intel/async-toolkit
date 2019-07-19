@@ -1223,3 +1223,48 @@ if(!Synchronous
 t
  )
 )
+
+
+; Write LEF for a list of cell-views
+(defun ExportCellsLEF (filename cells)
+  (let (LefCellsList MWLefCellsList pout scratchlib srccv dstcv copyexact gcells)
+    (printf "Exporting LEF\n")
+    ; translate cell names to Intel format
+    ; there appears to be no name map file like with gds, so we have to copy the cells
+    scratchlib = (dbCreateLib "export_lef_temp" (strcat (ConfigFileGetValue TheCDSConfigTable "TEMP") "/export_lef_temp"))
+    (techSetTechLibName scratchlib "1276")
+
+    (foreach c cells
+      srccv = (dbOpenCellViewByType (car (NameParseCellName c->cellName)) c->cellName "layout")
+      copyexact = (dbGetPropByName srccv "CopyExact")->value
+      gcells = (cons copyexact gcells)
+      srccv = (dbOpenCellViewByType (car (NameParseCellName c->cellName)) c->cellName "abstract")
+      dstcv = (betterCopyCellView srccv scratchlib->name copyexact "abstract" ?b_overwrite t)
+      )
+
+    ; write lef cells list
+    LefCellsList = (sprintf nil "%s.lef_cells_list" filename)
+    pout = (outfile LefCellsList)
+    (foreach c gcells (fprintf pout "%s %s abstract\n" scratchlib->name c))
+    (close pout)
+    ; write another without the lib and view so that it can be read directly later
+    MWLefCellsList = (sprintf nil "%s.gen_db_mw.lef_cells_list" filename)
+    pout = (outfile MWLefCellsList)
+    (foreach c gcells (fprintf pout "%s\n" c))
+    (close pout)
+
+    ; export LEF for cells
+    (ldtrLefWriteOA
+     (sprintf nil "%s.lef" filename)
+     TechLibName
+     nil
+     LefCellsList
+     nil
+     (sprintf nil "%s.lef.log" filename)
+     t
+     "5.7"
+     )
+
+     (ddDeleteLocal (ddGetObjLib scratchlib))
+    )
+  )

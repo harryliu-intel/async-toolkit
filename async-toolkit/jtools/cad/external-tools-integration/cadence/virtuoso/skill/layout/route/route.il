@@ -548,34 +548,6 @@
     )
   )
 
-; Write LEF for a list of cell-views
-(defun ExportCellsLEF (filename cells)
-  (let (LefCellsList MWLefCellsList pout)
-    ; write lef cells list
-    LefCellsList = (sprintf nil "%s.lef_cells_list" filename)
-    pout = (outfile LefCellsList)
-    (foreach c cells (fprintf pout "%s %s abstract\n" c->libName c->cellName))
-    (close pout)
-    ; write another without the lib and view so that it can be read directly later
-    MWLefCellsList = (sprintf nil "%s.gen_db_mw.lef_cells_list" filename)
-    pout = (outfile MWLefCellsList)
-    (foreach c cells (fprintf pout "%s\n" c->cellName))
-    (close pout)
-
-    ; export LEF for cells
-    (ldtrLefWriteOA
-     (sprintf nil "%s.lef" filename)
-     TechLibName
-     nil
-     LefCellsList
-     nil
-     (sprintf nil "%s.lef.log" filename)
-     t
-     "5.7"
-     )
-    )
-  )
-
 ; convert a cell name from DFII to CAST
 (defun GetCastCellName (cellname
                         @key (tempdir ConfigFileGetValue(TheCDSConfigTable "TEMP"))
