@@ -6,7 +6,16 @@
 use strict;
 use FindBin;
 
-my $top = '/nfs/sc/proj/ctg/mrl108/mrl/tools';
+my %site_tool_path=(
+  'sc' => '/nfs/sc/proj/ctg/mrl108/mrl/tools',
+  'pdx' =>  '/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/ncl/tools'
+);
+my %nb_cfg_path=(
+  'sc' => '"/nfs/sc/proj/ctg/mrl108/mrl/tools/local/fulcrum_nb.config',
+  'pdx' =>  '/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/ncl/local/fulcrum_nb.config'
+);
+
+my $top = $site_tool_path{$ENV{EC_SITE}};
 BEGIN {
     my $correctitools="$FindBin::Bin/.itools";
     $correctitools="$top/bin/.itools" unless -e $correctitools;
@@ -14,16 +23,13 @@ BEGIN {
         $ENV{USER_ITOOLS}=$correctitools;
         exec "$0",@ARGV;
     }
+    $ENV{NBCONF}="/nfs/site/gen/adm/netbatch/conf";
 }
 
 use Getopt::Long qw(:config require_order); # allows tool options not to be decoded
 use DB_File;
 
-if(not defined $ENV{FULCRUM_NB_CONFIG}) {
-  if ( (not defined  $ENV{NBPOOL}) || (not defined $ENV{NBQSLOT}) || (not defined $ENV{NBCLASS}) ) {
-      $ENV{FULCRUM_NB_CONFIG}="/nfs/sc/proj/ctg/mrl108/mrl/tools/local/fulcrum_nb.config";
-  }
-}
+$ENV{FULCRUM_NB_CONFIG}=$nb_cfg_path{$ENV{EC_SITE}} if(not defined $ENV{FULCRUM_NB_CONFIG});
 
 # config file
 my $configfile = $ENV{FULCRUMCONFIG};
@@ -228,7 +234,7 @@ sub readconfig {
 }
 
 my $cadencewrapperdir=$ENV{'FULCRUM_WRAPPER_DIR'};
-$cadencewrapperdir="/nfs/sc/proj/ctg/mrl108/mrl/tools/bin" unless $cadencewrapperdir;
+$cadencewrapperdir="$top/bin" unless $cadencewrapperdir;
 $ENV{'FULCRUM_WRAPPER_DIR'}=$cadencewrapperdir;
 my $javapath = "/usr/intel/pkgs/java/1.6.0.10-64/bin";
 warn "No JAVA found $javapath" if (! -d $javapath);
@@ -1600,7 +1606,8 @@ if (!defined ($arglist)) {
             print "PATH=$ENV{PATH}" if $argverbose;
             gettmp;
             print "TMP=$ENV{TMP}" if $argverbose;
-            exec "$cadencewrapperdir/$cadence_ver{$argexe}",@args;
+            #exec "$cadencewrapperdir/$cadence_ver{$argexe}",@args;
+            source_pdk_exec("$cadencewrapperdir/$cadence_ver{$argexe}",@args);
         }
     }
     elsif ($#list == 0) {
@@ -1712,7 +1719,9 @@ if (!defined ($arglist)) {
 # now with all package, need the wrappers
             unshift @ARGV, @cadence_wrappers;
             print "Executing @ARGV" if $argverbose;
-            exec @ARGV;
+            #exec @ARGV;
+            source_pdk_exec(@ARGV);
+
         }
     }
     elsif ($#list < 0) {
@@ -1809,7 +1818,8 @@ if (!defined ($arglist)) {
         }
         else {
             print "Executing @ARGV" if $argverbose;
-            exec @ARGV;
+            #exec @ARGV;
+            source_pdk_exec(@ARGV);
             die "Unable to execute @ARGV";
         }
     }
@@ -1948,3 +1958,13 @@ sub getexelist {
         dbmclose %a;
     }
 }
+
+sub source_pdk_exec {
+  if (defined $ENV{FULCRUM_PDK_ROOT} && -e "$ENV{FULCRUM_PDK_ROOT}/share/Fulcrum/pdk.setup") {
+     exec 'csh', '-c', "source $ENV{FULCRUM_PDK_ROOT}/share/Fulcrum/pdk.setup; exec ".  join(' ', map("\Q$_\E", @_)); 
+  } else {
+     exec @_;
+  }
+}
+
+
