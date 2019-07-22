@@ -6,11 +6,11 @@ use strict;
 
 BEGIN {
     unshift @INC, "$ENV{'FULCRUM_PACKAGE_ROOT'}/lib/perl";
-    if (!exists($ENV{CPDK_PATH}) && $ENV{'FULCRUM_PDK_ROOT'}!~/731/) {
+    #need to setup extrac env variables for CCP
+    if (!exists($ENV{PDK_STARRCEX_SETUP}) && -e "$ENV{FULCRUM_PDK_ROOT}/share/Fulcrum/starrcxt/env.setup") {
        exec 'csh', '-c', "source $ENV{FULCRUM_PDK_ROOT}/share/Fulcrum/starrcxt/env.setup; exec " . join(' ', map("\Q$_\E", $0, @ARGV)); 
     }
 }
-
 my $doc = <<DOC;
 
 <h2> Summary </h2>
@@ -536,7 +536,7 @@ if ($stage2b) {
         $cmd{"TCAD_GRD_FILE"} = "$conf_dir/$upf_version.$extractCorner.nxtgrd";
     }
     if ($ENV{FULCRUM_PDK_ROOT}!~/731/) {
-        $cmd{"TCAD_GRD_FILE"} = "$ENV{CPDK_PATH}/extraction/starrc/techfiles/$extractCorner.nxtgrd";
+        $cmd{"TCAD_GRD_FILE"} = "$ENV{PDK_CPDK_PATH}/extraction/starrc/techfiles/$extractCorner.nxtgrd";
     }
     my $skip_cell_cmd="";
     if(-s $graycell_file) {
@@ -618,7 +618,7 @@ if ($stage2b) {
     $cmd{"NETLIST_GROUND_NODE_NAME"} = $netlist_gnd;
     $cmd{"VIA_COVERAGE_OPTION_FILE"} = "$conf_dir/$upf_version.via_coverage.custom";
     if ($ENV{FULCRUM_PDK_ROOT}!~/731/) {
-        $cmd{"VIA_COVERAGE_OPTION_FILE"} = "$ENV{CPDK_PATH}/extraction/starrc/techfiles/$extractCorner.via_coverage.custom";
+        $cmd{"VIA_COVERAGE_OPTION_FILE"} = "$ENV{PDK_CPDK_PATH}/extraction/starrc/techfiles/$extractCorner.via_coverage.custom";
     }
 
     # setup up SMC (only SPEF output supported for now)
@@ -1549,3 +1549,4 @@ sub my_system {
     $status == 0 or die "Error: $cmd failed.\n";
     }
 }
+
