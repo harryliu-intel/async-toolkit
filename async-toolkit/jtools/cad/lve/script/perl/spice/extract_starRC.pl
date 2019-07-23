@@ -158,7 +158,6 @@ while (defined $ARGV[0] and $ARGV[0] =~ /^--(.*)/) {
             $fixbulk = $value;
     } elsif ($flag eq "working-dir") {
             $working_dir = $value;
-print "working dir $working_dir\n";
     } elsif ($flag eq "root-target-dir") {
             $root_target_dir = $value;
     } elsif ($flag eq "current-target-dir") {
@@ -531,12 +530,11 @@ if ($stage2b) {
     read_starcmd("$conf_dir/star.cmd", \%cmd);
 
     # set options
-    $cmd{"TCAD_GRD_FILE"} = "$conf_dir/$upf_version.nxtgrd";
-    if ( -f "$conf_dir/$upf_version.$extractCorner.nxtgrd") {
-        $cmd{"TCAD_GRD_FILE"} = "$conf_dir/$upf_version.$extractCorner.nxtgrd";
-    }
-    if ($ENV{FULCRUM_PDK_ROOT}!~/731/) {
-        $cmd{"TCAD_GRD_FILE"} = "$ENV{PDK_CPDK_PATH}/extraction/starrc/techfiles/$extractCorner.nxtgrd";
+    $cmd{"TCAD_GRD_FILE"} = "$ENV{PDK_STARRC_TECH_FILE_DIR}/$upf_version.nxtgrd";
+    if ( -f "$ENV{PDK_STARRC_TECH_FILE_DIR}/$upf_version.$extractCorner.nxtgrd") {
+        $cmd{"TCAD_GRD_FILE"} = "$ENV{PDK_STARRC_TECH_FILE_DIR}/$upf_version.$extractCorner.nxtgrd";
+    } elsif (-f "$ENV{PDK_STARRC_TECH_FILE_DIR}/$extractCorner.nxtgrd") {
+        $cmd{"TCAD_GRD_FILE"} = "$ENV{PDK_STARRC_TECH_FILE_DIR}/$extractCorner.nxtgrd";
     }
     my $skip_cell_cmd="";
     if(-s $graycell_file) {
@@ -616,9 +614,9 @@ if ($stage2b) {
     $cmd{"NETLIST_TAIL_COMMENTS"} = $tailcomments;
     $cmd{"REDUCTION"} = $reduction;
     $cmd{"NETLIST_GROUND_NODE_NAME"} = $netlist_gnd;
-    $cmd{"VIA_COVERAGE_OPTION_FILE"} = "$conf_dir/$upf_version.via_coverage.custom";
-    if ($ENV{FULCRUM_PDK_ROOT}!~/731/) {
-        $cmd{"VIA_COVERAGE_OPTION_FILE"} = "$ENV{PDK_CPDK_PATH}/extraction/starrc/techfiles/$extractCorner.via_coverage.custom";
+    $cmd{"VIA_COVERAGE_OPTION_FILE"} = "$ENV{PDK_STARRC_TECH_FILE_DIR}/$upf_version.via_coverage.custom";
+    if ( -f "$ENV{PDK_STARRC_TECH_FILE_DIR}/$extractCorner.via_coverage.custom") {
+        $cmd{"VIA_COVERAGE_OPTION_FILE"} = "$ENV{PDK_STARRC_TECH_FILE_DIR}/$extractCorner.via_coverage.custom";
     }
 
     # setup up SMC (only SPEF output supported for now)
@@ -647,13 +645,13 @@ EOF
     if ($ccp) {
         my %ccpcmd = ();
         read_starcmd("$conf_dir/ccp.cmd", \%ccpcmd);
-        if ($ENV{FULCRUM_PDK_ROOT}=~/731/) {
-          $ccpcmd{'DEVICE_MODEL_MAP_FILE'} = "$conf_dir/$upf_version.device_map";
-          $ccpcmd{'RCMODEL_MAP_FILE'} = "$conf_dir/$upf_version.rc_map";
+        if (defined $ENV{CCP_OVERWRITE}) {
+          $ccpcmd{'DEVICE_MODEL_MAP_FILE'} = "$ENV{PDK_STARRC_TECH_FILE_DIR}/$upf_version.device_map";
+          $ccpcmd{'RCMODEL_MAP_FILE'} = "$ENV{PDK_STARRC_TECH_FILE_DIR}/$upf_version.rc_map";
           $ccpcmd{'STARRCXT_CCP_EXECUTABLE'} = "$ENV{CCP_INSTALL_PATH}/ccp";
           $ccpcmd{'STARRCXT_CCP_VERSION'} = "$ENV{CCP_VERSION}";
-          $ccpcmd{'UPF_FILE'} = "$conf_dir/$upf_version.be.upf";
-          $ccpcmd{'VIA_FILE'} = "$conf_dir/$upf_version.via_table.ctf";
+          $ccpcmd{'UPF_FILE'} = "$ENV{PDK_STARRC_TECH_FILE_DIR}/$upf_version.be.upf";
+          $ccpcmd{'VIA_FILE'} = "$ENV{PDK_STARRC_TECH_FILE_DIR}/$upf_version.via_table.ctf";
         }
 
 
