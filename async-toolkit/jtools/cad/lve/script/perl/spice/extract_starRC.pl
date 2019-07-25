@@ -8,7 +8,7 @@ BEGIN {
     unshift @INC, "$ENV{'FULCRUM_PACKAGE_ROOT'}/lib/perl";
     #need to setup extrac env variables for CCP
     if (!exists($ENV{PDK_STARRCEX_SETUP}) && -e "$ENV{FULCRUM_PDK_ROOT}/share/Fulcrum/starrcxt/env.setup") {
-       exec 'csh', '-c', "source $ENV{FULCRUM_PDK_ROOT}/share/Fulcrum/starrcxt/env.setup; exec " . join(' ', map("\Q$_\E", $0, @ARGV)); 
+       exec 'csh', '-f', '-c', "source $ENV{FULCRUM_PDK_ROOT}/share/Fulcrum/starrcxt/env.setup; exec " . join(' ', map("\Q$_\E", $0, @ARGV)); 
     }
 }
 my $doc = <<DOC;
