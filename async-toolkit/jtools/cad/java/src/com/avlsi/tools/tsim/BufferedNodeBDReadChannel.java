@@ -196,6 +196,9 @@ public final class BufferedNodeBDReadChannel extends BufferedNodeBDChannel
                 ack.setValueAndEnqueueDependents(value);
             } else if (value == Node.VALUE_1) {
                 cycle_status = WAIT_REQ;
+                if (req.getValue() == wantReqState) {
+                    waitData(time);
+                }
             }
         }
     }
@@ -253,6 +256,11 @@ public final class BufferedNodeBDReadChannel extends BufferedNodeBDChannel
         }
     }
 
+    private synchronized void waitData(long time) {
+        cycle_status = WAIT_DATA;
+        DigitalScheduler.get().addEvent(new DataEvent(time + toData));
+    }
+
     private final class ReqNodeWatcher implements NodeWatcher {
         public void nodeChanged(Node node, long time) {
             final byte val = node.getValue();
@@ -262,11 +270,7 @@ public final class BufferedNodeBDReadChannel extends BufferedNodeBDChannel
                 break;
               case WAIT_REQ:
                 if (val == wantReqState) {
-                    synchronized (BufferedNodeBDReadChannel.this) {
-                        cycle_status = WAIT_DATA;
-                        DigitalScheduler.get().addEvent(
-                                new DataEvent(time + toData));
-                    }
+                    waitData(time);
                 }
                 break;
               case WAIT_DATA:
