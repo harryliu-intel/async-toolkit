@@ -259,6 +259,7 @@ public final class BufferedNodeBDReadChannel extends BufferedNodeBDChannel
 
             switch (cycle_status) {
               case BEGIN:
+                break;
               case WAIT_REQ:
                 if (val == wantReqState) {
                     synchronized (BufferedNodeBDReadChannel.this) {

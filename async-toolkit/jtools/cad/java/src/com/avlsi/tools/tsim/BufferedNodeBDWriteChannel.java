@@ -234,6 +234,7 @@ public final class BufferedNodeBDWriteChannel extends BufferedNodeBDChannel
 
             switch (cycle_status) {
               case BEGIN:
+                break;
               case WAIT_ACK:
                 if (val == wantAckState) {
                     synchronized (BufferedNodeBDWriteChannel.this) {
