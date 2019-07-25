@@ -3,7 +3,7 @@ package com.avlsi.csp.csp2java.runtime;
 import java.math.BigInteger;
 
 public class ShadowCspInteger {
-    public static class Simple extends CspInteger {
+    public static class Simple extends CspInteger implements Packable {
         private final CspInteger formal;
         private final CspInteger actual;
         public Simple(final CspInteger actual) {
@@ -25,9 +25,15 @@ public class ShadowCspInteger {
         protected BigInteger getValue() {
             return formal.getValue();
         }
+        public int pack(CspInteger packed, int start) {
+            return ((Packable) formal).pack(packed, start);
+        }
+        public int unpack(CspInteger packed, int start) {
+            return ((Packable) formal).unpack(packed, start);
+        }
     }
 
-    public static class BitRange extends CspInteger {
+    public static class BitRange extends CspInteger implements Packable {
         private final CspInteger min, max;
         private final CspInteger formal;
         private final CspInteger actual;
@@ -54,6 +60,12 @@ public class ShadowCspInteger {
         }
         protected BigInteger getValue() {
             return formal.getValue();
+        }
+        public int pack(CspInteger packed, int start) {
+            return ((Packable) formal).pack(packed, start);
+        }
+        public int unpack(CspInteger packed, int start) {
+            return ((Packable) formal).unpack(packed, start);
         }
     }
 }
