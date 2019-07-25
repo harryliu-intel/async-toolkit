@@ -3,5 +3,8 @@ import("libm3")
 import("cit_util")
 import("csv")
 
+interface("XArray")
+list("XArray", "XArray")
+
 implementation ("Main")
 program("leakage")

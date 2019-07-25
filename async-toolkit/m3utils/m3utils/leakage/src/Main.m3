@@ -11,19 +11,27 @@ IMPORT FloatMode, Lex;
 IMPORT Scan;
 IMPORT Thread;
 IMPORT OSError;
+IMPORT TextTextTbl;
+IMPORT Math;
+IMPORT XArray;
+IMPORT XArrayList;
 
 <*FATAL Thread.Alerted*>
 <*FATAL OSError.E, Rd.Failure*>
 
 CONST TE = Text.Equal;
 CONST Verbose = FALSE;
-      
-PROCEDURE ReadTableFrom(READONLY col, row : CARDINAL) =
+
+PROCEDURE ReadTableFrom(READONLY col, row : CARDINAL) : XArray.T =
   VAR
     vseq, tseq := NEW(LongRealSeq.T).init();
     r, c : CARDINAL;
-    str : TEXT;
+    str  : TEXT;
     data : REF ARRAY OF ARRAY OF LONGREAL;
+    res := NEW(XArray.T,
+               vseq := vseq,
+               tseq := tseq,
+               params := NEW(TextTextTbl.Default).init());
   BEGIN
     Debug.Out(F("Reading table from magic at %s %s", Int(col), Int(row)));
 
@@ -69,6 +77,7 @@ PROCEDURE ReadTableFrom(READONLY col, row : CARDINAL) =
     BEGIN
       data := NEW(REF ARRAY OF ARRAY OF LONGREAL,
                   c-1-col, r-1-row);
+      res.data := data;
       TRY
         FOR i := col+1 TO c-1 DO
           FOR j := row+1 TO r-1 DO
@@ -103,7 +112,7 @@ PROCEDURE ReadTableFrom(READONLY col, row : CARDINAL) =
             Debug.Out(F("bar at %s %s", Int(col), Int(r)));
             INC(bars)
           ELSIF NOT IsWhiteSpace(cell) THEN
-            ParseHeaderCell(cell, hcnt)
+            ParseHeaderCell(cell, hcnt, res.params)
           END
         END;
         
@@ -111,8 +120,8 @@ PROCEDURE ReadTableFrom(READONLY col, row : CARDINAL) =
 
         DEC(r)
       END
-    END
-    
+    END;
+    RETURN res
   END ReadTableFrom;
 
 CONST WS = SET OF CHAR { ' ', '\t', '\n', '\r' };
@@ -138,7 +147,9 @@ PROCEDURE IsWhiteSpace(txt : TEXT) : BOOLEAN =
     RETURN Text.Length(TextUtils.FilterOut(txt, WS)) = 0
   END IsWhiteSpace;
 
-PROCEDURE ParseHeaderCell(txt : TEXT; VAR cnt : CARDINAL) =
+PROCEDURE ParseHeaderCell(txt : TEXT;
+                          VAR cnt : CARDINAL;
+                          params : TextTextTbl.T) =
   VAR
     beg, end : TEXT;
   BEGIN
@@ -148,6 +159,7 @@ PROCEDURE ParseHeaderCell(txt : TEXT; VAR cnt : CARDINAL) =
       beg := TextUtils.FilterOut(beg, WS);
       end := TextUtils.FilterOut(end, WS);
       Debug.Out(F("binding %s :=: %s", beg, end));
+      EVAL params.put(beg, end);
       RETURN
     END;
 
@@ -157,6 +169,7 @@ PROCEDURE ParseHeaderCell(txt : TEXT; VAR cnt : CARDINAL) =
       beg := TextUtils.FilterOut(beg, WS);
       end := TextUtils.FilterOut(end, WS);
       Debug.Out(F("binding %s :=: %s", beg, end));
+      EVAL params.put(beg, end);
       RETURN
     END;
     
@@ -169,17 +182,19 @@ PROCEDURE ParseHeaderCell(txt : TEXT; VAR cnt : CARDINAL) =
         end := p.head;
         end := TextUtils.FilterOut(end, WS);
         Debug.Out(F("binding %s :=: %s", beg, end));
+        EVAL params.put(beg, end);
         p := p.tail;
         INC(cnt)
       END
     END;
   END ParseHeaderCell;
       
-PROCEDURE Do(rd : Rd.T) =
+PROCEDURE Do(rd : Rd.T; fn : Pathname.T) : XArrayList.T =
   VAR
     parser := NEW(CSVParse.T).init(rd);
     cell : TEXT;
     r, c : CARDINAL := 0;
+    res : XArrayList.T := NIL;
   BEGIN
     arr := NEW(REF ARRAY OF ARRAY OF TEXT, 1, 1);
     arr[0,0] := NIL;
@@ -201,22 +216,27 @@ PROCEDURE Do(rd : Rd.T) =
     END;
 
     (* now search for the magic string *)
-    CONST
-      Magic = "V/T";
     BEGIN
       FOR c := FIRST(arr^) TO LAST(arr^) DO
         FOR r := FIRST(arr[0]) TO LAST(arr[0]) DO
           IF arr[c,r] # NIL AND TE(arr[c,r],Magic) THEN
-            ReadTableFrom(c, r)
+            WITH xarr = ReadTableFrom(c, r) DO
+              EVAL xarr.params.put("FILE", fn);
+              res := XArrayList.Cons(xarr,res)
+            END
           END
         END
       END
-    END          
+    END;
+    RETURN res
   END Do;
 
 CONST Files = ARRAY OF Pathname.T { "8L.csv", "11L.csv" };
 CONST Pfx = "../data";
-  
+
+CONST RowMagic = "V";                     (* meaning of table rows *)
+      ColMagic = "T";                     (* meaning of table columns *)
+      Magic = RowMagic & "/" & ColMagic;  (* table label *)
 VAR
   rd : ARRAY [0..NUMBER(Files)-1] OF Rd.T;
   arr : REF ARRAY OF ARRAY OF TEXT;
@@ -267,13 +287,104 @@ PROCEDURE Set(col, row : CARDINAL; to : TEXT) =
     END;
     arr[col, row] := to
   END Set;
+
+CONST
+  CellConstants = ARRAY OF TEXT { "area", "gate" };
   
+TYPE
+  CellDataRec = RECORD
+    nm         : TEXT;
+    states     : CARDINAL;
+    area       : LONGREAL;
+    gate       : CARDINAL; (* in fins *)
+  END;
+
+CONST
+  CellData = ARRAY OF CellDataRec {
+  CellDataRec { "INVD1B",         2, 0.04104d-12,   4 },
+  CellDataRec { "ND2D1B",         4, 0.05472d-12,   8 },
+  CellDataRec { "NR2D1B",         4, 0.05472d-12,   8 },
+  CellDataRec { "ND3D1B",         8, 0.0684d-12 ,  12 },
+  CellDataRec { "SDFRPQD1",       8, 0.4104d-12 ,  88 },
+  CellDataRec { "BUFFD1B",        2, 0.05472d-12,   8 },
+  CellDataRec { "MB4SRLSDFRPQD1", 8, 1.58688d-12, 300 },
+  CellDataRec { "CKBD6",          2, 0.1368d-12 ,  32 },
+  CellDataRec { "CKND6",          2, 0.1368d-12 ,  28 }
+  };
+
+
+PROCEDURE DebugBindings(xa : XArray.T) =
+  BEGIN
+    Debug.Out("vseq.size() = " & Int(xa.vseq.size()));
+    Debug.Out("tseq.size() = " & Int(xa.tseq.size()));
+    Debug.Out("values = " & Int(xa.vseq.size() * xa.tseq.size()));
+    VAR
+      iter := xa.params.iterate();
+      k, v : TEXT;
+    BEGIN
+      WHILE iter.next(k, v) DO
+        Debug.Out(F("%s :=: %s", k, v))
+      END
+    END
+  END DebugBindings;
+
+PROCEDURE Fx(x : LONGREAL) : LONGREAL =
+  BEGIN
+    RETURN Math.log(x)
+  END Fx;
+
+TYPE
+  ParamHandling = { Split,
+                    Regress,
+                    RegressValue,
+                    Ignore };
+
+  ParamInst = RECORD
+    nm       : TEXT;
+    handling : ParamHandling;
+  END;
+
+PROCEDURE Regress(data : XArrayList.T; READONLY config : ARRAY OF ParamInst) =
+  BEGIN
+  END Regress;
+  
+VAR
+  allData : XArrayList.T := NIL;
 BEGIN
   
   FOR i := FIRST(Files) TO LAST(Files) DO
-    rd[i] := FileRd.Open(Pfx & "/" & Files[i])
+    WITH fn = Pfx & "/" & Files[i] DO
+      rd[i] := FileRd.Open(fn);
+      allData := XArrayList.Append(allData, Do(rd[i], fn))
+    END
   END;
 
-  Do(rd[0]);
-  Do(rd[1]);
+  VAR
+    p := allData;
+  BEGIN
+    WHILE p # NIL DO
+      Debug.Out("XArray ==========================");
+      DebugBindings(p.head);
+      p := p.tail
+    END
+  END;
+
+  TYPE
+    PH = ParamHandling;
+  CONST
+    TheConfig = ARRAY OF ParamInst {
+    ParamInst { "V",                 PH.RegressValue },
+    ParamInst { "T",                 PH.RegressValue },
+    ParamInst { "Model",             PH.Split },
+    ParamInst { "Vttype",            PH.Split },
+    ParamInst { "Scalingfactorused", PH.Ignore },
+    ParamInst { "FILE",              PH.Split }, (* not really *)
+    ParamInst { "PARAM0000",         PH.Ignore },
+    ParamInst { "PARAM0001",         PH.Ignore }, 
+    ParamInst { "PARAM0002",         PH.Split } (* this is wrong *)
+    };
+  BEGIN
+    Regress(allData, TheConfig)
+  END
+      
 END Main.
