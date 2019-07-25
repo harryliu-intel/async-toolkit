@@ -42,7 +42,7 @@ useICV = t
     CV = (DirectFlatten ?CV CV ?RegenerateFromCast RegenerateFromCast)
 
     ; update connectivity (TODO: eliminate one of these, but this one connects subcell pins)
-    (UpdateFloorplan ?CV CV ?recurse nil)
+    (UpdateFloorplan ?CV CV ?recurse nil ?skipInstances t)
 
     ; lock all instances unless softMacro
     (unless softMacro (foreach x CV->instances x->status="locked"))
@@ -54,7 +54,7 @@ useICV = t
     (DeleteRedundantPins ?CV CV ?warnOnly !delete_redundant_pins)
 
     ; update connectivity (TODO: eliminate one of these, but this one sets top-level pin directions)
-    (UpdateFloorplan ?CV CV ?recurse nil)
+    (UpdateFloorplan ?CV CV ?recurse nil ?skipInstances t)
 
     ; cache various information in CV properties
     (dbReplaceProp CV "topMetal" "integer" topMetal)
@@ -666,7 +666,7 @@ useICV = t
                       progress=t
                       )
                      (inst->viewName!="layout"
-                      lCV = (ReadCV inst->libName inst->cellName "layout")
+                      lCV = (ChooseLayoutVariant inst)
                       (when lCV inst->master=lCV)
                       )
                      )
