@@ -1961,7 +1961,7 @@ sub getexelist {
 
 sub source_pdk_exec {
   if (defined $ENV{FULCRUM_PDK_ROOT} && -e "$ENV{FULCRUM_PDK_ROOT}/share/Fulcrum/pdk.setup") {
-     exec 'csh', '-c', "source $ENV{FULCRUM_PDK_ROOT}/share/Fulcrum/pdk.setup; exec ".  join(' ', map("\Q$_\E", @_)); 
+     exec 'csh', '-f', '-c', "source $ENV{FULCRUM_PDK_ROOT}/share/Fulcrum/pdk.setup; exec ".  join(' ', map("\Q$_\E", @_)); 
   } else {
      exec @_;
   }
