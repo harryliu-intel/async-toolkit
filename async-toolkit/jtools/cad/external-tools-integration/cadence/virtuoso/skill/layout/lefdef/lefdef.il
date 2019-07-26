@@ -1237,9 +1237,14 @@ t
     (foreach c cells
       srccv = (dbOpenCellViewByType (car (NameParseCellName c->cellName)) c->cellName "layout")
       copyexact = (dbGetPropByName srccv "CopyExact")->value
-      gcells = (cons copyexact gcells)
       srccv = (dbOpenCellViewByType (car (NameParseCellName c->cellName)) c->cellName "abstract")
-      dstcv = (betterCopyCellView srccv scratchlib->name copyexact "abstract" ?b_overwrite t)
+      (if copyexact then
+        gcells = (cons copyexact gcells)
+        dstcv = (betterCopyCellView srccv scratchlib->name copyexact "abstract" ?b_overwrite t)
+      else 
+        gcells = (cons srccv->cellName gcells)
+        dstcv = (betterCopyCellView srccv scratchlib->name srccv->cellName "abstract" ?b_overwrite t)
+        )
       )
 
     ; write lef cells list
