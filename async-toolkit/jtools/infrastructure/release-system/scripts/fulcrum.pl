@@ -11,7 +11,7 @@ my %site_tool_path=(
   'pdx' =>  '/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/ncl/tools'
 );
 my %nb_cfg_path=(
-  'sc' => '"/nfs/sc/proj/ctg/mrl108/mrl/tools/local/fulcrum_nb.config',
+  'sc' => '/nfs/sc/proj/ctg/mrl108/mrl/tools/local/fulcrum_nb.config',
   'pdx' =>  '/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/ncl/local/fulcrum_nb.config'
 );
 
