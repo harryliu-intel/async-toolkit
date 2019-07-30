@@ -29,7 +29,7 @@ my $extra_extract_equiv="";
 my $blackbox=0;
 my $icv_options;
 my $threads=2;
-my $icv_runset_path="/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/ncl/1276/cpdk/latest/runsets/icvtdr";
+my $icv_path="";
 my $rc_database=0;
 my $nodeprops='';
 
@@ -264,12 +264,15 @@ sub prepare_clf_file {
    while(my $line=<CLF_CFG>) {
        chomp;
        my @data = split("=", $line);
-       if( $data[0] =~ "RUNSET_PATH") {
+       if( $data[0] =~ "ICV_PATH") {
+	   $icv_path=$data[1];
+       } elsif( $data[0] =~ "RUNSET_PATH") {
 	   $rs_path=$data[1];
        } elsif( $data[0] =~ "ILVS_DECK") {
 	   $lvs_rs=$data[1];
        }
    }
+   chomp $icv_path;
    chomp $rs_path;
    chomp $lvs_rs;
    close(CLF_CFG);
@@ -279,12 +282,12 @@ sub prepare_clf_file {
    print LVS_CLF <<ET;
 -I .
 -I $pdk_root/share/Fulcrum/icv/lvs
--I $icv_runset_path/PXL_ovrd
--I $icv_runset_path/PXL
--I $icv_runset_path/$rs_path
--I $icv_runset_path/util/dot1/HIP
--I $icv_runset_path/util/Cadnav
--I $icv_runset_path/util/denplot
+-I $icv_path/PXL_ovrd
+-I $icv_path/PXL
+-I $icv_path/$rs_path
+-I $icv_path/util/dot1/HIP
+-I $icv_path/util/Cadnav
+-I $icv_path/util/denplot
 -I $working_dir
 -D _drIncludePort
 -D NOCLD
@@ -310,7 +313,7 @@ ET
     print LVS_CLF "-e $equivlance_file\n" if (-r $equivlance_file);
     print LVS_CLF "$icv_options\n" if (defined $icv_options and $icv_options ne "");
 
-    my $ilvs_deck=$icv_runset_path . "/" . $rs_path . "/" . $lvs_rs;
+    my $ilvs_deck=$icv_path . $rs_path . $lvs_rs;
     print LVS_CLF "$ilvs_deck\n";
     close(LVS_CLF);
     return $lvs_clf_file;
