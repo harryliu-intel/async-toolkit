@@ -262,19 +262,16 @@ sub prepare_clf_file {
    my $lvs_rs="";
    open(CLF_CFG, "$clf_config") or die "Cannot read $clf_config\n";
    while(my $line=<CLF_CFG>) {
-       chomp;
+       chomp $line;
        my @data = split("=", $line);
        if( $data[0] =~ "ICV_PATH") {
-	   $icv_path=$data[1];
+           $icv_path=$data[1];
        } elsif( $data[0] =~ "RUNSET_PATH") {
-	   $rs_path=$data[1];
+           $rs_path=$data[1];
        } elsif( $data[0] =~ "ILVS_DECK") {
-	   $lvs_rs=$data[1];
+           $lvs_rs=$data[1];
        }
    }
-   chomp $icv_path;
-   chomp $rs_path;
-   chomp $lvs_rs;
    close(CLF_CFG);
 
    my $lvs_clf_file="$working_dir/lvs.clf";
