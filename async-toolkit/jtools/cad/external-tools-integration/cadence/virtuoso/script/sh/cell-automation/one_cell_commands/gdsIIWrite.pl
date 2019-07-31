@@ -940,7 +940,7 @@ else {
     $myrsf =~ s/COMMENTVIAS/#/;
 }
 my $pdk = "";
-if ($pdkroot=~/fulcrum-(\S+)-pdk/) {
+while ($pdkroot=~/fulcrum-([^\/\s]+)-pdk/g) {
   $pdk=$1;
 }
 
