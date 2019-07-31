@@ -1,3 +1,5 @@
+#define _GNU_SOURCE
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -5,6 +7,7 @@
 #include <stdio.h>
 #include <poll.h>
 #include <unistd.h>
+#include <errno.h>
 
 int cast2verilog_fopen(const char *filename, const char *mode) {
     int flags = 0;
@@ -46,7 +49,7 @@ int cast2verilog_fputc(char c, int fp) {
 int cast2verilog_fpoll(int fp) {
     if (fp > 0) {
         struct pollfd fds = { fp - 1, POLLIN | POLLOUT, 0 };
-        int nfds = poll(&fds, 1, 0);
+        int nfds = TEMP_FAILURE_RETRY(poll(&fds, 1, 0));
         if (nfds == 0) {
             return 0;
         } else if (nfds == 1) {
