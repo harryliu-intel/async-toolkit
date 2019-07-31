@@ -140,17 +140,15 @@ LaygenNetMap[LaygenVccName] = VddNetName
 
 ; label the nwell for LVS
 (defun LaygenLabelNwell (@key (CV (geGetEditCellView)) (netName VddNetName))
-  (let (lpp xy points)
+  (let (lpp xy)
     lpp = NWellLPP
-    (foreach shape (setof x CV->shapes x->objType=="label" && x->lpp==lpp)
-             (dbDeleteObject shape)
-             )
-    (foreach shape (setof x CV->shapes x->lpp==lpp)
-             points = shape->points
-             (unless points points = shape->bBox)
-             xy = (car (SortVertices points))
-             (dbCreateLabel CV lpp xy netName "lowerLeft" "R0" "stick" 0.02)
-             )
+    (foreach shape CV->shapes (when shape->lpp==lpp (dbDeleteObject shape)))
+    (when CV->prBoundary
+      xy = (car (SortVertices CV->prBoundary->points))
+      xy = (car xy):(cadr xy)+GridPitch/2
+      (dbCreateLabel CV lpp xy netName "upperLeft" "R0" "stick" 0.02)
+      (dbCreateRect CV lpp (list xy (car xy)+GridPolyPitch:(cadr xy)-GridDiffPitch))
+      )
     )
   t
   )
