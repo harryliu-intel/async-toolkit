@@ -250,12 +250,6 @@
     (for m 0 2 (AbstractCutAroundPins abstractCV MetalDrawing[m] MetalKeepout[m]))
 
     ; create keepout for vias and metal
-    map = (list "vcn")
-    (foreach purpose (list "drawing" "fill")
-             map = (append map (list (list "vcn" purpose)))
-             )
-    inLayerMap = (cons map inLayerMap)
-    outLayerMap = (cons (list "vcn" (list "vcn" KeepoutPurpose)) outLayerMap)
     (for m 0 1
          name = Via[m]
          map = (list name)
@@ -351,7 +345,6 @@
 (defun CopyKeepoutToBlockage (cv)
   (let (points valid)
     (foreach shape cv->shapes
-      valid = (shape->lpp==(list "vcn" "keepout"))
       (for m 0 TopMetal   valid = valid || shape->lpp==MetalKeepout[m])
       (for m 0 TopMetal-1 valid = valid || shape->lpp==ViaKeepout[m])
       (when valid
