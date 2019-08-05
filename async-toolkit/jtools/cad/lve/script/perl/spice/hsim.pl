@@ -375,7 +375,11 @@ if ($env_spice_file ne "") {
             chomp;
             if (/^\*\* JFlat:(ground|power|reset|start|delay)_net:(.*)/) {
                 my $type = $1;
-                my @aliases = split /=/, $2;
+                my @aliases;
+                foreach my $net (split("=",$2)) {
+                    $net =~ s/^env\./Xenv\./g; # BUG 28502: use SPICE hierarchy seperator
+                    push @aliases, $net;
+                }
                 foreach my $alias (@aliases) {
                     $canon{$alias} = $aliases[0];
                 }
@@ -420,7 +424,7 @@ if (defined $special_net{'reset'}) {
 }
 if (defined $special_net{'start'}) {
     foreach my $name (sort @{$special_net{'start'}}) {
-        my $t0 = $reset_time+$start_time; 
+        my $t0 = $reset_time+$start_time;
         my $t1 = $t0+$slope_time;
         my $v = get_voltage($name, 'start');
         print RUN_FILE "V${name} ${name} 0 pwl (0 0 $t0 0 $t1 $v)\n";
