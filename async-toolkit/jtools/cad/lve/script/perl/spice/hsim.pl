@@ -58,7 +58,7 @@ my $power_window = "";
 my $env_spice_file = "";
 my $accurate = 0;
 my %default_voltage = ('ground' => 0, 'power' => 'true',
-                       'reset' => 'true', 'start' => true, 'delay' => 0);
+                       'reset' => 'true', 'start' => 'true', 'delay' => 0);
 my %voltage;
 my %special_net;
 
