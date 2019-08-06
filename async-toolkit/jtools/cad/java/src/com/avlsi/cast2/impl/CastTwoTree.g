@@ -419,7 +419,9 @@ options {
     private int getInt(final Value v, final ASTWithInfo ast)
         throws SemanticWrapperException {
         try {
-            return IntValue.valueOf(v).getValue().intValue();
+            return IntValue.valueOf(v).getValue().intValueExact();
+        } catch (ArithmeticException e){
+            throw semanticWrapperException(e, ast);
         } catch (InvalidOperationException e) {
             throw semanticWrapperException(e, ast);
         }
