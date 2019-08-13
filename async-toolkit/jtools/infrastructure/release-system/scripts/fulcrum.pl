@@ -6,26 +6,25 @@
 use strict;
 use FindBin;
 
-my %site_tool_path=(
-  'sc' => '/nfs/sc/proj/ctg/mrl108/mrl/tools',
-  'pdx' =>  '/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/ncl/tools'
-);
 my %nb_cfg_path=(
   'sc' => '/nfs/sc/proj/ctg/mrl108/mrl/tools/local/fulcrum_nb.config',
   'pdx' =>  '/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/ncl/local/fulcrum_nb.config'
 );
 
-my $top = $site_tool_path{$ENV{EC_SITE}};
 BEGIN {
+    my %site_tool_path=(
+      'sc' => '/nfs/sc/proj/ctg/mrl108/mrl/tools',
+      'pdx' =>  '/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/ncl/tools'
+    );
+    $ENV{EC_TOP_PATH} = $site_tool_path{$ENV{EC_SITE}};
     my $correctitools="$FindBin::Bin/.itools";
-    $correctitools="$top/bin/.itools" unless -e $correctitools;
+    $correctitools="$ENV{EC_TOP_PATH}/bin/.itools" unless -e $correctitools;
     if ( $ENV{USER_ITOOLS} ne $correctitools) {
         $ENV{USER_ITOOLS}=$correctitools;
         exec "$0",@ARGV;
     }
     $ENV{NBCONF}="/nfs/site/gen/adm/netbatch/conf";
 }
-
 use Getopt::Long qw(:config require_order); # allows tool options not to be decoded
 use DB_File;
 
@@ -234,7 +233,7 @@ sub readconfig {
 }
 
 my $cadencewrapperdir=$ENV{'FULCRUM_WRAPPER_DIR'};
-$cadencewrapperdir="$top/bin" unless $cadencewrapperdir;
+$cadencewrapperdir="$ENV{EC_TOP_PATH}/bin" unless $cadencewrapperdir;
 $ENV{'FULCRUM_WRAPPER_DIR'}=$cadencewrapperdir;
 my $javapath = "/usr/intel/pkgs/java/1.6.0.10-64/bin";
 warn "No JAVA found $javapath" if (! -d $javapath);
@@ -293,7 +292,7 @@ sub iAmCadence {
 }
 
 # directories
-my $fulcrum="$top/fulcrum";
+my $fulcrum="$ENV{EC_TOP_PATH}/fulcrum";
 my $defaultfulcrum = $fulcrum;
 my $argtoolhome = "$fulcrum/tools";
 my $defaulttoolhome = $argtoolhome;
