@@ -127,9 +127,13 @@
       (when prop isLeaf=prop->value=="TRUE")
       (when CV->viewName=="floorplan" && isLeaf
         (when CV->prBoundary (dbDeleteObject CV->prBoundary))
-        (when CV->viewName=="floorplan" && (ddGetObj CV->libName CV->cellName "layout")
-              layoutCV = (dbOpenCellViewByType CV->libName CV->cellName "layout" "maskLayout" "r")
-              points = layoutCV->prBoundary->points
+        (cond (CV->viewName=="floorplan" && (ddGetObj CV->libName CV->cellName "layout")
+               points=(dbOpenCellViewByType CV->libName CV->cellName
+                                            "layout" "maskLayout" "r")->prBoundary->points)
+              (CV->viewName=="floorplan" && (ddGetObj CV->libName (strcat CV->cellName "v2") "layout")
+               points=(dbOpenCellViewByType CV->libName (strcat CV->cellName "v2")
+                                            "layout" "maskLayout" "r")->prBoundary->points)
+               points=layoutCV->prBoundary->points)
               )
         (unless points
           (unless w&&h (error "undetermined height or width in cell %s" CV->cellName))
