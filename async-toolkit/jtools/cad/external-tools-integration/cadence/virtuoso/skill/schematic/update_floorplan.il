@@ -59,7 +59,7 @@
 (defun UpdateFloorplanCore (CV indent)
   (let (netFile NetListTable rx ux uy w h instanceTable netTable termTable
         dirFile DirectiveTable 
-        lastArrayName layoutCV points realInstances prop isLeaf)
+        lastArrayName points realInstances isLeaf isRouted)
     (fprintf LOG "%sUpdate floorplan of %s\n" indent CV->cellName)
     mastersVisited[CV] = t
 
@@ -121,25 +121,33 @@
           )
         )
 
-      ; update prBoundary of leaf cells, from layout view if it exists
-      isLeaf = !realInstances
-      prop = (dbGetPropByName CV "LeafCell")
-      (when prop isLeaf=prop->value=="TRUE")
-      (when CV->viewName=="floorplan" && isLeaf
-        (when CV->prBoundary (dbDeleteObject CV->prBoundary))
-        (cond (CV->viewName=="floorplan" && (ddGetObj CV->libName CV->cellName "layout")
+      ; detect leaf cells
+      isLeaf   = !realInstances || (dbGetPropByName CV "LeafCell")->value=="TRUE"
+      isRouted = (dbGetPropByName CV "routed")->value=="TRUE"
+
+      ; delete prBoundary of non-routed cells
+      (when CV->viewName=="floorplan" && !isRouted && CV->prBoundary
+            (dbDeleteObject CV->prBoundary)
+            )
+
+      ; update prBoundary of routed cells from layout view if it exists
+      (when CV->viewName=="floorplan" && isRouted
+        ; use prBoundary of layout view if it exists
+        (cond ((ddGetObj CV->libName CV->cellName "layout")
                points=(dbOpenCellViewByType CV->libName CV->cellName
                                             "layout" "maskLayout" "r")->prBoundary->points)
-              (CV->viewName=="floorplan" && (ddGetObj CV->libName (strcat CV->cellName "v2") "layout")
+              ((ddGetObj CV->libName (strcat CV->cellName "v2") "layout")
                points=(dbOpenCellViewByType CV->libName (strcat CV->cellName "v2")
                                             "layout" "maskLayout" "r")->prBoundary->points)
-               points=layoutCV->prBoundary->points)
               )
-        (unless points
-          (unless w&&h (error "undetermined height or width in cell %s" CV->cellName))
-          points = (list 0:0 w:0 w:h 0:h 0:0)
-          )
-        (dbCreatePRBoundary CV points)
+        ; otherwise pick prBoundary appropriately
+        (cond (!points && isLeaf
+               (unless w&&h (error "undetermined height or width in cell %s" CV->cellName))
+               points=(list 0:0 w:0 w:h 0:h 0:0))
+              (!points points=CV->prBoundary->points)
+              )
+        (when CV->prBoundary (dbDeleteObject CV->prBoundary))
+        (when points (dbCreatePRBoundary CV points))
         )
       )
 
