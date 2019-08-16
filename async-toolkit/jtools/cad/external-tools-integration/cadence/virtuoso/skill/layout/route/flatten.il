@@ -745,7 +745,6 @@ useICV = t
       HalfGrid = GridPitch/2
       misalign = (mod (round y/HalfGrid) 2)==1
       (when std && short && misalign
-            (printf "legalizing instance %s\n" inst->name)
             (cond (inst->orient=="R0"   inst->orient="MX"   inst->xy=x:y+HalfGrid)
                   (inst->orient=="MX"   inst->orient="R0"   inst->xy=x:y-HalfGrid)
                   (inst->orient=="MY"   inst->orient="R180" inst->xy=x:y+HalfGrid)
