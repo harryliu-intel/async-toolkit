@@ -668,6 +668,7 @@ useICV = t
                      (inst->viewName!="layout"
                       lCV = (ChooseLayoutVariant inst)
                       (when lCV inst->master=lCV)
+                      (LegalizeShortInstance inst)
                       )
                      )
                )
@@ -730,4 +731,28 @@ useICV = t
     (close p_in)
     cells
     )
+  )
+
+; Flip and offset mis-aligned single-height standard cells
+(defun LegalizeShortInstance (inst)
+  (let (x y orient std type short HalfGrid)
+    type = (dbFindProp inst->master "CopyExact")->value
+    (when type
+      std = (strncmp type "g0m" 3)==0 || (strncmp type "g1m" 3)==0
+      x = (car  inst->xy)
+      y = (cadr inst->xy)
+      short = (substring type 13 1)=="n"
+      HalfGrid = GridPitch/2
+      misalign = (mod (round y/HalfGrid) 2)==1
+      (when std && short && misalign
+            (printf "legalizing instance %s\n" inst->name)
+            (cond (inst->orient=="R0"   inst->orient="MX"   inst->xy=x:y+HalfGrid)
+                  (inst->orient=="MX"   inst->orient="R0"   inst->xy=x:y-HalfGrid)
+                  (inst->orient=="MY"   inst->orient="R180" inst->xy=x:y+HalfGrid)
+                  (inst->orient=="R180" inst->orient="MY"   inst->xy=x:y-HalfGrid)
+                  )
+            )
+      )
+    )
+  t
   )
