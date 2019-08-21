@@ -148,6 +148,9 @@ defun( flFloorplanTemplating ( dstCellView srcCellName
     (unless cellName cellName=CV->cellName)
     fCV = (dbOpenCellViewByType libName cellName viewName "maskLayout" "r")
     (unless fCV (error "Can't open %s %s %s\n" libName cellName viewName))
+    (when fCV->prBoundary && !CV->prBoundary
+          (dbCreatePRBoundary CV fCV->prBoundary->points)
+          )
     (foreach inst CV->instances
              finst = (dbFindAnyInstByName fCV inst->name)
              (when finst
