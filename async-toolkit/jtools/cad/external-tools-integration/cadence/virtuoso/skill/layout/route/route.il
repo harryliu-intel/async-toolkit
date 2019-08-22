@@ -20,7 +20,7 @@
         (hookupLaygen nil)       ; add power hookups around Laygen cells
         (metalFill t)            ; add metal fill
         (noPowerFill nil)
-        (colorGrid t)            ; add a color grid to flatten view
+        (colorGrid nil)          ; add a color grid to flatten view
         (timingDriven t)
         (softMacro nil)          ; run APR
         (abstractCellName nil)   ; DFII name for APR abstract cell
@@ -80,8 +80,8 @@
         (metalFill t)            ; add metal fill
         (noPowerFill nil)
         (doPowerGates nil)       ; optionally skip export of placed pillars
-        (powerGrid t)            ; add a powergrid to flatten view
-        (colorGrid t)            ; add a color grid to flatten view
+        (powerGrid nil)          ; add a powergrid to flatten view
+        (colorGrid nil)          ; add a color grid to flatten view
         (timingDriven t)         ; timing driven custom routing
         (softMacro nil)          ; run APR
         (abstractCellName nil)   ; DFII name for APR abstract cell

@@ -12,8 +12,8 @@ useICV = t
         (Verbose nil)              ; verbose
         (ConnectDanglingPins t)    ; paint metal on top of one-terminal subcell pins
         (ConnectAbuttingPins t)    ; paint metal between nearby pins on the same net
-        (powerGrid t)              ; add a power grid
-        (colorGrid t)              ; add a color grid
+        (powerGrid nil)            ; add a power grid
+        (colorGrid nil)            ; add a color grid
         (hookupD04 nil)            ; add power hookups around d04 cells
         (hookupLaygen nil)         ; add power hookups around Laygen cells
         (noPowerFill nil)          ; use POWER_GRID_NO_FILL instead of POWER_GRID
@@ -65,6 +65,7 @@ useICV = t
 
     ; Create power grid and abstract
     (when powerGrid
+      (error "Power Grid not supported in 1276")
       pgCV = (MakePowerGrid ?CV CV ?topMetal topMetal ?hookupLaygen hookupLaygen ?hookupD04 hookupD04
                             ?noPowerFill noPowerFill ?doPowerGates doPowerGates)
       (unless pgCV (error "Unable to create power grid\n"))
@@ -75,6 +76,7 @@ useICV = t
 
     ; Create color grid and abstract
     (when colorGrid && topMetal>=5
+      (error "Color Grid not supported in 1276")
       cgCV = (MakeColorGrid ?CV CV)
       (unless cgCV (error "Unable to create color grid\n"))
       cgCV = (betterCopyCellView cgCV cgCV->libName cgCV->cellName "abstract" nil nil t)
@@ -161,7 +163,7 @@ useICV = t
     align = gridAlignment[topMetal]
     (when topMetal==8 align=gridAlignment["lego"]) ; HACK: special case for M8
     (when (CheckPointsOffGrid prb->points align)
-      (error "Not all prBoundary vertices are on grid")
+      (printf "WARNING! Not all prBoundary vertices are on grid\n")
       )
 
     ; ICV layers
