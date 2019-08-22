@@ -27,6 +27,7 @@
                                    (doPower t)
                                    (doCheck t)
                                    (doColor t)
+                                   (doFillTagCell t)
                                    (doFill nil)
                                    (doHalo nil)
                                    )
@@ -61,7 +62,7 @@
            doColor=nil
            doFill=nil
            )
-          (t
+          (doFillTagCell
            (FillTagCell ?CV tagCV ?topMetal topMetal ?doHalo doHalo)
            )
           )
