@@ -33,7 +33,7 @@ my $target;
 my $format='make';
 my $pdk_root;
 my @errs=();
-my %skiplibs=("gate"=>1, "stack"=>1, "tsmc28"=>1);
+my %skiplibs=("gate"=>1, "stack"=>1);
 
 GetOptions (
     "dfII-dir=s" => \$dfIIdir,
@@ -110,47 +110,41 @@ sub search {
     local (*P, $_);
     if ( -s "$df/layout.oa") {
         $cdbs{"$df/layout.oa"}=1;
-        my @stat=stat("$df/layout.oa");
-        my $mtimely=$stat[9];
-        my $mtimedb=0;
-        if ( -f "$df/pc.db") {
-            @stat=stat("$df/pc.db");
-            $mtimedb=$stat[9];
-        }
-        if ($mtimedb != $mtimely) {
-            my $skill=$template;
-            my $temp=$ENV{TMP};
-            my $user=`whoami`;
-            chomp $user;
-            $temp="/scratch/$user" if $temp eq "";
-            `mkdir -p $temp`;
-            $temp=`mktemp -d "$temp/df2d.XXXXXX"`;
-            chomp $temp;
-            `mkcdswd --dfII-dir="$dfIIdir" --fulcrum-pdk-root="$pdk_root" --target-dir="$temp" --temp`;
-            $skill =~ s/LIBNAME/$lib/;
-            $skill =~ s/CELLNAME/$cell/;
-            $skill =~ s/VIEWNAME/$view/;
-            open (P, ">$temp/tempskill.il");
-            print P $skill;
-            close P;
-            $cdbs{"$df/layout.oa"}=1;
-            system("cd '$temp'; virtuoso -nograph -replay tempskill.il -log /dev/null >/dev/null 2>&1");
-            system("/bin/sort","-u", "$temp/tempskill.out","-o", "$df/pc.db");
-            system("/bin/touch","-r","$df/layout.oa","$df/pc.db");
-            system("/bin/rm","-rf","$temp");
-        }
-        open (P, "<$df/pc.db");
-        while (<P>) {
-            chomp;
-            next if (/^#/);
-            my ($lib,$cell,$view)=split;
-            next if $skiplibs{$lib};
-            $df=cast2cadence($lib,$cell,$view);
-            if ( -s "$df/layout.oa") {
-                $cdbs{"$df/layout.oa"}=1;
-            }
-        }
+        my $skill=$template;
+        my $temp=$ENV{TMP};
+        my $user=`whoami`;
+        chomp $user;
+        $temp="/scratch/$user" if $temp eq "";
+        `mkdir -p $temp`;
+        $temp=`mktemp -d "$temp/df2d.XXXXXX"`;
+        chomp $temp;
+        `mkcdswd --dfII-dir="$dfIIdir" --fulcrum-pdk-root="$pdk_root" --target-dir="$temp" --temp`;
+        $skill =~ s/LIBNAME/$lib/;
+        $skill =~ s/CELLNAME/$cell/;
+        $skill =~ s/VIEWNAME/$view/;
+        open (P, ">$temp/tempskill.il");
+        print P $skill;
         close P;
+        $cdbs{"$df/layout.oa"}=1;
+        my $status =
+            system("cd '$temp'; virtuoso -nograph -replay tempskill.il -log /dev/null >/dev/null 2>&1");
+        if ($status == 0) {
+            open (P, "<$temp/tempskill.out");
+            while (<P>) {
+                chomp;
+                next if (/^#/);
+                my ($lib,$cell,$view)=split;
+                next if $skiplibs{$lib};
+                $df=cast2cadence($lib,$cell,$view);
+                if ( -s "$df/layout.oa") {
+                    $cdbs{"$df/layout.oa"}=1;
+                }
+            }
+            close P;
+        } else {
+            push @errs, "Error running Virtuoso (system returned $status)";
+        }
+        system("/bin/rm","-rf","$temp");
     }
     else {
         push @errs, "Not found in dfIIdir: df=$df lib=$lib cell=$cell view=$view";
