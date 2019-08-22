@@ -28,6 +28,7 @@
 ( hiSetBindKey "Layout" "Ctrl Alt<Key>f" "StepViewBack()" )
 
 ; bindkeys for bus scripts
+( hiSetBindKey "Layout" "<Key>p" "leHiCreatePath()" )
 ( hiSetBindKey "Layout" "Ctrl<Key>b" "SetPattern(nil)" )
 ;( hiSetBindKey "Layout" "Alt<Key>b" "DrawWires( )" )
 ;( hiSetBindKey "Layout" "Alt<Key>d" "DeleteWiresAndKeepout( )" )
