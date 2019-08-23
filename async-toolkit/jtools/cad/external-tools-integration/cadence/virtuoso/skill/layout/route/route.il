@@ -194,10 +194,6 @@
                       (printf "NOTE: flattening wiring cell %s\n" inst->cellName)
                       (dbFlattenInst inst 32)
                       )
-                     (t
-                      errorStr = (strcat "No abstract view for " inst->cellName)
-                      statusDef=nil
-                      )
                      )
                (when doHierDef
                  inst->name = (ListApplyFuncToListAndAccumulateResult
