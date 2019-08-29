@@ -580,7 +580,7 @@ public final class Cast2Cdl {
        
         // Filter out zero width transistors, 79 columns per line
         final CDLFactoryInterface cdlEmitterFactory =
-            new CDLFactoryEmitter(writer, true, 79);
+            new CDLFactoryEmitter(writer, true, 79, true, bFlatten);
 
         // Determine the renaming method to use
         final CDLNameInterface cdlNamer;
