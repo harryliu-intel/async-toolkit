@@ -85,7 +85,7 @@ importPostProcessAction =
                (when text!=inst->name inst->name=text)
                )
       (when (setof x CV->shapes x->layerName=="ndiff")!=nil
-            (LaygenLabelPwell ?CV CV ?netName "vss")
+            (LaygenLabelPwell ?CV CV ?netName VssNetName)
             )
       )
     t
