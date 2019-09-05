@@ -1109,7 +1109,11 @@ public final class DirectiveUtils {
         } else {
             dirs = new HashSet<>();
             for (HierName topDir : topDirs) {
-                dirs.add((HierName) envNodes.getCanonicalKey(topDir));
+                final HierName canon = (HierName) envNodes.getCanonicalKey(topDir);
+                if (canon != null) {
+                    // could be null due to directives inlined into the DUT
+                    dirs.add(canon);
+                }
             }
             getNetDirectives(envCell, envNodes, directive, true, dirs, null);
             CellUtils.getCanonicalDir(canonPortDir, envCell, envNodes);
