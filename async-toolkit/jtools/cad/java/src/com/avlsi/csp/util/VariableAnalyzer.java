@@ -994,84 +994,11 @@ public class VariableAnalyzer {
          * cannot contain strings.
          **/
         private boolean isPacked(final Type t) throws VisitorException {
-            if (t instanceof BooleanType) {
-                return true;
-            } else if (t instanceof IntegerType) {
-                final IntegerType it = (IntegerType) t;
-                return it.getDeclaredWidth() != null;
-            } else if (t instanceof ArrayType) {
-                return isPacked(((ArrayType) t).getElementType());
-            } else if (t instanceof StructureType) {
-                final StructureDeclaration decl = getStructureDecl(null, t);
-                if (decl == null) {
-                    return false;
-                } else {
-                    return isPacked(decl);
-                }
-            } else {
-                return false;
-            }
-        }
-
-        private boolean isPacked(final StructureDeclaration decl)
-            throws VisitorException {
-            final boolean[] result = new boolean[] { true };
-            (new DeclarationProcessor() {
-                public void process(final Declarator d)
-                    throws VisitorException {
-                    final Type t = d.getTypeFragment();
-                    result[0] &= isPacked(t);
-                }
-            }).process(decl.getDeclarations());
-            return result[0];
-        }
-
-        private int getPackSize(final StructureDeclaration decl)
-            throws VisitorException {
-            final int[] result = new int[] { 0 };
-            (new DeclarationProcessor() {
-                public void process(final Declarator d)
-                    throws VisitorException {
-                    if (result[0] != -1) {
-                        final int w = getPackSize(d.getTypeFragment());
-                        if (w == -1) result[0] = -1;
-                        else result[0] += w;
-                    }
-                }
-            }).process(decl.getDeclarations());
-            return result[0];
+            return CspUtils.isPacked(st -> getStructureDecl(null, st), t);
         }
 
         private int getPackSize(final Type t) throws VisitorException {
-            int s = -1;
-            if (t instanceof BooleanType) {
-                s = 1;
-            } else if (t instanceof IntegerType) {
-                final IntegerType it = (IntegerType) t;
-                final BigInteger w =
-                    CspUtils.getIntegerConstant(it.getDeclaredWidth());
-                s = w == null ? -1 : w.intValue();
-            } else if (t instanceof ArrayType) {
-                final ArrayType at = (ArrayType) t;
-                final Range r = at.getRange();
-                final BigInteger min =
-                    CspUtils.getIntegerConstant(r.getMinExpression());
-                final BigInteger max =
-                    CspUtils.getIntegerConstant(r.getMaxExpression());
-                if (min != null && max != null) {
-                    final int w = getPackSize(at.getElementType());
-                    if (w != -1) {
-                        BigInteger num = max.subtract(min).add(BigInteger.ONE);
-                        s = num.intValue() * w;
-                    }
-                }
-            } else if (t instanceof StructureType) {
-                final StructureDeclaration decl = getStructureDecl(null, t);
-                if (decl != null) {
-                    s = getPackSize(decl);
-                }
-            }
-            return s;
+            return CspUtils.getPackSize(st -> getStructureDecl(null, st), t);
         }
 
         private StructureDeclaration getStructureDecl(
@@ -1592,7 +1519,7 @@ public class VariableAnalyzer {
             throws VisitorException {
             if (ty instanceof StructureType) {
                 final StructureDeclaration sd = getStructureDecl(rhs, ty);
-                if (sd != null && !isPacked(sd)) {
+                if (sd != null && !isPacked(ty)) {
                     report("not.a.packed.structure", rhs, sd.getName());
                 }
             } else if (ty instanceof ArrayType) {

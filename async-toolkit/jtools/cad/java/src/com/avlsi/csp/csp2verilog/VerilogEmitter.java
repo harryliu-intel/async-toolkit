@@ -21,6 +21,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.regex.Pattern;
 
@@ -145,6 +146,14 @@ public class VerilogEmitter extends CommonEmitter {
     private int scope = 0;
 
     private final ProblemFilter problems;
+
+    private StatementInterface infiniteLoop = null;
+
+    private static final String INFINITE_LOOP_ITERATION_EVENT =
+        "c2v_infinite_loop_event";
+
+    private static final String STATE_COVERGROUP_INST =
+        "c2v_state_cg_inst";
 
     private interface Index {
         void write() throws VisitorException;
@@ -298,16 +307,16 @@ public class VerilogEmitter extends CommonEmitter {
     }
 
     private class ComplexDeclaration {
-        private final List/*<Range>*/ array;
-        private final List/*<String>*/ structure;
+        private final List<Range> array;
+        private final List<String> structure;
         private Type type;
         public ComplexDeclaration() {
-            this.array = new ArrayList/*<ExpressionInterface>*/();
-            this.structure = new ArrayList/*<String>*/();
+            this.array = new ArrayList<>();
+            this.structure = new ArrayList<>();
         }
         public ComplexDeclaration(final ComplexDeclaration c) {
-            this.array = new ArrayList/*<ExpressionInterface>*/(c.array);
-            this.structure = new ArrayList/*<String>*/(c.structure);
+            this.array = new ArrayList<>(c.array);
+            this.structure = new ArrayList<>(c.structure);
             this.type = c.type;
         }
         public void declareArray(final Range expr) {
@@ -319,14 +328,20 @@ public class VerilogEmitter extends CommonEmitter {
         public void setType(final Type type) {
             this.type = type;
         }
-        private String getStructurePart(final String base) {
+        protected String getStructurePartUnescaped(final String base) {
             final StringBuffer buf = new StringBuffer();
             buf.append(base);
-            for (Iterator i = structure.iterator(); i.hasNext(); ) {
+            for (String s : structure) {
                 buf.append('.');
-                buf.append((String) i.next());
+                buf.append(s);
             }
-            return escape(buf.toString());
+            return buf.toString();
+        }
+        protected String getStructurePart(final String base) {
+            return escape(getStructurePartUnescaped(base));
+        }
+        protected List<Range> getArray() {
+            return Collections.unmodifiableList(array);
         }
         public void declare(final String base) throws VisitorException {
             if (type instanceof StringType) {
@@ -337,8 +352,7 @@ public class VerilogEmitter extends CommonEmitter {
                 out.print(getRegisterType((IntegerType) type)); out.ws();
             }
             out.print(getStructurePart(base));
-            for (Iterator i = array.iterator(); i.hasNext(); ) {
-                final Range r = (Range) i.next();
+            for (Range r : array) {
                 out.print('[');
                 r.getMinExpression().accept(VerilogEmitter.this);
                 out.print(':');
@@ -850,6 +864,55 @@ public class VerilogEmitter extends CommonEmitter {
 
     private void outputProgramBody(CSPProgram e) throws VisitorException {
         declareVariables();
+
+        final boolean[] hasCovergroup = new boolean[] { false };
+        if (e.getStatement() instanceof SequentialStatement) {
+            for (Iterator<StatementInterface> i =
+                    ((SequentialStatement) e.getStatement()).getStatements();
+                i.hasNext(); ) {
+                StatementInterface s = i.next();
+                if (CspUtils.getInfiniteLoopBody(s) != null) {
+                    infiniteLoop = s;
+                    break;
+                }
+            }
+        }
+
+        if (infiniteLoop != null) {
+            final String coverGroup = cellInfo.getAbbreviatedType() + "$state_cg";
+
+            out.println("event " + INFINITE_LOOP_ITERATION_EVENT + ";");
+            final Map<IdentifierExpression,Declarator> topVars =
+                new LinkedHashMap<>();
+            getTopLevelVariables(e.getStatement(), resolver, analysisResults,
+                null, topVars, new HashSet<>());
+            final int stateCGlimit = 1024;
+            final String decl = "covergroup " + escape(coverGroup) +
+                                " @(" + INFINITE_LOOP_ITERATION_EVENT + ");";
+            for (Map.Entry<IdentifierExpression,Declarator> topVar :
+                    topVars.entrySet()) {
+                final Type t = topVar.getValue().getTypeFragment();
+                if (!t.getFlag(DISABLE_COVERAGE)) {
+                    final int packSize =
+                        CspUtils.getPackSize(
+                            st -> resolver.getResolvedStructures()
+                                          .get(st)
+                                          .getSecond(),
+                            t);
+                    if (packSize > 0 && packSize < stateCGlimit) {
+                        declareCoverpoint(() -> decl,
+                                          topVar.getKey().getIdentifier(),
+                                          topVar.getValue().getTypeFragment(),
+                                          hasCovergroup);
+                    }
+                }
+            }
+            if (hasCovergroup[0]) {
+                out.println("endgroup");
+                out.println(escape(coverGroup) + " " + STATE_COVERGROUP_INST +
+                            " = new;");
+            }
+        }
 
         // call resetNodes() if it is defined
         final Pair/*<CSPProgram,FunctionDeclaration>*/ resetDecl =
@@ -2108,6 +2171,9 @@ public class VerilogEmitter extends CommonEmitter {
             out.print("while (");
             gc.getGuard().accept(this);
             println(") begin", gc);
+            if (s == infiniteLoop) {
+                out.println("-> " + INFINITE_LOOP_ITERATION_EVENT + ";");
+            }
             gc.getCommand().accept(this);
             if (guardStmt != null) {
                 guardStmt.accept(this);
@@ -2446,8 +2512,7 @@ public class VerilogEmitter extends CommonEmitter {
     private void declareVariable(final String inout, final String id,
                                  final Type t, final String delim)
         throws VisitorException {
-        final Collection/*<ComplexDeclaration>*/ results =
-            new ArrayList/*<ComplexDeclaration>*/();
+        final Collection<ComplexDeclaration> results = new ArrayList<>();
         final ComplexDeclaration decl = new ComplexDeclaration();
         declareType(t, decl, results);
 
@@ -2457,6 +2522,44 @@ public class VerilogEmitter extends CommonEmitter {
             out.print(inout);
             cdecl.declare(id);
             if (i.hasNext()) out.println(delim);
+        }
+    }
+
+    private void declareCoverpoint(final Supplier<String> preamble,
+                                   final String id,
+                                   final Type t,
+                                   final boolean[] hasCG)
+        throws VisitorException {
+        final Collection<ComplexDeclaration> results = new ArrayList<>();
+        final ComplexDeclaration decl = new ComplexDeclaration();
+        declareType(t, decl, results);
+
+        for (ComplexDeclaration cdecl : results) {
+            if (!hasCG[0]) {
+                out.println(preamble.get());
+                hasCG[0] = true;
+            }
+            (new ComplexDeclaration(cdecl) {
+                private void unroll(final List<Range> rs,
+                                    final int dims,
+                                    final String base,
+                                    final String idx)
+                throws VisitorException {
+                    if (dims < rs.size()) {
+                        final Range r = rs.get(dims);
+                        final int min = getIntegerConstant(r.getMinExpression());
+                        final int max = getIntegerConstant(r.getMaxExpression());
+                        for (int i = min; i <= max; ++i) {
+                            unroll(rs, dims + 1, base, idx + "[" + i + "]");
+                        }
+                    } else {
+                        out.println("  coverpoint " + escape(base) + idx + ";");
+                    }
+                }
+                public void declare(final String base) throws VisitorException {
+                    unroll(getArray(), 0, getStructurePartUnescaped(base), "");
+                }
+            }).declare(id);
         }
     }
 

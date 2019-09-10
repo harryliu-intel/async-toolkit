@@ -3,10 +3,18 @@ package com.avlsi.csp.csp2verilog;
 import java.math.BigInteger;
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.util.Map;
+import java.util.Set;
 
 import com.avlsi.csp.ast.*;
+import com.avlsi.csp.grammar.ParseRange;
 import com.avlsi.csp.util.CspUtils;
+import com.avlsi.csp.util.DeclarationProcessor;
+import com.avlsi.csp.util.RefinementResolver;
+import com.avlsi.csp.util.VariableAnalyzer;
 import com.avlsi.io.IndentPrintWriter;
+import com.avlsi.util.container.IterableIterator;
+import com.avlsi.util.container.Pair;
 
 abstract class CommonEmitter implements VisitorInterface {
     LengthAwareWriter out;
@@ -133,6 +141,122 @@ abstract class CommonEmitter implements VisitorInterface {
             }
         }
         return true;
+    }
+
+    private BigInteger getBits(final RefinementResolver resolver, final Type t)
+        throws VisitorException {
+        if (t instanceof ArrayType) {
+            final ArrayType at = (ArrayType) t;
+            final Range r = at.getRange();
+            final BigInteger min =
+                CspUtils.getIntegerConstant(r.getMinExpression());
+            final BigInteger max =
+                CspUtils.getIntegerConstant(r.getMaxExpression());
+            final BigInteger elem = getBits(resolver, at.getElementType());
+            if (min == null || max == null || elem == null) return null;
+            else return max.subtract(min).add(BigInteger.ONE).multiply(elem);
+        } else if (t instanceof IntegerType) {
+            final IntegerType it = (IntegerType) t;
+            if (it.getDeclaredWidth() == null) {
+                return BigInteger.valueOf(registerBitWidth);
+            } else {
+                return CspUtils.getIntegerConstant(it.getDeclaredWidth());
+            }
+        } else if (t instanceof BooleanType) {
+            return BigInteger.ONE;
+        } else if (t instanceof StructureType) {
+            final BigInteger[] result = new BigInteger[] { BigInteger.ZERO };
+            final Pair p = (Pair) resolver.getResolvedStructures().get(t);
+            // VariableAnalyzer should have made sure all structures are valid
+            final StructureDeclaration sdecl =
+                (StructureDeclaration) p.getSecond();
+            final DeclarationProcessor proc = new DeclarationProcessor() {
+                public void process(final Declarator d)
+                    throws VisitorException {
+                    final BigInteger field = getBits(resolver, d.getTypeFragment());
+                    if (field == null || result[0] == null) {
+                        result[0] = null;
+                    } else {
+                        result[0] = result[0].add(field);
+                    }
+                }
+            };
+            proc.process(sdecl.getDeclarations());
+            return result[0];
+        } else if (t instanceof NodeType) {
+            return BigInteger.valueOf(((NodeType) t).getWidth());
+        } else {
+            return BigInteger.ZERO;
+        }
+    }
+
+    // Return top-level variables
+    void getTopLevelVariables(
+            final StatementInterface stmt,
+            final RefinementResolver resolver,
+            final VariableAnalyzer.Results analysisResults,
+            final Map<String,Pair<ParseRange,BigInteger>> stateVars,
+            final Map<IdentifierExpression,Declarator> topVars,
+            final Set<Type> topTokens)
+        throws VisitorException {
+        for (Map.Entry<String,Type> entry :
+                analysisResults.getUndeclaredTypes().entrySet()) {
+            final IdentifierExpression id =
+                new IdentifierExpression(entry.getKey());
+            final Type t = entry.getValue();
+            topTokens.add(t);
+            topVars.put(id, new Declarator(id, t, null));
+            if (stateVars != null) {
+                stateVars.put(entry.getKey(),
+                              new Pair<ParseRange,BigInteger>(ParseRange.EMPTY,
+                                                              getBits(resolver, t)));
+            }
+        }
+        for (Map.Entry<String,Type> entry :
+                analysisResults.getPortTypes().entrySet()) {
+            final IdentifierExpression id =
+                new IdentifierExpression(entry.getKey());
+            final Type t = entry.getValue();
+            topTokens.add(t);
+            topVars.put(id, new Declarator(id, t, null));
+            if (stateVars != null) {
+                if (t instanceof NodeType) {
+                    final NodeType nt = (NodeType) t;
+                    if (nt.getDirection() == PortDirection.OUT) {
+                        stateVars.put(entry.getKey(),
+                                new Pair<ParseRange,BigInteger>(null,
+                                    getBits(resolver, t)));
+                    }
+                }
+            }
+        }
+
+        if (stmt instanceof AbstractCompositeStatement) {
+            final AbstractCompositeStatement seq =
+                (AbstractCompositeStatement) stmt;
+            final DeclarationProcessor proc = new DeclarationProcessor() {
+                public void process(final Declarator d)
+                    throws VisitorException {
+                    final IdentifierExpression id = d.getIdentifier();
+                    topTokens.add(d.getTypeFragment());
+                    topVars.put(id, d);
+                    if (stateVars != null) {
+                        stateVars.put(
+                            id.getIdentifier(),
+                            new Pair<ParseRange,BigInteger>(
+                                id.getParseRange(),
+                                getBits(resolver, d.getTypeFragment())));
+                    }
+                }
+            };
+            for (StatementInterface i :
+                    new IterableIterator<StatementInterface>(
+                        seq.getStatements())) {
+                if (i instanceof VarStatement) {
+                    proc.process(((VarStatement) i).getDeclarationList());
+                }
+            }
+        }
     }
 
     // A simple bit range is one that can be translated to Verilog directly
