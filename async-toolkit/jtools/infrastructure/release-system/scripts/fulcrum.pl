@@ -1735,8 +1735,8 @@ if (!defined ($arglist)) {
         @ARGV=();
         my @ARGEXE=();
         foreach my $wrapper (keys %cadencewrappers) {
-            if ( $isOA and defined ($cadencewrappers{$wrapper.".oa"})) {
-                $wrapper=$wrapper.".oa";
+            if ( $isOA and defined ($cadencewrappers{$wrapper."_oa"})) {
+                $wrapper=$wrapper."_oa";
             }
             my $x=`$cadencewrapperdir/$cadence_ver{$wrapper} which $argexe 2>/dev/null`;
             if ( "$x" =~ m:/nfs/site/eda/tools/: and ! ( "$x" =~ /no $argexe in/ ) and ! ( "$x" =~ /does not exist/) ) {
