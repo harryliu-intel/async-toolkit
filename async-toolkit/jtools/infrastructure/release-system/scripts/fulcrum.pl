@@ -1739,7 +1739,7 @@ if (!defined ($arglist)) {
                 $wrapper=$wrapper."_oa";
             }
             my $x=`$cadencewrapperdir/$cadence_ver{$wrapper} which $argexe 2>/dev/null`;
-            if ( "$x" =~ m:/nfs/site/eda/tools/: and ! ( "$x" =~ /no $argexe in/ ) and ! ( "$x" =~ /does not exist/) ) {
+            if ( "$x" =~ m:^/(nfs/site/eda/tools|p/hdk)/: and ! ( "$x" =~ /no $argexe in/ ) and ! ( "$x" =~ /does not exist/) ) {
                 if ((($argexe =~ /^layout/) or ($argexe =~ /^icfb/) or ($argexe =~ /virtuoso/))
                         and ($wrapper =~ /^ic/)) {
                     unshift @ARGEXE, $argexe if $found == 0;
