@@ -19,6 +19,7 @@ useICV = t
         (noPowerFill nil)          ; use POWER_GRID_NO_FILL instead of POWER_GRID
         (doPowerGates nil)         ; use POWER_GRID_GATED instead of POWER_GRID
         (softMacro nil)            ; when !softMacro, lock all instances
+        (chooseVariant nil)        ; automatically pick v1/v2/v3 variant
         )
   (let (MaxHeapSize TEMP PowerGridCellName ColorGridCellName xalign yalign win pgCV cgCV)
 
@@ -39,7 +40,7 @@ useICV = t
     yalign = (GetYAlignmentProp CV)
 
     ; Create flatten view from floorplan view
-    CV = (DirectFlatten ?CV CV ?RegenerateFromCast RegenerateFromCast)
+    CV = (DirectFlatten ?CV CV ?RegenerateFromCast RegenerateFromCast ?chooseVariant chooseVariant)
 
     ; update connectivity (TODO: eliminate one of these, but this one connects subcell pins)
     (UpdateFloorplan ?CV CV ?recurse nil ?skipInstances t)
@@ -644,7 +645,8 @@ useICV = t
   )
 
 ; go straight from floorplan to flatten view
-(defun DirectFlatten (@key (CV (geGetEditCellView)) (RegenerateFromCast nil) (flatViewName "flatten"))
+(defun DirectFlatten (@key (CV (geGetEditCellView)) (RegenerateFromCast nil) (flatViewName "flatten")
+                           (chooseVariant nil))
   (let (not_routed progress)
 
     ; create flatten view
@@ -668,7 +670,8 @@ useICV = t
                       progress=t
                       )
                      (inst->viewName!="layout"
-                      lCV = (ChooseLayoutVariant inst)
+                      lCV = (if chooseVariant (ChooseLayoutVariant inst)
+                              (ReadCV inst->libName inst->cellName "layout"))      
                       (when lCV inst->master=lCV)
                       (LegalizeShortInstance inst)
                       )
