@@ -1729,7 +1729,6 @@ if (!defined ($arglist)) {
             exit 0;
         }
         my $found = 0;
-        my $noherc=1;
         my $noicv=1;
         my @ARGLAST=@ARGV;
         @ARGV=();
@@ -1744,12 +1743,7 @@ if (!defined ($arglist)) {
                         and ($wrapper =~ /^ic/)) {
                     unshift @ARGEXE, $argexe if $found == 0;
                     foreach my $arg (@ARGV) {
-                        $noherc=0 if $arg eq "$cadencewrapperdir/$cadence_ver{herc}";
                         $noicv=0 if $arg eq "$cadencewrapperdir/$cadence_ver{icv}";
-                    }
-                    if ($noherc) {
-                        unshift @ARGV, "$cadencewrapperdir/$cadence_ver{herc}";
-                        $noherc=0;
                     }
                     if ($noicv) {
                         unshift @ARGV, "$cadencewrapperdir/$cadence_ver{icv}";
@@ -1778,11 +1772,7 @@ if (!defined ($arglist)) {
                     push @ARGV, "$cadencewrapperdir/$cadence_ver{$w}";
                 }
                 elsif (defined ($cadence_ver{$w})) {
-                    if ($w ne "herc" or $noherc) {
-                        push @ARGV, "$cadencewrapperdir/$cadence_ver{$w}";
-                        $noherc=0 if $w eq "herc";
-                    }
-                    elsif ($w ne "icv" or $noicv) {
+                    if ($w ne "icv" or $noicv) {
                         push @ARGV, "$cadencewrapperdir/$cadence_ver{$w}";
                         $noicv=0 if $w eq "icv";
                     }
