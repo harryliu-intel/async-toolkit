@@ -59,7 +59,7 @@
 (defun UpdateFloorplanCore (CV indent)
   (let (netFile NetListTable rx ux uy w h instanceTable netTable termTable
         dirFile DirectiveTable 
-        lastArrayName points realInstances isLeaf isRouted)
+        lastArrayName points realInstances isLeaf isRouted lCV align CopyExact)
     (fprintf LOG "%sUpdate floorplan of %s\n" indent CV->cellName)
     mastersVisited[CV] = t
 
@@ -130,16 +130,15 @@
             (dbDeleteObject CV->prBoundary)
             )
 
+      ; find layout view
+      lCV=nil
+      (when (ddGetObj CV->libName CV->cellName "layout")
+        lCV=(dbOpenCellViewByType CV->libName CV->cellName "layout" "maskLayout" "r"))
+
       ; update prBoundary of routed cells from layout view if it exists
       (when CV->viewName=="floorplan" && isRouted
         ; use prBoundary of layout view if it exists
-        (cond ((ddGetObj CV->libName CV->cellName "layout")
-               points=(dbOpenCellViewByType CV->libName CV->cellName
-                                            "layout" "maskLayout" "r")->prBoundary->points)
-              ((ddGetObj CV->libName (strcat CV->cellName "v2") "layout")
-               points=(dbOpenCellViewByType CV->libName (strcat CV->cellName "v2")
-                                            "layout" "maskLayout" "r")->prBoundary->points)
-              )
+        (when lCV points=lCV->prBoundary->points)       
         ; otherwise pick prBoundary appropriately
         (cond (!points && isLeaf
                (unless w&&h (error "undetermined height or width in cell %s" CV->cellName))
@@ -148,6 +147,18 @@
               )
         (when CV->prBoundary (dbDeleteObject CV->prBoundary))
         (when points (dbCreatePRBoundary CV points))
+        )
+
+      ; transfer CopyExact property
+      (when lCV
+        CopyExact = (dbGetPropByName lCV "CopyExact")
+        (when CopyExact (dbReplaceProp CV "CopyExact" "string" CopyExact->value))
+        )
+ 
+      ; set alignment based on LCD alignment of subcells
+      (when CV->instances
+        align = (GetLCDAlignment ?instances CV->instances)
+        (SetCellAlignment align 0:0 ?CV CV ?overwrite nil)
         )
       )
 

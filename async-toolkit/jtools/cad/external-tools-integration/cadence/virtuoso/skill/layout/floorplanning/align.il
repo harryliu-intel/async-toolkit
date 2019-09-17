@@ -1,4 +1,159 @@
+; Align cells according to cell properies for MoveAligned
 
+; set alignment properties
+(defun SetCellAlignment (GridXY OffsetXY @key (CV (geGetEditCellView)) (overwrite t))
+  (when overwrite || !(dbGetPropByName CV "XAlignGrid")
+        (dbReplaceProp CV "XAlignGrid"   "float" (car  GridXY)))
+  (when overwrite || !(dbGetPropByName CV "YAlignGrid")
+        (dbReplaceProp CV "YAlignGrid"   "float" (cadr GridXY)))
+  (when overwrite || !(dbGetPropByName CV "XAlignOffset")
+        (dbReplaceProp CV "XAlignOffset" "float" (car  OffsetXY)))
+  (when overwrite || !(dbGetPropByName CV "YAlignOffset")
+        (dbReplaceProp CV "YAlignOffset" "float" (cadr OffsetXY)))        
+  t
+  )
+
+; choose default alignment by CellView (TODO: move to PDK)
+(defun DefaultCellAlignment (@key (CV (geGetEditCellView)))
+  (let (CopyExact g0m height variant offset align gx gy ox oy)
+    CopyExact = (dbGetPropByName CV "CopyExact")->value
+    g0m=CopyExact && ((strncmp CopyExact "g0m" 3)==0 || (strncmp CopyExact "g1m" 3)==0)
+    (cond (g0m
+           height = (substring CopyExact 13 1)
+           variant = (substring CopyExact 12 1)
+           gx=GridPolyPitch
+           gy=TrackPitch*(if height=="n" && CV->viewName=="floorplan" 1 2)
+           (cond (CV->viewName=="floorplan" ox=0.5*GridPolyPitch)
+                 (variant=="1" gx=3*GridPolyPitch ox=0.5*GridPolyPitch)
+                 (variant=="2" gx=3*GridPolyPitch ox=1.5*GridPolyPitch)
+                 (variant=="3" gx=3*GridPolyPitch ox=2.5*GridPolyPitch)
+                 (t (error "Illegal standard cell metal variant %s\n" variant))
+                 )
+           oy=0
+           align = (list gx:gy ox:oy)
+           )
+          (t align=(list GridPolyPitch:TrackPitch 0:0))
+          )
+    align
+    )
+  )
+
+; get alignment properies
+(defun GetCellAlignment (@key (CV (geGetEditCellView)))
+  (let (gx gy ox oy align)
+    gx = (dbGetPropByName CV "XAlignGrid")->value
+    gy = (dbGetPropByName CV "YAlignGrid")->value
+    ox = (dbGetPropByName CV "XAlignOffset")->value
+    oy = (dbGetPropByName CV "YAlignOffset")->value
+    (unless gx && gy && ox && oy
+            align = (DefaultCellAlignment ?CV CV)
+            (unless gx gx=(car  (car  align)))
+            (unless gy gy=(cadr (car  align)))
+            (unless ox ox=(car  (cadr align)))
+            (unless oy oy=(cadr (cadr align)))
+            )
+    (list gx:gy ox:oy)
+    )
+  )
+
+; compute GCD of two integers Euclid's Algorithm
+(defun GCD (a b)
+  (cond (a==0 b)
+        (b==0 a)
+        (a>b (GCD (mod a b) b))
+        (a<b (GCD (mod b a) a))
+        (t a)
+        )
+  )
+
+; compute LCM of integers usign GCD
+(defun LCM (a b)
+  (cond (a==0 b)
+        (b==0 a)
+        (t (a / (GCD a b)) * b)
+        )
+  )
+
+; compute LCD alignment of set of instances
+(defun GetLCDAlignment (@key (x 0) (y 0) (instances (geGetSelSet)))
+  (let (grid gx gy)
+    x=(round x/MfgGrid)
+    y=(round y/MfgGrid)
+    (foreach inst instances
+             grid=(car (GetCellAlignment ?CV inst->master))
+             gx=(round (car  grid)/MfgGrid)
+             gy=(round (cadr grid)/MfgGrid)
+             x=(LCM x gx)
+             y=(LCM y gy)
+             )
+    (list MfgGrid*x MfgGrid*y)
+    )
+  )
+
+; move selected cells by LCM while preserving snap alignments
+(defun MoveAligned (dir @key (dx 0) (dy 0) (instances (geGetSelSet)))
+  (let (align ox oy x y gx gy nx ny)
+    instances = (setof x instances !(IsInstanceAnchored x) && (x->objType=="inst" || x->objType=="mosaic"))
+    align = (GetLCDAlignment ?instances instances ?x dx ?y dy)
+    dx = (car  align)
+    dy = (cadr align)
+    (foreach inst instances
+      align=(GetCellAlignment ?CV inst->master)
+      gx=(car (car align))
+      gy=(cadr (car align))
+      ox=(car (cadr align))
+      oy=(cadr (cadr align))
+      xy=(dbTransformPoint ox:oy (list 0:0 inst->orient))
+      ox=(car xy)
+      oy=(cadr xy)
+      x=(car  inst->xy)
+      y=(cadr inst->xy)
+      nx=x
+      ny=y
+      (cond
+       (dir=="L" nx=(round (x-dx+ox)/gx)*gx-ox)
+       (dir=="R" nx=(round (x+dx+ox)/gx)*gx-ox)
+       (dir=="U" ny=(round (y+dy+oy)/gy)*gy-oy)
+       (dir=="D" ny=(round (y-dy+oy)/gy)*gy-oy)
+       )
+      (dbMoveFig inst nil (list (list nx-x ny-y) "R0"))
+      )
+    )
+  t
+  )
+
+; Check if an instance is aligned
+(defun CheckCellAlignment (inst)
+  (let (align x y gx gy ox oy nx ny xy)
+    align = (GetCellAlignment ?CV inst->master)
+    x=(car  inst->xy)
+    y=(cadr inst->xy)
+    gx=(car  (car  align))
+    gy=(cadr (car  align))
+    ox=(car  (cadr align))
+    oy=(cadr (cadr align))
+    xy=(dbTransformPoint ox:oy (list 0:0 inst->orient))
+    ox=(car xy)
+    oy=(cadr xy)
+    nx=(round (x+ox)/gx)*gx-ox
+    ny=(round (y+oy)/gy)*gy-oy
+    (round nx/MfgGrid)==(round x/MfgGrid) && (round ny/MfgGrid)==(round y/MfgGrid)
+    )
+  )
+
+; Return list of misaligned instances
+(defun MisalignedInstances (@key (CV (geGetEditCellView)))
+  (let (misaligned)
+    misaligned=nil
+    (foreach inst CV->instances
+             (when inst->status=="locked" && !(CheckCellAlignment inst)
+                   misaligned=(cons inst misaligned))
+             )
+    misaligned
+    )
+  )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Obsolete Functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun SetXAlignmentProp ( cv val )
   (dbReplaceProp cv "XAlignGrid" "float" val)
@@ -21,7 +176,7 @@
 )
 
 
-(defun SetAlignmentUI () 
+(defun SetAlignmentUI ()
  (let (cv valx valy xalign maxalign yalign use_subcell str
        layout prelayout floorplan layout_exists prelayout_exists floorplan_exists noedit edit)
   cv = (geGetWindowCellView)
@@ -42,7 +197,7 @@
         ?buttonLayout   'Close
     )
   else
-  
+
 
   ; check for additonal views to be updated
   floorplan_exists = (dbOpenCellViewByType cv->libName cv->cellName "floorplan" nil "r")
@@ -85,11 +240,11 @@
                      )
   )
   (when edit
-    (when floorplan_exists 
+    (when floorplan_exists
       floorplan = (CDSP4CellView floorplan "edit"))
-    (when prelayout_exists 
+    (when prelayout_exists
       prelayout = (CDSP4CellView prelayout "edit"))
-    (when layout_exists 
+    (when layout_exists
       layout = (CDSP4CellView layout "edit"))
   )
 
@@ -110,7 +265,7 @@
   )
 
   ;update properties
-  (when (nrIsCellViewWritable floorplan) 
+  (when (nrIsCellViewWritable floorplan)
     (SetXAlignmentProp floorplan xalign)
     (SetYAlignmentProp floorplan yalign)
     (dbSave floorplan)
@@ -147,7 +302,7 @@
    )
    (foreach inst uniqueInstances
      cellv = (nrOpenCellViewReadable inst->libName inst->cellName inst->viewName)
-     (when cellv 
+     (when cellv
        align = (max align (GetMaxSubcellXAlignment cellv))
      )
    )
@@ -156,22 +311,22 @@
 )
 
 
-(defun SetCellAlignment (cv @key (xalign MfgGrid) (yalign GridPitch) )
- (let (maxalign current_xalign)
-   (if (nrIsCellViewWritable cv) then
-     (SetYAlignmentProp cv yalign)
-     current_xalign = (GetXAlignmentProp cv)
-     (when !current_xalign
-       current_xalign = MfgGrid
-     )
-     maxalign = (max xalign (GetMaxSubcellXAlignment cv) current_xalign)
-     (SetXAlignmentProp cv maxalign)
-     (dbSave cv)
-   else
-     (printf "Couldn't open cell %s for edit.\n" cv->cellName)
-   )
- )
-)
+;(defun SetCellAlignment (cv @key (xalign MfgGrid) (yalign GridPitch) )
+; (let (maxalign current_xalign)
+;   (if (nrIsCellViewWritable cv) then
+;     (SetYAlignmentProp cv yalign)
+;     current_xalign = (GetXAlignmentProp cv)
+;     (when !current_xalign
+;       current_xalign = MfgGrid
+;     )
+;     maxalign = (max xalign (GetMaxSubcellXAlignment cv) current_xalign)
+;     (SetXAlignmentProp cv maxalign)
+;     (dbSave cv)
+;   else
+;    (printf "Couldn't open cell %s for edit.\n" cv->cellName)
+;  )
+; )
+;)
 
 
 (defun CheckRoutedAlignment (cv @key (dialog nil))
@@ -183,7 +338,7 @@
    (foreach inst instances
      inst_misaligned = !(IsInstAligned inst)
      misalignment = misalignment || inst_misaligned
-     (when inst_misaligned (printf "       in cell %s\n" cv->cellName))  
+     (when inst_misaligned (printf "       in cell %s\n" cv->cellName))
      (when inst->libName!=TechLibName && inst->orient
        (when !(IsInList inst->orient LegalRotations)
          misalignment = t
@@ -194,7 +349,7 @@
      location = (list inst->xy inst->cellName inst->orient)
        (when (IsInList location locations)
          misalignment = t
-         (printf "Instance %s in cell %s overlaps another at (%.3f %.3f)\n" 
+         (printf "Instance %s in cell %s overlaps another at (%.3f %.3f)\n"
                  inst->name cv->cellName (car inst->xy) (cadr inst->xy))
        )
      locations = (cons location locations)
@@ -232,14 +387,14 @@
  )
 )
 
-(defun fixXAlignment ( @key (cv nil)) 
+(defun fixXAlignment ( @key (cv nil))
  (let (xalign instcv inst misaligned inst_moved)
   (when !cv
     cv = (geGetWindowCellView)
   )
   move=0.0
   inst_moved=0
-  instances=sort( cv~>instances 
+  instances=sort( cv~>instances
     lambda((cell1 cell2) leftEdge(cell1~>bBox)<leftEdge(cell2~>bBox)))
   foreach( inst instances
     new_move=AlignInstX( cv inst move )
@@ -318,10 +473,10 @@
  (let (instcv xalign  instx instx_new )
      instcv = (nrOpenCellViewReadable inst->libName inst->cellName inst->viewName)
       xalign = (GetXAlignmentProp instcv)
-      (when !xalign 
+      (when !xalign
         xalign = MfgGrid
       )
-      instx = round( 1000* ((car inst->xy) || (car inst->mosaic->xy)))/1000.0 
+      instx = round( 1000* ((car inst->xy) || (car inst->mosaic->xy)))/1000.0
       instx_new = ceiling( round( 1000 * (instx + moveX))/1000.0 /  xalign) *xalign
       moveX = round( 1000* (instx_new - instx))/1000.0
       if( moveX > 0.0 then dbMoveFig( inst cv list(moveX:0 "R0" 1.0)))
@@ -335,7 +490,7 @@
     aligned = t
   else
     aligned = nil
-  ) 
+  )
  )
 )
 

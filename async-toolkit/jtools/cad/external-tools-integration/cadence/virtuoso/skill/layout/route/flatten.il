@@ -669,11 +669,12 @@ useICV = t
                       (TrivialInline inst ?CV CV)
                       progress=t
                       )
-                     (inst->viewName!="layout"
-                      lCV = (if chooseVariant (ChooseLayoutVariant inst)
-                              (ReadCV inst->libName inst->cellName "layout"))      
-                      (when lCV inst->master=lCV)
+                     (inst->viewName=="floorplan"
                       (LegalizeShortInstance inst)
+                      (when chooseVariant
+                        lCV = (ChooseLayoutVariant inst)
+                        (when lCV inst->master=lCV)
+                        )
                       )
                      )
                )
@@ -740,20 +741,19 @@ useICV = t
 
 ; Flip and offset mis-aligned single-height standard cells
 (defun LegalizeShortInstance (inst)
-  (let (x y orient std type short HalfGrid)
+  (let (x y orient std type short)
     type = (dbFindProp inst->master "CopyExact")->value
     (when type
       std = (strncmp type "g0m" 3)==0 || (strncmp type "g1m" 3)==0
       x = (car  inst->xy)
       y = (cadr inst->xy)
       short = (substring type 13 1)=="n"
-      HalfGrid = GridPitch/2
-      misalign = (mod (round y/HalfGrid) 2)==1
+      misalign = (mod (round y/TrackPitch) 2)==1
       (when std && short && misalign
-            (cond (inst->orient=="R0"   inst->orient="MX"   inst->xy=x:y+HalfGrid)
-                  (inst->orient=="MX"   inst->orient="R0"   inst->xy=x:y-HalfGrid)
-                  (inst->orient=="MY"   inst->orient="R180" inst->xy=x:y+HalfGrid)
-                  (inst->orient=="R180" inst->orient="MY"   inst->xy=x:y-HalfGrid)
+            (cond (inst->orient=="R0"   inst->orient="MX"   inst->xy=x:y+TrackPitch)
+                  (inst->orient=="MX"   inst->orient="R0"   inst->xy=x:y-TrackPitch)
+                  (inst->orient=="MY"   inst->orient="R180" inst->xy=x:y+TrackPitch)
+                  (inst->orient=="R180" inst->orient="MY"   inst->xy=x:y-TrackPitch)
                   )
             )
       )

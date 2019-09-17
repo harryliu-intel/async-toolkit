@@ -5,15 +5,16 @@
   (let (v x nx mx my)
     v=nil
     x=(car inst->xy)
-    nx=(round x/GridPolyPitch)
-    mx=(mod (mod nx 3)+3 3)
     my=inst->orient=="MY" || inst->orient=="R180"
+    nx=(round (x-0.5*GridPolyPitch)/GridPolyPitch)
+    mx=(mod (mod nx 3)+3 3)
     (when TechLibName=="1276"
-          (cond (mx==1 && !my v=1)
-                (mx==1 &&  my v=3)
-                (mx==2 && !my v=3)
-                (mx==2 &&  my v=1)
-                (t            v=2)
+          (cond (!my && mx==1 v=2)
+                (!my && mx==2 v=1)
+                (!my && mx==0 v=3)
+                ( my && mx==1 v=2)
+                ( my && mx==2 v=3)
+                ( my && mx==0 v=1)
                 )
           )
     v
@@ -36,16 +37,12 @@
 
 ; Pick layout variant CV given an instance
 (defun ChooseLayoutVariant (inst)
-  (let (v lCV stdcell)
+  (let (v lCV stdcell CopyExact)
     v=(LayoutVariantNumber inst)
-    stdcell=inst->libName=="vendor.intel.g0m" ||
-            inst->libName=="vendor.intel.g1m" ||
-            inst->libName=="vendor.intel.e08"
+    CopyExact=(dbGetPropByName inst->master "CopyExact")->value
+    stdcell=CopyExact && ((strncmp "g0m" CopyExact 3)==0 || (strncmp "g1m" CopyExact 3)==0)
     (cond (stdcell lCV=(ReadCV inst->libName (VariantStdCellName inst->cellName v) "layout"))
-          (t
-           lCV=(ReadCV inst->libName inst->cellName "layout") ; default if it exists!
-           (when v && !lCV lCV=(ReadCV inst->libName (sprintf nil "%sv%d" inst->cellName v) "layout"))
-           )
+          (t lCV=(ReadCV inst->libName inst->cellName "layout"))
           )
     lCV
     )

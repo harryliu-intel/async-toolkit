@@ -92,7 +92,7 @@
         )
   (let (TEMP WDIR LEFDEF_DIR MaxHeapSize CAST_PATH DFII_DIR SPAR_DIR PDK_DIR
         abstractCV
-        Command (statusVerilog t)
+        Command (statusVerilog t) statusAlignment
         lef_subcells GdsMapFile gds_name
         pout (statusGds t) (statusLef t)
         pinmap dirmap (statusDef t)
@@ -122,7 +122,6 @@
     (csh (strcat "mkdir -p " WDIR))
     (csh (strcat "mkdir -p " LEFDEF_DIR))
 
-
     ; make flatten view automatically
     (printf "Flatten Start %s\n" (getCurrentTime))
     (when (or CV->viewName=="floorplan" CV->viewName=="prelayout")
@@ -130,6 +129,11 @@
                         ?noPowerFill noPowerFill ?doPowerGates doPowerGates
                         ?powerGrid powerGrid ?colorGrid colorGrid ?softMacro softMacro
                         ?chooseVariant chooseVariant))
+
+    ; check Alignment
+    misaligned = (MisalignedInstances ?CV CV)
+    (foreach inst misaligned (geSelectObject inst))
+    statusAlignment=misaligned==nil
 
     ; write proteus.config
     (ProteusConfig ?CV CV ?botMetal botMetal ?topMetal topMetal ?metalFill metalFill
@@ -274,11 +278,12 @@
     (dbSave CV)
 
     ; summarize errors
-    (unless statusVerilog errorStr = (strcat errorStr " Verilog"))
-    (unless statusGds errorStr = (strcat " GDS Error. " errorStr))
-    (unless statusLef errorStr = (strcat " LEF Error. " errorStr))
-    (unless statusDef errorStr = (strcat " DEF Error. " errorStr))
-    (unless statusNonDefault errorStr = (strcat errorStr " NonDefaultDEF"))
+    (unless statusAlignment errorStr = (strcat errorStr "Alignment "))
+    (unless statusVerilog errorStr = (strcat errorStr "Verilog "))
+    (unless statusGds errorStr = (strcat errorStr " GDS "))
+    (unless statusLef errorStr = (strcat errorStr " LEF "))
+    (unless statusDef errorStr = (strcat errorStr " DEF "))
+    (unless statusNonDefault errorStr = (strcat errorStr "NonDefaultDEF "))
     (when errorStr!="" (error errorStr))
 
     (printf "Export Finish %s\n" (getCurrentTime))
