@@ -123,7 +123,7 @@
   )
 
 ; Check if an instance is aligned
-(defun CheckCellAlignment (inst)
+(defun CheckInstanceAlignment (inst)
   (let (align x y gx gy ox oy nx ny xy)
     align = (GetCellAlignment ?CV inst->master)
     x=(car  inst->xy)
@@ -146,7 +146,7 @@
   (let (misaligned)
     misaligned=nil
     (foreach inst CV->instances
-             (when inst->status=="locked" && !(CheckCellAlignment inst)
+             (when inst->status=="locked" && !(CheckInstanceAlignment inst)
                    misaligned=(cons inst misaligned))
              )
     misaligned
