@@ -90,13 +90,22 @@
     )
   )
 
-; move selected cells by LCM while preserving snap alignments
-(defun MoveAligned (dir @key (dx 0) (dy 0) (instances (geGetSelSet)))
-  (let (align ox oy x y gx gy nx ny)
-    instances = (setof x instances !(IsInstanceAnchored x) && (x->objType=="inst" || x->objType=="mosaic"))
-    align = (GetLCDAlignment ?instances instances ?x dx ?y dy)
-    dx = (car  align)
-    dy = (cadr align)
+; Move selected cells by LCM while preserving snap alignments.
+; Directions are U D L R to move, A to align, C to check alignment.
+(defun MoveAligned (dir @key (dx 0) (dy 0) (CV (geGetEditCellView)) (instances (geGetSelSet)))
+  (let (align px py ox oy x y gx gy nx ny aligned)
+    instances = (setof inst instances
+      inst->cellView==CV && !(IsInstanceAnchored inst) && 
+      (inst->objType=="inst" || inst->objType=="mosaic"))
+    (when instances
+      align=(GetCellAlignment ?CV CV)
+      px=(car (cadr align))
+      py=(cadr (cadr align))
+      )
+    align=(GetLCDAlignment ?instances instances ?x dx ?y dy)
+    dx=(car  align)
+    dy=(cadr align)
+    aligned=t
     (foreach inst instances
       align=(GetCellAlignment ?CV inst->master)
       gx=(car (car align))
@@ -106,39 +115,28 @@
       xy=(dbTransformPoint ox:oy (list 0:0 inst->orient))
       ox=(car xy)
       oy=(cadr xy)
+      ox=ox-px
+      oy=oy-py
       x=(car  inst->xy)
       y=(cadr inst->xy)
-      nx=x
-      ny=y
+      nx=(round (x+ox)/gx)*gx-ox
+      ny=(round (y+oy)/gy)*gy-oy
       (cond
        (dir=="L" nx=(round (x-dx+ox)/gx)*gx-ox)
        (dir=="R" nx=(round (x+dx+ox)/gx)*gx-ox)
        (dir=="U" ny=(round (y+dy+oy)/gy)*gy-oy)
        (dir=="D" ny=(round (y-dy+oy)/gy)*gy-oy)
        )
-      (dbMoveFig inst nil (list (list nx-x ny-y) "R0"))
+      aligned=aligned && (round nx/MfgGrid)==(round x/MfgGrid) && (round ny/MfgGrid)==(round y/MfgGrid)
+      (unless dir=="C" (dbMoveFig inst nil (list (list nx-x ny-y) "R0")))
       )
+    aligned
     )
-  t
   )
 
 ; Check if an instance is aligned
 (defun CheckInstanceAlignment (inst)
-  (let (align x y gx gy ox oy nx ny xy)
-    align = (GetCellAlignment ?CV inst->master)
-    x=(car  inst->xy)
-    y=(cadr inst->xy)
-    gx=(car  (car  align))
-    gy=(cadr (car  align))
-    ox=(car  (cadr align))
-    oy=(cadr (cadr align))
-    xy=(dbTransformPoint ox:oy (list 0:0 inst->orient))
-    ox=(car xy)
-    oy=(cadr xy)
-    nx=(round (x+ox)/gx)*gx-ox
-    ny=(round (y+oy)/gy)*gy-oy
-    (round nx/MfgGrid)==(round x/MfgGrid) && (round ny/MfgGrid)==(round y/MfgGrid)
-    )
+  (MoveAligned "C" ?CV inst->cellView ?instances (list inst))
   )
 
 ; Return list of misaligned instances

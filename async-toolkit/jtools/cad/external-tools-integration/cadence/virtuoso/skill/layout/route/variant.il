@@ -1,49 +1,43 @@
-; Scripts to choose between 3 M1 layout varaints for 7nm
-
-; Compute preferred variant number using instance's xy and orient
-(defun LayoutVariantNumber (inst)
-  (let (v x nx mx my)
-    v=nil
-    x=(car inst->xy)
-    my=inst->orient=="MY" || inst->orient=="R180"
-    nx=(round (x-0.5*GridPolyPitch)/GridPolyPitch)
-    mx=(mod (mod nx 3)+3 3)
-    (when TechLibName=="1276"
-          (cond (!my && mx==1 v=2)
-                (!my && mx==2 v=1)
-                (!my && mx==0 v=3)
-                ( my && mx==1 v=2)
-                ( my && mx==2 v=3)
-                ( my && mx==0 v=1)
-                )
+; Find layout CV with appropriate v1/v2/v3 variant of current CV
+(defun FindLayoutVariant (CV v)
+  (let (cellName suffix components subtype baseName)
+    suffix = (substring CV->cellName (strlen CV->cellName)-1)
+    (cond (CV->libName=="vendor.intel.g0m" || CV->libName=="vendor.intel.g1m" ; G0M naming
+           components = (parseString CV->cellName ".")
+           subtype = (car (last components))
+           subtype = (sprintf nil "%d%s" v (substring subtype 2 5))
+           components = (reverse components)
+           components = (cdr components)
+           components = (cons subtype components)
+           components = (reverse components)
+           cellName = (buildString components ".")
+           )
+          (suffix=="v1" || suffix=="v2" || suffix=="v3" ; 4GBD naming
+           baseName = (substring CV->cellName 1 (strlen CV->cellName)-2)
+           cellName = (sprintf nil "%sv%d" baseName v)
+           )
+          (t cellName=CV->cellName ; other cells
+           )
           )
-    v
+    (ReadCV CV->libName cellName "layout")
     )
   )
 
-; Construct E08/G0M/G1M standard cell name
-(defun VariantStdCellName (cellName v)
-  (let (components subtype)
-    components = (parseString cellName ".")
-    subtype = (car (last components))
-    subtype = (sprintf nil "%d%s" v (substring subtype 2 5))
-    components = (reverse components)
-    components = (cdr components)
-    components = (cons subtype components)
-    components = (reverse components)
-    (buildString components ".")
-    )
-  )
-
-; Pick layout variant CV given an instance
+; Replace instance->master with aligned layout variant CV
 (defun ChooseLayoutVariant (inst)
-  (let (v lCV stdcell CopyExact)
-    v=(LayoutVariantNumber inst)
-    CopyExact=(dbGetPropByName inst->master "CopyExact")->value
-    stdcell=CopyExact && ((strncmp "g0m" CopyExact 3)==0 || (strncmp "g1m" CopyExact 3)==0)
-    (cond (stdcell lCV=(ReadCV inst->libName (VariantStdCellName inst->cellName v) "layout"))
-          (t lCV=(ReadCV inst->libName inst->cellName "layout"))
-          )
-    lCV
+  (let (oldMaster aligned v lCV)
+    oldMaster=inst->master
+    aligned=nil
+    v=1
+    (while !aligned && v<=3
+           lCV=(FindLayoutVariant inst->master v)
+           (when lCV
+             inst->master=lCV
+             aligned=(CheckInstanceAlignment inst)
+             )
+           v=v+1
+           )
+    (unless aligned inst->master=oldMaster)
+    aligned
     )
   )

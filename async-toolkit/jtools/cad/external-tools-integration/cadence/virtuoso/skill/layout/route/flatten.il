@@ -671,10 +671,7 @@ useICV = t
                       )
                      (inst->viewName=="floorplan"
                       (LegalizeShortInstance inst)
-                      (when chooseVariant
-                        lCV = (ChooseLayoutVariant inst)
-                        (when lCV inst->master=lCV)
-                        )
+                      (when chooseVariant (ChooseLayoutVariant inst))
                       )
                      )
                )
