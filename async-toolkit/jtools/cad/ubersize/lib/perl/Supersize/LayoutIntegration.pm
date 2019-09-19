@@ -1489,6 +1489,7 @@ sub layout {
     }
     close IL;
     my $cmd = "cd $cds_wd; \\\n";
+    $cmd .= "env CDS_PROJECT_DIR=\$PWD ";
     $cmd .= (path_to_tool($SS_r, "layoutPlus"))[0] . 
         " -log \"$cds_wd/CDS.log\" -replay replay.il \\\n";
     supersize_system($SS_r, $cmd, $LOCAL_JOB, {}, "/dev/stdout");
