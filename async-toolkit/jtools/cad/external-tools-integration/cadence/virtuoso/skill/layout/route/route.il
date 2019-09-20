@@ -99,7 +99,7 @@
         SkipRoutingFileName inplacedPins
         excludeCellsFile
         (hierSep "!") ; a character that is legal, but not otherwise used
-        (statusNonDefault t) (errorStr "") placed)
+        (statusNonDefault t) (errorStr "") placed offset)
 
     (printf "Export Start %s\n" (getCurrentTime))
 
@@ -210,12 +210,14 @@
                                 nil
                                 nil))
                )
-;      (unless doPowerGates
-;        (DeletePwrGateCells ?CV ExportCV)
-;        )
-      (CheckPinsForExport ?CV ExportCV)
 
+      ; offset for cell alignment
+      offset = (cadr (GetCellAlignment ?CV ExportCV))
+      (OffsetEverything -(car offset):-(cadr offset) ?CV ExportCV)
       (dbSave ExportCV)
+
+      ; check
+      (CheckPinsForExport ?CV ExportCV)
 
       ; export DEF
       (when statusDef
@@ -657,3 +659,15 @@
   ok
   )
 )
+
+; Shift contents of a cell
+(defun OffsetEverything (offset @key (CV (geGetEditCellView)))
+  (let (contents)
+    contents = (list CV->prBoundary)
+    contents = (append contents CV->instances)
+    contents = (append contents CV->shapes)
+    contents = (append contents CV->mosiacs)
+    (foreach fig contents (dbMoveFig fig CV (list offset "R0")))
+    )
+  t
+  )
