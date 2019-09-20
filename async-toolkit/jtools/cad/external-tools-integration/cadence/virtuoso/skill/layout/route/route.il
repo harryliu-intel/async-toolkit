@@ -457,6 +457,8 @@
     ; choose libName and cellName
     (unless libName  libName  = CV->libName)
     (unless cellName cellName = CV->cellName)
+    (unless cellName (error "no cellName\n"))
+    (unless libName  libName = (GetCastLibName cellName))
 
     ; directories and files
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
