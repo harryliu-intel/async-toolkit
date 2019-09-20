@@ -452,7 +452,7 @@
         (defFile nil)
         )
   (let (TEMP WDIR SubcellLibNames libPath logFile Command status ImportCV layoutCV floorplanCV
-             win instmap SubcellLibString)
+             win instmap SubcellLibString offset)
 
     ; choose libName and cellName
     (unless libName  libName  = CV->libName)
@@ -498,6 +498,10 @@
 
     ; label pins
     (LabelPins ?CV ImportCV)
+    
+    ; restore custom alignment
+    offset = (cadr (GetCellAlignment ?CV ImportCV))
+    (OffsetEverything offset ?CV ImportCV)
     (dbSave ImportCV)
 
     ; change window to ImportCV
