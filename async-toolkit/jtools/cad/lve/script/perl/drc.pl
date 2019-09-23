@@ -143,7 +143,7 @@ sub run_drc {
    my @flows=split(',',$flow);
    foreach my $f (@flows) {
        $runset=$icv_runset_path . "/" . $rs_path . "/" . $f . "." . $rs_num . ".rs";
-       print "\npigfucker! " . $runset;
+       print "\nRunset path: " . $runset;
        if ( -e $runset) {
 	   $drc_runsets{$f}=$runset;
        }else{
