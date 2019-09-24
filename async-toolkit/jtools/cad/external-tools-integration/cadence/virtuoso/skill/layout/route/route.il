@@ -500,7 +500,7 @@
 
     ; label pins
     (LabelPins ?CV ImportCV)
-    
+
     ; restore custom alignment
     offset = (cadr (GetCellAlignment ?CV ImportCV))
     (OffsetEverything offset ?CV ImportCV)
@@ -529,6 +529,7 @@
   (DeleteKeepout ?CV CV)
   ; (ConvertFill ?CV CV)    ; HACK: ICC should distinguish fill shapes better
   ; (FixFillerCells ?CV CV) ; HACK: change threshold of spc00 to avoid NV1/PV1 DRC errors
+  (FixPowerPurpose ?CV CV) ; HACK: use vdd and gnd purpose on power nets
   (FixImportedPins ?CV CV) ; HACK: make sure pins and labels are "pin" purpose
   (defun RunAfterImportDef (@key (CV (geGetEditCellView))) t)
   (LoadWires ?CV CV)
@@ -578,7 +579,7 @@
       (printf "%s\n" Command)
       (shell Command )
       )
-    
+
     file=(infile filename)
     (unless file (error "GetCastCellName unable to read %s\n" filename))
     (while (gets line file)
@@ -595,6 +596,16 @@
 (defun LockInstances (@key (CV (geGetEditCellView)) (status "locked"))
   (foreach inst CV->instances inst->status=status)
   t
+  )
+
+; Converts pins and labels to "pin" purpose
+(defun FixPowerPurpose (@key (CV (geGetEditCellView)))
+  (foreach shape (setof x CV->shapes x->net && x->purpose=="drawing")
+           (cond ((member shape->net->name PowerNets)  shape->lpp=(list shape->layerName "vdd"))
+                 ((member shape->net->name GroundNets) shape->lpp=(list shape->layerName "gnd"))
+                 )
+           )
+  CV
   )
 
 ; Converts pins and labels to "pin" purpose
