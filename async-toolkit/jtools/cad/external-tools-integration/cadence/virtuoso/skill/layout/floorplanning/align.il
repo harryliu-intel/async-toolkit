@@ -21,13 +21,14 @@
     (cond (g0m
            height = (substring CopyExact 13 1)
            variant = (substring CopyExact 12 1)
+           ox=1.5*GridPolyPitch
            gx=GridPolyPitch
            gy=TrackPitch*(if height=="n" && CV->viewName=="floorplan" 1 2)
            (cond (CV->viewName=="floorplan" ox=0.5*GridPolyPitch)
                  (variant=="1" gx=3*GridPolyPitch ox=0.5*GridPolyPitch)
                  (variant=="2" gx=3*GridPolyPitch ox=1.5*GridPolyPitch)
                  (variant=="3" gx=3*GridPolyPitch ox=2.5*GridPolyPitch)
-                 (t (error "Illegal standard cell metal variant %s\n" variant))
+                 ; (t (error "Illegal standard cell metal variant %s\n" variant))
                  )
            oy=0
            align = (list gx:gy ox:oy)
@@ -144,8 +145,8 @@
   (let (misaligned)
     misaligned=nil
     (foreach inst CV->instances
-             (when inst->status=="locked" && !(CheckInstanceAlignment inst)
-                   misaligned=(cons inst misaligned))
+             (unless (CheckInstanceAlignment inst)
+               misaligned=(cons inst misaligned))
              )
     misaligned
     )
