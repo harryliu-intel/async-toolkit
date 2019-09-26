@@ -1227,7 +1227,7 @@ t
 
 ; Write LEF for a list of cell-views
 (defun ExportCellsLEF (filename cells)
-  (let (LefCellsList MWLefCellsList pout scratchlib srccv dstcv copyexact gcells)
+  (let (LefCellsList MWLefCellsList pout scratchlib srccv dstcv copyexact gcells libName cellName)
     (printf "Exporting LEF\n")
     ; translate cell names to Intel format
     ; there appears to be no name map file like with gds, so we have to copy the cells
@@ -1235,16 +1235,23 @@ t
     (techSetTechLibName scratchlib "1276")
 
     (foreach c cells
-      srccv = (dbOpenCellViewByType (car (NameParseCellName c->cellName)) c->cellName "layout")
+      cellName = c->cellName
+      libName = (GetCastLibName cellName)
+      srccv = (ReadCV libName cellName "layout")
       copyexact = (dbGetPropByName srccv "CopyExact")->value
-      srccv = (dbOpenCellViewByType (car (NameParseCellName c->cellName)) c->cellName "abstract")
-      (if copyexact then
-        gcells = (cons copyexact gcells)
-        dstcv = (betterCopyCellView srccv scratchlib->name copyexact "abstract" ?b_overwrite t)
-      else 
-        gcells = (cons srccv->cellName gcells)
-        dstcv = (betterCopyCellView srccv scratchlib->name srccv->cellName "abstract" ?b_overwrite t)
-        )
+      srccv = (ReadCV libName cellName "abstract")
+      (cond (copyexact
+             gcells = (cons copyexact gcells)
+             dstcv = (betterCopyCellView srccv scratchlib->name copyexact "abstract" ?b_overwrite t)
+             )
+            (srccv
+             gcells = (cons srccv->cellName gcells)
+             dstcv = (betterCopyCellView srccv scratchlib->name srccv->cellName "abstract" ?b_overwrite t)
+             )
+            (t
+             (printf "WARNING: no abstract exists for %s no LEF created\n" cellName)
+             )
+            )
       )
 
     ; write lef cells list
