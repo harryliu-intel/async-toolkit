@@ -1165,6 +1165,7 @@ wires_modtime = makeTable("wires" 0)
     dir = (NameGetCellPathFromCellName CV->cellName)
     (when (strncmp DFII_DIR dir (strlen DFII_DIR))==0
           dir = (substring dir (strlen DFII_DIR)+2)
+          dir = (strcat "./" dir)
           components = (parseString dir "/")
           dir = ""
           (for i 0 (length components)-1
