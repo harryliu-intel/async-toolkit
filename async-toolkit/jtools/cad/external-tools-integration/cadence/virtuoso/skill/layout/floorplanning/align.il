@@ -152,6 +152,15 @@
     )
   )
 
+; Select misaligned instances
+(defun SelectMisalignedInstances (@key (CV (geGetEditCellView)))
+  (let (insts)
+    insts = (MisalignedInstances ?CV CV)
+    (foreach inst insts (geSelectObject inst))
+    (length insts)
+    )
+  )
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Obsolete Functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun SetXAlignmentProp ( cv val )
