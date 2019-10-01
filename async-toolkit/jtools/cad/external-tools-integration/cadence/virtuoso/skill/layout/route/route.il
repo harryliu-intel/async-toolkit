@@ -684,6 +684,7 @@
     contents = (append contents CV->instances)
     contents = (append contents CV->shapes)
     contents = (append contents CV->mosiacs)
+    contents = (append contents CV->vias)
     (foreach fig contents (dbMoveFig fig CV (list offset "R0")))
     )
   t
