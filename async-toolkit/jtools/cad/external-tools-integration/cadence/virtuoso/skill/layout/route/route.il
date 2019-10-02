@@ -7,6 +7,7 @@
   (@key (CV (geGetEditCellView)) ; specify CellView or nil to use edit view
         (botMetal nil)           ; bottom metal layer to use, or nil to use wires.il
         (topMetal nil)           ; top metal layer to use, or nil to use wires.il
+        (topHalo t)              ; APR should add a top halo
         (Background nil)         ; optionally run in the background
         (importView "layout")    ; view name to import wiring back to
         (Mem 4000)               ; memory to use
@@ -34,7 +35,7 @@
 
     ; export
     CV = (RouteExport ?CV CV
-                          ?botMetal botMetal ?topMetal topMetal
+                          ?botMetal botMetal ?topMetal topMetal ?topHalo topHalo
                           ?doVerilog doVerilog ?doGds doGds ?doLef doLef ?doDef doDef
                           ?doNondefaultDef doNondefaultDef
                           ?doSkipRouting doSkipRouting
@@ -69,6 +70,7 @@
   (@key (CV (geGetEditCellView)) ; specify CellView or nil to use edit view
         (botMetal nil)           ; bottom metal layer to use, or nil to use wires.il
         (topMetal nil)           ; top metal layer to use, or nil to use wires.il
+        (topHalo t)              ; APR should add a top halo
         (doVerilog nil)          ; create cellName.v
         (doGds t)                ; create gds for subcells (used for power hookups and maybe fill)
         (doLef t)                ; create cellName.lef
@@ -136,7 +138,7 @@
     statusAlignment=misaligned==nil
 
     ; write proteus.config
-    (ProteusConfig ?CV CV ?botMetal botMetal ?topMetal topMetal ?metalFill metalFill
+    (ProteusConfig ?CV CV ?botMetal botMetal ?topMetal topMetal ?topHalo topHalo ?metalFill metalFill
                    ?timingDriven timingDriven ?softMacro softMacro
                    ?abstractCellName abstractCellName ?targetCellName targetCellName
                    ?ecoIter ecoIter)
@@ -332,6 +334,7 @@
   (@key (CV (geGetEditCellView)) ; specify CellView or use edit view
         (botMetal 0)             ; bottom metal layer
         (topMetal 8)             ; top metal layer
+        (topHalo t)              ; APR should add a top halo
         (metalFill t)
         (timingDriven t)
         (softMacro nil)          ; run APR
@@ -360,6 +363,7 @@
     (fprintf file "--output-dir=proteus\n")
     (fprintf file "--bottom-layer=%d\n" botMetal)
     (fprintf file "--top-layer=%d\n" topMetal)
+    (fprintf file "--top-halo=%d\n" (if topHalo 1 0))
     (fprintf file "--rdt-run-fill=%d\n" (if metalFill 1 0))
     (fprintf file "--timing-driven-route=%d\n" (if softMacro || timingDriven 1 0))
     (fprintf file "--rdt-eco-iter=%d\n" ecoIter)
