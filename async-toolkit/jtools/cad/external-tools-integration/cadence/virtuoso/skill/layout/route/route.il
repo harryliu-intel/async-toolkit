@@ -133,9 +133,7 @@
                         ?chooseVariant chooseVariant))
 
     ; check Alignment
-    misaligned = (MisalignedInstances ?CV CV)
-    (foreach inst misaligned (geSelectObject inst))
-    statusAlignment=misaligned==nil
+    statusAlignment = (SelectMisalignedInstances ?CV CV)==0
 
     ; write proteus.config
     (ProteusConfig ?CV CV ?botMetal botMetal ?topMetal topMetal ?topHalo topHalo ?metalFill metalFill
