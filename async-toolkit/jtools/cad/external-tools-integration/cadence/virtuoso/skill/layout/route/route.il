@@ -228,7 +228,7 @@
                      ExportCV->cellName
                      ExportCV->viewName
                      (sprintf nil "%s/%s.def.log" LEFDEF_DIR CV->cellName)
-                     "5.7")
+                     "5.8")
         (when (and statusDef doHierDef)
           div = (or (dbGetPropByName (dbGetPropByName (techGetTechFile CV)
                                                       "LEF Legacy")
