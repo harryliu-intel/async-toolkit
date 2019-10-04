@@ -368,7 +368,7 @@ useICV = t
       y0 = (round (cadr (car  bbox))/yp)
       y1 = (round (cadr (cadr bbox))/yp)
       (for row y0 y1-1
-           odd = (mod row 2)!=0
+           odd = (posmod row 2)!=0
            y = yp*(if odd row+1 row)
            orient = (if odd "MX" "R0")
            (foreach x (list (car (car bbox)) (car (cadr bbox)))
@@ -745,7 +745,7 @@ useICV = t
       x = (car  inst->xy)
       y = (cadr inst->xy)
       short = (substring type 13 1)=="n"
-      misalign = (mod (round y/TrackPitch) 2)==1
+      misalign = (posmod (round y/TrackPitch) 2)==1
       (when std && short && misalign
             (cond (inst->orient=="R0"   inst->orient="MX"   inst->xy=x:y+TrackPitch)
                   (inst->orient=="MX"   inst->orient="R0"   inst->xy=x:y-TrackPitch)
