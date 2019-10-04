@@ -9,7 +9,7 @@
   (when overwrite || !(dbGetPropByName CV "XAlignOffset")
         (dbReplaceProp CV "XAlignOffset" "float" (car  OffsetXY)))
   (when overwrite || !(dbGetPropByName CV "YAlignOffset")
-        (dbReplaceProp CV "YAlignOffset" "float" (cadr OffsetXY)))        
+        (dbReplaceProp CV "YAlignOffset" "float" (cadr OffsetXY)))
   t
   )
 
@@ -57,6 +57,15 @@
     )
   )
 
+; Cache the default alignment in cell properties
+(defun SetDefaultCellAlignment (@key (CV (geGetEditCellView)))
+  (let (align)
+    align = (DefaultCellAlignment ?CV CV)
+    (SetCellAlignment (car align) (cadr align) ?CV CV)
+    align
+    )
+  )
+
 ; compute GCD of two integers Euclid's Algorithm
 (defun GCD (a b)
   (cond (a==0 b)
@@ -96,7 +105,7 @@
 (defun MoveAligned (dir @key (dx 0) (dy 0) (CV (geGetEditCellView)) (instances (geGetSelSet)))
   (let (align px py ox oy x y gx gy nx ny aligned)
     instances = (setof inst instances
-      inst->cellView==CV && !(IsInstanceAnchored inst) && 
+      inst->cellView==CV && !(IsInstanceAnchored inst) &&
       (inst->objType=="inst" || inst->objType=="mosaic"))
     (when instances
       align=(GetCellAlignment ?CV CV)
