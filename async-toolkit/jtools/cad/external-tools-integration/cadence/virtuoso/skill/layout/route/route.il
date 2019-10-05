@@ -101,7 +101,7 @@
         SkipRoutingFileName inplacedPins
         excludeCellsFile
         (hierSep "!") ; a character that is legal, but not otherwise used
-        (statusNonDefault t) (errorStr "") placed offset)
+        (statusNonDefault t) (errorStr "") placed offset x y gx gy)
 
     (printf "Export Start %s\n" (getCurrentTime))
 
@@ -214,6 +214,20 @@
       ; offset for cell alignment
       offset = (cadr (GetCellAlignment ?CV ExportCV))
       (OffsetEverything -(car offset):-(cadr offset) ?CV ExportCV)
+
+      ; HACK: offset to avoid negative numbers because RDT is stupid
+      x=(car  (car ExportCV->bBox))
+      y=(cadr (car ExportCV->bBox))
+      (when x<0 || y<0
+            gx=(car  gridAlignment["lego"])
+            gy=(cadr gridAlignment["lego"])
+            offset = (list (floor x/gx)*gx (floor y/gy)*gy)
+            (dbReplaceProp ExportCV "StupidOffsetX" "float" (car  offset))
+            (dbReplaceProp ExportCV "StupidOffsetY" "float" (cadr offset))
+            (OffsetEverything -(car offset):-(cadr offset) ?CV ExportCV)
+            )
+
+      ; save
       (dbSave ExportCV)
 
       ; check
@@ -502,6 +516,15 @@
 
     ; label pins
     (LabelPins ?CV ImportCV)
+
+    ; HACK: offset to avoid negative numbers because RDT is stupid
+    offset = (list (dbGetPropByName ImportCV "StupidOffsetX")->value
+                   (dbGetPropByName ImportCV "StupidOffsetY")->value)
+    (when (car offset)!=nil || (cadr offset)!=nil
+          (OffsetEverything (car offset):(cadr offset) ?CV ImportCV)
+          (dbDeletePropByName ImportCV "StupidOffsetX")
+          (dbDeletePropByName ImportCV "StupidOffsetY")
+          )
 
     ; restore custom alignment
     offset = (cadr (GetCellAlignment ?CV ImportCV))
