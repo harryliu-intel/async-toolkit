@@ -556,6 +556,7 @@
 
 ; Finish router import, user over-ridable in wires.il
 (defun FinishRouterImport (@key (CV (geGetEditCellView)))
+  (DeleteMarkers ?CV CV)
   (DeleteKeepout ?CV CV)
   (DeleteDumbThings ?CV CV)
   ; (ConvertFill ?CV CV)    ; HACK: ICC should distinguish fill shapes better
@@ -578,6 +579,12 @@
                  fig->net = nil
                  )
            )
+  t
+  )
+
+; Delete markers
+(defun DeleteMarkers (@key (CV (geGetEditCellView)))
+  (foreach x CV->markers (dbDeleteObject x))
   t
   )
 
