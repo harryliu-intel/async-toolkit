@@ -519,9 +519,6 @@
     ImportCV = (dbOpenCellViewByType libName cellName viewName "maskLayout" "a")
     (dbRefreshCellView ImportCV)
 
-    ; label pins
-    (LabelPins ?CV ImportCV)
-
     ; HACK: offset to avoid negative numbers because RDT is stupid
     offset = (list (dbGetPropByName ImportCV "StupidOffsetX")->value
                    (dbGetPropByName ImportCV "StupidOffsetY")->value)
@@ -530,6 +527,9 @@
           (dbDeletePropByName ImportCV "StupidOffsetX")
           (dbDeletePropByName ImportCV "StupidOffsetY")
           )
+
+    ; label pins
+    (LabelPins ?CV ImportCV)
 
     ; restore custom alignment
     offset = (cadr (GetCellAlignment ?CV ImportCV))
@@ -557,6 +557,7 @@
 ; Finish router import, user over-ridable in wires.il
 (defun FinishRouterImport (@key (CV (geGetEditCellView)))
   (DeleteKeepout ?CV CV)
+  (DeleteDumbThings ?CV CV)
   ; (ConvertFill ?CV CV)    ; HACK: ICC should distinguish fill shapes better
   ; (FixFillerCells ?CV CV) ; HACK: change threshold of spc00 to avoid NV1/PV1 DRC errors
   (FixPowerPurpose ?CV CV) ; HACK: use vdd and gnd purpose on power nets
@@ -575,6 +576,19 @@
                                   fig->net->name==GNDNetName || fig->net->name==VddNetName)
                  fig->lpp = (list (car fig->lpp) "fill")
                  fig->net = nil
+                 )
+           )
+  t
+  )
+
+; Delete incorrect shapes that shouldn't be added by ICC or qfill
+(defun DeleteDumbThings (@key (CV (geGetEditCellView)))
+  (foreach fig CV->shapes
+           (when fig->lpp==(list "SRAM" "fill") ||
+                 fig->lpp==(list "POLYCHECK" "fill") ||
+                 fig->lpp==(list "poly" "fill") ||
+                 fig->lpp==(list "tcn" "fill")
+                 (dbDeleteObject fig)
                  )
            )
   t
