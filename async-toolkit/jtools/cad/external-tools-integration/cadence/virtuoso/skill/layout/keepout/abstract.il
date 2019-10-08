@@ -247,10 +247,10 @@
     (DeleteLabels ?CV abstractCV)
 
     ; chop flooded/extended keepout near pins
-    (for m 0 2 (AbstractCutAroundPins abstractCV MetalDrawing[m] MetalKeepout[m]))
+    (for m 0 4 (AbstractCutAroundPins abstractCV MetalDrawing[m] MetalKeepout[m]))
 
     ; create keepout for vias and metal
-    (for m 0 1
+    (for m 0 3
          name = Via[m]
          map = (list name)
          (foreach purpose (list "drawing" "gnd" "vdd" "fill")
@@ -259,7 +259,7 @@
          inLayerMap = (cons map inLayerMap)
          outLayerMap = (cons (list name (list Via[m] KeepoutPurpose)) outLayerMap)
          )
-    (for m 0 2
+    (for m 0 4
          name = Metal[m]
          map = (list name)
          (foreach purpose (list "drawing" "gnd" "vdd" "fill")
@@ -274,10 +274,10 @@
     (ICVLayerProcessorSimple CV abstractCV "mergeShape" inLayerMap outLayerMap)
 
     ; chop keepout overlapping pins
-    (for m 0 2 (AbstractCutAroundPins abstractCV MetalDrawing[m] MetalKeepout[m] ?cutout 0:0))
+    (for m 0 4 (AbstractCutAroundPins abstractCV MetalDrawing[m] MetalKeepout[m] ?cutout 0:0))
 
     ; add M1:keepout on edges if M2:fill is used in cell
-    (when hasM2fill (BlockEdgeM1 ?CV abstractCV))
+    (when TechLibName=="731" && hasM2fill (BlockEdgeM1 ?CV abstractCV))
 
     ; create final boundary shapes and blockage objects
     ; (leMergeShapes abstractCV->shapes)
@@ -320,7 +320,7 @@
 
     ; make all remaining vias a member of NULL net, per Georgois's request
     nullnet = (dbCreateNet abstractCV "NULL")
-    (for m 0 2
+    (for m 0 3
       (foreach viashape abstractCV->shapes
         (when (car viashape->lpp)==Via[m]
           (when !viashape->net
