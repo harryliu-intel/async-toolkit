@@ -59,7 +59,7 @@
 (defun UpdateFloorplanCore (CV indent)
   (let (netFile NetListTable rx ux uy w h instanceTable netTable termTable
         dirFile DirectiveTable 
-        lastArrayName points realInstances isLeaf isRouted lCV align CopyExact)
+        lastArrayName points realInstances isLeaf isRouted lCV align)
     (fprintf LOG "%sUpdate floorplan of %s\n" indent CV->cellName)
     mastersVisited[CV] = t
 
@@ -149,12 +149,6 @@
         (when points (dbCreatePRBoundary CV points))
         )
 
-      ; transfer CopyExact property
-      (when lCV
-        CopyExact = (dbGetPropByName lCV "CopyExact")
-        (when CopyExact (dbReplaceProp CV "CopyExact" "string" CopyExact->value))
-        )
- 
       ; set alignment based on LCD alignment of subcells
       (when CV->instances
         align = (GetLCDAlignment ?instances CV->instances)
