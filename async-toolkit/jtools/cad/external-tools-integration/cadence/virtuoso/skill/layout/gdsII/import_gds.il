@@ -65,20 +65,13 @@ importPostProcessAction =
       pcre1 = (pcreCompile "<")
       pcre2 = (pcreCompile ">")
       pcre3 = (pcreCompile "/")
-      pcre4 = (pcreCompile "^M.ROUT$") ; delete these from SRAM
       (foreach label (setof x CV->shapes x->objType=="label")
                text = label->theLabel
-               (cond ((pcreExecute pcre4 text) (dbDeleteObject label))
-                     (t 
-                      text = (car (parseString text ":"))   ; delete :* suffix
-                      text = (pcreReplace pcre1 text "[" 0) ; replace < with [
-                      text = (pcreReplace pcre2 text "]" 0) ; replace > with ]
-                      text = (pcreReplace pcre3 text "." 0) ; replace / with .
-                      label->theLabel = text
-                      label->height = 0.02
-                      label->justify = "centerCenter"
-                      )
-                     )
+               text = (car (parseString text ":"))   ; delete :* suffix
+               text = (pcreReplace pcre1 text "[" 0) ; replace < with [
+               text = (pcreReplace pcre2 text "]" 0) ; replace > with ]
+               text = (pcreReplace pcre3 text "." 0) ; replace / with .
+               label->theLabel = text
                )
       (foreach inst CV->instances
                text = (pcreReplace pcre3 inst->name "." 0) ; replace / with .
