@@ -154,18 +154,16 @@ while ($line) {
 
         # emit
         for ($f=0; $f<$folds; $f++) {
-            my $suffix = "";
-            if ($folds>1) {
-                $suffix = "_${f}";
-                $parameters{"w"} = ($maxW-($f<$small)) * $gridW;
-            }
+            if ($folds>1) { $parameters{"w"} = ($maxW-($f<$small)) * $gridW; }
             $w2 = $parameters{"w"}/$grid;
             $l2 = $parameters{"l"}/$grid;
             $type =~ /^(.)/;
             my $tc = $1;
-            $num_mos++ if ($cell eq $top);
-            push @out, "Device ${name}${suffix} nets=[ $drain $gate $source $bulk ] " .
-                "type=$tc model=$type w=$w2 l=$l2\n" if ($cell eq $top);
+            if ($cell eq $top) {
+                push @out, "Device M${num_mos} nets=[ $drain $gate $source $bulk ] " .
+                    "type=$tc model=$type w=$w2 l=$l2\n";
+                $num_mos++;
+            }
         }
 
     } elsif ($line =~ s/^X//i) {
