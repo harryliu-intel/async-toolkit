@@ -647,7 +647,7 @@ useICV = t
 ; go straight from floorplan to flatten view
 (defun DirectFlatten (@key (CV (geGetEditCellView)) (RegenerateFromCast nil) (flatViewName "flatten")
                            (chooseVariant nil))
-  (let (not_routed progress)
+  (let (not_routed progress lCV)
 
     ; create flatten view
     CV = (betterCopyCellView CV CV->libName CV->cellName flatViewName nil nil t)
@@ -661,6 +661,7 @@ useICV = t
     (while progress
       progress=nil
       (foreach inst CV->instances
+               lCV=(ReadCV inst->libName inst->cellName "layout")
                (cond (inst->objType=="mosaic"
                       (dbFlattenInst inst 1)
                       progress=t
@@ -668,6 +669,9 @@ useICV = t
                      (not_routed[inst->cellName] && inst->viewName=="floorplan"
                       (TrivialInline inst ?CV CV)
                       progress=t
+                      )
+                     (inst->viewName=="floorplan" && lCV
+                      inst->master=lCV
                       )
                      (inst->viewName=="floorplan"
                       (LegalizeShortInstance inst)
