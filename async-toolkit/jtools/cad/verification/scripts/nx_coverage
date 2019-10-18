@@ -53,7 +53,7 @@ my $only_publish=0;
 
 
 
-my $vcsCoverageMetrics="line+cond+tgl+fsm";
+my $vcsCoverageMetrics="line+cond+tgl+fsm+group";
 
 # vcs coverage source directory file
 my $urgFile=undef;
