@@ -1,3 +1,12 @@
+; does this cell appear to use metal variants?
+(defun HasLayoutVariants (@key (CV (geGetEditCellView)))
+  (let (suffix)
+    suffix = (substring CV->cellName (strlen CV->cellName)-1)
+    suffix=="v1" || suffix=="v2" || suffix=="v3" ||
+      CV->libName=="vendor.intel.g0m" || CV->libName=="vendor.intel.g1m"
+    )
+  )
+
 ; Find layout CV with appropriate v1/v2/v3 variant of current CV
 (defun FindLayoutVariant (CV v)
   (let (cellName suffix components subtype baseName)

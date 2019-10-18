@@ -670,12 +670,12 @@ useICV = t
                       (TrivialInline inst ?CV CV)
                       progress=t
                       )
-                     (inst->viewName=="floorplan" && lCV
-                      inst->master=lCV
-                      )
-                     (inst->viewName=="floorplan"
+                     (inst->viewName=="floorplan" && (HasLayoutVariants ?CV inst->master)
                       (LegalizeShortInstance inst)
                       (when chooseVariant (ChooseLayoutVariant inst))
+                      )
+                     (inst->viewName=="floorplan" && lCV
+                      inst->master=lCV
                       )
                      )
                )
