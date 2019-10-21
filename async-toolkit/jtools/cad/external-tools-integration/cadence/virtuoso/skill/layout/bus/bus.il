@@ -11,7 +11,6 @@ wires_modtime = makeTable("wires" 0)
 
 (defun BusDefaults ()
   busContacts = t   ; draw the contacts
-  busKeepout  = nil ; draw keepout instead of metal
   busTopMetal = nil ; use top metal in both directions
   busContactNum = 1 ; unique number for contact instance names
   busGuideInstName = "buswires" ; global default guideInstName
@@ -271,7 +270,7 @@ wires_modtime = makeTable("wires" 0)
     y1 = (cadr nxy1)
     fig = (dbCreatePath CV layer (list nxy0 nxy1) width "varExtendExtend")
     (SetBusProp fig)
-    net = (MakeNet CV name)
+    (unless (cadr layer)=="keepout" net = (MakeNet CV name))
     fig->beginExt = (if beginExt width/2 0)
     fig->endExt = (if endExt width/2 0)
     fig->routeStatus = "locked"
@@ -369,7 +368,7 @@ wires_modtime = makeTable("wires" 0)
 ; (DrawWire metal67 "a" 0.36 (list 0:0 9.6:0 9.6:9.6 19.2:9.6))
 (defun DrawWire (layers name width points
                         @key (isPin nil) (startVias nil) (endVias nil) (doubleVias t) (verticalVias nil) (positiveVias nil) 
-                        (guideInst nil) (flipX nil) (flipY nil) (pattern evalstring("e1of4"))
+                        (guideInst nil) (flipX nil) (flipY nil) (pattern nil) (busKeepout nil)
                         (CV (geGetEditCellView)))
   (let (horz_layer vert_layer via viadir last first lastIndex index cuts layer hv dir prevdir templast (types (ClassifyPoints points)) (dirs (ClassifyDirs points)) corrected correctOP)
     corrected = nil
@@ -400,6 +399,7 @@ wires_modtime = makeTable("wires" 0)
                dir     = nth(index dirs)
              )
              layer = (if (almostEqual (car point) (car last)) vert_layer horz_layer)
+             (when busKeepout layer=(list (car layer) "keepout"))
              (DrawSegment name layer width last point
                           (index!=0) (index!=lastIndex) isPin ?guideInst guideInst ?CV CV)
 	when(!verticalVias
@@ -457,11 +457,10 @@ wires_modtime = makeTable("wires" 0)
     )
   )
 
-; add suffix to a prefix (unless the prefix is empty, in which case result is too)
+; add suffix to a prefix or keep suffix if it is a power net
 (defun AddSuffix (prefix suffix)
   (cond ((member suffix PowerGroundNets) || prefix==nil suffix)
-        (prefix!="" (sprintf nil "%s%s" prefix suffix))
-        (prefix=="" "")
+        (t (sprintf nil "%s%s" prefix suffix))
         )
   )
 
@@ -471,7 +470,7 @@ wires_modtime = makeTable("wires" 0)
                            @key (flipX nil) (flipY nil) (isPin nil)
                            (startVias nil) (endVias nil) (doubleVias t) (verticalVias nil) (positiveVias nil) 
                            (altLayerPatternList nil)
-                           (guideInstName nil) (guideInst nil) (shieldM2 t) (drawShield nil)
+                           (guideInstName nil) (guideInst nil) (shieldM2 t) (drawShield nil) (busKeepout nil)
                            (CV (geGetEditCellView)))
   (let (newpoints node width offset index x y hv
         offsetX offsetY nextOffset curOffset lastLayer curLayer tmpx tmpy
@@ -603,7 +602,7 @@ wires_modtime = makeTable("wires" 0)
           (DrawWire (if layer_override layer_override curLayer)
                     (AddSuffix prefix node) width newpoints
                     ?isPin isPin ?startVias stVias ?endVias eVias ?verticalVias verticalVias ?positiveVias positiveVias 
-                    ?doubleVias doubleVias ?guideInst guideInst ?flipX flipX ?flipY flipY ?pattern pattern ?CV CV)
+                    ?doubleVias doubleVias ?guideInst guideInst ?flipX flipX ?flipY flipY ?pattern pattern ?busKeepout busKeepout ?CV CV)
 
       when( drawShield DrawBusShield(newpoints (if layer_override layer_override curLayer) prefix ?shieldM2 shieldM2 ?CV CV) )
           
@@ -623,7 +622,7 @@ wires_modtime = makeTable("wires" 0)
                            @key (flipX nil) (flipY nil) (isPin nil)
                            (startVias nil) (endVias nil) (doubleVias t) (verticalVias nil) (positiveVias nil) 
                            (guideInstName nil) (guideInst nil)
-                           (only_evens nil) (only_odds nil) (drawShield nil)
+                           (only_evens nil) (only_odds nil) (drawShield nil) (busKeepout nil)
                            (CV (geGetEditCellView)))
   (let (x y o hv xoff yoff newpoints index index_list
         (types (ClassifyPoints points))
@@ -682,7 +681,7 @@ wires_modtime = makeTable("wires" 0)
          (DrawChannel layers pattern (AddSuffix prefix (sprintf nil "[%d]" i)) newpoints
                       ?flipX flipX ?flipY flipY ?verticalVias verticalVias ?positiveVias positiveVias 
                       ?isPin isPin ?startVias startVias ?endVias endVias ?doubleVias doubleVias
-                      ?guideInst guideInst ?drawShield drawShield ?CV CV)
+                      ?guideInst guideInst ?drawShield drawShield ?busKeepout busKeepout ?CV CV)
          )
     )
   t
@@ -751,8 +750,9 @@ wires_modtime = makeTable("wires" 0)
              rotate    = (GetProp obj "RotateMetalOrientation" nil)
              vertical  = (GetProp obj "BusVerticalVias" nil)
              positive  = (GetProp obj "PositiveViaShift" nil)
+             busKeepout = (GetProp obj "BusKeepout" nil)
              props = (list pattern obj->lpp pre isPin startVias endVias flipX flipY pitch double
-                           shield rotate vertical positive)
+                           shield rotate vertical positive busKeepout)
              (when (and pattern!=nil (or name==nil pattern==name))
                paths = (cons (list props obj->points) paths))
              )
@@ -762,7 +762,8 @@ wires_modtime = makeTable("wires" 0)
 
 ; create bus properties if necessary
 (defun CreateBusProps (@key (paths nil))
-  (let (pattern prefix pin flipX flipY startVias endVias doubleVias drawShield rotateMetals verticalVias positiveVias )
+  (let (pattern prefix pin flipX flipY startVias endVias doubleVias drawShield
+                rotateMetals verticalVias positiveVias busKeepout )
     paths = (if paths==nil (geGetSelSet) paths)
     (foreach obj paths
              (cond (obj->objType=="path"
@@ -779,6 +780,7 @@ wires_modtime = makeTable("wires" 0)
                                   rotateMetals = (GetProp obj "RotateMetalOrientation" nil)
                                   verticalVias = (GetProp obj "BusVerticalVias" nil)
                                   positiveVias = (GetProp obj "PositiveViaShift" nil)
+                                  busKeepout = (GetProp obj "BusKeepout" nil)
                                   ; delete properties
                                   (dbDeletePropByName obj "BusPattern")
                                   (dbDeletePropByName obj "BusPrefix")
@@ -793,6 +795,7 @@ wires_modtime = makeTable("wires" 0)
                                   (dbDeletePropByName obj "RotateMetalOrientation")
                                   (dbDeletePropByName obj "BusVerticalVias")
                                   (dbDeletePropByName obj "PositiveViaShift")
+                                  (dbDeletePropByName obj "BusKeepout")
                                   ; set new properties
                                   (dbReplaceProp obj "BusPattern" "string" pattern)
                                   (dbReplaceProp obj "BusPrefix" "string" prefix)
@@ -807,6 +810,7 @@ wires_modtime = makeTable("wires" 0)
                                   (dbReplaceProp obj "RotateMetalOrientation" "boolean" rotateMetals)
                                   (dbReplaceProp obj "BusVerticalVias" "boolean" verticalVias)
                                   (dbReplaceProp obj "PositiveViaShift" "boolean" positiveVias)
+                                  (dbReplaceProp obj "BusKeepout" "boolean" busKeepout)
                                   ))
              )
     )
