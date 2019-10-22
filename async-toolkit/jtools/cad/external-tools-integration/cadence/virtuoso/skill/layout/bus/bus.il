@@ -731,7 +731,7 @@ wires_modtime = makeTable("wires" 0)
 ; get list of waypoints and layers from (optionally) named shapes
 (defun GetPaths (name @key (guideInstName nil) (CV (geGetEditCellView)))
   (let (paths shapes pattern pre isPin startVias endVias flipX flipY pitch double
-              shield rotate vertical positive props)
+              shield rotate vertical positive props busKeepout)
     (cond (guideInstName!=nil CV = (GetGuideInst nil guideInstName ?CV CV)->master))
     shapes = (setof x CV->shapes x->objType=="path" && (geIsFigSelected x)) ; avoid geGetSelSet
     (when shapes (printf "GetPaths with selected shapes only"))
@@ -912,7 +912,7 @@ wires_modtime = makeTable("wires" 0)
 (defun DrawChannels (layers pattern prefix paths
                             @key (guideInstName nil) (guideInst nil) (CV (geGetEditCellView)))
   (let (props points layer isPin startVias endVias doubleVias flipX flipY busShield rotateMetals verticalVias positiveVias 
-              patlist prelist pre buspat)
+              patlist prelist pre buspat busKeepout)
 
     ; set guide instance
     guideInst = (GetGuideInst guideInst guideInstName ?CV CV)
@@ -937,6 +937,7 @@ wires_modtime = makeTable("wires" 0)
              rotateMetals = (nth 11 props)
              verticalVias = (nth 12 props)
 	     positiveVias = (nth 13 props)
+             busKeepout = (nth 14 props)
 
              ; iterate over BusPattern/BusPrefix lists
              (foreach pat patlist
@@ -949,7 +950,7 @@ wires_modtime = makeTable("wires" 0)
                                      ?flipX flipX ?flipY flipY ?isPin isPin
                                      ?startVias startVias ?endVias endVias
                                      ?doubleVias doubleVias ?verticalVias verticalVias ?positiveVias positiveVias  
-                                     ?guideInst guideInst ?drawShield busShield ?CV CV)
+                                     ?guideInst guideInst ?drawShield busShield ?busKeepout busKeepout ?CV CV)
                         )
                       )
              )
