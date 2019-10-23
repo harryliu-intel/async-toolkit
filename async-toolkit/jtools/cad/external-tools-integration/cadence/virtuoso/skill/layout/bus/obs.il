@@ -89,7 +89,7 @@
 (defun DrawObstructions (@key (upto 128) (guideInstName nil) (guideInst nil)
                               (CV (geGetEditCellView)))
   (let (view obstype top pitch pattern flip track
-             busKeepout busPatterns busUseDefaultPatterns)
+             busPatterns busUseDefaultPatterns)
 
     ; set guide instance
     guideInst = (GetGuideInst guideInst guideInstName ?CV CV)
@@ -102,11 +102,10 @@
              )
 
     ; draw bus paths with BusPattern "obstruction"
-    busKeepout = t
     busUseDefaultPatterns = nil
     busPatterns = (list (list "obstruction" node_TW))
-    (DrawChannels      nil nil nil nil ?guideInst guideInst ?CV CV)
-    (DrawChannelArrays nil nil nil nil nil nil ?guideInst guideInst ?CV CV)
+    (DrawChannels      nil nil nil nil ?guideInst guideInst ?CV CV ?busKeepout t)
+    (DrawChannelArrays nil nil nil nil nil nil ?guideInst guideInst ?CV CV ?busKeepout t)
 
     ; draw obstructM*
     (for i 2 7
