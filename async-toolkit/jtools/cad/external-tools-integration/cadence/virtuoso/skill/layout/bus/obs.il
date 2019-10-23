@@ -101,12 +101,6 @@
              (when (isBusObs shape) (DrawObsLayers view shape) )
              )
 
-    ; draw bus paths with BusPattern "obstruction"
-    busUseDefaultPatterns = nil
-    busPatterns = (list (list "obstruction" node_TW))
-    (DrawChannels      nil nil nil nil ?guideInst guideInst ?CV CV ?busKeepout t)
-    (DrawChannelArrays nil nil nil nil nil nil ?guideInst guideInst ?CV CV ?busKeepout t)
-
     ; draw obstructM*
     (for i 2 7
          obstype=(sprintf nil "obstructM%d" i)
