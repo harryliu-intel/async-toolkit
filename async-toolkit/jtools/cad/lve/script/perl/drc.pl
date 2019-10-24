@@ -124,7 +124,7 @@ sub run_drc {
    my $cmd_config="$pdk_root/share/Fulcrum/icv/drc/drc_cmd.config";
    my $rs_path="";
    my $rs_num="1";
-   my $runset="";
+   $runset="";
    open(CMD_CFG, "$cmd_config") or die "Cannot read $cmd_config\n";
    while(my $line=<CMD_CFG>) {
        my @data = split("=", $line);
