@@ -994,6 +994,7 @@ wires_modtime = makeTable("wires" 0)
              rotateMetals = (nth 11 props)
              verticalVias = (nth 12 props)
 	     positiveVias = (nth 13 props)
+             busKeepout = (nth 14 props)
 
              ; iterate over BusPattern/BusPrefix lists
              (for n 0 (length patlist)-1
@@ -1038,7 +1039,7 @@ wires_modtime = makeTable("wires" 0)
                                       ?flipX flipX ?flipY flipY ?isPin isPin
                                       ?startVias startVias ?endVias endVias
                                       ?doubleVias doubleVias ?verticalVias verticalVias ?positiveVias positiveVias 
-                                      ?guideInst guideInst
+                                      ?guideInst guideInst ?busKeepout busKeepout
                                       ?only_evens evens ?only_odds odds ?drawShield busShield ?CV CV)
                     )
                   )
