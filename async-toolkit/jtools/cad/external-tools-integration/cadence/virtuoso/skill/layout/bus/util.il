@@ -207,14 +207,10 @@
 
 ; delete shapes and vias that have BusScriptObject property
 (defun DeleteBusWires (@key (CV (geGetEditCellView)))
-  (let (shapes vias blockages)
-    shapes = (setof obj CV->shapes (IsBusObject obj))
-    vias = (GetBusScriptVias CV)
-    blockages = (setof obj CV->blockages (IsBusObject obj))
-    (foreach shape shapes (dbDeleteObject shape))
-    (foreach via vias (dbDeleteObject via))
-    (foreach blockage blockages (dbDeleteObject blockage))
-    )
+  (foreach shape (setof obj CV->shapes (IsBusObject obj) && obj->objType=="path") (dbDeleteObject shape))
+  (foreach shape (setof obj CV->shapes (IsBusObject obj) && obj->objType=="rect") (dbDeleteObject shape))
+  (foreach blockage (setof obj CV->blockages (IsBusObject obj)) (dbDeleteObject blockage))
+  (foreach via (GetBusScriptVias CV) (dbDeleteObject via))
   t
   )
 
