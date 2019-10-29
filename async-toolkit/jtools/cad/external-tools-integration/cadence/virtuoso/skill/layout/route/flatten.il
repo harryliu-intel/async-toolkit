@@ -93,7 +93,7 @@ useICV = t
 
     ; route abutting pins
     (when ConnectAbuttingPins && !softMacro
-      (RouteNearby ?CV CV ?topShapes t)
+      (RouteNearby ?CV CV ?topShapes t ?offGrid t)
       )
 
     ; fix things for DEF export
