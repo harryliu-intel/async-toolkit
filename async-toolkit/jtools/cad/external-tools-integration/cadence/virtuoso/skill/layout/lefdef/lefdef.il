@@ -1238,10 +1238,10 @@ t
       cellName = c->cellName
       libName = (GetCastLibName cellName)
       srccv = (ReadCV libName cellName "layout")
-      (unless srcv (error "No layout view for %s\n" cellName))
+      (unless srccv (error "No layout view for %s\n" cellName))
       copyexact = (dbGetPropByName srccv "CopyExact")->value
       srccv = (ReadCV libName cellName "abstract")
-      (unless srcv (error "No abstract view for %s\n" cellName))
+      (unless srccv (error "No abstract view for %s\n" cellName))
       (cond (copyexact
              gcells = (cons copyexact gcells)
              dstcv = (betterCopyCellView srccv scratchlib->name copyexact "abstract" ?b_overwrite t)
