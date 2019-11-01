@@ -1610,7 +1610,7 @@ $(ROOT_TARGET_DIR)/%/lvs_graybox_list : $$(call GET_DF2D,$$(@D)) $$(call GET_CEL
 	QB_DIAG_FILE='$(@D)/lvs.graylist.diag' QB_RUN_NAME='lve_lvs_graylist' \
 	  QB_LOCAL=$(QB_LOCAL) QRSH_FLAGS="$(PACKAGE_FLAGS)" \
 	   $(EXEC) $(CAST_QUERY) --cast-path='$(CAST_PATH)' \
-	  --task=subcells --filter=one-level --routed \
+	  --task=subcells --filter="one-level&!ancestor=standard.attributes.signoff_lvs" --routed \
 	  --output='$@' \
 	  --cell='$(call GET_CAST_FULL_NAME,$(@D))'; \
 	  : < '$@' ; \
