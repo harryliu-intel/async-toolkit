@@ -1227,7 +1227,7 @@ t
 
 ; Write LEF for a list of cell-views
 (defun ExportCellsLEF (filename cells)
-  (let (LefCellsList MWLefCellsList pout scratchlib srccv dstcv copyexact gcells libName cellName)
+  (let (LefCellsList MWLefCellsList pout scratchlib srccv dstcv copyexact gcells libName cellName status)
     (printf "Exporting LEF\n")
     ; translate cell names to Intel format
     ; there appears to be no name map file like with gds, so we have to copy the cells
@@ -1268,17 +1268,17 @@ t
     (close pout)
 
     ; export LEF for cells
-    (ldtrLefWriteOA
-     (sprintf nil "%s.lef" filename)
-     TechLibName
-     nil
-     LefCellsList
-     nil
-     (sprintf nil "%s.lef.log" filename)
-     t
-     "5.7"
-     )
-
-     (ddDeleteLocal (ddGetObjLib scratchlib))
+    status = (ldtrLefWriteOA
+              (sprintf nil "%s.lef" filename)
+              TechLibName
+              nil
+              LefCellsList
+              nil
+              (sprintf nil "%s.lef.log" filename)
+              t
+              "5.7"
+              )
+    (ddDeleteLocal (ddGetObjLib scratchlib))
+    status
     )
   )
