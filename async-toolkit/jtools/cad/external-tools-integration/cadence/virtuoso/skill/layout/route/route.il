@@ -561,7 +561,6 @@
   (DeleteDumbThings ?CV CV)
   ; (ConvertFill ?CV CV)    ; HACK: ICC should distinguish fill shapes better
   ; (FixFillerCells ?CV CV) ; HACK: change threshold of spc00 to avoid NV1/PV1 DRC errors
-  (FixPowerPurpose ?CV CV) ; HACK: use vdd and gnd purpose on power nets
   (FixImportedPins ?CV CV) ; HACK: make sure pins and labels are "pin" purpose
   (defun RunAfterImportDef (@key (CV (geGetEditCellView))) t)
   (LoadWires ?CV CV)
@@ -594,7 +593,8 @@
            (when fig->lpp==(list "SRAM" "fill") ||
                  fig->lpp==(list "POLYCHECK" "fill") ||
                  fig->lpp==(list "poly" "fill") ||
-                 fig->lpp==(list "tcn" "fill")
+                 fig->lpp==(list "tcn" "fill") ||
+                 fig->purpose=="fill" ; HACK: delete fill until we import coloring better
                  (dbDeleteObject fig)
                  )
            )
@@ -650,16 +650,6 @@
   )
 
 ; Converts pins and labels to "pin" purpose
-(defun FixPowerPurpose (@key (CV (geGetEditCellView)))
-  (foreach shape (setof x CV->shapes x->net && x->purpose=="drawing")
-           (cond ((member shape->net->name PowerNets)  shape->lpp=(list shape->layerName "vdd"))
-                 ((member shape->net->name GroundNets) shape->lpp=(list shape->layerName "gnd"))
-                 )
-           )
-  CV
-  )
-
-; Converts pins and labels to "pin" purpose
 (defun FixImportedPins (@key (CV (geGetEditCellView)))
   (let (net purpose)
     (foreach label (setof x CV->shapes x->objType=="label" && x->purpose=="drawing")
@@ -670,8 +660,6 @@
                    ((member pin->net->name GroundNets) purpose="gnd")
                    (t                                  purpose="drawing")
                    )
-             rect = (dbCreateRect CV (list pin->layerName purpose) pin->bBox)
-             rect->net = pin->net
              pin->lpp = (list pin->layerName "pin")
              )
     )
