@@ -411,7 +411,7 @@ foreach my $type ('ground', 'power') {
     }
     foreach my $name (sort @{$special_net{$type}}) {
         my $v = get_voltage($name, $type);
-        print RUN_FILE "V${name} ${name} 0 pwl (0 0 $slope_time $v)\n"
+        print RUN_FILE "V${name} ${name} 0 pwl (0 0 $slope_time '$v')\n"
     }
 }
 if (defined $special_net{'reset'}) {
@@ -419,7 +419,7 @@ if (defined $special_net{'reset'}) {
         my $t0 = $reset_time;
         my $t1 = $t0+$slope_time;
         my $v = get_voltage($name, 'reset');
-        print RUN_FILE "V${name} ${name} 0 pwl (0 0 $t0 0 $t1 $v)\n";
+        print RUN_FILE "V${name} ${name} 0 pwl (0 0 $t0 0 $t1 '$v')\n";
     }
 }
 if (defined $special_net{'start'}) {
@@ -427,13 +427,13 @@ if (defined $special_net{'start'}) {
         my $t0 = $reset_time+$start_time;
         my $t1 = $t0+$slope_time;
         my $v = get_voltage($name, 'start');
-        print RUN_FILE "V${name} ${name} 0 pwl (0 0 $t0 0 $t1 $v)\n";
+        print RUN_FILE "V${name} ${name} 0 pwl (0 0 $t0 0 $t1 '$v')\n";
     }
 }
 if (defined $special_net{'delay'}) {
     foreach my $name (sort @{$special_net{'delay'}}) {
         my $v = get_voltage($name, 'delay');
-        print RUN_FILE "V${name} ${name} 0 pwl (0 0 $slope_time $v)\n";
+        print RUN_FILE "V${name} ${name} 0 pwl (0 0 $slope_time '$v')\n";
     }
 }
 print RUN_FILE "\n";
