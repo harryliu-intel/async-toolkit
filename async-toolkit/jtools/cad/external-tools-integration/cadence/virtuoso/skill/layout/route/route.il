@@ -651,7 +651,7 @@
 
 ; Converts pins and labels to "pin" purpose
 (defun FixImportedPins (@key (CV (geGetEditCellView)))
-  (let (net purpose)
+  (let (net purpose rect)
     (foreach label (setof x CV->shapes x->objType=="label" && x->purpose=="drawing")
              label->lpp = (list label->layerName "pin")
              )
@@ -660,6 +660,8 @@
                    ((member pin->net->name GroundNets) purpose="gnd")
                    (t                                  purpose="drawing")
                    )
+             rect = (dbCreateRect CV (list pin->layerName purpose) pin->bBox)
+             rect->net = pin->net
              pin->lpp = (list pin->layerName "pin")
              )
     )
