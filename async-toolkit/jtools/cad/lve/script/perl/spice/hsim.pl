@@ -497,8 +497,8 @@ foreach my $node (sort @{$special_net{'power'}}) {
     print RUN_FILE ".measure tran AvgCurrent_${node} avg i(V$node) $win\n";
     print RUN_FILE ".measure tran MaxCurrent_${node} max i(V$node) $win\n";
     my $v = get_voltage($node, 'power');
-    print RUN_FILE ".measure tran AvgPower_${node} PARAM='(-AvgCurrent_${node}*$v)'\n";
-    print RUN_FILE ".measure tran MaxPower_${node} PARAM='(-MaxCurrent_${node}*$v)'\n";
+    print RUN_FILE ".measure tran AvgPower_${node} PARAM='(-AvgCurrent_${node}*($v))'\n";
+    print RUN_FILE ".measure tran MaxPower_${node} PARAM='(-MaxCurrent_${node}*($v))'\n";
     print RUN_FILE "\n";
 }
 
