@@ -300,14 +300,11 @@ EOF
 
 ####################################### Common ############################################
 
-# include files
+# PDK include files
 print RUN_FILE "* Include\n";
 foreach my $file (@pdk_include) {
     my $f = "$pdk_root/share/Fulcrum/$file";
-print RUN_FILE ".include '$f'\n" if (-e $f);
-}
-foreach my $file (@extra_includes) {
-    print RUN_FILE ".include '$file'\n";
+    print RUN_FILE ".include '$f'\n" if (-e $f);
 }
 print RUN_FILE "\n";
 
@@ -448,6 +445,9 @@ if (!($env_spice_file eq "")) {
 .param PrsDelay=$prsdelay
 .include '$env_spice_file'
 EOF
+}
+foreach my $file (@extra_includes) {
+    print RUN_FILE ".include '$file'\n" if (-e $file);
 }
 print RUN_FILE "\n";
 
