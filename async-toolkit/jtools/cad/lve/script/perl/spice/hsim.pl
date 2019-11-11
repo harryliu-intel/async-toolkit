@@ -266,9 +266,6 @@ EOF
     }
     if ($totem_mode) {
         print RUN_FILE ".param HSIMOUTPUTTBL=rawfile\n" if ($totem_mode);
-        foreach my $file (@extra_includes) {
-            print RUN_FILE ".include '$file'\n";
-        }
     }
 }
 
@@ -303,11 +300,14 @@ EOF
 
 ####################################### Common ############################################
 
-# PDK include files
+# include files
 print RUN_FILE "* Include\n";
 foreach my $file (@pdk_include) {
     my $f = "$pdk_root/share/Fulcrum/$file";
-    print RUN_FILE ".include '$f'\n" if (-e $f);
+print RUN_FILE ".include '$f'\n" if (-e $f);
+}
+foreach my $file (@extra_includes) {
+    print RUN_FILE ".include '$file'\n";
 }
 print RUN_FILE "\n";
 
