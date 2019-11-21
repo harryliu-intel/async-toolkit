@@ -18,7 +18,8 @@ TYPE
   ServerCl = Thread.Closure OBJECT
     mu : MUTEX;
     c  : Thread.Condition;
-    ready := FALSE;
+    ready := -1;
+    port : IP.Port;
   OVERRIDES
     apply := Server;
   END;
@@ -26,12 +27,12 @@ TYPE
 PROCEDURE Server(cl : ServerCl) : REFANY =
   <*FATAL Thread.Alerted, UDP.Timeout*>
   VAR
-    udp : UDP.T;
+    udp      : UDP.T;
     datagram : UDP.Datagram;
   BEGIN
     Debug.Out("Creating server");
     TRY
-      udp := NEW(UDP.T).init(ServerPort);
+      udp := NEW(UDP.T).init(cl.port);
     EXCEPT
       IP.Error(err) =>
       Debug.Error("Caught IP.Error creating server " & AL.Format(err));
@@ -39,7 +40,7 @@ PROCEDURE Server(cl : ServerCl) : REFANY =
     
     LOCK cl.mu DO
       (* we need to show, somehow, that we are ready to receive *)
-      cl.ready := TRUE;
+      cl.ready := cl.port;
       Thread.Signal(cl.c)
     END;
     
@@ -57,6 +58,8 @@ PROCEDURE Server(cl : ServerCl) : REFANY =
 
 TYPE
   ClientCl = Thread.Closure OBJECT
+    port   : IP.Port;
+    other  : IP.Endpoint;
   OVERRIDES
     apply := Client;
   END;
@@ -64,21 +67,21 @@ TYPE
 CONST
   NumPackets = 10;
       
-PROCEDURE Client(<*UNUSED*>cl : ClientCl) : REFANY =
+PROCEDURE Client(cl : ClientCl) : REFANY =
   VAR
     udp      : UDP.T;
     datagram : UDP.Datagram;
   BEGIN
     Debug.Out("Creating client");
     TRY
-      udp := NEW(UDP.T).init(ClientPort);
+      udp := NEW(UDP.T).init(cl.port);
     EXCEPT
       IP.Error(err) =>
       Debug.Error("Caught IP.Error creating client " & AL.Format(err));
     END;
           
     datagram.bytes := NEW(REF ARRAY OF CHAR, MaxUdpBytes);
-    datagram.other := IP.Endpoint { addr := myAddr, port := ServerPort };
+    datagram.other := cl.other;
     FOR i := 0 TO NumPackets-1 DO
       (* format i in ASCII *)
       WITH str = Fmt.Int(i),
@@ -122,11 +125,14 @@ VAR
   cTh : Thread.T;
     
 BEGIN
-  WITH sCl = NEW(ServerCl, mu := NEW(MUTEX), c := NEW(Thread.Condition)),
-       cCl = NEW(ClientCl) DO
+  WITH sCl = NEW(ServerCl, mu := NEW(MUTEX), c := NEW(Thread.Condition),
+                 port := ServerPort),
+       cCl = NEW(ClientCl,
+                 port := ClientPort,
+                 other := IP.Endpoint { addr := myAddr, port := ServerPort }) DO
     EVAL Thread.Fork(sCl);
     LOCK sCl.mu DO
-      WHILE NOT sCl.ready DO
+      WHILE sCl.ready < 0 DO
         Thread.Wait(sCl.mu, sCl.c)
       END
     END;
