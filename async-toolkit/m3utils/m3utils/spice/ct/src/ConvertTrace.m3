@@ -1,4 +1,20 @@
 MODULE ConvertTrace EXPORTS Main;
+
+(* ct program -- 
+
+   convert 
+          spice trace files (ASCII .tr0 files) 
+                    to 
+          aspice .names and .trace files
+
+   Aspice output file is created in the fast format (blocked by node)
+
+   Algorithm is external (uses numerous disk files for reordering)
+
+   Author : Mika Nystrom <mika.nystroem@intel.com>
+
+*)
+
 IMPORT FileRd;
 IMPORT Rd;
 IMPORT Debug;
@@ -17,7 +33,7 @@ IMPORT TextUtils;
 IMPORT Scan;
 IMPORT Lex, FloatMode;
 
-VAR doDebug := FALSE;
+VAR doDebug := Debug.DebugThis("CT");
 
 PROCEDURE StartsWith(READONLY buf, pfx : ARRAY OF CHAR) : BOOLEAN =
   BEGIN 
@@ -150,10 +166,21 @@ PROCEDURE DoData(READONLY line : ARRAY OF CHAR;
           lbp := 0
         END;
         lbq := 0;
-        EVAL GetLR(lbuff[lbq,lbp]); INC(lbq);
-        EVAL GetInt(dummy);
+
+        (* process time timestamp *)
+        EVAL GetLR(lbuff[lbq,lbp]); 
+        lbuff[lbq,lbp] := timeScaleFactor*(lbuff[lbq,lbp]+timeOffset);
+        IF doDebug THEN
+          Debug.Out(F("time %s", LongReal(lbuff[lbq,lbp])))
+        END;
+        INC(lbq);
+        
+        EVAL GetInt(dummy); (* should really assert this is = names.size() *)
       END;
-      WHILE GetLR(z) DO lbuff[lbq,lbp] := z; INC(lbq); INC(got) END;
+      WHILE GetLR(z) DO
+        lbuff[lbq,lbp] := z*voltageScaleFactor+voltageOffset;
+        INC(lbq); INC(got)
+      END;
       RETURN got
     EXCEPT
       ShortRead =>
@@ -210,7 +237,11 @@ PROCEDURE WriteNames() =
         WITH wr2 = FileWr.Open(wd & "/" & FormatFN(i)) DO
           wdWr[i] := wr2
         END;
-        Wr.PutText(wr, names.get(i));
+        WITH nm = TextUtils.ReplaceChar(names.get(i), ':', '_') DO
+          (* aplot has trouble with colons in node names, so rename those,
+             sorry about any clashes ... *)
+          Wr.PutText(wr, nm)
+        END;
         Wr.PutChar(wr, '\n')
       END;
       Wr.Close(wr)
@@ -254,7 +285,7 @@ VAR
   names := NEW(TextSeq.T).init();
   ifn, ofn : Pathname.T;
 
-  rd  :Rd.T;
+  rd  : Rd.T;
 
   buf : ARRAY [0..8191] OF CHAR;
 
@@ -269,9 +300,23 @@ VAR
   wd := "ct.work";
   dutName : TEXT := NIL;
   pp := NEW(ParseParams.T).init(Stdio.stderr);
+  timeScaleFactor, voltageScaleFactor := 1.0d0;
+  timeOffset, voltageOffset := 0.0d0;
 BEGIN
-  IF pp.keywordPresent("-rename") THEN
+  IF    pp.keywordPresent("-rename") THEN
     dutName := pp.getNext()
+  END;
+  IF pp.keywordPresent("-scaletime") THEN
+    timeScaleFactor := pp.getNextLongReal()
+  END;
+  IF pp.keywordPresent("-scalevoltage") THEN
+    voltageScaleFactor := pp.getNextLongReal()
+  END;
+  IF pp.keywordPresent("-offsettime") THEN
+    timeOffset := pp.getNextLongReal()
+  END;
+  IF pp.keywordPresent("-offsetvoltage") THEN
+    voltageOffset := pp.getNextLongReal()
   END;
 
   ifn := pp.getNext();

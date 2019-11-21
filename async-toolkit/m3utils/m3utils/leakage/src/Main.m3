@@ -344,7 +344,13 @@ TYPE
     handling : ParamHandling;
   END;
 
-PROCEDURE Regress(data : XArrayList.T; READONLY config : ARRAY OF ParamInst) =
+  LRF = PROCEDURE(x : LONGREAL) : LONGREAL;
+
+PROCEDURE Identity(x : LONGREAL) : LONGREAL = BEGIN RETURN x END Identity;
+  
+PROCEDURE Regress(data : XArrayList.T;
+                  READONLY config : ARRAY OF ParamInst;
+                  dataFunc : LRF := Identity) =
   BEGIN
   END Regress;
   
