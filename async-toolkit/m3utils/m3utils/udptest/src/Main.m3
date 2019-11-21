@@ -29,6 +29,7 @@ PROCEDURE Server(cl : ServerCl) : REFANY =
     udp : UDP.T;
     datagram : UDP.Datagram;
   BEGIN
+    Debug.Out("Creating server");
     TRY
       udp := NEW(UDP.T).init(ServerPort);
     EXCEPT
@@ -50,7 +51,7 @@ PROCEDURE Server(cl : ServerCl) : REFANY =
         IP.Error(err) =>
         Debug.Error("Server caught IP.Error listening for packet " & AL.Format(err));
       END;
-      Debug.Out("Got datagram!")
+      Debug.Out("Got datagram: " & FmtDatagram(datagram))
     END
   END Server;
 
@@ -68,6 +69,7 @@ PROCEDURE Client(<*UNUSED*>cl : ClientCl) : REFANY =
     udp      : UDP.T;
     datagram : UDP.Datagram;
   BEGIN
+    Debug.Out("Creating client");
     TRY
       udp := NEW(UDP.T).init(ClientPort);
     EXCEPT
@@ -93,11 +95,29 @@ PROCEDURE Client(<*UNUSED*>cl : ClientCl) : REFANY =
         IP.Error(err) =>
         Debug.Error("Client caught IP.Error sending packet " & AL.Format(err));
       END;
-      Debug.Out("Sent datagram!")
+      Debug.Out("Sent datagram: " & FmtDatagram(datagram))
     END;
     RETURN NIL
   END Client;
 
+PROCEDURE FmtDatagram(d : UDP.Datagram) : TEXT =
+  BEGIN
+    RETURN Fmt.F("ep={%s} len=%s txt=\"%s\"",
+                 FmtEndpoint(d.other),
+                 Fmt.Int(d.len),
+                 Text.FromChars(SUBARRAY(d.bytes^,0,d.len)))
+  END FmtDatagram;
+
+PROCEDURE FmtEndpoint(ep : IP.Endpoint) : TEXT =
+  BEGIN
+    RETURN Fmt.F("a={%s,%s,%s,%s} p=%s",
+                 Fmt.Int(ep.addr.a[0]),
+                 Fmt.Int(ep.addr.a[1]),
+                 Fmt.Int(ep.addr.a[2]),
+                 Fmt.Int(ep.addr.a[3]),
+                 Fmt.Int(ep.port))
+  END FmtEndpoint;
+  
 VAR
   cTh : Thread.T;
     
@@ -111,7 +131,6 @@ BEGIN
       END
     END;
     cTh := Thread.Fork(cCl);
-    EVAL Thread.Fork(sCl);
 
     (* wait for client to be done sending *)
     EVAL Thread.Join(cTh);
