@@ -3,6 +3,7 @@ IMPORT UDP, IP, Thread;
 IMPORT Debug;
 IMPORT Fmt, Text;
 IMPORT AL;
+IMPORT UdpAdapter;
 
 CONST
   MyBasePort      = 31337;
@@ -27,12 +28,12 @@ TYPE
 PROCEDURE Server(cl : ServerCl) : REFANY =
   <*FATAL Thread.Alerted, UDP.Timeout*>
   VAR
-    udp      : UDP.T;
+    udp      : UdpAdapter.T;
     datagram : UDP.Datagram;
   BEGIN
     Debug.Out("Creating server");
     TRY
-      udp := NEW(UDP.T).init(cl.port);
+      udp := NEW(UdpAdapter.Default).init(cl.port);
     EXCEPT
       IP.Error(err) =>
       Debug.Error("Caught IP.Error creating server " & AL.Format(err));
@@ -69,12 +70,12 @@ CONST
       
 PROCEDURE Client(cl : ClientCl) : REFANY =
   VAR
-    udp      : UDP.T;
+    udp      : UdpAdapter.T;
     datagram : UDP.Datagram;
   BEGIN
     Debug.Out("Creating client");
     TRY
-      udp := NEW(UDP.T).init(cl.port);
+      udp := NEW(UdpAdapter.Default).init(cl.port);
     EXCEPT
       IP.Error(err) =>
       Debug.Error("Caught IP.Error creating client " & AL.Format(err));

@@ -3,8 +3,11 @@ import ("tcp")
 import ("udp")
 import ("cit_util")
 
-interface ("UdpDatagram")
+module ("UdpDatagram")
 sequence ("UdpDatagram", "UdpDatagram")
+module ("UdpAdapter")
+module ("ReorderUdpAdapter")
+
 implementation ("Main")
 
 program ("udptest")
