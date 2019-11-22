@@ -4,10 +4,6 @@ IMPORT IP;
 
 TYPE
   T = UDP.T OBJECT METHODS
-    eot()
-      RAISES {IP.Error};
-    (* client calls eot to indicate that no further transmission is 
-       forthcoming *)
   END;
 
   Default <: T;

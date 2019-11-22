@@ -3,7 +3,11 @@ IMPORT UDP, IP, Thread;
 IMPORT Debug;
 IMPORT Fmt, Text;
 IMPORT AL;
-IMPORT UdpAdapter;
+IMPORT UdpAdapter, ReorderUdpAdapter;
+IMPORT FloatMode, Lex;
+IMPORT IntSetDef;
+FROM Fmt IMPORT F;
+IMPORT Scan;
 
 CONST
   MyBasePort      = 31337;
@@ -21,6 +25,7 @@ TYPE
     c  : Thread.Condition;
     ready := -1;
     port : IP.Port;
+    parent : Thread.T;
   OVERRIDES
     apply := Server;
   END;
@@ -30,6 +35,8 @@ PROCEDURE Server(cl : ServerCl) : REFANY =
   VAR
     udp      : UdpAdapter.T;
     datagram : UDP.Datagram;
+    last     := -1;
+    seen     := NEW(IntSetDef.T).init();
   BEGIN
     Debug.Out("Creating server");
     TRY
@@ -53,7 +60,25 @@ PROCEDURE Server(cl : ServerCl) : REFANY =
         IP.Error(err) =>
         Debug.Error("Server caught IP.Error listening for packet " & AL.Format(err));
       END;
-      Debug.Out("Got datagram: " & FmtDatagram(datagram))
+      Debug.Out("Got datagram: " & FmtDatagram(datagram));
+      TRY
+        WITH val = GetDatagramInt(datagram) DO
+          IF ABS(val) # last + 1 THEN
+            Debug.Warning(F("MISSING %s, got %s", Fmt.Int(last+1), Fmt.Int(val)))
+          END;
+          IF seen.insert(val) THEN
+            Debug.Warning (F("DUP %s", Fmt.Int(val)))
+          END;
+          IF val < 0 THEN
+            Thread.Alert(cl.parent);
+            RETURN NIL (* EOT *)
+          ELSE
+            last := val
+          END
+        END;
+      EXCEPT
+        FloatMode.Trap, Lex.Error => Debug.Error("couldnt parse datagram")
+      END
     END
   END Server;
 
@@ -69,21 +94,9 @@ CONST
   NumPackets = 10;
       
 PROCEDURE Client(cl : ClientCl) : REFANY =
-  VAR
-    udp      : UdpAdapter.T;
-    datagram : UDP.Datagram;
-  BEGIN
-    Debug.Out("Creating client");
-    TRY
-      udp := NEW(UdpAdapter.Default).init(cl.port);
-    EXCEPT
-      IP.Error(err) =>
-      Debug.Error("Caught IP.Error creating client " & AL.Format(err));
-    END;
-          
-    datagram.bytes := NEW(REF ARRAY OF CHAR, MaxUdpBytes);
-    datagram.other := cl.other;
-    FOR i := 0 TO NumPackets-1 DO
+
+  PROCEDURE Send(i : INTEGER) =
+    BEGIN
       (* format i in ASCII *)
       WITH str = Fmt.Int(i),
            len = Text.Length(str) DO
@@ -100,7 +113,30 @@ PROCEDURE Client(cl : ClientCl) : REFANY =
         Debug.Error("Client caught IP.Error sending packet " & AL.Format(err));
       END;
       Debug.Out("Sent datagram: " & FmtDatagram(datagram))
+    END Send;
+    
+  VAR
+    udp      : UdpAdapter.T;
+    datagram : UDP.Datagram;
+  BEGIN
+    Debug.Out("Creating client");
+    TRY
+      udp := NEW(ReorderUdpAdapter.T).init(cl.port,
+                                           dropProb := 0.0d0,
+                                           reorderProb := 0.0d0,
+                                           dupProb := 0.20d0,
+                                           underlying := NEW(UdpAdapter.Default));
+    EXCEPT
+      IP.Error(err) =>
+      Debug.Error("Caught IP.Error creating client " & AL.Format(err));
     END;
+          
+    datagram.bytes := NEW(REF ARRAY OF CHAR, MaxUdpBytes);
+    datagram.other := cl.other;
+    FOR i := 0 TO NumPackets-1 DO
+      Send(i)
+    END;
+    Send(-NumPackets);
     RETURN NIL
   END Client;
 
@@ -111,6 +147,12 @@ PROCEDURE FmtDatagram(d : UDP.Datagram) : TEXT =
                  Fmt.Int(d.len),
                  Text.FromChars(SUBARRAY(d.bytes^,0,d.len)))
   END FmtDatagram;
+
+PROCEDURE GetDatagramInt(d : UDP.Datagram) : INTEGER
+  RAISES { FloatMode.Trap, Lex.Error } =
+  BEGIN
+    RETURN Scan.Int(Text.FromChars(SUBARRAY(d.bytes^,0,d.len)))
+  END GetDatagramInt;
 
 PROCEDURE FmtEndpoint(ep : IP.Endpoint) : TEXT =
   BEGIN
@@ -127,7 +169,7 @@ VAR
     
 BEGIN
   WITH sCl = NEW(ServerCl, mu := NEW(MUTEX), c := NEW(Thread.Condition),
-                 port := ServerPort),
+                 port := ServerPort, parent := Thread.Self()),
        cCl = NEW(ClientCl,
                  port := ClientPort,
                  other := IP.Endpoint { addr := myAddr, port := ServerPort }) DO
@@ -140,10 +182,14 @@ BEGIN
     cTh := Thread.Fork(cCl);
 
     (* wait for client to be done sending *)
-    EVAL Thread.Join(cTh);
+    EVAL Thread.Join(cTh)
   END;
-
+  
   (* and wait a while longer for server to receive everything *)
-  Thread.Pause(5.0d0);
-
+  TRY
+    Thread.AlertPause(5.0d0);
+  EXCEPT
+    Thread.Alerted => (* server exited, skip *)
+  END
+  
 END Main.
