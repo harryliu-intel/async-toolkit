@@ -8,6 +8,7 @@ IMPORT FloatMode, Lex;
 IMPORT IntSetDef;
 FROM Fmt IMPORT F;
 IMPORT Scan;
+IMPORT RtaUdpAdapter;
 
 CONST
   MyBasePort      = 31337;
@@ -169,6 +170,8 @@ VAR
   cTh : Thread.T;
     
 BEGIN
+  RtaUdpAdapter.Initialize(RtaUdpAdapter.TestPortRanges);
+  
   WITH sCl = NEW(ServerCl, mu := NEW(MUTEX), c := NEW(Thread.Condition),
                  port := ServerPort, parent := Thread.Self()),
        cCl = NEW(ClientCl,

@@ -8,6 +8,7 @@ sequence ("UdpDatagram", "UdpDatagram")
 module ("UdpAdapter")
 module ("ReorderUdpAdapter")
 interface ("NestedUdpAdapter")
+module ("RtaUdpAdapter")
 
 implementation ("Main")
 
