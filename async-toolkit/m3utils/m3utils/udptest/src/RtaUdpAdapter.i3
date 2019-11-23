@@ -34,6 +34,6 @@ CONST
     PortRange { RtaManagerPort, FIRST(IP.Port), NUMBER(IP.Port) }
   };
 
-PROCEDURE Initialize(READONLY portRanges : PortRanges);
+PROCEDURE Initialize(READONLY portRanges : PortRanges) RAISES { IP.Error };
       
 END RtaUdpAdapter.

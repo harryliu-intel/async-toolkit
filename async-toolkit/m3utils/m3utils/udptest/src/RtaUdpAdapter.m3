@@ -5,6 +5,7 @@ IMPORT IP;
 FROM UDP IMPORT Datagram, Timeout;
 IMPORT NestedUdpAdapter;
 IMPORT CardRefTbl;
+IMPORT TCP;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
@@ -93,13 +94,14 @@ PROCEDURE GetManager(t : T) : Manager =
  
 TYPE
   Manager = Thread.Closure OBJECT
-    portRange : PortRange;
-    mu        : MUTEX;
-    c         : Thread.Condition;
+    portRange     : PortRange;
+    mu            : MUTEX;
+    c             : Thread.Condition;
     ready     := FALSE;
     underlyingTbl : CardRefTbl.T;
+    tcp           : TCP.Connector;
   METHODS
-    init(portRange : PortRange) : Manager := InitManager;
+    init(portRange : PortRange; tcp : TCP.Connector) : Manager := InitManager;
     
     (* must implement these! *)
     
@@ -119,12 +121,13 @@ TYPE
     apply := ManagerApply;
   END;
 
-PROCEDURE InitManager(m : Manager; portRange : PortRange) : Manager =
+PROCEDURE InitManager(m : Manager; portRange : PortRange; tcp : TCP.Connector) : Manager =
   BEGIN
     m.portRange := portRange;
     m.mu := NEW(MUTEX);
     m.c := NEW(Thread.Condition);
     m.underlyingTbl := NEW(CardRefTbl.Default).init();
+    m.tcp := tcp;
     RETURN m
   END InitManager;
 
@@ -139,9 +142,12 @@ PROCEDURE ManagerApply(cl : Manager) : REFANY =
     END
   END ManagerApply;
   
-PROCEDURE StartRtaManager(READONLY portRange : PortRange) : Manager =
+PROCEDURE StartRtaManager(READONLY portRange : PortRange) : Manager
+  RAISES { IP.Error } =
   BEGIN
-    WITH manager = NEW(Manager).init(portRange) DO
+    WITH manEp = IP.Endpoint { IP.NullAddress, portRange.listen },
+         tcp   = TCP.NewConnector(manEp),
+         manager = NEW(Manager).init(portRange, tcp) DO
       EVAL Thread.Fork(manager);
       LOCK manager.mu DO
         WHILE NOT manager.ready DO Thread.Wait(manager.mu, manager.c) END
@@ -152,7 +158,8 @@ PROCEDURE StartRtaManager(READONLY portRange : PortRange) : Manager =
 
 VAR managers : REF ARRAY OF Manager := NIL;
   
-PROCEDURE Initialize(READONLY portRanges : PortRanges) =
+PROCEDURE Initialize(READONLY portRanges : PortRanges)
+  RAISES { IP.Error } =
   BEGIN
     managers := NEW(REF ARRAY OF Manager, NUMBER(portRanges));
     FOR i := FIRST(portRanges) TO LAST(portRanges) DO

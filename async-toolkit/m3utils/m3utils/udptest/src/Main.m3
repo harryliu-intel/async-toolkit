@@ -170,7 +170,12 @@ VAR
   cTh : Thread.T;
     
 BEGIN
-  RtaUdpAdapter.Initialize(RtaUdpAdapter.TestPortRanges);
+  TRY
+    RtaUdpAdapter.Initialize(RtaUdpAdapter.TestPortRanges)
+  EXCEPT
+    IP.Error(err) => Debug.Error("Couldnt initialize RTA layer : IP.Error : " &
+      AL.Format(err))
+  END;
   
   WITH sCl = NEW(ServerCl, mu := NEW(MUTEX), c := NEW(Thread.Condition),
                  port := ServerPort, parent := Thread.Self()),
