@@ -1,20 +1,14 @@
 INTERFACE ReorderUdpAdapter;
-IMPORT UdpAdapter;
+IMPORT NestedUdpAdapter;
 IMPORT Random;
-IMPORT IP;
 
 TYPE
   T <: Public;
 
-  Public = UdpAdapter.T OBJECT METHODS
-    init(myPort: IP.Port;
-         myAddr := IP.NullAddress;
-         underlying : UdpAdapter.T := NIL;
-         reorderProb, dropProb, dupProb := 0.0d0;
-         rand : Random.T := NIL): T
-      RAISES {IP.Error};
+  Public = NestedUdpAdapter.T OBJECT METHODS
     setParams(reorderProb, dropProb, dupProb := 0.0d0;
-              rand       : Random.T := NIL);
+              rand       : Random.T := NIL) : T;
+    (* returns itself *)
   END;
 
   (* init, underlying is the underlying UDP implementation.

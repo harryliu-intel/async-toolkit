@@ -121,11 +121,12 @@ PROCEDURE Client(cl : ClientCl) : REFANY =
   BEGIN
     Debug.Out("Creating client");
     TRY
-      udp := NEW(ReorderUdpAdapter.T).init(cl.port,
-                                           dropProb := 0.0d0,
-                                           reorderProb := 0.0d0,
-                                           dupProb := 0.20d0,
-                                           underlying := NEW(UdpAdapter.Default));
+      udp := NARROW(NEW(ReorderUdpAdapter.T).
+        init(cl.port,
+             underlying := NEW(UdpAdapter.Default)),ReorderUdpAdapter.T).
+        setParams(dropProb    := 0.0d0,
+                  reorderProb := 0.0d0,
+                  dupProb     := 0.20d0)
     EXCEPT
       IP.Error(err) =>
       Debug.Error("Caught IP.Error creating client " & AL.Format(err));

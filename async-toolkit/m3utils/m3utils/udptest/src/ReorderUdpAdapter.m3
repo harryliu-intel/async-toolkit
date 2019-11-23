@@ -8,6 +8,7 @@ FROM UDP IMPORT Datagram, Timeout;
 IMPORT Thread;
 IMPORT Text;
 IMPORT Debug;
+IMPORT NestedUdpAdapter;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
@@ -31,11 +32,7 @@ REVEAL
 PROCEDURE Init(t           : T;
                myPort      : IP.Port;
                myAddr      : IP.Address;
-               underlying  : UdpAdapter.T;
-               reorderProb : LONGREAL;
-               dropProb    : LONGREAL;
-               dupProb     : LONGREAL;
-               rand        : Random.T) : T
+               underlying  : UdpAdapter.T) : NestedUdpAdapter.T
   RAISES { IP.Error } =
   BEGIN
     IF underlying = NIL THEN
@@ -46,20 +43,16 @@ PROCEDURE Init(t           : T;
     
     (* alloc a default Random.T and a DatagramSeq *)
     t.buff := NEW(RefSeq.T).init();
-    IF rand = NIL THEN
-      t.rand := NEW(Random.Default).init();
-    ELSE
-      t.rand := rand
-    END;
-    t.reorderProb := reorderProb;
-    t.dropProb    := dropProb;
-    t.dupProb     := dupProb;
+    t.rand := NEW(Random.Default).init();
+    t.reorderProb := 0.0d0;
+    t.dropProb    := 0.0d0;
+    t.dupProb     := 0.0d0;
     RETURN t
   END Init;
 
-PROCEDURE SetParams(t                     : T;
+PROCEDURE SetParams(t                              : T;
                     reorderProb, dropProb, dupProb : LONGREAL;
-                    rand                  : Random.T) =
+                    rand                           : Random.T) : T =
   BEGIN
     t.reorderProb := reorderProb;
     t.dropProb    := dropProb;
@@ -67,6 +60,7 @@ PROCEDURE SetParams(t                     : T;
     IF rand # NIL THEN
       t.rand := rand
     END;
+    RETURN t
   END SetParams;
 
 TYPE Decision = { Go, Drop, Reorder, Dup };   
