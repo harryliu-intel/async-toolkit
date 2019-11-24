@@ -246,13 +246,13 @@ $(CURR_CELL_DIR)/%/nanotime/analog.mk: $(CURR_CELL_DIR)/cast.d
 	 echo 'include $$(BUILD)/filetypes/castfiles/nanotime.mk') > '$@'
 
 $(CURR_CELL_DIR)/%/analog.mk: $(CURR_CELL_DIR)/cast.d
-	mkdir -p '$(@D)'
-	echo 'SPICE_DIR := $(call GET_EXTRACT_DIR,$(@D))' > '$@'
-	echo 'CELL_DIR := $(call GET_CELL_DIR,$(@D))' >> '$@'
-	for env in $$(find '$(<D)/jflat$(ROUTED_SUFFIX)/aspice' -noleaf -mindepth 1 -type d -printf "%P\n"); do \
-	  echo "ENV := $$env" >> '$@'; \
-	  echo 'include $$(BUILD)/filetypes/castfiles/env.mk' >> '$@'; \
-	done
+	mkdir -p '$(@D)' && \
+	(echo 'SPICE_DIR := $(call GET_EXTRACT_DIR,$(@D))' && \
+	 echo 'CELL_DIR := $(call GET_CELL_DIR,$(@D))' && \
+	 for env in $$(find '$(<D)/jflat$(ROUTED_SUFFIX)/env-ntpc' -name '*.latest' -type f -printf "%P\n" | sed 's/\.latest//' | sort); do \
+	   echo "ENV := $$env"; \
+	   echo 'include $$(BUILD)/filetypes/castfiles/env.mk'; \
+	 done) > '$@'
 
 # layout signoffs - will be read in after df2.d is made
 ifneq ("$(strip $(wildcard $(CURR_CELL_DIR)/layout/df2.d))","")
@@ -273,20 +273,24 @@ CURR_TARGET_DEPS := $(CURR_TARGET_DEPS) $(CURR_LAYOUT_DEPS) $(CURR_SPICE_DEPS) $
 ifeq ($(JUST_PRINT_MODE),1)
 CURR_TARGET_DEPS := $(CURR_TARGET_DEPS) $(CURR_CELL_DIR)/signature.mk $(CURR_CELL_DIR)/signature.includes
 $(CURR_CELL_DIR)/signature.mk: $(CURR_CELL_DIR)/cast.d
-	echo "$(@D)/signature.includes: \\" >> '$@'
-	for env in $$(find '$(<D)/jflat$(ROUTED_SUFFIX)/aspice' -noleaf -mindepth 1 -type d -printf "%P\n"|grep -v default); do \
-	  echo "$(@D)/jflat$(ROUTED_SUFFIX)/env-ntpc/$$env \\" >> '$@' ;\
-	  echo "$(@D)/jflat$(ROUTED_SUFFIX)/env-ntpc/$$env.nodes \\" >> '$@' ;\
-	  echo "$(@D)/jflat$(ROUTED_SUFFIX)/aspice/$$env/env.asp \\" >> '$@' ;\
-	done
-	echo "$(@D)/jflat$(ROUTED_SUFFIX)/aspice/default/prs.asp \\" >> '$@'
-	echo "$(@D)/jflat$(ROUTED_SUFFIX)/aspice/default/noprs.asp \\" >> '$@'
-	echo "$(@D)/cell.stats \\" >> '$@'
-	echo "$(@D)/cell.cdl \\" >> '$@'
-	echo "$(@D)/cell.localprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX) \\" >> '$@'
-	echo "$(@D)/cell.portprops \\" >> '$@'
-	echo "$(@D)/cell.leakynodes$(ROUTED_SUFFIX) \\" >> '$@'
-	echo "$(@D)/cell.scenarios$(ROUTED_SUFFIX)" >> '$@'
+	(echo "$(@D)/signature.includes: \\"; \
+	 for env in $$(find '$(<D)/jflat$(ROUTED_SUFFIX)/env-ntpc' -name '*.latest' -type f -printf "%P\n" | grep -v default | sed 's/\.latest//'); do \
+	   echo "$(@D)/jflat$(ROUTED_SUFFIX)/env-ntpc/$$env \\" ;\
+	   echo "$(@D)/jflat$(ROUTED_SUFFIX)/env-ntpc/$$env.nodes \\" ;\
+	 done; \
+	 if [[ -d '$(<D)/jflat$(ROUTED_SUFFIX)/aspice' ]]; then \
+	   for env in $$(find '$(<D)/jflat$(ROUTED_SUFFIX)/aspice' -noleaf -mindepth 1 -type d -printf "%P\n"|grep -v default); do \
+	     echo "$(@D)/jflat$(ROUTED_SUFFIX)/aspice/$$env/env.asp \\" ;\
+	   done; \
+	   echo "$(@D)/jflat$(ROUTED_SUFFIX)/aspice/default/prs.asp \\" ;\
+	   echo "$(@D)/jflat$(ROUTED_SUFFIX)/aspice/default/noprs.asp \\" ;\
+	 fi; \
+	 echo "$(@D)/cell.stats \\"; \
+	 echo "$(@D)/cell.cdl \\"; \
+	 echo "$(@D)/cell.localprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX) \\"; \
+	 echo "$(@D)/cell.portprops \\"; \
+	 echo "$(@D)/cell.leakynodes$(ROUTED_SUFFIX) \\"; \
+	 echo "$(@D)/cell.scenarios$(ROUTED_SUFFIX)") >> '$@'
 
 $(CURR_CELL_DIR)/signature.includes: $(CURR_CELL_DIR)/signature.mk
 	touch '$@'
