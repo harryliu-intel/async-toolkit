@@ -660,6 +660,7 @@ EOF
         print $fh join('', map { "$_: $ccpcmd{$_}\n" } sort keys %ccpcmd);
         close($fh);
         $cmd{'CCP_EXTRACTION_FILE'} = 'ccp.cmd';
+        $cmd{'CCP_ANNOTATION_FILE'} = 'YES';
     }
 
     # print out star.cmd for this run
