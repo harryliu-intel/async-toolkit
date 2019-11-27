@@ -135,7 +135,7 @@
                         ?chooseVariant chooseVariant))
 
     ; check Alignment
-    statusAlignment = (SelectMisalignedInstances ?CV CV)==0
+    statusAlignment = (length (MisalignedInstances ?CV CV))==0
 
     ; write proteus.config
     (ProteusConfig ?CV CV ?botMetal botMetal ?topMetal topMetal
