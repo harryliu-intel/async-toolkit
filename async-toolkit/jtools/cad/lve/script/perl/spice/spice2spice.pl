@@ -32,7 +32,7 @@ my $flatten_top = 0; # flatten top cell
 my $probe_top_ports = 0; # probe ports of top cell
 my $probe_ports = 0;     # probe all ports of SUBCKT's
 my $probe_gates = 0;     # probe base node names if they gate transistors
-my $skip_parms = "x,y,llx,lly,urx,ury,si_l,si_w,size0,mulid0,angle"; # hack
+my $skip_parms = "x,y,llx,lly,urx,ury,si_l,si_w"; # hack
 
 # skip renaming estimated extraction primitives
 my %primitive;
