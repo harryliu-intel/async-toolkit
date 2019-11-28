@@ -506,11 +506,32 @@ if($stage2a){
 
 sub read_starcmd {
     my ($file, $cmd) = @_;
+    my %repeatable = ('XREF_SWAP_MOS_SD_PROPERTY' => 1);
     open my $fh, $file or die "Can't read $file: $!";
     while (my $line = <$fh>) {
         if ($line =~ /^\*/) {}
         elsif ($line =~ /^(\S+):\s*(\S.*)$/) {
-            $cmd->{$1} = $2;
+            my ($k, $v) = ($1, $2);
+            if ($repeatable{uc($k)}) {
+                $k = uc($k);
+                $cmd->{$k} = [] unless exists $cmd->{$k};
+                push @{$cmd->{$k}}, $v;
+            } else {
+                $cmd->{$k} = $v;
+            }
+        }
+    }
+    close $fh;
+}
+
+sub write_starcmd {
+    my ($file, $cmd) = @_;
+    open my $fh, '>', $file or die "Can't create $file: $!";
+    foreach my $key (sort keys %{$cmd}) {
+        my $vals = $cmd->{$key};
+        $vals = [ $vals ] unless ref($cmd->{$key}) eq 'ARRAY';
+        foreach my $val (@{$vals}) {
+            print $fh "${key}: $val\n";
         }
     }
     close $fh;
@@ -656,19 +677,13 @@ EOF
 
 
         $ccpcmd{'NUM_THREADS'} = $threads;
-        open my $fh, '>', 'ccp.cmd' or die "Can't create ccp.cmd: $!";
-        print $fh join('', map { "$_: $ccpcmd{$_}\n" } sort keys %ccpcmd);
-        close($fh);
+        write_starcmd('ccp.cmd', \%ccpcmd);
         $cmd{'CCP_EXTRACTION_FILE'} = 'ccp.cmd';
         $cmd{'CCP_ANNOTATION_FILE'} = 'YES';
     }
 
     # print out star.cmd for this run
-    open STAR_CMD, ">star.cmd" or die "Can not create star.cmd file!\n";
-    foreach my $key (sort keys %cmd) {
-        print STAR_CMD "${key}: $cmd{$key}\n";
-    }
-    close STAR_CMD;
+    write_starcmd('star.cmd', \%cmd);
 
     # run starRc
     {
