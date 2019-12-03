@@ -2,17 +2,15 @@
 ;
 ; Copyright 2011 Fulcrum Microsystems.  All rights reserved.
 
-; Trim dangling paths and contacts for all nets except Vdd/GND.
+; Trim dangling paths and contacts for all nets except PowerGroundNets
 (defun TrimDanglingWires 
   (@key (CV (geGetEditCellView))
-        (overhang 2*DefaultWiringPitch)
+        (overhang 0)
         (nets nil)
         (depth 32)
         )
-  (let (Vdd GND progress total)
-    GND = (dbFindNetByName CV "GND")
-    Vdd = (dbFindNetByName CV "Vdd")
-    (unless nets nets = (setof net CV->nets (and net!=GND net!=Vdd)))
+  (let (progress total)
+    (unless nets nets = (setof net CV->nets (member net->name PowerGroundNets)==nil))
     total = 0
     (foreach net nets
       progress = 1
@@ -93,7 +91,7 @@
 ; contact or path, otherwise leave at least some overhang to meet
 ; minimum area on stacked vias.
 (defun TrimDanglingPaths
-  (net @key (CV (geGetEditCellView)) (overhang 2*DefaultWiringPitch) (depth 32))
+  (net @key (CV (geGetEditCellView)) (overhang 0) (depth 32))
   (let (progress paths xy0 xy1 x0 y0 x1 y1 bbox overlaps unknown
         xy bxy0 bxy1 bx0 by1 bx1 by1
         nx0 ny0 nx1 xy1 n progress)
@@ -121,7 +119,8 @@
                (cond (overlap==path nil) ; ignore self-overlap
                      ; combine bBox of overlapping paths or rects
                      ((and (atom overlap)
-                           (or overlap->objType=="path" overlap->objType=="rect"))
+                           (or overlap->objType=="path" overlap->objType=="rect"
+                               overlap->objType=="label"))
                       bbox = (BBoxCombine bbox overlap->bBox)
                       n = n+1
                       )
@@ -141,7 +140,7 @@
                      )
                )
 
-      ; trim path to fit inside bbox (bloated by DefaultWiringPitch)
+      ; trim path to fit inside bbox (bloated by overhang)
       (cond (unknown nil) ; unknown overlaps, leave path alone
             ; if one or less overlapping path or contact, delete dangling path
             (n<=1
