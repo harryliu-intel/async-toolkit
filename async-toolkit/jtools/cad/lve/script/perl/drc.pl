@@ -20,7 +20,7 @@ my $mem=1;
 my $jobs=0;
 my $flow="drcd";
 my $pdk_root="";
-my $icv_runset_path="/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/ncl/1276/cpdk/latest/runsets/icvtdr";
+my $icv_runset_path="$ENV{PDK_CPDK_PATH}/runsets/icvtdr";
 my $oasis = 0;
 my $format = "GDSII";
 

@@ -29,7 +29,7 @@ my $extra_extract_equiv="";
 my $blackbox=0;
 my $icv_options;
 my $threads=2;
-my $icv_path="";
+my $icv_path="$ENV{PDK_CPDK_PATH}/runsets/icvtdr/";
 my $rc_database=0;
 my $nodeprops='';
 
