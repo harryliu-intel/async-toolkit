@@ -7,7 +7,7 @@
     n=0
     (unless nets nets=(setof a CV->nets (member a->name PowerGroundNets)==nil))
     (foreach net nets n=n+(RouteNearbyNet net ?CV CV ?topShapes topShapes ?offGrid offGrid))
-    (printf "Note that RouteNearby only connects abutting pins between locked instances.") 
+    (printf "Note that RouteNearby only connects abutting pins between locked instances.")
     n
     )
   )
@@ -28,7 +28,7 @@
     ; add paths between subcell pins that align at e2e spacing
     (foreach pinRectList MasterRectList
              layerName=(car pinRectList)
-             pinRectList=(cadr pinRectList) 
+             pinRectList=(cadr pinRectList)
              layerNum = MetalNum[layerName]
              space = MetalSpace[layerName]
              (unless space (error "No MetalSpace defined for layer %s\n" layerName))
@@ -37,10 +37,12 @@
                inst1 = (car   (nth a pinRectList))
                net1  = (cadr  (nth a pinRectList))
                rect1 = (caddr (nth a pinRectList))
+               rect1 = (BBoxCanonicalize rect1)
                (for b a+1 len-1
                   inst2 = (car   (nth b pinRectList))
                   net2  = (cadr  (nth b pinRectList))
                   rect2 = (caddr (nth b pinRectList))
+                  rect2 = (BBoxCanonicalize rect2)
                   (cond ((mod layerNum 2)==0
                          bbox1 = (BBoxExpandHorizontal rect1 (car space))
                          bbox2 = (BBoxExpandHorizontal rect2 (car space))
@@ -51,7 +53,7 @@
                          )
                         )
                   overlap = (BBoxAnd bbox1 bbox2)
-                  (when overlap && !(BBoxAnd rect1 rect2) 
+                  (when overlap && !(BBoxAnd rect1 rect2)
                         && net1!=nil && net2!=nil && (net1!=net2 || inst1!=inst2)
                     rect = (dbCreateRect CV (list layerName "drawing") overlap)
                     rect->routeStatus="locked"
@@ -98,7 +100,7 @@
                    params = (cdr viaName)
                    viaName = (car viaName)
                    )
-                  ) 
+                  )
             via = (dbCreateVia CV viaDef xy "R0" params)
             via->routeStatus="locked"
             via->net = net
