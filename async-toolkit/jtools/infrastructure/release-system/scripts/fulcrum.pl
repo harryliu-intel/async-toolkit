@@ -16,7 +16,7 @@ BEGIN {
       'sc' => '/nfs/sc/proj/ctg/mrl108/mrl/tools',
       'pdx' =>  '/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/ncl/tools'
     );
-    $ENV{EC_TOP_PATH} = $site_tool_path{$ENV{EC_SITE}};
+    $ENV{EC_TOP_PATH} = $site_tool_path{$ENV{EC_SITE}} unless defined $ENV{EC_TOP_PATH};
     my $correctitools="$FindBin::Bin/.itools";
     $correctitools="$ENV{EC_TOP_PATH}/bin/.itools" unless -e $correctitools;
     if ( $ENV{USER_ITOOLS} ne $correctitools) {
@@ -28,7 +28,7 @@ BEGIN {
 use Getopt::Long qw(:config require_order); # allows tool options not to be decoded
 use DB_File;
 
-$ENV{FULCRUM_NB_CONFIG}=$nb_cfg_path{$ENV{EC_SITE}} if(not defined $ENV{FULCRUM_NB_CONFIG});
+$ENV{FULCRUM_NB_CONFIG}=$nb_cfg_path{$ENV{EC_SITE}} unless defined $ENV{FULCRUM_NB_CONFIG};
 
 # config file
 my $configfile = $ENV{FULCRUMCONFIG};
