@@ -1,4 +1,4 @@
-; Export GDS for current cell with only cell name conversion (unlike for lve)
+; Export Oasis for current cell with only cell name conversion (unlike for lve)
 (defun ExportOAS (@key (CV (geGetEditCellView))
                        (directory nil)
                        (oasFile nil)
@@ -6,7 +6,7 @@
                        (flattenVias nil))
   (let (TEMP PDK_DIR Command status cellMapFile fmap oasName name used CID)
     (unless CV->objType=="cellView" (error "CV not valid"))
-    CID = (NameStartRename "cell" "cadence" "oas2")
+    CID = (NameStartRename "cell" "cadence" "gds2")
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
     (unless directory directory = (strcat TEMP "/oas/" CV->cellName))
     PDK_DIR = (strcat (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT") "/share/Fulcrum")
@@ -20,7 +20,7 @@
 
     ; Write cellmap to rename cells.  CopyExact cells get renamed to
     ; their original name as saved in the CopyExact property.  Other
-    ; cells get OAS2 names.
+    ; cells get GDS names.
     cellMapFile = (sprintf nil "%s/%s.cellmap" directory oasName)
     fmap = (outfile cellMapFile)
     used = (makeTable "used" nil)
