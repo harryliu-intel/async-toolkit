@@ -688,6 +688,21 @@ EOF
     # run starRc
     {
         local $ENV{'PATH'} = $ENV{'PATH'} . ":.";
+        # XXX: start workaround for https://hsdes.intel.com/appstore/article/#/14010556252
+        use File::Which;
+        open (my $fh, '>', 'ccp') or die "Can't write ccp: $!";
+        my $oldccp = which('ccp');
+        print $fh <<EOF;
+#!/bin/sh
+$oldccp "\$@"
+ret=\$?
+[[ \$ret -eq 136 ]] && fgrep -q 'Thanks' ../STAR/summary/.CCP.messages && ret=0
+exit \$ret
+EOF
+        close $fh;
+        chmod 0755, 'ccp';
+        $ENV{'PATH'} = getcwd() . ':' . $ENV{'PATH'};
+        # XXX: end workaround
         my_system("LD_LIBRARY_PATH= $ENV{STAR_SCRIPT} StarXtract -clean star.cmd > star.log");
     }
     print "StarRC Extraction ... done\n";
