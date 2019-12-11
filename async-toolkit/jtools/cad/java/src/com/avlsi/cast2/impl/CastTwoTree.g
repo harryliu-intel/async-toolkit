@@ -2291,8 +2291,11 @@ returns [Pair p]
             // Interpreting channel width
             try {
                 channelWidth = ((IntValue) channelWidthValue).getValue().intValue();
+            } catch (ClassCastException e) {
+                throw semanticWrapperException("channel width must be an integer",
+                                               new Exception(), errorAST);
             } catch (InvalidOperationException e) {
-                throw semanticWrapperException("error understanding channelwidth",
+                throw semanticWrapperException("error understanding channel width",
                                                e, errorAST);
             }
             if (channelWidth < 1)
