@@ -12,3 +12,4 @@ include ../../csp/csp2verilog/runtime/runtime.package.inc ../../csp/csp2verilog/
 $arch/bin/cast2verilog.sh	cast2verilog.sh 775
 $arch/bin/cast2rtl.sh	cast2rtl.sh 775
 $arch/bin/verilog_filelist	verilog_filelist.pl 775 p
+$arch/bin/gen_model	gen_model.pl 775 p
