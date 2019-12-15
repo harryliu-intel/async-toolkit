@@ -135,16 +135,15 @@
       (when (ddGetObj CV->libName CV->cellName "layout")
         lCV=(dbOpenCellViewByType CV->libName CV->cellName "layout" "maskLayout" "r"))
 
-      ; update prBoundary of routed cells from layout view if it exists
-      (when CV->viewName=="floorplan" && isRouted
+      ; update prBoundary of leaf routed cells from layout view if it exists
+      (when CV->viewName=="floorplan" && isRouted && isLeaf
         ; use prBoundary of layout view if it exists
         (when lCV points=lCV->prBoundary->points)       
         ; otherwise pick prBoundary appropriately
-        (cond (!points && isLeaf
-               (unless w&&h (error "undetermined height or width in cell %s" CV->cellName))
-               points=(list 0:0 w:0 w:h 0:h 0:0))
-              (!points points=CV->prBoundary->points)
-              )
+        (unless points
+          (unless w&&h (error "undetermined height or width in cell %s" CV->cellName))
+          points=(list 0:0 w:0 w:h 0:h 0:0)
+          )
         (when CV->prBoundary (dbDeleteObject CV->prBoundary))
         (when points (dbCreatePRBoundary CV points))
         )
