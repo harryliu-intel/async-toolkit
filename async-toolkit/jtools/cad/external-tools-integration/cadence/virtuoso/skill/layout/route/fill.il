@@ -1,14 +1,17 @@
 ; Delete shapes with autogen=t property
-(defun DeleteAutoGen (@key (CV (geGetEditCellView)) (propName "autogen"))
-  (foreach obj (setof x CV->shapes (dbGetPropByName x propName)->value)
-       (dbDeleteObject obj)
-       )
-  (foreach obj (setof x CV->vias (dbGetPropByName x propName)->value)
-       (dbDeleteObject obj)
-       )
-  (foreach obj (setof x CV->instances (dbGetPropByName x propName)->value)
-       (dbDeleteObject obj)
-       )
+(defun DeleteAutoGen (@key (CV (geGetEditCellView)) (propName "autogen") (propValue nil))
+  (foreach obj (setof x CV->shapes (dbGetPropByName x propName)->value
+                      && (!propValue || (dbGetPropByName x propName)->value==propValue))
+           (dbDeleteObject obj)
+           )
+  (foreach obj (setof x CV->vias (dbGetPropByName x propName)->value
+                      && (!propValue || (dbGetPropByName x propName)->value==propValue))
+           (dbDeleteObject obj)
+           )
+  (foreach obj (setof x CV->instances (dbGetPropByName x propName)->value
+                      && (!propValue || (dbGetPropByName x propName)->value==propValue))
+           (dbDeleteObject obj)
+           )
   )
 
 ; Chop fill to avoid other purposes

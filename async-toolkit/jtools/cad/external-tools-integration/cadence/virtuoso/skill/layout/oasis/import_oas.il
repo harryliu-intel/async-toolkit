@@ -6,14 +6,14 @@
 ; and nodes.
 
 ; Import a OAS file and rename all subcells to CAST conventions
-(defun ImportOAS (oasFileName libName cellName
-                              )
+(defun ImportOAS (oasFileName libName cellName viewName)
   (let (PDK_DIR cmd status CV)
     ; stream in OAS into import_oas_temp library
     PDK_DIR = (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT")
     cmd = (strcat "oasisin "
                   "-library \"" libName "\" "
 		  "-topCell \"" cellName "\" "
+                  "-view \"" viewName "\" "
                   "-oasisFile \"" oasFileName "\" "
                   "-logFile \"oasisIn.log\" "
                   "-attachTechFileOfLib \"" TechLibName "\" "
@@ -27,7 +27,7 @@
     (ddUpdateLibList)
 
     ; open imported top CV
-    CV = (dbOpenCellViewByType libName cellName "layout")
+    CV = (dbOpenCellViewByType libName cellName viewName)
     (unless CV (error "unable to open import_oas_temp %s layout\n" cellName))
 
     ; return top-level CV
