@@ -193,7 +193,7 @@ PROCEDURE Truncate(t : T; e : End; by : CARDINAL) =
     END
   END Truncate;
 
-PROCEDURE Cat(s, t : T) : T =
+PROCEDURE Cat(s, t : ByteSeq.T) : T =
   VAR
     res := NEW(T).init(sizeHint := s.size() + t.size());
   BEGIN
@@ -206,7 +206,7 @@ PROCEDURE Cat(s, t : T) : T =
     RETURN res
   END Cat;
 
-PROCEDURE Sub(s : T; start : CARDINAL; length : CARDINAL) : T =
+PROCEDURE Sub(s : ByteSeq.T; start : CARDINAL; length : CARDINAL) : T =
   VAR
     slen := s.size();
     res  := NEW(T).init(sizeHint := length);
