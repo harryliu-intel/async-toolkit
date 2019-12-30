@@ -170,6 +170,21 @@ PROCEDURE PutA(t : T; e : End; READONLY a : ARRAY OF Byte.T) =
     END
   END PutA;
 
+PROCEDURE PutS(t : T; e : End; a : ByteSeq.T) =
+  BEGIN
+     CASE e OF
+       End.Front =>
+       FOR i := a.size() - 1 TO 0 BY -1 DO
+         ByteSeq.T.addlo(t,a.get(i))
+       END
+    |
+      End.Back  =>
+      FOR i := 0 TO a.size() - 1 BY 1 DO
+        ByteSeq.T.addhi(t,a.get(i))
+      END
+    END
+  END PutS;
+
 PROCEDURE PutWLE(t : T; e : End; w : Word.T; bytes : [0..BYTESIZE(Word.T)]) =
   VAR
     arr : ARRAY [0..BYTESIZE(Word.T)-1] OF Byte.T;
@@ -218,5 +233,4 @@ PROCEDURE Sub(s : ByteSeq.T; start : CARDINAL; length : CARDINAL) : T =
     RETURN res
   END Sub;
     
-  
 BEGIN END ServerPacket.
