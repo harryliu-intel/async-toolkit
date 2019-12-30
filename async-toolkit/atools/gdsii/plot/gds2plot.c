@@ -98,7 +98,7 @@ typedef struct {
 static int Nlayers=0;              // defines number of relevant gds2 layers
 static LIST *layerMap;             // map layer/purpose to color
 SCANSCREEN *subscreen;             // gds2 resolution screen
-static int grid=1;                 // gds2 manufacturing grid in nm
+static int grid=1;                 // gds2 manufacturing grid in GDS units
 LIST *polygon_knots=NULL;          // temporary list used to render polygon spans
 
 /****************************** function prototypes ***************************/
@@ -140,7 +140,7 @@ static void usage( char *msg) {
           "  [--x xmax]              # maximum horizontal pixel dimension [1600]\n"
           "  [--y ymax]              # maximum vertical pixel dimension [1200]\n"
           "  [--swapXY [0|1]]        # swap X/Y coordinates\n"
-          "  [--grid nm]             # gds2 manufacturing grid in nm [1]\n"
+          "  [--grid size]           # gds2 manufacturing grid in GDS units [1]\n"
           "  [--tile pixels]         # tile size to render in manufacturing grid [20000]\n"
           "  [--exclude fqcn]        # don't plot a specific cell (multiple allowed)\n"
           "  [--exclude-regex regex] # don't plot cells matching regular expression (multiple allowed)\n"

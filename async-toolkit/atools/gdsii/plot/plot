@@ -9,8 +9,8 @@
 my $name = "";
 my $JOBS = 1;
 my $MEM  = 4096;   # memory argument to QSUB
-my $GRID = 1;      # manufacturing grid, in nm
-my $TILE = 20000;  # tile size, relative to manufacturing grid
+my $GRID = 1;      # manufacturing grid in GDS units
+my $TILE = 20000;  # tile size relative to manufacturing grid
 my $MAX  = 13200;  # pixels, 22 inches @ 600 DPI, use 25200 for 42 inches @ 600 DPI
 my $BLACK = 95;    # black point for gamma correction
 my $WHITE = 255;   # white point for gamma correction
