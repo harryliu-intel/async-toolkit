@@ -31,6 +31,11 @@ TYPE
 
   Public = ByteSeq.T OBJECT METHODS
     prepPfx(pfxSz : CARDINAL); (* set up for a prefix to be added *)
+
+    save(VAR state : UndoState);
+
+    reset(READONLY state : UndoState) : BOOLEAN;
+    (* returns FALSE *)
   END;
 
 
@@ -83,5 +88,12 @@ PROCEDURE Cat(s, t : ByteSeq.T) : T;
 PROCEDURE Sub(s      : ByteSeq.T;
               start  : CARDINAL;
               length : CARDINAL := LAST(CARDINAL)) : T;
-  
+
+PROCEDURE ChopEnd(s : ByteSeq.T; e : End; by : CARDINAL) : T;
+
+TYPE
+  UndoState = RECORD (* treat as opaque *)
+    st, sz : CARDINAL;
+  END;
+    
 END ServerPacket.

@@ -16,8 +16,23 @@ REVEAL
   OVERRIDES
     prepPfx := PrepPfx;
     init    := Init;
+    save    := Save;
+    reset   := Reset;
   END;
 
+PROCEDURE Save(t : T; VAR state : UndoState) =
+  BEGIN
+    state.sz := t.sz;
+    state.st := t.st
+  END Save;
+
+PROCEDURE Reset(t : T; READONLY state : UndoState) : BOOLEAN =
+  BEGIN
+    t.sz := state.sz;
+    t.st := state.st;
+    RETURN FALSE
+  END Reset;
+  
 PROCEDURE PrepPfx(t : T; pfxSz : CARDINAL) =
   BEGIN
     WITH newSz = t.sz + pfxSz DO
@@ -208,6 +223,25 @@ PROCEDURE Truncate(t : T; e : End; by : CARDINAL) =
     END
   END Truncate;
 
+PROCEDURE ChopEnd(s : ByteSeq.T; e : End; by : CARDINAL) : T =
+  VAR
+    res := NEW(T).init();
+  BEGIN
+    <*ASSERT by <= s.sz*>
+    CASE e OF
+      End.Front =>
+      FOR i := 0 TO by - 1 DO
+        res.addhi(s.remlo())
+      END
+    |
+      End.Back =>
+      FOR i := 0 TO by - 1 DO
+        res.addlo(s.remhi())
+      END
+    END;
+    RETURN res
+  END ChopEnd;
+
 PROCEDURE Cat(s, t : ByteSeq.T) : T =
   VAR
     res := NEW(T).init(sizeHint := s.size() + t.size());
@@ -232,5 +266,5 @@ PROCEDURE Sub(s : ByteSeq.T; start : CARDINAL; length : CARDINAL) : T =
     END;
     RETURN res
   END Sub;
-    
+
 BEGIN END ServerPacket.
