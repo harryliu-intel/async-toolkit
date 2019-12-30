@@ -15,7 +15,7 @@ REVEAL
   T = Public BRANDED Brand OBJECT
   OVERRIDES
     prepPfx := PrepPfx;
-    init := Init;
+    init    := Init;
   END;
 
 PROCEDURE PrepPfx(t : T; pfxSz : CARDINAL) =
@@ -193,4 +193,30 @@ PROCEDURE Truncate(t : T; e : End; by : CARDINAL) =
     END
   END Truncate;
 
+PROCEDURE Cat(s, t : T) : T =
+  VAR
+    res := NEW(T).init(sizeHint := s.size() + t.size());
+  BEGIN
+    FOR i := 0 TO s.size() - 1 DO
+      res.addhi(s.get(i))
+    END;
+    FOR i := 0 TO t.size() - 1 DO
+      res.addhi(t.get(i))
+    END;
+    RETURN res
+  END Cat;
+
+PROCEDURE Sub(s : T; start : CARDINAL; length : CARDINAL) : T =
+  VAR
+    slen := s.size();
+    res  := NEW(T).init(sizeHint := length);
+  BEGIN
+    FOR i := start TO start + length - 1 DO
+      IF i > slen-1 THEN EXIT END;
+      res.addhi(s.get(i))
+    END;
+    RETURN res
+  END Sub;
+    
+  
 BEGIN END ServerPacket.

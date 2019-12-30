@@ -76,4 +76,8 @@ PROCEDURE DebugOut(seq : ByteSeq.T);
   
 CONST Brand = "ServerPacket";
 
+PROCEDURE Cat(s, t : T) : T;
+
+PROCEDURE Sub(s : T; start : CARDINAL; length : CARDINAL := LAST(CARDINAL)) : T;
+  
 END ServerPacket.
