@@ -18,19 +18,22 @@ REVEAL
     init    := Init;
     save    := Save;
     reset   := Reset;
+    remhi   := Remhi;
+    remlo   := Remlo;
   END;
 
 PROCEDURE Save(t : T; VAR state : UndoState) =
   BEGIN
+    state.t  := t;
     state.sz := t.sz;
     state.st := t.st
   END Save;
 
-PROCEDURE Reset(t : T; READONLY state : UndoState) : BOOLEAN =
+PROCEDURE Reset(t : T; READONLY state : UndoState) =
   BEGIN
+    <*ASSERT state.t = t*>
     t.sz := state.sz;
-    t.st := state.st;
-    RETURN FALSE
+    t.st := state.st
   END Reset;
   
 PROCEDURE PrepPfx(t : T; pfxSz : CARDINAL) =
@@ -267,4 +270,28 @@ PROCEDURE Sub(s : ByteSeq.T; start : CARDINAL; length : CARDINAL) : T =
     RETURN res
   END Sub;
 
+(* non-zeroing versions of remhi and remlo so that save/restore can be
+   used *)
+
+PROCEDURE Remhi(s: T): Byte.T =
+  VAR
+    j := s.st + s.sz - 1;
+    res: Byte.T;
+  BEGIN
+    IF j >= NUMBER(s.elem^) THEN j := j - NUMBER(s.elem^) END;
+    DEC(s.sz);
+    WITH z = s.elem[j] DO  res := z;  END;
+    RETURN res;
+  END Remhi;
+
+PROCEDURE Remlo(s: T): Byte.T =
+  VAR res: Byte.T;
+  BEGIN
+    WITH z = s.elem[s.st] DO  res := z;  END;
+    DEC(s.sz);
+    INC(s.st);
+    IF s.st = NUMBER(s.elem^) THEN s.st := 0 END;
+    RETURN res
+  END Remlo;
+  
 BEGIN END ServerPacket.

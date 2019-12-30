@@ -33,9 +33,10 @@ TYPE
     prepPfx(pfxSz : CARDINAL); (* set up for a prefix to be added *)
 
     save(VAR state : UndoState);
+    (* save the state so that remlo/remhi can be undone later *)
 
-    reset(READONLY state : UndoState) : BOOLEAN;
-    (* returns FALSE *)
+    reset(READONLY state : UndoState);
+    (* go back to the indicated UndoState*)
   END;
 
 
@@ -93,6 +94,7 @@ PROCEDURE ChopEnd(s : ByteSeq.T; e : End; by : CARDINAL) : T;
 
 TYPE
   UndoState = RECORD (* treat as opaque *)
+    t      : T;
     st, sz : CARDINAL;
   END;
     
