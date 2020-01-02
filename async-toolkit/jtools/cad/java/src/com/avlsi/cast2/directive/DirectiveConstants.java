@@ -212,9 +212,10 @@ public interface DirectiveConstants {
     String TIME = "time";
 
     /** DFX related directives */
-    String ASYNC_SCAN_INPUTS = "async_scan_inputs";
-    String ASYNC_SCAN_OUTPUTS = "async_scan_outputs";
-    String ASYNC_SCAN = "async_scan";
+    String SCAN_INPUTS = "scan_inputs";
+    String SCAN_OUTPUTS = "scan_outputs";
+    String SCAN_STATE = "scan_state";
+    String SCAN = "scan";
     String PROTEUS_SCAN_MODEL = "proteus_scan_model";
     String PROTEUS_SCAN_MACROS = "proteus_scan_macros";
     String PROTEUS_SCAN_DECLONE = "proteus_scan_declone";
