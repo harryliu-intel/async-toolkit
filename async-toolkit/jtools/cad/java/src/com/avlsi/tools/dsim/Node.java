@@ -815,4 +815,12 @@ public final class Node implements Event, Waitable {
     public byte getDelayType() {
         return delay_type;
     }
+
+    /**
+     * Return if the node is floating.
+     **/
+    public boolean isFloating() {
+        return count[0] == 0 && uCount[0] == 0 &&
+               count[1] == 0 && uCount[1] == 0;
+    }
 }
