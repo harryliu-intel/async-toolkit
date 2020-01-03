@@ -116,6 +116,7 @@ public class DSimUtil {
             if (DLY!=null) DLY.setValueAndEnqueueDependents(Node.VALUE_0); // might be overridden by env
             if (_RESET!=null) _RESET.scheduleImmediate(Node.VALUE_0);
             if (START!=null) START.scheduleImmediate(Node.VALUE_0);
+            dsim.cycle(-1);
             initResetNodes(init);
             dsim.cycle(-1);
 
@@ -201,7 +202,8 @@ public class DSimUtil {
                     new SortingIterator<Node>(
                         new FilteringIterator<Node>(
                             dsim.getNodes(),
-                            n -> n.getInit() != Node.Init.UNDEFINED),
+                            n -> n.getValue() == Node.VALUE_U &&
+                                 n.getInit() != Node.Init.UNDEFINED),
                         new Comparator<Node>() {
                             public int compare(Node a, Node b) {
                                 return a.getName().compareTo(b.getName());
