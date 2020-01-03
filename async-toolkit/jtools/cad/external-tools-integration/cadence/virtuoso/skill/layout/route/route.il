@@ -470,10 +470,10 @@
         (libName  nil)
         (cellName nil)
         (viewName "layout")
-        (defFile nil)
+        (oasFile nil)
         )
-  (let (TEMP WDIR SubcellLibNames libPath logFile Command status ImportCV layoutCV floorplanCV
-             win instmap SubcellLibString offset)
+  (let (TEMP WDIR libPath logFile Command status ImportCV layoutCV floorplanCV
+             win instmap offset CID oasName oasFile dfII_name inst_lib)
 
     ; choose libName and cellName
     (unless libName  libName  = CV->libName)
@@ -481,43 +481,46 @@
     (unless cellName (error "no cellName\n"))
     (unless libName  libName = (GetCastLibName cellName))
 
+    ; map to icc cellname
+    CID = (NameStartRename "cell" "cadence" "gds2")
+    oasName = (NameDoRename CID CV->cellName)             
+    fields = (parseString cellName ".")
+    short_name = (nth ((length fields)-2) fields)
+    top_name = (NameDoRename CID short_name)
+
     ; directories and files
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
     WDIR = (strcat TEMP "/route/" cellName)
-    (unless defFile defFile = (strcat WDIR "/" cellName "_routed.def"))
-    (unless (fileTimeModified defFile) (error "Cannot read %s\n" defFile))
+    (unless oasFile oasFile = (strcat WDIR "/" cellName ".oas"))
+    (unless (fileTimeModified oasFile) (error "Cannot read %s\n" oasFile))
 
     ; create library
     (GDSIIHierMakeLibrary libName (getShellEnvVar "DFII_DIR") TechLibName)
-
-    ; figure out libNames for all exported subcells
-    SubcellLibNames  = (GetSubcellLibNames defFile)
-    SubcellLibString = (buildString SubcellLibNames)
-
-    ; import def
     libPath = (getShellEnvVar "DFII_DIR")
-    logFile = (strcat defFile ".log")
-    status = (ldtrDefReadOA
-              defFile ; t_fileName
-              libName ; t_libName
-              libPath ; [t_libPath libPath]
-              cellName ; [t_cellName cellName]
-              viewName ; [t_viewName viewName]
-              nil ; [t_techName techName] (see BUG 22162)
-              "layout abstract floorplan"  ; [t_viewNameList viewNameList]
-              SubcellLibString ; [t_masterLibs masterLibs]
-              nil ; [ shared nil]
-              nil ; [ noRouting nil]
-              logFile ; [ t_logName logName]
-              nil ; [ useCustomVias nil]
-              t   ; [ overwrite nil]
-              nil ; [ createModHier nil]
-              ; [ t_commentChar commentChar]
-              ; [ t_templateFileName templateFileName]
-              )
-    (unless status (error "Unsuccessful defin\n"))
-    ImportCV = (dbOpenCellViewByType libName cellName viewName "maskLayout" "a")
+    logFile = (strcat oasFile ".log")
+    status = (ImportOAS oasFile "oas_import_temp" top_name viewName)
+    (unless status (error "Unsuccessful OAS import\n"))
+
+    ImportCV = (dbOpenCellViewByType "oas_import_temp" top_name viewName "maskLayout" "a")
+    ImportCV = (betterCopyCellView ImportCV "oas_import_temp" CV->cellName viewName nil nil t)
     (dbRefreshCellView ImportCV)
+
+    ; flatten ICC cells
+    (foreach inst ImportCV->instances
+      (when (rexMatchp top_name inst->cellName)
+        ;(printf "Flattening cell %s\n" inst->cellName)
+	(dbFlattenInst inst 32)
+	)
+      )
+
+    ; convert instances to dfII hierarchy
+    (foreach inst ImportCV->instances
+      dfII_name = (GetDFIIName inst->cellName)
+      inst_lib = (GetCastLibName dfII_name)
+      (printf "Remastering %s to %s\n" inst->cellName dfII_name)
+      status = (leReplaceAnyInstMaster inst inst_lib dfII_name "layout")
+      (unless status (error "Could not remaster %s\n" inst->cellName))
+      )
 
     ; HACK: offset to avoid negative numbers because RDT is stupid
     offset = (list (dbGetPropByName ImportCV "StupidOffsetX")->value
@@ -536,12 +539,17 @@
     (OffsetEverything offset ?CV ImportCV)
     (dbSave ImportCV)
 
-    ; change window to ImportCV
+    ; copy ImportCV to correct lib and change window
+    ImportCV = (betterCopyCellView ImportCV libName cellName viewName nil nil t)
     win = (hiGetCurrentWindow)
     (when win
       (geOpen ?lib libName ?cell cellName ?view viewName
               ?viewType "maskLayout" ?mode "a" ?window win)
       )
+
+    ; delete import_oas_temp library
+    (ddDeleteObj (ddGetObj "oas_import_temp"))
+    (shell "rm -rf oas_import_temp")
 
     ; execute custom function
     (FinishRouterImport ?CV ImportCV)
@@ -730,3 +738,26 @@
     )
   t
   )
+
+; Map APR cell names back to DFII names using rule file from PDK
+(defun GetDFIIName (cellName)
+  (let (rulefile names_in line fields line map_name)
+    rulefile = (strcat (ConfigFileGetValue TheCDSConfigTable "PDK_DIR") "/v2cast/g1m.rul")
+    names_in = (infile rulefile)
+    map_name = nil
+    (while (gets line names_in) != nil
+      (when (rexMatchp "\n$" line) ; remove newline
+        line = (strncat "" line (strlen line)-1)
+        )
+      fields = (parseString line " ")
+      (foreach item fields
+        (when item == cellName
+          map_name = (caddr fields)
+	  )
+        )
+      )
+    (unless map_name (error "Can't map dfII name of %s from g1m.rul\n" cellName) )
+    map_name
+    )
+  )
+
