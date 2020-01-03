@@ -20,6 +20,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -27,6 +28,7 @@ import java.util.regex.Pattern;
 
 import com.avlsi.cell.CellUtils;
 import com.avlsi.csp.ast.*;
+import com.avlsi.csp.coverage.*;
 import com.avlsi.csp.grammar.ParseRange;
 import com.avlsi.csp.grammar.ParsePosition;
 import com.avlsi.csp.util.CSPCellInfo;
@@ -38,6 +40,7 @@ import com.avlsi.csp.util.ProblemFilter;
 import com.avlsi.csp.util.UniqueLabel;
 import com.avlsi.csp.util.VariableAnalysisException;
 import com.avlsi.csp.util.VariableAnalyzer;
+import com.avlsi.csp.util.VisitorByCategory;
 import com.avlsi.fast.metaparameters.ArrayMetaParam;
 import com.avlsi.fast.metaparameters.BooleanMetaParam;
 import com.avlsi.fast.metaparameters.IntegerMetaParam;
@@ -49,6 +52,7 @@ import com.avlsi.tools.prs2verilog.verilog.VerilogUtil;
 import com.avlsi.tools.dsim.ExceptionPrettyPrinter;
 import com.avlsi.util.container.CollectionUtils;
 import com.avlsi.util.container.HashCounter;
+import com.avlsi.util.container.MutableInt;
 import com.avlsi.util.container.Pair;
 import com.avlsi.util.container.Triplet;
 import com.avlsi.util.math.BigIntegerUtil;
@@ -143,6 +147,18 @@ public class VerilogEmitter extends CommonEmitter {
 
     private final boolean implicitInit;
 
+    /** Whether to emit line coverage probes */
+    private final boolean emitCoverageProbes;
+
+    /** List of all line coverage probes */
+    private List<ProbeInfo> probeTable = null;
+
+    /** Map function to probeTable index (to collapse uniquified functions) */
+    private Map<FunctionDeclaration,Integer> hitTableOffsets = null;
+
+    /** Index for the next probe */
+    private int hitTableOffset = 0;
+
     private int scope = 0;
 
     private final ProblemFilter problems;
@@ -154,6 +170,12 @@ public class VerilogEmitter extends CommonEmitter {
 
     private static final String STATE_COVERGROUP_INST =
         "c2v_state_cg_inst";
+
+    private static final String HIT_TABLE =
+        "c2v_line_cov_hits";
+
+    private static final String LINE_COV_COVERGROUP_INST =
+        "c2v_line_cov_cg_inst";
 
     private interface Index {
         void write() throws VisitorException;
@@ -389,6 +411,43 @@ public class VerilogEmitter extends CommonEmitter {
 
     private void coverage_on() {
         coverage_on(true);
+    }
+
+    private boolean isFirstActualFalse(final FunctionCallExpression e) {
+        final Iterator<ExpressionInterface> it = e.getActuals();
+        return it.hasNext() && CspUtils.getBooleanConstant(it.next())
+                                       .orElse(false);
+    }
+
+    private void emitOneProbe(StatementInterface node, String type) {
+        if (emitCoverageProbes) {
+            if (node.getFlag(DISABLE_COVERAGE)) {
+                out.println("// no coverage probe for preprocessing code");
+            } else if (CspUtils.hasFunctionCallTo(node, "cover")
+                        .map(f -> isFirstActualFalse(f))
+                        .orElse(false)) {
+                out.println("// coverage probe elided for cover(false) (" +
+                            node.getParseRange().fullString() + ")");
+            } else if (CspUtils.hasFunctionCallTo(node, "assert")
+                               .map(f -> isFirstActualFalse(f))
+                               .orElse(false)) {
+                out.println("// coverage probe elided for assert(false) (" +
+                            node.getParseRange().fullString() + ")");
+            } else {
+                final ProbeInfo probe = new ProbeInfo(
+                        node.getParseRange(), type, cellInfo.getAbbreviatedType());
+                if (hitTableOffset < probeTable.size()) {
+                    assert Objects.equals(
+                            probeTable.get(hitTableOffset).toString(),
+                            probe.toString());
+                } else {
+                    probeTable.add(probe);
+                }
+                out.println(HIT_TABLE + "[" + hitTableOffset + "] = 1'b1;" +
+                        " // coverage probe (" + node.getParseRange().fullString() + ")");
+                hitTableOffset++;
+            }
+        }
     }
 
     private String getLoopVarType(final Range r) {
@@ -793,6 +852,7 @@ public class VerilogEmitter extends CommonEmitter {
                           final int registerBitWidth,
                           final boolean strictVars,
                           final boolean implicitInit,
+                          final boolean emitCoverageProbes,
                           final ProblemFilter problems) { 
         super(out, registerBitWidth, true);
         this.cellInfo = cellInfo;
@@ -807,6 +867,11 @@ public class VerilogEmitter extends CommonEmitter {
         this.resetNodeName = resetNodeName;
         this.strictVars = strictVars;
         this.implicitInit = implicitInit;
+        this.emitCoverageProbes = emitCoverageProbes;
+        if (emitCoverageProbes) {
+            this.probeTable = new ArrayList<>();
+            this.hitTableOffsets = new HashMap<>();
+        }
         this.problems = problems;
     }
 
@@ -914,6 +979,35 @@ public class VerilogEmitter extends CommonEmitter {
             }
         }
 
+        if (emitCoverageProbes) {
+            // count the number of probes, and declare hit table
+            final MutableInt count = new MutableInt(0);
+            e.accept(new VisitorByCategory() {
+                protected void processAbstractGuardedStatement(AbstractGuardedStatement s)
+                throws VisitorException {
+                    super.processAbstractGuardedStatement(s);
+                    final StatementInterface els = s.getElseStatement();
+                    if (els != null && !els.getFlag(DISABLE_COVERAGE)) {
+                        count.inc();
+                    }
+                }
+                protected void processGuardedCommandInterface(GuardedCommandInterface gci)
+                throws VisitorException {
+                    final StatementInterface gc = ((GuardedCommand) gci).getCommand();
+                    if (!gc.getFlag(DISABLE_COVERAGE)) {
+                        count.inc();
+                    }
+                    gc.accept(getVisitor());
+                }
+            });
+            if (count.get() > 0) {
+                coverage_off();
+                out.println("bit [" + (count.get() - 1) + ":0] " + HIT_TABLE + ";");
+                out.println("initial " + HIT_TABLE + " = '0;");
+                coverage_on();
+            }
+        }
+
         // call resetNodes() if it is defined
         final Pair/*<CSPProgram,FunctionDeclaration>*/ resetDecl =
             (Pair) resolver.getResolvedFunctions()
@@ -970,6 +1064,13 @@ public class VerilogEmitter extends CommonEmitter {
         out.println();
     }
 
+    private void setupCoverageProbes(final FunctionDeclaration decl) {
+        if (emitCoverageProbes) {
+            hitTableOffset = hitTableOffsets.computeIfAbsent(decl, 
+                    k -> Integer.valueOf(probeTable.size()));
+        }
+    }
+
     public void visitCSPProgram(CSPProgram e) throws VisitorException {
 
         resolver.resolve(e);
@@ -994,11 +1095,31 @@ public class VerilogEmitter extends CommonEmitter {
         }
 
         if (!problems.hasError()) {
+            setupCoverageProbes(null);
             updateTokenVerilogMap(moduleName);
             outputProgramBody(e);
             outputFunctions(e.getInitializerStatement());
             outputConstructors();
             outputArbiters();
+
+            if (emitCoverageProbes && !probeTable.isEmpty()) {
+                final String coverGroup =
+                    cellInfo.getAbbreviatedType() + "$cov_cg";
+                out.println("covergroup " + escape(coverGroup) +
+                    " @(" + HIT_TABLE + " or " + resetNodeName + ");");
+                out.println("  option.per_instance = 1;");
+                int i = 0;
+                for (ProbeInfo p : probeTable) {
+                    out.println("  coverpoint " + HIT_TABLE + "[" + i + "] {");
+                    out.println("    bins hit = ( 0 => 1 );");
+                    out.println("    option.comment = \"" + p.toString() + "\";");
+                    out.println("  }");
+                    i++;
+                }
+                out.println("endgroup");
+                out.println(escape(coverGroup) + " " + LINE_COV_COVERGROUP_INST +
+                            " = new;");
+            }
         }
 
         out.flush();
@@ -1066,7 +1187,8 @@ public class VerilogEmitter extends CommonEmitter {
         // structures and simple variables.
         assert e.getBitsExpression() instanceof IdentifierExpression ||
                e.getBitsExpression() instanceof ArrayAccessExpression ||
-               e.getBitsExpression() instanceof MemberAccessExpression:
+               e.getBitsExpression() instanceof MemberAccessExpression ||
+               e.getBitsExpression() instanceof StructureAccessExpression:
                "Invalid bit range expression found at: " + e.getParseRange().fullString();
 
         lvalues.add(e.getBitsExpression());
@@ -1847,6 +1969,7 @@ public class VerilogEmitter extends CommonEmitter {
             final FunctionDeclaration decl = (FunctionDeclaration) t.getFirst();
             final List/*<Object>*/ arrayArg = (List) t.getSecond();
             final String name = (String) t.getThird();
+            setupCoverageProbes(decl);
             outputFunction(decl, initStmt, arrayArg, name);
         }
     }
@@ -2174,6 +2297,7 @@ public class VerilogEmitter extends CommonEmitter {
             if (s == infiniteLoop) {
                 out.println("-> " + INFINITE_LOOP_ITERATION_EVENT + ";");
             }
+            emitOneProbe(gc.getCommand(), "repetition statement alternative");
             gc.getCommand().accept(this);
             if (guardStmt != null) {
                 guardStmt.accept(this);
@@ -2266,6 +2390,8 @@ public class VerilogEmitter extends CommonEmitter {
             // handle else or do nothing case
             out.println("-1 : begin");
             if (s.getElseStatement() != null) {
+                emitOneProbe(s.getElseStatement(),
+                    "repetition or selection statement else clause");
                 s.getElseStatement().accept(this);
             } else if (!isRepetition) {
                 // handle case that no guards are true
@@ -2297,6 +2423,8 @@ public class VerilogEmitter extends CommonEmitter {
             for (Iterator i = s.getGuardedCommands(); i.hasNext(); ) {
                 final GuardedCommand gc = (GuardedCommand) i.next();
                 println(guardNum + " : begin", gc.getCommand());
+                emitOneProbe(gc.getCommand(),
+                    "repetition or selection statement alternative");
                 gc.getCommand().accept(this);
                 if (!isRepetition) {
                     // HACK: end loop by setting chosenGuard to -1

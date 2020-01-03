@@ -179,6 +179,10 @@ public class Cast2Verilog {
     private boolean enableSystemVerilog;
 
     /**
+     * Whether to emit line coverage probes
+     **/
+    private boolean emitCoverageProbes;
+    /**
      * Whether to surround module definitions with ifdefs to prevent
      * redefinition.
      **/
@@ -813,6 +817,7 @@ public class Cast2Verilog {
                    final CoSimParameters params,
                    final int registerBitWidth,
                    final boolean enableSystemVerilog,
+                   final boolean emitCoverageProbes,
                    final boolean generateIfDef,
                    final boolean generateTb) {
         this.subcellNames = new HashMap();
@@ -826,6 +831,7 @@ public class Cast2Verilog {
         this.leafDelayBias = new HashMap();
         this.leafExtraDelay = new HashMap();
         this.enableSystemVerilog = enableSystemVerilog;
+        this.emitCoverageProbes = emitCoverageProbes;
         this.generateIfDef = generateIfDef;
         this.generateTb = generateTb;
         this.errorExist = false;
@@ -2338,13 +2344,15 @@ public class Cast2Verilog {
             theArgs.getArgValue("register-width", "129");
         final boolean enableSystemVerilog =
             theArgs.argExists("enable-system-verilog");
+        final boolean emitCoverageProbes =
+            theArgs.argExists("emit-coverage-probes");
         final boolean generateIfDef = theArgs.argExists("ifdef");
         final boolean generateTb = theArgs.argExists("generate-testbench");
 
         final Cast2Verilog c2v = new Cast2Verilog(systemErrWriter, 
              systemErrWriter, systemErrWriter, params,
              Integer.parseInt(registerWidth), enableSystemVerilog,
-             generateIfDef, generateTb);
+             emitCoverageProbes, generateIfDef, generateTb);
         c2v.emitHelperFunctions(out);
         c2v.convert(cellEnv, instanceName, out, behOut, theArgs);
         if (c2v.checkError()) {
@@ -3368,7 +3376,8 @@ public class Cast2Verilog {
         walkPortList(cell.getCSPInfo(), false, new CollectInputPorts(inputPorts));
         final Csp2Verilog c2v =
             new Csp2Verilog(warningWriter, errorWriter, debugWriter, resetName,
-                            registerBitWidth, probFilter, enableSystemVerilog);
+                            registerBitWidth, probFilter, enableSystemVerilog,
+                            emitCoverageProbes);
         c2v.convert(cell, bodyName, inputPorts, out);
         structDecls.addAll(c2v.getStructureDeclaration());
 

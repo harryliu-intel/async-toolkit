@@ -578,6 +578,7 @@ public class FunctionPreprocessor extends VisitorByCategory {
                 new AssignmentStatement(val,
                                         (ExpressionInterface) getResult()));
         actionStmt.epr(e.getRight());
+        actionStmt.setFlag(DISABLE_COVERAGE, true);
 
         final GuardedCommand gc;
         if (guardStmt == null) {
@@ -592,6 +593,7 @@ public class FunctionPreprocessor extends VisitorByCategory {
 
         final StatementInterface elseStmt =
             new AssignmentStatement(val, new BooleanExpression(!and));
+        elseStmt.setFlag(DISABLE_COVERAGE, true);
 
         final AbstractGuardedStatement select =
             new DeterministicSelectionStatement();
