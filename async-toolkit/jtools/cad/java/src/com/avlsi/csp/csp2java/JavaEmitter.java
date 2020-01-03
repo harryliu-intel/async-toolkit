@@ -2170,34 +2170,6 @@ public class JavaEmitter implements VisitorInterface {
                " to line " + pr.end.line + ", column " + pr.end.column;
     }
 
-    private Optional<FunctionCallExpression> hasFunctionCallTo(
-            final StatementInterface s,
-            final String name) {
-        if (s instanceof ExpressionStatement) {
-            final ExpressionInterface expr =
-                ((ExpressionStatement) s).getExpression();
-            if (expr instanceof FunctionCallExpression) {
-                final FunctionCallExpression func =
-                    (FunctionCallExpression) expr;
-                final ExpressionInterface funcExpr =
-                    func.getFunctionExpression();
-                if (funcExpr instanceof IdentifierExpression &&
-                    ((IdentifierExpression) funcExpr).getIdentifier()
-                                                     .equals(name)) {
-                    return Optional.of(func);
-                }
-            }
-        } else if (s instanceof SequentialStatement) {
-            for (StatementInterface s1 : new IterableIterator<StatementInterface>(
-                    ((SequentialStatement) s).getStatements())) {
-                final Optional<FunctionCallExpression> result =
-                    hasFunctionCallTo(s1, name);
-                if (result.isPresent()) return result;
-            }
-        }
-        return Optional.empty();
-    }
-
     private boolean isFirstActualFalse(final FunctionCallExpression e) {
         final Iterator<ExpressionInterface> it = e.getActuals();
         final boolean result = it.hasNext() ?
@@ -2207,11 +2179,11 @@ public class JavaEmitter implements VisitorInterface {
 
     protected void emitOneProbe(StatementInterface node, String type) {
         if (emitCoverageProbes) {
-            if (hasFunctionCallTo(node, "cover").map(f -> isFirstActualFalse(f))
+            if (CspUtils.hasFunctionCallTo(node, "cover").map(f -> isFirstActualFalse(f))
                                                 .orElse(false)) {
                 out.println("/* coverage probe elided for cover(false) (" +
                             getLineColumn(node) + ") */");
-            } else if (hasFunctionCallTo(node, "assert").map(f -> isFirstActualFalse(f))
+            } else if (CspUtils.hasFunctionCallTo(node, "assert").map(f -> isFirstActualFalse(f))
                                                         .orElse(false)) {
                 out.println("/* coverage probe elided for assert(false) (" +
                             getLineColumn(node) + ") */");

@@ -7,6 +7,7 @@ import java.util.Iterator;
 
 import com.avlsi.csp.ast.*;
 import com.avlsi.csp.csp2java.runtime.CspInteger;
+import com.avlsi.util.container.IterableIterator;
 
 public class CspUtils {
     public static BigInteger getIntegerConstant(final ExpressionInterface e) {
@@ -173,4 +174,31 @@ public class CspUtils {
         return result;
     }
 
+    public static Optional<FunctionCallExpression> hasFunctionCallTo(
+            final StatementInterface s,
+            final String name) {
+        if (s instanceof ExpressionStatement) {
+            final ExpressionInterface expr =
+                ((ExpressionStatement) s).getExpression();
+            if (expr instanceof FunctionCallExpression) {
+                final FunctionCallExpression func =
+                    (FunctionCallExpression) expr;
+                final ExpressionInterface funcExpr =
+                    func.getFunctionExpression();
+                if (funcExpr instanceof IdentifierExpression &&
+                    ((IdentifierExpression) funcExpr).getIdentifier()
+                                                     .equals(name)) {
+                    return Optional.of(func);
+                }
+            }
+        } else if (s instanceof SequentialStatement) {
+            for (StatementInterface s1 : new IterableIterator<StatementInterface>(
+                    ((SequentialStatement) s).getStatements())) {
+                final Optional<FunctionCallExpression> result =
+                    hasFunctionCallTo(s1, name);
+                if (result.isPresent()) return result;
+            }
+        }
+        return Optional.empty();
+    }
 }
