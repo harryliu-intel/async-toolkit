@@ -50,6 +50,7 @@
                                " -objectMap '%s/stream/objectmap'"
                                " -cellMap '%s'"
                                " -logFile '%s/%s.log'"
+			       " -enableColoring"
                                " -strmFile '%s'")
                        CV->libName CV->cellName CV->viewName
                        directory directory layerMapFile

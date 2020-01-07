@@ -229,6 +229,7 @@ techLib                            "PDKLIB"
 topCell                            "CELLNAME"
 userSkillFile                      ""
 viaMap                             ""
+enableColoring
 view                               "VIEWNAME"
 warnToErr                          ""
 TEMPLATE
