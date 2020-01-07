@@ -48,6 +48,7 @@
                                " -layerMap '%s'"
                                " -propMap '%s/stream/prop.map'"
                                " -objectMap '%s/stream/objectmap'"
+			       " -enableColoring"
                                " -cellMap '%s'"
                                " -logFile '%s/%s.log'"
                                " -oasisFile '%s'")
