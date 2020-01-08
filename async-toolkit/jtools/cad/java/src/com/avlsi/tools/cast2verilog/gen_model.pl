@@ -7,7 +7,7 @@ use File::Spec::Functions qw/:ALL/;
 use FindBin;
 use Cwd qw/abs_path/;
 
-my ($cast_path, $spar_dir, $cell, $env, $cosim, @cast_defines, $beh, $fpga_path, $help);
+my ($cast_path, $spar_dir, $cell, $env, $cosim, @cast_defines, $beh, $fpga_path, @c2v_args, $help);
 my $width = 300;
 GetOptions("cast-path=s" => \$cast_path,
            "spar-dir=s"  => \$spar_dir,
@@ -17,6 +17,7 @@ GetOptions("cast-path=s" => \$cast_path,
            "width=i"     => \$width,
            "fpga-path=s" => \$fpga_path,
            "defines=s"   => \@cast_defines,
+           "c2v-args=s"  => \@c2v_args,
            "beh!"        => \$beh,
            "help!"       => \$help) || pod2usage(2);
 
@@ -47,6 +48,7 @@ my $cmd = ("cast2verilog --cast-path=\Q$cast_path\E " .
            "--cell=\Q$cosim\E " .
            "--file-list=$flist " .
            join('', map { "--define=\Q$_\E " } @cast_defines) .
+           join('', map { "\Q$_\E " } @c2v_args) .
            "--output-file=testbench.v 2> testbench.err");
 
 system($cmd) == 0 || die "Error executing cast2verilog: $!";
@@ -93,4 +95,5 @@ gen_model.pl [options] [verilog files...]
    --fpga-path     Specify the instance path of the FPGA relative to the top
    --define        Override CAST variables; can be specified any number of times
    --beh           If specified, generate a behavior model
+   --c2v-arg       Flags to cast2verilog; can be specified any number of times
 =cut
