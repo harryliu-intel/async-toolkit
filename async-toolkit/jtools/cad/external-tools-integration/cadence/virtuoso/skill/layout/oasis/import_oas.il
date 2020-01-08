@@ -45,6 +45,7 @@
                   "-attachTechFileOfLib \"" TechLibName "\" "
                   "-layerMap \"" PDK_DIR "/share/Fulcrum/stream/strmin.layermap\" "
                   "-objectMap \"" PDK_DIR "/share/Fulcrum/stream/objectmap\" "
+		  "-textHeight \"0.01\" "
 		  "-enableColoring"
 		  )
     status = (shell cmd)
