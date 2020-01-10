@@ -22,7 +22,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.StringTokenizer;
 import java.util.NoSuchElementException;
-
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.avlsi.util.text.StringUtil;
 
@@ -476,8 +477,43 @@ public final class FileSearchPath implements SearchPath {
             throw new FileNotFoundException( generateErrorMessage( dirName ) );
         }
     }
-    
-    
+
+    private Stream<File> getCanonicalFile(File f) {
+        try {
+            return Stream.of(f.getCanonicalFile());
+        } catch (IOException e) {
+        }
+        return Stream.empty();
+    }
+
+    public SearchPathDirectoryIterator findAllDirectory( final String dirName ) {
+        final File absFileObj = new File( dirName );
+
+        final Stream<File> candidates;
+        if ( absFileObj.isAbsolute() ) {
+            candidates = Stream.of( absFileObj );
+        }
+        else {
+            candidates = Arrays.stream(dirs)
+                               .map(dir -> new File( dir, dirName ));
+        }
+        
+        final Iterator<File> result =
+            candidates.filter(f -> f.canRead() && f.isDirectory())
+                      .flatMap(f -> getCanonicalFile(f))
+                      .collect(Collectors.toList())
+                      .iterator();
+
+        return new SearchPathDirectoryIterator() {
+            public boolean hasNext() {
+                return result.hasNext();
+            }
+            public SearchPathDirectory next() {
+                return new FileSearchPathDirectory( result.next(), spfFactory );
+            }
+        };
+    }
+
     /**
      * Returns the components of the search path as an unmodifiable
      * Iterator.

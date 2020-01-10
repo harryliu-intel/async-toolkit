@@ -12,6 +12,7 @@ import java.io.FileNotFoundException;
 
 import com.avlsi.io.SearchPathFile;
 import com.avlsi.io.SearchPathDirectory;
+import com.avlsi.io.SearchPathDirectoryIterator;
 
 import com.avlsi.util.container.StringContainerIterator;
 
@@ -67,6 +68,17 @@ public interface SearchPath {
        to first one that can be read will be returned.
      */
     SearchPathDirectory findDirectory( final String dirName ) throws FileNotFoundException;
+
+    /**
+     * Searches for the directory <code>dirName</code> in each component of the search path.
+     *
+     * @param dirName The name of the directory to find relative to the entries
+     * in the SearchPath.  Can also be an absolute directory name.
+     *
+     * @return A SearchPathDirectoryIterator that iterates over all the
+     * directories found.
+     **/
+    SearchPathDirectoryIterator findAllDirectory( final String dirName );
 
     /**
        Returns the search path as a string.  The components of the path are seperated by File.pathSeparatorChar

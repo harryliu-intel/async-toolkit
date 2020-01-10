@@ -23,10 +23,12 @@ import java.io.InputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import antlr.ASTFactory;
 import antlr.CharScanner;
@@ -63,6 +65,7 @@ import com.avlsi.io.SearchPath;
 import com.avlsi.io.SearchPathFile;
 import com.avlsi.io.SearchPathFileFilter;
 import com.avlsi.io.SearchPathDirectory;
+import com.avlsi.io.SearchPathDirectoryIterator;
 import com.avlsi.io.FileSearchPath;
 import com.avlsi.io.SearchPathFileIterator;
 
@@ -229,7 +232,7 @@ public final class CastParserEnvironment {
         if (defaultImportDir != null) {
             /** @bug jmr parseDirectory ignores SelfImportException **/
             final Environment[] envs
-                = parseDirectory(defaultImportDir, new LinkedList());
+                = parseAllDirectory(defaultImportDir, new LinkedList());
             for (int i = 0; i < envs.length; ++i)
                 defaultImportEnv.addEnvironment(envs[i]);
         }
@@ -598,6 +601,37 @@ public final class CastParserEnvironment {
         }
     }
 
+    private void parseOneDirectory(final SearchPathDirectory f,
+                                   final String dirname,
+                                   final LinkedList fileList,
+                                   final CellImpl topLevelEnv,
+                                   final SearchPathFileFilter filter,
+                                   final List<Environment> envList)
+        throws IOException,
+               RecognitionException,
+               TokenStreamException,
+               CircularImportException
+    {
+        final SearchPathFileIterator fileIter = f.getFiles( filter );
+
+        while ( fileIter.hasNext() ) {
+            SearchPathFile currFile = fileIter.next();
+            try {
+                envList.add( parseFile( currFile, fileList, topLevelEnv,
+                                        castVersion.equals("1") ? null :
+                                        dirname.replace( File.separatorChar,
+                                                         '.' ) + '.' +
+                                        StringUtil.chompEnd(
+                                            StringUtil.chompStart(
+                                                currFile.getName(),
+                                                f.getName() +
+                                                    File.separatorChar),
+                                            ".cast" ) ) );
+            } catch (SelfImportException e) {
+                continue;
+            }
+        }
+    }
 
     public final Environment[] parseDirectory( final String dirName,
                                                final LinkedList fileList )
@@ -631,40 +665,61 @@ public final class CastParserEnvironment {
                TokenStreamException,
                CircularImportException
     {
-        final SearchPathDirectory f = castPath.findDirectory(dirname);
-        
         final SearchPathFileFilter castFilter = new SearchPathFileFilter() {
                 public boolean accept(final SearchPathFile pathname) {
                     return pathname.getName().endsWith(".cast");
                 }
             };
 
-        final SearchPathFileIterator fileIter = f.getFiles( castFilter );
-        
+        final List<Environment> envList = new ArrayList<>();
 
-        final List envList = new ArrayList();
-        
-        while ( fileIter.hasNext() ) {
-            SearchPathFile currFile = fileIter.next();
-            try {
-                envList.add( parseFile( currFile, fileList, topLevelEnv,
-                                        castVersion.equals("1") ? null :
-                                        dirname.replace( File.separatorChar,
-                                                         '.' ) + '.' +
-                                        StringUtil.chompEnd(
-                                            StringUtil.chompStart(
-                                                currFile.getName(),
-                                                f.getName() +
-                                                    File.separatorChar),
-                                            ".cast" ) ) );
-            } catch (SelfImportException e) {
-                continue;
-            }
-        }
-	
-        return (Environment[]) envList.toArray(new Environment[0]);
+        parseOneDirectory( castPath.findDirectory(dirname), dirname, fileList,
+                           topLevelEnv, castFilter, envList );
+
+        return envList.toArray(new Environment[0]);
     }
     
+    public final Environment[] parseAllDirectory( final String dirName,
+                                                  final LinkedList fileList )
+        throws IOException,
+               RecognitionException,
+               TokenStreamException,
+               CircularImportException {
+        return parseAllDirectory( dirName, fileList,
+                                  new CellImpl( "$env", null,
+                                                CellImpl.SYNTHETIC_CELL ) );
+    }
+
+    public Environment[] parseAllDirectory(final String dirname,
+                                           final LinkedList fileList,
+                                           final CellImpl topLevelEnv )
+        throws IOException,
+               RecognitionException,
+               TokenStreamException,
+               CircularImportException
+    {
+        final Set<String> seen = new HashSet<>();
+
+        final List<Environment> envList = new ArrayList<>();
+
+        final SearchPathFileFilter filter = new SearchPathFileFilter() {
+                public boolean accept(final SearchPathFile pathname) {
+                    return pathname.getName().endsWith(".cast") &&
+                        seen.add(pathname.getOriginalFile().getName());
+                }
+            };
+
+        final SearchPathDirectoryIterator dirIter =
+            castPath.findAllDirectory(dirname);
+        
+        while ( dirIter.hasNext() ) {
+            parseOneDirectory( dirIter.next(), dirname, fileList, topLevelEnv,
+                               filter, envList );
+        }
+
+        return envList.toArray(new Environment[0]);
+    }
+
     /**
      * Returns a new ImportEnvironment, with the default imports
      * already added.

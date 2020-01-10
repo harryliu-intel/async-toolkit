@@ -5,8 +5,9 @@
  * $Author$
  */
 package com.avlsi.io;
-import java.io.InputStream;
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.InputStream;
 
 
 /**
@@ -23,6 +24,11 @@ public interface SearchPathFile {
        @return The absolute name of the file in the SearchPath.
      */
     String getName( );
+
+    /**
+     * Returns the original abstract file before any canonicalization.
+     **/
+    File getOriginalFile( );
 
     /**
        Opens an InputStream that reads the contents of the file.

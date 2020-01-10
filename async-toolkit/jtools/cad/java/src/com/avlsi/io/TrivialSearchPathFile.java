@@ -17,6 +17,8 @@ import com.avlsi.util.debug.Debug;
 
 public class TrivialSearchPathFile implements SearchPathFile {
 
+    private File m_OriginalFile;
+
     private File m_File;
 
     /**
@@ -71,6 +73,8 @@ public class TrivialSearchPathFile implements SearchPathFile {
         // not be using this class anyway.
         assert !isCanon || isCanonical(theFile);
 
+        m_OriginalFile = theFile;
+
         m_File = isCanon ? theFile : canonizeIfPossible(theFile);
     }
 
@@ -82,6 +86,10 @@ public class TrivialSearchPathFile implements SearchPathFile {
 
     public String getName() {
         return m_File.getAbsolutePath();
+    }
+
+    public File getOriginalFile() {
+        return m_OriginalFile;
     }
         
     public InputStream getStream() throws FileNotFoundException {
