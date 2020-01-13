@@ -188,7 +188,7 @@ print OUT "\nCell $newtop bbox=0:0:0:0\n\n";
 foreach my $node (sort keys %portnodes) {
     my $dir="";
     if    (defined($b_nodes{$node})) { $dir = "InOut"; } # TODO: power?
-    elsif (defined($g_nodes{$node}) && defined($sd_nodes{$node})) { $dir = "InOut"; }
+    elsif (defined($g_nodes{$node}) && defined($sd_nodes{$node})) { $dir = "Out"; } # TODO: InOut?
     elsif (defined($g_nodes{$node})) { $dir = "In"; }
     elsif (defined($sd_nodes{$node})) { $dir = "Out"; }
     print OUT "Pin $node direction=$dir\n";
