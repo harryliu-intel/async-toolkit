@@ -1,13 +1,16 @@
 package com.avlsi.csp.util;
 
 import java.math.BigInteger;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.Iterator;
 
 import com.avlsi.csp.ast.*;
 import com.avlsi.csp.csp2java.runtime.CspInteger;
+import com.avlsi.util.container.FilteringIterator;
 import com.avlsi.util.container.IterableIterator;
+import com.avlsi.util.container.MappingIterator;
 
 public class CspUtils {
     public static BigInteger getIntegerConstant(final ExpressionInterface e) {
@@ -172,6 +175,28 @@ public class CspUtils {
             else return null;
         }
         return result;
+    }
+
+    public static Iterable<StatementInterface>
+    getStatements(final StatementInterface stmt, final boolean body) {
+        final Iterator<StatementInterface> result;
+        if (stmt instanceof AbstractCompositeStatement) {
+            final AbstractCompositeStatement seq =
+                (AbstractCompositeStatement) stmt;
+            result =
+                new FilteringIterator<StatementInterface>(
+                    new MappingIterator<StatementInterface,StatementInterface>(
+                        seq.getStatements(),
+                        s -> {
+                            final StatementInterface inf =
+                                CspUtils.getInfiniteLoopBody(s);
+                            return body ? inf : (inf == null ? s : null);
+                        }),
+                    s -> s != null);
+        } else {
+            result = Collections.emptyIterator();
+        }
+        return new IterableIterator<StatementInterface>(result);
     }
 
     public static Optional<FunctionCallExpression> hasFunctionCallTo(
