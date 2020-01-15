@@ -158,13 +158,13 @@ public class DetectUnconditional extends VisitorByCategory {
             if (merged == null) merged = uncond;
             else merged = intersect(merged, uncond);
         }
-        uncond = new HashSet<>();
         final StatementInterface els = s.getElseStatement();
         if (els != null) {
+            uncond = new HashSet<>();
             els.accept(getVisitor());
+            if (merged == null) merged = uncond;
+            else merged = intersect(merged, uncond);
         }
-        if (merged == null) merged = uncond;
-        else merged = intersect(merged, uncond);
         uncond = oldUncond;
         uncond.addAll(merged);
     }
