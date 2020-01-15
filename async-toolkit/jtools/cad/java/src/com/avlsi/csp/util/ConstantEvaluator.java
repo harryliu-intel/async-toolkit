@@ -39,6 +39,7 @@ public class ConstantEvaluator implements VisitorInterface {
     private boolean inInitializers = false;
     private final Optional<ExpressionObserver> guardObserver;
     private final Optional<ExpressionObserver> actualObserver;
+    private final boolean unrollSeqLoop;
 
     public interface Value {
         Type getType();
@@ -59,7 +60,22 @@ public class ConstantEvaluator implements VisitorInterface {
      **/
     public static CSPProgram evaluate(final CSPProgram p)
         throws VisitorException {
-        return evaluate(p, Optional.empty(), Optional.empty());
+        return evaluate(p, false);
+    }
+
+    /**
+     * Returns a new {@link CSPProgram} that is the same as the given program,
+     * except with all constant variables removed, and iterators with constant
+     * bounds unrolled.
+     *
+     * @param p program to process
+     * @param unrollSeqLoop whether to unroll sequential loop statements
+     * @return unrolled program with no constant variables
+     **/
+    public static CSPProgram evaluate(final CSPProgram p,
+                                      final boolean unrollSeqLoop)
+        throws VisitorException {
+        return evaluate(p, Optional.empty(), Optional.empty(), unrollSeqLoop);
     }
 
     /**
@@ -79,25 +95,29 @@ public class ConstantEvaluator implements VisitorInterface {
         throws VisitorException {
         return evaluate(p,
                         Optional.of(guardObserver),
-                        Optional.of(actualObserver));
+                        Optional.of(actualObserver),
+                        false);
     }
 
     private static CSPProgram evaluate(
             final CSPProgram p,
             final Optional<ExpressionObserver> guardObserver,
-            final Optional<ExpressionObserver> actualObserver)
+            final Optional<ExpressionObserver> actualObserver,
+            final boolean unrollSeqLoop)
         throws VisitorException {
         final ConstantEvaluator e =
-            new ConstantEvaluator(guardObserver, actualObserver);
+            new ConstantEvaluator(guardObserver, actualObserver, unrollSeqLoop);
         e.visitCSPProgram(p);
         return (CSPProgram) e.result;
     }
 
     private ConstantEvaluator(Optional<ExpressionObserver> guardObserver,
-                              Optional<ExpressionObserver> actualObserver) {
+                              Optional<ExpressionObserver> actualObserver,
+                              boolean unrollSeqLoop) {
         this.guardObserver = guardObserver;
         this.actualObserver = actualObserver;
         this.table = new SymbolTable<Value>();
+        this.unrollSeqLoop = unrollSeqLoop;
     }
 
     private static CspInteger toCspInteger(final IntegerExpression e) {
@@ -1271,7 +1291,8 @@ public class ConstantEvaluator implements VisitorInterface {
         final Range range = processRange(s.getRange());
 
         final int sep = s.getSeparator();
-        if (sep == LoopStatement.PARALLEL) {
+        if (sep == LoopStatement.PARALLEL ||
+            unrollSeqLoop && sep == LoopStatement.SEQUENTIAL) {
             final AbstractCompositeStatement acs =
                 sep == LoopStatement.SEQUENTIAL ?
                     (AbstractCompositeStatement) new SequentialStatement() :
