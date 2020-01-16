@@ -68,6 +68,7 @@ my $urgFile=undef;
 #chip.n2.BASE_N2$narrow
 #core.neuro.neuron.v2.BASE_NEURON$narrow
 #/;
+my $config_dir=undef;
 
 #user input files
 my $user_exclude_file=undef;
@@ -158,17 +159,18 @@ my @urgConfig;
 if($task_str =~ /merge/){
     die usage() if (! defined ($urgFile) and ! defined ($source_dir));
     die usage() if (!-e $cast_dir);
-    $hier_file = "$cast_dir/chip/n2/urg/hier.config";
-    $config_file = "$cast_dir/chip/n2/urg/urg.config";
-    $hvp_file = "$cast_dir/chip/n2/urg/nx.hvp";
+    $config_dir = "$cast_dir/chip/n2/urg" unless defined $config_dir;
+    $hier_file = "$config_dir/hier.config";
+    $config_file = "$config_dir/urg.config";
+    $hvp_file = "$config_dir/nx.hvp";
     if (! -e $hier_file) {
-      die "Cannot fine hier file $hier_file\n";
+      die "Cannot find hier file $hier_file\n";
     }
     if (! -e $config_file) {
-      die "Cannot fine config file $config_file\n";
+      die "Cannot find config file $config_file\n";
     }
     if (! -e $hvp_file) {
-      die "Cannot fine config file $config_file\n";
+      die "Cannot find plan file $hvp_file\n";
     }
     @urgConfig = parse_config($config_file);
 }
@@ -491,6 +493,8 @@ sub parseArgs() {
                 $cast_dir = $value;
             } elsif($key eq "dir") {
                 $source_dir = $value;
+            } elsif($key eq "config-dir") {
+                $config_dir = $value;
             } elsif($key eq "urg-file") {
                 $urgFile = $value;
             } elsif($key eq "debug-level") {
@@ -525,11 +529,12 @@ sub parseArgs() {
 }
 sub usage {
     local $"=",";
-    my $source_dir_str = (defined $source_dir) ? $source_dir:"";
-    my $urgfile_str = (defined $urgFile) ? $urgFile:"";
-    my $user_exclude_file_str=(defined $user_exclude_file) ? $user_exclude_file:"";
-    my $user_urg_options_str=(defined $user_urg_options) ? $user_urg_options:"";
-    my $output_dir_str = (defined $user_output_dir) ? $user_output_dir:"";
+    my $source_dir_str = $source_dir // "";
+    my $urgfile_str = $urgFile // "";
+    my $user_exclude_file_str = $user_exclude_file // "";
+    my $user_urg_options_str =  $user_urg_options // "";
+    my $output_dir_str = $user_output_dir // "";
+    my $config_dir_str = $config_dir // "";
 
     my $usages = <<ET;
 
@@ -545,6 +550,7 @@ USAGE: $0 [options]
     --task=[$task_str]\n\t\t\t([merge|publish] Execute the step. User should flow the sequence to execute the report coverage.)
 
     --dir=[$source_dir_str]\n\t\t\t(URG will merged all $vdb_name.vdb directories it can find under this.\n\t\t\tIf dir is a vdb directory, URG will just use it. "seperated by ,")
+    --config-dir=[$config_dir_str]\n\t\t\t(Where to find hier.config, urg.config, nx.hvp)
     --vdb-name=[$vdb_name]\n\t\t\t(URG will find the vdb based on this prefix)
     --urg-file=[$urgfile_str]\n\t\t\t(A file contains a vcs coverage source list)\n\t\t\t(User need to specify dir or urg-file. Two setting can be used simultaneously)
     --metric=[$vcsCoverageMetrics]\n\t\t\t(Optional. vcs coverage metrics. Note: urg map merging does not support assert and group metrics)
