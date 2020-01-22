@@ -21,6 +21,8 @@
                   "-attachTechFileOfLib \"" TechLibName "\" \\\n"
                   "-layerMap \"" PDK_DIR "/share/Fulcrum/stream/strmin.layermap\" \\\n"
                   "-objectMap \"" PDK_DIR "/share/Fulcrum/stream/objectmap\" \\\n"
+
+                  "-enableColoring \\\n"
                   "-library \"import_gds_temp\" \\\n"
                   "-strmFile \"" gdsFileName "\"")
     status = (shell cmd)
