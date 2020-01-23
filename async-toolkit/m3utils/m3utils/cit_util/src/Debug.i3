@@ -128,4 +128,9 @@ PROCEDURE SetDebugTimeZone(tz : TEXT) RAISES { OSError.E };
 PROCEDURE SetTimedDebugFlush(wr : Wr.T);
   (* flush this stream on a timer rather than automatically on every write *)
 
+TYPE SimpleCallback = PROCEDURE ();
+     
+PROCEDURE RegisterCallback(cb : SimpleCallback);
+  (* register a callback if debug level changes, etc. dynamically *)
+
 END Debug.

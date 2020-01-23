@@ -43,6 +43,8 @@ IMPORT RdWrReset;
 IMPORT TZ, XTime AS Time;
 IMPORT DebugStream, DebugStreamList;
 IMPORT RTParams, TextReader, FileWr, AL;
+IMPORT TextTextTbl;
+IMPORT RefList;
 
 VAR options := SET OF Options {};
 
@@ -52,6 +54,7 @@ PROCEDURE SetOptions(newOptions : SET OF Options) =
 PROCEDURE GetOptions() : SET OF Options = BEGIN RETURN options END GetOptions;
 
 VAR envOverrides := NEW(LockedTextBooleanTbl.Default).init();
+    valOverrides := NEW(TextTextTbl.Default).init();
 
 PROCEDURE SetEnv(var : TEXT) =
   BEGIN EVAL envOverrides.put(var,TRUE) END SetEnv;
@@ -59,12 +62,23 @@ PROCEDURE SetEnv(var : TEXT) =
 PROCEDURE ClearEnv(var : TEXT) =
   BEGIN EVAL envOverrides.put(var,FALSE) END ClearEnv;
 
+PROCEDURE GetVal(var : TEXT) : TEXT =
+  VAR
+    val : TEXT;
+  BEGIN
+    IF valOverrides.get(var,val) THEN
+      RETURN val
+    ELSE
+      RETURN Env.Get(var)
+    END
+  END GetVal;
+
 PROCEDURE HaveEnv(var : TEXT) : BOOLEAN =
   VAR b : BOOLEAN; BEGIN
     IF envOverrides.get(var, b) THEN
       RETURN b
     ELSE
-      RETURN Env.Get(var) # NIL
+      RETURN GetVal(var) # NIL
     END
   END HaveEnv;
 
@@ -83,13 +97,15 @@ PROCEDURE DebugThis(this : TEXT; def : BOOLEAN) : BOOLEAN =
 
 VAR pidText := "(" & Fmt.Int(Process.GetMyID()) & ") ";
  
-PROCEDURE OutFilePos(file : Pathname.T; pos : CARDINAL;
-                     t: TEXT; minLevel : CARDINAL; cr:=TRUE) = 
+PROCEDURE OutFilePos(file     : Pathname.T;
+                     pos      : CARDINAL;
+                     t        : TEXT;
+                     minLevel : CARDINAL;
+                     cr   :=TRUE ) = 
   BEGIN
     (* for now... *)
     Out(file & ":" & Fmt.Int(pos) & ": " & t,minLevel,cr)
   END OutFilePos;
-
 
 (* 
    The code below here is very inefficient.
@@ -208,9 +224,13 @@ PROCEDURE Out(t: TEXT; minLevel : CARDINAL; cr:=TRUE; this : TEXT := NIL) =
     END
   END Out;
 
-PROCEDURE HexOut(t : TEXT; minLevel : CARDINAL; cr : BOOLEAN; 
-                 toHex : PROCEDURE (t : TEXT) : TEXT) =
-    BEGIN Out(toHex(t), minLevel, cr) END HexOut;
+PROCEDURE HexOut(t        : TEXT;
+                 minLevel : CARDINAL;
+                 cr       : BOOLEAN; 
+                 toHex    : PROCEDURE (t : TEXT) : TEXT) =
+  BEGIN
+    Out(toHex(t), minLevel, cr)
+  END HexOut;
 
 PROCEDURE ToHex(t : TEXT) : TEXT =
   <* FATAL Thread.Alerted, Wr.Failure *>
@@ -352,7 +372,7 @@ PROCEDURE RegisterErrorHook(err: OutHook) =
 (* debugFilter *)
 
 VAR
-  debugFilter := Env.Get("DEBUGFILTER");
+  debugFilter := GetVal("DEBUGFILTER");
   triggers: TextSet.T;
   streams := DebugStreamList.List1(DebugStream.T { stderr }); 
   (* protected by mu *)
@@ -415,24 +435,141 @@ PROCEDURE FlushApply(<*UNUSED*>cl : Thread.Closure) : REFANY =
     END
   END FlushApply;
 
-BEGIN 
-  WITH str = Env.Get("DEBUGTIMEZONE") DO
-    IF str # NIL THEN
-      DebugTimeZone := str;
-      LOCK tMu DO
-        tz := NIL
-      END
-    END
+TYPE
+  OverrideClosure = Thread.Closure OBJECT
+    fn : Pathname.T;
+  OVERRIDES
+    apply := OCApply;
   END;
 
+PROCEDURE OCApply(cl : OverrideClosure) : REFANY =
+  BEGIN
+    LOOP
+      Thread.Pause(1.0d0);
+      OCIter(cl)
+    END
+  END OCApply;
+
+PROCEDURE OCIter(cl : OverrideClosure) =
   VAR
-    debugStr := Env.Get("DEBUGLEVEL");
+    val : TEXT;
+    newTab := NEW(TextTextTbl.Default).init();
+
   BEGIN
     TRY
-      IF debugStr # NIL THEN level := Scan.Int(debugStr) END
+      WITH rd     = FileRd.Open(cl.fn) DO
+        LOOP
+          WITH line = Rd.GetLine(rd),
+               reader = NEW(TextReader.T).init(line),
+               key    = reader.nextE(" ", skipNulls := TRUE) DO
+            IF NOT reader.next(" ", val, skipNulls := TRUE) THEN
+              val := ""
+            END;
+            EVAL newTab.put(key, val)
+          END
+        END
+      END
     EXCEPT
-      Lex.Error, FloatMode.Trap => 
+      OSError.E => (* file not found *)
+    |
+      Rd.EndOfFile => (* done parsing, ok *)
+    |
+      Rd.Failure => (* who knows *)
+    |
+      Thread.Alerted => <*ASSERT FALSE*>
+    |
+      TextReader.NoMore => (* syntax error in file *)
+    END;
+    
+    IF Different(newTab, valOverrides) THEN
+      valOverrides := newTab;
+      Reevaluate()
+    END
+  END OCIter;
+
+PROCEDURE Different(t1, t2 : TextTextTbl.Default) : BOOLEAN =
+  VAR
+    var, val1, val2 : TEXT;
+  BEGIN
+    IF t1.size() # t2.size() THEN RETURN TRUE END;
+
+    VAR
+      iter := t1.iterate();
+    BEGIN
+      WHILE iter.next(var, val1) DO
+        IF NOT t2.get(var, val2) THEN
+          RETURN TRUE
+        ELSIF (val1 = NIL OR val2 = NIL) THEN
+          IF val1 # val2 THEN RETURN TRUE END
+        ELSIF NOT Text.Equal(val1, val2) THEN
+          RETURN TRUE
+        END
+      END
+    END;
+    RETURN FALSE
+  END Different;
+
+PROCEDURE Reevaluate() =
+  BEGIN
+    WITH str = GetVal("DEBUGTIMEZONE") DO
+      IF str # NIL THEN
+        DebugTimeZone := str;
+        LOCK tMu DO
+          tz := NIL
+        END
+      END
+    END;
+    
+    VAR
+      debugStr := GetVal("DEBUGLEVEL");
+    BEGIN
+      TRY
+        IF debugStr # NIL THEN level := Scan.Int(debugStr) END
+      EXCEPT
+        Lex.Error, FloatMode.Trap => 
         Error("DEBUGLEVEL set to nonsense! \"" & debugStr & "\"",TRUE)
+      END
+    END;
+
+    CallCallbacks()
+  END Reevaluate;
+
+VAR
+  callbacks : RefList.T := NIL;
+  cbMu := NEW(MUTEX);
+
+TYPE CbRec = REF RECORD cb : SimpleCallback END;
+
+PROCEDURE RegisterCallback(cb : SimpleCallback) =
+  BEGIN
+    LOCK cbMu DO
+      callbacks := RefList.Cons(NEW(CbRec, cb := cb), callbacks)
+    END
+  END RegisterCallback;
+
+PROCEDURE CallCallbacks() =
+  BEGIN
+    LOCK cbMu DO
+      VAR p := callbacks;
+      BEGIN
+        WHILE p # NIL DO
+          WITH cbRec = NARROW(p.head, CbRec) DO
+            cbRec.cb()
+          END;
+          p := p.tail
+        END
+      END
+    END
+  END CallCallbacks;
+  
+BEGIN
+
+  WITH str = RTParams.Value("debugoverrides") DO
+    IF str # NIL THEN
+      WITH cl = NEW(OverrideClosure, fn := str) DO
+        OCIter(cl); (* get the table set up before proceeding with fork *)
+        EVAL Thread.Fork(cl)
+      END
     END
   END;
 
@@ -455,6 +592,8 @@ BEGIN
     END(*IF*)
   END(*WITH*);
 
+  Reevaluate();
+  
   IF debugFilter # NIL THEN
     triggers := NEW(TextSetDef.T).init();
     VAR
@@ -474,4 +613,5 @@ BEGIN
       END
     END
   END
+
 END Debug.
