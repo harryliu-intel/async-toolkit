@@ -16,6 +16,8 @@ TYPE
 
   PubDefault = KeyValueTbl.Default OBJECT METHODS
     copy() : KeyValueTbl.Default; (* note copy not locked *)
+
+    copyLocked() : KeyValueTbl.Default; (* note copy not locked *)
   END;
 
   Iterator = KeyValueTbl.Iterator;

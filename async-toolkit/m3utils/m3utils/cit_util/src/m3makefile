@@ -39,6 +39,7 @@ LockedTable("TextRef", "Text", "Refany", "TextRefTbl")
 MkLockedSetDef("Text", "Text")
 
 LockedTable("TextBoolean", "Text", "Boolean", "TextBooleanTbl")
+LockedTable("TextText", "Text", "Text", "TextTextTbl")
 
 Generic_module("BrandedSet")
 template("brandedset")

@@ -6,13 +6,14 @@ REVEAL
   Default = PubDefault BRANDED Brand OBJECT
     mu : MUTEX;
   OVERRIDES
-    init := Init;
-    get := Get;
-    put := Put;
-    delete := Delete;
-    size := Size;
-    iterate := Iterate;
-    copy := Copy;
+    init       := Init;
+    get        := Get;
+    put        := Put;
+    delete     := Delete;
+    size       := Size;
+    iterate    := Iterate;
+    copy       := Copy;
+    copyLocked := CopyLocked;
   END;
 
 PROCEDURE Init(d : Default; sizeHint : CARDINAL) : KeyValueTbl.Default =
@@ -56,5 +57,12 @@ PROCEDURE Copy(d : Default) : KeyValueTbl.Default =
       RETURN res
     END
   END Copy;
+
+PROCEDURE CopyLocked(d : Default) : KeyValueTbl.Default =
+  BEGIN
+    LOCK d.mu DO
+      RETURN d.copy()
+    END
+  END CopyLocked;
 
 BEGIN END LockedTbl.
