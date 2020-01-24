@@ -3,6 +3,7 @@
                        (directory nil)
                        (oasFile nil)
                        (layerMapFile nil)
+		       (enableColoring t)
                        (flattenVias nil))
   (let (TEMP PDK_DIR Command status cellMapFile fmap oasName name used CID)
     (unless CV->objType=="cellView" (error "CV not valid"))
@@ -48,7 +49,7 @@
                                " -layerMap '%s'"
                                " -propMap '%s/stream/prop.map'"
                                " -objectMap '%s/stream/objectmap'"
-			       " -enableColoring"
+			       (if enableColoring " -enableColoring" "")
                                " -cellMap '%s'"
                                " -logFile '%s/%s.log'"
                                " -oasisFile '%s'")

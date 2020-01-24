@@ -6,10 +6,15 @@
 ; and nodes.
 
 ; Import a OAS file and rename all subcells to CAST conventions
-(defun ImportOAS (oasFileName libName cellName viewName)
+(defun ImportOAS (oasFileName libName cellName viewName
+       		 @key (CV (geGetEditCellView))
+                       (layerMapFile nil)
+		       (enableColoring t))
   (let (PDK_DIR cmd status CV)
     ; stream in OAS into import_oas_temp library
     PDK_DIR = (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT")
+    (unless layerMapFile (sprintf layerMapFile "%s/stream/strmout.layermap" PDK_DIR))
+
     cmd = (strcat "oasisin "
                   "-library \"" libName "\" "
 		  "-topCell \"" cellName "\" "
@@ -17,10 +22,10 @@
                   "-oasisFile \"" oasFileName "\" "
                   "-logFile \"oasisIn.log\" "
                   "-attachTechFileOfLib \"" TechLibName "\" "
-                  "-layerMap \"" PDK_DIR "/share/Fulcrum/stream/strmin.layermap\" "
+                  "-layerMap \"" layerMapFile "\" "
                   "-objectMap \"" PDK_DIR "/share/Fulcrum/stream/objectmap\" "
 		  "-textHeight \"0.01\" "
-		  "-enableColoring"
+	          (if enableColoring " -enableColoring" "")
 		  )
     status = (shell cmd)
     (unless status (error "strmin failed\n"))
