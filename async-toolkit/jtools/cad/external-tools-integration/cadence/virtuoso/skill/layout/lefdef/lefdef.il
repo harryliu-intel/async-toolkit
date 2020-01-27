@@ -62,7 +62,7 @@ defun( defGenerateC2VTable ( cellName ignoreNetlist )
       if( ignoreNetlist then
          Command = strcat( Command " --ignore-netlist" ) )
       if( ! isFile( mapfile ) then
-              ( shell Command ) )
+            (unless ( shell Command ) (error Command)))
       if( isFile( mapfile ) then
          load( mapfile )
          map = PinCastToVerilogTable() )
@@ -84,7 +84,7 @@ defun( defGenerateP2DTable ( cellName ignoreNetlist )
       if( ignoreNetlist then
          Command = strcat( Command " --ignore-netlist" ) )
       if( ! isFile( mapfile ) then
-              ( shell Command ) )
+            (unless ( shell Command ) (error Command)))
       if( isFile( mapfile ) then
          load( mapfile )
          map = PinDirectionTable() )
