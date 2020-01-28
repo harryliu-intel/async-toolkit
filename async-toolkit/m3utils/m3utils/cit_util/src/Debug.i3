@@ -36,6 +36,20 @@ INTERFACE Debug;
      DEBUGFILTER env. variable
    
      @M3debugtrace=<filename>[,<filename>...]  RT arg
+     @M3debugoverrides=<filename>              RT arg
+
+   If the @M3debugoverrides runtime argument is passed, then the specified
+   file path will be polled asynchronously and repeatedly (on a human 
+   timescale).  The debugoverrides file is expected to have the following
+   format.
+
+     <env var. from above list>  <value>
+     ...
+
+   The values in debugoverrides will override any other given values.  
+   Removing the values from debugoverrides will revert the values to their
+   otherwise-defaults.
+
 *)
 
 IMPORT Fmt, Wr, Pathname;
