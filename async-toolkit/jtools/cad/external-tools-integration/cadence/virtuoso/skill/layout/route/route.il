@@ -33,6 +33,7 @@
   (let (TEMP WDIR)
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
     WDIR = (strcat TEMP "/route/" CV->cellName)
+    (unless targetCellName targetCellName=CV->cellName)
 
     ; export
     CV = (RouteExport ?CV CV
@@ -50,15 +51,14 @@
     (when Background (betterCopyCellView CV CV->libName CV->cellName importView nil nil t))
 
     ; route
-    (RouteRun ?CV CV ?Background Background ?Mem Mem)
+    (RouteRun ?CV CV ?Background Background ?Mem Mem ?targetCellName targetCellName)
 
     ; import
     (cond (Background (printf "Route running in background, finish with RouteImport\n"))
           (t
-           (unless targetCellName targetCellName = CV->cellName)
            CV = (RouteImport ?libName (GetCastLibName targetCellName)
                              ?cellName targetCellName ?viewName importView
-                             ?defFile (strcat WDIR "/" targetCellName "_routed.def")
+                             ?oasFile (strcat WDIR "/" targetCellName ".oas")
                              )
            )
           )
@@ -408,15 +408,17 @@
   (@key (CV (geGetEditCellView)) ; specify CellView or use edit view
         (Background nil)         ; run in background
         (Mem 4000)               ; qsub memory
+        (targetCellName nil)     ; DFII name for APR target cell
         )
-  (let (TEMP WDIR defFile Command status)
+  (let (TEMP WDIR oasFile Command status)
     ; files and options
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
     WDIR = (strcat TEMP "/route/" CV->cellName)
-    defFile = (strcat WDIR "/" CV->cellName "_routed.def")
+    (unless targetCellName targetCellName=CV->cellName)
+    oasFile = (strcat WDIR "/" targetCellName ".oas")
 
     ; run
-    (shell (strcat "rm -rf " defFile))
+    (shell (strcat "rm -rf " oasFile))
     Command = (sprintf nil "cd \"%s\"; proteus --include=proteus.config --mem=%dM %s"
                        WDIR Mem (if Background "&" "--runlocal=1 --runlocal-pv=0"))
     (printf "%s\n" Command)
@@ -424,7 +426,7 @@
     (unless status (error "Proteus failed\n"))
 
     ; wait for slow filesystem until def is created
-    (or Background (WaitForFile defFile 60))
+    (or Background (WaitForFile oasFile 60))
     )
   )
 
@@ -473,7 +475,7 @@
         (oasFile nil)
         )
   (let (TEMP WDIR libPath logFile Command status ImportCV layoutCV floorplanCV
-             win instmap offset CID oasName oasFile dfII_name inst_lib)
+             win instmap offset CID oasName dfII_name inst_lib rename)
 
     ; choose libName and cellName
     (unless libName  libName  = CV->libName)
@@ -483,7 +485,7 @@
 
     ; map to icc cellname
     CID = (NameStartRename "cell" "cadence" "gds2")
-    oasName = (NameDoRename CID CV->cellName)             
+    oasName = (NameDoRename CID cellName)
     fields = (parseString cellName ".")
     short_name = (nth ((length fields)-2) fields)
     top_name = (NameDoRename CID short_name)
@@ -491,35 +493,40 @@
     ; directories and files
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
     WDIR = (strcat TEMP "/route/" cellName)
-    (unless oasFile oasFile = (strcat WDIR "/" cellName ".oas"))
     (unless (fileTimeModified oasFile) (error "Cannot read %s\n" oasFile))
+    (unless oasFile oasFile = (strcat WDIR "/" cellName ".oas"))
 
-    ; create library
+    ; create temp library and import cell
     (GDSIIHierMakeLibrary libName (getShellEnvVar "DFII_DIR") TechLibName)
     libPath = (getShellEnvVar "DFII_DIR")
     logFile = (strcat oasFile ".log")
     status = (ImportOAS oasFile "oas_import_temp" top_name viewName)
     (unless status (error "Unsuccessful OAS import\n"))
-
     ImportCV = (dbOpenCellViewByType "oas_import_temp" top_name viewName "maskLayout" "a")
-    ImportCV = (betterCopyCellView ImportCV "oas_import_temp" CV->cellName viewName nil nil t)
-    (dbRefreshCellView ImportCV)
-
+    
     ; flatten ICC cells
     (foreach inst ImportCV->instances
       (when (rexMatchp top_name inst->cellName)
-        ;(printf "Flattening cell %s\n" inst->cellName)
 	(dbFlattenInst inst 32)
 	)
       )
 
     ; convert instances to dfII hierarchy
+    rename = (RouteRenameCellTable)
     (foreach inst ImportCV->instances
-      dfII_name = (GetDFIIName inst->cellName)
+      dfII_name = rename[inst->cellName]
+      (unless dfII_name
+        (when (strncmp inst->cellName "g1m" 3)==0 ; TODO: finish PDK/v2cast/g1m.rul
+              dfII_name=(sprintf nil "vendor.intel.g1m.%s.%s"
+                                 (substring inst->cellName 4 8)
+                                 (substring inst->cellName 12 6))
+              (printf "WARNING: implicitly renamed %s\n" dfII_name)
+              )
+        )
+      (unless dfII_name (error "unable to rename %s\n" inst->cellName))
       inst_lib = (GetCastLibName dfII_name)
-      (printf "Remastering %s to %s\n" inst->cellName dfII_name)
       status = (leReplaceAnyInstMaster inst inst_lib dfII_name "layout")
-      (unless status (error "Could not remaster %s\n" inst->cellName))
+      (unless status (error "unable to open %s\n" dfII_name))
       )
 
     ; HACK: offset to avoid negative numbers because RDT is stupid
@@ -739,25 +746,21 @@
   t
   )
 
-; Map APR cell names back to DFII names using rule file from PDK
-(defun GetDFIIName (cellName)
-  (let (rulefile names_in line fields line map_name)
-    rulefile = (strcat (ConfigFileGetValue TheCDSConfigTable "PDK_DIR") "/v2cast/g1m.rul")
+; Return name mapping table for APR cell names back to DFII cell names
+(defun RouteRenameCellTable ()
+  (let (PDK_DIR CID rulefile name_in CID rename fields)
+    PDK_DIR = (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT")
+    rulefile = (strcat PDK_DIR "/share/Fulcrum/v2cast/g1m.rul")
     names_in = (infile rulefile)
-    map_name = nil
-    (while (gets line names_in) != nil
-      (when (rexMatchp "\n$" line) ; remove newline
-        line = (strncat "" line (strlen line)-1)
-        )
+    CID = (NameStartRename "cell" "cast" "cadence")
+    rename = (makeTable "rename" nil)
+    (while (gets line names_in)
       fields = (parseString line " ")
-      (foreach item fields
-        (when item == cellName
-          map_name = (caddr fields)
-	  )
-        )
+      (when (car fields)=="c"
+            rename[(cadr fields)]=(NameDoRename CID (caddr fields))
+            )
       )
-    (unless map_name (error "Can't map dfII name of %s from g1m.rul\n" cellName) )
-    map_name
+    (close names_in)
+    rename
     )
   )
-
