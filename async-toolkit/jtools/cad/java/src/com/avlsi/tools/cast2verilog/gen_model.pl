@@ -7,7 +7,7 @@ use File::Spec::Functions qw/:ALL/;
 use FindBin;
 use Cwd qw/abs_path/;
 
-my ($cast_path, $spar_dir, $cell, $env, $cosim, @cast_defines, $beh, $fpga_path, @c2v_args, $help);
+my ($cast_path, $spar_dir, $cell, $env, $cosim, @cast_defines, $beh, $fpga_path, @c2v_args, $kdb, $help);
 my $width = 300;
 GetOptions("cast-path=s" => \$cast_path,
            "spar-dir=s"  => \$spar_dir,
@@ -19,6 +19,7 @@ GetOptions("cast-path=s" => \$cast_path,
            "defines=s"   => \@cast_defines,
            "c2v-args=s"  => \@c2v_args,
            "beh!"        => \$beh,
+           "kdb!"        => \$kdb,
            "help!"       => \$help) || pod2usage(2);
 
 pod2usage(-verbose => 1) if $help;
@@ -67,12 +68,14 @@ if (-s $flist) {
     $flist = '';
 }
 
+$kdb = $kdb ? '-kdb' : '';
+
 open my $fh, ">$runvcs" || die "Can't open $runvcs: $!";
 print $fh <<EOF;
 export SPAR="$spar_dir"
 export COLLATERAL=/nfs/sc/proj/ctg/mrl108/mrl/collateral
 export CAST2VERILOG_RUNTIME="$instdir/share/cast2verilog"
-vcs -licqueue -debug_access+dmptf+all -debug_region=lib+cell -full64 @defines -file "\$CAST2VERILOG_RUNTIME/$vcfg" testbench.v $flist @netlists
+vcs $kdb -licqueue -debug_access+dmptf+all -debug_region=lib+cell -full64 @defines -file "\$CAST2VERILOG_RUNTIME/$vcfg" testbench.v $flist @netlists
 EOF
 close $fh;
 chmod 0755, $runvcs;
@@ -95,5 +98,6 @@ gen_model.pl [options] [verilog files...]
    --fpga-path     Specify the instance path of the FPGA relative to the top
    --define        Override CAST variables; can be specified any number of times
    --beh           If specified, generate a behavior model
+   --kdb           If specified, generate Verdi Elaboration Database
    --c2v-arg       Flags to cast2verilog; can be specified any number of times
 =cut
