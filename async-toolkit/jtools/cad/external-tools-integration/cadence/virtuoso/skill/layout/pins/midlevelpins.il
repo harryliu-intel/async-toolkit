@@ -24,7 +24,7 @@
 */
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun DrawMidLevelPins ( @key (CV (UIGetCellView)) (include_supply nil) (supply_topMetal -1))
+(defun DrawMidLevelPins ( @key (CV (UIGetCellView)) (include_supply nil) (supply_topMetal -1) (all_supply nil))
   (let (TEMP
         WarningFile
         ErrorFile
@@ -46,7 +46,7 @@
       (foreach InstTerm Term->net->instTerms
         (unless (member Term->name BusPinList)
           InPlacePinFig = (MidPinsInheritPin CV InstTerm->inst InstTerm->name Term->name
-                                             ?topMetal supply_topMetal)
+                                             ?topMetal supply_topMetal ?all_supply all_supply)
           (when InPlacePinFig->LeafInPlacePin
             (printf "*WARNING* Top Level pin \"%s\" is drawn inplace from leaf cell instance \"%s\" \n" Term->name InstTerm->inst->name)
             (fprintf Warnport "*WARNING* Top Level pin \"%s\" is drawn inplace from leaf cell instance \"%s\" \n" Term->name InstTerm->inst->name)
@@ -68,7 +68,7 @@
 ; Promote pins from a subcell to inplace pins for a given terminal.
 ; All pins on the top metal layer used by them get promoted.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun MidPinsInheritPin (CV Inst TermName PinName @key (topMetal -1))
+(defun MidPinsInheritPin (CV Inst TermName PinName @key (topMetal -1) (all_supply nil))
   (let (InPlacePinList
         transform
         fig
@@ -84,10 +84,10 @@
              InPlacePinList = (append InPlacePinList pin->figs)
              )
 
-    ; restrict candidates to M1 and above
+    ; restrict candidates to M0 and above
     pinList=nil
     (foreach fig InPlacePinList
-             (for m 1 TopMetal
+             (for m 0 TopMetal
                   (when fig->layerName==Metal[m]
                     topMetal=(max topMetal m)
                     pinList=(cons fig pinList)
@@ -97,7 +97,7 @@
     InPlacePinList=pinList
 
     ; limit the candidates to those on the top metal layer among the set for power nets
-    (when (member PinName PowerGroundNets)!=nil
+    (when !all_supply && (member PinName PowerGroundNets)!=nil
           InPlacePinList = (setof x InPlacePinList x->layerName==Metal[topMetal])
           )
 
