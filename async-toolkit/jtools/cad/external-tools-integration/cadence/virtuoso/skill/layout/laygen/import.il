@@ -3,7 +3,6 @@
 ; Andrew Lines
 
 ; Laygen dimensions
-MfgGrid = 1e-3     ; round dimensions of lables to this manufacturing grid
 LaygenUnits = 1e-4 ; scale LayGen coordinates to Virtuoso
 UV_dx = -0.035     ; x bloat of uv1/uv2 implant layers relative to diffusion
 UV_dy =  0.021     ; y bloat of uv1/uv2 implant layers relative to diffusion
