@@ -15,6 +15,7 @@
         (verbose nil)  ; spam net and parameter changes too
         (instancePrimitives nil) ; instantiate TechLibName instances
         (skipInstances nil) ; don't add/delete instances
+        (midPRB nil) ; update prBoundary of routed mid-level cells
         )
   (let (mastersVisited cmd temp dir routed LOG pcre)
 
@@ -136,7 +137,7 @@
         lCV=(dbOpenCellViewByType CV->libName CV->cellName "layout" "maskLayout" "r"))
 
       ; update prBoundary of leaf routed cells from layout view if it exists
-      (when CV->viewName=="floorplan" && isRouted && isLeaf
+      (when CV->viewName=="floorplan" && isRouted && (isLeaf || midPRB)
         ; use prBoundary of layout view if it exists
         (when lCV points=lCV->prBoundary->points)       
         ; otherwise pick prBoundary appropriately
