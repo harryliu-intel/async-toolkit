@@ -11,7 +11,7 @@
 	     track = (GetTrack (MetalNumber ?layer metal) (car shape->bBox))
 	     )
 	  (when shape->objType=="path"
-             track = (GetTrack (MetalNumber ?layer metal) (car shape->points))
+             track = (GetTrack (MetalNumber ?layer metal) (car shape->bBox))
 	     )
 	  (unless shape->objType=="label"
              color = (GetTrackColor (MetalNumber ?lpp shape->lpp) track)
@@ -41,7 +41,7 @@
 
 (defun ColorizeShape (shape mptcolor)
   (let ()
-    (printf "Creating MPT Color for %s %s %f %s\n" shape->objType (car shape->lpp) (cadar shape->bBox) mptcolor)
+    ;(printf "Creating MPT Color for %s %s %f %s\n" shape->objType (car shape->lpp) (cadar shape->bBox) mptcolor)
     (dbSetShapeColor shape mptcolor)
     )
   )
