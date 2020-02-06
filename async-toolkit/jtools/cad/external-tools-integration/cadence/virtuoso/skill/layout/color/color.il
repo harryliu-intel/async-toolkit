@@ -2,7 +2,7 @@
 ; via colors are assigned by ICC during routing, so don't want to change those unless they are uncolored
 ; v1 and v2 are colored based on m2 track, v3 and v4 are assumed to be colored by Qfill
 
-(defun Colorize (@key (CV (geGetEditCellView)) (doVias t))
+(defun Colorize (@key (CV (geGetEditCellView)) (doVias t) (override nil))
   (let (color shapes track oldcolor shiftorg track1 track2 color1 color2 colorc)
     (foreach metal ColorableMetals
        shapes = (setof s CV->shapes (car s->lpp)==metal)
@@ -37,7 +37,7 @@
           ; some hard coded hacks in here right now
 	  ; the way this is structured, it will not edit the metal colors of an already colored via cut
           oldcolor = (dbGetViaCutLayerControl via)
-	  (if oldcolor!=vcolor_control[0] then
+	  (if oldcolor!=vcolor_control[0] && !override then
 	     (printf "Not changing via that is already colored %s %s.\n" via->viaHeader->master->cellName oldcolor)
           else
 	     (when via->viaHeader->master->cellName=="via1"
