@@ -27,9 +27,9 @@
 	        track = (GetTrack (ViaMetalNumber ?layer via) (car shape->bBox))
 	        color = (GetViaTrackColor (ViaMetalNumber ?layer via) track)
 		oldcolor = (dbGetShapeColor shape)
-	        (when oldcolor=="grayColor"
-		   (ColorizeShape shape color)
-		   )
+	        (when override || oldcolor=="grayColor"
+                      (ColorizeShape shape color)
+                      )
 	        )
 	     )
 	  )
@@ -37,10 +37,8 @@
           ; some hard coded hacks in here right now
 	  ; the way this is structured, it will not edit the metal colors of an already colored via cut
           oldcolor = (dbGetViaCutLayerControl via)
-	  (if oldcolor!=vcolor_control[0] && !override then
-	     (printf "Not changing via that is already colored %s %s.\n" via->viaHeader->master->cellName oldcolor)
-          else
-	     (when via->viaHeader->master->cellName=="via1"
+          (when override || oldcolor==vcolor_control[0]
+              (when via->viaHeader->master->cellName=="via1"
 	        (unless (GetTrackWidth 2 via->origin)
 		   (error "Can't color with m2 off-track via %f:%f\n" (car via->origin) (cadr via->origin))
 		   )
