@@ -17,7 +17,7 @@
     (dbOpenHier CV 32)
 
     ; create shapes from PRBoundary boundary objects
-    instPaths=(dbBoundaryQuery CV CV->bBox)
+    instPaths=(dbBoundaryQuery CV CV->bBox 1)
     (foreach item instPaths
       pts=TransformGetBBoxFromPath(item)
       (dbCreateRect ovCV BoundaryLPP pts)
