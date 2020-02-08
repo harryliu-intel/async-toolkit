@@ -39,6 +39,7 @@ public class DSimUtil {
     private Node Vdd;
     private Node _RESET;
     private Node START;
+    private Node STEP;
     private Node DLY;
     private Node ERROR;
 
@@ -47,6 +48,7 @@ public class DSimUtil {
     // TODO BUG 28502: use reset_net/start_net/delay_net directives instead
     public static HierName _RESET_NAME = HierName.makeHierName("_RESET");
     public static HierName START_NAME  = HierName.makeHierName("START");
+    public static HierName STEP_NAME  = HierName.makeHierName("STEP");
     public static HierName DLY_NAME    = HierName.makeHierName("DLY");
 
     /** Get a node from top level or env (TODO BUG 28502: eliminate) **/
@@ -66,6 +68,11 @@ public class DSimUtil {
         return getTopOrEnvNode(START_NAME);
     }
 
+    /** Return the STEP node (TODO BUG 28502: query list of start_net inputs) **/
+    public static Node getStepNode() {
+        return getTopOrEnvNode(STEP_NAME);
+    }
+
     /** Return the DLY node (TODO BUG 28502: query list of delay_net inputs) **/
     public static Node getDelayNode() {
         return getTopOrEnvNode(DLY_NAME);
@@ -82,6 +89,7 @@ public class DSimUtil {
         ERROR = dsim.findNode("ERROR");
         _RESET = getResetNode();
         START  = getStartNode();
+        STEP   = getStepNode();
         DLY    = getDelayNode();
     }
 
@@ -116,6 +124,7 @@ public class DSimUtil {
             if (DLY!=null) DLY.setValueAndEnqueueDependents(Node.VALUE_0); // might be overridden by env
             if (_RESET!=null) _RESET.scheduleImmediate(Node.VALUE_0);
             if (START!=null) START.scheduleImmediate(Node.VALUE_0);
+            if (STEP!=null) STEP.scheduleImmediate(Node.VALUE_0);
             dsim.cycle(-1);
             initResetNodes(init);
             dsim.cycle(-1);
@@ -138,11 +147,16 @@ public class DSimUtil {
                 _RESET.scheduleImmediate(Node.VALUE_1);
             }
 
-            // second phase doreset if START node exists
+            // second phase doreset if START/STEP nodes exist
             if (START!=null) {
                 if (_RESET!=null) dsim.cycle(-1);
                 START.scheduleImmediate(Node.VALUE_1);
             }
+            if (STEP!=null) {
+                if (_RESET!=null) dsim.cycle(-1);
+                STEP.scheduleImmediate(Node.VALUE_1);
+            }
+            
         }
         else {
             throw new IllegalArgumentException(

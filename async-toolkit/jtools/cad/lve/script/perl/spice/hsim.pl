@@ -58,7 +58,8 @@ my $power_window = "";
 my $env_spice_file = "";
 my $accurate = 0;
 my %default_voltage = ('ground' => 0, 'power' => 'true',
-                       'reset' => 'true', 'start' => 'true', 'delay' => 0);
+                       'reset' => 'true', 'start' => 'true',
+                       'step' => 'true', 'delay' => 0);
 my %voltage;
 my %special_net;
 
@@ -95,7 +96,7 @@ sub usage() {
     $usage .= "    --totem-mode (for running totem dynamic\n";
     $usage .= "    --sigma-factor (to vary corner limits, 0..1)\n";
     $usage .= "    --extra-includes (for files needed for running totem in hsim)\n";
-    $usage .= "    --default-(ground|power|reset|start|delay)=voltage (specify default voltage)\n";
+    $usage .= "    --default-(ground|power|reset|start|step|delay)=voltage (specify default voltage)\n";
     $usage .= "    --voltage:node=voltage (set voltage for specific ground/power/reset nets)\n";
     die "$usage";
 }
@@ -168,7 +169,7 @@ while (defined $ARGV[0] && $ARGV[0] =~ /^--(.*)/) {
         $cap_load=$value;
     } elsif ($flag eq "out-nodes") {
         @out_nodes=split(/,/,$value);
-    } elsif ($flag =~ "default-(power|ground|reset|start|delay)") {
+    } elsif ($flag =~ "default-(power|ground|reset|start|step|delay)") {
         $default_voltage{$1} = $value;
     } elsif ($flag =~ /^voltage:(\S+)$/) {
         $voltage{$1} = $value;
@@ -370,7 +371,7 @@ if ($env_spice_file ne "") {
         if (/^\*\* JFlat:begin/../^\*\* JFlat:end/) {
             last if /^\*\* JFlat:end/;
             chomp;
-            if (/^\*\* JFlat:(ground|power|reset|start|delay)_net:(.*)/) {
+            if (/^\*\* JFlat:(ground|power|reset|start|step|delay)_net:(.*)/) {
                 my $type = $1;
                 my @aliases;
                 foreach my $net (split("=",$2)) {
@@ -424,6 +425,14 @@ if (defined $special_net{'start'}) {
         my $t0 = $reset_time+$start_time;
         my $t1 = $t0+$slope_time;
         my $v = get_voltage($name, 'start');
+        print RUN_FILE "V${name} ${name} 0 pwl (0 0 $t0 0 $t1 '$v')\n";
+    }
+}
+if (defined $special_net{'step'}) {
+    foreach my $name (sort @{$special_net{'step'}}) {
+        my $t0 = $reset_time+$start_time;
+        my $t1 = $t0+$slope_time;
+        my $v = get_voltage($name, 'step');
         print RUN_FILE "V${name} ${name} 0 pwl (0 0 $t0 0 $t1 '$v')\n";
     }
 }
