@@ -5,7 +5,10 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.Iterator;
+import java.util.Map;
 
+import com.avlsi.fast.ports.PortDefinition;
+import com.avlsi.fast.ports.PortTypeInterface;
 import com.avlsi.csp.ast.*;
 import com.avlsi.csp.csp2java.runtime.CspInteger;
 import com.avlsi.util.container.FilteringIterator;
@@ -225,5 +228,75 @@ public class CspUtils {
             }
         }
         return Optional.empty();
+    }
+
+    /**
+     * Returns how many values a wide channel can carry.
+     **/
+    private static /*@ non_null @*/ BigInteger computeChannelWidth(
+            final BigInteger narrow,
+            final int width) {
+        return narrow.pow(width);
+    }
+
+    /**
+     * Maps a {@link PortTypeInterface} to a CSP AST {@link Type}.
+     **/
+    public static Type port2AST(final PortTypeInterface t, final int direction) {
+        // XXX: what to do for parseRange of the nodes we create here?
+        if (t instanceof com.avlsi.fast.ports.ArrayType) {
+            final com.avlsi.fast.ports.ArrayType at =
+                (com.avlsi.fast.ports.ArrayType) t;
+            return new ArrayType
+                (new Range(new IntegerExpression(at.getMinIndex()),
+                           new IntegerExpression(at.getMaxIndex())),
+                 port2AST(at.getArrayedType(), direction));
+        } else if (t instanceof com.avlsi.fast.ports.ChannelType) {
+            final com.avlsi.fast.ports.ChannelType ct =
+                (com.avlsi.fast.ports.ChannelType) t;
+            return new ChannelType(computeChannelWidth(ct.getNumValues(),
+                                                       ct.getWidth()),
+                                   PortDirection.mapDirection(direction),
+                                   ct.getTypeName());
+        } else if (t instanceof com.avlsi.fast.ports.NodeType) {
+            final com.avlsi.fast.ports.NodeType nt =
+                (com.avlsi.fast.ports.NodeType) t;
+            return new NodeType(nt.getWidth(),
+                                PortDirection.mapDirection(direction),
+                                nt.isArrayed());
+        } else {
+            assert t instanceof com.avlsi.fast.ports.StructureType;
+            final com.avlsi.fast.ports.StructureType st =
+                (com.avlsi.fast.ports.StructureType) t;
+            final ChannelStructureType cst =
+                new ChannelStructureType(st.getTag());
+            for (Iterator i = st.iterator(); i.hasNext(); ) {
+                final PortDefinition portDef = (PortDefinition) i.next();
+                cst.addMember(portDef.getName(),
+                              port2AST(portDef.getType(),
+                                       PortDefinition.updateDirection(
+                                           direction,
+                                           portDef.getDirection())));
+            }
+            return cst;
+        }
+    }
+
+    /** Get a Map of the ports of the current cell.  **/
+    public static Map<String,Type> getPortMap(final CSPCellInfo cellInfo,
+                                              final Map<String,Type> portTypes) {
+        for (PortDefinition d :
+                new IterableIterator<PortDefinition>(
+                    cellInfo.getPortDefinitions())) {
+            // TODO: We probably want to ignore Vdd, GND, and _RESET,
+            // but eventually we will not want to ignore other nodes.
+            portTypes.put(d.getName(),
+                          CspUtils.port2AST(
+                              d.getType(),
+                              PortDefinition.updateDirection(
+                                  d.getDirection(),
+                                  PortDefinition.FORWARD)));
+        }
+        return portTypes;
     }
 }

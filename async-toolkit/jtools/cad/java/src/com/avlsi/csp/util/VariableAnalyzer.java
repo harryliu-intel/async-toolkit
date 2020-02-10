@@ -638,65 +638,9 @@ public class VariableAnalyzer {
     /** Get a Map of the ports of the current cell.  **/
     private /*@ non_null @*/ Map<String,Type> getPortMap() {
         if (portTypes == null) {
-            portTypes = new HashMap<String,Type>();
-            for (Iterator i = cellInfo.getPortDefinitions(); i.hasNext(); ) {
-                PortDefinition d = (PortDefinition) i.next();
-                // TODO: We probably want to ignore Vdd, GND, and _RESET,
-                // but eventually we will not want to ignore other nodes.
-                portTypes.put(d.getName(),
-                              port2AST(d.getType(),
-                                       PortDefinition.updateDirection(
-                                           d.getDirection(),
-                                           PortDefinition.FORWARD)));
-            }
+            portTypes = CspUtils.getPortMap(cellInfo, new HashMap<>());
         }
         return portTypes;
-    }
-
-    /**
-     * Maps a {@link PortTypeInterface} to a csp ast {@link Type}.
-     **/
-    private /*@ non_null @*/ Type port2AST(
-            final /*@ non_null @*/ PortTypeInterface t,
-            final int direction) {
-        if (t instanceof com.avlsi.fast.ports.ArrayType) {
-            final com.avlsi.fast.ports.ArrayType at =
-                (com.avlsi.fast.ports.ArrayType) t;
-            // XXX: what to do for parseRange of the nodes we create
-            // here?
-            return new ArrayType
-                (new Range(new IntegerExpression(at.getMinIndex()),
-                           new IntegerExpression(at.getMaxIndex())),
-                 port2AST(at.getArrayedType(), direction));
-        } else if (t instanceof com.avlsi.fast.ports.ChannelType) {
-            final com.avlsi.fast.ports.ChannelType ct =
-                (com.avlsi.fast.ports.ChannelType) t;
-            return new ChannelType(computeChannelWidth(ct.getNumValues(),
-                                                       ct.getWidth()),
-                                   PortDirection.mapDirection(direction),
-                                   ct.getTypeName());
-        } else if (t instanceof com.avlsi.fast.ports.NodeType) {
-            final com.avlsi.fast.ports.NodeType nt =
-                (com.avlsi.fast.ports.NodeType) t;
-            return new NodeType(nt.getWidth(),
-                                PortDirection.mapDirection(direction),
-                                nt.isArrayed());
-        } else {
-            assert t instanceof com.avlsi.fast.ports.StructureType;
-            final com.avlsi.fast.ports.StructureType st =
-                (com.avlsi.fast.ports.StructureType) t;
-            final ChannelStructureType cst =
-                new ChannelStructureType(st.getTag());
-            for (Iterator i = st.iterator(); i.hasNext(); ) {
-                final PortDefinition portDef = (PortDefinition) i.next();
-                cst.addMember(portDef.getName(),
-                              port2AST(portDef.getType(),
-                                       PortDefinition.updateDirection(
-                                           direction,
-                                           portDef.getDirection())));
-            }
-            return cst;
-        }
     }
 
     /**
@@ -708,15 +652,6 @@ public class VariableAnalyzer {
         final int result = CellUtils.extractN(channelTypeName);
         assert result != -1;
         return result;
-    }
-
-    /**
-     * Returns how many values a wide channel can carry.
-     **/
-    private static /*@ non_null @*/ BigInteger computeChannelWidth(
-            final BigInteger narrow,
-            final int width) {
-        return narrow.pow(width);
     }
 
     /** Get a Map of the metaparameters of the current cell.  **/
