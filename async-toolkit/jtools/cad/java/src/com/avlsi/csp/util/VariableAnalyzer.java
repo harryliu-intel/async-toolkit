@@ -1683,7 +1683,9 @@ public class VariableAnalyzer {
             throws VisitorException {
             e.getExpression().accept(this);
             final Type ty = getType(e.getExpression());
-            if (isInteger(ty)) {
+            if (isBoolean(ty)) {
+                setBoolean(e);
+            } else if (isInteger(ty)) {
                 setInteger(e);
             } else {
                 setType(e, getType(e.getExpression()));
