@@ -48,7 +48,7 @@ public class DSimUtil {
     // TODO BUG 28502: use reset_net/start_net/delay_net directives instead
     public static HierName _RESET_NAME = HierName.makeHierName("_RESET");
     public static HierName START_NAME  = HierName.makeHierName("START");
-    public static HierName STEP_NAME  = HierName.makeHierName("STEP");
+    public static HierName STEP_NAME   = HierName.makeHierName("STEP");
     public static HierName DLY_NAME    = HierName.makeHierName("DLY");
 
     /** Get a node from top level or env (TODO BUG 28502: eliminate) **/
@@ -57,7 +57,7 @@ public class DSimUtil {
         if (n==null) n = DSim.get().findNode(HierName.append(HierName.makeHierName("_env"),name));
         return n;
     }
-    
+
     /** Return the _RESET node (TODO BUG 28502: query list of reset_net inputs) **/
     public static Node getResetNode() {
         return getTopOrEnvNode(_RESET_NAME);
@@ -93,11 +93,11 @@ public class DSimUtil {
         DLY    = getDelayNode();
     }
 
-    /** 
+    /**
      * Resets DSim.  Reset is performed with full random (untimed)
      * transitions.  Following reset, the timing model is restored to
      * its prior value.  START+ follows _RESET+.
-     * 
+     *
      * @throws IllegalArgumentException
      * @throws IllegalStateException
      **/
@@ -121,11 +121,13 @@ public class DSimUtil {
 
         if (protocol == STANDARD_RESET) {
             // Reset and cycle
-            if (DLY!=null) DLY.setValueAndEnqueueDependents(Node.VALUE_0); // might be overridden by env
+            if (DLY!=null) DLY.setValueAndEnqueueDependents(Node.VALUE_0); // can override in env
             if (_RESET!=null) _RESET.scheduleImmediate(Node.VALUE_0);
             if (START!=null) START.scheduleImmediate(Node.VALUE_0);
             if (STEP!=null) STEP.scheduleImmediate(Node.VALUE_0);
             dsim.cycle(-1);
+
+            // additional step for initialize_on_reset directives
             initResetNodes(init);
             dsim.cycle(-1);
 
@@ -145,18 +147,12 @@ public class DSimUtil {
             // de-assert _RESET
             if (_RESET!=null) {
                 _RESET.scheduleImmediate(Node.VALUE_1);
+                if (START!=null || STEP!=null) dsim.cycle(-1);
             }
 
             // second phase doreset if START/STEP nodes exist
-            if (START!=null) {
-                if (_RESET!=null) dsim.cycle(-1);
-                START.scheduleImmediate(Node.VALUE_1);
-            }
-            if (STEP!=null) {
-                if (_RESET!=null) dsim.cycle(-1);
-                STEP.scheduleImmediate(Node.VALUE_1);
-            }
-            
+            if (START!=null) START.scheduleImmediate(Node.VALUE_1);
+            if (STEP!=null)   STEP.scheduleImmediate(Node.VALUE_1);
         }
         else {
             throw new IllegalArgumentException(
@@ -168,20 +164,20 @@ public class DSimUtil {
     /**
      * Performs repeated random-timing reset tests.  This test is intended
      * to catch timing races involving reset (such as the one that killed
-     * A2S_40 in F1).  
+     * A2S_40 in F1).
      *
      * @param numTests Number of reset cycles to run.
      * @param numCycles Number of cycles to run for between each reset.
      * @param cycleNode Node to use for post-reset cycling.
      * @param resetProtocol Reset protocol to use (STANDARD_RESET).
-     * 
+     *
      * @throws IllegalArgumentException
      * @throws IllegalStateException
      *
      * Returns true if run successfully (no deadlock); false otherwise
      **/
-    public boolean resetStressTest(int numTests, 
-				   int numCycles, 
+    public boolean resetStressTest(int numTests,
+				   int numCycles,
 				   String cycleNode,
 				   int resetProtocol,
                    IntSupplier init) {
@@ -293,9 +289,9 @@ public class DSimUtil {
         private boolean longOutput;
         private boolean continuousOutput;
 
-        MeasureNodeStats(Node node, boolean verbose, boolean continuous) { 
+        MeasureNodeStats(Node node, boolean verbose, boolean continuous) {
             cycles = new TreeMap();
-            n = node; 
+            n = node;
             longOutput = verbose;
             continuousOutput = continuous;
             phase = n.getValue();
@@ -354,11 +350,11 @@ public class DSimUtil {
                 else first = false;
                 long_str += period.toString() + "[";
                 if (cnt.longValue() >= 10) {
-                    float percent = (float)(cnt.longValue() * 100) 
+                    float percent = (float)(cnt.longValue() * 100)
                                     / totalPeriods;
                     long_str += percent + "%";
                 }
-                else 
+                else
                     long_str += cnt.longValue();
                 long_str += "]";
             }
@@ -373,7 +369,7 @@ public class DSimUtil {
             if (totalPeriods != 0 && averagePeriod != 0.0) {
                 //
                 // Only print out the measurement if it's meaningful.
-                // (Error before cycling or full random timing can 
+                // (Error before cycling or full random timing can
                 // prevent this from being the case.)
                 //
                 System.out.println(str);
@@ -381,10 +377,10 @@ public class DSimUtil {
             }
             return s;
         }
-        
-        //return the measured NTPC 
+
+        //return the measured NTPC
         float getMeasuredNTPC(){return  measuredNTPC; }
-        
+
         void clearMeasuredNTPC(){measuredNTPC = Float.NaN; }
 
         void restart() {
@@ -464,14 +460,14 @@ public class DSimUtil {
     }
 
     /**
-     * Node Watcher class which watches a list of nodes and tallies 
+     * Node Watcher class which watches a list of nodes and tallies
      * their transitions statistics.
      **/
     static class MeasureNodeWatcher
     extends CombinedNodeWatcher<MeasureNodeStats> {
         private boolean verbose;
 
-        MeasureNodeWatcher(boolean verbose) { 
+        MeasureNodeWatcher(boolean verbose) {
             this.verbose = verbose;
         }
 
@@ -480,7 +476,7 @@ public class DSimUtil {
         }
 
         void addNode(Node node) { addNode(node,false); }
-        
+
         float getMeasuredNTPC(Node node) {
             MeasureNodeStats mns = getNode(node);
             if(mns != null){
@@ -493,7 +489,7 @@ public class DSimUtil {
                 return Float.NaN;
             }
         }
-        
+
         public void clear() {
             verbose = false;
             super.clear();
@@ -583,7 +579,7 @@ public class DSimUtil {
         if(measure != null)
             measure.clear();
     }
-    
+
     public void haltOn(Node node, BinaryPredicate p, int tpc) {
         if (haltWatcher == null) {
             haltWatcher = new CombinedNodeWatcher<HaltOnCycleWatcher>();
@@ -595,8 +591,8 @@ public class DSimUtil {
         if (haltWatcher != null) haltWatcher.deleteNode(node);
     }
 
-    /** 
-     * Prints the set of nodes to System.out in a compact manner, nicely 
+    /**
+     * Prints the set of nodes to System.out in a compact manner, nicely
      * formatting to an 80 column line width.
      **/
     void printNodeSet(Set s) {
