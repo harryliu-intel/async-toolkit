@@ -13,7 +13,8 @@
 	  (when shape->objType=="path"
              track = (GetTrack (MetalNumber ?layer metal) (car shape->bBox))
 	     )
-	  (unless shape->objType=="label"
+	  (unless shape->objType=="label" || (cadr shape->lpp)=="AABBregion"
+	     (when !track (error "No track. Probably a shape off-grid on %s" (car shape->lpp)))
              color = (GetTrackColor (MetalNumber ?lpp shape->lpp) track)
 	     (ColorizeShape shape color)
 	     )
