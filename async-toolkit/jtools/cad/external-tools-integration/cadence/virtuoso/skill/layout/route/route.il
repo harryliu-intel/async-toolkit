@@ -219,8 +219,8 @@
       (OffsetEverything -(car offset):-(cadr offset) ?CV ExportCV)
 
       ; HACK: offset to avoid negative numbers because RDT is stupid
-      x=(car  (car ExportCV->bBox))
-      y=(cadr (car ExportCV->bBox))
+      x=(car  (car (GetPrbound ExportCV)->bBox))
+      y=(cadr (car (GetPrbound ExportCV)->bBox))
       (when x<0 || y<0
             gx=(car  gridAlignment["lego"])
             gy=(cadr gridAlignment["lego"])
@@ -473,6 +473,7 @@
         (cellName nil)
         (viewName "layout")
         (oasFile nil)
+	(colorize t)
         )
   (let (TEMP WDIR libPath logFile Command status ImportCV layoutCV floorplanCV
              win instmap offset CID oasName dfII_name inst_lib rename)
@@ -493,8 +494,8 @@
     ; directories and files
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
     WDIR = (strcat TEMP "/route/" cellName)
-    (unless (fileTimeModified oasFile) (error "Cannot read %s\n" oasFile))
     (unless oasFile oasFile = (strcat WDIR "/" cellName ".oas"))
+    (unless (fileTimeModified oasFile) (error "Cannot read %s\n" oasFile))
 
     ; create temp library and import cell
     (GDSIIHierMakeLibrary libName (getShellEnvVar "DFII_DIR") TechLibName)
@@ -503,6 +504,9 @@
     status = (ImportOAS oasFile "oas_import_temp" top_name viewName)
     (unless status (error "Unsuccessful OAS import\n"))
     ImportCV = (dbOpenCellViewByType "oas_import_temp" top_name viewName "maskLayout" "a")
+
+    ; restore cellview properties- would rather do this through properties propagated through the flow
+    (CopyCellViewProps CV ImportCV)
     
     ; flatten ICC cells
     (foreach inst ImportCV->instances
@@ -574,6 +578,7 @@
   (DeleteMarkers ?CV CV)
   (DeleteKeepout ?CV CV)
   (DeleteDumbThings ?CV CV)
+  (Colorize ?CV CV ?override t)
   ; (ConvertFill ?CV CV)    ; HACK: ICC should distinguish fill shapes better
   ; (FixFillerCells ?CV CV) ; HACK: change threshold of spc00 to avoid NV1/PV1 DRC errors
   (FixImportedPins ?CV CV) ; HACK: make sure pins and labels are "pin" purpose
@@ -762,5 +767,18 @@
       )
     (close names_in)
     rename
+    )
+  )
+
+; Copy OA properties from one cellview to another
+(defun CopyCellViewProps (srcCV dstCV)
+  (let (props)
+    ;(printf "Copying properties from %s:%s to %s:%s\n" srcCV->cellName srcCV->viewName dstCV->cellName dstCV->viewName)
+    props = srcCV->prop
+    (foreach p props
+      (unless p->name=="lxInternal"
+        (dbCreateProp dstCV p->name p->valueType p->value)
+	)
+      )
     )
   )
