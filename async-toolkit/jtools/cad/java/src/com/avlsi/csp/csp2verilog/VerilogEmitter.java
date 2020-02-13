@@ -1207,6 +1207,8 @@ public class VerilogEmitter extends CommonEmitter {
                 e.getMinExpression().accept(this);
             }
             out.print(')');
+        } else if (isBitRangeInvalid(e)) {
+            out.print("'0");
         } else {
             processSimpleBitRange(e, false);
         }
@@ -1705,7 +1707,10 @@ public class VerilogEmitter extends CommonEmitter {
                 (lty instanceof StringType);
             final boolean rstr =
                 lstr && !(analysisResults.getType(rhs) instanceof StringType);
+            final boolean skip = lhs instanceof BitRangeExpression &&
+                                 isBitRangeInvalid((BitRangeExpression) lhs);
 
+            if (skip) out.print("/* ");
             if (op) out.print("util.assign_" +
                               (lstr ? "concat" : stmt.getKindString()) + "(");
             if (lhs instanceof BitRangeExpression) {
@@ -1724,7 +1729,8 @@ public class VerilogEmitter extends CommonEmitter {
             processBooleanChannel(chanExpr, rhs);
             if (rstr) out.print(", 10)");
             if (op) out.print(" )");
-            out.println(';');
+            if (skip) out.println(" */");
+            else out.println(';');
             coverage_on(cov);
 
             if (false) {

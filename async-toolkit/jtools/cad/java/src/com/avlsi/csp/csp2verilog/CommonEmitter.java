@@ -260,12 +260,12 @@ abstract class CommonEmitter implements VisitorInterface {
     }
 
     // A simple bit range is one that can be translated to Verilog directly
-    void processSimpleBitRange(BitRangeExpression e, boolean rhs)
+    void processSimpleBitRange(BitRangeExpression e, boolean lhs)
         throws VisitorException {
-        if (!rhs) out.print("($signed({1'd0, ");
+        if (!lhs) out.print("($signed({1'd0, ");
         e.getBitsExpression().accept(this);
         processSimpleBitRangeIndex(e);
-        if (!rhs) out.print("}))");
+        if (!lhs) out.print("}))");
     }
 
     void processSimpleBitRangeIndex(final BitRangeExpression e)
@@ -277,6 +277,21 @@ abstract class CommonEmitter implements VisitorInterface {
             out.print(':'); minExpr.accept(this);
         }
         out.print(']');
+    }
+
+
+    // Detect when hi<lo in x{hi:lo}
+    boolean isBitRangeInvalid(final BitRangeExpression e)
+        throws VisitorException {
+        final ExpressionInterface minExpr = e.getMinExpression();
+        final BigInteger max =
+            CspUtils.getIntegerConstant(e.getMaxExpression());
+        if (minExpr == null) {
+            return max != null && max.compareTo(BigInteger.ZERO) < 0;
+        } else {
+            final BigInteger min = CspUtils.getIntegerConstant(minExpr);
+            return max != null && min != null && max.compareTo(min) < 0;
+        }
     }
 
     int getIntegerConstant(final ExpressionInterface e)
