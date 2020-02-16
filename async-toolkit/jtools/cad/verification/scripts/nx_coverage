@@ -92,7 +92,6 @@ my $nb_qslot="/ncl/be";
 my $nb_class="SLES11SP4_EM64T_128G";
 
 #vcs tool setting
-my $vcs_tool="vcs";
 my $vcs_version="vcs-mx.2017.12sp1";
 
 
@@ -515,8 +514,6 @@ sub parseArgs() {
                 $max_vdb=$value;
             } elsif($key eq "urg-options") {
                 $user_urg_options=$value;
-            } elsif($key eq "vcs-tool") {
-                $vcs_tool=$value;
             } elsif($key eq "vcs-version") {
                 $vcs_version=$value;
             } else {
@@ -563,7 +560,6 @@ USAGE: $0 [options]
     --nb-class=[$nb_class]\n\t\t\t(netbatch --class option)
     --runlocal=[$runlocal]\n\t\t\t([0|1] running urg at netbatch or not)
     --debug-level=[$DEBUG_LEVEL]\n\t\t\t(Optional. print debug information according to level setting)
-    --vcs-tool=[$vcs_tool]\n\t\t\t(VCS tool name, default is vcs. User can use vcs-mx by setting this variable)
     --vcs-version=[$vcs_version]\n\t\t\t(VCS version wrapper, default is vcs.2012.09sp1.)
     
 ET
@@ -792,7 +788,7 @@ sub merge_coverage
     debug_print(0, "***Information: Saved urg log file $urgLogFile\n");
     debug_print(0, "***Information: Writing coverage report to $output_dir\n");
     
-    my $urg                 = "fulcrum --wrapper $vcs_version $vcs_tool urg";
+    my $urg = "fulcrum --wrapper $vcs_version urg";
     my $cmd = "$urg -full64\t\\
 \t-metric $vcsCoverageMetrics\t\\
 \t-report $urgCoverageRpt\t\\
@@ -895,7 +891,7 @@ sub merge_coverage_sub
 
     debug_print(1, "***Information: Saved urg merge config file $source_file\n");
     debug_print(1, "***Information: Saved urg log file $urgLogFile\n");
-    my $urg                 = "fulcrum --wrapper $vcs_version $vcs_tool urg";
+    my $urg = "fulcrum --wrapper $vcs_version urg";
     my $cmd = "$urg -full64\t\\
 \t-f $source_file\t\\
 \t-metric $vcsCoverageMetrics\t\\
