@@ -996,7 +996,8 @@ public class FunctionPreprocessor extends VisitorByCategory {
                 (u == null ? true : (dir == Declarator.IN && u.isAssigned()));
             if (needCopy && u != null) {
                 for (AbstractASTNode node : u.getWrites()) {
-                    problems.add(new AssignToInput(node, name, d));
+                    // TODO: need better way to detect unused-but-set variables
+                    // problems.add(new AssignToInput(node, name, d));
                 }
             }
 
