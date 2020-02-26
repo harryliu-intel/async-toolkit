@@ -476,7 +476,7 @@
 	(colorize t)
         )
   (let (TEMP WDIR libPath logFile Command status ImportCV layoutCV floorplanCV
-             win instmap offset CID oasName dfII_name inst_lib rename)
+             win instmap offset CID oasName dfII_name inst_lib rename templib)
 
     ; choose libName and cellName
     (unless libName  libName  = CV->libName)
@@ -501,9 +501,10 @@
     (GDSIIHierMakeLibrary libName (getShellEnvVar "DFII_DIR") TechLibName)
     libPath = (getShellEnvVar "DFII_DIR")
     logFile = (strcat oasFile ".log")
-    status = (ImportOAS oasFile "oas_import_temp" top_name viewName)
+    templib = (strcat "oas_import_temp_" top_name)
+    status = (ImportOAS oasFile templib top_name viewName)
     (unless status (error "Unsuccessful OAS import\n"))
-    ImportCV = (dbOpenCellViewByType "oas_import_temp" top_name viewName "maskLayout" "a")
+    ImportCV = (dbOpenCellViewByType templib top_name viewName "maskLayout" "a")
 
     ; restore cellview properties- would rather do this through properties propagated through the flow
     (CopyCellViewProps CV ImportCV)
@@ -559,8 +560,8 @@
       )
 
     ; delete import_oas_temp library
-    (ddDeleteObj (ddGetObj "oas_import_temp"))
-    (shell "rm -rf oas_import_temp")
+    (ddDeleteObj (ddGetObj templib))
+    (shell (strcat "rm -rf " templib))
 
     ; execute custom function
     (FinishRouterImport ?CV ImportCV)
@@ -575,15 +576,15 @@
 
 ; Finish router import, user over-ridable in wires.il
 (defun FinishRouterImport (@key (CV (geGetEditCellView)))
+  (LoadWires ?CV CV)
   (DeleteMarkers ?CV CV)
   (DeleteKeepout ?CV CV)
   (DeleteDumbThings ?CV CV)
-  (Colorize ?CV CV ?override t)
+  (Colorize ?CV CV)
   ; (ConvertFill ?CV CV)    ; HACK: ICC should distinguish fill shapes better
   ; (FixFillerCells ?CV CV) ; HACK: change threshold of spc00 to avoid NV1/PV1 DRC errors
   (FixImportedPins ?CV CV) ; HACK: make sure pins and labels are "pin" purpose
   (defun RunAfterImportDef (@key (CV (geGetEditCellView))) t)
-  (LoadWires ?CV CV)
   (RunAfterImportDef ?CV CV)
   (printf "Route Import finished.\n")
   )
@@ -608,13 +609,23 @@
   )
 
 ; Delete incorrect shapes that shouldn't be added by ICC or qfill
+DumbLayers = (list (list "SRAM" "fill")
+	     	   (list "POLYCHECK" "fill")
+		   (list "poly" "fill")
+		   (list "tcn" "fill")
+		   (list "optLego" "id")
+		   (list "v1a" "colorA")
+		   (list "v1b" "colorB")
+		   (list "v1c" "colorC")
+		   (list "v2a" "colorA")
+		   (list "v2b" "colorB")
+		   (list "v2c" "colorC")
+		   (list "v3a" "colorA")
+		   (list "v3b" "colorB")
+		   )
 (defun DeleteDumbThings (@key (CV (geGetEditCellView)))
   (foreach fig CV->shapes
-           (when fig->lpp==(list "SRAM" "fill") ||
-                 fig->lpp==(list "POLYCHECK" "fill") ||
-                 fig->lpp==(list "poly" "fill") ||
-                 fig->lpp==(list "tcn" "fill") ||
-                 fig->purpose=="fill" ; HACK: delete fill until we import coloring better
+           (when (IsInList fig->lpp DumbLayers)
                  (dbDeleteObject fig)
                  )
            )
