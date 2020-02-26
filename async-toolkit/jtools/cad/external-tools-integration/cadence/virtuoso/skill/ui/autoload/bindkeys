@@ -4,7 +4,7 @@
 (when (hiGraphicMode)
 ( hiSetBindKey "Layout" "Ctrl<Key>m" "leHiMarkNet()" )
 ( hiSetBindKey "Layout" "Ctrl<Key>n" "leHiUnmarkNet(nil)" )
-( hiSetBindKey "Layout" "y" "leToggleGravity()" )
+;( hiSetBindKey "Layout" "y" "leToggleGravity()" )
 ( hiSetBindKey "Layout" "n" "ToggleNameDisplay()" )
 ( hiSetBindKey "Layout" "Ctrl<Key>r" "hiRedraw()" )
 ( hiSetBindKey "Layout" "F1" "nil" )
@@ -53,17 +53,17 @@
 ( hiSetBindKey "Layout" "Ctrl Alt<Key>h"  "(SetHandLayoutAllObjects)" )
 
 ;adding grid poly and cut poly to layout
-( hiSetBindKey "Layout" "Ctrl<Key>y"       "DrawGridPoly()" )
+;( hiSetBindKey "Layout" "Ctrl<Key>y"       "DrawGridPoly()" )
 ;( hiSetBindKey "Layout" "Alt<Key>y"       "DeleteGridPoly()" )
 
 ;adding Implants to layout
-( hiSetBindKey "Layout" "Ctrl<Key>i"  "Implant()" )
-( hiSetBindKey "Layout" "Ctrl<Key>q"  "DeleteImplant()" )
+;( hiSetBindKey "Layout" "Ctrl<Key>i"  "Implant()" )
+;( hiSetBindKey "Layout" "Ctrl<Key>q"  "DeleteImplant()" )
 
 ; cell alignment form
-( hiSetBindKey "Layout" "g" "OpenAlignForm()" )
+;( hiSetBindKey "Layout" "g" "OpenAlignForm()" )
 ;( hiSetBindKey "Layout" "Alt<Key>g" "AlignSelectedV()" )
-( hiSetBindKey "Layout" "Ctrl<Key>g" "AlignSelectedH()" )
+;( hiSetBindKey "Layout" "Ctrl<Key>g" "AlignSelectedH()" )
 
 
 hiSetBindKey( "Layout" "<Shift>h"   "AlignCells( PowerGridPitch 2*PowerGridPitch 0 0 )" )
@@ -142,6 +142,11 @@ hiSetBindKey( "Layout"  "Ctrl<Key>n"       "UnAnchorSelectedInstances( )" )
 (hiSetBindKey "Layout"  "Ctrl Shift<Key>Right" "(LockMoveAndSnap)" )
 (hiSetBindKey "Layout"  "Ctrl Shift<Key>Up"    "(LockMoveAndSnap)" )
 (hiSetBindKey "Layout"  "Ctrl Shift<Key>Down"  "(LockMoveAndSnap)" )
+
+(hiSetBindKey "Layout"  "<Key>g"  "(MoveAligned \"L\")" )
+(hiSetBindKey "Layout"  "<Key>j"  "(MoveAligned \"R\")" )
+(hiSetBindKey "Layout"  "<Key>y"  "(MoveAligned \"U\")" )
+(hiSetBindKey "Layout"  "<Key>h"  "(MoveAligned \"D\")" )
 
 (hiSetBindKey "Layout"  "<Key>F4"       "TR_FindInstance( )" )
 (hiSetBindKey "Layout"  "Ctrl Shift<Key>o"  "FL_Overlap( )" )
