@@ -655,3 +655,20 @@
  )
 )
 
+(defun InsertElementIntoList (element source position)
+  (let (i target)
+    i = 0
+    target = nil
+    (while i<=position-1
+      target = (cons (nth i source) target)
+      i++
+      )
+    target = (cons element target)
+    (while i<=(length source)-1
+      target = (cons (nth i source) target)
+      i++
+      )    
+    (reverse target)
+    )
+  )
+  
