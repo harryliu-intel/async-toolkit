@@ -1164,10 +1164,11 @@ wires_modtime = makeTable("wires" 0)
   ))
 
 ; load wires.il for this cell
-(defun LoadWires (@key (CV (geGetEditCellView)))
+(defun LoadWires (@key (CV (geGetEditCellView)) (cellName nil))
   (BusDefaults)
-  (let (DFII_DIR dir components file)
+  (let (DFII_DIR dir components file cellName)
     DFII_DIR = (ConfigFileGetValue TheCDSConfigTable "DFII_DIR")
+    (unless cellName cellName=CV->cellName)
     dir = (NameGetCellPathFromCellName CV->cellName)
     (when (strncmp DFII_DIR dir (strlen DFII_DIR))==0
           dir = (substring dir (strlen DFII_DIR)+2)
