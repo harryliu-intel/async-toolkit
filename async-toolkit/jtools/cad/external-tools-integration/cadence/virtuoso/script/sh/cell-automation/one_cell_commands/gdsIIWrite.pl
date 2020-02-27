@@ -863,6 +863,7 @@ EFT
     else {
         open ($ft, ">$cdsWD/mktag.il");
         print $ft <<EFT;
+LoadWires(?cellName "$pc")
 MakeLayoutTagCell("$pc" ?orientation "$tag_orientation" ?viewName "$srcViewName" ?targetViewName "${srcViewName}_tag" ?CastPath "$castpath" ?TempDir "$cdsWD" )
 exit
 EFT
