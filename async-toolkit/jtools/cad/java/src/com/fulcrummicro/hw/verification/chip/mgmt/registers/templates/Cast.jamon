@@ -153,7 +153,7 @@ define <% camelCaseBaseName %>Management() attributes
   <+ <% Utility.underscoreToCamelCase(base.getName() + "_" + g.toUpperCase(), true) %>Management
 </%if></%for></%if>\
   <+ AddressSpace 
-  <+ core.neuro.v2.register_functions.RegisterFunctions {
+  <+ core.neuro.<% chip %>.register_functions.RegisterFunctions {
   int <% baseName %>_MGMT_BITS = <% mgmtDataBits %>;
   csp {
 <%doc>************************************************************</%doc>\
