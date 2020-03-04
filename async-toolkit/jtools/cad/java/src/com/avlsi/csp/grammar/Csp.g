@@ -675,18 +675,34 @@ declarator[boolean formalP] returns [Declarator dec]
       ident=identifier
         {dec = new Declarator(ident, null, null, dir); dec.epr(ident);
          if (pm != null) dec.epr(pm);}
-      ( lb:LBRACK rng=range rb:RBRACK 
-         { s=new ArrayType(rng, null); s.epr(lb,rb);
-           if (t == null) {
-               dec.setTypeFragment(s);
-               dec.epr(s);
-           } else {
-               t.setElementType(s); 
-               t.epr(s);
-           } 
-           t = s; 
-         }
-      )*
+      ( (LBRACK range RBRACK) =>
+        ( lb:LBRACK rng=range rb:RBRACK 
+           { s=new ArrayType(rng, null); s.epr(lb,rb);
+             if (t == null) {
+                 dec.setTypeFragment(s);
+                 dec.epr(s);
+             } else {
+                 t.setElementType(s); 
+                 t.epr(s);
+             } 
+             t = s; 
+           }
+        )*
+      | LBRACK rng=range
+           { s=new ArrayType(rng, null); s.epr(rng);
+             dec.setTypeFragment(s);
+             dec.epr(s);
+             t = s; 
+           }
+         ( COMMA rng=range
+           { s=new ArrayType(rng, null); s.epr(rng);
+             t.setElementType(s); 
+             t.epr(s);
+             t = s; 
+           }
+         )*
+         RBRACK
+      )?
       ( ASSIGN init=expression {dec.setInitializer(init);
                                 dec.epr(init);} )?
     ;
