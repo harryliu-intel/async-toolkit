@@ -119,7 +119,7 @@ loop_statement returns [StatementInterface stmt = null]
       |la1:SLOOP {sep = LoopStatement.SEQUENTIAL; t=la1; }
       |la2:BLOOP {sep = LoopStatement.PARALLEL; t=la2; }
       |la3:CLOOP {sep = LoopStatement.PARALLEL; t=la3; })
-      id:IDENT COLON r=range COLON LPAREN s=sequential_statement RPAREN ra:RANGL
+      id:IDENT COLON r=range COLON s=sequential_statement ra:RANGL
     { stmt = new LoopStatement(id.getText(), r, sep, s);
       stmt.epr(t,ra); }
     ;
@@ -165,7 +165,7 @@ statement returns [StatementInterface stmt = null]
     | stmt=repetition_statement
     | (lvalue
         (  ASSIGN | PASSIGN | MASSIGN | TASSIGN |  XASSIGN |
-          DASSIGN | RASSIGN | AASSIGN | OASSIGN | LSASSIGN | RSASSIGN )
+          DASSIGN | RASSIGN | AASSIGN | OASSIGN | LSASSIGN | (RANGL GEQ) )
       ) => stmt=assignment_statement
     | (lvalue ( INC | DEC ) ) => stmt=incdec_statement
     | (HASH | ( lvalue ( QUEST | BANG ) ) ) => stmt=communication_statement
@@ -209,7 +209,7 @@ assignment_statement returns [StatementInterface stmt = null]
       | OASSIGN  { kind = AssignmentStatement.OR;         }
       | XASSIGN  { kind = AssignmentStatement.XOR;        }
       | LSASSIGN { kind = AssignmentStatement.LEFTSHIFT;  }
-      | RSASSIGN { kind = AssignmentStatement.RIGHTSHIFT; }
+      | (RANGL GEQ) { kind = AssignmentStatement.RIGHTSHIFT; }
       )
       e2=expression
       {stmt = new AssignmentStatement(e1, e2, kind); stmt.epr(e1,e2);}
@@ -310,13 +310,21 @@ guard_command_simple returns [GuardedCommandInterface guardedCommand = null]
 det_guard_command returns [GuardedCommandInterface guardedCommand = null]
     { GuardedCommandInterface g;
       LoopGuard loop = null;
-      Range r; }
+      Range r; 
+      boolean paren = false; }
     : guardedCommand=guard_command_simple
-    | la:BOXLOOP bid:IDENT COLON r=range COLON LPAREN
-      {loop = new LoopGuard(bid.getText(), r, LoopGuard.BOX);}
-      g=det_guard_command {loop.addGuard(g);}
-      (BOX g=det_guard_command {loop.addGuard(g);})*
-      RPAREN ra:RANGL
+    | la:BOXLOOP bid:IDENT COLON r=range COLON
+      ( (LPAREN) =>
+        LPAREN
+        {loop = new LoopGuard(bid.getText(), r, LoopGuard.BOX);}
+        g=det_guard_command {loop.addGuard(g);}
+        (BOX g=det_guard_command {loop.addGuard(g);})*
+        RPAREN
+      | {loop = new LoopGuard(bid.getText(), r, LoopGuard.BOX);}
+        g=det_guard_command {loop.addGuard(g);}
+        (BOX g=det_guard_command {loop.addGuard(g);})*
+      )
+      ra:RANGL
     { guardedCommand = loop; guardedCommand.epr(la,ra); }
     ;
 non_det_guard_command returns [GuardedCommandInterface guardedCommand = null]
@@ -324,11 +332,18 @@ non_det_guard_command returns [GuardedCommandInterface guardedCommand = null]
       LoopGuard loop = null;
       Range r; }
     : guardedCommand=guard_command_simple
-    | lb:CLLOOP cid:IDENT COLON r=range COLON LPAREN
-      {loop = new LoopGuard(cid.getText(), r, LoopGuard.COLON);}
-      g=non_det_guard_command {loop.addGuard(g);}
-      (COLON g=non_det_guard_command {loop.addGuard(g);})*
-      RPAREN rb:RANGL
+    | lb:CLLOOP cid:IDENT COLON r=range COLON
+      ( (LPAREN) =>
+        LPAREN
+        {loop = new LoopGuard(cid.getText(), r, LoopGuard.COLON);}
+        g=non_det_guard_command {loop.addGuard(g);}
+        (COLON g=non_det_guard_command {loop.addGuard(g);})*
+        RPAREN
+      | {loop = new LoopGuard(cid.getText(), r, LoopGuard.COLON);}
+        g=non_det_guard_command {loop.addGuard(g);}
+        (COLON g=non_det_guard_command {loop.addGuard(g);})*
+      )
+      rb:RANGL
     { guardedCommand = loop; guardedCommand.epr(lb,rb); }
     ;
 linked_guard_command returns [GuardedCommandInterface guardedCommand = null]
@@ -342,11 +357,17 @@ linked_guard_command returns [GuardedCommandInterface guardedCommand = null]
       ARROW seqStmt=sequential_statement
     { guardedCommand = new GuardedCommand(guardExpr, linkTerms, seqStmt); 
       guardedCommand.epr(guardExpr,seqStmt); }
-    | lb:CLLOOP cid:IDENT COLON r=range COLON LPAREN
-      {loop = new LoopGuard(cid.getText(), r, LoopGuard.COLON);}
-      g=linked_guard_command {loop.addGuard(g);}
-      (COLON g=linked_guard_command {loop.addGuard(g);})*
-      RPAREN rb:RANGL
+    | lb:CLLOOP cid:IDENT COLON r=range COLON
+      ( (LPAREN) => LPAREN
+        {loop = new LoopGuard(cid.getText(), r, LoopGuard.COLON);}
+        g=linked_guard_command {loop.addGuard(g);}
+        (COLON g=linked_guard_command {loop.addGuard(g);})*
+        RPAREN
+      | {loop = new LoopGuard(cid.getText(), r, LoopGuard.COLON);}
+        g=linked_guard_command {loop.addGuard(g);}
+        (COLON g=linked_guard_command {loop.addGuard(g);})*
+      )
+      rb:RANGL
     { guardedCommand = loop; guardedCommand.epr(lb,rb); }
     ;
 linkage_specifier returns [LinkageTerms terms]
@@ -408,7 +429,7 @@ loop_expression returns [ExpressionInterface expr = null]
       |lo2:ALOOP {sep = LoopExpression.AND; t=lo2; }
       |lo3:OLOOP {sep = LoopExpression.OR; t=lo3; }
       |lo4:XLOOP {sep = LoopExpression.XOR; t=lo4; })
-      id:IDENT COLON r=range COLON LPAREN e=expression RPAREN ra:RANGL
+      id:IDENT COLON r=range COLON e=expression ra:RANGL
     { expr = new LoopExpression(id.getText(), r, sep, e);
       expr.epr(t,ra); }
     ;
@@ -482,7 +503,7 @@ shift_expression returns [ExpressionInterface expr]
       (LSHIFT e2=add_expression 
             {expr = (ExpressionInterface)
                 new LeftShiftExpression(expr, e2).epr(expr,e2); }
-      |RSHIFT e2=add_expression 
+      |RANGL RANGL e2=add_expression 
             {expr = (ExpressionInterface)
                 new RightShiftExpression(expr, e2).epr(expr,e2); }
       )*
@@ -751,14 +772,14 @@ PLOOP :"<+" ;    MLOOP :"<*" ;    ALOOP :"<&" ;    OLOOP :"<|" ;
 SLOOP :"<;" ;    BLOOP :"<||";    CLOOP :"<," ;    XLOOP :"<^" ;
 BOXLOOP :"<[]";  CLLOOP: "<:";
 LANGL : '<' ;    RANGL : '>' ;
-LSHIFT:"<<" ;    RSHIFT:">>" ;
+LSHIFT:"<<" ;
 LEQ   :"<=" ;    GEQ   :">=" ;
 ARROW : "->";
 EQUAL : "==" ;
 NEQ   :"!=" ;
 ASSIGN: '=' ;    PASSIGN:"+=";    MASSIGN:"-=";    TASSIGN:"*=";
 DASSIGN:"/=";    RASSIGN:"%=";    AASSIGN:"&=";    OASSIGN:"|=";
-LSASSIGN:"<<=";  RSASSIGN:">>=";  XASSIGN:"^=";
+LSASSIGN:"<<=";  XASSIGN:"^=";
 INC   : "++";    DEC   : "--";
 TILDE : '~' ;
 STAR  : '*' ;    SLASH : '/' ;
@@ -779,6 +800,8 @@ CARET : "^" ;
 HASH  : '#' ;
 AT    : '@' ;
 //PEEK  : "#?" ;
+//RSHIFT  :">>";
+//RSASSIGN:">>=";
 
 COMMENT_1
     : "/*"
