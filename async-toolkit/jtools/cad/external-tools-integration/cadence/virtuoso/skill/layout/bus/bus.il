@@ -1113,6 +1113,19 @@ wires_modtime = makeTable("wires" 0)
   )
 )
 
+; Invert the offsets of wires in channel
+(defun FlipChan (chan_list)
+  (let (new_list new_chan)
+    new_list=nil
+    (foreach chan chan_list
+             new_chan = (list (car chan) (cadr chan) -(caddr chan) (cadddr chan))
+             new_list = (cons new_chan new_list
+                              )
+             )
+    new_list
+    )
+  )
+
 ; Round the offsets in a channel definition (suitable for DefChan) to multiple
 ; of pitch, and return a new channel definition (suitable for DefChan)
 (defun AlignDefChan (pitch channels)
