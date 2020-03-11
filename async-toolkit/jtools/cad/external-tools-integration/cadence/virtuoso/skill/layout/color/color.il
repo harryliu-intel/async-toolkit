@@ -14,11 +14,15 @@
              track = (GetTrack (MetalNumber ?layer metal) (car shape->bBox))
 	     )
 	  (unless shape->objType=="label" || (cadr shape->lpp)=="AABBregion"
-	     (when !track (error "No track. Probably a shape off-grid on %s" (car shape->lpp)))
-             color = (GetTrackColor (MetalNumber ?lpp shape->lpp) track)
-	     (ColorizeShape shape color)
-	     )
-          )
+	     (if !track then
+	        (printf "ERROR: No color track. Probably a shape off-grid on %s at %f:%f\n"
+			(car shape->lpp) (caar shape->bBox) (cadar shape->bBox))
+   	     else
+                color = (GetTrackColor (MetalNumber ?lpp shape->lpp) track)
+	        (ColorizeShape shape color)
+	        )
+             )
+	  )
        )
     (when doVias
        (foreach via ColorableVias
@@ -41,7 +45,7 @@
           (when override || oldcolor==vcolor_control[0]
               (when via->viaHeader->master->cellName=="via1"
 	        (unless (GetTrackWidth 2 via->origin)
-		   (error "Can't color with m2 off-track via %f:%f\n" (car via->origin) (cadr via->origin))
+		   (printf "ERROR: Can't color with m2 off-track via %f:%f\n" (car via->origin) (cadr via->origin))
 		   )
 	        shiftorg = (list (car via->origin) (cadr via->origin)-(GetTrackWidth 2 via->origin)/2)
 	        track = (GetTrack 2 shiftorg)
@@ -52,10 +56,10 @@
 	        )
              (when via->viaHeader->master->cellName=="via2"
 	        (unless (GetTrackWidth 2 via->origin)
-		   (error "Can't color with m2 off-track %s %f:%f\n" via->viaHeader->master->cellName (car via->origin) (cadr via->origin))
+		   (printf "ERROR: Can't color with m2 off-track %s %f:%f\n" via->viaHeader->master->cellName (car via->origin) (cadr via->origin))
 		   )
 	        (unless (GetTrackWidth 3 via->origin)
-		   (error "Can't color with m3 off-track %s %f:%f\n" via->viaHeader->master->cellName (car via->origin) (cadr via->origin))
+		   (printf "ERROR: Can't color with m3 off-track %s %f:%f\n" via->viaHeader->master->cellName (car via->origin) (cadr via->origin))
 		   )
 	        shiftorg = (list (car via->origin)-(GetTrackWidth 3 via->origin)/2 (cadr via->origin)-(GetTrackWidth 2 via->origin)/2)
 	        track1 = (GetTrack 2 shiftorg)
