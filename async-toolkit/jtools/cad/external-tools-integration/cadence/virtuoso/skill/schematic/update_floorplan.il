@@ -198,7 +198,8 @@
 
 (defun UpdateFloorplanCreateInstanceInNetlist (table instName libName cellName)
   (let (inst master viewName w h x0 y0 arrayName primitive)
-    primitive = libName=="gate" || libName=="stack" || libName=="resistor" || libName==TechLibName
+    primitive = libName=="" || libName=="gate" || libName=="stack" ||
+                libName=="resistor" || libName==TechLibName
     realInstances = realInstances || !primitive
     (when !skipInstances && (CV->viewName!="floorplan" && instancePrimitives || !primitive)
           ; find existing inst and its viewName
