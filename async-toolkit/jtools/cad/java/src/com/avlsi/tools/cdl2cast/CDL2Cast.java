@@ -187,12 +187,12 @@ public class CDL2Cast {
                             "    --cdl-file=file\n" +
                             "    --output-spec=dir\n" +
                             "    --output-cast=dir\n" +
+                            "    --lib-name=mod.ule\n" +
                             "    [--pedantic]\n" +
                             "    [--vdd-node=name]\n" +
                             "    [--gnd-node=name]\n" +
                             "    [--node-prefix=prefix]\n" +
                             "    [--instance-prefix=prefix]\n" +
-                            "    [--lib-name=name]\n" +
                             "    [--refinement-parent=type]\n" +
                             "    [--name-table-dir=.]\n" +
                             "    [--sub-type=num]\n" +
@@ -458,7 +458,7 @@ public class CDL2Cast {
          * The libname and subtype for backstop renamed cells
          **/
         final String subType = theArgs.getArgValue( "sub-type", "0" );
-        final String libName = theArgs.getArgValue( "lib-name", "" );
+        final String libName = theArgs.getArgValue( "lib-name", null );
 
         /**
          * Sometimes, generated CDL will have non meter units
@@ -542,7 +542,7 @@ public class CDL2Cast {
              ( outputSkillTableDirName != null ) &&
              ( outputSpecTreeDirName != null  ) &&
              ( outputCastTreeDirName != null  ) &&
-             ( libName != null  ) &&
+             ( libName != null  ) && ( libName.matches("[^.]+\\.[^.]+.*") ) &&
              ( subType != null  ) &&
              ( refinementParent != null ) &&
              ( cdlToLayoutInputBindRulFileName != null ) &&
