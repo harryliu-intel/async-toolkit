@@ -1057,7 +1057,12 @@ sub transform_subtype {
 
     # Parse subtype file and apply matching function for each subcell
     my $file = fqcn_to_file(get_work_dir($SS_r) . "/cast", $subtype);
-    command_die($SS_r, "Error: $file doesn't exist.") if (!-e $file);
+    if (!-e $file && -e fqcn_to_file($SS_r->{GS}{SPEC_DIR}, $subtype)) {
+        print "Warning: ignoring $subtype in SPEC_DIR but not local cast dir.\n";
+        return;
+    } elsif (!-e $file) {
+        command_die($SS_r, "Error: $file doesn't exist.");
+    }
     open(OLD, $file) || command_die($SS_r, "Couldn't open $file.");
     open(NEW, ">${file}.new") || 
         command_die($SS_r, "Couldn't write to ${file}.new.");
