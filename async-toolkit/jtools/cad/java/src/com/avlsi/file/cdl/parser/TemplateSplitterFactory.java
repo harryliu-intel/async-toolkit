@@ -8,7 +8,9 @@
 
 package com.avlsi.file.cdl.parser;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 
@@ -128,6 +130,14 @@ public class TemplateSplitterFactory implements CDLFactoryInterface {
     private final Map newCellNames = new HashMap();
     private final Counter newCellCounter = new HashCounter();
 
+    private List<Pair<String,String>> getParams(Map<String,CDLLexer.InfoToken> parameters) {
+        final ArrayList<Pair<String,String>> result = new ArrayList<>();
+        for(Map.Entry<String,CDLLexer.InfoToken> kv : parameters.entrySet()) {
+            result.add(new Pair<String,String>(kv.getKey(), kv.getValue().getText()));
+        }
+        return result;
+    }
+
     /**
      * Get a new name for a parameterized template
      * For the first parameterization we call this with,
@@ -140,7 +150,7 @@ public class TemplateSplitterFactory implements CDLFactoryInterface {
         final int count = newCellCounter.getCount(subName);
         final String newCellName =
             (count == 0) ? subName : subName + count;
-        final Pair key = new Pair(subName,parameters.toString());
+        final Pair key = new Pair(subName,getParams(parameters));
         if(newCellNames.containsKey(key)) {
             return (String) newCellNames.get(key);
         }
