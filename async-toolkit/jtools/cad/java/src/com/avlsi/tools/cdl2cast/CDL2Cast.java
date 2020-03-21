@@ -171,6 +171,8 @@ public class CDL2Cast {
      **/
     private static final int MIN_TRUTH_TABLE_LITERALS = 5;
 
+    private final boolean detectGendev;
+
     private static void usage( String m ) {
 
         final String className = CDL2Cast.class.getName();
@@ -209,7 +211,9 @@ public class CDL2Cast {
                             "    [--width-grid=W]\n" +
                             "    [--length-grid=L]\n" +
                             "    [--bus-bit-chars=\"[]\"]\n" +
-                            "    [--liberty-file=file]\n"
+                            "    [--write-verilog-rtl]\n" +
+                            "    [--liberty-file=file]\n" +
+                            "    [--detect-gendev]\n"
                             );
         if (m != null && m.length() > 0)
             System.err.println ( m );
@@ -383,9 +387,10 @@ public class CDL2Cast {
     }
 
     public CDL2Cast(CellPortsReverseMapper reverseMap, final char leftBitChar,
-                    final char rightBitChar) {
+                    final char rightBitChar, final boolean detectGendev) {
         this.reverseMap = reverseMap;
         this.busBitChars = new char[] { leftBitChar, rightBitChar };
+        this.detectGendev = detectGendev;
     }
 
     public static void main(String[] args)
@@ -532,6 +537,8 @@ public class CDL2Cast {
             Optional.ofNullable(theArgs.getArgValue("liberty-file", null))
                     .map(LibertyParser::new);
 
+        final boolean detectGendev = theArgs.argExists("detect-gendev");
+
         if (! pedanticArgs.pedanticOK(false, true)) {
             usage(pedanticArgs.pedanticString());
         }
@@ -662,7 +669,7 @@ public class CDL2Cast {
                         new CellPortsReverseMapper();
 
                     final CDL2Cast cdl2cast = new CDL2Cast(reverseMap,
-                            busBitChars.charAt(0), busBitChars.charAt(1));
+                            busBitChars.charAt(0), busBitChars.charAt(1), detectGendev);
 
                     final ArrayNamingFactory arrayNamingFactory =
                         cdl2cast.new ArrayNamingFactory( castLegalizingNIF );
@@ -908,7 +915,7 @@ public class CDL2Cast {
     /**
      * Write templates in cast format to spec tree and digital tree
      **/
-    public void writeTemplates( final Map templates,
+    public void writeTemplates( final Map<String,Template> templates,
                                 final AspiceCellAdapter aspicer,
                                 final Optional<LibertyParser> libertyParser,
                                 final Writer outputCastCellsWriter,
@@ -931,6 +938,11 @@ public class CDL2Cast {
         final Set leafSet = new HashSet();
 
         /**
+         * Set of generic devices.
+         **/
+        final Set genDevSet = new HashSet();
+
+        /**
          * Set of cells which are instantiated somewhere.
          * If a flattened cell is not instantiated, then it should not
          * be output.
@@ -950,13 +962,17 @@ public class CDL2Cast {
         final Map digitalLibWriterMap = new HashMap();
         final Map emitterMap = new HashMap();
         final Set cellModuleDone = new HashSet();
-
-        for(Iterator i=templates.entrySet().iterator(); i.hasNext(); ) {
-            final Map.Entry entry = (Map.Entry)i.next();
-            final String fqcn = (String)entry.getKey();
-            final Template template = (Template)entry.getValue();
+        final Map<Template,TemplateContentSniffer> sniffedResult = new HashMap<>();
+        for(Template template : templates.values()) {
             final TemplateContentSniffer sniffer =
                  new TemplateContentSniffer(template);
+            sniffedResult.put(template, sniffer);
+            template.execute(sniffer);
+        }
+        for(Map.Entry<String,Template> entry : templates.entrySet()) {
+            final String fqcn = entry.getKey();
+            final Template template = entry.getValue();
+            final TemplateContentSniffer sniffer = sniffedResult.get(template);
 
             outputCastCellsWriter.write(fqcn+"\n");
             final HierName hName   = HierName.makeHierName(fqcn,'.');
@@ -980,11 +996,27 @@ public class CDL2Cast {
             }
 
             template.execute( sniffer );
-            if(sniffer.hasComponents() ) {
+            boolean hasComponents = sniffer.hasComponents();
+            if(!hasComponents) {
+                for(Iterator<String> j = sniffer.getSubCells(); j.hasNext(); ) {
+                    final String subname = j.next();
+                    Template subtempl = templates.get(subname);
+                    if(subtempl != null && sniffedResult.get(subtempl).isGenericDevice()) {
+                        hasComponents = true;
+                        break;
+                    }
+                }
+            }
+            if(hasComponents || sniffer.isGenericDevice()) {
                 leafSet.add(template);
+                if (sniffer.isGenericDevice()) {
+                    genDevSet.add(template);
+                }
                 for(Iterator j = sniffer.getSubCells(); j.hasNext(); ) {
                     String cellName = (String)j.next();
-                    flattenedSet.add( templates.get( cellName ) );
+                    if (!sniffedResult.get(templates.get(cellName)).isGenericDevice()) {
+                        flattenedSet.add( templates.get( cellName ) );
+                    }
                 }
             }
             else {
@@ -1037,6 +1069,7 @@ public class CDL2Cast {
                                     netgraph,
                                     flatten,
                                     isLeaf,
+                                    genDevSet,
                                     specWriter);
 
             specWriter.close();
@@ -1058,6 +1091,7 @@ public class CDL2Cast {
                                     flatten,
                                     writeVerilogRTL,
                                     isLeaf,
+                                    genDevSet,
                                     digitalWriter);
         }
 
@@ -1082,7 +1116,7 @@ public class CDL2Cast {
     {
         private boolean bComponent = false;
         private boolean bCall = false;
-        private Collection subCells = new HashSet();
+        private Collection<String> subCells = new HashSet<>();
         private final Template templ;
 
         TemplateContentSniffer(final Template templ) {
@@ -1133,8 +1167,9 @@ public class CDL2Cast {
         }
 
         public boolean hasSubCells() { return bCall; }
-        public Iterator getSubCells() { return subCells.iterator(); }
+        public Iterator<String> getSubCells() { return subCells.iterator(); }
         public boolean hasComponents() { return bComponent; }
+        public boolean isGenericDevice() { return detectGendev && !hasSubCells() && !hasComponents(); }
     }
 
     /**
@@ -1752,6 +1787,7 @@ public class CDL2Cast {
                                          final NetGraph netgraph,
                                          final CDLInlineFactory flatten,
                                          final boolean isLeaf,
+                                         final Set genDevSet,
                                          final Writer writer)
         throws IOException {
 
@@ -1788,7 +1824,8 @@ public class CDL2Cast {
                                          HierName[] args,
                                          Map parameters,
                                          Environment env) {
-                        if (template.containsTemplate(subName)) {
+                        final Template sub = template.getTemplate(subName);
+                        if (sub != null && !genDevSet.contains(sub)) {
                             // flatten through
                             flatten.makeCall(name, subName, args,
                                              parameters, env);
@@ -1800,11 +1837,14 @@ public class CDL2Cast {
                     }
                 };
             flatten.setProxy(emitter);
-            template.execute(flatten);
+            template.execute(emitter);
 
             iw.prevLevel();
             iw.write("}\n");
-            iw.write("directives { fixed_size = true; }\n");
+            iw.write("directives { ");
+            iw.write("fixed_size = true; ");
+            if (genDevSet.contains(template)) iw.write("wiring = true; ");
+            iw.write("}\n");
         }
         else {
             iw.write("subtypes {\n");
@@ -1943,6 +1983,7 @@ public class CDL2Cast {
                                          final CDLInlineFactory flatten,
                                          final boolean writeVerilogRTL,
                                          final boolean isLeaf,
+                                         final Set genDevSet,
                                          final Writer writer)
         throws IOException {
 
@@ -1953,7 +1994,8 @@ public class CDL2Cast {
         final String cellName = fqcn.getAsString('.');
 
         writeCellHeader(cellModule.getSuffixString(),
-                        refinementParents,
+                        genDevSet.contains(template) ?
+                            new String[]{ "NULL" } : refinementParents,
                         template,
                         netgraph,
                         iw,
@@ -2072,7 +2114,7 @@ public class CDL2Cast {
                         }
                     };
                 flatten.setProxy(emitter);
-                template.execute(flatten);
+                template.execute(emitter);
                 iw.prevLevel();
                 iw.write("}\n");
                 iw.write("directives { fixed_size = false; }\n");
