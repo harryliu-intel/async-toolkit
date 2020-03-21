@@ -146,7 +146,7 @@
 
 ; Check if an instance is aligned
 (defun CheckInstanceAlignment (inst)
-  (MoveAligned "C" ?CV inst->cellView ?instances (list inst))
+  inst->status=="unplaced" || (MoveAligned "C" ?CV inst->cellView ?instances (list inst))
   )
 
 ; Return list of misaligned instances
