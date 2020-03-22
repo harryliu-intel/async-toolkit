@@ -213,7 +213,8 @@ public class CDL2Cast {
                             "    [--bus-bit-chars=\"[]\"]\n" +
                             "    [--write-verilog-rtl]\n" +
                             "    [--liberty-file=file]\n" +
-                            "    [--detect-gendev]\n"
+                            "    [--detect-gendev]\n" +
+                            "    [--use-multiple]\n"
                             );
         if (m != null && m.length() > 0)
             System.err.println ( m );
@@ -522,6 +523,8 @@ public class CDL2Cast {
             theArgs.argExists("skip-prs-generation");
 
         final boolean writeVerilogRTL = theArgs.argExists("write-verilog-rtl");
+        
+        final boolean useMultiple = theArgs.argExists("use-multiple");
 
         netlistInCast = theArgs.argExists("netlist-in-cast");
         onlyLeafCells = theArgs.argExists("only-leaf-cells");
@@ -844,7 +847,8 @@ public class CDL2Cast {
                                                 outputCastTreeDir,
                                                 new String[] { refinementParent },
                                                 allCells,
-                                                writeVerilogRTL );
+                                                writeVerilogRTL,
+                                                useMultiple );
                         outputCastCellsWriter.close();
 
                     }
@@ -923,7 +927,8 @@ public class CDL2Cast {
                                 final File outputCastTreeDir,
                                 final String[] refinementParents,
                                 final Boolean allCells,
-                                final boolean writeVerilogRTL )
+                                final boolean writeVerilogRTL,
+                                final boolean useMultiple )
         throws Exception {
 
         //determine which templates should be inlined.
@@ -1028,7 +1033,7 @@ public class CDL2Cast {
         }
 
         CDLInlineFactory flatten =
-            new CDLInlineFactory(false, null, false);
+            new CDLInlineFactory(false, null, false, useMultiple);
         flatten.addTargets(templates);
 
         for(Iterator i=templates.entrySet().iterator(); i.hasNext(); ) {

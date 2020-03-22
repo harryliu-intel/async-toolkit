@@ -10,6 +10,7 @@ package com.avlsi.file.cdl.parser;
 import java.io.Reader;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -33,14 +34,29 @@ import com.avlsi.util.container.Pair;
  * Inlines cells in a CDL file.
  **/
 public class CDLInlineFactory implements CDLFactoryInterface {
+    private static double getMultiple(final Map parameters,
+                                      final Environment env) {
+        // try uppercase M then lowercase M parameter
+        double result = 1.0;
+        CDLLexer.InfoToken m = (CDLLexer.InfoToken) parameters.get("M");
+        if (m == null) m = (CDLLexer.InfoToken) parameters.get("m");
+        if (m != null) {
+            Double val = m.getValue(env);
+            if (val != null) result = val.doubleValue();
+        }
+        return result;
+    }
     private class Inliner implements CDLFactoryInterface {
         /** Mapping from formal to actual parameters */
         private final Map param;
         /** What to prefix to internal nodes */
         private final HierName prefix;
-        public Inliner(Map param, HierName prefix) {
+        /** M (multiply) parameter */
+        private final double multiple;
+        public Inliner(Map param, HierName prefix, double multiple) {
             this.param = param;
             this.prefix = prefix;
+            this.multiple = multiple;
         }
 
         /* This function depends on how HierName determines a name is
@@ -69,17 +85,34 @@ public class CDLInlineFactory implements CDLFactoryInterface {
             }
             return translated;
         }
-
+        private boolean closeTo(double a, double b) {
+            final double EPSILON = 1e-8;
+            return Math.abs(a - b) < EPSILON;
+        }
+        private Map updateMultiple(final Map parameters, final Environment env) {
+            final Map result;
+            if (closeTo(multiple, 1.0)) {
+                result = parameters;
+            } else {
+                final double newMultiple = multiple * getMultiple(parameters, env);
+                result = new LinkedHashMap(parameters);
+                final String key = !result.containsKey("M") && result.containsKey("m") ? "m" : "M";
+                result.put(key, new CDLLexer.SimpleToken(Double.valueOf(newMultiple)));
+            }
+            return result;
+        }
         public void makeResistor(HierName name, HierName n1, HierName n2,
                                  CDLLexer.InfoToken val, Map parameters,
                                  Environment env) {
-            proxy.makeResistor(prefix(name), subst(n1), subst(n2), val, parameters, env);
+            proxy.makeResistor(prefix(name), subst(n1), subst(n2), val,
+                               updateMultiple(parameters, env), env);
         }
 
         public void makeCapacitor(HierName name, HierName npos, HierName nneg,
                                   CDLLexer.InfoToken val, Map parameters,
                                   Environment env) {
-            proxy.makeCapacitor(prefix(name), subst(npos), subst(nneg), val, parameters, env);
+            proxy.makeCapacitor(prefix(name), subst(npos), subst(nneg), val,
+                                updateMultiple(parameters, env), env);
         }
 
         public void makeTransistor(HierName name, String type, HierName ns,
@@ -87,19 +120,22 @@ public class CDLInlineFactory implements CDLFactoryInterface {
                                    CDLLexer.InfoToken w, CDLLexer.InfoToken l,
                                    Map parameters, Environment env) {
             proxy.makeTransistor(prefix(name), type, subst(ns), subst(nd),
-                                 subst(ng), subst(nb), w, l, parameters, env);
+                                 subst(ng), subst(nb), w, l, updateMultiple(parameters, env),
+                                 env);
         }
         
         public void makeDiode(HierName name, String type, HierName npos, HierName nneg,
                               CDLLexer.InfoToken val,
                               Map parameters, Environment env) {
-            proxy.makeDiode(prefix(name), type, subst(npos), subst(nneg), val, parameters, env);
+            proxy.makeDiode(prefix(name), type, subst(npos), subst(nneg), val,
+                            updateMultiple(parameters, env), env);
         }
 
         public void makeInductor(HierName name, HierName npos, HierName nneg,
                                  CDLLexer.InfoToken val, Map parameters,
                                  Environment env) {
-            proxy.makeInductor(prefix(name), subst(npos), subst(nneg), val, parameters, env);
+            proxy.makeInductor(prefix(name), subst(npos), subst(nneg), val,
+                               updateMultiple(parameters, env), env);
         }
 
         public void makeBipolar(HierName name, String type, HierName nc,
@@ -107,12 +143,13 @@ public class CDLInlineFactory implements CDLFactoryInterface {
                                 CDLLexer.InfoToken val,
                                 Map parameters, Environment env) {
             proxy.makeBipolar(prefix(name), type, subst(nc), subst(nb),
-                              subst(ne), val, parameters, env);
+                              subst(ne), val, updateMultiple(parameters, env), env);
         }
 
         public void makeCall(HierName name, String subName, HierName[] args,
                              Map parameters, Environment env) {
-            callProxy.makeCall(prefix(name), subName, subst(args), parameters, env);
+            callProxy.makeCall(prefix(name), subName, subst(args),
+                               updateMultiple(parameters, env), env);
         }
 
         public void beginSubcircuit(String subName, String[] in, String[] out,
@@ -168,6 +205,7 @@ public class CDLInlineFactory implements CDLFactoryInterface {
     private final boolean markGenerated;
     private final Retriever retriever;
     private boolean bFlatten;
+    private final boolean useMultiple;
 
     public CDLInlineFactory() {
         this(false);
@@ -191,10 +229,16 @@ public class CDLInlineFactory implements CDLFactoryInterface {
     }
 
     public CDLInlineFactory(final boolean markGenerated, final Retriever retriever, boolean flatten) {
+        this(markGenerated, retriever, flatten, false);
+    }
+
+    public CDLInlineFactory(final boolean markGenerated, final Retriever retriever, boolean flatten,
+                            boolean useMultiple) {
         templates = new HashMap();
         this.markGenerated = markGenerated;
         this.retriever = retriever;
         this.bFlatten = flatten;
+        this.useMultiple = useMultiple;
         if(this.bFlatten)
             this.callProxy = this;
     }
@@ -294,7 +338,8 @@ public class CDLInlineFactory implements CDLFactoryInterface {
             } catch (InvalidHierNameException e) {
                 System.err.println("InvalidHierNameException cannot happen!");
             }
-            final Inliner inliner = new Inliner(m, name);
+            final Inliner inliner = new Inliner(m, name,
+                    useMultiple ? getMultiple(parameters, env) : 1.0);
             t.execute(inliner, parameters, NullEnvironment.getInstance(), null);
         }
     }
