@@ -690,8 +690,9 @@ useICV = t
            sub2 = (dbCopyFig sub1 CV inst->transform)
            sub2->name = (strcat inst->name "." sub1->name)
            sub2->hierName = (cons sub1->name (or inst->hierName (list inst->name)))
-           (when inst->status=="locked"   sub2->status="locked")
-           (when inst->status=="unplaced" sub2->status="unplaced")
+           (cond (inst->status=="unplaced" || sub2->status=="unplaced" sub2->status="unplaced")
+                 (inst->status=="locked"   || sub2->status=="locked"   sub2->status="locked")
+                 )
            )
   (dbDeleteObject inst)
   t
