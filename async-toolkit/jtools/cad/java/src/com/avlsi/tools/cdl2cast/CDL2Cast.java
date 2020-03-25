@@ -768,13 +768,23 @@ public class CDL2Cast {
                      **/
                     final CDLFactoryInterface templateSplitterFactory =
                         new TemplateSplitterFactory(templateFactory) {
+                            private final Map<Template,Boolean> genDevs =
+                                new HashMap<>();
+                            private boolean isGenericDevice(Template templ) {
+                                return genDevs.computeIfAbsent(templ,
+                                        k -> TemplateContentSniffer.sniff(templ, detectGendev)
+                                                                   .isGenericDevice());
+                            }
                             public void makeCall(HierName name,
                                                  String subName,
                                                  HierName[] args,
                                                  Map parameters,
                                                  Environment env) {
-                                // don't specialize undefined subcircuits
-                                if (templateFactory.containsTemplate(subName)) {
+                                // don't specialize undefined subcircuits or
+                                // generic devices
+                                final Template subtempl =
+                                    templateFactory.getTemplate(subName);
+                                if (subtempl != null && !isGenericDevice(subtempl)) {
                                     super.makeCall(
                                         name, subName, args, parameters, env);
                                 } else {
@@ -969,10 +979,8 @@ public class CDL2Cast {
         final Set cellModuleDone = new HashSet();
         final Map<Template,TemplateContentSniffer> sniffedResult = new HashMap<>();
         for(Template template : templates.values()) {
-            final TemplateContentSniffer sniffer =
-                 new TemplateContentSniffer(template);
-            sniffedResult.put(template, sniffer);
-            template.execute(sniffer);
+            sniffedResult.put(template,
+                    TemplateContentSniffer.sniff(template, detectGendev));
         }
         for(Map.Entry<String,Template> entry : templates.entrySet()) {
             final String fqcn = entry.getKey();
@@ -1117,15 +1125,17 @@ public class CDL2Cast {
      * Used to determine what ever to do with this template.  e.g. if it has
      * both components and calls, it will be flattened
      **/
-    private class TemplateContentSniffer extends CDLInterfaceSimplifier
+    private static class TemplateContentSniffer extends CDLInterfaceSimplifier
     {
         private boolean bComponent = false;
         private boolean bCall = false;
         private Collection<String> subCells = new HashSet<>();
         private final Template templ;
+        private final boolean detectGendev;
 
-        TemplateContentSniffer(final Template templ) {
+        TemplateContentSniffer(final Template templ, final boolean detectGendev) {
             this.templ = templ;
+            this.detectGendev = detectGendev;
         }
 
         public void makeCall(HierName name, String subName, HierName[] args,
@@ -1174,7 +1184,16 @@ public class CDL2Cast {
         public boolean hasSubCells() { return bCall; }
         public Iterator<String> getSubCells() { return subCells.iterator(); }
         public boolean hasComponents() { return bComponent; }
-        public boolean isGenericDevice() { return detectGendev && !hasSubCells() && !hasComponents(); }
+        public boolean isGenericDevice() {
+            return detectGendev && !hasSubCells() && !hasComponents();
+        }
+
+        public static TemplateContentSniffer sniff(Template templ, boolean detectGendev) {
+            final TemplateContentSniffer sniffer =
+                new TemplateContentSniffer(templ, detectGendev);
+            templ.execute(sniffer);
+            return sniffer;
+        }
     }
 
     /**
