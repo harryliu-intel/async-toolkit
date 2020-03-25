@@ -9,7 +9,9 @@
 (defun ImportOAS (oasFileName libName cellName viewName
        		 @key (CV (geGetEditCellView))
                        (layerMapFile nil)
-		       (enableColoring t))
+		       (enableColoring t)
+                       (setCopyExact nil) ; lamda on CV to decide when to set CopyExact property
+		       )
   (let (PDK_DIR cmd status CV)
     ; stream in OAS into import_oas_temp library
     PDK_DIR = (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT")
@@ -35,7 +37,13 @@
     CV = (dbOpenCellViewByType libName cellName viewName)
     (unless CV (error "unable to open import_oas_temp %s layout\n" cellName))
 
-    ; return top-level CV
+    ; set CopyExact property
+    (when setCopyExact
+      (FindSubcells ?CV CV ?filter setCopyExact
+                    ?action (lambda (CV) (dbReplaceProp CV "CopyExact" "string" CV->cellName)))
+      )
+
+; return top-level CV
     CV
     )
   )
