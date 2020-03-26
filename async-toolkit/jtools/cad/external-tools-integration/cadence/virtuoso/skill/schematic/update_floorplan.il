@@ -123,7 +123,10 @@
         )
 
       ; detect leaf cells
-      isLeaf   = !realInstances || (dbGetPropByName CV "LeafCell")->value=="TRUE"
+      isLeaf=!realInstances
+      (when (dbGetPropByName CV "LeafCell")
+        isLeaf=(dbGetPropByName CV "LeafCell")->value=="TRUE"
+        )
       isRouted = (dbGetPropByName CV "routed")->value=="TRUE"
 
       ; delete prBoundary of non-routed cells
