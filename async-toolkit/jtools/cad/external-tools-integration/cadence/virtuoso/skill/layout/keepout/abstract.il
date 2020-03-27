@@ -343,11 +343,9 @@
 
 ; copy MetalKeepout and ViaKeepout to blockage objects
 (defun CopyKeepoutToBlockage (cv)
-  (let (points valid)
+  (let (points)
     (foreach shape cv->shapes
-      (for m 0 TopMetal   valid = valid || shape->lpp==MetalKeepout[m])
-      (for m 0 TopMetal-1 valid = valid || shape->lpp==ViaKeepout[m])
-      (when valid
+      (when shape->purpose=="keepout"
         points = (cond (shape->objType=="path" (dbConvertPathToPolygon shape)->points)
                        (shape->objType=="rect" (RectGetPolygonPoints shape->bBox))
                        (t shape->points)
