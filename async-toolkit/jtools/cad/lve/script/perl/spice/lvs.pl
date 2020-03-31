@@ -260,6 +260,7 @@ sub prepare_clf_file {
    my $clf_config="$pdk_root/share/Fulcrum/icv/lvs/lvs_clf.config";
    my $rs_path="";
    my $lvs_rs="";
+   my $lvs_process;
    open(CLF_CFG, "$clf_config") or die "Cannot read $clf_config\n";
    while(my $line=<CLF_CFG>) {
        chomp $line;
@@ -270,6 +271,8 @@ sub prepare_clf_file {
            $rs_path=$data[1];
        } elsif( $data[0] =~ "ILVS_DECK") {
            $lvs_rs=$data[1];
+       } elsif( $data[0] =~ "PROCESS") {
+           $lvs_process=$data[1];
        }
    }
    close(CLF_CFG);
@@ -285,6 +288,7 @@ sub prepare_clf_file {
 -I $icv_path/util/dot1/HIP
 -I $icv_path/util/Cadnav
 -I $icv_path/util/denplot
+-I $icv_path/../../libraries/icv/libcells
 -I $working_dir
 -D _drIncludePort
 -D NOCLD
@@ -304,6 +308,7 @@ sub prepare_clf_file {
 -stc $topcell
 -c $topcell
 ET
+    print LVS_CLF "-D _drPROCESS=$lvs_process\n" if defined($lvs_process);
     print LVS_CLF "-D _drRCextract\n"  if ($rc_database);
     # v0.8.1 runset bug prevents unconditional use of flag, fixed in v1.2.0
     print LVS_CLF "-D _drDONTCMPCAPS\n" unless ($rc_database);
