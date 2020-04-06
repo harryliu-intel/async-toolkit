@@ -167,6 +167,12 @@ public class GeneratePortMapping extends AbstractConverter {
             currentElement = Integer.MIN_VALUE;
         }
 
+        public void hierIdent(final VerilogObject[] parts) {
+            for (VerilogObject o : parts) {
+                o.accept(this);
+            }
+        }
+
         public void ident(final String ident, final boolean escape) {
             if (namedPort) {
                 if (currentPort == null) {
