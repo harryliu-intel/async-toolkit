@@ -92,6 +92,11 @@ $pdk_root="$ENV{FULCRUM_PDK_ROOT}" if ( ! ( -d $pdk_root ) and -d $ENV{FULCRUM_P
 -d $pdk_root or usage("fulcrum-pdk-root improperly defined");
 $gdsii = $cell_name . ".gds" if (!$oasis && $gdsii eq "" && $gdsii_list eq "");
 $gdsii = $cell_name . ".oas" if ( $oasis && $gdsii eq "" && $gdsii_list eq "");
+if ( -e $gdsii) {
+    print "\nSource Layout: " . $gdsii;
+}else{
+    die "\nError: Layout file " . $gdsii . " not found.\n";
+}
 $format = "OASIS" if ($oasis);
 
 ##########################################################################
