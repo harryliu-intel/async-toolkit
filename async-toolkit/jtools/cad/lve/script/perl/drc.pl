@@ -21,7 +21,7 @@ my $jobs=0;
 my $flow="drcd";
 my $pdk_root="";
 my $icv_runset_path="$ENV{PDK_CPDK_PATH}/runsets/icvtdr";
-my $oasis = 0;
+my $oasis = 1;
 my $format = "GDSII";
 
 sub usage {
@@ -117,50 +117,56 @@ sub main{
 
 sub run_drc {
    my ($run_dir,$icv_runset_path,$runset)=@_;
-   system('cp','-rp', "$icv_runset_path/CPYDB","$run_dir");
    my $cmd_file="$run_dir/drc.cmd";
    open(CF, ">$cmd_file") or die "Cannot write to $cmd_file\n";
 
    my $cmd_config="$pdk_root/share/Fulcrum/icv/drc/drc_cmd.config";
-   my $rs_path="";
-   my $rs_num="1";
+   my $process_name="";
+   my $dotprocess_name="";
    $runset="";
    open(CMD_CFG, "$cmd_config") or die "Cannot read $cmd_config\n";
    while(my $line=<CMD_CFG>) {
        my @data = split("=", $line);
-       if( $data[0] =~ "RUNSET_PATH") {
-	   $rs_path=$data[1];
-       } elsif( $data[0] =~ "RUNSET_NUM") {
-	   $rs_num=$data[1];
+       if($data[0] =~ "PROCESS_NAME") {
+	   $process_name=$data[1];
+       } elsif($data[0] =~ "DOTP_NAME") {
+	   $dotprocess_name=$data[1];
        }
    }
-   chomp $rs_path;
-   chomp $rs_num;
+   chomp $process_name;
+   chomp $dotprocess_name;
    close(CMD_CFG);
 
    #check if flow is valid
    my %drc_runsets;
    my @flows=split(',',$flow);
+   my $numf=@flows;
+   if($numf>1) {
+       die "\nNo support right now for a list of flows\n";
+   }
    foreach my $f (@flows) {
-       $runset=$icv_runset_path . "/" . $rs_path . "/" . $f . "." . $rs_num . ".rs";
-       print "\nRunset path: " . $runset;
+       # first check if a standalone runset exists
+       $runset=$icv_runset_path . "/PXL/StandAlone/" . $f . ".rs";
        if ( -e $runset) {
+	   print "\nRunset path: " . $runset;
 	   $drc_runsets{$f}=$runset;
        }else{
-	   die "ERROR: Cannot find DRC runset:$runset\n";
+	   #TODO: need better error checking here.
+	   # if invalid flow is specified, you get a regular drcd
+	   print "\nStandalone runset not found, reverting to drcd flag";
+	   $runset=$icv_runset_path . "/PXL/StandAlone/drcd.rs";
        }
    }
 
    print CF <<ET;
 #!/usr/intel/bin/tcsh -f
-setenv DR_CPYDB $run_dir/CPYDB
-setenv ICV_RSH_COMMAND $ENV{'FULCRUM_PACKAGE_ROOT'}/bin/icvrsh
+setenv _ICV_RSH_COMMAND $ENV{'FULCRUM_PACKAGE_ROOT'}/bin/icvrsh
 $ENV{'ICV_SCRIPT'} 'icv' -I . \\
 -I $pdk_root/share/Fulcrum/icv/drc \\
 -I $pdk_root/share/Fulcrum/icv/lvs \\
 -I $icv_runset_path/PXL_ovrd \\
 -I $icv_runset_path/PXL \\
--I $icv_runset_path/$rs_path \\
+-I $ENV{PDK_CPDK_PATH}/libraries/icv/libcells \\
 -I $icv_runset_path/util/dot1/HIP \\
 -I $icv_runset_path/util/Cadnav \\
 -I $icv_runset_path/util/denplot \\
@@ -171,8 +177,11 @@ $ENV{'ICV_SCRIPT'} 'icv' -I . \\
 -D _drCOVER_BY_BCID=_drYES \\
 -D _drICFBCIDEXCEPTION=_drYES \\
 -D _drUSENDG=_drNO \\
-#-D _drUSERDEFINESUIN \\
 -D _drCaseSensitive \\
+-D _drPROCESS=_dr$dotprocess_name \\
+-D _drICF_$flow \\
+-D _drPROJECT=_drnone \\
+-D _drPROCESSNAME=$process_name \\
 -f $format \\
 ET
    if ($jobs > 0) {
@@ -196,8 +205,8 @@ ET
       }
       close(FL);
    }
-    print CF "-c $cell_name \\\n";
-    print CF "$runset\n";
+   print CF "-c $cell_name \\\n";
+   print CF "$runset\n";
     close(CF);
     `chmod +x $cmd_file`;
     my $cmd;
