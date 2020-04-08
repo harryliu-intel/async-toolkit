@@ -24,6 +24,8 @@ import java.util.LinkedHashSet;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -211,7 +213,7 @@ public class CDL2Cast {
                             "    [--width-grid=W]\n" +
                             "    [--length-grid=L]\n" +
                             "    [--bus-bit-chars=\"[]\"]\n" +
-                            "    [--write-verilog-rtl]\n" +
+                            "    [--write-verilog-rtl=[regex]]\n" +
                             "    [--liberty-file=file]\n" +
                             "    [--detect-gendev]\n" +
                             "    [--use-multiple]\n"
@@ -522,7 +524,21 @@ public class CDL2Cast {
         final boolean skipPrsGeneration =
             theArgs.argExists("skip-prs-generation");
 
-        final boolean writeVerilogRTL = theArgs.argExists("write-verilog-rtl");
+        final Predicate<String> truePredicate =
+            new Predicate<String>() {
+                public boolean test(String t) { return true; }
+            };
+        final Predicate<String> writeVerilogRTL;
+        if (theArgs.argExists("write-verilog-rtl")) {
+            final String regex = theArgs.getArgValue("write-verilog-rtl", null);
+            if (regex == null) {
+                writeVerilogRTL = truePredicate;
+            } else {
+                writeVerilogRTL = Pattern.compile(regex).asPredicate();
+            }
+        } else {
+            writeVerilogRTL = truePredicate.negate();
+        }
         
         final boolean useMultiple = theArgs.argExists("use-multiple");
 
@@ -937,7 +953,7 @@ public class CDL2Cast {
                                 final File outputCastTreeDir,
                                 final String[] refinementParents,
                                 final Boolean allCells,
-                                final boolean writeVerilogRTL,
+                                final Predicate<String> writeVerilogRTL,
                                 final boolean useMultiple )
         throws Exception {
 
@@ -1515,10 +1531,40 @@ public class CDL2Cast {
     }
 
     /**
-     * Write out an actual port list appropriate for a Verilog block.  Since
-     * it's impossible to know whether a bit vector is declared as [MSB:LSB] or
-     * [LSB:MSB] without reading the Verilog, throw an exception if the port
-     * list contains arrays.
+     * Return a concatenation expression for an arrayed port in the Verilog
+     * block.  If all nodes share a common stem in CAST, pass in the CAST array
+     * directly for conciseness.
+     **/
+    private String getArrayedActual(final Map<String,String> nodeMap,
+                                    final int min,
+                                    final int max,
+                                    final String stem) {
+        final List<String> actuals = new ArrayList<>();
+        String lastStem = null;
+        boolean commonStem = true;
+        for (int i = min; i <= max; ++i) {
+            final String actual = nodeMap.get(stem + "[" + i + "]");
+            actuals.add(actual);
+            final int idx = actual.indexOf('[');
+            final String actualStem = idx > 0 ? actual.substring(0, idx) : actual;
+            if (lastStem != null) {
+                commonStem &= lastStem.equals(actualStem);
+            }
+            lastStem = actualStem;
+        }
+        if (commonStem) {
+            return lastStem;
+        } else {
+            return actuals.stream().collect(Collectors.joining(",", "{", "}"));
+        }
+    }
+
+    /**
+     * Write out an actual port list appropriate for a Verilog block.  It's
+     * impossible to know whether a bit vector is declared as [MSB:LSB] or
+     * [LSB:MSB] without reading the Verilog, assume [MSB:LSB] since that is
+     * the usual convention.  Throw an exception if the port list contains
+     * multidimensional arrays.
      **/
     private void writeVerilogActualPorts(final Template template,
                                          final Map<String,String> nodeMap,
@@ -1538,11 +1584,17 @@ public class CDL2Cast {
         while (stemIter.hasNext()) {
             final String stem = stemIter.next();
             final List<Pair<Integer,Integer>> dimensions = portMap.get(stem);
-            if (!dimensions.isEmpty()) {
-                throw new RuntimeException("Can't handle arrayed port: " + stem);
+            if (dimensions.size() > 1) {
+                throw new RuntimeException("Can't handle multidimensional port: " + stem);
             }
-
-            iw.write("." + nodeMap.get(stem) + "(" + stem + ")");
+            iw.write("." + stem + "(");
+            if (dimensions.isEmpty()) {
+                iw.write(nodeMap.get(stem));
+            } else {
+                final Pair<Integer,Integer> minmax = dimensions.get(0);
+                iw.write(getArrayedActual(nodeMap, minmax.getFirst(), minmax.getSecond(), stem));
+            }
+            iw.write(")");
             if (stemIter.hasNext()) {
                 iw.write( ", " );
             }
@@ -2005,7 +2057,7 @@ public class CDL2Cast {
                                          final NetGraph netgraph,
                                          final Optional<LibertyParser> libertyParser,
                                          final CDLInlineFactory flatten,
-                                         final boolean writeVerilogRTL,
+                                         final Predicate<String> writeVerilogRTL,
                                          final boolean isLeaf,
                                          final Set genDevSet,
                                          final Writer writer)
@@ -2144,7 +2196,7 @@ public class CDL2Cast {
                 iw.write("directives { fixed_size = false; }\n");
             }
         }
-        if (writeVerilogRTL) {
+        if (writeVerilogRTL.test(reverseMap.getCellName(cellName))) {
             iw.write("verilog {\n");
             iw.nextLevel();
             writeVerilogBlock("rtl", cellName, template, iw);
