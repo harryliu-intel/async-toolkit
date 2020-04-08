@@ -13,6 +13,10 @@ MODULE ConvertTrace EXPORTS Main;
 
    Author : Mika Nystrom <mika.nystroem@intel.com>
 
+   ct [-rename <dutName>] [-scaletime <timeScaleFactor>] [-offsettime <timeOffset>] [-offsetvoltage <voltageOffset>] <inFileName> <outFileRoot>
+
+   will generate <outFileRoot>.trace and <outFileRoot>.names
+
 *)
 
 IMPORT FileRd;
@@ -32,6 +36,10 @@ IMPORT Pathname;
 IMPORT TextUtils;
 IMPORT Scan;
 IMPORT Lex, FloatMode;
+IMPORT OSError, AL;
+IMPORT Thread;
+
+<*FATAL Thread.Alerted*>
 
 VAR doDebug := Debug.DebugThis("CT");
 
@@ -43,7 +51,9 @@ PROCEDURE StartsWith(READONLY buf, pfx : ARRAY OF CHAR) : BOOLEAN =
 TYPE CSet = SET OF CHAR; 
 CONST iSet = CSet { 'i', 'I' };
 
-PROCEDURE DoNames(READONLY line : ARRAY OF CHAR; f : BOOLEAN) : CARDINAL =
+PROCEDURE DoNames(READONLY line : ARRAY OF CHAR;
+                  <*UNUSED*>f : BOOLEAN) : CARDINAL
+  RAISES { SyntaxError } =
 
   PROCEDURE Push(s, l : CARDINAL; isCurr : BOOLEAN) =
     VAR
@@ -54,9 +64,11 @@ PROCEDURE DoNames(READONLY line : ARRAY OF CHAR; f : BOOLEAN) : CARDINAL =
       INC(c)
     END Push;
 
-  PROCEDURE Get(s : CSet) =
+  PROCEDURE Get(s : CSet) RAISES { SyntaxError } =
     BEGIN
-      <*ASSERT line[p] IN s *>
+      IF NOT line[p] IN s THEN
+        RAISE SyntaxError("character " & Int(p) & " '" & Text.FromChar(line[p]) & "' unexpected")
+      END;
       INC(p)
     END Get;
 
@@ -87,9 +99,11 @@ PROCEDURE DoNames(READONLY line : ARRAY OF CHAR; f : BOOLEAN) : CARDINAL =
 
 EXCEPTION ShortRead;
 
+EXCEPTION SyntaxError(TEXT);
+          
 PROCEDURE DoData(READONLY line : ARRAY OF CHAR; 
                  f             : BOOLEAN) : CARDINAL 
-  RAISES { ShortRead } =
+  RAISES { ShortRead, SyntaxError } =
 
   PROCEDURE Char() : CHAR RAISES { ShortRead } =
     BEGIN
@@ -100,9 +114,12 @@ PROCEDURE DoData(READONLY line : ARRAY OF CHAR;
       END
     END Char;
 
-  PROCEDURE Get(c : CHAR)  RAISES { ShortRead } =
+  PROCEDURE Get(c : CHAR)  RAISES { ShortRead, SyntaxError } =
     BEGIN
-      <*ASSERT Char() = c *>
+      WITH cc = Char() DO
+        IF cc # c THEN RAISE SyntaxError("expected '" & Text.FromChar(c) & "' got '" & Text.FromChar(cc) & "'")
+        END
+      END;
       INC(p)
     END Get;
 
@@ -122,7 +139,7 @@ PROCEDURE DoData(READONLY line : ARRAY OF CHAR;
       RETURN  p-s
     END GetInt;
 
-  PROCEDURE GetLR(VAR z : LONGREAL) : BOOLEAN  RAISES { ShortRead } =
+  PROCEDURE GetLR(VAR z : LONGREAL) : BOOLEAN  RAISES { ShortRead, SyntaxError } =
     VAR  
       len : CARDINAL;
       f : INTEGER;
@@ -130,6 +147,7 @@ PROCEDURE DoData(READONLY line : ARRAY OF CHAR;
       x := 0;
       neg : BOOLEAN;
     BEGIN
+      TRY
       WHILE NOT Char() IN SET OF CHAR { '-', '0' .. '9' } DO 
         INC(p); IF p = LAST(line)+1 THEN RETURN FALSE END
       END;
@@ -150,6 +168,9 @@ PROCEDURE DoData(READONLY line : ARRAY OF CHAR;
                     LongReal(z)))
       END;
       RETURN TRUE
+    EXCEPT
+      SyntaxError(e) => RAISE SyntaxError("GetLR : " & e)
+    END
     END GetLR;
 
   VAR
@@ -168,7 +189,11 @@ PROCEDURE DoData(READONLY line : ARRAY OF CHAR;
         lbq := 0;
 
         (* process time timestamp *)
-        EVAL GetLR(lbuff[lbq,lbp]); 
+        TRY
+          EVAL GetLR(lbuff[lbq,lbp]);
+        EXCEPT
+          SyntaxError(e) => RAISE SyntaxError("Getting timestamp : " & e)
+        END;
         lbuff[lbq,lbp] := timeScaleFactor*(lbuff[lbq,lbp]+timeOffset);
         IF doDebug THEN
           Debug.Out(F("time %s", LongReal(lbuff[lbq,lbp])))
@@ -177,9 +202,13 @@ PROCEDURE DoData(READONLY line : ARRAY OF CHAR;
         
         EVAL GetInt(dummy); (* should really assert this is = names.size() *)
       END;
+      TRY
       WHILE GetLR(z) DO
         lbuff[lbq,lbp] := z*voltageScaleFactor+voltageOffset;
         INC(lbq); INC(got)
+      END;
+      EXCEPT
+        SyntaxError(e) => RAISE SyntaxError("Getting value : " & e)
       END;
       RETURN got
     EXCEPT
@@ -195,7 +224,7 @@ PROCEDURE DoData(READONLY line : ARRAY OF CHAR;
 
 TYPE
   AParser = PROCEDURE(READONLY l : ARRAY OF CHAR; f : BOOLEAN) : CARDINAL 
-              RAISES { ShortRead };
+              RAISES { ShortRead, SyntaxError };
 
 PROCEDURE NullParser(<*UNUSED*>READONLY line : ARRAY OF CHAR; 
                      <*UNUSED*>f : BOOLEAN) : CARDINAL =
@@ -228,14 +257,28 @@ PROCEDURE FormatFN(i : CARDINAL) : TEXT =
   BEGIN RETURN F("%08s", Int(i)) END FormatFN;
 
 PROCEDURE WriteNames() =
+  VAR
+    wr : Wr.T;
+    nFn := ofn & ".names";
   BEGIN
-    wdWr := NEW(REF ARRAY OF Wr.T, names.size());
-
-    WITH wr = FileWr.Open(ofn & ".names") DO
-
+    TRY
+      wdWr := NEW(REF ARRAY OF Wr.T, names.size());
+      
+      TRY
+        wr := FileWr.Open(nFn)
+      EXCEPT
+        OSError.E(x) => Debug.Error("Unable to open names file \"" & nFn & "\" : OSError.E : " & AL.Format(x))
+      END;
+      
       FOR i := 0 TO names.size()-1 DO
-        WITH wr2 = FileWr.Open(wd & "/" & FormatFN(i)) DO
-          wdWr[i] := wr2
+        WITH fn = wd & "/" & FormatFN(i) DO
+          TRY
+            WITH wr2 = FileWr.Open(fn) DO
+              wdWr[i] := wr2
+            END
+          EXCEPT
+            OSError.E(x) => Debug.Error("Unable to temp file \"" & fn & "\" : OSError.E : " & AL.Format(x))
+          END
         END;
         WITH nm = TextUtils.ReplaceChar(names.get(i), ':', '_') DO
           (* aplot has trouble with colons in node names, so rename those,
@@ -245,9 +288,11 @@ PROCEDURE WriteNames() =
         Wr.PutChar(wr, '\n')
       END;
       Wr.Close(wr)
-    END;
+    EXCEPT
+      Wr.Failure(x) => Debug.Error("Unable to write names file \"" & nFn & "\" : Wr.Failure : " & AL.Format(x))
+    END
   END WriteNames;
-
+  
 PROCEDURE RenameBack(txt : TEXT) : TEXT =
   VAR
     otxt := txt;
@@ -277,7 +322,8 @@ PROCEDURE RenameBack(txt : TEXT) : TEXT =
     END
     EXCEPT
       Lex.Error, FloatMode.Trap => 
-      Debug.Error("Cant convert node \"" & otxt & "\"")
+      Debug.Error("Cant convert node \"" & otxt & "\"");
+      <*ASSERT FALSE*>
     END
   END RenameBack;
 
@@ -302,29 +348,38 @@ VAR
   pp := NEW(ParseParams.T).init(Stdio.stderr);
   timeScaleFactor, voltageScaleFactor := 1.0d0;
   timeOffset, voltageOffset := 0.0d0;
+  lNo := 1;
 BEGIN
-  IF    pp.keywordPresent("-rename") THEN
-    dutName := pp.getNext()
-  END;
-  IF pp.keywordPresent("-scaletime") THEN
-    timeScaleFactor := pp.getNextLongReal()
-  END;
-  IF pp.keywordPresent("-scalevoltage") THEN
-    voltageScaleFactor := pp.getNextLongReal()
-  END;
-  IF pp.keywordPresent("-offsettime") THEN
-    timeOffset := pp.getNextLongReal()
-  END;
-  IF pp.keywordPresent("-offsetvoltage") THEN
-    voltageOffset := pp.getNextLongReal()
+  TRY
+    IF    pp.keywordPresent("-rename") THEN
+      dutName := pp.getNext()
+    END;
+    IF pp.keywordPresent("-scaletime") THEN
+      timeScaleFactor := pp.getNextLongReal()
+    END;
+    IF pp.keywordPresent("-scalevoltage") THEN
+      voltageScaleFactor := pp.getNextLongReal()
+    END;
+    IF pp.keywordPresent("-offsettime") THEN
+      timeOffset := pp.getNextLongReal()
+    END;
+    IF pp.keywordPresent("-offsetvoltage") THEN
+      voltageOffset := pp.getNextLongReal()
+    END;
+    
+    ifn := pp.getNext();
+    ofn := pp.getNext();
+    
+    pp.finish();
+  EXCEPT
+    ParseParams.Error => Debug.Error("Can't parse command-line parameters")
   END;
 
-  ifn := pp.getNext();
-  ofn := pp.getNext();
-
-  pp.finish();
-
-  rd  := FileRd.Open(ifn);
+  TRY
+    rd  := FileRd.Open(ifn)
+  EXCEPT
+    OSError.E(x) => Debug.Error("Trouble opening input file \"" & ifn & "\": OSError.E : " & AL.Format(x))
+  END;
   
   names.addhi("TIME");
   TRY FS.CreateDirectory(wd) EXCEPT ELSE END;
@@ -383,31 +438,67 @@ BEGIN
           EVAL parser(SUBARRAY(line,start,n-start),first)
         END
       END
-    END
+    END;
+    INC(lNo)
   END
+  
   EXCEPT
+    SyntaxError(e) => Debug.Error("Syntax error on line " & Int(lNo) & " : " &
+      e)
+  |
     ShortRead => Debug.Warning("Short read on final line, data may be corrupted")
+  |
+    Rd.Failure(x) => Debug.Error("Trouble reading input file : Rd.Failure : " & AL.Format(x))
   END;
 
-  FOR i := FIRST(wdWr^) TO LAST(wdWr^) DO Wr.Close(wdWr[i]) END;
+  TRY
+    FOR i := FIRST(wdWr^) TO LAST(wdWr^) DO Wr.Close(wdWr[i]) END;
+  EXCEPT
+    Wr.Failure(x) => Debug.Error("Trouble closing temp files : Wr.Failure : " &
+      AL.Format(x))
+  END;
 
-  WITH tWr = FileWr.Open(ofn & ".trace") DO
+  VAR
+    tFn := ofn & ".trace";
+    tWr : Wr.T;
+  BEGIN
+    TRY
+      tWr := FileWr.Open(tFn)
+    EXCEPT
+      OSError.E(x) => Debug.Error("Unable to open trace file \"" & tFn & "\" for writing : OSError.E : " & AL.Format(x))
+    END;
+    
     UnsafeWriter.WriteI(tWr, 1);
     UnsafeWriter.WriteI(tWr, TRUNC(Time.Now()));
     UnsafeWriter.WriteI(tWr, names.size());
 
-    FOR i := FIRST(wdWr^) TO LAST(wdWr^) DO 
-      WITH rd = FileRd.Open(wd & "/" & FormatFN(i)) DO
-        LOOP
-          WITH n = Rd.GetSub(rd, buf) DO
-            IF n = 0 THEN EXIT END;
-            Wr.PutString(tWr, SUBARRAY(buf,0,n))
+    FOR i := FIRST(wdWr^) TO LAST(wdWr^) DO
+      WITH fn = wd & "/" & FormatFN(i) DO
+        TRY
+          WITH rd = FileRd.Open(fn) DO
+            LOOP
+              WITH n = Rd.GetSub(rd, buf) DO
+                IF n = 0 THEN EXIT END;
+                Wr.PutString(tWr, SUBARRAY(buf,0,n))
+              END
+            END;
+            Rd.Close(rd)
           END
-        END;
-        Rd.Close(rd)
+        EXCEPT
+          OSError.E(x) => Debug.Error("Unable to open temp file \"" & fn & "\" for reading : OSError.E : " & AL.Format(x))
+        |
+          Rd.Failure(x) => Debug.Error("Read error on temp file \"" & fn & "\" for reading : Rd.Failure : " & AL.Format(x))
+        |
+          Wr.Failure(x) => Debug.Error("Write error on trace file \"" & fn & "\" for reading : Wr.Failure : " & AL.Format(x))
+        END
       END
     END;
-    Wr.Close(tWr)
+    TRY
+      Wr.Close(tWr)
+    EXCEPT
+      Wr.Failure(x) => Debug.Error("Trouble closing trace file : Wr.Failure : " &
+        AL.Format(x))
+    END
   END
 
 END ConvertTrace.
