@@ -197,7 +197,8 @@ public class CDL2Cast {
                             "    [--gnd-node=name]\n" +
                             "    [--node-prefix=prefix]\n" +
                             "    [--instance-prefix=prefix]\n" +
-                            "    [--refinement-parent=type]\n" +
+                            "    [--refinement-parent=type,...]\n" +
+                            "    [--top-refinement-parent=type,...]\n" +
                             "    [--name-table-dir=.]\n" +
                             "    [--sub-type=num]\n" +
                             "    [--meters-per-input-unit=1]\n" +
@@ -213,7 +214,8 @@ public class CDL2Cast {
                             "    [--width-grid=W]\n" +
                             "    [--length-grid=L]\n" +
                             "    [--bus-bit-chars=\"[]\"]\n" +
-                            "    [--write-verilog-rtl=[regex]]\n" +
+                            "    [--write-verilog-rtl=[all|top]]\n" +
+                            "    [--top-cells=regex]\n" +
                             "    [--liberty-file=file]\n" +
                             "    [--detect-gendev]\n" +
                             "    [--use-multiple]\n"
@@ -501,6 +503,8 @@ public class CDL2Cast {
          **/
         final String refinementParent =
             theArgs.getArgValue( "refinement-parent", "NULL" );
+        final String topParent =
+            theArgs.getArgValue( "top-refinement-parent", refinementParent );
 
         /**
          * bind.rul format mappings from cdl -> existing layout
@@ -524,21 +528,17 @@ public class CDL2Cast {
         final boolean skipPrsGeneration =
             theArgs.argExists("skip-prs-generation");
 
-        final Predicate<String> truePredicate =
-            new Predicate<String>() {
+        final Predicate<String> topCells;
+        final String topCellsRegex = theArgs.getArgValue("top-cells", null);
+        if (topCellsRegex == null) {
+            topCells = new Predicate<String>() {
                 public boolean test(String t) { return true; }
             };
-        final Predicate<String> writeVerilogRTL;
-        if (theArgs.argExists("write-verilog-rtl")) {
-            final String regex = theArgs.getArgValue("write-verilog-rtl", null);
-            if (regex == null) {
-                writeVerilogRTL = truePredicate;
-            } else {
-                writeVerilogRTL = Pattern.compile(regex).asPredicate();
-            }
         } else {
-            writeVerilogRTL = truePredicate.negate();
+            topCells = Pattern.compile(topCellsRegex).asPredicate();
         }
+
+        final boolean writeVerilogRTL = theArgs.argExists("write-verilog-rtl");
         
         final boolean useMultiple = theArgs.argExists("use-multiple");
 
@@ -571,6 +571,7 @@ public class CDL2Cast {
              ( libName != null  ) && ( libName.matches("[^.]+\\.[^.]+.*") ) &&
              ( subType != null  ) &&
              ( refinementParent != null ) &&
+             ( topParent != null ) &&
              ( cdlToLayoutInputBindRulFileName != null ) &&
              ( cdlToDesiredLayoutOutputBindRulFileName != null )
              ) {
@@ -871,8 +872,10 @@ public class CDL2Cast {
                                                 outputCastCellsWriter,
                                                 outputSpecTreeDir,
                                                 outputCastTreeDir,
-                                                new String[] { refinementParent },
+                                                StringUtil.split(refinementParent, ':'),
+                                                StringUtil.split(topParent, ':'),
                                                 allCells,
+                                                topCells,
                                                 writeVerilogRTL,
                                                 useMultiple );
                         outputCastCellsWriter.close();
@@ -952,8 +955,10 @@ public class CDL2Cast {
                                 final File outputSpecTreeDir,
                                 final File outputCastTreeDir,
                                 final String[] refinementParents,
+                                final String[] topParents,
                                 final Boolean allCells,
-                                final Predicate<String> writeVerilogRTL,
+                                final Predicate<String> topCells,
+                                final boolean writeVerilogRTL,
                                 final boolean useMultiple )
         throws Exception {
 
@@ -1113,11 +1118,13 @@ public class CDL2Cast {
             
             writeTemplateToCastTree(hName,
                                     refinementParents,
+                                    topParents,
                                     template,
                                     templates,
                                     netgraph,
                                     libertyParser,
                                     flatten,
+                                    topCells,
                                     writeVerilogRTL,
                                     isLeaf,
                                     genDevSet,
@@ -1596,7 +1603,7 @@ public class CDL2Cast {
             }
             iw.write(")");
             if (stemIter.hasNext()) {
-                iw.write( ", " );
+                iw.write( "," );
             }
             iw.write("\n");
         }
@@ -1667,7 +1674,7 @@ public class CDL2Cast {
      * from the examples above
      **/
     private void writeCellHeader(String cell,
-                                 String[] refinementParents,
+                                 String[] parents,
                                  Template template,
                                  NetGraph netgraph,
                                  Writer writer,
@@ -1679,11 +1686,9 @@ public class CDL2Cast {
             writeCellPorts(template, netgraph, writer);
         }
 
-        if (refinementParents.length > 0 ) {
-            writer.write(" <:");
-            for(int i=0; i<refinementParents.length; i++) {
-                writer.write(" " + refinementParents[i]);
-            }
+        for (int i = 0; i < parents.length; i++) {
+            final String op = i == parents.length - 1 ? ":" : "+";
+            writer.write(" <" + op + " " + parents[i]);
         }
         writer.write(" ");
     }
@@ -2052,12 +2057,14 @@ public class CDL2Cast {
 
     private void writeTemplateToCastTree(final HierName fqcn,
                                          final String[] refinementParents,
+                                         final String[] topParents,
                                          final Template template,
                                          final Map templates,
                                          final NetGraph netgraph,
                                          final Optional<LibertyParser> libertyParser,
                                          final CDLInlineFactory flatten,
-                                         final Predicate<String> writeVerilogRTL,
+                                         final Predicate<String> topCells,
+                                         final boolean writeVerilogRTL,
                                          final boolean isLeaf,
                                          final Set genDevSet,
                                          final Writer writer)
@@ -2069,9 +2076,16 @@ public class CDL2Cast {
 
         final String cellName = fqcn.getAsString('.');
 
+        final String[] parents;
+        if (genDevSet.contains(template)) {
+            parents = new String[] { "NULL" };
+        } else if (topCells.test(reverseMap.getCellName(cellName))) {
+            parents = topParents;
+        } else {
+            parents = refinementParents;
+        }
         writeCellHeader(cellModule.getSuffixString(),
-                        genDevSet.contains(template) ?
-                            new String[]{ "NULL" } : refinementParents,
+                        parents,
                         template,
                         netgraph,
                         iw,
@@ -2196,7 +2210,7 @@ public class CDL2Cast {
                 iw.write("directives { fixed_size = false; }\n");
             }
         }
-        if (writeVerilogRTL.test(reverseMap.getCellName(cellName))) {
+        if (writeVerilogRTL && topCells.test(reverseMap.getCellName(cellName))) {
             iw.write("verilog {\n");
             iw.nextLevel();
             writeVerilogBlock("rtl", cellName, template, iw);
