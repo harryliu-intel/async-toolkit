@@ -3,8 +3,6 @@
 ; layout leaf cells.
 ;
 ; Author: a very impatient person
-;
-; TODO: Place pcells in leaf cells according to better heuristic.
 
 ; user interface
 (defun UpdateFloorplan
@@ -16,6 +14,7 @@
         (instancePrimitives nil) ; instantiate TechLibName instances
         (skipInstances nil) ; don't add/delete instances
         (midPRB nil) ; update prBoundary of routed mid-level cells
+        (update t) ; actually modify the cells, otherwise just writes log files
         )
   (let (mastersVisited cmd temp dir routed LOG pcre)
 
@@ -25,6 +24,7 @@
       CV = (UpdateFloorplanOpenCV libName cellName viewName)
       )
     routed = (CV->viewName!="floorplan" && CV->viewName!="prelayout")
+    (unless update (dbReopen CV "r"))
 
     ; call cast2skill
     temp = (ConfigFileGetValue TheCDSConfigTable "TEMP")
@@ -183,6 +183,7 @@
   (let (mode)
     (UpdateFloorplanCreateLib libName)
     mode = (if (IsCellViewWritable libName cellName viewName) "a" "r")
+    (unless update mode="r")
     (dbOpenCellViewByType libName cellName viewName "maskLayout" mode)
     )
   )
@@ -213,42 +214,45 @@
           master = (dbOpenCellViewByType libName cellName viewName "maskLayout" "r")
           (when !master || recurse && !mastersVisited[master] && master->viewName==CV->viewName
                 master = (UpdateFloorplanOpenCV libName cellName CV->viewName)
-                (when master->mode=="a" (UpdateFloorplanCore master (strcat indent " ")))
-                )
-          (unless master
-            (error "Unable to create libName=%s cellName=%s viewName=%s\n"
-                   libName cellName viewName)
-            )
-          
-          ; add instance
-          arrayName = (pcreReplace pcre instName "" 0)
-          (unless inst
-            w = (car  (cadr master->bBox)) - (car  (car master->bBox))
-            h = (cadr (cadr master->bBox)) - (cadr (car master->bBox))
-            (cond (lastArrayName==arrayName
-                   x0 = ux
-                   y0 = uy
-                   rx = (max ux+w rx)
-                   uy = uy+h)
-                  (t
-                   x0 = rx
-                   y0 = 0
-                   ux = rx
-                   uy = h
-                   rx = rx+w)
+                (when master && (!update || master->mode=="a")
+                      (UpdateFloorplanCore master (strcat indent " ")))
+                (unless master
+                  (fprintf LOG "%sUnable to create libName=%s cellName=%s viewName=%s\n"
+                           (strcat indent " ") libName cellName viewName)
                   )
-            x0 = x0 - (car  (car master->bBox))
-            y0 = y0 - (cadr (car master->bBox))
-            (fprintf LOG "%sCreate instance %s of %s\n" indent instName cellName)
-            inst = (dbCreateInst CV master instName x0:y0 "R0")
+                )
+
+          (when master
+            ; add instance
+            arrayName = (pcreReplace pcre instName "" 0)
+            (unless inst
+              w = (car  (cadr master->bBox)) - (car  (car master->bBox))
+              h = (cadr (cadr master->bBox)) - (cadr (car master->bBox))
+              (cond (lastArrayName==arrayName
+                     x0 = ux
+                     y0 = uy
+                     rx = (max ux+w rx)
+                     uy = uy+h)
+                    (t
+                     x0 = rx
+                     y0 = 0
+                     ux = rx
+                     uy = h
+                     rx = rx+w)
+                    )
+              x0 = x0 - (car  (car master->bBox))
+              y0 = y0 - (cadr (car master->bBox))
+              (fprintf LOG "%sCreate instance %s of %s\n" indent instName cellName)
+              inst = (dbCreateInst CV master instName x0:y0 "R0")
+              )
+            (unless inst->master==master
+              (fprintf LOG "%sChange master of instance %s to %s\n" indent instName cellName)
+              inst->master = master
+              )
+            lastArrayName = arrayName
+            instanceTable[inst] = t
+            (foreach term inst->terminals (dbDeleteObject term)) ; delete old connections
             )
-          (unless inst->master==master
-            (fprintf LOG "%sChange master of instance %s to %s\n" indent instName cellName)
-            inst->master = master
-            )
-          lastArrayName = arrayName
-          instanceTable[inst] = t
-          (foreach term inst->terminals (dbDeleteObject term)) ; delete old connections
           )
     )
   )
@@ -288,11 +292,6 @@
 
 (defun UpdateFloorplanAddConnectionToInstanceInNetlist (table instName termName netName)
   (let (inst term net)
-    ; too spammy, since I can't figure out how to detect if connection changed
-    ;(when verbose
-    ;  (fprintf LOG "%sAdding instance term to inst=%s term=%s net=%s\n"
-    ;           indent instName termName netName)
-    ;  )
     net  = (dbFindNetByName CV netName)
     inst = (dbFindAnyInstByName CV instName)
     (when inst
