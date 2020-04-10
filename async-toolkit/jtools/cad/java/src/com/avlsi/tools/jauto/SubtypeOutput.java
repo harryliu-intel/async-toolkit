@@ -2301,15 +2301,17 @@ public final class SubtypeOutput {
                                    final String header,
                                    final boolean explicitPortList)
         throws IOException {
-        w.write("/* Copyright " + (new GregorianCalendar()).get(Calendar.YEAR) +  " Intel Corporation.  All rights reserved.\n");
-        // Prevent Perforce from doing substitution on the string literal
-        w.write(" * $" + "Id$\n");
-        w.write(" * $" + "DateTime$\n");
-        w.write(" * $" + "Author$\n");
-        w.write(" */\n");
-        w.write("/* Automatically generated.  Modify at your own risk. */\n");
-        if (header != null) {
-            w.write("/*\n"); w.write(header); w.write("*/\n");
+        if (false) { // BUG 1206: don't write headers in SPEC files
+            w.write("/* Copyright " + (new GregorianCalendar()).get(Calendar.YEAR) +  " Intel Corporation.  All rights reserved.\n");
+            // Prevent Perforce from doing substitution on the string literal
+            w.write(" * $" + "Id$\n");
+            w.write(" * $" + "DateTime$\n");
+            w.write(" * $" + "Author$\n");
+            w.write(" */\n");
+            w.write("/* Automatically generated.  Modify at your own risk. */\n");
+            if (header != null) {
+                w.write("/*\n"); w.write(header); w.write("*/\n");
+            }
         }
 
         w.write("module " + CellUtils.hashMetaParameters(module) + ";\n");
