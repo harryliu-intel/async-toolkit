@@ -3,7 +3,7 @@
 ; Copyright 2011 Fulcrum Microsystems.  All rights reserved.
 
 ; Trim dangling paths and contacts for all nets except PowerGroundNets
-(defun TrimDanglingWires 
+(defun TrimDanglingWires
   (@key (CV (geGetEditCellView))
         (overhang 0)
         (nets nil)
@@ -35,7 +35,7 @@
     (when (and path1 path2
                path1->objType=="path"
                path2->objType=="path"
-               (length path1->points)==2 
+               (length path1->points)==2
                (length path2->points)==2
                path1->lpp==path2->lpp
                path1->net==path2->net
@@ -93,7 +93,7 @@
 (defun TrimDanglingPaths
   (net @key (CV (geGetEditCellView)) (overhang 0) (depth 32))
   (let (progress paths xy0 xy1 x0 y0 x1 y1 bbox overlaps unknown
-        xy bxy0 bxy1 bx0 by1 bx1 by1
+        xy bxy0 bxy1 bx0 by1 bx1 by1 overlap_bbox
         nx0 ny0 nx1 xy1 n progress)
     progress = 0
     paths = (setof obj net->figs
@@ -116,34 +116,17 @@
       unknown = nil
       n = 0
       (foreach overlap overlaps
+               overlap_bbox=(GetOverlapBBox overlap)
                (cond (overlap==path nil) ; ignore self-overlap
-                     ; combine bBox of overlapping paths or rects
-                     ((and (atom overlap)
-                           (or overlap->objType=="path" overlap->objType=="rect"
-                               overlap->objType=="label"))
-                      bbox = (BBoxCombine bbox overlap->bBox)
-                      n = n+1
+                     (overlap_bbox
+                      bbox=(BBoxCombine bbox overlap_bbox)
+                      n=n+1
                       )
-                     ; combine xy of overlapping contacts
-                     ((and !(atom overlap) (car overlap)->libName==TechLibName)
-                      xy = (car overlap)->xy
-                      bbox = (BBoxCombine bbox (list xy xy))
-                      n = n+1
-                      )
-                     ; subcell pin uses bBox of entire subcell (not optimal)
-                     (!(atom overlap)
-                       bbox = (BBoxCombine bbox (car overlap)->bBox)
-                       n = n+1
-                       )
-                     ; unknown overlap disables trimming
-                     (t unknown=t)
                      )
                )
 
       ; trim path to fit inside bbox (bloated by overhang)
-      (cond (unknown nil) ; unknown overlaps, leave path alone
-            ; if one or less overlapping path or contact, delete dangling path
-            (n<=1
+      (cond (n<=1
              (dbDeleteObject path)
              progress = progress+1
              )
@@ -169,8 +152,28 @@
       )
     progress
     )
-  )
+    )
 
+; Transform the bbox of an overlap to top-level coordinates
+(defun GetOverlapBBox (overlap)
+  (let (xy bbox inst)
+    (cond ((atom overlap) &&
+           (overlap->objType=="path" || overlap->objType=="rect" || overlap->objType=="pathSeg")
+           bbox=overlap->bBox
+           )
+          (!(atom overlap) && (car overlap)->objType=="stdVia"
+            xy=(car overlap)->xy
+            bbox=(list xy xy)
+            )
+          (!(atom overlap) && (car overlap)->objType=="inst"
+            bbox=(GetOverlapBBox (cadr overlap))
+            (when bbox bbox=(dbTransformBBox bbox (car overlap)->transform))
+            )
+          (t nil)
+          )
+    bbox
+    )
+  )
 
 ; find contacts on this net
 (defun FindContactsOnNet (net)
@@ -203,7 +206,7 @@
                 )
               )
          )
-    (foreach contact duplicates (dbDeleteObject contact))    
+    (foreach contact duplicates (dbDeleteObject contact))
     (length duplicates)
     )
   )
