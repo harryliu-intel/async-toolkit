@@ -526,15 +526,15 @@
       (unless status (error "unable to open %s\n" dfII_name))
       )
 
-    ; HACK: copy properties from baseCV.  Fix alignment too.
+    ; HACK: copy properties and pins from baseCV.  Fix alignment too.
     (when baseCV
       (CopyCellViewProps CV ImportCV)
       offset = (GetRDTOffset ?CV baseCV)
       (OffsetEverything (car offset):(cadr offset) ?CV ImportCV)
+      (DeleteLabels ?CV ImportCV)
+      (CopyPinsFromSourceView ?srcCV baseCV ?CV ImportCV)
+      (LabelPins ?CV ImportCV)
       )
-
-    ; label pins
-    (LabelPins ?CV ImportCV)
 
     ; restore custom alignment
     offset = (cadr (GetCellAlignment ?CV ImportCV))
@@ -689,7 +689,7 @@ DumbLayers = (list (list "SRAM" "fill")
   CV
   )
 
-; OBSOLETE: Copy pins from a floorplan view
+; Copy pins from a floorplan view
 (defun CopyPinsFromSourceView (@key (CV (geGetEditCellView)) (srcCV nil))
   (let (fig net pin trm)
     ; assumes same cell name unless specified
@@ -704,8 +704,7 @@ DumbLayers = (list (list "SRAM" "fill")
 
       (foreach shape srcCV->shapes
         (when shape->pin
-          net = (dbM0
-                 akeNet CV shape->net->name)
+          net = (dbMakeNet CV shape->net->name)
           trm = (dbCreateTerm net net->name shape->pin->term->direction)
           fig = (dbCopyFig shape CV)
           pin = (dbCreatePin net fig); net->name trm)
@@ -718,7 +717,6 @@ DumbLayers = (list (list "SRAM" "fill")
         )
        )
 
-    (CreatePowerPins ?CV CV)
     (dbSave CV)
     CV
     )

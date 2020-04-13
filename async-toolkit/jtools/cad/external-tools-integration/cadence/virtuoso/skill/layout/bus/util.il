@@ -34,7 +34,7 @@
     height = MfgGrid * (round height/MfgGrid/3) ; adjust height
     label = (dbCreateLabel view fig->lpp x:y fig->net->name
                            "centerCenter" rotation "stick" height) ; draw the label
-    label->parent = fig ; label moves with figure
+    ;label->parent = fig ; label moves with figure
     )
   t
   )
