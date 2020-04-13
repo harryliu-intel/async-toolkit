@@ -72,7 +72,7 @@ cast_path=
 cds_wd_target=
 force=
 interactive=1
-user_template_cds_wd="$package_root/share/script/sh/setup/cds_wd_default_template"
+user_template_cds_wd=
 
 for arg in $@ ; do
   
@@ -132,6 +132,8 @@ if [ -n "$user_template_cds_wd" ] ; then
       "Cadence Working Directory: \"$user_template_cds_wd\" is not a readable directory."  1
   conon_path "$user_template_cds_wd"
   user_template_cds_wd="$ret"
+else
+    user_template_cds_wd="$fulcrum_pdk_root/share/Fulcrum/cds_wd"
 fi
 
 check_readable_dir  "$fulcrum_pdk_root"                                          \
