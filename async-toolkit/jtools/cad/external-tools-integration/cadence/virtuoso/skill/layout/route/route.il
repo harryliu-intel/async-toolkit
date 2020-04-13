@@ -59,6 +59,7 @@
            CV = (RouteImport ?libName (GetCastLibName targetCellName)
                              ?cellName targetCellName ?viewName importView
                              ?oasFile (strcat WDIR "/" targetCellName ".oas")
+                             ?baseCV CV
                              )
            )
           )
@@ -214,21 +215,13 @@
                                 nil))
                )
 
+      ; HACK: offset to avoid negative numbers because RDT is stupid
+      offset = (GetRDTOffset ?CV ExportCV)
+      (OffsetEverything -(car offset):-(cadr offset) ?CV ExportCV)
+
       ; offset for cell alignment
       offset = (cadr (GetCellAlignment ?CV ExportCV))
       (OffsetEverything -(car offset):-(cadr offset) ?CV ExportCV)
-
-      ; HACK: offset to avoid negative numbers because RDT is stupid
-      x=(car  (car (GetPrbound ExportCV)->bBox))
-      y=(cadr (car (GetPrbound ExportCV)->bBox))
-      (when x<0 || y<0
-            gx=(car  gridAlignment["lego"])
-            gy=(cadr gridAlignment["lego"])
-            offset = (list (floor x/gx)*gx (floor y/gy)*gy)
-            (dbReplaceProp ExportCV "StupidOffsetX" "float" (car  offset))
-            (dbReplaceProp ExportCV "StupidOffsetY" "float" (cadr offset))
-            (OffsetEverything -(car offset):-(cadr offset) ?CV ExportCV)
-            )
 
       ; save
       (dbSave ExportCV)
@@ -474,6 +467,7 @@
         (viewName "layout")
         (oasFile nil)
 	(colorize t)
+        (baseCV nil)
         )
   (let (TEMP WDIR libPath logFile Command status ImportCV layoutCV floorplanCV
              win instmap offset CID oasName dfII_name inst_lib rename templib)
@@ -483,6 +477,7 @@
     (unless cellName cellName = CV->cellName)
     (unless cellName (error "no cellName\n"))
     (unless libName  libName = (GetCastLibName cellName))
+    (unless baseCV baseCV=(dbOpenCellViewByType libName cellName "floorplan"))
 
     ; map to icc cellname
     CID = (NameStartRename "cell" "cadence" "gds2")
@@ -506,9 +501,6 @@
     (unless status (error "Unsuccessful OAS import\n"))
     ImportCV = (dbOpenCellViewByType templib top_name viewName "maskLayout" "a")
 
-    ; restore cellview properties- would rather do this through properties propagated through the flow
-    (CopyCellViewProps CV ImportCV)
-    
     ; flatten ICC cells
     (foreach inst ImportCV->instances
       (when (rexMatchp top_name inst->cellName)
@@ -534,14 +526,12 @@
       (unless status (error "unable to open %s\n" dfII_name))
       )
 
-    ; HACK: offset to avoid negative numbers because RDT is stupid
-    offset = (list (dbGetPropByName ImportCV "StupidOffsetX")->value
-                   (dbGetPropByName ImportCV "StupidOffsetY")->value)
-    (when (car offset)!=nil || (cadr offset)!=nil
-          (OffsetEverything (car offset):(cadr offset) ?CV ImportCV)
-          (dbDeletePropByName ImportCV "StupidOffsetX")
-          (dbDeletePropByName ImportCV "StupidOffsetY")
-          )
+    ; HACK: copy properties from baseCV.  Fix alignment too.
+    (when baseCV
+      (CopyCellViewProps CV ImportCV)
+      offset = (GetRDTOffset ?CV baseCV)
+      (OffsetEverything (car offset):(cadr offset) ?CV ImportCV)
+      )
 
     ; label pins
     (LabelPins ?CV ImportCV)
@@ -579,8 +569,8 @@
   (LoadWires ?CV CV)
   (DeleteMarkers ?CV CV)
   (DeleteKeepout ?CV CV)
-  (DeleteDumbThings ?CV CV)
-  (Colorize ?CV CV)
+  ; (DeleteDumbThings ?CV CV)
+  ; (Colorize ?CV CV)
   ; (ConvertFill ?CV CV)    ; HACK: ICC should distinguish fill shapes better
   ; (FixFillerCells ?CV CV) ; HACK: change threshold of spc00 to avoid NV1/PV1 DRC errors
   (FixImportedPins ?CV CV) ; HACK: make sure pins and labels are "pin" purpose
@@ -714,7 +704,8 @@ DumbLayers = (list (list "SRAM" "fill")
 
       (foreach shape srcCV->shapes
         (when shape->pin
-          net = (dbMakeNet CV shape->net->name)
+          net = (dbM0
+                 akeNet CV shape->net->name)
           trm = (dbCreateTerm net net->name shape->pin->term->direction)
           fig = (dbCopyFig shape CV)
           pin = (dbCreatePin net fig); net->name trm)
@@ -791,5 +782,21 @@ DumbLayers = (list (list "SRAM" "fill")
         (dbCreateProp dstCV p->name p->valueType p->value)
 	)
       )
+    )
+  )
+
+; HACK to figure out how to offset prBoundary into upper right quadrant
+(defun GetRDTOffset (@key (CV (geGetEditCellView)))
+  (let (bbox x y gx gy offset)
+    bbox=(GetPrbound CV)->bBox
+    x=(car  (car bbox))
+    y=(cadr (car bbox))
+    offset = 0:0
+    (when x<0 || y<0
+          gx=(car  gridAlignment["lego"])
+          gy=(cadr gridAlignment["lego"])
+          offset = (list (floor x/gx)*gx (floor y/gy)*gy)
+          )
+    offset
     )
   )
