@@ -144,6 +144,10 @@
              ny1 = (min by1 (max by0 y1))
              (when (or (abs nx0-x0)>=MfgGrid (abs ny0-y0)>=MfgGrid
                        (abs nx1-x1)>=MfgGrid (abs ny1-y1)>=MfgGrid)
+               (when nx0==nx1 && ny0==ny1
+                     (geSelectObject path)
+                     (error)
+                     )
                path->points = (list nx0:ny0 nx1:ny1)
                progress = progress+1
                )
@@ -152,7 +156,7 @@
       )
     progress
     )
-    )
+  )
 
 ; Transform the bbox of an overlap to top-level coordinates
 (defun GetOverlapBBox (overlap)
@@ -162,8 +166,7 @@
            bbox=overlap->bBox
            )
           (!(atom overlap) && (car overlap)->objType=="stdVia"
-            xy=(car overlap)->xy
-            bbox=(list xy xy)
+            bbox=(car overlap)->bBox
             )
           (!(atom overlap) && (car overlap)->objType=="inst"
             bbox=(GetOverlapBBox (cadr overlap))
