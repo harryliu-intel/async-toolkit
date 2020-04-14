@@ -348,6 +348,7 @@ public class DirectiveTable {
         registerDirective(CSP, CYCLE_TIME_IN, WIDE_CHANNEL_TYPE, FLOAT_TYPE, null);
         registerDirective(CSP, CYCLE_TIME_OUT, WIDE_CHANNEL_TYPE, FLOAT_TYPE, null);
         registerDirective(CSP, CYCLE_TIME, FLOAT_TYPE, null);
+        registerDirective(CSP, CYCLE_TIME, WIDE_CHANNEL_TYPE, FLOAT_TYPE, null);
         registerDirective(CSP, FORWARD_LATENCY, FLOAT_TYPE, null);
         registerDirective(CSP, FB, WIDE_CHANNEL_TYPE, FLOAT_TYPE, null);
         registerDirective(CSP, FB_NEUTRAL, WIDE_CHANNEL_TYPE, FLOAT_TYPE, null);
@@ -365,6 +366,8 @@ public class DirectiveTable {
         registerDirective(CSP, CSP_TIME_INPUTS, FLOAT_TYPE, null);
         registerDirective(CSP, CSP_TIME_OUTPUTS, FLOAT_TYPE, null);
         registerDirective(CSP, SEND_CTRL_LATENCY, FLOAT_TYPE, new Float(1));
+        registerDirective(CSP, CYCLE_TIME_INPUTS, FLOAT_TYPE, null);
+        registerDirective(CSP, CYCLE_TIME_OUTPUTS, FLOAT_TYPE, null);
         registerDirective(CSP, CONDITION_TIME, POSSIBLY_WIDE_CHANNEL_TYPE, FLOAT_TYPE, new Float(0));
 
         // see bug 6085
@@ -431,8 +434,6 @@ public class DirectiveTable {
         registerDirective(CELL, CYCLE_TIME, POSSIBLY_WIDE_CHANNEL_TYPE, FLOAT_TYPE, null);
         registerDirective(CELL, CYCLE_TIME, FLOAT_TYPE,  new Float(10));
         registerDirective(CELL, FORWARD_LATENCY, FLOAT_TYPE,  new Float(6));
-        registerDirective(CELL, CYCLE_TIME_INPUTS, FLOAT_TYPE, null);
-        registerDirective(CELL, CYCLE_TIME_OUTPUTS, FLOAT_TYPE, null);
         
         /** VDCVerify directives */
         registerDirective(CELL, VDC_LEAF, BOOLEAN_TYPE, Boolean.FALSE);
