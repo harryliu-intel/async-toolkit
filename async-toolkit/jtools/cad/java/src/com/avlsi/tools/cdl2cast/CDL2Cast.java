@@ -129,6 +129,9 @@ public class CDL2Cast {
     static String[] power_nets;
     static String[] ground_nets;
     private static Set<String> IMPLIED_PORTS;
+    private static Predicate<String> isImpliedPort;
+    private static Predicate<String> isPowerNet;
+    private static Predicate<String> isGroundNet;
 
     /** renaming table for transistor types **/
     static Map transistorTypeMap;
@@ -370,14 +373,14 @@ public class CDL2Cast {
         public void beginSubcircuit(String subName, String[] in, String[] out,
                                     Map parameters, Environment env) {
             currSubcircuit = subName;
-            for (String port : getNonImpliedPorts(in, out)) {
+            getNonImpliedPorts(in, out).forEach(port -> {
                 final Pair<String,List<Integer>> portInfo =
                     parsePortNodeName(port, busBitChars);
                 final List<Integer> indices = portInfo.getSecond();
                 if (!indices.isEmpty()) {
                     addMapping(nodeMap, port, portInfo.getFirst(), indices);
                 }
-            }
+            });
         }
         public void makeCall(HierName name, String subName, HierName[] args,
                              Map parameters, Environment env) {
@@ -456,6 +459,16 @@ public class CDL2Cast {
         ground_nets = StringUtil.split(GNDString, ',');
         IMPLIED_PORTS =
             new LinkedHashSet<>(Arrays.asList(new String[] { power_nets[0], ground_nets[0] }));
+        /**
+         * HACK to check for the nodes which are in the STD_CELL parent
+         * should really check the refinement parent
+        **/
+        isImpliedPort = port -> IMPLIED_PORTS.contains(port);
+
+        final Set<String> powerNets = new HashSet<>(Arrays.asList(power_nets));
+        final Set<String> groundNets = new HashSet<>(Arrays.asList(ground_nets));
+        isPowerNet = port -> powerNets.contains(port);
+        isGroundNet = port -> groundNets.contains(port);
 
         /**
          * Prefixes to apply to node and instance names to make sure
@@ -1445,15 +1458,19 @@ public class CDL2Cast {
         }
     }
 
-    private List<String> getNonImpliedPorts(String[] in, String[] out) {
-        return Stream.concat(Arrays.stream(in), Arrays.stream(out))
-                     .filter(port -> !isImpliedPort(port))
-                     .collect(Collectors.toList());
+    private Stream<String> getPortsAsStream(Template t) {
+        final Pair<String[],String[]> p = t.getArguments();
+        return Stream.concat(Arrays.stream(p.getFirst()),
+                             Arrays.stream(p.getSecond()));
     }
 
-    private List<String> getNonImpliedPorts(Template t) {
-        final Pair<String[],String[]> p = t.getArguments();
-        return getNonImpliedPorts(p.getFirst(), p.getSecond());
+    private Stream<String> getNonImpliedPorts(String[] in, String[] out) {
+        return Stream.concat(Arrays.stream(in), Arrays.stream(out))
+                     .filter(isImpliedPort);
+    }
+
+    private Stream<String> getNonImpliedPorts(Template t) {
+        return getPortsAsStream(t).filter(isImpliedPort.negate());
     }
 
     /**
@@ -1468,11 +1485,11 @@ public class CDL2Cast {
      * ({a->((0,1),(0,1)), b->((0,1)), d->(), DOG->()}, {b,a,d,DOG})
      **/
     private Pair<Map<String,List<Pair<Integer,Integer>>>,Set<String>>
-        sniffArrays( final List<String> ports, final char[] busBitChars ) {
+        sniffArrays(final Stream<String> ports, final char[] busBitChars) {
         final Map<String,List<Pair<Integer,Integer>>> portMap = new HashMap<>();
         final Set<String> portStems = new LinkedHashSet<>();
 
-        for (String currPortNode : ports) {
+        ports.forEach(currPortNode -> {
             final Pair<String,List<Integer>> portInfo =
                 parsePortNodeName( currPortNode, busBitChars );
 
@@ -1523,18 +1540,10 @@ public class CDL2Cast {
                     throw new RuntimeException( "Can not change number of dimensions of \"" + stem + "\"." );
                 }
             }
-        }
+        });
 
         return new Pair<>( portMap, portStems );
 
-    }
-
-    /**
-     * HACK to check for the nodes which are in the STD_CELL parent
-     * should really check the refinement parent
-    **/
-    private boolean isImpliedPort(final String name) {
-        return IMPLIED_PORTS.contains(name);
     }
 
     /**
@@ -1573,14 +1582,14 @@ public class CDL2Cast {
      * the usual convention.  Throw an exception if the port list contains
      * multidimensional arrays.
      **/
-    private void writeVerilogActualPorts(final Template template,
+    private void writeVerilogActualPorts(final Stream<String> ports,
                                          final Map<String,String> nodeMap,
                                          final IndentWriter iw)
         throws IOException {
         iw.write("(\n");
         iw.nextLevel();
         final Pair<Map<String,List<Pair<Integer,Integer>>>,Set<String>> portInfo =
-            sniffArrays(getNonImpliedPorts(template), CAST_BUSBITCHARS);
+            sniffArrays(ports, CAST_BUSBITCHARS);
 
         final Map<String,List<Pair<Integer,Integer>>> portMap =
             portInfo.getFirst();
@@ -1780,13 +1789,8 @@ public class CDL2Cast {
                     formalToActual.put(out[i], args[argidx]);
                 }
 
-                final Map<Boolean,List<String>> portsByImplied =
-                    Stream.concat(Arrays.stream(in), Arrays.stream(out))
-                          .collect(Collectors.partitioningBy(
-                                      port -> isImpliedPort(port)));
-
                 final Pair<Map<String,List<Pair<Integer,Integer>>>,Set<String>> portInfo =
-                    sniffArrays(portsByImplied.get(false), CAST_BUSBITCHARS);
+                    sniffArrays(getNonImpliedPorts(in, out), CAST_BUSBITCHARS);
 
                 final Map<String,List<Pair<Integer,Integer>>> dimsMap =
                     portInfo.getFirst();
@@ -1845,7 +1849,7 @@ public class CDL2Cast {
 
     private void writeVerilogBlock(final String blockName,
                                    final String moduleName,
-                                   final Template template,
+                                   final Stream<String> ports,
                                    final IndentWriter iw)
         throws IOException {
         iw.write(blockName + " {\n");
@@ -1853,7 +1857,7 @@ public class CDL2Cast {
         iw.write(reverseMap.getCellName(moduleName));
         final Map<String,String> nodeMap = reverseMap.getNodeMap(moduleName);
         try {
-            writeVerilogActualPorts(template, nodeMap, iw);
+            writeVerilogActualPorts(ports, nodeMap, iw);
         } catch (RuntimeException e) {
             throw new RuntimeException("Can't generate Verilog block for: " +
                     moduleName, e);
@@ -2210,10 +2214,28 @@ public class CDL2Cast {
                 iw.write("directives { fixed_size = false; }\n");
             }
         }
+
+        final String supplies =
+            Stream.concat(getPortsAsStream(template)
+                            .filter(isPowerNet.and(isImpliedPort.negate()))
+                            .map(port -> "power_net(" + port + ") = true;"),
+                          getPortsAsStream(template)
+                            .filter(isGroundNet.and(isImpliedPort.negate()))
+                            .map(port -> "ground_net(" + port + ") = true;"))
+                  .collect(Collectors.joining(" "));
+        if (!supplies.equals("")) {
+            iw.write("directives { " + supplies + " }\n");
+        }
+
         if (writeVerilogRTL && topCells.test(reverseMap.getCellName(cellName))) {
             iw.write("verilog {\n");
             iw.nextLevel();
-            writeVerilogBlock("rtl", cellName, template, iw);
+            writeVerilogBlock(
+                "rtl",
+                cellName,
+                getPortsAsStream(template).filter(isPowerNet.or(isGroundNet)
+                                                            .negate()),
+                iw);
             iw.prevLevel();
             iw.write("}\n");
         }
