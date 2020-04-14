@@ -55,10 +55,10 @@
 
   ; flood via keepout (use blockage layer to avoid polygons with too many points)
   ; keep vias within a lego spacing of the prBoundary just to be safe!
-  (for m -1 topMetal-2 (AbstractInvertKeepout (list Via[m] "blockage") CV abstractCV ?space 0:0))
+  (for m 0 topMetal-2 (AbstractInvertKeepout (list Via[m] "blockage") CV abstractCV ?space 0:0))
 
   ; create keepout for all existing vias and metal
-  (for m -1 TopMetal-1
+  (for m 0 TopMetal-1
        name = Via[m]
        map = (list name)
        (foreach purpose (list "drawing" "gnd" "vdd" "fill")
