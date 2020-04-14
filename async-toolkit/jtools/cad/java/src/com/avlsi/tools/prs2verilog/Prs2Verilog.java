@@ -122,13 +122,17 @@ public class Prs2Verilog {
     }
 
     public static class SimpleChooser implements VerilogChooser {
-        private final String name;
-        public SimpleChooser(final String name) {
-            this.name = name;
+        private final String[] names;
+        public SimpleChooser(final String... names) {
+            this.names = names;
         }
         public VerilogBlock.NamedBlock choose(final CellInterface cell,
                                               final VerilogBlock vb) {
-            return vb.getNamedBlock(name);
+            for (String name : names) {
+                VerilogBlock.NamedBlock nb = vb.getNamedBlock(name);
+                if (nb != null) return nb;
+            }
+            return null;
         }
     }
 
