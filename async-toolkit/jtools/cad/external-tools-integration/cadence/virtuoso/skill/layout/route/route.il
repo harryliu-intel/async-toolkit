@@ -753,9 +753,14 @@ DumbLayers = (list (list "SRAM" "fill")
 
 ; Return name mapping table for APR cell names back to DFII cell names
 (defun RouteRenameCellTable ()
-  (let (PDK_DIR CID rulefile name_in CID rename fields)
+  (let (PDK_DIR CID rulefile name_in CID rename fields cmd)
     PDK_DIR = (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT")
-    rulefile = (strcat PDK_DIR "/share/Fulcrum/v2cast/g1m.rul")
+    rulefile = (strcat (ConfigFileGetValue TheCDSConfigTable "TEMP") "/import.cellmap")
+    cmd =  (strcat "cp " PDK_DIR "/share/Fulcrum/v2cast/g1m.rul  " rulefile)
+    (system cmd)
+    cmd = (strcat "cat " PDK_DIR "/share/Fulcrum/v2cast/hip.rul >> " rulefile)
+    (system cmd)
+
     names_in = (infile rulefile)
     CID = (NameStartRename "cell" "cast" "cadence")
     rename = (makeTable "rename" nil)
