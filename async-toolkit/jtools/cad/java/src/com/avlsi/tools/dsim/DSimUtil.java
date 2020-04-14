@@ -213,7 +213,7 @@ public class DSimUtil {
                         new FilteringIterator<Node>(
                             dsim.getNodes(),
                             n -> n.getValue() == Node.VALUE_U &&
-                                 n.isFloating() &&
+                                 // n.isFloating() && // BUG: 28664
                                  n.getInit() != Node.Init.UNDEFINED),
                         new Comparator<Node>() {
                             public int compare(Node a, Node b) {
