@@ -841,13 +841,10 @@ public final class DirectiveUtils {
         // find dynamic_slack, a scalar quantity that describes the maximum
         // number of tokens in a channel while still cycling at cycle_time
         final Integer dynslack = (Integer) getWideDir.apply(DirectiveConstants.DYNAMIC_SLACK);
+        final Float defaultct = (defaultCycleTime == null) ?
+            (Float) getTopLevelDirective(cell, DirectiveConstants.CYCLE_TIME) : defaultCycleTime;
         final Float ct = (Float) getWideDir.apply(DirectiveConstants.CYCLE_TIME);
-        final float cycleTime =  ct == null ? defaultCycleTime : ct.floatValue();
-        if (ct==null) {
-System.out.println("Debug2: null, use default"+block+"/"+channel+"  "+defaultCycleTime);
-        } else {
-System.out.println("Debug2:Not null, use ct"+block+"/"+channel+"  "+ct.floatValue());
-        }
+        final float cycleTime = ct == null ? defaultct : ct;
         // find cycle_time_in
         final Float cti = (Float) getWideDir.apply(DirectiveConstants.CYCLE_TIME_IN);
         final float cycleTimeIn = cti == null ? cycleTime : cti.floatValue();
