@@ -527,15 +527,16 @@
       (unless status (error "unable to open %s\n" dfII_name))
       )
 
-    ; HACK: copy properties and pins from baseCV.  Fix alignment too.
+    ; HACK: copy properties from baseCV.  Fix alignment too.
     (when baseCV
       (CopyCellViewProps baseCV ImportCV)
       offset = (GetRDTOffset ?CV baseCV)
       (OffsetEverything (car offset):(cadr offset) ?CV ImportCV)
-      (DeleteLabels ?CV ImportCV)
-      (CopyPinsFromSourceView ?srcCV baseCV ?CV ImportCV)
-      (LabelPins ?CV ImportCV)
       )
+
+    ; fixup pins and connectivity
+    (DeleteExtraLabels ?CV ImportCV)
+    (LabelsToPins ?CV ImportCV)
 
     ; restore custom alignment
     offset = (cadr (GetCellAlignment ?CV ImportCV))
@@ -800,3 +801,24 @@ DumbLayers = (list (list "SRAM" "fill")
     offset
     )
   )
+
+; This is a nasty hack because the oasis from ICC puts labels on every net.
+; Here we preserve the ones on the pins and delete the rest
+(defun DeleteExtraLabels (@key (CV (geGetEditCellView)))
+  (let (bb ovr)
+    (foreach shape CV->shapes
+      (when shape->objType=="label"
+	bb = (list (car shape->xy)-MfgGrid:(cadr shape->xy)-MfgGrid
+	           (car shape->xy)+MfgGrid:(cadr shape->xy)+MfgGrid)
+        shape->lpp = (list (car shape->lpp) "pin")
+	ovr = (dbGetTrueOverlaps CV bb shape->lpp 0)
+        (when (length ovr)==1 ; the only overlapping shape is itself
+          (printf "Deleting label %s on %s:%s\n" shape->theLabel (car shape->lpp) (cadr shape->lpp))
+	  (dbDeleteObject shape)
+          )
+	)
+      )
+    t
+    )
+  )
+
