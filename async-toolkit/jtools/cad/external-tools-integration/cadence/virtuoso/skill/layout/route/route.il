@@ -470,7 +470,7 @@
         (baseCV nil)
         )
   (let (TEMP WDIR libPath logFile Command status ImportCV layoutCV floorplanCV
-             win instmap offset CID oasName dfII_name inst_lib rename templib)
+             win instmap offset CID oasName dfII_name master rename templib)
 
     ; choose libName and cellName
     (unless libName  libName  = CV->libName)
@@ -521,10 +521,10 @@
               )
         )
       (unless dfII_name (error "unable to rename %s\n" inst->cellName))
-      inst_lib = (GetCastLibName dfII_name)
-      (printf "%s => %s\n" inst->cellName dfII_name)
-      status = (leReplaceAnyInstMaster inst inst_lib dfII_name "layout")
-      (unless status (error "unable to open %s\n" dfII_name))
+      master=(dbOpenCellViewByType (GetCastLibName dfII_name) dfII_name "layout")
+      (unless master (error "unable to open %s\n" dfII_name))
+      inst->master=master
+      (printf "rename instance %s type %s => %s => %s\n" inst->name inst->cellName dfII_name inst->cellName)
       )
 
     ; HACK: copy properties from baseCV.  Fix alignment too.
