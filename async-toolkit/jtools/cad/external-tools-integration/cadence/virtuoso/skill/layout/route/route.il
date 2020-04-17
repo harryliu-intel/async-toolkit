@@ -529,7 +529,7 @@
 
     ; HACK: copy properties and pins from baseCV.  Fix alignment too.
     (when baseCV
-      (CopyCellViewProps CV ImportCV)
+      (CopyCellViewProps baseCV ImportCV)
       offset = (GetRDTOffset ?CV baseCV)
       (OffsetEverything (car offset):(cadr offset) ?CV ImportCV)
       (DeleteLabels ?CV ImportCV)
