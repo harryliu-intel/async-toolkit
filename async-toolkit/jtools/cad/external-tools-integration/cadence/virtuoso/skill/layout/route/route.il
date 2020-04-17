@@ -810,6 +810,8 @@ DumbLayers = (list (list "SRAM" "fill")
       (when shape->objType=="label"
 	bb = (list (car shape->xy)-MfgGrid:(cadr shape->xy)-MfgGrid
 	           (car shape->xy)+MfgGrid:(cadr shape->xy)+MfgGrid)
+        ; pin shapes on "pin" purpose are in the oas but the labels are "drawing"
+	; so convert the labels purpose and then look for overlapping shapes
         shape->lpp = (list (car shape->lpp) "pin")
 	ovr = (dbGetTrueOverlaps CV bb shape->lpp 0)
         (when (length ovr)==1 ; the only overlapping shape is itself
