@@ -470,7 +470,7 @@
         (baseCV nil)
         )
   (let (TEMP WDIR libPath logFile Command status ImportCV layoutCV floorplanCV
-             win instmap offset CID oasName dfII_name master rename templib)
+             win instmap offset CID oasName templib)
 
     ; choose libName and cellName
     (unless libName  libName  = CV->libName)
@@ -509,23 +509,7 @@
       )
 
     ; convert instances to dfII hierarchy
-    rename = (RouteRenameCellTable)
-    (foreach inst ImportCV->instances
-      dfII_name = rename[inst->cellName]
-      (unless dfII_name
-        (when (strncmp inst->cellName "g1m" 3)==0 ; TODO: finish PDK/v2cast/g1m.rul
-              dfII_name=(sprintf nil "vendor.intel.g1m.%s.%s"
-                                 (substring inst->cellName 4 8)
-                                 (substring inst->cellName 12 6))
-              (printf "WARNING: implicitly renamed %s\n" dfII_name)
-              )
-        )
-      (unless dfII_name (error "unable to rename %s\n" inst->cellName))
-      master=(dbOpenCellViewByType (GetCastLibName dfII_name) dfII_name "layout")
-      (unless master (error "unable to open %s\n" dfII_name))
-      inst->master=master
-      (printf "rename instance %s type %s => %s => %s\n" inst->name inst->cellName dfII_name inst->cellName)
-      )
+    (RouteRemapInstances ?CV ImportCV)
 
     ; HACK: copy properties from baseCV.  Fix alignment too.
     (when baseCV
@@ -754,7 +738,7 @@ DumbLayers = (list (list "SRAM" "fill")
   )
 
 ; Return name mapping table for APR cell names back to DFII cell names
-(defun RouteRenameCellTable ()
+(defun RouteRemapCellTable ()
   (let (PDK_DIR CID rename name_in fields)
     PDK_DIR = (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT")
     CID = (NameStartRename "cell" "cast" "cadence")
@@ -771,6 +755,29 @@ DumbLayers = (list (list "SRAM" "fill")
              )
     rename
     )
+  )
+
+; Change instance masters from GDS to DFII
+(defun RouteRemapInstances (@key (CV (geGetEditCellView)))
+  (let (rename dfII_name master)
+    rename = (RouteRemapCellTable)
+    (foreach inst CV->instances
+      dfII_name = rename[inst->cellName]
+      (when !dfII_name && (strncmp inst->cellName "g1m" 3)==0 ; TODO: finish PDK/v2cast/g1m.rul
+        dfII_name = (sprintf nil "vendor.intel.g1m.%s.%s"
+                             (substring inst->cellName 4 8)
+                             (substring inst->cellName 12 6))
+        (printf "WARNING: implicitly renamed %s\n" dfII_name)
+        )
+      (unless dfII_name (error "unable to rename %s\n" inst->cellName))
+      master=(dbOpenCellViewByType (GetCastLibName dfII_name) dfII_name "layout")
+      (unless master (error "unable to read %s\n" dfII_name))
+      (printf "rename instance %s type %s => %s\n"
+              inst->name inst->cellName master->cellName)
+      inst->master=master
+      )
+    )
+  t
   )
 
 ; Copy OA properties from one cellview to another
