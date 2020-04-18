@@ -746,7 +746,7 @@ DumbLayers = (list (list "SRAM" "fill")
     (foreach file (list "/share/Fulcrum/v2cast/g1m.rul" "/share/Fulcrum/v2cast/hip.rul")
              names_in = (infile (strcat PDK_DIR file))
              (while (gets line names_in)
-               fields = (parseString line " ")
+               fields = (parseString line " \n")
                (when (car fields)=="c"
                      (when rename[(cadr fields)]
                            (error "RouteRemapCellTable duplicate mapping %s in file %s\n"
