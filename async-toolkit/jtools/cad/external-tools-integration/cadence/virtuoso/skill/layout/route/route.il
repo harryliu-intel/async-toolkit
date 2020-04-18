@@ -748,6 +748,10 @@ DumbLayers = (list (list "SRAM" "fill")
              (while (gets line names_in)
                fields = (parseString line " ")
                (when (car fields)=="c"
+                     (when rename[(cadr fields)]
+                           (error "RouteRemapCellTable duplicate mapping %s in file %s\n"
+                                  (cadr fields) file)
+                           )
                      rename[(cadr fields)]=(NameDoRename CID (caddr fields))
                      )
                )
