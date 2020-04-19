@@ -19,6 +19,10 @@
         (error "rename failed" ) )
       CID ) ) )
 
+(defun NameStopRename ( CID )
+  ( ipcKillProcess CID )
+  ( StringUtilReadLine CID nil ) )
+
 (defun NameDoRename ( CID name )
   (unless
       ( ipcWriteProcess 
@@ -29,19 +33,7 @@
   )
 
 (defun NameStartCastToCadenceCellName ( )
-  (let (
-        ( Cmd 
-          ( sprintf
-            nil
-            "%s/rename --type=cell --from=cast --to=cadence"
-            ( PackageGetBinRoot ) ) ) )
-    (let (
-          ( CID
-            ( ipcBeginProcess Cmd ) ) )
-      (ipcWaitForProcess CID)
-      (unless ( ipcIsAliveProcess CID )
-        (error "rename failed" ) )
-      CID ) ) )
+  ( NameStartRename "cell" "cast" "cadence" ) )
 
 (defun NameDoCastToCadenceCellName ( CID CellName )
   (unless

@@ -3,7 +3,7 @@
                        (directory nil)
                        (oasFile nil)
                        (layerMapFile nil)
-		       (enableColoring t)
+                       (enableColoring t)
                        (flattenVias nil))
   (let (TEMP PDK_DIR Command status cellMapFile fmap oasName name used CID)
     (unless CV->objType=="cellView" (error "CV not valid"))
@@ -35,7 +35,7 @@
              used[name]=t
              )
     (close fmap)
-    (ipcKillProcess CID)
+    (NameStopRename CID)
 
     ; strmout command line arguments
     Command = (sprintf nil
@@ -49,7 +49,7 @@
                                " -layerMap '%s'"
                                " -propMap '%s/stream/prop.map'"
                                " -objectMap '%s/stream/objectmap'"
-			       (if enableColoring " -enableColoring" "")
+                               (if enableColoring " -enableColoring" "")
                                " -cellMap '%s'"
                                " -logFile '%s/%s.log'"
                                " -oasisFile '%s'")

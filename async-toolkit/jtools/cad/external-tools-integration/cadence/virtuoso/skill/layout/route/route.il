@@ -485,6 +485,7 @@
     fields = (parseString cellName ".")
     short_name = (nth ((length fields)-2) fields)
     top_name = (NameDoRename CID short_name)
+    (NameStopRename CID)
 
     ; directories and files
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
@@ -757,6 +758,7 @@ DumbLayers = (list (list "SRAM" "fill")
                )
              (close names_in)
              )
+    (NameStopRename CID)
     rename
     )
   )

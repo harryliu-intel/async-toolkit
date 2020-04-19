@@ -23,7 +23,7 @@ else
         (let ((CID (NameStartRename "cell" "gds2" "cadence")))
           t_cellName = (NameDoRename CID t_cellName)
           t_uniqueCellName = (NameDoRename CID t_uniqueCellName)
-          (ipcKillProcess CID)
+          (NameStopRename CID)
           ;(printf "vueSetLayTopCell 2: %s %s\n" t_cellName t_uniqueCellName)
           (origVueSetLayTopCell t_cellName t_uniqueCellName)))))
 
@@ -36,7 +36,7 @@ else
           t_cellName = (NameDoRename CID t_cellName)
           (if t_uniqueCellName
             t_uniqueCellName = (NameDoRename CID t_uniqueCellName))
-          (ipcKillProcess CID)
+          (NameStopRename CID)
           ;(printf "vueLayOpen 2: %s %s\n" t_cellName t_uniqueCellName)
           (origVueLayOpen t_cellName t_uniqueCellName)))))
 
@@ -65,7 +65,7 @@ else
 (defun translateName (type from to input)
   (let ((CID (NameStartRename type from to)) output)
     output = (NameDoRename CID input)
-    (ipcKillProcess CID)
+    (NameStopRename CID)
     output))
 
 (defun createGDS2 (@key (CV (geGetEditCellView))

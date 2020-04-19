@@ -5,27 +5,29 @@
 
 ReadLineCache = ( makeTable `readline nil )
 (defun StringUtilReadLine ( CID TimeOut )
-  (let (
+  (if TimeOut
+    (let (
+          Ret
+          Accum
+          Bit )
+      
+      (while (let ()
+               ( setq Bit ( ipcReadProcess CID TimeOut ) )
+               (when ( not ( equal "\n" Bit ) )
+                 ( setq Accum Bit ) )
+               ( equal Bit "\n" )
+               ) t )
+      ReadLineCache[CID] = ( append 
+                             ReadLineCache[CID]
+                             (cond ( 
+                                    ( stringp Accum )
+                                    ( parseString Accum "\n" ) ) )
+                             )
+      Ret = ( car ReadLineCache[CID] )
+      ReadLineCache[CID] = ( cdr ReadLineCache[CID] )
         Ret
-        Accum
-        Bit )
-    
-    (while (let ()
-             ( setq Bit ( ipcReadProcess CID TimeOut ) )
-             (when ( not ( equal "\n" Bit ) )
-               ( setq Accum Bit ) )
-             ( equal Bit "\n" )
-             ) t )
-    ReadLineCache[CID] = ( append 
-                           ReadLineCache[CID]
-                           (cond ( 
-                                  ( stringp Accum )
-                                  ( parseString Accum "\n" ) ) )
-                           )
-    Ret = ( car ReadLineCache[CID] )
-    ReadLineCache[CID] = ( cdr ReadLineCache[CID] )
-      Ret
-    ) )
+      )
+    (remove CID ReadLineCache) ) )
     
 
 ;Remove an optional new line character from the end of a string.

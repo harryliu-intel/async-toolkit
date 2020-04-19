@@ -38,6 +38,7 @@
     WDIR = (strcat TEMP "/oas/" CV->cellName)
     CID = (NameStartRename "cell" "cadence" "gds2")
     oasName = (NameDoRename CID CV->cellName)
+    (NameStopRename CID)
     (ExportOAS ?CV CV)
 
     ; run qfill
@@ -60,8 +61,6 @@
           (CopyQfillShapes CV qCV)
           )
 
-    ; finish up
-    (ipcKillProcess CID)
     )
   CV
   )

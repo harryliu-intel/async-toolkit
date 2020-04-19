@@ -735,7 +735,7 @@ if(!Synchronous
     prBound=setof( lpp instMaster~>lpps lpp~>layerName=="prBoundary" )
     if(instMaster->prBoundary || (prBound !=nil) then
       prBoundBox=nil
-	  if( instMaster->prBoundary then
+      if( instMaster->prBoundary then
         if( instMaster->prBoundary then
           prBoundBox=instMaster->prBoundary->bBox)
       else
@@ -1198,6 +1198,7 @@ if(!Synchronous
   temp_dir  = ( ConfigFileGetValue TheCDSConfigTable "TEMP" ) ; strcat(root_dir "temp/")
   tpid = (NameStartRename "cell" "cadence" "gds2")
   gdsName = (NameDoRename tpid cellName)
+  (NameStopRename tpid)
   dfIILoc   = ( ConfigFileGetValue TheCDSConfigTable "DFII_DIR" )
   fp_dir    = NameGetViewDirFromDFIIDirAndCellNameAndView( dfIILoc cellName viewName )
   lefPort = outfile(strcat( fp_dir "/" "cell_totem.lef" ))
