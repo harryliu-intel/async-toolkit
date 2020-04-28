@@ -249,7 +249,7 @@ public class GeneratePortMapping extends AbstractConverter {
         final VerilogFactoryInterface factory = new VerilogFactoryImpl();
         final GeneratePortMapping mapper =
             new GeneratePortMapping(factory, cell,
-                                    new Prs2Verilog.SimpleChooser(verilogBlock),
+                                    new Prs2Verilog.SimpleChooser(verilogBlock.split(",")),
                                     false, cad);
         final VerilogObject result =
             mapper.convert(null, null, false, false);

@@ -644,7 +644,7 @@ public final class Cast2Skill {
                 */
             }
 
-            final String verilogBlock = theArgs.getArgValue( "verilog-block", "rtl");
+            final String verilogBlock = theArgs.getArgValue( "verilog-block", "gate,rtl");
             final CDLNameInterface ni = new CadenceNameInterface();
 
             for(int c=0;c<cellsToProcess.size();c++) {
@@ -659,8 +659,6 @@ public final class Cast2Skill {
                     if (cadenceCellName == null && ni != null) {
                         cadenceCellName = ni.renameCell(cellName);
                     }
-                    map.put("Vss", "GND");
-                    map.put("Vdd", "Vdd");
 
                     final File currOutputFile = new File( outputDir, cadenceCellName + ".mapping.il" );
                     System.out.println( "Generating \"" + currOutputFile.getAbsolutePath() + "\"." );

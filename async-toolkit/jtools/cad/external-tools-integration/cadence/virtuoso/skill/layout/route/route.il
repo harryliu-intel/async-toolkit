@@ -94,6 +94,7 @@
         (targetCellName nil)     ; DFII name for APR target   cell
         (ecoIter 0)              ; number of spr ECO passes
         (chooseVariant nil)      ; automatically pick v1/v2/v3 variant
+        (pinMap nil)             ; rename ports based on map
         )
   (let (TEMP WDIR LEFDEF_DIR MaxHeapSize CAST_PATH DFII_DIR SPAR_DIR PDK_DIR
         abstractCV
@@ -214,6 +215,14 @@
                                 nil
                                 nil))
                )
+
+      ; rename ports
+      (when pinMap
+        (foreach term ExportCV->terminals
+          newName = pinMap[term->name]
+          (when (and newName newName!=term->name)
+            term->name = newName
+            (dbRenameNet term->net newName))))
 
       ; HACK: offset to avoid negative numbers because RDT is stupid
       offset = (GetRDTOffset ?CV ExportCV)
