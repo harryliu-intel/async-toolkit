@@ -343,16 +343,17 @@
 
 ; copy MetalKeepout and ViaKeepout to blockage objects
 (defun CopyKeepoutToBlockage (cv)
-  (let (points)
+  (let (shapes)
     (foreach shape cv->shapes
-      (when shape->purpose=="keepout"
-        points = (cond (shape->objType=="path" (dbConvertPathToPolygon shape)->points)
-                       (shape->objType=="rect" (RectGetPolygonPoints shape->bBox))
-                       (t shape->points)
-                       )
-        (when points (dbCreateLayerBlockage cv shape->layerName "routing" points))
-        )
-      )
+       (when shape->purpose=="keepout"
+             shapes = (dbLayerTile cv shape->lpp (list shape)) ; convert to rectangles
+             (foreach shape shapes
+                      (dbCreateLayerBlockage cv shape->layerName "routing"
+                                             (RectGetPolygonPoints shape->bBox))
+                      (dbDeleteObject shape)
+                      )
+             )
+       )
     )
   t
   )
