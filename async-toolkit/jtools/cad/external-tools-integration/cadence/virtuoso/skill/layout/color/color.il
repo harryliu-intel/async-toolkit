@@ -19,10 +19,7 @@
 			(car shape->lpp) (caar shape->bBox) (cadar shape->bBox))
    	     else
                 color = (GetTrackColor (MetalNumber ?lpp shape->lpp) track)
-                oldcolor = (dbGetShapeColor shape)
-                (when override || oldcolor=="grayColor"
-                      (ColorizeShape shape color)
-                      )
+	        (ColorizeShape shape color)
 	        )
              )
 	  )
