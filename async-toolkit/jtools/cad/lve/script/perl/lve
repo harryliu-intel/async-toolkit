@@ -412,6 +412,7 @@ my $keepLvsDir= 0;          # clean up after lvs
 my $keepNanotimeDir=0;      # clean up after nanotime
 my $hsimDeleteFiles= 1;
 my $monte_carlo=0;
+my $reset_time=2;
 my $start_time=2;
 my $extract_corner="tttt";
 my $custom_config = "$ENV{PWD}/custom.config"; # extra jauto options
@@ -887,6 +888,7 @@ if ( ! @cells) {
 }
 
 # derived variables
+$reset_time *= 1e-9; # convert to ns
 $start_time *= 1e-9; # convert to ns
 # round and convert taus from ps to s
 our $prsTau = int($prsTau+0.5) * 1e-12;
@@ -1285,6 +1287,7 @@ HSIM_DELETE                      := $hsimDeleteFiles
 PROBE_TOP_PORTS                  := $probeTopPorts
 PROBE_PORTS                      := $probePorts
 PROBE_GATES                      := $probeGates
+RESET_TIME                       := $reset_time
 START_TIME                       := $start_time
 MINR                             := $minR
 MINC                             := $minC
@@ -2674,7 +2677,8 @@ USAGE: $0 [options] cell[:env][:node,node,...]
   SPICE and Aspice shared options:
     --env-cap-load=[$env_cap_load] (put additional load in Farads on ports)
     --monte-carlo=[$monte_carlo] (how many monte carlo seeds to run)
-    --start-time=[$start_time] (how long to assert reset)
+    --reset-time=[$reset_time] (how long to assert reset_node)
+    --start-time=[$start_time] (how long after reset to raise start_node)
     --default-ground=[$default_voltage{'ground'}] (specify default ground voltage)
     --default-power=[$default_voltage{'power'}] (specify default power voltage)
     --default-reset=[$default_voltage{'reset'}] (specify default reset voltage)
@@ -3158,6 +3162,7 @@ sub processOption {
         elsif ($key eq "hsimPrsMaxRes")     { $hsimPrsMaxRes = $value; }
         elsif ($key eq "hsimDeleteFiles")   { $hsimDeleteFiles = $value; }
         elsif ($key eq "monte-carlo")       { $monte_carlo = $value; }
+        elsif ($key eq "reset-time")        { $reset_time = $value; }
         elsif ($key eq "start-time")        { $start_time = $value; }
         elsif ($key eq "probeTopPorts")     { $probeTopPorts = $value; }
         elsif ($key eq "probePorts")        { $probePorts = $value; }
