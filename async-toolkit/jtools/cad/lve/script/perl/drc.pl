@@ -184,7 +184,7 @@ $ENV{'ICV_SCRIPT'} 'icv' -I . \\
 -D _drUSENDG=_drNO \\
 -D _drCaseSensitive \\
 -D _drPROCESS=_dr$dotprocess_name \\
--D _drICF_$flow \\
+-D _drSELECT_$flow \\
 -D _drPROJECT=_drnone \\
 -D _drPROCESSNAME=$process_name \\
 -f $format \\
