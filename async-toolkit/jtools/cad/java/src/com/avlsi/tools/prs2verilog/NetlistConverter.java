@@ -184,6 +184,7 @@ class NetlistConverter extends AbstractConverter {
                 final Map map = new LinkedHashMap();
                 GeneratePortMapping.generateMapping(map, Collections.emptyMap(),
                                                     mapper.getBounds(),
+                                                    new ArrayList<String>(),
                                                     block);
                 return map;
             }

@@ -10,6 +10,7 @@ package com.avlsi.tools.prs2verilog;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -103,21 +104,26 @@ public class GeneratePortMapping extends AbstractConverter {
     }
 
     private static class MappingVisitor extends TrivialVisitor {
-        private final Map result;
-        private final Map modulePorts;
-        private final Map bounds;
+        private final Map<String,String> result;
+        private final Map<String,Map<String,PortDeclarationTreeParser.Range>> modulePorts;
+        private final Map<String,List<Integer>> bounds;
+        private final List<String> instances;
         private String currentPort;
         private int currentElement;
-        private Map currentPorts;
-        private List currentBounds;
+        private Map<String,PortDeclarationTreeParser.Range> currentPorts;
+        private List<Integer> currentBounds;
         private boolean namedPort, moduleName;
         private PortDeclarationTreeParser.Range currentRange;
 
-        public MappingVisitor(final Map result, final Map modulePorts,
-                              final Map bounds) {
+        public MappingVisitor(
+                final Map<String,String> result,
+                final Map<String,Map<String,PortDeclarationTreeParser.Range>> modulePorts,
+                final Map<String,List<Integer>> bounds,
+                final List<String> instances) {
             this.result = result;
             this.modulePorts = modulePorts;
             this.bounds = bounds;
+            this.instances = instances;
             this.currentElement = Integer.MIN_VALUE;
             this.currentBounds = null;
         }
@@ -137,8 +143,8 @@ public class GeneratePortMapping extends AbstractConverter {
             final int length;
             final int delta;
             if (currentBounds != null) {
-                final int lbound = ((Integer) currentBounds.get(0)).intValue();
-                final int rbound = ((Integer) currentBounds.get(1)).intValue();
+                final int lbound = currentBounds.get(0);
+                final int rbound = currentBounds.get(1);
                 currentElement  = lbound;
                 length = Math.abs(currentElement - rbound) + 1;
                 delta = currentElement > rbound ? -1 : 1;
@@ -178,9 +184,8 @@ public class GeneratePortMapping extends AbstractConverter {
                 if (currentPort == null) {
                     currentPort = ident;
                     currentRange = currentPorts == null ? null :
-                        (PortDeclarationTreeParser.Range)
                             currentPorts.get(ident);
-                    currentBounds = (List) bounds.get(ident);
+                    currentBounds = bounds.get(ident);
                 } else {
                     String lhs = currentPort;
                     if (currentElement != Integer.MIN_VALUE) {
@@ -190,7 +195,8 @@ public class GeneratePortMapping extends AbstractConverter {
                 }
             }
             if (moduleName) {
-                currentPorts = (Map) modulePorts.get(ident);
+                instances.add(ident);
+                currentPorts = modulePorts.get(ident);
             }
         }
 
@@ -241,6 +247,17 @@ public class GeneratePortMapping extends AbstractConverter {
         final String verilogBlock,
         final String verilogPath,
         final Cadencize cad) throws Exception {
+        return generateMapping(cell, cellName, verilogBlock, verilogPath, cad,
+                               new ArrayList<>());
+    }
+
+    public static Map generateMapping (
+        final CellInterface cell,
+        final String cellName,
+        final String verilogBlock,
+        final String verilogPath,
+        final Cadencize cad,
+        final List<String> instances) throws Exception {
 
         if (cellName == null || verilogBlock == null) {
             return null;
@@ -265,16 +282,17 @@ public class GeneratePortMapping extends AbstractConverter {
         if (verilogPath != null)
             mapper.getModulePorts(modulePorts, verilogPath);
         final Map map = new LinkedHashMap();
-        generateMapping(map, modulePorts, mapper.getBounds(), result);
+        generateMapping(map, modulePorts, mapper.getBounds(), instances, result);
         return map;
     }
 
     static void generateMapping(final Map map,
                                 final Map modulePorts,
                                 final Map boundsMap,
+                                final List<String> instances,
                                 final VerilogObject block) {
         final VerilogVisitor visitor =
-            new MappingVisitor(map, modulePorts, boundsMap);
+            new MappingVisitor(map, modulePorts, boundsMap, instances);
         block.accept(visitor);
     }
 
