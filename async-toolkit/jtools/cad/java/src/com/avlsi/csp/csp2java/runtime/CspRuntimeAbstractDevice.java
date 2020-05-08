@@ -136,6 +136,10 @@ public abstract class CspRuntimeAbstractDevice extends AbstractDevice {
      **/
     private MultiMap<Statusable,String> usedChannels = null;
 
+    /**
+     * Used to detect if send happens before receive in one loop.
+     **/
+    private Pair<Statusable,String> lastSend = null;
 
     /**
      * Class constructor.
@@ -452,7 +456,10 @@ public abstract class CspRuntimeAbstractDevice extends AbstractDevice {
         if (isStatusable) {
             final Statusable status = (Statusable) out;
             setChanOp(status, "!" + message);
-            if (usedChannels !=null) usedChannels.put(status, whereAmI);
+            if (usedChannels != null) {
+                usedChannels.put(status, whereAmI);
+                lastSend = new Pair<>(status, whereAmI);
+            }
         }
         super.send(out, message);
         if (isStatusable) resetChanOp();
@@ -463,7 +470,16 @@ public abstract class CspRuntimeAbstractDevice extends AbstractDevice {
         if (isStatusable) {
             final Statusable status = (Statusable) in;
             setChanOp(status, "?");
-            if (usedChannels !=null) usedChannels.put(status, whereAmI);
+            if (usedChannels != null) {
+                usedChannels.put(status, whereAmI);
+                if (lastSend != null) {
+                    outerr("warning (synthesis): " +
+                           lastSend.getFirst().getName() + "! " +
+                           "(" + lastSend.getSecond() + ") before " +
+                           status.getName() + "? " +
+                           "(" + whereAmI + ")");
+                }
+            }
         }
         final Message m = super.receive(in);
         if (isStatusable) resetChanOp();
@@ -845,6 +861,7 @@ public abstract class CspRuntimeAbstractDevice extends AbstractDevice {
                     }
                 }
                 usedChannels.clear();
+                lastSend = null;
             }
             firstLoop = false;
         }
