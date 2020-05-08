@@ -58,10 +58,10 @@
   )
 
 ; Cache the default alignment in cell properties
-(defun SetDefaultCellAlignment (@key (CV (geGetEditCellView)))
+(defun SetDefaultCellAlignment (@key (CV (geGetEditCellView)) (overwrite nil))
   (let (align)
     align = (DefaultCellAlignment ?CV CV)
-    (SetCellAlignment (car align) (cadr align) ?CV CV)
+    (SetCellAlignment (car align) (cadr align) ?CV CV ?overwrite overwrite)
     align
     )
   )
