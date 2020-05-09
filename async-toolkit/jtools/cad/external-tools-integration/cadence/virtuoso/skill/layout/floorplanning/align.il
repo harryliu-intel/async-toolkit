@@ -13,6 +13,15 @@
   t
   )
 
+; delete alignment properties
+(defun DeleteCellAlignment (@key (CV (geGetEditCellView)))
+  (dbDeletePropByName CV "XAlignGrid")
+  (dbDeletePropByName CV "YAlignGrid")
+  (dbDeletePropByName CV "XAlignOffset")
+  (dbDeletePropByName CV "YAlignOffset")
+  t
+  )
+
 ; choose default alignment by CellView (TODO: move to PDK)
 (defun DefaultCellAlignment (@key (CV (geGetEditCellView)))
   (let (CopyExact g0m height variant offset align gx gy ox oy)
@@ -30,10 +39,10 @@
                  (variant=="3" gx=3*GridPolyPitch ox=2.5*GridPolyPitch)
                  ; (t (error "Illegal standard cell metal variant %s\n" variant))
                  )
-           oy=0
+           oy=TrackPitch ; NOTE: double height cells align Vdd stripe to origin in 7nm
            align = (list gx:gy ox:oy)
            )
-          (t align=(list GridPolyPitch:TrackPitch 0:0))
+          (t align=(list GridPolyPitch:TrackPitch 0:0)) ; unknown alignment
           )
     align
     )
