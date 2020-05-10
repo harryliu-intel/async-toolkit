@@ -115,7 +115,7 @@
   (let (align px py ox oy x y gx gy nx ny aligned)
     instances = (setof inst instances
       inst->cellView==CV && !(IsInstanceAnchored inst) &&
-      (inst->objType=="inst" || inst->objType=="mosaic"))
+      (inst->objType=="inst"))
     (when instances
       align=(GetCellAlignment ?CV CV)
       px=(car (cadr align))
