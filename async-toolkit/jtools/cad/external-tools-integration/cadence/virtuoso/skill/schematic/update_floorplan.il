@@ -59,7 +59,7 @@
 ; process one cell
 (defun UpdateFloorplanCore (CV indent)
   (let (netFile NetListTable rx ux uy w h instanceTable netTable termTable
-        dirFile DirectiveTable gx gy
+        dirFile DirectiveTable gx gy ox oy
         lastArrayName points realInstances isLeaf isRouted lCV align)
     (fprintf LOG "%sUpdate floorplan of %s\n" indent CV->cellName)
     mastersVisited[CV] = t
@@ -156,10 +156,14 @@
       (when CV->instances
         gx = (dbGetPropByName CV "XAlignGrid")->value
         gy = (dbGetPropByName CV "YAlignGrid")->value
+        ox = (dbGetPropByName CV "XAlignOffset")->value
+        oy = (dbGetPropByName CV "YAlignOffset")->value        
         (unless gx gx=0)
         (unless gy gy=0)
+        (unless ox ox=0)
+        (unless oy oy=0)
         align = (GetLCDAlignment ?x gx ?y gy ?instances CV->instances)
-        (SetCellAlignment align 0:0 ?CV CV)
+        (SetCellAlignment align ox:oy ?CV CV)
         )
       )
 
