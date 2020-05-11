@@ -63,6 +63,7 @@ final class NetgraphConverter extends NetgraphGateConverter {
     private boolean macroModel = false;
     private boolean noResetFault = false;
     private boolean extraPortInfo = false;
+    private boolean warnGateFallback = true;
     private VerilogObject parameterPrefix = null;
     private int faultParamNum = 0;
 
@@ -354,6 +355,11 @@ final class NetgraphConverter extends NetgraphGateConverter {
         this.macroModel = theArgs.argExists("macro-model");
         this.noResetFault = theArgs.argExists("no-reset-fault");
         this.extraPortInfo = theArgs.argExists("extra-port-info");
+        final String fallbackArg =
+            theArgs.getArgValue("warn-gate-fallback", null);
+        if (fallbackArg != null) {
+            this.warnGateFallback = Boolean.valueOf(fallbackArg);
+        }
         if (theArgs.argExists("trireg-output")) {
             System.err.println("Warning: trireg-output is obselete, ignoring.");
         }
@@ -404,9 +410,11 @@ final class NetgraphConverter extends NetgraphGateConverter {
                                       gates.toArray(new NetGraph[0]),
                                       null, null);
             } catch (UnimplementableProductionRuleException e) {
-                System.err.println("UnimplementableProdunctionRule found: " +
-                               e.getMessage());
-                System.err.println("Falling back to GateConverter");
+                if (warnGateFallback) {
+                    System.err.println("UnimplementableProdunctionRule found: " +
+                                   e.getMessage());
+                    System.err.println("Falling back to GateConverter");
+                }
                 final AbstractConverter conv =
                     new GateConverter(cell, factory, ports, GND, 
                                       mAlwaysEscape, chooser, cad);

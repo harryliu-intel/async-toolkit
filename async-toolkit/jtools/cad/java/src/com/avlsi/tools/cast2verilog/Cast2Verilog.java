@@ -1272,7 +1272,8 @@ public class Cast2Verilog {
                         new NoRepeatVisitor(out, prsDone),
                         new UnionCommandLineArgs(theArgs,
                             new CommandLineArgsDefImpl(
-                                new String[] { "--timescale" })),
+                                new String[] { "--timescale",
+                                               "--warn-gate-fallback=false" })),
                         validVerilogFiles);
                 } catch (IOException e) {
                     throw new SemanticException(e);
