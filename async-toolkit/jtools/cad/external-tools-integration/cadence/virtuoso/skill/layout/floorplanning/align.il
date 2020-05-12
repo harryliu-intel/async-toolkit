@@ -179,6 +179,27 @@
     )
   )
 
+; report all subcells with misaligned instances
+(defun RecursiveFindMisaligned (@key (CV (geGetEditCellView)))
+  misaligned=
+    (FindSubcells ?CV CV ?filter (lambda (CV) (MisalignedInstances ?CV CV)!=nil))
+  misaligned = (sort misaligned (lambda (a b) (strcmp a->cellName b->cellName)>0))
+  t
+  )
+
+; open the next subcell in the misaligned list
+(defun OpenNextMisaligned ()
+  (let (CV)
+    (when misaligned
+      CV = (car misaligned)
+      misaligned = (cdr misaligned)
+      (Open CV->cellName CV->viewName)
+      (SelectMisalignedInstances)
+      )
+    )
+  t
+  )
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Obsolete Functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun SetXAlignmentProp ( cv val )
