@@ -287,6 +287,8 @@ wires_modtime = makeTable("wires" 0)
                 (t (error "invalid coordinates for pins %f:%f %f:%f" x0 y0 x1 y1) 
                 )
           )
+	   (IndentRectFromPrbound rect1 (GetPrbound CV))
+	   (IndentRectFromPrbound rect2 (GetPrbound CV))
            (dbDeleteObject fig) ; delete the path
            rect1->net = net
            pin = (dbCreatePin net rect2) ; create a pin
@@ -2038,4 +2040,38 @@ wires_modtime = makeTable("wires" 0)
   reverse(dirs)
   )
 )
+
+; in 1276 all shapes have a set indent from the edge
+(defun IndentRectFromPrbound (rect prb)
+  (let (x1 x2 y1 y2 lpp xp yp)
+    (unless MetalHaloBoundarySpace[(car rect->lpp)]
+      (error "Pin on %s can't touch prbound" (car rect->lpp))
+      )
+    (foreach point prb->points
+      xp = (car point)
+      yp = (cadr point)
+      (when (caar rect->bBox)==xp
+        ;(printf "Indenting pin on %s at x=%f\n" (car rect->lpp) (caar rect->bBox))
+	rect->bBox = (list (list (caar rect->bBox)+MetalHaloBoundarySpace[(car rect->lpp)] (cadar rect->bBox)) 
+		     	   (list (caadr rect->bBox) (cadadr rect->bBox)))
+	)
+      (when (caadr rect->bBox)==xp
+        ;(printf "Indenting pin on %s at x=%f\n" (car rect->lpp) (caadr rect->bBox))
+	rect->bBox = (list (list (caar rect->bBox) (cadar rect->bBox)) 
+		     	   (list (caadr rect->bBox)-MetalHaloBoundarySpace[(car rect->lpp)] (cadadr rect->bBox)))
+	)
+      (when (cadar rect->bBox)==yp
+        ;(printf "Indenting pin on %s at y=%f\n" (car rect->lpp) (cadar rect->bBox))
+	rect->bBox = (list (list (caar rect->bBox) (cadar rect->bBox)+MetalHaloBoundarySpace[(car rect->lpp)]) 
+		     	   (list (caadr rect->bBox) (cadadr rect->bBox)))
+	)
+      (when (cadadr rect->bBox)==yp
+        ;(printf "Indenting pin on %s at y=%f\n" (car rect->lpp) (cadadr rect->bBox))
+	rect->bBox = (list (list (caar rect->bBox) (cadar rect->bBox)) 
+		     	   (list (caadr rect->bBox) (cadadr rect->bBox)-MetalHaloBoundarySpace[(car rect->lpp)]))
+	)
+
+      )
+    )
+  )
 
