@@ -19,7 +19,6 @@ useICV = t
         (noPowerFill nil)          ; use POWER_GRID_NO_FILL instead of POWER_GRID
         (doPowerGates nil)         ; use POWER_GRID_GATED instead of POWER_GRID
         (softMacro nil)            ; when !softMacro, lock all instances
-        (chooseVariant nil)        ; automatically pick v1/v2/v3 variant
         )
   (let (MaxHeapSize TEMP PowerGridCellName ColorGridCellName xalign yalign win pgCV cgCV)
 
@@ -40,7 +39,7 @@ useICV = t
     yalign = (GetYAlignmentProp CV)
 
     ; Create flatten view from floorplan view
-    CV = (DirectFlatten ?CV CV ?RegenerateFromCast RegenerateFromCast ?chooseVariant chooseVariant)
+    CV = (DirectFlatten ?CV CV ?RegenerateFromCast RegenerateFromCast ?softMacro softMacro)
 
     ; update connectivity (TODO: eliminate one of these, but this one connects subcell pins)
     (UpdateFloorplan ?CV CV ?recurse nil ?skipInstances t)
@@ -645,8 +644,8 @@ useICV = t
   )
 
 ; go straight from floorplan to flatten view
-(defun DirectFlatten (@key (CV (geGetEditCellView)) (RegenerateFromCast nil) (flatViewName "flatten")
-                           (chooseVariant nil))
+(defun DirectFlatten (@key (CV (geGetEditCellView)) (RegenerateFromCast nil)
+                           (flatViewName "flatten") (softMacro nil))
   (let (not_routed progress lCV)
 
     ; create flatten view
@@ -656,12 +655,11 @@ useICV = t
     not_routed = (filterCastQuery ?CV CV ?RegenerateFromCast RegenerateFromCast
                                   ?filter "!directive=routed:true")
 
-    ; flatten everything that should be flattened, convert the rest to layout views
+    ; recursively flatten everything that should be flattened
     progress=t
     (while progress
       progress=nil
       (foreach inst CV->instances
-               lCV=(ReadCV inst->libName inst->cellName "layout")
                (cond (inst->objType=="mosaic"
                       (dbFlattenInst inst 1)
                       progress=t
@@ -670,16 +668,22 @@ useICV = t
                       (TrivialInline inst ?CV CV)
                       progress=t
                       )
-                     (inst->viewName=="floorplan" && (HasLayoutVariants ?CV inst->master)
-                      (LegalizeShortInstance inst)
-                      (when chooseVariant (ChooseLayoutVariant inst))
-                      )
-                     (inst->viewName=="floorplan" && lCV
-                      inst->master=lCV
-                      )
                      )
                )
       )
+
+    ; choose variants, legalize instances, convert to layout views
+    (foreach inst CV->instances
+             (when inst->viewName=="floorplan"
+                   (LegalizeShortInstance inst)
+                   (when !softMacro && (HasLayoutVariants ?CV inst->master)
+                         (ChooseLayoutVariant inst)
+                         )
+                   lCV=(ReadCV inst->libName inst->cellName "layout")
+                   (when lCV inst->master=lCV)
+                   )
+             )
+    
     )
   CV
   )
@@ -751,7 +755,7 @@ useICV = t
       x = (car  inst->xy)
       y = (cadr inst->xy)
       short = (substring type 13 1)=="n"
-      misalign = (posmod (round y/TrackPitch) 2)==1
+      misalign = (posmod (round y/TrackPitch) 2)==0
       (when std && short && misalign
             (cond (inst->orient=="R0"   inst->orient="MX"   inst->xy=x:y+TrackPitch)
                   (inst->orient=="MX"   inst->orient="R0"   inst->xy=x:y-TrackPitch)

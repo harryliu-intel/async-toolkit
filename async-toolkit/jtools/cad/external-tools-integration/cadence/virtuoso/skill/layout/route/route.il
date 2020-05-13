@@ -28,7 +28,6 @@
         (abstractCellName nil)   ; DFII name for APR abstract cell
         (targetCellName nil)     ; DFII name for APR target   cell
         (ecoIter 0)              ; number of spr ECO passes
-        (chooseVariant nil)      ; automatically pick v1/v2/v3 variant
         )
   (let (TEMP WDIR)
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
@@ -45,7 +44,7 @@
                           ?metalFill metalFill ?softMacro softMacro
                           ?abstractCellName abstractCellName ?targetCellName targetCellName
                           ?noPowerFill noPowerFill ?timingDriven timingDriven ?colorGrid colorGrid
-                          ?ecoIter ecoIter ?chooseVariant chooseVariant)
+                          ?ecoIter ecoIter)
 
     ; copy CV to importView so in-place pins don't need to wait on router to finish
     (when Background (betterCopyCellView CV CV->libName CV->cellName importView nil nil t))
@@ -93,7 +92,6 @@
         (abstractCellName nil)   ; DFII name for APR abstract cell
         (targetCellName nil)     ; DFII name for APR target   cell
         (ecoIter 0)              ; number of spr ECO passes
-        (chooseVariant nil)      ; automatically pick v1/v2/v3 variant
         (pinMap nil)             ; rename ports based on map
         )
   (let (TEMP WDIR LEFDEF_DIR MaxHeapSize CAST_PATH DFII_DIR SPAR_DIR PDK_DIR
@@ -133,11 +131,15 @@
     (when (or CV->viewName=="floorplan" CV->viewName=="prelayout")
       CV = (MakeFlatten ?CV CV ?topMetal topMetal ?hookupLaygen hookupLaygen ?hookupD04 hookupD04
                         ?noPowerFill noPowerFill ?doPowerGates doPowerGates
-                        ?powerGrid powerGrid ?colorGrid colorGrid ?softMacro softMacro
-                        ?chooseVariant chooseVariant))
+                        ?powerGrid powerGrid ?colorGrid colorGrid ?softMacro softMacro))
 
-    ; check Alignment
-    statusAlignment = (length (MisalignedInstances ?CV CV))==0
+    ; check Alignment of locked non-standard cells
+    statusAlignment=t
+    (foreach inst (MisalignedInstances ?CV CV)
+             (unless inst->status!="locked" || (HasLayoutVariants ?CV inst->master)
+                     statusAlignment=nil
+                     )
+             )
 
     ; write proteus.config
     (ProteusConfig ?CV CV ?botMetal botMetal ?topMetal topMetal
