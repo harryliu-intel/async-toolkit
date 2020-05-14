@@ -479,9 +479,10 @@
         (oasFile nil)
 	(colorize t)
         (baseCV nil)
+        (top_name nil)
         )
   (let (TEMP WDIR libPath logFile Command status ImportCV layoutCV floorplanCV
-             win instmap offset CID oasName templib)
+             win instmap offset CID oasName templib fields short_name)
 
     ; choose libName and cellName
     (unless libName  libName  = CV->libName)
@@ -491,13 +492,18 @@
     (unless baseCV baseCV=(dbOpenCellViewByType libName cellName "floorplan"))
 
     ; map to icc cellname
-    CID = (NameStartRename "cell" "cadence" "gds2")
-    oasName = (NameDoRename CID cellName)
-    fields = (parseString cellName ".")
-    short_name = (nth ((length fields)-2) fields)
-    top_name = (NameDoRename CID short_name)
-    (NameStopRename CID)
-
+    (unless top_name
+      fields = (parseString cellName ".")
+      (unless (length fields)>=2
+              (error "expected cellName to be module.type.subtype, use ?top_name to override")
+              )
+      short_name = (nth ((length fields)-2) fields)
+      CID = (NameStartRename "cell" "cadence" "gds2")
+      oasName = (NameDoRename CID cellName)
+      top_name = (NameDoRename CID short_name)
+      (NameStopRename CID)
+      )
+    
     ; directories and files
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
     WDIR = (strcat TEMP "/route/" cellName)
