@@ -30,7 +30,7 @@
              layerName=(car pinRectList)
              pinRectList=(cadr pinRectList)
              layerNum = MetalNum[layerName]
-             space = MetalSpace[layerName]
+	     space = 2 * MetalHaloBoundarySpace[layerName]
              (unless space (error "No MetalSpace defined for layer %s\n" layerName))
              len = (length pinRectList)
              (for a 0 len-1
@@ -44,12 +44,12 @@
                   rect2 = (caddr (nth b pinRectList))
                   rect2 = (BBoxCanonicalize rect2)
                   (cond ((mod layerNum 2)==0
-                         bbox1 = (BBoxExpandHorizontal rect1 (car space))
-                         bbox2 = (BBoxExpandHorizontal rect2 (car space))
+                         bbox1 = (BBoxExpandHorizontal rect1 space)
+                         bbox2 = (BBoxExpandHorizontal rect2 space)
                         )
                         (t
-                         bbox1 = (BBoxExpandVertical rect1 (cadr space))
-                         bbox2 = (BBoxExpandVertical rect2 (cadr space))
+                         bbox1 = (BBoxExpandVertical rect1 space)
+                         bbox2 = (BBoxExpandVertical rect2 space)
                          )
                         )
                   overlap = (BBoxAnd bbox1 bbox2)
