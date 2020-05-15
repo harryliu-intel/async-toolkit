@@ -30,8 +30,10 @@
              layerName=(car pinRectList)
              pinRectList=(cadr pinRectList)
              layerNum = MetalNum[layerName]
+             (unless MetalHaloBoundarySpace[layerName]
+               (error "No MetalHaloBoundarySpace defined for layer %s\n" layerName)
+               )
 	     space = 2 * MetalHaloBoundarySpace[layerName]
-             (unless space (error "No MetalSpace defined for layer %s\n" layerName))
              len = (length pinRectList)
              (for a 0 len-1
                inst1 = (car   (nth a pinRectList))
