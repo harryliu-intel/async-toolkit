@@ -492,12 +492,12 @@
     (unless baseCV baseCV=(dbOpenCellViewByType libName cellName "floorplan"))
 
     ; map to icc cellname
+    fields = (parseString cellName ".")
+    (unless (length fields)>=3
+            (error "cellName must be module.type.subtype, try ?top_name")
+            )
+    short_name = (nth ((length fields)-2) fields)
     (unless top_name
-      fields = (parseString cellName ".")
-      (unless (length fields)>=2
-              (error "expected cellName to be module.type.subtype, use ?top_name to override")
-              )
-      short_name = (nth ((length fields)-2) fields)
       CID = (NameStartRename "cell" "cadence" "gds2")
       oasName = (NameDoRename CID cellName)
       top_name = (NameDoRename CID short_name)
@@ -750,6 +750,7 @@ DumbLayers = (list (list "SRAM" "fill")
     contents = (append contents CV->shapes)
     contents = (append contents CV->mosiacs)
     contents = (append contents CV->vias)
+    contents = (append contents CV->blockages)
     (foreach fig contents (dbMoveFig fig CV (list offset "R0")))
     )
   t
