@@ -387,6 +387,7 @@
     (fprintf file "--top-halo=%d\n" (if topHalo 1 0))
     (fprintf file "--rdt-run-fill=%d\n" (if metalFill 1 0))
     (fprintf file "--timing-driven-route=%d\n" (if softMacro || timingDriven 1 0))
+    (fprintf file "--soft-macro=%d\n" (if softMacro 1 0))
     (fprintf file "--rdt-eco-iter=%d\n" ecoIter)
     (fprintf file "--base=%s\n" (GetCastCellName CV->cellName))
     (cond (softMacro && abstractCellName && targetCellName
