@@ -1121,9 +1121,12 @@ public final class DirectiveUtils {
             final boolean implied = dutCell.isImpliedPort(dir.getCadenceString());
             if (portDir == null) {
                 internalNodes.add(dir);
-            } else if (implied && portDir == PortDefinition.IN) {
+            } else if (implied && (portDir == PortDefinition.IN ||
+                                   portDir == PortDefinition.INOUT)) {
                 impliedPorts.add(dir);
-            } else if (!implied && portDir == (envCell == null ? PortDefinition.IN : PortDefinition.OUT)) {
+            } else if (!implied && ((portDir == (envCell == null ? PortDefinition.IN
+                                                                 : PortDefinition.OUT)) ||
+                                    portDir == PortDefinition.INOUT)) {
                 ports.add(dir);
             }
         }
