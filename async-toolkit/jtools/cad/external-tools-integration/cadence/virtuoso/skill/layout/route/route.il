@@ -752,6 +752,7 @@ DumbLayers = (list (list "SRAM" "fill")
     contents = (append contents CV->mosiacs)
     contents = (append contents CV->vias)
     contents = (append contents CV->blockages)
+    contents = (setof x contents x->parent==nil)
     (foreach fig contents (dbMoveFig fig CV (list offset "R0")))
     )
   t
