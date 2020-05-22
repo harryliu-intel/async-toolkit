@@ -199,7 +199,6 @@
                placed = (if inst->status inst->status "placed") ; keep inst->status if it exists
                (unless softMacro placed="locked")
                (cond (abstractCV
-                      inst->master=abstractCV
                       inst->status=(if abstractCV->cellType=="core" placed "locked")
                       )
                      ((isStandardCell inst->master) inst->status=placed)
@@ -233,6 +232,8 @@
       ; offset for cell alignment
       offset = (cadr (GetCellAlignment ?CV ExportCV))
       (OffsetEverything -(car offset):-(cadr offset) ?CV ExportCV)
+      (dbDeleteObject (dbFindProp ExportCV "XAlignOffset"))
+      (dbDeleteObject (dbFindProp ExportCV "YAlignOffset"))
 
       ; save
       (dbSave ExportCV)
