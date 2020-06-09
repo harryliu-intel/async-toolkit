@@ -391,6 +391,7 @@
     (fprintf file "--soft-macro=%d\n" (if softMacro 1 0))
     (fprintf file "--rdt-eco-iter=%d\n" ecoIter)
     (fprintf file "--base=%s\n" (GetCastCellName CV->cellName))
+    (fprintf file "--csp-register-width=1025\n")
     (cond (softMacro && abstractCellName && targetCellName
            (fprintf file "--cell=%s\n" (GetCastCellName targetCellName))
            (fprintf file "--abstract=%s\n" (GetCastCellName abstractCellName))
