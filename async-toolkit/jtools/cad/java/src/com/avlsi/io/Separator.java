@@ -29,4 +29,10 @@ public class Separator {
         }
         out.print(s);
     }
+    public void ifdef(final String s) {
+        out.println("\n`ifdef " + s);
+    }
+    public void endif() {
+        out.println("\n`endif");
+    }
 }
