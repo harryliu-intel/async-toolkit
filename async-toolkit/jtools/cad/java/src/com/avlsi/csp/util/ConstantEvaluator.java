@@ -1212,7 +1212,8 @@ public class ConstantEvaluator implements VisitorInterface {
         }
         for (Iterator i = p.getRefinementParents().iterator(); i.hasNext(); ) {
             final CSPProgram parent = (CSPProgram) i.next();
-            ncsp.refineFrom(ConstantEvaluator.evaluate(parent));
+            ncsp.refineFrom(ConstantEvaluator.evaluate(
+                    parent, guardObserver, actualObserver, unrollSeqLoop));
         }
         table.leaveScope();
         ncsp.epr(p);
