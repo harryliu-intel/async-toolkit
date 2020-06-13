@@ -232,7 +232,7 @@
     (foreach shape CV->shapes
              (when shape->pin && (isMetal (car shape->lpp))
                name=shape->net->name
-	       (printf "Copying pin %s to abstract\n" name)
+	       ;(printf "Copying pin %s to abstract\n" name)
                net=(dbFindNetByName abstractCV name)
                (unless net net=(dbCreateNet abstractCV name))
                term=(dbFindTermByName abstractCV name)
@@ -244,6 +244,7 @@
                allpinfigs = (cons fig allpinfigs)
                )
              )
+
     (DeleteLabels ?CV abstractCV)
 
     ; chop flooded/extended keepout near pins
@@ -319,7 +320,8 @@
     )
 
     ; make all remaining vias a member of NULL net, per Georgois's request
-    nullnet = (dbCreateNet abstractCV "NULL")
+    nullnet = (dbFindNetByName abstractCV "NULL")
+    (unless nullnet nullnet = (dbCreateNet abstractCV "NULL"))
     (for m 0 3
       (foreach viashape abstractCV->shapes
         (when (car viashape->lpp)==Via[m]
@@ -472,7 +474,11 @@
   (let (viafig block)
     viafig = (car blockage)
     viafig->lpp = (list (car viafig->lpp) "drawing")
-    (dbCreatePin pinfig->net viafig)
+    (if pinfig->net then
+      (dbCreatePin pinfig->net viafig)
+    else
+      (printf "No net for figure\n")
+      )
     block=(cadr blockage)
     (when block
       (dbDeleteObject block)
