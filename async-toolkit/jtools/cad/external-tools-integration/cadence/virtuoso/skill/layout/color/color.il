@@ -46,11 +46,11 @@
 	  color2 = nil
 	  colorc = nil
           oldcolor = (dbGetViaCutLayerControl via)
-          (when override || oldcolor==vcolor_control[0]
-             (when via->viaHeader->master->cellName=="via1" ||
-	     	   via->viaHeader->master->cellName=="via2" ||
-		   via->viaHeader->master->cellName=="via3"
-                layernum = (ViaMetalNumber ?layer via_master_table[via->viaHeader->master->cellName])
+	  (when override || oldcolor==vcolor_control[0]
+             (when (rexMatchp "via1" via->viaHeader->master->cellName) ||
+	     	   (rexMatchp "via2" via->viaHeader->master->cellName) ||
+		   (rexMatchp "via3" via->viaHeader->master->cellName)
+		layernum = (ViaMetalNumber ?layer via_master_table[via->viaHeader->master->cellName])
 	        cutbbox = (GetCutBBox via)
 	        track1 = (GetTrack layernum-1 cutbbox)
 	        track2 = (GetTrack layernum cutbbox)
@@ -64,11 +64,11 @@
 		  )
 	        )
               ; special case for via0/4/5 because the cut is uncolored but the metals are colored
-              (when ;via->viaHeader->master->cellName=="via0" ||
-	      	    ;via->viaHeader->master->cellName=="via4" ||
-		    via->viaHeader->master->cellName=="via5"
+              (when (rexMatchp "via0" via->viaHeader->master->cellName) ||
+	       	    (rexMatchp "via4" via->viaHeader->master->cellName) ||
+		    (rexMatchp "via5" via->viaHeader->master->cellName)
 	        layernum = (ViaMetalNumber ?layer via_master_table[via->viaHeader->master->cellName])
-	        cutbbox = (GetCutBBox via)
+		cutbbox = (GetCutBBox via)
 	        track1 = (GetTrack layernum-1 cutbbox)
 	        track2 = (GetTrack layernum cutbbox)
 	        (when track1 color1 = (GetTrackColorNum layernum-1 track1))
