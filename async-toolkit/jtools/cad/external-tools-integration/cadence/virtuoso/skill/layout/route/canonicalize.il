@@ -141,7 +141,7 @@
         errname=sprintf(nil "%s/%s.canon.err" TEMP CV~>cellName )
         errfile=outfile(errname)
         foreach( path setof(shape CV~>shapes shape~>objType=="path" && shape~>net==nil &&
-                                  shape->purpose=="drawing")
+                                  (isMetalDrawing shape->layerName shape->purpose))
             if(verbose printf( "Unconnected path converted to keepout\n"))
             if(errfile fprintf( errfile "Unconnected path converted to keepout\n"))
             path->lpp = list( path->layerName "keepout")
