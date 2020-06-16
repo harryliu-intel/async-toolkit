@@ -2510,7 +2510,7 @@ public class Cast2Verilog {
         out.println("module \\" + moduleName + " (");
         new EmitFlatPortDeclarations(new Separator(out),
                 dir -> (dir > 0 ? "output" : "input"),
-                h -> tbNets.containsKey(HierName.makeHierNameUnchecked(h, '.')),
+                h -> topLevel && tbNets.containsKey(HierName.makeHierNameUnchecked(h, '.')),
                 "",
                 narrowInstances.contains(null))
             .mark(cell.getCSPInfo().getPortDefinitions());
