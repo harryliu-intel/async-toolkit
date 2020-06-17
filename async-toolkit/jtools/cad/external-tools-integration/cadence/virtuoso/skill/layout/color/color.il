@@ -1,21 +1,23 @@
-; always color metals based on track position since this is invariable in a fixed track pattern
-; via colors are assigned by ICC during routing, so don't want to change those unless they are uncolored
-
+; always color metals based on track position since this is invariable
+; in a fixed track pattern via colors are assigned by ICC during
+; routing, so don't want to change those unless they are uncolored
 (defun Colorize (@key (CV (geGetEditCellView)) (doVias t) (override nil))
-  (let (color shapes track oldcolor track1 track2 color1 color2 colorc layernum cutbbox)
+  (let (offset bbox color shapes track oldcolor track1 track2 color1 color2 colorc layernum cutbbox)
+    offset=(cadr (GetCellAlignment ?CV CV))
     (foreach metal ColorableMetals
        shapes = (setof s CV->shapes (car s->lpp)==metal)
        (foreach shape shapes
+          bbox=(dbTransformBBox shape->bBox (list -(car offset):-(cadr offset) "R0"))      
           (when shape->objType=="rect"
-	     track = (GetTrack (MetalNumber ?layer metal) shape->bBox)
+	     track = (GetTrack (MetalNumber ?layer metal) bbox)
 	     )
 	  (when shape->objType=="path"
-             track = (GetTrack (MetalNumber ?layer metal) shape->bBox)
+             track = (GetTrack (MetalNumber ?layer metal) bbox)
 	     )
 	  (unless shape->objType=="label" || (cadr shape->lpp)=="AABBregion"
 	     (if !track then
 	        (printf "ERROR: No color track. Probably a shape off-grid on %s at %f:%f\n"
-			(car shape->lpp) (caar shape->bBox) (cadar shape->bBox))
+			(car shape->lpp) (caar bbox) (cadar bbox))
    	     else
                 color = (GetTrackColor (MetalNumber ?lpp shape->lpp) track)
 	        (ColorizeShape shape color)
@@ -27,8 +29,9 @@
        (foreach via ColorableVias
           shapes = (setof s CV->shapes (car s->lpp)==via)
 	  (foreach shape shapes
+             bbox=(dbTransformBBox shape->bBox (list -(car offset):-(cadr offset) "R0"))      
              (when shape->objType=="rect"
-	        track = (GetTrack (ViaMetalNumber ?layer via) shape->bBox)
+	        track = (GetTrack (ViaMetalNumber ?layer via) bbox)
 	        color = (GetViaTrackColor (ViaMetalNumber ?layer via) track)
 		oldcolor = (dbGetShapeColor shape)
 		(when override || oldcolor=="grayColor"
@@ -162,6 +165,7 @@
                    (s->lpp==(list "v1c" "colorC")     layer="v1" color=3)
                    (s->lpp==(list "v2a" "colorA")     layer="v2" color=1)
                    (s->lpp==(list "v2b" "colorB")     layer="v2" color=2)
+                   (s->lpp==(list "v2c" "colorC")     layer="v2" color=3)
                    (s->lpp==(list "v3a" "colorA")     layer="v3" color=1)
                    (s->lpp==(list "v3b" "colorB")     layer="v3" color=2)
                    (t                                 layer=nil  color=nil)
@@ -174,7 +178,7 @@
                         overlaps=(append overlaps (dbGetOverlaps CV s->bBox lpp 0:1))
                         )
                (foreach o overlaps
-                        (cond (nil && !(atom o) && (car o)->objType=="stdVia"
+                        (cond (!(atom o) && (car o)->objType=="stdVia"
                                 o=(car o)
                                 via=o->viaHeader->viaDef
                                 (cond (via->layer1->name==layer (ColorizeVia o nil color nil))
