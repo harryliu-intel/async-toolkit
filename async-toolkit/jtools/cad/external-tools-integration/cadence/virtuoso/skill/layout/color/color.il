@@ -124,6 +124,22 @@
   (when mptcolor_t (dbSetViaLayer2Control via vcolor_control[mptcolor_t]))
   )
 
+; flip color of specified metal layer number
+(defun FlipColor (m @key (CV (geGetEditCellView)))
+  (let (color)
+    (foreach shape CV->shapes
+             (when shape->objType!="label" && shape->layerName==Metal[m]
+                   color = (dbGetShapeColor shape)
+                   (cond (color=="mask1Color" color="mask2Color")
+                         (color=="mask2Color" color="mask1Color")
+                         )
+                   (ColorizeShape shape color)
+                   )
+             )
+    )
+  t
+  )
+
 ; Assign maskColor using overlay layers, then optionally delete overlay layers
 (defun ColorizeByOverlay (@key (CV (geGetEditCellView)) (delete nil))
   (let (layer color overlaps lpp via colorName)
@@ -153,7 +169,7 @@
              (when layer
                colorName = (sprintf nil "mask%dColor" color)
                overlaps=nil
-               (foreach purpose (list "drawing" "pin" "fill" "actFill")
+               (foreach purpose (list "drawing" "pin" "fill" "actFill" "vdd" "gnd")
                         lpp = (list layer purpose)
                         overlaps=(append overlaps (dbGetOverlaps CV s->bBox lpp 0:1))
                         )
