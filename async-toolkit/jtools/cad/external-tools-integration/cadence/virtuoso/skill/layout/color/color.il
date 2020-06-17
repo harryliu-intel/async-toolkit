@@ -102,7 +102,7 @@
       (when (car p)=="cutWidth"  cutw = (cadr p))
       (when (car p)=="cutHeight" cuth = (cadr p))
       )
-    (when cutw && cuth    
+    (when cutw && cuth
       bbox = (list (list (car via->origin)-cutw/2 (cadr via->origin)-cuth/2)
       	     	   (list (car via->origin)+cutw/2 (cadr via->origin)+cuth/2))
       ;this wouldn't be necessary except that some vias are indented
@@ -115,23 +115,65 @@
   )
 
 (defun ColorizeShape (shape mptcolor)
-  (let ()
-    ;(printf "Creating MPT Color for %s %s %f %s\n" shape->objType (car shape->lpp) (cadar shape->bBox) mptcolor)
-    (dbSetShapeColor shape mptcolor)
-    )
+  (dbSetShapeColor shape mptcolor)
   )
 
 (defun ColorizeVia (via mptcolor mptcolor_b mptcolor_t)
-  (let ()
-    ;(printf "Creating MPT Color for %s %s %f %s\n" shape->objType (car shape->lpp) (cadar shape->bBox) mptcolor)
-    (when mptcolor
-      (dbSetViaCutLayerControl via mptcolor)
-      )
-    (when mptcolor_b
-      (dbSetViaLayer1Control via vcolor_control[mptcolor_b])
-      )
-    (when mptcolor_t
-      (dbSetViaLayer2Control via vcolor_control[mptcolor_t])
-      )
+  (when mptcolor   (dbSetViaCutLayerControl via mptcolor))
+  (when mptcolor_b (dbSetViaLayer1Control via vcolor_control[mptcolor_b]))
+  (when mptcolor_t (dbSetViaLayer2Control via vcolor_control[mptcolor_t]))
+  )
+
+; Assign maskColor using overlay layers, then optionally delete overlay layers
+(defun ColorizeByOverlay (@key (CV (geGetEditCellView)) (delete nil))
+  (let (layer color overlaps lpp via colorName)
+    (foreach s CV->shapes
+             (cond (s->lpp==(list "m0"  "backBone")   layer="m0" color=1)
+                   (s->lpp==(list "m0c" "complement") layer="m0" color=2)
+                   (s->lpp==(list "m0s" "spacer")     layer="m0" color=3)
+                   (s->lpp==(list "m2"  "backBone")   layer="m2" color=1)
+                   (s->lpp==(list "m2c" "complement") layer="m2" color=2)
+                   (s->lpp==(list "m3"  "backBone")   layer="m3" color=1)
+                   (s->lpp==(list "m3c" "complement") layer="m3" color=2)
+                   (s->lpp==(list "m4"  "backBone")   layer="m4" color=1)
+                   (s->lpp==(list "m4c" "complement") layer="m4" color=2)
+                   (s->lpp==(list "m5"  "backBone")   layer="m5" color=1)
+                   (s->lpp==(list "m5c" "complement") layer="m5" color=2)
+                   (s->lpp==(list "m6"  "backBone")   layer="m6" color=1)
+                   (s->lpp==(list "m6c" "complement") layer="m6" color=2)
+                   (s->lpp==(list "v1a" "colorA")     layer="v1" color=1)
+                   (s->lpp==(list "v1b" "colorB")     layer="v1" color=2)
+                   (s->lpp==(list "v1c" "colorC")     layer="v1" color=3)
+                   (s->lpp==(list "v2a" "colorA")     layer="v2" color=1)
+                   (s->lpp==(list "v2b" "colorB")     layer="v2" color=2)
+                   (s->lpp==(list "v3a" "colorA")     layer="v3" color=1)
+                   (s->lpp==(list "v3b" "colorB")     layer="v3" color=2)
+                   (t                                 layer=nil  color=nil)
+                   )
+             (when layer
+               colorName = (sprintf nil "mask%dColor" color)
+               overlaps=nil
+               (foreach purpose (list "drawing" "pin" "fill" "actFill")
+                        lpp = (list layer purpose)
+                        overlaps=(append overlaps (dbGetOverlaps CV s->bBox lpp 0:1))
+                        )
+               (foreach o overlaps
+                        (cond (nil && !(atom o) && (car o)->objType=="stdVia"
+                                o=(car o)
+                                via=o->viaHeader->viaDef
+                                (cond (via->layer1->name==layer (ColorizeVia o nil color nil))
+                                      (via->layer2->name==layer (ColorizeVia o nil nil color))
+                                      (t (ColorizeVia o vcolor_control[color] nil nil))
+                                      )
+                                )
+                              ((atom o) && o->objType!="label"
+                                   (ColorizeShape o colorName)
+                                   )
+                              )
+                        )
+               (when delete (dbDeleteObject s))
+               )
+             )
     )
+  t
   )
