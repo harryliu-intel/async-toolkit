@@ -1,6 +1,6 @@
 ; Run QFILL to add fill and color shapes to a cell
 (defun DoFill (@key (CV (geGetEditCellView)) (botLayer nil) (topLayer "m8"))
-  (let (TEMP WDIR all_layers layers dir cmd CID oasName oasFile qCV)
+  (let (TEMP WDIR ExportCV offset all_layers layers dir cmd CID oasName oasFile qCV)
 
     ; pick list of layers to fill
     all_layers = (list "cell" "end_check_grid" "diffcon" "poly" "fti"
@@ -33,13 +33,19 @@
     ; delete previous qfill shapes
     (DeleteAutoGen ?CV CV ?propValue "qfill")
 
+    ; copy to temp view and offset accordring to alignment properties
+    offset = (cadr (GetCellAlignment ?CV CV))
+    ExportCV = (betterCopyCellView CV CV->libName CV->cellName "qfill" nil nil t)
+    (OffsetEverything -(car offset):-(cadr offset) ?CV ExportCV)
+    (dbSave ExportCV)
+
     ; export OAS
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
     WDIR = (strcat TEMP "/oas/" CV->cellName)
     CID = (NameStartRename "cell" "cadence" "gds2")
     oasName = (NameDoRename CID CV->cellName)
     (NameStopRename CID)
-    (ExportOAS ?CV CV)
+    (ExportOAS ?CV ExportCV)
 
     ; run qfill
     cmd = (sprintf nil "cd %s; qfill run_fill --process 1276.31 --layers %s --input_layout %s.oas"
@@ -50,7 +56,7 @@
     ; import metal_via_fill
     oasFile = (sprintf nil "%s/qfill_work/qfill_%s_1276.31_s_asic_g1m_240H_50p_run_metal_via_fill/qfill_run_metal_via_fill_output/%s_metal_via_fill.oas" WDIR oasName oasName)
     qCV = (ImportOAS oasFile CV->libName (strcat oasName "_metal_via_fill") "qfill")
-    (CopyQfillShapes CV qCV)
+    (CopyQfillShapes CV qCV offset)
 
     ; import signal_via_color
     (when (member "via1_signal_color" layers )!=nil ||
@@ -58,7 +64,7 @@
           (member "via3_signal_color" layers )!=nil
           oasFile = (sprintf nil "%s/qfill_work/qfill_%s_1276.31_s_asic_g1m_240H_50p_run_via_coloring/qfill_run_via_coloring_output/%s_signal_via_color.oas" WDIR oasName oasName)
           qCV = (ImportOAS oasFile CV->libName (strcat oasName "_signal_via_color") "qfill")
-          (CopyQfillShapes CV qCV)
+          (CopyQfillShapes CV qCV offset)
           )
 
     )
@@ -66,9 +72,9 @@
   )
 
 ; Copy shapes from qfill import and set autogen property
-(defun CopyQfillShapes (CV qCV)
+(defun CopyQfillShapes (CV qCV offset)
   (foreach shape qCV->shapes
-           shape = (dbCopyShape shape CV)
+           shape = (dbCopyShape shape CV (list offset "R0"))
            (dbReplaceProp shape "autogen" "string" "qfill")
            )
   qCV
