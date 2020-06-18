@@ -1,14 +1,17 @@
 ; Run QFILL to add fill and color shapes to a cell
-(defun DoFill (@key (CV (geGetEditCellView)) (botLayer nil) (topLayer "m8"))
+(defun DoFill (@key (CV (geGetEditCellView)) (botLayer "m0") (topLayer "m10"))
   (let (TEMP WDIR ExportCV offset all_layers layers dir cmd CID oasName oasFile qCV)
 
     ; pick list of layers to fill
-    all_layers = (list "cell" "end_check_grid" "diffcon" "poly" "fti"
-                       "vcg" "vct"
+    all_layers = (list "cell"
+                       "end_check_grid"
+                       "diffcon"
+                       "poly" "fti"
+                       "vct" "vcg"
                        "m0" "v0"
-                       "m1" "v1" "via1_signal_color"
-                       "m2" "v2" "via2_signal_color"
-                       "m3" "v3" "via3_signal_color"
+                       "m1" "v1"
+                       "m2" "v2"
+                       "m3" "v3"
                        "m4" "v4"
                        "m5" "v5"
                        "m6" "v6"
@@ -21,19 +24,25 @@
                        "m13" "v13"
                        "m14" "v14"
                        "m15" "v15")
+    (unless (member botLayer all_layers) (error "botLayer not valid"))
+    (unless (member topLayer all_layers) (error "topLayer not valid"))
     (when botLayer all_layers = (member botLayer all_layers))
     layers = nil
     done = nil
     (foreach layer all_layers
-             (unless done layers = (cons layer layers)
-                     done = layer==topLayer
-                     )
+             (unless done
+               layers = (append layers (list layer))
+               (when layer=="v1" layers=(append layers (list "via1_signal_color")))
+               (when layer=="v2" layers=(append layers (list "via2_signal_color")))
+               (when layer=="v3" layers=(append layers (list "via3_signal_color")))
+               done = layer==topLayer
+               )
              )
 
     ; delete previous qfill shapes
     (DeleteAutoGen ?CV CV ?propValue "qfill")
 
-    ; copy to temp view and offset accordring to alignment properties
+    ; copy to temp view and offset according to alignment properties
     offset = (cadr (GetCellAlignment ?CV CV))
     ExportCV = (betterCopyCellView CV CV->libName CV->cellName "qfill" nil nil t)
     (OffsetEverything -(car offset):-(cadr offset) ?CV ExportCV)
