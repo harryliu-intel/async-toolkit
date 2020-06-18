@@ -225,15 +225,13 @@
             term->name = newName
             (dbRenameNet term->net newName))))
 
-      ; HACK: offset to avoid negative numbers because RDT is stupid
-      offset = (GetRDTOffset ?CV ExportCV)
-      (OffsetEverything -(car offset):-(cadr offset) ?CV ExportCV)
-
       ; offset for cell alignment
       offset = (cadr (GetCellAlignment ?CV ExportCV))
       (OffsetEverything -(car offset):-(cadr offset) ?CV ExportCV)
-      (dbDeleteObject (dbFindProp ExportCV "XAlignOffset"))
-      (dbDeleteObject (dbFindProp ExportCV "YAlignOffset"))
+
+      ; HACK: offset to avoid negative numbers because RDT is stupid
+      offset = (GetRDTOffset ?CV ExportCV)
+      (OffsetEverything -(car offset):-(cadr offset) ?CV ExportCV)
 
       ; save
       (dbSave ExportCV)
@@ -485,7 +483,7 @@
         (top_name nil)
         )
   (let (TEMP WDIR libPath logFile Command status ImportCV layoutCV floorplanCV
-             win instmap offset CID oasName templib fields short_name)
+             win instmap CID oasName templib fields short_name)
 
     ; choose libName and cellName
     (unless libName  libName  = CV->libName)
@@ -506,7 +504,7 @@
       top_name = (NameDoRename CID short_name)
       (NameStopRename CID)
       )
-    
+
     ; directories and files
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
     WDIR = (strcat TEMP "/route/" cellName)
@@ -532,20 +530,16 @@
     ; convert instances to dfII hierarchy
     (RouteRemapInstances ?CV ImportCV)
 
-    ; HACK: copy properties from baseCV.  Fix alignment too.
+    ; HACK: copy properties from baseCV and restore cell alignment
     (when baseCV
       (CopyCellViewProps baseCV ImportCV)
-      offset = (GetRDTOffset ?CV baseCV)
-      (OffsetEverything (car offset):(cadr offset) ?CV ImportCV)
+      (OffsetEverything (GetRDTOffset ?CV baseCV) ?CV ImportCV)
+      (OffsetEverything (cadr (GetCellAlignment ?CV baseCV)) ?CV ImportCV)
       )
 
     ; fixup pins and connectivity
     (DeleteExtraLabels ?CV ImportCV)
     (LabelsToPins ?CV ImportCV)
-
-    ; restore custom alignment
-    offset = (cadr (GetCellAlignment ?CV ImportCV))
-    (OffsetEverything offset ?CV ImportCV)
     (dbSave ImportCV)
 
     ; copy ImportCV to correct lib and change window
