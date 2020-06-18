@@ -177,3 +177,14 @@
     (list x0:y0 x1:y1)
     )
   )
+
+; Convert bBox to polygon
+(defun BBoxToPolygon (bbox)
+  (let (x0 y0 x1 y1)
+    x0=(car  (car  bbox))
+    y0=(cadr (car  bbox))
+    x1=(car  (cadr bbox))
+    y1=(cadr (cadr bbox))
+    (list x0:y0 x1:y0 x1:y1 x0:y1 x0:y0)
+    )
+  )
