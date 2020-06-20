@@ -235,42 +235,44 @@
   t
   )
 
-; special script to re-color V1C to V1A or V1B when conflicts found
-(defun ColorizeFixV1C (@key (CV (geGetEditCellView)))
-  (let (bbox bbox1 bbox2 lpp overlaps colors)
-    (foreach via (setof x CV->vias (GetViaColor x)==3)
-             bbox  = (GetCutBBox via)
-             bbox1 = (BBoxExpandHorizontal bbox 0.07) ; V1_29
-             bbox1 = (BBoxExpandVertical   bbox 0.02)
-             bbox2 = (BBoxExpandHorizontal bbox 0.02)
-             bbox2 = (BBoxExpandVertical   bbox 0.11) ; V1_128
-             overlaps=nil
-             (foreach purpose (list "drawing" "fill")
-                      lpp = (list "v1" purpose)
-                      overlaps=(append overlaps (dbGetOverlaps CV bbox1 lpp 0:1))
-                      overlaps=(append overlaps (dbGetOverlaps CV bbox2 lpp 0:1))
+; recursively figure out color of an overalp from dbGetOverlaps
+(defun GetOverlapColor (overlap)
+  (cond ( (atom overlap) (GetShapeColor overlap))
+        (!(atom overlap) && (car o)->objType=="stdVia" (GetViaColor (car o)))
+        (t (GetOverlapColor (cadr overlap)))
+        )
+  )
+
+; Recolor V1C or V2C to A or B whenever possible to avoid C spacing errors
+(defun ColorizeFixViaC (@key (CV (geGetEditCellView)))
+  (let (bbox bbox1 bbox2 lpp overlaps colors c viaName layerName)
+    (for v 1 2
+         layerName=(sprintf nil "v%d" v)
+         viaName=(sprintf nil "via%d" v)
+         (foreach via (setof x CV->vias
+                             (strncmp x->viaHeader->master->cellName viaName 4)==0 &&
+                             (GetViaColor x)==3)
+                  bbox  = (GetCutBBox via)
+                  bbox1 = (BBoxExpandHorizontal bbox  0.07) ; V1_29
+                  bbox1 = (BBoxExpandVertical   bbox1 0.02)
+                  bbox2 = (BBoxExpandHorizontal bbox  0.02)
+                  bbox2 = (BBoxExpandVertical   bbox2 0.11) ; V1_128
+                  overlaps=nil
+                  (foreach purpose (list "drawing" "fill")
+                           lpp = (list layerName purpose)
+                           overlaps=(append overlaps (dbGetOverlaps CV bbox1 lpp 0:31))
+                           overlaps=(append overlaps (dbGetOverlaps CV bbox2 lpp 0:31))
+                           )
+                  colors=nil
+                  (foreach o overlaps
+                           c=(GetOverlapColor o)
+                           colors=(cons c colors)
                       )
-             colors=nil
-             (foreach o overlaps
-                      (cond (!(atom o) && (car o)->objType=="stdVia" && (car o)!=via
-                              c=(GetViaColor (car o))
-                              (when (member c colors)==nil colors=(cons c colors))
-                              )
-                            ( (atom o) && o->objType!="label"
-                              c=(GetShapeColor o)
-                              (when (member c colors)==nil colors=(cons c colors))
-                              )
-                            )
-                      )
-             (cond ((member 3 colors)==nil t)
-                   ((member 1 colors)==nil (SetViaColor via 1 nil nil))
-                   ((member 2 colors)==nil (SetViaColor via 2 nil nil))
-                   (t (printf "WARNING: unable to fix V1C at %g:%g\n"
-                              (car via->xy) (cadr via->xy))
-                      (geSelectObject via)
-                      )
-                   )
-             )
+                  (cond ((member 1 colors)==nil (SetViaColor via 1 nil nil))
+                        ((member 2 colors)==nil (SetViaColor via 2 nil nil))
+                        )
+                  )
+         )
     )
   t
   )
