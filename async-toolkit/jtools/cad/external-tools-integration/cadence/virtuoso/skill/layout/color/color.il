@@ -20,7 +20,7 @@
 			(car shape->lpp) (caar bbox) (cadar bbox))
    	     else
                 color = (GetTrackColor (MetalNumber shape->layerName) track)
-	        (ColorizeShape shape color)
+	        (SetShapeColor shape color)
 	        )
              )
 	  )
@@ -40,7 +40,7 @@
                                color = (GetViaTrackColor viaNum track)
                                oldcolor = (GetShapeColor shape)
                                (when override || oldcolor==0
-                                     (ColorizeShape shape color)
+                                     (SetShapeColor shape color)
                                      )
                                )
                          )
@@ -52,8 +52,8 @@
 	  color1 = nil
 	  color2 = nil
 	  colorc = nil
-          oldcolor = (dbGetViaCutLayerControl via)
-	  (when override || oldcolor==via_color_name[0]
+          oldcolor = (GetViaColor via)
+	  (when override || oldcolor==0
                 (cond ((strncmp via->viaHeader->master->cellName "via0" 4)==0 viaNum=0)
                       ((strncmp via->viaHeader->master->cellName "via1" 4)==0 viaNum=1)
                       ((strncmp via->viaHeader->master->cellName "via2" 4)==0 viaNum=2)
@@ -73,7 +73,7 @@
                       ; (printf "viaNum=%d track=%d\n" viaNum track)
                       colorc = (GetViaTrackColor viaNum track)
                       (if colorc
-                        (ColorizeVia via colorc color1 color2)
+                        (SetViaColor via colorc color1 color2)
                         (printf "ERROR: Can't color off-track %s at %f:%f\n"
                                 via->viaHeader->master->cellName
                                 (car via->origin) (cadr via->origin))
@@ -91,7 +91,7 @@
                       ; (printf "viaNum=%d track=%d\n" viaNum track)
                       colorc = (GetViaTrackColor viaNum track)
                       (if track1 && track2
-                          (ColorizeVia via nil color1 color2)
+                          (SetViaColor via nil color1 color2)
                           (printf "ERROR: Can't color off-track %s at %f:%f\n"
                                   via->viaHeader->master->cellName
                                   (car via->origin) (cadr via->origin))
@@ -125,7 +125,7 @@
     )
   )
 
-; Get the color number of a shape
+; get the color number of a shape
 (defun GetShapeColor (shape)
   (let (color)
     color=(dbGetShapeColor shape)
@@ -140,12 +140,26 @@
   )
 
 ; set color number of a shape
-(defun ColorizeShape (shape color)
+(defun SetShapeColor (shape color)
   (dbSetShapeColor shape metal_color_name[color])
   )
 
+; get the color number of the via cut
+(defun GetViaColor (via)
+  (let (color)
+    color = (dbGetViaCutLayerControl via)
+    (cond (color==via_color_name[0] color=0)
+          (color==via_color_name[1] color=1)
+          (color==via_color_name[2] color=2)
+          (color==via_color_name[3] color=3)
+          (t color=nil)
+          )
+    color
+    )
+  )
+
 ; set color numbers of a symbolic via
-(defun ColorizeVia (via color color_b color_t)
+(defun SetViaColor (via color color_b color_t)
   (when color   (dbSetViaCutLayerControl via via_color_name[color]))
   (when color_b (dbSetViaLayer1Control   via via_color_name[color_b]))
   (when color_t (dbSetViaLayer2Control   via via_color_name[color_t]))
@@ -160,7 +174,7 @@
                    (cond (color==1 color=2)
                          (color==2 color=1)
                          )
-                   (ColorizeShape shape color)
+                   (SetShapeColor shape color)
                    )
              )
     )
@@ -204,18 +218,58 @@
                         (cond (!(atom o) && (car o)->objType=="stdVia"
                                 o=(car o)
                                 via=o->viaHeader->viaDef
-                                (cond (via->layer1->name==layer (ColorizeVia o nil color nil))
-                                      (via->layer2->name==layer (ColorizeVia o nil nil color))
-                                      (t (ColorizeVia o color nil nil))
+                                (cond (via->layer1->name==layer (SetViaColor o nil color nil))
+                                      (via->layer2->name==layer (SetViaColor o nil nil color))
+                                      (t (SetViaColor o color nil nil))
                                       )
                                 )
                               ((atom o) && o->objType!="label"
-                                   (ColorizeShape o color)
+                                   (SetShapeColor o color)
                                    )
                               )
                         )
                (when delete (dbDeleteObject s))
                )
+             )
+    )
+  t
+  )
+
+; special script to re-color V1C to V1A or V1B when conflicts found
+(defun ColorizeFixV1C (@key (CV (geGetEditCellView)))
+  (let (bbox bbox1 bbox2 lpp overlaps colors)
+    (foreach via (setof x CV->vias (GetViaColor x)==3)
+             bbox  = (GetCutBBox via)
+             bbox1 = (BBoxExpandHorizontal bbox 0.07) ; V1_29
+             bbox1 = (BBoxExpandVertical   bbox 0.02)
+             bbox2 = (BBoxExpandHorizontal bbox 0.02)
+             bbox2 = (BBoxExpandVertical   bbox 0.11) ; V1_128
+             overlaps=nil
+             (foreach purpose (list "drawing" "fill")
+                      lpp = (list "v1" purpose)
+                      overlaps=(append overlaps (dbGetOverlaps CV bbox1 lpp 0:1))
+                      overlaps=(append overlaps (dbGetOverlaps CV bbox2 lpp 0:1))
+                      )
+             colors=nil
+             (foreach o overlaps
+                      (cond (!(atom o) && (car o)->objType=="stdVia" && (car o)!=via
+                              c=(GetViaColor (car o))
+                              (when (member c colors)==nil colors=(cons c colors))
+                              )
+                            ( (atom o) && o->objType!="label"
+                              c=(GetShapeColor o)
+                              (when (member c colors)==nil colors=(cons c colors))
+                              )
+                            )
+                      )
+             (cond ((member 3 colors)==nil t)
+                   ((member 1 colors)==nil (SetViaColor via 1 nil nil))
+                   ((member 2 colors)==nil (SetViaColor via 2 nil nil))
+                   (t (printf "WARNING: unable to fix V1C at %g:%g\n"
+                              (car via->xy) (cadr via->xy))
+                      (geSelectObject via)
+                      )
+                   )
              )
     )
   t
