@@ -391,7 +391,7 @@ useICV = t
         (powerLayers (list Metal[0] Metal[2] Metal[3])) ; HACK: minimize number of pin shapes
 	(doPowerGates nil)
 	)
-  (let (inst pgCV pgaCV lpps figsVdd figsGND figsVddg)
+  (let (inst pgCV pgaCV lpps figsVdd figsGND figsVddg metNum)
 
     ; HACK: minimize number of pin shapes
     powerLayers = (cons Metal[topMetal] powerLayers)
@@ -441,7 +441,8 @@ useICV = t
             )
 
       (when doPowerGates
-        (when (MetalNumber ?lpp shape->lpp) < 2
+        metNum=(MetalNumber shape->layerName)
+        (when metNum < 2
               ; normal
              (cond (shape->purpose=="vdd"
                     shape->purpose="pin"
@@ -449,7 +450,7 @@ useICV = t
                     )
 		   )
 	  )
-        (when (MetalNumber ?lpp shape->lpp) == 2
+        (when metNum == 2
               ; m2 vdd becomes Vddg pins
              (cond (shape->purpose=="vdd"
                     shape->purpose="pin"
@@ -457,7 +458,7 @@ useICV = t
                     )
 		   )
           )
-        (when 3 <= (MetalNumber ?lpp shape->lpp) && (MetalNumber ?lpp shape->lpp) < 5
+        (when 3 <= metNum && metNum < 5
               ; mx vdd becomes Vddg pins
 	      ; mx fill becomes Vdd pins
              (cond (shape->purpose=="vdd"
@@ -471,7 +472,7 @@ useICV = t
                     )
 		   )
 	  )
-        (when (MetalNumber ?lpp shape->lpp) > 5
+        (when metNum > 5
               ; normal
              (cond (shape->purpose=="vdd"
                     shape->purpose="pin"
