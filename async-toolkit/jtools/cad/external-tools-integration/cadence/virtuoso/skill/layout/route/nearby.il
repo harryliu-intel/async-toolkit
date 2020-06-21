@@ -91,24 +91,26 @@
             (unless wt (error "no track width for %d %g:%g\n" v+1 (car xy) (cadr xy)))
             wb = (round wb/MfgGrid)
             wt = (round wt/MfgGrid)
-            viaName = viaTable[(list v wb wt)]
-            (unless viaName (error "no viaTable for %d %d %d\n" v wb wt))
-            (cond ((atom viaName)
-                   viaDef = (techFindViaDefByName tech viaName)
-                   params = nil
-                   )
-                  (t
-                   viaDef = (techFindViaDefByName tech (car viaName))
-                   params = (cdr viaName)
-                   viaName = (car viaName)
-                   )
+            (when (dbGetOverlaps CV overlap (list Via[v] "drawing") 0:31)==nil
+                  viaName = viaTable[(list v wb wt)]
+                  (unless viaName (error "no viaTable for %d %d %d\n" v wb wt))
+                  (cond ((atom viaName)
+                         viaDef = (techFindViaDefByName tech viaName)
+                         params = nil
+                         )
+                        (t
+                         viaDef = (techFindViaDefByName tech (car viaName))
+                         params = (cdr viaName)
+                         viaName = (car viaName)
+                         )
+                        )
+                  via = (dbCreateVia CV viaDef xy "R0" params)
+                  via->routeStatus="locked"
+                  via->net = net
+                  (dbReplaceProp via "autogen" "string" "RouteNearby")
+                  (printf "%s on %s\n" Via[v] net->name)
+                  n++
                   )
-            via = (dbCreateVia CV viaDef xy "R0" params)
-            via->routeStatus="locked"
-            via->net = net
-            (dbReplaceProp via "autogen" "string" "RouteNearby")
-            (printf "%s on %s\n" Via[v] net->name)
-            n++
             )
           )
         )
