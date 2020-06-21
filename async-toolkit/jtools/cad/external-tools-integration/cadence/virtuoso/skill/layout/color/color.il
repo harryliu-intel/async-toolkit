@@ -254,8 +254,8 @@
                              (GetViaColor x)==3)
                   bbox  = (GetCutBBox via)
                   bbox1 = (BBoxExpandHorizontal bbox  0.07) ; V1_29
-                  bbox1 = (BBoxExpandVertical   bbox1 0.02)
-                  bbox2 = (BBoxExpandHorizontal bbox  0.02)
+                  bbox1 = (BBoxExpandVertical   bbox1 0.03)
+                  bbox2 = (BBoxExpandHorizontal bbox  0.03)
                   bbox2 = (BBoxExpandVertical   bbox2 0.11) ; V1_128
                   overlaps=nil
                   (foreach purpose (list "drawing" "fill")
