@@ -332,6 +332,9 @@
         )
       )
 
+    ; copy site definition from source
+    abstractCV->sitePattern = CV->sitePattern
+
     ; save and exit
     (SetLefProperties abstractCV ?leaf t)
     (dbSave abstractCV)
