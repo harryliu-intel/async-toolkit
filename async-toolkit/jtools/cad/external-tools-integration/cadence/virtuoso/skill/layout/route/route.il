@@ -9,6 +9,7 @@
         (topMetal nil)           ; top metal layer to use, or nil to use wires.il
         (pwrMetal nil)           ; top metal layer for power
         (topHalo t)              ; APR should add a top halo
+	(denseM3Staples nil)	 ; APR should add m3 staples at double pitch
         (Background nil)         ; optionally run in the background
         (importView "layout")    ; view name to import wiring back to
         (Mem 4000)               ; memory to use
@@ -36,7 +37,8 @@
 
     ; export
     CV = (RouteExport ?CV CV
-                          ?botMetal botMetal ?topMetal topMetal ?pwrMetal pwrMetal ?topHalo topHalo
+                          ?botMetal botMetal ?topMetal topMetal ?pwrMetal pwrMetal
+			  ?topHalo topHalo ?denseM3Staples denseM3Staples
                           ?doVerilog doVerilog ?doGds doGds ?doLef doLef ?doDef doDef
                           ?doNondefaultDef doNondefaultDef
                           ?doSkipRouting doSkipRouting
@@ -73,7 +75,8 @@
         (topMetal nil)           ; top metal layer to use, or nil to use wires.il
         (pwrMetal nil)           ; top metal layer for power
         (topHalo t)              ; APR should add a top halo
-        (doVerilog nil)          ; create cellName.v
+	(denseM3Staples nil)	 ; APR should add m3 staples at double pitch
+	(doVerilog nil)          ; create cellName.v
         (doGds t)                ; create gds for subcells (used for power hookups and maybe fill)
         (doLef t)                ; create cellName.lef
         (doDef t)                ; create cellName.def
@@ -143,7 +146,7 @@
 
     ; write proteus.config
     (ProteusConfig ?CV CV ?botMetal botMetal ?topMetal topMetal
-                   ?pwrMetal pwrMetal ?topHalo topHalo ?metalFill metalFill
+                   ?pwrMetal pwrMetal ?topHalo topHalo ?denseM3Staples denseM3Staples ?metalFill metalFill
                    ?timingDriven timingDriven ?softMacro softMacro
                    ?abstractCellName abstractCellName ?targetCellName targetCellName
                    ?ecoIter ecoIter)
@@ -354,6 +357,7 @@
         (topMetal 8)             ; top metal layer
         (pwrMetal nil)           ; top metal layer for power
         (topHalo t)              ; APR should add a top halo
+	(denseM3Staples nil)	 ; APR should add m3 staples at double pitch
         (metalFill t)
         (timingDriven t)
         (softMacro nil)          ; run APR
@@ -384,6 +388,7 @@
     (fprintf file "--top-layer=%d\n" topMetal)
     (when pwrMetal (fprintf file "--pwr-layer=%d\n" pwrMetal))
     (fprintf file "--top-halo=%d\n" (if topHalo 1 0))
+    (fprintf file "--dense-m3-staples=%d\n" (if denseM3Staples 1 0))
     (fprintf file "--rdt-run-fill=%d\n" (if metalFill 1 0))
     (fprintf file "--timing-driven-route=%d\n" (if softMacro || timingDriven 1 0))
     (fprintf file "--soft-macro=%d\n" (if softMacro 1 0))
