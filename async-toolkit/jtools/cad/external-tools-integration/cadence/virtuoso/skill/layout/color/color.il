@@ -11,7 +11,7 @@
           (when shape->objType=="rect"
 	     track = (GetTrack (MetalNumber metal) bbox)
 	     )
-	  (when shape->objType=="path"
+	  (when shape->objType=="path" || shape->objType=="pathSeg"
              track = (GetTrack (MetalNumber metal) bbox)
 	     )
 	  (unless shape->objType=="label" || (cadr shape->lpp)=="AABBregion"
