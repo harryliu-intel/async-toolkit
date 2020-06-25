@@ -3023,7 +3023,10 @@ public class Cast2Verilog {
             if (source.getType() instanceof NodeType) {
                 final String sourceName = nodeVerilogName(source);
                 final String sinkName = nodeVerilogName(sink);
-                out.println("assign " + sinkName + " = " + sourceName + ";");
+                final String assignOrAlias =
+                    source.isBidirectional() ||
+                    sink.isBidirectional() ? "alias" : "assign";
+                out.println(assignOrAlias + " " + sinkName + " = " + sourceName + ";");
             } else {
                 getChannelEmitter((ChannelType) source.getType()).
                     emitPassThru(out, source.getFullName(), sink.getFullName());
