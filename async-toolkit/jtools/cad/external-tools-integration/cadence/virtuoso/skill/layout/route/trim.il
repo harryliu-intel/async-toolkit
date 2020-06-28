@@ -5,7 +5,7 @@
 ; Trim dangling paths and contacts for all nets except PowerGroundNets
 (defun TrimDanglingWires
   (@key (CV (geGetEditCellView))
-        (overhang 0)
+        (aligned nil)
         (nets nil)
         (depth 32)
         )
@@ -19,7 +19,7 @@
         progress = progress + (MergePaths net)
         progress = progress + (TrimDuplicateContacts net)
         progress = progress + (TrimDanglingPaths net ?CV CV
-                                                 ?overhang overhang ?depth depth)
+                                                 ?aligned aligned ?depth depth)
         progress = progress + (TrimDanglingContacts net ?CV CV ?depth depth)
         total = total + progress
         )
@@ -88,12 +88,11 @@
   )
 
 ; Trim dangling paths on a net.  Delete if it only overlaps one
-; contact or path, otherwise leave at least some overhang to meet
-; minimum area on stacked vias.
+; contact or path.  Optionally align the ETE cut to a grid.
 (defun TrimDanglingPaths
-  (net @key (CV (geGetEditCellView)) (overhang 0) (depth 32))
+  (net @key (CV (geGetEditCellView)) (aligned nil) (depth 32))
   (let (progress paths xy0 xy1 x0 y0 x1 y1 bbox overlaps unknown
-        xy bxy0 bxy1 bx0 by1 bx1 by1 overlap_bbox
+        xy bxy0 bxy1 bx0 by1 bx1 by1 overlap_bbox horz space grid m
         nx0 ny0 nx1 xy1 n progress)
     progress = 0
     paths = (setof obj net->figs
@@ -108,6 +107,19 @@
       x1 = (car  xy1)
       y1 = (cadr xy1)
       bbox = path->bBox
+
+      ; find spacing
+      m=(MetalNumber path->layerName)
+      horz = (mod m 2)==0
+      (cond (horz
+             space=(car  MetalSpace[path->layerName])/2
+             grid=0.15
+             )
+            (t
+             space=(cadr MetalSpace[path->layerName])/2
+             grid=0.12
+             )
+            )
 
       ; find bbox of overlapping paths and contacts
       overlaps = (append (dbGetOverlaps CV bbox (list path->layerName "drawing") depth)
@@ -125,7 +137,7 @@
                      )
                )
 
-      ; trim path to fit inside bbox (bloated by overhang)
+      ; trim path to fit inside bbox (optionally aligned ETE cuts)
       (cond (n<=1
              (dbDeleteObject path)
              progress = progress+1
@@ -134,23 +146,36 @@
             (bbox
              bxy0 = (car  bbox)
              bxy1 = (cadr bbox)
-             bx0 = (car  bxy0) - overhang
-             by0 = (cadr bxy0) - overhang
-             bx1 = (car  bxy1) + overhang
-             by1 = (cadr bxy1) + overhang
+             bx0 = (car  bxy0)
+             by0 = (cadr bxy0)
+             bx1 = (car  bxy1)
+             by1 = (cadr bxy1)
              nx0 = (min bx1 (max bx0 x0))
              nx1 = (min bx1 (max bx0 x1))
              ny0 = (min by1 (max by0 y0))
              ny1 = (min by1 (max by0 y1))
-             (when (or (abs nx0-x0)>=MfgGrid (abs ny0-y0)>=MfgGrid
-                       (abs nx1-x1)>=MfgGrid (abs ny1-y1)>=MfgGrid)
-               (when nx0==nx1 && ny0==ny1
-                     (geSelectObject path)
-                     (error)
+             (when aligned
+               (cond (horz
+                      nx0=(max x0 (floor   (nx0-space)/grid)*grid+space)
+                      nx1=(min x1 (ceiling (nx1+space)/grid)*grid-space)
+                      )
+                     (t
+                      ny0=(max y0 (floor   (ny0-space)/grid)*grid+space)
+                      ny1=(min y1 (ceiling (ny1+space)/grid)*grid-space)
+                      )
                      )
-               path->points = (list nx0:ny0 nx1:ny1)
-               progress = progress+1
                )
+             (when (round nx0/MfgGrid)!=(round x0/MfgGrid) ||
+                   (round nx1/MfgGrid)!=(round x1/MfgGrid) ||
+                   (round ny0/MfgGrid)!=(round y0/MfgGrid) ||
+                   (round ny1/MfgGrid)!=(round y1/MfgGrid)
+                   (when nx0==nx1 && ny0==ny1
+                         (geSelectObject path)
+                         (error)
+                         )
+                   path->points = (list nx0:ny0 nx1:ny1)
+                   progress = progress+1
+                   )
              )
             )
       )
