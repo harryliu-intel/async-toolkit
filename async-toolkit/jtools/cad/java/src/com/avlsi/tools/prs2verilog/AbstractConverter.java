@@ -191,15 +191,6 @@ public abstract class AbstractConverter implements ConverterInterface {
                              final String type) {
         addFormal(params, name, type, "inout");
     }
-    private Integer accumPortDir(final Integer oldDir, final Integer newDir) {
-        if (oldDir == null || oldDir == newDir) return newDir;
-        else if (oldDir == PortDefinition.IN && newDir == PortDefinition.OUT ||
-                 oldDir == PortDefinition.OUT && newDir == PortDefinition.IN)
-            return PortDefinition.IN;
-        else if (oldDir == PortDefinition.NONE) return newDir;
-        else if (newDir == PortDefinition.NONE) return oldDir;
-        else return PortDefinition.INOUT;
-    }
     protected void formal(final List params, final ConnectionInfo ci,
                           final String type) {
         final Map<String,Integer> ports =
@@ -218,10 +209,8 @@ public abstract class AbstractConverter implements ConverterInterface {
             final CellNet pn = ci.child.getNet(hn);
             if (pn != null) {
                 // This could happen if the net is unused.
-                canonPorts.put(
-                    pn.canonicalName,
-                    accumPortDir(canonPorts.get(pn.canonicalName),
-                                 entry.getValue()));
+                canonPorts.merge(pn.canonicalName, entry.getValue(),
+                        CellUtils::combinePorts);
             }
         }
         final Collection set = ports(ci);

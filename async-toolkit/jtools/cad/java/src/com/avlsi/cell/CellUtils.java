@@ -227,6 +227,17 @@ public final class CellUtils {
         return result;
     }
 
+    public static int combinePorts(final int oldDir, final int newDir) {
+        if (oldDir == newDir) {
+            return newDir;
+        } else if (oldDir == PortDefinition.INOUT ||
+                   newDir == PortDefinition.INOUT) {
+            return PortDefinition.INOUT;
+        } else {
+            return PortDefinition.IN;
+        }
+    }
+
     public static class MarkPort {
         public void mark(final CellInterface ci) {
             mark(ci.getPortDefinitions());
