@@ -1,0 +1,39 @@
+INTERFACE DefLexer;
+IMPORT Rd;
+
+CONST BufSize = 4096;
+
+CONST BaseSpecial    = SET OF CHAR { '(', ')', '{', '}', '-', '+', ';' };
+CONST DefDivChar = '/';
+CONST DefBusbitChars = ARRAY [0..1] OF CHAR { '[', ']' };
+
+CONST DefSpecial = BaseSpecial + 
+                   SET OF CHAR { DefDivChar } + 
+                   SET OF CHAR { DefBusbitChars[0] } + 
+                   SET OF CHAR { DefBusbitChars[1] };
+
+TYPE 
+  State = RECORD
+    rd : Rd.T;
+    s    := 0;     (* next token to parse starts here *)
+    e    := 0;     (* end of currently valid chars in buffer *)
+    eof  := FALSE; (* done parsing *)
+
+    special     := DefSpecial;
+    divChar     := DefDivChar;
+    busbitChars := DefBusbitChars;
+  END;
+
+TYPE Buffer = ARRAY [0..BufSize-1] OF CHAR;
+
+TYPE String = RECORD start : [0..BufSize-1]; n : [0..BufSize] END;
+
+PROCEDURE GetToken(VAR buff  : Buffer;
+                   VAR state : State;
+                   VAR res   : String) : BOOLEAN;
+
+PROCEDURE DividerChar(VAR s : State; c : CHAR);
+
+PROCEDURE BusbitChars(VAR s : State; c : ARRAY [0..1] OF CHAR);
+
+END DefLexer.

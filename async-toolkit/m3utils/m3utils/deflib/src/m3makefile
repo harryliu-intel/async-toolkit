@@ -1,0 +1,10 @@
+import ("libm3")
+import ("cit_util")
+import ("parseparams")
+
+module ("DefFormat")
+module ("DefLexer")
+
+implementation ("Main")
+
+program ("testdef")
