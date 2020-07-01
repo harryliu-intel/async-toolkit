@@ -1,4 +1,12 @@
 MODULE DefLexer;
+
+(* 
+   Lexer for DEF file format
+
+   Author: Mika Nystrom <mika.nystroem@intel.com>
+   June 2020
+*)
+
 IMPORT Rd;
 IMPORT Debug, Fmt;
 
@@ -8,7 +16,6 @@ CONST CC = '#'; (* comment character *)
 CONST NL = SET OF CHAR { '\n', '\r' };
 CONST WhiteSpace    = SET OF CHAR { ' ', '\n', '\r', '\t' };
 CONST BS = '\\';
-
 
 PROCEDURE GetToken(VAR buff  : Buffer;
                    VAR state : State;

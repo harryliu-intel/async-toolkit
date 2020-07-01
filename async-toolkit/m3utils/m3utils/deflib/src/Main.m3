@@ -63,7 +63,7 @@ BEGIN
     dRd := fRd
   END;
 
-  DefFormat.Parse(dRd)
+  EVAL DefFormat.Parse(dRd)
 
 END Main.
                     

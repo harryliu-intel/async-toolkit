@@ -1,9 +1,15 @@
 import ("libm3")
 import ("cit_util")
 import ("parseparams")
+import ("trie")
 
 module ("DefFormat")
 module ("DefLexer")
+
+interface ("ParseProc")
+interface ("ParseError")
+
+trie("DefParse", "Char", "ParseProc")
 
 implementation ("Main")
 
