@@ -11,6 +11,9 @@ interface ("ParseError")
 
 trie("DefParse", "Char", "ParseProc")
 
+interface ("DefPoint")
+sequence  ("DefPoint", "DefPoint")
+
 implementation ("Main")
 
 program ("testdef")

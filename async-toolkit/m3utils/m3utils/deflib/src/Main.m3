@@ -26,13 +26,17 @@ VAR
   c : ProcUtils.Completion;
   fn : Pathname.T := Fn;
   fRd, dRd : Rd.T;
-  doGunzip : BOOLEAN;
-
+  doUncompress : BOOLEAN;
+  uncompressCommand := "gzip -dc";
 BEGIN
   TRY
     WITH pp = NEW(ParseParams.T).init(Stdio.stderr) DO
 
-      doGunzip := pp.keywordPresent("-z");
+      doUncompress := pp.keywordPresent("-z");
+
+      IF pp.keywordPresent("-Z") THEN
+        uncompressCommand := pp.getNext()
+      END;
 
       IF pp.keywordPresent("-f") THEN
         fn := pp.getNext()
@@ -48,12 +52,12 @@ BEGIN
     fRd := FileRd.Open(fn)
   END;
 
-  IF doGunzip THEN
+  IF doUncompress THEN
     VAR
       reader := ProcUtils.ReadHere(fRd);
       writer := ProcUtils.GimmeRd(dRd);
     BEGIN
-      c := ProcUtils.RunText("gzip -dc",
+      c := ProcUtils.RunText(uncompressCommand,
                              stdout := writer,
                              stderr := NIL,
                              stdin  := reader,
