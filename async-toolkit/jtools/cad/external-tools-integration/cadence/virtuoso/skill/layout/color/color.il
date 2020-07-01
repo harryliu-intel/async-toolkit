@@ -238,7 +238,7 @@
 ; recursively figure out color of an overalp from dbGetOverlaps
 (defun GetOverlapColor (overlap)
   (cond ( (atom overlap) (GetShapeColor overlap))
-        (!(atom overlap) && (car o)->objType=="stdVia" (GetViaColor (car o)))
+        (!(atom overlap) && (car overlap)->objType=="stdVia" (GetViaColor (car overlap)))
         (t (GetOverlapColor (cadr overlap)))
         )
   )
