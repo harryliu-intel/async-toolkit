@@ -51,6 +51,17 @@ PROCEDURE GetChar(t : T; c : CHAR) : BOOLEAN =
     END
   END GetChar;
 
+PROCEDURE GetCharSet(t : T; s : SET OF CHAR; VAR c : CHAR) : BOOLEAN =
+  BEGIN
+    IF t.token.n = 1 AND t.buff[t.token.start] IN s THEN
+      c := t.buff[t.token.start];
+      Next(t);
+      RETURN TRUE
+    ELSE
+      RETURN FALSE
+    END
+  END GetCharSet;
+
 PROCEDURE GetToken(t : T; READONLY tok : ARRAY OF CHAR) : BOOLEAN =
   BEGIN
     IF SUBARRAY(t.buff, t.token.start, t.token.n) = tok THEN
@@ -101,6 +112,13 @@ PROCEDURE GetCard(t : T; VAR c : CARDINAL) : BOOLEAN =
     D("Card"); RETURN TRUE
   END GetCard;
 
+PROCEDURE MustBeCard(t : T; VAR c : CARDINAL) RAISES { E } = 
+  BEGIN
+    IF NOT GetCard(t, c) THEN
+      RAISE E ("MustBeCard, expected number")
+    END
+  END MustBeCard;
+
 PROCEDURE MustBeInt(t : T; VAR i : INTEGER) RAISES { E } =
   (* kind of ugly *)
   VAR
@@ -111,9 +129,7 @@ PROCEDURE MustBeInt(t : T; VAR i : INTEGER) RAISES { E } =
       RETURN 
     ELSIF t.token.n = 1 AND t.buff[t.token.start] = '+' THEN
       Next(t); 
-      IF NOT GetCard(t, j) THEN
-        RAISE E("MustBeInt, expected number")
-      END;
+      MustBeCard(t, j);
       i := j;
       RETURN
     ELSIF t.token.n = 1 AND t.buff[t.token.start] = '-' THEN
@@ -190,7 +206,7 @@ PROCEDURE Parse(rd : Rd.T) : T RAISES { E } =
     Next(t); (* establish lookahead *)
 
     TRY
-      LOOP
+      WHILE NOT t.state.eof DO
         (* note that this type of "block" is a bit different because
            it doesn't end with an END statement *)
         ParseBlock(ARRAY OF CHAR {} ,
@@ -200,7 +216,7 @@ PROCEDURE Parse(rd : Rd.T) : T RAISES { E } =
       END
     EXCEPT
       E(x) => RAISE E ("DefFormat.Parse: Error" & x & ", line " & Fmt.Int(t.state.line))
-      END;
+    END;
 
     RETURN t
 
@@ -363,6 +379,51 @@ PROCEDURE ParseRow(t : T; ref : REFANY) RAISES { E } =
     END
   END ParseRow;
 
+PROCEDURE ParseTracks(t : T; ref : REFANY) RAISES { E } =
+  VAR
+    xy : CHAR;
+    numTracks, space, mask : CARDINAL;
+    start : INTEGER;
+  BEGIN
+    IF NOT GetCharSet(t, SET OF CHAR { 'X', 'Y' }, xy) THEN
+      RAISE E("ParseTracks, xy")
+    END;
+
+    MustBeInt(t, start);
+    
+    IF NOT GetToken(t, DOa^) THEN
+      RAISE E("ParseTracks, ?DO")
+    END;
+
+    MustBeCard(t, numTracks);
+
+    IF NOT GetToken(t, STEPa^) THEN
+      RAISE E("ParseTracks, ?STEP")
+    END;
+
+    MustBeCard(t, space);
+
+    IF GetToken(t, MASKa^) THEN
+      MustBeCard(t, mask);
+      
+      IF NOT GetToken(t, SAMEMASKa^) THEN
+        RAISE E ("ParseTracks, ?MASK..SAMEMASK")
+      END
+    END;
+
+    IF NOT GetToken(t, LAYERa^) THEN
+      RAISE E ("ParseTracks, ?LAYER")
+    END;
+
+    (* now pointing to layer name *)
+    
+    t.tokMustNotBeChar(';');
+
+    (* do not support multiple layers at this time *)
+
+    t.tokMustBeChar(';')
+  END ParseTracks;
+
 (**********************************************************************)
 
 PROCEDURE ParsePropertyDefinitions(t : T; ref : REFANY) 
@@ -472,6 +533,9 @@ VAR
   DOa       := MakeCA("DO");
   BYa       := MakeCA("BY");
   STEPa       := MakeCA("STEP");
+  MASKa       := MakeCA("MASK");
+  LAYERa       := MakeCA("LAYER");
+  SAMEMASKa       := MakeCA("SAMEMASK");
 
 BEGIN 
 
@@ -484,7 +548,7 @@ BEGIN
   AddKeyword(designDisp, "PROPERTYDEFINITIONS", ParsePropertyDefinitions);
   AddKeyword(designDisp, "DIEAREA",             ParseDieArea);
   AddKeyword(designDisp, "ROW",                 ParseRow);
-  AddKeyword(designDisp, "TRACKS",              NIL);
+  AddKeyword(designDisp, "TRACKS",              ParseTracks);
   AddKeyword(designDisp, "GCELLGRID",           NIL);
   AddKeyword(designDisp, "VIAS",                NIL);
   AddKeyword(designDisp, "NONDEFAULTRULES",     NIL);
