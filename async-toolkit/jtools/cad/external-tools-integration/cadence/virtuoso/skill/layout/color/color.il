@@ -1,9 +1,9 @@
 ; always color metals based on track position since this is invariable
 ; in a fixed track pattern via colors are assigned by ICC during
 ; routing, so don't want to change those unless they are uncolored
-(defun Colorize (@key (CV (geGetEditCellView)) (doVias t) (override nil))
-  (let (offset bbox color shapes track oldcolor track1 track2 color1 color2 colorc viaNum)
-    offset=(cadr (GetCellAlignment ?CV CV))
+(defun Colorize (@key (CV (geGetEditCellView)) (doVias t) (override nil) (offset nil))
+  (let (bbox color shapes track oldcolor track1 track2 color1 color2 colorc viaNum)
+    (unless offset offset=(cadr (GetCellAlignment ?CV CV)))
     (foreach metal ColorableMetals
        shapes = (setof s CV->shapes (car s->lpp)==metal)
        (foreach shape shapes
