@@ -15,8 +15,9 @@
 ; connect subcells pins of a net with short paths or vias
 (defun RouteNearbyNet (net @key (CV (geGetEditCellView)) (topShapes nil) (offGrid nil) (verbose nil))
   (let (lpps tech n MasterRectList layerName pinRectList layerNum space len
-          inst1 inst2 net1 net2 rect1 rect2 bbox1 bbox2 overlap rect
-          viaDef via list1 list2 xy wb wt viaName viaDef via)
+             inst1 inst2 net1 net2 rect1 rect2 overlap rect
+             a0 b0 a1 b1 x0 x1 y0 y1
+             viaDef via list1 list2 xy wb wt viaName viaDef via)
     tech = (techGetTechFile CV)
     n=0
     (for m 0 TopMetal
@@ -45,16 +46,30 @@
                   net2  = (cadr  (nth b pinRectList))
                   rect2 = (caddr (nth b pinRectList))
                   rect2 = (BBoxCanonicalize rect2)
+                  overlap = nil
                   (cond ((mod layerNum 2)==0
-                         bbox1 = (BBoxExpandHorizontal rect1 space)
-                         bbox2 = (BBoxExpandHorizontal rect2 space)
-                        )
+                         a0=(car  (car  rect1))
+                         a1=(car  (cadr rect1))
+                         b0=(car  (car  rect2))
+                         b1=(car  (cadr rect2))
+                         y0=(cadr (car  rect1))
+                         y1=(cadr (cadr rect1))
+                         (cond (a1<b0 && b0<=a1+space overlap=(list a1:y0 b0:y1))
+                               (b1<a0 && a0<=b1+space overlap=(list b1:y0 a0:y1))
+                               )
+                         )
                         (t
-                         bbox1 = (BBoxExpandVertical rect1 space)
-                         bbox2 = (BBoxExpandVertical rect2 space)
+                         a0=(cadr (car  rect1))
+                         a1=(cadr (cadr rect1))
+                         b0=(cadr (car  rect2))
+                         b1=(cadr (cadr rect2))
+                         x0=(car  (car  rect1))
+                         x1=(car  (cadr rect1))
+                         (cond (a1<b0 && b0<=a1+space overlap=(list x0:a1 x1:b0))
+                               (b1<a0 && a0<=b1+space overlap=(list x0:b1 x1:a0))
+                               )
                          )
                         )
-                  overlap = (BBoxAnd bbox1 bbox2)
                   (when overlap && !(BBoxAnd rect1 rect2)
                         && net1!=nil && net2!=nil && (net1!=net2 || inst1!=inst2)
                     rect = (dbCreateRect CV (list layerName "drawing") overlap)
