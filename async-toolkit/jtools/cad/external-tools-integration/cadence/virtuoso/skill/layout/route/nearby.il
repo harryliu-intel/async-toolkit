@@ -54,8 +54,10 @@
                          b1=(car  (cadr rect2))
                          y0=(cadr (car  rect1))
                          y1=(cadr (cadr rect1))
-                         (cond (a1<b0 && b0<=a1+space overlap=(list a1:y0 b0:y1))
-                               (b1<a0 && a0<=b1+space overlap=(list b1:y0 a0:y1))
+                         (cond ((round (a1-b0)/MfgGrid)<0 && (round (b0-a1-space)/MfgGrid)<=0
+                                overlap=(list a1:y0 b0:y1))
+                               ((round (b1-a0)/MfgGrid)<0 && (round (a0-b1-space)/MfgGrid)<=0
+                                overlap=(list b1:y0 a0:y1))
                                )
                          )
                         (t
@@ -65,8 +67,10 @@
                          b1=(cadr (cadr rect2))
                          x0=(car  (car  rect1))
                          x1=(car  (cadr rect1))
-                         (cond (a1<b0 && b0<=a1+space overlap=(list x0:a1 x1:b0))
-                               (b1<a0 && a0<=b1+space overlap=(list x0:b1 x1:a0))
+                         (cond ((round (a1-b0)/MfgGrid)<0 && (round (b0-a1-space)/MfgGrid)<=0
+                                overlap=(list x0:a1 x1:b0))
+                               ((round (b1-a0)/MfgGrid)<0 && (round (a0-b1-space)/MfgGrid)<=0
+                                overlap=(list x0:b1 x1:a0))
                                )
                          )
                         )
