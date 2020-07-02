@@ -8,6 +8,7 @@ IMPORT ParseParams, Params;
 IMPORT Stdio;
 IMPORT Pathname;
 IMPORT Text;
+IMPORT ParseError;
 
 CONST TE = Text.Equal;
 
@@ -67,7 +68,12 @@ BEGIN
     dRd := fRd
   END;
 
-  EVAL DefFormat.Parse(dRd)
+  TRY
+    EVAL DefFormat.Parse(dRd)
+  EXCEPT
+    ParseError.E(x) =>
+    Debug.Error("Parse error: " & x)
+  END
 
 END Main.
                     

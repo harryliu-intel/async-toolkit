@@ -12,12 +12,15 @@ CONST DefSpecial = BaseSpecial +
                    SET OF CHAR { DefBusbitChars[0] } + 
                    SET OF CHAR { DefBusbitChars[1] };
 
+CONST Digit = SET OF CHAR { '0' .. '9' };
+
 TYPE 
   State = RECORD
     rd : Rd.T;
     s    := 0;     (* next token to parse starts here *)
     e    := 0;     (* end of currently valid chars in buffer *)
     eof  := FALSE; (* done parsing *)
+    line := 1;
 
     special     := DefSpecial;
     divChar     := DefDivChar;

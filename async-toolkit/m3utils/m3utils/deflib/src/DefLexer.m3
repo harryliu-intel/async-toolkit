@@ -16,6 +16,7 @@ CONST CC = '#'; (* comment character *)
 CONST NL = SET OF CHAR { '\n', '\r' };
 CONST WhiteSpace    = SET OF CHAR { ' ', '\n', '\r', '\t' };
 CONST BS = '\\';
+CONST LF = '\n';
 
 PROCEDURE GetToken(VAR buff  : Buffer;
                    VAR state : State;
@@ -34,10 +35,14 @@ PROCEDURE GetToken(VAR buff  : Buffer;
     END Fill;
 
   PROCEDURE Shift() : CARDINAL = 
-    VAR old := state.s;
+    VAR 
+      old := state.s;
+      len := state.e - state.s;
     BEGIN
-      SUBARRAY(buff, 0, state.e-state.s) := SUBARRAY(buff, state.s, state.e-state.s);
-      state.e := state.e-state.s; state.s := state.s-state.s;
+      SUBARRAY(buff, 0, len) :=
+          SUBARRAY(buff, state.s, len);
+      state.e := len; 
+      state.s := 0;
       RETURN old
     END Shift;
 
@@ -45,6 +50,7 @@ PROCEDURE GetToken(VAR buff  : Buffer;
 
       (* move 1 char *)
       BEGIN
+        <*ASSERT res.start = state.s*>
         lastIsBs := buff[res.start + res.n] = BS;
 
         IF lastIsBs THEN
@@ -65,17 +71,20 @@ PROCEDURE GetToken(VAR buff  : Buffer;
         IF res.start + res.n = state.e THEN 
           res.start := res.start - Shift(); Fill() 
         END;
-        <*ASSERT res.start+res.n <= state.e OR state.eof *>
+        <*ASSERT res.start = state.s*>
+
+        <*ASSERT res.start + res.n <= state.e OR state.eof *>
       END Char;
 
     VAR 
       inComment := FALSE;
       lastIsBs  := FALSE;
     BEGIN
-      WHILE state.s = state.e OR 
+      (* pass over various things until we get to a token *)
+      WHILE state.s = state.e           OR 
             buff[state.s] IN WhiteSpace OR
-            buff[state.s] = CC OR
-            inComment DO 
+            buff[state.s] = CC          OR
+            inComment                      DO 
         IF    state.s = state.e AND state.eof THEN 
           RETURN FALSE
         ELSIF state.s = state.e         THEN
@@ -84,19 +93,23 @@ PROCEDURE GetToken(VAR buff  : Buffer;
           INC(state.s)
         ELSIF inComment AND buff[state.s] IN NL THEN
           inComment := FALSE;
+          IF buff[state.s] = LF THEN INC(state.line) END;
           INC(state.s)
         ELSIF buff[state.s] IN WhiteSpace THEN
+          IF buff[state.s] = LF THEN INC(state.line) END;
           INC(state.s)
         ELSIF buff[state.s] = CC THEN
           inComment := TRUE;
           INC(state.s)
         END
       END;
+
       (* start of token *)
       res.start := state.s; res.n := 0; 
       IF    buff[state.s] = DQ       THEN
+        (* token is a double-quoted string *)
         Char(); 
-        WHILE buff[state.s+res.n] # DQ DO 
+        WHILE buff[state.s + res.n] # DQ DO 
           Char() ;
           IF state.s + res.n = BufSize THEN
             Debug.Error("DefLexer.GetToken : string too long (n >= " & Fmt.Int(res.n) & ", endPos >= "& Fmt.Int(state.s + res.n)& " )")
@@ -104,15 +117,18 @@ PROCEDURE GetToken(VAR buff  : Buffer;
         END; 
         Char()
       ELSIF buff[state.s] IN state.special THEN
+        (* see a special character, that's the full token *)
         Char()
-      ELSE  (* identifier *)
+      ELSE  
+        (* identifier, or number *)
         Char();
-        WHILE NOT buff[state.s + res.n] IN WhiteSpace     AND
+        WHILE state.s + res.n # state.e                   AND
+              NOT buff[state.s + res.n] IN WhiteSpace     AND
               NOT buff[state.s + res.n] IN state.special  AND
                   buff[state.s + res.n] # CC              AND
                   buff[state.s + res.n] # DQ                   DO
           Char()
-        END
+        END;
       END;
       state.s := state.s+res.n; (* advance s *)
 (*

@@ -1,13 +1,14 @@
 MODULE DefFormat;
 IMPORT Rd;
-FROM DefLexer IMPORT GetToken, String, State, Buffer;
+FROM DefLexer IMPORT String, State, Buffer, Digit;
 IMPORT Debug;
 IMPORT Text;
 IMPORT DefParseTrie;
 IMPORT ParseProc;
 IMPORT DefLexer;
-IMPORT ParseError;
 IMPORT DefPoint, DefPointSeq;
+IMPORT Fmt;
+FROM ParseError IMPORT E;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
@@ -20,22 +21,22 @@ REVEAL
 
   METHODS
     getCard(VAR c : CARDINAL) : BOOLEAN := GetCard;
-    getInt(VAR i : INTEGER) : BOOLEAN := GetInt;
     error() := Error;
-    getIdentifier(VAR name : Name) : BOOLEAN := GetIdentifier;
-    tokMustBeChar(c : CHAR) RAISES { ParseError.E } := TokMustBeChar;
-    tokMustNotBeChar(c : CHAR) RAISES { ParseError.E } := TokMustNotBeChar;
-    tokMustBeChars(READONLY a : ARRAY OF CHAR) RAISES { ParseError.E } := TokMustBeChars;
+    getIdentifier(VAR txt : TEXT) : BOOLEAN := GetIdentifier;
+    tokMustBeChar(c : CHAR; dbg : TEXT := NIL) RAISES { E } := 
+                                              TokMustBeChar;
+    tokMustNotBeChar(c : CHAR; dbg : TEXT := NIL) RAISES { E } := 
+                                                 TokMustNotBeChar;
+    tokMustBeChars(READONLY a : ARRAY OF CHAR; dbg : TEXT := NIL) RAISES { E } := 
+                                                                 TokMustBeChars;
   END;
-
-TYPE Name = REFANY;
 
 CONST DQ = '"';
 
-PROCEDURE TokMustBeChar(t : T; c : CHAR) RAISES { ParseError.E } =
+PROCEDURE TokMustBeChar(t : T; c : CHAR; dbg : TEXT) RAISES { E } =
   BEGIN
     IF NOT GetChar(t, c) THEN
-      RAISE ParseError.E("TokMustBeChar: expected '" & Text.FromChar(c) & 
+      RAISE E("TokMustBeChar: "&BrackOrEmpty(dbg)&" expected '" & Text.FromChar(c) & 
         "' but got \"" & S2T(t.buff, t.token) & "\"")
     END
   END TokMustBeChar;
@@ -50,25 +51,40 @@ PROCEDURE GetChar(t : T; c : CHAR) : BOOLEAN =
     END
   END GetChar;
 
-PROCEDURE TokMustNotBeChar(t : T; c : CHAR) RAISES { ParseError.E } =
+PROCEDURE GetToken(t : T; READONLY tok : ARRAY OF CHAR) : BOOLEAN =
+  BEGIN
+    IF SUBARRAY(t.buff, t.token.start, t.token.n) = tok THEN
+      Next(t);
+      RETURN TRUE
+    ELSE
+      RETURN FALSE
+    END
+  END GetToken;
+
+PROCEDURE TokMustNotBeChar(t : T; c : CHAR; dbg : TEXT) RAISES { E } =
   BEGIN
     IF t.token.n = 1 AND t.buff[t.token.start] = c THEN
-      RAISE ParseError.E("TokMustNotBeChar:illegal \"" & 
+      RAISE E("TokMustNotBeChar: "&BrackOrEmpty(dbg)&" illegal \"" & 
             S2T(t.buff, t.token) & "\"")
     ELSE
       Next(t)
     END
   END TokMustNotBeChar;
 
-PROCEDURE TokMustBeChars(t : T; READONLY a : ARRAY OF CHAR) =
+PROCEDURE TokMustBeChars(t : T; READONLY a : ARRAY OF CHAR; dbg : TEXT) RAISES { E } =
   BEGIN
     IF t.token.n # NUMBER(a) OR 
        SUBARRAY(t.buff, t.token.start, t.token.n) # a THEN
-      Debug.Error("TokMustBeChars: expected '" & Text.FromChars(a) & 
+      RAISE E("TokMustBeChars: "&BrackOrEmpty(dbg)&" expected '" & Text.FromChars(a) & 
         "' but got \"" & S2T(t.buff, t.token) & "\"")
     END;
     Next(t)
   END TokMustBeChars;
+
+PROCEDURE BrackOrEmpty(txt : TEXT) : TEXT =
+  BEGIN
+    IF txt = NIL THEN RETURN "" ELSE RETURN "["&txt&"]" END
+  END BrackOrEmpty;
 
 PROCEDURE GetCard(t : T; VAR c : CARDINAL) : BOOLEAN =
   VAR 
@@ -85,35 +101,39 @@ PROCEDURE GetCard(t : T; VAR c : CARDINAL) : BOOLEAN =
     D("Card"); RETURN TRUE
   END GetCard;
 
-PROCEDURE GetInt(t : T; VAR i : INTEGER) : BOOLEAN =
+PROCEDURE MustBeInt(t : T; VAR i : INTEGER) RAISES { E } =
+  (* kind of ugly *)
   VAR
-    o := t.token.start;
-    mult := 1;
     j : CARDINAL;
   BEGIN
-    IF t.buff[t.token.start] = '+' THEN
-      (* skip *) 
-      INC(t.token.start)
-    ELSIF t.buff[t.token.start] = '-' THEN
-      mult := -1;
-      INC(t.token.start)
-    END;
-    IF GetCard(t,j) THEN
-      i := mult * j;
-      RETURN TRUE
+    IF GetCard(t, j) THEN
+      i := j;
+      RETURN 
+    ELSIF t.token.n = 1 AND t.buff[t.token.start] = '+' THEN
+      Next(t); 
+      IF NOT GetCard(t, j) THEN
+        RAISE E("MustBeInt, expected number")
+      END;
+      i := j;
+      RETURN
+    ELSIF t.token.n = 1 AND t.buff[t.token.start] = '-' THEN
+      Next(t); 
+      IF NOT GetCard(t, j) THEN
+        RAISE E("MustBeInt, expected number")
+      END;
+      i := -j;
+      RETURN
     ELSE
-      t.token.start := o;
-      RETURN FALSE
+      RAISE E("MustBeInt, expected integer")
     END
-  END GetInt;
+  END MustBeInt;
 
-PROCEDURE MustBePoint(t : T; VAR p : DefPoint.T) RAISES { ParseError.E } =
+PROCEDURE MustBePoint(t : T; VAR p : DefPoint.T; dbg : TEXT := NIL) RAISES { E } =
   BEGIN
     t.tokMustBeChar('(');
-    IF NOT GetInt(t, p.x) OR NOT GetInt(t, p.y) THEN
-      RAISE ParseError.E ("non-integer in MustBePoint")
-    END;
-    t.tokMustBeChar(')');
+    MustBeInt(t, p.x);
+    MustBeInt(t, p.y);
+    t.tokMustBeChar(')',dbg);
   END MustBePoint;
   
 PROCEDURE Error(t : T) =
@@ -126,20 +146,39 @@ PROCEDURE Error(t : T) =
   
 PROCEDURE Next(t : T) =
   BEGIN 
-    t.eop := NOT GetToken(t.buff, t.state, t.token) ;
+    t.eop := NOT DefLexer.GetToken(t.buff, t.state, t.token) ;
     Debug.Out("Token \"" & S2T(t.buff, t.token) & "\"")
   END Next;
   
-PROCEDURE GetIdentifier(t : T; VAR name : Name) : BOOLEAN =
+PROCEDURE GetIdentifier(t : T; VAR ident : TEXT) : BOOLEAN =
+  VAR
+    ok := FALSE;
   BEGIN
-    name := NIL;
+    (* check its not a special character or a number *)
+    IF    t.token.n = 0 THEN 
+      RETURN FALSE
+    ELSIF t.buff[t.token.start] IN t.state.special THEN
+      <*ASSERT t.token.n = 1*>
+      RETURN FALSE
+    ELSE
+      FOR i := t.token.start TO t.token.start + t.token.n - 1 DO
+        IF NOT t.buff[i] IN Digit THEN 
+          ok := TRUE
+        END
+      END
+    END;
+
+    IF NOT ok THEN RETURN FALSE END;
+      
+    ident := Text.FromChars(SUBARRAY(t.buff, t.token.start, t.token.n));
     Next(t);
-    D("Identifier"); RETURN TRUE
+    D("Identifier"); 
+    RETURN TRUE
   END GetIdentifier;
   
   <*NOWARN*>PROCEDURE D(what : TEXT) = BEGIN (*IO.Put(what & "\n")*) END D;
 
-PROCEDURE Parse(rd : Rd.T) : T =
+PROCEDURE Parse(rd : Rd.T) : T RAISES { E } =
 
   VAR
     (* parsing *)
@@ -150,14 +189,18 @@ PROCEDURE Parse(rd : Rd.T) : T =
 
     Next(t); (* establish lookahead *)
 
-    LOOP
-      (* note that this type of "block" is a bit different because
-         it doesn't end with an END statement *)
-      ParseBlock(ARRAY OF CHAR {} ,
-                 topDisp, 
-                 t, 
-                 t)        
-    END;
+    TRY
+      LOOP
+        (* note that this type of "block" is a bit different because
+           it doesn't end with an END statement *)
+        ParseBlock(ARRAY OF CHAR {} ,
+                   topDisp, 
+                   t, 
+                   t)        
+      END
+    EXCEPT
+      E(x) => RAISE E ("DefFormat.Parse: Error" & x & ", line " & Fmt.Int(t.state.line))
+      END;
 
     RETURN t
 
@@ -170,16 +213,16 @@ CONST A2T = Text.FromChars;
 
 (**********************************************************************)
 
-PROCEDURE ParseVersion(t : T; ref : REFANY) =
+PROCEDURE ParseVersion(t : T; ref : REFANY) RAISES { E } =
   BEGIN
     <*ASSERT t = ref*>
     t.version := S2T(t.buff, t.token);
     Debug.Out("ParseVersion, t.version = " & t.version);
     Next(t);
-    t.tokMustBeChar(';')
+    t.tokMustBeChar(';',"VERSION")
   END ParseVersion;
 
-PROCEDURE ParseDividerChar(t : T; ref : REFANY) =
+PROCEDURE ParseDividerChar(t : T; ref : REFANY) RAISES { E } =
   BEGIN
     <*ASSERT t = ref*>
     WITH chars = SUBARRAY(t.buff, t.token.start, t.token.n) DO
@@ -189,10 +232,10 @@ PROCEDURE ParseDividerChar(t : T; ref : REFANY) =
       DefLexer.DividerChar(t.state, chars[1])
     END;
     Next(t);
-    t.tokMustBeChar(';')
+    t.tokMustBeChar(';',"DIVIDERCHAR")
   END ParseDividerChar;
 
-PROCEDURE ParseBusbitChars(t : T; ref : REFANY) =
+PROCEDURE ParseBusbitChars(t : T; ref : REFANY) RAISES { E } =
   BEGIN
     <*ASSERT t = ref*>
     WITH chars = SUBARRAY(t.buff, t.token.start, t.token.n) DO
@@ -202,7 +245,7 @@ PROCEDURE ParseBusbitChars(t : T; ref : REFANY) =
       DefLexer.BusbitChars(t.state, SUBARRAY(chars, 1, 2))
     END;
     Next(t);
-    t.tokMustBeChar(';')
+    t.tokMustBeChar(';',"BUSBITCHARS")
   END ParseBusbitChars;
 
 (**********************************************************************)
@@ -215,20 +258,20 @@ TYPE
     end := FALSE;
   END;
 
-PROCEDURE ParseDesign(t : T; ref : REFANY) =
+PROCEDURE ParseDesign(t : T; ref : REFANY) RAISES { E } =
   VAR 
     des := NEW(Design);
   BEGIN
     <*ASSERT t = ref*>
     des.name := S2T(t.buff, t.token);
     Next(t);
-    t.tokMustBeChar(';');
+    t.tokMustBeChar(';',"DESIGN");
     
     LOOP
       Debug.Out("DefFormat.ParseDesign kw=" & S2T(t.buff, t.token));
       WITH f = designDisp.get(SUBARRAY(t.buff, t.token.start, t.token.n)) DO
         IF f = NIL THEN
-          Debug.Error("DefFormat.ParseDesign, syntax error \"" & S2T(t.buff, t.token) & "\"")
+          RAISE E("DefFormat.ParseDesign, syntax error \"" & S2T(t.buff, t.token) & "\"")
         ELSE
           Next(t);
           f(t, des)
@@ -237,45 +280,93 @@ PROCEDURE ParseDesign(t : T; ref : REFANY) =
     END
   END ParseDesign;
 
-PROCEDURE ParseDesignUnits(t : T; ref : REFANY) =
+PROCEDURE ParseDesignUnits(t : T; ref : REFANY) RAISES { E } =
   BEGIN
     WITH des = NARROW(ref, Design) DO
       t.tokMustBeChars(DISTANCEa^);
       t.tokMustBeChars(MICRONSa^);
       
       IF NOT t.getCard(des.distUnits) THEN
-        Debug.Error("ParseDesignUnits: ?syntax error: \"" & S2T(t.buff, t.token) & "\"")
+        RAISE E("ParseDesignUnits: ?syntax error: \"" & S2T(t.buff, t.token) & "\"")
       END;
-      t.tokMustBeChar(';')
+      t.tokMustBeChar(';',"DESIGNUNITS")
     END
   END ParseDesignUnits;
 
-PROCEDURE ParseDieArea(t : T; ref : REFANY) 
-  RAISES { ParseError.E } =
+PROCEDURE ParseDieArea(t : T; ref : REFANY) RAISES { E } =
   BEGIN
     WITH des = NARROW(ref, Design),
          seq = NEW(DefPointSeq.T).init() DO
       LOOP
         IF SUBARRAY(t.buff, t.token.start, t.token.n) = Semia^ THEN
           IF seq.size() < 2 THEN
-            RAISE ParseError.E("DIEAREA with fewer than 2 points")
+            RAISE E("DIEAREA with fewer than 2 points")
           END;
           des.diearea := seq;
-          Next(t)
+          Next(t);
+          RETURN
         END;
         VAR 
           p : DefPoint.T;
         BEGIN
-          MustBePoint(t, p);
+          MustBePoint(t, p, "DIEAREA");
           seq.addhi(p)
         END
       END
     END
   END ParseDieArea;
 
+PROCEDURE ParseRow(t : T; ref : REFANY) RAISES { E } = 
+  VAR
+    rowName, siteName, siteOrient : TEXT;
+    origX, origY : INTEGER;
+    numX, numY : CARDINAL := 1;
+    stepX, stepY : INTEGER := 0;
+  BEGIN
+    WITH des = NARROW(ref, Design) DO
+      IF NOT t.getIdentifier(rowName) OR NOT t.getIdentifier(siteName) THEN
+        RAISE E("ParseRow, rowName, siteName")
+      END;
+
+      MustBeInt(t, origX);
+      MustBeInt(t, origY);
+
+      IF NOT t.getIdentifier(siteOrient) THEN
+        RAISE E("ParseRow, siteOrient")
+      END;
+
+      IF GetToken(t, Semia^) THEN
+        RETURN
+      END;
+
+      IF GetToken(t, DOa^) THEN
+        IF NOT GetCard(t, numX) THEN RAISE E("ParseRow, numX") END;
+        
+        IF NOT GetToken(t, BYa^) THEN RAISE E("ParseRow, DO...BY") END;
+
+        IF NOT GetCard(t, numY) THEN  RAISE E("ParseRow, numY") END;
+        
+        IF GetToken(t, Semia^) THEN
+          RETURN
+        ELSIF GetToken(t, STEPa^) THEN
+
+          MustBeInt(t, stepX);
+          MustBeInt(t, stepY)
+        END;
+
+        IF GetToken(t, Semia^) THEN
+          RETURN
+        ELSE
+          <*ASSERT FALSE*> (* ROW-PROPERTY not implemented yet *)
+        END
+      END
+    END
+  END ParseRow;
+
 (**********************************************************************)
+
 PROCEDURE ParsePropertyDefinitions(t : T; ref : REFANY) 
-  RAISES { ParseError.E } =
+  RAISES { E } =
   BEGIN
     WITH des = NARROW(ref, Design) DO
       ParseBlock(PROPERTYDEFINITIONSa^, propDisp, t, ref)
@@ -285,7 +376,7 @@ PROCEDURE ParsePropertyDefinitions(t : T; ref : REFANY)
 PROCEDURE ParseBlock(READONLY type : ARRAY OF CHAR;
                      keywords      : DefParseTrie.T;
                      t             : T;
-                     ref           : REFANY) RAISES { ParseError.E } =
+                     ref           : REFANY) RAISES { E } =
   BEGIN
     LOOP
       Debug.Out(A2T(type) & " kw=" & S2T(t.buff, t.token));
@@ -298,14 +389,14 @@ PROCEDURE ParseBlock(READONLY type : ARRAY OF CHAR;
               Next(t);
               RETURN
             ELSE
-              RAISE ParseError.E ("? END " & A2T(nxt2) & " ending block " & A2T(type))
+              RAISE E ("? END " & A2T(nxt2) & " ending block " & A2T(type))
             END
           END
         END;
 
         WITH f = keywords.get(nxt) DO
           IF f = NIL THEN
-            RAISE ParseError.E(A2T(type) & 
+            RAISE E(A2T(type) & 
                   ", syntax error \"" & S2T(t.buff, t.token) & "\"")
           ELSE
             Next(t);
@@ -319,7 +410,7 @@ PROCEDURE ParseBlock(READONLY type : ARRAY OF CHAR;
 (**********************************************************************)
 
 PROCEDURE IgnorePropertyDefinition(t : T; ref : REFANY) 
-  RAISES { ParseError.E } =
+  RAISES { E } =
   BEGIN
     (* skip name *) 
     Next(t); 
@@ -378,6 +469,9 @@ VAR
   Semia     := MakeCA(";");
   RANGEa    := MakeCA("RANGE");
   ENDa      := MakeCA("END");
+  DOa       := MakeCA("DO");
+  BYa       := MakeCA("BY");
+  STEPa       := MakeCA("STEP");
 
 BEGIN 
 
@@ -389,7 +483,7 @@ BEGIN
   AddKeyword(designDisp, "UNITS",               ParseDesignUnits);
   AddKeyword(designDisp, "PROPERTYDEFINITIONS", ParsePropertyDefinitions);
   AddKeyword(designDisp, "DIEAREA",             ParseDieArea);
-  AddKeyword(designDisp, "ROW",                 NIL);
+  AddKeyword(designDisp, "ROW",                 ParseRow);
   AddKeyword(designDisp, "TRACKS",              NIL);
   AddKeyword(designDisp, "GCELLGRID",           NIL);
   AddKeyword(designDisp, "VIAS",                NIL);
