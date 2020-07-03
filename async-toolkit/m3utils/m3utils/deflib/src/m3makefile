@@ -7,9 +7,10 @@ module ("DefFormat")
 module ("DefLexer")
 
 interface ("ParseProc")
+interface ("ParseProcRec")
 interface ("ParseError")
 
-trie("DefParse", "Char", "ParseProc")
+trie("DefParse", "Char", "ParseProcRec")
 
 interface ("DefPoint")
 sequence  ("DefPoint", "DefPoint")

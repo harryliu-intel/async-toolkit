@@ -4,7 +4,7 @@ FROM DefLexer IMPORT String, State, Buffer, Digit;
 IMPORT Debug;
 IMPORT Text;
 IMPORT DefParseTrie;
-IMPORT ParseProc;
+IMPORT ParseProc, ParseProcRec;
 IMPORT DefLexer;
 IMPORT DefPoint, DefPointSeq;
 IMPORT Fmt;
@@ -19,27 +19,33 @@ REVEAL
 
     version : TEXT;
 
+    lately := ParseProcRec.Default;
+
   METHODS
     getCard(VAR c : CARDINAL) : BOOLEAN := GetCard;
     error() := Error;
     getIdentifier(VAR txt : TEXT) : BOOLEAN := GetIdentifier;
-    tokMustBeChar(c : CHAR; dbg : TEXT := NIL) RAISES { E } := 
-                                              TokMustBeChar;
-    tokMustNotBeChar(c : CHAR; dbg : TEXT := NIL) RAISES { E } := 
-                                                 TokMustNotBeChar;
-    tokMustBeChars(READONLY a : ARRAY OF CHAR; dbg : TEXT := NIL) RAISES { E } := 
-                                                                 TokMustBeChars;
   END;
 
 CONST DQ = '"';
 
-PROCEDURE TokMustBeChar(t : T; c : CHAR; dbg : TEXT) RAISES { E } =
+PROCEDURE MustBeSingle(t : T; VAR c : CHAR) RAISES { E } =
   BEGIN
-    IF NOT GetChar(t, c) THEN
-      RAISE E("TokMustBeChar: "&BrackOrEmpty(dbg)&" expected '" & Text.FromChar(c) & 
-        "' but got \"" & S2T(t.buff, t.token) & "\"")
+    IF NOT GetSingle(t, c) THEN
+      RAISE E("MustBeSingle: "&BrackOrEmpty(t.lately.nm)&" expected single but got \"" & S2T(t.buff, t.token) & "\"")
     END
-  END TokMustBeChar;
+  END MustBeSingle;
+
+PROCEDURE GetSingle(t : T; VAR c : CHAR) : BOOLEAN =
+  BEGIN
+    IF t.token.n = 1 THEN
+      c := t.buff[t.token.start];
+      Next(t);
+      RETURN TRUE
+    ELSE
+      RETURN FALSE
+    END
+  END GetSingle;
 
 PROCEDURE GetChar(t : T; c : CHAR) : BOOLEAN =
   BEGIN
@@ -50,6 +56,13 @@ PROCEDURE GetChar(t : T; c : CHAR) : BOOLEAN =
       RETURN FALSE
     END
   END GetChar;
+
+PROCEDURE MustBeChar(t : T;  c : CHAR) RAISES { E } =
+  BEGIN
+    IF NOT GetChar(t, c) THEN
+      RAISE E("MustBeChar: "&BrackOrEmpty(t.lately.nm)&" expected '"&Text.FromChar(c)&"' but got \"" & S2T(t.buff, t.token) & "\"")
+    END
+  END MustBeChar;
 
 PROCEDURE GetCharSet(t : T; s : SET OF CHAR; VAR c : CHAR) : BOOLEAN =
   BEGIN
@@ -72,25 +85,42 @@ PROCEDURE GetToken(t : T; READONLY tok : ARRAY OF CHAR) : BOOLEAN =
     END
   END GetToken;
 
-PROCEDURE TokMustNotBeChar(t : T; c : CHAR; dbg : TEXT) RAISES { E } =
+PROCEDURE MustBeToken(t : T; READONLY tok : ARRAY OF CHAR) RAISES { E } =
+  BEGIN
+    IF NOT GetToken(t, tok) THEN
+      RAISE E("MustBeToken: "&BrackOrEmpty(t.lately.nm)&" expected '" & A2T(tok) & 
+        "' but got \"" & S2T(t.buff, t.token) & "\"")
+    END
+  END MustBeToken;
+
+PROCEDURE MustNotBeChar(t : T; c : CHAR) RAISES { E } =
   BEGIN
     IF t.token.n = 1 AND t.buff[t.token.start] = c THEN
-      RAISE E("TokMustNotBeChar: "&BrackOrEmpty(dbg)&" illegal \"" & 
+      RAISE E("MustNotBeChar: "&BrackOrEmpty(t.lately.nm)&" illegal \"" & 
             S2T(t.buff, t.token) & "\"")
     ELSE
       Next(t)
     END
-  END TokMustNotBeChar;
+  END MustNotBeChar;
 
-PROCEDURE TokMustBeChars(t : T; READONLY a : ARRAY OF CHAR; dbg : TEXT) RAISES { E } =
+PROCEDURE MustBeChars(t : T; READONLY a : ARRAY OF CHAR) RAISES { E } =
   BEGIN
     IF t.token.n # NUMBER(a) OR 
        SUBARRAY(t.buff, t.token.start, t.token.n) # a THEN
-      RAISE E("TokMustBeChars: "&BrackOrEmpty(dbg)&" expected '" & Text.FromChars(a) & 
+      RAISE E("MustBeChars: "&BrackOrEmpty(t.lately.nm)&" expected '" & Text.FromChars(a) & 
         "' but got \"" & S2T(t.buff, t.token) & "\"")
     END;
     Next(t)
-  END TokMustBeChars;
+  END MustBeChars;
+
+PROCEDURE MustBeCharSet(t : T; s : SET OF CHAR; VAR c : CHAR) RAISES { E } =
+  BEGIN
+    IF t.token.n # 1 OR NOT t.buff[t.token.start] IN s THEN
+      RAISE E("MustBeCharSet: unexpected \"" & S2T(t.buff, t.token) & "\"")
+    END;
+    c := t.buff[t.token.start];
+    Next(t)
+  END MustBeCharSet;
 
 PROCEDURE BrackOrEmpty(txt : TEXT) : TEXT =
   BEGIN
@@ -115,7 +145,7 @@ PROCEDURE GetCard(t : T; VAR c : CARDINAL) : BOOLEAN =
 PROCEDURE MustBeCard(t : T; VAR c : CARDINAL) RAISES { E } = 
   BEGIN
     IF NOT GetCard(t, c) THEN
-      RAISE E ("MustBeCard, expected number")
+      RAISE E ("MustBeCard, "&BrackOrEmpty(t.lately.nm)&" expected number")
     END
   END MustBeCard;
 
@@ -135,22 +165,34 @@ PROCEDURE MustBeInt(t : T; VAR i : INTEGER) RAISES { E } =
     ELSIF t.token.n = 1 AND t.buff[t.token.start] = '-' THEN
       Next(t); 
       IF NOT GetCard(t, j) THEN
-        RAISE E("MustBeInt, expected number")
+        RAISE E("MustBeInt, "&BrackOrEmpty(t.lately.nm)&" expected number")
       END;
       i := -j;
       RETURN
     ELSE
-      RAISE E("MustBeInt, expected integer")
+      RAISE E("MustBeInt, "&BrackOrEmpty(t.lately.nm)&" expected integer")
     END
   END MustBeInt;
 
-PROCEDURE MustBePoint(t : T; VAR p : DefPoint.T; dbg : TEXT := NIL) RAISES { E } =
+PROCEDURE MustBePoint(t : T; VAR p : DefPoint.T) RAISES { E } =
   BEGIN
-    t.tokMustBeChar('(');
+    MustBeChar(t,'(');
     MustBeInt(t, p.x);
     MustBeInt(t, p.y);
-    t.tokMustBeChar(')',dbg);
+    MustBeChar(t,')');
   END MustBePoint;
+
+PROCEDURE GetPoint(t : T; VAR p : DefPoint.T) : BOOLEAN RAISES { E } =
+  (* a bit of a hack because of the LL(1) capability here *)
+  BEGIN
+    IF NOT GetChar(t, '(') THEN
+      RETURN FALSE
+    END;
+    MustBeInt(t, p.x);
+    MustBeInt(t, p.y);
+    MustBeChar(t,')');
+    RETURN TRUE
+  END GetPoint;
   
 PROCEDURE Error(t : T) =
   BEGIN
@@ -167,6 +209,10 @@ PROCEDURE Next(t : T) =
   END Next;
   
 PROCEDURE GetIdentifier(t : T; VAR ident : TEXT) : BOOLEAN =
+  (* we could use a char buffer instead of TEXT here to reduce mem alloc *)
+
+  (* this needs to handle multiple arcs and arraying! *)
+
   VAR
     ok := FALSE;
   BEGIN
@@ -191,8 +237,15 @@ PROCEDURE GetIdentifier(t : T; VAR ident : TEXT) : BOOLEAN =
     D("Identifier"); 
     RETURN TRUE
   END GetIdentifier;
-  
-  <*NOWARN*>PROCEDURE D(what : TEXT) = BEGIN (*IO.Put(what & "\n")*) END D;
+
+PROCEDURE MustBeIdentifier(t : T; VAR ident : TEXT) RAISES { E } =
+  BEGIN
+    IF NOT GetIdentifier(t, ident) THEN
+      RAISE E ("MustBeIdentifier: " & BrackOrEmpty(t.lately.nm) & " expected identifier here : " & S2T(t.buff, t.token))
+    END;
+  END MustBeIdentifier;
+
+<*NOWARN*>PROCEDURE D(what : TEXT) = BEGIN (*IO.Put(what & "\n")*) END D;
 
 PROCEDURE Parse(rd : Rd.T) : T RAISES { E } =
 
@@ -209,13 +262,12 @@ PROCEDURE Parse(rd : Rd.T) : T RAISES { E } =
       WHILE NOT t.state.eof DO
         (* note that this type of "block" is a bit different because
            it doesn't end with an END statement *)
-        ParseBlock(ARRAY OF CHAR {} ,
+        ParseBlock(t,
                    topDisp, 
-                   t, 
                    t)        
       END
     EXCEPT
-      E(x) => RAISE E ("DefFormat.Parse: Error" & x & ", line " & Fmt.Int(t.state.line))
+      E(x) => RAISE E ("DefFormat.Parse: Error " & x & ", line " & Fmt.Int(t.state.line))
     END;
 
     RETURN t
@@ -235,7 +287,7 @@ PROCEDURE ParseVersion(t : T; ref : REFANY) RAISES { E } =
     t.version := S2T(t.buff, t.token);
     Debug.Out("ParseVersion, t.version = " & t.version);
     Next(t);
-    t.tokMustBeChar(';',"VERSION")
+    MustBeChar(t,';')
   END ParseVersion;
 
 PROCEDURE ParseDividerChar(t : T; ref : REFANY) RAISES { E } =
@@ -248,7 +300,7 @@ PROCEDURE ParseDividerChar(t : T; ref : REFANY) RAISES { E } =
       DefLexer.DividerChar(t.state, chars[1])
     END;
     Next(t);
-    t.tokMustBeChar(';',"DIVIDERCHAR")
+    MustBeChar(t,';')
   END ParseDividerChar;
 
 PROCEDURE ParseBusbitChars(t : T; ref : REFANY) RAISES { E } =
@@ -261,7 +313,7 @@ PROCEDURE ParseBusbitChars(t : T; ref : REFANY) RAISES { E } =
       DefLexer.BusbitChars(t.state, SUBARRAY(chars, 1, 2))
     END;
     Next(t);
-    t.tokMustBeChar(';',"BUSBITCHARS")
+    MustBeChar(t,';')
   END ParseBusbitChars;
 
 (**********************************************************************)
@@ -281,31 +333,19 @@ PROCEDURE ParseDesign(t : T; ref : REFANY) RAISES { E } =
     <*ASSERT t = ref*>
     des.name := S2T(t.buff, t.token);
     Next(t);
-    t.tokMustBeChar(';',"DESIGN");
+    MustBeChar(t,';');
     
-    LOOP
-      Debug.Out("DefFormat.ParseDesign kw=" & S2T(t.buff, t.token));
-      WITH f = designDisp.get(SUBARRAY(t.buff, t.token.start, t.token.n)) DO
-        IF f = NIL THEN
-          RAISE E("DefFormat.ParseDesign, syntax error \"" & S2T(t.buff, t.token) & "\"")
-        ELSE
-          Next(t);
-          f(t, des)
-        END
-      END
-    END
+    ParseBlock(t, designDisp, des);
   END ParseDesign;
 
 PROCEDURE ParseDesignUnits(t : T; ref : REFANY) RAISES { E } =
   BEGIN
     WITH des = NARROW(ref, Design) DO
-      t.tokMustBeChars(DISTANCEa^);
-      t.tokMustBeChars(MICRONSa^);
+      MustBeChars(t, DISTANCEa^);
+      MustBeChars(t, MICRONSa^);
       
-      IF NOT t.getCard(des.distUnits) THEN
-        RAISE E("ParseDesignUnits: ?syntax error: \"" & S2T(t.buff, t.token) & "\"")
-      END;
-      t.tokMustBeChar(';',"DESIGNUNITS")
+      MustBeCard(t, des.distUnits);
+      MustBeChar(t,';')
     END
   END ParseDesignUnits;
 
@@ -325,7 +365,7 @@ PROCEDURE ParseDieArea(t : T; ref : REFANY) RAISES { E } =
         VAR 
           p : DefPoint.T;
         BEGIN
-          MustBePoint(t, p, "DIEAREA");
+          MustBePoint(t, p);
           seq.addhi(p)
         END
       END
@@ -405,10 +445,7 @@ PROCEDURE ParseTracks(t : T; ref : REFANY) RAISES { E } =
 
     IF GetToken(t, MASKa^) THEN
       MustBeCard(t, mask);
-      
-      IF NOT GetToken(t, SAMEMASKa^) THEN
-        RAISE E ("ParseTracks, ?MASK..SAMEMASK")
-      END
+      MustBeChars(t, SAMEMASKa^);
     END;
 
     IF NOT GetToken(t, LAYERa^) THEN
@@ -417,56 +454,364 @@ PROCEDURE ParseTracks(t : T; ref : REFANY) RAISES { E } =
 
     (* now pointing to layer name *)
     
-    t.tokMustNotBeChar(';');
+    MustNotBeChar(t,';');
 
     (* do not support multiple layers at this time *)
 
-    t.tokMustBeChar(';')
+    MustBeChar(t,';')
   END ParseTracks;
 
+PROCEDURE ParseGCellGrid(t : T; ref : REFANY) RAISES { E } = 
+  VAR
+    c : CHAR;
+    start : INTEGER;
+    numRowsCols : CARDINAL;
+    step : CARDINAL;
+  BEGIN
+    WITH des = NARROW(ref, Design) DO
+      MustBeCharSet(t, SET OF CHAR { 'X', 'Y' }, c);
+      MustBeInt(t, start);
+      MustBeChars(t, DOa^);
+      MustBeCard(t, numRowsCols);
+      MustBeChars(t, STEPa^);
+      MustBeCard(t, step);
+      MustBeChar(t, ';');
+    END
+  END ParseGCellGrid;
+
+PROCEDURE ParseVias(t : T; ref : REFANY) RAISES { E } = 
+  VAR
+    numVias : CARDINAL;
+  BEGIN
+    WITH des = NARROW(ref, Design) DO
+      MustBeCard(t, numVias);
+      MustBeChar(t, ';');
+
+      ParseMinusBlock(t, ref, numVias, ParseVia);
+    END
+  END ParseVias;
+
+PROCEDURE ParseNonDefaultRules(t : T; ref : REFANY) RAISES { E } = 
+  VAR
+    numNonDefaultRules : CARDINAL;
+  BEGIN
+    WITH des = NARROW(ref, Design) DO
+      MustBeCard(t, numNonDefaultRules);
+      MustBeChar(t, ';');
+
+      ParseMinusBlock(t, ref, numNonDefaultRules, ParseNonDefaultRule);
+    END
+  END ParseNonDefaultRules;
+
+PROCEDURE ParseRegions(t : T; ref : REFANY) RAISES { E } = 
+  VAR
+    num : CARDINAL;
+  BEGIN
+    WITH des = NARROW(ref, Design) DO
+      MustBeCard(t, num);
+      MustBeChar(t, ';');
+
+      ParseMinusBlock(t, ref, num, ParseRegion);
+    END
+  END ParseRegions;
+
+PROCEDURE ParseComponents(t : T; ref : REFANY) RAISES { E } = 
+  VAR
+    num : CARDINAL;
+  BEGIN
+    WITH des = NARROW(ref, Design) DO
+      MustBeCard(t, num);
+      MustBeChar(t, ';');
+
+      ParseMinusBlock(t, ref, num, ParseComponent);
+    END
+  END ParseComponents;
+
+PROCEDURE ParseMinusBlock(t : T; ref : REFANY; cnt : CARDINAL; f : ParseProc.T) 
+  RAISES { E } =
+  BEGIN
+    FOR i := 0 TO cnt - 1 DO
+      MustBeChar(t, '-');
+      f(t, ref)
+    END;
+
+    (* parse END statement, e.g., END VIAS for VIAS block *)
+    MustBeChars(t, ENDa^);    
+    MustBeChars(t, t.lately.ca^)
+  END ParseMinusBlock;
+
+PROCEDURE ParseVia(t : T; ref : REFANY) RAISES { E } =
+  VAR
+    nm : TEXT;
+    c  : CHAR;
+  BEGIN
+    MustBeIdentifier(t, nm);
+    LOOP
+      MustBeSingle(t, c);
+      CASE c OF 
+        ';' => RETURN
+      |
+        '+' =>
+        
+        IF GetToken(t, RECTa^) THEN
+          VAR 
+            p1, p2 : DefPoint.T;
+            layer : TEXT;
+            maskNo : CARDINAL;
+          BEGIN
+            MustBeIdentifier(t, layer);
+            IF GetChar(t, '+') THEN
+              MustBeToken(t, MASKa^);
+              MustBeCard(t, maskNo)
+            END;
+            MustBePoint(t, p1);
+            MustBePoint(t, p2)
+          END
+        ELSE
+          RAISE E("ParseVia: expected RECT")
+        END
+      ELSE
+        RAISE E("ParseVia: unexpected '" & Text.FromChar(c) & "'")
+      END
+    END
+  END ParseVia;
+
+PROCEDURE ParseComponent(t : T; ref : REFANY) RAISES { E } =
+  VAR
+    c : CHAR;
+    compName, modelName, macroName : TEXT;
+    p : DefPoint.T;
+    left, bottom, right, top, haloDist, weight : CARDINAL;
+    prop : PropertyBinding;
+    orient, minLayer, maxLayer, regionName : TEXT;
+  BEGIN
+    MustBeIdentifier(t, compName);
+    MustBeIdentifier(t, modelName);
+    LOOP
+      MustBeSingle(t, c);
+      CASE c OF
+        ';' => RETURN
+      |
+        '+' =>
+        IF    GetToken(t, EEQMASTERa^) THEN
+          MustBeIdentifier(t, macroName)
+        ELSIF GetToken(t, SOURCEa^) THEN
+          IF    GetToken(t, NETLISTa^) THEN
+          ELSIF GetToken(t, DISTa^) THEN
+          ELSIF GetToken(t, USERa^) THEN
+          ELSIF GetToken(t, TIMINGa^) THEN
+          ELSE
+            RAISE E ("ParseComponent ?SOURCE")
+          END
+        ELSIF GetToken(t, FIXEDa^) THEN
+          MustBePoint(t, p);
+          MustBeIdentifier(t, orient) (* should be a special func *)
+        ELSIF GetToken(t, COVERa^) THEN
+          MustBePoint(t, p);
+          MustBeIdentifier(t, orient) (* should be a special func *)
+        ELSIF GetToken(t, PLACEDa^) THEN
+          MustBePoint(t, p);
+          MustBeIdentifier(t, orient) (* should be a special func *)
+        ELSIF GetToken(t, UNPLACEDa^) THEN
+        ELSIF GetToken(t, HALOa^) THEN
+          IF GetToken(t, SOFTa^) THEN
+          END;
+          MustBeCard(t, left);
+          MustBeCard(t, bottom);
+          MustBeCard(t, right);
+          MustBeCard(t, top)
+        ELSIF GetToken(t, ROUTEHALOa^) THEN
+          MustBeCard(t, haloDist);
+          MustBeIdentifier(t, minLayer);
+          MustBeIdentifier(t, maxLayer)
+        ELSIF GetToken(t, WEIGHTa^) THEN
+          MustBeCard(t, weight)
+        ELSIF GetToken(t, REGIONa^) THEN
+          MustBeIdentifier(t, regionName)
+        ELSIF GetProperty(t, ref, prop) THEN
+        ELSE
+          RAISE E("ParseComponent unexpected text")
+        END
+      ELSE
+        RAISE E("ParseComponent: unexpected '" & Text.FromChar(c) & "'")
+      END
+    END          
+  END ParseComponent;
+
+PROCEDURE ParseNonDefaultRule(t : T; ref : REFANY) RAISES { E } =
+  VAR
+    nm : TEXT;
+    c : CHAR;
+    prop : PropertyBinding;
+  BEGIN
+    MustBeIdentifier(t, nm);
+    LOOP
+      MustBeSingle(t, c);
+      CASE c OF 
+        ';' => RETURN
+      |
+        '+' =>
+        IF    GetToken(t, HARDSPACINGa^) THEN
+        ELSIF GetToken(t, LAYERa^) THEN
+          VAR
+            layer : TEXT;
+            width, diagWidth, spacing, wireExt : CARDINAL;
+          BEGIN
+            MustBeIdentifier(t, layer);
+            MustBeToken(t, WIDTHa^);
+            MustBeCard(t, width);
+            IF    GetToken(t, DIAGWIDTHa^) THEN
+              MustBeCard(t, diagWidth)
+            ELSIF GetToken(t, SPACINGa^) THEN
+              MustBeCard(t, spacing)
+            ELSIF GetToken(t, WIREEXTa^) THEN
+              MustBeCard(t, wireExt)
+            ELSE
+              RAISE E("ParseNonDefaultRule: LAYER: unknown keyword")
+            END
+          END
+        ELSIF GetToken(t, VIAa^) THEN
+          VAR
+            viaName : TEXT;
+          BEGIN
+            MustBeIdentifier(t, viaName)
+          END
+        ELSIF GetToken(t, VIARULEa^) THEN
+          VAR
+            viaRuleName : TEXT;
+          BEGIN
+            MustBeIdentifier(t, viaRuleName)
+          END
+        ELSIF GetToken(t, MINCUTSa^) THEN
+          VAR 
+            cutLayerName : TEXT;
+            numCuts : CARDINAL;
+          BEGIN
+            MustBeIdentifier(t, cutLayerName);
+            MustBeCard(t, numCuts)
+          END
+        ELSIF GetProperty(t, ref, prop) THEN
+        ELSE
+          RAISE E("ParseNonDefaultRule: unknown keyword")
+        END
+         
+      ELSE
+        RAISE E("ParseNonDefaultRule: unexpected '" & Text.FromChar(c) & "'")
+      END
+    END
+        
+  END ParseNonDefaultRule;
+
+TYPE
+  PropertyBinding = RECORD
+    property : TEXT; (* should really point to a Property.T *)
+    binding  : NULL; (* needs to be a type-tagged value *)
+  END;
+
+PROCEDURE GetProperty(t : T; 
+                      ref : REFANY; 
+                      VAR pb : PropertyBinding) : BOOLEAN
+  RAISES { E } =
+  BEGIN
+    IF GetToken(t, PROPERTYa^) THEN
+      MustBeIdentifier(t, pb.property);
+      Next(t); (* should put it in binding *)
+      RETURN TRUE
+    ELSE
+      RETURN FALSE
+    END
+  END GetProperty;
+
+PROCEDURE ParseRegion(t : T; ref : REFANY) RAISES { E } =
+  VAR
+    nm : TEXT;
+    c  : CHAR;
+    p, q : DefPoint.T;
+    prop : PropertyBinding;
+  BEGIN
+    MustBeIdentifier(t, nm);
+    LOOP
+      WHILE GetPoint(t, p) DO (* points are in pairs *)
+        MustBePoint(t, q)
+      END;
+
+      MustBeSingle(t, c);
+
+      CASE c OF 
+        ';' => RETURN
+      |
+        '+' =>
+        IF GetToken(t, TYPEa^) THEN
+          IF    GetToken(t, FENCEa^) THEN
+          ELSIF GetToken(t, GUIDEa^) THEN
+          ELSE
+            RAISE E("ParseRegion TYPE")
+          END
+        ELSIF GetProperty(t, ref, prop) THEN
+        ELSE
+          RAISE E("ParseRegion")
+        END
+      ELSE
+        RAISE E("ParseRegion: unexpected '" & Text.FromChar(c) & "'")
+      END
+    END
+  END ParseRegion;        
+        
 (**********************************************************************)
 
 PROCEDURE ParsePropertyDefinitions(t : T; ref : REFANY) 
   RAISES { E } =
   BEGIN
     WITH des = NARROW(ref, Design) DO
-      ParseBlock(PROPERTYDEFINITIONSa^, propDisp, t, ref)
+      ParseBlock(t, propDisp, ref)
     END
   END ParsePropertyDefinitions;
 
-PROCEDURE ParseBlock(READONLY type : ARRAY OF CHAR;
+PROCEDURE ParseBlock(t             : T;
                      keywords      : DefParseTrie.T;
-                     t             : T;
                      ref           : REFANY) RAISES { E } =
   BEGIN
     LOOP
-      Debug.Out(A2T(type) & " kw=" & S2T(t.buff, t.token));
+      Debug.Out(t.lately.nm & " kw=" & S2T(t.buff, t.token));
       WITH nxt = SUBARRAY(t.buff, t.token.start, t.token.n) DO
         IF nxt = ENDa^ THEN
           Next(t);
 
           WITH nxt2 = SUBARRAY(t.buff, t.token.start, t.token.n) DO
-            IF nxt2 = type THEN 
+            IF nxt2 = t.lately.ca^ THEN 
               Next(t);
               RETURN
             ELSE
-              RAISE E ("? END " & A2T(nxt2) & " ending block " & A2T(type))
+              RAISE E ("? END " & A2T(nxt2) & " ending block " & t.lately.nm)
             END
           END
         END;
 
-        WITH f = keywords.get(nxt) DO
+        WITH rec = keywords.get(nxt),
+             f   = rec.f DO
           IF f = NIL THEN
-            RAISE E(A2T(type) & 
+            RAISE E(BrackOrEmpty(t.lately.nm) & 
                   ", syntax error \"" & S2T(t.buff, t.token) & "\"")
           ELSE
             Next(t);
-            f(t, ref)
+            VAR old := t.lately; BEGIN
+              t.lately := rec;
+              f(t, ref);
+              t.lately := old
+            END
           END
         END
       END
     END
   END ParseBlock;
+
+PROCEDURE ParseComponentMaskShift(t : T; ref : REFANY) RAISES { E } = 
+  VAR
+    id : TEXT;
+  BEGIN
+    WHILE GetIdentifier(t, id) DO (* skip *) END;
+    MustBeChar(t, ';')
+  END ParseComponentMaskShift;
 
 (**********************************************************************)
 
@@ -484,23 +829,21 @@ PROCEDURE IgnorePropertyDefinition(t : T; ref : REFANY)
         (* skip *)
       ELSIF nxt = RANGEa^ THEN
         Next(t);
-        t.tokMustNotBeChar(';');
-        t.tokMustNotBeChar(';');
+        MustNotBeChar(t,';');
+        MustNotBeChar(t,';');
       ELSE
         (* was def value *)
         Next(t);
       END
     END;
-    t.tokMustBeChar(';')
+    MustBeChar(t,';')
   END IgnorePropertyDefinition;
 
 (**********************************************************************)
 
 VAR 
-  topDisp    := NEW(DefParseTrie.T).init(NIL);
-  designDisp := NEW(DefParseTrie.T).init(NIL);
-  propDisp   := NEW(DefParseTrie.T).init(NIL);
-
+  topDisp, designDisp, propDisp    := 
+      NEW(DefParseTrie.T).init(ParseProcRec.Default);
 
 PROCEDURE AddKeyword(to : DefParseTrie.T; 
                      kw : TEXT;
@@ -508,7 +851,7 @@ PROCEDURE AddKeyword(to : DefParseTrie.T;
   VAR
     buff := MakeCA(kw);
   BEGIN
-    EVAL to.put(buff^, f)
+    EVAL to.put(buff^, ParseProcRec.T { nm := kw, f := f, ca := buff})
   END AddKeyword;
 
 PROCEDURE MakeCA(txt : TEXT) : REF ARRAY OF CHAR =
@@ -534,9 +877,37 @@ VAR
   BYa       := MakeCA("BY");
   STEPa       := MakeCA("STEP");
   MASKa       := MakeCA("MASK");
+  RECTa       := MakeCA("RECT");
+  VIAa       := MakeCA("VIA");
+  VIARULEa       := MakeCA("VIARULE");
+  WIREEXTa       := MakeCA("WIREEXT");
   LAYERa       := MakeCA("LAYER");
   SAMEMASKa       := MakeCA("SAMEMASK");
-
+  SPACINGa    := MakeCA("SPACING");
+  HARDSPACINGa    := MakeCA("HARDSPACING");
+  WIDTHa    := MakeCA("WIDTH");
+  MINCUTSa    := MakeCA("MINCUTS");
+  PROPERTYa    := MakeCA("PROPERTY");
+  DIAGWIDTHa    := MakeCA("DIAGWIDTH");
+  TYPEa    := MakeCA("TYPE");
+  FENCEa    := MakeCA("FENCE");
+  GUIDEa    := MakeCA("GUIDE");
+  EEQMASTERa    := MakeCA("EEQMASTER");
+  SOURCEa    := MakeCA("SOURCE");
+  NETLISTa    := MakeCA("NETLIST");
+  DISTa    := MakeCA("DIST");
+  USERa    := MakeCA("USER");
+  TIMINGa    := MakeCA("TIMING");
+  FIXEDa    := MakeCA("FIXED");
+  COVERa    := MakeCA("COVER");
+  PLACEDa    := MakeCA("PLACED");
+  UNPLACEDa    := MakeCA("UNPLACED");
+  HALOa    := MakeCA("HALO");
+  SOFTa    := MakeCA("SOFT");
+  ROUTEHALOa    := MakeCA("ROUTEHALO");
+  WEIGHTa    := MakeCA("WEIGHT");
+  REGIONa    := MakeCA("REGION");
+  
 BEGIN 
 
   AddKeyword(topDisp, "VERSION",             ParseVersion);
@@ -549,12 +920,12 @@ BEGIN
   AddKeyword(designDisp, "DIEAREA",             ParseDieArea);
   AddKeyword(designDisp, "ROW",                 ParseRow);
   AddKeyword(designDisp, "TRACKS",              ParseTracks);
-  AddKeyword(designDisp, "GCELLGRID",           NIL);
-  AddKeyword(designDisp, "VIAS",                NIL);
-  AddKeyword(designDisp, "NONDEFAULTRULES",     NIL);
-  AddKeyword(designDisp, "REGIONS",             NIL);
-  AddKeyword(designDisp, "COMPONENTMASKSHIFT",  NIL);
-  AddKeyword(designDisp, "COMPONENTS",          NIL);
+  AddKeyword(designDisp, "GCELLGRID",           ParseGCellGrid);
+  AddKeyword(designDisp, "VIAS",                ParseVias);
+  AddKeyword(designDisp, "NONDEFAULTRULES",     ParseNonDefaultRules);
+  AddKeyword(designDisp, "REGIONS",             ParseRegions);
+  AddKeyword(designDisp, "COMPONENTMASKSHIFT",  ParseComponentMaskShift);
+  AddKeyword(designDisp, "COMPONENTS",          ParseComponents);
   AddKeyword(designDisp, "PINS",                NIL);
   AddKeyword(designDisp, "BLOCKAGES",           NIL);
   AddKeyword(designDisp, "FILLS",               NIL);
