@@ -3,6 +3,10 @@ import ("cit_util")
 import ("parseparams")
 import ("trie")
 
+_exec(["../../parsesupport/AMD64_LINUX/parsesupport","../src/enums.scm"])
+
+include ("../AMD64_LINUX/derived.m3m")
+
 module ("DefFormat")
 module ("DefLexer")
 
@@ -10,6 +14,7 @@ interface ("ParseProc")
 interface ("ParseProcRec")
 interface ("ParseError")
 
+trie("CharCard", "Char", "Cardinal")
 trie("DefParse", "Char", "ParseProcRec")
 
 interface ("DefPoint")

@@ -205,7 +205,7 @@ PROCEDURE Error(t : T) =
 PROCEDURE Next(t : T) =
   BEGIN 
     t.eop := NOT DefLexer.GetToken(t.buff, t.state, t.token) ;
-    Debug.Out("Token \"" & S2T(t.buff, t.token) & "\"")
+    (*Debug.Out("Token \"" & S2T(t.buff, t.token) & "\"")*)
   END Next;
   
 PROCEDURE GetIdentifier(t : T; VAR ident : TEXT) : BOOLEAN =
@@ -273,6 +273,51 @@ PROCEDURE Parse(rd : Rd.T) : T RAISES { E } =
     RETURN t
 
   END Parse;
+
+(**********************************************************************)
+
+(* parsing a hierarchical name *)
+
+TYPE 
+  Name = RECORD END; (* not sure yet *)
+
+PROCEDURE GetName(t : T; VAR name : Name) : BOOLEAN RAISES { E } =
+  VAR
+    res := FALSE;
+    id : TEXT;
+    idx : INTEGER;
+  BEGIN
+    LOOP
+      (* identifier *)
+      IF    GetIdentifier(t, id) THEN
+        res := TRUE
+      ELSE 
+        RETURN res
+      END;
+
+      (* array index, is optional after any identifier *)
+      IF GetChar(t, t.state.busbitChars[0]) THEN
+        MustBeInt(t, idx);
+        MustBeChar(t, t.state.busbitChars[1])
+      END;
+
+      (* separator -- is trailing separator OK, probably not? *)
+      (* separator MUST precede next arc *)
+      IF NOT GetChar(t, t.state.divChar) THEN
+        RETURN TRUE
+      END
+
+    END
+  END GetName;
+
+PROCEDURE MustBeName(t : T; VAR name : Name) RAISES { E } = 
+  BEGIN
+    IF NOT GetName(t, name) THEN
+      RAISE E("MustBeName: "&BrackOrEmpty(t.lately.nm)&" expected name")
+    END
+  END MustBeName;
+
+(**********************************************************************)
 
 PROCEDURE S2T(READONLY buff : Buffer; s : String) : TEXT =
   BEGIN RETURN Text.FromChars(SUBARRAY(buff, s.start, s.n)) END S2T;
@@ -527,6 +572,18 @@ PROCEDURE ParseComponents(t : T; ref : REFANY) RAISES { E } =
     END
   END ParseComponents;
 
+PROCEDURE ParsePins(t : T; ref : REFANY) RAISES { E } = 
+  VAR
+    num : CARDINAL;
+  BEGIN
+    WITH des = NARROW(ref, Design) DO
+      MustBeCard(t, num);
+      MustBeChar(t, ';');
+
+      ParseMinusBlock(t, ref, num, ParsePin);
+    END
+  END ParsePins;
+
 PROCEDURE ParseMinusBlock(t : T; ref : REFANY; cnt : CARDINAL; f : ParseProc.T) 
   RAISES { E } =
   BEGIN
@@ -579,13 +636,14 @@ PROCEDURE ParseVia(t : T; ref : REFANY) RAISES { E } =
 PROCEDURE ParseComponent(t : T; ref : REFANY) RAISES { E } =
   VAR
     c : CHAR;
-    compName, modelName, macroName : TEXT;
+    compName : Name;
+    modelName, macroName : TEXT;
     p : DefPoint.T;
     left, bottom, right, top, haloDist, weight : CARDINAL;
     prop : PropertyBinding;
     orient, minLayer, maxLayer, regionName : TEXT;
   BEGIN
-    MustBeIdentifier(t, compName);
+    MustBeName(t, compName);
     MustBeIdentifier(t, modelName);
     LOOP
       MustBeSingle(t, c);
@@ -637,6 +695,66 @@ PROCEDURE ParseComponent(t : T; ref : REFANY) RAISES { E } =
       END
     END          
   END ParseComponent;
+
+PROCEDURE ParsePin(t : T; ref : REFANY) RAISES { E } =
+  VAR
+    c : CHAR;
+    compName : Name;
+    modelName, macroName : TEXT;
+    p : DefPoint.T;
+    left, bottom, right, top, haloDist, weight : CARDINAL;
+    prop : PropertyBinding;
+    orient, minLayer, maxLayer, regionName : TEXT;
+  BEGIN
+    MustBeName(t, pinName);
+    MustBeChar(t, '+');
+    MustBeToken(t, NETa^);
+    MustBeName(t, netName);
+
+    LOOP
+      MustBeSingle(t, c);
+      CASE c OF
+        ';' => RETURN
+      |
+        '+' =>
+        (* there are many others too *)
+        IF    GetToken(t, DIRECTIONa^) THEN
+          VAR
+            dir : Direction;
+          BEGIN
+            MustBeDirection(t, dir)
+          END
+        ELSIF GetToken(t, USEa^) THEN
+          VAR 
+            use : Use;
+          BEGIN
+            MustBeUse(t, use)
+          END
+        ELSIF GetToken(t, LAYERa^) THEN
+          VAR 
+            layer : TEXT;
+            p0, p1 : DefPoint.T;
+          BEGIN
+            MustBeIdentifier(t, layer);
+            MustBePoint(t, p0);
+            MustBePoint(t, p1)
+          END
+        ELSIF GetToken(t, FIXEDa^) THEN
+          VAR 
+            p : DefPoint.T;
+            o : Orientation;
+          BEGIN
+            MustBePoint(t, p);
+            MustBeOrientation(t, o)
+          END
+        ELSE
+          RAISE E("ParsePin unexpected text")
+        END
+      ELSE
+        RAISE E("ParsePin: unexpected '" & Text.FromChar(c) & "'")
+      END
+    END          
+  END ParsePin;
 
 PROCEDURE ParseNonDefaultRule(t : T; ref : REFANY) RAISES { E } =
   VAR
@@ -926,7 +1044,7 @@ BEGIN
   AddKeyword(designDisp, "REGIONS",             ParseRegions);
   AddKeyword(designDisp, "COMPONENTMASKSHIFT",  ParseComponentMaskShift);
   AddKeyword(designDisp, "COMPONENTS",          ParseComponents);
-  AddKeyword(designDisp, "PINS",                NIL);
+  AddKeyword(designDisp, "PINS",                ParsePins);
   AddKeyword(designDisp, "BLOCKAGES",           NIL);
   AddKeyword(designDisp, "FILLS",               NIL);
   AddKeyword(designDisp, "SPECIALNETS",         NIL);
