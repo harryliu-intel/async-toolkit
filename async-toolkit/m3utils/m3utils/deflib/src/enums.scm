@@ -150,7 +150,7 @@
                               
 (define *lookup-proto* 
   (string-append
- "PROCEDURE "*lookup-name*"(READONLY a : ARRAY OF CHAR) : [0..NotFound]"
+ "PROCEDURE "*lookup-name*"(READONLY a : ARRAY OF CHAR; VAR v : T) : BOOLEAN"
  )
   )
 
@@ -171,8 +171,6 @@
 dnl
 "CONST N = ARRAY T OF TEXT { " (infixize (map double-quote (map symbol->string tokens)) ", ") " };" dnl
 dnl
-"CONST NotFound = ORD(LAST(T)) + 1;" dnl
-dnl
 *lookup-proto* ";" dnl
 dnl
     i-wr)
@@ -180,6 +178,8 @@ dnl
     (dis 
 "IMPORT Text;" dnl
 "IMPORT CharCardTrie AS Trie;" dnl
+dnl
+"CONST NotFound = ORD(LAST(T)) + 1;" dnl
 dnl
 "PROCEDURE MakeCA(txt : TEXT) : REF ARRAY OF CHAR =" dnl
 "  VAR" dnl
@@ -191,7 +191,14 @@ dnl
 dnl
 *lookup-proto* "=" dnl
 "  BEGIN" dnl
-"    RETURN trie.get(a)" dnl
+"    WITH x = trie.get(a) DO"  dnl
+"      IF x = NotFound THEN" dnl
+"        RETURN FALSE" dnl
+"      ELSE" dnl
+"        v := VAL(x,T);"
+"        RETURN TRUE" dnl
+"      END" dnl
+"    END" dnl
 "  END " *lookup-name* ";" dnl
 dnl
      m-wr)
@@ -221,7 +228,18 @@ dnl
     )
 )
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (do-build-types types pfx)
+
+  (define (do-build-type type)
+    (let* ((mod-nm (symbol-append pfx (car type))))
+           (do-build-tokens (cadr type) mod-nm)))
+
+  (map do-build-type types))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (do-build-tokens tokens 'DefTokens)
 
-(exit)
+(do-build-types types 'Def)

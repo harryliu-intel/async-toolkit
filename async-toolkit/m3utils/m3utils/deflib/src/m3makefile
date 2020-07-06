@@ -3,7 +3,7 @@ import ("cit_util")
 import ("parseparams")
 import ("trie")
 
-_exec(["../../parsesupport/AMD64_LINUX/parsesupport","../src/enums.scm"])
+_exec(["../../parsesupport/AMD64_LINUX/parsesupport","../src/enums.scm","exit"])
 
 include ("../AMD64_LINUX/derived.m3m")
 
