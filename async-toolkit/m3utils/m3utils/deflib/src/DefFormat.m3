@@ -25,6 +25,7 @@ IMPORT DefInt;
 IMPORT DefCard;
 IMPORT DefIdent;
 IMPORT DefName;
+IMPORT IO;
 
 TYPE R = RecursiveParser.T;
 
@@ -36,7 +37,12 @@ REVEAL
 
 CONST DQ = '"';
 
-<*NOWARN*>PROCEDURE D(what : TEXT) = BEGIN (*IO.Put(what & "\n")*) END D;
+VAR d := FALSE;
+
+PROCEDURE D(what : TEXT) = 
+  BEGIN 
+    IF d THEN IO.Put(what & "\n") END
+  END D;
 
 PROCEDURE Parse(rd : Rd.T) : T RAISES { E } =
 
@@ -329,15 +335,28 @@ PROCEDURE ParsePins(t : R; ref : REFANY) RAISES { E } =
 
 PROCEDURE ParseMinusBlock(t : T; ref : REFANY; cnt : CARDINAL; f : ParseProc.T) 
   RAISES { E } =
+  VAR
+    j : CARDINAL;
   BEGIN
-    FOR i := 0 TO cnt - 1 DO
-      MustBeChar(t, '-');
-      f(t, ref)
-    END;
-
-    (* parse END statement, e.g., END VIAS for VIAS block *)
-    MustBeChars(t, K.T_END);    
-    MustBeChars(t, t.lately.ca^)
+    TRY
+      FOR i := 0 TO cnt - 1 DO
+        j := i;
+        IF GetToken(t, K.T_END) THEN
+          (* Hmm... *)
+          Debug.Warning("ParseMinusBlock of " & Text.FromChars(t.lately.ca^) & " is short: " & Fmt.Int(j) & "/" & Fmt.Int(cnt-1));
+          MustBeChars(t, t.lately.ca^);
+          RETURN
+        END;
+        MustBeChar(t, '-');
+        f(t, ref)
+      END;
+      
+      (* parse END statement, e.g., END VIAS for VIAS block *)
+      MustBeChars(t, K.T_END);    
+      MustBeChars(t, t.lately.ca^)
+    EXCEPT
+      E(x) => RAISE E("ParseMinusBlock ("& Fmt.Int(j) & "/" & Fmt.Int(cnt-1) &"): " & x)
+    END
   END ParseMinusBlock;
 
 PROCEDURE ParseVia(t : R; ref : REFANY) RAISES { E } =
@@ -447,6 +466,9 @@ PROCEDURE ParsePin(t : R; ref : REFANY) RAISES { E } =
     left, bottom, right, top, haloDist, weight : CARDINAL;
     prop : PropertyBinding;
     orient, minLayer, maxLayer, regionName : DefIdent.T;
+
+    parsingPort := FALSE;
+    (* DAMN!!! grammar isnt LL(1) for PIN .. + PORT + .... *)
   BEGIN
     DefName.MustBe(t, pinName);
     MustBeChar(t, '+');
@@ -459,43 +481,82 @@ PROCEDURE ParsePin(t : R; ref : REFANY) RAISES { E } =
         ';' => RETURN
       |
         '+' =>
-        (* there are many others too *)
-        IF    GetToken(t, K.T_DIRECTION) THEN
-          VAR
-            dir : DefDirection.T;
-          BEGIN
-            DefDirection.MustBe(t, dir)
+        IF parsingPort THEN
+          IF    GetToken(t, K.T_LAYER) THEN
+            VAR
+              layer : DefIdent.T;
+              p0, p1 : DefPoint.T;
+            BEGIN
+              DefIdent.MustBe(t, layer);
+              DefPoint.MustBe(t, p0);
+              DefPoint.MustBe(t, p1)
+            END;
+            D("Layer")
+          ELSIF GetToken(t, K.T_FIXED) THEN
+            VAR
+              p : DefPoint.T;
+              dir : DefOrientation.T;
+            BEGIN
+              DefPoint.MustBe(t, p);
+              DefOrientation.MustBe(t, dir)
+            END;
+            D("Fixed")
+          ELSIF GetToken(t, K.T_POLYGON) THEN
+            <*ASSERT FALSE*>
+          ELSIF GetToken(t, K.T_VIA) THEN
+            <*ASSERT FALSE*>
+          ELSIF GetToken(t, K.T_PORT) THEN
+            D("Port");
+            (* next port *) (* TBD *)
+          ELSE 
+            parsingPort := FALSE
           END
-        ELSIF GetToken(t, K.T_USE) THEN
-          VAR 
-            use : DefUse.T;
-          BEGIN
-            DefUse.MustBe(t, use)
+        END;
+
+        IF NOT parsingPort THEN
+          (* there are many others too *)
+          IF    GetToken(t, K.T_DIRECTION) THEN
+            VAR
+              dir : DefDirection.T;
+            BEGIN
+              DefDirection.MustBe(t, dir)
+            END
+          ELSIF GetToken(t, K.T_SPECIAL) THEN
+          ELSIF GetToken(t, K.T_PORT) THEN
+            parsingPort := TRUE;
+            (*d := TRUE;*)
+          ELSIF GetToken(t, K.T_USE) THEN
+            VAR 
+              use : DefUse.T;
+            BEGIN
+              DefUse.MustBe(t, use)
+            END
+          ELSIF GetToken(t, K.T_LAYER) THEN
+            VAR 
+              layer : DefIdent.T;
+              p0, p1 : DefPoint.T;
+            BEGIN
+              DefIdent.MustBe(t, layer);
+              DefPoint.MustBe(t, p0);
+              DefPoint.MustBe(t, p1)
+            END
+          ELSIF GetToken(t, K.T_FIXED) THEN
+            VAR 
+              p : DefPoint.T;
+              o : DefOrientation.T;
+            BEGIN
+              DefPoint.MustBe(t, p);
+              DefOrientation.MustBe(t, o)
+            END
+          ELSE
+            RAISE E("ParsePin unexpected text")
           END
-        ELSIF GetToken(t, K.T_LAYER) THEN
-          VAR 
-            layer : DefIdent.T;
-            p0, p1 : DefPoint.T;
-          BEGIN
-            DefIdent.MustBe(t, layer);
-            DefPoint.MustBe(t, p0);
-            DefPoint.MustBe(t, p1)
-          END
-        ELSIF GetToken(t, K.T_FIXED) THEN
-          VAR 
-            p : DefPoint.T;
-            o : DefOrientation.T;
-          BEGIN
-            DefPoint.MustBe(t, p);
-            DefOrientation.MustBe(t, o)
-          END
-        ELSE
-          RAISE E("ParsePin unexpected text")
         END
       ELSE
         RAISE E("ParsePin: unexpected '" & Text.FromChar(c) & "'")
-      END
-    END          
+      END(*ESAC*)
+
+    END(*POOL*)          
   END ParsePin;
 
 PROCEDURE ParseNonDefaultRule(t : R; ref : REFANY) RAISES { E } =
