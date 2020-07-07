@@ -25,6 +25,8 @@ REVEAL
 
     lately := ParseProcRec.Default;
 
+    lexer : DefLexer.T;
+
   METHODS
     getCard(VAR c : CARDINAL) : BOOLEAN := GetCard;
     error() := Error;
@@ -262,7 +264,7 @@ PROCEDURE Error(t : T) =
   
 PROCEDURE Next(t : T) =
   BEGIN 
-    t.eop := NOT DefLexer.GetToken(t.buff, t.state, t.token) ;
+    t.eop := NOT DefLexer.GetToken(t.lexer, t.buff, t.state, t.token) ;
     (*Debug.Out("Token \"" & S2T(t.buff, t.token) & "\"")*)
   END Next;
   
@@ -277,7 +279,7 @@ PROCEDURE GetIdentifier(t : T; VAR ident : TEXT) : BOOLEAN =
     (* check its not a special character or a number *)
     IF    t.token.n = 0 THEN 
       RETURN FALSE
-    ELSIF t.buff[t.token.start] IN t.state.special THEN
+    ELSIF t.buff[t.token.start] IN t.lexer.special THEN
       <*ASSERT t.token.n = 1*>
       RETURN FALSE
     ELSE
@@ -354,14 +356,14 @@ PROCEDURE GetName(t : T; VAR name : Name) : BOOLEAN RAISES { E } =
       END;
 
       (* array index, is optional after any identifier *)
-      IF GetChar(t, t.state.busbitChars[0]) THEN
+      IF GetChar(t, t.lexer.busbitChars[0]) THEN
         MustBeInt(t, idx);
-        MustBeChar(t, t.state.busbitChars[1])
+        MustBeChar(t, t.lexer.busbitChars[1])
       END;
 
       (* separator -- is trailing separator OK, probably not? *)
       (* separator MUST precede next arc *)
-      IF NOT GetChar(t, t.state.divChar) THEN
+      IF NOT GetChar(t, t.lexer.divChar) THEN
         RETURN TRUE
       END
 
@@ -400,7 +402,7 @@ PROCEDURE ParseDividerChar(t : T; ref : REFANY) RAISES { E } =
       IF NUMBER(chars) # 3 OR chars[0] # DQ OR chars[2] # DQ THEN
         Debug.Error("DefFormat.ParseDividerChar ?syntax error")
       END;
-      DefLexer.DividerChar(t.state, chars[1])
+      DefLexer.DividerChar(t.lexer, chars[1])
     END;
     Next(t);
     MustBeChar(t,';')
@@ -413,7 +415,7 @@ PROCEDURE ParseBusbitChars(t : T; ref : REFANY) RAISES { E } =
       IF NUMBER(chars) # 4 OR chars[0] # DQ OR chars[3] # DQ THEN
         Debug.Error("DefFormat.ParseBusbitChars ?syntax error")
       END;
-      DefLexer.BusbitChars(t.state, SUBARRAY(chars, 1, 2))
+      DefLexer.BusbitChars(t.lexer, SUBARRAY(chars, 1, 2))
     END;
     Next(t);
     MustBeChar(t,';')

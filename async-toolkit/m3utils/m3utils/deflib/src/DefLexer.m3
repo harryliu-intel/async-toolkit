@@ -18,7 +18,8 @@ CONST WhiteSpace    = SET OF CHAR { ' ', '\n', '\r', '\t' };
 CONST BS = '\\';
 CONST LF = '\n';
 
-PROCEDURE GetToken(VAR buff  : Buffer;
+PROCEDURE GetToken(READONLY t : T;
+                   VAR buff  : Buffer;
                    VAR state : State;
                    VAR res   : String) : BOOLEAN =
 
@@ -116,7 +117,7 @@ PROCEDURE GetToken(VAR buff  : Buffer;
           END;
         END; 
         Char()
-      ELSIF buff[state.s] IN state.special THEN
+      ELSIF buff[state.s] IN t.special THEN
         (* see a special character, that's the full token *)
         Char()
       ELSE  
@@ -124,7 +125,7 @@ PROCEDURE GetToken(VAR buff  : Buffer;
         Char();
         WHILE state.s + res.n # state.e                   AND
               NOT buff[state.s + res.n] IN WhiteSpace     AND
-              NOT buff[state.s + res.n] IN state.special  AND
+              NOT buff[state.s + res.n] IN t.special  AND
                   buff[state.s + res.n] # CC              AND
                   buff[state.s + res.n] # DQ                   DO
           Char()
@@ -137,13 +138,13 @@ PROCEDURE GetToken(VAR buff  : Buffer;
       RETURN TRUE 
   END GetToken;
 
-PROCEDURE DividerChar(VAR s : State; c : CHAR) =
+PROCEDURE DividerChar(VAR s : T; c : CHAR) =
   BEGIN
     s.divChar := c;
     s.special := BaseSpecial + SET OF CHAR { s.divChar } + SET OF CHAR { s.busbitChars[0] } + SET OF CHAR { s.busbitChars[1] };
   END DividerChar;
 
-PROCEDURE BusbitChars(VAR s : State; c : ARRAY [0..1] OF CHAR) =
+PROCEDURE BusbitChars(VAR s : T; c : ARRAY [0..1] OF CHAR) =
   BEGIN
     s.busbitChars := c;
     s.special := BaseSpecial + SET OF CHAR { s.divChar } + SET OF CHAR { s.busbitChars[0] } + SET OF CHAR { s.busbitChars[1] };

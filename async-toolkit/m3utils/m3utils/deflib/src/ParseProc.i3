@@ -1,5 +1,4 @@
 INTERFACE ParseProc;
-FROM DefLexer IMPORT String, State, Buffer;
 IMPORT DefFormat;
 IMPORT ParseError;
 
