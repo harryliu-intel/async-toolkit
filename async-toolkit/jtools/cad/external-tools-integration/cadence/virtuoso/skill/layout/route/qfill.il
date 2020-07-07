@@ -1,6 +1,7 @@
 ; Run QFILL to add fill and color shapes to a cell
-(defun DoFill (@key (CV (geGetEditCellView)) (botLayer "m0") (topLayer "m10"))
-  (let (TEMP WDIR ExportCV offset all_layers layers dir cmd CID oasName oasFile qCV)
+(defun DoFill (@key (CV (geGetEditCellView)) (botLayer "m0") (topLayer "m10")
+                    (layers nil) (delete t))
+  (let (TEMP WDIR ExportCV offset all_layers dir cmd CID oasName oasFile qCV fill_layers)
 
     ; pick list of layers to fill
     all_layers = (list "cell"
@@ -27,20 +28,23 @@
     (unless (member botLayer all_layers) (error "botLayer not valid"))
     (unless (member topLayer all_layers) (error "topLayer not valid"))
     (when botLayer all_layers = (member botLayer all_layers))
-    layers = nil
-    done = nil
-    (foreach layer all_layers
-             (unless done
-               layers = (append layers (list layer))
-               (when layer=="v1" layers=(append layers (list "via1_signal_color")))
-               (when layer=="v2" layers=(append layers (list "via2_signal_color")))
-               (when layer=="v3" layers=(append layers (list "via3_signal_color")))
-               done = layer==topLayer
+    (unless layers
+      done = nil
+      (foreach layer all_layers
+               (unless done
+                 layers = (append layers (list layer))
+                 (cond (layer=="v1" layers=(append layers (list "via1_signal_color")))
+                       (layer=="v2" layers=(append layers (list "via2_signal_color")))
+                       (layer=="v3" layers=(append layers (list "via3_signal_color")))
+                       (t fill_layers=t)
+                       )
+                 done = layer==topLayer
+                 )
                )
-             )
+      )
 
     ; delete previous qfill shapes
-    (DeleteAutoGen ?CV CV ?propValue "qfill")
+    (when delete (DeleteAutoGen ?CV CV ?propValue "qfill"))
 
     ; copy to temp view and offset according to alignment properties
     offset = (cadr (GetCellAlignment ?CV CV))
@@ -63,9 +67,11 @@
     (shell cmd)
 
     ; import metal_via_fill
-    oasFile = (sprintf nil "%s/qfill_work/qfill_%s_1276.31_s_asic_g1m_240H_50p_run_metal_via_fill/qfill_run_metal_via_fill_output/%s_metal_via_fill.oas" WDIR oasName oasName)
-    qCV = (ImportOAS oasFile CV->libName (strcat oasName "_metal_via_fill") "qfill")
-    (CopyQfillShapes CV qCV offset)
+    (when fill_layers        
+        oasFile = (sprintf nil "%s/qfill_work/qfill_%s_1276.31_s_asic_g1m_240H_50p_run_metal_via_fill/qfill_run_metal_via_fill_output/%s_metal_via_fill.oas" WDIR oasName oasName)
+        qCV = (ImportOAS oasFile CV->libName (strcat oasName "_metal_via_fill") "qfill")
+        (CopyQfillShapes CV qCV offset)
+        )
 
     ; import signal_via_color
     (when (member "via1_signal_color" layers )!=nil ||
