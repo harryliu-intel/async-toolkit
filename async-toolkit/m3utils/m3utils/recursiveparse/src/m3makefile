@@ -1,0 +1,15 @@
+import ("libm3")
+import ("cit_util")
+import ("trie")
+
+Interface ("ParseProc")
+Interface ("ParseProcRec")
+Interface ("ParseError")
+
+Interface ("RecursiveParser")
+Interface ("RecursiveParserRep")
+
+Trie("CharCard", "Char", "Cardinal")
+Trie("Parse", "Char", "ParseProcRec")
+
+library ("recursiveparse")

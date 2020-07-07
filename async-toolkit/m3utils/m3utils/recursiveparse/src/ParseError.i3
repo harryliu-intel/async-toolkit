@@ -1,0 +1,5 @@
+INTERFACE ParseError;
+
+EXCEPTION E(TEXT);
+
+END ParseError.

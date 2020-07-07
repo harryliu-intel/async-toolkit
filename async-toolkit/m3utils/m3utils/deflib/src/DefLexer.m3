@@ -7,6 +7,7 @@ MODULE DefLexer;
    June 2020
 *)
 
+FROM RecursiveParserRep IMPORT Buffer, State, String;
 IMPORT Rd;
 IMPORT Debug, Fmt;
 
@@ -112,7 +113,7 @@ PROCEDURE GetToken(READONLY t : T;
         Char(); 
         WHILE buff[state.s + res.n] # DQ DO 
           Char() ;
-          IF state.s + res.n = BufSize THEN
+          IF state.s + res.n = NUMBER(Buffer) THEN
             Debug.Error("DefLexer.GetToken : string too long (n >= " & Fmt.Int(res.n) & ", endPos >= "& Fmt.Int(state.s + res.n)& " )")
           END;
         END; 

@@ -1,9 +1,12 @@
 MODULE DefFormat;
 IMPORT Rd;
-FROM DefLexer IMPORT String, State, Buffer, Digit;
+IMPORT RecursiveParser;
+IMPORT RecursiveParserRep;
+FROM RecursiveParserRep IMPORT String, Buffer;
+FROM DefLexer IMPORT Digit;
 IMPORT Debug;
 IMPORT Text;
-IMPORT DefParseTrie;
+IMPORT ParseTrie;
 IMPORT ParseProc, ParseProcRec;
 IMPORT DefLexer;
 IMPORT DefPoint, DefPointSeq;
@@ -14,23 +17,14 @@ IMPORT DefDirection;
 IMPORT DefOrientation;
 IMPORT DefUse;
 
+TYPE R = RecursiveParser.T;
+
 REVEAL
   T = Public BRANDED Brand OBJECT
-    buff  : Buffer;
-    token : String;
-    state : State;
-    eop   := FALSE; (* done parsing *)
-
     version : TEXT;
-
     lately := ParseProcRec.Default;
-
     lexer : DefLexer.T;
-
   METHODS
-    getCard(VAR c : CARDINAL) : BOOLEAN := GetCard;
-    error() := Error;
-    getIdentifier(VAR txt : TEXT) : BOOLEAN := GetIdentifier;
   END;
 
 CONST DQ = '"';
@@ -254,14 +248,6 @@ PROCEDURE GetPoint(t : T; VAR p : DefPoint.T) : BOOLEAN RAISES { E } =
     RETURN TRUE
   END GetPoint;
   
-PROCEDURE Error(t : T) =
-  BEGIN
-    Debug.Error("PARSE ERROR, lately reading: " & 
-      Text.FromChars(SUBARRAY(t.buff,
-                              t.token.start,
-                              t.token.n)))
-  END Error;
-  
 PROCEDURE Next(t : T) =
   BEGIN 
     t.eop := NOT DefLexer.GetToken(t.lexer, t.buff, t.state, t.token) ;
@@ -386,36 +372,36 @@ CONST A2T = Text.FromChars;
 
 (**********************************************************************)
 
-PROCEDURE ParseVersion(t : T; ref : REFANY) RAISES { E } =
+PROCEDURE ParseVersion(t : R; ref : REFANY) RAISES { E } =
   BEGIN
     <*ASSERT t = ref*>
-    t.version := S2T(t.buff, t.token);
-    Debug.Out("ParseVersion, t.version = " & t.version);
+    NARROW(t,T).version := S2T(t.buff, t.token);
+    Debug.Out("ParseVersion, t.version = " & NARROW(t,T).version);
     Next(t);
     MustBeChar(t,';')
   END ParseVersion;
 
-PROCEDURE ParseDividerChar(t : T; ref : REFANY) RAISES { E } =
+PROCEDURE ParseDividerChar(t : R; ref : REFANY) RAISES { E } =
   BEGIN
     <*ASSERT t = ref*>
     WITH chars = SUBARRAY(t.buff, t.token.start, t.token.n) DO
       IF NUMBER(chars) # 3 OR chars[0] # DQ OR chars[2] # DQ THEN
         Debug.Error("DefFormat.ParseDividerChar ?syntax error")
       END;
-      DefLexer.DividerChar(t.lexer, chars[1])
+      DefLexer.DividerChar(NARROW(t,T).lexer, chars[1])
     END;
     Next(t);
     MustBeChar(t,';')
   END ParseDividerChar;
 
-PROCEDURE ParseBusbitChars(t : T; ref : REFANY) RAISES { E } =
+PROCEDURE ParseBusbitChars(t : R; ref : REFANY) RAISES { E } =
   BEGIN
     <*ASSERT t = ref*>
     WITH chars = SUBARRAY(t.buff, t.token.start, t.token.n) DO
       IF NUMBER(chars) # 4 OR chars[0] # DQ OR chars[3] # DQ THEN
         Debug.Error("DefFormat.ParseBusbitChars ?syntax error")
       END;
-      DefLexer.BusbitChars(t.lexer, SUBARRAY(chars, 1, 2))
+      DefLexer.BusbitChars(NARROW(t,T).lexer, SUBARRAY(chars, 1, 2))
     END;
     Next(t);
     MustBeChar(t,';')
@@ -431,7 +417,7 @@ TYPE
     end := FALSE;
   END;
 
-PROCEDURE ParseDesign(t : T; ref : REFANY) RAISES { E } =
+PROCEDURE ParseDesign(t : R; ref : REFANY) RAISES { E } =
   VAR 
     des := NEW(Design);
   BEGIN
@@ -443,7 +429,7 @@ PROCEDURE ParseDesign(t : T; ref : REFANY) RAISES { E } =
     ParseBlock(t, designDisp, des);
   END ParseDesign;
 
-PROCEDURE ParseDesignUnits(t : T; ref : REFANY) RAISES { E } =
+PROCEDURE ParseDesignUnits(t : R; ref : REFANY) RAISES { E } =
   BEGIN
     WITH des = NARROW(ref, Design) DO
       MustBeChars(t, K.T_DISTANCE);
@@ -456,7 +442,7 @@ PROCEDURE ParseDesignUnits(t : T; ref : REFANY) RAISES { E } =
 
 CONST T_Semi = ARRAY OF CHAR { ';' };
 
-PROCEDURE ParseDieArea(t : T; ref : REFANY) RAISES { E } =
+PROCEDURE ParseDieArea(t : R; ref : REFANY) RAISES { E } =
   BEGIN
     WITH des = NARROW(ref, Design),
          seq = NEW(DefPointSeq.T).init() DO
@@ -479,7 +465,7 @@ PROCEDURE ParseDieArea(t : T; ref : REFANY) RAISES { E } =
     END
   END ParseDieArea;
 
-PROCEDURE ParseRow(t : T; ref : REFANY) RAISES { E } = 
+PROCEDURE ParseRow(t : R; ref : REFANY) RAISES { E } = 
   VAR
     rowName, siteName, siteOrient : TEXT;
     origX, origY : INTEGER;
@@ -487,14 +473,14 @@ PROCEDURE ParseRow(t : T; ref : REFANY) RAISES { E } =
     stepX, stepY : INTEGER := 0;
   BEGIN
     WITH des = NARROW(ref, Design) DO
-      IF NOT t.getIdentifier(rowName) OR NOT t.getIdentifier(siteName) THEN
+      IF NOT GetIdentifier(t, rowName) OR NOT GetIdentifier(t, siteName) THEN
         RAISE E("ParseRow, rowName, siteName")
       END;
 
       MustBeInt(t, origX);
       MustBeInt(t, origY);
 
-      IF NOT t.getIdentifier(siteOrient) THEN
+      IF NOT GetIdentifier(t, siteOrient) THEN
         RAISE E("ParseRow, siteOrient")
       END;
 
@@ -526,7 +512,7 @@ PROCEDURE ParseRow(t : T; ref : REFANY) RAISES { E } =
     END
   END ParseRow;
 
-PROCEDURE ParseTracks(t : T; ref : REFANY) RAISES { E } =
+PROCEDURE ParseTracks(t : R; ref : REFANY) RAISES { E } =
   VAR
     xy : CHAR;
     numTracks, space, mask : CARDINAL;
@@ -568,7 +554,7 @@ PROCEDURE ParseTracks(t : T; ref : REFANY) RAISES { E } =
     MustBeChar(t,';')
   END ParseTracks;
 
-PROCEDURE ParseGCellGrid(t : T; ref : REFANY) RAISES { E } = 
+PROCEDURE ParseGCellGrid(t : R; ref : REFANY) RAISES { E } = 
   VAR
     c : CHAR;
     start : INTEGER;
@@ -586,7 +572,7 @@ PROCEDURE ParseGCellGrid(t : T; ref : REFANY) RAISES { E } =
     END
   END ParseGCellGrid;
 
-PROCEDURE ParseVias(t : T; ref : REFANY) RAISES { E } = 
+PROCEDURE ParseVias(t : R; ref : REFANY) RAISES { E } = 
   VAR
     numVias : CARDINAL;
   BEGIN
@@ -598,7 +584,7 @@ PROCEDURE ParseVias(t : T; ref : REFANY) RAISES { E } =
     END
   END ParseVias;
 
-PROCEDURE ParseNonDefaultRules(t : T; ref : REFANY) RAISES { E } = 
+PROCEDURE ParseNonDefaultRules(t : R; ref : REFANY) RAISES { E } = 
   VAR
     numNonDefaultRules : CARDINAL;
   BEGIN
@@ -610,7 +596,7 @@ PROCEDURE ParseNonDefaultRules(t : T; ref : REFANY) RAISES { E } =
     END
   END ParseNonDefaultRules;
 
-PROCEDURE ParseRegions(t : T; ref : REFANY) RAISES { E } = 
+PROCEDURE ParseRegions(t : R; ref : REFANY) RAISES { E } = 
   VAR
     num : CARDINAL;
   BEGIN
@@ -622,7 +608,7 @@ PROCEDURE ParseRegions(t : T; ref : REFANY) RAISES { E } =
     END
   END ParseRegions;
 
-PROCEDURE ParseComponents(t : T; ref : REFANY) RAISES { E } = 
+PROCEDURE ParseComponents(t : R; ref : REFANY) RAISES { E } = 
   VAR
     num : CARDINAL;
   BEGIN
@@ -634,7 +620,7 @@ PROCEDURE ParseComponents(t : T; ref : REFANY) RAISES { E } =
     END
   END ParseComponents;
 
-PROCEDURE ParsePins(t : T; ref : REFANY) RAISES { E } = 
+PROCEDURE ParsePins(t : R; ref : REFANY) RAISES { E } = 
   VAR
     num : CARDINAL;
   BEGIN
@@ -659,7 +645,7 @@ PROCEDURE ParseMinusBlock(t : T; ref : REFANY; cnt : CARDINAL; f : ParseProc.T)
     MustBeChars(t, t.lately.ca^)
   END ParseMinusBlock;
 
-PROCEDURE ParseVia(t : T; ref : REFANY) RAISES { E } =
+PROCEDURE ParseVia(t : R; ref : REFANY) RAISES { E } =
   VAR
     nm : TEXT;
     c  : CHAR;
@@ -695,7 +681,7 @@ PROCEDURE ParseVia(t : T; ref : REFANY) RAISES { E } =
     END
   END ParseVia;
 
-PROCEDURE ParseComponent(t : T; ref : REFANY) RAISES { E } =
+PROCEDURE ParseComponent(t : R; ref : REFANY) RAISES { E } =
   VAR
     c : CHAR;
     compName : Name;
@@ -758,7 +744,7 @@ PROCEDURE ParseComponent(t : T; ref : REFANY) RAISES { E } =
     END          
   END ParseComponent;
 
-PROCEDURE ParsePin(t : T; ref : REFANY) RAISES { E } =
+PROCEDURE ParsePin(t : R; ref : REFANY) RAISES { E } =
   VAR
     c : CHAR;
     netName, pinName, compName : Name;
@@ -817,7 +803,7 @@ PROCEDURE ParsePin(t : T; ref : REFANY) RAISES { E } =
     END          
   END ParsePin;
 
-PROCEDURE ParseNonDefaultRule(t : T; ref : REFANY) RAISES { E } =
+PROCEDURE ParseNonDefaultRule(t : R; ref : REFANY) RAISES { E } =
   VAR
     nm : TEXT;
     c : CHAR;
@@ -901,7 +887,7 @@ PROCEDURE GetProperty(t : T;
     END
   END GetProperty;
 
-PROCEDURE ParseRegion(t : T; ref : REFANY) RAISES { E } =
+PROCEDURE ParseRegion(t : R; ref : REFANY) RAISES { E } =
   VAR
     nm : TEXT;
     c  : CHAR;
@@ -936,9 +922,9 @@ PROCEDURE ParseRegion(t : T; ref : REFANY) RAISES { E } =
     END
   END ParseRegion;        
         
-(**********************************************************************)
+(*********************************************************************)
 
-PROCEDURE ParsePropertyDefinitions(t : T; ref : REFANY) 
+PROCEDURE ParsePropertyDefinitions(t : R; ref : REFANY) 
   RAISES { E } =
   BEGIN
     WITH des = NARROW(ref, Design) DO
@@ -947,7 +933,7 @@ PROCEDURE ParsePropertyDefinitions(t : T; ref : REFANY)
   END ParsePropertyDefinitions;
 
 PROCEDURE ParseBlock(t             : T;
-                     keywords      : DefParseTrie.T;
+                     keywords      : ParseTrie.T;
                      ref           : REFANY) RAISES { E } =
   BEGIN
     LOOP
@@ -984,7 +970,7 @@ PROCEDURE ParseBlock(t             : T;
     END
   END ParseBlock;
 
-PROCEDURE ParseComponentMaskShift(t : T; ref : REFANY) RAISES { E } = 
+PROCEDURE ParseComponentMaskShift(t : R; ref : REFANY) RAISES { E } = 
   VAR
     id : TEXT;
   BEGIN
@@ -994,7 +980,7 @@ PROCEDURE ParseComponentMaskShift(t : T; ref : REFANY) RAISES { E } =
 
 (**********************************************************************)
 
-PROCEDURE IgnorePropertyDefinition(t : T; ref : REFANY) 
+PROCEDURE IgnorePropertyDefinition(t : R; ref : REFANY) 
   RAISES { E } =
   BEGIN
     (* skip name *) 
@@ -1018,9 +1004,9 @@ PROCEDURE IgnorePropertyDefinition(t : T; ref : REFANY)
 
 VAR 
   topDisp, designDisp, propDisp    := 
-      NEW(DefParseTrie.T).init(ParseProcRec.Default);
+      NEW(ParseTrie.T).init(ParseProcRec.Default);
 
-PROCEDURE AddKeyword(to : DefParseTrie.T; 
+PROCEDURE AddKeyword(to : ParseTrie.T; 
                      kw : TEXT;
                      f  : ParseProc.T) =
   VAR
