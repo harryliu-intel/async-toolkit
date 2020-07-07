@@ -6,8 +6,9 @@ Interface ("ParseProc")
 Interface ("ParseProcRec")
 Interface ("ParseError")
 
-Interface ("RecursiveParser")
+Module ("RecursiveParser")
 Interface ("RecursiveParserRep")
+Interface ("RecursiveLexer")
 
 Trie("CharCard", "Char", "Cardinal")
 Trie("Parse", "Char", "ParseProcRec")

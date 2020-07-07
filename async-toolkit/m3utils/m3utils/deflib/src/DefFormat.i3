@@ -12,4 +12,6 @@ PROCEDURE Parse(rd : Rd.T) : T RAISES { ParseError.E };
 
 CONST Brand = "DefFormat";
 
+PROCEDURE D(what : TEXT);
+
 END DefFormat.

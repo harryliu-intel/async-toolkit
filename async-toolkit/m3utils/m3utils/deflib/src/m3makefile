@@ -18,8 +18,15 @@ module ("DefLexer")
 %trie("CharCard", "Char", "Cardinal")
 %trie("DefParse", "Char", "ParseProcRec")
 
-interface ("DefPoint")
+module ("DefPoint")
 sequence  ("DefPoint", "DefPoint")
+
+module ("DefNumbers")
+interface ("DefInt")
+interface ("DefCard")
+
+module ("DefName")
+module ("DefIdent")
 
 implementation ("Main")
 

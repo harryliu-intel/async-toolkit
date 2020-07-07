@@ -7,7 +7,7 @@ MODULE DefLexer;
    June 2020
 *)
 
-FROM RecursiveParserRep IMPORT Buffer, State, String;
+FROM RecursiveLexer IMPORT Buffer, State, String;
 IMPORT Rd;
 IMPORT Debug, Fmt;
 
@@ -19,7 +19,13 @@ CONST WhiteSpace    = SET OF CHAR { ' ', '\n', '\r', '\t' };
 CONST BS = '\\';
 CONST LF = '\n';
 
-PROCEDURE GetToken(READONLY t : T;
+REVEAL
+  T = Public BRANDED Brand OBJECT 
+  OVERRIDES
+    getToken := GetToken;
+  END;
+
+PROCEDURE GetToken(t : T;
                    VAR buff  : Buffer;
                    VAR state : State;
                    VAR res   : String) : BOOLEAN =
@@ -139,13 +145,13 @@ PROCEDURE GetToken(READONLY t : T;
       RETURN TRUE 
   END GetToken;
 
-PROCEDURE DividerChar(VAR s : T; c : CHAR) =
+PROCEDURE DividerChar(s : T; c : CHAR) =
   BEGIN
     s.divChar := c;
     s.special := BaseSpecial + SET OF CHAR { s.divChar } + SET OF CHAR { s.busbitChars[0] } + SET OF CHAR { s.busbitChars[1] };
   END DividerChar;
 
-PROCEDURE BusbitChars(VAR s : T; c : ARRAY [0..1] OF CHAR) =
+PROCEDURE BusbitChars(s : T; c : ARRAY [0..1] OF CHAR) =
   BEGIN
     s.busbitChars := c;
     s.special := BaseSpecial + SET OF CHAR { s.divChar } + SET OF CHAR { s.busbitChars[0] } + SET OF CHAR { s.busbitChars[1] };

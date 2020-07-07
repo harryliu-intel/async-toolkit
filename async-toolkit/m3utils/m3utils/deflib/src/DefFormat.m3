@@ -1,9 +1,14 @@
 MODULE DefFormat;
 IMPORT Rd;
 IMPORT RecursiveParser;
+
+FROM RecursiveParser IMPORT GetToken, Next, MustBeToken, MustNotBeChar,  
+                            MustBeChars, MustBeCharSet, BrackOrEmpty, 
+                            GetChar, MustBeChar, GetCharSet, MustBeSingle,
+                            S2T, A2T
+                            ;
+
 IMPORT RecursiveParserRep;
-FROM RecursiveParserRep IMPORT String, Buffer;
-FROM DefLexer IMPORT Digit;
 IMPORT Debug;
 IMPORT Text;
 IMPORT ParseTrie;
@@ -16,280 +21,20 @@ IMPORT DefTokens AS K;
 IMPORT DefDirection;
 IMPORT DefOrientation;
 IMPORT DefUse;
+IMPORT DefInt;
+IMPORT DefCard;
+IMPORT DefIdent;
+IMPORT DefName;
 
 TYPE R = RecursiveParser.T;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
     version : TEXT;
-    lately := ParseProcRec.Default;
-    lexer : DefLexer.T;
   METHODS
   END;
 
 CONST DQ = '"';
-
-PROCEDURE MustBeSingle(t : T; VAR c : CHAR) RAISES { E } =
-  BEGIN
-    IF NOT GetSingle(t, c) THEN
-      RAISE E("MustBeSingle: "&BrackOrEmpty(t.lately.nm)&" expected single but got \"" & S2T(t.buff, t.token) & "\"")
-    END
-  END MustBeSingle;
-
-PROCEDURE GetSingle(t : T; VAR c : CHAR) : BOOLEAN =
-  BEGIN
-    IF t.token.n = 1 THEN
-      c := t.buff[t.token.start];
-      Next(t);
-      RETURN TRUE
-    ELSE
-      RETURN FALSE
-    END
-  END GetSingle;
-
-PROCEDURE GetChar(t : T; c : CHAR) : BOOLEAN =
-  BEGIN
-    IF t.token.n = 1 AND t.buff[t.token.start] = c THEN
-      Next(t);
-      RETURN TRUE
-    ELSE
-      RETURN FALSE
-    END
-  END GetChar;
-
-PROCEDURE MustBeChar(t : T;  c : CHAR) RAISES { E } =
-  BEGIN
-    IF NOT GetChar(t, c) THEN
-      RAISE E("MustBeChar: "&BrackOrEmpty(t.lately.nm)&" expected '"&Text.FromChar(c)&"' but got \"" & S2T(t.buff, t.token) & "\"")
-    END
-  END MustBeChar;
-
-PROCEDURE GetCharSet(t : T; s : SET OF CHAR; VAR c : CHAR) : BOOLEAN =
-  BEGIN
-    IF t.token.n = 1 AND t.buff[t.token.start] IN s THEN
-      c := t.buff[t.token.start];
-      Next(t);
-      RETURN TRUE
-    ELSE
-      RETURN FALSE
-    END
-  END GetCharSet;
-
-PROCEDURE GetToken(t : T; READONLY tok : ARRAY OF CHAR) : BOOLEAN =
-  BEGIN
-    IF SUBARRAY(t.buff, t.token.start, t.token.n) = tok THEN
-      Next(t);
-      RETURN TRUE
-    ELSE
-      RETURN FALSE
-    END
-  END GetToken;
-
-PROCEDURE GetUse(t : T; VAR use : DefUse.T) : BOOLEAN =
-  BEGIN
-    IF DefUse.Lookup(SUBARRAY(t.buff, t.token.start, t.token.n), use) THEN
-      Next(t);
-      RETURN TRUE
-    ELSE
-      RETURN FALSE
-    END
-  END GetUse;
-
-PROCEDURE GetDirection(t : T; VAR dir : DefDirection.T) : BOOLEAN =
-  BEGIN
-    IF DefDirection.Lookup(SUBARRAY(t.buff, t.token.start, t.token.n), dir) THEN
-      Next(t);
-      RETURN TRUE
-    ELSE
-      RETURN FALSE
-    END
-  END GetDirection;
-
-PROCEDURE GetOrientation(t : T; VAR orient : DefOrientation.T) : BOOLEAN =
-  BEGIN
-    IF DefOrientation.Lookup(SUBARRAY(t.buff, t.token.start, t.token.n), orient) THEN
-      Next(t);
-      RETURN TRUE
-    ELSE
-      RETURN FALSE
-    END
-  END GetOrientation;
-
-PROCEDURE MustBeUse(t : T; VAR use : DefUse.T) RAISES { E } =
-  BEGIN
-    IF NOT GetUse(t, use) THEN
-      RAISE E("MustBeUse: expected use, but got \"" & 
-            S2T(t.buff, t.token) & "\"")
-    END
-  END MustBeUse;
-
-PROCEDURE MustBeDirection(t : T; VAR direction : DefDirection.T) RAISES { E } =
-  BEGIN
-    IF NOT GetDirection(t, direction) THEN
-      RAISE E("MustBeDirection: expected direction, but got \"" & 
-            S2T(t.buff, t.token) & "\"")
-    END
-  END MustBeDirection;
-
-PROCEDURE MustBeOrientation(t : T; VAR orientation : DefOrientation.T) RAISES { E } =
-  BEGIN
-    IF NOT GetOrientation(t, orientation) THEN
-      RAISE E("MustBeOrientation: expected orientation, but got \"" & 
-            S2T(t.buff, t.token) & "\"")
-    END
-  END MustBeOrientation;
-
-PROCEDURE MustBeToken(t : T; READONLY tok : ARRAY OF CHAR) RAISES { E } =
-  BEGIN
-    IF NOT GetToken(t, tok) THEN
-      RAISE E("MustBeToken: "&BrackOrEmpty(t.lately.nm)&" expected '" & A2T(tok) & 
-        "' but got \"" & S2T(t.buff, t.token) & "\"")
-    END
-  END MustBeToken;
-
-PROCEDURE MustNotBeChar(t : T; c : CHAR) RAISES { E } =
-  BEGIN
-    IF t.token.n = 1 AND t.buff[t.token.start] = c THEN
-      RAISE E("MustNotBeChar: "&BrackOrEmpty(t.lately.nm)&" illegal \"" & 
-            S2T(t.buff, t.token) & "\"")
-    ELSE
-      Next(t)
-    END
-  END MustNotBeChar;
-
-PROCEDURE MustBeChars(t : T; READONLY a : ARRAY OF CHAR) RAISES { E } =
-  BEGIN
-    IF t.token.n # NUMBER(a) OR 
-       SUBARRAY(t.buff, t.token.start, t.token.n) # a THEN
-      RAISE E("MustBeChars: "&BrackOrEmpty(t.lately.nm)&" expected '" & Text.FromChars(a) & 
-        "' but got \"" & S2T(t.buff, t.token) & "\"")
-    END;
-    Next(t)
-  END MustBeChars;
-
-PROCEDURE MustBeCharSet(t : T; s : SET OF CHAR; VAR c : CHAR) RAISES { E } =
-  BEGIN
-    IF t.token.n # 1 OR NOT t.buff[t.token.start] IN s THEN
-      RAISE E("MustBeCharSet: unexpected \"" & S2T(t.buff, t.token) & "\"")
-    END;
-    c := t.buff[t.token.start];
-    Next(t)
-  END MustBeCharSet;
-
-PROCEDURE BrackOrEmpty(txt : TEXT) : TEXT =
-  BEGIN
-    IF txt = NIL THEN RETURN "" ELSE RETURN "["&txt&"]" END
-  END BrackOrEmpty;
-
-PROCEDURE GetCard(t : T; VAR c : CARDINAL) : BOOLEAN =
-  VAR 
-    res := 0;
-  BEGIN
-    FOR i := t.token.start TO t.token.start+t.token.n-1 DO
-      WITH num = ORD(t.buff[i])-ORD('0') DO
-        IF num < 0 OR num > 9 THEN RETURN FALSE END;
-        res := 10*res+num
-      END
-    END;
-    c := res;
-    Next(t);
-    D("Card"); RETURN TRUE
-  END GetCard;
-
-PROCEDURE MustBeCard(t : T; VAR c : CARDINAL) RAISES { E } = 
-  BEGIN
-    IF NOT GetCard(t, c) THEN
-      RAISE E ("MustBeCard, "&BrackOrEmpty(t.lately.nm)&" expected number")
-    END
-  END MustBeCard;
-
-PROCEDURE MustBeInt(t : T; VAR i : INTEGER) RAISES { E } =
-  (* kind of ugly *)
-  VAR
-    j : CARDINAL;
-  BEGIN
-    IF GetCard(t, j) THEN
-      i := j;
-      RETURN 
-    ELSIF t.token.n = 1 AND t.buff[t.token.start] = '+' THEN
-      Next(t); 
-      MustBeCard(t, j);
-      i := j;
-      RETURN
-    ELSIF t.token.n = 1 AND t.buff[t.token.start] = '-' THEN
-      Next(t); 
-      IF NOT GetCard(t, j) THEN
-        RAISE E("MustBeInt, "&BrackOrEmpty(t.lately.nm)&" expected number")
-      END;
-      i := -j;
-      RETURN
-    ELSE
-      RAISE E("MustBeInt, "&BrackOrEmpty(t.lately.nm)&" expected integer")
-    END
-  END MustBeInt;
-
-PROCEDURE MustBePoint(t : T; VAR p : DefPoint.T) RAISES { E } =
-  BEGIN
-    MustBeChar(t,'(');
-    MustBeInt(t, p.x);
-    MustBeInt(t, p.y);
-    MustBeChar(t,')');
-  END MustBePoint;
-
-PROCEDURE GetPoint(t : T; VAR p : DefPoint.T) : BOOLEAN RAISES { E } =
-  (* a bit of a hack because of the LL(1) capability here *)
-  BEGIN
-    IF NOT GetChar(t, '(') THEN
-      RETURN FALSE
-    END;
-    MustBeInt(t, p.x);
-    MustBeInt(t, p.y);
-    MustBeChar(t,')');
-    RETURN TRUE
-  END GetPoint;
-  
-PROCEDURE Next(t : T) =
-  BEGIN 
-    t.eop := NOT DefLexer.GetToken(t.lexer, t.buff, t.state, t.token) ;
-    (*Debug.Out("Token \"" & S2T(t.buff, t.token) & "\"")*)
-  END Next;
-  
-PROCEDURE GetIdentifier(t : T; VAR ident : TEXT) : BOOLEAN =
-  (* we could use a char buffer instead of TEXT here to reduce mem alloc *)
-
-  (* this needs to handle multiple arcs and arraying! *)
-
-  VAR
-    ok := FALSE;
-  BEGIN
-    (* check its not a special character or a number *)
-    IF    t.token.n = 0 THEN 
-      RETURN FALSE
-    ELSIF t.buff[t.token.start] IN t.lexer.special THEN
-      <*ASSERT t.token.n = 1*>
-      RETURN FALSE
-    ELSE
-      FOR i := t.token.start TO t.token.start + t.token.n - 1 DO
-        IF NOT t.buff[i] IN Digit THEN 
-          ok := TRUE
-        END
-      END
-    END;
-
-    IF NOT ok THEN RETURN FALSE END;
-      
-    ident := Text.FromChars(SUBARRAY(t.buff, t.token.start, t.token.n));
-    Next(t);
-    D("Identifier"); 
-    RETURN TRUE
-  END GetIdentifier;
-
-PROCEDURE MustBeIdentifier(t : T; VAR ident : TEXT) RAISES { E } =
-  BEGIN
-    IF NOT GetIdentifier(t, ident) THEN
-      RAISE E ("MustBeIdentifier: " & BrackOrEmpty(t.lately.nm) & " expected identifier here : " & S2T(t.buff, t.token))
-    END;
-  END MustBeIdentifier;
 
 <*NOWARN*>PROCEDURE D(what : TEXT) = BEGIN (*IO.Put(what & "\n")*) END D;
 
@@ -297,7 +42,7 @@ PROCEDURE Parse(rd : Rd.T) : T RAISES { E } =
 
   VAR
     (* parsing *)
-    t := NEW(T);
+    t := NEW(T, lexer := NEW(DefLexer.T));
   BEGIN
     
     t.state.rd := rd;
@@ -322,56 +67,6 @@ PROCEDURE Parse(rd : Rd.T) : T RAISES { E } =
 
 (**********************************************************************)
 
-(* parsing a hierarchical name *)
-
-TYPE 
-  Name = RECORD END; (* not sure yet *)
-
-PROCEDURE GetName(t : T; VAR name : Name) : BOOLEAN RAISES { E } =
-  VAR
-    res := FALSE;
-    id : TEXT;
-    idx : INTEGER;
-  BEGIN
-    LOOP
-      (* identifier *)
-      IF    GetIdentifier(t, id) THEN
-        res := TRUE
-      ELSE 
-        RETURN res
-      END;
-
-      (* array index, is optional after any identifier *)
-      IF GetChar(t, t.lexer.busbitChars[0]) THEN
-        MustBeInt(t, idx);
-        MustBeChar(t, t.lexer.busbitChars[1])
-      END;
-
-      (* separator -- is trailing separator OK, probably not? *)
-      (* separator MUST precede next arc *)
-      IF NOT GetChar(t, t.lexer.divChar) THEN
-        RETURN TRUE
-      END
-
-    END
-  END GetName;
-
-PROCEDURE MustBeName(t : T; VAR name : Name) RAISES { E } = 
-  BEGIN
-    IF NOT GetName(t, name) THEN
-      RAISE E("MustBeName: "&BrackOrEmpty(t.lately.nm)&" expected name")
-    END
-  END MustBeName;
-
-(**********************************************************************)
-
-PROCEDURE S2T(READONLY buff : Buffer; s : String) : TEXT =
-  BEGIN RETURN Text.FromChars(SUBARRAY(buff, s.start, s.n)) END S2T;
-
-CONST A2T = Text.FromChars;
-
-(**********************************************************************)
-
 PROCEDURE ParseVersion(t : R; ref : REFANY) RAISES { E } =
   BEGIN
     <*ASSERT t = ref*>
@@ -388,7 +83,7 @@ PROCEDURE ParseDividerChar(t : R; ref : REFANY) RAISES { E } =
       IF NUMBER(chars) # 3 OR chars[0] # DQ OR chars[2] # DQ THEN
         Debug.Error("DefFormat.ParseDividerChar ?syntax error")
       END;
-      DefLexer.DividerChar(NARROW(t,T).lexer, chars[1])
+      DefLexer.DividerChar(NARROW(t,T).lexer,chars[1])
     END;
     Next(t);
     MustBeChar(t,';')
@@ -435,7 +130,7 @@ PROCEDURE ParseDesignUnits(t : R; ref : REFANY) RAISES { E } =
       MustBeChars(t, K.T_DISTANCE);
       MustBeChars(t, K.T_MICRONS);
       
-      MustBeCard(t, des.distUnits);
+      DefCard.MustBe(t, des.distUnits);
       MustBeChar(t,';')
     END
   END ParseDesignUnits;
@@ -458,7 +153,7 @@ PROCEDURE ParseDieArea(t : R; ref : REFANY) RAISES { E } =
         VAR 
           p : DefPoint.T;
         BEGIN
-          MustBePoint(t, p);
+          DefPoint.MustBe(t, p);
           seq.addhi(p)
         END
       END
@@ -467,20 +162,20 @@ PROCEDURE ParseDieArea(t : R; ref : REFANY) RAISES { E } =
 
 PROCEDURE ParseRow(t : R; ref : REFANY) RAISES { E } = 
   VAR
-    rowName, siteName, siteOrient : TEXT;
+    rowName, siteName, siteOrient : DefIdent.T;
     origX, origY : INTEGER;
     numX, numY : CARDINAL := 1;
     stepX, stepY : INTEGER := 0;
   BEGIN
     WITH des = NARROW(ref, Design) DO
-      IF NOT GetIdentifier(t, rowName) OR NOT GetIdentifier(t, siteName) THEN
+      IF NOT DefIdent.Get(t, rowName) OR NOT DefIdent.Get(t, siteName) THEN
         RAISE E("ParseRow, rowName, siteName")
       END;
 
-      MustBeInt(t, origX);
-      MustBeInt(t, origY);
+      DefInt.MustBe(t, origX);
+      DefInt.MustBe(t, origY);
 
-      IF NOT GetIdentifier(t, siteOrient) THEN
+      IF NOT DefIdent.Get(t, siteOrient) THEN
         RAISE E("ParseRow, siteOrient")
       END;
 
@@ -489,18 +184,18 @@ PROCEDURE ParseRow(t : R; ref : REFANY) RAISES { E } =
       END;
 
       IF GetToken(t, K.T_DO) THEN
-        IF NOT GetCard(t, numX) THEN RAISE E("ParseRow, numX") END;
+        IF NOT DefCard.Get(t, numX) THEN RAISE E("ParseRow, numX") END;
         
         IF NOT GetToken(t, K.T_BY) THEN RAISE E("ParseRow, DO...BY") END;
 
-        IF NOT GetCard(t, numY) THEN  RAISE E("ParseRow, numY") END;
+        IF NOT DefCard.Get(t, numY) THEN  RAISE E("ParseRow, numY") END;
         
         IF GetToken(t, T_Semi) THEN
           RETURN
         ELSIF GetToken(t, K.T_STEP) THEN
 
-          MustBeInt(t, stepX);
-          MustBeInt(t, stepY)
+          DefInt.MustBe(t, stepX);
+          DefInt.MustBe(t, stepY)
         END;
 
         IF GetToken(t, T_Semi) THEN
@@ -522,22 +217,22 @@ PROCEDURE ParseTracks(t : R; ref : REFANY) RAISES { E } =
       RAISE E("ParseTracks, xy")
     END;
 
-    MustBeInt(t, start);
+    DefInt.MustBe(t, start);
     
     IF NOT GetToken(t, K.T_DO) THEN
       RAISE E("ParseTracks, ?DO")
     END;
 
-    MustBeCard(t, numTracks);
+    DefCard.MustBe(t, numTracks);
 
     IF NOT GetToken(t, K.T_STEP) THEN
       RAISE E("ParseTracks, ?STEP")
     END;
 
-    MustBeCard(t, space);
+    DefCard.MustBe(t, space);
 
     IF GetToken(t, K.T_MASK) THEN
-      MustBeCard(t, mask);
+      DefCard.MustBe(t, mask);
       MustBeChars(t, K.T_SAMEMASK);
     END;
 
@@ -563,11 +258,11 @@ PROCEDURE ParseGCellGrid(t : R; ref : REFANY) RAISES { E } =
   BEGIN
     WITH des = NARROW(ref, Design) DO
       MustBeCharSet(t, SET OF CHAR { 'X', 'Y' }, c);
-      MustBeInt(t, start);
+      DefInt.MustBe(t, start);
       MustBeChars(t, K.T_DO);
-      MustBeCard(t, numRowsCols);
+      DefCard.MustBe(t, numRowsCols);
       MustBeChars(t, K.T_STEP);
-      MustBeCard(t, step);
+      DefCard.MustBe(t, step);
       MustBeChar(t, ';');
     END
   END ParseGCellGrid;
@@ -577,7 +272,7 @@ PROCEDURE ParseVias(t : R; ref : REFANY) RAISES { E } =
     numVias : CARDINAL;
   BEGIN
     WITH des = NARROW(ref, Design) DO
-      MustBeCard(t, numVias);
+      DefCard.MustBe(t, numVias);
       MustBeChar(t, ';');
 
       ParseMinusBlock(t, ref, numVias, ParseVia);
@@ -589,7 +284,7 @@ PROCEDURE ParseNonDefaultRules(t : R; ref : REFANY) RAISES { E } =
     numNonDefaultRules : CARDINAL;
   BEGIN
     WITH des = NARROW(ref, Design) DO
-      MustBeCard(t, numNonDefaultRules);
+      DefCard.MustBe(t, numNonDefaultRules);
       MustBeChar(t, ';');
 
       ParseMinusBlock(t, ref, numNonDefaultRules, ParseNonDefaultRule);
@@ -601,7 +296,7 @@ PROCEDURE ParseRegions(t : R; ref : REFANY) RAISES { E } =
     num : CARDINAL;
   BEGIN
     WITH des = NARROW(ref, Design) DO
-      MustBeCard(t, num);
+      DefCard.MustBe(t, num);
       MustBeChar(t, ';');
 
       ParseMinusBlock(t, ref, num, ParseRegion);
@@ -613,7 +308,7 @@ PROCEDURE ParseComponents(t : R; ref : REFANY) RAISES { E } =
     num : CARDINAL;
   BEGIN
     WITH des = NARROW(ref, Design) DO
-      MustBeCard(t, num);
+      DefCard.MustBe(t, num);
       MustBeChar(t, ';');
 
       ParseMinusBlock(t, ref, num, ParseComponent);
@@ -625,7 +320,7 @@ PROCEDURE ParsePins(t : R; ref : REFANY) RAISES { E } =
     num : CARDINAL;
   BEGIN
     WITH des = NARROW(ref, Design) DO
-      MustBeCard(t, num);
+      DefCard.MustBe(t, num);
       MustBeChar(t, ';');
 
       ParseMinusBlock(t, ref, num, ParsePin);
@@ -647,10 +342,10 @@ PROCEDURE ParseMinusBlock(t : T; ref : REFANY; cnt : CARDINAL; f : ParseProc.T)
 
 PROCEDURE ParseVia(t : R; ref : REFANY) RAISES { E } =
   VAR
-    nm : TEXT;
+    nm : DefIdent.T;
     c  : CHAR;
   BEGIN
-    MustBeIdentifier(t, nm);
+    DefIdent.MustBe(t, nm);
     LOOP
       MustBeSingle(t, c);
       CASE c OF 
@@ -661,16 +356,16 @@ PROCEDURE ParseVia(t : R; ref : REFANY) RAISES { E } =
         IF GetToken(t, K.T_RECT) THEN
           VAR 
             p1, p2 : DefPoint.T;
-            layer : TEXT;
+            layer : DefIdent.T;
             maskNo : CARDINAL;
           BEGIN
-            MustBeIdentifier(t, layer);
+            DefIdent.MustBe(t, layer);
             IF GetChar(t, '+') THEN
               MustBeToken(t, K.T_MASK);
-              MustBeCard(t, maskNo)
+              DefCard.MustBe(t, maskNo)
             END;
-            MustBePoint(t, p1);
-            MustBePoint(t, p2)
+            DefPoint.MustBe(t, p1);
+            DefPoint.MustBe(t, p2)
           END
         ELSE
           RAISE E("ParseVia: expected RECT")
@@ -684,15 +379,15 @@ PROCEDURE ParseVia(t : R; ref : REFANY) RAISES { E } =
 PROCEDURE ParseComponent(t : R; ref : REFANY) RAISES { E } =
   VAR
     c : CHAR;
-    compName : Name;
-    modelName, macroName : TEXT;
+    compName : DefName.T;
+    modelName, macroName : DefIdent.T;
     p : DefPoint.T;
     left, bottom, right, top, haloDist, weight : CARDINAL;
     prop : PropertyBinding;
-    orient, minLayer, maxLayer, regionName : TEXT;
+    orient, minLayer, maxLayer, regionName : DefIdent.T;
   BEGIN
-    MustBeName(t, compName);
-    MustBeIdentifier(t, modelName);
+    DefName.MustBe(t, compName);
+    DefIdent.MustBe(t, modelName);
     LOOP
       MustBeSingle(t, c);
       CASE c OF
@@ -700,7 +395,7 @@ PROCEDURE ParseComponent(t : R; ref : REFANY) RAISES { E } =
       |
         '+' =>
         IF    GetToken(t, K.T_EEQMASTER) THEN
-          MustBeIdentifier(t, macroName)
+          DefIdent.MustBe(t, macroName)
         ELSIF GetToken(t, K.T_SOURCE) THEN
           IF    GetToken(t, K.T_NETLIST) THEN
           ELSIF GetToken(t, K.T_DIST) THEN
@@ -710,30 +405,30 @@ PROCEDURE ParseComponent(t : R; ref : REFANY) RAISES { E } =
             RAISE E ("ParseComponent ?SOURCE")
           END
         ELSIF GetToken(t, K.T_FIXED) THEN
-          MustBePoint(t, p);
-          MustBeIdentifier(t, orient) (* should be a special func *)
+          DefPoint.MustBe(t, p);
+          DefIdent.MustBe(t, orient) (* should be a special func *)
         ELSIF GetToken(t, K.T_COVER) THEN
-          MustBePoint(t, p);
-          MustBeIdentifier(t, orient) (* should be a special func *)
+          DefPoint.MustBe(t, p);
+          DefIdent.MustBe(t, orient) (* should be a special func *)
         ELSIF GetToken(t, K.T_PLACED) THEN
-          MustBePoint(t, p);
-          MustBeIdentifier(t, orient) (* should be a special func *)
+          DefPoint.MustBe(t, p);
+          DefIdent.MustBe(t, orient) (* should be a special func *)
         ELSIF GetToken(t, K.T_UNPLACED) THEN
         ELSIF GetToken(t, K.T_HALO) THEN
           IF GetToken(t, K.T_SOFT) THEN
           END;
-          MustBeCard(t, left);
-          MustBeCard(t, bottom);
-          MustBeCard(t, right);
-          MustBeCard(t, top)
+          DefCard.MustBe(t, left);
+          DefCard.MustBe(t, bottom);
+          DefCard.MustBe(t, right);
+          DefCard.MustBe(t, top)
         ELSIF GetToken(t, K.T_ROUTEHALO) THEN
-          MustBeCard(t, haloDist);
-          MustBeIdentifier(t, minLayer);
-          MustBeIdentifier(t, maxLayer)
+          DefCard.MustBe(t, haloDist);
+          DefIdent.MustBe(t, minLayer);
+          DefIdent.MustBe(t, maxLayer)
         ELSIF GetToken(t, K.T_WEIGHT) THEN
-          MustBeCard(t, weight)
+          DefCard.MustBe(t, weight)
         ELSIF GetToken(t, K.T_REGION) THEN
-          MustBeIdentifier(t, regionName)
+          DefIdent.MustBe(t, regionName)
         ELSIF GetProperty(t, ref, prop) THEN
         ELSE
           RAISE E("ParseComponent unexpected text")
@@ -747,16 +442,16 @@ PROCEDURE ParseComponent(t : R; ref : REFANY) RAISES { E } =
 PROCEDURE ParsePin(t : R; ref : REFANY) RAISES { E } =
   VAR
     c : CHAR;
-    netName, pinName, compName : Name;
+    netName, pinName, compName : DefName.T;
     p : DefPoint.T;
     left, bottom, right, top, haloDist, weight : CARDINAL;
     prop : PropertyBinding;
-    orient, minLayer, maxLayer, regionName : TEXT;
+    orient, minLayer, maxLayer, regionName : DefIdent.T;
   BEGIN
-    MustBeName(t, pinName);
+    DefName.MustBe(t, pinName);
     MustBeChar(t, '+');
     MustBeToken(t, K.T_NET);
-    MustBeName(t, netName);
+    DefName.MustBe(t, netName);
 
     LOOP
       MustBeSingle(t, c);
@@ -769,30 +464,30 @@ PROCEDURE ParsePin(t : R; ref : REFANY) RAISES { E } =
           VAR
             dir : DefDirection.T;
           BEGIN
-            MustBeDirection(t, dir)
+            DefDirection.MustBe(t, dir)
           END
         ELSIF GetToken(t, K.T_USE) THEN
           VAR 
             use : DefUse.T;
           BEGIN
-            MustBeUse(t, use)
+            DefUse.MustBe(t, use)
           END
         ELSIF GetToken(t, K.T_LAYER) THEN
           VAR 
-            layer : TEXT;
+            layer : DefIdent.T;
             p0, p1 : DefPoint.T;
           BEGIN
-            MustBeIdentifier(t, layer);
-            MustBePoint(t, p0);
-            MustBePoint(t, p1)
+            DefIdent.MustBe(t, layer);
+            DefPoint.MustBe(t, p0);
+            DefPoint.MustBe(t, p1)
           END
         ELSIF GetToken(t, K.T_FIXED) THEN
           VAR 
             p : DefPoint.T;
             o : DefOrientation.T;
           BEGIN
-            MustBePoint(t, p);
-            MustBeOrientation(t, o)
+            DefPoint.MustBe(t, p);
+            DefOrientation.MustBe(t, o)
           END
         ELSE
           RAISE E("ParsePin unexpected text")
@@ -805,11 +500,11 @@ PROCEDURE ParsePin(t : R; ref : REFANY) RAISES { E } =
 
 PROCEDURE ParseNonDefaultRule(t : R; ref : REFANY) RAISES { E } =
   VAR
-    nm : TEXT;
+    nm : DefIdent.T;
     c : CHAR;
     prop : PropertyBinding;
   BEGIN
-    MustBeIdentifier(t, nm);
+    DefIdent.MustBe(t, nm);
     LOOP
       MustBeSingle(t, c);
       CASE c OF 
@@ -819,41 +514,41 @@ PROCEDURE ParseNonDefaultRule(t : R; ref : REFANY) RAISES { E } =
         IF    GetToken(t, K.T_HARDSPACING) THEN
         ELSIF GetToken(t, K.T_LAYER) THEN
           VAR
-            layer : TEXT;
+            layer : DefIdent.T;
             width, diagWidth, spacing, wireExt : CARDINAL;
           BEGIN
-            MustBeIdentifier(t, layer);
+            DefIdent.MustBe(t, layer);
             MustBeToken(t, K.T_WIDTH);
-            MustBeCard(t, width);
+            DefCard.MustBe(t, width);
             IF    GetToken(t, K.T_DIAGWIDTH) THEN
-              MustBeCard(t, diagWidth)
+              DefCard.MustBe(t, diagWidth)
             ELSIF GetToken(t, K.T_SPACING) THEN
-              MustBeCard(t, spacing)
+              DefCard.MustBe(t, spacing)
             ELSIF GetToken(t, K.T_WIREEXT) THEN
-              MustBeCard(t, wireExt)
+              DefCard.MustBe(t, wireExt)
             ELSE
               RAISE E("ParseNonDefaultRule: LAYER: unknown keyword")
             END
           END
         ELSIF GetToken(t, K.T_VIA) THEN
           VAR
-            viaName : TEXT;
+            viaName : DefIdent.T;
           BEGIN
-            MustBeIdentifier(t, viaName)
+            DefIdent.MustBe(t, viaName)
           END
         ELSIF GetToken(t, K.T_VIARULE) THEN
           VAR
-            viaRuleName : TEXT;
+            viaRuleName : DefIdent.T;
           BEGIN
-            MustBeIdentifier(t, viaRuleName)
+            DefIdent.MustBe(t, viaRuleName)
           END
         ELSIF GetToken(t, K.T_MINCUTS) THEN
           VAR 
-            cutLayerName : TEXT;
+            cutLayerName : DefIdent.T;
             numCuts : CARDINAL;
           BEGIN
-            MustBeIdentifier(t, cutLayerName);
-            MustBeCard(t, numCuts)
+            DefIdent.MustBe(t, cutLayerName);
+            DefCard.MustBe(t, numCuts)
           END
         ELSIF GetProperty(t, ref, prop) THEN
         ELSE
@@ -868,9 +563,11 @@ PROCEDURE ParseNonDefaultRule(t : R; ref : REFANY) RAISES { E } =
   END ParseNonDefaultRule;
 
 TYPE
+  Value = NULL; (* TBD *)
+
   PropertyBinding = RECORD
-    property : TEXT; (* should really point to a Property.T *)
-    binding  : NULL; (* needs to be a type-tagged value *)
+    property : DefIdent.T; (* should really point to a Property.T *)
+    binding  : Value; (* needs to be a type-tagged value *)
   END;
 
 PROCEDURE GetProperty(t : T; 
@@ -879,7 +576,7 @@ PROCEDURE GetProperty(t : T;
   RAISES { E } =
   BEGIN
     IF GetToken(t, K.T_PROPERTY) THEN
-      MustBeIdentifier(t, pb.property);
+      DefIdent.MustBe(t, pb.property);
       Next(t); (* should put it in binding *)
       RETURN TRUE
     ELSE
@@ -889,15 +586,15 @@ PROCEDURE GetProperty(t : T;
 
 PROCEDURE ParseRegion(t : R; ref : REFANY) RAISES { E } =
   VAR
-    nm : TEXT;
+    nm : DefIdent.T;
     c  : CHAR;
     p, q : DefPoint.T;
     prop : PropertyBinding;
   BEGIN
-    MustBeIdentifier(t, nm);
+    DefIdent.MustBe(t, nm);
     LOOP
-      WHILE GetPoint(t, p) DO (* points are in pairs *)
-        MustBePoint(t, q)
+      WHILE DefPoint.Get(t, p) DO (* points are in pairs *)
+        DefPoint.MustBe(t, q)
       END;
 
       MustBeSingle(t, c);
@@ -972,9 +669,9 @@ PROCEDURE ParseBlock(t             : T;
 
 PROCEDURE ParseComponentMaskShift(t : R; ref : REFANY) RAISES { E } = 
   VAR
-    id : TEXT;
+    id : DefIdent.T;
   BEGIN
-    WHILE GetIdentifier(t, id) DO (* skip *) END;
+    WHILE DefIdent.Get(t, id) DO (* skip *) END;
     MustBeChar(t, ';')
   END ParseComponentMaskShift;
 

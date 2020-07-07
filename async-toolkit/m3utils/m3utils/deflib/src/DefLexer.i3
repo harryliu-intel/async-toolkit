@@ -1,5 +1,5 @@
 INTERFACE DefLexer;
-FROM RecursiveParserRep IMPORT Buffer, State, String;
+IMPORT RecursiveLexer;
 
 CONST BaseSpecial    = SET OF CHAR { '(', ')', '{', '}', '-', '+', ';' };
 CONST DefDivChar = '/';
@@ -13,19 +13,18 @@ CONST DefSpecial = BaseSpecial +
 CONST Digit = SET OF CHAR { '0' .. '9' };
 
 TYPE 
-  T = RECORD
+  T <: Public;
+
+  Public = RecursiveLexer.T OBJECT
     special     := DefSpecial;
     divChar     := DefDivChar;
     busbitChars := DefBusbitChars;
   END;
 
-PROCEDURE GetToken(READONLY t : T;
-                   VAR buff  : Buffer;
-                   VAR state : State;
-                   VAR res   : String) : BOOLEAN;
+PROCEDURE DividerChar(s : T; c : CHAR);
 
-PROCEDURE DividerChar(VAR s : T; c : CHAR);
+PROCEDURE BusbitChars(s : T; c : ARRAY [0..1] OF CHAR);
 
-PROCEDURE BusbitChars(VAR s : T; c : ARRAY [0..1] OF CHAR);
+CONST Brand = "DefLexer";
 
 END DefLexer.

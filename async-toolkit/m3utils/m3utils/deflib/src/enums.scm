@@ -157,12 +157,28 @@
 )
 
 (define *lookup-name* "Lookup")   
+
+(define *get-name* "Get")
+(define *mustbe-name* "MustBe")
                               
 (define *lookup-proto* 
   (string-append
- "PROCEDURE "*lookup-name*"(READONLY a : ARRAY OF CHAR; VAR v : T) : BOOLEAN"
- )
+   "PROCEDURE "*lookup-name*"(READONLY a : ARRAY OF CHAR; VAR v : T) : BOOLEAN"
+   )
   )
+
+(define *get-proto*
+  (string-append
+   "PROCEDURE "*get-name*"(p : RecursiveParser.T; VAR t : T) : BOOLEAN"
+   )
+  )
+
+(define *mustbe-proto*
+  (string-append
+   "PROCEDURE "*mustbe-name*"(p : RecursiveParser.T; VAR t : T) RAISES { E }"
+   )
+  )
+
 
 (define (T-prefix str) (string-append "T_" str))
 (define (a-suffix str) (string-append str "a"))
@@ -173,6 +189,11 @@
          (m-wr (cadr wrs))
          (nm   (caddr wrs))
          )
+
+    (dis "IMPORT RecursiveParser;" dnl
+         "FROM ParseError IMPORT E;" dnl
+         dnl
+         i-wr)
 
     (map (lambda(tok)(do-token-i3 tok i-wr)) tokens)
 
@@ -186,11 +207,20 @@ dnl
 dnl
 *lookup-proto* ";" dnl
 dnl
+*get-proto* ";" dnl
+dnl
+*mustbe-proto* ";" dnl
+dnl
+dnl
     i-wr)
 
     (dis 
 "IMPORT Text;" dnl
 "IMPORT CharCardTrie AS Trie;" dnl
+"IMPORT RecursiveParser;" dnl
+"IMPORT RecursiveParserRep;" dnl
+"FROM RecursiveParser IMPORT S2T, Next;" dnl
+"FROM ParseError IMPORT E;" dnl
 dnl
 "CONST NotFound = ORD(LAST(T)) + 1;" dnl
 dnl
@@ -214,6 +244,23 @@ dnl
 "    END" dnl
 "  END " *lookup-name* ";" dnl
 dnl
+*get-proto* "=" dnl
+"  BEGIN" dnl
+"    IF Lookup(SUBARRAY(p.buff, p.token.start, p.token.n), t) THEN" dnl
+"      Next(p);" dnl
+"      RETURN TRUE;" dnl
+"    ELSE" dnl
+"      RETURN FALSE" dnl
+"    END" dnl
+"  END " *get-name* ";" dnl
+dnl
+*mustbe-proto* "=" dnl
+"  BEGIN" dnl
+"    IF NOT Get(p, t) THEN" dnl
+"      RAISE E(\""*mustbe-name* ":" nm " expected value but got \" & S2T(p.buff, p.token) & \"\")" dnl
+"    END" dnl
+"  END "*mustbe-name*";" dnl
+dnl 
      m-wr)
 
      (dis
