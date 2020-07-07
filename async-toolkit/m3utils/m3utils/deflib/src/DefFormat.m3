@@ -9,6 +9,10 @@ IMPORT DefLexer;
 IMPORT DefPoint, DefPointSeq;
 IMPORT Fmt;
 FROM ParseError IMPORT E;
+IMPORT DefTokens AS K;
+IMPORT DefDirection;
+IMPORT DefOrientation;
+IMPORT DefUse;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
@@ -84,6 +88,60 @@ PROCEDURE GetToken(t : T; READONLY tok : ARRAY OF CHAR) : BOOLEAN =
       RETURN FALSE
     END
   END GetToken;
+
+PROCEDURE GetUse(t : T; VAR use : DefUse.T) : BOOLEAN =
+  BEGIN
+    IF DefUse.Lookup(SUBARRAY(t.buff, t.token.start, t.token.n), use) THEN
+      Next(t);
+      RETURN TRUE
+    ELSE
+      RETURN FALSE
+    END
+  END GetUse;
+
+PROCEDURE GetDirection(t : T; VAR dir : DefDirection.T) : BOOLEAN =
+  BEGIN
+    IF DefDirection.Lookup(SUBARRAY(t.buff, t.token.start, t.token.n), dir) THEN
+      Next(t);
+      RETURN TRUE
+    ELSE
+      RETURN FALSE
+    END
+  END GetDirection;
+
+PROCEDURE GetOrientation(t : T; VAR orient : DefOrientation.T) : BOOLEAN =
+  BEGIN
+    IF DefOrientation.Lookup(SUBARRAY(t.buff, t.token.start, t.token.n), orient) THEN
+      Next(t);
+      RETURN TRUE
+    ELSE
+      RETURN FALSE
+    END
+  END GetOrientation;
+
+PROCEDURE MustBeUse(t : T; VAR use : DefUse.T) RAISES { E } =
+  BEGIN
+    IF NOT GetUse(t, use) THEN
+      RAISE E("MustBeUse: expected use, but got \"" & 
+            S2T(t.buff, t.token) & "\"")
+    END
+  END MustBeUse;
+
+PROCEDURE MustBeDirection(t : T; VAR direction : DefDirection.T) RAISES { E } =
+  BEGIN
+    IF NOT GetDirection(t, direction) THEN
+      RAISE E("MustBeDirection: expected direction, but got \"" & 
+            S2T(t.buff, t.token) & "\"")
+    END
+  END MustBeDirection;
+
+PROCEDURE MustBeOrientation(t : T; VAR orientation : DefOrientation.T) RAISES { E } =
+  BEGIN
+    IF NOT GetOrientation(t, orientation) THEN
+      RAISE E("MustBeOrientation: expected orientation, but got \"" & 
+            S2T(t.buff, t.token) & "\"")
+    END
+  END MustBeOrientation;
 
 PROCEDURE MustBeToken(t : T; READONLY tok : ARRAY OF CHAR) RAISES { E } =
   BEGIN
@@ -386,20 +444,22 @@ PROCEDURE ParseDesign(t : T; ref : REFANY) RAISES { E } =
 PROCEDURE ParseDesignUnits(t : T; ref : REFANY) RAISES { E } =
   BEGIN
     WITH des = NARROW(ref, Design) DO
-      MustBeChars(t, DISTANCEa^);
-      MustBeChars(t, MICRONSa^);
+      MustBeChars(t, K.T_DISTANCE);
+      MustBeChars(t, K.T_MICRONS);
       
       MustBeCard(t, des.distUnits);
       MustBeChar(t,';')
     END
   END ParseDesignUnits;
 
+CONST T_Semi = ARRAY OF CHAR { ';' };
+
 PROCEDURE ParseDieArea(t : T; ref : REFANY) RAISES { E } =
   BEGIN
     WITH des = NARROW(ref, Design),
          seq = NEW(DefPointSeq.T).init() DO
       LOOP
-        IF SUBARRAY(t.buff, t.token.start, t.token.n) = Semia^ THEN
+        IF SUBARRAY(t.buff, t.token.start, t.token.n) = T_Semi THEN
           IF seq.size() < 2 THEN
             RAISE E("DIEAREA with fewer than 2 points")
           END;
@@ -436,26 +496,26 @@ PROCEDURE ParseRow(t : T; ref : REFANY) RAISES { E } =
         RAISE E("ParseRow, siteOrient")
       END;
 
-      IF GetToken(t, Semia^) THEN
+      IF GetToken(t, T_Semi) THEN
         RETURN
       END;
 
-      IF GetToken(t, DOa^) THEN
+      IF GetToken(t, K.T_DO) THEN
         IF NOT GetCard(t, numX) THEN RAISE E("ParseRow, numX") END;
         
-        IF NOT GetToken(t, BYa^) THEN RAISE E("ParseRow, DO...BY") END;
+        IF NOT GetToken(t, K.T_BY) THEN RAISE E("ParseRow, DO...BY") END;
 
         IF NOT GetCard(t, numY) THEN  RAISE E("ParseRow, numY") END;
         
-        IF GetToken(t, Semia^) THEN
+        IF GetToken(t, T_Semi) THEN
           RETURN
-        ELSIF GetToken(t, STEPa^) THEN
+        ELSIF GetToken(t, K.T_STEP) THEN
 
           MustBeInt(t, stepX);
           MustBeInt(t, stepY)
         END;
 
-        IF GetToken(t, Semia^) THEN
+        IF GetToken(t, T_Semi) THEN
           RETURN
         ELSE
           <*ASSERT FALSE*> (* ROW-PROPERTY not implemented yet *)
@@ -476,24 +536,24 @@ PROCEDURE ParseTracks(t : T; ref : REFANY) RAISES { E } =
 
     MustBeInt(t, start);
     
-    IF NOT GetToken(t, DOa^) THEN
+    IF NOT GetToken(t, K.T_DO) THEN
       RAISE E("ParseTracks, ?DO")
     END;
 
     MustBeCard(t, numTracks);
 
-    IF NOT GetToken(t, STEPa^) THEN
+    IF NOT GetToken(t, K.T_STEP) THEN
       RAISE E("ParseTracks, ?STEP")
     END;
 
     MustBeCard(t, space);
 
-    IF GetToken(t, MASKa^) THEN
+    IF GetToken(t, K.T_MASK) THEN
       MustBeCard(t, mask);
-      MustBeChars(t, SAMEMASKa^);
+      MustBeChars(t, K.T_SAMEMASK);
     END;
 
-    IF NOT GetToken(t, LAYERa^) THEN
+    IF NOT GetToken(t, K.T_LAYER) THEN
       RAISE E ("ParseTracks, ?LAYER")
     END;
 
@@ -516,9 +576,9 @@ PROCEDURE ParseGCellGrid(t : T; ref : REFANY) RAISES { E } =
     WITH des = NARROW(ref, Design) DO
       MustBeCharSet(t, SET OF CHAR { 'X', 'Y' }, c);
       MustBeInt(t, start);
-      MustBeChars(t, DOa^);
+      MustBeChars(t, K.T_DO);
       MustBeCard(t, numRowsCols);
-      MustBeChars(t, STEPa^);
+      MustBeChars(t, K.T_STEP);
       MustBeCard(t, step);
       MustBeChar(t, ';');
     END
@@ -593,7 +653,7 @@ PROCEDURE ParseMinusBlock(t : T; ref : REFANY; cnt : CARDINAL; f : ParseProc.T)
     END;
 
     (* parse END statement, e.g., END VIAS for VIAS block *)
-    MustBeChars(t, ENDa^);    
+    MustBeChars(t, K.T_END);    
     MustBeChars(t, t.lately.ca^)
   END ParseMinusBlock;
 
@@ -610,7 +670,7 @@ PROCEDURE ParseVia(t : T; ref : REFANY) RAISES { E } =
       |
         '+' =>
         
-        IF GetToken(t, RECTa^) THEN
+        IF GetToken(t, K.T_RECT) THEN
           VAR 
             p1, p2 : DefPoint.T;
             layer : TEXT;
@@ -618,7 +678,7 @@ PROCEDURE ParseVia(t : T; ref : REFANY) RAISES { E } =
           BEGIN
             MustBeIdentifier(t, layer);
             IF GetChar(t, '+') THEN
-              MustBeToken(t, MASKa^);
+              MustBeToken(t, K.T_MASK);
               MustBeCard(t, maskNo)
             END;
             MustBePoint(t, p1);
@@ -651,40 +711,40 @@ PROCEDURE ParseComponent(t : T; ref : REFANY) RAISES { E } =
         ';' => RETURN
       |
         '+' =>
-        IF    GetToken(t, EEQMASTERa^) THEN
+        IF    GetToken(t, K.T_EEQMASTER) THEN
           MustBeIdentifier(t, macroName)
-        ELSIF GetToken(t, SOURCEa^) THEN
-          IF    GetToken(t, NETLISTa^) THEN
-          ELSIF GetToken(t, DISTa^) THEN
-          ELSIF GetToken(t, USERa^) THEN
-          ELSIF GetToken(t, TIMINGa^) THEN
+        ELSIF GetToken(t, K.T_SOURCE) THEN
+          IF    GetToken(t, K.T_NETLIST) THEN
+          ELSIF GetToken(t, K.T_DIST) THEN
+          ELSIF GetToken(t, K.T_USER) THEN
+          ELSIF GetToken(t, K.T_TIMING) THEN
           ELSE
             RAISE E ("ParseComponent ?SOURCE")
           END
-        ELSIF GetToken(t, FIXEDa^) THEN
+        ELSIF GetToken(t, K.T_FIXED) THEN
           MustBePoint(t, p);
           MustBeIdentifier(t, orient) (* should be a special func *)
-        ELSIF GetToken(t, COVERa^) THEN
+        ELSIF GetToken(t, K.T_COVER) THEN
           MustBePoint(t, p);
           MustBeIdentifier(t, orient) (* should be a special func *)
-        ELSIF GetToken(t, PLACEDa^) THEN
+        ELSIF GetToken(t, K.T_PLACED) THEN
           MustBePoint(t, p);
           MustBeIdentifier(t, orient) (* should be a special func *)
-        ELSIF GetToken(t, UNPLACEDa^) THEN
-        ELSIF GetToken(t, HALOa^) THEN
-          IF GetToken(t, SOFTa^) THEN
+        ELSIF GetToken(t, K.T_UNPLACED) THEN
+        ELSIF GetToken(t, K.T_HALO) THEN
+          IF GetToken(t, K.T_SOFT) THEN
           END;
           MustBeCard(t, left);
           MustBeCard(t, bottom);
           MustBeCard(t, right);
           MustBeCard(t, top)
-        ELSIF GetToken(t, ROUTEHALOa^) THEN
+        ELSIF GetToken(t, K.T_ROUTEHALO) THEN
           MustBeCard(t, haloDist);
           MustBeIdentifier(t, minLayer);
           MustBeIdentifier(t, maxLayer)
-        ELSIF GetToken(t, WEIGHTa^) THEN
+        ELSIF GetToken(t, K.T_WEIGHT) THEN
           MustBeCard(t, weight)
-        ELSIF GetToken(t, REGIONa^) THEN
+        ELSIF GetToken(t, K.T_REGION) THEN
           MustBeIdentifier(t, regionName)
         ELSIF GetProperty(t, ref, prop) THEN
         ELSE
@@ -699,8 +759,7 @@ PROCEDURE ParseComponent(t : T; ref : REFANY) RAISES { E } =
 PROCEDURE ParsePin(t : T; ref : REFANY) RAISES { E } =
   VAR
     c : CHAR;
-    compName : Name;
-    modelName, macroName : TEXT;
+    netName, pinName, compName : Name;
     p : DefPoint.T;
     left, bottom, right, top, haloDist, weight : CARDINAL;
     prop : PropertyBinding;
@@ -708,7 +767,7 @@ PROCEDURE ParsePin(t : T; ref : REFANY) RAISES { E } =
   BEGIN
     MustBeName(t, pinName);
     MustBeChar(t, '+');
-    MustBeToken(t, NETa^);
+    MustBeToken(t, K.T_NET);
     MustBeName(t, netName);
 
     LOOP
@@ -718,19 +777,19 @@ PROCEDURE ParsePin(t : T; ref : REFANY) RAISES { E } =
       |
         '+' =>
         (* there are many others too *)
-        IF    GetToken(t, DIRECTIONa^) THEN
+        IF    GetToken(t, K.T_DIRECTION) THEN
           VAR
-            dir : Direction;
+            dir : DefDirection.T;
           BEGIN
             MustBeDirection(t, dir)
           END
-        ELSIF GetToken(t, USEa^) THEN
+        ELSIF GetToken(t, K.T_USE) THEN
           VAR 
-            use : Use;
+            use : DefUse.T;
           BEGIN
             MustBeUse(t, use)
           END
-        ELSIF GetToken(t, LAYERa^) THEN
+        ELSIF GetToken(t, K.T_LAYER) THEN
           VAR 
             layer : TEXT;
             p0, p1 : DefPoint.T;
@@ -739,10 +798,10 @@ PROCEDURE ParsePin(t : T; ref : REFANY) RAISES { E } =
             MustBePoint(t, p0);
             MustBePoint(t, p1)
           END
-        ELSIF GetToken(t, FIXEDa^) THEN
+        ELSIF GetToken(t, K.T_FIXED) THEN
           VAR 
             p : DefPoint.T;
-            o : Orientation;
+            o : DefOrientation.T;
           BEGIN
             MustBePoint(t, p);
             MustBeOrientation(t, o)
@@ -769,38 +828,38 @@ PROCEDURE ParseNonDefaultRule(t : T; ref : REFANY) RAISES { E } =
         ';' => RETURN
       |
         '+' =>
-        IF    GetToken(t, HARDSPACINGa^) THEN
-        ELSIF GetToken(t, LAYERa^) THEN
+        IF    GetToken(t, K.T_HARDSPACING) THEN
+        ELSIF GetToken(t, K.T_LAYER) THEN
           VAR
             layer : TEXT;
             width, diagWidth, spacing, wireExt : CARDINAL;
           BEGIN
             MustBeIdentifier(t, layer);
-            MustBeToken(t, WIDTHa^);
+            MustBeToken(t, K.T_WIDTH);
             MustBeCard(t, width);
-            IF    GetToken(t, DIAGWIDTHa^) THEN
+            IF    GetToken(t, K.T_DIAGWIDTH) THEN
               MustBeCard(t, diagWidth)
-            ELSIF GetToken(t, SPACINGa^) THEN
+            ELSIF GetToken(t, K.T_SPACING) THEN
               MustBeCard(t, spacing)
-            ELSIF GetToken(t, WIREEXTa^) THEN
+            ELSIF GetToken(t, K.T_WIREEXT) THEN
               MustBeCard(t, wireExt)
             ELSE
               RAISE E("ParseNonDefaultRule: LAYER: unknown keyword")
             END
           END
-        ELSIF GetToken(t, VIAa^) THEN
+        ELSIF GetToken(t, K.T_VIA) THEN
           VAR
             viaName : TEXT;
           BEGIN
             MustBeIdentifier(t, viaName)
           END
-        ELSIF GetToken(t, VIARULEa^) THEN
+        ELSIF GetToken(t, K.T_VIARULE) THEN
           VAR
             viaRuleName : TEXT;
           BEGIN
             MustBeIdentifier(t, viaRuleName)
           END
-        ELSIF GetToken(t, MINCUTSa^) THEN
+        ELSIF GetToken(t, K.T_MINCUTS) THEN
           VAR 
             cutLayerName : TEXT;
             numCuts : CARDINAL;
@@ -831,7 +890,7 @@ PROCEDURE GetProperty(t : T;
                       VAR pb : PropertyBinding) : BOOLEAN
   RAISES { E } =
   BEGIN
-    IF GetToken(t, PROPERTYa^) THEN
+    IF GetToken(t, K.T_PROPERTY) THEN
       MustBeIdentifier(t, pb.property);
       Next(t); (* should put it in binding *)
       RETURN TRUE
@@ -859,9 +918,9 @@ PROCEDURE ParseRegion(t : T; ref : REFANY) RAISES { E } =
         ';' => RETURN
       |
         '+' =>
-        IF GetToken(t, TYPEa^) THEN
-          IF    GetToken(t, FENCEa^) THEN
-          ELSIF GetToken(t, GUIDEa^) THEN
+        IF GetToken(t, K.T_TYPE) THEN
+          IF    GetToken(t, K.T_FENCE) THEN
+          ELSIF GetToken(t, K.T_GUIDE) THEN
           ELSE
             RAISE E("ParseRegion TYPE")
           END
@@ -892,7 +951,7 @@ PROCEDURE ParseBlock(t             : T;
     LOOP
       Debug.Out(t.lately.nm & " kw=" & S2T(t.buff, t.token));
       WITH nxt = SUBARRAY(t.buff, t.token.start, t.token.n) DO
-        IF nxt = ENDa^ THEN
+        IF nxt = K.T_END THEN
           Next(t);
 
           WITH nxt2 = SUBARRAY(t.buff, t.token.start, t.token.n) DO
@@ -942,19 +1001,15 @@ PROCEDURE IgnorePropertyDefinition(t : T; ref : REFANY)
     (* skip type *)
     Next(t);
 
-    WITH nxt = SUBARRAY(t.buff, t.token.start, t.token.n) DO
-      IF nxt = Semia^ THEN 
-        (* skip *)
-      ELSIF nxt = RANGEa^ THEN
-        Next(t);
-        MustNotBeChar(t,';');
-        MustNotBeChar(t,';');
-      ELSE
-        (* was def value *)
-        Next(t);
-      END
+    IF GetToken(t, T_Semi) THEN 
+      (* skip *)
+    ELSIF GetToken(t, K.T_RANGE) THEN
+      MustNotBeChar(t,';');
+    ELSE
+      (* was def value *)
+      MustNotBeChar(t,';');
+      MustBeChar(t,';')
     END;
-    MustBeChar(t,';')
   END IgnorePropertyDefinition;
 
 (**********************************************************************)
@@ -980,52 +1035,6 @@ PROCEDURE MakeCA(txt : TEXT) : REF ARRAY OF CHAR =
     RETURN buff
   END MakeCA;
 
-VAR
-  DISTANCEa := MakeCA("DISTANCE");
-  MICRONSa  := MakeCA("MICRONS");
-
-  REALa     := MakeCA("REAL");
-  STRINGa   := MakeCA("STRING");
-  INTEGERa  := MakeCA("INTEGER");
-  PROPERTYDEFINITIONSa := MakeCA("PROPERTYDEFINITIONS");
-  Semia     := MakeCA(";");
-  RANGEa    := MakeCA("RANGE");
-  ENDa      := MakeCA("END");
-  DOa       := MakeCA("DO");
-  BYa       := MakeCA("BY");
-  STEPa       := MakeCA("STEP");
-  MASKa       := MakeCA("MASK");
-  RECTa       := MakeCA("RECT");
-  VIAa       := MakeCA("VIA");
-  VIARULEa       := MakeCA("VIARULE");
-  WIREEXTa       := MakeCA("WIREEXT");
-  LAYERa       := MakeCA("LAYER");
-  SAMEMASKa       := MakeCA("SAMEMASK");
-  SPACINGa    := MakeCA("SPACING");
-  HARDSPACINGa    := MakeCA("HARDSPACING");
-  WIDTHa    := MakeCA("WIDTH");
-  MINCUTSa    := MakeCA("MINCUTS");
-  PROPERTYa    := MakeCA("PROPERTY");
-  DIAGWIDTHa    := MakeCA("DIAGWIDTH");
-  TYPEa    := MakeCA("TYPE");
-  FENCEa    := MakeCA("FENCE");
-  GUIDEa    := MakeCA("GUIDE");
-  EEQMASTERa    := MakeCA("EEQMASTER");
-  SOURCEa    := MakeCA("SOURCE");
-  NETLISTa    := MakeCA("NETLIST");
-  DISTa    := MakeCA("DIST");
-  USERa    := MakeCA("USER");
-  TIMINGa    := MakeCA("TIMING");
-  FIXEDa    := MakeCA("FIXED");
-  COVERa    := MakeCA("COVER");
-  PLACEDa    := MakeCA("PLACED");
-  UNPLACEDa    := MakeCA("UNPLACED");
-  HALOa    := MakeCA("HALO");
-  SOFTa    := MakeCA("SOFT");
-  ROUTEHALOa    := MakeCA("ROUTEHALO");
-  WEIGHTa    := MakeCA("WEIGHT");
-  REGIONa    := MakeCA("REGION");
-  
 BEGIN 
 
   AddKeyword(topDisp, "VERSION",             ParseVersion);

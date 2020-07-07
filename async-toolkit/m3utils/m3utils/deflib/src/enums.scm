@@ -1,7 +1,17 @@
 (require-modules "basic-defs" "display" "hashtable" "struct" "set" "m3")
 
-(define types '((Orientation (N W E S))
-                (Direction (INPUT OUTPUT INOUT FEEDTHRU)))
+(define types '((Orientation 
+                 (N S W E FN FS FW FE)) ;; PV 5.7 p.267
+                (Use 
+                 (SIGNAL POWER GROUND CLOCK TIEOFF ANALOG SCAN RESET))
+                (Source
+                 (DIST NETLIST TEST TIMING USER))
+                (Pattern
+                 (BALANCED STEINER TRUNK WIREDLOGIC))
+                (AntennaModel
+                 (OXIDE1 OXIDE2 OXIDE3 OXIDE4))
+                (Direction 
+                 (INPUT OUTPUT INOUT FEEDTHRU)))
 )
 
 (define tokens '(DISTANCE MICRONS REAL STRING INTEGER 
@@ -14,7 +24,7 @@
                  TRCKS GCELLGRID VIAS NONDEFAULTRULES REGIONS 
                  COMPONENTMASKSHIFT COMPONENTS PINS BLOCKAGES
                  FILLS SPECIALNETS NETS GROUPS SPECIALNET NET COMPONENTPIN
-                 NONDEFAULTRULE COMPONENT))
+                 NONDEFAULTRULE COMPONENT DIRECTION USE))
 
 
 
@@ -155,6 +165,7 @@
   )
 
 (define (T-prefix str) (string-append "T_" str))
+(define (a-suffix str) (string-append str "a"))
 
 (define (do-build-tokens tokens mod-name)
   (let* ((wrs (open-m3 mod-name))
@@ -170,6 +181,8 @@
 "TYPE T = { " (infixize (map T-prefix (map symbol->string tokens)) ", ") " };" dnl
 dnl
 "CONST N = ARRAY T OF TEXT { " (infixize (map double-quote (map symbol->string tokens)) ", ") " };" dnl
+dnl
+"VAR A : ARRAY T OF REF ARRAY OF CHAR;" dnl
 dnl
 *lookup-proto* ";" dnl
 dnl
@@ -220,6 +233,7 @@ m-wr)
      (map make-a tokens)
 
      (dis
+"    A := ARRAY T OF REF ARRAY OF CHAR { " (infixize (map a-suffix (map symbol->string tokens)) ", ") " };" dnl
 "  END Do;" dnl
 dnl
     m-wr)
