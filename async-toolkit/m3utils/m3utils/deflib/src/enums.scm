@@ -25,7 +25,8 @@
                  COMPONENTMASKSHIFT COMPONENTS PINS BLOCKAGES
                  FILLS SPECIALNETS NETS GROUPS SPECIALNET NET COMPONENTPIN
                  NONDEFAULTRULE COMPONENT DIRECTION USE SPECIAL
-                 POLYGON PORT))
+                 POLYGON PORT PLACEMENT SLOTS PUSHDOWN EXCEPTPGNET
+                 DESIGNRULEWIDTH OPC))
 
 
 
@@ -161,6 +162,7 @@
 
 (define *get-name* "Get")
 (define *mustbe-name* "MustBe")
+(define *mustget-name* "MustGet")
                               
 (define *lookup-proto* 
   (string-append
@@ -177,6 +179,12 @@
 (define *mustbe-proto*
   (string-append
    "PROCEDURE "*mustbe-name*"(p : RecursiveParser.T; VAR t : T) RAISES { E }"
+   )
+  )
+
+(define *mustget-proto*
+  (string-append
+   "PROCEDURE "*mustget-name*"(p : RecursiveParser.T) : T RAISES { E }"
    )
   )
 
@@ -211,6 +219,8 @@ dnl
 *get-proto* ";" dnl
 dnl
 *mustbe-proto* ";" dnl
+dnl
+*mustget-proto* ";" dnl
 dnl
 dnl
     i-wr)
@@ -261,6 +271,17 @@ dnl
 "      RAISE E(\""*mustbe-name* ":" nm " expected value but got \" & S2T(p.buff, p.token) & \"\")" dnl
 "    END" dnl
 "  END "*mustbe-name*";" dnl
+dnl 
+*mustget-proto* "=" dnl
+"  VAR" dnl
+"    t : T;" dnl
+"  BEGIN" dnl
+"    IF Get(p, t) THEN" dnl
+"      RETURN t" dnl
+"    ELSE" dnl
+"      RAISE E(\""*mustbe-name* ":" nm " expected value but got \" & S2T(p.buff, p.token) & \"\")" dnl
+"    END" dnl
+"  END "*mustget-name*";" dnl
 dnl 
      m-wr)
 

@@ -45,5 +45,16 @@ PROCEDURE MustBe(t : RecursiveParser.T; VAR ident : T) RAISES { E } =
     END;
   END MustBe;
 
+PROCEDURE MustGet(t : RecursiveParser.T) : T RAISES { E } =
+  VAR
+    ident : T;
+  BEGIN
+    IF Get(t, ident) THEN
+      RETURN ident
+    ELSE
+      RAISE E ("DefIdent.MustBe: " & BrackOrEmpty(t.lately.nm) & " expected identifier here : " & S2T(t.buff, t.token))
+    END;
+  END MustGet;
+
 BEGIN END DefIdent.
 

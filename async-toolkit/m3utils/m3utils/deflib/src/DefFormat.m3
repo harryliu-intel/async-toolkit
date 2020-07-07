@@ -142,6 +142,7 @@ PROCEDURE ParseDesignUnits(t : R; ref : REFANY) RAISES { E } =
   END ParseDesignUnits;
 
 CONST T_Semi = ARRAY OF CHAR { ';' };
+CONST T_Plus = ARRAY OF CHAR { '+' };
 
 PROCEDURE ParseDieArea(t : R; ref : REFANY) RAISES { E } =
   BEGIN
@@ -332,6 +333,42 @@ PROCEDURE ParsePins(t : R; ref : REFANY) RAISES { E } =
       ParseMinusBlock(t, ref, num, ParsePin);
     END
   END ParsePins;
+
+PROCEDURE ParseBlockages(t : R; ref : REFANY) RAISES { E } = 
+  VAR
+    num : CARDINAL;
+  BEGIN
+    WITH des = NARROW(ref, Design) DO
+      DefCard.MustBe(t, num);
+      MustBeChar(t, ';');
+
+      ParseMinusBlock(t, ref, num, ParseBlockage);
+    END
+  END ParseBlockages;
+
+PROCEDURE ParseFills(t : R; ref : REFANY) RAISES { E } = 
+  VAR
+    num : CARDINAL;
+  BEGIN
+    WITH des = NARROW(ref, Design) DO
+      DefCard.MustBe(t, num);
+      MustBeChar(t, ';');
+
+      ParseMinusBlock(t, ref, num, ParseFill);
+    END
+  END ParseFills;
+
+PROCEDURE ParseSpecialNets(t : R; ref : REFANY) RAISES { E } = 
+  VAR
+    num : CARDINAL;
+  BEGIN
+    WITH des = NARROW(ref, Design) DO
+      DefCard.MustBe(t, num);
+      MustBeChar(t, ';');
+
+      ParseMinusBlock(t, ref, num, ParseSpecialNet);
+    END
+  END ParseSpecialNets;
 
 PROCEDURE ParseMinusBlock(t : T; ref : REFANY; cnt : CARDINAL; f : ParseProc.T) 
   RAISES { E } =
@@ -558,6 +595,141 @@ PROCEDURE ParsePin(t : R; ref : REFANY) RAISES { E } =
 
     END(*POOL*)          
   END ParsePin;
+
+PROCEDURE ParseBlockage(t : R; ref : REFANY) RAISES { E } =
+  BEGIN
+    IF    GetToken(t, K.T_LAYER) THEN
+      VAR 
+        layer : DefIdent.T;
+      BEGIN
+        DefIdent.MustBe(t, layer);
+      END
+    ELSIF GetToken(t, K.T_PLACEMENT) THEN
+    ELSE
+      RAISE E("ParseBlockage of unexpected type")
+    END;
+    LOOP
+      IF GetToken(t, T_Semi) THEN
+        RETURN
+      ELSIF GetToken(t, T_Plus) THEN
+        IF    GetToken(t, K.T_COMPONENT) THEN
+          VAR
+            compName : DefName.T;
+          BEGIN
+            DefName.MustBe(t, compName)
+          END
+        ELSIF GetToken(t, K.T_SOFT) THEN
+          (* skip *)
+        ELSIF GetToken(t, K.T_SLOTS) THEN
+          (* skip *)
+        ELSIF GetToken(t, K.T_FILLS) THEN
+          (* skip *)
+        ELSIF GetToken(t, K.T_PUSHDOWN) THEN
+          (* skip *)
+        ELSIF GetToken(t, K.T_EXCEPTPGNET) THEN
+          (* skip *)
+        ELSIF GetToken(t, K.T_SPACING) THEN
+          VAR
+            spacing : CARDINAL;
+          BEGIN
+            DefCard.MustBe(t, spacing)
+          END
+        ELSIF GetToken(t, K.T_DESIGNRULEWIDTH) THEN
+          VAR
+            effectiveWidth : CARDINAL;
+          BEGIN
+            DefCard.MustBe(t, effectiveWidth)
+          END
+        ELSE
+          RAISE E("ParseBlockage: unexpected option")
+        END
+      ELSIF GetToken(t, K.T_POLYGON) THEN
+        VAR
+          p : DefPoint.T;
+        BEGIN
+          WHILE DefPoint.Get(t, p) DO
+          END
+        END
+      ELSIF GetToken(t, K.T_RECT) THEN
+        VAR
+          p0, p1 : DefPoint.T;
+        BEGIN
+          DefPoint.MustBe(t, p0);
+          DefPoint.MustBe(t, p1)
+        END
+      ELSE
+        RAISE E("ParseBlockage: unexpected token")
+      END
+    END
+  END ParseBlockage;
+
+PROCEDURE ParseFill(t : R; ref : REFANY) RAISES { E } =
+
+  PROCEDURE GetShapes() =
+    BEGIN
+      LOOP
+        IF GetToken(t, K.T_RECT) THEN
+          VAR 
+            p0, p1 : DefPoint.T;
+          BEGIN
+            DefPoint.MustBe(t, p0);
+            DefPoint.MustBe(t, p1)
+          END
+        ELSIF GetToken(t, K.T_POLYGON) THEN
+          VAR
+            p : DefPoint.T;
+          BEGIN
+            WHILE DefPoint.Get(t, p) DO END
+          END
+        ELSIF GetToken(t, T_Semi) THEN
+          RETURN
+        ELSE
+          RAISE E("ParseFill getting shapes")
+        END
+      END
+    END GetShapes;
+
+  BEGIN
+    IF    GetToken(t, K.T_VIA) THEN
+      VAR
+        viaName : DefIdent.T;
+      BEGIN
+        DefIdent.MustBe(t, viaName);
+        
+        IF GetToken(t, T_Plus) THEN
+          MustBeToken(t, K.T_OPC);
+        END;
+        GetShapes()
+      END
+    ELSIF GetToken(t, K.T_LAYER) THEN
+      VAR
+        layerName : DefIdent.T;
+        p : DefPoint.T;
+      BEGIN
+        DefIdent.MustBe(t, layerName);
+
+        WHILE GetToken(t, T_Plus) DO
+          IF    GetToken(t, K.T_OPC) THEN
+          ELSIF GetToken(t, K.T_MASK) THEN
+            VAR
+              mask : CARDINAL;
+            BEGIN
+              DefCard.MustBe(t, mask)
+            END
+          END
+        END;
+        GetShapes()
+      END
+    ELSE
+      RAISE E ("ParseFill ??")
+    END
+  END ParseFill;
+
+PROCEDURE ParseSpecialNet(t : R; ref : REFANY) RAISES { E } =
+  VAR
+    netName := DefName.MustGet(t);
+  BEGIN
+  END ParseSpecialNet;
 
 PROCEDURE ParseNonDefaultRule(t : R; ref : REFANY) RAISES { E } =
   VAR
@@ -800,9 +972,9 @@ BEGIN
   AddKeyword(designDisp, "COMPONENTMASKSHIFT",  ParseComponentMaskShift);
   AddKeyword(designDisp, "COMPONENTS",          ParseComponents);
   AddKeyword(designDisp, "PINS",                ParsePins);
-  AddKeyword(designDisp, "BLOCKAGES",           NIL);
-  AddKeyword(designDisp, "FILLS",               NIL);
-  AddKeyword(designDisp, "SPECIALNETS",         NIL);
+  AddKeyword(designDisp, "BLOCKAGES",           ParseBlockages);
+  AddKeyword(designDisp, "FILLS",               ParseFills);
+  AddKeyword(designDisp, "SPECIALNETS",         ParseSpecialNets);
   AddKeyword(designDisp, "NETS",                NIL);
   AddKeyword(designDisp, "GROUPS",              NIL);
 

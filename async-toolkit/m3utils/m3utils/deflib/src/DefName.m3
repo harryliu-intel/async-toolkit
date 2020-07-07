@@ -43,4 +43,15 @@ PROCEDURE MustBe(t : RecursiveParser.T; VAR name : T) RAISES { E } =
     END
   END MustBe;
 
+PROCEDURE MustGet(t : RecursiveParser.T) : T RAISES { E } = 
+  VAR 
+    name : T;
+  BEGIN
+    IF Get(t, name) THEN
+      RETURN name
+    ELSE
+      RAISE E("DefName.MustBe: "&BrackOrEmpty(t.lately.nm)&" expected name")
+    END
+  END MustGet;
+
 BEGIN END DefName.
