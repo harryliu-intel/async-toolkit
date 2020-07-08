@@ -88,9 +88,13 @@
 
 ; Copy shapes from qfill import and set autogen property
 (defun CopyQfillShapes (CV qCV offset)
-  (foreach shape qCV->shapes
+  (let (color)
+    (foreach shape qCV->shapes
+  	   color = (GetShapeColor shape)
            shape = (dbCopyShape shape CV (list offset "R0"))
+	   (SetShapeColor shape color)
            (dbReplaceProp shape "autogen" "string" "qfill")
            )
-  qCV
+    qCV
+    )
   )
