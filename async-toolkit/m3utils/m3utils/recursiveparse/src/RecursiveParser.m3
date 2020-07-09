@@ -20,6 +20,11 @@ PROCEDURE GetToken(t : T; READONLY tok : ARRAY OF CHAR) : BOOLEAN =
     END
   END GetToken;
 
+PROCEDURE PeekToken(t : T; READONLY tok : ARRAY OF CHAR) : BOOLEAN =
+  BEGIN
+    RETURN SUBARRAY(t.buff, t.token.start, t.token.n) = tok
+  END PeekToken;
+
 PROCEDURE Next(t : T) =
   BEGIN 
     t.eop := NOT t.lexer.getToken(t.buff, t.state, t.token) ;

@@ -5,7 +5,7 @@ IMPORT RecursiveParser;
 FROM RecursiveParser IMPORT GetToken, Next, MustBeToken, MustNotBeChar,  
                             MustBeChars, MustBeCharSet, BrackOrEmpty, 
                             GetChar, MustBeChar, GetCharSet, MustBeSingle,
-                            S2T, A2T
+                            S2T, A2T, PeekToken
                             ;
 
 IMPORT RecursiveParserRep;
@@ -25,6 +25,11 @@ IMPORT DefInt;
 IMPORT DefCard;
 IMPORT DefIdent;
 IMPORT DefName;
+IMPORT DefRoutingPoint;
+IMPORT DefPattern;
+IMPORT DefSource;
+IMPORT DefString;
+IMPORT DefShape;
 IMPORT IO;
 
 TYPE R = RecursiveParser.T;
@@ -64,7 +69,12 @@ PROCEDURE Parse(rd : Rd.T) : T RAISES { E } =
                    t)        
       END
     EXCEPT
-      E(x) => RAISE E ("DefFormat.Parse: Error " & x & ", line " & Fmt.Int(t.state.line))
+      E(x) => RAISE E (Fmt.F("DefFormat.Parse: Error %s, line %s, lately parsing \"%s\"",
+                             x, 
+                             Fmt.Int(t.state.line),
+                             Text.FromChars(SUBARRAY(t.buff, 
+                                                     t.token.start, 
+                                                     t.token.n))))
     END;
 
     RETURN t
@@ -143,6 +153,9 @@ PROCEDURE ParseDesignUnits(t : R; ref : REFANY) RAISES { E } =
 
 CONST T_Semi = ARRAY OF CHAR { ';' };
 CONST T_Plus = ARRAY OF CHAR { '+' };
+CONST T_OParen = ARRAY OF CHAR { '(' };
+CONST T_CParen = ARRAY OF CHAR { ')' };
+CONST T_Asterisk = ARRAY OF CHAR { '*' };
 
 PROCEDURE ParseDieArea(t : R; ref : REFANY) RAISES { E } =
   BEGIN
@@ -369,6 +382,18 @@ PROCEDURE ParseSpecialNets(t : R; ref : REFANY) RAISES { E } =
       ParseMinusBlock(t, ref, num, ParseSpecialNet);
     END
   END ParseSpecialNets;
+
+PROCEDURE ParseNets(t : R; ref : REFANY) RAISES { E } = 
+  VAR
+    num : CARDINAL;
+  BEGIN
+    WITH des = NARROW(ref, Design) DO
+      DefCard.MustBe(t, num);
+      MustBeChar(t, ';');
+
+      ParseMinusBlock(t, ref, num, ParseNet);
+    END
+  END ParseNets;
 
 PROCEDURE ParseMinusBlock(t : T; ref : REFANY; cnt : CARDINAL; f : ParseProc.T) 
   RAISES { E } =
@@ -665,7 +690,7 @@ PROCEDURE ParseBlockage(t : R; ref : REFANY) RAISES { E } =
 
 PROCEDURE ParseFill(t : R; ref : REFANY) RAISES { E } =
 
-  PROCEDURE GetShapes() =
+  PROCEDURE GetShapes() RAISES { E } =
     BEGIN
       LOOP
         IF GetToken(t, K.T_RECT) THEN
@@ -728,16 +753,203 @@ PROCEDURE ParseFill(t : R; ref : REFANY) RAISES { E } =
 PROCEDURE ParseSpecialNet(t : R; ref : REFANY) RAISES { E } =
   VAR
     netName := DefName.MustGet(t);
+    c : CHAR;
   BEGIN
+    (* parse the special comp/net syntax here *)
+    WHILE GetToken(t, T_OParen) DO
+      IF GetToken(t, T_Asterisk) THEN
+      ELSIF GetToken(t, K.T_PIN) THEN
+      ELSE
+        VAR compName := DefIdent.MustGet(t); BEGIN END;
+      END;
+      VAR pinName := DefName.MustGet(t); BEGIN END;
+
+      IF GetToken(t, T_Plus) THEN
+        MustBeToken(t, K.T_SYNTHESIZED)
+      END;
+
+      MustBeToken(t, T_CParen);
+    END;
+
+    LOOP
+      MustBeSingle(t, c);
+      CASE c OF 
+        ';' => RETURN
+      |
+        '+' =>
+        IF    GetSpecialWiring(t, ref) THEN
+        ELSIF GetToken(t, K.T_VOLTAGE) THEN
+          <*ASSERT FALSE*> (* real number? *)
+        ELSIF GetToken(t, K.T_SOURCE) THEN
+          VAR src := DefSource.MustGet(t); BEGIN END
+        ELSIF GetToken(t, K.T_FIXEDBUMP) THEN
+          (* skip *)
+        ELSIF GetToken(t, K.T_ORIGINAL) THEN
+          VAR netName := DefName.MustGet(t); BEGIN END
+        ELSIF GetToken(t, K.T_USE) THEN
+          VAR use := DefUse.MustGet(t); BEGIN END
+        ELSIF GetToken(t, K.T_PATTERN) THEN 
+          VAR pattern := DefPattern.MustGet(t); BEGIN END
+        ELSIF GetToken(t, K.T_ESTCAP) THEN
+          <*ASSERT FALSE*> (* real number? *)
+        ELSIF GetToken(t, K.T_WEIGHT) THEN
+          VAR weight := DefCard.MustGet(t); BEGIN END
+        ELSIF GetToken(t, K.T_PROPERTY) THEN
+          VAR propName  : DefIdent.T;
+          BEGIN
+            WHILE DefIdent.Get(t, propName) DO
+              (* here we really should look up the type of the property
+                 named propName and parse the value of that type, 
+                 but for now we just skip it *)
+              Next(t)
+            END
+          END
+        ELSE
+          RAISE E("ParseSpecialNet???")
+        END
+      ELSE
+        RAISE E("ParseSpecialNet character ???")
+      END
+    END
   END ParseSpecialNet;
+
+PROCEDURE GetSpecialWiring(t : R; ref : REFANY) : BOOLEAN RAISES { E } =
+  (* assume '+' has already been consumed *)
+
+  PROCEDURE GetSubDetails() : BOOLEAN RAISES { E } =
+    BEGIN
+      IF NOT GetToken(t, T_Plus) THEN RETURN FALSE END;
+
+      IF    GetToken(t, K.T_SHAPE) THEN
+        VAR shape := DefShape.MustGet(t); BEGIN END
+      ELSIF GetToken(t, K.T_STYLE) THEN
+        VAR styleNum := DefCard.MustGet(t); BEGIN END
+      ELSIF GetToken(t, K.T_MASK) THEN
+        VAR maskNum := DefCard.MustGet(t); BEGIN END
+      ELSIF GetToken(t, K.T_RECT) THEN
+        (* this is just for GetAlternativeDetails -- not in grammar?? *)
+        VAR 
+          layer := DefIdent.MustGet(t);
+          p0, p1 : DefPoint.T; 
+        BEGIN
+          p0 := DefPoint.MustGet(t);
+          p1 := DefPoint.MustGet(t)
+        END;
+        RETURN FALSE (* what a hack! *)
+      ELSE 
+        RAISE E("GetSpecialWiring.GetSubDetails???")
+      END;
+
+      RETURN TRUE
+    END GetSubDetails;
+
+  PROCEDURE GetRoutingPointSeq() RAISES { E } =
+    VAR 
+      rp := DefRoutingPoint.Initial;
+    BEGIN
+      LOOP
+        IF    DefRoutingPoint.Get(t, rp) THEN
+        ELSIF GetToken(t, K.T_MASK) THEN
+          VAR maskId := DefCard.MustGet(t); BEGIN END
+        ELSE
+          RETURN
+        END
+      END
+    END GetRoutingPointSeq;
+
+  PROCEDURE GetDetails() RAISES { E } =
+    (* we are just past the "FIXED" keyword *)
+    VAR
+      layerName  := DefIdent.MustGet(t);
+      routeWidth := DefCard.MustGet(t);
+      viaName : DefIdent.T;
+    BEGIN
+      IF GetSubDetails() THEN
+      END;
+      GetRoutingPointSeq();
+      (* could end in a via name *)
+      IF DefIdent.Get(t, viaName) THEN END;
+
+      WHILE GetToken(t, K.T_NEW) DO
+        layerName  := DefIdent.MustGet(t);
+        routeWidth := DefCard.MustGet(t);
+        IF GetSubDetails() THEN
+        END;
+        GetRoutingPointSeq();
+        (* could end in a via name *)
+        IF DefIdent.Get(t, viaName) THEN END;
+      END
+    END GetDetails;
+
+  PROCEDURE GetAlternativeDetails() RAISES { E } =
+    BEGIN
+      WHILE GetSubDetails() DO END;
+    END GetAlternativeDetails;
+
+  VAR
+    dummyId : DefIdent.T;
+  BEGIN
+    IF    GetToken(t, K.T_POLYGON) THEN
+      VAR
+        layerName := DefIdent.MustGet(t);
+        p : DefPoint.T;
+      BEGIN
+        WHILE DefPoint.Get(t, p) DO
+        END
+      END
+    ELSIF GetToken(t, K.T_RECT) THEN
+      VAR
+        layerName := DefIdent.MustGet(t);
+        p0 := DefPoint.MustGet(t);
+        p1 := DefPoint.MustGet(t);
+      BEGIN
+      END
+    ELSIF GetToken(t, K.T_COVER) THEN
+      GetDetails()
+    ELSIF GetToken(t, K.T_FIXED) THEN
+      GetDetails()
+    ELSIF GetToken(t, K.T_ROUTED) THEN
+      (* so the grammar claims here we need to have
+
+         layerName routeWidth 
+
+         but at least some files do not have that.  
+      *)
+      IF DefIdent.Peek(t, dummyId) THEN
+        GetDetails()
+      ELSE
+        GetAlternativeDetails()
+      END
+    ELSIF GetToken(t, K.T_SHIELD) THEN
+      VAR
+        shieldNetName := DefName.MustGet(t);
+      BEGIN
+        IF PeekToken(t, T_Plus) THEN
+          (* not in the grammar...?? *)
+          GetAlternativeDetails() 
+        ELSE
+          GetDetails()
+        END
+      END
+    ELSE
+      RETURN FALSE
+    END;
+    RETURN TRUE
+  END GetSpecialWiring;
+
+PROCEDURE ParseNet(t : R; ref : REFANY) RAISES { E } =
+  VAR
+    netName := DefName.MustGet(t);
+  BEGIN
+  END ParseNet;
+
 
 PROCEDURE ParseNonDefaultRule(t : R; ref : REFANY) RAISES { E } =
   VAR
-    nm : DefIdent.T;
+    nm := DefIdent.MustGet(t);
     c : CHAR;
     prop : PropertyBinding;
   BEGIN
-    DefIdent.MustBe(t, nm);
     LOOP
       MustBeSingle(t, c);
       CASE c OF 
@@ -765,23 +977,21 @@ PROCEDURE ParseNonDefaultRule(t : R; ref : REFANY) RAISES { E } =
           END
         ELSIF GetToken(t, K.T_VIA) THEN
           VAR
-            viaName : DefIdent.T;
+            viaName := DefIdent.MustGet(t);
           BEGIN
-            DefIdent.MustBe(t, viaName)
+
           END
         ELSIF GetToken(t, K.T_VIARULE) THEN
           VAR
-            viaRuleName : DefIdent.T;
+            viaRuleName := DefIdent.MustGet(t);
           BEGIN
-            DefIdent.MustBe(t, viaRuleName)
+
           END
         ELSIF GetToken(t, K.T_MINCUTS) THEN
           VAR 
-            cutLayerName : DefIdent.T;
-            numCuts : CARDINAL;
+            cutLayerName := DefIdent.MustGet(t);
+            numCuts := DefCard.MustGet(t);
           BEGIN
-            DefIdent.MustBe(t, cutLayerName);
-            DefCard.MustBe(t, numCuts)
           END
         ELSIF GetProperty(t, ref, prop) THEN
         ELSE
@@ -975,7 +1185,7 @@ BEGIN
   AddKeyword(designDisp, "BLOCKAGES",           ParseBlockages);
   AddKeyword(designDisp, "FILLS",               ParseFills);
   AddKeyword(designDisp, "SPECIALNETS",         ParseSpecialNets);
-  AddKeyword(designDisp, "NETS",                NIL);
+  AddKeyword(designDisp, "NETS",                ParseNets);
   AddKeyword(designDisp, "GROUPS",              NIL);
 
   AddKeyword(propDisp,   "DESIGN",              IgnorePropertyDefinition);

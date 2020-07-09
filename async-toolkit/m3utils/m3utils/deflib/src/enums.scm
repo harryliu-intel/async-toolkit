@@ -10,6 +10,9 @@
                  (BALANCED STEINER TRUNK WIREDLOGIC))
                 (AntennaModel
                  (OXIDE1 OXIDE2 OXIDE3 OXIDE4))
+                (Shape
+                 (RING PADRING BLOCKRING STRIPE FOLLOWPIN IOWIRE COREWIRE 
+                  BLOCKWIRE BLOCKAGEWIRE FILLWIRE FILLWIREOPC DRCFILL))
                 (Direction 
                  (INPUT OUTPUT INOUT FEEDTHRU)))
 )
@@ -26,9 +29,9 @@
                  FILLS SPECIALNETS NETS GROUPS SPECIALNET NET COMPONENTPIN
                  NONDEFAULTRULE COMPONENT DIRECTION USE SPECIAL
                  POLYGON PORT PLACEMENT SLOTS PUSHDOWN EXCEPTPGNET
-                 DESIGNRULEWIDTH OPC))
-
-
+                 DESIGNRULEWIDTH OPC SHAPE STYLE NEW ROUTED SHIELD
+                 VOLTAGE FIXEDBUMP ORIGINAL PATTERN ESTCAP
+                 TOKENS ORIENTATION ANTENNAMODEL PIN SYNTHESIZED))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -161,6 +164,8 @@
 (define *lookup-name* "Lookup")   
 
 (define *get-name* "Get")
+(define *peek-name* "Peek")
+(define *getkeyed-name* "GetKeyed")
 (define *mustbe-name* "MustBe")
 (define *mustget-name* "MustGet")
                               
@@ -173,6 +178,18 @@
 (define *get-proto*
   (string-append
    "PROCEDURE "*get-name*"(p : RecursiveParser.T; VAR t : T) : BOOLEAN"
+   )
+  )
+
+(define *peek-proto*
+  (string-append
+   "PROCEDURE "*peek-name*"(p : RecursiveParser.T; VAR t : T) : BOOLEAN"
+   )
+  )
+
+(define *getkeyed-proto*
+  (string-append
+   "PROCEDURE "*getkeyed-name*"(p : RecursiveParser.T; VAR t : T) : BOOLEAN RAISES { E } "
    )
   )
 
@@ -192,11 +209,12 @@
 (define (T-prefix str) (string-append "T_" str))
 (define (a-suffix str) (string-append str "a"))
 
-(define (do-build-tokens tokens mod-name)
+(define (do-build-tokens tokens mod-name basenm)
   (let* ((wrs (open-m3 mod-name))
          (i-wr (car  wrs))
          (m-wr (cadr wrs))
          (nm   (caddr wrs))
+         (unm  (TextUtils.ToUpper (symbol->string basenm)))
          )
 
     (dis "IMPORT RecursiveParser;" dnl
@@ -218,6 +236,10 @@ dnl
 dnl
 *get-proto* ";" dnl
 dnl
+*peek-proto* ";" dnl
+dnl
+*getkeyed-proto* ";" dnl
+dnl
 *mustbe-proto* ";" dnl
 dnl
 *mustget-proto* ";" dnl
@@ -228,6 +250,7 @@ dnl
     (dis 
 "IMPORT Text;" dnl
 "IMPORT CharCardTrie AS Trie;" dnl
+"IMPORT DefTokens AS K;" dnl
 "IMPORT RecursiveParser;" dnl
 "IMPORT RecursiveParserRep;" dnl
 "FROM RecursiveParser IMPORT S2T, Next;" dnl
@@ -249,7 +272,7 @@ dnl
 "      IF x = NotFound THEN" dnl
 "        RETURN FALSE" dnl
 "      ELSE" dnl
-"        v := VAL(x,T);"
+"        v := VAL(x,T);" dnl
 "        RETURN TRUE" dnl
 "      END" dnl
 "    END" dnl
@@ -264,6 +287,25 @@ dnl
 "      RETURN FALSE" dnl
 "    END" dnl
 "  END " *get-name* ";" dnl
+dnl
+*peek-proto* "=" dnl
+"  BEGIN" dnl
+"    IF Lookup(SUBARRAY(p.buff, p.token.start, p.token.n), t) THEN" dnl
+"      RETURN TRUE;" dnl
+"    ELSE" dnl
+"      RETURN FALSE" dnl
+"    END" dnl
+"  END " *peek-name* ";" dnl
+dnl
+*getkeyed-proto* "=" dnl
+"  BEGIN" dnl
+"    IF SUBARRAY(p.buff, p.token.start, p.token.n) # K.T_" unm " THEN" dnl
+"      RETURN FALSE" dnl
+"    END;" dnl
+"    Next(p);" dnl
+"    MustBe(p, t);" dnl
+"    RETURN TRUE" dnl
+"  END " *getkeyed-name* ";" dnl
 dnl
 *mustbe-proto* "=" dnl
 "  BEGIN" dnl
@@ -317,12 +359,12 @@ dnl
 
   (define (do-build-type type)
     (let* ((mod-nm (symbol-append pfx (car type))))
-           (do-build-tokens (cadr type) mod-nm)))
+           (do-build-tokens (cadr type) mod-nm (car type))))
 
   (map do-build-type types))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(do-build-tokens tokens 'DefTokens)
+(do-build-tokens tokens 'DefTokens 'Tokens)
 
 (do-build-types types 'Def)

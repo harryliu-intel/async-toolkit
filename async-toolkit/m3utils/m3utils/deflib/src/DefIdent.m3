@@ -7,6 +7,9 @@ FROM DefLexer IMPORT Digit;
 FROM ParseError IMPORT E;
 FROM DefFormat IMPORT D;
 IMPORT Text;
+IMPORT DefTokens;
+
+CONST DQ = '"';
 
 PROCEDURE Get(t : RecursiveParser.T; VAR ident : T) : BOOLEAN =
   (* we could use a char buffer instead of TEXT here to reduce mem alloc *)
@@ -15,6 +18,7 @@ PROCEDURE Get(t : RecursiveParser.T; VAR ident : T) : BOOLEAN =
 
   VAR
     ok := FALSE;
+    tok : DefTokens.T;
   BEGIN
     (* check its not a special character or a number *)
     IF    t.token.n = 0 THEN 
@@ -22,6 +26,10 @@ PROCEDURE Get(t : RecursiveParser.T; VAR ident : T) : BOOLEAN =
     ELSIF t.buff[t.token.start] IN NARROW(t.lexer,DefLexer.T).special THEN
       <*ASSERT t.token.n = 1*>
       RETURN FALSE
+    ELSIF t.buff[t.token.start] = DQ THEN
+      RETURN FALSE (* a String *)
+    ELSIF DefTokens.Peek(t, tok) THEN
+      RETURN FALSE (* a Token *)
     ELSE
       FOR i := t.token.start TO t.token.start + t.token.n - 1 DO
         IF NOT t.buff[i] IN Digit THEN 
@@ -37,6 +45,39 @@ PROCEDURE Get(t : RecursiveParser.T; VAR ident : T) : BOOLEAN =
     D("Identifier"); 
     RETURN TRUE
   END Get;
+
+PROCEDURE Peek(t : RecursiveParser.T; VAR ident : T) : BOOLEAN =
+  (* we could use a char buffer instead of TEXT here to reduce mem alloc *)
+
+  (* this needs to handle multiple arcs and arraying! *)
+
+  VAR
+    ok := FALSE;
+    tok : DefTokens.T;
+  BEGIN
+    (* check its not a special character or a number *)
+    IF    t.token.n = 0 THEN 
+      RETURN FALSE
+    ELSIF t.buff[t.token.start] IN NARROW(t.lexer,DefLexer.T).special THEN
+      <*ASSERT t.token.n = 1*>
+      RETURN FALSE
+    ELSIF t.buff[t.token.start] = DQ THEN
+      RETURN FALSE (* a String *)
+    ELSIF DefTokens.Peek(t, tok) THEN
+      RETURN FALSE (* a Token *)
+    ELSE
+      FOR i := t.token.start TO t.token.start + t.token.n - 1 DO
+        IF NOT t.buff[i] IN Digit THEN 
+          ok := TRUE
+        END
+      END
+    END;
+
+    IF NOT ok THEN RETURN FALSE END;
+      
+    ident := Text.FromChars(SUBARRAY(t.buff, t.token.start, t.token.n));
+    RETURN TRUE
+  END Peek;
 
 PROCEDURE MustBe(t : RecursiveParser.T; VAR ident : T) RAISES { E } =
   BEGIN

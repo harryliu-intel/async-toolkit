@@ -27,6 +27,16 @@ PROCEDURE MustBeCard(t : RecursiveParser.T; VAR c : CARDINAL) RAISES { E } =
     END
   END MustBeCard;
 
+PROCEDURE MustGetCard(t : RecursiveParser.T) : CARDINAL RAISES { E } = 
+  VAR 
+    c : CARDINAL;
+  BEGIN
+    IF NOT GetCard(t, c) THEN
+      RAISE E ("MustBeCard, "&BrackOrEmpty(t.lately.nm)&" expected number")
+    END;
+    RETURN c
+  END MustGetCard;
+
 PROCEDURE MustBeInt(t : RecursiveParser.T; VAR i : INTEGER) RAISES { E } =
   (* kind of ugly *)
   VAR
@@ -51,5 +61,13 @@ PROCEDURE MustBeInt(t : RecursiveParser.T; VAR i : INTEGER) RAISES { E } =
       RAISE E("MustBeInt, "&BrackOrEmpty(t.lately.nm)&" expected integer")
     END
   END MustBeInt;
+
+PROCEDURE MustGetInt(t : RecursiveParser.T) : INTEGER RAISES { E } =
+  VAR 
+    i : INTEGER;
+  BEGIN
+    MustBeInt(t, i);
+    RETURN i
+  END MustGetInt;
 
 BEGIN END DefNumbers.

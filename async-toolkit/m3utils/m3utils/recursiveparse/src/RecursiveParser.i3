@@ -11,6 +11,7 @@ TYPE
 CONST Brand = "RecursiveParser";
 
 PROCEDURE GetToken(t : T; READONLY tok : ARRAY OF CHAR) : BOOLEAN ;
+PROCEDURE PeekToken(t : T; READONLY tok : ARRAY OF CHAR) : BOOLEAN ;
 PROCEDURE Next(t : T) ;
 PROCEDURE MustBeToken(t : T; READONLY tok : ARRAY OF CHAR) RAISES { E } ;
 PROCEDURE MustNotBeChar(t : T; c : CHAR) RAISES { E } ;

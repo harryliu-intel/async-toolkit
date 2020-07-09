@@ -21,12 +21,16 @@ module ("DefLexer")
 module ("DefPoint")
 sequence  ("DefPoint", "DefPoint")
 
+module ("DefRoutingPoint")
+sequence ("DefRoutingPoint", "DefRoutingPoint")
+
 module ("DefNumbers")
 interface ("DefInt")
 interface ("DefCard")
 
 module ("DefName")
 module ("DefIdent")
+module ("DefString")
 
 implementation ("Main")
 
