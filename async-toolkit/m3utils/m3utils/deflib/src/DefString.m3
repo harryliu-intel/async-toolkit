@@ -10,7 +10,8 @@ IMPORT Text;
 
 CONST DQ = '"';
 
-PROCEDURE Get(t : RecursiveParser.T; VAR string : T) : BOOLEAN =
+PROCEDURE Get(t : RecursiveParser.T; VAR string : T) : BOOLEAN
+  RAISES { E } =
   (* we could use a char buffer instead of TEXT here to reduce mem alloc *)
 
   (* this needs to handle multiple arcs and arraying! *)

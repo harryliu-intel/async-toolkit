@@ -6,6 +6,6 @@ PROCEDURE MustBeInt(t : RecursiveParser.T; VAR i : INTEGER) RAISES { E };
 PROCEDURE MustGetInt(t : RecursiveParser.T) : INTEGER RAISES { E };
 PROCEDURE MustBeCard(t : RecursiveParser.T; VAR c : CARDINAL) RAISES { E }; 
 PROCEDURE MustGetCard(t : RecursiveParser.T) : CARDINAL RAISES { E }; 
-PROCEDURE GetCard(t : RecursiveParser.T; VAR c : CARDINAL) : BOOLEAN;
+PROCEDURE GetCard(t : RecursiveParser.T; VAR c : CARDINAL) : BOOLEAN RAISES { E } ;
 
 END DefNumbers.

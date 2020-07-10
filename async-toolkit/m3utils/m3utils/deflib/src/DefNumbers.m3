@@ -5,7 +5,8 @@ IMPORT RecursiveParserRep;
 FROM ParseError IMPORT E;
 FROM RecursiveParser IMPORT BrackOrEmpty, Next;
 
-PROCEDURE GetCard(t : RecursiveParser.T; VAR c : CARDINAL) : BOOLEAN =
+PROCEDURE GetCard(t : RecursiveParser.T; VAR c : CARDINAL) : BOOLEAN
+  RAISES { E } =
   VAR 
     res := 0;
   BEGIN

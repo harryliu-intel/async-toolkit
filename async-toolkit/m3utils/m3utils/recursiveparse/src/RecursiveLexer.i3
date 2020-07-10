@@ -1,5 +1,6 @@
 INTERFACE RecursiveLexer;
 IMPORT Rd;
+IMPORT Thread;
 
 CONST 
   BufSize = 4096; 
@@ -7,7 +8,7 @@ CONST
 
 TYPE
   T = OBJECT METHODS
-    getToken(VAR buff : Buffer; VAR state : State; VAR token : String) : BOOLEAN;
+    getToken(VAR buff : Buffer; VAR state : State; VAR token : String) : BOOLEAN RAISES { Thread.Alerted, Rd.Failure };
   END;
 
   State = RECORD

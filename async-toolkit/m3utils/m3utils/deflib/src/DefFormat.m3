@@ -61,13 +61,12 @@ PROCEDURE Parse(rd : Rd.T) : T RAISES { E } =
     Next(t); (* establish lookahead *)
 
     TRY
-      LOOP
         (* note that this type of "block" is a bit different because
            it doesn't end with an END statement *)
         ParseBlock(t,
                    topDisp, 
-                   t)        
-      END
+                   t);
+        IF t.eop THEN RETURN t END
     EXCEPT
       E(x) => RAISE E (Fmt.F("DefFormat.Parse: Error %s, line %s, lately parsing \"%s\"",
                              x, 
@@ -1247,6 +1246,9 @@ PROCEDURE ParseBlock(t             : T;
   BEGIN
     LOOP
       Debug.Out(t.lately.nm & " kw=" & S2T(t.buff, t.token));
+      IF keywords = topDisp AND t.eop THEN
+        RETURN (* top level block has no EOP *)
+      END;
       IF GetToken(t, K.T_END) THEN
         IF GetToken(t, t.lately.ca^) THEN
           RETURN

@@ -10,6 +10,8 @@ MODULE DefLexer;
 FROM RecursiveLexer IMPORT Buffer, State, String;
 IMPORT Rd;
 IMPORT Debug, Fmt;
+IMPORT Text;
+IMPORT Thread;
 
 CONST DQ='"';
 
@@ -19,6 +21,10 @@ CONST WhiteSpace    = SET OF CHAR { ' ', '\n', '\r', '\t' };
 CONST BS = '\\';
 CONST LF = '\n';
 
+VAR doDebug := Debug.DebugThis("DefLexer");
+  
+CONST FC = Text.FromChars;
+      
 REVEAL
   T = Public BRANDED Brand OBJECT 
   OVERRIDES
@@ -28,17 +34,24 @@ REVEAL
 PROCEDURE GetToken(t : T;
                    VAR buff  : Buffer;
                    VAR state : State;
-                   VAR res   : String) : BOOLEAN =
+                   VAR res   : String) : BOOLEAN
+  RAISES { Rd.Failure, Thread.Alerted } =
 
-  PROCEDURE Fill() =
+  PROCEDURE Fill() RAISES { Rd.Failure, Thread.Alerted } =
     (* refill buffer *)
     BEGIN
       WITH space = NUMBER(buff)-state.e,
            chars = Rd.GetSub(state.rd, SUBARRAY(buff, state.e, space)) DO
+        IF doDebug THEN
+          Debug.Out("GetToken.Fill: got \"" &
+            FC(SUBARRAY(buff, state.e, chars)) & "\"")
+        END;
+
         state.e := state.e + chars;
 
         (* add known whitespace at end, makes finding tokens easier *)
-        IF chars < space THEN buff[state.e] := '\n'; INC(state.e); state.eof := TRUE END
+        IF chars < space THEN buff[state.e] := '\n'; INC(state.e); state.eof := TRUE END;
+
       END
     END Fill;
 

@@ -4,13 +4,21 @@ IMPORT RecursiveParserRep;
 FROM RecursiveLexer IMPORT Buffer, String;
 FROM ParseError IMPORT E;
 IMPORT Text;
+IMPORT Debug;
+IMPORT Rd, Thread;
+IMPORT Fmt;
+
+VAR doDebug := Debug.DebugThis("RecursiveParser");
+
+CONST FC = Text.FromChars;
 
 PROCEDURE S2T(READONLY buff : Buffer; s : String) : TEXT =
   BEGIN RETURN Text.FromChars(SUBARRAY(buff, s.start, s.n)) END S2T;
 
 (**********************************************************************)
 
-PROCEDURE GetToken(t : T; READONLY tok : ARRAY OF CHAR) : BOOLEAN =
+PROCEDURE GetToken(t : T; READONLY tok : ARRAY OF CHAR) : BOOLEAN
+  RAISES { E } =
   BEGIN
     IF SUBARRAY(t.buff, t.token.start, t.token.n) = tok THEN
       Next(t);
@@ -25,12 +33,27 @@ PROCEDURE PeekToken(t : T; READONLY tok : ARRAY OF CHAR) : BOOLEAN =
     RETURN SUBARRAY(t.buff, t.token.start, t.token.n) = tok
   END PeekToken;
 
-PROCEDURE Next(t : T) =
-  BEGIN 
-    t.eop := NOT t.lexer.getToken(t.buff, t.state, t.token) ;
-    IF t.eop THEN
-      Debug.Out("RecursiveParser.Next: parsing done")
-    END
+PROCEDURE Next(t : T) RAISES { E } =
+  BEGIN
+    TRY
+      t.eop := NOT t.lexer.getToken(t.buff, t.state, t.token) ;
+      IF t.eop THEN
+        t.state.s := t.state.e;
+        t.token.n := 0;
+        Debug.Out("RecursiveParser.Next: parsing done")
+      END;
+      IF doDebug THEN
+        Debug.Out(Fmt.F("EOP=%s, token=\"%s\"",
+                        Fmt.Bool(t.eop),
+                        FC(SUBARRAY(t.buff, t.token.start, t.token.n))))
+      END;
+
+    EXCEPT
+      Rd.Failure => RAISE E ("Got Rd.Failure from Lexer")
+    |
+      Thread.Alerted => RAISE E ("Got Thread.Alerted from Lexer")
+    END;                                  
+      
     (*Debug.Out("Token \"" & S2T(t.buff, t.token) & "\"")*)
   END Next;
 
@@ -76,7 +99,7 @@ PROCEDURE BrackOrEmpty(txt : TEXT) : TEXT =
     IF txt = NIL THEN RETURN "" ELSE RETURN "["&txt&"]" END
   END BrackOrEmpty;
 
-PROCEDURE GetChar(t : T; c : CHAR) : BOOLEAN =
+PROCEDURE GetChar(t : T; c : CHAR) : BOOLEAN RAISES { E } =
   BEGIN
     IF t.token.n = 1 AND t.buff[t.token.start] = c THEN
       Next(t);
@@ -93,7 +116,7 @@ PROCEDURE MustBeChar(t : T;  c : CHAR) RAISES { E } =
     END
   END MustBeChar;
 
-PROCEDURE GetCharSet(t : T; s : SET OF CHAR; VAR c : CHAR) : BOOLEAN =
+PROCEDURE GetCharSet(t : T; s : SET OF CHAR; VAR c : CHAR) : BOOLEAN RAISES { E }  =
   BEGIN
     IF t.token.n = 1 AND t.buff[t.token.start] IN s THEN
       c := t.buff[t.token.start];
@@ -111,7 +134,7 @@ PROCEDURE MustBeSingle(t : T; VAR c : CHAR) RAISES { E } =
     END
   END MustBeSingle;
 
-PROCEDURE GetSingle(t : T; VAR c : CHAR) : BOOLEAN =
+PROCEDURE GetSingle(t : T; VAR c : CHAR) : BOOLEAN RAISES { E } =
   BEGIN
     IF t.token.n = 1 THEN
       c := t.buff[t.token.start];
