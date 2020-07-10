@@ -125,29 +125,32 @@ PROCEDURE GetToken(t : T;
         END
       END;
 
-      (* start of token *)
+      (* it doesn't match any obf the above -- start of token *)
       res.start := state.s; res.n := 0; 
       IF    buff[state.s] = DQ       THEN
         (* token is a double-quoted string *)
         Char(); 
-        WHILE buff[state.s + res.n] # DQ DO 
+        WHILE buff[state.s + res.n] # DQ OR lastIsBs DO
+          (* we should handle the backslash-double quote case here *)
           Char() ;
           IF state.s + res.n = NUMBER(Buffer) THEN
             Debug.Error("DefLexer.GetToken : string too long (n >= " & Fmt.Int(res.n) & ", endPos >= "& Fmt.Int(state.s + res.n)& " )")
           END;
         END; 
         Char()
-      ELSIF buff[state.s] IN t.special THEN
+      ELSIF buff[state.s] IN t.special AND NOT lastIsBs THEN
         (* see a special character, that's the full token *)
         Char()
       ELSE  
         (* identifier, or number *)
         Char();
         WHILE state.s + res.n # state.e                   AND
+          (lastIsBs
+           OR (
               NOT buff[state.s + res.n] IN WhiteSpace     AND
-              NOT buff[state.s + res.n] IN t.special  AND
+              NOT buff[state.s + res.n] IN t.special      AND
                   buff[state.s + res.n] # CC              AND
-                  buff[state.s + res.n] # DQ                   DO
+                  buff[state.s + res.n] # DQ                   ))   DO
           Char()
         END;
       END;
