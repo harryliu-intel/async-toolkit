@@ -47,7 +47,9 @@
                   rect2 = (caddr (nth b pinRectList))
                   rect2 = (BBoxCanonicalize rect2)
                   overlap = nil
-                  (cond ((mod layerNum 2)==0
+                  (cond ((mod layerNum 2)==0 &&
+                         (cadr (car  rect1))==(cadr (car  rect2)) &&
+                         (cadr (cadr rect1))==(cadr (cadr rect2))
                          a0=(car  (car  rect1))
                          a1=(car  (cadr rect1))
                          b0=(car  (car  rect2))
@@ -60,7 +62,9 @@
                                 overlap=(list b1:y0 a0:y1))
                                )
                          )
-                        (t
+                        ((mod layerNum 2)==1 &&
+                         (car (car  rect1))==(car (car  rect2)) &&
+                         (car (cadr rect1))==(car (cadr rect2))
                          a0=(cadr (car  rect1))
                          a1=(cadr (cadr rect1))
                          b0=(cadr (car  rect2))
