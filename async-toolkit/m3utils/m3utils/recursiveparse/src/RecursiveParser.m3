@@ -28,6 +28,9 @@ PROCEDURE PeekToken(t : T; READONLY tok : ARRAY OF CHAR) : BOOLEAN =
 PROCEDURE Next(t : T) =
   BEGIN 
     t.eop := NOT t.lexer.getToken(t.buff, t.state, t.token) ;
+    IF t.eop THEN
+      Debug.Out("RecursiveParser.Next: parsing done")
+    END
     (*Debug.Out("Token \"" & S2T(t.buff, t.token) & "\"")*)
   END Next;
 

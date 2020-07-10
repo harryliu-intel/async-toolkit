@@ -61,7 +61,7 @@ PROCEDURE Parse(rd : Rd.T) : T RAISES { E } =
     Next(t); (* establish lookahead *)
 
     TRY
-      WHILE NOT t.state.eof DO
+      LOOP
         (* note that this type of "block" is a bit different because
            it doesn't end with an END statement *)
         ParseBlock(t,
@@ -750,26 +750,36 @@ PROCEDURE ParseFill(t : R; ref : REFANY) RAISES { E } =
     END
   END ParseFill;
 
+PROCEDURE ParseNetSpecials(t : R; ref : REFANY) RAISES { E } =
+  BEGIN
+    (* parse the special comp/net syntax here *)
+    IF GetToken(t, K.T_MUSTJOIN) THEN
+      <*ASSERT FALSE*>
+    ELSE
+      WHILE GetToken(t, T_OParen) DO
+        IF    GetToken(t, T_Asterisk) THEN
+        ELSIF GetToken(t, K.T_PIN) THEN
+        ELSE
+          VAR compName := DefName.MustGet(t); BEGIN END;
+        END;
+        VAR pinName := DefName.MustGet(t); BEGIN END;
+        
+        IF GetToken(t, T_Plus) THEN
+          MustBeToken(t, K.T_SYNTHESIZED)
+        END;
+        
+        MustBeToken(t, T_CParen);
+      END
+    END
+  END ParseNetSpecials;
+
 PROCEDURE ParseSpecialNet(t : R; ref : REFANY) RAISES { E } =
   VAR
     netName := DefName.MustGet(t);
     c : CHAR;
   BEGIN
-    (* parse the special comp/net syntax here *)
-    WHILE GetToken(t, T_OParen) DO
-      IF GetToken(t, T_Asterisk) THEN
-      ELSIF GetToken(t, K.T_PIN) THEN
-      ELSE
-        VAR compName := DefIdent.MustGet(t); BEGIN END;
-      END;
-      VAR pinName := DefName.MustGet(t); BEGIN END;
 
-      IF GetToken(t, T_Plus) THEN
-        MustBeToken(t, K.T_SYNTHESIZED)
-      END;
-
-      MustBeToken(t, T_CParen);
-    END;
+    ParseNetSpecials(t, ref);
 
     LOOP
       MustBeSingle(t, c);
@@ -813,20 +823,72 @@ PROCEDURE ParseSpecialNet(t : R; ref : REFANY) RAISES { E } =
     END
   END ParseSpecialNet;
 
+PROCEDURE GetSpecialRoutingPointSeq(t : T; ref : REFANY) RAISES { E } =
+  VAR 
+    rp := DefRoutingPoint.Initial;
+  BEGIN
+    LOOP
+      IF    DefRoutingPoint.Get(t, rp) THEN
+      ELSIF GetToken(t, K.T_MASK) THEN
+        VAR maskId := DefCard.MustGet(t); BEGIN END
+      ELSE
+        RETURN
+      END
+    END
+  END GetSpecialRoutingPointSeq;
+
 PROCEDURE GetSpecialWiring(t : R; ref : REFANY) : BOOLEAN RAISES { E } =
   (* assume '+' has already been consumed *)
 
-  PROCEDURE GetSubDetails() : BOOLEAN RAISES { E } =
+  PROCEDURE GetSubDetails() RAISES { E } =
     BEGIN
-      IF NOT GetToken(t, T_Plus) THEN RETURN FALSE END;
+      LOOP
+        IF NOT GetToken(t, T_Plus) THEN RETURN END;
 
-      IF    GetToken(t, K.T_SHAPE) THEN
-        VAR shape := DefShape.MustGet(t); BEGIN END
-      ELSIF GetToken(t, K.T_STYLE) THEN
-        VAR styleNum := DefCard.MustGet(t); BEGIN END
-      ELSIF GetToken(t, K.T_MASK) THEN
-        VAR maskNum := DefCard.MustGet(t); BEGIN END
-      ELSIF GetToken(t, K.T_RECT) THEN
+        IF    GetToken(t, K.T_SHAPE) THEN
+          VAR shape := DefShape.MustGet(t); BEGIN END
+        ELSIF GetToken(t, K.T_STYLE) THEN
+          VAR styleNum := DefCard.MustGet(t); BEGIN END
+        ELSIF GetToken(t, K.T_MASK) THEN
+          VAR maskNum := DefCard.MustGet(t); BEGIN END
+        ELSE
+          RETURN 
+            (* this is important for the "short" case, 
+               which ends on a RECT/POLYGON, will leave the
+               parse pointing to said keyword 
+
+               see GetShortDetails *)
+        END
+      END
+    END GetSubDetails;
+
+  PROCEDURE GetLongDetails() RAISES { E } =
+    (* we are just past the "FIXED" keyword *)
+    VAR
+      layerName  := DefIdent.MustGet(t);
+      routeWidth := DefCard.MustGet(t);
+      viaName : DefIdent.T;
+    BEGIN
+      GetSubDetails();
+      GetSpecialRoutingPointSeq(t, ref);
+      (* could end in a via name *)
+      IF DefIdent.Get(t, viaName) THEN END;
+
+      WHILE GetToken(t, K.T_NEW) DO
+        layerName  := DefIdent.MustGet(t);
+        routeWidth := DefCard.MustGet(t);
+        GetSubDetails();
+        GetSpecialRoutingPointSeq(t, ref);
+        (* could end in a via name *)
+        IF DefIdent.Get(t, viaName) THEN END;
+      END
+    END GetLongDetails;
+
+  PROCEDURE GetShortDetails() RAISES { E } =
+    BEGIN
+      GetSubDetails(); (* this eats the plus *)
+
+      IF GetToken(t, K.T_RECT) THEN
         (* this is just for GetAlternativeDetails -- not in grammar?? *)
         VAR 
           layer := DefIdent.MustGet(t);
@@ -835,56 +897,24 @@ PROCEDURE GetSpecialWiring(t : R; ref : REFANY) : BOOLEAN RAISES { E } =
           p0 := DefPoint.MustGet(t);
           p1 := DefPoint.MustGet(t)
         END;
-        RETURN FALSE (* what a hack! *)
-      ELSE 
-        RAISE E("GetSpecialWiring.GetSubDetails???")
+      ELSIF GetToken(t, K.T_POLYGON) THEN
+        <*ASSERT FALSE*>
+      ELSIF GetToken(t, K.T_VIA) THEN
+        <*ASSERT FALSE*>
+      ELSE
+        RAISE E("GetShortDetails???")
       END;
-
-      RETURN TRUE
-    END GetSubDetails;
-
-  PROCEDURE GetRoutingPointSeq() RAISES { E } =
-    VAR 
-      rp := DefRoutingPoint.Initial;
-    BEGIN
-      LOOP
-        IF    DefRoutingPoint.Get(t, rp) THEN
-        ELSIF GetToken(t, K.T_MASK) THEN
-          VAR maskId := DefCard.MustGet(t); BEGIN END
-        ELSE
-          RETURN
-        END
-      END
-    END GetRoutingPointSeq;
+    END GetShortDetails;
 
   PROCEDURE GetDetails() RAISES { E } =
-    (* we are just past the "FIXED" keyword *)
-    VAR
-      layerName  := DefIdent.MustGet(t);
-      routeWidth := DefCard.MustGet(t);
-      viaName : DefIdent.T;
     BEGIN
-      IF GetSubDetails() THEN
-      END;
-      GetRoutingPointSeq();
-      (* could end in a via name *)
-      IF DefIdent.Get(t, viaName) THEN END;
-
-      WHILE GetToken(t, K.T_NEW) DO
-        layerName  := DefIdent.MustGet(t);
-        routeWidth := DefCard.MustGet(t);
-        IF GetSubDetails() THEN
-        END;
-        GetRoutingPointSeq();
-        (* could end in a via name *)
-        IF DefIdent.Get(t, viaName) THEN END;
+      IF PeekToken(t, T_Plus) THEN
+        (* V5.8 grammar, p. 310 *)
+        GetShortDetails() 
+      ELSE
+        GetLongDetails()
       END
     END GetDetails;
-
-  PROCEDURE GetAlternativeDetails() RAISES { E } =
-    BEGIN
-      WHILE GetSubDetails() DO END;
-    END GetAlternativeDetails;
 
   VAR
     dummyId : DefIdent.T;
@@ -909,27 +939,12 @@ PROCEDURE GetSpecialWiring(t : R; ref : REFANY) : BOOLEAN RAISES { E } =
     ELSIF GetToken(t, K.T_FIXED) THEN
       GetDetails()
     ELSIF GetToken(t, K.T_ROUTED) THEN
-      (* so the grammar claims here we need to have
-
-         layerName routeWidth 
-
-         but at least some files do not have that.  
-      *)
-      IF DefIdent.Peek(t, dummyId) THEN
-        GetDetails()
-      ELSE
-        GetAlternativeDetails()
-      END
+      GetDetails()
     ELSIF GetToken(t, K.T_SHIELD) THEN
       VAR
         shieldNetName := DefName.MustGet(t);
       BEGIN
-        IF PeekToken(t, T_Plus) THEN
-          (* not in the grammar...?? *)
-          GetAlternativeDetails() 
-        ELSE
-          GetDetails()
-        END
+        GetDetails()
       END
     ELSE
       RETURN FALSE
@@ -937,12 +952,161 @@ PROCEDURE GetSpecialWiring(t : R; ref : REFANY) : BOOLEAN RAISES { E } =
     RETURN TRUE
   END GetSpecialWiring;
 
+(**********************************************************************)
+
 PROCEDURE ParseNet(t : R; ref : REFANY) RAISES { E } =
   VAR
     netName := DefName.MustGet(t);
+    c : CHAR;
   BEGIN
+    ParseNetSpecials(t, ref);
+    LOOP
+      MustBeSingle(t, c);
+      CASE c OF 
+        ';' => RETURN
+      |
+        '+' =>
+        IF    GetRegularWiring(t, ref) THEN
+        ELSIF GetToken(t, K.T_SHIELDNET) THEN
+          VAR shieldNetName := DefIdent.MustGet(t); BEGIN END
+        ELSIF GetToken(t, K.T_VPIN) THEN
+          VAR vpinName := DefIdent.MustGet(t);
+          BEGIN
+            IF GetToken(t, K.T_LAYER) THEN
+              VAR layerName := DefIdent.MustGet(t);
+              BEGIN
+                IF    GetToken(t, K.T_PLACED) THEN
+                  VAR p      := DefPoint.MustGet(t);
+                      orient := DefOrientation.MustGet(t);
+                  BEGIN END
+                ELSIF GetToken(t, K.T_FIXED) THEN
+                  VAR p      := DefPoint.MustGet(t);
+                      orient := DefOrientation.MustGet(t);
+                  BEGIN END
+                ELSIF GetToken(t, K.T_COVER) THEN
+                  VAR p      := DefPoint.MustGet(t);
+                      orient := DefOrientation.MustGet(t);
+                  BEGIN END
+                END
+              END
+            END
+          END
+        ELSIF GetToken(t, K.T_SUBNET) THEN
+          VAR subnetName := DefIdent.MustGet(t);
+          BEGIN
+            ParseNetSpecials(t, ref);
+            IF GetToken(t, K.T_NONDEFAULTRULE) THEN
+              VAR ruleName := DefIdent.MustGet(t); BEGIN END
+            END
+          END
+        ELSIF GetToken(t, K.T_XTALK) THEN
+          VAR class := DefCard.MustGet(t); BEGIN END
+        ELSIF GetToken(t, K.T_NONDEFAULTRULE) THEN
+          VAR ruleName := DefIdent.MustGet(t); BEGIN END
+        ELSIF GetToken(t, K.T_SOURCE) THEN
+          VAR source := DefSource.MustGet(t); BEGIN END
+        ELSIF GetToken(t, K.T_FIXEDBUMP) THEN
+          (* skip *)
+        ELSIF GetToken(t, K.T_FREQUENCY) THEN
+          Next(t); (* should be real? *)
+        ELSIF GetToken(t, K.T_ORIGINAL) THEN
+          VAR netName := DefIdent.MustGet(t); BEGIN END
+        ELSIF GetToken(t, K.T_USE) THEN
+          VAR use := DefUse.MustGet(t); BEGIN END
+        ELSIF GetToken(t, K.T_PATTERN) THEN
+          VAR pattern := DefPattern.MustGet(t); BEGIN END
+        ELSIF GetToken(t, K.T_ESTCAP) THEN
+          Next(t); (* should be real? *)
+        ELSIF GetToken(t, K.T_WEIGHT) THEN
+          VAR weight := DefCard.MustGet(t); BEGIN END
+        ELSIF GetToken(t, K.T_PROPERTY) THEN
+          VAR propName  : DefIdent.T;
+          BEGIN
+            WHILE DefIdent.Get(t, propName) DO
+              (* here we really should look up the type of the property
+                 named propName and parse the value of that type, 
+                 but for now we just skip it *)
+              Next(t)
+            END
+          END
+        ELSE
+          RAISE E("ParseNet ???")
+        END
+      ELSE
+        RAISE E("ParseNet c ???")
+      END
+    END
   END ParseNet;
 
+PROCEDURE GetRegularRoutingPointSeq(t : T; ref : REFANY) RAISES { E } =
+  VAR 
+    rp := DefRoutingPoint.Initial;
+    viaName : DefIdent.T;
+  BEGIN
+    LOOP
+      IF    DefRoutingPoint.Get(t, rp) THEN
+      ELSIF GetToken(t, K.T_MASK) THEN
+        VAR maskId := DefCard.MustGet(t); BEGIN END
+      ELSIF GetToken(t, K.T_RECT) THEN
+        VAR
+          deltax1, deltay1, deltax2, deltay2 : DefInt.T;
+        BEGIN
+          MustBeToken(t, T_OParen);
+          deltax1 := DefInt.MustGet(t);
+          deltay1 := DefInt.MustGet(t);
+          deltax2 := DefInt.MustGet(t);
+          deltay2 := DefInt.MustGet(t);
+          MustBeToken(t, T_CParen);
+        END
+      ELSIF GetToken(t, K.T_VIRTUAL) THEN
+        IF NOT DefRoutingPoint.Get(t, rp) THEN
+          RAISE E("VIRTUAL RoutingPoint ???")
+        END
+      ELSIF DefIdent.Get(t, viaName) THEN
+        (* skip *)
+      ELSE
+        RETURN
+      END
+    END
+  END GetRegularRoutingPointSeq;
+
+PROCEDURE GetRegularWiring(t : R; ref : REFANY) : BOOLEAN RAISES { E } =
+  (* assume '+' has already been consumed *)
+
+  PROCEDURE DoOne() RAISES { E } =
+    BEGIN
+      VAR layerName := DefIdent.MustGet(t); BEGIN END;
+      
+      IF    GetToken(t, K.T_TAPER) THEN
+      ELSIF GetToken(t, K.T_TAPERRULE) THEN
+        VAR ruleName := DefIdent.MustGet(t); BEGIN END
+      END;
+      
+      IF GetToken(t, K.T_STYLE) THEN
+        VAR styleNum := DefCard.MustGet(t); BEGIN END
+      END;
+      
+      GetRegularRoutingPointSeq(t, ref);
+    END DoOne;
+
+  BEGIN
+    IF    GetToken(t, K.T_COVER) THEN
+    ELSIF GetToken(t, K.T_FIXED) THEN
+    ELSIF GetToken(t, K.T_ROUTED) THEN
+    ELSIF GetToken(t, K.T_NOSHIELD) THEN
+    ELSE 
+      RETURN FALSE
+    END;
+
+    DoOne();
+
+    WHILE GetToken(t, K.T_NEW) DO
+      DoOne()
+    END;
+    RETURN TRUE
+  END GetRegularWiring;
+
+(**********************************************************************)
 
 PROCEDURE ParseNonDefaultRule(t : R; ref : REFANY) RAISES { E } =
   VAR
@@ -1072,27 +1236,26 @@ PROCEDURE ParsePropertyDefinitions(t : R; ref : REFANY)
     END
   END ParsePropertyDefinitions;
 
+PROCEDURE CurrToken(t : T) : TEXT =
+  BEGIN
+    RETURN A2T( SUBARRAY(t.buff, t.token.start, t.token.n ) ) 
+  END CurrToken;
+
 PROCEDURE ParseBlock(t             : T;
                      keywords      : ParseTrie.T;
                      ref           : REFANY) RAISES { E } =
   BEGIN
     LOOP
       Debug.Out(t.lately.nm & " kw=" & S2T(t.buff, t.token));
-      WITH nxt = SUBARRAY(t.buff, t.token.start, t.token.n) DO
-        IF nxt = K.T_END THEN
-          Next(t);
-
-          WITH nxt2 = SUBARRAY(t.buff, t.token.start, t.token.n) DO
-            IF nxt2 = t.lately.ca^ THEN 
-              Next(t);
-              RETURN
-            ELSE
-              RAISE E ("? END " & A2T(nxt2) & " ending block " & t.lately.nm)
-            END
-          END
-        END;
-
-        WITH rec = keywords.get(nxt),
+      IF GetToken(t, K.T_END) THEN
+        IF GetToken(t, t.lately.ca^) THEN
+          RETURN
+        ELSE
+          RAISE E ("? END " & CurrToken(t) & " ending block " & t.lately.nm)
+        END
+      ELSE
+        WITH nxt = SUBARRAY(t.buff, t.token.start, t.token.n),
+             rec = keywords.get(nxt),
              f   = rec.f DO
           IF f = NIL THEN
             RAISE E(BrackOrEmpty(t.lately.nm) & 
