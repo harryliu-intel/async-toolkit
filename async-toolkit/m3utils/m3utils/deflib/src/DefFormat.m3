@@ -1123,10 +1123,10 @@ PROCEDURE ParseGroup(t : R; ref : REFANY) RAISES { E } =
   VAR
     groupName := DefName.MustGet(t);
     c : CHAR;
-    compNamePattern : DefIdent.T;
+    compNamePattern : DefName.T;
   BEGIN
     LOOP
-      IF    DefIdent.Get(t, compNamePattern) THEN
+      IF    DefName.Get(t, compNamePattern) THEN
       ELSIF GetToken(t, T_Semi) THEN
         RETURN
       ELSIF GetToken(t, T_Plus) THEN
