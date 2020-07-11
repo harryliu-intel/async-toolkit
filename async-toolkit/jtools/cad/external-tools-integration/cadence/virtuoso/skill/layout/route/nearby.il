@@ -48,8 +48,8 @@
                   rect2 = (BBoxCanonicalize rect2)
                   overlap = nil
                   (cond ((mod layerNum 2)==0 &&
-                         (cadr (car  rect1))==(cadr (car  rect2)) &&
-                         (cadr (cadr rect1))==(cadr (cadr rect2))
+                         (round ((cadr (car  rect1))-(cadr (car  rect2)))/MfgGrid)==0 &&
+                         (round ((cadr (cadr rect1))-(cadr (cadr rect2)))/MfgGrid)==0
                          a0=(car  (car  rect1))
                          a1=(car  (cadr rect1))
                          b0=(car  (car  rect2))
@@ -63,8 +63,8 @@
                                )
                          )
                         ((mod layerNum 2)==1 &&
-                         (car (car  rect1))==(car (car  rect2)) &&
-                         (car (cadr rect1))==(car (cadr rect2))
+                         (round ((car (car  rect1))-(car (car  rect2)))/MfgGrid)==0 &&
+                         (round ((car (cadr rect1))-(car (cadr rect2)))/MfgGrid)==0
                          a0=(cadr (car  rect1))
                          a1=(cadr (cadr rect1))
                          b0=(cadr (car  rect2))
