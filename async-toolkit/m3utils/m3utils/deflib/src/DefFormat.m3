@@ -394,6 +394,18 @@ PROCEDURE ParseNets(t : R; ref : REFANY) RAISES { E } =
     END
   END ParseNets;
 
+PROCEDURE ParseGroups(t : R; ref : REFANY) RAISES { E } = 
+  VAR
+    num : CARDINAL;
+  BEGIN
+    WITH des = NARROW(ref, Design) DO
+      DefCard.MustBe(t, num);
+      MustBeChar(t, ';');
+
+      ParseMinusBlock(t, ref, num, ParseGroup);
+    END
+  END ParseGroups;
+
 PROCEDURE ParseMinusBlock(t : T; ref : REFANY; cnt : CARDINAL; f : ParseProc.T) 
   RAISES { E } =
   VAR
@@ -1107,6 +1119,30 @@ PROCEDURE GetRegularWiring(t : R; ref : REFANY) : BOOLEAN RAISES { E } =
 
 (**********************************************************************)
 
+PROCEDURE ParseGroup(t : R; ref : REFANY) RAISES { E } =
+  VAR
+    groupName := DefName.MustGet(t);
+    c : CHAR;
+    compNamePattern : DefIdent.T;
+  BEGIN
+    LOOP
+      IF    DefIdent.Get(t, compNamePattern) THEN
+      ELSIF GetToken(t, T_Semi) THEN
+        RETURN
+      ELSIF GetToken(t, T_Plus) THEN
+        IF    GetToken(t, K.T_REGION) THEN
+        ELSIF GetToken(t, K.T_PROPERTY) THEN
+        ELSE
+          RAISE E("ParseGroup + ???")
+        END
+      ELSE
+        RAISE E("ParseGroup ???")
+      END
+    END
+  END ParseGroup;
+  
+(**********************************************************************)
+
 PROCEDURE ParseNonDefaultRule(t : R; ref : REFANY) RAISES { E } =
   VAR
     nm := DefIdent.MustGet(t);
@@ -1351,7 +1387,7 @@ BEGIN
   AddKeyword(designDisp, "FILLS",               ParseFills);
   AddKeyword(designDisp, "SPECIALNETS",         ParseSpecialNets);
   AddKeyword(designDisp, "NETS",                ParseNets);
-  AddKeyword(designDisp, "GROUPS",              NIL);
+  AddKeyword(designDisp, "GROUPS",              ParseGroups);
 
   AddKeyword(propDisp,   "DESIGN",              IgnorePropertyDefinition);
   AddKeyword(propDisp,   "SPECIALNET",          IgnorePropertyDefinition);

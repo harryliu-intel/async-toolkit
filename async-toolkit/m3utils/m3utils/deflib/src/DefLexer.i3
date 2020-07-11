@@ -1,7 +1,7 @@
 INTERFACE DefLexer;
 IMPORT RecursiveLexer;
 
-CONST BaseSpecial    = SET OF CHAR { '(', ')', '{', '}', '-', '+', ';', '*' };
+CONST BaseSpecial    = SET OF CHAR { '(', ')', '{', '}', '-', '+', ';' };
 CONST DefDivChar = '/';
 CONST DefBusbitChars = ARRAY [0..1] OF CHAR { '[', ']' };
 
