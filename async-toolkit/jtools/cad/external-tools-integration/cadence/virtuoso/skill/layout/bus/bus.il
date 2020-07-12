@@ -136,7 +136,7 @@ wires_modtime = makeTable("wires" 0)
   (let (wirescell wirescv)
     wirescell=(GetGuideInst nil busGuideInstName)
     (if wirescell then
-      wirescv=(dbOpenCellViewByType 
+      wirescv=(dbOpenCellViewByType
        wirescell->libName wirescell->cellName wirescell->viewName "maskLayout" "a")
       (CopyGuideShapes CV wirescv)
       (DeleteGuideShapes CV)
@@ -173,8 +173,8 @@ wires_modtime = makeTable("wires" 0)
 
     defchantemplate = "(ReloadDefChans)\n"
 
-    filename = strcat( "/"  
-                      buildString( reverse( cddr( reverse( parseString( CellView~>fileName "/")))) "/") 
+    filename = strcat( "/"
+                      buildString( reverse( cddr( reverse( parseString( CellView~>fileName "/")))) "/")
                       "/wires.il")
     (if (isFile filename) then
       (printf "File wires.il already exists. Won't overwrite.")
@@ -242,7 +242,7 @@ wires_modtime = makeTable("wires" 0)
 (defun SetBusProp (obj)
   (when obj
     (dbReplaceProp obj "BusScriptObject" "boolean" t)
-  ) 
+  )
 )
 
 (defun IsBusObject (obj)
@@ -250,10 +250,10 @@ wires_modtime = makeTable("wires" 0)
   isbus = nil
   (when obj
     (when (dbGetPropByName obj "BusScriptObject")->value=="TRUE"
-      isbus=t 
+      isbus=t
     )
   )
-  isbus 
+  isbus
  )
 )
 
@@ -261,7 +261,7 @@ wires_modtime = makeTable("wires" 0)
 ; draw an individual segment of a path
 (defun DrawSegment (name layer width xy0 xy1 beginExt endExt isPin
                          @key (guideInst nil) (CV (geGetEditCellView)))
-  (let (nxy0 nxy1 x0 y0 x1 y1 fig rect1 rect2 net label pin)
+  (let (nxy0 nxy1 x0 y0 x1 y1 fig rect net label pin)
     nxy0 = (busTransformPoint xy0 guideInst)
     nxy1 = (busTransformPoint xy1 guideInst)
     x0 = (car nxy0)
@@ -276,28 +276,16 @@ wires_modtime = makeTable("wires" 0)
     fig->routeStatus = "locked"
     (if net!=nil fig->net = net)
     (cond (isPin && net
-          (cond (y0==y1
-                rect1 = (dbCreateRect CV layer list(x0:y0-width/2 x1:y1+width/2)) ; pins should be rectangles
-                rect2 = (dbCreateRect CV (list (car layer) "pin") list(x0:y0-width/2 x1:y1+width/2)) ; add pin purpose
-                )
-                (x0==x1
-                rect1 = (dbCreateRect CV layer list(x0-width/2:y0 x1+width/2:y1)) ; pins should be rectangles
-                rect2 = (dbCreateRect CV (list (car layer) "pin") list(x0-width/2:y0 x1+width/2:y1)) ; add pin purpose
-                )
-                (t (error "invalid coordinates for pins %f:%f %f:%f" x0 y0 x1 y1) 
-                )
-          )
-	   (IndentRectFromPrbound rect1 (GetPrbound CV))
-	   (IndentRectFromPrbound rect2 (GetPrbound CV))
-           (dbDeleteObject fig) ; delete the path
-           rect1->net = net
-           pin = (dbCreatePin net rect2) ; create a pin
-           (SetBusProp rect1)
-           (SetBusProp rect2)
-           (dbReplaceProp rect2 "PinType" "string" "BusScript")
+           fig->net = net
+           (IndentPathFromPrBound fig (GetPrbound CV))
+           rect = (dbCreateRect CV (list (car layer) "pin") fig->bBox) ; add pin rectangle
+           pin = (dbCreatePin net rect) ; create a pin
+           (SetBusProp fig)
+           (SetBusProp rect)
+           (dbReplaceProp rect "PinType" "string" "BusScript")
            pin->accessDir = (list "left" "right" "top" "bottom")
-           pin->term->direction = "inputOutput"
-           (LabelPin CV rect1) ;attching the label to the pin no longer works, have to use the drawing rect
+            pin->term->direction = "inputOutput"
+           (LabelPin CV fig) ; attach label to the drawing shape, not the pin
            )
           )
     )
@@ -306,7 +294,7 @@ wires_modtime = makeTable("wires" 0)
 
 
 ; draw a via (use Nanoroute compatible vias)
-(defun DrawVia (name viaList xy width cuts @key (doubleVias t) (verticalVias nil) (positiveVias nil) 
+(defun DrawVia (name viaList xy width cuts @key (doubleVias t) (verticalVias nil) (positiveVias nil)
                      (guideInst nil) (stacked nil) (corrected nil) (CV (geGetEditCellView)))
   (let (inst net type extensions params contactOrientation layer1 layer2)
 
@@ -323,13 +311,13 @@ wires_modtime = makeTable("wires" 0)
              (if !doubleVias then
                nil
                 else
-                 type = (strcat via "_R_H") 
+                 type = (strcat via "_R_H")
              )
             else type = (strcat via cuts)
            )
            extensions = (BusDefaultViaExtensions via
                          ?cuts cuts ?doubleVias doubleVias ?stacked stacked)
-           params = (if extensions 
+           params = (if extensions
                         (list (list "layer1XEnclosure" "float" (car extensions))
                               (list "layer1YEnclosure" "float" (cadr extensions))
                               (list "layer2XEnclosure" "float" (caddr extensions))
@@ -355,7 +343,7 @@ wires_modtime = makeTable("wires" 0)
               inst~>layer1Enc = 0.04:0.01
               inst~>layer2Enc = 0.04:0.01
             )
-           ) 
+           )
            (SetBusProp inst)
            net = (MakeNet CV name)
            (cond (net!=nil (dbAddFigToNet inst net)))
@@ -369,7 +357,7 @@ wires_modtime = makeTable("wires" 0)
 ; Draw a multisegment path on two perpendicular layers with vias.
 ; (DrawWire metal67 "a" 0.36 (list 0:0 9.6:0 9.6:9.6 19.2:9.6))
 (defun DrawWire (layers name width points
-                        @key (isPin nil) (startVias nil) (endVias nil) (doubleVias t) (verticalVias nil) (positiveVias nil) 
+                        @key (isPin nil) (startVias nil) (endVias nil) (doubleVias t) (verticalVias nil) (positiveVias nil)
                         (guideInst nil) (flipX nil) (flipY nil) (pattern nil) (busKeepout nil)
                         (CV (geGetEditCellView)))
   (let (horz_layer vert_layer via viadir last first lastIndex index cuts layer hv dir prevdir templast (types (ClassifyPoints points)) (dirs (ClassifyDirs points)) corrected correctOP)
@@ -388,12 +376,12 @@ wires_modtime = makeTable("wires" 0)
 	when(verticalVias
     cuts = (if verticalVias "_R_V" "_R_H"))
 
-    (if startVias (DrawVia name via last width cuts ?doubleVias doubleVias ?verticalVias verticalVias ?positiveVias positiveVias 
+    (if startVias (DrawVia name via last width cuts ?doubleVias doubleVias ?verticalVias verticalVias ?positiveVias positiveVias
                    ?guideInst guideInst ?stacked t ?CV CV))
     (foreach point (cdr points)
              hv = nth(index types)
              if( index > 0
-              then 
+              then
                prevdir = nth(index-1 dirs)
                dir     = nth(index dirs)
              else
@@ -420,7 +408,7 @@ wires_modtime = makeTable("wires" 0)
                 corrected = nth(1 correctOP)
               )
              (if (not first) (DrawVia name via last width cuts
-                                      ?doubleVias doubleVias ?guideInst guideInst ?verticalVias verticalVias ?positiveVias positiveVias 
+                                      ?doubleVias doubleVias ?guideInst guideInst ?verticalVias verticalVias ?positiveVias positiveVias
                                       ?stacked nil ?corrected corrected ?CV CV))
              corrected = nil
              first = nil
@@ -431,7 +419,7 @@ wires_modtime = makeTable("wires" 0)
              last = point
              index = index+1
              )
-    (if endVias (DrawVia name via last width cuts ?doubleVias doubleVias ?verticalVias verticalVias ?positiveVias positiveVias 
+    (if endVias (DrawVia name via last width cuts ?doubleVias doubleVias ?verticalVias verticalVias ?positiveVias positiveVias
                          ?guideInst guideInst ?stacked t ?CV CV))
     )
   t
@@ -470,7 +458,7 @@ wires_modtime = makeTable("wires" 0)
 ; (DrawChannel metal67 e1of4 "a" (list 0:0 9.6:0 9.6:9.6 19.2:9.6 19.2:19.2 38.4:19.2))
 (defun DrawChannel (layers pattern prefix points
                            @key (flipX nil) (flipY nil) (isPin nil)
-                           (startVias nil) (endVias nil) (doubleVias t) (verticalVias nil) (positiveVias nil) 
+                           (startVias nil) (endVias nil) (doubleVias t) (verticalVias nil) (positiveVias nil)
                            (altLayerPatternList nil)
                            (guideInstName nil) (guideInst nil) (shieldM2 t) (drawShield nil) (busKeepout nil)
                            (CV (geGetEditCellView)))
@@ -507,7 +495,7 @@ wires_modtime = makeTable("wires" 0)
                   (if length(altLayerPatternList) > 1
                   then
                       ;current pattern
-                      (if index >= 2 && nth(1 nth(index-2 altLayerPatternList)) 
+                      (if index >= 2 && nth(1 nth(index-2 altLayerPatternList))
                       then
                           curLayerPattern = nth(index-2 altLayerPatternList)
                           curLayer =  nth(0 curLayerPattern )
@@ -519,7 +507,7 @@ wires_modtime = makeTable("wires" 0)
                           )
                       )
                       ;next pattern
-                      (if index >= 1 && nth(1 nth(index-1 altLayerPatternList)) 
+                      (if index >= 1 && nth(1 nth(index-1 altLayerPatternList))
                       then
                           nextLayer = nth(0 nth(index-1 altLayerPatternList))
                           nextPattern = nth(1 nth(index-1 altLayerPatternList))
@@ -547,7 +535,7 @@ wires_modtime = makeTable("wires" 0)
                   (if hv == "EH"  || hv == "HV" then
                       offsetX = nextOffset
                       offsetY = curOffset
-                  else 
+                  else
                       (if hv == "VE" || hv == "HE" then
                           offsetX = curOffset
                           offsetY = curOffset
@@ -565,7 +553,7 @@ wires_modtime = makeTable("wires" 0)
                       newpoints = (append newpoints (list (list ((lastx+tmpx)/2.0) ((lasty+tmpy)/2.0))))
                       (DrawWire lastLayer (AddSuffix prefix node)
                                           width newpoints
-                                          ?isPin isPin ?startVias stVias ?endVias nil ?verticalVias verticalVias ?positiveVias positiveVias 
+                                          ?isPin isPin ?startVias stVias ?endVias nil ?verticalVias verticalVias ?positiveVias positiveVias
                                           ?doubleVias doubleVias ?guideInst guideInst ?flipX flipX ?flipY flipY ?pattern pattern ?CV CV)
                       newpoints = (list (list ((lastx+tmpx)/2.0) ((lasty+tmpy)/2.0)))
                   )
@@ -574,14 +562,14 @@ wires_modtime = makeTable("wires" 0)
                   lasty = y+(if flipY -1 1)*(if (and hv!="VE" hv!="EV") offsetY 0)
                   (if segNum == 0 && startVias && startVias!=t then
                      ;layer info is in the startVias to draw multiple vias
-                      DrawVia((AddSuffix prefix node) startVias lastx:lasty 
+                      DrawVia((AddSuffix prefix node) startVias lastx:lasty
                                width (if (and hv!="HE" hv!="EH") "_R_V" "_R_H") ?doubleVias doubleVias ?verticalVias verticalVias ?positiveVias positiveVias ?CV CV)
                       stVias = nil
                   )
                   eVias = endVias
                   (if segNum == length(points)-1 && endVias && endVias!=t then
                      ;layer info is in the endVias to draw multiple vias
-                      DrawVia((AddSuffix prefix node) endVias lastx:lasty 
+                      DrawVia((AddSuffix prefix node) endVias lastx:lasty
                                width (if (and hv!="HE" hv!="EH") "_R_V" "_R_H") ?doubleVias doubleVias ?verticalVias verticalVias ?positiveVias positiveVias ?CV CV)
                       eVias = nil
                   )
@@ -603,11 +591,11 @@ wires_modtime = makeTable("wires" 0)
           ; draw wire for this node
           (DrawWire (if layer_override layer_override curLayer)
                     (AddSuffix prefix node) width newpoints
-                    ?isPin isPin ?startVias stVias ?endVias eVias ?verticalVias verticalVias ?positiveVias positiveVias 
+                    ?isPin isPin ?startVias stVias ?endVias eVias ?verticalVias verticalVias ?positiveVias positiveVias
                     ?doubleVias doubleVias ?guideInst guideInst ?flipX flipX ?flipY flipY ?pattern pattern ?busKeepout busKeepout ?CV CV)
 
       when( drawShield DrawBusShield(newpoints (if layer_override layer_override curLayer) prefix ?shieldM2 shieldM2 ?CV CV) )
-          
+
     )
 
   )
@@ -617,12 +605,12 @@ wires_modtime = makeTable("wires" 0)
 ; Draw an array of channels.  Must give array_pitch for each segment
 ; (including "before and "after" segments), or give a single atom for
 ; all segments except before and after segments, which will be 0.
-; 
+;
 ;(DrawChannelArray metal67 e1of4 "a" 0:3 (list 0 19.2 4.8 4.8 4.8 0)
 ;                  (list 0.5:2 9.6:0 9.6:9.6 38.4:9.6 38.4:19.2))
 (defun DrawChannelArray (layers pattern prefix indices array_pitch points
                            @key (flipX nil) (flipY nil) (isPin nil)
-                           (startVias nil) (endVias nil) (doubleVias t) (verticalVias nil) (positiveVias nil) 
+                           (startVias nil) (endVias nil) (doubleVias t) (verticalVias nil) (positiveVias nil)
                            (guideInstName nil) (guideInst nil)
                            (only_evens nil) (only_odds nil) (drawShield nil) (busKeepout nil)
                            (CV (geGetEditCellView)))
@@ -678,10 +666,10 @@ wires_modtime = makeTable("wires" 0)
                   newpoints = (append newpoints (list (list x y)))
                   index = index+1
                   )
-         
+
          ; draw channel
          (DrawChannel layers pattern (AddSuffix prefix (sprintf nil "[%d]" i)) newpoints
-                      ?flipX flipX ?flipY flipY ?verticalVias verticalVias ?positiveVias positiveVias 
+                      ?flipX flipX ?flipY flipY ?verticalVias verticalVias ?positiveVias positiveVias
                       ?isPin isPin ?startVias startVias ?endVias endVias ?doubleVias doubleVias
                       ?guideInst guideInst ?drawShield drawShield ?busKeepout busKeepout ?CV CV)
          )
@@ -913,7 +901,7 @@ wires_modtime = makeTable("wires" 0)
 ; draw multiple channels
 (defun DrawChannels (layers pattern prefix paths
                             @key (guideInstName nil) (guideInst nil) (CV (geGetEditCellView)))
-  (let (props points layer isPin startVias endVias doubleVias flipX flipY busShield rotateMetals verticalVias positiveVias 
+  (let (props points layer isPin startVias endVias doubleVias flipX flipY busShield rotateMetals verticalVias positiveVias
               patlist prelist pre buspat busKeepout)
 
     ; set guide instance
@@ -951,7 +939,7 @@ wires_modtime = makeTable("wires" 0)
                                      buspat pre points
                                      ?flipX flipX ?flipY flipY ?isPin isPin
                                      ?startVias startVias ?endVias endVias
-                                     ?doubleVias doubleVias ?verticalVias verticalVias ?positiveVias positiveVias  
+                                     ?doubleVias doubleVias ?verticalVias verticalVias ?positiveVias positiveVias
                                      ?guideInst guideInst ?drawShield busShield ?busKeepout busKeepout ?CV CV)
                         )
                       )
@@ -966,7 +954,7 @@ wires_modtime = makeTable("wires" 0)
                                       (only_evens nil) (only_odds nil)
                                       (CV (geGetEditCellView)))
   (let (props points layer isPin startVias endVias doubleVias flipX flipY
-              pitch busShield rotateMetals verticalVias positiveVias  
+              pitch busShield rotateMetals verticalVias positiveVias
               patlist prelist pre buspat lo hi lohi options evens odds)
 
     ; set guide instance
@@ -1040,7 +1028,7 @@ wires_modtime = makeTable("wires" 0)
                                       buspat pre lohi pitch points
                                       ?flipX flipX ?flipY flipY ?isPin isPin
                                       ?startVias startVias ?endVias endVias
-                                      ?doubleVias doubleVias ?verticalVias verticalVias ?positiveVias positiveVias 
+                                      ?doubleVias doubleVias ?verticalVias verticalVias ?positiveVias positiveVias
                                       ?guideInst guideInst ?busKeepout busKeepout
                                       ?only_evens evens ?only_odds odds ?drawShield busShield ?CV CV)
                     )
@@ -1213,7 +1201,7 @@ wires_modtime = makeTable("wires" 0)
 
 ; load then draw wires.il for currently edited cellview
 (defun DrawWires (@key (CV (geGetEditCellView)))
-  (defun DrawAll (@key (CV (geGetEditCellView))) 
+  (defun DrawAll (@key (CV (geGetEditCellView)))
     (printf "Default DrawAll: DrawTracks with paths in current cellview.\n")
     busPatterns = (append busPatterns defchan_patterns)
     (DrawTracks ?CV CV)
@@ -1276,7 +1264,7 @@ wires_modtime = makeTable("wires" 0)
 
     ; slot paths
     (SlotPaths)
-    
+
     ; fix pins
     (FixPinNames)
     )
@@ -1361,7 +1349,7 @@ wires_modtime = makeTable("wires" 0)
 ; mark a list of wiring shapes with marker paint
 (defun MarkWires (shapes)
   (foreach shape shapes
-           (cond ((isWiringPath shape) 
+           (cond ((isWiringPath shape)
                   (geCreateMarker shape "warning" "bus" "length" "")))
            )
   t
@@ -1561,12 +1549,12 @@ wires_modtime = makeTable("wires" 0)
     file = (outfile (sprintf nil "%s.subtypes" CV->cellName "w"))
     (foreach subtype subtypes (fprintf file "%s\n" subtype))
     (close file)
-    
+
     ; sort and write types
     types = (sort types nil)
     file = (outfile (sprintf nil "%s.types" CV->cellName "w"))
     last = nil
-    (foreach type types 
+    (foreach type types
              (cond (type!=last (fprintf file "%s\n" type)))
              last = type
              )
@@ -1578,7 +1566,7 @@ wires_modtime = makeTable("wires" 0)
 ; quickly scan pins to a userpins.il file
 (defun ScanPins (@key (CV (geGetEditCellView)))
   (let (file bbox x0 y0 x1 y1 name str pins)
-    (foreach obj CV->shapes 
+    (foreach obj CV->shapes
              (cond (obj->pin
                     bbox = obj->bBox
                     x0 = (car  (car  bbox))
@@ -1613,12 +1601,12 @@ wires_modtime = makeTable("wires" 0)
                     term = (dbFindTermByName inst->master "_RESET")
                     (cond (term
                            name = "_RESET"
-                           
+
                            ; find wiring connected to this instances _RESET pin
                            pin = (car term->pins)->fig
                            wiring = (ConnectedWiringFromSubcellPin CV inst pin)
                            (SetBusMarkForObjects wiring)
-                           
+
                            ; look for outputs of BUF_RESET's
                            inst_pins = (ConnectedSubcellPins CV wiring)
                            (foreach inst_pin inst_pins
@@ -1630,7 +1618,7 @@ wires_modtime = makeTable("wires" 0)
                                            )
                                           )
                                     )
-                           
+
                            ; look for top level pins
                            (foreach obj wiring (cond (obj->pin name = obj->net->name)))
                            str = (sprintf nil "%s._RESET = %s" inst->name name)
@@ -1669,20 +1657,20 @@ wires_modtime = makeTable("wires" 0)
                     (or obj->layerName==(car Metal2LPP)
                         obj->layerName==(car Metal4LPP)
                         obj->layerName==(car Metal6LPP))
-                    (or ((abs x0-gx0)<distance) 
+                    (or ((abs x0-gx0)<distance)
                         ((abs x1-gx1)<distance))
                     )
                (and (isWiringPath obj)
                     (or obj->layerName==(car Metal3LPP)
                         obj->layerName==(car Metal5LPP)
                         obj->layerName==(car Metal7LPP))
-                    (or ((abs y0-gy0)<distance) 
+                    (or ((abs y0-gy0)<distance)
                         ((abs y1-gy1)<distance))
                     )
                (and (isWiringContact obj)
-                    (or ((abs y0-gy0)<distance) 
+                    (or ((abs y0-gy0)<distance)
                         ((abs y1-gy1)<distance)
-                        ((abs x0-gx0)<distance) 
+                        ((abs x0-gx0)<distance)
                         ((abs x1-gx1)<distance))
                     )
                )
@@ -1742,9 +1730,9 @@ wires_modtime = makeTable("wires" 0)
 ; to be attached to the names.
 ; this seemed the best way to reuse a collection of subcell pins which are
 ; not all on the same layer or contain a mixture of flippings, neither of which
-; can be done in a DefChan. 
+; can be done in a DefChan.
 (defun ProcessBuswiresSubcell ()
- (let (wirescell wirescv subcell prefix newpath pathname newname flipx flipy) 
+ (let (wirescell wirescv subcell prefix newpath pathname newname flipx flipy)
   wirescell=(GetGuideInst nil busGuideInstName)
   wirescv=(nrOpenCellViewWritable wirescell->libName wirescell->cellName wirescell->viewName ?mode "a")
   subcells=wirescv->instances
@@ -1793,7 +1781,7 @@ wires_modtime = makeTable("wires" 0)
 (defun SetBusSubcellProp (obj)
   (when obj
     (dbReplaceProp obj "BusSubcellPath" "boolean" t)
-  ) 
+  )
 )
 
 (defun IsBusSubcellPath (obj)
@@ -1802,7 +1790,7 @@ wires_modtime = makeTable("wires" 0)
   (when obj
     isbus=(dbGetPropByName obj "BusSubcellPath")
   )
-  isbus 
+  isbus
  )
 )
 
@@ -1814,75 +1802,75 @@ wires_modtime = makeTable("wires" 0)
      corrected = t
      if( hv == "HV"
       then
-        when( dir == "P" 
+        when( dir == "P"
          if( prevdir == "P"
           then
-            if( Flip 
+            if( Flip
             then
              newpoint = car(point)-(TrackPitch/24):cadr(point)
-            else                                              
+            else
              newpoint = car(point)+(TrackPitch/24):cadr(point)
              )
           else
-            if( Flip 
+            if( Flip
             then
              newpoint = car(point)-(TrackPitch/24):cadr(point)
-            else                                              
+            else
              newpoint = car(point)+(TrackPitch/24):cadr(point)
              )
            )
          )
-        when( dir == "N" 
+        when( dir == "N"
          if( prevdir == "N"
           then
-            if( Flip 
+            if( Flip
             then
              newpoint = car(point)+(TrackPitch/24):cadr(point)
-            else                                              
+            else
              newpoint = car(point)-(TrackPitch/24):cadr(point)
              )
           else
-            if( Flip 
-            then  
+            if( Flip
+            then
              newpoint = car(point)+(TrackPitch/24):cadr(point)
-            else                                              
+            else
              newpoint = car(point)-(TrackPitch/24):cadr(point)
              )
            )
          )
       else
-        when( dir == "P" 
+        when( dir == "P"
          if( prevdir == "P"
           then
-            if( Flip 
+            if( Flip
             then
              newpoint = car(point)+(TrackPitch/24):cadr(point)
-            else                                              
+            else
              newpoint = car(point)-(TrackPitch/24):cadr(point)
              )
           else
-            if( Flip 
+            if( Flip
             then
              newpoint = car(point)-(TrackPitch/24):cadr(point)
-            else                                              
+            else
              newpoint = car(point)+(TrackPitch/24):cadr(point)
              )
            )
          )
-        when( dir == "N" 
+        when( dir == "N"
          if( prevdir == "N"
           then
-            if( Flip 
+            if( Flip
             then
              newpoint = car(point)-(TrackPitch/24):cadr(point)
-            else                                              
+            else
              newpoint = car(point)+(TrackPitch/24):cadr(point)
              )
           else
-            if( Flip 
+            if( Flip
             then
              newpoint = car(point)+(TrackPitch/24):cadr(point)
-            else                                             
+            else
              newpoint = car(point)-(TrackPitch/24):cadr(point)
              )
            )
@@ -1902,75 +1890,75 @@ wires_modtime = makeTable("wires" 0)
    then
      if( hv == "HV"
       then
-        when( dir == "P" 
+        when( dir == "P"
          if( prevdir == "P"
           then
-            if( Flip 
+            if( Flip
             then
              newpoint = car(point):cadr(point)+(TrackPitch/24)
-            else                                              
+            else
              newpoint = car(point):cadr(point)-(TrackPitch/24)
              )
           else
-            if( Flip 
+            if( Flip
             then
              newpoint = car(point):cadr(point)-(TrackPitch/24)
-            else                                              
+            else
              newpoint = car(point):cadr(point)+(TrackPitch/24)
              )
            )
          )
-        when( dir == "N" 
+        when( dir == "N"
          if( prevdir == "N"
           then
-            if( Flip 
+            if( Flip
             then
              newpoint = car(point):cadr(point)-(TrackPitch/24)
-            else                                              
+            else
              newpoint = car(point):cadr(point)+(TrackPitch/24)
              )
           else
-            if( Flip 
+            if( Flip
             then
              newpoint = car(point):cadr(point)+(TrackPitch/24)
-            else                                              
+            else
              newpoint = car(point):cadr(point)-(TrackPitch/24)
              )
            )
          )
       else
-        when( dir == "P" 
+        when( dir == "P"
          if( prevdir == "P"
           then
-            if( Flip 
+            if( Flip
             then
              newpoint = car(point):cadr(point)-(TrackPitch/24)
-            else                                              
+            else
              newpoint = car(point):cadr(point)+(TrackPitch/24)
              )
           else
-            if( Flip 
+            if( Flip
             then
              newpoint = car(point):cadr(point)-(TrackPitch/24)
-            else                                              
+            else
              newpoint = car(point):cadr(point)+(TrackPitch/24)
              )
            )
          )
-        when( dir == "N" 
+        when( dir == "N"
          if( prevdir == "N"
           then
-            if( Flip 
+            if( Flip
             then
              newpoint = car(point):cadr(point)+(TrackPitch/24)
-            else                                              
+            else
              newpoint = car(point):cadr(point)-(TrackPitch/24)
              )
           else
-            if( Flip 
+            if( Flip
             then
              newpoint = car(point):cadr(point)+(TrackPitch/24)
-            else                                              
+            else
              newpoint = car(point):cadr(point)-(TrackPitch/24)
              )
            )
@@ -1988,7 +1976,7 @@ wires_modtime = makeTable("wires" 0)
 
    for( Idx 0 length(points)-1
 
-     when( nth(Idx types) == "VE" || nth(Idx types) == "HE" 
+     when( nth(Idx types) == "VE" || nth(Idx types) == "HE"
         dirs = cons(nil dirs)
        )
 
@@ -2003,7 +1991,7 @@ wires_modtime = makeTable("wires" 0)
          )
        )
 
-     when( nth(Idx types) == "EV" 
+     when( nth(Idx types) == "EV"
        currPt = nth(Idx points)
        comparePt = nth(Idx+1 points)
        if( cadr(currPt) < cadr(comparePt)
@@ -2041,37 +2029,47 @@ wires_modtime = makeTable("wires" 0)
   )
 )
 
-; in 1276 all shapes have a set indent from the edge
-(defun IndentRectFromPrbound (rect prb)
-  (let (x1 x2 y1 y2 lpp xp yp)
-    (unless MetalHaloBoundarySpace[(car rect->lpp)]
-      (error "Pin on %s can't touch prbound" (car rect->lpp))
-      )
-    (foreach point prb->points
-      xp = (car point)
-      yp = (cadr point)
-      (when (caar rect->bBox)==xp
-        ;(printf "Indenting pin on %s at x=%f\n" (car rect->lpp) (caar rect->bBox))
-	rect->bBox = (list (list (caar rect->bBox)+MetalHaloBoundarySpace[(car rect->lpp)] (cadar rect->bBox)) 
-		     	   (list (caadr rect->bBox) (cadadr rect->bBox)))
-	)
-      (when (caadr rect->bBox)==xp
-        ;(printf "Indenting pin on %s at x=%f\n" (car rect->lpp) (caadr rect->bBox))
-	rect->bBox = (list (list (caar rect->bBox) (cadar rect->bBox)) 
-		     	   (list (caadr rect->bBox)-MetalHaloBoundarySpace[(car rect->lpp)] (cadadr rect->bBox)))
-	)
-      (when (cadar rect->bBox)==yp
-        ;(printf "Indenting pin on %s at y=%f\n" (car rect->lpp) (cadar rect->bBox))
-	rect->bBox = (list (list (caar rect->bBox) (cadar rect->bBox)+MetalHaloBoundarySpace[(car rect->lpp)]) 
-		     	   (list (caadr rect->bBox) (cadadr rect->bBox)))
-	)
-      (when (cadadr rect->bBox)==yp
-        ;(printf "Indenting pin on %s at y=%f\n" (car rect->lpp) (cadadr rect->bBox))
-	rect->bBox = (list (list (caar rect->bBox) (cadar rect->bBox)) 
-		     	   (list (caadr rect->bBox) (cadadr rect->bBox)-MetalHaloBoundarySpace[(car rect->lpp)]))
-	)
-
-      )
+; shrink paths that end on prBoundary
+(defun IndentPathFromPrBound (path prb)
+  (let (s pt0 pt1 xy0 xy1)
+    s=(round MetalHaloBoundarySpace[(car path->lpp)]/MfgGrid)
+    xy0=(XYtoIntegers (car  path->points))
+    xy1=(XYtoIntegers (cadr path->points))
+    (for i 0 (length prb->points)-1
+         pt0=(XYtoIntegers (nth i prb->points))
+         pt1=(XYtoIntegers (nth (mod i+1 (length prb->points)) prb->points))
+         (when (car pt0)==(car xy0) && (car pt1)==(car xy0) &&
+               ((cadr pt0)<=(cadr xy0) && (cadr xy0)<=(cadr pt1) ||
+                (cadr pt1)<=(cadr xy0) && (cadr xy0)<=(cadr pt0))
+               xy0=(car xy0)+(if (car xy1)>(car xy0) s -s):(cadr xy0)
+               )
+         (when (car pt0)==(car xy1) && (car pt1)==(car xy1) &&
+               ((cadr pt0)<=(cadr xy1) && (cadr xy1)<=(cadr pt1) ||
+                (cadr pt1)<=(cadr xy1) && (cadr xy1)<=(cadr pt0))
+               xy1=(car xy1)+(if (car xy0)>(car xy1) s -s):(cadr xy1)
+               )
+         (when (cadr pt0)==(cadr xy0) && (cadr pt1)==(cadr xy0) &&
+               ((car pt0)<=(car xy0) && (car xy0)<=(car pt1) ||
+                (car pt1)<=(car xy0) && (car xy0)<=(car pt0))
+               xy0=(car xy0):(cadr xy0)+(if (cadr xy1)>(cadr xy0) s -s)
+               )
+         (when (cadr pt0)==(cadr xy1) && (cadr pt1)==(cadr xy1) &&
+               ((car pt0)<=(car xy1) && (car xy1)<=(car pt1) ||
+                (car pt1)<=(car xy1) && (car xy1)<=(car pt0))
+               xy1=(car xy1):(cadr xy1)+(if (cadr xy0)>(cadr xy1) s -s)
+               )
+         )
+    path->points=(list (XYfromIntegers xy0) (XYfromIntegers xy1))
     )
+  t
   )
 
+; convert a point from floating-point to integer MfgGrid
+(defun XYtoIntegers (xy)
+  (round (car xy)/MfgGrid):(round (cadr xy)/MfgGrid)
+  )
+
+; convert a point from integer MfgGrid to floating-point
+(defun XYfromIntegers (xy)
+  (car xy)*MfgGrid:(cadr xy)*MfgGrid
+  )
