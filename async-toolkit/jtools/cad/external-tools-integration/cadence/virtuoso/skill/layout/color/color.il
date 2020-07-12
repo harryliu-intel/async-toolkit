@@ -16,8 +16,8 @@
 	     )
 	  (unless shape->objType=="label" || (cadr shape->lpp)=="AABBregion"
 	     (if !track then
-	        (printf "ERROR: No color track. Probably a shape off-grid on %s at %f:%f\n"
-			(car shape->lpp) (caar bbox) (cadar bbox))
+               (printf "ERROR: Can't color off-track %s at %f:%f\n"
+                       (car shape->lpp) (caar bbox) (cadar bbox))
    	     else
                 color = (GetTrackColor (MetalNumber shape->layerName) track)
 	        (SetShapeColor shape color)
@@ -63,7 +63,7 @@
                       (t viaNum=nil)
                       )
                 (when viaNum==1 || viaNum==2 || viaNum==3
-                      bbox = (GetCutBBox via)
+                      bbox = (GetViaOverlapBBox via)
                       bbox = (dbTransformBBox bbox (list -(car offset):-(cadr offset) "R0"))
                       track1 = (GetTrack viaNum   bbox)
                       track2 = (GetTrack viaNum+1 bbox)
@@ -81,7 +81,7 @@
                       )
                 ; for via0/4/5 cut is uncolored but the metals are colored
                 (when viaNum==0 || viaNum==4 || viaNum==5
-                      bbox = (GetCutBBox via)
+                      bbox = (GetViaOverlapBBox via)
                       bbox = (dbTransformBBox bbox (list -(car offset):-(cadr offset) "R0"))
                       track1 = (GetTrack viaNum   bbox)
                       track2 = (GetTrack viaNum+1 bbox)
@@ -122,6 +122,20 @@
       	     	   (list (car via->origin)+cutw/2 (cadr via->origin)+cuth/2))
       )
     bbox
+    )
+  )
+
+; Return the bbox of the overlap between top and bottom layers of a via
+(defun GetViaOverlapBBox (via)
+  (let (bbox overhang1 overhang2 bbox1 bbox2)
+    bbox = (GetCutBBox via)
+    overhang1 = (nth 6 via->viaHeader->viaDef->params)
+    overhang2 = (nth 7 via->viaHeader->viaDef->params)
+    bbox1 = (BBoxExpandHorizontal bbox  (car  overhang1))
+    bbox1 = (BBoxExpandVertical   bbox1 (cadr overhang1))
+    bbox2 = (BBoxExpandHorizontal bbox  (car  overhang2))
+    bbox2 = (BBoxExpandVertical   bbox2 (cadr overhang2))
+    bbox  = (BBoxAnd bbox1 bbox2)
     )
   )
 
@@ -182,7 +196,7 @@
   )
 
 ; Assign maskColor using overlay layers, then optionally delete overlay layers
-(defun ColorizeByOverlay (@key (CV (geGetEditCellView)) (delete nil))
+(defun ColorizeByOverlay (@key (CV (geGetEditCellView)) (delete nil) (doVias t))
   (let (layer color overlaps lpp via)
     (foreach s CV->shapes
              (cond (s->lpp==(list "m0"  "backBone")   layer="m0" color=1)
@@ -198,15 +212,15 @@
                    (s->lpp==(list "m5c" "complement") layer="m5" color=2)
                    (s->lpp==(list "m6"  "backBone")   layer="m6" color=1)
                    (s->lpp==(list "m6c" "complement") layer="m6" color=2)
-                   (s->lpp==(list "v1a" "colorA")     layer="v1" color=1)
-                   (s->lpp==(list "v1b" "colorB")     layer="v1" color=2)
-                   (s->lpp==(list "v1c" "colorC")     layer="v1" color=3)
-                   (s->lpp==(list "v2a" "colorA")     layer="v2" color=1)
-                   (s->lpp==(list "v2b" "colorB")     layer="v2" color=2)
-                   (s->lpp==(list "v2c" "colorC")     layer="v2" color=3)
-                   (s->lpp==(list "v3a" "colorA")     layer="v3" color=1)
-                   (s->lpp==(list "v3b" "colorB")     layer="v3" color=2)
-                   (t                                 layer=nil  color=nil)
+                   (doVias && s->lpp==(list "v1a" "colorA") layer="v1" color=1)
+                   (doVias && s->lpp==(list "v1b" "colorB") layer="v1" color=2)
+                   (doVias && s->lpp==(list "v1c" "colorC") layer="v1" color=3)
+                   (doVias && s->lpp==(list "v2a" "colorA") layer="v2" color=1)
+                   (doVias && s->lpp==(list "v2b" "colorB") layer="v2" color=2)
+                   (doVias && s->lpp==(list "v2c" "colorC") layer="v2" color=3)
+                   (doVias && s->lpp==(list "v3a" "colorA") layer="v3" color=1)
+                   (doVias && s->lpp==(list "v3b" "colorB") layer="v3" color=2)
+                   (t                                       layer=nil  color=nil)
                    )
              (when layer
                overlaps=nil
