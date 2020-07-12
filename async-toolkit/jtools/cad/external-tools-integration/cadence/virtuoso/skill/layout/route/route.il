@@ -542,6 +542,9 @@
       (OffsetEverything (cadr (GetCellAlignment ?CV baseCV)) ?CV ImportCV)
       )
 
+    ; colorize
+    (ColorizeByOverlay ?CV ImportCV ?delete t ?doVias nil)
+
     ; fixup pins and connectivity
     (DeleteExtraLabels ?CV ImportCV)
     (LabelsToPins ?CV ImportCV)
