@@ -49,7 +49,7 @@
     ; copy to temp view and offset according to alignment properties
     offset = (cadr (GetCellAlignment ?CV CV))
     ExportCV = (betterCopyCellView CV CV->libName CV->cellName "qfill" nil nil t)
-    (OffsetEverything -(car offset):-(cadr offset) ?CV ExportCV)
+    (OffsetEverything offset ?CV ExportCV)
     (dbSave ExportCV)
 
     ; export OAS
@@ -91,7 +91,7 @@
   (let (color)
     (foreach shape qCV->shapes
   	   color = (GetShapeColor shape)
-           shape = (dbCopyShape shape CV (list offset "R0"))
+           shape = (dbCopyShape shape CV (list (car offset):-(cadr offset) "R0"))
 	   (SetShapeColor shape color)
            (dbReplaceProp shape "autogen" "string" "qfill")
            )
