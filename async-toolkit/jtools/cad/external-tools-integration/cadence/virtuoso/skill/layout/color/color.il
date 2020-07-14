@@ -33,8 +33,8 @@
                 (foreach shape shapes
                          bbox=(dbTransformBBox shape->bBox (list offset "R0"))
                          (when shape->objType=="rect"
-                               track1 = (GetTrack viaNum   bbox)
-                               track2 = (GetTrack viaNum+1 bbox)
+                               track1 = (GetTrack viaNum   bbox ?exact nil)
+                               track2 = (GetTrack viaNum+1 bbox ?exact nil)
                                track = (if (mod viaNum 2)==0 track1 track2)
                                ; (printf "viaNum=%d track=%d\n" viaNum track)
                                color = (GetViaTrackColor viaNum track)
