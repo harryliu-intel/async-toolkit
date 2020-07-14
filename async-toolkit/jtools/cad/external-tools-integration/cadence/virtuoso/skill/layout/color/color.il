@@ -7,7 +7,7 @@
     (foreach metal ColorableMetals
        shapes = (setof s CV->shapes (car s->lpp)==metal)
        (foreach shape shapes
-          bbox=(dbTransformBBox shape->bBox offset "R0"))
+          bbox=(dbTransformBBox shape->bBox (list offset "R0"))
           (when shape->objType=="rect"
 	     track = (GetTrack (MetalNumber metal) bbox)
 	     )
@@ -31,7 +31,7 @@
                 (unless viaNum (error))
                 shapes = (setof s CV->shapes (car s->lpp)==via)
                 (foreach shape shapes
-                         bbox=(dbTransformBBox shape->bBox offset "R0"))
+                         bbox=(dbTransformBBox shape->bBox (list offset "R0"))
                          (when shape->objType=="rect"
                                track1 = (GetTrack viaNum   bbox)
                                track2 = (GetTrack viaNum+1 bbox)
@@ -64,7 +64,7 @@
                       )
                 (when viaNum==1 || viaNum==2 || viaNum==3
                       bbox = (GetViaOverlapBBox via)
-                      bbox = (dbTransformBBox bbox offset "R0"))
+                      bbox = (dbTransformBBox bbox (list offset "R0"))
                       track1 = (GetTrack viaNum   bbox)
                       track2 = (GetTrack viaNum+1 bbox)
                       (when track1 color1 = (GetTrackColor viaNum   track1))
