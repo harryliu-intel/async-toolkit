@@ -228,13 +228,9 @@
             term->name = newName
             (dbRenameNet term->net newName))))
 
-      ; offset for cell alignment
-      offset = (cadr (GetCellAlignment ?CV ExportCV))
-      (OffsetEverything -(car offset):-(cadr offset) ?CV ExportCV)
-
-      ; HACK: offset to avoid negative numbers because RDT is stupid
+      ; offset for cell alignment and avoid negative numbers because RDT is stupid
       offset = (GetRDTOffset ?CV ExportCV)
-      (OffsetEverything -(car offset):-(cadr offset) ?CV ExportCV)
+      (OffsetEverything offset ?CV ExportCV)
 
       ; save
       (dbSave ExportCV)
@@ -488,7 +484,7 @@
         (top_name nil)
         )
   (let (TEMP WDIR libPath logFile Command status ImportCV layoutCV floorplanCV
-             win instmap CID oasName templib fields short_name)
+             win instmap CID oasName templib fields short_name offset)
 
     ; choose libName and cellName
     (unless libName  libName  = CV->libName)
@@ -538,8 +534,8 @@
     ; HACK: copy properties from baseCV and restore cell alignment
     (when baseCV
       (CopyCellViewProps baseCV ImportCV)
-      (OffsetEverything (GetRDTOffset ?CV baseCV) ?CV ImportCV)
-      (OffsetEverything (cadr (GetCellAlignment ?CV baseCV)) ?CV ImportCV)
+      offset = (GetRDTOffset ?CV baseCV)
+      (OffsetEverything -(car offset):-(cadr offset) ?CV ImportCV)
       )
 
     ; colorize
@@ -825,17 +821,22 @@ DumbLayers = (list (list "SRAM" "fill")
 
 ; HACK to figure out how to offset prBoundary into upper right quadrant
 (defun GetRDTOffset (@key (CV (geGetEditCellView)))
-  (let (bbox x y gx gy offset)
+  (let (bbox x y gx gy ox oy offset)
+    offset = (cadr (GetCellAlignment ?CV CV))
+    ox=(car  offset)
+    oy=(cadr offset)
     bbox=(GetPrbound CV)->bBox
-    x=(car  (car bbox))
-    y=(cadr (car bbox))
-    offset = 0:0
-    (when x<0 || y<0
-          gx=(car  gridAlignment["lego"])
-          gy=(cadr gridAlignment["lego"])
-          offset = (list (floor x/gx)*gx (floor y/gy)*gy)
-          )
-    offset
+    x=(car  (car bbox)) + ox
+    y=(cadr (car bbox)) + oy
+    (when x<0
+      gx=(car  gridAlignment["lego"])
+      ox=ox - (floor x/gx)*gx
+      )
+    (when y<0
+      gy=(cadr gridAlignment["lego"])
+      oy=oy - (floor y/gy)*gy
+      )
+    ox:oy
     )
   )
 
