@@ -84,8 +84,8 @@ public class DSimUtil {
      **/
     public DSimUtil() {
         dsim = DSim.get();
-        GND = dsim.findNode("GND");
-        Vdd = dsim.findNode("Vdd");
+        GND = getTopOrEnvNode(HierName.makeHierName("GND"));
+        Vdd = getTopOrEnvNode(HierName.makeHierName("Vdd"));
         ERROR = dsim.findNode("ERROR");
         _RESET = getResetNode();
         START  = getStartNode();
