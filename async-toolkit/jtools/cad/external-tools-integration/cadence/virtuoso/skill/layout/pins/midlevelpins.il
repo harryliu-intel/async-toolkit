@@ -108,6 +108,7 @@
     (foreach fig InPlacePinList
       transform = (dbTransformBBox fig->bBox Inst->transform)
       TopPinFig = (dbCreateRect CV (list (car fig->lpp) "pin") transform)
+      (SetShapeColor TopPinFig (GetShapeColor fig))
       TopPinNet = (dbMakeNet CV PinName)
       TopPin    = (dbCreatePin TopPinNet TopPinFig)
       TopPin->accessDir = (list "top" "bottom" "left" "right" )
