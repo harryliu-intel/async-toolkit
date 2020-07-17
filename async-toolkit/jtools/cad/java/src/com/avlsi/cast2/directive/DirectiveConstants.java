@@ -181,6 +181,9 @@ public interface DirectiveConstants {
 
     /** CSP timing directives */
     String FORWARD_LATENCY = "forward_latency";
+    String BACKWARD_LATENCY = "backward_latency";
+    String PORT_FORWARD_LATENCY = "port_forward_latency";
+    String PORT_BACKWARD_LATENCY = "port_backward_latency";
     String CONTROLLER_LATENCY = "controller_latency";
     String SLACK = "slack";
     String STAGES = "stages";

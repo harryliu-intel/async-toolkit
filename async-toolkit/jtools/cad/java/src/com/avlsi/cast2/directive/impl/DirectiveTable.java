@@ -428,12 +428,17 @@ public class DirectiveTable {
 
         registerDirective(SUBCELL, TIME, INSTANCE_TYPE, FLOAT_TYPE, new Float(0));
         registerDirective(SUBCELL, FORWARD_LATENCY, FLOAT_TYPE, null);
+        registerDirective(SUBCELL, FORWARD_LATENCY, CHANNEL_TYPE, FLOAT_TYPE, null);
         registerDirective(SUBCELL, CYCLE_TIME, FLOAT_TYPE, null);
         registerDirective(SUBCELL, CYCLE_TIME, CHANNEL_TYPE, FLOAT_TYPE, null);
 
         registerDirective(CELL, CYCLE_TIME, POSSIBLY_WIDE_CHANNEL_TYPE, FLOAT_TYPE, null);
         registerDirective(CELL, CYCLE_TIME, FLOAT_TYPE,  new Float(10));
         registerDirective(CELL, FORWARD_LATENCY, FLOAT_TYPE,  new Float(6));
+        registerDirective(CELL, PORT_FORWARD_LATENCY, FLOAT_TYPE, null);
+        registerDirective(CELL, PORT_BACKWARD_LATENCY, FLOAT_TYPE, null);
+        registerDirective(CELL, PORT_FORWARD_LATENCY, CHANNEL_TYPE, FLOAT_TYPE, null);
+        registerDirective(CELL, PORT_BACKWARD_LATENCY, CHANNEL_TYPE, FLOAT_TYPE, null);
         
         /** VDCVerify directives */
         registerDirective(CELL, VDC_LEAF, BOOLEAN_TYPE, Boolean.FALSE);

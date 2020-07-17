@@ -10,6 +10,7 @@ package com.avlsi.cast2.directive.impl;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.HashSet;
 import java.util.Set;
@@ -231,7 +232,7 @@ public class DirectiveImpl implements DirectiveVisitor {
 
             Map m = (Map) paramDefinition.get(new Pair(key, memberType));
             if (m == null) {
-                m = new HashMap();
+                m = new LinkedHashMap();
                 paramDefinition.put(new Pair(key, memberType), m);
             }
             m.put(param, value);

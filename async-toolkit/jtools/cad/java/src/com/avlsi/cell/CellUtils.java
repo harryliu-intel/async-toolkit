@@ -2052,6 +2052,23 @@ public final class CellUtils {
         return notfound;
     }
 
+    public static CellInterface getSubcell(final CellInterface cell,
+                                           HierName name) {
+        CellInterface curr = cell;
+        while (curr != null) {
+            Pair<HierName,HierName> p =
+                CellUtils.getFirstInstance(curr, name, true);
+            assert p.getFirst() != null;
+            curr = curr.getSubcell(p.getFirst());
+            if (p.getSecond() == null) {
+                break;
+            } else {
+                name = p.getSecond();
+            }
+        }
+        return curr;
+    }
+
     /**
      * Returns a map from canonical port name to port direction.  If aliases of
      * a port include both input and output ports, then input will be returned.

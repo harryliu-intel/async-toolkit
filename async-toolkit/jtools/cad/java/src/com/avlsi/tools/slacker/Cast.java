@@ -324,7 +324,7 @@ public class Cast {
         final String parent =
             castChan.getParent() != null ? castChan.getParent().getFullName()
                                          : null;
-        final CellInterface chanCell = getSubcell(cell, toHierName(name));
+        final CellInterface chanCell = CellUtils.getSubcell(cell, toHierName(name));
         double cost = (Float) DirectiveUtils.getTopLevelDirective(chanCell,
                 DirectiveConstants.SLACKER_COST);
         boolean chanDontTouch =
@@ -495,23 +495,6 @@ public class Cast {
                                            CellUtils.CHANNEL_TYPE));
     }
 
-    private static CellInterface getSubcell(final CellInterface cell,
-                                            HierName name) {
-        CellInterface curr = cell;
-        while (curr != null) {
-            Pair<HierName,HierName> p =
-                CellUtils.getFirstInstance(curr, name, true);
-            assert p.getFirst() != null;
-            curr = curr.getSubcell(p.getFirst());
-            if (p.getSecond() == null) {
-                break;
-            } else {
-                name = p.getSecond();
-            }
-        }
-        return curr;
-    }
-
     private static CellUtils.Channel getChannel(final CellInterface cell,
                                                 final HierName name) {
         final Pair<HierName,HierName> p =
@@ -588,9 +571,9 @@ public class Cast {
                                     CellUtils.Channel in,
                                     AliasedSet/*<Channel>*/ connections) {
                     final HierName outInst = toHierName(out.getFullName());
-                    final CellInterface outCell = getSubcell(cell, outInst);
+                    final CellInterface outCell = CellUtils.getSubcell(cell, outInst);
                     final HierName inInst = toHierName(in.getFullName());
-                    final CellInterface inCell = getSubcell(cell, inInst);
+                    final CellInterface inCell = CellUtils.getSubcell(cell, inInst);
                     final List<Pair<HierName,CellInterface>> outSlackerChans =
                         new ArrayList<>();
                     final List<Pair<HierName,CellInterface>> inSlackerChans =
