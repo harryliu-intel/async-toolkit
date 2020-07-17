@@ -2038,22 +2038,26 @@ wires_modtime = makeTable("wires" 0)
     (for i 0 (length prb->points)-1
          pt0=(XYtoIntegers (nth i prb->points))
          pt1=(XYtoIntegers (nth (mod i+1 (length prb->points)) prb->points))
-         (when (car pt0)==(car xy0) && (car pt1)==(car xy0) &&
+         (when (cadr xy0)==(cadr xy1) &&
+               (car pt0)==(car xy0) && (car pt1)==(car xy0) &&
                ((cadr pt0)<=(cadr xy0) && (cadr xy0)<=(cadr pt1) ||
                 (cadr pt1)<=(cadr xy0) && (cadr xy0)<=(cadr pt0))
                xy0=(car xy0)+(if (car xy1)>(car xy0) s -s):(cadr xy0)
                )
-         (when (car pt0)==(car xy1) && (car pt1)==(car xy1) &&
+         (when (cadr xy0)==(cadr xy1) &&
+               (car pt0)==(car xy1) && (car pt1)==(car xy1) &&
                ((cadr pt0)<=(cadr xy1) && (cadr xy1)<=(cadr pt1) ||
                 (cadr pt1)<=(cadr xy1) && (cadr xy1)<=(cadr pt0))
                xy1=(car xy1)+(if (car xy0)>(car xy1) s -s):(cadr xy1)
                )
-         (when (cadr pt0)==(cadr xy0) && (cadr pt1)==(cadr xy0) &&
+         (when (car xy0)==(car xy1) &&
+               (cadr pt0)==(cadr xy0) && (cadr pt1)==(cadr xy0) &&
                ((car pt0)<=(car xy0) && (car xy0)<=(car pt1) ||
                 (car pt1)<=(car xy0) && (car xy0)<=(car pt0))
                xy0=(car xy0):(cadr xy0)+(if (cadr xy1)>(cadr xy0) s -s)
                )
-         (when (cadr pt0)==(cadr xy1) && (cadr pt1)==(cadr xy1) &&
+         (when (car xy0)==(car xy1) &&
+               (cadr pt0)==(cadr xy1) && (cadr pt1)==(cadr xy1) &&
                ((car pt0)<=(car xy1) && (car xy1)<=(car pt1) ||
                 (car pt1)<=(car xy1) && (car xy1)<=(car pt0))
                xy1=(car xy1):(cadr xy1)+(if (cadr xy0)>(cadr xy1) s -s)
