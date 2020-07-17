@@ -59,6 +59,7 @@
     (foreach lpp MetalLPPs
       paths = (setof obj net->figs
                      (and obj->objType=="path"
+                          !(dbGetPropByName obj "underPin")->value
                           obj->lpp==lpp
                           (length obj->points)==2))
       ; NOTE: quadratic algorithm in number of paths on each layer of net
@@ -97,7 +98,8 @@
     progress = 0
     paths = (setof obj net->figs
               (and obj->objType=="path" (length obj->points)==2
-                (isMetalDrawing (car obj->lpp) (cadr obj->lpp))))
+                   !(dbGetPropByName obj "underPin")->value
+                   (isMetalDrawing (car obj->lpp) (cadr obj->lpp))))
     (foreach path paths
       ; create bbox from 2 points of path
       xy0 = (car  path->points)

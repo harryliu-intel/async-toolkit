@@ -277,6 +277,7 @@ wires_modtime = makeTable("wires" 0)
     (if net!=nil fig->net = net)
     (cond (isPin && net
            fig->net = net
+           (dbReplaceProp fig "underPin" "boolean" t)
            (IndentPathFromPrBound fig (GetPrbound CV))
            rect = (dbCreateRect CV (list (car layer) "pin") fig->bBox) ; add pin rectangle
            pin = (dbCreatePin net rect) ; create a pin
