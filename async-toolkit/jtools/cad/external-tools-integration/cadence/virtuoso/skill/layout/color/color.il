@@ -5,7 +5,7 @@
   (let (bbox color shapes track oldcolor track1 track2 color1 color2 colorc viaNum)
     (unless offset offset=(cadr (GetCellAlignment ?CV CV)))
     (foreach metal ColorableMetals
-       shapes = (setof s CV->shapes (car s->lpp)==metal)
+       shapes = (setof s CV->shapes s->layerName==metal && s->purpose!="bus")
        (foreach shape shapes
           bbox=(dbTransformBBox shape->bBox (list offset "R0"))
           (when shape->objType=="rect"
