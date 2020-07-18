@@ -1,7 +1,8 @@
 ; Run QFILL to add fill and color shapes to a cell
 (defun DoFill (@key (CV (geGetEditCellView)) (botLayer "m0") (topLayer "m10")
                     (layers nil) (delete t))
-  (let (TEMP WDIR ExportCV offset all_layers dir cmd CID oasName oasFile qCV fill_layers)
+  (let (TEMP WDIR ExportCV offset all_layers dir cmd CID oasName oasFile qCV fill_layers
+             done offset)
 
     ; pick list of layers to fill
     all_layers = (list "cell"
@@ -91,7 +92,7 @@
   (let (color)
     (foreach shape qCV->shapes
   	   color = (GetShapeColor shape)
-           shape = (dbCopyShape shape CV (list (car offset):-(cadr offset) "R0"))
+           shape = (dbCopyShape shape CV (list -(car offset):-(cadr offset) "R0"))
 	   (SetShapeColor shape color)
            (dbReplaceProp shape "autogen" "string" "qfill")
            )
