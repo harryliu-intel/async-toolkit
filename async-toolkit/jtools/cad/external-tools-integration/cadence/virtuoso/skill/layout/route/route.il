@@ -539,7 +539,7 @@
       )
 
     ; colorize
-    (ColorizeByOverlay ?CV ImportCV ?delete t ?doVias nil)
+    (ColorizeByOverlay ?CV ImportCV)
 
     ; fixup pins and connectivity
     (DeleteExtraLabels ?CV ImportCV)

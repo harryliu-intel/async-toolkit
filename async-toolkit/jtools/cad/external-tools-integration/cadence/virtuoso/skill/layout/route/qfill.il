@@ -83,6 +83,8 @@
           (CopyQfillShapes CV qCV offset)
           )
 
+    ; Colorize
+    (ColorizeByOverlay ?CV CV)
     )
   CV
   )

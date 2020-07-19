@@ -20,86 +20,86 @@
                        (car shape->lpp) (caar bbox) (cadar bbox))
    	     else
                 color = (GetTrackColor (MetalNumber shape->layerName) track)
-	        (SetShapeColor shape color)
+	        (when color (SetShapeColor shape color))
 	        )
              )
 	  )
        )
     (when doVias
-       (foreach via ColorableVias
-                viaNum = (ViaNumber via)
-                (unless viaNum (error))
-                shapes = (setof s CV->shapes (car s->lpp)==via)
-                (foreach shape shapes
-                         bbox=(dbTransformBBox shape->bBox (list offset "R0"))
-                         (when shape->objType=="rect"
-                               track1 = (GetTrack viaNum   bbox ?exact nil)
-                               track2 = (GetTrack viaNum+1 bbox ?exact nil)
-                               track = (if (mod viaNum 2)==0 track1 track2)
-                               ; (printf "viaNum=%d track=%d\n" viaNum track)
-                               color = (GetViaTrackColor viaNum track)
-                               oldcolor = (GetShapeColor shape)
-                               (when override || oldcolor==0
-                                     (SetShapeColor shape color)
-                                     )
-                               )
-                         )
-                )
-       (foreach via CV->vias
-          ; some hard coded hacks in here right now
-	  track1 = nil
-	  track2 = nil
-	  color1 = nil
-	  color2 = nil
-	  colorc = nil
-          oldcolor = (GetViaColor via)
-	  (when override || oldcolor==0
-                (cond ((strncmp via->viaHeader->master->cellName "via0" 4)==0 viaNum=0)
-                      ((strncmp via->viaHeader->master->cellName "via1" 4)==0 viaNum=1)
-                      ((strncmp via->viaHeader->master->cellName "via2" 4)==0 viaNum=2)
-                      ((strncmp via->viaHeader->master->cellName "via3" 4)==0 viaNum=3)
-                      ((strncmp via->viaHeader->master->cellName "via4" 4)==0 viaNum=4)
-                      ((strncmp via->viaHeader->master->cellName "via5" 4)==0 viaNum=5)
-                      (t viaNum=nil)
-                      )
-                (when viaNum==1 || viaNum==2 || viaNum==3
-                      bbox = (GetViaOverlapBBox via)
-                      bbox = (dbTransformBBox bbox (list offset "R0"))
-                      track1 = (GetTrack viaNum   bbox)
-                      track2 = (GetTrack viaNum+1 bbox)
-                      (when track1 color1 = (GetTrackColor viaNum   track1))
-                      (when track2 color2 = (GetTrackColor viaNum+1 track2))
-                      track = (if (mod viaNum 2)==0 track1 track2)
-                      ; (printf "viaNum=%d track=%d\n" viaNum track)
-                      colorc = (GetViaTrackColor viaNum track)
-                      (if colorc
-                        (SetViaColor via colorc color1 color2)
-                        (printf "ERROR: Can't color off-track %s at %f:%f\n"
-                                via->viaHeader->master->cellName
-                                (car via->origin) (cadr via->origin))
+      (foreach via ColorableVias
+               viaNum = (ViaNumber via)
+               (unless viaNum (error))
+               shapes = (setof s CV->shapes (car s->lpp)==via)
+               (foreach shape shapes
+                        bbox=(dbTransformBBox shape->bBox (list offset "R0"))
+                        (when shape->objType=="rect"
+                              track1 = (GetTrack viaNum   bbox ?exact nil)
+                              track2 = (GetTrack viaNum+1 bbox ?exact nil)
+                              track = (if (mod viaNum 2)==0 track1 track2)
+                              ; (printf "viaNum=%d track=%d\n" viaNum track)
+                              color = (GetViaTrackColor viaNum track)
+                              oldcolor = (GetShapeColor shape)
+                              (when color && (override || oldcolor==0)
+                                    (SetShapeColor shape color)
+                                    )
+                              )
                         )
-                      )
-                ; for via0/4/5 cut is uncolored but the metals are colored
-                (when viaNum==0 || viaNum==4 || viaNum==5
-                      bbox = (GetViaOverlapBBox via)
-                      bbox = (dbTransformBBox bbox (list offset "R0"))
-                      track1 = (GetTrack viaNum   bbox)
-                      track2 = (GetTrack viaNum+1 bbox)
-                      (when track1 color1 = (GetTrackColor viaNum   track1))
-                      (when track2 color2 = (GetTrackColor viaNum+1 track2))
-                      track = (if (mod viaNum 2)==0 track1 track2)
-                      ; (printf "viaNum=%d track=%d\n" viaNum track)
-                      colorc = (GetViaTrackColor viaNum track)
-                      (if track1 && track2
-                          (SetViaColor via nil color1 color2)
-                          (printf "ERROR: Can't color off-track %s at %f:%f\n"
-                                  via->viaHeader->master->cellName
-                                  (car via->origin) (cadr via->origin))
-                          )
-                      )
-                )
-          )
-       )
+               )
+      )
+    (foreach via CV->vias
+             ; some hard coded hacks in here right now
+             track1 = nil
+             track2 = nil
+             color1 = nil
+             color2 = nil
+             colorc = nil
+             oldcolor = (GetViaColor via)
+             (when override || oldcolor==0
+                   (cond ((strncmp via->viaHeader->master->cellName "via0" 4)==0 viaNum=0)
+                         ((strncmp via->viaHeader->master->cellName "via1" 4)==0 viaNum=1)
+                         ((strncmp via->viaHeader->master->cellName "via2" 4)==0 viaNum=2)
+                         ((strncmp via->viaHeader->master->cellName "via3" 4)==0 viaNum=3)
+                         ((strncmp via->viaHeader->master->cellName "via4" 4)==0 viaNum=4)
+                         ((strncmp via->viaHeader->master->cellName "via5" 4)==0 viaNum=5)
+                         (t viaNum=nil)
+                         )
+                   (when viaNum==1 || viaNum==2 || viaNum==3
+                         bbox = (GetViaOverlapBBox via)
+                         bbox = (dbTransformBBox bbox (list offset "R0"))
+                         track1 = (GetTrack viaNum   bbox)
+                         track2 = (GetTrack viaNum+1 bbox)
+                         (when track1 color1 = (GetTrackColor viaNum   track1))
+                         (when track2 color2 = (GetTrackColor viaNum+1 track2))
+                         track = (if (mod viaNum 2)==0 track1 track2)
+                         ; (printf "viaNum=%d track=%d\n" viaNum track)
+                         colorc = (GetViaTrackColor viaNum track)
+                         (SetViaColor via (if doVias colorc nil) color1 color2)
+                         (unless colorc
+                           (printf "ERROR: Can't color off-track %s at %f:%f\n"
+                                   via->viaHeader->master->cellName
+                                   (car via->origin) (cadr via->origin))
+                           )
+                         )
+                   ; for via0/4/5 cut is uncolored but the metals are colored
+                   (when viaNum==0 || viaNum==4 || viaNum==5
+                         bbox = (GetViaOverlapBBox via)
+                         bbox = (dbTransformBBox bbox (list offset "R0"))
+                         track1 = (GetTrack viaNum   bbox)
+                         track2 = (GetTrack viaNum+1 bbox)
+                         (when track1 color1 = (GetTrackColor viaNum   track1))
+                         (when track2 color2 = (GetTrackColor viaNum+1 track2))
+                         track = (if (mod viaNum 2)==0 track1 track2)
+                                        ; (printf "viaNum=%d track=%d\n" viaNum track)
+                         colorc = (GetViaTrackColor viaNum track)
+                         (if track1 && track2
+                             (SetViaColor via nil color1 color2)
+                             (printf "ERROR: Can't color off-track %s at %f:%f\n"
+                                     via->viaHeader->master->cellName
+                                     (car via->origin) (cadr via->origin))
+                             )
+                         )
+                   )
+             )
     t
     )
   )
@@ -196,8 +196,8 @@
   )
 
 ; Assign maskColor using overlay layers, then optionally delete overlay layers
-(defun ColorizeByOverlay (@key (CV (geGetEditCellView)) (delete nil) (doVias t))
-  (let (layer color overlaps lpp via)
+(defun ColorizeByOverlay (@key (CV (geGetEditCellView)))
+  (let (layer color overlaps lpp via keep)
     (foreach s CV->shapes
              (cond (s->lpp==(list "m0"  "backBone")   layer="m0" color=1)
                    (s->lpp==(list "m0c" "complement") layer="m0" color=2)
@@ -212,22 +212,23 @@
                    (s->lpp==(list "m5c" "complement") layer="m5" color=2)
                    (s->lpp==(list "m6"  "backBone")   layer="m6" color=1)
                    (s->lpp==(list "m6c" "complement") layer="m6" color=2)
-                   (doVias && s->lpp==(list "v1a" "colorA") layer="v1" color=1)
-                   (doVias && s->lpp==(list "v1b" "colorB") layer="v1" color=2)
-                   (doVias && s->lpp==(list "v1c" "colorC") layer="v1" color=3)
-                   (doVias && s->lpp==(list "v2a" "colorA") layer="v2" color=1)
-                   (doVias && s->lpp==(list "v2b" "colorB") layer="v2" color=2)
-                   (doVias && s->lpp==(list "v2c" "colorC") layer="v2" color=3)
-                   (doVias && s->lpp==(list "v3a" "colorA") layer="v3" color=1)
-                   (doVias && s->lpp==(list "v3b" "colorB") layer="v3" color=2)
-                   (t                                       layer=nil  color=nil)
+                   (s->lpp==(list "v1a" "colorA")     layer="v1" color=1)
+                   (s->lpp==(list "v1b" "colorB")     layer="v1" color=2)
+                   (s->lpp==(list "v1c" "colorC")     layer="v1" color=3)
+                   (s->lpp==(list "v2a" "colorA")     layer="v2" color=1)
+                   (s->lpp==(list "v2b" "colorB")     layer="v2" color=2)
+                   (s->lpp==(list "v2c" "colorC")     layer="v2" color=3)
+                   (s->lpp==(list "v3a" "colorA")     layer="v3" color=1)
+                   (s->lpp==(list "v3b" "colorB")     layer="v3" color=2)
+                   (t                                 layer=nil  color=nil)
                    )
              (when layer
                overlaps=nil
                (foreach purpose (list "drawing" "pin" "fill" "actFill" "vdd" "gnd")
                         lpp = (list layer purpose)
-                        overlaps=(append overlaps (dbGetOverlaps CV s->bBox lpp 0:1))
+                        overlaps=(append overlaps (dbGetOverlaps CV s->bBox lpp 0:31))
                         )
+               keep=nil
                (foreach o overlaps
                         (cond (!(atom o) && (car o)->objType=="stdVia"
                                 o=(car o)
@@ -238,11 +239,14 @@
                                       )
                                 )
                               ((atom o) && o->objType!="label"
-                                   (SetShapeColor o color)
-                                   )
+                               (SetShapeColor o color)
+                               )
+                              ((GetOverlapObjType o)!="label" && (GetOverlapColor o)!=color
+                               keep=t
+                               )
                               )
                         )
-               (when delete (dbDeleteObject s))
+               (unless keep (dbDeleteObject s))
                )
              )
     )
@@ -254,6 +258,13 @@
   (cond ( (atom overlap) (GetShapeColor overlap))
         (!(atom overlap) && (car overlap)->objType=="stdVia" (GetViaColor (car overlap)))
         (t (GetOverlapColor (cadr overlap)))
+        )
+  )
+
+; recursively figure out objType of an overalp from dbGetOverlaps
+(defun GetOverlapObjType (overlap)
+  (cond ((atom overlap) overlap->objType)
+        (t (GetOverlapObjType (cadr overlap)))
         )
   )
 
