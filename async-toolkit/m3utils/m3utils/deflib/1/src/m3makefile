@@ -4,7 +4,7 @@ import ("parseparams")
 import ("trie")
 import ("recursiveparse")
 
-_exec(["../../parsesupport/AMD64_LINUX/parsesupport","../src/enums.scm","exit"])
+_exec(["../../../parsesupport/AMD64_LINUX/parsesupport","../src/enums.scm","exit"])
 
 include ("../AMD64_LINUX/derived.m3m")
 
