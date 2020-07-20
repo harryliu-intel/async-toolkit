@@ -12,7 +12,13 @@
                  (OXIDE1 OXIDE2 OXIDE3 OXIDE4))
                 (Shape
                  (RING PADRING BLOCKRING STRIPE FOLLOWPIN IOWIRE COREWIRE 
-                  BLOCKWIRE BLOCKAGEWIRE FILLWIRE FILLWIREOPC DRCFILL))
+                       BLOCKWIRE BLOCKAGEWIRE FILLWIRE FILLWIREOPC DRCFILL))
+                (ObjectType
+                 (COMPONENT COMPONENTPIN DESIGN GROUP NET NONDEFAULTRULE
+                            REGION ROW SPECIALNET))
+                (PropType
+                 (INTEGER REAL STRING))
+                
                 (Direction 
                  (INPUT OUTPUT INOUT FEEDTHRU)))
 )
@@ -31,9 +37,12 @@
                  POLYGON PORT PLACEMENT SLOTS PUSHDOWN EXCEPTPGNET
                  DESIGNRULEWIDTH OPC SHAPE STYLE NEW ROUTED SHIELD
                  VOLTAGE FIXEDBUMP ORIGINAL PATTERN ESTCAP
-                 TOKENS ORIENTATION ANTENNAMODEL PIN SYNTHESIZED
+                 TOKENS ANTENNAMODEL PIN SYNTHESIZED
                  SUBNET XTALK FREQUENCY TAPER TAPERRULE NOSHIELD VPIN
-                 SHIELDNET MUSTJOIN VIRTUAL))
+                 SHIELDNET MUSTJOIN VIRTUAL
+                 
+                 ORIENTATION OBJECTTYPE PROPTYPE ;; fake
+                 ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -179,7 +188,7 @@
 
 (define *get-proto*
   (string-append
-   "PROCEDURE "*get-name*"(p : RecursiveParser.T; VAR t : T) : BOOLEAN"
+   "PROCEDURE "*get-name*"(p : RecursiveParser.T; VAR t : T) : BOOLEAN RAISES { E }"
    )
   )
 
