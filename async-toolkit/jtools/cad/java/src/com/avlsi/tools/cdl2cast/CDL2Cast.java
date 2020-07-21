@@ -129,7 +129,7 @@ public class CDL2Cast {
     static String[] power_nets;
     static String[] ground_nets;
     private static Set<String> IMPLIED_PORTS;
-    private static Predicate<String> isImpliedPort;
+    private static Predicate<String> isNonImpliedPort;
     private static Predicate<String> isPowerNet;
     private static Predicate<String> isGroundNet;
 
@@ -463,7 +463,7 @@ public class CDL2Cast {
          * HACK to check for the nodes which are in the STD_CELL parent
          * should really check the refinement parent
         **/
-        isImpliedPort = port -> IMPLIED_PORTS.contains(port);
+        isNonImpliedPort = port -> !IMPLIED_PORTS.contains(port);
 
         final Set<String> powerNets = new HashSet<>(Arrays.asList(power_nets));
         final Set<String> groundNets = new HashSet<>(Arrays.asList(ground_nets));
@@ -1466,11 +1466,11 @@ public class CDL2Cast {
 
     private Stream<String> getNonImpliedPorts(String[] in, String[] out) {
         return Stream.concat(Arrays.stream(in), Arrays.stream(out))
-                     .filter(isImpliedPort);
+                     .filter(isNonImpliedPort);
     }
 
     private Stream<String> getNonImpliedPorts(Template t) {
-        return getPortsAsStream(t).filter(isImpliedPort.negate());
+        return getPortsAsStream(t).filter(isNonImpliedPort);
     }
 
     /**
@@ -2217,10 +2217,10 @@ public class CDL2Cast {
 
         final String supplies =
             Stream.concat(getPortsAsStream(template)
-                            .filter(isPowerNet.and(isImpliedPort.negate()))
+                            .filter(isPowerNet.and(isNonImpliedPort))
                             .map(port -> "power_net(" + port + ") = true;"),
                           getPortsAsStream(template)
-                            .filter(isGroundNet.and(isImpliedPort.negate()))
+                            .filter(isGroundNet.and(isNonImpliedPort))
                             .map(port -> "ground_net(" + port + ") = true;"))
                   .collect(Collectors.joining(" "));
         if (!supplies.equals("")) {
