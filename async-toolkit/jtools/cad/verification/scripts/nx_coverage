@@ -801,17 +801,19 @@ sub merge_coverage
     $cmd .= "\t\\\n\t-group instcov_for_score -group flex_merge_drop -group merge_across_scopes -group ratio";    
 
     my $rpt_cmd = $cmd; 
-    $cmd .= "\t\\\n\t-hier $hier_file";
-    my ($v,$dirs, $fname) = File::Spec->splitpath($hier_file);
-    $rpt_cmd .= "\t\\\n\t-hier $fname ";
+    if (-s $hier_file) {
+      $cmd .= "\t\\\n\t-hier $hier_file";
+      my ($v,$dirs, $fname) = File::Spec->splitpath($hier_file);
+      $rpt_cmd .= "\t\\\n\t-hier $fname ";
+    }
     if (defined $exclude_file) {
       $cmd .= "\t\\\n\t-elfile $exclude_file -excl_bypass_checks ";
-      ($v,$dirs, $fname) = File::Spec->splitpath($exclude_file);
+      my ($v,$dirs, $fname) = File::Spec->splitpath($exclude_file);
       $rpt_cmd .= "\t\\\n\t-elfile $fname -excl_bypass_checks ";
     }
     if (defined $hvp_file){
       $cmd .= "\t\\\n\t-plan $hvp_file";
-      ($v,$dirs, $fname) = File::Spec->splitpath($hvp_file);
+      my ($v,$dirs, $fname) = File::Spec->splitpath($hvp_file);
       $rpt_cmd .= "\t\\\n\t-plan $fname";
     }
     
@@ -897,8 +899,8 @@ sub merge_coverage_sub
 \t-metric $vcsCoverageMetrics\t\\
 \t-noreport\t\\
 \t-log $urgLogFile\t\\
-\t-dbname $urgMergedCoverage\t\\
-\t-hier $hier_file";
+\t-dbname $urgMergedCoverage\t\\\n";
+    $cmd .= "\t-hier $hier_file" if -s $hier_file;
 
     my @map_cmd;
     foreach my $c (@urgConfig) {
