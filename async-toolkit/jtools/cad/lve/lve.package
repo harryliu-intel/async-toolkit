@@ -97,6 +97,7 @@ $arch/bin/spefrename.pl       script/perl/spefrename.pl             755 p
 $arch/bin/lvs                 script/perl/spice/lvs.pl             755 p
 $arch/bin/bbox_lvs            script/perl/bbox_lvs.pl               755 p
 $arch/bin/drc                 script/perl/drc.pl                   755 p
+$arch/bin/drc_ntvsram         script/perl/drc_ntvsram.pl            755 p
 $arch/bin/icvrsh              script/perl/icvrsh.pl                 755 p
 $arch/bin/frc                 script/perl/frc.pl                    755 p
 $arch/bin/hlvsrename          script/perl/spice/hlvsrename.pl       755 p
