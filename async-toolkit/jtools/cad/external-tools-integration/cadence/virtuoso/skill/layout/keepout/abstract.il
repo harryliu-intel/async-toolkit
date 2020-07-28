@@ -232,19 +232,18 @@
     (foreach shape CV->shapes
              (when shape->pin && (isMetal (car shape->lpp))
                name=shape->net->name
-	       ;(printf "Copying pin %s to abstract\n" name)
                net=(dbFindNetByName abstractCV name)
                (unless net net=(dbCreateNet abstractCV name))
                term=(dbFindTermByName abstractCV name)
                (unless term term=(dbCreateTerm net name shape->pin->term->direction))
-               fig=(dbCopyFig shape abstractCV)
                pin=(car term->pins)
-               (unless pin pin=(dbCreatePin net fig))
-	       (unless fig (error "Can't copy fig to abstract\n"))
-               allpinfigs = (cons fig allpinfigs)
+               (unless pin pin=(dbCreatePin net nil))
+               fig=(dbCopyFig shape abstractCV)
+               fig->lpp = (list (car fig->lpp) "drawing")
+               (dbAddFigToPin pin fig) ; strongly connected figures
+               allpinfigs = (cons fig allpinfigs) 
                )
              )
-
     (DeleteLabels ?CV abstractCV)
 
     ; chop flooded/extended keepout near pins
