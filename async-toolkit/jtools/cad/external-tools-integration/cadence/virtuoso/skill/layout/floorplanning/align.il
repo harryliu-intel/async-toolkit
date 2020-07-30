@@ -43,9 +43,13 @@
     v = (cadr hv)
     (cond (v
            ox=1.5*GridPolyPitch
+           oy=TrackPitch ; NOTE: double height cells align Vdd stripe to origin in 7nm
            gx=GridPolyPitch
            gy=TrackPitch*(if h=="n" && CV->viewName=="floorplan" 1 2)
-           (cond (CV->viewName=="floorplan" && (v=="1" || v=="2" || v=="3") ox=0.5*GridPolyPitch)
+           (cond (v=="x" gx=GridPolyPitch gy=TrackPitch ox=0.5*GridPolyPitch oy=0) ; halo cells
+                 (v=="c" gx=GridPolyPitch gy=TrackPitch ox=0 oy=0) ; halo cells
+                 (v=="y" gx=6*GridPolyPitch gy=TrackPitch ox=0 oy=0) ; halo cells
+                 (CV->viewName=="floorplan" && (v=="1" || v=="2" || v=="3") ox=0.5*GridPolyPitch)
                  (CV->viewName=="floorplan" && (v=="0" || v=="4" || v=="5") gx=3.0*GridPolyPitch)
                  (v=="1" gx=3*GridPolyPitch ox=0.5*GridPolyPitch)
                  (v=="2" gx=3*GridPolyPitch)
@@ -55,7 +59,6 @@
                  (v=="5" gx=6*GridPolyPitch ox=4.5*GridPolyPitch)
                  (t (error "Illegal standard cell metal variant %s\n" v))
                  )
-           oy=TrackPitch ; NOTE: double height cells align Vdd stripe to origin in 7nm
            align = (list gx:gy ox:oy)
            )
           (t align=(list GridPolyPitch:TrackPitch 0:0)) ; unknown alignment
