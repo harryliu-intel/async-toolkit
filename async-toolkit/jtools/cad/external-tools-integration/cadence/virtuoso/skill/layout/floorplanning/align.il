@@ -22,22 +22,38 @@
   t
   )
 
+; get cell height and variant or nil if none
+(defun GetHeightAndVariant (@key (CV (geGetEditCellView)))
+  (let (CopyExact g1m h v)
+    CopyExact = (dbGetPropByName CV "CopyExact")->value
+    g1m = CopyExact && ((strncmp CopyExact "g1m" 3)==0)
+    (when g1m
+      h = (substring CopyExact 13 1)
+      v = (substring CopyExact 12 1)
+      )
+    (list h v)
+    )
+  )
+
 ; choose default alignment by CellView (TODO: move to PDK)
 (defun DefaultCellAlignment (@key (CV (geGetEditCellView)))
-  (let (CopyExact g0m height variant offset align gx gy ox oy)
-    CopyExact = (dbGetPropByName CV "CopyExact")->value
-    g0m=CopyExact && ((strncmp CopyExact "g0m" 3)==0 || (strncmp CopyExact "g1m" 3)==0)
-    (cond (g0m
-           height = (substring CopyExact 13 1)
-           variant = (substring CopyExact 12 1)
+  (let (hv h v offset align gx gy ox oy)
+    hv = (GetHeightAndVariant ?CV CV)
+    h = (car hv)
+    v = (cadr hv)
+    (cond (v
            ox=1.5*GridPolyPitch
            gx=GridPolyPitch
-           gy=TrackPitch*(if height=="n" && CV->viewName=="floorplan" 1 2)
-           (cond (CV->viewName=="floorplan" ox=0.5*GridPolyPitch)
-                 (variant=="1" gx=3*GridPolyPitch ox=0.5*GridPolyPitch)
-                 (variant=="2" gx=3*GridPolyPitch ox=1.5*GridPolyPitch)
-                 (variant=="3" gx=3*GridPolyPitch ox=2.5*GridPolyPitch)
-                 ; (t (error "Illegal standard cell metal variant %s\n" variant))
+           gy=TrackPitch*(if h=="n" && CV->viewName=="floorplan" 1 2)
+           (cond (CV->viewName=="floorplan" && (v=="1" || v=="2" || v=="3") ox=0.5*GridPolyPitch)
+                 (CV->viewName=="floorplan" && (v=="0" || v=="4" || v=="5") gx=3.0*GridPolyPitch)
+                 (v=="1" gx=3*GridPolyPitch ox=0.5*GridPolyPitch)
+                 (v=="2" gx=3*GridPolyPitch)
+                 (v=="3" gx=3*GridPolyPitch ox=2.5*GridPolyPitch)
+                 (v=="0" gx=3*GridPolyPitch)
+                 (v=="4" gx=6*GridPolyPitch)
+                 (v=="5" gx=6*GridPolyPitch ox=4.5*GridPolyPitch)
+                 (t (error "Illegal standard cell metal variant %s\n" v))
                  )
            oy=TrackPitch ; NOTE: double height cells align Vdd stripe to origin in 7nm
            align = (list gx:gy ox:oy)

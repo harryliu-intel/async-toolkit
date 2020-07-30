@@ -169,7 +169,7 @@
 
   ; save and exit
   (CopyKeepoutToBlockage abstractCV)
-  (SetLefProperties abstractCV ?topMetal topMetal)
+  (SetLefProperties abstractCV CV)
   (dbSave abstractCV)
   abstractCV
   )
@@ -331,11 +331,8 @@
         )
       )
 
-    ; copy site definition from source
-    abstractCV->sitePattern = CV->sitePattern
-
     ; save and exit
-    (SetLefProperties abstractCV ?leaf t)
+    (SetLefProperties abstractCV CV ?leaf t)
     (dbSave abstractCV)
     dd_CV = (ddGetObj abstractCV->libName abstractCV->cellName "abstract_temp")
     (when dd_CV (ddDeleteObj dd_CV))
@@ -363,13 +360,18 @@
   )
 
 ; set properties for LEF export
-(defun SetLefProperties (CV @key (powergrid nil) (leaf nil) (topMetal nil))
-  (let (net)
+(defun SetLefProperties (CV srcCV @key (powergrid nil) (leaf nil))
+  (let (net v)
     (cond (powergrid CV->cellType="cover")
           (leaf      CV->cellType="core")
           (t         CV->cellType="block")
           )
     (dbSetCellViewSymmetry CV "any") ; SYMMETRY X Y R90
+    v = (cadr (GetHeightAndVariant ?CV srcCV))
+    (cond (v=="1" || v=="2" || v=="3" CV->sitePattern = (list (list "core"   0:0 "R0")))
+          (v=="0" || v=="4" || v=="5" CV->sitePattern = (list (list "corev2" 0:0 "R0")))
+          (t                          CV->sitePattern = nil)
+          )
     (foreach name PowerNets
              net = (dbFindNetByName CV name)
              (when net net->term->direction="inputOutput" net->sigType = "supply") ; USE POWER
