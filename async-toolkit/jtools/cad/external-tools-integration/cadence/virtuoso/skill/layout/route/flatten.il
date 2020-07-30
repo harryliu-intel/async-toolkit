@@ -61,7 +61,6 @@ useICV = t
     (SetXAlignmentProp CV (max (if xalign xalign 0) GridPolyPitch))
     (SetYAlignmentProp CV (max (if yalign yalign 0) GridPitch))
     (SetLeafProp CV nil)
-    (SetLefProperties CV)
 
     ; Create power grid and abstract
     (when powerGrid
