@@ -2,16 +2,16 @@
 (defun HasLayoutVariants (@key (CV (geGetEditCellView)))
   (let (suffix)
     suffix = (substring CV->cellName (strlen CV->cellName)-1)
-    suffix=="v1" || suffix=="v2" || suffix=="v3" ||
-      CV->libName=="vendor.intel.g0m" || CV->libName=="vendor.intel.g1m"
+    suffix=="v1" || suffix=="v2" || suffix=="v3" || suffix=="v4" || suffix=="v5" ||
+      CV->libName=="vendor.intel.g1m"
     )
   )
 
-; Find layout CV with appropriate v1/v2/v3 variant of current CV
+; Find layout CV with appropriate v1/v2/v3/v4/v5 variant of current CV
 (defun FindLayoutVariant (CV v)
   (let (cellName suffix components subtype baseName)
     suffix = (substring CV->cellName (strlen CV->cellName)-1)
-    (cond (CV->libName=="vendor.intel.g0m" || CV->libName=="vendor.intel.g1m" ; G0M naming
+    (cond (CV->libName=="vendor.intel.g1m" ; G1M naming
            components = (parseString CV->cellName ".")
            subtype = (car (last components))
            subtype = (sprintf nil "%d%s" v (substring subtype 2 5))
@@ -21,7 +21,7 @@
            components = (reverse components)
            cellName = (buildString components ".")
            )
-          (suffix=="v1" || suffix=="v2" || suffix=="v3" ; 4GBD naming
+          (suffix=="v1" || suffix=="v2" || suffix=="v3" || suffix=="v4" || suffix=="v5" ; 4GBD naming
            baseName = (substring CV->cellName 1 (strlen CV->cellName)-2)
            cellName = (sprintf nil "%sv%d" baseName v)
            )
@@ -38,7 +38,7 @@
     oldMaster=inst->master
     aligned=nil
     v=1
-    (while !aligned && v<=3
+    (while !aligned && v<=5
            lCV=(FindLayoutVariant inst->master v)
            (when lCV
              inst->master=lCV
