@@ -579,7 +579,7 @@
   ; (Colorize ?CV CV)
   ; (ConvertFill ?CV CV)    ; HACK: ICC should distinguish fill shapes better
   ; (FixFillerCells ?CV CV) ; HACK: change threshold of spc00 to avoid NV1/PV1 DRC errors
-  (FixImportedPins ?CV CV) ; HACK: make sure pins and labels are "pin" purpose
+  (FixImportedPins ?CV CV)  ; HACK: add drawing rectangles under pins
   (RunAfterImportDef ?CV CV)
   (printf "Route Import finished.\n")
   )
@@ -675,23 +675,15 @@ DumbLayers = (list (list "SRAM" "fill")
   t
   )
 
-; Converts pins and labels to "pin" purpose
+; Add drawing rectangles under pins (TODO: remove when unnecessary)
 (defun FixImportedPins (@key (CV (geGetEditCellView)))
-  (let (net purpose rect)
-    (foreach label (setof x CV->shapes x->objType=="label" && x->purpose=="drawing")
-             label->lpp = (list label->layerName "pin")
-             )
-    (foreach pin (setof x CV->shapes x->objType=="rect" && x->pin && x->purpose=="drawing")
-             (cond ((member pin->net->name PowerNets)  purpose="vdd")
-                   ((member pin->net->name GroundNets) purpose="gnd")
-                   (t                                  purpose="drawing")
-                   )
-             rect = (dbCreateRect CV (list pin->layerName purpose) pin->bBox)
+  (let (rect)
+    (foreach pin (setof x CV->shapes x->objType=="rect" && x->pin && x->purpose=="pin")
+             rect = (dbCreateRect CV (list pin->layerName "drawing") pin->bBox)
              rect->net = pin->net
-             pin->lpp = (list pin->layerName "pin")
              )
     )
-  CV
+  t
   )
 
 ; Copy pins from a floorplan view
