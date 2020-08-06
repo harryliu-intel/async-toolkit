@@ -106,7 +106,8 @@
         SkipRoutingFileName inplacedPins
         excludeCellsFile
         (hierSep "!") ; a character that is legal, but not otherwise used
-        (statusNonDefault t) (errorStr "") placed offset x y gx gy)
+        (statusNonDefault t) (errorStr "") placed offset x y gx gy
+        flattened_instances)
 
     (printf "Export Start %s\n" (getCurrentTime))
 
@@ -219,6 +220,13 @@
                                 nil
                                 nil))
                )
+
+      ; reconstruct net name to distinguish routed=false hierarchy
+      (when doHierDef
+        (foreach net ExportCV->nets
+                 (dbRenameNet net (LocalizeNet net->name ?flat_map flattened_instances ?hierSep hierSep))
+                 )
+        )
 
       ; rename ports
       (when pinMap
@@ -469,6 +477,21 @@
       )
     (close file)
     libNames
+    )
+  )
+
+; Given a flat net name, return a hierarchical path to the net
+(defun LocalizeNet (name @key (flat_map flattened_instances) (hierSep "!"))
+  (let (parts tryname newname sep)
+    parts=(parseString name ".")
+    tryname=(car parts)
+    newname=(car parts)
+    (foreach part (cdr parts)
+             sep=(if flat_map[tryname] hierSep ".")
+             tryname=(strcat tryname "." part)
+             newname=(strcat newname sep part)
+             )
+    newname
     )
   )
 

@@ -647,6 +647,8 @@ useICV = t
 (defun DirectFlatten (@key (CV (geGetEditCellView)) (RegenerateFromCast nil)
                            (flatViewName "flatten") (softMacro nil))
   (let (not_routed progress lCV)
+    ; table of flattened instance names
+    flattened_instances = (makeTable "flattened_instances" nil)
 
     ; create flatten view
     CV = (betterCopyCellView CV CV->libName CV->cellName flatViewName nil nil t)
@@ -665,6 +667,7 @@ useICV = t
                       progress=t
                       )
                      (not_routed[inst->cellName] && inst->viewName=="floorplan"
+                      flattened_instances[inst->name]=t
                       (TrivialInline inst ?CV CV)
                       progress=t
                       )
