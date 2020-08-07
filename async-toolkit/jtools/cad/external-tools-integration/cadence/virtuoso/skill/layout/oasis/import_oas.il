@@ -8,14 +8,16 @@
 ; Import a OAS file and rename all subcells to CAST conventions
 (defun ImportOAS (oasFileName libName cellName viewName
        		 @key (CV (geGetEditCellView))
-                       (layerMapFile nil)
-		       (enableColoring t)
-                       (setCopyExact nil) ; lamda on CV to decide when to set CopyExact property
-		       )
+                      (layerMapFile nil)
+                      (propMapFile nil)
+                      (enableColoring t)
+                      (setCopyExact nil) ; lamda on CV to decide when to set CopyExact property
+                      )
   (let (PDK_DIR cmd status CV)
     ; stream in OAS into import_oas_temp library
     PDK_DIR = (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT")
     (unless layerMapFile (sprintf layerMapFile "%s/share/Fulcrum/stream/strmout.layermap" PDK_DIR))
+    (unless propMapFile (sprintf propMapFile "%s/share/Fulcrum/stream/prop.map" PDK_DIR))
 
     cmd = (strcat "oasisin "
                   "-library \"" libName "\" "
@@ -25,6 +27,7 @@
                   "-logFile \"oasisIn.log\" "
                   "-attachTechFileOfLib \"" TechLibName "\" "
                   "-layerMap \"" layerMapFile "\" "
+                  "-propMap \"" propMapFile "\" "
                   "-objectMap \"" PDK_DIR "/share/Fulcrum/stream/objectmap\" "
 		  "-textHeight \"0.01\" "
 	          (if enableColoring " -enableColoring" "")
@@ -57,6 +60,7 @@
                   "-logFile \"oasisIn.log\" "
                   "-attachTechFileOfLib \"" TechLibName "\" "
                   "-layerMap \"" PDK_DIR "/share/Fulcrum/stream/strmin.layermap\" "
+                  "-propMap  \"" PDK_DIR "/share/Fulcrum/stream/prop.map\" " 
                   "-objectMap \"" PDK_DIR "/share/Fulcrum/stream/objectmap\" "
 		  "-textHeight \"0.01\" "
 		  "-enableColoring"
