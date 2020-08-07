@@ -17,7 +17,7 @@
     ; stream in OAS into import_oas_temp library
     PDK_DIR = (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT")
     (unless layerMapFile (sprintf layerMapFile "%s/share/Fulcrum/stream/strmout.layermap" PDK_DIR))
-    (unless propMapFile (sprintf propMapFile "%s/share/Fulcrum/stream/prop.map" PDK_DIR))
+    (unless propMapFile (sprintf propMapFile "%s/share/Fulcrum/stream/oasis_prop.map" PDK_DIR))
 
     cmd = (strcat "oasisin "
                   "-library \"" libName "\" "
@@ -60,7 +60,7 @@
                   "-logFile \"oasisIn.log\" "
                   "-attachTechFileOfLib \"" TechLibName "\" "
                   "-layerMap \"" PDK_DIR "/share/Fulcrum/stream/strmin.layermap\" "
-                  "-propMap  \"" PDK_DIR "/share/Fulcrum/stream/prop.map\" " 
+                  "-propMap  \"" PDK_DIR "/share/Fulcrum/stream/oasis_prop.map\" " 
                   "-objectMap \"" PDK_DIR "/share/Fulcrum/stream/objectmap\" "
 		  "-textHeight \"0.01\" "
 		  "-enableColoring"
