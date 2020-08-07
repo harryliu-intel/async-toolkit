@@ -216,7 +216,7 @@
     (when !skipInstances && (CV->viewName!="floorplan" && instancePrimitives || !primitive)
           ; find existing inst and its viewName
           inst = (dbFindAnyInstByName CV instName)
-          viewName = (if inst inst->viewName CV->viewName)
+          viewName = CV->viewName
 
           ; recurse into master
           master = (dbOpenCellViewByType libName cellName viewName "maskLayout" "r")
