@@ -704,6 +704,7 @@ DumbLayers = (list (list "SRAM" "fill")
     (foreach pin (setof x CV->shapes x->objType=="rect" && x->pin && x->purpose=="pin")
              rect = (dbCreateRect CV (list pin->layerName "drawing") pin->bBox)
              rect->net = pin->net
+             (SetShapeColor rect (GetShapeColor pin))
              )
     )
   t
