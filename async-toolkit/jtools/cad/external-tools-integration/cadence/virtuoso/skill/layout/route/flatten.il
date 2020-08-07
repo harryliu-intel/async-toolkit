@@ -11,7 +11,8 @@ useICV = t
         (RegenerateFromCast nil)   ; force CAST query
         (Verbose nil)              ; verbose
         (ConnectDanglingPins t)    ; paint metal on top of one-terminal subcell pins
-        (ConnectAbuttingPins t)    ; paint metal between nearby pins on the same net
+        (ConnectAbuttingPins nil)  ; paint metal between nearby pins on the same net
+        (ConnectNearbyShapes t)    ; connect toplevel shapes with RouteNearby
         (powerGrid nil)            ; add a power grid
         (colorGrid nil)            ; add a color grid
         (hookupD04 nil)            ; add power hookups around d04 cells
@@ -90,8 +91,8 @@ useICV = t
       )
 
     ; route abutting pins
-    (when ConnectAbuttingPins && !softMacro
-      (RouteNearby ?CV CV ?topShapes t ?offGrid t)
+    (when !softMacro
+      (RouteNearby ?CV CV ?topShapes ConnectNearbyShapes ?subShapes ConnectAbuttingPins)
       )
 
     ; fix things for DEF export

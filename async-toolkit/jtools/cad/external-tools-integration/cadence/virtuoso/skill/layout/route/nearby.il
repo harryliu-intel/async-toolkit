@@ -2,18 +2,19 @@
 ; plus functionality to strap intersecting pins with vias
 
 ; route nearby nets with short paths or vias only
-(defun RouteNearby (@key (CV (geGetEditCellView)) (nets nil) (topShapes t) (offGrid t) (verbose nil))
+(defun RouteNearby (@key (CV (geGetEditCellView)) (nets nil) (topShapes t) (subShapes t) (offGrid t) (verbose nil))
   (let (n)
     n=0
     (unless nets nets=(setof a CV->nets (member a->name PowerGroundNets)==nil))
-    (foreach net nets n=n+(RouteNearbyNet net ?CV CV ?topShapes topShapes ?offGrid offGrid ?verbose verbose))
+    (foreach net nets n=n+(RouteNearbyNet net ?CV CV ?topShapes topShapes ?subShapes subShapes
+                                          ?offGrid offGrid ?verbose verbose))
     (printf "Note that RouteNearby only connects abutting pins between locked instances.")
     n
     )
   )
 
 ; connect subcells pins of a net with short paths or vias
-(defun RouteNearbyNet (net @key (CV (geGetEditCellView)) (topShapes t) (offGrid t) (verbose nil))
+(defun RouteNearbyNet (net @key (CV (geGetEditCellView)) (topShapes t) (subShapes t) (offGrid t) (verbose nil))
   (let (lpps tech n MasterRectList layerName pinRectList layerNum space len
              inst1 inst2 net1 net2 rect1 rect2 overlap rect
              a0 b0 a1 b1 x0 x1 y0 y1
@@ -24,7 +25,7 @@
          lpps = (cons MetalDrawing[m] lpps)
          lpps = (cons MetalPin[m] lpps)
          )
-    MasterRectList = (nrFindPinShapesWithNet net lpps ?topShapes topShapes)
+    MasterRectList = (nrFindPinShapesWithNet net lpps ?topShapes topShapes ?subShapes subShapes)
 
     ; add paths between subcell pins that align at e2e spacing
     (foreach pinRectList MasterRectList

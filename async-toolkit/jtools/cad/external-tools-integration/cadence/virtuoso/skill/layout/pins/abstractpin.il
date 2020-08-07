@@ -540,7 +540,7 @@ defun( nrCreateMidAbstract ( libName cellName viewName
 
 ; Same as above but include the net and inst in the subcell with the
 ; rectangle to avoid connecting the same net in the same subcell.
-(defun nrFindPinShapesWithNet (net pinLPPs @key (topShapes nil))
+(defun nrFindPinShapesWithNet (net pinLPPs @key (topShapes nil) (subShapes t))
   (let (layerName inst transform tmp pinRectList lppList ret)
     (foreach lpp pinLPPs
       layerName = (car lpp)
@@ -555,19 +555,23 @@ defun( nrCreateMidAbstract ( libName cellName viewName
         )
 
       ; shapes from subcell pins
-      (foreach instTerm net->instTerms
-        inst = instTerm->inst
-        (when inst->libName!=TechLibName && inst->status=="locked"
-          transform = (geGetInstTransform inst)
-          (foreach pin instTerm->term->pins
-            (when (car pin->fig->lpp)==layerName
-              tmp = (nrConvertFigToRectList pin->fig)
-              tmp = (nrRectListTransform tmp transform)
-              (foreach rect tmp pinRectList = (cons (list inst pin->fig->net rect) pinRectList))
+      (when subShapes
+        (foreach instTerm net->instTerms
+          inst = instTerm->inst
+          (when inst->libName!=TechLibName && inst->status=="locked"
+            transform = (geGetInstTransform inst)
+            (foreach pin instTerm->term->pins
+              (when (car pin->fig->lpp)==layerName
+                tmp = (nrConvertFigToRectList pin->fig)
+                tmp = (nrRectListTransform tmp transform)
+                (foreach rect tmp pinRectList = (cons (list inst pin->fig->net rect) pinRectList))
+                )
               )
             )
           )
         )
+
+      ; return
       (when pinRectList ret = (cons (list layerName pinRectList) ret))
       )
     ret
