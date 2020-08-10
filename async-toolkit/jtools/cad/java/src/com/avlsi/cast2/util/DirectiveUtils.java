@@ -647,6 +647,14 @@ public final class DirectiveUtils {
         }
     }
 
+    private static final HierName makeHierName(HierName prefix, String suffix) {
+        try {
+            return HierName.makeHierName(prefix, suffix);
+        } catch (InvalidHierNameException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static Object parseDirective(final String type, final String val) {
         if (type.equals(DirectiveConstants.INT_TYPE)) {
             return Integer.valueOf(val);
@@ -1130,5 +1138,55 @@ public final class DirectiveUtils {
                 ports.add(dir);
             }
         }
+    }
+
+    /**
+     * Recursively enumerate bdc channels within a defchan.
+     **/
+    private static Set<HierName> findBdc(final CellInterface cell,
+                                         final HierName prefix,
+                                         final Set<HierName> result) {
+        if (cell.isChannel()) {
+            if (cell.getFullyQualifiedType().equals("standard.channel.bdc")) {
+                result.add(prefix);
+            } else {
+                for (Iterator<Pair<HierName,CellInterface>> i = cell.getSubcellPairs();
+                        i.hasNext(); ) {
+                    final Pair<HierName,CellInterface> p = i.next();
+                    findBdc(p.getSecond(), HierName.append(prefix, p.getFirst()),
+                            result);
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Flatten recursive bdc directives to nodes.
+     **/
+    public static Map<HierName,Float> getBdcDirectives(final Map<HierName,Float> dirs,
+                                                       final CellInterface cell,
+                                                       final AliasedSet nodes,
+                                                       final String... pins) {
+        final Map<HierName,Float> vals = new HashMap<>();
+        if (dirs != null) {
+            for (Map.Entry<HierName,Float> e : dirs.entrySet()) {
+                for (HierName h : findBdc(CellUtils.getSubcell(cell, e.getKey()),
+                                          e.getKey(),
+                                          new HashSet<>())) {
+                    for (String pin : pins) {
+                        final HierName hpin = makeHierName(h, pin);
+                        vals.put(hpin, e.getValue());
+                    }
+                }
+            }
+        }
+        final Map<HierName,Float> result = new HashMap<>();
+        for (Map.Entry<HierName,Float> e : vals.entrySet()) {
+            result.merge((HierName) nodes.getCanonicalKey(e.getKey()),
+                         e.getValue(),
+                         (a, b) -> Float.min(a, b));
+        }
+        return result;
     }
 }
