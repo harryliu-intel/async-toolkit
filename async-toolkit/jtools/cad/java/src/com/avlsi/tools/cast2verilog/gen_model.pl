@@ -9,6 +9,7 @@ use Cwd qw/abs_path/;
 
 my ($cast_path, $spar_dir, $cell, $env, $cosim, @cast_defines, $beh, $fpga_path, @c2v_args, $kdb, $help);
 my $width = 300;
+my $mem = '16G';
 GetOptions("cast-path=s" => \$cast_path,
            "spar-dir=s"  => \$spar_dir,
            "cell=s"      => \$cell,
@@ -18,6 +19,7 @@ GetOptions("cast-path=s" => \$cast_path,
            "fpga-path=s" => \$fpga_path,
            "defines=s"   => \@cast_defines,
            "c2v-args=s"  => \@c2v_args,
+           "mem=s"       => \$mem,
            "beh!"        => \$beh,
            "kdb!"        => \$kdb,
            "help!"       => \$help) || pod2usage(2);
@@ -44,7 +46,7 @@ my $flist = "testbench.f";
 
 my $cmd = ("cast2verilog --cast-path=\Q$cast_path\E " .
            "--register-width=$width " .
-           "--max-heap-size=16G --generate-testbench --enable-orphan-bdc --ifdef " .
+           "--max-heap-size=$mem --generate-testbench --enable-orphan-bdc --ifdef " .
            "--structure-declarations=structs.txt " .
            "--cell=\Q$cosim\E " .
            "--file-list=$flist " .
@@ -97,6 +99,7 @@ gen_model.pl [options] [verilog files...]
    --width         Specify the maximum bitwidth for temporary variables
    --fpga-path     Specify the instance path of the FPGA relative to the top
    --define        Override CAST variables; can be specified any number of times
+   --mem           Specify the Java heap size (defaults to 16G)
    --beh           If specified, generate a behavior model
    --kdb           If specified, generate Verdi Elaboration Database
    --c2v-arg       Flags to cast2verilog; can be specified any number of times
