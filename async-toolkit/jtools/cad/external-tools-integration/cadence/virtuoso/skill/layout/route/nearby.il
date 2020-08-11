@@ -3,11 +3,17 @@
 
 ; route nearby nets with short paths or vias only
 (defun RouteNearby (@key (CV (geGetEditCellView)) (nets nil) (topShapes t) (subShapes t) (offGrid t) (verbose nil))
-  (let (n)
+  (let (n c pct)
     n=0
+    c=0
     (unless nets nets=(setof a CV->nets (member a->name PowerGroundNets)==nil))
-    (foreach net nets n=n+(RouteNearbyNet net ?CV CV ?topShapes topShapes ?subShapes subShapes
-                                          ?offGrid offGrid ?verbose verbose))
+    pct=((length nets)+99)/100
+    (foreach net nets
+             n+=(RouteNearbyNet net ?CV CV ?topShapes topShapes ?subShapes subShapes
+                                ?offGrid offGrid ?verbose verbose)
+             c++
+             (when (mod c pct)==0 (printf "RouteNearby %d%% complete...\n",c/pct))
+             )
     (printf "Note that RouteNearby only connects abutting pins between locked instances.")
     n
     )
@@ -107,7 +113,8 @@
           net2  = (cadr e2)
           rect2 = (BBoxCanonicalize (caddr e2))
           overlap = (BBoxAnd rect1 rect2)
-          (when overlap && (net1==nil || (net1!=net2 || inst1!=inst2))
+          (when overlap && (net1!=net2 || inst1!=inst2 ||
+                net1==nil && net2==nil && (dbGetOverlaps CV overlap (list Via[v] "drawing") 0:1)==nil)
             xy = (BBoxGetCenter overlap)
             wb = (if offGrid (GetWireWidth v rect1) (GetTrackWidth v   xy))
             (unless wb (error "no track width for %d %g:%g\n" v (car xy) (cadr xy)))
@@ -115,26 +122,24 @@
             (unless wt (error "no track width for %d %g:%g\n" v+1 (car xy) (cadr xy)))
             wb = (round wb/MfgGrid)
             wt = (round wt/MfgGrid)
-            (when (dbGetOverlaps CV overlap (list Via[v] "drawing") 0:31)==nil
-                  viaName = viaTable[(list v wb wt)]
-                  (unless viaName (error "no viaTable for %d %d %d\n" v wb wt))
-                  (cond ((atom viaName)
-                         viaDef = (techFindViaDefByName tech viaName)
-                         params = nil
-                         )
-                        (t
-                         viaDef = (techFindViaDefByName tech (car viaName))
-                         params = (cdr viaName)
-                         viaName = (car viaName)
-                         )
-                        )
-                  via = (dbCreateVia CV viaDef xy "R0" params)
-                  via->routeStatus="locked"
-                  via->net = net
-                  (dbReplaceProp via "autogen" "string" "RouteNearby")
-                  (when verbose (printf "%s on %s\n" Via[v] net->name))
-                  n++
+            viaName = viaTable[(list v wb wt)]
+            (unless viaName (error "no viaTable for %d %d %d\n" v wb wt))
+            (cond ((atom viaName)
+                   viaDef = (techFindViaDefByName tech viaName)
+                   params = nil
+                   )
+                  (t
+                   viaDef = (techFindViaDefByName tech (car viaName))
+                   params = (cdr viaName)
+                   viaName = (car viaName)
+                   )
                   )
+            via = (dbCreateVia CV viaDef xy "R0" params)
+            via->routeStatus="locked"
+            via->net = net
+            (dbReplaceProp via "autogen" "string" "RouteNearby")
+            (when verbose (printf "%s on %s\n" Via[v] net->name))
+            n++
             )
           )
         )
