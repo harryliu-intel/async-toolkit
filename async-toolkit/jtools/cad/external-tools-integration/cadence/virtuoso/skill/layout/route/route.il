@@ -558,7 +558,7 @@
     (when baseCV
       (CopyCellViewProps baseCV ImportCV)
       offset = (GetRDTOffset ?CV baseCV)
-      (OffsetEverything -(car offset):-(cadr offset) ?CV ImportCV)
+      (OffsetEverything offset ?CV ImportCV ?reverse t)
       )
 
     ; colorize
@@ -760,7 +760,7 @@ DumbLayers = (list (list "SRAM" "fill")
 )
 
 ; Shift contents of a cell
-(defun OffsetEverything (offset @key (CV (geGetEditCellView)))
+(defun OffsetEverything (offset @key (CV (geGetEditCellView)) (reverse nil))
   (let (contents)
     contents = (list CV->prBoundary)
     contents = (append contents CV->instances)
@@ -769,7 +769,7 @@ DumbLayers = (list (list "SRAM" "fill")
     contents = (append contents CV->vias)
     contents = (append contents CV->blockages)
     contents = (setof x contents x->parent==nil)
-    (foreach fig contents (dbMoveFig fig CV (list offset "R0")))
+    (foreach fig contents (dbMoveFig fig CV (list (if reverse -(car offset):-(cadr offset) offset) "R0")))
     )
   t
   )
