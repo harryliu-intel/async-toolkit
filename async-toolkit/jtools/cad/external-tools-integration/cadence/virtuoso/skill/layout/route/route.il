@@ -810,12 +810,11 @@ DumbLayers = (list (list "SRAM" "fill")
                              (substring inst->cellName 4 8)
                              (substring inst->cellName 12 6))
         (printf "WARNING: implicitly renamed %s\n" dfII_name)
+        rename[inst->cellName] = dfII_name
         )
       (unless dfII_name (error "unable to rename %s\n" inst->cellName))
       master=(dbOpenCellViewByType (GetCastLibName dfII_name) dfII_name "layout")
       (unless master (error "unable to read %s\n" dfII_name))
-      (printf "rename instance %s type %s => %s\n"
-              inst->name inst->cellName master->cellName)
       inst->master=master
       )
     )
