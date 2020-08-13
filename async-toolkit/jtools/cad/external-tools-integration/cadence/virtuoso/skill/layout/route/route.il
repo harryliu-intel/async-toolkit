@@ -505,6 +505,7 @@
 	(colorize t)
         (baseCV nil)
         (top_name nil)
+        (doColorize t)
         )
   (let (TEMP WDIR libPath logFile Command status ImportCV layoutCV floorplanCV
              win instmap CID oasName templib fields short_name offset)
@@ -562,7 +563,7 @@
       )
 
     ; colorize
-    (ColorizeByOverlay ?CV ImportCV)
+    (when doColorize (ColorizeByOverlay ?CV ImportCV))
 
     ; fixup pins and connectivity
     (DeleteExtraLabels ?CV ImportCV)
