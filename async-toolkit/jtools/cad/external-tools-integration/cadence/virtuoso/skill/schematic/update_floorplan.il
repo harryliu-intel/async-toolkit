@@ -188,11 +188,13 @@
 
 ; Open a CellView and create lib if necessary
 (defun UpdateFloorplanOpenCV (libName cellName viewName)
-  (let (mode)
+  (let (mode CV)
     (UpdateFloorplanCreateLib libName)
     mode = (if (IsCellViewWritable libName cellName viewName) "a" "r")
     (unless update mode="r")
-    (dbOpenCellViewByType libName cellName viewName "maskLayout" mode)
+    CV=(dbOpenCellViewByType libName cellName viewName "maskLayout" mode)
+    (unless CV CV=(dbOpenCellViewByType libName cellName viewName "maskLayout" "r"))
+    CV
     )
   )
 
