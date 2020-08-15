@@ -28,6 +28,7 @@
         (softMacro nil)          ; run APR
         (abstractCellName nil)   ; DFII name for APR abstract cell
         (targetCellName nil)     ; DFII name for APR target   cell
+        (tau nil)                ; override tau for Proteus
         (ecoIter 0)              ; number of spr ECO passes
         )
   (let (TEMP WDIR)
@@ -46,7 +47,7 @@
                           ?metalFill metalFill ?softMacro softMacro
                           ?abstractCellName abstractCellName ?targetCellName targetCellName
                           ?noPowerFill noPowerFill ?timingDriven timingDriven ?colorGrid colorGrid
-                          ?ecoIter ecoIter)
+                          ?tau tau ?ecoIter ecoIter)
 
     ; copy CV to importView so in-place pins don't need to wait on router to finish
     (when Background (betterCopyCellView CV CV->libName CV->cellName importView nil nil t))
@@ -94,6 +95,7 @@
         (softMacro nil)          ; run APR
         (abstractCellName nil)   ; DFII name for APR abstract cell
         (targetCellName nil)     ; DFII name for APR target   cell
+        (tau nil)                ; override tau for Proteus
         (ecoIter 0)              ; number of spr ECO passes
         (pinMap nil)             ; rename ports based on map
         )
@@ -150,7 +152,7 @@
                    ?pwrMetal pwrMetal ?topHalo topHalo ?denseM3Staples denseM3Staples ?metalFill metalFill
                    ?timingDriven timingDriven ?softMacro softMacro
                    ?abstractCellName abstractCellName ?targetCellName targetCellName
-                   ?ecoIter ecoIter)
+                   ?tau tau ?ecoIter ecoIter)
 
     ; export Verilog
     (when doVerilog
@@ -367,6 +369,7 @@
         (softMacro nil)          ; run APR
         (abstractCellName nil)   ; DFII name of APR abstract cell
         (targetCellName nil)     ; DFII name of APR target   cell
+        (tau nil)                ; override tau for Proteus
         (ecoIter 0)              ; number of spr ECO passes
         )
   (let (CAST_PATH DFII_DIR TEMP WDIR file)
@@ -396,6 +399,7 @@
     (fprintf file "--rdt-run-fill=%d\n" (if metalFill 1 0))
     (fprintf file "--timing-driven-route=%d\n" (if softMacro || timingDriven 1 0))
     (fprintf file "--soft-macro=%d\n" (if softMacro 1 0))
+    (when tau (fprintf file "--tau=%g\n" tau))
     (fprintf file "--rdt-eco-iter=%d\n" ecoIter)
     (fprintf file "--base=%s\n" (GetCastCellName CV->cellName))
     (fprintf file "--csp-register-width=1025\n")
