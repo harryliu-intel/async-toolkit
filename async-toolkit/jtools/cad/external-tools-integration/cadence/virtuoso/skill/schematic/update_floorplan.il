@@ -42,6 +42,7 @@
                    (if routed "--routed" "")
                    temp
                    )
+    (when verbose (printf "%s\n" cmd))
     (when cast2skill (shell cmd))
 
     ; compile regular expression to identify arrays
@@ -50,14 +51,14 @@
     ; update floorplan
     LOG = (outfile (strcat temp "/UpdateFloorplan.log"))
     mastersVisited = (makeTable "mastersVisited" nil)
-    (UpdateFloorplanCore CV "")
+    (UpdateFloorplanCore CV "" ?verbose verbose)
     (close LOG)
     CV
     )
   )
 
 ; process one cell
-(defun UpdateFloorplanCore (CV indent)
+(defun UpdateFloorplanCore (CV indent @key (verbose nil))
   (let (netFile NetListTable rx ux uy w h instanceTable netTable termTable
         dirFile DirectiveTable gx gy ox oy
         lastArrayName points realInstances isLeaf isRouted lCV align)
