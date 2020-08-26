@@ -4570,6 +4570,13 @@ public class DSim implements NodeWatcher {
                         cell,
                         DirectiveConstants.INITIALIZE_ON_RESET,
                         DirectiveConstants.NODE_TYPE));
+            for (Map.Entry<HierName,Integer> e : initOnReset.entrySet()) {
+                final Node n = lookupNode(prefixName(prefix, e.getKey()));
+                final int v = e.getValue();
+                n.setInit(v == 0 ? Node.Init.ZERO :
+                          v == 1 ? Node.Init.ONE  :
+                                   Node.Init.RANDOM);
+            }
 
             final Node localVdd, localGND;
             try {
@@ -4627,11 +4634,6 @@ public class DSim implements NodeWatcher {
                 final boolean timed = pr.isTimed();
                 final Node target = lookupNode(h);
 
-                Optional.ofNullable(initOnReset.get(canonTarget))
-                        .ifPresent(v -> target.setInit(
-                                    v == 0 ? Node.Init.ZERO
-                                           : v == 1 ? Node.Init.ONE
-                                                    : Node.Init.RANDOM));
                 target.setSlew(defaultSlew);
 
                 // mark unstable nodes
