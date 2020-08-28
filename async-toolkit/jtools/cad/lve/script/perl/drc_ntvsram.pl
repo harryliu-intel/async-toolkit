@@ -24,6 +24,11 @@ my $icv_runset_path="$ENV{PDK_CPDK_PATH}/runsets/icvtdr";
 my $oasis = 1;
 my $format = "GDSII";
 
+# map flows to runsets
+my %default_runset;
+$default_runset{""}="drcd";
+$default_runset{"lden"}="denall";
+
 sub usage {
     my ($msg) = @_;
     print STDERR "$msg\n" if defined $msg;
@@ -146,9 +151,11 @@ sub run_drc {
        print "\nRunset path: " . $runset;
        $drc_runsets{$flow}=$runset;
    } else {
-       # if invalid flow is specified, you get drcd with a flag
-       print "\nStandalone runset not found, reverting to drcd";
-       $runset=$icv_runset_path . "/PXL/StandAlone/drcd.rs";
+       # if invalid flow is specified, use default_runset with a flag
+       if (defined($default_runset{$flow})) { $runset=$default_runset{$flow}; }
+       else                                 { $runset=$default_runset{""}; }
+       print "\nStandalone runset $flow not found, reverting to $runset";
+       $runset=$icv_runset_path . "/PXL/StandAlone/${runset}.rs";
    }
 
    print CF <<ET;
