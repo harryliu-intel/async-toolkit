@@ -146,7 +146,9 @@ sub run_drc {
        print "\nRunset path: " . $runset;
        $drc_runsets{$flow}=$runset;
    } else {
-       die "ERROR: flow $flow not defined.\n";
+       # if invalid flow is specified, you get drcd with a flag
+       print "\nStandalone runset not found, reverting to drcd";
+       $runset=$icv_runset_path . "/PXL/StandAlone/drcd.rs";
    }
 
    print CF <<ET;
