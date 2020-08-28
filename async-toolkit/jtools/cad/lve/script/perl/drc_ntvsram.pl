@@ -40,10 +40,7 @@ sub usage {
     $usage .= "    --oasis=[$oasis] (output oasis format)\n";
     $usage .= "    --fulcrum-pdk-root=[$pdk_root]\n";
     $usage .= "    --help (Shows this menu)\n";
-
-
-    print STDERR "$usage\n";
-    exit 1;
+    die "$usage\n";
 }
 
 
@@ -92,10 +89,8 @@ $pdk_root="$ENV{FULCRUM_PDK_ROOT}" if ( ! ( -d $pdk_root ) and -d $ENV{FULCRUM_P
 -d $pdk_root or usage("fulcrum-pdk-root improperly defined");
 $gdsii = $cell_name . ".gds" if (!$oasis && $gdsii eq "" && $gdsii_list eq "");
 $gdsii = $cell_name . ".oas" if ( $oasis && $gdsii eq "" && $gdsii_list eq "");
-if ( -e $gdsii) {
-    print "\nSource Layout: " . $gdsii;
-}else{
-    die "\nError: Layout file " . $gdsii . " not found.\n";
+if (! -e $gdsii) {
+    die "Layout file " . $gdsii . " not found.\n";
 }
 $format = "OASIS" if ($oasis);
 
@@ -113,7 +108,7 @@ sub main{
   foreach my $f (@flows) {
     my $drc_run_dir="$working_dir/$f";
     system('mkdir', '-p', "$drc_run_dir"); 
-    run_drc($drc_run_dir, $icv_runset_path, $drc_runsets{$f});
+    run_drc($f,$drc_run_dir, $icv_runset_path, $drc_runsets{$f});
   }
 }
 
@@ -121,7 +116,7 @@ sub main{
 
 
 sub run_drc {
-   my ($run_dir,$icv_runset_path,$runset)=@_;
+   my ($flow,$run_dir,$icv_runset_path,$runset)=@_;
    my $cmd_file="$run_dir/drc.cmd";
    open(CF, ">$cmd_file") or die "Cannot write to $cmd_file\n";
 
@@ -144,23 +139,14 @@ sub run_drc {
 
    #check if flow is valid
    my %drc_runsets;
-   my @flows=split(',',$flow);
-   my $numf=@flows;
-   if($numf>1) {
-       die "\nNo support right now for a list of flows\n";
-   }
-   foreach my $f (@flows) {
-       # first check if a standalone runset exists
-       $runset=$icv_runset_path . "/PXL/StandAlone/" . $f . ".rs";
-       if ( -e $runset) {
-	   print "\nRunset path: " . $runset;
-	   $drc_runsets{$f}=$runset;
-       }else{
-	   #TODO: need better error checking here.
-	   # if invalid flow is specified, you get a regular drcd
-	   print "\nStandalone runset not found, reverting to drcd flag";
-	   $runset=$icv_runset_path . "/PXL/StandAlone/drcd.rs";
-       }
+
+   # first check if a standalone runset exists
+   $runset=$icv_runset_path . "/PXL/StandAlone/" . $flow . ".rs";
+   if ( -e $runset) {
+       print "\nRunset path: " . $runset;
+       $drc_runsets{$flow}=$runset;
+   } else {
+       die "ERROR: flow $flow not defined.\n";
    }
 
    print CF <<ET;
@@ -219,7 +205,7 @@ ET
     my $cmd;
     if ($jobs > 0) {
         my $slots = $jobs * $threads;
-        $cmd = "nbjob run --mode interactive " .
+        $cmd = "nbjob run " .
                "--parallel slots=$slots,slots_per_host=$threads,exit_on_master_finish=true ".
                "--class-reservation cores=1,memory=$mem $cmd_file";
     } else {
