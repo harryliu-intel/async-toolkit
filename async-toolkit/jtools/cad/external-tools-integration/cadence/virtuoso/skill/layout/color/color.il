@@ -104,6 +104,13 @@
     )
   )
 
+; Change all shapes and vias to uncolored
+(defun UnColorize (@key (CV (geGetEditCellView)))
+  (foreach shape CV->shapes (SetShapeColor shape 0))
+  (foreach via   CV->vias   (SetViaColor   via 0 0 0))
+  t
+  )
+
 ; Return the bbox of the via layer in a symbolic via
 (defun GetCutBBox (via)
   (let (params cutw cuth bbox)
