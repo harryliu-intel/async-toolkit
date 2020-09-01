@@ -285,8 +285,8 @@ wires_modtime = makeTable("wires" 0)
            (SetBusProp rect)
            (dbReplaceProp rect "PinType" "string" "BusScript")
            pin->accessDir = (list "left" "right" "top" "bottom")
-            pin->term->direction = "inputOutput"
-           (LabelPin CV fig) ; attach label to the drawing shape, not the pin
+           pin->term->direction = "inputOutput"
+           (LabelPin CV rect) ; attach label to the pin purpose rectangle
            )
           )
     )
