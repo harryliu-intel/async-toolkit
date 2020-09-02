@@ -20,8 +20,8 @@
     cmd = (strcat "strmin \\\n"
                   "-attachTechFileOfLib \"" TechLibName "\" \\\n"
                   "-layerMap \"" PDK_DIR "/share/Fulcrum/stream/strmin.layermap\" \\\n"
+                  "-propMap \"" PDK_DIR "/share/Fulcrum/stream/prop.map\" \\\n"
                   "-objectMap \"" PDK_DIR "/share/Fulcrum/stream/objectmap\" \\\n"
-
                   "-enableColoring \\\n"
                   "-library \"import_gds_temp\" \\\n"
                   "-strmFile \"" gdsFileName "\"")
