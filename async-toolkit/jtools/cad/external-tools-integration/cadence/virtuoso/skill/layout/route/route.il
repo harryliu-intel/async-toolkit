@@ -506,13 +506,14 @@
         (cellName nil)
         (viewName "layout")
         (oasFile nil)
+        (gdsFile nil)
 	(colorize t)
         (baseCV nil)
         (top_name nil)
         (doColorize t)
         )
   (let (TEMP WDIR libPath logFile Command status ImportCV layoutCV floorplanCV
-             win instmap CID oasName templib fields short_name offset)
+             win instmap CID templib fields short_name offset file gds)
 
     ; choose libName and cellName
     (unless libName  libName  = CV->libName)
@@ -529,7 +530,6 @@
     short_name = (nth ((length fields)-2) fields)
     (unless top_name
       CID = (NameStartRename "cell" "cadence" "gds2")
-      oasName = (NameDoRename CID cellName)
       top_name = (NameDoRename CID short_name)
       (NameStopRename CID)
       )
@@ -537,16 +537,23 @@
     ; directories and files
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
     WDIR = (strcat TEMP "/route/" cellName)
-    (unless oasFile oasFile = (strcat WDIR "/" cellName ".oas"))
-    (unless (fileTimeModified oasFile) (error "Cannot read %s\n" oasFile))
+    (cond (oasFile && gdsFile (error "oasFile and gdsFile options are exclusive"))
+          (oasFile file=oasFile)
+          (gdsFile file=gdsFile gds=t)
+          (t file=(strcat WDIR "/" cellName ".oas"))
+          )
+    (unless (fileTimeModified file) (error "Cannot read %s\n" file))
 
     ; create temp library and import cell
     (GDSIIHierMakeLibrary libName (getShellEnvVar "DFII_DIR") TechLibName)
     libPath = (getShellEnvVar "DFII_DIR")
-    logFile = (strcat oasFile ".log")
+    logFile = (strcat file ".log")
     templib = (strcat "oas_import_temp_" top_name)
-    status = (ImportOAS oasFile templib top_name viewName)
-    (unless status (error "Unsuccessful OAS import\n"))
+    status = (if gds
+               (ImportGDS file templib top_name ?prefix "" ?suffix "")
+               (ImportOAS file templib top_name viewName)
+               )
+    (unless status (error "Unsuccessful import\n"))
     ImportCV = (dbOpenCellViewByType templib top_name viewName "maskLayout" "a")
 
     ; flatten ICC cells
