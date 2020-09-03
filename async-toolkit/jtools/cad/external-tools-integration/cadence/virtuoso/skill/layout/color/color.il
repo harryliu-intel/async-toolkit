@@ -302,7 +302,7 @@
                   (foreach o overlaps
                            c=(GetOverlapColor o)
                            colors=(cons c colors)
-                           conflict=c==3 && o!=via
+                           (when c==3 && o!=via conflict=t)
                       )
                   (cond (!conflict t)
                         ((member 1 colors)==nil (SetViaColor via 1 nil nil))
@@ -329,7 +329,7 @@
                   (foreach o overlaps
                            c=(GetOverlapColor o)
                            colors=(cons c colors)
-                           conflict=c==3 && o!=via
+                           (when c==3 && o!=via conflict=t)
                            )
                   (cond (!conflict t)
                         ((member 1 colors)==nil (SetShapeColor via 1))
