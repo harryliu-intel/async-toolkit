@@ -281,6 +281,8 @@
     (for v 1 2
          layerName=(sprintf nil "v%d" v)
          viaName=(sprintf nil "via%d" v)
+
+         ; fix symbolic vias
          (foreach via (setof x CV->vias
                              (strncmp x->viaHeader->master->cellName viaName 4)==0 &&
                              (GetViaColor x)==3)
@@ -302,6 +304,30 @@
                       )
                   (cond ((member 1 colors)==nil (SetViaColor via 1 nil nil))
                         ((member 2 colors)==nil (SetViaColor via 2 nil nil))
+                        )
+                  )
+
+         ; fix via shapes too
+         (foreach via (setof x CV->shapes x->lpp==(list (sprintf nil "v%d" v) "drawing") &&
+                             (GetShapeColor x)==3)
+                  bbox  = via->bBox
+                  bbox1 = (BBoxExpandHorizontal bbox  0.07) ; V1_29
+                  bbox1 = (BBoxExpandVertical   bbox1 0.03)
+                  bbox2 = (BBoxExpandHorizontal bbox  0.03)
+                  bbox2 = (BBoxExpandVertical   bbox2 0.11) ; V1_128
+                  overlaps=nil
+                  (foreach purpose (list "drawing" "fill")
+                           lpp = (list layerName purpose)
+                           overlaps=(append overlaps (dbGetOverlaps CV bbox1 lpp 0:31))
+                           overlaps=(append overlaps (dbGetOverlaps CV bbox2 lpp 0:31))
+                           )
+                  colors=nil
+                  (foreach o overlaps
+                           c=(GetOverlapColor o)
+                           colors=(cons c colors)
+                           )
+                  (cond ((member 1 colors)==nil (SetShapeColor via 1))
+                        ((member 2 colors)==nil (SetShapeColor via 2))
                         )
                   )
          )
