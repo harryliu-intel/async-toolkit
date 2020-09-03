@@ -275,9 +275,9 @@
         )
   )
 
-; Recolor V1C or V2C to A or B whenever possible to avoid C spacing errors
+; Recolor V1C or V2C to A or B to to avoid C spacing conflicts
 (defun ColorizeFixViaC (@key (CV (geGetEditCellView)))
-  (let (bbox bbox1 bbox2 lpp overlaps colors c viaName layerName)
+  (let (bbox bbox1 bbox2 lpp overlaps colors c viaName layerName conflict)
     (for v 1 2
          layerName=(sprintf nil "v%d" v)
          viaName=(sprintf nil "via%d" v)
@@ -298,11 +298,14 @@
                            overlaps=(append overlaps (dbGetOverlaps CV bbox2 lpp 0:31))
                            )
                   colors=nil
+                  conflict=nil
                   (foreach o overlaps
                            c=(GetOverlapColor o)
                            colors=(cons c colors)
+                           conflict=c==3 && o!=via
                       )
-                  (cond ((member 1 colors)==nil (SetViaColor via 1 nil nil))
+                  (cond (!conflict t)
+                        ((member 1 colors)==nil (SetViaColor via 1 nil nil))
                         ((member 2 colors)==nil (SetViaColor via 2 nil nil))
                         )
                   )
@@ -322,11 +325,14 @@
                            overlaps=(append overlaps (dbGetOverlaps CV bbox2 lpp 0:31))
                            )
                   colors=nil
+                  conflict=nil
                   (foreach o overlaps
                            c=(GetOverlapColor o)
                            colors=(cons c colors)
+                           conflict=c==3 && o!=via
                            )
-                  (cond ((member 1 colors)==nil (SetShapeColor via 1))
+                  (cond (!conflict t)
+                        ((member 1 colors)==nil (SetShapeColor via 1))
                         ((member 2 colors)==nil (SetShapeColor via 2))
                         )
                   )
