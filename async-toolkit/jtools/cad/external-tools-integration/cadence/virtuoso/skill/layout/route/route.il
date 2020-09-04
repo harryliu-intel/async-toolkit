@@ -60,7 +60,7 @@
           (t
            CV = (RouteImport ?libName (GetCastLibName targetCellName)
                              ?cellName targetCellName ?viewName importView
-                             ?oasFile (strcat WDIR "/" targetCellName ".oas")
+                             ?gdsFile (strcat WDIR "/" targetCellName ".gds")
                              ?baseCV CV
                              )
            )
@@ -428,15 +428,15 @@
         (Mem 4000)               ; qsub memory
         (targetCellName nil)     ; DFII name for APR target cell
         )
-  (let (TEMP WDIR oasFile Command status)
+  (let (TEMP WDIR gdsFile Command status)
     ; files and options
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
     WDIR = (strcat TEMP "/route/" CV->cellName)
     (unless targetCellName targetCellName=CV->cellName)
-    oasFile = (strcat WDIR "/" targetCellName ".oas")
+    gdsFile = (strcat WDIR "/" targetCellName ".gds")
 
     ; run
-    (shell (strcat "rm -rf " oasFile))
+    (shell (strcat "rm -rf " gdsFile))
     Command = (sprintf nil "cd \"%s\"; proteus --include=proteus.config --mem=%dM %s"
                        WDIR Mem (if Background "&" "--runlocal=1 --runlocal-pv=0"))
     (printf "%s\n" Command)
@@ -444,7 +444,7 @@
     (unless status (error "Proteus failed\n"))
 
     ; wait for slow filesystem until def is created
-    (or Background (WaitForFile oasFile 60))
+    (or Background (WaitForFile gdsFile 60))
     )
   )
 
