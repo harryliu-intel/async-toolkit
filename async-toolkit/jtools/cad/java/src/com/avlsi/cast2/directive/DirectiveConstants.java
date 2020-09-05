@@ -179,6 +179,7 @@ public interface DirectiveConstants {
     String GROUND_NET = "ground_net";
     String INITIALIZE_ON_RESET = "initialize_on_reset";
     String ISOCHRONIC = "isochronic";
+    String PSEUDOSTATIC = "pseudostatic";
 
     /** CSP timing directives */
     String FORWARD_LATENCY = "forward_latency";
