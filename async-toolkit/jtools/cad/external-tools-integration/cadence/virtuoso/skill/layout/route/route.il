@@ -513,7 +513,7 @@
         (doColorize t)
         )
   (let (TEMP WDIR libPath logFile Command status ImportCV layoutCV floorplanCV
-             win instmap CID templib fields short_name offset file gds)
+             win instmap CID templib fields short_name offset file oas)
 
     ; choose libName and cellName
     (unless libName  libName  = CV->libName)
@@ -538,9 +538,9 @@
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
     WDIR = (strcat TEMP "/route/" cellName)
     (cond (oasFile && gdsFile (error "oasFile and gdsFile options are exclusive"))
-          (oasFile file=oasFile)
-          (gdsFile file=gdsFile gds=t)
-          (t file=(strcat WDIR "/" cellName ".oas"))
+          (gdsFile file=gdsFile)
+          (oasFile file=oasFile oas=t)
+          (t file=(strcat WDIR "/" cellName ".gds"))
           )
     (unless (fileTimeModified file) (error "Cannot read %s\n" file))
 
@@ -549,9 +549,9 @@
     libPath = (getShellEnvVar "DFII_DIR")
     logFile = (strcat file ".log")
     templib = (strcat "oas_import_temp_" top_name)
-    status = (if gds
-               (ImportGDS file templib top_name ?prefix "" ?suffix "")
+    status = (if oas
                (ImportOAS file templib top_name viewName)
+               (ImportGDS file templib top_name ?prefix "" ?suffix "")
                )
     (unless status (error "Unsuccessful import\n"))
     ImportCV = (dbOpenCellViewByType templib top_name viewName "maskLayout" "a")
