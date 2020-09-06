@@ -249,7 +249,7 @@
                               ((atom o) && o->objType!="label"
                                (SetShapeColor o color)
                                )
-                              ((GetOverlapObjType o)!="label" && (GetOverlapColor o)!=color
+                              ((GetOverlapObjType o)!="label" && (GetOverlapColor o layer)!=color
                                keep=t
                                )
                               )
@@ -261,12 +261,22 @@
   t
   )
 
-; recursively figure out color of an overalp from dbGetOverlaps
-(defun GetOverlapColor (overlap)
-  (cond ( (atom overlap) (GetShapeColor overlap))
-        (!(atom overlap) && (car overlap)->objType=="stdVia" (GetViaColor (car overlap)))
-        (t (GetOverlapColor (cadr overlap)))
-        )
+; recursively figure out color of an overlap from dbGetOverlaps
+(defun GetOverlapColor (overlap layer)
+  (let (via c color)
+    (cond ((atom overlap) (GetShapeColor overlap))
+          (!(atom overlap) && (car overlap)->objType=="stdVia" ; NOTE: vias are tricky!
+            via=(car overlap)
+            (cond (via->viaHeader->viaDef->layer1->name==layer c=(dbGetViaLayer1Control   via))
+                  (via->viaHeader->viaDef->layer2->name==layer c=(dbGetViaLayer2Control   via))
+                  (t                                           c=(dbGetViaCutLayerControl via))
+                  )
+            (for i 0 3 (when via_color_name[i]==c color=i))
+            color
+            )   
+          (t (GetOverlapColor (cadr overlap) layer))
+          )
+    )
   )
 
 ; recursively figure out objType of an overalp from dbGetOverlaps
@@ -301,7 +311,7 @@
                   colors=nil
                   conflict=nil
                   (foreach o overlaps
-                           c=(GetOverlapColor o)
+                           c=(GetOverlapColor o layerName)
                            colors=(cons c colors)
                            (when c==3 && o!=via conflict=t)
                       )
@@ -328,7 +338,7 @@
                   colors=nil
                   conflict=nil
                   (foreach o overlaps
-                           c=(GetOverlapColor o)
+                           c=(GetOverlapColor o layerName)
                            colors=(cons c colors)
                            (when c==3 && o!=via conflict=t)
                            )
