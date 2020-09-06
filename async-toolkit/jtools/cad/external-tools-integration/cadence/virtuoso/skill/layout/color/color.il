@@ -4,6 +4,7 @@
 (defun Colorize (@key (CV (geGetEditCellView)) (doVias t) (override nil) (offset nil))
   (let (bbox color shapes track oldcolor track1 track2 color1 color2 colorc viaNum)
     (unless offset offset=(cadr (GetCellAlignment ?CV CV)))
+    offset = -(car offset):-(cadr offset) ; reverse offset
     (foreach metal ColorableMetals
        shapes = (setof s CV->shapes s->layerName==metal && s->purpose!="bus")
        (foreach shape shapes
