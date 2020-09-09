@@ -113,8 +113,8 @@
           net2  = (cadr e2)
           rect2 = (BBoxCanonicalize (caddr e2))
           overlap = (BBoxAnd rect1 rect2)
-          (when overlap && (net1!=net2 || inst1!=inst2 ||
-                net1==nil && net2==nil && (dbGetOverlaps CV overlap (list Via[v] "drawing") 0:1)==nil)
+          (when overlap && (net1!=net2 || inst1!=inst2 || net1==nil && net2==nil) &&
+                (dbGetOverlaps CV overlap (list Via[v] "drawing") 0:31)==nil
             xy = (BBoxGetCenter overlap)
             wb = (if offGrid (GetWireWidth v rect1) (GetTrackWidth v   xy))
             (unless wb (error "no track width for %d %g:%g\n" v (car xy) (cadr xy)))
