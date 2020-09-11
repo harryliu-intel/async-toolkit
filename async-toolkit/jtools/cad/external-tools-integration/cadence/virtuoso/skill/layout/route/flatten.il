@@ -10,7 +10,7 @@ useICV = t
         (topMetal 8)               ; top metal for power grid
         (RegenerateFromCast nil)   ; force CAST query
         (Verbose nil)              ; verbose
-        (ConnectDanglingPins t)    ; paint metal on top of one-terminal subcell pins
+        (ConnectDanglingPins nil)  ; paint metal on top of one-terminal subcell pins
         (ConnectAbuttingPins nil)  ; paint metal between nearby pins on the same net
         (ConnectNearbyShapes t)    ; connect toplevel shapes with RouteNearby
         (powerGrid nil)            ; add a power grid
