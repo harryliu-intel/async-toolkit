@@ -507,10 +507,9 @@
         (viewName "layout")
         (oasFile nil)
         (gdsFile nil)
-	(colorize t)
+	(colorize nil) ; run ColorizeByOverlay
         (baseCV nil)
         (top_name nil)
-        (doColorize t)
         )
   (let (TEMP WDIR libPath logFile Command status ImportCV layoutCV floorplanCV
              win instmap CID templib fields short_name offset file oas)
@@ -574,7 +573,7 @@
       )
 
     ; colorize
-    (when doColorize (ColorizeByOverlay ?CV ImportCV))
+    (when colorize (ColorizeByOverlay ?CV ImportCV))
 
     ; fixup pins and connectivity
     (DeleteExtraLabels ?CV ImportCV)
