@@ -687,7 +687,6 @@ useICV = t
                    (when lCV inst->master=lCV)
                    )
              )
-    
     )
   CV
   )
@@ -700,6 +699,8 @@ useICV = t
            sub2->hierName = (cons sub1->name (or inst->hierName (list inst->name)))
            (cond (inst->status=="unplaced" || sub2->status=="unplaced" sub2->status="unplaced")
                  (inst->status=="locked"   || sub2->status=="locked"   sub2->status="locked")
+                 (inst->status=="firm"     || sub2->status=="firm"     sub2->status="firm")
+                 (inst->status=="place"    || sub2->status=="placed"   sub2->status="placed")
                  )
            )
   (dbDeleteObject inst)
