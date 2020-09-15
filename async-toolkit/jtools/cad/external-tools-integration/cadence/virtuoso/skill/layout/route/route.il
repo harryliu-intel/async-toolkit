@@ -576,8 +576,9 @@
     (when colorize (ColorizeByOverlay ?CV ImportCV))
 
     ; fixup pins and connectivity
-    (DeleteExtraLabels ?CV ImportCV)
     (LabelsToPins ?CV ImportCV)
+    (DeleteLabels ?CV ImportCV)
+    (LabelPins ?CV ImportCV)
     (dbSave ImportCV)
 
     ; copy ImportCV to correct lib and change window
@@ -865,26 +866,3 @@ DumbLayers = (list (list "SRAM" "fill")
     ox:oy
     )
   )
-
-; This is a nasty hack because the oasis from ICC puts labels on every net.
-; Here we preserve the ones on the pins and delete the rest
-(defun DeleteExtraLabels (@key (CV (geGetEditCellView)))
-  (let (bb ovr)
-    (foreach shape CV->shapes
-      (when shape->objType=="label"
-	bb = (list (car shape->xy)-MfgGrid:(cadr shape->xy)-MfgGrid
-	           (car shape->xy)+MfgGrid:(cadr shape->xy)+MfgGrid)
-        ; pin shapes on "pin" purpose are in the oas but the labels are "drawing"
-	; so convert the labels purpose and then look for overlapping shapes
-        shape->lpp = (list (car shape->lpp) "pin")
-	ovr = (dbGetTrueOverlaps CV bb shape->lpp 0)
-        (when (length ovr)==1 ; the only overlapping shape is itself
-          (printf "Deleting label %s on %s:%s\n" shape->theLabel (car shape->lpp) (cadr shape->lpp))
-	  (dbDeleteObject shape)
-          )
-	)
-      )
-    t
-    )
-  )
-
