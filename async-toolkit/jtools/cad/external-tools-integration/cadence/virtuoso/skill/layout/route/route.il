@@ -813,7 +813,8 @@ DumbLayers = (list (list "SRAM" "fill")
 
 ; Change instance masters from GDS to DFII
 (defun RouteRemapInstances (@key (CV (geGetEditCellView)))
-  (let (rename dfII_name master)
+  (let (rename flatten dfII_name master)
+    flatten = (makeTable "flatten" nil)
     rename = (RouteRemapCellTable)
     (foreach inst CV->instances
       dfII_name = rename[inst->cellName]
@@ -824,10 +825,19 @@ DumbLayers = (list (list "SRAM" "fill")
         (printf "WARNING: implicitly renamed %s\n" dfII_name)
         rename[inst->cellName] = dfII_name
         )
-      (unless dfII_name (error "unable to rename %s\n" inst->cellName))
-      master=(dbOpenCellViewByType (GetCastLibName dfII_name) dfII_name "layout")
-      (unless master (error "unable to read %s\n" dfII_name))
-      inst->master=master
+      (cond (dfII_name
+             master=(dbOpenCellViewByType (GetCastLibName dfII_name) dfII_name "layout")
+             (unless master (error "unable to read %s\n" dfII_name))
+             inst->master=master
+             )
+            (t
+             (unless flatten[inst->cellName]
+               (printf "WARNING: unable to rename %s, flattening instead\n" inst->cellName)
+               flatten[inst->cellName]=t
+               )
+             (dbFlattenInst inst 32)
+             )
+            )
       )
     )
   t
