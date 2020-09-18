@@ -505,16 +505,18 @@ defun( nrCreateMidAbstract ( libName cellName viewName
 ; where the inner list is a layerName followed by a list of rectangles
 ; in the parent coordinate system.
 (defun nrFindPinShapes (net pinLPPs @key (topShapes nil))
-  (let (layerName inst transform tmp pinRectList lppList ret)
+  (let (layerName inst transform pinRectList lppList ret)
     (foreach lpp pinLPPs
       layerName = (car lpp)
       pinRectList = nil
 
       ; shapes from top level
       (when topShapes
-        (foreach rect (setof a net->cellView->shapes a->net==net && a->lpp==lpp &&
-                             (a->objType=="rect" || a->objType=="path" || a->objType=="pathSeg"))
-                 pinRectList = (cons rect->bBox pinRectList)
+        (foreach s net->pins
+                 (when s->fig && s->fig->lpp==lpp &&
+                       (s->fig->objType=="rect" || s->fig->objType=="path" || s->fig->objType=="pathSeg")
+                       pinRectList = (cons s->fig->bBox pinRectList)
+                       )
                  )
         )
 
@@ -524,10 +526,8 @@ defun( nrCreateMidAbstract ( libName cellName viewName
         (when inst->libName!=TechLibName && inst->status=="locked"
           transform = (geGetInstTransform inst)
           (foreach pin instTerm->term->pins
-            (when (car pin->fig->lpp)==layerName
-              tmp = (nrConvertFigToRectList pin->fig)
-              tmp = (nrRectListTransform tmp transform)
-              pinRectList = (append tmp pinRectList)
+            (when pin->fig->layerName==layerName
+              pinRectList = (cons (dbTransformBBox pin->fig->bBox transform) pinRectList)
               )
             )
           )
@@ -541,16 +541,18 @@ defun( nrCreateMidAbstract ( libName cellName viewName
 ; Same as above but include the net and inst in the subcell with the
 ; rectangle to avoid connecting the same net in the same subcell.
 (defun nrFindPinShapesWithNet (net pinLPPs @key (topShapes nil) (subShapes t))
-  (let (layerName inst transform tmp pinRectList lppList ret)
+  (let (layerName inst transform pinRectList lppList ret)
     (foreach lpp pinLPPs
       layerName = (car lpp)
       pinRectList = nil
 
       ; shapes from top level
       (when topShapes
-        (foreach rect (setof a net->cellView->shapes a->net==net && a->lpp==lpp &&
-                             (a->objType=="rect" || a->objType=="path" || a->objType=="pathSeg"))
-                 pinRectList = (cons (list nil nil rect->bBox) pinRectList)
+        (foreach s net->pins
+                 (when s->fig && s->fig->lpp==lpp &&
+                       (s->fig->objType=="rect" || s->fig->objType=="path" || s->fig->objType=="pathSeg")
+                       pinRectList = (cons (list nil nil s->fig->bBox) pinRectList)
+                       )
                  )
         )
 
@@ -561,11 +563,9 @@ defun( nrCreateMidAbstract ( libName cellName viewName
           (when inst->libName!=TechLibName && inst->status=="locked"
             transform = (geGetInstTransform inst)
             (foreach pin instTerm->term->pins
-              (when (car pin->fig->lpp)==layerName
-                tmp = (nrConvertFigToRectList pin->fig)
-                tmp = (nrRectListTransform tmp transform)
-                (foreach rect tmp pinRectList = (cons (list inst pin->fig->net rect) pinRectList))
-                )
+              (when pin->fig->layerName==layerName
+                    pinRectList = (cons (list inst pin->fig->net (dbTransformBBox pin->fig->bBox transform)) pinRectList)
+                    )
               )
             )
           )
