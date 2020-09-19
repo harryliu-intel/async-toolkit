@@ -512,10 +512,10 @@ defun( nrCreateMidAbstract ( libName cellName viewName
 
       ; shapes from top level
       (when topShapes
-        (foreach s net->pins
-                 (when s->fig && s->fig->lpp==lpp &&
-                       (s->fig->objType=="rect" || s->fig->objType=="path" || s->fig->objType=="pathSeg")
-                       pinRectList = (cons s->fig->bBox pinRectList)
+        (foreach s net->figs
+                 (when s->lpp==lpp &&
+                       (s->objType=="rect" || s->objType=="path" || s->objType=="pathSeg")
+                       pinRectList = (cons s->bBox pinRectList)
                        )
                  )
         )
@@ -548,10 +548,10 @@ defun( nrCreateMidAbstract ( libName cellName viewName
 
       ; shapes from top level
       (when topShapes
-        (foreach s net->pins
-                 (when s->fig && s->fig->lpp==lpp &&
-                       (s->fig->objType=="rect" || s->fig->objType=="path" || s->fig->objType=="pathSeg")
-                       pinRectList = (cons (list nil nil s->fig->bBox) pinRectList)
+        (foreach s net->figs
+                 (when s->lpp==lpp &&
+                       (s->objType=="rect" || s->objType=="path" || s->objType=="pathSeg")
+                       pinRectList = (cons (list nil nil s->bBox) pinRectList)
                        )
                  )
         )
