@@ -96,14 +96,15 @@
       w = NetListTable["width"]
       h = NetListTable["height"]
 
-      ; delete incorrect nets
+      ; delete incorrect nets and pins without figures
       (foreach net CV->nets
         (unless netTable[net]
           (when verbose (fprintf LOG "%sDelete net %s\n" indent net->name))
           (dbDeleteObject net)
           )
+        (foreach pin net->pins (unless pin->fig (dbDeleteObject pin)))
         )
-
+      
       ; delete incorrect terminals
       (foreach term CV->terminals
         (unless termTable[term]
