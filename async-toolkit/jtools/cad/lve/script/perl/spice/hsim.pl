@@ -439,7 +439,9 @@ if (defined $special_net{'step'}) {
 if (defined $special_net{'delay'}) {
     foreach my $name (sort @{$special_net{'delay'}}) {
         my $v = get_voltage($name, 'delay');
-        print RUN_FILE "V${name} ${name} 0 pwl (0 0 $slope_time '$v')\n";
+        # drive DLY through a resistor so it can be overpowered by env driver
+        print RUN_FILE "V${name} ${name}:src 0 pwl (0 0 $slope_time '$v')\n";
+        print RUN_FILE "R${name} ${name}:src ${name} PrsMinRes\n";
     }
 }
 print RUN_FILE "\n";
