@@ -1,17 +1,15 @@
 /**
- * Convert *.fsdb or *.csdf into Aplot .names and *.trace file format.
- * Uses Synopsis fsdb2tbl for fsdb files.  Replaces older fsdb2aplot
- * and csdf2aplot utilities.  Uses only 1GB memory but is still very
- * slow.
+ * Convert *.fsdb into Aplot *.names and *.trace file format.  Uses
+ * Synopsis fsdb2ns for fsdb files.
  **/
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <math.h>
 #include "tracelib.h"
 #define MAXLINE 16384
-#define REORDERMEM 980*1024*1024 /*** use 980MB to reorder ***/
 
 int translate=0;
 int linesize=0;
@@ -20,7 +18,7 @@ char *line=NULL;
 /*** usage banner ***/
 void usage() {
   fprintf(stderr,"USAGE: convert_trace\n");
-  fprintf(stderr,"  [--fsdb infile | --csdf infile]\n");
+  fprintf(stderr,"  [--fsdb infile]\n");
   fprintf(stderr,"  [--translate]\n");
   fprintf(stderr,"  [--time-step s]\n");
   fprintf(stderr,"  [--sigfile signal-list-file]\n");
@@ -67,13 +65,29 @@ char *gds2cast(char *name) {
   return name;
 }
 
-/*** convert fsdb or csdf to names and trace ***/
+/** linear interpolate PWL **/
+void write_values(FILE *ft, int timesteps, float time_step, int n, float *times, float *values) {
+  int m=0,time;
+  for (time=0; time<timesteps; time++) {
+    while (m+1<n && !(times[m]<=time*time_step && time*time_step<=times[m+1])) m++; // bracket
+    int   m1=m+1<n ? m+1 : m;
+    float t0=times[m];
+    float t1=times[m1];
+    float v0=values[m];
+    float v1=values[m1];
+    float t=time*time_step;
+    float d=v0 + (v1-v0) * (t-t0)/(t1-t0);
+    fwrite(&d,sizeof(float),1,ft);
+  }
+}
+
+/*** convert fsdb to names and trace ***/
 int main(int argc, char *argv[]) {
   FILE *fp, *fn, *ft;
   char *infile=NULL, *basename=NULL, *sigfile=NULL;
-  int   i, ok, nsig, fsdb=0, csdf=0, first_tok;
-  float d, scale_time = 1, time_step=1e-12;
-  char  filename[2048], cmd[MAXLINE], *tok, c;
+  int   i, nsig=1, fsdb=0;
+  float scale_time = 1, time_step=1e-12, max_time=0;
+  char  filename[2048], cmd[MAXLINE], *tok;
 
   // parse command line arguments
   for(i=1; i<argc; i++) {
@@ -84,8 +98,6 @@ int main(int argc, char *argv[]) {
         sigfile = argv[++i];
       else if (i+1<argc && !strncmp(argv[i], "--fsdb",6))
         { fsdb=1; infile = argv[++i];}
-      else if (i+1<argc && !strncmp(argv[i], "--csdf",6))
-        { csdf=1; infile = argv[++i];}
       else if (i+1<argc && !strncmp(argv[i], "--scale-time",12))
         sscanf(argv[++i],"%f",&scale_time);
       else if (i+1<argc && !strncmp(argv[i], "--time-step",11))
@@ -95,7 +107,7 @@ int main(int argc, char *argv[]) {
     else if (!basename) basename=argv[i++];
     else usage();
   }
-  if (!basename) usage();
+  if (!basename || !fsdb) usage();
 
   // open output names and trace files
   strcpy(filename, basename);
@@ -115,126 +127,97 @@ int main(int argc, char *argv[]) {
   line = malloc(MAXLINE);
   linesize = MAXLINE;
 
-  if (fsdb) {
-    // convert from fsdb
-    char *xa = getenv("XA_SCRIPT");
-    if (!xa) xa = "xa";
-    int err = snprintf(cmd, sizeof(cmd),
-                       "%s fsdb2tbl -hn -step %g -prec 9 -o /dev/stdout", xa, time_step/scale_time/1e-9);
-    if (err < 0 || err >= sizeof(cmd)) {
-      fprintf(stderr, "Command too long, truncated to %s\n", cmd);
-      usage();
-    }
-    if (sigfile && strlen(sigfile)) {
-      strcat(cmd, " -s '");
-      strcat(cmd, sigfile);
-      strcat(cmd, "'");
-    }
-    strcat(cmd, " -i '");
-    strcat(cmd, infile);
-    strcat(cmd, "'");
-    if (!((fp = popen(cmd, "r")))) {
-      fprintf(stderr, "Cannot do command\n%s\n", cmd);
-      usage();
-    }
+  // convert from fsdb
+  char *fulcrum = getenv("FULCRUM");
+  if (!fulcrum) fulcrum = "fulcrum";
+  int err = snprintf(cmd, sizeof(cmd),
+                     "%s fsdb2ns -fmt pwl -step ps ", fulcrum);
+  if (err < 0 || err >= sizeof(cmd)) {
+    fprintf(stderr, "Command too long, truncated to %s\n", cmd);
+    usage();
+  }
+  if (sigfile && strlen(sigfile)) {
+    fprintf(stderr,"-sigfile not supported");
+  }
+  strcat(cmd, "'");
+  strcat(cmd, infile);
+  strcat(cmd, "'");
+  if (!((fp = popen(cmd, "r")))) {
+    fprintf(stderr, "Cannot do command\n%s\n", cmd);
+    usage();
+  }
 
-    // write names file
-    myfgets(fp);
-    tok = strtok(line," ");
-    if (!tok) {
-      fprintf(stderr, "ERROR: fsdb2tbl has no output\n");
-      return 1;
-    }
-    if (!strcmp(tok, "Time")) *tok = 't';
-    fprintf(fn, "%s\n", gds2cast(tok));
-    nsig=1;
-    while((tok = strtok(NULL, " \n"))) {
-      fprintf(fn, "%s\n", gds2cast(tok));
+  // first pass to count signals and max time
+  int n=0,max_points=0;
+  while (myfgets(fp)) {
+    if (line[0]=='V' || line[0]=='I') {
       nsig++;
+      n=0;
+    } else if (line[0]=='+') {
+      float time,val;
+      sscanf(line,"+ %gps %g",&time,&val);
+      time*=1e-12;
+      n++;
+      if(time>max_time) max_time=time;
+      if(n>max_points) max_points=n;
+    } else if (strcmp(line,"td=0ps")) {
+      fprintf(stderr,"bad line=%s\n",line);
     }
-    fclose(fn);
+  }
+  fclose(fp);
 
-    // write trace file
-    i = ORDER_ORIGINAL;
-    fwrite(&i, sizeof(int), 1, ft);
-    i = time(NULL);
-    fwrite(&i, sizeof(int), 1, ft);
-    fwrite(&nsig, sizeof(int), 1, ft);
-    while(myfgets(fp)) {
-      tok = strtok(line, " ");
-      sscanf(tok, "%e", &d);
-      d *= scale_time;
-      fwrite(&d,sizeof(float),1,ft);
-      while((tok = strtok(NULL, " \n"))) {
-        sscanf(tok, "%e", &d);
-        fwrite(&d,sizeof(float),1,ft);
-      }
-    }
-    pclose(fp);
-  } else if (csdf) {
-    // convert from csdf
-    if (!(fp = fopen(infile, "r"))) {
-      fprintf(stderr, "ERROR: cannot read csdf file %s\n",infile);
-      return 1;
-    }
+  // write trace header
+  i = ORDER_REORDERED;
+  fwrite(&i, sizeof(int), 1, ft);
+  i = time(NULL);
+  fwrite(&i, sizeof(int), 1, ft);
+  fwrite(&nsig, sizeof(int), 1, ft);
 
-    // write names file
-    nsig=1;
-    c=' ';
-    while (myfgets(fp)) {
-      first_tok=1;
-      if      (!strncmp(line,"#H",2)) c='H';
-      else if (!strncmp(line,"#N",2)) {
-        c='N';
-        tok = strtok(line, " ");
-        fprintf(fn,"time\n");
-        first_tok=0;
-      }
-      else if (!strncmp(line,"#C",2)) break;
-      else if (!strncmp(line,"#;",2)) break;
-      if (c=='N') {
-        while ((tok = strtok(first_tok ? line : NULL," "))) {
-          first_tok=0;
-          fprintf(fn,"%s\n",gds2cast(tok));
-          nsig++;
-        }
-      }
-    }
-    fclose(fn);
+  // write time
+  int timesteps=ceil(max_time/time_step);
+  fprintf(fn,"time\n");
+  for (i=0; i<timesteps; i++) {
+    float time=time_step*i;
+    fwrite(&time,sizeof(float),1,ft);
+  }
 
-    // write trace file
-    i = ORDER_ORIGINAL;
-    fwrite (&i, sizeof (i), 1, ft);
-    i = time(NULL);
-    fwrite (&i, sizeof (i), 1, ft);
-    fwrite (&nsig, sizeof (i), 1, ft);
-    do {
-      first_tok=1;
-      if (!strncmp(line,"#;",2)) break; // end of file
-      if (!strncmp(line,"#C",2)) {
-        tok = strtok(line," "); // skip #C
-        tok = strtok(NULL," "); // first value is time
-        sscanf(tok, "%e", &d);
-        d *= scale_time;
-        fwrite(&d,sizeof(float),1,ft);
-        tok = strtok(NULL," "); // this value is count of values, ignore
-        first_tok=0;
-      }
-      while ((tok = strtok(first_tok ? line : NULL," "))) { // voltage values
-        sscanf(tok, "%e", &d);
-        fwrite(&d,sizeof(float),1,ft);
-        first_tok=0;
-      }
-    } while (myfgets(fp));
-    fclose(fp);
-  } else usage();
-  
+  // second pass to output names and trace
+  fp = popen(cmd, "r");
+  float *times=malloc(max_points*sizeof(float));
+  float *values=malloc(max_points*sizeof(float));
+  n=0;
+  while (myfgets(fp)) {
+    if (line[0]=='V') {
+      if (n>0) write_values(ft,timesteps,time_step,n,times,values);
+      tok=strtok(line," ");
+      tok=strtok(NULL," ");
+      fprintf(fn,"%s\n",gds2cast(tok));
+      nsig++;
+      n=0;
+    } else if (line[0]=='I') {
+      if (n>0) write_values(ft,timesteps,time_step,n,times,values);
+      tok=strtok(line," ");
+      tok=strtok(NULL," ");
+      fprintf(fn,"i(%s)\n",gds2cast(tok));
+      nsig++;
+      n=0;
+    } else if (line[0]=='+') {
+      float time,val;
+      sscanf(line,"+ %gps %g",&time,&val);
+      time*=1e-12;
+      times[n]=time;
+      values[n]=val;
+      n++;
+    }
+  }
+  if (n>0) write_values(ft,timesteps,time_step,n,times,values);
+
   // free and close
+  free(times);
+  free(values);
   free(line);
   fclose(ft);
-
-  // reorder trace file in place
-  ok = reorder_trace_in_place(filename,REORDERMEM);
-  if (!ok) fprintf(stderr,"WARNING: unable to reorder trace file.\n");
+  fclose(fn);
+  fclose(fp);
   return 0;
 }
