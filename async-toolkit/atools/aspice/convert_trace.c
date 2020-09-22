@@ -142,6 +142,7 @@ int main(int argc, char *argv[]) {
   strcat(cmd, "'");
   strcat(cmd, infile);
   strcat(cmd, "'");
+  strcat(cmd," 2> /dev/null");
   if (!((fp = popen(cmd, "r")))) {
     fprintf(stderr, "Cannot do command\n%s\n", cmd);
     usage();
@@ -164,7 +165,7 @@ int main(int argc, char *argv[]) {
       fprintf(stderr,"bad line=%s\n",line);
     }
   }
-  fclose(fp);
+  pclose(fp);
 
   // write trace header
   i = ORDER_REORDERED;
@@ -218,6 +219,6 @@ int main(int argc, char *argv[]) {
   free(line);
   fclose(ft);
   fclose(fn);
-  fclose(fp);
+  pclose(fp);
   return 0;
 }
