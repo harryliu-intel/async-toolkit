@@ -549,11 +549,11 @@
     logFile = (strcat file ".log")
     templib = (strcat "oas_import_temp_" top_name)
     status = (if oas
-               (ImportOAS file templib top_name viewName)
+               (ImportOAS file templib top_name "layout")
                (ImportGDS file templib top_name ?prefix "" ?suffix "")
                )
     (unless status (error "Unsuccessful import\n"))
-    ImportCV = (dbOpenCellViewByType templib top_name viewName "maskLayout" "a")
+    ImportCV = (dbOpenCellViewByType templib top_name "layout" "maskLayout" "a")
 
     ; flatten ICC cells
     (foreach inst ImportCV->instances
@@ -582,6 +582,10 @@
     (dbSave ImportCV)
 
     ; copy ImportCV to correct lib and change window
+    (unless (IsCellViewWritable libName cellName viewName)
+      viewName=(strcat viewName ".import")
+      (warn "Import to view %s because target view was not writable\n" viewName)
+      )
     ImportCV = (betterCopyCellView ImportCV libName cellName viewName nil nil t)
     win = (hiGetCurrentWindow)
     (when win
