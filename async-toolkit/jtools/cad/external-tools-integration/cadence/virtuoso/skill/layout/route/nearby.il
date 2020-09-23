@@ -2,24 +2,29 @@
 ; plus functionality to strap intersecting pins with vias
 
 ; route nearby nets with short paths or vias only
-(defun RouteNearby (@key (CV (geGetEditCellView)) (nets nil) (topShapes t) (subShapes t) (offGrid t) (verbose nil))
-  (let (n c pct)
+(defun RouteNearby (@key (CV (geGetEditCellView)) (nets nil) (topShapes t) (subShapes t) (offGrid t) (verbose nil)
+                         (protect nil))
+  (let (n c pct protect_map)
     n=0
+    protect_map=(makeTable "protect_map" nil)
     (unless nets nets=(setof a CV->nets (member a->name PowerGroundNets)==nil))
     (foreach net nets
              n+=(RouteNearbyNet net ?CV CV ?topShapes topShapes ?subShapes subShapes
-                                ?offGrid offGrid ?verbose verbose)
+                                ?offGrid offGrid ?verbose verbose ?protect_map protect_map)
              )
+    (when protect (RouteNearbyProtect protect_map ?CV CV))
     (printf "Note that RouteNearby only connects abutting pins between locked instances.")
     n
     )
   )
 
 ; connect subcells pins of a net with short paths or vias
-(defun RouteNearbyNet (net @key (CV (geGetEditCellView)) (topShapes t) (subShapes t) (offGrid t) (verbose nil))
+(defun RouteNearbyNet (net @key (CV (geGetEditCellView)) (topShapes t) (subShapes t) (offGrid t) (verbose nil)
+                           (protect_map nil))
   (let (lpps tech n MasterRectList layerName pinRectList layerNum space len
              e1 e2 inst1 inst2 net1 net2 rect1 rect2 overlap rect horz
              r1x0 r1x1 r1y0 r1y1 r2x0 r2x1 r2y0 r2y1
+             x0 y0 x1 y1 x y key pitch
              viaDef via list1 list2 xy wb wt viaName viaDef via)
     tech = (techGetTechFile CV)
     n=0
@@ -38,7 +43,7 @@
         (error "No MetalHaloBoundarySpace defined for layer %s\n" layerName)
         )
       space = 2 * MetalHaloBoundarySpace[layerName]
-      horz = (mod layerNum 2)==0
+      horz = (layerNum&1)==0
       list1=pinRectList
       (while list1
         e1    = (car list1)
@@ -85,6 +90,19 @@
               rect->routeStatus="locked"
               (dbAddFigToNet rect net)
               (dbReplaceProp rect "autogen" "string" "RouteNearby")
+              (when protect_map
+                x0=(car  (car  overlap))
+                y0=(cadr (car  overlap))
+                x1=(car  (cadr overlap))
+                y1=(cadr (cadr overlap))
+                x=(x0+x1)/2
+                y=(y0+y1)/2
+                pitch=pitch_m[layerNum]/2 ; HACK: assumes half-pitch is symmetric
+                (cond (horz y=(floor y/pitch)*pitch key=(list layerNum x0 y  x1 y))
+                      (t    x=(floor x/pitch)*pitch key=(list layerNum x  y0 x  y1))
+                      )
+                protect_map[key]=t
+                )
               (when verbose (printf "%s on %s\n" layerName net->name))
               n++
               )
@@ -145,8 +163,45 @@
 
 ; get the width of a wire from its layer number and bBox
 (defun GetWireWidth (m bbox)
-  (if (mod m 2)==0
+  (if (m&1)==0
     (cadr (cadr bbox))-(cadr (car bbox)) ; horizontal wire
     (car  (cadr bbox))-(car  (car bbox)) ; vertical wire
     )
+  )
+
+; draw fill shapes to protect jumpers from ETE drc
+; HACK: makes assumptions outside of the PDK parameters
+(defun RouteNearbyProtect (protect_map @key (CV (geGetEditCellView)))
+  (let (pattern layers wires key layerNum x0 y0 x1 y1)
+    ; pre-define fill patterns and layers
+    pattern=(makeTable "pattern" nil)
+    layers =(makeTable "layers"  nil)
+    (for m 0 10
+         wires=nil
+         (for n 0 tracks_m[m]/2-1
+              wires=(cons (list "" (NodeChan m n) 0) wires)
+              )
+         pattern[m]=(DefChan wires)
+         layers[m]=(list (list Metal[m] "fill") (list Metal[m] "fill"))
+         )
+
+    ; draw fill shapes at all protect_map locations
+    (foreach s (tableToList protect_map)
+             key=(car s)
+             layerNum=(car key)
+             x0=(nth 1 key)
+             y0=(nth 2 key)
+             x1=(nth 3 key)
+             y1=(nth 4 key)
+             (DrawChannel layers[layerNum] pattern[layerNum] nil (list x0:y0 x1:y1) ?CV CV)
+             )
+
+    ; delete fill that overlaps top-level drawing
+    (foreach s CV->shapes
+             (when s->purpose=="fill" && (dbGetOverlaps CV s->bBox (list s->layerName "drawing") 0:0)!=nil
+                   (dbDeleteObject s)
+                   )
+             )
+    )
+  t
   )
