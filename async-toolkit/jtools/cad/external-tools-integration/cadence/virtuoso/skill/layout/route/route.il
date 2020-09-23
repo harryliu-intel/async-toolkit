@@ -507,7 +507,7 @@
         (viewName "layout")
         (oasFile nil)
         (gdsFile nil)
-	(colorize nil) ; run ColorizeByOverlay
+	(colorize t) ; run ColorizeByOverlay
         (baseCV nil)
         (top_name nil)
         )
