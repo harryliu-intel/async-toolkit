@@ -96,15 +96,19 @@
       w = NetListTable["width"]
       h = NetListTable["height"]
 
-      ; delete incorrect nets and pins without figures
+      ; delete incorrect nets
       (foreach net CV->nets
         (unless netTable[net]
           (when verbose (fprintf LOG "%sDelete net %s\n" indent net->name))
           (dbDeleteObject net)
           )
+        )
+
+      ; delete pins without figures
+      (foreach net CV->nets
         (foreach pin net->pins (unless pin->fig (dbDeleteObject pin)))
         )
-      
+
       ; delete incorrect terminals
       (foreach term CV->terminals
         (unless termTable[term]
@@ -114,7 +118,7 @@
         )
 
       ; delete incorrect instances
-      (unless skipInstances 
+      (unless skipInstances
         (foreach inst CV->instances
           (unless inst->master==nil || instanceTable[inst] ||
                   !(IsCastCell inst->master) (IsWiringCell inst->master)
@@ -144,7 +148,7 @@
       ; update prBoundary of leaf routed cells from layout view if it exists
       (when CV->viewName=="floorplan" && isRouted && (isLeaf || midPRB)
         ; use prBoundary of layout view if it exists
-        (when lCV points=lCV->prBoundary->points)       
+        (when lCV points=lCV->prBoundary->points)
         ; otherwise pick prBoundary appropriately
         (unless points
           (unless w&&h (error "undetermined height or width in cell %s" CV->cellName))
@@ -159,7 +163,7 @@
         gx = (dbGetPropByName CV "XAlignGrid")->value
         gy = (dbGetPropByName CV "YAlignGrid")->value
         ox = (dbGetPropByName CV "XAlignOffset")->value
-        oy = (dbGetPropByName CV "YAlignOffset")->value        
+        oy = (dbGetPropByName CV "YAlignOffset")->value
         (unless gx gx=0)
         (unless gy gy=0)
         (unless ox ox=0)
