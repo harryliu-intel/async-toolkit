@@ -98,8 +98,14 @@
                 x=(x0+x1)/2
                 y=(y0+y1)/2
                 pitch=pitch_m[layerNum]/2 ; HACK: assumes half-pitch is symmetric
-                (cond (horz y=(floor y/pitch)*pitch key=(list layerNum x0 y  x1 y))
-                      (t    x=(floor x/pitch)*pitch key=(list layerNum x  y0 x  y1))
+                (cond (horz
+                       y=(floor y/pitch)*pitch
+                       key=(list layerNum (round x0/MfgGrid) (round y/MfgGrid) (round x1/MfgGrid) (round y/MfgGrid))
+                       )
+                      (t
+                       x=(floor x/pitch)*pitch
+                       key=(list layerNum (round x/MfgGrid) (round y0/MfgGrid) (round x/MfgGrid) (round y1/MfgGrid))
+                       )
                       )
                 protect_map[key]=t
                 )
@@ -172,8 +178,9 @@
 ; draw fill shapes to protect jumpers from ETE drc
 ; HACK: makes assumptions outside of the PDK parameters
 (defun RouteNearbyProtect (protect_map @key (CV (geGetEditCellView)))
-  (let (pattern layers wires key layerNum x0 y0 x1 y1)
+  (let (power pattern layers wires key layerNum ix0 ix1 iy0 iy1 ipitch x0 y0 x1 y1 pitch ete)
     ; pre-define fill patterns and layers
+    power=(makeTable "power" nil)
     pattern=(makeTable "pattern" nil)
     layers =(makeTable "layers"  nil)
     (for m 0 10
@@ -182,6 +189,7 @@
               wires=(cons (list "" (NodeChan m n) 0) wires)
               )
          pattern[m]=(DefChan wires)
+         power[m] = (list (list "" (cadr (car power_m[m])) (caddr (car power_m[m]))))
          layers[m]=(list (list Metal[m] "fill") (list Metal[m] "fill"))
          )
 
@@ -189,11 +197,26 @@
     (foreach s (tableToList protect_map)
              key=(car s)
              layerNum=(car key)
-             x0=(nth 1 key)
-             y0=(nth 2 key)
-             x1=(nth 3 key)
-             y1=(nth 4 key)
+             ix0=(nth 1 key)
+             iy0=(nth 2 key)
+             ix1=(nth 3 key)
+             iy1=(nth 4 key)
+             x0=ix0*MfgGrid
+             y0=iy0*MfgGrid
+             x1=ix1*MfgGrid
+             y1=iy1*MfgGrid
+             pitch=pitch_m[layerNum]/2 ; HACK: assumes half-pitch is symmetric
+             ipitch=(round pitch/MfgGrid)
              (DrawChannel layers[layerNum] pattern[layerNum] nil (list x0:y0 x1:y1) ?CV CV)
+             (cond (layerNum>=5 && (layerNum&1)==0 && protect_map[(list layerNum ix0 iy0-ipitch ix1 iy1-ipitch)]
+                    ete=(car MetalSpace[Metal[layerNum]])
+                    (DrawChannel layers[layerNum] power[layerNum] nil (list x0+ete:y0 x1-ete:y1) ?CV CV)
+                    )
+                   (layerNum>=5 && (layerNum&1)==1 && protect_map[(list layerNum ix0-ipitch iy0 ix1-ipitch iy1)]
+                                ete=(cadr MetalSpace[Metal[layerNum]])
+                                (DrawChannel layers[layerNum] power[layerNum] nil (list x0:y0+ete x1:y1-ete) ?CV CV)
+                                )
+                   )
              )
 
     ; delete fill that overlaps top-level drawing
