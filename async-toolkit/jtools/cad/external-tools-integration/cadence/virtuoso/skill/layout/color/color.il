@@ -204,59 +204,61 @@
   )
 
 ; Assign maskColor using overlay layers, then optionally delete overlay layers
-(defun ColorizeByOverlay (@key (CV (geGetEditCellView)))
-  (let (layer color overlaps lpp via keep)
+(defun ColorizeByOverlay (@key (CV (geGetEditCellView)) (doVias t))
+  (let (layer color isvia keep overlaps o via)
     (foreach s CV->shapes
-             (cond (s->lpp==(list "m0"  "backBone")   layer="m0" color=1)
-                   (s->lpp==(list "m0c" "complement") layer="m0" color=2)
-                   (s->lpp==(list "m0s" "spacer")     layer="m0" color=3)
-                   (s->lpp==(list "m2"  "backBone")   layer="m2" color=1)
-                   (s->lpp==(list "m2c" "complement") layer="m2" color=2)
-                   (s->lpp==(list "m3"  "backBone")   layer="m3" color=1)
-                   (s->lpp==(list "m3c" "complement") layer="m3" color=2)
-                   (s->lpp==(list "m4"  "backBone")   layer="m4" color=1)
-                   (s->lpp==(list "m4c" "complement") layer="m4" color=2)
-                   (s->lpp==(list "m5"  "backBone")   layer="m5" color=1)
-                   (s->lpp==(list "m5c" "complement") layer="m5" color=2)
-                   (s->lpp==(list "m6"  "backBone")   layer="m6" color=1)
-                   (s->lpp==(list "m6c" "complement") layer="m6" color=2)
-                   (s->lpp==(list "v1a" "colorA")     layer="v1" color=1)
-                   (s->lpp==(list "v1b" "colorB")     layer="v1" color=2)
-                   (s->lpp==(list "v1c" "colorC")     layer="v1" color=3)
-                   (s->lpp==(list "v2a" "colorA")     layer="v2" color=1)
-                   (s->lpp==(list "v2b" "colorB")     layer="v2" color=2)
-                   (s->lpp==(list "v2c" "colorC")     layer="v2" color=3)
-                   (s->lpp==(list "v3a" "colorA")     layer="v3" color=1)
-                   (s->lpp==(list "v3b" "colorB")     layer="v3" color=2)
-                   (t                                 layer=nil  color=nil)
+      isvia=nil
+      (cond (s->lpp==(list "m0"  "backBone")   layer="m0" color=1)
+            (s->lpp==(list "m0c" "complement") layer="m0" color=2)
+            (s->lpp==(list "m0s" "spacer")     layer="m0" color=3)
+            (s->lpp==(list "m2"  "backBone")   layer="m2" color=1)
+            (s->lpp==(list "m2c" "complement") layer="m2" color=2)
+            (s->lpp==(list "m3"  "backBone")   layer="m3" color=1)
+            (s->lpp==(list "m3c" "complement") layer="m3" color=2)
+            (s->lpp==(list "m4"  "backBone")   layer="m4" color=1)
+            (s->lpp==(list "m4c" "complement") layer="m4" color=2)
+            (s->lpp==(list "m5"  "backBone")   layer="m5" color=1)
+            (s->lpp==(list "m5c" "complement") layer="m5" color=2)
+            (s->lpp==(list "m6"  "backBone")   layer="m6" color=1)
+            (s->lpp==(list "m6c" "complement") layer="m6" color=2)
+            (doVias && s->lpp==(list "v1a" "colorA") layer="v1" color=1 isvia=t)
+            (doVias && s->lpp==(list "v1b" "colorB") layer="v1" color=2 isvia=t)
+            (doVias && s->lpp==(list "v1c" "colorC") layer="v1" color=3 isvia=t)
+            (doVias && s->lpp==(list "v2a" "colorA") layer="v2" color=1 isvia=t)
+            (doVias && s->lpp==(list "v2b" "colorB") layer="v2" color=2 isvia=t)
+            (doVias && s->lpp==(list "v2c" "colorC") layer="v2" color=3 isvia=t)
+            (doVias && s->lpp==(list "v3a" "colorA") layer="v3" color=1 isvia=t)
+            (doVias && s->lpp==(list "v3b" "colorB") layer="v3" color=2 isvia=t)
+            (t layer=nil color=nil)
+            )
+      (when layer
+        keep=nil
+        (foreach purpose (list "drawing" "pin" "fill" "actFill")
+          overlaps = (dbGetOverlaps CV s->bBox (list layer purpose) (if isvia 0:31 0:1))
+          (foreach o overlaps
+            (cond ((atom o) && o->objType!="label"
+                   ; (printf "Colorize shape on %s\n" layer)
+                   (SetShapeColor o color)
                    )
-             (when layer
-               overlaps=nil
-               (foreach purpose (list "drawing" "pin" "fill" "actFill" "vdd" "gnd")
-                        lpp = (list layer purpose)
-                        overlaps=(append overlaps (dbGetOverlaps CV s->bBox lpp 0:31))
-                        )
-               keep=nil
-               (foreach o overlaps
-                        (cond (!(atom o) && (car o)->objType=="stdVia"
-                                o=(car o)
-                                via=o->viaHeader->viaDef
-                                (cond (via->layer1->name==layer (SetViaColor o nil color nil))
-                                      (via->layer2->name==layer (SetViaColor o nil nil color))
-                                      (t (SetViaColor o color nil nil))
-                                      )
-                                )
-                              ((atom o) && o->objType!="label"
-                               (SetShapeColor o color)
-                               )
-                              ((GetOverlapObjType o)!="label" && (GetOverlapColor o layer)!=color
-                               keep=t
-                               )
-                              )
-                        )
-               (unless keep (dbDeleteObject s))
-               )
-             )
+                  (!(atom o) && (car o)->objType=="stdVia"
+                   ; (printf "Colorize via on %s\n" layer)
+                   o=(car o)
+                   via=o->viaHeader->viaDef
+                   (cond (isvia (SetViaColor o color nil nil))
+                         (via->layer1->name==layer (SetViaColor o nil color nil))
+                         (via->layer2->name==layer (SetViaColor o nil nil color))
+                         )
+                   )
+                  (isvia && (GetOverlapObjType o)!="label" && (GetOverlapColor o layer)!=color ; keep via overlay
+                   ; (printf "Keep via overlay on %s\n" layer)
+                   keep=t
+                   )
+                  )
+            )
+          )
+        (unless keep (dbDeleteObject s))
+        )
+      )
     )
   t
   )
@@ -273,7 +275,7 @@
                   )
             (for i 0 3 (when via_color_name[i]==c color=i))
             color
-            )   
+            )
           (t (GetOverlapColor (cadr overlap) layer))
           )
     )
