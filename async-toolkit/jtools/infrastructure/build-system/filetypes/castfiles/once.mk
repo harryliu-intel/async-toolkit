@@ -511,35 +511,6 @@ $(ROOT_TARGET_DIR)/%/cell.aspice: $(ROOT_TARGET_DIR)/%/cell.spice $$(call GET_CE
 	  mv -f '$@.tmp' '$@' && \
 	task=rc_spice2aspice && $(CASTFILES_DEQUEUE_TASK)
 
-.PRECIOUS: $(ROOT_TARGET_DIR)/%/cell.gds2_bias
-$(ROOT_TARGET_DIR)/%/cell.gds2_bias: $(ROOT_TARGET_DIR)/%/cell.gds2_lambda
-	#TASK=gds2_silicon CELL=$(call GET_CAST_FULL_NAME,$(@D))
-	task=gds2_si && $(CASTFILES_ENQUEUE_TASK) && \
-	drc_dir=`mktemp -d "$(WORKING_DIR)/drc.XXXXXX"`; \
-	sync; \
-	sleep 1; \
-	rsf="$$drc_dir/rsf"; \
-	cp '$(FULCRUM_PDK_PACKAGE_ROOT)/share/Fulcrum/assura/bias.rsf.include' "$$rsf" ; \
-	ln -s '$(@D)/cell.gds2_lambda' "$$drc_dir/cell.gds2" ; \
-	chmod 2775 "$$drc_dir" && cd "$$drc_dir" && \
-	QB_DIAG_FILE='$@.diag' QB_RUN_NAME='lve_bias_si' \
-	QB_LOCAL=0 QRSH_FLAGS='$(PACKAGE_FLAGS) -l drc=1' \
-	$(QEXEC) $(ASSURA_SCRIPT) \
-	$(LVE_PACKAGE_ROOT)/share/script/perl/ve/front-end/vfe \
-	VerificationType=AssuraDrc \
-	RunName=drc \
-	LayoutCell='$(call GET_GDS2_CDL_NAME,$(@D))' \
-	WorkingDir="$$drc_dir" \
-	GDS2File="$$drc_dir/cell.gds2" \
-	OutFile=1 \
-	AssuraSet.=KEEP_NDIFF_PDIFF \
-	RuleFile="$(FULCRUM_PDK_PACKAGE_ROOT)/share/Fulcrum/assura/bias.rul" \
-	AssuraRsfInclude="$$rsf" \
-	> "$$drc_dir/vfeout" && \
-	mv "$$drc_dir/biased.gds2" '$@' && \
-	cd / && ls "$$drc_dir"; \
-	$(CASTFILES_DEQUEUE_TASK)
-
 GDS2_TARGET := cell.gds2
 
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/lib_gds2.lef
@@ -761,41 +732,6 @@ $(ROOT_TARGET_DIR)/%/$(GDS2_TARGET) $(ROOT_TARGET_DIR)/%/cell.bindrul: $$(call G
 	task=gds2 && $(CASTFILES_DEQUEUE_TASK)
 
 endif # "$(NOEXTRACTDEPS)" ne "1" 48 lines back
-
-# create gds2 from DFII and cast
-GDS2_TARGET10x := cell.gds2_lambda2
-.PRECIOUS: $(ROOT_TARGET_DIR)/%/$(GDS2_TARGET10x)
-.PRECIOUS: $(ROOT_TARGET_DIR)/%/cell.bindrul
-$(ROOT_TARGET_DIR)/%/cell.gds2_lambda2 $(ROOT_TARGET_DIR)/%/cell.bindrul: $$(call GET_CELL_DIR,$$(@D))/cell.cdl $$(call GET_DF2D,$$(@D))
-	#TASK=gds2_10x VIEW=$(call GET_VIEW,$(@D)) CELL=$(call GET_CAST_FULL_NAME,$(@D))
-	if [[ ( -n "$(call LVE_SKIP,gds2)" ) && ( -e '$@' ) ]] ; then exit; fi; \
-	task=gds2_10x && $(CASTFILES_ENQUEUE_TASK) ; \
-	working_dir=`mktemp -d "$(WORKING_DIR)/gds2.XXXXXX"`; \
-	sync; \
-	sleep 1; \
-	QB_DIAG_FILE='$(@D)/$(GDS2_TARGET10x).diag' QB_RUN_NAME='lve_gdsIIWrite' \
-	  QB_LOCAL=$(QB_LOCAL) QRSH_FLAGS="$(PACKAGE_FLAGS)" \
-	   $(EXEC) $(IC_SCRIPT) $(GDSIIWRITE) \
-	  --working-dir="$$working_dir" \
-          --fulcrum-pdk-root='$(FULCRUM_PDK_PACKAGE_ROOT)' \
-          --cast-path='$(CAST_PATH)' \
-          --view='$(call GET_VIEW,$(@D))' \
-          --dfII-dir='$(DFII_DIR)' \
-	  --scale=0.0001 \
-          --cadence-log='$(@D)/cadence.log' \
-          --assura-log='$(@D)/partial.log' \
-          --output='$(@D)/$(GDS2_TARGET10x).tmp' \
-          --bind-rul='$(@D)/cell.bindrul.tmp' \
-          --cell='$(call GET_CAST_FULL_NAME,$(@D))' \
-          --output-root-cell-name='$(call GET_GDS2_CDL_NAME,$(@D))' \
-          --noproperties \
-          --flatten-pcells && \
-	isgds '$(@D)/$(GDS2_TARGET10x).tmp' && \
-	mv -f '$(@D)/$(GDS2_TARGET10x).tmp' '$(@D)/$(GDS2_TARGET10x)' &&\
-	cp '$(@D)/cell.bindrul.tmp' '$(@D)/cell.bindrul'; \
-	cd / && ( [[ $(DELETE_EXTRACT_DIR) == 0 ]] || rm -rf "$$working_dir" ); \
-	task=gds2_10x && $(CASTFILES_DEQUEUE_TASK)
-
 
 # use mk_instance to extract cell geometry
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/estimated/instances/.instances
