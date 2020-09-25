@@ -43,7 +43,7 @@ open  OUT, ">${cdswd}/replay.il" or die;
 print OUT "(ExportGDS ?CV (ReadCV (GetCastLibName \"$cell\") \"$cell\" \"$view\"))\n";
 close OUT;
 
-# run mkcdswd and virtuoso (TODO: avoid $ENV{FULCRUM})
+# run mkcdswd and virtuoso
 system("mkcdswd --fulcrum-pdk-root=$pdk_root --target-dir=\"$cdswd\" --dfII-dir=\"$dfII_dir\" --cast-path=\"$cast_path\" --force && " .
        "cd \"$cdswd\" && " .
        "$ENV{IC_SCRIPT} virtuoso -log CDS.log -replay replay.il -nograph && " .
