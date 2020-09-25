@@ -7,7 +7,6 @@ my $work_dir=".";
 my $pdk_root;
 my $cast_path=$ENV{CAST_PATH};
 my $dfII_dir=$ENV{DFII_DIR};
-
 my $output="cell.gds2";
 my $mem=16*1024;
 
@@ -35,20 +34,15 @@ while (@ARGV) {
 if (@args!=3) { usage(); }
 my ($libName,$cellName,$viewName)=@args;
 
-# create cdswd
+# create cdswd and write replay.il
 my $cdswd = "${work_dir}/ExportGDS.cdswd";
 system("mkdir -p $cdswd");
-
-# mkcdswd
-system("mkcdswd --fulcrum-pdk-root=$pdk_root --target-dir=\"$cdswd\" --dfII-dir=\"$dfII_dir\" --cast-path=\"$cast_path\" --force");
-
-# write replay.il
 open  OUT, ">${cdswd}/replay.il" or die;
 print OUT "(ExportGDS ?CV (ReadCV \"$libName\" \"$cellName\" \"$viewName\"))\n";
 close OUT;
 
-# run virtuoso
-system("(cd \"$cdswd\"; $ENV{FULCRUM} virtuoso -log CDS.log -replay replay.il -nograph)"); # TODO: avoid $ENV{FULCRUM}
-
-# move file to destination
-system("mv \"$cdswd/temp/gds/$cellName/*.gds\" \"$output\"");
+# run mkcdswd and virtuoso (TODO: avoid $ENV{FULCRUM})
+system("mkcdswd --fulcrum-pdk-root=$pdk_root --target-dir=\"$cdswd\" --dfII-dir=\"$dfII_dir\" --cast-path=\"$cast_path\" --force && " .
+       "cd \"$cdswd\" && " .
+       "$ENV{FULCRUM} virtuoso -log CDS.log -replay replay.il -nograph && " .
+       "mv temp/gds/$cellName/*.gds \"$output\"");
