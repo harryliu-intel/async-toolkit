@@ -46,5 +46,5 @@ close OUT;
 # run mkcdswd and virtuoso (TODO: avoid $ENV{FULCRUM})
 system("mkcdswd --fulcrum-pdk-root=$pdk_root --target-dir=\"$cdswd\" --dfII-dir=\"$dfII_dir\" --cast-path=\"$cast_path\" --force && " .
        "cd \"$cdswd\" && " .
-       "$ENV{FULCRUM} virtuoso -log CDS.log -replay replay.il -nograph && " .
+       "$ENV{IC_SCRIPT} virtuoso -log CDS.log -replay replay.il -nograph && " .
        "mv temp/gds/$cell/*.gds \"$output\"");
