@@ -8,7 +8,8 @@ my $pdk_root;
 my $cast_path=$ENV{CAST_PATH};
 my $dfII_dir=$ENV{DFII_DIR};
 my $output="cell.gds2";
-my $mem=16*1024;
+my $view="layout";
+my $cell;
 
 # usage banner
 sub usage {
@@ -17,7 +18,8 @@ sub usage {
         " --cast-path=[$cast_path]\n" .
         " --dfII-dir=[$dfII_dir]\n" .
         " --output=[$output]\n" .
-        " libName cellName viewName\n");
+        " --view=[$view]\n" .
+        " cellName\n");
 }
 
 # parse command-line arguments
@@ -28,21 +30,21 @@ while (@ARGV) {
     elsif ($ARGV[0] =~ /^--cast-path=(.*)/) { $cast_path=$1; }
     elsif ($ARGV[0] =~ /^--dfII-dir=(.*)/)  { $dfII_dir =$1; }
     elsif ($ARGV[0] =~ /^--output=(.*)/)    { $output   =$1; }
-    else { push @args, $ARGV[0]; }
+    elsif ($ARGV[0] =~ /^--view=(.*)/)      { $view    = $1; }
+    else { $cell = $ARGV[0]; }
     shift @ARGV;
 }
-if (@args!=3) { usage(); }
-my ($libName,$cellName,$viewName)=@args;
+usage() unless defined($cell);
 
 # create cdswd and write replay.il
 my $cdswd = "${work_dir}/ExportGDS.cdswd";
 system("mkdir -p $cdswd");
 open  OUT, ">${cdswd}/replay.il" or die;
-print OUT "(ExportGDS ?CV (ReadCV \"$libName\" \"$cellName\" \"$viewName\"))\n";
+print OUT "(ExportGDS ?CV (ReadCV (GetCastLibName \"$cell\") \"$cell\" \"$view\"))\n";
 close OUT;
 
 # run mkcdswd and virtuoso (TODO: avoid $ENV{FULCRUM})
 system("mkcdswd --fulcrum-pdk-root=$pdk_root --target-dir=\"$cdswd\" --dfII-dir=\"$dfII_dir\" --cast-path=\"$cast_path\" --force && " .
        "cd \"$cdswd\" && " .
        "$ENV{FULCRUM} virtuoso -log CDS.log -replay replay.il -nograph && " .
-       "mv temp/gds/$cellName/*.gds \"$output\"");
+       "mv temp/gds/$cell/*.gds \"$output\"");
