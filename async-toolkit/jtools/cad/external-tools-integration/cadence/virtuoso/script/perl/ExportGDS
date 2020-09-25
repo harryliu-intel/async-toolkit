@@ -1,0 +1,54 @@
+#!/usr/intel/bin/perl -w
+use strict;
+use warnings;
+
+# default arguments
+my $work_dir=".";
+my $pdk_root;
+my $cast_path=$ENV{CAST_PATH};
+my $dfII_dir=$ENV{DFII_DIR};
+
+my $output="cell.gds2";
+my $mem=16*1024;
+
+# usage banner
+sub usage {
+    die("USAGE: ExportGDS\n" .
+        " --work-dir=[$work_dir]\n" .
+        " --cast-path=[$cast_path]\n" .
+        " --dfII-dir=[$dfII_dir]\n" .
+        " --output=[$output]\n" .
+        " libName cellName viewName\n");
+}
+
+# parse command-line arguments
+my @args;
+while (@ARGV) {
+    if    ($ARGV[0] =~ /^--work-dir=(.*)/ ) { $work_dir =$1; }
+    elsif ($ARGV[0] =~ /^--fulcrum-pdk-root=(.*)/) { $pdk_root=$1; }
+    elsif ($ARGV[0] =~ /^--cast-path=(.*)/) { $cast_path=$1; }
+    elsif ($ARGV[0] =~ /^--dfII-dir=(.*)/)  { $dfII_dir =$1; }
+    elsif ($ARGV[0] =~ /^--output=(.*)/)    { $output   =$1; }
+    else { push @args, $ARGV[0]; }
+    shift @ARGV;
+}
+if (@args!=3) { usage(); }
+my ($libName,$cellName,$viewName)=@args;
+
+# create cdswd
+my $cdswd = "${work_dir}/ExportGDS.cdswd";
+system("mkdir -p $cdswd");
+
+# mkcdswd
+system("mkcdswd --fulcrum-pdk-root=$pdk_root --target-dir=\"$cdswd\" --dfII-dir=\"$dfII_dir\" --cast-path=\"$cast_path\" --force");
+
+# write replay.il
+open  OUT, ">${cdswd}/replay.il" or die;
+print OUT "(ExportGDS ?CV (ReadCV \"$libName\" \"$cellName\" \"$viewName\"))\n";
+close OUT;
+
+# run virtuoso
+system("(cd \"$cdswd\"; $ENV{FULCRUM} virtuoso -log CDS.log -replay replay.il -nograph)"); # TODO: avoid $ENV{FULCRUM}
+
+# move file to destination
+system("mv \"$cdswd/temp/gds/$cellName/*.gds\" \"$output\"");
