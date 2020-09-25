@@ -1,8 +1,9 @@
-; Export GDS for current cell with only cell name conversion (unlike for lve)
+; Export GDS for current cell with only cell name conversion (now also used for lve)
 (defun ExportGDS (@key (CV (geGetEditCellView))
                        (directory nil)
                        (gdsFile nil)
                        (layerMapFile nil)
+                       (renameTop  t) ; CopyExact applies to top cell too
                        (flattenVias nil))
   (let (TEMP PDK_DIR Command status cellMapFile fmap gdsName name used CID)
     (unless CV->objType=="cellView" (error "CV not valid"))
@@ -10,7 +11,7 @@
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
     (unless directory directory = (strcat TEMP "/gds/" CV->cellName))
     PDK_DIR = (strcat (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT") "/share/Fulcrum")
-    gdsName = (if (dbGetPropByName CV "CopyExact")
+    gdsName = (if renameTop && (dbGetPropByName CV "CopyExact")
                   (dbGetPropByName CV "CopyExact")->value
                   (NameDoRename CID CV->cellName)
                   )

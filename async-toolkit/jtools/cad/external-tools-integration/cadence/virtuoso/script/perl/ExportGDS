@@ -39,12 +39,28 @@ usage() unless defined($cell);
 # create cdswd and write replay.il
 my $cdswd = "${work_dir}/ExportGDS.cdswd";
 system("mkdir -p $cdswd");
-open  OUT, ">${cdswd}/replay.il" or die;
-print OUT "(ExportGDS ?CV (ReadCV (GetCastLibName \"$cell\") \"$cell\" \"$view\"))\n";
+chdir($cdswd);
+open  OUT, ">replay.il" or die("unable to write ${cdswd}/replay.il\n");
+print OUT "(ExportGDS ?renameTop nil ?CV (ReadCV (GetCastLibName \"$cell\") \"$cell\" \"$view\"))\n";
 close OUT;
 
-# run mkcdswd and virtuoso
-system("mkcdswd --fulcrum-pdk-root=$pdk_root --target-dir=\"$cdswd\" --dfII-dir=\"$dfII_dir\" --cast-path=\"$cast_path\" --force && " .
-       "cd \"$cdswd\" && " .
-       "$ENV{IC_SCRIPT} virtuoso -log CDS.log -replay replay.il -nograph && " .
-       "mv temp/gds/$cell/*.gds \"$output\"");
+# run mkcdswd
+system("mkcdswd --fulcrum-pdk-root=$pdk_root --target-dir=. --dfII-dir=\"$dfII_dir\" --cast-path=\"$cast_path\" --force")==0 ||
+    die("mkcdswd failed\n");
+
+# run virtuoso
+# HACK: retry Xvnc server sharing on display [10..99]
+my $attempt=0;
+my $status=0;
+do {
+    my $display = int(rand(90)) + 10;
+    $ENV{CDS_XVNC_TENBASE} = $display / 10;
+    $ENV{CDS_XVNC_OFFSET}  = $display % 10;
+    $status = system("$ENV{IC_SCRIPT} virtuoso -log CDS.log -replay replay.il -nograph");
+    if ($status!=0) { print STDERR "Virtuoso attempt $attempt, display port $display, error status $status\n"; }
+    $attempt++;
+} while ($status!=0 && ($attempt<10));
+$status==0 || die("virtuoso failed\n");
+
+# move output file
+system("mv temp/gds/$cell/*.gds \"$output\"")==0 || die("unable to move to $output\n");
