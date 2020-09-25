@@ -10,6 +10,7 @@ package com.avlsi.file.cdl.util.rename;
 import java.util.List;
 import java.util.Iterator;
 import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 import java.io.Writer;
 import java.io.Reader;
@@ -34,7 +35,7 @@ import com.avlsi.file.cdl.util.rename.GDS2NameInterface;
 import com.avlsi.file.cdl.util.rename.CadenceNameInterface;
 import com.avlsi.file.cdl.util.rename.ReloadableNameInterface;
 import com.avlsi.file.cdl.util.rename.CDLRenameException;
-import com.avlsi.file.cdl.util.rename.PMCHackNameInterface;
+import com.avlsi.file.cdl.util.rename.Rename;
 
 import com.avlsi.io.NullWriter;
 
@@ -135,10 +136,12 @@ public class CDLRenamer  {
 
     private static void usage( String m ) {
 
+        final String supported = Rename.getNamespaces().collect(Collectors.joining("|"));
+
         System.err.println( "Usage: cdl_renamer\n" + 
             "   --source-cdl-file=file\n" +
-            "   --name-in=cast|gds2|cadence|pmc_hack|rcx_hack\n" + 
-            "   --name-out=cast|gds2|cadence|pmc_hack|rcx_hack\n" + 
+            "   --name-in=" + supported + "\n" + 
+            "   --name-out=" + supported + "\n" + 
             "   --translated-cdl=file\n" +
             "   [--extension-in=string] [--extension-out=string]\n" +
             "   [--rcx-cell-map=file]\n" +
@@ -160,6 +163,7 @@ public class CDLRenamer  {
     private static void usagej() {
 
         final String className = CDLRenamer.class.getName();
+        final String supported = Rename.getNamespaces().collect(Collectors.joining("|"));
         
         System.out.println( "Usage: " + 
                             System.getProperty( "java.home" ) +
@@ -171,8 +175,8 @@ public class CDLRenamer  {
                             System.getProperty( "java.class.path" ) + " " +
                             className + "\n" +
                             "   --source-cdl-file=file\n" +
-                            "   --name-in=cast|gds2|cadence|pmc_hack|rcx_hack\n" + 
-                            "   --name-out=cast|gds2|cadence|pmc_hack|rcx_hack\n" + 
+                            "   --name-in=" + supported + "\n" + 
+                            "   --name-out=" + supported + "\n" + 
                             "   --translated-cdl=file\n" +
                             "   [--extension-in=string] [--extension-out=string]\n" +
                             "   [--rcx-cell-map=file]\n" +
@@ -297,70 +301,11 @@ public class CDLRenamer  {
                     ni = new IdentityNameInterface();
                 }
                 else {
-                    final CDLNameInterface f,g;
-                        
-                    if( nameIn.equals( "cast" ) ||
-                        nameOut.equals( "pmc_hack" ) ) {
-                        f = new IdentityNameInterface();
-                    }
-                    else if( nameIn.equals( "cadence" ) ) {
-                        f = new CadenceReverseNameInterface();
-                    }
-                    else if ( nameIn.equals( "gds2" ) ) {
-                        f = new GDS2ReverseNameInterface();
-                    }
-                    else if ( nameIn.equals( "pmc_hack" ) ) {
-                        f = PMCHackNameInterface.getReverseNamer();
-                    }
-                    else if ( nameIn.equals( "rcx_hack" ) ) {
-                        final String cellMapFile =
-                            theArgs.getArgValue("rcx-cell-map", null);
-                        if (cellMapFile == null) {
-                            throw new CDLRenameException(
-                                "rcx_hack naming requires valid " +
-                                "--rcx-cell-map cell name mapping file" );
-                        }
-                        final Reader r = new FileReader(cellMapFile);
-                        f = RCXHackNameInterface.getReverseNamer(r);
-                    }
-                    else 
+                    ni = Rename.getInterface(nameIn, nameOut);
+                    if (ni == null) {
                         throw new CDLRenameException("Invalid translation: " +
                                                      nameIn + " -> " + nameOut );
-                        
-                    if( nameOut.equals( "cast" ) ||
-                        nameIn.equals( "pmc_hack" ) ) {
-                        g = new IdentityNameInterface();
                     }
-                    else if( nameOut.equals( "cadence" ) ) {
-                        g = new CadenceNameInterface();
-                    }
-                    else if( nameOut.equals( "gds2" ) ) {
-                        g = new GDS2NameInterface();
-                    }
-                    else if( nameOut.equals( "pmc_hack" ) ) {
-                        g = PMCHackNameInterface.getForwardNamer();
-                    }
-                    else if ( nameOut.equals( "rcx_hack" ) ) {
-                        final String cellMapFile =
-                            theArgs.getArgValue("rcx-cell-map", null);
-                        final String pipoMapFile =
-                            theArgs.getArgValue("rcx-pipo-map", null);
-                        if (cellMapFile == null) {
-                            throw new CDLRenameException(
-                                "rcx_hack naming requires valid " +
-                                "--rcx-cell-map cell name mapping file" );
-                        }
-                        final Writer cellWriter = new FileWriter(cellMapFile);
-                        final Writer pipoWriter = pipoMapFile == null ?
-                            (Writer) NullWriter.getInstance() :
-                            (Writer) new FileWriter(pipoMapFile);
-                        g = RCXHackNameInterface.getForwardNamer(
-                                60, cellWriter, pipoWriter);
-                    }
-                    else 
-                        throw new CDLRenameException("Invalid translation: " +
-                                                     nameIn + " -> " + nameOut );
-                    ni = new CompositeInterface(f,g);
                 }
                 final CDLNameInterface nameInterface = ni;             
                 final CDLNameInterface filteredInterface =
