@@ -24,7 +24,7 @@
 */
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun DrawMidLevelPins ( @key (CV (UIGetCellView)) (include_supply nil) (supply_topMetal -1) (supply_metals nil)
+(defun DrawMidLevelPins ( @key (CV (UIGetCellView)) (include_supply nil) (supply_topMetal -1)
                                (all_supply nil) (all_signal nil))
   (let (TEMP
         WarningFile
@@ -47,7 +47,7 @@
       (foreach InstTerm Term->net->instTerms
         (unless (member Term->name BusPinList)
           InPlacePinFig = (MidPinsInheritPin CV InstTerm->inst InstTerm->name Term->name
-                                             ?topMetal supply_topMetal ?supply_metals supply_metals
+                                             ?topMetal supply_topMetal
                                              ?all_supply all_supply ?all_signal all_signal)
           (when InPlacePinFig->LeafInPlacePin
             (printf "*WARNING* Top Level pin \"%s\" is drawn inplace from leaf cell instance \"%s\" \n" Term->name InstTerm->inst->name)
@@ -71,7 +71,7 @@
 ; All pins on the top metal layer used by them get promoted.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun MidPinsInheritPin (CV Inst TermName PinName @key (topMetal -1)
-                             (all_supply nil) (supply_metals nil) (all_signal nil))
+                             (all_supply nil) (all_signal nil))
   (let (InPlacePinList
         transform
         fig
@@ -99,24 +99,9 @@
              )
     InPlacePinList=pinList
 
-    ; limit the signal pin candidates to those on the top metal layer
-    (when !supply_metals
-      (when (if (member PinName PowerGroundNets)==nil !all_supply !all_signal)
-        InPlacePinList = (setof x InPlacePinList x->layerName==Metal[topMetal])
-        )
-      )
-      
-    ; if supply_metals is specified, draw power pins on those layers
-    (when supply_metals    
-      (when (member PinName PowerGroundNets)
-        (foreach metal supply_metals
-          (printf "drawing %s pins on metal %d\n" PinName metal)
-	  pins = (setof x InPlacePinList x->layerName==Metal[metal])
-	  (foreach pin pins 
-	    InPlacePinList = (cons pin InPlacePinList)
-	    )
-	  )
-        )
+    ; limit the candidates to those on the top metal layer
+    (when (if (member PinName PowerGroundNets)!=nil !all_supply !all_signal)
+      InPlacePinList = (setof x InPlacePinList x->layerName==Metal[topMetal])
       )
 
     ; draw inplace pins
