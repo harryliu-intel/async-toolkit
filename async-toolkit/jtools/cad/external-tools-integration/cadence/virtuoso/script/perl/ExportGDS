@@ -38,14 +38,14 @@ usage() unless defined($cell);
 
 # create cdswd and write replay.il
 my $cdswd = "${work_dir}/ExportGDS.cdswd";
-system("mkdir -p $cdswd");
+system("mkdir -p '$cdswd'")==0 || die("unable to mkdir $cdswd\n");
 chdir($cdswd);
 open  OUT, ">replay.il" or die("unable to write ${cdswd}/replay.il\n");
 print OUT "(ExportGDS ?renameTop nil ?CV (ReadCV (GetCastLibName \"$cell\") \"$cell\" \"$view\"))\n";
 close OUT;
 
 # run mkcdswd
-system("mkcdswd --fulcrum-pdk-root=$pdk_root --target-dir=. --dfII-dir=\"$dfII_dir\" --cast-path=\"$cast_path\" --force")==0 ||
+system("mkcdswd --fulcrum-pdk-root=$pdk_root --target-dir=. --dfII-dir='$dfII_dir' --cast-path='$cast_path' --force")==0 ||
     die("mkcdswd failed\n");
 
 # run virtuoso
@@ -63,4 +63,4 @@ do {
 $status==0 || die("virtuoso failed\n");
 
 # move output file
-system("mv temp/gds/$cell/*.gds \"$output\"")==0 || die("unable to move to $output\n");
+system("mv 'temp/gds/$cell'/*.gds '$output'")==0 || die("unable to move to $output\n");

@@ -3,7 +3,7 @@
                        (directory nil)
                        (gdsFile nil)
                        (layerMapFile nil)
-                       (renameTop  t) ; CopyExact applies to top cell too
+                       (renameTop t) ; CopyExact applies to top cell too
                        (flattenVias nil))
   (let (TEMP PDK_DIR Command status cellMapFile fmap gdsName name used CID)
     (unless CV->objType=="cellView" (error "CV not valid"))
@@ -17,16 +17,17 @@
                   )
     (unless gdsFile (sprintf gdsFile "%s/%s.gds" directory gdsName))
     (unless layerMapFile (sprintf layerMapFile "%s/stream/strmout.layermap" PDK_DIR))
-    (shell (strcat "mkdir -p " directory))
+    (shell (sprintf nil "mkdir -p '%s'" directory))
 
     ; Write cellmap to rename cells.  CopyExact cells get renamed to
     ; their original name as saved in the CopyExact property.  Other
     ; cells get GDS2 names.
     cellMapFile = (sprintf nil "%s/%s.cellmap" directory gdsName)
     fmap = (outfile cellMapFile)
+    (unless fmap (error "unable to write %s\n" cellMapFile))
     used = (makeTable "used" nil)
     (foreach subCV (FindSubcells ?CV CV)
-             name = (if (dbGetPropByName subCV "CopyExact")
+             name = (if (renameTop || subCV!=CV) && (dbGetPropByName subCV "CopyExact")
                         (dbGetPropByName subCV "CopyExact")->value
                         (NameDoRename CID subCV->cellName)
                         )
