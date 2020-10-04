@@ -1121,7 +1121,8 @@ public final class DirectiveUtils {
                 }
             }
             getNetDirectives(envCell, envNodes, directive, true, dirs, null);
-            CellUtils.getCanonicalDir(canonPortDir, envCell, envNodes);
+            CellUtils.getCanonicalDir(canonPortDir, envCell, envNodes,
+                                      PortDefinition.INOUT);
         }
 
         for (HierName dir : dirs) {

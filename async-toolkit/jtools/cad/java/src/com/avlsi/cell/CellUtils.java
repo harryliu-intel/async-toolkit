@@ -2076,7 +2076,8 @@ public final class CellUtils {
     public static Map<HierName,Integer>
     getCanonicalDir(final Map<HierName,Integer> portDirs,
                     final CellInterface cell,
-                    final AliasedSet nodes) {
+                    final AliasedSet nodes,
+                    final Integer inOutDef) {
         for (Map.Entry<String,Integer> portDir :
                 CellUtils.markPorts(cell).entrySet()) {
             final HierName canon = (HierName)
@@ -2095,6 +2096,8 @@ public final class CellUtils {
 
                 if (inout) {
                     portDirs.put(canon, PortDefinition.INOUT);
+                } else if (in && out) {
+                    portDirs.put(canon, inOutDef);
                 } else if (in) {
                     portDirs.put(canon, PortDefinition.IN);
                 } else if (out) {
@@ -2105,6 +2108,13 @@ public final class CellUtils {
             }
         }
         return portDirs;
+    }
+
+    public static Map<HierName,Integer>
+    getCanonicalDir(final Map<HierName,Integer> portDirs,
+                    final CellInterface cell,
+                    final AliasedSet nodes) {
+        return getCanonicalDir(portDirs, cell, nodes, PortDefinition.IN);
     }
 
     /**
