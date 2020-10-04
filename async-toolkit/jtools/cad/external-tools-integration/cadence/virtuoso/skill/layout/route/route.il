@@ -142,9 +142,7 @@
     ; check Alignment of locked non-standard cells
     statusAlignment=t
     (foreach inst (MisalignedInstances ?CV CV)
-             (unless inst->status!="locked" || (HasLayoutVariants ?CV inst->master)
-                     statusAlignment=nil
-                     )
+             (when inst->status=="locked" || inst->status=="firm" statusAlignment=nil)
              )
 
     ; write proteus.config

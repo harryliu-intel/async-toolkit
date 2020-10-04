@@ -680,11 +680,11 @@ useICV = t
     (foreach inst CV->instances
              (when inst->viewName=="floorplan"
                    (LegalizeShortInstance inst)
-                   (when !softMacro && (HasLayoutVariants ?CV inst->master)
-                         (ChooseLayoutVariant inst)
-                         )
-                   lCV=(ReadCV inst->libName inst->cellName "layout")
-                   (when lCV inst->master=lCV)
+                   (unless softMacro
+                     (when (HasLayoutVariants ?CV inst->master) (ChooseLayoutVariant inst))
+                     lCV=(ReadCV inst->libName inst->cellName "layout")
+                     (when lCV inst->master=lCV)
+                     )
                    )
              )
     )
