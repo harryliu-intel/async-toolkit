@@ -7,11 +7,12 @@ use File::Spec::Functions qw/:ALL/;
 use FindBin;
 use Cwd qw/abs_path/;
 
-my ($cast_path, $spar_dir, $cell, $env, $cosim, @cast_defines, $beh, $fpga_path, @c2v_args, $kdb, $help);
+my ($cast_path, $spar_dir, $gls_dir, $cell, $env, $cosim, @cast_defines, $beh, $fpga_path, @c2v_args, $kdb, $help);
 my $width = 300;
 my $mem = '16G';
 GetOptions("cast-path=s" => \$cast_path,
            "spar-dir=s"  => \$spar_dir,
+           "gls-dir=s"   => \$gls_dir,
            "cell=s"      => \$cell,
            "env=s"       => \$env, 
            "cosim=s"     => \$cosim,
@@ -64,20 +65,40 @@ my @defines = ();
 
 push @defines, "+define+FPGA_HIER_PATH=.\Q$fpga_path\E." if $fpga_path;
 
+my @args = ();
 if (-s $flist) {
-    $flist = "-file $flist";
-} else {
-    $flist = '';
+    push @args, '-file', $flist;
 }
 
 $kdb = $kdb ? '-kdb' : '';
 
 open my $fh, ">$runvcs" || die "Can't open $runvcs: $!";
+
+if ($gls_dir) {
+    push @args, '-f', '$CAST2VERILOG_RUNTIME/gls.vcfg';
+    print $fh <<'EOF';
+if [[ -z "$NCL_DIR" ]]; then
+    if [[ "$EC_SITE" = "sc" ]]; then
+        export NCL_DIR=/nfs/sc/proj/ctg/mrl108/mrl/1276
+    else
+        export NCL_DIR=/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/ncl/1276
+    fi
+fi
+[[ -z "$STDCELL_DIR" ]] && export STDCELL_DIR=$NCL_DIR/stdcells
+[[ -z "$GPIO_DIR" ]] && export GPIO_DIR=$NCL_DIR/gpio/latest/ip7631iolib
+[[ -z "$CMO_DIR" ]] && export CMO_DIR=$NCL_DIR/sram/cmo/latest
+EOF
+    print $fh <<EOF;
+[[ -z "\$G1MBD_DIR" ]] && export G1MBD_DIR="$gls_dir/g1m"
+[[ -z "\$GLS_DIR" ]] && export GLS_DIR="$gls_dir"
+EOF
+}
+
 print $fh <<EOF;
 export SPAR="$spar_dir"
 export COLLATERAL=/nfs/sc/proj/ctg/mrl108/mrl/collateral
 export CAST2VERILOG_RUNTIME="$instdir/share/cast2verilog"
-vcs $kdb -licqueue -debug_access+dmptf+all -debug_region=lib+cell -full64 @defines -file "\$CAST2VERILOG_RUNTIME/$vcfg" testbench.v $flist @netlists
+vcs $kdb -assert svaext -licqueue -debug_access+dmptf+all -debug_region=lib+cell -full64 @defines -file "\$CAST2VERILOG_RUNTIME/$vcfg" testbench.v @args @netlists
 EOF
 close $fh;
 chmod 0755, $runvcs;
