@@ -238,6 +238,24 @@ while ($line) {
         node_names($pos,$neg);
         print OUT "C$name $pos $neg $line";
 
+    } elsif ($line =~ s/^D//i) {
+	
+        #
+        # Diode
+        #
+
+        $line =~ s/^(\S*)\s*//;
+        $name = $1;
+        $line =~ s/^(\S+)\s*//
+            or error_msg("Diode has no positive terminal: $full");
+        $pos = "$1";
+        $line =~ s/^(\S+)\s*//
+            or error_msg("Diode has no negative terminal: $full");
+        $neg = "$1";
+        my_list_to_spice($name);
+        node_names($pos,$neg);
+        print OUT "D$name $pos $neg $line";
+
     } elsif ($line =~ s/^R//i) {
 
         #
