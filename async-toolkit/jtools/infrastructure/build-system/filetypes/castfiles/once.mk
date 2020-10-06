@@ -216,6 +216,7 @@ CDL_RENAMER   := cdl_renamer $(GLOBAL_JAVA_LOW_FLAGS) $(GLOBAL_JRE_FLAGS) --layo
 CAST2SKILL    := cast2skill $(GLOBAL_JAVA_FLAGS) $(GLOBAL_JRE_FLAGS)
 GENERATEPLTSUBTYPES := generate_plt_subtypes $(GLOBAL_JAVA_FLAGS) $(GLOBAL_JRE_FLAGS)
 GDSIIWRITE    := gdsIIWrite $(GLOBAL_JAVA_FLAGS) $(GLOBAL_JRE_FLAGS)
+GDS2_NAMESPACE := gds2
 GENERATELIB   := generatelib --format=real $(GLOBAL_JAVA_FLAGS) $(GLOBAL_JRE_FLAGS)
 CELL_LEF      := cell_lef
 JDSIM         := jdsim $(GLOBAL_JAVA_FLAGS) $(GLOBAL_JRE_FLAGS)
@@ -308,7 +309,7 @@ $(ROOT_TARGET_DIR)/%/extracted/cell.spice: $(ROOT_TARGET_DIR)/%/extracted/cell.s
 	QB_DIAG_FILE='$@.renamer.diag' QB_RUN_NAME='lve_gds2spice' \
 	$(EXEC_LOW_PACKAGE) $(CDL_RENAMER) \
 	  --source-cdl-file='$<' \
-	  --name-in=gds2 \
+	  --name-in=$(GDS2_NAMESPACE) \
 	  --name-out=cast \
 	  --extension-in=.spice_gds2 \
 	  --extension-out=.spice \
@@ -321,7 +322,7 @@ $(ROOT_TARGET_DIR)/%/totem/cell.spice: $(ROOT_TARGET_DIR)/%/totem/cell.spice_gds
 	QB_DIAG_FILE='$@.renamer.diag' QB_RUN_NAME='lve_gds2spice' \
 	$(EXEC_LOW_PACKAGE) $(CDL_RENAMER) \
 	  --source-cdl-file='$<' \
-	  --name-in=gds2 \
+	  --name-in=$(GDS2_NAMESPACE) \
 	  --name-out=cast \
 	  --extension-in=.spice_gds2 \
 	  --extension-out=.spice \
@@ -390,7 +391,7 @@ $(ROOT_TARGET_DIR)/%/extracted/cell.spice: $(ROOT_TARGET_DIR)/%/extracted/cell.s
 	QB_DIAG_FILE='$@.renamer.diag' QB_RUN_NAME='lve_gds2spice' \
 	$(EXEC_LOW_PACKAGE) $(CDL_RENAMER) \
 	  --source-cdl-file='$<' \
-	  --name-in=gds2 \
+	  --name-in=$(GDS2_NAMESPACE) \
 	  --name-out=cast \
 	  --extension-in=.spice_gds2 \
 	  --extension-out=.spice \
@@ -884,7 +885,7 @@ $(ROOT_TARGET_DIR)/%/cell.cdl_gds2: $$(call GET_CELL_DIR,$$(@D))/cell.cdl
 	$(EXEC_LOW_PACKAGE) $(CDL_RENAMER) \
 	  --source-cdl-file='$<' \
 	  --name-in=cadence \
-	  --name-out=gds2 \
+	  --name-out=$(GDS2_NAMESPACE) \
 	  --translated-cdl='$@.tmp' \
 	  --call-delimiter= \
 	&& mv -f '$@.tmp' '$@'; \
@@ -896,7 +897,7 @@ $(ROOT_TARGET_DIR)/%/cell.cdl_pmc: $(ROOT_TARGET_DIR)/%/cell.cdl_gds2
 	QB_DIAG_FILE='$@.diag' QB_RUN_NAME='lve_rename' \
 	$(EXEC_LOW_PACKAGE) $(CDL_RENAMER) \
 	  --source-cdl-file='$<' \
-	  --name-in=gds2 \
+	  --name-in=$(GDS2_NAMESPACE) \
 	  --name-out=pmc_hack \
 	  --translated-cdl='$@.tmp' \
 	&& mv -f '$@.tmp' '$@'; \
@@ -912,7 +913,7 @@ $(ROOT_TARGET_DIR)/%/extracted/cell.spef :\
         $(ROOT_TARGET_DIR)/%/extracted/cell.spef_gds2
 	QRSH_FLAGS="$(PACKAGE_LOW_FLAGS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_spefrn.diag" QB_RUN_NAME='lve_spefrn' \
-	  $(QB) spefrename --from=gds2 --to=cast '$<' '$@.tmp' \
+	  $(QB) spefrename --from=$(GDS2_NAMESPACE) --to=cast '$<' '$@.tmp' \
 	&& mv '$@.tmp' '$@' \
 	&& : < '$@'
 
@@ -1431,7 +1432,7 @@ $(ROOT_TARGET_DIR)/%/estimated/cell.spice_gds2: $(ROOT_TARGET_DIR)/%/estimated/c
 	$(EXEC_LOW_PACKAGE) $(CDL_RENAMER) \
 	  --source-cdl-file='$<' \
 	  --name-in=cast \
-	  --name-out=gds2 \
+	  --name-out=$(GDS2_NAMESPACE) \
 	  --extension-in=.spice \
 	  --extension-out=.spice_gds2 \
 	  --translated-cdl='$@'; \
@@ -1445,7 +1446,7 @@ $(ROOT_TARGET_DIR)/%/nogeometry/cell.spice_gds2: $(ROOT_TARGET_DIR)/%/nogeometry
 	$(EXEC_LOW_PACKAGE) $(CDL_RENAMER) \
 	  --source-cdl-file='$<' \
 	  --name-in=cast \
-	  --name-out=gds2 \
+	  --name-out=$(GDS2_NAMESPACE) \
 	  --extension-in=.spice \
 	  --extension-out=.spice_gds2 \
 	  --translated-cdl='$@'

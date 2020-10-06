@@ -135,7 +135,7 @@ $(CURR_CELL_DIR)/cast.d : $(CURR_CELL_DIR)/.nodes$(ROUTED_SUFFIX)
 	  "--internalRules=$(INTERNAL_RULES)" \
 	  '--cdl-mos-parameters=m' \
 	  '$(JFLAT_NAME_MAP)' \
-	  "--cdl-translate=cadence" "--hsim-translate=gds2" "--query-translate=none" \
+	  "--cdl-translate=cadence" "--hsim-translate=$(GDS2_NAMESPACE)" "--query-translate=none" \
 	  --hsim-rand-seed=0 --hsim-rand-length=4 \
 	  "--query-tasks=prs,transistors=gate.STATICIZER.0:gate.STATICIZER.1,routing,density,tau,external_nodes=im:di:re" \
 	  "--query-separator=," \
@@ -180,7 +180,7 @@ $(CURR_CELL_DIR)/jflat$(ROUTED_SUFFIX)/%.latest: $(CURR_CELL_DIR)/.nodes$(ROUTED
 	  "--internalRules=$(INTERNAL_RULES)" \
 	  '--cdl-mos-parameters=m' \
 	  '$(JFLAT_NAME_MAP)' \
-	  "--cdl-translate=cadence" "--hsim-translate=gds2" "--query-translate=none" \
+	  "--cdl-translate=cadence" "--hsim-translate=$(GDS2_NAMESPACE)" "--query-translate=none" \
 	  --hsim-rand-seed=0 --hsim-rand-length=4 \
 	  "--query-tasks=prs,transistors=gate.STATICIZER.0:gate.STATICIZER.1,routing,density,tau,external_nodes=im:di:re" \
 	  "--query-separator=," \

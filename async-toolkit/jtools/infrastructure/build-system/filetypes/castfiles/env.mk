@@ -1706,7 +1706,7 @@ $(SPICE_DIR)/hsim/$(ENV)/%/totem.out: $(SPICE_DIR)/cell.spf \
 	mkdir -p '$(@D)'; \
 	work_dir=`mktemp -d "$(WORKING_DIR)/totem.XXXXXX"`; \
 	nodes=$$($(GNUGAWK) '{print $$7}' '$(word 3,$^)' | sort -u | \
-		$(RENAME) --type=node --from=cast --to=gds2 | \
+		$(RENAME) --type=node --from=cast --to=$(GDS2_NAMESPACE) | \
 		$(GNUGAWK) '{print "Xdut." $$1}' | \
 	        tr '\n' ',' | $(GNUSED) 's/,$$//' ); \
 	QB_DIAG_FILE='$@.diag' QB_RUN_NAME='lve_totem' \
@@ -1743,7 +1743,7 @@ $(SPICE_DIR)/hsim/$(ENV)/%/cmm.out: $(SPICE_DIR)/hsim/$(ENV)/%/totem.out \
 	mkdir -p '$(@D)'; \
 	work_dir=`mktemp -d "$(WORKING_DIR)/cmm.XXXXXX"`; \
 	nodes=$$($(GNUGAWK) '{print $$7}' '$(word 1,$^)' | sort -u | \
-		$(RENAME) --type=node --from=cast --to=gds2 | \
+		$(RENAME) --type=node --from=cast --to=$(GDS2_NAMESPACE) | \
 		$(GNUGAWK) '{print "Xdut." $$1}' | \
 	        tr '\n' ',' | $(GNUSED) 's/,$$//' ); \
 	QB_DIAG_FILE='$@.diag' QB_RUN_NAME='lve_cmm' \
@@ -1863,7 +1863,7 @@ $(SPICE_DIR)/aspice/$(ENV)/%/cell.spiprof: \
 	  --corner='$(call GET_CORNER,$(@D))' \
 	  --temp='$(call GET_TEMP,$(@D))' \
 	  $(CAP_LOAD) \
-	  --name-space=gds2 \
+	  --name-space=$(GDS2_NAMESPACE) \
 	  --output-dir='$(ROOT_TARGET_DIR)'
 	@if [[ -s '$(@D)/$(call GET_GDS2_CDL_NAME,$(@D)).spiprof' && -s '$(@D)/$(call GET_GDS2_CDL_NAME,$(@D)).cdev' ]]; then \
 	   ln -f '$(@D)/$(call GET_GDS2_CDL_NAME,$(@D)).spiprof' '$(@D)/cell.spiprof'; \
