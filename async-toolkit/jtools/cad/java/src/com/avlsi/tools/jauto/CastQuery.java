@@ -38,6 +38,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Collectors;
 
 import antlr.RecognitionException;
 import antlr.TokenStreamException;
@@ -87,6 +88,7 @@ import com.avlsi.file.cdl.util.rename.CDLRenameException;
 import com.avlsi.file.cdl.util.rename.CadenceNameInterface;
 import com.avlsi.file.cdl.util.rename.CadenceReverseNameInterface;
 import com.avlsi.file.cdl.util.rename.GDS2NameInterface;
+import com.avlsi.file.cdl.util.rename.Rename;
 import com.avlsi.file.common.HierName;
 import com.avlsi.file.common.InvalidHierNameException;
 import com.avlsi.io.FileSearchPath;
@@ -159,6 +161,7 @@ public final class CastQuery {
     }
 
     private static void usage( String m ) {
+        final String xlators = Rename.getNamespaces().collect(Collectors.joining(" | "));
         System.err.print(
             "java com.avlsi.tools.jauto.CastQuery\n" +
             "    --cast-path=<path> (defaults to .)\n" +
@@ -250,7 +253,7 @@ public final class CastQuery {
             "    [ --prune=<expression> ] expression same as --filter\n" +
             "    [ --cadence-name ] (cell name is a Cadence name)\n" +
             "    [ --no-recurse ]\n" +
-            "    [ --translate=(cadence | gdsII) ] (for hierarchical tasks)\n" +
+            "    [ --translate=(" + xlators + ") ] (for hierarchical tasks)\n" +
             "    [ --no-header ] (do not print header for flat tasks)\n" +
             "    [ --instantiation-order ] (run hierarchical tasks in instantiation order)\n" +
             "    [ --output=<file> ] (write result to file instead of standard out)\n" +
@@ -2896,22 +2899,6 @@ NextPair:   for (Iterator i = cell.getSubcellPairs(); i.hasNext(); ) {
         });
     }
 
-    /**
-     * Returns an appropriate renamer given the target name, or null if the
-     * translation scheme is unknown.
-     **/
-    private static CDLNameInterface getRenamer(final String scheme) {
-        final CDLNameInterface result;
-        if (scheme.equals("gdsII") || scheme.equals("gds2")) {
-            result = new GDS2NameInterface();
-        } else if (scheme.equals("cadence")) {
-            result = new CadenceNameInterface();
-        } else {
-            result = null;
-        }
-        return result;
-    }
-
     private static class MathFunction implements UnaryFunction {
         private final Map dictCache;
         private final MathExpression expr;
@@ -4084,12 +4071,7 @@ NextPair:   for (Iterator i = cell.getSubcellPairs(); i.hasNext(); ) {
         }
         
         // Get the optional renamer.
-        CDLNameInterface renamer;
-        if ( translatorName.equals("") ) {
-            renamer = null;
-        } else {
-            renamer = getRenamer( translatorName );
-        }
+        CDLNameInterface renamer = Rename.getInterface("cast", translatorName);
         
         query( cell,
                castParser,

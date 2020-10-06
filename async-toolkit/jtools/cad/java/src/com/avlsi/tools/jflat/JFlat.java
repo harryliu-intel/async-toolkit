@@ -187,7 +187,9 @@ public final class JFlat {
      * Prints usage message and exits with the specified status.
      **/
     private static void usage( String m ) {
-        final String translaters = Rename.getNamespaces().collect(Collectors.joining(" | "));
+        final String xlators = Rename.getNamespaces().collect(Collectors.joining(" | "));
+        final String xlatorsWithNone = Stream.concat(Rename.getNamespaces(), Stream.of("none"))
+                                             .collect(Collectors.joining(" | "));
         System.err.println("Usage:\n"
                            + " [ --cast-path=castpath ]\n"
                            + " [ --cast-version=1 | --cast-version=2 ]\n" 
@@ -203,10 +205,10 @@ public final class JFlat {
                            + " | --tool=aspice [--internalWires] [--internalRules]\n"
                            + " | --tool=check [--check-all-csp]\n"
                            + " | --tool=new-aspice [--internalRules=[0|1]]\n"
-                           + " | --tool=hsim [ --hsim-translate=[ cadence | gds2 | none ]\n"
+                           + " | --tool=hsim [ --hsim-translate=[ " + xlatorsWithNone + " ]\n"
                            + "                 --hsim-rand-seed=<seed> --hsim-rand-length=<length> ]\n"
                            + " | --tool=cdl|routed-cdl\n"
-                           + "              [ --cdl-translate=[ " + translaters + " ]\n"
+                           + "              [ --cdl-translate=[ " + xlators + " ]\n"
                            + "              [ --cdl-name-map=<name map file> ]\n"
                            + "              [ --cdl-mos-parameters=<param,param,...> ]\n"
                            + "              [ --cdl-call-delimiter=<string> ]\n"
@@ -221,7 +223,7 @@ public final class JFlat {
                            + " [ --tool=query --query-tasks=<task,task,...>\n"
                            + "                --query-filter=<expression>\n"
                            + "                --query-no-recurse\n"
-                           + "                --query-translate=[ cadence | gds2 | none ]\n"
+                           + "                --query-translate=[ " + xlatorsWithNone + " ]\n"
                            + "                --query-no-header\n"
                            + "                --query-separator=<string> ]\n"
                            + " [ [--all-cells ] file.cast ]");
@@ -559,14 +561,9 @@ public final class JFlat {
                 return null;
             }
             final String renameStr = args.getArgValue("hsim-translate", "cadence");
-            final CDLNameInterface renamer;
-            if (renameStr.equals("cadence")) {
-                renamer = new CadenceNameInterface(true);
-            } else if (renameStr.equals("gds2")) {
-                renamer = new GDS2NameInterface();
-            } else if (renameStr.equals("none")) {
-                renamer = new IdentityNameInterface();
-            } else {
+            final CDLNameInterface renamer = Rename.getInterface("cast",
+                    renameStr.equals("none") ? "cast" : renameStr);
+            if (renamer == null) {
                 System.err.println("Invalid name translator specified: " + renameStr);
                 return null;
             }
