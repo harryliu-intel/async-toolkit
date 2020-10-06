@@ -10,6 +10,7 @@ package com.avlsi.file.cdl.util.rename;
 import java.util.List;
 import java.util.Iterator;
 import java.util.ArrayList;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import java.io.Writer;
@@ -40,6 +41,7 @@ import com.avlsi.file.cdl.util.rename.Rename;
 import com.avlsi.io.NullWriter;
 
 import com.avlsi.util.cmdlineargs.CommandLineArgs;
+import com.avlsi.util.cmdlineargs.CommandLineArgsUtil;
 import com.avlsi.util.cmdlineargs.defimpl.CommandLineArgsDefImpl;
 import com.avlsi.util.cmdlineargs.defimpl.CachingCommandLineArgs;
 import com.avlsi.util.cmdlineargs.defimpl.CommandLineArgsWithConfigFiles;
@@ -77,6 +79,57 @@ public class CDLRenamer  {
             }
             if (g instanceof EndObserver) {
                 ((EndObserver) g).renameEnd();
+            }
+        }
+    }
+
+    /** Special handling of : in node names, and / in device names. **/
+    private static class ExtractedNameInterface extends CDLNameInterfaceProxy {
+        final String deviceHierDelimiter;
+        final String subnetDelimiter;
+        final Pattern deviceHierPattern;
+        public ExtractedNameInterface( final CDLNameInterface inner,
+                                       final String deviceHierDelimiter,
+                                       final String subnetDelimiter ) {
+            super( inner );
+            this.deviceHierDelimiter = deviceHierDelimiter;
+            this.subnetDelimiter = subnetDelimiter;
+            this.deviceHierPattern =
+                Pattern.compile( Pattern.quote( deviceHierDelimiter ) );
+        }
+        public String renameNode( final String name )
+            throws CDLRenameException {
+            final int idx = name.indexOf( subnetDelimiter );
+            final String net, subnet;
+            if (idx == -1) {
+                net = name;
+                subnet = "";
+            } else {
+                net = name.substring( 0, idx );
+                subnet = name.substring( idx );
+            }
+            return inner.renameNode( net ) + subnet;
+        }
+        public String renameDevice( final String name )
+            throws CDLRenameException {
+            try {
+                return deviceHierPattern
+                    .splitAsStream( name )
+                    .map(n -> {
+                        try {
+                            return inner.renameDevice( n );
+                        } catch ( CDLRenameException e ) {
+                            throw new RuntimeException( e );
+                        }
+                     })
+                    .collect( Collectors.joining( deviceHierDelimiter ) );
+            } catch ( RuntimeException e ) {
+                if ( e.getCause() instanceof CDLRenameException ) {
+                    throw new CDLRenameException( "Can't rename device: " + name,
+                                                  e.getCause() );
+                } else {
+                    throw e;
+                }
             }
         }
     }
@@ -150,6 +203,7 @@ public class CDLRenamer  {
             "   [--layout-net-prefix=string]\n" +
             "   [--layout-inst-prefix=string]\n" +
             "   [--call-delimiter=string]\n" +
+            "   [--extracted=[0|1]]\n" +
             "   (only understands conditionals and loops if nmap specified)\n" );
         if (m != null && m.length() > 0)
             System.err.print( m );
@@ -184,6 +238,7 @@ public class CDLRenamer  {
                             "   [--translated-nmap=file]\n" +
                             "   [--layout-net-prefix=string]\n" +
                             "   [--layout-inst-prefix=string]\n" +
+                            "   [--extracted=[0|1]]\n" +
                             "   (only understands conditionals and loops if nmap specified)\n" );
     }
 
@@ -242,6 +297,10 @@ public class CDLRenamer  {
 
         final String callDelimiter =
             theArgs.getArgValue( "call-delimiter", "/" );
+
+        final int extracted =
+            CommandLineArgsUtil.getIntegerArgValue(theArgs,
+                    "extracted", 1);
 
         pedanticArgs.argTag("rcx-cell-map");
         pedanticArgs.argTag("rcx-pipo-map");
@@ -305,6 +364,9 @@ public class CDLRenamer  {
                     if (ni == null) {
                         throw new CDLRenameException("Invalid translation: " +
                                                      nameIn + " -> " + nameOut );
+                    }
+                    if (extracted != 0) {
+                        ni = new ExtractedNameInterface(ni, "/", ":");
                     }
                 }
                 final CDLNameInterface nameInterface = ni;             
