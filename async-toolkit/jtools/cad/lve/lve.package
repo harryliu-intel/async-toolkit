@@ -89,6 +89,9 @@ $arch/bin/lve_bumpsim          script/perl/lve_bumpsim   755 p
 $arch/bin/qb.pl               script/perl/qsub/qb              755 p
 $arch/bin/qbwrapper           script/perl/qsub/qbwrapper       755 p
 
+# hack to rename GDS2 labels
+$arch/bin/rename_gds2.pl      script/perl/rename_gds2.pl      755 p
+
 # The extraction script
 $arch/bin/extract_starRC.pl   script/perl/spice/extract_starRC.pl   755 p
 $arch/bin/spice_reduce.pl     script/perl/spice/spice_reduce.pl     755 p
