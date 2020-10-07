@@ -1755,7 +1755,6 @@ $(ROOT_TARGET_DIR)/%/nanotime/extract.raw: $(ROOT_TARGET_DIR)/%/nanotime/extract
 	touch '$@'
 
 $(ROOT_TARGET_DIR)/%/extract.raw: $(ROOT_TARGET_DIR)/%/extract.result \
-				  $(ROOT_TARGET_DIR)/%/cell.aspice \
 				  $(ROOT_TARGET_DIR)/%/cell.hspice
 	#TASK=extract_raw MODE=$(call GET_EXTRACT_MODE,$(@D)) VIEW=$(call GET_VIEW,$(@D)) CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	$(RAWIFY) --use-db=$(USEDB) --task=extract --root='$(ROOT_TARGET_DIR)' --dir='$(@D)' --cell="$(call GET_CAST_FULL_NAME,$(@D))"
