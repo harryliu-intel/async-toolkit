@@ -4,7 +4,6 @@ use strict;
 use IPC::Open2;
 
 # rename pin labels from cadence to gds2 namespace
-my $pintype=126;
 my $text=0;
 my $texttype=0;
 my $err=0;
@@ -13,7 +12,7 @@ while (my $line = <STDIN>) {
     if    ($line =~ /^TEXT$/)            { $text=1; }
     elsif ($line =~ /^TEXTTYPE (\d+)$/ ) { $texttype=$1; }
     elsif ($line =~ /^ENDEL$/)           { $text=0; }
-    elsif ($text==1 && $texttype==$pintype && $line =~ /^STRING '(\S+)'$/) {
+    elsif ($text==1 && ($texttype==2 || $texttype==126) && $line =~ /^STRING '(\S+)'$/) {
         my $net=$1;
         $net=n2convert($net);
         $line="STRING '$net'\n";
