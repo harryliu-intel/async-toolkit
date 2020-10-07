@@ -4,39 +4,39 @@ use strict;
 use IPC::Open2;
 
 # rename pin labels from cadence to gds2 namespace
-my $text=0;
-my $texttype=0;
-my $err=0;
+my $text="";
 my $n2pid=0;
+my $valid=0;
 while (my $line = <STDIN>) {
-    if    ($line =~ /^TEXT$/)            { $text=1; }
-    elsif ($line =~ /^TEXTTYPE (\d+)$/ ) { $texttype=$1; }
-    elsif ($line =~ /^ENDEL$/)           { $text=0; }
-    elsif ($text==1 && ($texttype==2 || $texttype==126) && $line =~ /^STRING '(\S+)'$/) {
+    if    ($line =~ /^TEXT$/) { $text=$line; }
+    elsif ($text ne "" && $line =~ /^STRING '(\S+)'$/) {
         my $net=$1;
-        $net=n2convert($net);
-        $line="STRING '$net'\n";
+        if ($net =~ /^[_0-9a-zA-Z\.\[\]]+$/) { # keep legal labels
+            $net=n2convert($net);
+            $line="STRING '$net'\n";
+            $valid=1;
+        }
+        $text .= $line;
     }
-    print $line;
+    elsif ($text ne "" && $line =~ /^ENDEL$/) {
+        $text .= $line;
+        if ($valid) { print $text; }
+        $text="";
+        $valid=0;
+    }
+    elsif ($text ne "") { $text .= $line; }
+    else { print $line; }
 }
-exit $err;
 
 # use Java rename to rename nodes from cadence to gds2
 local(*N2RD,*N2WR);
 sub n2convert {
     my $in = $_[0];
-    $in =~ s/\#/_/g; # hack
-    $in =~ s/\$/_/g; # hack because renamer does not recognize '$', use '_' to be consistent with vs2cast
-    local($_);
     if ($n2pid <= 0) {
         $n2pid=open2(\*N2RD,\*N2WR, "fulcrum rename --from=cadence --to=gds2 --type=node");
     }
     print N2WR "$in\n";
     my $out=<N2RD>;
     chomp $out;
-    if ($out eq "") {
-        $out=$in;
-        $err++;
-    }
     $out;
 }
