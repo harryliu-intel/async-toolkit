@@ -215,7 +215,8 @@ CAST2CDL      := cast2cdl $(GLOBAL_JAVA_FLAGS) $(GLOBAL_JRE_FLAGS)
 CDL_RENAMER   := cdl_renamer $(GLOBAL_JAVA_LOW_FLAGS) $(GLOBAL_JRE_FLAGS) --layout-net-prefix='ln\#' --layout-inst-prefix='ld\#'
 CAST2SKILL    := cast2skill $(GLOBAL_JAVA_FLAGS) $(GLOBAL_JRE_FLAGS)
 GENERATEPLTSUBTYPES := generate_plt_subtypes $(GLOBAL_JAVA_FLAGS) $(GLOBAL_JRE_FLAGS)
-GDSIIWRITE    := gdsIIWrite $(GLOBAL_JAVA_FLAGS) $(GLOBAL_JRE_FLAGS)
+EXPORT_GDS     := ExportGDS
+RENAME_GDS     := rename_gds2
 GDS2_NAMESPACE := gds2
 GENERATELIB   := generatelib --format=real $(GLOBAL_JAVA_FLAGS) $(GLOBAL_JRE_FLAGS)
 CELL_LEF      := cell_lef
@@ -682,10 +683,9 @@ $(ROOT_TARGET_DIR)/%/extracted/cell_gds2.def: $(DEFFILE) $(LVELOG)
 endif # "$(DEFFILE)" eq ""
 # create gds2 from DFII and cast
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/$(GDS2_TARGET)
-.PRECIOUS: $(ROOT_TARGET_DIR)/%/cell.bindrul
 
 ifneq ("$(NOEXTRACTDEPS)", "1")
-$(ROOT_TARGET_DIR)/%/$(GDS2_TARGET) $(ROOT_TARGET_DIR)/%/cell.bindrul: $$(call GET_CELL_DIR,$$(@D))/cell.cdl $$(call GET_DF2D,$$(@D))
+$(ROOT_TARGET_DIR)/%/$(GDS2_TARGET): $$(call GET_CELL_DIR,$$(@D))/cell.cdl $$(call GET_DF2D,$$(@D))
 	#TASK=gds2 VIEW=$(call GET_VIEW,$(@D)) CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	/bin/rm -f "$(@D)/$(GDS2_TARGET)"
 	if [[ ( -n "$(call LVE_SKIP,gds2)" ) && ( -e '$@' ) ]] ; then exit; fi; \
@@ -706,28 +706,22 @@ $(ROOT_TARGET_DIR)/%/$(GDS2_TARGET) $(ROOT_TARGET_DIR)/%/cell.bindrul: $$(call G
           --outfile='$(@D)/dangling_node.out' \
           --java-flag=$(GLOBAL_JAVA_FLAGS) \
           --cdl='$(@D)/../cell.cdl' ) && \
-	QB_DIAG_FILE='$(@D)/$(GDS2_TARGET).diag2' QB_RUN_NAME='lve_gdsIIWrite' \
+	QB_DIAG_FILE='$(@D)/$(GDS2_TARGET).diag2' QB_RUN_NAME='lve_EXPORT_GDS' \
 	  QB_LOCAL=$(QB_LOCAL) QRSH_FLAGS="$(PACKAGE_FLAGS)" \
-	   $(EXEC) $(IC_SCRIPT) $(GDSIIWRITE) \
-	  --working-dir="$$working_dir" \
+	   $(EXEC) $(IC_SCRIPT) $(EXPORT_GDS) \
+	  --work-dir="$$working_dir" \
           --fulcrum-pdk-root='$(FULCRUM_PDK_PACKAGE_ROOT)' \
           --cast-path='$(CAST_PATH)' \
           --view='$(call GET_VIEW,$(@D))' \
           --dfII-dir='$(DFII_DIR)' \
-          --cadence-log='$(@D)/gdsIIWrite.log' \
-          --assura-log='$(@D)/partial.log' \
           --output='$(@D)/$(GDS2_TARGET).tmp' \
-          --bind-rul='$(@D)/cell.bindrul.tmp' \
-          --cell='$(call GET_CAST_FULL_NAME,$(@D))' \
-          --noproperties \
-          --output-root-cell-name='$(call GET_GDS2_CDL_NAME,$(@D))' \
-          --65mode=$(SIXTYFIVEMODE) \
-          $(GDS_USE_TAG) \
-          --tag-orientation=$(GDS_TAG_ORIENTATION) \
-          --flatten-pcells && \
-	isgds '$(@D)/$(GDS2_TARGET).tmp' && \
-	mv -f '$(@D)/$(GDS2_TARGET).tmp' '$(@D)/$(GDS2_TARGET)' &&\
-	mv -f '$(@D)/cell.bindrul.tmp' '$(@D)/cell.bindrul'; \
+	  '$(call GET_CADENCE_BASE_NAME,$(@D))' && \
+	QB_DIAG_FILE='$(@D)/$(GDS2_TARGET).diag3' QB_RUN_NAME='lve_RENAME_GDS' \
+	  QB_LOCAL=$(QB_LOCAL) QRSH_FLAGS="$(PACKAGE_FLAGS)" \
+	   $(EXEC) $(IC_SCRIPT) \
+	   rdgds '$(@D)/$(GDS2_TARGET).tmp' | $(RENAME_GDS) | wrgds > '$(@D)/$(GDS2_TARGET).tmp2' && \
+	isgds '$(@D)/$(GDS2_TARGET).tmp2' && \
+	mv -f '$(@D)/$(GDS2_TARGET).tmp2' '$(@D)/$(GDS2_TARGET)' &&\
 	sleep 1; \
 	cd / && ( [[ $(DELETE_EXTRACT_DIR) == 0 ]] || rm -rf "$$working_dir" ); \
 	task=gds2 && $(CASTFILES_DEQUEUE_TASK)
