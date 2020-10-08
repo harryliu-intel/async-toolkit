@@ -178,11 +178,12 @@
 ; draw fill shapes to protect jumpers from ETE drc
 ; HACK: makes assumptions outside of the PDK parameters
 (defun RouteNearbyProtect (protect_map @key (CV (geGetEditCellView)))
-  (let (power pattern layers wires key layerNum ix0 ix1 iy0 iy1 ipitch x0 y0 x1 y1 pitch ete)
+  (let (power pattern layers space wires key layerNum ix0 ix1 iy0 iy1 ipitch x0 y0 x1 y1 is pitch ete)
     ; pre-define fill patterns and layers
-    power=(makeTable "power" nil)
+    power  =(makeTable "power"   nil)
     pattern=(makeTable "pattern" nil)
     layers =(makeTable "layers"  nil)
+    space  =(makeTable "space"   nil)
     (for m 0 10
          wires=nil
          (for n 0 tracks_m[m]/2-1
@@ -191,6 +192,7 @@
          pattern[m]=(DefChan wires)
          power[m] = (list (list "" (cadr (car power_m[m])) (caddr (car power_m[m]))))
          layers[m]=(list (list Metal[m] "fill") (list Metal[m] "fill"))
+         space[m] = (round MetalHaloBoundarySpace[Metal[m]]/MfgGrid)*2
          )
 
     ; draw fill shapes at all protect_map locations
@@ -201,21 +203,27 @@
              iy0=(nth 2 key)
              ix1=(nth 3 key)
              iy1=(nth 4 key)
+             is=space[layerNum]
              x0=ix0*MfgGrid
              y0=iy0*MfgGrid
              x1=ix1*MfgGrid
              y1=iy1*MfgGrid
              pitch=pitch_m[layerNum]/2 ; HACK: assumes half-pitch is symmetric
              ipitch=(round pitch/MfgGrid)
-             (DrawChannel layers[layerNum] pattern[layerNum] nil (list x0:y0 x1:y1) ?CV CV)
-             (cond (layerNum>=5 && (layerNum&1)==0 && protect_map[(list layerNum ix0 iy0-ipitch ix1 iy1-ipitch)]
-                    ete=(car MetalSpace[Metal[layerNum]])
-                    (DrawChannel layers[layerNum] power[layerNum] nil (list x0+ete:y0 x1-ete:y1) ?CV CV)
+             (cond ((layerNum&1)==0 && (abs ix1-ix0)==is
+                    (DrawChannel layers[layerNum] pattern[layerNum] nil (list x0:y0 x1:y1) ?CV CV)
+                    (when layerNum>=5 && protect_map[(list layerNum ix0 iy0-ipitch ix1 iy1-ipitch)]
+                          ete=(car MetalSpace[Metal[layerNum]])
+                          (DrawChannel layers[layerNum] power[layerNum] nil (list x0+ete:y0 x1-ete:y1) ?CV CV)
+                          )
                     )
-                   (layerNum>=5 && (layerNum&1)==1 && protect_map[(list layerNum ix0-ipitch iy0 ix1-ipitch iy1)]
-                                ete=(cadr MetalSpace[Metal[layerNum]])
-                                (DrawChannel layers[layerNum] power[layerNum] nil (list x0:y0+ete x1:y1-ete) ?CV CV)
-                                )
+                   ((layerNum&1)==1 && (abs iy1-iy0)==is
+                    (DrawChannel layers[layerNum] pattern[layerNum] nil (list x0:y0 x1:y1) ?CV CV)
+                    (when layerNum>=5 && protect_map[(list layerNum ix0-ipitch iy0 ix1-ipitch iy1)]
+                          ete=(cadr MetalSpace[Metal[layerNum]])
+                          (DrawChannel layers[layerNum] power[layerNum] nil (list x0:y0+ete x1:y1-ete) ?CV CV)
+                          )
+                    )
                    )
              )
 
