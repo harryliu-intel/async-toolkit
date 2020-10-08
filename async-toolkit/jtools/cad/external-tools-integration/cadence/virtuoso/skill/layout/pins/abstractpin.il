@@ -540,18 +540,18 @@ defun( nrCreateMidAbstract ( libName cellName viewName
 
 ; Same as above but include the net and inst in the subcell with the
 ; rectangle to avoid connecting the same net in the same subcell.
-(defun nrFindPinShapesWithNet (net pinLPPs @key (topShapes nil) (subShapes t))
-  (let (layerName inst transform pinRectList lppList ret)
-    (foreach lpp pinLPPs
-      layerName = (car lpp)
+; Also puts pin and drawing purposes in the same set.
+(defun nrFindPinShapesWithNet (net layerNames @key (topShapes t) (subShapes t))
+  (let (inst transform pinRectList ret)
+    (foreach layerName layerNames
       pinRectList = nil
 
       ; shapes from top level
       (when topShapes
         (foreach s net->figs
-                 (when s->lpp==lpp &&
+                 (when s->lpp==(list layerName "drawing")
                        (s->objType=="rect" || s->objType=="path" || s->objType=="pathSeg")
-                       pinRectList = (cons (list nil nil s->bBox) pinRectList)
+                       pinRectList = (cons (list nil s->net s->bBox) pinRectList)
                        )
                  )
         )
@@ -563,7 +563,7 @@ defun( nrCreateMidAbstract ( libName cellName viewName
           (when inst->libName!=TechLibName && inst->status=="locked"
             transform = (geGetInstTransform inst)
             (foreach pin instTerm->term->pins
-              (when pin->fig->layerName==layerName
+              (when pin->fig->lpp==(list layerName "pin")
                     pinRectList = (cons (list inst pin->fig->net (dbTransformBBox pin->fig->bBox transform)) pinRectList)
                     )
               )

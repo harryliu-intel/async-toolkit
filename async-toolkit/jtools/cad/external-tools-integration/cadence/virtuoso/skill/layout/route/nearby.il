@@ -21,18 +21,15 @@
 ; connect subcells pins of a net with short paths or vias
 (defun RouteNearbyNet (net @key (CV (geGetEditCellView)) (topShapes t) (subShapes t) (offGrid t) (verbose nil)
                            (protect_map nil))
-  (let (lpps tech n MasterRectList layerName pinRectList layerNum space len
+  (let (layerNames tech n MasterRectList layerName pinRectList layerNum space len
              e1 e2 inst1 inst2 net1 net2 rect1 rect2 overlap rect horz
              r1x0 r1x1 r1y0 r1y1 r2x0 r2x1 r2y0 r2y1
              x0 y0 x1 y1 x y key pitch
              viaDef via list1 list2 xy wb wt viaName viaDef via)
     tech = (techGetTechFile CV)
     n=0
-    (for m 0 TopMetal
-         lpps = (cons MetalDrawing[m] lpps)
-         lpps = (cons MetalPin[m] lpps)
-         )
-    MasterRectList = (nrFindPinShapesWithNet net lpps ?topShapes topShapes ?subShapes subShapes)
+    (for m 0 TopMetal layerNames = (cons Metal[m] layerNames))
+    MasterRectList = (nrFindPinShapesWithNet net layerNames ?topShapes topShapes ?subShapes subShapes)
 
     ; add paths between subcell pins that align at e2e spacing
     (foreach pinRectList MasterRectList
