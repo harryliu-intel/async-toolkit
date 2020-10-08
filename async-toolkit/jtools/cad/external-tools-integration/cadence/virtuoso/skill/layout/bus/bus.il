@@ -2069,6 +2069,25 @@ wires_modtime = makeTable("wires" 0)
   t
   )
 
+; indent path by half Big ETE spacing
+(defun IndentPath (path)
+  (let (s pt0 pt1 xy0 xy1)
+    s=(round MetalHaloBoundarySpace[(car path->lpp)]/MfgGrid)
+    xy0=(XYtoIntegers (car  path->points))
+    xy1=(XYtoIntegers (cadr path->points))
+    (when (cadr xy0)==(cadr xy1)
+          xy0=(car xy0)+(if (car xy1)>(car xy0) s -s):(cadr xy0)
+          xy1=(car xy1)+(if (car xy0)>(car xy1) s -s):(cadr xy1)
+          )
+    (when (car xy0)==(car xy1)
+          xy0=(car xy0):(cadr xy0)+(if (cadr xy1)>(cadr xy0) s -s)
+          xy1=(car xy1):(cadr xy1)+(if (cadr xy0)>(cadr xy1) s -s)
+          )
+    path->points=(list (XYfromIntegers xy0) (XYfromIntegers xy1))
+    )
+  t
+  )
+
 ; convert a point from floating-point to integer MfgGrid
 (defun XYtoIntegers (xy)
   (round (car xy)/MfgGrid):(round (cadr xy)/MfgGrid)
