@@ -3,10 +3,12 @@
 use strict;
 use IPC::Open2;
 
-# rename pin labels from cadence to gds2 namespace
+# rename pin labels and instance names from cadence to gds2 namespace
 my $text="";
 my $n2pid=0;
+my $i2pid=0;
 my $valid=0;
+my $propattr=0;
 while (my $line = <STDIN>) {
     if    ($line =~ /^TEXT$/) { $text=$line; }
     elsif ($text ne "" && $line =~ /^STRING '(\S+)'$/) {
@@ -25,6 +27,12 @@ while (my $line = <STDIN>) {
         $valid=0;
     }
     elsif ($text ne "") { $text .= $line; }
+    elsif ($line =~ /^PROPATTR (\d+)$/ ) { $propattr=$1; print $line; }
+    elsif ($propattr==112 && $line =~ /^PROPVALUE instName=(\S+)$/ ) {
+        my $inst=$1;
+        $inst=i2convert($inst);
+        print "PROPVALUE $inst\n";
+    }
     else { print $line; }
 }
 
@@ -37,6 +45,19 @@ sub n2convert {
     }
     print N2WR "$in\n";
     my $out=<N2RD>;
+    chomp $out;
+    $out;
+}
+
+# use Java rename to rename instances from cadence to gds2
+local(*I2RD,*I2WR);
+sub i2convert {
+    my $in = $_[0];
+    if ($i2pid <= 0) {
+        $i2pid=open2(\*I2RD,\*I2WR, "fulcrum rename --from=cadence --to=gds2 --type=instance");
+    }
+    print I2WR "$in\n";
+    my $out=<I2RD>;
     chomp $out;
     $out;
 }
