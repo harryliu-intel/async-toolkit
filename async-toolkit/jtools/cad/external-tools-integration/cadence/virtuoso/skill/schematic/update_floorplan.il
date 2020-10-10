@@ -15,6 +15,7 @@
         (skipInstances nil) ; don't add/delete instances
         (midPRB nil) ; update prBoundary of routed mid-level cells
         (update t) ; actually modify the cells, otherwise just writes log files
+        (Mem 4096) ; how much memory to use, in MB
         )
   (let (mastersVisited cmd temp dir routed LOG pcre)
 
@@ -30,12 +31,13 @@
     temp = (ConfigFileGetValue TheCDSConfigTable "TEMP")
     dir = (sprintf nil "%s/cast2skill" temp)
     cmd = (sprintf nil
-                   (strcat "%s/cast2skill --max-heap-size=4G --cadence-name "
+                   (strcat "%s/cast2skill --max-heap-size=%dM --cadence-name "
                            "--suppress-pins --suppress-wiring-directives "
                            "--function-prefix=UpdateFloorplan "
                            "--cast-path=%s --cell=%s --output-dir=%s %s "
                            " &> %s/cast2skill.log")
                    (PackageGetBinRoot)
+                   Mem
                    (ConfigFileGetValue TheCDSConfigTable "CAST_PATH")
                    CV->cellName
                    dir
