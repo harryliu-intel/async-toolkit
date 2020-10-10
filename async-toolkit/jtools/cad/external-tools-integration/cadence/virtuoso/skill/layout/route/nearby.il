@@ -13,7 +13,7 @@
                                 ?offGrid offGrid ?verbose verbose ?protect_map protect_map)
              )
     (when protect (RouteNearbyProtect protect_map ?CV CV))
-    (printf "Note that RouteNearby only connects abutting pins between locked instances.")
+    (printf "Note that RouteNearby only connects abutting pins between locked instances.\n")
     n
     )
   )
