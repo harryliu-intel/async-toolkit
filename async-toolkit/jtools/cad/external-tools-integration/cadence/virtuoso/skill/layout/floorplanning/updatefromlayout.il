@@ -1,16 +1,6 @@
 (defun GetPrbound (cv)
- (let (prb prb2)
-  (foreach shape cv->shapes
-    (when (car shape->lpp)=="prBoundary" && (cadr shape->lpp)=="drawing"
-      prb=shape
-    )
+  cv->prBoundary
   )
-  (when cv->prBoundary
-    prb=cv->prBoundary
-  )
-  prb
- )
-)
 
 ; return points of prBoundary as if it were a polygon
 (defun GetPrboundPoints (cv)
