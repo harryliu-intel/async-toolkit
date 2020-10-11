@@ -132,6 +132,7 @@ $arch/bin/check_dummy_pin.pl script/perl/check_dummy_pin.pl  755 p
 
 # utilities
 $arch/bin/lve_jobs.pl        script/perl/lve_jobs            755 p
+$arch/bin/drc_count.pl       script/perl/drc_count.pl        755 p
 
 # new df2.d generator
 $arch/bin/df2d              script/perl/df2d.pl              755 p
