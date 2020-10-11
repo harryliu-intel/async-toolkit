@@ -205,7 +205,8 @@
 
 ; Assign maskColor using overlay layers, then optionally delete overlay layers
 (defun ColorizeByOverlay (@key (CV (geGetEditCellView)) (doVias t))
-  (let (layer color isvia keep overlaps o via)
+  (let (n layer color isvia keep overlaps ov via to_delete)
+    n=0
     (foreach s CV->shapes
       isvia=nil
       (cond (s->lpp==(list "m0"  "backBone")   layer="m0" color=1)
@@ -232,6 +233,8 @@
             (t layer=nil color=nil)
             )
       (when layer
+        n++
+        (when (n&0x3FF)==0 (printf "processed %d color overlay shapes\n" n))
         keep=nil
         (foreach purpose (list "drawing" "pin" "fill" "actFill")
           overlaps = (dbGetOverlaps CV s->bBox (list layer purpose) (if isvia 0:31 0:1))
@@ -242,11 +245,11 @@
                    )
                   (!(atom o) && (car o)->objType=="stdVia"
                    ; (printf "Colorize via on %s\n" layer)
-                   o=(car o)
-                   via=o->viaHeader->viaDef
-                   (cond (isvia (SetViaColor o color nil nil))
-                         (via->layer1->name==layer (SetViaColor o nil color nil))
-                         (via->layer2->name==layer (SetViaColor o nil nil color))
+                   ov=(car o)
+                   via=ov->viaHeader->viaDef
+                   (cond (isvia                    (SetViaColor ov color nil nil))
+                         (via->layer1->name==layer (SetViaColor ov nil color nil))
+                         (via->layer2->name==layer (SetViaColor ov nil nil color))
                          )
                    )
                   (isvia && (GetOverlapObjType o)!="label" && (GetOverlapColor o layer)!=color ; keep via overlay
@@ -256,9 +259,10 @@
                   )
             )
           )
-        (unless keep (dbDeleteObject s))
+        (unless keep to_delete=(cons s to_delete)) ; NOTE: defer delete runs faster!
         )
       )
+    (foreach s to_delete (dbDeleteObject s))
     )
   t
   )
