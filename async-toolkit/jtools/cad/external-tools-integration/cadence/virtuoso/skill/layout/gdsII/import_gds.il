@@ -46,7 +46,7 @@
 
     ; delete temp_lib library
     (ddDeleteObj (ddGetObj temp_lib))
-    (shell "rm -rf %s" temp_lib)
+    (shell (strcat "rm -rf " temp_lib))
 
     ; FindSubcells to recursively rename stuff
     (when action (FindSubcells ?action action ?CV CV))
