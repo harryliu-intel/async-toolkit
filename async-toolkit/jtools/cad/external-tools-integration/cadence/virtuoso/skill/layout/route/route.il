@@ -545,7 +545,7 @@
     (GDSIIHierMakeLibrary libName (getShellEnvVar "DFII_DIR") TechLibName)
     libPath = (getShellEnvVar "DFII_DIR")
     logFile = (strcat file ".log")
-    templib = (strcat "oas_import_temp_" top_name)
+    templib = (strcat "import_temp_" top_name)
     status = (if oas
                (ImportOAS file templib top_name "layout")
                (ImportGDS file templib top_name ?prefix "" ?suffix "")
