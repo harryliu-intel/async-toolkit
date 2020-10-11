@@ -14,24 +14,25 @@
                               (action importPostProcessAction)
                               (setCopyExact nil) ; lamda on CV to decide when to set CopyExact property
                               )
-  (let (PDK_DIR cmd status CV)
-    ; stream in GDS into import_gds_temp library
+  (let (PDK_DIR temp_lib cmd status CV)
+    ; stream in GDS into temp_lib library
     PDK_DIR = (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT")
+    temp_lib = (sprintf nil "import_gds_%s" cellName)
     cmd = (strcat "strmin \\\n"
                   "-attachTechFileOfLib \"" TechLibName "\" \\\n"
                   "-layerMap \"" PDK_DIR "/share/Fulcrum/stream/strmin.layermap\" \\\n"
                   "-propMap \"" PDK_DIR "/share/Fulcrum/stream/prop.map\" \\\n"
                   "-objectMap \"" PDK_DIR "/share/Fulcrum/stream/objectmap\" \\\n"
                   "-enableColoring \\\n"
-                  "-library \"import_gds_temp\" \\\n"
+                  "-library \"" temp_lib "\" \\\n"
                   "-strmFile \"" gdsFileName "\"")
     status = (shell cmd)
     (unless status (error "strmin failed\n"))
     (ddUpdateLibList)
 
     ; open imported top CV
-    CV = (dbOpenCellViewByType "import_gds_temp" cellName "layout")
-    (unless CV (error "unable to open import_gds_temp %s layout\n" cellName))
+    CV = (dbOpenCellViewByType temp_lib cellName "layout")
+    (unless CV (error "unable to open %s %s layout\n" temp_lib cellName))
 
     ; set CopyExact property
     (when setCopyExact
@@ -43,9 +44,9 @@
     (unless prefix prefix = (strcat libName "."))
     CV = (CopyToNewLib libName ?CV CV ?prefix prefix ?suffix suffix ?mapCellName mapCellName)
 
-    ; delete import_gds_temp library
-    (ddDeleteObj (ddGetObj "import_gds_temp"))
-    (shell "rm -rf import_gds_temp")
+    ; delete temp_lib library
+    (ddDeleteObj (ddGetObj temp_lib))
+    (shell "rm -rf %s" temp_lib)
 
     ; FindSubcells to recursively rename stuff
     (when action (FindSubcells ?action action ?CV CV))
