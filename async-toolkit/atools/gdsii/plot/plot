@@ -53,7 +53,7 @@ sub usage {
     die "USAGE: plot basename\n" .
         " --max=[$MAX] # maximum x or y pixel dimensions\n" .
         " --jobs=[$JOBS] # number of parallel jobs to launch with nbq\n" .
-        " --mem=[$MEM] # memory to request for jobs (bytes)\n" .
+        " --mem=[$MEM] # memory to request for jobs (MB)\n" .
         " # rarely used options\n" .
         " --gds=[$gds] # GDS file name\n" .
         " --grid=[$GRID] # manufacturing grid in GDS units\n" .
