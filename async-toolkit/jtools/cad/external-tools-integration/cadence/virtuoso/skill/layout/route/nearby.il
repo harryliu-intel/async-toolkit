@@ -57,7 +57,7 @@
           net2  = (cadr  e2)
           rect2 = (caddr e2)
           rect2 = (BBoxCanonicalize rect2)
-          (when net1!=nil && net2!=nil && (net1!=net2 || inst1!=inst2) && !(BBoxAnd rect1 rect2)
+          (when (inst1==nil || inst2==nil || net1!=net2 || inst1!=inst2) && !(BBoxAnd rect1 rect2)
             overlap=nil
             r1x0=(car  (car  rect1))
             r1x1=(car  (cadr rect1))
@@ -129,7 +129,7 @@
           net2  = (cadr e2)
           rect2 = (BBoxCanonicalize (caddr e2))
           overlap = (BBoxAnd rect1 rect2)
-          (when overlap && (net1!=net2 || inst1!=inst2 || net1==nil && net2==nil) &&
+          (when overlap && (inst1==nil || inst2==nil || net1!=net2 || inst1!=inst2) &&
                 (dbGetOverlaps CV overlap (list Via[v] "drawing") 0:31)==nil
             xy = (BBoxGetCenter overlap)
             wb = (if offGrid (GetWireWidth v rect1) (GetTrackWidth v xy))
