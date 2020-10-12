@@ -775,16 +775,7 @@ DumbLayers = (list (list "SRAM" "fill")
 
 ; Shift contents of a cell
 (defun OffsetEverything (offset @key (CV (geGetEditCellView)) (reverse nil))
-  (let (contents)
-    contents = (list CV->prBoundary)
-    contents = (append contents CV->instances)
-    contents = (append contents CV->shapes)
-    contents = (append contents CV->mosiacs)
-    contents = (append contents CV->vias)
-    contents = (append contents CV->blockages)
-    contents = (setof x contents x->parent==nil)
-    (foreach fig contents (dbMoveFig fig CV (list (if reverse -(car offset):-(cadr offset) offset) "R0")))
-    )
+  (leMoveCellViewOrigin CV (if reverse offset -(car offset):-(cadr offset)))
   t
   )
 
