@@ -108,6 +108,7 @@ $arch/bin/checkpgvia.pl                                                    scrip
 $arch/bin/dangling.pl                                                      script/perl/dangling.pl                                                  775 p
 $arch/bin/virtuoso_replay                                                  script/perl/virtuoso_replay                                              775 p
 $arch/bin/ExportGDS                                                        script/perl/ExportGDS                                                    775 p
+$arch/bin/offset_layout                                                    script/sh/util/offset_layout                                             775 p
 # routing - needed for UI/gen_leaf_cells
 $arch/bin/runccar.sh                                                       skill/layout/leaf/router/runccar.sh                                      775 p
 $arch/bin/importccar.sh                                                    skill/layout/leaf/router/importccar.sh                                   775 p

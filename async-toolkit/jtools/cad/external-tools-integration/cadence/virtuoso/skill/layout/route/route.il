@@ -509,9 +509,10 @@
         (baseCV nil)
         (top_name nil)
         (pinMap nil)
+        (calibreOffset nil)
         )
   (let (TEMP WDIR libPath logFile Command status ImportCV layoutCV floorplanCV
-             win instmap CID templib fields short_name offset file oas)
+             win instmap CID templib fields short_name offset file origFile oas)
 
     ; choose libName and cellName
     (unless libName  libName  = CV->libName)
@@ -542,6 +543,21 @@
           )
     (unless (fileTimeModified file) (error "Cannot read %s\n" file))
 
+    ; HACK: restore cell alignment by preprocessing GDS or OAS file using Calibre
+    (when calibreOffset && baseCV
+      offset = (GetRDTOffset ?CV baseCV)
+      origFile = file
+      file = (sprintf nil "%s/offset_layout_%s.%s"
+                          TEMP
+                          top_name
+                          (if oas "oas" "gds"))
+      Command = (sprintf nil "offset_layout %f %f %s %s" (car offset)
+                                                         (cadr offset)
+                                                         origFile
+                                                         file)
+      (unless (shell Command)
+        (error "%s failed" Command)))
+
     ; create temp library and import cell
     (GDSIIHierMakeLibrary libName (getShellEnvVar "DFII_DIR") TechLibName)
     libPath = (getShellEnvVar "DFII_DIR")
@@ -552,6 +568,7 @@
                (ImportGDS file templib top_name ?prefix "" ?suffix "")
                )
     (unless status (error "Unsuccessful import\n"))
+    (when origFile (shell (strcat "rm -f " file)))
     ImportCV = (dbOpenCellViewByType templib top_name "layout" "maskLayout" "a")
 
     ; flatten ICC cells
@@ -567,9 +584,9 @@
     ; HACK: copy properties from baseCV and restore cell alignment
     (when baseCV
       (CopyCellViewProps baseCV ImportCV)
-      offset = (GetRDTOffset ?CV baseCV)
-      (OffsetEverything offset ?CV ImportCV ?reverse t)
-      )
+      (unless calibreOffset
+        offset = (GetRDTOffset ?CV baseCV)
+        (OffsetEverything offset ?CV ImportCV ?reverse t)))
 
     ; colorize
     (when colorize (ColorizeByOverlay ?CV ImportCV))
