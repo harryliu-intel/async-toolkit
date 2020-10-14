@@ -15,6 +15,7 @@ my $working_dir = "$pwd";
 my $gdsii="";
 my $gdsii_list="";
 my $icv_options="";
+my @include_before=();
 my $threads=2;
 my $mem=1;
 my $jobs=0;
@@ -38,6 +39,7 @@ sub usage {
     $usage .= "    --gds2-file=[$gdsii] (Provide source layout by gdsii file.)\n";
     $usage .= "    --gds2-list=[$gdsii_list] (Provide source layout by a file list contains gdsii file)\n";
     $usage .= "    --icv-options=[$icv_options] (Extra ICV command options)\n";
+    $usage .= "    --include-before=[@include_before] (Prepend directory to include search path)\n";
     $usage .= "    --threads=[$threads] (ICV thread)\n";
     $usage .= "    --jobs=[$jobs] (Netbatch jobs; if specified, --threads is per job)\n";
     $usage .= "    --mem=[$mem] (Memory in GB, if Netbatch enabled)\n";
@@ -72,6 +74,8 @@ while (defined $ARGV[0] and $ARGV[0] =~ /^--(.*)/) {
         $icv_runset_path = $value;
     } elsif ($flag eq "icv-options") {
         $icv_options = $value;
+    } elsif ($flag eq "include-before") {
+        unshift @include_before, $value;
     } elsif ($flag eq "fulcrum-pdk-root") {
             $pdk_root = $value  if(defined $value);
     } elsif ($flag eq "help") {
@@ -158,20 +162,26 @@ sub run_drc {
        $runset=$icv_runset_path . "/PXL/StandAlone/${runset}.rs";
    }
 
+   my @all_includes = (
+       @include_before,
+       ".",
+       "$pdk_root/share/Fulcrum/icv/ntvsram_waive",
+       "$pdk_root/share/Fulcrum/icv/drc",
+       "$pdk_root/share/Fulcrum/icv/lvs",
+       "$icv_runset_path/PXL_ovrd",
+       "$icv_runset_path/PXL",
+       "$ENV{PDK_CPDK_PATH}/libraries/icv/libcells",
+       "$icv_runset_path/util/dot1/HIP",
+       "$icv_runset_path/util/Cadnav",
+       "$icv_runset_path/util/denplot",
+       "$run_dir"
+   );
+   my $all_includes = join(" \\\n", map { "-I $_" } @all_includes);
+
    print CF <<ET;
 #!/usr/intel/bin/tcsh -f
 setenv _ICV_RSH_COMMAND $ENV{'FULCRUM_PACKAGE_ROOT'}/bin/icvrsh
-$ENV{'ICV_SCRIPT'} 'icv' -I . \\
--I $pdk_root/share/Fulcrum/icv/ntvsram_waive \\
--I $pdk_root/share/Fulcrum/icv/drc \\
--I $pdk_root/share/Fulcrum/icv/lvs \\
--I $icv_runset_path/PXL_ovrd \\
--I $icv_runset_path/PXL \\
--I $ENV{PDK_CPDK_PATH}/libraries/icv/libcells \\
--I $icv_runset_path/util/dot1/HIP \\
--I $icv_runset_path/util/Cadnav \\
--I $icv_runset_path/util/denplot \\
--I $run_dir \\
+$ENV{'ICV_SCRIPT'} 'icv' $all_includes \\
 -D NOCLD \\
 -vue \\
 -D _drMaxError=100000000 \\
