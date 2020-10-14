@@ -10,6 +10,13 @@
               ( setarray NewTable Key ( arrayref Table Key ) ) )
     NewTable ) )
 
+(defun TableCopyInvert ( Table )
+  (let (
+        ( NewTable ( makeTable `bla ( arrayref Table `unbound ) ) ) )
+    ( foreach Key Table 
+              ( setarray NewTable ( arrayref Table Key ) Key ) )
+    NewTable ) )
+
 (defun TableCreateFromPairs ( Pairs )
   (let (
         ( Table ( makeTable `foo nil ) ) )
@@ -37,4 +44,4 @@
       ( lambda ( CorrespondingElement )
         ( arrayref SourceTable ( apply CorrespondingKeyFunc ( list CorrespondingElement ) ) ) )
       CorrespondingList ) ) )
-       
+

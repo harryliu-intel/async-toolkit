@@ -508,6 +508,7 @@
 	(colorize t) ; run ColorizeByOverlay
         (baseCV nil)
         (top_name nil)
+        (pinMap nil)
         )
   (let (TEMP WDIR libPath logFile Command status ImportCV layoutCV floorplanCV
              win instmap CID templib fields short_name offset file oas)
@@ -575,6 +576,12 @@
 
     ; fixup pins and connectivity
     (LabelsToPins ?CV ImportCV)
+    (when pinMap
+      (foreach term ImportCV->terminals
+        newName = pinMap[term->name]
+        (when (and newName newName!=term->name)
+          term->name = newName
+          (dbRenameNet term->net newName))))
     (DeleteLabels ?CV ImportCV)
     (LabelPins ?CV ImportCV)
     (dbSave ImportCV)
