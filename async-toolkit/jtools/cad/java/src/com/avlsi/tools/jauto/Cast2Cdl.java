@@ -591,6 +591,11 @@ public final class Cast2Cdl {
         final CDLNameInterface cdlNamer = Rename.getInterface("cast",
                 translate.equals("none") ? "cast" : translate);
 
+        if (cdlNamer == null) {
+            System.err.println("Invalid namespace specified: " + translate);
+            System.exit(2);
+        }
+
         // Reload any name mapping
         final String argNameMap = theArgs.getArgValue("name-map", null);
         final String pdkRoot = theArgs.getArgValue("fulcrum-pdk-root", null);
