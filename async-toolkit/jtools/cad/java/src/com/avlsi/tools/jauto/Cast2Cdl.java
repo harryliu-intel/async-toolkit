@@ -26,6 +26,8 @@ import java.util.ArrayList;
 import java.util.Set;
 import java.util.Stack;
 import java.util.StringTokenizer;
+import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 import com.avlsi.cast.CastFileParser;
 import com.avlsi.cast.CastSyntaxException;
@@ -61,6 +63,7 @@ import com.avlsi.file.cdl.util.rename.GDS2NameInterface;
 import com.avlsi.file.cdl.util.rename.IdentityNameInterface;
 import com.avlsi.file.cdl.util.rename.TrivialCDLNameInterfaceFactory;
 import com.avlsi.file.cdl.util.rename.ReloadableNameInterface;
+import com.avlsi.file.cdl.util.rename.Rename;
 import com.avlsi.io.FileSearchPath;
 import com.avlsi.tools.cadencize.Cadencize;
 import com.avlsi.tools.cadencize.CadenceInfo;
@@ -237,13 +240,15 @@ public final class Cast2Cdl {
     }
 
     private static void usage( String m ) {
-        
+        final String xlators = 
+            Stream.concat(Rename.getNamespaces(), Stream.of("none"))
+                  .collect(Collectors.joining(" | "));
         System.err.println( "Usage: cast2cdl\n" );
         System.err.println("  --cast-path=<cast-path> (defaults to .)");
         System.err.println("  --cast-version=<version> (defaults to 2)");
         System.err.println("  --cell=<cell> (name of cell to process, can be FQCN+-)");
         System.err.println("  --output=<file> (defaults to <cell>.cdl)");
-        System.err.println("  --translate=[ cadence | gds2 | none ] (defaults to cadence)");
+        System.err.println("  --translate=[" + xlators + "] (defaults to cadence)");
         System.err.println("  [ --cadence-name ]");
         System.err.println("  [ --inline-layout (respect the inline_layout directive) ]"); 
         System.err.println("  [ --flatten (flatten the netlist) ]");
@@ -583,14 +588,8 @@ public final class Cast2Cdl {
             new CDLFactoryEmitter(writer, true, 79, true, bFlatten);
 
         // Determine the renaming method to use
-        final CDLNameInterface cdlNamer;
-        if (translate.equals("cadence")) {
-            cdlNamer = new CadenceNameInterface();
-        } else if (translate.equals("gds2")) {
-            cdlNamer = new GDS2NameInterface();
-        } else {
-            cdlNamer = new IdentityNameInterface();
-        }
+        final CDLNameInterface cdlNamer = Rename.getInterface("cast",
+                translate.equals("none") ? "cast" : translate);
 
         // Reload any name mapping
         final String argNameMap = theArgs.getArgValue("name-map", null);
