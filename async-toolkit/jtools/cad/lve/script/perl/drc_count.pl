@@ -4,7 +4,7 @@ my %count;
 my $rule;
 while (my $line = <STDIN> ){
     if ($line =~ /^ (\S+):/) { $rule = $1; }
-    if ($line =~ /(\d+) violations found.$/) {
+    if ($line =~ /(\d+) violation[s]* found.$/) {
         my $c=$1;
         print "$rule\t$c\n";
         if ($rule =~ /^M/ || $rule =~ /^V/) { $class="metvia"; }
