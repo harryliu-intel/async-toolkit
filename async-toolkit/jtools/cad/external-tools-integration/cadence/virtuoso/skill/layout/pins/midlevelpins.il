@@ -45,7 +45,7 @@
 
     (foreach Term CellTerms
       (foreach InstTerm Term->net->instTerms
-        (unless (member Term->name BusPinList)
+        (unless (member Term->name BusPinList) || !InstTerm->inst->transform
           InPlacePinFig = (MidPinsInheritPin CV InstTerm->inst InstTerm->name Term->name
                                              ?topMetal supply_topMetal
                                              ?all_supply all_supply ?all_signal all_signal)
