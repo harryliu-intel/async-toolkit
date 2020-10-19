@@ -509,7 +509,7 @@
         (baseCV nil)
         (top_name nil)
         (pinMap nil)
-        (calibreOffset nil)
+        (calibreOffset t)
         )
   (let (TEMP WDIR libPath logFile Command status ImportCV layoutCV floorplanCV
              win instmap CID templib fields short_name offset file origFile oas)
