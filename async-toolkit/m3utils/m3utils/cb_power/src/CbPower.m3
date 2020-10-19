@@ -99,17 +99,41 @@ CONST
   };
 
 CONST
-  BaseP56G       = 503.0d0;
+  (*
+     The base power figures are a bit confusing here.
+
+     They are not used to compute SERDES power.  
+
+     They are just used to set up the base power for the two modes
+
+     56G overall power is 503.0 -  6.4 = 496.6 W
+
+     112G                 496.6 - 37.5 = 459.1 W
+
+  *)
+  BaseP56G       = 503.0d0 - 6.4d0;
+  (* the 6.4W adjustment comes from Ram's update on the SERDES power
+     10/19/20 *)
+  
   BaseP112Gvs56G = 25.0d0 * 1.5d0;
   BaseP112G      = BaseP56G - BaseP112Gvs56G;
+
+  (**********************************************************************)
+  
   BaseLeakageP   = 30.0d0;
   BasePackBytes  = 247;
   BaseV          = 0.75d0;
-  BaseSerdesEpb  = 7.5d-12;
+
+  BaseSerdesEpb  = 7.0d-12;
+  (* serdes power is 700 mW per lane per Ram 10/19/20
+     down from 750 mW *)
+  
   BaseSerdesbps  = 12.8d12;
   BaseSerdesP    = BaseSerdesEpb * BaseSerdesbps;
 
   BaseDynP       = BaseP112G - BaseLeakageP;
+
+  BaseInterDieP  = 20.0d0;
 
   BaseClks       = ARRAY Clock OF LONGREAL {
   1.35d0,
@@ -263,9 +287,11 @@ PROCEDURE DoScenario(nm               : TEXT;
     totDynP := CalcDynP(clk, v, sz);
     Debug.Out(F(fmt, "totDynP/die [112G]", LR2(totDynP)));
     WITH lkgP = CalcLeakageP(v, sz),
-         totP = totDynP + lkgP DO
+         totP = totDynP + lkgP,
+         tot2P = 2.0d0 * totP + BaseInterDieP DO
       Debug.Out(F(fmt, "lkgP/die [112G]", LR2(lkgP)));
       Debug.Out(F(fmt, "totP/die [112G]", LR2(totP)));
+      Debug.Out(F(fmt, "totP/2die [112G]", LR2(tot2P)));
     END;
     
 
@@ -276,7 +302,8 @@ VAR
   totalA := 0.0d0; (* total area of all accounted-for blocks *)
   BaseSizes, RedSizes, RedMauSizes : ARRAY [0..NB-1] OF LONGREAL;
 BEGIN
-  
+
+  Debug.Out("====================  BASELINE SETUP  ====================");
   FOR i := FIRST(blocks) TO LAST(blocks) DO
     WITH b = blocks[i] DO
       BaseSizes[i] := FLOAT(b.size,LONGREAL);
@@ -317,6 +344,8 @@ BEGIN
     END
   END;
 
+  Debug.Out("====================  END BASELINE SETUP  ====================");
+
   (* initialize RedSizes *)
   RedSizes := BaseSizes;
   RedMauSizes := BaseSizes;
@@ -329,6 +358,7 @@ BEGIN
   DoScenario("BASELINE",             BaseClks    , BaseVs     , BaseSizes);
   DoScenario("ARCH SLOW",            ArchSlowClks, BaseVs     , BaseSizes);
   DoScenario("ARCH SLOW -50mV",      ArchSlowClks, Reduced50Vs, BaseSizes);
+  DoScenario("ARCH SLOW -50mV PpsLOW",      ArchSlowClks, PpsLowV, BaseSizes);
   DoScenario("ARCH RED SLOW -50mV",  ArchSlowClks, Reduced50Vs, RedSizes);
   DoScenario("ARCH REDMAU SLOW -50mV",  ArchSlowClks, Reduced50Vs, RedMauSizes);
   DoScenario("ARCH REDMAU SLOW MauLOW", ArchSlowClks, PpsLowV    , RedMauSizes);
