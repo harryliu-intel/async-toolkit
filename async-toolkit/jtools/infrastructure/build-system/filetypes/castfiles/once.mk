@@ -737,7 +737,7 @@ $(ROOT_TARGET_DIR)/%/estimated/instances/.instances \
 	#TASK=mk_instances VIEW=$(call GET_VIEW,$(@D)) CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	if [[ ( -n "$(call LVE_SKIP,extract)" ) && ( -e '$@' ) ]] ; then exit; fi; \
 	mkdir -p '$(@D)'; \
-	$(CASTFILES_ENQUEUE_TASK) && \
+	task=mk_instances && $(CASTFILES_ENQUEUE_TASK) && \
 	working_dir=`mktemp -d "$(WORKING_DIR)/cdswd.XXXXXX"`; \
 	sync; \
 	sleep 1; \
@@ -874,7 +874,7 @@ $(ROOT_TARGET_DIR)/%/custom/extract.result: $(CUSTOM_SPICE)
 # rename cdl to gds2 names
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/cell.cdl_gds2
 $(ROOT_TARGET_DIR)/%/cell.cdl_gds2: $$(call GET_CELL_DIR,$$(@D))/cell.cdl
-	$(CASTFILES_ENQUEUE_TASK) && \
+	task=renamer && $(CASTFILES_ENQUEUE_TASK) && \
 	QB_DIAG_FILE='$@.diag' QB_RUN_NAME='lve_rename' \
 	$(EXEC_LOW_PACKAGE) $(CDL_RENAMER) \
 	  --source-cdl-file='$<' \
@@ -887,7 +887,7 @@ $(ROOT_TARGET_DIR)/%/cell.cdl_gds2: $$(call GET_CELL_DIR,$$(@D))/cell.cdl
 
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/cell.cdl_pmc
 $(ROOT_TARGET_DIR)/%/cell.cdl_pmc: $(ROOT_TARGET_DIR)/%/cell.cdl_gds2
-	$(CASTFILES_ENQUEUE_TASK) && \
+	task=renamer && $(CASTFILES_ENQUEUE_TASK) && \
 	QB_DIAG_FILE='$@.diag' QB_RUN_NAME='lve_rename' \
 	$(EXEC_LOW_PACKAGE) $(CDL_RENAMER) \
 	  --source-cdl-file='$<' \
@@ -1421,7 +1421,7 @@ $(ROOT_TARGET_DIR)/%/nanotime/extract.err: \
 # rename spice file from cast to gds2 names
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/estimated/cell.spice_gds2
 $(ROOT_TARGET_DIR)/%/estimated/cell.spice_gds2: $(ROOT_TARGET_DIR)/%/estimated/cell.spice
-	$(CASTFILES_ENQUEUE_TASK) && \
+	task=renamer && $(CASTFILES_ENQUEUE_TASK) && \
 	QB_DIAG_FILE='$@.diag' QB_RUN_NAME='lve_rename' \
 	$(EXEC_LOW_PACKAGE) $(CDL_RENAMER) \
 	  --source-cdl-file='$<' \
@@ -1429,13 +1429,14 @@ $(ROOT_TARGET_DIR)/%/estimated/cell.spice_gds2: $(ROOT_TARGET_DIR)/%/estimated/c
 	  --name-out=$(GDS2_NAMESPACE) \
 	  --extension-in=.spice \
 	  --extension-out=.spice_gds2 \
-	  --translated-cdl='$@'; \
+	  --translated-cdl='$@.tmp' && \
+	mv -f '$@.tmp' '$@'; \
 	$(CASTFILES_DEQUEUE_TASK)
 
 # rename spice file from cast to gds2 names
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/nogeometry/cell.spice_gds2
 $(ROOT_TARGET_DIR)/%/nogeometry/cell.spice_gds2: $(ROOT_TARGET_DIR)/%/nogeometry/cell.spice
-	$(CASTFILES_ENQUEUE_TASK) && \
+	task=renamer && $(CASTFILES_ENQUEUE_TASK) && \
 	QB_DIAG_FILE='$@.diag' QB_RUN_NAME='lve_rename' \
 	$(EXEC_LOW_PACKAGE) $(CDL_RENAMER) \
 	  --source-cdl-file='$<' \
@@ -1443,14 +1444,18 @@ $(ROOT_TARGET_DIR)/%/nogeometry/cell.spice_gds2: $(ROOT_TARGET_DIR)/%/nogeometry
 	  --name-out=$(GDS2_NAMESPACE) \
 	  --extension-in=.spice \
 	  --extension-out=.spice_gds2 \
-	  --translated-cdl='$@'
+	  --translated-cdl='$@.tmp' && \
+	mv -f '$@.tmp' '$@'; \
 	$(CASTFILES_DEQUEUE_TASK)
 
 # post-process spice file to add probes
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/cell.hspice
 $(ROOT_TARGET_DIR)/%/cell.hspice: $(ROOT_TARGET_DIR)/%/cell.spice_gds2
 	#TASK=spice2spice CELL=$(call GET_CAST_FULL_NAME,$(@D))
-	$(SPICE2SPICE) --top='$(call GET_GDS2_CDL_NAME,$(@D))' "$?" "$@" ;\
+	task=spice2spice && $(CASTFILES_ENQUEUE_TASK) && \
+	$(SPICE2SPICE) --top='$(call GET_GDS2_CDL_NAME,$(@D))' "$?" "$@.tmp" && \
+	mv -f '$@.tmp' '$@'; \
+	$(CASTFILES_DEQUEUE_TASK)
 
 # summarize starRC extract results
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/extracted/extract.result
