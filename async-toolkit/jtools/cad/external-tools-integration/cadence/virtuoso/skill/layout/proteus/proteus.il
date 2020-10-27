@@ -206,10 +206,10 @@
   )
 
 ; delete labels
-(defun DeleteLabels (@key (CV nil))
+(defun DeleteLabels (@key (CV nil) (keepLPPs nil))
   (cond (!CV CV = (geGetEditCellView)))
   (foreach obj CV->shapes
-           (cond (obj->objType=="label" (dbDeleteObject obj)))
+           (when obj->objType=="label" && (member obj->lpp keepLPPs)==nil (dbDeleteObject obj))
            )
   t
   )

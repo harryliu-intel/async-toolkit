@@ -54,7 +54,7 @@
     ; more processing of top level cell
     (dbReplaceProp CV "CastCell" "boolean" t) ; top-level only
     (LabelsToPins ?CV CV) ; create pins by finding labels on "pin" purpose rectangles
-    (DeleteLabels ?CV CV)
+    (DeleteLabels ?CV CV ?keepLPPs (list NWellLPP))
     (LabelPins ?CV CV)
     (dbSave CV)
 
