@@ -61,7 +61,7 @@
                  )
            align = (list gx:gy ox:oy)
            )
-          (t align=(list GridPolyPitch:TrackPitch 0:0)) ; unknown alignment
+          (t align=(list GridPolyPitch:TrackPitch 0.0:0.0)) ; unknown alignment
           )
     align
     )
