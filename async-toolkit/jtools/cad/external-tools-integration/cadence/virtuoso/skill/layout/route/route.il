@@ -30,6 +30,7 @@
         (targetCellName nil)     ; DFII name for APR target   cell
         (tau nil)                ; override tau for Proteus
         (ecoIter 0)              ; number of spr ECO passes
+        (rdtUserTcl nil)         ; optional tcl file
         )
   (let (TEMP WDIR)
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
@@ -47,7 +48,7 @@
                           ?metalFill metalFill ?softMacro softMacro
                           ?abstractCellName abstractCellName ?targetCellName targetCellName
                           ?noPowerFill noPowerFill ?timingDriven timingDriven ?colorGrid colorGrid
-                          ?tau tau ?ecoIter ecoIter)
+                          ?tau tau ?ecoIter ecoIter ?rdtUserTcl rdtUserTcl)
 
     ; copy CV to importView so in-place pins don't need to wait on router to finish
     (when Background (betterCopyCellView CV CV->libName CV->cellName importView nil nil t t))
@@ -98,6 +99,7 @@
         (tau nil)                ; override tau for Proteus
         (ecoIter 0)              ; number of spr ECO passes
         (pinMap nil)             ; rename ports based on map
+        (rdtUserTcl nil)         ; optional tcl file
         )
   (let (TEMP WDIR LEFDEF_DIR MaxHeapSize CAST_PATH DFII_DIR SPAR_DIR PDK_DIR
         abstractCV
@@ -150,7 +152,7 @@
                    ?pwrMetal pwrMetal ?topHalo topHalo ?denseStaples denseStaples ?metalFill metalFill
                    ?timingDriven timingDriven ?softMacro softMacro
                    ?abstractCellName abstractCellName ?targetCellName targetCellName
-                   ?tau tau ?ecoIter ecoIter)
+                   ?tau tau ?ecoIter ecoIter ?rdtUserTcl rdtUserTcl)
 
     ; export Verilog
     (when doVerilog
@@ -369,6 +371,7 @@
         (targetCellName nil)     ; DFII name of APR target   cell
         (tau nil)                ; override tau for Proteus
         (ecoIter 0)              ; number of spr ECO passes
+        (rdtUserTcl nil)         ; optional tcl file
         )
   (let (CAST_PATH DFII_DIR TEMP WDIR file)
     ; files and options
@@ -399,6 +402,7 @@
     (fprintf file "--soft-macro=%d\n" (if softMacro 1 0))
     (when tau (fprintf file "--tau=%g\n" tau))
     (fprintf file "--rdt-eco-iter=%d\n" ecoIter)
+    (when rdtUserTcl (fprintf file "--rdt-user-tcl=%s\n" (PathMakePathAbsolute rdtUserTcl)))
     (fprintf file "--base=%s\n" (GetCastCellName CV->cellName))
     (fprintf file "--csp-register-width=1025\n")
     (cond (softMacro && abstractCellName && targetCellName
