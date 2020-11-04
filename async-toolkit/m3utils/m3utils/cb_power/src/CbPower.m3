@@ -321,10 +321,10 @@ PROCEDURE DoSimpleModel() =
   CONST
     Pppsmax       =  348.0d0;
     Pserdesconst  =  110.0d0;
-    Prestmax      =  582.0d0;
+    Prestmax      =  470.0d0;
 
-    Vminsram      = 0.55d0;
-    Vminrest      = 0.70d0;
+    Vminsram      = 0.600d0;
+    Vminrest      = 0.75d0;
 
     Fppsmax       = 1.50d0;
     Apsmin        = 247;
