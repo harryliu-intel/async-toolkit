@@ -318,17 +318,36 @@ PROCEDURE DoScenario(nm               : TEXT;
   END DoScenario;
 
 PROCEDURE DoSimpleModel() =
+  (* model is of a TF3-class switch with a PPS clock that can be
+     swept for various minimum average packet sizes.
+
+     3 models: 
+
+     1 is single power domain
+
+     2 is we split the PPS clock domain into its own p.d.
+
+     3 is we split also the SRAMs into their own p.d.
+
+     estimate power for each 
+  *)
   CONST
-    Pppsmax       =  348.0d0;
-    Pserdesconst  =  110.0d0;
-    Prestmax      =  470.0d0;
+    (* these are baseline power figures.
+       somewhat arbitrarily chosen to make #s at 300B agree with
+       Jon's power spreadsheet (744W split Vdd, 777W single p.d.)
+    *)
+    Pppsmax       =  348.0d0;  (* the part we scale completely *)
+    Pserdesconst  =  110.0d0;  (* the SERDES : fixed power *)
+    Prestmax      =  470.0d0;  (* the rest: voltage-scaled till Vminrest *)
 
-    Vminsram      = 0.600d0;
-    Vminrest      = 0.75d0;
+    Vminsram      = 0.600d0; (* assumed SRAM Vmin *)
+    Vminrest      = 0.750d0; (* min voltage for timing closure of non-PPS
+                                logic in chip *)
 
-    Fppsmax       = 1.50d0;
-    Apsmin        = 247;
-    Vmax          = 0.80d0;
+    Fppsmax       = 1.50d0;  (* in GHz *)
+    Apsmin        = 247;     (* in bytes *)
+    Vmax          = 0.80d0;  (* in volts, assumed voltage at which we do
+                                Apsmin @ Fppsmax *)
     
   VAR
     Vf, Ppsclock : LONGREAL;
@@ -336,11 +355,13 @@ PROCEDURE DoSimpleModel() =
     
   PROCEDURE V(f : LONGREAL) : LONGREAL =
     BEGIN
-      (* linear, based on 0.80V @ 1.5, 0.70V @ 1.25 *)
+      (* linear, based on 0.80V @ 1.5GHz, 0.70V @ 1.25GHz *)
       RETURN 0.55d0 / 1.5d0 * f + 0.25d0
     END V;
     
   PROCEDURE Ppps() : LONGREAL =
+    (* baseline scenario, PPS domain has its own voltage, but 
+       subject to SRAM Vmin *)
     BEGIN
       WITH vpps = MAX(Vminsram, Vf),
            vratio = vpps / Vmax,
@@ -354,6 +375,7 @@ PROCEDURE DoSimpleModel() =
     END Ppps;
 
   PROCEDURE PppsSingle() : LONGREAL =
+    (* worst case scenario, all domains same voltage *)
     BEGIN
       WITH vpps = MAX(Vminrest, MAX(Vminsram, Vf)),
            vratio = vpps / Vmax,
@@ -367,6 +389,8 @@ PROCEDURE DoSimpleModel() =
     END PppsSingle;
 
   PROCEDURE PppsLow() : LONGREAL =
+    (* best case scenario, split PPS voltage domain plus 
+       split SRAM voltage domain *)
     BEGIN
       WITH vpps = Vf,
            vratio = vpps / Vmax,
@@ -400,6 +424,23 @@ PROCEDURE DoSimpleModel() =
     
   BEGIN
     Wr.PutText(wr, "aps, fpps, vpps, ppps, fppsSingle, vppsSingle, pppsSingle, fppsLow, vppsLow, pppsLow, pserdes, vrest, prest, ptot, ptotSingle, ptotLow\n");
+
+    (*
+
+       below we sweep APS from 247 to 622 bytes
+       
+       why 622 bytes, you ask?
+
+       because 595 MHz is the single-port packet rate at 84B per packet
+       (64B data + 20B IFG)
+
+       TF3 can't do this because it can't service one single port on
+       back-to-back cycles, but would be theoretically possible with
+       architecture changes
+
+    *)
+
+
     FOR aps := 247 TO 622 (* 622 -> 595 MHz *) DO
       Wr.PutText(wr, F("%s", Int(aps)));
       
