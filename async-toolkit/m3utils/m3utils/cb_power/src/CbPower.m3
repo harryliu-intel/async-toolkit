@@ -1,8 +1,9 @@
 MODULE CbPower EXPORTS Main;
 IMPORT Debug;
-IMPORT Fmt; FROM Fmt IMPORT F, Int;
+IMPORT Fmt; FROM Fmt IMPORT F, Int, FN;
 IMPORT Math;
 IMPORT Text;
+IMPORT Wr, FileWr;
 
 CONST LR  = Fmt.LongReal;
       TE  = Text.Equal;
@@ -151,6 +152,14 @@ CONST
   1.0d0
   };
 
+  ArchSlowPps1Clks       = ARRAY Clock OF LONGREAL {
+  1.3d0,
+  1.3d0,
+  1.0d0,
+  1.0d0,
+  1.0d0
+  };
+
   BaseVs         = ARRAY Clock OF LONGREAL {
   BaseV, ..
   };
@@ -215,6 +224,7 @@ PROCEDURE CalcDynP(READONLY clk : ARRAY Clock     OF LONGREAL;
                    READONLY v   : ARRAY Clock     OF LONGREAL;
                    READONLY sz  : ARRAY [0..NB-1] OF LONGREAL) : LONGREAL =
   VAR
+    clkTot := ARRAY Clock OF LONGREAL { 0.0d0 , .. };
     tot, this : LONGREAL;
   BEGIN
     FOR i := FIRST(blocks) TO LAST(blocks) DO
@@ -222,7 +232,10 @@ PROCEDURE CalcDynP(READONLY clk : ARRAY Clock     OF LONGREAL;
            szRatio               = sz[i] / FLOAT(b.size,LONGREAL) DO
         this := 0.0d0;
         IF b.hasCustomP THEN
-          this := b.customP
+          this := b.customP;
+          FOR c := FIRST(b.clocks) TO LAST(b.clocks) DO
+            clkTot[c] := clkTot[c] + b.clocks[c] * b.customP
+          END
         ELSE
           VAR
             baselineBlockP := blockP[i];
@@ -232,9 +245,11 @@ PROCEDURE CalcDynP(READONLY clk : ARRAY Clock     OF LONGREAL;
                    clkRatio              = clk[c] / BaseClks[c],
                    speedBlockClkP        = baseBlockClkP  * clkRatio,
                    vddRatio              = v[c] / BaseV,
-                   speedVoltageBlockClkP = speedBlockClkP * vddRatio * vddRatio
+                   speedVoltageBlockClkP = speedBlockClkP * vddRatio * vddRatio,
+                   incrP                 = speedVoltageBlockClkP * szRatio
                DO
-                this := this + speedVoltageBlockClkP * szRatio
+                this := this + incrP;
+                clkTot[c] := clkTot[c] + incrP
               END
             END
           END
@@ -242,6 +257,10 @@ PROCEDURE CalcDynP(READONLY clk : ARRAY Clock     OF LONGREAL;
         Debug.Out(F("block %-15s P %10s", b.name, LR2(this)));
         tot := tot + this
       END
+    END;
+    Debug.Out("-------------------------------");
+    FOR c := FIRST(Clock) TO LAST(Clock) DO
+      Debug.Out(F("clock %-15s P %10s", ClockNames[c], LR2(clkTot[c])));
     END;
     RETURN tot
   END CalcDynP;
@@ -298,6 +317,127 @@ PROCEDURE DoScenario(nm               : TEXT;
     Debug.Out(F("scenario %s <<<<<<<<<<<<<<<<<", nm));
   END DoScenario;
 
+PROCEDURE DoSimpleModel() =
+  CONST
+    Pppsmax       =  348.0d0;
+    Pserdesconst  =  110.0d0;
+    Prestmax      =  582.0d0;
+
+    Vminsram      = 0.55d0;
+    Vminrest      = 0.70d0;
+
+    Fppsmax       = 1.50d0;
+    Apsmin        = 247;
+    Vmax          = 0.80d0;
+    
+  VAR
+    Vf, Ppsclock : LONGREAL;
+    wr := FileWr.Open("simple.dat");
+    
+  PROCEDURE V(f : LONGREAL) : LONGREAL =
+    BEGIN
+      (* linear, based on 0.80V @ 1.5, 0.70V @ 1.25 *)
+      RETURN 0.55d0 / 1.5d0 * f + 0.25d0
+    END V;
+    
+  PROCEDURE Ppps() : LONGREAL =
+    BEGIN
+      WITH vpps = MAX(Vminsram, Vf),
+           vratio = vpps / Vmax,
+           fratio = Ppsclock / Fppsmax,
+           p      = Pppsmax * Multiplier(vratio,fratio) DO
+        Wr.PutText(wr, F(",%s", LR(Ppsclock)));
+        Wr.PutText(wr, F(",%s", LR(vpps)));
+        Wr.PutText(wr, F(",%s", LR(p)));
+        RETURN p
+      END
+    END Ppps;
+
+  PROCEDURE PppsSingle() : LONGREAL =
+    BEGIN
+      WITH vpps = MAX(Vminrest, MAX(Vminsram, Vf)),
+           vratio = vpps / Vmax,
+           fratio = Ppsclock / Fppsmax,
+           p      = Pppsmax * Multiplier(vratio,fratio) DO
+        Wr.PutText(wr, F(",%s", LR(Ppsclock)));
+        Wr.PutText(wr, F(",%s", LR(vpps)));
+        Wr.PutText(wr, F(",%s", LR(p)));
+        RETURN p
+      END
+    END PppsSingle;
+
+  PROCEDURE PppsLow() : LONGREAL =
+    BEGIN
+      WITH vpps = Vf,
+           vratio = vpps / Vmax,
+           fratio = Ppsclock / Fppsmax,
+           p      = Pppsmax * Multiplier(vratio,fratio) DO
+        Wr.PutText(wr, F(",%s", LR(Ppsclock)));
+        Wr.PutText(wr, F(",%s", LR(vpps)));
+        Wr.PutText(wr, F(",%s", LR(p)));
+        RETURN p
+      END
+    END PppsLow;
+
+  PROCEDURE Pserdes() : LONGREAL =
+    BEGIN
+      WITH p = Pserdesconst DO
+        Wr.PutText(wr, F(",%s", LR(p)));
+        RETURN p
+      END
+    END Pserdes;
+
+  PROCEDURE Prest() : LONGREAL =
+    BEGIN
+      WITH vrest = MAX(Vminrest, Vf),
+           vratio = vrest / Vmax,
+           p      = Prestmax * Multiplier(vratio, 1.0d0) DO
+        Wr.PutText(wr, F(",%s", LR(vrest)));
+        Wr.PutText(wr, F(",%s", LR(p)));
+        RETURN p
+      END
+    END Prest;
+    
+  BEGIN
+    Wr.PutText(wr, "aps, fpps, vpps, ppps, fppsSingle, vppsSingle, pppsSingle, fppsLow, vppsLow, pppsLow, pserdes, vrest, prest, ptot, ptotSingle, ptotLow\n");
+    FOR aps := 247 TO 622 (* 622 -> 595 MHz *) DO
+      Wr.PutText(wr, F("%s", Int(aps)));
+      
+      Ppsclock := Fppsmax * FLOAT(Apsmin,LONGREAL)/FLOAT(aps,LONGREAL);
+      Vf := V(Ppsclock);
+      WITH p1 = Ppps(),
+           p1s= PppsSingle(),
+           p1l= PppsLow(),
+           p2 = Pserdes(),
+           p3 = Prest(),
+           
+           sum       = p1 + p2 + p3,  (* baseline assumption, SRAM Vmin limit *)
+           sumSingle = p1s + p2 + p3, (* single power domain calc *)
+           sumLow    = p1l + p2 + p3  (* assume NOT SRAM limited *)
+       DO 
+        Debug.Out(FN("%s %s %s %s %s %s %s",
+                     ARRAY OF TEXT {
+                    LR(FLOAT(aps,LONGREAL)),
+                    LR(Ppsclock),
+                    LR(Vf),
+                    LR(p1),
+                    LR(p2),
+                    LR(p3),
+                    LR(sum)} ));
+        Wr.PutText(wr, F(",%s", LR(sum)));
+        Wr.PutText(wr, F(",%s", LR(sumSingle)));
+        Wr.PutText(wr, F(",%s", LR(sumLow)));
+        Wr.PutChar(wr, '\n')
+      END
+    END;
+    Wr.Close(wr)
+  END DoSimpleModel;
+
+PROCEDURE Multiplier(vratio, fratio : LONGREAL) : LONGREAL =
+  BEGIN
+    RETURN vratio * vratio * fratio
+  END Multiplier;
+  
 VAR
   totalA := 0.0d0; (* total area of all accounted-for blocks *)
   BaseSizes, RedSizes, RedMauSizes : ARRAY [0..NB-1] OF LONGREAL;
@@ -363,7 +503,10 @@ BEGIN
   DoScenario("ARCH REDMAU SLOW -50mV",  ArchSlowClks, Reduced50Vs, RedMauSizes);
   DoScenario("ARCH REDMAU SLOW MauLOW", ArchSlowClks, PpsLowV    , RedMauSizes);
   DoScenario("ARCH REDMAU SLOW TmPpsLOW", ArchSlowClks, TmPpsLowV    , RedMauSizes);
+  DoScenario("ARCH SLOW TmPpsLOW Pps1", ArchSlowPps1Clks, TmPpsLowV    , BaseSizes);
+  DoScenario("ARCH REDMAU SLOW TmPpsLOW Pps1", ArchSlowPps1Clks, TmPpsLowV    , RedMauSizes);
 
+  Debug.Out("====================  END DETAIL RUNS  ====================");
 
-  
+  DoSimpleModel()
 END CbPower.
