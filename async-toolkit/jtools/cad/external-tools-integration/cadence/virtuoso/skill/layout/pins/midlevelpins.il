@@ -47,7 +47,7 @@
       (foreach InstTerm Term->net->instTerms
         (unless (member Term->name BusPinList) || !InstTerm->inst->transform
           InPlacePinFig = (MidPinsInheritPin CV InstTerm->inst InstTerm->name Term->name
-                                             ?topMetal supply_topMetal
+                                             ?topMetal (if (member Term->name PowerGroundNets)==nil -1 supply_topMetal)
                                              ?all_supply all_supply ?all_signal all_signal)
           (when InPlacePinFig->LeafInPlacePin
             (printf "*WARNING* Top Level pin \"%s\" is drawn inplace from leaf cell instance \"%s\" \n" Term->name InstTerm->inst->name)
