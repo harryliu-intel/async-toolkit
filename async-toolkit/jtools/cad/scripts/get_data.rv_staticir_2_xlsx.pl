@@ -37,7 +37,7 @@ BEGIN {
    use Time::Local;
    use POSIX; 
    use Excel::Writer::XLSX;
-
+   
    # For debugging purpose
    # use Data::Dumper;
 }
@@ -69,6 +69,46 @@ if(!(GetOptions(
   &help();
 }
 
+my %ip2inst_blocks = (
+    'BRIDGE'             => 'BRIDGE_U_CORE',
+    'CPU_SHIM'           => 'CPU_U_SHIM',
+    'CORE1'              => 'CORE1', 
+    'CORE2'              => 'CORE2',
+    'CORE3'              => 'CORE3', 
+    'CORE4'              => 'CORE4',
+    'DENDRITE_ACCUM_CMO' => 'DENDRITE_U_ACCUM_U_CMO',
+    'DENDRITE_ACCUM_NTV' => 'DENDRITE_U_ACCUM_U_NTV',
+    'DOUBLE_ROUTER2'     => 'DOUBLE_U_ROUTER2',
+    'DOUBLE_ROUTER4'     => 'DOUBLE_U_ROUTER4',
+    'IO'                 => 'IO',
+    'LAKEMONT'           => 'mintmia_lmt_subsys',
+    'LMT_CDC'            => 'LMT_U_CDC',
+    'MPDS_128KB_CMO'     => 'MPDS_U_CMO_U_128KB',
+    'MPDS_128KB_NTV'     => 'MPDS_U_NTV_U_128KB',
+    'MPDS_32KB_CMO'      => 'MPDS_U_CMO_U_32KB',
+    'MPDS_32KB_NTV'      => 'MPDS_U_NTV_U_32KB',
+    'PADS_FPIO'          => 'PADS_U_FPIO',
+    'PADS_RBCK'          => 'PADS_U_RBCK',
+    'PIO_H'              => 'PIO_U_H',
+    'PIO_V'              => 'PIO_U_V',
+    'T0A'                => 'T0A',
+    'TEST0'              => 'TEST0',
+    'TEST1'              => 'TEST1',
+    'BYPASS'             => 'BYPASS',
+    'D_BRIDGE_MCM_CABLE' => 'D_U_BRIDGE_U_MCM_U_CABLE',
+    'E_BRIDGE_MCM_CABLE' => 'E_U_BRIDGE_U_MCM_U_CABLE',
+    'E_CABLE'            => 'E_U_CABLE',
+    'E_MCM_CABLE'        => 'E_U_MCM_U_CABLE',
+    'E_PIO_MCM_CABLE'    => 'E_U_PIO_U_MCM_U_CABLE',
+    'N_BRIDGE_MCM_CABLE' => 'N_U_BRIDGE_U_MCM_U_CABLE',
+    'N_CABLE'            => 'N_U_CABLE',
+    'N_CABLE_CPU'        => 'N_U_CABLE_U_CPU',
+    'N_MCM_CABLE'        => 'N_U_MCM_U_CABLE',
+    'S_BRIDGE_MCM_CABLE' => 'S_U_BRIDGE_U_MCM_U_CABLE',
+    'U_BRIDGE_MCM_CABLE' => 'U_U_BRIDGE_U_MCM_U_CABLE',
+    'W_BRIDGE_MCM_CABLE' => 'W_U_BRIDGE_U_MCM_U_CABLE',
+    'W_PIO_MCM_CABLE'    => 'W_U_PIO_U_MCM_U_CABLE'
+    );
 
 ### Reading out main RV data and storing them into excel file
 print ("\nINFO: Reading RV rundirs under '$srcdir' and putting RV result extract under \'$output\'!\n\n");
@@ -87,7 +127,7 @@ $xlsxline = prep_xlsx($workbook, $worksheet, $xlsxline);
 # Get all the regression run dirs
 opendir(DIR, $srcdir);
 my @srcdir_arr = ();
-while (our $dir = readdir(RVDIR)) {
+while (our $dir = readdir(DIR)) {
     if ($dir =~ m/\.cdswd/) {
         $dir =~ s/(.*)\.cdswd/$1/;
         push (@srcdir_arr, $dir);
@@ -98,12 +138,13 @@ closedir DIR;
 # Extract most important RV data and store the result in Exel sheet
 my $renameContext = {};
 foreach my $dir (sort @srcdir_arr) {
-    my $rvdir = "${srcdir}/${dir}.cdswd/temp/route/*/proteus/rv";
+    my $rvdir = `ls -d ${srcdir}/${dir}.cdswd/temp/route/*/proteus/rv/staticir_run 2>/dev/null`;
+    chomp($rvdir);
     if (-d $rvdir) {
-        $sanitized_cell=reName2($renameContext, 'cell', 'cast', 'mw', $dir);
+        $sanitized_cell=$ip2inst_blocks{$dir};
         $xlsxline = get_data($mode, $rvdir, $sanitized_cell, $workbook, $worksheet, $xlsxline);
     } else {
-        print("INFO: No rv dir '$rvdir'! Continuing!\n");
+        print("INFO: No rv dir '${srcdir}/${dir}.cdswd/temp/route/*/proteus/rv/staticir_run'! Continuing!\n");
     }
 }
 
@@ -386,19 +427,6 @@ sub autofit_columns {
         $worksheet->set_column($col, $col, $width) if $width;
         $col++;
     }
-}
-
-sub reName2 {
-    # Taken from p4/intel/sw/cad/lve/lib/perl/LveUtil.pm
-    # Transforms block name into cell name
-    my ($context, $type, $from, $to, $name) = @_;
-    $context->{'pid'} = open2($context->{'read'}, $context->{'write'}, "rename --type=all")
-        unless $context->{'pid'} && (kill 0, $context->{'pid'}) == 1;
-    my ($rh, $wh) = ($context->{'read'}, $context->{'write'});
-    print $wh "$type $from $to $name\n";
-    chomp(my $result = <$rh>);
-    die "Exception in reName2: type=$type from=$from to=$to name=$name" unless $result;
-    return $result;
 }
 
 sub help {
