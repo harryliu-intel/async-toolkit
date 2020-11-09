@@ -69,16 +69,16 @@
             r2y1=(cadr (cadr rect2))
             (cond (horz && (round (r1y0-r2y0)/MfgGrid)==0 && (round (r1y1-r2y1)/MfgGrid)==0 ; horizontal aligned
                    (cond ((round (r1x1-r2x0)/MfgGrid)<0 && (round (r2x0-r1x1-space)/MfgGrid)<=0
-                          overlap=(list r1x1:r1y0 r2x0:r1y1))
+                          overlap=(list r1x0:r1y0 r2x1:r1y1))
                          ((round (r2x1-r1x0)/MfgGrid)<0 && (round (r1x0-r2x1-space)/MfgGrid)<=0
-                          overlap=(list r2x1:r1y0 r1x0:r1y1))
+                          overlap=(list r2x0:r1y0 r1x1:r1y1))
                          )
                    )
                   (!horz && (round (r1x0-r2x0)/MfgGrid)==0 && (round (r1x1-r2x1)/MfgGrid)==0 ; vertical aligned
                    (cond ((round (r1y1-r2y0)/MfgGrid)<0 && (round (r2y0-r1y1-space)/MfgGrid)<=0
-                          overlap=(list r1x0:r1y1 r1x1:r2y0))
+                          overlap=(list r1x0:r1y0 r1x1:r2y1))
                          ((round (r2y1-r1y0)/MfgGrid)<0 && (round (r1y0-r2y1-space)/MfgGrid)<=0
-                          overlap=(list r1x0:r2y1 r1x1:r1y0))
+                          overlap=(list r1x0:r2y0 r1x1:r1y1))
                          )
                    )
                   )

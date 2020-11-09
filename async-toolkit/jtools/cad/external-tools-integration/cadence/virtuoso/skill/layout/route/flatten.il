@@ -11,7 +11,7 @@ useICV = t
         (RegenerateFromCast nil)   ; force CAST query
         (Verbose nil)              ; verbose
         (ConnectDanglingPins nil)  ; paint metal on top of one-terminal subcell pins
-        (ConnectAbuttingPins nil)  ; paint metal between nearby pins on the same net
+        (ConnectAbuttingPins t)    ; paint metal between nearby pins on the same net
         (ConnectNearbyShapes t)    ; connect toplevel shapes with RouteNearby
         (powerGrid nil)            ; add a power grid
         (colorGrid nil)            ; add a color grid
