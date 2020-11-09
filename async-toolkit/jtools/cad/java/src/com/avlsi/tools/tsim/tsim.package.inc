@@ -49,6 +49,9 @@ java com.avlsi.tools.tsim.SharedBus
 java com.avlsi.tools.tsim.SlacklessNodeChannel
 java com.avlsi.tools.tsim.SlacklessNodeReadChannel
 java com.avlsi.tools.tsim.SlacklessNodeWriteChannel
+java com.avlsi.tools.tsim.SlacklessNodeBDChannel
+java com.avlsi.tools.tsim.SlacklessNodeBDReadChannel
+java com.avlsi.tools.tsim.SlacklessNodeBDWriteChannel
 java com.avlsi.tools.tsim.SplitDevice
 java com.avlsi.tools.tsim.Startable
 java com.avlsi.tools.tsim.StateMachine

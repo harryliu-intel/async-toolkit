@@ -31,6 +31,8 @@ import com.avlsi.tools.tsim.ChannelOutput;
 import com.avlsi.tools.tsim.MergeDevice;
 import com.avlsi.tools.tsim.NodeReadChannel;
 import com.avlsi.tools.tsim.NodeWriteChannel;
+import com.avlsi.tools.tsim.SlacklessNodeBDReadChannel;
+import com.avlsi.tools.tsim.SlacklessNodeBDWriteChannel;
 import com.avlsi.tools.tsim.SplitDevice;
 import com.avlsi.tools.tsim.Statusable;
 import com.avlsi.tools.tsim.WideNode;
@@ -301,9 +303,9 @@ public abstract class CoSimInfo {
         private int validateBDChannel(final String name, final int slack,
                                       final BigInteger radix,
                                       final int width) {
-            if (slack <= 0)
+            if (slack < 0)
                 throw new IllegalArgumentException(
-                        "Slackless BD channel " + name + " not supported");
+                        "Negative slack BD channel " + name + " not supported");
             if (width > 1)
                 throw new IllegalArgumentException(
                         "Wide BD channel " + name + " not supported");
@@ -315,11 +317,6 @@ public abstract class CoSimInfo {
         }
 
         private int getBDSlack(final String name, int slack) {
-            if (slack == 0) {
-                slack = 1;
-                System.err.println("WARNING: slackless BD channel " + name +
-                        " not supported; assuming slack of 1.");
-            }
             return slack;
         }
 
@@ -354,17 +351,24 @@ public abstract class CoSimInfo {
             } else if (type.startsWith("standard.channel.bd")) {
                 final int bdslack = getBDSlack(name, slack);
                 final int W = validateBDChannel(name, bdslack, radix, width);
-                return new BufferedNodeBDReadChannel(
-                        bdslack,
-                        Math.round(200 * digitalTau),
-                        Math.round(1 * digitalTau),
-                        Math.round(ffLatency * digitalTau),
-                        Math.round(bbLatency * digitalTau),
-                        Math.round(fbLatency * digitalTau),
-                        Math.round(bfLatency * digitalTau),
-                        Math.round(cti.getCycleTimeIn() * digitalTau),
-                        Math.round(cti.getCycleTimeOut() * digitalTau),
-                        name, W, true);
+                if (bdslack == 0) {
+                    return new SlacklessNodeBDReadChannel(
+                            Math.round(200 * digitalTau),
+                            Math.round(1 * digitalTau),
+                            name, W);
+                } else {
+                    return new BufferedNodeBDReadChannel(
+                            bdslack,
+                            Math.round(200 * digitalTau),
+                            Math.round(1 * digitalTau),
+                            Math.round(ffLatency * digitalTau),
+                            Math.round(bbLatency * digitalTau),
+                            Math.round(fbLatency * digitalTau),
+                            Math.round(bfLatency * digitalTau),
+                            Math.round(cti.getCycleTimeIn() * digitalTau),
+                            Math.round(cti.getCycleTimeOut() * digitalTau),
+                            name, W, true);
+                }
             } else {
                 throw new IllegalArgumentException("Unknown channel type " + type);
             }
@@ -400,17 +404,24 @@ public abstract class CoSimInfo {
             } else if (type.startsWith("standard.channel.bd")) {
                 final int bdslack = getBDSlack(name, slack);
                 final int W = validateBDChannel(name, bdslack, radix, width);
-                return new BufferedNodeBDWriteChannel(
-                        bdslack,
-                        Math.round(600 * digitalTau),
-                        Math.round(1 * digitalTau),
-                        Math.round(ffLatency * digitalTau),
-                        Math.round(bbLatency * digitalTau),
-                        Math.round(fbLatency * digitalTau),
-                        Math.round(bfLatency * digitalTau),
-                        Math.round(cti.getCycleTimeIn() * digitalTau),
-                        Math.round(cti.getCycleTimeOut() * digitalTau),
-                        name, W, true);
+                if (bdslack == 0) {
+                    return new SlacklessNodeBDWriteChannel(
+                            Math.round(600 * digitalTau),
+                            Math.round(1 * digitalTau),
+                            name, W);
+                } else {
+                    return new BufferedNodeBDWriteChannel(
+                            bdslack,
+                            Math.round(600 * digitalTau),
+                            Math.round(1 * digitalTau),
+                            Math.round(ffLatency * digitalTau),
+                            Math.round(bbLatency * digitalTau),
+                            Math.round(fbLatency * digitalTau),
+                            Math.round(bfLatency * digitalTau),
+                            Math.round(cti.getCycleTimeIn() * digitalTau),
+                            Math.round(cti.getCycleTimeOut() * digitalTau),
+                            name, W, true);
+                }
             } else {
                 throw new IllegalArgumentException("Unknown channel type " + type);
             }
