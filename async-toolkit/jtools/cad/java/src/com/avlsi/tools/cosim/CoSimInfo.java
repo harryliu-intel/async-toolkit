@@ -445,8 +445,15 @@ public abstract class CoSimInfo {
     public ChannelDictionary createNodeChannels(final HierName cellName,
                                                 final CellInterface cell,
                                                 final float digitalTau) {
+        return createNodeChannels(cellName, cell,
+                                  new NodeChannelFactory(digitalTau));
+    }
+
+    public ChannelDictionary createNodeChannels(final HierName cellName,
+                                                final CellInterface cell,
+                                                final ChannelFactoryInterface channelFactory) {
         return createChannels(cellName.getAsString('.'), cell,
-                              new NodeChannelFactory(digitalTau),
+                              channelFactory,
                               new WideNodeFactory());
     }
 

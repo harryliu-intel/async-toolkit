@@ -3453,6 +3453,7 @@ public class DSim implements NodeWatcher {
         private Map<String,ProductionRuleSet> staticizerPrs =
             new HashMap<String,ProductionRuleSet>();
         private final Collection<Node> boundaryNodes;
+        private final Set<String> slackValidated = new HashSet<>();
 
         private final UnaryFunction canonizer =
             new UnaryFunction() {
@@ -4314,6 +4315,69 @@ public class DSim implements NodeWatcher {
             }
         }
 
+        private ChannelDictionary createNodeChannels(
+                final CoSimInfo cosimInfo,
+                final HierName prefix,
+                final CellInterface cell,
+                final float digitalTau) {
+            final ChannelFactoryInterface factory =
+                new CoSimInfo.NodeChannelFactory(digitalTau);
+            ChannelFactoryInterface validatedFactory = factory;
+            final MutableInt totalInputs = new MutableInt(0);
+            final MutableInt totalOutputs = new MutableInt(0);
+            final MutableInt slacklessInputs = new MutableInt(0);
+            final MutableInt slacklessOutputs = new MutableInt(0);
+            if (slackValidated.add(cell.getFullyQualifiedType())) {
+                final boolean synthesizable =
+                    ((Boolean)DirectiveUtils.getCspDirective
+                     (cell, DirectiveConstants.SYNTHESIZABLE)).booleanValue();
+                if (synthesizable) {
+                    validatedFactory = new ChannelFactoryInterface() {
+                        @Override
+                        public ChannelInput makeInputChannel(String name,
+                                                             String type,
+                                                             BigInteger radix,
+                                                             int width,
+                                                             ChannelTimingInfo cti) {
+                            if (cti.getSlack() == 0) {
+                                slacklessInputs.inc();
+                            }
+                            totalInputs.inc();
+                            return factory.makeInputChannel(name, type, radix, width, cti);
+                        }
+
+                        @Override
+                        public ChannelOutput makeOutputChannel(String name,
+                                                               String type,
+                                                               BigInteger radix,
+                                                               int width,
+                                                               ChannelTimingInfo cti) {
+                            if (cti.getSlack() == 0) {
+                                slacklessOutputs.inc();
+                            }
+                            totalOutputs.inc();
+                            return factory.makeOutputChannel(name, type, radix, width, cti);
+                        }
+                    };
+                }
+            }
+            final ChannelDictionary result =
+                cosimInfo.createNodeChannels(prefix, cell, validatedFactory);
+            if (slacklessInputs.get() != 0 && slacklessInputs.get() != totalInputs.get()) {
+                System.err.println(
+                    "\nwarning (synthesis): " + slacklessInputs.get() + " of " +
+                    totalInputs.get() + " input channels are slackless, all " +
+                    "or none required in " + cell.getFullyQualifiedType());
+            }
+            if (slacklessOutputs.get() != 0 && slacklessOutputs.get() != totalOutputs.get()) {
+                System.err.println(
+                    "\nwarning (synthesis): " + slacklessOutputs.get() + " of " +
+                    totalOutputs.get() + " output channels are slackless, all " +
+                    "or none required in " + cell.getFullyQualifiedType());
+            }
+            return result;
+        }
+
         protected void createModels(
                 final HierName prefix,
                 final CellInterface cell, 
@@ -4338,7 +4402,7 @@ public class DSim implements NodeWatcher {
                 if (cell.containsCompletePrs())
                     createRules(prefix, cell, instData, astaIgnore, extraPrs,
                                 isEnv);
-                dict = cell.getCoSimInfo(behavior).createNodeChannels(prefix, cell, getDelayTau(DIGITAL_TAU));
+                dict = createNodeChannels(cell.getCoSimInfo(behavior), prefix, cell, getDelayTau(DIGITAL_TAU));
                 try {
                     if (cell.getJavaCoSimInfo().getClassName() != null)
                         cell.buildJavaClass(prefix, dict, m_DeviceLoader,
@@ -4411,7 +4475,7 @@ public class DSim implements NodeWatcher {
                         (cell.getCoSimInfo(behavior), prefix, cell, cosimSlack,
                          verbose);
             } else {
-                dict = cell.getCoSimInfo(behavior).createNodeChannels(prefix, cell, getDelayTau(DIGITAL_TAU));
+                dict = createNodeChannels(cell.getCoSimInfo(behavior), prefix, cell, getDelayTau(DIGITAL_TAU));
             }
           try {
             // XXX: We currently do not support cosimulation of JAVA and CSP.
