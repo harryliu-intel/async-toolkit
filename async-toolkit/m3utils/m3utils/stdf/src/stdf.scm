@@ -1,5 +1,6 @@
 ;; types cf and c12 are not used
-
+;; n1 only appears in an array
+;; 
 
 (define stdf-record-header ;; not sure whether we need this defn
   '((rec-len u2)
@@ -244,7 +245,7 @@
     (hi-spec r4)))
 
 (define multiple-result-parametric-record
-  'mpr
+  'MPR
   '((test-num u4)
     (head-num u1)
     (site-num u1)
@@ -274,7 +275,7 @@
     (hi-spec r4)))
 
 (define functional-test-record
-  'ftr
+  'FTR
   '((test-num u4)
     (head-num u1)
     (site-num u1)
@@ -305,54 +306,57 @@
     (spin-map dn)))
 
 (define begin-program-section-record
-  'bps
+  'BPS
   '((seq-name cn)))
 
 (define end-program-section-record
-  'eps
+  'EPS
   '())
 
 (define generic-data-record
-  'gdr
+  'GDR
   '((fld-cnt u2)
     (gen-data vn)))
 
 (define datalog-text-record
-  'dtr
+  'DTR
   '((text-dat cn)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define stdf-record-types
   '(
-    (file-attributes-record               0 10)
-    (audit-trail-record                   0 20)
+    ;;                              REC_TYP REC_SUB
+    (file-attributes-record               0      10)
+    (audit-trail-record                   0      20)
 
-    (master-information-record            1 10)
-    (master-results-record                1 20)
-    (part-count-record                    1 30)
-    (hardware-bin-record                  1 40)
-    (software-bin-record                  1 50)
-    (pin-map-record                       1 60)
-    (pin-group-record                     1 62)
-    (pin-list-record                      1 63)
-    (retest-data-record                   1 70)
-    (site-description-record              1 80)
+    (master-information-record            1      10)
+    (master-results-record                1      20)
+    (part-count-record                    1      30)
+    (hardware-bin-record                  1      40)
+    (software-bin-record                  1      50)
+    (pin-map-record                       1      60)
+    (pin-group-record                     1      62)
+    (pin-list-record                      1      63)
+    (retest-data-record                   1      70)
+    (site-description-record              1      80)
 
-    (wafer-information-record             2 10)
-    (wafer-results-record                 2 20)
-    (wafer-configuration-record           2 30)
+    (wafer-information-record             2      10)
+    (wafer-results-record                 2      20)
+    (wafer-configuration-record           2      30)
 
-    (part-information-record              5 10)
-    (part-results-record                  5 20)
+    (part-information-record              5      10)
+    (part-results-record                  5      20)
 
-    (test-synopsis-record                10 30)
+    (test-synopsis-record                10      30)
 
-    (parametric-test-record              15 10)
-    (multiple-result-parametric-record   15 15)
-    (functional-test-record              15 20)
+    (parametric-test-record              15      10)
+    (multiple-result-parametric-record   15      15)
+    (functional-test-record              15      20)
 
-    (begin-program-section-record        20 10)
-    (end-program-section-record          20 20)
+    (begin-program-section-record        20      10)
+    (end-program-section-record          20      20)
 
-    (generic-data-record                 50 10)
-    (datalog-text-record                 50 30)
+    (generic-data-record                 50      10)
+    (datalog-text-record                 50      30)
 ))
