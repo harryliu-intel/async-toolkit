@@ -43,7 +43,7 @@ public class EventQueue implements EventQueueInterface {
     /** 
      * The actual data-structure that holds the queue's elements as a heap. 
      **/
-    private ArrayList heap = new ArrayList();
+    private ArrayList<Event> heap = new ArrayList<>();
 
     /** 
      * The size of the heap, thus the queue. 
@@ -70,7 +70,7 @@ public class EventQueue implements EventQueueInterface {
     public String pendingList() {
         String ret = "";
         for (int i = 0; i < heap.size(); i++) {
-            Event cur = (Event)heap.get(i);
+            Event cur = heap.get(i);
             if (cur != null) {
                 if (cur instanceof Node) {
                     ret = ret + ((Node)cur).getEventString() + "\n";
@@ -118,7 +118,7 @@ public class EventQueue implements EventQueueInterface {
 
     public final Event front() {
         if (elementCount == 0) { throw new NoSuchElementException(); }
-        return (Event)heap.get(0);
+        return heap.get(0);
     }
 
     // Documented in interface.
@@ -222,7 +222,7 @@ public class EventQueue implements EventQueueInterface {
      * </jml></pre>
      **/
 
-    protected final /*@ pure @*/ Event get(int i) { return (Event) heap.get(i); }
+    protected final /*@ pure @*/ Event get(int i) { return heap.get(i); }
 
     /**
      * Class invariant: implementation heap is total ordered from children to
@@ -299,7 +299,7 @@ public class EventQueue implements EventQueueInterface {
     private final Event remove(int i) {
         int lastIndex = elementCount-1;
         exchange(i, lastIndex);
-        Event rv = (Event) heap.remove(lastIndex);
+        Event rv = heap.remove(lastIndex);
         elementCount--;
         //if node was not the last node in the array, reheap that
         //node to a valid spot
@@ -370,7 +370,7 @@ public class EventQueue implements EventQueueInterface {
      **/
 
     private final /*@ pure @*/ long compare(int i, int j) {
-        return ((Event)heap.get(i)).getTime() - ((Event)heap.get(j)).getTime();
+        return heap.get(i).getTime() - heap.get(j).getTime();
     }
 
     /**
@@ -392,8 +392,8 @@ public class EventQueue implements EventQueueInterface {
     private final void exchange(int i, int j) {
         Debug.assertTrue(i < elementCount);
         Debug.assertTrue(j < elementCount);
-        Event swapi = (Event)heap.get(i);
-        Event swapj = (Event)heap.get(j);
+        Event swapi = heap.get(i);
+        Event swapj = heap.get(j);
         heap.set(i, swapj);
         heap.set(j, swapi);
         swapi.setIndex(j);
