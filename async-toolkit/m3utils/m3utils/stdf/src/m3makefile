@@ -1,0 +1,15 @@
+import ("libm3")
+import ("cit_util")
+
+Module ("StdfU1")
+Module ("StdfU2")
+Module ("StdfU4")
+Module ("StdfN1")
+Module ("StdfRd")
+
+Interface ("StdfE")
+Module ("StdfParser")
+Interface ("StdfRecordObject")
+Sequence ("StdfRecordObject", "StdfRecordObject")
+
+library ("stdf")
