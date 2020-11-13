@@ -351,6 +351,11 @@ PROCEDURE CalcDynPPerBlock(READONLY clk : ARRAY Clock     OF LONGREAL;
                    speedVoltageBlockClkP = speedBlockClkP * vddRatio * vddRatio,
                    incrP                 = speedVoltageBlockClkP * szRatio
                DO
+(*
+                Debug.Out(F("v[i] %s", LR2(v[i])));
+                Debug.Out(F("clkRatio %s speedBlockClkP %s vddRatio %s incrP %s",
+                            LR2(clkRatio), LR2(speedBlockClkP), LR2(vddRatio), LR2(incrP)));
+*)
                 this := this + incrP;
                 clkTot[c] := clkTot[c] + incrP
               END
@@ -492,20 +497,44 @@ PROCEDURE DoIt() =
     DoClockScenario("BASELINE",             BaseClks    , BaseVs     , BaseSizes);
     DoClockScenario("ARCH SLOW",            ArchSlowClks, BaseVs     , BaseSizes);
     DoClockScenario("ARCH SLOW -50mV",      ArchSlowClks, Reduced50Vs, BaseSizes);
-    DoClockScenario("ARCH SLOW -50mV PpsLOW",      ArchSlowClks, PpsLowV, BaseSizes);
     DoClockScenario("ARCH RED SLOW -50mV",  ArchSlowClks, Reduced50Vs, RedSizes);
     DoClockScenario("ARCH REDMAU SLOW -50mV",  ArchSlowClks, Reduced50Vs, RedMauSizes);
     DoClockScenario("ARCH REDMAU SLOW MauLOW", ArchSlowClks, PpsLowV    , RedMauSizes);
     DoClockScenario("ARCH REDMAU SLOW TmPpsLOW", ArchSlowClks, TmPpsLowV    , RedMauSizes);
     DoClockScenario("ARCH SLOW TmPpsLOW Pps1", ArchSlowPps1Clks, TmPpsLowV    , BaseSizes);
     DoClockScenario("ARCH REDMAU SLOW TmPpsLOW Pps1", ArchSlowPps1Clks, TmPpsLowV    , RedMauSizes);
+    DoClockScenario("ARCH SLOW -50mV PpsLOW",      ArchSlowClks, PpsLowV, BaseSizes);
 
+    
     Debug.Out("====================  END DETAIL RUNS  ====================");
+    Debug.Out("====================  BLOCK SCENARIOS  ====================");
+    VAR
+      v : ARRAY BlockId OF LONGREAL;
+    BEGIN
+      MakeBlockScenario(BaseV,
+                        ARRAY OF BlockVoltage {},
+                        v);
+      DoBlockScenario("BLOCK BASELINE", BaseClks, BaseSizes, v);
+      DoBlockScenario("BLOCK SLOW", ArchSlowClks, BaseSizes, v);
+      MakeBlockScenario(BaseV - 0.050d0,
+                        ARRAY OF BlockVoltage {},
+                        v);
+      DoBlockScenario("BLOCK SLOW LOW", ArchSlowClks, BaseSizes, v);
+      MakeBlockScenario(BaseV - 0.050d0,
+                        ARRAY OF BlockVoltage {
+      BlockVoltage { "MauPipes", BaseV - 0.100d0 },
+      BlockVoltage { "QueueingLogic", BaseV - 0.100d0 }
+      },
+                        v);
+      DoBlockScenario("BLOCK SLOW SPLIT", ArchSlowClks, BaseSizes, v);
+    END;
+    Debug.Out("====================  END BLOCK SCENARIOS  ====================");
 
   END DoIt;
 
 BEGIN
+  CbSimple.DoIt();
+  
   DoIt();
 
-  CbSimple.DoIt()
 END CbPower.
