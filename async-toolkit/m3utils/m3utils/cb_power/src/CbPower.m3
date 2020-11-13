@@ -40,7 +40,17 @@ TYPE
     size           := 1.0;
     weightedArea   := 0.0d0;
   END;
-  
+
+  (* Decoder ring from Julianne:
+
+     PARDE     : Parser, Deparser, LearnEtc, PipeTmIntf
+     TM_FABRIC : PacketStorage
+     TM_CORE   : QueueingLogic
+     NIF       : MacPcs
+     MULTIPK   : MauPipes
+     serdes    : Serdes
+  *)
+
 CONST
   Data = ARRAY BlockId OF BlockInfo {
   BlockInfo { name   := "Parser",
@@ -523,7 +533,7 @@ PROCEDURE DoIt() =
       MakeBlockScenario(BaseV - 0.050d0,
                         ARRAY OF BlockVoltage {
       BlockVoltage { "MauPipes", BaseV - 0.100d0 },
-      BlockVoltage { "QueueingLogic", BaseV - 0.100d0 }
+      BlockVoltage { "MacPcs", BaseV - 0.100d0 }
       },
                         v);
       DoBlockScenario("BLOCK SLOW SPLIT", ArchSlowClks, BaseSizes, v);
