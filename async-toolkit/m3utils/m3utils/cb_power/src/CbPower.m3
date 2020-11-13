@@ -42,7 +42,7 @@ TYPE
   END;
   
 CONST
-  Data = ARRAY OF BlockInfo {
+  Data = ARRAY BlockId OF BlockInfo {
   BlockInfo { name   := "Parser",
               clocks := CA { 1.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0 },
               area   := 13.59,
@@ -195,6 +195,8 @@ CONST
   
   NB = NUMBER(Data);
 
+TYPE BlockId = { Parser, Deparser, LearnEtc, MauPipes, PipeTmIntf, PacketStorage, QueueingLogic, MacPcs, Misc, Serdes };
+     
 PROCEDURE LR2(x : LONGREAL) : TEXT =
   BEGIN
     RETURN LR(x, style := Fmt.Style.Fix, prec := 2);
@@ -205,7 +207,7 @@ PROCEDURE LR4(x : LONGREAL) : TEXT =
     RETURN LR(x, style := Fmt.Style.Fix, prec := 4);
   END LR4;
 
-PROCEDURE FindBlock(nm : TEXT) : [0..NB-1] =
+PROCEDURE FindBlock(nm : TEXT) : BlockId =
   BEGIN
     FOR i := FIRST(Data) TO LAST(Data) DO
       IF TE(Data[i].name, nm) THEN RETURN i END
@@ -215,15 +217,23 @@ PROCEDURE FindBlock(nm : TEXT) : [0..NB-1] =
   END FindBlock;
   
 VAR
-  blocks : ARRAY [0..NB-1] OF BlockInfo := Data;
+  blocks : ARRAY BlockId OF BlockInfo := Data;
   totalUnweightedP, totalWeightedArea := 0.0d0;
   totalWeightedP, dynPPerUnitArea : LONGREAL;
 
-  blockP : ARRAY [0..NB-1] OF LONGREAL;
+  blockP : ARRAY BlockId OF LONGREAL;
 
-PROCEDURE CalcDynP(READONLY clk : ARRAY Clock     OF LONGREAL;
+PROCEDURE LeakageRatio(v            : LONGREAL) : LONGREAL =
+  (* assume quadratic for now *)
+  BEGIN
+    WITH vr = v / BaseV DO
+      RETURN Math.pow(vr, 2.0d0)
+    END
+  END LeakageRatio;
+      
+PROCEDURE CalcDynPPerClock(READONLY clk : ARRAY Clock     OF LONGREAL;
                    READONLY v   : ARRAY Clock     OF LONGREAL;
-                   READONLY sz  : ARRAY [0..NB-1] OF LONGREAL) : LONGREAL =
+                   READONLY sz  : ARRAY BlockId OF LONGREAL) : LONGREAL =
   VAR
     clkTot := ARRAY Clock OF LONGREAL { 0.0d0 , .. };
     tot, this : LONGREAL;
@@ -264,18 +274,10 @@ PROCEDURE CalcDynP(READONLY clk : ARRAY Clock     OF LONGREAL;
       Debug.Out(F("clock %-15s P %10s", ClockNames[c], LR2(clkTot[c])));
     END;
     RETURN tot
-  END CalcDynP;
+  END CalcDynPPerClock;
 
-PROCEDURE LeakageRatio(v            : LONGREAL) : LONGREAL =
-  (* assume quadratic for now *)
-  BEGIN
-    WITH vr = v / BaseV DO
-      RETURN Math.pow(vr, 2.0d0)
-    END
-  END LeakageRatio;
-      
-PROCEDURE CalcLeakageP(READONLY v : ARRAY Clock OF LONGREAL;
-                       READONLY sz  : ARRAY [0..NB-1] OF LONGREAL) : LONGREAL =
+PROCEDURE CalcLeakagePPerClock(READONLY v : ARRAY Clock OF LONGREAL;
+                       READONLY sz  : ARRAY BlockId OF LONGREAL) : LONGREAL =
   VAR
     totLkgP := 0.0d0;
   BEGIN
@@ -294,99 +296,216 @@ PROCEDURE CalcLeakageP(READONLY v : ARRAY Clock OF LONGREAL;
       END
     END;
     RETURN totLkgP
-  END CalcLeakageP;
+  END CalcLeakagePPerClock;
   
-PROCEDURE DoScenario(nm               : TEXT;
-                     READONLY clk, v  : ARRAY Clock     OF LONGREAL;
-                     READONLY sz      : ARRAY [0..NB-1] OF LONGREAL) =
+PROCEDURE DoClockScenario(nm               : TEXT;
+                          READONLY clk, v  : ARRAY Clock     OF LONGREAL;
+                          READONLY sz      : ARRAY BlockId OF LONGREAL) =
+  (* in a "ClockScenario" we assume that the power and clock domains
+     are the same *)
   VAR
     totDynP : LONGREAL;
     fmt := F("%-15s %s %s", nm, "%-25s", "%12s");
   BEGIN
     Debug.Out(F("scenario %s >>>>>>>>>>>>>>>>>", nm));
-    totDynP := CalcDynP(clk, v, sz);
+    totDynP := CalcDynPPerClock(clk, v, sz);
     Debug.Out(F(fmt, "totDynP/die [112G]", LR2(totDynP)));
-    WITH lkgP = CalcLeakageP(v, sz),
+    WITH lkgP = CalcLeakagePPerClock(v, sz),
          totP = totDynP + lkgP,
          tot2P = 2.0d0 * totP + BaseInterDieP DO
       Debug.Out(F(fmt, "lkgP/die [112G]", LR2(lkgP)));
       Debug.Out(F(fmt, "totP/die [112G]", LR2(totP)));
       Debug.Out(F(fmt, "totP/2die [112G]", LR2(tot2P)));
     END;
-    
 
     Debug.Out(F("scenario %s <<<<<<<<<<<<<<<<<", nm));
-  END DoScenario;
+  END DoClockScenario;
+
+  (**********************************************************************)
+
+PROCEDURE CalcDynPPerBlock(READONLY clk : ARRAY Clock     OF LONGREAL;
+                   READONLY v   : ARRAY BlockId     OF LONGREAL;
+                   READONLY sz  : ARRAY BlockId OF LONGREAL) : LONGREAL =
+  VAR
+    clkTot := ARRAY Clock OF LONGREAL { 0.0d0 , .. };
+    tot, this : LONGREAL;
+  BEGIN
+    FOR i := FIRST(blocks) TO LAST(blocks) DO
+      WITH b                     = blocks[i],
+           szRatio               = sz[i] / FLOAT(b.size,LONGREAL) DO
+        this := 0.0d0;
+        IF b.hasCustomP THEN
+          this := b.customP;
+          FOR c := FIRST(b.clocks) TO LAST(b.clocks) DO
+            clkTot[c] := clkTot[c] + b.clocks[c] * b.customP
+          END
+        ELSE
+          VAR
+            baselineBlockP := blockP[i];
+          BEGIN
+            FOR c := FIRST(clk) TO LAST(clk) DO
+              WITH baseBlockClkP         = baselineBlockP * b.clocks[c],
+                   clkRatio              = clk[c] / BaseClks[c],
+                   speedBlockClkP        = baseBlockClkP  * clkRatio,
+                   vddRatio              = v[i] / BaseV,
+                   speedVoltageBlockClkP = speedBlockClkP * vddRatio * vddRatio,
+                   incrP                 = speedVoltageBlockClkP * szRatio
+               DO
+                this := this + incrP;
+                clkTot[c] := clkTot[c] + incrP
+              END
+            END
+          END
+        END(*FI*);
+        Debug.Out(F("block %-15s P %10s", b.name, LR2(this)));
+        tot := tot + this
+      END
+    END;
+    Debug.Out("-------------------------------");
+    FOR c := FIRST(Clock) TO LAST(Clock) DO
+      Debug.Out(F("clock %-15s P %10s", ClockNames[c], LR2(clkTot[c])));
+    END;
+    RETURN tot
+  END CalcDynPPerBlock;
+
+PROCEDURE CalcLeakagePPerBlock(READONLY v : ARRAY BlockId OF LONGREAL;
+                       READONLY sz  : ARRAY BlockId OF LONGREAL) : LONGREAL =
+  VAR
+    totLkgP := 0.0d0;
+  BEGIN
+    FOR i := FIRST(blocks) TO LAST(blocks) DO
+      WITH b       = blocks[i],
+           szRatio               = sz[i] / FLOAT(b.size,LONGREAL),
+           pctA    = b.weightedArea / totalA, 
+           baseLkP = pctA * BaseLeakageP DO
+        FOR c := FIRST(Clock) TO LAST(Clock) DO
+          WITH p           = blocks[i].clocks[c],
+               baseClkLkgP = baseLkP * p,
+               lkgP        = LeakageRatio(v[i]) * baseClkLkgP * szRatio DO
+            totLkgP := totLkgP + lkgP 
+          END
+        END
+      END
+    END;
+    RETURN totLkgP
+  END CalcLeakagePPerBlock;
+
+PROCEDURE DoBlockScenario(nm               : TEXT;
+                          READONLY clk     : ARRAY Clock     OF LONGREAL;
+                          READONLY sz      : ARRAY BlockId OF LONGREAL;
+                          READONLY v       : ARRAY BlockId OF LONGREAL) =
+  (* in a "BlockScenario" we assume that the power domains
+     are the same as the blocks *)
+  VAR
+    totDynP : LONGREAL;
+    fmt := F("%-15s %s %s", nm, "%-25s", "%12s");
+  BEGIN
+    Debug.Out(F("scenario %s >>>>>>>>>>>>>>>>>", nm));
+    totDynP := CalcDynPPerBlock(clk, v, sz);
+    Debug.Out(F(fmt, "totDynP/die [112G]", LR2(totDynP)));
+    WITH lkgP = CalcLeakagePPerBlock(v, sz),
+         totP = totDynP + lkgP,
+         tot2P = 2.0d0 * totP + BaseInterDieP DO
+      Debug.Out(F(fmt, "lkgP/die [112G]", LR2(lkgP)));
+      Debug.Out(F(fmt, "totP/die [112G]", LR2(totP)));
+      Debug.Out(F(fmt, "totP/2die [112G]", LR2(tot2P)));
+    END;
+
+    Debug.Out(F("scenario %s <<<<<<<<<<<<<<<<<", nm));
+  END DoBlockScenario;
+
+TYPE
+  BlockVoltage = RECORD nm : TEXT; v : LONGREAL END;
+  
+PROCEDURE MakeBlockScenario(defaultV : LONGREAL;
+                            READONLY exceptions : ARRAY OF BlockVoltage;
+                            VAR   v : ARRAY BlockId OF LONGREAL) =
+  BEGIN
+    FOR i := FIRST(v) TO LAST(v) DO
+      v[i] := defaultV
+    END;
+    FOR i := FIRST(exceptions) TO LAST(exceptions) DO
+      v[FindBlock(exceptions[i].nm)] := exceptions[i].v
+    END;
+  END MakeBlockScenario;
 
 VAR
   totalA := 0.0d0; (* total area of all accounted-for blocks *)
-  BaseSizes, RedSizes, RedMauSizes : ARRAY [0..NB-1] OF LONGREAL;
+
+PROCEDURE DoIt() =
+  VAR
+    BaseSizes, RedSizes, RedMauSizes : ARRAY BlockId OF LONGREAL;
+  BEGIN
+
+    Debug.Out("====================  BASELINE SETUP  ====================");
+    FOR i := FIRST(blocks) TO LAST(blocks) DO
+      WITH b = blocks[i] DO
+        BaseSizes[i] := FLOAT(b.size,LONGREAL);
+        b.weightedArea :=
+            FLOAT(b.area,LONGREAL) * FLOAT(b.weight, LONGREAL);
+        Debug.Out(F("block %-15s weightedArea %10s",
+                    b.name,
+                    LR2(b.weightedArea)));
+
+        totalA := totalA + b.weightedArea;
+        
+        IF b.hasCustomP THEN
+          totalUnweightedP := totalUnweightedP + b.customP
+        ELSE
+          totalWeightedArea := totalWeightedArea + b.weightedArea
+        END;
+      END
+    END;
+
+    totalWeightedP := BaseDynP - totalUnweightedP;
+    dynPPerUnitArea   := totalWeightedP / totalWeightedArea;
+
+    Debug.Out(F("totalWeightedArea    %10s", LR2(totalWeightedArea)));
+    Debug.Out(F("totalUnweightedP     %10s", LR2(totalUnweightedP)));
+    Debug.Out(F("totalWeightedP       %10s", LR2(totalWeightedP)));
+    Debug.Out(F("dynPPerUnitArea        %10s", LR4(dynPPerUnitArea)));
+
+    FOR i := FIRST(blockP) TO LAST(blockP) DO
+      WITH b = blocks[i] DO
+        IF b.hasCustomP THEN
+          blockP[i] := b.customP
+        ELSE
+          blockP[i] := b.weightedArea / totalWeightedArea * totalWeightedP
+        END;
+        Debug.Out(F("block %-15s blockP %8s",
+                    b.name,
+                    LR2(blockP[i])))
+      END
+    END;
+
+    Debug.Out("====================  END BASELINE SETUP  ====================");
+
+    (* initialize RedSizes *)
+    RedSizes := BaseSizes;
+    RedMauSizes := BaseSizes;
+
+    RedSizes[FindBlock("MauPipes")]      := 18.0d0;
+    RedMauSizes[FindBlock("MauPipes")]      := 18.0d0;
+    
+    RedSizes[FindBlock("PacketStorage")] := 64.0d0;
+
+    DoClockScenario("BASELINE",             BaseClks    , BaseVs     , BaseSizes);
+    DoClockScenario("ARCH SLOW",            ArchSlowClks, BaseVs     , BaseSizes);
+    DoClockScenario("ARCH SLOW -50mV",      ArchSlowClks, Reduced50Vs, BaseSizes);
+    DoClockScenario("ARCH SLOW -50mV PpsLOW",      ArchSlowClks, PpsLowV, BaseSizes);
+    DoClockScenario("ARCH RED SLOW -50mV",  ArchSlowClks, Reduced50Vs, RedSizes);
+    DoClockScenario("ARCH REDMAU SLOW -50mV",  ArchSlowClks, Reduced50Vs, RedMauSizes);
+    DoClockScenario("ARCH REDMAU SLOW MauLOW", ArchSlowClks, PpsLowV    , RedMauSizes);
+    DoClockScenario("ARCH REDMAU SLOW TmPpsLOW", ArchSlowClks, TmPpsLowV    , RedMauSizes);
+    DoClockScenario("ARCH SLOW TmPpsLOW Pps1", ArchSlowPps1Clks, TmPpsLowV    , BaseSizes);
+    DoClockScenario("ARCH REDMAU SLOW TmPpsLOW Pps1", ArchSlowPps1Clks, TmPpsLowV    , RedMauSizes);
+
+    Debug.Out("====================  END DETAIL RUNS  ====================");
+
+  END DoIt;
+
 BEGIN
-
-  Debug.Out("====================  BASELINE SETUP  ====================");
-  FOR i := FIRST(blocks) TO LAST(blocks) DO
-    WITH b = blocks[i] DO
-      BaseSizes[i] := FLOAT(b.size,LONGREAL);
-      b.weightedArea :=
-          FLOAT(b.area,LONGREAL) * FLOAT(b.weight, LONGREAL);
-      Debug.Out(F("block %-15s weightedArea %10s",
-                  b.name,
-                  LR2(b.weightedArea)));
-
-      totalA := totalA + b.weightedArea;
-      
-      IF b.hasCustomP THEN
-        totalUnweightedP := totalUnweightedP + b.customP
-      ELSE
-        totalWeightedArea := totalWeightedArea + b.weightedArea
-      END;
-    END
-  END;
-
-  totalWeightedP := BaseDynP - totalUnweightedP;
-  dynPPerUnitArea   := totalWeightedP / totalWeightedArea;
-
-  Debug.Out(F("totalWeightedArea    %10s", LR2(totalWeightedArea)));
-  Debug.Out(F("totalUnweightedP     %10s", LR2(totalUnweightedP)));
-  Debug.Out(F("totalWeightedP       %10s", LR2(totalWeightedP)));
-  Debug.Out(F("dynPPerUnitArea        %10s", LR4(dynPPerUnitArea)));
-
-  FOR i := FIRST(blockP) TO LAST(blockP) DO
-    WITH b = blocks[i] DO
-      IF b.hasCustomP THEN
-        blockP[i] := b.customP
-      ELSE
-        blockP[i] := b.weightedArea / totalWeightedArea * totalWeightedP
-      END;
-      Debug.Out(F("block %-15s blockP %8s",
-                  b.name,
-                  LR2(blockP[i])))
-    END
-  END;
-
-  Debug.Out("====================  END BASELINE SETUP  ====================");
-
-  (* initialize RedSizes *)
-  RedSizes := BaseSizes;
-  RedMauSizes := BaseSizes;
-
-  RedSizes[FindBlock("MauPipes")]      := 18.0d0;
-  RedMauSizes[FindBlock("MauPipes")]      := 18.0d0;
-  
-  RedSizes[FindBlock("PacketStorage")] := 64.0d0;
-
-  DoScenario("BASELINE",             BaseClks    , BaseVs     , BaseSizes);
-  DoScenario("ARCH SLOW",            ArchSlowClks, BaseVs     , BaseSizes);
-  DoScenario("ARCH SLOW -50mV",      ArchSlowClks, Reduced50Vs, BaseSizes);
-  DoScenario("ARCH SLOW -50mV PpsLOW",      ArchSlowClks, PpsLowV, BaseSizes);
-  DoScenario("ARCH RED SLOW -50mV",  ArchSlowClks, Reduced50Vs, RedSizes);
-  DoScenario("ARCH REDMAU SLOW -50mV",  ArchSlowClks, Reduced50Vs, RedMauSizes);
-  DoScenario("ARCH REDMAU SLOW MauLOW", ArchSlowClks, PpsLowV    , RedMauSizes);
-  DoScenario("ARCH REDMAU SLOW TmPpsLOW", ArchSlowClks, TmPpsLowV    , RedMauSizes);
-  DoScenario("ARCH SLOW TmPpsLOW Pps1", ArchSlowPps1Clks, TmPpsLowV    , BaseSizes);
-  DoScenario("ARCH REDMAU SLOW TmPpsLOW Pps1", ArchSlowPps1Clks, TmPpsLowV    , RedMauSizes);
-
-  Debug.Out("====================  END DETAIL RUNS  ====================");
+  DoIt();
 
   CbSimple.DoIt()
 END CbPower.
