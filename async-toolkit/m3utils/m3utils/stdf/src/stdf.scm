@@ -438,8 +438,8 @@
 (define (put-m3-imports wr)
   (dis "<*NOWARN*>IMPORT StdfU1, StdfU2, StdfU4, StdfN1, StdfCn;" dnl
        "<*NOWARN*>IMPORT StdfI2, StdfB1, StdfC1, StdfDn, StdfVn;" dnl
-       "<*NOWARN*>IMPORT StdfI1, StdfR4, StdfI4;" dnl
-       "IMPORT StdfE, Rd;" dnl
+       "<*NOWARN*>IMPORT StdfI1, StdfR4, StdfI4, StdfBn;" dnl
+       "IMPORT StdfE, Rd, Thread;" dnl
        "<*NOWARN*>" dnl
        dnl
        wr))
@@ -447,7 +447,10 @@
 (define deriv-dir "../AMD64_LINUX/")
 
 (define parse-proc-name "Parse")
-(define parse-proto "(rd : Rd.T; VAR len : CARDINAL; VAR t : T) RAISES { StdfE.E }")
+(define parse-proto "(rd : Rd.T; VAR len : CARDINAL; VAR t : T) RAISES { StdfE.E , Rd.EndOfFile, Rd.Failure, Thread.Alerted}")
+
+(define parseobj-proc-name "ParseObject")
+(define parseobj-proto "(rd : Rd.T; VAR len : CARDINAL) : O RAISES { StdfE.E, Rd.EndOfFile, Rd.Failure, Thread.Alerted }")
 
 (define (put-m3-proc whch .
                      wrs ;; i3 m3 ...
@@ -580,10 +583,12 @@
               (m3t (scheme->m3 (caddr t))))
           (if (not (eq? a 'array)) (error "not an array spec : " t))
           (if (number? idx)
-              (dis "    FOR i := 0 TO " (number->string idx) "-1 DO" dnl wr)
-              (dis "    FOR i := 0 TO x." (symbol->string idx) "-1 DO" dnl wr)
+              (dis "    x. "m3f" := NEW(REF ARRAY OF "m3t", " (number->string idx)");" dnl
+                   "    FOR i := 0 TO " (number->string idx) "-1 DO" dnl wr)
+              (dis "    x. "m3f" := NEW(REF ARRAY OF Stdf"m3t".T, x." (scheme->m3l idx)");" dnl
+                   "    FOR i := 0 TO x." (scheme->m3l idx) "-1 DO" dnl wr)
               )
-          (dis     "      Stdf" m3t ".Parse(rd, len, x." m3f ")" dnl wr)
+          (dis     "      Stdf" m3t ".Parse(rd, len, x." m3f "[i])" dnl wr)
           (dis     "    END;" dnl wr)
           )
         ))
