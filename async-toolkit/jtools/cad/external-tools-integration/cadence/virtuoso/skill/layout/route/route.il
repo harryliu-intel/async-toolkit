@@ -644,7 +644,7 @@
   ; (Colorize ?CV CV)
   ; (ConvertFill ?CV CV)    ; HACK: ICC should distinguish fill shapes better
   ; (FixFillerCells ?CV CV) ; HACK: change threshold of spc00 to avoid NV1/PV1 DRC errors
-  (FixImportedPins ?CV CV)  ; HACK: add drawing rectangles under pins
+  ;(FixImportedPins ?CV CV)  ; HACK: add drawing rectangles under pins
   (RunAfterImportDef ?CV CV)
   (printf "Route Import finished.\n")
   )
