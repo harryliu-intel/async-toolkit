@@ -747,6 +747,7 @@ DumbLayers = (list (list "SRAM" "fill")
              rect = (dbCreateRect CV (list pin->layerName "drawing") pin->bBox)
              rect->net = pin->net
              (SetShapeColor rect (GetShapeColor pin))
+             (dbReplaceProp rect "autogen" "string" "FixImportedPins")
              )
     )
   t
