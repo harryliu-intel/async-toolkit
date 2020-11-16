@@ -1,18 +1,15 @@
 MODULE StdfParser;
-IMPORT Rd;
-
 IMPORT StdfRecordHeader;
+IMPORT StdfRecordObject, StdfRecordObjectSeq;
+IMPORT Rd;
 
 PROCEDURE Parse(rd : Rd.T) : StdfRecordObjectSeq.T =
   VAR
     seq := NEW(StdfRecordObjectSeq.T).init();
   BEGIN
     LOOP
-      WITH c = Rd.GetChar(rd) DO (* block until there is data *)
-        Rd.UnGetChar(rd, c)
-      END;
       VAR
-        hdrlen := StdfRecordHeader.Length;
+        hdrlen : CARDINAL := StdfRecordHeader.Length;
         hdr : StdfRecordHeader.T;
         bdylen : CARDINAL;
         o : StdfRecordObject.T;

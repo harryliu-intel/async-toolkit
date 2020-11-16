@@ -10,6 +10,7 @@ import ("sstubgen")
 import ("wm_support")
 
 Module ("M3Support")
+Module ("StdfTypeName")
 
 SchemeStubs("FileWr")
 SchemeStubs("Wr")
@@ -27,7 +28,8 @@ SchemeStubs("Text")
 SchemeStubs("TextUtils") 
 SchemeStubs("TextSet") 
 SchemeStubs("TextRefTbl") 
-SchemeStubs("TextList") 
+SchemeStubs("TextList")
+SchemeStubs("StdfTypeName")
 
 ExportSchemeStubs("generator") % export OUR scheme stubs
 

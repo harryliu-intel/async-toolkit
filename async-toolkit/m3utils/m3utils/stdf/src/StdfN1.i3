@@ -1,9 +1,11 @@
 INTERFACE StdfN1;
 IMPORT Rd, StdfE;
+IMPORT Thread;
 
 TYPE T = [0..15];
 
-PROCEDURE ParseArray(rd : Rd.T; VAR len : CARDINAL; VAR t : ARRAY OF T) RAISES { StdfE.E };
+PROCEDURE ParseArray(rd : Rd.T; VAR len : CARDINAL; VAR t : ARRAY OF T)
+  RAISES { StdfE.E, Thread.Alerted, Rd.Failure };
 
 PROCEDURE Format(t : T) : TEXT;
   

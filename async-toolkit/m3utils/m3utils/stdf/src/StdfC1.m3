@@ -1,0 +1,22 @@
+MODULE StdfC1;
+IMPORT Rd, StdfE;
+IMPORT Thread;
+IMPORT Text;
+
+PROCEDURE Parse(rd : Rd.T; VAR len : CARDINAL; VAR t : T)
+  RAISES { StdfE.E, Thread.Alerted, Rd.Failure } =
+  BEGIN
+    IF len < 1 THEN
+      RAISE StdfE.E("short read")
+    ELSE
+      t[0] := Rd.GetChar(rd);
+      DEC(len);
+    END
+  END Parse;
+  
+PROCEDURE Format(t : T) : TEXT =
+  BEGIN
+    RETURN Brand & " : " & Text.FromChar(t[0])
+  END Format;
+
+BEGIN END StdfC1.

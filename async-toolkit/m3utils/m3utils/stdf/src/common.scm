@@ -75,3 +75,19 @@
     (rename-file-if-different (sa deriv-dir nm ".m3.tmp")
                               (sa deriv-dir nm ".m3"))
     ))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; FILE HANDLING
+
+(define (cmp-files-safely fn1 fn2)
+  (let ((res #f))
+    (unwind-protect
+     (set! res (cmp-files fn1 fn2)) #f #f)
+    res))
+
+(define (rename-file-if-different fn1 fn2)
+  (if (not (cmp-files-safely fn1 fn2))
+      (fs-rename fn1 fn2) ;; copy the scratch over the target
+      (FS.DeleteFile fn1) ;; else delete the scratch
+      ))
