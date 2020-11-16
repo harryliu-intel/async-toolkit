@@ -371,7 +371,7 @@
   (if (list? f)
       (let* ((idx (scheme->m3l (cadr f)))
              (m3tn (scheme->m3  (caddr f))))
-        (string-append "REF ARRAY OF StdfTypes." m3tn))
+        (string-append "REF ARRAY OF Stdf" m3tn ".T"))
       (string-append "Stdf" (scheme->m3 f) ".T" )))
 
 (define (m3-field-type-intf f)
@@ -438,7 +438,7 @@
 (define (put-m3-imports wr)
   (dis "<*NOWARN*>IMPORT StdfU1, StdfU2, StdfU4, StdfN1, StdfCn;" dnl
        "<*NOWARN*>IMPORT StdfI2, StdfB1, StdfC1, StdfDn, StdfVn;" dnl
-       "<*NOWARN*>IMPORT StdfI4;" dnl
+       "<*NOWARN*>IMPORT StdfI1, StdfR4, StdfI4;" dnl
        "IMPORT StdfE, Rd;" dnl
        "<*NOWARN*>" dnl
        dnl
@@ -584,8 +584,10 @@
               (dis "    FOR i := 0 TO x." (symbol->string idx) "-1 DO" dnl wr)
               )
           (dis     "      Stdf" m3t ".Parse(rd, len, x." m3f ")" dnl wr)
-          (dis     "    END" dnl wr)
+          (dis     "    END;" dnl wr)
           )
         ))
   'ok
   )
+
+(map make-record-code (map car stdf-record-types))

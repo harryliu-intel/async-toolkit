@@ -6,6 +6,7 @@ _exec(["../generator/AMD64_LINUX/generator","../src/common.scm","../src/stdf.scm
 
 include ("../AMD64_LINUX/derived.m3m")
 
+Module ("StdfI1")
 Module ("StdfI2")
 Module ("StdfI4")
 Module ("StdfU1")

@@ -1,16 +1,18 @@
-INTERFACE StdfU2;
+INTERFACE StdfI1;
 IMPORT Rd, StdfE;
 IMPORT Word;
+IMPORT Thread;
 
-CONST Bytes = 2;
+CONST Bytes = 1;
       Bits  = Bytes * 8;
       
-TYPE T = [0..Word.Shift(1,Bits)-1];
+TYPE T = [-Word.Shift(1,Bits-1)..Word.Shift(1,Bits-1)-1];
 
-PROCEDURE Parse(rd : Rd.T; VAR len : CARDINAL; VAR t : T) RAISES { StdfE.E };
+PROCEDURE Parse(rd : Rd.T; VAR len : CARDINAL; VAR t : T)
+  RAISES { StdfE.E, Thread.Alerted, Rd.Failure };
 
 PROCEDURE Format(t : T) : TEXT;
   
-CONST Brand = "StdfU2";
+CONST Brand = "StdfI1";
 
-END StdfU2.
+END StdfI1.
