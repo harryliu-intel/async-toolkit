@@ -609,7 +609,7 @@
 
     ; copy ImportCV to correct lib and change window
     (unless (IsCellViewWritable libName cellName viewName)
-      viewName=(strcat viewName ".import")
+      viewName=(strcat viewName "_import")
       (warn "Import to view %s because target view was not writable\n" viewName)
       )
     ImportCV = (betterCopyCellView ImportCV libName cellName viewName nil nil t)
