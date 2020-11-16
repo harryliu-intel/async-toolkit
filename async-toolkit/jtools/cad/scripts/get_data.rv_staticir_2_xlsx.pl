@@ -141,10 +141,11 @@ foreach my $dir (sort @srcdir_arr) {
     my $rvdir = `ls -d ${srcdir}/${dir}.cdswd/temp/route/*/proteus/rv/staticir_run 2>/dev/null`;
     chomp($rvdir);
     if (-d $rvdir) {
+        print("INFO: Extracting data for IP '$dir'... \n");
         $sanitized_cell=$ip2inst_blocks{$dir};
         $xlsxline = get_data($mode, $rvdir, $sanitized_cell, $workbook, $worksheet, $xlsxline);
     } else {
-        print("INFO: No rv dir '${srcdir}/${dir}.cdswd/temp/route/*/proteus/rv/staticir_run'! Continuing!\n");
+        print("WARNING: No rv dir '${srcdir}/${dir}.cdswd/temp/route/*/proteus/rv/staticir_run'! Continuing!\n");
     }
 }
 
