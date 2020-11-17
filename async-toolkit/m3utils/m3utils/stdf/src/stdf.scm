@@ -619,7 +619,7 @@
          "TYPE" dnl
          "  PF = PROCEDURE" parseobj-proto ";" dnl
          dnl
-         "  Type = RECORD" dnl
+         "  T = RECORD" dnl
          "    nm      : TEXT;" dnl
          "    enum    : Enum;" dnl
          "    recTyp  : CARDINAL;" dnl
@@ -632,7 +632,7 @@
          "CONST" dnl
          "  Names = ARRAY Enum OF TEXT { " (infixize (map double-quote (map car (map eval (map car stdf-record-types)))) ", ") " };" dnl
          dnl
-         "  Types = ARRAY Enum OF Type { " (infixize (map make-type-desc stdf-record-types) ", "  ) " };" dnl
+         "  Types = ARRAY Enum OF T { " (infixize (map make-type-desc stdf-record-types) ", "  ) " };" dnl
          dnl
          i-wr)
   
@@ -644,15 +644,12 @@
   (let ((m3tn (scheme->m3 (car rtyp)))
       (rec (eval (car rtyp))))
     (string-append
-     dnl "    Type { \"Stdf"m3tn"\", "
+     dnl "    T { \"Stdf"m3tn"\", "
      "Enum."(symbol->string (car rec))", "
      (number->string (cadr rtyp))", "
      (number->string (caddr rtyp))", "
      "Stdf"m3tn".ParseObject }")
     )
 )
-
-
-
   
 (make-record-types)

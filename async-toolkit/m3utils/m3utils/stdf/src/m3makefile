@@ -28,4 +28,8 @@ Module ("StdfParser")
 Interface ("StdfRecordObject")
 Sequence ("StdfRecordObject", "StdfRecordObject")
 
+Table("StdfCardPairRec", "CardPair", "StdfRecordTypes")
+
+Module ("StdfParseTable")
+
 library ("stdf")
