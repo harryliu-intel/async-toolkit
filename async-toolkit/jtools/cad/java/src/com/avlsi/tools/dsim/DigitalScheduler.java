@@ -112,6 +112,8 @@ public class DigitalScheduler {
     private final Random rand;
     /** The time that the last event fired. **/
     private long lastTime = 0;
+    /** The sub-time that the last event fired. **/
+    private int lastSubTime = 0;
 
     /** Whether to stall the simulation before the next event. **/
     private InterruptedBy interrupted = InterruptedBy.NONE;
@@ -311,6 +313,25 @@ public class DigitalScheduler {
         }
     }
 
+    private static String timeString(long time, int subTime) {
+        assert subTime >= 0;
+        StringBuilder sb = new StringBuilder();
+        sb.append(time);
+        if (subTime != 0) {
+            sb.append('.');
+            sb.append(subTime);
+        }
+        return sb.toString();
+    }
+
+    private static String timeString(Event e) {
+        return timeString(e.getTime(), e.getSubTime());
+    }
+
+    private String timeString() {
+        return timeString(getTime(), getSubTime());
+    }
+
     /** 
      * Adds an event to the appropriate queue.  
      *
@@ -332,7 +353,7 @@ public class DigitalScheduler {
         assert Thread.currentThread() == constructorThread;
 
         if (verbose)
-            System.err.println(e.getTime() + ": Adding " + e + 
+            System.err.println(timeString(e) + ": Adding " + e + 
                                " index = " + e.getIndex());
         if ((e instanceof SequencedEvent)  && ((SequencedEvent) e).hasNextEvent())
             System.err.println("Event has NEXT!!");
@@ -340,9 +361,9 @@ public class DigitalScheduler {
         boolean isQueued = e.getIndex() >= 0;
 
         if (verbose) 
-            if (e.getTime() < getTime()) 
+            if (compareTime(e) < 0)
                 System.err.println("Queueing Up Event "+e+" which is in the past "+
-                                   e.getTime()+"<"+getTime());
+                                   timeString(e)+"<"+timeString());
         /*if (e.isRandom()) {
          if (!isQueued) { rqueue.enqueue(e); }
          } else {
@@ -387,7 +408,7 @@ public class DigitalScheduler {
         synchronized(this) {
             if (pqueue.isEmpty()) {
                 if (verbose) 
-                    System.out.println("pqueue is empty @"+getTime());
+                    System.out.println("pqueue is empty @"+timeString());
                 return -1;
             }
             ret = pqueue.front().getTime();
@@ -404,9 +425,8 @@ public class DigitalScheduler {
      * Misnomer.  But we want to keep firing random queue
      * if timed queue is empty.
      **/
-    //private boolean isPqueueInFuture(int time) {
     private boolean isPqueueInFuture(long time) {
-        return pqueue.isEmpty() || compareTime(pqueue.front().getTime(),time) < 0;
+        return pqueue.isEmpty() || Event.compare(pqueue.front(),time,0) < 0;
     }
 
     /** Runs until there are no more events in the queue (and no more threads). */
@@ -481,7 +501,6 @@ public class DigitalScheduler {
             return;
         }
         // process event
-        long newTime = e.getTime();
         // There is no monotonicity requirement on event times.
         // @see <a
         // href="http://internal/bugzilla/show_bug.cgi?id=1062">Bug#1062</a>
@@ -493,14 +512,15 @@ public class DigitalScheduler {
 //                                AbstractDevice.varianceOfTimeOfAllDevices());
 //         }
         // FIXME this may not handle time with random events correctly...
-        if (!e.isRandom() && compareTime(newTime, lastTime) > 0) {
+        if (!e.isRandom() && compareTime(e) > 0) {
             if (verbose) {
-                System.err.println(lastTime + ": changing time to " + newTime);
+                System.err.println(lastTime + ": changing time to " + timeString(e));
             }
-            lastTime = newTime;
+            lastTime = e.getTime();
+            lastSubTime = e.getSubTime();
         }
         e.fire();
-        if (verbose) System.err.println(e.getTime() + " Fired " + e + 
+        if (verbose) System.err.println(timeString(e) + " Fired " + e + 
                                         " numTimed= " + pqueue.size());
     }
     /** Returns the number of queued random events. **/
@@ -535,8 +555,7 @@ public class DigitalScheduler {
              * delay of -1, so they happen "in the past".  They must
              * happen in preference to random rules to avoid instabilities.
              */
-            if (pSz > 0 &&
-                compareTime(pqueue.front().getTime(),lastTime) < 0) {
+            if (pSz > 0 && compareTime(pqueue.front()) < 0) {
                 return pqueue.next();
             }
             float pick = rand.nextInt(tot);
@@ -555,6 +574,9 @@ public class DigitalScheduler {
 
     /** Returns time of last event processed. */
     public long getTime() { return lastTime; }
+
+    /** Returns sub-time of last event processed. */
+    public int getSubTime() { return lastSubTime; }
 
     public void waitForOthersIdle() {
         synchronized (tLock) {
@@ -604,13 +626,10 @@ public class DigitalScheduler {
     }
 
     /**
-     * Convert the ordering between first and second to an integer with
-     * the same conventions as {@link java.util.Comparator#compare}, etc.
-     * Handles time wrapping properly.
+     * Compare time of the given even with the current schedule time.
      **/
-    //public static final int compareTime(final int first, final int second) {
-    public static final long compareTime(final long first, final long second) {
-        return (first - second);
+    private final long compareTime(final Event e) {
+        return Event.compare(e, getTime(), getSubTime());
     }
 
     /*

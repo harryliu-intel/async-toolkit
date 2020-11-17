@@ -16,13 +16,17 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.OptionalInt;
 import java.util.Vector;
 import java.util.WeakHashMap;
 
 import com.avlsi.cast.impl.SubscriptSpecInterface;
+import com.avlsi.cast2.util.DirectiveUtils.BdcValue;
 import com.avlsi.cell.CellInterface;
+import com.avlsi.fast.ports.PortDefinition;
 import com.avlsi.file.common.HierName;
 import com.avlsi.file.common.InvalidHierNameException;
+import com.avlsi.tools.dsim.InstanceData;
 import com.avlsi.tools.tsim.BufferedChannel;
 import com.avlsi.tools.tsim.BufferedNodeBDReadChannel;
 import com.avlsi.tools.tsim.BufferedNodeBDWriteChannel;
@@ -37,6 +41,7 @@ import com.avlsi.tools.tsim.SplitDevice;
 import com.avlsi.tools.tsim.Statusable;
 import com.avlsi.tools.tsim.WideNode;
 import com.avlsi.tools.tsim.WideNodeImpl;
+import com.avlsi.util.container.AliasedSet;
 import com.avlsi.util.container.Pair;
 import com.avlsi.util.math.BigIntegerUtil;
 import com.avlsi.util.debug.Debug;
@@ -209,14 +214,24 @@ public abstract class CoSimInfo {
                                final int slack,
                                final BigInteger N, final int M,
                                final boolean isArrayed) {
-        addChannelInfo(name, type, slack, 1, 4, N, M, isArrayed);
+        addChannelInfo(name, type, slack, N, M, isArrayed,
+                       PortDefinition.NONE);
+    }
+
+    public void addChannelInfo(final String name, final String type,
+                               final int slack,
+                               final BigInteger N, final int M,
+                               final boolean isArrayed,
+                               final int dir) {
+        addChannelInfo(name, type, slack, 1, 4, N, M, isArrayed, dir);
     }
 
     public void addChannelInfo(final String name, final String type,
                                final int slack,
                                final int latency, final int cycle_time,
                                final BigInteger N, final int M,
-                               final boolean isArrayed) {
+                               final boolean isArrayed,
+                               final int dir) {
         addChannelInfo(name, type,
             new ChannelTimingInfo() {
                 public int getSlack() { return slack; }
@@ -229,13 +244,14 @@ public abstract class CoSimInfo {
                 public int getCycleTimeIn() { return cycle_time; }
                 public int getCycleTimeOut() { return cycle_time; }
                 public int getLatencyPerSlack() { return 0; }
-            }, N, M, isArrayed);
+            }, N, M, isArrayed, dir);
     }
 
     public void addChannelInfo(final String name, final String type,
                                final ChannelTimingInfo cti,
                                final BigInteger N, final int M,
-                               final boolean isArrayed) {
+                               final boolean isArrayed,
+                               final int dir) {
         final String realName = isArrayed && M == 1 ?
             StringUtil.replaceSubstring(name + "[0]", "][", ",") : name;
         chanParams.addChannelParameters(realName, type, cti, N, M);
@@ -287,13 +303,32 @@ public abstract class CoSimInfo {
     public static class NodeChannelFactory
         implements ChannelFactoryInterface {
         private final float digitalTau;
+        private final String prefix;
+        private final CellInterface cell;
+        private final AliasedSet localNodes;
+        private final InstanceData instData;
+        private final CoSimInfo cosimInfo;
 
         public NodeChannelFactory() {
             this(1.0f);
         }
 
         public NodeChannelFactory(final float digitalTau) {
+            this(digitalTau, null, null, null, null, null);
+        }
+
+        public NodeChannelFactory(final float digitalTau,
+                                  final String prefix,
+                                  final CellInterface cell,
+                                  final AliasedSet localNodes,
+                                  final InstanceData instData,
+                                  final CoSimInfo cosimInfo) {
             this.digitalTau = digitalTau;
+            this.prefix = prefix;
+            this.cell = cell;
+            this.localNodes = localNodes;
+            this.instData = instData;
+            this.cosimInfo = cosimInfo;
         }
 
         protected int getSlack(final ChannelTimingInfo cti) {
@@ -320,6 +355,21 @@ public abstract class CoSimInfo {
             return slack;
         }
 
+        private String stripPrefix(String name) {
+            if (prefix.length() > 0 && name.startsWith(prefix)) {
+                name = name.substring(prefix.length() + 1);
+            }
+            return StringUtil.replaceSubstring(name, "][", ",");
+        }
+
+        private HierName getAckReq(final String fullname, final String aq,
+                                   final int width) {
+            final String node = fullname + (width == 0 ? "" : ".C") + "." + aq;
+            final HierName hNode =
+                HierName.makeHierNameUnchecked(stripPrefix(node), '.');
+            return (HierName) localNodes.getCanonicalKey(hNode);
+        }
+
         public ChannelInput makeInputChannel(final String name,
                                              final String type,
                                              final BigInteger radix,
@@ -327,12 +377,12 @@ public abstract class CoSimInfo {
                                              final ChannelTimingInfo cti) {
             final int slack = getSlack(cti);
             final int latency = cti.getLatency();
-            final int ffLatency = slack == 0 ? latency : latency / slack;
-            final int bfLatency = cti.getEnableDataLatency();
+            int ffLatency = slack == 0 ? latency : latency / slack;
+            int bfLatency = cti.getEnableDataLatency();
             final int fbNeutral = cti.getDataNeutralEnableLatency();
             final int fbValid = cti.getDataValidEnableLatency();
-            final int fbLatency = (fbNeutral + fbValid) / 2;
-            final int bbLatency =
+            int fbLatency = (fbNeutral + fbValid) / 2;
+            int bbLatency =
                 cti.getCycleTime() - ffLatency - bfLatency - fbLatency;
             if (type.startsWith("standard.channel.e1of")) {
                 return new NodeReadChannel(slack,
@@ -349,18 +399,33 @@ public abstract class CoSimInfo {
                                            BigIntegerUtil.safeIntValue(radix),
                                            width);
             } else if (type.startsWith("standard.channel.bd")) {
-                final int bdslack = getBDSlack(name, slack);
+                int bdslack = getBDSlack(name, slack);
                 final int W = validateBDChannel(name, bdslack, radix, width);
+                float fromData = 1;
+                float toData = 200;
+                if (instData != null) {
+                    toData = 0;
+                    final HierName ack = getAckReq(name, "a", width);
+                    final int cspTimeOffset =
+                        cti.getCspTime() - cosimInfo.getMinimumCspTime().getAsInt();
+                    fromData = instData.getBDLatency(ack, bdslack > 0);
+                    ffLatency = cti.getLatencyPerSlack();
+                    bbLatency = cti.getCycleTime() - ffLatency;
+                    fbLatency = 0;
+                    bfLatency = 0;
+                    fromData *= 100;
+                    fromData += cspTimeOffset;
+                }
                 if (bdslack == 0) {
                     return new SlacklessNodeBDReadChannel(
-                            Math.round(200 * digitalTau),
-                            Math.round(1 * digitalTau),
+                            Math.round(toData * digitalTau),
+                            Math.round(fromData * digitalTau),
                             name, W);
                 } else {
                     return new BufferedNodeBDReadChannel(
                             bdslack,
-                            Math.round(200 * digitalTau),
-                            Math.round(1 * digitalTau),
+                            Math.round(toData * digitalTau),
+                            Math.round(fromData * digitalTau),
                             Math.round(ffLatency * digitalTau),
                             Math.round(bbLatency * digitalTau),
                             Math.round(fbLatency * digitalTau),
@@ -381,12 +446,12 @@ public abstract class CoSimInfo {
                                                final ChannelTimingInfo cti) {
             final int slack = getSlack(cti);
             final int latency = cti.getLatency();
-            final int ffLatency = slack == 0 ? latency : latency / slack;
-            final int bfLatency = cti.getEnableDataLatency();
+            int ffLatency = slack == 0 ? latency : latency / slack;
+            int bfLatency = cti.getEnableDataLatency();
             final int fbNeutral = cti.getDataNeutralEnableLatency();
             final int fbValid = cti.getDataValidEnableLatency();
-            final int fbLatency = (fbNeutral + fbValid) / 2;
-            final int bbLatency =
+            int fbLatency = (fbNeutral + fbValid) / 2;
+            int bbLatency =
                 cti.getCycleTime() - ffLatency - bfLatency - fbLatency;
             if (type.startsWith("standard.channel.e1of")) {
                 return new NodeWriteChannel(slack,
@@ -402,18 +467,33 @@ public abstract class CoSimInfo {
                                             BigIntegerUtil.safeIntValue(radix),
                                             width);
             } else if (type.startsWith("standard.channel.bd")) {
-                final int bdslack = getBDSlack(name, slack);
+                float fromData = 1;
+                float toData = 600;
+                int bdslack = getBDSlack(name, slack);
+                if (instData != null) {
+                    toData = 0;
+                    final HierName req = getAckReq(name, "q", width);
+                    final int cspTimeOffset =
+                        cti.getCspTime() - cosimInfo.getMinimumCspTime().getAsInt();
+                    fromData = instData.getBDLatency(req, bdslack > 0);
+                    ffLatency = cti.getLatencyPerSlack();
+                    bbLatency = cti.getCycleTime() - ffLatency;
+                    fbLatency = 0;
+                    bfLatency = 0;
+                    fromData *= 100;
+                    fromData += cspTimeOffset;
+                }
                 final int W = validateBDChannel(name, bdslack, radix, width);
                 if (bdslack == 0) {
                     return new SlacklessNodeBDWriteChannel(
-                            Math.round(600 * digitalTau),
-                            Math.round(1 * digitalTau),
+                            Math.round(toData * digitalTau),
+                            Math.round(fromData * digitalTau),
                             name, W);
                 } else {
                     return new BufferedNodeBDWriteChannel(
                             bdslack,
-                            Math.round(600 * digitalTau),
-                            Math.round(1 * digitalTau),
+                            Math.round(toData * digitalTau),
+                            Math.round(fromData * digitalTau),
                             Math.round(ffLatency * digitalTau),
                             Math.round(bbLatency * digitalTau),
                             Math.round(fbLatency * digitalTau),
@@ -444,16 +524,20 @@ public abstract class CoSimInfo {
      **/
     public ChannelDictionary createNodeChannels(final HierName cellName,
                                                 final CellInterface cell,
-                                                final float digitalTau) {
+                                                final float digitalTau,
+                                                final AliasedSet localNodes,
+                                                final InstanceData instData) {
+        final String sCellName = cellName.getAsString('.');
         return createNodeChannels(cellName, cell,
-                                  new NodeChannelFactory(digitalTau));
+                new NodeChannelFactory(digitalTau, sCellName, cell, localNodes,
+                                       instData, this));
     }
 
     public ChannelDictionary createNodeChannels(final HierName cellName,
                                                 final CellInterface cell,
                                                 final ChannelFactoryInterface channelFactory) {
-        return createChannels(cellName.getAsString('.'), cell,
-                              channelFactory,
+        final String sCellName = cellName.getAsString('.');
+        return createChannels(sCellName, cell, channelFactory,
                               new WideNodeFactory());
     }
 
@@ -743,5 +827,9 @@ public abstract class CoSimInfo {
             Statusable s = (Statusable) it.next();
             s.printStatus();
         }
+    }
+
+    public OptionalInt getMinimumCspTime() {
+        return OptionalInt.empty();
     }
 }

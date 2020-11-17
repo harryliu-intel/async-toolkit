@@ -61,6 +61,8 @@ public final class Node implements Event, Waitable {
     
     /** Trigger time */
     long eventTime;
+    /** Trigger subtime */
+    int eventSubTime;
     /** Rules we activate positively and negatively */
     private final Rule[][] rules = { new Rule[4], new Rule[4] };
 
@@ -249,6 +251,9 @@ public final class Node implements Event, Waitable {
     }
     /** Returns the next time that we should fire. **/
     public long getTime() { return eventTime; }
+    /** Returns the next time that we should fire. **/
+    @Override
+    public int getSubTime() { return eventSubTime; }
     /** Returns whether we should fire at a random time. **/
     public boolean isRandom() { return testFlag(RANDOM_BIT); }
     /** sets whether we should fire at a random time. **/
@@ -592,6 +597,7 @@ public final class Node implements Event, Waitable {
                 }
             }
 
+            boolean st = drule.useSubtimeDelay();
             if (index < 0) { 
                 if (value==dir); /*** vacuous ***/
                 else if (value==VALUE_U) { 
@@ -603,7 +609,7 @@ public final class Node implements Event, Waitable {
                     sim.eventNotice(lastEvent,drule,"scheduled normally");
                     setSlew(slew);
                     setDelayType(type);
-                    sim.scheduleEvent(this,dir,delay,random,lastEvent);
+                    sim.scheduleEvent(this,dir,st?0:delay,st?delay:0,random,lastEvent);
                 } 
             } else {
                 if (pending==VALUE_U) { 
@@ -623,7 +629,8 @@ public final class Node implements Event, Waitable {
                     sim.eventNotice(lastEvent,drule,"rescheduled earlier");
                     setSlew(slew);
                     setDelayType(type);
-                    sim.scheduleEvent(this,dir,delay,random,lastEvent);
+                    sim.scheduleEvent(this,dir,st?0:delay,st?delay:0,
+                                      random,lastEvent);
                 }
             }
         } else /*** floating ***/ {

@@ -2427,6 +2427,18 @@ public class DSimModule extends CmdLine {
                 }
             }
         },
+        new CmdCommand("bd_timing", "bd_timing <on/off>",
+                       "Enable/disable BD timing directives",
+                       "Enables or disables BD timing directives.") {
+            public void execute(String args[]) { 
+                if (checkDSim()) {
+                    boolean val = getBooleanArg(args, 0, dsim.getBDTiming());
+                    dsim.setBDTiming(val);
+                    System.out.println("BD timing directives " +
+                            (dsim.getBDTiming() ? "enabled" : "disabled"));
+                }
+            }
+        },
   	new CmdCommand("haltonconflict", "haltonconflict <on/off>",
 				"Halt on cosimulation conflict",
 				"Controls whether a simulation halts or " +

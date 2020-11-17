@@ -370,7 +370,7 @@ public class EventQueue implements EventQueueInterface {
      **/
 
     private final /*@ pure @*/ long compare(int i, int j) {
-        return heap.get(i).getTime() - heap.get(j).getTime();
+        return Event.compare(heap.get(i), heap.get(j));
     }
 
     /**

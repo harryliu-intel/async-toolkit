@@ -40,11 +40,40 @@ public interface Event {
      **/
     /*@ pure @*/ long getTime();
 
+    /**
+     * @return the sub-time at which the event should fire, for non-random events.
+     **/
+    /*@ pure @*/ default int getSubTime() {
+        return 0;
+    }
+
     /** 
      * @return a true value indicates that the event should fire at a random
      * unspecified time.
      **/
     /*@ pure @*/ boolean isRandom();
+
+    static long compare(final long ta, final long sta,
+                        final long tb, final long stb) {
+        long delta = ta - tb;
+        if (delta == 0) {
+            delta = sta - stb;
+        }
+        return delta;
+    }
+
+    static long compare(final long ta, final long sta, final Event b) {
+        return compare(ta, sta, b.getTime(), b.getSubTime());
+    }
+
+    static long compare(final Event a, final long tb, final long stb) {
+        return compare(a.getTime(), a.getSubTime(), tb, stb);
+    }
+
+    static long compare(final Event a, final Event b) {
+        return compare(a.getTime(), a.getSubTime(),
+                       b.getTime(), b.getSubTime());
+    }
 
 } // end of interface Event
 

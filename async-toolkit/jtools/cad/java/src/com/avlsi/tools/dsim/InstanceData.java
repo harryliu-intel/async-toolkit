@@ -15,11 +15,14 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.avlsi.cast2.directive.DirectiveConstants;
 import com.avlsi.cast2.util.DirectiveUtils;
+import com.avlsi.cast2.util.DirectiveUtils.BdcValue;
 import com.avlsi.cell.CellInterface;
 import com.avlsi.cell.CellUtils;
+import com.avlsi.fast.BlockInterface;
 import com.avlsi.file.common.HierName;
 import com.avlsi.tools.cadencize.Cadencize;
 import com.avlsi.util.container.AliasedSet;
@@ -65,7 +68,7 @@ public class InstanceData {
      **/
     public static class NodeDirective implements AttributeInterface {
         private final Map /*<HierName,Object>*/ directives;
-        private final UnaryFunction /*<CellInterface,Map>*/ getter;
+        protected final UnaryFunction /*<CellInterface,Map>*/ getter;
         private MultiMap/*<HierName,Pair<HierName,Object>>*/ cache;
 
         public NodeDirective(final CellInterface ci,
@@ -82,19 +85,23 @@ public class InstanceData {
             this.directives = directives;
             this.getter = getter;
         }
-        private NodeDirective(final Map directives,
-                              final UnaryFunction getter) {
+        protected NodeDirective(final Map directives,
+                                final UnaryFunction getter) {
             this.directives = directives;
             this.getter = getter;
+        }
+        protected AttributeInterface getInstance(
+            final Map /*<HierName,Object>*/ directives,
+            final UnaryFunction /*<CellInterface,Map>*/ getter) {
+            return new NodeDirective(directives, getter);
         }
         public Object getAttribute(final HierName canon) {
             return directives.get(canon);
         }
-        public AttributeInterface translate(final CellInterface cell,
-                                            final CellInterface subcell,
-                                            final AliasedSet cellAliases,
-                                            final AliasedSet subcellAliases,
-                                            final HierName instance) {
+        protected Map translate(final CellInterface cell,
+                                final CellInterface subcell,
+                                final AliasedSet cellAliases,
+                                final HierName instance) {
             // in anticipation that translate will be called on all instances
             // of cell, group attributes by instance
             if (cache == null) attributeByInstance(cell, cellAliases);
@@ -111,10 +118,19 @@ public class InstanceData {
                     translated.put(alias.tail(n), p.getSecond());
                 }
             }
+            return translated;
+        }
+        public AttributeInterface translate(final CellInterface cell,
+                                            final CellInterface subcell,
+                                            final AliasedSet cellAliases,
+                                            final AliasedSet subcellAliases,
+                                            final HierName instance) {
+            final Map translated =
+                translate(cell, subcell, cellAliases, instance);
             final Map newdir =
                 augmentMap(translated,
                            (Map) getter.execute(subcell), subcellAliases);
-            return new NodeDirective(newdir, getter);
+            return getInstance(newdir, getter);
         }
         private void attributeByInstance(final CellInterface cell,
                                          final AliasedSet cellAliases) {
@@ -346,15 +362,60 @@ public class InstanceData {
         }
     }
 
-    public static class SubcellGetter implements UnaryFunction {
-        protected final String dir, type;
-        public SubcellGetter(final String dir, final String type) {
+    public static class BdcDirective extends NodeDirective {
+        public BdcDirective(final CellInterface ci, final BdcGetter getter) {
+            super((Map) getter.execute(ci), getter);
+        }
+        public BdcDirective(final Map dir, final BdcGetter getter) {
+            super(dir, getter);
+        }
+        private CellInterface subcell;
+        protected AttributeInterface getInstance(
+            final Map /*<HierName,Object>*/ directives,
+            final UnaryFunction /*<CellInterface,Map>*/ getter) {
+            return new BdcDirective(directives, (BdcGetter) getter);
+        }
+        protected Map translate(final CellInterface cell,
+                                final CellInterface subcell,
+                                final AliasedSet cellAliases,
+                                final HierName instance) {
+            final Map result =
+                super.translate(cell, subcell, cellAliases, instance);
+            if (CellUtils.matchRefinement(
+                        subcell, c -> c.getFullyQualifiedType()
+                                       .equals("standard.base.BD_CONTROLLER"))) {
+                result.replaceAll((k, v) ->
+                        new BdcValue(((BdcValue) v).getValue(), false));
+            }
+            return result;
+        }
+        public AttributeInterface translate(final CellInterface cell,
+                                            final CellInterface subcell,
+                                            final AliasedSet cellAliases,
+                                            final AliasedSet subcellAliases,
+                                            final HierName instance) {
+            ((BdcGetter) getter).setLocalNodes(subcellAliases);
+            return super.translate(cell, subcell, cellAliases, subcellAliases, instance);
+        }
+    }
+
+    public static class BlockGetter implements UnaryFunction {
+        protected final String dir, type, block;
+        public BlockGetter(final String dir, final String type,
+                           final String block) {
             this.dir = dir;
             this.type = type;
+            this.block = block;
         }
         public Object execute(final Object o) {
             final CellInterface cell = (CellInterface) o;
-            return DirectiveUtils.getSubcellDirective(cell, dir, type);
+            return DirectiveUtils.getBlockDirective(cell, block, dir, type);
+        }
+    }
+
+    public static class SubcellGetter extends BlockGetter {
+        public SubcellGetter(final String dir, final String type) {
+            super(dir, type, BlockInterface.SUBCELL);
         }
     }
 
@@ -424,6 +485,61 @@ public class InstanceData {
             return result;
         }
     }
+
+    public static class BdcGetter implements UnaryFunction {
+        private final String dir, type, block;
+        private AliasedSet localNodes;
+        private final boolean isPort;
+        private final String[] pins;
+        public BdcGetter(final String dir, final String type,
+                         final String block,
+                         final AliasedSet localNodes,
+                         final String... pins) {
+            this(dir, type, block, localNodes, false, pins);
+        }
+        public BdcGetter(final String dir, final String type,
+                         final String block,
+                         final AliasedSet localNodes,
+                         final boolean isPort,
+                         final String... pins) {
+            this.dir = dir;
+            this.type = type;
+            this.block = block;
+            this.localNodes = localNodes;
+            this.isPort = isPort;
+            this.pins = pins;
+        }
+        public Object execute(final Object o) {
+            final CellInterface cell = (CellInterface) o;
+            final Float defValue = (Float)
+                DirectiveUtils.getTopLevelDirective(cell, dir);
+            final Map<HierName,BdcValue> dirs = new LinkedHashMap<>();
+            final Iterator<Pair<HierName,CellInterface>> i =
+                isPort ? cell.getPortSubcellPairs()
+                       : cell.getLocalSubcellPairs();
+            while (i.hasNext()) {
+                Pair<HierName,CellInterface> p = i.next();
+                if (p.getSecond().isChannel()) {
+                    dirs.put(p.getFirst(), new BdcValue(defValue, true));
+                }
+            }
+            for (Map.Entry<HierName,Float> e : (Set<Map.Entry<HierName,Float>>)
+                    DirectiveUtils.getBlockDirective(cell, block, dir, type)
+                                  .entrySet()) {
+                dirs.put(e.getKey(), new BdcValue(e.getValue(), false));
+            }
+            return DirectiveUtils.getBdcDirectives(dirs, cell, localNodes, pins);
+        }
+        public void setLocalNodes(final AliasedSet localNodes) {
+            this.localNodes = localNodes;
+        }
+    }
+
+    private static UnaryFunction NULL_GETTER = new UnaryFunction() {
+        public Object execute(final Object o) {
+            return Collections.emptyMap();
+        }
+    };
 
     private final Map /*<String,AttributeInterface>*/ attributes;
 
@@ -522,6 +638,14 @@ public class InstanceData {
                                   DirectiveConstants.HALFOP_TYPE)));
     }
 
+    public void updateBDExtraDelay(final CellInterface cell,
+                                   final AliasedSet aliases) {
+        put(DirectiveConstants.BD_EXTRA_DELAY,
+            new HalfOpDirective(cell, aliases,
+                new SubcellGetter(DirectiveConstants.BD_EXTRA_DELAY,
+                                  DirectiveConstants.HALFOP_TYPE)));
+    }
+
     public void updateExtraDelay(final CellInterface cell,
                                  final AliasedSet aliases) {
         put(DirectiveConstants.EXTRA_DELAY,
@@ -594,6 +718,46 @@ public class InstanceData {
 
     public void updateIsochronic(final CellInterface cell) {
         updateIsochronic(cell, false);
+    }
+
+    public void updateBdcTiming(final CellInterface cell,
+                                final AliasedSet aliases) {
+        put(DirectiveConstants.LATENCY,
+            new NodeDirective(cell, aliases,
+                new BlockGetter(DirectiveConstants.LATENCY,
+                                DirectiveConstants.NODE_TYPE,
+                                BlockInterface.CELL)));
+        put(DirectiveConstants.FORWARD_LATENCY,
+            new BdcDirective(cell,
+                new BdcGetter(DirectiveConstants.FORWARD_LATENCY,
+                              DirectiveConstants.CHANNEL_TYPE,
+                              BlockInterface.SUBCELL,
+                              aliases, "q")));
+        put(DirectiveConstants.BACKWARD_LATENCY,
+            new BdcDirective(cell,
+                new BdcGetter(DirectiveConstants.BACKWARD_LATENCY,
+                              DirectiveConstants.CHANNEL_TYPE,
+                              BlockInterface.SUBCELL,
+                              aliases, "a")));
+    }
+
+    public void updateBdcPortTiming(final CellInterface cell,
+                                    final AliasedSet aliases) {
+        final Map portForwardLatency = (Map)
+            new BdcGetter(DirectiveConstants.PORT_FORWARD_LATENCY,
+                          DirectiveConstants.CHANNEL_TYPE,
+                          BlockInterface.CELL,
+                          aliases, true, "q").execute(cell);
+        put(DirectiveConstants.PORT_FORWARD_LATENCY,
+            new NodeDirective(cell, portForwardLatency, NULL_GETTER));
+
+        final Map portBackwardLatency = (Map)
+                new BdcGetter(DirectiveConstants.PORT_BACKWARD_LATENCY,
+                              DirectiveConstants.CHANNEL_TYPE,
+                              BlockInterface.CELL,
+                              aliases, true, "a").execute(cell);
+        put(DirectiveConstants.PORT_BACKWARD_LATENCY,
+            new NodeDirective(cell, portBackwardLatency, NULL_GETTER));
     }
 
     public class MeasuredProcessor implements MeasuredGetter.Processor {
@@ -824,6 +988,11 @@ public class InstanceData {
         }
     }
 
+    public float getBDExtraDelay(final boolean up, final HierName canon) {
+        final float result = getHalfopResult(up, canon, DirectiveConstants.BD_EXTRA_DELAY, 0);
+        return result;
+    }
+
     public float getEstimatedDelay(final boolean up, final HierName canon) {
         return getHalfopResult(up, canon, DirectiveConstants.ESTIMATED_DELAY,
                                Float.NaN);
@@ -891,6 +1060,44 @@ public class InstanceData {
         final Boolean result =
             (Boolean) get(DirectiveConstants.ISOCHRONIC).getAttribute(instance);
         return result;
+    }
+
+    public BdcValue getForwardLatency(final HierName canon) {
+        return (BdcValue) get(DirectiveConstants.FORWARD_LATENCY).getAttribute(canon);
+    }
+
+    public BdcValue getBackwardLatency(final HierName canon) {
+        return (BdcValue) get(DirectiveConstants.BACKWARD_LATENCY).getAttribute(canon);
+    }
+
+    public BdcValue getPortForwardLatency(final HierName canon) {
+        return (BdcValue) get(DirectiveConstants.PORT_FORWARD_LATENCY).getAttribute(canon);
+    }
+
+    public BdcValue getPortBackwardLatency(final HierName canon) {
+        return (BdcValue) get(DirectiveConstants.PORT_BACKWARD_LATENCY).getAttribute(canon);
+    }
+
+    public float getLatency(final HierName canon, final float defValue) {
+        final Number result =
+            (Number) get(DirectiveConstants.LATENCY).getAttribute(canon);
+        return result == null ? defValue : result.floatValue();
+    }
+
+    public float getBDLatency(final HierName canon, final boolean useDefault) {
+        final BdcValue pfl = getPortForwardLatency(canon);
+        final BdcValue fl = pfl == null ? getForwardLatency(canon) : pfl;
+
+        final BdcValue pbl = getPortBackwardLatency(canon);
+        final BdcValue bl = pbl == null ? getBackwardLatency(canon) : pbl;
+
+        final BdcValue result;
+        if (bl != null && fl != null) result = fl.min(bl);
+        else if (bl != null) result = bl;
+        else result = fl;
+
+        return result != null && (useDefault || !result.isDefault()) ? result.getValue() : 0;
+        //return result != null ? (result.isDefault() ? 1 : result.getValue()) : 0;
     }
 
     public String toString() {

@@ -1253,9 +1253,10 @@ public class CellImpl implements CellInterface {
             // can be looked up; for arrayed, width 1 channels, "[0]" will be
             // appended inside CoSimInfo.addChannelInfo to make the name look
             // identical to chanName below.
+
             addNewChannelToCosimInfo(newname, channelType.getTypeName(), slack,
                                      N, M, channelType.isArrayed(),
-                                     outCosimInfo);
+                                     outCosimInfo, direction);
 
             // Fix for Bug 2373.  Add index for "wide" channels of width 1.
             // Do this before converting ][ -> , to get better channel
@@ -1611,16 +1612,18 @@ public class CellImpl implements CellInterface {
          final int N, final int M, final boolean isArrayed,
          final CoSimInfo cosimInfo) {
         addNewChannelToCosimInfo(name, type, slack, BigInteger.valueOf(N), M,
-                                 isArrayed, cosimInfo);
+                                 isArrayed, cosimInfo, PortDefinition.NONE);
     }
 
     private void addNewChannelToCosimInfo
         (final String name, final String type, final int slack,
          final BigInteger N, final int M, final boolean isArrayed,
-         final CoSimInfo cosimInfo) {
+         final CoSimInfo cosimInfo,
+         final int direction) {
         // System.err.println("Adding channel " + name + " with parameters " +
         //         "e1of" + N + " * " + M + "  slack " + slack);
-        cosimInfo.addChannelInfo(name, type, slack, N, M, isArrayed);
+        cosimInfo.addChannelInfo(name, type, slack, N, M, isArrayed,
+                                 direction);
     }
 
     class BadChannelSpec extends RuntimeException {

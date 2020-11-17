@@ -138,14 +138,17 @@ public final class DirectiveUtils {
 
     public static BlockInterface getUniqueBlock(BlockInterface block,
                                                 String type ) {
+        if (type == BlockInterface.CELL) {
+            return block;
+        } else {
+            BlockIterator subBlockIter = block.iterator(type);
 
-        BlockIterator subBlockIter = block.iterator(type);
+            assert subBlockIter.hasNext() : "No " + type + " block exists!";
+            BlockInterface b = subBlockIter.next();
+            assert !subBlockIter.hasNext() : "Multiple " + type + " blocks?";
 
-        Debug.assertTrue(subBlockIter.hasNext(), "No " + type + " block exists!");
-        BlockInterface b = subBlockIter.next();
-        Debug.assertTrue(!subBlockIter.hasNext(), "Multiple " + type + " blocks?");
-
-        return b;
+            return b;
+        }
     }
 
     public static Object getBlockDirective(CellInterface cell, String block,
@@ -832,13 +835,23 @@ public final class DirectiveUtils {
                                               final int defStages) {
         return getTiming(cell, block, channel, defStages, null);
 
-   }
+    }
 
     public static ChannelTimingInfo getTiming(final CellInterface cell,
                                               final String block,
                                               final String channel,
                                               final int defStages,
                                               final Float defaultCycleTime) {
+        return getTiming(cell, block, channel, defStages, defaultCycleTime,
+                         PortDefinition.NONE);
+    }
+
+    public static ChannelTimingInfo getTiming(final CellInterface cell,
+                                              final String block,
+                                              final String channel,
+                                              final int defStages,
+                                              final Float defaultCycleTime,
+                                              final int direction) {
         final Function<String,Object> getWideDir = dir ->
             getBlockDirective(cell, block, dir, DirectiveConstants.WIDE_CHANNEL_TYPE)
                    .get(channel);
@@ -959,6 +972,25 @@ public final class DirectiveUtils {
         // find the conversion to DSim units
         final int timeUnit = ((Integer) getTopLevelDirective(cell, DirectiveConstants.TIME_UNIT)).intValue();
 
+        // if a csp block, find csp_time offset from the minimum csp_time
+        final float cspTime;
+        if (block == BlockInterface.CSP &&
+            (direction == PortDefinition.IN || direction == PortDefinition.OUT)) {
+            final Map<String,Float> cspTimeDir = (Map<String,Float>)
+                DirectiveUtils.getCspDirective(cell,
+                        DirectiveConstants.CSP_TIME,
+                        DirectiveConstants.POSSIBLY_WIDE_CHANNEL_TYPE);
+            final float defaultCspTimeInputs = (Float)
+                DirectiveUtils.getCspDirective(cell, DirectiveConstants.CSP_TIME_INPUTS);
+            final float defaultCspTimeOutputs = (Float)
+                DirectiveUtils.getCspDirective(cell, DirectiveConstants.CSP_TIME_OUTPUTS);
+            cspTime = cspTimeDir.getOrDefault(channel,
+                    direction == PortDefinition.IN ? defaultCspTimeInputs
+                                                   : defaultCspTimeOutputs);
+        } else {
+            cspTime = Float.NaN;
+        }
+
         return new ChannelTimingInfo() {
             public int getSlack() { return slack; }
             public int getInternalSlack() { return internalSlack; }
@@ -985,6 +1017,9 @@ public final class DirectiveUtils {
             }
             public int getLatencyPerSlack() {
                 return Math.round(latencyPerSlack * timeUnit);
+            }
+            public int getCspTime() {
+                return Math.round(cspTime * timeUnit);
             }
         };
     }
@@ -1162,16 +1197,53 @@ public final class DirectiveUtils {
         return result;
     }
 
+    public static class BdcValue implements Comparable<BdcValue> {
+        public final float val;
+        public final boolean isDef;
+        public BdcValue(final float val, final boolean isDef) {
+            this.val = val;
+            this.isDef = isDef;
+        }
+        public int compareTo(BdcValue o) {
+            if (this.isDef == o.isDef) {
+                return Float.compare(this.val, o.val);
+            } else {
+                return Boolean.compare(this.isDef, o.isDef);
+            }
+        }
+        public BdcValue min(final BdcValue o) {
+            return this.compareTo(o) <= 0 ? this : o;
+        }
+        public float getValue() {
+            return val;
+        }
+        public boolean isDefault() {
+            return isDef;
+        }
+        public String toString() {
+            return "BdcValue(" + val + "," + isDef + ")";
+        }
+    }
+
+    public static Map<HierName,BdcValue> toBdcValue(final Map<HierName,Float> dirs,
+                                                    final boolean isDef) {
+        final Map<HierName,BdcValue> result = new LinkedHashMap<>();
+        for (Map.Entry<HierName,Float> e : dirs.entrySet()) {
+            result.put(e.getKey(), new BdcValue(e.getValue(), isDef));
+        }
+        return result;
+    }
+
     /**
      * Flatten recursive bdc directives to nodes.
      **/
-    public static Map<HierName,Float> getBdcDirectives(final Map<HierName,Float> dirs,
-                                                       final CellInterface cell,
-                                                       final AliasedSet nodes,
-                                                       final String... pins) {
-        final Map<HierName,Float> vals = new HashMap<>();
+    public static Map<HierName,BdcValue> getBdcDirectives(final Map<HierName,BdcValue> dirs,
+                                                          final CellInterface cell,
+                                                          final AliasedSet nodes,
+                                                          final String... pins) {
+        final Map<HierName,BdcValue> vals = new HashMap<>();
         if (dirs != null) {
-            for (Map.Entry<HierName,Float> e : dirs.entrySet()) {
+            for (Map.Entry<HierName,BdcValue> e : dirs.entrySet()) {
                 for (HierName h : findBdc(CellUtils.getSubcell(cell, e.getKey()),
                                           e.getKey(),
                                           new HashSet<>())) {
@@ -1182,11 +1254,11 @@ public final class DirectiveUtils {
                 }
             }
         }
-        final Map<HierName,Float> result = new HashMap<>();
-        for (Map.Entry<HierName,Float> e : vals.entrySet()) {
+        final Map<HierName,BdcValue> result = new HashMap<>();
+        for (Map.Entry<HierName,BdcValue> e : vals.entrySet()) {
             result.merge((HierName) nodes.getCanonicalKey(e.getKey()),
                          e.getValue(),
-                         (a, b) -> Float.min(a, b));
+                         (a, b) -> a.min(b));
         }
         return result;
     }

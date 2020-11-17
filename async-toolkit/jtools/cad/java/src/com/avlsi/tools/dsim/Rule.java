@@ -121,6 +121,11 @@ public final class Rule {
     boolean measureDelayOn;
     
     /**
+     * Whether delay is subtime delay.
+     **/
+    final boolean subtimeDelay;
+
+    /**
      * Lower bound of timed jitter range.
      **/
     final float fastDelay;
@@ -144,6 +149,9 @@ public final class Rule {
     public String toPrettyString () {
         DSim sim = DSim.get();
         StringBuffer ret = new StringBuffer();
+        if (isochronic) ret.append("isochronic ");
+        if (delay > 0)
+            ret.append("after " + (useSubtimeDelay() ? "." : "") + delay + " ");
         boolean pastFirst = false;
         for (Node n : sim.getTargetingNodes(this)) {
             int sense = n.getSense(this);
@@ -207,7 +215,7 @@ public final class Rule {
      **/
     public Rule(Node[] guards, int[] sense, Node target, int dir, int delay,
                 byte delay_type, boolean timed, float fastDelay,
-                float slowDelay, boolean isochronic,
+                float slowDelay, boolean isochronic, boolean subtimeDelay,
 				boolean absoluteDelay, boolean asserted, Pair[] measuredDelay,
 				byte coverageRequirement, HierName prefix) {
         Debug.assertTrue(guards.length == sense.length);
@@ -220,6 +228,7 @@ public final class Rule {
         this.fastDelay = fastDelay;
         this.slowDelay = slowDelay;
         this.isochronic = isochronic;
+        this.subtimeDelay = subtimeDelay;
         this.absoluteDelay = absoluteDelay;
         this.asserted = asserted;
         if (measuredDelay != null) addMeasured(measuredDelay, 0);
@@ -536,6 +545,10 @@ public final class Rule {
     
     public boolean getMeasureStatus() {
         return measureDelayOn;
+    }
+
+    public boolean useSubtimeDelay() {
+        return subtimeDelay;
     }
 
     public int setDelay(final int newDelay) {

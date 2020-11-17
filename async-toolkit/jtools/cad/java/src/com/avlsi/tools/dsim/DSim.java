@@ -326,6 +326,11 @@ public class DSim implements NodeWatcher {
     public CspStdio cspStdio = new CspStdio(32);
 
     /**
+     * Enable BD timing directives
+     **/
+    private boolean bdTiming = false;
+
+    /**
      * possibilities for randomOrder.
      * <p>
      * NO_RANDOM, just use delay.
@@ -981,24 +986,24 @@ public class DSim implements NodeWatcher {
         // GND => ERROR+
         createHierRule(new HierNameAtomicBooleanExpression(false, gndName),
                        target, ProductionRule.DOWN, 100, DIGITAL_TAU, false,
-                       -1, -1,
+                       -1, -1, false,
                        false, false, true, null, null, Float.NaN, null, true,
                        null);
         createHierRule(new HierNameAtomicBooleanExpression(true, gndName),
                        target, ProductionRule.UP, 100, DIGITAL_TAU, false,
-                       -1, -1,
+                       -1, -1, false,
                        false, false, true, null, null, Float.NaN, null, true,
                        null);
 
         // Vdd => ERROR-
         createHierRule(new HierNameAtomicBooleanExpression(true, vddName),
                        target, ProductionRule.DOWN, 100, DIGITAL_TAU, false,
-                       -1, -1,
+                       -1, -1, false,
                        false, false, true, null, null, Float.NaN, null, true,
                        null);
         createHierRule(new HierNameAtomicBooleanExpression(false, vddName),
                        target, ProductionRule.UP, 100, DIGITAL_TAU, false,
-                       -1, -1,
+                       -1, -1, false,
                        false, false, true, null, null, Float.NaN, null, true,
                        null);
 
@@ -1014,12 +1019,12 @@ public class DSim implements NodeWatcher {
         createHierRule(
                 new HierNameAtomicBooleanExpression(false, resetNodeName),
                 body, ProductionRule.DOWN, 100, DIGITAL_TAU, false, -1, -1,
-                false, false, true, null, null, RESET_SLEW, null, true,
+                false, false, false, true, null, null, RESET_SLEW, null, true,
                 null);
         createHierRule(
                 new HierNameAtomicBooleanExpression(true, resetNodeName),
                 body, ProductionRule.UP, 100, DIGITAL_TAU, false, -1, -1,
-                false, false, true, null, null, RESET_SLEW, null, true,
+                false, false, false, true, null, null, RESET_SLEW, null, true,
                 null);
 
         if (!includeEnv) return;
@@ -1030,12 +1035,12 @@ public class DSim implements NodeWatcher {
         createHierRule(
                 new HierNameAtomicBooleanExpression(false, resetNodeName),
                 env, ProductionRule.DOWN, 100, DIGITAL_TAU, false, -1, -1,
-                false, false, true, null, null, RESET_SLEW, null, true,
+                false, false, false, true, null, null, RESET_SLEW, null, true,
                 null);
         createHierRule(
                 new HierNameAtomicBooleanExpression(true, resetNodeName),
                 env, ProductionRule.UP, 100, DIGITAL_TAU, false, -1, -1,
-                false, false, true, null, null, RESET_SLEW, null, true,
+                false, false, false, true, null, null, RESET_SLEW, null, true,
                 null);
     }
 
@@ -1059,7 +1064,7 @@ public class DSim implements NodeWatcher {
                         new HierNameAtomicBooleanExpression(
                             negated, trigger.getName()),
                         target, dir, count * 100, DIGITAL_TAU, false, -1, -1,
-                        false,
+                        false, false,
                         false, false, null, null, RESET_SLEW, null, true, null);
                 }
             }
@@ -1500,6 +1505,7 @@ public class DSim implements NodeWatcher {
                                 int direction, int delay, byte delay_type,
                                 boolean timed, float fastDelay,
                                 float slowDelay, boolean isochronic,
+                                boolean subtimeDelay,
                                 boolean absoluteDelay, boolean assertedP,
                                 Pair[] delays,
                                 HierName prefix, float defaultSlew,
@@ -1566,7 +1572,7 @@ public class DSim implements NodeWatcher {
 
         final Rule newrule =
             new Rule(guards, sense, n, direction, delay, delay_type, timed,
-                     fastDelay, slowDelay, isochronic,
+                     fastDelay, slowDelay, isochronic, subtimeDelay,
                      absoluteDelay, assertedP,
                      measuredDelay == null ? null :
                         (Pair[]) measuredDelay.toArray(new Pair[0]),
@@ -1712,6 +1718,9 @@ public class DSim implements NodeWatcher {
     /** controls printing of extra info */
     public void setVerbose(boolean v) { sched.setVerbose(verbose=v); }
     public boolean getVerbose() { return verbose; }
+
+    public void setBDTiming(boolean t) { bdTiming = t; }
+    public boolean getBDTiming() { return bdTiming; }
     
     /** Finds and returns a node in the map, or returns null. **/
     //public Node findNode(String nodeName) { return nodes.getDigitalNode(nodeName); }
@@ -2551,6 +2560,9 @@ public class DSim implements NodeWatcher {
     }
     /** Returns the scheduler's current time. **/
     public long getTime() { return sched.getTime(); }
+
+    public int getSubTime() { return sched.getSubTime(); }
+
     /**
      * Sets the scheduler's current time.  Clears all events out to
      * avoid dealing with timing conflicts.  Mostly for debugging.
@@ -2628,9 +2640,10 @@ public class DSim implements NodeWatcher {
         
     /** Schedule (or re-schedule) a node transition. */
     public void scheduleEvent(Node node, byte pending, long delay,
-            boolean random, Node lastEvent) {
+            int subDelay, boolean random, Node lastEvent) {
         boolean destRandom;
         long time;
+        int subTime;
 
         /* questionable... should perhaps be outside?
          * neither otherwise used in this method, but
@@ -2639,6 +2652,7 @@ public class DSim implements NodeWatcher {
         node.enabler=lastEvent;
 
         time = delay + getTime();
+        subTime = subDelay + (delay > 0 ? 0 : getSubTime());
 
         if (verbose)  
             ui_out("adding "+node+" -> "+Node.getNameForValue(node.pending)+
@@ -2651,7 +2665,7 @@ public class DSim implements NodeWatcher {
         }
         node.setRandom(destRandom); // force on correct queue
         if (node.getIndex() >= 0 && !destRandom &&
-                DigitalScheduler.compareTime(time,node.eventTime) > 0) {
+                Event.compare(time,0,node.eventTime,0) > 0) {
             if (warn) {
                 ui_out("Queuing event for node later than outstanding"+
                        " event on EventQueue\n\tnode: " + node + " time= "+time+
@@ -2659,7 +2673,13 @@ public class DSim implements NodeWatcher {
             }
         }
         node.eventTime = time;
+        node.eventSubTime = subTime;
         sched.addEvent(node);
+    }
+
+    public void scheduleEvent(Node node, byte pending, long delay,
+            boolean random, Node lastEvent) {
+        scheduleEvent(node, pending, delay, 0, random, lastEvent);
     }
 
     private boolean isGlob(String s) {
@@ -3146,6 +3166,11 @@ public class DSim implements NodeWatcher {
             throw new UnsupportedOperationException();
         }
 
+        public void updateBDExtraDelay(final CellInterface cell,
+                                       final AliasedSet aliases) {
+            throw new UnsupportedOperationException();
+        }
+
         public void updateAstaExtraDelay(final CellInterface cell,
                                          final AliasedSet aliases) {
             throw new UnsupportedOperationException();
@@ -3193,6 +3218,11 @@ public class DSim implements NodeWatcher {
             return 0;
         }
 
+        @Override
+        public float getBDExtraDelay(final boolean up, final HierName canon) {
+            return 0;
+        }
+
         public float getEstimatedDelay(final boolean up, final HierName canon) {
             return Float.NaN;
         }
@@ -3221,6 +3251,16 @@ public class DSim implements NodeWatcher {
 
         public boolean getIsochronic(final HierName instance) {
             return false;
+        }
+
+        @Override
+        public float getLatency(final HierName canon, final float defValue) {
+            return 0;
+        }
+
+        @Override
+        public float getBDLatency(final HierName canon, final boolean useDefault) {
+            return 0;
         }
     };
 
@@ -3554,6 +3594,10 @@ public class DSim implements NodeWatcher {
                 1, getMeasureDataSet());
             instData.updateDelayBias(cell, getAstaDelayBias());
             instData.updateIsochronic(cell, false);
+            if (getBDTiming()) {
+                instData.updateBDExtraDelay(cell, aliases);
+                instData.updateBdcTiming(cell, aliases);
+            }
             if (!isEnv) {
                 for (Iterator i = cell.getSubcellPairs(); i.hasNext(); ) {
                     final Pair p = (Pair) i.next();
@@ -4242,6 +4286,10 @@ public class DSim implements NodeWatcher {
                     DUMMY_INSTANCE
                   : instData.translate(cell, ci, (HierName) p.getFirst(),
                                        cadencizer);
+                if (depth == 1 && getBDTiming()) {
+                    newInstData.updateBdcPortTiming(ci,
+                        cadencizer.convert(ci).getLocalNodes());
+                }
 
                 final Map<HalfOp<Node>,Set<HalfOp<Node>>> newAstaIgnore =
                     isAstaEnabled() ? updateAstaIgnore(astaIgnore, ci, name)
@@ -4319,9 +4367,16 @@ public class DSim implements NodeWatcher {
                 final CoSimInfo cosimInfo,
                 final HierName prefix,
                 final CellInterface cell,
-                final float digitalTau) {
+                final float digitalTau,
+                final InstanceData instData) {
             final ChannelFactoryInterface factory =
-                new CoSimInfo.NodeChannelFactory(digitalTau);
+                new CoSimInfo.NodeChannelFactory(
+                        digitalTau,
+                        prefix.getAsString('.'),
+                        cell,
+                        cadencizer.convert(cell).getLocalNodes(),
+                        getBDTiming() ? instData : null,
+                        cosimInfo);
             ChannelFactoryInterface validatedFactory = factory;
             final MutableInt totalInputs = new MutableInt(0);
             final MutableInt totalOutputs = new MutableInt(0);
@@ -4402,7 +4457,8 @@ public class DSim implements NodeWatcher {
                 if (cell.containsCompletePrs())
                     createRules(prefix, cell, instData, astaIgnore, extraPrs,
                                 isEnv);
-                dict = createNodeChannels(cell.getCoSimInfo(behavior), prefix, cell, getDelayTau(DIGITAL_TAU));
+                dict = createNodeChannels(cell.getCoSimInfo(behavior), prefix,
+                        cell, getDelayTau(DIGITAL_TAU), instData);
                 try {
                     if (cell.getJavaCoSimInfo().getClassName() != null)
                         cell.buildJavaClass(prefix, dict, m_DeviceLoader,
@@ -4475,7 +4531,8 @@ public class DSim implements NodeWatcher {
                         (cell.getCoSimInfo(behavior), prefix, cell, cosimSlack,
                          verbose);
             } else {
-                dict = createNodeChannels(cell.getCoSimInfo(behavior), prefix, cell, getDelayTau(DIGITAL_TAU));
+                dict = createNodeChannels(cell.getCoSimInfo(behavior), prefix,
+                        cell, getDelayTau(DIGITAL_TAU), instData);
             }
           try {
             // XXX: We currently do not support cosimulation of JAVA and CSP.
@@ -4662,10 +4719,19 @@ public class DSim implements NodeWatcher {
                 final HierName canonTarget = 
                     (HierName) localNodes.getCanonicalKey(pr.getTarget());
 
-                final float extraDelay =
-                    instData.getExtraDelay(updir, canonTarget);
-                final float afterDelay =
-                    cellDelay.getDelay(pr.getTarget(), updir, 100) + extraDelay;
+                boolean subtimeDelay = false;
+                float afterDelay = 0;
+                if (getBDTiming()) {
+                    afterDelay =
+                        instData.getBDLatency(canonTarget, false) * 100 +
+                        instData.getLatency(canonTarget, 0) +
+                        instData.getBDExtraDelay(updir, canonTarget);
+                    subtimeDelay = afterDelay == 0;
+                }
+                if (afterDelay == 0) {
+                    afterDelay = cellDelay.getDelay(pr.getTarget(), updir, 100) +
+                                 instData.getExtraDelay(updir, canonTarget);
+                }
 
                 final boolean isochronic = pr.isIsochronic() || cellIsochronic;
 
@@ -4821,7 +4887,7 @@ public class DSim implements NodeWatcher {
                                    Float.isNaN(estimated) ? DIGITAL_TAU
                                                           : ESTIMATED_TAU,
                                    timed, pr.getFastDelay(), pr.getSlowDelay(),
-                                   isochronic,
+                                   isochronic, subtimeDelay,
                                    pr.isAbsolute(), assertedP, measured, prefix,
                                    defaultSlew, localNodes,
                                    coverage_ignore || assertedP || isEnv,
@@ -4834,7 +4900,7 @@ public class DSim implements NodeWatcher {
                 AndBooleanExpressionInterface term, Node n,
                 int direction, int delay, byte delay_type,
                 boolean timed, float fastDelay, float slowDelay,
-                boolean isochronic,
+                boolean isochronic, boolean subtimeDelay,
                 boolean absoluteDelay, boolean assertedP,
                 Pair[] delays,
                 HierName prefix, float defaultSlew,
@@ -4843,7 +4909,7 @@ public class DSim implements NodeWatcher {
                 final Map<Pair<List<Node>,BitSet>,Rule> astaGrayboxRules) {
             DSim.this.createHierRule(term, n, direction, delay, delay_type,
                                      timed, fastDelay, slowDelay, isochronic,
-                                     absoluteDelay,
+                                     subtimeDelay, absoluteDelay,
                                      assertedP, delays, prefix, defaultSlew,
                                      localNodes, coverage_ignore,
                                      astaGrayboxRules);
@@ -4887,7 +4953,7 @@ public class DSim implements NodeWatcher {
         protected void createHierRule(
                 AndBooleanExpressionInterface term, final Node n,
                 final int direction, int delay, byte delay_type,
-                boolean timed, boolean isochronic,
+                boolean timed, boolean isochronic, boolean subtimeDelay,
                 boolean absoluteDelay, boolean assertedP,
                 Pair[] delays,
                 final HierName prefix, float defaultSlew,

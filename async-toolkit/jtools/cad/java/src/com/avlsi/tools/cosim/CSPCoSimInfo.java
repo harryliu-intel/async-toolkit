@@ -8,9 +8,11 @@
 package com.avlsi.tools.cosim;
 
 import java.math.BigInteger;
+import java.util.OptionalInt;
 
 import com.avlsi.cast2.util.DirectiveUtils;
 import com.avlsi.cell.CellInterface;
+import com.avlsi.fast.BlockInterface;
 
 /**
  * Extends CoSimInfo to contain information specific to the csp block.
@@ -18,11 +20,13 @@ import com.avlsi.cell.CellInterface;
  **/
 public class CSPCoSimInfo extends CoSimInfo {
     private CellInterface parent = null;
+    private int minCspTime = Integer.MAX_VALUE;
 
     public CSPCoSimInfo() {
         super();
     }
 
+    @Override
     public ChannelDictionary createChannels(final String cellName,
                                             final CellInterface cell,
                                             final ChannelFactoryInterface
@@ -36,20 +40,28 @@ public class CSPCoSimInfo extends CoSimInfo {
         return cdict;
     }
 
+    @Override
     public void addChannelInfo(final String name, final String type,
                                final int slack,
                                final int latency, final int cycle_time,
                                final BigInteger N, final int M,
-                               final boolean isArrayed) {
+                               final boolean isArrayed,
+                               final int dir) {
         if (parent == null) {
             super.addChannelInfo(name, type, slack, latency, cycle_time, N, M,
-                                 isArrayed);
+                                 isArrayed, dir);
         } else {
             final ChannelTimingInfo cti =
-                DirectiveUtils.getTiming(parent, name);
-            //System.err.println("CSP channel: " + parent.getFullyQualifiedType() + " " + name + " " + cti.getSlack() + " " + cti.getLatency() + " " + cti.getCycleTime());
-            super.addChannelInfo(name, type, cti, N, M, isArrayed);
+                DirectiveUtils.getTiming(parent, BlockInterface.CSP, name, 1, null, dir);
+            minCspTime = Math.min(minCspTime, cti.getCspTime());
+            //System.err.println("CSP channel: " + parent.getFullyQualifiedType() + " " + name + " " + cti.getSlack() + " " + cti.getLatency() + " " + cti.getCycleTime() + " " + cti.getCspTime() + " " + minCspTime);
+            super.addChannelInfo(name, type, cti, N, M, isArrayed, dir);
         }
+    }
+
+    @Override
+    public OptionalInt getMinimumCspTime() {
+        return OptionalInt.of(minCspTime);
     }
 
     protected boolean usePorts() { return true; }

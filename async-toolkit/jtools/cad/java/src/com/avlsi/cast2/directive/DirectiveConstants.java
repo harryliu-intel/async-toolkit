@@ -40,6 +40,7 @@ public interface DirectiveConstants {
     String SHARED = "shared";
     String DELAYBIAS = "delaybias";
     String EXTRA_DELAY = "extra_delay";
+    String BD_EXTRA_DELAY = "bd_extra_delay";
     String ASTA_EXTRA_DELAY = "asta_extra_delay";
     String DEFAULT_UP_DELAY = "default_up_delay";
     String DEFAULT_DN_DELAY = "default_dn_delay";

@@ -50,4 +50,11 @@ public interface ChannelTimingInfo {
      * Return latency per slack, in DSim units.
      **/
     int getLatencyPerSlack();
+
+    /**
+     * Return the csp_time directive, in DSim units.
+     **/
+    default int getCspTime() {
+        throw new UnsupportedOperationException();
+    }
 }
