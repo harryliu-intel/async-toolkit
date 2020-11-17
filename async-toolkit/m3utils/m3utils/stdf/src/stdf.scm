@@ -6,7 +6,7 @@
 ;; n1 only appears in an array
 ;; 
 
-(define stdf-record-header ;; not sure whether we need this defn
+(define record-header ;; not sure whether we need this defn
   '((rec-len u2)
     (rec-typ u1)
     (rec-sub u1)))
@@ -414,10 +414,9 @@
     )
   )
 
-(define (produce-record-decl field-list prolog wr)
+(define (produce-record-decl field-list wr)
   (begin
     (dis "RECORD" dnl wr)
-    (dis prolog wr)
     (let loop ((lst field-list))
       (if (null? lst)
           #t
@@ -440,7 +439,6 @@
        "<*NOWARN*>IMPORT StdfI2, StdfB1, StdfC1, StdfDn, StdfVn;" dnl
        "<*NOWARN*>IMPORT StdfI1, StdfR4, StdfI4, StdfBn;" dnl
        "IMPORT StdfE, Rd, Thread;" dnl
-       "<*NOWARN*>" dnl
        dnl
        wr))
 
@@ -450,7 +448,7 @@
 (define parse-proto "(rd : Rd.T; VAR len : CARDINAL; VAR t : T) RAISES { StdfE.E , Rd.EndOfFile, Rd.Failure, Thread.Alerted}")
 
 (define parseobj-proc-name "ParseObject")
-(define parseobj-proto "(rd : Rd.T; VAR len : CARDINAL) : O RAISES { StdfE.E, Rd.EndOfFile, Rd.Failure, Thread.Alerted }")
+(define parseobj-proto "(rd : Rd.T; VAR len : CARDINAL) : StdfRecordObject.T RAISES { StdfE.E, Rd.EndOfFile, Rd.Failure, Thread.Alerted }")
 
 (define (put-m3-proc whch .
                      wrs ;; i3 m3 ...
@@ -470,16 +468,16 @@
 
 (define (make-header-code rec-nam)
   (let* ((rec (eval rec-nam))
-         (wrs (open-m3 (scheme->m3 rec-nam)))
+         (wrs (open-m3 (string-append "Stdf" (scheme->m3 rec-nam))))
          (i-wr (car wrs))
          (m-wr (cadr wrs))
          (field-lens (map StdfTypeName.GetByteLength
                           (map symbol->string
                                (map cadr rec))))
          )
-    
+
     (dis "TYPE T = " dnl i-wr)
-    (produce-record-decl rec "" i-wr)
+    (produce-record-decl rec i-wr)
     (dis dnl i-wr)
     
     ;; following leads to circular imports
@@ -516,7 +514,7 @@
     )
   )
 
-(make-header-code 'stdf-record-header)
+(make-header-code 'record-header)
 
 (define (get-type-len tdef)
   (if (symbol? tdef)
@@ -527,20 +525,19 @@
 
 (define (make-record-code rec-nam)
   (let* ((rec (cadr (eval rec-nam)))
-         (wrs (open-m3 (scheme->m3 rec-nam)))
+         (wrs (open-m3 (string-append "Stdf" (scheme->m3 rec-nam))))
          (i-wr (car wrs))
          (m-wr (cadr wrs))
          (field-lens (map get-type-len
                           (map cadr rec)))
          )
     
-    (dis "TYPE T = " dnl i-wr)
-    (produce-record-decl rec "" i-wr)
-    (dis dnl i-wr)
+    (dis "IMPORT StdfRecordObject;" dnl dnl i-wr)
+    (dis "IMPORT StdfRecordObject;" dnl dnl m-wr)
     
-    ;; following leads to circular imports
-    ;;  (dis "TYPE O = StdfRecordObject.T OBJECT rec : T END;" dnl
-    ;;       dnl i-wr)
+    (dis "TYPE T = " dnl i-wr)
+    (produce-record-decl rec i-wr)
+    (dis dnl i-wr)
     
     (if (not (member? -1 field-lens))
         (dis "CONST Length = "
@@ -549,7 +546,7 @@
              i-wr))
     
     (put-m3-proc 'parse i-wr m-wr)
-    (dis "  VAR x : T; BEGIN" dnl m-wr)
+    (dis "  BEGIN" dnl m-wr)
     (let loop ((lst rec))
       (if (null? lst)
           ""
@@ -564,6 +561,13 @@
     (dis  "  END Parse;" dnl
           dnl
           m-wr)
+
+    (put-m3-proc 'parseobj i-wr m-wr)
+    (dis "TYPE O = StdfRecordObject.T OBJECT rec : T; END;" dnl dnl i-wr)
+    (dis "  VAR res := NEW(O); BEGIN" dnl
+         "    Parse(rd, len, res.rec);" dnl
+         "    RETURN res" dnl
+         "  END ParseObject;" dnl m-wr)
     
     (close-m3 wrs)
     )
@@ -576,23 +580,79 @@
          (t (cadr rec)))
     (if (symbol? t)
         (let ((m3t (scheme->m3 t)))
-          (dis "    Stdf" m3t ".Parse(rd, len, x." m3f ");" dnl wr)
+          (dis "    Stdf" m3t ".Parse(rd, len, t." m3f ");" dnl wr)
           )
         (let ((a   (car t))
               (idx (cadr t))
               (m3t (scheme->m3 (caddr t))))
           (if (not (eq? a 'array)) (error "not an array spec : " t))
           (if (number? idx)
-              (dis "    x. "m3f" := NEW(REF ARRAY OF "m3t", " (number->string idx)");" dnl
-                   "    FOR i := 0 TO " (number->string idx) "-1 DO" dnl wr)
-              (dis "    x. "m3f" := NEW(REF ARRAY OF Stdf"m3t".T, x." (scheme->m3l idx)");" dnl
-                   "    FOR i := 0 TO x." (scheme->m3l idx) "-1 DO" dnl wr)
+              (dis "    t."m3f" := NEW(REF ARRAY OF Stdf"m3t".T, " (number->string idx)");" dnl wr)
+              (dis "    t."m3f" := NEW(REF ARRAY OF Stdf"m3t".T, t." (scheme->m3l idx)");" dnl wr)
               )
-          (dis     "      Stdf" m3t ".Parse(rd, len, x." m3f "[i])" dnl wr)
-          (dis     "    END;" dnl wr)
+          (if (eq? (caddr t) 'n1)
+              (dis     "    StdfN1.ParseArray(rd, len, t."m3f"^);" dnl wr)
+              
+              (dis     "    FOR i := FIRST(t."m3f"^) TO LAST(t."m3f"^) DO" dnl
+                       "      Stdf" m3t ".Parse(rd, len, t." m3f "[i])" dnl 
+                       "    END;" dnl wr)
+              )
           )
         ))
   'ok
   )
 
 (map make-record-code (map car stdf-record-types))
+
+(define (make-record-types)
+  (let* ((wrs (open-m3 "StdfRecordTypes"))
+         (i-wr (car wrs))
+         (m-wr (cadr wrs)))
+
+    (dis "IMPORT StdfRecordObject;" dnl dnl i-wr)
+    (dis "IMPORT "
+         (infixize (map (lambda(s)(string-append "Stdf" s)) (map scheme->m3 (map car stdf-record-types))) ", ")
+         ";" dnl
+         i-wr)
+              
+    (dis dnl
+         "TYPE" dnl
+         "  PF = PROCEDURE" parseobj-proto ";" dnl
+         dnl
+         "  Type = RECORD" dnl
+         "    nm      : TEXT;" dnl
+         "    enum    : Enum;" dnl
+         "    recTyp  : CARDINAL;" dnl
+         "    recSub  : CARDINAL;" dnl
+         "    parser  : PF;" dnl
+         "  END;" dnl
+         dnl
+         "  Enum = { " (infixize (map car (map eval (map car stdf-record-types))) ", ") " };" dnl
+         dnl
+         "CONST" dnl
+         "  Names = ARRAY Enum OF TEXT { " (infixize (map double-quote (map car (map eval (map car stdf-record-types)))) ", ") " };" dnl
+         dnl
+         "  Types = ARRAY Enum OF Type { " (infixize (map make-type-desc stdf-record-types) ", "  ) " };" dnl
+         dnl
+         i-wr)
+  
+  (close-m3 wrs)
+  )
+)
+
+(define (make-type-desc rtyp)
+  (let ((m3tn (scheme->m3 (car rtyp)))
+      (rec (eval (car rtyp))))
+    (string-append
+     dnl "    Type { \"Stdf"m3tn"\", "
+     "Enum."(symbol->string (car rec))", "
+     (number->string (cadr rtyp))", "
+     (number->string (caddr rtyp))", "
+     "Stdf"m3tn".ParseObject }")
+    )
+)
+
+
+
+  
+(make-record-types)

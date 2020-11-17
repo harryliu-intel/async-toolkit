@@ -30,6 +30,7 @@ SchemeStubs("TextSet")
 SchemeStubs("TextRefTbl") 
 SchemeStubs("TextList")
 SchemeStubs("StdfTypeName")
+SchemeStubs("TextWr")
 
 ExportSchemeStubs("generator") % export OUR scheme stubs
 

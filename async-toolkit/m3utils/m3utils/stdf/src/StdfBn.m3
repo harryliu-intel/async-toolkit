@@ -11,7 +11,7 @@ PROCEDURE Parse(rd : Rd.T; VAR len : CARDINAL; VAR t : T)
     c, d : ARRAY [0..0] OF CHAR;
   BEGIN
     StdfC1.Parse(rd, len, c);
-    t := NEW(REF ARRAY OF BOOLEAN, 8*c[0]);
+    t := NEW(REF ARRAY OF BOOLEAN, 8 * ORD(c[0]));
     FOR i := FIRST(t^) TO LAST(t^) DO
       IF i MOD 8 = 0 THEN
         StdfC1.Parse(rd, len, d);

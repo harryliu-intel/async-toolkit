@@ -5,6 +5,30 @@
 
 (define (fromhex x) (Scan.Int (stringify x) 16))
 
+(define (intersperse lst sep)
+  ;; this routine MUST BE tail-recursive, or we shall definitely
+  ;; run out of stack space!
+  (define (helper lst so-far)
+    (cond ((null? lst) so-far)
+          ((null? (cdr lst)) (cons (car lst) so-far))
+
+          (else
+           (helper (cdr lst)
+                   (cons sep  (cons (car lst) so-far))))))
+  (reverse (helper lst '()))
+  )
+
+(define (single-quote str)
+  (string-append "'" str "'"))
+
+(define (double-quote str)
+  (string-append "\"" str "\""))
+
+(define (infixize string-list sep)
+  (if (null? string-list) ""
+      (apply sa
+             (intersperse string-list sep))))     
+
 (define (symbol-append . x) ;; permissive form, allow both symbol and string
   (string->symbol
    (eval

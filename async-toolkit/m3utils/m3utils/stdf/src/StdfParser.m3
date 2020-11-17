@@ -20,6 +20,7 @@ PROCEDURE Parse(rd : Rd.T) : StdfRecordObjectSeq.T =
 
         WITH parsePrc = StdfParseTable.GetParser(hdr) DO
           parsePrc(rd, bdylen, o);
+          o.hdr := hdr;
           seq.addhi(o)
         END
       END
