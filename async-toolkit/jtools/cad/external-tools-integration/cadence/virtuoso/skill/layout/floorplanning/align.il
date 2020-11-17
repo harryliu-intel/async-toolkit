@@ -49,6 +49,11 @@
            (cond (v=="x" gx=GridPolyPitch gy=TrackPitch ox=0.5*GridPolyPitch oy=0) ; halo cells
                  (v=="c" gx=GridPolyPitch gy=TrackPitch ox=0 oy=0) ; halo cells
                  (v=="y" gx=6*GridPolyPitch gy=TrackPitch ox=0 oy=0) ; halo cells
+		 ; new 'i' 't' and 'f' halo types in 0.5.1HP2_20ww43.1-
+		 ; this alignment might be wrong, but clearly we don't use them
+		 (v=="i" gx=GridPolyPitch gy=TrackPitch ox=0 oy=0)
+		 (v=="f" gx=GridPolyPitch gy=TrackPitch ox=0 oy=0)
+                 (v=="t" gx=GridPolyPitch gy=TrackPitch ox=0 oy=0) 
                  (CV->viewName=="floorplan" && (v=="1" || v=="2" || v=="3") ox=0.5*GridPolyPitch)
                  (CV->viewName=="floorplan" && (v=="0" || v=="4" || v=="5") gx=3.0*GridPolyPitch)
                  (v=="1" gx=3*GridPolyPitch ox=0.5*GridPolyPitch)
