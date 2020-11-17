@@ -54,7 +54,7 @@ my $date = sprintf("%04d_%02d_%02d", $year,$mon, $mday);
 my $srcdir = "";
 my $output = "./";
 my $mode = "static";
-my $xlsxfile = "./RV_Summary_$date.xlsx";
+my $xlsxfile = "RV_Summary_$date.xlsx";
 my $workbook = "";
 my $worksheet = "";
 my $xlsxline = 4;
@@ -114,9 +114,9 @@ my %ip2inst_blocks = (
 print ("\nINFO: Reading RV rundirs under '$srcdir' and putting RV result extract under \'$output\'!\n\n");
 
 # Preparing Excel file and header of data sheet
-print ("INFO: Preparing Excel sheet '$xlsxfile'!\n\n");
+print ("INFO: Preparing Excel sheet '$output/$xlsxfile'!\n\n");
 
-$workbook  = Excel::Writer::XLSX->new($xlsxfile);
+$workbook  = Excel::Writer::XLSX->new("$output/$xlsxfile");
 die "ERROR: Problems creating new Excel file: $!" unless defined $workbook;
 
 $worksheet = $workbook->add_worksheet($date);
