@@ -5,4 +5,4 @@ import ("parseparams")
 import ("normaldev")
 
 implementation ("Main")
-program("mismatch")
+program("svspredict")
