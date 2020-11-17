@@ -259,7 +259,7 @@ wires_modtime = makeTable("wires" 0)
 
 
 ; draw an individual segment of a path
-(defun DrawSegment (name layer width xy0 xy1 beginExt endExt isPin
+(defun DrawSegment (name layer width xy0 xy1 beginExt endExt isPin isHopOver
                          @key (guideInst nil) (CV (geGetEditCellView)))
   (let (nxy0 nxy1 x0 y0 x1 y1 fig rect net label pin)
     nxy0 = (busTransformPoint xy0 guideInst)
@@ -289,6 +289,14 @@ wires_modtime = makeTable("wires" 0)
            (LabelPin CV rect) ; attach label to the pin purpose rectangle
            )
           )
+    (cond (isHopOver
+    	   (IndentPathFromPrBound fig CV->prBoundary)
+	   fig->lpp = (list (car fig->lpp) "fill")
+	   rect = (dbCreateRect CV fig->lpp (car (nrConvertPathToRectList fig)))
+	   (SetBusProp rect)
+	   (dbDeleteObject fig)
+	   )
+	  )
     )
   t
   )
@@ -358,7 +366,7 @@ wires_modtime = makeTable("wires" 0)
 ; Draw a multisegment path on two perpendicular layers with vias.
 ; (DrawWire metal67 "a" 0.36 (list 0:0 9.6:0 9.6:9.6 19.2:9.6))
 (defun DrawWire (layers name width points
-                        @key (isPin nil) (startVias nil) (endVias nil) (doubleVias t) (verticalVias nil) (positiveVias nil)
+                        @key (isPin nil) (isHopOver nil) (startVias nil) (endVias nil) (doubleVias t) (verticalVias nil) (positiveVias nil)
                         (guideInst nil) (flipX nil) (flipY nil) (pattern nil) (busKeepout nil)
                         (CV (geGetEditCellView)))
   (let (horz_layer vert_layer via viadir last first lastIndex index cuts layer hv dir prevdir templast (types (ClassifyPoints points)) (dirs (ClassifyDirs points)) corrected correctOP)
@@ -392,7 +400,7 @@ wires_modtime = makeTable("wires" 0)
              layer = (if (almostEqual (car point) (car last)) vert_layer horz_layer)
              (when busKeepout layer=(list (car layer) "keepout"))
              (DrawSegment name layer width last point
-                          (index!=0) (index!=lastIndex) isPin ?guideInst guideInst ?CV CV)
+                          (index!=0) (index!=lastIndex) isPin isHopOver ?guideInst guideInst ?CV CV)
 	when(!verticalVias
              cuts = (if (and doubleVias viadir) (strcat "_R_" viadir) ""))
 	when(verticalVias
@@ -458,7 +466,7 @@ wires_modtime = makeTable("wires" 0)
 ; Draw a channel bundle of wires.
 ; (DrawChannel metal67 e1of4 "a" (list 0:0 9.6:0 9.6:9.6 19.2:9.6 19.2:19.2 38.4:19.2))
 (defun DrawChannel (layers pattern prefix points
-                           @key (flipX nil) (flipY nil) (isPin nil)
+                           @key (flipX nil) (flipY nil) (isPin nil) (isHopOver nil)
                            (startVias nil) (endVias nil) (doubleVias t) (verticalVias nil) (positiveVias nil)
                            (altLayerPatternList nil)
                            (guideInstName nil) (guideInst nil) (shieldM2 t) (drawShield nil) (busKeepout nil)
@@ -554,7 +562,7 @@ wires_modtime = makeTable("wires" 0)
                       newpoints = (append newpoints (list (list ((lastx+tmpx)/2.0) ((lasty+tmpy)/2.0))))
                       (DrawWire lastLayer (AddSuffix prefix node)
                                           width newpoints
-                                          ?isPin isPin ?startVias stVias ?endVias nil ?verticalVias verticalVias ?positiveVias positiveVias
+                                          ?isPin isPin ?isHopOver isHopOver ?startVias stVias ?endVias nil ?verticalVias verticalVias ?positiveVias positiveVias
                                           ?doubleVias doubleVias ?guideInst guideInst ?flipX flipX ?flipY flipY ?pattern pattern ?CV CV)
                       newpoints = (list (list ((lastx+tmpx)/2.0) ((lasty+tmpy)/2.0)))
                   )
@@ -592,7 +600,7 @@ wires_modtime = makeTable("wires" 0)
           ; draw wire for this node
           (DrawWire (if layer_override layer_override curLayer)
                     (AddSuffix prefix node) width newpoints
-                    ?isPin isPin ?startVias stVias ?endVias eVias ?verticalVias verticalVias ?positiveVias positiveVias
+                    ?isPin isPin ?isHopOver isHopOver ?startVias stVias ?endVias eVias ?verticalVias verticalVias ?positiveVias positiveVias
                     ?doubleVias doubleVias ?guideInst guideInst ?flipX flipX ?flipY flipY ?pattern pattern ?busKeepout busKeepout ?CV CV)
 
       when( drawShield DrawBusShield(newpoints (if layer_override layer_override curLayer) prefix ?shieldM2 shieldM2 ?CV CV) )
@@ -610,7 +618,7 @@ wires_modtime = makeTable("wires" 0)
 ;(DrawChannelArray metal67 e1of4 "a" 0:3 (list 0 19.2 4.8 4.8 4.8 0)
 ;                  (list 0.5:2 9.6:0 9.6:9.6 38.4:9.6 38.4:19.2))
 (defun DrawChannelArray (layers pattern prefix indices array_pitch points
-                           @key (flipX nil) (flipY nil) (isPin nil)
+                           @key (flipX nil) (flipY nil) (isPin nil) (isHopOver nil)
                            (startVias nil) (endVias nil) (doubleVias t) (verticalVias nil) (positiveVias nil)
                            (guideInstName nil) (guideInst nil)
                            (only_evens nil) (only_odds nil) (drawShield nil) (busKeepout nil)
@@ -671,7 +679,7 @@ wires_modtime = makeTable("wires" 0)
          ; draw channel
          (DrawChannel layers pattern (AddSuffix prefix (sprintf nil "[%d]" i)) newpoints
                       ?flipX flipX ?flipY flipY ?verticalVias verticalVias ?positiveVias positiveVias
-                      ?isPin isPin ?startVias startVias ?endVias endVias ?doubleVias doubleVias
+                      ?isPin isPin ?isHopOver isHopOver ?startVias startVias ?endVias endVias ?doubleVias doubleVias
                       ?guideInst guideInst ?drawShield drawShield ?busKeepout busKeepout ?CV CV)
          )
     )
@@ -722,7 +730,7 @@ wires_modtime = makeTable("wires" 0)
 ; get list of waypoints and layers from (optionally) named shapes
 (defun GetPaths (name @key (guideInstName nil) (CV (geGetEditCellView)))
   (let (paths shapes pattern pre isPin startVias endVias flipX flipY pitch double
-              shield rotate vertical positive props busKeepout)
+              shield rotate vertical positive props busKeepout busHopOver)
     (cond (guideInstName!=nil CV = (GetGuideInst nil guideInstName ?CV CV)->master))
     shapes = (setof x CV->shapes x->objType=="path" && (geIsFigSelected x)) ; avoid geGetSelSet
     (when shapes (printf "GetPaths with selected shapes only"))
@@ -742,8 +750,9 @@ wires_modtime = makeTable("wires" 0)
              vertical  = (GetProp obj "BusVerticalVias" nil)
              positive  = (GetProp obj "PositiveViaShift" nil)
              busKeepout = (GetProp obj "BusKeepout" nil)
+             busHopOver = (GetProp obj "BusHopOver" nil)
              props = (list pattern obj->lpp pre isPin startVias endVias flipX flipY pitch double
-                           shield rotate vertical positive busKeepout)
+                           shield rotate vertical positive busKeepout busHopOver)
              (when (and pattern!=nil (or name==nil pattern==name))
                paths = (cons (list props obj->points) paths))
              )
@@ -754,7 +763,7 @@ wires_modtime = makeTable("wires" 0)
 ; create bus properties if necessary
 (defun CreateBusProps (@key (paths nil))
   (let (pattern prefix pin flipX flipY startVias endVias doubleVias drawShield
-                rotateMetals verticalVias positiveVias busKeepout )
+                rotateMetals verticalVias positiveVias busKeepout busHopOver)
     paths = (if paths==nil (geGetSelSet) paths)
     (foreach obj paths
              (cond (obj->objType=="path"
@@ -772,6 +781,7 @@ wires_modtime = makeTable("wires" 0)
                                   verticalVias = (GetProp obj "BusVerticalVias" nil)
                                   positiveVias = (GetProp obj "PositiveViaShift" nil)
                                   busKeepout = (GetProp obj "BusKeepout" nil)
+                                  busHopOver = (GetProp obj "BusHopOver" nil)
                                   ; delete properties
                                   (dbDeletePropByName obj "BusPattern")
                                   (dbDeletePropByName obj "BusPrefix")
@@ -787,6 +797,7 @@ wires_modtime = makeTable("wires" 0)
                                   (dbDeletePropByName obj "BusVerticalVias")
                                   (dbDeletePropByName obj "PositiveViaShift")
                                   (dbDeletePropByName obj "BusKeepout")
+                                  (dbDeletePropByName obj "BusHopOver")
                                   ; set new properties
                                   (dbReplaceProp obj "BusPattern" "string" pattern)
                                   (dbReplaceProp obj "BusPrefix" "string" prefix)
@@ -802,6 +813,7 @@ wires_modtime = makeTable("wires" 0)
                                   (dbReplaceProp obj "BusVerticalVias" "boolean" verticalVias)
                                   (dbReplaceProp obj "PositiveViaShift" "boolean" positiveVias)
                                   (dbReplaceProp obj "BusKeepout" "boolean" busKeepout)
+                                  (dbReplaceProp obj "BusHopOver" "boolean" busHopOver)
                                   ))
              )
     )
@@ -902,7 +914,7 @@ wires_modtime = makeTable("wires" 0)
 ; draw multiple channels
 (defun DrawChannels (layers pattern prefix paths
                             @key (guideInstName nil) (guideInst nil) (CV (geGetEditCellView)))
-  (let (props points layer isPin startVias endVias doubleVias flipX flipY busShield rotateMetals verticalVias positiveVias
+  (let (props points layer isPin isHopOver startVias endVias doubleVias flipX flipY busShield rotateMetals verticalVias positiveVias
               patlist prelist pre buspat busKeepout)
 
     ; set guide instance
@@ -929,6 +941,7 @@ wires_modtime = makeTable("wires" 0)
              verticalVias = (nth 12 props)
 	     positiveVias = (nth 13 props)
              busKeepout = (nth 14 props)
+	     isHopOver = (nth 15 props)
 
              ; iterate over BusPattern/BusPrefix lists
              (foreach pat patlist
@@ -938,7 +951,7 @@ wires_modtime = makeTable("wires" 0)
                       (when (and buspat pre)
                         (DrawChannel (ChooseLayers layers layer ?rotateMetals rotateMetals)
                                      buspat pre points
-                                     ?flipX flipX ?flipY flipY ?isPin isPin
+                                     ?flipX flipX ?flipY flipY ?isPin isPin ?isHopOver isHopOver
                                      ?startVias startVias ?endVias endVias
                                      ?doubleVias doubleVias ?verticalVias verticalVias ?positiveVias positiveVias
                                      ?guideInst guideInst ?drawShield busShield ?busKeepout busKeepout ?CV CV)
@@ -954,7 +967,7 @@ wires_modtime = makeTable("wires" 0)
                                  @key (guideInstName nil) (guideInst nil)
                                       (only_evens nil) (only_odds nil)
                                       (CV (geGetEditCellView)))
-  (let (props points layer isPin startVias endVias doubleVias flipX flipY
+  (let (props points layer isPin isHopOver startVias endVias doubleVias flipX flipY
               pitch busShield rotateMetals verticalVias positiveVias
               patlist prelist pre buspat lo hi lohi options evens odds)
 
@@ -986,6 +999,7 @@ wires_modtime = makeTable("wires" 0)
              verticalVias = (nth 12 props)
 	     positiveVias = (nth 13 props)
              busKeepout = (nth 14 props)
+	     isHopOver = (nth 15 props)
 
              ; iterate over BusPattern/BusPrefix lists
              (for n 0 (length patlist)-1
@@ -1027,7 +1041,7 @@ wires_modtime = makeTable("wires" 0)
                   (when (and buspat pre lohi)
                     (DrawChannelArray (ChooseLayers layers layer ?rotateMetals rotateMetals)
                                       buspat pre lohi pitch points
-                                      ?flipX flipX ?flipY flipY ?isPin isPin
+                                      ?flipX flipX ?flipY flipY ?isPin isPin ?isHopOver isHopOver
                                       ?startVias startVias ?endVias endVias
                                       ?doubleVias doubleVias ?verticalVias verticalVias ?positiveVias positiveVias
                                       ?guideInst guideInst ?busKeepout busKeepout
