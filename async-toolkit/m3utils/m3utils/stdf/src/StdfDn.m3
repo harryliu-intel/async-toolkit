@@ -11,7 +11,7 @@ PROCEDURE Parse(rd : Rd.T; VAR len : CARDINAL; VAR t : T)
     u : [0..255];
     n : [0..65535];
   BEGIN
-    IF len = 0 THEN RETURN END;
+    IF len = 0 THEN t := Default(); RETURN END;
 
     n := StdfRd.U2(rd, len);
     t := NEW(T, n);

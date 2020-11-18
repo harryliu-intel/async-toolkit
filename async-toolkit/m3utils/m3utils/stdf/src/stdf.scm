@@ -707,6 +707,8 @@
         )
     )
   )
+
+(define (emit-field-init rec wr) )
                
 
 (define (emit-field-parse rec wr)
