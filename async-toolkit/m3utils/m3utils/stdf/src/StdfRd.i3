@@ -15,6 +15,9 @@ PROCEDURE Char(rd : Rd.T; VAR len : CARDINAL) : CHAR
 PROCEDURE U1(rd : Rd.T; VAR len : CARDINAL) : [ 0..255 ]
   RAISES { StdfE.E, Thread.Alerted, Rd.Failure, Rd.EndOfFile };
 
+PROCEDURE U2(rd : Rd.T; VAR len : CARDINAL) : [ 0..65535 ]
+  RAISES { StdfE.E, Thread.Alerted, Rd.Failure, Rd.EndOfFile };
+
 CONST Brand = "StdfRd";
 
 END StdfRd.

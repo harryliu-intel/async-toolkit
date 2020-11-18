@@ -6,11 +6,12 @@ IMPORT StdfC1;
 IMPORT StdfRd;
 
 PROCEDURE Parse(rd : Rd.T; VAR len : CARDINAL; VAR t : T)
-  RAISES { StdfE.E, Thread.Alerted, Rd.Failure, Rd.EndOfFile } =
+  RAISES { StdfE.E, StdfE.Missing, Thread.Alerted, Rd.Failure, Rd.EndOfFile } =
   VAR
-    rlen := StdfRd.U1(rd, len);
+    rlen : [0..255];
   BEGIN
-    DEC(len);
+    IF len = 0 THEN RAISE StdfE.Missing END;
+    rlen := StdfRd.U1(rd, len);
     t := NEW(T, rlen);
     FOR i := FIRST(t^) TO LAST(t^) DO
       StdfC1.Parse(rd, len, SUBARRAY(t^,i,1))

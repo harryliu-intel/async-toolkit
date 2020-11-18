@@ -2,20 +2,21 @@ MODULE StdfB1;
 IMPORT Rd, StdfE;
 IMPORT Thread;
 IMPORT Word;
-IMPORT StdfC1;
+IMPORT StdfRd;
 IMPORT Wx;
 
 PROCEDURE Parse(rd : Rd.T; VAR len : CARDINAL; VAR t : T)
-  RAISES { StdfE.E, Thread.Alerted, Rd.Failure, Rd.EndOfFile } =
+  RAISES { StdfE.E, StdfE.Missing, Thread.Alerted, Rd.Failure, Rd.EndOfFile } =
   VAR
-    c : ARRAY [0..0] OF CHAR;
+    u : [0..255];
   BEGIN
+    IF len = 0 THEN RAISE StdfE.Missing END;
     FOR i := FIRST(t) TO LAST(t) DO
       IF i MOD 8 = 0 THEN
-        StdfC1.Parse(rd, len, c);
-        t[i] := Word.And(ORD(c[0]),1) = 1
+        u := StdfRd.U1(rd, len);
+        t[i] := Word.And(u,1) = 1
       ELSE
-        t[i] := Word.And(Word.RightShift(ORD(c[0]),i MOD 8), 1) = 1
+        t[i] := Word.And(Word.RightShift(u, i MOD 8), 1) = 1
       END
     END
   END Parse;

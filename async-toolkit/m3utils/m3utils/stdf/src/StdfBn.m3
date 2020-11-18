@@ -2,22 +2,23 @@ MODULE StdfBn;
 IMPORT Rd, StdfE;
 IMPORT Thread;
 IMPORT Word;
-IMPORT StdfC1;
+IMPORT StdfRd;
 IMPORT Wx;
 
 PROCEDURE Parse(rd : Rd.T; VAR len : CARDINAL; VAR t : T)
-  RAISES { StdfE.E, Thread.Alerted, Rd.Failure, Rd.EndOfFile } =
+  RAISES { StdfE.E, StdfE.Missing, Thread.Alerted, Rd.Failure, Rd.EndOfFile } =
   VAR
-    c, d : ARRAY [0..0] OF CHAR;
+    u, v : [0..255];
   BEGIN
-    StdfC1.Parse(rd, len, c);
-    t := NEW(REF ARRAY OF BOOLEAN, 8 * ORD(c[0]));
+    IF len = 0 THEN RAISE StdfE.Missing END;
+    u := StdfRd.U1(rd, len);
+    t := NEW(REF ARRAY OF BOOLEAN, 8 * u);
     FOR i := FIRST(t^) TO LAST(t^) DO
       IF i MOD 8 = 0 THEN
-        StdfC1.Parse(rd, len, d);
-        t[i] := Word.And(ORD(d[0]),1) = 1
+        v  := StdfRd.U1(rd, len);
+        t[i] := Word.And(v,1) = 1
       ELSE
-        t[i] := Word.And(Word.RightShift(ORD(d[0]),i MOD 8), 1) = 1
+        t[i] := Word.And(Word.RightShift(v, i MOD 8), 1) = 1
       END
     END
   END Parse;
