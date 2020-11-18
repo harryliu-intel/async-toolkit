@@ -10,7 +10,7 @@ PROCEDURE Parse(rd : Rd.T; VAR len : CARDINAL; VAR t : T)
   VAR
     u : [0..255];
   BEGIN
-    IF len = 0 THEN RAISE StdfE.Missing END;
+    IF len = 0 THEN RETURN END;
     FOR i := FIRST(t) TO LAST(t) DO
       IF i MOD 8 = 0 THEN
         u := StdfRd.U1(rd, len);

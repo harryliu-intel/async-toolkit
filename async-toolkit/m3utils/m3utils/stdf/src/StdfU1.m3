@@ -6,7 +6,7 @@ FROM Fmt IMPORT Int;
 PROCEDURE Parse(rd : Rd.T; VAR len : CARDINAL; VAR t : T)
   RAISES { StdfE.E, StdfE.Missing, Thread.Alerted, Rd.Failure, Rd.EndOfFile } =
   BEGIN
-    IF len = 0 THEN RAISE StdfE.Missing END;
+    IF len = 0 THEN RETURN END;
     t := StdfRd.U1(rd, len)
   END Parse;
   

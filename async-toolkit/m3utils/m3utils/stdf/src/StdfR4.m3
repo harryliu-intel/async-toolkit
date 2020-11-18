@@ -9,7 +9,7 @@ PROCEDURE Parse(rd : Rd.T; VAR len : CARDINAL; VAR t : T)
   VAR
     buff : ARRAY [0..Bytes-1] OF CHAR;
   BEGIN
-    IF len = 0 THEN RAISE StdfE.Missing END;
+    IF len = 0 THEN RETURN END;
     StdfRd.Chars(rd, len, buff);
     t := LOOPHOLE(ADR(buff),REF REAL)^;
   END Parse;

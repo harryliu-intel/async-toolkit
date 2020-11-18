@@ -10,7 +10,7 @@ PROCEDURE Parse(rd : Rd.T; VAR len : CARDINAL; VAR t : T)
   VAR
     u, v : [0..255];
   BEGIN
-    IF len = 0 THEN RAISE StdfE.Missing END;
+    IF len = 0 THEN RETURN END;
     u := StdfRd.U1(rd, len);
     t := NEW(REF ARRAY OF BOOLEAN, 8 * u);
     FOR i := FIRST(t^) TO LAST(t^) DO

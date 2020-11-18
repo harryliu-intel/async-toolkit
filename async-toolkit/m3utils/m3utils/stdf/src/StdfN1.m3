@@ -10,7 +10,7 @@ PROCEDURE ParseArray(rd : Rd.T; VAR len : CARDINAL; VAR t : ARRAY OF T)
   VAR
     u : [0..255];
   BEGIN
-    IF len = 0 THEN RAISE StdfE.Missing END;
+    IF len = 0 THEN RETURN END;
     FOR i := FIRST(t) TO LAST(t) DO
       IF i MOD 2 = 0 THEN
         u := StdfRd.U1(rd, len);
