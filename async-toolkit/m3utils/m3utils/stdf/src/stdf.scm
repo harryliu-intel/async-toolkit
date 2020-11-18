@@ -711,6 +711,8 @@
          "TYPE" dnl
          "  PF = PROCEDURE" parseobj-proto ";" dnl
          dnl
+         "  FF = PROCEDURE" formatobj-proto ";" dnl
+         dnl
          "  T = RECORD" dnl
          "    nm      : TEXT;" dnl
          "    enum    : Enum;" dnl
@@ -725,6 +727,8 @@
          "  Names = ARRAY Enum OF TEXT { " (infixize (map double-quote (map car (map eval (map car stdf-record-types)))) ", ") " };" dnl
          dnl
          "  Types = ARRAY Enum OF T { " (infixize (map make-type-desc stdf-record-types) ", "  ) " };" dnl
+         dnl
+         "  Formatters = ARRAY Enum OF FF { " (infixize (map make-format-desc stdf-record-types) ", "  ) " };" dnl
          dnl
          i-wr)
   
@@ -744,4 +748,9 @@
     )
 )
   
+(define (make-format-desc rtyp)
+  (let ((m3tn (scheme->m3 (car rtyp))))
+    (string-append "Stdf"m3tn".FormatObject")
+    )
+)
 (make-record-types)
