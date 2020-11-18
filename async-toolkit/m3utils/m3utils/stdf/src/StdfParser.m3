@@ -8,7 +8,7 @@ IMPORT Debug;
 FROM Fmt IMPORT F, Int;
 IMPORT StdfE, Thread;
 
-VAR doDebug := TRUE;
+VAR doDebug := Debug.DebugThis("StdfParser");
     
 PROCEDURE Parse(rd : Rd.T) : StdfRecordObjectSeq.T
   RAISES { Rd.Failure, StdfE.E, Thread.Alerted } =

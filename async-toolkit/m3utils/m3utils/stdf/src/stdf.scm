@@ -591,6 +591,17 @@
           ""
           (let* ((rec (car lst)))
             (set! *e* rec)
+            (emit-field-init rec m-wr)
+            (loop (cdr lst))
+            )
+          
+          )
+      )
+    (let loop ((lst rec))
+      (if (null? lst)
+          ""
+          (let* ((rec (car lst)))
+            (set! *e* rec)
             (emit-field-parse rec m-wr)
             (loop (cdr lst))
             )
@@ -672,6 +683,28 @@
           )
         )
     (dis "    Wx.PutChar(wx, '\\n');" dnl wr)
+    )
+  )
+               
+
+(define must-init-types '(bn cn dn vn))
+
+(define (emit-field-init rec wr)
+  ;; initialize arrays to a length-zero array
+  (let ((m3f (scheme->m3l (car rec)))
+         (t (cadr rec)))
+    (if (symbol? t)
+        (if (member? t must-init-types)
+            (dis "    t."m3f" := Stdf"(scheme->m3 t)".Default();" dnl
+                 wr))
+        (let ((a   (car t))
+              (idx (cadr t))
+              (m3t (scheme->m3 (caddr t))))
+
+          (dis "    t."m3f" := NEW(REF ARRAY OF Stdf"m3t".T, 0);" dnl
+               wr)
+          )
+        )
     )
   )
                

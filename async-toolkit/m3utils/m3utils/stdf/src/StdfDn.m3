@@ -40,4 +40,6 @@ PROCEDURE Format(t : T) : TEXT =
     RETURN Brand & " : " & Wx.ToText(wx)
   END Format;
 
+PROCEDURE Default() : T = BEGIN RETURN NEW(T, 0) END Default;
+
 BEGIN END StdfDn.

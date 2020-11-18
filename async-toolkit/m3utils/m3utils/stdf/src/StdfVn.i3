@@ -11,4 +11,6 @@ PROCEDURE Format(t : T) : TEXT;
   
 CONST Brand = "StdfVn";
 
+PROCEDURE Default() : T;
+  
 END StdfVn.

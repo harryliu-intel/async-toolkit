@@ -10,5 +10,7 @@ PROCEDURE Parse(rd : Rd.T; VAR len : CARDINAL; VAR t : T)
 PROCEDURE Format(t : T) : TEXT;
 
 CONST Brand = "StdfCn";
+
+PROCEDURE Default() : T;
   
 END StdfCn.

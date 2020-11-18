@@ -5,7 +5,7 @@ IMPORT Thread;
 IMPORT Debug;
 FROM Fmt IMPORT Int, F, Pad, Align;
 
-VAR doDebug := TRUE;
+VAR doDebug := Debug.DebugThis("StdfRd");
     
 PROCEDURE Chars(rd : Rd.T; VAR len : CARDINAL; VAR x : ARRAY OF CHAR)
   RAISES { StdfE.E, Thread.Alerted, Rd.Failure, Rd.EndOfFile } =

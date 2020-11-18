@@ -23,4 +23,6 @@ PROCEDURE Format(t : T) : TEXT =
     RETURN Brand & " : " & Text.FromChars(t^)
   END Format;
 
+PROCEDURE Default() : T = BEGIN RETURN NEW(T, 0) END Default;
+
 BEGIN END StdfCn.
