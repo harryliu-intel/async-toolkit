@@ -1,21 +1,12 @@
 MODULE StdfU1;
-IMPORT Rd, StdfE;
+IMPORT Rd, StdfRd, StdfE;
 IMPORT Thread;
 FROM Fmt IMPORT Int;
 
 PROCEDURE Parse(rd : Rd.T; VAR len : CARDINAL; VAR t : T)
-  RAISES { StdfE.E, Thread.Alerted, Rd.Failure } =
+  RAISES { StdfE.E, Thread.Alerted, Rd.Failure, Rd.EndOfFile } =
   BEGIN
-    IF len < 1 THEN
-      RAISE StdfE.E("short read")
-    ELSE
-      TRY
-        t := ORD(Rd.GetChar(rd));
-        DEC(len,Bytes);
-      EXCEPT
-        Rd.EndOfFile => RAISE StdfE.E("EOF")
-      END
-    END
+    t := StdfRd.U1(rd, len)
   END Parse;
   
 PROCEDURE Format(t : T) : TEXT =

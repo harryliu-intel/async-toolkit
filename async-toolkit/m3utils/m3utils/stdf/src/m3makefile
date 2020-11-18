@@ -26,6 +26,7 @@ Module ("StdfRd")
 Interface ("StdfE")
 Module ("StdfParser")
 Interface ("StdfRecordObject")
+Interface ("StdfRecordObjectClass")
 Sequence ("StdfRecordObject", "StdfRecordObject")
 
 Table("StdfCardPairRec", "CardPair", "StdfRecordTypes")

@@ -2,25 +2,20 @@ MODULE StdfI1;
 IMPORT Rd, StdfE;
 IMPORT Thread;
 FROM Fmt IMPORT Int;
+IMPORT StdfU1;
 
 PROCEDURE Parse(rd : Rd.T; VAR len : CARDINAL; VAR t : T)
-  RAISES { StdfE.E, Thread.Alerted, Rd.Failure } =
+  RAISES { StdfE.E, Thread.Alerted, Rd.Failure, Rd.EndOfFile } =
+  TYPE
+    U = StdfU1.T;
+  VAR
+    u : U;
   BEGIN
-    IF len < Bytes THEN
-      RAISE StdfE.E("short read")
+    StdfU1.Parse(rd, len, u);
+    IF u <= LAST(T) THEN
+      t := u
     ELSE
-      TRY
-        VAR
-          c : INTEGER := ORD(Rd.GetChar(rd));
-        BEGIN
-          IF c >= 128 THEN c := c - 256 END;
-          
-          t :=  c;
-        END;
-        DEC(len);
-      EXCEPT
-        Rd.EndOfFile => RAISE StdfE.E("EOF")
-      END
+      t := u - LAST(U) - 1 
     END
   END Parse;
   

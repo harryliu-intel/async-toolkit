@@ -533,17 +533,24 @@
          m-wr)
 
     (put-m3-proc 'formatwx i-wr m-wr)
-    (dis "  BEGIN" dnl 
-
-         "  END FormatWx;" dnl
+    (dis "  BEGIN" dnl m-wr) 
+    (let loop ((lst rec))
+      (if (null? lst)
+          ""
+          (let* ((rec (car lst)))
+            (emit-field-formatwx rec m-wr)
+            (loop (cdr lst))
+            )
+          
+          )
+      );;tel
+    (dis "  END FormatWx;" dnl
          dnl
          m-wr)
     
     (close-m3 wrs)
     )
   )
-
-(make-header-code 'record-header)
 
 (define (get-type-len tdef)
   (if (symbol? tdef)
@@ -623,7 +630,6 @@
           
           )
       )
-
     (dis   "  END FormatWx;" dnl
          dnl
          m-wr)
@@ -694,8 +700,6 @@
   'ok
   )
 
-(map make-record-code (map car stdf-record-types))
-
 (define (make-record-types)
   (let* ((wrs (open-m3 "StdfRecordTypes"))
          (i-wr (car wrs))
@@ -753,4 +757,12 @@
     (string-append "Stdf"m3tn".FormatObject")
     )
 )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(dis ">>>>>>>>>>>>>>>>>>>>  building STDF modules  >>>>>>>>>>>>>>>>>>>>" dnl '())
+
+(map make-record-code (map car stdf-record-types))
+(make-header-code 'record-header)
 (make-record-types)
+
+(dis "<<<<<<<<<<<<<<<<<<  done building STDF modules  <<<<<<<<<<<<<<<<<" dnl '())

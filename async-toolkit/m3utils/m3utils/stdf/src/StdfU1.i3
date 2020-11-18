@@ -9,7 +9,7 @@ CONST Bytes = 1;
 TYPE T = [0..Word.Shift(1,Bits)-1];
 
 PROCEDURE Parse(rd : Rd.T; VAR len : CARDINAL; VAR t : T)
-  RAISES { StdfE.E, Thread.Alerted, Rd.Failure };
+  RAISES { StdfE.E, Thread.Alerted, Rd.Failure, Rd.EndOfFile };
 
 PROCEDURE Format(t : T) : TEXT;
   

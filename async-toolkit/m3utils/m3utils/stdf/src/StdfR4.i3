@@ -1,6 +1,5 @@
 INTERFACE StdfR4;
 IMPORT Rd, StdfE;
-IMPORT Word;
 IMPORT Thread;
 
 CONST Bytes = 4;
@@ -9,7 +8,7 @@ CONST Bytes = 4;
 TYPE T = REAL;
 
 PROCEDURE Parse(rd : Rd.T; VAR len : CARDINAL; VAR t : T)
-  RAISES { StdfE.E, Thread.Alerted, Rd.Failure };
+  RAISES { StdfE.E, Thread.Alerted, Rd.Failure, Rd.EndOfFile };
 
 PROCEDURE Format(t : T) : TEXT;
   
