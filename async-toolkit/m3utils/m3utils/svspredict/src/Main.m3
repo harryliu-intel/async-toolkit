@@ -26,9 +26,9 @@ VAR
   Ff := Corner { 0.620d0, 0.670d0, -3.0d0 };
 
   (* from the Karthik/Mika/Julianne Excel 2020WW47 *)
-  RefP          := 379.1d0;
+  RefP          := 388.6d0;
   FixedP        :=  81.8d0;
-  RefLeakP      :=  13.4d0;
+  RefLeakP      :=  21.1d0;
   
   
   LkgRatio      :=   2.0d0; (* how much does leakage vary over corner *)

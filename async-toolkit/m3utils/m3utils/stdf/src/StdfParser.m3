@@ -27,6 +27,7 @@ PROCEDURE Parse(rd : Rd.T) : StdfRecordObjectSeq.T =
           hadIt := StdfParseTable.Get(hdr.recTyp, hdr.recSub, recType);
           bdyLen : CARDINAL := hdr.recLen;
         BEGIN
+
           IF NOT hadIt THEN
             Debug.Error(F("No parser defined for recTyp %s recSub %s",
                           Int(hdr.recTyp), Int(hdr.recSub)))

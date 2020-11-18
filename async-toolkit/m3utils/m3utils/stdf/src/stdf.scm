@@ -438,17 +438,30 @@
   (dis "<*NOWARN*>IMPORT StdfU1, StdfU2, StdfU4, StdfN1, StdfCn;" dnl
        "<*NOWARN*>IMPORT StdfI2, StdfB1, StdfC1, StdfDn, StdfVn;" dnl
        "<*NOWARN*>IMPORT StdfI1, StdfR4, StdfI4, StdfBn;" dnl
-       "IMPORT StdfE, Rd, Thread;" dnl
+       "<*NOWARN*>IMPORT StdfE, Rd, Thread, Wx, Fmt;" dnl
        dnl
        wr))
 
 (define deriv-dir "../AMD64_LINUX/")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define parse-proc-name "Parse")
 (define parse-proto "(rd : Rd.T; VAR len : CARDINAL; VAR t : T) RAISES { StdfE.E , Rd.EndOfFile, Rd.Failure, Thread.Alerted}")
 
 (define parseobj-proc-name "ParseObject")
 (define parseobj-proto "(rd : Rd.T; VAR len : CARDINAL) : StdfRecordObject.T RAISES { StdfE.E, Rd.EndOfFile, Rd.Failure, Thread.Alerted }")
+
+(define formatwx-proc-name "FormatWx")
+(define formatwx-proto "(wx : Wx.T; READONLY t : T)")
+
+(define format-proc-name "Format")
+(define format-proto "(READONLY t : T) : TEXT")
+
+(define formatobj-proc-name "FormatObject")
+(define formatobj-proto "(x : StdfRecordObject.T) : TEXT")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (put-m3-proc whch .
                      wrs ;; i3 m3 ...
@@ -509,6 +522,22 @@
     (dis  "  END Parse;" dnl
           dnl
           m-wr)
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    (put-m3-proc 'format i-wr m-wr)
+    (dis "  VAR wx := Wx.New(); BEGIN" dnl 
+         "    FormatWx(wx, t);" dnl
+         "    RETURN Wx.ToText(wx)" dnl
+         "  END Format;" dnl
+         dnl
+         m-wr)
+
+    (put-m3-proc 'formatwx i-wr m-wr)
+    (dis "  BEGIN" dnl 
+
+         "  END FormatWx;" dnl
+         dnl
+         m-wr)
     
     (close-m3 wrs)
     )
@@ -567,13 +596,76 @@
     (dis "  VAR res := NEW(O); BEGIN" dnl
          "    Parse(rd, len, res.rec);" dnl
          "    RETURN res" dnl
-         "  END ParseObject;" dnl m-wr)
+         "  END ParseObject;" dnl
+         dnl
+         m-wr)
     
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+    (put-m3-proc 'format i-wr m-wr)
+    (dis "  VAR wx := Wx.New(); BEGIN" dnl 
+         "    FormatWx(wx, t);" dnl
+         "    RETURN Wx.ToText(wx)" dnl
+         "  END Format;" dnl
+         dnl
+         m-wr)
+
+    (put-m3-proc 'formatwx i-wr m-wr)
+    (dis "  BEGIN" dnl m-wr)
+    (let loop ((lst rec))
+      (if (null? lst)
+          ""
+          (let* ((rec (car lst)))
+            (set! *e* rec)
+            (emit-field-formatwx rec m-wr)
+            (loop (cdr lst))
+            )
+          
+          )
+      )
+
+    (dis   "  END FormatWx;" dnl
+         dnl
+         m-wr)
+
+    (put-m3-proc 'formatobj i-wr m-wr)
+    (dis "  BEGIN" dnl 
+         "    RETURN Format(NARROW(x, O).rec)" dnl
+         "  END FormatObject;" dnl
+         dnl
+         m-wr)
+
     (close-m3 wrs)
     )
   )
 
 (define *e* '())
+
+(define (emit-field-formatwx rec wr)
+  (let ((m3f (scheme->m3l (car rec)))
+        (t (cadr rec)))
+    (dis "    Wx.PutText(wx, \"" m3f ": \");" dnl wr)
+    (if (symbol? t)
+        (let ((m3t (scheme->m3 t)))
+          (dis "    Wx.PutText(wx, Stdf" m3t ".Format(t." m3f "));" dnl wr)
+          )
+        (let ((a   (car t))
+              (idx (cadr t))
+              (m3t (scheme->m3 (caddr t))))
+          (if (not (eq? a 'array)) (error "not an array spec : " t))
+          (dis "    FOR i := FIRST(t." m3f "^) TO LAST(t." m3f "^) DO" dnl
+               "      Wx.PutChar(wx, '\\n');" dnl
+               "      Wx.PutChar(wx, '[');" dnl
+               "      Wx.PutText(wx, Fmt.Int(i));" dnl
+               "      Wx.PutText(wx, \"] : \");" dnl
+               "      Wx.PutText(wx, Stdf" m3t ".Format(t." m3f "[i]));" dnl
+               "    END;" dnl wr)
+          )
+        )
+    (dis "    Wx.PutChar(wx, '\\n');" dnl wr)
+    )
+  )
+               
 
 (define (emit-field-parse rec wr)
   (let ((m3f (scheme->m3l (car rec)))
