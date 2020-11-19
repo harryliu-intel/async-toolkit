@@ -3,11 +3,11 @@
 #
 # Program : get_data.rv_staticir_2_xlsx.pl
 #
-# Version : 1.0
+# Version : 1.1
 #
 # Editor : Ralf Goettsche
 #
-# Last changes : 09.11.2020
+# Last changes : 19.11.2020
 #
 #################################################################
 #
@@ -18,7 +18,10 @@
 #################################################################
 #
 # Call:
+#   get_data.rv_staticir_2_xlsx.pl -srcdir <dir> -output <dir>
+# e.g.
 #   get_data.rv_staticir_2_xlsx.pl -srcdir ../apr.latest
+#   get_data.rv_staticir_2_xlsx.pl -srcdir apr.latest -output rv_summary
 #
 #################################################################
 #
@@ -52,7 +55,7 @@ my $date = sprintf("%04d_%02d_%02d", $year,$mon, $mday);
 
 # Define default settings for options
 my $srcdir = "";
-my $output = "./";
+my $output = ".";
 my $mode = "static";
 my $xlsxfile = "RV_Summary_$date.xlsx";
 my $workbook = "";
@@ -69,49 +72,8 @@ if(!(GetOptions(
   &help();
 }
 
-my %ip2inst_blocks = (
-    'BRIDGE'             => 'BRIDGE_U_CORE',
-    'CPU_SHIM'           => 'CPU_U_SHIM',
-    'CORE1'              => 'CORE1', 
-    'CORE2'              => 'CORE2',
-    'CORE3'              => 'CORE3', 
-    'CORE4'              => 'CORE4',
-    'DENDRITE_ACCUM_CMO' => 'DENDRITE_U_ACCUM_U_CMO',
-    'DENDRITE_ACCUM_NTV' => 'DENDRITE_U_ACCUM_U_NTV',
-    'DOUBLE_ROUTER2'     => 'DOUBLE_U_ROUTER2',
-    'DOUBLE_ROUTER4'     => 'DOUBLE_U_ROUTER4',
-    'IO'                 => 'IO',
-    'LAKEMONT'           => 'mintmia_lmt_subsys',
-    'LMT_CDC'            => 'LMT_U_CDC',
-    'MPDS_128KB_CMO'     => 'MPDS_U_CMO_U_128KB',
-    'MPDS_128KB_NTV'     => 'MPDS_U_NTV_U_128KB',
-    'MPDS_32KB_CMO'      => 'MPDS_U_CMO_U_32KB',
-    'MPDS_32KB_NTV'      => 'MPDS_U_NTV_U_32KB',
-    'PADS_FPIO'          => 'PADS_U_FPIO',
-    'PADS_RBCK'          => 'PADS_U_RBCK',
-    'PIO_H'              => 'PIO_U_H',
-    'PIO_V'              => 'PIO_U_V',
-    'T0A'                => 'T0A',
-    'TEST0'              => 'TEST0',
-    'TEST1'              => 'TEST1',
-    'BYPASS'             => 'BYPASS',
-    'D_BRIDGE_MCM_CABLE' => 'D_U_BRIDGE_U_MCM_U_CABLE',
-    'E_BRIDGE_MCM_CABLE' => 'E_U_BRIDGE_U_MCM_U_CABLE',
-    'E_CABLE'            => 'E_U_CABLE',
-    'E_MCM_CABLE'        => 'E_U_MCM_U_CABLE',
-    'E_PIO_MCM_CABLE'    => 'E_U_PIO_U_MCM_U_CABLE',
-    'N_BRIDGE_MCM_CABLE' => 'N_U_BRIDGE_U_MCM_U_CABLE',
-    'N_CABLE'            => 'N_U_CABLE',
-    'N_CABLE_CPU'        => 'N_U_CABLE_U_CPU',
-    'N_MCM_CABLE'        => 'N_U_MCM_U_CABLE',
-    'S_BRIDGE_MCM_CABLE' => 'S_U_BRIDGE_U_MCM_U_CABLE',
-    'U_BRIDGE_MCM_CABLE' => 'U_U_BRIDGE_U_MCM_U_CABLE',
-    'W_BRIDGE_MCM_CABLE' => 'W_U_BRIDGE_U_MCM_U_CABLE',
-    'W_PIO_MCM_CABLE'    => 'W_U_PIO_U_MCM_U_CABLE'
-    );
-
 ### Reading out main RV data and storing them into excel file
-print ("\nINFO: Reading RV rundirs under '$srcdir' and putting RV result extract under \'$output\'!\n\n");
+print ("\nINFO: Reading RV rundirs under '$srcdir' and putting RV result extract under \'$output/\'!\n\n");
 
 # Preparing Excel file and header of data sheet
 print ("INFO: Preparing Excel sheet '$output/$xlsxfile'!\n\n");
@@ -136,14 +98,35 @@ while (our $dir = readdir(DIR)) {
 closedir DIR;
 
 # Extract most important RV data and store the result in Exel sheet
-my $renameContext = {};
 foreach my $dir (sort @srcdir_arr) {
+    my $cell = "";
     my $rvdir = `ls -d ${srcdir}/${dir}.cdswd/temp/route/*/proteus/rv/staticir_run 2>/dev/null`;
     chomp($rvdir);
     if (-d $rvdir) {
+        # Get gds2 name of block
+        my $proteus_config = `ls ${srcdir}/${dir}.cdswd/temp/route/*/proteus.config`;
+        chomp(${proteus_config});
+        if (-f $proteus_config) {
+            # Get full block name
+            my $fullcell = `grep -- --cell= ${proteus_config}`;
+            chomp(${fullcell});
+            if (length($fullcell) > 0) {
+                # Extract name part
+                my @fullcell_part=split(/\./, $fullcell);
+                $cell = $fullcell_part[length($fullcell_part) - 2];
+                # Transform it to gds2
+                $cell = rename2gds($cell);
+            } else {
+                print("WARNING: No cell definition in ${proteus_config}! Continuing!\n");
+                next;
+            }
+        } else {
+            print("WARNING: No proteus.config file! Continuing!\n");
+            next;
+        }
+        # Extract data and storage in Excel sheet
         print("INFO: Extracting data for IP '$dir'... \n");
-        $sanitized_cell=$ip2inst_blocks{$dir};
-        $xlsxline = get_data($mode, $rvdir, $sanitized_cell, $workbook, $worksheet, $xlsxline);
+        $xlsxline = get_data($mode, $rvdir, $cell, $workbook, $worksheet, $xlsxline);
     } else {
         print("WARNING: No rv dir '${srcdir}/${dir}.cdswd/temp/route/*/proteus/rv/staticir_run'! Continuing!\n");
     }
@@ -430,6 +413,46 @@ sub autofit_columns {
     }
 }
 
+sub rename2gds {
+
+    my ($name) = @_;
+
+    my $result = "";
+
+    foreach $char (split //, $name) {
+        if ( $char eq "." ) {
+            $result .= "_D_";
+        } elsif ( $char eq "," ) {
+            $result .= "_C_";
+        } elsif ( $char eq "[" ) {
+            $result .= "_l_";
+        } elsif ( $char eq "]" ) {
+            $result .= "_r_";
+        } elsif ( $char eq "(" ) {
+            $result .= "_L_";
+        } elsif ( $char eq ")" ) {
+            $result .= "_R_";
+        } elsif ( $char eq "-" ) {
+            $result .= "_M_";
+        } elsif ( $char eq "_" ) {
+            $result .= "_U_";
+        } elsif ( $char eq "#" ) {
+            $result .= "_H_";
+        } elsif ($char =~ m/\w/) {
+            $result .= $char;
+        } else {
+            my $hexstring = sprintf("%00x", ord($char));
+            if ( length($hexstring) == 2) {
+                $result .= "_$hexsting_";
+            } else {
+                die "Error(rename): The code point of $char is greater tha 255.\n";
+            }
+        }
+    }
+
+    return $result;
+}
+ 
 sub help {
     print "\n";
     print "Usage: get_data.rv_staticir_2_xlsx.pl -srcdir <dir> [-output <dir>|-xlsxfile <name>|-help]\n";
