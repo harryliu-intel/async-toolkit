@@ -23,6 +23,7 @@ import java.util.ListIterator;
 import java.util.LinkedHashSet;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -83,6 +84,7 @@ import com.avlsi.file.cdl.parser.CDLScalingFactory;
 import com.avlsi.file.cdl.parser.Template;
 
 import com.avlsi.file.liberty.parser.FunctionParser;
+import com.avlsi.file.liberty.parser.LibertyAttr;
 import com.avlsi.file.liberty.parser.LibertyParser;
 import com.avlsi.file.liberty.parser.LibertyGroup;
 
@@ -167,6 +169,11 @@ public class CDL2Cast {
      * Cached map from cell to map of pin to function, using Liberty names.
      **/
     private Map<String,Map<String,String>> libertyFunctions;
+
+    /**
+     * Cached map from cell to attribute name to attribute value.
+     **/
+    private Map<String,Map<String,LibertyAttr>> libertyAttributes;
 
     private static final String LIBERTY_PRS_DEFINE = "USE_LIBERTY_PRS";
 
@@ -565,9 +572,12 @@ public class CDL2Cast {
 
 
         /** Liberty file from which to extract PRS */
-        final Optional<LibertyParser> libertyParser =
+        final List<LibertyParser> libertyParser =
             Optional.ofNullable(theArgs.getArgValue("liberty-file", null))
-                    .map(LibertyParser::new);
+                    .map(arg -> Stream.of(arg.split(","))
+                                      .map(LibertyParser::new)
+                                      .collect(Collectors.toList()))
+                    .orElse(Collections.emptyList());
 
         final boolean detectGendev = theArgs.argExists("detect-gendev");
 
@@ -963,7 +973,7 @@ public class CDL2Cast {
      **/
     public void writeTemplates( final Map<String,Template> templates,
                                 final AspiceCellAdapter aspicer,
-                                final Optional<LibertyParser> libertyParser,
+                                final List<LibertyParser> libertyParser,
                                 final Writer outputCastCellsWriter,
                                 final File outputSpecTreeDir,
                                 final File outputCastTreeDir,
@@ -2020,6 +2030,10 @@ public class CDL2Cast {
     private static Set<String> SEQUENTIAL_GROUP_TYPES =
         new HashSet<>(Arrays.asList("ff", "ff_bank", "latch", "latch_bank"));
 
+    /** Liberty cell level attributes of interest */
+    private static Set<String> LIBERTY_CELL_ATTRS =
+        new HashSet<>(Arrays.asList("is_level_shifter", "cell_description"));
+
     /** Returns whether the liberty cell is combinational */
     private boolean isCombinational(final LibertyGroup cell) {
         return CollectionUtils.stream(cell.getGroups())
@@ -2027,36 +2041,60 @@ public class CDL2Cast {
                               .noneMatch(n -> SEQUENTIAL_GROUP_TYPES.contains(n));
     }
 
-    /** Returns map from cell to map of pin to function. */
-    private Map<String,Map<String,String>>
-    findLibertyFunctions(final LibertyParser libertyParser) {
-        final Map<String,Map<String,String>> funcs = new HashMap<>();
+    /** Fill in output pin function attribute, and cell attributes */
+    private void findLibertyInfo(final LibertyParser libertyParser,
+                                 final Map<String,Map<String,String>> funcs,
+                                 final Map<String,Map<String,LibertyAttr>> attrs) {
         findGroup(libertyParser.getGroups(), "library")
             .flatMap(lib -> findGroup(lib.getGroups(), "cell"))
-            .filter(cell -> isCombinational(cell))
             .forEach(cell -> {
-                findGroup(cell.getGroups(), "pin")
-                    .forEach(pin -> {
-                        Optional.ofNullable(pin.findAttrByName("function"))
-                                .ifPresent(func -> {
-                                    funcs.computeIfAbsent(cell.getNames().next(),
-                                                          k -> new HashMap<>())
-                                         .put(pin.getNames().next(),
-                                              func.getSimpleAttr()
-                                                  .getStringValue());
-                                });
-                    });
+                for (String attr : LIBERTY_CELL_ATTRS) {
+                    Optional.ofNullable(cell.findAttrByName(attr))
+                            .ifPresent(val -> {
+                                attrs.computeIfAbsent(cell.getNames().next(),
+                                                      k -> new HashMap<>())
+                                     .put(attr, val);
+                            });
+                }
+                if (isCombinational(cell)) {
+                    findGroup(cell.getGroups(), "pin")
+                        .forEach(pin -> {
+                            Optional.ofNullable(pin.findAttrByName("function"))
+                                    .ifPresent(func -> {
+                                        funcs.computeIfAbsent(cell.getNames().next(),
+                                                              k -> new HashMap<>())
+                                             .put(pin.getNames().next(),
+                                                  func.getSimpleAttr()
+                                                      .getStringValue());
+                                    });
+                        });
+                }
             });
-        return funcs;
+    }
+
+    /** Update cached liberty function and cell attributes, if necessary */
+    private void updateLibertyCache(List<LibertyParser> libertyParser) {
+        if (libertyFunctions == null) {
+            libertyFunctions = new HashMap<>();
+            libertyAttributes = new HashMap<>();
+            for (LibertyParser lp : libertyParser) {
+                findLibertyInfo(lp, libertyFunctions, libertyAttributes);
+            }
+        }
     }
 
     /** Returns map from pin to function for the given cell. */
-    private Map<String,String> getLibertyFunction(LibertyParser libertyParser,
+    private Map<String,String> getLibertyFunction(List<LibertyParser> libertyParser,
                                                   String cell) {
-        if (libertyFunctions == null) {
-            libertyFunctions = findLibertyFunctions(libertyParser);
-        }
+        updateLibertyCache(libertyParser);
         return libertyFunctions.getOrDefault(cell, Collections.emptyMap());
+    }
+
+    /** Returns map from attribute key to attribute value for the given cell. */
+    private Map<String,LibertyAttr> getLibertyAttributes(List<LibertyParser> libertyParser,
+                                                         String cell) {
+        updateLibertyCache(libertyParser);
+        return libertyAttributes.getOrDefault(cell, Collections.emptyMap());
     }
 
     private void writeTemplateToCastTree(final HierName fqcn,
@@ -2065,7 +2103,7 @@ public class CDL2Cast {
                                          final Template template,
                                          final Map templates,
                                          final NetGraph netgraph,
-                                         final Optional<LibertyParser> libertyParser,
+                                         final List<LibertyParser> libertyParser,
                                          final CDLInlineFactory flatten,
                                          final Predicate<String> topCells,
                                          final boolean writeVerilogRTL,
@@ -2080,13 +2118,20 @@ public class CDL2Cast {
 
         final String cellName = fqcn.getAsString('.');
 
+        final String origName = reverseMap.getCellName(cellName);
+
         final String[] parents;
         if (genDevSet.contains(template)) {
             parents = new String[] { "NULL" };
-        } else if (topCells.test(reverseMap.getCellName(cellName))) {
+        } else if (topCells.test(origName)) {
             parents = topParents;
         } else {
             parents = refinementParents;
+        }
+        final LibertyAttr desc = getLibertyAttributes(libertyParser, origName)
+            .get("cell_description");
+        if (desc != null) {
+            iw.write("/** " + desc.getSimpleAttr().getStringValue() + " **/\n");
         }
         writeCellHeader(cellModule.getSuffixString(),
                         parents,
@@ -2117,15 +2162,14 @@ public class CDL2Cast {
         else if (netgraph!=null) {
             final ProductionRuleSet libertyPrs = new ProductionRuleSet();
             // try to generate PRS from Liberty file if available
-            if (libertyParser.isPresent()) {
-                final String origName = reverseMap.getCellName(cellName);
+            if (!libertyParser.isEmpty()) {
                 final Map<HierName,HierName> forwardMap = new HashMap<>();
                 reverseMap.getNodeMap(cellName)
                           .entrySet()
                           .stream()
                           .forEach(e -> forwardMap.put(toHier(e.getValue()),
                                                        toHier(e.getKey())));
-                getLibertyFunction(libertyParser.get(), origName)
+                getLibertyFunction(libertyParser, origName)
                     .entrySet()
                     .stream()
                     .forEach(et -> {
@@ -2227,14 +2271,20 @@ public class CDL2Cast {
             iw.write("directives { " + supplies + " }\n");
         }
 
-        if (writeVerilogRTL && topCells.test(reverseMap.getCellName(cellName))) {
+        if (writeVerilogRTL && topCells.test(origName)) {
             iw.write("verilog {\n");
             iw.nextLevel();
+            Stream<String> ports = getPortsAsStream(template);
+            final LibertyAttr lsAttr =
+                getLibertyAttributes(libertyParser, origName).get("is_level_shifter");
+            if (lsAttr == null || !lsAttr.getSimpleAttr().getBooleanValue()) {
+                // if not a level shifter, exclude power/ground pins
+                ports = ports.filter(isPowerNet.or(isGroundNet).negate());
+            }
             writeVerilogBlock(
                 "rtl",
                 cellName,
-                getPortsAsStream(template).filter(isPowerNet.or(isGroundNet)
-                                                            .negate()),
+                ports,
                 iw);
             iw.prevLevel();
             iw.write("}\n");
