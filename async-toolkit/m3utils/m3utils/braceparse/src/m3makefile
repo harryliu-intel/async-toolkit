@@ -1,6 +1,11 @@
 import ("libm3")
 import ("cit_util")
+import ("parseparams")
 
-Interface ("BraceParse")
+Module ("BraceParse")
+implementation ("Main")
 
-library ("braceparse")
+%library ("braceparse")
+program ("testbrace")
+
+
