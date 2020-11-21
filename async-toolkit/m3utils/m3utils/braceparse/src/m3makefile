@@ -5,6 +5,12 @@ import ("parseparams")
 Module ("BraceParse")
 implementation ("Main")
 
+module("OpenCharArray")
+
+interface ("CellRec")
+
+openarrayTable("CellRec", "OpenCharArray", "CellRec")
+
 %library ("braceparse")
 program ("testbrace")
 

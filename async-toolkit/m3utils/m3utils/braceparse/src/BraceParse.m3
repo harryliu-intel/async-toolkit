@@ -8,6 +8,7 @@ CONST BufSiz = 80;
 TYPE  Buffer = ARRAY [ 0 .. BufSiz-1 ] OF CHAR;
 
 TYPE SC = SET OF CHAR;
+     CA = ARRAY OF CHAR;
      
 CONST WhiteSpace = SC { ' ', '\t', '\n', '\r' };
       Special    = SC { '{', '}', '=' };
@@ -98,7 +99,10 @@ PROCEDURE Parse(rd : Rd.T)
       haveTok := TRUE
     END NextToken;
 
-  PROCEDURE GetToken(VAR tok : Token) : BOOLEAN
+    
+    (************************************************************)
+    
+  PROCEDURE GetAny(VAR tok : Token) : BOOLEAN
     RAISES { Rd.EndOfFile } =
     BEGIN
       IF NOT haveTok THEN NextToken() END;
@@ -107,13 +111,42 @@ PROCEDURE Parse(rd : Rd.T)
       tok.b := b;
       haveTok := FALSE;
       RETURN NOT haveTok
-    END GetToken;
+    END GetAny;
 
-  VAR
-    dummy : Token;
-  BEGIN
-    TRY
-      WHILE GetToken(dummy) DO
+  PROCEDURE GetExact(READONLY str : ARRAY OF CHAR) : BOOLEAN
+    RAISES { Rd.EndOfFile } =
+    BEGIN
+      IF NOT haveTok THEN NextToken() END;
+
+      haveTok := SUBARRAY(buf, s, b - s) # str;
+      RETURN NOT haveTok
+    END GetExact;
+
+  PROCEDURE GetIdent(VAR str : ARRAY OF CHAR) : BOOLEAN
+    RAISES { Rd.EndOfFile } =
+    BEGIN
+      IF NOT haveTok THEN NextToken() END;
+
+      IF NOT buf[s] IN Ident1 THEN RETURN FALSE END;
+
+      FOR q := s + 1 TO b - 1 DO
+        IF NOT buf[s] IN Ident THEN RETURN FALSE END
+      END;
+
+      str := SUBARRAY(buf, s, b - s);
+      haveTok := FALSE;
+      RETURN NOT haveTok
+    END GetIdent;
+
+  PROCEDURE GetInt(VAR int : INTEGER) : BOOLEAN =
+    BEGIN
+    END GetInt;
+    
+    (************************************************************)
+
+  PROCEDURE Trivial() =
+    BEGIN
+      WHILE GetAny(dummy) DO
         IF doDebug THEN
           Debug.Out(F("Lev %s got token %s",
                       Int(lev),
@@ -122,6 +155,70 @@ PROCEDURE Parse(rd : Rd.T)
                                               dummy.b - dummy.s))))
         END
       END
+    END Trivial;
+
+  PROCEDURE GetPin() : BOOLEAN =
+    BEGIN
+    END GetPin;
+
+  PROCEDURE GetInst() : BOOLEAN =
+    BEGIN
+    END GetInst;
+    
+  PROCEDURE GetType() : BOOLEAN =
+    BEGIN
+    END GetType;
+    
+  PROCEDURE GetProp() : BOOLEAN =
+    BEGIN
+    END GetProp;
+    
+  PROCEDURE GetCell() : BOOLEAN =
+    BEGIN
+    END GetCell;
+    
+  PROCEDURE GetVersion() : BOOLEAN =
+    VAR
+      v0, v1, v2 : INTEGER;
+    BEGIN
+      IF NOT GetExact(VERSIONkw) THEN RETURN FALSE END;
+
+      IF NOT GetInt(v0) THEN RAISE Syntax END;
+      IF NOT GetInt(v1) THEN RAISE Syntax END;
+      IF NOT GetInt(v2) THEN RAISE Syntax END;
+
+      IF NOT GetExact(CA{'}'}) THEN RAISE Syntax END;
+    END GetVersion;
+
+  PROCEDURE GetNetlist() : BOOLEAN =
+    BEGIN
+      IF NOT GetExact(NETLISTkw) THEN RETURN FALSE END;
+
+      LOOP
+        IF GetExact(CA{'}'}) THEN
+          RETURN TRUE
+        ELSIF GetVersion() THEN
+        ELSIF GetCell() THEN
+        ELSE RAISE Syntax
+        END
+      END
+    END GetNetlist;
+    
+  PROCEDURE ParseTop() : BOOLEAN =
+    BEGIN
+      IF NOT GetExact(CA{'{'}) THEN RETURN FALSE END;
+
+      IF GetNetlist() THEN
+        RETURN TRUE
+      END;
+
+    END ParseNetlist;
+    
+  VAR
+    dummy : Token;
+  BEGIN
+    TRY
+      Trivial()
     EXCEPT
       Rd.EndOfFile => (* skip *)
     END;
@@ -130,6 +227,8 @@ PROCEDURE Parse(rd : Rd.T)
   END Parse;
 
 TYPE Token = RECORD s, b : CARDINAL END;
-     
+
+EXCEPTION Syntax;
+          
 BEGIN
 END BraceParse.
