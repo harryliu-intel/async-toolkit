@@ -1,4 +1,14 @@
 MODULE BraceParse;
+
+(*
+
+  Parser for Synopsys ICV ".net" output format.
+
+  Author : Mika Nystrom <mika.nystroem@intel.com>
+  November 2020
+
+*)
+
 IMPORT Rd, Thread;
 FROM Fmt IMPORT F, Int;
 IMPORT Debug;
@@ -7,8 +17,18 @@ IMPORT NetKeywords AS N;
 IMPORT Compiler;
 IMPORT IO;
 
-CONST BufSiz = 16384;
+CONST BufSiz = 16*1024;
+
 TYPE  Buffer = ARRAY [ 0 .. BufSiz-1 ] OF CHAR;
+
+      (* an interesting extension of the buffering code would be to make the
+         buffer variable size (REF ARRAY OF CHAR), starting it at, say, 16K, 
+         and growing it as needed to accomodate larger objects.
+
+         doing this we could for example decree that an entire CELL or 
+         INST is in memory at the same time, and use offsets into the buffer to
+         build it all at the end of parsing the CELL or INST rather than having
+         to do everything on-the-fly *)
 
 TYPE SC = SET OF CHAR;
      CA = ARRAY OF CHAR;
@@ -73,6 +93,15 @@ PROCEDURE Parse(rd : Rd.T)
 
   VAR haveTok := FALSE;
 
+  PROCEDURE PutPos() =
+    BEGIN
+      IO.Put("\r");
+      IO.Put(Int(lineno));
+      IO.Put(" lines ");
+      IO.Put(Int(Rd.Index(rd)));
+      IO.Put(" bytes")
+    END PutPos;
+    
   PROCEDURE NextToken() 
     RAISES { Rd.EndOfFile, Rd.Failure, Thread.Alerted, Syntax } =
 
@@ -100,11 +129,7 @@ PROCEDURE Parse(rd : Rd.T)
           IF buf[b] = '\n' THEN
             INC(lineno);
             IF lineno MOD 10000 = 0 THEN
-              IO.Put("\r");
-              IO.Put(Int(lineno));
-              IO.Put(" lines ");
-              IO.Put(Int(Rd.Index(rd)));
-              IO.Put(" bytes")
+              PutPos()
             END
           END;
         
@@ -521,7 +546,9 @@ PROCEDURE Parse(rd : Rd.T)
       
       IF NOT ParseTop() THEN
         RAISE Syntax(TL())
-      END
+      END;
+      PutPos();
+      IO.Put("\n")
     EXCEPT
       Rd.EndOfFile => (* skip *)
     |
@@ -538,7 +565,7 @@ PROCEDURE Parse(rd : Rd.T)
       Debug.Error("Unexpected exception");
       <*ASSERT FALSE*>
     END;
-
+    
     Debug.Out(F("Read %s bytes", Int(totBytes)))
   END Parse;
 
