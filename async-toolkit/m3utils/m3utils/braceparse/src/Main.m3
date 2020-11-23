@@ -29,6 +29,8 @@ BEGIN
     ParseParams.Error => Debug.Error("Can't parse command line")
   END;
 
+  IF rd = NIL THEN Debug.Error("Must provide filename") END;
+  
   BraceParse.Parse(rd)
 
 END Main.

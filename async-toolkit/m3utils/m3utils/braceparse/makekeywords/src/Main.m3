@@ -13,7 +13,7 @@ VAR rd  := FileRd.Open(Params.Get(1));
 BEGIN
   Wr.PutText(wr, "INTERFACE ");
   Wr.PutText(wr, oin);
-  Wr.PutText(wr, F("\n\nCONST Brand = \"%s\";\n\n", oin));
+  Wr.PutText(wr, F(";\n\nCONST Brand = \"%s\";\n\n", oin));
   
   TRY
     LOOP
@@ -23,7 +23,7 @@ BEGIN
       BEGIN
         Wr.PutText(wr, "CONST ");
         Wr.PutText(wr, line);
-        Wr.PutText(wr, "kw := ARRAY OF CHAR { ");
+        Wr.PutText(wr, "kw = ARRAY OF CHAR { ");
         FOR i := 0 TO len - 1 DO
           Wr.PutText(wr, F("'%s'", Text.Sub(line, i, 1)));
           IF i # len - 1 THEN

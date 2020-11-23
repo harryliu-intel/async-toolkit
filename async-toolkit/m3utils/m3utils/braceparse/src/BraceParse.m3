@@ -3,6 +3,8 @@ IMPORT Rd, Thread;
 FROM Fmt IMPORT F, Int;
 IMPORT Debug;
 IMPORT Text;
+IMPORT NetKeywords AS N;
+IMPORT Compiler;
 
 CONST BufSiz = 80;
 TYPE  Buffer = ARRAY [ 0 .. BufSiz-1 ] OF CHAR;
@@ -19,10 +21,16 @@ CONST WhiteSpace = SC { ' ', '\t', '\n', '\r' };
       Ident1     = Letter + SC { '_' };
       Ident      = Ident1 + Digit;
 
-VAR doDebug := TRUE;
+      LB = CA { '{' };
+      RB = CA { '}' };
+      EQ = CA { '=' };
+
+CONST TL = Compiler.ThisLine;
+      
+VAR doDebug := Debug.GetLevel() >= 10;
     
 PROCEDURE Parse(rd : Rd.T)
-  RAISES { Rd.EndOfFile, Rd.Failure, Thread.Alerted } =
+  RAISES { Rd.Failure, Thread.Alerted } =
 
   VAR
     buf       : Buffer;
@@ -34,7 +42,10 @@ PROCEDURE Parse(rd : Rd.T)
 
     lev := 0;
 
-  PROCEDURE Refill() RAISES { Rd.EndOfFile }  =
+    lineno := 1;
+
+  PROCEDURE Refill()
+    RAISES { Rd.EndOfFile, Rd.Failure, Thread.Alerted }  =
     BEGIN
       (* existing token starts at s, b is at end *)
       
@@ -58,7 +69,17 @@ PROCEDURE Parse(rd : Rd.T)
   VAR haveTok := FALSE;
 
   PROCEDURE NextToken() 
-    RAISES { Rd.EndOfFile } =
+    RAISES { Rd.EndOfFile, Rd.Failure, Thread.Alerted } =
+
+    PROCEDURE Dbg() =
+      BEGIN
+        Debug.Out(F("Lev %s got token %s",
+                    Int(lev),
+                    Text.FromChars(SUBARRAY(buf,
+                                            s,
+                                            b - s))))
+      END Dbg;
+
     BEGIN
       (* we should have consumed previous token *)
       <*ASSERT NOT haveTok*>
@@ -68,6 +89,11 @@ PROCEDURE Parse(rd : Rd.T)
       
       (* read token from b onwards *)
       WHILE buf[b] IN WhiteSpace DO
+
+        IF buf[b] = '\n' THEN
+          INC(lineno)
+        END;
+        
         INC(b); (* skip *)
         
         IF b = e THEN Refill() END;
@@ -85,6 +111,7 @@ PROCEDURE Parse(rd : Rd.T)
         
         INC(b);
         haveTok := TRUE;
+        IF doDebug THEN Dbg() END;
         RETURN 
       END;
 
@@ -96,25 +123,25 @@ PROCEDURE Parse(rd : Rd.T)
       END;
 
       (* we are at the end of a token *)
-      haveTok := TRUE
+      haveTok := TRUE;
+      IF doDebug THEN Dbg() END;
     END NextToken;
 
-    
     (************************************************************)
     
   PROCEDURE GetAny(VAR tok : Token) : BOOLEAN
-    RAISES { Rd.EndOfFile } =
+    RAISES { Rd.EndOfFile, Rd.Failure, Thread.Alerted } =
     BEGIN
       IF NOT haveTok THEN NextToken() END;
       
       tok.s := s;
-      tok.b := b;
+      tok.n := b - s;
       haveTok := FALSE;
       RETURN NOT haveTok
     END GetAny;
 
   PROCEDURE GetExact(READONLY str : ARRAY OF CHAR) : BOOLEAN
-    RAISES { Rd.EndOfFile } =
+    RAISES { Rd.EndOfFile, Rd.Failure, Thread.Alerted } =
     BEGIN
       IF NOT haveTok THEN NextToken() END;
 
@@ -122,8 +149,8 @@ PROCEDURE Parse(rd : Rd.T)
       RETURN NOT haveTok
     END GetExact;
 
-  PROCEDURE GetIdent(VAR str : ARRAY OF CHAR) : BOOLEAN
-    RAISES { Rd.EndOfFile } =
+  PROCEDURE GetIdent(VAR str : Token) : BOOLEAN
+    RAISES { Rd.EndOfFile, Rd.Failure, Thread.Alerted } =
     BEGIN
       IF NOT haveTok THEN NextToken() END;
 
@@ -133,102 +160,351 @@ PROCEDURE Parse(rd : Rd.T)
         IF NOT buf[s] IN Ident THEN RETURN FALSE END
       END;
 
-      str := SUBARRAY(buf, s, b - s);
+      str := Token { s, b - s };
       haveTok := FALSE;
       RETURN NOT haveTok
     END GetIdent;
 
-  PROCEDURE GetInt(VAR int : INTEGER) : BOOLEAN =
+  PROCEDURE GetInt(VAR int : INTEGER) : BOOLEAN 
+    RAISES { Rd.EndOfFile, Rd.Failure, Thread.Alerted } =
+    VAR
+      neg := FALSE;
+      q : CARDINAL;
+
+      res := 0;
     BEGIN
+      IF NOT haveTok THEN NextToken() END;
+
+      q := s;
+
+      IF buf[q] = '-' THEN neg := TRUE; INC(q) END;
+
+      IF q = b THEN RETURN FALSE END;
+
+      WHILE q < b DO
+        WITH c = buf[q] DO
+          IF '0' <= c AND c <= '9' THEN
+            res := res * 10 + ORD(c) - ORD('0');
+            INC(q)
+          ELSE
+            RETURN FALSE
+          END
+        END
+      END;
+
+      IF neg THEN int := -res ELSE int := res END;
+
+      haveTok := FALSE;
+      RETURN TRUE
     END GetInt;
+
+  PROCEDURE GetFloat(VAR lr : LONGREAL) : BOOLEAN 
+    RAISES { Rd.EndOfFile, Rd.Failure, Thread.Alerted } =
+    VAR
+      neg := FALSE;
+      q : CARDINAL;
+
+      whole := 0;
+      frac := 0.0d0;
+    BEGIN
+      IF NOT haveTok THEN NextToken() END;
+
+      q := s;
+
+      IF buf[q] = '-' THEN neg := TRUE; INC(q) END;
+
+      IF q = b THEN RETURN FALSE END;
+
+      WHILE q < b DO
+        WITH c = buf[q] DO
+          IF '0' <= c AND c <= '9' THEN
+            whole := whole * 10 + ORD(c) - ORD('0');
+            INC(q)
+          ELSE
+            EXIT
+          END
+        END
+      END;
+
+      (* done reading the integer part *)
+
+      IF q # b THEN
+        IF buf[q] = '.' THEN
+          INC(q);
+          (* read fractional part *)
+          WHILE q < b DO
+            VAR
+              pos := 10.0d0; (* this is exact, 0.1 is not *)
+            BEGIN
+              WITH c = buf[q] DO
+                IF '0' <= c AND c <= '9' THEN
+                  frac := frac + FLOAT(ORD(c) - ORD('0'),LONGREAL) / pos;
+                  pos := pos * 10.0d0;
+                  INC(q);
+                ELSE
+                  EXIT
+                END
+              END
+            END
+          END
+        ELSE
+          RETURN FALSE
+        END
+      END;
+
+      IF neg THEN lr := -(FLOAT(whole,LONGREAL) + frac)
+      ELSE        lr :=   FLOAT(whole,LONGREAL) + frac
+      END;
+
+      haveTok := FALSE;
+      RETURN TRUE
+    END GetFloat;
     
     (************************************************************)
 
-  PROCEDURE Trivial() =
+  <*UNUSED*>PROCEDURE Trivial() 
+    RAISES { Rd.EndOfFile, Rd.Failure, Thread.Alerted } =
+    VAR
+      tok : Token;
     BEGIN
-      WHILE GetAny(dummy) DO
+      WHILE GetAny(tok) DO
         IF doDebug THEN
           Debug.Out(F("Lev %s got token %s",
                       Int(lev),
                       Text.FromChars(SUBARRAY(buf,
-                                              dummy.s,
-                                              dummy.b - dummy.s))))
+                                              tok.s,
+                                              tok.n))))
         END
       END
     END Trivial;
 
-  PROCEDURE GetPin() : BOOLEAN =
+    (************************************************************)
+
+  PROCEDURE GetPin() : BOOLEAN 
+    RAISES ANY =
+    VAR
+      exName, inName : Token;
     BEGIN
+      IF NOT GetExact(N.PINkw) THEN RETURN FALSE END;
+
+      LOOP
+        IF GetExact(RB) THEN
+          RETURN TRUE
+        ELSE
+          IF NOT GetIdent(exName) THEN RAISE Syntax(TL()) END;
+          IF NOT GetExact(EQ) THEN RAISE Syntax(TL()) END;
+          IF NOT GetIdent(inName) THEN RAISE Syntax(TL()) END;
+        END
+      END
     END GetPin;
 
-  PROCEDURE GetInst() : BOOLEAN =
+  PROCEDURE GetCoord() : BOOLEAN 
+    RAISES ANY =
+    VAR
+      axis : Token;
+      pos : LONGREAL;
     BEGIN
+      IF NOT GetExact(N.COORDkw) THEN RETURN FALSE END;
+
+      IF NOT GetIdent(axis) THEN RAISE Syntax(TL()) END;
+      IF NOT GetExact(EQ) THEN RAISE Syntax(TL()) END;
+      IF NOT GetFloat(pos) THEN RAISE Syntax(TL()) END;
+      IF NOT GetIdent(axis) THEN RAISE Syntax(TL()) END;
+      IF NOT GetExact(EQ) THEN RAISE Syntax(TL()) END;
+      IF NOT GetFloat(pos) THEN RAISE Syntax(TL()) END;
+
+      IF NOT GetExact(RB) THEN RAISE Syntax(TL()) END;
+      RETURN TRUE
+    END GetCoord;
+
+  PROCEDURE GetPort() : BOOLEAN 
+    RAISES ANY =
+    VAR
+      portNm : Token;
+    BEGIN
+      IF NOT GetExact(N.PORTkw) THEN RETURN FALSE END;
+
+      LOOP
+        IF    GetIdent(portNm) THEN
+        ELSIF GetExact(RB) THEN
+          RETURN TRUE
+        ELSE
+          RAISE Syntax(TL())
+        END
+      END
+    END GetPort;
+
+  PROCEDURE GetInst() : BOOLEAN 
+    RAISES ANY =
+    VAR
+      instNm, typeNm : Token;
+    BEGIN 
+      IF NOT GetExact(N.INSTkw) THEN RETURN FALSE END;
+      IF NOT GetIdent(instNm) THEN RAISE Syntax(TL()) END;
+      IF NOT GetExact(EQ) THEN RAISE Syntax(TL()) END;
+      IF NOT GetIdent(typeNm) THEN RAISE Syntax(TL()) END;
+      LOOP
+        IF GetExact(LB) THEN
+          IF GetType() THEN
+          ELSIF GetCoord() THEN
+          ELSIF GetProp() THEN
+          ELSIF GetPin() THEN
+          ELSE
+            RAISE Syntax(TL())
+          END
+        ELSIF GetExact(RB) THEN
+          RETURN TRUE
+        END
+      END
     END GetInst;
     
-  PROCEDURE GetType() : BOOLEAN =
+  PROCEDURE GetType() : BOOLEAN 
+    RAISES ANY =
+    VAR
+      typeType : Token;
     BEGIN
+      IF NOT GetExact(N.TYPEkw) THEN RETURN FALSE END;
+
+      IF NOT GetIdent(typeType) THEN RAISE Syntax(TL()) END;
+      IF NOT GetExact(RB) THEN RAISE Syntax(TL()) END;
+      RETURN TRUE
     END GetType;
     
-  PROCEDURE GetProp() : BOOLEAN =
+  PROCEDURE GetProp() : BOOLEAN 
+    RAISES ANY =
+    VAR
+      propNm : Token;
+      propVal : LONGREAL;
     BEGIN
+      IF NOT GetExact(N.PROPkw) THEN RETURN FALSE END;
+
+      LOOP
+        IF    GetExact(RB) THEN
+          RETURN TRUE
+        ELSIF GetIdent(propNm) AND GetExact(EQ) AND GetFloat(propVal) THEN
+          (* here's the action! *)
+        ELSE
+          RAISE Syntax(TL())
+        END
+      END   
     END GetProp;
     
-  PROCEDURE GetCell() : BOOLEAN =
+  PROCEDURE GetCell() : BOOLEAN 
+    RAISES ANY =
+    VAR
+      nm : Token;
     BEGIN
+      IF NOT GetExact(N.CELLkw) THEN RETURN FALSE END;
+
+      IF NOT GetIdent(nm) THEN RETURN FALSE END;
+
+      LOOP
+        IF GetExact(LB) THEN
+          IF    GetPort() THEN
+          ELSIF GetProp() THEN
+          ELSIF GetInst() THEN
+          ELSE
+            RAISE Syntax(TL()) 
+          END
+        ELSIF GetExact(RB) THEN
+          RETURN TRUE
+        ELSE
+          RAISE Syntax(TL())
+        END
+      END
     END GetCell;
     
-  PROCEDURE GetVersion() : BOOLEAN =
+  PROCEDURE GetVersion() : BOOLEAN 
+    RAISES ANY =
     VAR
       v0, v1, v2 : INTEGER;
     BEGIN
-      IF NOT GetExact(VERSIONkw) THEN RETURN FALSE END;
+      IF NOT GetExact(N.VERSIONkw) THEN RETURN FALSE END;
 
-      IF NOT GetInt(v0) THEN RAISE Syntax END;
-      IF NOT GetInt(v1) THEN RAISE Syntax END;
-      IF NOT GetInt(v2) THEN RAISE Syntax END;
+      IF NOT GetInt(v0) THEN RAISE Syntax(TL()) END;
+      IF NOT GetInt(v1) THEN RAISE Syntax(TL()) END;
+      IF NOT GetInt(v2) THEN RAISE Syntax(TL()) END;
 
-      IF NOT GetExact(CA{'}'}) THEN RAISE Syntax END;
+      IF NOT GetExact(RB) THEN RAISE Syntax(TL()) END;
+      RETURN TRUE
     END GetVersion;
 
-  PROCEDURE GetNetlist() : BOOLEAN =
+  PROCEDURE GetNetlist() : BOOLEAN 
+    RAISES ANY =
+    VAR
+      nm : Token;
     BEGIN
-      IF NOT GetExact(NETLISTkw) THEN RETURN FALSE END;
+      IF NOT GetExact(N.NETLISTkw) THEN RETURN FALSE END;
 
+      IF NOT GetIdent(nm) THEN RETURN FALSE END;
+      
       LOOP
-        IF GetExact(CA{'}'}) THEN
+        IF GetExact(RB) THEN
           RETURN TRUE
-        ELSIF GetVersion() THEN
-        ELSIF GetCell() THEN
-        ELSE RAISE Syntax
+        ELSIF GetExact(LB) THEN
+          IF    GetVersion() THEN
+          ELSIF GetCell() THEN
+          ELSE RAISE Syntax(TL())
+          END
+        ELSE
+          RAISE Syntax(TL())
         END
       END
     END GetNetlist;
     
-  PROCEDURE ParseTop() : BOOLEAN =
+  PROCEDURE ParseTop() : BOOLEAN 
+    RAISES ANY =
     BEGIN
-      IF NOT GetExact(CA{'{'}) THEN RETURN FALSE END;
+      IF NOT GetExact(LB) THEN RETURN FALSE END;
 
-      IF GetNetlist() THEN
-        RETURN TRUE
-      END;
+      TRY
+        IF GetNetlist() THEN
+          RETURN TRUE
+        ELSE
+          RETURN FALSE
+        END
+      EXCEPT
+        Rd.EndOfFile => RAISE Syntax(TL())
+      END
 
-    END ParseNetlist;
+    END ParseTop;
+
+    (* complete set of exceptions is
+
+    RAISES { Rd.EndOfFile, Rd.Failure, Thread.Alerted, Syntax } 
+
+    *)
     
-  VAR
-    dummy : Token;
   BEGIN
     TRY
-      Trivial()
+      (* Trivial() *)
+      
+      IF NOT ParseTop() THEN
+        RAISE Syntax(TL())
+      END
     EXCEPT
       Rd.EndOfFile => (* skip *)
+    |
+      Rd.Failure(x) => RAISE Rd.Failure(x)
+    |
+      Thread.Alerted => RAISE Thread.Alerted
+    |
+      Syntax(line) =>
+      Debug.Error(F("?Syntax error on line %s of input (%s:%s)",
+                    Int(lineno),
+                    Compiler.ThisFile(),
+                    Int(line)))
+    ELSE
+      Debug.Error("Unexpected exception");
+      <*ASSERT FALSE*>
     END;
 
     Debug.Out(F("Read %s bytes", Int(totBytes)))
   END Parse;
 
-TYPE Token = RECORD s, b : CARDINAL END;
+TYPE Token = RECORD s, n : CARDINAL END;
 
-EXCEPTION Syntax;
+EXCEPTION Syntax(CARDINAL);
           
 BEGIN
 END BraceParse.
