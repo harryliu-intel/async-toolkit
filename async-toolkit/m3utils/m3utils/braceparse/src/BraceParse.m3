@@ -5,6 +5,7 @@ IMPORT Debug;
 IMPORT Text;
 IMPORT NetKeywords AS N;
 IMPORT Compiler;
+IMPORT IO;
 
 CONST BufSiz = 16384;
 TYPE  Buffer = ARRAY [ 0 .. BufSiz-1 ] OF CHAR;
@@ -58,8 +59,8 @@ PROCEDURE Parse(rd : Rd.T)
 
       (* refill buffer *)
 
-      IF BufSiz - b = 0 THEN RAISE 
-        Syntax(TL())  (* token too long *)
+      IF BufSiz - b < 2 THEN RAISE 
+        Syntax(TL())  (* token too long -- need 2 for comments *)
       END;
       WITH len = Rd.GetSub(rd, SUBARRAY(buf, b, BufSiz - b)) DO
         IF len = 0 THEN RAISE Rd.EndOfFile END;
@@ -67,7 +68,7 @@ PROCEDURE Parse(rd : Rd.T)
         e := b + len;
       END;
 
-      <*ASSERT b # e*>
+      <*ASSERT b # e AND b # e - 1*>
     END Refill;
 
   VAR haveTok := FALSE;
@@ -92,15 +93,41 @@ PROCEDURE Parse(rd : Rd.T)
       IF b = e THEN Refill() END;
       
       (* read token from b onwards *)
-      WHILE buf[b] IN WhiteSpace DO
+      WHILE buf[b] IN WhiteSpace OR
+            buf[b] = '/' AND buf[b+1] = '*' DO
+        WHILE buf[b] IN WhiteSpace DO
 
-        IF buf[b] = '\n' THEN
-          INC(lineno)
+          IF buf[b] = '\n' THEN
+            INC(lineno);
+            IF lineno MOD 10000 = 0 THEN
+              IO.Put("\r");
+              IO.Put(Int(lineno));
+              IO.Put(" lines ");
+              IO.Put(Int(Rd.Index(rd)));
+              IO.Put(" bytes")
+            END
+          END;
+        
+          INC(b); (* skip *)
+        
+          IF b = e THEN Refill() END;
         END;
+
+        IF buf[b] = '/' AND buf[b+1] = '*' THEN
+          INC(b,2);
+
+          WHILE buf[b] # '*' AND buf[b+1] # '/' DO
+            IF buf[b] = '\n' THEN
+              INC(lineno)
+            END;
         
-        INC(b); (* skip *)
+            INC(b); (* skip *)
         
-        IF b = e THEN Refill() END;
+            IF b = e THEN Refill() END;
+          END;
+          INC(b,2)
+        END
+            
       END;
 
       (* buf[b] is NOT whitespace : we are at start of token *)
@@ -310,6 +337,7 @@ PROCEDURE Parse(rd : Rd.T)
     BEGIN
       IF NOT GetExact(N.COORDkw) THEN RETURN FALSE END;
 
+      (* at least two coords *)
       IF NOT GetIdent(axis) THEN RAISE Syntax(TL()) END;
       IF NOT GetExact(EQ) THEN RAISE Syntax(TL()) END;
       IF NOT GetFloat(pos) THEN RAISE Syntax(TL()) END;
@@ -317,8 +345,16 @@ PROCEDURE Parse(rd : Rd.T)
       IF NOT GetExact(EQ) THEN RAISE Syntax(TL()) END;
       IF NOT GetFloat(pos) THEN RAISE Syntax(TL()) END;
 
-      IF NOT GetExact(RB) THEN RAISE Syntax(TL()) END;
-      RETURN TRUE
+      LOOP
+        IF GetExact(RB) THEN
+          RETURN TRUE
+        ELSIF GetIdent(axis) THEN 
+          IF NOT GetExact(EQ) THEN RAISE Syntax(TL()) END;
+          IF NOT GetFloat(pos) THEN RAISE Syntax(TL()) END;
+        ELSE
+          RAISE Syntax(TL())
+        END
+      END
     END GetCoord;
 
   PROCEDURE GetPort() : BOOLEAN 
