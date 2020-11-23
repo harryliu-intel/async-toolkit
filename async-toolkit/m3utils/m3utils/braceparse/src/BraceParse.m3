@@ -6,7 +6,7 @@ IMPORT Text;
 IMPORT NetKeywords AS N;
 IMPORT Compiler;
 
-CONST BufSiz = 80;
+CONST BufSiz = 16384;
 TYPE  Buffer = ARRAY [ 0 .. BufSiz-1 ] OF CHAR;
 
 TYPE SC = SET OF CHAR;
@@ -45,7 +45,7 @@ PROCEDURE Parse(rd : Rd.T)
     lineno := 1;
 
   PROCEDURE Refill()
-    RAISES { Rd.EndOfFile, Rd.Failure, Thread.Alerted }  =
+    RAISES { Rd.EndOfFile, Rd.Failure, Thread.Alerted, Syntax }  =
     BEGIN
       (* existing token starts at s, b is at end *)
       
@@ -57,6 +57,10 @@ PROCEDURE Parse(rd : Rd.T)
       END;
 
       (* refill buffer *)
+
+      IF BufSiz - b = 0 THEN RAISE 
+        Syntax(TL())  (* token too long *)
+      END;
       WITH len = Rd.GetSub(rd, SUBARRAY(buf, b, BufSiz - b)) DO
         IF len = 0 THEN RAISE Rd.EndOfFile END;
         INC(totBytes, len);
@@ -69,7 +73,7 @@ PROCEDURE Parse(rd : Rd.T)
   VAR haveTok := FALSE;
 
   PROCEDURE NextToken() 
-    RAISES { Rd.EndOfFile, Rd.Failure, Thread.Alerted } =
+    RAISES { Rd.EndOfFile, Rd.Failure, Thread.Alerted, Syntax } =
 
     PROCEDURE Dbg() =
       BEGIN
@@ -130,7 +134,7 @@ PROCEDURE Parse(rd : Rd.T)
     (************************************************************)
     
   PROCEDURE GetAny(VAR tok : Token) : BOOLEAN
-    RAISES { Rd.EndOfFile, Rd.Failure, Thread.Alerted } =
+    RAISES ANY =
     BEGIN
       IF NOT haveTok THEN NextToken() END;
       
@@ -141,7 +145,7 @@ PROCEDURE Parse(rd : Rd.T)
     END GetAny;
 
   PROCEDURE GetExact(READONLY str : ARRAY OF CHAR) : BOOLEAN
-    RAISES { Rd.EndOfFile, Rd.Failure, Thread.Alerted } =
+    RAISES ANY =
     BEGIN
       IF NOT haveTok THEN NextToken() END;
 
@@ -150,7 +154,7 @@ PROCEDURE Parse(rd : Rd.T)
     END GetExact;
 
   PROCEDURE GetIdent(VAR str : Token) : BOOLEAN
-    RAISES { Rd.EndOfFile, Rd.Failure, Thread.Alerted } =
+    RAISES ANY =
     BEGIN
       IF NOT haveTok THEN NextToken() END;
 
@@ -166,7 +170,7 @@ PROCEDURE Parse(rd : Rd.T)
     END GetIdent;
 
   PROCEDURE GetInt(VAR int : INTEGER) : BOOLEAN 
-    RAISES { Rd.EndOfFile, Rd.Failure, Thread.Alerted } =
+    RAISES ANY =
     VAR
       neg := FALSE;
       q : CARDINAL;
@@ -199,7 +203,7 @@ PROCEDURE Parse(rd : Rd.T)
     END GetInt;
 
   PROCEDURE GetFloat(VAR lr : LONGREAL) : BOOLEAN 
-    RAISES { Rd.EndOfFile, Rd.Failure, Thread.Alerted } =
+    RAISES ANY =
     VAR
       neg := FALSE;
       q : CARDINAL;
@@ -263,7 +267,7 @@ PROCEDURE Parse(rd : Rd.T)
     (************************************************************)
 
   <*UNUSED*>PROCEDURE Trivial() 
-    RAISES { Rd.EndOfFile, Rd.Failure, Thread.Alerted } =
+    RAISES ANY =
     VAR
       tok : Token;
     BEGIN
