@@ -264,7 +264,12 @@ public final class BufferedNodeBDWriteChannel extends BufferedNodeBDChannel
         final BigInteger bi = m.getValue();
         for (int i = 0; i < data.length; ++i) {
             final byte val = bi.testBit(i) ? Node.VALUE_1 : Node.VALUE_0;
-            data[i].scheduleTime(val, time, getEnablingNode());
+            if (DSim.get().getBDTiming()) {
+                final long delay = time - DigitalScheduler.get().getTime();
+                data[i].scheduleDelay(val, delay, 600, getEnablingNode());
+            } else {
+                data[i].scheduleTime(val, time, getEnablingNode());
+            }
         }
     }
 

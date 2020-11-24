@@ -683,7 +683,15 @@ public final class Node implements Event, Waitable {
      * Does not block.
      **/
     public void scheduleDelay(byte value, long delay, Node lastEvent) {
-        sim.scheduleEvent(this, value, delay, false, lastEvent);
+        scheduleDelay(value, delay, 0, lastEvent);
+    }
+
+    /**
+     * Cause this node to be scheduled (delay, subDelay) timesteps in the future.
+     * Does not block.
+     **/
+    public void scheduleDelay(byte value, long delay, int subDelay, Node lastEvent) {
+        sim.scheduleEvent(this, value, delay, subDelay, false, lastEvent);
     }
 
     /**
