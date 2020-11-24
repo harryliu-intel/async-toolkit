@@ -381,9 +381,11 @@ public class InstanceData {
                                 final HierName instance) {
             final Map result =
                 super.translate(cell, subcell, cellAliases, instance);
-            if (CellUtils.matchRefinement(
-                        subcell, c -> c.getFullyQualifiedType()
-                                       .equals("standard.base.BD_CONTROLLER"))) {
+            if (cell.getFullyQualifiedType()
+                    .startsWith("lib.bd.standard.pipeline") &&
+                CellUtils.matchRefinement(
+                    subcell, c -> c.getFullyQualifiedType()
+                                   .equals("standard.base.BD_CONTROLLER"))) {
                 result.replaceAll((k, v) ->
                         new BdcValue(((BdcValue) v).getValue(), false));
             }
