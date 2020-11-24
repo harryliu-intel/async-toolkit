@@ -16,6 +16,11 @@ IMPORT Text;
 IMPORT NetKeywords AS N;
 IMPORT Compiler;
 IMPORT IO;
+IMPORT CellRec;
+IMPORT Atom, Subcell, SubcellList;
+IMPORT CharsAtomTbl;
+IMPORT MosInfo, MosInfoCardTbl;
+IMPORT AtomCellTbl;
 
 CONST BufSiz = 16*1024;
 
@@ -46,11 +51,34 @@ CONST WhiteSpace = SC { ' ', '\t', '\n', '\r' };
       RB = CA { '}' };
       EQ = CA { '=' };
 
+TYPE InstanceType = { MOS, Cell, Res, Unknown };
+
+     FetProps = RECORD
+       l : CARDINAL;    (* length in micro-microns (picometers) *)
+       nfin : CARDINAL; (* # of fins *)
+     END;
+
 CONST TL = Compiler.ThisLine;
       
-VAR doDebug := Debug.GetLevel() >= 10;
-    
-PROCEDURE Parse(rd : Rd.T)
+VAR doDebug := Debug.GetLevel() >= 10 AND Debug.This("BraceParse");
+
+VAR
+  atomTbl := NEW(CharsAtomTbl.Default).init();
+  
+PROCEDURE AtomFromChars(READONLY chars : ARRAY OF CHAR) : Atom.T =
+  VAR
+    atom : Atom.T;
+  BEGIN
+    IF atomTbl.get(chars, atom) THEN
+      RETURN atom
+    ELSE
+      atom := Atom.FromText(Text.FromChars(chars));
+      EVAL atomTbl.put(chars, atom);
+      RETURN atom
+    END
+  END AtomFromChars;
+  
+PROCEDURE Parse(rd : Rd.T) : AtomCellTbl.T
   RAISES { Rd.Failure, Thread.Alerted } =
 
   VAR
@@ -399,46 +427,104 @@ PROCEDURE Parse(rd : Rd.T)
       END
     END GetPort;
 
-  PROCEDURE GetInst() : BOOLEAN 
+  PROCEDURE GetInst(parent : CellRec.T) : BOOLEAN 
     RAISES ANY =
     VAR
-      instNm, typeNm : Token;
+      instNm, typeNm   : Token;
+      instBuf, typeBuf : Buffer;
+      type             : InstanceType;
+      props            := FetProps { 0, 0};
     BEGIN 
       IF NOT GetExact(N.INSTkw) THEN RETURN FALSE END;
       IF NOT GetIdent(instNm) THEN RAISE Syntax(TL()) END;
+      SUBARRAY(instBuf, 0, instNm.n) := SUBARRAY(buf, instNm.s, instNm.n);
       IF NOT GetExact(EQ) THEN RAISE Syntax(TL()) END;
       IF NOT GetIdent(typeNm) THEN RAISE Syntax(TL()) END;
+      SUBARRAY(typeBuf, 0, typeNm.n) := SUBARRAY(buf, typeNm.s, typeNm.n);
       LOOP
         IF GetExact(LB) THEN
-          IF GetType() THEN
+          IF    GetType(type) THEN
           ELSIF GetCoord() THEN
-          ELSIF GetProp() THEN
+          ELSIF GetProp(props) THEN
           ELSIF GetPin() THEN
           ELSE
             RAISE Syntax(TL())
           END
         ELSIF GetExact(RB) THEN
-          RETURN TRUE
+          EXIT
         END
-      END
+      END;
+
+      CASE type OF
+        InstanceType.MOS =>
+        VAR
+          type    := AtomFromChars(SUBARRAY(typeBuf, 0, typeNm.n));
+          mosInfo := MosInfo.T { type, props.l };
+          oldCnt  : CARDINAL;
+        BEGIN
+          IF parent.mosTbl.get(mosInfo, oldCnt) THEN
+            EVAL parent.mosTbl.put(mosInfo, oldCnt + props.nfin)
+          ELSE
+            EVAL parent.mosTbl.put(mosInfo,          props.nfin)
+          END
+        END
+
+      |
+        InstanceType.Cell =>
+        WITH instCA = NEW(REF ARRAY OF CHAR, instNm.n),
+             sub    = Subcell.T {
+          type := AtomFromChars(SUBARRAY(typeBuf, 0, typeNm.n)),
+          instance := instCA }
+         DO
+          instCA^ := SUBARRAY(instBuf, 0, instNm.n);
+
+          parent.subcells := SubcellList.Cons(sub, parent.subcells)
+        END
+      |
+        InstanceType.Res =>
+        (* skip *)
+      ELSE
+        Debug.Warning("?unknown instance type on line " & Int(lineno))
+      END;
+      
+      RETURN TRUE
     END GetInst;
     
-  PROCEDURE GetType() : BOOLEAN 
+  PROCEDURE GetType(VAR type : InstanceType) : BOOLEAN 
     RAISES ANY =
     VAR
-      typeType : Token;
+      typeDummy : Token;
     BEGIN
       IF NOT GetExact(N.TYPEkw) THEN RETURN FALSE END;
 
-      IF NOT GetIdent(typeType) THEN RAISE Syntax(TL()) END;
+      IF GetExact(N.MOSkw) THEN
+        type := InstanceType.MOS
+      ELSIF GetExact(N.CELLkw) THEN
+        type := InstanceType.Cell
+      ELSIF GetExact(N.RESkw) THEN
+        type := InstanceType.Res
+      ELSIF GetIdent(typeDummy) THEN
+        type := InstanceType.Unknown
+      ELSE
+        RAISE Syntax(TL())
+      END;
+
       IF NOT GetExact(RB) THEN RAISE Syntax(TL()) END;
       RETURN TRUE
     END GetType;
     
-  PROCEDURE GetProp() : BOOLEAN 
+  PROCEDURE GetProp(props : FetProps) : BOOLEAN 
     RAISES ANY =
+
+    PROCEDURE GetPropAssign() RAISES ANY =
+      BEGIN
+        IF NOT GetExact(EQ) OR NOT GetFloat(propVal) THEN
+          RAISE Syntax(TL())
+        END
+      END GetPropAssign;
+      
     VAR
-      propNm : Token;
+      propNm  : Token;
       propVal : LONGREAL;
     BEGIN
       IF NOT GetExact(N.PROPkw) THEN RETURN FALSE END;
@@ -446,8 +532,14 @@ PROCEDURE Parse(rd : Rd.T)
       LOOP
         IF    GetExact(RB) THEN
           RETURN TRUE
-        ELSIF GetIdent(propNm) AND GetExact(EQ) AND GetFloat(propVal) THEN
-          (* here's the action! *)
+        ELSIF GetExact(N.lkw) THEN
+          GetPropAssign();
+          props.l := ROUND(propVal * 1.0d6)
+        ELSIF GetExact(N.nfinkw) THEN
+          GetPropAssign();
+          props.nfin := ROUND(propVal)
+        ELSIF GetIdent(propNm) THEN
+          GetPropAssign()
         ELSE
           RAISE Syntax(TL())
         END
@@ -458,25 +550,43 @@ PROCEDURE Parse(rd : Rd.T)
     RAISES ANY =
     VAR
       nm : Token;
+
+      cell : CellRec.T;
+      props : FetProps; (* unused *)
+
+      cellNm : Atom.T;
     BEGIN
       IF NOT GetExact(N.CELLkw) THEN RETURN FALSE END;
 
-      IF NOT GetIdent(nm) THEN RETURN FALSE END;
+      IF NOT GetIdent(nm) THEN RAISE Syntax(TL()) END;
+
+      cellNm := AtomFromChars(SUBARRAY(buf, nm.s, nm.n));
+
+      cell := NEW(CellRec.T,
+                  nm       := Text.FromChars(SUBARRAY(buf, nm.s, nm.n)),
+                  subcells := NIL,
+                  mosTbl   := NEW(MosInfoCardTbl.Default).init());
 
       LOOP
         IF GetExact(LB) THEN
           IF    GetPort() THEN
-          ELSIF GetProp() THEN
-          ELSIF GetInst() THEN
+          ELSIF GetProp(props) THEN
+          ELSIF GetInst(cell) THEN
           ELSE
             RAISE Syntax(TL()) 
           END
         ELSIF GetExact(RB) THEN
-          RETURN TRUE
+          EXIT
         ELSE
           RAISE Syntax(TL())
         END
-      END
+      END;
+
+      WITH hadIt = cellTbl.put(cellNm, cell) DO
+        IF hadIt THEN RAISE Syntax(TL()) END
+      END;
+
+      RETURN TRUE
     END GetCell;
     
   PROCEDURE GetVersion() : BOOLEAN 
@@ -494,12 +604,15 @@ PROCEDURE Parse(rd : Rd.T)
       RETURN TRUE
     END GetVersion;
 
-  PROCEDURE GetNetlist() : BOOLEAN 
+  PROCEDURE GetNetlist(VAR cellTbl : AtomCellTbl.T) : BOOLEAN 
     RAISES ANY =
     VAR
       nm : Token;
     BEGIN
       IF NOT GetExact(N.NETLISTkw) THEN RETURN FALSE END;
+
+      <*ASSERT cellTbl = NIL*>
+      cellTbl := NEW(AtomCellTbl.Default).init();
 
       IF NOT GetIdent(nm) THEN RETURN FALSE END;
       
@@ -517,13 +630,13 @@ PROCEDURE Parse(rd : Rd.T)
       END
     END GetNetlist;
     
-  PROCEDURE ParseTop() : BOOLEAN 
+  PROCEDURE ParseTop(VAR cellTbl : AtomCellTbl.T) : BOOLEAN 
     RAISES ANY =
     BEGIN
       IF NOT GetExact(LB) THEN RETURN FALSE END;
 
       TRY
-        IF GetNetlist() THEN
+        IF GetNetlist(cellTbl) THEN
           RETURN TRUE
         ELSE
           RETURN FALSE
@@ -539,12 +652,14 @@ PROCEDURE Parse(rd : Rd.T)
     RAISES { Rd.EndOfFile, Rd.Failure, Thread.Alerted, Syntax } 
 
     *)
-    
+
+  VAR
+    cellTbl : AtomCellTbl.T := NIL;
   BEGIN
     TRY
       (* Trivial() *)
       
-      IF NOT ParseTop() THEN
+      IF NOT ParseTop(cellTbl) THEN
         RAISE Syntax(TL())
       END;
       PutPos();
@@ -566,12 +681,12 @@ PROCEDURE Parse(rd : Rd.T)
       <*ASSERT FALSE*>
     END;
     
-    Debug.Out(F("Read %s bytes", Int(totBytes)))
+    Debug.Out(F("Read %s bytes", Int(totBytes)));
+    RETURN cellTbl
   END Parse;
 
 TYPE Token = RECORD s, n : CARDINAL END;
 
 EXCEPTION Syntax(CARDINAL);
           
-BEGIN
-END BraceParse.
+BEGIN END BraceParse.

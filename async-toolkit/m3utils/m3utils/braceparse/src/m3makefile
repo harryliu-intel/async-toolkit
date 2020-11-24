@@ -11,11 +11,22 @@ implementation ("Main")
 
 module("OpenCharArray")
 
-interface ("CellRec")
+module ("CellRec")
 
 openarrayTable("CellRec", "OpenCharArray", "CellRec")
+openarrayTable("CharsAtom", "OpenCharArray", "Atom")
+
 
 %library ("braceparse")
+
+interface("Subcell")
+list ("Subcell", "Subcell")
+
+module ("MosInfo")
+
+table ("MosInfoCard", "MosInfo", "Cardinal")
+table ("AtomCell", "Atom", "CellRec")
+
 program ("testbrace")
 
 
