@@ -1099,7 +1099,6 @@ public class InstanceData {
         else result = fl;
 
         return result != null && (useDefault || !result.isDefault()) ? result.getValue() : 0;
-        //return result != null ? (result.isDefault() ? 1 : result.getValue()) : 0;
     }
 
     public String toString() {
