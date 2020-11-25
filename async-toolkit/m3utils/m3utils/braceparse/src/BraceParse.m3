@@ -629,7 +629,7 @@ PROCEDURE Parse(rd : Rd.T) : T
       <*ASSERT t = NIL*>
       t := NEW(T);
       t.cellTbl := NEW(AtomCellTbl.Default).init();
-      t.longNames := NEW(Subcell.LongNames).init();
+      t.longNames := Subcell.NewLongNames();
 
       IF NOT GetIdent(nm) THEN RETURN FALSE END;
       

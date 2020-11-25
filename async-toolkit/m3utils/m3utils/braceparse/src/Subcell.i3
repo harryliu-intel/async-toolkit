@@ -1,6 +1,5 @@
 INTERFACE Subcell;
 IMPORT Atom;
-IMPORT CharSeq;
 
 TYPE
   T = RECORD
@@ -16,7 +15,9 @@ TYPE
 
   InstanceName = ARRAY [0..7] OF CHAR;
 
-  LongNames = CharSeq.T;
+  LongNames <: ROOT;
+
+PROCEDURE NewLongNames() : LongNames;
   
 PROCEDURE EncodeName(longNames     : LongNames;
                      READONLY name : ARRAY OF CHAR;

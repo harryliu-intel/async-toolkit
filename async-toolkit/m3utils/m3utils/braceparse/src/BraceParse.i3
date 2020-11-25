@@ -1,12 +1,12 @@
 INTERFACE BraceParse;
 IMPORT Rd, Thread;
 IMPORT AtomCellTbl;
-IMPORT CharSeq;
+IMPORT Subcell;
 
 TYPE
   T = OBJECT
     cellTbl : AtomCellTbl.T;
-    longNames : CharSeq.T;
+    longNames : Subcell.LongNames;
   END;
   
 PROCEDURE Parse(rd : Rd.T) : T
