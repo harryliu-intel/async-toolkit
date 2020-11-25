@@ -39,24 +39,24 @@ PROCEDURE RecurseTransistors(db       : AtomCellTbl.T;
       END;
       VAR
         tbl := NEW(MosInfoCardTbl.Default).init();
-        p := cellRec.subcells;
       BEGIN
         MosInfoAdd(tbl, cellRec.mosTbl);
-        WHILE p # NIL DO
-          RecurseTransistors(db, p.head.type, memoTbl, warnSet);
-          WITH hadIt = memoTbl.get(p.head.type, tab) DO
-            IF hadIt THEN
-              MosInfoAdd(tbl, tab)
-            ELSE
-              IF NOT warnSet.member(p.head.type) THEN
-                Debug.Warning(F("unknown cell type %s while processing %s",
-                                Atom.ToText(p.head.type),
-                                Atom.ToText(rootType)));
-                EVAL warnSet.insert(p.head.type)
+        FOR i := FIRST(cellRec.subcells^) TO LAST(cellRec.subcells^) DO
+          WITH sc = cellRec.subcells[i] DO
+            RecurseTransistors(db, sc.type, memoTbl, warnSet);
+            WITH hadIt = memoTbl.get(sc.type, tab) DO
+              IF hadIt THEN
+                MosInfoAdd(tbl, tab)
+              ELSE
+                IF NOT warnSet.member(sc.type) THEN
+                  Debug.Warning(F("unknown cell type %s while processing %s",
+                                  Atom.ToText(sc.type),
+                                  Atom.ToText(rootType)));
+                  EVAL warnSet.insert(sc.type)
+                END
               END
             END
-          END;
-          p := p.tail
+          END
         END;
         EVAL memoTbl.put(rootType, tbl)
       END
@@ -82,7 +82,7 @@ PROCEDURE MosInfoAdd(tgt, from : MosInfoCardTbl.T) =
 VAR
   pp := NEW(ParseParams.T).init(Stdio.stderr);
   rd : Rd.T := NIL;
-  cells : AtomCellTbl.T;
+  parsed : BraceParse.T;
   rootType : TEXT := NIL;
 BEGIN
   TRY
@@ -109,13 +109,13 @@ BEGIN
 
   IF rd = NIL THEN Debug.Error("Must provide filename") END;
   
-  cells := BraceParse.Parse(rd);
+  parsed := BraceParse.Parse(rd);
 
   IF doDebug THEN
-    Debug.Out(F("Main.m3 got %s cells", Int(cells.size())));
+    Debug.Out(F("Main.m3 got %s cells", Int(parsed.cellTbl.size())));
 
     VAR
-      iter := cells.iterate();
+      iter := parsed.cellTbl.iterate();
       nm : Atom.T;
       cell : CellRec.T;
     BEGIN
@@ -134,7 +134,7 @@ BEGIN
     VAR memoTbl := NEW(AtomMosInfoCardTblTbl.Default).init();
         warnSet := NEW(AtomSetDef.T).init();
     BEGIN
-      RecurseTransistors(cells,
+      RecurseTransistors(parsed.cellTbl,
                          Atom.FromText(rootType),
                          memoTbl,
                          warnSet)

@@ -1,12 +1,12 @@
 INTERFACE CellRec;
-IMPORT SubcellList;
+IMPORT Subcell;
 IMPORT MosInfoCardTbl;
 IMPORT Wx;
 
 TYPE
   T = OBJECT
     nm       : TEXT;
-    subcells : SubcellList.T;
+    subcells : REF ARRAY OF Subcell.T;
     mosTbl   : MosInfoCardTbl.T;
   END;
 

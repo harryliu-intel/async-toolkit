@@ -17,11 +17,12 @@ IMPORT NetKeywords AS N;
 IMPORT Compiler;
 IMPORT IO;
 IMPORT CellRec;
-IMPORT Atom, Subcell, SubcellList;
+IMPORT Atom, Subcell;
 IMPORT CharsAtomTbl;
 IMPORT MosInfo, MosInfoCardTbl;
 IMPORT AtomCellTbl;
 IMPORT CardPair;
+IMPORT SubcellSeq;
 
 CONST BufSiz = 16*1024;
 
@@ -80,7 +81,7 @@ PROCEDURE AtomFromChars(READONLY chars : ARRAY OF CHAR) : Atom.T =
     END
   END AtomFromChars;
   
-PROCEDURE Parse(rd : Rd.T) : AtomCellTbl.T
+PROCEDURE Parse(rd : Rd.T) : T
   RAISES { Rd.Failure, Thread.Alerted } =
 
   VAR
@@ -429,7 +430,7 @@ PROCEDURE Parse(rd : Rd.T) : AtomCellTbl.T
       END
     END GetPort;
 
-  PROCEDURE GetInst(parent : CellRec.T) : BOOLEAN 
+  PROCEDURE GetInst(parent : CellRec.T; subcells : SubcellSeq.T) : BOOLEAN 
     RAISES ANY =
     VAR
       instNm, typeNm   : Token;
@@ -474,14 +475,16 @@ PROCEDURE Parse(rd : Rd.T) : AtomCellTbl.T
 
       |
         InstanceType.Cell =>
-        WITH instCA = NEW(REF ARRAY OF CHAR, instNm.n),
-             sub    = Subcell.T {
-          type := AtomFromChars(SUBARRAY(typeBuf, 0, typeNm.n)),
-          instance := instCA }
-         DO
-          instCA^ := SUBARRAY(instBuf, 0, instNm.n);
+        VAR
+          sub : Subcell.T;
+        BEGIN
+          sub.type := AtomFromChars(SUBARRAY(typeBuf, 0, typeNm.n));
 
-          parent.subcells := SubcellList.Cons(sub, parent.subcells)
+          Subcell.EncodeName(t.longNames,
+                             SUBARRAY(instBuf, 0, instNm.n),
+                             sub.instance);
+
+          subcells.addhi(sub)
         END
       |
         InstanceType.Res, InstanceType.BJT =>
@@ -560,6 +563,7 @@ PROCEDURE Parse(rd : Rd.T) : AtomCellTbl.T
       props : FetProps; (* unused *)
 
       cellNm : Atom.T;
+      subcells : SubcellSeq.T;
     BEGIN
       IF NOT GetExact(N.CELLkw) THEN RETURN FALSE END;
 
@@ -571,12 +575,12 @@ PROCEDURE Parse(rd : Rd.T) : AtomCellTbl.T
                   nm       := Text.FromChars(SUBARRAY(buf, nm.s, nm.n)),
                   subcells := NIL,
                   mosTbl   := NEW(MosInfoCardTbl.Default).init());
-
+      subcells := NEW(SubcellSeq.T).init();
       LOOP
         IF GetExact(LB) THEN
           IF    GetPort() THEN
           ELSIF GetProp(props) THEN
-          ELSIF GetInst(cell) THEN
+          ELSIF GetInst(cell, subcells) THEN
           ELSE
             RAISE Syntax(TL()) 
           END
@@ -587,7 +591,13 @@ PROCEDURE Parse(rd : Rd.T) : AtomCellTbl.T
         END
       END;
 
-      WITH hadIt = cellTbl.put(cellNm, cell) DO
+      (* copy sequence to cell *)
+      cell.subcells := NEW(REF ARRAY OF Subcell.T, subcells.size());
+      FOR i := FIRST(cell.subcells^) TO LAST(cell.subcells^) DO
+        cell.subcells[i] := subcells.get(i)
+      END;
+      
+      WITH hadIt = t.cellTbl.put(cellNm, cell) DO
         IF hadIt THEN RAISE Syntax(TL()) END
       END;
 
@@ -609,15 +619,17 @@ PROCEDURE Parse(rd : Rd.T) : AtomCellTbl.T
       RETURN TRUE
     END GetVersion;
 
-  PROCEDURE GetNetlist(VAR cellTbl : AtomCellTbl.T) : BOOLEAN 
+  PROCEDURE GetNetlist(VAR t : T) : BOOLEAN 
     RAISES ANY =
     VAR
       nm : Token;
     BEGIN
       IF NOT GetExact(N.NETLISTkw) THEN RETURN FALSE END;
 
-      <*ASSERT cellTbl = NIL*>
-      cellTbl := NEW(AtomCellTbl.Default).init();
+      <*ASSERT t = NIL*>
+      t := NEW(T);
+      t.cellTbl := NEW(AtomCellTbl.Default).init();
+      t.longNames := NEW(Subcell.LongNames).init();
 
       IF NOT GetIdent(nm) THEN RETURN FALSE END;
       
@@ -635,13 +647,13 @@ PROCEDURE Parse(rd : Rd.T) : AtomCellTbl.T
       END
     END GetNetlist;
     
-  PROCEDURE ParseTop(VAR cellTbl : AtomCellTbl.T) : BOOLEAN 
+  PROCEDURE ParseTop(VAR t : T) : BOOLEAN 
     RAISES ANY =
     BEGIN
       IF NOT GetExact(LB) THEN RETURN FALSE END;
 
       TRY
-        IF GetNetlist(cellTbl) THEN
+        IF GetNetlist(t) THEN
           RETURN TRUE
         ELSE
           RETURN FALSE
@@ -659,12 +671,12 @@ PROCEDURE Parse(rd : Rd.T) : AtomCellTbl.T
     *)
 
   VAR
-    cellTbl : AtomCellTbl.T := NIL;
+    t : T := NIL;
   BEGIN
     TRY
       (* Trivial() *)
       
-      IF NOT ParseTop(cellTbl) THEN
+      IF NOT ParseTop(t) THEN
         RAISE Syntax(TL())
       END;
       PutPos();
@@ -687,7 +699,7 @@ PROCEDURE Parse(rd : Rd.T) : AtomCellTbl.T
     END;
     
     Debug.Out(F("Read %s bytes", Int(totBytes)));
-    RETURN cellTbl
+    RETURN t
   END Parse;
 
 TYPE Token = RECORD s, n : CARDINAL END;

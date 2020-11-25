@@ -19,9 +19,9 @@ openarrayTable("CharsAtom", "OpenCharArray", "Atom")
 
 %library ("braceparse")
 
-interface("Subcell")
+module("Subcell")
 list ("Subcell", "Subcell")
-
+sequence ("Subcell", "Subcell")
 module ("MosInfo")
 
 table ("MosInfoCard", "MosInfo", "CardPair")
