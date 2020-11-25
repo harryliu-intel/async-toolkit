@@ -47,6 +47,7 @@ CONST WhiteSpace = SC { ' ', '\t', '\n', '\r' };
       Letter     = Lower + Upper;
       Ident1     = Letter + SC { '_' };
       Ident      = Ident1 + Digit;
+      SpecialPlusWS = Special + WhiteSpace;
 
       LB = CA { '{' };
       RB = CA { '}' };
@@ -201,7 +202,7 @@ PROCEDURE Parse(rd : Rd.T) : AtomCellTbl.T
       END;
 
       <*ASSERT b # e*>
-      WHILE NOT buf[b] IN Special + WhiteSpace DO
+      WHILE NOT buf[b] IN SpecialPlusWS DO
         INC(b); 
 
         IF b = e THEN Refill() END
