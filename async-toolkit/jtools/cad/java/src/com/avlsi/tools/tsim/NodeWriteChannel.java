@@ -29,7 +29,7 @@ import java.math.BigInteger;
  * @review kiniry - Under review beginning 23 July 2002.
  **/
 
-public final class NodeWriteChannel implements ChannelOutput, NodeChannel, Statusable, ChannelStatus {
+public final class NodeWriteChannel implements ChannelOutput, NodeChannel, Statusable, ChannelStatus, Ownable {
 
     private final ChannelOutput wrapped;
 
@@ -192,6 +192,13 @@ public final class NodeWriteChannel implements ChannelOutput, NodeChannel, Statu
 
     public String getVerboseStatus() {
         return ((ChannelStatus) wrapped).getVerboseStatus();
+    }
+
+    @Override
+    public void setOwner(AbstractDevice owner) {
+        if (wrapped instanceof Ownable) {
+            ((Ownable) wrapped).setOwner(owner);
+        }
     }
 } // end of final class NodeWriteChannel
 

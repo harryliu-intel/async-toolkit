@@ -23,7 +23,7 @@ import com.avlsi.util.text.StringUtil;
  * @version $Revision$ $Date$
  **/
 
-public abstract class BufferedNodeChannel implements Statusable, ChannelStatus {
+public abstract class BufferedNodeChannel implements Statusable, ChannelStatus, Ownable {
     
     protected final Node [][][]  rail;
     protected final Node [][]    enable;
@@ -225,6 +225,7 @@ public abstract class BufferedNodeChannel implements Statusable, ChannelStatus {
         bc.printStatus();
     }
 
+    @Override
     public void setOwner(final AbstractDevice owner) {
         this.owner = owner;
     }

@@ -44,6 +44,7 @@ import com.avlsi.tools.tsim.NodeReadChannel;
 import com.avlsi.tools.tsim.NodeWriteChannel;
 import com.avlsi.tools.tsim.EmptyWaitSetException;
 import com.avlsi.tools.tsim.Message;
+import com.avlsi.tools.tsim.Ownable;
 import com.avlsi.tools.tsim.Statusable;
 import com.avlsi.tools.tsim.Wait;
 import com.avlsi.tools.tsim.Waitable;
@@ -164,27 +165,15 @@ public abstract class CspRuntimeAbstractDevice extends AbstractDevice {
         this.nodes = (Node[]) uniqNodes.toArray(new Node[0]);
         this.arbitrationMode = arbitrationMode;
 
-        for (int i = 0; i < in.length; ++i) setOwner(in[i]);
-        for (int i = 0; i < out.length; ++i) setOwner(out[i]);
+        for (ChannelInput c : in) setOwner(c);
+        for (ChannelOutput c : out) setOwner(c);
 
         cspDevices.add(this);
     }
 
-    private void setOwner(final ChannelInput in) {
-        if (in instanceof NodeReadChannel) {
-            final ChannelInput wrapped = ((NodeReadChannel) in).unwrap();
-            if (wrapped instanceof BufferedNodeChannel) {
-                ((BufferedNodeChannel) wrapped).setOwner(this);
-            }
-        }
-    }
-
-    private void setOwner(final ChannelOutput out) {
-        if (out instanceof NodeWriteChannel) {
-            final ChannelOutput wrapped = ((NodeWriteChannel) out).unwrap();
-            if (wrapped instanceof BufferedNodeChannel) {
-                ((BufferedNodeChannel) wrapped).setOwner(this);
-            }
+    private void setOwner(final Object o) {
+        if (o instanceof Ownable) {
+            ((Ownable) o).setOwner(this);
         }
     }
 

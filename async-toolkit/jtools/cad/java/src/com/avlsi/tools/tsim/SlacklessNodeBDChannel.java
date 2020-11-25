@@ -21,7 +21,7 @@ import com.avlsi.util.text.StringUtil;
 /**
  * <p> Base class for <code>SlacklessNodeBD*Channel</code>.
  **/
-public abstract class SlacklessNodeBDChannel implements ChannelStatus {
+public abstract class SlacklessNodeBDChannel implements ChannelStatus, Ownable {
     
     protected final Node[]  data;
     protected       Node    ack;
@@ -145,6 +145,7 @@ public abstract class SlacklessNodeBDChannel implements ChannelStatus {
         sleep_status = DESTROYED;
     }
 
+    @Override
     public void setOwner(final AbstractDevice owner) {
         this.owner = owner;
     }
