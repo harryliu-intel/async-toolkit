@@ -1,5 +1,6 @@
 INTERFACE MosInfo;
 IMPORT Atom, Word;
+IMPORT Wx;
 
 TYPE
   T = RECORD
@@ -12,5 +13,7 @@ CONST Brand = "MosInfo";
 PROCEDURE Equal(READONLY a, b : T) : BOOLEAN;
 
 PROCEDURE Hash(READONLY a : T) : Word.T;
+
+PROCEDURE DebugOut(READONLY a : T; wx : Wx.T);
 
 END MosInfo.

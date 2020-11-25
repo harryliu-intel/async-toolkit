@@ -1,6 +1,8 @@
 MODULE MosInfo;
 IMPORT Word;
 IMPORT Atom;
+FROM Fmt IMPORT F, Int;
+IMPORT Wx;
 
 PROCEDURE Equal(READONLY a, b : T) : BOOLEAN =
   BEGIN
@@ -11,6 +13,14 @@ PROCEDURE Hash(READONLY a : T) : Word.T =
   BEGIN
     RETURN Word.Plus(Atom.Hash(a.type), a.len)
   END Hash;
+
+PROCEDURE DebugOut(READONLY a : T; wx : Wx.T) =
+  BEGIN
+    Wx.PutText(wx,
+               F("type %s length %s picometers ",
+                 Atom.ToText(a.type),
+                 Int(a.len)))
+  END DebugOut;
 
 BEGIN END MosInfo.
   
