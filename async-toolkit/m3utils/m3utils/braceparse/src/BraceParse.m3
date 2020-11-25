@@ -52,7 +52,7 @@ CONST WhiteSpace = SC { ' ', '\t', '\n', '\r' };
       RB = CA { '}' };
       EQ = CA { '=' };
 
-TYPE InstanceType = { MOS, Cell, Res, Unknown };
+TYPE InstanceType = { MOS, Cell, Res, BJT, Unknown };
 
      FetProps = RECORD
        l : CARDINAL;    (* length in micro-microns (picometers) *)
@@ -483,7 +483,7 @@ PROCEDURE Parse(rd : Rd.T) : AtomCellTbl.T
           parent.subcells := SubcellList.Cons(sub, parent.subcells)
         END
       |
-        InstanceType.Res =>
+        InstanceType.Res, InstanceType.BJT =>
         (* skip *)
       ELSE
         Debug.Warning("?unknown instance type on line " & Int(lineno))
@@ -505,6 +505,8 @@ PROCEDURE Parse(rd : Rd.T) : AtomCellTbl.T
         type := InstanceType.Cell
       ELSIF GetExact(N.RESkw) THEN
         type := InstanceType.Res
+      ELSIF GetExact(N.BJTkw) THEN
+        type := InstanceType.BJT
       ELSIF GetIdent(typeDummy) THEN
         type := InstanceType.Unknown
       ELSE
