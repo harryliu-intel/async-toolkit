@@ -12,6 +12,7 @@ IMPORT AtomMosInfoCardTblTbl;
 IMPORT MosInfoCardTbl;
 IMPORT MosInfo;
 IMPORT AtomSet, AtomSetDef;
+IMPORT CardPair;
 
 CONST TE = Text.Equal;
 
@@ -66,11 +67,12 @@ PROCEDURE MosInfoAdd(tgt, from : MosInfoCardTbl.T) =
   VAR
     iter := from.iterate();
     info : MosInfo.T;
-    fromfins, tofins : CARDINAL;
+    fromfins, tofins : CardPair.T;
   BEGIN
     WHILE iter.next(info, fromfins) DO
       IF tgt.get(info, tofins) THEN
-        EVAL tgt.put(info, tofins + fromfins)
+        EVAL tgt.put(info, CardPair.T { tofins.k1 + fromfins.k1,
+                                        tofins.k2 + fromfins.k2 })
       ELSE
         EVAL tgt.put(info, fromfins)
       END

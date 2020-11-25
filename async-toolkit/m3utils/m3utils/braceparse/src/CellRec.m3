@@ -3,6 +3,7 @@ IMPORT Wx;
 FROM Fmt IMPORT Int;
 IMPORT SubcellList;
 IMPORT MosInfo;
+IMPORT CardPair;
 
 PROCEDURE DebugOut(t : T; wx : Wx.T) =
   BEGIN
@@ -14,11 +15,13 @@ PROCEDURE DebugOut(t : T; wx : Wx.T) =
     VAR
       iter := t.mosTbl.iterate();
       mosInfo : MosInfo.T;
-      finCnt  : CARDINAL;
+      finCnt  : CardPair.T;
     BEGIN
       WHILE iter.next(mosInfo, finCnt) DO
         MosInfo.DebugOut(mosInfo, wx);
-        Wx.PutInt(wx, finCnt);
+        Wx.PutInt(wx, finCnt.k2);
+        Wx.PutText(wx, " devices ");
+        Wx.PutInt(wx, finCnt.k2);
         Wx.PutText(wx, " fins\n")
       END
     END

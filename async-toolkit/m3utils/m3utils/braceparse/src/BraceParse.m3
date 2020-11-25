@@ -21,6 +21,7 @@ IMPORT Atom, Subcell, SubcellList;
 IMPORT CharsAtomTbl;
 IMPORT MosInfo, MosInfoCardTbl;
 IMPORT AtomCellTbl;
+IMPORT CardPair;
 
 CONST BufSiz = 16*1024;
 
@@ -460,12 +461,13 @@ PROCEDURE Parse(rd : Rd.T) : AtomCellTbl.T
         VAR
           type    := AtomFromChars(SUBARRAY(typeBuf, 0, typeNm.n));
           mosInfo := MosInfo.T { type, props.l };
-          oldCnt  : CARDINAL;
+          oldCnt  : CardPair.T;
         BEGIN
           IF parent.mosTbl.get(mosInfo, oldCnt) THEN
-            EVAL parent.mosTbl.put(mosInfo, oldCnt + props.nfin)
+            EVAL parent.mosTbl.put(mosInfo, CardPair.T {oldCnt.k1 + 1,
+                                                        oldCnt.k2 + props.nfin})
           ELSE
-            EVAL parent.mosTbl.put(mosInfo,          props.nfin)
+            EVAL parent.mosTbl.put(mosInfo, CardPair.T { 1, props.nfin })
           END
         END
 

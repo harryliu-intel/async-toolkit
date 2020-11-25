@@ -24,7 +24,7 @@ list ("Subcell", "Subcell")
 
 module ("MosInfo")
 
-table ("MosInfoCard", "MosInfo", "Cardinal")
+table ("MosInfoCard", "MosInfo", "CardPair")
 table ("AtomCell", "Atom", "CellRec")
 
 table ("AtomMosInfoCardTbl", "Atom", "MosInfoCardTbl")
