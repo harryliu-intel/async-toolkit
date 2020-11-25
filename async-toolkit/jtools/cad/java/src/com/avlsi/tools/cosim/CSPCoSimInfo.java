@@ -13,6 +13,7 @@ import java.util.OptionalInt;
 import com.avlsi.cast2.util.DirectiveUtils;
 import com.avlsi.cell.CellInterface;
 import com.avlsi.fast.BlockInterface;
+import com.avlsi.fast.ports.PortDefinition;
 
 /**
  * Extends CoSimInfo to contain information specific to the csp block.
@@ -20,7 +21,8 @@ import com.avlsi.fast.BlockInterface;
  **/
 public class CSPCoSimInfo extends CoSimInfo {
     private CellInterface parent = null;
-    private int minCspTime = Integer.MAX_VALUE;
+    private int maxInputOffset = Integer.MIN_VALUE;
+    private int minOutputOffset = Integer.MAX_VALUE;
 
     public CSPCoSimInfo() {
         super();
@@ -53,15 +55,22 @@ public class CSPCoSimInfo extends CoSimInfo {
         } else {
             final ChannelTimingInfo cti =
                 DirectiveUtils.getTiming(parent, BlockInterface.CSP, name, 1, null, dir);
-            minCspTime = Math.min(minCspTime, cti.getCspTime());
+            if (dir == PortDefinition.IN) {
+                maxInputOffset = Math.max(maxInputOffset, cti.getCspTime());
+            } else if (dir == PortDefinition.OUT) {
+                minOutputOffset = Math.min(minOutputOffset, cti.getCspTime());
+            }
             //System.err.println("CSP channel: " + parent.getFullyQualifiedType() + " " + name + " " + cti.getSlack() + " " + cti.getLatency() + " " + cti.getCycleTime() + " " + cti.getCspTime() + " " + minCspTime);
             super.addChannelInfo(name, type, cti, N, M, isArrayed, dir);
         }
     }
 
     @Override
-    public OptionalInt getMinimumCspTime() {
-        return OptionalInt.of(minCspTime);
+    public OptionalInt getReferenceTime() {
+        int t = maxInputOffset == Integer.MIN_VALUE
+            ? (minOutputOffset == Integer.MAX_VALUE ? 0 : minOutputOffset)
+            : maxInputOffset;
+        return OptionalInt.of(t);
     }
 
     protected boolean usePorts() { return true; }

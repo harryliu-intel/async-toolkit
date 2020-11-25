@@ -38,6 +38,7 @@ import com.avlsi.tools.tsim.Arbiter.Alternative;
 import com.avlsi.tools.tsim.Arbiter.Term;
 import com.avlsi.tools.tsim.AbstractDevice;
 import com.avlsi.tools.tsim.BufferedNodeChannel;
+import com.avlsi.tools.tsim.BufferedNodeBDChannel;
 import com.avlsi.tools.tsim.ChannelInput;
 import com.avlsi.tools.tsim.ChannelOutput;
 import com.avlsi.tools.tsim.NodeReadChannel;
@@ -45,6 +46,7 @@ import com.avlsi.tools.tsim.NodeWriteChannel;
 import com.avlsi.tools.tsim.EmptyWaitSetException;
 import com.avlsi.tools.tsim.Message;
 import com.avlsi.tools.tsim.Ownable;
+import com.avlsi.tools.tsim.SlacklessNodeBDChannel;
 import com.avlsi.tools.tsim.Statusable;
 import com.avlsi.tools.tsim.Wait;
 import com.avlsi.tools.tsim.Waitable;
@@ -107,6 +109,9 @@ public abstract class CspRuntimeAbstractDevice extends AbstractDevice {
 
     /** Number of times yield() has been called **/
     private volatile int yieldCount = 0;
+
+    /** Time of the last receive **/
+    private long lastRecvTime = 0;
 
     /** Maximum supported base conversion */
     private static final CspInteger MAX_BASE =
@@ -450,8 +455,19 @@ public abstract class CspRuntimeAbstractDevice extends AbstractDevice {
                 lastSend = new Pair<>(status, whereAmI);
             }
         }
-        super.send(out, message);
+        final int portOffset = getPortOffset(out);
+        super.send(out, new Message(message).updateMessageTime(lastRecvTime + portOffset));
         if (isStatusable) resetChanOp();
+    }
+
+    private int getPortOffset(Object o) {
+        int result = 0;
+        if (o instanceof SlacklessNodeBDChannel) {
+            result = ((SlacklessNodeBDChannel) o).getPortOffset();
+        } else if (o instanceof BufferedNodeBDChannel) {
+            result = ((BufferedNodeBDChannel) o).getPortOffset();
+        }
+        return result;
     }
 
     protected Message receive(ChannelInput in) throws InterruptedException {
@@ -471,6 +487,9 @@ public abstract class CspRuntimeAbstractDevice extends AbstractDevice {
             }
         }
         final Message m = super.receive(in);
+        final int offset = getPortOffset(in);
+        updateTime(m.getTime() + offset);
+        lastRecvTime = getTime();
         if (isStatusable) resetChanOp();
         return m;
     }
@@ -835,6 +854,7 @@ public abstract class CspRuntimeAbstractDevice extends AbstractDevice {
         }
 
         public void onOutermostLoopStart() {
+            lastRecvTime = getTime();
             if (!usedChannels.keySet().isEmpty()) {
                 final String err = getErrorString(firstLoop);
                 if (firstLoop) {

@@ -78,9 +78,11 @@ public final class BufferedNodeBDReadChannel extends BufferedNodeBDChannel
                                      int ffLatency, int bbLatency,
                                      int fbLatency, int bfLatency,
                                      int cycleTimeIn, int cycleTimeOut,
-                                     String name, int W, boolean startNow) {
+                                     int portOffset, String name, int W,
+                                     boolean startNow) {
         super(slack, toData, fromData, ffLatency, bbLatency, fbLatency,
-              bfLatency, cycleTimeIn, cycleTimeOut, name, W, startNow);
+              bfLatency, cycleTimeIn, cycleTimeOut, portOffset, name, W,
+              startNow);
     }
 
     protected void instantiate() {

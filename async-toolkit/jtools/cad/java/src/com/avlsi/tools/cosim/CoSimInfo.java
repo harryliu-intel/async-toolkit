@@ -403,23 +403,25 @@ public abstract class CoSimInfo {
                 final int W = validateBDChannel(name, bdslack, radix, width);
                 float fromData = 1;
                 float toData = 200;
+                int cspTimeOffset = 0;
                 if (instData != null) {
                     toData = 0;
                     final HierName ack = getAckReq(name, "a", width);
-                    final int cspTimeOffset =
-                        cti.getCspTime() - cosimInfo.getMinimumCspTime().getAsInt();
-                    fromData = instData.getBDLatency(ack, bdslack > 0);
+                    cspTimeOffset = cosimInfo.getReferenceTime().getAsInt() -
+                                    cti.getCspTime();
+                    assert cspTimeOffset >= 0;
+                    fromData = instData.getBDLatency(ack, true);
                     ffLatency = cti.getLatencyPerSlack();
                     bbLatency = cti.getCycleTime() - ffLatency;
                     fbLatency = 0;
                     bfLatency = 0;
                     fromData *= 100;
-                    fromData += cspTimeOffset;
                 }
                 if (bdslack == 0) {
                     return new SlacklessNodeBDReadChannel(
                             Math.round(toData * digitalTau),
                             Math.round(fromData * digitalTau),
+                            cspTimeOffset,
                             name, W);
                 } else {
                     return new BufferedNodeBDReadChannel(
@@ -432,6 +434,7 @@ public abstract class CoSimInfo {
                             Math.round(bfLatency * digitalTau),
                             Math.round(cti.getCycleTimeIn() * digitalTau),
                             Math.round(cti.getCycleTimeOut() * digitalTau),
+                            cspTimeOffset,
                             name, W, true);
                 }
             } else {
@@ -470,24 +473,25 @@ public abstract class CoSimInfo {
                 float fromData = 1;
                 float toData = 600;
                 int bdslack = getBDSlack(name, slack);
+                int cspTimeOffset = 0;
                 if (instData != null) {
                     toData = 0;
                     final HierName req = getAckReq(name, "q", width);
-                    final int cspTimeOffset =
-                        cti.getCspTime() - cosimInfo.getMinimumCspTime().getAsInt();
-                    fromData = instData.getBDLatency(req, bdslack > 0);
+                    cspTimeOffset = cti.getCspTime() - cosimInfo.getReferenceTime().getAsInt();
+                    assert cspTimeOffset >= 0;
+                    fromData = instData.getBDLatency(req, true);
                     ffLatency = cti.getLatencyPerSlack();
                     bbLatency = cti.getCycleTime() - ffLatency;
                     fbLatency = 0;
                     bfLatency = 0;
                     fromData *= 100;
-                    fromData += cspTimeOffset;
                 }
                 final int W = validateBDChannel(name, bdslack, radix, width);
                 if (bdslack == 0) {
                     return new SlacklessNodeBDWriteChannel(
                             Math.round(toData * digitalTau),
                             Math.round(fromData * digitalTau),
+                            cspTimeOffset,
                             name, W);
                 } else {
                     return new BufferedNodeBDWriteChannel(
@@ -500,6 +504,7 @@ public abstract class CoSimInfo {
                             Math.round(bfLatency * digitalTau),
                             Math.round(cti.getCycleTimeIn() * digitalTau),
                             Math.round(cti.getCycleTimeOut() * digitalTau),
+                            cspTimeOffset,
                             name, W, true);
                 }
             } else {
@@ -829,7 +834,7 @@ public abstract class CoSimInfo {
         }
     }
 
-    public OptionalInt getMinimumCspTime() {
+    public OptionalInt getReferenceTime() {
         return OptionalInt.empty();
     }
 }

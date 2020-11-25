@@ -28,7 +28,7 @@ public abstract class BufferedNodeBDChannel implements Statusable, ChannelStatus
     protected final Node[]  data;
     protected       Node    ack;
     protected       Node    req;
-    protected final int     toData, fromData;
+    protected final int     toData, fromData, portOffset;
 
     protected static final int BEGIN = 0, WAIT_REQ = 1, WAIT_ACK = 2,
                                WAIT_DATA = 3, DESTROYED = 4;
@@ -78,11 +78,13 @@ public abstract class BufferedNodeBDChannel implements Statusable, ChannelStatus
                                  int ffLatency, int bbLatency,
                                  int fbLatency, int bfLatency,
                                  int cycleTimeIn, int cycleTimeOut,
-                                 String name, int W, boolean startNow) {
+                                 int portOffset, String name, int W,
+                                 boolean startNow) {
          connect_status = startNow;
          this.name = name;
          this.toData = toData;
          this.fromData = fromData;
+         this.portOffset = portOffset;
          data = new Node[W];
          numPossibleValues = BigInteger.valueOf(2).pow(W);
          if (startNow) instantiateNM();
@@ -134,6 +136,10 @@ public abstract class BufferedNodeBDChannel implements Statusable, ChannelStatus
 
     public long getCycleTime() {
         return bc.getCycleTime();
+    }
+
+    public int getPortOffset() {
+        return portOffset;
     }
 
     /*

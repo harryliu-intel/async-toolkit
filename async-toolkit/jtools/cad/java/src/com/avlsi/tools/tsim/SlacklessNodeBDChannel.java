@@ -27,7 +27,7 @@ public abstract class SlacklessNodeBDChannel implements ChannelStatus, Ownable {
     protected       Node    ack;
     protected       Node    req;
 
-    protected final int     toData, fromData;
+    protected final int     toData, fromData, portOffset;
     protected static final int BEGIN = 0, NONE = 0, WAIT_REQ = 1, WAIT_ACK = 2,
                                WAIT_DATA = 3, SELECT = 4, DESTROYED = 5;
 
@@ -65,13 +65,14 @@ public abstract class SlacklessNodeBDChannel implements ChannelStatus, Ownable {
      * @throws NoSuchNodeException  If a node in the channel could not be
      *   found.
      **/
-    public SlacklessNodeBDChannel(int toData, int fromData, String name, int W,
-                                  boolean startNow) {
+    public SlacklessNodeBDChannel(int toData, int fromData, int portOffset,
+                                  String name, int W, boolean startNow) {
         connect_status = startNow;
         this.name = name;
         this.data = new Node[W];
         this.toData = toData;
         this.fromData = fromData;
+        this.portOffset = portOffset;
         if (startNow) instantiateNM();
         numPossibleValues = BigInteger.valueOf(2).pow(W);
     }
@@ -85,6 +86,10 @@ public abstract class SlacklessNodeBDChannel implements ChannelStatus, Ownable {
         return 0;
     }
     
+    public int getPortOffset() {
+        return portOffset;
+    }
+
     /**
      * @throws NoSuchNodeException  If a node in the channel could not be
      *   found.

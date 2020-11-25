@@ -50,13 +50,14 @@ public final class SlacklessNodeBDReadChannel extends SlacklessNodeBDChannel
      * @param name Base name of the channel
      * @param W    width of the channel
      **/
-    public SlacklessNodeBDReadChannel(int toData, int fromData, String name, int W) {
-        this(toData, fromData, name, W, true);
+    public SlacklessNodeBDReadChannel(int toData, int fromData, int portOffset,
+                                      String name, int W) {
+        this(toData, fromData, portOffset, name, W, true);
     }
 
-    public SlacklessNodeBDReadChannel(int toData, int fromData, String name, int W,
-                                      boolean startNow) {
-        super(toData, fromData, name, W, startNow);
+    public SlacklessNodeBDReadChannel(int toData, int fromData, int portOffset,
+                                      String name, int W, boolean startNow) {
+        super(toData, fromData, portOffset, name, W, startNow);
     }
 
     ///////////////////////  Channel interfaces.
