@@ -27,6 +27,8 @@ module ("MosInfo")
 table ("MosInfoCard", "MosInfo", "Cardinal")
 table ("AtomCell", "Atom", "CellRec")
 
+table ("AtomMosInfoCardTbl", "Atom", "MosInfoCardTbl")
+
 program ("testbrace")
 
 
