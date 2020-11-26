@@ -18,15 +18,79 @@ IMPORT AL;
 IMPORT Thread;
 IMPORT OpenCharArrayRefTbl;
 IMPORT Wr, FileWr;
+IMPORT Subcell;
 <*FATAL Thread.Alerted*>
 
 CONST TE = Text.Equal;
 
 VAR doDebug := Debug.GetLevel() >= 10;
 
-PROCEDURE DoTransistorReports(wr : Wr.T)
+PROCEDURE DoTransistorReports(wr       : Wr.T;
+                              db       : AtomCellTbl.T;
+                              rootType : Atom.T;
+                              memoTbl  : AtomMosInfoCardTblTbl.T;
+                              level    : CARDINAL;
+                              nlevels  : CARDINAL;
+                              path     : TEXT;
+                              longNames: Subcell.LongNames)
   RAISES { Wr.Failure } =
+
+  VAR
+    tab : MosInfoCardTbl.T;
+    iter : MosInfoCardTbl.Iterator;
+    mosInfo : MosInfo.T;
+    finCnt : CardPair.T;
+    wx := Wx.New();
   BEGIN
+    WITH hadIt = memoTbl.get(rootType, tab) DO
+      IF NOT hadIt THEN RETURN END
+    END;
+    (* got the tab *)
+    iter := tab.iterate();
+
+    (* iterate thru all the transistor types in the tab *)
+    WHILE iter.next(mosInfo, finCnt) DO
+      MosInfo.DebugOut(mosInfo, wx);
+      Wx.PutInt(wx, finCnt.k2);
+      Wx.PutText(wx, " devices ");
+      Wx.PutInt(wx, finCnt.k2);
+      Wx.PutText(wx, " fins ");
+      Wx.PutInt(wx, finCnt.k2 * mosInfo.len);
+      Wx.PutText(wx, " fin*picometer\n");
+    END;
+
+    Wr.PutText(wr, F("====================  Level %s Path %s Type %s  ====================\n",
+                     Int(level),
+                     path,
+                     Atom.ToText(rootType)));
+    
+    Wr.PutText(wr, Wx.ToText(wx));
+
+    IF level < nlevels THEN
+      VAR
+        cell : CellRec.T;
+      BEGIN
+        WITH hadIt = db.get(rootType, cell) DO
+          IF NOT hadIt THEN RETURN END;
+          FOR i := FIRST(cell.subcells^) TO LAST(cell.subcells^) DO
+            VAR
+              sub := cell.subcells[i];
+              decodedSubName := Subcell.DecodeNameToText(longNames,
+                                                         sub.instance);
+            BEGIN
+              DoTransistorReports(wr,
+                                  db,
+                                  sub.type,
+                                  memoTbl,
+                                  level + 1,
+                                  nlevels,
+                                  path & "." & decodedSubName,
+                                  longNames)
+            END
+          END
+        END
+      END
+    END
   END DoTransistorReports;
 
 PROCEDURE RecurseTransistors(db       : AtomCellTbl.T;
@@ -98,6 +162,7 @@ VAR
   transistorCellFn : TEXT := NIL;
   transistorReportFn : TEXT := NIL;
   transistorCells := NEW(OpenCharArrayRefTbl.Default).init();
+  levels : CARDINAL := 1; (* report levels, default just the root *)
 BEGIN
   TRY
     IF pp.keywordPresent("-Z") THEN
@@ -128,6 +193,10 @@ BEGIN
 
     IF pp.keywordPresent("-T") OR pp.keywordPresent("-transistorreport") THEN
       transistorReportFn := pp.getNext()
+    END;
+
+    IF pp.keywordPresent("-l") OR pp.keywordPresent("-levels") THEN
+      levels := pp.getNextInt()
     END;
 
     pp.skipParsed()
@@ -208,7 +277,14 @@ BEGIN
       IF transistorReportFn # NIL THEN
         TRY
           WITH wr = FileWr.Open(transistorReportFn) DO
-            DoTransistorReports(wr);
+            DoTransistorReports(wr,
+                                parsed.cellTbl,
+                                rootTypeA,
+                                memoTbl,
+                                0,
+                                levels,
+                                "(ROOT)",
+                                parsed.longNames);
             Wr.Close(wr)
           END
         EXCEPT
@@ -225,6 +301,5 @@ BEGIN
       END
     END
   END
-
 END Main.
 

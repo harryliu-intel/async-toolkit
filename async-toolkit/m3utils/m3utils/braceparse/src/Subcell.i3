@@ -28,6 +28,9 @@ PROCEDURE DecodeName(longNames     : LongNames;
                      VAR buffer : ARRAY OF CHAR  (* zero terminated *)
   );
 
+PROCEDURE DecodeNameToText(longNames     : LongNames;
+                           READONLY inst : InstanceName) : TEXT;
+
 CONST Brand = "Subcell";
 
 CONST Equal : PROCEDURE(a, b : T) : BOOLEAN = NIL;

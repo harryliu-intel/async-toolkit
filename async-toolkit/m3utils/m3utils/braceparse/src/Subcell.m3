@@ -5,6 +5,8 @@ IMPORT Compiler, Fmt, Process;
 IMPORT Thread;
 IMPORT AL, OSError, Debug;
 FROM Fmt IMPORT F;
+IMPORT BraceParse;
+IMPORT Text;
 
 <*FATAL Thread.Alerted*>
 
@@ -105,6 +107,20 @@ PROCEDURE DecodeName(longNames     : LongNames;
       Rd.EndOfFile => Debug.Error("unexpected EOF reading longnames file")
     END
   END DecodeName;
+
+PROCEDURE DecodeNameToText(longNames     : LongNames;
+                           READONLY inst : InstanceName) : TEXT =
+  VAR
+    buf : BraceParse.Buffer;
+  BEGIN
+    DecodeName(longNames, inst, buf);
+    FOR i := FIRST(buf) TO LAST(buf) DO
+      IF buf[i] = VAL(0, CHAR) THEN
+        RETURN Text.FromChars(SUBARRAY(buf, 0, i))
+      END
+    END;
+    <*ASSERT FALSE*>
+  END DecodeNameToText;
 
 REVEAL
   LongNames = BRANDED Brand & " LongNames" OBJECT
