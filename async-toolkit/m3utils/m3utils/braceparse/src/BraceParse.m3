@@ -25,14 +25,16 @@ IMPORT CardPair;
 IMPORT SubcellSeq;
 IMPORT OpenCharArrayRefTbl;
 
-      (* an interesting extension of the buffering code would be to make the
-         buffer variable size (REF ARRAY OF CHAR), starting it at, say, 16K, 
-         and growing it as needed to accomodate larger objects.
-
-         doing this we could for example decree that an entire CELL or 
-         INST is in memory at the same time, and use offsets into the buffer to
-         build it all at the end of parsing the CELL or INST rather than having
-         to do everything on-the-fly *)
+(* 
+   an interesting extension of the buffering code would be to make the
+   buffer variable size (REF ARRAY OF CHAR), starting it at, say, 16K, 
+   and growing it as needed to accomodate larger objects.
+   
+   doing this we could for example decree that an entire CELL or 
+   INST is in memory at the same time, and use offsets into the buffer to
+   build it all at the end of parsing the CELL or INST rather than having
+   to do everything on-the-fly 
+*)
 
 TYPE SC = SET OF CHAR;
      CA = ARRAY OF CHAR;
@@ -61,7 +63,7 @@ TYPE InstanceType = { MOS, Cell, Res, BJT, Unknown };
 CONST TL = Compiler.ThisLine;
       
 VAR doDebug := Debug.GetLevel() >= 10 AND Debug.This("BraceParse");
-
+    
 VAR
   atomTbl := NEW(CharsAtomTbl.Default).init();
   
@@ -433,7 +435,7 @@ PROCEDURE Parse(rd : Rd.T; transistorCells : OpenCharArrayRefTbl.T) : T
       instNm, typeNm   : Token;
       instBuf, typeBuf : Buffer;
       type             := InstanceType.Unknown;
-      props            := FetProps { 0, 0};
+      props            := FetProps { 0, 0 };
       isTransistorCell := FALSE;
       dummy            : REFANY;
     BEGIN 
@@ -476,6 +478,7 @@ PROCEDURE Parse(rd : Rd.T; transistorCells : OpenCharArrayRefTbl.T) : T
           mosInfo := MosInfo.T { type, props.l };
           oldCnt  : CardPair.T;
         BEGIN
+          Debug.Out("got a MOS with fins " & Int(props.nfin));
           IF parent.mosTbl.get(mosInfo, oldCnt) THEN
             EVAL parent.mosTbl.put(mosInfo, CardPair.T {oldCnt.k1 + 1,
                                                         oldCnt.k2 + props.nfin})
@@ -532,7 +535,7 @@ PROCEDURE Parse(rd : Rd.T; transistorCells : OpenCharArrayRefTbl.T) : T
       RETURN TRUE
     END GetType;
     
-  PROCEDURE GetProp(props : FetProps) : BOOLEAN 
+  PROCEDURE GetProp(VAR props : FetProps) : BOOLEAN 
     RAISES ANY =
 
     PROCEDURE GetPropAssign() RAISES ANY =
@@ -556,7 +559,9 @@ PROCEDURE Parse(rd : Rd.T; transistorCells : OpenCharArrayRefTbl.T) : T
           props.l := ROUND(propVal * 1.0d6)
         ELSIF GetExact(N.nfinkw) THEN
           GetPropAssign();
-          props.nfin := ROUND(propVal)
+          props.nfin := ROUND(propVal);
+
+          Debug.Out(F("nfin %s", Int(props.nfin)))
         ELSIF GetIdent(propNm) THEN
           GetPropAssign()
         ELSE
