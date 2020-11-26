@@ -19,6 +19,8 @@ IMPORT Thread;
 IMPORT OpenCharArrayRefTbl;
 IMPORT Wr, FileWr;
 IMPORT Subcell;
+IMPORT TextList;
+IMPORT Pathname;
 <*FATAL Thread.Alerted*>
 
 CONST TE = Text.Equal;
@@ -185,128 +187,25 @@ PROCEDURE MosInfoAdd(tgt, from : MosInfoCardTbl.T) =
       END
     END
   END MosInfoAdd;
-  
-VAR
-  pp := NEW(ParseParams.T).init(Stdio.stderr);
-  rd : Rd.T := NIL;
-  parsed : BraceParse.T;
-  rootType : TEXT := NIL;
-  transistorCellFn : TEXT := NIL;
-  transistorReportPfx : TEXT := NIL;
-  transistorCells := NEW(OpenCharArrayRefTbl.Default).init();
-  levels : CARDINAL := 1; (* report levels, default just the root *)
-BEGIN
-  TRY
-    IF pp.keywordPresent("-Z") THEN
-    END;
-    IF pp.keywordPresent("-f") THEN
-      WITH fn = pp.getNext() DO
-        IF TE(fn,"-") THEN
-          rd := Stdio.stdin
-        ELSE
-          TRY
-            rd := FileRd.Open(fn)
-          EXCEPT
-            OSError.E(e) => Debug.Error(F("Main.m3: trouble opening \"%s\" : OSError.E : %s",
-                                          fn,
-                                          AL.Format(e)))
-          END
-        END
-      END
-    END;
 
-    IF pp.keywordPresent("-r") OR pp.keywordPresent("-rootcell") THEN
-      rootType := pp.getNext()
-    END;
+PROCEDURE ProduceGoxReports(p : TextList.T) =
+  BEGIN
+    WHILE p # NIL DO
+      VAR rootType := rootTypes.head;
+          memoTbl := NEW(AtomMosInfoCardTblTbl.Default).init();
+          warnSet := NEW(AtomSetDef.T).init();
+          dummy   : CellRec.T;
+          rootTypeA := Atom.FromText(rootType);
+      BEGIN
+        IF NOT parsed.cellTbl.get(rootTypeA, dummy) THEN
+          Debug.Warning("Cannot find root type : " & rootType);
+          EXIT
+        END;
+        RecurseTransistors(parsed.cellTbl,
+                           rootTypeA,
+                           memoTbl,
+                           warnSet);
 
-    IF pp.keywordPresent("-t") OR pp.keywordPresent("-transistorcelltypes") THEN
-      transistorCellFn := pp.getNext()
-    END;
-
-    IF pp.keywordPresent("-T") OR pp.keywordPresent("-transistorreport") THEN
-      transistorReportPfx := pp.getNext()
-    END;
-
-    IF pp.keywordPresent("-l") OR pp.keywordPresent("-levels") THEN
-      levels := pp.getNextInt()
-    END;
-
-    pp.skipParsed()
-  EXCEPT
-    ParseParams.Error => Debug.Error("Can't parse command line")
-  END;
-
-  IF rd = NIL THEN Debug.Error("Must provide filename") END;
-
-  IF transistorCellFn # NIL THEN
-    TRY
-      WITH rd = FileRd.Open(transistorCellFn) DO
-        LOOP
-          VAR
-            buf : BraceParse.Buffer;
-            cnt := Rd.GetSubLine(rd, buf);
-          BEGIN
-            IF cnt = 0 THEN
-              Rd.Close(rd);
-              EXIT
-            END;
-            IF doDebug THEN
-              Debug.Out("special transistor cell type : " &
-                Text.FromChars(SUBARRAY(buf, 0, cnt - 1)))
-            END;
-            EVAL transistorCells.put(SUBARRAY(buf, 0, cnt - 1), NIL)
-          END
-        END
-      END
-    EXCEPT
-      OSError.E(e) => Debug.Error(F("Main.m3: couldnt open transistor cell file \"%s\" : OSError.E : %s", transistorCellFn, AL.Format(e)))
-      
-    |
-      Rd.Failure(e) => Debug.Error(F("Main.m3: couldnt open transistor cell file \"%s\" : OSError.E : %s", transistorCellFn, AL.Format(e)))
-        
-    END
-  END;
-  
-  TRY
-    parsed := BraceParse.Parse(rd, transistorCells);
-  EXCEPT
-    Rd.Failure(e) => Debug.Error("Main.m3: Trouble parsing input : Rd.Failure : "&
-      AL.Format(e))
-  END;
-
-  IF doDebug THEN
-    Debug.Out(F("Main.m3 got %s cells", Int(parsed.cellTbl.size())));
-
-    VAR
-      iter := parsed.cellTbl.iterate();
-      nm : Atom.T;
-      cell : CellRec.T;
-    BEGIN
-      WHILE iter.next(nm, cell) DO
-        VAR
-          wx := Wx.New();
-        BEGIN
-          CellRec.DebugOut(cell, wx);
-          Debug.Out(Wx.ToText(wx))
-        END
-      END
-    END
-  END;
-
-  IF rootType # NIL THEN
-    VAR memoTbl := NEW(AtomMosInfoCardTblTbl.Default).init();
-        warnSet := NEW(AtomSetDef.T).init();
-        dummy   : CellRec.T;
-        rootTypeA := Atom.FromText(rootType);
-    BEGIN
-      IF NOT parsed.cellTbl.get(rootTypeA, dummy) THEN
-        Debug.Error("Cannot find root type : " & rootType)
-      END;
-      RecurseTransistors(parsed.cellTbl,
-                         rootTypeA,
-                         memoTbl,
-                         warnSet);
-      IF transistorReportPfx # NIL THEN
         TRY
           WITH wr    = FileWr.Open(transistorReportPfx & ".rpt"),
                csvWr = FileWr.Open(transistorReportPfx & ".csv") DO
@@ -334,8 +233,127 @@ BEGIN
                         transistorReportPfx,
                         AL.Format(x)))
         END
+      END;
+      p := p.tail
+    END(*EHILW*)
+  END ProduceGoxReports;
+
+PROCEDURE ReadSpecialTransistorCells(transistorCellFn : Pathname.T) =
+  BEGIN
+    TRY
+      WITH rd = FileRd.Open(transistorCellFn) DO
+        LOOP
+          VAR
+            buf : BraceParse.Buffer;
+            cnt := Rd.GetSubLine(rd, buf);
+          BEGIN
+            IF cnt = 0 THEN
+              Rd.Close(rd);
+              EXIT
+            END;
+            IF doDebug THEN
+              Debug.Out("special transistor cell type : " &
+                Text.FromChars(SUBARRAY(buf, 0, cnt - 1)))
+            END;
+            EVAL transistorCells.put(SUBARRAY(buf, 0, cnt - 1), NIL)
+          END
+        END
+      END
+    EXCEPT
+      OSError.E(e) => Debug.Error(F("Main.m3: couldnt open transistor cell file \"%s\" : OSError.E : %s", transistorCellFn, AL.Format(e)))
+      
+    |
+      Rd.Failure(e) => Debug.Error(F("Main.m3: couldnt open transistor cell file \"%s\" : OSError.E : %s", transistorCellFn, AL.Format(e)))
+        
+    END
+  END ReadSpecialTransistorCells;
+
+PROCEDURE DebugDumpCells(parsed : BraceParse.T) =
+  VAR
+    iter := parsed.cellTbl.iterate();
+    nm : Atom.T;
+    cell : CellRec.T;
+  BEGIN
+    Debug.Out(F("Main.m3 got %s cells", Int(parsed.cellTbl.size())));
+    WHILE iter.next(nm, cell) DO
+      VAR
+        wx := Wx.New();
+      BEGIN
+        CellRec.DebugOut(cell, wx);
+        Debug.Out(Wx.ToText(wx))
       END
     END
-  END
+  END DebugDumpCells;
+
+VAR
+  pp := NEW(ParseParams.T).init(Stdio.stderr);
+  rd : Rd.T := NIL;
+  parsed : BraceParse.T;
+  rootTypes : TextList.T := NIL;
+  transistorCellFn : TEXT := NIL;
+  transistorReportPfx : TEXT := "gox";
+  transistorCells := NEW(OpenCharArrayRefTbl.Default).init();
+  levels : CARDINAL := 1; (* report levels, default just the root *)
+BEGIN
+  TRY
+    IF pp.keywordPresent("-Z") THEN
+    END;
+    IF pp.keywordPresent("-f") THEN
+      WITH fn = pp.getNext() DO
+        IF TE(fn,"-") THEN
+          rd := Stdio.stdin
+        ELSE
+          TRY
+            rd := FileRd.Open(fn)
+          EXCEPT
+            OSError.E(e) => Debug.Error(F("Main.m3: trouble opening \"%s\" : OSError.E : %s",
+                                          fn,
+                                          AL.Format(e)))
+          END
+        END
+      END
+    END;
+
+    IF pp.keywordPresent("-r") OR pp.keywordPresent("-rootcell") THEN
+      WITH rootType = pp.getNext() DO
+        rootTypes := TextList.Cons(rootType, rootTypes)
+      END
+    END;
+
+    IF pp.keywordPresent("-t") OR pp.keywordPresent("-transistorcelltypes") THEN
+      transistorCellFn := pp.getNext()
+    END;
+
+    IF pp.keywordPresent("-T") OR pp.keywordPresent("-transistorreport") THEN
+      transistorReportPfx := pp.getNext()
+    END;
+
+    IF pp.keywordPresent("-l") OR pp.keywordPresent("-levels") THEN
+      levels := pp.getNextInt()
+    END;
+
+    pp.skipParsed()
+  EXCEPT
+    ParseParams.Error => Debug.Error("Can't parse command line")
+  END;
+
+  IF rd = NIL THEN Debug.Error("Must provide filename") END;
+
+  IF transistorCellFn # NIL THEN
+    ReadSpecialTransistorCells(transistorCellFn)
+  END;
+  
+  TRY
+    parsed := BraceParse.Parse(rd, transistorCells);
+  EXCEPT
+    Rd.Failure(e) => Debug.Error("Main.m3: Trouble parsing input : Rd.Failure : "&
+      AL.Format(e))
+  END;
+
+  IF doDebug THEN
+    DebugDumpCells(parsed)
+  END;
+
+  ProduceGoxReports(rootTypes)
 END Main.
 
