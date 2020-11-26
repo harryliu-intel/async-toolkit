@@ -17,11 +17,17 @@ IMPORT OSError;
 IMPORT AL;
 IMPORT Thread;
 IMPORT OpenCharArrayRefTbl;
+IMPORT Wr, FileWr;
 <*FATAL Thread.Alerted*>
 
 CONST TE = Text.Equal;
 
 VAR doDebug := Debug.GetLevel() >= 10;
+
+PROCEDURE DoTransistorReports(wr : Wr.T)
+  RAISES { Wr.Failure } =
+  BEGIN
+  END DoTransistorReports;
 
 PROCEDURE RecurseTransistors(db       : AtomCellTbl.T;
                              rootType : Atom.T;
@@ -90,6 +96,7 @@ VAR
   parsed : BraceParse.T;
   rootType : TEXT := NIL;
   transistorCellFn : TEXT := NIL;
+  transistorReportFn : TEXT := NIL;
   transistorCells := NEW(OpenCharArrayRefTbl.Default).init();
 BEGIN
   TRY
@@ -117,6 +124,10 @@ BEGIN
 
     IF pp.keywordPresent("-t") OR pp.keywordPresent("-transistorcelltypes") THEN
       transistorCellFn := pp.getNext()
+    END;
+
+    IF pp.keywordPresent("-T") OR pp.keywordPresent("-transistorreport") THEN
+      transistorReportFn := pp.getNext()
     END;
 
     pp.skipParsed()
@@ -193,7 +204,25 @@ BEGIN
       RecurseTransistors(parsed.cellTbl,
                          rootTypeA,
                          memoTbl,
-                         warnSet)
+                         warnSet);
+      IF transistorReportFn # NIL THEN
+        TRY
+          WITH wr = FileWr.Open(transistorReportFn) DO
+            DoTransistorReports(wr);
+            Wr.Close(wr)
+          END
+        EXCEPT
+          OSError.E(x) =>
+          Debug.Error(F("Trouble opening/closing transistor reports file %s : OSError.E : %s",
+                        transistorReportFn,
+                        AL.Format(x)))
+        |
+          Wr.Failure(x) =>
+          Debug.Error(F("Trouble writing transistor reports file %s : Wr.Failure : %s",
+                        transistorReportFn,
+                        AL.Format(x)))
+        END
+      END
     END
   END
 
