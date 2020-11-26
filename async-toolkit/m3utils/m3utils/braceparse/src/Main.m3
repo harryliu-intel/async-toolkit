@@ -25,6 +25,12 @@ CONST TE = Text.Equal;
 
 VAR doDebug := Debug.GetLevel() >= 10;
 
+PROCEDURE PutCsvHeader(wr : Wr.T)
+  RAISES { Wr.Failure } =
+  BEGIN
+    Wr.PutText(wr, "cellType,level,MOS type,length/pm,count,totfins,fin*pm\n")
+  END PutCsvHeader;
+
 PROCEDURE DoTransistorReports(wr       : Wr.T;
                               csvWr    : Wr.T;
                               db       : AtomCellTbl.T;
@@ -302,6 +308,7 @@ BEGIN
         TRY
           WITH wr    = FileWr.Open(transistorReportPfx & ".rpt"),
                csvWr = FileWr.Open(transistorReportPfx & ".csv") DO
+            PutCsvHeader(csvWr);
             DoTransistorReports(wr,
                                 csvWr,
                                 parsed.cellTbl,
