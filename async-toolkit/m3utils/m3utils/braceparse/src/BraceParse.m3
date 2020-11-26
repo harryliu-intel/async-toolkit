@@ -559,7 +559,7 @@ PROCEDURE Parse(rd : Rd.T; transistorCells : OpenCharArrayRefTbl.T) : T
       LOOP
         IF    GetExact(RB) THEN
           RETURN TRUE
-        ELSIF GetExact(N.lkw) THEN
+        ELSIF GetExact(N.lkw) OR GetExact(N.lrkw) THEN
           GetPropAssign();
           props.l := ROUND(propVal * 1.0d6);
           IF doDebug THEN
