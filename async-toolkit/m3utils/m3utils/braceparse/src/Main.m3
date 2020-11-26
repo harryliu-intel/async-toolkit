@@ -97,7 +97,7 @@ PROCEDURE DoTransistorReports(wr       : Wr.T;
     
     (**************************************************)
 
-    IF level < nlevels THEN
+    IF level + 1 < nlevels THEN
       VAR
         cell : CellRec.T;
       BEGIN

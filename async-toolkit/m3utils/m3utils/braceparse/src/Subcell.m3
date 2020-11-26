@@ -1,7 +1,7 @@
 MODULE Subcell;
 IMPORT Random, Wr, Rd, FileRd, FileWr;
 IMPORT FS, TextList;
-IMPORT Compiler, Fmt, Process;
+IMPORT Fmt, Process;
 IMPORT Thread;
 IMPORT AL, OSError, Debug;
 FROM Fmt IMPORT F, Int;
@@ -147,7 +147,7 @@ VAR longNameNames : TextList.T := NIL;
 PROCEDURE NewLongNames() : LongNames =
   VAR
     q := rand.integer(FIRST(CARDINAL), LAST(CARDINAL));
-    nm := Compiler.ThisFile() & ":" & Fmt.Int(q);
+    nm := Brand & ":" & Fmt.Int(q);
   BEGIN
     longNameNames := TextList.Cons(nm, longNameNames);
 
