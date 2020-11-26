@@ -16,6 +16,7 @@ IMPORT CardPair;
 IMPORT OSError;
 IMPORT AL;
 IMPORT Thread;
+IMPORT OpenCharArrayRefTbl;
 <*FATAL Thread.Alerted*>
 
 CONST TE = Text.Equal;
@@ -88,6 +89,8 @@ VAR
   rd : Rd.T := NIL;
   parsed : BraceParse.T;
   rootType : TEXT := NIL;
+  transistorCellFn : TEXT := NIL;
+  transistorCells := NEW(OpenCharArrayRefTbl.Default).init();
 BEGIN
   TRY
     IF pp.keywordPresent("-Z") THEN
@@ -112,6 +115,10 @@ BEGIN
       rootType := pp.getNext()
     END;
 
+    IF pp.keywordPresent("-t") OR pp.keywordPresent("-transistorcelltypes") THEN
+      transistorCellFn := pp.getNext()
+    END;
+
     pp.skipParsed()
   EXCEPT
     ParseParams.Error => Debug.Error("Can't parse command line")
@@ -119,8 +126,37 @@ BEGIN
 
   IF rd = NIL THEN Debug.Error("Must provide filename") END;
 
+  IF transistorCellFn # NIL THEN
+    TRY
+      WITH rd = FileRd.Open(transistorCellFn) DO
+        LOOP
+          VAR
+            buf : BraceParse.Buffer;
+            cnt := Rd.GetSubLine(rd, buf);
+          BEGIN
+            IF cnt = 0 THEN
+              Rd.Close(rd);
+              EXIT
+            END;
+            IF doDebug THEN
+              Debug.Out("special transistor cell type : " &
+                Text.FromChars(SUBARRAY(buf, 0, cnt - 1)))
+            END;
+            EVAL transistorCells.put(SUBARRAY(buf, 0, cnt - 1), NIL)
+          END
+        END
+      END
+    EXCEPT
+      OSError.E(e) => Debug.Error(F("Main.m3: couldnt open transistor cell file \"%s\" : OSError.E : %s", transistorCellFn, AL.Format(e)))
+      
+    |
+      Rd.Failure(e) => Debug.Error(F("Main.m3: couldnt open transistor cell file \"%s\" : OSError.E : %s", transistorCellFn, AL.Format(e)))
+        
+    END
+  END;
+  
   TRY
-    parsed := BraceParse.Parse(rd);
+    parsed := BraceParse.Parse(rd, transistorCells);
   EXCEPT
     Rd.Failure(e) => Debug.Error("Main.m3: Trouble parsing input : Rd.Failure : "&
       AL.Format(e))

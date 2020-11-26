@@ -29,6 +29,8 @@ table ("AtomCell", "Atom", "CellRec")
 
 table ("AtomMosInfoCardTbl", "Atom", "MosInfoCardTbl")
 
+openarrayTable ("OpenCharArrayRef", "OpenCharArray", "Refany")
+
 program ("testbrace")
 
 

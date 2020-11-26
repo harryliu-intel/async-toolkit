@@ -23,10 +23,7 @@ IMPORT MosInfo, MosInfoCardTbl;
 IMPORT AtomCellTbl;
 IMPORT CardPair;
 IMPORT SubcellSeq;
-
-CONST BufSiz = 16*1024;
-
-TYPE  Buffer = ARRAY [ 0 .. BufSiz-1 ] OF CHAR;
+IMPORT OpenCharArrayRefTbl;
 
       (* an interesting extension of the buffering code would be to make the
          buffer variable size (REF ARRAY OF CHAR), starting it at, say, 16K, 
@@ -81,7 +78,7 @@ PROCEDURE AtomFromChars(READONLY chars : ARRAY OF CHAR) : Atom.T =
     END
   END AtomFromChars;
   
-PROCEDURE Parse(rd : Rd.T) : T
+PROCEDURE Parse(rd : Rd.T; transistorCells : OpenCharArrayRefTbl.T) : T
   RAISES { Rd.Failure, Thread.Alerted } =
 
   VAR
@@ -435,8 +432,10 @@ PROCEDURE Parse(rd : Rd.T) : T
     VAR
       instNm, typeNm   : Token;
       instBuf, typeBuf : Buffer;
-      type             : InstanceType;
+      type             := InstanceType.Unknown;
       props            := FetProps { 0, 0};
+      isTransistorCell := FALSE;
+      dummy            : REFANY;
     BEGIN 
       IF NOT GetExact(N.INSTkw) THEN RETURN FALSE END;
       IF NOT GetIdent(instNm) THEN RAISE Syntax(TL()) END;
@@ -444,9 +443,21 @@ PROCEDURE Parse(rd : Rd.T) : T
       IF NOT GetExact(EQ) THEN RAISE Syntax(TL()) END;
       IF NOT GetIdent(typeNm) THEN RAISE Syntax(TL()) END;
       SUBARRAY(typeBuf, 0, typeNm.n) := SUBARRAY(buf, typeNm.s, typeNm.n);
+
+      (* check whether type name is in the special list *)
+      IF transistorCells.get(SUBARRAY(buf, typeNm.s, typeNm.n), dummy) THEN
+        isTransistorCell := TRUE
+      END;
+      
       LOOP
         IF GetExact(LB) THEN
           IF    GetType(type) THEN
+            (* if stated type is one of the special Transistor Cell types
+               then override whatever the type says it is and set it to 
+               MOS *)
+            IF isTransistorCell THEN
+              type := InstanceType.MOS
+            END
           ELSIF GetCoord() THEN
           ELSIF GetProp(props) THEN
           ELSIF GetPin() THEN
