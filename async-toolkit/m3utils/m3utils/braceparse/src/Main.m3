@@ -26,6 +26,7 @@ CONST TE = Text.Equal;
 VAR doDebug := Debug.GetLevel() >= 10;
 
 PROCEDURE DoTransistorReports(wr       : Wr.T;
+                              csvWr    : Wr.T;
                               db       : AtomCellTbl.T;
                               rootType : Atom.T;
                               memoTbl  : AtomMosInfoCardTblTbl.T;
@@ -51,7 +52,7 @@ PROCEDURE DoTransistorReports(wr       : Wr.T;
     (* iterate thru all the transistor types in the tab *)
     WHILE iter.next(mosInfo, finCnt) DO
       MosInfo.DebugOut(mosInfo, wx);
-      Wx.PutInt(wx, finCnt.k2);
+      Wx.PutInt(wx, finCnt.k1);
       Wx.PutText(wx, " devices ");
       Wx.PutInt(wx, finCnt.k2);
       Wx.PutText(wx, " fins ");
@@ -66,6 +67,28 @@ PROCEDURE DoTransistorReports(wr       : Wr.T;
     
     Wr.PutText(wr, Wx.ToText(wx));
 
+    (**************************************************)
+
+    iter := tab.iterate();
+    WHILE iter.next(mosInfo, finCnt) DO
+      Wr.PutText(csvWr, Atom.ToText(rootType));
+      Wr.PutChar(csvWr, ',');
+      Wr.PutText(csvWr, Int(level));
+      Wr.PutChar(csvWr, ',');
+      Wr.PutText(csvWr, Atom.ToText(mosInfo.type));
+      Wr.PutChar(csvWr, ',');
+      Wr.PutText(csvWr, Int(mosInfo.len));
+      Wr.PutChar(csvWr, ',');
+      Wr.PutText(csvWr, Int(finCnt.k1));
+      Wr.PutChar(csvWr, ',');
+      Wr.PutText(csvWr, Int(finCnt.k2));
+      Wr.PutChar(csvWr, ',');
+      Wr.PutText(csvWr, Int(finCnt.k2 * mosInfo.len));
+      Wr.PutChar(csvWr, '\n');
+    END;
+    
+    (**************************************************)
+
     IF level < nlevels THEN
       VAR
         cell : CellRec.T;
@@ -79,6 +102,7 @@ PROCEDURE DoTransistorReports(wr       : Wr.T;
                                                          sub.instance);
             BEGIN
               DoTransistorReports(wr,
+                                  csvWr,
                                   db,
                                   sub.type,
                                   memoTbl,
@@ -160,7 +184,7 @@ VAR
   parsed : BraceParse.T;
   rootType : TEXT := NIL;
   transistorCellFn : TEXT := NIL;
-  transistorReportFn : TEXT := NIL;
+  transistorReportPfx : TEXT := NIL;
   transistorCells := NEW(OpenCharArrayRefTbl.Default).init();
   levels : CARDINAL := 1; (* report levels, default just the root *)
 BEGIN
@@ -192,7 +216,7 @@ BEGIN
     END;
 
     IF pp.keywordPresent("-T") OR pp.keywordPresent("-transistorreport") THEN
-      transistorReportFn := pp.getNext()
+      transistorReportPfx := pp.getNext()
     END;
 
     IF pp.keywordPresent("-l") OR pp.keywordPresent("-levels") THEN
@@ -274,10 +298,12 @@ BEGIN
                          rootTypeA,
                          memoTbl,
                          warnSet);
-      IF transistorReportFn # NIL THEN
+      IF transistorReportPfx # NIL THEN
         TRY
-          WITH wr = FileWr.Open(transistorReportFn) DO
+          WITH wr    = FileWr.Open(transistorReportPfx & ".rpt"),
+               csvWr = FileWr.Open(transistorReportPfx & ".csv") DO
             DoTransistorReports(wr,
+                                csvWr,
                                 parsed.cellTbl,
                                 rootTypeA,
                                 memoTbl,
@@ -285,17 +311,18 @@ BEGIN
                                 levels,
                                 "(ROOT)",
                                 parsed.longNames);
-            Wr.Close(wr)
+            Wr.Close(wr);
+            Wr.Close(csvWr)
           END
         EXCEPT
           OSError.E(x) =>
           Debug.Error(F("Trouble opening/closing transistor reports file %s : OSError.E : %s",
-                        transistorReportFn,
+                        transistorReportPfx,
                         AL.Format(x)))
         |
           Wr.Failure(x) =>
           Debug.Error(F("Trouble writing transistor reports file %s : Wr.Failure : %s",
-                        transistorReportFn,
+                        transistorReportPfx,
                         AL.Format(x)))
         END
       END
