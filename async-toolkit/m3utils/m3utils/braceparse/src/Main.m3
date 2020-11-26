@@ -13,6 +13,10 @@ IMPORT MosInfoCardTbl;
 IMPORT MosInfo;
 IMPORT AtomSet, AtomSetDef;
 IMPORT CardPair;
+IMPORT OSError;
+IMPORT AL;
+IMPORT Thread;
+<*FATAL Thread.Alerted*>
 
 CONST TE = Text.Equal;
 
@@ -93,7 +97,13 @@ BEGIN
         IF TE(fn,"-") THEN
           rd := Stdio.stdin
         ELSE
-          rd := FileRd.Open(fn)
+          TRY
+            rd := FileRd.Open(fn)
+          EXCEPT
+            OSError.E(e) => Debug.Error(F("Main.m3: trouble opening \"%s\" : OSError.E : %s",
+                                          fn,
+                                          AL.Format(e)))
+          END
         END
       END
     END;
@@ -108,8 +118,13 @@ BEGIN
   END;
 
   IF rd = NIL THEN Debug.Error("Must provide filename") END;
-  
-  parsed := BraceParse.Parse(rd);
+
+  TRY
+    parsed := BraceParse.Parse(rd);
+  EXCEPT
+    Rd.Failure(e) => Debug.Error("Main.m3: Trouble parsing input : Rd.Failure : "&
+      AL.Format(e))
+  END;
 
   IF doDebug THEN
     Debug.Out(F("Main.m3 got %s cells", Int(parsed.cellTbl.size())));
