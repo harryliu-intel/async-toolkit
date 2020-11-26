@@ -202,11 +202,14 @@ PROCEDURE Parse(rd : Rd.T; transistorCells : OpenCharArrayRefTbl.T) : T
       END;
 
       <*ASSERT b # e*>
-      WHILE NOT buf[b] IN SpecialPlusWS DO
+
+      (* we are now at a normal character, so we can execute the 
+         following loop at least once *)
+      REPEAT
         INC(b); 
 
         IF b = e THEN Refill() END
-      END;
+      UNTIL buf[b] IN SpecialPlusWS;
 
       (* we are at the end of a token *)
       haveTok := TRUE;
