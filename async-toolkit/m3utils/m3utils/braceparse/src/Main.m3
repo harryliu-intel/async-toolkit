@@ -148,9 +148,14 @@ BEGIN
   IF rootType # NIL THEN
     VAR memoTbl := NEW(AtomMosInfoCardTblTbl.Default).init();
         warnSet := NEW(AtomSetDef.T).init();
+        dummy   : CellRec.T;
+        rootTypeA := Atom.FromText(rootType);
     BEGIN
+      IF NOT parsed.cellTbl.get(rootTypeA, dummy) THEN
+        Debug.Error("Cannot find root type : " & rootType)
+      END;
       RecurseTransistors(parsed.cellTbl,
-                         Atom.FromText(rootType),
+                         rootTypeA,
                          memoTbl,
                          warnSet)
     END
