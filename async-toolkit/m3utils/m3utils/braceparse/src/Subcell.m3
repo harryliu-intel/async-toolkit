@@ -4,7 +4,7 @@ IMPORT FS, TextList;
 IMPORT Compiler, Fmt, Process;
 IMPORT Thread;
 IMPORT AL, OSError, Debug;
-FROM Fmt IMPORT F;
+FROM Fmt IMPORT F, Int;
 IMPORT BraceParse;
 IMPORT Text;
 
@@ -42,12 +42,13 @@ PROCEDURE EncodeName(longNames     : LongNames;
 
           idx := Wr.Index(longNames.wr);
           
-          tgt[LAST(tgt)] := LAST(CHAR);
           FOR i := FIRST(tgt) TO LAST(tgt) - 1 DO
             tgt[i] := VAL(idx MOD NUMBER(CHAR),CHAR);
             idx := idx DIV NUMBER(CHAR)
           END;
           <*ASSERT idx = 0*>
+          tgt[LAST(tgt)] := LAST(CHAR);
+
           FOR i := FIRST(name) TO LAST(name) DO
             Wr.PutChar(longNames.wr, name[i])
           END;
@@ -64,15 +65,16 @@ PROCEDURE DecodeName(longNames     : LongNames;
                      VAR buffer    : ARRAY OF CHAR) =
   VAR
     last := ORD(inst[LAST(inst)]);
+    idx : CARDINAL := 0;
+    j := 0;
   BEGIN
     TRY
-      IF last < LAST(inst) THEN
-        SUBARRAY(buffer, 0, last) := SUBARRAY(inst, 0, last)
+      IF last # ORD(LAST(CHAR)) THEN
+        SUBARRAY(buffer, 0, last) := SUBARRAY(inst, 0, last);
+        buffer[last] := VAL(0,CHAR)
       ELSE
         VAR
-          idx : CARDINAL := 0;
           c : CHAR;
-          j := 0;
         BEGIN
           IF longNames.wr # NIL THEN
             TRY
@@ -90,7 +92,7 @@ PROCEDURE DecodeName(longNames     : LongNames;
             END;
           END;
 
-          FOR i := FIRST(inst) TO LAST(inst) - 1 DO
+          FOR i := LAST(inst) - 1 TO FIRST(inst) BY -1 DO
             idx := NUMBER(CHAR) * idx + ORD(inst[i])
           END;
           Rd.Seek(longNames.rd, idx);
@@ -104,7 +106,16 @@ PROCEDURE DecodeName(longNames     : LongNames;
     EXCEPT
       Rd.Failure(e) => Debug.Error(F("trouble reading longnames file : Rd.Failure : %s", AL.Format(e)))
     |
-      Rd.EndOfFile => Debug.Error("unexpected EOF reading longnames file")
+      Rd.EndOfFile => 
+      longNameNames := NIL; (* do not delete any files *)
+      VAR
+        str := "";
+      BEGIN
+        FOR i := FIRST(inst) TO LAST(inst) DO
+          str := str & "16_" & Int(ORD(inst[i]), base := 16) & " "
+        END;
+        Debug.Error(F("unexpected EOF reading longnames file, idx = %s j = %s inst = %s", Int(idx), Int(j), str))
+      END
     END
   END DecodeName;
 
