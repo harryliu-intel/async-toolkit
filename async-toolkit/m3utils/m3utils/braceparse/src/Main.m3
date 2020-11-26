@@ -207,8 +207,9 @@ PROCEDURE ProduceGoxReports(p : TextList.T) =
                            warnSet);
 
         TRY
-          WITH wr    = FileWr.Open(transistorReportPfx & ".rpt"),
-               csvWr = FileWr.Open(transistorReportPfx & ".csv") DO
+          WITH pfx = F("%s.%s", p.head, transistorReportSfx),
+               wr    = FileWr.Open(pfx & ".rpt"),
+               csvWr = FileWr.Open(pfx & ".csv") DO
             PutCsvHeader(csvWr);
             DoTransistorReports(wr,
                                 csvWr,
@@ -225,12 +226,12 @@ PROCEDURE ProduceGoxReports(p : TextList.T) =
         EXCEPT
           OSError.E(x) =>
           Debug.Error(F("Trouble opening/closing transistor reports file %s : OSError.E : %s",
-                        transistorReportPfx,
+                        transistorReportSfx,
                         AL.Format(x)))
         |
           Wr.Failure(x) =>
           Debug.Error(F("Trouble writing transistor reports file %s : Wr.Failure : %s",
-                        transistorReportPfx,
+                        transistorReportSfx,
                         AL.Format(x)))
         END
       END;
@@ -291,7 +292,7 @@ VAR
   parsed : BraceParse.T;
   rootTypes : TextList.T := NIL;
   transistorCellFn : TEXT := NIL;
-  transistorReportPfx : TEXT := "gox";
+  transistorReportSfx : TEXT := "gox";
   transistorCells := NEW(OpenCharArrayRefTbl.Default).init();
   levels : CARDINAL := 1; (* report levels, default just the root *)
 BEGIN
@@ -325,7 +326,7 @@ BEGIN
     END;
 
     IF pp.keywordPresent("-T") OR pp.keywordPresent("-transistorreport") THEN
-      transistorReportPfx := pp.getNext()
+      transistorReportSfx := pp.getNext()
     END;
 
     IF pp.keywordPresent("-l") OR pp.keywordPresent("-levels") THEN

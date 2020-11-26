@@ -10,7 +10,7 @@ MODULE BraceParse;
 *)
 
 IMPORT Rd, Thread;
-FROM Fmt IMPORT F, Int;
+FROM Fmt IMPORT F, Int, LongReal;
 IMPORT Debug;
 IMPORT Text;
 IMPORT NetKeywords AS N;
@@ -306,35 +306,38 @@ PROCEDURE Parse(rd : Rd.T; transistorCells : OpenCharArrayRefTbl.T) : T
           IF '0' <= c AND c <= '9' THEN
             whole := whole * 10 + ORD(c) - ORD('0');
             INC(q)
-          ELSE
+          ELSIF buf[q] = '.' THEN
             EXIT
+          ELSE
+            RETURN FALSE
           END
         END
       END;
 
-      (* done reading the integer part *)
+      (* done reading the integer part -- two poss.
+         
+         1. either done here
+         2. we are at the radix point
+      *)
 
-      IF q # b THEN
-        IF buf[q] = '.' THEN
-          INC(q);
-          (* read fractional part *)
+      IF buf[q] = '.' THEN
+        INC(q);(* skip *)
+        
+        (* now read fractional part *)
+        VAR
+          pos := 10.0d0; (* this is exact, 0.1 is not *)
+        BEGIN
           WHILE q < b DO
-            VAR
-              pos := 10.0d0; (* this is exact, 0.1 is not *)
-            BEGIN
-              WITH c = buf[q] DO
-                IF '0' <= c AND c <= '9' THEN
-                  frac := frac + FLOAT(ORD(c) - ORD('0'),LONGREAL) / pos;
-                  pos := pos * 10.0d0;
-                  INC(q);
-                ELSE
-                  EXIT
-                END
+            WITH c = buf[q] DO
+              IF '0' <= c AND c <= '9' THEN
+                frac := frac + FLOAT(ORD(c) - ORD('0'),LONGREAL) / pos;
+                pos := pos * 10.0d0;
+                INC(q);
+              ELSE
+                RETURN FALSE
               END
             END
           END
-        ELSE
-          RETURN FALSE
         END
       END;
 
@@ -558,7 +561,10 @@ PROCEDURE Parse(rd : Rd.T; transistorCells : OpenCharArrayRefTbl.T) : T
           RETURN TRUE
         ELSIF GetExact(N.lkw) THEN
           GetPropAssign();
-          props.l := ROUND(propVal * 1.0d6)
+          props.l := ROUND(propVal * 1.0d6);
+          IF doDebug THEN
+            Debug.Out(F("Got l = %s -> %s", LongReal(propVal), Int(props.l)))
+          END;
         ELSIF GetExact(N.nfinkw) THEN
           GetPropAssign();
           props.nfin := ROUND(propVal);
