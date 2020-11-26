@@ -31,6 +31,6 @@ table ("AtomMosInfoCardTbl", "Atom", "MosInfoCardTbl")
 
 openarrayTable ("OpenCharArrayRef", "OpenCharArray", "Refany")
 
-program ("testbrace")
+program ("netlist2goxrpt")
 
 

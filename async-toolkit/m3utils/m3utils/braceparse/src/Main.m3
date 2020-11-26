@@ -28,7 +28,7 @@ VAR doDebug := Debug.GetLevel() >= 10;
 PROCEDURE PutCsvHeader(wr : Wr.T)
   RAISES { Wr.Failure } =
   BEGIN
-    Wr.PutText(wr, "cellType,level,MOS type,length/pm,count,totfins,fin*pm\n")
+    Wr.PutText(wr, "path,cellType,level,MOS type,length/pm,count,totfins,fin*pm\n")
   END PutCsvHeader;
 
 PROCEDURE DoTransistorReports(wr       : Wr.T;
@@ -77,6 +77,8 @@ PROCEDURE DoTransistorReports(wr       : Wr.T;
 
     iter := tab.iterate();
     WHILE iter.next(mosInfo, finCnt) DO
+      Wr.PutText(csvWr, path);
+      Wr.PutChar(csvWr, ',');
       Wr.PutText(csvWr, Atom.ToText(rootType));
       Wr.PutChar(csvWr, ',');
       Wr.PutText(csvWr, Int(level));
