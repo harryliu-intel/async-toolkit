@@ -478,7 +478,9 @@ PROCEDURE Parse(rd : Rd.T; transistorCells : OpenCharArrayRefTbl.T) : T
           mosInfo := MosInfo.T { type, props.l };
           oldCnt  : CardPair.T;
         BEGIN
-          Debug.Out("got a MOS with fins " & Int(props.nfin));
+          IF doDebug THEN
+            Debug.Out("got a MOS with fins " & Int(props.nfin))
+          END;
           IF parent.mosTbl.get(mosInfo, oldCnt) THEN
             EVAL parent.mosTbl.put(mosInfo, CardPair.T {oldCnt.k1 + 1,
                                                         oldCnt.k2 + props.nfin})
@@ -561,7 +563,9 @@ PROCEDURE Parse(rd : Rd.T; transistorCells : OpenCharArrayRefTbl.T) : T
           GetPropAssign();
           props.nfin := ROUND(propVal);
 
-          Debug.Out(F("nfin %s", Int(props.nfin)))
+          IF doDebug THEN
+            Debug.Out(F("nfin %s", Int(props.nfin)))
+          END
         ELSIF GetIdent(propNm) THEN
           GetPropAssign()
         ELSE
