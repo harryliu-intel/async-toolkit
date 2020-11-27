@@ -37,8 +37,11 @@ table ("AtomMosInfoCardTbl", "Atom", "MosInfoCardTbl")
 openarrayTable ("OpenCharArrayRef", "OpenCharArray", "Refany")
 
 table ("AtomCard", "Atom", "Cardinal")
+table ("AtomCardPair", "Atom", "CardPair")
+table ("AtomCardTriple", "Atom", "CardTriple")
 
 module("ExceptionInfo")
+module("CardTriple")
 
 program ("netlist2goxrpt")
 

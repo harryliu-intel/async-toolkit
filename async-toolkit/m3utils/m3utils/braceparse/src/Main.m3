@@ -23,6 +23,8 @@ IMPORT TextList;
 IMPORT Pathname;
 IMPORT AtomCardTbl;
 IMPORT AtomTextTbl;
+IMPORT AtomCardTripleTbl;
+IMPORT CardTriple;
 <*FATAL Thread.Alerted*>
 
 CONST TE = Text.Equal;
@@ -41,6 +43,12 @@ PROCEDURE PutCsvHeader2(wr : Wr.T)
   BEGIN
     Wr.PutText(wr, "canonpath,cellType,minlevel,multiplicity,MOS type,length/pm,count/inst,fins/inst,fins*pm/inst,totcount,totfins,totfins*pm\n")
   END PutCsvHeader2;
+
+PROCEDURE PutConsolidatedHeader(wr : Wr.T)
+  RAISES { Wr.Failure } =
+  BEGIN
+    Wr.PutText(wr, "canonpath,cellType,minlevel,multiplicity,MOS type,count/inst,fins/inst,fins*pm/inst,totcount,totfins,totfins*pm\n")
+  END PutConsolidatedHeader;
 
 PROCEDURE DoTransistorReports(wr       : Wr.T;
                               csvWr    : Wr.T;
@@ -138,8 +146,20 @@ PROCEDURE DoTransistorReports(wr       : Wr.T;
     END
   END DoTransistorReports;
 
+PROCEDURE AccumByAtom(tbl : AtomCardTripleTbl.T; atom : Atom.T; c : CardTriple.T) =
+  VAR
+    old : CardTriple.T;
+  BEGIN
+    IF tbl.get(atom, old) THEN
+      EVAL tbl.put(atom, CardTriple.Add(old, c))
+    ELSE
+      EVAL tbl.put(atom, c)
+    END
+  END AccumByAtom;
+  
 PROCEDURE DoTransistorReports2(wr       : Wr.T;
                                csvWr    : Wr.T;
+                               conWr    : Wr.T;
                                db       : AtomCellTbl.T;
                                rootType : CellRec.T;
                                memoTbl  : AtomMosInfoCardTblTbl.T;
@@ -162,6 +182,7 @@ PROCEDURE DoTransistorReports2(wr       : Wr.T;
       finCnt : CardPair.T;
       wx := Wx.New();
       cpath : TEXT;
+      consolidated := NEW(AtomCardTripleTbl.Default).init();
     BEGIN
       WITH hadIt = memoTbl.get(nm, tab) DO
         <*ASSERT hadIt*>
@@ -179,6 +200,10 @@ PROCEDURE DoTransistorReports2(wr       : Wr.T;
 
         WHILE iter.next(mosInfo, finCnt) DO
           MosInfo.DebugOut(mosInfo, wx);
+          AccumByAtom(consolidated, mosInfo.type,
+                      CardTriple.T { finCnt.k1,
+                                     finCnt.k2,
+                                     finCnt.k2 * mosInfo.len });
           Wx.PutInt(wx, finCnt.k1);
           Wx.PutText(wx, " devs ");
           Wx.PutInt(wx, finCnt.k2);
@@ -233,6 +258,37 @@ PROCEDURE DoTransistorReports2(wr       : Wr.T;
           Wr.PutChar(csvWr, ',');
           Wr.PutText(csvWr, Int(n * finCnt.k2 * mosInfo.len));
           Wr.PutChar(csvWr, '\n');
+        END
+      END;
+
+      VAR ttype : Atom.T;
+          iter := consolidated.iterate();
+          n   := cell.aux;
+          data : CardTriple.T;
+      BEGIN
+        WHILE iter.next(ttype, data) DO
+          Wr.PutText(conWr, cpath);
+          Wr.PutChar(conWr, ',');
+          Wr.PutText(conWr, Atom.ToText(nm));
+          Wr.PutChar(conWr, ',');
+          Wr.PutText(conWr, Int(level));
+          Wr.PutChar(conWr, ',');
+          Wr.PutText(conWr, Int(n));
+          Wr.PutChar(conWr, ',');
+          Wr.PutText(conWr, Atom.ToText(ttype));
+          Wr.PutChar(conWr, ',');
+          Wr.PutText(conWr, Int(data[0]));
+          Wr.PutChar(conWr, ',');
+          Wr.PutText(conWr, Int(data[1]));
+          Wr.PutChar(conWr, ',');
+          Wr.PutText(conWr, Int(data[2]));
+          Wr.PutChar(conWr, ',');
+          Wr.PutText(conWr, Int(n * data[0]));
+          Wr.PutChar(conWr, ',');
+          Wr.PutText(conWr, Int(n * data[1]));
+          Wr.PutChar(conWr, ',');
+          Wr.PutText(conWr, Int(n * data[2]));
+          Wr.PutChar(conWr, '\n');
         END
       END
     END Emit;
@@ -467,17 +523,21 @@ PROCEDURE ProduceGoxReports(p : TextList.T) =
         TRY
           WITH pfx = F("%s.%s", p.head, transistorReportSfx),
                wr    = FileWr.Open(pfx & ".rpt"),
-               csvWr = FileWr.Open(pfx & ".csv") DO
+               csvWr = FileWr.Open(pfx & ".csv"),
+               conWr = FileWr.Open(pfx & "_consolidated.csv") DO
             PutCsvHeader2(csvWr);
+            PutConsolidatedHeader(conWr);
             DoTransistorReports2(wr,
-                                csvWr,
-                                parsed.cellTbl,
-                                root,
-                                memoTbl,
-                                levels,
-                                parsed.longNames);
+                                 csvWr,
+                                 conWr,
+                                 parsed.cellTbl,
+                                 root,
+                                 memoTbl,
+                                 levels,
+                                 parsed.longNames);
             Wr.Close(wr);
-            Wr.Close(csvWr)
+            Wr.Close(csvWr);
+            Wr.Close(conWr)
           END
         EXCEPT
           OSError.E(x) =>
