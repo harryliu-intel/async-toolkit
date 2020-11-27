@@ -18,6 +18,8 @@ TYPE
 
   LongNames <: ROOT;
 
+CONST NullInstanceName = InstanceName { FIRST(CHAR), .. };
+
 PROCEDURE NewLongNames() : LongNames;
   
 PROCEDURE EncodeName(longNames     : LongNames;

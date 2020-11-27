@@ -7,6 +7,7 @@ TYPE
   Private = CellRec.Public OBJECT
     subcells : REF ARRAY OF Subcell.T;
     mosTbl   : MosInfoCardTbl.T;
+    aux      : CARDINAL; (* value slot for client computations *)
   END;
 
 REVEAL

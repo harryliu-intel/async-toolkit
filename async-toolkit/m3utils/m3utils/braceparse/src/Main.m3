@@ -21,17 +21,26 @@ IMPORT Wr, FileWr;
 IMPORT Subcell;
 IMPORT TextList;
 IMPORT Pathname;
+IMPORT AtomCardTbl;
+IMPORT AtomTextTbl;
 <*FATAL Thread.Alerted*>
 
 CONST TE = Text.Equal;
 
 VAR doDebug := Debug.GetLevel() >= 10;
 
+<*UNUSED*>
 PROCEDURE PutCsvHeader(wr : Wr.T)
   RAISES { Wr.Failure } =
   BEGIN
     Wr.PutText(wr, "path,cellType,level,MOS type,length/pm,count,totfins,fin*pm\n")
   END PutCsvHeader;
+
+PROCEDURE PutCsvHeader2(wr : Wr.T)
+  RAISES { Wr.Failure } =
+  BEGIN
+    Wr.PutText(wr, "canonpath,cellType,minlevel,multiplicity,MOS type,length/pm,count/inst,fins/inst,fins*pm/inst,totcount,totfins,totfins*pm\n")
+  END PutCsvHeader2;
 
 PROCEDURE DoTransistorReports(wr       : Wr.T;
                               csvWr    : Wr.T;
@@ -44,6 +53,8 @@ PROCEDURE DoTransistorReports(wr       : Wr.T;
                               longNames: Subcell.LongNames)
   RAISES { Wr.Failure } =
 
+  (* recursive version, not currently used *)
+  
   VAR
     tab : MosInfoCardTbl.T;
     iter : MosInfoCardTbl.Iterator;
@@ -127,32 +138,277 @@ PROCEDURE DoTransistorReports(wr       : Wr.T;
     END
   END DoTransistorReports;
 
+PROCEDURE DoTransistorReports2(wr       : Wr.T;
+                               csvWr    : Wr.T;
+                               db       : AtomCellTbl.T;
+                               rootType : CellRec.T;
+                               memoTbl  : AtomMosInfoCardTblTbl.T;
+                               nlevels  : CARDINAL;
+                               longNames: Subcell.LongNames)
+  RAISES { Wr.Failure } =
+
+  PROCEDURE Emit(nm : Atom.T; level : CARDINAL)
+    RAISES { Wr.Failure } =
+    
+    (* write the stats for a single cell;
+       assumes that CountTotalInstances was just called so that the cell.aux
+       contains the total # of instances of each type in the design
+    *)
+    
+    VAR
+      tab : MosInfoCardTbl.T;
+      cell : CellRec.T;
+      mosInfo : MosInfo.T;
+      finCnt : CardPair.T;
+      wx := Wx.New();
+      cpath : TEXT;
+    BEGIN
+      WITH hadIt = memoTbl.get(nm, tab) DO
+        <*ASSERT hadIt*>
+      END;
+      WITH hadIt = db.get(nm, cell) DO
+        <*ASSERT hadIt*>
+        <*ASSERT cell.nm = nm*>
+      END;
+      WITH hadIt = canonNames.get(nm, cpath) DO
+        <*ASSERT hadIt*>
+      END;
+      WITH iter = tab.iterate(),
+           n    = cell.aux DO
+            (* iterate thru all the transistor types in the tab *)
+
+        WHILE iter.next(mosInfo, finCnt) DO
+          MosInfo.DebugOut(mosInfo, wx);
+          Wx.PutInt(wx, finCnt.k1);
+          Wx.PutText(wx, " devs ");
+          Wx.PutInt(wx, finCnt.k2);
+          Wx.PutText(wx, " fins ");
+          Wx.PutInt(wx, finCnt.k2 * mosInfo.len);
+          Wx.PutText(wx, " fin*pm");
+          
+          Wx.PutInt(wx, n * finCnt.k1);
+          Wx.PutText(wx, " tot devs ");
+          Wx.PutInt(wx, n * finCnt.k2);
+          Wx.PutText(wx, " tot fins ");
+          Wx.PutInt(wx, n * finCnt.k2 * mosInfo.len);
+          Wx.PutText(wx, " tot fin*pm");
+
+          
+          Wx.PutChar(wx, '\n');
+        END;
+        
+        Wr.PutText(wr, F("====================  Level %s Canon path %s Type %s Total instances %s  ====================\n",
+                         Int(level),
+                         cpath,
+                         Atom.ToText(nm),
+                         Int(cell.aux)));
+    
+        Wr.PutText(wr, Wx.ToText(wx));
+      END;
+
+      WITH iter = tab.iterate(),
+           n    = cell.aux DO
+        WHILE iter.next(mosInfo, finCnt) DO
+          Wr.PutText(csvWr, cpath);
+          Wr.PutChar(csvWr, ',');
+          Wr.PutText(csvWr, Atom.ToText(nm));
+          Wr.PutChar(csvWr, ',');
+          Wr.PutText(csvWr, Int(level));
+          Wr.PutChar(csvWr, ',');
+          Wr.PutText(csvWr, Int(n));
+          Wr.PutChar(csvWr, ',');
+          Wr.PutText(csvWr, Atom.ToText(mosInfo.type));
+          Wr.PutChar(csvWr, ',');
+          Wr.PutText(csvWr, Int(mosInfo.len));
+          Wr.PutChar(csvWr, ',');
+          Wr.PutText(csvWr, Int(finCnt.k1));
+          Wr.PutChar(csvWr, ',');
+          Wr.PutText(csvWr, Int(finCnt.k2));
+          Wr.PutChar(csvWr, ',');
+          Wr.PutText(csvWr, Int(finCnt.k2 * mosInfo.len));
+          Wr.PutChar(csvWr, ',');
+          Wr.PutText(csvWr, Int(n * finCnt.k1));
+          Wr.PutChar(csvWr, ',');
+          Wr.PutText(csvWr, Int(n * finCnt.k2));
+          Wr.PutChar(csvWr, ',');
+          Wr.PutText(csvWr, Int(n * finCnt.k2 * mosInfo.len));
+          Wr.PutChar(csvWr, '\n');
+        END
+      END
+    END Emit;
+    
+  PROCEDURE PrintAtLevel(lev : CARDINAL) RAISES { Wr.Failure } =
+    VAR
+      iter := printTypes.iterate();
+      a    : Atom.T;
+      clev : CARDINAL;
+    BEGIN
+      WHILE iter.next(a, clev) DO
+        IF lev = clev THEN
+          Emit(a, clev)
+        END
+      END
+    END PrintAtLevel;
+    
+  VAR
+    printTypes := MarkMinDepth(db, rootType, nlevels - 1);
+    canonNames := FindCanonicalNames(longNames, rootType, nlevels - 1);
+  BEGIN
+    
+    CountTotalInstances(db, rootType);
+
+    FOR i := 0 TO nlevels - 1 DO
+      PrintAtLevel(i)
+    END
+  END DoTransistorReports2;
+  
+PROCEDURE MarkMinDepth(db       : AtomCellTbl.T;
+                       rootType : CellRec.T;
+                       maxDepth : CARDINAL) : AtomCardTbl.T =
+
+  VAR
+    res := NEW(AtomCardTbl.Default).init();
+    
+  PROCEDURE Recurse(type : CellRec.T; depth : CARDINAL) =
+    BEGIN
+      IF depth < type.aux THEN
+        type.aux := depth;
+        IF depth <= maxDepth THEN
+          EVAL res.put(type.nm, depth)
+        END;
+        FOR i := FIRST(type.subcells^) TO LAST(type.subcells^) DO
+          Recurse(type.subcells[i].type, depth + 1)
+        END
+      END
+    END Recurse;
+
+  BEGIN
+    BraceParse.InitCellTblAux(db, LAST(CARDINAL));
+    Recurse(rootType, 0);
+    RETURN res
+  END MarkMinDepth;
+
+TYPE Formatter = PROCEDURE() : TEXT;
+  
+PROCEDURE FindCanonicalNames(longNames: Subcell.LongNames;
+                             rootType : CellRec.T;
+                             maxDepth : CARDINAL) : AtomTextTbl.T =
+  (* when this procedure is run, MarkMinDepth must have been
+     run, so that all the .aux fields contain the type's min depth *)
+  VAR
+    res := NEW(AtomTextTbl.Default).init();    
+
+  PROCEDURE Recurse(type : CellRec.T; depth : CARDINAL; f : Formatter) =
+
+    VAR
+      dummy : TEXT;
+    BEGIN
+      IF depth = type.aux AND NOT res.get(type.nm, dummy) THEN
+        (* ok we have a new canon. name. *)
+        WITH canon = f() DO
+          IF doDebug THEN
+            Debug.Out(F("canonical name of %s is %s", Atom.ToText(type.nm), canon))
+          END;
+          EVAL res.put(type.nm, canon)
+        END
+      END;
+        
+      IF depth # maxDepth THEN
+        FOR i := FIRST(type.subcells^) TO LAST(type.subcells^) DO
+
+          (* using this nested procedure approach defers printing to
+             the last possible moment 
+
+             AND
+
+             stores the necessary linkage on the stack! 
+          *)
+          
+          PROCEDURE Formatter() : TEXT =
+            BEGIN
+              RETURN f() & "." & Subcell.DecodeNameToText(longNames, instance)
+            END Formatter;
+          VAR
+            instance := type.subcells[i].instance;
+          BEGIN
+            Recurse(type.subcells[i].type,
+                    depth + 1,
+                    Formatter)
+          END
+        END
+      END
+    END Recurse;
+
+  PROCEDURE RootFormatter() : TEXT = BEGIN RETURN "(ROOT)" END RootFormatter;
+
+  BEGIN
+    Recurse(rootType, 0, RootFormatter);
+    RETURN res
+  END FindCanonicalNames;
+  
+
+PROCEDURE CountTotalInstances(db       : AtomCellTbl.T;
+                              rootType : CellRec.T) =
+
+  PROCEDURE Recurse(type : CellRec.T; weight : CARDINAL) =
+    VAR
+      tbl := NEW(AtomCardTbl.Default).init();
+      o : CARDINAL;
+    BEGIN
+      INC(type.aux, weight);
+
+      (* count instances of each subtype here *)
+      FOR i := FIRST(type.subcells^) TO LAST(type.subcells^) DO
+        WITH sub = type.subcells[i] DO
+          IF tbl.get(sub.type.nm, o) THEN
+            EVAL tbl.put(sub.type.nm, o + 1)
+          ELSE
+            EVAL tbl.put(sub.type.nm, 1)
+          END
+        END
+      END;
+
+      VAR
+        iter := tbl.iterate();
+        a : Atom.T;
+        cell : CellRec.T;
+        cnt : CARDINAL;
+      BEGIN
+        WHILE iter.next(a, cnt) DO
+          WITH hadIt = db.get(a, cell) DO
+            <*ASSERT hadIt*>
+          END;
+          Recurse(cell, cnt * weight)
+        END
+      END
+    END Recurse;
+    
+  BEGIN
+    BraceParse.InitCellTblAux(db, 0);
+    Recurse(rootType, 1)
+  END CountTotalInstances;
+
 PROCEDURE RecurseTransistors(db       : AtomCellTbl.T;
-                             rootType : Atom.T;
+                             rootType : CellRec.T;
                              memoTbl  : AtomMosInfoCardTblTbl.T;
                              warnSet  : AtomSet.T) =
   VAR
     tab : MosInfoCardTbl.T;
   BEGIN
     (* check if already computed *)
-    IF memoTbl.get(rootType, tab) THEN RETURN END;
+    IF memoTbl.get(rootType.nm, tab) THEN RETURN END;
 
     (* not yet computed, compute it! *)
     VAR
-      cellRec : CellRec.T;
+      cellRec := rootType;
     BEGIN
-      WITH hadIt = db.get(rootType, cellRec) DO
-        IF NOT hadIt THEN
-          RETURN
-        END
-      END;
       VAR
         tbl := NEW(MosInfoCardTbl.Default).init();
       BEGIN
         MosInfoAdd(tbl, cellRec.mosTbl);
         FOR i := FIRST(cellRec.subcells^) TO LAST(cellRec.subcells^) DO
           WITH sc = cellRec.subcells[i] DO
-            RecurseTransistors(db, sc.type.nm, memoTbl, warnSet);
+            RecurseTransistors(db, sc.type, memoTbl, warnSet);
             WITH hadIt = memoTbl.get(sc.type.nm, tab) DO
               IF hadIt THEN
                 MosInfoAdd(tbl, tab)
@@ -160,14 +416,14 @@ PROCEDURE RecurseTransistors(db       : AtomCellTbl.T;
                 IF NOT warnSet.member(sc.type.nm) THEN
                   Debug.Warning(F("unknown cell type %s while processing %s",
                                   Atom.ToText(sc.type.nm),
-                                  Atom.ToText(rootType)));
+                                  Atom.ToText(rootType.nm)));
                   EVAL warnSet.insert(sc.type.nm)
                 END
               END
             END
           END
         END;
-        EVAL memoTbl.put(rootType, tbl)
+        EVAL memoTbl.put(rootType.nm, tbl)
       END
     END
   END RecurseTransistors;
@@ -194,15 +450,17 @@ PROCEDURE ProduceGoxReports(p : TextList.T) =
       VAR rootType := rootTypes.head;
           memoTbl := NEW(AtomMosInfoCardTblTbl.Default).init();
           warnSet := NEW(AtomSetDef.T).init();
-          dummy   : CellRec.T;
+          root   : CellRec.T;
           rootTypeA := Atom.FromText(rootType);
       BEGIN
-        IF NOT parsed.cellTbl.get(rootTypeA, dummy) THEN
+        IF NOT parsed.cellTbl.get(rootTypeA, root) THEN
           Debug.Warning("Cannot find root type : " & rootType);
           EXIT
         END;
+        <*ASSERT root # NIL*>
+        <*ASSERT root.nm # NIL*>
         RecurseTransistors(parsed.cellTbl,
-                           rootTypeA,
+                           root,
                            memoTbl,
                            warnSet);
 
@@ -210,15 +468,13 @@ PROCEDURE ProduceGoxReports(p : TextList.T) =
           WITH pfx = F("%s.%s", p.head, transistorReportSfx),
                wr    = FileWr.Open(pfx & ".rpt"),
                csvWr = FileWr.Open(pfx & ".csv") DO
-            PutCsvHeader(csvWr);
-            DoTransistorReports(wr,
+            PutCsvHeader2(csvWr);
+            DoTransistorReports2(wr,
                                 csvWr,
                                 parsed.cellTbl,
-                                rootTypeA,
+                                root,
                                 memoTbl,
-                                0,
                                 levels,
-                                "(ROOT)",
                                 parsed.longNames);
             Wr.Close(wr);
             Wr.Close(csvWr)

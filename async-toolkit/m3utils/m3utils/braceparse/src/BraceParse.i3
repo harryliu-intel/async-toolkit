@@ -16,5 +16,7 @@ TYPE
   
 PROCEDURE Parse(rd : Rd.T; transistorCells : OpenCharArrayRefTbl.T) : T
   RAISES { Rd.Failure, Thread.Alerted };
+
+PROCEDURE InitCellTblAux(tbl : AtomCellTbl.T; to : CARDINAL);
   
 END BraceParse.

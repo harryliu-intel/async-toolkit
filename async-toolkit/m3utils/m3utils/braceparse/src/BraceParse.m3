@@ -24,6 +24,8 @@ IMPORT AtomCellTbl;
 IMPORT CardPair;
 IMPORT SubcellSeq;
 IMPORT OpenCharArrayRefTbl;
+IMPORT ExceptionInfo;
+IMPORT AtomSetDef;
 
 (* 
    an interesting extension of the buffering code would be to make the
@@ -94,6 +96,8 @@ PROCEDURE Parse(rd : Rd.T; transistorCells : OpenCharArrayRefTbl.T) : T
     lev := 0;
 
     lineno := 1;
+
+    warnSet := NEW(AtomSetDef.T).init();
 
   PROCEDURE Refill()
     RAISES { Rd.EndOfFile, Rd.Failure, Thread.Alerted, Syntax }  =
@@ -500,19 +504,30 @@ PROCEDURE Parse(rd : Rd.T; transistorCells : OpenCharArrayRefTbl.T) : T
         VAR
           sub : Subcell.T;
           cellRec : CellRec.T;
+          fail := FALSE;
         BEGIN
 
           WITH subtype = AtomFromChars(SUBARRAY(typeBuf, 0, typeNm.n)),
                hadIt = t.cellTbl.get(subtype, cellRec) DO
-            <*ASSERT hadIt*>
+            IF NOT hadIt THEN
+              fail := TRUE;
+
+              IF NOT warnSet.member(subtype) THEN
+                EVAL warnSet.insert(subtype);
+                Debug.Warning("Cannot find subcell type " & Atom.ToText(subtype));
+              END;
+              fail := TRUE;
+            END;
             sub.type := cellRec
           END;
 
-          Subcell.EncodeName(t.longNames,
-                             SUBARRAY(instBuf, 0, instNm.n),
-                             sub.instance);
+          IF NOT fail THEN
+            Subcell.EncodeName(t.longNames,
+                               SUBARRAY(instBuf, 0, instNm.n),
+                               sub.instance);
 
-          subcells.addhi(sub)
+            subcells.addhi(sub)
+          END
         END
       |
         InstanceType.Res, InstanceType.BJT =>
@@ -729,7 +744,7 @@ PROCEDURE Parse(rd : Rd.T; transistorCells : OpenCharArrayRefTbl.T) : T
                     Compiler.ThisFile(),
                     Int(line)))
     ELSE
-      Debug.Error("Unexpected exception");
+      Debug.Error("Unexpected exception\n" & ExceptionInfo.Fmt(Compiler.ThisException()));
       <*ASSERT FALSE*>
     END;
     
@@ -740,5 +755,16 @@ PROCEDURE Parse(rd : Rd.T; transistorCells : OpenCharArrayRefTbl.T) : T
 TYPE Token = RECORD s, n : CARDINAL END;
 
 EXCEPTION Syntax(CARDINAL);
+
+PROCEDURE InitCellTblAux(tbl : AtomCellTbl.T; to : CARDINAL) =
+  VAR
+    iter := tbl.iterate();
+    a : Atom.T;
+    c : CellRec.T;
+  BEGIN
+    WHILE iter.next(a, c) DO
+      c.aux := to
+    END
+  END InitCellTblAux;
           
 BEGIN END BraceParse.
