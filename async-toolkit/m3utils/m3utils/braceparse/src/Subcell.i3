@@ -1,6 +1,5 @@
 INTERFACE Subcell;
 IMPORT CellRec;
-IMPORT Atom;
 
 TYPE
   T = RECORD
