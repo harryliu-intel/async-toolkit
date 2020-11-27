@@ -1,13 +1,12 @@
 INTERFACE CellRec;
-IMPORT Subcell;
-IMPORT MosInfoCardTbl;
 IMPORT Wx;
+IMPORT Atom;
 
 TYPE
-  T = OBJECT
-    nm       : TEXT;
-    subcells : REF ARRAY OF Subcell.T;
-    mosTbl   : MosInfoCardTbl.T;
+  T <: Public;
+
+  Public = OBJECT
+    nm       : Atom.T;
   END;
 
 CONST Brand = "CellRec";

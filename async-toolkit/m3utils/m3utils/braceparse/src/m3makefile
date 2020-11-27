@@ -16,6 +16,7 @@ implementation ("Main")
 module("OpenCharArray")
 
 module ("CellRec")
+interface ("CellRecClass")
 
 openarrayTable("CellRec", "OpenCharArray", "CellRec")
 openarrayTable("CharsAtom", "OpenCharArray", "Atom")

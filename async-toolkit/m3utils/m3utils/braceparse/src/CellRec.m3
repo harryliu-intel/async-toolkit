@@ -1,12 +1,17 @@
 MODULE CellRec;
+IMPORT CellRecClass;
 IMPORT Wx;
 FROM Fmt IMPORT Int;
 IMPORT MosInfo;
 IMPORT CardPair;
+IMPORT Atom;
+
+REVEAL
+  T = CellRecClass.Private BRANDED Brand OBJECT END;
 
 PROCEDURE DebugOut(t : T; wx : Wx.T) =
   BEGIN
-    Wx.PutText(wx, "CellRec \"" & t.nm & "\"\n");
+    Wx.PutText(wx, "CellRec \"" & Atom.ToText(t.nm) & "\"\n");
     Wx.PutText(wx, Int(NUMBER(t.subcells^)));
     Wx.PutText(wx, " subcells:\n");
     Wx.PutText(wx, Int(t.mosTbl.size()));

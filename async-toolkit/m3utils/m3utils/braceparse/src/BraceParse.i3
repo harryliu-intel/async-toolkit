@@ -10,7 +10,7 @@ TYPE  Buffer = ARRAY [ 0 .. BufSiz-1 ] OF CHAR;
 
 TYPE
   T = OBJECT
-    cellTbl : AtomCellTbl.T;
+    cellTbl   : AtomCellTbl.T;
     longNames : Subcell.LongNames;
   END;
   

@@ -16,7 +16,7 @@ IMPORT Text;
 IMPORT NetKeywords AS N;
 IMPORT Compiler;
 IMPORT IO;
-IMPORT CellRec;
+IMPORT CellRec, CellRecClass;
 IMPORT Atom, Subcell;
 IMPORT CharsAtomTbl;
 IMPORT MosInfo, MosInfoCardTbl;
@@ -499,8 +499,14 @@ PROCEDURE Parse(rd : Rd.T; transistorCells : OpenCharArrayRefTbl.T) : T
         InstanceType.Cell =>
         VAR
           sub : Subcell.T;
+          cellRec : CellRec.T;
         BEGIN
-          sub.type := AtomFromChars(SUBARRAY(typeBuf, 0, typeNm.n));
+
+          WITH subtype = AtomFromChars(SUBARRAY(typeBuf, 0, typeNm.n)),
+               hadIt = t.cellTbl.get(subtype, cellRec) DO
+            <*ASSERT hadIt*>
+            sub.type := cellRec
+          END;
 
           Subcell.EncodeName(t.longNames,
                              SUBARRAY(instBuf, 0, instNm.n),
@@ -601,7 +607,7 @@ PROCEDURE Parse(rd : Rd.T; transistorCells : OpenCharArrayRefTbl.T) : T
       cellNm := AtomFromChars(SUBARRAY(buf, nm.s, nm.n));
 
       cell := NEW(CellRec.T,
-                  nm       := Text.FromChars(SUBARRAY(buf, nm.s, nm.n)),
+                  nm       := AtomFromChars(SUBARRAY(buf, nm.s, nm.n)),
                   subcells := NIL,
                   mosTbl   := NEW(MosInfoCardTbl.Default).init());
       subcells := NEW(SubcellSeq.T).init();

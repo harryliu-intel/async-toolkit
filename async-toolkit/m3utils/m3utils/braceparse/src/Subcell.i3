@@ -1,9 +1,10 @@
 INTERFACE Subcell;
+IMPORT CellRec;
 IMPORT Atom;
 
 TYPE
   T = RECORD
-    type     : Atom.T;
+    type     : CellRec.T;
 
     instance : InstanceName;
     (* representation: 

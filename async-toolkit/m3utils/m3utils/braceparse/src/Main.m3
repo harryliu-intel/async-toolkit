@@ -6,7 +6,7 @@ IMPORT BraceParse;
 IMPORT Text;
 IMPORT AtomCellTbl;
 FROM Fmt IMPORT F, Int;
-IMPORT Atom, CellRec;
+IMPORT Atom, CellRec, CellRecClass;
 IMPORT Wx;
 IMPORT AtomMosInfoCardTblTbl;
 IMPORT MosInfoCardTbl;
@@ -114,7 +114,7 @@ PROCEDURE DoTransistorReports(wr       : Wr.T;
               DoTransistorReports(wr,
                                   csvWr,
                                   db,
-                                  sub.type,
+                                  sub.type.nm,
                                   memoTbl,
                                   level + 1,
                                   nlevels,
@@ -152,16 +152,16 @@ PROCEDURE RecurseTransistors(db       : AtomCellTbl.T;
         MosInfoAdd(tbl, cellRec.mosTbl);
         FOR i := FIRST(cellRec.subcells^) TO LAST(cellRec.subcells^) DO
           WITH sc = cellRec.subcells[i] DO
-            RecurseTransistors(db, sc.type, memoTbl, warnSet);
-            WITH hadIt = memoTbl.get(sc.type, tab) DO
+            RecurseTransistors(db, sc.type.nm, memoTbl, warnSet);
+            WITH hadIt = memoTbl.get(sc.type.nm, tab) DO
               IF hadIt THEN
                 MosInfoAdd(tbl, tab)
               ELSE
-                IF NOT warnSet.member(sc.type) THEN
+                IF NOT warnSet.member(sc.type.nm) THEN
                   Debug.Warning(F("unknown cell type %s while processing %s",
-                                  Atom.ToText(sc.type),
+                                  Atom.ToText(sc.type.nm),
                                   Atom.ToText(rootType)));
-                  EVAL warnSet.insert(sc.type)
+                  EVAL warnSet.insert(sc.type.nm)
                 END
               END
             END
