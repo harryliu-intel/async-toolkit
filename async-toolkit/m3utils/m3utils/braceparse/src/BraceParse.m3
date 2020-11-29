@@ -66,10 +66,8 @@ CONST TL = Compiler.ThisLine;
       
 VAR doDebug := Debug.GetLevel() >= 10 AND Debug.This("BraceParse");
     
-VAR
-  atomTbl := NEW(CharsAtomTbl.Default).init();
-  
-PROCEDURE AtomFromChars(READONLY chars : ARRAY OF CHAR) : Atom.T =
+PROCEDURE AtomFromChars(atomTbl : CharsAtomTbl.T;
+                        READONLY chars : ARRAY OF CHAR) : Atom.T =
   VAR
     atom : Atom.T;
   BEGIN
@@ -98,6 +96,7 @@ PROCEDURE Parse(rd : Rd.T; transistorCells : OpenCharArrayRefTbl.T) : T
     lineno := 1;
 
     warnSet := NEW(AtomSetDef.T).init();
+    atomTbl := NEW(CharsAtomTbl.Default).init();
 
   PROCEDURE Refill()
     RAISES { Rd.EndOfFile, Rd.Failure, Thread.Alerted, Syntax }  =
@@ -484,7 +483,7 @@ PROCEDURE Parse(rd : Rd.T; transistorCells : OpenCharArrayRefTbl.T) : T
       CASE type OF
         InstanceType.MOS =>
         VAR
-          type    := AtomFromChars(SUBARRAY(typeBuf, 0, typeNm.n));
+          type    := AtomFromChars(atomTbl, SUBARRAY(typeBuf, 0, typeNm.n));
           mosInfo := MosInfo.T { type, props.l };
           oldCnt  : CardPair.T;
         BEGIN
@@ -507,7 +506,7 @@ PROCEDURE Parse(rd : Rd.T; transistorCells : OpenCharArrayRefTbl.T) : T
           fail := FALSE;
         BEGIN
 
-          WITH subtype = AtomFromChars(SUBARRAY(typeBuf, 0, typeNm.n)),
+          WITH subtype = AtomFromChars(atomTbl, SUBARRAY(typeBuf, 0, typeNm.n)),
                hadIt = t.cellTbl.get(subtype, cellRec) DO
             IF NOT hadIt THEN
               fail := TRUE;
@@ -619,10 +618,10 @@ PROCEDURE Parse(rd : Rd.T; transistorCells : OpenCharArrayRefTbl.T) : T
 
       IF NOT GetIdent(nm) THEN RAISE Syntax(TL()) END;
 
-      cellNm := AtomFromChars(SUBARRAY(buf, nm.s, nm.n));
+      cellNm := AtomFromChars(atomTbl, SUBARRAY(buf, nm.s, nm.n));
 
       cell := NEW(CellRec.T,
-                  nm       := AtomFromChars(SUBARRAY(buf, nm.s, nm.n)),
+                  nm       := AtomFromChars(atomTbl, SUBARRAY(buf, nm.s, nm.n)),
                   subcells := NIL,
                   mosTbl   := NEW(MosInfoCardTbl.Default).init());
       subcells := NEW(SubcellSeq.T).init();
