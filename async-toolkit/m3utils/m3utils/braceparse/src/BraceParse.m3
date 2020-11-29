@@ -26,6 +26,7 @@ IMPORT SubcellSeq;
 IMPORT OpenCharArrayRefTbl;
 IMPORT ExceptionInfo;
 IMPORT AtomSetDef;
+IMPORT LongNames;
 
 (* 
    an interesting extension of the buffering code would be to make the
@@ -521,9 +522,9 @@ PROCEDURE Parse(rd : Rd.T; transistorCells : OpenCharArrayRefTbl.T) : T
           END;
 
           IF NOT fail THEN
-            Subcell.EncodeName(t.longNames,
-                               SUBARRAY(instBuf, 0, instNm.n),
-                               sub.instance);
+            LongNames.Encode(t.longNames,
+                             SUBARRAY(instBuf, 0, instNm.n),
+                             sub.instance);
 
             subcells.addhi(sub)
           END
@@ -621,10 +622,12 @@ PROCEDURE Parse(rd : Rd.T; transistorCells : OpenCharArrayRefTbl.T) : T
       cellNm := AtomFromChars(atomTbl, SUBARRAY(buf, nm.s, nm.n));
 
       cell := NEW(CellRec.T,
-                  nm       := AtomFromChars(atomTbl, SUBARRAY(buf, nm.s, nm.n)),
-                  subcells := NIL,
+                  nm       := cellNm,
                   mosTbl   := NEW(MosInfoCardTbl.Default).init());
+
+      (* capture subcells in a sequence first *)
       subcells := NEW(SubcellSeq.T).init();
+
       LOOP
         IF GetExact(LB) THEN
           IF    GetPort() THEN
@@ -640,7 +643,7 @@ PROCEDURE Parse(rd : Rd.T; transistorCells : OpenCharArrayRefTbl.T) : T
         END
       END;
 
-      (* copy sequence to cell *)
+      (* copy subcell sequence to cell as an array to save some memory *)
       cell.subcells := NEW(REF ARRAY OF Subcell.T, subcells.size());
       FOR i := FIRST(cell.subcells^) TO LAST(cell.subcells^) DO
         cell.subcells[i] := subcells.get(i)
@@ -678,7 +681,7 @@ PROCEDURE Parse(rd : Rd.T; transistorCells : OpenCharArrayRefTbl.T) : T
       <*ASSERT t = NIL*>
       t := NEW(T);
       t.cellTbl := NEW(AtomCellTbl.Default).init();
-      t.longNames := Subcell.NewLongNames();
+      t.longNames := LongNames.New();
 
       IF NOT GetIdent(nm) THEN RETURN FALSE END;
       

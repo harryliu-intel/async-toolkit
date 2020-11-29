@@ -1,4 +1,4 @@
-MODULE Subcell;
+MODULE LongNames;
 IMPORT Random, Wr, Rd, FileRd, FileWr;
 IMPORT FS, TextList;
 IMPORT Fmt, Process;
@@ -7,12 +7,13 @@ IMPORT AL, OSError, Debug;
 FROM Fmt IMPORT F, Int;
 IMPORT BraceParse;
 IMPORT Text;
+IMPORT InstanceName;
 
 <*FATAL Thread.Alerted*>
 
-PROCEDURE EncodeName(longNames     : LongNames;
-                     READONLY name : ARRAY OF CHAR;
-                     VAR      tgt  : InstanceName) =
+PROCEDURE Encode(longNames     : T;
+                 READONLY name : ARRAY OF CHAR;
+                 VAR      tgt  : InstanceName.T) =
   BEGIN
     TRY
       IF NUMBER(name) < NUMBER(tgt) THEN
@@ -58,11 +59,11 @@ PROCEDURE EncodeName(longNames     : LongNames;
     EXCEPT
       Wr.Failure(e) => Debug.Error(F("trouble writing longnames file \"%s\" for writing : OSError.E : %s", longNames.nm, AL.Format(e)))
     END
-  END EncodeName;
+  END Encode;
 
-PROCEDURE DecodeName(longNames     : LongNames;
-                     READONLY inst : InstanceName;
-                     VAR buffer    : ARRAY OF CHAR) =
+PROCEDURE Decode(longNames     : T;
+                 READONLY inst : InstanceName.T;
+                 VAR buffer    : ARRAY OF CHAR) =
   VAR
     last := ORD(inst[LAST(inst)]);
     idx : CARDINAL := 0;
@@ -117,24 +118,24 @@ PROCEDURE DecodeName(longNames     : LongNames;
         Debug.Error(F("unexpected EOF reading longnames file, idx = %s j = %s inst = %s", Int(idx), Int(j), str))
       END
     END
-  END DecodeName;
+  END Decode;
 
-PROCEDURE DecodeNameToText(longNames     : LongNames;
-                           READONLY inst : InstanceName) : TEXT =
+PROCEDURE DecodeToText(longNames     : T;
+                       READONLY inst : InstanceName.T) : TEXT =
   VAR
     buf : BraceParse.Buffer;
   BEGIN
-    DecodeName(longNames, inst, buf);
+    Decode(longNames, inst, buf);
     FOR i := FIRST(buf) TO LAST(buf) DO
       IF buf[i] = VAL(0, CHAR) THEN
         RETURN Text.FromChars(SUBARRAY(buf, 0, i))
       END
     END;
     <*ASSERT FALSE*>
-  END DecodeNameToText;
+  END DecodeToText;
 
 REVEAL
-  LongNames = BRANDED Brand & " LongNames" OBJECT
+  T = BRANDED Brand OBJECT
     nm : TEXT;
     wr : Wr.T;
     rd : Rd.T;
@@ -143,23 +144,29 @@ REVEAL
 VAR rand := NEW(Random.Default).init();
 
 VAR longNameNames : TextList.T := NIL;
+
+VAR mu := NEW(MUTEX);
     
-PROCEDURE NewLongNames() : LongNames =
+PROCEDURE New() : T =
   VAR
-    q := rand.integer(FIRST(CARDINAL), LAST(CARDINAL));
-    nm := Brand & ":" & Fmt.Int(q);
+    q : CARDINAL;
+    nm : TEXT;
   BEGIN
-    longNameNames := TextList.Cons(nm, longNameNames);
+    LOCK mu DO
+      q := rand.integer(FIRST(CARDINAL), LAST(CARDINAL));
+      nm := Brand & ":" & Fmt.Int(q);
+      longNameNames := TextList.Cons(nm, longNameNames)
+    END;
 
     TRY FS.DeleteFile(nm) EXCEPT ELSE END;
     
-    RETURN NEW(LongNames,
+    RETURN NEW(T,
                nm := nm,
                wr := NIL,
                rd := NIL)
-  END NewLongNames;
+  END New;
 
-PROCEDURE CleanupLongnames() =
+PROCEDURE Cleanup() =
   VAR
     p := longNameNames;
   BEGIN
@@ -167,8 +174,8 @@ PROCEDURE CleanupLongnames() =
       TRY FS.DeleteFile(p.head) EXCEPT ELSE END;
       p := p.tail
     END
-  END CleanupLongnames;
+  END Cleanup;
   
 BEGIN
-  Process.RegisterExitor(CleanupLongnames)
-END Subcell.
+  Process.RegisterExitor(Cleanup)
+END LongNames.

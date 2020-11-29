@@ -18,13 +18,13 @@ IMPORT AL;
 IMPORT Thread;
 IMPORT OpenCharArrayRefTbl;
 IMPORT Wr, FileWr;
-IMPORT Subcell;
 IMPORT TextList;
 IMPORT Pathname;
 IMPORT AtomCardTbl;
 IMPORT AtomTextTbl;
 IMPORT AtomCardTripleTbl;
 IMPORT CardTriple;
+IMPORT LongNames;
 <*FATAL Thread.Alerted*>
 
 CONST TE = Text.Equal;
@@ -58,16 +58,16 @@ PROCEDURE DoTransistorReports(wr       : Wr.T;
                               level    : CARDINAL;
                               nlevels  : CARDINAL;
                               path     : TEXT;
-                              longNames: Subcell.LongNames)
+                              longNames: LongNames.T)
   RAISES { Wr.Failure } =
 
-  (* recursive version, not currently used *)
+  (* old recursive version, not currently used --- see DoTransistorReports2 *)
   
   VAR
-    tab : MosInfoCardTbl.T;
-    iter : MosInfoCardTbl.Iterator;
+    tab     : MosInfoCardTbl.T;
+    iter    : MosInfoCardTbl.Iterator;
     mosInfo : MosInfo.T;
-    finCnt : CardPair.T;
+    finCnt  : CardPair.T;
     wx := Wx.New();
   BEGIN
     WITH hadIt = memoTbl.get(rootType, tab) DO
@@ -127,7 +127,7 @@ PROCEDURE DoTransistorReports(wr       : Wr.T;
           FOR i := FIRST(cell.subcells^) TO LAST(cell.subcells^) DO
             VAR
               sub := cell.subcells[i];
-              decodedSubName := Subcell.DecodeNameToText(longNames,
+              decodedSubName := LongNames.DecodeToText(longNames,
                                                          sub.instance);
             BEGIN
               DoTransistorReports(wr,
@@ -164,7 +164,7 @@ PROCEDURE DoTransistorReports2(wr       : Wr.T;
                                rootType : CellRec.T;
                                memoTbl  : AtomMosInfoCardTblTbl.T;
                                nlevels  : CARDINAL;
-                               longNames: Subcell.LongNames)
+                               longNames: LongNames.T)
   RAISES { Wr.Failure } =
 
   PROCEDURE Emit(nm : Atom.T; level : CARDINAL)
@@ -176,12 +176,12 @@ PROCEDURE DoTransistorReports2(wr       : Wr.T;
     *)
     
     VAR
-      tab : MosInfoCardTbl.T;
-      cell : CellRec.T;
+      tab     : MosInfoCardTbl.T;
+      cell    : CellRec.T;
       mosInfo : MosInfo.T;
-      finCnt : CardPair.T;
+      finCnt  : CardPair.T;
       wx := Wx.New();
-      cpath : TEXT;
+      cpath   : TEXT;
       consolidated := NEW(AtomCardTripleTbl.Default).init();
     BEGIN
       WITH hadIt = memoTbl.get(nm, tab) DO
@@ -346,7 +346,7 @@ PROCEDURE MarkMinDepth(db       : AtomCellTbl.T;
 
 TYPE Formatter = PROCEDURE() : TEXT;
   
-PROCEDURE FindCanonicalNames(longNames: Subcell.LongNames;
+PROCEDURE FindCanonicalNames(longNames: LongNames.T;
                              rootType : CellRec.T;
                              maxDepth : CARDINAL) : AtomTextTbl.T =
   (* when this procedure is run, MarkMinDepth must have been
@@ -382,7 +382,7 @@ PROCEDURE FindCanonicalNames(longNames: Subcell.LongNames;
           
           PROCEDURE Formatter() : TEXT =
             BEGIN
-              RETURN f() & "." & Subcell.DecodeNameToText(longNames, instance)
+              RETURN f() & "." & LongNames.DecodeToText(longNames, instance)
             END Formatter;
           VAR
             instance := type.subcells[i].instance;
