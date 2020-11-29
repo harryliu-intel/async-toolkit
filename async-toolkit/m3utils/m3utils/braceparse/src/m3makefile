@@ -47,6 +47,8 @@ table ("AtomCardTriple", "Atom", "CardTriple")
 module("ExceptionInfo")
 module("CardTriple")
 
+module ("Gox")
+
 program ("netlist2goxrpt")
 
 
