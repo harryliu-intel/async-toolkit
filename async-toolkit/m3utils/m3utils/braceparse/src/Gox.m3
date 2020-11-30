@@ -341,39 +341,33 @@ PROCEDURE RecurseTransistors(db       : AtomCellTbl.T;
                              memoTbl  : AtomMosInfoCardTblTbl.T;
                              warnSet  : AtomSet.T) =
   VAR
-    tab : MosInfoCardTbl.T;
+    tab, tbl : MosInfoCardTbl.T;
   BEGIN
     (* check if already computed *)
     IF memoTbl.get(rootType.nm, tab) THEN RETURN END;
 
     (* not yet computed, compute it! *)
-    VAR
-      cellRec := rootType;
-    BEGIN
-      VAR
-        tbl := NEW(MosInfoCardTbl.Default).init();
-      BEGIN
-        MosInfoAdd(tbl, cellRec.mosTbl);
-        FOR i := FIRST(cellRec.subcells^) TO LAST(cellRec.subcells^) DO
-          WITH sc = cellRec.subcells[i] DO
-            RecurseTransistors(db, sc.type, memoTbl, warnSet);
-            WITH hadIt = memoTbl.get(sc.type.nm, tab) DO
-              IF hadIt THEN
-                MosInfoAdd(tbl, tab)
-              ELSE
-                IF NOT warnSet.member(sc.type.nm) THEN
-                  Debug.Warning(F("unknown cell type %s while processing %s",
-                                  Atom.ToText(sc.type.nm),
-                                  Atom.ToText(rootType.nm)));
-                  EVAL warnSet.insert(sc.type.nm)
-                END
-              END
+    tbl := NEW(MosInfoCardTbl.Default).init();
+
+    MosInfoAdd(tbl, rootType.mosTbl);
+    FOR i := FIRST(rootType.subcells^) TO LAST(rootType.subcells^) DO
+      WITH sc = rootType.subcells[i] DO
+        RecurseTransistors(db, sc.type, memoTbl, warnSet);
+        WITH hadIt = memoTbl.get(sc.type.nm, tab) DO
+          IF hadIt THEN
+            MosInfoAdd(tbl, tab)
+          ELSE
+            IF NOT warnSet.member(sc.type.nm) THEN
+              Debug.Warning(F("unknown cell type %s while processing %s",
+                              Atom.ToText(sc.type.nm),
+                              Atom.ToText(rootType.nm)));
+              EVAL warnSet.insert(sc.type.nm)
             END
           END
-        END;
-        EVAL memoTbl.put(rootType.nm, tbl)
+        END
       END
-    END
+    END;
+    EVAL memoTbl.put(rootType.nm, tbl)
   END RecurseTransistors;
 
 PROCEDURE MosInfoAdd(tgt, from : MosInfoCardTbl.T) =
