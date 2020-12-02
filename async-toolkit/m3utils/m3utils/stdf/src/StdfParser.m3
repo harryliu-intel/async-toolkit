@@ -27,11 +27,7 @@ PROCEDURE Parse(rd : Rd.T) : StdfRecordObjectSeq.T
           bdylen : CARDINAL;
           start := Rd.Index(rd);
         BEGIN
-          TRY
-            StdfRecordHeader.Parse(rd, hdrlen, hdr)
-          EXCEPT
-            StdfE.Missing => RAISE StdfE.E("StdfParser.Parse : missing field(s) in header")
-          END;
+          StdfRecordHeader.Parse(rd, hdrlen, hdr);
           
           IF doDebug THEN
             Debug.Out(F("StdfParser.Parse Got StdfRecordHeader recTyp %s recSub %s len %s",

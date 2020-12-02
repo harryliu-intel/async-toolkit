@@ -6,7 +6,7 @@ IMPORT StdfU4;
 IMPORT Wr;
 
 PROCEDURE Parse(rd : Rd.T; VAR len : CARDINAL; VAR t : T)
-  RAISES { StdfE.E, StdfE.Missing, Thread.Alerted, Rd.Failure, Rd.EndOfFile } =
+  RAISES { StdfE.E, Thread.Alerted, Rd.Failure, Rd.EndOfFile } =
   TYPE
     U = StdfU4.T;
   VAR

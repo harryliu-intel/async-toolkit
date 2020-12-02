@@ -91,7 +91,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define parse-proc-name "Parse")
-(define parse-proto "(rd : Rd.T; VAR len : CARDINAL; VAR t : T) RAISES { StdfE.Missing, StdfE.E , Rd.EndOfFile, Rd.Failure, Thread.Alerted}")
+(define parse-proto "(rd : Rd.T; VAR len : CARDINAL; VAR t : T) RAISES { StdfE.E , Rd.EndOfFile, Rd.Failure, Thread.Alerted}")
 
 (define parseobj-proc-name "ParseObject")
 (define parseobj-proto "(rd : Rd.T; VAR len : CARDINAL) : StdfRecordObject.T RAISES { StdfE.E, Rd.EndOfFile, Rd.Failure, Thread.Alerted }")
@@ -256,7 +256,7 @@
     (put-m3-proc 'parseobj i-wr m-wr)
     (dis "TYPE O = StdfRecordObject.T OBJECT rec : T; END;" dnl dnl i-wr)
     (dis "  VAR res := NEW(O); BEGIN" dnl
-         "    TRY Parse(rd, len, res.rec) EXCEPT StdfE.Missing => (* skip *) END;" dnl
+         "    Parse(rd, len, res.rec);" dnl
          "    RETURN res" dnl
          "  END ParseObject;" dnl
          dnl
