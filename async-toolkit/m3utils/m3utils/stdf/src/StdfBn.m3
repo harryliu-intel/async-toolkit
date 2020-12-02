@@ -50,7 +50,7 @@ PROCEDURE Write(wr : Wr.T; READONLY t : T)
   RAISES { Thread.Alerted, Wr.Failure } =
   VAR
     n  := NUMBER(t^);
-    nb := (n - 1) DIV 8 + 1;
+    nb : [0..255] := (n - 1) DIV 8 + 1;
   BEGIN
     StdfWr.U1(wr, nb);
     
