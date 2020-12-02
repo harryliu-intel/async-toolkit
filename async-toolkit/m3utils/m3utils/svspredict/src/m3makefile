@@ -5,4 +5,8 @@ import ("parseparams")
 import ("normaldev")
 
 implementation ("Main")
+
+module("Cloudbreak")
+interface("SvsTypes")
+
 program("svspredict")

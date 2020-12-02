@@ -10,36 +10,21 @@ IMPORT Thread, OSError;
 IMPORT ParseParams;
 IMPORT Stdio;
 IMPORT Pathname;
+FROM SvsTypes IMPORT Corner;
+IMPORT Cloudbreak;
 
 <*FATAL Thread.Alerted, Wr.Failure, OSError.E*>
 
 CONST LR = Fmt.LongReal;
 
-TYPE
-  Corner = RECORD
-    vtiming, vpower, sigma : LONGREAL;
-  END;
-  
-VAR
-  Ss := Corner { 0.710d0, 0.760d0, +3.0d0 };
-  Tt := Corner { 0.660d0, 0.710d0,  0.0d0 };
-  Ff := Corner { 0.620d0, 0.670d0, -3.0d0 };
-
-  (* from the Karthik/Mika/Julianne Excel 2020WW47 *)
-  RefP          := 388.6d0;
-  FixedP        :=  81.8d0;
-  RefLeakP      :=  21.1d0;
-  
-  
-  LkgRatio      :=   2.0d0; (* how much does leakage vary over corner *)
-  LkgRatioSigma :=   3.0d0;
+VAR Ss, Tt, Ff              : Corner;
+                     VAR RefP, FixedP, RefLeakP  : LONGREAL;
+                     VAR LkgRatio, LkgRatioSigma : LONGREAL;
+                     VAR Trunc                   : LONGREAL;
 
 VAR
-  H := 15;
-
-  Trunc := 3.0d0; (* where to truncate the distribution at sort *)
-  
-  Samples := 1000;
+  H       :=   15; (* # of buckets *)
+  Samples := 1000; (* # of samples *)
 
 PROCEDURE Interpolate1(x : LONGREAL;
                        s, ssigma, t, tsigma, f, fsigma : LONGREAL) : LONGREAL=
@@ -120,69 +105,84 @@ PROCEDURE DoIt() =
     
     (* make histogram of res *)
     LongrealArraySort.Sort(res^);
+    DoHistogram(res^);
+  END DoIt;
+
+PROCEDURE DoHistogram(READONLY res : ARRAY OF LONGREAL (* sorted *)) =
+  VAR
+    min := res[FIRST(res)];
+    max := res[LAST (res)];
+    hw  := (max - min) / FLOAT(H, LONGREAL);
+    hcnt := NEW(REF ARRAY OF CARDINAL, H);
+    hmax := 0.0d0;
+    sum, sumsq := 0.0d0;
+    n := FLOAT(NUMBER(res),LONGREAL);
+  BEGIN
+    FOR i := FIRST(hcnt^) TO LAST(hcnt^) DO
+      hcnt[i] := 0
+    END;
+    FOR i := FIRST(res) TO LAST(res) DO
+      sum := sum + res[i];
+      sumsq := sumsq + res[i] * res[i];
+      WITH h  = (res[i] - min) / hw,
+           ht = TRUNC(h) DO
+        hmax := MAX(h,hmax);
+        INC(hcnt[MIN(ht,LAST(hcnt^))])
+        (* the MAX is FOR a round-off possibility pushing us up... *)
+      END
+    END;
     
-    VAR
-      min := res[FIRST(res^)];
-      max := res[LAST (res^)];
-      hw  := (max - min) / FLOAT(H, LONGREAL);
-      hcnt := NEW(REF ARRAY OF CARDINAL, H);
-      hmax := 0.0d0;
-      sum, sumsq := 0.0d0;
-    BEGIN
+    Debug.Out(F("hmax = %s, H = %s", LR(hmax), Int(H)));
+    
+    (* dump the histogram *)
+    WITH wr  = FileWr.Open(ofn & "_hist.dat") DO
       FOR i := FIRST(hcnt^) TO LAST(hcnt^) DO
-        hcnt[i] := 0
-      END;
-      FOR i := FIRST(res^) TO LAST(res^) DO
-        sum := sum + res[i];
-        sumsq := sumsq + res[i] * res[i];
-        WITH h  = (res[i] - min) / hw,
-             ht = TRUNC(h) DO
-          hmax := MAX(h,hmax);
-          INC(hcnt[MIN(ht,LAST(hcnt^))])
-          (* the MAX is FOR a round-off possibility pushing us up... *)
+        WITH lo = min + hw * FLOAT(i    , LONGREAL),
+             hi = min + hw * FLOAT(i + 1, LONGREAL),
+             c  = hcnt[i] DO
+          Debug.Out(F("hist bin %s from %s to %s cnt %s",
+                      Int(i),
+                      LR(lo),
+                      LR(hi),
+                      Int(c)));
+          
+          Wr.PutText(wr, F("%s %s\n", LR(lo), "0.0"));
+          Wr.PutText(wr, F("%s %s\n", LR(hi), "0.0"));
+          Wr.PutText(wr, F("%s %s\n", LR(hi), Int(c)));
+          Wr.PutText(wr, F("%s %s\n", LR(lo), Int(c)));
+          Wr.PutText(wr, F("%s %s\n", LR(lo), "0.0"));
+          Wr.PutText(wr, "\n");
         END
       END;
-      
-      Debug.Out(F("hmax = %s, H = %s", LR(hmax), Int(H)));
-      
-      (* dump the histogram *)
-      WITH wr = FileWr.Open(ofn) DO
-        FOR i := FIRST(hcnt^) TO LAST(hcnt^) DO
-          WITH lo = min + hw * FLOAT(i    , LONGREAL),
-               hi = min + hw * FLOAT(i + 1, LONGREAL),
-               c  = hcnt[i] DO
-            Debug.Out(F("hist bin %s from %s to %s cnt %s",
-                        Int(i),
-                        LR(lo),
-                        LR(hi),
-                        Int(c)));
-            
-            Wr.PutText(wr, F("%s %s\n", LR(lo), "0.0"));
-            Wr.PutText(wr, F("%s %s\n", LR(hi), "0.0"));
-            Wr.PutText(wr, F("%s %s\n", LR(hi), Int(c)));
-            Wr.PutText(wr, F("%s %s\n", LR(lo), Int(c)));
-            Wr.PutText(wr, F("%s %s\n", LR(lo), "0.0"));
-            Wr.PutText(wr, "\n");
-          END
-        END;
-        Wr.Close(wr)
+      Wr.Close(wr)
+    END;
+
+    
+    WITH lwr = FileWr.Open(ofn & "_loss.dat") DO
+      FOR i := FIRST(res) TO LAST(res) DO
+        WITH rem = 1.0d0 - FLOAT(i+1,LONGREAL)/ n DO
+          Wr.PutText(lwr, F("%s %s\n", LR(res[i]), LR(rem)))
+        END
       END;
-      
-      WITH n      = FLOAT(NUMBER(res^),LONGREAL),
-           mean   = sum   / n,
-           meansq = sumsq / n,
-           var    = n / (n - 1.0d0) * (meansq - mean * mean),
-           sdev   = Math.sqrt(var) DO
-        Debug.Out(F("mean %s sdev %s", LR(mean), LR(sdev)))
-      END
+      Wr.Close(lwr)
+    END;
+    
+    WITH mean   = sum   / n,
+         meansq = sumsq / n,
+         var    = n / (n - 1.0d0) * (meansq - mean * mean),
+         sdev   = Math.sqrt(var) DO
+      Debug.Out(F("mean %s sdev %s", LR(mean), LR(sdev)))
     END
-  END DoIt;
+  END DoHistogram;
+  
 
 VAR
   pp := NEW(ParseParams.T).init(Stdio.stderr);
-  ofn : Pathname.T := "hist.dat";
+  ofn : Pathname.T := "hist";
   oWr : Wr.T := NIL;
 BEGIN
+  Cloudbreak.SetProgram(Ss, Tt, Ff, RefP, FixedP, RefLeakP, LkgRatio, LkgRatioSigma, Trunc);
+  
   TRY
     IF pp.keywordPresent("-a") THEN
       oWr := FileWr.Open(pp.getNext())
