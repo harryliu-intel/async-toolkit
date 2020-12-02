@@ -1,0 +1,9 @@
+INTERFACE StdfConstProc;
+
+PROCEDURE P1() : CARDINAL;
+PROCEDURE P2() : CARDINAL;
+PROCEDURE P4() : CARDINAL;
+
+CONST Brand = "StdfConstProc";
+      
+END StdfConstProc.

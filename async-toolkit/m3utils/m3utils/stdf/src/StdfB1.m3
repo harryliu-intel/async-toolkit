@@ -4,9 +4,11 @@ IMPORT Thread;
 IMPORT Word;
 IMPORT StdfRd;
 IMPORT Wx;
+IMPORT Wr;
+IMPORT StdfWr;
 
 PROCEDURE Parse(rd : Rd.T; VAR len : CARDINAL; VAR t : T)
-  RAISES { StdfE.E, StdfE.Missing, Thread.Alerted, Rd.Failure, Rd.EndOfFile } =
+  RAISES { StdfE.E, Thread.Alerted, Rd.Failure, Rd.EndOfFile } =
   VAR
     u : [0..255];
   BEGIN
@@ -35,4 +37,19 @@ PROCEDURE Format(t : T) : TEXT =
     RETURN Brand & " : " & Wx.ToText(wx)
   END Format;
 
+PROCEDURE Write(wr : Wr.T; READONLY t : T)
+  RAISES { Wr.Failure, Thread.Alerted } =
+  CONST
+    Sel = ARRAY [FALSE..TRUE] OF CARDINAL { 0, 1 };
+  VAR
+    b : [0..255] := 0;
+    k := 0;
+  BEGIN
+    FOR i := 0 TO 7 DO
+      b := Word.Insert(b, Sel[t[i]], k, 1);
+      INC(k)
+    END;
+    StdfWr.U1(wr, b)
+  END Write;
+  
 BEGIN END StdfB1.

@@ -1,6 +1,7 @@
 INTERFACE StdfVn;
 IMPORT Rd, StdfE;
 IMPORT Thread;
+IMPORT Wr;
 
 TYPE T = REF ARRAY OF CHAR;
 
@@ -12,5 +13,10 @@ PROCEDURE Format(t : T) : TEXT;
 CONST Brand = "StdfVn";
 
 PROCEDURE Default() : T;
+
+PROCEDURE Bytes(READONLY t : T) : CARDINAL;
   
+PROCEDURE Write(wr : Wr.T; READONLY t : T)
+  RAISES { Thread.Alerted, Wr.Failure };
+
 END StdfVn.
