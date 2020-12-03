@@ -412,7 +412,7 @@ public abstract class CoSimInfo {
                         cti.getCspTime();
                     assert cspTimeOffset >= 0;
                     fromData = instData.getBDLatency(ack, true) * 100;
-                    ffLatency = cti.getLatencyPerSlack();
+                    ffLatency = 0;
                     bbLatency = cti.getCycleTime() - ffLatency;
                     fbLatency = 0;
                     bfLatency = 0;
@@ -482,7 +482,7 @@ public abstract class CoSimInfo {
                         cosimInfo.getReferenceTime().orElse(cti.getCspTime());
                     assert cspTimeOffset >= 0;
                     fromData = instData.getBDLatency(req, true) * 100;
-                    ffLatency = cti.getLatencyPerSlack();
+                    ffLatency = 0;
                     bbLatency = cti.getCycleTime() - ffLatency;
                     fbLatency = 0;
                     bfLatency = 0;
