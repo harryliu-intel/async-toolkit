@@ -23,6 +23,7 @@ public class CSPCoSimInfo extends CoSimInfo {
     private CellInterface parent = null;
     private int maxInputOffset = Integer.MIN_VALUE;
     private int minOutputOffset = Integer.MAX_VALUE;
+    private boolean hasSlackless = false;
 
     public CSPCoSimInfo() {
         super();
@@ -60,6 +61,7 @@ public class CSPCoSimInfo extends CoSimInfo {
             } else if (dir == PortDefinition.OUT) {
                 minOutputOffset = Math.min(minOutputOffset, cti.getCspTime());
             }
+            hasSlackless |= cti.getSlack() == 0;
             //System.err.println("CSP channel: " + parent.getFullyQualifiedType() + " " + name + " " + cti.getSlack() + " " + cti.getLatency() + " " + cti.getCycleTime() + " " + cti.getCspTime() + " " + minCspTime);
             super.addChannelInfo(name, type, cti, N, M, isArrayed, dir);
         }
@@ -67,10 +69,14 @@ public class CSPCoSimInfo extends CoSimInfo {
 
     @Override
     public OptionalInt getReferenceTime() {
-        int t = maxInputOffset == Integer.MIN_VALUE
-            ? (minOutputOffset == Integer.MAX_VALUE ? 0 : minOutputOffset)
-            : maxInputOffset;
-        return OptionalInt.of(t);
+        if (hasSlackless) {
+            return OptionalInt.empty();
+        } else {
+            int t = maxInputOffset == Integer.MIN_VALUE
+                ? (minOutputOffset == Integer.MAX_VALUE ? 0 : minOutputOffset)
+                : maxInputOffset;
+            return OptionalInt.of(t);
+        }
     }
 
     protected boolean usePorts() { return true; }

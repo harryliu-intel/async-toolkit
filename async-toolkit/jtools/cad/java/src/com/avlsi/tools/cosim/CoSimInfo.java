@@ -407,15 +407,15 @@ public abstract class CoSimInfo {
                 if (instData != null) {
                     toData = 0;
                     final HierName ack = getAckReq(name, "a", width);
-                    cspTimeOffset = cosimInfo.getReferenceTime().getAsInt() -
-                                    cti.getCspTime();
+                    cspTimeOffset = 
+                        cosimInfo.getReferenceTime().orElse(cti.getCspTime()) -
+                        cti.getCspTime();
                     assert cspTimeOffset >= 0;
-                    fromData = instData.getBDLatency(ack, true);
+                    fromData = instData.getBDLatency(ack, true) * 100;
                     ffLatency = cti.getLatencyPerSlack();
                     bbLatency = cti.getCycleTime() - ffLatency;
                     fbLatency = 0;
                     bfLatency = 0;
-                    fromData *= 100;
                 }
                 if (bdslack == 0) {
                     return new SlacklessNodeBDReadChannel(
@@ -477,14 +477,15 @@ public abstract class CoSimInfo {
                 if (instData != null) {
                     toData = 0;
                     final HierName req = getAckReq(name, "q", width);
-                    cspTimeOffset = cti.getCspTime() - cosimInfo.getReferenceTime().getAsInt();
+                    cspTimeOffset =
+                        cti.getCspTime() -
+                        cosimInfo.getReferenceTime().orElse(cti.getCspTime());
                     assert cspTimeOffset >= 0;
-                    fromData = instData.getBDLatency(req, true);
+                    fromData = instData.getBDLatency(req, true) * 100;
                     ffLatency = cti.getLatencyPerSlack();
                     bbLatency = cti.getCycleTime() - ffLatency;
                     fbLatency = 0;
                     bfLatency = 0;
-                    fromData *= 100;
                 }
                 final int W = validateBDChannel(name, bdslack, radix, width);
                 if (bdslack == 0) {
