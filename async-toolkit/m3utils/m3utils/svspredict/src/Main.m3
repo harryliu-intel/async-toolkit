@@ -10,12 +10,15 @@ IMPORT Thread, OSError;
 IMPORT ParseParams;
 IMPORT Stdio;
 IMPORT Pathname;
-FROM SvsTypes IMPORT Corner;
+FROM SvsTypes IMPORT Corner, ProgramSetter;
+IMPORT Text;
 IMPORT Cloudbreak;
+IMPORT JBay;
 
 <*FATAL Thread.Alerted, Wr.Failure, OSError.E*>
 
 CONST LR = Fmt.LongReal;
+      TE = Text.Equal;
 
 VAR Ss, Tt, Ff              : Corner;
                      VAR RefP, FixedP, RefLeakP  : LONGREAL;
@@ -181,9 +184,25 @@ VAR
   ofn : Pathname.T := "hist";
   oWr : Wr.T := NIL;
 BEGIN
-  Cloudbreak.SetProgram(Ss, Tt, Ff, RefP, FixedP, RefLeakP, LkgRatio, LkgRatioSigma, Trunc);
   
   TRY
+    IF pp.keywordPresent("-d") OR pp.keywordPresent("-program") THEN
+      VAR
+        f : ProgramSetter;
+        progName := pp.getNext();
+      BEGIN
+        IF    TE(progName, "Cloudbreak") THEN
+          f := Cloudbreak.SetProgram
+        ELSIF TE(progName, "JBay") THEN
+          f := JBay.SetProgram
+        ELSE
+          Debug.Error(F("Unknown BXD program \"%s\"", progName))
+        END;
+        f(Ss, Tt, Ff, RefP, FixedP, RefLeakP, LkgRatio, LkgRatioSigma, Trunc)
+      END
+          
+    END;
+    
     IF pp.keywordPresent("-a") THEN
       oWr := FileWr.Open(pp.getNext())
     END;
