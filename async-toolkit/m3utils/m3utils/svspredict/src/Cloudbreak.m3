@@ -18,7 +18,7 @@ PROCEDURE SetProgram(VAR Ss, Tt, Ff              : Corner;
     
     LkgRatio      :=   2.0d0; (* how much does leakage vary over corner *)
     LkgRatioSigma :=   3.0d0;
-    Trunc := 3.0d0; (* where to truncate the distribution at sort *)
+    Trunc         := 3.0d0; (* where to truncate the distribution at sort *)
   END SetProgram;
 
 BEGIN END Cloudbreak.
