@@ -1,28 +1,51 @@
 MODULE StdfRand;
 IMPORT Random;
 
-PROCEDURE Chars(VAR     x : ARRAY OF CHAR;
+REVEAL
+  T = Public BRANDED Brand OBJECT
+    rand : Random.T;
+    defWeighting : CARDINAL := WeightingUniform;
+    defCharSet : SET OF CHAR := Printable;
+    defUtf8 := FALSE;
+  OVERRIDES
+    init := Init;
+    
+    chars := Chars;
+    char := Char;
+    u1 := U1;
+    u2 := U2;
+
+    configureCharacterSet := ConfigureCharacterSet;
+    configureWeighting := ConfigureWeighting;
+  END;
+
+PROCEDURE Init(t : T; rand : Random.T) : T =
+  BEGIN
+    t.rand := rand;
+    RETURN t
+  END Init;
+  
+PROCEDURE Chars(t : T;
+                VAR     x : ARRAY OF CHAR;
                 fromSet   := EmptySet;
                 utf8      := FALSE) =
   (* fill the array x with characters *)
   (* utf8 not yet supported *)
   BEGIN
     FOR i := FIRST(x) TO LAST(x) DO
-      x[i] := Char(fromSet)
+      x[i] := Char(t, fromSet)
     END
   END Chars;
 
-VAR rand := NEW(Random.Default).init(); (* hrm shouldnt be here *)
-    
-PROCEDURE Char(fromSet := EmptySet) : CHAR
+PROCEDURE Char(t : T; fromSet := EmptySet) : CHAR
   RAISES {} =
   BEGIN
     IF fromSet = EmptySet THEN
-      fromSet := defCharSet
+      fromSet := t.defCharSet
     END;
 
     LOOP
-      WITH ansatz = VAL(rand.integer(ORD(FIRST(CHAR)),
+      WITH ansatz = VAL(t.rand.integer(ORD(FIRST(CHAR)),
                                      ORD(LAST((CHAR)))),
                         CHAR) DO
         IF ansatz IN fromSet THEN
@@ -34,48 +57,44 @@ PROCEDURE Char(fromSet := EmptySet) : CHAR
 
 TYPE U1_T = [ 0 .. 255 ];
      
-PROCEDURE U1(weighting : Weighting) : U1_T =
+PROCEDURE U1(t : T; weighting : Weighting) : U1_T =
   VAR
     x := 1.0d0;
   BEGIN
     IF weighting = WeightingDefault THEN
-      weighting := defWeighting
+      weighting := t.defWeighting
     END;
     FOR i := 0 TO weighting DO
-      x := x * rand.longreal(0.0d0, 1.0d0)
+      x := x * t.rand.longreal(0.0d0, 1.0d0)
     END;
     RETURN TRUNC(FLOAT(NUMBER(U1_T),LONGREAL) / x)
   END U1;           
 
 TYPE U2_T = [ 0 .. 65535 ];
      
-PROCEDURE U2(weighting : Weighting) : U2_T =
+PROCEDURE U2(t : T; weighting : Weighting) : U2_T =
   VAR
     x := 1.0d0;
   BEGIN
     IF weighting = WeightingDefault THEN
-      weighting := defWeighting
+      weighting := t.defWeighting
     END;
     FOR i := 0 TO weighting*2 DO
-      x := x * rand.longreal(0.0d0, 1.0d0)
+      x := x * t.rand.longreal(0.0d0, 1.0d0)
     END;
     RETURN TRUNC(FLOAT(NUMBER(U2_T),LONGREAL) / x)
   END U2;
 
-VAR defCharSet := Printable;
-    defUtf8    := FALSE;
-    
-PROCEDURE ConfigureCharacterSet(READONLY set : SET OF CHAR; utf8 : BOOLEAN) =
+PROCEDURE ConfigureCharacterSet(t : T; READONLY set : SET OF CHAR; utf8 : BOOLEAN) =
   BEGIN
-    defCharSet := set;
-    defUtf8    := utf8
+    <*ASSERT set # EmptySet*>
+    t.defCharSet := set;
+    t.defUtf8    := utf8
   END ConfigureCharacterSet;
 
-VAR defWeighting : CARDINAL := WeightingUniform;
-    
-PROCEDURE ConfigureWeighting(weighting : CARDINAL) =
+PROCEDURE ConfigureWeighting(t : T; weighting : CARDINAL) =
   BEGIN
-    defWeighting := weighting
+    t.defWeighting := weighting
   END ConfigureWeighting;
 
 BEGIN END StdfRand.
