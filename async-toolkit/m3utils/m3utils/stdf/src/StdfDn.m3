@@ -46,7 +46,7 @@ PROCEDURE Default() : T = BEGIN RETURN NEW(T, 0) END Default;
 
 PROCEDURE Bytes(READONLY t : T) : CARDINAL =
   BEGIN
-    RETURN (NUMBER(t^) - 1) DIV 8 + 1
+    RETURN 2 + ((NUMBER(t^) - 1) DIV 8 + 1)
   END Bytes;
   
 PROCEDURE Write(wr : Wr.T; READONLY t : T)

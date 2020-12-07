@@ -38,7 +38,7 @@ PROCEDURE Write(wr : Wr.T; READONLY t : T)
 
 PROCEDURE Bytes(READONLY t : T) : CARDINAL =
   BEGIN
-    RETURN NUMBER(t^)
+    RETURN 1 + NUMBER(t^)
   END Bytes;
   
 BEGIN END StdfCn.
