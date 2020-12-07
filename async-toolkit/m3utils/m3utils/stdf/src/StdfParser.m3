@@ -53,7 +53,7 @@ PROCEDURE Parse(rd : Rd.T) : StdfRecordObjectSeq.T
             VAR
               o : StdfRecordObject.T;
             BEGIN
-              o := recType.parser(rd, bdyLen);
+              o := recType.parser(rd, hdr, bdyLen);
               o.hdr := hdr;
               o.tag := recType.enum;
               
