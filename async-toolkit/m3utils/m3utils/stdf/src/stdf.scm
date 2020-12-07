@@ -79,7 +79,7 @@
   (dis "<*NOWARN*>IMPORT StdfU1, StdfU2, StdfU4, StdfN1, StdfCn;" dnl
        "<*NOWARN*>IMPORT StdfI2, StdfB1, StdfC1, StdfDn, StdfVn;" dnl
        "<*NOWARN*>IMPORT StdfI1, StdfR4, StdfI4, StdfBn;" dnl
-       "<*NOWARN*>IMPORT StdfE, Rd, Thread, Wx, Fmt;" dnl
+       "<*NOWARN*>IMPORT StdfE, Rd, Thread, Wx, Fmt, Wr;" dnl
        dnl
        wr))
 
@@ -107,6 +107,9 @@
 
 (define bytes-proc-name "Bytes")
 (define bytes-proto "(READONLY t : T) : CARDINAL (* not incl header *)")
+
+(define write-proc-name "Write")
+(define write-proto "(wr : Wr.T; VAR t : T) RAISES { Wr.Failure, Thread.Alerted }")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -195,6 +198,20 @@
     (dis "  END FormatWx;" dnl
          dnl
          m-wr)
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+    (put-m3-proc 'write i-wr m-wr)
+    (dis "  BEGIN" dnl
+         m-wr)
+
+    (map (lambda(r)(emit-field-write r m-wr)) rec)
+
+    (dis
+         "  END Write;" dnl
+         dnl
+         m-wr)
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     
     (close-m3 wrs)
     )
@@ -325,6 +342,21 @@
          dnl
          m-wr)
 
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+    (put-m3-proc 'write i-wr m-wr)
+    (dis "  BEGIN" dnl
+         "    t.header.recLen := Bytes(t);" dnl
+         "    StdfRecordHeader.Write(wr, t.header);" dnl
+         m-wr)
+
+    (map (lambda(r)(emit-field-write r m-wr)) rec)
+
+    (dis
+         "  END Write;" dnl
+         dnl
+         m-wr)
+
     (close-m3 wrs)
     )
   )
@@ -407,6 +439,8 @@
   'ok
   )
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (define (emit-field-bytes rec wr)
   (let ((m3f (scheme->m3l (car rec)))
          (t (cadr rec)))
@@ -444,6 +478,47 @@
     )
   'ok
   )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (emit-field-write rec wr)
+  (let ((m3f (scheme->m3l (car rec)))
+         (t (cadr rec)))
+    (if (symbol? t)
+        (let ((m3t (scheme->m3 t)))
+          (dis "    Stdf" m3t ".Write(wr, t." m3f ");" dnl wr)
+          )
+        (let ((a   (car t))
+              (idx (cadr t))
+              (m3t (scheme->m3 (caddr t))))
+
+          (if (not (eq? a 'array)) (error "not an array spec : " t))
+
+          (if (eq? (caddr t) 'n1)
+              ;; special case for Nibble array
+              (dis     "    StdfN1.WriteArray(wr, t."m3f"^);" dnl wr)
+
+              ;; else not a Nibble array, write each element
+              (begin
+                (if (number? idx)
+                    (dis "    <*ASSERT NUMBER(t."m3f"^)= "(number->string idx)"*>" dnl wr)
+                    (dis "    <*ASSERT NUMBER(t."m3f"^)= t."(scheme->m3l idx)"*>" dnl wr)
+                    )
+
+                (dis "    FOR i := FIRST(t." m3f "^) TO LAST(t." m3f "^) DO" dnl
+
+                     "      Stdf"m3t".Write(wr, t."m3f"[i]);" dnl
+                     "    END;" dnl wr)
+                
+                )
+              )
+          )
+        )
+    )
+  'ok
+  )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (make-record-types)
   (let* ((wrs (open-m3 "StdfRecordTypes"))

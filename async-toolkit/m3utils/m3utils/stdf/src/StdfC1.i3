@@ -1,7 +1,6 @@
 INTERFACE StdfC1;
 IMPORT Rd, StdfE, Thread;
-IMPORT StdfConstProc;
-IMPORT StdfWr;
+IMPORT Wr;
 
 TYPE T = ARRAY [0..1-1] OF CHAR;
 
@@ -12,7 +11,7 @@ PROCEDURE Format(t : T) : TEXT;
   
 CONST Brand = "StdfC1";
 
-CONST Write = StdfWr.Char;
+PROCEDURE Write(wr : Wr.T; READONLY t : T) RAISES { Wr.Failure, Thread.Alerted };
 
 PROCEDURE Bytes(READONLY t : T) : CARDINAL;
 
