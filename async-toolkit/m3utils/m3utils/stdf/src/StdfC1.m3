@@ -16,4 +16,6 @@ PROCEDURE Format(t : T) : TEXT =
     RETURN Brand & " : " & Text.FromChar(t[0])
   END Format;
 
+PROCEDURE Bytes(<*UNUSED*>READONLY t : T) : CARDINAL = BEGIN RETURN 1 END Bytes;
+
 BEGIN END StdfC1.

@@ -29,4 +29,6 @@ PROCEDURE Format(t : T) : TEXT =
     RETURN Brand & " : " & Real(t)
   END Format;
 
+PROCEDURE Bytes(<*UNUSED*>READONLY t : T) : CARDINAL = BEGIN RETURN 4 END Bytes;
+
 BEGIN END StdfR4.

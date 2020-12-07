@@ -105,6 +105,9 @@
 (define formatobj-proc-name "FormatObject")
 (define formatobj-proto "(x : StdfRecordObject.T) : TEXT")
 
+(define bytes-proc-name "Bytes")
+(define bytes-proto "(READONLY t : T) : CARDINAL (* not incl header *)")
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (put-m3-proc whch .
@@ -229,6 +232,8 @@
              ";" dnl
              i-wr))
     
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
     (put-m3-proc 'parse i-wr m-wr)
     (dis "  BEGIN" dnl m-wr)
     (dis "    t.header := hdr;" dnl m-wr)
@@ -258,6 +263,8 @@
           dnl
           m-wr)
 
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
     (put-m3-proc 'parseobj i-wr m-wr)
     (dis "TYPE O = StdfRecordObject.T OBJECT rec : T; END;" dnl dnl i-wr)
     (dis "  VAR res := NEW(O); BEGIN" dnl
@@ -277,6 +284,8 @@
          dnl
          m-wr)
 
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
     (put-m3-proc 'formatwx i-wr m-wr)
     (dis "  BEGIN" dnl m-wr)
     (let loop ((lst rec))
@@ -294,10 +303,25 @@
          dnl
          m-wr)
 
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
     (put-m3-proc 'formatobj i-wr m-wr)
     (dis "  BEGIN" dnl 
          "    RETURN Format(NARROW(x, O).rec)" dnl
          "  END FormatObject;" dnl
+         dnl
+         m-wr)
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+    (put-m3-proc 'bytes i-wr m-wr)
+    (dis "  VAR b : CARDINAL := 0; BEGIN" dnl m-wr)
+
+    (map (lambda(r)(emit-field-bytes r m-wr)) rec)
+
+    (dis
+         "    RETURN b" dnl
+         "  END Bytes;" dnl
          dnl
          m-wr)
 
@@ -356,7 +380,6 @@
 
 (define (emit-field-init rec wr) )
                
-
 (define (emit-field-parse rec wr)
   (let ((m3f (scheme->m3l (car rec)))
          (t (cadr rec)))
@@ -381,6 +404,44 @@
               )
           )
         ))
+  'ok
+  )
+
+(define (emit-field-bytes rec wr)
+  (let ((m3f (scheme->m3l (car rec)))
+         (t (cadr rec)))
+    (if (symbol? t)
+        (let ((m3t (scheme->m3 t)))
+          (dis "    INC(b,Stdf" m3t ".Bytes(t." m3f "));" dnl wr)
+          )
+        (let ((a   (car t))
+              (idx (cadr t))
+              (m3t (scheme->m3 (caddr t))))
+
+          (if (not (eq? a 'array)) (error "not an array spec : " t))
+
+          (if (eq? (caddr t) 'n1)
+              ;; special case for Nibble array
+              (dis     "    INC(b,StdfN1.BytesArray(t."m3f"^));" dnl wr)
+
+              ;; else not a Nibble array, just get a single element and
+              ;; multiply by N
+              (begin
+                (dis "    VAR n : CARDINAL; BEGIN" dnl wr)
+                (if (number? idx)
+                    (dis "      n := "(number->string idx)";" dnl wr)
+                    (dis "      n := t."(scheme->m3l idx)";" dnl wr)
+                    )
+                (dis "      IF n # 0 THEN" dnl wr)
+                (dis "        INC(b, n*Stdf"m3t".Bytes(t."m3f"[0]));" dnl wr)
+                (dis "      END" dnl
+                     "    END;" dnl
+                     wr)
+                )
+              )
+          )
+        )
+    )
   'ok
   )
 

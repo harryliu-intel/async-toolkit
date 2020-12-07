@@ -12,8 +12,8 @@ PROCEDURE Format(t : T) : TEXT;
   
 CONST Brand = "StdfC1";
 
-CONST Bytes = StdfConstProc.P1;
-
 CONST Write = StdfWr.Char;
+
+PROCEDURE Bytes(READONLY t : T) : CARDINAL;
 
 END StdfC1.

@@ -3,7 +3,6 @@ IMPORT Rd, StdfE;
 IMPORT Word;
 IMPORT Thread;
 IMPORT Wr;
-IMPORT StdfConstProc;
 
 CONST Bytez = 4;
       Bits  = Bytez * 8;
@@ -18,7 +17,7 @@ PROCEDURE Format(t : T) : TEXT;
 PROCEDURE Write(wr : Wr.T; READONLY t : T)
   RAISES { Thread.Alerted, Wr.Failure };
 
-CONST Bytes = StdfConstProc.P4;
+PROCEDURE Bytes(READONLY t : T) : CARDINAL;
 
 CONST Brand = "StdfU4";
 

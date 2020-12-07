@@ -38,4 +38,6 @@ PROCEDURE Write(wr : Wr.T; READONLY t : T)
     StdfU4.Write(wr, u)
   END Write;
   
+PROCEDURE Bytes(<*UNUSED*>READONLY  t : T) : CARDINAL = BEGIN RETURN 4 END Bytes;
+
 BEGIN END StdfI4.

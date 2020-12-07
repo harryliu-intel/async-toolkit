@@ -3,7 +3,6 @@ IMPORT Rd, StdfE;
 IMPORT Word;
 IMPORT Thread;
 IMPORT Wr;
-IMPORT StdfConstProc;
 
 CONST Bytez = 2;
       Bits  = Bytez * 8;
@@ -15,7 +14,7 @@ PROCEDURE Parse(rd : Rd.T; VAR len : CARDINAL; VAR t : T)
 
 PROCEDURE Format(t : T) : TEXT;
 
-CONST Bytes = StdfConstProc.P1;
+PROCEDURE Bytes(READONLY t : T) : CARDINAL;
 
 PROCEDURE Write(wr : Wr.T; READONLY t : T)
   RAISES { Thread.Alerted, Wr.Failure };

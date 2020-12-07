@@ -14,7 +14,7 @@ PROCEDURE Parse(rd : Rd.T; VAR len : CARDINAL; VAR t : T)
 
 PROCEDURE Format(t : T) : TEXT;
 
-CONST Bytes = StdfConstProc.P4;
+PROCEDURE Bytes(READONLY t : T) : CARDINAL;
 
 PROCEDURE Write(wr : Wr.T; READONLY t : T)
   RAISES { Thread.Alerted, Wr.Failure };
