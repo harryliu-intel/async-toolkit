@@ -14,12 +14,14 @@ IMPORT OpenCharArrayRefTbl;
 IMPORT TextList;
 IMPORT Pathname;
 IMPORT Gox;
+IMPORT DrawnWidth;
 
 <*FATAL Thread.Alerted*>
 
 CONST TE = Text.Equal;
 
 VAR doDebug := Debug.GetLevel() >= 10;
+CONST debugFins = FALSE;
 
 PROCEDURE ReadSpecialTransistorCells(transistorCellFn : Pathname.T) =
   BEGIN
@@ -77,6 +79,7 @@ VAR
   transistorReportSfx : TEXT := "gox";
   transistorCells := NEW(OpenCharArrayRefTbl.Default).init();
   levels : CARDINAL := 1; (* report levels, default just the root *)
+  drawnWidth : DrawnWidth.T := NIL;
 BEGIN
   TRY
     IF pp.keywordPresent("-Z") THEN
@@ -115,6 +118,15 @@ BEGIN
       levels := pp.getNextInt()
     END;
 
+    IF pp.keywordPresent("-w") THEN
+      drawnWidth := NEW(DrawnWidth.T).init(pp.getNext());
+      IF debugFins THEN
+        FOR i := 1 TO 40 DO
+          Debug.Out(F("fins %s drawn %s nm", Int(i), Int(drawnWidth.eval(i))))
+        END
+      END
+    END;
+
     pp.skipParsed()
   EXCEPT
     ParseParams.Error => Debug.Error("Can't parse command line")
@@ -127,7 +139,7 @@ BEGIN
   END;
   
   TRY
-    parsed := BraceParse.Parse(rd, transistorCells);
+    parsed := BraceParse.Parse(rd, transistorCells, drawnWidth);
   EXCEPT
     Rd.Failure(e) => Debug.Error("Main.m3: Trouble parsing input : Rd.Failure : "&
       AL.Format(e))

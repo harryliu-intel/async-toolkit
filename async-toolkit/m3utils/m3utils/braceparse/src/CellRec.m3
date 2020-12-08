@@ -23,9 +23,9 @@ PROCEDURE DebugOut(t : T; wx : Wx.T) =
     BEGIN
       WHILE iter.next(mosInfo, finCnt) DO
         MosInfo.DebugOut(mosInfo, wx);
-        Wx.PutInt(wx, finCnt[0]);
+        Wx.PutInt(wx, finCnt[FinInfo.Info.MosCnt]);
         Wx.PutText(wx, " devices ");
-        Wx.PutInt(wx, finCnt[1]);
+        Wx.PutInt(wx, finCnt[FinInfo.Info.FinCnt]);
         Wx.PutText(wx, " fins\n")
       END
     END

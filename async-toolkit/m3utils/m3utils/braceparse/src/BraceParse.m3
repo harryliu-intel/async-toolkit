@@ -27,6 +27,7 @@ IMPORT OpenCharArrayRefTbl;
 IMPORT ExceptionInfo;
 IMPORT AtomSetDef;
 IMPORT LongNames;
+IMPORT DrawnWidth;
 
 (* 
    an interesting extension of the buffering code would be to make the
@@ -81,7 +82,9 @@ PROCEDURE AtomFromChars(atomTbl : CharsAtomTbl.T;
     END
   END AtomFromChars;
   
-PROCEDURE Parse(rd : Rd.T; transistorCells : OpenCharArrayRefTbl.T) : T
+PROCEDURE Parse(rd : Rd.T;
+                transistorCells : OpenCharArrayRefTbl.T;
+                drawnWidth : DrawnWidth.T) : T
   RAISES { Rd.Failure, Thread.Alerted } =
 
   VAR
@@ -491,12 +494,12 @@ PROCEDURE Parse(rd : Rd.T; transistorCells : OpenCharArrayRefTbl.T) : T
           IF doDebug THEN
             Debug.Out("got a MOS with fins " & Int(props.nfin))
           END;
-          IF parent.mosTbl.get(mosInfo, oldCnt) THEN
-            EVAL parent.mosTbl.put(mosInfo, FinInfo.T {oldCnt[0] + 1,
-                                                       oldCnt[1] + props.nfin,
-                                                       oldCnt[2] + props.nfin *props.l })
-          ELSE
-            EVAL parent.mosTbl.put(mosInfo, FinInfo.T { 1, props.nfin, props.nfin * props.l })
+          WITH thisInfo = FinInfo.T { 1, props.nfin, props.nfin * props.l } DO
+            IF parent.mosTbl.get(mosInfo, oldCnt) THEN
+              EVAL parent.mosTbl.put(mosInfo, FinInfo.Add(oldCnt, thisInfo))
+            ELSE
+              EVAL parent.mosTbl.put(mosInfo, thisInfo)
+            END
           END
         END
 

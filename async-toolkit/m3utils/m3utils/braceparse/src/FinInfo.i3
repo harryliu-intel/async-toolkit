@@ -1,6 +1,10 @@
 INTERFACE FinInfo;
 
-TYPE T = ARRAY [0..2] OF CARDINAL;
+TYPE Info = { MosCnt, FinCnt, FinXLength };
+     
+TYPE T = ARRAY Info OF CARDINAL;
+
+CONST ColName = ARRAY Info OF TEXT { "count", "fins", "fins*pm" };
 
 CONST Brand = "FinInfo";
 

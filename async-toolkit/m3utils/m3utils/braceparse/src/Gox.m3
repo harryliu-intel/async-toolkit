@@ -25,16 +25,34 @@ IMPORT MosInfo;
 
 VAR doDebug := Debug.GetLevel() >= 10;
 
+PROCEDURE PutFinInfoHeader(wr : Wr.T) RAISES { Wr.Failure } =
+  BEGIN
+    FOR i := FIRST(FinInfo.Info) TO LAST(FinInfo.Info) DO
+      Wr.PutChar(wr, ',');
+      Wr.PutText(wr, FinInfo.ColName[i]);
+      Wr.PutText(wr, "/inst");
+    END;
+    FOR i := FIRST(FinInfo.Info) TO LAST(FinInfo.Info) DO
+      Wr.PutChar(wr, ',');
+      Wr.PutText(wr, "tot");
+      Wr.PutText(wr, FinInfo.ColName[i]);
+    END
+  END PutFinInfoHeader;
+  
 PROCEDURE PutCsvHeader2(wr : Wr.T)
   RAISES { Wr.Failure } =
   BEGIN
-    Wr.PutText(wr, "canonpath,cellType,minlevel,multiplicity,MOS type,length/pm,count/inst,fins/inst,fins*pm/inst,totcount,totfins,totfins*pm\n")
+    Wr.PutText(wr, "canonpath,cellType,minlevel,multiplicity,MOS type,length/pm");
+    PutFinInfoHeader(wr);
+    Wr.PutChar(wr, '\n')
   END PutCsvHeader2;
 
 PROCEDURE PutConsolidatedHeader(wr : Wr.T)
   RAISES { Wr.Failure } =
   BEGIN
-    Wr.PutText(wr, "canonpath,cellType,minlevel,multiplicity,MOS type,count/inst,fins/inst,fins*pm/inst,totcount,totfins,totfins*pm\n")
+    Wr.PutText(wr, "canonpath,cellType,minlevel,multiplicity,MOS type");
+    PutFinInfoHeader(wr);
+    Wr.PutChar(wr, '\n')
   END PutConsolidatedHeader;
 
 PROCEDURE AccumByAtom(tbl : AtomFinInfoTbl.T; atom : Atom.T; c : FinInfo.T) =
@@ -74,6 +92,8 @@ PROCEDURE DoTransistorReports2(wr       : Wr.T;
       wx := Wx.New();
       cpath   : TEXT;
       consolidated := NEW(AtomFinInfoTbl.Default).init();
+    TYPE
+      FI = FinInfo.Info;
     BEGIN
       WITH hadIt = memoTbl.get(nm, tab) DO
         <*ASSERT hadIt*>
@@ -92,18 +112,18 @@ PROCEDURE DoTransistorReports2(wr       : Wr.T;
         WHILE iter.next(mosInfo, finCnt) DO
           MosInfo.DebugOut(mosInfo, wx);
           AccumByAtom(consolidated, mosInfo.type, finCnt);
-          Wx.PutInt(wx, finCnt[0]);
+          Wx.PutInt(wx, finCnt[FI.MosCnt]);
           Wx.PutText(wx, " devs ");
-          Wx.PutInt(wx, finCnt[1]);
+          Wx.PutInt(wx, finCnt[FI.FinCnt]);
           Wx.PutText(wx, " fins ");
-          Wx.PutInt(wx, finCnt[2]);
+          Wx.PutInt(wx, finCnt[FI.FinXLength]);
           Wx.PutText(wx, " fin*pm");
           
-          Wx.PutInt(wx, n * finCnt[0]);
+          Wx.PutInt(wx, n * finCnt[FI.MosCnt]);
           Wx.PutText(wx, " tot devs ");
-          Wx.PutInt(wx, n * finCnt[1]);
+          Wx.PutInt(wx, n * finCnt[FI.FinCnt]);
           Wx.PutText(wx, " tot fins ");
-          Wx.PutInt(wx, n * finCnt[2]);
+          Wx.PutInt(wx, n * finCnt[FI.FinXLength]);
           Wx.PutText(wx, " tot fin*pm");
 
           
@@ -133,18 +153,14 @@ PROCEDURE DoTransistorReports2(wr       : Wr.T;
           Wr.PutText(csvWr, Atom.ToText(mosInfo.type));
           Wr.PutChar(csvWr, ',');
           Wr.PutText(csvWr, Int(mosInfo.len));
-          Wr.PutChar(csvWr, ',');
-          Wr.PutText(csvWr, Int(finCnt[0]));
-          Wr.PutChar(csvWr, ',');
-          Wr.PutText(csvWr, Int(finCnt[1]));
-          Wr.PutChar(csvWr, ',');
-          Wr.PutText(csvWr, Int(finCnt[2]));
-          Wr.PutChar(csvWr, ',');
-          Wr.PutText(csvWr, Int(n * finCnt[0]));
-          Wr.PutChar(csvWr, ',');
-          Wr.PutText(csvWr, Int(n * finCnt[1]));
-          Wr.PutChar(csvWr, ',');
-          Wr.PutText(csvWr, Int(n * finCnt[2]));
+          FOR i := FIRST(FinInfo.Info) TO LAST(FinInfo.Info) DO
+            Wr.PutChar(csvWr, ',');
+            Wr.PutText(csvWr, Int(finCnt[i]))
+          END;
+          FOR i := FIRST(FinInfo.Info) TO LAST(FinInfo.Info) DO
+            Wr.PutChar(csvWr, ',');
+            Wr.PutText(csvWr, Int(n * finCnt[i]))
+          END;
           Wr.PutChar(csvWr, '\n');
         END
       END;
@@ -164,18 +180,14 @@ PROCEDURE DoTransistorReports2(wr       : Wr.T;
           Wr.PutText(conWr, Int(n));
           Wr.PutChar(conWr, ',');
           Wr.PutText(conWr, Atom.ToText(ttype));
-          Wr.PutChar(conWr, ',');
-          Wr.PutText(conWr, Int(data[0]));
-          Wr.PutChar(conWr, ',');
-          Wr.PutText(conWr, Int(data[1]));
-          Wr.PutChar(conWr, ',');
-          Wr.PutText(conWr, Int(data[2]));
-          Wr.PutChar(conWr, ',');
-          Wr.PutText(conWr, Int(n * data[0]));
-          Wr.PutChar(conWr, ',');
-          Wr.PutText(conWr, Int(n * data[1]));
-          Wr.PutChar(conWr, ',');
-          Wr.PutText(conWr, Int(n * data[2]));
+          FOR i := FIRST(FinInfo.Info) TO LAST(FinInfo.Info) DO
+            Wr.PutChar(conWr, ',');
+            Wr.PutText(conWr, Int(data[i]))
+          END;
+          FOR i := FIRST(FinInfo.Info) TO LAST(FinInfo.Info) DO
+            Wr.PutChar(conWr, ',');
+            Wr.PutText(conWr, Int(n * data[i]))
+          END;
           Wr.PutChar(conWr, '\n');
         END
       END

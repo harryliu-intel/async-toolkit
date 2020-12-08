@@ -1,6 +1,7 @@
 import ("libm3")
 import ("cit_util")
 import ("parseparams")
+import ("mscheme")
 
 if defined("CM3_VERSION")
         m3_optimize("T")
@@ -48,6 +49,7 @@ module("ExceptionInfo")
 module("FinInfo")
 
 module ("Gox")
+Module ("DrawnWidth")
 
 program ("netlist2goxrpt")
 
