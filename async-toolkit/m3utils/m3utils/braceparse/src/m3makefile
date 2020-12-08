@@ -42,10 +42,10 @@ openarrayTable ("OpenCharArrayRef", "OpenCharArray", "Refany")
 
 table ("AtomCard", "Atom", "Cardinal")
 table ("AtomCardPair", "Atom", "CardPair")
-table ("AtomCardTriple", "Atom", "CardTriple")
+table ("AtomFinInfo", "Atom", "FinInfo")
 
 module("ExceptionInfo")
-module("CardTriple")
+module("FinInfo")
 
 module ("Gox")
 

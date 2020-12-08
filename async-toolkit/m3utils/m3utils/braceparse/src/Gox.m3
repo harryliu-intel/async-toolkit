@@ -11,7 +11,7 @@ IMPORT Thread;
 IMPORT BraceParse;
 IMPORT Atom;
 IMPORT AL;
-IMPORT CardTriple, AtomCardTripleTbl;
+IMPORT FinInfo, AtomFinInfoTbl;
 IMPORT LongNames;
 IMPORT AtomCellTbl;
 IMPORT AtomCardTbl;
@@ -38,12 +38,12 @@ PROCEDURE PutConsolidatedHeader(wr : Wr.T)
     Wr.PutText(wr, "canonpath,cellType,minlevel,multiplicity,MOS type,count/inst,fins/inst,fins*pm/inst,totcount,totfins,totfins*pm\n")
   END PutConsolidatedHeader;
 
-PROCEDURE AccumByAtom(tbl : AtomCardTripleTbl.T; atom : Atom.T; c : CardTriple.T) =
+PROCEDURE AccumByAtom(tbl : AtomFinInfoTbl.T; atom : Atom.T; c : FinInfo.T) =
   VAR
-    old : CardTriple.T;
+    old : FinInfo.T;
   BEGIN
     IF tbl.get(atom, old) THEN
-      EVAL tbl.put(atom, CardTriple.Add(old, c))
+      EVAL tbl.put(atom, FinInfo.Add(old, c))
     ELSE
       EVAL tbl.put(atom, c)
     END
@@ -74,7 +74,7 @@ PROCEDURE DoTransistorReports2(wr       : Wr.T;
       finCnt  : CardPair.T;
       wx := Wx.New();
       cpath   : TEXT;
-      consolidated := NEW(AtomCardTripleTbl.Default).init();
+      consolidated := NEW(AtomFinInfoTbl.Default).init();
     BEGIN
       WITH hadIt = memoTbl.get(nm, tab) DO
         <*ASSERT hadIt*>
@@ -93,9 +93,9 @@ PROCEDURE DoTransistorReports2(wr       : Wr.T;
         WHILE iter.next(mosInfo, finCnt) DO
           MosInfo.DebugOut(mosInfo, wx);
           AccumByAtom(consolidated, mosInfo.type,
-                      CardTriple.T { finCnt.k1,
-                                     finCnt.k2,
-                                     finCnt.k2 * mosInfo.len });
+                      FinInfo.T { finCnt.k1,
+                                  finCnt.k2,
+                                  finCnt.k2 * mosInfo.len});
           Wx.PutInt(wx, finCnt.k1);
           Wx.PutText(wx, " devs ");
           Wx.PutInt(wx, finCnt.k2);
@@ -156,7 +156,7 @@ PROCEDURE DoTransistorReports2(wr       : Wr.T;
       VAR ttype : Atom.T;
           iter := consolidated.iterate();
           n   := cell.aux;
-          data : CardTriple.T;
+          data : FinInfo.T;
       BEGIN
         WHILE iter.next(ttype, data) DO
           Wr.PutText(conWr, cpath);
@@ -386,9 +386,9 @@ PROCEDURE MosInfoAdd(tgt, from : MosInfoCardTbl.T) =
     END
   END MosInfoAdd;
 
-PROCEDURE ProduceReports(p : TextList.T;
-                         parsed : BraceParse.T;
-                         levels : CARDINAL;
+PROCEDURE ProduceReports(p                   : TextList.T;
+                         parsed              : BraceParse.T;
+                         levels              : CARDINAL;
                          transistorReportSfx : TEXT) =
   BEGIN
     WHILE p # NIL DO
