@@ -494,7 +494,12 @@ PROCEDURE Parse(rd : Rd.T;
           IF doDebug THEN
             Debug.Out("got a MOS with fins " & Int(props.nfin))
           END;
-          WITH thisInfo = FinInfo.T { 1, props.nfin, props.nfin * props.l } DO
+          WITH drawn = drawnWidth.eval(props.nfin),
+               thisInfo = FinInfo.T { 1,
+                                      props.nfin,
+                                      props.nfin * props.l,
+                                      drawn,
+                                      drawn * props.l } DO
             IF parent.mosTbl.get(mosInfo, oldCnt) THEN
               EVAL parent.mosTbl.put(mosInfo, FinInfo.Add(oldCnt, thisInfo))
             ELSE
