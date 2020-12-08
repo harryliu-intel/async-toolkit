@@ -22,18 +22,22 @@ PROCEDURE Init(t : T; defString : TEXT) : T =
     RETURN t
   END Init;
 
-PROCEDURE Eval(t : T; fins : CARDINAL) : CARDINAL =
+PROCEDURE Eval(t : T; fins : [1..LAST(CARDINAL)]) : CARDINAL =
   VAR
     drawn : CARDINAL;
   BEGIN
     IF NOT t.tab.get(fins, drawn) THEN
       drawn := 0;
-      WITH formula = "(" & t.formula & " " & Int(fins) & ")",
-           scm = NEW(Scheme.T).init(ARRAY OF Pathname.T{}) DO
-        Debug.Out("formula: " & formula);
-        WITH q = scm.loadEvalText(formula) DO
-          drawn := SchemeLongReal.Card(q)
+      TRY
+        WITH formula = "(" & t.formula & " " & Int(fins) & ")",
+             scm = NEW(Scheme.T).init(ARRAY OF Pathname.T{}) DO
+          Debug.Out("formula: " & formula);
+          WITH q = scm.loadEvalText(formula) DO
+            drawn := SchemeLongReal.Card(q)
+          END
         END
+      EXCEPT
+        Scheme.E(x) => Debug.Error("Caught unexpected Scheme.E : " & x)
       END;
       EVAL t.tab.put(fins, drawn)
     END;

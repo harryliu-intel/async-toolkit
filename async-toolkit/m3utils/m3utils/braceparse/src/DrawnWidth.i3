@@ -7,7 +7,7 @@ TYPE
     init(defString : TEXT) : T;
     (* specify formula for the width.  formula must be purely functional *)
     
-    eval(fins : CARDINAL) : CARDINAL;
+    eval(fins : [1..LAST(CARDINAL)]) : CARDINAL;
     (* convert width in fins to width in nanometers *)
   END;
 

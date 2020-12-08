@@ -490,12 +490,17 @@ PROCEDURE Parse(rd : Rd.T;
           type    := AtomFromChars(atomTbl, SUBARRAY(typeBuf, 0, typeNm.n));
           mosInfo := MosInfo.T { type, props.l };
           oldCnt  : FinInfo.T;
+          drawn   : CARDINAL;
         BEGIN
           IF doDebug THEN
             Debug.Out("got a MOS with fins " & Int(props.nfin))
           END;
-          WITH drawn = drawnWidth.eval(props.nfin),
-               thisInfo = FinInfo.T { 1,
+          IF props.nfin = 0 THEN
+            drawn := 0
+          ELSE
+            drawn := drawnWidth.eval(props.nfin)
+          END;
+          WITH thisInfo = FinInfo.T { 1,
                                       props.nfin,
                                       props.nfin * props.l,
                                       drawn,
