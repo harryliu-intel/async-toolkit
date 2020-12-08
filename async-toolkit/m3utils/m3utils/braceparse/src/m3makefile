@@ -33,7 +33,7 @@ interface ("InstanceName")
 
 module ("MosInfo")
 
-table ("MosInfoCard", "MosInfo", "CardPair")
+table ("MosInfoCard", "MosInfo", "FinInfo")
 table ("AtomCell", "Atom", "CellRec")
 
 table ("AtomMosInfoCardTbl", "Atom", "MosInfoCardTbl")
@@ -41,7 +41,7 @@ table ("AtomMosInfoCardTbl", "Atom", "MosInfoCardTbl")
 openarrayTable ("OpenCharArrayRef", "OpenCharArray", "Refany")
 
 table ("AtomCard", "Atom", "Cardinal")
-table ("AtomCardPair", "Atom", "CardPair")
+%table ("AtomCardPair", "Atom", "CardPair")
 table ("AtomFinInfo", "Atom", "FinInfo")
 
 module("ExceptionInfo")

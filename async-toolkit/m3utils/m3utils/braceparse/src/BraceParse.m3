@@ -21,7 +21,7 @@ IMPORT Atom, Subcell;
 IMPORT CharsAtomTbl;
 IMPORT MosInfo, MosInfoCardTbl;
 IMPORT AtomCellTbl;
-IMPORT CardPair;
+IMPORT FinInfo;
 IMPORT SubcellSeq;
 IMPORT OpenCharArrayRefTbl;
 IMPORT ExceptionInfo;
@@ -486,16 +486,17 @@ PROCEDURE Parse(rd : Rd.T; transistorCells : OpenCharArrayRefTbl.T) : T
         VAR
           type    := AtomFromChars(atomTbl, SUBARRAY(typeBuf, 0, typeNm.n));
           mosInfo := MosInfo.T { type, props.l };
-          oldCnt  : CardPair.T;
+          oldCnt  : FinInfo.T;
         BEGIN
           IF doDebug THEN
             Debug.Out("got a MOS with fins " & Int(props.nfin))
           END;
           IF parent.mosTbl.get(mosInfo, oldCnt) THEN
-            EVAL parent.mosTbl.put(mosInfo, CardPair.T {oldCnt.k1 + 1,
-                                                        oldCnt.k2 + props.nfin})
+            EVAL parent.mosTbl.put(mosInfo, FinInfo.T {oldCnt[0] + 1,
+                                                       oldCnt[1] + props.nfin,
+                                                       oldCnt[2] + props.nfin *props.l })
           ELSE
-            EVAL parent.mosTbl.put(mosInfo, CardPair.T { 1, props.nfin })
+            EVAL parent.mosTbl.put(mosInfo, FinInfo.T { 1, props.nfin, props.nfin * props.l })
           END
         END
 

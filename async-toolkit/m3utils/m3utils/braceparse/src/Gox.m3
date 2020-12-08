@@ -19,7 +19,6 @@ IMPORT MosInfoCardTbl;
 IMPORT Wx;
 IMPORT AtomTextTbl;
 IMPORT AtomSet;
-IMPORT CardPair;
 IMPORT MosInfo;
 
 <*FATAL Thread.Alerted*>
@@ -71,7 +70,7 @@ PROCEDURE DoTransistorReports2(wr       : Wr.T;
       tab     : MosInfoCardTbl.T;
       cell    : CellRec.T;
       mosInfo : MosInfo.T;
-      finCnt  : CardPair.T;
+      finCnt  : FinInfo.T;
       wx := Wx.New();
       cpath   : TEXT;
       consolidated := NEW(AtomFinInfoTbl.Default).init();
@@ -92,22 +91,19 @@ PROCEDURE DoTransistorReports2(wr       : Wr.T;
 
         WHILE iter.next(mosInfo, finCnt) DO
           MosInfo.DebugOut(mosInfo, wx);
-          AccumByAtom(consolidated, mosInfo.type,
-                      FinInfo.T { finCnt.k1,
-                                  finCnt.k2,
-                                  finCnt.k2 * mosInfo.len});
-          Wx.PutInt(wx, finCnt.k1);
+          AccumByAtom(consolidated, mosInfo.type, finCnt);
+          Wx.PutInt(wx, finCnt[0]);
           Wx.PutText(wx, " devs ");
-          Wx.PutInt(wx, finCnt.k2);
+          Wx.PutInt(wx, finCnt[1]);
           Wx.PutText(wx, " fins ");
-          Wx.PutInt(wx, finCnt.k2 * mosInfo.len);
+          Wx.PutInt(wx, finCnt[2]);
           Wx.PutText(wx, " fin*pm");
           
-          Wx.PutInt(wx, n * finCnt.k1);
+          Wx.PutInt(wx, n * finCnt[0]);
           Wx.PutText(wx, " tot devs ");
-          Wx.PutInt(wx, n * finCnt.k2);
+          Wx.PutInt(wx, n * finCnt[1]);
           Wx.PutText(wx, " tot fins ");
-          Wx.PutInt(wx, n * finCnt.k2 * mosInfo.len);
+          Wx.PutInt(wx, n * finCnt[2]);
           Wx.PutText(wx, " tot fin*pm");
 
           
@@ -138,17 +134,17 @@ PROCEDURE DoTransistorReports2(wr       : Wr.T;
           Wr.PutChar(csvWr, ',');
           Wr.PutText(csvWr, Int(mosInfo.len));
           Wr.PutChar(csvWr, ',');
-          Wr.PutText(csvWr, Int(finCnt.k1));
+          Wr.PutText(csvWr, Int(finCnt[0]));
           Wr.PutChar(csvWr, ',');
-          Wr.PutText(csvWr, Int(finCnt.k2));
+          Wr.PutText(csvWr, Int(finCnt[1]));
           Wr.PutChar(csvWr, ',');
-          Wr.PutText(csvWr, Int(finCnt.k2 * mosInfo.len));
+          Wr.PutText(csvWr, Int(finCnt[2]));
           Wr.PutChar(csvWr, ',');
-          Wr.PutText(csvWr, Int(n * finCnt.k1));
+          Wr.PutText(csvWr, Int(n * finCnt[0]));
           Wr.PutChar(csvWr, ',');
-          Wr.PutText(csvWr, Int(n * finCnt.k2));
+          Wr.PutText(csvWr, Int(n * finCnt[1]));
           Wr.PutChar(csvWr, ',');
-          Wr.PutText(csvWr, Int(n * finCnt.k2 * mosInfo.len));
+          Wr.PutText(csvWr, Int(n * finCnt[2]));
           Wr.PutChar(csvWr, '\n');
         END
       END;
@@ -374,12 +370,11 @@ PROCEDURE MosInfoAdd(tgt, from : MosInfoCardTbl.T) =
   VAR
     iter := from.iterate();
     info : MosInfo.T;
-    fromfins, tofins : CardPair.T;
+    fromfins, tofins : FinInfo.T;
   BEGIN
     WHILE iter.next(info, fromfins) DO
       IF tgt.get(info, tofins) THEN
-        EVAL tgt.put(info, CardPair.T { tofins.k1 + fromfins.k1,
-                                        tofins.k2 + fromfins.k2 })
+        EVAL tgt.put(info, FinInfo.Add(tofins,fromfins)) 
       ELSE
         EVAL tgt.put(info, fromfins)
       END
