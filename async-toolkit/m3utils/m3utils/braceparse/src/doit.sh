@@ -11,5 +11,5 @@ NET=chip.net.gz
 
 cd ${WORKDIR}
 
-gzip -dc ${NET} | ${XPATH} -f - -r chip -t ${MYDIR}/${SPECIALS} -T gox -l 3  -w '(lambda(nfin) (if (= nfin 1) 30000 (- (* 30000 nfin) 22000)))'
+gzip -dc ${NET} | ${XPATH} -f - -r chip -t ${MYDIR}/${SPECIALS} -T gox -l 3  -w '(lambda(nfin) (if (= nfin 1) 30 (- (* 30 nfin) 22)))'
 
