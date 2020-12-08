@@ -1,6 +1,7 @@
 import ("libm3")
 import ("cit_util")
 import ("parseparams")
+import ("mscheme")
 
 if defined("CM3_VERSION")
         m3_optimize("T")
@@ -24,12 +25,16 @@ openarrayTable("CharsAtom", "OpenCharArray", "Atom")
 
 %library ("braceparse")
 
-module("Subcell")
+interface("Subcell")
 list ("Subcell", "Subcell")
 sequence ("Subcell", "Subcell")
+
+module ("LongNames")
+interface ("InstanceName")
+
 module ("MosInfo")
 
-table ("MosInfoCard", "MosInfo", "CardPair")
+table ("MosInfoCard", "MosInfo", "FinInfo")
 table ("AtomCell", "Atom", "CellRec")
 
 table ("AtomMosInfoCardTbl", "Atom", "MosInfoCardTbl")
@@ -37,11 +42,14 @@ table ("AtomMosInfoCardTbl", "Atom", "MosInfoCardTbl")
 openarrayTable ("OpenCharArrayRef", "OpenCharArray", "Refany")
 
 table ("AtomCard", "Atom", "Cardinal")
-table ("AtomCardPair", "Atom", "CardPair")
-table ("AtomCardTriple", "Atom", "CardTriple")
+%table ("AtomCardPair", "Atom", "CardPair")
+table ("AtomFinInfo", "Atom", "FinInfo")
 
 module("ExceptionInfo")
-module("CardTriple")
+module("FinInfo")
+
+module ("Gox")
+Module ("DrawnWidth")
 
 program ("netlist2goxrpt")
 

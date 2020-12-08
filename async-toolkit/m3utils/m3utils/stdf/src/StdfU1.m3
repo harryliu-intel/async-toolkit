@@ -2,9 +2,10 @@ MODULE StdfU1;
 IMPORT Rd, StdfRd, StdfE;
 IMPORT Thread;
 FROM Fmt IMPORT Int;
+IMPORT Wr, StdfWr;
 
 PROCEDURE Parse(rd : Rd.T; VAR len : CARDINAL; VAR t : T)
-  RAISES { StdfE.E, StdfE.Missing, Thread.Alerted, Rd.Failure, Rd.EndOfFile } =
+  RAISES { StdfE.E, Thread.Alerted, Rd.Failure, Rd.EndOfFile } =
   BEGIN
     IF len = 0 THEN RETURN END;
     t := StdfRd.U1(rd, len)
@@ -14,5 +15,13 @@ PROCEDURE Format(t : T) : TEXT =
   BEGIN
     RETURN Brand & " : " & Int(t)
   END Format;
+
+PROCEDURE Write(wr : Wr.T; READONLY t : T)
+  RAISES { Thread.Alerted, Wr.Failure } =
+  BEGIN
+    StdfWr.U1(wr, t)
+  END Write;
+  
+PROCEDURE Bytes(<*UNUSED*>READONLY t : T) : CARDINAL = BEGIN RETURN 1 END Bytes;
 
 BEGIN END StdfU1.

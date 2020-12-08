@@ -33,4 +33,10 @@ Table("StdfCardPairRec", "CardPair", "StdfRecordTypes")
 
 Module ("StdfParseTable")
 
+module ("StdfConstProc")
+
+module ("StdfWr")
+
+module ("StdfRand")
+
 library ("stdf")

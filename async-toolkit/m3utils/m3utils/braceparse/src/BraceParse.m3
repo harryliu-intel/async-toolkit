@@ -21,11 +21,13 @@ IMPORT Atom, Subcell;
 IMPORT CharsAtomTbl;
 IMPORT MosInfo, MosInfoCardTbl;
 IMPORT AtomCellTbl;
-IMPORT CardPair;
+IMPORT FinInfo;
 IMPORT SubcellSeq;
 IMPORT OpenCharArrayRefTbl;
 IMPORT ExceptionInfo;
 IMPORT AtomSetDef;
+IMPORT LongNames;
+IMPORT DrawnWidth;
 
 (* 
    an interesting extension of the buffering code would be to make the
@@ -66,10 +68,8 @@ CONST TL = Compiler.ThisLine;
       
 VAR doDebug := Debug.GetLevel() >= 10 AND Debug.This("BraceParse");
     
-VAR
-  atomTbl := NEW(CharsAtomTbl.Default).init();
-  
-PROCEDURE AtomFromChars(READONLY chars : ARRAY OF CHAR) : Atom.T =
+PROCEDURE AtomFromChars(atomTbl : CharsAtomTbl.T;
+                        READONLY chars : ARRAY OF CHAR) : Atom.T =
   VAR
     atom : Atom.T;
   BEGIN
@@ -82,7 +82,9 @@ PROCEDURE AtomFromChars(READONLY chars : ARRAY OF CHAR) : Atom.T =
     END
   END AtomFromChars;
   
-PROCEDURE Parse(rd : Rd.T; transistorCells : OpenCharArrayRefTbl.T) : T
+PROCEDURE Parse(rd : Rd.T;
+                transistorCells : OpenCharArrayRefTbl.T;
+                drawnWidth : DrawnWidth.T) : T
   RAISES { Rd.Failure, Thread.Alerted } =
 
   VAR
@@ -98,6 +100,7 @@ PROCEDURE Parse(rd : Rd.T; transistorCells : OpenCharArrayRefTbl.T) : T
     lineno := 1;
 
     warnSet := NEW(AtomSetDef.T).init();
+    atomTbl := NEW(CharsAtomTbl.Default).init();
 
   PROCEDURE Refill()
     RAISES { Rd.EndOfFile, Rd.Failure, Thread.Alerted, Syntax }  =
@@ -484,18 +487,24 @@ PROCEDURE Parse(rd : Rd.T; transistorCells : OpenCharArrayRefTbl.T) : T
       CASE type OF
         InstanceType.MOS =>
         VAR
-          type    := AtomFromChars(SUBARRAY(typeBuf, 0, typeNm.n));
+          type    := AtomFromChars(atomTbl, SUBARRAY(typeBuf, 0, typeNm.n));
           mosInfo := MosInfo.T { type, props.l };
-          oldCnt  : CardPair.T;
+          oldCnt  : FinInfo.T;
         BEGIN
           IF doDebug THEN
             Debug.Out("got a MOS with fins " & Int(props.nfin))
           END;
-          IF parent.mosTbl.get(mosInfo, oldCnt) THEN
-            EVAL parent.mosTbl.put(mosInfo, CardPair.T {oldCnt.k1 + 1,
-                                                        oldCnt.k2 + props.nfin})
-          ELSE
-            EVAL parent.mosTbl.put(mosInfo, CardPair.T { 1, props.nfin })
+          WITH drawn = drawnWidth.eval(props.nfin),
+               thisInfo = FinInfo.T { 1,
+                                      props.nfin,
+                                      props.nfin * props.l,
+                                      drawn,
+                                      drawn * props.l } DO
+            IF parent.mosTbl.get(mosInfo, oldCnt) THEN
+              EVAL parent.mosTbl.put(mosInfo, FinInfo.Add(oldCnt, thisInfo))
+            ELSE
+              EVAL parent.mosTbl.put(mosInfo, thisInfo)
+            END
           END
         END
 
@@ -507,7 +516,7 @@ PROCEDURE Parse(rd : Rd.T; transistorCells : OpenCharArrayRefTbl.T) : T
           fail := FALSE;
         BEGIN
 
-          WITH subtype = AtomFromChars(SUBARRAY(typeBuf, 0, typeNm.n)),
+          WITH subtype = AtomFromChars(atomTbl, SUBARRAY(typeBuf, 0, typeNm.n)),
                hadIt = t.cellTbl.get(subtype, cellRec) DO
             IF NOT hadIt THEN
               fail := TRUE;
@@ -522,9 +531,9 @@ PROCEDURE Parse(rd : Rd.T; transistorCells : OpenCharArrayRefTbl.T) : T
           END;
 
           IF NOT fail THEN
-            Subcell.EncodeName(t.longNames,
-                               SUBARRAY(instBuf, 0, instNm.n),
-                               sub.instance);
+            LongNames.Encode(t.longNames,
+                             SUBARRAY(instBuf, 0, instNm.n),
+                             sub.instance);
 
             subcells.addhi(sub)
           END
@@ -619,13 +628,15 @@ PROCEDURE Parse(rd : Rd.T; transistorCells : OpenCharArrayRefTbl.T) : T
 
       IF NOT GetIdent(nm) THEN RAISE Syntax(TL()) END;
 
-      cellNm := AtomFromChars(SUBARRAY(buf, nm.s, nm.n));
+      cellNm := AtomFromChars(atomTbl, SUBARRAY(buf, nm.s, nm.n));
 
       cell := NEW(CellRec.T,
-                  nm       := AtomFromChars(SUBARRAY(buf, nm.s, nm.n)),
-                  subcells := NIL,
+                  nm       := cellNm,
                   mosTbl   := NEW(MosInfoCardTbl.Default).init());
+
+      (* capture subcells in a sequence first *)
       subcells := NEW(SubcellSeq.T).init();
+
       LOOP
         IF GetExact(LB) THEN
           IF    GetPort() THEN
@@ -641,7 +652,7 @@ PROCEDURE Parse(rd : Rd.T; transistorCells : OpenCharArrayRefTbl.T) : T
         END
       END;
 
-      (* copy sequence to cell *)
+      (* copy subcell sequence to cell as an array to save some memory *)
       cell.subcells := NEW(REF ARRAY OF Subcell.T, subcells.size());
       FOR i := FIRST(cell.subcells^) TO LAST(cell.subcells^) DO
         cell.subcells[i] := subcells.get(i)
@@ -679,7 +690,7 @@ PROCEDURE Parse(rd : Rd.T; transistorCells : OpenCharArrayRefTbl.T) : T
       <*ASSERT t = NIL*>
       t := NEW(T);
       t.cellTbl := NEW(AtomCellTbl.Default).init();
-      t.longNames := Subcell.NewLongNames();
+      t.longNames := LongNames.New();
 
       IF NOT GetIdent(nm) THEN RETURN FALSE END;
       

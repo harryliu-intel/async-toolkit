@@ -4,9 +4,11 @@ IMPORT Thread;
 IMPORT Word;
 IMPORT StdfRd;
 IMPORT Wx;
+IMPORT Wr;
+IMPORT StdfWr;
 
 PROCEDURE Parse(rd : Rd.T; VAR len : CARDINAL; VAR t : T)
-  RAISES { StdfE.E, StdfE.Missing, Thread.Alerted, Rd.Failure, Rd.EndOfFile } =
+  RAISES { StdfE.E, Thread.Alerted, Rd.Failure, Rd.EndOfFile } =
   VAR
     u, v : [0..255];
   BEGIN
@@ -38,5 +40,34 @@ PROCEDURE Format(t : T) : TEXT =
   END Format;
 
 PROCEDURE Default() : T = BEGIN RETURN NEW(T, 0) END Default;
+
+PROCEDURE Bytes(READONLY t : T) : CARDINAL =
+  BEGIN
+    RETURN 1 + ((NUMBER(t^) - 1) DIV 8 + 1)
+  END Bytes;
+  
+PROCEDURE Write(wr : Wr.T; READONLY t : T)
+  RAISES { Thread.Alerted, Wr.Failure } =
+  VAR
+    n  := NUMBER(t^);
+    nb : [0..255] := (n - 1) DIV 8 + 1;
+  BEGIN
+    StdfWr.U1(wr, nb);
+    
+    FOR i := 0 TO nb - 1 DO
+      VAR
+        b : [0..255] := 0;
+        k := 0;
+      CONST
+        Sel = ARRAY [FALSE..TRUE] OF CARDINAL { 0, 1 };
+      BEGIN
+        FOR j := i * 8 TO MIN(i * 8 + 7, LAST(t^)) DO
+          b := Word.Insert(b, Sel[t[8 * i + j]], k, 1);
+          INC(k)
+        END;
+        StdfWr.U1(wr, b)
+      END
+    END
+  END Write;
 
 BEGIN END StdfBn.

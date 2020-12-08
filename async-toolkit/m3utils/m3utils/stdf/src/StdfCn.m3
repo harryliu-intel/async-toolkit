@@ -4,9 +4,11 @@ IMPORT Thread;
 IMPORT Text;
 IMPORT StdfC1;
 IMPORT StdfRd;
+IMPORT Wr;
+IMPORT StdfWr;
 
 PROCEDURE Parse(rd : Rd.T; VAR len : CARDINAL; VAR t : T)
-  RAISES { StdfE.E, StdfE.Missing, Thread.Alerted, Rd.Failure, Rd.EndOfFile } =
+  RAISES { StdfE.E, Thread.Alerted, Rd.Failure, Rd.EndOfFile } =
   VAR
     rlen : [0..255];
   BEGIN
@@ -25,4 +27,18 @@ PROCEDURE Format(t : T) : TEXT =
 
 PROCEDURE Default() : T = BEGIN RETURN NEW(T, 0) END Default;
 
+PROCEDURE Write(wr : Wr.T; READONLY t : T)
+  RAISES { Thread.Alerted, Wr.Failure } =
+  BEGIN
+    StdfWr.U1(wr, NUMBER(t^));
+    FOR i := FIRST(t^) TO LAST(t^) DO
+      StdfWr.Char(wr, t[i])
+    END
+  END Write;
+
+PROCEDURE Bytes(READONLY t : T) : CARDINAL =
+  BEGIN
+    RETURN 1 + NUMBER(t^)
+  END Bytes;
+  
 BEGIN END StdfCn.
