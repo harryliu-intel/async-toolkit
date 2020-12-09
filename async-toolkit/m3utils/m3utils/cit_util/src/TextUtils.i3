@@ -32,6 +32,8 @@ PROCEDURE CountCharOccurences(in: TEXT; c: CHAR): CARDINAL;
 PROCEDURE Filter(in: TEXT; keep: SET OF CHAR): TEXT;
 PROCEDURE FilterOut(in: TEXT; remove := SET OF CHAR{' ', '\t', '\n'}): TEXT;
 PROCEDURE FilterEdges(in: TEXT; remove := SET OF CHAR{' ', '\t', '\n'}): TEXT;
+PROCEDURE FilterIdent(in : TEXT) : TEXT; (* filter anything that's not a legal
+                                            identifier *)
 
 PROCEDURE FindSub(in, sub : TEXT; VAR pos : CARDINAL; start := 0) : BOOLEAN;
 (* find first occurrence of sub in in *)

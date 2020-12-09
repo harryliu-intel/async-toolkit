@@ -217,6 +217,34 @@ PROCEDURE Filter(in: TEXT; keep: SET OF CHAR): TEXT =
     RETURN Text.FromChars(SUBARRAY(result^, 0, len));
   END Filter;
 
+PROCEDURE FilterIdent(in: TEXT): TEXT =
+  TYPE
+    SC      = SET OF CHAR;
+  CONST
+    Lower   = SC { 'a' .. 'z' };
+    Upper   = SC { 'A' .. 'Z' };
+    Alpha   = Lower + Upper;
+    Digit   = SC { '0' .. '9' };
+    Ident1  = Alpha + SC { '_' };
+    Ident2  = Ident1 + Digit;
+  VAR
+    result := NEW(REF ARRAY OF CHAR, TL(in));
+    len := 0;
+    last := TL(in) - 1;
+    c: CHAR;
+    first := TRUE;
+  BEGIN
+    FOR i := 0 TO last DO
+      c := Text.GetChar(in, i);
+      IF c IN Ident1 OR NOT first AND c IN Ident2 THEN
+        result[len] := c;
+        INC(len);
+        first := FALSE;
+      END;
+    END;
+    RETURN Text.FromChars(SUBARRAY(result^, 0, len));
+  END FilterIdent;
+
 PROCEDURE FilterOut(in: TEXT; remove := SET OF CHAR{' ', '\t', '\n'}): TEXT =
   BEGIN
     RETURN Filter(in, SET OF CHAR{FIRST(CHAR) .. LAST(CHAR)} - remove);
