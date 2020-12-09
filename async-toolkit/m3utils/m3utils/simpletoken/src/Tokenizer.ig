@@ -2,13 +2,14 @@ GENERIC INTERFACE Tokenizer(Defs);
 
 (* defs must contain the following symbols:
 
-BufSiz    : CARDINAL     -- CARDINAL size of input buffer
-Special   : SET OF CHAR -- special characters to recognize as tokens
-White     : SET OF CHAR -- whitespace characters to skip
-Ident1    : SET OF CHAR -- legal initial chars for identifiers
-Ident2    : SET OF CHAR -- legal non-initial chars for identifiers
-CComments : BOOLEAN   -- recognize (and skip) C-style comments
-
+BufSiz      : CARDINAL    -- CARDINAL size of input buffer
+Special     : SET OF CHAR -- special characters to recognize as tokens
+White       : SET OF CHAR -- whitespace characters to skip
+Ident1      : SET OF CHAR -- legal initial chars for identifiers
+Ident2      : SET OF CHAR -- legal non-initial chars for identifiers
+CComments   : BOOLEAN     -- recognize (and skip) C-style comments
+DoString    : BOOLEAN     -- recognize string
+StringQuote : CHAR        -- quotation mark to use (backslash escapes)
 *)
 
 IMPORT Rd, Thread;
@@ -29,6 +30,7 @@ TYPE
     s        : CARDINAL := Defs.BufSiz;    (* start of token  *)
 
     haveTok  := FALSE;
+    string   := FALSE;
   END;
 
   Buffer = ARRAY [ 0 .. Defs.BufSiz-1 ] OF CHAR;

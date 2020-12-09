@@ -1,5 +1,6 @@
 GENERIC MODULE Tokenizer(Defs);
-FROM Defs IMPORT BufSiz, Special, White, Ident1, Ident2, CComments;
+FROM Defs IMPORT BufSiz, Special, White, Ident1, Ident2, CComments,
+                 DoString, StringQuote;
 
 IMPORT Thread, Rd;
 IMPORT Text, TextUtils;
@@ -52,17 +53,27 @@ PROCEDURE NextToken(VAR buf : Buffer; VAR st : State)
 
   PROCEDURE Dbg() =
     BEGIN
-      Debug.Out(F("Got token %s",
-                  Text.FromChars(SUBARRAY(buf,
-                                          st.s,
-                                          st.b - st.s))))
+      IF st.string THEN
+        Debug.Out(F("Got string %s",
+                    Text.FromChars(SUBARRAY(buf,
+                                            st.s,
+                                            st.b - st.s))))
+      ELSE
+        Debug.Out(F("Got token <%s>",
+                    Text.FromChars(SUBARRAY(buf,
+                                            st.s,
+                                            st.b - st.s))))
+      END;
     END Dbg;
   CONST
     SpecialPlusWS = Special + White;
+    BackSlash     = '\\';
   BEGIN
     (* we should have consumed previous token *)
     <*ASSERT NOT st.haveTok*>
-    
+
+    st.string := FALSE;
+
     (* ensure we have text *)
     IF st.b = st.e THEN Refill(buf, st) END;
     
@@ -92,7 +103,6 @@ PROCEDURE NextToken(VAR buf : Buffer; VAR st : State)
           END;
           
           INC(st.b); (* skip *)
-          
           IF st.b = st.e THEN Refill(buf, st) END;
         END;
         INC(st.b, 2)
@@ -113,12 +123,43 @@ PROCEDURE NextToken(VAR buf : Buffer; VAR st : State)
     END;
 
     <*ASSERT st.b # st.e*>
-
+    (* we are now not at whitespace nor at a special
+       either at 
+       -- a string 
+       -- a number 
+       -- an identifier 
+    *)
+    IF DoString AND buf[st.b] = StringQuote THEN
+      VAR
+        state : CARDINAL := 0;
+      BEGIN
+        INC(st.b); (* skip opening quote *)
+        IF st.b = st.e THEN Refill(buf, st) END;
+        st.haveTok := TRUE;
+        
+        LOOP
+          IF    state = 0 AND buf[st.b] = BackSlash THEN
+            state := 1
+          ELSIF state = 1 THEN
+            (* just skip this char *)
+            state := 0
+          ELSIF buf[st.b] = StringQuote THEN
+            st.string := TRUE
+          END;
+          INC(st.b); 
+          IF st.b = st.e THEN Refill(buf, st) END;
+          IF st.string THEN
+            IF doDebug THEN Dbg() END;
+            RETURN
+          END
+        END
+      END          
+    END;
+    
     (* we are now at a normal character, so we can execute the 
        following loop at least once *)
     REPEAT
       INC(st.b); 
-
       IF st.b = st.e THEN Refill(buf, st) END
     UNTIL buf[st.b] IN SpecialPlusWS;
 
