@@ -1,0 +1,18 @@
+import ("libm3")
+import ("cit_util")
+import ("parseparams")
+import ("simpletoken")
+
+%if defined("CM3_VERSION")
+%        m3_optimize("T")
+%end
+
+implementation ("Main")
+
+interface ("BnfDefs")
+module ("BnfTokenizer")
+interface ("BnfTokenizer")
+
+program ("bnfgrammar")
+
+
