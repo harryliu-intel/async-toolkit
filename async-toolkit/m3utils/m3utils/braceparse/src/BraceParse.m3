@@ -82,9 +82,9 @@ PROCEDURE AtomFromChars(atomTbl : CharsAtomTbl.T;
     END
   END AtomFromChars;
   
-PROCEDURE Parse(rd : Rd.T;
+PROCEDURE Parse(rd              : Rd.T;
                 transistorCells : OpenCharArrayRefTbl.T;
-                drawnWidth : DrawnWidth.T) : T
+                drawnWidth      : DrawnWidth.T) : T
   RAISES { Rd.Failure, Thread.Alerted } =
 
   VAR
