@@ -2,7 +2,7 @@ GENERIC MODULE Tokenizer(Defs);
 FROM Defs IMPORT BufSiz, Special, White, Ident1, Ident2, CComments;
 
 IMPORT Thread, Rd;
-IMPORT Text;
+IMPORT Text, TextUtils;
 IMPORT Debug;
 FROM Fmt IMPORT F, Int;
 IMPORT IO;
@@ -10,7 +10,7 @@ IMPORT Compiler;
 
 CONST TL = Compiler.ThisLine;
 
-VAR doDebug := Debug.DebugThis(Brand);
+VAR doDebug := Debug.DebugThis(TextUtils.FilterIdent(Brand));
 
 PROCEDURE Refill(VAR buf : Buffer; VAR st : State)
   RAISES { Rd.EndOfFile, Rd.Failure, Thread.Alerted, Syntax }  =

@@ -236,7 +236,7 @@ PROCEDURE FilterIdent(in: TEXT): TEXT =
   BEGIN
     FOR i := 0 TO last DO
       c := Text.GetChar(in, i);
-      IF c IN Ident1 OR NOT first AND c IN Ident2 THEN
+      IF c IN Ident1 OR ((NOT first) AND c IN Ident2) THEN
         result[len] := c;
         INC(len);
         first := FALSE;
