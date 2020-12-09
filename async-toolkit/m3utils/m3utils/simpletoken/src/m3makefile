@@ -1,0 +1,13 @@
+import ("libm3")
+import ("cit_util")
+
+%if defined("CM3_VERSION")
+%        m3_optimize("T")
+%end
+
+
+Generic_module("Tokenizer")
+
+library ("simpletoken")
+
+
