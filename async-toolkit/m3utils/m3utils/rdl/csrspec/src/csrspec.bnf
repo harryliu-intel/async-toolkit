@@ -1,3 +1,9 @@
+/*
+   csrspec.bnf
+
+   commas have been added where missing
+*/
+
 source_text=
 		translation_unit,
 		{translation_unit}
@@ -563,13 +569,15 @@ union_item=
 	;
 
 union_selection=
-		union_select,
-		{",", union_select},
-		 ":",
-		union_member
-	|	"default",
-		 ":",
-		union_member
+		(       union_select,
+                	{",", union_select},
+		         ":",
+                         union_member
+                )
+	|	(       "default",
+		        ":",
+		        union_member
+                )
 	;
 
 union_select=
@@ -1375,13 +1383,15 @@ assignment_statement=
 	;
 
 assignment=
-		complex_identifier,
-		"=",
-		expression
-	|	complex_identifier,
-		"[", expression, "]",
-		"=",
-		expression
+		(       complex_identifier,
+		        "=",
+		        expression
+                )
+	|	(       complex_identifier,
+		        "[", expression, "]",
+		        "=",
+		        expression
+                )
 	;
 
 array_definition=
@@ -1552,35 +1562,41 @@ array_initializer=
 	;
 
 reference=
-		"enum",
-		"(",
-		name_of_enumeration,
-		")"
-	|	"field",
-		"(",
-		reference_name,
-		[",", string],
-		")",
-		[expression, [":", expression]]
-	|	"memory",
-		"(",
-		reference_name,
-		[",", string],
-		")"
-	|	"parameter",
-		"(",
-		name_of_parameter,
-		")"
-	|	"port",
-		"(",
-		reference_name,
-		")",
-		[expression, [":", expression]]
-	|	"register",
-		"(",
-		reference_name,
-		[",", string],
-		")"
+		(       "enum",
+		        "(",
+		        name_of_enumeration,
+		        ")"
+                )
+	|	(       "field",
+		        "(",
+		        reference_name,
+		        [",", string],
+		        ")",
+		        [expression, [":", expression]]
+                )
+	|	(       "memory",
+		        "(",
+		        reference_name,
+		        [",", string],
+		        ")"
+                )
+	|	(       "parameter",
+		        "(",
+		        name_of_parameter,
+		        ")"
+                )
+	|	(       "port",
+        		"(",
+	                reference_name,
+	                ")",
+		        [expression, [":", expression]]
+                )
+	|	(       "register",
+		        "(",
+		        reference_name,
+		        [",", string],
+		        ")"
+                )
 	;
 
 name_of_enumeration=
@@ -1659,16 +1675,18 @@ units=
 	;
 
 system_function_call=
-		"$error",
-		"(",
-		expression,
-		{".", expression},
-		")",
-		";"
-	|	 "$print",
-		"(",
-		expression,
-		{".", expression},
-		")",
-		";"
+		(       "$error",
+		        "(",
+		        expression,
+		        {".", expression},
+		        ")",
+		        ";"
+                )
+	|	(       "$print",
+		        "(",
+		        expression,
+		        {".", expression},
+		        ")",
+		        ";"
+                )
 	;
