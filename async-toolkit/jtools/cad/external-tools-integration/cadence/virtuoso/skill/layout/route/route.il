@@ -380,6 +380,7 @@
     SPEC_DIR  = (ConfigFileGetValue TheCDSConfigTable "SPEC_DIR")
     DFII_DIR  = (ConfigFileGetValue TheCDSConfigTable "DFII_DIR")
     SPAR_DIR  = (ConfigFileGetValue TheCDSConfigTable "SPAR_DIR")
+    VERI_DIR  = (ConfigFileGetValue TheCDSConfigTable "VERI_DIR")
     TEMP      = (ConfigFileGetValue TheCDSConfigTable "TEMP")
     WDIR      = (strcat TEMP "/route/" CV->cellName)
 
@@ -390,6 +391,7 @@
     (fprintf file "--spar-dir=%s\n" SPAR_DIR)
     (fprintf file "--cast-dir=%s\n" CAST_DIR)
     (fprintf file "--spec-dir=%s\n" SPEC_DIR)
+    (fprintf file "--verilog-dir=%s\n" VERI_DIR)
     (fprintf file "--lefdef-dir=lefdef\n")
     (fprintf file "--output-dir=proteus\n")
     (fprintf file "--bottom-layer=%d\n" botMetal)
