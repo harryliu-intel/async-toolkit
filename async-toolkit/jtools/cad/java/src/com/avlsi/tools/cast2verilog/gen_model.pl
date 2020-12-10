@@ -7,7 +7,8 @@ use File::Spec::Functions qw/:ALL/;
 use FindBin;
 use Cwd qw/abs_path/;
 
-my ($cast_path, $spar_dir, $gls_dir, $cell, $env, $cosim, @cast_defines, $beh, $fpga_path, @c2v_args, $kdb, $help);
+my ($cast_path, $spar_dir, $gls_dir, $cell, $env, $cosim, @cast_defines);
+my ($beh, $fpga_path, @c2v_args, @vcs_args, $kdb, $help);
 my $width = 300;
 my $mem = '16G';
 GetOptions("cast-path=s" => \$cast_path,
@@ -20,6 +21,7 @@ GetOptions("cast-path=s" => \$cast_path,
            "fpga-path=s" => \$fpga_path,
            "defines=s"   => \@cast_defines,
            "c2v-args=s"  => \@c2v_args,
+           "vcs-args=s"  => \@vcs_args,
            "mem=s"       => \$mem,
            "beh!"        => \$beh,
            "kdb!"        => \$kdb,
@@ -70,11 +72,12 @@ if (-s $flist) {
     push @args, '-file', $flist;
 }
 
-$kdb = $kdb ? '-kdb' : '';
+push @vcs_args, '-kdb' if $kdb;
 
 open my $fh, ">$runvcs" || die "Can't open $runvcs: $!";
 
 if ($gls_dir) {
+    push @vcs_args, '+nospecify';
     push @args, '-f', '$CAST2VERILOG_RUNTIME/gls.vcfg';
     print $fh <<'EOF';
 if [[ -z "$NCL_DIR" ]]; then
@@ -98,7 +101,7 @@ print $fh <<EOF;
 export SPAR="$spar_dir"
 export COLLATERAL=/nfs/sc/proj/ctg/mrl108/mrl/collateral
 export CAST2VERILOG_RUNTIME="$instdir/share/cast2verilog"
-vcs $kdb -assert svaext -licqueue -debug_access+dmptf+all -debug_region=lib+cell -full64 @defines -file "\$CAST2VERILOG_RUNTIME/$vcfg" testbench.v @args @netlists
+vcs @vcs_args -assert svaext -licqueue -debug_access+dmptf+all -debug_region=lib+cell -full64 @defines -file "\$CAST2VERILOG_RUNTIME/$vcfg" testbench.v @args @netlists
 EOF
 close $fh;
 chmod 0755, $runvcs;
@@ -114,6 +117,7 @@ gen_model.pl [options] [verilog files...]
 
  Options:
    --cast-path     Specify the CAST path
+   --gls-dir       Specify GLS top directory
    --cell          Name of the CAST cell
    --env           Name of the CAST environment
    --cosim         Or, specify a cosim spec instead of --cell and --env
@@ -124,4 +128,5 @@ gen_model.pl [options] [verilog files...]
    --beh           If specified, generate a behavior model
    --kdb           If specified, generate Verdi Elaboration Database
    --c2v-arg       Flags to cast2verilog; can be specified any number of times
+   --vcs-arg       Flags to VCS; can be specified any number of times
 =cut
