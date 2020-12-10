@@ -13,6 +13,14 @@ interface ("BnfDefs")
 module ("BnfTokenizer")
 interface ("BnfTokenizer")
 
+module ("Bnf")
+
+table ("TextBnf", "Text", "Bnf")
+sequence ("Bnf", "Bnf")
+
+table ("CharText", "Char", "Text")
+module ("CharNames")
+
 program ("bnfgrammar")
 
 
