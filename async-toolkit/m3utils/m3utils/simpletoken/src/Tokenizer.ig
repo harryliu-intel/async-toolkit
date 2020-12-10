@@ -35,7 +35,9 @@ TYPE
 
   Buffer = ARRAY [ 0 .. Defs.BufSiz-1 ] OF CHAR;
 
-EXCEPTION Syntax(CARDINAL); (* arg is line number of syntax error *)
+  E = RECORD file : TEXT; line : CARDINAL END;
+  
+EXCEPTION Syntax(E); (* arg is line number of syntax error *)
 
 TYPE Token = RECORD s, n : CARDINAL END;
 
@@ -50,6 +52,12 @@ PROCEDURE GetExact(VAR buf : ARRAY OF CHAR; VAR st : State;
 PROCEDURE GetIdent(VAR buf : ARRAY OF CHAR; VAR st : State;
                    VAR str : Token) : BOOLEAN
   RAISES { Syntax, Rd.EndOfFile, Rd.Failure, Thread.Alerted };
+  (* returns TRUE iff token matches {Ident1}{Ident2}* *)
+
+PROCEDURE GetString(VAR buf : ARRAY OF CHAR; VAR st : State;
+                   VAR str : Token) : BOOLEAN
+  RAISES { Syntax, Rd.EndOfFile, Rd.Failure, Thread.Alerted };
+  (* str is the string including quotes and all internal escapes *)
 
 PROCEDURE GetInt(VAR buf : ARRAY OF CHAR; VAR st : State;
                    VAR int : INTEGER) : BOOLEAN 

@@ -10,7 +10,8 @@ IMPORT IO;
 IMPORT Compiler;
 
 CONST TL = Compiler.ThisLine;
-
+      TF = Compiler.ThisFile;
+      
 VAR doDebug := Debug.DebugThis(TextUtils.FilterIdent(Brand));
 
 PROCEDURE Refill(VAR buf : Buffer; VAR st : State)
@@ -28,7 +29,7 @@ PROCEDURE Refill(VAR buf : Buffer; VAR st : State)
     (* refill buffer *)
     
     IF BufSiz - st.b < 2 THEN RAISE 
-      Syntax(TL())  (* token too long -- need 2 for comments *)
+      Syntax(E{TF(),TL()})  (* token too long -- need 2 for comments *)
     END;
     WITH len = Rd.GetSub(st.rd, SUBARRAY(buf, st.b, BufSiz - st.b)) DO
       IF len = 0 THEN RAISE Rd.EndOfFile END;
@@ -208,6 +209,19 @@ PROCEDURE GetIdent(VAR buf : ARRAY OF CHAR; VAR st : State;
     st.haveTok := FALSE;
     RETURN NOT st.haveTok
   END GetIdent;
+      
+PROCEDURE GetString(VAR buf : ARRAY OF CHAR; VAR st : State;
+                   VAR str : Token) : BOOLEAN
+  RAISES { Syntax, Rd.EndOfFile, Rd.Failure, Thread.Alerted } =
+  BEGIN
+    IF NOT st.haveTok THEN NextToken(buf, st) END;
+
+    IF NOT st.string THEN RETURN FALSE END;
+
+    str := Token { st.s, st.b - st.s };
+    st.haveTok := FALSE;
+    RETURN NOT st.haveTok
+  END GetString;
       
 PROCEDURE GetInt(VAR buf : ARRAY OF CHAR; VAR st : State;
                  VAR int : INTEGER) : BOOLEAN 
