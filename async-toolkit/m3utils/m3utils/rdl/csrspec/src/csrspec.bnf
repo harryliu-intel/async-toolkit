@@ -1445,14 +1445,23 @@ name_of_formal_argument_define=
 
 variable_type=
 		"bool"
-	|	("number", ["[", expression, [":", expression], "]"])
+	|	number_type
 	|	"integer"
 	|	"string"
 	;
 
+number_type=
+                "number", ["[", expression, [":", expression], "]"]
+        ;
+
+/**********************************************************************/
+
 expression=
-		primary
-	|	("+", primary)
+		primary | unary_expression | binary_expression | ternary_expression;
+
+
+unary_expression=
+                ("+", primary)
 	|	("-", primary)
 	|	("!", primary)
 	|	("~", primary)
@@ -1460,7 +1469,10 @@ expression=
 	|	("|", primary)
 	|	("^", primary)
 	|	("@", primary)
-	|	(expression, "+", expression)
+        ;
+
+binary_expression=
+		(expression, "+", expression)
 	|	(expression, "-", expression)
 	|	(expression, "*", expression)
 	|	(expression, "/", expression)
@@ -1478,10 +1490,14 @@ expression=
 	|	(expression, "^", expression)
 	|	(expression, ">>", expression)
 	|	(expression, "<<", expression)
-	|	(expression, "?", expression, ":", expression)
+        ;
+
+ternary_expression=
+		(expression, "?", expression, ":", expression)
 	;
 
-/* */
+/**********************************************************************/
+
 primary=
 		constant
 	|	complex_array_indexed
@@ -1512,7 +1528,6 @@ complex_array_sliced=
                         ;
 
 paren_expression= "(", expression, ")" ;
-
 
 /**********************************************************************/
 

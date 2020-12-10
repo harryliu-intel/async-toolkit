@@ -11,6 +11,7 @@ IMPORT AL;
 IMPORT ParseParams;
 IMPORT OSError;
 IMPORT FileRd;
+IMPORT ExceptionInfo;
 
 VAR doDebug := Debug.GetLevel() >= 10 AND Debug.This("BnfGrammar");
 
@@ -163,6 +164,7 @@ BEGIN
   |
     Rd.Failure(x) => Debug.Error("Rd.Failure : " & AL.Format(x))
   ELSE
-    <*ASSERT FALSE*> (* cant happen *)
+    Debug.Error("Unexpected exception\n" & ExceptionInfo.Fmt(Compiler.ThisException()));
+    <*ASSERT FALSE*>
   END
 END Main.

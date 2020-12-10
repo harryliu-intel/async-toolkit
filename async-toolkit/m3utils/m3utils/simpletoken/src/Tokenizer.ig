@@ -25,8 +25,8 @@ TYPE
     lineno   : CARDINAL := 1;
     bytes    : CARDINAL := 0;
 
-    b        : CARDINAL := 0;              (* buffer pointer  *)
-    e        : CARDINAL := 0;              (* end of buffer   *)
+    b        : CARDINAL := Defs.BufSiz;    (* buffer pointer  *)
+    e        : CARDINAL := Defs.BufSiz;    (* end of buffer   *)
     s        : CARDINAL := Defs.BufSiz;    (* start of token  *)
 
     haveTok  := FALSE;

@@ -17,24 +17,31 @@ VAR doDebug := Debug.DebugThis(TextUtils.FilterIdent(Brand));
 PROCEDURE Refill(VAR buf : Buffer; VAR st : State)
   RAISES { Rd.EndOfFile, Rd.Failure, Thread.Alerted, Syntax }  =
   BEGIN
-    (* existing token starts at s, b is at end *)
+    (* existing token starts at s, b is at or past end *)
     
-    (* shift down the old token *)
-    WITH tokSoFar = BufSiz - st.s DO
-      SUBARRAY(buf, 0, tokSoFar) := SUBARRAY(buf, st.s, tokSoFar);
+    (* shift down the old token 
+       st.s <- 0
+    *)
+    WITH bufRem       = BufSiz - st.s DO
+      SUBARRAY(buf, 0, bufRem) := SUBARRAY(buf, st.s, bufRem);
+      DEC(st.b, st.s);
+      DEC(st.e, st.s);
       st.s := 0;
-      st.b := tokSoFar
     END;
     
     (* refill buffer *)
     
-    IF BufSiz - st.b < 2 THEN RAISE 
-      Syntax(E{TF(),TL()})  (* token too long -- need 2 for comments *)
+    IF BufSiz - st.b < 2 THEN RAISE
+      (* token too long -- need 2 for comments *)
+      Syntax(E{TF(),TL()})  
     END;
-    WITH len = Rd.GetSub(st.rd, SUBARRAY(buf, st.b, BufSiz - st.b)) DO
+
+    (* we can fit some characters, let's get them *)
+    
+    WITH len = Rd.GetSub(st.rd, SUBARRAY(buf, st.e, BufSiz - st.e)) DO
       IF len = 0 THEN RAISE Rd.EndOfFile END;
       INC(st.bytes, len);
-      st.e := st.b + len;
+      st.e := st.e + len;
     END;
     
     <*ASSERT st.b # st.e AND st.b # st.e - 1*>
@@ -52,6 +59,12 @@ PROCEDURE NextToken(VAR buf : Buffer; VAR st : State)
       IO.Put(" bytes")
     END PutPos;
 
+  PROCEDURE Get(charsNeeded : CARDINAL)
+    RAISES { Rd.EndOfFile, Rd.Failure, Thread.Alerted, Syntax }  =
+    BEGIN
+      IF st.b > st.e - charsNeeded THEN Refill(buf, st) END
+    END Get;
+    
   PROCEDURE Dbg() =
     BEGIN
       IF st.string THEN
@@ -76,8 +89,8 @@ PROCEDURE NextToken(VAR buf : Buffer; VAR st : State)
     st.string := FALSE;
 
     (* ensure we have text *)
-    IF st.b = st.e THEN Refill(buf, st) END;
-    
+    Get(2);
+
     (* read token from b onwards *)
     WHILE buf[st.b] IN White OR
       CComments AND buf[st.b] = '/' AND buf[st.b+1] = '*' DO
@@ -91,12 +104,13 @@ PROCEDURE NextToken(VAR buf : Buffer; VAR st : State)
         END;
         
         INC(st.b); (* skip *)
-        
-        IF st.b = st.e THEN Refill(buf, st) END;
+        INC(st.s);
+        Get(2)
       END;
 
       IF CComments AND buf[st.b] = '/' AND buf[st.b + 1] = '*' THEN
-        INC(st.b, 2);
+        INC(st.b,2);
+        Get(2);
 
         WHILE buf[st.b] # '*' OR buf[st.b + 1] # '/' DO
           IF buf[st.b] = '\n' THEN
@@ -104,9 +118,12 @@ PROCEDURE NextToken(VAR buf : Buffer; VAR st : State)
           END;
           
           INC(st.b); (* skip *)
-          IF st.b = st.e THEN Refill(buf, st) END;
+          INC(st.s);
+          Get(2);
         END;
-        INC(st.b, 2)
+        INC(st.b, 2);
+        INC(st.s, 2);
+        Get(2)
       END
       
     END;
@@ -135,7 +152,7 @@ PROCEDURE NextToken(VAR buf : Buffer; VAR st : State)
         state : CARDINAL := 0;
       BEGIN
         INC(st.b); (* skip opening quote *)
-        IF st.b = st.e THEN Refill(buf, st) END;
+        Get(1);
         st.haveTok := TRUE;
         
         LOOP
@@ -148,7 +165,7 @@ PROCEDURE NextToken(VAR buf : Buffer; VAR st : State)
             st.string := TRUE
           END;
           INC(st.b); 
-          IF st.b = st.e THEN Refill(buf, st) END;
+          Get(1);
           IF st.string THEN
             IF doDebug THEN Dbg() END;
             RETURN
@@ -161,7 +178,7 @@ PROCEDURE NextToken(VAR buf : Buffer; VAR st : State)
        following loop at least once *)
     REPEAT
       INC(st.b); 
-      IF st.b = st.e THEN Refill(buf, st) END
+      Get(1)
     UNTIL buf[st.b] IN SpecialPlusWS;
 
     (* we are at the end of a token *)

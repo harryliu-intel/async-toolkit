@@ -45,7 +45,6 @@ table ("AtomCard", "Atom", "Cardinal")
 %table ("AtomCardPair", "Atom", "CardPair")
 table ("AtomFinInfo", "Atom", "FinInfo")
 
-module("ExceptionInfo")
 module("FinInfo")
 
 module ("Gox")

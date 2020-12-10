@@ -1,6 +1,6 @@
 INTERFACE BnfDefs;
 
-CONST BufSiz = 1024;
+CONST BufSiz = 1024; (* needs to be at least longest token + 1 *)
 
 TYPE SC = SET OF CHAR;
 

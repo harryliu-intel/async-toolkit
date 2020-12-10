@@ -388,6 +388,8 @@ c_source ("UtimeOpsC")
 
 Module ("FastNumParse")
 
+Module ("ExceptionInfo")
+
 Library("cit_util")
 
 
