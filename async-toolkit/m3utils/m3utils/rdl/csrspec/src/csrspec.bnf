@@ -1,0 +1,1674 @@
+source_text=
+		translation_unit,
+		{translation_unit}
+	;
+
+translation_unit=
+		property_declaration
+	|	attribute_declaration
+	|	enum_declaration
+	|	component_template
+	|	addressmap_template
+	|	group_template
+	|	union_template
+	|	register_template
+	|	field_template
+	|	port_template
+	|	memory_template
+	|	port_definitions
+	|	outer_definitions
+	|	system_function_call
+	;
+
+property_declaration=
+		"property",
+		property_assignment
+	;
+
+property_assignment=
+		name_of_property,
+		["=", expression, [units]],
+		";"
+	;
+
+name_of_property=
+		IDENTIFIER
+	;
+
+enum_declaration=
+		"enum",
+		name_of_enum_declaration,
+		"{",
+		enumerator,
+		{",", enumerator},
+		"}",
+		["{", enum_item, {enum_item}, "}"],
+		";"
+	;
+
+name_of_enum_declaration=
+		IDENTIFIER
+	;
+
+enumerator=
+		name_of_enumerator,
+		["=", number],
+		["{", enum_item, {enum_item}, "}"]
+	;
+
+name_of_enumerator=
+		IDENTIFIER
+	;
+
+enum_item=
+		property_declaration
+	|	attribute_declaration
+	;
+
+attribute_declaration=
+		"(*",
+		attribute_assignment,
+		{attribute_assignment},
+		"*)"
+	;
+
+attribute_assignment=
+		name_of_attribute,
+		["=", expression]
+	;
+
+name_of_attribute=
+		IDENTIFIER
+	;
+
+outer_definitions=
+		(
+			component_named_template,
+			outer_define,
+			{",", outer_define},
+			";"
+		)
+	|	(
+			component_anonymous_template,
+			outer_define,
+			{",", outer_define},
+			";"
+		)
+	|	(
+			addressmap_named_template,
+			outer_define,
+			{",", outer_define},
+			";"
+		)
+	|	(
+			addressmap_anonymous_template,
+			outer_define,
+			{",", outer_define},
+			";"
+		)
+	|	(
+			name_of_reference,
+			outer_define,
+			{",", outer_define},
+			";"
+		)
+	;
+
+outer_define=
+		name_of_define,
+		[list_of_actual_arguments]
+	;
+
+component_template=
+		component_named_template,
+		";"
+	;
+
+component_named_template=
+		["userdefined"],
+		"component",
+		name_of_template,
+		[list_of_formal_arguments],
+		component_body
+	;
+
+component_anonymous_template=
+		["userdefined"],
+		"component",
+		[list_of_formal_arguments],
+		component_body
+	;
+
+component_body=
+		"{",
+		component_item,
+		{component_item},
+		"}"
+	;
+
+component_item=
+		property_declaration
+	|	attribute_declaration
+	|	addressmap_template
+	|	group_template
+	|	union_template
+	|	register_template
+	|	field_template
+	|	memory_template
+	|	port_template
+	|	enum_declaration
+	|	variable_definitions
+	|	addressmap_definitions
+	|	port_definitions
+	|	definition
+	|	component_case_statement
+	|	component_if_statement
+	|	component_for_statement
+	|	assignment_statement
+	|	system_function_call
+	;
+
+component_for_statement=
+		"for",
+		"(",
+		[for_statement_or_expression],
+		";",
+		expression,
+		";",
+		[for_statement_or_expression],
+		")",
+		"{",
+		component_item,
+		{component_item},
+		"}"
+	;
+
+for_statement_or_expression=
+		assignment
+	|	expression
+	;
+
+component_if_statement=
+		"if",
+		"(",
+		expression,
+		")",
+		"{",
+		component_item,
+		{component_item},
+		"}",
+		[
+		"else",
+		"{",
+		component_item,
+		{component_item},
+		"}"
+		]
+	;
+
+component_case_statement=
+		"case",
+		"(",
+		expression,
+		")",
+		"{",
+		component_case_item,
+		{component_case_item},
+		"}"
+	;
+
+component_case_item=
+		(
+			expression,
+			{",", expression},
+			":",
+			"{",
+			component_item,
+			{component_item},
+			"}"
+		)
+	|	(
+			"default",
+			":",
+			"{",
+			component_item,
+			{component_item},
+			"}"
+		)
+	;
+
+addressmap_template=
+		addressmap_named_template,
+		";"
+	;
+
+addressmap_definitions=
+		(
+			addressmap_named_template,
+			define,
+			{",", define},
+			";"
+		)
+	|	(
+			addressmap_anonymous_template,
+			define,
+			{",", define},
+			";"
+		)
+	;
+
+addressmap_named_template=
+		["userdefined"],
+		"addressmap",
+		name_of_template,
+		[list_of_formal_arguments],
+		addressmap_body
+	;
+
+addressmap_anonymous_template=
+		["userdefined"],
+		"addressmap",
+		[list_of_formal_arguments],
+		addressmap_body
+	;
+
+addressmap_body=
+		"{",
+		addressmap_item,
+		{addressmap_item},
+		"}"
+	;
+
+addressmap_item=
+		property_declaration
+	|	attribute_declaration
+	|	group_template
+	|	union_template
+	|	register_template
+	|	field_template
+	|	memory_template
+	|	port_template
+	|	enum_declaration
+	|	variable_definitions
+	|	group_definitions
+	|	union_definitions
+	|	register_definitions
+	|	memory_definitions
+	|	port_definitions
+	|	definition
+	|	alias_definition
+	|	broadcast_definition
+	|	addressmap_case_statement
+	|	addressmap_if_statement
+	|	addressmap_for_statement
+	|	assignment_statement
+	|	system_function_call
+	;
+
+addressmap_for_statement=
+		"for",
+		"(",
+		[for_statement_or_expression],
+		";",
+		expression,
+		";",
+		[for_statement_or_expression],
+		")",
+		"{",
+		addressmap_item,
+		{addressmap_item},
+		"}"
+	;
+
+addressmap_if_statement=
+		"if",
+		"(",
+		expression,
+		")",
+		"{",
+		addressmap_item,
+		{addressmap_item},
+		"}",
+		[
+		"else",
+		"{",
+		addressmap_item,
+		{addressmap_item},
+		"}"
+		]
+	;
+
+addressmap_case_statement=
+		"case",
+		"(",
+		expression,
+		")",
+		"{",
+		addressmap_case_item,
+		{addressmap_case_item},
+		"}"
+	;
+
+addressmap_case_item=
+		(
+			expression,
+			{",", expression},
+			":",
+			"{",
+			addressmap_item,
+			{addressmap_item},
+			"}"
+		)
+	|	(
+			"default",
+			":",
+			"{",
+			addressmap_item,
+			{addressmap_item},
+			"}"
+		)
+	;
+
+group_template=
+		group_named_template,
+		";"
+	;
+
+group_definitions=
+		(
+			group_named_template,
+			define,
+			{",", define},
+			";"
+		)
+	|	(
+			group_anonymous_template,
+			define,
+			{",", define},
+			";"
+		)
+	;
+
+group_named_template=
+		"group",
+		name_of_template,
+		[list_of_formal_arguments],
+		group_body
+	;
+
+group_anonymous_template=
+		"group",
+		[list_of_formal_arguments],
+		group_body
+	;
+
+group_body=
+		"{",
+		group_item,
+		{group_item},
+		"}"
+	;
+
+group_item=
+		property_declaration
+	|	attribute_declaration
+	|	group_template
+	|	union_template
+	|	register_template
+	|	field_template
+	|	memory_template
+	|	enum_declaration
+	|	variable_definitions
+	|	group_definitions
+	|	union_definitions
+	|	register_definitions
+	|	memory_definitions
+	|	definition
+	|	alias_definition
+	|	broadcast_definition
+	|	group_for_statement
+	|	group_if_statement
+	|	group_case_statement
+	|	assignment_statement
+	|	system_function_call
+	;
+
+group_for_statement=
+		"for",
+		"(",
+		[for_statement_or_expression],
+		";",
+		expression,
+		";",
+		[for_statement_or_expression],
+		")",
+		"{",
+		group_item,
+		{group_item},
+		"}"
+	;
+
+group_if_statement=
+		"if",
+		"(",
+		expression,
+		")",
+		"{",
+		group_item,
+		{group_item},
+		"}",
+		[
+		"else",
+		"{",
+		group_item,
+		{group_item},
+		"}"
+		]
+	;
+
+group_case_statement=
+		"case",
+		"(",
+		expression,
+		")",
+		"{",
+		group_case_item,
+		{group_case_item},
+		"}"
+	;
+
+group_case_item=
+		(
+			expression,
+			{",", expression},
+			":",
+			"{",
+			group_item,
+			{group_item},
+			"}"
+		)
+	|	(
+			"default",
+			":",
+			"{",
+			group_item,
+			{group_item},
+			"}"
+		)
+	;
+
+union_template=
+		union_named_template,
+		";"
+	;
+
+union_definitions=
+		(
+			union_named_template,
+			define,
+			{",", define},
+			";"
+		)
+	|	(
+			union_anonymous_template,
+			define,
+			{",", define},
+			";"
+		)
+	;
+
+union_named_template=
+		"userdefined", "union",
+		name_of_template,
+		[list_of_formal_arguments],
+		union_body
+	;
+
+union_anonymous_template=
+		"userdefined", "union",
+		[list_of_formal_arguments],
+		union_body
+	;
+
+union_body=
+		"{",
+		union_item,
+		{union_item},
+		"}"
+	;
+
+union_item=
+		property_declaration
+	|	attribute_declaration
+	|	group_template
+	|	union_template
+	|	register_template
+	|	field_template
+	|	memory_template
+	|	enum_declaration
+	|	variable_definitions
+	|	group_definitions
+	|	union_definitions
+	|	register_definitions
+	|	memory_definitions
+	|	definition
+	|	alias_definition
+	|	broadcast_definition
+	|	union_selection
+	|	union_for_statement
+	|	union_if_statement
+	|	union_case_statement
+	|	assignment_statement
+	|	system_function_call
+	;
+
+union_selection=
+		union_select,
+		{",", union_select},
+		 ":",
+		union_member
+	|	"default",
+		 ":",
+		union_member
+	;
+
+union_select=
+		IDENTIFIER
+	;
+
+union_member=
+		register_definitions
+	|	definition
+	;
+
+union_for_statement=
+		"for",
+		"(",
+		[for_statement_or_expression],
+		";",
+		expression,
+		";",
+		[for_statement_or_expression],
+		")",
+		"{",
+		union_item,
+		{union_item},
+		"}"
+	;
+
+union_if_statement=
+		"if",
+		"(",
+		expression,
+		")",
+		"{",
+		union_item,
+		{union_item},
+		"}",
+		[
+		"else",
+		"{",
+		union_item,
+		{union_item},
+		"}"
+		]
+	;
+
+union_case_statement=
+		"case",
+		"(",
+		expression,
+		")",
+		"{",
+		union_case_item,
+		{union_case_item},
+		"}"
+	;
+
+union_case_item=
+		(
+			expression,
+			{",", expression},
+			":",
+			"{",
+			union_item,
+			{union_item},
+			"}"
+		)
+	|	(
+			"default",
+			":",
+			"{",
+			union_item,
+			{union_item},
+			"}"
+		)
+	;
+
+register_template=
+		register_named_template,
+		";"
+	;
+
+register_definitions=
+		(
+			register_named_template,
+			define,
+			{",", define},
+			";"
+		)
+	|	(
+			register_anonymous_template,
+			define,
+			{",", define},
+			";"
+		)
+	;
+
+register_named_template=
+		["userdefined"],
+		"register",
+		name_of_template,
+		[list_of_formal_arguments],
+		register_body
+	;
+
+register_anonymous_template=
+		["userdefined"],
+		"register",
+		[list_of_formal_arguments],
+		register_body
+	;
+
+register_body=
+		"{",
+		{register_item},
+		"}"
+	;
+
+register_item=
+		property_declaration
+	|	attribute_declaration
+	|	field_template
+	|	enum_declaration
+	|	variable_definitions
+	|	field_definitions
+	|	field_alias_definitions
+	|	register_case_statement
+	|	register_for_statement
+	|	register_if_statement
+	|	assignment_statement
+	|	system_function_call
+	;
+
+register_for_statement=
+		"for",
+		"(",
+		[for_statement_or_expression],
+		";",
+		expression,
+		";",
+		[for_statement_or_expression],
+		")",
+		"{",
+		register_item,
+		{register_item},
+		"}"
+	;
+
+register_if_statement=
+		"if",
+		"(",
+		expression,
+		")",
+		"{",
+		register_item,
+		{register_item},
+		"}",
+		[
+		"else",
+		"{",
+		register_item,
+		{register_item},
+		"}"
+		]
+	;
+
+register_case_statement=
+		"case",
+		"(",
+		expression,
+		")",
+		"{",
+		register_case_item,
+		{register_case_item},
+		"}"
+	;
+
+register_case_item=
+		(
+			expression,
+			{",", expression},
+			":",
+			"{",
+			register_item,
+			{register_item},
+			"}"
+		)
+	|	(
+			"default",
+			":",
+			"{",
+			register_item,
+			{register_item},
+			"}"
+		)
+	;
+
+field_template=
+		field_named_template,
+		";"
+	;
+
+field_definitions=
+		(
+			field_named_template,
+			field_define,
+			{",", field_define},
+			";"
+		)
+	|	(
+			field_anonymous_template,
+			field_define,
+			{",", field_define},
+			";"
+		)
+	|	(
+			name_of_field_reference,
+			field_define,
+			{",", field_define},
+			";"
+		)
+	;
+
+field_define=
+		(
+			[bit_position],
+			name_of_field_define,
+			[list_of_actual_arguments],
+			[array_definition]
+		)
+	|	(
+			[bit_position],
+			name_of_field_define_expression,
+			[list_of_actual_arguments],
+			[array_definition]
+		)
+	;
+
+name_of_field_define=
+		IDENTIFIER
+	;
+
+name_of_field_define_expression=
+		"{",
+		expression,
+		"}"
+	;
+
+name_of_field_reference=
+		IDENTIFIER
+	;
+
+bit_position=
+		"[",
+		expression,
+		[":", expression],
+		"]"
+	;
+
+field_alias_definitions=
+		(
+			"alias",
+			reference_name,
+			"{", [alias_item, {alias_item}], "}",
+			field_alias_define,
+			{",", field_alias_define},
+			";"
+		)
+	;
+
+field_alias_define=
+		(
+			[bit_position],
+			name_of_define
+		)
+	|	(
+			[bit_position],
+			name_of_define_expression
+		)
+	;
+
+field_named_template=
+		["userdefined"],
+		"field",
+		name_of_template,
+		[list_of_formal_arguments],
+		field_body
+	;
+
+field_anonymous_template=
+		["userdefined"],
+		"field",
+		[list_of_formal_arguments],
+		field_body
+	;
+
+field_body=
+		"{",
+		{field_item},
+		"}"
+	;
+
+field_item=
+		property_declaration
+	|	attribute_declaration
+	|	enum_declaration
+	|	variable_definitions
+	|	field_for_statement
+	|	field_if_statement
+	|	field_case_statement
+	|	assignment_statement
+	|	system_function_call
+	;
+
+field_for_statement=
+		"for",
+		"(",
+		[for_statement_or_expression],
+		";",
+		expression,
+		";",
+		[for_statement_or_expression],
+		")",
+		"{",
+		field_item,
+		{field_item},
+		"}"
+	;
+
+field_if_statement=
+		"if",
+		"(",
+		expression,
+		")",
+		"{",
+		field_item,
+		{field_item},
+		"}",
+		[
+		"else",
+		"{",
+		field_item,
+		{field_item},
+		"}"
+		]
+	;
+
+field_case_statement=
+		"case",
+		"(",
+		expression,
+		")",
+		"{",
+		field_case_item,
+		{field_case_item},
+		"}"
+	;
+
+field_case_item=
+		(
+			expression,
+			{",", expression},
+			":",
+			"{",
+			field_item,
+			{field_item},
+			"}"
+		)
+	|	(
+			"default",
+			":",
+			"{",
+			field_item,
+			{field_item},
+			"}"
+		)
+	;
+
+memory_template=
+		memory_named_template,
+		";"
+	;
+
+memory_definitions=
+		(
+			memory_named_template,
+			define,
+			{",", define},
+			";"
+		)
+	|	(
+			memory_anonymous_template,
+			define,
+			{",", define},
+			";"
+		)
+	;
+
+memory_named_template=
+		["userdefined"],
+		"memory",
+		name_of_template,
+		[list_of_formal_arguments],
+		memory_body
+	;
+
+memory_anonymous_template=
+		["userdefined"],
+		"memory",
+		[list_of_formal_arguments],
+		memory_body
+	;
+
+memory_body=
+		"{",
+		{memory_item},
+		"}"
+	;
+
+memory_item=
+		property_declaration
+	|	attribute_declaration
+	|	variable_definitions
+	|	memory_case_statement
+	|	memory_for_statement
+	|	memory_if_statement
+	|	assignment_statement
+	|	system_function_call
+	;
+
+memory_for_statement=
+		"for",
+		"(",
+		[for_statement_or_expression],
+		";",
+		expression,
+		";",
+		[for_statement_or_expression],
+		")",
+		"{",
+		memory_item,
+		{memory_item},
+		"}"
+	;
+
+memory_if_statement=
+		"if",
+		"(",
+		expression,
+		")",
+		"{",
+		memory_item,
+		{memory_item},
+		"}",
+		[
+		"else",
+		"{",
+		memory_item,
+		{memory_item},
+		"}"
+		]
+	;
+
+memory_case_statement=
+		"case",
+		"(",
+		expression,
+		")",
+		"{",
+		memory_case_item,
+		{memory_case_item},
+		"}"
+	;
+
+memory_case_item=
+		(
+			expression,
+			{",", expression},
+			":",
+			"{",
+			memory_item,
+			{memory_item},
+			"}"
+		)
+	|	(
+			"default",
+			":",
+			"{",
+			memory_item,
+			{memory_item},
+			"}"
+		)
+	;
+
+port_template=
+		port_named_template,
+		";"
+	;
+
+port_definitions=
+		(
+			port_named_template,
+			port_define,
+			{",", port_define},
+			";"
+		)
+	|	(
+			port_anonymous_template,
+			port_define,
+			{",", port_define},
+			";"
+		)
+	;
+
+port_define=
+		(
+			[range],
+			name_of_port_define,
+			[list_of_actual_arguments],
+			[array_definition]
+		)
+	|	(
+			[range],
+			name_of_port_define_expression,
+			[list_of_actual_arguments],
+			[array_definition]
+		)
+	;
+
+name_of_port_define=
+		IDENTIFIER
+	;
+
+name_of_port_define_expression=
+		"{",
+		expression,
+		"}"
+	;
+
+range=
+		"[",
+		expression,
+		[":", expression],
+		"]"
+	;
+
+port_named_template=
+		"port",
+		name_of_template,
+		[list_of_formal_arguments],
+		port_body
+	;
+
+port_anonymous_template=
+		"port",
+		[list_of_formal_arguments],
+		port_body
+	;
+
+port_body=
+		"{",
+		{port_item},
+		"}"
+	;
+
+port_item=
+		property_declaration
+	|	attribute_declaration
+	|	variable_definitions
+	|	port_case_statement
+	|	port_for_statement
+	|	port_if_statement
+	|	assignment_statement
+	|	system_function_call
+	;
+
+port_for_statement=
+		"for",
+		"(",
+		[for_statement_or_expression],
+		";",
+		expression,
+		";",
+		[for_statement_or_expression],
+		")",
+		"{",
+		port_item,
+		{port_item},
+		"}"
+	;
+
+port_if_statement=
+		"if",
+		"(",
+		expression,
+		")",
+		"{",
+		port_item,
+		{port_item},
+		"}",
+		[
+		"else",
+		"{",
+		port_item,
+		{port_item},
+		"}"
+		]
+	;
+
+port_case_statement=
+		"case",
+		"(",
+		expression,
+		")",
+		"{",
+		port_case_item,
+		{port_case_item},
+		"}"
+	;
+
+port_case_item=
+		(
+			expression,
+			{",", expression},
+			":",
+			"{",
+			port_item,
+			{port_item},
+			"}"
+		)
+	|	(
+			"default",
+			":",
+			"{",
+			port_item,
+			{port_item},
+			"}"
+		)
+	;
+
+variable_definitions=
+		variable_type,
+		variable_definition,
+		{",", variable_definition},
+		";"
+	;
+
+variable_definition=
+		name_of_variable_definition,
+		[variable_array_definition],
+		["=", expression]
+	;
+
+name_of_variable_definition=
+		IDENTIFIER
+	;
+
+definition=
+		name_of_reference,
+		define,
+		{",", define},
+		";"
+	;
+
+define=
+		(
+			[address],
+			name_of_define,
+			[list_of_actual_arguments],
+			[array_definition],
+			[array_stride],
+			[instance_alignment]
+		)
+
+
+	|	(
+			[address],
+			name_of_define_expression,
+			[list_of_actual_arguments],
+			[array_definition],
+			[array_stride],
+			[instance_alignment]
+		)
+	;
+
+address=
+		"[",
+		expression,
+		"]"
+	;
+
+name_of_define=
+		IDENTIFIER
+	;
+
+name_of_define_expression=
+		"{",
+		expression,
+		"}"
+	;
+
+name_of_reference=
+		IDENTIFIER
+	;
+
+list_of_actual_arguments=
+		"(",
+		actual_argument,
+		{",", actual_argument},
+		")"
+	;
+
+actual_argument=
+		name_of_formal_argument_reference,
+		"=",
+		expression
+	;
+
+name_of_formal_argument_reference=
+		IDENTIFIER
+	;
+
+alias_definition=
+		(
+			"alias",
+			name_of_instance,
+			"{", [alias_item, {alias_item}], "}",
+			alias_define,
+			{",", alias_define},
+			";"
+		)
+	|	(
+			"alias",
+			name_of_instance_expression,
+			"{", [alias_item, {alias_item}], "}",
+			alias_define,
+			{",", alias_define},
+			";"
+		)
+	;
+
+broadcast_definition=
+		(
+			"broadcast",
+			name_of_instance,
+			"{", [broadcast_item, {broadcast_item}], "}",
+			broadcast_define,
+			{",", broadcast_define},
+			";"
+		)
+	|	(
+			"broadcast",
+			name_of_instance_expression,
+			"{", [broadcast_item, {broadcast_item}], "}",
+			broadcast_define,
+			{",", broadcast_define},
+			";"
+		)
+	;
+
+name_of_instance=
+		IDENTIFIER
+	;
+
+name_of_instance_expression=
+		"{",
+		expression,
+		"}"
+	;
+
+alias_define=
+		(
+			[address],
+			name_of_define
+		)
+	|	(
+			[address],
+			name_of_define_expression
+		)
+	;
+
+alias_item=
+		property_declaration
+	;
+
+broadcast_define=
+		(
+			[address],
+			name_of_define
+		)
+	|	(
+			[address],
+			name_of_define_expression
+		)
+	;
+
+broadcast_item=
+		property_declaration
+	;
+
+assignment_statement=
+		"assign",
+		assignment,
+		";"
+	;
+
+assignment=
+		complex_identifier,
+		"=",
+		expression
+	|	complex_identifier,
+		"[", expression, "]",
+		"=",
+		expression
+	;
+
+array_definition=
+		array_dimension,
+		{array_dimension}
+	;
+
+array_dimension=
+		"[",
+		expression,
+		"]"
+	;
+
+array_stride=
+		"+=",
+		expression
+	;
+
+instance_alignment=
+		"%=",
+		expression
+	;
+
+variable_array_definition=
+		"[",
+		[expression],
+		"]"
+	;
+
+name_of_template=
+		IDENTIFIER
+	;
+
+list_of_formal_arguments=
+		"(",
+		formal_argument_define,
+		{",", formal_argument_define},
+		")"
+	;
+
+formal_argument_define=
+		variable_type,
+		name_of_formal_argument_define,
+		[variable_array_definition],
+		["=", expression]
+	;
+
+name_of_formal_argument_define=
+		IDENTIFIER
+	;
+
+variable_type=
+		"bool"
+	|	("number", ["[", expression, [":", expression], "]"])
+	|	"integer"
+	|	"string"
+	;
+
+expression=
+		primary
+	|	("+", primary)
+	|	("-", primary)
+	|	("!", primary)
+	|	("~", primary)
+	|	("&", primary)
+	|	("|", primary)
+	|	("^", primary)
+	|	("@", primary)
+	|	(expression, "+", expression)
+	|	(expression, "-", expression)
+	|	(expression, "*", expression)
+	|	(expression, "/", expression)
+	|	(expression, "%", expression)
+	|	(expression, "==", expression)
+	|	(expression, "!=", expression)
+	|	(expression, "&&", expression)
+	|	(expression, "||", expression)
+	|	(expression, "<", expression)
+	|	(expression, "<=", expression)
+	|	(expression, ">", expression)
+	|	(expression, ">=", expression)
+	|	(expression, "&", expression)
+	|	(expression, "|", expression)
+	|	(expression, "^", expression)
+	|	(expression, ">>", expression)
+	|	(expression, "<<", expression)
+	|	(expression, "?", expression, ":", expression)
+	;
+
+primary=
+		constant
+	|	(
+			complex_identifier,
+			[array_or_bit_index]
+		)
+	|	(
+			complex_identifier,
+			"[",
+			expression,
+			":",
+			expression,
+			"]"
+		)
+	|	concatenation
+	|	multiple_concatenation
+	|	reference
+	|	function_clog2
+	|	function_defined
+	|	function_index
+	|	function_parent_index
+	|	("(", expression, ")")
+	|	array_initializer
+	;
+
+constant=
+		boolean_constant
+	|	number
+	|	string
+	;
+
+boolean_constant=
+		"true"
+	|	"false"
+	;
+
+number=
+		INTEGER
+	|	NUMBER
+	;
+
+string=
+		string_element,
+		{string_element}
+	;
+
+string_element=
+		STRING
+	;
+
+array_or_bit_index=
+		"[",
+		expression,
+		"]"
+	;
+
+concatenation=
+		"{",
+		expression,
+		{",", expression},
+		"}"
+	;
+
+multiple_concatenation=
+		"{",
+		expression,
+		"{",
+		expression,
+		{",", expression},
+		"}",
+		"}"
+	;
+
+array_initializer=
+		"[",
+		expression,
+		{",", expression},
+		"]"
+	;
+
+reference=
+		"enum",
+		"(",
+		name_of_enumeration,
+		")"
+	|	"field",
+		"(",
+		reference_name,
+		[",", string],
+		")",
+		[expression, [":", expression]]
+	|	"memory",
+		"(",
+		reference_name,
+		[",", string],
+		")"
+	|	"parameter",
+		"(",
+		name_of_parameter,
+		")"
+	|	"port",
+		"(",
+		reference_name,
+		")",
+		[expression, [":", expression]]
+	|	"register",
+		"(",
+		reference_name,
+		[",", string],
+		")"
+	;
+
+name_of_enumeration=
+		IDENTIFIER
+	;
+
+name_of_parameter=
+		IDENTIFIER
+	;
+
+reference_name=
+		reference_identifier_or_expression,
+		[
+		".",
+		reference_identifier_or_expression,
+		{".", reference_identifier_or_expression}
+		]
+	;
+
+reference_identifier_or_expression=
+		sub_identifier
+	|	reference_expression
+	;
+
+reference_expression=
+		"(",
+		expression,
+		")"
+	;
+
+complex_identifier=
+		IDENTIFIER
+	|	(
+			sub_identifier,
+			".",
+			sub_identifier,
+			{".", sub_identifier}
+		)
+	;
+
+sub_identifier=
+		IDENTIFIER
+	;
+
+function_clog2=
+		"$clog2",
+		"(",
+		expression,
+		")"
+	;
+
+function_defined=
+		"defined",
+		"(",
+		expression,
+		")"
+	;
+
+function_index=
+		"$index",
+		"(", ")"
+	;
+
+function_parent_index=
+		"$parent_index",
+		"(", ")"
+	;
+
+units=
+		"bits"
+	|	"bit"
+	|	"bytes"
+	|	"byte"
+	|	"words"
+	|	"word"
+	;
+
+system_function_call=
+		"$error",
+		"(",
+		expression,
+		{".", expression},
+		")",
+		";"
+	|	 "$print",
+		"(",
+		expression,
+		{".", expression},
+		")",
+		";"
+	;
