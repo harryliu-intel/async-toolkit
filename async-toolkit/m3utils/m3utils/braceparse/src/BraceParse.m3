@@ -178,7 +178,7 @@ PROCEDURE Parse(rd              : Rd.T;
         IF buf[b] = '/' AND buf[b+1] = '*' THEN
           INC(b,2);
 
-          WHILE buf[b] # '*' AND buf[b+1] # '/' DO
+          WHILE buf[b] # '*' OR buf[b+1] # '/' DO
             IF buf[b] = '\n' THEN
               INC(lineno)
             END;
