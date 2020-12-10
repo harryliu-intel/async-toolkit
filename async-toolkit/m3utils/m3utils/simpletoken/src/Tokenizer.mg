@@ -98,7 +98,7 @@ PROCEDURE NextToken(VAR buf : Buffer; VAR st : State)
       IF CComments AND buf[st.b] = '/' AND buf[st.b + 1] = '*' THEN
         INC(st.b, 2);
 
-        WHILE buf[st.b] # '*' AND buf[st.b + 1] # '/' DO
+        WHILE buf[st.b] # '*' OR buf[st.b + 1] # '/' DO
           IF buf[st.b] = '\n' THEN
             INC(st.lineno)
           END;

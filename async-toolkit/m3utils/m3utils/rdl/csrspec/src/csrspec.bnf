@@ -1481,20 +1481,11 @@ expression=
 	|	(expression, "?", expression, ":", expression)
 	;
 
+/* */
 primary=
 		constant
-	|	(
-			complex_identifier,
-			[array_or_bit_index]
-		)
-	|	(
-			complex_identifier,
-			"[",
-			expression,
-			":",
-			expression,
-			"]"
-		)
+	|	complex_array_indexed
+	|	complex_array_sliced
 	|	concatenation
 	|	multiple_concatenation
 	|	reference
@@ -1502,9 +1493,28 @@ primary=
 	|	function_defined
 	|	function_index
 	|	function_parent_index
-	|	("(", expression, ")")
+	|	paren_expression
 	|	array_initializer
 	;
+
+complex_array_indexed=
+                complex_identifier,
+                [array_or_bit_index]
+                ;
+
+complex_array_sliced=
+			complex_identifier,
+			"[",
+			expression,
+			":",
+			expression,
+			"]"
+                        ;
+
+paren_expression= "(", expression, ")" ;
+
+
+/**********************************************************************/
 
 constant=
 		boolean_constant
@@ -1561,43 +1571,70 @@ array_initializer=
 		"]"
 	;
 
-reference=
-		(       "enum",
+/**********************************************************************/
+
+reference= /* deanonymized */
+                        enum_reference
+                |       field_reference
+                |       memory_reference
+                |       parameter_reference
+                |       port_reference
+                |       register_reference;
+
+enum_reference=
+                (       "enum",
 		        "(",
 		        name_of_enumeration,
 		        ")"
                 )
-	|	(       "field",
+        ;
+
+field_reference=
+		(       "field",
 		        "(",
 		        reference_name,
 		        [",", string],
 		        ")",
 		        [expression, [":", expression]]
                 )
-	|	(       "memory",
+                ;
+                
+memory_reference=
+        	(       "memory",
 		        "(",
 		        reference_name,
 		        [",", string],
 		        ")"
                 )
-	|	(       "parameter",
+                ;
+                
+parameter_reference=
+        	(       "parameter",
 		        "(",
 		        name_of_parameter,
 		        ")"
                 )
-	|	(       "port",
+                ;
+                
+port_reference=                
+		(       "port",
         		"(",
 	                reference_name,
 	                ")",
 		        [expression, [":", expression]]
                 )
-	|	(       "register",
+                ;
+                
+register_reference=                
+		(       "register",
 		        "(",
 		        reference_name,
 		        [",", string],
 		        ")"
                 )
 	;
+
+/**********************************************************************/
 
 name_of_enumeration=
 		IDENTIFIER
@@ -1665,7 +1702,7 @@ function_parent_index=
 		"(", ")"
 	;
 
-units=
+units= /* OR of strings OK */
 		"bits"
 	|	"bit"
 	|	"bytes"
@@ -1674,19 +1711,25 @@ units=
 	|	"word"
 	;
 
-system_function_call=
-		(       "$error",
+system_function_call= /* OR of rules OK */
+                system_error_function_call
+        |       system_print_function_call
+        ;
+        
+system_error_function_call=
+                        "$error",
 		        "(",
 		        expression,
 		        {".", expression},
 		        ")",
 		        ";"
-                )
-	|	(       "$print",
+                        ;
+
+system_print_function_call=
+                        "$print",
 		        "(",
 		        expression,
 		        {".", expression},
 		        ")",
 		        ";"
-                )
-	;
+	                ;
