@@ -2,6 +2,20 @@
    csrspec.bnf
 
    commas have been added where missing
+
+   *************************************************************
+
+   Things to be concerned about:
+
+   X, {X}       -- normal list pattern
+   [<literal>]  -- optional literal, must be indicated in output
+
+   generally, anonymous syntax is to be avoided
+
+   also parse ambiguities (shift/reduce conflicts)
+
+   operator precedence, how to do that?
+   
 */
 
 source_text=

@@ -18,6 +18,9 @@ IMPORT TextBnfTbl;
 IMPORT TextSet, TextSetDef;
 IMPORT Wx;
 IMPORT CharNames;
+IMPORT Wr;
+IMPORT Pathname;
+IMPORT FileWr;
 
 VAR doDebug := Debug.GetLevel() >= 10 AND Debug.This("BnfGrammar");
 
@@ -287,15 +290,86 @@ PROCEDURE PatchVisit(v : PatchVisitor; bnf : Bnf.T) =
       (* skip *)
     END
   END PatchVisit;
+
+PROCEDURE OpenF(gramName : TEXT; outDir : Pathname.T; ext : TEXT) : Wr.T =
+  VAR
+    fn := gramName & "." & ext;
+    qn := outDir & "/" & fn;
+  BEGIN
+    TRY
+      RETURN FileWr.Open(qn)
+    EXCEPT
+      OSError.E(x) =>
+      Debug.Error(F("Trouble opening \"%s\" for writing : OSError.E : %s",
+                    qn, AL.Format(x)));
+      <*ASSERT FALSE*>
+    END
+      
+  END OpenF;
+
+  (**********************************************************************)
+  
+PROCEDURE GenTokFile(wr : Wr.T)
+  RAISES { Wr.Failure } =
+  BEGIN
+  END GenTokFile;
+  
+PROCEDURE GenLexFile(wr : Wr.T)
+  RAISES { Wr.Failure } =
+  BEGIN
+  END GenLexFile;
+  
+PROCEDURE GenYacFile(wr : Wr.T)
+  RAISES { Wr.Failure } =
+  BEGIN
+  END GenYacFile;
+  
+  (**********************************************************************)
+
+PROCEDURE WriteFiles(gramName : TEXT;
+                     outDir   : Pathname.T)
+  RAISES { OSError.E, Wr.Failure } =
+  VAR
+    derQn := outDir & "/derived.m3m";
+
+    derWr : Wr.T;
+    
+    tokWr := OpenF(gramName, outDir, "t");
+    lexWr := OpenF(gramName, outDir, "l");
+    yacWr := OpenF(gramName, outDir, "y");
+  BEGIN
+    TRY
+      derWr := FileWr.Open(derQn);
+    EXCEPT
+      OSError.E(x) =>
+      Debug.Error(F("Trouble opening \"%s\" for writing : OSError.E : %s",
+                    derQn, AL.Format(x)))
+    END;
+
+    GenTokFile(tokWr);
+    GenLexFile(lexWr);
+    GenYacFile(yacWr);
+      
+  END WriteFiles;
   
 VAR
   pp := NEW(ParseParams.T).init(Stdio.stderr);
   symtab := NEW(TextBnfTbl.Default).init();
   rootType : TEXT := NIL;
+  outDir : Pathname.T := NIL;
+  gramName : TEXT := NIL;
 BEGIN
   TRY
     IF pp.keywordPresent("-r") THEN
       rootType := pp.getNext()
+    END;
+    IF pp.keywordPresent("-n") THEN
+      gramName := pp.getNext()
+    ELSE
+      gramName := rootType
+    END;
+    IF pp.keywordPresent("-d") THEN
+      outDir := pp.getNext()
     END;
     IF pp.keywordPresent("-f") THEN
       WITH fn = pp.getNext() DO
@@ -347,6 +421,7 @@ BEGIN
   END;
 
   Debug.Out("Parsing done");
+  Debug.Out(Int(symtab.size()) & " grammar rules");
   
   IF doDebug THEN
     Debug.Out(F("Main.m3:Got %s unique strings", Int(stringSet.size())));
@@ -364,6 +439,8 @@ BEGIN
 
   IF rootType # NIL THEN
     PatchTypes(rootType)
-  END
+  END;
+
+  WriteFiles(gramName, outDir)
 
 END Main.

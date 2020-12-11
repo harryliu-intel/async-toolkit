@@ -1,9 +1,15 @@
 INTERFACE CharNames;
 
+(* 
+   special characters that appear in the BNF grammars, these are enough
+   to cover csrspec (and probably many other languages) 
+*)
+
 TYPE T = RECORD c : CHAR; nm : TEXT END;
 
 CONST
   Mappings = ARRAY OF T {
+  T { '.', "Per" },
   T { '&', "Amp" },
   T { '*', "Ast" },
   T { '%', "Pct" },
@@ -18,8 +24,8 @@ CONST
   T { '}', "Rcu" },
   T { '-', "Min" },
   T { '$', "Dol" },
-  T { '<', "Lst" },
-  T { '>', "Grt" },
+  T { '<', "Lth" },
+  T { '>', "Gth" },
   T { ',', "Com" },
   T { '+', "Plu" },
   T { '@', "Ats" },
