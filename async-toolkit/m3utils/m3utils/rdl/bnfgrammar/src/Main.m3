@@ -16,6 +16,8 @@ IMPORT Bnf;
 IMPORT BnfSeq;
 IMPORT TextBnfTbl;
 IMPORT TextSet, TextSetDef;
+IMPORT Wx;
+IMPORT CharNames;
 
 VAR doDebug := Debug.GetLevel() >= 10 AND Debug.This("BnfGrammar");
 
@@ -239,6 +241,24 @@ TYPE
     visit := PatchVisit
   END;
 
+PROCEDURE MapString(str : TEXT) : TEXT =
+  VAR
+    in := Text.Length(str);
+    wx := Wx.New();
+    to : TEXT;
+  BEGIN
+    FOR i := 1 TO in - 2 DO
+      WITH c = Text.GetChar(str, i) DO
+        IF CharNames.Map(c, to) THEN
+          Wx.PutText(wx, to)
+        ELSE
+          Wx.PutChar(wx, c)
+        END
+      END
+    END;
+    RETURN Wx.ToText(wx)
+  END MapString;
+
 PROCEDURE PatchVisit(v : PatchVisitor; bnf : Bnf.T) =
   VAR
     mapping : Bnf.T;
@@ -335,7 +355,9 @@ BEGIN
       str : TEXT;
     BEGIN
       WHILE iter.next(str) DO
-        Debug.Out("String " & str)
+        WITH mapStr = MapString(str) DO
+          Debug.Out("String " & str & " -> " & mapStr)
+        END
       END
     END
   END;
