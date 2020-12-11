@@ -1,15 +1,37 @@
 GENERIC INTERFACE Tokenizer(Defs);
 
-(* defs must contain the following symbols:
+(* 
+   Generic fast lexical scanner (tokenizer)
 
-BufSiz      : CARDINAL    -- CARDINAL size of input buffer
+   Standard implementation in the accompanying MODULE performs
+   lexical scanning without any heap memory allocation.
+
+   Suitable for building very fast parsers that will work on large 
+   files and filter out specific syntactic structures.
+
+   Author : Mika Nystrom <mika.nystroem@intel.com>
+   November-December, 2020
+*)
+
+(* the Defs interface must contain the following symbols:
+
+BufSiz      : CARDINAL    -- CARDINAL size of input buffer - needs to be at
+                             least longest token + 1
+
 Special     : SET OF CHAR -- special characters to recognize as tokens
+
 White       : SET OF CHAR -- whitespace characters to skip
+
 Ident1      : SET OF CHAR -- legal initial chars for identifiers
+
 Ident2      : SET OF CHAR -- legal non-initial chars for identifiers
+
 CComments   : BOOLEAN     -- recognize (and skip) C-style comments
-DoString    : BOOLEAN     -- recognize string
-StringQuote : CHAR        -- quotation mark to use (backslash escapes)
+
+DoString    : BOOLEAN     -- recognize strings
+
+StringQuote : CHAR        -- quotation mark to use (backslash always escapes)
+
 *)
 
 IMPORT Rd, Thread;
@@ -36,8 +58,9 @@ TYPE
   Buffer = ARRAY [ 0 .. Defs.BufSiz-1 ] OF CHAR;
 
   E = RECORD file : TEXT; line : CARDINAL END;
+  (* file and line of a syntax error within lexer *)
   
-EXCEPTION Syntax(E); (* arg is line number of syntax error *)
+EXCEPTION Syntax(E); 
 
 TYPE Token = RECORD s, n : CARDINAL END;
 
@@ -60,7 +83,7 @@ PROCEDURE GetString(VAR buf : ARRAY OF CHAR; VAR st : State;
   (* str is the string including quotes and all internal escapes *)
 
 PROCEDURE GetInt(VAR buf : ARRAY OF CHAR; VAR st : State;
-                   VAR int : INTEGER) : BOOLEAN 
+                 VAR int : INTEGER) : BOOLEAN 
   RAISES { Syntax, Rd.EndOfFile, Rd.Failure, Thread.Alerted };
 
 PROCEDURE GetFloat(VAR buf : ARRAY OF CHAR; VAR st : State;

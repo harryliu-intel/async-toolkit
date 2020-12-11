@@ -1,4 +1,13 @@
 MODULE Main;
+
+(* 
+   "BNF" parser for automated generation of parser using Karl's 
+   parser system
+
+   Author : Mika Nystrom <mika.nystroem@intel.com>
+   December, 2020
+*)
+
 IMPORT Stdio, Rd;
 IMPORT Thread;
 IMPORT Compiler;
@@ -64,6 +73,8 @@ CONST LParen  = AC { '(' };
       Equal   = AC { '=' };
       Semi    = AC { ';' };
 
+<*FATAL Thread.Alerted*>
+      
 PROCEDURE Tok2Text(READONLY tok : Token) : TEXT =
   BEGIN
     RETURN Text.FromChars(SUBARRAY(buf, tok.s, tok.n))
@@ -244,6 +255,13 @@ TYPE
     visit := PatchVisit
   END;
 
+PROCEDURE MapPrintable(str : TEXT) : TEXT =
+  VAR
+    in := Text.Length(str);
+  BEGIN
+    RETURN Text.Sub(str, 1, in - 2)
+  END MapPrintable;
+  
 PROCEDURE MapString(str : TEXT) : TEXT =
   VAR
     in := Text.Length(str);
@@ -304,31 +322,58 @@ PROCEDURE OpenF(gramName : TEXT; outDir : Pathname.T; ext : TEXT) : Wr.T =
                     qn, AL.Format(x)));
       <*ASSERT FALSE*>
     END
-      
   END OpenF;
+
+PROCEDURE CloseF(wr : Wr.T; gramName : TEXT; outDir : Pathname.T; ext : TEXT) =
+  VAR
+    fn := gramName & "." & ext;
+    qn := outDir & "/" & fn;
+  BEGIN
+    TRY
+      Wr.Close(wr)
+    EXCEPT
+      Wr.Failure(x) =>
+      Debug.Error(F("Trouble closing \"%s\" for writing : Wr.Failure : %s",
+                    qn, AL.Format(x)));
+      <*ASSERT FALSE*>
+    END
+  END CloseF;
 
   (**********************************************************************)
   
 PROCEDURE GenTokFile(wr : Wr.T)
   RAISES { Wr.Failure } =
+  VAR
+    iter := stringSet.iterate();
+    str : TEXT;
   BEGIN
+    WHILE iter.next(str) DO
+      Wr.PutText(wr, F("%const T_%s\n", MapString(str)))
+    END
   END GenTokFile;
   
 PROCEDURE GenLexFile(wr : Wr.T)
   RAISES { Wr.Failure } =
+  VAR
+    iter := stringSet.iterate();
+    str : TEXT;
   BEGIN
+    WHILE iter.next(str) DO
+      Wr.PutText(wr, F("T_%s \"%s\"\n", MapString(str), MapPrintable(str)))
+    END
   END GenLexFile;
   
 PROCEDURE GenYacFile(wr : Wr.T)
   RAISES { Wr.Failure } =
   BEGIN
+    Wr.PutText(wr, F("%start %s\n", "%s", rootType))
   END GenYacFile;
   
   (**********************************************************************)
 
 PROCEDURE WriteFiles(gramName : TEXT;
                      outDir   : Pathname.T)
-  RAISES { OSError.E, Wr.Failure } =
+  RAISES { Wr.Failure } =
   VAR
     derQn := outDir & "/derived.m3m";
 
@@ -346,10 +391,19 @@ PROCEDURE WriteFiles(gramName : TEXT;
                     derQn, AL.Format(x)))
     END;
 
+    Wr.PutText(derWr, F("Token(\"%s\")\n", gramName));
+    Wr.PutText(derWr, F("Lexer(\"%s\",\"%s\")\n", gramName, gramName));
+    Wr.PutText(derWr, F("Parser(\"%s\",\"%s\")\n", gramName, gramName));
+    
     GenTokFile(tokWr);
     GenLexFile(lexWr);
     GenYacFile(yacWr);
-      
+
+    Wr.Close(derWr);
+    
+    CloseF(tokWr, gramName, outDir, "t");
+    CloseF(lexWr, gramName, outDir, "l");
+    CloseF(yacWr, gramName, outDir, "y");
   END WriteFiles;
   
 VAR
@@ -441,6 +495,10 @@ BEGIN
     PatchTypes(rootType)
   END;
 
+  IF outDir = NIL THEN
+    Debug.Error("Must specify output directory with -d")
+  END;
+  
   WriteFiles(gramName, outDir)
 
 END Main.
