@@ -30,6 +30,7 @@ IMPORT CharNames;
 IMPORT Wr;
 IMPORT Pathname;
 IMPORT FileWr;
+IMPORT TextRefTbl;
 
 VAR doDebug := Debug.GetLevel() >= 10 AND Debug.This("BnfGrammar");
 
@@ -80,8 +81,19 @@ PROCEDURE Tok2Text(READONLY tok : Token) : TEXT =
     RETURN Text.FromChars(SUBARRAY(buf, tok.s, tok.n))
   END Tok2Text;
 
-VAR stringSet : TextSet.T := NEW(TextSetDef.T).init();
-    
+VAR stringTbl : TextRefTbl.T := NEW(TextRefTbl.Default).init();
+
+PROCEDURE MakeString(str : TEXT) : Bnf.String =
+  VAR
+    res : REFANY;
+  BEGIN
+    IF NOT stringTbl.get(str,res) THEN
+      res := NEW(Bnf.String, string := str);
+      EVAL stringTbl.put(str, res)
+    END;
+    RETURN res
+  END MakeString;
+  
 PROCEDURE GetFactor(VAR factor : Bnf.T) : BOOLEAN
   RAISES ANY =
   VAR
@@ -92,8 +104,7 @@ PROCEDURE GetFactor(VAR factor : Bnf.T) : BOOLEAN
       RETURN TRUE
     ELSIF GetString(buf, st, ident) THEN
       WITH str = Tok2Text(ident) DO
-        factor := NEW(Bnf.String, string := str);
-        EVAL stringSet.insert(str)
+        factor := MakeString(str)
       END;
       RETURN TRUE
     ELSIF GetExact(buf, st, LParen) THEN
@@ -344,10 +355,11 @@ PROCEDURE CloseF(wr : Wr.T; gramName : TEXT; outDir : Pathname.T; ext : TEXT) =
 PROCEDURE GenTokFile(wr : Wr.T)
   RAISES { Wr.Failure } =
   VAR
-    iter := stringSet.iterate();
+    iter := stringTbl.iterate();
     str : TEXT;
+    dummy : REFANY;
   BEGIN
-    WHILE iter.next(str) DO
+    WHILE iter.next(str, dummy) DO
       Wr.PutText(wr, F("%const T_%s\n", MapString(str)))
     END
   END GenTokFile;
@@ -355,18 +367,37 @@ PROCEDURE GenTokFile(wr : Wr.T)
 PROCEDURE GenLexFile(wr : Wr.T)
   RAISES { Wr.Failure } =
   VAR
-    iter := stringSet.iterate();
+    iter := stringTbl.iterate();
     str : TEXT;
+    dummy : REFANY;
   BEGIN
-    WHILE iter.next(str) DO
+    WHILE iter.next(str, dummy) DO
       Wr.PutText(wr, F("T_%s \"%s\"\n", MapString(str), MapPrintable(str)))
     END
   END GenLexFile;
   
 PROCEDURE GenYacFile(wr : Wr.T)
   RAISES { Wr.Failure } =
+  VAR
+    iter := symtab.iterate();
+    nm : TEXT;
+    rule : Bnf.T;
   BEGIN
-    Wr.PutText(wr, F("%start %s\n", "%s", rootType))
+    Wr.PutText(wr, F("%start %s\n", "%s", rootType));
+
+    WHILE iter.next(nm, rule) DO
+      rule := Bnf.DistributeAll(rule);
+
+      TYPECASE rule OF
+        Bnf.Disjunction(dis) =>
+        Debug.Out(F("%s disjunctive rule, %s disjuncts", nm, Int(NUMBER(dis.elems^))))
+      |
+        Bnf.Sequence(seq) =>
+        Debug.Out(F("%s sequence rule, %s steps", nm, Int(NUMBER(seq.elems^))))
+      ELSE
+        Debug.Out(F("%s simple rule", nm))
+      END
+    END
   END GenYacFile;
   
   (**********************************************************************)
@@ -405,7 +436,7 @@ PROCEDURE WriteFiles(gramName : TEXT;
     CloseF(lexWr, gramName, outDir, "l");
     CloseF(yacWr, gramName, outDir, "y");
   END WriteFiles;
-  
+
 VAR
   pp := NEW(ParseParams.T).init(Stdio.stderr);
   symtab := NEW(TextBnfTbl.Default).init();
@@ -478,12 +509,13 @@ BEGIN
   Debug.Out(Int(symtab.size()) & " grammar rules");
   
   IF doDebug THEN
-    Debug.Out(F("Main.m3:Got %s unique strings", Int(stringSet.size())));
+    Debug.Out(F("Main.m3:Got %s unique strings", Int(stringTbl.size())));
     VAR
-      iter := stringSet.iterate();
+      iter := stringTbl.iterate();
       str : TEXT;
+      dummy : REFANY;
     BEGIN
-      WHILE iter.next(str) DO
+      WHILE iter.next(str, dummy) DO
         WITH mapStr = MapString(str) DO
           Debug.Out("String " & str & " -> " & mapStr)
         END
@@ -498,7 +530,7 @@ BEGIN
   IF outDir = NIL THEN
     Debug.Error("Must specify output directory with -d")
   END;
-  
+
   WriteFiles(gramName, outDir)
 
 END Main.
