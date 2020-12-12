@@ -1,21 +1,38 @@
 MODULE Bnf;
+IMPORT Word;
+IMPORT Text;
+IMPORT BnfSetList;
+IMPORT BnfList;
+IMPORT TextBnfSeq;
+IMPORT BnfSeq;
+
+CONST TE = Text.Equal;
+
 TYPE
   Array = REF ARRAY OF T;
   
 REVEAL
   T = Public BRANDED Brand OBJECT
+    hashV : Word.T;
+  METHODS
+    copy() : T;
+    deepCopy() : T;
+  OVERRIDES
+    init := Init;
   END;
 
   Ident = PubIdent BRANDED Brand & " Ident" OBJECT
   OVERRIDES
     copy := CopyIdent;
     deepCopy := CopyIdent;
+    equal := EqualIdent;
   END;
   
   String = PubString BRANDED Brand & " String" OBJECT
   OVERRIDES
     copy := CopyString;
     deepCopy := CopyString;
+    equal := EqualString;
   END;
   
   ListOf = PubListOf BRANDED Brand & " ListOf" OBJECT
@@ -23,6 +40,7 @@ REVEAL
     copy := CopyListOf;
     deepCopy := DeepCopyListOf;
     replaceChild := ReplaceChildListOf;
+    equal := EqualListOf;
   END;
   
   Optional = PubOptional BRANDED Brand & " Optional" OBJECT
@@ -30,6 +48,7 @@ REVEAL
     copy := CopyOptional;
     deepCopy := DeepCopyOptional;
     replaceChild := ReplaceChildOptional;
+    equal := EqualOptional;
   END;
   
   Disjunction = PubDisjunction BRANDED Brand & " Disjunction" OBJECT
@@ -37,6 +56,7 @@ REVEAL
     copy := CopyDisjunction;
     deepCopy := DeepCopyDisjunction;
     replaceChild := ReplaceChildDisjunction;
+    equal := EqualDisjunction;
   END;
   
   Sequence = PubSequence BRANDED Brand & " Sequence" OBJECT
@@ -44,11 +64,50 @@ REVEAL
     copy := CopySequence;
     deepCopy := DeepCopySequence;
     replaceChild := ReplaceChildSequence;
+    equal := EqualSequence;
   END;
+
+VAR set : BnfList.T := NIL;
+  
+PROCEDURE Init(t : T) : T =
+  VAR
+    p := set;
+  BEGIN
+    WHILE p # NIL DO
+      IF Equal(t, p.head) THEN
+        RETURN p.head
+      END;
+      p := p.tail
+    END;
+    set := BnfList.Cons(t, set);
+    RETURN t
+  END Init;
+
+  (**********************************************************************)
 
 PROCEDURE CopyIdent(t : T) : T = BEGIN RETURN t END CopyIdent;
 
 CONST CopyString = CopyIdent;
+
+PROCEDURE EqualString(y : String; x : T) : BOOLEAN =
+  BEGIN
+    TYPECASE x OF
+      String(s) => RETURN TE(y.string, s.string)
+    ELSE
+      RETURN FALSE
+    END
+  END EqualString;
+
+PROCEDURE EqualIdent(y : Ident; x : T) : BOOLEAN =
+  BEGIN
+    TYPECASE x OF
+      Ident(id) => RETURN TE(y.ident, id.ident)
+    ELSE
+      RETURN FALSE
+    END
+  END EqualIdent;
+
+  (**********************************************************************)
 
 PROCEDURE CopyListOf(x : ListOf) : T =
   BEGIN
@@ -66,6 +125,17 @@ PROCEDURE ReplaceChildListOf(x : ListOf; o, n : T) =
     x.elem := n
   END ReplaceChildListOf;
 
+PROCEDURE EqualListOf(y : ListOf; x : T) : BOOLEAN =
+  BEGIN
+    TYPECASE x OF
+      ListOf(lo) => RETURN lo.elem.equal(y.elem)
+    ELSE
+      RETURN FALSE
+    END
+  END EqualListOf;
+
+  (**********************************************************************)
+
 PROCEDURE CopyOptional(x : Optional) : T =
   BEGIN
     RETURN NEW(Optional, elem := x.elem)
@@ -81,6 +151,17 @@ PROCEDURE ReplaceChildOptional(x : Optional; o, n : T) =
     <*ASSERT x.elem = o*>
     x.elem := n
   END ReplaceChildOptional;
+
+PROCEDURE EqualOptional(y : Optional; x : T) : BOOLEAN =
+  BEGIN
+    TYPECASE x OF
+      Optional(lo) => RETURN lo.elem.equal(y.elem)
+    ELSE
+      RETURN FALSE
+    END
+  END EqualOptional;
+
+  (**********************************************************************)
 
 PROCEDURE CopyDisjunction(x : Disjunction) : T =
   BEGIN
@@ -111,6 +192,28 @@ PROCEDURE ReplaceChildDisjunction(x : Disjunction; o, n : T) =
     <*ASSERT FALSE*>
   END ReplaceChildDisjunction;
 
+PROCEDURE EqualDisjunction(y : Disjunction; x : T) : BOOLEAN =
+  BEGIN
+    TYPECASE x OF
+      Disjunction(d) =>
+      VAR
+        ye, de := NEW(BnfSetList.T).init();
+      BEGIN
+        FOR i := FIRST(y.elems^) TO LAST(y.elems^) DO
+          EVAL ye.insert(y.elems[i])
+        END;
+        FOR i := FIRST(d.elems^) TO LAST(d.elems^) DO
+          EVAL de.insert(d.elems[i])
+        END;
+        RETURN ye.equal(de)
+      END
+    ELSE
+      RETURN FALSE
+    END
+  END EqualDisjunction;
+
+  (**********************************************************************)
+
 PROCEDURE CopySequence(x : Sequence) : T =
   BEGIN
     WITH elems = NEW(Array, NUMBER(x.elems^)) DO
@@ -139,6 +242,25 @@ PROCEDURE ReplaceChildSequence(x : Sequence; o, n : T) =
     END;
     <*ASSERT FALSE*>
   END ReplaceChildSequence;
+
+PROCEDURE EqualSequence(y : Sequence; x : T) : BOOLEAN =
+  BEGIN
+    TYPECASE x OF
+      Sequence(seq) =>
+      IF NUMBER(y.elems^) # NUMBER(seq.elems^) THEN
+        RETURN FALSE
+      ELSE
+        FOR i := FIRST(y.elems^) TO LAST(y.elems^) DO
+          IF NOT y.elems[i].equal(seq.elems[i]) THEN RETURN FALSE END
+        END;
+        RETURN TRUE
+      END
+    ELSE
+      RETURN FALSE
+    END
+  END EqualSequence;
+
+  (**********************************************************************)
 
 PROCEDURE VisitPre(t : T; visitor : Visitor) =
   BEGIN
@@ -174,6 +296,8 @@ PROCEDURE VisitChildren(t : T; visitor : Visitor; recurse : Recurse) =
       (* skip *)
     END
   END VisitChildren;
+
+  (**********************************************************************)
 
 PROCEDURE Distribute(parent, me : T) =
   BEGIN
@@ -285,5 +409,171 @@ PROCEDURE DistributeAll(t : T) : T =
     <*ASSERT NUMBER(root.elems^) = 1*>
     RETURN root.elems[0]
   END DistributeAll;
+
+  (**********************************************************************)
+
+TYPE Mapper = OBJECT METHODS f(t : T) : T END;
+     
+PROCEDURE MapRecursively(m : T; f : Mapper) : T =
+  BEGIN
+    TYPECASE m OF
+      Ident(id) =>
+      RETURN f.f(id)
+    |
+      String(str) =>
+      RETURN f.f(str)
+    |
+      ListOf(lst) =>
+      VAR
+        elem := MapRecursively(lst.elem, f);
+        res  := NEW(ListOf, elem := elem).init();
+      BEGIN
+        RETURN f.f(res)
+      END
+    |
+      Optional(opt) =>
+      VAR
+        elem := MapRecursively(opt.elem, f);
+        res  := NEW(Optional, elem := elem).init();
+      BEGIN
+        RETURN f.f(res)
+      END
+    |
+      Disjunction(dis) =>
+      VAR
+        elems := NEW(Array, NUMBER(dis.elems^));
+      BEGIN
+        FOR i := FIRST(dis.elems^) TO LAST(dis.elems^) DO
+          elems[i] := MapRecursively(dis.elems[i], f)
+        END;
+        RETURN f.f(NEW(Disjunction, elems := elems).init());
+      END
+    |
+      Sequence(seq) =>
+      VAR
+        elems := NEW(Array, NUMBER(seq.elems^));
+      BEGIN
+        FOR i := FIRST(seq.elems^) TO LAST(seq.elems^) DO
+          elems[i] := MapRecursively(seq.elems[i], f)
+        END;
+        RETURN f.f(NEW(Sequence, elems := elems).init());
+      END
+    ELSE
+      <*ASSERT FALSE*>
+    END
+  END MapRecursively;
+
+TYPE
+  SeqListRemover = Mapper OBJECT
+    seq : TextBnfSeq.T;
+    stringMapper : StringMapper;
+  OVERRIDES
+    f := RemoveListsFromSeq;
+  END;
+
+PROCEDURE RemoveListsFromSeq(m : SeqListRemover; t : T) : T =
+  BEGIN
+    TYPECASE t OF
+      Sequence(seq) =>
+      VAR
+        new := NEW(BnfSeq.T).init();
+        i := 0;
+      BEGIN
+        WHILE i < NUMBER(seq.elems^) DO
+          IF i # LAST(seq.elems^) THEN
+            WITH match = MatchListPat(m,
+                                      seq.elems[i],
+                                      seq.elems[i+1]) DO
+              IF match # NIL THEN
+                new.addhi(match);
+                INC(i)
+              ELSE
+                new.addhi(seq.elems[i])
+              END
+            END
+          ELSE
+            new.addhi(seq.elems[i])
+          END;
+          INC(i)
+        END;
+        RETURN NEW(Sequence, elems := Seq2Array(new)).init()
+      END
+    ELSE
+      RETURN t
+    END
+  END RemoveListsFromSeq;
+
+PROCEDURE MatchListPat(m : SeqListRemover; s0, s1 : T) : T =
+  BEGIN
+    (* this nasty bit of code looks for the patterns
+       
+       X { X }
+       
+       and
+       
+       X { string X }
+    *)
+          
+    TYPECASE s0 OF
+      Ident(e) => (* X ... *)
+      TYPECASE s1 OF
+        ListOf (ll) =>
+
+        (* X { ... } *)
+        
+        IF  ll.elem = e THEN
+          (* X { X } *)
+          RETURN (NEW(Ident, ident := "list1of_" & e.ident).init());
+         
+          (* add list rule here *)
+              
+        ELSIF ISTYPE(ll.elem, Sequence) THEN
+          WITH iseq = NARROW(ll.elem, Sequence) DO
+            IF NUMBER(iseq.elems^) = 2 AND
+              ISTYPE(iseq.elems[0], String) AND
+              e = iseq.elems[1] THEN
+              
+              (* X { <string> X } *)
+              
+              RETURN (NEW(Ident,
+                          ident := "list1of_" &
+                                       m.stringMapper(NARROW(iseq.elems[0],String).string) &
+                                       "_" &
+                                       e.ident).init());
+              
+              (* add list rule here *)
+            END
+          END
+        END
+      ELSE (* skip *)
+      END
+    ELSE (* skip *)
+    END;
+    RETURN NIL
+  END MatchListPat;
+
+PROCEDURE Seq2Array(seq : BnfSeq.T) : Array =
+  VAR
+    res := NEW(Array, seq.size());
+  BEGIN
+    FOR i := FIRST(res^) TO LAST(res^) DO
+      res[i] := seq.get(i)
+    END;
+    RETURN res
+  END Seq2Array;
+  
+PROCEDURE ExpandLists(t    : T;
+                      seqA : REFANY (* TextBnfSeq.T *);
+                      stringMapper : StringMapper) : T =
+  VAR
+    m := NEW(SeqListRemover, seq := seqA, stringMapper := stringMapper);
+  BEGIN
+    RETURN MapRecursively(t, m)
+  END ExpandLists;
+  
+  (**********************************************************************)
+
+PROCEDURE Equal(a, b : T) : BOOLEAN =
+  BEGIN RETURN a.equal(b) END Equal;
   
 BEGIN END Bnf.

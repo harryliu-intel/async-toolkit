@@ -23,7 +23,7 @@ IMPORT FileRd;
 IMPORT ExceptionInfo;
 IMPORT Bnf;
 IMPORT BnfSeq;
-IMPORT TextBnfTbl;
+IMPORT TextBnfTbl, TextBnf;
 IMPORT TextSet, TextSetDef;
 IMPORT Wx;
 IMPORT CharNames;
@@ -31,6 +31,7 @@ IMPORT Wr;
 IMPORT Pathname;
 IMPORT FileWr;
 IMPORT TextRefTbl;
+IMPORT TextBnfSeq;
 
 VAR doDebug := Debug.GetLevel() >= 10 AND Debug.This("BnfGrammar");
 
@@ -88,7 +89,7 @@ PROCEDURE MakeString(str : TEXT) : Bnf.String =
     res : REFANY;
   BEGIN
     IF NOT stringTbl.get(str,res) THEN
-      res := NEW(Bnf.String, string := str);
+      res := NEW(Bnf.String, string := str).init();
       EVAL stringTbl.put(str, res)
     END;
     RETURN res
@@ -100,7 +101,7 @@ PROCEDURE GetFactor(VAR factor : Bnf.T) : BOOLEAN
     ident : Token;
   BEGIN
     IF    GetIdent(buf, st, ident) THEN
-      factor := NEW(Bnf.Ident, ident := Tok2Text(ident));
+      factor := NEW(Bnf.Ident, ident := Tok2Text(ident)).init();
       RETURN TRUE
     ELSIF GetString(buf, st, ident) THEN
       WITH str = Tok2Text(ident) DO
@@ -117,7 +118,7 @@ PROCEDURE GetFactor(VAR factor : Bnf.T) : BOOLEAN
       BEGIN
         IF NOT GetExpression(expr) THEN RAISE Syntax(E{TF(),TL()}) END;
         IF NOT GetExact(buf, st, RBrace) THEN RAISE Syntax(E{TF(),TL()}) END;
-        factor := NEW(Bnf.ListOf, elem := expr);
+        factor := NEW(Bnf.ListOf, elem := expr).init();
         RETURN TRUE
       END
     ELSIF GetExact(buf, st, LSquare) THEN  
@@ -126,7 +127,7 @@ PROCEDURE GetFactor(VAR factor : Bnf.T) : BOOLEAN
       BEGIN
         IF NOT GetExpression(expr) THEN RAISE Syntax(E{TF(),TL()}) END;
         IF NOT GetExact(buf, st, RSquare) THEN RAISE Syntax(E{TF(),TL()}) END;
-        factor := NEW(Bnf.Optional, elem := expr);
+        factor := NEW(Bnf.Optional, elem := expr).init();
         RETURN TRUE
       END
     ELSE
@@ -151,12 +152,13 @@ PROCEDURE GetTerm(VAR term : Bnf.T) : BOOLEAN
     IF seq.size() = 1 THEN
       term := seq.get(0)
     ELSE
-      WITH res = NEW(Bnf.Disjunction,
-                     elems := NEW(REF ARRAY OF Bnf.T, seq.size()))  DO
-        FOR i := FIRST(res.elems^) TO LAST(res.elems^) DO
-          res.elems[i] := seq.get(i)
+      VAR
+        elems := NEW(REF ARRAY OF Bnf.T, seq.size());
+      BEGIN
+        FOR i := FIRST(elems^) TO LAST(elems^) DO
+          elems[i] := seq.get(i)
         END;
-        term := res
+        term := NEW(Bnf.Disjunction, elems := elems).init();
       END;
     END;
     <*ASSERT term # NIL*>
@@ -180,12 +182,13 @@ PROCEDURE GetExpression(VAR expr : Bnf.T) : BOOLEAN
     IF seq.size() = 1 THEN
       expr := seq.get(0)
     ELSE
-      WITH res = NEW(Bnf.Sequence,
-                     elems := NEW(REF ARRAY OF Bnf.T, seq.size()))  DO
-        FOR i := FIRST(res.elems^) TO LAST(res.elems^) DO
-          res.elems[i] := seq.get(i)
+      VAR
+        elems := NEW(REF ARRAY OF Bnf.T, seq.size());
+      BEGIN
+        FOR i := FIRST(elems^) TO LAST(elems^) DO
+          elems[i] := seq.get(i)
         END;
-        expr := res
+        expr := NEW(Bnf.Sequence, elems := elems).init();
       END
     END;
     <*ASSERT expr # NIL*>
@@ -360,9 +363,12 @@ PROCEDURE GenTokFile(wr : Wr.T)
     dummy : REFANY;
   BEGIN
     WHILE iter.next(str, dummy) DO
-      Wr.PutText(wr, F("%const T_%s\n", MapString(str)))
+      Wr.PutText(wr, F("%const %s\n", Str2Token(str)))
     END
   END GenTokFile;
+
+PROCEDURE Str2Token(str : TEXT) : TEXT =
+  BEGIN RETURN "T_" & MapString(str) END Str2Token;
   
 PROCEDURE GenLexFile(wr : Wr.T)
   RAISES { Wr.Failure } =
@@ -375,30 +381,156 @@ PROCEDURE GenLexFile(wr : Wr.T)
       Wr.PutText(wr, F("T_%s \"%s\"\n", MapString(str), MapPrintable(str)))
     END
   END GenLexFile;
+
+PROCEDURE CopySymtab() : TextBnfSeq.T =
+  VAR
+    new := NEW(TextBnfSeq.T).init();
+    iter := symtab.iterate();
+    nm : TEXT;
+    x : Bnf.T;
+  BEGIN
+    WHILE iter.next(nm, x) DO
+      new.addhi(TextBnf.T { nm, x })
+    END;
+    RETURN new
+  END CopySymtab;
+
+PROCEDURE DistributeDisjunctions(seq : TextBnfSeq.T) =
+  BEGIN
+    FOR i := 0 TO seq.size() - 1 DO
+      WITH e = seq.get(i) DO
+        seq.put(i, TextBnf.T { e.t, Bnf.DistributeAll(e.b) })
+      END
+    END
+  END DistributeDisjunctions;
+
+PROCEDURE ExpandLists(seq : TextBnfSeq.T) =
+  VAR
+    i := 0;
+  BEGIN
+    WHILE i # seq.size() - 1 DO
+      WITH e = seq.get(i) DO
+        seq.put(i, TextBnf.T { e.t, Bnf.ExpandLists(e.b, seq, MapString) })
+      END;
+      INC(i)
+    END
+  END ExpandLists;
   
 PROCEDURE GenYacFile(wr : Wr.T)
   RAISES { Wr.Failure } =
   VAR
-    iter := symtab.iterate();
-    nm : TEXT;
-    rule : Bnf.T;
+    seq := CopySymtab();
+    k := 0;
   BEGIN
     Wr.PutText(wr, F("%start %s\n", "%s", rootType));
 
-    WHILE iter.next(nm, rule) DO
-      rule := Bnf.DistributeAll(rule);
+    (* distribute out the disjunctions ... *)
+    DistributeDisjunctions(seq);
 
-      TYPECASE rule OF
-        Bnf.Disjunction(dis) =>
-        Debug.Out(F("%s disjunctive rule, %s disjuncts", nm, Int(NUMBER(dis.elems^))))
-      |
-        Bnf.Sequence(seq) =>
-        Debug.Out(F("%s sequence rule, %s steps", nm, Int(NUMBER(seq.elems^))))
-      ELSE
-        Debug.Out(F("%s simple rule", nm))
-      END
+    ExpandLists(seq);
+    
+    WHILE k < seq.size() DO
+      WITH e = seq.get(k) DO
+
+        TYPECASE e.b OF
+          Bnf.Disjunction(dis) =>
+          Debug.Out(F("%s disjunctive rule, %s disjuncts", e.t, Int(NUMBER(dis.elems^))))
+        |
+          Bnf.Sequence(seq) =>
+          Debug.Out(F("%s sequence rule, %s steps", e.t, Int(NUMBER(seq.elems^))))
+        ELSE
+          Debug.Out(F("%s simple rule", e.t))
+        END;
+        
+        Wr.PutText(wr, "\n" & e.t & ":\n");
+        TYPECASE e.b OF Bnf.Disjunction(dis) =>
+          FOR i := FIRST(dis.elems^) TO LAST(dis.elems^) DO
+            DumpYaccRule(wr,
+                         NameDisjunct(dis.elems[i], i),
+                         dis.elems[i])
+          END
+        ELSE
+          DumpYaccRule(wr,
+                       "x",
+                       e.b)
+        END
+      END;
+      INC(k)
     END
   END GenYacFile;
+
+PROCEDURE FormatBnf(x : Bnf.T) : TEXT =
+  BEGIN
+    TYPECASE x OF
+      Bnf.String(str) => RETURN Str2Token(str.string)
+    |
+      Bnf.Sequence(seq) =>
+      VAR
+        wx := Wx.New();
+      BEGIN
+        FOR i := FIRST(seq.elems^) TO LAST(seq.elems^) DO
+          Wx.PutChar(wx, ' ');
+          Wx.PutText(wx, FormatBnf(seq.elems[i]));
+        END;
+        RETURN Wx.ToText(wx)
+      END
+    |
+      Bnf.Ident(id) => RETURN id.ident
+    |
+      Bnf.Optional(opt) =>
+      RETURN "(*optional* " & FormatBnf(opt.elem) & ")"
+    |
+      Bnf.ListOf(listof) =>
+      RETURN "(*listof* " & FormatBnf(listof.elem) & ")"
+    |
+      Bnf.Disjunction(dis) =>
+      VAR
+        wx := Wx.New();
+      BEGIN
+        Wx.PutText(wx, "(*disjunction* ");
+        FOR i := FIRST(dis.elems^) TO LAST(dis.elems^) DO
+          Wx.PutChar(wx, ' ');
+          Wx.PutText(wx, FormatBnf(dis.elems[i]));
+        END;
+        Wx.PutText(wx, ")");
+        RETURN Wx.ToText(wx)
+      END
+    ELSE
+      <*ASSERT FALSE*>
+    END
+  END FormatBnf;
+
+PROCEDURE EnsureHaveRule(expr : Bnf.T; rules : TextBnfSeq.T) : TEXT =
+  BEGIN
+    FOR i := 0 TO rules.size() - 1 DO
+      WITH e = rules.get(i) DO
+        IF Bnf.Equal(expr, e.b) THEN RETURN e.t END
+      END
+    END;
+
+    (* we do not yet have a rule for this *)
+
+    RETURN "*unknown*"
+  END EnsureHaveRule;
+  
+PROCEDURE DumpYaccRule(wr : Wr.T; nm : TEXT; expr : Bnf.T)
+  RAISES { Wr.Failure } =
+  BEGIN
+    Wr.PutText(wr, F("  %s %s\n", nm, FormatBnf(expr)));
+
+    
+  END DumpYaccRule;
+
+PROCEDURE NameDisjunct(x : Bnf.T; i : CARDINAL) : TEXT =
+  BEGIN
+    TYPECASE x OF
+      Bnf.String(str) => RETURN MapString(str.string)
+    |
+      Bnf.Ident(id) => RETURN id.ident
+    ELSE
+      RETURN "dis" & Int(i)
+    END
+  END NameDisjunct;
   
   (**********************************************************************)
 

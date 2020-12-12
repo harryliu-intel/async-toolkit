@@ -1,13 +1,19 @@
 INTERFACE Bnf;
 
+(* this interface should be made entirely functional
+
+   hide implementations and always call T.init() at the end of
+   every method/procedure that returns a T
+*)
+
 TYPE
   T <: Public;
 
   Public = OBJECT
   METHODS
-    copy() : T;
-    deepCopy() : T;
+    init() : T; (* init hash value *)
     replaceChild(old, new : T);
+    equal(x : T) : BOOLEAN;
   END;
 
   Visitor = OBJECT METHODS visit(t : T)  END;
@@ -48,5 +54,13 @@ PROCEDURE DistributeAll(t : T) : T;
   (* distribute everything else over Disjunction 
      (move Disjunction to top of tree, result will have no child Disjunctions)
   *)
-  
+
+TYPE StringMapper = PROCEDURE ( t : TEXT ) : TEXT;
+     
+PROCEDURE ExpandLists(t : T;
+                      seq : REFANY (* TextBnfSeq.T *);
+                      stringMapper : StringMapper) : T;
+
+PROCEDURE Equal(a, b : T) : BOOLEAN;
+
 END Bnf.

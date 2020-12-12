@@ -21,6 +21,13 @@ sequence ("Bnf", "Bnf")
 table ("CharText", "Char", "Text")
 module ("CharNames")
 
+interface("TextBnf")
+sequence("TextBnf","TextBnf")
+
+list("Bnf","Bnf")
+mkSet("Bnf", "Bnf")
+mkSetList("Bnf", "Bnf")
+
 program ("bnfgrammar")
 
 
