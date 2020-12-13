@@ -8,7 +8,7 @@ use FindBin;
 use Cwd qw/abs_path/;
 
 my ($cast_path, $spar_dir, $gls_dir, $cell, $env, $cosim, @cast_defines);
-my ($beh, $fpga_path, @c2v_args, @vcs_args, $kdb, $help);
+my ($beh, $fpga_path, @c2v_args, @vcs_args, $kdb, $sdf, $help, $nodebug);
 my $width = 300;
 my $mem = '16G';
 GetOptions("cast-path=s" => \$cast_path,
@@ -25,6 +25,8 @@ GetOptions("cast-path=s" => \$cast_path,
            "mem=s"       => \$mem,
            "beh!"        => \$beh,
            "kdb!"        => \$kdb,
+           "no-debug!"   => \$nodebug,
+           "sdf=s"       => \$sdf,
            "help!"       => \$help) || pod2usage(2);
 
 pod2usage(-verbose => 1) if $help;
@@ -77,7 +79,17 @@ push @vcs_args, '-kdb' if $kdb;
 open my $fh, ">$runvcs" || die "Can't open $runvcs: $!";
 
 if ($gls_dir) {
-    push @vcs_args, '+nospecify';
+    if ($sdf) {
+        push @vcs_args, '+pulse_r/0',
+                        '+pulse_e/0',
+                        '+pathpulse',
+                        '+neg_tchk',
+                        '-negdelay',
+                        '-sdf', "\Q$sdf\E";
+    } else {
+        push @vcs_args, '+define+functional',
+                        '+define+no_unit_delay';
+    }
     push @args, '-f', '$CAST2VERILOG_RUNTIME/gls.vcfg';
     print $fh <<'EOF';
 if [[ -z "$NCL_DIR" ]]; then
@@ -97,11 +109,13 @@ EOF
 EOF
 }
 
+push @vcs_args, '-debug_access+dmptf+all', '-debug_region=lib+cell' unless $nodebug;
+
 print $fh <<EOF;
 export SPAR="$spar_dir"
 export COLLATERAL=/nfs/sc/proj/ctg/mrl108/mrl/collateral
 export CAST2VERILOG_RUNTIME="$instdir/share/cast2verilog"
-vcs @vcs_args -assert svaext -licqueue -debug_access+dmptf+all -debug_region=lib+cell -full64 @defines -file "\$CAST2VERILOG_RUNTIME/$vcfg" testbench.v @args @netlists
+vcs @vcs_args -assert svaext -licqueue -full64 @defines -file "\$CAST2VERILOG_RUNTIME/$vcfg" testbench.v @args @netlists
 EOF
 close $fh;
 chmod 0755, $runvcs;
@@ -127,6 +141,7 @@ gen_model.pl [options] [verilog files...]
    --mem           Specify the Java heap size (defaults to 16G)
    --beh           If specified, generate a behavior model
    --kdb           If specified, generate Verdi Elaboration Database
+   --no-debug      Disable default VCS debugging options
    --c2v-arg       Flags to cast2verilog; can be specified any number of times
    --vcs-arg       Flags to VCS; can be specified any number of times
 =cut

@@ -1,5 +1,3 @@
-+define+functional
-+define+no_unit_delay
 +define+BD_EXTRA_DELAY=#1
 -v $STDCELL_DIR/g1m/v/an/g1m_an.v
 -v $STDCELL_DIR/g1m/v/bn/g1m_bn.v
