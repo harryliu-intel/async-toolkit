@@ -1,0 +1,3 @@
+start= stuff , { ";" , stuff } ;
+
+stuff= IDENTIFIER ;

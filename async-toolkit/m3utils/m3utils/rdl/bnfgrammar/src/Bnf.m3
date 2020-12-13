@@ -5,6 +5,10 @@ IMPORT BnfSetList;
 IMPORT BnfList;
 IMPORT TextBnfSeq;
 IMPORT BnfSeq;
+IMPORT Debug;
+IMPORT Wx;
+IMPORT CharNames;
+FROM Fmt IMPORT Int;
 
 CONST TE = Text.Equal;
 
@@ -467,7 +471,7 @@ PROCEDURE MapRecursively(m : T; f : Mapper) : T =
 
   (**********************************************************************)
 
-PROCEDURE RemoveIdentListsM(m : EditObj; t : T) : T =
+PROCEDURE RemoveIdentListsM(<*UNUSED*>m : EditObj; t : T) : T =
   BEGIN
     TYPECASE t OF
       ListOf(lst) =>
@@ -632,6 +636,60 @@ PROCEDURE RemoveSingletonSequences(t    : T;
   END RemoveSingletonSequences;
 
   (**********************************************************************)
+
+TYPE
+  RemoveOptionalsObj = EditObj OBJECT
+    cnt : CARDINAL;
+    nm  : TEXT;
+  END;
+  
+PROCEDURE RemoveRemOptionals(m : RemoveOptionalsObj; t : T) : T =
+  BEGIN
+    TYPECASE t OF
+      Optional(opt) =>
+      WITH newnm =  "opt_" & m.nm & "_" & Int(m.cnt) DO
+        INC(m.cnt);
+        (* need to make new rule here *)
+        RETURN NEW(Ident, ident := newnm).init()
+      END
+    ELSE
+    END;
+    RETURN t
+  END RemoveRemOptionals;
+  
+PROCEDURE RemoveRemainingOptionals(t    : T;
+                                   seqA : REFANY (* TextBnfSeq.T *);
+                                   stringMapper : StringMapper) : T =
+  VAR
+    seq : TextBnfSeq.T := seqA;
+    m : RemoveOptionalsObj;
+    nm : TEXT := NIL;
+  BEGIN
+    FOR i := 0 TO seq.size() - 1 DO
+      WITH rec = seq.get(i) DO
+        IF rec.b = t THEN
+          nm := rec.t
+        END
+      END
+    END;
+
+    IF nm = NIL THEN
+      Debug.Error("RemoveRemainingOptionals : no name for production " &
+        DebugBnf(t, 0)
+      )
+    END;
+    
+    m := NEW(RemoveOptionalsObj,
+             cnt := 0,
+             nm := nm,
+             seq := seqA,
+             stringMapper := stringMapper,
+             f := RemoveRemOptionals);
+
+    RETURN MapRecursively(t, m)
+  END RemoveRemainingOptionals;
+
+  (**********************************************************************)
   
 PROCEDURE MatchListPat(m : EditObj; s0, s1 : T) : T =
   BEGIN
@@ -709,4 +767,86 @@ PROCEDURE RemoveSeqLists(t    : T;
 PROCEDURE Equal(a, b : T) : BOOLEAN =
   BEGIN RETURN a.equal(b) END Equal;
   
+PROCEDURE DebugBnf(x : T; lev : CARDINAL) : TEXT =
+
+  PROCEDURE Lev() : TEXT =
+    VAR
+      z := NEW(REF ARRAY OF CHAR, 4*(lev+1));
+    BEGIN
+      FOR i := FIRST(z^) TO LAST(z^) DO
+        z[i] :=  ' '
+      END;
+      RETURN Text.FromChars(z^)
+    END Lev;
+
+  VAR
+    nxt := lev + 1;
+  BEGIN
+    TYPECASE x OF
+      String(str) => RETURN "(*string* " & Str2Token(str.string) & ")"
+    |
+      Sequence(seq) =>
+      VAR
+        wx := Wx.New();
+      BEGIN
+        Wx.PutText(wx, "(*sequence* ");
+        FOR i := FIRST(seq.elems^) TO LAST(seq.elems^) DO
+          Wx.PutChar(wx, '\n');
+          Wx.PutText(wx, Lev() & DebugBnf(seq.elems[i], nxt));
+        END;
+        Wx.PutText(wx, "\n" & Lev() & ")");
+        RETURN Wx.ToText(wx)
+      END
+    |
+      Ident(id) => RETURN "(*ident* " & id.ident & ")"
+    |
+      Optional(opt) =>
+      RETURN "(*optional* " & DebugBnf(opt.elem, nxt) & ")"
+    |
+      ListOf(listof) =>
+      RETURN "(*listof* " & DebugBnf(listof.elem, nxt) & ")"
+    |
+      Disjunction(dis) =>
+      VAR
+        wx := Wx.New();
+      BEGIN
+        Wx.PutText(wx, "(*disjunction* ");
+        FOR i := FIRST(dis.elems^) TO LAST(dis.elems^) DO
+          Wx.PutChar(wx, '\n');
+          Wx.PutText(wx, Lev() & DebugBnf(dis.elems[i], nxt));
+        END;
+        Wx.PutText(wx, "\n" & Lev() & ")");
+        RETURN Wx.ToText(wx)
+      END
+    ELSE
+      <*ASSERT FALSE*>
+    END
+  END DebugBnf;
+
+PROCEDURE Str2Token(str : TEXT) : TEXT =
+  (* just for debugging, does not match output *)
+  BEGIN RETURN "\"" & MapString(str) & "\"" END Str2Token;
+
+PROCEDURE MapString(str : TEXT) : TEXT =
+  (* this one is just for debugging.  It NEED NOT match the one used to
+     produce the output grammar, at least for now *)
+  VAR
+    in := Text.Length(str);
+    wx := Wx.New();
+    to : TEXT;
+  BEGIN
+    FOR i := 1 TO in - 2 DO
+      WITH c = Text.GetChar(str, i) DO
+        IF CharNames.Map(c, to) THEN
+          Wx.PutText(wx, to)
+        ELSE
+          Wx.PutChar(wx, c)
+        END
+      END
+    END;
+    RETURN Wx.ToText(wx)
+  END MapString;
+
+
+
 BEGIN END Bnf.

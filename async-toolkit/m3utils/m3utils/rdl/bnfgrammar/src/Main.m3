@@ -485,62 +485,6 @@ PROCEDURE FormatBnf(x : Bnf.T) : TEXT =
     END
   END FormatBnf;
 
-PROCEDURE DebugBnf(x : Bnf.T; lev : CARDINAL) : TEXT =
-
-  PROCEDURE Lev() : TEXT =
-    VAR
-      z := NEW(REF ARRAY OF CHAR, 4*(lev+1));
-    BEGIN
-      FOR i := FIRST(z^) TO LAST(z^) DO
-        z[i] :=  ' '
-      END;
-      RETURN Text.FromChars(z^)
-    END Lev;
-
-  VAR
-    nxt := lev + 1;
-  BEGIN
-    TYPECASE x OF
-      Bnf.String(str) => RETURN "(*string* " & Str2Token(str.string) & ")"
-    |
-      Bnf.Sequence(seq) =>
-      VAR
-        wx := Wx.New();
-      BEGIN
-        Wx.PutText(wx, "(*sequence* ");
-        FOR i := FIRST(seq.elems^) TO LAST(seq.elems^) DO
-          Wx.PutChar(wx, '\n');
-          Wx.PutText(wx, Lev() & DebugBnf(seq.elems[i], nxt));
-        END;
-        Wx.PutText(wx, "\n" & Lev() & ")");
-        RETURN Wx.ToText(wx)
-      END
-    |
-      Bnf.Ident(id) => RETURN "(*ident* " & id.ident & ")"
-    |
-      Bnf.Optional(opt) =>
-      RETURN "(*optional* " & DebugBnf(opt.elem, nxt) & ")"
-    |
-      Bnf.ListOf(listof) =>
-      RETURN "(*listof* " & DebugBnf(listof.elem, nxt) & ")"
-    |
-      Bnf.Disjunction(dis) =>
-      VAR
-        wx := Wx.New();
-      BEGIN
-        Wx.PutText(wx, "(*disjunction* ");
-        FOR i := FIRST(dis.elems^) TO LAST(dis.elems^) DO
-          Wx.PutChar(wx, '\n');
-          Wx.PutText(wx, Lev() & DebugBnf(dis.elems[i], nxt));
-        END;
-        Wx.PutText(wx, "\n" & Lev() & ")");
-        RETURN Wx.ToText(wx)
-      END
-    ELSE
-      <*ASSERT FALSE*>
-    END
-  END DebugBnf;
-
 PROCEDURE EnsureHaveRule(expr : Bnf.T; rules : TextBnfSeq.T) : TEXT =
   BEGIN
     FOR i := 0 TO rules.size() - 1 DO
@@ -619,7 +563,8 @@ PROCEDURE EditParseTree(seq : TextBnfSeq.T) =
                                    Bnf.RemoveIdentLists,
                                    Bnf.RemoveNestedSequences,
                                    Bnf.RemoveSingletonSequences,
-                                   Bnf.RemoveOptionalStringIdent };
+                                   Bnf.RemoveOptionalStringIdent,
+                                   Bnf.RemoveRemainingOptionals};
   BEGIN
     (* perform parse edits *)
 
@@ -643,7 +588,7 @@ PROCEDURE DebugDumpTree(fn : Pathname.T; seq : TextBnfSeq.T) =
         Wr.PutText(wr, q.t);
         Wr.PutChar(wr, '=');
         Wr.PutChar(wr, '\n');
-        Wr.PutText(wr, DebugBnf(q.b, 0))
+        Wr.PutText(wr, Bnf.DebugBnf(q.b, 0))
       END
     END;
     Wr.Close(wr)
