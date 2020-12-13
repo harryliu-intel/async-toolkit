@@ -81,6 +81,10 @@ PROCEDURE RemoveNestedSequences(t : T;
                                 seq : REFANY (* TextBnfSeq.T *);
                                 stringMapper : StringMapper) : T;
 
+PROCEDURE RemoveSingletonSequences(t : T;
+                                   seq : REFANY (* TextBnfSeq.T *);
+                                   stringMapper : StringMapper) : T;
+
 PROCEDURE Equal(a, b : T) : BOOLEAN;
 
 END Bnf.

@@ -407,23 +407,13 @@ PROCEDURE PerformParseEdit(seq : TextBnfSeq.T; editor : Bnf.Editor) =
     END
   END PerformParseEdit;
 
-PROCEDURE GenYacFile(wr : Wr.T)
+PROCEDURE GenYacFile(wr : Wr.T; seq : TextBnfSeq.T)
   RAISES { Wr.Failure } =
   VAR
-    seq := CopySymtab();
     k := 0;
   BEGIN
     Wr.PutText(wr, F("%start %s\n", "%s", rootType));
 
-    (* perform parse edits *)
-
-    PerformParseEdit(seq, Bnf.RemoveNestedSequences);
-    PerformParseEdit(seq, Bnf.DistributeAll);
-    PerformParseEdit(seq, Bnf.RemoveSeqLists);
-    PerformParseEdit(seq, Bnf.RemoveIdentLists);
-    PerformParseEdit(seq, Bnf.RemoveNestedSequences);
-    PerformParseEdit(seq, Bnf.RemoveOptionalStringIdent);
-    
     WHILE k < seq.size() DO
       WITH e = seq.get(k) DO
 
@@ -495,6 +485,62 @@ PROCEDURE FormatBnf(x : Bnf.T) : TEXT =
     END
   END FormatBnf;
 
+PROCEDURE DebugBnf(x : Bnf.T; lev : CARDINAL) : TEXT =
+
+  PROCEDURE Lev() : TEXT =
+    VAR
+      z := NEW(REF ARRAY OF CHAR, 4*(lev+1));
+    BEGIN
+      FOR i := FIRST(z^) TO LAST(z^) DO
+        z[i] :=  ' '
+      END;
+      RETURN Text.FromChars(z^)
+    END Lev;
+
+  VAR
+    nxt := lev + 1;
+  BEGIN
+    TYPECASE x OF
+      Bnf.String(str) => RETURN "(*string* " & Str2Token(str.string) & ")"
+    |
+      Bnf.Sequence(seq) =>
+      VAR
+        wx := Wx.New();
+      BEGIN
+        Wx.PutText(wx, "(*sequence* ");
+        FOR i := FIRST(seq.elems^) TO LAST(seq.elems^) DO
+          Wx.PutChar(wx, '\n');
+          Wx.PutText(wx, Lev() & DebugBnf(seq.elems[i], nxt));
+        END;
+        Wx.PutText(wx, "\n" & Lev() & ")");
+        RETURN Wx.ToText(wx)
+      END
+    |
+      Bnf.Ident(id) => RETURN "(*ident* " & id.ident & ")"
+    |
+      Bnf.Optional(opt) =>
+      RETURN "(*optional* " & DebugBnf(opt.elem, nxt) & ")"
+    |
+      Bnf.ListOf(listof) =>
+      RETURN "(*listof* " & DebugBnf(listof.elem, nxt) & ")"
+    |
+      Bnf.Disjunction(dis) =>
+      VAR
+        wx := Wx.New();
+      BEGIN
+        Wx.PutText(wx, "(*disjunction* ");
+        FOR i := FIRST(dis.elems^) TO LAST(dis.elems^) DO
+          Wx.PutChar(wx, '\n');
+          Wx.PutText(wx, Lev() & DebugBnf(dis.elems[i], nxt));
+        END;
+        Wx.PutText(wx, "\n" & Lev() & ")");
+        RETURN Wx.ToText(wx)
+      END
+    ELSE
+      <*ASSERT FALSE*>
+    END
+  END DebugBnf;
+
 PROCEDURE EnsureHaveRule(expr : Bnf.T; rules : TextBnfSeq.T) : TEXT =
   BEGIN
     FOR i := 0 TO rules.size() - 1 DO
@@ -530,7 +576,8 @@ PROCEDURE NameDisjunct(x : Bnf.T; i : CARDINAL) : TEXT =
   (**********************************************************************)
 
 PROCEDURE WriteFiles(gramName : TEXT;
-                     outDir   : Pathname.T)
+                     outDir   : Pathname.T;
+                     seq : TextBnfSeq.T)
   RAISES { Wr.Failure } =
   VAR
     derQn := outDir & "/derived.m3m";
@@ -555,7 +602,7 @@ PROCEDURE WriteFiles(gramName : TEXT;
     
     GenTokFile(tokWr);
     GenLexFile(lexWr);
-    GenYacFile(yacWr);
+    GenYacFile(yacWr, seq);
 
     Wr.Close(derWr);
     
@@ -564,6 +611,44 @@ PROCEDURE WriteFiles(gramName : TEXT;
     CloseF(yacWr, gramName, outDir, "y");
   END WriteFiles;
 
+PROCEDURE EditParseTree(seq : TextBnfSeq.T) =
+  CONST
+    Phases = ARRAY OF Bnf.Editor { Bnf.RemoveNestedSequences,
+                                   Bnf.DistributeAll,
+                                   Bnf.RemoveSeqLists,
+                                   Bnf.RemoveIdentLists,
+                                   Bnf.RemoveNestedSequences,
+                                   Bnf.RemoveSingletonSequences,
+                                   Bnf.RemoveOptionalStringIdent };
+  BEGIN
+    (* perform parse edits *)
+
+    DebugDumpTree("start.tree", seq);
+    FOR i := FIRST(Phases) TO LAST(Phases) DO
+      PerformParseEdit(seq, Phases[i]);
+      DebugDumpTree("result" & Int(i)  & ".tree", seq)
+    END
+  END EditParseTree;    
+
+
+PROCEDURE DebugDumpTree(fn : Pathname.T; seq : TextBnfSeq.T) =
+  <*FATAL OSError.E, Wr.Failure*>
+  VAR
+    wr := FileWr.Open(fn);
+  BEGIN
+    FOR i := 0 TO seq.size() - 1 DO
+      WITH q = seq.get(i) DO
+        Wr.PutChar(wr, '\n');
+        Wr.PutChar(wr, '\n');
+        Wr.PutText(wr, q.t);
+        Wr.PutChar(wr, '=');
+        Wr.PutChar(wr, '\n');
+        Wr.PutText(wr, DebugBnf(q.b, 0))
+      END
+    END;
+    Wr.Close(wr)
+  END DebugDumpTree;
+  
 VAR
   pp := NEW(ParseParams.T).init(Stdio.stderr);
   symtab := NEW(TextBnfTbl.Default).init();
@@ -658,6 +743,10 @@ BEGIN
     Debug.Error("Must specify output directory with -d")
   END;
 
-  WriteFiles(gramName, outDir)
+  WITH seq = CopySymtab() DO
+    EditParseTree(seq);
+  
+    WriteFiles(gramName, outDir, seq)
+  END
 
 END Main.

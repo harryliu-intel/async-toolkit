@@ -466,13 +466,8 @@ PROCEDURE MapRecursively(m : T; f : Mapper) : T =
   END MapRecursively;
 
   (**********************************************************************)
-TYPE
-  IdentListRemover = SeqListRemover OBJECT
-  OVERRIDES
-    f := RemoveIdentListsM;
-  END;
 
-PROCEDURE RemoveIdentListsM(m : SeqListRemover; t : T) : T =
+PROCEDURE RemoveIdentListsM(m : EditObj; t : T) : T =
   BEGIN
     TYPECASE t OF
       ListOf(lst) =>
@@ -489,23 +484,20 @@ PROCEDURE RemoveIdentListsM(m : SeqListRemover; t : T) : T =
   END RemoveIdentListsM;
   
 PROCEDURE RemoveIdentLists(t    : T;
-                         seqA : REFANY (* TextBnfSeq.T *);
-                         stringMapper : StringMapper) : T =
+                           seqA : REFANY (* TextBnfSeq.T *);
+                           stringMapper : StringMapper) : T =
   VAR
-    m := NEW(IdentListRemover, seq := seqA, stringMapper := stringMapper);
+    m := NEW(EditObj,
+             seq := seqA,
+             stringMapper := stringMapper,
+             f := RemoveIdentListsM);
   BEGIN
     RETURN MapRecursively(t, m)
   END RemoveIdentLists;
 
   (**********************************************************************)
 
-TYPE
-  OptionalStringIdentRemover = SeqListRemover OBJECT
-  OVERRIDES
-    f := RemoveOSI;
-  END;
-
-PROCEDURE RemoveOSI(m : OptionalStringIdentRemover; t : T) : T =
+PROCEDURE RemoveOSI(m : EditObj; t : T) : T =
   BEGIN
     TYPECASE t OF
       Optional(opt) =>
@@ -528,9 +520,10 @@ PROCEDURE RemoveOptionalStringIdent(t    : T;
                                     seqA : REFANY (* TextBnfSeq.T *);
                                     stringMapper : StringMapper) : T =
   VAR
-    m := NEW(OptionalStringIdentRemover,
+    m := NEW(EditObj,
              seq := seqA,
-             stringMapper := stringMapper);
+             stringMapper := stringMapper,
+             f := RemoveOSI);
   BEGIN
     RETURN MapRecursively(t, m)
   END RemoveOptionalStringIdent;
@@ -538,14 +531,12 @@ PROCEDURE RemoveOptionalStringIdent(t    : T;
   (**********************************************************************)
   
 TYPE
-  SeqListRemover = Mapper OBJECT
-    seq : TextBnfSeq.T;
+  EditObj = Mapper OBJECT
+    seq          : TextBnfSeq.T;
     stringMapper : StringMapper;
-  OVERRIDES
-    f := RemoveListsFromSeq;
   END;
 
-PROCEDURE RemoveListsFromSeq(m : SeqListRemover; t : T) : T =
+PROCEDURE RemoveListsFromSeq(m : EditObj; t : T) : T =
   BEGIN
     TYPECASE t OF
       Sequence(seq) =>
@@ -579,13 +570,7 @@ PROCEDURE RemoveListsFromSeq(m : SeqListRemover; t : T) : T =
 
   (**********************************************************************)
 
-TYPE
-  NestedSeqRemover = SeqListRemover OBJECT
-  OVERRIDES
-    f := RemoveNestedSeqs;
-  END;
-
-PROCEDURE RemoveNestedSeqs(<*UNUSED*>m : NestedSeqRemover; t : T) : T =
+PROCEDURE RemoveNestedSeqs(<*UNUSED*>m : EditObj; t : T) : T =
   BEGIN
     TYPECASE t OF
       Sequence(seq) =>
@@ -614,16 +599,41 @@ PROCEDURE RemoveNestedSequences(t    : T;
                                     seqA : REFANY (* TextBnfSeq.T *);
                                     stringMapper : StringMapper) : T =
   VAR
-    m := NEW(OptionalStringIdentRemover,
+    m := NEW(EditObj,
              seq := seqA,
-             stringMapper := stringMapper);
+             stringMapper := stringMapper,
+             f := RemoveNestedSeqs);
   BEGIN
     RETURN MapRecursively(t, m)
   END RemoveNestedSequences;
 
   (**********************************************************************)
+
+PROCEDURE RemoveSingletonSeqs(<*UNUSED*>m : EditObj; t : T) : T =
+  BEGIN
+    TYPECASE t OF
+      Sequence(seq) =>
+      IF NUMBER(seq.elems^) = 1 THEN RETURN seq.elems[0] END
+    ELSE
+    END;
+    RETURN t
+  END RemoveSingletonSeqs;
   
-PROCEDURE MatchListPat(m : SeqListRemover; s0, s1 : T) : T =
+PROCEDURE RemoveSingletonSequences(t    : T;
+                                    seqA : REFANY (* TextBnfSeq.T *);
+                                    stringMapper : StringMapper) : T =
+  VAR
+    m := NEW(EditObj,
+             seq := seqA,
+             stringMapper := stringMapper,
+             f := RemoveSingletonSeqs);
+  BEGIN
+    RETURN MapRecursively(t, m)
+  END RemoveSingletonSequences;
+
+  (**********************************************************************)
+  
+PROCEDURE MatchListPat(m : EditObj; s0, s1 : T) : T =
   BEGIN
     (* this nasty bit of code looks for the patterns
        
@@ -686,7 +696,10 @@ PROCEDURE RemoveSeqLists(t    : T;
                          seqA : REFANY (* TextBnfSeq.T *);
                          stringMapper : StringMapper) : T =
   VAR
-    m := NEW(SeqListRemover, seq := seqA, stringMapper := stringMapper);
+    m := NEW(EditObj,
+             seq := seqA,
+             stringMapper := stringMapper,
+             f := RemoveListsFromSeq);
   BEGIN
     RETURN MapRecursively(t, m)
   END RemoveSeqLists;
