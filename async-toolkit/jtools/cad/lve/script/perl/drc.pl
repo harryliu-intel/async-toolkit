@@ -29,6 +29,9 @@ my $format = "GDSII";
 my %default_runset;
 $default_runset{""}="drcd";
 $default_runset{"lden"}="denall";
+$default_runset{"gden"}="denall";
+$default_runset{"cden"}="denall";
+$default_runset{"cmden"}="denall";
 
 sub usage {
     my ($msg) = @_;
