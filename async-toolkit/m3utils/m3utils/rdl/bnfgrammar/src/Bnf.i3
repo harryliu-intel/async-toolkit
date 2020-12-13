@@ -2,6 +2,8 @@ INTERFACE Bnf;
 
 (* this interface should be made entirely functional
 
+   objects should be opaque and immutable
+
    hide implementations and always call T.init() at the end of
    every method/procedure that returns a T
 *)
@@ -50,16 +52,34 @@ TYPE
 
 CONST Brand = "Bnf";
 
-PROCEDURE DistributeAll(t : T) : T;
+TYPE Editor = PROCEDURE ( t : T;
+                          seq : REFANY (* TextBnfSeq.T *);
+                          stringmapper : StringMapper) : T; 
+     
+PROCEDURE DistributeAll(t : T;
+                        seq : REFANY (* TextBnfSeq.T *);
+                        stringMapper : StringMapper) : T;
   (* distribute everything else over Disjunction 
      (move Disjunction to top of tree, result will have no child Disjunctions)
   *)
 
 TYPE StringMapper = PROCEDURE ( t : TEXT ) : TEXT;
      
-PROCEDURE ExpandLists(t : T;
-                      seq : REFANY (* TextBnfSeq.T *);
-                      stringMapper : StringMapper) : T;
+PROCEDURE RemoveSeqLists(t : T;
+                         seq : REFANY (* TextBnfSeq.T *);
+                         stringMapper : StringMapper) : T;
+
+PROCEDURE RemoveIdentLists(t : T;
+                           seq : REFANY (* TextBnfSeq.T *);
+                           stringMapper : StringMapper) : T;
+
+PROCEDURE RemoveOptionalStringIdent(t : T;
+                                    seq : REFANY (* TextBnfSeq.T *);
+                                    stringMapper : StringMapper) : T;
+
+PROCEDURE RemoveNestedSequences(t : T;
+                                seq : REFANY (* TextBnfSeq.T *);
+                                stringMapper : StringMapper) : T;
 
 PROCEDURE Equal(a, b : T) : BOOLEAN;
 

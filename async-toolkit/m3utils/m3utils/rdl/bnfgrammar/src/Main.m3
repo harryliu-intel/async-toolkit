@@ -395,27 +395,18 @@ PROCEDURE CopySymtab() : TextBnfSeq.T =
     RETURN new
   END CopySymtab;
 
-PROCEDURE DistributeDisjunctions(seq : TextBnfSeq.T) =
-  BEGIN
-    FOR i := 0 TO seq.size() - 1 DO
-      WITH e = seq.get(i) DO
-        seq.put(i, TextBnf.T { e.t, Bnf.DistributeAll(e.b) })
-      END
-    END
-  END DistributeDisjunctions;
-
-PROCEDURE ExpandLists(seq : TextBnfSeq.T) =
+PROCEDURE PerformParseEdit(seq : TextBnfSeq.T; editor : Bnf.Editor) =
   VAR
     i := 0;
   BEGIN
-    WHILE i # seq.size() - 1 DO
+    WHILE i # seq.size() DO
       WITH e = seq.get(i) DO
-        seq.put(i, TextBnf.T { e.t, Bnf.ExpandLists(e.b, seq, MapString) })
+        seq.put(i, TextBnf.T { e.t, editor(e.b, seq, MapString) });
       END;
       INC(i)
     END
-  END ExpandLists;
-  
+  END PerformParseEdit;
+
 PROCEDURE GenYacFile(wr : Wr.T)
   RAISES { Wr.Failure } =
   VAR
@@ -424,10 +415,14 @@ PROCEDURE GenYacFile(wr : Wr.T)
   BEGIN
     Wr.PutText(wr, F("%start %s\n", "%s", rootType));
 
-    (* distribute out the disjunctions ... *)
-    DistributeDisjunctions(seq);
+    (* perform parse edits *)
 
-    ExpandLists(seq);
+    PerformParseEdit(seq, Bnf.RemoveNestedSequences);
+    PerformParseEdit(seq, Bnf.DistributeAll);
+    PerformParseEdit(seq, Bnf.RemoveSeqLists);
+    PerformParseEdit(seq, Bnf.RemoveIdentLists);
+    PerformParseEdit(seq, Bnf.RemoveNestedSequences);
+    PerformParseEdit(seq, Bnf.RemoveOptionalStringIdent);
     
     WHILE k < seq.size() DO
       WITH e = seq.get(k) DO

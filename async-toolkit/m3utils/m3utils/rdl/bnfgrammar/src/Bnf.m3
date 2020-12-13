@@ -400,7 +400,9 @@ PROCEDURE DistributeRec(p, m : T) =
     END
   END DistributeRec;
 
-PROCEDURE DistributeAll(t : T) : T =
+PROCEDURE DistributeAll(t : T;
+                        <*UNUSED*>seq : REFANY (* TextBnfSeq.T *);
+                        <*UNUSED*>stringMapper : StringMapper) : T =
   VAR elems := NEW(Array, 1);
       root := NEW(Disjunction, elems := elems);
   BEGIN
@@ -463,6 +465,78 @@ PROCEDURE MapRecursively(m : T; f : Mapper) : T =
     END
   END MapRecursively;
 
+  (**********************************************************************)
+TYPE
+  IdentListRemover = SeqListRemover OBJECT
+  OVERRIDES
+    f := RemoveIdentListsM;
+  END;
+
+PROCEDURE RemoveIdentListsM(m : SeqListRemover; t : T) : T =
+  BEGIN
+    TYPECASE t OF
+      ListOf(lst) =>
+        (* remove the pattern { X } *)
+        TYPECASE lst.elem OF
+          Ident(e) =>
+          (* need to add the new rule here *)
+          RETURN (NEW(Ident, ident := "list1of_" & e.ident).init())
+        ELSE
+        END
+    ELSE
+    END;
+    RETURN t
+  END RemoveIdentListsM;
+  
+PROCEDURE RemoveIdentLists(t    : T;
+                         seqA : REFANY (* TextBnfSeq.T *);
+                         stringMapper : StringMapper) : T =
+  VAR
+    m := NEW(IdentListRemover, seq := seqA, stringMapper := stringMapper);
+  BEGIN
+    RETURN MapRecursively(t, m)
+  END RemoveIdentLists;
+
+  (**********************************************************************)
+
+TYPE
+  OptionalStringIdentRemover = SeqListRemover OBJECT
+  OVERRIDES
+    f := RemoveOSI;
+  END;
+
+PROCEDURE RemoveOSI(m : OptionalStringIdentRemover; t : T) : T =
+  BEGIN
+    TYPECASE t OF
+      Optional(opt) =>
+        (* remove the patterns  [X] ["S"]  *)
+        TYPECASE opt.elem OF
+          Ident(e) =>
+          RETURN (NEW(Ident, ident := "opt_" & e.ident).init())
+        |
+          String(s) =>
+          RETURN NEW(Ident,
+                     ident := "opt_" & m.stringMapper(s.string)).init()
+        ELSE
+        END
+    ELSE
+    END;
+    RETURN t
+  END RemoveOSI;
+  
+PROCEDURE RemoveOptionalStringIdent(t    : T;
+                                    seqA : REFANY (* TextBnfSeq.T *);
+                                    stringMapper : StringMapper) : T =
+  VAR
+    m := NEW(OptionalStringIdentRemover,
+             seq := seqA,
+             stringMapper := stringMapper);
+  BEGIN
+    RETURN MapRecursively(t, m)
+  END RemoveOptionalStringIdent;
+
+  (**********************************************************************)
+  
 TYPE
   SeqListRemover = Mapper OBJECT
     seq : TextBnfSeq.T;
@@ -503,6 +577,52 @@ PROCEDURE RemoveListsFromSeq(m : SeqListRemover; t : T) : T =
     END
   END RemoveListsFromSeq;
 
+  (**********************************************************************)
+
+TYPE
+  NestedSeqRemover = SeqListRemover OBJECT
+  OVERRIDES
+    f := RemoveNestedSeqs;
+  END;
+
+PROCEDURE RemoveNestedSeqs(<*UNUSED*>m : NestedSeqRemover; t : T) : T =
+  BEGIN
+    TYPECASE t OF
+      Sequence(seq) =>
+      VAR
+        elems := NEW(BnfSeq.T).init();
+      BEGIN
+        (* remove the pattern (... , ( ... , ...) ...)    *)
+        FOR i := FIRST(seq.elems^) TO LAST(seq.elems^) DO
+          TYPECASE seq.elems[i] OF
+            Sequence(e) =>
+            FOR j := FIRST(e.elems^) TO LAST(e.elems^) DO
+              elems.addhi(e.elems[j])
+            END
+          ELSE
+            elems.addhi(seq.elems[i])
+          END
+        END;
+        RETURN NEW(Sequence, elems := Seq2Array(elems)).init()
+      END
+    ELSE
+      RETURN t
+    END;
+  END RemoveNestedSeqs;
+  
+PROCEDURE RemoveNestedSequences(t    : T;
+                                    seqA : REFANY (* TextBnfSeq.T *);
+                                    stringMapper : StringMapper) : T =
+  VAR
+    m := NEW(OptionalStringIdentRemover,
+             seq := seqA,
+             stringMapper := stringMapper);
+  BEGIN
+    RETURN MapRecursively(t, m)
+  END RemoveNestedSequences;
+
+  (**********************************************************************)
+  
 PROCEDURE MatchListPat(m : SeqListRemover; s0, s1 : T) : T =
   BEGIN
     (* this nasty bit of code looks for the patterns
@@ -562,14 +682,14 @@ PROCEDURE Seq2Array(seq : BnfSeq.T) : Array =
     RETURN res
   END Seq2Array;
   
-PROCEDURE ExpandLists(t    : T;
-                      seqA : REFANY (* TextBnfSeq.T *);
-                      stringMapper : StringMapper) : T =
+PROCEDURE RemoveSeqLists(t    : T;
+                         seqA : REFANY (* TextBnfSeq.T *);
+                         stringMapper : StringMapper) : T =
   VAR
     m := NEW(SeqListRemover, seq := seqA, stringMapper := stringMapper);
   BEGIN
     RETURN MapRecursively(t, m)
-  END ExpandLists;
+  END RemoveSeqLists;
   
   (**********************************************************************)
 
