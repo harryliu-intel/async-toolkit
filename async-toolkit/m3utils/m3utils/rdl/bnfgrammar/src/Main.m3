@@ -564,7 +564,8 @@ PROCEDURE EditParseTree(seq : TextBnfSeq.T) =
                                    Bnf.RemoveNestedSequences,
                                    Bnf.RemoveSingletonSequences,
                                    Bnf.RemoveOptionalStringIdent,
-                                   Bnf.RemoveRemainingOptionals};
+                                   Bnf.RemoveRemainingOptionals
+    };
   BEGIN
     (* perform parse edits *)
 

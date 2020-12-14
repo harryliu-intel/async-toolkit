@@ -8,6 +8,7 @@ IMPORT BnfSeq;
 IMPORT Debug;
 IMPORT Wx;
 IMPORT CharNames;
+IMPORT TextBnf;
 FROM Fmt IMPORT Int;
 
 CONST TE = Text.Equal;
@@ -471,15 +472,24 @@ PROCEDURE MapRecursively(m : T; f : Mapper) : T =
 
   (**********************************************************************)
 
-PROCEDURE RemoveIdentListsM(<*UNUSED*>m : EditObj; t : T) : T =
+PROCEDURE RemoveIdentListsM(m : EditObj; t : T) : T =
   BEGIN
     TYPECASE t OF
       ListOf(lst) =>
         (* remove the pattern { X } *)
         TYPECASE lst.elem OF
           Ident(e) =>
-          (* need to add the new rule here *)
-          RETURN (NEW(Ident, ident := "list1of_" & e.ident).init())
+          WITH nm = "list1of_" & e.ident,
+               ident = MakeIdent(nm) DO
+            
+            (* need to add the new rule here *)
+            WITH empty = MakeSequence(ARRAY OF T {}),
+                 list  = MakeSequence(ARRAY OF T { lst.elem, ident }),
+                 dis   = MakeDisjunction(ARRAY OF T { empty, list }) DO
+              m.seq.addhi(TextBnf.T { nm, dis });
+              RETURN ident
+            END
+          END
         ELSE
         END
     ELSE
@@ -508,11 +518,22 @@ PROCEDURE RemoveOSI(m : EditObj; t : T) : T =
         (* remove the patterns  [X] ["S"]  *)
         TYPECASE opt.elem OF
           Ident(e) =>
-          RETURN (NEW(Ident, ident := "opt_" & e.ident).init())
+          WITH nm = "opt_" & e.ident,
+               ident = MakeIdent(nm),
+               empty = MakeSequence(ARRAY OF T {}),
+               rule = MakeDisjunction(ARRAY OF T { empty, opt.elem }) DO
+            m.seq.addhi(TextBnf.T { nm, rule });
+            RETURN ident
+          END
         |
           String(s) =>
-          RETURN NEW(Ident,
-                     ident := "opt_" & m.stringMapper(s.string)).init()
+          WITH nm = "opt_" & m.stringMapper(s.string),
+               ident = MakeIdent(nm),
+               empty = MakeSequence(ARRAY OF T {}),
+               rule = MakeDisjunction(ARRAY OF T { empty, opt.elem }) DO
+            m.seq.addhi(TextBnf.T { nm, rule });
+            RETURN ident
+          END
         ELSE
         END
     ELSE
@@ -647,10 +668,14 @@ PROCEDURE RemoveRemOptionals(m : RemoveOptionalsObj; t : T) : T =
   BEGIN
     TYPECASE t OF
       Optional(opt) =>
-      WITH newnm =  "opt_" & m.nm & "_" & Int(m.cnt) DO
+      WITH nm    =  "opt_" & m.nm & "_" & Int(m.cnt),
+           ident = MakeIdent(nm),
+           empty = MakeSequence(ARRAY OF T {}),
+           rule  = MakeDisjunction(ARRAY OF T { opt.elem, empty }) DO
         INC(m.cnt);
         (* need to make new rule here *)
-        RETURN NEW(Ident, ident := newnm).init()
+        m.seq.addhi(TextBnf.T { nm, rule });
+        RETURN ident
       END
     ELSE
     END;
@@ -711,9 +736,19 @@ PROCEDURE MatchListPat(m : EditObj; s0, s1 : T) : T =
         
         IF  ll.elem = e THEN
           (* X { X } *)
-          RETURN (NEW(Ident, ident := "list1of_" & e.ident).init());
-         
-          (* add list rule here *)
+          WITH nm    = "list1of_" & e.ident,
+               ident = MakeIdent(nm) DO
+
+            (* add list rule here *)
+            
+            WITH single = ll.elem,
+                 list   = MakeSequence   (ARRAY OF T { single, ident }),
+                 dis    = MakeDisjunction(ARRAY OF T { single, list }) DO
+              m.seq.addhi(TextBnf.T { nm, dis })
+            END;
+              
+            RETURN ident
+          END         
               
         ELSIF ISTYPE(ll.elem, Sequence) THEN
           WITH iseq = NARROW(ll.elem, Sequence) DO
@@ -722,14 +757,20 @@ PROCEDURE MatchListPat(m : EditObj; s0, s1 : T) : T =
               e = iseq.elems[1] THEN
               
               (* X { <string> X } *)
-              
-              RETURN (NEW(Ident,
-                          ident := "list1of_" &
-                                       m.stringMapper(NARROW(iseq.elems[0],String).string) &
-                                       "_" &
-                                       e.ident).init());
-              
-              (* add list rule here *)
+
+              WITH nm = "list1of_" &
+                   m.stringMapper(NARROW(iseq.elems[0],String).string) &
+                   "_" &
+                   e.ident,
+                   ident = MakeIdent(nm) DO
+                WITH single = ll.elem,
+                     delim  = iseq.elems[0],
+                     list = MakeSequence(ARRAY OF T { delim, single, ident }),
+                     dis  = MakeDisjunction(ARRAY OF T { single, list }) DO
+                  m.seq.addhi(TextBnf.T { nm, dis });
+                  RETURN ident
+                END              
+              END
             END
           END
         END
@@ -783,7 +824,7 @@ PROCEDURE DebugBnf(x : T; lev : CARDINAL) : TEXT =
     nxt := lev + 1;
   BEGIN
     TYPECASE x OF
-      String(str) => RETURN "(*string* " & Str2Token(str.string) & ")"
+      String(str) => RETURN "(*token* " & MapString(str.string) & ")"
     |
       Sequence(seq) =>
       VAR
@@ -823,10 +864,6 @@ PROCEDURE DebugBnf(x : T; lev : CARDINAL) : TEXT =
     END
   END DebugBnf;
 
-PROCEDURE Str2Token(str : TEXT) : TEXT =
-  (* just for debugging, does not match output *)
-  BEGIN RETURN "\"" & MapString(str) & "\"" END Str2Token;
-
 PROCEDURE MapString(str : TEXT) : TEXT =
   (* this one is just for debugging.  It NEED NOT match the one used to
      produce the output grammar, at least for now *)
@@ -847,6 +884,32 @@ PROCEDURE MapString(str : TEXT) : TEXT =
     RETURN Wx.ToText(wx)
   END MapString;
 
+PROCEDURE MakeSequence(READONLY of : ARRAY OF T) : Sequence =
+  VAR
+    elems := NEW(REF ARRAY OF T, NUMBER(of));
+  BEGIN 
+    elems^ := of;
+    RETURN NEW(Sequence, elems := elems).init()
+  END MakeSequence;
 
+PROCEDURE MakeDisjunction(READONLY of : ARRAY OF T) : Disjunction =
+  VAR
+    elems := NEW(REF ARRAY OF T, NUMBER(of));
+  BEGIN
+    elems^ := of;
+    RETURN NEW(Disjunction, elems := elems).init()
+  END MakeDisjunction;
+
+PROCEDURE MakeOptional(of : T) : Optional =
+  BEGIN RETURN NEW(Optional, elem := of).init() END MakeOptional;
+
+PROCEDURE MakeListOf(of : T) : ListOf =
+  BEGIN RETURN NEW(ListOf, elem := of).init() END MakeListOf;
+
+PROCEDURE MakeIdent(nm : TEXT) : Ident =
+  BEGIN RETURN NEW(Ident, ident := nm).init() END MakeIdent;
+
+PROCEDURE MakeString(str : TEXT) : String =
+  BEGIN RETURN NEW(String, string := str).init() END MakeString;
 
 BEGIN END Bnf.

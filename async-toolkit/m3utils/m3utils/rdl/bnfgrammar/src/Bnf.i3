@@ -92,5 +92,19 @@ PROCEDURE RemoveRemainingOptionals(t : T;
 PROCEDURE Equal(a, b : T) : BOOLEAN;
 
 PROCEDURE DebugBnf(a : T; lev : CARDINAL) : TEXT;
+
+  (********************   MAKERS   ********************)
+  
+PROCEDURE MakeSequence(READONLY of : ARRAY OF T) : Sequence;
+
+PROCEDURE MakeDisjunction(READONLY of : ARRAY OF T) : Disjunction;
+
+PROCEDURE MakeOptional(of : T) : Optional;
+
+PROCEDURE MakeListOf(of : T) : ListOf;
+
+PROCEDURE MakeIdent(nm : TEXT) : Ident;
+
+PROCEDURE MakeString(str : TEXT) : String;
   
 END Bnf.
