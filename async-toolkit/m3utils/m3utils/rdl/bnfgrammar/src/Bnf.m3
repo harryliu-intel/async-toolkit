@@ -475,6 +475,24 @@ PROCEDURE MapRecursively(m : T; f : Mapper) : T =
 
   (**********************************************************************)
 
+PROCEDURE AttemptAdd(seq : TextBnfSeq.T; nm : TEXT; expr : T) : BOOLEAN =
+  (* returns name under which it was actually added *)
+  BEGIN
+    FOR i := 0 TO seq.size() - 1 DO
+      WITH old = seq.get(i) DO
+        IF TE(nm, old.t) THEN
+          IF old.b = expr THEN
+            RETURN TRUE
+          ELSE
+            RETURN FALSE
+          END
+        END
+      END
+    END;
+    seq.addhi(TextBnf.T { nm, expr });
+    RETURN TRUE
+  END AttemptAdd;
+  
 PROCEDURE RemoveIdentListsM(m : EditObj; t : T) : T =
   BEGIN
     TYPECASE t OF
@@ -482,16 +500,17 @@ PROCEDURE RemoveIdentListsM(m : EditObj; t : T) : T =
         (* remove the pattern { X } *)
         TYPECASE lst.elem OF
           Ident(e) =>
-          WITH nm = "list1of_" & e.ident,
-               ident = MakeIdent(nm) DO
-            
-            (* need to add the new rule here *)
-            WITH empty = MakeSequence(ARRAY OF T {}),
-                 list  = MakeSequence(ARRAY OF T { lst.elem, ident }),
-                 dis   = MakeDisjunction(ARRAY OF T { empty, list }) DO
-              m.seq.addhi(TextBnf.T { nm, dis });
-              RETURN ident
-            END
+          WITH nm = "listof_" & e.ident,
+               ident = MakeIdent(nm),
+               empty = MakeSequence(ARRAY OF T {}),
+               list  = MakeSequence(ARRAY OF T { lst.elem, ident }),
+               dis   = MakeDisjunction(ARRAY OF T { empty, list }),
+               success = AttemptAdd(m.seq, nm, dis) DO
+            IF NOT success THEN
+              Debug.Error("Multiple definitions for " & nm)
+            END;
+            <*ASSERT success*>
+            RETURN ident
           END
         ELSE
         END
@@ -524,17 +543,19 @@ PROCEDURE RemoveOSI(m : EditObj; t : T) : T =
           WITH nm = "opt_" & e.ident,
                ident = MakeIdent(nm),
                empty = MakeSequence(ARRAY OF T {}),
-               rule = MakeDisjunction(ARRAY OF T { empty, opt.elem }) DO
-            m.seq.addhi(TextBnf.T { nm, rule });
+               rule = MakeDisjunction(ARRAY OF T { empty, opt.elem }),
+               success = AttemptAdd(m.seq, nm, rule) DO
+            <*ASSERT success*>
             RETURN ident
           END
         |
           String(s) =>
-          WITH nm = "opt_" & m.stringMapper(s.string),
-               ident = MakeIdent(nm),
-               empty = MakeSequence(ARRAY OF T {}),
-               rule = MakeDisjunction(ARRAY OF T { empty, opt.elem }) DO
-            m.seq.addhi(TextBnf.T { nm, rule });
+          WITH nm      = "opt_" & m.stringMapper(s.string),
+               ident   = MakeIdent(nm),
+               empty   = MakeSequence(ARRAY OF T {}),
+               rule    = MakeDisjunction(ARRAY OF T { empty, opt.elem }),
+               success = AttemptAdd(m.seq, nm, rule) DO
+            <*ASSERT success*>
             RETURN ident
           END
         ELSE
@@ -674,10 +695,10 @@ PROCEDURE RemoveRemOptionals(m : RemoveOptionalsObj; t : T) : T =
       WITH nm    =  "opt_" & m.nm & "_" & Int(m.cnt),
            ident = MakeIdent(nm),
            empty = MakeSequence(ARRAY OF T {}),
-           rule  = MakeDisjunction(ARRAY OF T { opt.elem, empty }) DO
+           rule  = MakeDisjunction(ARRAY OF T { opt.elem, empty }),
+           success = AttemptAdd(m.seq, nm, rule) DO
+        <*ASSERT success*>
         INC(m.cnt);
-        (* need to make new rule here *)
-        m.seq.addhi(TextBnf.T { nm, rule });
         RETURN ident
       END
     ELSE
@@ -739,17 +760,13 @@ PROCEDURE MatchListPat(m : EditObj; s0, s1 : T) : T =
         
         IF  ll.elem = e THEN
           (* X { X } *)
-          WITH nm    = "list1of_" & e.ident,
-               ident = MakeIdent(nm) DO
-
-            (* add list rule here *)
-            
-            WITH single = ll.elem,
-                 list   = MakeSequence   (ARRAY OF T { single, ident }),
-                 dis    = MakeDisjunction(ARRAY OF T { single, list }) DO
-              m.seq.addhi(TextBnf.T { nm, dis })
-            END;
-              
+          WITH nm      = "list1of_" & e.ident,
+               single  = ll.elem,
+               ident   = MakeIdent(nm),
+               list    = MakeSequence   (ARRAY OF T { single, ident }),
+               dis     = MakeDisjunction(ARRAY OF T { single, list }),
+               success = AttemptAdd(m.seq, nm, dis) DO
+            <*ASSERT success*>
             RETURN ident
           END         
               
@@ -765,14 +782,14 @@ PROCEDURE MatchListPat(m : EditObj; s0, s1 : T) : T =
                    m.stringMapper(NARROW(iseq.elems[0],String).string) &
                    "_" &
                    e.ident,
-                   ident = MakeIdent(nm) DO
-                WITH single = ll.elem,
-                     delim  = iseq.elems[0],
-                     list = MakeSequence(ARRAY OF T { delim, single, ident }),
-                     dis  = MakeDisjunction(ARRAY OF T { single, list }) DO
-                  m.seq.addhi(TextBnf.T { nm, dis });
-                  RETURN ident
-                END              
+                   single = ll.elem,
+                   delim  = iseq.elems[0],
+                   ident = MakeIdent(nm),
+                   list = MakeSequence(ARRAY OF T { delim, single, ident }),
+                   dis  = MakeDisjunction(ARRAY OF T { single, list }),
+                   success = AttemptAdd(m.seq, nm, dis) DO
+                <*ASSERT success*>
+                RETURN ident
               END
             END
           END
