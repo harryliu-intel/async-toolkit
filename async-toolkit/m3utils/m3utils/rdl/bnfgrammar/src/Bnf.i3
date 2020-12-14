@@ -8,10 +8,12 @@ INTERFACE Bnf;
    every method/procedure that returns a T
 *)
 
+IMPORT BnfType;
+
 TYPE
   T <: Public;
 
-  Public = OBJECT
+  Public = BnfType.T OBJECT
   METHODS
     init() : T; (* init hash value *)
     replaceChild(old, new : T);

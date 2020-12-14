@@ -596,11 +596,11 @@ PROCEDURE DebugDumpTree(fn : Pathname.T; seq : TextBnfSeq.T) =
   END DebugDumpTree;
   
 VAR
-  pp := NEW(ParseParams.T).init(Stdio.stderr);
-  symtab := NEW(TextBnfTbl.Default).init();
-  rootType : TEXT := NIL;
-  outDir : Pathname.T := NIL;
-  gramName : TEXT := NIL;
+  pp                    := NEW(ParseParams.T).init(Stdio.stderr);
+  symtab                := NEW(TextBnfTbl.Default).init();
+  rootType : TEXT       := NIL;
+  outDir   : Pathname.T := NIL;
+  gramName : TEXT       := NIL;
 BEGIN
   TRY
     IF pp.keywordPresent("-r") THEN

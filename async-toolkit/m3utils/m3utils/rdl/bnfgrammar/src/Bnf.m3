@@ -10,6 +10,7 @@ IMPORT Wx;
 IMPORT CharNames;
 IMPORT TextBnf;
 FROM Fmt IMPORT Int;
+IMPORT BnfType;
 
 CONST TE = Text.Equal;
 
@@ -17,6 +18,8 @@ TYPE
   Array = REF ARRAY OF T;
   
 REVEAL
+  BnfType.T = BRANDED BnfType.Brand OBJECT END;
+  
   T = Public BRANDED Brand OBJECT
     hashV : Word.T;
   METHODS
