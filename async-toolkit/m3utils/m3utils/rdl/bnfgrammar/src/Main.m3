@@ -414,6 +414,11 @@ PROCEDURE GenYacFile(wr : Wr.T; seq : TextBnfSeq.T)
   BEGIN
     Wr.PutText(wr, F("%start %s\n", "%s", rootType));
 
+    IF yaccHeader # NIL THEN
+      Wr.PutText(wr, yaccHeader);
+      Wr.PutText(wr, "\n")
+    END;
+    
     WHILE k < seq.size() DO
       WITH e = seq.get(k) DO
 
@@ -485,19 +490,6 @@ PROCEDURE FormatBnf(x : Bnf.T) : TEXT =
     END
   END FormatBnf;
 
-PROCEDURE EnsureHaveRule(expr : Bnf.T; rules : TextBnfSeq.T) : TEXT =
-  BEGIN
-    FOR i := 0 TO rules.size() - 1 DO
-      WITH e = rules.get(i) DO
-        IF Bnf.Equal(expr, e.b) THEN RETURN e.t END
-      END
-    END;
-
-    (* we do not yet have a rule for this *)
-
-    RETURN "*unknown*"
-  END EnsureHaveRule;
-  
 PROCEDURE DumpYaccRule(wr : Wr.T; nm : TEXT; expr : Bnf.T)
   RAISES { Wr.Failure } =
   BEGIN
@@ -601,6 +593,7 @@ VAR
   rootType : TEXT       := NIL;
   outDir   : Pathname.T := NIL;
   gramName : TEXT       := NIL;
+  yaccHeader : TEXT     := NIL;
 BEGIN
   TRY
     IF pp.keywordPresent("-r") THEN
@@ -614,6 +607,29 @@ BEGIN
     IF pp.keywordPresent("-d") THEN
       outDir := pp.getNext()
     END;
+
+    IF pp.keywordPresent("-H") OR pp.keywordPresent("-yaccheader") THEN
+      VAR
+        fn := pp.getNext();
+        rd := FileRd.Open(fn);
+        wx := Wx.New();
+      BEGIN
+        TRY
+          LOOP
+            VAR
+              line := Rd.GetLine(rd);
+            BEGIN
+              Wx.PutText(wx, line);
+              Wx.PutChar(wx, '\n')
+            END
+          END
+        EXCEPT
+          Rd.EndOfFile => Rd.Close(rd); yaccHeader := Wx.ToText(wx)
+        END
+      END
+      
+    END;
+    
     IF pp.keywordPresent("-f") THEN
       WITH fn = pp.getNext() DO
         IF TE(fn,"-") THEN
