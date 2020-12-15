@@ -362,6 +362,11 @@ PROCEDURE GenTokFile(wr : Wr.T)
     str : TEXT;
     dummy : REFANY;
   BEGIN
+    IF tokHeader # NIL THEN
+      Wr.PutText(wr, tokHeader);
+      Wr.PutText(wr, "\n")
+    END;
+
     WHILE iter.next(str, dummy) DO
       Wr.PutText(wr, F("%const %s\n", Str2Token(str)))
     END
@@ -377,6 +382,11 @@ PROCEDURE GenLexFile(wr : Wr.T)
     str : TEXT;
     dummy : REFANY;
   BEGIN
+    IF lexHeader # NIL THEN
+      Wr.PutText(wr, lexHeader);
+      Wr.PutText(wr, "\n")
+    END;
+
     WHILE iter.next(str, dummy) DO
       Wr.PutText(wr, F("T_%s \"%s\"\n", MapString(str), MapPrintable(str)))
     END
@@ -586,7 +596,42 @@ PROCEDURE DebugDumpTree(fn : Pathname.T; seq : TextBnfSeq.T) =
     END;
     Wr.Close(wr)
   END DebugDumpTree;
-  
+
+PROCEDURE ReadFile(fn : Pathname.T) : TEXT =
+  VAR
+    rd : Rd.T;
+    wx := Wx.New();
+  BEGIN
+    TRY
+      rd := FileRd.Open(fn);
+    EXCEPT
+      OSError.E (x) =>
+      Debug.Error(F("Couldn't open \"%s\" for reading : OSError.E : %s",
+                    fn, AL.Format(x)));
+      <*ASSERT FALSE*>
+    END;
+
+    TRY
+      LOOP
+        VAR
+          line := Rd.GetLine(rd);
+        BEGIN
+          Wx.PutText(wx, line);
+          Wx.PutChar(wx, '\n')
+        END
+      END
+    EXCEPT
+      Rd.EndOfFile =>
+      TRY Rd.Close(rd); EXCEPT ELSE <*ASSERT FALSE*> END;
+      RETURN Wx.ToText(wx)
+    |
+      Rd.Failure (x) =>
+      Debug.Error(F("Trouble reading \"%s\" : Rd.Failure : %s",
+                    fn, AL.Format(x)));
+      <*ASSERT FALSE*>
+    END
+  END ReadFile;
+
 VAR
   pp                    := NEW(ParseParams.T).init(Stdio.stderr);
   symtab                := NEW(TextBnfTbl.Default).init();
@@ -594,6 +639,8 @@ VAR
   outDir   : Pathname.T := NIL;
   gramName : TEXT       := NIL;
   yaccHeader : TEXT     := NIL;
+  lexHeader  : TEXT     := NIL;
+  tokHeader  : TEXT     := NIL;
 BEGIN
   TRY
     IF pp.keywordPresent("-r") THEN
@@ -608,26 +655,16 @@ BEGIN
       outDir := pp.getNext()
     END;
 
-    IF pp.keywordPresent("-H") OR pp.keywordPresent("-yaccheader") THEN
-      VAR
-        fn := pp.getNext();
-        rd := FileRd.Open(fn);
-        wx := Wx.New();
-      BEGIN
-        TRY
-          LOOP
-            VAR
-              line := Rd.GetLine(rd);
-            BEGIN
-              Wx.PutText(wx, line);
-              Wx.PutChar(wx, '\n')
-            END
-          END
-        EXCEPT
-          Rd.EndOfFile => Rd.Close(rd); yaccHeader := Wx.ToText(wx)
-        END
-      END
-      
+    IF pp.keywordPresent("-Hy") OR pp.keywordPresent("-yaccheader") THEN
+      yaccHeader := ReadFile(pp.getNext())
+    END;
+    
+    IF pp.keywordPresent("-Hl") OR pp.keywordPresent("-lexheader") THEN
+      lexHeader := ReadFile(pp.getNext())
+    END;
+    
+    IF pp.keywordPresent("-Ht") OR pp.keywordPresent("-tokheader") THEN
+      tokHeader := ReadFile(pp.getNext())
     END;
     
     IF pp.keywordPresent("-f") THEN

@@ -1,0 +1,14 @@
+
+expression=
+		primary | binary_expression;
+
+
+binary_expression=
+		(expression, "+", expression)
+        ;
+
+primary=
+	       "field",
+	        [expression, [":", expression]]
+                ;
+                
