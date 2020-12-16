@@ -966,11 +966,11 @@ PROCEDURE MakeString(str : TEXT) : String =
 
 PROCEDURE Unify(a, b : Disjunction) : Disjunction =
   VAR
-    setA := DisjunctionSet(a);
-    setB := DisjunctionSet(b);
+    setA  := DisjunctionSet(a);
+    setB  := DisjunctionSet(b);
     union := setA.union(setB);
-    iter := union.iterate();
-    res := NEW(REF ARRAY OF T, union.size());
+    iter  := union.iterate();
+    res   := NEW(REF ARRAY OF T, union.size());
   BEGIN
 
     FOR i := FIRST(res^) TO LAST(res^) DO
