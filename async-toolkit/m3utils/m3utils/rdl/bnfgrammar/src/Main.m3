@@ -683,13 +683,17 @@ PROCEDURE EditParseTree(seq : TextBnfSeq.T) =
     FOR i := FIRST(Phases) TO LAST(Phases) DO
 
       Debug.Out(F("============================  EDIT PASS %s  ==========================", Int(i)));
+      Debug.Out(Int(seq.size()) & " grammar rules");
       PerformParseEdit(seq, Phases[i]);
       DebugDumpTree("result" & Int(i)  & ".tree", seq);
+      Debug.Out(Int(seq.size()) & " grammar rules");
       IF doElimIdenticalRules THEN EliminateIdenticals(seq) END;
+      Debug.Out(Int(seq.size()) & " grammar rules");
 
     END;
       Debug.Out(F("======================   END EDIT PARSE TREE   ========================"));
-    DebugDumpTree("stop" & ".tree", seq);
+      DebugDumpTree("stop" & ".tree", seq);
+
   END EditParseTree;    
 
 
@@ -784,7 +788,7 @@ BEGIN
       tokHeader := ReadFile(pp.getNext())
     END;
 
-    IF pp.keywordPresent("-n") THEN
+    IF pp.keywordPresent("-k") THEN
       doElimIdenticalRules := FALSE
     END;
     
