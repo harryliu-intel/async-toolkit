@@ -1,6 +1,8 @@
 MODULE Bnf;
+
 IMPORT Word;
 IMPORT Text;
+IMPORT BnfSet;
 IMPORT BnfSetList;
 IMPORT BnfList;
 IMPORT TextBnfSeq;
@@ -200,19 +202,24 @@ PROCEDURE ReplaceChildDisjunction(x : Disjunction; o, n : T) =
     <*ASSERT FALSE*>
   END ReplaceChildDisjunction;
 
+PROCEDURE DisjunctionSet(y : Disjunction) : BnfSet.T =
+  VAR
+    res := NEW(BnfSetList.T).init();
+  BEGIN
+    FOR i := FIRST(y.elems^) TO LAST(y.elems^) DO
+      EVAL res.insert(y.elems[i])
+    END;
+    RETURN res
+  END DisjunctionSet;
+  
 PROCEDURE EqualDisjunction(y : Disjunction; x : T) : BOOLEAN =
   BEGIN
     TYPECASE x OF
       Disjunction(d) =>
       VAR
-        ye, de := NEW(BnfSetList.T).init();
+        ye := DisjunctionSet(y);
+        de := DisjunctionSet(d);
       BEGIN
-        FOR i := FIRST(y.elems^) TO LAST(y.elems^) DO
-          EVAL ye.insert(y.elems[i])
-        END;
-        FOR i := FIRST(d.elems^) TO LAST(d.elems^) DO
-          EVAL de.insert(d.elems[i])
-        END;
         RETURN ye.equal(de)
       END
     ELSE
@@ -957,4 +964,22 @@ PROCEDURE MakeIdent(nm : TEXT) : Ident =
 PROCEDURE MakeString(str : TEXT) : String =
   BEGIN RETURN NEW(String, string := str).init() END MakeString;
 
+PROCEDURE Unify(a, b : Disjunction) : Disjunction =
+  VAR
+    setA := DisjunctionSet(a);
+    setB := DisjunctionSet(b);
+    union := setA.union(setB);
+    iter := union.iterate();
+    res := NEW(REF ARRAY OF T, union.size());
+  BEGIN
+
+    FOR i := FIRST(res^) TO LAST(res^) DO
+      WITH hadIt = iter.next(res[i]) DO
+        <*ASSERT hadIt*>
+      END
+    END;
+
+    RETURN NEW(Disjunction, elems := res).init()
+  END Unify;
+  
 BEGIN END Bnf.

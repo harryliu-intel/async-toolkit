@@ -112,6 +112,9 @@ PROCEDURE MakeString(str : TEXT) : String;
   (********************            ********************)
 
 PROCEDURE Substitute(t, from, to : T) : T;
+
+PROCEDURE Unify(a, b : Disjunction) : Disjunction;
+  (* unify two Disjunction rules *)
   
   
 END Bnf.

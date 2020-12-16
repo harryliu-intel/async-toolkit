@@ -32,6 +32,8 @@ IMPORT Pathname;
 IMPORT FileWr;
 IMPORT TextRefTbl;
 IMPORT TextBnfSeq;
+IMPORT TextReader;
+IMPORT TextTextSetTbl;
 
 VAR doDebug := Debug.GetLevel() >= 10 AND Debug.This("BnfGrammar");
 
@@ -557,9 +559,9 @@ PROCEDURE WriteFiles(gramName : TEXT;
     CloseF(yacWr, gramName, outDir, "y");
   END WriteFiles;
 
-PROCEDURE RenameAllIdents(seq : TextBnfSeq.T;
-                          fromSet : TextSet.T;
-                          to : TEXT;
+PROCEDURE RenameAllIdents(seq       : TextBnfSeq.T;
+                          fromSet   : TextSet.T;
+                          to        : TEXT;
                           protected : TextSet.T) =
   VAR
     iter := fromSet.iterate();
@@ -662,6 +664,89 @@ PROCEDURE EliminateIdenticals(seq : TextBnfSeq.T) =
   BEGIN
     WHILE EliminateOneIdentical(seq) DO (* skip *) END
   END EliminateIdenticals;
+
+PROCEDURE FmtSet(s : TextSet.T) : TEXT =
+  VAR
+    wx := Wx.New();
+    iter := s.iterate();
+    txt : TEXT;
+  BEGIN
+    WHILE iter.next(txt) DO
+      Wx.PutText(wx, txt);
+      Wx.PutChar(wx, ' ');
+    END;
+    RETURN Wx.ToText(wx)
+  END FmtSet;
+    
+PROCEDURE AttemptUnify(seq : TextBnfSeq.T; new : TEXT; old : TextSet.T) =
+  VAR
+    dis := Bnf.MakeDisjunction(ARRAY OF Bnf.T {});
+    txt : TEXT;
+    iter := old.iterate();
+  BEGIN
+    Debug.Out(F("Attempting UNIFY %s <- %s", new, FmtSet(old)));
+    WHILE iter.next(txt) DO
+      WITH x = GetByName(seq, txt) DO
+        IF NOT ISTYPE(x.b, Bnf.Disjunction) THEN
+          Debug.Error("Attempting to UNIFY non-Disjunction " &
+            x.t)
+        END;
+        dis := Bnf.Unify(dis, x.b)
+      END
+    END;
+    (* we have the unified Bnf here -- 
+       now insert it in the table and sweep out the old ones *)
+    VAR
+      newBnf := Bnf.MakeIdent(new);
+      oldBnf : Bnf.Ident;
+    BEGIN
+      iter := old.iterate();
+      WHILE iter.next(txt) DO
+        oldBnf := Bnf.MakeIdent(txt); (* this is the old identifier *)
+
+        SubstituteAll(seq, oldBnf, newBnf);
+        RemoveNamedRule(seq, txt);         (* remove it from the BNF *)
+      END
+    END
+  END AttemptUnify;
+
+PROCEDURE GetByName(seq : TextBnfSeq.T; nm : TEXT) : TextBnf.T =
+  BEGIN
+    FOR i := 0 TO seq.size() - 1 DO
+      WITH x = seq.get(i) DO
+        IF TE(x.t, nm) THEN RETURN x END
+      END
+    END;
+    <*ASSERT FALSE*>
+  END GetByName;
+
+  (**********************************************************************)
+
+PROCEDURE SubstituteAll(seq : TextBnfSeq.T; from, to : Bnf.T) =
+  BEGIN
+    FOR i := 0 TO seq.size() - 1 DO
+      VAR x := seq.get(i);
+      BEGIN
+        x.b := Bnf.Substitute(x.b, from, to);
+        seq.put(i, x)
+      END
+    END
+  END SubstituteAll;
+
+PROCEDURE RemoveNamedRule(seq : TextBnfSeq.T; nm : TEXT) =
+  BEGIN
+    FOR i := seq.size() - 1 TO 0 BY -1 DO
+      WITH rule = seq.get(i) DO
+        IF TE(rule.t, nm) THEN
+          WITH last = seq.get(seq.size() - 1) DO
+            seq.put(i, last)
+          END;
+          EVAL seq.remhi();
+          RETURN
+        END
+      END        
+    END 
+  END RemoveNamedRule;
   
 PROCEDURE EditParseTree(seq : TextBnfSeq.T) =
   CONST
@@ -680,6 +765,20 @@ PROCEDURE EditParseTree(seq : TextBnfSeq.T) =
       Debug.Out(F("=====================   BEGIN EDIT PARSE TREE   ======================="));
     DebugDumpTree("start.tree", seq);
     IF doElimIdenticalRules THEN EliminateIdenticals(seq) END;
+
+    IF unify # NIL THEN
+      (* attempt unifications *)
+      VAR
+        iter := unify.iterate();
+        new : TEXT;
+        old : TextSet.T;
+      BEGIN
+        WHILE iter.next(new, old) DO
+          AttemptUnify(seq, new, old)
+        END
+      END
+    END;
+    
     FOR i := FIRST(Phases) TO LAST(Phases) DO
 
       Debug.Out(F("============================  EDIT PASS %s  ==========================", Int(i)));
@@ -749,7 +848,44 @@ PROCEDURE ReadFile(fn : Pathname.T) : TEXT =
       <*ASSERT FALSE*>
     END
   END ReadFile;
+  
+PROCEDURE ParseControl(rd : Rd.T)
+  RAISES { Rd.Failure, TextReader.NoMore } =
+  BEGIN
+    TRY
+      LOOP
+        CONST
+          Delims = " \t";
+        VAR
+          line := Rd.GetLine(rd);
+          reader := NEW(TextReader.T).init(line);
+          kw := reader.nextE(Delims, TRUE);
+        BEGIN
+          IF    TE(kw, "PROTECT") THEN
+            WITH what = reader.nextE(Delims, TRUE) DO
+              EVAL protected.insert(what)
+            END
+          ELSIF TE(kw, "UNIFY") THEN
+            VAR tgt := reader.nextE(Delims, TRUE);
+                set := NEW(TextSetDef.T).init();
+                nm : TEXT;
+            BEGIN
+              WHILE reader.next(Delims, nm, TRUE) DO
+                EVAL set.insert(nm)
+              END;
 
+              EVAL unify.put(tgt, set)
+            END
+          ELSE
+            Debug.Error("Control keyword not understood : " & kw)
+          END
+        END
+      END
+    EXCEPT
+      Rd.EndOfFile => (* skip *)
+    END
+  END ParseControl;
+      
 VAR
   pp                    := NEW(ParseParams.T).init(Stdio.stderr);
   symtab                := NEW(TextBnfTbl.Default).init();
@@ -761,6 +897,7 @@ VAR
   tokHeader  : TEXT     := NIL;
   protected             := NEW(TextSetDef.T).init(); (* protected rules *)
   doElimIdenticalRules  := TRUE;
+  unify                 := NEW(TextTextSetTbl.Default).init();
   
 BEGIN
   TRY
@@ -790,6 +927,25 @@ BEGIN
 
     IF pp.keywordPresent("-k") THEN
       doElimIdenticalRules := FALSE
+    END;
+
+    IF pp.keywordPresent("-U") THEN
+      VAR
+        rd : Rd.T;
+        fn := pp.getNext();
+      BEGIN
+        TRY
+          rd := FileRd.Open(fn);
+        EXCEPT
+          OSError.E(e) =>
+          Debug.Error(F("Main.m3: trouble opening \"%s\" : OSError.E : %s",
+                        fn,
+                        AL.Format(e)))
+        END;
+
+        ParseControl(rd);
+        TRY Rd.Close(rd) EXCEPT ELSE <*ASSERT FALSE*> END
+      END
     END;
     
     IF pp.keywordPresent("-f") THEN
