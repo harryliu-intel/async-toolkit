@@ -557,6 +557,112 @@ PROCEDURE WriteFiles(gramName : TEXT;
     CloseF(yacWr, gramName, outDir, "y");
   END WriteFiles;
 
+PROCEDURE RenameAllIdents(seq : TextBnfSeq.T;
+                          fromSet : TextSet.T;
+                          to : TEXT;
+                          protected : TextSet.T) =
+  VAR
+    iter := fromSet.iterate();
+    f : TEXT;
+    ti := Bnf.MakeIdent(to);
+    rule : TextBnf.T;
+  BEGIN
+    (* make all the substitutions *)
+    WHILE iter.next(f) DO
+      IF NOT protected.member(f) AND NOT TE(f, to) THEN
+        Debug.Out(F("Renaming %s -> %s", f, to));
+        FOR i := 0 TO seq.size() - 1 DO
+          rule := seq.get(i);
+          rule.b := Bnf.Substitute(rule.b, Bnf.MakeIdent(f), ti);
+          seq.put(i, rule)
+        END
+      END
+    END;
+
+    (* now remove the named rules that we no longer need *)
+    FOR i := seq.size() - 1 TO 0 BY -1 DO
+      WITH rule = seq.get(i) DO
+        IF NOT protected.member(rule.t) AND
+           NOT TE(rule.t, to) AND
+           fromSet.member(rule.t) THEN
+          (* we need to remove rule i 
+             swap with last and lop off last
+          *)
+          WITH last = seq.get(seq.size() - 1) DO
+            seq.put(i, last)
+          END;
+
+          EVAL seq.remhi()
+        END
+      END
+    END;
+          
+  END RenameAllIdents;
+  
+PROCEDURE EliminateOneIdentical(seq : TextBnfSeq.T) : BOOLEAN =
+  BEGIN
+    FOR i := 0 TO seq.size() - 1 DO
+      VAR
+        set := NEW(TextSetDef.T).init();
+      BEGIN
+        FOR j := i + 1 TO seq.size() - 1 DO
+          WITH ie = seq.get(i),
+               je = seq.get(j) DO
+            IF ie.b = je.b THEN
+              Debug.Out(F("Rules the same: %s %s", ie.t, je.t));
+              EVAL set.insert(ie.t);
+              EVAL set.insert(je.t);
+            END
+          END
+        END(*ROF*);
+
+        IF set.size() > 1 THEN
+          (* found an equivalence class,
+
+             now we chose canonical names as follows:
+
+             if no protected names, canonical is shortest name
+
+             if protected names, canonical is shortest protected name
+          *)
+          VAR canonical : TEXT;
+              myProtected := set.intersection(protected);
+          BEGIN
+            IF myProtected.size() = 0 THEN
+              canonical := GetShortest(set)
+            ELSE
+              canonical := GetShortest(myProtected)
+            END;
+            RenameAllIdents(seq, set, canonical, protected)
+          END;
+          RETURN TRUE
+        END
+      END
+    END;
+    RETURN FALSE
+  END EliminateOneIdentical;
+
+PROCEDURE GetShortest(set : TextSet.T) : TEXT =
+  VAR
+    len := LAST(CARDINAL);
+    res : TEXT := NIL;
+    t   : TEXT;
+    iter := set.iterate();
+  BEGIN
+    WHILE iter.next(t) DO
+      IF Text.Length(t) < len THEN
+        res := t;
+        len := Text.Length(t)
+      END
+    END;
+    RETURN res
+  END GetShortest;
+
+PROCEDURE EliminateIdenticals(seq : TextBnfSeq.T) =
+  BEGIN
+    WHILE EliminateOneIdentical(seq) DO (* skip *) END
+  END EliminateIdenticals;
+  
 PROCEDURE EditParseTree(seq : TextBnfSeq.T) =
   CONST
     Phases = ARRAY OF Bnf.Editor { Bnf.RemoveNestedSequences,
@@ -571,11 +677,19 @@ PROCEDURE EditParseTree(seq : TextBnfSeq.T) =
   BEGIN
     (* perform parse edits *)
 
+      Debug.Out(F("=====================   BEGIN EDIT PARSE TREE   ======================="));
     DebugDumpTree("start.tree", seq);
+    IF doElimIdenticalRules THEN EliminateIdenticals(seq) END;
     FOR i := FIRST(Phases) TO LAST(Phases) DO
+
+      Debug.Out(F("============================  EDIT PASS %s  ==========================", Int(i)));
       PerformParseEdit(seq, Phases[i]);
-      DebugDumpTree("result" & Int(i)  & ".tree", seq)
-    END
+      DebugDumpTree("result" & Int(i)  & ".tree", seq);
+      IF doElimIdenticalRules THEN EliminateIdenticals(seq) END;
+
+    END;
+      Debug.Out(F("======================   END EDIT PARSE TREE   ========================"));
+    DebugDumpTree("stop" & ".tree", seq);
   END EditParseTree;    
 
 
@@ -641,6 +755,9 @@ VAR
   yaccHeader : TEXT     := NIL;
   lexHeader  : TEXT     := NIL;
   tokHeader  : TEXT     := NIL;
+  protected             := NEW(TextSetDef.T).init(); (* protected rules *)
+  doElimIdenticalRules  := TRUE;
+  
 BEGIN
   TRY
     IF pp.keywordPresent("-r") THEN
@@ -665,6 +782,10 @@ BEGIN
     
     IF pp.keywordPresent("-Ht") OR pp.keywordPresent("-tokheader") THEN
       tokHeader := ReadFile(pp.getNext())
+    END;
+
+    IF pp.keywordPresent("-n") THEN
+      doElimIdenticalRules := FALSE
     END;
     
     IF pp.keywordPresent("-f") THEN

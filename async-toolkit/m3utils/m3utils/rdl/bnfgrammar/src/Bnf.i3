@@ -108,5 +108,10 @@ PROCEDURE MakeListOf(of : T) : ListOf;
 PROCEDURE MakeIdent(nm : TEXT) : Ident;
 
 PROCEDURE MakeString(str : TEXT) : String;
+
+  (********************            ********************)
+
+PROCEDURE Substitute(t, from, to : T) : T;
+  
   
 END Bnf.

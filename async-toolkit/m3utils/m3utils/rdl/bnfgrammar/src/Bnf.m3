@@ -739,6 +739,31 @@ PROCEDURE RemoveRemainingOptionals(t    : T;
   END RemoveRemainingOptionals;
 
   (**********************************************************************)
+
+TYPE
+  SubstituteObj = Mapper OBJECT
+    from, to : T;
+  OVERRIDES
+    f := SubstituteM;
+  END;
+
+PROCEDURE SubstituteM(m : SubstituteObj; t : T) : T =
+  BEGIN
+    IF m.from = t THEN
+      RETURN m.to
+    ELSE
+      RETURN t
+    END
+  END SubstituteM;
+
+PROCEDURE Substitute(t, from, to : T) : T =
+  VAR
+    m := NEW(SubstituteObj, from := from, to := to);
+  BEGIN
+    RETURN MapRecursively(t, m)
+  END Substitute;
+  
+  (**********************************************************************)
   
 PROCEDURE MatchListPat(m : EditObj; s0, s1 : T) : T =
   BEGIN
