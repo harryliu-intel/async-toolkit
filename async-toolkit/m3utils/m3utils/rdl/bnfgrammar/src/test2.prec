@@ -1,3 +1,14 @@
-%left  T_Plu
+%left  T_Ast T_Fsl T_Pct
+%left  T_Plu T_Min
+%left  T_GthGth T_LthLth
+%left  T_Lth T_Gth T_GthEqu T_LthEqu 
+%left  T_EquEqu T_ExcEqu
+%left  T_Amp
+%left  T_Car
+%left  T_Pip
+%left  T_AmpAmp
+%left  T_PipPip
+%right T_Que
+%right T_Equ
 %right T_Col
 

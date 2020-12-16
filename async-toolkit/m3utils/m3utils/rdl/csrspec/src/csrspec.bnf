@@ -94,7 +94,7 @@ attribute_declaration=
 
 attribute_assignment=
 		name_of_attribute,
-		["=", expression]
+		["=", nonref_expression]
 	;
 
 name_of_attribute=
@@ -193,7 +193,7 @@ component_for_statement=
 		"(",
 		[for_statement_or_expression],
 		";",
-		expression,
+		nonref_expression,
 		";",
 		[for_statement_or_expression],
 		")",
@@ -205,7 +205,10 @@ component_for_statement=
 
 for_statement_or_expression=
 		assignment
-	|	expression
+                /* can be complex_identifier[nonref_ex]=*/
+                
+	|	nonref_expression
+                /* can be complex_array_indexed */
 	;
 
 component_if_statement=
@@ -239,8 +242,8 @@ component_case_statement=
 
 component_case_item=
 		(
-			expression,
-			{",", expression},
+			nonref_expression,
+			{",", nonref_expression},
 			":",
 			"{",
 			component_item,
@@ -330,7 +333,7 @@ addressmap_for_statement=
 		"(",
 		[for_statement_or_expression],
 		";",
-		expression,
+		nonref_expression,
 		";",
 		[for_statement_or_expression],
 		")",
@@ -371,8 +374,8 @@ addressmap_case_statement=
 
 addressmap_case_item=
 		(
-			expression,
-			{",", expression},
+			nonref_expression,
+			{",", nonref_expression},
 			":",
 			"{",
 			addressmap_item,
@@ -458,7 +461,7 @@ group_for_statement=
 		"(",
 		[for_statement_or_expression],
 		";",
-		expression,
+		nonref_expression,
 		";",
 		[for_statement_or_expression],
 		")",
@@ -499,8 +502,8 @@ group_case_statement=
 
 group_case_item=
 		(
-			expression,
-			{",", expression},
+			nonref_expression,
+			{",", nonref_expression},
 			":",
 			"{",
 			group_item,
@@ -608,7 +611,7 @@ union_for_statement=
 		"(",
 		[for_statement_or_expression],
 		";",
-		expression,
+		nonref_expression,
 		";",
 		[for_statement_or_expression],
 		")",
@@ -649,8 +652,8 @@ union_case_statement=
 
 union_case_item=
 		(
-			expression,
-			{",", expression},
+			nonref_expression,
+			{",", nonref_expression},
 			":",
 			"{",
 			union_item,
@@ -728,7 +731,7 @@ register_for_statement=
 		"(",
 		[for_statement_or_expression],
 		";",
-		expression,
+		nonref_expression,
 		";",
 		[for_statement_or_expression],
 		")",
@@ -769,8 +772,8 @@ register_case_statement=
 
 register_case_item=
 		(
-			expression,
-			{",", expression},
+			nonref_expression,
+			{",", nonref_expression},
 			":",
 			"{",
 			register_item,
@@ -834,7 +837,7 @@ name_of_field_define=
 
 name_of_field_define_expression=
 		"{",
-		expression,
+		nonref_expression,
 		"}"
 	;
 
@@ -844,8 +847,8 @@ name_of_field_reference=
 
 bit_position=
 		"[",
-		expression,
-		[":", expression],
+		nonref_expression,
+		[":", nonref_expression],
 		"]"
 	;
 
@@ -909,7 +912,7 @@ field_for_statement=
 		"(",
 		[for_statement_or_expression],
 		";",
-		expression,
+		nonref_expression,
 		";",
 		[for_statement_or_expression],
 		")",
@@ -950,8 +953,8 @@ field_case_statement=
 
 field_case_item=
 		(
-			expression,
-			{",", expression},
+			nonref_expression,
+			{",", nonref_expression},
 			":",
 			"{",
 			field_item,
@@ -1025,7 +1028,7 @@ memory_for_statement=
 		"(",
 		[for_statement_or_expression],
 		";",
-		expression,
+		nonref_expression,
 		";",
 		[for_statement_or_expression],
 		")",
@@ -1066,8 +1069,8 @@ memory_case_statement=
 
 memory_case_item=
 		(
-			expression,
-			{",", expression},
+			nonref_expression,
+			{",", nonref_expression},
 			":",
 			"{",
 			memory_item,
@@ -1125,14 +1128,14 @@ name_of_port_define=
 
 name_of_port_define_expression=
 		"{",
-		expression,
+		nonref_expression,
 		"}"
 	;
 
 range=
 		"[",
-		expression,
-		[":", expression],
+		nonref_expression,
+		[":", nonref_expression],
 		"]"
 	;
 
@@ -1171,7 +1174,7 @@ port_for_statement=
 		"(",
 		[for_statement_or_expression],
 		";",
-		expression,
+		nonref_expression,
 		";",
 		[for_statement_or_expression],
 		")",
@@ -1212,8 +1215,8 @@ port_case_statement=
 
 port_case_item=
 		(
-			expression,
-			{",", expression},
+			nonref_expression,
+			{",", nonref_expression},
 			":",
 			"{",
 			port_item,
@@ -1402,7 +1405,7 @@ assignment=
 		        expression
                 )
 	|	(       complex_identifier,
-		        "[", expression, "]",
+		        "[", nonref_expression, "]",
 		        "=",
 		        expression
                 )
@@ -1465,7 +1468,7 @@ variable_type=
 	;
 
 number_type=
-                "number", ["[", expression, [":", expression], "]"]
+                "number", ["[", nonref_expression, [":", nonref_expression], "]"]
         ;
 
 /**********************************************************************/
@@ -1499,10 +1502,17 @@ number_type=
    In order to avoid this issue, we bring out references as a new type
    of expression and break apart the grammar at this point.
 
+   Because <paren_expression> is ( <expression> ) we can always fix any
+   useful syntax we broke by putting things in parentheses!
+
 */
 
 expression=     nonref_expression
-                | reference;
+                | ref_expression
+                ;
+
+ref_expression= reference
+                ;
 
 nonref_expression=
 		primary
@@ -1523,28 +1533,28 @@ unary_expression=
         ;
 
 binary_expression=
-		(expression, "+", expression)
-	|	(expression, "-", expression)
-	|	(expression, "*", expression)
-	|	(expression, "/", expression)
-	|	(expression, "%", expression)
-	|	(expression, "==", expression)
-	|	(expression, "!=", expression)
-	|	(expression, "&&", expression)
-	|	(expression, "||", expression)
-	|	(expression, "<", expression)
-	|	(expression, "<=", expression)
-	|	(expression, ">", expression)
-	|	(expression, ">=", expression)
-	|	(expression, "&", expression)
-	|	(expression, "|", expression)
-	|	(expression, "^", expression)
-	|	(expression, ">>", expression)
-	|	(expression, "<<", expression)
+		(nonref_expression, "+", nonref_expression)
+	|	(nonref_expression, "-", nonref_expression)
+	|	(nonref_expression, "*", nonref_expression)
+	|	(nonref_expression, "/", nonref_expression)
+	|	(nonref_expression, "%", nonref_expression)
+	|	(nonref_expression, "==", nonref_expression)
+	|	(nonref_expression, "!=", nonref_expression)
+	|	(nonref_expression, "&&", nonref_expression)
+	|	(nonref_expression, "||", nonref_expression)
+	|	(nonref_expression, "<", nonref_expression)
+	|	(nonref_expression, "<=", nonref_expression)
+	|	(nonref_expression, ">", nonref_expression)
+	|	(nonref_expression, ">=", nonref_expression)
+	|	(nonref_expression, "&", nonref_expression)
+	|	(nonref_expression, "|", nonref_expression)
+	|	(nonref_expression, "^", nonref_expression)
+	|	(nonref_expression, ">>", nonref_expression)
+	|	(nonref_expression, "<<", nonref_expression)
         ;
 
 ternary_expression=
-		(expression, "?", expression, ":", expression)
+		(nonref_expression, "?", nonref_expression, ":", nonref_expression)
 	;
 
 /**********************************************************************/
@@ -1571,9 +1581,9 @@ complex_array_indexed=
 complex_array_sliced=
 			complex_identifier,
 			"[",
-			expression,
+			nonref_expression,
 			":",
-			expression,
+			nonref_expression,
 			"]"
                         ;
 
@@ -1608,23 +1618,23 @@ string_element=
 
 array_or_bit_index=
 		"[",
-		expression,
+		nonref_expression,
 		"]"
 	;
 
 concatenation=
 		"{",
-		expression,
-		{",", expression},
+		nonref_expression,
+		{",", nonref_expression},
 		"}"
 	;
 
 multiple_concatenation=
 		"{",
-		expression,
+		nonref_expression,
 		"{",
-		expression,
-		{",", expression},
+		nonref_expression,
+		{",", nonref_expression},
 		"}",
 		"}"
 	;
