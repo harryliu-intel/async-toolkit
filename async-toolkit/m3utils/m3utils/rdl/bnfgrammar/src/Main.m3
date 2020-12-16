@@ -776,8 +776,9 @@ PROCEDURE EditParseTree(seq : TextBnfSeq.T) =
         WHILE iter.next(new, old) DO
           AttemptUnify(seq, new, old)
         END
-      END
-    END;
+      END;
+      IF doElimIdenticalRules THEN EliminateIdenticals(seq) END;
+      END;
     
     FOR i := FIRST(Phases) TO LAST(Phases) DO
 
