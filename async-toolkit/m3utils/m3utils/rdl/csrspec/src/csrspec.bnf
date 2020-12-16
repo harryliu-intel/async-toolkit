@@ -1470,8 +1470,45 @@ number_type=
 
 /**********************************************************************/
 
-expression=
-		primary | unary_expression | binary_expression | ternary_expression;
+/* the original grammar has an annoying issue with port and field
+   references.
+
+   These are, in the original grammar, part of the <primary> below.
+
+   Since they use bit identifiers within themselves, optionally, there
+   exist ambiguities in the grammar.
+
+   For example, the field specification
+
+   field (a) 0 : 1
+
+   means bits 0 .. 1 of field a
+
+   Well, in the grammar, 0 and 1 are any expression, including a reference
+   (this makes no semantic sense but is good syntax), so the following is
+   good syntax
+
+   field(a) field(b)
+
+   or even
+
+   field(a) field(b) field(c) : field(d) field(e) : field(f) field(g)
+
+   which can parenthesize several ways.
+
+   In order to avoid this issue, we bring out references as a new type
+   of expression and break apart the grammar at this point.
+
+*/
+
+expression=     nonref_expression
+                | reference;
+
+nonref_expression=
+		primary
+                | unary_expression
+                | binary_expression
+                | ternary_expression;
 
 
 unary_expression=
@@ -1518,7 +1555,6 @@ primary=
 	|	complex_array_sliced
 	|	concatenation
 	|	multiple_concatenation
-	|	reference
 	|	function_clog2
 	|	function_defined
 	|	function_index
@@ -1624,7 +1660,7 @@ field_reference=
 		        reference_name,
 		        [",", string],
 		        ")",
-		        [expression, [":", expression]]
+		        [nonref_expression, [":", nonref_expression]] /*XXX*/
                 )
                 ;
                 
@@ -1650,7 +1686,7 @@ port_reference=
         		"(",
 	                reference_name,
 	                ")",
-		        [expression, [":", expression]]
+		        [nonref_expression, [":", nonref_expression]] /*XXX*/
                 )
                 ;
                 
