@@ -1,14 +1,14 @@
 MODULE Cloudbreak;
-FROM SvsTypes IMPORT Corner;
+FROM SvsTypes IMPORT CornerData;
 
-PROCEDURE SetProgram(VAR Ss, Tt, Ff              : Corner;
+PROCEDURE SetProgram(VAR Ss, Tt, Ff              : CornerData;
                      VAR RefP, FixedP, RefLeakP  : LONGREAL;
                      VAR LkgRatio, LkgRatioSigma : LONGREAL;
                      VAR Trunc                   : LONGREAL) =
   BEGIN
-    Ss := Corner { 0.710d0, 0.760d0, +3.0d0 };
-    Tt := Corner { 0.660d0, 0.710d0,  0.0d0 };
-    Ff := Corner { 0.620d0, 0.670d0, -3.0d0 };
+    Ss := CornerData { 0.710d0, 0.760d0, +3.0d0 };
+    Tt := CornerData { 0.660d0, 0.710d0,  0.0d0 };
+    Ff := CornerData { 0.620d0, 0.670d0, -3.0d0 };
     
     (* from the Karthik/Mika/Julianne Excel 2020WW47 *)
     RefP          := 388.6d0;

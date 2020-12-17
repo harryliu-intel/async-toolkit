@@ -1,7 +1,7 @@
 MODULE JBay;
-FROM SvsTypes IMPORT Corner;
+FROM SvsTypes IMPORT CornerData;
 
-PROCEDURE SetProgram(VAR Ss, Tt, Ff              : Corner;
+PROCEDURE SetProgram(VAR Ss, Tt, Ff              : CornerData;
                      VAR RefP, FixedP, RefLeakP  : LONGREAL;
                      VAR LkgRatio, LkgRatioSigma : LONGREAL;
                      VAR Trunc                   : LONGREAL) =
@@ -22,9 +22,9 @@ PROCEDURE SetProgram(VAR Ss, Tt, Ff              : Corner;
     PowToContact = -50.0d-3;
   BEGIN
     
-    Ss := Corner { SsPowV + PowToContact, SsPowV, +3.0d0 };
-    Tt := Corner { TtPowV + PowToContact, TtPowV,  0.0d0 };
-    Ff := Corner { FfPowV + PowToContact, FfPowV, -3.0d0 };
+    Ss := CornerData { SsPowV + PowToContact, SsPowV, +3.0d0 };
+    Tt := CornerData { TtPowV + PowToContact, TtPowV,  0.0d0 };
+    Ff := CornerData { FfPowV + PowToContact, FfPowV, -3.0d0 };
     
     (* from lab measurements : we assume measured chip is at FF *)
     RefP          := 377.90d0;

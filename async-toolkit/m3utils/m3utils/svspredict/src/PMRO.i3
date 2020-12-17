@@ -1,0 +1,7 @@
+INTERFACE PMRO;
+IMPORT Corner;
+
+TYPE
+  T = ARRAY Corner.T OF CARDINAL; (* PMRO counts *)
+
+END PMRO.

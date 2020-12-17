@@ -10,7 +10,7 @@ IMPORT Thread, OSError;
 IMPORT ParseParams;
 IMPORT Stdio;
 IMPORT Pathname;
-FROM SvsTypes IMPORT Corner, ProgramSetter;
+FROM SvsTypes IMPORT CornerData, ProgramSetter;
 IMPORT Text;
 IMPORT Cloudbreak;
 IMPORT JBay;
@@ -20,10 +20,10 @@ IMPORT JBay;
 CONST LR = Fmt.LongReal;
       TE = Text.Equal;
 
-VAR Ss, Tt, Ff              : Corner;
-                     VAR RefP, FixedP, RefLeakP  : LONGREAL;
-                     VAR LkgRatio, LkgRatioSigma : LONGREAL;
-                     VAR Trunc                   : LONGREAL;
+VAR Ss, Tt, Ff              : CornerData;
+VAR RefP, FixedP, RefLeakP  : LONGREAL;
+VAR LkgRatio, LkgRatioSigma : LONGREAL;
+VAR Trunc                   : LONGREAL;
 
 VAR
   H       :=   15; (* # of buckets *)
@@ -43,9 +43,9 @@ PROCEDURE Interpolate1(x : LONGREAL;
     END
   END Interpolate1;
   
-PROCEDURE Interpolate(x : LONGREAL) : Corner =
+PROCEDURE Interpolate(x : LONGREAL) : CornerData =
   VAR
-    res : Corner;
+    res : CornerData;
   BEGIN
     res.sigma := x;
     res.vtiming := Interpolate1(x,
@@ -59,7 +59,7 @@ PROCEDURE Interpolate(x : LONGREAL) : Corner =
     RETURN res
   END Interpolate;
   
-PROCEDURE MakeDie() : Corner =
+PROCEDURE MakeDie() : CornerData =
   (* returns the PVT voltage of a single die *)
   BEGIN
     LOOP
@@ -75,7 +75,7 @@ PROCEDURE MakeDie() : Corner =
 
 VAR rand := NEW(Random.Default).init();
 
-PROCEDURE CalcPower(at : Corner) : LONGREAL =
+PROCEDURE CalcPower(at : CornerData) : LONGREAL =
   BEGIN
     (* +sigma = slow, less leaky *)
     WITH RefRestPwr    = RefP - FixedP - RefLeakP,
