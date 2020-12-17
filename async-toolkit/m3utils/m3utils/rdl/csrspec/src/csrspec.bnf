@@ -837,7 +837,7 @@ name_of_field_define=
 
 name_of_field_define_expression=
 		"{",
-		nonref_expression,
+		expression,
 		"}"
 	;
 
@@ -1128,7 +1128,7 @@ name_of_port_define=
 
 name_of_port_define_expression=
 		"{",
-		nonref_expression,
+		expression,
 		"}"
 	;
 
@@ -1301,7 +1301,7 @@ name_of_define=
 
 name_of_define_expression=
 		"{",
-		nonref_expression,
+		expression,
 		"}"
 	;
 
