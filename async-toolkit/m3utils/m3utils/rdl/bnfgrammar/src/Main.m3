@@ -23,7 +23,8 @@ IMPORT FileRd;
 IMPORT ExceptionInfo;
 IMPORT Bnf;
 IMPORT BnfSeq;
-IMPORT TextBnfTbl, TextBnf;
+IMPORT TextBnfTbl;
+IMPORT BnfRule;
 IMPORT TextSet, TextSetDef;
 IMPORT Wx;
 IMPORT CharNames;
@@ -31,7 +32,7 @@ IMPORT Wr;
 IMPORT Pathname;
 IMPORT FileWr;
 IMPORT TextRefTbl;
-IMPORT TextBnfSeq;
+IMPORT BnfRuleSeq;
 IMPORT TextReader;
 IMPORT TextTextSetTbl;
 IMPORT BnfVisit, BnfEdit;
@@ -395,32 +396,32 @@ PROCEDURE GenLexFile(wr : Wr.T)
     END
   END GenLexFile;
 
-PROCEDURE CopySymtab() : TextBnfSeq.T =
+PROCEDURE CopySymtab() : BnfRuleSeq.T =
   VAR
-    new := NEW(TextBnfSeq.T).init();
+    new := NEW(BnfRuleSeq.T).init();
     iter := symtab.iterate();
     nm : TEXT;
     x : Bnf.T;
   BEGIN
     WHILE iter.next(nm, x) DO
-      new.addhi(TextBnf.T { nm, x })
+      new.addhi(BnfRule.T { nm, x })
     END;
     RETURN new
   END CopySymtab;
 
-PROCEDURE PerformParseEdit(seq : TextBnfSeq.T; editor : BnfEdit.T) =
+PROCEDURE PerformParseEdit(seq : BnfRuleSeq.T; editor : BnfEdit.T) =
   VAR
     i := 0;
   BEGIN
     WHILE i # seq.size() DO
       WITH e = seq.get(i) DO
-        seq.put(i, TextBnf.T { e.t, editor(e.b, seq, MapString) });
+        seq.put(i, BnfRule.T { e.t, editor(e.b, seq, MapString) });
       END;
       INC(i)
     END
   END PerformParseEdit;
 
-PROCEDURE GenYacFile(wr : Wr.T; seq : TextBnfSeq.T)
+PROCEDURE GenYacFile(wr : Wr.T; seq : BnfRuleSeq.T)
   RAISES { Wr.Failure } =
   VAR
     k := 0;
@@ -526,7 +527,7 @@ PROCEDURE NameDisjunct(x : Bnf.T; i : CARDINAL) : TEXT =
 
 PROCEDURE WriteFiles(gramName : TEXT;
                      outDir   : Pathname.T;
-                     seq : TextBnfSeq.T)
+                     seq : BnfRuleSeq.T)
   RAISES { Wr.Failure } =
   VAR
     derQn := outDir & "/derived.m3m";
@@ -560,7 +561,7 @@ PROCEDURE WriteFiles(gramName : TEXT;
     CloseF(yacWr, gramName, outDir, "y");
   END WriteFiles;
 
-PROCEDURE RenameAllIdents(seq       : TextBnfSeq.T;
+PROCEDURE RenameAllIdents(seq       : BnfRuleSeq.T;
                           fromSet   : TextSet.T;
                           to        : TEXT;
                           protected : TextSet.T) =
@@ -568,7 +569,7 @@ PROCEDURE RenameAllIdents(seq       : TextBnfSeq.T;
     iter := fromSet.iterate();
     f : TEXT;
     ti := Bnf.MakeIdent(to);
-    rule : TextBnf.T;
+    rule : BnfRule.T;
   BEGIN
     (* make all the substitutions *)
     WHILE iter.next(f) DO
@@ -602,7 +603,7 @@ PROCEDURE RenameAllIdents(seq       : TextBnfSeq.T;
           
   END RenameAllIdents;
   
-PROCEDURE EliminateOneIdentical(seq : TextBnfSeq.T) : BOOLEAN =
+PROCEDURE EliminateOneIdentical(seq : BnfRuleSeq.T) : BOOLEAN =
   BEGIN
     FOR i := 0 TO seq.size() - 1 DO
       VAR
@@ -661,7 +662,7 @@ PROCEDURE GetShortest(set : TextSet.T) : TEXT =
     RETURN res
   END GetShortest;
 
-PROCEDURE EliminateIdenticals(seq : TextBnfSeq.T) =
+PROCEDURE EliminateIdenticals(seq : BnfRuleSeq.T) =
   BEGIN
     WHILE EliminateOneIdentical(seq) DO (* skip *) END
   END EliminateIdenticals;
@@ -679,7 +680,7 @@ PROCEDURE FmtSet(s : TextSet.T) : TEXT =
     RETURN Wx.ToText(wx)
   END FmtSet;
     
-PROCEDURE AttemptUnify(seq : TextBnfSeq.T; new : TEXT; old : TextSet.T) =
+PROCEDURE AttemptUnify(seq : BnfRuleSeq.T; new : TEXT; old : TextSet.T) =
   VAR
     dis := Bnf.MakeDisjunction(ARRAY OF Bnf.T {});
     txt : TEXT;
@@ -697,7 +698,7 @@ PROCEDURE AttemptUnify(seq : TextBnfSeq.T; new : TEXT; old : TextSet.T) =
     END;
     (* we have the unified Bnf here -- 
        now insert it in the table and sweep out the old ones *)
-    seq.addhi(TextBnf.T { new, dis });
+    seq.addhi(BnfRule.T { new, dis });
     VAR
       newBnf := Bnf.MakeIdent(new);
       oldBnf : Bnf.Ident;
@@ -712,7 +713,7 @@ PROCEDURE AttemptUnify(seq : TextBnfSeq.T; new : TEXT; old : TextSet.T) =
     END
   END AttemptUnify;
 
-PROCEDURE GetByName(seq : TextBnfSeq.T; nm : TEXT) : TextBnf.T =
+PROCEDURE GetByName(seq : BnfRuleSeq.T; nm : TEXT) : BnfRule.T =
   BEGIN
     FOR i := 0 TO seq.size() - 1 DO
       WITH x = seq.get(i) DO
@@ -724,7 +725,7 @@ PROCEDURE GetByName(seq : TextBnfSeq.T; nm : TEXT) : TextBnf.T =
 
   (**********************************************************************)
 
-PROCEDURE SubstituteAll(seq : TextBnfSeq.T; from, to : Bnf.T) =
+PROCEDURE SubstituteAll(seq : BnfRuleSeq.T; from, to : Bnf.T) =
   BEGIN
     FOR i := 0 TO seq.size() - 1 DO
       VAR x := seq.get(i);
@@ -735,7 +736,7 @@ PROCEDURE SubstituteAll(seq : TextBnfSeq.T; from, to : Bnf.T) =
     END
   END SubstituteAll;
 
-PROCEDURE RemoveNamedRule(seq : TextBnfSeq.T; nm : TEXT) =
+PROCEDURE RemoveNamedRule(seq : BnfRuleSeq.T; nm : TEXT) =
   BEGIN
     FOR i := seq.size() - 1 TO 0 BY -1 DO
       WITH rule = seq.get(i) DO
@@ -750,7 +751,7 @@ PROCEDURE RemoveNamedRule(seq : TextBnfSeq.T; nm : TEXT) =
     END 
   END RemoveNamedRule;
 
-PROCEDURE EliminateIdentRules(seq : TextBnfSeq.T) =
+PROCEDURE EliminateIdentRules(seq : BnfRuleSeq.T) =
   BEGIN
     FOR i := seq.size() - 1 TO 0 BY -1 DO
       WITH rule = seq.get(i) DO
@@ -773,7 +774,7 @@ PROCEDURE EliminateIdentRules(seq : TextBnfSeq.T) =
     END
   END EliminateIdentRules;
   
-PROCEDURE EditParseTree(seq : TextBnfSeq.T) =
+PROCEDURE EditParseTree(seq : BnfRuleSeq.T) =
   CONST
     Phases = ARRAY OF BnfEdit.T { BnfEdit.RemoveNestedSequences,
                                   BnfEdit.DistributeAll,
@@ -826,7 +827,7 @@ PROCEDURE EditParseTree(seq : TextBnfSeq.T) =
   END EditParseTree;    
 
 
-PROCEDURE DebugDumpTree(fn : Pathname.T; seq : TextBnfSeq.T) =
+PROCEDURE DebugDumpTree(fn : Pathname.T; seq : BnfRuleSeq.T) =
   <*FATAL OSError.E, Wr.Failure*>
   VAR
     wr := FileWr.Open(fn);

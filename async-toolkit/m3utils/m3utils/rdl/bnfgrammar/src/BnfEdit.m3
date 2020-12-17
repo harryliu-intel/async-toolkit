@@ -2,13 +2,13 @@ MODULE BnfEdit;
 IMPORT Bnf;
 IMPORT BnfClass;
 IMPORT BnfSeq;
-IMPORT TextBnfSeq;
+IMPORT BnfRuleSeq;
 FROM Bnf IMPORT Array;
 FROM Bnf IMPORT ListOf, Optional, Disjunction, Sequence, Ident, String;
 FROM Bnf IMPORT MakeIdent, MakeDisjunction, MakeSequence;
 FROM Bnf IMPORT DebugBnf, DebugFmt, DisjunctionSet;
 IMPORT Text;
-IMPORT TextBnf;
+IMPORT BnfRule;
 IMPORT Debug;
 FROM Fmt IMPORT Int;
 
@@ -116,7 +116,7 @@ PROCEDURE DistributeRec(p, m : Bnf.T) =
   END DistributeRec;
 
 PROCEDURE DistributeAll(t : Bnf.T;
-                        <*UNUSED*>seq : TextBnfSeq.T;
+                        <*UNUSED*>seq : BnfRuleSeq.T;
                         <*UNUSED*>stringMapper : StringMapper) : Bnf.T =
   VAR elems := NEW(Array, 1);
       root := NEW(Disjunction, elems := elems);
@@ -129,23 +129,30 @@ PROCEDURE DistributeAll(t : Bnf.T;
 
   (**********************************************************************)
 
-TYPE Mapper = OBJECT METHODS f(t : Bnf.T) : Bnf.T END;
+TYPE
+  Mapper = OBJECT
+    changed := FALSE;
+  METHODS
+    f(t : Bnf.T) : Bnf.T
+  END;
      
 PROCEDURE MapRecursively(m : Bnf.T; f : Mapper) : Bnf.T =
+  VAR
+    new : Bnf.T;
   BEGIN
     TYPECASE m OF
       Ident(id) =>
-      RETURN f.f(id)
+      new := f.f(id)
     |
       String(str) =>
-      RETURN f.f(str)
+      new := f.f(str)
     |
       ListOf(lst) =>
       VAR
         elem := MapRecursively(lst.elem, f);
         res  := NEW(ListOf, elem := elem).init();
       BEGIN
-        RETURN f.f(res)
+        new := f.f(res)
       END
     |
       Optional(opt) =>
@@ -153,7 +160,7 @@ PROCEDURE MapRecursively(m : Bnf.T; f : Mapper) : Bnf.T =
         elem := MapRecursively(opt.elem, f);
         res  := NEW(Optional, elem := elem).init();
       BEGIN
-        RETURN f.f(res)
+        new := f.f(res)
       END
     |
       Disjunction(dis) =>
@@ -163,7 +170,7 @@ PROCEDURE MapRecursively(m : Bnf.T; f : Mapper) : Bnf.T =
         FOR i := FIRST(dis.elems^) TO LAST(dis.elems^) DO
           elems[i] := MapRecursively(dis.elems[i], f)
         END;
-        RETURN f.f(NEW(Disjunction, elems := elems).init());
+        new := f.f(NEW(Disjunction, elems := elems).init());
       END
     |
       Sequence(seq) =>
@@ -173,16 +180,18 @@ PROCEDURE MapRecursively(m : Bnf.T; f : Mapper) : Bnf.T =
         FOR i := FIRST(seq.elems^) TO LAST(seq.elems^) DO
           elems[i] := MapRecursively(seq.elems[i], f)
         END;
-        RETURN f.f(NEW(Sequence, elems := elems).init());
+        new := f.f(NEW(Sequence, elems := elems).init());
       END
     ELSE
       <*ASSERT FALSE*>
-    END
+    END;
+    f.changed := f.changed OR new # m;
+    RETURN new
   END MapRecursively;
 
   (**********************************************************************)
 
-PROCEDURE AttemptAdd(seq : TextBnfSeq.T; nm : TEXT; expr : Bnf.T) : BOOLEAN =
+PROCEDURE AttemptAdd(seq : BnfRuleSeq.T; nm : TEXT; expr : Bnf.T) : BOOLEAN =
   (* returns name under which it was actually added *)
   BEGIN
     FOR i := 0 TO seq.size() - 1 DO
@@ -196,7 +205,7 @@ PROCEDURE AttemptAdd(seq : TextBnfSeq.T; nm : TEXT; expr : Bnf.T) : BOOLEAN =
         END
       END
     END;
-    seq.addhi(TextBnf.T { nm, expr });
+    seq.addhi(BnfRule.T { nm, expr });
     RETURN TRUE
   END AttemptAdd;
   
@@ -227,7 +236,7 @@ PROCEDURE RemoveIdentListsM(m : EditObj; t : Bnf.T) : Bnf.T =
   END RemoveIdentListsM;
   
 PROCEDURE RemoveIdentLists(t    : Bnf.T;
-                           seqA : TextBnfSeq.T;
+                           seqA : BnfRuleSeq.T;
                            stringMapper : StringMapper) : Bnf.T =
   VAR
     m := NEW(EditObj,
@@ -273,7 +282,7 @@ PROCEDURE RemoveOSI(m : EditObj; t : Bnf.T) : Bnf.T =
   END RemoveOSI;
   
 PROCEDURE RemoveOptionalStringIdent(t    : Bnf.T;
-                                    seqA : TextBnfSeq.T;
+                                    seqA : BnfRuleSeq.T;
                                     stringMapper : StringMapper) : Bnf.T =
   VAR
     m := NEW(EditObj,
@@ -288,7 +297,7 @@ PROCEDURE RemoveOptionalStringIdent(t    : Bnf.T;
   
 TYPE
   EditObj = Mapper OBJECT
-    seq          : TextBnfSeq.T;
+    seq          : BnfRuleSeq.T;
     stringMapper : StringMapper;
   END;
 
@@ -352,7 +361,7 @@ PROCEDURE RemoveNestedSeqs(<*UNUSED*>m : EditObj; t : Bnf.T) : Bnf.T =
   END RemoveNestedSeqs;
   
 PROCEDURE RemoveNestedSequences(t    : Bnf.T;
-                                    seqA : TextBnfSeq.T;
+                                    seqA : BnfRuleSeq.T;
                                     stringMapper : StringMapper) : Bnf.T =
   VAR
     m := NEW(EditObj,
@@ -376,7 +385,7 @@ PROCEDURE RemoveSingletonSeqs(<*UNUSED*>m : EditObj; t : Bnf.T) : Bnf.T =
   END RemoveSingletonSeqs;
   
 PROCEDURE RemoveSingletonSequences(t    : Bnf.T;
-                                    seqA : TextBnfSeq.T;
+                                    seqA : BnfRuleSeq.T;
                                     stringMapper : StringMapper) : Bnf.T =
   VAR
     m := NEW(EditObj,
@@ -414,10 +423,10 @@ PROCEDURE RemoveRemOptionals(m : RemoveOptionalsObj; t : Bnf.T) : Bnf.T =
   END RemoveRemOptionals;
   
 PROCEDURE RemoveRemainingOptionals(t    : Bnf.T;
-                                   seqA : TextBnfSeq.T;
+                                   seqA : BnfRuleSeq.T;
                                    stringMapper : StringMapper) : Bnf.T =
   VAR
-    seq : TextBnfSeq.T := seqA;
+    seq : BnfRuleSeq.T := seqA;
     m : RemoveOptionalsObj;
     nm : TEXT := NIL;
   BEGIN
@@ -544,7 +553,7 @@ PROCEDURE Seq2Array(seq : BnfSeq.T) : Array =
   END Seq2Array;
   
 PROCEDURE RemoveSeqLists(t    : Bnf.T;
-                         seqA : TextBnfSeq.T;
+                         seqA : BnfRuleSeq.T;
                          stringMapper : StringMapper) : Bnf.T =
   VAR
     m := NEW(EditObj,

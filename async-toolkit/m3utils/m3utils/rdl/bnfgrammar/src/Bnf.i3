@@ -9,7 +9,7 @@ INTERFACE Bnf;
 *)
 
 IMPORT BnfType;
-IMPORT TextBnfSeq;
+IMPORT BnfRuleSeq;
 IMPORT BnfSet;
 
 REVEAL

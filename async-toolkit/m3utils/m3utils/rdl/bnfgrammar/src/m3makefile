@@ -17,14 +17,15 @@ module ("Bnf")
 interface ("BnfClass")
 module ("BnfType")
 
-table ("TextBnf", "Text", "BnfType")
+table ("TextBnfRule", "Text", "BnfRule")
 sequence ("Bnf", "BnfType")
+table ("TextBnf", "Text", "Bnf")
 
 table ("CharText", "Char", "Text")
 module ("CharNames")
 
-interface("TextBnf")
-sequence("TextBnf","TextBnf")
+interface("BnfRule")
+sequence("BnfRule","BnfRule")
 
 list("Bnf","BnfType")
 mkSet("Bnf", "BnfType")
