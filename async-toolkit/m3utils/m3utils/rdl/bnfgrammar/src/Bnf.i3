@@ -9,11 +9,15 @@ INTERFACE Bnf;
 *)
 
 IMPORT BnfType;
+IMPORT TextBnfSeq;
 
-TYPE
+REVEAL
   T <: Public;
+  
+TYPE
+  T = BnfType.T;
 
-  Public = BnfType.T OBJECT
+  Public = BnfType.Public OBJECT
   METHODS
     init() : T; (* init hash value *)
     replaceChild(old, new : T);
@@ -55,11 +59,11 @@ TYPE
 CONST Brand = "Bnf";
 
 TYPE Editor = PROCEDURE ( t : T;
-                          seq : REFANY (* TextBnfSeq.T *);
+                          seq : TextBnfSeq.T;
                           stringmapper : StringMapper) : T; 
      
 PROCEDURE DistributeAll(t : T;
-                        seq : REFANY (* TextBnfSeq.T *);
+                        seq : TextBnfSeq.T;
                         stringMapper : StringMapper) : T;
   (* distribute everything else over Disjunction 
      (move Disjunction to top of tree, result will have no child Disjunctions)
@@ -68,30 +72,28 @@ PROCEDURE DistributeAll(t : T;
 TYPE StringMapper = PROCEDURE ( t : TEXT ) : TEXT;
      
 PROCEDURE RemoveSeqLists(t : T;
-                         seq : REFANY (* TextBnfSeq.T *);
+                         seq : TextBnfSeq.T;
                          stringMapper : StringMapper) : T;
 
 PROCEDURE RemoveIdentLists(t : T;
-                           seq : REFANY (* TextBnfSeq.T *);
+                           seq : TextBnfSeq.T;
                            stringMapper : StringMapper) : T;
 
 PROCEDURE RemoveOptionalStringIdent(t : T;
-                                    seq : REFANY (* TextBnfSeq.T *);
+                                    seq : TextBnfSeq.T;
                                     stringMapper : StringMapper) : T;
 
 PROCEDURE RemoveNestedSequences(t : T;
-                                seq : REFANY (* TextBnfSeq.T *);
+                                seq : TextBnfSeq.T;
                                 stringMapper : StringMapper) : T;
 
 PROCEDURE RemoveSingletonSequences(t : T;
-                                   seq : REFANY (* TextBnfSeq.T *);
+                                   seq : TextBnfSeq.T;
                                    stringMapper : StringMapper) : T;
 
 PROCEDURE RemoveRemainingOptionals(t : T;
-                                   seq : REFANY (* TextBnfSeq.T *);
+                                   seq : TextBnfSeq.T;
                                    stringMapper : StringMapper) : T;
-
-PROCEDURE Equal(a, b : T) : BOOLEAN;
 
 PROCEDURE DebugBnf(a : T; lev : CARDINAL) : TEXT;
 
@@ -116,5 +118,6 @@ PROCEDURE Substitute(t, from, to : T) : T;
 PROCEDURE Unify(a, b : Disjunction) : Disjunction;
   (* unify two Disjunction rules *)
   
-  
+PROCEDURE Equal(a, b : T) : BOOLEAN;
+
 END Bnf.

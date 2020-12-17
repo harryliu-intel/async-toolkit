@@ -14,10 +14,10 @@ module ("BnfTokenizer")
 interface ("BnfTokenizer")
 
 module ("Bnf")
-interface ("BnfType")
+module ("BnfType")
 
-table ("TextBnf", "Text", "Bnf")
-sequence ("Bnf", "Bnf")
+table ("TextBnf", "Text", "BnfType")
+sequence ("Bnf", "BnfType")
 
 table ("CharText", "Char", "Text")
 module ("CharNames")
@@ -25,9 +25,9 @@ module ("CharNames")
 interface("TextBnf")
 sequence("TextBnf","TextBnf")
 
-list("Bnf","Bnf")
-mkSet("Bnf", "Bnf")
-mkSetList("Bnf", "Bnf")
+list("Bnf","BnfType")
+mkSet("Bnf", "BnfType")
+mkSetList("Bnf", "BnfType")
 
 table("TextTextSet", "Text", "TextSet")
 

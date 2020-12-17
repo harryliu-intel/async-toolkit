@@ -1,5 +1,5 @@
 INTERFACE TextBnf;
-IMPORT Bnf;
+IMPORT BnfType AS Bnf;
 
 TYPE T = RECORD t : TEXT; b : Bnf.T END;
 

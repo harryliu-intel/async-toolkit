@@ -12,7 +12,6 @@ IMPORT Wx;
 IMPORT CharNames;
 IMPORT TextBnf;
 FROM Fmt IMPORT Int;
-IMPORT BnfType;
 
 CONST TE = Text.Equal;
 
@@ -20,8 +19,6 @@ TYPE
   Array = REF ARRAY OF T;
   
 REVEAL
-  BnfType.T = BRANDED BnfType.Brand OBJECT END;
-  
   T = Public BRANDED Brand OBJECT
     hashV : Word.T;
   METHODS
@@ -476,7 +473,7 @@ PROCEDURE DistributeRec(p, m : T) =
   END DistributeRec;
 
 PROCEDURE DistributeAll(t : T;
-                        <*UNUSED*>seq : REFANY (* TextBnfSeq.T *);
+                        <*UNUSED*>seq : TextBnfSeq.T;
                         <*UNUSED*>stringMapper : StringMapper) : T =
   VAR elems := NEW(Array, 1);
       root := NEW(Disjunction, elems := elems);
@@ -587,7 +584,7 @@ PROCEDURE RemoveIdentListsM(m : EditObj; t : T) : T =
   END RemoveIdentListsM;
   
 PROCEDURE RemoveIdentLists(t    : T;
-                           seqA : REFANY (* TextBnfSeq.T *);
+                           seqA : TextBnfSeq.T;
                            stringMapper : StringMapper) : T =
   VAR
     m := NEW(EditObj,
@@ -633,7 +630,7 @@ PROCEDURE RemoveOSI(m : EditObj; t : T) : T =
   END RemoveOSI;
   
 PROCEDURE RemoveOptionalStringIdent(t    : T;
-                                    seqA : REFANY (* TextBnfSeq.T *);
+                                    seqA : TextBnfSeq.T;
                                     stringMapper : StringMapper) : T =
   VAR
     m := NEW(EditObj,
@@ -712,7 +709,7 @@ PROCEDURE RemoveNestedSeqs(<*UNUSED*>m : EditObj; t : T) : T =
   END RemoveNestedSeqs;
   
 PROCEDURE RemoveNestedSequences(t    : T;
-                                    seqA : REFANY (* TextBnfSeq.T *);
+                                    seqA : TextBnfSeq.T;
                                     stringMapper : StringMapper) : T =
   VAR
     m := NEW(EditObj,
@@ -736,7 +733,7 @@ PROCEDURE RemoveSingletonSeqs(<*UNUSED*>m : EditObj; t : T) : T =
   END RemoveSingletonSeqs;
   
 PROCEDURE RemoveSingletonSequences(t    : T;
-                                    seqA : REFANY (* TextBnfSeq.T *);
+                                    seqA : TextBnfSeq.T;
                                     stringMapper : StringMapper) : T =
   VAR
     m := NEW(EditObj,
@@ -774,7 +771,7 @@ PROCEDURE RemoveRemOptionals(m : RemoveOptionalsObj; t : T) : T =
   END RemoveRemOptionals;
   
 PROCEDURE RemoveRemainingOptionals(t    : T;
-                                   seqA : REFANY (* TextBnfSeq.T *);
+                                   seqA : TextBnfSeq.T;
                                    stringMapper : StringMapper) : T =
   VAR
     seq : TextBnfSeq.T := seqA;
@@ -904,7 +901,7 @@ PROCEDURE Seq2Array(seq : BnfSeq.T) : Array =
   END Seq2Array;
   
 PROCEDURE RemoveSeqLists(t    : T;
-                         seqA : REFANY (* TextBnfSeq.T *);
+                         seqA : TextBnfSeq.T;
                          stringMapper : StringMapper) : T =
   VAR
     m := NEW(EditObj,
