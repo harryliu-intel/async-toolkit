@@ -1,9 +1,8 @@
 INTERFACE Cloudbreak;
 FROM SvsTypes IMPORT CornerData;
+IMPORT Power;
 
-PROCEDURE SetProgram(VAR Ss, Tt, Ff              : CornerData;
-                     VAR RefP, FixedP, RefLeakP  : LONGREAL;
-                     VAR LkgRatio, LkgRatioSigma : LONGREAL;
+PROCEDURE SetProgram(VAR params                  : Power.Params;
                      VAR Trunc                   : LONGREAL);
 
 CONST Brand = "Cloudbreak";

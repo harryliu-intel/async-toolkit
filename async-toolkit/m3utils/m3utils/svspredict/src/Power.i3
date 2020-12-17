@@ -1,12 +1,13 @@
 INTERFACE Power;
 FROM SvsTypes IMPORT CornerData;
+IMPORT Corner;
 
-PROCEDURE Calc(READONLY dist : T; at : CornerData) : Result;
+PROCEDURE Calc(READONLY dist : Params; at : CornerData) : Result;
 
 TYPE (* information about the distribution from which we are drawing *)
-  T = RECORD
+  Params = RECORD
     RefP, FixedP, RefLeakP, LkgRatio, LkgRatioSigma : LONGREAL;
-    Tt : CornerData;
+    c : ARRAY Corner.T OF CornerData;
   END;
 
   Result = RECORD

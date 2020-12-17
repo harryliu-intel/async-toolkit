@@ -10,21 +10,21 @@ IMPORT Thread, OSError;
 IMPORT ParseParams;
 IMPORT Stdio;
 IMPORT Pathname;
-FROM SvsTypes IMPORT CornerData, ProgramSetter;
+FROM SvsTypes IMPORT CornerData;
 IMPORT Text;
 IMPORT Cloudbreak;
 IMPORT JBay;
 IMPORT Power;
+IMPORT Corner;
+IMPORT ProgramSetter;
 
 <*FATAL Thread.Alerted, Wr.Failure, OSError.E*>
 
 CONST LR = Fmt.LongReal;
       TE = Text.Equal;
 
-VAR Ss, Tt, Ff              : CornerData;
-VAR RefP, FixedP, RefLeakP  : LONGREAL;
-VAR LkgRatio, LkgRatioSigma : LONGREAL;
-VAR Trunc                   : LONGREAL;
+VAR p     : Power.Params;
+VAR Trunc : LONGREAL;
 
 VAR
   H       :=   15; (* # of buckets *)
@@ -47,6 +47,9 @@ PROCEDURE Interpolate1(x : LONGREAL;
 PROCEDURE Interpolate(x : LONGREAL) : CornerData =
   VAR
     res : CornerData;
+    Ss := p.c[Corner.T.SS];
+    Tt := p.c[Corner.T.TT];
+    Ff := p.c[Corner.T.FF];
   BEGIN
     res.sigma := x;
     res.vtiming := Interpolate1(x,
@@ -79,20 +82,12 @@ VAR rand := NEW(Random.Default).init();
 PROCEDURE DoIt() = 
   VAR
     res  := NEW(REF ARRAY OF LONGREAL, Samples);
-
-    dist := Power.T {
-    RefP          := RefP,
-    FixedP        := FixedP,
-    RefLeakP      := RefLeakP,
-    LkgRatio      := LkgRatio,
-    LkgRatioSigma := LkgRatioSigma,
-    Tt            := Tt
-    };
+    dist := p;
 
   BEGIN
     FOR i := FIRST(res^) TO LAST(res^) DO
       WITH corner = MakeDie(),
-           p = Power.Calc(dist, corner) DO
+           p      = Power.Calc(dist, corner) DO
         IF oWr # NIL THEN
           Wr.PutText(oWr, F("%s %s %s %s %s\n",
                             LR(corner.sigma),
@@ -187,7 +182,7 @@ BEGIN
   TRY
     IF pp.keywordPresent("-d") OR pp.keywordPresent("-program") THEN
       VAR
-        f : ProgramSetter;
+        f : ProgramSetter.T;
         progName := pp.getNext();
       BEGIN
         IF    TE(progName, "Cloudbreak") THEN
@@ -197,7 +192,7 @@ BEGIN
         ELSE
           Debug.Error(F("Unknown BXD program \"%s\"", progName))
         END;
-        f(Ss, Tt, Ff, RefP, FixedP, RefLeakP, LkgRatio, LkgRatioSigma, Trunc)
+        f(p, Trunc)
       END
     END;
     
@@ -218,19 +213,19 @@ BEGIN
     END;
 
     IF pp.keywordPresent("-Vsspower") THEN
-      Ss.vpower := pp.getNextLongReal()
+      p.c[Corner.T.SS].vpower := pp.getNextLongReal()
     END;
     
     IF pp.keywordPresent("-Vffpower") THEN
-      Ff.vpower := pp.getNextLongReal()
+      p.c[Corner.T.FF].vpower := pp.getNextLongReal()
     END;
 
     IF pp.keywordPresent("-Vttpower") THEN
-      Tt.vpower := pp.getNextLongReal()
+      p.c[Corner.T.TT].vpower := pp.getNextLongReal()
     END;
 
     IF pp.keywordPresent("-lkgratio") THEN
-      LkgRatio := pp.getNextLongReal()
+      p.LkgRatio := pp.getNextLongReal()
     END;
 
     IF pp.keywordPresent("-o") THEN

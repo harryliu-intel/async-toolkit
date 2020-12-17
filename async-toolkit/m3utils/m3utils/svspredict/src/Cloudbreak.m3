@@ -1,23 +1,23 @@
 MODULE Cloudbreak;
 FROM SvsTypes IMPORT CornerData;
+IMPORT Corner;
+IMPORT Power;
 
-PROCEDURE SetProgram(VAR Ss, Tt, Ff              : CornerData;
-                     VAR RefP, FixedP, RefLeakP  : LONGREAL;
-                     VAR LkgRatio, LkgRatioSigma : LONGREAL;
+PROCEDURE SetProgram(VAR p                       : Power.Params;
                      VAR Trunc                   : LONGREAL) =
   BEGIN
-    Ss := CornerData { 0.710d0, 0.760d0, +3.0d0 };
-    Tt := CornerData { 0.660d0, 0.710d0,  0.0d0 };
-    Ff := CornerData { 0.620d0, 0.670d0, -3.0d0 };
+    p.c := ARRAY Corner.T OF CornerData {
+    CornerData { 0.710d0, 0.760d0, +3.0d0 },
+    CornerData { 0.660d0, 0.710d0,  0.0d0 },
+    CornerData { 0.620d0, 0.670d0, -3.0d0 } };
     
     (* from the Karthik/Mika/Julianne Excel 2020WW47 *)
-    RefP          := 388.6d0;
-    FixedP        :=  81.8d0;
-    RefLeakP      :=  21.1d0;
+    p.RefP          := 388.6d0;
+    p.FixedP        :=  81.8d0;
+    p.RefLeakP      :=  21.1d0;
     
-    
-    LkgRatio      :=   2.0d0; (* how much does leakage vary over corner *)
-    LkgRatioSigma :=   3.0d0;
+    p.LkgRatio      :=   2.0d0; (* how much does leakage vary over corner *)
+    p.LkgRatioSigma :=   3.0d0;
     Trunc         := 3.0d0; (* where to truncate the distribution at sort *)
   END SetProgram;
 

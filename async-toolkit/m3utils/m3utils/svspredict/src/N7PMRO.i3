@@ -9,9 +9,9 @@ TYPE
   
 CONST
   V = T {
-  PMRO.T { 394, 450, 512 },
-  PMRO.T { 310, 367, 430 },
-  PMRO.T { 242, 292, 348 }
+  PMRO.T { 394, 450, 512 }, (* ulvt *)
+  PMRO.T { 310, 367, 430 }, (* lvt  *)
+  PMRO.T { 242, 292, 348 }  (* svt  *)
   };
 
 END N7PMRO.

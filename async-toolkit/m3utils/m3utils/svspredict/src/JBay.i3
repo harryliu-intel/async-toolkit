@@ -1,12 +1,11 @@
 INTERFACE JBay;
 FROM SvsTypes IMPORT CornerData;
 IMPORT N7Tech;
+IMPORT Power;
 
 (* what's below is for JBay B0 *)
 
-PROCEDURE SetProgram(VAR Ss, Tt, Ff              : CornerData;
-                     VAR RefP, FixedP, RefLeakP  : LONGREAL;
-                     VAR LkgRatio, LkgRatioSigma : LONGREAL;
+PROCEDURE SetProgram(VAR params                  : Power.Params;
                      VAR Trunc                   : LONGREAL);
   
 CONST Brand = "JBay";

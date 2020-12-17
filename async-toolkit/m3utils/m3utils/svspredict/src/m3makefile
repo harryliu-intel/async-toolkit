@@ -15,5 +15,6 @@ interface ("PMRO")
 interface ("Corner")
 
 module ("Power")
+interface ("ProgramSetter")
 
 program("svspredict")
