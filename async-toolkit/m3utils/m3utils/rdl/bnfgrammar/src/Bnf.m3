@@ -33,48 +33,49 @@ REVEAL
 
   Ident = PubIdent BRANDED Brand & " Ident" OBJECT
   OVERRIDES
-    copy := CopyIdent;
+    copy     := CopyIdent;
     deepCopy := CopyIdent;
-    equal := EqualIdent;
+    equal    := EqualIdent;
   END;
   
   String = PubString BRANDED Brand & " String" OBJECT
   OVERRIDES
-    copy := CopyString;
+    copy     := CopyString;
     deepCopy := CopyString;
-    equal := EqualString;
+    equal    := EqualString;
   END;
   
   ListOf = PubListOf BRANDED Brand & " ListOf" OBJECT
   OVERRIDES
-    copy := CopyListOf;
-    deepCopy := DeepCopyListOf;
+    copy         := CopyListOf;
+    deepCopy     := DeepCopyListOf;
     replaceChild := ReplaceChildListOf;
-    equal := EqualListOf;
+    equal        := EqualListOf;
   END;
   
   Optional = PubOptional BRANDED Brand & " Optional" OBJECT
   OVERRIDES
-    copy := CopyOptional;
-    deepCopy := DeepCopyOptional;
+    copy         := CopyOptional;
+    deepCopy     := DeepCopyOptional;
     replaceChild := ReplaceChildOptional;
-    equal := EqualOptional;
+    equal        := EqualOptional;
   END;
   
   Disjunction = PubDisjunction BRANDED Brand & " Disjunction" OBJECT
   OVERRIDES
-    copy := CopyDisjunction;
-    deepCopy := DeepCopyDisjunction;
+    copy         := CopyDisjunction;
+    deepCopy     := DeepCopyDisjunction;
     replaceChild := ReplaceChildDisjunction;
-    equal := EqualDisjunction;
+    equal        := EqualDisjunction;
+    init         := InitDisjunction;
   END;
   
   Sequence = PubSequence BRANDED Brand & " Sequence" OBJECT
   OVERRIDES
-    copy := CopySequence;
-    deepCopy := DeepCopySequence;
+    copy         := CopySequence;
+    deepCopy     := DeepCopySequence;
     replaceChild := ReplaceChildSequence;
-    equal := EqualSequence;
+    equal        := EqualSequence;
   END;
 
 VAR set : BnfList.T := NIL;
@@ -94,6 +95,48 @@ PROCEDURE Init(t : T) : T =
   END Init;
 
   (**********************************************************************)
+
+PROCEDURE DebugFmt(t : T) : TEXT =
+  VAR
+    wx := Wx.New();
+  BEGIN
+    Wx.PutChar(wx, '(');
+    TYPECASE t OF
+      Ident(id) =>
+      Wx.PutText(wx, "*ident* ");
+      Wx.PutText(wx, id.ident)
+    |
+      String(str) =>
+      Wx.PutText(wx, "*string* ");
+      Wx.PutText(wx, str.string)
+    |
+      ListOf(lst) =>
+      Wx.PutText(wx, "*listof* ");
+      Wx.PutText(wx, DebugFmt(lst.elem))
+    |
+      Optional(opt) =>
+      Wx.PutText(wx, "*optional* ");
+      Wx.PutText(wx, DebugFmt(opt.elem))
+    |
+      Disjunction(dis) =>
+      Wx.PutText(wx, "*disjunction*");
+      FOR i := FIRST(dis.elems^) TO LAST(dis.elems^) DO
+        Wx.PutChar(wx, ' ');
+        Wx.PutText(wx, DebugFmt(dis.elems[i]))
+      END
+    |
+      Sequence(seq) =>
+      Wx.PutText(wx, "*sequence*");
+      FOR i := FIRST(seq.elems^) TO LAST(seq.elems^) DO
+        Wx.PutChar(wx, ' ');
+        Wx.PutText(wx, DebugFmt(seq.elems[i]))
+      END
+    ELSE
+      <*ASSERT FALSE*>
+    END;
+    Wx.PutChar(wx, ')');
+    RETURN Wx.ToText(wx)
+  END DebugFmt;
 
 PROCEDURE CopyIdent(t : T) : T = BEGIN RETURN t END CopyIdent;
 
@@ -226,6 +269,23 @@ PROCEDURE EqualDisjunction(y : Disjunction; x : T) : BOOLEAN =
       RETURN FALSE
     END
   END EqualDisjunction;
+
+PROCEDURE InitDisjunction(x : Disjunction) : T =
+  VAR
+    set := DisjunctionSet(x);
+    n := set.size();
+  BEGIN
+    IF n < NUMBER(x.elems^) THEN
+      x.elems := NEW(REF ARRAY OF T, n);
+      VAR iter := set.iterate();
+      BEGIN
+        FOR i := FIRST(x.elems^) TO LAST(x.elems^) DO
+          EVAL iter.next(x.elems[i])
+        END
+      END
+    END;
+    RETURN T.init(x)
+  END InitDisjunction;
 
   (**********************************************************************)
 
@@ -972,14 +1032,18 @@ PROCEDURE Unify(a, b : Disjunction) : Disjunction =
     iter  := union.iterate();
     res   := NEW(REF ARRAY OF T, union.size());
   BEGIN
-
+    Debug.Out("Unifying a : " & DebugFmt(a));
+    Debug.Out("Unifying b : " & DebugFmt(b));
     FOR i := FIRST(res^) TO LAST(res^) DO
       WITH hadIt = iter.next(res[i]) DO
         <*ASSERT hadIt*>
       END
     END;
-
-    RETURN NEW(Disjunction, elems := res).init()
+    
+    WITH new = NEW(Disjunction, elems := res).init() DO
+      Debug.Out("Result res : " & DebugFmt(new));
+      RETURN new
+    END
   END Unify;
   
 BEGIN END Bnf.

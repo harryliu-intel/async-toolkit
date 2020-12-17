@@ -1278,11 +1278,22 @@ define=
 		)
 	;
 
+/* the syntax for address and range are so similar, it probably makes sense
+   to unify them and then check in the semantics that we are getting the
+   correct # of elements */
+   
+/*
 address=
 		"[",
-		expression,
+		nonref_expression,
 		"]"
 	;
+*/
+
+address=
+        range
+        ;
+        
 
 name_of_define=
 		IDENTIFIER
@@ -1290,7 +1301,7 @@ name_of_define=
 
 name_of_define_expression=
 		"{",
-		expression,
+		nonref_expression,
 		"}"
 	;
 

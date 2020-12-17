@@ -696,6 +696,7 @@ PROCEDURE AttemptUnify(seq : TextBnfSeq.T; new : TEXT; old : TextSet.T) =
     END;
     (* we have the unified Bnf here -- 
        now insert it in the table and sweep out the old ones *)
+    seq.addhi(TextBnf.T { new, dis });
     VAR
       newBnf := Bnf.MakeIdent(new);
       oldBnf : Bnf.Ident;
@@ -747,6 +748,29 @@ PROCEDURE RemoveNamedRule(seq : TextBnfSeq.T; nm : TEXT) =
       END        
     END 
   END RemoveNamedRule;
+
+PROCEDURE EliminateIdentRules(seq : TextBnfSeq.T) =
+  BEGIN
+    FOR i := seq.size() - 1 TO 0 BY -1 DO
+      WITH rule = seq.get(i) DO
+        IF ISTYPE(rule.b, Bnf.Ident) AND NOT TE(rule.t, rootType) THEN
+          VAR
+            old := Bnf.MakeIdent(rule.t);
+            new := rule.b;
+          BEGIN
+            Debug.Out(F("Renaming %s -> %s",
+                        rule.t,
+                        NARROW(rule.b, Bnf.Ident).ident));
+            SubstituteAll(seq, old, new);
+            WITH last = seq.get(seq.size() - 1) DO
+              seq.put(i, last)
+            END;
+            EVAL seq.remhi()
+          END
+        END
+      END
+    END
+  END EliminateIdentRules;
   
 PROCEDURE EditParseTree(seq : TextBnfSeq.T) =
   CONST
@@ -765,6 +789,7 @@ PROCEDURE EditParseTree(seq : TextBnfSeq.T) =
       Debug.Out(F("=====================   BEGIN EDIT PARSE TREE   ======================="));
     DebugDumpTree("start.tree", seq);
     IF doElimIdenticalRules THEN EliminateIdenticals(seq) END;
+    IF doElimIdentRules THEN EliminateIdentRules(seq) END;
 
     IF unify # NIL THEN
       (* attempt unifications *)
@@ -778,6 +803,7 @@ PROCEDURE EditParseTree(seq : TextBnfSeq.T) =
         END
       END;
       IF doElimIdenticalRules THEN EliminateIdenticals(seq) END;
+      IF doElimIdentRules THEN EliminateIdentRules(seq) END;
       END;
     
     FOR i := FIRST(Phases) TO LAST(Phases) DO
@@ -788,6 +814,8 @@ PROCEDURE EditParseTree(seq : TextBnfSeq.T) =
       DebugDumpTree("result" & Int(i)  & ".tree", seq);
       Debug.Out(Int(seq.size()) & " grammar rules");
       IF doElimIdenticalRules THEN EliminateIdenticals(seq) END;
+      Debug.Out(Int(seq.size()) & " grammar rules");
+      IF doElimIdentRules THEN EliminateIdentRules(seq) END;
       Debug.Out(Int(seq.size()) & " grammar rules");
 
     END;
@@ -898,6 +926,7 @@ VAR
   tokHeader  : TEXT     := NIL;
   protected             := NEW(TextSetDef.T).init(); (* protected rules *)
   doElimIdenticalRules  := TRUE;
+  doElimIdentRules      := TRUE;
   unify                 := NEW(TextTextSetTbl.Default).init();
   
 BEGIN
@@ -928,6 +957,10 @@ BEGIN
 
     IF pp.keywordPresent("-k") THEN
       doElimIdenticalRules := FALSE
+    END;
+
+    IF pp.keywordPresent("-noelimidentrules") THEN
+      doElimIdentRules := FALSE
     END;
 
     IF pp.keywordPresent("-U") THEN
