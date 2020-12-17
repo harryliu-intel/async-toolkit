@@ -78,12 +78,12 @@ VAR rand := NEW(Random.Default).init();
 PROCEDURE CalcPower(at : CornerData) : LONGREAL =
   BEGIN
     (* +sigma = slow, less leaky *)
-    WITH RefRestPwr    = RefP - FixedP - RefLeakP,
+    WITH RefRestPwr     = RefP - FixedP - RefLeakP,
          cornerLkgRatio = Math.pow(LkgRatio, -at.sigma / LkgRatioSigma),
-         voltPwrRatio = (at.vpower/Tt.vpower)*(at.vpower/Tt.vpower),
-         restPwr = RefRestPwr * voltPwrRatio,
-         leakPwr = RefLeakP * cornerLkgRatio * voltPwrRatio,
-         totPwr  = FixedP + restPwr + leakPwr DO
+         voltPwrRatio   = (at.vpower/Tt.vpower)*(at.vpower/Tt.vpower),
+         restPwr        = RefRestPwr * voltPwrRatio,
+         leakPwr        = RefLeakP * cornerLkgRatio * voltPwrRatio,
+         totPwr         = FixedP + restPwr + leakPwr DO
       IF oWr # NIL THEN
         Wr.PutText(oWr, F("%s %s %s %s %s\n",
                           LR(at.sigma),
