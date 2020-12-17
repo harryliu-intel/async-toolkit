@@ -14,6 +14,7 @@ module ("BnfTokenizer")
 interface ("BnfTokenizer")
 
 module ("Bnf")
+interface ("BnfClass")
 module ("BnfType")
 
 table ("TextBnf", "Text", "BnfType")
@@ -30,6 +31,9 @@ mkSet("Bnf", "BnfType")
 mkSetList("Bnf", "BnfType")
 
 table("TextTextSet", "Text", "TextSet")
+
+module ("BnfVisit")
+module ("BnfEdit")
 
 program ("bnfgrammar")
 

@@ -34,6 +34,7 @@ IMPORT TextRefTbl;
 IMPORT TextBnfSeq;
 IMPORT TextReader;
 IMPORT TextTextSetTbl;
+IMPORT BnfVisit, BnfEdit;
 
 VAR doDebug := Debug.GetLevel() >= 10 AND Debug.This("BnfGrammar");
 
@@ -231,7 +232,7 @@ PROCEDURE PatchTypes(rn : TEXT) =
 
     <*ASSERT rootType # NIL*>
 
-    Bnf.VisitPre(rootType, NEW(PatchVisitor,
+    BnfVisit.Pre(rootType, NEW(PatchVisitor,
                                fails := fails,
                                found := found));
 
@@ -264,7 +265,7 @@ PROCEDURE PatchTypes(rn : TEXT) =
   END PatchTypes;
 
 TYPE
-  PatchVisitor = Bnf.Visitor OBJECT
+  PatchVisitor = BnfVisit.T OBJECT
     fails : TextSet.T;
     found : TextSet.T;
   OVERRIDES
@@ -317,7 +318,7 @@ PROCEDURE PatchVisit(v : PatchVisitor; bnf : Bnf.T) =
              with the link to the definition of our name *)
           EVAL v.found.insert(id.ident);
           id.def := mapping;
-          Bnf.VisitPre(mapping, v)
+          BnfVisit.Pre(mapping, v)
         END
       END
     ELSE
@@ -407,7 +408,7 @@ PROCEDURE CopySymtab() : TextBnfSeq.T =
     RETURN new
   END CopySymtab;
 
-PROCEDURE PerformParseEdit(seq : TextBnfSeq.T; editor : Bnf.Editor) =
+PROCEDURE PerformParseEdit(seq : TextBnfSeq.T; editor : BnfEdit.T) =
   VAR
     i := 0;
   BEGIN
@@ -575,7 +576,7 @@ PROCEDURE RenameAllIdents(seq       : TextBnfSeq.T;
         Debug.Out(F("Renaming %s -> %s", f, to));
         FOR i := 0 TO seq.size() - 1 DO
           rule := seq.get(i);
-          rule.b := Bnf.Substitute(rule.b, Bnf.MakeIdent(f), ti);
+          rule.b := BnfEdit.Substitute(rule.b, Bnf.MakeIdent(f), ti);
           seq.put(i, rule)
         END
       END
@@ -691,7 +692,7 @@ PROCEDURE AttemptUnify(seq : TextBnfSeq.T; new : TEXT; old : TextSet.T) =
           Debug.Error("Attempting to UNIFY non-Disjunction " &
             x.t)
         END;
-        dis := Bnf.Unify(dis, x.b)
+        dis := BnfEdit.Unify(dis, x.b)
       END
     END;
     (* we have the unified Bnf here -- 
@@ -728,7 +729,7 @@ PROCEDURE SubstituteAll(seq : TextBnfSeq.T; from, to : Bnf.T) =
     FOR i := 0 TO seq.size() - 1 DO
       VAR x := seq.get(i);
       BEGIN
-        x.b := Bnf.Substitute(x.b, from, to);
+        x.b := BnfEdit.Substitute(x.b, from, to);
         seq.put(i, x)
       END
     END
@@ -774,14 +775,14 @@ PROCEDURE EliminateIdentRules(seq : TextBnfSeq.T) =
   
 PROCEDURE EditParseTree(seq : TextBnfSeq.T) =
   CONST
-    Phases = ARRAY OF Bnf.Editor { Bnf.RemoveNestedSequences,
-                                   Bnf.DistributeAll,
-                                   Bnf.RemoveSeqLists,
-                                   Bnf.RemoveIdentLists,
-                                   Bnf.RemoveNestedSequences,
-                                   Bnf.RemoveSingletonSequences,
-                                   Bnf.RemoveOptionalStringIdent,
-                                   Bnf.RemoveRemainingOptionals
+    Phases = ARRAY OF BnfEdit.T { BnfEdit.RemoveNestedSequences,
+                                  BnfEdit.DistributeAll,
+                                  BnfEdit.RemoveSeqLists,
+                                  BnfEdit.RemoveIdentLists,
+                                  BnfEdit.RemoveNestedSequences,
+                                  BnfEdit.RemoveSingletonSequences,
+                                  BnfEdit.RemoveOptionalStringIdent,
+                                  BnfEdit.RemoveRemainingOptionals
     };
   BEGIN
     (* perform parse edits *)

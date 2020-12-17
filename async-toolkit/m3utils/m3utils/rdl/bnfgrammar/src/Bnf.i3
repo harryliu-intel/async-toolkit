@@ -10,6 +10,7 @@ INTERFACE Bnf;
 
 IMPORT BnfType;
 IMPORT TextBnfSeq;
+IMPORT BnfSet;
 
 REVEAL
   T <: Public;
@@ -24,12 +25,8 @@ TYPE
     equal(x : T) : BOOLEAN;
   END;
 
-  Visitor = OBJECT METHODS visit(t : T)  END;
-
-PROCEDURE VisitPre(t : T; visitor : Visitor);
-
-PROCEDURE VisitPost(t : T; visitor : Visitor);
-
+TYPE
+  Array = REF ARRAY OF T;
 
   (********** subtypes of T **********)
 TYPE  
@@ -58,44 +55,9 @@ TYPE
 
 CONST Brand = "Bnf";
 
-TYPE Editor = PROCEDURE ( t : T;
-                          seq : TextBnfSeq.T;
-                          stringmapper : StringMapper) : T; 
-     
-PROCEDURE DistributeAll(t : T;
-                        seq : TextBnfSeq.T;
-                        stringMapper : StringMapper) : T;
-  (* distribute everything else over Disjunction 
-     (move Disjunction to top of tree, result will have no child Disjunctions)
-  *)
-
-TYPE StringMapper = PROCEDURE ( t : TEXT ) : TEXT;
-     
-PROCEDURE RemoveSeqLists(t : T;
-                         seq : TextBnfSeq.T;
-                         stringMapper : StringMapper) : T;
-
-PROCEDURE RemoveIdentLists(t : T;
-                           seq : TextBnfSeq.T;
-                           stringMapper : StringMapper) : T;
-
-PROCEDURE RemoveOptionalStringIdent(t : T;
-                                    seq : TextBnfSeq.T;
-                                    stringMapper : StringMapper) : T;
-
-PROCEDURE RemoveNestedSequences(t : T;
-                                seq : TextBnfSeq.T;
-                                stringMapper : StringMapper) : T;
-
-PROCEDURE RemoveSingletonSequences(t : T;
-                                   seq : TextBnfSeq.T;
-                                   stringMapper : StringMapper) : T;
-
-PROCEDURE RemoveRemainingOptionals(t : T;
-                                   seq : TextBnfSeq.T;
-                                   stringMapper : StringMapper) : T;
-
 PROCEDURE DebugBnf(a : T; lev : CARDINAL) : TEXT;
+
+PROCEDURE DebugFmt(a : T) : TEXT;
 
   (********************   MAKERS   ********************)
   
@@ -111,13 +73,10 @@ PROCEDURE MakeIdent(nm : TEXT) : Ident;
 
 PROCEDURE MakeString(str : TEXT) : String;
 
-  (********************            ********************)
-
-PROCEDURE Substitute(t, from, to : T) : T;
-
-PROCEDURE Unify(a, b : Disjunction) : Disjunction;
-  (* unify two Disjunction rules *)
+  (****************************************************)
   
 PROCEDURE Equal(a, b : T) : BOOLEAN;
+
+PROCEDURE DisjunctionSet(y : Disjunction) : BnfSet.T;
 
 END Bnf.
