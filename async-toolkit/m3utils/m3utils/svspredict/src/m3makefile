@@ -14,4 +14,6 @@ interface ("N7PMRO")
 interface ("PMRO")
 interface ("Corner")
 
+module ("Power")
+
 program("svspredict")

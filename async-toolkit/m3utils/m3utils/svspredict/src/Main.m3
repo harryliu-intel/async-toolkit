@@ -14,6 +14,7 @@ FROM SvsTypes IMPORT CornerData, ProgramSetter;
 IMPORT Text;
 IMPORT Cloudbreak;
 IMPORT JBay;
+IMPORT Power;
 
 <*FATAL Thread.Alerted, Wr.Failure, OSError.E*>
 
@@ -75,34 +76,32 @@ PROCEDURE MakeDie() : CornerData =
 
 VAR rand := NEW(Random.Default).init();
 
-PROCEDURE CalcPower(at : CornerData) : LONGREAL =
-  BEGIN
-    (* +sigma = slow, less leaky *)
-    WITH RefRestPwr     = RefP - FixedP - RefLeakP,
-         cornerLkgRatio = Math.pow(LkgRatio, -at.sigma / LkgRatioSigma),
-         voltPwrRatio   = (at.vpower/Tt.vpower)*(at.vpower/Tt.vpower),
-         restPwr        = RefRestPwr * voltPwrRatio,
-         leakPwr        = RefLeakP * cornerLkgRatio * voltPwrRatio,
-         totPwr         = FixedP + restPwr + leakPwr DO
-      IF oWr # NIL THEN
-        Wr.PutText(oWr, F("%s %s %s %s %s\n",
-                          LR(at.sigma),
-                          LR(at.vpower),
-                          LR(cornerLkgRatio),
-                          LR(leakPwr),
-                          LR(totPwr)))
-      END;
-      RETURN totPwr
-    END
-  END CalcPower;
-    
 PROCEDURE DoIt() = 
   VAR
     res  := NEW(REF ARRAY OF LONGREAL, Samples);
+
+    dist := Power.T {
+    RefP          := RefP,
+    FixedP        := FixedP,
+    RefLeakP      := RefLeakP,
+    LkgRatio      := LkgRatio,
+    LkgRatioSigma := LkgRatioSigma,
+    Tt            := Tt
+    };
+
   BEGIN
     FOR i := FIRST(res^) TO LAST(res^) DO
-      WITH corner = MakeDie() DO
-        res[i] := CalcPower(corner)
+      WITH corner = MakeDie(),
+           p = Power.Calc(dist, corner) DO
+        IF oWr # NIL THEN
+          Wr.PutText(oWr, F("%s %s %s %s %s\n",
+                            LR(corner.sigma),
+                            LR(corner.vpower),
+                            LR(p.cornerLkgRatio),
+                            LR(p.leakPwr),
+                            LR(p.totPwr)))
+        END;
+        res[i] := p.totPwr
       END
     END;
     
