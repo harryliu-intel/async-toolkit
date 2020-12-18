@@ -36,6 +36,7 @@ IMPORT BnfRuleSeq;
 IMPORT TextReader;
 IMPORT TextTextSetTbl;
 IMPORT BnfVisit, BnfEdit;
+IMPORT FS;
 
 VAR doDebug := Debug.GetLevel() >= 10 AND Debug.This("BnfGrammar");
 
@@ -942,7 +943,10 @@ BEGIN
       gramName := rootType
     END;
     IF pp.keywordPresent("-d") THEN
-      outDir := pp.getNext()
+      outDir := pp.getNext();
+
+      (* create it if it doesnt exist *)
+      TRY FS.CreateDirectory(outDir) EXCEPT ELSE END;
     END;
 
     IF pp.keywordPresent("-Hy") OR pp.keywordPresent("-yaccheader") THEN
