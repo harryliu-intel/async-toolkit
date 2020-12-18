@@ -3,7 +3,7 @@ import ("cit_util")
 import ("parserlib")
 import ("parseparams")
 
-include ("derived.m3m") % shd really be in DERIVED_DIR
+include ("../AMD64_LINUX/derived.m3m") % shd really be in DERIVED_DIR
 
 implementation ("Main")
 program ("csrspec")

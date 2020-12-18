@@ -527,7 +527,7 @@ PROCEDURE NameDisjunct(x : Bnf.T; i : CARDINAL) : TEXT =
 
 PROCEDURE WriteFiles(gramName : TEXT;
                      outDir   : Pathname.T;
-                     seq : BnfRuleSeq.T)
+                     seq      : BnfRuleSeq.T)
   RAISES { Wr.Failure } =
   VAR
     derQn := outDir & "/derived.m3m";
@@ -546,9 +546,9 @@ PROCEDURE WriteFiles(gramName : TEXT;
                     derQn, AL.Format(x)))
     END;
 
-    Wr.PutText(derWr, F("Token(\"%s\")\n", gramName));
-    Wr.PutText(derWr, F("Lexer(\"%s\",\"%s\")\n", gramName, gramName));
-    Wr.PutText(derWr, F("Parser(\"%s\",\"%s\")\n", gramName, gramName));
+    Wr.PutText(derWr, F("derived_token(\"%s\",HIDDEN)\n", gramName));
+    Wr.PutText(derWr, F("derived_lexer(\"%s\",\"%s\",HIDDEN)\n", gramName, gramName));
+    Wr.PutText(derWr, F("derived_parser(\"%s\",\"%s\",HIDDEN)\n", gramName, gramName));
     
     GenTokFile(tokWr);
     GenLexFile(lexWr);

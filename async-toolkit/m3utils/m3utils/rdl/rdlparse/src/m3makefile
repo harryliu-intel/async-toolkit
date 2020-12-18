@@ -9,6 +9,7 @@ Parser("rdl","rdl")
 
 Extended("rdlLexExt")
 Extended("rdlParseExt")
+%derived_extended("rdlParseExt", VISIBLE)
 
 %library("rdlparse")
 
