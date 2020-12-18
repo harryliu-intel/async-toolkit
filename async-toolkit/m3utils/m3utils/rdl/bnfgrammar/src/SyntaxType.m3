@@ -4,6 +4,8 @@ IMPORT SyntaxTypeSystem;
 IMPORT SyntaxTypeSyntaxTypeTbl;
 IMPORT Text, Boolean, Cardinal;
 IMPORT SyntaxTypeArraySort;
+IMPORT Wx;
+FROM Fmt IMPORT F;
 
 TYPE System = SyntaxTypeSystem.T;
      Array  = ARRAY OF T;
@@ -334,5 +336,50 @@ PROCEDURE Hash(a : T) : Word.T =
     IF a.hashV = 0 THEN a.hashV := a.hash() END;
     RETURN a.hashV 
   END Hash;
+
+PROCEDURE Format(a : T) : TEXT =
+  BEGIN
+    TYPECASE a OF
+      Terminal(at) =>
+      RETURN F("(*term* %s)", at.type)
+    |
+      String(at) =>
+      RETURN F("(*lit* %s)", at.string)
+    |
+      Optional(at) =>
+      RETURN F("(*opt %s)", Format(at.of))
+    |
+      List(at) =>
+      RETURN F("(*list* %s)", Format(at.of))
+    |
+      Disjunction(at) =>
+      VAR
+        wx := Wx.New();
+      BEGIN
+        Wx.PutText(wx, "(*disjunction*");
+        FOR i := FIRST(at.x^) TO LAST(at.x^) DO
+          Wx.PutText(wx, " ");
+          Wx.PutText(wx, Format(at.x[i]))
+        END;
+        Wx.PutText(wx, ")");
+        RETURN Wx.ToText(wx)
+      END
+    |
+      Sequence(at) =>
+      VAR
+        wx := Wx.New();
+      BEGIN
+        Wx.PutText(wx, "(*sequence*");
+        FOR i := FIRST(at.x^) TO LAST(at.x^) DO
+          Wx.PutText(wx, " ");
+          Wx.PutText(wx, Format(at.x[i]))
+        END;
+        Wx.PutText(wx, ")");
+        RETURN Wx.ToText(wx)
+      END
+    ELSE
+      <*ASSERT FALSE*>
+    END
+  END Format;
 
 BEGIN END SyntaxType.
