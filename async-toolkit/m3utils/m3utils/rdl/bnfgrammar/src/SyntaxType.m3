@@ -223,7 +223,21 @@ PROCEDURE MakeString(system : System; string : TEXT) : T =
 
 PROCEDURE MakeOptional(system : System; of : T) : T =
   BEGIN
-    RETURN system.initT(NEW(Optional, system := system, of := of))
+    TYPECASE of OF
+      Disjunction(dis) =>
+      VAR
+        res := EmptyDisjunction(system);
+      BEGIN
+        FOR i := FIRST(dis.x^) TO LAST(dis.x^) DO
+          res := MakeDisjunction(system,
+                                 res,
+                                 MakeOptional(system, dis.x[i]))
+        END;
+        RETURN res
+      END
+    ELSE
+      RETURN system.initT(NEW(Optional, system := system, of := of))
+    END
   END MakeOptional;
 
 PROCEDURE MakeList(system : System; of : T; emptyOk : BOOLEAN) : T =
