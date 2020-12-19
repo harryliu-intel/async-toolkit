@@ -36,6 +36,11 @@ table("TextTextSet", "Text", "TextSet")
 module ("BnfVisit")
 module ("BnfEdit")
 
+module ("SyntaxType")
+interface ("SyntaxTypeSystem")
+array_sort ("SyntaxType", "SyntaxType")
+table ("SyntaxTypeSyntaxType", "SyntaxType", "SyntaxType")
+
 program ("bnfgrammar")
 
 
