@@ -127,7 +127,8 @@ BEGIN
       END
     END;
 
-    pp.skipParsed()
+    pp.skipParsed();
+    pp.finish()
   EXCEPT
     ParseParams.Error => Debug.Error("Can't parse command line")
   END;
