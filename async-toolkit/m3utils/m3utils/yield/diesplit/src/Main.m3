@@ -5,35 +5,13 @@ MODULE Main;
 IMPORT Math;
 IMPORT Fmt; FROM Fmt IMPORT F;
 IMPORT Wr, FileWr;
+FROM YieldModel IMPORT Stapper;
 
 CONST LR = Fmt.LongReal;
-
-CONST SqMmPerSqInch = 25.4d0 * 25.4d0;
-      
-PROCEDURE Stapper(A, D0, n, alpha : LONGREAL) : LONGREAL =
-  VAR
-    Ai := A / SqMmPerSqInch;
-  BEGIN
-    RETURN Math.pow(1.0d0 + Ai * D0 / alpha, -n * alpha)
-  END Stapper;
 
 PROCEDURE Stapper0_05(A, D0, n : LONGREAL) : LONGREAL =
   BEGIN RETURN Stapper(A, D0, n, 0.05d0) END Stapper0_05;
   
-PROCEDURE BoseEinstein(A, D0, n : LONGREAL) : LONGREAL =
-  VAR
-    Ai := A / SqMmPerSqInch;
-  BEGIN
-    RETURN Math.pow(1.0d0 / (1.0d0 + Ai * D0), n)
-  END BoseEinstein;
-
-PROCEDURE Poisson(A, D0, n : LONGREAL) : LONGREAL =
-  VAR
-    Ai := A / SqMmPerSqInch;
-  BEGIN
-    RETURN Math.exp(-Ai * D0 * n)
-  END Poisson;
-
 TYPE
   Chip = RECORD
     fixed, variable : LONGREAL;
