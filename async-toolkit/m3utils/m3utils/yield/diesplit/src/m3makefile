@@ -2,10 +2,22 @@ import ("libm3")
 import ("cit_util")
 import ("parseparams")
 import ("simpletoken")
+import ("mscheme")
+import ("modula3scheme")
+import ("sstubgen")
+import ("parseparams")
 
 %if defined("CM3_VERSION")
 %        m3_optimize("T")
 %end
+
+module ("YieldModel")
+SchemeStubs ("YieldModel")
+SchemeStubs ("Math")
+SchemeStubs ("Wr")
+SchemeStubs ("Rd")
+ExportSchemeStubs ("diesplit")
+importSchemeStubs()
 
 implementation ("Main")
 

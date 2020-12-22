@@ -5,35 +5,24 @@ MODULE Main;
 IMPORT Math;
 IMPORT Fmt; FROM Fmt IMPORT F;
 IMPORT Wr, FileWr;
+FROM YieldModel IMPORT Stapper;
+IMPORT ParseParams;
+IMPORT Stdio;
+IMPORT SchemeM3;
+IMPORT SchemeStubs;
+IMPORT ReadLine, SchemeReadLine;
+IMPORT Debug;
+IMPORT Scheme;
+IMPORT Pathname;
+IMPORT Thread;
+
+<*FATAL Thread.Alerted*>
 
 CONST LR = Fmt.LongReal;
-
-CONST SqMmPerSqInch = 25.4d0 * 25.4d0;
-      
-PROCEDURE Stapper(A, D0, n, alpha : LONGREAL) : LONGREAL =
-  VAR
-    Ai := A / SqMmPerSqInch;
-  BEGIN
-    RETURN Math.pow(1.0d0 + Ai * D0 / alpha, -n * alpha)
-  END Stapper;
 
 PROCEDURE Stapper0_05(A, D0, n : LONGREAL) : LONGREAL =
   BEGIN RETURN Stapper(A, D0, n, 0.05d0) END Stapper0_05;
   
-PROCEDURE BoseEinstein(A, D0, n : LONGREAL) : LONGREAL =
-  VAR
-    Ai := A / SqMmPerSqInch;
-  BEGIN
-    RETURN Math.pow(1.0d0 / (1.0d0 + Ai * D0), n)
-  END BoseEinstein;
-
-PROCEDURE Poisson(A, D0, n : LONGREAL) : LONGREAL =
-  VAR
-    Ai := A / SqMmPerSqInch;
-  BEGIN
-    RETURN Math.exp(-Ai * D0 * n)
-  END Poisson;
-
 TYPE
   Chip = RECORD
     fixed, variable : LONGREAL;
@@ -136,9 +125,33 @@ PROCEDURE DoIt(wr : Wr.T) =
     END
   END DoIt;
 
+VAR
+  pp := NEW(ParseParams.T).init(Stdio.stderr);
+  doScheme := FALSE;
 BEGIN
-  WITH wr = FileWr.Open("tfc_12.dat") DO
-    DoIt(wr);
-    Wr.Close(wr)
+  TRY
+    doScheme := pp.keywordPresent("-scm");
+    pp.skipParsed();
+    pp.finish()
+  EXCEPT
+    ParseParams.Error => Debug.Error("Can't parse command line")
+  END;
+
+  IF doScheme THEN
+    SchemeStubs.RegisterStubs();
+    TRY
+      WITH scm = NEW(SchemeM3.T).init(ARRAY OF Pathname.T { "require", "m3" }) DO
+        SchemeReadLine.MainLoop(NEW(ReadLine.Default).init(), scm)
+      END
+    EXCEPT
+      Scheme.E(err) => Debug.Error("Caught Scheme.E : " & err)
+    ELSE
+      <*ASSERT FALSE*>
+    END
+  ELSE
+    WITH wr = FileWr.Open("tfc_12.dat") DO
+      DoIt(wr);
+      Wr.Close(wr)
+    END
   END
 END Main.
