@@ -16,6 +16,6 @@ PROCEDURE DynPwrByT(<*UNUSED*>from, to : LONGREAL) : LONGREAL =
   BEGIN RETURN 1.0d0 END DynPwrByT;
 
 PROCEDURE DynPwrByV(from, to : LONGREAL) : LONGREAL =
-  BEGIN RETURN from * from / to / to END DynPwrByV;
+  BEGIN RETURN to * to / from / from END DynPwrByV;
 
 BEGIN END Scale.

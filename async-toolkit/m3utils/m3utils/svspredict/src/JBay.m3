@@ -70,6 +70,8 @@ PROCEDURE SetProgram79(VAR p     : Power.Params;
 
     AgeMargin = 20.0d-3;
 
+    CmvGuard  = 20.0d-3;
+
     tgtTemp = Svl.TargetTemp;
   VAR
     sigma79 := InterpolatePmro(TechPmro.V, pmro);
@@ -89,7 +91,7 @@ PROCEDURE SetProgram79(VAR p     : Power.Params;
     Vmin79vsTT := Interpolate.OverLR(Tech.CornerSigma,
                                      Tech.SvsOffset,
                                      speedSigma);
-    VminEolTT := AteVmin79 + AgeMargin - Vmin79vsTT;
+    VminEolTT := AteVmin79 + AgeMargin - Vmin79vsTT + CmvGuard;
 
     (* now we will take data from chip 139 and massage them to stand in
        for measurements on 79 *)
@@ -151,10 +153,15 @@ PROCEDURE MakeCornerArrayFromTt(vminEolTt : LONGREAL) : ARRAY Corner.T OF Corner
 CONST
   Pmro242    = ARRAY Tech.Transistor OF CARDINAL { 495, 445, 359 };
   (* PMRO 242 likely measured under the wrong conditions -- DO NOT TRUST! *)
+
   MeasLkg242 = TvpMeasurement { 95.0d0, 0.750d0,  33.188d0 };
+
   MeasAct242 = TvpMeasurement { 96.0d0, 0.700d0, 336.0d0   };
+
   MeasLkg139 = TvpMeasurement { 90.0d0, 0.735d0,  22.964d0 };
-  MeasAct139 = TvpMeasurement { 45.0d0, 0.730d0, 336.06d0  };
+
+  MeasAct139 = TvpMeasurement { 45.0d0, 0.730d0, 342.06d0  };
+  (* this includes leakage *)
 
 PROCEDURE WeightLkgSigma(sigma : ARRAY Tech.Transistor OF LONGREAL) : LONGREAL =
   VAR
