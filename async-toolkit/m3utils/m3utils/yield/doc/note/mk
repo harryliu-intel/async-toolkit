@@ -1,0 +1,22 @@
+#!/bin/sh -x
+
+ROOT=note
+BUILD=build
+
+rm -rf ${BUILD}
+mkdir -p ${BUILD}
+
+#for f in falseneg.fig  falsepos.fig  general.fig  prio.fig; do
+#	e=`echo ${f} | sed 's/fig$/eps/'`
+#	fig2dev -L eps ${f} > ${BUILD}/${e}
+#done
+
+#./run_gnuplot.sh ${BUILD}
+ln -sf ../${ROOT}.tex ${BUILD}
+
+cd ${BUILD}
+latex ${ROOT}.tex
+latex ${ROOT}.tex
+latex ${ROOT}.tex
+dvips -tletter -o ${ROOT}.ps ${ROOT}.dvi
+ps2pdf ${ROOT}.ps

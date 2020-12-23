@@ -1,0 +1,597 @@
+\documentclass{article}
+\usepackage{graphicx}
+\usepackage{epsf}
+
+\usepackage{floatflt}
+\usepackage{fancyhdr}
+\usepackage{array}
+\usepackage{amsmath}
+\usepackage{sectsty}
+%\allsectionsfont{\mdseries\sffamily}
+\allsectionsfont{\mdseries\sc}
+
+\usepackage{caption}
+\captionsetup{margin=2pc,font=small,labelfont=bf}
+
+%%%%%%%%%%%%%%Mika's figure macro%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\def\listcaption_ins_epsfig#1#2#3#4{
+  \begin{figure}[!tbph!]
+  \bigskip
+  \begin{center}
+  \includegraphics[width=#1]{#2}
+  \end{center}
+  \caption[#4]{#3}\label{fig:#2}
+  \bigskip
+  \end{figure}
+}
+
+\def\ins_epsfig#1#2#3{
+  \begin{figure}[!tbph!]
+  \bigskip
+  \begin{center}
+  \includegraphics[width=#1]{#2}
+  \end{center}
+  \caption{#3}\label{fig:#2}
+  \bigskip
+  \end{figure}
+}
+
+\def\rotins_epsfig_listcaption#1#2#3#4#5{
+  \begin{figure}[!tbph!]
+  \bigskip
+  \begin{center}
+  \includegraphics[angle=#4,width=#1]{#2}
+  \end{center}
+  \caption[#5]{#3}\label{fig:#2}
+  \bigskip
+  \end{figure}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\oddsidemargin=0.15in
+\evensidemargin=0.15in
+\topmargin=0.2in
+\textwidth=6.2truein
+
+
+\pagestyle{fancy}
+\lhead{\scriptsize\bfseries\sffamily DRAFT---INTEL CONFIDENTIAL---DRAFT}
+\chead{}\rhead{\thepage}
+\lfoot{}\cfoot{}\rfoot{}
+\renewcommand{\headrulewidth}{0pt}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\title{A Note on Hardware Redundancy \\ Under \\ Non-Independent Yield Models}
+\author{Mika Nystr\"om \\ {\tt mika.nystroem@intel.com}}
+
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\parindent=0pt
+\parskip=1.5ex
+
+\arraycolsep=1.4pt\def\arraystretch{1.5}
+
+\begin{abstract}
+  We define process yield, manufacturing yield, and system yield, and consider
+  systems that incorporate redundancy in such a way as to raise system yield higher than raw process yield.  We derive an expression for how redundancy improves system yield under weak assumptions on the process yield, assuming only that process yield can be expressed as a formula in terms of area.  In particular, we do not assume that process yields are spatially independent.  We discuss the use of non-independent (i.e., non-Poisson) process yield expressions and their appearance in semiconductor fabrication lines.  Through a series of examples including a software implementation, we show how to compute the system yield for interesting redundant hardware systems and conclude with an example that shows that the na\"\i{}ve but common assumption of independent process yields can grossly overestimate the extent to which hardware redundancy improves system yields.
+\end{abstract}
+
+%\tableofcontents
+%\listoffigures
+%\listoftables
+
+\section{Introduction}
+
+We define {\em process yield\/} $Y$ as the probability of a particular event,
+namely, the event that a manufactured circuit is found to contain no
+manufacturing defects that are fatal to its functioning according to
+its circuit specification.  Holding all else equal, process yield
+falls with increasing circuit size, that is, circuit area.  Process
+yield in modern semiconductor manufacturing processes is low enough
+that it is economical to take steps at the architecture and design
+stages to design circuits that are to a greater or lesser extent fault
+tolerant in the presence of the types of defects that are expected to
+arise during manufacturing.
+
+We define {\em manufacturing yield\/} as the probability that a manufactured
+circuit is found to contain no manufacturing defects that are fatal
+its functioning according to its customer-visible specification.
+Manfacturing yield can be different from, and then always higher than,
+process yield, because only circuits that were inessential to the correct
+customer-visible functioning of the system are faulty.  We call such circuits
+{\em redundant.}
+
+This note will treat a particular method of introducing circuit
+redundancy in the hope of improving manufacturing yield.
+
+\section{Definitions}
+
+Let it be given that process yield is defined as a function of
+manufactured area.  That is, $Y = Y(A)$ maps from area in square
+length units to a probability so that
+
+\begin{equation} Y(A) \in [ 0 .. 1 ] \quad . \end{equation}
+
+$Y(A)$ is strictly decreasing in $A$.  We shall reserve $Y$ for the
+process yield in this form.
+
+Let it be given that a system $S$ comprises $N$ subsystems
+$u_i$, each with area $A_{U_i}$, so that
+
+\begin{equation}
+  S = u_0 \cup u_1 \cdots u_{N-1}
+\end{equation}
+and
+\begin{equation}
+  A_S = \sum A_{u_i} \quad .
+\end{equation}
+
+When we have occasion to speak of the subsystems as a set, we write
+\begin{equation}
+  \Sigma = \{ u_0, u_1, \ldots , u_{N-1} \} \quad .
+\end{equation}
+
+Further assume that at least $M \leq N$ of
+the subsystems $u_i$ must be fabricated correctly in order for $S$ to
+have no customer-visible faults.  We call the
+probability that at least $M$ out of $N$ units are fabricated
+correctly the {\em system yield.}
+
+We shall write for the system yield of $S$,
+\begin{equation}
+  P_{S(N)}(x \geq M) \quad . \label{eq:sysyield}
+\end{equation}
+We drop the subscript $S(N)$ when the meaning is clear from context.  
+
+We shall derive expressions for the system yield of $S$ under the
+above assumptions.
+
+It is obvious that the system yield will depend on the subsystem
+yields of the subsystems $u_i$.  Let us therefore introduce symbology
+for these yields.  Let's write $U_i$ for the event that subsystem
+$u_i$ is fabricated correctly.  Since the subsystems themselves do not
+have internal redundancy, the process yield, system yield, and
+manufacturing yield of any one subsystem can be written as
+\begin{equation}
+  P(U_i) = Y(A) \quad .
+\end{equation}
+
+It will turn out to be useful to consider the case that {\em exactly\/} $k$ out of $N$ subsystems are functional, and we will write this analogosly to (\ref{eq:sysyield}) as $P_{S(N)}(x = k)$.
+
+\section{General formulation}\label{sec:general}
+
+Note first that
+\begin{equation}
+  P_{S(N)}(x \geq N) = P_{S(N)}(x = N) = Y\left(\sum A_U\right) = Y(A_S) \quad ,
+\end{equation}
+since this is the system yield of $S$ under the requirement that all
+$N$ subsystems are fully functional, which is simply the process yield
+of the area of the system $S$ or equivalently the $N$ subsystems $U_i$.
+
+We may write out the event corresponding to $P_{S(N)}(x = N)$ as an intersection of events $U_i$, namely,
+
+\begin{equation}
+U_0 \cap U_1 \cap \cdots \cap  U_{N-1} \quad .
+\end{equation}
+
+If we now consider the result of fabricating our $N$ subsystems as one out of the list of possible events
+%\begin{equation}
+  \begin{equation}\begin{aligned}
+    &U_0 &\cap \  U_1 &\cap \cdots \cap U_{N-1} \quad  \\
+    &U_0'&\cap \ U_1 &\cap \cdots \cap U_{N-1} \quad  \\
+    \ldots\\
+    &U_0'&\cap \ U_1' &\cap \cdots \cap U_{N-1}' \quad ,
+  \end{aligned}\end{equation}
+%\end{equation}
+where we use the normal set notation $\cup$ for union, $\cap$ for intersection, and $'$ for complement.
+we can write the probability of each of the $2^N$ events in the list,
+and label them in binary bits as in each case the subsystem $u_i$ is
+fabricated to function or not:
+%\begin{equation}
+  \begin{equation}\label{eq:pi}\begin{aligned}
+    \pi_{1\ldots11} = P(&U_0 &\cap \  U_1 &\cap \cdots \cap U_{N-1} \quad )   \\
+    \pi_{1\ldots10} = P(&U_0'&\cap \ U_1 &\cap \cdots \cap U_{N-1} \quad )   \\
+    \ldots\\
+    \pi_{0\ldots00} = P(&U_0'&\cap \ U_1' &\cap \cdots \cap U_{N-1}' \quad)  , \\
+  \end{aligned}\end{equation}
+%\end{equation}
+Note that each $\pi_k$ corresponds to a subset of $\Sigma$ that was fabricated correctly (and the balance being fabricated defective).  In analogy with boolean logic, we call the $2^N$ possible and mutually exclusive results of fabrication the {\em minterms\/} of the fabrication process.
+
+If we now consider the power set of the set of subsystems, that is,
+\begin{equation}
+  2^\Sigma = \{ \emptyset, \{ u_0 \}, \{ u_1 \}, \ldots \Sigma \}
+\end{equation}
+it is clear that each of the members  $\sigma \in 2^\Sigma$ corresponds to a certain physical area, namely
+\begin{equation}
+  A_\sigma = \sum_{u_i \in \sigma} A_{u_i} \quad .
+\end{equation}
+The probability that the circuitry in $\sigma$ is fabricated correctly is therefore
+\begin{equation}
+  P_\sigma = Y(A_\sigma) = Y \left( \sum_{u_i \in \sigma} A_{u_i} \right) \quad , \label{eq:system}
+\end{equation}
+irrespective of whether the remaining blocks $u_i \not\in \sigma$ are fabricated correctly or not. (We are considering the process yield of only the subsystems selected by the subset $\sigma \subseteq \Sigma$.)  But this is exactly the same as the probability of the manufacturing process's arriving at any of the minterms including $\sigma$.  Therefore we may write
+\begin{equation}
+  \sum_{\sigma \subseteq \tau} \pi_\tau = P_\sigma \label{eq:master}
+\end{equation}
+where the notation $\sigma \subseteq \tau$ means that for every $u_i$ that appears in $\sigma$, bit $i$ of $\tau$ is one.
+
+We observe that (\ref{eq:master}) describes $2^N$ equations, and there are $2^N$ unknowns $\pi_\tau$.
+
+Having derived each $\pi_\tau$ we can now compute the probability of arriving at any desired subset $\sigma \subseteq \Sigma$, for example, for the subsets
+\begin{equation}
+  \sigma : \sigma \subseteq \Sigma : || \sigma || \geq M \label{eq:countsets}
+\end{equation}
+corresponding to the probability $P_{S(N)}(x \geq M)$, i.e., the
+desired value of the system yield from (\ref{eq:sysyield}).  The
+formulation extends trivially for any other desired constraint on the
+allowable subsets $\sigma$: since the $\pi_\tau$ correspond to
+mutually exclusive events, we may add them without further thought, so
+that the probability of any event $E$ that we care to describe in
+terms of a constraint on $\sigma$ becomes
+\begin{equation}
+  P(E) = P\left( \bigcup_{\sigma_i \in E} \sigma_i \right) =
+  P\left( \bigcup_{\sigma_i \in E} \left(\bigcup_{\tau_j: \sigma_i \subseteq \tau_j, \tau_j \in 2^\Sigma} \tau_j \right) \right) =
+  \sum_{\tau_j} \pi_{\tau_j} \quad . \label{eq:generalconstraint}
+\end{equation}
+
+
+
+\subsection{Example}
+Consider the system $S$ comprising the subsystems $u_0$ and $u_1$ with areas
+$A_{u_0} = 1$ and $A_{u_1} = 2$.  There are four manufacturing minterms with associated probabilities:
+%\begin{equation}
+  \begin{equation}\begin{aligned}
+  \pi_{00} = P(U_0'&\cap \ U_1')  , \\
+  \pi_{01} = P(U_0' &\cap \ U_1)  , \\
+  \pi_{10} = P(U_0'&\cap \ U_1)  , \\
+  \pi_{11} = P(U_0&\cap \ U_1)  , \\
+\end{aligned}\end{equation}
+%\end{equation}
+Now we consider the power sets of $\Sigma_S$ and their areas:
+\begin{equation}
+  A_\emptyset = 0 \quad ,
+\end{equation}
+\begin{equation}
+  A_{\{u_0\}} = 1 \quad ,
+\end{equation}
+\begin{equation}
+  A_{\{u_1\}} = 2 \quad ,
+\end{equation}
+\begin{equation}
+  A_{\{u_1\}} = 2 \quad ,
+\end{equation}
+\begin{equation}
+  A_{\{u_0,u_1\}} = 3 \quad .
+\end{equation}
+Accordingly we may write the equations for the minterm probabilities:
+%\begin{equation}
+  \begin{equation}\begin{aligned}
+    P_\emptyset    \hfil &= Y(0) =& \pi_{00} + \pi_{01} + \pi_{10} + \pi_{11} \hfil\\
+    P_{\{u_0\}}    \hfil &= Y(1) =& \pi_{10} + \pi_{11} \hfil\\
+    P_{\{u_1\}}    \hfil &= Y(2) =& \pi_{01} + \pi_{11} \hfil\\
+    P_{\{u_0,u_1\}} \hfil &= Y(3) =& \pi_{11} \hfil\\
+\end{aligned}\end{equation}
+  %\end{equation}
+  Solving for the $\pi_\tau$ we have
+  \begin{equation}\begin{aligned}
+      \pi_{11} &&=& Y(3) \\
+      \pi_{01} &= Y(2) - \pi_{11} &=& Y(2) - Y(3) \\
+      \pi_{10} &= Y(1) - \pi_{11} &=& Y(1) - Y(3) \\
+      \pi_{00} & = Y(0) - \pi_{01} - \pi_{10} - \pi_{11} &=& Y(0) - Y(1) - Y(2) + Y(3) \quad ,\\
+\end{aligned}\end{equation}
+  where it is clear that the system of equations can be put in upper triangular form.  (Note also that $Y(0) = 1$ by definition.)
+
+  If we now suppose that in order for $S$ to be functional, both $u_0$ and $u_1$ must be functional, we can write
+  \begin{equation}
+    P_{S(2)}(x \geq 2) = \pi_{11} = Y(3)
+  \end{equation}
+  as expected, and if only one of the two subsystems need be functional, then we can write
+  \begin{equation}
+    P_{S(2)}(x \geq 1) = \pi_{11} + \pi_{01} + \pi_{10} = Y(1) + Y(2) - Y(3) \quad .
+  \end{equation}
+  Note that this result is different from the result that obtains if we assume that the probabilities of manufacturing defects' hitting $u_0$ and $u_1$ are independent.  In that case, the probability of $u_0$ being functional is $Y(1)$, the probability of $u_1$ being functional is $Y(2)$, and the probability of either being functional is simply
+  \begin{equation}
+    P_{i} = Y(1) + Y(2) - Y(1) Y(2) \quad .
+  \end{equation}
+  If $Y$ is Poisson, then
+  \begin{equation}
+    Y(a+b) = Y(a)Y(b) \qquad \hbox{($Y \sim$ Poisson)}
+  \end{equation}
+  and the two formulations are equivalent.  {\em Otherwise not.}
+
+\section{Restriction to equal subsystems}\label{sec:restricted}
+The theory presented in section~\ref{sec:general} is comprehensive but
+cumbersome.  It involves inverting a (admittedly trivial upper
+diagonal) matrix in $2^N$ dimensions and pertains to a general class
+of problems not usually seen by practitioners.  Practitioners are far
+more likely to encounter the following problem: given that $S$
+consists of $N$ {\em equal\/} subsystems and requires at least $M \leq
+N$ of these to be functional in order for the system to be functional,
+what is the system yield given the process yield and the subsystem
+areas?
+
+With the restriction that the subsystems all be equal, the distinction
+between different subsystems in the subscripts of $\pi_\tau$ in
+(\ref{eq:pi}) disappears, and we may simply count the number of ones
+in $\tau$.  In other words, we may write
+  \begin{equation}
+    \forall \tau : w(\tau) = n : \pi_\tau = \Pi_n \quad ,
+  \end{equation}
+  where $w(k)$ is the bit-sum function (i.e., the sum of the bits of the binary expansion of $k$), and the salient difference to the earlier formulation is that we have replaced a number of different minterm probabilities $\pi_\tau$ with the uniform probability $\Pi_n$, which pertains to any minterm with precisely $n$ non-defective components.
+
+  Under the preceding conditions, we can write, as before,
+  \begin{equation}
+    \Pi_N = \pi_{11\ldots1} = Y(NA_u) = Y(A_S)
+  \end{equation}
+  where now we write $A_u$ to signify that all the $A_{u_i}$ are the same, since all the $u_i$ are the same.
+  We continue with 
+  \begin{equation}
+    \Pi_{N-1} = \pi_{1\ldots10} = \pi_{1\ldots01} = \cdots = \pi_{01\ldots11} 
+  \end{equation}
+  whose value is given by equation \ref{eq:master} as
+\begin{equation}
+\pi_{1\ldots10} + \pi_{11\ldots1} = \pi_{1\ldots01} + \pi_{11\ldots1} = \cdots = \pi_{01\ldots11} + \pi_{11\ldots1} = Y(N-1)
+\end{equation}
+but we can simply write that as
+\begin{equation}
+  \Pi_{N-1} + \Pi_{N} = Y(N-1)
+\end{equation}
+and drop the $\pi_\tau$ from further consideration.  Continuing the argument of section~\ref{sec:general} and making the appropriate considerations for substituting $\Pi_k$ for $\pi_\tau$, we find that we may reduce the triangular equation system of (\ref{eq:system}) to the following recurrence:
+\begin{equation}\begin{aligned}
+    \Pi_N     &=& Y(N A_u) \\
+    \Pi_{k-1}  &=& Y((k-1) A_u) - \left( \sum_{j=k}^{N} {N-k+1 \choose N-j} \Pi_j \right) \quad .
+    \label{eq:recurrence}
+\end{aligned}\end{equation}
+Continuing along the lines of (\ref{eq:countsets}) and (\ref{eq:generalconstraint}) we can now compute our desideratum, namely
+\begin{equation}
+  P_{S(N)}(x \geq M) = \sum_{i=M}^{i=N} {N \choose i} \Pi_{i}\quad.
+\end{equation}
+with $\Pi_i$ taken from (\ref{eq:recurrence}).
+
+\section{Example}
+\label{sec:ex16of17}
+A system $S$ has been designed to operate with 16 identical subsystems
+$u_0 \ldots u_{15} = u$.  Designers have added one spare unit
+$u_{16}$, identical to all the others.  The area of each $u$ is 1.  It
+is desired to compute the system yield of $S$.
+
+By (\ref{eq:recurrence}) we have the recurrence
+\begin{equation}\begin{aligned}
+    \Pi_{17}              &=& Y(17) \\
+    \Pi_{16}              &=& Y(16) - \Pi_{17} = Y(16) - Y(17) \\
+\end{aligned}\end{equation}
+and, accordingly, the system yield
+\begin{equation}\begin{aligned}
+    P_{S(17)}(x \geq 16) &=& \Pi_{17} + {17 \choose 16} \Pi_{16} \\
+                       &=& Y(17) + 17 (Y(16) - Y(17)) \\
+                       &=& 17\, Y(16) - 16\, Y(17) \quad ,
+\end{aligned}\end{equation}
+which, as expected, equals the formulation under independence
+\begin{equation}
+  P_{i,16/17} = Y(1)^{17} + 17\, Y(1)^{16}
+\end{equation}
+if and only if $Y \sim \hbox{Poisson}$ so that $Y(z) = Y(1)^z$.
+
+\section{Example}
+As in section~\ref{sec:ex16of17} but assume we have two spare units so that
+there is a need for 16 out of 18 units to be operational.
+
+By (\ref{eq:recurrence}) we have the recurrence
+\begin{equation}\begin{aligned}
+    \Pi_{18}              &=& Y(18) \\
+    \Pi_{17}              &=& Y(17) - \Pi_{18}            &=& Y(17) - Y(18) \\
+    \Pi_{16}              &=& Y(16) - \Pi_{18} - 2\Pi_{17} &=&
+                             Y(16) - 2\,Y(17) + Y(18)\\
+\end{aligned}\end{equation}
+and
+\begin{equation}\label{eq:yield16of18}\begin{aligned}
+    P_{S(18)}(x \geq 16) &=& \Pi_{18} + {18 \choose 17} \Pi_{17} + {18 \choose 16} \Pi_{16} \\
+    &=& 136 \, Y(18) - 288 \, Y(17) + 153 Y(16) \quad .
+\end{aligned}\end{equation}
+
+\section{Implementation of the restricted formulation}
+
+A simple implementation of the formulation in section~\ref{sec:restricted} above is given in the programming language Scheme\cite{scheme}.
+\begin{verbatim}
+(define (make-yield-calculator Y)
+  (lambda(A N M)
+    (define (Pi k)
+      (if (= k N)
+          (Y (* N A))
+          
+          (- (Y (* k A))
+             (sum (+ k 1) N (lambda(j)(* (choose (- N k) (- N j)) (Pi j)))))))
+    (sum M N (lambda(i) (* (choose N i) (Pi i)))))
+  )
+\end{verbatim}
+The procedure \verb!make-yield-calculator! takes a procedure \verb!Y!
+of a single argument (the area in square length units) and a single
+result (the process yield of an area of the given size) and returns a
+procedure of three arguments: \verb!A! the area of a subsystem,
+\verb!N! the number of subsystems, and \verb!M! the number of
+subsystems that need to be functional.  The so-returned procedure
+produces the system yield of the system containing the stated
+subsystems.
+
+\section{Discussion}
+Originally, integrated circuit defect density was modeled by
+practitioners as being constant, i.e., leading to Poisson defect
+statistics.  This was quickly realized to be an inadequate model,
+because defects are not engineered into circuits: they are on the
+contrary avoided to any extent possible.  Defects that remain are thus
+in some sense ``accidents'' and there is no reason one would assume
+accidents occur according to smooth underlying statistics.  The
+English idiom ``when it rains, it pours'' well describes the folk wisdom
+of accidents, and in fact, better describes accidents in semiconductor
+fabs than a simple Poisson defect distribution does.
+
+What we see when we look at fabrication data is that observed faults
+suggest that defects are highly clustered.  There are many reasons this
+would happen, e.g., a single accidental event during manufacturing causes
+more than one defect, a machine is misadjusted for a day, etc.  The result
+is remarkably stable.  In general, it is beneficial to the industry that
+accidents are distributed according to ``clustered'' statistics because
+this tends to localize the defects to fewer chips than would happen if
+they were more uniformly distributed.  Defect clustering thus raises the
+expected yield of large semiconductor ICs relatve to what would be expected
+using Poisson statistics.
+
+In response to the concerns surrounding Poisson statistics, Murphy
+introduced the concept of variable defect density already in
+1964\cite{murphy}.  Stapper applied Murphy's idea using a Gamma
+distribution for the defect density in 1973\cite{stapper1973}.
+Stapper's model was initially validated on a data set provided by
+Moore\cite{moore1970} but has been shown to be rather generally
+applicable and is well known to practitioners today.
+
+The main idea of the work of Murphy and Stapper is as follows.  If we assume
+simple Poisson statistics, we can calculate chip yield as
+\begin{equation}
+  Y(A) = e^{-AD_0}
+\end{equation}
+where $A$ is the area of the chip, and $D_0$ is the defect density of the process.  Murphy introduces the idea that $D$ itself is a random variable subject to some probability distribution (p.d.f.) $f(D)$ and then we may write
+\begin{equation}
+  Y(A) = \int_0^\infty e^{-AD} \, f(D) \, dD \quad ,
+\end{equation}
+from which formulation we could return to a classical Poisson
+formulation with defect density $D_0$ simply by writing $f(D) =
+\delta( D- D_0)$ where $\delta$ represents the Dirac delta function.
+
+Various forms of the defect density distribution $f(D)$ have been
+tried over the years, with special mention due to Stapper's use of the
+Gamma distribution, where
+\begin{equation}
+  f(D) = { 1 \over \Gamma(\alpha) \beta^\alpha } D^{\alpha - 1} e^{-D/\beta} \quad .
+\end{equation}
+This definition of $f(D)$ implies that the average defect density $D_0$ may be
+computed
+\begin{equation}
+  D_0 = \int_0^\infty D f(D) dD = \alpha \beta
+\end{equation}
+as well as its variance
+\begin{equation}
+\sigma^2 = \int_0^\infty D^2 f(D) dD - {D_0}^2 = \alpha \beta^2
+\end{equation}
+implying that
+\begin{equation}
+  \sigma^2  = { \mu^2  \over \alpha } \quad .
+\end{equation}
+In other words, the variance of the defect density is $1/\alpha$ times the average defect density.
+
+The most widely seen forms of Stapper's equation have $\alpha
+\rightarrow \infty$, which implies a Poisson distribution, or $\alpha
+= 1$, which implies a Bose-Einstein distribution.  However, other
+values of $\alpha$ are possible, and smaller values of $\alpha$ imply
+greater variability in the underlying defect density (more
+clustering).  Recent processes in fact show $\alpha$ in the range
+roughly 0.02 to 0.05---i.e., the variance of the defect density is
+between 20 and 50 times its average value.  A quick glance at recent
+wafer data suggests that such values appear more reasonable (because of
+high levels of clustering), and Poisson and Bose-Einstein distributions
+are probably more used for calculational expediency than for accuracy.
+
+The general case of the fault distribution implied by Stapper's
+formula is known as a P\'olya-Eggenberger\cite{polya1923,stanford} distribution and
+implies a process yield of the form
+\begin{equation}\label{eq:stapperyield}
+  Y(A) = \left({1 + AD_0 \over \alpha} \right)^{-n \alpha}
+\end{equation}
+where we use modern nomenclature $D_0$ for the per-layer defect
+density and $n$ for the number of effective process layers.
+
+The significance of our calculations above now becomes clear.  Modern
+semiconductor processes do not follow Poisson statistics, instead
+their behavior is more closely modeled by the
+Stapper-P\'olya-Eggenberger yield formula (\ref{eq:stapperyield}) with
+$\alpha \ll 1$ to model the clustering of defects that occurs in
+manufacturing.  (In fact it is not clear that Poisson statistics {\em
+  ever\/} modeled semiconductor fab line behavior very well.)  While
+the resultant defect statistics are a boon for large-die yields, they
+do have a deleterious effect, namely, that redundancy does not work as
+well as it does under a Poisson model.  This is to be expected, as the
+fact that accidents cluster, which improves overall yield, also
+implies that an accident that strikes a subsystem $u_0$ is also likely
+to strike subsystem $u_1$.  Our work models this effect.
+
+\section{Calculational example}
+For our final example, let's take a specific redundant hardware module
+in a representative 2020 fabrication process.  We assume $D_0 = 0.10$
+faults per square inch per layer, $\alpha=0.02$, $n=30$, and that we have a
+system consisting of 18 subsystems $u_i$, each 4~mm$^2$ in area, of
+which we need 16 to be functional.
+
+The system yield of 16 of 18 units was given in (\ref{eq:yield16of18}) and is
+\begin{equation}
+    P_{S(18)}(x \geq 16) = 136 \, Y(72) - 288 \, Y(68) + 153 Y(74) \quad ,
+\end{equation}
+irrespective of the statistics (we have multiplied the size of the units by 4 so all the arguments are multiplied by 4).
+
+Under Stapper-P\'olya-Eggenberger statistics, the system yield is
+\begin{equation}
+    P_{S(18)}(x \geq 16) = 0.98074\ldots \quad .
+\end{equation}
+Under binomial statistics on the other hand, we would work out
+\begin{equation}\begin{aligned}
+  P_{S(18)}(x \geq 16) &=& Y(4)^{18} + {18 \choose 17} Y(4)^{17}(1-Y(4))
+                                  + {18 \choose 16} Y(4)^{16}(1-Y(4))^2  \\
+                     &=& 0.9960\ldots \quad .
+\end{aligned}\end{equation}
+If we are interested in incorporating our system into a larger system,
+we are likely most interested in the yield loss $\xi$ ($1-$ yield) of our system.
+In this formulation, it is clear that the binomial formulation grossly underestimates the yield loss because
+\begin{equation}
+  \xi\textsubscript{binomial} \approx 0.0040 \ll \xi\textsubscript{clustered} \approx 0.0193 \quad,
+\end{equation}
+that is to say, the na\"\i{}ve assumption of statistically independent
+yield of the submodules is responsible for a five-fold underestimate of
+the yield loss of the redundant system.
+
+\section{Summary and conclusion}
+We have seen how to derive a general formula for the system yield of a
+redundant hardware system under weak assumptions on process yield.  We
+have furthermore shown how to more efficiently compute the system
+yield of a system consisting of identical subsystems, and we have
+discussed how practitioners over the years have found that
+semiconductor defects are more highly clustered than the yield models
+have allowed for.  We find it likely that existing yield models
+overestimate the efficiacy of adding hardware redundancy and thereby
+mislead designers into considering redundancy in situations where it
+may not be so effective.  Future work that remains to be done here is
+to shown how to integrate results derived with our model into the
+context of a larger system incorporating the system we are studing as
+itself a subsystem (our equations as they stand are only applicable if
+they can take the entire system of interest---probably a semiconductor
+die---into consideration ``at one''), and doing so with computational
+efficiency.
+
+\begin{thebibliography}{99}
+
+\bibitem{scheme} W.~Clinger and J.~Rees, eds. {Revised$^4$ Report on the Algorithmic Language Scheme.}  In {\it ACM Lisp Pointers IV}, July-September 1991.
+
+\bibitem{murphy} B.~T.~Murphy. Cost-size optima of monolithic integrated circuits. {\it Proceedings of the IEEE}, 12({\bf 52}), pp.~1537--1545, Dec.~1964.
+
+\bibitem{stapper1973}C.~H.~Stapper. Defect density distribution for LSI yield calculations. {\it IEEE Transactions on Electron Devices}, 7({\bf 20}), pp.~655--657, July 1973.
+
+\bibitem{moore1970}G.~E.~Moore. What level of LSI is best for you?. {\bf Electronics} {\bf 43}, pp.~126-130, Feb.~1970.
+
+\bibitem{polya1923}F.~Eggenberger and G.~P\'olya. \"Uber die Statistik verketteter Vorg\"ange. {\it Z. Angew. Math. Mech.}, ({\bf 3}), pp.~279--289, 1923.
+
+\bibitem{stanford}A.~.W.~Marshall and I.~Olkin.  {\it Bivariate Distributions Generated from P\'olya-Eggenberger Urn Models.}  Technical report no.~262, Department of Statistics, Stanford University.  Stanford:\ October 1989.
+  
+\end{thebibliography}
+
+
+
+  
+  
+    
+
+
+\end{document}
+
+
+
+
