@@ -3,6 +3,10 @@ MODULE Power;
 FROM SvsTypes IMPORT CornerData;
 IMPORT Math;
 IMPORT Corner;
+IMPORT Wx;
+FROM Fmt IMPORT F, LongReal;
+
+CONST LR = LongReal;
 
 PROCEDURE Calc(READONLY d : Params; at : CornerData) : Result =
   BEGIN
@@ -20,4 +24,16 @@ PROCEDURE Calc(READONLY d : Params; at : CornerData) : Result =
     END
   END Calc;
 
+PROCEDURE FmtParams(READONLY p : Params) : TEXT =
+  VAR
+    wx := Wx.New();
+  BEGIN
+    Wx.PutText(wx, F("RefP = %s\n", LR(p.RefP)));
+    Wx.PutText(wx, F("FixedP = %s\n", LR(p.FixedP)));
+    Wx.PutText(wx, F("RefLeakP = %s\n", LR(p.RefLeakP)));
+    Wx.PutText(wx, F("LkgRatio = %s\n", LR(p.LkgRatio)));
+    Wx.PutText(wx, F("LkgRatioSigma = %s\n", LR(p.LkgRatioSigma)));
+    RETURN Wx.ToText(wx)
+  END FmtParams;
+  
 BEGIN END Power.

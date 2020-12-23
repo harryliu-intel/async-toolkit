@@ -192,7 +192,12 @@ BEGIN
         ELSE
           Debug.Error(F("Unknown BXD program \"%s\"", progName))
         END;
-        f(p, Trunc)
+        f(p, Trunc);
+
+        Debug.Out(F("Set program %s :", progName));
+        Debug.Out(F("p="));
+        Debug.Out(Power.FmtParams(p));
+        Debug.Out(F("Trunc= %s", LR(Trunc)))
       END
     END;
     

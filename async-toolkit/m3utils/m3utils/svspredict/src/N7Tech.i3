@@ -12,6 +12,9 @@ CONST CornerLkgRatio = ARRAY Corner.T OF LONGREAL { 1.0d0, 2.0d0, 4.0d0 };
 
 CONST CornerSigma = ARRAY Corner.T OF LONGREAL { -3.0d0, 0.0d0, +3.0d0 };
 
-CONST LkgTempCoeff = 0.03d0; (* leakage increase per kelvin *)
+CONST LkgTempCoeff = 0.03d0; (* leakage increase ratio per kelvin *)
 
+CONST SvsOffset = ARRAY Corner.T OF LONGREAL { +50.0d-3, 0.0d0, -40.0d-3 };
+      (* from Karthik's STA measurements *)
+      
 END N7Tech.

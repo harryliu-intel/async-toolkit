@@ -1,5 +1,4 @@
 INTERFACE JBay;
-FROM SvsTypes IMPORT CornerData;
 IMPORT N7Tech;
 IMPORT Power;
 
@@ -29,4 +28,8 @@ CONST GoxArea = ARRAY N7Tech.Transistor OF LONGREAL {
   1.399d8
   };
 
+CONST PowToContact = -50.0d-3;
+  (* assumed delta between power and contact voltage, per Ram's 
+     voltage stack, updated *)
+      
 END JBay.

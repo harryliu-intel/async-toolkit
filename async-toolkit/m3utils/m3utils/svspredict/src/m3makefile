@@ -3,6 +3,7 @@ import ("libm3")
 import ("cit_util")
 import ("parseparams")
 import ("normaldev")
+import ("minimize")
 
 implementation ("Main")
 
@@ -14,7 +15,10 @@ interface ("N7PMRO")
 interface ("PMRO")
 interface ("Corner")
 
+module ("Interpolate")
 module ("Power")
 interface ("ProgramSetter")
+interface ("Svl")
+module ("Scale")
 
 program("svspredict")

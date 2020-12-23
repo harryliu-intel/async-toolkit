@@ -6,6 +6,11 @@ IMPORT Debug;
 IMPORT Fmt; FROM Fmt IMPORT F;
 IMPORT Power;
 IMPORT Corner;
+IMPORT Interpolate;
+IMPORT Math;
+IMPORT Svl;
+IMPORT Scale;
+IMPORT Wx;
 
 CONST LR = Fmt.LongReal;
 
@@ -17,35 +22,26 @@ TYPE
 PROCEDURE SetProgram(VAR p : Power.Params;
                      VAR Trunc                   : LONGREAL) =
   CONST
-    f       = SetProgram139;
+    f       = SetProgram79;
   BEGIN
     f(p, Trunc)
   END SetProgram;
 
-
-PROCEDURE Interpolate1(READONLY spec  : ARRAY OF CARDINAL;
-                       READONLY sigma : ARRAY OF LONGREAL;
-                       READONLY meas  : CARDINAL) : LONGREAL =
-  PROCEDURE Do(i0, i1 : CARDINAL) : LONGREAL =
-    BEGIN
-      WITH x0 = sigma[i0],
-           x1 = sigma[i1],
-           y0 = FLOAT(spec [i0], LONGREAL),
-           y1 = FLOAT(spec [i1], LONGREAL),
-           m  = FLOAT(meas, LONGREAL) DO
-        RETURN x0 + (x1 - x0) * (m - y0) / (y1 - y0)
-      END
-    END Do;
-    
-    BEGIN
-      FOR j := 1 TO LAST(spec) DO
-        IF meas <= spec[j] THEN
-          RETURN Do(j - 1, j)
-        END
-      END;
-      RETURN Do(LAST(spec) - 1, LAST(spec))
-    END Interpolate1;
-    
+PROCEDURE DebugPmroSigma(READONLY sigma : ARRAY Tech.Transistor OF LONGREAL) : TEXT =
+  VAR
+    wx := Wx.New();
+  BEGIN
+    Wx.PutText(wx, "{");
+    FOR i := FIRST(sigma) TO LAST(sigma) DO
+      Wx.PutChar(wx, ' ');
+      Wx.PutText(wx, Tech.TransistorNames[i]);
+      Wx.PutText(wx, "=");
+      Wx.PutText(wx, LR(sigma[i]))
+    END;
+    Wx.PutText(wx, " }");
+    RETURN Wx.ToText(wx)
+  END DebugPmroSigma;
+  
 PROCEDURE InterpolatePmro(READONLY specs : ARRAY Tech.Transistor OF PMRO.T;
                           READONLY meas  : ARRAY Tech.Transistor OF CARDINAL) :
   ARRAY Tech.Transistor OF LONGREAL =
@@ -54,23 +50,115 @@ PROCEDURE InterpolatePmro(READONLY specs : ARRAY Tech.Transistor OF PMRO.T;
     res : ARRAY Tech.Transistor OF LONGREAL;
   BEGIN
     FOR i := FIRST(res) TO LAST(res) DO
-      res[i] := Interpolate1(specs[i], Tech.CornerSigma, meas[i])
+      res[i] := Interpolate.OverCard(specs[i], Tech.CornerSigma, meas[i])
     END;
     RETURN res
   END InterpolatePmro;
-  
-PROCEDURE SetProgram242(VAR p : Power.Params;
-                        VAR Trunc                   : LONGREAL) =
+
+CONST
+  Pmro79  = ARRAY Tech.Transistor OF CARDINAL { 463, 422, 338 };
+  Pmro139 = ARRAY Tech.Transistor OF CARDINAL { 487, 429, 332 };
+
+PROCEDURE SetProgram79(VAR p     : Power.Params;
+                       VAR Trunc : LONGREAL) =
   CONST
-    pmro    = ARRAY Tech.Transistor OF CARDINAL { 495, 445, 359 };
+    pmro = Pmro79;
+    (* PMRO data for this individual from the lab *)
     
-    MeasLkg = TvpMeasurement { 95.0d0, 0.750d0,  33.188d0 };
-    MeasAct = TvpMeasurement { 96.0d0, 0.700d0, 336.0d0   };
-    
+    AteVmin79 = 680.0d-3;
+    (* from Dinesh's estimations at ATE for this specific individual *)
+
+    AgeMargin = 20.0d-3;
+
+    tgtTemp = Svl.TargetTemp;
   VAR
-    sigma := InterpolatePmro(TechPmro.V, pmro);
+    sigma79 := InterpolatePmro(TechPmro.V, pmro);
+    (* this is now the leakage sigmas of #79 *)
+
+    weightedSigma79 := WeightLkgSigma(sigma79);
+    (* leakage weighted sigma *)
+
+    speedSigma := Math.sqrt(sigma79[Tech.Transistor.Ulvt] * weightedSigma79);
+    (* take the geom. mean of the Ulvt sigma and the leakage sigma *)
+
+    sigma139 := InterpolatePmro(TechPmro.V, Pmro139);
+    
+    weightedSigma139 := WeightLkgSigma(sigma139);
+    (* weighted sigma *)
+    
+    Vmin79vsTT := Interpolate.OverLR(Tech.CornerSigma,
+                                     Tech.SvsOffset,
+                                     speedSigma);
+    VminEolTT := AteVmin79 + AgeMargin - Vmin79vsTT;
+
+    (* now we will take data from chip 139 and massage them to stand in
+       for measurements on 79 *)
+
+    pred139 := PredPower(MeasAct139, MeasLkg139, VminEolTT, tgtTemp);
+    (* bring the power figures of 139 to the conditions we care about *)
+
+    leakRatio139 := Interpolate.Exp(Tech.CornerSigma,
+                                    Tech.CornerLkgRatio,
+                                    weightedSigma139);
+
+    leakPwrTt := pred139.lkgP / leakRatio139;
+
+    predTt := Power3 { dynP := pred139.dynP,
+                       lkgP := leakPwrTt,
+                       totP := pred139.dynP + leakPwrTt };
+  BEGIN
+    Debug.Out(F("SetProgram79 : sigma79 = %s, weightedSigma79 = %s, speedSigma = %s",
+                DebugPmroSigma(sigma79), LR(weightedSigma79), LR(speedSigma)));
+    Debug.Out(F("SetProgram79 : Vmin79vsTT = %s, VminEolTT = %s",
+                LR(Vmin79vsTT), LR(VminEolTT)));
+    Debug.Out(F("SetProgram79 : pred139 = %s",
+                DebugPower3(pred139)));
+    Debug.Out(F("SetProgram79 : leakRatio139 = %s, leakPwrTt = %s",
+                LR(leakRatio139), LR(leakPwrTt)));
+    Debug.Out(F("SetProgram79 : predTt = %s",
+                DebugPower3(predTt)));
+
+    SetShared(p, Trunc);
+    p.c             := MakeCornerArrayFromTt(VminEolTT);
+    p.RefLeakP      := predTt.lkgP;
+    p.RefP          := predTt.totP;
+  END SetProgram79;
+
+PROCEDURE SetShared(VAR p : Power.Params; VAR Trunc : LONGREAL) =
+  BEGIN
+    p.LkgRatio      :=   Tech.CornerLkgRatio[Corner.T.FF] /
+                         Tech.CornerLkgRatio[Corner.T.TT]; 
+    p.LkgRatioSigma :=   Tech.CornerSigma[Corner.T.FF];
+    Trunc           :=   Tech.CornerSigma[Corner.T.FF];
+
+    p.FixedP        := 107.0d0;
+  END SetShared;
+  
+PROCEDURE MakeCornerArrayFromTt(vminEolTt : LONGREAL) : ARRAY Corner.T OF CornerData =
+  VAR
+    TtPowV := vminEolTt;
+    FfPowV := TtPowV + Tech.SvsOffset[Corner.T.FF];
+    SsPowV := TtPowV + Tech.SvsOffset[Corner.T.SS];
+  BEGIN
+    RETURN ARRAY Corner.T OF CornerData {
+    CornerData { SsPowV + PowToContact, SsPowV, Tech.CornerSigma[Corner.T.SS] },
+    CornerData { TtPowV + PowToContact, TtPowV, Tech.CornerSigma[Corner.T.TT] },
+    CornerData { FfPowV + PowToContact, FfPowV, Tech.CornerSigma[Corner.T.FF] }
+    };
+    
+  END MakeCornerArrayFromTt;
+  
+CONST
+  Pmro242    = ARRAY Tech.Transistor OF CARDINAL { 495, 445, 359 };
+  (* PMRO 242 likely measured under the wrong conditions -- DO NOT TRUST! *)
+  MeasLkg242 = TvpMeasurement { 95.0d0, 0.750d0,  33.188d0 };
+  MeasAct242 = TvpMeasurement { 96.0d0, 0.700d0, 336.0d0   };
+  MeasLkg139 = TvpMeasurement { 90.0d0, 0.735d0,  22.964d0 };
+  MeasAct139 = TvpMeasurement { 45.0d0, 0.730d0, 336.06d0  };
+
+PROCEDURE WeightLkgSigma(sigma : ARRAY Tech.Transistor OF LONGREAL) : LONGREAL =
+  VAR
     sumWeight, sumSigma := 0.0d0;
-    weightedSigma : LONGREAL;
   BEGIN
     FOR i := FIRST(sigma) TO LAST(sigma) DO
       WITH weight = FinCounts[i] * Tech.TranLeakageRatio[i] DO
@@ -81,14 +169,24 @@ PROCEDURE SetProgram242(VAR p : Power.Params;
                   Tech.TransistorNames[i], LR(sigma[i])))
     END;
 
-    weightedSigma := sumSigma / sumWeight;
-    
+    RETURN sumSigma / sumWeight;
+  END WeightLkgSigma;
+
+PROCEDURE SetProgram242(<*NOWARN*>VAR p : Power.Params;
+                        <*NOWARN*>VAR Trunc                   : LONGREAL) =
+  CONST
+    pmro    = Pmro242;
+  VAR
+    sigma := InterpolatePmro(TechPmro.V, pmro);
+    weightedSigma := WeightLkgSigma(sigma);
+  BEGIN
     Debug.Out(F("weighted sigma %s",
                 LR(weightedSigma)));
+    (* not done yet *)
     <*ASSERT FALSE*>
   END SetProgram242;
   
-PROCEDURE SetProgram139(VAR p : Power.Params;
+PROCEDURE SetProgram139(VAR p                       : Power.Params;
                         VAR Trunc                   : LONGREAL) =
   CONST
     (* endless discussions 12/3/20 *)
@@ -97,20 +195,20 @@ PROCEDURE SetProgram139(VAR p : Power.Params;
     AgeMargin     =  0.020d0;
     Vmin139vsFF   = +10.22d-3;
     VminEolFF     =  LabVmin139 + AgeMargin - Vmin139vsFF;
-    Ff2Tt         =  40.0d-3;
-    Tt2Ss         =  50.0d-3;
 
     FfPowV        =  VminEolFF;
-    TtPowV        =  FfPowV + Ff2Tt;
-    SsPowV        =  TtPowV + Tt2Ss;
+    TtPowV        =  FfPowV - Tech.SvsOffset[Corner.T.FF];
+    SsPowV        =  TtPowV + Tech.SvsOffset[Corner.T.SS];
 
-    PowToContact  = -50.0d-3;
-    ThisLeakSigma = -2.2335d0;
+    ThisLeakSigma = +2.2335d0; (* + for fast *)
   BEGIN
+    SetShared(p, Trunc);
+    
     p.c := ARRAY Corner.T OF CornerData {
-    CornerData { SsPowV + PowToContact, SsPowV, +3.0d0 },
-    CornerData { TtPowV + PowToContact, TtPowV,  0.0d0 },
-    CornerData { FfPowV + PowToContact, FfPowV, -3.0d0 } };
+    CornerData { SsPowV + PowToContact, SsPowV, Tech.CornerSigma[Corner.T.SS] },
+    CornerData { TtPowV + PowToContact, TtPowV, Tech.CornerSigma[Corner.T.TT] },
+    CornerData { FfPowV + PowToContact, FfPowV, Tech.CornerSigma[Corner.T.FF] }
+    };
     
     (* from lab measurements : we assumed measured chip is at FF *)
     (* These figures are re-computed for a TT chip *)
@@ -137,12 +235,54 @@ PROCEDURE SetProgram139(VAR p : Power.Params;
        tot power @ 95C/735mV                 367.09W
     *)
     
-    p.FixedP        := 107.0d0;
-    p.RefLeakP      := 26.41d0 / 1.6754d0;
-    
-    p.LkgRatio      :=   2.0d0; (* how much does leakage vary over corner *)
-    p.LkgRatioSigma :=   3.0d0;
-    Trunc         :=   3.0d0; (* where to truncate the distribution at sort *)
+    WITH leakFactor = Math.pow(p.LkgRatio, ThisLeakSigma / p.LkgRatioSigma) DO
+      p.RefLeakP      := 26.41d0 / leakFactor
+    END
   END SetProgram139;
+
+TYPE
+  Power3 = RECORD
+    dynP, lkgP, totP : LONGREAL;
+  END;
+
+PROCEDURE DebugPower3(READONLY p3 : Power3) : TEXT =
+  BEGIN
+    RETURN F("Power3 { dynP = %s, lkgP = %s, totP = %s }",
+             LR(p3.dynP), LR(p3.lkgP), LR(p3.totP))
+  END DebugPower3;
+  
+PROCEDURE FmtTvpMeasurement(READONLY q : TvpMeasurement) : TEXT =
+  BEGIN
+    RETURN F("Tvp { t = %s, v = %s, p = %s }",
+             LR(q.t), LR(q.v), LR(q.p))
+  END FmtTvpMeasurement;
+  
+PROCEDURE PredPower(measAct    : TvpMeasurement;
+                    measLkg    : TvpMeasurement;
+                    reqV, reqT : LONGREAL) : Power3 =
+  VAR
+    lkgAtAct := measLkg.p *
+                Scale.LkgPwrByT(measLkg.t, measAct.t) * 
+                Scale.LkgPwrByV(measLkg.v, measAct.v);
+    (* leakage power predicted for conditions seen at actual measurement *)
+
+    dynAtAct := measAct.p - lkgAtAct;
+    
+    lkgAtReq := measLkg.p *
+                Scale.LkgPwrByT(measLkg.t, reqT) * 
+                Scale.LkgPwrByV(measLkg.v, reqV);
+    
+    dynAtReq := dynAtAct *
+                Scale.DynPwrByT(measAct.t, reqT) * 
+                Scale.DynPwrByV(measAct.v, reqV);
+  BEGIN
+    Debug.Out(F("PredPower measLkg = %s", FmtTvpMeasurement(measLkg)));
+    Debug.Out(F("PredPower measAct = %s", FmtTvpMeasurement(measAct)));
+    Debug.Out(F("PredPower reqV = %s, reqT = %s", LR(reqV), LR(reqT)));
+    Debug.Out(F("lkgAtAct = %s, dynAtAct = %s, lkgAtReq = %s, dynAtReq = %s",
+                LR(lkgAtAct), LR(dynAtAct), LR(lkgAtReq), LR(dynAtReq)));
+    
+    RETURN Power3 { dynAtReq, lkgAtReq, dynAtReq + lkgAtReq }
+  END PredPower;
 
 BEGIN END JBay.
