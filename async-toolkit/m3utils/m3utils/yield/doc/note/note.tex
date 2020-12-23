@@ -122,7 +122,7 @@ Let it be given that a system $S$ comprises $N$ subsystems
 $u_i$, each with area $A_{U_i}$, so that
 
 \begin{equation}
-  S = u_0 \cup u_1 \cdots u_{N-1}
+  S = u_0 \cup u_1 \cup \cdots \cup u_{N-1}
 \end{equation}
 and
 \begin{equation}
@@ -159,7 +159,7 @@ manufacturing yield of any one subsystem can be written as
   P(U_i) = Y(A) \quad .
 \end{equation}
 
-It will turn out to be useful to consider the case that {\em exactly\/} $k$ out of $N$ subsystems are functional, and we will write this analogosly to (\ref{eq:sysyield}) as $P_{S(N)}(x = k)$.
+It will turn out to be useful to consider the case that {\em exactly\/} $k$ out of $N$ subsystems are functional, and we will write this analogously to (\ref{eq:sysyield}) as $P_{S(N)}(x = k)$.
 
 \section{General formulation}\label{sec:general}
 
@@ -192,10 +192,10 @@ and label them in binary bits as in each case the subsystem $u_i$ is
 fabricated to function or not:
 %\begin{equation}
   \begin{equation}\label{eq:pi}\begin{aligned}
-    \pi_{1\ldots11} = P(&U_0 &\cap \  U_1 &\cap \cdots \cap U_{N-1} \quad )   \\
-    \pi_{1\ldots10} = P(&U_0'&\cap \ U_1 &\cap \cdots \cap U_{N-1} \quad )   \\
+    \pi_{1\ldots11} = P(&U_0 &\cap \  U_1 &\cap \cdots \cap U_{N-1})   \\
+    \pi_{1\ldots10} = P(&U_0'&\cap \ U_1 &\cap \cdots \cap U_{N-1})   \\
     \ldots\\
-    \pi_{0\ldots00} = P(&U_0'&\cap \ U_1' &\cap \cdots \cap U_{N-1}' \quad)  , \\
+    \pi_{0\ldots00} = P(&U_0'&\cap \ U_1' &\cap \cdots \cap U_{N-1}')  , \\
   \end{aligned}\end{equation}
 %\end{equation}
 Note that each $\pi_k$ corresponds to a subset of $\Sigma$ that was fabricated correctly (and the balance being fabricated defective).  In analogy with boolean logic, we call the $2^N$ possible and mutually exclusive results of fabrication the {\em minterms\/} of the fabrication process.
@@ -331,9 +331,9 @@ in $\tau$.  In other words, we may write
   \begin{equation}
     \Pi_{N-1} = \pi_{1\ldots10} = \pi_{1\ldots01} = \cdots = \pi_{01\ldots11} 
   \end{equation}
-  whose value is given by equation \ref{eq:master} as
+  whose value is given by (\ref{eq:master}) as
 \begin{equation}
-\pi_{1\ldots10} + \pi_{11\ldots1} = \pi_{1\ldots01} + \pi_{11\ldots1} = \cdots = \pi_{01\ldots11} + \pi_{11\ldots1} = Y(N-1)
+\pi_{1\ldots10} + \pi_{11\ldots1} = \pi_{1\ldots01} + \pi_{11\ldots1} = \cdots = \pi_{01\ldots11} + \pi_{11\ldots1} = Y(N-1) \quad ,
 \end{equation}
 but we can simply write that as
 \begin{equation}
@@ -381,7 +381,7 @@ there is a need for 16 out of 18 units to be operational.
 
 By (\ref{eq:recurrence}) we have the recurrence
 \begin{equation}\begin{aligned}
-    \Pi_{18}              &=& Y(18) \\
+    \Pi_{18}              &&                             &=& Y(18) \\
     \Pi_{17}              &=& Y(17) - \Pi_{18}            &=& Y(17) - Y(18) \\
     \Pi_{16}              &=& Y(16) - \Pi_{18} - 2\Pi_{17} &=&
                              Y(16) - 2\,Y(17) + Y(18)\\
@@ -391,6 +391,7 @@ and
     P_{S(18)}(x \geq 16) &=& \Pi_{18} + {18 \choose 17} \Pi_{17} + {18 \choose 16} \Pi_{16} \\
     &=& 136 \, Y(18) - 288 \, Y(17) + 153 Y(16) \quad .
 \end{aligned}\end{equation}
+(We may note that the sum of coefficients is 1, as always.)
 
 \section{Implementation of the restricted formulation}
 
@@ -436,7 +437,7 @@ is remarkably stable.  In general, it is beneficial to the industry that
 accidents are distributed according to ``clustered'' statistics because
 this tends to localize the defects to fewer chips than would happen if
 they were more uniformly distributed.  Defect clustering thus raises the
-expected yield of large semiconductor ICs relatve to what would be expected
+expected yield of large semiconductor ICs relative to what would be expected
 using Poisson statistics.
 
 In response to the concerns surrounding Poisson statistics, Murphy
@@ -540,7 +541,7 @@ Under binomial statistics on the other hand, we would work out
                      &=& 0.9960\ldots \quad .
 \end{aligned}\end{equation}
 If we are interested in incorporating our system into a larger system,
-we are likely most interested in the yield loss $\xi$ ($1-$ yield) of our system.
+we are likely most interested in the yield loss $\xi$ $=$ ($1-$ yield) of our system.
 In this formulation, it is clear that the binomial formulation grossly underestimates the yield loss because
 \begin{equation}
   \xi\textsubscript{binomial} \approx 0.0040 \ll \xi\textsubscript{clustered} \approx 0.0193 \quad,
@@ -564,7 +565,7 @@ to shown how to integrate results derived with our model into the
 context of a larger system incorporating the system we are studing as
 itself a subsystem (our equations as they stand are only applicable if
 they can take the entire system of interest---probably a semiconductor
-die---into consideration ``at one''), and doing so with computational
+die---into consideration ``at once''), and doing so with computational
 efficiency.
 
 \begin{thebibliography}{99}
@@ -575,7 +576,7 @@ efficiency.
 
 \bibitem{stapper1973}C.~H.~Stapper. Defect density distribution for LSI yield calculations. {\it IEEE Transactions on Electron Devices}, 7({\bf 20}), pp.~655--657, July 1973.
 
-\bibitem{moore1970}G.~E.~Moore. What level of LSI is best for you? {\bf Electronics} {\bf 43}, pp.~126-130, Feb.~1970.
+\bibitem{moore1970}G.~E.~Moore. What level of LSI is best for you? {\bf Electronics} {\bf 43}, pp.~126--130, Feb.~1970.
 
 \bibitem{polya1923}F.~Eggenberger and G.~P\'olya. \"Uber die Statistik verketteter Vorg\"ange. {\it Z. Angew. Math. Mech.}, ({\bf 3}), pp.~279--289, 1923.
 
