@@ -245,7 +245,7 @@ $A_{u_0} = 1$ and $A_{u_1} = 2$.  There are four manufacturing minterms with ass
 %\begin{equation}
   \begin{equation}\begin{aligned}
   \pi_{00} = P(U_0'&\cap \ U_1')  , \\
-  \pi_{01} = P(U_0' &\cap \ U_1)  , \\
+  \pi_{01} = P(U_0 &\cap \ U_1')  , \\
   \pi_{10} = P(U_0'&\cap \ U_1)  , \\
   \pi_{11} = P(U_0&\cap \ U_1)  , \\
 \end{aligned}\end{equation}
@@ -412,7 +412,7 @@ of a single argument (the area in square length units) and a single
 result (the process yield of an area of the given size) and returns a
 procedure of three arguments: \verb!A! the area of a subsystem,
 \verb!N! the number of subsystems, and \verb!M! the number of
-subsystems that need to be functional.  The so-returned procedure
+subsystems that need to be functional.  (\verb!sum! and \verb!choose! are not part of the standard Scheme language but have the obvious meanings here.)  The so-returned procedure
 produces the system yield of the system containing the stated
 subsystems.
 
