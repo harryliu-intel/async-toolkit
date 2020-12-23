@@ -61,8 +61,10 @@
 \renewcommand{\headrulewidth}{0pt}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\input{build/hash}
+
 \title{A Note on Hardware Redundancy \\ Under \\ Non-Independent Yield Models}
-\author{Mika Nystr\"om \\ {\tt mika.nystroem@intel.com}}
+\author{Mika Nystr\"om \\ {\tt mika.nystroem@intel.com} \\ {\tt \hash}}
 
 \date{\today}
 
@@ -376,6 +378,12 @@ which, as expected, equals the formulation under independence
 if and only if $Y \sim \hbox{Poisson}$ so that $Y(z) = Y(1)^z$.
 
 \section{Example}
+From section~\ref{sec:ex16of17} we can generalize as follows.  A system has $N$ identical subsystems of which one is spare.  (This is a very common arrangement in practice.)  The area of each subsystem is A.  Then the system yield is
+\begin{equation}
+P_{S(N)}(x \geq N-1) = N \, Y(N-1) - (N-1)\, Y(N) \quad .
+\end{equation}
+
+\section{Example}
 As in section~\ref{sec:ex16of17} but assume we have two spare units so that
 there is a need for 16 out of 18 units to be operational.
 
@@ -392,6 +400,23 @@ and
     &=& 136 \, Y(18) - 288 \, Y(17) + 153 Y(16) \quad .
 \end{aligned}\end{equation}
 (We may note that the sum of coefficients is 1, as always.)
+
+\section{Properties of the System Yield}
+
+The following properties follow directly from the definition of the system yield as a function of $Y(A)$.
+
+\begin{enumerate}
+\item The system yield is a linear expression in the $Y()$ of the form
+  \begin{equation}
+    \sum_i C_i Y(k_i)
+  \end{equation}
+  where the $C_i$ are constants.
+
+\item If the functional system configurations cover a range of areas from $M$ to $N$, then the arguments $k_i$ in the formula will cover the same range.
+
+\item The sum of the coefficients before the $Y()$ will be equal to 1.  This follows from considering the happy case that our yield is precisely 1 for all sizes.  Redundancy will not change this and the required answer is 1 regardless of configuration.
+  
+\end{enumerate}
 
 \section{Implementation of the restricted formulation}
 
@@ -454,7 +479,7 @@ simple Poisson statistics, we can calculate chip yield as
   Y(A) = e^{-AD_0}
 \end{equation}
 where $A$ is the area of the chip, and $D_0$ is the defect density of the process.  Murphy introduces the idea that $D$ itself is a random variable subject to some probability distribution (p.d.f.) $f(D)$ and then we may write
-\begin{equation}
+\begin{equation}\label{eq:murphy}
   Y(A) = \int_0^\infty e^{-AD} \, f(D) \, dD \quad ,
 \end{equation}
 from which formulation we could return to a classical Poisson
@@ -517,7 +542,28 @@ fact that accidents cluster, which improves overall yield, also
 implies that an accident that strikes a subsystem $u_0$ is also likely
 to strike subsystem $u_1$.  Our work models this effect.
 
-\section{Calculational example}
+\section{Limitations}
+An obvious limitation to our work is that we assume that the process
+yield $Y(A)$ depends only on one scalar variable, namely, the chip
+area.  This is true of commonly used yield functions, but it must be
+noted that unlike other practitioners, we are assuming that the yield obeys
+the restriction regardless of the shape of the region.  The regions that
+are implied by (\ref{eq:master}) are non-convex and in fact not even contiguous.
+
+The restriction to the form of $Y(A)$ can be traced back all the way to Murphy's equation (\ref{eq:murphy}), that is: 
+\begin{equation}\label{eq:murphy}
+  Y(A) = \int_0^\infty e^{-AD} \, f(D) \, dD \quad .
+\end{equation}
+It is clear that the variability of the defect density which is here
+represented by $f(D)$ is not occuring over physical space but over an
+abstract parameter space.  How closely, or not, this models actual
+physical processes is not clear: we do know that Murphy's formulation
+leading to the Stapper-P\'olya-Eggenberger yield results can work
+extremely well in practice for predicting gross die yields, but is it
+really capable of supporting the kind of ``slicing and dicing'' we are
+doing in this work?
+
+\section{Example}
 For our final example, let's take a specific redundant hardware module
 in a representative 2020 fabrication process.  We assume $D_0 = 0.10$
 faults per square inch per layer, $\alpha=0.02$, $n=30$, and that we have a
