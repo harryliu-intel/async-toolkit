@@ -22,7 +22,7 @@
 (defun RouteNearbyNet (net @key (CV (geGetEditCellView)) (topShapes t) (subShapes t) (offGrid t) (verbose nil)
                            (protect_map nil))
   (let (layerNames tech n MasterRectList layerName pinRectList layerNum space len
-             e1 e2 inst1 inst2 net1 net2 rect1 rect2 overlap rect horz
+             e1 e2 inst1 inst2 net1 net2 rect1 rect2 overlap gap rect horz
              r1x0 r1x1 r1y0 r1y1 r2x0 r2x1 r2y0 r2y1
              x0 y0 x1 y1 x y key pitch
              viaDef via list1 list2 xy wb wt viaName viaDef via)
@@ -69,16 +69,24 @@
             r2y1=(cadr (cadr rect2))
             (cond (horz && (round (r1y0-r2y0)/MfgGrid)==0 && (round (r1y1-r2y1)/MfgGrid)==0 ; horizontal aligned
                    (cond ((round (r1x1-r2x0)/MfgGrid)<0 && (round (r2x0-r1x1-space)/MfgGrid)<=0
-                          overlap=(list r1x0:r1y0 r2x1:r1y1))
+                          overlap=(list r1x0:r1y0 r2x1:r1y1)
+                          gap=    (list r1x1:r1y0 r2x0:r1y1)
+                          )
                          ((round (r2x1-r1x0)/MfgGrid)<0 && (round (r1x0-r2x1-space)/MfgGrid)<=0
-                          overlap=(list r2x0:r1y0 r1x1:r1y1))
+                          overlap=(list r2x0:r1y0 r1x1:r1y1)
+                          gap=    (list r2x1:r1y0 r1x0:r1y1)
+                          )
                          )
                    )
                   (!horz && (round (r1x0-r2x0)/MfgGrid)==0 && (round (r1x1-r2x1)/MfgGrid)==0 ; vertical aligned
                    (cond ((round (r1y1-r2y0)/MfgGrid)<0 && (round (r2y0-r1y1-space)/MfgGrid)<=0
-                          overlap=(list r1x0:r1y0 r1x1:r2y1))
+                          overlap=(list r1x0:r1y0 r1x1:r2y1)
+                          gap=    (list r1x0:r1y1 r1x1:r2y0)
+                          )
                          ((round (r2y1-r1y0)/MfgGrid)<0 && (round (r1y0-r2y1-space)/MfgGrid)<=0
-                          overlap=(list r1x0:r2y0 r1x1:r1y1))
+                          overlap=(list r1x0:r2y0 r1x1:r1y1)
+                          gap=    (list r1x0:r2y1 r1x1:r1y0)
+                          )
                          )
                    )
                   )
@@ -88,10 +96,10 @@
               (dbAddFigToNet rect net)
               (dbReplaceProp rect "autogen" "string" "RouteNearby")
               (when protect_map
-                x0=(car  (car  overlap))
-                y0=(cadr (car  overlap))
-                x1=(car  (cadr overlap))
-                y1=(cadr (cadr overlap))
+                x0=(car  (car  gap))
+                y0=(cadr (car  gap))
+                x1=(car  (cadr gap))
+                y1=(cadr (cadr gap))
                 x=(x0+x1)/2
                 y=(y0+y1)/2
                 pitch=pitch_m[layerNum]/2 ; HACK: assumes half-pitch is symmetric
