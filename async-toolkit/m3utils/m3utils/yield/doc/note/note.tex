@@ -68,7 +68,7 @@
 \input{build/hash}
 
 \title{A Note on Hardware Redundancy \\ Under \\ Non-Independent Yield Models}
-\author{Mika Nystr\"om \\ {\tt mika.nystroem@intel.com} \\ {\tt \hash}}
+\author{Mika Nystr\"om \\ {\tt mika.nystroem@intel.com}}
 
 \date{\today}
 
@@ -399,7 +399,7 @@ From section~\ref{sec:ex16of17} we can generalize as follows.  A system has $N$ 
 P_{S(N)}(x \geq N-1) = N \, Y(N-1) - (N-1)\, Y(N) \quad .
 \end{equation}
 
-\section{Example}
+\section{Example}\label{sec:ex16of18}
 As in section~\ref{sec:ex16of17} but assume we have two spare units so that
 there is a need for 16 out of 18 units to be operational.
 
@@ -417,7 +417,7 @@ and
 \end{aligned}\end{equation}
 (We may note that the sum of coefficients is 1, as always.)
 
-\section{Properties of the System Yield}
+\section{Properties of the System Yield}\label{sec:props}
 
 The following properties follow directly from the definition of the system yield as a function of $Y(A)$.
 
@@ -434,7 +434,7 @@ The following properties follow directly from the definition of the system yield
   
 \end{enumerate}
 
-\section{Implementation of the restricted formulation}
+\section{Implementation of the restricted formulation}\label{sec:impl}
 
 A simple implementation of the formulation in section~\ref{sec:restricted} above is given in the programming language Scheme\cite{scheme}.
 \begin{verbatim}
@@ -457,6 +457,9 @@ procedure of three arguments: \verb!A! the area of a subsystem,
 subsystems that need to be functional.  (\verb!sum! and \verb!choose! are not part of the standard Scheme language but have the obvious meanings here.)  The so-returned procedure
 produces the system yield of the system containing the stated
 subsystems.
+A full listing of the program is given in appendix~\ref{app:program}.
+
+It follows from the properties listed in section~\ref{sec:props} that we can evaluate the coefficients of the yield function by formally substituting a Kronecker delta function for the yield function.  For more details see appendix~\ref{app:program}.
 
 \section{Discussion}
 Originally, integrated circuit defect density was modeled by
@@ -630,9 +633,93 @@ they can take the entire system of interest---probably a semiconductor
 die---into consideration ``at once''), and doing so with computational
 efficiency.
 
+\section{Acknowledgements}
+
+\appendix
+\newpage
+\section{Program listing}
+
+The following is a full listing of necessary code to generate the results of this paper in an interpreter implementing the {\it Revised$^4$ Report on the Algorithmic Language Scheme\/} (R4RS)\cite{scheme}.
+
+First, \verb!choose! and \verb!sum! are implemented in the obvious way:
+\begin{verbatim}
+(define (choose n k)
+  (let loop ((d 1)             ;; Denominator
+             (u (+ n (- k) 1)) ;; nUmerator
+             (p 1)             ;; Product
+             )
+    (if (> d k) p
+        (loop (+ d 1) (+ u 1) (* p (/ u d))))))
+
+(define (sum lo hi f)
+  (let loop ((s 0)
+             (i lo))
+    (if (= i hi)
+        (+ s (f i))
+        (loop (+ s (f i)) (+ i 1)))))
+\end{verbatim}
+
+Then we implement \verb!make-yield-calculator! as in section~\ref{sec:impl} but with a slight syntactic change from \verb!(define (Pi k)...! to \verb!(define Pi (lambda(k)...! which allows the introduction of memoization:
+\begin{verbatim}
+(define (make-yield-calculator Y)
+  (lambda(A N M)
+
+    (define Pi
+      (memoize
+       (lambda (k)
+         (if (= k N)
+             (Y (* N A))
+             
+             (- (Y (* k A))
+                (sum (+ k 1)
+                     N
+                     (lambda(j)(* (choose (- N k) (- N j)) (Pi j)))))))))
+
+    (sum M N (lambda(i) (* (choose N i) (Pi i)))))
+  )
+\end{verbatim}
+
+The procedure \verb!memoize! is here defined either for simplicity
+\begin{verbatim}
+(define (memoize f) f)
+\end{verbatim}
+or, for speed, by a memoization implementation such as the one from section~3.3.3 of Abelson and Sussman\cite{sicp}.  This is sufficient for calculating the yield according to the formulas developed in this paper.
+
+If we wish to derive the yield formulas that appear earlier in this paper (e.g., sections~\ref{sec:ex16of17} and~\ref{sec:ex16of18}) we can introduce the Kronecker delta function $\delta_{ij}$ as follows:
+\begin{verbatim}
+(define (kronecker i) (lambda (j) (if (= i j) 1 0)))
+\end{verbatim}
+At this point, we simply evaluate the yield using \verb!make-yield-calculator! but formally supply \verb!kronecker! as the yield function as follows:
+\begin{verbatim}
+(define (find-yield-expression A N M)
+  (let loop ((i M)
+             (q '()))
+    (if (> i N)
+        (cons '+ q)
+        (loop (+ i 1)
+              (cons (list '*
+                          (round ((make-yield-calculator (kronecker i)) A N M))
+                          (list 'Y i))
+                    q)
+              )
+        )))
+\end{verbatim}
+Then, e.g., running
+\begin{verbatim}
+(find-yield-expression 1 18 16)
+\end{verbatim}
+results in the interpreter's printing
+\begin{verbatim}
+(+ (* 136 (Y 18)) (* -288 (Y 17)) (* 153 (Y 16)))
+\end{verbatim}
+as expected (see the example in section~\ref{sec:ex16of18}).
+
+
 \begin{thebibliography}{99}
 
 \bibitem{scheme} W.~Clinger and J.~Rees, eds. {Revised$^4$ Report on the Algorithmic Language Scheme.}  In {\it ACM Lisp Pointers IV}, July-September 1991.
+
+\bibitem{sicp} H.~Abelson and G.~J.~Sussman with J.~Sussman.  {\it Structure and Interpretation of Computer Programs,} second edition.  Cambridge, Mass.:~MIT Press, 1996.
 
 \bibitem{murphy} B.~T.~Murphy. Cost-size optima of monolithic integrated circuits. {\it Proceedings of the IEEE}, 12({\bf 52}), pp.~1537--1545, Dec.~1964.
 
@@ -647,6 +734,8 @@ efficiency.
 \end{thebibliography}
 
 
+\section{Version}
+The Git hash of the head when this document was built was {\tt \hash}.
 
   
   
