@@ -136,7 +136,7 @@ $Y(A)$ is strictly decreasing in $A$.  We shall reserve $Y$ for the
 process yield in this form.  
 
 Let it be given that a system $S$ comprises $N$ subsystems
-$u_i$, each with area $A_{U_i}$, so that
+$u_i$, each with area $A_{u_i}$, so that
 \begin{equation}
   A_S = \sum A_{u_i} \quad .
 \end{equation}
@@ -206,7 +206,7 @@ We introduce the shorthand
 \end{equation}
 where we may write the subscript of $\pi$ as a bit vector $v$ where
 bit $i$ in $v$ corresponds to whether $u_i \in \tau$.  By analogy with
-boolean algebra, we call the individual, mutually exclusive $pi_i$ the
+boolean algebra, we call the individual, mutually exclusive $\pi_i$ the
 {\em minterms\/} of the fabrication process.
 
 The probability that the circuitry in $\sigma$ is fabricated correctly is
@@ -260,27 +260,20 @@ Consider the system $S$ comprising the subsystems $u_0$ and $u_1$ with areas
 $A_{u_0} = 1$ and $A_{u_1} = 2$.  There are four manufacturing minterms with associated probabilities:
 %\begin{equation}
   \begin{equation}\begin{aligned}
-  \pi_{00} = P(C = \emptyset), \\
-  \pi_{01} = P(C = \{ u_0 \}), \\
-  \pi_{10} = P(C = \{ u_1 \}), \\
-  \pi_{11} = P(C = \{ u_0, u_1 \}).
+  \pi_{00} &=& P(C = \emptyset), \\
+  \pi_{01} &=& P(C = \{ u_0 \}), \\
+  \pi_{10} &=& P(C = \{ u_1 \}), \\
+  \pi_{11} &=& P(C = \{ u_0, u_1 \}).
 \end{aligned}\end{equation}
 %\end{equation}
 Now we consider the power sets of $\Sigma_S$ and their areas:
 \begin{equation}
-  A_\emptyset = 0 \quad ,
-\end{equation}
-\begin{equation}
-  A_{\{u_0\}} = 1 \quad ,
-\end{equation}
-\begin{equation}
-  A_{\{u_1\}} = 2 \quad ,
-\end{equation}
-\begin{equation}
-  A_{\{u_1\}} = 2 \quad ,
-\end{equation}
-\begin{equation}
-  A_{\{u_0,u_1\}} = 3 \quad .
+  \begin{aligned}
+  A_\emptyset &=& 0 \quad ,
+  A_{\{u_0\}} &=& 1 \quad ,
+  A_{\{u_1\}} &=& 2 \quad ,
+  A_{\{u_0,u_1\}} &=& 3 \quad .
+  \end{aligned}
 \end{equation}
 Accordingly we may write the equations for the minterm probabilities:
 %\begin{equation}
@@ -740,7 +733,7 @@ as expected (see the example in section~\ref{sec:ex16of18}).
 
 \bibitem{polya1923}F.~Eggenberger and G.~P\'olya. \"Uber die Statistik verketteter Vorg\"ange. {\it Z. Angew. Math. Mech.}, ({\bf 3}), pp.~279--289, 1923.
 
-\bibitem{stanford}A.~.W.~Marshall and I.~Olkin.  {\it Bivariate Distributions Generated from P\'olya-Eggenberger Urn Models.}  Technical report no.~262, Department of Statistics, Stanford University.  Stanford:\ October 1989.
+\bibitem{stanford}A.~W.~Marshall and I.~Olkin.  {\it Bivariate Distributions Generated from P\'olya-Eggenberger Urn Models.}  Technical report no.~262, Department of Statistics, Stanford University.  Stanford:\ October 1989.
   
 \end{thebibliography}
 
