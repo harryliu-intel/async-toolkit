@@ -199,6 +199,16 @@ it is clear that each of the members  $\sigma \in 2^\Sigma$ corresponds to a cer
   A_\sigma = \sum_{u_i \in \sigma} A_{u_i} \quad ,
 \end{equation}
 and also that the result of fabrication will be that $C$ equals precisely one of the members of $2^\Sigma$.
+
+We introduce the shorthand
+\begin{equation}
+  \pi_\tau = P(C = \tau)
+\end{equation}
+where we may write the subscript of $\pi$ as a bit vector $v$ where
+bit $i$ in $v$ corresponds to whether $u_i \in \tau$.  By analogy with
+boolean algebra, we call the individual, mutually exclusive $pi_i$ the
+{\em minterms\/} of the fabrication process.
+
 The probability that the circuitry in $\sigma$ is fabricated correctly is
 \begin{equation}
   P(\sigma \subseteq C) = Y(A_\sigma) = Y \left( \sum_{u_i \in \sigma} A_{u_i} \right) \quad , \label{eq:system}
@@ -217,25 +227,17 @@ different $\tau$), whereas $P(\sigma \subseteq C)$ is simply the
 process yield of the area of $\sigma$ (but not mutually exclusive for
 different $\sigma$).  Our approach will be to write an equation that
 expresses the known $P(\sigma \subseteq C)$ in terms of the unknown
-$P(C = \tau)$ and then use that to solve for the $P(C = \tau)$.  Once
-we have the $P(C = \tau)$ we can decompose any desired event (e.g.,
-``manufacturing $\geq M$ blocks correctly'') into the minterms that make
+$P(C = \tau)$ and then use that to solve for the $P(C = \tau)$.
+
+We observe that (\ref{eq:master}) describes $2^N$ equations, and there are $2^N$ unknowns $\pi_\tau = P(C = \tau)$.
+
+Once
+we have the $\pi_\tau = P(C = \tau)$ we can decompose any desired event into the minterms that make
 up that event, and since the minterms are mutually exclusive, their
 probabilities can be added to yield the probability of the class of
 events we seek.
-
-We observe that (\ref{eq:master}) describes $2^N$ equations, and there are $2^N$ unknowns $P(C = \tau)$.
-
-We introduce the shorthand
-\begin{equation}
-  \pi_\tau = P(C = \tau)
-\end{equation}
-where we may write the subscript of $\pi$ as a bit vector $v$ where
-bit $i$ in $v$ corresponds to whether $u_i \in \tau$.  By analogy with
-boolean algebra, we call the individual, mutually exclusive $pi_i$ the
-{\em minterms\/} of the fabrication process.
-
-Having derived each $P(C = \tau)$ we can now compute the probability of arriving at any desired subset $\sigma \subseteq \Sigma$, for example, for the subsets
+In other words, we can compute the probability of arriving
+ at  $\sigma \subseteq \Sigma$, for example, for the subsets
 \begin{equation}
   \sigma : \sigma \subseteq \Sigma : || \sigma || \geq M \label{eq:countsets}
 \end{equation}
@@ -333,12 +335,17 @@ areas?
 
 With the restriction that the subsystems all be equal, the distinction
 between different subsystems in the subscripts of $\pi_\tau$ in
-(\ref{eq:pi}) disappears, and we may simply count the number of ones
+(\ref{eq:master}) disappears, and we may simply count the number of ones
 in $\tau$.  In other words, we may write
   \begin{equation}
     \forall \tau : w(\tau) = n : \pi_\tau = \Pi_n \quad ,
   \end{equation}
-  where $w(k)$ is the bit-sum function (i.e., the sum of the bits of the binary expansion of $k$), and the salient difference to the earlier formulation is that we have replaced a number of different minterm probabilities $\pi_\tau$ with the uniform probability $\Pi_n$, which pertains to any minterm with precisely $n$ non-defective components.
+  where $w(k)$ is the bit-sum function (i.e., the sum of the bits of
+  the binary expansion of $k$), and the salient difference to the
+  earlier formulation is that we have replaced a number of different
+  minterm probabilities $\pi_\tau$ with the uniform probability
+  $\Pi_n$, which pertains to any minterm with precisely $n$
+  non-defective components.
 
   Under the preceding conditions, we can write, as before,
   \begin{equation}
@@ -415,7 +422,6 @@ and
     P_{S(18)}(x \geq 16) &=& \Pi_{18} + {18 \choose 17} \Pi_{17} + {18 \choose 16} \Pi_{16} \\
     &=& 136 \, Y(18) - 288 \, Y(17) + 153 Y(16) \quad .
 \end{aligned}\end{equation}
-(We may note that the sum of coefficients is 1, as always.)
 
 \section{Properties of the System Yield}\label{sec:props}
 
@@ -526,12 +532,14 @@ implying that
 \end{equation}
 In other words, the variance of the defect density is $1/\alpha$ times the average defect density.
 
-The most widely seen forms of Stapper's equation have $\alpha
-\rightarrow \infty$, which implies a Poisson distribution, or $\alpha
-= 1$, which implies a Bose-Einstein distribution.  However, other
+The most widely seen forms of Stapper's equation have
+$\alpha \rightarrow \infty$,
+which implies a Poisson distribution, or
+$\alpha= 1$,
+which implies a Bose-Einstein distribution.  However, other
 values of $\alpha$ are possible, and smaller values of $\alpha$ imply
 greater variability in the underlying defect density (more
-clustering).  Recent processes in fact show $\alpha$ in the range
+clustering).  Recent (2020) nanometer-scale fabrication processes in fact show $\alpha$ in the range
 roughly 0.02 to 0.05---i.e., the variance of the defect density is
 between 20 and 50 times its average value.  A quick glance at recent
 wafer data suggests that such values appear more reasonable (because of
@@ -570,7 +578,7 @@ the restriction regardless of the shape of the region.  The regions that
 are implied by (\ref{eq:master}) are non-convex and in fact not even contiguous.
 
 The restriction to the form of $Y(A)$ can be traced back all the way to Murphy's equation (\ref{eq:murphy}), that is: 
-\begin{equation}\label{eq:murphy}
+\begin{equation}
   Y(A) = \int_0^\infty e^{-AD} \, f(D) \, dD \quad .
 \end{equation}
 It is clear that the variability of the defect density which is here
@@ -580,7 +588,9 @@ physical processes is not clear: we do know that Murphy's formulation
 leading to the Stapper-P\'olya-Eggenberger yield results can work
 extremely well in practice for predicting gross die yields, but is it
 really capable of supporting the kind of ``slicing and dicing'' we are
-doing in this work?
+doing in this work?  In defense of our method, it should be noted that
+defect clusters are often seen that are larger than individual dice, or possibly even larger than individual wafers (if for example a machine is out of tune on a particular day), and under such conditions our arguments are clearly sound, because the regions we are interested in in our work tend
+to be far smaller than even an individual die.
 
 \section{Example}
 For our final example, let's take a specific redundant hardware module
@@ -605,7 +615,7 @@ Under binomial statistics on the other hand, we would work out
                                   + {18 \choose 16} Y(4)^{16}(1-Y(4))^2  \\
                      &=& 0.9960\ldots \quad . \hfill
 \end{aligned}\end{equation}
-If we are interested in incorporating our system into a larger system,
+If we are interested in incorporating our system into a larger super-system,
 we are likely most interested in the yield loss $\xi$ $=$ ($1-$ yield) of our system.
 In this formulation, it is clear that the binomial formulation grossly underestimates the yield loss because
 \begin{equation}
@@ -637,7 +647,7 @@ efficiency.
 
 \appendix
 \newpage
-\section{Program listing}
+\section{Program listing}\label{app:program}
 
 The following is a full listing of necessary code to generate the results of this paper in an interpreter implementing the {\it Revised$^4$ Report on the Algorithmic Language Scheme\/} (R4RS)\cite{scheme}.
 
@@ -659,7 +669,7 @@ First, \verb!choose! and \verb!sum! are implemented in the obvious way:
         (loop (+ s (f i)) (+ i 1)))))
 \end{verbatim}
 
-Then we implement \verb!make-yield-calculator! as in section~\ref{sec:impl} but with a slight syntactic change from \verb!(define (Pi k)...! to \verb!(define Pi (lambda(k)...! which allows the introduction of memoization:
+Then we implement \verb!make-yield-calculator! as in section~\ref{sec:impl} but with a slight syntactic change from \verb!(define (Pi k)...! to \verb!(define Pi (lambda(k)...! which allows us to introduce memoization\cite{sicp}:
 \begin{verbatim}
 (define (make-yield-calculator Y)
   (lambda(A N M)
@@ -719,7 +729,8 @@ as expected (see the example in section~\ref{sec:ex16of18}).
 
 \bibitem{scheme} W.~Clinger and J.~Rees, eds. {Revised$^4$ Report on the Algorithmic Language Scheme.}  In {\it ACM Lisp Pointers IV}, July-September 1991.
 
-\bibitem{sicp} H.~Abelson and G.~J.~Sussman with J.~Sussman.  {\it Structure and Interpretation of Computer Programs,} second edition.  Cambridge, Mass.:~MIT Press, 1996.
+\bibitem{sicp} H.~Abelson and G.~J.~Sussman with J.~Sussman.  {\it Structure and Interpretation of Computer Programs,} second edition.  Cambridge, Mass.:~MIT Press, 1996.  Available online from the MIT Press (free of charge),\par
+  {\tt //https://mitpress.mit.edu/sites/default/files/sicp/full-text/book/book.html}\ .
 
 \bibitem{murphy} B.~T.~Murphy. Cost-size optima of monolithic integrated circuits. {\it Proceedings of the IEEE}, 12({\bf 52}), pp.~1537--1545, Dec.~1964.
 
