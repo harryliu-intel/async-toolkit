@@ -13,6 +13,10 @@
 \usepackage{caption}
 \captionsetup{margin=2pc,font=small,labelfont=bf}
 
+\usepackage{tikz}
+\def\checkmark{\tikz\fill[scale=0.15](0,.35) -- (.25,0) -- (1,.7) -- (.25,.15) -- cycle;}
+\def\check#1{\overset{\checkmark}{#1}}
+
 %%%%%%%%%%%%%%Mika's figure macro%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \def\listcaption_ins_epsfig#1#2#3#4{
   \begin{figure}[!tbph!]
@@ -77,8 +81,20 @@
 \arraycolsep=1.4pt\def\arraystretch{1.5}
 
 \begin{abstract}
-  We define process yield, manufacturing yield, and system yield, and consider
-  systems that incorporate redundancy in such a way as to raise system yield higher than raw process yield.  We derive an expression for how redundancy improves system yield under weak assumptions on the process yield, assuming only that process yield can be expressed as a formula in terms of area.  In particular, we do not assume that process yields are spatially independent.  We discuss the use of non-independent (i.e., non-Poisson) process yield expressions and their appearance in semiconductor fabrication lines.  Through a series of examples including a software implementation, we show how to compute the system yield for interesting redundant hardware systems and conclude with an example that shows that the na\"\i{}ve but common assumption of independent process yields can grossly overestimate the extent to which hardware redundancy improves system yields.
+We define process yield, manufacturing yield, and system yield, and
+consider systems that incorporate redundancy in such a way as to raise
+system yield higher than raw process yield.  We derive an expression
+for how redundancy improves system yield under weak assumptions on the
+process yield, assuming only that process yield can be expressed as a
+formula in terms of area.  In particular, we do not assume that
+process yields are spatially independent.  We discuss the use of
+non-independent (i.e., non-Poisson) process yield expressions and
+their appearance in semiconductor fabrication lines.  Through a series
+of examples including a software implementation, we show how to
+compute the system yield for interesting redundant hardware systems
+and conclude with an example that shows that the na\"\i{}ve but common
+assumption of independent process yields can grossly overestimate the
+extent to which hardware redundancy improves system yields.
 \end{abstract}
 
 %\tableofcontents
@@ -86,7 +102,6 @@
 %\listoftables
 
 \section{Introduction}
-
 We define {\em process yield\/} $Y$ as the probability of a particular event,
 namely, the event that a manufactured circuit is found to contain no
 manufacturing defects that are fatal to its functioning according to
@@ -122,19 +137,15 @@ process yield in this form.
 
 Let it be given that a system $S$ comprises $N$ subsystems
 $u_i$, each with area $A_{U_i}$, so that
-
-\begin{equation}
-  S = u_0 \cup u_1 \cup \cdots \cup u_{N-1}
-\end{equation}
-and
 \begin{equation}
   A_S = \sum A_{u_i} \quad .
 \end{equation}
 
 When we have occasion to speak of the subsystems as a set, we write
 \begin{equation}
-  \Sigma = \{ u_0, u_1, \ldots , u_{N-1} \} \quad .
+  \Sigma = \{ u_0, u_1, \ldots , u_{N-1} \} 
 \end{equation}
+for the set of all subsystems $u_i$ of $S$.
 
 Further assume that at least $M \leq N$ of
 the subsystems $u_i$ must be fabricated correctly in order for $S$ to
@@ -151,15 +162,15 @@ We drop the subscript $S(N)$ when the meaning is clear from context.
 We shall derive expressions for the system yield of $S$ under the
 above assumptions.
 
-It is obvious that the system yield will depend on the subsystem
-yields of the subsystems $u_i$.  Let us therefore introduce symbology
-for these yields.  Let's write $U_i$ for the event that subsystem
-$u_i$ is fabricated correctly.  Since the subsystems themselves do not
-have internal redundancy, the process yield, system yield, and
-manufacturing yield of any one subsystem can be written as
-\begin{equation}
-  P(U_i) = Y(A) \quad .
-\end{equation}
+%It is obvious that the system yield will depend on the subsystem
+%yields of the subsystems $u_i$.  Let us therefore introduce symbology
+%for these yields.  Let's write $\check{u_i}$ for the event that subsystem
+%$u_i$ is fabricated correctly.  Since the subsystems themselves do not
+%have internal redundancy, the process yield, system yield, and
+%manufacturing yield of any one subsystem can be written as
+%\begin{equation}
+%  P(\check{u_i}) = Y(A_{u_i}) \quad .
+%\end{equation}
 
 It will turn out to be useful to consider the case that {\em exactly\/} $k$ out of $N$ subsystems are functional, and we will write this analogously to (\ref{eq:sysyield}) as $P_{S(N)}(x = k)$.
 
@@ -167,40 +178,17 @@ It will turn out to be useful to consider the case that {\em exactly\/} $k$ out 
 
 Note first that
 \begin{equation}
-  P_{S(N)}(x \geq N) = P_{S(N)}(x = N) = Y\left(\sum A_U\right) = Y(A_S) \quad ,
+  P_{S(N)}(x \geq N) = P_{S(N)}(x = N) = Y\left(\sum_i A_{u_i}\right) = Y(A_S) \quad ,
 \end{equation}
 since this is the system yield of $S$ under the requirement that all
 $N$ subsystems are fully functional, which is simply the process yield
-of the area of the system $S$ or equivalently the $N$ subsystems $U_i$.
+of the area of the system $S$ or equivalently the $N$ subsystems $u_i$.
 
-We may write out the event corresponding to $P_{S(N)}(x = N)$ as an intersection of events $U_i$, namely,
-
+Let's consider the state of affairs after fabricating $S$.  Some number of
+subsystems $u_i \in \Sigma$ will have been fabricated correctly, with the balance defective.  Let's define $C$ to be the set of correctly fabricated subsystems.  It is clear that
 \begin{equation}
-U_0 \cap U_1 \cap \cdots \cap  U_{N-1} \quad .
+  C \subseteq \Sigma .
 \end{equation}
-
-If we now consider the result of fabricating our $N$ subsystems as one out of the list of possible events
-%\begin{equation}
-  \begin{equation}\begin{aligned}
-    &U_0 &\cap \  U_1 &\cap \cdots \cap U_{N-1} \quad  \\
-    &U_0'&\cap \ U_1 &\cap \cdots \cap U_{N-1} \quad  \\
-    \ldots\\
-    &U_0'&\cap \ U_1' &\cap \cdots \cap U_{N-1}' \quad ,
-  \end{aligned}\end{equation}
-%\end{equation}
-where we use the normal set notation $\cup$ for union, $\cap$ for intersection, and $'$ for complement.
-we can write the probability of each of the $2^N$ events in the list,
-and label them in binary bits as in each case the subsystem $u_i$ is
-fabricated to function or not:
-%\begin{equation}
-  \begin{equation}\label{eq:pi}\begin{aligned}
-    \pi_{1\ldots11} = P(&U_0 &\cap \  U_1 &\cap \cdots \cap U_{N-1})   \\
-    \pi_{1\ldots10} = P(&U_0'&\cap \ U_1 &\cap \cdots \cap U_{N-1})   \\
-    \ldots\\
-    \pi_{0\ldots00} = P(&U_0'&\cap \ U_1' &\cap \cdots \cap U_{N-1}')  , \\
-  \end{aligned}\end{equation}
-%\end{equation}
-Note that each $\pi_k$ corresponds to a subset of $\Sigma$ that was fabricated correctly (and the balance being fabricated defective).  In analogy with boolean logic, we call the $2^N$ possible and mutually exclusive results of fabrication the {\em minterms\/} of the fabrication process.
 
 If we now consider the power set of the set of subsystems, that is,
 \begin{equation}
@@ -208,21 +196,46 @@ If we now consider the power set of the set of subsystems, that is,
 \end{equation}
 it is clear that each of the members  $\sigma \in 2^\Sigma$ corresponds to a certain physical area, namely
 \begin{equation}
-  A_\sigma = \sum_{u_i \in \sigma} A_{u_i} \quad .
+  A_\sigma = \sum_{u_i \in \sigma} A_{u_i} \quad ,
 \end{equation}
-The probability that the circuitry in $\sigma$ is fabricated correctly is therefore
+and also that the result of fabrication will be that $C$ equals precisely one of the members of $2^\Sigma$.
+The probability that the circuitry in $\sigma$ is fabricated correctly is
 \begin{equation}
-  P_\sigma = Y(A_\sigma) = Y \left( \sum_{u_i \in \sigma} A_{u_i} \right) \quad , \label{eq:system}
+  P(\sigma \subseteq C) = Y(A_\sigma) = Y \left( \sum_{u_i \in \sigma} A_{u_i} \right) \quad , \label{eq:system}
 \end{equation}
-irrespective of whether the remaining blocks $u_i \not\in \sigma$ are fabricated correctly or not. (We are considering the process yield of only the subsystems selected by the subset $\sigma \subseteq \Sigma$.)  But this is exactly the same as the probability of the manufacturing process's arriving at any of the minterms including $\sigma$.  Therefore we may write
+irrespective of whether the remaining blocks $u_i \not\in \sigma$ are
+fabricated correctly or not. (We are considering the process yield of
+only the subsystems selected by the subset $\sigma \subseteq \Sigma$.)
+But this is exactly the same as the probability of the manufacturing
+process's producing any $C$ that includes $\sigma$.
+Therefore we may write
 \begin{equation}
-  \sum_{\sigma \subseteq \tau} \pi_\tau = P_\sigma \label{eq:master}
+  \sum_{\tau \supseteq \sigma} P(C = \tau) = P(\sigma \subseteq C) \quad . \label{eq:master}
 \end{equation}
-where the notation $\sigma \subseteq \tau$ means that for every $u_i$ that appears in $\sigma$, bit $i$ of $\tau$ is one.
+Note that $P(C = \tau)$ is unknown (but mutually exclusive for
+different $\tau$), whereas $P(\sigma \subseteq C)$ is simply the
+process yield of the area of $\sigma$ (but not mutually exclusive for
+different $\sigma$).  Our approach will be to write an equation that
+expresses the known $P(\sigma \subseteq C)$ in terms of the unknown
+$P(C = \tau)$ and then use that to solve for the $P(C = \tau)$.  Once
+we have the $P(C = \tau)$ we can decompose any desired event (e.g.,
+``manufacturing $\geq M$ blocks correctly'') into the minterms that make
+up that event, and since the minterms are mutually exclusive, their
+probabilities can be added to yield the probability of the class of
+events we seek.
 
-We observe that (\ref{eq:master}) describes $2^N$ equations, and there are $2^N$ unknowns $\pi_\tau$.
+We observe that (\ref{eq:master}) describes $2^N$ equations, and there are $2^N$ unknowns $P(C = \tau)$.
 
-Having derived each $\pi_\tau$ we can now compute the probability of arriving at any desired subset $\sigma \subseteq \Sigma$, for example, for the subsets
+We introduce the shorthand
+\begin{equation}
+  \pi_\tau = P(C = \tau)
+\end{equation}
+where we may write the subscript of $\pi$ as a bit vector $v$ where
+bit $i$ in $v$ corresponds to whether $u_i \in \tau$.  By analogy with
+boolean algebra, we call the individual, mutually exclusive $pi_i$ the
+{\em minterms\/} of the fabrication process.
+
+Having derived each $P(C = \tau)$ we can now compute the probability of arriving at any desired subset $\sigma \subseteq \Sigma$, for example, for the subsets
 \begin{equation}
   \sigma : \sigma \subseteq \Sigma : || \sigma || \geq M \label{eq:countsets}
 \end{equation}
@@ -230,15 +243,14 @@ corresponding to the probability $P_{S(N)}(x \geq M)$, i.e., the
 desired value of the system yield from (\ref{eq:sysyield}).  The
 formulation extends trivially for any other desired constraint on the
 allowable subsets $\sigma$: since the $\pi_\tau$ correspond to
-mutually exclusive events, we may add them without further thought, so
-that the probability of any event $E$ that we care to describe in
-terms of a constraint on $\sigma$ becomes
+mutually exclusive events, we may add their probabilities without
+further thought, so that the probability of any event $E$ that we care
+to describe in terms of a constraint on $\sigma$ becomes
 \begin{equation}
   P(E) = P\left( \bigcup_{\sigma_i \in E} \sigma_i \right) =
   P\left( \bigcup_{\sigma_i \in E} \left(\bigcup_{\tau_j: \sigma_i \subseteq \tau_j, \tau_j \in 2^\Sigma} \tau_j \right) \right) =
-  \sum_{\tau_j} \pi_{\tau_j} \quad . \label{eq:generalconstraint}
+  \sum_{\tau_j} P(C = \tau_i) \quad . \label{eq:generalconstraint}
 \end{equation}
-
 
 
 \subsection{Example}
@@ -246,10 +258,10 @@ Consider the system $S$ comprising the subsystems $u_0$ and $u_1$ with areas
 $A_{u_0} = 1$ and $A_{u_1} = 2$.  There are four manufacturing minterms with associated probabilities:
 %\begin{equation}
   \begin{equation}\begin{aligned}
-  \pi_{00} = P(U_0'&\cap \ U_1')  , \\
-  \pi_{01} = P(U_0 &\cap \ U_1')  , \\
-  \pi_{10} = P(U_0'&\cap \ U_1)  , \\
-  \pi_{11} = P(U_0&\cap \ U_1)  , \\
+  \pi_{00} = P(C = \emptyset), \\
+  \pi_{01} = P(C = \{ u_0 \}), \\
+  \pi_{10} = P(C = \{ u_1 \}), \\
+  \pi_{11} = P(C = \{ u_0, u_1 \}).
 \end{aligned}\end{equation}
 %\end{equation}
 Now we consider the power sets of $\Sigma_S$ and their areas:
@@ -294,7 +306,11 @@ Accordingly we may write the equations for the minterm probabilities:
   \begin{equation}
     P_{S(2)}(x \geq 1) = \pi_{11} + \pi_{01} + \pi_{10} = Y(1) + Y(2) - Y(3) \quad .
   \end{equation}
-  Note that this result is different from the result that obtains if we assume that the probabilities of manufacturing defects' hitting $u_0$ and $u_1$ are independent.  In that case, the probability of $u_0$ being functional is $Y(1)$, the probability of $u_1$ being functional is $Y(2)$, and the probability of either being functional is simply
+Note that this result is different from the result that obtains if we
+assume that the probabilities of manufacturing defects' hitting $u_0$
+and $u_1$ are independent.  In that case, the probability of $u_0$
+being functional is $Y(1)$, the probability of $u_1$ being functional
+is $Y(2)$, and the probability of either being functional is simply
   \begin{equation}
     P_{i} = Y(1) + Y(2) - Y(1) Y(2) \quad .
   \end{equation}
@@ -310,8 +326,8 @@ cumbersome.  It involves inverting a (admittedly trivial upper
 diagonal) matrix in $2^N$ dimensions and pertains to a general class
 of problems not usually seen by practitioners.  Practitioners are far
 more likely to encounter the following problem: given that $S$
-consists of $N$ {\em equal\/} subsystems and requires at least $M \leq
-N$ of these to be functional in order for the system to be functional,
+consists of $N$ {\em equal\/} subsystems and requires at least
+$M \leq N$ of these to be functional in order for the system to be functional,
 what is the system yield given the process yield and the subsystem
 areas?
 

@@ -80,7 +80,7 @@ PROCEDURE SetProgram79(VAR p     : Power.Params;
     weightedSigma79 := WeightLkgSigma(sigma79);
     (* leakage weighted sigma *)
 
-    speedSigma := Math.sqrt(sigma79[Tech.Transistor.Ulvt] * weightedSigma79);
+    speedSigma := sigma79[Tech.Transistor.Ulvt];
     (* take the geom. mean of the Ulvt sigma and the leakage sigma *)
 
     sigma139 := InterpolatePmro(TechPmro.V, Pmro139);
