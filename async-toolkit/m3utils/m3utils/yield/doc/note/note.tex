@@ -691,14 +691,14 @@ If we wish to derive the yield formulas that appear earlier in this paper (e.g.,
 \end{verbatim}
 At this point, we simply evaluate the yield using \verb!make-yield-calculator! but formally supply \verb!kronecker! as the yield function as follows:
 \begin{verbatim}
-(define (find-yield-expression A N M)
+(define (find-yield-expression N M)
   (let loop ((i M)
              (q '()))
     (if (> i N)
         (cons '+ q)
         (loop (+ i 1)
               (cons (list '*
-                          (round ((make-yield-calculator (kronecker i)) A N M))
+                          (round ((make-yield-calculator (kronecker i)) 1 N M))
                           (list 'Y i))
                     q)
               )
@@ -706,7 +706,7 @@ At this point, we simply evaluate the yield using \verb!make-yield-calculator! b
 \end{verbatim}
 Then, e.g., running
 \begin{verbatim}
-(find-yield-expression 1 18 16)
+(find-yield-expression 18 16)
 \end{verbatim}
 results in the interpreter's printing
 \begin{verbatim}
