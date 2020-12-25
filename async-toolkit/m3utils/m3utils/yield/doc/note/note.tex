@@ -460,6 +460,32 @@ A full listing of the program is given in appendix~\ref{app:program}.
 
 It follows from the properties listed in section~\ref{sec:props} that we can evaluate the coefficients of the yield function by formally substituting a Kronecker delta function for the yield function.  For more details see appendix~\ref{app:program}.
 
+\section{Alternative derivation}
+In sections~\ref{sec:general} and~\ref{sec:restricted} we used a
+direct calculation method to derive expressions for the system yield
+as a function of process yield.  We will now examine an alternative method
+of derivation.
+
+We have remarked that the expressions we derive for system yield are equivalent
+to the binomial formula assuming independent statistics for the subsystems if and only if the statistics are Poisson.  We can use this property to calculate
+the general system yield expression from the binomial form as follows: expand the binomial formula fully, and collect like terms in powers of $Y$.  Then we can make a {\rm formal\/} substitution of $Y(N)$ for $Y^N$, and the resulting formula will be valid for all types of yield statistics.
+
+For example, consider s system of 18 subsystems of area $A=1$, 16 of which need to be functional.  If we assume independent Poisson statistics, we can write:
+\begin{equation}
+  \begin{aligned}
+P_{S(18)}(x \geq 16) &=& P_{S(18)}(x = 18) + P_{S(18)}(x = 17) + P_{S(18)}(x = 16)\\
+&=& Y(1)^{18} + {18 \choose 17} Y(1)^{17}(1-Y) + {18 \choose 16} Y(1)^{17}(1-Y)^2\\
+&=& Y(1)^{18} + 18 \, Y(1)^{17}(1-Y) + 153 \, Y(1)^{17}(1-2\,Y+Y^2) \\
+&=& 136\,Y(1)^{18} - 288 \, Y(1)^{17} + 153 Y(1)^{16}
+  \end{aligned}
+\end{equation}
+and if we now formally identify $Y(1)^k$ as $Y(k)$, we arrive at
+\begin{equation}
+P_{S(18)}(x \geq 16) = 136\,Y(18) - 288 \, Y(17) + 153 Y(16) \quad .
+\end{equation}
+Compare (\ref{eq:yield16of18}).  The method is generally valid.
+    
+
 \section{Discussion}
 Originally, integrated circuit defect density was modeled by
 practitioners as being constant, i.e., leading to Poisson defect
