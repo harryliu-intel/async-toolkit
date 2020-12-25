@@ -101,7 +101,64 @@ extent to which hardware redundancy improves system yields.
 %\listoffigures
 %\listoftables
 
-\section{Introduction}
+\section{Background and motivation}
+
+Ever since the first integrated circuit (IC) was manufactured,
+manufacturing yield has been one of the main limiters to progress in
+technology.  One of the ways that the yield of manufactured part (what
+we will call the system yield $Y_S$) can be improved is by adding hardware
+redundancy: if our design requires $N$ subsystems to be operational,
+we manufacture $N+1$ on our die and provide a scheme whereby a
+defective subsystem can be switched out.
+
+Practitioners in the field have generally modeled system yield using
+the binomial distribution, that is,
+\begin{equation}\label{eq:basic}
+  P(\text{at least $M$ out of $N$ subsystems OK}) = \sum_{k=M}^N {N \choose k}Y(1)^{N-k}(1-Y(1))^k
+\end{equation}
+where the yield of a single subsystem is given as $Y(1)$.
+
+We observe that (\ref{eq:basic}) is only correct under statistical independence of the individual yields $Y(1)$.
+
+At the same time as designers have been improving system design, yield
+modelers have been improving the modeling of manufacturing yield.  It
+was realized early on that the Poisson process was not adequate for
+describing the yield of ICs, and Murphy introduced a more
+sophisticated method in (\ref{eq:murphy}) already in 1964.  Stapper in
+particular refined Murphy's approach and applied P\'olya-Eggenberger
+statistics (\ref{eq:stapperyield}) to the yield problem starting in
+1973.  Whereas the Poisson formulation implies that there is an
+underlying constant rate of defects, the Stapper model allows for a
+highly variable defect rate, to account for clustering.  In modern
+processes, the variance of the defect density is modeled as being up to 50
+times its average value.  
+
+It is important to realize that any distribution that is not Poisson also
+implies that the yields of two subsystems on the same die are not independent.
+
+The resulting situation is something of a conundrum: redundancy
+modeling uses the binomial formula, which assumes that subsystem
+yields are independent; process yield modeling uses Stapper's model,
+or something similar, which assumes that yields are clustered.  As we
+shall see, large disagreements are possible in the computed yields of
+redundantly provisioned systems: Stapper himself observed this already in
+the 1970s and produced a model for redundancy under
+P\'olya-Eggenberger statistics in 1980\cite{stapper1980}, but it was
+quite cumbersome to use and does not appear to be used for digital
+logic yield calculations.
+
+We shall derive expressions for the system yield in terms of process
+yield that do not depend on the assumption of independence by two
+methods: first by direct computation, and then by showing how we can
+derive the same equations by a formal argument starting from the
+binomial yields, assuming independent subsystem yields.  It will be shown that the yield expressions even for
+non-Poisson underlying distributions are quite simple in practice.  In
+an appendix, we provide a short Scheme program for computing the
+necessary formulas.
+
+
+
+\section{Definitions}
 We define {\em process yield\/} $Y$ as the probability of a particular event,
 namely, the event that a manufactured circuit is found to contain no
 manufacturing defects that are fatal to its functioning according to
@@ -124,7 +181,7 @@ customer-visible functioning of the system are faulty.  We call such circuits
 This note will treat a particular method of introducing circuit
 redundancy in the hope of improving manufacturing yield.
 
-\section{Definitions}
+\section{Problem statement}
 
 Let it be given that process yield $Y$ is defined as a function of
 manufactured area.  That is, $Y$ maps from area $A$ in square
@@ -151,7 +208,7 @@ Further assume that at least $M \leq N$ of
 the subsystems $u_i$ must be fabricated correctly in order for $S$ to
 have no customer-visible faults.  We call the
 probability that at least $M$ out of $N$ units are fabricated
-correctly the {\em system yield.}
+correctly the {\em system manufacturing yield,} or for short, the {\em system yield.}
 
 We shall write for the system yield of $S$,
 \begin{equation}
@@ -756,6 +813,8 @@ as expected (see the example in section~\ref{sec:ex16of18}).
 \bibitem{murphy} B.~T.~Murphy. Cost-size optima of monolithic integrated circuits. {\it Proceedings of the IEEE}, 12({\bf 52}), pp.~1537--1545, Dec.~1964.
 
 \bibitem{stapper1973}C.~H.~Stapper. Defect density distribution for LSI yield calculations. {\it IEEE Transactions on Electron Devices}, 7({\bf 20}), pp.~655--657, July 1973.
+
+  \bibitem{stapper1980}C.~H.~Stapper. Yield Model for Productivity Optimization of VLSI Memory Chips with Redundancy and Partially Good Product.  {\it IBM J. Res. Develop.\/} 3({\bf 24}), May 1980.
 
 \bibitem{moore1970}G.~E.~Moore. What level of LSI is best for you? {\bf Electronics} {\bf 43}, pp.~126--130, Feb.~1970.
 
