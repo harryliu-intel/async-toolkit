@@ -7,6 +7,7 @@
 \usepackage{array}
 \usepackage{amsmath}
 \usepackage{sectsty}
+\usepackage{breqn}
 %\allsectionsfont{\mdseries\sffamily}
 \allsectionsfont{\mdseries\sc}
 
@@ -517,7 +518,7 @@ A full listing of the program is given in appendix~\ref{app:program}.
 
 It follows from the properties listed in section~\ref{sec:props} that we can evaluate the coefficients of the yield function by formally substituting a Kronecker delta function for the yield function.  For more details see appendix~\ref{app:program}.
 
-\section{Alternative derivation}
+\section{Alternative derivation}\label{sec:poissonderiv}
 In sections~\ref{sec:general} and~\ref{sec:restricted} we used a
 direct calculation method to derive expressions for the system yield
 as a function of process yield.  We will now examine an alternative method
@@ -540,9 +541,21 @@ and if we now formally identify $Y(1)^k$ as $Y(k)$, we arrive at
 \begin{equation}
 P_{S(18)}(x \geq 16) = 136\,Y(18) - 288 \, Y(17) + 153 \, Y(16) \quad .
 \end{equation}
-Compare (\ref{eq:yield16of18}).  The method is valid generally, and it may
-be of interest to practitioners who already have a methodology for building
-the binomial formulas.  It is not, however, any easier to implement than the method described in section~\ref{sec:restricted}, as it involves expanding a doubly-nested combinatorial expression and collecting like terms, a substantial amount of bookkeeping if the formulas are large.
+Compare (\ref{eq:yield16of18}).  The method is valid generally, and it
+may be of interest to practitioners who already have a methodology for
+building the binomial formulas.  It is not, however, any easier to
+implement directly than the method described in section~\ref{sec:restricted},
+as it involves expanding a doubly-nested combinatorial expression and
+collecting like terms, a substantial amount of bookkeeping if the
+formulas are large.
+
+The formal approach via Poisson statistics has one powerful
+application, which is to use it to build hierarchical yield
+computations.  Since the formal approach is generally valid, we can
+use a Poisson formalism to build yield expressions for arbitarily large
+and complicated systems, and easily evaluate the yield formulas, without
+making the unwarranted assumption of statistical independence.  See
+appendix~\ref{app:hierarchical}.
     
 
 \section{Discussion}
@@ -803,6 +816,269 @@ results in the interpreter's printing
 as expected (see the example in section~\ref{sec:ex16of18}).
 
 
+\section{A hierarchical yield calculation system}\label{app:hierarchical}
+We shall use the idea of section~\ref{sec:poissonderiv} to build a calculator
+capable of evaluating the expected yield of a hierarchically defined system,
+with redundancy incorporated.  The basic idea is to use the equivalence
+of the formulation developed in this paper with binomial probability
+calculations under the assumption that only Poisson statistics are involved.
+Having developed the yield formula under Poisson statistics, we can then
+back out the calculation to derive the actual chip areas being considered,
+with appropriate weighting, and compute the yield under any given yield
+model, Poisson or not.
+
+Our approach will be based on polynomial arithmetic.  The yield of a given
+system with subsystems incorporated in it, under the assumption of Poisson
+statistics, can be represented as a polynomial in $x$, which we define as
+\begin{equation}
+  x = Y(1) \quad .
+\end{equation}
+For example, if the system has no redundancy and is of area 100, then its
+yield can simply be written as
+\begin{equation}
+  P(\text{system of area 100 works}) = x^{100} \quad .
+\end{equation}
+Similarly if we let $y$ (which is some expression in $x$) be the probability that some subsystem $T$ works, then
+the probability that a system comprising 18 instances of $T$ of which at least~16 must be functional will be
+\begin{equation}
+  P(\text{system of 16/18 instances of {\sl T} works}) =
+  136\,y^{18} - 288 \, y^{17} + 153 \, y^{16} \quad ,
+\end{equation}
+again, under the assumption of Poisson statistics (see section~\ref{sec:poissonderiv}.  Since $y$ is known
+to be a polynomial in $x$, the probability can also be expanded as a
+polynomial in $x$.  Having expanded the Poisson polynomial in $x$, we
+may then {\em formally identify\/} the $x^n$ as $Y(n)$.  Based on the
+argument in section~\ref{sec:poissonderiv}, the resulting formula will
+be correct, regardless of whether the underlying statistics is Poisson
+or not.
+
+In order to complete this system, we define polynomials in terms of monomials.
+We write a monomial
+\begin{equation}
+  a \, x^k
+\end{equation}
+where $a$ and $k$ are real numbers (they need not be integers) and $x$ is $Y(1)$.  The abstraction in Scheme is very simple, a monomial is a short list starting with the symbol \verb!t!:
+\begin{verbatim}
+(define (term? x) (and (list x) (eq? (car x) 't)))
+
+(define (make-number-term n) (list 't n 0))
+
+(define (make-power-term k) (list 't 1 k))
+
+(define (term-factor t) (cadr t))
+
+(define (term-exponent t) (caddr t))
+\end{verbatim}
+
+We then introduce a few basic operations (see appendix~\ref{app:codecomplete} for full details):
+\begin{verbatim}
+(define (*-term a b) ...)
+
+(define (+-term a b) ...)
+
+(define (^-term a b) ...) 
+
+(define (sum-term lo hi f) ...) ,
+\end{verbatim}
+which perform the expected math on polynomials.  Finally, we introduce the
+formal conversion process from polynomial to yield formula, and a means
+of evaluating the complete formula:
+\begin{verbatim}
+(define (term-2-yield x)
+  (if (term? x)
+      (list '* (term-factor x) (list 'Y (term-exponent x)))
+      (cons '+ (map term-2-yield (cdr x)))))
+
+(define (eval-yield x Y) (eval (term-2-yield x)))
+\end{verbatim}
+This is now enough to develop our hierarchical yield computer:
+\begin{verbatim}
+(define (area-yield A) (make-power-term A))
+
+(define (modules-yield . x) (accumulate *-term (make-number-term 1) x))
+
+(define (redundant-yield x N M)
+  (sum-term M N (lambda(k)(*-term (make-number-term (choose N k))
+                                  (*-term (^-term x k)
+                                          (^-term 
+                                           (+-term 1-term (*-term -1-term x))
+                                           (- N k))))
+                       )))
+\end{verbatim}
+
+\subsection{Example interaction}
+Let's ask the computer what the yield of a module of area 100 is.
+\begin{verbatim}
+> (define poly-100 (area-yield 100))
+poly-100
+> poly-100
+(t 1 100)
+\end{verbatim}
+In other words (see above), the yield of a module of area 100 is, as expected,
+the monomial $1\,x^{100}$.  To evaluate this, we convert it to a formula in $Y$
+and substitute in our desired yield model:
+\begin{verbatim}
+> (term-2-yield poly-100)
+(* 1 (Y 100))
+\end{verbatim}
+that is to say $1\,Y(100)$
+\begin{verbatim}
+> (define (Y A) (YieldModel.Stapper A 0.10 30 0.02))
+Y
+> (eval-yield  poly-100 Y)
+0.7087299045569723
+\end{verbatim}
+which means that given the provided model, Stapper's formula with $D_0=0.10$, $n=30$, $\alpha=0.02$, the yield of the module is expected to be about 70.9\%.
+
+\subsection{Extended example}
+
+ The HAL9000 multiprocessor consists of 10 individual HAL1000
+ processors, one of which is spare (i.e., 9 are needed for correct
+ operation).  The HAL9000 further has 100 square millimeters of
+ non-redundant hardware.
+
+ A HAL1000 single processor consists of 9 slices, each of which
+ contains 4 square millimeters.  1 of these is spare (i.e., 8 are
+ needed for correct operation).  A HAL1000 further contains 14
+ square millimeters of non-redundant hardware.
+
+\begin{verbatim}
+(define HAL1000-slice-yield (area-yield 4))
+
+(define HAL1000-yield
+  (modules-yield
+   (area-yield 14) ;; non-redundant
+   (redundant-yield HAL1000-slice-yield 9 8)))
+
+(define HAL9000-yield
+  (modules-yield
+   (area-yield 100) ;; non-redundant
+   (redundant-yield HAL1000-yield 10 9)))
+\end{verbatim}
+After these operations, we have the following expressions for
+\verb!HAL1000-yield!:
+\begin{verbatim}
+(+ (t -8 50) (t 9 46))
+\end{verbatim}
+or in infix terms,
+\begin{equation}
+  -8 \, x^{50} + 9 \, x^{46}\quad ,
+\end{equation}
+and for \verb!HAL9000-yield!:
+\begin{verbatim}
+(+ (t 4388393189376 580) (t 278942752080 564) (t 108716359680 596) 
+   (t 3874204890 514) (t -4114118615040 576) (t -1115771008320 568) 
+   (t -228562145280 526) (t 13589544960 546) (t -550376570880 592) 
+   (t 110199605760 522) (t 1651129712640 588) (t 304749527040 530) 
+   (t -30993639120 518) (t -270888468480 534) (t 2644790538240 572) 
+   (t -9663676416 600) (t -1342177280 550) (t -3250661621760 584) 
+   (t -31381059609 560) (t -61152952320 542) (t 160526499840 538)  )
+\end{verbatim}
+or in infix terms,
+\begin{dmath}
+-9663676416 \, x^{600} + 108716359680 \, x^{596} + -550376570880 \, x^{592} + 1651129712640 \, x^{588} + -3250661621760 \, x^{584} + 4388393189376 \, x^{580} + -4114118615040 \, x^{576} + 2644790538240 \, x^{572} + -1115771008320 \, x^{568} + 278942752080 \, x^{564} + -31381059609 \, x^{560} + -1342177280 \, x^{550} + 13589544960 \, x^{546} + -61152952320 \, x^{542} + 160526499840 \, x^{538} + -270888468480 \, x^{534} + 304749527040 \, x^{530} + -228562145280 \, x^{526} + 110199605760 \, x^{522} + -30993639120 \, x^{518} + 3874204890 \, x^{514}
+\end{dmath}
+
+And now define a representative high-end process as of 2020:
+\begin{verbatim}
+(define D0    0.10)
+(define n       30)
+(define alpha 0.02)
+(define (the-yield-model A) (YieldModel.Stapper A D0 n alpha))
+\end{verbatim}
+Finally, we can evaluate the expected yield of the HAL9000 multiprocessor chip:
+\begin{verbatim}
+> (eval-yield HAL9000-yield the-yield-model)
+0.641571044921875
+\end{verbatim}
+
+\section{Complete listing of hierarchical yield computer}\label{app:codecomplete}
+Here we give the detailed implementation that was elided in appendix~\ref{app:hierarchical}.
+
+We begin by defining a few useful constants
+\begin{verbatim}
+(define 1-term (make-number-term 1))
+(define -1-term (make-number-term -1))
+(define 0-term (make-number-term 0))
+
+(define (term-0? a)
+  (and (term? a) (= 0 (term-factor a))))
+
+(define (term-1? a)
+  (and (term? a) (= 0 (term-exponent a)) (= 1 (term-factor a))))
+\end{verbatim}
+and then proceed with defining the basic operations of addition, multiplication, and exponentiation
+\begin{verbatim}
+(define (op? op)
+  (lambda (a)
+    (cond ((not (pair? a)) #f)
+          ((eq? op (car a)) #t)
+          (else #f)))
+  )
+
+(define +? (op? '+))
+
+(define (*-term a b)
+  (cond ((term-0? a) 0-term)
+        ((term-0? b) 0-term)
+        ((and (term? a) (term? b))
+         (list 't
+               (* (term-factor a) (term-factor b))
+               (+ (term-exponent a) (term-exponent b))))
+        ((+? b) (*-+-term a b))
+        (else (*-+-term b a))))
+
+(define (*-+-term x y)
+  ;; y is a + expression
+  (accumulate +-term
+              (make-number-term 0)
+              (map (lambda (yi) (*-term x yi)) (cdr y))))
+
+(define (+-term a b)
+  (cond ((term-0? a) b)
+        ((term-0? b) a)
+        ((and (term? a) (term? b)) (+-term a (list '+ b)))
+        ((term? b) (+-term b a))
+        (else (+-term-term a b))))
+
+(define (+-term-term a b)
+  (if (term? a)
+      (let loop ((p (cdr b))
+                 (res '()))
+        (cond ((null? p) ;; end of list, no match
+               (cons '+ (cons a res)))
+               ((= (term-exponent a) (term-exponent (car p))) ;; match
+                (cons '+ (cons (list 't (+ (term-factor a) (term-factor (car p)))
+                                     (term-exponent a))
+                               (append (cdr p) res))))
+               (else (loop (cdr p) (cons (car p) res)))))
+      (accumulate +-term a (cdr b)))
+  )
+\end{verbatim}
+Exponentiation is performed by repeated squaring:
+\begin{verbatim}
+(define (^-term a k) ;; exponentiation by squaring
+  (let loop ((n    k)
+             (p    a)
+             (r    (make-number-term 1)))
+    (cond ((= 0 n) r)
+          ((= 0 (modulo n 2))
+           (loop (div n 2) (*-term p p) r))
+          ((= 1 (modulo n 2))
+           (loop (div n 2) (*-term p p) (*-term r p)))
+          )))
+\end{verbatim}
+We end by developing a summation operator within the framework.
+\begin{verbatim}
+(define (sum-term lo hi f)
+  (let loop ((s (make-number-term 0))
+             (i lo))
+    (if (= i hi)
+        (+-term (f i) s)
+        (loop (+-term (f i) s) (+ i 1)))))
+\end{verbatim}
+With these definitions, the framework is complete.
+
 \begin{thebibliography}{99}
 
 \bibitem{scheme} W.~Clinger and J.~Rees, eds. {Revised$^4$ Report on the Algorithmic Language Scheme.}  In {\it ACM Lisp Pointers IV}, July-September 1991.
@@ -826,7 +1102,7 @@ as expected (see the example in section~\ref{sec:ex16of18}).
 
 
 \section{Version}
-The Git hash of the head when this document was built was {\tt \hash}.
+The Git hash of the head was {\tt \hash}.
 
   
   
