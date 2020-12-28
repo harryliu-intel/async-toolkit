@@ -11,7 +11,7 @@
 ;;
 ;; we represent a polynomial (sparsely) as a sum of monomials
 ;;
-;; a monomial is written (t <a> <k>) an represents the expression
+;; a monomial is written (t <a> <k>) and represents the expression
 ;;
 ;; $a x^k$
 ;;

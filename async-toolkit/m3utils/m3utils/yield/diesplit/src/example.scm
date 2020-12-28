@@ -15,16 +15,16 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define HAL1000-slice-yield (area-yield 4))
+(define HAL1000-slice-yield (area-yield 10))
 
 (define HAL1000-yield
   (modules-yield
-   (area-yield 14) ;; non-redundant
+   (area-yield 5) ;; non-redundant
    (redundant-yield HAL1000-slice-yield 9 8)))
 
 (define HAL9000-yield
   (modules-yield
-   (area-yield 100) ;; non-redundant
+   (area-yield 50) ;; non-redundant
    (redundant-yield HAL1000-yield 10 9)))
 
 ;;;;;;;;;;;;;;;;;;;;

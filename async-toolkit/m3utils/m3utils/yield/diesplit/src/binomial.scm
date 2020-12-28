@@ -5,8 +5,6 @@
 ;; instead of using the dependent formulas
 ;;
 
-(define the-binomial-yield-model '())
-
 (define (set-binomial-yield-model! Y)
   (set! the-binomial-yield-model Y))
 
