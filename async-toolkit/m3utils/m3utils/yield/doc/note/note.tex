@@ -447,7 +447,7 @@ and, accordingly, the system yield
 \end{aligned}\end{equation}
 which, as expected, equals the formulation under independence
 \begin{equation}
-  P_{i,16/17} = Y(1)^{17} + 17\, Y(1)^{16}
+  P_{i,16/17} = Y(1)^{17} + 17\, Y(1)^{16}(1 - Y(1))^1
 \end{equation}
 if and only if $Y \sim \hbox{Poisson}$ so that $Y(z) = Y(1)^z$.
 
@@ -528,7 +528,7 @@ We have remarked that the expressions we derive for system yield are equivalent
 to the binomial formula assuming independent statistics for the subsystems if and only if the statistics are Poisson.  We can use this property to calculate
 the general system yield expression from the binomial form as follows: expand the binomial formula fully, and collect like terms in powers of $Y$.  Then we can make a {\rm formal\/} substitution of $Y(N)$ for $Y^N$, and the resulting formula will be valid for all types of yield statistics.
 
-For example, consider s system of 18 subsystems of area $A=1$, 16 of which need to be functional.  If we assume independent Poisson statistics, we can write:
+For example, consider a system of 18 subsystems of area $A=1$, 16 of which need to be functional.  If we assume independent Poisson statistics, we can write:
 \begin{equation}
   \begin{aligned}
 P_{S(18)}(x \geq 16) &=& P_{S(18)}(x = 18) + P_{S(18)}(x = 17) + P_{S(18)}(x = 16)\\
@@ -844,7 +844,7 @@ the probability that a system comprising 18 instances of $T$ of which at least~1
   P(\text{system of 16/18 instances of {\sl T} works}) =
   136\,y^{18} - 288 \, y^{17} + 153 \, y^{16} \quad ,
 \end{equation}
-again, under the assumption of Poisson statistics (see section~\ref{sec:poissonderiv}.  Since $y$ is known
+again, under the assumption of Poisson statistics (see section~\ref{sec:poissonderiv}).  Since $y$ is known
 to be a polynomial in $x$, the probability can also be expanded as a
 polynomial in $x$.  Having expanded the Poisson polynomial in $x$, we
 may then {\em formally identify\/} the $x^n$ as $Y(n)$.  Based on the
