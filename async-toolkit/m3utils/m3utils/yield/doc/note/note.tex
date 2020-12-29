@@ -191,7 +191,8 @@ length units to a probability $Y(A)$ so that
 \begin{equation} Y(A) \in [ 0 .. 1 ] \quad . \end{equation}
 
 $Y(A)$ is strictly decreasing in $A$.  We shall reserve $Y$ for the
-process yield in this form.  
+process yield in this form.  See appendix~\ref{app:yieldrestrictions} for
+implications of defining the yield thus.
 
 Let it be given that a system $S$ comprises $N$ subsystems
 $u_i$, each with area $A_{u_i}$, so that
@@ -660,7 +661,7 @@ fact that accidents cluster, which improves overall yield, also
 implies that an accident that strikes a subsystem $u_0$ is also likely
 to strike subsystem $u_1$.  Our work models this effect.
 
-\section{Limitations}
+\section{Limitations}\label{sec:limitations}
 An obvious limitation to our work is that we assume that the process
 yield $Y(A)$ depends only on one scalar variable, namely, the chip
 area.  This is true of commonly used yield functions, but it must be
@@ -1078,6 +1079,87 @@ We end by developing a summation operator within the framework.
         (loop (+-term (f i) s) (+ i 1)))))
 \end{verbatim}
 With these definitions, the framework is complete.
+
+\section{Restrictions on the yield function {\sl Y}}\label{ref:yieldrestrictions}
+
+The statement that the yield $Y(A)$ is a function of a single real
+parameter $A$ and is non-increasing, together with the way that this function
+is used in section~\ref{sec:general} leads to some important restrictions
+on $Y$.
+
+Let's make a small thought experiment.  Three identical submodules $A$, $B$,
+$C$, each of area 1, are manufactured somewhere on a wafer and
+observed by the four Greek observers $\beta$, $\gamma$, $\delta$,
+$\epsilon$.  The four observers are, however, confused as to what
+exactly is being built.  $\beta$ believes that the system that is
+being built is $AB$, $\gamma$ believes it is $BC$, $\delta$ believes
+it is $CA$, and finally, observer $\epsilon$ believes that the system
+being built is $ABC$.  Many copies of the wafer are produced.
+
+We will make similar assumptions as in section~\ref{sec:general}.  For
+one thing, the yield function is only a function of area (see
+section~\ref{sec:limitations} for discussion).  For another, we assume
+symmetry, as in section~\ref{sec:restricted}.  Then we know that
+\begin{equation}
+  Y_\beta = Y_\gamma = Y_\delta = Y(2) \quad .
+\end{equation}
+And by definition of course we have
+\begin{equation}
+  Y_\epsilon = Y(3) \quad .
+\end{equation}
+We now ask, what constraints do the values of $Y(2)$ and $Y(3)$ impose upon each other?
+
+On the one side, it is easy to write down that
+\begin{equation}
+  Y(3) \le Y(2) \quad .
+\end{equation}
+It will turn out to be easier to work in the yield loss domain than the yield
+domain for this exercise.  Thus, the equations above can be read as equations
+in $1-Y = \xi$.  That is,
+\begin{equation}\begin{aligned}
+  \xi_\beta = \xi_\gamma = \xi_\delta &=& \xi(2) \\
+  \xi_\epsilon &=& \xi(3) \\
+  \xi(3) &\ge& \xi(2) 
+  \end{aligned}
+\end{equation}
+Now consider the maximum difference between $\xi(3)$ and
+$\xi(2)$.  We can find this by maximizing $\xi(3)$ and minimizing
+$\xi(2)$.  One scenario is as follows: we consider a manufacturing
+process $X$ for which the yield $Y(3)$ is zero and the $Y(2)$ is maximum.
+Such a process is one that, for example, every time we make three
+modules, exactly two are operational.  For this process, we have
+\begin{equation}\begin{aligned}
+  \xi_X(3) &=& 1 \\
+  \xi_X(2) &=& {2 \over 3}
+\end{aligned}\end{equation}
+because for each time we fabricate $ABC$, some combination of two of the three submodules will yield, and exactly one of the Greeks will count it as succesful.  So over a long manufacturing run, we find the following:
+\begin{equation}\begin{aligned}
+ Y_{X,\beta} &=& {1 \over 3}\\
+ Y_{X,\gamma} &=& {1 \over 3}\\
+ Y_{X,\delta} &=& {1 \over 3}\\
+ Y_{X,\epsilon} &=& 0 
+\end{aligned}\end{equation}
+In other words in this case we seem to have
+\begin{equation}
+  \xi(2) \le \xi(3) \le {3 \over 2} \xi(2) \quad .
+\end{equation}
+The same argument generalizes and it seems that
+\begin{equation}
+  m < n \rightarrow \xi(m) \le \xi(n) \le {{n \choose m}\over {n \choose m } - 1} \xi(m) \quad .
+\end{equation}
+Generalizing this to the continuous case we have
+\begin{equation}
+  x < y \rightarrow
+  \xi(x) \le
+  \xi(y) \le
+     { \Gamma(y+1) \over \Gamma(y+1) - \Gamma(y-x+1) \Gamma(x+1) } \xi(x)
+\end{equation}
+but this seems dubious.  {It's wrong.}
+
+
+
+
+
 
 \begin{thebibliography}{99}
 
