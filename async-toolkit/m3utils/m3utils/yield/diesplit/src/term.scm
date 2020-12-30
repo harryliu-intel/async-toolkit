@@ -16,6 +16,8 @@
 ;; $a x^k$
 ;;
 
+;; predefine the operations (see term-defs.scm)
+
 (define (term? x)
   (and (list x) (eq? (car x) 't)))
 
@@ -39,10 +41,10 @@
 (define 0-term (make-number-term 0))
 
 (define (term-0? a)
-  (and (term? a) (= 0 (term-factor a))))
+  (and (term? a) (=-op 0 (term-factor a))))
 
 (define (term-1? a)
-  (and (term? a) (= 0 (term-exponent a)) (= 1 (term-factor a))))
+  (and (term? a) (=-op 0 (term-exponent a)) (=-op 1 (term-factor a))))
 
 ;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -56,14 +58,14 @@
           (else #f)))
   )
 
-(define +? (op? '+))
+(define +? (op? +-sym))
 
 (define (*-term a b)
   (cond ((term-0? a) 0-term)
         ((term-0? b) 0-term)
         ((and (term? a) (term? b))
          (list 't
-               (* (term-factor a) (term-factor b))
+               (*-op (term-factor a) (term-factor b))
                (+ (term-exponent a) (term-exponent b))))
         ((+? b) (*-+-term a b))
         (else (*-+-term b a))))
@@ -79,7 +81,7 @@
 
         ((term-0? b) a)
 
-        ((and (term? a) (term? b)) (+-term a (list '+ b)))
+        ((and (term? a) (term? b)) (+-term a (list +-sym b)))
 
         ((term? b) (+-term b a))
 
@@ -94,10 +96,10 @@
                  (res '()))
 
         (cond ((null? p) ;; end of list, no match
-               (cons '+ (cons a res)))
+               (cons +-sym (cons a res)))
               
                ((= (term-exponent a) (term-exponent (car p))) ;; match
-                (cons '+ (cons (list 't (+ (term-factor a) (term-factor (car p)))
+                (cons +-sym (cons (list 't (+-op (term-factor a) (term-factor (car p)))
                                      (term-exponent a))
                                (append (cdr p) res))))
 
@@ -142,14 +144,14 @@
 (define (canonical-order-term x)
   (if (term? x)
       x
-      (cons '+ (mergesort
+      (cons +-sym (mergesort
                 (cdr x)
                 (lambda (x y) (> (term-exponent x) (term-exponent y)))))))
 
 (define (term-2-yield x)
   (if (term? x)
-      (list '* (term-factor x) (list 'Y (term-exponent x)))
-      (cons '+
+      (list *-sym (term-factor x) (list 'Y (term-exponent x)))
+      (cons +-sym
             (map term-2-yield (cdr x)))))
 
 (define (term-2-latex x)

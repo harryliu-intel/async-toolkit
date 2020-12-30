@@ -15,6 +15,8 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(load "yield-calc.scm")
+
 (define HAL1000-slice-yield (area-yield 10))
 
 (define HAL1000-yield
@@ -36,8 +38,13 @@
 (define n       30)
 (define alpha 0.02)
 
+(define (stapper A D0 n alpha)
+  (let ((sqmmPsqinch (* 25.4 25.4)))
+    (pow-op (+-op 1 (/-op (*-op (/-op A sqmmPsqinch) D0) alpha))
+            (*-op -1 alpha n))))
+   
 ;; let's use Stapper's formula 
-(define (the-yield-model A) (YieldModel.Stapper A D0 n alpha))
+(define (the-yield-model A) (stapper A D0 n alpha))
 
-(define computed-HAL-9000-yield
+(define computed-HAL9000-yield
   (eval-yield HAL9000-yield the-yield-model))

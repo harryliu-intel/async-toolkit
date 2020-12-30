@@ -97,8 +97,20 @@ PROCEDURE ParseLine(VAR circuit : SpiceCircuitList.T; (* circuit stack *)
               END;
 
               (* validate typeName *)
-              WITH haveIt  = subCkts.get(x.type,ckt) DO
+              WITH haveIt  = subCkts.get(x.type, ckt) DO
+                IF NOT haveIt THEN
+                  RAISE ("Can't find subcircuit of type " & x.type)
+                END;
+
                 <*ASSERT haveIt*>  (* definition *)
+
+                IF NOT x.terminals.size() = ckt.params.size()  THEN
+                  Debug.Error(F("Wrong terminal count: subcircuit type %s terms %s params at call site %s",
+                                x.type,
+                                Int(x.terminals.size()),
+                                Int(ckt.params.size())))
+                END;
+
                 <*ASSERT x.terminals.size() = ckt.params.size()*>
                 <*ASSERT x.type # NIL*>
               END;

@@ -5,6 +5,7 @@ IMPORT TextSpiceCircuitTbl;
 
 TYPE
   ErrorData = OBJECT
+    msg : TEXT := "";
     lNo : CARDINAL;
   END;
   
