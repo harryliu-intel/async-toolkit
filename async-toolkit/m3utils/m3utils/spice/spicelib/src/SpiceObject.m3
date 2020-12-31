@@ -49,10 +49,10 @@ PROCEDURE ParseLine(VAR circuit   : SpiceCircuitList.T; (* circuit stack *)
   BEGIN
     IF    NUMBER(line) = 0 THEN
       (* skip *)
-    ELSIF line[0] = '.' THEN
+    ELSIF line[p] = '.' THEN
+      Debug.Out("SpiceObject.ParseLine Got directive");
       (* directive *)
-      INC(p);
-      IF    HavePrefix(line, p, "SUBCKT") THEN
+      IF    HavePrefix(line, p, ".SUBCKT") THEN
         (* start subcircuit *)
         WITH new   = NEW(SpiceCircuit.T, 
                          elements := NEW(SpiceObjectSeq.T).init(),
@@ -66,10 +66,15 @@ PROCEDURE ParseLine(VAR circuit   : SpiceCircuitList.T; (* circuit stack *)
           circuit := SpiceCircuitList.Cons(new, circuit) (* push *)
         END
 
-      ELSIF HavePrefix(line, p, "ENDS") THEN
+      ELSIF HavePrefix(line, p, ".ENDS") THEN
         (* end subcircuit *)
         Debug.Out("Closing SUBCKT " & circuit.head.name);
         circuit := circuit.tail (* pop *)
+      ELSE
+        RAISE SpiceError.E(SpiceError.Data {
+        msg := "Unknown directive in \"" & Text.FromChars(line) & "\"",
+        lNo := lNo
+        })
       END
     ELSIF line[0] = '*' THEN
       (* comment *) (* skip for now *)

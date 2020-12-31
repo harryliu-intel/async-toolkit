@@ -25,11 +25,12 @@ IMPORT SpiceInstance, SpiceInstanceSetDef;
 IMPORT SpiceInstanceSet;
 IMPORT TextTextTbl;
 IMPORT FlatUI;
+IMPORT SpiceError;
+IMPORT AL;
+IMPORT Rd;
 
 <*FATAL Thread.Alerted*>
 <*FATAL Wr.Failure, OSError.E*> (* ugly *)
-
-CONST TE = Text.Equal;
 
 TYPE OType = { Null, R, C, M, X, Unknown };
 CONST ONames = ARRAY OType OF TEXT { "NULL", "R", "C", "M", "X", "UNKNOWN" };
@@ -102,10 +103,10 @@ PROCEDURE Visit(nm    : TEXT;
     END
   END Visit;
 
-PROCEDURE DumpOneType(wr : Wr.T; 
-                      tn : TEXT; 
-                      ckt : SpiceCircuit.T;
-                      tbl : TextRefTbl.T;
+PROCEDURE DumpOneType(wr   : Wr.T; 
+                      tn   : TEXT; 
+                      ckt  : SpiceCircuit.T;
+                      tbl  : TextRefTbl.T;
                       pTbl : TextTextSetTbl.T) =
   VAR
     elems := ckt.elements;
@@ -506,14 +507,28 @@ PROCEDURE AliasSortOrder(a, b : TEXT) : [-1..1] =
   (**********************************************************************)
 
 VAR
-  rd := FileRd.Open(Params.Get(1));
+  fn := Params.Get(1);
+  rd : Rd.T;
   top := Params.Get(2);
 
   topCkt : SpiceCircuit.T;
-  spice := SpiceFormat.ParseSpice(rd);
+  spice : SpiceFormat.T;
 BEGIN
+  TRY
+    rd := FileRd.Open(fn);
+    spice := SpiceFormat.ParseSpice(rd, ".", fn);
+  EXCEPT
+    OSError.E(e) =>
+    Debug.Error(F("Can't open top level file %s : OSError.E : %s",
+                  fn, AL.Format(e)))
+  |
+    SpiceError.E(e) =>
+    Debug.Error(F("Parsing input : caught SpiceError.E : %s at line %s of file %s",
+                  e.msg, Int(e.lNo), Debug.UnNil(e.fn)))
+  END;
+
   IF NOT spice.subCkts.get(top, topCkt) THEN
-    Debug.Error("Can't find subcircuit def'n \"" & top & "\"")
+    Debug.Error("Can't find top-level subcircuit def'n \"" & top & "\"")
   END;
   
   WITH wr = FileWr.Open("flat.out") DO

@@ -12,7 +12,7 @@ IMPORT Thread;
 IMPORT SpiceError;
 IMPORT Pathname;
 FROM SpiceParse IMPORT HavePrefix;
-FROM Fmt IMPORT F;
+FROM Fmt IMPORT F, Int;
 IMPORT OSError, FileRd;
 IMPORT AL;
 
@@ -20,10 +20,26 @@ IMPORT AL;
 
 VAR Verbose := Debug.DebugThis("SpiceFormat");
 
-PROCEDURE GetSingleLine(rd : Rd.T; 
-                        VAR p : CARDINAL; 
+(* The way we do EOF is an absolute mess.
+
+   It's partly because of the file format, and partly a result of poor 
+   programming by me.
+
+   Remember that we don't know that a line is complete until we read the
+   first character on the NEXT line, to see if it is a continuation 
+   character.
+
+   Also we want to be able to tolerate the case that the last line does
+   not end in a carriage return.
+
+   It is nasty.  Should not have used Rd.GetSubLine.
+
+   Maybe re-code this using the generic fast lexer instead.
+*)
+PROCEDURE GetSingleLine(rd       : Rd.T; 
+                        VAR p    : [-1..LAST(CARDINAL)]; 
                         VAR buff : REF ARRAY OF CHAR;
-                        VAR lNo : CARDINAL ) : CARDINAL
+                        VAR lNo  : CARDINAL ) : [ -1..LAST(CARDINAL) ]
   RAISES { Rd.Failure, Thread.Alerted } =
   VAR
     len : CARDINAL;
@@ -33,11 +49,24 @@ PROCEDURE GetSingleLine(rd : Rd.T;
     END;
     LOOP
       len := Rd.GetSubLine(rd, SUBARRAY(buff^, p, NUMBER(buff^)-p));
-      IF len = 0 THEN
-        (* no read now *)
-        IF Verbose THEN Debug.Out("GetSingleLine: no read now") END;
-        RETURN p
-      ELSIF buff[p+len-1] = '\n' THEN
+      IF Verbose THEN
+        Debug.Out(F("GetSingleLine: lNo %s len %s", Int(lNo), Int(len)))
+      END;
+      IF Rd.EOF(rd) THEN
+        IF len # 0 THEN
+          (* on the last line *)
+          IF Verbose THEN Debug.Out("GetSingleLine: at EOF") END;
+          (*success*)
+          INC(lNo);
+          IF p + len # 0 AND buff[p + len - 1] = '\r' THEN
+            IF Verbose THEN Debug.Out("GetSingleLine: strip CR") END;
+            DEC(len) (* strip carriage return *)
+          END;
+          RETURN p + len
+        ELSE
+          RETURN -1
+        END
+      ELSIF buff[p + len - 1] = '\n' THEN
         IF Verbose THEN Debug.Out("GetSingleLine: success") END;
         (*success*)
         INC(lNo);
@@ -47,6 +76,7 @@ PROCEDURE GetSingleLine(rd : Rd.T;
           DEC(len) (* strip carriage return *)
         END;
         RETURN p+len
+
       ELSE
         (*failure to finish the line*)
         IF Verbose THEN Debug.Out("GetSingleLine: failure to finish") END;
@@ -63,23 +93,33 @@ PROCEDURE GetLine(rd : Rd.T;
                   VAR buff : REF ARRAY OF CHAR;
                   VAR lNo : CARDINAL) : [-1..LAST(CARDINAL)] RAISES { Rd.Failure, Thread.Alerted } =
   VAR 
-    p : CARDINAL := 0;
+    p : [ -1 .. LAST(CARDINAL) ] := 0;
     <*FATAL Rd.EndOfFile*>
   BEGIN
+    (* there are two ways of hitting EOF here ... *)
     LOOP
       p := GetSingleLine(rd, p, buff, lNo);
-      IF Rd.EOF(rd) THEN RETURN -1 END;
+
+      IF p = -1 THEN RETURN p END; (* check for EOF *)
+      
       LOOP
         (* eat the next live character.
+           
+           it can still be an EOF because we can get another line at EOF..
+           argh what a mess.
+
            if a + keep getting stuff, else return here *)
-        WITH c = Rd.GetChar(rd) DO
-          CASE c OF
-            '+' => EXIT
-          |
-            ' ', '\t' => AddToBuff(buff, p, c)(* skip *)
-          ELSE
-            Rd.UnGetChar(rd); RETURN p
+
+        TRY
+          WITH c = Rd.GetChar(rd) DO
+            CASE c OF
+              '+' => EXIT
+            ELSE
+              Rd.UnGetChar(rd); RETURN p
+            END
           END
+        EXCEPT
+          Rd.EndOfFile => RETURN p
         END
       END
     END
@@ -111,8 +151,14 @@ TYPE
   END;
   
 PROCEDURE ResolvePath(cwd, fn : Pathname.T) : FileLookup
-  RAISES { OSError.E } =
+  RAISES { SpiceError.E, OSError.E } =
   BEGIN
+    IF Text.Length(fn) = 0 THEN
+      RAISE SpiceError.E(SpiceError.Data {
+      msg := "Empty filename in .INCLUDE",
+      lNo := 0
+      })
+    END;
     IF Text.GetChar(fn, 0) = '/' THEN
       (* absolute name *)
       RETURN FileLookup { tgtFileName  := fn,
@@ -149,7 +195,7 @@ PROCEDURE ParseSpice(rd : Rd.T; currentSearchDir, fn : Pathname.T) : T
   PROCEDURE Recurse(rd : Rd.T; currentSearchDir, fn : Pathname.T)
     RAISES { SpiceError.E, Rd.Failure } =
     VAR
-      buff := NEW(REF ARRAY OF CHAR, 1);
+      buff := NEW(REF ARRAY OF CHAR, 100);
       p : CARDINAL;
       lNo : CARDINAL := 0;
     BEGIN
@@ -171,6 +217,7 @@ PROCEDURE ParseSpice(rd : Rd.T; currentSearchDir, fn : Pathname.T) : T
           IF HavePrefix(buff^, p, ".INCLUDE") THEN
             VAR
               q := LAST(CARDINAL);
+              lookup : FileLookup;
             BEGIN
               IF buff[p] # '\'' THEN
                 RAISE SpiceError.E(SpiceError.Data {
@@ -180,10 +227,12 @@ PROCEDURE ParseSpice(rd : Rd.T; currentSearchDir, fn : Pathname.T) : T
               INC(p);
               FOR i := p TO len - 1 DO
                 IF buff[i] = '\'' THEN
-                  q := p; EXIT
+                  q := i; EXIT
                 END
               END;
-
+              IF Verbose THEN
+                Debug.Out(F("Filename, p=%s q=%s", Int(p), Int(q)))
+              END;
               (* if q finite, success *)
               IF q = LAST(CARDINAL) THEN
                 RAISE SpiceError.E(SpiceError.Data {
@@ -192,13 +241,23 @@ PROCEDURE ParseSpice(rd : Rd.T; currentSearchDir, fn : Pathname.T) : T
               END;
               WITH fn     = Text.FromChars(SUBARRAY(buff^, p, q - p)) DO
                 TRY
-                  WITH lookup = ResolvePath(currentSearchDir, fn) DO
-                    IF Verbose THEN
-                      Debug.Out(F("ParseSpice: found .INCLUDE file %s to parse resolving to %s",
-                                  fn))
-                    END;
-                    Recurse(lookup.rd, lookup.newSearchDir, lookup.tgtFileName)
-                  END
+                  TRY
+                    lookup := ResolvePath(currentSearchDir, fn);
+                  EXCEPT
+                    SpiceError.E(e) =>
+                    VAR f := e; BEGIN
+                      f.fn := fn;
+                      f.lNo := lNo;
+                      RAISE SpiceError.E(f)
+                    END
+                  END;
+
+                  IF Verbose THEN
+                    Debug.Out(F("ParseSpice: found .INCLUDE file %s to parse resolving to %s",
+                                fn,
+                                lookup.tgtFileName))
+                  END;
+                  Recurse(lookup.rd, lookup.newSearchDir, lookup.tgtFileName)
                 EXCEPT
                   OSError.E => Debug.Error(F("Can't find .INCLUDE file %s",fn))
                 END
@@ -206,6 +265,7 @@ PROCEDURE ParseSpice(rd : Rd.T; currentSearchDir, fn : Pathname.T) : T
             END
           ELSE
             TRY
+              WHILE p < len AND buff[p] IN White DO INC(p) END;
               SpiceObjectParse.ParseLine(res.circuit,
                                          res.subCkts,
                                          SUBARRAY(buff^, p, len - p),
