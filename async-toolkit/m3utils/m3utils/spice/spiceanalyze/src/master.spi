@@ -1,0 +1,3 @@
+
+.INCLUDE 'my_devices.spi'
+.INCLUDE 'tphn7_18gpio.spi'

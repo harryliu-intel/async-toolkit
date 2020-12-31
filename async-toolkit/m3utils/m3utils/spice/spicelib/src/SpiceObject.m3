@@ -18,6 +18,8 @@ FROM SpiceParse IMPORT HavePrefix, CaseIns;
 
 CONST TE = Text.Equal;
 
+VAR doDebug := Debug.DebugThis("SpiceObject");
+    
 REVEAL
   T = Public BRANDED Brand OBJECT
   OVERRIDES
@@ -50,7 +52,9 @@ PROCEDURE ParseLine(VAR circuit   : SpiceCircuitList.T; (* circuit stack *)
     IF    NUMBER(line) = 0 THEN
       (* skip *)
     ELSIF line[p] = '.' THEN
-      Debug.Out("SpiceObject.ParseLine Got directive");
+      IF doDebug THEN
+        Debug.Out("SpiceObject.ParseLine Got directive")
+      END;
       (* directive *)
       IF    HavePrefix(line, p, ".SUBCKT") THEN
         (* start subcircuit *)
@@ -68,7 +72,9 @@ PROCEDURE ParseLine(VAR circuit   : SpiceCircuitList.T; (* circuit stack *)
 
       ELSIF HavePrefix(line, p, ".ENDS") THEN
         (* end subcircuit *)
-        Debug.Out("Closing SUBCKT " & circuit.head.name);
+        IF doDebug THEN
+          Debug.Out("Closing SUBCKT " & circuit.head.name)
+        END;
         circuit := circuit.tail (* pop *)
       ELSE
         RAISE SpiceError.E(SpiceError.Data {
@@ -90,7 +96,9 @@ PROCEDURE ParseLine(VAR circuit   : SpiceCircuitList.T; (* circuit stack *)
             w : TEXT;
             got := GetWord(line, p, w);
           BEGIN
-            Debug.Out(F("got=%s word %s ", Bool(got), UnNil(w)));
+            IF doDebug THEN
+              Debug.Out(F("got=%s word %s ", Bool(got), UnNil(w)))
+            END;
             (* we have just read a word from the line 
                
                some systems produce

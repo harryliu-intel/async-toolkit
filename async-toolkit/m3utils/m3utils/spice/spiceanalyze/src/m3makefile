@@ -1,0 +1,9 @@
+import ("libm3")
+import ("cit_util")
+import ("parseparams")
+import ("spicelib")
+import ("m3readline")
+
+implementation ("Main")
+
+program ("spiceanalyze")
