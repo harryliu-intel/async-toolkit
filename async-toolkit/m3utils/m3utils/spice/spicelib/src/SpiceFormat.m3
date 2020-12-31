@@ -9,8 +9,16 @@ IMPORT SpiceCircuit;
 IMPORT SpiceObjectParse;
 FROM SpiceFileFormat IMPORT White;
 IMPORT Thread;
+IMPORT SpiceError;
+IMPORT Pathname;
+FROM SpiceParse IMPORT HavePrefix;
+FROM Fmt IMPORT F;
+IMPORT OSError, FileRd;
+IMPORT AL;
 
-VAR Verbose := FALSE;
+<*FATAL Thread.Alerted*>
+
+VAR Verbose := Debug.DebugThis("SpiceFormat");
 
 PROCEDURE GetSingleLine(rd : Rd.T; 
                         VAR p : CARDINAL; 
@@ -97,43 +105,135 @@ TYPE
     circuit : SpiceCircuitList.T; (* currently parsing *)
   END;
 
-PROCEDURE ParseSpice(rd : Rd.T) : T RAISES { Error } =
-  VAR
-    buff := NEW(REF ARRAY OF CHAR, 1);
-    lNo : CARDINAL := 0;
-    p : CARDINAL;
+  FileLookup = RECORD
+    tgtFileName, newSearchDir : Pathname.T;
+    rd : Rd.T;
+  END;
+  
+PROCEDURE ResolvePath(cwd, fn : Pathname.T) : FileLookup
+  RAISES { OSError.E } =
+  BEGIN
+    IF Text.GetChar(fn, 0) = '/' THEN
+      (* absolute name *)
+      RETURN FileLookup { tgtFileName  := fn,
+                          newSearchDir := Pathname.Prefix(fn),
+                          rd           := FileRd.Open(fn) }
+    ELSE
+      WITH primary = cwd & "/" & fn DO
+        TRY
+          RETURN FileLookup { tgtFileName  := primary,
+                              newSearchDir := Pathname.Prefix(primary),
+                              rd           := FileRd.Open(primary) }
+        EXCEPT
+          OSError.E(x) =>
+          Debug.Warning(F("SpiceFormat.ResolvePath didn't find file %s in correct place %s : OSError.E : %s",
+                          fn, primary, AL.Format(x)))
+        END
+      END;
+      WITH secondary = "." & "/" & fn DO
+        RETURN FileLookup { tgtFileName  := secondary,
+                            newSearchDir := Pathname.Prefix(secondary),
+                            rd           := FileRd.Open(secondary) }
+      END
+    END
+  END ResolvePath;
 
+PROCEDURE ParseSpice(rd : Rd.T; currentSearchDir, fn : Pathname.T) : T
+  RAISES { SpiceError.E, Rd.Failure } =
+
+
+  VAR
     res := NEW(Private, subCkts := NEW(TextSpiceCircuitTbl.Default).init());
+
+
+  PROCEDURE Recurse(rd : Rd.T; currentSearchDir, fn : Pathname.T)
+    RAISES { SpiceError.E, Rd.Failure } =
+    VAR
+      buff := NEW(REF ARRAY OF CHAR, 1);
+      p : CARDINAL;
+      lNo : CARDINAL := 0;
+    BEGIN
+      LOOP
+        WITH len = GetLine(rd, buff, lNo) DO
+          IF len = -1 THEN 
+            IF Verbose THEN Debug.Out("ParseSpice: EOF") END;
+            RETURN 
+          END;
+          IF Verbose THEN
+            Debug.Out("ParseSpice: " & Text.FromChars(SUBARRAY(buff^, 0, len)))
+          END;
+
+          p := 0;
+          WHILE p < len AND buff[p] IN White DO
+            INC(p)
+          END;
+
+          IF HavePrefix(buff^, p, ".INCLUDE") THEN
+            VAR
+              q := LAST(CARDINAL);
+            BEGIN
+              IF buff[p] # '\'' THEN
+                RAISE SpiceError.E(SpiceError.Data {
+                msg := "Can't find filename in .INCLUDE", lNo := lNo, fn := fn
+                })
+              END;
+              INC(p);
+              FOR i := p TO len - 1 DO
+                IF buff[i] = '\'' THEN
+                  q := p; EXIT
+                END
+              END;
+
+              (* if q finite, success *)
+              IF q = LAST(CARDINAL) THEN
+                RAISE SpiceError.E(SpiceError.Data {
+                msg := "Can't find filename in .INCLUDE", lNo := lNo, fn := fn
+                })
+              END;
+              WITH fn     = Text.FromChars(SUBARRAY(buff^, p, q - p)) DO
+                TRY
+                  WITH lookup = ResolvePath(currentSearchDir, fn) DO
+                    IF Verbose THEN
+                      Debug.Out(F("ParseSpice: found .INCLUDE file %s to parse resolving to %s",
+                                  fn))
+                    END;
+                    Recurse(lookup.rd, lookup.newSearchDir, lookup.tgtFileName)
+                  END
+                EXCEPT
+                  OSError.E => Debug.Error(F("Can't find .INCLUDE file %s",fn))
+                END
+              END
+            END
+          ELSE
+            TRY
+              SpiceObjectParse.ParseLine(res.circuit,
+                                         res.subCkts,
+                                         SUBARRAY(buff^, p, len - p),
+                                         lNo)
+            EXCEPT
+              SpiceError.E(e) =>
+              VAR f := e; BEGIN
+                f.fn := fn;
+                RAISE SpiceError.E(f)
+              END
+            END
+          END
+        END
+      END
+    END Recurse;
     
   BEGIN 
     res.circuit := NIL;       
 
     WITH root = NEW(SpiceCircuit.T, 
-                    name := NIL, 
-                    params := NEW(TextSeq.T).init(),
+                    name     := NIL, 
+                    params   := NEW(TextSeq.T).init(),
                     elements := NEW(SpiceObjectSeq.T).init()) DO
       res.circuit := SpiceCircuitList.Cons(root, res.circuit)
     END;
 
-    LOOP
-      WITH len = GetLine(rd, buff, lNo) DO
-        IF len = -1 THEN 
-          IF Verbose THEN Debug.Out("ParseSpice: EOF") END;
-          RETURN res
-        END;
-        IF Verbose THEN Debug.Out("ParseSpice: " & Text.FromChars(SUBARRAY(buff^, 0, len))) END;
-
-        p := 0;
-        WHILE p < len AND buff[p] IN White DO
-          INC(p)
-        END;
-
-        WITH line = SUBARRAY(buff^, p, len-p) DO
-          SpiceObjectParse.ParseLine(res.circuit, res.subCkts, line, lNo)
-        END
-      END
-    END
+    Recurse(rd, currentSearchDir, fn);
+    RETURN res
   END ParseSpice;
 
-BEGIN
-END SpiceFormat.
+BEGIN END SpiceFormat.

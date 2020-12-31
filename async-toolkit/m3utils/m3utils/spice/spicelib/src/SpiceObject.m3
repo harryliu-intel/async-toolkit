@@ -3,7 +3,7 @@ IMPORT Wr;
 IMPORT Rd;
 IMPORT Debug;
 IMPORT Text;
-FROM Fmt IMPORT Int, F;
+FROM Fmt IMPORT Int, F, Bool;
 IMPORT SpiceCircuitList, TextSpiceCircuitTbl;
 IMPORT TextSeq;
 IMPORT SpiceObjectSeq;
@@ -12,6 +12,9 @@ IMPORT SpiceObject, SpiceObjectParse;
 IMPORT Scan;
 FROM SpiceFileFormat IMPORT White;
 IMPORT Word;
+IMPORT SpiceError;
+FROM Debug IMPORT UnNil;
+FROM SpiceParse IMPORT HavePrefix, CaseIns;
 
 CONST TE = Text.Equal;
 
@@ -27,15 +30,22 @@ PROCEDURE Output(t : T; wr : Wr.T; path : TEXT; VAR c : CARDINAL)
     
   END Output;
 
-PROCEDURE ParseLine(VAR circuit : SpiceCircuitList.T; (* circuit stack *)
-                    subCkts : TextSpiceCircuitTbl.T;
+PROCEDURE IsParamAssign(txt : TEXT) : BOOLEAN =
+  (* returns whether it matches the pattern <a>=<b> *)
+  BEGIN
+    RETURN Text.FindChar(txt, '=') # -1
+  END IsParamAssign;
+  
+PROCEDURE ParseLine(VAR circuit   : SpiceCircuitList.T; (* circuit stack *)
+                    subCkts       : TextSpiceCircuitTbl.T;
                     READONLY line : ARRAY OF CHAR;
-                    lNo : CARDINAL (* for errors *)) =
+                    lNo           : CARDINAL (* for errors *))
+  RAISES { SpiceError.E } =
   VAR 
-    p : CARDINAL := 0;
+    p   : CARDINAL := 0;
     str : TEXT;
     ckt : SpiceCircuit.T;
-    o : SpiceObject.T := NIL;
+    o   : SpiceObject.T := NIL;
   BEGIN
     IF    NUMBER(line) = 0 THEN
       (* skip *)
@@ -65,13 +75,17 @@ PROCEDURE ParseLine(VAR circuit : SpiceCircuitList.T; (* circuit stack *)
       (* comment *) (* skip for now *)
     ELSIF CaseIns(line[0],'X') THEN
       (* subcell *)
-      WITH x     = NEW(SpiceObject.X, terminals := NEW(TextSeq.T).init()),
+      WITH x     = NEW(SpiceObject.X,
+                       terminals := NEW(TextSeq.T).init(),
+                       data      := NEW(TextSeq.T).init()),
            gotIt = GetWord(line, p, x.name) DO
         <*ASSERT gotIt*>
         LOOP
-          VAR w : TEXT;
-              got := GetWord(line, p, w);
+          VAR
+            w : TEXT;
+            got := GetWord(line, p, w);
           BEGIN
+            Debug.Out(F("got=%s word %s ", Bool(got), UnNil(w)));
             (* we have just read a word from the line 
                
                some systems produce
@@ -88,10 +102,13 @@ PROCEDURE ParseLine(VAR circuit : SpiceCircuitList.T; (* circuit stack *)
             *)
             IF NOT got OR TE(w, "/") THEN
               IF NOT got THEN
+                WHILE IsParamAssign(x.terminals.get(x.terminals.size() - 1)) DO
+                  x.data.addhi(x.terminals.remhi())
+                END;
                 x.type := x.terminals.remhi()
               ELSE (*IF TE(w, "/")*)
                 (* easy syntax, typename delimited by slash *)
-                WITH gotType = GetWord(line,p,x.type) DO
+                WITH gotType = GetWord(line, p, x.type) DO
                   <*ASSERT gotType*> (* syntax *)
                 END
               END;
@@ -99,7 +116,9 @@ PROCEDURE ParseLine(VAR circuit : SpiceCircuitList.T; (* circuit stack *)
               (* validate typeName *)
               WITH haveIt  = subCkts.get(x.type, ckt) DO
                 IF NOT haveIt THEN
-                  RAISE ("Can't find subcircuit of type " & x.type)
+                  RAISE SpiceError.E(SpiceError.Data {
+                  msg := "Can't find subcircuit of type " & x.type,
+                  lNo := lNo })
                 END;
 
                 <*ASSERT haveIt*>  (* definition *)
@@ -126,7 +145,7 @@ PROCEDURE ParseLine(VAR circuit : SpiceCircuitList.T; (* circuit stack *)
       VAR nd : TEXT;
           m     := NEW(SpiceObject.M, 
                        terminals := NEW(TextSeq.T).init(),
-                       data := NEW(TextSeq.T).init());
+                       data      := NEW(TextSeq.T).init());
           gotNm := GetWord(line,p, m.name);
       BEGIN
         <*ASSERT gotNm*>
@@ -192,17 +211,6 @@ PROCEDURE ParseLine(VAR circuit : SpiceCircuitList.T; (* circuit stack *)
     END
   END ParseLine;
 
-PROCEDURE CaseIns(a, b : CHAR) : BOOLEAN =
-  BEGIN
-    IF a >= 'a' AND a <= 'z' THEN
-      a := VAL(ORD(a)-ORD('a')+ORD('A'),CHAR)
-    END;
-    IF b >= 'a' AND b <= 'z' THEN
-      b := VAL(ORD(b)-ORD('a')+ORD('A'),CHAR)
-    END;
-    RETURN a = b
-  END CaseIns;
-
 TYPE
   Suffix = RECORD
     s : TEXT; mult : LONGREAL
@@ -252,26 +260,6 @@ PROCEDURE ParseValue(z : TEXT) : LONGREAL =
     END;
     RETURN Scan.LongReal(z)
   END ParseValue;
-
-PROCEDURE HavePrefix(READONLY line : ARRAY OF CHAR;
-                     VAR p : CARDINAL;
-                     search : TEXT) : BOOLEAN =
-  VAR
-    n := Text.Length(search);
-  BEGIN
-    IF NUMBER(line)-p < n THEN RETURN FALSE END;
-
-    FOR i := 0 TO n-1 DO
-      IF NOT CaseIns(Text.GetChar(search,i),line[p+i]) THEN
-        RETURN FALSE
-      END
-    END;
-    INC(p,n);
-    WHILE p < NUMBER(line) AND line[p] IN White DO
-      INC(p)
-    END;
-    RETURN TRUE
-  END HavePrefix;
 
 PROCEDURE GetWord(READONLY line : ARRAY OF CHAR;
                   VAR      p    : CARDINAL;
