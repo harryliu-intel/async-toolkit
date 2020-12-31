@@ -188,7 +188,9 @@ PROCEDURE ParseSpice(rd : Rd.T; currentSearchDir, fn : Pathname.T) : T
 
 
   VAR
-    res := NEW(Private, subCkts := NEW(TextSpiceCircuitTbl.Default).init());
+    res := NEW(Private,
+               subCkts := NEW(TextSpiceCircuitTbl.Default).init(),
+               subCktNames := NEW(TextSeq.T).init());
 
 
   PROCEDURE Recurse(rd : Rd.T; currentSearchDir, fn : Pathname.T)
@@ -270,6 +272,7 @@ PROCEDURE ParseSpice(rd : Rd.T; currentSearchDir, fn : Pathname.T) : T
               BEGIN
                 SpiceObjectParse.ParseLine(res.circuit,
                                            res.subCkts,
+                                           res.subCktNames,
                                            SUBARRAY(buff^, p, len - p),
                                            warning);
                 IF warning # NIL THEN

@@ -19,19 +19,19 @@ TYPE
            VAR     ctr : CARDINAL) RAISES { Wr.Failure };
   END;
 
-  R = T BRANDED OBJECT
+  R = T BRANDED OBJECT (* resistor *)
     r : LONGREAL;
   END;
 
-  C = T BRANDED OBJECT
+  C = T BRANDED OBJECT (* capacitor *)
     c : LONGREAL;
   END;
 
-  X = T OBJECT
+  X = T OBJECT         (* subcell *)
     type : TEXT;
   END;
 
-  M = T OBJECT
+  M = T OBJECT         (* transistor *)
   END;
 
 CONST Brand = "SpiceObject";

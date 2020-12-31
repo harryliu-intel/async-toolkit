@@ -1,13 +1,10 @@
-MODULE Main;
+MODULE SpiceFlat;
 
 (* spiceflat <spice-deck-filename> <top-cell> *)
 
-IMPORT SpiceFormat;
-IMPORT FileRd;
-IMPORT Params;
 IMPORT SpiceCircuit;
 IMPORT Debug; FROM Debug IMPORT UnNil;
-IMPORT Wr, FileWr;
+IMPORT Wr;
 IMPORT SpiceObject;
 FROM Fmt IMPORT Int, F;
 IMPORT Thread;
@@ -20,25 +17,22 @@ IMPORT TextCardArraySort;
 IMPORT TextArraySort;
 IMPORT TextUtils, Integer, Text;
 IMPORT TextSpiceInstanceSetTbl;
-IMPORT OSError;
 IMPORT SpiceInstance, SpiceInstanceSetDef;
 IMPORT SpiceInstanceSet;
 IMPORT TextTextTbl;
-IMPORT FlatUI;
-IMPORT SpiceError;
-IMPORT AL;
-IMPORT Rd;
+IMPORT TextSpiceCircuitTbl;
 
 <*FATAL Thread.Alerted*>
-<*FATAL Wr.Failure, OSError.E*> (* ugly *)
 
-TYPE OType = { Null, R, C, M, X, Unknown };
+TYPE  OType =                      {  Null,   R,   C,   M,   X,   Unknown };
 CONST ONames = ARRAY OType OF TEXT { "NULL", "R", "C", "M", "X", "UNKNOWN" };
 
 PROCEDURE Visit(nm    : TEXT; 
                 wr    : Wr.T; 
-                ckt   : SpiceCircuit.T; 
-                level : CARDINAL := 0) =
+                ckt   : SpiceCircuit.T;
+                subCkts : TextSpiceCircuitTbl.T;
+                level : CARDINAL := 0)
+  RAISES { Wr.Failure } =
   VAR 
     cnt := ARRAY OType OF CARDINAL { 0, .. };
     subs := NEW(TextSetDef.T).init();
@@ -88,12 +82,12 @@ PROCEDURE Visit(nm    : TEXT;
             SpiceObject.X(x)    => 
             VAR
               ckt : SpiceCircuit.T;
-              hadIt := spice.subCkts.get(x.type, ckt);
+              hadIt := subCkts.get(x.type, ckt);
               seenIt : BOOLEAN;
             BEGIN
               <*ASSERT hadIt*>
               seenIt := subs.insert(x.type);
-              Visit(nm & "." & x.name, wr, ckt, level+1)
+              Visit(nm & "." & x.name, wr, ckt, subCkts, level+1)
             END
           ELSE
             (* skip *)
@@ -107,7 +101,8 @@ PROCEDURE DumpOneType(wr   : Wr.T;
                       tn   : TEXT; 
                       ckt  : SpiceCircuit.T;
                       tbl  : TextRefTbl.T;
-                      pTbl : TextTextSetTbl.T) =
+                      pTbl : TextTextSetTbl.T)
+  RAISES { Wr.Failure } =
   VAR
     elems := ckt.elements;
     cntTbl := NEW(TextCardTbl.Default).init();
@@ -153,7 +148,8 @@ PROCEDURE DumpBrief(wr         : Wr.T;
                     x          : TextCard.T; 
                     parentTbl  : TextTextSetTbl.T;
                     typeCntTbl : TextRefTbl.T;
-                    heightTbl  : TextCardTbl.T) =
+                    heightTbl  : TextCardTbl.T)
+  RAISES { Wr.Failure } =
   (* print instantiation DAG node in manner of gprof *)
   VAR
     ps : TextSet.T;
@@ -195,7 +191,8 @@ PROCEDURE DumpBrief(wr         : Wr.T;
 
 PROCEDURE DumpGprofFormat(wr : Wr.T;
                           typeCntTbl : TextRefTbl.T;
-                          parentTbl : TextTextSetTbl.T) =
+                          parentTbl : TextTextSetTbl.T)
+  RAISES { Wr.Failure } =
   BEGIN
     (* at this point typeCntTbl contains a table for every type; 
        each such table contains a count of how many instances of each
@@ -281,7 +278,8 @@ PROCEDURE DumpBriefFlat(wr         : Wr.T;
                         top        : TEXT; 
                         typeCntTbl : TextRefTbl.T;
                         cnt        : CARDINAL := 1;
-                        level      := 0) =
+                        level      := 0)
+  RAISES { Wr.Failure } =
   VAR
     r : REFANY;
     ct : TextCardTbl.T;
@@ -331,7 +329,8 @@ PROCEDURE VisitCktNodes(pfx    : TEXT;
                         ckt    : SpiceCircuit.T;
                         pNms   : TextSeq.T;
                         assocs : TextSpiceInstanceSetTbl.T;
-                        me     : SpiceInstance.T) =
+                        me     : SpiceInstance.T;
+                        subCkts : TextSpiceCircuitTbl.T) =
   (* build symbol table for every circuit node in system *)
   VAR
     sckt : SpiceCircuit.T;
@@ -361,7 +360,7 @@ PROCEDURE VisitCktNodes(pfx    : TEXT;
         TYPECASE elem OF
           SpiceObject.X(x) =>
           WITH nm   = pfx & "." & elem.name,
-               gotType = spice.subCkts.get(x.type, sckt),
+               gotType = subCkts.get(x.type, sckt),
                fNmSeq  = NEW(TextSeq.T).init() DO
             <*ASSERT gotType*>
 
@@ -369,7 +368,7 @@ PROCEDURE VisitCktNodes(pfx    : TEXT;
               fNmSeq.addhi(pfx & "." & x.terminals.get(i))
             END;
             
-            VisitCktNodes(nm, symTab, sckt, fNmSeq, assocs, inst)
+            VisitCktNodes(nm, symTab, sckt, fNmSeq, assocs, inst, subCkts)
           END
         ELSE
           (* skip *)
@@ -506,76 +505,4 @@ PROCEDURE AliasSortOrder(a, b : TEXT) : [-1..1] =
   
   (**********************************************************************)
 
-VAR
-  fn := Params.Get(1);
-  rd : Rd.T;
-  top := Params.Get(2);
-
-  topCkt : SpiceCircuit.T;
-  spice : SpiceFormat.T;
-BEGIN
-  TRY
-    rd := FileRd.Open(fn);
-    spice := SpiceFormat.ParseSpice(rd, ".", fn);
-  EXCEPT
-    OSError.E(e) =>
-    Debug.Error(F("Can't open top level file %s : OSError.E : %s",
-                  fn, AL.Format(e)))
-  |
-    SpiceError.E(e) =>
-    Debug.Error(F("Parsing input : caught SpiceError.E : %s at line %s of file %s",
-                  e.msg, Int(e.lNo), Debug.UnNil(e.fn)))
-  END;
-
-  IF NOT spice.subCkts.get(top, topCkt) THEN
-    Debug.Error("Can't find top-level subcircuit def'n \"" & top & "\"")
-  END;
-  
-  WITH wr = FileWr.Open("flat.out") DO
-    Visit("TOP", wr, topCkt);
-    Wr.Close(wr)
-  END;
-
-  VAR 
-    wr   := FileWr.Open("hier.out");
-    iter := spice.subCkts.iterate();
-    type : TEXT;
-    ckt : SpiceCircuit.T;
-    typeCntTbl := NEW(TextRefTbl.Default).init();
-    parentTbl := NEW(TextTextSetTbl.Default).init();
-    gwr := FileWr.Open("gprof.out");
-    bwr := FileWr.Open("bflat.out");
-  BEGIN
-    WHILE iter.next(type, ckt) DO
-      DumpOneType(wr, type, ckt, typeCntTbl, parentTbl)
-    END;
-    Wr.Close(wr);
-
-    DumpGprofFormat(gwr, typeCntTbl, parentTbl);
-    Wr.Close(gwr);
-
-    DumpBriefFlat(bwr, top, typeCntTbl);
-    Wr.Close(bwr)
-  END;
-
-  (* print out all the aliases ... *)
-  VAR
-    topName := "X1"; (* s.b. cmd-line param *)
-    symTab := NEW(TextTextSetTbl.Default).init();
-    assocs := NEW(TextSpiceInstanceSetTbl.Default).init();
-    topInstance := NEW(SpiceInstance.T).init("X1", NIL (* not right *), NIL);
-    canonTbl := NEW(TextTextTbl.Default).init();
-  BEGIN
-    VisitCktNodes(topName, symTab, topCkt, NIL, assocs, topInstance);
-    WITH wr = FileWr.Open("aliases.txt") DO
-      DumpSymtab(wr, symTab, canonTbl);
-      Wr.Close(wr)
-    END;
-
-    (* clean up assocs, merging any unmerged aliases *)
-    assocs := CleanAssocs(assocs, canonTbl);
-
-    FlatUI.REPL(assocs, symTab, canonTbl)
-  END
-
-END Main.
+BEGIN END SpiceFlat.

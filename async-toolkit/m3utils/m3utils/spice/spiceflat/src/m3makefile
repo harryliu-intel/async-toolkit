@@ -1,6 +1,5 @@
 import ("libm3")
 import ("cit_util")
-import ("parseparams")
 import ("spicelib")
 import ("m3readline")
 
@@ -20,6 +19,6 @@ Table("TextSpiceInstanceSet", "Text", "SpiceInstanceSet")
 
 Module ("FlatUI")
 
-implementation ("Main")
+Module ("SpiceFlat")
 
-program ("spiceflat")
+library ("spiceflat")

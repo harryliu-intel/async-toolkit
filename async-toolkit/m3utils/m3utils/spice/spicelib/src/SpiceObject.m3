@@ -41,6 +41,7 @@ PROCEDURE IsParamAssign(txt : TEXT) : BOOLEAN =
   
 PROCEDURE ParseLine(VAR circuit   : SpiceCircuitList.T; (* circuit stack *)
                     subCkts       : TextSpiceCircuitTbl.T;
+                    subCktNames   : TextSeq.T;
                     READONLY line : ARRAY OF CHAR;
                     VAR warning   : TEXT)
   RAISES { SpiceError.E } =
@@ -70,6 +71,7 @@ PROCEDURE ParseLine(VAR circuit   : SpiceCircuitList.T; (* circuit stack *)
             new.params.addhi(str)
           END;
           EVAL subCkts.put(new.name, new);
+          subCktNames.addhi(new.name);
           circuit := SpiceCircuitList.Cons(new, circuit) (* push *)
         END
 

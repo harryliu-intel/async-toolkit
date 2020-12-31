@@ -4,6 +4,16 @@ import ("parseparams")
 import ("spicelib")
 import ("m3readline")
 
+Module ("SpiceAnalyze")
 implementation ("Main")
+Interface ("CktGraph")
+
+Interface ("CktElement")
+Interface ("CktNode")
+List ("CktElement", "CktElement")
+List ("CktNode", "CktNode")
+
+Interface ("CktCell")
+Table ("TextCktCell", "Text", "CktCell")
 
 program ("spiceanalyze")

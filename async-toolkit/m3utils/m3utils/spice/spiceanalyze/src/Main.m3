@@ -12,38 +12,20 @@ IMPORT FileRd;
 IMPORT Debug;
 FROM Fmt IMPORT F, Int;
 IMPORT AL;
-IMPORT TextSpiceObjectTbl;
 IMPORT Pathname;
-IMPORT TextSet, TextSetDef;
+IMPORT TextSetDef;
 IMPORT Stdio;
 IMPORT Text;
 IMPORT TextReader;
 IMPORT Thread;
+IMPORT SpiceAnalyze;
+FROM SpiceAnalyze IMPORT Power, PowerSets, PowerNames;
+IMPORT TextCktCellTbl;
 
 <*FATAL Thread.Alerted*>
 
 CONST TE = Text.Equal;
 
-
-PROCEDURE DoOne( nm   : TEXT;
-                 ckt  : SpiceCircuit.T ) =
-  VAR
-    symtab := NEW(TextSpiceObjectTbl.Default).init();
-    
-  BEGIN
-    Debug.Out("Working on " & nm);
-    Debug.Out(F("name %s", ckt.name));
-    FOR i := 0 TO ckt.params.size() - 1 DO
-      Debug.Out(F("param[%s] %s", Int(i), ckt.params.get(i)))
-    END;
-    FOR i := 0 TO ckt.elements.size() - 1 DO
-      WITH obj = ckt.elements.get(i) DO
-        <*ASSERT obj.name # NIL*>
-        Debug.Out(F("elem[%s] %s", Int(i), obj.name));
-        EVAL symtab.put(obj.name, obj)
-      END
-    END
-  END DoOne;
 
 PROCEDURE TryOpenFile(fn : Pathname.T; VAR rd : Rd.T) =
   BEGIN
@@ -59,13 +41,6 @@ PROCEDURE TryOpenFile(fn : Pathname.T; VAR rd : Rd.T) =
       END
     END
   END TryOpenFile;
-
-TYPE
-  Power      = { GND, Vdd };
-  PowerSets  = ARRAY Power OF TextSet.T;
-
-CONST
-  PowerNames = ARRAY Power OF TEXT { "GND", "Vdd" };
 
 PROCEDURE ParsePower(rd : Rd.T; VAR ps : PowerSets)
   RAISES { Rd.Failure, SpiceError.E } =
@@ -163,12 +138,15 @@ BEGIN
 
   Debug.Out(F("subCkts : %s", Int(spice.subCkts.size())));
   VAR
-    iter := spice.subCkts.iterate();
-    t : TEXT;
     ckt : SpiceCircuit.T;
+    hierTbl := NEW(TextCktCellTbl.Default).init();
   BEGIN
-    WHILE iter.next(t, ckt) DO
-      DoOne(t, ckt)
+    FOR i := 0 TO spice.subCktNames.size() - 1 DO
+      WITH nm = spice.subCktNames.get(i),
+           hadIt = spice.subCkts.get(nm, ckt) DO
+        <*ASSERT hadIt*>
+        SpiceAnalyze.Cell(nm, ckt, powerSets, hierTbl, spice.subCkts)
+      END
     END
   END
       

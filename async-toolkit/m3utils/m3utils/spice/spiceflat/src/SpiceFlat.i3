@@ -1,0 +1,56 @@
+INTERFACE SpiceFlat;
+IMPORT Wr;
+IMPORT TextRefTbl;
+IMPORT TextTextSetTbl;
+IMPORT TextSeq;
+IMPORT TextTextTbl;
+IMPORT SpiceCircuit;
+IMPORT SpiceInstance;
+IMPORT TextSpiceInstanceSetTbl;
+IMPORT TextSpiceCircuitTbl;
+
+PROCEDURE Visit(nm    : TEXT; 
+                wr    : Wr.T; 
+                ckt   : SpiceCircuit.T;
+                subCkts : TextSpiceCircuitTbl.T;
+                level : CARDINAL := 0)
+  RAISES { Wr.Failure } ;
+
+PROCEDURE DumpOneType(wr   : Wr.T; 
+                      tn   : TEXT; 
+                      ckt  : SpiceCircuit.T;
+                      tbl  : TextRefTbl.T;
+                      pTbl : TextTextSetTbl.T)
+  RAISES { Wr.Failure };
+  
+PROCEDURE DumpGprofFormat(wr : Wr.T;
+                          typeCntTbl : TextRefTbl.T;
+                          parentTbl : TextTextSetTbl.T)
+  RAISES { Wr.Failure };
+
+PROCEDURE DumpBriefFlat(wr         : Wr.T; 
+                        top        : TEXT; 
+                        typeCntTbl : TextRefTbl.T;
+                        cnt        : CARDINAL := 1;
+                        level      := 0)
+  RAISES { Wr.Failure };
+
+PROCEDURE VisitCktNodes(pfx    : TEXT;
+                        symTab : TextTextSetTbl.T;
+                        ckt    : SpiceCircuit.T;
+                        pNms   : TextSeq.T;
+                        assocs : TextSpiceInstanceSetTbl.T;
+                        me     : SpiceInstance.T;
+                        subCkts : TextSpiceCircuitTbl.T);
+
+PROCEDURE DumpSymtab(wr : Wr.T;
+                     symTab : TextTextSetTbl.T;
+                     (*OUT*)canonTbl : TextTextTbl.T)
+  RAISES { Wr.Failure };
+
+PROCEDURE CleanAssocs(tbl      : TextSpiceInstanceSetTbl.T;
+                      canonTbl : TextTextTbl.T) : TextSpiceInstanceSetTbl.T;
+
+CONST Brand = "SpiceFlat";
+
+END SpiceFlat.
