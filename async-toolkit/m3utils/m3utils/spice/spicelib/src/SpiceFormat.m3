@@ -186,7 +186,6 @@ PROCEDURE ResolvePath(cwd, fn : Pathname.T) : FileLookup
 PROCEDURE ParseSpice(rd : Rd.T; currentSearchDir, fn : Pathname.T) : T
   RAISES { SpiceError.E, Rd.Failure } =
 
-
   VAR
     res := NEW(Private,
                subCkts := NEW(TextSpiceCircuitTbl.Default).init(),
@@ -306,6 +305,7 @@ PROCEDURE ParseSpice(rd : Rd.T; currentSearchDir, fn : Pathname.T) : T
     END;
 
     Recurse(rd, currentSearchDir, fn);
+    res.topCkt := res.circuit.head; 
     RETURN res
   END ParseSpice;
 

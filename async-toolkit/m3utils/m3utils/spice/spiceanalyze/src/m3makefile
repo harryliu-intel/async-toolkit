@@ -3,6 +3,7 @@ import ("cit_util")
 import ("parseparams")
 import ("spicelib")
 import ("m3readline")
+import ("spiceflat")
 
 Module ("SpiceAnalyze")
 implementation ("Main")

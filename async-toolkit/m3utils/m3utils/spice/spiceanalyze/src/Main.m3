@@ -21,6 +21,11 @@ IMPORT Thread;
 IMPORT SpiceAnalyze;
 FROM SpiceAnalyze IMPORT Power, PowerSets, PowerNames;
 IMPORT TextCktCellTbl;
+FROM SpiceFlat IMPORT VisitCktNodes, CleanAssocs;
+IMPORT TextTextSetTbl;
+IMPORT SpiceInstance;
+IMPORT TextSpiceInstanceSetTbl;
+IMPORT TextTextTbl;
 
 <*FATAL Thread.Alerted*>
 
@@ -137,6 +142,26 @@ BEGIN
   END;
 
   Debug.Out(F("subCkts : %s", Int(spice.subCkts.size())));
+  
+  VAR
+    topName := "X1"; (* s.b. cmd-line param *)
+    symTab := NEW(TextTextSetTbl.Default).init();
+    assocs := NEW(TextSpiceInstanceSetTbl.Default).init();
+    topInstance := NEW(SpiceInstance.T).init("X1", NIL (* not right *), NIL);
+    canonTbl := NEW(TextTextTbl.Default).init();
+  BEGIN
+    spice.topCkt.name := topName; (* wont be named otherwise *)
+    
+    VisitCktNodes(topName,
+                  symTab,
+                  spice.topCkt,
+                  NIL,
+                  assocs,
+                  topInstance,
+                  spice.subCkts);
+    assocs := CleanAssocs(assocs, canonTbl);
+  END;
+  
   VAR
     ckt : SpiceCircuit.T;
     hierTbl := NEW(TextCktCellTbl.Default).init();

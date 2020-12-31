@@ -1,13 +1,15 @@
 INTERFACE SpiceFormat;
 IMPORT Rd, Thread;
+IMPORT SpiceCircuit;
 IMPORT TextSpiceCircuitTbl;
 IMPORT SpiceError;
 IMPORT Pathname;
 IMPORT TextSeq;
 
 TYPE
-  T = OBJECT 
-    subCkts : TextSpiceCircuitTbl.T;
+  T = OBJECT
+    topCkt      : SpiceCircuit.T;
+    subCkts     : TextSpiceCircuitTbl.T;
     subCktNames : TextSeq.T; (* in correct sequence *)
   END;
     
