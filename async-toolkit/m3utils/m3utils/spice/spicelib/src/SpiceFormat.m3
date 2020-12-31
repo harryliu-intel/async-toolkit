@@ -94,7 +94,6 @@ PROCEDURE GetLine(rd : Rd.T;
                   VAR lNo : CARDINAL) : [-1..LAST(CARDINAL)] RAISES { Rd.Failure, Thread.Alerted } =
   VAR 
     p : [ -1 .. LAST(CARDINAL) ] := 0;
-    <*FATAL Rd.EndOfFile*>
   BEGIN
     (* there are two ways of hitting EOF here ... *)
     LOOP
@@ -266,13 +265,24 @@ PROCEDURE ParseSpice(rd : Rd.T; currentSearchDir, fn : Pathname.T) : T
           ELSE
             TRY
               WHILE p < len AND buff[p] IN White DO INC(p) END;
-              SpiceObjectParse.ParseLine(res.circuit,
-                                         res.subCkts,
-                                         SUBARRAY(buff^, p, len - p),
-                                         lNo)
+              VAR
+                warning : TEXT := NIL;
+              BEGIN
+                SpiceObjectParse.ParseLine(res.circuit,
+                                           res.subCkts,
+                                           SUBARRAY(buff^, p, len - p),
+                                           warning);
+                IF warning # NIL THEN
+                  Debug.Warning(F("SpiceFormat.ParseSpice : file %s line %s : %s",
+                                  fn, Int(lNo), warning))
+                END
+              END
+                
+              
             EXCEPT
               SpiceError.E(e) =>
               VAR f := e; BEGIN
+                f.lNo := lNo;
                 f.fn := fn;
                 RAISE SpiceError.E(f)
               END

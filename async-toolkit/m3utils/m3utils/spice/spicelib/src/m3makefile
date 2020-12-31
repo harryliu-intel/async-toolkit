@@ -23,6 +23,8 @@ MkSetDef("SpiceObject", "SpiceObject")
 Table("SpiceObjectRef", "SpiceObject", "Refany")
 Table("TextSpiceObjectSet", "Text", "SpiceObjectSet")
 
+Table("TextSpiceObject", "Text", "SpiceObject")
+
 Interface ("SpiceError")
 
 module ("SpiceParse")

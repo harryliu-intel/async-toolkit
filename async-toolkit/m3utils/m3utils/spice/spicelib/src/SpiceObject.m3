@@ -1,6 +1,4 @@
 MODULE SpiceObject EXPORTS SpiceObject, SpiceObjectParse;
-IMPORT Wr;
-IMPORT Rd;
 IMPORT Debug;
 IMPORT Text;
 FROM Fmt IMPORT Int, F, Bool;
@@ -8,13 +6,14 @@ IMPORT SpiceCircuitList, TextSpiceCircuitTbl;
 IMPORT TextSeq;
 IMPORT SpiceObjectSeq;
 IMPORT SpiceCircuit;
-IMPORT SpiceObject, SpiceObjectParse;
+IMPORT SpiceObject;
 IMPORT Scan;
 FROM SpiceFileFormat IMPORT White;
 IMPORT Word;
 IMPORT SpiceError;
 FROM Debug IMPORT UnNil;
 FROM SpiceParse IMPORT HavePrefix, CaseIns;
+IMPORT FloatMode, Lex;
 
 CONST TE = Text.Equal;
 
@@ -23,14 +22,16 @@ VAR doDebug := Debug.DebugThis("SpiceObject");
 REVEAL
   T = Public BRANDED Brand OBJECT
   OVERRIDES
-    output := Output;
+  (*  output := Output;*)
   END;
-
-PROCEDURE Output(t : T; wr : Wr.T; path : TEXT; VAR c : CARDINAL) 
+  
+(*
+  PROCEDURE Output(t : T; wr : Wr.T; path : TEXT; VAR c : CARDINAL) 
   RAISES { Wr.Failure } =
   BEGIN
-    
+    <
   END Output;
+*)
 
 PROCEDURE IsParamAssign(txt : TEXT) : BOOLEAN =
   (* returns whether it matches the pattern <a>=<b> *)
@@ -41,7 +42,7 @@ PROCEDURE IsParamAssign(txt : TEXT) : BOOLEAN =
 PROCEDURE ParseLine(VAR circuit   : SpiceCircuitList.T; (* circuit stack *)
                     subCkts       : TextSpiceCircuitTbl.T;
                     READONLY line : ARRAY OF CHAR;
-                    lNo           : CARDINAL (* for errors *))
+                    VAR warning   : TEXT)
   RAISES { SpiceError.E } =
   VAR 
     p   : CARDINAL := 0;
@@ -49,6 +50,7 @@ PROCEDURE ParseLine(VAR circuit   : SpiceCircuitList.T; (* circuit stack *)
     ckt : SpiceCircuit.T;
     o   : SpiceObject.T := NIL;
   BEGIN
+    warning := NIL;
     IF    NUMBER(line) = 0 THEN
       (* skip *)
     ELSIF line[p] = '.' THEN
@@ -64,6 +66,7 @@ PROCEDURE ParseLine(VAR circuit   : SpiceCircuitList.T; (* circuit stack *)
              hadIt = GetWord(line, p, new.name) DO
           <*ASSERT hadIt*>
           WHILE GetWord(line, p, str) DO
+            <*ASSERT str # NIL*>
             new.params.addhi(str)
           END;
           EVAL subCkts.put(new.name, new);
@@ -78,8 +81,7 @@ PROCEDURE ParseLine(VAR circuit   : SpiceCircuitList.T; (* circuit stack *)
         circuit := circuit.tail (* pop *)
       ELSE
         RAISE SpiceError.E(SpiceError.Data {
-        msg := "Unknown directive in \"" & Text.FromChars(line) & "\"",
-        lNo := lNo
+        msg := "Unknown directive in \"" & Text.FromChars(line) & "\""
         })
       END
     ELSIF line[0] = '*' THEN
@@ -130,8 +132,8 @@ PROCEDURE ParseLine(VAR circuit   : SpiceCircuitList.T; (* circuit stack *)
               WITH haveIt  = subCkts.get(x.type, ckt) DO
                 IF NOT haveIt THEN
                   RAISE SpiceError.E(SpiceError.Data {
-                  msg := "Can't find subcircuit of type " & x.type,
-                  lNo := lNo })
+                  msg := "Can't find subcircuit of type " & x.type
+                  })
                 END;
 
                 <*ASSERT haveIt*>  (* definition *)
@@ -209,9 +211,9 @@ PROCEDURE ParseLine(VAR circuit   : SpiceCircuitList.T; (* circuit stack *)
         o := m
       END
     ELSE
-      Debug.Warning(F("Unknown element %s in line %s : %s" ,
+      warning := F("unknown element %s : %s" ,
                       Text.FromChar(line[0]),
-                      Int(lNo), Text.FromChars(line)))
+                      Text.FromChars(line))
     END;
 
     IF o # NIL THEN circuit.head.elements.addhi(o) END;
@@ -264,14 +266,25 @@ PROCEDURE RemoveCaseInsSuff(VAR z : TEXT; s : TEXT) : BOOLEAN =
     END
   END RemoveCaseInsSuff;
 
-PROCEDURE ParseValue(z : TEXT) : LONGREAL =
+PROCEDURE ParseValue(z : TEXT) : LONGREAL
+  RAISES { SpiceError.E } =
+  VAR
+    orig := z;
   BEGIN
-    FOR i := FIRST(Suffixes) TO LAST(Suffixes) DO
-      IF    RemoveCaseInsSuff(z, Suffixes[i].s) THEN
-        RETURN Suffixes[i].mult * Scan.LongReal(z)
-      END
-    END;
-    RETURN Scan.LongReal(z)
+    TRY
+      FOR i := FIRST(Suffixes) TO LAST(Suffixes) DO
+        IF    RemoveCaseInsSuff(z, Suffixes[i].s) THEN
+          RETURN Suffixes[i].mult * Scan.LongReal(z)
+        END
+      END;
+      RETURN Scan.LongReal(z)
+    EXCEPT
+      Lex.Error, FloatMode.Trap =>
+      RAISE SpiceError.E(SpiceError.Data {
+      msg := F("Can't parse value \"%s\"", orig),
+      lNo := 0
+      })
+    END
   END ParseValue;
 
 PROCEDURE GetWord(READONLY line : ARRAY OF CHAR;

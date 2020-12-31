@@ -4,7 +4,7 @@ IMPORT Pathname;
 TYPE
   Data = RECORD
     msg : TEXT := "";
-    lNo : CARDINAL;
+    lNo : CARDINAL := 0;
     fn  : Pathname.T := NIL;
   END;
   

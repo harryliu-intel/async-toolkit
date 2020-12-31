@@ -6,7 +6,7 @@ IMPORT SpiceError;
 PROCEDURE ParseLine(VAR circuit : SpiceCircuitList.T; (* circuit stack *)
                     subCkts : TextSpiceCircuitTbl.T;
                     READONLY line : ARRAY OF CHAR;
-                    lNo : CARDINAL (* for errors *))
+                    VAR warning : TEXT)
   RAISES { SpiceError.E };
 
 END SpiceObjectParse.
