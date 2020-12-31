@@ -1,0 +1,19 @@
+.SUBCKT pdio_hia18_mac anode cathode
+.ENDS pdio_hia18_mac
+
+.SUBCKT ndio_hia18_mac anode cathode
+.ENDS ndio_hia18_mac
+
+.SUBCKT ndio_18_mac anode cathode
+.ENDS ndio_18_mac
+
+.SUBCKT rhim_nw a b c
+* not sure what this is
+.ENDS rhim_nw
+
+.SUBCKT rm1w a b 
+* not sure what this is
+.ENDS rm1w
+
+
+
