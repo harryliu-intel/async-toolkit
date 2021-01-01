@@ -163,18 +163,20 @@ PROCEDURE GateFindVisit(v    : GateFindVisitor;
     Debug.Out(F("GateFindVisit : n %s -> e %s -> n %s",
                 Int(prev.id), Int(via.id), Int(this.id)));
 
-    IF NdProp.IsVdd IN this.props OR NdProp.IsGnd IN this.props THEN
-      (* end of line, we are at power supply *)
-      Debug.Out(F("GateFindVisit n %s at power supply", Int(this.id)));
-      RETURN FALSE
-    ELSIF v.eMustMatch * via.props # v.eMustMatch THEN
+    IF v.eMustMatch * via.props # v.eMustMatch THEN
       Debug.Out(F("GateFindVisit non-transistor e %s", Int(via.id)));
       RETURN FALSE
     ELSIF NOT (IsFetTerminal(via, this, FetTerminal.Source) OR
                IsFetTerminal(via, this, FetTerminal.Source)) THEN
       Debug.Out(F("GateFindVisit not source or drain of %s", Int(via.id)));
       RETURN FALSE
+    ELSIF NdProp.IsVdd IN this.props OR NdProp.IsGnd IN this.props THEN
+      (* end of line, we are at power supply, device is included *)
+      v.fetArray.addToRow(via, NodeList.Length(path) - 1);
+      Debug.Out(F("GateFindVisit n %s at power supply", Int(this.id)));
+      RETURN FALSE
     ELSE
+      (* moving along, device is included *)
       v.fetArray.addToRow(via, NodeList.Length(path) - 1);
       RETURN TRUE
     END
