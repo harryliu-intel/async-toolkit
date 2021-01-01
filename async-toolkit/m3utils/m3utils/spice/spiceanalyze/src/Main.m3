@@ -144,35 +144,23 @@ BEGIN
   Debug.Out(F("subCkts : %s", Int(spice.subCkts.size())));
   
   VAR
-    topName := "X1"; (* s.b. cmd-line param *)
-    symTab := NEW(TextTextSetTbl.Default).init();
-    assocs := NEW(TextSpiceInstanceSetTbl.Default).init();
-    topInstance := NEW(SpiceInstance.T).init("X1", NIL (* not right *), NIL);
-    canonTbl := NEW(TextTextTbl.Default).init();
-  BEGIN
-    spice.topCkt.name := topName; (* wont be named otherwise *)
-    
-    VisitCktNodes(topName,
-                  symTab,
-                  spice.topCkt,
-                  NIL,
-                  assocs,
-                  topInstance,
-                  spice.subCkts);
-    assocs := CleanAssocs(assocs, canonTbl);
-  END;
-  
-  VAR
     ckt : SpiceCircuit.T;
     hierTbl := NEW(TextCktCellTbl.Default).init();
   BEGIN
     FOR i := 0 TO spice.subCktNames.size() - 1 DO
-      WITH nm = spice.subCktNames.get(i),
+
+      (* this loop walks through all the SUBCKT regions in the input,
+         in order *)
+      
+      WITH nm    = spice.subCktNames.get(i),
            hadIt = spice.subCkts.get(nm, ckt) DO
         <*ASSERT hadIt*>
+        (* first find all the aliases *)
         SpiceAnalyze.Cell(nm, ckt, powerSets, hierTbl, spice.subCkts)
       END
-    END
+    END;
+
+    SpiceAnalyze.Cell("TOP", spice.topCkt, powerSets, hierTbl, spice.subCkts)
   END
       
 END Main.

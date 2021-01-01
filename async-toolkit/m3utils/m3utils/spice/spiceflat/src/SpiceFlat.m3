@@ -331,7 +331,6 @@ PROCEDURE VisitCktNodes(pfx    : TEXT;
                         assocs : TextSpiceInstanceSetTbl.T;
                         me     : SpiceInstance.T;
                         subCkts : TextSpiceCircuitTbl.T) =
-  (* build symbol table for every circuit node in system *)
   VAR
     sckt : SpiceCircuit.T;
   BEGIN
@@ -354,7 +353,12 @@ PROCEDURE VisitCktNodes(pfx    : TEXT;
            inst     = NEW(SpiceInstance.T).init(flatName, elem, me) DO
         (* associate element, no matter what it is, with nodes connected *)
         FOR i := 0 TO elem.terminals.size()-1 DO
-          Associate(assocs, pfx & "." & elem.terminals.get(i), inst)
+          WITH fn = pfx & "." & elem.terminals.get(i) DO
+            Associate(assocs, fn, inst);
+
+            (* and dont lose nodes that are connected only to circuit elements *)
+            AddAlias(symTab, fn, fn)
+          END
         END;
 
         TYPECASE elem OF
@@ -464,7 +468,49 @@ PROCEDURE DumpSymtab(wr : Wr.T;
     Debug.Out(F("%-10s max aliases in net %s", Int(mas), mca));
   END DumpSymtab;
 
-PROCEDURE DumpSingleList(wr : Wr.T; aliases : TextSet.T; done : TextSet.T; canonTbl : TextTextTbl.T) : TEXT
+PROCEDURE BuildCanonTbl(aliasTbl : TextTextSetTbl.T;
+                        canonTbl : TextTextTbl.T) =
+
+  PROCEDURE DoOneSet(aliases : TextSet.T) =
+    VAR
+      arr := NEW(REF ARRAY OF TEXT, aliases.size());
+      iter := aliases.iterate();
+      i := 0;
+      q : TEXT;
+    BEGIN
+      WHILE iter.next(q) DO
+        arr[i] := q;
+        EVAL done.insert(arr[i]);
+        INC(i)
+      END;
+      <*ASSERT i = NUMBER(arr^)*>
+      TextArraySort.Sort(arr^, AliasSortOrder);
+      
+      FOR i := FIRST(arr^) TO LAST(arr^) DO
+        EVAL canonTbl.put(arr[i], arr[0])
+      END
+    END DoOneSet;
+    
+  VAR
+    done := NEW(TextSetDef.T).init();
+    iter := aliasTbl.iterate();
+    t : TEXT;
+    ts : TextSet.T;
+  BEGIN
+    WHILE iter.next(t, ts) DO
+      IF NOT done.member(t) THEN
+        DoOneSet(ts);
+        done := done.union(ts)
+      END
+    END
+  END BuildCanonTbl;
+
+
+
+PROCEDURE DumpSingleList(wr : Wr.T;
+                         aliases : TextSet.T;
+                         done : TextSet.T;
+                         canonTbl : TextTextTbl.T) : TEXT
   RAISES { Wr.Failure } =
   VAR
     arr := NEW(REF ARRAY OF TEXT, aliases.size());

@@ -9,12 +9,26 @@ Module ("SpiceAnalyze")
 implementation ("Main")
 Interface ("CktGraph")
 
-Interface ("CktElement")
-Interface ("CktNode")
+Module ("CktElement")
+Module ("CktNode")
 List ("CktElement", "CktElement")
 List ("CktNode", "CktNode")
+Table ("TextNode", "Text", "CktNode")
+Table ("TextElement", "Text", "CktElement")
 
 Interface ("CktCell")
 Table ("TextCktCell", "Text", "CktCell")
+Sequence("CktNode", "CktNode")
+
+Table("CktNodeRef", "CktNode", "Refany")
+MkSet("CktNode", "CktNode")
+MkSetDef("CktNode", "CktNode")
+
+Table("CktElementRef", "CktElement", "Refany")
+MkSet("CktElement", "CktElement")
+MkSetDef("CktElement", "CktElement")
+
+Interface("NodeProperty")
+Interface("NodePropertySet")
 
 program ("spiceanalyze")
