@@ -20,6 +20,8 @@ Table ("TextElement", "Text", "CktElement")
 Interface ("CktCell")
 Table ("TextCktCell", "Text", "CktCell")
 Sequence("CktNode", "CktNode")
+Sequence("CktElement", "CktElement")
+Sequence("CktElementSeq", "CktElementSeq")
 
 Table("CktNodeRef", "CktNode", "Refany")
 MkSet("CktNode", "CktNode")
@@ -36,5 +38,7 @@ Interface("ElementProperty")
 Module("ElementPropertySet")
 
 Generic_module("EnumSet")
+
+Module ("FetArray")
 
 program ("spiceanalyze")
