@@ -20,6 +20,7 @@ IMPORT TextSetDef;
 IMPORT TextElementTbl;
 IMPORT CktNodeSeq;
 IMPORT CktElementList;
+IMPORT CktNodeList AS NodeList;
 IMPORT CktNodeSet, CktNodeSetDef;
 IMPORT NodeProperty;
 IMPORT NodePropertySet AS NdProps;
@@ -28,6 +29,7 @@ IMPORT ElementPropertySet AS EtProps;
 IMPORT TextUtils;
 IMPORT Text;
 IMPORT CktGraphDfs AS Dfs;
+IMPORT FetArray;
 
 VAR doDebug := Debug.DebugThis("SpiceAnalyze");
     
@@ -112,13 +114,16 @@ PROCEDURE Cell(nm      : TEXT;
       VAR
         n : Node;
         visitor := NEW(GateFindVisitor);
-        iter := gateOutputs.iterate();
+        iter    := gateOutputs.iterate();
       BEGIN
         WHILE iter.next(n) DO
           FOR i := FIRST(MatchSets) TO LAST(MatchSets) DO
             visitor.eMustMatch := MatchSets[i];
+            visitor.fetArray := NEW(FetArray.T).init();
+
             Debug.Out("Finding gate from " & Int(n.id));
             Dfs.Node(n, visitor);
+            Debug.Out(F("%s elements", Int(visitor.fetArray.size())))
           END
         END
       END
@@ -129,6 +134,7 @@ PROCEDURE Cell(nm      : TEXT;
 TYPE
   GateFindVisitor = Dfs.NodeVisitor OBJECT
     eMustMatch : EtProps.T;
+    fetArray   : FetArray.T;
   OVERRIDES
     visit := GateFindVisit;
   END;
@@ -147,8 +153,12 @@ PROCEDURE IsFetTerminal(e : Element; n : Node; term : FetTerminal) : BOOLEAN =
     RETURN found = ORD(term)
   END IsFetTerminal;
   
-PROCEDURE GateFindVisit(v : GateFindVisitor;
-                        prev : Node; via : Element; this : Node) : BOOLEAN =
+PROCEDURE GateFindVisit(v    : GateFindVisitor;
+                        path : NodeList.T;
+                        via  : Element;
+                        this : Node) : BOOLEAN =
+  VAR
+    prev := path.head;
   BEGIN
     Debug.Out(F("GateFindVisit : n %s -> e %s -> n %s",
                 Int(prev.id), Int(via.id), Int(this.id)));
@@ -165,6 +175,7 @@ PROCEDURE GateFindVisit(v : GateFindVisitor;
       Debug.Out(F("GateFindVisit not source or drain of %s", Int(via.id)));
       RETURN FALSE
     ELSE
+      v.fetArray.addToRow(via, NodeList.Length(path) - 1);
       RETURN TRUE
     END
   END GateFindVisit;

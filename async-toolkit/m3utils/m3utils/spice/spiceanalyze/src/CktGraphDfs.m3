@@ -1,11 +1,12 @@
 MODULE CktGraphDfs;
 IMPORT CktGraph AS G;
+IMPORT CktNodeList AS NodeList;
 
 PROCEDURE Node(n : G.Node; visitor : NodeVisitor) =
   VAR
     myMark := NEW(G.Mark);
 
-  PROCEDURE Recurse(n : G.Node) =
+  PROCEDURE Recurse(n : G.Node; path : NodeList.T) =
     VAR
       p := n.elements;
     BEGIN
@@ -18,8 +19,9 @@ PROCEDURE Node(n : G.Node; visitor : NodeVisitor) =
               WITH nn = e.terminals.get(i) DO
                 IF nn.mark # myMark THEN
                   nn.mark := myMark;
-                  IF visitor.visit(n, e, nn) THEN
-                    Recurse(nn)
+                  IF visitor.visit(path, e, nn) THEN
+                    Recurse(nn,
+                            NodeList.Cons(nn, path))
                   END
                 END
               END
@@ -31,7 +33,7 @@ PROCEDURE Node(n : G.Node; visitor : NodeVisitor) =
     END Recurse;
     
   BEGIN
-    Recurse(n)
+    Recurse(n, NodeList.List1(n))
   END Node;
 
 
