@@ -8,6 +8,7 @@ import ("spiceflat")
 Module ("SpiceAnalyze")
 implementation ("Main")
 Interface ("CktGraph")
+Module ("CktGraphDfs")
 
 Module ("CktElement")
 Module ("CktNode")
@@ -29,6 +30,11 @@ MkSet("CktElement", "CktElement")
 MkSetDef("CktElement", "CktElement")
 
 Interface("NodeProperty")
-Interface("NodePropertySet")
+Module("NodePropertySet")
+
+Interface("ElementProperty")
+Module("ElementPropertySet")
+
+Generic_module("EnumSet")
 
 program ("spiceanalyze")

@@ -6,6 +6,7 @@ IMPORT CktElementList;
 IMPORT TextSet;
 IMPORT CktNodeSeq;
 IMPORT NodePropertySet;
+IMPORT ElementPropertySet;
 
 TYPE
   Mark = BRANDED OBJECT END; (* DFS mark *)
@@ -15,6 +16,7 @@ REVEAL
     id        : INTEGER;
     src       : SpiceObject.T;
     terminals : CktNodeSeq.T;
+    props     := ElementPropertySet.Empty;
     mark      : Mark := NIL;
   END;
 
