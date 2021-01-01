@@ -174,6 +174,9 @@ PROCEDURE ParseLine(VAR circuit   : SpiceCircuitList.T; (* circuit stack *)
         m.terminals.addhi(nd);
         WITH gotBk = GetWord(line, p, nd) DO <*ASSERT gotBk*> END;
         m.terminals.addhi(nd);
+
+        WITH gotType = GetWord(line, p, nd) DO <*ASSERT gotType*> END;
+        m.type := nd;
         
         o := m
       END

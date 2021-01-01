@@ -22,6 +22,9 @@ IMPORT CktNodeSeq;
 IMPORT CktElementList;
 IMPORT CktNodeSet, CktNodeSetDef;
 IMPORT NodeProperty;
+IMPORT NodePropertySet AS NdProps;
+IMPORT TextUtils;
+IMPORT Text;
 
 VAR doDebug := Debug.DebugThis("SpiceAnalyze");
     
@@ -80,8 +83,10 @@ PROCEDURE Cell(nm      : TEXT;
       elemTab := NEW(TextElementTbl.Default).init();
 
       gateOutputs : CktNodeSet.T;
+
+      canons : TextSet.T;
     BEGIN
-      BuildNodeTab(canonTbl, ckt, subCkts, nodeTab);
+      canons := BuildNodeTab(canonTbl, ckt, subCkts, nodeTab);
       
       BuildElementTab(ckt, subCkts, nodeTab, elemTab, ckt.name);
 
@@ -90,34 +95,93 @@ PROCEDURE Cell(nm      : TEXT;
 
       MarkNodeProperties(nodeTab, elemTab);
       
-      gateOutputs := FindGateOutputs(nodeTab)
+      gateOutputs := FindGateOutputs(canons, nodeTab)
     END;
 
   END Cell;
 
-PROCEDURE FindGateOutputs(nodeTab : TextNodeTbl.T) : CktNodeSet.T =
+PROCEDURE FindGateOutputs(canons  : TextSet.T;
+                          nodeTab : TextNodeTbl.T) : CktNodeSet.T =
   TYPE
     NdProp = NodeProperty.T;
   VAR
     res := NEW(CktNodeSetDef.T).init();
-    iter := nodeTab.iterate();
+    iter := canons.iterate();
     nn : TEXT;
     n : Node;
   BEGIN
-    WHILE iter.next(nn, n) DO
-      IF NdProp.IsNfetTerminal IN n.props AND
-         NdProp.IsPfetTerminal IN n.props THEN
+    WHILE iter.next(nn) DO
+      WITH hadIt = nodeTab.get(nn, n) DO
+        <*ASSERT hadIt*>
+      END;
+      IF NdProp.IsNfetSourceDrain IN n.props AND
+         NdProp.IsPfetSourceDrain IN n.props THEN
+        Debug.Out("Found a putative gate output : " & nn);
         EVAL res.insert(n)
       END
     END;
     RETURN res
   END FindGateOutputs;
 
+TYPE TransistorType = { N, P, Unknown };
+     
+PROCEDURE DecodeTransistorTypeName(tn : TEXT) : TransistorType =
+  BEGIN
+    WITH low   = TextUtils.ToLower(tn),
+         first = Text.GetChar(tn, 0) DO
+      CASE first OF
+        'p' => RETURN TransistorType.P
+      |
+        'n' => RETURN TransistorType.N
+      ELSE
+        RETURN TransistorType.Unknown
+      END
+    END
+  END DecodeTransistorTypeName;
+
 PROCEDURE MarkNodeProperties(nodeTab : TextNodeTbl.T;
                              elemTab : TextElementTbl.T) =
+
+  TYPE
+    NdProp = NodeProperty.T;
+    
+  PROCEDURE Mark(n : Node; prop : NdProp) =
+    BEGIN
+      n.props := n.props + NdProps.T { prop }
+    END Mark;
+    
   VAR
-    iter := nodeTab.iterate();
+    iter := elemTab.iterate();
+    e : Element;
+    t : TEXT;
   BEGIN
+    WHILE iter.next(t, e) DO
+      TYPECASE e.src OF
+        SpiceObject.M(m) =>
+        WITH tt   = DecodeTransistorTypeName(m.type),
+             drnT = e.terminals.get(0),
+             gatT = e.terminals.get(1),
+             srcT = e.terminals.get(2),
+             bodT = e.terminals.get(3) DO
+          CASE tt OF
+            TransistorType.N => 
+            Mark(drnT, NdProp.IsNfetSourceDrain);
+            Mark(gatT, NdProp.IsNfetGate);
+            Mark(srcT, NdProp.IsNfetSourceDrain);
+            Mark(bodT, NdProp.IsNfetBody);
+          |
+            TransistorType.P =>
+            Mark(drnT, NdProp.IsPfetSourceDrain);
+            Mark(gatT, NdProp.IsPfetGate);
+            Mark(srcT, NdProp.IsPfetSourceDrain);
+            Mark(bodT, NdProp.IsPfetBody);
+          |
+            TransistorType.Unknown =>
+          END
+        END
+      ELSE
+      END
+    END
   END MarkNodeProperties;
   
 PROCEDURE BuildElementTab(ckt     : SpiceCircuit.T;
@@ -163,7 +227,7 @@ PROCEDURE BuildElementTab(ckt     : SpiceCircuit.T;
 PROCEDURE BuildNodeTab(canonTbl : TextTextTbl.T;
                        ckt     : SpiceCircuit.T;
                        subCkts : TextSpiceCircuitTbl.T;
-                       nodeTab : TextNodeTbl.T) =
+                       nodeTab : TextNodeTbl.T) : TextSet.T =
     VAR
       aliasTab := FindAllAliases(ckt, subCkts, canonTbl);
       iter := aliasTab.iterate();
@@ -209,7 +273,8 @@ PROCEDURE BuildNodeTab(canonTbl : TextTextTbl.T;
             <*ASSERT NOT hadIt*>
           END
         END
-      END
+      END;
+      RETURN canons
     END BuildNodeTab;
 
 PROCEDURE FindAllAliases(ckt      : SpiceCircuit.T;

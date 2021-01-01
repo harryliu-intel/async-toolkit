@@ -1,14 +1,12 @@
 INTERFACE NodeProperty;
 
 TYPE
-  T = { IsNfetSourceOrDrain,
-        IsPfetSourceOrDrain,
-        IsSourceOrDrain,
+  T = { IsNfetSourceDrain,
+        IsPfetSourceDrain,
         IsNfetBody,
         IsPfetBody,
-        IsNfetTerminal,
-        IsPfetTerminal,
-        IsFetGate,
+        IsNfetGate,
+        IsPfetGate,
         IsVdd,
         IsGnd,
         IsCellBoundaryNode,

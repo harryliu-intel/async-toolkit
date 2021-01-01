@@ -22,7 +22,7 @@ REVEAL
     id       : INTEGER;
     elements : CktElementList.T;
     aliases  : TextSet.T;
-    props    : NodePropertySet.T;
+    props    := NodePropertySet.Empty;
     mark     : Mark := NIL;
   END;
 

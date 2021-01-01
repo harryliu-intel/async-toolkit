@@ -27,11 +27,12 @@ TYPE
     c : LONGREAL;
   END;
 
-  X = T OBJECT         (* subcell *)
+  X = T BRANDED Brand & " Subcell" OBJECT         (* subcell *)
     type : TEXT;
   END;
 
-  M = T OBJECT         (* transistor *)
+  M = T BRANDED Brand & " MOSFET" OBJECT         (* transistor *)
+    type : TEXT;
   END;
 
 CONST Brand = "SpiceObject";
