@@ -1,12 +1,13 @@
 MODULE PicPoint;
-IMPORT Word, Integer;
+IMPORT Word;
+IMPORT PicCoord;
 
 PROCEDURE Equal(READONLY a, b : T) : BOOLEAN =
   BEGIN RETURN a = b END Equal;
 
 PROCEDURE Hash(READONLY a : T) : Word.T =
   BEGIN
-    RETURN Word.Times(Word.Plus(Integer.Hash(a.x), 17), Integer.Hash(a.y))
+    RETURN Word.Times(Word.Plus(PicCoord.Hash(a.x), 17), PicCoord.Hash(a.y))
   END Hash;
 
 BEGIN END PicPoint.

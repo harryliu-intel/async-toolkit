@@ -1,5 +1,6 @@
 INTERFACE Pic;
 IMPORT Refany;
+IMPORT Canvas;
 
 TYPE
   T <: Public;
@@ -8,7 +9,7 @@ TYPE
   
   Public = OBJECT METHODS
     computeMinExtent() : Extent;
-    render(to : Extent);
+    render(to : Extent; canvas : Canvas.T);
   END;
 
 CONST Brand = "Pic";

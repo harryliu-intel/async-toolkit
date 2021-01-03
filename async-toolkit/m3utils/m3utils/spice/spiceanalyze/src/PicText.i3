@@ -1,5 +1,6 @@
 INTERFACE PicText;
 IMPORT Pic;
+FROM Canvas IMPORT FontSize, FontType;
 
 TYPE
   T <: Public;
@@ -10,10 +11,6 @@ TYPE
          fontType := FontType.Default;
          maxWidth : CARDINAL) : T;
   END;
-
-  FontSize = CARDINAL;
-
-  FontType = { Default, Serif, SansSerif };
 
 CONST Brand = "PicText";
 
