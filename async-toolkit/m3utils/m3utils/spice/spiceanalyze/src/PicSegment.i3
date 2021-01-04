@@ -3,7 +3,7 @@ IMPORT PicPoint;
 IMPORT Word;
 
 TYPE
-  T = RECORD a, b : PicPoint.T; w : CARDINAL END;
+  T = RECORD a, b : PicPoint.T END;
 
 PROCEDURE Equal(READONLY a, b : T) : BOOLEAN;
 

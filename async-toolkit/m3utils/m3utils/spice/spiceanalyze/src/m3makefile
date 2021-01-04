@@ -60,6 +60,9 @@ List("PicPoint", "PicPoint")
 List("PicCircle", "PicCircle")
 List("PicText", "PicText")
 
+/* SVG */
+Module ("SvgColor")
+
 /* Canvases */
 Interface ("Canvas")
 Module ("SvgCanvas")
