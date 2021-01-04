@@ -1,17 +1,24 @@
 INTERFACE PicText;
-IMPORT Pic;
-FROM Canvas IMPORT FontSize, FontType;
+IMPORT PicPoint, PicCoord;
+IMPORT Word;
 
 TYPE
-  T <: Public;
-
-  Public = Pic.T OBJECT METHODS
-    init(text     : TEXT;
-         fontSize : FontSize;
-         fontType := FontType.Default;
-         maxWidth : CARDINAL) : T;
+  T = RECORD
+    ll       : PicPoint.T;
+    txt      : TEXT;
+    size     : FontSize;
+    width    : PicCoord.NonNeg;
+    fontType : FontType;
   END;
 
+  FontSize = CARDINAL;
+
+  FontType = { Default, Serif, SansSerif };
+
 CONST Brand = "PicText";
+
+PROCEDURE Equal(READONLY a, b : T) : BOOLEAN;
+
+PROCEDURE Hash(READONLY a : T) : Word.T;
 
 END PicText.

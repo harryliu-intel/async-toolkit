@@ -1,26 +1,16 @@
 INTERFACE Canvas;
-IMPORT PicCoord;
-IMPORT PicPoint, PicSegment;
+IMPORT PicPoint;
+IMPORT PicCircle;
+IMPORT PicText;
+IMPORT PicSegment;
 
 TYPE
   T = OBJECT METHODS
     point(at : PicPoint.T);
-    circle(at : PicPoint.T; radius : PicCoord.NonNeg);
-    text(at : PicPoint.T; txt : Text);
+    circle(circ : PicCircle.T);
+    text(txt : PicText.T);
     segment(at : PicSegment.T);
   END;
-
-  Text = RECORD
-    txt      : TEXT;
-    size     : FontSize;
-    width    : PicCoord.NonNeg;
-    fontType : FontType;
-  END;
-
-  FontSize = CARDINAL;
-
-  FontType = { Default, Serif, SansSerif };
-
 
 CONST Brand = "Canvas";
 

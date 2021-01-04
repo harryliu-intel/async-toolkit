@@ -41,4 +41,34 @@ Generic_module("EnumSet")
 
 Module ("FetArray")
 
+/* Pic containers */
+Module ("Pic")
+Module ("PicArray")
+Module ("PicSegments")
+
+List("Pic", "Pic")
+
+/* Pic objects */
+Module ("PicPoint")
+Interface ("PicCoord")
+Module ("PicSegment")
+List ("PicSegment", "PicSegment")
+Module ("PicText")
+Module ("PicCircle")
+Module("PicOverlay")
+List("PicPoint", "PicPoint")
+List("PicCircle", "PicCircle")
+List("PicText", "PicText")
+
+/* Canvases */
+Interface ("Canvas")
+Module ("SvgCanvas")
+Module ("XformCanvas")
+Interface ("CanvasXform")
+
+Interface ("SpiceGate")
+Sequence ("SpiceGate", "SpiceGate")
+
+Module ("SpiceDiagram")
+
 program ("spiceanalyze")

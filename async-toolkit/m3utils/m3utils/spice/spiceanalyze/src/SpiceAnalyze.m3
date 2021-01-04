@@ -30,6 +30,10 @@ IMPORT TextUtils;
 IMPORT Text;
 IMPORT CktGraphDfs AS Dfs;
 IMPORT FetArray;
+IMPORT SpiceGate;
+IMPORT SpiceDiagram;
+IMPORT FileWr;
+IMPORT SvgCanvas;
 
 VAR doDebug := Debug.DebugThis("SpiceAnalyze");
     
@@ -107,7 +111,7 @@ PROCEDURE Cell(nm      : TEXT;
       gateOutputs := FindGateOutputs(canons, nodeTab);
 
       CONST
-        MatchSets = ARRAY OF EtProps.T {
+        MatchSets = ARRAY SpiceGate.Pull OF EtProps.T {
           EtProps.T { EtProp.IsNfet },
           EtProps.T { EtProp.IsPfet }
         };
@@ -115,16 +119,29 @@ PROCEDURE Cell(nm      : TEXT;
         n : Node;
         visitor := NEW(GateFindVisitor);
         iter    := gateOutputs.iterate();
+        gate : SpiceGate.T;
+        diag := NEW(SpiceDiagram.T).init();
       BEGIN
         WHILE iter.next(n) DO
-          FOR i := FIRST(MatchSets) TO LAST(MatchSets) DO
-            visitor.eMustMatch := MatchSets[i];
+          FOR pull := FIRST(MatchSets) TO LAST(MatchSets) DO
+            visitor.eMustMatch := MatchSets[pull];
             visitor.fetArray := NEW(FetArray.T).init();
 
             Debug.Out("Finding gate from " & Int(n.id));
             Dfs.Node(n, visitor);
-            Debug.Out(F("%s elements", Int(visitor.fetArray.size())))
-          END
+            Debug.Out(F("%s elements", Int(visitor.fetArray.size())));
+            gate[pull] := visitor.fetArray;
+          END;
+          diag.addGate(gate)
+        END;
+
+        (* here we should look for components that are not in the gates
+           we have already added, and add them too *)
+
+        WITH wr   = FileWr.Open("out.svg"),
+             canv = NEW(SvgCanvas.T).init() DO
+          diag.render(canv);
+          canv.write(wr)
         END
       END
     END;

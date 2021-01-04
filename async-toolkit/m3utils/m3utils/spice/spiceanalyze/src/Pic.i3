@@ -1,15 +1,17 @@
 INTERFACE Pic;
 IMPORT Refany;
 IMPORT Canvas;
+IMPORT PicCoord;
 
 TYPE
   T <: Public;
 
-  Extent = RECORD w, h : CARDINAL END;
+  Extent = RECORD w, h : PicCoord.T END;
   
   Public = OBJECT METHODS
+    init() : T;
     computeMinExtent() : Extent;
-    render(to : Extent; canvas : Canvas.T);
+    render(at : PicCoord.T; to : Extent; canvas : Canvas.T);
   END;
 
 CONST Brand = "Pic";
