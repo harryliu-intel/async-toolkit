@@ -2,6 +2,8 @@ MODULE PicText;
 IMPORT Text;
 IMPORT Word;
 IMPORT PicPoint;
+IMPORT PicExtent;
+IMPORT LongReal;
 
 CONST TE = Text.Equal;
       
@@ -17,10 +19,9 @@ PROCEDURE Equal(READONLY a, b : T) : BOOLEAN =
 
 PROCEDURE Hash(READONLY a : T) : Word.T =
   VAR
-    w := ARRAY [0..4] OF Word.T { PicPoint.Hash(a.ll),
+    w := ARRAY [ 0 .. 3 ] OF Word.T { PicPoint.Hash(a.ll),
                                   Text.Hash(a.txt),
-                                  a.size,
-                                  0(*LongReal.Hash(a.width)*),
+                                  LongReal.Hash(a.size+a.width),
                                   ORD(a.fontType) };
     x : Word.T := 0;
   BEGIN
@@ -29,5 +30,12 @@ PROCEDURE Hash(READONLY a : T) : Word.T =
     END;
     RETURN x
   END Hash;
+
+PROCEDURE Extent(READONLY a : T) : PicExtent.T =
+  BEGIN
+    RETURN PicExtent.T { a.ll,
+                         PicPoint.T { a.ll.x + a.width,
+                                      a.ll.y + a.size } }
+  END Extent;
 
 BEGIN END PicText.

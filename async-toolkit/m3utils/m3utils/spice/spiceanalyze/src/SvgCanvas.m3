@@ -9,6 +9,8 @@ FROM Fmt IMPORT Int, LongReal, F, FN;
 IMPORT PicCoord;
 IMPORT Thread;
 
+(* this is basically a duplicate of PicSegments.m3 ??? *)
+
 REVEAL
   T = Public BRANDED Brand OBJECT
     points    : PicPointList.T;
@@ -100,7 +102,7 @@ PROCEDURE Write(t : T; wr : Wr.T)
                    F(" <text x=%s y=%s font-size=%s text-anchor=\"middle\" fill=\"%s\">%s</text>\n\n",
                      N(p.head.ll.x),
                      N(p.head.ll.y),
-                     I(p.head.size),
+                     N(p.head.size),
                      dct,
                      p.head.txt)
         );

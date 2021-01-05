@@ -1,0 +1,40 @@
+MODULE PicComponent;
+IMPORT PicSegments;
+IMPORT PicOverlay;
+IMPORT SpiceObject;
+
+REVEAL
+  T = Public BRANDED Brand OBJECT
+    over, under : PicSegments.T;
+    contents    : PicOverlay.T;
+    neighbors   : ARRAY Step OF ARRAY Step OF T;
+    obj         : SpiceObject.T;
+  OVERRIDES
+    init := Init;
+    setNeighbor := SetNeighbor;
+  END;
+
+PROCEDURE Init(t : T; obj : SpiceObject.T) : T =
+  VAR
+  BEGIN
+    t.over     := NEW(PicSegments.T).init();
+    t.under    := NEW(PicSegments.T).init();
+    t.obj      := obj;
+    t.contents := NEW(PicOverlay.T).init(
+                                     over  := t.over,
+                                     under := t.under);
+    FOR i := FIRST(t.neighbors) TO LAST(t.neighbors) DO
+      FOR j := FIRST(t.neighbors[i]) TO LAST(t.neighbors[i]) DO
+        t.neighbors[i, j] := NIL
+      END
+    END;
+    
+    RETURN t
+  END Init;
+
+PROCEDURE SetNeighbor(t : T; dx, dy : Step; n : T) =
+  BEGIN
+    t.neighbors[dx, dy] := n
+  END SetNeighbor;
+  
+BEGIN END PicComponent.
