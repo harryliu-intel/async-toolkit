@@ -9,6 +9,7 @@ CONST LR = LongReal;
 
 PROCEDURE Do(ofn          : TEXT;
              READONLY res : ARRAY OF LONGREAL; (* sorted *)
+             low          : BOOLEAN;
              H            : CARDINAL)
   RAISES { OSError.E, Wr.Failure, Thread.Alerted } =
   VAR
@@ -61,7 +62,12 @@ PROCEDURE Do(ofn          : TEXT;
     
     WITH lwr = FileWr.Open(ofn & "_loss.dat") DO
       FOR i := FIRST(res) TO LAST(res) DO
-        WITH rem = 1.0d0 - FLOAT(i+1,LONGREAL)/ n DO
+        VAR rem : LONGREAL; BEGIN
+          IF low THEN
+            rem := 1.0d0 - FLOAT(i+1,LONGREAL)/ n
+          ELSE
+            rem := FLOAT(i+1,LONGREAL)/ n
+          END;
           Wr.PutText(lwr, F("%s %s\n", LR(res[i]), LR(rem)))
         END
       END;

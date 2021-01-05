@@ -120,7 +120,7 @@ PROCEDURE Cell(nm      : TEXT;
         visitor := NEW(GateFindVisitor);
         iter    := gateOutputs.iterate();
         gate : SpiceGate.T;
-        diag := NEW(SpiceDiagram.T).init();
+        diagram := NEW(SpiceDiagram.T).init();
       BEGIN
         WHILE iter.next(n) DO
           FOR pull := FIRST(MatchSets) TO LAST(MatchSets) DO
@@ -132,7 +132,7 @@ PROCEDURE Cell(nm      : TEXT;
             Debug.Out(F("%s elements", Int(visitor.fetArray.size())));
             gate[pull] := visitor.fetArray;
           END;
-          diag.addGate(gate)
+          diagram.addGate(gate)
         END;
 
         (* here we should look for components that are not in the gates
@@ -140,7 +140,7 @@ PROCEDURE Cell(nm      : TEXT;
 
         WITH wr   = FileWr.Open("out.svg"),
              canv = NEW(SvgCanvas.T).init() DO
-          diag.render(canv);
+          diagram.render(canv);
           canv.write(wr)
         END
       END

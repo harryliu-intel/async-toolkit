@@ -1,5 +1,5 @@
 INTERFACE PicComponent;
-IMPORT Pic, SpiceObject;
+IMPORT Pic, CktElement;
 
 TYPE
   T <: Public;
@@ -7,7 +7,7 @@ TYPE
   Step = [ -1 .. +1 ];
   
   Public = Pic.T OBJECT METHODS
-    init(obj : SpiceObject.T) : T;
+    init(obj : CktElement.T) : T;
     setNeighbor(dx, dy : Step; n : T);
   END;
 

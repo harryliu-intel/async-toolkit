@@ -3,6 +3,7 @@
 DATE=`date +"%Y-%m-%d %H:%M"`
 PAUSE=0
 RES="1500,1000 font \"arial,30\""
+OFF=31
 
 PFX=jbay_svs
 gnuplot << __GNUPLOT__
@@ -34,7 +35,7 @@ set xlabel "P/[W]"
 set term png size ${RES}
 set output "${PFX}.png"
 
-plot "${PFX}.dat" with lines
+plot "${PFX}.dat" using (\$1+${OFF}):2 with lines
 
 pause ${PAUSE}
 
@@ -53,7 +54,7 @@ set xlabel "P/[W]"
 set term png size ${RES}
 set output "${PFX}.png"
 
-plot [:][0.01:1] "${PFX}.dat" with lines
+plot [:][0.01:1] "${PFX}.dat" using (\$1+${OFF}):2 with lines
 
 pause ${PAUSE}
 

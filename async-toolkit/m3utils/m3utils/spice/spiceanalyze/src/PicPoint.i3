@@ -7,6 +7,9 @@ TYPE
 
   ExtentT = RECORD ll, ur : T END;
 
+CONST
+  Zero = T { PicCoord.Zero, PicCoord.Zero };
+
 PROCEDURE Equal(READONLY a, b : T) : BOOLEAN;
 
 PROCEDURE Hash(READONLY a : T) : Word.T;

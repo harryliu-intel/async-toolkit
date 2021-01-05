@@ -1,7 +1,7 @@
 INTERFACE Pic;
 IMPORT Refany;
 IMPORT Canvas;
-IMPORT PicCoord;
+IMPORT PicPoint;
 IMPORT PicExtent;
 
 TYPE
@@ -19,7 +19,7 @@ TYPE
     curExtent() : PicExtent.T;
     (* current extent to render *)
     
-    render(READONLY at : PicCoord.T; canvas : Canvas.T);
+    render(READONLY at : PicPoint.T; canvas : Canvas.T);
     (* request to render *)
   END;
 

@@ -47,6 +47,8 @@ Module ("PicArray")
 Module ("PicSegments")
 
 List("Pic", "Pic")
+Sequence ("Pic", "Pic")
+Sequence ("PicSeq", "PicSeq")
 
 /* Pic objects */
 Module ("PicPoint")
@@ -73,5 +75,9 @@ Interface ("SpiceGate")
 Sequence ("SpiceGate", "SpiceGate")
 
 Module ("SpiceDiagram")
+
+Module ("PicExtent")
+
+Module ("PicComponent")
 
 program ("spiceanalyze")

@@ -11,5 +11,7 @@ CONST Hash    = Parent.Hash;
       Equal   = Parent.Equal;
       Compare = Parent.Compare;
 
+CONST Zero = 0.0d0;
+
 END PicCoord.
      

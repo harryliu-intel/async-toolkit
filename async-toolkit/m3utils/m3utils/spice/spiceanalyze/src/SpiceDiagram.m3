@@ -2,6 +2,9 @@ MODULE SpiceDiagram;
 IMPORT SpiceGateSeq;
 IMPORT SpiceGate;
 IMPORT Canvas;
+IMPORT PicArray;
+IMPORT PicComponent;
+IMPORT PicPoint;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
@@ -35,12 +38,44 @@ PROCEDURE Render(t : T; to : Canvas.T) =
     END
   END Render;
 
-PROCEDURE RenderGate(to     : Canvas.T;
+PROCEDURE RenderGate(canvas : Canvas.T;
                      g      : SpiceGate.T;
                      offset : LONGREAL) : LONGREAL =
   (* returns urx of just-rendered gate *)
+  VAR
+    array := NEW(PicArray.T).init();
+    j := 0;
   BEGIN
-    RETURN offset
+
+    (* we start from the bottom (power supply) of the N stack *)
+    WITH nstack = g[SpiceGate.Pull.Down] DO
+      FOR nr := nstack.size() - 1 TO 0 BY -1 DO
+        WITH row = nstack.getRow(nr) DO
+          FOR i := 0 TO row.size() - 1 DO
+            array.put(i, j, NEW(PicComponent.T).init(row.get(i)))
+          END
+        END;
+        INC(j)
+      END
+    END;
+
+    (* we start from the bottom (output) of the P stack *)
+    WITH pstack = g[SpiceGate.Pull.Down] DO
+      FOR pr := 0 TO pstack.size() - 1 DO
+        WITH row = pstack.getRow(pr) DO
+          FOR i := 0 TO row.size() - 1 DO
+            array.put(i, j, NEW(PicComponent.T).init(row.get(i)))
+          END
+        END;
+        INC(j)
+      END
+    END;
+
+    WITH extent = array.minExtent() DO
+      array.setExtent(extent);
+      array.render(PicPoint.T { offset, 0.0d0 }, canvas);
+      RETURN extent.ur.x - extent.ll.x
+    END
   END RenderGate;
   
 BEGIN END SpiceDiagram.

@@ -2,7 +2,7 @@ MODULE Main;
 IMPORT Random, NormalDeviate;
 IMPORT Debug;
 IMPORT LongrealArraySort;
-FROM Fmt IMPORT F;
+FROM Fmt IMPORT F, FN;
 IMPORT Fmt;
 IMPORT FileWr, Wr;
 IMPORT Thread, OSError;
@@ -17,17 +17,17 @@ IMPORT Power;
 IMPORT Corner;
 IMPORT ProgramSetter;
 IMPORT Histogram;
+IMPORT LRFunction;
+IMPORT Solve;
 
 <*FATAL Thread.Alerted, Wr.Failure, OSError.E*>
 
 CONST LR = Fmt.LongReal;
       TE = Text.Equal;
 
-VAR p     : Power.Params;
 VAR Trunc : LONGREAL;
 
-VAR
-  Samples := 1000; (* # of samples *)
+VAR Samples := 1000; (* # of samples *)
 
 PROCEDURE Interpolate1(x : LONGREAL;
                        s, ssigma, t, tsigma, f, fsigma : LONGREAL) : LONGREAL=
@@ -43,7 +43,8 @@ PROCEDURE Interpolate1(x : LONGREAL;
     END
   END Interpolate1;
   
-PROCEDURE Interpolate(x : LONGREAL) : CornerData =
+PROCEDURE Interpolate(READONLY p : Power.Params;
+                               x : LONGREAL) : CornerData =
   VAR
     res : CornerData;
     Ss := p.c[Corner.T.SS];
@@ -62,7 +63,7 @@ PROCEDURE Interpolate(x : LONGREAL) : CornerData =
     RETURN res
   END Interpolate;
   
-PROCEDURE MakeDie() : CornerData =
+PROCEDURE MakeDie(READONLY p : Power.Params) : CornerData =
   (* returns the PVT voltage of a single die *)
   BEGIN
     LOOP
@@ -70,7 +71,7 @@ PROCEDURE MakeDie() : CornerData =
         x := NormalDeviate.Get(rand, 0.0d0, 1.0d0);
       BEGIN
         IF ABS(x) <= Trunc THEN
-          RETURN Interpolate(x)
+          RETURN Interpolate(p, x)
         END
       END
     END
@@ -78,37 +79,103 @@ PROCEDURE MakeDie() : CornerData =
 
 VAR rand := NEW(Random.Default).init();
 
-PROCEDURE DoIt() = 
+PROCEDURE DoDebugCorner(READONLY p : Power.Params) =
   VAR
-    res  := NEW(REF ARRAY OF LONGREAL, Samples);
-    dist := p;
-
+    dbgCorner := Interpolate(p, 0.0d0);
+    q : Power.Result;
   BEGIN
-    FOR i := FIRST(res^) TO LAST(res^) DO
-      WITH corner = MakeDie(),
+    dbgCorner.vpower := 0.750d0;
+    
+    q := Power.Calc(p, dbgCorner);
+    Debug.Out(F("DEBUG CORNER Vdd=%s leakPwr=%s totPwr=%s",
+                LR(dbgCorner.vpower), LR(q.leakPwr), LR(q.totPwr)))
+    
+  END DoDebugCorner;
+    
+PROCEDURE DoIt(READONLY p : Power.Params) = 
+  VAR
+    totPwr  := NEW(REF ARRAY OF LONGREAL, Samples);
+    deltaV  := NEW(REF ARRAY OF LONGREAL, Samples);
+    dist := p;
+    dvp  : LONGREAL := 0.0d0;
+    shP : Power.Result;
+  BEGIN
+    DoDebugCorner(p);
+    
+    FOR i := FIRST(totPwr^) TO LAST(totPwr^) DO
+      WITH corner = MakeDie(dist),
            p      = Power.Calc(dist, corner) DO
+
+        shP := p;
+        
+        IF solveMax # FIRST(LONGREAL) THEN
+          WITH f = NEW(SolveDeltaV,
+                       constraintP := solveMax,
+                       dist        := dist,
+                       corner      := corner) DO
+            dvp := Solve.WDB(f, -0.1d0, +0.1d0);
+            deltaV[i] := dvp;
+            VAR
+              shiftCorner := corner;
+            BEGIN
+              shiftCorner.vpower := corner.vpower + dvp;
+              shP := Power.Calc(dist, shiftCorner);
+            END            
+          END
+        END;
+        
         IF oWr # NIL THEN
-          Wr.PutText(oWr, F("%s %s %s %s %s\n",
+          Wr.PutText(oWr, FN("%s %s %s %s %s %s %s %s\n",ARRAY OF TEXT{
                             LR(corner.sigma),
                             LR(corner.vpower),
                             LR(p.cornerLkgRatio),
                             LR(p.leakPwr),
-                            LR(p.totPwr)))
+                            LR(p.totPwr),
+
+                            LR(dvp),
+
+                            LR(shP.leakPwr),
+                            LR(shP.totPwr)    }))
         END;
-        res[i] := p.totPwr
+        totPwr[i] := p.totPwr
       END
     END;
     
-    (* make histogram of res *)
-    LongrealArraySort.Sort(res^);
-    Histogram.Do(ofn, res^, H := H);
+    (* make power histogram *)
+    LongrealArraySort.Sort(totPwr^);
+    Histogram.Do(ofn, totPwr^, TRUE, H := H);
+
+    IF solveMax # FIRST(LONGREAL) THEN
+      (* make deltaV historgram *)
+      LongrealArraySort.Sort(deltaV^);
+      Histogram.Do(ofn & "_deltav", deltaV^, FALSE, H := H);
+    END
   END DoIt;
+
+TYPE
+  SolveDeltaV = LRFunction.T OBJECT
+    constraintP : LONGREAL;
+    corner      : CornerData;
+    dist        : Power.Params;
+  OVERRIDES
+    eval := SolveDeltaVEval;
+  END;
+
+PROCEDURE SolveDeltaVEval(state : SolveDeltaV; dv : LONGREAL) : LONGREAL =
+  VAR
+    corner := state.corner;
+  BEGIN
+    corner.vpower := state.corner.vpower + dv;
+    RETURN Power.Calc(state.dist, corner).totPwr - state.constraintP
+  END SolveDeltaVEval;
 
 VAR
   pp := NEW(ParseParams.T).init(Stdio.stderr);
   ofn : Pathname.T := "hist";
   oWr : Wr.T := NIL;
   H := Histogram.DefaultBuckets;
+  p   : Power.Params;
+  solveMax := FIRST(LONGREAL);
   
 BEGIN
   
@@ -150,6 +217,10 @@ BEGIN
       Samples := pp.getNextInt()
     END;
 
+    IF pp.keywordPresent("-solvemax") THEN
+      solveMax := pp.getNextLongReal()
+    END;
+
     IF pp.keywordPresent("-Vsspower") THEN
       p.c[Corner.T.SS].vpower := pp.getNextLongReal()
     END;
@@ -176,7 +247,7 @@ BEGIN
     ParseParams.Error => Debug.Error("Can't parse command line")
   END;
   
-  DoIt();
+  DoIt(p);
 
   IF oWr # NIL THEN Wr.Close(oWr) END
  

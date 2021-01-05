@@ -14,7 +14,7 @@ PROCEDURE Calc(READONLY d  : Params;
   BEGIN
     (* +sigma = fast, more leaky *)
     WITH RefRestPwr     = d.RefP - d.FixedP - d.RefLeakP,
-         cornerLkgRatio = Math.pow(d.LkgRatio, +at.sigma / d.LkgRatioSigma),
+         cornerLkgRatio = Math.pow(d.LkgRatio, at.sigma / d.LkgRatioSigma),
          ttV            = d.c[Corner.T.TT].vpower,
          voltPwrRatio   = (at.vpower/ttV)*(at.vpower/ttV),
          restPwr        = RefRestPwr * voltPwrRatio,

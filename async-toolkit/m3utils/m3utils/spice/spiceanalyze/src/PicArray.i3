@@ -6,7 +6,7 @@ TYPE
 
   Public = Pic.T OBJECT METHODS
     init() : T;
-    put(x, y : INTEGER; pic : Pic.T);
+    put(x, y : CARDINAL; pic : Pic.T);
   END;
 
 CONST Brand = "PicArray";

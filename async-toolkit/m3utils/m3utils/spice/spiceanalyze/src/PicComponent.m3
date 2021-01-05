@@ -1,20 +1,20 @@
 MODULE PicComponent;
 IMPORT PicSegments;
 IMPORT PicOverlay;
-IMPORT SpiceObject;
+IMPORT CktElement;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
     over, under : PicSegments.T;
     contents    : PicOverlay.T;
     neighbors   : ARRAY Step OF ARRAY Step OF T;
-    obj         : SpiceObject.T;
+    obj         : CktElement.T;
   OVERRIDES
     init := Init;
     setNeighbor := SetNeighbor;
   END;
 
-PROCEDURE Init(t : T; obj : SpiceObject.T) : T =
+PROCEDURE Init(t : T; obj : CktElement.T) : T =
   VAR
   BEGIN
     t.over     := NEW(PicSegments.T).init();
