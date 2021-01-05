@@ -1,8 +1,18 @@
 #!/bin/sh -x
 
+# 319W comes from...
+# asking for 4% margin for power supply
+# 3W guardband for serdes
+#
+# ---- all taken off the TDP target of 350W
+
+TARGETPWR=319
+
+../AMD64_LINUX/svspredict -d JBay -H 30 -samples 100000 -a jbay_svs.dat -solvemax ${TARGETPWR}
+
 DATE=`date +"%Y-%m-%d %H:%M"`
 PAUSE=0
-RES="1500,1000 font \"arial,30\""
+RES="2000,1600 font \"arial,30\""
 
 PFX=jbay_svs
 gnuplot << __GNUPLOT__
@@ -45,10 +55,27 @@ gnuplot << __GNUPLOT__
 
 # then the yield loss
 
-set title "JBay B0 Process Power Yield Loss ${DATE} (samples=100K)"
-set logscale y
+set title "JBay B0 Process Power Yield Loss ${DATE}"
 set ylabel "yield loss/[1]"
 set xlabel "P/[W]"
+
+set term png size ${RES}
+set output "${PFX}.png"
+
+plot [:][0.01:1] "${PFX}.dat" with lines
+
+pause ${PAUSE}
+
+__GNUPLOT__
+
+PFX=hist_deltav_loss
+gnuplot << __GNUPLOT__
+
+# then the yield loss
+
+set title "JBay B0 Process Voltage Margin Yield Loss ${DATE} Ptarget=${TARGETPWR}W"
+set ylabel "yield loss/[1]"
+set xlabel "voltage margin/[V]"
 
 set term png size ${RES}
 set output "${PFX}.png"
