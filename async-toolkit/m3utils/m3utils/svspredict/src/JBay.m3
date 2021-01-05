@@ -65,8 +65,9 @@ PROCEDURE SetProgram79(VAR p     : Power.Params;
     pmro = Pmro79;
     (* PMRO data for this individual from the lab *)
     
-    AteVmin79 = 680.0d-3;
-    (* from Dinesh's estimations at ATE for this specific individual *)
+    AteVmin79 = 645.0d-3;
+    (* from Dinesh's estimations at ATE for this specific individual 
+       updated per email 1/5/21 *)
 
     AgeMargin = 20.0d-3;
 

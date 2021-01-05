@@ -2,7 +2,8 @@ INTERFACE Power;
 FROM SvsTypes IMPORT CornerData;
 IMPORT Corner;
 
-PROCEDURE Calc(READONLY dist : Params; at : CornerData) : Result;
+PROCEDURE Calc(READONLY dist : Params;
+               READONLY at   : CornerData) : Result;
 
 TYPE (* information about the distribution from which we are drawing *)
   Params = RECORD

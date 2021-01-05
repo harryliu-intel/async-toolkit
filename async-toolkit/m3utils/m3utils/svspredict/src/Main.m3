@@ -2,9 +2,8 @@ MODULE Main;
 IMPORT Random, NormalDeviate;
 IMPORT Debug;
 IMPORT LongrealArraySort;
-FROM Fmt IMPORT Int, F;
+FROM Fmt IMPORT F;
 IMPORT Fmt;
-IMPORT Math;
 IMPORT FileWr, Wr;
 IMPORT Thread, OSError;
 IMPORT ParseParams;
@@ -17,6 +16,7 @@ IMPORT JBay;
 IMPORT Power;
 IMPORT Corner;
 IMPORT ProgramSetter;
+IMPORT Histogram;
 
 <*FATAL Thread.Alerted, Wr.Failure, OSError.E*>
 
@@ -27,19 +27,18 @@ VAR p     : Power.Params;
 VAR Trunc : LONGREAL;
 
 VAR
-  H       :=   15; (* # of buckets *)
   Samples := 1000; (* # of samples *)
 
 PROCEDURE Interpolate1(x : LONGREAL;
                        s, ssigma, t, tsigma, f, fsigma : LONGREAL) : LONGREAL=
   BEGIN
     (* 
-       negative -> FAST 
-       positive -> SLOW
+       negative -> SLOW 
+       positive -> FAST
     *)
-    IF       x <  tsigma THEN
+    IF       x >=  tsigma THEN
       RETURN x * (f - t) / (fsigma - tsigma) + t
-    ELSE  (* x >= tsigma *)
+    ELSE  (* x < tsigma *)
       RETURN x * (s - t) / (ssigma - tsigma) + t
     END
   END Interpolate1;
@@ -102,81 +101,15 @@ PROCEDURE DoIt() =
     
     (* make histogram of res *)
     LongrealArraySort.Sort(res^);
-    DoHistogram(res^);
+    Histogram.Do(ofn, res^, H := H);
   END DoIt;
-
-PROCEDURE DoHistogram(READONLY res : ARRAY OF LONGREAL (* sorted *)) =
-  VAR
-    min := res[FIRST(res)];
-    max := res[LAST (res)];
-    hw  := (max - min) / FLOAT(H, LONGREAL);
-    hcnt := NEW(REF ARRAY OF CARDINAL, H);
-    hmax := 0.0d0;
-    sum, sumsq := 0.0d0;
-    n := FLOAT(NUMBER(res),LONGREAL);
-  BEGIN
-    FOR i := FIRST(hcnt^) TO LAST(hcnt^) DO
-      hcnt[i] := 0
-    END;
-    FOR i := FIRST(res) TO LAST(res) DO
-      sum := sum + res[i];
-      sumsq := sumsq + res[i] * res[i];
-      WITH h  = (res[i] - min) / hw,
-           ht = TRUNC(h) DO
-        hmax := MAX(h,hmax);
-        INC(hcnt[MIN(ht,LAST(hcnt^))])
-        (* the MAX is FOR a round-off possibility pushing us up... *)
-      END
-    END;
-    
-    Debug.Out(F("hmax = %s, H = %s", LR(hmax), Int(H)));
-    
-    (* dump the histogram *)
-    WITH wr  = FileWr.Open(ofn & "_hist.dat") DO
-      FOR i := FIRST(hcnt^) TO LAST(hcnt^) DO
-        WITH lo = min + hw * FLOAT(i    , LONGREAL),
-             hi = min + hw * FLOAT(i + 1, LONGREAL),
-             c  = hcnt[i] DO
-          Debug.Out(F("hist bin %s from %s to %s cnt %s",
-                      Int(i),
-                      LR(lo),
-                      LR(hi),
-                      Int(c)));
-          
-          Wr.PutText(wr, F("%s %s\n", LR(lo), "0.0"));
-          Wr.PutText(wr, F("%s %s\n", LR(hi), "0.0"));
-          Wr.PutText(wr, F("%s %s\n", LR(hi), Int(c)));
-          Wr.PutText(wr, F("%s %s\n", LR(lo), Int(c)));
-          Wr.PutText(wr, F("%s %s\n", LR(lo), "0.0"));
-          Wr.PutText(wr, "\n");
-        END
-      END;
-      Wr.Close(wr)
-    END;
-
-    
-    WITH lwr = FileWr.Open(ofn & "_loss.dat") DO
-      FOR i := FIRST(res) TO LAST(res) DO
-        WITH rem = 1.0d0 - FLOAT(i+1,LONGREAL)/ n DO
-          Wr.PutText(lwr, F("%s %s\n", LR(res[i]), LR(rem)))
-        END
-      END;
-      Wr.Close(lwr)
-    END;
-    
-    WITH mean   = sum   / n,
-         meansq = sumsq / n,
-         var    = n / (n - 1.0d0) * (meansq - mean * mean),
-         sdev   = Math.sqrt(var) DO
-      Debug.Out(F("mean %s sdev %s", LR(mean), LR(sdev)))
-    END
-  END DoHistogram;
-  
 
 VAR
   pp := NEW(ParseParams.T).init(Stdio.stderr);
   ofn : Pathname.T := "hist";
   oWr : Wr.T := NIL;
+  H := Histogram.DefaultBuckets;
+  
 BEGIN
   
   TRY

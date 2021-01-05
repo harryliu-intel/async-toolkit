@@ -5,11 +5,13 @@ import ("parseparams")
 import ("normaldev")
 import ("minimize")
 
+module ("Histogram")
 implementation ("Main")
 
 module("Cloudbreak")
 module("JBay")
-interface("SvsTypes")
+
+module("SvsTypes")
 interface ("N7Tech")
 interface ("N7PMRO")
 interface ("PMRO")
