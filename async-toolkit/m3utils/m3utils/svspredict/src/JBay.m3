@@ -11,15 +11,13 @@ IMPORT Math;
 IMPORT Svl;
 IMPORT Scale;
 IMPORT Wx;
+IMPORT TvpMeasurement;
+IMPORT Power3;
+IMPORT PowerScaling;
 
 CONST LR = Fmt.LongReal;
 
 CONST FixedDynPwr = 107.0d0;
-
-TYPE
-  TvpMeasurement = RECORD
-    t, v, p : LONGREAL;
-  END;
 
 PROCEDURE SetProgram(VAR p : Power.Params;
                      VAR Trunc                   : LONGREAL) =
@@ -100,11 +98,11 @@ PROCEDURE SetProgram79(VAR p     : Power.Params;
     (* now we will take data from chip 139 and massage them to stand in
        for measurements on 79 *)
 
-    pred139 := PredPower(MeasAct139, 
-                         MeasLkg139,
-                         VminEolTT,
-                         tgtTemp,
-                         FixedDynPwr);
+    pred139 := PowerScaling.Predict(MeasAct139, 
+                                    MeasLkg139,
+                                    VminEolTT,
+                                    tgtTemp,
+                                    FixedDynPwr);
     (* bring the power figures of 139 to the conditions we care about *)
 
     leakRatio139 := Interpolate.Exp(Tech.CornerSigma,
@@ -113,20 +111,20 @@ PROCEDURE SetProgram79(VAR p     : Power.Params;
 
     leakPwrTt := pred139.lkgP / leakRatio139;
 
-    predTt := Power3 { dynP := pred139.dynP,
-                       lkgP := leakPwrTt,
-                       totP := pred139.dynP + leakPwrTt };
+    predTt := Power3.T { dynP := pred139.dynP,
+                         lkgP := leakPwrTt,
+                         totP := pred139.dynP + leakPwrTt };
   BEGIN
     Debug.Out(F("SetProgram79 : sigma79 = %s, weightedSigma79 = %s, speedSigma = %s",
                 DebugPmroSigma(sigma79), LR(weightedSigma79), LR(speedSigma)));
     Debug.Out(F("SetProgram79 : Vmin79vsTT = %s, VminEolTT = %s",
                 LR(Vmin79vsTT), LR(VminEolTT)));
     Debug.Out(F("SetProgram79 : pred139 = %s",
-                DebugPower3(pred139)));
+                Power3.DebugFmt(pred139)));
     Debug.Out(F("SetProgram79 : leakRatio139 = %s, leakPwrTt = %s",
                 LR(leakRatio139), LR(leakPwrTt)));
     Debug.Out(F("SetProgram79 : predTt = %s",
-                DebugPower3(predTt)));
+                Power3.DebugFmt(predTt)));
 
     SetShared(p, Trunc);
     p.c             := MakeCornerArrayFromTt(VminEolTT);
@@ -163,13 +161,13 @@ CONST
   Pmro242    = ARRAY Tech.Transistor OF CARDINAL { 495, 445, 359 };
   (* PMRO 242 likely measured under the wrong conditions -- DO NOT TRUST! *)
 
-  MeasLkg242 = TvpMeasurement { 95.0d0, 0.750d0,  33.188d0 };
+  MeasLkg242 = TvpMeasurement.T { 95.0d0, 0.750d0,  33.188d0 };
 
-  MeasAct242 = TvpMeasurement { 96.0d0, 0.700d0, 336.0d0   };
+  MeasAct242 = TvpMeasurement.T { 96.0d0, 0.700d0, 336.0d0   };
 
-  MeasLkg139 = TvpMeasurement { 90.0d0, 0.735d0,  22.964d0 };
+  MeasLkg139 = TvpMeasurement.T { 90.0d0, 0.735d0,  22.964d0 };
 
-  MeasAct139 = TvpMeasurement { 45.0d0, 0.730d0, 342.06d0  };
+  MeasAct139 = TvpMeasurement.T { 45.0d0, 0.730d0, 342.06d0  };
   (* this includes leakage *)
 
 PROCEDURE WeightLkgSigma(sigma : ARRAY Tech.Transistor OF LONGREAL) : LONGREAL =
@@ -255,52 +253,5 @@ PROCEDURE SetProgram139(VAR p                       : Power.Params;
       p.RefLeakP      := 26.41d0 / leakFactor
     END
   END SetProgram139;
-
-TYPE
-  Power3 = RECORD
-    dynP, lkgP, totP : LONGREAL;
-  END;
-
-PROCEDURE DebugPower3(READONLY p3 : Power3) : TEXT =
-  BEGIN
-    RETURN F("Power3 { dynP = %s, lkgP = %s, totP = %s }",
-             LR(p3.dynP), LR(p3.lkgP), LR(p3.totP))
-  END DebugPower3;
-  
-PROCEDURE FmtTvpMeasurement(READONLY q : TvpMeasurement) : TEXT =
-  BEGIN
-    RETURN F("Tvp { t = %s, v = %s, p = %s }",
-             LR(q.t), LR(q.v), LR(q.p))
-  END FmtTvpMeasurement;
-  
-PROCEDURE PredPower(measAct    : TvpMeasurement;
-                    measLkg    : TvpMeasurement;
-                    reqV, reqT : LONGREAL;
-                    fixedDynP  : LONGREAL
-                    ) : Power3 =
-  VAR
-    lkgAtAct := measLkg.p *
-                Scale.LkgPwrByT(measLkg.t, measAct.t) * 
-                Scale.LkgPwrByV(measLkg.v, measAct.v);
-    (* leakage power predicted for conditions seen at actual measurement *)
-
-    dynAtAct := measAct.p - lkgAtAct - fixedDynP;
-    
-    lkgAtReq := measLkg.p *
-                Scale.LkgPwrByT(measLkg.t, reqT) * 
-                Scale.LkgPwrByV(measLkg.v, reqV);
-    
-    dynAtReq := dynAtAct *
-                Scale.DynPwrByT(measAct.t, reqT) * 
-                Scale.DynPwrByV(measAct.v, reqV) + fixedDynP;
-  BEGIN
-    Debug.Out(F("PredPower measLkg = %s", FmtTvpMeasurement(measLkg)));
-    Debug.Out(F("PredPower measAct = %s", FmtTvpMeasurement(measAct)));
-    Debug.Out(F("PredPower reqV = %s, reqT = %s", LR(reqV), LR(reqT)));
-    Debug.Out(F("lkgAtAct = %s, dynAtAct = %s, lkgAtReq = %s, dynAtReq = %s",
-                LR(lkgAtAct), LR(dynAtAct), LR(lkgAtReq), LR(dynAtReq)));
-    
-    RETURN Power3 { dynAtReq, lkgAtReq, dynAtReq + lkgAtReq }
-  END PredPower;
 
 BEGIN END JBay.
