@@ -18,4 +18,12 @@ CONST Brand = "PicPoint";
 
 PROCEDURE Extent(READONLY a : T) : ExtentT;
 
+PROCEDURE Minus(READONLY a, b : T) : T;
+
+PROCEDURE Plus(READONLY a, b : T) : T;
+
+PROCEDURE Times(a : LONGREAL; READONLY v : T) : T;
+  
+PROCEDURE Translate(READONLY a : T; READONLY by : T) : T;
+  
 END PicPoint.

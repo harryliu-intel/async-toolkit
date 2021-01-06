@@ -12,6 +12,8 @@ PROCEDURE Hash(READONLY a : T) : Word.T;
 
 PROCEDURE Extent(READONLY a : T) : PicExtent.T;
 
+PROCEDURE Translate(READONLY a : T; READONLY by : PicPoint.T) : T;
+
 CONST Brand = "PicSegment";
 
 END PicSegment.

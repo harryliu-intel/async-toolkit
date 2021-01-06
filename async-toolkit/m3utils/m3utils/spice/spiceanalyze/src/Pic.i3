@@ -14,13 +14,16 @@ TYPE
     (* extent of content, bottom up *)
 
     setExtent(READONLY to : PicExtent.T);
-    (* extent to render, top down *)
+    (* extent to render, top down
+
+       all that matters is { ur.x - ll.x, ur.y - ll.y }
+    *)
     
     curExtent() : PicExtent.T;
     (* current extent to render *)
     
     render(READONLY at : PicPoint.T; canvas : Canvas.T);
-    (* request to render *)
+    (* request to render, LL of cell to be rendered at at *)
   END;
 
 CONST Brand = "Pic";

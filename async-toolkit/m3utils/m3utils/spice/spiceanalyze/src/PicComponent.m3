@@ -6,7 +6,6 @@ IMPORT CktElement;
 REVEAL
   T = Public BRANDED Brand OBJECT
     over, under : PicSegments.T;
-    contents    : PicOverlay.T;
     neighbors   : ARRAY Step OF ARRAY Step OF T;
     obj         : CktElement.T;
   OVERRIDES
@@ -20,21 +19,20 @@ PROCEDURE Init(t : T; obj : CktElement.T) : T =
     t.over     := NEW(PicSegments.T).init();
     t.under    := NEW(PicSegments.T).init();
     t.obj      := obj;
-    t.contents := NEW(PicOverlay.T).init(
-                                     over  := t.over,
-                                     under := t.under);
     FOR i := FIRST(t.neighbors) TO LAST(t.neighbors) DO
       FOR j := FIRST(t.neighbors[i]) TO LAST(t.neighbors[i]) DO
         t.neighbors[i, j] := NIL
       END
     END;
     
-    RETURN t
+    RETURN PicOverlay.T.init(t,
+                             over  := t.over,
+                             under := t.under);
   END Init;
 
 PROCEDURE SetNeighbor(t : T; dx, dy : Step; n : T) =
   BEGIN
     t.neighbors[dx, dy] := n
   END SetNeighbor;
-  
+
 BEGIN END PicComponent.

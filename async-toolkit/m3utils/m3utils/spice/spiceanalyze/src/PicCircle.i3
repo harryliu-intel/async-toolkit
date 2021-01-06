@@ -14,4 +14,6 @@ PROCEDURE Equal(READONLY a, b : T) : BOOLEAN;
 
 PROCEDURE Extent(READONLY a : T) : PicExtent.T;
 
+PROCEDURE Translate(READONLY a : T; READONLY by : PicPoint.T) : T;
+
 END PicCircle.

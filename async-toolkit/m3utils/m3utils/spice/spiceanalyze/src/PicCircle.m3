@@ -10,4 +10,12 @@ PROCEDURE Extent(READONLY a : T) : PicExtent.T =
                          PicPoint.T { a.at.x + a.r, a.at.y + a.r } };
   END Extent;
   
+PROCEDURE Translate(READONLY a : T; READONLY by : PicPoint.T) : T =
+  VAR
+    res := a;
+  BEGIN
+    res.at := PicPoint.Plus(res.at, by);
+    RETURN res
+  END Translate;
+  
 BEGIN END PicCircle.

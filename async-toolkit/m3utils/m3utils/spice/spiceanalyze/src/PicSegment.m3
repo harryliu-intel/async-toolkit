@@ -20,4 +20,9 @@ PROCEDURE Extent(READONLY a : T) : PicExtent.T =
                                       MAX(a.a.y, a.b.y) } }
   END Extent;
 
+PROCEDURE Translate(READONLY a : T; READONLY by : PicPoint.T) : T =
+  BEGIN
+    RETURN T { PicPoint.Plus(a.a, by), PicPoint.Plus(a.b, by) }
+  END Translate;
+  
 BEGIN END PicSegment.

@@ -14,4 +14,24 @@ PROCEDURE Hash(READONLY a : T) : Word.T =
 PROCEDURE Extent(READONLY a : T) : PicExtent.T =
   BEGIN RETURN PicExtent.T { a, a } END Extent;
 
+PROCEDURE Minus(READONLY a, b : T) : T =
+  BEGIN
+    RETURN T { a.x - b.x, a.y - b.y }
+  END Minus;
+
+PROCEDURE Plus(READONLY a, b : T) : T =
+  BEGIN
+    RETURN T { a.x + b.x, a.y + b.y }
+  END Plus;
+
+PROCEDURE Times(a : LONGREAL; READONLY v : T) : T =
+  BEGIN
+    RETURN T { a * v.x, a * v.y }
+  END Times;
+
+PROCEDURE Translate(READONLY a : T; READONLY by : T) : T =
+  BEGIN
+    RETURN Plus(a, by)
+  END Translate;
+  
 BEGIN END PicPoint.

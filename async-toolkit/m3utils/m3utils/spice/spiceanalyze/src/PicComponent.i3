@@ -1,12 +1,12 @@
 INTERFACE PicComponent;
-IMPORT Pic, CktElement;
+IMPORT PicOverlay, CktElement;
 
 TYPE
   T <: Public;
 
   Step = [ -1 .. +1 ];
   
-  Public = Pic.T OBJECT METHODS
+  Public = PicOverlay.T OBJECT METHODS
     init(obj : CktElement.T) : T;
     setNeighbor(dx, dy : Step; n : T);
   END;

@@ -62,10 +62,16 @@ PROCEDURE MinExtent(t : T) : PicExtent.T =
     xtent := NEW(REF ARRAY OF LONGREAL, t.nx);
     ytent := NEW(REF ARRAY OF LONGREAL, t.ny);
   BEGIN
-    FOR i := FIRST(xtent^) TO LAST(xtent^) DO
+    RETURN ComputeMinExtent(t, xtent^, ytent^)
+  END MinExtent;
+  
+PROCEDURE ComputeMinExtent(t : T;
+                           VAR xtent, ytent : ARRAY OF LONGREAL) : PicExtent.T =
+  BEGIN
+    FOR i := FIRST(xtent) TO LAST(xtent) DO
       xtent[i] := 0.0d0
     END;
-    FOR i := FIRST(ytent^) TO LAST(ytent^) DO
+    FOR i := FIRST(ytent) TO LAST(ytent) DO
       ytent[i] := 0.0d0
     END;
     
@@ -85,19 +91,41 @@ PROCEDURE MinExtent(t : T) : PicExtent.T =
     VAR
       res := PicExtent.Zero;
     BEGIN
-      FOR i := FIRST(xtent^) TO LAST(xtent^) DO
-        res.ll.x := res.ll.x + xtent[i] 
+      FOR i := FIRST(xtent) TO LAST(xtent) DO
+        res.ur.x := res.ur.x + xtent[i] 
       END;
-      FOR i := FIRST(ytent^) TO LAST(ytent^) DO
-        res.ll.y := res.ll.y + ytent[i]
+      FOR i := FIRST(ytent) TO LAST(ytent) DO
+        res.ur.y := res.ur.y + ytent[i]
       END;
       RETURN res
     END
-  END MinExtent;
+  END ComputeMinExtent;
 
 PROCEDURE Render(t : T; READONLY at : PicPoint.T; canvas : Canvas.T) =
+  VAR
+    xtent     := NEW(REF ARRAY OF LONGREAL, t.nx);
+    ytent     := NEW(REF ARRAY OF LONGREAL, t.ny);
+    minExtent := ComputeMinExtent(t, xtent^, ytent^);
+    curExtent := t.curExtent();
+    xtrExtent := PicPoint.Minus(minExtent.ur, curExtent.ur);
+    nxf       := FLOAT(t.nx, LONGREAL);
+    nyf       := FLOAT(t.ny, LONGREAL);
+    offset    := PicPoint.Times(0.5d0, PicPoint.T { xtrExtent.x / nxf,
+                                                    xtrExtent.y / nyf });
+    ll        := at;
   BEGIN
-    (* unfinished *)
+    FOR i := FIRST(xtent^) TO LAST(xtent^) DO
+      ll.x := ll.x + offset.x;
+      ll.y := at.y;
+      FOR j := FIRST(ytent^) TO LAST(ytent^) DO
+        ll.y := ll.y + offset.y;
+        t.get(i, j).render(ll, canvas);
+        ll.y := ll.y + offset.y;
+        ll.y := ll.y + ytent[j]
+      END;
+      ll.x := ll.x + offset.x;
+      ll.x := ll.x + xtent[i]
+    END
   END Render;
   
 BEGIN END PicArray.

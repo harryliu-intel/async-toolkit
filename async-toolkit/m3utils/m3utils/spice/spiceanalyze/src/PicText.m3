@@ -38,4 +38,12 @@ PROCEDURE Extent(READONLY a : T) : PicExtent.T =
                                       a.ll.y + a.size } }
   END Extent;
 
+PROCEDURE Translate(READONLY a : T; READONLY by : PicPoint.T) : T =
+  VAR
+    res := a;
+  BEGIN
+    res.ll := PicPoint.Plus(a.ll, by);
+    RETURN res
+  END Translate;
+  
 BEGIN END PicText.

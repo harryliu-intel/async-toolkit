@@ -1,5 +1,6 @@
 MODULE Pic;
 IMPORT PicExtent;
+IMPORT PicPoint;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
@@ -16,7 +17,10 @@ PROCEDURE Init(t : T) : T =
   END Init;
 
 PROCEDURE SetExtent(t : T; READONLY extent : PicExtent.T) =
-  BEGIN t.reqExtent := extent END SetExtent;
+  BEGIN
+    t.reqExtent := PicExtent.T { PicPoint.Zero,
+                                 PicPoint.Minus(extent.ur, extent.ll) }
+  END SetExtent;
 
 PROCEDURE CurExtent(t : T) : PicExtent.T =
   BEGIN RETURN t.reqExtent END CurExtent;
