@@ -21,11 +21,7 @@ IMPORT Thread;
 IMPORT SpiceAnalyze;
 FROM SpiceAnalyze IMPORT Power, PowerSets, PowerNames;
 IMPORT TextCktCellTbl;
-FROM SpiceFlat IMPORT VisitCktNodes, CleanAssocs;
-IMPORT TextTextSetTbl;
-IMPORT SpiceInstance;
-IMPORT TextSpiceInstanceSetTbl;
-IMPORT TextTextTbl;
+IMPORT FS;
 
 <*FATAL Thread.Alerted*>
 
@@ -100,6 +96,7 @@ VAR
 
   spice : SpiceFormat.T;
   powerSets := PowerSets { NEW(TextSetDef.T).init(), .. };
+  outDir : Pathname.T := ".";
 BEGIN
   TRY
     IF pp.keywordPresent("-power") OR pp.keywordPresent("-p") THEN
@@ -107,6 +104,9 @@ BEGIN
     END;
     IF pp.keywordPresent("-f") THEN
       fn := pp.getNext()
+    END;
+    IF pp.keywordPresent("-o") THEN
+      outDir := pp.getNext()
     END;
     IF fn = NIL THEN
       Debug.Error("must specify -f")
@@ -116,6 +116,8 @@ BEGIN
   EXCEPT
     ParseParams.Error => Debug.Error("Can't parse command line")
   END;
+
+  TRY FS.CreateDirectory(outDir) EXCEPT ELSE END;
   
   IF powerFn # NIL THEN
     TryOpenFile(powerFn, pRd);
@@ -142,7 +144,7 @@ BEGIN
   END;
 
   Debug.Out(F("subCkts : %s", Int(spice.subCkts.size())));
-  
+
   VAR
     ckt : SpiceCircuit.T;
     hierTbl := NEW(TextCktCellTbl.Default).init();
@@ -156,11 +158,13 @@ BEGIN
            hadIt = spice.subCkts.get(nm, ckt) DO
         <*ASSERT hadIt*>
         (* first find all the aliases *)
-        SpiceAnalyze.Cell(nm, ckt, powerSets, hierTbl, spice.subCkts)
+        SpiceAnalyze.Cell(nm,
+                          ckt, powerSets, hierTbl, spice.subCkts, outDir)
       END
     END;
 
-    SpiceAnalyze.Cell("TOP", spice.topCkt, powerSets, hierTbl, spice.subCkts)
+    SpiceAnalyze.Cell("TOP",
+                      spice.topCkt, powerSets, hierTbl, spice.subCkts, outDir)
   END
       
 END Main.

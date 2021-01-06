@@ -12,7 +12,9 @@ TYPE
     (* 0 is the row nearest the output (drain end of network) --
        increases towards the power supply *)
 
-    size() : CARDINAL;
+    nrows() : CARDINAL;
+    nelems() : CARDINAL;
+    
     getRow(row : CARDINAL) : Row;
   END;
 

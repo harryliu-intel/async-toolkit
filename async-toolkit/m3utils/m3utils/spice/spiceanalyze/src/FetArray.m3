@@ -10,13 +10,14 @@ REVEAL
   T = Public BRANDED Brand OBJECT
     rep : ElemSeqSeq.T;
   OVERRIDES
-    init := Init;
+    init     := Init;
     addToRow := AddToRow;
-    size := Size;
-    getRow := GetRow;
+    nelems   := Nelems;
+    nrows    := Nrows;
+    getRow   := GetRow;
   END;
 
-PROCEDURE Size(t : T) : CARDINAL =
+PROCEDURE Nelems(t : T) : CARDINAL =
   VAR
     sz : CARDINAL := 0;
   BEGIN
@@ -24,7 +25,10 @@ PROCEDURE Size(t : T) : CARDINAL =
       INC(sz, t.rep.get(i).size())
     END;
     RETURN sz
-  END Size;
+  END Nelems;
+
+PROCEDURE Nrows(t : T) : CARDINAL =
+  BEGIN RETURN t.rep.size() END Nrows;
 
 PROCEDURE GetRow(t : T; row : CARDINAL) : ElemSeq.T =
   BEGIN

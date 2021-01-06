@@ -3,6 +3,7 @@ IMPORT SpiceCircuit;
 IMPORT TextSet;
 IMPORT TextCktCellTbl;
 IMPORT TextSpiceCircuitTbl;
+IMPORT Pathname;
 
 (* process a single SUBCKT definition *)
 PROCEDURE Cell(nm : TEXT;
@@ -17,9 +18,12 @@ PROCEDURE Cell(nm : TEXT;
                hierTbl : TextCktCellTbl.T;
                (* output: hierarchy *)
                
-               subCkts : TextSpiceCircuitTbl.T
+               subCkts : TextSpiceCircuitTbl.T;
                (* (global) map from type names to definitions -- to resolve
-                   subcell types *)
+                  subcell types *)
+
+               outDir : Pathname.T
+               (* directory whither to put output result files *)
   );
  
 CONST Brand = "SpiceAnalyze";

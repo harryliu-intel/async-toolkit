@@ -34,6 +34,7 @@ IMPORT SpiceGate;
 IMPORT SpiceDiagram;
 IMPORT FileWr;
 IMPORT SvgCanvas;
+IMPORT Pathname;
 
 VAR doDebug := Debug.DebugThis("SpiceAnalyze");
     
@@ -51,7 +52,8 @@ PROCEDURE Cell(nm      : TEXT;
                ckt     : SpiceCircuit.T;
                power   : PowerSets;
                hierTbl : TextCktCellTbl.T;
-               subCkts : TextSpiceCircuitTbl.T) =
+               subCkts : TextSpiceCircuitTbl.T;
+               outDir  : Pathname.T) =
   CONST
     DefaultTopName = "CIRCUIT";
   VAR
@@ -59,6 +61,9 @@ PROCEDURE Cell(nm      : TEXT;
     canonTbl := NEW(TextTextTbl.Default).init();
 
   BEGIN
+    <*ASSERT outDir # NIL*>
+    <*ASSERT nm # NIL*>
+    
     Debug.Out("Working on " & nm);
     Debug.Out(F("name %s", Debug.UnNil(ckt.name)));
     IF ckt.name = NIL THEN
@@ -129,7 +134,7 @@ PROCEDURE Cell(nm      : TEXT;
 
             Debug.Out("Finding gate from " & Int(n.id));
             Dfs.Node(n, visitor);
-            Debug.Out(F("%s elements", Int(visitor.fetArray.size())));
+            Debug.Out(F("%s elements", Int(visitor.fetArray.nelems())));
             gate[pull] := visitor.fetArray;
           END;
           diagram.addGate(gate)
@@ -138,7 +143,7 @@ PROCEDURE Cell(nm      : TEXT;
         (* here we should look for components that are not in the gates
            we have already added, and add them too *)
 
-        WITH wr   = FileWr.Open("out.svg"),
+        WITH wr   = FileWr.Open(outDir & "/" & nm & ".svg"),
              canv = NEW(SvgCanvas.T).init() DO
           diagram.render(canv);
           canv.write(wr)

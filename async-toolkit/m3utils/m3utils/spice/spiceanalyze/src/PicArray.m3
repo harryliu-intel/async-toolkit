@@ -119,7 +119,11 @@ PROCEDURE Render(t : T; READONLY at : PicPoint.T; canvas : Canvas.T) =
       ll.y := at.y;
       FOR j := FIRST(ytent^) TO LAST(ytent^) DO
         ll.y := ll.y + offset.y;
-        t.get(i, j).render(ll, canvas);
+        WITH cell = t.get(i, j) DO
+          IF cell # NIL THEN
+            cell.render(ll, canvas)
+          END
+        END;
         ll.y := ll.y + offset.y;
         ll.y := ll.y + ytent[j]
       END;
