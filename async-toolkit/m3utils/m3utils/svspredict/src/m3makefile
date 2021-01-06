@@ -23,4 +23,8 @@ interface ("ProgramSetter")
 interface ("Svl")
 module ("Scale")
 
+module ("PowerScaling")
+module ("Power3")
+module ("TvpMeasurement")
+
 program("svspredict")
