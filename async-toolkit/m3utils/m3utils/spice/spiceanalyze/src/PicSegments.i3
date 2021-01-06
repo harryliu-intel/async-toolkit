@@ -11,11 +11,11 @@ TYPE
 
   Public = Pic.T OBJECT METHODS
     init() : T;
-    addSegment(seg : PicSegment.T);
-    addPoint(at : PicPoint.T);
-    addCircle(circ : PicCircle.T);
-    addText(txt : PicText.T);
-END;
+    addSegment(READONLY seg  : PicSegment.T);
+    addPoint  (READONLY at   : PicPoint.T);
+    addCircle (READONLY circ : PicCircle.T);
+    addText   (READONLY txt  : PicText.T);
+  END;
 
 CONST Brand = "PicSegments";
 

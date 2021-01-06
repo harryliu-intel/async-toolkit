@@ -133,22 +133,22 @@ PROCEDURE Write(t : T; wr : Wr.T)
     Wr.PutText(wr, "</svg>\n")
   END Write;
 
-PROCEDURE Point(t : T; point : PicPoint.T) =
+PROCEDURE Point(t : T; READONLY point : PicPoint.T) =
   BEGIN
     t.points := PicPointList.Cons(point, t.points)
   END Point;
 
-PROCEDURE Circle(t : T; circle : PicCircle.T) =
+PROCEDURE Circle(t : T; READONLY circle : PicCircle.T) =
   BEGIN
     t.circles := PicCircleList.Cons(circle, t.circles)
   END Circle;
 
-PROCEDURE Segment(t : T; segment : PicSegment.T) =
+PROCEDURE Segment(t : T; READONLY segment : PicSegment.T) =
   BEGIN
     t.segments := PicSegmentList.Cons(segment, t.segments)
   END Segment;
 
-PROCEDURE Text(t : T; text : PicText.T) =
+PROCEDURE Text(t : T; READONLY text : PicText.T) =
   BEGIN
     t.texts := PicTextList.Cons(text, t.texts)
   END Text;

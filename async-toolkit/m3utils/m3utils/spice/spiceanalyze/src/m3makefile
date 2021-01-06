@@ -68,6 +68,7 @@ Module ("SvgColor")
 /* Canvases */
 Interface ("Canvas")
 Module ("SvgCanvas")
+Module ("PicCanvas")
 Module ("XformCanvas")
 Interface ("CanvasXform")
 
@@ -79,5 +80,7 @@ Module ("SpiceDiagram")
 Module ("PicExtent")
 
 Module ("PicComponent")
+
+Module ("DrawElements")
 
 program ("spiceanalyze")

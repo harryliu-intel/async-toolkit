@@ -24,7 +24,7 @@ PROCEDURE Init(t : T; target : Canvas.T) : T =
     RETURN t
   END Init;
 
-PROCEDURE Point(t : T; point : PicPoint.T) =
+PROCEDURE Point(t : T; READONLY point : PicPoint.T) =
   VAR
     xpoint := point;
   BEGIN
@@ -32,7 +32,7 @@ PROCEDURE Point(t : T; point : PicPoint.T) =
     t.target.point(xpoint)
   END Point;
 
-PROCEDURE Circle(t : T; circle : PicCircle.T) =
+PROCEDURE Circle(t : T; READONLY circle : PicCircle.T) =
   VAR
     xcirc := circle;
   BEGIN
@@ -41,7 +41,7 @@ PROCEDURE Circle(t : T; circle : PicCircle.T) =
     t.target.circle(xcirc)
   END Circle;
 
-PROCEDURE Segment(t : T; segment : PicSegment.T) =
+PROCEDURE Segment(t : T; READONLY segment : PicSegment.T) =
   VAR
     xseg := segment;
   BEGIN
@@ -50,7 +50,7 @@ PROCEDURE Segment(t : T; segment : PicSegment.T) =
     t.target.segment(xseg)
   END Segment;
 
-PROCEDURE Text(t : T; text : PicText.T) =
+PROCEDURE Text(t : T; READONLY text : PicText.T) =
   VAR
     xtext := text;
   BEGIN

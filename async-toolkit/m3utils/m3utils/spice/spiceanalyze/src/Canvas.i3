@@ -6,10 +6,10 @@ IMPORT PicSegment;
 
 TYPE
   T = OBJECT METHODS
-    point(at : PicPoint.T);
-    circle(circ : PicCircle.T);
-    text(txt : PicText.T);
-    segment(at : PicSegment.T);
+    point  (READONLY p    : PicPoint.T);
+    circle (READONLY circ : PicCircle.T);
+    text   (READONLY txt  : PicText.T);
+    segment(READONLY seg  : PicSegment.T);
   END;
 
 CONST Brand = "Canvas";
