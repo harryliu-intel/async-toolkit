@@ -19,11 +19,11 @@ TYPE
            VAR     ctr : CARDINAL) RAISES { Wr.Failure };
   END;
 
-  R = T BRANDED OBJECT (* resistor *)
+  R = T BRANDED Brand & " Resistor" OBJECT (* resistor *)
     r : LONGREAL;
   END;
 
-  C = T BRANDED OBJECT (* capacitor *)
+  C = T BRANDED Brand & " Capacitor" OBJECT (* capacitor *)
     c : LONGREAL;
   END;
 
@@ -32,6 +32,10 @@ TYPE
   END;
 
   M = T BRANDED Brand & " MOSFET" OBJECT         (* transistor *)
+    type : TEXT;
+  END;
+
+  D = T BRANDED Brand & " Diode" OBJECT         (* diode *)
     type : TEXT;
   END;
 

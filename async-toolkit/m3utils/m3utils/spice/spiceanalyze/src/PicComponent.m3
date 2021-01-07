@@ -39,6 +39,9 @@ PROCEDURE Init(t : T; obj : CktElement.T) : T =
       SpiceObject.C =>
       DrawElements.Cap(t.under)
     |
+      SpiceObject.D =>
+      DrawElements.Dio(t.under)
+    |
       SpiceObject.X(x) =>
       
       Debug.Error("Do not build component out of subcell of type " & x.type)

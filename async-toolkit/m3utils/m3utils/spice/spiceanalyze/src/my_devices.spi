@@ -9,10 +9,12 @@
 
 .SUBCKT rhim_nw a b c
 * not sure what this is
+R_0 a b 1
 .ENDS rhim_nw
 
 .SUBCKT rm1w a b 
 * not sure what this is
+R_0 a b 1
 .ENDS rm1w
 
 

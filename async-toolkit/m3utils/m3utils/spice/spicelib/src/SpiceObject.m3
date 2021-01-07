@@ -181,6 +181,25 @@ PROCEDURE ParseLine(VAR circuit   : SpiceCircuitList.T; (* circuit stack *)
         
         o := m
       END
+    ELSIF CaseIns(line[0],'D') THEN
+      (* transistor *)
+      VAR nd : TEXT;
+          d     := NEW(SpiceObject.D, 
+                       terminals := NEW(TextSeq.T).init(),
+                       data      := NEW(TextSeq.T).init());
+          gotNm := GetWord(line,p, d.name);
+      BEGIN
+        <*ASSERT gotNm*>
+        WITH gotAn = GetWord(line, p, nd) DO <*ASSERT gotAn*> END;
+        d.terminals.addhi(nd);
+        WITH gotCa = GetWord(line, p, nd) DO <*ASSERT gotCa*> END;
+        d.terminals.addhi(nd);
+
+        WITH gotModel = GetWord(line, p, nd) DO <*ASSERT gotModel*> END;
+        d.type := nd;
+        
+        o := d
+      END
     ELSIF CaseIns(line[0],'C') THEN
       (* capacitor *)
       VAR nd : TEXT;
