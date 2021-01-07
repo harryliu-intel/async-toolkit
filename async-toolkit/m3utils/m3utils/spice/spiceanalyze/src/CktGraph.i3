@@ -22,7 +22,10 @@ REVEAL
 
   CktNode.T = BRANDED OBJECT
     id       : INTEGER;
+
     elements : CktElementList.T;
+    (* note that one Element can be connected more than once to a Node *)
+    
     aliases  : TextSet.T;
     props    := NodePropertySet.Empty;
     mark     : Mark := NIL;

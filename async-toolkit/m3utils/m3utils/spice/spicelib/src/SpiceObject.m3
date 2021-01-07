@@ -1,7 +1,7 @@
 MODULE SpiceObject EXPORTS SpiceObject, SpiceObjectParse;
 IMPORT Debug;
 IMPORT Text;
-FROM Fmt IMPORT Int, F, Bool;
+FROM Fmt IMPORT Int, F, Bool, LongReal;
 IMPORT SpiceCircuitList, TextSpiceCircuitTbl;
 IMPORT TextSeq;
 IMPORT SpiceObjectSeq;
@@ -16,7 +16,8 @@ FROM SpiceParse IMPORT HavePrefix, CaseIns;
 IMPORT FloatMode, Lex;
 
 CONST TE = Text.Equal;
-
+      LR = LongReal;
+      
 VAR doDebug := Debug.DebugThis("SpiceObject");
     
 REVEAL
@@ -310,6 +311,22 @@ PROCEDURE GetWord(READONLY line : ARRAY OF CHAR;
 
 PROCEDURE Hash(a : T) : Word.T = BEGIN
   RETURN Text.Hash(a.name) END Hash;
+
+PROCEDURE Format(a : T) : TEXT =
+  BEGIN
+    TYPECASE a OF
+      R(r) => RETURN F("R(%s)", LR(r.r))
+    |
+      C(c) => RETURN F("C(%s)", LR(c.c))
+    |
+      M(m) => RETURN F("M(%s)", m.type)
+    |
+      X(x) => RETURN F("X(%s)", x.type)
+    ELSE
+      RETURN "UNKNOWN"
+    END
+  END Format;
+
   
 BEGIN END SpiceObject.
 

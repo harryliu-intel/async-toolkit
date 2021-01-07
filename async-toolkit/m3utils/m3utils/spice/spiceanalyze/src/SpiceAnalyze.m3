@@ -2,7 +2,7 @@ MODULE SpiceAnalyze;
 IMPORT Debug;
 IMPORT SpiceCircuit;
 IMPORT TextSpiceObjectTbl;
-FROM Fmt IMPORT F, Int;
+FROM Fmt IMPORT F, Int, FN;
 IMPORT CktGraph;
 IMPORT CktCell;
 IMPORT TextCktCellTbl;
@@ -22,6 +22,7 @@ IMPORT CktNodeSeq;
 IMPORT CktElementList;
 IMPORT CktNodeList AS NodeList;
 IMPORT CktNodeSet, CktNodeSetDef;
+IMPORT CktElementSet, CktElementSetDef;
 IMPORT NodeProperty;
 IMPORT NodePropertySet AS NdProps;
 IMPORT ElementProperty;
@@ -36,6 +37,7 @@ IMPORT FileWr;
 IMPORT Wr;
 IMPORT SvgCanvas;
 IMPORT Pathname;
+IMPORT CktElement;
 
 VAR doDebug := Debug.DebugThis("SpiceAnalyze");
     
@@ -58,7 +60,7 @@ PROCEDURE Cell(nm      : TEXT;
   CONST
     DefaultTopName = "CIRCUIT";
   VAR
-    symtab := NEW(TextSpiceObjectTbl.Default).init();
+    symtab   := NEW(TextSpiceObjectTbl.Default).init();
     canonTbl := NEW(TextTextTbl.Default).init();
 
   BEGIN
@@ -123,7 +125,9 @@ PROCEDURE Cell(nm      : TEXT;
         };
       VAR
         n : Node;
-        visitor := NEW(GateFindVisitor);
+        visitor := NEW(GateFindVisitor,
+                       canonTbl := canonTbl,
+                       elems := NEW(CktElementSetDef.T).init());
         iter    := gateOutputs.iterate();
         gate : SpiceGate.T;
         diagram := NEW(SpiceDiagram.T).init();
@@ -159,49 +163,76 @@ TYPE
   GateFindVisitor = Dfs.NodeVisitor OBJECT
     eMustMatch : EtProps.T;
     fetArray   : FetArray.T;
+    canonTbl   : TextTextTbl.T;
+    elems      : CktElementSet.T;
   OVERRIDES
     visit := GateFindVisit;
   END;
 
 TYPE FetTerminal = { Drain, Gate, Source, Body };
 
-PROCEDURE IsFetTerminal(e : Element; n : Node; term : FetTerminal) : BOOLEAN =
-  VAR
-    found := -1;
+PROCEDURE IsFetTerminal(e    : Element;
+                        n    : Node;
+                        term : FetTerminal) : BOOLEAN =
   BEGIN
     <*ASSERT e.props * EtProps.T { EtProp.IsNfet, EtProp.IsPfet } # EtProps.Empty *>
-    FOR i := 0 TO e.terminals.size() - 1 DO
-      IF e.terminals.get(i) = n THEN found := i END
-    END;
-    <*ASSERT found # -1 *>
-    RETURN found = ORD(term)
+    <*ASSERT ORD(term) < e.terminals.size()*>
+    RETURN e.terminals.get(ORD(term)) = n
   END IsFetTerminal;
-  
+
 PROCEDURE GateFindVisit(v    : GateFindVisitor;
                         path : NodeList.T;
                         via  : Element;
                         this : Node) : BOOLEAN =
+
+  PROCEDURE CanonNm(n : Node) : TEXT =
+    VAR
+      res := "***";
+    BEGIN
+      WITH iter = n.aliases.iterate() DO
+        IF iter.next(res) THEN
+          EVAL v.canonTbl.get(res, res)
+        END
+      END;
+      RETURN res
+    END CanonNm;
+    
   VAR
     prev := path.head;
   BEGIN
-    Debug.Out(F("GateFindVisit : n %s -> e %s -> n %s",
-                Int(prev.id), Int(via.id), Int(this.id)));
-
+    IF doDebug THEN
+      Debug.Out(FN("GateFindVisit : n %s [%s] -> e %s -> n %s [%s]",
+                   ARRAY OF TEXT { Int(prev.id),
+                                   CanonNm(prev),
+                                   CktElement.Format(via),
+                                   Int(this.id),
+                                   CanonNm(this)} ));
+    END;
+      
     IF v.eMustMatch * via.props # v.eMustMatch THEN
       Debug.Out(F("GateFindVisit non-transistor e %s", Int(via.id)));
       RETURN FALSE
-    ELSIF NOT (IsFetTerminal(via, this, FetTerminal.Source) OR
-               IsFetTerminal(via, this, FetTerminal.Source)) THEN
+    ELSIF v.elems.member(via) THEN
+      Debug.Out(F("GateFindVisit visiting elem already added"));
+      RETURN FALSE
+    ELSIF this = prev THEN
+      Debug.Out(F("GateFindVisit visiting prev"));
+      RETURN FALSE
+    ELSIF   NOT (IsFetTerminal(via, this, FetTerminal.Source) OR
+                 IsFetTerminal(via, this, FetTerminal.Drain))
+     THEN
       Debug.Out(F("GateFindVisit not source or drain of %s", Int(via.id)));
       RETURN FALSE
     ELSIF NdProp.IsVdd IN this.props OR NdProp.IsGnd IN this.props THEN
       (* end of line, we are at power supply, device is included *)
       v.fetArray.addToRow(via, NodeList.Length(path) - 1);
+      EVAL v.elems.insert(via);
       Debug.Out(F("GateFindVisit n %s at power supply", Int(this.id)));
       RETURN FALSE
     ELSE
-      (* moving along, device is included *)
+      (* moving along, device is included, but only once *)
       v.fetArray.addToRow(via, NodeList.Length(path) - 1);
+      EVAL v.elems.insert(via);
       RETURN TRUE
     END
   END GateFindVisit;
@@ -295,8 +326,8 @@ PROCEDURE BuildElementTab(ckt     : SpiceCircuit.T;
     FOR i := 0 TO ckt.elements.size() - 1 DO
       WITH e   = ckt.elements.get(i),
            new = NEW(Element,
-                     id := id,
-                     src := e,
+                     id        := id,
+                     src       := e,
                      terminals := NEW(CktNodeSeq.T).init()),
            fqn = path & "." & e.name DO
         INC(id);
@@ -314,7 +345,7 @@ PROCEDURE BuildElementTab(ckt     : SpiceCircuit.T;
         END;
         
         FOR i := 0 TO e.terminals.size() - 1 DO
-          WITH tn = e.terminals.get(i),
+          WITH tn   = e.terminals.get(i),
                ffqn = path & "." & tn DO
             IF doDebug THEN
               Debug.Out(F("Seeking name %s", ffqn))
@@ -326,8 +357,12 @@ PROCEDURE BuildElementTab(ckt     : SpiceCircuit.T;
             END;
             (* record the source of the def'n *)
             
-            (* cross-link the Node and Element *)
-            n.elements := CktElementList.Cons(new, n.elements);
+            (* cross-link the Node and Element, only need to do it once
+               for nodes that are connected multiple times to a single
+               element *)
+            IF NOT CktElementList.Member(n.elements, new) THEN
+              n.elements := CktElementList.Cons(new, n.elements)
+            END;
             new.terminals.addhi(n);
           END
         END(*ROF*);
@@ -349,10 +384,10 @@ PROCEDURE FinalArc(nm : TEXT) : TEXT =
     RETURN nm
   END FinalArc;
 
-PROCEDURE BuildNodeTab(canonTbl : TextTextTbl.T;
-                       ckt     : SpiceCircuit.T;
-                       subCkts : TextSpiceCircuitTbl.T;
-                       nodeTab : TextNodeTbl.T;
+PROCEDURE BuildNodeTab(canonTbl  : TextTextTbl.T;
+                       ckt       : SpiceCircuit.T;
+                       subCkts   : TextSpiceCircuitTbl.T;
+                       nodeTab   : TextNodeTbl.T;
                        powerSets : PowerSets) : TextSet.T =
   VAR
     aliasTab := FindAllAliases(ckt, subCkts, canonTbl);
@@ -382,7 +417,10 @@ PROCEDURE BuildNodeTab(canonTbl : TextTextTbl.T;
         IF doDebug THEN
           Debug.Out(F("canon %s, aliases %s", canon, Int(ts.size())))
         END;
-        WITH node = NEW(Node, id := id, aliases := ts, elements := NIL),
+        WITH node = NEW(Node,
+                        id       := id,
+                        aliases  := ts,
+                        elements := NIL),
              jter = ts.iterate() DO
           INC(id);
           WHILE jter.next(u) DO

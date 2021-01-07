@@ -9,5 +9,7 @@ CONST Brand = "CktElement";
 CONST Equal = Refany.Equal;
 
 PROCEDURE Hash(a : T) : Word.T;
-      
+
+PROCEDURE Format(a : T) : TEXT;
+  
 END CktElement.

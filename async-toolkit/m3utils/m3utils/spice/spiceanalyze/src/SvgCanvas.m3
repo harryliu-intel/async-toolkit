@@ -65,6 +65,8 @@ PROCEDURE Write(t : T; wr : Wr.T)
       xs := t.extent.ur.x - t.extent.ll.x;
       ys := t.extent.ur.y - t.extent.ll.y;
     BEGIN
+      IF t.extent = PicExtent.Empty THEN RETURN "0 0 0 0" END;
+      
       (* we are going to flip the signs on the Y-extent *)
       (* -ur.y is therefore the min Y coord in the image *)
       RETURN F("%s %s %s %s",

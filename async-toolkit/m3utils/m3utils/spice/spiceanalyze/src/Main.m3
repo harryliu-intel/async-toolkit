@@ -27,7 +27,6 @@ IMPORT FS;
 
 CONST TE = Text.Equal;
 
-
 PROCEDURE TryOpenFile(fn : Pathname.T; VAR rd : Rd.T) =
   BEGIN
     IF TE(fn, "-") THEN
@@ -85,7 +84,20 @@ PROCEDURE ParsePower(rd : Rd.T; VAR ps : PowerSets)
       END
     EXCEPT
       Rd.EndOfFile => (* skip *)
-    END
+    END;
+
+    FOR i := FIRST(Power) TO LAST(Power) DO
+      Debug.Out("Power set " & PowerNames[i]);
+      VAR str := "";
+          iter := ps[i].iterate();
+          nm : TEXT;
+      BEGIN
+        WHILE iter.next(nm) DO
+          str := str & nm & " "
+        END;
+        Debug.Out(str)
+      END
+    END;
   END ParsePower;
   
 VAR
@@ -95,7 +107,8 @@ VAR
   pRd, rd : Rd.T;
 
   spice : SpiceFormat.T;
-  powerSets := PowerSets { NEW(TextSetDef.T).init(), .. };
+  powerSets := PowerSets { NEW(TextSetDef.T).init(),
+                           NEW(TextSetDef.T).init() };
   outDir : Pathname.T := ".";
 BEGIN
   TRY
