@@ -13,6 +13,11 @@ CONST Big   = 50.0d0;
 TYPE P = PicPoint.T;
 TYPE PArray = ARRAY OF P;
 
+PROCEDURE Mid(READONLY p, q : P) : P =
+  BEGIN
+    RETURN PicPoint.Times(0.5d0, PicPoint.Plus(p, q))
+  END Mid;
+
 PROCEDURE Step(READONLY from : P;
                big, small    : CARDINAL;
                dx, dy        : [ -1 .. +1 ] ) : P =
@@ -64,9 +69,11 @@ PROCEDURE Fet(to     : PicSegments.T;
     q2  := Up(q1, 2);        (* gate top *)
     qc  := Up(q1);           (* where bubble touches gate *)
 
-    cp1 := Left(qc, 0, 1);   (* bubble center *)
+    cp1 := Left(qc, 0, 1);   (* bubble left *)
 
-    dp1 := Left(cp1, 0, 1);  (* line from bubble left, P transistor *)
+    bm  := Mid(qc, cp1);
+
+    dp1 := cp1;              (* line from bubble left, P transistor *)
     dn1 := qc;               (* line from gate left, N transistor *)
     d2  := Left(pc3, 2);
  
@@ -81,7 +88,7 @@ PROCEDURE Fet(to     : PicSegments.T;
       OpenPath(to, PArray { dn1, d2 })
     |
       Pfet =>
-      to.addCircle(PicCircle.T { cp1, Small});
+      to.addCircle(PicCircle.T { bm, Small / 2.0d0 });
       OpenPath(to, PArray { dp1, d2 })
     END;
     IF doBody THEN

@@ -30,6 +30,8 @@ PROCEDURE Init(t : T; obj : CktElement.T) : T =
       END
     END;
 
+    Debug.Out("PicComponent.Init: obj.src: " & SpiceObject.Format(obj.src));
+    
     TYPECASE obj.src OF
       SpiceObject.R =>
       DrawElements.Res(t.under)

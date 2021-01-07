@@ -78,6 +78,7 @@ PROCEDURE Write(t : T; wr : Wr.T)
     
   VAR
     dct    := SvgColor.Format(t.defColor);
+    wht    := SvgColor.Format(SvgColor.White);
     stroke := t.defStrokeWidth;
   BEGIN
     Wr.PutText(wr,
@@ -106,12 +107,16 @@ PROCEDURE Write(t : T; wr : Wr.T)
     BEGIN
       WHILE p # NIL DO
         Wr.PutText(wr,
-                   F("<circle cx=%s cy=%s r=%s stroke-width=%s stroke=\"%s\" />\n\n",
-                     N(p.head.at.x),
-                     N(-p.head.at.y),
-                     N(p.head.r),
-                     N(stroke),
-                     dct));
+                   FN("<circle cx=%s cy=%s r=%s stroke-width=%s stroke=\"%s\" fill=\"%s\"/>\n\n",
+                      ARRAY OF TEXT {
+        N(p.head.at.x),
+        N(-p.head.at.y),
+        N(p.head.r),
+        N(stroke),
+        dct,
+        wht
+        } ));
+        
         p := p.tail
       END
     END;

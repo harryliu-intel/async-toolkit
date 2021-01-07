@@ -2,6 +2,7 @@ MODULE SpiceInstance;
 IMPORT Word;
 IMPORT Text;
 IMPORT SpiceObject;
+IMPORT Debug;
 
 CONST TE = Text.Equal;
 
@@ -21,8 +22,8 @@ PROCEDURE Init(t : T; flatName : TEXT; obj : SpiceObject.T; parent : T) : T =
       
 PROCEDURE Equal(a, b : T) : BOOLEAN =
   BEGIN
-    IF TE(a.flatName, b.flatName) THEN
-      <*ASSERT a.obj=b.obj*>
+    IF TE(a.flatName, b.flatName) AND a.obj # b.obj THEN
+      Debug.Error("SpiceInstance.Equal : multiple definitions of object named " & a.flatName)
     END;
     RETURN TE(a.flatName, b.flatName)
   END Equal;

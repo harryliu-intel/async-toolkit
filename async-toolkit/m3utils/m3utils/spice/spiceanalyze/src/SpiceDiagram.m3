@@ -64,7 +64,7 @@ PROCEDURE RenderGate(canvas : Canvas.T;
     END;
 
     (* we start from the bottom (output) of the P stack *)
-    WITH pstack = g[SpiceGate.Pull.Down] DO
+    WITH pstack = g[SpiceGate.Pull.Up] DO
       FOR pr := 0 TO pstack.nrows() - 1 DO
         WITH row = pstack.getRow(pr) DO
           FOR i := 0 TO row.size() - 1 DO
