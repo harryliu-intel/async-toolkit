@@ -3,7 +3,7 @@ FROM SvsTypes IMPORT CornerData;
 IMPORT N7Tech AS Tech, N7PMRO AS TechPmro;
 IMPORT PMRO;
 IMPORT Debug;
-IMPORT Fmt; FROM Fmt IMPORT F;
+IMPORT Fmt; FROM Fmt IMPORT F, FN;
 IMPORT Power;
 IMPORT Corner;
 IMPORT Interpolate;
@@ -14,6 +14,7 @@ IMPORT Wx;
 IMPORT TvpMeasurement;
 IMPORT Power3;
 IMPORT PowerScaling;
+IMPORT Wr;
 
 CONST LR = Fmt.LongReal;
 
@@ -65,14 +66,14 @@ PROCEDURE SetProgram79(VAR p     : Power.Params;
     pmro = Pmro79;
     (* PMRO data for this individual from the lab *)
     
-    AteVmin79 = 645.0d-3;
+    AteVmin79   = 680.0d-3;
     (*AteVmin79 = 645.0d-3;*)
     (* from Dinesh's estimations at ATE for this specific individual 
-       updated per email 1/5/21 *)
+       updated per email 1/5/21 : 645mV *)
 
-    AgeMargin = 20.0d-3;
+    AgeMargin = 15.0d-3; (*20.0d-3;*)
 
-    CmvGuard  = 20.0d-3;
+    CmvGuard  = 10.0d-3; (*20.0d-3;*)
 
     tgtTemp = Svl.TargetTemp;
   VAR
@@ -130,8 +131,197 @@ PROCEDURE SetProgram79(VAR p     : Power.Params;
     p.c             := MakeCornerArrayFromTt(VminEolTT);
     p.RefLeakP      := predTt.lkgP;
     p.RefP          := predTt.totP;
+
   END SetProgram79;
 
+PROCEDURE EvalSpecialCases(wr : Wr.T;
+                           READONLY p : Power.Params;
+                           medianSigma, worstSigma : LONGREAL) =
+  CONST
+    MacCredit    = -6.0d0; (* from Remy  *)
+    SerdesMargin = +3.0d0; (* Dan's est. *)
+    Corr         = MacCredit + SerdesMargin;
+    WorV         = 0.04d0;
+    TypV         = 0.02d0;
+  BEGIN
+    ConditionsHeader(wr);
+    EVAL Conditions(wr, p, 105.0d0, 1.0d0, 300.0d0, worstSigma,  Corr, WorV);
+    EVAL Conditions(wr, p, 105.0d0, 1.0d0, 300.0d0, medianSigma, Corr, WorV);
+    EVAL Conditions(wr, p, 105.0d0, 1.0d0, 300.0d0, medianSigma, Corr, 0.0d0);
+
+    EVAL Conditions(wr, p,  90.0d0, 1.0d0, 300.0d0, medianSigma, Corr, TypV);
+    EVAL Conditions(wr, p,  90.0d0, 0.7d0, 300.0d0, medianSigma, Corr, TypV);
+    EVAL Conditions(wr, p,  90.0d0, 0.3d0, 300.0d0, medianSigma, Corr, TypV);
+    EVAL Conditions(wr, p,  75.0d0, 0.3d0, 300.0d0, medianSigma, Corr, TypV);
+    EVAL Conditions(wr, p,  75.0d0, 0.0d0, 300.0d0, medianSigma, Corr, TypV);
+    EVAL Conditions(wr, p,  75.0d0, 0.0d0,9000.0d0, medianSigma, Corr, TypV);
+    EVAL Conditions(wr, p,  90.0d0, 1.0d0,9000.0d0, medianSigma, Corr, TypV);
+    EVAL Conditions(wr, p,  90.0d0, 0.0d0,9000.0d0, medianSigma, Corr, TypV);
+    EVAL Conditions(wr, p,  90.0d0, 0.0d0,9000.0d0, 2.23d0, Corr, 0.100d0);
+  END EvalSpecialCases;
+
+PROCEDURE ConditionsHeader(wr : Wr.T) =
+  BEGIN
+    Wr.PutText(wr, "temp, active, bytes, sigma, deltaP, voltFrac, chipVoltMin, vrVolt, power\n");
+  END ConditionsHeader;
+
+PROCEDURE Conditions(wr : Wr.T;
+                     READONLY p    : Power.Params;
+                     (* p is for a chip at Svl.TargetTemp and TT per
+                        the corner data *)
+                     temp,
+                     active,
+                     bytes,
+                     sigma,
+                     deltaP, (* +debit / -credit on power *)
+                     voltMarginFrac : LONGREAL) : LONGREAL =
+  CONST
+    ActiveAt300B = 0.2943d0; (* percentage of non-leakage non-fixed power
+                                from packet size *)
+  VAR
+    activeAtBytes     := ActiveAt300B / bytes * 300.0d0;
+
+    bytesFracOfActive := 1.0d0 - ActiveAt300B + activeAtBytes;
+
+    q := p;
+
+    ttActMeasurement := TvpMeasurement.T { Svl.TargetTemp,
+                                           p.c[Corner.T.TT].vpower,
+                                           p.RefP };
+    
+    ttLkgMeasurement := TvpMeasurement.T { Svl.TargetTemp,
+                                           p.c[Corner.T.TT].vpower,
+                                           p.RefLeakP };
+
+    ttAtTemp : Power3.T;
+    powerResultsNoMargin : Power.Result;
+    cd : CornerData;
+    chipVoltReq, vrVoltAssumed : LONGREAL;
+
+  BEGIN
+    Debug.Out(FN("*** Conditions temp %s active %s bytes %s sigma %s deltaP %s voltMargin %s",
+                 ARRAY OF TEXT {
+    LR(temp),
+    LR(active),
+    LR(bytes),
+    LR(sigma),
+    LR(deltaP),
+    LR(voltMarginFrac)}));
+
+    
+    ttAtTemp := PowerScaling.Predict(ttActMeasurement,
+                                     ttLkgMeasurement,
+                                     p.c[Corner.T.TT].vpower,
+                                     temp,
+                                     FixedDynPwr);
+    cd := PowerScaling.Interpolate(q, sigma); (* corner data for new *)
+    q.RefP     := ttAtTemp.totP;
+    q.RefLeakP := ttAtTemp.lkgP;
+
+    powerResultsNoMargin := Power.Calc(q, cd);
+
+
+    Debug.Out("TT params @ ref T/V " & Power.FmtParams(p));
+    Debug.Out("TT params @ tgt T   " & Power.FmtParams(q));
+    Debug.Out(F("@ sigma=%s vpower=%s", LR(sigma), LR(cd.vpower)));
+    Debug.Out(Power.FmtResult(powerResultsNoMargin));
+
+    VAR
+      cdMargin := cd;
+      powerResultsMargin : Power.Result;
+
+      creditedPwr : LONGREAL;
+      nonFixedNonLeakPwr : LONGREAL;
+      varPwr, bytesPwr, activePwr : LONGREAL;
+    BEGIN
+      cdMargin.vpower := (1.0d0 + voltMarginFrac) * cd.vpower;
+      powerResultsMargin := Power.Calc(q, cdMargin);
+      Debug.Out(F("@ sigma=%s vpower=%s", LR(sigma), LR(cdMargin.vpower)));
+
+      chipVoltReq   := cd.vpower;
+      vrVoltAssumed := cdMargin.vpower;
+      
+      Debug.Out(Power.FmtResult(powerResultsMargin));
+
+      creditedPwr := powerResultsMargin.totPwr + deltaP;
+
+      Debug.Out("with final credits/debits P=" & LR(creditedPwr));
+
+      VAR
+        (* now apply activity *)
+        nonFixedNonLeakPwr :=
+            creditedPwr - powerResultsMargin.leakPwr - FixedDynPwr;
+        
+        potBytesPwr := nonFixedNonLeakPwr * ActiveAt300B;
+        
+        sizedBytesPwr    := potBytesPwr * bytesFracOfActive;
+        
+        nonBytesFrac      := (activeFrac - ActiveAt300B);
+        
+        potNonBytesPwr       := nonBytesFrac * nonFixedNonLeakPwr;
+        
+        activeActualBytesPwr := active * sizedBytesPwr;
+        activeNonBytesPwr    := active * potNonBytesPwr;
+        
+        totVarPower          := activeActualBytesPwr + activeNonBytesPwr;
+        
+        potVarPower          := potBytesPwr + potNonBytesPwr;
+        
+        finalPwr := creditedPwr - potVarPower + totVarPower;
+
+      BEGIN
+        Debug.Out(F("non-fixed-non-leak power   %s", LR(nonFixedNonLeakPwr)));
+        Debug.Out(F("potential bytes power      %s", LR(potBytesPwr)));
+        Debug.Out(F("sized bytes power          %s", LR(sizedBytesPwr)));
+        Debug.Out(F("active bytes power         %s", LR(activeActualBytesPwr)));
+        Debug.Out(F("potential non-bytes power  %s", LR(potNonBytesPwr)));
+        Debug.Out(F("totVarPower                %s", LR(totVarPower)));
+        Debug.Out(F("potVarPower                %s", LR(potVarPower)));
+
+        Debug.Out(F("final power   %s", LR(finalPwr)));
+
+        Wr.PutText(wr, FN("%s, %s, %s, %s, %s, %s, %s, %s, %s\n",     ARRAY OF TEXT {
+        LR(temp),
+        LR(active),
+        LR(bytes),
+        LR(sigma),
+        LR(deltaP),
+        LR(voltMarginFrac),
+        LR(chipVoltReq),
+        LR(vrVoltAssumed),
+        LR(finalPwr)}));
+
+        
+        RETURN finalPwr
+      END
+    END
+    
+  END Conditions;
+
+VAR activeFrac : LONGREAL;
+    
+PROCEDURE EvalActiveMinusIdle() =
+  CONST
+    T = 90.0d0;
+    V = 0.730d0;
+    
+  VAR
+    actPred := PowerScaling.Predict(MeasAct139, MeasLkg139, V, T, FixedDynPwr);
+    idlPred := PowerScaling.Predict(MeasIdl139, MeasLkg139, V, T, FixedDynPwr);
+
+    varP    := actPred.dynP - idlPred.dynP;
+    varFrac := varP / (actPred.dynP - FixedDynPwr);
+  BEGIN
+    Debug.Out("Active      " & Power3.DebugFmt(actPred));
+    Debug.Out("Idle        " & Power3.DebugFmt(idlPred));
+    Debug.Out("Variable    " & LR(varP));
+    Debug.Out("frac of dyn " & LR(varFrac));
+
+    activeFrac := varFrac;
+    Debug.Out("act. frac   " & LR(activeFrac));
+  END EvalActiveMinusIdle;
+
+                         
 PROCEDURE SetShared(VAR p : Power.Params; VAR Trunc : LONGREAL) =
   BEGIN
     p.LkgRatio      :=   Tech.CornerLkgRatio[Corner.T.FF] /
@@ -168,7 +358,12 @@ CONST
   MeasLkg139 = TvpMeasurement.T { 90.0d0, 0.735d0,  22.964d0 };
 
   MeasAct139 = TvpMeasurement.T { 45.0d0, 0.730d0, 342.06d0  };
-  (* this includes leakage *)
+  (* this includes leakage, 300B frames *)
+
+  MeasIdl139 = TvpMeasurement.T { 90.0d0, 0.750d0, 261.072d0 };
+  (* idle power *)
+
+
 
 PROCEDURE WeightLkgSigma(sigma : ARRAY Tech.Transistor OF LONGREAL) : LONGREAL =
   VAR
@@ -254,4 +449,6 @@ PROCEDURE SetProgram139(VAR p                       : Power.Params;
     END
   END SetProgram139;
 
-BEGIN END JBay.
+BEGIN
+  EvalActiveMinusIdle()
+END JBay.

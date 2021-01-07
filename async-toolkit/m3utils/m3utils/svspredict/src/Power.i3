@@ -30,6 +30,8 @@ TYPE (* information about the distribution from which we are drawing *)
   END;
 
 PROCEDURE FmtParams(READONLY p : Params) : TEXT;
+
+PROCEDURE FmtResult(READONLY r : Result) : TEXT;
   
 CONST Brand = "Power";
       

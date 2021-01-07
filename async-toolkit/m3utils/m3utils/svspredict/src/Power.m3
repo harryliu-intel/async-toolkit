@@ -42,5 +42,11 @@ PROCEDURE FmtParams(READONLY p : Params) : TEXT =
     END;
     RETURN Wx.ToText(wx)
   END FmtParams;
+
+PROCEDURE FmtResult(READONLY r : Result) : TEXT =
+  BEGIN
+    RETURN F("Power.Result { cornerLkgRatio=%s leakPwr=%s totPwr=%s }",
+             LR(r.cornerLkgRatio), LR(r.leakPwr), LR(r.totPwr))
+  END FmtResult;
   
 BEGIN END Power.

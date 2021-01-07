@@ -1,6 +1,7 @@
 INTERFACE JBay;
 IMPORT N7Tech;
 IMPORT Power;
+IMPORT Wr;
 
 (* what's below is for JBay B0 *)
 
@@ -31,5 +32,9 @@ CONST GoxArea = ARRAY N7Tech.Transistor OF LONGREAL {
 CONST PowToContact = -50.0d-3;
   (* assumed delta between power and contact voltage, per Ram's 
      voltage stack, updated *)
-      
+
+PROCEDURE EvalSpecialCases(wr : Wr.T;
+                           READONLY p : Power.Params;
+                           medianSigma, worstSigma : LONGREAL);
+ 
 END JBay.

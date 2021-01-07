@@ -27,4 +27,9 @@ module ("PowerScaling")
 module ("Power3")
 module ("TvpMeasurement")
 
+module ("Die")
+
+array_sort("Die", "Die")
+sequence ("Die", "Die")
+
 program("svspredict")

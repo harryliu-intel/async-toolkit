@@ -3,6 +3,9 @@ IMPORT TvpMeasurement, Power3;
 IMPORT Scale;
 IMPORT Debug;
 FROM Fmt IMPORT F, LongReal;
+FROM SvsTypes IMPORT CornerData;
+IMPORT Power;
+IMPORT Corner;
 
 CONST LR = LongReal;
 
@@ -35,5 +38,40 @@ PROCEDURE Predict(measAct    : TvpMeasurement.T;
     
     RETURN Power3.T { dynAtReq, lkgAtReq, dynAtReq + lkgAtReq }
   END Predict;
+
+PROCEDURE Interpolate1(x : LONGREAL;
+                       s, ssigma, t, tsigma, f, fsigma : LONGREAL) : LONGREAL=
+  BEGIN
+    (* 
+       negative -> SLOW 
+       positive -> FAST
+    *)
+    IF       x >=  tsigma THEN
+      RETURN x * (f - t) / (fsigma - tsigma) + t
+    ELSE  (* x < tsigma *)
+      RETURN x * (s - t) / (ssigma - tsigma) + t
+    END
+  END Interpolate1;
+  
+PROCEDURE Interpolate(READONLY p : Power.Params;
+                               x : LONGREAL) : CornerData =
+  VAR
+    res : CornerData;
+    Ss := p.c[Corner.T.SS];
+    Tt := p.c[Corner.T.TT];
+    Ff := p.c[Corner.T.FF];
+  BEGIN
+    res.sigma := x;
+    res.vtiming := Interpolate1(x,
+                                Ss.vtiming, Ss.sigma,
+                                Tt.vtiming, Tt.sigma,
+                                Ff.vtiming, Ff.sigma);
+    res.vpower  := Interpolate1(x,
+                                Ss.vpower, Ss.sigma,
+                                Tt.vpower, Tt.sigma,
+                                Ff.vpower, Ff.sigma);
+    RETURN res
+  END Interpolate;
+  
 
 BEGIN END PowerScaling.
