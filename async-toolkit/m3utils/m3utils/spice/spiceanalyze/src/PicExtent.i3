@@ -14,6 +14,8 @@ PROCEDURE Merge(READONLY a, b : T) : T;
 
 CONST Brand = "PicExtent";
 
+PROCEDURE Format(READONLY a : T) : TEXT;
+  
 END PicExtent.
   
 

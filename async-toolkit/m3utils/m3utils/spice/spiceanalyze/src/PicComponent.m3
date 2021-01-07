@@ -1,7 +1,12 @@
 MODULE PicComponent;
 IMPORT PicSegments;
 IMPORT PicOverlay;
+IMPORT CktGraph; (* reveal CktElement.T *)
 IMPORT CktElement;
+IMPORT SpiceObject;
+IMPORT DrawElements;
+IMPORT Debug;
+FROM SpiceAnalyze IMPORT DecodeTransistorTypeName;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
@@ -23,6 +28,25 @@ PROCEDURE Init(t : T; obj : CktElement.T) : T =
       FOR j := FIRST(t.neighbors[i]) TO LAST(t.neighbors[i]) DO
         t.neighbors[i, j] := NIL
       END
+    END;
+
+    TYPECASE obj.src OF
+      SpiceObject.R =>
+      DrawElements.Res(t.under)
+    |
+      SpiceObject.C =>
+      DrawElements.Cap(t.under)
+    |
+      SpiceObject.X(x) =>
+      
+      Debug.Error("Do not build component out of subcell of type " & x.type)
+    |
+      SpiceObject.M(m) =>
+      WITH tt = DecodeTransistorTypeName(m.type) DO
+        DrawElements.Fet(t.under, tt, FALSE)
+      END
+    ELSE
+      Debug.Error("Unknown SpiceObject type")
     END;
     
     RETURN PicOverlay.T.init(t,

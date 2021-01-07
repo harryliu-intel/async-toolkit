@@ -1,6 +1,9 @@
 MODULE PicCircle;
 
-IMPORT PicExtent, PicPoint;
+IMPORT PicExtent;
+IMPORT PicPoint;
+FROM Fmt IMPORT F;
+IMPORT PicCoord;
 
 PROCEDURE Equal(READONLY a, b : T) : BOOLEAN = BEGIN RETURN a = b END Equal;
 
@@ -18,4 +21,12 @@ PROCEDURE Translate(READONLY a : T; READONLY by : PicPoint.T) : T =
     RETURN res
   END Translate;
   
+PROCEDURE Format(READONLY a : T) : TEXT =
+  BEGIN
+    RETURN F("%s { %s , %s }",
+             Brand,
+             PicPoint.Format(a.at),
+             PicCoord.Format(a.r))
+  END Format;
+
 BEGIN END PicCircle.

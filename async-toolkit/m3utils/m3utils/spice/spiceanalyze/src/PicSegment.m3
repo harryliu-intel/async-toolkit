@@ -2,6 +2,7 @@ MODULE PicSegment;
 IMPORT Word;
 IMPORT PicPoint;
 IMPORT PicExtent;
+FROM Fmt IMPORT F;
 
 PROCEDURE Equal(READONLY a, b : T) : BOOLEAN =
   BEGIN RETURN a = b END Equal;
@@ -25,4 +26,12 @@ PROCEDURE Translate(READONLY a : T; READONLY by : PicPoint.T) : T =
     RETURN T { PicPoint.Plus(a.a, by), PicPoint.Plus(a.b, by) }
   END Translate;
   
+PROCEDURE Format(READONLY a : T) : TEXT =
+  BEGIN
+    RETURN F("%s { %s , %s }",
+             Brand,
+             PicPoint.Format(a.a),
+             PicPoint.Format(a.b))
+  END Format;
+
 BEGIN END PicSegment.

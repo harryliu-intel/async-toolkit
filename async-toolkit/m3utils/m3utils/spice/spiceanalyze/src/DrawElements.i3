@@ -1,20 +1,24 @@
 INTERFACE DrawElements;
 IMPORT PicSegments;
+IMPORT SpiceAnalyze;
 
-TYPE FetType = { N, P };
+CONST Nfet = SpiceAnalyze.TransistorType.N;
+      Pfet = SpiceAnalyze.TransistorType.P;
+      
+TYPE FetType = [ Nfet .. Pfet ];
      
-PROCEDURE DrawFet(to     : PicSegments.T;
-                  type   : FetType;
-                  doBody : BOOLEAN);
+PROCEDURE Fet(to     : PicSegments.T;
+              type   : FetType;
+              doBody : BOOLEAN);
 
-PROCEDURE DrawRes(to : PicSegments.T);
+PROCEDURE Res(to : PicSegments.T);
 
-PROCEDURE DrawDio(to : PicSegments.T);
+PROCEDURE Dio(to : PicSegments.T);
 
-PROCEDURE DrawCap(to : PicSegments.T);
+PROCEDURE Cap(to : PicSegments.T);
 
-PROCEDURE DrawVdd(to : PicSegments.T);
+PROCEDURE Vdd(to : PicSegments.T);
 
-PROCEDURE DrawGnd(to : PicSegments.T);
+PROCEDURE Gnd(to : PicSegments.T);
 
 END DrawElements.

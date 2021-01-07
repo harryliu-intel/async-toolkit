@@ -25,5 +25,7 @@ PROCEDURE Plus(READONLY a, b : T) : T;
 PROCEDURE Times(a : LONGREAL; READONLY v : T) : T;
   
 PROCEDURE Translate(READONLY a : T; READONLY by : T) : T;
+
+PROCEDURE Format(READONLY a : T) : TEXT;
   
 END PicPoint.

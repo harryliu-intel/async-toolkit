@@ -5,6 +5,9 @@ IMPORT Pic;
 IMPORT PicExtent;
 IMPORT PicPoint;
 IMPORT Canvas;
+IMPORT Debug;
+
+CONST doDebug = TRUE;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
@@ -80,6 +83,9 @@ PROCEDURE ComputeMinExtent(t : T;
         WITH pic = t.get(x, y) DO
           IF pic # NIL THEN
             WITH e = pic.minExtent() DO
+              IF doDebug THEN
+                Debug.Out("PicArray.ComputeMinExtent: e=" & PicExtent.Format(e))
+              END;
               xtent[x] := MAX(xtent[x], e.ur.x - e.ll.x);
               ytent[y] := MAX(ytent[y], e.ur.y - e.ll.y)
             END

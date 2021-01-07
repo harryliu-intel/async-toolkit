@@ -6,6 +6,9 @@ IMPORT PicText, PicTextList;
 IMPORT PicSegment, PicSegmentList;
 IMPORT PicExtent;
 IMPORT Canvas;
+IMPORT Debug;
+
+CONST doDebug = TRUE;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
@@ -77,6 +80,9 @@ PROCEDURE Render(t : T; READONLY at : PicPoint.T; canvas : Canvas.T) =
       p := t.points;
     BEGIN
       WHILE p # NIL DO
+        IF doDebug THEN
+          Debug.Out("PicSegments : point " & PicPoint.Format(p.head))
+        END;
         canvas.point(PicPoint.Translate(p.head, offset));
         p := p.tail
       END
@@ -85,6 +91,9 @@ PROCEDURE Render(t : T; READONLY at : PicPoint.T; canvas : Canvas.T) =
       p := t.circles;
     BEGIN
       WHILE p # NIL DO
+        IF doDebug THEN
+          Debug.Out("PicSegments : circle " & PicCircle.Format(p.head))
+        END;
         canvas.circle(PicCircle.Translate(p.head, offset));
         p := p.tail
       END
@@ -93,6 +102,9 @@ PROCEDURE Render(t : T; READONLY at : PicPoint.T; canvas : Canvas.T) =
       p := t.texts;
     BEGIN
       WHILE p # NIL DO
+        IF doDebug THEN
+          Debug.Out("PicSegments : text " & PicText.Format(p.head))
+        END;
         canvas.text(PicText.Translate(p.head, offset));
         p := p.tail
       END
@@ -101,6 +113,9 @@ PROCEDURE Render(t : T; READONLY at : PicPoint.T; canvas : Canvas.T) =
       p := t.segments;
     BEGIN
       WHILE p # NIL DO
+        IF doDebug THEN
+          Debug.Out("PicSegments : segment " & PicSegment.Format(p.head))
+        END;
         canvas.segment(PicSegment.Translate(p.head, offset));
         p := p.tail
       END

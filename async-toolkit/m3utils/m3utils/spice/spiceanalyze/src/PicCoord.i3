@@ -1,5 +1,6 @@
 INTERFACE PicCoord;
 IMPORT LongReal AS Parent;
+IMPORT Fmt;
 
 TYPE T = Parent.T;
 
@@ -12,6 +13,8 @@ CONST Hash    = Parent.Hash;
       Compare = Parent.Compare;
 
 CONST Zero = 0.0d0;
+
+CONST Format = Fmt.LongReal;
 
 END PicCoord.
      

@@ -35,4 +35,12 @@ TYPE
 CONST
   PowerNames = ARRAY Power OF TEXT { "GND", "Vdd" };
 
+TYPE
+  TransistorType = { N, P, Unknown };
+
+CONST
+  TransistorTypeNames = ARRAY TransistorType OF TEXT { "N", "P", "Unknown" };
+     
+PROCEDURE DecodeTransistorTypeName(tn : TEXT) : TransistorType;
+
 END SpiceAnalyze.

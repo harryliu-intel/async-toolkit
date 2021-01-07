@@ -5,6 +5,10 @@ IMPORT Canvas;
 IMPORT PicArray;
 IMPORT PicComponent;
 IMPORT PicPoint;
+IMPORT PicExtent;
+IMPORT Debug;
+
+CONST doDebug = TRUE;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
@@ -72,6 +76,9 @@ PROCEDURE RenderGate(canvas : Canvas.T;
     END;
 
     WITH extent = array.minExtent() DO
+      IF doDebug THEN
+        Debug.Out("SpiceDiagram.RenderGate: extent=" & PicExtent.Format(extent))
+      END;
       array.setExtent(extent);
       array.render(PicPoint.T { offset, 0.0d0 }, canvas);
       RETURN extent.ur.x - extent.ll.x

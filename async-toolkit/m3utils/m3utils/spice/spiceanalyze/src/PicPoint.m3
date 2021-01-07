@@ -2,6 +2,7 @@ MODULE PicPoint;
 IMPORT Word;
 IMPORT PicCoord;
 IMPORT PicExtent;
+FROM Fmt IMPORT F;
 
 PROCEDURE Equal(READONLY a, b : T) : BOOLEAN =
   BEGIN RETURN a = b END Equal;
@@ -33,5 +34,13 @@ PROCEDURE Translate(READONLY a : T; READONLY by : T) : T =
   BEGIN
     RETURN Plus(a, by)
   END Translate;
+
+PROCEDURE Format(READONLY a : T) : TEXT =
+  BEGIN
+    RETURN F("%s { %s , %s }",
+             Brand,
+             PicCoord.Format(a.x),
+             PicCoord.Format(a.y))
+  END Format;
   
 BEGIN END PicPoint.

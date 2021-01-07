@@ -4,6 +4,7 @@ IMPORT Word;
 IMPORT PicPoint;
 IMPORT PicExtent;
 IMPORT LongReal;
+FROM Fmt IMPORT F;
 
 CONST TE = Text.Equal;
       
@@ -45,5 +46,13 @@ PROCEDURE Translate(READONLY a : T; READONLY by : PicPoint.T) : T =
     res.ll := PicPoint.Plus(a.ll, by);
     RETURN res
   END Translate;
+  
+PROCEDURE Format(READONLY a : T) : TEXT =
+  BEGIN
+    RETURN F("%s { %s , \"%s\" }",
+             Brand,
+             PicPoint.Format(a.ll),
+             a.txt)
+  END Format;
   
 BEGIN END PicText.

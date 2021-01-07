@@ -5,12 +5,17 @@ IMPORT PicCircle, PicCircleList;
 IMPORT PicText, PicTextList;
 IMPORT PicSegment, PicSegmentList;
 IMPORT SvgColor;
-FROM Fmt IMPORT Int, LongReal, F, FN;
+FROM Fmt IMPORT LongReal, F, FN;
 IMPORT PicCoord;
 IMPORT Thread;
+IMPORT Debug;
+IMPORT PicExtent;
 
 (* this is basically a duplicate of PicSegments.m3 ??? *)
 
+CONST doDebug = TRUE;
+      LR = LongReal;
+      
 REVEAL
   T = Public BRANDED Brand OBJECT
     points    : PicPointList.T;
@@ -20,6 +25,8 @@ REVEAL
 
     defColor  : SvgColor.T;
     defStrokeWidth : PicCoord.T;
+
+    extent    : PicExtent.T;
     
   OVERRIDES
     init  := Init;
@@ -33,6 +40,7 @@ REVEAL
 
 PROCEDURE Init(t : T; defColor : SvgColor.T; defStrokeWidth : PicCoord.T) : T =
   BEGIN
+    t.extent := PicExtent.Empty;
     t.points := NIL;
     t.circles := NIL;
     t.texts := NIL;
@@ -50,17 +58,29 @@ PROCEDURE Write(t : T; wr : Wr.T)
       RETURN F("\"%s\"", LongReal(z))
     END N;
 
-  PROCEDURE I(i : INTEGER) : TEXT =
+  PROCEDURE FormatViewBox() : TEXT =
+    CONST
+      Pad = 0.2d0;
+    VAR
+      xs := t.extent.ur.x - t.extent.ll.x;
+      ys := t.extent.ur.y - t.extent.ll.y;
     BEGIN
-      RETURN F("\"%s\"", Int(i))
-    END I;
+      (* we are going to flip the signs on the Y-extent *)
+      (* -ur.y is therefore the min Y coord in the image *)
+      RETURN F("%s %s %s %s",
+               LR( t.extent.ll.x - Pad * xs),     (* origin X *)
+               LR(-t.extent.ur.y - Pad * ys),     (* origin Y *)
+               LR(xs * (1.0d0 + 2.0d0 * Pad)),
+               LR(ys * (1.0d0 + 2.0d0 * Pad)));
+    END FormatViewBox;
     
   VAR
     dct    := SvgColor.Format(t.defColor);
     stroke := t.defStrokeWidth;
   BEGIN
     Wr.PutText(wr,
-               "<svg version=\"1.1\" baseProfile=\"full\" xmlns=\"http://www.w3.org/2000/svg\">\n");
+               F("<svg version=\"1.1\" baseProfile=\"full\" viewBox=\"%s\" xmlns=\"http://www.w3.org/2000/svg\">\n",
+                 FormatViewBox()));
 
     VAR
       p := t.points;
@@ -70,7 +90,7 @@ PROCEDURE Write(t : T; wr : Wr.T)
                    FN("<circle cx=%s cy=%s r=%s stroke-width=%s stroke=\"%s\" fill=\"%s\" />\n\n",
                       ARRAY OF TEXT {
         N(p.head.x),
-        N(p.head.y),
+        N(-p.head.y),
         N(stroke / 2.0d0),
         N(stroke),
         dct,
@@ -86,7 +106,7 @@ PROCEDURE Write(t : T; wr : Wr.T)
         Wr.PutText(wr,
                    F("<circle cx=%s cy=%s r=%s stroke-width=%s stroke=\"%s\" />\n\n",
                      N(p.head.at.x),
-                     N(p.head.at.y),
+                     N(-p.head.at.y),
                      N(p.head.r),
                      N(stroke),
                      dct));
@@ -101,7 +121,7 @@ PROCEDURE Write(t : T; wr : Wr.T)
         Wr.PutText(wr,
                    F(" <text x=%s y=%s font-size=%s text-anchor=\"middle\" fill=\"%s\">%s</text>\n\n",
                      N(p.head.ll.x),
-                     N(p.head.ll.y),
+                     N(-p.head.ll.y),
                      N(p.head.size),
                      dct,
                      p.head.txt)
@@ -119,9 +139,9 @@ PROCEDURE Write(t : T; wr : Wr.T)
                    FN("<line x1=%s y1=%s x2=%s y2=%s stroke-width=%s stroke=\"%s\" />\n\n",
                       ARRAY OF TEXT {
         N(p.head.a.x),
-        N(p.head.a.y),
+        N(-p.head.a.y),
         N(p.head.b.x),
-        N(p.head.b.y),
+        N(-p.head.b.y),
         N(stroke),
         dct
         }
@@ -135,21 +155,37 @@ PROCEDURE Write(t : T; wr : Wr.T)
 
 PROCEDURE Point(t : T; READONLY point : PicPoint.T) =
   BEGIN
+    IF doDebug THEN
+      Debug.Out("SvgCanvas : point " & PicPoint.Format(point))
+    END;
+    t.extent := PicExtent.Merge(t.extent, PicPoint.Extent(point));
     t.points := PicPointList.Cons(point, t.points)
   END Point;
 
 PROCEDURE Circle(t : T; READONLY circle : PicCircle.T) =
   BEGIN
+    IF doDebug THEN
+      Debug.Out("SvgCanvas : circle " & PicCircle.Format(circle))
+    END;
+    t.extent  := PicExtent.Merge(t.extent, PicCircle.Extent(circle));
     t.circles := PicCircleList.Cons(circle, t.circles)
   END Circle;
 
 PROCEDURE Segment(t : T; READONLY segment : PicSegment.T) =
   BEGIN
+    IF doDebug THEN
+      Debug.Out("SvgCanvas : segment " & PicSegment.Format(segment))
+    END;
+    t.extent   := PicExtent.Merge(t.extent, PicSegment.Extent(segment));
     t.segments := PicSegmentList.Cons(segment, t.segments)
   END Segment;
 
 PROCEDURE Text(t : T; READONLY text : PicText.T) =
   BEGIN
+    IF doDebug THEN
+      Debug.Out("SvgCanvas : text " & PicText.Format(text))
+    END;
+    t.extent := PicExtent.Merge(t.extent, PicText.Extent(text));
     t.texts := PicTextList.Cons(text, t.texts)
   END Text;
 

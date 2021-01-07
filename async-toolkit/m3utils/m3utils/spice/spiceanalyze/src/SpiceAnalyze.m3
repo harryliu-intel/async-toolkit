@@ -33,6 +33,7 @@ IMPORT FetArray;
 IMPORT SpiceGate;
 IMPORT SpiceDiagram;
 IMPORT FileWr;
+IMPORT Wr;
 IMPORT SvgCanvas;
 IMPORT Pathname;
 
@@ -146,7 +147,8 @@ PROCEDURE Cell(nm      : TEXT;
         WITH wr   = FileWr.Open(outDir & "/" & nm & ".svg"),
              canv = NEW(SvgCanvas.T).init() DO
           diagram.render(canv);
-          canv.write(wr)
+          canv.write(wr);
+          Wr.Close(wr)
         END
       END
     END;
@@ -225,8 +227,6 @@ PROCEDURE FindGateOutputs(canons  : TextSet.T;
     RETURN res
   END FindGateOutputs;
 
-TYPE TransistorType = { N, P, Unknown };
-     
 PROCEDURE DecodeTransistorTypeName(tn : TEXT) : TransistorType =
   BEGIN
     WITH low   = TextUtils.ToLower(tn),

@@ -7,8 +7,8 @@ IMPORT PicCircle;
 
 IMPORT PicSegments;
 
-CONST Big   = 5.0d0;
-      Small = 3.0d0;
+CONST Big   = 50.0d0;
+      Small = 30.0d0;
 
 TYPE P = PicPoint.T;
 TYPE PArray = ARRAY OF P;
@@ -38,16 +38,16 @@ PROCEDURE Down(READONLY f : P;
 PROCEDURE Right(READONLY f : P;
                 big        : CARDINAL := 1;
                 small      : CARDINAL := 0) : P =
-  BEGIN RETURN Step(f, big, small,  0,  1) END Right;
+  BEGIN RETURN Step(f, big, small,  1,  0) END Right;
       
 PROCEDURE Left(READONLY f : P;
                big        : CARDINAL := 1;
                small      : CARDINAL := 0) : P =
-  BEGIN RETURN Step(f, big, small,  0, -1) END Left;
+  BEGIN RETURN Step(f, big, small, -1,  0) END Left;
 
   (**********************************************************************)
   
-PROCEDURE DrawFet(to     : PicSegments.T;
+PROCEDURE Fet(to     : PicSegments.T;
                   type   : FetType;
                   doBody : BOOLEAN) =
   VAR
@@ -62,7 +62,7 @@ PROCEDURE DrawFet(to     : PicSegments.T;
 
     q1  := Left(p3, 0, 1);   (* gate bottom *)
     q2  := Up(q1, 2);        (* gate top *)
-    qc := Up(q1);            (* where bubble touches gate *)
+    qc  := Up(q1);           (* where bubble touches gate *)
 
     cp1 := Left(qc, 0, 1);   (* bubble center *)
 
@@ -73,23 +73,23 @@ PROCEDURE DrawFet(to     : PicSegments.T;
     r1  := pc3;              (* body *)
     r2  := Right(pc3, 2);   
   BEGIN
-    AddOpenPath(to, PArray { p1, p2, p3, p4, p5, p6 });
-    AddOpenPath(to, PArray { q1, q2 });
+    OpenPath(to, PArray { p1, p2, p3, p4, p5, p6 });
+    OpenPath(to, PArray { q1, q2 });
 
     CASE type OF
-      FetType.N =>
-      AddOpenPath(to, PArray { dn1, d2 })
+      Nfet =>
+      OpenPath(to, PArray { dn1, d2 })
     |
-      FetType.P =>
+      Pfet =>
       to.addCircle(PicCircle.T { cp1, Small});
-      AddOpenPath(to, PArray { dp1, d2 })
+      OpenPath(to, PArray { dp1, d2 })
     END;
     IF doBody THEN
-      AddOpenPath(to, PArray { r1, r2 })
+      OpenPath(to, PArray { r1, r2 })
     END
-  END DrawFet;
+  END Fet;
 
-PROCEDURE DrawRes(to : PicSegments.T) =
+PROCEDURE Res(to : PicSegments.T) =
   VAR
     t0 := PicPoint.Zero;
     t1 := Up(t0, 1);
@@ -97,12 +97,12 @@ PROCEDURE DrawRes(to : PicSegments.T) =
     u0 := Up(t1, 2);
     u1 := Up(u0, 1);
   BEGIN
-    AddOpenPath(to, PArray { t0, t1 });
-    DrawRect(to, t1, 2.0d0 * Small, 2.0d0 * Big);
-    AddOpenPath(to, PArray { u0, u1 });
-  END DrawRes;
+    OpenPath(to, PArray { t0, t1 });
+    Rect(to, t1, 2.0d0 * Small, 2.0d0 * Big);
+    OpenPath(to, PArray { u0, u1 });
+  END Res;
 
-PROCEDURE DrawDio(to : PicSegments.T) =
+PROCEDURE Dio(to : PicSegments.T) =
   VAR
     t0 := PicPoint.Zero;
 
@@ -117,13 +117,13 @@ PROCEDURE DrawDio(to : PicSegments.T) =
     w0 := Down(v0, 1); (* anode *)
     w1 := Down(v1, 1);
   BEGIN
-    AddOpenPath(to, PArray { t0, t1 });
-    AddOpenPath(to, PArray { u0, u1 });
-    AddOpenPath(to, PArray { v0, v1 });
-    AddClosedPath(to, PArray { u0, w0, w1 })
-  END DrawDio;
+    OpenPath(to, PArray { t0, t1 });
+    OpenPath(to, PArray { u0, u1 });
+    OpenPath(to, PArray { v0, v1 });
+    ClosedPath(to, PArray { u0, w0, w1 })
+  END Dio;
 
-PROCEDURE DrawCap(to : PicSegments.T) =
+PROCEDURE Cap(to : PicSegments.T) =
   VAR
     t0 := PicPoint.Zero;
     t1 := Up(t0, 0, 3);
@@ -136,32 +136,32 @@ PROCEDURE DrawCap(to : PicSegments.T) =
     w0 := Left(u0, 1);    (* upper plate *)
     w1 := Right(u0, 1);
   BEGIN
-    AddOpenPath(to, PArray { t0, t1 });
-    AddOpenPath(to, PArray { u0, u1 });
-    AddOpenPath(to, PArray { v0, v1 });
-    AddOpenPath(to, PArray { w0, w1 });
-  END DrawCap;
+    OpenPath(to, PArray { t0, t1 });
+    OpenPath(to, PArray { u0, u1 });
+    OpenPath(to, PArray { v0, v1 });
+    OpenPath(to, PArray { w0, w1 });
+  END Cap;
 
-PROCEDURE DrawVdd(to : PicSegments.T) =
+PROCEDURE Vdd(to : PicSegments.T) =
   VAR
     t0 := Left(PicPoint.Zero);
     t1 := Right(PicPoint.Zero);
   BEGIN
-    AddOpenPath(to, PArray { t0, t1 });
-  END DrawVdd;
+    OpenPath(to, PArray { t0, t1 });
+  END Vdd;
     
-PROCEDURE DrawGnd(to : PicSegments.T) =
+PROCEDURE Gnd(to : PicSegments.T) =
   VAR
     t0 := Left(PicPoint.Zero, 0, 1);
     t1 := Right(PicPoint.Zero, 0, 1);
     t2 := Down(PicPoint.Zero);
   BEGIN
-    AddClosedPath(to, PArray { t0, t1, t2 })
-  END DrawGnd;
+    ClosedPath(to, PArray { t0, t1, t2 })
+  END Gnd;
 
   (**********************************************************************)
 
-PROCEDURE DrawRect(to   : PicSegments.T;
+PROCEDURE Rect(to   : PicSegments.T;
                    at   : P;
                    w, h : PicCoord.T) =
   VAR
@@ -170,11 +170,11 @@ PROCEDURE DrawRect(to   : PicSegments.T;
     lr := P { ur.x, ll.y };
     ul := P { ur.y, ll.x };
   BEGIN
-    AddClosedPath(to, PArray { ll, lr, ur, ul });
-  END DrawRect;
+    ClosedPath(to, PArray { ll, lr, ur, ul });
+  END Rect;
 
 
-PROCEDURE AddClosedPath(to           : PicSegments.T;
+PROCEDURE ClosedPath(to           : PicSegments.T;
                         READONLY lst : PArray) =
   BEGIN
     WITH n = NUMBER(lst) DO
@@ -182,14 +182,14 @@ PROCEDURE AddClosedPath(to           : PicSegments.T;
         to.addSegment( PicSegment.T { lst[i], lst[(i + 1) MOD n] } )
       END
     END
-  END AddClosedPath;
+  END ClosedPath;
 
-PROCEDURE AddOpenPath(to           : PicSegments.T;
+PROCEDURE OpenPath(to           : PicSegments.T;
                       READONLY lst : PArray) =
   BEGIN
     FOR i := FIRST(lst) TO LAST(lst) - 1 DO
       to.addSegment(PicSegment.T { lst[i], lst[i + 1] })
     END
-  END AddOpenPath;
+  END OpenPath;
 
 BEGIN END DrawElements.
