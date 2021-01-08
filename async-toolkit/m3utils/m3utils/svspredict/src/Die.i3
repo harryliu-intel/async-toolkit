@@ -37,7 +37,8 @@ PROCEDURE ExtractValues(READONLY arr : Array; val : Value) : REF ARRAY OF LONGRE
 
 PROCEDURE CutoffArr(READONLY a : Array;
                     value      : Value;
-                    max        : LONGREAL ) : REF Array;
+                    max        : LONGREAL;
+                    higher     : BOOLEAN) : REF Array;
 
 END Die.
   

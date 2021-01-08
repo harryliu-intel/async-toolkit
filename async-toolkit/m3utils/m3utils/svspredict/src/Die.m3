@@ -40,14 +40,17 @@ PROCEDURE ExtractValues(READONLY arr : Array; val : Value) : REF ARRAY OF LONGRE
   
 PROCEDURE CutoffArr(READONLY a : Array;
                     value      : Value;
-                    max        : LONGREAL ) : REF Array =
+                    cutoff     : LONGREAL;
+                    higher     : BOOLEAN) : REF Array =
   VAR
     seq := NEW(Seq.T).init();
     res : REF Array;
   BEGIN
     FOR i := FIRST(a) TO LAST(a) DO
       WITH p = a[i] DO
-        IF p[value] <= max THEN
+        IF    NOT higher AND p[value] <= cutoff THEN
+          seq.addhi(p)
+        ELSIF     higher AND p[value] >  cutoff THEN
           seq.addhi(p)
         END
       END

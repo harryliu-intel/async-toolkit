@@ -23,6 +23,7 @@ IMPORT Solve;
 IMPORT Die;
 IMPORT DieArraySort;
 FROM PowerScaling IMPORT Interpolate;
+IMPORT IO;
 
 <*FATAL Thread.Alerted, Wr.Failure, OSError.E*>
 
@@ -131,10 +132,12 @@ PROCEDURE DoIt(READONLY p : Power.Params) : ShipDist =
       (* make deltaV histogram *)
       LongrealArraySort.Sort(deltaV^);
       Histogram.Do(ofn & "_deltav", deltaV^, FALSE, H := H);
+    END;
 
+    IF minSigma # FIRST(LONGREAL) THEN
       (* also make the cut off distribution *)
       VAR
-        cutoff := Die.CutoffArr(dice^, Die.Value.Power, solveMax);
+        cutoff := Die.CutoffArr(dice^, Die.Value.Sigma, minSigma, TRUE);
         
         cutoffPwr   := Die.ExtractValues(cutoff^, Die.Value.Power);
         cutoffSig   := Die.ExtractValues(cutoff^, Die.Value.Sigma);
@@ -208,13 +211,27 @@ PROCEDURE SolveDeltaVEval(state : SolveDeltaV; dv : LONGREAL) : LONGREAL =
     RETURN Power.Calc(state.dist, corner).totPwr - state.constraintP
   END SolveDeltaVEval;
 
+TYPE
+  SolvePower = LRFunction.T OBJECT
+    p           : Power.Params;
+    constraintP : LONGREAL;
+  OVERRIDES
+    eval := SolvePowerEval;
+  END;
+
+PROCEDURE SolvePowerEval(state : SolvePower; sigma : LONGREAL) : LONGREAL =
+  BEGIN
+    RETURN JBay.EvalCustomerMaxSpec(state.p, sigma) - state.constraintP
+  END SolvePowerEval;
+  
 VAR
   pp                  := NEW(ParseParams.T).init(Stdio.stderr);
   ofn : Pathname.T    := "hist";
   oWr : Wr.T          := NIL;
   H                   := Histogram.DefaultBuckets;
   p   : Power.Params;
-  solveMax            := FIRST(LONGREAL);
+  solveMax, custMaxPower, minSigma := FIRST(LONGREAL);
+
   progName : TEXT;
   
 BEGIN
@@ -257,7 +274,14 @@ BEGIN
       Samples := pp.getNextInt()
     END;
 
+    IF pp.keywordPresent("-custmaxpower") THEN
+      custMaxPower := pp.getNextLongReal()
+    END;
+
     IF pp.keywordPresent("-solvemax") THEN
+      IF custMaxPower # FIRST(LONGREAL) THEN
+        Debug.Error("Don't specify both -custmaxpower and -solvemax")
+      END;
       solveMax := pp.getNextLongReal()
     END;
 
@@ -286,7 +310,29 @@ BEGIN
   EXCEPT
     ParseParams.Error => Debug.Error("Can't parse command line")
   END;
-  
+
+  IF TE(progName, "JBay") AND custMaxPower # FIRST(LONGREAL) THEN
+    VAR
+      pm3 := JBay.EvalCustomerMaxSpec(p, -3.0d0);
+      p0  := JBay.EvalCustomerMaxSpec(p,  0.0d0);
+      pp3 := JBay.EvalCustomerMaxSpec(p, +3.0d0);
+    BEGIN
+      Debug.Out(F("pm3 %s p0 %s pp3 %s", LR(pm3), LR(p0), LR(pp3)));
+
+      WITH f = NEW(SolvePower,
+                   constraintP := custMaxPower,
+                   p           := p) DO
+        minSigma := Solve.WDB(f, -3.0d0, +3.0d0);
+        Debug.Out("MinSigma = " & LR(minSigma));
+
+        WITH pwr = Power.Calc(p, Interpolate(p, minSigma)) DO
+          IO.Put("DIECUTOFF " & LR(pwr.totPwr) & "\n");
+          solveMax := pwr.totPwr;
+        END
+      END
+    END
+  END;
+
   WITH shipData = DoIt(p) DO
 
   

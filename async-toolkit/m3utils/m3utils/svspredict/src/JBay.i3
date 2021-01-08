@@ -36,5 +36,8 @@ CONST PowToContact = -50.0d-3;
 PROCEDURE EvalSpecialCases(wr : Wr.T;
                            READONLY p : Power.Params;
                            medianSigma, worstSigma : LONGREAL);
- 
+
+PROCEDURE EvalCustomerMaxSpec(READONLY p : Power.Params;
+                              worstSigma : LONGREAL) : LONGREAL;
+
 END JBay.

@@ -15,6 +15,7 @@ IMPORT TvpMeasurement;
 IMPORT Power3;
 IMPORT PowerScaling;
 IMPORT Wr;
+IMPORT NullWr;
 
 CONST LR = Fmt.LongReal;
 
@@ -134,15 +135,24 @@ PROCEDURE SetProgram79(VAR p     : Power.Params;
 
   END SetProgram79;
 
+CONST
+  MacCredit    = -6.0d0; (* from Remy  *)
+  SerdesMargin = +3.0d0; (* Dan's est. *)
+  Corr         = MacCredit + SerdesMargin;
+  WorV         = 0.04d0;
+  TypV         = 0.02d0;
+
+PROCEDURE EvalCustomerMaxSpec(READONLY p : Power.Params;
+                              worstSigma : LONGREAL) : LONGREAL =
+  VAR
+    wr := NEW(NullWr.T).init();
+  BEGIN
+    RETURN Conditions(wr, p, 105.0d0, 1.0d0, 300.0d0, worstSigma,  Corr, WorV);
+  END EvalCustomerMaxSpec;
+  
 PROCEDURE EvalSpecialCases(wr : Wr.T;
                            READONLY p : Power.Params;
                            medianSigma, worstSigma : LONGREAL) =
-  CONST
-    MacCredit    = -6.0d0; (* from Remy  *)
-    SerdesMargin = +3.0d0; (* Dan's est. *)
-    Corr         = MacCredit + SerdesMargin;
-    WorV         = 0.04d0;
-    TypV         = 0.02d0;
   BEGIN
     ConditionsHeader(wr);
     EVAL Conditions(wr, p, 105.0d0, 1.0d0, 300.0d0, worstSigma,  Corr, WorV);
