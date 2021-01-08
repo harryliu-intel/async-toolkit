@@ -167,7 +167,7 @@ PROCEDURE ConditionsHeader(wr : Wr.T) =
     Wr.PutText(wr, "temp, active, bytes, sigma, deltaP, voltFrac, chipVoltMin, vrVolt, power\n");
   END ConditionsHeader;
 
-PROCEDURE Conditions(wr : Wr.T;
+PROCEDURE Conditions(wr            : Wr.T;
                      READONLY p    : Power.Params;
                      (* p is for a chip at Svl.TargetTemp and TT per
                         the corner data *)
