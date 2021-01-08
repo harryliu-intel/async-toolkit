@@ -169,7 +169,7 @@ PROCEDURE EvalSpecialCases(wr : Wr.T;
     EVAL Conditions(wr, p,  90.0d0, 0.0d0,9000.0d0, medianSigma, Corr, TypV);
 
     EVAL Conditions(wr, p,  90.0d0, 0.0d0,9000.0d0, 2.23d0, 0.0d0, 0.113d0);
-    (* try to replicate lab leakage measurement of indiv #139 *)
+    (* try to replicate lab idle measurement of indiv #139 *)
   END EvalSpecialCases;
 
 PROCEDURE ConditionsHeader(wr : Wr.T) =

@@ -334,7 +334,6 @@ BEGIN
   END;
 
   WITH shipData = DoIt(p) DO
-
   
     IF oWr # NIL THEN Wr.Close(oWr) END;
     
