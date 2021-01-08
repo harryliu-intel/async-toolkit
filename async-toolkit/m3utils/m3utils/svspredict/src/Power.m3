@@ -6,11 +6,13 @@ IMPORT Corner;
 IMPORT Wx;
 FROM Fmt IMPORT F, LongReal;
 IMPORT SvsTypes;
+IMPORT Debug;
 
 CONST LR = LongReal;
 
 PROCEDURE Calc(READONLY d  : Params;
-               READONLY at : CornerData) : Result =
+               READONLY at : CornerData;
+               doDebug     : BOOLEAN) : Result =
   BEGIN
     (* +sigma = fast, more leaky *)
     WITH RefRestPwr     = d.RefP - d.FixedP - d.RefLeakP,
@@ -20,6 +22,13 @@ PROCEDURE Calc(READONLY d  : Params;
          restPwr        = RefRestPwr * voltPwrRatio,
          leakPwr        = d.RefLeakP * cornerLkgRatio * voltPwrRatio,
          totPwr         = d.FixedP + restPwr + leakPwr DO
+      IF doDebug THEN
+        Debug.Out(F("Power.Calc: d.LkgRatio %s d.LkgRatioSigma %s vpower %s",
+                    LR(d.LkgRatio), LR(d.LkgRatioSigma), LR(at.vpower)));
+        Debug.Out(F("Power.Calc: d.RefLeakP %s sigma %s leakPwr %s",
+                    LR(d.RefLeakP), LR(at.sigma), LR(leakPwr)))
+      END;
+      
       RETURN Result { cornerLkgRatio := cornerLkgRatio,
                       leakPwr        := leakPwr,
                       totPwr         := totPwr }

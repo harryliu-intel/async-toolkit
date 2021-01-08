@@ -66,7 +66,7 @@ PROCEDURE SetProgram79(VAR p     : Power.Params;
     pmro = Pmro79;
     (* PMRO data for this individual from the lab *)
     
-    AteVmin79   = 680.0d-3;
+    AteVmin79   = 670.0d-3;
     (*AteVmin79 = 645.0d-3;*)
     (* from Dinesh's estimations at ATE for this specific individual 
        updated per email 1/5/21 : 645mV *)
@@ -110,7 +110,7 @@ PROCEDURE SetProgram79(VAR p     : Power.Params;
                                     Tech.CornerLkgRatio,
                                     weightedSigma139);
 
-    leakPwrTt := pred139.lkgP / leakRatio139;
+    leakPwrTt := pred139.lkgP / leakRatio139 * Tech.CornerLkgRatio[Corner.T.TT];
 
     predTt := Power3.T { dynP := pred139.dynP,
                          lkgP := leakPwrTt,
@@ -157,7 +157,9 @@ PROCEDURE EvalSpecialCases(wr : Wr.T;
     EVAL Conditions(wr, p,  75.0d0, 0.0d0,9000.0d0, medianSigma, Corr, TypV);
     EVAL Conditions(wr, p,  90.0d0, 1.0d0,9000.0d0, medianSigma, Corr, TypV);
     EVAL Conditions(wr, p,  90.0d0, 0.0d0,9000.0d0, medianSigma, Corr, TypV);
-    EVAL Conditions(wr, p,  90.0d0, 0.0d0,9000.0d0, 2.23d0, Corr, 0.100d0);
+
+    EVAL Conditions(wr, p,  90.0d0, 0.0d0,9000.0d0, 2.23d0, 0.0d0, 0.113d0);
+    (* try to replicate lab leakage measurement of indiv #139 *)
   END EvalSpecialCases;
 
 PROCEDURE ConditionsHeader(wr : Wr.T) =
@@ -218,7 +220,7 @@ PROCEDURE Conditions(wr : Wr.T;
     q.RefP     := ttAtTemp.totP;
     q.RefLeakP := ttAtTemp.lkgP;
 
-    powerResultsNoMargin := Power.Calc(q, cd);
+    powerResultsNoMargin := Power.Calc(q, cd, TRUE);
 
 
     Debug.Out("TT params @ ref T/V " & Power.FmtParams(p));
@@ -235,7 +237,7 @@ PROCEDURE Conditions(wr : Wr.T;
       varPwr, bytesPwr, activePwr : LONGREAL;
     BEGIN
       cdMargin.vpower := (1.0d0 + voltMarginFrac) * cd.vpower;
-      powerResultsMargin := Power.Calc(q, cdMargin);
+      powerResultsMargin := Power.Calc(q, cdMargin, TRUE);
       Debug.Out(F("@ sigma=%s vpower=%s", LR(sigma), LR(cdMargin.vpower)));
 
       chipVoltReq   := cd.vpower;
@@ -290,7 +292,6 @@ PROCEDURE Conditions(wr : Wr.T;
         LR(chipVoltReq),
         LR(vrVoltAssumed),
         LR(finalPwr)}));
-
         
         RETURN finalPwr
       END
@@ -298,7 +299,17 @@ PROCEDURE Conditions(wr : Wr.T;
     
   END Conditions;
 
-VAR activeFrac : LONGREAL;
+VAR
+  activeFrac : LONGREAL;
+  (* this is the fraction of the non-leakage non-fixed power that
+     varies with traffic (total traffic variation) 
+     
+     i.e., if the system is idle, take off this much of the non-leakage 
+     non-fixed power 
+
+     It is initialized by EvalActiveMinusIdle below.
+  *)
+  
     
 PROCEDURE EvalActiveMinusIdle() =
   CONST
@@ -310,15 +321,17 @@ PROCEDURE EvalActiveMinusIdle() =
     idlPred := PowerScaling.Predict(MeasIdl139, MeasLkg139, V, T, FixedDynPwr);
 
     varP    := actPred.dynP - idlPred.dynP;
+
     varFrac := varP / (actPred.dynP - FixedDynPwr);
+    (* this is the varying part of the power as a fraction of
+       the non-leakage non-fixed (serdes) power *)
+    
   BEGIN
     Debug.Out("Active      " & Power3.DebugFmt(actPred));
     Debug.Out("Idle        " & Power3.DebugFmt(idlPred));
     Debug.Out("Variable    " & LR(varP));
     Debug.Out("frac of dyn " & LR(varFrac));
-
     activeFrac := varFrac;
-    Debug.Out("act. frac   " & LR(activeFrac));
   END EvalActiveMinusIdle;
 
                          

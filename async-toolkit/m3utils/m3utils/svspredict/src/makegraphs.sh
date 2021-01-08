@@ -6,7 +6,7 @@
 #
 # ---- all taken off the TDP target of 350W
 
-TARGETPWR=331.7
+TARGETPWR=328.1
 
 ../AMD64_LINUX/svspredict -d JBay -H 30 -samples 100000 -a jbay_svs.dat -solvemax ${TARGETPWR}
 

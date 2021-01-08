@@ -155,7 +155,6 @@ PROCEDURE DoIt(READONLY p : Power.Params) : ShipDist =
     RETURN res
   END DoIt;
 
-
 TYPE
   ShipDist = RECORD
     worstSigma, medianSigma : LONGREAL;

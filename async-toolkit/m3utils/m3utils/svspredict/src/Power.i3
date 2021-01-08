@@ -3,7 +3,8 @@ FROM SvsTypes IMPORT CornerData;
 IMPORT Corner;
 
 PROCEDURE Calc(READONLY dist : Params;
-               READONLY at   : CornerData) : Result;
+               READONLY at   : CornerData;
+               doDebug := FALSE) : Result;
 
 TYPE (* information about the distribution from which we are drawing *)
   Params = RECORD
