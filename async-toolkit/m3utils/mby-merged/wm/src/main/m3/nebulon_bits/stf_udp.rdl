@@ -1,0 +1,554 @@
+<% if ($STF_UDP) { 
+   } else {
+   $STF_UDP = 1;
+%>
+
+//------------------------------------------------------------------------------
+// User Defined Properties (UDP) Library
+//
+// This contains all of the UDPs that are used globally throughout all register
+// descriptions.  UDP should not be declared anywhere else.
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// Required Address Map UDPs
+//------------------------------------------------------------------------------
+//Generate Code
+property Space {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+
+//Generate Code
+property BaseAddress {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+
+
+//Generate Code
+//For HSD 871497
+property USER_SPECIFIED_UDP {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+
+//For HSD 889327
+property ModuleName {
+    component = addrmap | reg | field;
+    type      = string;
+    default   = "";
+};
+
+//For HSD 912981 dmeka
+property RTLPriority {
+    component = reg | field;
+    type      = string;
+    default   = "";
+};
+
+//------------------------------------------------------------------------------
+// Required Register UDPs
+//------------------------------------------------------------------------------
+//Generate Code
+property AliasAddress {
+    component = reg | addrmap;
+    type      = string;
+    default   = "";
+};
+
+
+//Generate Code`
+// this UDP defines the power well for both reg & field level:
+property PowerWell {
+    component = reg | field;
+    type      = string;
+    default   = "";
+};
+
+
+//------------------------------------------------------------------------------
+// Required Field UDPs
+//------------------------------------------------------------------------------
+//Generate Code
+property AccessType {
+    component = field; 
+    type      = string;
+    default   = "";
+};
+
+
+//Generate Code
+// FieldDefaultValue is used to define Field Default Value override
+//   - FieldDefaultValue="X";
+property FieldDefaultValue {
+    component = field;
+    type      = string;
+    default   = "";
+};
+
+//Generate Code
+property ValLegalValues {
+    component = field;
+    type      = string;
+    default   = "";
+};
+
+//Generate Code
+property ValRandomize {
+    component = field;
+    type      = boolean;
+    default   = false;
+};
+
+//Generate Code
+// GLS RTL Signal path
+property ValGLSSignal {
+    component = field | addrmap;
+    type      = string;
+    default   = "";
+};
+
+//Generate Code
+property ValRTLSignal {
+    component = reg | field | addrmap | regfile;
+    type      = string;
+    default   = "";
+};
+
+
+//Generate Code
+// specify one bit register field that serve as the locking Key for the corresponding lockable field. The key field can be in the same register or different register
+property LockKeyField {
+    component = field;
+    type      = string; 
+    default   = "";
+};
+
+//Generate Code
+// specify whether a key value of 0 or 1 will cause the corresponding field to lock and behaves as RO. Default value is 1 if not specified.
+property LockKeyValue {
+    component = field;
+    type      = number; 
+    default   = 1;       //Changed to 1 (from true) per HSD 5212157
+};
+
+
+//Generate Code
+//Added per HSD 896535  for power retention awareness
+property StateRetention {
+  component = field;
+  type = boolean;
+  default = false;
+};
+
+
+//Generate Code
+  //Must specify PGD with StateRetention
+property PGD {
+  component = field;
+  type = string;
+  default = "";
+};
+
+//Generate Code
+//Added per HSD 913197
+property ResetSignal {
+    component = reg | field;
+    type      = string;
+    default   = "";
+};
+
+
+//Generate Code
+//Added per HSD 5079148
+
+ property IsIndirect {
+   component = reg;
+   type = boolean;
+   default = false;
+ };
+
+//Generate Code
+property DefaultValRTLSignal {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+
+// STF specific properties start here
+property StfPID {
+    component = addrmap;
+    type      = number; 
+    default   = 0;       //check if Default is 0 in tree if rdl doesnot define the property
+};
+
+property StfInpRpt {
+    component = addrmap;
+    type      = number; 
+    default   = 0;       //check if Default is 0 in tree if rdl doesnot define the property
+};
+
+property StfOutRpt {
+    component = addrmap;
+    type      = number; 
+    default   = 0;       //check if Default is 0 in tree if rdl doesnot define the property
+};
+
+property StfChildInpRpt {
+    component = addrmap;
+    type      = number; 
+    default   = 0;       //check if Default is 0 in tree if rdl doesnot define the property
+};
+
+property StfChildOutRpt {
+    component = addrmap;
+    type      = number; 
+    default   = 0;       //check if Default is 0 in tree if rdl doesnot define the property
+};
+
+property StfOrder {
+    component = addrmap;
+    type      = number; 
+    default   = 0;       //check if Default is 0 in tree if rdl doesnot define the property
+};
+
+property StfNetworkID {
+    component = addrmap;
+    type      = number; 
+    default   = 0;       //check if Default is 0 in tree if rdl doesnot define the property
+};
+
+property StfDataSize {
+    component = addrmap;
+    type      = number; 
+    default   = 0;       //check if Default is 0 in tree if rdl doesnot define the property
+};
+
+property StfAddrSize {
+    component = addrmap;
+    type      = number; 
+   // default   = 0;       //check if Default is 0 in tree if rdl doesnot define the property
+};
+
+property StfParent {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+
+property StfOutSuppressMask {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+
+property StfAgtType {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+
+property StfAgtName {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+
+property StfMaxFreq {
+    component = addrmap;
+    type      = number; 
+    default   = 0;       //check if Default is 0 in tree if rdl doesnot define the property
+};
+
+property StfIpMaxRate {
+    component = addrmap;
+    type      = number;
+    default   = 0;      //check if Default is 0 in tree if rdl doesnot define the property
+};
+
+property StfBifSupport {
+   component = addrmap;
+   type = boolean;
+   default = false;
+};
+
+property StfBifWidth {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+
+property StfPidSize {
+    component = addrmap;
+    type      = number;
+    default   = 0;      
+};
+
+property StfGrpSize {
+    component = addrmap;
+    type      = number;
+    default   = 0;      
+};
+
+property StfOpcodeSize {
+    component = addrmap;
+    type      = number;
+    default   = 0;      
+};
+
+property StfTPinSize {
+    component = addrmap;
+    type      = number;
+    default   = 0;      
+};
+
+property StfTPoutSize {
+    component = addrmap;
+    type      = number;
+    default   = 0;      
+};
+
+property StfUsrOpNum {
+    component = addrmap;
+    type      = number;
+    default   = 0;      
+};
+
+property StfPktSize {
+    component = addrmap;
+    type      = number;
+    default   = 0;      
+};
+
+property StfDataWidthLimit {
+    component = addrmap;
+    type      = number;
+    default   = 0;      
+};
+
+//Added per HSD 8616777 - start
+// For IP parameters
+property StfAgentParams {
+    component = addrmap;
+    type      = string; 
+    default   = "";
+};
+
+// For Test Port
+property StfTPRegAddrSize {
+    component = addrmap;
+    type      = number; 
+    default   = 0;
+};
+
+property StfTPRegDataSize {
+    component = addrmap;
+    type      = number; 
+    default   = 0;
+};
+
+property StfWideInSize {
+    component = addrmap;
+    type      = number; 
+    default   = 0;
+};
+
+property StfDeskewFifoDepth {
+    component = addrmap;
+    type      = number; 
+    default   = 0;
+};
+
+// For HUB
+property StfResponseFiFoDepth {
+    component = addrmap;
+    type      = number; 
+    default   = 0;
+};
+
+property StfChildRingRptIn {
+    component = addrmap;
+    type      = number; 
+    default   = 0;
+};
+
+property StfChildRingRptOut {   
+    component = addrmap;
+    type      = number; 
+    default   = 0;
+};
+
+property StfChildRingPayloadWidth {
+    component = addrmap;
+    type      = number; 
+    default   = 0;
+};
+
+// For documentation/tagging
+property StfFunctionalPurpose {
+    component = addrmap | reg | field;
+    type      = string; 
+    default   = "";
+};
+
+// For transpose registers
+property StfChainLength {
+    component = field;
+    type      = number; 
+    default   = 0;
+};
+
+property StfFieldTemplate {
+    component = field;
+    type      = string; 
+    default   = "";
+};
+
+//Added per HSD 8616777 - end
+
+//Added per HSD 9174458 - start
+property StfChainNum  {
+  component = addrmap | reg;    
+  type = number;
+  default = 0;                  
+};
+
+property StfFieldType {
+  component = field;
+  type = string;     
+  default = "";
+};
+
+property StfFieldAbsIdx {
+  component = field;
+  type = number;
+  default = 0;              
+};
+
+//Added per HSD 9174458 - end
+
+property StfFieldResetType {    //Added per HSD 10039913
+    component = field;
+    type      = string;
+    default   = "";
+};
+
+property StfRegExists {
+    component = reg;
+    type = boolean;
+    default = true;    //Can it default to false??
+};
+
+property StfRegRequired {
+    component = reg;
+    type = boolean;
+    default = true;    //Can it default to false??
+};
+
+property StfRegWidth {
+    component = reg;
+    type      = number;
+    default   = 0;      //check if Default is 0 in tree if rdl doesnot define the property
+};
+
+property StfRegType {
+    component = reg;
+    type      = string;
+    default   = "";      
+};
+
+property StfFifoDepth {
+    component = reg;
+    type      = number;
+    default   = 1;      //check if Default is 0 in tree if rdl doesnot define the property
+};
+
+property StfRegOutSuppress {
+    component = reg;
+    type = boolean;
+    default = false;    //Can it default to false??
+};
+
+property StfRegResetType {
+    component = reg;
+    type      = string;
+    default   = "";
+};
+
+property StfRegMultiAddr {
+    component = reg;
+    type = boolean;
+    default = false;    //Can it default to false??
+};
+
+property StfRegAddrNum {
+    component = reg;
+    type      = number;
+    default   = 1;      //check if Default is 0 in tree if rdl doesnot define the property
+};
+
+property StfRegAddrInc {
+    component = reg;
+    type      = number;
+    default   = 1;      //check if Default is 0 in tree if rdl doesnot define the property
+};
+
+property StfUpdateAddr {
+    component = reg;
+    type      = number;
+    default   = 1;      //check if Default is 0 in tree if rdl doesnot define the property
+};
+
+property StfActionAddrLow {
+    component = reg;
+    type = boolean;
+    default = false;
+};
+
+property StfRegIndirAddr {
+    component = reg;
+    type = boolean;
+    default = false;    //Can it default to false??
+};
+
+property StfAutoIncSupport {
+    component = reg;
+    type = boolean;
+    default = false;    //Can it default to false??
+};
+
+property StfRegVarSize {
+    component = reg;
+    type = boolean;
+    default = false;    //Can it default to false??
+};
+
+property StfOpcode {
+    component = reg;
+    type      = string;
+    default   = "";      
+};
+
+property StfOutResponseDelay {
+    component = reg;
+    type      = number;
+    default   = 0;      
+};
+
+property StfFieldIsNoInit {
+    component = field;
+    type = boolean;
+    default = false;    //Can it default to false??
+};
+
+property StfFieldVarSize {
+    component = field;
+    type = boolean;
+    default = false;    //Can it default to false??
+};
+
+<% }; %>

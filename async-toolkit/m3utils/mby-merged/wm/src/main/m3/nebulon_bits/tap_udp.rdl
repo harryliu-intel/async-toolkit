@@ -1,0 +1,877 @@
+<% if ($TAP_UDP) {
+   } else {
+   $TAP_UDP = 1;
+%>
+
+//------------------------------------------------------------------------------
+// User Defined Properties (UDP) Library
+//
+// This contains all of the UDPs that are used globally throughout all register
+// descriptions.  UDP should not be declared anywhere else.
+//
+// Updated by mwiznero 05/21/2013
+// This version of TAP UDP is aligned to phase2 of the TAP SystemRDL / Nebulon format
+//   where we are incorporating similar functionality that Haswell implmented.
+//   First release of phase 2 UDP in ww15.
+//   Reviewed, updated, and added UDPs in ww19 through ww21.
+//
+// Updated by mwiznero 12/13/2013
+// Updated by mwiznero 06/09/2014
+//   It was discovered that the following TAP-RDL property types are incorrect
+//      OLD: type = field;
+//      NEW: type = addrmap;
+//      TapNetworkIpName
+//      TapIpPortName
+//      TapGroupName
+// Updated by mwiznero 11/28/2014
+//   Added UDPs to support TAP link.
+//   The TapLinkPreIrDelay, TapLinkPreDrDelay, TapLinkPostDrDelay are defined in the tap_udp.rdl file. These
+//     values do not change unless it is aligned with a Nebulon release
+// Updated by mwiznero 03/20/2015
+//   Added a new UDP called TapNetworkArch. Currently, there is no obvious way of determine if this TAP-RDL file supports
+//       TAP link or the hierarchical TAP architecture. In the future, there may be cases where an SoC
+//       implements a mixed TAP link / TAP heirarchy topology on the same die or stacked die. This of course,
+//       requires the TAP link to be implement at the CLTAP but an IP TAP may contain a heirarchical TAP network.
+// Updated by mwiznero 04/06/2015
+//   Added new UDPs.
+//       1. TapLinkGlobalBaseAddressName. This UDP provides a symbolic name associated with the TapLinkGlobalBaseAddress hex value.
+//
+// Updated by mwiznero 04/09/2015
+//   Changed the name of two UDPs to more accurately describe their function.
+//     OLD: TapLinkNumChildTaps
+//     NEW: TapLinkNumTapPorts
+//     OLD: TapLinkNumChildTapLinkNwIps
+//     NEW: TapLinkNumLinkPorts
+//
+//  Updated by mwiznero 04/16/2015
+//    Added regfile component to specific UDPs to support TAP link 
+//    Added the TapLinkOpcodeStart for the CLTAP. This defines where the assigned IP TAP opcode for TAP link architecture may start.
+//
+//  Updated by mwiznero 04/17/2015
+//    Added TapRegName. This acts like the TapInstName which can be added to a register as an override when incorporating remote TDRs.
+//
+//  Updated by mwiznero 04/29/2015
+//    Made the TapMiscUserText available at addrmap, reg, field and regfile level of attributes.
+//
+//  Updated by mwiznero 5/4/2015
+//    Removed the TapLinkIrSize. this is not necessary because the CLTAP IR shift register length already communicates this value to Nebulon
+//      Nebulon will be required to check this value to ensure it compliant to the Chassis requirements. Chassis DFx Gen2.1 defines the 
+//      CLTAP IR shift length value to be 16 bits.
+//
+//  Updated by mwiznero 5/8/2015
+//    Added TapLinkNwipAddress 
+//    Added TapLinkNwipDelay
+//    Added TapLinkNwipLevel
+// 
+//  Updated by mwiznero 5/13/2015
+//    Removed regfile from these UDPs: TapInstName, TapMiscUserText, TapRtlPath, ChopID, 
+//                                     TapType, TapRdlVersion, TapParentName, TapParentPortIndex,
+//                                     TapLinkGlobalBaseAddress, TapLinkGlobalBaseAddressName
+//
+//    Changed the default value. OLD = 1, NEW = 0 for these UDPs: TapLinkNumTapPorts, TapLinkNumLinkPorts, TapLinkDelayValue    
+//    Added the following UDPs: TapNetworkArch
+//
+//  Updated by mwiznero 8/13/2015
+//    Added TapCollateralVisibility UDP to addrmap and reg level   
+//
+//  Updated by mwiznero 11/18/2015
+//    Added TapIrLength to bring back the TapLinkIrSize used by the Collage and other tools. The name will not include "link" becuase it can
+//       by used by any TAP for hierarchical or TAP link based topologies.
+//
+//  Update by mwiznero 11/20/2015
+//    Added three more UDPs for the new TAP link: TapLinkIrExtSize, TapLinkIrExtAddrIsUsed, TapLinkIrExtAddress
+//
+//  Update by mwiznero 1/14/2016
+//    The update on 5/8/2015 states that TapLinkNwipLevel definition was added but it actually wasn't. 
+//
+//  Update 1/29/2016 (mwiznero)
+//    Changed the level of TapPowerName from addrmap to all levels. Now it is available at addrmap, reg, field
+//    Added new UDP TapFieldReset for defining the reset by string name for this bit. Its purpose is intended for remote TDRs
+//       that are distributed throughout the SoC like an IDV (Inter-Die Variation monitor) chain or VDM (Voltage Droop Monitor) chain
+//    Added new UDP TapSliceSelectFunction for reg level. Its purpose is to support downstream tools with embedded PERL code for variable
+//       length registers that are stitched upon instantiation from a distributed remote Test Data Register (rTDR) like a IDV or VDM chain.
+//
+//  Update 2/9/2016 (mwiznero)
+//    Duplicate definition for TapIrLength. Removed one of them
+//
+//  Updated 6/22/2016 (mwiznero)
+//    Changed the name of the UDP so that it can be used by SoC TAP network or TAP link
+//    Old: TapLinkNumTapPorts      New: TapNumTapPorts
+//    Old: TapLinkNumLinkPorts     New: TapNumLinkPorts
+//------------------------------------------------------------------------------
+//
+//============================== Address map properties (TAP level attributes): BEGIN
+//Added per HSD 5255192
+property TapIdCodeOpcode {
+    component = addrmap;
+    type = number;
+    default = 0;
+};
+property TapWithIdcode {
+    component = addrmap;
+    type = boolean;
+    default = false;
+};
+property TapWithSlvIdcode {
+    component = addrmap;
+    type = boolean;
+    default = true;
+};
+property TapIpName  {
+    component = addrmap | regfile | reg;
+    type      = string;
+    default   = "";
+};
+property TapInstName {
+    component = addrmap | reg;
+    type      = string;
+    default   = "";
+};
+property TapSlvIdNum {
+    component = addrmap;
+    type      = number;
+    default   = 0;
+};
+property TapModuleName {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+property TapMiscUserText {
+    component = addrmap | reg | field | regfile;
+    type      = string;
+    default   = "";
+};
+
+property TapPowerName {
+    component = addrmap | reg | field;
+    type      = string;
+    default   = "";
+};
+property TapSlvIdPowerNum {
+    component = addrmap;
+    type      = number;
+    default   = 0;
+};
+property TapRegionName {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+property TapSlvIdRegionNum {
+    component = addrmap;
+    type      = number;
+    default   = 0;
+};
+property TapIsBoundaryScan {
+    component = addrmap;
+    type      = boolean;
+    default   = false;
+};
+property TapIsRmtDrBussed {
+    component = addrmap;
+    type      = boolean;
+    default   = false;
+};
+property TapIsRemovable {
+    component = addrmap;
+    type      = boolean;
+    default   = false;
+};
+property TapPowerGoodSignal {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+property TapIsIntDrPrgReset {
+    component = addrmap;
+    type      = boolean;
+    default   = false;
+};
+property TapIsRmtDrPrgReset {
+    component = addrmap;
+    type      = boolean;
+    default   = false;
+};
+property TapIrCaptureValue {
+    component = addrmap | reg;
+    type      = number;
+    default   = 1;               //modifed per HSD 5254972
+};
+property TapTckParkValue {
+    component = addrmap;
+    type      = number;
+    //default   = ""; magillem change
+    default   = 0;
+};
+property TapVersion {
+    component = addrmap;
+    type      = number;
+    default   = 0;
+};
+property TapSecurityLevel {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+property TapIsTertiaryPort {
+    component = addrmap;
+    type      = boolean;
+    default   = false;
+};
+property TapTertiaryPortName {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+property TapSlvIdCodeInfo  {
+    component = addrmap;
+    type      = number;
+    default   = 0;
+};
+property TapNetworkMasterID {
+    component = addrmap;
+    type      = number;
+    default   = 0;
+};
+property TapSlvIdCodeValue {
+    component = addrmap;
+    type      = number;
+    default   = 0;
+};
+property TapSlvIdCodeSignal {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+property TapSlvIdCodeOpcode {
+    component = addrmap;
+    type      = number;
+    default   = 0;
+};
+property TapIdCodeValue {
+    component = addrmap;
+    type      = number;
+    default   = 0;
+};
+property TapNumWtaps {
+    component = addrmap;
+    type      = number;
+    default   = 0;
+};
+property WtapIsPosTck {
+    component = addrmap;
+    type      = boolean;
+    default   = false;
+};
+property WtapIsInSeries {
+    component = addrmap;
+    type      = boolean;
+    default   = false;
+};
+property WtapWithSlvIdCode {
+    component = addrmap;
+    type      = boolean;
+    default   = false;
+};
+
+//=================================== CLTAP only BEGIN
+property TapExiAgentNum {
+    component = addrmap;
+    type      = number;
+    default   = 0;
+};
+property TapInternalSteppingInfo  {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+
+//=================================== CLTAP only END
+
+property TapIsParent {
+    component = addrmap;
+    type      = boolean;
+    default   = false;
+};
+property TapRmtDrSignalPrefix {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+property TapRtlPath  {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+property TapNetworkID  {
+    component = addrmap;
+    type      = number;
+    default   = 0;
+};
+property TapCollateralVisibility  {
+    component = addrmap | reg;
+    type      = string;
+    default   = "";
+};
+property TapNotCompliantInfo  {
+    component = addrmap | reg | field;
+    type      = string;
+    default   = "";
+};
+//============================== Address map properties (TAP level attributes): END
+
+
+//========================================== Legacy SoC TAP network: BEGIN
+property TAP_Control {
+//    component = addrmap;
+    component = field;
+    type      = string;
+    default   = "";
+};
+property TAP_SChain_Next {
+//    component = addrmap;
+    component = field;
+    type      = string;
+    default   = "";
+};
+
+//========================================== Legacy SoC TAP network: END
+
+
+//========================================= Properties for a Data Register (reg): BEGIN
+
+property TapTotalNumRegBits {
+    component = reg;
+    type      = number;
+    default   = 0;
+};
+property TapShiftRegLength {
+    component = reg;
+    type      = number;
+    default   = 0;
+};
+property TapOpcodeSecurityLevel {
+  component =  reg | regfile;
+  type = string;
+  default = "";
+};
+property TapOpcodeEngageType {
+    component = reg | regfile;
+    type      = string;
+    default   = "";
+};
+property TapIsNotFullOpcodeSpec {
+    component = reg | addrmap;       //Modified per HSD 5254972
+    type      = boolean;
+    default   = false;
+};
+
+property TapRegResetType {
+    component = reg;
+    type      = string;
+    default   = "";
+};
+property TapShadowSleepState {
+    component = reg;
+    type      = string;
+    default   = "";
+};
+property TapShadowRestoreState {
+    component = reg;
+    type      = string;
+    default   = "";
+};
+property TapIsDrRemote {
+    component = reg | regfile;
+    type      = boolean;
+    default   = false;
+};
+property TapDrIsBypass {
+    component = reg;
+    type      = boolean;
+    default   = false;
+};
+property TapDrIsFixedSize {
+    component = reg;
+    type      = boolean;
+    default   = true;
+};
+property ChopID {
+    component = addrmap | regfile | reg | field;
+    type      = string;
+    default   = "";
+};
+property TapShadowSignal {
+    component = reg | field;
+    type      = string;
+    default   = "";
+};
+property TapRcvrSignal {
+    component = reg | field;
+    type      = string;
+    default   = "";
+};
+property TapPriSignal {
+    component = reg | field;
+    type      = string;
+    default   = "";
+};
+property TapUseSignalID {
+    component = reg | field;
+    type      = boolean;
+    default   = false;
+};
+property TapDrImplStatus {
+    component = reg | regfile;
+    type      = string;
+    default   = "";
+};
+property RegOpcode {
+    component = reg | regfile;
+    type      = number;
+    default   = 0;
+};
+property TapSliceSelectFunction {
+    component = reg;
+    type      = string;
+    default   = "";
+};
+
+//======================================== Properties FOR a Data Register (DR): END
+
+
+//======================================= Properties for TAP bit field: BEGIN
+property AccessType {
+    component = field;
+    type      = string;
+    default   = "";
+};
+property TapFieldSliceID {
+    component = field;
+    type      = string;
+    default   = "";
+};
+property TapFieldIsVarSize {
+    component = field;
+    type      = boolean;
+    default   = false;
+};
+property TapWrEnField {
+    component = field;
+    type      = string;
+    default   = "";
+};
+property TapWrEnPolarity {
+    component = field;
+    type      = number;
+    default   = 1;
+};
+property TapFieldIsNoInit {
+    component = field;
+    type      = boolean;
+    default   = false;
+};
+property TapFieldReset {
+    component = field;
+    type      = string;
+    default   = "";
+};
+//======================================= Properties for TAP bit field: END
+
+
+
+//========================================== Legacy validation UDPs: BEGIN
+
+
+property SampleMode {
+    component = reg;
+    type      = string;
+    default   = "FD_RW_SAMPLE";
+};
+
+property CoverageMode {
+    component = reg | field;
+    type      = string;
+    default   = "COVERAGE_ON";
+};
+
+
+// individual registers will be instantiated in OVM only, by default to include in OVM output
+property ValInstanceReg {
+    component = reg;
+    type      = boolean;
+    default   = true;
+};
+
+// this UDP defines the power well for both reg & field level:
+property PowerWell {
+    component = reg | field;
+    type      = string;
+    default   = "";
+};
+
+property ValLegalValues {
+    component = field;
+    type      = string;
+    default   = "";
+};
+
+property ValRandomize {
+    component = field;
+    type      = boolean;
+    default   = false;
+};
+
+//Added per HSD 896535  for power retention awareness
+property StateRetention {
+  component = field;
+  type = boolean;
+  default = false;
+};
+  //Must specify PGD with StateRetention
+property PGD {
+  component = field;
+  type = string;
+  default = "";
+};
+
+//Sub-field/dummy reg
+property TapFieldTemplate {
+  component = field;
+    type = string;
+    default = "";
+};
+
+property TapIsFieldTemplateReg {
+  component = reg;
+    type = boolean;
+    default  = false;
+ };
+
+//========================================== Legacy validation UDPs: END
+
+
+
+
+//============================== Address map properties (TAP level attributes): BEGIN
+//
+///New UDPs added per HSD 525497
+
+property TapMaxFreq  {
+    component = addrmap;
+    type      = number;
+    default   = 0;
+};
+property TapType {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+property TapIsWtap {
+    component = addrmap;
+    type      = boolean;
+    default   = false;
+};
+property TapNetworkIpName {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+property TapIpPortName {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+property TapIsPosTckTdo {
+    component = addrmap;
+    type      = boolean;
+    default   = false;
+};
+
+property TapGroupName {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+property TapRegClockDomain {
+    component = reg;
+    type      = string;
+    default   = "";
+};
+
+// IP UDP for file tracking
+property TapRdlVersion {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+
+
+//--------------- UDP for specifying TAP Network topology
+
+property TapParentName {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+property TapParentPortIndex {
+    component = addrmap;
+    type      = number;
+    default   = 0;
+};
+
+//--------------------------- TAP IP UDPs for TAP Link network properties
+property TapNumTapPorts  {
+    component = addrmap;
+    type      = number;
+    default   = 0;
+};
+property TapNumLinkPorts  {
+    component = addrmap;
+    type      = number;
+    default   = 0;
+};
+
+property TapLinkLocalBaseAddress {
+    component = addrmap;
+    type      = number;
+    default   = 0;
+};
+property TapLinkGlobalBaseAddress {
+    component = addrmap;
+    type      = number;
+    default   = 0;
+};
+property TapLinkGlobalBaseAddressName  {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+property TapNetworkArch {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+property TapLinkNwipAddress {
+    component = addrmap;
+    type      = number;
+    default   = 0;
+};
+property TapLinkNwipDelay {
+    component = addrmap;
+    type      = number;
+    default   = 0;
+};
+property TapLinkNwipLevel {
+    component = addrmap;
+    type      = number;
+    default   = 0;
+};
+property TapLinkIrExtSize {
+    component = addrmap;
+    type      = number;
+    default   = 0;
+};
+property TapLinkIrExtAddrIsUsed {
+    component = addrmap;
+    type      = boolean;
+    default   = false;
+};
+property TapLinkIrExtAddress {
+    component = addrmap;
+    type      = number;
+    default   = 0;
+};
+
+
+
+//----------------------- CLTAP only. UDPs for TAP Link: BEGIN
+
+property TapRegType {
+    component = reg | regfile;
+    type      = string;
+    default   = "";
+};
+property TapTdoAlignDepth  {
+    component = addrmap;
+    type      = number;
+    default   = 0;
+};
+
+
+property TapLinkCltapTdrEndOpcode {
+
+    component = addrmap;
+    type      = number;
+    default   = 0;
+};
+// ------------------------ CLTAP only: END
+
+
+// ------------------------- general TAP : BEGIN
+
+property TapHasInternalTapLinkEndpoint {
+    component = addrmap;
+    type = boolean;
+    default = false;
+};
+property TapIrLength  {
+    component = addrmap;
+    type      = number;
+    default   = 0;
+}; 
+
+
+    
+// ------------------------- general TAP : END
+
+
+
+
+//============================== Address map properties (TAP level attributes): END
+
+
+// ============================= Register map properties (reg level attributes): BEGIN
+
+property TapRegName { 
+    component = reg;
+    type      = string;
+    default   = "";
+};
+property TapFunctionalPurpose {
+    component = addrmap | reg | field;
+    type      = string;
+    default   = "";
+};
+
+
+
+
+// ==============================
+
+
+//------ The following are fixed per generation of TAP link. 
+//   For example, TapLinkPreIrDelay=2, TapLinkPreDrDelay=1 and TapLinkPostDrDelay=1 is fixed for all Chassis 2.1 SoCs
+
+property TapLinkPreIrDelay  {
+    component = addrmap | reg;
+    type      = number;
+    default   = 0;
+};
+property TapLinkPostIrDelay  {
+    component = addrmap | reg;
+    type      = number;
+    default   = 0;
+};
+property TapLinkPreDrDelay  {
+    component = addrmap | reg;
+    type      = number;
+    default   = 0;
+};
+property TapLinkPostDrDelay  {
+    component = addrmap | reg;
+    type      = number;
+    default   = 0;
+};
+
+// ============================= IJTAG properties:
+ 
+// Description: UDP specifies name of SIB register/bit (parent), which controls the current register or SIB (child) in IJTAG chain.
+property TapSibRef {
+    component = reg | regfile;
+    type = string;
+    default = "";
+};
+
+// Description: UDP specifies assigned security level of current SIB register/bit and its child register.
+property TapRegSecurity {
+    component = reg;
+    type = string;
+    default = "";
+};
+
+// Description: UDP specifies parameters for integration of referenced IP register.
+property TapIntegSpec {
+    component = reg | regfile;
+    type      = string;
+    default   = "";
+};
+
+//Description: UDP specifies register name in the IP scope.
+property TapIpRegName {
+    component = reg;
+    type      = string;
+    default   = "";
+};
+
+// Description: UDP specifies IP definition hierarchy.
+property TapIpDefHier {
+    component = reg | regfile | addrmap;
+    type      = string;
+    default   = "";
+};
+
+// Description: UDP specifies IP instance hierarchy.
+property TapIpInstHier {
+    component = reg | regfile | addrmap;
+    type      = string;
+    default   = "";
+};
+
+// Description: UDP specifies index of the current register in IJTAG chain.
+property TapRegIndex {
+    component = reg;
+    type      = number;
+    default   = 0;
+};
+
+// ============================= Conditional Registers:
+
+// Description: UDP specifies a function, which controls existence of the current register in TAP chain (not including IJTAG/SIB dependencies).
+property TapRegEnable {
+    component = reg | regfile;
+    type      = string;
+    default   = "";
+};
+
+// Description: UDP specifies a function, which controls existence of the current field in TAP register (not including IJTAG/SIB dependencies).
+property TapFieldEnable {
+    component = field;
+    type      = string;
+    default   = "";
+};
+
+// ============================= IP Param properties:
+
+// Description: UDP specifies TAP IP parameter name.
+property TapParamType {
+    component = field;
+    type      = string;
+    default   = "";
+};
+ 
+// Description: UDP specifies TAP IP parameter value.
+property TapParamValue {
+    component = field;
+    type      = string;
+    default   = "";
+};
+ 
+// Description: UDP specifies default value of current TAP IP parameter.
+property TapParamDefault {
+    component = field;
+    type      = string;
+    default   = "";
+};
+ 
+// Description: UDP specifies list of allowed values of current TAP IP parameter.
+property TapParamAllowed {
+    component = field;
+    type      = string;
+    default   = "";
+};
+// ==============================
+
+
+<% }; %>
