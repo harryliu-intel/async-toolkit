@@ -3,7 +3,7 @@
 ;; requires the Modula-3 interface Mpfr to be imported
 
 (define the-mpfr-rounding-mode 'N)
-(define the-mpfr-default-precision 200)
+(define the-mpfr-default-precision 4000)
 
 (define (force-mpfr a)
   (if (number? a)
@@ -57,6 +57,8 @@
 
 
 (define (fmt-mpfr m) (Mpfr.Format m 10 the-mpfr-rounding-mode))
+
+(define (mpfr->number m) (Mpfr.GetLR m the-mpfr-rounding-mode))
 
 (define sqrt-mpfr (make-unary-mpfr-op Mpfr.Sqrt))
 (define neg-mpfr (make-unary-mpfr-op Mpfr.Neg))

@@ -1,5 +1,6 @@
 (load "term-defs.scm")
-(load "term.scm")
+;;(load "term.scm")
+(load "poly-term.scm")
 
 
 (define (area-yield A)

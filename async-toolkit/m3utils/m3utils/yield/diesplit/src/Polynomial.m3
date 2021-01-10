@@ -29,6 +29,14 @@ PROCEDURE MakePower(x : LONGREAL) : T =
   END MakePower;
 
 PROCEDURE Plus(a, b : T) : T =
+
+  PROCEDURE Put(x : LONGREAL; c : Mpfr.T) =
+    BEGIN
+      IF NOT Mpfr.EqualP(c, M0) THEN
+        EVAL res.put(x, c)
+      END
+    END Put;
+    
   VAR
     res := NEW(T).init();
     ai  := a.iterateOrdered();
@@ -57,21 +65,21 @@ PROCEDURE Plus(a, b : T) : T =
       IF    NOT ha AND NOT hb THEN
         RETURN res
       ELSIF ha AND NOT hb THEN
-        EVAL res.put(ax, ac);
+        Put(ax, ac);
         ha := FALSE
       ELSIF hb AND NOT ha THEN
-        EVAL res.put(bx, bc);
+        Put(bx, bc);
         hb := FALSE
       ELSIF ax < bx THEN
-        EVAL res.put(ax, ac);
+        Put(ax, ac);
         ha := FALSE
       ELSIF bx < ax THEN
-        EVAL res.put(bx, bc);
+        Put(bx, bc);
         hb := FALSE
       ELSE
         <*ASSERT ax = bx *>
         <*ASSERT ha AND hb *>
-        EVAL res.put(ax, MpfrPlus(ac, bc));
+        Put(ax, MpfrPlus(ac, bc));
         ha := FALSE;
         hb := FALSE
       END
@@ -85,7 +93,10 @@ PROCEDURE Times(a, b : T) : T =
       oc : Mpfr.T;
     BEGIN
       IF res.get(x, oc) THEN
-        EVAL res.put(x, MpfrPlus(oc, c))
+        c := MpfrPlus(oc, c)
+      END;
+      IF Mpfr.EqualP(c, M0) THEN
+        EVAL res.delete(x, oc)
       ELSE
         EVAL res.put(x, c)
       END

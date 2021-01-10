@@ -25,6 +25,8 @@ SchemeStubs ("Wr")
 SchemeStubs ("Rd")
 SchemeStubs ("Mpfr")
 SchemeStubs ("Polynomial")
+SchemeStubs ("SortedLongrealMpfrTbl")
+SchemeStubs ("LongrealMpfrTbl")
 ExportSchemeStubs ("diesplit")
 importSchemeStubs()
 
