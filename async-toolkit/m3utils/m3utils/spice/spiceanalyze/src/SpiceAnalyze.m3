@@ -106,6 +106,9 @@ PROCEDURE Cell(nm      : TEXT;
       gateOutputs : CktNodeSet.T;
 
       canons : TextSet.T;
+
+      gateElems : CktElementSet.T := NEW(CktElementSetDef.T).init();
+      
     BEGIN
       canons := BuildNodeTab(canonTbl, ckt, subCkts, nodeTab, power);
       
@@ -141,11 +144,12 @@ PROCEDURE Cell(nm      : TEXT;
             Dfs.Node(n, visitor);
             Debug.Out(F("%s elements", Int(visitor.fetArray.nelems())));
             gate[pull] := visitor.fetArray;
+            gateElems := gateElems.union(visitor.elems)
           END;
           diagram.addGate(gate)
         END;
 
-        (* here we should look for components that are not in the gates
+        (* here we should look for elements that are not in the gates
            we have already added, and add them too *)
 
         WITH wr   = FileWr.Open(outDir & "/" & nm & ".svg"),
@@ -478,8 +482,8 @@ PROCEDURE FindAllAliases(ckt      : SpiceCircuit.T;
     RETURN symTab
   END FindAllAliases;
  
-PROCEDURE BuildCellStructure(ckt    : SpiceCircuit.T;
-                             symtab : TextSpiceObjectTbl.T;
+PROCEDURE BuildCellStructure(ckt     : SpiceCircuit.T;
+                             symtab  : TextSpiceObjectTbl.T;
                              typeTbl : TextCktCellTbl.T) : CktCell.T  =
   VAR
     res := NEW(CktCell.T,

@@ -199,7 +199,7 @@ where $\cdot$ represents the standard vector dot product.  As a final observatio
 \end{equation}
     
 
-\section{Dense data structures in systems programming languages}\label{sec:dense_system}
+\section{Dense data structures}\label{sec:dense_system}
 Systems programming languages such as C\cite{k+r} and Pascal\cite{pascal} have a richer
 language of structured data types than does Fortran-77.  Here we shall concern
 ourselves only with {\em dense\/} so-called value data structures in
@@ -305,12 +305,12 @@ to the compiler, there are two important properties of dense type definitions
 that we shall have
 occasion to use:
 \begin{itemize}
-\item The (byte) offset of any member of a given {\tt RECORD} type from the beginning address of that {\tt RECORD} is always the same, no matter what the context of the declaration.
+\item The addressing offset of any member of a given {\tt RECORD} type from the beginning address of that {\tt RECORD} is always the same, no matter what the context of the declaration.
 
-\item The (byte) stride of any {\tt ARRAY} type is always constant, regardless of how complex the type of the {\tt ARRAY} element is.
+\item The addressing stride of any {\tt ARRAY} type is always constant, regardless of how complex the type of the {\tt ARRAY} element is.
 \end{itemize}
-In other words, if we know the byte offset of a {\tt RECORD} member
-from the beginning of its {\tt RECORD} and if we know the byte delta
+In other words, if we know the address offset of a {\tt RECORD} member
+from the beginning of its {\tt RECORD} and if we know the address delta
 between any two consecutive elements of an {\tt ARRAY} and if we know
 this information for just one instance of every unique {\tt RECORD}
 member and {\tt ARRAY} type, we can at least in principle compute the
@@ -319,7 +319,7 @@ every {\tt ARRAY}---or in other words the offset of every base
 datum---from the beginning of the top-level {\tt RECORD} or {\tt
   ARRAY}.
   
-\section{Dense data structures in hardware models}
+\subsection{Dense data structures in hardware models}
 It should be clear that the view of dense data structures of
 section~\ref{sec:dense_system} is not far removed from the embedding
 of a register set in the CSR space of a hardware device.  In fact,
@@ -331,10 +331,36 @@ from each other (records are variously called ``register files'' or
 ``address maps'' in the context of CSRs, but the abstraction has most
 of the same properties as a software record).
 
-Languages such as RDL provide finer control over addressing (i.e., user control
-over padding rules) than do most software environments, but while these controls
+Languages such as RDL provide finer control over addressing than do most software environments, but while these controls
 certainly change the addresses that are generated, they do not in fact destroy
-the two properties of section~\ref{sec:denseproperties}.
+the two properties of section~\ref{sec:denseproperties}.  The main
+differences between hardware register layouts and software record layouts
+are that first of all, the programmer has bit-level control over register
+layouts in hardware design, and secondly, the programmer normally has a wider
+range of data types available in hardware designs than in systems programming languages.
+
+
+We should say a few words about bit fields here.  While programming
+languages like Modula-3 and C have limited control over bit layouts by
+using bit fields, these methods are not as expressive as what is
+available in RDL.  Some designers attempt to lay out bit fields to
+exactly match their CSR register set, but this comes at a high cost:
+only being able to use the CSR data types that are available in the
+software model.  (This is a two-way ``least common denominator'' type
+of decision: Pascal-derived languages such as Modula provide integer
+subrange types such as \verb![0..257]! which are not constrained
+to fit in a specific number of bits, and the hardware implementation
+probably cannot ``model'' such software either.)  Our goal here is
+explicitly not to match the hardware design entirely in the software
+models we are building, but to {\em model\/} the hardware.  So, for
+example, an unaligned 7-bit bit field from RDL can be modeled in the
+software model by, for example, a byte-aligned 8-bit value of type
+\verb![0..255]! or possibly even by a value of type \verb!INTEGER!,
+which is 64 bits wide on contemporary machines.  Some models may even
+use something far more elaborate to model such a bit field, such as a
+Java/Smalltalk style object.
+
+\subsection{Summary}
 
 We can thus abstract away from the specific implementation of a CSR
 space (hardware, C model, etc.) and use a uniform addressing scheme
@@ -348,6 +374,10 @@ short, the dope for two implementations of a CSR space will have the
 same shape but may contain different constants (array strides and
 field offsets).
 
+\section{Addressing in dense data structures}
+
+We have investigated a few methods of addressing objects in
+dense data structures as described in section~\ref{sec:dense_system}.
 
 \begin{thebibliography}{99}
 
