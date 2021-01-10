@@ -15,6 +15,9 @@ TYPE T         = MpfrPtrT; (* mpfr_ptr_t_star *)
 <*EXTERNAL MpfrC__alloc*>
 PROCEDURE alloc() : MpfrPtrT;
 
+<*EXTERNAL MpfrC__free*>
+PROCEDURE free(x : MpfrPtrT);
+
 <*EXTERNAL MpfrC__deref*>
 PROCEDURE deref(p : MpfrPtrT) : MpfrPtrT;
 

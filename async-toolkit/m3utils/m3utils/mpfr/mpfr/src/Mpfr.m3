@@ -5,6 +5,7 @@ IMPORT Math;
 IMPORT Debug;
 FROM Fmt IMPORT F, Int;
 IMPORT Text;
+IMPORT WeakRef;
 
 REVEAL
   T = BRANDED Brand OBJECT
@@ -17,8 +18,18 @@ PROCEDURE New(prec : CARDINAL) : T =
     val := P.alloc();
   BEGIN
     P.init2(L(val), prec);
-    RETURN NEW(T, val := val);
+    WITH new = NEW(T, val := val) DO
+      EVAL WeakRef.FromRef(new, CleanUp);
+      RETURN new
+    END
   END New;
+
+PROCEDURE CleanUp(<*UNUSED*>READONLY w : WeakRef.T; r : REFANY) =
+  BEGIN
+    WITH this = NARROW(r, T) DO
+      P.free(this.val)
+    END
+  END CleanUp;
 
 PROCEDURE I2T(int : INTEGER) : Ternary =
   BEGIN

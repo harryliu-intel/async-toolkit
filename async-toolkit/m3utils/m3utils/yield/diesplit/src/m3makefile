@@ -13,11 +13,18 @@ import ("mpfr")
 %end
 
 module ("YieldModel")
+
+Table("LongrealMpfr", "LongReal", "Mpfr")
+Sorted_table("LongrealMpfr", "LongReal", "Mpfr")
+
+Module ("Polynomial")
+
 SchemeStubs ("YieldModel")
 SchemeStubs ("Math")
 SchemeStubs ("Wr")
 SchemeStubs ("Rd")
 SchemeStubs ("Mpfr")
+SchemeStubs ("Polynomial")
 ExportSchemeStubs ("diesplit")
 importSchemeStubs()
 

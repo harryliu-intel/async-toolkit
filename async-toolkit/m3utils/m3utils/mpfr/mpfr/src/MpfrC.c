@@ -14,6 +14,17 @@ MpfrC__alloc(void)
   return res;
 }
 
+void
+MpfrC__free(mpfr_ptr x)
+{
+
+#if 0
+  printf("%s:%d freeing %x\n", __FILE__, __LINE__, x);
+#endif
+  
+  free(x);
+}
+
 mpfr_ptr
 MpfrC__deref(mpfr_ptr p)
 {
