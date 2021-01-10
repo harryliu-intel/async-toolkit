@@ -9,6 +9,17 @@ CONST LR = LongReal;
 REVEAL
   T = LRMTbl.Default BRANDED Brand OBJECT END;
 
+  (* the implementation is a sorted table, with the key being the
+     power, and the value being the coefficient.
+
+     That is, if the table contains (k,v) this means that the polynomial
+     contains a (monomial) term 
+
+                       v x^k
+
+     The polynomial is simply the sum of all monomials.
+   *)
+
 PROCEDURE MakeConstant(x : Mpfr.T) : T =
   VAR
     res := NEW(T).init();

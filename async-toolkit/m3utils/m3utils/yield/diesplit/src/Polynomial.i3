@@ -1,4 +1,14 @@
 INTERFACE Polynomial;
+
+(* 
+   Simple polynomials, for yield calculations
+
+   The implementation internally uses SortedLongrealMpfrTbl, and while
+   this implementation is not exposed to clients, we borrow the implementation
+   of the iterator from the more generic code.
+
+*)
+
 IMPORT Mpfr;
 IMPORT SortedLongrealMpfrTbl;
 
@@ -14,29 +24,41 @@ TYPE
      we can take integral (CARDINAL) powers of the expressions
   *)
 
-PROCEDURE MakeConstant(x : Mpfr.T) : T;
+PROCEDURE MakeConstant(c : Mpfr.T) : T;
+  (* return the polynomial c x^0 *)  
 
-PROCEDURE MakePower(x : LONGREAL) : T;
+PROCEDURE MakePower(y : LONGREAL) : T;
+  (* return the polynomial 1 x^y *)
 
 PROCEDURE Plus(a, b : T) : T;
+  (* return the polynomial a + b *)
 
 PROCEDURE Times(a, b : T) : T;
+  (* return the polynomial a * b *)
 
 PROCEDURE IntPow(a : T; k : CARDINAL) : T;
+  (* return the polynomial a ^ k *)
 
-PROCEDURE Iterate(a : T) : Iterator;
-
-PROCEDURE SetPrec(to : CARDINAL);
-
-PROCEDURE GetPrec() : CARDINAL;
-
-PROCEDURE DebugFmt(a : T) : TEXT;
-  
-CONST DefPrec = 200;
-      
 TYPE
   Iterator = SortedLongrealMpfrTbl.Iterator;
 
+PROCEDURE Iterate(a : T) : Iterator;
+  (* iterate through the monomial terms of the polynomial
+
+     If iter.next(y, c) returns TRUE, then the polynomial contains a term
+     c x^y 
+  *)
+
+PROCEDURE SetPrec(to : CARDINAL);
+  (* set the underlying Mpfr precision of numbers used by this module *)
+
+PROCEDURE GetPrec() : CARDINAL;
+
+CONST DefPrec = 200; (* default precision *)
+
+PROCEDURE DebugFmt(a : T) : TEXT;
+  (* format a polynomial for debugging *)
+  
 CONST Brand = "Polynomial";
 
 END Polynomial.
