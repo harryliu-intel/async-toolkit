@@ -191,8 +191,9 @@ PROCEDURE MapRecursively(m : Bnf.T; f : Mapper) : Bnf.T =
 
   (**********************************************************************)
 
-PROCEDURE AttemptAdd(seq : BnfRuleSeq.T; nm : TEXT; expr : Bnf.T) : BOOLEAN =
-  (* returns name under which it was actually added *)
+PROCEDURE AttemptAdd(seq  : BnfRuleSeq.T;
+                     nm   : TEXT;
+                     expr : Bnf.T) : BOOLEAN =
   BEGIN
     FOR i := 0 TO seq.size() - 1 DO
       WITH old = seq.get(i) DO
@@ -205,7 +206,7 @@ PROCEDURE AttemptAdd(seq : BnfRuleSeq.T; nm : TEXT; expr : Bnf.T) : BOOLEAN =
         END
       END
     END;
-    seq.addhi(BnfRule.T { nm, expr });
+    seq.addhi(BnfRule.T { nm, expr, NIL });
     RETURN TRUE
   END AttemptAdd;
   
@@ -520,14 +521,14 @@ PROCEDURE MatchListPat(m : EditObj; s0, s1 : Bnf.T) : Bnf.T =
               (* X { <string> X } *)
 
               WITH nm = "list1of_" &
-                   m.stringMapper(NARROW(iseq.elems[0],String).string) &
-                   "_" &
-                   e.ident,
-                   single = ll.elem,
-                   delim  = iseq.elems[0],
-                   ident = MakeIdent(nm),
-                   list = MakeSequence(ARRAY OF Bnf.T { delim, single, ident }),
-                   dis  = MakeDisjunction(ARRAY OF Bnf.T { single, list }),
+                     m.stringMapper(NARROW(iseq.elems[0],String).string) &
+                     "_" &
+                     e.ident,
+                   single  = ll.elem,
+                   delim   = iseq.elems[0],
+                   ident   = MakeIdent(nm),
+                   list    = MakeSequence(ARRAY OF Bnf.T { delim, single, ident }),
+                   dis     = MakeDisjunction(ARRAY OF Bnf.T { single, list }),
                    success = AttemptAdd(m.seq, nm, dis) DO
                 <*ASSERT success*>
                 RETURN ident
@@ -557,9 +558,9 @@ PROCEDURE RemoveSeqLists(t    : Bnf.T;
                          stringMapper : StringMapper) : Bnf.T =
   VAR
     m := NEW(EditObj,
-             seq := seqA,
+             seq          := seqA,
              stringMapper := stringMapper,
-             f := RemoveListsFromSeq);
+             f            := RemoveListsFromSeq);
   BEGIN
     RETURN MapRecursively(t, m)
   END RemoveSeqLists;

@@ -31,6 +31,7 @@ IMPORT CharNames;
 IMPORT Wr;
 IMPORT Pathname;
 IMPORT FileWr;
+IMPORT FileUpdateWr;
 IMPORT TextRefTbl;
 IMPORT BnfRuleSeq;
 IMPORT TextReader;
@@ -334,7 +335,7 @@ PROCEDURE OpenF(gramName : TEXT; outDir : Pathname.T; ext : TEXT) : Wr.T =
     qn := outDir & "/" & fn;
   BEGIN
     TRY
-      RETURN FileWr.Open(qn)
+      RETURN FileUpdateWr.Open(qn)
     EXCEPT
       OSError.E(x) =>
       Debug.Error(F("Trouble opening \"%s\" for writing : OSError.E : %s",
@@ -405,7 +406,7 @@ PROCEDURE CopySymtab() : BnfRuleSeq.T =
     x : Bnf.T;
   BEGIN
     WHILE iter.next(nm, x) DO
-      new.addhi(BnfRule.T { nm, x })
+      new.addhi(BnfRule.T { nm, x, NIL })
     END;
     RETURN new
   END CopySymtab;
@@ -416,7 +417,7 @@ PROCEDURE PerformParseEdit(seq : BnfRuleSeq.T; editor : BnfEdit.T) =
   BEGIN
     WHILE i # seq.size() DO
       WITH e = seq.get(i) DO
-        seq.put(i, BnfRule.T { e.t, editor(e.b, seq, MapString) });
+        seq.put(i, BnfRule.T { e.t, editor(e.b, seq, MapString), NIL });
       END;
       INC(i)
     END
@@ -540,7 +541,7 @@ PROCEDURE WriteFiles(gramName : TEXT;
     yacWr := OpenF(gramName, outDir, "y");
   BEGIN
     TRY
-      derWr := FileWr.Open(derQn);
+      derWr := FileUpdateWr.Open(derQn);
     EXCEPT
       OSError.E(x) =>
       Debug.Error(F("Trouble opening \"%s\" for writing : OSError.E : %s",
@@ -699,7 +700,7 @@ PROCEDURE AttemptUnify(seq : BnfRuleSeq.T; new : TEXT; old : TextSet.T) =
     END;
     (* we have the unified Bnf here -- 
        now insert it in the table and sweep out the old ones *)
-    seq.addhi(BnfRule.T { new, dis });
+    seq.addhi(BnfRule.T { new, dis, NIL });
     VAR
       newBnf := Bnf.MakeIdent(new);
       oldBnf : Bnf.Ident;

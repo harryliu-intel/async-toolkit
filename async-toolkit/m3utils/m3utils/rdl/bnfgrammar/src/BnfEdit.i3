@@ -3,12 +3,12 @@ IMPORT Bnf;
 FROM Bnf IMPORT Disjunction;
 IMPORT BnfRuleSeq;
 
-TYPE T = PROCEDURE ( t : Bnf.T;
-                          seq : BnfRuleSeq.T;
-                          stringmapper : StringMapper) : Bnf.T; 
+TYPE T = PROCEDURE ( t            : Bnf.T;
+                     seq          : BnfRuleSeq.T;
+                     stringmapper : StringMapper) : Bnf.T; 
      
-PROCEDURE DistributeAll(t : Bnf.T;
-                        seq : BnfRuleSeq.T;
+PROCEDURE DistributeAll(t            : Bnf.T;
+                        seq          : BnfRuleSeq.T;
                         stringMapper : StringMapper) : Bnf.T;
   (* distribute everything else over Disjunction 
      (move Disjunction to top of tree, result will have no child Disjunctions)
