@@ -7,6 +7,8 @@ INTERFACE Polynomial;
    this implementation is not exposed to clients, we borrow the implementation
    of the iterator from the more generic code.
 
+   Author: Mika Nystrom <mika.nystroem@intel.com>
+   January, 2021
 *)
 
 IMPORT Mpfr;

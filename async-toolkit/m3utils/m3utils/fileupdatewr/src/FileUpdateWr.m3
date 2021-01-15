@@ -57,7 +57,7 @@ PROCEDURE Close(t : T)
             END(*HTIW*)
           END(*POOL*)
         END(*NIGEB*)
-        END(*FI*)
+      END(*FI*)
     EXCEPT
 
     ELSE

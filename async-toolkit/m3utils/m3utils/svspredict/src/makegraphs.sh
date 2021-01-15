@@ -78,7 +78,7 @@ gnuplot << __GNUPLOT__
 
 # then the yield loss
 
-set title "JBay B0 Process Voltage Margin Yield Loss ${DATE} Ptarget=${TARGETPWR}W"
+set title "JBay B0 Process Voltage Margin Yield Loss ${DATE} Ptarget=${CUSTMAXPWR}"
 set ylabel "yield loss/[1]"
 set xlabel "voltage margin/[V]"
 
