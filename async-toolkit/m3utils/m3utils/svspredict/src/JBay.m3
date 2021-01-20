@@ -60,6 +60,7 @@ PROCEDURE InterpolatePmro(READONLY specs : ARRAY Tech.Transistor OF PMRO.T;
 CONST
   Pmro79  = ARRAY Tech.Transistor OF CARDINAL { 463, 422, 338 };
   Pmro139 = ARRAY Tech.Transistor OF CARDINAL { 487, 429, 332 };
+  Pmro222 = ARRAY Tech.Transistor OF CARDINAL { 503, 454, 365 };
 
 PROCEDURE SetProgram79(VAR p     : Power.Params;
                        VAR Trunc : LONGREAL) =
@@ -473,5 +474,12 @@ PROCEDURE SetProgram139(VAR p                       : Power.Params;
   END SetProgram139;
 
 BEGIN
-  EvalActiveMinusIdle()
+  EvalActiveMinusIdle();
+
+  WITH sigma222 = InterpolatePmro(TechPmro.V, Pmro222),
+       speedSigma = sigma222[Tech.Transistor.Ulvt],
+       weightedSigma = WeightLkgSigma(sigma222) DO
+    Debug.Out(F("sigma222 = %s, weightedSigma = %s, speedSigma = %s",
+                DebugPmroSigma(sigma222), LR(weightedSigma), LR(speedSigma)))
+  END
 END JBay.
