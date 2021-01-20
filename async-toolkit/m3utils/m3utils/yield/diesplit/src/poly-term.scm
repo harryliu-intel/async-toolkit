@@ -14,6 +14,12 @@
 
 (define ^-term Polynomial.IntPow)
 
+(define (/-term n d)
+  (let ((div-result (Polynomial.LongDivide n d #f)))
+    (cdr (assoc 'quotient div-result))))
+
+(define scale-exponents Polynomial.ScaleExponents)
+
 (define (sum-term lo hi f)
   (let loop ((s (make-number-term 0))
              (i lo))
@@ -57,6 +63,16 @@
   )
 
 
-        
+(define x+1-term (+-term 1-term (make-power-term 1)))
+
+(define x+1^20-term (^-term x+1-term 20))
     
     
+(define p19 (^-term x+1-term 19))
+
+(define p20op1 (/-term x+1^20-term x+1-term))
+
+(Polynomial.DebugFmt (+-term (*-term p19 -1-term) p20op1)) ;; s.b. zero
+
+(if (not (Polynomial.ZeroP (+-term (*-term p19 -1-term) p20op1)))
+    (error "problem with the polynomial math system!"))

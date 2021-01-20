@@ -476,6 +476,8 @@ PROCEDURE EvalInternal(t   : T;
                be a Primitive either (with the current design of the interpreter) 
              *)
             RETURN t.eval(t.eval(First(args),env),env)
+          ELSIF fn = SYMcurrentEnvironment THEN
+            RETURN env
           ELSIF fn = SYMif THEN
             IF TruthO(t.eval(First(args), env)) THEN
               x := Second(args) 
@@ -771,6 +773,7 @@ VAR
   SYMarrow := SchemeSymbol.Symbol("=>");
   SYMrip := SchemeSymbol.Symbol("####r.i.p.-dead-cons-cell####");
   SYMunwindProtect := SchemeSymbol.Symbol("unwind-protect");
+  SYMcurrentEnvironment := SchemeSymbol.Symbol("current-environment");
 
 (* the following for testing Bindings in Closure building! *)
 

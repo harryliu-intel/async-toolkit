@@ -27,6 +27,7 @@ SchemeStubs ("Mpfr")
 SchemeStubs ("Polynomial")
 SchemeStubs ("SortedLongrealMpfrTbl")
 SchemeStubs ("LongrealMpfrTbl")
+SchemeStubs ("SchemeEnvironment")
 ExportSchemeStubs ("diesplit")
 importSchemeStubs()
 
