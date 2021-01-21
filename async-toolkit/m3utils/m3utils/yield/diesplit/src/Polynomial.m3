@@ -52,10 +52,12 @@ PROCEDURE MakeMono(c : Coefficient; x : Exponent) : T =
 PROCEDURE ScaleExponents(a : T; by : Exponent) : T =
   VAR
     res := NEW(T).init();
-    ai := a.iterate();
+    ai : Iterator;
     ax : Exponent;
     ac : Coefficient;
   BEGIN
+    <*ASSERT a # NIL*>
+    ai := a.iterate();
     WHILE ai.next(ax, ac) DO
       EVAL res.put(ax * by, ac)
     END;
@@ -73,13 +75,16 @@ PROCEDURE Plus(a, b : T) : T =
     
   VAR
     res := NEW(T).init();
-    ai  := a.iterateOrdered();
-    bi  := b.iterateOrdered();
+    ai, bi : Iterator;
     ha, hb := FALSE;
 
     ax, bx : Exponent; (* exponent    *)
     ac, bc : Coefficient;   (* coefficient *)
   BEGIN
+    <*ASSERT a # NIL*>
+    <*ASSERT b # NIL*>
+    ai  := a.iterateOrdered();
+    bi  := b.iterateOrdered();
     LOOP
       IF NOT ha AND ai # NIL THEN
         IF ai.next(ax, ac) THEN
@@ -142,10 +147,13 @@ PROCEDURE Times(a, b : T) : T =
     
   VAR
     res := NEW(T).init();
-    ai := a.iterate();
+    ai : Iterator;
     ax : Exponent;
     ac : Coefficient;
   BEGIN
+    <*ASSERT a # NIL*>
+    <*ASSERT b # NIL*>
+    ai := a.iterate();
     WHILE ai.next(ax, ac) DO
       VAR
         bi := b.iterate();
@@ -171,10 +179,12 @@ PROCEDURE ZeroTermD(a : T; exponent : Exponent) : T =
 
 PROCEDURE ZeroP(a : T) : BOOLEAN =
   VAR
-    ai := a.iterate();
+    ai : Iterator;
     ax : Exponent;
     ac : Coefficient;
   BEGIN
+    <*ASSERT a # NIL*>
+    ai := a.iterate();
     WHILE ai.next(ax, ac) DO
       IF NOT Mpfr.ZeroP(ac) THEN
         RETURN FALSE
@@ -186,11 +196,14 @@ PROCEDURE ZeroP(a : T) : BOOLEAN =
 PROCEDURE LongDivide(n, d : T; remOk : BOOLEAN) : DivResult
   RAISES { Remainder, DivisionByZero } =
   VAR
-    ni := n.iterateOrdered(up := FALSE);
-    di := d.iterateOrdered(up := FALSE);
+    ni, di : Iterator;
     nx, dx : Exponent;
     nc, dc : Coefficient;
   BEGIN
+    <*ASSERT n # NIL*>
+    <*ASSERT d # NIL*>
+    ni := n.iterateOrdered(up := FALSE);
+    di := d.iterateOrdered(up := FALSE);
     WITH gotIt = ni.next(nx, nc) DO
       IF NOT gotIt THEN RETURN DivResult { Zero, Zero } END
     END;

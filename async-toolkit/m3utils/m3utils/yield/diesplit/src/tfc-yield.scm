@@ -57,13 +57,9 @@
   (let ((ram-area          0)
         (redundant-area    0)
         (channel-area      0)
-        (nfactor          32
-                          ;;(- 34.25 3.25) ;;est N6
-                          )
         (channel-nfactor   9)
-        (d0              .07)
         (repaired-ram-k   .6);;.6 ;;area includes ram-area
-        (alpha           .05))
+        )
 
     (do-overrides! optional (current-environment)) ;; do CLisp style overrides
 
@@ -100,7 +96,7 @@
 
     (do-overrides! optional (current-environment)) ;; do CLisp style overrides
 
-    "yield improvements:
+  "yield improvements:
    Spare mac per quadrant
    Mark one cdm memory block bad in s/w (out of 192)
    Use spare bit in cdm for logic/wiring redundancy
@@ -112,8 +108,6 @@
    Left/right pipes, requires only one tm_core, half cdm functional.
   "
     (let*(
-          ;; helper func for scaling areas
-          
           ;;sram module areas
           (stm-unit-sram-area (* .0373830  .1264480))
           (ppu-unit-tcam-area (* .1292850  .0382200))
@@ -381,8 +375,8 @@
                                            ;;gpio-yield
                                            mac-channel-repaired-yield))
 
-          (half-yield       (modules-yield evenodd-yield tm-core-yield))
-          (halfchip-yield   (modules-yield half-yield half-yield))
+          (tohalf-yield       (modules-yield evenodd-yield tm-core-yield))
+          (halfchip-yield   (scale-area tohalf-yield 1/2))
           
           (either-lrhalf-yield  (modules-yield
                                  (redundant-yield halfchip-yield 2 1)
