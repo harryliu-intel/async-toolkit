@@ -206,6 +206,8 @@
 
 (compute-yield (tfc-model) build-yield)
 
+(if #f
+    (begin
 (mergesort
  (map (lambda(m)(Mpfr.GetLR m 'N))
       (map (lambda(x)(eval-yield x the-yield-model))
@@ -220,6 +222,7 @@
  (map (lambda(m)(Mpfr.GetLR m 'N))
       (map (lambda(x)(eval-yield x the-yield-model))
            (map cadr (compute-yield (eohalf-25t-model) build-yield)))) <)
+))
 
 (define tfc-tags (accumulate union '() (map car (compute-yield (tfc-model) build-yield))))
 
@@ -233,38 +236,36 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define tfc-results
-  (map (lambda(alt) (decorate-yield alt tfc-model the-yield-model))
+  (map (lambda(alt) (decorate-yield alt (tfc-model) the-yield-model))
        (compute-yield (tfc-model) build-yield)))
 
 (map sqmm-per-good-die
      (mergesort
-
       tfc-results
-      
       (lambda(a b) (< (cadr a) (cadr b)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define eohalf-results
-  (map (lambda(alt) (decorate-yield alt eohalf-25t-model the-yield-model))
+  (map (lambda(alt) (decorate-yield alt (eohalf-25t-model) the-yield-model))
        (compute-yield (eohalf-25t-model) build-yield)))
 
 (map sqmm-per-good-die
      (mergesort
-
       eohalf-results
-
       (lambda(a b) (< (cadr a) (cadr b)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define lrhalf-results
-  (map (lambda(alt) (decorate-yield alt lrhalf-25t-model the-yield-model))
+  (map (lambda(alt) (decorate-yield alt (lrhalf-25t-model) the-yield-model))
        (compute-yield (lrhalf-25t-model) build-yield)))
 
 (map sqmm-per-good-die
      (mergesort
-
       lrhalf-results
-
       (lambda(a b) (< (cadr a) (cadr b)))))
+
+(mergesort tfc-results (lambda(a b) (< (cadr a) (cadr b))))
+
+(load "reports.scm")

@@ -130,7 +130,7 @@
 
 (define (compute-yield struct f)
   (let ((key (car struct)))
-    (dis "doing " key dnl)
+    ;;(dis "doing " key dnl)
     (cond ((eq? '* key)
            (let ((nam (cadr struct))
                  (N (caddr struct))
@@ -169,9 +169,6 @@
 (define *cdr-model* #f)
 
 (define (compute-total-area model optional)
-  (set! *model* model)
-  (dis "model: " (stringify model) dnl)
-  
   (if (null? model)
       0
       (let ((key (car model)))
@@ -196,7 +193,6 @@
                      area)))
 
               ((and (symbol? key) (list? (cadr model)))
-               (set! *cdr-model* (cdr model))
                (apply + (map (lambda(s)(compute-total-area s optional))
                              (cdr model))))
 
@@ -269,7 +265,7 @@
   (let* ((config (car yr))
          (poly   (cadr yr))
          (latex  (Polynomial.LaTeXFmt poly))
-         (area   (compute-total-area (model) config))
+         (area   (compute-total-area model config))
          (y      (Mpfr.GetLR (eval-yield poly ym) 'N)))
     (cons area (cons y (cons latex yr)))))
         

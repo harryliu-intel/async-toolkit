@@ -312,7 +312,7 @@ PROCEDURE DebugFmt(a : T) : TEXT =
 PROCEDURE LaTeXFmt(a : T) : TEXT =
   VAR
     wx := Wx.New();
-    ai := a.iterateOrdered();
+    ai := a.iterateOrdered(up := FALSE);
     ax : Exponent;
     ac : Coefficient;
     signT : TEXT;
@@ -335,15 +335,16 @@ PROCEDURE LaTeXFmt(a : T) : TEXT =
     RETURN Wx.ToText(wx)
   END LaTeXFmt;
 
-
 BEGIN
-  M0 := Mpfr.New(DefPrec);
-  M1 := Mpfr.New(DefPrec);
+  M0  := Mpfr.New(DefPrec);
+  M1  := Mpfr.New(DefPrec);
   Mn1 := Mpfr.New(DefPrec);
+
   EVAL Mpfr.SetInt(M0, 0);
   EVAL Mpfr.SetInt(M1, 1);
   EVAL Mpfr.SetInt(Mn1, -1);
-  One := MakeConstant(M1);
-  Zero := MakeConstant(M0);
+  
+  One    := MakeConstant(M1);
+  Zero   := MakeConstant(M0);
   NegOne := MakeConstant(Mn1);
 END Polynomial.
