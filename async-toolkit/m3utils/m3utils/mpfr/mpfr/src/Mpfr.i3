@@ -27,6 +27,7 @@ PROCEDURE Swap(a, b : T);
 PROCEDURE Compare(a, b : T) : Ternary;
 
 PROCEDURE Format(v : T; base : PrintBase := 10; rnd := RM.N) : TEXT;
+PROCEDURE FormatInt(v : T; base : PrintBase := 10; rnd := RM.N) : TEXT;
 
 PROCEDURE NanP    (v : T) : BOOLEAN;
 PROCEDURE InfP    (v : T) : BOOLEAN;

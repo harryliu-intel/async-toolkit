@@ -83,6 +83,9 @@ CONST DefPrec = 200; (* default precision *)
 PROCEDURE DebugFmt(a : T) : TEXT;
   (* format a polynomial for debugging *)
   
+PROCEDURE LaTeXFmt(a : T) : TEXT;
+  (* format a polynomial for LaTeX *)
+  
 CONST Brand = "Polynomial";
 
 END Polynomial.

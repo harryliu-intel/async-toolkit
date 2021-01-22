@@ -13,7 +13,7 @@
     (do-overrides! optional (current-environment)) 
 
     (let* ((logic-area
-            (- area ram-area redundant-area channel-area))
+            (- area ram-area redundant-area channel-area serdes-area))
 
            (logic-yield
             (area-yield logic-area))
@@ -165,6 +165,44 @@
                         try
                         (loop (cdr p))))))))))
 
+(define *model* #f)
+(define *cdr-model* #f)
+
+(define (compute-total-area model optional)
+  (set! *model* model)
+  (dis "model: " (stringify model) dnl)
+  
+  (if (null? model)
+      0
+      (let ((key (car model)))
+        (cond ((eq? '* key)
+               (let ((nam (cadr model))
+                     (N (caddr model))
+                     (M (cadddr model))
+                     (sub (caddddr model))
+                     )
+                 (*
+                  (if (member nam optional) N M)
+                  (compute-total-area sub optional))))
+              
+              ((eq? 'scale key)
+               (* (cadr model) (compute-total-area (caddr model) optional)))
+
+              ((and (symbol? key) (number? (cadr model)))
+               (let ((area (cadr model)))
+                 (if (member key optional)
+                     (let ((rc (nth model (+ 1 (find 'repair-cost model)))))
+                       (* (+ 1 rc) area))
+                     area)))
+
+              ((and (symbol? key) (list? (cadr model)))
+               (set! *cdr-model* (cdr model))
+               (apply + (map (lambda(s)(compute-total-area s optional))
+                             (cdr model))))
+
+              (else (error "unknown spec " (stringify model)))))))
+              
+
 (define (make-downbin model spec)
   (let ((proto (model)))
     (cond ((null? spec) '())
@@ -208,7 +246,30 @@
   )
            
            
+(define (union a b)
+  (let loop ((p   a)
+             (res b))
+    (cond ((null? p) res)
+          ((member? (car p) b) (loop (cdr p) res))
+          (else (loop (cdr p) (cons (car p) res))))))
 
+(define (set-eq? a b)
+  (if (not (= (length a) (length b)))
+      #f
+      (let loop ((p a))
+        (cond ((null? p) #t)
+              (else (if (member? (car p) b)
+                        (loop (cdr p))
+                        #f))))))
+          
                    
                    
 
+(define (decorate-yield yr model ym)
+  (let* ((config (car yr))
+         (poly   (cadr yr))
+         (latex  (Polynomial.LaTeXFmt poly))
+         (area   (compute-total-area (model) config))
+         (y      (Mpfr.GetLR (eval-yield poly ym) 'N)))
+    (cons area (cons y (cons latex yr)))))
+        

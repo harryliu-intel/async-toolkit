@@ -1,7 +1,7 @@
 MODULE Polynomial;
 IMPORT SortedLongrealMpfrTbl AS LRMTbl;
 IMPORT Mpfr;
-FROM Fmt IMPORT F, LongReal;
+FROM Fmt IMPORT F, LongReal, Style;
 IMPORT Wx;
 
 CONST LR = LongReal;
@@ -275,6 +275,14 @@ PROCEDURE MpfrDiv(a, b : Coefficient) : Coefficient =
     RETURN res
   END MpfrDiv;
   
+PROCEDURE MpfrAbs(a : Coefficient) : Coefficient =
+  VAR
+    res := Mpfr.New(prec);
+  BEGIN
+    EVAL Mpfr.Abs(res, a);
+    RETURN res
+  END MpfrAbs;
+  
 PROCEDURE Iterate(a : T) : Iterator =
   BEGIN RETURN a.iterateOrdered() END Iterate;
 
@@ -300,6 +308,33 @@ PROCEDURE DebugFmt(a : T) : TEXT =
     Wx.PutText(wx, ")");
     RETURN Wx.ToText(wx)
   END DebugFmt;
+
+PROCEDURE LaTeXFmt(a : T) : TEXT =
+  VAR
+    wx := Wx.New();
+    ai := a.iterateOrdered();
+    ax : Exponent;
+    ac : Coefficient;
+    signT : TEXT;
+    first := TRUE;
+  BEGIN
+    WHILE ai.next(ax, ac) DO
+      IF Mpfr.Sign(ac) = -1 THEN
+        signT := "-"
+      ELSIF first THEN
+        signT := ""
+      ELSE
+        signT := "+"
+      END;
+      first := FALSE;
+      Wx.PutText(wx, F("%s %s \\, x ^ { %s } ",
+                       signT,
+                       Mpfr.FormatInt(MpfrAbs(ac)),
+                       LR(ax, style := Style.Fix, prec := 2)))
+    END;
+    RETURN Wx.ToText(wx)
+  END LaTeXFmt;
+
 
 BEGIN
   M0 := Mpfr.New(DefPrec);

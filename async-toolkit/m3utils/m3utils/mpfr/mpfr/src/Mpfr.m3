@@ -118,6 +118,45 @@ PROCEDURE Format(v : T; base : PrintBase := 10; rnd := RM.N) : TEXT =
     END
   END Format;
 
+PROCEDURE FormatInt(v : T; base : PrintBase := 10; rnd := RM.N) : TEXT =
+  VAR
+    prec :=  P.get_prec(L(v.val));
+    n := Ndigits(base, prec);
+    siz := n + 2;
+    buf := NEW(REF ARRAY OF CHAR, siz);
+    exp : P.Exp;
+    mlen : CARDINAL;
+    edit := TRUE;
+  BEGIN
+    WITH str = LOOPHOLE(ADR(buf[0]), char_star) DO
+      EVAL P.get_str(str, ADR(exp), base, siz, L(v.val), RM2C(rnd));
+
+      mlen := siz;
+      FOR i := FIRST(buf^) TO LAST(buf^) DO
+        IF buf[i] = '\000' THEN
+          mlen := i;
+          EXIT
+        END;
+        IF buf[i] = '@' THEN
+          edit := FALSE
+        END
+      END;
+
+      IF edit AND exp <= mlen - 1 THEN
+        IF buf[0] = '-' THEN
+          RETURN F("-%s",
+                   Text.FromChars(SUBARRAY(buf^, 1, exp)))
+        ELSE
+          RETURN F("%s",
+                   Text.FromChars(SUBARRAY(buf^, 0, exp)))
+        END
+      ELSE
+        RETURN Format(v, base, rnd) (* give up, use sci. not. *)
+      END;
+
+    END
+  END FormatInt;
+
 PROCEDURE I2B(int : INTEGER) : BOOLEAN =
   BEGIN RETURN int # 0 END I2B;
 
@@ -139,7 +178,18 @@ PROCEDURE RegularP(v : T) : BOOLEAN =
   (**********************************************************************)
   
 PROCEDURE Sign    (v : T) : Ternary =
-  BEGIN RETURN I2T(P.sgn(L(v.val))) END Sign;
+  BEGIN
+    WITH int = P.cmp_ui(L(v.val), 0),
+         res = I2T(int) DO
+      (*
+      Debug.Out(F("Mpfr.Sign(%s): int = %s ; res = %s",
+                  Format(v),
+                  Int(int),
+                  Int(res)));
+      *)
+      RETURN res
+    END
+  END Sign;
 
   (**********************************************************************)
 

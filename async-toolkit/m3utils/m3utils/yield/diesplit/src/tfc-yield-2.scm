@@ -66,7 +66,6 @@
 
           ;;serdes
           (serdes-area    (+ (* 32 3.7 1.5)(* 8 5 1.5)))
-          (serdes-kfactor   .8)
 
           ;;misc blocks
           (misc-areas   (+ 2.72         ;;host+sbc
@@ -187,7 +186,8 @@
 (define (lrhalf-25t-model)
   (make-downbin tfc-model
                 `(lrhalf-25t
-                  (* lr-spare 2 1 (lr-half (scale ,1/2 (to-lrhalf evenodd tm-core))))
+                  (* lr-spare 2 1
+                     (lr-half (scale ,1/2 (to-lrhalf evenodd tm-core))))
                   misc
                   gpio)
                 )
@@ -196,7 +196,8 @@
 (define (eohalf-25t-model)
   (make-downbin tfc-model
                 `(eohalf-25t
-                  (* eo-spare 2 1 (eo-half (scale ,1/2 (to-eohalf evenodd))))
+                  (* eo-spare 2 1
+                     (eo-half (scale ,1/2 (to-eohalf evenodd))))
                   tm-core
                   misc
                 gpio)
@@ -219,3 +220,51 @@
  (map (lambda(m)(Mpfr.GetLR m 'N))
       (map (lambda(x)(eval-yield x the-yield-model))
            (map cadr (compute-yield (eohalf-25t-model) build-yield)))) <)
+
+(define tfc-tags (accumulate union '() (map car (compute-yield (tfc-model) build-yield))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (sqmm-per-good-die r)
+  ;; how many sq mm do we have to fab to get a single good die out
+  (/ (car r) (cadr r)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define tfc-results
+  (map (lambda(alt) (decorate-yield alt tfc-model the-yield-model))
+       (compute-yield (tfc-model) build-yield)))
+
+(map sqmm-per-good-die
+     (mergesort
+
+      tfc-results
+      
+      (lambda(a b) (< (cadr a) (cadr b)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define eohalf-results
+  (map (lambda(alt) (decorate-yield alt eohalf-25t-model the-yield-model))
+       (compute-yield (eohalf-25t-model) build-yield)))
+
+(map sqmm-per-good-die
+     (mergesort
+
+      eohalf-results
+
+      (lambda(a b) (< (cadr a) (cadr b)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define lrhalf-results
+  (map (lambda(alt) (decorate-yield alt lrhalf-25t-model the-yield-model))
+       (compute-yield (lrhalf-25t-model) build-yield)))
+
+(map sqmm-per-good-die
+     (mergesort
+
+      lrhalf-results
+
+      (lambda(a b) (< (cadr a) (cadr b)))))
