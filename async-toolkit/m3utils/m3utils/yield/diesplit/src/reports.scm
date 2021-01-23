@@ -79,6 +79,26 @@
 
   )
 
+(define (do-report-single-downbin name top-bin down-bin)
+  (let* ((tyu (cadar top-bin))
+         (tyi (caddr top-bin))
+         (dyu (cadar down-bin))
+         (dyi (caddr down-bin))
+         (deltayu (- dyu tyu))
+         (deltayi (- dyi tyi))
+         )
+    (dis (Fmt.FN "%-30s : %6s% %6s% %6s% %6s%"
+                 (list name
+                       (fmt% dyu)
+                       (fmt% deltayu)
+                       (fmt% dyi)
+                       (fmt% deltayi)
+                       )
+                 )
+         dnl)
+        
+  )
+)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define line "----------------------------------------------------------------------------------------------------------------------")
@@ -91,6 +111,11 @@
 (define header2 (string-append
              "         SINGLE                    IMP      IMP     YIELD    IMP       IMP " dnl
              "       REDUNDANCY                 YIELD    MM^2    IMPROV   MM^2/GD   MM^2/GD " dnl 
+             line))
+
+(define header3 (string-append
+             "        DOWNBIN                   UNMP     UNIMP    IMP      IMP     " dnl
+             "                                  YIELD    DELTA   YIELD    DELTA  " dnl 
              line))
 
 (define (spaces n)
@@ -107,7 +132,7 @@
 (define (fmtC x) ;; format count
   (Fmt.LongReal x 'Fix 0 #f))
 
-(define (report-all-yields model yield-model title)
+(define (report-all-yields model yield-model title downbin-list)
 
   (dis dnl dnl title dnl header dnl)
   
@@ -198,6 +223,26 @@
              (loop (cdr p)))))
     )
   (dis line dnl)
+
+  ;; now do downbins
+  (let ((top-results (report-yield model yield-model)))
+    (dis line dnl header3 dnl )
+         
+    (do-report-single-downbin (stringify (car model))
+                              top-results
+                              top-results)
+    (let loop ((p downbin-list))
+      (if (null? p)
+          'ok
+          (begin
+            (do-report-single-downbin (stringify (caar p))
+                                      top-results
+                                      (report-yield (car p) yield-model))
+            (loop (cdr p)))
+          )
+      )
+    )
+  (dis line dnl)
   
   'ok
   )
@@ -221,15 +266,21 @@
                  (0.05 10000) 
                  ))
 
-(define (report-yields-for-params model params)
+(define (report-yields-for-params model params downbin-list)
   (let loop ((p params))
     (if (null? p)
         'ok
         (begin
           (report-all-yields model
                              (apply ym (car p))
-                             (string-append "==================================================   D:" (number->string (caar p)) " alpha:" (number->string (cadar p)) "  ================================================="))
+                             (string-append "==================================================   D:" (number->string (caar p)) " alpha:" (number->string (cadar p)) "  =================================================")
+                             downbin-list
+                             )
           (loop (cdr p))
           ))))
 
-(report-yields-for-params (tfc-model) params)
+(report-yields-for-params
+ (tfc-model)
+ params
+ (list (eohalf-25t-model) (lrhalf-25t-model))
+ )
