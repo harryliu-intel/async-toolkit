@@ -1,4 +1,4 @@
-(define (report-yield model yield-model)
+(define (compute-yield-results model yield-model)
   (let* ((yield-list (compute-yield model build-yield))
          (all-tags   (accumulate union
                                  '()
@@ -7,7 +7,13 @@
                       (map
                        (lambda(alt)(decorate-yield alt model yield-model))
                        yield-list)
-                      (lambda(a b) (< (cadr a) (cadr b)))))
+                      (lambda(a b) (< (cadr a) (cadr b))))))
+    results
+    ))
+         
+
+(define (report-yield model yield-model)
+  (let* ((results    (compute-yield-results model yield-model))
          (worst      (car results))
          (best       (nth results (- (length results) 1)))
          )
@@ -45,15 +51,47 @@
                        )
                  )
          dnl)
+    data
     )
+  )
+
+(define (do-report-single-red name all-reds this-red)
+  (let* ((ay (cadr all-reds))
+         (aa (car all-reds))
+         (ar (/ aa ay))  ;; fab area req'd
+         (ty (cadr this-red))
+         (ta (car this-red))
+         (tr (/ ta ty))
+         (yi (/ (- ay ty) ty))
+         (rd (/ (- tr ar) tr))
+         )
+    (dis (Fmt.FN "%-30s : %6s% %8s %7s% %8s %7s%"
+                 (list name
+                       (fmt% ty)
+                       (fmtA ta)
+                       (fmt% yi)
+                       (fmtA tr)
+                       (fmt% rd)
+                       )
+                 )
+         dnl)
+    )
+
   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define line "----------------------------------------------------------------------------------------------------------------------")
+
 (define header (string-append
-             "         BLOCK                    UNIMP    UNIMP   UNIMP     IMP       IMP    UNIMP   YIELD    FAB/GDIE  MULT     TOT " dnl
-             "         NAME                     YIELD    AREA   FAB/GDIE  YIELD     AREA  FAB/GDIE  IMPROV    DELTA             AREA" dnl 
-             "----------------------------------------------------------------------------------------------------------------------"))
+             "         BLOCK                    UNIMP    UNIMP    UNIMP    IMP       IMP     IMP     YIELD   MM^2/GD   MULT     TOT " dnl
+             "         NAME                     YIELD    MM^2    MM^2/GD  YIELD     MM^2   MM^2/GD   IMPROV   DELTA             MM^2" dnl 
+             line))
+
+(define header2 (string-append
+             "         SINGLE                    IMP      IMP     YIELD    IMP       IMP " dnl
+             "       REDUNDANCY                 YIELD    MM^2    IMPROV   MM^2/GD   MM^2/GD " dnl 
+             line))
 
 (define (spaces n)
   (let loop ((i n)
@@ -128,13 +166,39 @@
 
                  )
 
-
-
                 (else (error "unknown spec " (stringify model))))
           ))
+
    )
 
   (recurse model 0 1 1)
+  (dis line dnl)
+
+  ;; now do differential over base
+
+  (let* ((yield-results (compute-yield-results model yield-model))
+         (all-red-result (car (filter (lambda(r)(set-eq? (nth r 3) all-tags))
+                                     yield-results)))
+         )
+    (dis line dnl
+         header2 dnl)
+    (do-report-single-red "**all-repairs**" all-red-result all-red-result)
+                   
+    (let loop ((p all-tags))
+      (cond ((null? p) 'ok)
+            (else
+             (let* ((tags (set-diff all-tags (list (car p))))
+                    (result (car (filter (lambda(r)(set-eq? (nth r 3) tags))
+                                         yield-results))))
+
+               (do-report-single-red (string-append "-"(stringify (car p)))
+                                     all-red-result
+                                     result)
+               )
+             (loop (cdr p)))))
+    )
+  (dis line dnl)
+  
   'ok
   )
 

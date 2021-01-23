@@ -249,6 +249,13 @@
           ((member? (car p) b) (loop (cdr p) res))
           (else (loop (cdr p) (cons (car p) res))))))
 
+(define (set-diff a b)
+  (let loop ((p a)
+             (res '()))
+    (cond ((null? p) res)
+          ((member? (car p) b) (loop (cdr p) res))
+          (else (loop (cdr p) (cons (car p) res))))))
+
 (define (set-eq? a b)
   (if (not (= (length a) (length b)))
       #f
