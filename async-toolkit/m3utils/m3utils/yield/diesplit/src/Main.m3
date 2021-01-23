@@ -86,8 +86,8 @@ TYPE YieldModel = PROCEDURE(A, D0, n : LONGREAL) : LONGREAL;
      
 PROCEDURE N5Yield(ym : YieldModel; A : LONGREAL) : LONGREAL =
   CONST
-    D0 = 0.065d0;  (* 2024Q1 *)
-    n  = 32.00d0;  (* complexity factor for N5_1P15M *)
+    D0 =  0.065d0;  (* 2024Q1 *)
+    n  = 32.00d0;   (* complexity factor for N5_1P15M *)
   BEGIN
     RETURN ym(A, D0, n)
   END N5Yield;
@@ -98,6 +98,26 @@ CONST Reticle = 850.0d0; (* reticle size in sq mm *)
 PROCEDURE DoIt(wr : Wr.T) =
   CONST
     TFc = Chip { fixed       := 150.0d0,
+
+                 (* 
+                    Discuss w/ Helia 1/22/21
+
+                    fixed area comes from 
+                    32 12-lane SERDES per solution (3.7  x 1.5)
+                     8 16-lane SERDES per solution (4.9  x 1.5) 
+                     
+                     1  4-lane PCIe                (1.52 x 1)
+                 
+                     ====> Total 237.92 fixed area.
+
+                     D2D per solution is 70mm^2
+ 
+                     ====> split per die 35 mm^2
+
+                     SERDES 65% analog 35% logic
+
+                     PCIe 50/50 
+                 *)
                  variable    := 0.0d0, (* will be overwritten *)
                  splitPerDie := 30.0d0 };
   VAR
