@@ -1,0 +1,326 @@
+\documentclass{article}
+\usepackage{graphicx}
+\usepackage{epsf}
+
+\usepackage{floatflt}
+\usepackage{fancyhdr}
+\usepackage{array}
+\usepackage{amsmath}
+\usepackage{sectsty}
+\usepackage{breqn}
+%\allsectionsfont{\mdseries\sffamily}
+\allsectionsfont{\mdseries\sc}
+
+\usepackage{caption}
+\captionsetup{margin=2pc,font=small,labelfont=bf}
+
+\usepackage{tikz}
+\def\checkmark{\tikz\fill[scale=0.15](0,.35) -- (.25,0) -- (1,.7) -- (.25,.15) -- cycle;}
+\def\check#1{\overset{\checkmark}{#1}}
+
+%%%%%%%%%%%%%%Mika's figure macro%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\def\listcaption_ins_epsfig#1#2#3#4{
+  \begin{figure}[!tbph!]
+  \bigskip
+  \begin{center}
+  \includegraphics[width=#1]{#2}
+  \end{center}
+  \caption[#4]{#3}\label{fig:#2}
+  \bigskip
+  \end{figure}
+}
+
+\def\ins_epsfig#1#2#3{
+  \begin{figure}[!tbph!]
+  \bigskip
+  \begin{center}
+  \includegraphics[width=#1]{#2}
+  \end{center}
+  \caption{#3}\label{fig:#2}
+  \bigskip
+  \end{figure}
+}
+
+\def\rotins_epsfig_listcaption#1#2#3#4#5{
+  \begin{figure}[!tbph!]
+  \bigskip
+  \begin{center}
+  \includegraphics[angle=#4,width=#1]{#2}
+  \end{center}
+  \caption[#5]{#3}\label{fig:#2}
+  \bigskip
+  \end{figure}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\oddsidemargin=0.15in
+\evensidemargin=0.15in
+\topmargin=0.2in
+\textwidth=6.2truein
+
+
+\pagestyle{fancy}
+\lhead{\scriptsize\bfseries\sffamily DRAFT---INTEL CONFIDENTIAL---DRAFT}
+\chead{}\rhead{\thepage}
+\lfoot{}\cfoot{}\rfoot{}
+\renewcommand{\headrulewidth}{0pt}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\input{build/hash}
+
+\title{A Simple Yield-Improvement Example}
+\author{Mika Nystr\"om \\ {\tt mika.nystroem@intel.com}}
+
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\parindent=0pt
+\parskip=1.5ex
+
+\arraycolsep=1.4pt\def\arraystretch{1.5}
+
+\section{Example}
+
+Dr.~Arch~I.~Tect has just started working at Smarty Computer Corporation
+and has been asked to do the high-level design of a large chip.  Arch
+has decided on an architecture consisting of 800 (eight hundred) blocks
+each one square millimeter (mm$^2$) in size.
+
+Assume the process technology has a $D_0$ of 0.10(/in$^2$) in the limit of
+small chip sizes, with a layer complexity $n=30$ and it has been noted
+that the fabrication yield follows a Stapper-P\'olya-Eggenberger model with
+$\alpha=0.02$.  Further assume that defect clusters are large relative to
+the objects being fabricated.
+
+(a) Using Stapper's model, what is the expected yield of the 800-mm$^2$ die?
+
+(b) Arch's boss, Fred I.~Nance, asks him to ``do something'' to
+improve the yield of the die, as he finds the answer to (a) too low.
+Arch decides that one way to help Mr.~F.~I.~Nance is to add redundancy
+to the design.  Arch ponders the question for a while and decides that
+he can add a 801st redundant block at no cost except the added silicon
+area plus of course a 10-week program slip and 10 man-weeks of RTL
+design, 30 man-weeks of DV work, and 40 man-weeks of extra meetings at all
+levels of the organization.
+
+(i) What is the expected yield of Arch's new design?  What is the yield improvement $I_Y$ of the design, defined as
+\begin{equation}
+  I_Y = {Y_n - Y_o \over Y_o}
+\end{equation}
+where $Y_o$ and $Y_n$ are the old and new yields, respectively?
+
+(ii) Assuming a projected production run of 1 million units and a cost
+of \$200 per man-hour, \$1 per mm$^2$ of silicon area, and \$1 million
+per week of program slip, does Arch's idea pan out in the end?
+
+
+\section{Solutions}
+
+\subsection{Base yield}
+(a) Using Stapper's model, what is the expected yield of the 800-mm$^2$ die?
+
+This is easy to answer.  Assume we have coded Stapper's model, all we need to
+do is call it:
+
+\begin{verbatim}
+(define (stapper A)
+  (YieldModel.Stapper A simple-D0 simple-n simple-alpha))
+
+> (stapper 800)
+0.3059144935419878
+\end{verbatim}
+So the expected yield is around 30.6\% for the design without any redundancy.
+
+\subsection{Improved yield}
+(b)(i) What is the expected yield of Arch's new design?
+
+This gets much hairier.
+
+\subsubsection{Direct binomial calculation}
+
+The standard method is to use the binomial formula.  If the system has 801 blocks and 800 need to work, we can compute
+\begin{equation}\label{eq:simple}
+  P(x \ge \text{800 work}) = P(\text{exactly 801 work}) + P(\text{exactly 800 work})
+\end{equation}
+where we are allowed to add the probabilities because the two events on the R.H.S. are mutually exclusive.  But what is the probability that exactly $M$ out of $N$ blocks work?  Well, the probability that any one block works is simply the yield function applied to a single block.  Let's call this $x$ for short.
+\begin{equation}
+  x = Y(1)
+\end{equation}
+And then we can assume that the blocks are independent and arrive at the
+terms of~(\ref{eq:simple}):
+\begin{equation}
+  P(\text{exactly 801 work}) = x^{801}
+\end{equation}
+and
+\begin{equation}
+  P(\text{exactly 800 work}) = {801 \choose 800 }x^{800}(1-x)^{1}
+\end{equation}
+Let's try it!
+\begin{verbatim}
+  (define x (stapper 1))
+  (define P801 (expt x 801))
+  (define P800 (* (choose 801 800) (expt x 800)(expt (- 1 x) 1)))
+  (define Y801 (+ P801 P800))
+\end{verbatim}
+after which \verb!Y801! is exactly the value of (\ref{eq:simple}).
+\begin{verbatim}
+> x
+0.9953786285137391
+> P801
+0.024470217500740937
+> P800
+0.0910024142643028
+> Y801
+0.11547263176504374
+\end{verbatim}
+Ok, so the yield at 801 blocks is very small, only 2.4\%, and it is greatly helped by adding the new redundant block, and brought up to 11.5\%.
+
+We define the yield-improvement function
+\begin{verbatim}
+  (define (improvement from to) (/ (- to from) from))
+\end{verbatim}
+and we could call it on \verb!Y801! and \verb!P801! above:
+\begin{verbatim}
+> (improvement P801 Y801)
+3.718905002031442
+\end{verbatim}
+i.e., a 371.8\% yield improvement from adding the redundancy.
+
+But hold on here!  The improved yield is 11.5\% but it really should
+be compared to the original 800-mm$^2$ yield, which we calculated as
+30.6\%!  So the improved yield from the binomial calculation is {\em
+  worse\/} than the unimproved yield.  What did we do wrong?
+
+It's pretty obvious what we did wrong.  We used the Stapper formula
+for a small area (1~mm$^2$) and compared it to using the Stapper
+formula for a large area (800~mm$^2$), and that seems wrong.  We can remedy
+the situation by using the Stapper formula for only 1~mm$^2$, and the correct
+answer would then be to compare the yield of 800~mm$^2$ of silicon without
+redundancy to 801~mm$^2$ with redundancy.
+\begin{verbatim}
+  (define Y800 (expt x 800))
+  (define YI801 (improvement Y800 Y801))
+\end{verbatim}
+Evaluating:
+\begin{verbatim}
+> Y800
+0.024583828504816222
+> YI801
+3.6970971890086806
+\end{verbatim}
+which shows a slightly higher yield (as expected) at 800~mm$^2$ than at 801~mm$^2$ and a slightly smaller improvement, but of course not significantly different, at 370\% y.i.
+
+So far we can see that using the Stapper formula at 1~mm$^2$ and plugging into the binomial formula gives us very wrong actual yields, but maybe at least the
+yield improvement figures are OK?
+
+\subsubsection{Indirect calculation using Poisson statistics}
+It's been observed by many practitioners that the use of the binomial formula
+is really only sound if it is true that
+\begin{equation}
+  Y(a+b) = Y(a) Y(b)\quad .
+\end{equation}
+To see why consider the case when we require $N$ out of $N$ blocks to be
+functional, then the binomial formula demands that $Y(NA) = Y(A)^N$.
+
+So let's flog the Poisson distribution into service---this method is widely uesd
+in industry (including at Intel) when the departure of using non-Poisson statistics from reality becomes too much to stomach.
+
+Let's figure out the answer to the following question: At what defect density $D$ will a Poisson yield formula give the same yield at $A=801$~mm$^2$ as the Stapper formula we started with?  We will numerically solve this problem.
+\begin{verbatim}
+  (define (compute-equivalent-poisson-d at-area stapper-D0 stapper-alpha n)
+    (define (error-func D)
+      (- (YieldModel.Poisson at-area D n)
+         (YieldModel.Stapper at-area stapper-D0 n stapper-alpha)))
+    (solve error-func 0 stapper-D0))
+
+  (define equiv-poisson-D
+    (compute-equivalent-poisson-d 801 simple-D0 simple-alpha simple-n))
+
+  (define (poisson A)
+    (YieldModel.Poisson A equiv-poisson-D simple-n))
+
+  (define y (poisson 1))
+\end{verbatim}
+where we let $y$ take the same r\^ole as we had for $x$ above.  (The
+\verb!solve! function is some fancy function-solver, doesn't matter
+what.  We used a van~Wijngaarden-Dekker-Brent solver from Numerical Recipes, essentially the
+secant method familiar from high school math classes.) We can now
+repeat all the same calculations using the implied Poisson $D$:
+\begin{verbatim}
+  (define Q801 (expt y 801))
+  (define Q800 (* (choose 801 800) (expt y 800) (expt (- 1 y) 1)))
+
+  (define Z800 (expt y 800))
+  (define Z801 (+ Q801 Q800))
+
+  (define ZI801 (improvement Z800 Z801))
+\end{verbatim}
+What do we get out of this?
+\begin{verbatim}
+> equiv-poisson-D
+0.031817559523680976
+> Q801
+0.30571710411722924
+> Q800
+0.3625719924016353
+> Z800
+0.3061697532962575
+> Z801
+0.6682890965188646
+> ZI801
+1.1827404220174922
+\end{verbatim}
+So here we see that \verb!Z800! is almost exactly the same as \verb!(stapper 800)!---not a surprise since we know that $D$ was chosen to make the Stapper and Poisson values the same at $A=801$~mm$^2$.  The implied $D$ is 0.0318, about one third of the actual process $D_0$, but we don't care about that.  What's interesting is the yield improvement.  It has dropped from 370\% using the nonsensical approach of mixing the binomial formula with the Stapper yield function to a probably more reasonable 118\%.
+
+\subsubsection{Direct calculation not assuming independence}
+As shown elsewhere\cite{note}, the right answer to the question, ``What is the yield of the system Arch~I.~Tect has built?'' is in fact
+\begin{equation}
+  Y_{801} = 801 \, Y(800) - 800 \, Y(801)
+\end{equation}
+and the yield improvement is
+\begin{equation}
+  I_{801} = { 801 \, Y(800) - 800 \, Y(801) - Y(800) \over Y(800) }
+        =  800 { Y(800) - Y(801) \over Y(800) }
+\end{equation}
+so we define and evaluate these
+\begin{verbatim}
+  (define Ys800 (stapper 800))
+  (define Ys801 (- (* 801 (stapper 800)) (* 800 (stapper 801))))
+  (define YsI801 (improvement Ys800 Ys801))
+\end{verbatim}
+Evaluating:
+\begin{verbatim}
+> Ys800
+0.3059144935419878
+> Ys801
+0.4638343822542197
+> YsI801
+0.5162223171703267
+\end{verbatim}
+I.e., a yield improvement of 51.6\%.  This answer is correct under the assumptions we have made.
+
+\subsubsection{Summary of approaches}
+What have we learned here?  Applying a formula for yield well outside
+of the domain where it makes sense (i.e., applying a formula derived
+for chip yield on a small subsection of a chip) gives a very large
+error (off about 6$\times$ for our example).  By massaging the math so that we do the math soundly, using a Poisson
+distribution tuned to have the same full-chip yield, we mitigate the situation
+somewhat.  But even here, we overestimate the yield improvement dramatically (about 2$\times$ for our example).  The only reasonable way of getting a
+reliable answer appears to be to consider the non-independence of the underlying distributions implied by the Stapper $\alpha$.  It is also important to realize
+that we do not have any formulas that characterize the probable error when using
+the various other methods.  It is obvious that their errors increase as $\alpha$ decreases but how much and under what conditions  we do not know.
+
+{\em The conclusion is that calculations using Poisson assumptions and that
+advertise some certain large yield improvement from adding redundancy to
+large chips need to be taken with an equally large grain of salt.}
+
+The last subsection of the problem is left as an exercise for the reader.
+
+\begin{thebibliography}{99}
+
+\bibitem{note} M.~Nystr\"om.  {\it A Note on Hardware Redundancy Under Non-Independent Yield Models.}  In preparation.  Santa Clara, Calif.:\ Barefoot Switching Division, Intel Corp., 2021.
+\end{thebibliography}
+
+\end{document}
