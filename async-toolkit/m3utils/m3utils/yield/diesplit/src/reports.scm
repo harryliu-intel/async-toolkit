@@ -266,6 +266,8 @@
                  (0.05 10000) 
                  ))
 
+(define basic-params '((0.05 1) (0.075 0.05)))
+
 (define (report-yields-for-params model params downbin-list)
   (let loop ((p params))
     (if (null? p)
@@ -281,6 +283,9 @@
 
 (report-yields-for-params
  (tfc-model)
- params
+
+ basic-params  ;; short list of techs
+;params        ;; long list of techs
+ 
  (list (eohalf-25t-model) (lrhalf-25t-model))
  )

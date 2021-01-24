@@ -268,4 +268,22 @@
 
 (mergesort tfc-results (lambda(a b) (< (cadr a) (cadr b))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;;     TWO-DIE TFc spec
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (tfc-twodie-model)
+  (let ((split-overhead-per-die 35))
+    (make-downbin tfc-model
+                  `(tfc-twodie (half-onedie (scale ,1/2 tfc))
+                               (d2d ,split-overhead-per-die
+                                    serdes-area ,split-overhead-per-die)
+                               )
+                  )
+    )
+  )
+
+
 (load "reports.scm")
