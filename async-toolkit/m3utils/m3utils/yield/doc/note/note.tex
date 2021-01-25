@@ -152,9 +152,10 @@ We shall derive expressions for the system yield in terms of process
 yield that do not depend on the assumption of independence by two
 methods: first by direct computation, and then by showing how we can
 derive the same equations by a formal argument starting from the
-binomial yields, assuming independent subsystem yields.  It will be shown that the yield expressions even for
-non-Poisson underlying distributions are quite simple in practice.  In
-an appendix, we provide a short Scheme program for computing the
+binomially computed yields, assuming independent subsystem yields.  It
+will be shown that the yield expressions even for non-Poisson
+underlying distributions are quite simple in practice.  In an
+appendix, we provide a short Scheme program for computing the
 necessary formulas.
 
 
@@ -648,7 +649,7 @@ where we use modern nomenclature $D_0$ for the per-layer defect
 density and $n$ for the number of effective process layers.
 
 The significance of our calculations above now becomes clear.  Modern
-semiconductor processes do not follow Poisson statistics, instead
+semiconductor processes do not follow Poisson statistics: instead
 their behavior is more closely modeled by the
 Stapper-P\'olya-Eggenberger yield formula (\ref{eq:stapperyield}) with
 $\alpha \ll 1$ to model the clustering of defects that occurs in
@@ -931,7 +932,7 @@ Y
 \end{verbatim}
 which means that given the provided model, Stapper's formula with $D_0=0.10$, $n=30$, $\alpha=0.02$, the yield of the module is expected to be about 70.9\%.
 
-\subsection{Extended example}
+\subsection{Extended example}\label{sec:extended-example}
 
  The HAL9000 multiprocessor consists of 10 individual HAL1000
  processors, one of which is spare (i.e., 9 are needed for correct
@@ -976,7 +977,7 @@ and for \verb!HAL9000-yield!:
    (t -31381059609 560) (t -61152952320 542) (t 160526499840 538)  )
 \end{verbatim}
 or in infix terms,
-\begin{dmath}
+\begin{dmath}\label{eq:huge-eq}
 -9663676416 \, x^{600} + 108716359680 \, x^{596} + -550376570880 \, x^{592} + 1651129712640 \, x^{588} + -3250661621760 \, x^{584} + 4388393189376 \, x^{580} + -4114118615040 \, x^{576} + 2644790538240 \, x^{572} + -1115771008320 \, x^{568} + 278942752080 \, x^{564} + -31381059609 \, x^{560} + -1342177280 \, x^{550} + 13589544960 \, x^{546} + -61152952320 \, x^{542} + 160526499840 \, x^{538} + -270888468480 \, x^{534} + 304749527040 \, x^{530} + -228562145280 \, x^{526} + 110199605760 \, x^{522} + -30993639120 \, x^{518} + 3874204890 \, x^{514}
 \end{dmath}
 
@@ -993,8 +994,71 @@ Finally, we can evaluate the expected yield of the HAL9000 multiprocessor chip:
 0.641571044921875
 \end{verbatim}
 
+\subsection{Discussion of numerical issues}\label{sec:math-limitations}
+We will make some technical observations regarding the discussion in section~\ref{sec:extended-example} above:
+\begin{enumerate}
+\item The yield calculator, which properly incorporates the non-independence of the statistical distributions, is a conceptually simple program and can be used to solve yield-estimation problems of practical scale.
+
+\item The yield calculator operates in polynomials whose number of terms grows exponentially in the size of the input program.
+
+\item The coefficients of the polynomials also increase exponentially in the size of the input program, as well as a function of the parameters of the input program.
+  
+\end{enumerate}
+The fact that the polynomials grows exponentially is unfortunate.
+This means that a theory of yield that can be applied at every level
+of a design (e.g., applied to the individual elements of an SRAM
+block) appears to be out of reach for now, and the theory we have developed
+seems to be limited to the kind of high-level block-by-block inventory that
+we have been examining here.  In fairness, we did not set out to achieve
+a ``yield theory of everything'' so we may still consider our work to be
+successful.
+
+The final observation, about the coefficients of the polynomials, leads to a
+few technical consequences that implementors must stay aware of to use
+our theory effectively.
+
+\subsubsection{High precision arithmetic is necessary}
+Taking the coefficients of~(\ref{eq:huge-eq}) together with the
+properties described in section~\ref{sec:props}, it is clear that the
+computations of the resulting system yield must be performed to
+potentially extremely high precision.  Since the yield function $Y(A)$
+is itself a real-valued function, even potentially transcendental in
+character, this means we must implement high-precision floating-point
+artithmetic in order to get reliable answers.  Our production version
+of the system described here uses the GNU MPFR (Multiple Precision
+Floating-Point Reliable Library) developed at INRIA\cite{mpfr,mpfr-2}.  Our
+system uses the C version of the MPFR library and exports it to our
+Scheme environment through Modula-3 interfaces~\cite{spwm3}; the
+polynomial calculator is implemented in Modula-3 using the SRC generic
+table code provided with the Modula-3 system.
+
+We are currently applying the yield calculator described here to the
+next-generation products in the Intel Barefoot Division portfolio: these
+are full-reticle chips with large amounts of redundancy incorporated, and
+manufactured in cutting-edge fabrication technologies.
+
+\subsubsection{Restriction in the form of the yield function $Y(A)$}
+The large coefficients in the polynomials used for the intermediate
+expression of the yield formulas necessitates that $Y(A)$ is somehow
+well-behaved as a function.  See appendix~\ref{app:yieldrestrictions}
+for some related observations.  A small error in $Y(A)$ taken together
+with the large coefficients in the polynomial can lead to completely
+nonsensical answers.  Currently, the only way we know to ensure that
+the answers are meaningful is to make sure that $Y(A)$ is a result of
+applying Murphy's integral in (\ref{eq:murphy}).  Many forms of $Y$
+fit this bill: Poisson, Bose-Einstein, and Stapper formulas all
+qualify.  What however does {\em not\/} qualify is some ``hack''
+version of these formulas with further functional dependences (e.g.,
+an arbitrary dependence of $D$ on $A$) unless such forms can be shown
+to derive from an application of (\ref{eq:murphy}).  Our
+recommendation in such cases (e.g., when a foundry publishes their
+yield function in a non-Murphy form) is to fit Stapper's formula to
+whatever form the foundry publishes and use the fitted Stapper formula
+from then on out.
+
 \section{Complete listing of hierarchical yield computer}\label{app:codecomplete}
-Here we give the detailed implementation that was elided in appendix~\ref{app:hierarchical}.
+Here we give the detailed implementation that was elided in appendix~\ref{app:hierarchical}.  This is an experimental version of the yield calculator in Scheme, which does not take into account the observations of section~\ref{sec:math-limitations}.  It is given here as a reference for practitioners interested in
+implementing their own version of the given system.
 
 We begin by defining a few useful constants
 \begin{verbatim}
@@ -1080,14 +1144,14 @@ We end by developing a summation operator within the framework.
 \end{verbatim}
 With these definitions, the framework is complete.
 
-\section{Restrictions on the yield function {\sl Y}}\label{ref:yieldrestrictions}
+\section{Restrictions on the yield function $Y(A)$}\label{app:yieldrestrictions}
 
 The statement that the yield $Y(A)$ is a function of a single real
 parameter $A$ and is non-increasing, together with the way that this function
 is used in section~\ref{sec:general} leads to some important restrictions
 on $Y$.
 
-Let's make a small thought experiment.  Three identical submodules $A$, $B$,
+Let's perform a small thought experiment.  Three identical submodules $A$, $B$,
 $C$, each of area 1, are manufactured somewhere on a wafer and
 observed by the four Greek observers $\beta$, $\gamma$, $\delta$,
 $\epsilon$.  The four observers are, however, confused as to what
@@ -1170,7 +1234,16 @@ We're actively trying to generalize these formulas.  (Work in progress.)
 \bibitem{polya1923}F.~Eggenberger and G.~P\'olya. \"Uber die Statistik verketteter Vorg\"ange. {\it Z. Angew. Math. Mech.}, ({\bf 3}), pp.~279--289, 1923.
 
 \bibitem{stanford}A.~W.~Marshall and I.~Olkin.  {\it Bivariate Distributions Generated from P\'olya-Eggenberger Urn Models.}  Technical report no.~262, Department of Statistics, Stanford University.  Stanford:\ October 1989.
-  
+
+\bibitem{mpfr}L.~Fousse, G.~Hanrot, V.~Lef\`evre, P.~P\'elissier,
+  and P.~Zimmermann. MPFR: A multiple-precision binary floating-point
+  library with correct rounding. {\it ACM Transactions on Mathematical
+    Software.} 33~({\bf 2}), June 2007, pp.~1--15.
+
+\bibitem{mpfr-2} P.~Zimmermann.  MPFR:~vers un calcul flottant correct?  {\it Interstices}, August 2005.
+
+\bibitem{spwm3}{G.~Nelson, ed.  {\it Systems Programming with Modula-3.} Englewood Cliffs, N.J.:\ Prentice Hall, 1991.}
+
 \end{thebibliography}
 
 
