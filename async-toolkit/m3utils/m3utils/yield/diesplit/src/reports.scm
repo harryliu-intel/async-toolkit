@@ -26,7 +26,7 @@
          name model lev min-scale max-scale all-tags yield-model)
   (let ((data (report-yield model yield-model)))
     ;;    (dis  "--- do-report-yield data " name " " lev " " (stringify data) dnl)
-    (dis (Fmt.FN "%-30s : %6s% %8s %8s %6s% %8s %8s %7s% %7s% %6s %8s"
+    (dis (Fmt.FN "%-30s : %6s% %8s %8s %6s% %8s %8s %7s% %7s% %9s %8s"
                  (let* ((uy (cadar data))
                         (ua (caar data))
                         (ur (/ ua uy)) ;; reqd fab area
@@ -101,11 +101,11 @@
 )
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define line "----------------------------------------------------------------------------------------------------------------------")
+(define line "-------------------------------------------------------------------------------------------------------------------------")
 
 (define header (string-append
-             "         BLOCK                    UNIMP    UNIMP    UNIMP    IMP       IMP     IMP     YIELD   MM^2/GD   MULT     TOT " dnl
-             "         NAME                     YIELD    MM^2    MM^2/GD  YIELD     MM^2   MM^2/GD   IMPROV   DELTA             MM^2" dnl 
+             "         BLOCK                    UNIMP    UNIMP    UNIMP    IMP       IMP     IMP     YIELD   MM^2/GD     MULT      TOT " dnl
+             "         NAME                     YIELD    MM^2    MM^2/GD  YIELD     MM^2   MM^2/GD   IMPROV   DELTA                MM^2" dnl 
              line))
 
 (define header2 (string-append
@@ -130,7 +130,7 @@
   (Fmt.LongReal x 'Fix 2 #f))
 
 (define (fmtC x) ;; format count
-  (Fmt.LongReal x 'Fix 0 #f))
+  (FmtFrac.Frac x 10))
 
 (define (report-all-yields model yield-model title downbin-list)
 
@@ -275,7 +275,7 @@
         (begin
           (report-all-yields model
                              (apply ym (car p))
-                             (string-append "==================================================   D:" (number->string (caar p)) " alpha:" (number->string (cadar p)) "  =================================================")
+                             (string-append "====================================================  D:" (number->string (caar p)) " alpha:" (number->string (cadar p)) "  ===================================================")
                              downbin-list
                              )
           (loop (cdr p))
@@ -288,4 +288,13 @@
 ;params        ;; long list of techs
  
  (list (eohalf-25t-model) (lrhalf-25t-model))
+ )
+
+(report-yields-for-params
+ (tfc-twodie-model)
+
+ basic-params  ;; short list of techs
+;params        ;; long list of techs
+ 
+ ()
  )

@@ -20,6 +20,8 @@ Sorted_table("LongrealMpfr", "LongReal", "Mpfr")
 
 Module ("Polynomial")
 
+Module ("FmtFrac")
+
 SchemeStubs ("YieldModel")
 SchemeStubs ("Math")
 SchemeStubs ("Wr")
@@ -32,6 +34,7 @@ SchemeStubs ("SchemeEnvironment")
 SchemeStubs ("Fmt")
 SchemeStubs ("LRFunction")
 SchemeStubs ("Solve")
+SchemeStubs ("FmtFrac")
 
 ExportSchemeStubs ("diesplit")
 importSchemeStubs()
