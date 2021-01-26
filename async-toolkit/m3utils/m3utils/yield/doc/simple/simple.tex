@@ -90,9 +90,14 @@ each one square millimeter (mm$^2$) in size.
 
 Assume the process technology has a $D_0$ of 0.10(/in$^2$) in the limit of
 small chip sizes, with a layer complexity $n=30$ and it has been noted
-that the fabrication yield follows a Stapper-P\'olya-Eggenberger model with
+that the fabrication yield follows a Stapper-P\'olya-Eggenberger model
+as follows
+\begin{equation}
+  Y(A) = \left(1 + {A D_0 \over \alpha}\right)^{-n \alpha}
+\end{equation}
+with
 $\alpha=0.02$.  Further assume that defect clusters are large relative to
-the objects being fabricated.
+the objects being fabricated.  
 
 (a) Using Stapper's model, what is the expected yield of the 800-mm$^2$ die?
 
@@ -224,7 +229,7 @@ is really only sound if it is true that
 To see why consider the case when we require $N$ out of $N$ blocks to be
 functional, then the binomial formula demands that $Y(NA) = Y(A)^N$.
 
-So let's flog the Poisson distribution into service---this method is widely uesd
+So let's flog the Poisson distribution into service---this method is widely used
 in industry (including at Intel) when the departure of using non-Poisson statistics from reality becomes too much to stomach.
 
 Let's figure out the answer to the following question: At what defect density $D$ will a Poisson yield formula give the same yield at $A=801$~mm$^2$ as the Stapper formula we started with?  We will numerically solve this problem.
