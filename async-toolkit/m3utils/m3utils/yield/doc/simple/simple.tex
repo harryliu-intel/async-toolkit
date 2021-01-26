@@ -224,7 +224,7 @@ is really only sound if it is true that
 To see why consider the case when we require $N$ out of $N$ blocks to be
 functional, then the binomial formula demands that $Y(NA) = Y(A)^N$.
 
-So let's flog the Poisson distribution into service---this method is widely uesd
+So let's flog the Poisson distribution into service---this method is widely used
 in industry (including at Intel) when the departure of using non-Poisson statistics from reality becomes too much to stomach.
 
 Let's figure out the answer to the following question: At what defect density $D$ will a Poisson yield formula give the same yield at $A=801$~mm$^2$ as the Stapper formula we started with?  We will numerically solve this problem.
@@ -277,11 +277,11 @@ So here we see that \verb!Z800! is almost exactly the same as \verb!(stapper 800
 \subsubsection{Direct calculation not assuming independence}
 As shown elsewhere\cite{note}, the right answer to the question, ``What is the yield of the system Arch~I.~Tect has built?'' is in fact
 \begin{equation}
-  Y_{801} = 801 \, Y(800) - 800 \, Y(801)
+  Y_{800/801} = 801 \, Y(800) - 800 \, Y(801)
 \end{equation}
 and the yield improvement is
 \begin{equation}
-  I_{801} = { 801 \, Y(800) - 800 \, Y(801) - Y(800) \over Y(800) }
+  I_{800/801} = { 801 \, Y(800) - 800 \, Y(801) - Y(800) \over Y(800) }
         =  800 { Y(800) - Y(801) \over Y(800) }
 \end{equation}
 so we define and evaluate these
