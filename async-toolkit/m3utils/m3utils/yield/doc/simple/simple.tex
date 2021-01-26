@@ -90,9 +90,14 @@ each one square millimeter (mm$^2$) in size.
 
 Assume the process technology has a $D_0$ of 0.10(/in$^2$) in the limit of
 small chip sizes, with a layer complexity $n=30$ and it has been noted
-that the fabrication yield follows a Stapper-P\'olya-Eggenberger model with
+that the fabrication yield follows a Stapper-P\'olya-Eggenberger model
+as follows
+\begin{equation}
+  Y(A) = \left(1 + {A D_0 \over \alpha}\right)^{-n \alpha}
+\end{equation}
+with
 $\alpha=0.02$.  Further assume that defect clusters are large relative to
-the objects being fabricated.
+the objects being fabricated.  
 
 (a) Using Stapper's model, what is the expected yield of the 800-mm$^2$ die?
 
@@ -246,7 +251,7 @@ Let's figure out the answer to the following question: At what defect density $D
 where we let $y$ take the same r\^ole as we had for $x$ above.  (The
 \verb!solve! function is some fancy function-solver, doesn't matter
 what.  We used a van~Wijngaarden-Dekker-Brent solver from Numerical Recipes, essentially the
-secant method familiar from high school math classes.) We can now
+secant method familiar from high school math classes.  Yes we could use logarithms to invert the Poisson formula, also.)  We can now
 repeat all the same calculations using the implied Poisson $D$:
 \begin{verbatim}
   (define Q801 (expt y 801))
