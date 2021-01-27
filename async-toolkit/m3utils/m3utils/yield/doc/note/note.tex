@@ -346,10 +346,10 @@ Accordingly we may write the equations for the minterm probabilities:
   %\end{equation}
   Solving for the $\pi_\tau$ we have
   \begin{equation}\begin{aligned}
-      \pi_{11} &&=& Y(3) \\
-      \pi_{01} &= Y(2) - \pi_{11} &=& Y(2) - Y(3) \\
-      \pi_{10} &= Y(1) - \pi_{11} &=& Y(1) - Y(3) \\
-      \pi_{00} & = Y(0) - \pi_{01} - \pi_{10} - \pi_{11} &=& Y(0) - Y(1) - Y(2) + Y(3) \quad ,\\
+      \pi_{11} &&=                                      \,& Y(3) \\
+      \pi_{01} &= Y(2) - \pi_{11} &=                     \,& Y(2) - Y(3) \\
+      \pi_{10} &= Y(1) - \pi_{11} &=                     \,& Y(1) - Y(3) \\
+      \pi_{00} & = Y(0) - \pi_{01} - \pi_{10} - \pi_{11} &=\,& Y(0) - Y(1) - Y(2) + Y(3) \quad ,\\
 \end{aligned}\end{equation}
   where it is clear that the system of equations can be put in upper triangular form.  (Note also that $Y(0) = 1$ by definition.)
 
@@ -423,13 +423,18 @@ and drop the $\pi_\tau$ from further consideration.  Continuing the argument of 
     \Pi_{k-1}  &=& Y((k-1) A_u) - \left( \sum_{j=k}^{N} {N-k+1 \choose N-j} \Pi_j \right) \quad .
     \label{eq:recurrence}
 \end{aligned}\end{equation}
-Continuing along the lines of (\ref{eq:countsets}) and (\ref{eq:generalconstraint}) we can now compute our desideratum, namely
-\begin{equation}
-  P_{S(N)}(x \geq M) = \sum_{i=M}^{i=N} {N \choose i} \Pi_{i}\quad.
+This can be summarized as
+\begin{equation}\label{eq:pi-summary}
+  \Pi_{N-k} = \sum_{j=0}^k {k \choose j} (-1)^j Y((N-j)A_u) \quad .
 \end{equation}
-with $\Pi_i$ taken from (\ref{eq:recurrence}).
+Continuing along the lines of (\ref{eq:countsets}) and (\ref{eq:generalconstraint}) we can now compute our desideratum, namely
+\begin{equation}\begin{aligned}\label{eq:double-sum}
+    P_{S(N)}(x \geq M) &=& \sum_{i=M}^{i=N} {N \choose i} \Pi_{i} \hskip 2ex& \hfill \\
+                     &=& \sum_{i=0}^{N-M} {N \choose i}  \sum_{j=0}^{j=i}& {j \choose i} (-1)^j Y((N-j)A_u) \quad.
+\end{aligned}\end{equation}
 
-\section{Example}
+
+\subsection{Example}
 \label{sec:ex16of17}
 A system $S$ has been designed to operate with 16 identical subsystems
 $u_0 \ldots u_{15} = u$.  Designers have added one spare unit
@@ -453,13 +458,13 @@ which, as expected, equals the formulation under independence
 \end{equation}
 if and only if $Y \sim \hbox{Poisson}$ so that $Y(z) = Y(1)^z$.
 
-\section{Example}
+\subsection{Example}
 From section~\ref{sec:ex16of17} we can generalize as follows.  A system has $N$ identical subsystems of which one is spare.  (This is a very common arrangement in practice.)  The area of each subsystem is A.  Then the system yield is
 \begin{equation}
 P_{S(N)}(x \geq N-1) = N \, Y(N-1) - (N-1)\, Y(N) \quad .
 \end{equation}
 
-\section{Example}\label{sec:ex16of18}
+\subsection{Example}\label{sec:ex16of18}
 As in section~\ref{sec:ex16of17} but assume we have two spare units so that
 there is a need for 16 out of 18 units to be operational.
 
@@ -492,6 +497,17 @@ The following properties follow directly from the definition of the system yield
 \item The sum of the coefficients before the $Y()$ will be equal to 1.  This follows from considering the happy case that our yield is precisely 1 for all sizes.  Redundancy will not change this and the required answer is 1 regardless of configuration.
   
 \end{enumerate}
+
+\section{Yield improvement}\label{sec:yield-improvement}
+We define {\em yield improvement\/} to be the relative increase in the yield
+from a certain design transformation.  For example, consider moving from a system of $N$ equal subsystems, all of which must work, to a system of $N+1$ equal subsystems, where still $N$ of which must work.  We can write the yield improvement
+\begin{equation}
+\begin{aligned}\label{eq:nplusoneimprovement}
+  \upsilon_{N/N+1} & =  {Y_{N/N+1} - Y_{N/N} \over Y_{N/N}} \\
+                 & = { (N+1) \, Y(N) - N\, Y(N+1) - Y(N) \over Y(N) } \\
+                 & =  N { Y(N) - Y(N+1) \over Y(N) } \quad .
+\end{aligned}
+\end{equation}
 
 \section{Implementation of the restricted formulation}\label{sec:impl}
 
@@ -603,13 +619,17 @@ where $A$ is the area of the chip, and $D_0$ is the defect density of the proces
 from which formulation we could return to a classical Poisson
 formulation with defect density $D_0$ simply by writing $f(D) =
 \delta( D- D_0)$ where $\delta$ represents the Dirac delta function.
+Note that Murphy's formulation has $Y(A)$ as the Laplace transform of
+$f(D)$ where we may identify $D$ with the ``time domain'' and $A$ with
+the ``$s$ domain'' of the Laplace formalism.
 
 Various forms of the defect density distribution $f(D)$ have been
 tried over the years, with special mention due to Stapper's use of the
 Gamma distribution, where
 \begin{equation}
-  f(D) = { 1 \over \Gamma(\alpha) \beta^\alpha } D^{\alpha - 1} e^{-D/\beta} \quad .
+  f(D) = { 1 \over \Gamma(\alpha) \beta^\alpha } D^{\alpha - 1} e^{-D/\beta} 
 \end{equation}
+and $\Gamma$ is Euler's gamma function.
 This definition of $f(D)$ implies that the average defect density $D_0$ may be
 computed
 \begin{equation}
@@ -688,7 +708,7 @@ to be far smaller than even an individual die.
 \section{Example}
 For our final example, let's take a specific redundant hardware module
 in a representative 2020 fabrication process.  We assume $D_0 = 0.10$
-faults per square inch per layer, $\alpha=0.02$, $n=30$, and that we have a
+defects per square inch per layer, $\alpha=0.02$, $n=30$, and that we have a
 system consisting of 18 subsystems $u_i$, each 4~mm$^2$ in area, of
 which we need 16 to be functional.
 
@@ -717,6 +737,86 @@ In this formulation, it is clear that the binomial formulation grossly underesti
 that is to say, the na\"\i{}ve assumption of statistically independent
 yield of the submodules is responsible for a five-fold underestimate of
 the yield loss of the redundant system.
+
+\section{Continuous approximation}
+
+It is clear that some of the formulas above get complicated and may lead to
+computational difficulty.  Although the problems we are investigating
+are discrete---the systems we study have continuous areas and yields but consist of a discrete
+number of subsystems---we can gain some insight by considering the continuous interpretation of equations like (\ref{eq:pi-summary}):
+\begin{equation}
+  \Pi_{N-k} = \sum_{j=0}^k {k \choose j} (-1)^j Y((N-j)A_u) \quad .
+\end{equation}
+This equation can be interpreted as the $k$th discrete derivative (finite difference) of the yield function $Y$, with the appropriate sign adjustment:
+\begin{equation}\label{eq:finite-diff}
+  \Pi_{N-k} = (-1)^k \hat{Y}^{(k)}(N A_u)
+\end{equation}
+where $\hat{Y}^{(k)}$ is simply the $k$th discrete derivative of $Y$.  We
+can then also write
+\begin{equation}
+  \Pi_{N-k} \approx (-1)^k { Y^{(k)} } (N A_u) \quad .
+\end{equation}
+
+The continuous approximation becomes especially attractive when
+evaluating the yield improvement defined in section~\ref{sec:yield-improvement}.  For example, we can approximate the yield improvement of adding one redundant unit to $N$ required units as
+\begin{equation}
+  \upsilon_{N/N+1} \approx -N {Y^\prime(NA_u) \over Y(NA_u) } \quad ;
+\end{equation}
+compare (\ref{eq:nplusoneimprovement}), where we further note that the expression $Y^\prime(x)/Y(x)$ is known as the {\em logarithmic derivative\/} of $Y$.
+
+\subsection{Derivatives of Stapper's yield function}
+
+If we consider Stapper's yield function from (\ref{eq:stapperyield})
+\begin{equation}
+  Y(A) = \left(1 + { AD_0 \over \alpha } \right)^{-n \alpha}
+\end{equation}
+we can introduce the function $Z_k(A)$ defined as
+\begin{equation}
+  Z_k(A) = { Y(A) \over (\alpha + A D_0)^k } \quad ;
+\end{equation}
+after some algebra, we find that the first derivative of $Z_k$ is
+\begin{equation}
+  Z_k^\prime (A) = - D_0 (n \alpha + k) Z_{k+1}(A)
+\end{equation}
+and from this we see that in general the $k$th derivative of $Z_0$ is
+\begin{equation}
+  Z_0^{(k)} (A) = (-1)^k D_0^k \left(\prod_{i=0}^{k-1} (n \alpha + i) \right)Z_k(A) 
+\end{equation}
+but since $Z_0(A) = Y(A)$, the $k$th derivative of $Y(A)$ is just
+\begin{equation}\label{eq:stapper-derivs}
+  \begin{aligned}
+    Y^{(k)}  (A) &=  (-1)^k D_0^k \left(\prod_{i=0}^{k-1} (n \alpha + i) \right) { Y(A) \over (\alpha + A D_0)^k } \\
+               &=   {\Gamma(n \alpha + k) \over \Gamma(n \alpha) }(-1)^k\left({ D_0 \over \alpha + A D_0 }\right)^k Y(A) \\
+  \end{aligned}
+\end{equation}
+in particular
+\begin{equation}
+  Y^\prime (A) =  - { D_0 n \alpha \over \alpha + A D_0 } Y(A) \quad .
+\end{equation}
+
+Our primary example, the yield improvement from adding one redundant unit to $N$ required units of area $A_u$ in this context becomes
+\begin{equation}
+  \upsilon_{N/N+1} \approx -N {Y^\prime(NA_u) \over Y(NA_u) } = N {n \alpha D_0 \over \alpha + N A_u D_0} \quad .
+\end{equation}
+
+\subsection{Continuous approximation example}
+Consider using Stapper's yield function with $D_0 = 0.1$ (per square inch), $\alpha = 0.02$, $n = 30$ and now let's approximate (\ref{eq:yield16of18}) using (\ref{eq:finite-diff}):
+\begin{equation}\begin{aligned}
+    P_{S(18)}(x \geq 16) &= \Pi_{18} + {18 \choose 17} \Pi_{17} + {18 \choose 16} \Pi_{16} \\
+    &= Y(18) - {18 \choose 17} \hat{Y}' (18) + {18 \choose 16}\hat{Y}'' (18) \\
+    & \approx Y(18) - {18 \choose 17} Y' (17.5) + {18 \choose 16}Y'' (17)
+  \end{aligned}
+\end{equation}
+where we have used the midpoint rule to translate the discrete derivatives to continuous.
+
+Evaluating the above expressions using (\ref{eq:stapper-derivs}) we find that the exact answer and approximate answer are very close:
+\begin{equation}\begin{aligned}
+    Y(18) - {18 \choose 17} \hat{Y}' (18) + {18 \choose 16}\hat{Y}'' (18) &= 0.99932150\ldots = 1 - 0.00067929\ldots\\
+     Y(18) - {18 \choose 17} Y' (17.5) + {18 \choose 16}Y'' (17) &= 0.99932071\ldots = 1 - 0.00067850\ldots
+\end{aligned}\end{equation}
+Written in terms of yield loss, the approximation is about 0.1\% off from the correct answer.
+
+How do we apply this hierarchically?
 
 \section{Summary and conclusion}
 We have seen how to derive a general formula for the system yield of a
@@ -1017,7 +1117,7 @@ The final observation, about the coefficients of the polynomials, leads to a
 few technical consequences that implementors must stay aware of to use
 our theory effectively.
 
-\subsubsection{High precision arithmetic is necessary}
+\subsubsection{High precision arithmetic may be necessary}\label{sec:high-prec-necessary}
 Taking the coefficients of~(\ref{eq:huge-eq}) together with the
 properties described in section~\ref{sec:props}, it is clear that the
 computations of the resulting system yield must be performed to
@@ -1036,6 +1136,16 @@ We are currently applying the yield calculator described here to the
 next-generation products in the Intel Barefoot Division portfolio: these
 are full-reticle chips with large amounts of redundancy incorporated, and
 manufactured in cutting-edge fabrication technologies.
+
+\subsubsection{Finite differences}
+It seems that we ought to be able to use the finite difference
+restatement of the yield function from (\ref{eq:finite-diff}) to cure
+the issues raised above in sections~\ref{sec:math-limitations}
+and~\ref{sec:high-prec-necessary}.  Since the finite difference is
+formally equivalent to a derivative, we should be able to reduce the
+order of computation from exponential to polynomial by considering the
+expressions for the partial yields $\Pi_x$ as finite differences
+(discrete derivatives) rather than expanding them as polynomials.
 
 \subsubsection{Restriction in the form of the yield function $Y(A)$}
 The large coefficients in the polynomials used for the intermediate
