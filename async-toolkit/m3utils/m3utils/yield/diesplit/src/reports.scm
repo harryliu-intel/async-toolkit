@@ -266,7 +266,7 @@
                  (0.05 10000) 
                  ))
 
-(define basic-params '((0.05 1) (0.075 0.05)))
+(define basic-params '((0.05 1) (0.075 0.05) (0.05 10000)))
 
 (define (report-yields-for-params model params downbin-list)
   (let loop ((p params))

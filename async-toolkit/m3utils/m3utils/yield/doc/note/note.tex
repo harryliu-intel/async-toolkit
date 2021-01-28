@@ -6,6 +6,7 @@
 \usepackage{fancyhdr}
 \usepackage{array}
 \usepackage{amsmath}
+\usepackage{amssymb}
 \usepackage{sectsty}
 \usepackage{breqn}
 %\allsectionsfont{\mdseries\sffamily}
@@ -443,8 +444,8 @@ is desired to compute the system yield of $S$.
 
 By (\ref{eq:recurrence}) we have the recurrence
 \begin{equation}\begin{aligned}
-    \Pi_{17}              &=& Y(17) \\
-    \Pi_{16}              &=& Y(16) - \Pi_{17} = Y(16) - Y(17) \\
+    \Pi_{17}              &=& Y(17)& \\
+    \Pi_{16}              &=& Y(16) - \Pi_{17} = Y(16)& - Y(17) \\
 \end{aligned}\end{equation}
 and, accordingly, the system yield
 \begin{equation}\begin{aligned}
@@ -477,8 +478,8 @@ By (\ref{eq:recurrence}) we have the recurrence
 \end{aligned}\end{equation}
 and
 \begin{equation}\label{eq:yield16of18}\begin{aligned}
-    P_{S(18)}(x \geq 16) &=& \Pi_{18} + {18 \choose 17} \Pi_{17} + {18 \choose 16} \Pi_{16} \\
-    &=& 136 \, Y(18) - 288 \, Y(17) + 153 \, Y(16) \quad .
+    P_{S(18)}(x \geq 16) &= \Pi_{18} + {18 \choose 17} \Pi_{17} + {18 \choose 16} \Pi_{16} \\
+    &= 136 \, Y(18) - 288 \, Y(17) + 153 \, Y(16) \quad .
 \end{aligned}\end{equation}
 
 \section{Properties of the System Yield}\label{sec:props}
@@ -576,7 +577,7 @@ making the unwarranted assumption of statistical independence.  See
 appendix~\ref{app:hierarchical}.
     
 
-\section{Discussion}
+\section{Discussion}\label{sec:discussion}
 Originally, integrated-circuit defect density was modeled by
 practitioners as being constant, i.e., leading to Poisson defect
 statistics.  This was quickly realized to be an inadequate model,
@@ -666,7 +667,20 @@ implies a process yield of the form
   Y(A) = \left(1 + { AD_0 \over \alpha } \right)^{-n \alpha}
 \end{equation}
 where we use modern nomenclature $D_0$ for the per-layer defect
-density and $n$ for the number of effective process layers.
+density and $n$ for the number of effective process layers.  But note that
+we can rewrite (\ref{eq:stapperyield}) in terms of starred parameters
+\begin{equation}
+  Y(A) = \left(1 + { AD^*_0 \over \alpha^* } \right)^{\alpha^*}
+\end{equation}
+where we have
+\begin{equation}\label{eq:starred}
+  \begin{aligned}
+    \alpha^* &= n \alpha \\
+    D^*_0    &= n D_0 \\
+    \beta^*  & = {D^*_0 \over \alpha^*} = {D_0 \over \alpha } = \beta \quad ,
+  \end{aligned}
+\end{equation}
+so it is possible to relate this standard, modern formula directly to Murphy's formalism.
 
 The significance of our calculations above now becomes clear.  Modern
 semiconductor processes do not follow Poisson statistics: instead
@@ -743,18 +757,48 @@ the yield loss of the redundant system.
 It is clear that some of the formulas above get complicated and may lead to
 computational difficulty.  Although the problems we are investigating
 are discrete---the systems we study have continuous areas and yields but consist of a discrete
-number of subsystems---we can gain some insight by considering the continuous interpretation of equations like (\ref{eq:pi-summary}):
+number of subsystems---we can gain considerable insight by considering the continuous interpretation of equations like (\ref{eq:pi-summary}):
 \begin{equation}
   \Pi_{N-k} = \sum_{j=0}^k {k \choose j} (-1)^j Y((N-j)A_u) \quad .
 \end{equation}
-This equation can be interpreted as the $k$th discrete derivative (finite difference) of the yield function $Y$, with the appropriate sign adjustment:
-\begin{equation}\label{eq:finite-diff}
-  \Pi_{N-k} = (-1)^k \hat{Y}^{(k)}(N A_u)
+
+First, we introduce the standard Euler differential operator $D_x$.  We write
+\begin{equation}
+  \begin{aligned}
+    D_x f(x)   &= {df \over dx} = f'(x) \\
+    D_x^2 f(x) &= {d^2f \over dx^2} = f''(x)  \\
+    \ldots     & \\
+    D_x^n f(x) &= {d^nf \over dx^n} = f^{(n)}(x) \quad , \\
+  \end{aligned}
 \end{equation}
-where $\hat{Y}^{(k)}$ is simply the $k$th discrete derivative of $Y$.  We
+and if the argument of the function is specified, e.g., as a constant $a$, we mean to evaluate the derivative at the point specified:
+\begin{equation}
+  D_x f(a) = {df \over dx}(a) = f'(a) \quad ,
+\end{equation}
+etc.  In general our yield functions vary as a function of $A$ only, and therefore we may omit the subscript from $D_A$ and instead write simply $D$.
+
+By analogy to the Euler differential, we introduce the discrete finite difference operator $\Delta$, and
+\begin{equation}
+  \begin{aligned}
+    \Delta_x f(x)   &= {\delta f \over \delta x}  \\
+    \Delta_x^2 f(x) &= {\delta^2f \over \delta x^2}  \\
+    \ldots     & \\
+    \Delta_x^n f(x) &= {\delta^nf \over \delta x^n} \quad . \\
+  \end{aligned}
+\end{equation}
+We observe that the $k$th finite difference of $f$ evaluated at $a$ is simply written
+\begin{equation}
+  \Delta^k f(a) = \sum_{j=0}^k {k \choose j} (-1)^{k-j} f(a - j \delta x) \quad .
+\end{equation}
+   
+Now we can see that we can write (\ref{eq:pi-summary}) as a finite difference, simply interpreted as the $k$th finite difference of the yield function $Y$, with the appropriate sign adjustment:
+\begin{equation}\label{eq:finite-diff}
+  \Pi_{N-k} = (-1)^k \Delta^k Y(N A_u)
+\end{equation}
+where $\Delta^k Y$ is simply the $k$th discrete derivative of $Y$.  We
 can then also write
 \begin{equation}
-  \Pi_{N-k} \approx (-1)^k { Y^{(k)} } (N A_u) \quad .
+  \Pi_{N-k} \approx (-1)^k D^k Y(N A_u) \quad .
 \end{equation}
 
 The continuous approximation becomes especially attractive when
@@ -803,20 +847,78 @@ Our primary example, the yield improvement from adding one redundant unit to $N$
 Consider using Stapper's yield function with $D_0 = 0.1$ (per square inch), $\alpha = 0.02$, $n = 30$ and now let's approximate (\ref{eq:yield16of18}) using (\ref{eq:finite-diff}):
 \begin{equation}\begin{aligned}
     P_{S(18)}(x \geq 16) &= \Pi_{18} + {18 \choose 17} \Pi_{17} + {18 \choose 16} \Pi_{16} \\
-    &= Y(18) - {18 \choose 17} \hat{Y}' (18) + {18 \choose 16}\hat{Y}'' (18) \\
-    & \approx Y(18) - {18 \choose 17} Y' (17.5) + {18 \choose 16}Y'' (17)
+    &= Y(18) - {18 \choose 17} \Delta Y (18) + {18 \choose 16} \Delta^2 Y (18) \\
+    & \approx Y(18) - {18 \choose 17} D Y (17.5) + {18 \choose 16}D^2 Y (17)
   \end{aligned}
 \end{equation}
 where we have used the midpoint rule to translate the discrete derivatives to continuous.
 
 Evaluating the above expressions using (\ref{eq:stapper-derivs}) we find that the exact answer and approximate answer are very close:
 \begin{equation}\begin{aligned}
-    Y(18) - {18 \choose 17} \hat{Y}' (18) + {18 \choose 16}\hat{Y}'' (18) &= 0.99932150\ldots = 1 - 0.00067929\ldots\\
-     Y(18) - {18 \choose 17} Y' (17.5) + {18 \choose 16}Y'' (17) &= 0.99932071\ldots = 1 - 0.00067850\ldots
+    Y(18) - {18 \choose 17} \Delta Y (18) + {18 \choose 16}\Delta^2 Y (18) &= 0.99932150\ldots = 1 - 0.00067929\ldots\\
+     Y(18) - {18 \choose 17} D Y (17.5) + {18 \choose 16}D^2 Y (17) &= 0.99932071\ldots = 1 - 0.00067850\ldots
 \end{aligned}\end{equation}
 Written in terms of yield loss, the approximation is about 0.1\% off from the correct answer.
 
 How do we apply this hierarchically?
+
+\section{Revisiting Murphy's formalism}
+
+Consider Murphy's formula (\ref{eq:murphy}):
+\begin{equation}
+  Y(A) = \int_0^\infty e^{-AD} \, f(D) \, dD \quad ,
+\end{equation}
+We can consider this an average process yield over a parameter
+distribution $f(D)$: we are here writing that the process yield is of
+the Poisson form $e^{-AD}$ but taken over an ensemble of yields
+according to the p.d.f.~$f(D)$.  We may think of this, for example, as modeling a production
+line that at any time produces defects according to the Poisson distribution $e^{-AD}$ but over time $D$ varies, drawn from the p.d.f.~$f(D)$.
+
+But now we can also observe that the system yields that we have
+computed in this paper are linear functions (or, technically, {\em functionals\/}) of the process yields and
+subject to precisely the same distribution $f(D)$ for the Poisson parameters.
+
+Up until now we have considered the system yield $Y_S$ a function of
+the process yield function $Y(A)$; we can take this one step further
+and restrict our process yields to being Poisson yields $e^{-AD}$,
+drawn from the ensemble $f(D)$.  The approach now is to compute the system
+yield under Poisson assumptions (binomial distribution) and compute the
+expected value of that system yield given the distribution of $D$.
+
+We write the Poisson system yield $Y_S(D)$ and compute the expected
+system yield across the process ensemble,
+\begin{equation}\label{eq:ensemble-yield}
+  <Y_S> = \int_0^\infty Y_S(D) f(D) dD
+\end{equation}
+where each $Y_S(D)$ is straightforward to compute using the binomial formula.  We have implemented this
+approach and verified that it gives the same answers as the formalism in
+section~\ref{sec:impl}.
+
+\subsection{Discussion}
+Implementing the system yield through (\ref{eq:ensemble-yield}) appears attractive as it does not require the heavyweight generalized polynomial machinery described in section~\ref{app:hierarchical}; it is sufficient to perform the
+Poisson yield calculations ``as usual'' and then integrate them over the
+real line.  Note however that if we follow Stapper, we use the gamma distribution
+\begin{equation}
+  f(D) = { 1 \over \Gamma(\alpha^*) \beta^{\alpha^*} } D^{\alpha^* - 1} e^{-D/\beta}  \quad ;
+\end{equation}
+the parameters here include the starred $\alpha^*$ mentioned in
+section~\ref{sec:discussion}, (\ref{eq:starred}).  We see that when
+$\alpha^* < 1$, then this expression goes to infinity as $D$
+approaches $0^+$.  Since the yield as $D$ approaches 0 is one, this
+means that the integrand in (\ref{eq:ensemble-yield}) goes to infinity
+as well, i.e., in these cases (\ref{eq:ensemble-yield}) is an
+improper integral, which presents numerical difficulties.  Recall from (\ref{eq:starred}) that
+$\alpha^* = n \alpha$ so that for a modern process with $n \approx
+30$, the integral becomes improper for values of $\alpha \lesssim 1/30$,
+which is a domain of practical interest.
+
+We are able to evaluate the integral (\ref{eq:ensemble-yield}) using Romberg (interior point)
+integration\cite{numerical-recipes}, but it is cumbersome and
+inefficient: at present it is not clearly more efficient to evaluate
+this integral than to use the polynomial formalism we have developed
+in the rest of the paper.
+
+
 
 \section{Summary and conclusion}
 We have seen how to derive a general formula for the system yield of a
@@ -929,12 +1031,25 @@ back out the calculation to derive the actual chip areas being considered,
 with appropriate weighting, and compute the yield under any given yield
 model, Poisson or not.
 
-Our approach will be based on polynomial arithmetic.  The yield of a given
+Our approach will be based on {\em generalized polynomial arithmetic.}  The yield of a given
 system with subsystems incorporated in it, under the assumption of Poisson
-statistics, can be represented as a polynomial in $x$, which we define as
+statistics, can be represented as an {\em generalized polynomial\/} in $x$, which we define as
 \begin{equation}
-  x = Y(1) \quad .
+  x = Y(1)
 \end{equation}
+and an extended polynomial is an expression of the form
+\begin{equation}
+  \sum_i a_i x^{p_i}
+\end{equation}
+where $a_i$ and $p_i$ are real and $x>0$.  Since $x$ is a yield and we
+have therefore that $x \in [0 \ldots 1]$ the restriction on $x$
+presents no difficulty.  What makes a generalized polynomial different
+from a high-school polynomial is that in a generalized polynomial, the
+coefficients are not limited to being integers.  The restriction on
+$x$ is necessary in order to ensure that the result of evaluating a
+generalized polynomial is real.  In the following, we may refer to
+generalized polynomials simply as ``polynomials.''
+
 For example, if the system has no redundancy and is of area 100, then its
 yield can simply be written as
 \begin{equation}
@@ -1353,6 +1468,8 @@ We're actively trying to generalize these formulas.  (Work in progress.)
 \bibitem{mpfr-2} P.~Zimmermann.  MPFR:~vers un calcul flottant correct?  {\it Interstices}, August 2005.
 
 \bibitem{spwm3}{G.~Nelson, ed.  {\it Systems Programming with Modula-3.} Englewood Cliffs, N.J.:\ Prentice Hall, 1991.}
+
+\bibitem{numerical-recipes}{W.~H.~Press, B.~P.~Flannery, S.~A~Teukolsky, and W.~T.~Vetterling.  {\it Numerical Recipes in Fortran 77: The Art of Scientific Computing.}  Second edition.  Cambridge:\ Cambridge University Press, 1992.}
 
 \end{thebibliography}
 

@@ -87,6 +87,7 @@
 (define (caddddr x) (car (cddddr x)))
 
 (define (define-yield! key yld)
+  ;; no-op
   yld)
 
 (define *r* 'hi)
@@ -276,3 +277,4 @@
          (y      (Mpfr.GetLR (eval-yield poly ym) 'N)))
     (cons area (cons y (cons latex yr)))))
         
+

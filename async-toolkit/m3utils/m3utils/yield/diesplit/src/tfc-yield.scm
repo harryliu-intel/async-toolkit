@@ -21,7 +21,12 @@
             (modula-type-op tc 'call-method env 'set (list (car p) (cadr p)))
             (loop (cddr p)))))))
 
+(define (make-lrfunc-obj f)
+  (let* ((func (lambda(*unused* x)(f x)))
+         (min-obj (new-modula-object 'LRFunction.T `(eval . ,func))))
+    min-obj))
 
+  
 (define *n5-d0*         .07)
 (define *n5-nfactor*  32   );;34.25 for N7
 

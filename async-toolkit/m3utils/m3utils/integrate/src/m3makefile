@@ -4,7 +4,9 @@ m3_option("-times")
 
 import("cit_util")
 
-Module("IntegrateTrap")
-Module("DerivRidders")
+Module ("IntegrateTrap")
+Module ("DerivRidders")
+Module ("PolInt")
+Module ("NR4p4")
 
 library("integrate")

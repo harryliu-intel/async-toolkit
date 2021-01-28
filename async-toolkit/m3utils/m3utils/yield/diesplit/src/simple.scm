@@ -26,9 +26,7 @@
 
 (define (solve f start-lo start-hi)
   ;; solve eq f = 0 from start (start-lo , start-hi)
-  (let* ((func (lambda(*unused* x)(f x)))
-         (min-obj (new-modula-object 'LRFunction.T `(eval . ,func))))
-    (Solve.WDB min-obj start-lo start-hi 1e-8)))
+    (Solve.WDB (make-lrfunc-obj f) start-lo start-hi 1e-8))
 
 ;; binomial calc
 
