@@ -265,9 +265,6 @@
               (else (if (member? (car p) b)
                         (loop (cdr p))
                         #f))))))
-          
-                   
-                   
 
 (define (decorate-yield yr model ym)
   (let* ((config (car yr))
@@ -276,5 +273,10 @@
          (area   (compute-total-area model config))
          (y      (Mpfr.GetLR (eval-yield poly ym) 'N)))
     (cons area (cons y (cons latex yr)))))
+
+(define (ym D0 alpha)
+  (lambda(A) (stapper A D0 *n5-n* alpha)))
+
+
         
 

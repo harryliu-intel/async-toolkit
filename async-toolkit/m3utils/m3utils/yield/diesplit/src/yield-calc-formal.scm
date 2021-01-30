@@ -53,14 +53,25 @@
                                (eq? '* (car b))
                                (number? (cadr b)))
                           `(* ,(* a (cadr b)) ,(simplify (caddr b))))
+                         ((and (pair? a) (pair? b)
+                               (eq? 'exp (car a)) (eq? 'exp (car b)))
+                          `(exp ,(simplify `(+ ,(cadr a) ,(cadr b)))))
+                                                    
                          (else `(* ,a ,b))))
               
               ((+) (cond ((0? a) b)
                          ((0? b) a)
+                         ((and (pair? a) (pair? b)
+                               (eq? '* (car a)) (eq? '* (car b))
+                               (eq? (caddr a) (caddr b)))
+                          (simplify `(* (+ ,(cadr a) ,(cadr b)) ,(caddr a))))
                          (else `(+ ,a ,b))))
               
               ((^) (cond ((1? b) a)
                          ((0? b) 1)
+                         ((and (pair? a) (eq? (car a) 'exp) (number? b))
+                          (simplify `(exp (* ,b ,(cadr a)) (caddr a))))
+                         
                          (else `(^ ,a ,b))))
               
               ((exp) (cond ((0? a) 0)
@@ -141,3 +152,53 @@
 (dump-to-file (lambda(D)(YieldModel.GammaDistCdf 1.6 1.5 D)) 0 100 "F.dat")
 
 (integrate integrand 0 10)
+
+(define *integrand* #f)
+(define *Pi-formula-0*       #f)
+(define *Pip-formula*       #f)
+(define *Pip*       #f)
+(define *F*         #f)
+
+(define (poly-yield poly ym)
+  ;;(dis "poly-yield poly: " (stringify poly) " ym: " (stringify ym) dnl)
+  (let* ((Pi-formula-0   (scale-area poly (/ 1 25.4 25.4)))
+         (Pi-formula-1   (simplify Pi-formula-0))
+         (Pip-formula    (simplify (deriv Pi-formula-1 'D)))
+         (Pip            (eval `(lambda(D) ,Pip-formula)))
+
+         (D0             (car ym))
+         (alpha          (cadr ym))
+         (n              (caddr ym))
+
+         (D0p            (* n D0))
+         (alphap         (* n alpha))
+         (beta           (/ D0 alpha))
+
+         (F              (lambda(D)(YieldModel.GammaDistCdf alphap beta D)))
+
+         (integrand      (lambda(D)(* -1
+                                      (F D)
+                                      (if (= D 0) (Pip 1e-10) (Pip D)))))
+         )
+    ;;(dis "Pip-formula: " (stringify Pip-formula) dnl)
+    (set! *Pi-formula-0* Pi-formula-0)
+    (set! *Pip-formula* Pip-formula)
+    (set! *Pip* Pip)
+    (set! *integrand* integrand)
+    (set! *F* F)
+    (integrate integrand 0 2000)
+
+    )
+  )
+
+(define (decorate-yield yr model ym)
+  (let* ((config (car yr))
+         (poly   (cadr yr))
+         (latex  "**none**")
+         (area   (compute-total-area model config))
+         (y      (poly-yield poly ym)))
+    (cons area (cons y (cons latex yr)))))
+
+(define (ym D0 alpha)
+  (list D0 alpha *n5-n*))
+

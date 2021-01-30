@@ -249,9 +249,6 @@
 
 (define *n5-n* 32)
 
-(define (ym D0 alpha)
-  (lambda(A) (stapper A D0 *n5-n* alpha)))
-
 (define params '((0.075 1) ;; B-E
                  (0.05 1)
                  (0.10 1)
@@ -262,11 +259,11 @@
                  (0.075 0.05)
                  (0.075 0.02)
                  
-                 (0.10 10000) ;; Poisson
-                 (0.05 10000) 
+                 (0.10 10) ;; Poisson
+                 (0.05 10) 
                  ))
 
-(define basic-params '((0.05 1) (0.075 0.05) (0.05 10000)))
+(define basic-params '((0.05 1) (0.075 0.05) (0.05 10)))
 
 (define (report-yields-for-params model params downbin-list)
   (let loop ((p params))
