@@ -99,7 +99,7 @@ assumption of independent process yields can grossly overestimate the
 extent to which hardware redundancy improves system yields.
 \end{abstract}
 
-%\tableofcontents
+\tableofcontents
 %\listoffigures
 %\listoftables
 
@@ -862,7 +862,7 @@ Written in terms of yield loss, the approximation is about 0.1\% off from the co
 
 How do we apply this hierarchically?
 
-\section{Revisiting Murphy's formalism}
+\section{Revisiting Murphy's formalism}\label{sec:murphy-again}
 
 Consider Murphy's formula (\ref{eq:murphy}):
 \begin{equation}
@@ -1032,6 +1032,19 @@ die---into consideration ``at once''), and doing so with computational
 efficiency.
 
 \section{Acknowledgements}
+
+Many people have provided helpful suggestions for this work.  Karl
+Papadantonakis suggested the numerical approach to Murphy's method
+described in section~\ref{sec:murphy-again}; he also suggested the
+specific formulation used in section~\ref{sec:general}.  Helia Naeimi
+continually critiqued the difficulty of some of the methods involved
+and inspired many improvements.  Pat Bosshart provided Lisp models for
+the yield of the next-generation Intel Barefoot switching chips.
+Hayden Helm provided invaluable feedback on the statistical framework.
+Kishore Maddi provided yield data and feedback on recently fabricated
+Intel products.  CherSian Chua took the time and effort to describe
+the currently used yield models at Intel.  Whatever errors remain are
+due to the author and nobody else.
 
 \appendix
 \newpage
