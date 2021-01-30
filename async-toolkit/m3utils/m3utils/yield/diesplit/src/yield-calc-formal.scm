@@ -186,13 +186,26 @@
 
 (define *the-slop*       0.0001)
 
+(define *deriv-step* 0.001)
+
+(define (numerical-deriv-step f x step)
+  ;; midpoint rule
+  (/ (- (f (+ x (/ step 2))) (f (- x (/ step 2)))) step))
+
+(define (numerical-deriv f)
+  (lambda (x)(if (<= x (/ *deriv-step* 2))
+                 (numerical-deriv-step f x x)
+                 (numerical-deriv-step f x *deriv-step*))))
+                     
+
 (define (poly-yield poly ym)
   ;;(dis "poly-yield poly: " (stringify poly) " ym: " (stringify ym) dnl)
   (let* ((Pi-formula-0   (scale-area poly (/ 1 25.4 25.4)))
          (Pi-formula-1   (simplify Pi-formula-0))
          (Pip-formula    (simplify (deriv Pi-formula-1 'D)))
          (Pi            (eval `(lambda(D) ,Pi-formula-1)))
-         (Pip            (eval `(lambda(D) ,Pip-formula)))
+;;         (Pip            (eval `(lambda(D) ,Pip-formula)))
+         (Pip            (numerical-deriv Pi))
 
          (D0             (car ym))
          (alpha          (cadr ym))
