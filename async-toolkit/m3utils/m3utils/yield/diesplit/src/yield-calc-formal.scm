@@ -32,13 +32,15 @@
 
 (define (^ a b) (expt a b))  ;; not a standard Scheme function
 
+(define (caddadr x) (caddr (cadr x)))
+
 (define (simplify x)
 
   (if (pair? x)
       (let ((a (simplify (cadr x)))
             (b (if (binop? (car x)) (simplify (caddr x)) 0)))
 
-        ;;(dis "a:"a " b:"b dnl)
+        ;;(dis "op:" (car x) " a:" a " b:" b dnl)
         
         (if (and (number? a) (number? b))
             (apply (eval (car x)) (list a b))
@@ -53,18 +55,33 @@
                                (eq? '* (car b))
                                (number? (cadr b)))
                           `(* ,(* a (cadr b)) ,(simplify (caddr b))))
+                         
                          ((and (pair? a) (pair? b)
                                (eq? 'exp (car a)) (eq? 'exp (car b)))
                           `(exp ,(simplify `(+ ,(cadr a) ,(cadr b)))))
-                                                    
+
+                         ((and (pair? a) (pair? b) 
+                               (eq? 'exp (car a))
+                               (eq? '* (car b)) (pair? (cadr b))
+                               (eq? 'exp (caadr b)))
+                          (simplify `(* (exp (+ ,(cadr a) ,(cadadr b)))
+                                        ,(caddr b))))
+
+                        ;; ((and (pair? a) (eq? '+ (car a)))
+                        ;;  (simplify `(+ (* ,(cadr a) ,b) (* ,(caddr a) ,b))))
+
+                        ;; ((and (pair? b) (eq? '+ (car b)))
+                        ;;  (simplify `(+ (* ,a ,(cadr b)) (* ,a ,(caddr b)))))
+                                      
                          (else `(* ,a ,b))))
               
               ((+) (cond ((0? a) b)
                          ((0? b) a)
                          ((and (pair? a) (pair? b)
                                (eq? '* (car a)) (eq? '* (car b))
+                               (number? (cadr a)) (number? (cadr b))
                                (eq? (caddr a) (caddr b)))
-                          (simplify `(* (+ ,(cadr a) ,(cadr b)) ,(caddr a))))
+                          (simplify `(* ,(+ (cadr a) (cadr b)) ,(caddr a))))
                          (else `(+ ,a ,b))))
               
               ((^) (cond ((1? b) a)
@@ -103,6 +120,7 @@
 
 ;; (simplify (cadar (compute-yield (tfc-model) build-yield)))
 
+(if #f (begin
 (define all-recs
   (mergesort
    (compute-yield (tfc-model) build-yield)
@@ -126,13 +144,17 @@
     (if (= 0 D) (PiP 1e-10)
         ,(simplify (deriv Pi-formula 'D)))))
 
-(define *evaluations* 0)
-
 (define (integrand D)
   (set! *evaluations* (+ 1 *evaluations*))
   (* -1 (PiP D) (YieldModel.GammaDistCdf 1.6 1.5 D)))
 
-(define *dump-steps* 1000)
+))
+
+
+(define *evaluations* 0)
+
+(define *dump-steps* 10000)
+
 
 (define (dump-to-file f lo hi fn)
   (let ((wr (FileWr.Open fn))
@@ -146,24 +168,30 @@
             (loop (+ p step)))))))
 
 
-(dump-to-file integrand 0 100 "integrand.dat")
-(dump-to-file PiP 0 100 "PiP.dat")
-(dump-to-file Pi 0 100 "Pi.dat")
-(dump-to-file (lambda(D)(YieldModel.GammaDistCdf 1.6 1.5 D)) 0 100 "F.dat")
+;;(dump-to-file integrand 0 100 "integrand.dat")
+;;(dump-to-file PiP 0 100 "PiP.dat")
+;;(dump-to-file Pi 0 100 "Pi.dat")
+;;(dump-to-file (lambda(D)(YieldModel.GammaDistCdf 1.6 1.5 D)) 0 100 "F.dat")
 
 (integrate integrand 0 10)
 
 (define *integrand* #f)
+(define *exp-integrand* #f)
 (define *Pi-formula-0*       #f)
 (define *Pip-formula*       #f)
 (define *Pip*       #f)
+(define *Pi*       #f)
 (define *F*         #f)
+(define *f*         #f)
+
+(define *the-slop*       0.0001)
 
 (define (poly-yield poly ym)
   ;;(dis "poly-yield poly: " (stringify poly) " ym: " (stringify ym) dnl)
   (let* ((Pi-formula-0   (scale-area poly (/ 1 25.4 25.4)))
          (Pi-formula-1   (simplify Pi-formula-0))
          (Pip-formula    (simplify (deriv Pi-formula-1 'D)))
+         (Pi            (eval `(lambda(D) ,Pi-formula-1)))
          (Pip            (eval `(lambda(D) ,Pip-formula)))
 
          (D0             (car ym))
@@ -175,21 +203,35 @@
          (beta           (/ D0 alpha))
 
          (F              (lambda(D)(YieldModel.GammaDistCdf alphap beta D)))
+         (f              (lambda(D)(YieldModel.GammaDistPdf alphap beta D)))
 
-         (integrand      (lambda(D)(* -1
-                                      (F D)
-                                      (if (= D 0) (Pip 1e-10) (Pip D)))))
+         (integrand      (lambda(D)
+                           (set! *evaluations* (+ 1 *evaluations*))
+                           (* -1
+                              (F D)
+                              (if (= D 0) (Pip 1e-10) (Pip D)))))
+         (exp-integrand  (exponential-transform integrand))
+         (lo-lim         (solve-for-yield F  *the-slop*))
+         (hi-lim         (solve-for-yield Pi *the-slop*))
          )
     ;;(dis "Pip-formula: " (stringify Pip-formula) dnl)
     (set! *Pi-formula-0* Pi-formula-0)
     (set! *Pip-formula* Pip-formula)
     (set! *Pip* Pip)
+    (set! *Pi* Pi)
     (set! *integrand* integrand)
+    (set! *exp-integrand* exp-integrand)
     (set! *F* F)
-    (integrate integrand 0 2000)
+    (set! *f* f)
+    (integrate exp-integrand (log lo-lim) (log hi-lim))
 
     )
   )
+
+(define (exponential-transform f)
+  (lambda (x)
+    (let ((D (exp x)))
+      (* D (f D)))))
 
 (define (decorate-yield yr model ym)
   (let* ((config (car yr))

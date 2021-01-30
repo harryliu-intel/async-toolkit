@@ -930,14 +930,14 @@ where we identify
     u'(D) &= \Pi'(D)
   \end{aligned}
 \end{equation}
-where $F(D)$ is the c.d.f.~corresponding to $f(D)$.
+where $F(D)$ is the c.d.f.~corresponding to the p.d.f.~$f(D)$.
 
 Noting that
 \begin{equation}
   uv \Big|_0^\infty = \Pi(D) F(D) \Big|_{D=0}^{D=\infty} = (0)(1) - (1)(0) = 0 - 0 = 0
 \end{equation}
 we have that 
-\begin{equation}
+\begin{equation}\label{eq:byparts}
 <Y_S> = - \int_0^\infty \Pi'(D) F(D) \, dD
 \end{equation}
 where we derive $\Pi'(D)$ from the binomially computed $\Pi(D)$ by symbolic differentiation and
@@ -946,6 +946,72 @@ where we derive $\Pi'(D)$ from the binomially computed $\Pi(D)$ by symbolic diff
 \end{equation}
 where $\gamma(a,x)$ represents the lower incomplete gamma function.  We have implemented this approach, and the integration is many times faster and more accurate than the direct integration approach of (\ref{eq:ensemble-yield}).
 
+\subsection{Efficient evaluation of the system yield as a function of density}
+The form (\ref{eq:byparts}) is easier to integrate than (\ref{eq:ensemble-yield}), but it still leaves something to be desired.  In particular, we appear to have
+traded an improper integral with a singularity at 0 for an improper integral to $+\infty$.  What have we really gained out of that? (Keep in mind that $\Pi'(D)$ is a function that describes the redundancy of our chip, so it may be {\em very\/} complicated and slow to evaluate---we wish to reduce the number of evaluations of this function to the absolute minimum possible given whatever accuracy requirements we may have.)
+
+Let us consider that we have two ways of writing the integral
+\begin{equation}
+  <Y_S> = \int_{\mathbb{R}^+} \Pi \, f \, = - \int_{\mathbb{R}^+} \Pi' \, f \, 
+\end{equation}
+and that we also know, because of the nature of the functions involved, that
+\begin{equation}
+  \begin{aligned}
+    \int_{\mathbb{R}^+} f     &= 1 \\
+    -\int_{\mathbb{R}^+} \Pi' &= 1 \quad .
+  \end{aligned}
+\end{equation}
+And furthermore, we have everywhere that $F<1$ and $\Pi<1$.
+Therefore, if we are willing to accept an error of, say, $2 \epsilon$,
+we can restrict our integration range as follows.
+Find $a(\epsilon)$, $b(\epsilon)$ such that
+\begin{equation}
+  \begin{aligned}
+    F(a)   &= \epsilon \\
+    \Pi(b) &= \epsilon \quad ;
+  \end{aligned}
+\end{equation}
+then we have that
+\begin{equation}
+  - \int_0^a \Pi'(D) \, F(D) \, dD \le -F(a) \int_0^a \Pi(D) \, dD  \le F(a) = \epsilon
+\end{equation}
+and 
+\begin{equation}
+  \int_b^\infty \Pi(D) \, f(D) \, dD \le \Pi(b) \int_b^\infty f(D) \, dD  \le \Pi(b) = \epsilon
+\end{equation}
+and therefore that, taking into account that the integral is positive over every interval,
+\begin{equation}
+  \left( -\int_0^\infty \Pi'(D) \, F(D) \, dD \right) - 2\epsilon \quad \le
+    - \int_a^b \Pi'(D) \, F(D) \, dD \le
+     -\int_0^\infty \Pi'(D) \, F(D) \, dD 
+\end{equation}
+whence we conclude that we need only perform the integral over the interval $[a(\epsilon),b(\epsilon)]$ to achieve (at least) the desired accuracy.
+
+One final note is that the integrand $\Pi(D)\,f(D)$ is ``lopsided'': it rises sharply near zero and has a long tail towards $+\infty$.  Integration is generally easier with a change of variables as follows.
+Let
+\begin{equation}
+  \begin{aligned}
+    D &= e^x \\
+    {dD \over dx} &= e^x = D \\
+    dD &= e^x \,dx
+  \end{aligned}
+\end{equation}
+then
+\begin{equation}
+- \int_0^{\infty} \Pi'(D) \, F(D) \, dD = - \int_{-\infty}^{+\infty} \Pi'(e^x) \, F(e^x) \, e^x \, dx
+\end{equation}
+and naturally
+\begin{equation}\label{eq:final}
+- \int_{D=a}^{D=b} \Pi'(D) \, F(D) \, dD = - \int_{x=\log a}^{x=\log b} \Pi'(e^x) \, F(e^x) \, e^x \, dx \quad ,
+\end{equation}
+which is the integral we evaluate numerically.  The resultant integral
+is still somewhat lopsided, and special integration methods may be
+useful for absolute maximum performance (e.g., if $\log a >0$ we can
+again perform the substitution $x = e^y$ for a more symmetric
+function, but this does not work in general since $\log a > 0$ is not
+guaranteed), but in practice we find that (\ref{eq:final}) works quite
+well and converges with the desired accuracy in less than about 100
+evaluations of $\Pi'(e^x)$.
 
 \section{Summary and conclusion}
 We have seen how to derive a general formula for the system yield of a
