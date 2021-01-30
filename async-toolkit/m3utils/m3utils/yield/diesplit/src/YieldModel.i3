@@ -6,11 +6,17 @@ PROCEDURE BoseEinstein(A, D0, n : LONGREAL) : LONGREAL;
 
 PROCEDURE Poisson(A, D0, n : LONGREAL) : LONGREAL;
 
+PROCEDURE GammaDistPdf(alpha, beta, x : LONGREAL) : LONGREAL;
+  (* p.d.f. that Stapper used for his distribution 
 
-  (* helper functions below *)
+     note that Stapper's beta is 1/beta = theta in Wikipedia
+  *)
 
-PROCEDURE StapperGamma(alpha, beta, D : LONGREAL) : LONGREAL;
-  (* p.d.f. that Stapper used for his distribution *)
+PROCEDURE GammaDistCdf(alpha, beta, x : LONGREAL) : LONGREAL;
+  (* c.d.f. that Stapper used for his distribution 
+
+     note that Stapper's beta is 1/beta = theta in Wikipedia
+  *)
 
 CONST Brand = "YieldModel";
 

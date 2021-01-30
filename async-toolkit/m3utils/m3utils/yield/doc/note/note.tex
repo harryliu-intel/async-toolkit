@@ -630,15 +630,15 @@ Gamma distribution, where
 \begin{equation}
   f(D) = { 1 \over \Gamma(\alpha) \beta^\alpha } D^{\alpha - 1} e^{-D/\beta} 
 \end{equation}
-and $\Gamma$ is Euler's gamma function.
+and $\Gamma$ is Euler's gamma function.\footnote{Note that Stapper uses opposite terminology to many authors.  Some authors would say that Stapper's Gamma distribution is parameterized over $(k,\theta)$ where $k=\alpha$ and $\theta=`/\beta$.  In this document, we shall consistently use Stapper's version, as the literature on semiconductor yield tends to follow his example.}
 This definition of $f(D)$ implies that the average defect density $D_0$ may be
 computed
 \begin{equation}
-  D_0 = \int_0^\infty D f(D) dD = \alpha \beta
+  D_0 = \int_0^\infty D f(D) \, dD = \alpha \beta
 \end{equation}
 as well as its variance
 \begin{equation}
-\sigma^2 = \int_0^\infty D^2 f(D) dD - {D_0}^2 = \alpha \beta^2
+\sigma^2 = \int_0^\infty D^2 f(D) \, dD - {D_0}^2 = \alpha \beta^2
 \end{equation}
 implying that
 \begin{equation}
@@ -660,7 +660,7 @@ wafer data suggests that such values appear more reasonable (because of
 high levels of clustering), and Poisson and Bose-Einstein distributions
 are probably more used for calculational expediency than for accuracy.
 
-The general case of the fault distribution implied by Stapper's
+The general case of the defect distribution implied by Stapper's
 formula is known as a P\'olya-Eggenberger\cite{polya1923,stanford} distribution and
 implies a process yield of the form
 \begin{equation}\label{eq:stapperyield}
@@ -872,7 +872,7 @@ We can consider this an average process yield over a parameter
 distribution $f(D)$: we are here writing that the process yield is of
 the Poisson form $e^{-AD}$ but taken over an ensemble of yields
 according to the p.d.f.~$f(D)$.  We may think of this, for example, as modeling a production
-line that at any time produces defects according to the Poisson distribution $e^{-AD}$ but over time $D$ varies, drawn from the p.d.f.~$f(D)$.
+line that at any time produces defects according to the Poisson distribution $e^{-AD}$, but over time $D$ varies, drawn from the p.d.f.~$f(D)$.
 
 But now we can also observe that the system yields that we have
 computed in this paper are linear functions (or, technically, {\em functionals\/}) of the process yields and
@@ -885,12 +885,15 @@ drawn from the ensemble $f(D)$.  The approach now is to compute the system
 yield under Poisson assumptions (binomial distribution) and compute the
 expected value of that system yield given the distribution of $D$.
 
-We write the Poisson system yield $Y_S(D)$ and compute the expected
+Considering that the different $D$ values are mutually exclusive, we can use
+similar notation as in section~\ref{sec:restricted} to denote mutually
+exclusive outcomes:
+We write the Poisson system yield $\Pi(D)$ and compute the expected
 system yield across the process ensemble,
 \begin{equation}\label{eq:ensemble-yield}
-  <Y_S> = \int_0^\infty Y_S(D) f(D) dD
+  <Y_S> = \int_0^\infty \Pi(D) f(D) \, dD
 \end{equation}
-where each $Y_S(D)$ is straightforward to compute using the binomial formula.  We have implemented this
+where each $\Pi(D)$ is straightforward to compute using the binomial formula.  We have implemented this
 approach and verified that it gives the same answers as the formalism in
 section~\ref{sec:impl}.
 
@@ -902,7 +905,7 @@ real line.  Note however that if we follow Stapper, we use the gamma distributio
   f(D) = { 1 \over \Gamma(\alpha^*) \beta^{\alpha^*} } D^{\alpha^* - 1} e^{-D/\beta}  \quad ;
 \end{equation}
 the parameters here include the starred $\alpha^*$ mentioned in
-section~\ref{sec:discussion}, (\ref{eq:starred}).  We see that when
+section~\ref{sec:discussion}, equation (\ref{eq:starred}).  We see that when
 $\alpha^* < 1$, then this expression goes to infinity as $D$
 approaches $0^+$.  Since the yield as $D$ approaches 0 is one, this
 means that the integrand in (\ref{eq:ensemble-yield}) goes to infinity
@@ -914,10 +917,34 @@ which is a domain of practical interest.
 
 We are able to evaluate the integral (\ref{eq:ensemble-yield}) using Romberg (interior point)
 integration\cite{numerical-recipes}, but it is cumbersome and
-inefficient: at present it is not clearly more efficient to evaluate
-this integral than to use the polynomial formalism we have developed
-in the rest of the paper.
+inefficient to do so, and not very accurate.  It is more fruitful to rearrange the integral using integration by parts.  Consider
+\begin{equation}
+\int_0^\infty uv' \, dD =   uv \Big|_0^\infty - \int_0^\infty u'v \, dD
+\end{equation}
+where we identify
+\begin{equation}
+  \begin{aligned}
+    u(D)  &= \Pi(D) \\
+    v'(D) &= f(D) \\
+    v(d) &= F(D) \\
+    u'(D) &= \Pi'(D)
+  \end{aligned}
+\end{equation}
+where $F(D)$ is the c.d.f.~corresponding to $f(D)$.
 
+Noting that
+\begin{equation}
+  uv \Big|_0^\infty = \Pi(D) F(D) \Big|_{D=0}^{D=\infty} = (0)(1) - (1)(0) = 0 - 0 = 0
+\end{equation}
+we have that 
+\begin{equation}
+<Y_S> = - \int_0^\infty \Pi'(D) F(D) \, dD
+\end{equation}
+where we derive $\Pi'(D)$ from the binomially computed $\Pi(D)$ by symbolic differentiation and
+\begin{equation}
+  F(D) = { \gamma \left ( \alpha^*, { D \over \beta } \right) \over \Gamma(\alpha^*) }
+\end{equation}
+where $\gamma(a,x)$ represents the lower incomplete gamma function.  We have implemented this approach, and the integration is many times faster and more accurate than the direct integration approach of (\ref{eq:ensemble-yield}).
 
 
 \section{Summary and conclusion}

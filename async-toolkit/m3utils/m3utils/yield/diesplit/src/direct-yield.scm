@@ -1,5 +1,3 @@
-(load "struct-yield.scm")
-(load "tfc-yield-2.scm")
 (load "simple.scm")
 
 (define (yield-maker D)
@@ -136,18 +134,18 @@
                 (+ s ps))))))
 
     
-;;(define (f D) (YieldModel.StapperGamma 0.05 (/ 0.075 0.05) D))
-(define (f D) (YieldModel.StapperGamma (* 32 0.05)
+;;(define (f D) (YieldModel.GammaDistPdf 0.05 (/ 0.075 0.05) D))
+(define (f D) (YieldModel.GammaDistPdf (* 32 0.05)
                                        (/ 0.075 0.05)
                                        D))
 
 (define (make-gamma D0 n alpha)
-  (lambda (D)(YieldModel.StapperGamma (* n alpha)
+  (lambda (D)(YieldModel.GammaDistPdf (* n alpha)
                                       (/ D0 alpha)
                                       D)))
 
 (define (pseudo-delta-05 D)
-  (YieldModel.StapperGamma 10 (/ 0.05 10) D))
+  (YieldModel.GammaDistPdf 10 (/ 0.05 10) D))
 
 (define (tfc-integrand D)
   (cond ((< D 0.001) (f D))

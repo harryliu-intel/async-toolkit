@@ -1,5 +1,6 @@
 MODULE YieldModel;
 IMPORT Math;
+IMPORT IncompleteGamma;
 
 CONST SqMmPerSqInch = 25.4d0 * 25.4d0;
       
@@ -24,10 +25,15 @@ PROCEDURE Poisson(A, D0, n : LONGREAL) : LONGREAL =
     RETURN Math.exp(-Ai * D0 * n)
   END Poisson;
 
-PROCEDURE StapperGamma(alpha, beta, D : LONGREAL) : LONGREAL =
+PROCEDURE GammaDistPdf(alpha, beta, D : LONGREAL) : LONGREAL =
   BEGIN
     RETURN 1.0d0 / Math.exp(Math.gamma(alpha)) / Math.pow(beta, alpha) * Math.pow(D, alpha - 1.0d0) * Math.exp(-D / beta)
-  END StapperGamma;
+  END GammaDistPdf;
+
+PROCEDURE GammaDistCdf(alpha, beta, x : LONGREAL) : LONGREAL =
+  BEGIN
+    RETURN IncompleteGamma.Gammap(alpha, x / beta)
+  END GammaDistCdf;
   
 BEGIN END YieldModel.
 
