@@ -26,6 +26,7 @@ Module ("IncompleteGamma")
 
 SchemeStubs ("YieldModel")
 SchemeStubs ("Math")
+SchemeStubs ("TextWr")
 SchemeStubs ("FileWr")
 SchemeStubs ("Wr")
 SchemeStubs ("FileRd")

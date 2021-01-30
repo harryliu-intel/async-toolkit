@@ -173,7 +173,7 @@
 ;;(dump-to-file Pi 0 100 "Pi.dat")
 ;;(dump-to-file (lambda(D)(YieldModel.GammaDistCdf 1.6 1.5 D)) 0 100 "F.dat")
 
-(integrate integrand 0 10)
+;;(integrate integrand 0 10)
 
 (define *integrand* #f)
 (define *exp-integrand* #f)
