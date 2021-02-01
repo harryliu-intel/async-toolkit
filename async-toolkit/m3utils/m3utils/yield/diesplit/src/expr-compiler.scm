@@ -33,13 +33,12 @@
 
           (else (emit-temp x))))
 
-  (let ((cwr (FileWr.Open "a.c"))
+  (let ((cwr (TextWr.New))
         (result (recurse x)))
     (write-header i cwr)
     (dis (TextWr.ToText bwr) cwr)
     (write-footer result cwr)
-    (Wr.Close cwr)
-    'ok
+    (TextWr.ToText cwr)
     ))
 
 (define (write-header n wr)

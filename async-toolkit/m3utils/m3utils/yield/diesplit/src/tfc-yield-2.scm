@@ -200,7 +200,7 @@
                      (eo-half (scale ,1/2 (to-eohalf evenodd))))
                   tm-core
                   misc
-                gpio)
+                  gpio)
                 )
   )
 

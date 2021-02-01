@@ -175,18 +175,22 @@
 
 ;;(integrate integrand 0 10)
 
-(define *integrand* #f)
-(define *exp-integrand* #f)
+;; the following is all debug code
+(define *integrand*          #f)
+(define *exp-integrand*      #f)
 (define *Pi-formula-0*       #f)
-(define *Pip-formula*       #f)
-(define *Pip*       #f)
-(define *Pi*       #f)
-(define *F*         #f)
-(define *f*         #f)
+(define *Pip-formula*        #f)
+(define *Pip*                #f)
+(define *Pi*                 #f)
+(define *F*                  #f)
+(define *f*                  #f)
+(define *lo-lim*             #f)
+(define *hi-lim*             #f)
 
-(define *the-slop*       0.0001)
+;; constants for algorithms
+(define *the-slop*       0.0001) ;; yield slop
 
-(define *deriv-step* 0.001)
+(define *deriv-step*     0.001)  ;; step size for numerical differentiation
 
 (define (numerical-deriv-step f x step)
   ;; midpoint rule
@@ -196,7 +200,17 @@
   (lambda (x)(if (<= x (/ *deriv-step* 2))
                  (numerical-deriv-step f x x)
                  (numerical-deriv-step f x *deriv-step*))))
-                     
+
+(define (interpolate-func f from to steps)
+  (let ((step (/ (- to from) steps)))
+    (let loop ((p (+ to step))
+               (x '()))
+      (if (< p (- from step))
+          (let ((y (map f x)))
+            (dis "x :" x dnl)
+            (dis "y :" y dnl)
+            (lambda(z)(cdr (assoc 'y (PolInt.Interpolate x y z)))))
+          (loop (- p step) (cons p x))))))
 
 (define (poly-yield poly ym)
   ;;(dis "poly-yield poly: " (stringify poly) " ym: " (stringify ym) dnl)
@@ -236,6 +250,8 @@
     (set! *exp-integrand* exp-integrand)
     (set! *F* F)
     (set! *f* f)
+    (set! *lo-lim* lo-lim)
+    (set! *hi-lim* hi-lim)
     (integrate exp-integrand (log lo-lim) (log hi-lim))
 
     )
