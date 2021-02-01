@@ -32,7 +32,7 @@ CONST Eps   = 3.0d-7;
 
 PROCEDURE Gser(a, x : LONGREAL; VAR gln : LONGREAL) : LONGREAL =
   CONST
-    ItMax = 100;
+    ItMax = 10000;
   VAR
     ap, del, sum : LONGREAL;
   BEGIN
@@ -47,15 +47,15 @@ PROCEDURE Gser(a, x : LONGREAL; VAR gln : LONGREAL) : LONGREAL =
       del := del * x / ap;
       sum := sum + del;
       IF ABS(del) < ABS(sum) * Eps THEN
-        RETURN sum * Math.exp(-x + a*Math.log(x) - gln)
+        EXIT
       END
-    END;
-    <*ASSERT FALSE*>
+    END; (* if fall-through: inexact *)
+    RETURN sum * Math.exp(-x + a*Math.log(x) - gln)
   END Gser;
 
 PROCEDURE Gcf(a, x : LONGREAL; VAR gln : LONGREAL) : LONGREAL =
   CONST
-    ItMax = 100;
+    ItMax = 10000;
   VAR
     an, b, c, d, del, h : LONGREAL;
   BEGIN
@@ -76,11 +76,11 @@ PROCEDURE Gcf(a, x : LONGREAL; VAR gln : LONGREAL) : LONGREAL =
         del := d * c;
         h := h * del;
         IF ABS(del - 1.0d0) < Eps THEN
-          RETURN Math.exp(-x + a * Math.log(x) - gln) * h
+          EXIT
         END
       END
-    END;
-    <*ASSERT FALSE*>
+    END; (* if fall-through: inexact *)
+    RETURN Math.exp(-x + a * Math.log(x) - gln) * h
   END Gcf;
 
 BEGIN END IncompleteGamma.

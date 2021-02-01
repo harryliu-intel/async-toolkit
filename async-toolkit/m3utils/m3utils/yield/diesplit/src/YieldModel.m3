@@ -27,7 +27,14 @@ PROCEDURE Poisson(A, D0, n : LONGREAL) : LONGREAL =
 
 PROCEDURE GammaDistPdf(alpha, beta, D : LONGREAL) : LONGREAL =
   BEGIN
+
+    RETURN Math.exp(-Math.gamma(alpha) - alpha * Math.log(beta) + (alpha - 1.0d0) * Math.log(D) - D/beta)
+
+    (*
+               
     RETURN 1.0d0 / Math.exp(Math.gamma(alpha)) / Math.pow(beta, alpha) * Math.pow(D, alpha - 1.0d0) * Math.exp(-D / beta)
+
+    *)
   END GammaDistPdf;
 
 PROCEDURE GammaDistCdf(alpha, beta, x : LONGREAL) : LONGREAL =

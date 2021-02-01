@@ -1013,6 +1013,19 @@ guaranteed), but in practice we find that (\ref{eq:final}) works quite
 well and converges with the desired accuracy in less than about 100
 evaluations of $\Pi'(e^x)$.
 
+An alternative approach to evaluating the integral comes from considering
+that the symbolic differentiation that leads to $\Pi'(D)$ can be quite
+cumbersome.  We can go back to the previous improper integral from (\ref{eq:ensemble-yield}) and apply the exponential transformation to that integral
+instead to compute the estimate to $< Y_S >$, $< Y_S >^*$: 
+\begin{equation}\label{eq:final-final}
+< Y_S >^*\int_{\log a}^{\log b} \Pi(e^x) f(e^x) e^x\, dx
+\end{equation}
+We clearly still need $F(D)$ to compute the limits.  The formulation in
+(\ref{eq:final-final}) appears to require more evaluations of the
+integrand than in (\ref{eq:final}) but since we do not need to compute $\Pi'(D)$ it can be a computational win.
+
+
+
 \section{Summary and conclusion}
 We have seen how to derive a general formula for the system yield of a
 redundant hardware system under weak assumptions on process yield.  We

@@ -163,9 +163,12 @@
           ((> x b) 0)
           (else (f x)))))
 
+(define (make-target f targ)
+  (lambda (x)(- targ (f x))))
+
 (define (solve-for-yield yf targ)
   ;; find the area where the yield function equals the target
-  (let ((tf (lambda(A)(- targ (yf A)))))
+  (let ((tf (make-target yf targ)))
     (solve tf 1e-100 1e+10)))
 
 (define (integrate-yield hw-yield-func f)

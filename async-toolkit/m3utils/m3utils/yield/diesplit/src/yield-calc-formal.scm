@@ -157,6 +157,7 @@
 
 
 (define (dump-to-file f lo hi fn)
+  (dis "dumping function to " fn dnl)
   (let ((wr (FileWr.Open fn))
         (step (/ (- hi lo) *dump-steps*)))
     
@@ -184,8 +185,8 @@
 (define *Pi*                 #f)
 (define *F*                  #f)
 (define *f*                  #f)
-(define *lo-lim*             #f)
-(define *hi-lim*             #f)
+(define *a*                  #f)
+(define *b*                  #f)
 
 ;; constants for algorithms
 (define *the-slop*       0.0001) ;; yield slop
@@ -216,10 +217,10 @@
   ;;(dis "poly-yield poly: " (stringify poly) " ym: " (stringify ym) dnl)
   (let* ((Pi-formula-0   (scale-area poly (/ 1 25.4 25.4)))
          (Pi-formula-1   (simplify Pi-formula-0))
-         (Pip-formula    (simplify (deriv Pi-formula-1 'D)))
+;;         (Pip-formula    (simplify (deriv Pi-formula-1 'D)))
          (Pi            (eval `(lambda(D) ,Pi-formula-1)))
 ;;         (Pip            (eval `(lambda(D) ,Pip-formula)))
-         (Pip            (numerical-deriv Pi))
+;;         (Pip            (numerical-deriv Pi))
 
          (D0             (car ym))
          (alpha          (cadr ym))
@@ -232,27 +233,38 @@
          (F              (lambda(D)(YieldModel.GammaDistCdf alphap beta D)))
          (f              (lambda(D)(YieldModel.GammaDistPdf alphap beta D)))
 
-         (integrand      (lambda(D)
+;;         (bp-integrand   (lambda(D)
+;;                           (set! *evaluations* (+ 1 *evaluations*))
+;;                           (* -1
+;;                              (F D)
+;;                                 (if (= D 0) (Pip 1e-10) (Pip D)))))
+
+         (integrand     (lambda(D)
                            (set! *evaluations* (+ 1 *evaluations*))
-                           (* -1
-                              (F D)
-                              (if (= D 0) (Pip 1e-10) (Pip D)))))
-         (exp-integrand  (exponential-transform integrand))
-         (lo-lim         (solve-for-yield F  *the-slop*))
-         (hi-lim         (solve-for-yield Pi *the-slop*))
+                           (* 
+                              (f D)
+                              (Pi D))))
+         (exp-integrand (exponential-transform integrand))
+         (a             (solve (make-target (exponentiate-arg F) *the-slop*)
+                               -400
+                               +400))
+         (b             (solve (make-target (exponentiate-arg Pi) *the-slop*)
+                               -400
+                               +400))
+                                
          )
     ;;(dis "Pip-formula: " (stringify Pip-formula) dnl)
     (set! *Pi-formula-0* Pi-formula-0)
-    (set! *Pip-formula* Pip-formula)
-    (set! *Pip* Pip)
+;;    (set! *Pip-formula* Pip-formula)
+;;    (set! *Pip* Pip)
     (set! *Pi* Pi)
     (set! *integrand* integrand)
     (set! *exp-integrand* exp-integrand)
     (set! *F* F)
     (set! *f* f)
-    (set! *lo-lim* lo-lim)
-    (set! *hi-lim* hi-lim)
-    (integrate exp-integrand (log lo-lim) (log hi-lim))
+    (set! *a* a)
+    (set! *b* b)
+    (integrate exp-integrand a b)
 
     )
   )
@@ -273,3 +285,19 @@
 (define (ym D0 alpha)
   (list D0 alpha *n5-n*))
 
+;; (poly-yield (simplify (cadar (compute-yield (tfc-model) build-yield))) (ym 0.075 0.05))
+
+(define (multiply-funcs f g)
+  (lambda(x)(* (f x) (g x))))
+
+(define (exponentiate-arg f)
+  (lambda(x)(f (exp x))))
+
+(define (run-test)
+  (set! *evaluations* 0)
+  (poly-yield (simplify (cadar (compute-yield (tfc-model) build-yield))) (ym 0.075 0.01))
+  (dump-to-file *Pi* 0 10 "pi.dat")
+  (dump-to-file *f* 0 10 "f.dat")
+  (dump-to-file *F* 0 10 "F.dat")
+;;  (dump-to-file *Pip* 0 10 "pip.dat")
+  )
