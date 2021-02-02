@@ -6,15 +6,13 @@
 
 (define (redundant-yield x N M)
   (let loop ((i    N)
-             (lst '()))
+             (res  0))
     (if (< i M)
-        (cons '+ lst)
+        res
         (loop (- i 1)
-              (cons (list '*
-                          (choose N i)
-                          `(* (^ ,x ,i)
-                              (^ (+ 1 (* -1 ,x)) ,(- N i))))
-                    lst)))))
+              `(+ (* ,(choose N i)
+                     (* (^ ,x ,i) (^ (+ 1 (* -1 ,x)) ,(- N i))))
+                  ,res)))))
 
 (define (scale-area x by)
   (cond ((null? x) '())
@@ -120,6 +118,13 @@
 
 ;; (simplify (cadar (compute-yield (tfc-model) build-yield)))
 
+(define (all-recs)
+  (mergesort
+   (compute-yield (tfc-model) build-yield)
+   (lambda(r0 r1)(< (length (car r0)) (length (car r1))))))
+
+
+
 (if #f (begin
 (define all-recs
   (mergesort
@@ -213,9 +218,11 @@
             (lambda(z)(cdr (assoc 'y (PolInt.Interpolate x y z)))))
           (loop (- p step) (cons p x))))))
 
-(define (poly-yield poly ym)
+(define *inmm* (/ 1 25.4 25.4))
+
+(define (poly-yield poly ym . x)
   ;;(dis "poly-yield poly: " (stringify poly) " ym: " (stringify ym) dnl)
-  (let* ((Pi-formula-0   (scale-area poly (/ 1 25.4 25.4)))
+  (let* ((Pi-formula-0   (scale-area poly *inmm*))
          (Pi-formula-1   (simplify Pi-formula-0))
 ;;         (Pip-formula    (simplify (deriv Pi-formula-1 'D)))
          (Pi            (eval `(lambda(D) ,Pi-formula-1)))
@@ -264,8 +271,20 @@
     (set! *f* f)
     (set! *a* a)
     (set! *b* b)
+    (if (not (null? x))
+        ;; do debugging
+        (let ((pfx (car x)))
+          (dump-to-file (exponentiate-arg Pi)
+                        a b (string-append pfx "_xPi.dat"))
+          (dump-to-file (exponentiate-arg f)
+                        a b (string-append pfx "_xf.dat"))
+          (dump-to-file (exponentiate-arg F)
+                        a b (string-append pfx "_xF.dat"))
+          (dump-to-file (exponential-transform integrand)
+                        a b (string-append pfx "_xi.dat"))
+          )
+        )
     (integrate exp-integrand a b)
-
     )
   )
 
@@ -301,3 +320,14 @@
   (dump-to-file *F* 0 10 "F.dat")
 ;;  (dump-to-file *Pip* 0 10 "pip.dat")
   )
+
+(define (dump-extremes)
+  (let* ((al-repairs (simplify (cadar (tail 1 (all-recs)))))
+         (no-repairs (simplify (cadar (all-recs))))
+         (al-Pi      (eval `(lambda(D) ,(scale-area al-repairs *inmm*))))
+         (no-Pi      (eval `(lambda(D) ,(scale-area no-repairs *inmm*)))))
+    (dump-to-file (exponentiate-arg al-Pi) *a* *b* "xAlPi.dat")
+    (dump-to-file (exponentiate-arg no-Pi) *a* *b* "xNoPi.dat")))
+         
+        
+    
