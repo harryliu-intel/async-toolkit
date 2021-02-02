@@ -31,7 +31,7 @@
   \end{figure}
 }
 
-\def\ins_epsfig#1#2#3{
+\def\insepsfig#1#2#3{
   \begin{figure}[!tbph!]
   \bigskip
   \begin{center}
@@ -100,7 +100,7 @@ extent to which hardware redundancy improves system yields.
 \end{abstract}
 
 \tableofcontents
-%\listoffigures
+\listoffigures
 %\listoftables
 
 \section{Background and motivation}
@@ -630,8 +630,13 @@ Gamma distribution, where
 \begin{equation}
   f(D) = { 1 \over \Gamma(\alpha) \beta^\alpha } D^{\alpha - 1} e^{-D/\beta} 
 \end{equation}
-and $\Gamma$ is Euler's gamma function.\footnote{Note that Stapper uses opposite terminology to many authors.  Some authors would say that Stapper's Gamma distribution is parameterized over $(k,\theta)$ where $k=\alpha$ and $\theta=`/\beta$.  In this document, we shall consistently use Stapper's version, as the literature on semiconductor yield tends to follow his example.}
-This definition of $f(D)$ implies that the average defect density $D_0$ may be
+and $\Gamma$ is Euler's gamma function.\footnote{Note that Stapper
+  uses opposite terminology to many authors.  Some authors would say
+  that Stapper's Gamma distribution is parameterized over $(k,\theta)$
+  where $k=\alpha$ and $\theta=1/\beta$.  In this document, we shall
+  consistently use Stapper's version, as the literature on
+  semiconductor yield tends to follow his example.}  This definition
+of $f(D)$ implies that the average defect density $D_0$ may be
 computed
 \begin{equation}
   D_0 = \int_0^\infty D f(D) \, dD = \alpha \beta
@@ -952,7 +957,7 @@ traded an improper integral with a singularity at 0 for an improper integral to 
 
 Let us consider that we have two ways of writing the integral
 \begin{equation}
-  <Y_S> = \int_{\mathbb{R}^+} \Pi \, f \, = - \int_{\mathbb{R}^+} \Pi' \, f \, 
+  <Y_S> = \int_{\mathbb{R}^+} \Pi \, f \, = - \int_{\mathbb{R}^+} \Pi' \, F \, 
 \end{equation}
 and that we also know, because of the nature of the functions involved, that
 \begin{equation}
@@ -961,7 +966,7 @@ and that we also know, because of the nature of the functions involved, that
     -\int_{\mathbb{R}^+} \Pi' &= 1 \quad .
   \end{aligned}
 \end{equation}
-And furthermore, we have everywhere that $F<1$ and $\Pi<1$.
+And furthermore, we have everywhere that $F \le 1$ and $\Pi \le 1$.
 Therefore, if we are willing to accept an error of, say, $2 \epsilon$,
 we can restrict our integration range as follows.
 Find $a(\epsilon)$, $b(\epsilon)$ such that
@@ -1022,7 +1027,32 @@ instead to compute the estimate to $< Y_S >$, $< Y_S >^*$:
 \end{equation}
 We clearly still need $F(D)$ to compute the limits.  The formulation in
 (\ref{eq:final-final}) appears to require more evaluations of the
-integrand than in (\ref{eq:final}) but since we do not need to compute $\Pi'(D)$ it can be a computational win.
+integrand than in (\ref{eq:final}) for a given precision, but since we do not need to compute $\Pi'(D)$ it can be a computational win.
+
+\subsection{Example}
+Let's again consider a redundancy example across a few technologies.
+We assume we have blocks each of 40~mm$^2$, and we need 16 for our
+system.  We will look at how the integration procedure in this section
+combines the process yield and design information to generate the
+estimated system yield.  We assume a deep-submicron process circa 2020 with $n=30$, $D_0 = 0.10$ and a few potential values of $\alpha$ from 0.02 to 10.
+
+\insepsfig{6truein}{procs.eps}{Process distribution $f(e^x)$ for a variety of values of $\alpha$.}
+
+In figure~\ref{fig:procs.eps} we see the expected distribution $f(e^x)$ as used in this section, for values of $\alpha$ of 0.02, 0.05, 1, and 10.  Recall that $\alpha = 1$ corresponds to the popular Bose-Einstein model and as $\alpha$ gets larger than 1, the model approaches the simple Poisson process (in the extreme, the Poisson process would be a Dirac delta function as discussed in section~\ref{sec:discussion}.  Note that $f(e^x)$ diverges for $\alpha = 0.02$; this is because $\alpha^* = n \alpha = (30)(0.02) = 0.06 < 1$.
+
+\insepsfig{6truein}{designs.eps}{Three potential designs with and without redundancy.}
+Figure~\ref{fig:designs.eps} shows the forms of $\Pi(e^x)$ for three potential designs: 16 blocks of 40~$mm^2$ without redundancy, and the same design with 2 and 4 redundant blocks (i.e., 16/16 blocks need to work, 16/18 need to work, and 16/20 need to work).
+
+It is clear from the methodology that figure~\ref{fig:procs.eps} is independent of our designs, and figure~\ref{fig:designs.eps} is independent of the fabrication technology.
+
+To calculate the yield, we form the integrand $\Pi(e^x) f(e^x) e^x$ as seen for example in figure~\ref{fig:integrand_16_0p02.eps}.  The yield is given by the integral of the integrand, in this case 34.3\%.  (The yield for $D_0=0.1$, $\alpha=1$ would be only 5.9\%.)
+Two more examples are given in figures~\ref{fig:integrand_18_1.eps} and~\ref{fig:integrand_18_0p02.eps}, in this case for 16/18 units with $\alpha=1$ (yield is 40.1\%) and $\alpha=0.02$ (yield is 61.3\%).
+\insepsfig{6truein}{integrand_16_0p02.eps}{Computing the yield of 16 modules without redundancy for $\alpha=0.02$.}
+
+\insepsfig{6truein}{integrand_18_0p02.eps}{Computing the yield of 16 modules with 2 redundant modules for $\alpha=0.02$.}
+
+\insepsfig{6truein}{integrand_18_1.eps}{Computing the yield of 16 modules with 2 redundant modules for $\alpha=1$ (Bose-Einstein).}
+
 
 
 
