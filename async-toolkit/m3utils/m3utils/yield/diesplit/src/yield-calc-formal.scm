@@ -160,11 +160,10 @@
 
 (define *dump-steps* 10000)
 
-
-(define (dump-to-file f lo hi fn)
+(define (dump-to-file-steps f lo hi fn steps)
   (dis "dumping function to " fn dnl)
   (let ((wr (FileWr.Open fn))
-        (step (/ (- hi lo) *dump-steps*)))
+        (step (/ (- hi lo) steps)))
     
     (let loop ((p lo))
       (if (> p hi)
@@ -172,6 +171,9 @@
           (begin
             (dis p " " (f p) dnl wr)
             (loop (+ p step)))))))
+
+(define (dump-to-file f lo hi fn)
+  (dump-to-file-steps f lo hi fn *dump-steps*))
 
 
 ;;(dump-to-file integrand 0 100 "integrand.dat")
@@ -219,6 +221,12 @@
           (loop (- p step) (cons p x))))))
 
 (define *inmm* (/ 1 25.4 25.4))
+
+(define (make-Pi poly)
+  (let* ((Pi-formula-0   (scale-area poly *inmm*))
+         (Pi-formula-1   (simplify Pi-formula-0))
+         (Pi            (eval `(lambda(D) ,Pi-formula-1))))
+    Pi))
 
 (define (poly-yield poly ym . x)
   ;;(dis "poly-yield poly: " (stringify poly) " ym: " (stringify ym) dnl)
@@ -331,3 +339,51 @@
          
         
     
+(define (best-tfc-Pi) (make-Pi (simplify (cadar (tail 1 (all-recs))))))
+(define (base-tfc-Pi) (make-Pi (simplify (cadar (all-recs)))))
+
+(define (compute-poly-yield Pi D0 alpha n)
+  (let* ((alphap         (* n alpha))
+         (beta           (/ D0 alpha))
+         (F              (lambda(D)(YieldModel.GammaDistCdf alphap beta D)))
+         (f              (lambda(D)(YieldModel.GammaDistPdf alphap beta D)))
+         (a             (solve (make-target (exponentiate-arg F) *the-slop*)
+                               -400
+                               +400))
+         (b             (solve (make-target (exponentiate-arg Pi) *the-slop*)
+                               -400
+                              +400))
+         (integrand     (lambda(D)
+                          (set! *evaluations* (+ 1 *evaluations*))
+                          (* 
+                           (f D)
+                           (Pi D))))
+         (exp-integrand (exponential-transform integrand))
+         
+         )
+    (dis "D0:" D0 " alpha:"alpha " n:"n" a:"a" b:"b dnl)
+    (integrate exp-integrand a b)
+))
+
+(define (compute-yield-improvement fr to D0 alpha n)
+  (let ((to-yield (compute-poly-yield to D0 alpha n))
+        (fr-yield (compute-poly-yield fr D0 alpha n)))
+    (dis "fr:" fr-yield " to:" to-yield dnl)
+    (/ (- to-yield fr-yield) fr-yield)))
+
+(define (D0-from-alpha D0-at at-A n)
+  (lambda (alpha)
+    (solve (make-target (lambda(D)(YieldModel.Stapper at-A D n alpha))
+                        (YieldModel.BoseEinstein at-A D0-at n))
+           1e-6 1e4)))
+                        
+(define (compute-yield-improvement-at-fixed-area-yield
+         fr to
+         D0-at at-area n
+         alpha)
+  (let ((D0 ((D0-from-alpha D0-at at-area n) alpha)))
+    (compute-yield-improvement fr to D0 alpha n)))
+
+
+        
+         

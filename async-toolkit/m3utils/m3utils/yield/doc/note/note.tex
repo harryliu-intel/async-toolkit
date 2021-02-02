@@ -1038,10 +1038,10 @@ estimated system yield.  We assume a deep-submicron process circa 2020 with $n=3
 
 \insepsfig{6truein}{procs.eps}{Process distribution $f(e^x)$ for a variety of values of $\alpha$.}
 
-In figure~\ref{fig:procs.eps} we see the expected distribution $f(e^x)$ as used in this section, for values of $\alpha$ of 0.02, 0.05, 1, and 10.  Recall that $\alpha = 1$ corresponds to the popular Bose-Einstein model and as $\alpha$ gets larger than 1, the model approaches the simple Poisson process (in the extreme, the Poisson process would be a Dirac delta function as discussed in section~\ref{sec:discussion}.  Note that $f(e^x)$ diverges for $\alpha = 0.02$; this is because $\alpha^* = n \alpha = (30)(0.02) = 0.06 < 1$.
+In figure~\ref{fig:procs.eps} we see the expected distribution $f(e^x)$ as used in this section, for values of $\alpha$ of 0.02, 0.05, 1, and 10.  Recall that $\alpha = 1$ corresponds to the popular Bose-Einstein model and as $\alpha$ gets larger than 1, the model approaches the simple Poisson process (in the extreme, the Poisson process would be a Dirac delta function as discussed in section~\ref{sec:discussion}).  Note that $f(e^x)$ diverges for $\alpha = 0.02$; this is because $\alpha^* = n \alpha = (30)(0.02) = 0.6 < 1$.
 
 \insepsfig{6truein}{designs.eps}{Three potential designs with and without redundancy.}
-Figure~\ref{fig:designs.eps} shows the forms of $\Pi(e^x)$ for three potential designs: 16 blocks of 40~$mm^2$ without redundancy, and the same design with 2 and 4 redundant blocks (i.e., 16/16 blocks need to work, 16/18 need to work, and 16/20 need to work).
+Figure~\ref{fig:designs.eps} shows the forms of $\Pi(e^x)$ for three potential designs: 16 blocks of 40~mm$^2$ without redundancy, and the same design with 2 and 4 redundant blocks (i.e., 16/16 blocks need to work, 16/18 need to work, and 16/20 need to work).
 
 It is clear from the methodology that figure~\ref{fig:procs.eps} is independent of our designs, and figure~\ref{fig:designs.eps} is independent of the fabrication technology.
 
@@ -1052,6 +1052,26 @@ Two more examples are given in figures~\ref{fig:integrand_18_1.eps} and~\ref{fig
 \insepsfig{6truein}{integrand_18_0p02.eps}{Computing the yield of 16 modules with 2 redundant modules for $\alpha=0.02$.}
 
 \insepsfig{6truein}{integrand_18_1.eps}{Computing the yield of 16 modules with 2 redundant modules for $\alpha=1$ (Bose-Einstein).}
+
+Finally, let's look at how the yield improvement defined in
+section~\ref{sec:yield-improvement} depends on Stapper's $\alpha$ for
+a representative design.  First, we look at how the yield improvement
+depends on $\alpha$ for fixed $D_0$, see figure~\ref{fig:tfc-yield-over-alpha-fixed-D0.eps}.  Here we show the yield improvement of a given
+design that includes some amount of repair and redundancy, modeled
+using the methodology described in this paper.  We then vary $\alpha$
+from 0.01 (highly clustered) to 1 (Bose-Einstein) and beyond (towards
+Poisson, no clustering at all) and graph the results. 
+\insepsfig{6truein}{tfc-yield-over-alpha-fixed-D0.eps}{Product yield
+  over $\alpha$, holding $D_0$ constant.}
+
+Also, we can hold the yield at the specific area of 500~mm$^2$
+constant, based on Bose-Einstein yield with $D_0=0.06$, solving for
+$D_0(\alpha)$ given $\alpha$ and $n$ for a representative 2020 technology.
+See figure~\ref{fig:tfc-yield-over-alpha.eps}.  For reference, at
+$\alpha=0.05$, we have $D_0(\alpha=0.05)\approx 0.09$ for this method.
+\insepsfig{6truein}{tfc-yield-over-alpha.eps}{Product yield over
+  $\alpha$, holding yield at 500~mm$^2$ constant.}
+
 
 
 
