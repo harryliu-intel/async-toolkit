@@ -107,7 +107,7 @@ extent to which hardware redundancy improves system yields.
 
 Ever since the first integrated circuit (IC) was manufactured,
 manufacturing yield has been one of the main limiters to progress in
-technology.  One of the ways that the yield of manufactured part (what
+technology.  One of the ways that the yield of manufactured parts (what
 we will call the system yield $Y_S$) can be improved is by adding hardware
 redundancy: if our design requires $N$ subsystems to be operational,
 we manufacture $N+1$ on our die and provide a scheme whereby a
@@ -150,10 +150,10 @@ quite cumbersome to use and does not appear to be used for digital
 logic yield calculations.
 
 We shall derive expressions for the system yield in terms of process
-yield that do not depend on the assumption of independence by two
+yield that do not depend on the assumption of independence by thtree
 methods: first by direct computation, and then by showing how we can
 derive the same equations by a formal argument starting from the
-binomially computed yields, assuming independent subsystem yields.  It
+binomially computed yields, assuming independent subsystem yields, and finally by a numerical integration approach that lifts Murphy's model from die yield to system yield.  It
 will be shown that the yield expressions even for non-Poisson
 underlying distributions are quite simple in practice.  In an
 appendix, we provide a short Scheme program for computing the
@@ -176,7 +176,7 @@ arise during manufacturing.
 We define {\em manufacturing yield\/} as the probability that a manufactured
 circuit is found to contain no manufacturing defects that are fatal
 its functioning according to its customer-visible specification.
-Manfacturing yield can be different from, and then always higher than,
+Manufacturing yield can be different from, and then always higher than,
 process yield, because only circuits that were inessential to the correct
 customer-visible functioning of the system are faulty.  We call such circuits
 {\em redundant.}
@@ -495,7 +495,7 @@ The following properties follow directly from the definition of the system yield
 
 \item If the functional system configurations cover a range of areas from $M$ to $N$, then the arguments $k_i$ in the formula will cover the same range.
 
-\item The sum of the coefficients before the $Y()$ will be equal to 1.  This follows from considering the happy case that our yield is precisely 1 for all sizes.  Redundancy will not change this and the required answer is 1 regardless of configuration.
+\item The sum of the coefficients before the $Y()$ will be equal to 1.  This follows from considering the happy case that our yield is precisely 1 for all sizes.  Redundancy will not change this, and the required answer is 1 regardless of configuration.
   
 \end{enumerate}
 
@@ -535,7 +535,7 @@ produces the system yield of the system containing the stated
 subsystems.
 A full listing of the program is given in appendix~\ref{app:program}.
 
-It follows from the properties listed in section~\ref{sec:props} that we can evaluate the coefficients of the yield function by formally substituting a Kronecker delta function for the yield function.  For more details see appendix~\ref{app:program}.
+It follows from the properties listed in section~\ref{sec:props} that we can evaluate the coefficients of the yield function by formally substituting a Kronecker delta  for the yield function.  For more details see appendix~\ref{app:program}.
 
 \section{Alternative derivation}\label{sec:poissonderiv}
 In sections~\ref{sec:general} and~\ref{sec:restricted} we used a
@@ -613,22 +613,23 @@ simple Poisson statistics, we can calculate chip yield as
 \begin{equation}
   Y(A) = e^{-AD_0}
 \end{equation}
-where $A$ is the area of the chip, and $D_0$ is the defect density of the process.  Murphy introduces the idea that $D$ itself is a random variable subject to some probability distribution (p.d.f.) $f(D)$ and then we may write
+where $A$ is the area of the chip, and $D_0$ is the defect density of the process.  Murphy introduces the idea that $D$ itself is a random variable subject to some probability distribution (p.d.f.) $f(D)$, and then we may write
 \begin{equation}\label{eq:murphy}
   Y(A) = \int_0^\infty e^{-AD} \, f(D) \, dD \quad ,
 \end{equation}
 from which formulation we could return to a classical Poisson
 formulation with defect density $D_0$ simply by writing $f(D) =
-\delta( D- D_0)$ where $\delta$ represents the Dirac delta function.
-Note that Murphy's formulation has $Y(A)$ as the Laplace transform of
+\delta( D- D_0)$ where $\delta$ represents Dirac's delta function.
+Note also that Murphy's formulation has $Y(A)$ as the Laplace transform of
 $f(D)$ where we may identify $D$ with the ``time domain'' and $A$ with
-the ``$s$ domain'' of the Laplace formalism.
+the ``$s$ domain'' of the Laplace formalism: this suggests a way to
+move between the yield function $Y(A)$ and the density function $f(D)$.
 
 Various forms of the defect density distribution $f(D)$ have been
 tried over the years, with special mention due to Stapper's use of the
 Gamma distribution, where
 \begin{equation}
-  f(D) = { 1 \over \Gamma(\alpha) \beta^\alpha } D^{\alpha - 1} e^{-D/\beta} 
+  f(D) = { 1 \over \Gamma(\alpha) \beta^\alpha } D^{\alpha - 1} e^{-D/\beta} \quad,
 \end{equation}
 and $\Gamma$ is Euler's gamma function.\footnote{Note that Stapper
   uses opposite terminology to many authors.  Some authors would say
@@ -655,7 +656,7 @@ The most widely seen forms of Stapper's equation have
 $\alpha \rightarrow \infty$,
 which implies a Poisson distribution, or
 $\alpha= 1$,
-which implies a Bose-Einstein distribution.  However, other
+which implies a Bose-Einstein distribution; the latter formulation seems to have been introduced by Price~\cite{price}.  However, other
 values of $\alpha$ are possible, and smaller values of $\alpha$ imply
 greater variability in the underlying defect density (more
 clustering).  Recent (2020) nanometer-scale fabrication processes in fact show $\alpha$ in the range
@@ -849,7 +850,7 @@ Our primary example, the yield improvement from adding one redundant unit to $N$
 \end{equation}
 
 \subsection{Continuous approximation example}
-Consider using Stapper's yield function with $D_0 = 0.1$ (per square inch), $\alpha = 0.02$, $n = 30$ and now let's approximate (\ref{eq:yield16of18}) using (\ref{eq:finite-diff}):
+Consider using Stapper's yield function with $D_0 = 0.1$ (per square inch per layer), $\alpha = 0.02$, $n = 30$ and now let's approximate (\ref{eq:yield16of18}) using (\ref{eq:finite-diff}):
 \begin{equation}\begin{aligned}
     P_{S(18)}(x \geq 16) &= \Pi_{18} + {18 \choose 17} \Pi_{17} + {18 \choose 16} \Pi_{16} \\
     &= Y(18) - {18 \choose 17} \Delta Y (18) + {18 \choose 16} \Delta^2 Y (18) \\
@@ -1034,25 +1035,44 @@ Let's again consider a redundancy example across a few technologies.
 We assume we have blocks each of 40~mm$^2$, and we need 16 for our
 system.  We will look at how the integration procedure in this section
 combines the process yield and design information to generate the
-estimated system yield.  We assume a deep-submicron process circa 2020 with $n=30$, $D_0 = 0.10$ and a few potential values of $\alpha$ from 0.02 to 10.
+estimated system yield.  We assume a deep-submicron process circa 2020
+with $n=30$, $D_0 = 0.10$ (defects per square inch per layer) and a
+few potential values of $\alpha$ from 0.02 to 10.
 
-\insepsfig{6truein}{procs.eps}{Process distribution $f(e^x)$ for a variety of values of $\alpha$.}
+\insepsfig{6truein}{procs.eps}{Process defect distribution $f(e^x)$ for a variety of values of $\alpha$.}
 
-In figure~\ref{fig:procs.eps} we see the expected distribution $f(e^x)$ as used in this section, for values of $\alpha$ of 0.02, 0.05, 1, and 10.  Recall that $\alpha = 1$ corresponds to the popular Bose-Einstein model and as $\alpha$ gets larger than 1, the model approaches the simple Poisson process (in the extreme, the Poisson process would be a Dirac delta function as discussed in section~\ref{sec:discussion}).  Note that $f(e^x)$ diverges for $\alpha = 0.02$; this is because $\alpha^* = n \alpha = (30)(0.02) = 0.6 < 1$.
+In figure~\ref{fig:procs.eps} we see the expected distribution
+$f(e^x)$ as used in this section, for values of $\alpha$ of 0.02,
+0.05, 1, and 10.  Recall that $\alpha = 1$ corresponds to the popular
+Bose-Einstein model and as $\alpha$ gets larger than 1, the model
+approaches the simple Poisson process (in the extreme, the Poisson
+process would be modeled here by a Dirac delta function as discussed
+in section~\ref{sec:discussion}).  Note that $f(e^x)$ diverges for
+$\alpha = 0.02$; this is because $\alpha^* = n \alpha = (30)(0.02) =
+0.6 < 1$.
 
-\insepsfig{6truein}{designs.eps}{Three potential designs with and without redundancy.}
+\insepsfig{6truein}{designs.eps}{Three potential designs with (16/18 and 16/20) and without (16/16) redundancy.}
 Figure~\ref{fig:designs.eps} shows the forms of $\Pi(e^x)$ for three potential designs: 16 blocks of 40~mm$^2$ without redundancy, and the same design with 2 and 4 redundant blocks (i.e., 16/16 blocks need to work, 16/18 need to work, and 16/20 need to work).
 
-It is clear from the methodology that figure~\ref{fig:procs.eps} is independent of our designs, and figure~\ref{fig:designs.eps} is independent of the fabrication technology.
+It is clear from the methodology that figure~\ref{fig:procs.eps} is
+independent of our designs, and figure~\ref{fig:designs.eps} is
+independent of the fabrication technology.
 
-To calculate the yield, we form the integrand $\Pi(e^x) f(e^x) e^x$ as seen for example in figure~\ref{fig:integrand_16_0p02.eps}.  The yield is given by the integral of the integrand, in this case 34.3\%.  (The yield for $D_0=0.1$, $\alpha=1$ would be only 5.9\%.)
-Two more examples are given in figures~\ref{fig:integrand_18_1.eps} and~\ref{fig:integrand_18_0p02.eps}, in this case for 16/18 units with $\alpha=1$ (yield is 40.1\%) and $\alpha=0.02$ (yield is 61.3\%).
-\insepsfig{6truein}{integrand_16_0p02.eps}{Computing the yield of 16 modules without redundancy for $\alpha=0.02$.}
+To calculate the yield, we form the integrand $\Pi(e^x) f(e^x) e^x$ as
+seen for example in figure~\ref{fig:integrand_16_0p02.eps}.  The yield
+is given by the integral of the integrand, in this case 34.3\%.  (The
+yield for $D_0=0.1$, $\alpha=1$ would be only 5.9\%.)  Two more
+examples are given in figures~\ref{fig:integrand_18_1.eps}
+and~\ref{fig:integrand_18_0p02.eps}, in this case for 16/18 units with
+$\alpha=1$ (yield is 40.1\%) and $\alpha=0.02$ (yield is 61.3\%).
+\insepsfig{6truein}{integrand_16_0p02.eps}{Computing the yield of 16
+  modules without redundancy for $\alpha=0.02$.}
 
 \insepsfig{6truein}{integrand_18_0p02.eps}{Computing the yield of 16 modules with 2 redundant modules for $\alpha=0.02$.}
 
 \insepsfig{6truein}{integrand_18_1.eps}{Computing the yield of 16 modules with 2 redundant modules for $\alpha=1$ (Bose-Einstein).}
 
+\subsection{Yield improvement for a representative product design}
 Finally, let's look at how the yield improvement defined in
 section~\ref{sec:yield-improvement} depends on Stapper's $\alpha$ for
 a representative design.  First, we look at how the yield improvement
@@ -1061,7 +1081,7 @@ design that includes some amount of repair and redundancy, modeled
 using the methodology described in this paper.  We then vary $\alpha$
 from 0.01 (highly clustered) to 1 (Bose-Einstein) and beyond (towards
 Poisson, no clustering at all) and graph the results. 
-\insepsfig{6truein}{tfc-yield-over-alpha-fixed-D0.eps}{Product yield
+\insepsfig{6truein}{tfc-yield-over-alpha-fixed-D0.eps}{Product yield improvement
   over $\alpha$, holding $D_0$ constant.}
 
 Also, we can hold the yield at the specific area of 500~mm$^2$
@@ -1069,7 +1089,7 @@ constant, based on Bose-Einstein yield with $D_0=0.06$, solving for
 $D_0(\alpha)$ given $\alpha$ and $n$ for a representative 2020 technology.
 See figure~\ref{fig:tfc-yield-over-alpha.eps}.  For reference, at
 $\alpha=0.05$, we have $D_0(\alpha=0.05)\approx 0.09$ for this method.
-\insepsfig{6truein}{tfc-yield-over-alpha.eps}{Product yield over
+\insepsfig{6truein}{tfc-yield-over-alpha.eps}{Product yield improvement over
   $\alpha$, holding yield at 500~mm$^2$ constant.}
 
 
@@ -1590,7 +1610,10 @@ modules, exactly two are operational.  For this process, we have
   \xi_X(3) &=& 1 \\
   \xi_X(2) &=& {2 \over 3}
 \end{aligned}\end{equation}
-because for each time we fabricate $ABC$, some combination of two of the three submodules will yield, and exactly one of the Greeks will count it as succesful.  So over a long manufacturing run, we find the following:
+because for each time we fabricate $ABC$, some combination of two of
+the three submodules will yield, and exactly one of the Greeks will
+count it as successful.  So over a long manufacturing run, we find the
+following:
 \begin{equation}\begin{aligned}
  Y_{X,\beta} &=& {1 \over 3}\\
  Y_{X,\gamma} &=& {1 \over 3}\\
@@ -1639,6 +1662,8 @@ We're actively trying to generalize these formulas.  (Work in progress.)
 \bibitem{spwm3}{G.~Nelson, ed.  {\it Systems Programming with Modula-3.} Englewood Cliffs, N.J.:\ Prentice Hall, 1991.}
 
 \bibitem{numerical-recipes}{W.~H.~Press, B.~P.~Flannery, S.~A~Teukolsky, and W.~T.~Vetterling.  {\it Numerical Recipes in Fortran 77: The Art of Scientific Computing.}  Second edition.  Cambridge:\ Cambridge University Press, 1992.}
+
+  \bibitem{price}{J.~E.~Price. A new look at yield of integrated circuits, {\it Proceedings of the IEEE}, 8({\bf 58}), pp.~1290–1291, August 1970.}
 
 \end{thebibliography}
 
