@@ -33,6 +33,8 @@ IMPORT Csighandler; (* no-readline *)
 IMPORT SchemeModula3Types;
 IMPORT SchemeEnvironment;
 
+VAR doDebug := Debug.DebugThis("sstubgen");
+
 TYPE ContextClosure = M3Context.Closure OBJECT
     wr: Wr.T;
   OVERRIDES callback := VisitUnit;
@@ -73,7 +75,9 @@ PROCEDURE DoRun(<*UNUSED*> w: M3ToolFrame.Worker;
           FOR i := FIRST(objects) TO LAST(objects) DO
             WITH allSyms = AstToType.GetNames(c, objects[i]) DO
               FOR j := 0 TO allSyms.size()-1 DO
-                Debug.Out("Symbol: " & Atom.ToText(allSyms.get(j)));
+                IF doDebug THEN
+                  Debug.Out("Symbol: " & Atom.ToText(allSyms.get(j)));
+                END;
 
                 returnCode := AstToType.OneStubScm(c, 
                                                    NEW(Type.Qid,
@@ -166,7 +170,9 @@ BEGIN
           scm.bind("the-basetypes", TypeTranslator.basetypeList);
           scm.bind("the-sourcefiles", AstToType.filenames);
           FOR i := FIRST(args) TO LAST(args) DO
-            Debug.Out("Loading SCM file " & args[i]);
+            IF doDebug THEN
+              Debug.Out("Loading SCM file " & args[i]);
+            END;
             WITH str = SchemeString.FromText(args[i]) DO
               EVAL scm.loadFile(str)
             END

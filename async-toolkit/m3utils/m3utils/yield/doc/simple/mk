@@ -1,12 +1,11 @@
 #!/bin/sh -x
 
-ROOT=note
+ROOT=simple
 BUILD=build
 
 rm -rf ${BUILD}
 mkdir -p ${BUILD}
 
-cp *.eps ${BUILD}
 git log . | grep commit | head -1 | awk '{printf("\\def\\hash{%s}\n",$2) }' > ${BUILD}/hash.tex
 ln -sf . ${BUILD}/${BUILD}
 

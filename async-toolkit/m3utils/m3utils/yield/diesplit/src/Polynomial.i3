@@ -26,10 +26,14 @@ TYPE
      we can take integral (CARDINAL) powers of the expressions
   *)
 
-PROCEDURE MakeConstant(c : Mpfr.T) : T;
+TYPE
+  Coefficient = Mpfr.T;
+  Exponent    = LONGREAL;
+
+PROCEDURE MakeConstant(c : Coefficient) : T;
   (* return the polynomial c x^0 *)  
 
-PROCEDURE MakePower(y : LONGREAL) : T;
+PROCEDURE MakePower(y : Exponent) : T;
   (* return the polynomial 1 x^y *)
 
 PROCEDURE Plus(a, b : T) : T;
@@ -38,8 +42,26 @@ PROCEDURE Plus(a, b : T) : T;
 PROCEDURE Times(a, b : T) : T;
   (* return the polynomial a * b *)
 
+EXCEPTION Remainder;
+EXCEPTION DivisionByZero;
+
+TYPE DivResult = RECORD quotient, remainder : T END;
+     
+PROCEDURE LongDivide(n, d : T; remainderOk : BOOLEAN) : DivResult
+  RAISES { Remainder, DivisionByZero };
+  (* polynomial division
+     RAISES Remainder iff 
+     remainderOk = FALSE AND NOT Mpfr.ZeroP(result.remainder) 
+   *)
+
 PROCEDURE IntPow(a : T; k : CARDINAL) : T;
   (* return the polynomial a ^ k *)
+
+PROCEDURE ScaleExponents(a : T; by : Exponent) : T;
+  (* return the polynomial with all exponents scaled by by *)
+
+PROCEDURE ZeroP(a : T) : BOOLEAN;
+  (* return TRUE iff a is the zero polynomial *)
 
 TYPE
   Iterator = SortedLongrealMpfrTbl.Iterator;
@@ -60,6 +82,9 @@ CONST DefPrec = 200; (* default precision *)
 
 PROCEDURE DebugFmt(a : T) : TEXT;
   (* format a polynomial for debugging *)
+  
+PROCEDURE LaTeXFmt(a : T) : TEXT;
+  (* format a polynomial for LaTeX *)
   
 CONST Brand = "Polynomial";
 

@@ -140,6 +140,7 @@ TYPE
         EqMemo, EqualMemo,
 
         Cosh, Sinh, Tanh, Acosh, Asinh, Atanh
+
   };
 
 REVEAL 
@@ -439,6 +440,7 @@ PROCEDURE InstallSandboxPrimitives(dd : Definer;
     .defPrim("zero?",          ORD(P.ZeroQ), dd,    1)
     .defPrim("eq?-memo",       ORD(P.EqMemo), dd, 1, 1)
     .defPrim("equal?-memo",       ORD(P.EqualMemo), dd, 1, 1)
+
     ;
     
     RETURN env
@@ -1160,8 +1162,8 @@ PROCEDURE Prims(t : T;
         P.TimeCall => 
         WITH start = Time.Now(),
              p = SchemeProcedure.Proc(x) DO
-          EVAL p.apply(interp,Rest(args));
-          RETURN SchemeLongReal.FromLR(Time.Now()-start)
+          EVAL p.apply(interp, Rest(args));
+          RETURN SchemeLongReal.FromLR(Time.Now() - start)
         END
       |
         P.MacroExpand => RETURN SchemeMacro.MacroExpand(interp,x)
@@ -1414,6 +1416,7 @@ PROCEDURE NumberToString(x, y : Object) : Object RAISES { E } =
   END NumberToString;
 
 PROCEDURE Fmt_LongReal(lr : LONGREAL; literal := FALSE) : TEXT =
+  <*FATAL FloatMode.Trap, Lex.Error*>
   BEGIN
     IF FLOAT(ROUND(lr),LONGREAL) = lr THEN
       RETURN Fmt.Int(ROUND(lr))

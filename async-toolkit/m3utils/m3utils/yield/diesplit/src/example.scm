@@ -34,9 +34,9 @@
 ;; representative high-end process as of 2020
 ;;
 
-(define D0    0.10)
-(define n       30)
-(define alpha 0.02)
+(define D0    0.07)
+(define n       32)
+(define alpha 0.05)
 
 (define (stapper A D0 n alpha)
   (let ((sqmmPsqinch (* 25.4 25.4)))

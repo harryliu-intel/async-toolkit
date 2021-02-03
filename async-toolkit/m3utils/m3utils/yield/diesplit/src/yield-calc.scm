@@ -18,3 +18,13 @@
                        )))
                                                    
                                    
+(define (scale-area x by)
+  ;; return the yield of x, of the same structure, but where all the areas
+  ;; are scaled by by
+  (scale-exponents x by))
+
+(define (unmodule-yield y to-remove)
+  ;; given yield expression y, remove to-remove
+  (/-term y to-remove))
+
+
