@@ -84,6 +84,10 @@
 
 \section{Introduction}
 
+It never rains but it pours --- {\em British proverb}
+
+When it rains, it pours --- {\em American advertising slogan}
+
 Ever since the first IC was manufactured, manufacturing yield has been
 one of the main limiters to progress in technology.  One way we
 improve system yield is by adding hardware redundancy: if our design
@@ -104,12 +108,11 @@ independent, for example when using Stapper's yield formula
   Y(A) = \left(1 + { AD_0 \over \alpha } \right)^{-n \alpha}
 \end{equation}
 with small $\alpha$.  We will use Stapper's formula in this paper, noting that the other popular yield formulas, namely Poisson's
-formula and the Bose-Einstein distribution, are special cases of
+formula and the Bose-Einstein formula, are special cases of
 Stapper's formula, with $\alpha \rightarrow +\infty$ for Poisson and
 $\alpha = 1$ for Bose-Einstein.  The binomial formula (\ref{eq:basic})
 is {\em only\/} correct for Poisson distributions.
-For
-very small values of Stapper's $\alpha$, and in particular for large chips,
+For small values of Stapper's $\alpha$, and in particular for large chips,
 we will see that the binomial formula  (\ref{eq:basic}) dramatically
 over-estimates the benefit of adding redundancy to a chip design.
 
@@ -117,25 +120,21 @@ over-estimates the benefit of adding redundancy to a chip design.
   
 It was realized early on that the Poisson process was not adequate for
 describing the yield of ICs, and Murphy introduced a more
-sophisticated method in (\ref{eq:murphy}) already in 1964.  Big
+sophisticated method (\ref{eq:murphy}) already in 1964.  Big
 advances in yield modeling came from Moore's publication of Intel
 yield data in the open literature in 1970~\cite{moore1970}.  Stapper in
-particular refined Murphy's approach and applied P\'olya-Eggenberger
-statistics (\ref{eq:stapperyield}) to the yield problem starting in
+particular refined Murphy's approach and applied Gamma distribution
+statistics to the yield problem in
 1973, rediscovering the yield formula (\ref{eq:stapperyield}) that
 P\'olya and Eggenberger had developed in 1923 for a problem in botany.
 Whereas the Poisson formulation implies that there is an underlying
-constant rate of defects, the Stapper model allows for a highly
-variable defect rate, to account for clustering.  In modern processes,
-the variance of the defect density is modeled as being up to 50 times
-its average value.
+constant rate of defects, the Stapper model allows for a variable defect rate, to account for defect clustering. 
 
 The resulting situation is something of a conundrum: redundancy
 modeling uses the binomial formula, which assumes that subsystem
 yields are independent; process yield modeling uses Stapper's model,
-or something similar, which assumes that yields are clustered.  As we
-shall see, large disagreements are possible in the computed yields of
-redundantly provisioned systems.
+or something similar, which assumes that yields are clustered and not
+independent.  The two formulations are incompatible.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -143,7 +142,6 @@ redundantly provisioned systems.
 We define {\em process yield\/} $Y$ as the probability that a
 manufactured circuit is found to contain no manufacturing defects that
 are fatal to its functioning according to its circuit specification.
-Holding all else equal, process yield falls with circuit area.
 
 We define {\em manufacturing yield\/} as the probability that a manufactured
 circuit is found to contain no manufacturing defects that are fatal
@@ -153,18 +151,13 @@ process yield, because only circuits that were inessential to the correct
 customer-visible functioning of the system are faulty.  We call such circuits
 {\em redundant.}
 
-Let process yield $Y$ map from area $A$ in square
-length units to a probability $Y(A)$ so that
-
-\begin{equation} Y(A) \in [ 0 .. 1 ] \quad . \end{equation}
-
+Process yield $Y(A)$ maps from area $A$ in square
+length units to a probability so that $Y(A) \in [ 0 .. 1 ]$ ;
 $Y(A)$ is decreasing in $A$.
 
 Let it be given that a system $S$ comprises $N$ subsystems
 $u_i$, each with area $A_{u_i}$, so that
-\begin{equation}
-  A_S = \sum A_{u_i} \quad .
-\end{equation}
+$ A_S = \sum A_{u_i}$ .
 We call the set of subsystems
 \begin{equation}
   \Sigma = \{ u_0, u_1, \ldots , u_{N-1} \} \quad . 
@@ -178,11 +171,8 @@ correctly the {\em system manufacturing yield,} or for short, the {\em system yi
 \begin{equation}
   P_{S(N)}(x \geq M) \quad . \label{eq:sysyield}
 \end{equation}
-We drop the subscript $S(N)$ when the meaning is clear from context.  
-
-We consider the case that {\em exactly\/} $k$ out of $N$ subsystems
-are functional, and we will write this analogously to
-(\ref{eq:sysyield}) as $P_{S(N)}(x = k)$.
+We also consider the case that {\em exactly\/} $k$ out of $N$ subsystems
+are functional, written $P_{S(N)}(x = k)$.
 
 \section{General formulation}\label{sec:general}
 
@@ -195,31 +185,25 @@ $N$ subsystems are fully functional, which is simply the process yield
 of the area of the system $S$ or equivalently the $N$ subsystems $u_i$.
 
 Let's consider the state of affairs after fabricating $S$.  Some number of
-subsystems $u_i \in \Sigma$ will have been fabricated correctly, with the balance defective.  Let's define $C$ to be the set of correctly fabricated subsystems.  It is clear that
-\begin{equation}
-  C \subseteq \Sigma .
-\end{equation}
+subsystems $u_i \in \Sigma$ will have been fabricated correctly, with the balance defective.  Let's define $C$ to be the set of correctly fabricated subsystems.  It is clear that $C \subseteq \Sigma$.
 
 If we now consider the power set of the set of subsystems, that is,
 \begin{equation}
   2^\Sigma = \{ \emptyset, \{ u_0 \}, \{ u_1 \}, \ldots , \Sigma \}
 \end{equation}
-it is clear that each of the members  $\sigma \in 2^\Sigma$ corresponds to a certain physical area, namely
+each of the members  $\sigma \in 2^\Sigma$ corresponds to a certain physical area
 \begin{equation}
   A_\sigma = \sum_{u_i \in \sigma} A_{u_i} \quad ,
 \end{equation}
 and also that the result of fabrication will be that $C$ equals precisely one of the members of $2^\Sigma$.
 
-We introduce the shorthand
-\begin{equation}
-  \pi_\tau = P(C = \tau)
-\end{equation}
+We introduce the shorthand $\pi_\tau = P(C = \tau)$
 where we may write the subscript of $\pi$ as a bit vector $v$ where
 bit $i$ in $v$ corresponds to whether $u_i \in \tau$.  By analogy with
 boolean algebra, we call the individual, mutually exclusive $\pi_i$ the
 {\em minterms\/} of the fabrication process.
 
-The probability that the circuitry in $\sigma$ is fabricated correctly is
+The probability that the circuitry in $\sigma$ is fabricated correctly is given by the yield of their area
 \begin{equation}
   P(\sigma \subseteq C) = Y(A_\sigma) = Y \left( \sum_{u_i \in \sigma} A_{u_i} \right) \quad , \label{eq:system}
 \end{equation}
@@ -265,11 +249,11 @@ Now instead of a number of $\pi_\tau$, we have the probability
   where now we write $A_u$ to signify that all the $A_{u_i}$ are the same, since all the $u_i$ are the same.
   We continue with 
   \begin{equation}
-    \Pi_{N-1} = \pi_{1\ldots10} = \pi_{1\ldots01} = \cdots = \pi_{01\ldots11} 
+    \Pi_{N-1} = \pi_{1\ldots10} = \pi_{1\ldots101} = \cdots = \pi_{01\ldots11} 
   \end{equation}
   whose value is given by (\ref{eq:master}) as
 \begin{equation}
-\pi_{1\ldots10} + \pi_{11\ldots1} = \pi_{1\ldots01} + \pi_{11\ldots1} = \cdots = \pi_{01\ldots11} + \pi_{11\ldots1} = Y(N-1) \quad ,
+\pi_{1\ldots10} + \pi_{11\ldots1} = \pi_{1\ldots101} + \pi_{11\ldots1} = \cdots = \pi_{01\ldots11} + \pi_{11\ldots1} = Y(N-1) \quad ,
 \end{equation}
 but we can simply write that as
 \begin{equation}
@@ -277,17 +261,17 @@ but we can simply write that as
 \end{equation}
 and drop the $\pi_\tau$ from further consideration.  Now we may reduce (\ref{eq:system}) to the following recurrence:
 \begin{equation}\begin{aligned}
-    \Pi_N     &=& Y(N A_u) \\
-    \Pi_{k-1}  &=& Y((k-1) A_u) - \left( \sum_{j=k}^{N} {N-k+1 \choose N-j} \Pi_j \right) \quad .
+    \Pi_N     =& Y(N A_u) \\
+    \Pi_{k-1} =& Y((k-1) A_u) - \left( \sum_{j=k}^{N} {N-k+1 \choose N-j} \Pi_j \right) \quad .
     \label{eq:recurrence}
 \end{aligned}\end{equation}
 This can be summarized as
 \begin{equation}\label{eq:pi-summary}
-  \Pi_{N-k} = \sum_{j=0}^k {k \choose j} (-1)^j Y((N-j)A_u) \quad .
+  \Pi_{N-k} = \sum_{j=0}^k {k \choose j} (-1)^j Y((N-j)A_u) \quad ,
 \end{equation}
-And now
+so that
 \begin{equation}\begin{aligned}\label{eq:double-sum}
-    P_{S(N)}(x \geq M) &=& \sum_{i=M}^{i=N} {N \choose i} \Pi_{i} \hskip 2ex& \hfill \\
+    P_{S(N)}(x \geq M) 
                      &=& \sum_{i=0}^{N-M} {N \choose i}  \sum_{j=0}^{j=i}& {j \choose i} (-1)^j Y((N-j)A_u) \quad.
 \end{aligned}\end{equation}
 
@@ -304,7 +288,7 @@ By (\ref{eq:recurrence}) we have the recurrence
     \Pi_{16}              &=& Y(16) - \Pi_{17} = Y(16)& - Y(17) \\
 \end{aligned}\end{equation}
 and, accordingly, the system yield
-\begin{equation}\begin{aligned}
+\begin{equation}\begin{aligned}\label{eq:16of17}
     P_{S(17)}(x \geq 16) &=& \Pi_{17} + {17 \choose 16} \Pi_{16} \\
                        &=& Y(17) + 17 (Y(16) - Y(17)) \\
                        &=& 17\, Y(16) - 16\, Y(17) \quad ,
@@ -314,111 +298,137 @@ which, as expected, equals the formulation under independence
   P_{i,16/17} = Y(1)^{17} + 17\, Y(1)^{16}(1 - Y(1))^1
 \end{equation}
 if and only if $Y \sim \hbox{Poisson}$ so that $Y(z) = Y(1)^z$.
-This generalizes to
+The result (\ref{eq:16of17}) generalizes to
 \begin{equation}
 P_{S(N)}(x \geq N-1) = N \, Y((N-1)A) - (N-1)\, Y(NA) \quad .
 \end{equation}
 
-\section{Yield improvement}\label{sec:yield-improvement}
 The {\em yield improvement\/} is the relative increase in the yield
-from a certain design transformation.  For example, consider moving from a system of $N$ equal subsystems, all of which must work, to a system of $N+1$ equal subsystems, where still $N$ of which must work.  We can write the yield improvement
+from a certain design transformation.  For example, consider moving from a system of $N$ equal subsystems of area 1, all of which must work, to a system of $N+1$ equal subsystems, where still $N$ of which must work.  We can write the yield improvement
 \begin{equation}
 \begin{aligned}\label{eq:nplusoneimprovement}
   \upsilon_{N/N+1} & =  {Y_{N/N+1} - Y_{N/N} \over Y_{N/N}} \\
                  & = { (N+1) \, Y(N) - N\, Y(N+1) - Y(N) \over Y(N) } \\
-                 & =  N { Y(N) - Y(N+1) \over Y(N) } \quad .
+                 & =  N { Y(N) - Y(N+1) \over Y(N) } \approx - N {Y'(N) \over Y(N)}\quad .
 \end{aligned}
 \end{equation}
 
 \section{Integral formulation}
 The main idea of the work of Murphy and Stapper is as follows.  If we assume
-simple Poisson statistics, we can write
-\begin{equation}
-  Y(A) = e^{-AD_0}
-\end{equation}
-where $A$ is the area of the chip, and $D_0$ is the defect density of the process.  Murphy introduced the idea that $D$ itself is a random variable subject to some probability distribution (p.d.f.) $f(D)$, and then we may write
+simple Poisson statistics, we can write $Y(A) = e^{-AD_0}$
+where $A$ is the area of the chip, and $D_0$ is the defect density of the process.  Murphy introduced the idea that $D$ itself is a random variable subject to some probability distribution (p.d.f.) $f(D)$, so that
 \begin{equation}\label{eq:murphy}
-  Y(A) = \int_0^\infty e^{-AD} \, f(D) \, dD \quad ,
+  Y(A) = \int_0^\infty e^{-AD} \, f(D) \, dD \quad .
 \end{equation}
-From this equation, Stapper introduced
-\begin{equation}
-  f(D) = { 1 \over \Gamma(\alpha) \beta^\alpha } D^{\alpha - 1} e^{-D/\beta} \quad,
-\end{equation}
-whence he derived the yield formula~(\ref{eq:stapperyield}).  Now we take a step back and consider this an average process yield over a parameter
-distribution $f(D)$: we are here writing that the process yield is of
-the Poisson form $e^{-AD}$ but taken over an ensemble of yields
-according to the p.d.f.~$f(D)$.  We may think of this, for example, as modeling a production
-line that at any time produces defects according to the Poisson distribution $e^{-AD}$, but over time $D$ varies, drawn from the p.d.f.~$f(D)$.
+Stapper introduced $f(D)$ from the Gamma
+distribution with shape parameter $\alpha$ and scale parameter
+$\beta$, whence he derived the yield formula~(\ref{eq:stapperyield}).
+Now we take a step back and consider this an average process yield
+over a parameter distribution $f(D)$: we are here writing that the
+process yield is of the Poisson form $e^{-AD}$ but taken over an
+ensemble of yields according to the p.d.f.~$f(D)$.  We may think of
+this, for example, as modeling a production line that at any time
+produces defects according to the Poisson distribution $e^{-AD}$, but
+wafer-to-wafer $D$ varies, drawn from the p.d.f.~$f(D)$.
 
-If we restrict our process yields to Poisson yields $e^{-AD}$,
-drawn from the ensemble $f(D)$.  The approach now is to compute the system
-yield under Poisson assumptions (binomial distribution) and compute the
-expected value of that system yield given the distribution of $D$.
-We write the Poisson system yield $\Pi(D)$ and compute the expected
-system yield across the process ensemble,
+The approach now is to compute the system yield under Poisson
+assumptions (\ref{eq:basic}) and figure its
+expected value given the distribution of $D$.  We
+write the Poisson yield $\Pi(D)$ and write
 \begin{equation}\label{eq:ensemble-yield}
-  <Y_S> = \int_0^\infty \Pi(D) f(D) \, dD
+  < Y_S > = \int_0^\infty \Pi(D) f(D) \, dD
 \end{equation}
-where each $\Pi(D)$ is straightforward to compute using the binomial formula.
+where each $\Pi(D)$ is straightforward to compute using the binomial formula~(\ref{eq:basic}).
 
-In practice we evaluate
+In practice we make a change of variables and evaluate
 \begin{equation}
-< Y_S > = \int_{-\infty}^{+\infty} \Pi(e^x) f(e^x) e^x\, dx \quad ,
+< Y_S > = \int_{-\infty}^{+\infty} \Pi(e^x) f(e^x) e^x\, dx \quad ;
 \end{equation}
-and we have implemented this approach in a software tool and verified that it vies the same answers as the polynomial formulation.
+we have implemented this approach in a software tool and verified that
+it gives the same answers as the general formulation described in
+section~\ref{sec:general}.\footnote{We have also developed two more
+  formulations that lead to the same results as the integration
+  formulation described here: a generalized polynomial formulation and
+  a finite-differences formulation.  We do not have the space to
+  describe these approaches here.}
 
 \subsection{Example}
-We assume a generic deep-submicron process circa 2020
-with $n=30$, $D_0 = 0.10$ (defects per square inch per layer), and $\alpha$ varying from 10 (close to a Poisson defect distribution) through 1 (Bose-Einstein) to 0.02 (a more reasonable value for a modern process). 
+A generic deep-submicron process circa 2020 has $n=30$, $D_0 = 0.10$
+(defects per square inch per layer), $\alpha$ in the range 0.02--0.10.
+Let's model this process but let $\alpha$ vary from 10 (close to a
+Poisson defect distribution) through 1 (Bose-Einstein) to 0.02
+(``reasonable'' value, contemporary fabrication processes).
 
-\insepsfig{4truein}{procs.eps}{Process defect distribution $f(e^x)$ for a variety of values of $\alpha$.}
+\insepsfig{4truein}{proc_9000.eps}{Process defect distribution $f(e^x)$ for a variety of values of $\alpha$.  The dashed line is $e^x \Pi(e^x)$ from the HAL9000 example.}
 
-In figure~\ref{fig:procs.eps} we see the expected distribution
-$f(e^x)$ as used in this section, for values of $\alpha$ of 0.02,
-0.05, 1, and 10.
+In figure~\ref{fig:proc_9000.eps} we see the expected (transformed)
+distribution $f(e^x)$ as used in this section, for values of $\alpha$
+of 0.02, 1, and 10.  As $\alpha \rightarrow +\infty$, the distribution
+sharpens into a Dirac delta function, corresponding to a pure Poisson
+defect process.  The yield is computed by multiplying the dashed curve
+in the figure, representing a
+specific hardware design, with the $f(D)$ corresponding to the
+fabrication process, and integrating the result.
 
-Now let's model a design to be fabricated in this process.  Our example processor is a HAL9000 processor, which for yield purposes is modeled by the
-following Lisp S-expression:
+Now let's model a design to be fabricated in this process.  Our example processor is a ``HAL9000'' processor, which for yield purposes is modeled by the
+following Lisp S-expression\cite{scheme}:
 \begin{verbatim}
 (hal9000 (hal9000-misc 50)
    (* hal1000-modules 9 9 
       (hal1000 (hal1000-misc 5)
                (* hal1000-slices 10 8 (hal1000-slice 10))))))
 \end{verbatim}
-HAL9000 is a machine consisting of 9 modules of type
+This says that HAL9000 is a machine consisting of 9 modules of type
 HAL1000, each of which contains 10 10-mm$^2$ slices of which any 8 are
 required for correct operation.  Each HAL9000 also contains 50~mm$^2$
 of other logic, and each HAL1000 another 5~mm$^2$.  Running our tool
-on this design results output a part of which is shown in
-figure~\ref{fig:hal9000-output}.  We also see the effect of yield
+on this design results in output a part of which is shown in
+figure~\ref{fig:Hal9000Screenshot.png}.  The output shows the effect of yield
 improvement from the redundancy in the design.  Finally, we also see
 the yield of the ``downbins'' HAL8000 and HAL7000, which allow 1 and 2
-of the HAL1000 subprocessors to be faulty.  We see that the yield improvement from redundancy on a HAL9000 is from 27.97\% to 48.24\%, that is, a 72.48\% improvement in yielding parts.  By contrast, using Poisson statistics with the same defect densities would show yields of 13.25\% and 53.54\% for a yield improvement of 304\%.  In other words, Poisson statistics would over-estimate yield improvement in this case by about $4\times$. 
+of the HAL1000 subprocessors to be faulty.
 
-\insepsfig{4truein}{Hal9000Screenshot.png}{Output of yield calculator tool on HAL9000 example.}
+\insepsfig{6truein}{Hal9000Screenshot.png}{Output of yield calculator tool on HAL9000 example.}
 
 The danger of relying on the binomial formula for yield-improvement
 calculations is illustrated in
-figure~\ref{fig:hal9000-yield-improvement.eps}.  Here we see the yield improvement for the HAL9000 processor as a function of Stapper's $\alpha$ graphed in two ways.  The upper curve shows the yield improvement holding $D_0$ fixed at 0.1; the lower curve shows the perhaps more believable situation that we do have a good estimate for the yield at a fixed area (here assuming the effective $D_0$ is 0.06 at an area of 500~mm$^2$) but do not know $\alpha$ very well, although we may suspect that modern fabrication processes have $\alpha$ in the range 0.02--0.10.  We see that the Poisson assumptions  ($\alpha \gg 1$) that are commonly made over-estimate the yield improvement by anywhere from 2--20$\times$.
-\insepsfig{4truein}{hal9000-yield-improvement.eps}{Yield improvement as a function of $\alpha$.}
+figure~\ref{fig:hal9000-yield-improvement.eps}.  Here we see the yield
+improvement for the (top-bin) HAL9000 processor as a function of Stapper's
+$\alpha$ graphed in two ways.  The upper curve shows the yield
+improvement holding $D_0$ fixed at 0.1; the lower curve shows the
+perhaps more believable situation that we do have a good estimate for
+the yield at a fixed area (here assuming the effective $D_0$ is 0.06
+at an area of 500~mm$^2$) but do not know $\alpha$ very well, although
+we may suspect that modern fabrication processes have $\alpha$ in the
+range 0.02--0.10. Results of evaluating at two points are shown in table~\ref{tbl:yi}: we see that the Poisson assumption results in errors in the yield improvement lying roughly in the range 5--10$\times$.
+\insepsfig{4truein}{hal9000-yield-improvement.eps}{Yield improvement
+  as a function of $\alpha$.}
+\begin{table}
+  \begin{center}
+  \begin{tabular}{| c | c | c | c | c | c | c | c |}
+    \hline
+    Method & Base & Improved & Yield       & Base & Improved & Yield & Error \\
+           & yield      & yield    & imp. & yield      & yield    & imp. & factor         \\
+    & $\alpha\gg 1$ & $\alpha\gg 1$ & $\alpha\gg 1$ & $\alpha=0.02$ & $\alpha=0.02$& $\alpha=0.02$ & \\
+    \hline
+    Fixed $D_0$         & 2.2\% & 18.0\% & 694\%  &   30.3\% & 50.7\% & 67.5\% & 10.3$\times$ \\   
+    Fixed yield & 10.8\% & 48.2\% & 345\% &   19.5\% & 34.1\% & 74.5\% &    4.63$\times$ \\
+    \hline
+  \end{tabular}
+  \end{center}
+  \caption{Yield improvement for HAL9000 design assuming $\alpha \gg 1$ vs.~$\alpha = 0.02$.}\label{tbl:yi}
+\end{table}
 
 \section{Summary and conclusion}
 We have seen how to derive a general formula for the system yield of a
-redundant hardware system under weak assumptions on process yield.  We
-have furthermore shown how to more efficiently compute the system
-yield of a system consisting of identical subsystems, and we have
-discussed how practitioners over the years have found that
-semiconductor defects are more highly clustered than the yield models
-have allowed for.  We find it likely that existing yield models
-overestimate the efficiacy of adding hardware redundancy and thereby
-mislead designers into considering redundancy in situations where it
-may not be so effective.  Future work that remains to be done here is
-to shown how to integrate results derived with our model into the
-context of a larger system incorporating the system we are studing as
-itself a subsystem (our equations as they stand are only applicable if
-they can take the entire system of interest---probably a semiconductor
-die---into consideration ``at once''), and doing so with computational
-efficiency.
+redundant hardware system under weak assumptions on process yield and
+applied this to defect distributions that are more reasonable than
+simple Poisson distributions.  We find it likely that existing yield
+models overestimate the efficiacy of adding hardware redundancy and
+thereby mislead designers into considering redundancy in situations
+where it may not be so effective.  The results of this work are
+currently being used in architectural studies of next-generation
+Intel Barefoot division products.
 
 \section{Acknowledgements}
 
