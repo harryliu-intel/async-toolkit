@@ -81,12 +81,23 @@
 \parskip=1.5ex
 
 \arraycolsep=1.4pt\def\arraystretch{1.5}
+\begin{abstract}
+  A popular way of improving semiconductor yield is adding redundant
+  hardware to chip designs.  Analyzing the yield improvement of such
+  redundancy is commonly done assuming that the yields of different
+  components are independent of each other.  Meanwhile, process yield
+  models have long since abandoned this assumption.  This paper
+  explains how to compute yield improvement
+  under non-independent yield models and shows that large errors in
+  estimating yield improvement are possible when assuming
+  independence.
+\end{abstract}
 
 \section{Introduction}
 
-It never rains but it pours --- {\em British proverb}
+{\em It never rains but it pours} --- British proverb
 
-When it rains, it pours --- {\em American advertising slogan}
+{\em When it rains, it pours} --- American advertising slogan
 
 Ever since the first IC was manufactured, manufacturing yield has been
 one of the main limiters to progress in technology.  One way we
@@ -123,7 +134,7 @@ describing the yield of ICs, and Murphy introduced a more
 sophisticated method (\ref{eq:murphy}) already in 1964.  Big
 advances in yield modeling came from Moore's publication of Intel
 yield data in the open literature in 1970~\cite{moore1970}.  Stapper in
-particular refined Murphy's approach and applied Gamma distribution
+particular refined Murphy's approach and applied Gamma-distribution
 statistics to the yield problem in
 1973, rediscovering the yield formula (\ref{eq:stapperyield}) that
 P\'olya and Eggenberger had developed in 1923 for a problem in botany.
@@ -304,7 +315,7 @@ P_{S(N)}(x \geq N-1) = N \, Y((N-1)A) - (N-1)\, Y(NA) \quad .
 \end{equation}
 
 The {\em yield improvement\/} is the relative increase in the yield
-from a certain design transformation.  For example, consider moving from a system of $N$ equal subsystems of area 1, all of which must work, to a system of $N+1$ equal subsystems, where still $N$ of which must work.  We can write the yield improvement
+from a certain design transformation.  For example, consider moving from a system of $N$ equal subsystems of area 1, all of which must work, to a system of $N+1$ equal subsystems, where still $N$ must work.  The yield improvement
 \begin{equation}
 \begin{aligned}\label{eq:nplusoneimprovement}
   \upsilon_{N/N+1} & =  {Y_{N/N+1} - Y_{N/N} \over Y_{N/N}} \\
@@ -357,7 +368,7 @@ A generic deep-submicron process circa 2020 has $n=30$, $D_0 = 0.10$
 (defects per square inch per layer), $\alpha$ in the range 0.02--0.10.
 Let's model this process but let $\alpha$ vary from 10 (close to a
 Poisson defect distribution) through 1 (Bose-Einstein) to 0.02
-(``reasonable'' value, contemporary fabrication processes).
+(contemporary ``reasonable'' value).
 
 \insepsfig{4truein}{proc_9000.eps}{Process defect distribution $f(e^x)$ for a variety of values of $\alpha$.  The dashed line is $e^x \Pi(e^x)$ from the HAL9000 example.}
 
@@ -366,11 +377,11 @@ distribution $f(e^x)$ as used in this section, for values of $\alpha$
 of 0.02, 1, and 10.  As $\alpha \rightarrow +\infty$, the distribution
 sharpens into a Dirac delta function, corresponding to a pure Poisson
 defect process.  The yield is computed by multiplying the dashed curve
-in the figure, representing a
-specific hardware design, with the $f(D)$ corresponding to the
+in the figure, representing $e^x \Pi(e^x)$ of a
+specific hardware design, by the solid-line $f(D)$ corresponding to the
 fabrication process, and integrating the result.
 
-Now let's model a design to be fabricated in this process.  Our example processor is a ``HAL9000'' processor, which for yield purposes is modeled by the
+Now let's model a design to be fabricated in this process.  Our example is a ``HAL9000'' processor, which for yield purposes is modeled by the
 following Lisp S-expression\cite{scheme}:
 \begin{verbatim}
 (hal9000 (hal9000-misc 50)
@@ -386,7 +397,7 @@ on this design results in output a part of which is shown in
 figure~\ref{fig:Hal9000Screenshot.png}.  The output shows the effect of yield
 improvement from the redundancy in the design.  Finally, we also see
 the yield of the ``downbins'' HAL8000 and HAL7000, which allow 1 and 2
-of the HAL1000 subprocessors to be faulty.
+of the HAL1000 subprocessors to be faulty, for less choosy customers.
 
 \insepsfig{6truein}{Hal9000Screenshot.png}{Output of yield calculator tool on HAL9000 example.}
 
