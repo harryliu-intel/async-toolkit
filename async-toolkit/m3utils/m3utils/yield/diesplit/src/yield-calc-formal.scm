@@ -118,7 +118,7 @@
 
 ;; (simplify (cadar (compute-yield (tfc-model) build-yield)))
 
-(define (all-recs)
+(define (all-tfc-recs)
   (mergesort
    (compute-yield (tfc-model) build-yield)
    (lambda(r0 r1)(< (length (car r0)) (length (car r1))))))
@@ -126,16 +126,16 @@
 
 
 (if #f (begin
-(define all-recs
+(define all-tfc-recs
   (mergesort
    (compute-yield (tfc-model) build-yield)
    (lambda(r0 r1)(< (length (car r0)) (length (car r1))))))
 
 (define base-rec
-  (car all-recs))
+  (car all-tfc-recs))
 
 (define base-rec
-  (nth all-recs (- (length all-recs) 1)))
+  (nth all-tfc-recs (- (length all-tfc-recs) 1)))
 
 (define Pi-formula
   (scale-area (cadr base-rec) (/ 1 25.4 25.4)))
@@ -186,6 +186,7 @@
 ;; the following is all debug code
 (define *integrand*          #f)
 (define *exp-integrand*      #f)
+(define *bp-integrand*       #f)
 (define *Pi-formula-0*       #f)
 (define *Pip-formula*        #f)
 (define *Pip*                #f)
@@ -232,9 +233,8 @@
   ;;(dis "poly-yield poly: " (stringify poly) " ym: " (stringify ym) dnl)
   (let* ((Pi-formula-0   (scale-area poly *inmm*))
          (Pi-formula-1   (simplify Pi-formula-0))
-;;         (Pip-formula    (simplify (deriv Pi-formula-1 'D)))
+
          (Pi            (eval `(lambda(D) ,Pi-formula-1)))
-;;         (Pip            (eval `(lambda(D) ,Pip-formula)))
 ;;         (Pip            (numerical-deriv Pi))
 
          (D0             (car ym))
@@ -247,6 +247,9 @@
 
          (F              (lambda(D)(YieldModel.GammaDistCdf alphap beta D)))
          (f              (lambda(D)(YieldModel.GammaDistPdf alphap beta D)))
+
+;;         (Pip-formula    (simplify (deriv Pi-formula-1 'D)))
+;;         (Pip            (eval `(lambda(D) ,Pip-formula)))
 
 ;;         (bp-integrand   (lambda(D)
 ;;                           (set! *evaluations* (+ 1 *evaluations*))
@@ -275,6 +278,8 @@
     (set! *Pi* Pi)
     (set! *integrand* integrand)
     (set! *exp-integrand* exp-integrand)
+;;    (set! *bp-integrand* bp-integrand)
+    
     (set! *F* F)
     (set! *f* f)
     (set! *a* a)
@@ -330,8 +335,8 @@
   )
 
 (define (dump-extremes)
-  (let* ((al-repairs (simplify (cadar (tail 1 (all-recs)))))
-         (no-repairs (simplify (cadar (all-recs))))
+  (let* ((al-repairs (simplify (cadar (tail 1 (all-tfc-recs)))))
+         (no-repairs (simplify (cadar (all-tfc-recs))))
          (al-Pi      (eval `(lambda(D) ,(scale-area al-repairs *inmm*))))
          (no-Pi      (eval `(lambda(D) ,(scale-area no-repairs *inmm*)))))
     (dump-to-file (exponentiate-arg al-Pi) *a* *b* "xAlPi.dat")
@@ -339,8 +344,8 @@
          
         
     
-(define (best-tfc-Pi) (make-Pi (simplify (cadar (tail 1 (all-recs))))))
-(define (base-tfc-Pi) (make-Pi (simplify (cadar (all-recs)))))
+(define (best-tfc-Pi) (make-Pi (simplify (cadar (tail 1 (all-tfc-recs))))))
+(define (base-tfc-Pi) (make-Pi (simplify (cadar (all-tfc-recs)))))
 
 (define (compute-poly-yield Pi D0 alpha n)
   (let* ((alphap         (* n alpha))

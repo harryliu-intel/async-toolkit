@@ -5,6 +5,25 @@ IMPORT SchemePrimitive;
 IMPORT Scheme;
 IMPORT Rd;
 
+(* interface for extending Scheme interpreter with new primitives to run
+   Unix commands as follows
+
+     (run-command <cmd> <arg1> <arg2> ... ) 
+
+     (run-command-with-timeout <timeo> <cmd> <arg1> <arg2> ... ) 
+
+     (run-command-with-hooks
+                   <timeout-hook> 
+                   <error-hook> 
+                   <timeo> <cmd> <arg1> <arg2> ... ) 
+
+     (run-raw-command-with-hooks                      ;; output is TEXT
+                   <timeout-hook> 
+                   <error-hook> 
+                   <timeo> <cmd> <arg1> <arg2> ... ) 
+
+*)
+
 CONST Brand = "SchemeCommandRunner";
 
 PROCEDURE Extend(outputParser : OutputParser;

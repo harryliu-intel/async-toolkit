@@ -156,7 +156,14 @@
                  
 (define (find-node model name)
   (cond ((null? model) #f)
+
         ((eq? name (car model)) model)
+
+        ((eq? '* (car model))
+         (if (eq? name (cadr model))
+             model
+             (find-node (caddddr model) name)))
+             
         (else
          (let loop ((p (cdr model)))
            (cond ((null? p) #f)
