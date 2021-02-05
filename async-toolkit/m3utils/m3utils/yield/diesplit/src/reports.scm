@@ -114,7 +114,7 @@
              line))
 
 (define header3 (string-append
-             "        DOWNBIN                   UNMP     UNIMP    IMP      IMP     " dnl
+             "        DOWNBIN                   UNIMP    UNIMP    IMP      IMP     " dnl
              "                                  YIELD    DELTA   YIELD    DELTA  " dnl 
              line))
 

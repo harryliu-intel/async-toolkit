@@ -82,11 +82,11 @@
 
 \arraycolsep=1.4pt\def\arraystretch{1.5}
 \begin{abstract}
-  A popular way of improving semiconductor yield is adding redundant
-  hardware to chip designs.  Analyzing the yield improvement of such
+  A popular way of improving semiconductor chip yield is adding redundant
+  hardware.  Analyzing the yield improvement of such
   redundancy is commonly done assuming that the yields of different
   components are independent of each other.  Meanwhile, process yield
-  models have long since abandoned this assumption.  This paper
+  models have long since abandoned this assumption of independence.  This paper
   explains how to compute yield improvement
   under non-independent yield models and shows that large errors in
   estimating yield improvement are possible when assuming
@@ -103,7 +103,7 @@ Ever since the first IC was manufactured, manufacturing yield has been
 one of the main limiters to progress in technology.  One way we
 improve system yield is by adding hardware redundancy: if our design
 requires $N$ subsystems to be operational, we manufacture $N+1$ on the
-die and provide a scheme whereby a defective subsystem can be switched
+die and provide a scheme whereby a defective subsystem can be swapped
 out.
 
 The standard pre-silicon method of modeling yield improvement under
@@ -118,28 +118,30 @@ independent, for example when using Stapper's yield formula
 \begin{equation}\label{eq:stapperyield}
   Y(A) = \left(1 + { AD_0 \over \alpha } \right)^{-n \alpha}
 \end{equation}
-with small $\alpha$.  We will use Stapper's formula in this paper, noting that the other popular yield formulas, namely Poisson's
-formula and the Bose-Einstein formula, are special cases of
+with small $\alpha$\cite{stapper1973}.  We will use Stapper's formula
+in this paper, noting that the other popular yield formulas, namely
+Poisson's formula and the Bose-Einstein formula, are special cases of
 Stapper's formula, with $\alpha \rightarrow +\infty$ for Poisson and
 $\alpha = 1$ for Bose-Einstein.  The binomial formula (\ref{eq:basic})
-is {\em only\/} correct for Poisson distributions.
-For small values of Stapper's $\alpha$, and in particular for large chips,
-we will see that the binomial formula  (\ref{eq:basic}) dramatically
-over-estimates the benefit of adding redundancy to a chip design.
+is {\em only\/} correct for Poisson distributions.  For small values
+of Stapper's $\alpha$, and in particular for large chips, we will see
+that the binomial formula (\ref{eq:basic}) dramatically over-estimates
+the benefit of adding redundancy to a chip design.
 
 \section{Historical background}
   
 It was realized early on that the Poisson process was not adequate for
 describing the yield of ICs, and Murphy introduced a more
-sophisticated method (\ref{eq:murphy}) already in 1964.  Big
-advances in yield modeling came from Moore's publication of Intel
-yield data in the open literature in 1970~\cite{moore1970}.  Stapper in
-particular refined Murphy's approach and applied Gamma-distribution
-statistics to the yield problem in
-1973, rediscovering the yield formula (\ref{eq:stapperyield}) that
-P\'olya and Eggenberger had developed in 1923 for a problem in botany.
+sophisticated method (\ref{eq:murphy}) already in 1964.  Big advances
+in yield modeling came from Moore's publication of Intel yield data in
+the open literature in 1970~\cite{moore1970}.  Stapper in particular
+used Moore's data to refine Murphy's approach by applying
+Gamma-distribution statistics to the yield problem in 1973,
+rediscovering the yield formula (\ref{eq:stapperyield}) that P\'olya
+and Eggenberger had developed in 1923 for a problem in botany.
 Whereas the Poisson formulation implies that there is an underlying
-constant rate of defects, the Stapper model allows for a variable defect rate, to account for defect clustering. 
+constant rate of defects, the Stapper model allows for a variable
+defect rate, to account for defect clustering.
 
 The resulting situation is something of a conundrum: redundancy
 modeling uses the binomial formula, which assumes that subsystem
@@ -196,7 +198,7 @@ $N$ subsystems are fully functional, which is simply the process yield
 of the area of the system $S$ or equivalently the $N$ subsystems $u_i$.
 
 Let's consider the state of affairs after fabricating $S$.  Some number of
-subsystems $u_i \in \Sigma$ will have been fabricated correctly, with the balance defective.  Let's define $C$ to be the set of correctly fabricated subsystems.  It is clear that $C \subseteq \Sigma$.
+subsystems $u_i \in \Sigma$ will have been fabricated correctly, with the balance defective.  Let's define $C$, where $C \subseteq \Sigma$, to be the set of correctly fabricated subsystems. 
 
 If we now consider the power set of the set of subsystems, that is,
 \begin{equation}
@@ -359,13 +361,21 @@ we have implemented this approach in a software tool and verified that
 it gives the same answers as the general formulation described in
 section~\ref{sec:general}.\footnote{We have also developed two more
   formulations that lead to the same results as the integration
-  formulation described here: a generalized polynomial formulation and
-  a finite-differences formulation.  We do not have the space to
-  describe these approaches here.}
+  formulation described here.  First, we developed a generalized
+  polynomial formulation derived from the insight that the yield
+  formulas can be written as a linear combination of yield-function
+  evaluations and that this combination must equal the binomial
+  formulation under independence, which allows a straightforward
+  algorithm to discover the correct yield function.  This method is
+  suitable for solving small problems with pen-and-paper calculations
+  but appears to scale poorly to larger problems.  We have also developed a
+  finite-differences formulation that shows promise for allowing fast
+  computation of the yield formulas using algebraic methods.  We do
+  not have the space here to describe these approaches further.}
 
 \subsection{Example}
-A generic deep-submicron process circa 2020 has $n=30$, $D_0 = 0.10$
-(defects per square inch per layer), $\alpha$ in the range 0.02--0.10.
+A generic deep-submicron process circa 2020 has $n=30$ (layers), $D_0 = 0.10$
+(defects per square inch per layer), $\alpha$ (Gamma shape parameter) in the range 0.02--0.10.
 Let's model this process but let $\alpha$ vary from 10 (close to a
 Poisson defect distribution) through 1 (Bose-Einstein) to 0.02
 (contemporary ``reasonable'' value).
@@ -461,7 +471,7 @@ the currently used yield models.
 
 \bibitem{murphy} B.~T.~Murphy. Cost-size optima of monolithic integrated circuits. {\it Proc. IEEE}, 12({\bf 52}), pp.~1537--1545, Dec.~1964.
 
-\bibitem{stapper1973}C.~H.~Stapper. Defect density distribution for LSI yield calculations. {\it IEEE Trans. on Electron Devices}, 7({\bf 20}), pp.~655--657, July 1973.
+\bibitem{stapper1973}C.~H.~Stapper. Defect density distribution for LSI yield calculations. {\it IEEE Trans. Electron Devices}, 7({\bf 20}), pp.~655--657, July 1973.
 
   \bibitem{stapper1980}C.~H.~Stapper. Yield Model for Productivity Optimization of VLSI Memory Chips with Redundancy and Partially Good Product.  {\it IBM J. Res. Develop.\/} 3({\bf 24}), May 1980.
 
