@@ -1138,6 +1138,19 @@ public final class DirectiveUtils {
                                         final Set<HierName> impliedPorts,
                                         final Set<HierName> ports,
                                         final Set<HierName> internalNodes) {
+        getNetDirectives(dutCell, envCell, dutNodes, envNodes, directive,
+                         impliedPorts, ports, internalNodes, PortDefinition.IN);
+    }
+
+    public static void getNetDirectives(final CellInterface dutCell,
+                                        final CellInterface envCell,
+                                        final AliasedSet dutNodes,
+                                        final AliasedSet envNodes,
+                                        final String directive,
+                                        final Set<HierName> impliedPorts,
+                                        final Set<HierName> ports,
+                                        final Set<HierName> internalNodes,
+                                        final int expectedPortDir) {
         final Set<HierName> topDirs = new HashSet<>();
         getNetDirectives(dutCell, dutNodes, directive, false, topDirs, null);
 
@@ -1160,16 +1173,19 @@ public final class DirectiveUtils {
                                       PortDefinition.INOUT);
         }
 
+        final int oppositePortDir =
+            expectedPortDir == PortDefinition.IN ? PortDefinition.OUT
+                                                 : PortDefinition.IN;
         for (HierName dir : dirs) {
             final Integer portDir = canonPortDir.get(dir);
             final boolean implied = dutCell.isImpliedPort(dir.getCadenceString());
             if (portDir == null) {
                 internalNodes.add(dir);
-            } else if (implied && (portDir == PortDefinition.IN ||
+            } else if (implied && (portDir == expectedPortDir ||
                                    portDir == PortDefinition.INOUT)) {
                 impliedPorts.add(dir);
-            } else if (!implied && ((portDir == (envCell == null ? PortDefinition.IN
-                                                                 : PortDefinition.OUT)) ||
+            } else if (!implied && ((portDir == (envCell == null ? expectedPortDir
+                                                                 : oppositePortDir)) ||
                                     portDir == PortDefinition.INOUT)) {
                 ports.add(dir);
             }

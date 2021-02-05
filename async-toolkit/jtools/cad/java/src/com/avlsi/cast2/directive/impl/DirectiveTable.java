@@ -385,6 +385,10 @@ public class DirectiveTable {
         registerDirective(CELL, SCAN_OUTPUTS, BOOLEAN_TYPE, null);
         registerDirective(CSP, SCAN_STATE, BOOLEAN_TYPE, Boolean.FALSE);
         registerDirective(CELL, SCAN, POSSIBLY_WIDE_CHANNEL_TYPE, BOOLEAN_TYPE, null);
+        registerDirective(CELL, SCAN_CLOCK, NODE_TYPE, BOOLEAN_TYPE, Boolean.FALSE);
+        registerDirective(CELL, SCAN_ENABLE, NODE_TYPE, BOOLEAN_TYPE, Boolean.FALSE);
+        registerDirective(CELL, SCAN_IN, NODE_TYPE, BOOLEAN_TYPE, Boolean.FALSE);
+        registerDirective(CELL, SCAN_OUT, NODE_TYPE, BOOLEAN_TYPE, Boolean.FALSE);
         registerDirective(CELL, PROTEUS_SCAN_MODEL, BOOLEAN_TYPE, Boolean.FALSE);
         registerDirective(CELL, PROTEUS_SCAN_MACROS, BOOLEAN_TYPE, null);
         registerDirective(CELL, PROTEUS_SCAN_DECLONE, BOOLEAN_TYPE, Boolean.FALSE);

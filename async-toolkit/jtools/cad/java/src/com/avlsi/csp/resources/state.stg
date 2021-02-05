@@ -1,8 +1,9 @@
-state2(i,reset,init,clk1,clk2,do,pending,flop) ::= <<
-reg latch$<i>, latchDo$<i>, en$<i>;
+state2(i,reset,init,clk1,clk2,do,pending,flop,scan_clk) ::= <<
+reg latch$<i>, latchDo$<i>, en$<i><if(scan_clk)>, en_scan$<i><endif>;
 CLOCK_AND ckand$<i> (.clk(<clk1>), .en(latchDo$<i>), .clkout(en$<i>));
+<if(scan_clk)>CLOCK_OR ckor$<i> (.clk1(en$<i>), .clk2(<scan_clk>), .clkout(en_scan$<i>));<endif>
 always_ff @(posedge <clk2>) { latch$<i>, latchDo$<i> } \<= { <pending>, <do> };
-always_ff @(posedge en$<i>, negedge <reset>) if (!<reset>) <flop> \<= <init>; else <flop> \<= latch$<i>;
+always_ff @(posedge en<if(scan_clk)>_scan<endif>$<i>, negedge <reset>) if (!<reset>) <flop> \<= <init>; else <flop> \<= latch$<i>;
 
 >>
 state1(i,reset,init,clk1,clk2,do,pending,flop) ::= <<

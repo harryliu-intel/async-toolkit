@@ -222,6 +222,10 @@ public interface DirectiveConstants {
     String SCAN_OUTPUTS = "scan_outputs";
     String SCAN_STATE = "scan_state";
     String SCAN = "scan";
+    String SCAN_CLOCK = "scan_clock";
+    String SCAN_ENABLE = "scan_enable";
+    String SCAN_IN = "scan_in";
+    String SCAN_OUT = "scan_out";
     String PROTEUS_SCAN_MODEL = "proteus_scan_model";
     String PROTEUS_SCAN_MACROS = "proteus_scan_macros";
     String PROTEUS_SCAN_DECLONE = "proteus_scan_declone";
