@@ -120,7 +120,7 @@ independent, for example when using Stapper's yield formula
 \end{equation}
 with small $\alpha$\cite{stapper1973}.  We will use Stapper's formula
 in this paper, noting that the other popular yield formulas, namely
-Poisson's formula and the Bose-Einstein formula, are special cases of
+Poisson's formula \cite{poisson} and the Bose-Einstein \cite{price} formula, are special cases of
 Stapper's formula, with $\alpha \rightarrow +\infty$ for Poisson and
 $\alpha = 1$ for Bose-Einstein.  The binomial formula (\ref{eq:basic})
 is {\em only\/} correct for Poisson distributions.  For small values
@@ -130,15 +130,15 @@ the benefit of adding redundancy to a chip design.
 
 \section{Historical background}
   
-It was realized early on that the Poisson process was not adequate for
+It was realized early on that the Poisson process \cite{poisson,small} was not adequate for
 describing the yield of ICs, and Murphy introduced a more
-sophisticated method (\ref{eq:murphy}) already in 1964.  Big advances
+sophisticated method (\ref{eq:murphy}) already in 1964 \cite{murphy}.  Big advances
 in yield modeling came from Moore's publication of Intel yield data in
 the open literature in 1970~\cite{moore1970}.  Stapper in particular
 used Moore's data to refine Murphy's approach by applying
-Gamma-distribution statistics to the yield problem in 1973,
+Gamma-distribution statistics to the yield problem in 1973 \cite{stapper1973},
 rediscovering the yield formula (\ref{eq:stapperyield}) that P\'olya
-and Eggenberger had developed in 1923 for a problem in botany.
+and Eggenberger had developed in 1923 for a problem in botany \cite{polya1923}.
 Whereas the Poisson formulation implies that there is an underlying
 constant rate of defects, the Stapper model allows for a variable
 defect rate, to account for defect clustering.
@@ -146,8 +146,9 @@ defect rate, to account for defect clustering.
 The resulting situation is something of a conundrum: redundancy
 modeling uses the binomial formula, which assumes that subsystem
 yields are independent; process yield modeling uses Stapper's model,
-or something similar, which assumes that yields are clustered and not
-independent.  The two formulations are incompatible.
+or something similar, which assumes that yields are dependent on
+clustered defects and not independent.  The two formulations are
+incompatible.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -469,19 +470,23 @@ the currently used yield models.
 
 \bibitem{scheme} W.~Clinger and J.~Rees, eds. {Revised$^4$ Report on the Algorithmic Language Scheme.}  In {\it ACM Lisp Pointers IV}, July--September 1991.
 
-\bibitem{murphy} B.~T.~Murphy. Cost-size optima of monolithic integrated circuits. {\it Proc. IEEE}, 12({\bf 52}), pp.~1537--1545, Dec.~1964.
+\bibitem{murphy} B.~T.~Murphy. Cost-size optima of monolithic integrated circuits. {\it Proc.~IEEE}, 12({\bf 52}), pp.~1537--1545, Dec.~1964.
 
-\bibitem{stapper1973}C.~H.~Stapper. Defect density distribution for LSI yield calculations. {\it IEEE Trans. Electron Devices}, 7({\bf 20}), pp.~655--657, July 1973.
+\bibitem{stapper1973}C.~H.~Stapper. Defect density distribution for LSI yield calculations. {\it IEEE Trans.~Electron Devices}, 7({\bf 20}), pp.~655--657, July 1973.
 
-  \bibitem{stapper1980}C.~H.~Stapper. Yield Model for Productivity Optimization of VLSI Memory Chips with Redundancy and Partially Good Product.  {\it IBM J. Res. Develop.\/} 3({\bf 24}), May 1980.
+  \bibitem{stapper1980}C.~H.~Stapper. Yield Model for Productivity Optimization of VLSI Memory Chips with Redundancy and Partially Good Product.  {\it IBM J.~Res.~Develop.\/} 3({\bf 24}), May 1980.
 
-\bibitem{moore1970}G.~E.~Moore. What level of LSI is best for you? {\bf Electronics} {\bf 43}, pp.~126--130, Feb.~1970.
+\bibitem{moore1970}G.~E.~Moore. What level of LSI is best for you? {\it Electronics} ({\bf 43}), pp.~126--130, Feb.~1970.
 
-\bibitem{polya1923}F.~Eggenberger and G.~P\'olya. \"Uber die Statistik verketteter Vorg\"ange. {\it Z. Angew. Math. Mech.}, ({\bf 3}), pp.~279--289, 1923.
+\bibitem{polya1923}F.~Eggenberger and G.~P\'olya. \"Uber die Statistik verketteter Vorg\"ange. {\it Z.~Angew.~Math.~Mech.}, ({\bf 3}), pp.~279--289, 1923.
 
 \bibitem{numerical-recipes}{W.~H.~Press, B.~P.~Flannery, S.~A~Teukolsky, and W.~T.~Vetterling.  {\it Numerical Recipes in Fortran 77: The Art of Scientific Computing.}  Second edition.  Cambridge:\ Cambridge University Press, 1992.}
 
-\bibitem{price}{J.~E.~Price. A new look at yield of integrated circuits, {\it Proc. IEEE}, 8({\bf 58}), pp.~1290–1291, August 1970.}
+\bibitem{price}{J.~E.~Price. A new look at yield of integrated circuits, {\it Proc.~IEEE}, 8({\bf 58}), pp.~1290--1291, August 1970.}
+
+\bibitem{poisson}{S.~D.~Poisson.  Probabilit\'e des jugements en mati\`ere criminelle et en mati\`ere civile; pr\'ec\'ed\'ees des R\`egles g\'en\'erales du calcul des probabilit\'es.  Paris:\ Bachelier, 1837.}
+
+\bibitem{small}{L.~v.~Bortkiewicz.  {\it Das Gesetz der kleinen Zahlen.}  Leipzig:\ Teubner, 1898.}
 
 \end{thebibliography}
 
