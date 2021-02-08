@@ -136,7 +136,7 @@ sophisticated method (\ref{eq:murphy}) already in 1964 \cite{murphy}.  Big advan
 in yield modeling came from Moore's publication of Intel yield data in
 the open literature in 1970~\cite{moore1970}.  Stapper in particular
 used Moore's data to refine Murphy's approach by applying
-Gamma-distribution statistics to the yield problem in 1973 \cite{stapper1973},
+gamma-distribution statistics to the yield problem in 1973 \cite{stapper1973},
 rediscovering the yield formula (\ref{eq:stapperyield}) that P\'olya
 and Eggenberger had developed in 1923 for a problem in botany \cite{polya1923}.
 Whereas the Poisson formulation implies that there is an underlying
@@ -303,9 +303,9 @@ By (\ref{eq:recurrence}) we have the recurrence
 \end{aligned}\end{equation}
 and, accordingly, the system yield
 \begin{equation}\begin{aligned}\label{eq:16of17}
-    P_{S(17)}(x \geq 16) &=& \Pi_{17} + {17 \choose 16} \Pi_{16} \\
-                       &=& Y(17) + 17 (Y(16) - Y(17)) \\
-                       &=& 17\, Y(16) - 16\, Y(17) \quad ,
+    P_{S(17)}(x \geq 16) &= \Pi_{17} + {17 \choose 16} \Pi_{16} \\
+                       &= Y(17) + 17 (Y(16) - Y(17)) \\
+                       &= 17\, Y(16) - 16\, Y(17) \quad ,
 \end{aligned}\end{equation}
 which, as expected, equals the formulation under independence
 \begin{equation}
@@ -314,7 +314,7 @@ which, as expected, equals the formulation under independence
 if and only if $Y \sim \hbox{Poisson}$ so that $Y(z) = Y(1)^z$.
 The result (\ref{eq:16of17}) generalizes to
 \begin{equation}
-P_{S(N)}(x \geq N-1) = N \, Y((N-1)A) - (N-1)\, Y(NA) \quad .
+P_{S(N)}(x \geq N-1) = N \, Y((N-1)A_u) - (N-1)\, Y(NA_u) \quad .
 \end{equation}
 
 The {\em yield improvement\/} is the relative increase in the yield
@@ -334,7 +334,7 @@ where $A$ is the area of the chip, and $D_0$ is the defect density of the proces
 \begin{equation}\label{eq:murphy}
   Y(A) = \int_0^\infty e^{-AD} \, f(D) \, dD \quad .
 \end{equation}
-Stapper introduced $f(D)$ from the Gamma
+Stapper introduced $f(D)$ from the gamma
 distribution with shape parameter $\alpha$ and scale parameter
 $\beta$, whence he derived the yield formula~(\ref{eq:stapperyield}).
 Now we take a step back and consider this an average process yield
@@ -376,14 +376,14 @@ section~\ref{sec:general}.\footnote{We have also developed two more
 
 \subsection{Example}
 A generic deep-submicron process circa 2020 has $n=30$ (layers), $D_0 = 0.10$
-(defects per square inch per layer), $\alpha$ (Gamma shape parameter) in the range 0.02--0.10.
+(defects per square inch per layer), $\alpha$ (gamma shape parameter) in the range 0.02--0.10.
 Let's model this process but let $\alpha$ vary from 10 (close to a
 Poisson defect distribution) through 1 (Bose-Einstein) to 0.02
 (contemporary ``reasonable'' value).
 
 \insepsfig{4truein}{proc_9000.eps}{Process defect distribution $f(e^x)$ for a variety of values of $\alpha$.  The dashed line is $e^x \Pi(e^x)$ from the HAL9000 example.}
 
-In figure~\ref{fig:proc_9000.eps} we see the expected (transformed)
+In figure~\ref{fig:proc_9000.eps}, we see the expected (transformed)
 distribution $f(e^x)$ as used in this section, for values of $\alpha$
 of 0.02, 1, and 10.  As $\alpha \rightarrow +\infty$, the distribution
 sharpens into a Dirac delta function, corresponding to a pure Poisson
@@ -427,11 +427,12 @@ range 0.02--0.10. Results of evaluating at two points are shown in table~\ref{tb
   as a function of $\alpha$.}
 \begin{table}
   \begin{center}
-  \begin{tabular}{| c | c | c | c | c | c | c | c |}
+  \begin{tabular}{| c || c | c | c || c | c | c || c |}
     \hline
-    Method & Base & Improved & Yield       & Base & Improved & Yield & Error \\
+     & \multicolumn{3}{c ||}{$\alpha\gg 1$}       &  \multicolumn{3}{c ||}{$\alpha = 0.02$} &  \\
+    \hline
+    Method       & Base & Improved & Yield       & Base & Improved & Yield & Error \\
            & yield      & yield    & imp. & yield      & yield    & imp. & factor         \\
-    & $\alpha\gg 1$ & $\alpha\gg 1$ & $\alpha\gg 1$ & $\alpha=0.02$ & $\alpha=0.02$& $\alpha=0.02$ & \\
     \hline
     Fixed $D_0$         & 2.2\% & 18.0\% & 694\%  &   30.3\% & 50.7\% & 67.5\% & 10.3$\times$ \\   
     Fixed yield & 10.8\% & 48.2\% & 345\% &   19.5\% & 34.1\% & 74.5\% &    4.63$\times$ \\
