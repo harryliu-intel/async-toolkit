@@ -308,7 +308,7 @@ and, accordingly, the system yield
                        &= 17\, Y(16) - 16\, Y(17) \quad ,
 \end{aligned}\end{equation}
 which, as expected, equals the formulation under independence
-\begin{equation}
+\begin{equation}\label{eq:16of17-independent}
   P_{i,16/17} = Y(1)^{17} + 17\, Y(1)^{16}(1 - Y(1))^1
 \end{equation}
 if and only if $Y \sim \hbox{Poisson}$ so that $Y(z) = Y(1)^z$.
@@ -367,7 +367,7 @@ section~\ref{sec:general}.\footnote{We have also developed two more
   formulas can be written as a linear combination of yield-function
   evaluations and that this combination must equal the binomial
   formulation under independence, which allows a straightforward
-  algorithm to discover the correct yield function.  This method is
+  algorithm to discover the correct yield function (see our eqs.~(\ref{eq:16of17}) and~(\ref{eq:16of17-independent}) above).  This method is
   suitable for solving small problems with pen-and-paper calculations
   but appears to scale poorly to larger problems.  We have also developed a
   finite-differences formulation that shows promise for allowing fast

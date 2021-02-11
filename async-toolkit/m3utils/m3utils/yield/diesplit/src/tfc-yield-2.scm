@@ -227,6 +227,7 @@
 (define tfc-tags (accumulate union '() (map car (compute-yield (tfc-model) build-yield))))
 
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (sqmm-per-good-die r)
@@ -235,38 +236,48 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define tfc-results
+(define (tfc-results)
   (map (lambda(alt) (decorate-yield alt (tfc-model) the-yield-model))
        (compute-yield (tfc-model) build-yield)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (eohalf-results)
+  (map (lambda(alt) (decorate-yield alt (eohalf-25t-model) the-yield-model))
+       (compute-yield (eohalf-25t-model) build-yield)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (lrhalf-results)
+  (map (lambda(alt) (decorate-yield alt (lrhalf-25t-model) the-yield-model))
+       (compute-yield (lrhalf-25t-model) build-yield)))
+
+
+(if #f 
 (map sqmm-per-good-die
      (mergesort
       tfc-results
       (lambda(a b) (< (cadr a) (cadr b)))))
+)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(define eohalf-results
-  (map (lambda(alt) (decorate-yield alt (eohalf-25t-model) the-yield-model))
-       (compute-yield (eohalf-25t-model) build-yield)))
-
+(if #f 
 (map sqmm-per-good-die
      (mergesort
       eohalf-results
       (lambda(a b) (< (cadr a) (cadr b)))))
+)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(define lrhalf-results
-  (map (lambda(alt) (decorate-yield alt (lrhalf-25t-model) the-yield-model))
-       (compute-yield (lrhalf-25t-model) build-yield)))
-
+(if #f
 (map sqmm-per-good-die
      (mergesort
       lrhalf-results
-      (lambda(a b) (< (cadr a) (cadr b)))))
 
+      (lambda(a b) (< (cadr a) (cadr b)))))
+)
+
+(if #f
 (mergesort tfc-results (lambda(a b) (< (cadr a) (cadr b))))
+)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
