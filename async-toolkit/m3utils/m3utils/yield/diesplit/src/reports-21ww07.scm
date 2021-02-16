@@ -39,6 +39,16 @@
 (define 6/8 (/ 6 8))
 (define 15/16 (/ 15 16))
 
+(define (lrhalf-16t-model)
+  (make-downbin tfc-model
+                `(lrhalf-16t
+                  (* lr-spare 2 1
+                     (lr-half (scale ,6/16 (to-lrhalf evenodd tm-core))))
+                  misc
+                  gpio)
+                )
+  )
+
 (define (lhalf-16t-model)
   (make-downbin tfc-model
                 `(lhalf-16t
@@ -109,7 +119,10 @@
    ;;,(lrhalf-25t-model)
    ,(15/16-pipe-model)
    ,(lhalf-25t-model)
-   ,(lhalf-16t-model)) 
+   ,(lhalf-16t-model)
+   ,(lrhalf-25t-model)
+   ,(lrhalf-16t-model)
+   ) 
  )
 
 (report-yields-for-params
