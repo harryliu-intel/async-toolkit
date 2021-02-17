@@ -34,6 +34,16 @@
                 )
   )
 
+(define (lhalf-8/16-25t-model) ;; pipe 0 not needed
+  (make-downbin tfc-model
+                `(lhalf-8/16-25t
+                  (* lr-spare 1 1
+                     (lr-half (scale ,1/2 (to-lrhalf evenodd tm-core))))
+                  misc
+                  gpio)
+                )
+  )
+
 (define 9/16 (/ 9 16))
 (define 6/16 (/ 6 16))
 (define 6/8 (/ 6 8))
@@ -119,6 +129,7 @@
    ;;,(lrhalf-25t-model)
    ,(15/16-pipe-model)
    ,(lhalf-25t-model)
+   ,(lhalf-8/16-25t-model)
    ,(lhalf-16t-model)
    ,(lrhalf-25t-model)
    ,(lrhalf-16t-model)
