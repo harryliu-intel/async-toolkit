@@ -125,12 +125,27 @@
    ) 
  )
 
-(report-yields-for-params
- (tfc-twodie-model)
+(define (report-twodie) 
+  (report-yields-for-params
+   (tfc-twodie-model)
+   
+   params
+   
+   `(,(twodie-halfpipe-model)
+     ,(twodie-halfpipe-spare-model)
+     ,(twodie-6/8-model))
+   )
+  )
 
- params
+(dis "*spare-mac* " (stringify *spare-mac* )dnl)
 
- `(,(twodie-halfpipe-model)
-   ,(twodie-halfpipe-spare-model)
-   ,(twodie-6/8-model))
- )
+(report-twodie)
+
+(set! *spare-mac* (not *spare-mac*))
+
+(dis "*spare-mac* " (stringify *spare-mac* )dnl)
+
+(report-twodie)
+
+(set! *spare-mac* (not *spare-mac*))
+

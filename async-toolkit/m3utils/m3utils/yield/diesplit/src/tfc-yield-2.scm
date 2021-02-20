@@ -1,6 +1,8 @@
 (load "example.scm")
 (load "struct-yield.scm")
 
+(define *spare-mac* #t)
+
 (define (tfc-model)
   
   "yield improvements:
@@ -141,7 +143,7 @@
          (serdes ,serdes-area
                  serdes-area ,serdes-area)
          
-         (mac (* #f 4 4 (* mac-spare 17 16 (onemac ,mac-area))))
+         (mac (* #f 4 4 (* mac-spare ,(if *spare-mac* 17 16) 16 (onemac ,mac-area))))
          
          (mac-channel ,mac-channel-area
                       channel-area ,mac-channel-area
