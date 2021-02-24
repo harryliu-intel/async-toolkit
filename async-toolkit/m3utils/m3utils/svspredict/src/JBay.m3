@@ -159,6 +159,7 @@ PROCEDURE EvalSpecialCases(wr : Wr.T;
     EVAL Conditions(wr, p, 105.0d0, 1.0d0, 300.0d0, worstSigma,  Corr, WorV);
     EVAL Conditions(wr, p, 105.0d0, 1.0d0, 300.0d0, medianSigma, Corr, WorV);
     EVAL Conditions(wr, p, 105.0d0, 1.0d0, 300.0d0, medianSigma, Corr, 0.0d0);
+    EVAL Conditions(wr, p, 105.0d0, 1.0d0, 380.0d0, medianSigma, Corr, 0.0d0);
 
     EVAL Conditions(wr, p,  90.0d0, 1.0d0, 300.0d0, medianSigma, Corr, TypV);
     EVAL Conditions(wr, p,  90.0d0, 0.7d0, 300.0d0, medianSigma, Corr, TypV);
@@ -191,6 +192,9 @@ PROCEDURE Conditions(wr            : Wr.T;
   CONST
     ActiveAt300B = 0.2943d0; (* percentage of non-leakage non-fixed power
                                 from packet size *)
+
+    (* this number DOES NOT match Raji's lab data at all.  Her lab data 
+       suggests it ought to be much bigger. *)
   VAR
     activeAtBytes     := ActiveAt300B / bytes * 300.0d0;
 
