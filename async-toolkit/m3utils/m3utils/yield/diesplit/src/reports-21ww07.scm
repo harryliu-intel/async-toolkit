@@ -4,7 +4,11 @@
 
 (define *alpha* 0.07)
 
+(define *poisson-alpha* 10)
+
 (define (match-stapper D) (YieldModel.Stapper 500 D 32 *alpha*))
+
+(define (match-poisson D) (YieldModel.Stapper 500 D 32 *poisson-alpha*))
 
 (define stapper-d0
   (solve (make-target match-stapper
@@ -12,7 +16,13 @@
          0.01 0.15)
   )
 
-(define params `((,stapper-d0 ,*alpha*)))
+(define poisson-d0
+  (solve (make-target match-poisson
+                      (YieldModel.BoseEinstein 500 0.055 32))
+         0.01 0.15)
+  )
+
+(define params `((,stapper-d0 ,*alpha*) (,poisson-d0 ,*poisson-alpha*)))
 
 (define (lrhalf-25t-model)
   (make-downbin tfc-model

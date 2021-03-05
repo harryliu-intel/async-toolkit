@@ -171,6 +171,17 @@ PROCEDURE EvalSpecialCases(wr : Wr.T;
     EVAL Conditions(wr, p,  90.0d0, 0.0d0,9000.0d0, medianSigma, Corr, TypV);
 
     EVAL Conditions(wr, p,  90.0d0, 0.0d0,9000.0d0, 2.23d0, 0.0d0, 0.113d0);
+
+    (* the following are numbers for Google on CB -- just to test *)
+
+    EVAL Conditions(wr, p, 105.0d0, 1.0d0, 300.0d0, worstSigma,  Corr, TypV);
+    EVAL Conditions(wr, p, 105.0d0, 1.0d0, 300.0d0, medianSigma, Corr, TypV);
+    EVAL Conditions(wr, p,  95.0d0, 1.0d0, 300.0d0, medianSigma, Corr, TypV);
+    EVAL Conditions(wr, p,  95.0d0, 1.0d0,1000.0d0, medianSigma, Corr, TypV);
+    EVAL Conditions(wr, p,  95.0d0, 0.7d0,1000.0d0, medianSigma, Corr, TypV);
+    EVAL Conditions(wr, p,  95.0d0, 0.5d0,1000.0d0, medianSigma, Corr, TypV);
+    EVAL Conditions(wr, p,  95.0d0, 0.3d0,1000.0d0, medianSigma, Corr, TypV);
+
     (* try to replicate lab idle measurement of indiv #139 *)
   END EvalSpecialCases;
 
@@ -271,7 +282,7 @@ PROCEDURE Conditions(wr            : Wr.T;
         
         potBytesPwr := nonFixedNonLeakPwr * ActiveAt300B;
         
-        sizedBytesPwr    := potBytesPwr * bytesFracOfActive;
+        sizedBytesPwr    := potBytesPwr * 300.0d0 / bytes;
         
         nonBytesFrac      := (activeFrac - ActiveAt300B);
         
