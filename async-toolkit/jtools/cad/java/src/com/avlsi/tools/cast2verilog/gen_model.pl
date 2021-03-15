@@ -89,6 +89,7 @@ if ($gls_dir) {
     } else {
         push @vcs_args, '+define+functional',
                         '+define+no_unit_delay';
+                        '+nospecify';
     }
     push @args, '-f', '$CAST2VERILOG_RUNTIME/gls.vcfg';
     print $fh <<'EOF';
