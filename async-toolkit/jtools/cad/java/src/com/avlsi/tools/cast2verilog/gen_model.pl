@@ -88,7 +88,7 @@ if ($gls_dir) {
                         '-sdf', "\Q$sdf\E";
     } else {
         push @vcs_args, '+define+functional',
-                        '+define+no_unit_delay';
+                        '+define+no_unit_delay',
                         '+nospecify';
     }
     push @args, '-f', '$CAST2VERILOG_RUNTIME/gls.vcfg';
