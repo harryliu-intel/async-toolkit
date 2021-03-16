@@ -411,6 +411,7 @@
     (when rdtUserTcl (fprintf file "--rdt-user-tcl=%s\n" (PathMakePathAbsolute rdtUserTcl)))
     (fprintf file "--base=%s\n" (GetCastCellName CV->cellName))
     (fprintf file "--csp-register-width=1025\n")
+    (fprintf file "--pv-generate-sdf=1\n")
     (cond (softMacro && abstractCellName && targetCellName
            (fprintf file "--cell=%s\n" (GetCastCellName targetCellName))
            (fprintf file "--abstract=%s\n" (GetCastCellName abstractCellName))
