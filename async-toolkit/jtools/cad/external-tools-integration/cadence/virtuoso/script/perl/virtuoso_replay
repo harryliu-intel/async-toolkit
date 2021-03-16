@@ -2,7 +2,9 @@
 use strict;
 use warnings;
 
-@ARGV>0 or die "USAGE: virtuoso_replay 1.il 2.il ...\n";
+my $local=0;
+if ($ARGV[0] eq "--local") { $local=1; shift; }
+@ARGV>0 or die "USAGE: virtuoso_replay [--local] 1.il 2.il ...\n";
 my $MEM = 16*1024;
 my $count = 0;
 foreach my $file (@ARGV) {
@@ -20,9 +22,16 @@ foreach my $file (@ARGV) {
     $ENV{CDS_XVNC_TENBASE} = $display / 10;
     $ENV{CDS_XVNC_OFFSET} = $display % 10;
 
-    system("(cd ${base}.cdswd; " .
-           "nbq --class-reservation fRM=$MEM -j ${base}.out " .
-           "$ENV{FULCRUM} --cadence assura_oa,$ENV{ICV_VERSION} " .
-           "virtuoso -log ${base}.log -replay $ENV{PWD}/${file} -nograph)");
+    # run locally or with netbatch
+    if ($local) {
+        system("(cd ${base}.cdswd; " .
+               "$ENV{FULCRUM} --cadence assura_oa,$ENV{ICV_VERSION} " .
+               "virtuoso -log ${base}.log -replay $ENV{PWD}/${file} -nograph >& ${base}.out) &");
+    } else {
+        system("(cd ${base}.cdswd; " .
+               "nbq --class-reservation fRM=$MEM -j ${base}.out " .
+               "$ENV{FULCRUM} --cadence assura_oa,$ENV{ICV_VERSION} " .
+               "virtuoso -log ${base}.log -replay $ENV{PWD}/${file} -nograph)");
+    }
     $count++;
 }
