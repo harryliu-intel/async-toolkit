@@ -3,7 +3,7 @@ use strict;
 use warnings;
 
 my $local=0;
-if ($ARGV[0] eq "--local") { $local=1; shift; }
+if (@ARGV>0 && $ARGV[0] eq "--local") { $local=1; shift; }
 @ARGV>0 or die "USAGE: virtuoso_replay [--local] 1.il 2.il ...\n";
 my $MEM = 16*1024;
 my $count = 0;
