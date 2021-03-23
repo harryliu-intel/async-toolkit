@@ -127,7 +127,7 @@
           
           (stm-logic-repairable .87) ;;20b address not repairable out of 137b data + 20b address
           (stm-logic-repair-cost .01)
-          (d2d-area (* 4 37.5))
+          (d2d-area (* 2 1.2 32))
           )
 
       ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
