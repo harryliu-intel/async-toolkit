@@ -90,7 +90,7 @@
   )
 
 (define (tfc-twodie-model)
-  (let ((split-overhead-per-die 35))
+  (let ((split-overhead-per-die 46))
     (make-downbin tfc-model
                   `(tfc-twodie (eo-half (scale ,1/2 evenodd))
                                (tc-half (scale ,1/2 tm-core))
@@ -128,7 +128,11 @@
                   d2d)))
 
 
-
+(define (twodie-1.15-model)
+  (make-downbin tfc-twodie-model
+                '(tfc-twodie-bloated (big (scale 1.15 tfc-twodie)))
+                )
+  )
 
 (report-yields-for-params
  (tfc-model)
@@ -154,7 +158,8 @@
    
    `(,(twodie-halfpipe-model)
      ,(twodie-halfpipe-spare-model)
-     ,(twodie-6/8-model))
+     ,(twodie-6/8-model)
+     ,(twodie-1.15-model))
    )
   )
 
