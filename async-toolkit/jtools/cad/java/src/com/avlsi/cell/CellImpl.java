@@ -1336,9 +1336,9 @@ public class CellImpl implements CellInterface {
         else if (direction == PortDefinition.OUT)
             outCosimInfo.addOutputNode(nodeName);
         else {              // INOUT or NONE
-            System.out.println
-                ("WARNING: don't know direction of node " + 
-                 nodeName + " so not hooking it up for cosimulation");
+            //System.out.println
+            //    ("WARNING: don't know direction of node " + 
+            //     nodeName + " so not hooking it up for cosimulation");
         }
     }
 
