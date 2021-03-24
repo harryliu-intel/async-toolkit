@@ -439,7 +439,7 @@ public class JavaEmitter implements VisitorInterface {
     private void outputPortDecl (PortDefinition p, int direction)
             throws VisitorException {
         PortTypeInterface t = p.getType();
-        String dirString = "";
+        String dirString = null;
 
         /* Combine the direction argument and the port direction.  */
 
@@ -447,8 +447,6 @@ public class JavaEmitter implements VisitorInterface {
             direction = direction * +1;
         } else if (p.getDirection() == PortDefinition.REVERSE) {
             direction = direction * -1;
-        } else {
-            throw new VisitorException ("Invalid direction.");
         }
 
         /* Set dirString based on the new direction.  */
@@ -459,8 +457,6 @@ public class JavaEmitter implements VisitorInterface {
         } else if (direction > 0) {
             /* OUT, by convention */
             dirString = "Out";
-        } else {
-            throw new VisitorException ("Invalid direction.");
         }
 
         /* Handle channels and 1-dimensional arrays of channels as special
@@ -468,6 +464,8 @@ public class JavaEmitter implements VisitorInterface {
 
         if (t instanceof ChannelType) {
 
+            if (dirString == null)
+                throw new VisitorException ("Invalid direction: " + p.getName());
             /* channel */
             out.println("public final Channel" 
                       + dirString + "put _" + p.getName() + ";");
@@ -476,6 +474,8 @@ public class JavaEmitter implements VisitorInterface {
                 && ((com.avlsi.fast.ports.ArrayType) t).getArrayedType()
                         instanceof ChannelType) {
 
+            if (dirString == null)
+                throw new VisitorException ("Invalid direction: " + p.getName());
             /* 1-dimensional array of channels */
             out.println ("public final CspChannel" + dirString + "Array1"
                        + " _" + p.getName() + ";");
@@ -545,8 +545,8 @@ public class JavaEmitter implements VisitorInterface {
     private void outputPortInit (PortDefinition p, int direction)
             throws VisitorException {
         PortTypeInterface t = p.getType();
-        String dirString = "";
-        String dirStringLC = "";        /* dirString.toLowerCase() */
+        String dirString = null;
+        String dirStringLC = null;        /* dirString.toLowerCase() */
 
         /* Combine the direction argument and the port direction.  */
 
@@ -554,8 +554,6 @@ public class JavaEmitter implements VisitorInterface {
             direction = direction * +1;
         } else if (p.getDirection() == PortDefinition.REVERSE) {
             direction = direction * -1;
-        } else {
-            throw new VisitorException ("Invalid direction.");
         }
 
         /* Set dirString based on the new direction.  */
@@ -566,13 +564,13 @@ public class JavaEmitter implements VisitorInterface {
         } else if (direction > 0) {
             /* OUT, by convention */
             dirString = "Out";
-        } else {
-            throw new VisitorException ("Invalid direction.");
         }
         dirStringLC = dirString.toLowerCase();
 
         if (t instanceof ChannelType) {
 
+            if (dirString == null)
+                throw new VisitorException ("Invalid direction: " + p.getName());
             /*
              * Initialize a channel
              */
@@ -583,6 +581,8 @@ public class JavaEmitter implements VisitorInterface {
                 && ((com.avlsi.fast.ports.ArrayType) t).getArrayedType()
                         instanceof ChannelType) {
 
+            if (dirString == null)
+                throw new VisitorException ("Invalid direction: " + p.getName());
             /* 
              * Special handling for 1-dimensional Arrays 
              */
