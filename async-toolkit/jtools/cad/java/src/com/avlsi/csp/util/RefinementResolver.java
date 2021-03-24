@@ -38,6 +38,15 @@ public class RefinementResolver extends VisitorByCategory {
         String ORD = "ord";
         String DUMPON = "dumpOn";
         String DUMPOFF = "dumpOff";
+        String CONNECTSOCKET = "connectSocket";
+        String PROBECHANNEL = "probeChannel";
+        String PEEKCHANNEL = "peekChannel";
+        String RECEIVECHANNEL = "receiveChannel";
+        String SENDCHANNEL = "sendChannel";
+        String READSOCKET = "readSocket";
+        String WRITESOCKET = "writeSocket";
+        String SOCKETERROR = "socketError";
+        String RUNREMOTECMD = "runRemoteCmd";
         String FOPEN = "fopen";
         String FCLOSE = "fclose";
         String FREAD = "fread";
@@ -195,6 +204,76 @@ public class RefinementResolver extends VisitorByCategory {
                 new FunctionDeclaration(BuiltIn.DUMPOFF,
                                         new DeclarationList(),
                                         new BooleanType(),
+                                        new SequentialStatement()),
+                BuiltIn.CONNECTSOCKET,
+                new FunctionDeclaration(BuiltIn.CONNECTSOCKET,
+                                        getDeclarations(new Declaration[] {
+                                            getDeclaration("host",
+                                                new StringType()),
+                                            getDeclaration("port",
+                                                new IntegerType())
+                                        }),
+                                        null,
+                                        new SequentialStatement()),
+                BuiltIn.PROBECHANNEL,
+                new FunctionDeclaration(BuiltIn.PROBECHANNEL,
+                                        getDeclarations(new Declaration[] {
+                                            getDeclaration("chan",
+                                                new StringType())
+                                        }),
+                                        new IntegerType(),
+                                        new SequentialStatement()),
+                BuiltIn.PEEKCHANNEL,
+                new FunctionDeclaration(BuiltIn.PEEKCHANNEL,
+                                        getDeclarations(new Declaration[] {
+                                            getDeclaration("chan",
+                                                new StringType())
+                                        }),
+                                        new IntegerType(),
+                                        new SequentialStatement()),
+                BuiltIn.RECEIVECHANNEL,
+                new FunctionDeclaration(BuiltIn.RECEIVECHANNEL,
+                                        getDeclarations(new Declaration[] {
+                                            getDeclaration("chan",
+                                                new StringType())
+                                        }),
+                                        new IntegerType(),
+                                        new SequentialStatement()),
+                BuiltIn.SENDCHANNEL,
+                new FunctionDeclaration(BuiltIn.SENDCHANNEL,
+                                        getDeclarations(new Declaration[] {
+                                            getDeclaration("chan",
+                                                new StringType()),
+                                            getDeclaration("val",
+                                                new IntegerType())
+                                        }),
+                                        new IntegerType(),
+                                        new SequentialStatement()),
+                BuiltIn.WRITESOCKET,
+                new FunctionDeclaration(BuiltIn.WRITESOCKET,
+                                        getDeclarations(new Declaration[] {
+                                            getDeclaration("val",
+                                                new IntegerType())
+                                        }),
+                                        null,
+                                        new SequentialStatement()),
+                BuiltIn.READSOCKET,
+                new FunctionDeclaration(BuiltIn.READSOCKET,
+                                        new DeclarationList(),
+                                        new IntegerType(),
+                                        new SequentialStatement()),
+                BuiltIn.SOCKETERROR,
+                new FunctionDeclaration(BuiltIn.SOCKETERROR,
+                                        new DeclarationList(),
+                                        new IntegerType(),
+                                        new SequentialStatement()),
+                BuiltIn.RUNREMOTECMD,
+                new FunctionDeclaration(BuiltIn.RUNREMOTECMD,
+                                        getDeclarations(new Declaration[] {
+                                            getDeclaration("val",
+                                                new StringType())
+                                        }),
+                                        new IntegerType(),
                                         new SequentialStatement()),
                 BuiltIn.FOPEN,
                 new FunctionDeclaration(BuiltIn.FOPEN,

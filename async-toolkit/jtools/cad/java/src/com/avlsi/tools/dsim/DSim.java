@@ -323,6 +323,8 @@ public class DSim implements NodeWatcher {
      **/
     private final Set warnedCells = new HashSet();
     
+    public com.avlsi.csp.csp2java.runtime.RemoteChannel remoteChannel = null;
+
     public CspStdio cspStdio = new CspStdio(32);
 
     /**
@@ -961,6 +963,7 @@ public class DSim implements NodeWatcher {
         savedCadenceInfo = null;
         savedOptCandidate = null;
         slintIgnores.clear();
+        remoteChannel = null;
         cspStdio.clear();
         /** garbage collect here **/
         System.gc();

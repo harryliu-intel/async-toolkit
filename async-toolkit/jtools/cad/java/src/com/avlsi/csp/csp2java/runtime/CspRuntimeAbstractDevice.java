@@ -913,6 +913,44 @@ public abstract class CspRuntimeAbstractDevice extends AbstractDevice {
         }
     }
 
+    protected void _connectSocket(CspString host, CspInteger port) {
+        DSim.get().remoteChannel = new RemoteChannel(host.toString(), port.intValue());
+    }
+
+    protected void _writeSocket(CspInteger val) {
+        DSim.get().remoteChannel.write(val);
+    }
+
+    protected CspInteger _readSocket() {
+        return DSim.get().remoteChannel.read();
+    }
+
+    protected CspInteger _probeChannel(CspString chan) {
+        return DSim.get().remoteChannel.probe(chan.toString());
+    }
+
+    protected CspInteger _peekChannel(CspString chan) {
+        return DSim.get().remoteChannel.peek(chan.toString());
+    }
+
+    protected CspInteger _sendChannel(CspString chan, CspInteger val) {
+        return DSim.get().remoteChannel.send(chan.toString(), val.getValue());
+    }
+
+    protected CspInteger _receiveChannel(CspString chan) {
+        return DSim.get().remoteChannel.receive(chan.toString());
+    }
+
+    protected CspInteger _socketError() {
+        CspInteger result = CspInteger.valueOf(DSim.get().remoteChannel.last != null);
+        DSim.get().remoteChannel.last = null;
+        return result;
+    }
+
+    protected CspInteger _runRemoteCmd(CspString cmd) {
+        return DSim.get().remoteChannel.run(cmd.toString());
+    }
+
     protected CspInteger _fopen(CspString path, CspString mode) {
         return CspInteger.valueOf(DSim.get().cspStdio.fopen(path.toString(), mode.toString()));
     }
