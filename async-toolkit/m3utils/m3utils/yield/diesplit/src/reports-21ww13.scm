@@ -285,10 +285,26 @@
                 )
   )
 
+(define (core-615-model)
+    (make-downbin tfc-core-model
+                `(tfc-core-615 (big (scale ,(/ 615 635.52) tfc-core)))
+                )
+  )
+
+(define (core-615-bloated-model)
+    (make-downbin tfc-core-model
+                `(tfc-core-615-bloated (big (scale ,(* 1.15 (/ 615 635.52)) tfc-core)))
+                )
+  )
+
+
 (define (report-bloat)
   (report-yields-for-params
    (tfc-core-model)
 
    params
    `( ;; upbin!
-   ,(core-1.15-model))))
+     ,(core-1.15-model)
+     ,(core-615-model)
+     ,(core-615-bloated-model)
+     )))

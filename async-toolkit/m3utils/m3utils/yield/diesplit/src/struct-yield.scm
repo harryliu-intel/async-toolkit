@@ -205,6 +205,46 @@
                              (cdr model))))
 
               (else (error "unknown spec " (stringify model)))))))
+
+
+(define (get-kind-area model kind)
+  ;; extract a particular kind of area from leaf
+  ;; returns total area if kind is null
+  ;; returns 0 if kind non null and no such area in leaf
+  (cond ((null? kind) (cadr model))
+        ((member kind model) (nth model (+ 1 (find kind model))))
+        (else 0)))
+
+(define (compute-total-area-of-kind model optional kind)
+  ;; compute area of a particular kind of area
+  (if (null? model)
+      0
+      (let ((key (car model)))
+        (cond ((eq? '* key)
+               (let ((nam (cadr model))
+                     (N (caddr model))
+                     (M (cadddr model))
+                     (sub (caddddr model))
+                     )
+                 (*
+                  (if (member nam optional) N M)
+                  (compute-total-area-of-kind sub optional kind))))
+              
+              ((eq? 'scale key)
+               (* (cadr model) (compute-total-area-of-kind (caddr model) optional kind)))
+
+              ((and (symbol? key) (number? (cadr model)))
+               (let ((area (get-kind-area model kind)))
+                 (if (member key optional)
+                     (let ((rc (nth model (+ 1 (find 'repair-cost model)))))
+                       (* (+ 1 rc) area))
+                     area)))
+
+              ((and (symbol? key) (list? (cadr model)))
+               (apply + (map (lambda(s)(compute-total-area-of-kind s optional kind))
+                             (cdr model))))
+
+              (else (error "unknown spec " (stringify model)))))))
               
 
 (define (make-downbin model spec)
