@@ -1,0 +1,21 @@
+import ("libm3")
+import ("cit_util")
+import ("parseparams")
+import ("simpletoken")
+import ("mscheme")
+import ("modula3scheme")
+import ("sstubgen")
+import ("parseparams")
+import ("mpfr")
+import ("minimize")
+import ("integrate")
+
+%if defined("CM3_VERSION")
+%        m3_optimize("T")
+%end
+
+implementation ("Main")
+
+program ("marketsplit")
+
+
