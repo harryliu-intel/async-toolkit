@@ -95,6 +95,20 @@ VAR
   MkAss( BA { BinCount { Die.FullSwitch, "sixteenT", 1 } } )
   };
 
+  AllApproaches := ARRAY Approach OF ApproachData {
+    A1Approach,
+    ApproachData {
+      MkAss( BA{} ),
+      MkAss( BA{} ),
+      MkAss( BA{} )
+    },
+    ApproachData {
+      MkAss( BA{} ),
+      MkAss( BA{} ),
+      MkAss( BA{} )
+    }
+  };
+  
 CONST
   Build = 10000;
   
@@ -186,9 +200,34 @@ PROCEDURE DoMarket(mkt : Market) =
                LR(mkt.mix[s]),
                Int(target[s])));
     END;
-    
-    
+    FOR a := FIRST(AllApproaches) TO LAST(AllApproaches) DO
+      DoApproach(mkt, target, ApproachNames[a], AllApproaches[a])
+    END
   END DoMarket;
+
+PROCEDURE DoApproach(READONLY mkt    : Market;
+                     READONLY target : ARRAY Sku OF CARDINAL;
+                     appName         : TEXT;
+                     READONLY app    : ApproachData) =
+  VAR
+    needed := ApproachDieNeeded(app);
+  BEGIN
+  END DoApproach;
+
+PROCEDURE ApproachDieNeeded(READONLY app : ApproachData) : SET OF Die =
+  VAR
+    needed := SET OF Die {};
+  BEGIN
+    (* find die types needed *)
+    FOR s := FIRST(Sku) TO LAST(Sku) DO
+      WITH ass = app[s]^ DO
+        FOR k := FIRST(ass) TO LAST(ass) DO
+          needed := needed + SET OF Die { ass[k].die }
+        END
+      END
+    END;
+    RETURN needed
+  END ApproachDieNeeded;
   
 BEGIN
   FOR m := FIRST(Markets) TO LAST(Markets) DO
