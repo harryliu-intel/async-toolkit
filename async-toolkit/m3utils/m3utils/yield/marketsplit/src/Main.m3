@@ -95,19 +95,23 @@ VAR
   MkAss( BA { BinCount { Die.FullSwitch, "sixteenT", 1 } } )
   };
 
-  AllApproaches := ARRAY Approach OF ApproachData {
-    A1Approach,
-    ApproachData {
-      MkAss( BA{} ),
-      MkAss( BA{} ),
-      MkAss( BA{} )
-    },
-    ApproachData {
-      MkAss( BA{} ),
-      MkAss( BA{} ),
-      MkAss( BA{} )
-    }
+  A2Approach := ApproachData {
+  MkAss( BA{ BinCount { Die.HalfSwitch,      "top", 2 } } ),
+  MkAss( BA{ BinCount { Die.HalfSwitch,  "evenodd", 2 } } ),
+  MkAss( BA{ BinCount { Die.HalfSwitch, "sixteenT", 1 } } )
   };
+
+  A5Approach := ApproachData {
+  MkAss( BA { BinCount { Die.SwitchCore,      "top", 1 },
+              BinCount { Die.IoChiplet,       "top", 4 } } ),
+  MkAss( BA { BinCount { Die.SwitchCore,     "half", 1 },
+              BinCount { Die.IoChiplet,       "top", 4 }  } ),
+  MkAss( BA { BinCount { Die.SwitchCore, "sixteenT", 1 },
+              BinCount { Die.IoChiplet,       "top", 4 }  } )
+  };
+
+  AllApproaches :=
+      ARRAY Approach OF ApproachData { A1Approach, A2Approach, A5Approach };
   
 CONST
   Build = 10000;
@@ -212,6 +216,7 @@ PROCEDURE DoApproach(READONLY mkt    : Market;
   VAR
     needed := ApproachDieNeeded(app);
   BEGIN
+    IO.Put(F("approach %s\n", appName));
   END DoApproach;
 
 PROCEDURE ApproachDieNeeded(READONLY app : ApproachData) : SET OF Die =
