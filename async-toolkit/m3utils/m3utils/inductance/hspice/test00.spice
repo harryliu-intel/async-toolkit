@@ -1,0 +1,136 @@
+* MEV power test
+.temp 25
+*.param vtrue=1.00
+.param vtrue=1.115
+.param ilo=10
+.param ihi=50
+*.param ihi=30
+*.param imid='ihi*40.0/60.0'
+.param imid=ihi
+
+.param tcyc=1.0/3.0e9
+.param tirise=tcyc*1
+*.param tirise=250ns
+.param tsustain=tcyc*256
+.param when=1e-4
+.param teps=1e-9   * short fudge time interval
+
+* attempt to model voltage regulator
+.param vdroop=          0.20    * droop voltage (not really)
+.param tvrresp=        2e-6     * t.c. of v.r.
+
+.option resmin=1e-9 accurate delmax=10e-9
+
+.option CSDF probe=0
+
+.include "MEV_VCC_PDN_lumped_netlist_ww45.inc"
+
+V1 in 0 PWLZ (0 0 1e-6 vtrue )
+
+* 1-st order VR model ** very simple **
+.param rvr='vdroop/ihi'
+.param lvr='rvr*tvrresp'
+L1 in vr0  lvr
+R1 vr0 out rvr
+
+X1 in out PDN_lumped_model
+
+* control voltage for load
+V2 vcon 0 PWL (
++     0                                                       0
++    when                                                     0
++ '  when+tirise'                                             ilo
++ '2*when'                                                    ilo
++ '2*when+tirise'                                             ihi
++ '2*when+tirise+tsustain'                                    ihi
++ '2*when+tirise+tsustain+tirise*(ihi-imid)/(ihi-ilo)+teps'   imid * same di/dt
++ '3*when'                                                    imid
++ '3*when+tirise*(imid-ilo)/(ihi-ilo)+teps'                   0
++)
+
+G1 out 0 CUR='v(vcon)*v(out)/v(in)'
+
+.TRAN step=1e-9 stop='4*when'
+
+.probe tran v(in)
+.probe tran v(out)
+.probe tran i(G1)
+.probe tran v(vr0)
+.probe tran v(vcon)
+
+.end.subckt PDN_lumped_model in out13
+******** Branch 1 **********     
+Rs1 in nx1 0.00076136            
+Ls1 nx1 out1 2.9864e-008         
+Cp1 out1 ny1 4.9967              
+Rp1 ny1 nz1 0.50115              
+Lp1 nz1 0 4.9965e-010            
+******** Branch 2 **********     
+Rs2 out1 nx2 0.001058           
+Ls2  nx2 out2 4.9747e-010        
+Cp2 out2 ny2 0.0050333           
+Rp2 ny2 nz2 0.003139             
+Lp2 nz2 0 4.9289e-010            
+******** Branch 3 **********     
+Rs3 out2 nx3 0.0010234           
+Ls3  nx3 out3 4.0714e-009        
+Cp3 out3 ny3 0.050473            
+Rp3 ny3 nz3 0.51397              
+Lp3 nz3 0 4.9947e-010            
+******** Branch 4 **********     
+Rs4 out3 nx4 0.0010922           
+Ls4  nx4 out4 3.9881e-009        
+Cp4 out4 ny4 1.215e-005          
+Rp4 ny4 nz4 0.00010862           
+Lp4 nz4 0 3.096e-011             
+******** Branch 5 **********     
+Rs5 out4 nx5 0.0012049          
+Ls5  nx5 out5 3.1365e-011        
+Cp5 out5 ny5 0.0007755           
+Rp5 ny5 nz5 0.016193             
+Lp5 nz5 0 3.0643e-010            
+******** Branch 6 **********
+Rs6 out5 nx6 0.0012              
+Ls6  nx6 out6 7.7305e-012
+
+.param nbdc=4
+Cp6 out6 ny6 '0.00023464     * nbdc'
+Rp6 ny6 nz6 '0.0058361       / nbdc'
+Lp6 nz6 0 '8.5766e-010       / nbdc'
+******** Branch 7 **********     
+Rs7  out6 nx7 0.0005655          
+Ls7  nx7 out11 3.1799e-011
+
+*.param ndsc=5
+.param ndsc=100
+Cp9 out9 ny9 		'(6e-8)*ndsc'			**DSC lumped 60nF x 5
+Rp9 ny9 nz9  		'(0.045)/ndsc'                  **DSC lumped
+Lp9 nz9 0   	        '(180e-12)/ndsc'                **DSC lumped
+******** Branch 10 **********    ?????
+Rs10 out9 nx10 		'4e-3'                          **DSC interconnection
+Ls10 nx10 out11 	'82.1e-12'                      **DSC interconnection
+
+************ LSC guesses / EOL 90.2C ************
+*.param nlsc=8
+.param nlsc=16
+Cp12 out12 ny12 	'(520.2e-9)*nlsc'		**LSC lumped 
+Rp12 ny12 nz12  	'(13.257e-3)/nlsc'              **LSC lumped
+Lp12 nz12 0   	        '(155.258e-12)/nlsc'            **LSC lumped
+* following two are basic estimates
+Rs13 out12 nx13 	'2e-3/nlsc'                     **LSC interconnection
+Ls13 nx13 out11 	'40e-12/nlsc'                   **LSC interconnection
+
+
+*.param cmim=3.15e-7.
+*.param cmim=1600e-9
+.param cmim='1760e-9*2'
+.param tmim='(26.4*31.5e-12)'
+C_MIM out11 ny10 		cmim
+R_MIM ny10 0 			'tmim/cmim'
+
+C_die out13 ny10die 	        '30e-9'
+R_die ny10die 0 		'(0.065*165e-12)/(30e-9)'
+
+R_interconnect out11 out13 5e-4 * drop is 30mV @ 60A
+
+.ends                            
