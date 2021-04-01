@@ -38,10 +38,13 @@ IMPORT Scan;
 IMPORT Lex, FloatMode;
 IMPORT OSError, AL;
 IMPORT Thread;
+IMPORT Params;
 
 <*FATAL Thread.Alerted*>
 
 VAR doDebug := Debug.DebugThis("CT");
+
+CONST Usage = "[-rename <dutName>] [-scaletime <timeScaleFactor>] [-offsettime <timeOffset>] [-offsetvoltage <voltageOffset>] <inFileName> <outFileRoot>";
 
 PROCEDURE StartsWith(READONLY buf, pfx : ARRAY OF CHAR) : BOOLEAN =
   BEGIN 
@@ -372,7 +375,7 @@ BEGIN
     
     pp.finish();
   EXCEPT
-    ParseParams.Error => Debug.Error("Can't parse command-line parameters")
+    ParseParams.Error => Debug.Error("Can't parse command-line parameters\nUsage: " & Params.Get(0) & " " & Usage)
   END;
 
   TRY

@@ -1,6 +1,6 @@
 * CB clock wire test
 .temp 25
-.param vtrue=0.75
+.param vhi=0.75
 
 .param tcyc=1.0/1.6e9
 .param ttran=50p
@@ -20,6 +20,7 @@ V1 in 0 PWL (
 + '  tcyc/2'                                                  vhi
 + 'tcyc/2+ttran'                                              0
 + tcyc                                                        0
++ R
 +)
 
 .TRAN step=1e-12 stop='4*when'
