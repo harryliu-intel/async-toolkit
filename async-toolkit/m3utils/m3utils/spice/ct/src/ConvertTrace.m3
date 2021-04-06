@@ -13,7 +13,7 @@ MODULE ConvertTrace EXPORTS Main;
 
    Author : Mika Nystrom <mika.nystroem@intel.com>
 
-   ct [-rename <dutName>] [-scaletime <timeScaleFactor>] [-offsettime <timeOffset>] [-offsetvoltage <voltageOffset>] <inFileName> <outFileRoot>
+   ct [-rename <dutName>] [-scaletime <timeScaleFactor>] [-offsettime <timeOffset>] [-offsetvoltage <voltageOffset>] [-dosources] <inFileName> <outFileRoot>
 
    will generate <outFileRoot>.trace and <outFileRoot>.names
 
@@ -44,7 +44,7 @@ IMPORT Params;
 
 VAR doDebug := Debug.DebugThis("CT");
 
-CONST Usage = "[-rename <dutName>] [-scaletime <timeScaleFactor>] [-offsettime <timeOffset>] [-offsetvoltage <voltageOffset>] <inFileName> <outFileRoot>";
+CONST Usage = "[-rename <dutName>] [-scaletime <timeScaleFactor>] [-offsettime <timeOffset>] [-offsetvoltage <voltageOffset>] [-dosources] <inFileName> <outFileRoot>";
 
 PROCEDURE StartsWith(READONLY buf, pfx : ARRAY OF CHAR) : BOOLEAN =
   BEGIN 
@@ -330,6 +330,50 @@ PROCEDURE RenameBack(txt : TEXT) : TEXT =
     END
   END RenameBack;
 
+PROCEDURE WriteTrace() =
+  VAR
+    tFn := ofn & ".trace";
+    tWr : Wr.T;
+  BEGIN
+    TRY
+      tWr := FileWr.Open(tFn)
+    EXCEPT
+      OSError.E(x) => Debug.Error("Unable to open trace file \"" & tFn & "\" for writing : OSError.E : " & AL.Format(x))
+    END;
+    
+    UnsafeWriter.WriteI(tWr, 1);
+    UnsafeWriter.WriteI(tWr, TRUNC(Time.Now()));
+    UnsafeWriter.WriteI(tWr, names.size());
+
+    FOR i := FIRST(wdWr^) TO LAST(wdWr^) DO
+      WITH fn = wd & "/" & FormatFN(i) DO
+        TRY
+          WITH rd = FileRd.Open(fn) DO
+            LOOP
+              WITH n = Rd.GetSub(rd, buf) DO
+                IF n = 0 THEN EXIT END;
+                Wr.PutString(tWr, SUBARRAY(buf,0,n))
+              END
+            END;
+            Rd.Close(rd)
+          END
+        EXCEPT
+          OSError.E(x) => Debug.Error("Unable to open temp file \"" & fn & "\" for reading : OSError.E : " & AL.Format(x))
+        |
+          Rd.Failure(x) => Debug.Error("Read error on temp file \"" & fn & "\" for reading : Rd.Failure : " & AL.Format(x))
+        |
+          Wr.Failure(x) => Debug.Error("Write error on trace file \"" & fn & "\" for reading : Wr.Failure : " & AL.Format(x))
+        END
+      END
+    END;
+    TRY
+      Wr.Close(tWr)
+    EXCEPT
+      Wr.Failure(x) => Debug.Error("Trouble closing trace file : Wr.Failure : " &
+        AL.Format(x))
+    END
+  END WriteTrace;
+
 VAR
   names := NEW(TextSeq.T).init();
   ifn, ofn : Pathname.T;
@@ -352,6 +396,7 @@ VAR
   timeScaleFactor, voltageScaleFactor := 1.0d0;
   timeOffset, voltageOffset := 0.0d0;
   lNo := 1;
+  doSources := FALSE;
 BEGIN
   TRY
     IF    pp.keywordPresent("-rename") THEN
@@ -368,6 +413,9 @@ BEGIN
     END;
     IF pp.keywordPresent("-offsetvoltage") THEN
       voltageOffset := pp.getNextLongReal()
+    END;
+    IF pp.keywordPresent("-dosources") THEN
+      doSources := TRUE
     END;
     
     ifn := pp.getNext();
@@ -461,47 +509,6 @@ BEGIN
       AL.Format(x))
   END;
 
-  VAR
-    tFn := ofn & ".trace";
-    tWr : Wr.T;
-  BEGIN
-    TRY
-      tWr := FileWr.Open(tFn)
-    EXCEPT
-      OSError.E(x) => Debug.Error("Unable to open trace file \"" & tFn & "\" for writing : OSError.E : " & AL.Format(x))
-    END;
-    
-    UnsafeWriter.WriteI(tWr, 1);
-    UnsafeWriter.WriteI(tWr, TRUNC(Time.Now()));
-    UnsafeWriter.WriteI(tWr, names.size());
-
-    FOR i := FIRST(wdWr^) TO LAST(wdWr^) DO
-      WITH fn = wd & "/" & FormatFN(i) DO
-        TRY
-          WITH rd = FileRd.Open(fn) DO
-            LOOP
-              WITH n = Rd.GetSub(rd, buf) DO
-                IF n = 0 THEN EXIT END;
-                Wr.PutString(tWr, SUBARRAY(buf,0,n))
-              END
-            END;
-            Rd.Close(rd)
-          END
-        EXCEPT
-          OSError.E(x) => Debug.Error("Unable to open temp file \"" & fn & "\" for reading : OSError.E : " & AL.Format(x))
-        |
-          Rd.Failure(x) => Debug.Error("Read error on temp file \"" & fn & "\" for reading : Rd.Failure : " & AL.Format(x))
-        |
-          Wr.Failure(x) => Debug.Error("Write error on trace file \"" & fn & "\" for reading : Wr.Failure : " & AL.Format(x))
-        END
-      END
-    END;
-    TRY
-      Wr.Close(tWr)
-    EXCEPT
-      Wr.Failure(x) => Debug.Error("Trouble closing trace file : Wr.Failure : " &
-        AL.Format(x))
-    END
-  END
+  WriteTrace();
 
 END ConvertTrace.

@@ -1,0 +1,8 @@
+INTERFACE UnsafeReader;
+IMPORT Rd;
+
+PROCEDURE ReadI(rd : Rd.T) : INTEGER;
+
+PROCEDURE ReadLRA(rd : Rd.T; VAR q : ARRAY OF LONGREAL);
+
+END UnsafeReader.

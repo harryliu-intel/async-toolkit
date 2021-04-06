@@ -4,6 +4,7 @@ import ("parseparams")
 import ("spicelib")
 
 module("UnsafeWriter")
+module("UnsafeReader")
 implementation ("ConvertTrace")
 
 program ("ct")
