@@ -107,6 +107,7 @@ endfunction
 function [`CSP_STRING_WHOLE] reverse(input [`CSP_STRING_WHOLE] s);
 integer i, l;
 begin
+    reverse = 0;
     l = s[`CSP_STRING_LENGTH];
     for (i = 0; i < l; i = i + 1) begin
         reverse[(i + 1) * 8 -: 8] = s[(l - i) * 8 -: 8];
