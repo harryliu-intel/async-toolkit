@@ -6,7 +6,8 @@
 (define *dist-R* 18.3)
 (define *total-C* 0.25e-12)
 (define *dist-C-ratio* 0.5)
-(define *dist-L* 0.6e-9)
+(define *dist-L* 0.6e-9) ;; what we believe from extract
+;;(define *dist-L* 2e-9) ;; worst-case if extract is wrong
 
 ;; compute other params
 
