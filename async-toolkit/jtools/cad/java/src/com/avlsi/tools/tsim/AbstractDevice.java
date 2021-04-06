@@ -830,7 +830,7 @@ public abstract class AbstractDevice implements Runnable, Startable
                 devLogger.endedSending(this, out,message);
 
         if (opts.loggingScreen()) {
-            System.err.println(time + ":" + getCount(out) + getFullname() + ": sent 0x" +
+            System.err.println(time + ": " + getCount(out) + getFullname() + ": sent 0x" +
                                message.getValue().toString(16) + " on channel " +
                                out.getName());
         }
