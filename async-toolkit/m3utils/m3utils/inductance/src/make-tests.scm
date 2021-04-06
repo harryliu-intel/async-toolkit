@@ -30,8 +30,12 @@
 (define (do-put-model n wr)
   (dis ".subckt dut_model x0 x"(* n 2) dnl dnl wr)
   (do-put-dist-model n wr)
-  (dis "Cl999 x"(* n 2)" 0 "(* *total-C* *dist-C-ratio*) dnl dnl ".ends" dnl
+  (dis dnl
+       "Cl999 x"(* n 2)" 0 "(* *total-C* *dist-C-ratio*) dnl
+       dnl
+       ".ends" dnl
        wr )
+  'ok
  )
   
 
