@@ -2122,6 +2122,15 @@ public class Cast2Verilog {
         out.println("end");
         out.println("endfunction");
 
+        out.println("function longint walltime();");
+        out.println("longint sec;");
+        out.println("int nsec;");
+        out.println("begin");
+        out.println("cast2verilog_walltime(sec, nsec);");
+        out.println("walltime = sec * 64'd1000000000 + nsec;");
+        out.println("end");
+        out.println("endfunction");
+
         out.println("endmodule");
         endif(out);
         out.println();

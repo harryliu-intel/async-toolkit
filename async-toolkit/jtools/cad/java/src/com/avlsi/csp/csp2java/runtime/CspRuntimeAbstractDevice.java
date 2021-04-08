@@ -598,7 +598,7 @@ public abstract class CspRuntimeAbstractDevice extends AbstractDevice {
     /**
      * Return the current device time.
      **/
-    protected CspInteger _time() throws InterruptedException {
+    protected CspInteger _simtime() throws InterruptedException {
         return CspInteger.valueOf(getTime());
     }
 

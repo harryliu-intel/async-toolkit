@@ -31,7 +31,7 @@ public class RefinementResolver extends VisitorByCategory {
         String CHOOSE = "choose";
         String SRANDOM = "srandom";
         String RANDOM = "random";
-        String TIME = "time";
+        String SIMTIME = "simtime";
         String ENERGY = "energy";
         String READHEXINTS = "readHexInts";
         String CHR = "chr";
@@ -156,8 +156,8 @@ public class RefinementResolver extends VisitorByCategory {
                                         null,
                                         new SequentialStatement()),
 
-                BuiltIn.TIME,
-                new FunctionDeclaration(BuiltIn.TIME,
+                BuiltIn.SIMTIME,
+                new FunctionDeclaration(BuiltIn.SIMTIME,
                                         new DeclarationList(),
                                         new IntegerType(),
                                         new SequentialStatement()),

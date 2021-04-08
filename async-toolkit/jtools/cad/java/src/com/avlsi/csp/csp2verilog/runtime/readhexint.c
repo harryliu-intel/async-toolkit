@@ -8,6 +8,7 @@
 #include <poll.h>
 #include <unistd.h>
 #include <errno.h>
+#include <time.h>
 
 int cast2verilog_fopen(const char *filename, const char *mode) {
     int flags = 0;
@@ -61,4 +62,12 @@ int cast2verilog_fpoll(int fp) {
 
 int cast2verilog_fclose(int fp) {
     return fp > 0 && close(fp - 1) == 0 ? 0 : EOF;
+}
+
+int cast2verilog_walltime(long long *sec, int *nsec) {
+    struct timespec ts;
+    int result = clock_gettime(CLOCK_MONOTONIC, &ts);
+    *sec = ts.tv_sec;
+    *nsec = ts.tv_nsec;
+    return result;
 }

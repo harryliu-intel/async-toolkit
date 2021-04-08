@@ -1308,8 +1308,10 @@ public class VerilogEmitter extends CommonEmitter {
                 if (i.hasNext()) { out.ws(); out.print(','); out.ws(); }
             }
             out.println(")");
-        } else if ("time".equals(funcName)) {
+        } else if ("simtime".equals(funcName)) {
             out.println("`CAST2VERILOG_TIME");
+        } else if ("walltime".equals(funcName)) {
+            out.println("util.walltime()");
         } else if ("chr".equals(funcName) || "ord".equals(funcName)) {
             out.println("csp_string." + funcName + "(");
             final Iterator<ExpressionInterface> args = e.getActuals();
@@ -2074,7 +2076,8 @@ public class VerilogEmitter extends CommonEmitter {
                     System.out.println("N.B. srandom() function being skipped");
                 } else if (name.equals("choose") || name.equals("random") ||
                            name.equals("string") || name.equals("log2") ||
-                           name.equals("log4") || name.equals("time") ||
+                           name.equals("log4") || name.equals("simtime") ||
+                           name.equals("walltime") ||
                            name.equals("ord") || name.equals("chr") ||
                            name.equals("getArgValue")) {
                     boolean cov = coverage_off(lty);

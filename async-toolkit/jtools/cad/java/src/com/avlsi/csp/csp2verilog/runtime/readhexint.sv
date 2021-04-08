@@ -3,6 +3,7 @@ import "DPI-C" function int cast2verilog_fgetc(input int fp);
 import "DPI-C" function int cast2verilog_fputc(input byte c, input int fp);
 import "DPI-C" function int cast2verilog_fpoll(input int fp);
 import "DPI-C" function int cast2verilog_fclose(input int fp);
+import "DPI-C" function int cast2verilog_walltime(output longint sec, output int nsec);
 
 virtual class ReadHexInts #(parameter MEM_MIN = 0,
                             parameter MEM_MAX = 0,
