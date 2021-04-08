@@ -120,6 +120,8 @@ PROCEDURE SetProgram79(VAR p     : Power.Params;
   BEGIN
     Debug.Out(F("SetProgram79 : sigma79 = %s, weightedSigma79 = %s, speedSigma = %s",
                 DebugPmroSigma(sigma79), LR(weightedSigma79), LR(speedSigma)));
+    Debug.Out(F("SetProgram79 : sigma139 = %s, weightedSigma139 = %s, speedSigma = %s",
+                DebugPmroSigma(sigma139), LR(weightedSigma139), LR(speedSigma)));
     Debug.Out(F("SetProgram79 : Vmin79vsTT = %s, VminEolTT = %s",
                 LR(Vmin79vsTT), LR(VminEolTT)));
     Debug.Out(F("SetProgram79 : pred139 = %s",
@@ -411,10 +413,10 @@ PROCEDURE WeightLkgSigma(sigma : ARRAY Tech.Transistor OF LONGREAL) : LONGREAL =
     FOR i := FIRST(sigma) TO LAST(sigma) DO
       WITH weight = FinCounts[i] * Tech.TranLeakageRatio[i] DO
         sumWeight := sumWeight + weight;
-        sumSigma  := sumSigma  + weight * sigma[i]
+        sumSigma  := sumSigma  + weight * sigma[i];
+        Debug.Out(F("transistor type %4s weight %s sigma %s",
+                    Tech.TransistorNames[i], LR(weight), LR(sigma[i])))
       END;
-      Debug.Out(F("transistor type %4s sigma %s",
-                  Tech.TransistorNames[i], LR(sigma[i])))
     END;
 
     RETURN sumSigma / sumWeight;
