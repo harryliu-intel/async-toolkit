@@ -1,0 +1,57 @@
+* CB clock wire test
+.temp 25
+.param vhi=0.90
+
+.lib '/p/tech/n7/tech-prerelease/.dr/epic/v1.1.000/models/1P15M_1X_h_1Xa_v_1Ya_h_5Y_vhvhv_2Yy2Yx2R/cln7-1d8-sp-v1d2-2p2-usage.l'  FFGNPGlobalCorner_LocalMC_MOS_MOSCAP
+.lib '/p/tech/n7/tech-prerelease/.dr/epic/v1.1.000/models/1P15M_1X_h_1Xa_v_1Ya_h_5Y_vhvhv_2Yy2Yx2R/cln7-1d8-sp-v1d2-2p2-usage.l'  FFGlobalCorner_LocalMC_BIP_DIO
+.lib '/p/tech/n7/tech-prerelease/.dr/epic/v1.1.000/models/1P15M_1X_h_1Xa_v_1Ya_h_5Y_vhvhv_2Yy2Yx2R/cln7-1d8-sp-v1d2-2p2-usage.l'  FFGlobalCorner_LocalMC_RES_DISRES
+.lib '/p/tech/n7/tech-prerelease/.dr/epic/v1.1.000/models/1P15M_1X_h_1Xa_v_1Ya_h_5Y_vhvhv_2Yy2Yx2R/cln7-1d8-sp-v1d2-2p2-usage.l'  FFGlobalCorner_LocalMC_MOM
+.lib '/p/tech/n7/tech-prerelease/.dr/epic/v1.1.000/models/1P15M_1X_h_1Xa_v_1Ya_h_5Y_vhvhv_2Yy2Yx2R/cln7-1d8-sp-v1d2-2p2-usage.l'  FF_R_METAL
+
+* looks like standard cells are at
+* /p/tech/n7/tech-prerelease/.dr/tcbn07_bwph240l11p57pd_base_ulvt_lib/v1.1.0_pre.2/spice/tcbn07_bwph240l11p57pd_base_ulvt_130a/tcbn07_bwph240l11p57pd_base_ulvt_130a.spi
+
+.include '/p/jbay/ip/library/tsmc/7nm/projects/cb/latest/views/spice/tcbn07_bwph240l11p57pd_base_ulvt_130a.spi'
+
+.include '../hspice/dut_model_unloaded.inc'
+
+.param tcyc=1.0/1.6e9
+.param ttran=0.1p
+.param when=tcyc*2
+
+.option resmin=1e-9 accurate delmax=10e-9
+.option CSDF probe=0
+
+X1 in out Vdd 0 Vdd 0 INVD36BWP240H11P57PDULVT
+X2 out outp Vdd 0 Vdd 0 INVD36BWP240H11P57PDULVT
+Rout outp outpp 34.98
+X3 outpp outl0 dut_model
+X4 outp fork Vdd 0 Vdd 0 INVD3BWP240H11P57PDULVT
+
+Rin outl0 outl 143.1
+
+X5 outl outln Vdd 0 Vdd 0 INVD36BWP240H11P57PDULVT
+*X6 outl outln Vdd 0 Vdd 0 INVD36BWP240H11P57PDULVT
+*X7 outl outln Vdd 0 Vdd 0 INVD36BWP240H11P57PDULVT
+*X8 outl outln Vdd 0 Vdd 0 INVD36BWP240H11P57PDULVT
+*X9 outl outln Vdd 0 Vdd 0 INVD36BWP240H11P57PDULVT
+
+* control voltage for load
+V1 in 0 PWL (
++     0                                                       0
++    ttran                                                    vhi
++ '  tcyc/2'                                                  vhi
++ 'tcyc/2+ttran'                                              0
++ tcyc                                                        0
++ R
++)
+
+V2 Vdd 0 vhi
+
+.TRAN step=1e-13 stop='2*when'
+
+.probe tran v(in)
+.probe tran v(out)
+
+.end
+
