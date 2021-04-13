@@ -13,7 +13,7 @@ MODULE ConvertTrace EXPORTS Main;
 
    Author : Mika Nystrom <mika.nystroem@intel.com>
 
-   ct [-rename <dutName>] [-scaletime <timeScaleFactor>] [-offsettime <timeOffset>] [-offsetvoltage <voltageOffset>] [-dosources] [-dofiles] <inFileName> <outFileRoot>
+   ct [-rename <dutName>] [-scaletime <timeScaleFactor>] [-offsettime <timeOffset>] [-offsetvoltage <voltageOffset>] [-dosources] [-dofiles] [ [-n <nodename>] ...] <inFileName> <outFileRoot>
 
    will generate <outFileRoot>.trace and <outFileRoot>.names
 
@@ -40,6 +40,7 @@ IMPORT OSError, AL;
 IMPORT Thread;
 IMPORT Params;
 IMPORT UnsafeReader;
+IMPORT TextSet, TextSetDef;
 
 <*FATAL Thread.Alerted*>
 
@@ -422,18 +423,20 @@ PROCEDURE WriteSources() =
                 UnsafeReader.ReadLRA(rd, time^)
               END
             ELSE
-              Wr.PutText(sWr, "* source for " & names.get(i) & "\n");
-              UnsafeReader.ReadLRA(rd, data^);
-              Wr.PutText(sWr, F("V%s src%s 0 PWL (\n", Int(i), Int(i)));
-              FOR i := FIRST(data^) TO LAST(data^) DO
-                Wr.PutText(sWr, F("+   %20s       %20s\n",
-                                  LongReal(time[i]),
-                                  LongReal(data[i])))
+              IF restrictNodes = NIL OR restrictNodes.member(names.get(i)) THEN
+                Wr.PutText(sWr, "* source for " & names.get(i) & "\n");
+                UnsafeReader.ReadLRA(rd, data^);
+                Wr.PutText(sWr, F("V%s src%s 0 PWL (\n", Int(i), Int(i)));
+                FOR i := FIRST(data^) TO LAST(data^) DO
+                  Wr.PutText(sWr, F("+   %20s       %20s\n",
+                                    LongReal(time[i]),
+                                    LongReal(data[i])))
+                END;
+                Wr.PutText(sWr, "+)\n\n");
               END;
-              Wr.PutText(sWr, "+)\n\n");
-            END;
-
-            Rd.Close(rd)
+              
+              Rd.Close(rd)
+            END
           END
         EXCEPT
           OSError.E(x) => Debug.Error("Unable to open temp file \"" & fn & "\" for reading : OSError.E : " & AL.Format(x))
@@ -486,23 +489,25 @@ PROCEDURE WriteFiles() =
             ELSE
               UnsafeReader.ReadLRA(rd, data^);
 
-              TRY
-                sFn := tDn & "/" & names.get(i);
-                sWr := FileWr.Open(sFn)
-              EXCEPT
-                OSError.E(x) => Debug.Error("Unable to open file \"" & sFn & "\" for writing : OSError.E : " & AL.Format(x))
-              END;
-
-              FOR i := FIRST(data^) TO LAST(data^) DO
-                Wr.PutText(sWr, F("%20s       %20s\n",
-                                  LongReal(time[i]),
-                                  LongReal(data[i])))
-              END;
-              TRY
-                Wr.Close(sWr);
-              EXCEPT
-                Wr.Failure(x) => Debug.Error("Trouble closing sources file "&sFn&" : Wr.Failure : " &
-             AL.Format(x))
+              IF restrictNodes = NIL OR restrictNodes.member(names.get(i)) THEN
+                TRY
+                  sFn := tDn & "/" & names.get(i);
+                  sWr := FileWr.Open(sFn)
+                EXCEPT
+                  OSError.E(x) => Debug.Error("Unable to open file \"" & sFn & "\" for writing : OSError.E : " & AL.Format(x))
+                END;
+                
+                FOR i := FIRST(data^) TO LAST(data^) DO
+                  Wr.PutText(sWr, F("%20s       %20s\n",
+                                    LongReal(time[i]),
+                                    LongReal(data[i])))
+                END;
+                TRY
+                  Wr.Close(sWr);
+                EXCEPT
+                  Wr.Failure(x) => Debug.Error("Trouble closing sources file "&sFn&" : Wr.Failure : " &
+                    AL.Format(x))
+                END
               END
             END;
             
@@ -622,6 +627,8 @@ VAR
   lNo := 1;
   doSources := FALSE;
   doFiles   := FALSE;
+
+  restrictNodes : TextSet.T := NIL;
   
 BEGIN
   TRY
@@ -645,6 +652,12 @@ BEGIN
     END;
     IF pp.keywordPresent("-dofiles") THEN
       doFiles := TRUE
+    END;
+    WHILE pp.keywordPresent("-n") DO
+      IF restrictNodes = NIL THEN
+        restrictNodes := NEW(TextSetDef.T).init()
+      END;
+      EVAL restrictNodes.insert(pp.getNext())
     END;
     
     ifn := pp.getNext();
