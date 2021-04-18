@@ -1,5 +1,5 @@
 ;;
-;; $Id: sstubgen.scm,v 1.36 2011/03/31 21:16:15 mika Exp $
+;; $Id$
 ;;
 ;;
 ;; Process Modula-3 interfaces in Scheme
@@ -1216,9 +1216,20 @@
               
               (string-flatten
                "    IF ISTYPE(x, "m3tn") THEN RETURN x END;" dnl
+
+               ;; mika 4/18/2021 only handles 1-D arrays
+               ;; we should really fix this as follows:
+               ;; 
+               ;; if openDimensions > 1, then
+               ;;   iterate through the element types until we get to the
+               ;;   actual element type
+               ;;
+               ;;   and in the generated Modula code, make it use an array
+               ;;   of CARDINAL indices idx[] instead of a single cardinal i
                
                (let* ((target (extract-field 'target type)))
-                 (if (eq? (car target) 'OpenArray)
+                 (if (and (eq? (car target) 'OpenArray)
+                          (= (extract-field 'openDimensions target) 1))
                      (let* ((element (extract-field 'element target))
                             (element-pname (push-make element)))
                        (string-append
@@ -1380,11 +1391,17 @@
           )
 
          ((Object Opaque) 
+          (imports 'insert! 'SchemeConvertHooks)
           (string-append
-           "    IF NOT ISTYPE(x,"m3tn") THEN" dnl
-           "      RAISE Scheme.E(\"Not of type "m3tn" : \" & SchemeUtils.Stringify(x))" dnl
-           "    END;" dnl
-           "    RETURN x" 
+           "    TYPECASE x OF" dnl
+           "      "m3tn"(xx) => RETURN xx" dnl
+           "    ELSE" dnl
+           "      IF SchemeConvertHooks.AttemptConvertToModula(TYPECODE("m3tn"), x) THEN" dnl
+           "        RETURN x" dnl
+           "      ELSE" dnl
+           "        RAISE Scheme.E(\"Not of type "m3tn" : \" & SchemeUtils.Stringify(x))" dnl
+           "      END" dnl
+           "    END" dnl
            )
           )
 
@@ -1441,9 +1458,17 @@
        ))
     (cons (make-intf) (make-impl))))
 
+(define *making-type* #f)
+(define *making-env* #f)
+
 (define (make-to-modula type env)
   ;; this routine ONLY gets called for extension types (WIDECHAR, LONGINT)
   ;; and compound types
+  (set! *making-type* type)
+  (set! *making-env* env)
+
+  ;;(dis "(make-to-modula " (stringify type) ")" dnl)
+  
   (if (is-basetype type)
       ;; special handling for extension types
       (make-to-modula-baseref (is-basetype type) env)
@@ -1771,6 +1796,7 @@
                        (make-to-scheme (missing->scm 'retrieve k) env))
                      (missing->scm 'keys))
                 (map (lambda (k)
+;;                       (dis "making " k dnl)
                        (make-to-modula (missing->m3 'retrieve k) env))
                      (missing->m3 'keys)))))
           (append this (close-conversions env))))))
@@ -1784,7 +1810,7 @@
 
 (define (spit-out-intf intf-name proc-stubs converter-intfs env)
   (string-append
-   "INTERFACE " intf-name ";" dnl
+   (if is-unsafe "UNSAFE " "") "INTERFACE " intf-name ";" dnl
    "(* AUTOMATICALLY GENERATED DO NOT EDIT *)" dnl
    (format-imports env)
    dnl
@@ -2009,7 +2035,7 @@
     (imports 'insert! 'SchemePair)
     
     (string-flatten
-     "MODULE " intf-name ";" dnl
+     (if is-unsafe "UNSAFE " "") "MODULE " intf-name ";" dnl
      "(* AUTOMATICALLY GENERATED DO NOT EDIT *)" dnl
      (format-imports env)
      dnl
