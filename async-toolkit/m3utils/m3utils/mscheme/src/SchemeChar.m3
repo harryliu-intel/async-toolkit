@@ -1,4 +1,4 @@
-(* $Id: SchemeChar.m3,v 1.7 2009/05/02 00:12:22 mika Exp $ *)
+(* $Id$ *)
 
 
 (*
@@ -45,7 +45,7 @@ PROCEDURE Upcase(c : CHAR) : CHAR =
 
 PROCEDURE Downcase(c : CHAR) : CHAR =
   BEGIN 
-    IF c IN LowerCase THEN 
+    IF c IN UpperCase THEN 
       RETURN VAL(ORD(c) - ORD('A') + ORD('a'),CHAR)
     ELSE
       RETURN c

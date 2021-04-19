@@ -1,4 +1,4 @@
-(* $Id: SchemeAtRun.i3,v 1.1 2009/03/03 20:39:26 mika Exp $ *)
+(* $Id$ *)
 
 INTERFACE SchemeAtRun;
 IMPORT SchemePrimitive;

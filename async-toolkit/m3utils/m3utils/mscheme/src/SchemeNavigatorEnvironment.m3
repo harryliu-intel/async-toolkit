@@ -1,4 +1,4 @@
-(* $Id: SchemeNavigatorEnvironment.m3,v 1.6 2011/03/03 09:08:29 mika Exp $ *)
+(* $Id$ *)
 
 MODULE SchemeNavigatorEnvironment;
 IMPORT SchemeEnvironment, SchemeObject, SchemePair, SchemeSymbol;

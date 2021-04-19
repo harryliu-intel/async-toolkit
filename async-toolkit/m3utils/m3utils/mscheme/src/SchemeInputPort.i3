@@ -1,4 +1,4 @@
-(* $Id: SchemeInputPort.i3,v 1.11 2009/05/02 23:12:27 mika Exp $ *)
+(* $Id$ *)
 
 (*
   Copyright (c) 2008, Generation Capital Ltd.  All rights reserved.

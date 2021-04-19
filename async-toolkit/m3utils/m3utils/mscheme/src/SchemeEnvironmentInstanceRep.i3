@@ -1,4 +1,4 @@
-(* $Id: SchemeEnvironmentInstanceRep.i3,v 1.3 2011/03/07 01:59:08 mika Exp $ *)
+(* $Id$ *)
 
 INTERFACE SchemeEnvironmentInstanceRep;
 IMPORT SchemeEnvironment, SchemeEnvironmentClass, AtomRefTbl, AtomList;

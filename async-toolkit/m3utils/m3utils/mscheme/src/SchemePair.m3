@@ -1,4 +1,4 @@
-(* $Id: SchemePair.m3,v 1.8 2009/03/29 07:27:13 mika Exp $ *)
+(* $Id$ *)
 
 (*
   Copyright (c) 2008, Generation Capital Ltd.  All rights reserved.

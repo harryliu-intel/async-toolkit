@@ -1,4 +1,4 @@
-(* $Id: SchemeContinuation.m3,v 1.3 2008/10/06 08:12:46 mika Exp $ *)
+(* $Id$ *)
 
 (*
   Copyright (c) 2008, Generation Capital Ltd.  All rights reserved.

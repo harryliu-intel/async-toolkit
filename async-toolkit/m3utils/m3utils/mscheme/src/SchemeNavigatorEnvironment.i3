@@ -1,4 +1,4 @@
-(* $Id: SchemeNavigatorEnvironment.i3,v 1.4 2011/03/03 09:08:29 mika Exp $ *)
+(* $Id$ *)
 
 INTERFACE SchemeNavigatorEnvironment;
 IMPORT SchemeEnvironment;

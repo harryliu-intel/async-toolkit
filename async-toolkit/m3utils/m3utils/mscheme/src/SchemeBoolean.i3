@@ -1,4 +1,4 @@
-(* $Id: SchemeBoolean.i3,v 1.7 2009/11/28 12:11:34 mika Exp $ *)
+(* $Id$ *)
 
 (*
   Copyright (c) 2008, Generation Capital Ltd.  All rights reserved.

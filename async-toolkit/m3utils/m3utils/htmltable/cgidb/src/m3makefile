@@ -1,6 +1,6 @@
 /* $Id$ */
 
-import ("regresslib")
+%import ("regresslib")
 import ("htmltable")
 import ("cit_util")
 

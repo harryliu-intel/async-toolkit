@@ -1,4 +1,4 @@
-(* $Id: SchemeEnvironmentUnsafe.m3,v 1.3 2011/03/07 02:08:50 mika Exp $ *)
+(* $Id$ *)
 
 MODULE SchemeEnvironmentUnsafe EXPORTS SchemeEnvironment;
 

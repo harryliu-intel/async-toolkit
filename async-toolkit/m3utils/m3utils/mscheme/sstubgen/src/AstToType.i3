@@ -29,6 +29,8 @@ PROCEDURE OneStubScm(c: M3Context.T; qid: Type.Qid; wr: Wr.T): INTEGER;
 VAR varList, procList, constList, typeList, exceptionList : SchemePair.T := NIL;
     filenames : SchemePair.T := NIL;
 
+VAR isUnsafe : BOOLEAN;
+
 PROCEDURE GetNames(c : M3Context.T; qid: Type.Qid) : RefSeq.T;
 
 END AstToType.

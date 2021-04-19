@@ -1,4 +1,4 @@
-(* $Id: SchemeUtilsFormat.m3,v 1.3 2008/10/10 06:01:20 mika Exp $ *)
+(* $Id$ *)
 
 (*
   Copyright (c) 2008, Generation Capital Ltd.  All rights reserved.
