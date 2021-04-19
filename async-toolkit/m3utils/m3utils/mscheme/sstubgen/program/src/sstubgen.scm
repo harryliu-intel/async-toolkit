@@ -1250,13 +1250,14 @@
                )
               
               (string-flatten
-               "    TYPE Rec = REF RECORD ref : " m3tn "END;" dnl
+               "    TYPE Rec = REF RECORD ref : " m3tn " END;" dnl
                "    BEGIN" dnl
                "      IF NOT ISTYPE(x, Rec) THEN" dnl
                "        RAISE Scheme.E(\"Not of type "m3tn" : \" & SchemeUtils.Stringify(x))" dnl
                "      ELSE" dnl
                "        RETURN NARROW(x,Rec).ref" dnl
                "      END" dnl
+               "    END" dnl
                )
               
               )
