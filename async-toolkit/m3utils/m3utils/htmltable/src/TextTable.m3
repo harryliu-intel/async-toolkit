@@ -1,6 +1,8 @@
 MODULE TextTable;
 IMPORT HTMLTable, Debug;
 
+VAR doDebug := Debug.DebugThis("TextTable");
+
 REVEAL 
   T = Public BRANDED "TextTable" OBJECT
   OVERRIDES
@@ -18,7 +20,9 @@ PROCEDURE ToHTML(self : T) : HTMLTable.T =
         row := NEW(REF ARRAY OF TEXT, 2);
       BEGIN
         row^:= ARRAY OF TEXT { key, value };
-        Debug.Out("Adding (" & key & "," & value &") to table.");
+        IF doDebug THEN
+          Debug.Out("Adding (" & key & "," & value &") to table.")
+        END;
         table.addRow(row)
       END
       END;

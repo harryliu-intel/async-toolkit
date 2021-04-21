@@ -35,7 +35,8 @@ PROCEDURE MakeURL(to : TEXT; from : Request.T ; local : BOOLEAN) : TEXT =
     RETURN res;
   END MakeURL;
 
-PROCEDURE Init(self : T; encloses : HTML.Stuff;
+PROCEDURE Init(self : T; 
+               encloses : HTML.Stuff;
                to : TEXT;
                from : Request.T;
                local : BOOLEAN) : T =

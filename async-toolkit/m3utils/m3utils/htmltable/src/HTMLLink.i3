@@ -17,9 +17,9 @@ TYPE
   Public = HTML.T OBJECT
   METHODS
     init(encloses : HTML.Stuff; (* embedded "linked" object *)
-         to : TEXT;         (* where does it go to? *)
-         from : Request.T;
-         local := TRUE) : T;
+         to       : TEXT;         (* where does it go to? *)
+         from     : Request.T;
+         local    := TRUE) : T;
     URL() : TEXT;
   END;
 

@@ -11,6 +11,8 @@ IMPORT DBerr;
 
 <* FATAL Thread.Alerted *>
 
+VAR doDebug := Debug.DebugThis("HTMLTable");
+
 REVEAL
   T = Public BRANDED "Table" OBJECT
     fields : HTML.Matrix;
@@ -54,18 +56,20 @@ PROCEDURE AddRow(self : T;
     | Whence.Bottom => replace := NUMBER(self.fields^) - row
     END;
 
-    Debug.Out("NUMBER(newFields^): " & Fmt.Int(NUMBER(newFields^)));
-    Debug.Out("NUMBER(self.fields^): " & Fmt.Int(NUMBER(self.fields^)));
+    IF doDebug THEN
+      Debug.Out("NUMBER(newFields^): " & Fmt.Int(NUMBER(newFields^)));
+      Debug.Out("NUMBER(self.fields^): " & Fmt.Int(NUMBER(self.fields^)));
+      
+      IF NUMBER(newFields^) >0  THEN
+        Debug.Out("NUMBER(newFields[0]): " & Fmt.Int(NUMBER(newFields[0])))
+      END;
 
-    IF NUMBER(newFields^) >0  THEN
-      Debug.Out("NUMBER(newFields[0]): " & Fmt.Int(NUMBER(newFields[0])))
+      IF NUMBER(self.fields^) >0  THEN
+        Debug.Out("NUMBER(self.fields[0]): " & Fmt.Int(NUMBER(self.fields[0])))
+      END;
+    
+      Debug.Out("replace = " & Fmt.Int(replace))
     END;
-
-    IF NUMBER(self.fields^) >0  THEN
-      Debug.Out("NUMBER(self.fields[0]): " & Fmt.Int(NUMBER(self.fields[0])))
-    END;
-
-    Debug.Out("replace = " & Fmt.Int(replace));
 
     SUBARRAY(newFields^, 0 , replace) := SUBARRAY(self.fields^, 0, replace);
     newFields[replace] := HTML.WrapVector(stuff)^;

@@ -1,9 +1,11 @@
 (* $Id$ *)
 
 MODULE Session;
+IMPORT DatabaseClass; (* debug only *)
 IMPORT Random,Text;
 IMPORT Pages;
-IMPORT Database,DatabaseUtils,Fmt,Scan;
+IMPORT Database, DatabaseUtils, Scan, Fmt;
+FROM Fmt IMPORT F, Int;
 IMPORT Debug;
 IMPORT DBerr;
 IMPORT Pathname, Params;
@@ -26,7 +28,7 @@ REVEAL
   END;
 
 CONST
-  ExpiryInterval = "1 hour";
+  ExpiryHours = 1;
 
 PROCEDURE GetPriv(self : T) : Pages.Priv =
   BEGIN RETURN self.priv END GetPriv;
@@ -50,7 +52,10 @@ PROCEDURE RandomString(len : CARDINAL := 20) : TEXT =
     RETURN Text.FromChars(res^)
   END RandomString;
 
-PROCEDURE Init(self : T; userId : UserId; hostAddr : TEXT) : T 
+PROCEDURE Init(self     : T;
+               userId   : UserId;
+               hostAddr : TEXT;
+               multiOk  : BOOLEAN) : T 
   RAISES { DBerr.Error } =
   BEGIN 
     <* ASSERT self.userId < 0 AND self.hostAddr = NIL *>
@@ -62,18 +67,39 @@ PROCEDURE Init(self : T; userId : UserId; hostAddr : TEXT) : T
 
     (* we should delete all old sessions for this user *)
     EVAL Database.Exec("BEGIN");
-    EVAL Database.Exec("DELETE FROM session_tbl WHERE expires < 'now' OR uid = " & 
-      Fmt.Int(self.userId));
+    VAR
+      delQ := "DELETE FROM session_tbl WHERE expires < 'now'";
+    BEGIN
+      IF NOT multiOk THEN
+        delQ := delQ & " OR uid = " & Int(self.userId)
+      END;
+      EVAL Database.Exec(delQ)
+    END;
 
     (* at this point, we need to insert ourselves in the database ... *)
-    EVAL Database.Exec("INSERT INTO session_tbl " & 
-      "(uid, session_key, host_ip, expires) values (" &
-      Fmt.Int(self.userId) & ",'" & self.key & "','" & self.hostAddr & "', " &
-      " 'now'::timestamp with time zone + '" & ExpiryInterval & "'::interval)");
-
+      EVAL Database.Exec(F(
+     "INSERT INTO session_tbl (uid, session_key, host_ip, expires) values "&
+                            " (%s, '%s', '%s', %s)",
+                           Int(self.userId),
+                           self.key,
+                           self.hostAddr,
+                           ExpiryString()));
+    
     EVAL Database.Exec("COMMIT WORK");
     RETURN self 
   END Init;
+
+PROCEDURE ExpiryString() : TEXT =
+  BEGIN
+    CASE Database.GetType() OF
+      Database.Type.PostgreSQL =>
+      RETURN F(" 'now'::timestamp with time zone + '%s hour'::interval)",
+               Int(ExpiryHours))
+    |
+      Database.Type.MySQL =>
+      RETURN F("date_add(now(), interval %s hour)", Int(ExpiryHours))
+    END
+  END ExpiryString;
 
 PROCEDURE GetUserName(self : T) : TEXT RAISES { DBerr.Error } =
   BEGIN RETURN GetUserInfo(self,"name") END GetUserName;
@@ -89,7 +115,8 @@ PROCEDURE GetUserInfo(self : T; infoName : TEXT) : TEXT
     res := queryResult.getUniqueEntry(sanInfoName);
   BEGIN RETURN res END GetUserInfo;
 
-PROCEDURE Validate(hostAddr, key : TEXT) : T RAISES { DBerr.Error } =
+PROCEDURE Validate(hostAddr, key : TEXT; updateExpiry : BOOLEAN) : T
+  RAISES { DBerr.Error } =
   <* FATAL FloatMode.Trap, Lex.Error *>
   VAR
     res := NEW(T);
@@ -114,8 +141,13 @@ PROCEDURE Validate(hostAddr, key : TEXT) : T RAISES { DBerr.Error } =
        the session hasnt expired (perhaps ought to be done in the SQL query
        itself) *)
 
-    IF queryResult = NIL THEN Debug.Out("NIL queryResult")
-    ELSE Debug.Out("non-NIL queryResult") END;
+    IF queryResult = NIL THEN
+      Debug.Out("NIL queryResult")
+    ELSE
+      Debug.Out(F("non-NIL queryResult fields %s data %s",
+                  Int(NUMBER(queryResult.fieldNames^)),
+                  Int(NUMBER(queryResult.data^))))
+    END;
 
     TRY
       VAR
@@ -126,7 +158,7 @@ PROCEDURE Validate(hostAddr, key : TEXT) : T RAISES { DBerr.Error } =
           "hostAddr = " & Debug.UnNil(hostAddr));
         IF NOT Text.Equal(queryHostIP,
                           hostAddr) THEN RETURN NIL END
-      END;
+      END
     EXCEPT DBerr.Error(e) =>
       (* ok this stuff shoudlnt be hard-coded... *)
       RAISE DBerr.Error("Session key lookup failed with error:<br> " & e &
@@ -139,9 +171,12 @@ PROCEDURE Validate(hostAddr, key : TEXT) : T RAISES { DBerr.Error } =
     res.key := key;
 
     (* and extend validity of session *)
-    EVAL Database.TExec(
-  "update session_tbl set expires='now'::timestamp with time zone + '" & ExpiryInterval & "'::interval where session_key='"&key&"';"
-    );
+    IF updateExpiry THEN
+      EVAL Database.TExec(F(
+   "UPDATE session_tbl SET expires=%s WHERE session_key='%s'",
+      ExpiryString(), key
+      ))
+    END;
 
     (* add code to parse privilege level *)
     VAR

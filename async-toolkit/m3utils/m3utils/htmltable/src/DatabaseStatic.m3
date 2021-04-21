@@ -40,6 +40,9 @@ PROCEDURE TExecCA(VAR query : ARRAY OF CHAR; busyWait : BOOLEAN) : Table
 PROCEDURE Static() : T =
   BEGIN RETURN static END Static;
 
+PROCEDURE GetType() : Type =
+  BEGIN RETURN static.getType() END GetType;
+
 VAR static : T := NEW(Postgres);
 
 PROCEDURE SetStatic(to : T) = BEGIN static := to END SetStatic;

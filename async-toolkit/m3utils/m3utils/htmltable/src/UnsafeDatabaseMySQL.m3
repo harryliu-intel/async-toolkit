@@ -21,7 +21,7 @@ FROM Fmt IMPORT FN, F, Int;
 
 IMPORT Debug;
 FROM Debug IMPORT UnNil;
-IMPORT DatabaseVector, DatabaseVectorSeq;
+IMPORT DatabaseVectorSeq;
 
 CONST doDebug = TRUE;
 
@@ -63,7 +63,11 @@ REVEAL
     tExecCA    := TExecCAM;
     name       := GetName;
     isClosed   := IsClosed;
+    getType    := GetTypeM;
   END;
+
+PROCEDURE GetTypeM(<*UNUSED*>t : MySQL) : Type =
+  BEGIN RETURN Type.MySQL END GetTypeM;
 
 PROCEDURE Init(t : MySQL) : T
   RAISES { DBerr.Error } =
@@ -222,6 +226,11 @@ PROCEDURE CloseM(t : MySQL) =
     t.conn := NIL
   END CloseM;
 
+
+VAR EmptyTable := NEW(Table,
+                      fieldNames := NEW(Vector, 0),
+                      data       := NEW(Matrix, 0, 0));
+                      
 PROCEDURE ExecM(t                               : MySQL; 
                 query                           : TEXT; 
                 busyWait, abortConnectionOnFail : BOOLEAN) : Result  (*??*)
@@ -232,13 +241,31 @@ PROCEDURE ExecM(t                               : MySQL;
   BEGIN
     LOCK t.mu DO
       TRY
+        IF doDebug THEN
+          Debug.Out(F("UnsafeDatabaseMySQL.ExecM: running query \"%s\"", query))
+        END;
         VAR
           resi := Impl.Query(t.conn, query);
           res  := Impl.UseResult(t.conn);
           row : REF ARRAY OF TEXT;
           lengths : Impl.RefLengthsT;
-          nfields := Impl.NumFields(res);
+          nfields : CARDINAL;
         BEGIN
+
+          IF res = NIL THEN
+            (* see 
+               https://dev.mysql.com/doc/c-api/8.0/en/mysql-field-count.html *)
+
+            IF Impl.FieldCount(t.conn) > 0 THEN
+              RAISE DBerr.Error("NIL query result with non-zero field count")
+            ELSE
+              (* OK with NIL result : return empty result *)
+              RETURN NEW(MySQLResult, tab := EmptyTable)
+            END
+          END;
+          
+          nfields := Impl.NumFields(res);
+          
           IF resi # 0 THEN
             RAISE DBerr.Error("Query returned non-zero error: " & Fmt.Int(resi))
           END;
@@ -277,6 +304,7 @@ PROCEDURE ExecM(t                               : MySQL;
                 END;
                 vec[j] := row[j]
               END;
+              rowSeq.addhi(vec)
             END;
 
             row     := Impl.FetchRow(res);

@@ -429,8 +429,12 @@ REVEAL
     tExecCA    := TExecCAM;
     name       := GetName;
     isClosed   := IsClosed;
+    getType    := GetTypeM;
   END;
 
+PROCEDURE GetTypeM(<*UNUSED*>t : Postgres) : Type =
+  BEGIN RETURN Type.PostgreSQL END GetTypeM;
+  
 PROCEDURE InitNop(t : Postgres) : T = BEGIN RETURN t END InitNop;
   
 PROCEDURE IsClosed(t : Postgres) : BOOLEAN =

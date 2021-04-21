@@ -17,6 +17,8 @@ IMPORT DatabaseTable;
 *)
 
 TYPE
+  Type = { PostgreSQL, MySQL };
+  
   Postgres <: T;
 
   MySQL <: T;
@@ -24,7 +26,9 @@ TYPE
   T = (*MUTEX*) OBJECT METHODS
     init() : T
       RAISES { DBerr.Error };
-    
+
+    getType() : Type;
+
     open(dbTextName : TEXT) 
       RAISES { DBerr.Error };
     openRemote (dbHost, dbPort, dbName, dbLogin, dbPwd : TEXT) 
@@ -92,7 +96,8 @@ PROCEDURE SetStatic(to : T);
 
 PROCEDURE Close();
 
-<*OBSOLETE*>
+PROCEDURE GetType() : Type;
+
 PROCEDURE Exec(qry : TEXT; busyWait := FALSE) : Result RAISES { DBerr.Error };
 
 PROCEDURE TExec(qry : TEXT; busyWait := FALSE) : Table RAISES { DBerr.Error };
