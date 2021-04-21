@@ -5,23 +5,43 @@ IMPORT TextTable, HTML, HTMLForm, HTMLInput;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
-    envVars : TextTable.T;
-    postVars : TextTable.T;
+    envVars, postVars, getVars : TextTable.T;
   OVERRIDES
     init := Init;
     getEnvVar := GetEnvVar;
     getPostVar := GetPostVar;
+    getGetVar := GetGetVar;
+    getEnvVars := GetEnvVars;
+    getPostVars := GetPostVars;
+    getGetVars := GetGetVars;
     addPostVarsAsHidden := AddPostVarsAsHidden;
   END;
 
-PROCEDURE Init(t : T; envVars, postVars : TextTable.T) : T =
-  BEGIN t.envVars := envVars; t.postVars := postVars; RETURN t END Init;
+PROCEDURE Init(t : T; envVars, postVars, getVars : TextTable.T) : T =
+  BEGIN
+    t.envVars := envVars;
+    t.postVars := postVars;
+    t.getVars := getVars;
+    RETURN t
+  END Init;
 
 PROCEDURE GetEnvVar(t : T; named : TEXT; VAR value : TEXT) : BOOLEAN =
   BEGIN RETURN t.envVars.get(named,value) END GetEnvVar;
 
 PROCEDURE GetPostVar(t : T; named : TEXT; VAR value : TEXT) : BOOLEAN =
   BEGIN RETURN t.postVars.get(named,value) END GetPostVar;
+
+PROCEDURE GetGetVar(t : T; named : TEXT; VAR value : TEXT) : BOOLEAN =
+  BEGIN RETURN t.getVars.get(named,value) END GetGetVar;
+
+PROCEDURE GetEnvVars(t : T) : TextTable.T =
+  BEGIN RETURN t.envVars END GetEnvVars;
+
+PROCEDURE GetPostVars(t : T) : TextTable.T =
+  BEGIN RETURN t.postVars END GetPostVars;
+
+PROCEDURE GetGetVars(t : T) : TextTable.T =
+  BEGIN RETURN t.getVars END GetGetVars;
 
 PROCEDURE AddPostVarsAsHidden(t : T; to : HTML.T) =
   VAR

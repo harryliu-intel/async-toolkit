@@ -5,34 +5,23 @@ IMPORT DBerr;
 IMPORT HTML, HTMLPage, HTMLForm, HTMLInput, HTMLLink, HTMLList;
 IMPORT HTMLTextArea;
 IMPORT Pages,Debug,Database, DatabaseUtils, Text, Session, Scan;
-IMPORT Fmt;
+IMPORT Fmt; FROM Fmt IMPORT Bool, LongReal, F, Int;
 IMPORT Lex, FloatMode;
 IMPORT Request;
 IMPORT TextReader;
-IMPORT Wr;
 IMPORT PageDispatch;
 IMPORT HTMLFormatting; FROM HTMLFormatting IMPORT Alignment, RowFormat;
 IMPORT Process;
 IMPORT HTMLTable;
-IMPORT IntSet, IntSetDef, CardSetDef;
 IMPORT Thread;
 IMPORT XTime AS Time;
 IMPORT Pathname, Params;
-IMPORT Random, FileWr, FS, OSError;
-IMPORT TZ;
+IMPORT FS, OSError;
 IMPORT SysPerf;
-IMPORT TextRefTbl;
-IMPORT Rd, FileRd;
-IMPORT TextUtils;
-IMPORT RefList;
-IMPORT AL;
+IMPORT TextTable;
+IMPORT DatabaseClass; (* to get directly at DatabaseTable.T.data *)
 
 CONST TE = Text.Equal;
-CONST RefreshInterval = 10*1000;
-CONST PrintSQL = FALSE;
-CONST TmpDir = "/tmp";
-CONST GnuplotPath = "/usr/local/bin/gnuplot";
-CONST DoDeleteGnuplotFiles = TRUE;
 
 <* FATAL Thread.Alerted *>
 
@@ -61,263 +50,11 @@ TYPE
 
 EXCEPTION FormatError;
 
-PROCEDURE SiteStatus() : HTMLList.T RAISES { DBerr.Error,
-                                             OSError.E,
-                                             FormatError } =
-
-  PROCEDURE FLR(l : LONGREAL) : TEXT =
-    BEGIN
-      IF l > 1000.0d0 THEN 
-        RETURN Fmt.LongReal(l, prec := 3)
-      ELSE
-        RETURN Fmt.LongReal(l, style := Fmt.Style.Fix, prec := 2)
-      END
-    END FLR;
-
-  PROCEDURE FmtLA() : TEXT =
-    VAR res := ""; BEGIN
-      FOR i := FIRST(loadAvg) TO LAST(loadAvg) DO
-        res := res & FLR(loadAvg[i]) & " " 
-      END;
-      RETURN res
-    END FmtLA;
-
-  PROCEDURE SummarizeFeeds(path : Pathname.T) RAISES { OSError.E, 
-                                                       FormatError } =
-    VAR rd := FileRd.Open(path);
-    BEGIN
-      TRY
-        LOOP
-          VAR
-            line   := Rd.GetLine(rd);
-            reader := NEW(TextReader.T).init(line);
-            val    := reader.getLR();
-            which  := reader.get();
-            path   := reader.nextE("");
-            dirStat : DirStat;
-            r : REFANY;
-          BEGIN
-            IF dirStats.get(path,r) THEN
-              dirStat := r
-            ELSE
-              dirStat := NEW(DirStat, 
-                             median := FIRST(Time.T),
-                             last := FIRST(Time.T),
-                             recs := 0);
-              EVAL dirStats.put(path,dirStat)
-            END;
-
-            IF    TE(which, "MEDIAN") THEN
-              dirStat.median := MAX(dirStat.median,val)
-            ELSIF TE(which, "LAST") THEN
-              dirStat.last := MAX(dirStat.last,val)
-            ELSIF TE(which, "RECS") THEN
-              dirStat.recs := ROUND(val)
-            ELSE
-              Debug.Warning("Unknown which \"" & which & "\"")
-            END
-          END
-        END
-          
-      EXCEPT
-        Rd.EndOfFile => TRY Rd.Close(rd) EXCEPT Rd.Failure => (* ??? *) END
-      |
-        Rd.Failure, FloatMode.Trap, Lex.Error, TextReader.NoMore =>
-        RAISE FormatError
-      END
-    END SummarizeFeeds;
-
-  PROCEDURE P(t : TEXT; n : CARDINAL) : TEXT =
-    BEGIN
-      RETURN " " & TextUtils.Pluralize(t,n)
-    END P;
-
-  PROCEDURE FmtTime(t : Time.T) : HTML.Stuff =
-    VAR 
-      tot, d := ROUND(now - t);
-      delta := "";
-    BEGIN
-      (* we print the two most significant human-readable time intervals,
-         i.e.., days/hours, hours/minutes, minutes/seconds, or seconds only *)
-      IF tot >= 86400 THEN
-        delta := P("day",d DIV 86400);
-        d     := d MOD 86400
-      END;
-
-      IF tot >= 3600 THEN
-        delta := delta & P("hour",d DIV 3600); d := d MOD 3600
-      END;
-
-      IF tot >= 60 AND tot < 86400 THEN
-        delta := delta & P("minute",d DIV 60); d := d MOD 60
-      END;
-
-      IF               tot < 3600 THEN 
-        delta := delta & P("second",d) 
-      END;
-
-      RETURN HTMLTable.Vert(TZ.FormatSubsecond(tz,t,simplified:= TRUE),
-                            delta)
-    END FmtTime;
-
-  CONST 
-    MyTZ = "America/New_York";
-  VAR
-    tz := NEW(TZ.T).init(MyTZ);
-    res := NEW(HTMLList.T);
-    now := Time.Now();
-    loadAvg := ARRAY [0..2] OF LONGREAL { LAST(LONGREAL), .. };
-    dirStats := NEW(TextRefTbl.Default).init();
-    fsStats : FSStat := NIL;
-    fileStats : FileStat := NIL;
-    monitor := Database.TExec("select * from monitor;");
-  BEGIN
-    EVAL SysPerf.GetLoadAvg(loadAvg);
-
-    res.add("<br><br>System status at " & 
-      TZ.FormatSubsecond(tz,now,simplified:= TRUE) & 
-   "  (timezone=" & MyTZ &"): load averages " & FmtLA());
-
-    FOR i := 0 TO monitor.rows()-1 DO
-      WITH r = monitor.getRow(i),
-           what = r.getI(1) DO
-        IF    TE(what, "stat") THEN
-          VAR
-            newFS := NEW(FileStat, touched := LAST(Time.T), next := fileStats,
-                         pn := r.getI(0));
-          BEGIN
-            TRY
-              newFS.touched := FS.Status(r.getI(0)).modificationTime
-            EXCEPT
-              OSError.E => (* skip *)
-            END;
-            fileStats := newFS
-          END
-        ELSIF TE(what, "summarize") THEN
-          SummarizeFeeds(r.getI(0))
-        ELSIF TE(what, "filesystem") THEN
-          VAR 
-            newFS := NEW(FSStat, avail := LAST(LONGREAL), pn := r.getI(0), next := fsStats); 
-          BEGIN
-            TRY
-              newFS.avail := SysPerf.DiskAvail(r.getI(0))
-            EXCEPT
-              SysPerf.Error => (* skip *)
-            END;
-            fsStats := newFS
-          END
-        ELSE
-          Debug.Warning("Unknown monitor type \"" & what & "\"")
-        END
-      END
-    END;
-
-    VAR stuff : RefList.T := NIL; BEGIN
-      IF dirStats.size() # 0 THEN
-        VAR
-          tab := NEW(REF ARRAY OF ARRAY OF HTML.T, 1, 3);
-          hTab := NEW(HTMLTable.T);
-          iter := dirStats.iterate();
-          path : TEXT;
-          r : REFANY;
-        BEGIN
-          tab[0,0] := HTMLList.Hack("feed dir.");
-          tab[0,1] := HTMLList.Hack("last");
-          tab[0,2] := HTMLList.Hack("median");
-          EVAL hTab.init(tab);
-          
-          WHILE iter.next(path,r) DO
-            WITH rec = NARROW(r,DirStat),
-                 vec = NEW(REF ARRAY OF HTML.T, 3) DO
-              vec[0] := HTMLList.Hack(path);
-              vec[1] := FmtTime(rec.last);
-              vec[2] := FmtTime(rec.median);
-              
-              hTab.addRow(vec)
-            END
-          END;
-          
-          stuff := RefList.Cons(hTab, stuff)
-        END
-      END;
-      
-      IF fileStats # NIL THEN
-        VAR
-          tab := NEW(REF ARRAY OF ARRAY OF HTML.T, 1, 2);
-          hTab := NEW(HTMLTable.T);
-        BEGIN
-          tab[0,0] := HTMLList.Hack("file");
-          tab[0,1] := HTMLList.Hack("touched");
-          EVAL hTab.init(tab);
-
-          WHILE fileStats # NIL DO
-            WITH vec = NEW(REF ARRAY OF HTML.T,2) DO
-              vec[0] := HTMLList.Hack(fileStats.pn);
-              IF fileStats.touched = LAST(Time.T) THEN
-                vec[1] := HTMLList.Hack("ERROR") 
-              ELSE
-                vec[1] := FmtTime(fileStats.touched)
-              END;
-
-              hTab.addRow(vec)
-            END;
-            fileStats := fileStats.next
-          END;
-
-          stuff := RefList.Cons(hTab,stuff)
-        END
-      END;
-
-      IF fsStats # NIL THEN
-        VAR
-          tab := NEW(REF ARRAY OF ARRAY OF HTML.T, 1, 2);
-          hTab := NEW(HTMLTable.T);
-        BEGIN
-          tab[0,0] := HTMLList.Hack("filesystem");
-          tab[0,1] := HTMLList.Hack("used cap.");
-          EVAL hTab.init(tab);
-
-          WHILE fsStats # NIL DO
-            WITH vec = NEW(REF ARRAY OF HTML.T,2) DO
-              vec[0] := HTMLList.Hack(fsStats.pn);
-              IF fsStats.avail = LAST(LONGREAL) THEN
-                vec[1] := HTMLList.Hack("ERROR") 
-              ELSE
-                vec[1] := HTMLList.Hack(
-                            Fmt.LongReal(100.0d0 * (1.0d0-fsStats.avail), 
-                                     prec := 1, style := Fmt.Style.Fix) & 
-                                                 "%")
-              END;
-
-              hTab.addRow(vec)
-            END;
-            fsStats := fsStats.next
-          END;
-
-          stuff := RefList.Cons(hTab,stuff)
-        END
-      END;
-      
-      IF stuff # NIL THEN
-        WITH arr = NEW(REF ARRAY OF ARRAY OF HTML.T, 
-                       1,RefList.Length(stuff)) DO
-          FOR i := LAST(arr[0]) TO FIRST(arr[0]) BY -1 DO
-            arr[0,i] := stuff.head;
-            stuff := stuff.tail
-          END;
-
-          res.add("<br>");
-          res.add(NEW(HTMLTable.T).init(arr, useBorders := FALSE))
-        END
-      END
-    END;
-
-    RETURN res
-  END SiteStatus;
-
 PROCEDURE SiteNavBar(request : Request.T) : HTMLList.T =
 
-  PROCEDURE AddLinkTo(named : TEXT; titleP : TEXT := NIL) =
+  PROCEDURE AddLinkTo(named   : TEXT;
+                      titleP  : TEXT := NIL;
+                      getVars : TextTable.T := NIL) =
     VAR 
       title : TEXT;
       dispatch := Pages.GetPageDispatch(named);
@@ -332,12 +69,12 @@ PROCEDURE SiteNavBar(request : Request.T) : HTMLList.T =
         IF title = NIL THEN
           title := "Page \"" & named & "\""
         END;
-        res.add(NEW(HTMLLink.T).init(title,named,request))
+        res.add(NEW(HTMLLink.T).init(title, named, request, getVars := getVars))
       END
     END AddLinkTo;
 
   VAR
-    res := NEW(HTMLList.T);
+    res     := NEW(HTMLList.T);
     spacing := "&nbsp;&nbsp;&nbsp;";
   BEGIN
     Debug.Out("Building SiteNavBar...");
@@ -350,7 +87,7 @@ PROCEDURE SiteNavBar(request : Request.T) : HTMLList.T =
     res.add(spacing);
 *)
 
-    AddLinkTo("state_executed");
+    AddLinkTo("regression");
     res.add(spacing);
 
     AddLinkTo("state_rejected");
@@ -361,7 +98,9 @@ PROCEDURE SiteNavBar(request : Request.T) : HTMLList.T =
 
     res.add("<br>");
 
-    AddLinkTo("main");
+    Debug.Out(F("Chipdev.SiteNavBar: (getVars=NIL)=%s",
+              Bool(request.getGetVars()=NIL)), 0);
+    AddLinkTo("main", getVars := request.getGetVars());
     res.add(spacing);
 
     AddLinkTo("profile");
@@ -394,6 +133,92 @@ PROCEDURE Main(p : Page; request : Request.T) =
     p.page.addToBody("<br><br>");
   END Main;
 
+
+PROCEDURE Regression(p : Page; request : Request.T) =
+
+  PROCEDURE MakeButton(q : [1..LAST(CARDINAL)]) =
+    BEGIN
+      Debug.Out(F("MakeButton(%s)", Int(q)));
+    END MakeButton;
+    
+  VAR
+    rowsPerPage := 25;
+    maxid := -1;
+    restriction := "";
+    page : [ 1..LAST(CARDINAL) ] := 1; (* me *)
+    v : TEXT;
+    totalRows : CARDINAL;
+    npages : CARDINAL;
+  BEGIN
+    p.page.addToBody(SiteNavBar(request));
+    p.page.addToBody("<br><br>");
+
+    (* do the pagination calcs *)
+
+    (* first, my page? *)
+    IF request.getGetVars().get("page", v) THEN
+      page := Scan.Int(v)
+    END;
+
+    Debug.Out("My page is " & Int(page));
+
+    WITH query = "select count(*) as count from verification_regression",
+         res   = Database.TExec(query) DO
+      totalRows := Scan.Int(res.getUniqueEntry("count"))
+    END;
+
+    npages := (totalRows - 1) DIV rowsPerPage + 1;
+
+    VAR
+      q : INTEGER := page;
+      step : CARDINAL := 1;
+    BEGIN
+      WHILE q # 1 DO
+        q := q - step;
+        q := MAX(q, 1);
+
+        MakeButton(q);
+
+        step := step * 2
+      END
+    END;
+    
+    VAR
+      q := page;
+      step := 1;
+    BEGIN
+      WHILE q # npages DO
+        q := q + step;
+        q := MIN(q, npages);
+
+        MakeButton(q);
+
+        step := step * 2
+      END
+    END;
+
+    WITH offset = page * rowsPerPage, (* which row to start at *)
+         query = F("select r.id, r.name, r.username, r.date, r.status, r.comment, (select count(*) from verification_testrun t0 where t0.regression_id=r.id and t0.status='pass') as 'p', (select count(*) from verification_testrun t1 where t1.regression_id=r.id and t1.status='fail') as 'f',  (select count(*) from verification_testrun t2 where t2.regression_id=r.id) as 'total' from verification_regression r %s order by r.id desc limit %s offset %s",
+                   restriction,
+                   Int(rowsPerPage),
+                   Int(offset)),
+
+         res   = Database.TExec(query),
+         arr   = NEW(REF ARRAY OF ARRAY OF HTML.T,
+                     res.getNumRows(), res.getNumCols()) DO
+      FOR r := FIRST(arr^) TO LAST(arr^) DO
+        FOR c := FIRST(arr[0]) TO LAST(arr[0]) DO
+          arr[r,c] := HTMLList.Hack(res.data[r,c])
+        END
+      END;
+
+      WITH res = NEW(HTMLTable.T).init(arr) DO
+        p.page.addToBody(res)
+      END
+    END
+
+  END Regression;
+  
 PROCEDURE AdminMain(p : Page; request : Request.T) =
   BEGIN
     p.page.addToBody(SiteNavBar(request));
@@ -555,7 +380,7 @@ PROCEDURE FNFF(fnf : FixNumFmt; what : HTML.Stuff) : HTML.Stuff =
       TEXT(t) => 
         TRY
           WITH num = Scan.LongReal(t) DO
-            RETURN Fmt.LongReal(num, style := fnf.style, prec := fnf.prec)
+            RETURN LongReal(num, style := fnf.style, prec := fnf.prec)
           END
         EXCEPT
           Lex.Error, FloatMode.Trap => RETURN what
@@ -575,7 +400,8 @@ PROCEDURE MakeAlignments(READONLY cols : ARRAY OF TEXT) : Alignment =
     RETURN res
   END MakeAlignments;
 
-PROCEDURE CheckSignin(p : Page; request : Request.T)  RAISES { DBerr.Error }  = <* FATAL FloatMode.Trap, Lex.Error *>
+PROCEDURE CheckSignin(p : Page; request : Request.T)
+  RAISES { DBerr.Error }  = <* FATAL FloatMode.Trap, Lex.Error *>
   VAR
     login, password : TEXT;
     result : Database.Table;
@@ -677,6 +503,10 @@ BEGIN
     Pages.AddDispatch ( "",     mainPage, signinNeeded := FALSE)
   END;
 
+  Pages.AddDispatch ( "regression",
+                      NEW(Page, body := Regression ),
+                      signinNeeded := FALSE);
+  
   Pages.AddDispatch ( "signin",
                       NEW(Page, body := Signin ),
                       signinNeeded := FALSE);

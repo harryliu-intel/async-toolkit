@@ -1,10 +1,11 @@
-(* $Id$ *)
-
 MODULE HTMLLink;
 IMPORT HTML;
 IMPORT TextUtils AS Utils;
 IMPORT Request;
 IMPORT Pathname, Params;
+IMPORT Debug;
+FROM Fmt IMPORT F, Bool;
+IMPORT TextTextTbl;
 
 REVEAL
   T = Public BRANDED "HTML Link" OBJECT
@@ -17,16 +18,39 @@ REVEAL
     URL := GetURL;
   END;
 
-PROCEDURE MakeURL(to : TEXT; from : Request.T ; local : BOOLEAN) : TEXT =
+PROCEDURE MakeURL(to      : TEXT;
+                  from    : Request.T ;
+                  local   : BOOLEAN;
+                  getVars : TextTextTbl.T) : TEXT =
   VAR
     res : TEXT;
   BEGIN
+    Debug.Out(F("HTMLLink.MakeURL: local=%s (getVars=NIL)=%s",
+                Bool(local), Bool(getVars=NIL)), 0);
     IF local THEN
       res := CGIname & "?" & to ;
       IF from # NIL AND from.toPage # NIL THEN
         res := res & "?" & from.toPage;
         IF from.session # NIL THEN
           res := res & "?" & from.session.getId() 
+        END
+      END;
+      IF getVars # NIL THEN
+        VAR
+          iter := getVars.iterate();
+          k, v : TEXT;
+          first := TRUE;
+        BEGIN
+          WHILE iter.next(k, v) DO
+            Debug.Out(F("HTMLLink.MakeURL : var %s <- %s", k, v), 0);
+            IF first THEN
+              res := res & "?";
+              first := FALSE
+            ELSE
+              res := res & "&"
+            END;
+            res := res & k & "=" & v
+          END
         END
       END
     ELSE
@@ -35,14 +59,15 @@ PROCEDURE MakeURL(to : TEXT; from : Request.T ; local : BOOLEAN) : TEXT =
     RETURN res;
   END MakeURL;
 
-PROCEDURE Init(self : T; 
+PROCEDURE Init(self     : T; 
                encloses : HTML.Stuff;
-               to : TEXT;
-               from : Request.T;
-               local : BOOLEAN) : T =
+               to       : TEXT;
+               from     : Request.T;
+               local    : BOOLEAN;
+               getVars  : TextTextTbl.T) : T =
   BEGIN
     self.encloses := HTML.Wrap(encloses);
-    self.myURL := MakeURL(to,from,local);
+    self.myURL := MakeURL(to, from, local, getVars);
     self.text := "<a href=\"" & self.myURL & "\">\n";    
     RETURN self
   END Init;

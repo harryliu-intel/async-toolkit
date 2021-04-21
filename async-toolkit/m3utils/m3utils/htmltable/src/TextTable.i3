@@ -1,5 +1,3 @@
-(* $Id$ *)
-
 INTERFACE TextTable;
 IMPORT TextTextTbl;
 IMPORT HTMLTable;

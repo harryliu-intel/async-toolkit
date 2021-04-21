@@ -4,7 +4,7 @@ REVEAL
   T = Public BRANDED "HTML Text" OBJECT
     text : TEXT;
   OVERRIDES
-    init := Init;
+    init   := Init;
     format := Format;
   END;
 

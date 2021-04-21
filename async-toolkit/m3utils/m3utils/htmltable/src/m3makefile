@@ -39,6 +39,8 @@ Module("HTMLTextArea")
 Module("HTMLLink")
 Module("Pages")
 
+Module("WebAppUtils")
+
 if equal(TARGET, "NT386GNU")
 	implementation("UnsafeDatabaseWin")
 else

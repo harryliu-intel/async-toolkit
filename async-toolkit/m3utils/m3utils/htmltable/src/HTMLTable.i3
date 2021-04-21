@@ -14,11 +14,11 @@ TYPE
 
   Public = HTML.T OBJECT
   METHODS
-    init(stuff : AMatrix; 
-         useBorders : BOOLEAN := TRUE; 
-         borderWidth : CARDINAL := 0;
-         colNames : REF ARRAY OF TEXT := NIL;
-         formatting : HTMLFormatting.T := NIL;
+    init(stuff         : AMatrix; 
+         useBorders    : BOOLEAN := TRUE; 
+         borderWidth   : CARDINAL := 0;
+         colNames      : REF ARRAY OF TEXT := NIL;
+         formatting    : HTMLFormatting.T := NIL;
          rowFormatting : HTMLFormatting.RowFormat := NIL;
          firstIsHead := FALSE) : T;
 
