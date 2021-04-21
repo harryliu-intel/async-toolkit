@@ -8,7 +8,6 @@ IMPORT Pages,Debug,Database, DatabaseUtils, Text, Session, Scan;
 IMPORT Fmt; FROM Fmt IMPORT Bool, LongReal, F, Int;
 IMPORT Lex, FloatMode;
 IMPORT Request;
-IMPORT TextReader;
 IMPORT PageDispatch;
 IMPORT HTMLFormatting; FROM HTMLFormatting IMPORT Alignment, RowFormat;
 IMPORT Process;
@@ -16,10 +15,9 @@ IMPORT HTMLTable;
 IMPORT Thread;
 IMPORT XTime AS Time;
 IMPORT Pathname, Params;
-IMPORT FS, OSError;
-IMPORT SysPerf;
 IMPORT TextTable;
 IMPORT DatabaseClass; (* to get directly at DatabaseTable.T.data *)
+IMPORT HTMLSeq;
 
 CONST TE = Text.Equal;
 
@@ -79,21 +77,7 @@ PROCEDURE SiteNavBar(request : Request.T) : HTMLList.T =
   BEGIN
     Debug.Out("Building SiteNavBar...");
 
-    AddLinkTo("holding_exec");
-    res.add(spacing);
-
-(*
-    AddLinkTo("do_exec");
-    res.add(spacing);
-*)
-
-    AddLinkTo("regression");
-    res.add(spacing);
-
-    AddLinkTo("state_rejected");
-    res.add(spacing);
-
-    AddLinkTo("do_clear");
+    AddLinkTo("regression", "Regression status");
     res.add(spacing);
 
     res.add("<br>");
@@ -102,23 +86,6 @@ PROCEDURE SiteNavBar(request : Request.T) : HTMLList.T =
               Bool(request.getGetVars()=NIL)), 0);
     AddLinkTo("main", getVars := request.getGetVars());
     res.add(spacing);
-
-    AddLinkTo("profile");
-    res.add(spacing);
-
-    AddLinkTo("redirect_holdings","Journal");
-    res.add(spacing);
-
-    AddLinkTo("balance_sheet");
-    res.add(spacing);
-
-    AddLinkTo("pl_log");
-    res.add(spacing);
-
-
-    IF request.session.getPriv() >= Session.Priv.Admin THEN
-      AddLinkTo("admin_main")
-    END;
 
     res.add("<br>");
 
@@ -133,26 +100,56 @@ PROCEDURE Main(p : Page; request : Request.T) =
     p.page.addToBody("<br><br>");
   END Main;
 
+PROCEDURE Make1Var(k, v : TEXT) : TextTable.T =
+  VAR
+    res := NEW(TextTable.T).init();
+  BEGIN
+    EVAL res.put(k, v);
+    RETURN res
+  END Make1Var;
 
-PROCEDURE Regression(p : Page; request : Request.T) =
-
-  PROCEDURE MakeButton(q : [1..LAST(CARDINAL)]) =
+PROCEDURE AddPagedTable(myName, countQuery, rowQuery : TEXT;
+                        p                            : Page;
+                        request                      : Request.T;
+                        rowsPerPage                  : CARDINAL;
+                        getVars                      : TextTable.T;
+                        idDrilldown                  : TEXT;
+                        doCheckboxes                 : BOOLEAN) =
+  
+  TYPE End = { Lo, Hi };
+       
+  PROCEDURE MakeButton(q : [1..LAST(CARDINAL)]; end : End) =
+    VAR
+      vars : TextTable.T;
     BEGIN
       Debug.Out(F("MakeButton(%s)", Int(q)));
+
+      IF getVars = NIL THEN
+        vars := Make1Var("page", Int(q))
+      ELSE
+        vars := CopyVars(getVars);
+        EVAL vars.put("page", Int(q))
+      END;
+
+      WITH button = NEW(HTMLLink.T).init(Int(q),
+                                         myName,
+                                         request,
+                                         getVars := vars) DO
+        CASE end OF
+          End.Lo => buttons.addlo(button)
+        |
+          End.Hi => buttons.addhi(button)
+        END
+      END
     END MakeButton;
     
   VAR
-    rowsPerPage := 25;
-    maxid := -1;
-    restriction := "";
     page : [ 1..LAST(CARDINAL) ] := 1; (* me *)
     v : TEXT;
     totalRows : CARDINAL;
     npages : CARDINAL;
+    buttons := NEW(HTMLSeq.T).init();
   BEGIN
-    p.page.addToBody(SiteNavBar(request));
-    p.page.addToBody("<br><br>");
-
     (* do the pagination calcs *)
 
     (* first, my page? *)
@@ -162,53 +159,115 @@ PROCEDURE Regression(p : Page; request : Request.T) =
 
     Debug.Out("My page is " & Int(page));
 
-    WITH query = "select count(*) as count from verification_regression",
+    WITH query = countQuery,
          res   = Database.TExec(query) DO
-      totalRows := Scan.Int(res.getUniqueEntry("count"))
+      totalRows := res.getIntIN(0)
     END;
 
     npages := (totalRows - 1) DIV rowsPerPage + 1;
 
+    Debug.Out(F("Chipdev totalRows %s rowsPerPage %s npages %s",
+                Int(totalRows), Int(rowsPerPage), Int(npages)));
+
+    IF npages = 0 THEN RETURN END;
+    
     VAR
-      q : INTEGER := page;
+      q := page;
       step : CARDINAL := 1;
     BEGIN
       WHILE q # 1 DO
         q := q - step;
         q := MAX(q, 1);
 
-        MakeButton(q);
+        MakeButton(q, End.Lo);
 
         step := step * 2
       END
     END;
     
     VAR
-      q := page;
+      q : CARDINAL := page;
       step := 1;
     BEGIN
       WHILE q # npages DO
         q := q + step;
         q := MIN(q, npages);
 
-        MakeButton(q);
+        MakeButton(q, End.Hi);
 
         step := step * 2
       END
     END;
 
-    WITH offset = page * rowsPerPage, (* which row to start at *)
-         query = F("select r.id, r.name, r.username, r.date, r.status, r.comment, (select count(*) from verification_testrun t0 where t0.regression_id=r.id and t0.status='pass') as 'p', (select count(*) from verification_testrun t1 where t1.regression_id=r.id and t1.status='fail') as 'f',  (select count(*) from verification_testrun t2 where t2.regression_id=r.id) as 'total' from verification_regression r %s order by r.id desc limit %s offset %s",
-                   restriction,
-                   Int(rowsPerPage),
-                   Int(offset)),
+    FOR i := 0 TO buttons.size() - 1 DO
+      p.page.addToBody(buttons.get(i));
+      p.page.addToBody("&nbsp;")
+    END;
 
-         res   = Database.TExec(query),
-         arr   = NEW(REF ARRAY OF ARRAY OF HTML.T,
-                     res.getNumRows(), res.getNumCols()) DO
-      FOR r := FIRST(arr^) TO LAST(arr^) DO
-        FOR c := FIRST(arr[0]) TO LAST(arr[0]) DO
-          arr[r,c] := HTMLList.Hack(res.data[r,c])
+    p.page.addToBody("<br>\n");
+
+    VAR
+      offset := (page - 1) * rowsPerPage; (* which row to start at *)
+      query := rowQuery & F(" limit %s offset %s",
+                            Int(rowsPerPage),
+                            Int(offset));
+
+      res   := Database.TExec(query);
+      arr   := NEW(REF ARRAY OF ARRAY OF HTML.T,
+                   res.getNumRows() + 1,
+                   res.getNumCols() + 1);
+      idCol := -1;
+    BEGIN
+
+      Debug.Out(F("rows %s cols %s fields %s data %s x %s",
+                  Int(res.getNumRows()),
+                  Int(res.getNumCols()),
+                  Int(NUMBER(res.fieldNames^)),
+                  Int(NUMBER(res.data^)),
+                  Int(NUMBER(res.data[0]))));
+
+      arr[0, 0] := HTMLList.Hack("");
+      
+      FOR c := FIRST(res.fieldNames^) TO LAST(res.fieldNames^) DO
+        IF TE(res.fieldNames[c], "id") THEN
+          idCol := c
+        END;
+        arr[0,c + 1] := HTMLList.Hack(Bold(res.fieldNames[c]))
+      END;
+      FOR r := FIRST(res.data^) TO LAST(res.data^) DO
+        (* checkbox for id *)
+        IF doCheckboxes THEN
+          arr[r + 1, 0] := NEW(HTMLInput.T).init(HTMLInput.Type.checkbox,
+                                                 name  := res.data[r, idCol],
+                                                 value := res.data[r, idCol]);
+        ELSE
+          arr[r + 1, 0] := HTMLList.Hack("")
+        END;
+        
+        FOR c := FIRST(res.data[0]) TO LAST(res.data[0]) DO
+          VAR
+            sqlText := res.data[r,c];
+            text := HTMLList.Hack(Typewriter(sqlText));
+            stuff : HTML.T;
+            vars : TextTable.T;
+          BEGIN
+            IF getVars = NIL THEN
+              vars := Make1Var("id", sqlText)
+            ELSE
+              vars := CopyVars(getVars);
+              EVAL vars.put("id", sqlText)
+            END;
+            
+            IF idDrilldown # NIL AND c = idCol THEN
+              stuff := NEW(HTMLLink.T).init(text,
+                                            idDrilldown,
+                                            request,
+                                            getVars := vars)
+            ELSE
+              stuff := text;
+            END;
+            arr[r + 1, c + 1] := stuff
+          END
         END
       END;
 
@@ -216,8 +275,94 @@ PROCEDURE Regression(p : Page; request : Request.T) =
         p.page.addToBody(res)
       END
     END
+  END AddPagedTable;
 
+PROCEDURE CopyVars(tbl : TextTable.T) : TextTable.T =
+  VAR
+    res := NEW(TextTable.T).init();
+    k, v : TEXT;
+    iter := tbl.iterate();
+  BEGIN
+    WHILE iter.next(k, v) DO
+      EVAL res.put(k, v)
+    END;
+    RETURN res
+  END CopyVars;
+  
+  (**********************************************************************)
+  
+PROCEDURE Regression(p : Page; request : Request.T) =
+  BEGIN
+    p.page.addToBody(SiteNavBar(request));
+    p.page.addToBody("<br><br>");
+
+    WITH countQuery = "select count(*) from verification_regression",
+         
+         rowQuery   = "select r.id, r.name, r.username, r.date, r.status, r.comment, (select count(*) from verification_testrun t0 where t0.regression_id=r.id and t0.status='pass') as 'p', (select count(*) from verification_testrun t1 where t1.regression_id=r.id and t1.status='fail') as 'f',  (select count(*) from verification_testrun t2 where t2.regression_id=r.id) as 'total' from verification_regression r order by r.id desc"
+
+     DO
+      AddPagedTable("regression",
+                    countQuery,
+                    rowQuery,
+                    p,
+                    request,
+                    25,
+                    NIL,
+                    "regression_test",
+                    TRUE)
+    END
   END Regression;
+  
+PROCEDURE RegressionTest(p : Page; request : Request.T) =
+  VAR
+    id : CARDINAL := 0;
+    v : TEXT;
+  BEGIN
+    p.page.addToBody(SiteNavBar(request));
+    p.page.addToBody("<br><br>");
+
+    (* first, my id? *)
+    IF request.getGetVars().get("id", v) THEN
+      id := Scan.Int(v)
+    END;
+
+    WITH query = F("select * from verification_regression where id=%s",
+                   Int(id)),
+         res   = Database.TExec(query),
+         arr   = NEW(REF ARRAY OF ARRAY OF HTML.T,
+                   res.getNumCols() , (* note indices swapped *)
+                   2 ) DO
+      IF res.getNumRows() # 0 THEN
+        FOR i := FIRST(arr^) TO LAST(arr^) DO
+          arr[i, 0] := HTMLList.Hack(res.fieldNames[i]);
+          arr[i, 1] := HTMLList.Hack(res.data[0, i])
+        END;
+        
+        p.page.addToBody(NEW(HTMLTable.T).init(arr))
+      END
+    END;
+
+    p.page.addToBody("<br><br>");
+
+    WITH countQuery = F("select count(*) from verification_testrun where regression_id = %s", Int(id)),
+         rowQuery   = F("select * from verification_testrun where regression_id = %s", Int(id)) DO
+      AddPagedTable("regression_test",
+                    countQuery,
+                    rowQuery,
+                    p,
+                    request,
+                    25,
+                    Make1Var("id", v),
+                    NIL,
+                    FALSE)
+    END
+  END RegressionTest;
+
+PROCEDURE Bold(t : TEXT) : TEXT =
+  BEGIN RETURN F("<b>%s</b>", t) END Bold;
+  
+PROCEDURE Typewriter(t : TEXT) : TEXT =
+  BEGIN RETURN F("<tt>%s</tt>", t) END Typewriter;
   
 PROCEDURE AdminMain(p : Page; request : Request.T) =
   BEGIN
@@ -403,7 +548,6 @@ PROCEDURE MakeAlignments(READONLY cols : ARRAY OF TEXT) : Alignment =
 PROCEDURE CheckSignin(p : Page; request : Request.T)
   RAISES { DBerr.Error }  = <* FATAL FloatMode.Trap, Lex.Error *>
   VAR
-    login, password : TEXT;
     result : Database.Table;
     uid := Scan.Int(result.getUniqueEntry("uid"));
     remoteAddr : TEXT;
@@ -452,8 +596,8 @@ TYPE
   END;
 
 CONST
-  TinyTextHeader = "<LINK rel=\"stylesheet\" href=\"tiny.css\" type=\"text/css\">";
-
+  TinyTextHeader =
+    "<LINK rel=\"stylesheet\" href=\"tiny.css\" type=\"text/css\">";
   
 PROCEDURE GCRenderHeader(p : GCPage) : TEXT =
   VAR
@@ -505,6 +649,10 @@ BEGIN
 
   Pages.AddDispatch ( "regression",
                       NEW(Page, body := Regression ),
+                      signinNeeded := FALSE);
+  
+  Pages.AddDispatch ( "regression_test",
+                      NEW(Page, body := RegressionTest ),
                       signinNeeded := FALSE);
   
   Pages.AddDispatch ( "signin",

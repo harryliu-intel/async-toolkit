@@ -171,10 +171,18 @@ PROCEDURE Format(self : T) : TEXT =
       Put(">\n");
       FOR col := FIRST(self.fields[row]) TO LAST (self.fields[row]) DO
         VAR
-          entryTxt := NARROW(self.fields[row,col],HTML.T).format();
+          entryTxt : TEXT;
           printTD := TRUE;
           tags := "";
         BEGIN
+          WITH html = NARROW(self.fields[row,col], HTML.T) DO
+            IF html = NIL THEN
+              entryTxt := "*NIL*"
+            ELSE
+              entryTxt := html.format()
+            END
+          END;
+          
           IF entryTxt = NIL THEN entryTxt := "(NIL)" END;
           IF self.formatting # NIL AND self.colNames # NIL THEN
             WITH colName = self.colNames[col] DO

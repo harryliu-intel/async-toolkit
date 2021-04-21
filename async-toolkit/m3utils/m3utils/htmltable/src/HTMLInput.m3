@@ -31,10 +31,17 @@ PROCEDURE Init(self : T; type : Type;
     self.onkeyup := onkeyup;
 
     IF self.type # Type.reset AND self.type # Type.submit AND 
-      self.type # Type.image THEN <* ASSERT name # NIL *> END;
+      self.type # Type.image THEN
+      <* ASSERT name # NIL *>
+    END;
 
     CASE type OF 
-    | Type.button, Type.text, Type.submit, Type.hidden, Type.password => 
+    | Type.button,
+      Type.text, 
+      Type.submit, 
+      Type.hidden, 
+      Type.password,
+      Type.checkbox =>  (* skip *)
     ELSE 
       Process.Crash("HTMLInput of type \"" & Tags[type] & "\" not yet supported.")
     END;

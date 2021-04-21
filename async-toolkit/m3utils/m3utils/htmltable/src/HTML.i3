@@ -2,7 +2,7 @@ INTERFACE HTML;
 IMPORT Session;
 
 TYPE
-  Stuff = REFANY;
+  Stuff       = REFANY;
   StuffVector = REF ARRAY OF Stuff;
   StuffMatrix = REF ARRAY OF Matrix;
 
@@ -24,7 +24,12 @@ TYPE
 
 PROCEDURE Error(reason : TEXT; doQuit : BOOLEAN := FALSE);
 
+(* the following procedures are used for wrapping TEXTs, ARRAYs of TEXTs, 
+   and ARRAYs of ARRAYs of TEXTs *)
 PROCEDURE Wrap(stuff : Stuff) : T;
 PROCEDURE WrapVector(stuff : REFANY) : Vector;
 PROCEDURE WrapMatrix(stuff : REFANY) : Matrix;
+
+CONST Brand = "HTML";
+      
 END HTML.

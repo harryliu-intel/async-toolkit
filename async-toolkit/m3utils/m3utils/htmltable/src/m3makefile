@@ -39,6 +39,8 @@ Module("HTMLTextArea")
 Module("HTMLLink")
 Module("Pages")
 
+Sequence("HTML", "HTML")
+
 Module("WebAppUtils")
 
 if equal(TARGET, "NT386GNU")
