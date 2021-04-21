@@ -12,6 +12,10 @@ FROM Text IMPORT Sub;
 IMPORT Process, TextTextTbl, FileRd;
 IMPORT Thread;
 IMPORT Wr, FileWr;
+IMPORT OSError;
+FROM Fmt IMPORT F;
+IMPORT AL;
+IMPORT Debug;
 
 <* FATAL Thread.Alerted *>
 
@@ -113,7 +117,6 @@ PROCEDURE GetLineBackwards(rd : Rd.T) : TEXT RAISES { Rd.EndOfFile, Rd.Failure }
       END;
 
       (* we are now located at p, beginning of the thing we want to read *)
-      <*FATAL Rd.EndOfFile *>
       BEGIN
         WITH res = GetChars(rd,start-p+1) DO
           Rd.Seek(rd,p-1) (* seek to CR *) ;
@@ -142,11 +145,19 @@ VAR
   outBase := Params.Get(2);
   httpdLog := Params.Get(1);
   matchString : TEXT := NIL;
-  rd := FileRd.Open(httpdLog);
+  rd : Rd.T;
   startFound, parsing := FALSE;
   env := NEW(TextTextTbl.Default).init();
   pageInput : TEXT := NIL;
-BEGIN 
+BEGIN
+  TRY
+    rd := FileRd.Open(httpdLog);
+  EXCEPT
+    OSError.E(x) => Debug.Error(F("Trouble opening httpdLog \"%s\" : OSError.E : %s",
+                                  httpdLog,
+                                  AL.Format(x)))
+  END;
+  
   (* read the httpdLog backwards *)
   <* FATAL Rd.Failure *>
   BEGIN
@@ -183,6 +194,9 @@ BEGIN
       END
     END
   EXCEPT
+    Rd.Failure(x) => Debug.Error(F("Trouble reading httpdLog Rd.Failure : %s",
+                                  AL.Format(x)))
+  |
     Rd.EndOfFile => (* skip *)
   END;
 
@@ -192,27 +206,47 @@ BEGIN
 (*    Process.Crash("pageInput NIL!") *)
   END;
 
-  WITH wr = FileWr.Open(outBase & ".csh"),
-       iter = env.iterate() DO
-    VAR k,v : TEXT; BEGIN
-      WHILE iter.next(k,v) DO
-        IF doPath OR NOT Text.Equal(k,"PATH") THEN
-          Wr.PutText(wr, "setenv ");
-          Wr.PutText(wr, k);
-          Wr.PutText(wr, " \"");
-          Wr.PutText(wr, v);
-          Wr.PutText(wr, "\"\n")
+  TRY
+    WITH wr = FileWr.Open(outBase & ".csh"),
+         iter = env.iterate() DO
+      VAR k,v : TEXT; BEGIN
+        WHILE iter.next(k,v) DO
+          IF doPath OR NOT Text.Equal(k,"PATH") THEN
+            Wr.PutText(wr, "setenv ");
+            Wr.PutText(wr, k);
+            Wr.PutText(wr, " \"");
+            Wr.PutText(wr, v);
+            Wr.PutText(wr, "\"\n")
+          END
         END
-      END
+      END;
+      Wr.Close(wr)
     END;
-    Wr.Close(wr)
+  EXCEPT
+    OSError.E(x) => Debug.Error(F("Trouble opening/closing \"%s\" for writing : OSError.E : %s",
+                                  outBase & ".csh",
+                                  AL.Format(x)))
+  |
+    Wr.Failure(x) => Debug.Error(F("Trouble writing \"%s\"  : Wr.Failure : %s",
+                                  outBase & ".csh",
+                                  AL.Format(x)))
   END;
 
-  WITH wr = FileWr.Open(outBase & ".in") DO
-    IF pageInput # NIL THEN
-      Wr.PutText(wr, pageInput)
-    END;
-    Wr.Close(wr)
+  TRY
+    WITH wr = FileWr.Open(outBase & ".in") DO
+      IF pageInput # NIL THEN
+        Wr.PutText(wr, pageInput)
+      END;
+      Wr.Close(wr)
+    END
+  EXCEPT
+    OSError.E(x) => Debug.Error(F("Trouble opening/clsoing \"%s\" for writing : OSError.E : %s",
+                                  outBase & ".in",
+                                  AL.Format(x)))
+  |
+    Wr.Failure(x) => Debug.Error(F("Trouble writing \"%s\"  : Wr.Failure : %s",
+                                  outBase & ".in",
+                                  AL.Format(x)))
   END
 
 END Main.
