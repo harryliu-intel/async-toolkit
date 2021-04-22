@@ -172,7 +172,7 @@ PROCEDURE AddPagedTable(myName, countQuery, rowQuery : TEXT;
     IF npages = 0 THEN RETURN END;
     
     VAR
-      q := page;
+      q : INTEGER := page;
       step : CARDINAL := 1;
     BEGIN
       WHILE q # 1 DO
