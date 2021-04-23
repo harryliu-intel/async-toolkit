@@ -1,7 +1,8 @@
-(* $Id$ *)
-
 (* Copyright (c) 2000, 2005, Mika Nystrom.  All rights reserved. *)
 (* Copyright (c) 2006, Generation Capital Ltd.  All rights reserved. *)
+(* Copyright (c) 2021, Intel Corporation.  All rights reserved. *)
+
+(* Author : Mika Nystrom <mika@alum.mit.edu> *)
 
 INTERFACE Database;
 IMPORT DBerr;

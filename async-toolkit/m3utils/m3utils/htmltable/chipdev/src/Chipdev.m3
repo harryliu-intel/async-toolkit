@@ -1,5 +1,3 @@
-(* $Id$ *)
-
 MODULE Chipdev;
 IMPORT DBerr;
 IMPORT HTML, HTMLPage, HTMLForm, HTMLInput, HTMLLink, HTMLList;
