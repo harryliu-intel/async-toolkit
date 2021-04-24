@@ -297,6 +297,7 @@ TYPE
   RefMysqlT = UNTRACED BRANDED REF MYSQL;
 
 
+(*
   MYSQL_RES = RECORD
                 row_count                 : my_ulonglong;
                 fields                    : RefMysqlFieldT;
@@ -317,8 +318,18 @@ TYPE
                 extension                 : ADDRESS; (* new : void * *)
               END;
   RefMysqlResT = UNTRACED BRANDED REF MYSQL_RES;
+*)
+  OpaqueRecord = RECORD END;
+  RefMysqlResT = UNTRACED BRANDED REF OpaqueRecord;
 
+<*EXTERNAL mysql_res_field_count*>
+PROCEDURE ResFieldCount(res : RefMysqlResT) : CARDINAL;  
 
+<*EXTERNAL mysql_res_fields*>
+PROCEDURE ResFields(res : RefMysqlResT) : ADDRESS;
+
+<*EXTERNAL mysql_field_siz*>
+PROCEDURE FieldSiz() : Cstddef.size_t;
 
 CONST MAX_MYSQL_MANAGER_ERR = 256;
 

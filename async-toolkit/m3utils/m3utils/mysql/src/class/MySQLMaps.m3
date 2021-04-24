@@ -138,17 +138,17 @@ PROCEDURE FieldList(res : MySQL.ResT) : M3FieldArray =
 VAR
   numFields : INTEGER;
   result : M3FieldArray;
-  rawField : MySQLRaw.RefMysqlFieldT;
+  rawField : ADDRESS;
   rawRes : MySQLRaw.RefMysqlResT;
 BEGIN
   IF res = NIL THEN RETURN NIL; END;
-  rawRes := LOOPHOLE(res,MySQLRaw.RefMysqlResT);
-  numFields := rawRes.field_count;
-  result := NEW(M3FieldArray,numFields);
-  rawField := rawRes.fields;
+  rawRes := LOOPHOLE(res, MySQLRaw.RefMysqlResT);
+  numFields := MySQLRaw.ResFieldCount(rawRes);
+  result := NEW(M3FieldArray, numFields);
+  rawField := MySQLRaw.ResFields(rawRes);
   FOR j := 0 TO numFields - 1 DO
     result[j] := NewField(rawField);
-    INC(rawField,BYTESIZE(MySQLRaw.MYSQL_FIELD));
+    INC(rawField,MySQLRaw.FieldSiz())
   END;
   RETURN result;
 END FieldList;

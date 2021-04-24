@@ -35,7 +35,7 @@ PROCEDURE FreeString (t: TEXT; c: C.char_star) =
     IF t # NIL THEN M3toC.FreeSharedS(t, c); END;
   END FreeString;
 
-REVEAL ResT = UNTRACED BRANDED REF MySQLRaw.MYSQL_RES;
+
 
 REVEAL FieldT = UNTRACED BRANDED REF MySQLRaw.MYSQL_FIELD;
 
@@ -1485,6 +1485,7 @@ PROCEDURE DumpRawRes(arg : ResT) =
     res := LOOPHOLE(arg, MySQLRaw.RefMysqlResT);
   BEGIN
     RTIO.PutText("Raw Dump Res @ ");
+(*
     RTIO.PutAddr(res);
     RTIO.PutText("\n");
     
@@ -1556,6 +1557,7 @@ PROCEDURE DumpRawRes(arg : ResT) =
     RTIO.PutText("res.extension: ");
     RTIO.PutAddr(res.extension);
     RTIO.PutText("\n");
+*)
     RTIO.PutText("Raw Dump END\n");
     RTIO.Flush();
   END DumpRawRes;

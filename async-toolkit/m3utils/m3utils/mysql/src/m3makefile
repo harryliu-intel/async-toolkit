@@ -16,5 +16,6 @@ Module("MySQLRaw")
 Module("MySQL")
 
 c_source("dump")
+c_source("mysql_glue")
 
 library("m3mysql")
