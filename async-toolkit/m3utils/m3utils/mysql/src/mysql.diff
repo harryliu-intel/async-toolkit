@@ -1,0 +1,435 @@
+diff --git a/m3-db/mysql/src/MySQL.i3 b/m3-db/mysql/src/MySQL.i3
+index 556bd5e83..c60047062 100644
+--- a/m3-db/mysql/src/MySQL.i3
++++ b/m3-db/mysql/src/MySQL.i3
+@@ -203,6 +203,7 @@ PROCEDURE StoreResult (mysql: T; ): ResT RAISES {ResultE};
+ 
+ PROCEDURE UseResult (mysql: T; ): ResT RAISES {ResultE};
+ 
++(*  
+ PROCEDURE MasterQuery (mysql: T; q: TEXT; length: CARDINAL; ): BOOLEAN;
+ 
+ PROCEDURE MasterSendQuery (mysql: T; q: TEXT; length: CARDINAL; ): BOOLEAN;
+@@ -210,7 +211,8 @@ PROCEDURE MasterSendQuery (mysql: T; q: TEXT; length: CARDINAL; ): BOOLEAN;
+ PROCEDURE SlaveQuery (mysql: T; q: TEXT; length: CARDINAL; ): BOOLEAN;
+ 
+ PROCEDURE SlaveSendQuery (mysql: T; q: TEXT; length: CARDINAL; ): BOOLEAN;
+-
++*)
++  
+ PROCEDURE GetCharSetInfo (mysql: T; VAR charset: CharsT; );
+ 
+ PROCEDURE SetLocalInfileHandler (    mysql             : T;
+@@ -222,6 +224,7 @@ PROCEDURE SetLocalInfileHandler (    mysql             : T;
+ 
+ PROCEDURE SetLocalInfileDefault (mysql: T; );
+ 
++(*  
+ PROCEDURE EnableRplParse (mysql: T; );
+ 
+ PROCEDURE DisableRplParse (mysql: T; );
+@@ -229,13 +232,13 @@ PROCEDURE DisableRplParse (mysql: T; );
+ PROCEDURE RplParseEnabled (mysql: T; ): INTEGER RAISES {ReturnE};
+ 
+ PROCEDURE EnableReadsFromMaster (mysql: T; );
+-
++  
+ PROCEDURE DisableReadsFromMaster (mysql: T; );
+ 
+ PROCEDURE ReadsFromMasterEnabled (mysql: T; ): BOOLEAN;
+ 
+ PROCEDURE RplQueryType (q: TEXT; len: INTEGER; ): RplT;
+-
++  
+ PROCEDURE RplProbe (mysql: T; ): BOOLEAN;
+ 
+ PROCEDURE SetMaster
+@@ -245,7 +248,8 @@ PROCEDURE SetMaster
+ PROCEDURE AddSlave
+   (mysql: T; host: TEXT; port: CARDINAL; user, passwd: TEXT; ): INTEGER
+   RAISES {ReturnE};
+-
++*)
++  
+ PROCEDURE Shutdown (mysql: T; shutdown_level: INTEGER; ): INTEGER
+   RAISES {ReturnE};
+ 
+@@ -310,6 +314,7 @@ PROCEDURE RealEscapeString (mysql: T; to, from: TEXT; length: CARDINAL; ):
+ 
+ PROCEDURE Debug (debug: TEXT; );
+ 
++(*  
+ PROCEDURE OdbcEscapeString (    mysql        : T;
+                                 to           : TEXT;
+                                 to_length    : CARDINAL;
+@@ -317,13 +322,15 @@ PROCEDURE OdbcEscapeString (    mysql        : T;
+                                 from_length  : CARDINAL;
+                             VAR param        : REFANY;
+                                 extend_buffer: ExtendCBT; ): TEXT;
+-
++*)
++  
+ PROCEDURE RemoveEscape (mysql: T; name: TEXT; );
+ 
+ PROCEDURE ThreadSafe (): CARDINAL;
+ 
+ PROCEDURE Embedded (): BOOLEAN;
+ 
++(*  
+ PROCEDURE ManagerInit (con: ManagerT; ): ManagerT RAISES {ConnE};
+ 
+ PROCEDURE ManagerConnect
+@@ -338,7 +345,8 @@ PROCEDURE ManagerCommand (con: ManagerT; cmd: TEXT; cmd_len: INTEGER; ):
+ PROCEDURE ManagerFetchLine
+   (con: ManagerT; res_buf: TEXT; res_buf_size: INTEGER; ): INTEGER
+   RAISES {ReturnE};
+-
++*)
++  
+ PROCEDURE ReadQueryResult (mysql: T; ): BOOLEAN;
+ 
+ PROCEDURE StmtInit (mysql: T; ): StmtT RAISES {ResultE};
+@@ -415,5 +423,9 @@ PROCEDURE NextResult (mysql: T; ): INTEGER RAISES {ReturnE};
+ 
+ PROCEDURE Close (sock: T; );
+ 
++PROCEDURE DumpRawRes(res : ResT);
++
++<*EXTERNAL MySQL__dumpRawRes_C*>
++PROCEDURE DumpRawResC(res : ResT);
+ 
+ END MySQL.
+diff --git a/m3-db/mysql/src/MySQL.m3 b/m3-db/mysql/src/MySQL.m3
+index 9ce66dff2..9db8352cb 100644
+--- a/m3-db/mysql/src/MySQL.m3
++++ b/m3-db/mysql/src/MySQL.m3
+@@ -12,6 +12,7 @@ UNSAFE MODULE MySQL;
+ IMPORT M3toC;
+ IMPORT MySQLRaw;
+ IMPORT Ctypes AS C;
++IMPORT RTIO;
+ 
+ 
+ TYPE RefRow = UNTRACED REF ARRAY [0 .. MAX_COLUMNS] OF C.char_star;
+@@ -430,6 +431,7 @@ PROCEDURE UseResult (mysql: T; ): ResT RAISES {ResultE} =
+     RETURN result;
+   END UseResult;
+ 
++(*  
+ PROCEDURE MasterQuery (mysql: T; q: TEXT; length: CARDINAL; ): BOOLEAN =
+   VAR
+     ret   : MySQLRaw.my_bool;
+@@ -486,7 +488,8 @@ PROCEDURE SlaveSendQuery (mysql: T; q: TEXT; length: CARDINAL; ): BOOLEAN =
+     FreeString(q, arg2);
+     RETURN result;
+   END SlaveSendQuery;
+-
++*)
++  
+ PROCEDURE GetCharSetInfo (mysql: T; VAR charset: CharsT; ) =
+   VAR
+     arg1: MySQLRaw.RefMysqlT := LOOPHOLE(mysql, MySQLRaw.RefMysqlT);
+@@ -549,6 +552,7 @@ PROCEDURE SetLocalInfileDefault (mysql: T; ) =
+     MySQLRaw.SetLocalInfileDefault(arg1);
+   END SetLocalInfileDefault;
+ 
++(*  
+ PROCEDURE EnableRplParse (mysql: T; ) =
+   VAR arg1: MySQLRaw.RefMysqlT := LOOPHOLE(mysql, MySQLRaw.RefMysqlT);
+   BEGIN
+@@ -576,7 +580,7 @@ PROCEDURE EnableReadsFromMaster (mysql: T; ) =
+   BEGIN
+     MySQLRaw.EnableReadsFromMaster(arg1);
+   END EnableReadsFromMaster;
+-
++  
+ PROCEDURE DisableReadsFromMaster (mysql: T; ) =
+   VAR arg1: MySQLRaw.RefMysqlT := LOOPHOLE(mysql, MySQLRaw.RefMysqlT);
+   BEGIN
+@@ -604,7 +608,7 @@ PROCEDURE RplQueryType (q: TEXT; len: INTEGER; ): RplT =
+     FreeString(q, arg1);
+     RETURN result;
+   END RplQueryType;
+-
++  
+ PROCEDURE RplProbe (mysql: T; ): BOOLEAN =
+   VAR
+     ret   : MySQLRaw.my_bool;
+@@ -663,7 +667,8 @@ PROCEDURE AddSlave
+     END;
+     RETURN result;
+   END AddSlave;
+-
++*)
++  
+ PROCEDURE Shutdown (mysql: T; shutdown_level: INTEGER; ): INTEGER
+   RAISES {ReturnE} =
+   VAR
+@@ -987,6 +992,7 @@ PROCEDURE Debug (debug: TEXT; ) =
+     FreeString(debug, arg1);
+   END Debug;
+ 
++(*  
+ PROCEDURE OdbcEscapeString (    mysql        : T;
+                                 to           : TEXT;
+                                 to_length    : CARDINAL;
+@@ -1021,7 +1027,8 @@ PROCEDURE OdbcEscapeString (    mysql        : T;
+     FreeString(from, arg4);
+     RETURN M3toC.CopyStoT(result);
+   END OdbcEscapeString;
+-
++*)
++  
+ PROCEDURE RemoveEscape (mysql: T; name: TEXT; ) =
+   VAR
+     arg1: MySQLRaw.RefMysqlT := LOOPHOLE(mysql, MySQLRaw.RefMysqlT);
+@@ -1047,6 +1054,7 @@ PROCEDURE Embedded (): BOOLEAN =
+     RETURN result;
+   END Embedded;
+ 
++(*  
+ PROCEDURE ManagerInit (con: ManagerT; ): ManagerT RAISES {ConnE} =
+   VAR
+     ret   : MySQLRaw.RefMysqlManagerT;
+@@ -1133,7 +1141,8 @@ PROCEDURE ManagerFetchLine
+     END;
+     RETURN result;
+   END ManagerFetchLine;
+-
++*)
++  
+ PROCEDURE ReadQueryResult (mysql: T; ): BOOLEAN =
+   VAR
+     ret   : MySQLRaw.my_bool;
+@@ -1483,6 +1492,85 @@ PROCEDURE Close (sock: T; ) =
+     MySQLRaw.Close(arg1);
+   END Close;
+ 
++PROCEDURE DumpRawRes(arg : ResT) =
++  VAR
++    res := LOOPHOLE(arg, MySQLRaw.RefMysqlResT);
++  BEGIN
++    RTIO.PutText("Raw Dump Res @ ");
++    RTIO.PutAddr(res);
++    RTIO.PutText("\n");
++    
++    RTIO.PutText("res.row_count: ");
++    RTIO.PutLong(res.row_count);
++    RTIO.PutText("\n");
++    RTIO.PutText("res.fields: ");
++    RTIO.PutAddr(res.fields);
++    RTIO.PutText("\n");
++    RTIO.PutText("res.data: ");
++    RTIO.PutAddr(res.data);
++    RTIO.PutText("\n");
++    RTIO.PutText("res.data_cursor: ");
++    RTIO.PutAddr(res.data_cursor);
++    RTIO.PutText("\n");
++    RTIO.PutText("res.lengths: ");
++    RTIO.PutAddr(res.lengths);
++    RTIO.PutText("\n");
++    RTIO.PutText("res.handle: ");
++    RTIO.PutAddr(res.handle);
++    RTIO.PutText("\n");
++    RTIO.PutText("res.methods: ");
++    RTIO.PutAddr(res.methods);
++    RTIO.PutText("\n");
++    RTIO.PutText("res.row: ");
++    RTIO.PutAddr(res.row);
++    RTIO.PutText("\n");
++    RTIO.PutText("res.current_row: ");
++    RTIO.PutAddr(res.current_row);
++    RTIO.PutText("\n");
++    RTIO.PutText("<field_alloc>\n");
++    RTIO.PutText("res.field_alloc.free: ");
++    RTIO.PutAddr(res.field_alloc.free);
++    RTIO.PutText("\n");
++    RTIO.PutText("res.field_alloc.used: ");
++    RTIO.PutAddr(res.field_alloc.used);
++    RTIO.PutText("\n");
++    RTIO.PutText("res.field_alloc.pre_alloc: ");
++    RTIO.PutAddr(res.field_alloc.pre_alloc);
++    RTIO.PutText("\n");
++    RTIO.PutText("res.field_alloc.min_malloc: ");
++    RTIO.PutInt(res.field_alloc.min_malloc);
++    RTIO.PutText("\n");
++    RTIO.PutText("res.field_alloc.block_size: ");
++    RTIO.PutInt(res.field_alloc.block_size);
++    RTIO.PutText("\n");
++    RTIO.PutText("res.field_alloc.block_num: ");
++    RTIO.PutInt(res.field_alloc.block_num);
++    RTIO.PutText("\n");
++    RTIO.PutText("res.field_alloc.first_block_usage: ");
++    RTIO.PutInt(res.field_alloc.first_block_usage);
++    RTIO.PutText("\n");
++    RTIO.PutText("LOOPHOLE(res.field_alloc.error_handler,ADDRESS: ");
++    RTIO.PutAddr(LOOPHOLE(res.field_alloc.error_handler,ADDRESS));
++    RTIO.PutText("\n");
++    RTIO.PutText("</field_alloc>\n");
++    RTIO.PutText("res.field_count: ");
++    RTIO.PutInt(res.field_count);
++    RTIO.PutText("\n");
++    RTIO.PutText("res.current_field: ");
++    RTIO.PutInt(res.current_field);
++    RTIO.PutText("\n");
++    RTIO.PutText("res.eof: ");
++    RTIO.PutInt(res.eof);
++    RTIO.PutText("\n");
++    RTIO.PutText("res.unbuffered_fetch_cancelled: ");
++    RTIO.PutInt(res.unbuffered_fetch_cancelled);
++    RTIO.PutText("\n");
++    RTIO.PutText("res.extension: ");
++    RTIO.PutAddr(res.extension);
++    RTIO.PutText("\n");
++    RTIO.PutText("Raw Dump END\n");
++    RTIO.Flush();
++  END DumpRawRes;
+ 
+ BEGIN
+ END MySQL.
+diff --git a/m3-db/mysql/src/MySQLRaw.i3 b/m3-db/mysql/src/MySQLRaw.i3
+index a4fdf6301..fe5aeeb58 100644
+--- a/m3-db/mysql/src/MySQLRaw.i3
++++ b/m3-db/mysql/src/MySQLRaw.i3
+@@ -10,6 +10,7 @@ INTERFACE MySQLRaw;
+ 
+ 
+ IMPORT Ctypes AS C;
++IMPORT Cstddef;
+ 
+ 
+ TYPE
+@@ -33,8 +34,8 @@ TYPE
+ 
+   USED_MEM = RECORD
+                next: RefUsedMemT;
+-               left: C.unsigned_int;
+-               size: C.unsigned_int;
++               left: Cstddef.size_t;
++               size: Cstddef.size_t;
+              END;
+   RefUsedMemT = UNTRACED BRANDED REF USED_MEM;
+ 
+@@ -42,8 +43,8 @@ TYPE
+                free             : RefUsedMemT;
+                used             : RefUsedMemT;
+                pre_alloc        : RefUsedMemT;
+-               min_malloc       : C.unsigned_int;
+-               block_size       : C.unsigned_int;
++               min_malloc       : Cstddef.size_t;
++               block_size       : Cstddef.size_t;
+                block_num        : C.unsigned_int;
+                first_block_usage: C.unsigned_int;
+                error_handler    : PROCEDURE ();
+@@ -111,6 +112,7 @@ TYPE
+                   charsetnr       : C.unsigned_int;
+                   type: C.unsigned_int;  (* should be enumeration but
+                                             difficult to map *)
++                  extension       : ADDRESS;
+ 
+                 END;
+   RefMysqlFieldT = UNTRACED BRANDED REF MYSQL_FIELD;
+@@ -302,14 +304,17 @@ TYPE
+                 data_cursor               : RefMysqlRowsT;
+                 lengths                   : C.unsigned_long_star;
+                 handle                    : RefMysqlT;
++                methods                   : RefMysqlMethodsT;
++                
++                row                       : MYSQL_ROW;
++                current_row               : MYSQL_ROW;
++
+                 field_alloc               : MEM_ROOT;
+                 field_count               : C.unsigned_int;
+                 current_field             : C.unsigned_int;
+-                row                       : MYSQL_ROW;
+-                current_row               : MYSQL_ROW;
+                 eof                       : my_bool;
+                 unbuffered_fetch_cancelled: my_bool;
+-                methods                   : RefMysqlMethodsT;
++                extension                 : ADDRESS; (* new : void * *)
+               END;
+   RefMysqlResT = UNTRACED BRANDED REF MYSQL_RES;
+ 
+@@ -565,6 +570,7 @@ PROCEDURE StoreResult (mysql: RefMysqlT; ): RefMysqlResT;
+ <* EXTERNAL mysql_use_result *>
+ PROCEDURE UseResult (mysql: RefMysqlT; ): RefMysqlResT;
+ 
++(*  
+ <* EXTERNAL mysql_master_query *>
+ PROCEDURE MasterQuery
+   (mysql: RefMysqlT; q: C.const_char_star; length: C.unsigned_long; ):
+@@ -584,7 +590,8 @@ PROCEDURE SlaveQuery
+ PROCEDURE SlaveSendQuery
+   (mysql: RefMysqlT; q: C.const_char_star; length: C.unsigned_long; ):
+   my_bool;
+-
++*)
++  
+ <* EXTERNAL mysql_get_character_set_info *>
+ PROCEDURE GetCharSetInfo (mysql: RefMysqlT; charset: RefMysqlCharsT; );
+ 
+@@ -599,6 +606,7 @@ PROCEDURE SetLocalInfileHandler (mysql             : RefMysqlT;
+ <* EXTERNAL mysql_set_local_infile_default *>
+ PROCEDURE SetLocalInfileDefault (mysql: RefMysqlT; );
+ 
++(*
+ <* EXTERNAL mysql_enable_rpl_parse *>
+ PROCEDURE EnableRplParse (mysql: RefMysqlT; );
+ 
+@@ -635,7 +643,8 @@ PROCEDURE AddSlave (mysql       : RefMysqlT;
+                     host        : C.const_char_star;
+                     port        : C.unsigned_int;
+                     user, passwd: C.const_char_star; ): C.int;
+-
++*)
++  
+ <* EXTERNAL mysql_shutdown *>
+ PROCEDURE Shutdown
+   (mysql         : RefMysqlT;
+@@ -742,6 +751,7 @@ PROCEDURE RealEscapeString (mysql : RefMysqlT;
+ <* EXTERNAL mysql_debug *>
+ PROCEDURE Debug (debug: C.const_char_star; );
+ 
++(*  
+ <* EXTERNAL mysql_odbc_escape_string *>
+ PROCEDURE OdbcEscapeString (mysql        : RefMysqlT;
+                             to           : C.char_star;
+@@ -751,7 +761,8 @@ PROCEDURE OdbcEscapeString (mysql        : RefMysqlT;
+                             param        : ADDRESS;
+                             extend_buffer: ExtendRawCBT;      ):
+   C.char_star;
+-
++*)
++  
+ <* EXTERNAL myodbc_remove_escape *>
+ PROCEDURE RemoveEscape (mysql: RefMysqlT; name: C.char_star; );
+ 
+@@ -761,6 +772,7 @@ PROCEDURE ThreadSafe (): C.unsigned_int;
+ <* EXTERNAL mysql_embedded *>
+ PROCEDURE Embedded (): my_bool;
+ 
++(*
+ <* EXTERNAL mysql_manager_init *>
+ PROCEDURE ManagerInit (con: RefMysqlManagerT; ): RefMysqlManagerT;
+ 
+@@ -781,7 +793,8 @@ PROCEDURE ManagerCommand
+ PROCEDURE ManagerFetchLine
+   (con: RefMysqlManagerT; res_buf: C.char_star; res_buf_size: C.int; ):
+   C.int;
+-
++*)
++  
+ <* EXTERNAL mysql_read_query_result *>
+ PROCEDURE ReadQueryResult (mysql: RefMysqlT; ): my_bool;
+ 
+diff --git a/m3-db/mysql/src/m3makefile b/m3-db/mysql/src/m3makefile
+index aa36e9d05..6eacbaf08 100644
+--- a/m3-db/mysql/src/m3makefile
++++ b/m3-db/mysql/src/m3makefile
+@@ -9,4 +9,6 @@ import("libm3")
+ module("MySQLRaw")
+ module("MySQL")
+ 
++c_source("dump")
++
+ library("m3mysql")
