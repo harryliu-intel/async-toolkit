@@ -681,7 +681,7 @@ if (! defined ($headchange)) {
 }
 my $buildid="$aname-$headchange-official";
 $buildid="$aname-${branch}_$headchange-official" if $branch ne "";
-my $makecmd="make -f '$BUILD_SYSTEM_ROOT/Makefile' 'ROOT_PROJECT_DIR=$ROOT_PROJECT_DIR' 'ROOT_TARGET_DIR=$ROOT_TARGET_DIR' 'BUILD_SYSTEM_ROOT=$BUILD_SYSTEM_ROOT' MAKELINKS=$makelinks";
+my $makecmd="gmake -f '$BUILD_SYSTEM_ROOT/Makefile' 'ROOT_PROJECT_DIR=$ROOT_PROJECT_DIR' 'ROOT_TARGET_DIR=$ROOT_TARGET_DIR' 'BUILD_SYSTEM_ROOT=$BUILD_SYSTEM_ROOT' MAKELINKS=$makelinks";
 if ($branch eq "") {
     $makecmd .= " INTEL=1 BUILD_CHANGE_NUMBER=$headchange FULCRUM_BUILD_ID=$buildid FULCRUM_RESULTS_DIR=$PACKAGE_STORAGE";
 }

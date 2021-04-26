@@ -235,9 +235,7 @@ sub readconfig {
 my $cadencewrapperdir=$ENV{'FULCRUM_WRAPPER_DIR'};
 $cadencewrapperdir="$ENV{EC_TOP_PATH}/bin" unless $cadencewrapperdir;
 $ENV{'FULCRUM_WRAPPER_DIR'}=$cadencewrapperdir;
-my $javapath = "/usr/intel/pkgs/java/1.6.0.10-64/bin";
-warn "No JAVA found $javapath" if (! -d $javapath);
-$ENV{PATH}="/usr/intel/bin:$cadencewrapperdir:/usr/ucb:/bin:/usr/bin:$javapath";
+$ENV{PATH}="/usr/intel/bin:$cadencewrapperdir:/usr/ucb:/bin:/usr/bin";
 
 my %cadencewrappers = ();
 
