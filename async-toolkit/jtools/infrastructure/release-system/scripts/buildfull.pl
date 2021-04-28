@@ -640,10 +640,11 @@ if ($pdkbuild && $dosync) {
     my $dirlist="";
     open (X, "$p4cmd dirs //mrl/pdk/\\\* |");
     while (<X>) {
+        next if /tsmc/;
         chomp;
         s:.*/::;
         $dir = $_;
-	$dirlist .=
+        $dirlist .=
             sprintf "\t//mrl/pdk/%s/... //CLIENTNAME/pdk/%s/...\n",
                 $dir,$dir;
     }
