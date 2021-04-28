@@ -9,7 +9,6 @@ MODULE UnsafeDatabaseMySQL EXPORTS Database;
 IMPORT DatabaseClass;
 
 IMPORT MySQL AS Impl;
-IMPORT MySQLMaps AS ImplMaps;
 IMPORT DBerr;
 IMPORT Scan, Lex, FloatMode;
 IMPORT Env;
@@ -69,19 +68,26 @@ REVEAL
 PROCEDURE GetTypeM(<*UNUSED*>t : MySQL) : Type =
   BEGIN RETURN Type.MySQL END GetTypeM;
 
+VAR initMu := NEW(MUTEX);
+  
 PROCEDURE Init(t : MySQL) : T
   RAISES { DBerr.Error } =
   BEGIN
-    TRY
+    LOCK initMu DO
       t.conn := Impl.Init(NIL)
-    EXCEPT
-      Impl.ConnE =>
-      RAISE DBerr.Error("UnsafeDatabaseMySQL.Init: MySQL connection failed : " & Impl.Error(t.conn))
     END;
+    
+    IF t.conn = NIL THEN
+      RAISE
+        DBerr.Error("UnsafeDatabaseMySQL.Init: MySQL init failed : " &
+          Impl.Error(t.conn))
+    END;
+    
     RETURN t
   END Init;
 
-PROCEDURE OpenM(t : T; dbTextName : TEXT) RAISES { DBerr.Error } =
+PROCEDURE OpenM(t : T; dbTextName : TEXT)
+  RAISES { DBerr.Error } =
   (* could be in a higher-level object type, shared with PGSQL *)
   BEGIN
     t.openRemote(NIL, NIL, dbTextName, NIL, NIL)
@@ -98,7 +104,7 @@ PROCEDURE OpenRemoteImpl(t                                      : MySQL;
     IF dbHost = NIL THEN
       dbHost := Env.Get("DBHOST")
     END;
-    TRY
+
       IF dbPort # NIL THEN
         TRY
           WITH q = Scan.Int(dbPort) DO
@@ -133,13 +139,10 @@ PROCEDURE OpenRemoteImpl(t                                      : MySQL;
                                   0
         ) DO
 
-        (* NIL res means we should get an exception below vvv *)
-        <*ASSERT res # NIL*>
+        IF res = NIL THEN
+          RAISE DBerr.Error("MySQL connection failed : " & Impl.Error(t.conn))
+        END
       END
-    EXCEPT
-      Impl.ConnE =>
-      RAISE DBerr.Error("MySQL connection failed : " & Impl.Error(t.conn))
-    END
   END OpenRemoteImpl;
 
 PROCEDURE OpenRemoteM(t                                      : MySQL;
@@ -240,18 +243,22 @@ PROCEDURE ExecM(t                               : MySQL;
     rowSeq : DatabaseVectorSeq.T;
   BEGIN
     LOCK t.mu DO
-      TRY
         IF doDebug THEN
           Debug.Out(F("UnsafeDatabaseMySQL.ExecM: running query \"%s\"", query))
         END;
         VAR
           resi := Impl.Query(t.conn, query);
-          res  := Impl.UseResult(t.conn);
+          res  : Impl.ResultT;
           row : REF ARRAY OF TEXT;
-          lengths : Impl.RefLengthsT;
           nfields : CARDINAL;
         BEGIN
-
+          IF resi # 0 THEN
+            RAISE DBerr.Error("Query Error: num " &
+                  Fmt.Int(Impl.Errno(t.conn)) & " " &
+                  Impl.Error(t.conn) & "\n")
+          END;
+          
+          res := Impl.UseResult(t.conn);
           IF res = NIL THEN
             (* see 
                https://dev.mysql.com/doc/c-api/8.0/en/mysql-field-count.html *)
@@ -272,7 +279,7 @@ PROCEDURE ExecM(t                               : MySQL;
 
           result := NEW(MySQLResult, tab := NEW(Table));
           
-          WITH fields  = ImplMaps.FieldList(res),
+          WITH fields  = Impl.FetchFields(res),
                fa      = NEW(Vector, nfields)
            DO
             IF doDebug THEN
@@ -306,10 +313,17 @@ PROCEDURE ExecM(t                               : MySQL;
               END;
               rowSeq.addhi(vec)
             END;
-
             row     := Impl.FetchRow(res);
-
           END;
+          
+          WITH errno = Impl.Errno(t.conn) DO
+            IF errno # 0 THEN
+              RAISE DBerr.Error("FetchRow Error: num " &
+                    Fmt.Int(Impl.Errno(t.conn)) & " " &
+                    Impl.Error(t.conn) & "\n");
+            END;
+          END;
+          
           Impl.FreeResult(res);
 
           result.tab.data := NEW(Matrix, rowSeq.size(), nfields);
@@ -318,15 +332,9 @@ PROCEDURE ExecM(t                               : MySQL;
           END;
           RETURN result
         END
-      EXCEPT
-        Impl.ResultE => 
-        RAISE DBerr.Error("Result Error: num " & Fmt.Int(Impl.Errno(t.conn)) & " " & Impl.Error(t.conn) & "\n");
-       | Impl.ReturnE =>
-         RAISE DBerr.Error("Return Error: num " & Fmt.Int(Impl.Errno(t.conn)) & " " & Impl.Error(t.conn) & "\n"); 
-      END
     END
   END ExecM;
-  
+
 PROCEDURE ExecCA(t                               : MySQL; 
                  VAR arr                         : ARRAY OF CHAR; 
                  busyWait, abortConnectionOnFail : BOOLEAN) : Result 

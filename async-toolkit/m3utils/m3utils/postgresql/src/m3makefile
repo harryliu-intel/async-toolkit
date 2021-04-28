@@ -10,6 +10,7 @@
 %
 
 if equal(TARGET, "AMD64_LINUX")
+	import_sys_lib("POSTGRES95")
 else
 	import_lib ("pq","/usr/local/lib")
 end

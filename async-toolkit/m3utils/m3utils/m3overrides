@@ -192,5 +192,4 @@ override("simpletoken", TOP)
 override("fileupdatewr", TOP)
 override("mpfr", TOP & "/mpfr")
 
-override("mysql", TOP)
-
+%override("mysql", TOP)

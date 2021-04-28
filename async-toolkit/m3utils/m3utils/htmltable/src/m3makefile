@@ -1,17 +1,10 @@
 /* Copyright (c) 2000, 2005, Mika Nystrom.  All Rights Reserved. */
 /* $Id$ */
 
-if SYSTEM_LIBS contains "POSTGRES95"
-  import_sys_lib("POSTGRES95")
-end
-if SYSTEM_LIBS contains "MYSQL"
-  import_sys_lib("MYSQL")
-end
-
 import("cit_util")
 import("libm3")
 import("postgresql")
-import ("mysql")
+import("mysql")
 
 import ("sstubgen")
 
