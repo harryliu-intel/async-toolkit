@@ -81,4 +81,6 @@ Table ("UnixGidRef", "UnixGid", "Refany")
 interface("UnixGetIds")
 c_source("UnixGetIds")
 
+Module ("CheckUnixPermissions")
+
 library ("htmltable")

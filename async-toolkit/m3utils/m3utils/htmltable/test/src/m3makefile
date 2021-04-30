@@ -16,6 +16,7 @@ SchemeStubs ("SchemeEnvironment")
 SchemeStubs ("Fmt")
 SchemeStubs ("Database")
 SchemeStubs ("UnixPermissions")
+SchemeStubs ("CheckUnixPermissions")
 SchemeStubs ("UnixGroupList")
 %SchemeStubs ("MySQL")  % pulls in UNTRACED stuff, won't work 
 

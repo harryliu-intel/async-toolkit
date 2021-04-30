@@ -11,6 +11,8 @@ TYPE
   R = { Owner, Group, Other };
 
   Perms = ARRAY R OF P;
+
+  Type = { Regular, Directory, Unknown };
   
   T = RECORD
     path     : Pathname.T;
@@ -18,6 +20,7 @@ TYPE
     uid      : Utypes.uid_t;
     gid      : Utypes.gid_t;
     perms    : Perms;
+    type     : Type;
   END;
 
 PROCEDURE Get(path : Pathname.T) : T

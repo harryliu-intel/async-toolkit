@@ -23,6 +23,11 @@ PROCEDURE AddPerm(VAR perms : Perms;
     END
   END AddPerm;
 
+PROCEDURE HaveBits(val, bits : Utypes.mode_t) : BOOLEAN =
+  BEGIN
+    RETURN Word.And(val, bits) = bits
+  END HaveBits;
+
 PROCEDURE Get(path : Pathname.T) : T
   RAISES { OSError.E } =
   VAR
@@ -63,6 +68,14 @@ PROCEDURE Get(path : Pathname.T) : T
         res.perms := perms
       END;
 
+      IF    HaveBits(stat.st_mode, Ustat.S_IFREG) THEN
+        res.type := Type.Regular
+      ELSIF HaveBits(stat.st_mode, Ustat.S_IFDIR) THEN
+        res.type := Type.Directory
+      ELSE
+        res.type := Type.Unknown
+      END;
+      
       RETURN res
       
     FINALLY
