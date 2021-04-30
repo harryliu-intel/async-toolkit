@@ -16,6 +16,7 @@ IMPORT OSError;
 FROM Fmt IMPORT F;
 IMPORT AL;
 IMPORT Debug;
+IMPORT Stdio;
 
 <* FATAL Thread.Alerted *>
 
@@ -142,14 +143,24 @@ PROCEDURE GetChars(rd : Rd.T; num : CARDINAL) : TEXT RAISES { Rd.EndOfFile,
   
 VAR
   doPath := FALSE;
-  outBase := Params.Get(2);
-  httpdLog := Params.Get(1);
+  outBase : TEXT; 
+  httpdLog : TEXT;
   matchString : TEXT := NIL;
   rd : Rd.T;
   startFound, parsing := FALSE;
   env := NEW(TextTextTbl.Default).init();
   pageInput : TEXT := NIL;
 BEGIN
+
+  IF Params.Count # 3 THEN
+    Wr.PutText(Stdio.stderr, F("Usage: %s <httpd-log> <outBase>\n",
+                               Params.Get(0)));
+    Process.Exit(1)
+  END;
+  
+  outBase := Params.Get(2);
+  httpdLog := Params.Get(1);
+  
   TRY
     rd := FileRd.Open(httpdLog);
   EXCEPT
