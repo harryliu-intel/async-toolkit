@@ -93,20 +93,43 @@ PROCEDURE ViewFile(p : Page; request : Request.T) =
   VAR
     path : Pathname.T;
     v : TEXT;
+    fromByte : CARDINAL := 0;
+    cnt := 0;
+    lines := LAST(CARDINAL);
+    more := FALSE;
+    cur : CARDINAL;
   BEGIN
     Debug.Out("ViewFile!");
+
+    IF request.getGetVars().get("frombyte", v) THEN
+      fromByte := Scan.Int(v)
+    END;
+    
+    IF request.getGetVars().get("lines", v) THEN
+      lines := Scan.Int(v)
+    END;
     
     IF request.getGetVars().get("path", v) THEN
       path := v;
 
       Debug.Out("ViewFile path : " & path);
+      p.title := HTMLize(path);
+
 
       TRY
         WITH rd = FileRd.Open(path) DO
+          Rd.Seek(rd, fromByte);
           LOOP
             WITH line = Rd.GetLine(rd) DO
               p.page.addToBody(Typewriter(HTMLize(line)));
-              p.page.addToBody("<br>\n")
+              p.page.addToBody("<br>\n");
+              INC(cnt);
+
+              IF cnt = lines THEN
+                more := TRUE;
+                cur := Rd.Index(rd);
+                EXIT
+              END;
             END
           END
         END
@@ -125,7 +148,22 @@ PROCEDURE ViewFile(p : Page; request : Request.T) =
         Rd.Failure(x) =>
         p.page.addToBody(Bold(HTMLize(F("I/O error reading \"%s\" : %s", path, AL.Format(x))) & "<br><br>\n"))
       END
-      
+    END;
+
+    IF more THEN
+      p.page.addToBody("<br><br>\n");
+      WITH vars = CopyVars(request.getGetVars()) DO
+        EVAL vars.put("frombyte", Int(cur));
+
+        WITH link = NEW(HTMLLink.T).init(
+                                     "More",
+                                     "viewfile",
+                                     request,
+                                     getVars := vars) DO
+          p.page.addToBody(link);
+          p.page.addToBody("\n<br><br>\n");
+        END
+      END
     END
 
   END ViewFile;
@@ -203,6 +241,7 @@ PROCEDURE GCDisplay(p : Page; req : Request.T) : HTMLPage.T
   RAISES { DBerr.Error } =
   BEGIN 
     p.page := NEW(GCPage, p := p);
+    Debug.Out("GCDisplay: p.title " & Debug.UnNil(p.title));
     IF p.title # NIL THEN
       p.page.addToBody("<p><h1>"&p.title&"</h1><p>\n")
     ELSE
@@ -223,7 +262,7 @@ VAR
 BEGIN
 
   Pages.AddDispatch ( "viewfile",
-                      NEW(Page, body := ViewFile ),
+                      NEW(Page, title := "File viewer", body := ViewFile ),
                       signinNeeded := FALSE);
 
   FOR c := FIRST(CHAR) TO LAST(CHAR) DO

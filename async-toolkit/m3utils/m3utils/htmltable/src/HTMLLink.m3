@@ -32,7 +32,9 @@ PROCEDURE MakeURL(to      : TEXT;
       IF from # NIL AND from.toPage # NIL THEN
         res := res & "?" & from.toPage;
         IF from.session # NIL THEN
-          res := res & "?" & from.session.getId() 
+          res := res & "?" & from.session.getId()
+        ELSE
+          res := res & "?"
         END
       END;
       IF getVars # NIL THEN
