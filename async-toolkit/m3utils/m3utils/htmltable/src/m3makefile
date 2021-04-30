@@ -70,4 +70,15 @@ implementation ("UnsafeDatabaseMySQL")
 interface ("DatabaseVector")
 sequence ("DatabaseVector", "DatabaseVector")
 
+Module ("UnixPermissions")
+Module ("UnixGid")
+Module ("UnixGroupList")
+
+MkSet ("UnixGid", "UnixGid")
+MkSetDef ("UnixGid", "UnixGid")
+Table ("UnixGidRef", "UnixGid", "Refany")
+
+interface("UnixGetIds")
+c_source("UnixGetIds")
+
 library ("htmltable")

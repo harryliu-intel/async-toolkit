@@ -15,6 +15,8 @@ SchemeStubs ("Rd")
 SchemeStubs ("SchemeEnvironment")
 SchemeStubs ("Fmt")
 SchemeStubs ("Database")
+SchemeStubs ("UnixPermissions")
+SchemeStubs ("UnixGroupList")
 %SchemeStubs ("MySQL")  % pulls in UNTRACED stuff, won't work 
 
 ExportSchemeStubs("testhtml")

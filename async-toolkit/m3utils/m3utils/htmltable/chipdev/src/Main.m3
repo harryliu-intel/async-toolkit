@@ -1,5 +1,3 @@
-(* $Id$ *)
-
 MODULE Main;
 IMPORT Params, Pathname;
 IMPORT Database, HTML;
