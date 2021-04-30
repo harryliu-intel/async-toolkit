@@ -82,7 +82,7 @@ PROCEDURE HTMLize(txt : TEXT) : TEXT =
         IF c IN HtmlChars THEN
           Wx.PutChar(wx, c)
         ELSE
-          Wx.PutText(wx, F("&#x%s;", Int(ORD(c),base := 16)))
+          Wx.PutText(wx, charTab[c])
         END
       END
     END;
@@ -219,9 +219,14 @@ VAR
   now     : Time.T;
   dbName  : TEXT;
   CGIname := Pathname.Last(Params.Get(0));
+  charTab : ARRAY CHAR OF TEXT;
 BEGIN
 
   Pages.AddDispatch ( "viewfile",
                       NEW(Page, body := ViewFile ),
                       signinNeeded := FALSE);
+
+  FOR c := FIRST(CHAR) TO LAST(CHAR) DO
+    charTab[c] := F("&#x%s;", Int(ORD(c),base := 16))
+  END
 END Fileviewer.
