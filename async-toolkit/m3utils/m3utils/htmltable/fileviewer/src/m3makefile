@@ -4,7 +4,6 @@
 import ("htmltable")
 import ("cit_util")
 
-interface ("DbSettings")
 implementation("Main")
 module("Fileviewer")
 

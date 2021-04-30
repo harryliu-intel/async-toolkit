@@ -45,11 +45,13 @@ VAR
   key : TEXT;
   getData : TEXT;
   dbName := Pathname.LastBase(Params.Get(0));
+
+  userString := Env.Get("REMOTE_USER");
 BEGIN 
   debugStuff.add("<br><br><hr>--- DEBUGGING INFORMATION BELOW THIS LINE, PLEASE PAY NO ATTENTION ---<br>");
 
   IF VerboseDebug THEN myID := Process.GetMyID() END;
-  
+
   TRY
     WITH c = Env.Get("CONTENT_LENGTH") DO
       IF c = NIL THEN

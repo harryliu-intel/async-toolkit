@@ -18,6 +18,8 @@ IMPORT OSError, Rd, FileRd;
 IMPORT Wx;
 IMPORT AL;
 IMPORT FS;
+IMPORT TextUtils;
+IMPORT CheckUnixPermissions;
 
 CONST TE = Text.Equal;
 
@@ -98,8 +100,24 @@ PROCEDURE ViewFile(p : Page; request : Request.T) =
     lines := LAST(CARDINAL);
     more := FALSE;
     cur : CARDINAL;
+
+    envVars := request.getEnvVars();
+
+    user := "nobody";
+    
+  CONST
+    allowedDomains = ARRAY OF TEXT { "@AMR.CORP.INTEL.COM",
+                                     "@GER.CORP.INTEL.COM" };
   BEGIN
     Debug.Out("ViewFile!");
+
+    IF request.getEnvVars().get("REMOTE_USER", v) THEN
+      user := v;
+
+      user := TextUtils.RemoveSuffixes(user, allowedDomains);
+    END;
+
+    Debug.Out("user is " & Debug.UnNil(user));
 
     IF request.getGetVars().get("frombyte", v) THEN
       fromByte := Scan.Int(v)
@@ -115,6 +133,18 @@ PROCEDURE ViewFile(p : Page; request : Request.T) =
       Debug.Out("ViewFile path : " & path);
       p.title := HTMLize(path);
 
+      WITH reason = CheckUnixPermissions.GetReason(user, path) DO
+        IF NOT reason.result THEN
+          IF reason.osError # NIL THEN
+            p.page.addToBody(Bold(F("OSerror opening %s : %s", HTMLize(path), HTMLize(AL.Format(reason.osError)))))
+          ELSE
+            p.page.addToBody(Bold(F("Permission denied on path \"%s\" for user \"%s\"",
+                                    HTMLize(path),
+                                    HTMLize(user))))
+          END;
+          RETURN
+        END
+      END;
 
       TRY
         WITH rd = FileRd.Open(path) DO
