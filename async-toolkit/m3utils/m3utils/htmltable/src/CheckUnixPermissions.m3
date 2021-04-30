@@ -23,6 +23,17 @@ PROCEDURE GetReasonImpl(user : TEXT; path : Pathname.T) : Reason
     uid : Utypes.uid_t;
     gidSet := UnixGroupList.Get(user, uid);
     needPerm : UnixPermissions.PT;
+
+  PROCEDURE Fail(p : Pathname.T) : Reason =
+    BEGIN
+      RETURN Reason { FALSE, p, NIL }
+    END Fail;
+
+  PROCEDURE Succeed(p : Pathname.T) : Reason =
+    BEGIN
+      RETURN Reason { TRUE, p, NIL }
+    END Succeed;
+
   BEGIN
     FOR i := 1 TO arcs.size() DO
 
@@ -43,29 +54,36 @@ PROCEDURE GetReasonImpl(user : TEXT; path : Pathname.T) : Reason
               needPerm := PT.R
             END;
 
-            (* there are some subtleties in permissions *)
+            (* there are some subtleties in permissions! *)
+            
             IF gidSet # NIL AND uid = perms.uid THEN
-              (* I am owner, result is determined by owner bits *)
-              IF NOT needPerm IN perms.perms[R.Owner] THEN
-                RETURN Reason { FALSE, path, NIL }
+              (* I am owner *)
+              IF    NOT needPerm IN perms.perms[R.Owner] THEN
+                (* owner fail *)
+                RETURN Fail(thisPath)
+              ELSIF NOT needPerm IN perms.perms[R.Group] AND
+                    gidSet.member(perms.gid) THEN
+                (* I am owner, AND I am member of file group, no owner fail,
+                   and group fail *)
+                RETURN Fail(thisPath)
               ELSE
-                (* skip -- it is OK *)
+                (* skip *)
+              END
+            ELSIF gidSet # NIL AND gidSet.member(perms.gid) THEN
+              (* group member, but not owner *)
+              IF needPerm IN perms.perms[R.Group] THEN
+                (* skip *)
+              ELSE
+                RETURN Fail(thisPath)
               END
             ELSE
-              (* I am not owner *)
-              IF gidSet # NIL AND
-                 gidSet.member(perms.gid) AND
-                 needPerm IN perms.perms[R.Group] THEN
-                (* I have group access -- OK *)
+              (* I am not owner and I do not have group membership *)
+              IF needPerm IN perms.perms[R.Other] THEN
+                (* skip *)
               ELSE
-                (* I am not owner and I do not have group accss *)
-                IF NOT needPerm IN perms.perms[R.Other] THEN
-                  RETURN Reason { FALSE, path, NIL }
-                END
+                RETURN Fail(thisPath)
               END
-                
             END
-            
           END
         END;
 
@@ -73,7 +91,7 @@ PROCEDURE GetReasonImpl(user : TEXT; path : Pathname.T) : Reason
         OSError.E(x) => RETURN Reason { FALSE, path, x }
       END
     END;
-    RETURN Reason { TRUE, path, NIL }
+    RETURN Succeed(path)
   END GetReasonImpl;
 
 PROCEDURE GetReason(user : TEXT; path : Pathname.T) : Reason
