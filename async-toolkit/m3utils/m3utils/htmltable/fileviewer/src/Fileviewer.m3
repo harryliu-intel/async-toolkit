@@ -117,6 +117,10 @@ PROCEDURE ViewFile(p : Page; request : Request.T) =
       user := TextUtils.RemoveSuffixes(user, allowedDomains);
     END;
 
+    IF NOT request.getEnvVars().get("AUTH_TYPE", v) OR NOT TE(v, "VAS4") THEN
+      user := "nobody"
+    END;
+
     Debug.Out("user is " & Debug.UnNil(user));
 
     IF request.getGetVars().get("frombyte", v) THEN
