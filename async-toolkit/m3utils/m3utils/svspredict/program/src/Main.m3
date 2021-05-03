@@ -1,5 +1,5 @@
 MODULE Main;
-IMPORT Random, NormalDeviate;
+IMPORT Random;
 IMPORT Debug;
 IMPORT LongrealArraySort;
 IMPORT LongRealSeq AS LRSeq;
@@ -37,35 +37,8 @@ VAR Trunc : LONGREAL;
 
 VAR Samples := 1000; (* # of samples *)
 
-PROCEDURE MakeDie(READONLY p : Power.Params) : CornerData =
-  (* returns the PVT voltage of a single die *)
-  BEGIN
-    LOOP
-      VAR
-        x := NormalDeviate.Get(rand, 0.0d0, 1.0d0);
-      BEGIN
-        IF ABS(x) <= Trunc THEN
-          RETURN Interpolate(p, x)
-        END
-      END
-    END
-  END MakeDie;
-
 VAR rand := NEW(Random.Default).init();
 
-PROCEDURE DoDebugCorner(READONLY p : Power.Params) =
-  VAR
-    dbgCorner := Interpolate(p, 0.0d0);
-    q : Power.Result;
-  BEGIN
-    dbgCorner.vpower := 0.750d0;
-    
-    q := Power.Calc(p, dbgCorner);
-    Debug.Out(F("DEBUG CORNER Vdd=%s leakPwr=%s totPwr=%s",
-                LR(dbgCorner.vpower), LR(q.leakPwr), LR(q.totPwr)))
-    
-  END DoDebugCorner;
-    
 PROCEDURE DoIt(READONLY p : Power.Params) : ShipDist = 
   VAR
     dice    := NEW(REF ARRAY OF Die.T, Samples);
@@ -77,10 +50,10 @@ PROCEDURE DoIt(READONLY p : Power.Params) : ShipDist =
     res :=  ShipDist { worstSigma := -Trunc,
                        medianSigma := 0.0d0 };
   BEGIN
-    DoDebugCorner(p);
+    Power.DoDebugCorner(p);
     
     FOR i := FIRST(totPwr^) TO LAST(totPwr^) DO
-      WITH corner = MakeDie(dist),
+      WITH corner = Power.MakeDie(rand, dist, Trunc),
            p      = Power.Calc(dist, corner) DO
 
         shP := p;

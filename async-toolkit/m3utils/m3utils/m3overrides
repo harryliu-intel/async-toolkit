@@ -190,6 +190,7 @@ override("normaldev", TOP)
 override("stdf", TOP)
 override("simpletoken", TOP)
 override("fileupdatewr", TOP)
+override("svspredict", TOP)
 override("mpfr", TOP & "/mpfr")
 
 %override("mysql", TOP)

@@ -1,6 +1,7 @@
 INTERFACE Power;
 FROM SvsTypes IMPORT CornerData;
 IMPORT Corner;
+IMPORT Random;
 
 PROCEDURE Calc(READONLY dist : Params;
                READONLY at   : CornerData;
@@ -36,4 +37,10 @@ PROCEDURE FmtResult(READONLY r : Result) : TEXT;
   
 CONST Brand = "Power";
       
+PROCEDURE MakeDie(rand : Random.T;
+                  READONLY p : Params;
+                  trunc : LONGREAL) : CornerData;
+
+PROCEDURE DoDebugCorner(READONLY p : Params);
+
 END Power.

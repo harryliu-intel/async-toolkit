@@ -19,6 +19,8 @@ Interface ("Corner")
 
 Module ("Interpolate")
 Module ("Power")
+implementation ("PowerUtils")
+
 Interface ("ProgramSetter")
 Interface ("Svl")
 Module ("Scale")
