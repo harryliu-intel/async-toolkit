@@ -536,11 +536,13 @@ PROCEDURE Minimize(x0             : LRVector.T;
           IF maxsubspacedim = 3 THEN
             D := AppendCols(dx, NIL, NIL)
           ELSE
+            <*ASSERT maxsubspacedim >= 4 *>
             WITH neg = ZeroV(dim) DO
               MulSV(-1.0d0, g^, neg^);
               D := AppendCols(dx,
                               neg,
-                              CutbackCols(D, MIN(Size(D,1), maxsubspacedim-4)))
+                              CutbackCols(D, MIN(Size(D,1),
+                                                 maxsubspacedim - 4)))
             END
           END
         END

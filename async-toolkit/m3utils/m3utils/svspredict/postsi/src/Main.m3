@@ -20,8 +20,8 @@ IMPORT Histogram;
 IMPORT LRVector, LRScalarField;
 IMPORT RefSeq;
 IMPORT NewUOAs;
+IMPORT NewUOA_M3;
 IMPORT Wx;
-IMPORT LrArrayLRTbl;
 IMPORT FileWr;
 
 <*FATAL Thread.Alerted, Wr.Failure, OSError.E*>
@@ -141,8 +141,8 @@ PROCEDURE MakeD(READONLY vidBuckets : Array;
               LR(res.x), LR(res.y), LR(vmin), LR(linP), LR(resP)) &
             F("vminP=%s vage=%s ageP=%s vcust=%s ",
               LR(vminP), LR(vage), LR(ageP), LR(vcust)) &
-            F("custP=%s haveVid=%s vidbin=%s vidP=%s",
-              LR(custP), Bool(res.vidP # LAST(LONGREAL)), Int(res.vidbin), LR(res.vidP)))
+            F("custP=%s haveVid=%s vidbin=%s vidP=%s ",
+              LR(custP), Bool(res.vidP # LAST(LONGREAL)), Int(res.vidbin), LR(res.vidP)) )
         
       END
     END
@@ -175,7 +175,6 @@ TYPE
     samples            : RefSeq.T;      (* state *)
     k                  : CARDINAL := 0; (* pointer to next elem *)
 
-    cache              : LrArrayLRTbl.T;
   OVERRIDES
     eval := EvalYield;
     evalHint := EvalHint;
@@ -196,20 +195,26 @@ PROCEDURE FmtBins(vids : Vids) : TEXT =
     RETURN Wx.ToText(wx)
   END FmtBins;
   
-PROCEDURE EvalYield(ye : YieldEvaluator; cutoffs : LRVector.T) : LONGREAL =
+PROCEDURE FmtState(state : State) : TEXT =
+  VAR
+    wx := Wx.New();
+  BEGIN
+    FOR i := FIRST(State) TO LAST(State) DO
+      Wx.PutText(wx, F("%s ", LR(state[i])))
+    END;
+    RETURN Wx.ToText(wx)
+  END FmtState;
+  
+PROCEDURE EvalYield(ye : YieldEvaluator; state : LRVector.T) : LONGREAL =
   VAR
     val : LONGREAL;
   BEGIN
-    (*
-    IF ye.cache.get(cutoffs, val) THEN
-      RETURN val
-    END;
-    *)
-    
     (* copy vids *)
-    ye.vids := State2Vids(cutoffs^);
+    ye.vids := State2Vids(state^);
 
-    Debug.Out(F("EvalYield with bin limits=%s", FmtBins(ye.vids)));
+    Debug.Out(F("EvalYield with state %s bin limits=%s",
+                FmtState(state^),
+                FmtBins(ye.vids)));
     
     (* initialization *)
     WHILE ye.samples.size() < ye.nsamples DO
@@ -258,7 +263,7 @@ PROCEDURE EvalYield(ye : YieldEvaluator; cutoffs : LRVector.T) : LONGREAL =
       WITH nf         = FLOAT(ye.nsamples, LONGREAL),
            cf         = FLOAT(cnt, LONGREAL),
            yield      = cf / nf,
-           aveP       = sumP / cf,
+           aveP       = DivOr(sumP, cf, 10000.0d0),
            yieldloss  = 1.0d0 - yield,
            yieldlossP = yieldloss * aveP,
            score      = ye.yieldWeight * -yield +
@@ -272,11 +277,15 @@ PROCEDURE EvalYield(ye : YieldEvaluator; cutoffs : LRVector.T) : LONGREAL =
                     LR(score),
                     Int(maxbin)) &
                   F(" minvcust=%s maxvcust=%s", LR(minvcust), LR(maxvcust)));
-        (*EVAL ye.cache.put(cutoffs, score);*)
         RETURN score
       END
     END
   END EvalYield;
+
+PROCEDURE DivOr(n, d, x : LONGREAL) : LONGREAL =
+  BEGIN
+    IF d = 0.0d0 THEN RETURN x ELSE RETURN n / d END
+  END DivOr;
   
 VAR
   vminFileN : Pathname.T := NIL;
@@ -303,13 +312,13 @@ PROCEDURE AdjustBins(READONLY preVrAdj : Vids) : Vids =
     res : Vids;
   BEGIN
     FOR i := FIRST(res) TO LAST(res) DO
-      res[i] := (1.0d0 - marginCoeffs[1]) * preVrAdj[i];
+      res[i] := (1.0d0 + marginCoeffs[1]) * preVrAdj[i];
     END;
     RETURN res
   END AdjustBins;
 
 PROCEDURE UnadjustBins(READONLY postVrAdj : Vids) : Vids =
-  (* adjust cutoffs from pre-VR adjustment to post-VR adjustment.
+  (* adjust cutoffs from post-VR adjustment to pre-VR adjustment.
 
      cutoffs are actually applied on the binning, and then customer
      inaccuracy is the 1-st order term of the VR error 
@@ -321,32 +330,34 @@ PROCEDURE UnadjustBins(READONLY postVrAdj : Vids) : Vids =
     res : Vids;
   BEGIN
     FOR i := FIRST(res) TO LAST(res) DO
-      res[i] := 1.0d0 / (1.0d0 - marginCoeffs[1]) * postVrAdj[i];
+      res[i] := 1.0d0 / (1.0d0 + marginCoeffs[1]) * postVrAdj[i];
     END;
     RETURN res
   END UnadjustBins;
 
-PROCEDURE State2Vids(READONLY state : Vids) : Vids =
+TYPE State = ARRAY [0..1] OF LONGREAL;
+     
+PROCEDURE State2Vids(READONLY state : State) : Vids =
   VAR
     res : Vids;
   BEGIN
     (* convert from optimizer state variables to actual VID voltages *)
     res[0] := state[0];
-    FOR i := 1 TO LAST(res) DO
-      res[i] := res[i - 1] + Square(state[i])
-    END;
-    RETURN res
+    WITH delta = Square(state[1]) / FLOAT(NUMBER(Vids) - 1, LONGREAL) DO
+      FOR i := 1 TO LAST(res) DO
+        res[i] := res[0] + FLOAT(i, LONGREAL) * delta
+      END;
+      RETURN res
+    END
   END State2Vids;
   
-PROCEDURE Vids2State(READONLY vids : Vids) : Vids =
+PROCEDURE Vids2State(READONLY vids : Vids) : State =
   VAR
-    res : Vids;
+    res : State;
   BEGIN
     (* convert from actual VID voltages to optimizer state variables *)
     res[0] := vids[0];
-    FOR i := 1 TO LAST(res) DO
-      res[i] := Math.sqrt(vids[i] - vids[i - 1])
-    END;
+    res[1] := Math.sqrt(vids[LAST(vids)] - vids[0]);
     RETURN res
   END Vids2State;
 
@@ -455,14 +466,14 @@ CONST
                      0.740d0,
                      0.760d0 };
 
-  TestVmins = Vids { 0.680d0,
-                     0.690d0,
-                     0.700d0,
-                     0.710d0,
-                     0.720d0,
-                     0.730d0,
-                     0.740d0,
-                     0.760d0 };
+  TestVmins = Vids { 0.670d0,
+                     0.671d0,
+                     0.672d0,
+                     0.673d0,
+                     0.674d0,
+                     0.675d0,
+                     0.676d0,
+                     0.700d0 };
 BEGIN
   
   TRY
@@ -554,7 +565,10 @@ BEGIN
   VAR
     rand := NEW(Random.Default).init();
     
-    buckets := AdjustBins(TestVmins);
+    buckets := AdjustBins(DineshVmins);
+
+    vidBins : Vids;
+    f : LONGREAL;
   BEGIN
     FOR coi := 0 TO cutoffs.size() - 1 DO
       WITH ye  = NEW(YieldEvaluator,
@@ -562,32 +576,42 @@ BEGIN
                      cutoffP     := cutoffs.get(coi),
                      nsamples    := Samples,
                      batchsiz    := Samples DIV 100,
-                     aveWeight   := 100.0d0,
+                     aveWeight   := 10.0d0,
                      yieldWeight := 1000000.0d0,
                      binWeight   := 0.0d0,
                      
-                     samples     := NEW(RefSeq.T).init(),
-                     cache       := NEW(LrArrayLRTbl.Default).init()),
-
-           vec = NEW(LRVector.T, NUMBER(Vids)) DO
+                     samples     := NEW(RefSeq.T).init()),
+           vec = NEW(REF ARRAY OF LONGREAL, NUMBER(State)) DO
         vec^ := Vids2State(buckets);
         Debug.Out(F("Starting with cutoff %s : bins %s ; state %s",
                     LR(ye.cutoffP),
                     FmtBins(buckets),
-                    FmtBins(vec^)));
-        WITH out = NewUOAs.Minimize(vec,
-                                    ye,
-                                    rhobeg := 0.1d0,
-                                    rhoend := 0.00000001d0),
-             vidBins = UnadjustBins(State2Vids(out.x^)) DO
-          Debug.Out(F("At power cutoff %s : best binning voltages : %s ; score %s",
-                      LR(cutoffs.get(coi)),
-                      FmtBins(vidBins),
-                      LR(out.f)));
-
-          DoHistograms(rand, cutoffs.get(coi), vidBins)
-
-        END
+                    FmtState(vec^)));
+        IF FALSE THEN
+          WITH out = NewUOAs.Minimize(vec,
+                                      ye,
+                                      rhobeg := 0.01d0,
+                                      rhoend := 0.00000001d0) DO
+            vidBins := UnadjustBins(State2Vids(out.x^));
+            f := out.f;
+          END
+        ELSE
+          WITH ff = NewUOA_M3.Minimize(vec,
+                                      ye,
+                                      npt := 6,
+                                      rhobeg := 0.01d0,
+                                      rhoend := 0.0000001d0,
+                                      maxfun := 100000) DO
+            vidBins := UnadjustBins(State2Vids(vec^));
+            f := ff
+          END
+        END;
+        Debug.Out(F("At power cutoff %s : best binning voltages : %s ; score %s",
+                    LR(cutoffs.get(coi)),
+                    FmtBins(vidBins),
+                    LR(f)));
+        
+        DoHistograms(rand, cutoffs.get(coi), vidBins)
       END
     END
 

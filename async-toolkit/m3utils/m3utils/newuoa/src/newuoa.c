@@ -94,6 +94,7 @@
 /*     The partition requires the first NPT*(NPT+N)+5*N*(N+3)/2 elements of */
 /*     W plus the space that is needed by the last array of NEWUOB. */
 
+    ftarget = -1e12f;
     newuob_(n, npt, &x[1], rhobeg, rhoend, iprint, maxfun, &w[ixb], &w[ixo], &
 	    w[ixn], &w[ixp], &w[ifv], &w[igq], &w[ihq], &w[ipq], &w[ibmat], &
 	    w[izmat], &ndim, &w[id], &w[ivl], &w[iw], f, info, &ftarget, 
