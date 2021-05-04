@@ -9,9 +9,9 @@ IMPORT Debug;
 
 CONST LR = Fmt.LongReal;
 
-PROCEDURE MakeDie(rand : Random.T;
+PROCEDURE MakeDie(rand       : Random.T;
                   READONLY p : Params;
-                  trunc : LONGREAL) : CornerData =
+                  trunc      : LONGREAL) : CornerData =
   (* returns the PVT voltage of a single die *)
   BEGIN
     LOOP

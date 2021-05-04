@@ -9,11 +9,15 @@ PROCEDURE Do(ofn          : TEXT;
              (* must be sorted *)
 
              low          : BOOLEAN;
-             (* denotes whether desired value is low or high *)
+             (* denotes whether desired value is low or high, for the
+                yield loss chart *)
 
-             H            : CARDINAL := DefaultBuckets (* # of buckets *)
+             H            : CARDINAL := DefaultBuckets (* # of buckets *);
+
+             G            : CARDINAL := DefaultLossSteps
   ) RAISES { OSError.E, Wr.Failure, Thread.Alerted };
 
-CONST DefaultBuckets = 15;
+CONST DefaultBuckets   = 15;
+      DefaultLossSteps = 1000;
 
 END Histogram.

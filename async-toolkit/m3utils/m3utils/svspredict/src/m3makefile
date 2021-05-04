@@ -34,4 +34,8 @@ Module ("Die")
 Array_sort("Die", "Die")
 Sequence ("Die", "Die")
 
+Module ("Sortable")
+
+Array_sort("Sortable", "Sortable")
+
 library("svspredict")

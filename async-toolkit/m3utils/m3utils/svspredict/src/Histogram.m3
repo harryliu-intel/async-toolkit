@@ -5,12 +5,13 @@ IMPORT Math;
 IMPORT Debug;
 IMPORT Thread, OSError;
 
-CONST LR = LongReal;
+CONST LR      = LongReal;
+CONST doDebug = FALSE;
 
 PROCEDURE Do(ofn          : TEXT;
              READONLY res : ARRAY OF LONGREAL; (* sorted *)
              low          : BOOLEAN;
-             H            : CARDINAL)
+             H, G         : CARDINAL)
   RAISES { OSError.E, Wr.Failure, Thread.Alerted } =
   VAR
     min := res[FIRST(res)];
@@ -30,7 +31,15 @@ PROCEDURE Do(ofn          : TEXT;
       WITH h  = (res[i] - min) / hw,
            ht = TRUNC(h) DO
         hmax := MAX(h,hmax);
-        INC(hcnt[MIN(ht,LAST(hcnt^))])
+
+        IF doDebug THEN
+          Debug.Out(F("h=%s ht=%s LAST(hcnt^)=%s",
+                      LR(h),
+                      Int(ht),
+                      Int(LAST(hcnt^))))
+        END;
+            
+        INC(hcnt[MIN(ht, LAST(hcnt^))])
         (* the MAX is FOR a round-off possibility pushing us up... *)
       END
     END;
@@ -60,8 +69,10 @@ PROCEDURE Do(ofn          : TEXT;
       Wr.Close(wr)
     END;
     
-    WITH lwr = FileWr.Open(ofn & "_loss.dat") DO
-      FOR i := FIRST(res) TO LAST(res) DO
+    WITH lwr  = FileWr.Open(ofn & "_loss.dat"),
+         Step = MAX(NUMBER(res) DIV G, 1) DO
+
+      FOR i := FIRST(res) TO LAST(res) BY Step DO
         VAR rem : LONGREAL; BEGIN
           IF low THEN
             rem := 1.0d0 - FLOAT(i+1,LONGREAL)/ n

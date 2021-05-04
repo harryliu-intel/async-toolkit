@@ -472,7 +472,11 @@ PROCEDURE Minimize(x0             : LRVector.T;
              f         = newuoaRes.f,
              normd     = Norm(dopt) DO
           IF f > fx OR normd > 0.0d0 AND f = fx THEN
-            Debug.Error("NewUOAs:NewUOA failed to solve the subproblem")
+            Debug.Error(F("NewUOAs:NewUOA failed to solve the subproblem f=%s fx=%s normd=%s f(x)=%s",
+                          LongReal(f),
+                          LongReal(fx),
+                          LongReal(normd),
+                          LongReal(fun.eval(x))))
           END;
           IF normd > 0.0d0 THEN
             dx := ZeroV(n);
