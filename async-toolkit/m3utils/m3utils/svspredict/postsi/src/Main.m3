@@ -22,6 +22,7 @@ IMPORT NewUOA_M3;
 IMPORT Wx;
 IMPORT FileWr;
 IMPORT ReadDist;
+IMPORT DieData; FROM DieData IMPORT Vids;
 
 <*FATAL Thread.Alerted, Wr.Failure, OSError.E*>
 
@@ -35,40 +36,22 @@ VAR
   doDebug := TRUE;
 
 TYPE
-  DieData = OBJECT
-    x, y  : LONGREAL;   (* dist. #s *)
-
-    vmin  : LONGREAL;   (* ATE Vmin *)
-    vminP : LONGREAL;   (* P @ ATE Vmin *)
-
-    ageP  : LONGREAL;   (* P @ EOL (age margin + ATE margin) *)
-
-    vcust : LONGREAL;   (* customer V (incl. PS margin) *)
-    custP : LONGREAL;   (* P @ vcust *)
-
-    vroun : LONGREAL;   (* V rounded up to nearest mV *)
-    rounP : LONGREAL;   (* P @ vroun *)
-    
-    vidbin: [-1 .. LAST(Vids) ] ;   (* which VID bin *)
-    
-    vidP  : LONGREAL;   (* P @ VID (incl. VID round-off) *)
-  END;
-
   Model = OBJECT
     rand       : Random.T;
     vidBuckets : Vids;
   METHODS
-    make() : DieData;
+    make() : DieData.T;
   END;
 
   OneRegrModel = Model OBJECT
+    sigmaShift : LONGREAL;
     regrCoeffs : ARRAY [0..1] OF LONGREAL;
     margCoeffs : ARRAY [0..1] OF LONGREAL;
   OVERRIDES
     make := MakeORM;
   END;
 
-PROCEDURE MakeORM(model : OneRegrModel) : DieData =
+PROCEDURE MakeORM(model : OneRegrModel) : DieData.T =
   BEGIN
   END MakeORM;
   
@@ -100,18 +83,18 @@ PROCEDURE CopyPoly(READONLY poly : Array) : REF Array =
 VAR Samples := 1000;
   
 PROCEDURE Make(rand                : Random.T;
-               READONLY vidBuckets : Array) : DieData =
+               READONLY vidBuckets : Array) : DieData.T =
   VAR
     trunc := 3.0d0;
     x, y  := Normal.Trunc(rand, 0.0d0, 1.0d0, -trunc, +trunc);
-    res   := NEW(DieData, x := x, y := y);
+    res   := NEW(DieData.T, x := x, y := y);
     
   BEGIN
     MakeD(vidBuckets, res);
     RETURN res
   END Make;
 
-PROCEDURE DoVid(VAR res : DieData; READONLY vidBuckets : Vids) =
+PROCEDURE DoVid(VAR res : DieData.T; READONLY vidBuckets : Vids) =
   VAR
     vid   : LONGREAL;
     bin   : CARDINAL;
@@ -138,7 +121,7 @@ PROCEDURE NearestHigher(step, x : LONGREAL) : LONGREAL =
   END NearestHigher;
   
 PROCEDURE MakeD(READONLY vidBuckets : Vids;
-                VAR res             : DieData) =
+                VAR res             : DieData.T) =
   CONST
     Rounding = 0.001d0;
     
@@ -261,7 +244,7 @@ PROCEDURE EvalYield(ye : YieldEvaluator; state : LRVector.T) : LONGREAL =
 
     FOR i := 0 TO ye.nsamples - 1 DO
       VAR
-        s : DieData := ye.samples.get(i); (* pointer *)
+        s : DieData.T := ye.samples.get(i); (* pointer *)
       BEGIN
         DoVid(s, ye.vids)
       END
@@ -277,7 +260,7 @@ PROCEDURE EvalYield(ye : YieldEvaluator; state : LRVector.T) : LONGREAL =
       minvcust     := LAST(LONGREAL);
     BEGIN
       FOR i := 0 TO ye.nsamples - 1 DO
-        WITH d = NARROW(ye.samples.get(i), DieData) DO
+        WITH d = NARROW(ye.samples.get(i), DieData.T) DO
           IF FALSE THEN
             Debug.Out(F("i=%s d.vidP=%s ye.cutoffP=%s",
                         Int(i), LR(d.vidP), LR(ye.cutoffP)))
@@ -339,8 +322,6 @@ VAR
   Unit := 0.001d0; (* file input is in millivolts *)
   cutoffs := NEW(LRSeq.T).init();
   n : CARDINAL;
-TYPE
-  Vids = ARRAY [0..Tf2VidSteps-1] OF LONGREAL;
 
 PROCEDURE AdjustBins(READONLY preVrAdj : Vids) : Vids =
   (* adjust cutoffs from pre-VR adjustment to post-VR adjustment.
@@ -408,7 +389,7 @@ PROCEDURE DoHistograms(rand             : Random.T;
                        cutoffP          : LONGREAL;
                        READONLY buckets : Vids) =
   VAR
-    samples := NEW(REF ARRAY OF DieData, Samples);
+    samples := NEW(REF ARRAY OF DieData.T, Samples);
     hist    := NEW(REF Array, Samples);
     vidCases := 0;
     sfx     := Int(ROUND(cutoffP));
@@ -502,7 +483,6 @@ CONST
   Tf2MarginCoeffs  = ARRAY OF LONGREAL { 0.030d0, 0.04d0 };
   (* margin is 30 mV + 4% *)
 
-  Tf2VidSteps = 8;
   (* # of VID steps allowed *)
 
   DineshVmins = Vids { 0.620d0,
