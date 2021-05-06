@@ -52,11 +52,13 @@ PROCEDURE Do(ofn          : TEXT;
         WITH lo = min + hw * FLOAT(i    , LONGREAL),
              hi = min + hw * FLOAT(i + 1, LONGREAL),
              c  = hcnt[i] DO
-          Debug.Out(F("hist bin %s from %s to %s cnt %s",
-                      Int(i),
-                      LR(lo),
-                      LR(hi),
-                      Int(c)));
+          IF doDebug THEN
+            Debug.Out(F("hist bin %s from %s to %s cnt %s",
+                        Int(i),
+                        LR(lo),
+                        LR(hi),
+                        Int(c)))
+          END;
           
           Wr.PutText(wr, F("%s %s\n", LR(lo), "0.0"));
           Wr.PutText(wr, F("%s %s\n", LR(hi), "0.0"));

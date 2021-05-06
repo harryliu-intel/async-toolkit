@@ -47,6 +47,9 @@ TYPE
     vcust : LONGREAL;   (* customer V (incl. PS margin) *)
     custP : LONGREAL;   (* P @ vcust *)
 
+    vroun : LONGREAL;   (* V rounded up to nearest mV *)
+    rounP : LONGREAL;   (* P @ vroun *)
+    
     vidbin: [-1 .. LAST(Vids) ] ;   (* which VID bin *)
     
     vidP  : LONGREAL;   (* P @ VID (incl. VID round-off) *)
@@ -84,7 +87,7 @@ PROCEDURE Make(rand                : Random.T;
   VAR
     trunc := 3.0d0;
     x, y  := Normal.Trunc(rand, 0.0d0, 1.0d0, -trunc, +trunc);
-    res := NEW(DieData, x := x, y := y);
+    res   := NEW(DieData, x := x, y := y);
     
   BEGIN
     MakeD(vidBuckets, res);
@@ -110,29 +113,47 @@ PROCEDURE DoVid(VAR res : DieData; READONLY vidBuckets : Vids) =
     END
   END DoVid;
 
-PROCEDURE MakeD(READONLY vidBuckets : Array;
+PROCEDURE NearestHigher(step, x : LONGREAL) : LONGREAL =
+  BEGIN
+    WITH q = CEILING(x / step) DO
+      RETURN FLOAT(q, LONGREAL) * step
+    END
+  END NearestHigher;
+  
+PROCEDURE MakeD(READONLY vidBuckets : Vids;
                 VAR res             : DieData) =
+  CONST
+    Rounding = 0.001d0;
+    
   BEGIN
     (* first choose the Vmin *)
-    WITH vmin    = Poly(res.x   , Array { mean, sdev }),  (* vmin sample *)
-         linP    = Poly(vmin, Tf2PowerCoeffs),        (* linear power est *)
+    WITH vmin    = Poly(res.x + sigmaShift  ,
+                        Array { mean, sdev }),  (* vmin sample *)
+         linP    = Poly(vmin, Tf2PowerCoeffs),  (* linear power est *)
          resP    = Poly(res.y   , Array { 0.0d0, residual }),
          vminP   = resP + linP,
 
          vage    = vmin + marginCoeffs[0],
-         rageP   = Square(vage/vmin),
+         rageP   = Square(vage / vmin),
          ageP    = vminP * rageP,
          
          vcust   = vmin + Poly(vmin, marginCoeffs^),
-         rcusP   = Square(vcust/vmin),
-         custP   = vminP * rcusP DO
+         rcusP   = Square(vcust / vmin),
+         custP   = vminP * rcusP,
+
+         vroun   = NearestHigher(Rounding, vcust),
+         rrouP   = Square(vroun / vmin),
+         rounP   = vminP * rrouP
+     DO
 
       res.vmin  := vmin;
       res.vminP := vminP;
       res.ageP  := ageP;
       res.vcust := vcust;
       res.custP := custP;
-
+      res.vroun := vroun;
+      res.rounP := rounP;
+      
       DoVid(res, vidBuckets);
 
       IF FALSE AND doDebug THEN
@@ -176,7 +197,7 @@ TYPE
     k                  : CARDINAL := 0; (* pointer to next elem *)
 
   OVERRIDES
-    eval := EvalYield;
+    eval     := EvalYield;
     evalHint := EvalHint;
   END;
     
@@ -217,28 +238,22 @@ PROCEDURE EvalYield(ye : YieldEvaluator; state : LRVector.T) : LONGREAL =
                 FmtBins(ye.vids)));
     
     (* initialization *)
-    WHILE ye.samples.size() < ye.nsamples DO
+    WHILE ye.samples.size() # ye.nsamples DO
       ye.samples.addhi(Make(ye.rand, ye.vids))
-    END;
-
-    IF FALSE THEN
-      (* replace first batch *)
-      FOR i := 0 TO ye.batchsiz - 1 DO
-        ye.samples.put(ye.k, Make(ye.rand, ye.vids));
-        ye.k := (ye.k + 1) MOD ye.nsamples
-      END
     END;
 
     FOR i := 0 TO ye.nsamples - 1 DO
       VAR
-        s : DieData := ye.samples.get(i);
+        s : DieData := ye.samples.get(i); (* pointer *)
       BEGIN
         DoVid(s, ye.vids)
       END
     END;
 
     VAR
-      cnt    := 0;
+      binsDefined  := 0;
+      binnedCnt    := 0;
+      roundedCnt   := 0;
       sumP   := 0.0d0;
       maxbin := -1;
       maxvcust := 0.0d0;
@@ -250,28 +265,41 @@ PROCEDURE EvalYield(ye : YieldEvaluator; state : LRVector.T) : LONGREAL =
             Debug.Out(F("i=%s d.vidP=%s ye.cutoffP=%s",
                         Int(i), LR(d.vidP), LR(ye.cutoffP)))
           END;
+          IF d.vidP # LAST(LONGREAL) THEN
+            INC(binsDefined)
+          END;
           IF d.vidP <= ye.cutoffP THEN
-            INC(cnt);
-            sumP := sumP + d.vidP;
-            maxbin := MAX(maxbin, d.vidbin);
+            INC(binnedCnt);
+            sumP     := sumP + d.vidP;
+            maxbin   := MAX(maxbin, d.vidbin);
             maxvcust := MAX(maxvcust, d.vcust);
-            minvcust := MIN(minvcust, d.vcust);
+            minvcust := MIN(minvcust, d.vcust)
+          END;
+          IF d.rounP <= ye.cutoffP THEN
+            INC(roundedCnt)
           END
         END
       END;
       
-      WITH nf         = FLOAT(ye.nsamples, LONGREAL),
-           cf         = FLOAT(cnt, LONGREAL),
-           yield      = cf / nf,
-           aveP       = DivOr(sumP, cf, 10000.0d0),
-           yieldloss  = 1.0d0 - yield,
-           yieldlossP = yieldloss * aveP,
-           score      = ye.yieldWeight * -yield +
-                        ye.aveWeight * aveP     +
-                        ye.binWeight * -FLOAT(maxbin,LONGREAL)
+      WITH nf           = FLOAT(ye.nsamples, LONGREAL),
+           definedProp  = FLOAT(binsDefined, LONGREAL) / nf,
+           bcf          = FLOAT(binnedCnt, LONGREAL),
+
+           binnedYield  = bcf / nf,
+           aveP         = DivOr(sumP, bcf, 10000.0d0),
+           yieldloss    = 1.0d0 - binnedYield,
+           yieldlossP   = yieldloss * aveP,
+           score        = ye.yieldWeight * -binnedYield +
+                          ye.aveWeight * aveP     +
+                          ye.binWeight * -FLOAT(maxbin,LONGREAL),
+
+           roundedYield = FLOAT(roundedCnt, LONGREAL) / nf 
        DO
-        Debug.Out(F("yield=%s yieldloss=%s aveP=%s score=%s maxbin=%s",
-                    LR(yield),
+        Debug.Out(F("roundedYield=%s definedProp=%s ",
+                    LR(roundedYield),
+                    LR(definedProp)) &
+                  F("binnedYield=%s yieldloss=%s aveP=%s score=%s maxbin=%s",
+                    LR(binnedYield),
                     LR(yieldloss),
                     LR(aveP),
                     LR(score),
@@ -371,6 +399,10 @@ PROCEDURE DoHistograms(rand             : Random.T;
     sfx     := Int(ROUND(cutoffP));
 
   BEGIN
+    Debug.Out(F("DoHistograms cutoffP=%s bin limits=%s",
+                LR(cutoffP),
+                FmtBins(buckets)));
+
 
     FOR i := 0 TO Samples - 1 DO
       samples[i] := Make(rand, buckets);
@@ -403,6 +435,14 @@ PROCEDURE DoHistograms(rand             : Random.T;
     (**********************************************************************)
 
     FOR i := 0 TO Samples - 1 DO
+      hist[i]       := NARROW(samples[i], DieData).rounP
+    END;
+    LRSort.Sort(hist^);
+    Histogram.Do("rounP_"&sfx, hist^, TRUE, 100);
+
+    (**********************************************************************)
+
+    FOR i := 0 TO Samples - 1 DO
       hist[i]       := NARROW(samples[i], DieData).vidP;
       IF hist[i] # LAST(LONGREAL) THEN
         INC(vidCases)
@@ -415,7 +455,7 @@ PROCEDURE DoHistograms(rand             : Random.T;
     Histogram.Do("vidP_"&sfx, SUBARRAY(hist^, 0, vidCases) , TRUE, 100);
 
     WITH wr = FileWr.Open("vminVidP.dat") DO
-      FOR i := 0 TO Samples - 1 DO
+      FOR i := 0 TO MIN(Samples - 1, 100000) DO
         WITH s = NARROW(samples[i], DieData) DO
           IF s.vidbin # -1 THEN
             Wr.PutText(wr, F("%s %s\n", LR(buckets[s.vidbin]), LR(s.vidP)))
@@ -430,6 +470,8 @@ VAR
   residual := Tf2PowerResidual;
 
   marginCoeffs := CopyPoly(Tf2MarginCoeffs);
+
+  sigmaShift := 0.0d0;
   
 CONST
   Tf2PowerResidual = 9.103652d0;
@@ -495,6 +537,10 @@ BEGIN
 
     IF pp.keywordPresent("-S") OR pp.keywordPresent("-samples") THEN
       Samples := pp.getNextInt(min := 1)
+    END;
+
+    IF pp.keywordPresent("-sigmashift") THEN
+      sigmaShift := pp.getNextLongReal()
     END;
     
     pp.skipParsed()
@@ -597,11 +643,11 @@ BEGIN
           END
         ELSE
           WITH ff = NewUOA_M3.Minimize(vec,
-                                      ye,
-                                      npt := 6,
-                                      rhobeg := 0.01d0,
-                                      rhoend := 0.0000001d0,
-                                      maxfun := 100000) DO
+                                       ye,
+                                       npt := 6,
+                                       rhobeg := 0.01d0,
+                                       rhoend := 0.0000001d0,
+                                       maxfun := 100000) DO
             vidBins := UnadjustBins(State2Vids(vec^));
             f := ff
           END
@@ -611,7 +657,7 @@ BEGIN
                     FmtBins(vidBins),
                     LR(f)));
         
-        DoHistograms(rand, cutoffs.get(coi), vidBins)
+        DoHistograms(rand, cutoffs.get(coi), AdjustBins(vidBins))
       END
     END
 
