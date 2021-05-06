@@ -9,12 +9,10 @@ IMPORT Text;
 IMPORT OSError, Wr, Thread;
 IMPORT Pathname;
 IMPORT Rd, FileRd;
-IMPORT Scan;
 IMPORT Stdio;
 IMPORT FloatMode, Lex;
 IMPORT Random;
 IMPORT NormalDeviate AS Normal;
-IMPORT Sortable;
 IMPORT AL;
 IMPORT Histogram;
 IMPORT LRVector, LRScalarField;
@@ -23,6 +21,7 @@ IMPORT NewUOAs;
 IMPORT NewUOA_M3;
 IMPORT Wx;
 IMPORT FileWr;
+IMPORT ReadDist;
 
 <*FATAL Thread.Alerted, Wr.Failure, OSError.E*>
 
@@ -36,7 +35,7 @@ VAR
   doDebug := TRUE;
 
 TYPE
-  DieData = Sortable.T OBJECT
+  DieData = OBJECT
     x, y  : LONGREAL;   (* dist. #s *)
 
     vmin  : LONGREAL;   (* ATE Vmin *)
@@ -55,6 +54,24 @@ TYPE
     vidP  : LONGREAL;   (* P @ VID (incl. VID round-off) *)
   END;
 
+  Model = OBJECT
+    rand       : Random.T;
+    vidBuckets : Vids;
+  METHODS
+    make() : DieData;
+  END;
+
+  OneRegrModel = Model OBJECT
+    regrCoeffs : ARRAY [0..1] OF LONGREAL;
+    margCoeffs : ARRAY [0..1] OF LONGREAL;
+  OVERRIDES
+    make := MakeORM;
+  END;
+
+PROCEDURE MakeORM(model : OneRegrModel) : DieData =
+  BEGIN
+  END MakeORM;
+  
 PROCEDURE Square(x : LONGREAL) : LONGREAL = BEGIN RETURN x * x END Square;
 
 PROCEDURE RoundUp(x                : LONGREAL;
@@ -254,10 +271,10 @@ PROCEDURE EvalYield(ye : YieldEvaluator; state : LRVector.T) : LONGREAL =
       binsDefined  := 0;
       binnedCnt    := 0;
       roundedCnt   := 0;
-      sumP   := 0.0d0;
-      maxbin := -1;
-      maxvcust := 0.0d0;
-      minvcust := LAST(LONGREAL);
+      sumP         := 0.0d0;
+      maxbin       := -1;
+      maxvcust     := 0.0d0;
+      minvcust     := LAST(LONGREAL);
     BEGIN
       FOR i := 0 TO ye.nsamples - 1 DO
         WITH d = NARROW(ye.samples.get(i), DieData) DO
@@ -317,13 +334,11 @@ PROCEDURE DivOr(n, d, x : LONGREAL) : LONGREAL =
   
 VAR
   vminFileN : Pathname.T := NIL;
-  seq := NEW(LRSeq.T).init();
-  arr : REF ARRAY OF LONGREAL;
-  mean, var, sdev : LONGREAL;
+  mean, sdev : LONGREAL;
   pp := NEW(ParseParams.T).init(Stdio.stderr);
   Unit := 0.001d0; (* file input is in millivolts *)
   cutoffs := NEW(LRSeq.T).init();
-
+  n : CARDINAL;
 TYPE
   Vids = ARRAY [0..Tf2VidSteps-1] OF LONGREAL;
 
@@ -393,7 +408,7 @@ PROCEDURE DoHistograms(rand             : Random.T;
                        cutoffP          : LONGREAL;
                        READONLY buckets : Vids) =
   VAR
-    samples := NEW(REF ARRAY OF Sortable.T, Samples);
+    samples := NEW(REF ARRAY OF DieData, Samples);
     hist    := NEW(REF Array, Samples);
     vidCases := 0;
     sfx     := Int(ROUND(cutoffP));
@@ -411,7 +426,7 @@ PROCEDURE DoHistograms(rand             : Random.T;
     (**********************************************************************)
     
     FOR i := 0 TO Samples - 1 DO
-      hist[i]       := NARROW(samples[i], DieData).vminP
+      hist[i]       := samples[i].vminP
     END;
     LRSort.Sort(hist^);
     Histogram.Do("vminP_"&sfx, hist^, TRUE, 100);
@@ -419,7 +434,7 @@ PROCEDURE DoHistograms(rand             : Random.T;
     (**********************************************************************)
     
     FOR i := 0 TO Samples - 1 DO
-      hist[i]       := NARROW(samples[i], DieData).ageP
+      hist[i]       := samples[i].ageP
     END;
     LRSort.Sort(hist^);
     Histogram.Do("ageP_"&sfx, hist^, TRUE, 100);
@@ -427,7 +442,7 @@ PROCEDURE DoHistograms(rand             : Random.T;
     (**********************************************************************)
 
     FOR i := 0 TO Samples - 1 DO
-      hist[i]       := NARROW(samples[i], DieData).custP
+      hist[i]       := samples[i].custP
     END;
     LRSort.Sort(hist^);
     Histogram.Do("custP_"&sfx, hist^, TRUE, 100);
@@ -435,7 +450,7 @@ PROCEDURE DoHistograms(rand             : Random.T;
     (**********************************************************************)
 
     FOR i := 0 TO Samples - 1 DO
-      hist[i]       := NARROW(samples[i], DieData).rounP
+      hist[i]       := samples[i].rounP
     END;
     LRSort.Sort(hist^);
     Histogram.Do("rounP_"&sfx, hist^, TRUE, 100);
@@ -443,7 +458,7 @@ PROCEDURE DoHistograms(rand             : Random.T;
     (**********************************************************************)
 
     FOR i := 0 TO Samples - 1 DO
-      hist[i]       := NARROW(samples[i], DieData).vidP;
+      hist[i]       := samples[i].vidP;
       IF hist[i] # LAST(LONGREAL) THEN
         INC(vidCases)
       END
@@ -456,7 +471,7 @@ PROCEDURE DoHistograms(rand             : Random.T;
 
     WITH wr = FileWr.Open("vminVidP.dat") DO
       FOR i := 0 TO MIN(Samples - 1, 100000) DO
-        WITH s = NARROW(samples[i], DieData) DO
+        WITH s = samples[i] DO
           IF s.vidbin # -1 THEN
             Wr.PutText(wr, F("%s %s\n", LR(buckets[s.vidbin]), LR(s.vidP)))
           END
@@ -551,62 +566,35 @@ BEGIN
 
 
   IF vminFileN # NIL THEN
-    TRY
-      VAR
+    VAR
+      title : TEXT;
+      rd : Rd.T;
+    BEGIN
+      TRY
         rd := FileRd.Open(vminFileN);
-        line : TEXT;
-        val : LONGREAL;
-        lno := 0;
-      BEGIN
-        INC(lno);
-        EVAL Rd.GetLine(rd);
-        LOOP
-          INC(lno);
-          line := Rd.GetLine(rd);
-          val := Scan.LongReal(line) * Unit;
-          seq.addhi(val);
-        END;
-
-      END
-    EXCEPT
-      Rd.EndOfFile => (* ok *)
-    |
-      OSError.E(x) =>
-      Debug.Error(F("error opening input file \"%s\" : OSError.E : %s",
-                    vminFileN,
-                    AL.Format(x)))
-    |
-      Rd.Failure(x) =>
-      Debug.Error(F("error reading input file \"%s\" : Rd.Failure : %s",
-                    vminFileN,
-                    AL.Format(x)))
-    |
-      FloatMode.Trap, Lex.Error =>
+        ReadDist.Read(rd, Unit, n, mean, sdev, title);
+        Rd.Close(rd)
+      EXCEPT
+        OSError.E(x) =>
+        Debug.Error(F("error opening input file \"%s\" : OSError.E : %s",
+                      vminFileN,
+                      AL.Format(x)))
+      |
+        Rd.Failure(x) =>
+        Debug.Error(F("error reading input file \"%s\" : Rd.Failure : %s",
+                      vminFileN,
+                      AL.Format(x)))
+      |
+        FloatMode.Trap, Lex.Error =>
+      END;
+      
+      Debug.Out(F("data read title %s : n %s mean %s sdev %s\n",
+                  title,
+                  Int(n),
+                  LR(mean),
+                  LR(sdev)))
     END
   END;
-
-  arr := NEW(REF ARRAY OF LONGREAL, seq.size());
-  FOR i := 0 TO seq.size() - 1 DO
-    arr[i] := seq.get(i)
-  END;
-
-  LRSort.Sort(arr^); (* not needed, eh? *)
-
-  VAR
-    sumsq, sum := 0.00d0;
-    nf         := FLOAT(NUMBER(arr^),LONGREAL);
-    corr       := Math.sqrt(nf / ( nf - 1.0d0 ));
-  BEGIN
-    FOR i := 0 TO NUMBER(arr^) - 1 DO
-      sumsq := sumsq + arr[i] * arr[i];
-      sum   := sum + arr[i]
-    END;
-    mean := sum / nf;
-    var  := corr * ( sumsq / nf - (mean * mean) );
-    sdev := Math.sqrt(var);
-  END;
-
-  Debug.Out(F("n %s mean %s sdev %s\n", Int(NUMBER(arr^)), LR(mean), LR(sdev)));
 
   VAR
     rand := NEW(Random.Default).init();
