@@ -5,6 +5,8 @@ IMPORT LongRealSeq AS LRSeq;
 IMPORT Math;
 IMPORT Scan;
 IMPORT LongrealArraySort AS LRSort;
+IMPORT Debug;
+FROM Fmt IMPORT Int, F;
 
 <*FATAL Thread.Alerted*>
 
@@ -13,7 +15,7 @@ PROCEDURE Read(rd             : Rd.T;
                VAR n          : CARDINAL;
                VAR mean, sdev : LONGREAL;
                VAR title      : TEXT)
-  RAISES { Lex.Error, FloatMode.Trap } =
+  RAISES { Lex.Error, FloatMode.Trap, Rd.Failure } =
   VAR
     seq := NEW(LRSeq.T).init();
     arr : REF ARRAY OF LONGREAL;
@@ -38,6 +40,9 @@ PROCEDURE Read(rd             : Rd.T;
       Rd.EndOfFile => (* ok *)
     END;
 
+    Debug.Out(F("seq.size() = %s", Int(seq.size())));
+    n := seq.size();
+    
     arr := NEW(REF ARRAY OF LONGREAL, seq.size());
     FOR i := 0 TO seq.size() - 1 DO
       arr[i] := seq.get(i)

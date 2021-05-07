@@ -566,6 +566,7 @@ BEGIN
                       AL.Format(x)))
       |
         FloatMode.Trap, Lex.Error =>
+        Debug.Error(F("parse error reading input file \"%s\"", vminFileN))
       END;
       
       Debug.Out(F("data read title %s : n %s mean %s sdev %s\n",

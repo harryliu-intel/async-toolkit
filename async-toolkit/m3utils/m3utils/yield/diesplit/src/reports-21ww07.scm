@@ -134,21 +134,23 @@
                 )
   )
 
-(report-yields-for-params
- (tfc-model)
-
- params
-
- `(   ;; downbins
-   ;;,(lrhalf-25t-model)
-   ,(15/16-pipe-model)
-   ,(lhalf-25t-model)
-   ,(lhalf-8/16-25t-model)
-   ,(lhalf-16t-model)
-   ,(lrhalf-25t-model)
-   ,(lrhalf-16t-model)
-   ) 
- )
+(define (report-onedie)
+  (report-yields-for-params
+   (tfc-model)
+   
+   params
+   
+   `(   ;; downbins
+     ;;,(lrhalf-25t-model)
+     ,(15/16-pipe-model)
+     ,(lhalf-25t-model)
+     ,(lhalf-8/16-25t-model)
+     ,(lhalf-16t-model)
+     ,(lrhalf-25t-model)
+     ,(lrhalf-16t-model)
+     )
+   )
+  )
 
 (define (report-twodie) 
   (report-yields-for-params
@@ -163,15 +165,15 @@
    )
   )
 
-(dis "*spare-mac* " (stringify *spare-mac* )dnl)
+;;(dis "*spare-mac* " (stringify *spare-mac* )dnl)
 
-(report-twodie)
+;;(report-twodie)
 
-(set! *spare-mac* (not *spare-mac*))
+;;(set! *spare-mac* (not *spare-mac*))
 
-(dis "*spare-mac* " (stringify *spare-mac* )dnl)
+;;(dis "*spare-mac* " (stringify *spare-mac* )dnl)
 
-(report-twodie)
+;;(report-twodie)
 
-(set! *spare-mac* (not *spare-mac*))
+;;(set! *spare-mac* (not *spare-mac*))
 
