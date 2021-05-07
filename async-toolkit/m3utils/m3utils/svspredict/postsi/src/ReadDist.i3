@@ -6,6 +6,6 @@ PROCEDURE Read(rd : Rd.T;
                VAR n : CARDINAL;
                VAR mean, sdev : LONGREAL;
                VAR title : TEXT)
-  RAISES { Lex.Error, FloatMode.Trap };
+  RAISES { Lex.Error, FloatMode.Trap, Rd.Failure };
 
 END ReadDist.
