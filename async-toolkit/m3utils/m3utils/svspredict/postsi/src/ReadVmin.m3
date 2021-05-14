@@ -1,4 +1,4 @@
-MODULE ReadDist;
+MODULE ReadVmin EXPORTS ReadVmin, ReadStats;
 IMPORT Rd, Lex, FloatMode;
 IMPORT Thread;
 IMPORT LongRealSeq AS LRSeq;
@@ -7,6 +7,7 @@ IMPORT Scan;
 IMPORT LongrealArraySort AS LRSort;
 IMPORT Debug;
 FROM Fmt IMPORT Int, F;
+IMPORT TextReader;
 
 <*FATAL Thread.Alerted*>
 
@@ -15,15 +16,30 @@ PROCEDURE Read(rd             : Rd.T;
                VAR n          : CARDINAL;
                VAR mean, sdev : LONGREAL;
                VAR title      : TEXT)
-  RAISES { Lex.Error, FloatMode.Trap, Rd.Failure } =
+  RAISES { Lex.Error, FloatMode.Trap, Rd.Failure, TextReader.NoMore } =
   VAR
     seq := NEW(LRSeq.T).init();
-    arr : REF ARRAY OF LONGREAL;
     
+  BEGIN
+    ReadFile(rd, ARRAY OF LRSeq.T { seq }, title);
+    VAR
+      m, s : LONGREAL;
+    BEGIN
+      DoStats(seq, n, m, s);
+      mean := m * Unit;
+      sdev := s * Unit
+    END
+  END Read;
+
+PROCEDURE ReadFile(rd            : Rd.T;
+                   READONLY into : ARRAY OF LRSeq.T;
+                   VAR title     : TEXT)
+  RAISES { Lex.Error, FloatMode.Trap, Rd.Failure, TextReader.NoMore } =
   BEGIN
     TRY
       VAR
         line : TEXT;
+        reader : TextReader.T;
         val : LONGREAL;
         lno := 0;
       BEGIN
@@ -32,18 +48,30 @@ PROCEDURE Read(rd             : Rd.T;
         LOOP
           INC(lno);
           line := Rd.GetLine(rd);
-          val  := Scan.LongReal(line) * Unit;
-          seq.addhi(val);
+          reader := NEW(TextReader.T).init(line);
+          FOR i := FIRST(into) TO LAST(into) DO
+            WITH seq = into[i] DO
+              val  := Scan.LongReal(reader.nextE(","));
+              seq.addhi(val);
+            END
+          END
         END
       END
     EXCEPT
       Rd.EndOfFile => (* ok *)
     END;
-
-    Debug.Out(F("seq.size() = %s", Int(seq.size())));
-    n := seq.size();
-    
+  END ReadFile;
+  
+  
+PROCEDURE DoStats(seq            : LRSeq.T;
+                  VAR n          : CARDINAL;
+                  VAR mean, sdev : LONGREAL) =
+  VAR
     arr := NEW(REF ARRAY OF LONGREAL, seq.size());
+  BEGIN
+    Debug.Out(F("seq.size() = %s", Int(seq.size())));
+    n   := seq.size();
+
     FOR i := 0 TO seq.size() - 1 DO
       arr[i] := seq.get(i)
     END;
@@ -64,6 +92,7 @@ PROCEDURE Read(rd             : Rd.T;
       var  := corr * ( sumsq / nf - (mean * mean) );
       sdev := Math.sqrt(var);
     END
-  END Read;
 
-BEGIN END ReadDist.
+  END DoStats;
+
+BEGIN END ReadVmin.

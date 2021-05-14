@@ -40,4 +40,6 @@ PROCEDURE EvalSpecialCases(wr : Wr.T;
 PROCEDURE EvalCustomerMaxSpec(READONLY p : Power.Params;
                               worstSigma : LONGREAL) : LONGREAL;
 
+PROCEDURE WeightLkgSigma(READONLY sigma : ARRAY N7Tech.Transistor OF LONGREAL) : LONGREAL;
+  
 END JBay.

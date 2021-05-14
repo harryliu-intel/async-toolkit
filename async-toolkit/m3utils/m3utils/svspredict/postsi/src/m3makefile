@@ -6,8 +6,12 @@ import ("newuoa")
 implementation ("Main")
 
 Module ("LrArray")
-Module ("ReadDist")
+
+Module ("ReadPmroVmin")
+Module ("ReadVmin")
+
 Interface ("DieData")
+interface ("ReadStats")
 
 Table ("LrArrayLR", "LrArray", "LongrealType")
 

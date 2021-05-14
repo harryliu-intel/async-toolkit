@@ -21,8 +21,10 @@ IMPORT NewUOAs;
 IMPORT NewUOA_M3;
 IMPORT Wx;
 IMPORT FileWr;
-IMPORT ReadDist;
+IMPORT ReadVmin;
+IMPORT ReadPmroVmin;
 IMPORT DieData; FROM DieData IMPORT Vids;
+IMPORT N7PMRO;
 
 <*FATAL Thread.Alerted, Wr.Failure, OSError.E*>
 
@@ -41,6 +43,7 @@ TYPE
     vidBuckets : Vids;
   METHODS
     make() : DieData.T;
+    doVid(x : DieData.T) := DoVidModel;
   END;
 
   OneRegrModel = Model OBJECT
@@ -53,7 +56,14 @@ TYPE
 
 PROCEDURE MakeORM(model : OneRegrModel) : DieData.T =
   BEGIN
+    RETURN Make(model.rand,
+                model.vidBuckets)
   END MakeORM;
+
+PROCEDURE DoVidModel(model : Model; x : DieData.T) =
+  BEGIN
+    DoVid(x, model.vidBuckets)
+  END DoVidModel;
   
 PROCEDURE Square(x : LONGREAL) : LONGREAL = BEGIN RETURN x * x END Square;
 
@@ -94,7 +104,7 @@ PROCEDURE Make(rand                : Random.T;
     RETURN res
   END Make;
 
-PROCEDURE DoVid(VAR res : DieData.T; READONLY vidBuckets : Vids) =
+PROCEDURE DoVid(res : DieData.T; READONLY vidBuckets : Vids) =
   VAR
     vid   : LONGREAL;
     bin   : CARDINAL;
@@ -185,6 +195,8 @@ PROCEDURE Poly(x               : LONGREAL;
 
 TYPE
   YieldEvaluator = LRScalarField.Default OBJECT
+    model              : Model;
+    
     rand               : Random.T;
     cutoffP            : LONGREAL;
     nsamples, batchsiz : CARDINAL;
@@ -192,7 +204,6 @@ TYPE
     yieldWeight        : LONGREAL;
     binWeight          : LONGREAL;
 
-    vids               : Vids;          (* scratch *)
     samples            : RefSeq.T;      (* state *)
     k                  : CARDINAL := 0; (* pointer to next elem *)
 
@@ -231,22 +242,22 @@ PROCEDURE EvalYield(ye : YieldEvaluator; state : LRVector.T) : LONGREAL =
     val : LONGREAL;
   BEGIN
     (* copy vids *)
-    ye.vids := State2Vids(state^);
+    ye.model.vidBuckets := State2Vids(state^);
 
     Debug.Out(F("EvalYield with state %s bin limits=%s",
                 FmtState(state^),
-                FmtBins(ye.vids)));
+                FmtBins(ye.model.vidBuckets)));
     
     (* initialization *)
     WHILE ye.samples.size() # ye.nsamples DO
-      ye.samples.addhi(Make(ye.rand, ye.vids))
+      ye.samples.addhi(ye.model.make())
     END;
 
     FOR i := 0 TO ye.nsamples - 1 DO
       VAR
         s : DieData.T := ye.samples.get(i); (* pointer *)
       BEGIN
-        DoVid(s, ye.vids)
+        DoVid(s, ye.model.vidBuckets)
       END
     END;
 
@@ -316,12 +327,14 @@ PROCEDURE DivOr(n, d, x : LONGREAL) : LONGREAL =
   END DivOr;
   
 VAR
-  vminFileN : Pathname.T := NIL;
-  mean, sdev : LONGREAL;
-  pp := NEW(ParseParams.T).init(Stdio.stderr);
-  Unit := 0.001d0; (* file input is in millivolts *)
-  cutoffs := NEW(LRSeq.T).init();
-  n : CARDINAL;
+  vminFileN          : Pathname.T := NIL;
+  mean, sdev         : LONGREAL;
+  meanPmro, sdevPmro : LONGREAL;
+  n                  : CARDINAL;
+
+  Unit     := 0.001d0;      (* file input is in millivolts *)
+  pp       := NEW(ParseParams.T).init(Stdio.stderr);
+  cutoffs  := NEW(LRSeq.T).init();
 
 PROCEDURE AdjustBins(READONLY preVrAdj : Vids) : Vids =
   (* adjust cutoffs from pre-VR adjustment to post-VR adjustment.
@@ -385,7 +398,7 @@ PROCEDURE Vids2State(READONLY vids : Vids) : State =
     RETURN res
   END Vids2State;
 
-PROCEDURE DoHistograms(rand             : Random.T;
+PROCEDURE DoHistograms(model            : Model;
                        cutoffP          : LONGREAL;
                        READONLY buckets : Vids) =
   VAR
@@ -401,7 +414,7 @@ PROCEDURE DoHistograms(rand             : Random.T;
 
 
     FOR i := 0 TO Samples - 1 DO
-      samples[i] := Make(rand, buckets);
+      samples[i] := model.make()
     END;
 
     (**********************************************************************)
@@ -511,9 +524,19 @@ CONST
                      0.675d0,
                      0.676d0,
                      0.700d0 };
+TYPE
+  Mode = { Vmin, Pmro };
+
+VAR
+  mode := Mode.Vmin;
+  
 BEGIN
   
   TRY
+    IF pp.keywordPresent("-pmro") THEN
+      mode := Mode.Pmro;
+    END;
+    
     IF pp.keywordPresent("-f") THEN
       vminFileN := pp.getNext();
     END;
@@ -552,7 +575,15 @@ BEGIN
     BEGIN
       TRY
         rd := FileRd.Open(vminFileN);
-        ReadDist.Read(rd, Unit, n, mean, sdev, title);
+        CASE mode OF
+          Mode.Vmin =>
+          ReadVmin.Read(rd, Unit, n, mean, sdev, title)
+        |
+          Mode.Pmro =>
+          ReadPmroVmin.Read(rd, Unit, N7PMRO.V, n,
+                            mean, sdev,
+                            meanPmro, sdevPmro)
+        END;
         Rd.Close(rd)
       EXCEPT
         OSError.E(x) =>
@@ -586,16 +617,21 @@ BEGIN
     f : LONGREAL;
   BEGIN
     FOR coi := 0 TO cutoffs.size() - 1 DO
-      WITH ye  = NEW(YieldEvaluator,
-                     rand        := rand,
-                     cutoffP     := cutoffs.get(coi),
-                     nsamples    := Samples,
-                     batchsiz    := Samples DIV 100,
-                     aveWeight   := 10.0d0,
-                     yieldWeight := 1000000.0d0,
-                     binWeight   := 0.0d0,
-                     
-                     samples     := NEW(RefSeq.T).init()),
+      WITH model = NEW(Model,
+                       rand       := rand),
+           ye    = NEW(YieldEvaluator,
+                       
+                       model       := model,
+                       
+                       rand        := rand,
+                       cutoffP     := cutoffs.get(coi),
+                       nsamples    := Samples,
+                       batchsiz    := Samples DIV 100,
+                       aveWeight   := 10.0d0,
+                       yieldWeight := 1000000.0d0,
+                       binWeight   := 0.0d0,
+                       
+                       samples     := NEW(RefSeq.T).init()),
            vec = NEW(REF ARRAY OF LONGREAL, NUMBER(State)) DO
         vec^ := Vids2State(buckets);
         Debug.Out(F("Starting with cutoff %s : bins %s ; state %s",
@@ -626,7 +662,9 @@ BEGIN
                     FmtBins(vidBins),
                     LR(f)));
         
-        DoHistograms(rand, cutoffs.get(coi), AdjustBins(vidBins))
+        DoHistograms(model,
+                     cutoffs.get(coi),
+                     AdjustBins(vidBins))
       END
     END
 

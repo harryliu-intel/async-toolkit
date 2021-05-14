@@ -406,7 +406,7 @@ CONST
 
 
 
-PROCEDURE WeightLkgSigma(sigma : ARRAY Tech.Transistor OF LONGREAL) : LONGREAL =
+PROCEDURE WeightLkgSigma(READONLY sigma : ARRAY Tech.Transistor OF LONGREAL) : LONGREAL =
   VAR
     sumWeight, sumSigma := 0.0d0;
   BEGIN
