@@ -13,16 +13,19 @@ IMPORT FileWr;
 FROM Fmt IMPORT F;
 IMPORT Stdio;
 IMPORT Thread;
+IMPORT TextSeq;
+IMPORT TextReader;
+IMPORT TextList;
 
 <*FATAL Thread.Alerted*>
 
 CONST TE = Text.Equal;
 
 TYPE
-  Strategy = { Space };
+  Strategy = { Space, Multi };
 
 CONST
-  StrategyNames = ARRAY Strategy OF TEXT { "space" };
+  StrategyNames = ARRAY Strategy OF TEXT { "space", "multi" };
 
 TYPE
   ColFinder = PROCEDURE (line : TEXT) : CardSeq.T;
@@ -35,7 +38,8 @@ TYPE
     wr     : Wr.T;
   END;
 
-CONST Finders = ARRAY Strategy OF ColFinder { SpaceFinder };
+CONST Finders = ARRAY Strategy OF ColFinder { SpaceFinder,
+                                              SpaceFinder };
 
       
   
@@ -62,6 +66,13 @@ PROCEDURE SpaceFinder(line : TEXT) : CardSeq.T =
             nspaces := 0
           END;
           IF nspaces = minColSpaces THEN
+            (* add keyword to list of keywords *)
+            WITH start = seq.get(seq.size() - 1),
+                 lim   = q - nspaces + 1,
+                 len   = lim - start,
+                 heading = Text.Sub(line, start, len) DO
+              headings.addhi(heading)
+            END;
             spaces := TRUE
           END
         ELSE (* doing spaces *)
@@ -76,7 +87,14 @@ PROCEDURE SpaceFinder(line : TEXT) : CardSeq.T =
     RETURN seq
   END SpaceFinder;
 
-PROCEDURE Generate(line : TEXT; gen : GenRec; cols : CardSeq.T)
+VAR headings := NEW(TextSeq.T).init();
+
+TYPE Generator = PROCEDURE(line : TEXT; gen : GenRec; cols : CardSeq.T)
+  RAISES { Wr.Failure };
+
+CONST Generators = ARRAY Strategy OF Generator { SpaceGen, MultiGen };
+      
+PROCEDURE SpaceGen(line : TEXT; gen : GenRec; cols : CardSeq.T)
   RAISES { Wr.Failure } =
   VAR
     len := Text.Length(line);
@@ -99,18 +117,79 @@ PROCEDURE Generate(line : TEXT; gen : GenRec; cols : CardSeq.T)
       Wr.PutText(gen.wr, Text.Sub(line, start, stop - start + 1));
       Wr.PutChar(gen.wr, '\n')
     END
-  END Generate;
+  END SpaceGen;
+
+PROCEDURE ToArray(lst : TextList.T; n : CARDINAL) : REF ARRAY OF TEXT =
+  VAR
+    res := NEW(REF ARRAY OF TEXT, n);
+    p := lst;
+    j := 0;
+  BEGIN
+    WHILE p # NIL DO
+      res[j] := p.head;
+
+      INC(j); p := p.tail
+    END;
+    RETURN res
+  END ToArray;
+    
+PROCEDURE MultiGen(line : TEXT; gen : GenRec; cols : CardSeq.T)
+  RAISES { Wr.Failure } =
+  VAR
+    nCols := cols.size();
+    reader := NEW(TextReader.T).init(line);
+    tokens := reader.shatter(" ", "", TRUE);
+    nToks  := TextList.Length(tokens);
+    arr    := ToArray(tokens, nToks);
+    vals   := NEW(REF ARRAY OF TEXT, nCols);
+  BEGIN
+    <*ASSERT multiColNum # -1 *>
+    <*ASSERT multiColNum < nCols *>
+    FOR c := 0 TO nCols - 1 DO
+      IF    c > nToks - 1 THEN
+        vals[c] := ""
+      ELSIF nCols > nToks OR c < multiColNum THEN
+        (* if there are not enough tokens to go around we just copy them *)
+        vals[c] := arr[c]
+      ELSIF c > multiColNum THEN
+        (* there are enough tokens that every column has at least one.
+           extra tokens go in the special column *)
+        vals[c] := arr[c - nCols + nToks]
+      ELSE
+        <*ASSERT nCols <= nToks AND c = multiColNum*>
+        VAR
+          str := "";
+        BEGIN
+          FOR i := c TO c - nCols + nToks DO
+            str := str & arr[i];
+            IF i # c - nCols + nToks THEN
+              str := str & " "
+            END
+          END;
+          vals[c] := str
+        END
+      END
+    END;
+
+    FOR i := 0 TO nCols - 1 DO
+      Wr.PutText(gen.wr, vals[i]);
+      IF i # nCols - 1 THEN
+        Wr.PutChar(gen.wr, ',')
+      ELSE
+        Wr.PutChar(gen.wr, '\n')
+      END
+    END
+        
+  END MultiGen;
   
 VAR
   ifn : Pathname.T := NIL;
   pp       := NEW(ParseParams.T).init(Stdio.stderr);
+  multiColName : TEXT := NIL;
+  multiColNum : [-1..LAST(CARDINAL) ] := -1;
 BEGIN
 
   TRY
-    IF pp.keywordPresent("-strategy") THEN
-      (* not yet *)
-    END;
-
     IF pp.keywordPresent("-csv") THEN
       VAR
         rec := NEW(GenRec,
@@ -119,6 +198,11 @@ BEGIN
       BEGIN
         generators.addhi(rec)
       END
+    END;
+
+    IF pp.keywordPresent("-multi") THEN
+      strategy := Strategy.Multi;
+      multiColName := pp.getNext()
     END;
 
     IF pp.keywordPresent("-f") THEN
@@ -171,11 +255,22 @@ BEGIN
         line  := Rd.GetLine(rd);
         dummy := Rd.GetLine(rd);
         WITH cols = Finders[strategy](line) DO
+          IF strategy = Strategy.Multi THEN
+            FOR i := 0 TO cols.size() - 1 DO
+              IF TE(headings.get(i), multiColName) THEN
+                multiColNum := i;
+                EXIT
+              END
+            END;
+            IF multiColNum = -1 THEN
+              Debug.Error(F("Can't find column named \"%s\"", multiColName))
+            END
+          END;
           LOOP
             line := Rd.GetLine(rd);
             FOR i := 0 TO generators.size() - 1 DO
               TRY
-                Generate(line, generators.get(i), cols)
+                Generators[strategy](line, generators.get(i), cols)
               EXCEPT
                 Wr.Failure(x) => 
                 Debug.Error(F("I/O error writing to %s : Wr.Failure : %s",
