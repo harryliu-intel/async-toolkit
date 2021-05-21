@@ -10,22 +10,26 @@ IMPORT Pathname;
 IMPORT Wr;
 IMPORT Text;
 IMPORT FileWr;
-FROM Fmt IMPORT F;
+FROM Fmt IMPORT F, Int;
 IMPORT Stdio;
 IMPORT Thread;
 IMPORT TextSeq;
 IMPORT TextReader;
 IMPORT TextList;
+IMPORT TextCardTbl;
+IMPORT Params;
 
 <*FATAL Thread.Alerted*>
+
+CONST Usage = "-f [<input file>|-] [-csv <output file>|-] [-multi <multicolname>] ([-span <spancolname> <span>] ..)";
 
 CONST TE = Text.Equal;
 
 TYPE
-  Strategy = { Space, Multi };
+  Strategy = { Space, Multi, Span };
 
 CONST
-  StrategyNames = ARRAY Strategy OF TEXT { "space", "multi" };
+  StrategyNames = ARRAY Strategy OF TEXT { "space", "multi", "span" };
 
 TYPE
   ColFinder = PROCEDURE (line : TEXT) : CardSeq.T;
@@ -39,9 +43,62 @@ TYPE
   END;
 
 CONST Finders = ARRAY Strategy OF ColFinder { SpaceFinder,
+                                              SpaceFinder,
                                               SpaceFinder };
 
+TYPE Setup = PROCEDURE (cols : CardSeq.T; headings : TextSeq.T);
+     
+CONST Setups = ARRAY Strategy OF Setup { NIL,
+                                         MultiSetup,
+                                         SpanSetup };
       
+PROCEDURE MultiSetup(cols : CardSeq.T; headings : TextSeq.T) =
+  BEGIN
+    FOR i := 0 TO cols.size() - 1 DO
+      IF TE(headings.get(i), multiColName) THEN
+        multiColNum := i;
+        EXIT
+      END
+    END;
+    IF multiColNum = -1 THEN
+      Debug.Error(F("Can't find column named \"%s\"", multiColName))
+    END
+  END MultiSetup;
+
+PROCEDURE SpanSetup(cols : CardSeq.T; headings : TextSeq.T) =
+  VAR
+    iter := span.iterate();
+    k : TEXT;
+    c : CARDINAL;
+    found : BOOLEAN;
+  BEGIN
+    spans := NEW(REF ARRAY OF CARDINAL, cols.size());
+    WHILE iter.next(k, c) DO
+      found := FALSE;
+      FOR i := 0 TO cols.size() - 1 DO
+        IF TE(headings.get(i), k) THEN
+          Debug.Out(F("Found span %s at %s", k, Int(i)));
+          found := TRUE; EXIT
+        END
+      END;
+      IF NOT found THEN
+        Debug.Error(F("Can't find column named \"%s\"", k))
+      END
+    END;
+
+    FOR i := 0 TO headings.size() - 1 DO
+      IF span.get(headings.get(i), c) THEN
+        spans[i] := c
+      ELSE
+        spans[i] := 1
+      END;
+
+      Debug.Out(F("col %s heading %s span %s",
+                  Int(i),
+                  headings.get(i),
+                  Int(spans[i])))
+    END
+  END SpanSetup;
   
 VAR
   minColSpaces := 2;
@@ -92,7 +149,7 @@ VAR headings := NEW(TextSeq.T).init();
 TYPE Generator = PROCEDURE(line : TEXT; gen : GenRec; cols : CardSeq.T)
   RAISES { Wr.Failure };
 
-CONST Generators = ARRAY Strategy OF Generator { SpaceGen, MultiGen };
+CONST Generators = ARRAY Strategy OF Generator { SpaceGen, MultiGen, SpanGen };
       
 PROCEDURE SpaceGen(line : TEXT; gen : GenRec; cols : CardSeq.T)
   RAISES { Wr.Failure } =
@@ -171,22 +228,68 @@ PROCEDURE MultiGen(line : TEXT; gen : GenRec; cols : CardSeq.T)
       END
     END;
 
+    PushVals(gen.wr, vals^)
+  END MultiGen;
+  
+PROCEDURE SpanGen(line : TEXT; gen : GenRec; cols : CardSeq.T)
+  RAISES { Wr.Failure } =
+  VAR
+    nCols  := cols.size();
+    reader := NEW(TextReader.T).init(line);
+    tokens := reader.shatter(" ", "", TRUE);
+    nToks  := TextList.Length(tokens);
+    arr    := ToArray(tokens, nToks);
+    vals   := NEW(REF ARRAY OF TEXT, nCols);
+    p      := 0;
+  BEGIN
+    FOR i := FIRST(vals^) TO LAST(vals^) DO
+      vals[i] := "";
+      FOR j := 0 TO spans[i] - 1 DO
+        IF p <= LAST(arr^) THEN
+          IF j # 0 THEN
+            vals[i] := vals[i] & " ";
+          END;
+          vals[i] := vals[i] & arr[p];
+          INC(p)
+        END
+      END
+    END;
+
+    PushVals(gen.wr, vals^)
+  END SpanGen;
+
+PROCEDURE PutHeader(headings : TextSeq.T; gen : GenRec)
+  RAISES { Wr.Failure } =
+  BEGIN
+    FOR i := 0 TO headings.size() - 1 DO
+      IF i # 0 THEN Wr.PutChar(gen.wr, ',') END;
+      Wr.PutText(gen.wr, headings.get(i))
+    END;
+    Wr.PutChar(gen.wr, '\n')
+  END PutHeader;
+
+PROCEDURE PushVals(wr : Wr.T; READONLY vals : ARRAY OF TEXT)
+  RAISES { Wr.Failure } =
+  VAR
+    nCols := NUMBER(vals);
+  BEGIN
     FOR i := 0 TO nCols - 1 DO
-      Wr.PutText(gen.wr, vals[i]);
+      Wr.PutText(wr, vals[i]);
       IF i # nCols - 1 THEN
-        Wr.PutChar(gen.wr, ',')
+        Wr.PutChar(wr, ',')
       ELSE
-        Wr.PutChar(gen.wr, '\n')
+        Wr.PutChar(wr, '\n')
       END
     END
-        
-  END MultiGen;
+  END PushVals;
   
 VAR
   ifn : Pathname.T := NIL;
   pp       := NEW(ParseParams.T).init(Stdio.stderr);
   multiColName : TEXT := NIL;
   multiColNum : [-1..LAST(CARDINAL) ] := -1;
+  span := NEW(TextCardTbl.Default).init();
+  spans : REF ARRAY OF CARDINAL;
 BEGIN
 
   TRY
@@ -205,12 +308,24 @@ BEGIN
       multiColName := pp.getNext()
     END;
 
+    WHILE pp.keywordPresent("-span") DO
+      strategy := Strategy.Span;
+      WITH colName = pp.getNext(),
+           colSpan = pp.getNextInt() DO
+        EVAL span.put(colName, colSpan)
+      END
+    END;
+
     IF pp.keywordPresent("-f") THEN
       ifn := pp.getNext()
     END;
 
+    pp.finish()
   EXCEPT
-    ParseParams.Error => Debug.Error("Can't parse command line")
+    ParseParams.Error => 
+    Debug.Error(F("%s : can't parse command line : usage : %s ",
+                  Params.Get(0),
+                  Usage))
   END;
 
   IF ifn = NIL THEN
@@ -255,17 +370,25 @@ BEGIN
         line  := Rd.GetLine(rd);
         dummy := Rd.GetLine(rd);
         WITH cols = Finders[strategy](line) DO
-          IF strategy = Strategy.Multi THEN
-            FOR i := 0 TO cols.size() - 1 DO
-              IF TE(headings.get(i), multiColName) THEN
-                multiColNum := i;
-                EXIT
-              END
-            END;
-            IF multiColNum = -1 THEN
-              Debug.Error(F("Can't find column named \"%s\"", multiColName))
+
+          (* do any necessary setup *)
+          WITH setup = Setups[strategy] DO
+            IF setup # NIL THEN
+              setup(cols, headings)
             END
           END;
+
+          FOR i := 0 TO generators.size() - 1 DO
+            TRY
+              PutHeader(headings, generators.get(i))
+            EXCEPT
+              Wr.Failure(x) => 
+              Debug.Error(F("I/O error writing header to %s : Wr.Failure : %s",
+                            NARROW(generators.get(i),GenRec).path,
+                            AL.Format(x)))
+            END
+          END;
+
           LOOP
             line := Rd.GetLine(rd);
             FOR i := 0 TO generators.size() - 1 DO
@@ -273,7 +396,7 @@ BEGIN
                 Generators[strategy](line, generators.get(i), cols)
               EXCEPT
                 Wr.Failure(x) => 
-                Debug.Error(F("I/O error writing to %s : Wr.Failure : %s",
+                Debug.Error(F("I/O error writing body to %s : Wr.Failure : %s",
                               NARROW(generators.get(i),GenRec).path,
                               AL.Format(x)))
               END
