@@ -1703,22 +1703,22 @@ public final class CastQuery {
      **/
     private static class TransistorStat extends HierTask {
         private static class Stat {
-            private int number;
+            private long number;
             private double width;
             private double area;
-            public Stat(final int number, final double width,
+            public Stat(final long number, final double width,
                         final double area) {
                 this.number = number;
                 this.width = width;
                 this.area = area;
             }
-            public void add(final int number, final double width,
+            public void add(final long number, final double width,
                             final double area) {
                 this.number += number;
                 this.width += width;
                 this.area += area;
             }
-            public int getNumber() {
+            public long getNumber() {
                 return number;
             }
             public double getWidth() {
@@ -1728,7 +1728,7 @@ public final class CastQuery {
                 return area;
             }
             public String toString() {
-                return Integer.toString(getNumber()) + " " +
+                return Long.toString(getNumber()) + " " +
                        printDouble(getWidth()) + " " +
                        printDouble(getArea());
             }
