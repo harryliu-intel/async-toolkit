@@ -1,0 +1,9 @@
+-sdfretain
++transport_path_delays
++pulse_r/0
++pulse_e/0
++pathpulse
++neg_tchk
+-negdelay
++define+INTC_MEM_GLS
++define+BD_EXTRA_DELAY=#1ps

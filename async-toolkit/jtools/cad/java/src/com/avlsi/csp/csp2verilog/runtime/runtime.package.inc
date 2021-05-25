@@ -15,7 +15,9 @@ share/cast2verilog/define.v            define.v            644  p
 share/cast2verilog/filter.v            filter.v            644  p
 share/cast2verilog/fpga.vcfg           fpga.vcfg           644  p
 share/cast2verilog/fpga_reset.v        fpga_reset.v        644  p
+share/cast2verilog/1276.vcfg           1276.vcfg           644  p
 share/cast2verilog/gls.vcfg            gls.vcfg            644  p
+share/cast2verilog/sdf.vcfg            sdf.vcfg            644  p
 share/cast2verilog/new-timingbuffer.v  new-timingbuffer.v  644  p
 share/cast2verilog/nodeconverter.v     nodeconverter.v     644  p
 share/cast2verilog/nwwn.sv             nwwn.sv             644  p
@@ -23,3 +25,4 @@ share/cast2verilog/readhexint.sv       readhexint.sv       644  p
 share/cast2verilog/readhexint.c        readhexint.c        644  p
 share/cast2verilog/runtime.vcfg        runtime.vcfg        644  p
 share/cast2verilog/time.v              time.v              644  p
+share/cast2verilog/sdf_workarounds.tcl sdf_workarounds.tcl 644  p

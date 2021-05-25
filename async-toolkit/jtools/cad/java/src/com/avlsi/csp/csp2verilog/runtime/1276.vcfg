@@ -1,0 +1,25 @@
+-v $STDCELL_DIR/g1m/v/an/g1m_an.v
+-v $STDCELL_DIR/g1m/v/bn/g1m_bn.v
+-v $STDCELL_DIR/g1m/v/cn/g1m_cn.v
+-v $STDCELL_DIR/g1m/v/dn/g1m_dn.v
+-v $STDCELL_DIR/g1mls/v/an/g1mls_an.v
+-v $STDCELL_DIR/g1mls/v/bn/g1mls_bn.v
+-v $STDCELL_DIR/g1mls/v/cn/g1mls_cn.v
+-v $STDCELL_DIR/g1mspecial/v/an/g1mspecial_an.v
+-v $STDCELL_DIR/g1mspecial/v/bn/g1mspecial_bn.v
+-v $STDCELL_DIR/g1mspecial/v/cn/g1mspecial_cn.v
+-v $STDCELL_DIR/g1mspecial/v/dn/g1mspecial_dn.v
+-v $GPIO_DIR/ip76gpio1p0ff_e/rtl/ip76gpio1p0ff_e.v
+-v $GPIO_DIR/ip76gpio1p0ff_n/rtl/ip76gpio1p0ff_n.v
+-v $GPIO_DIR/ip76gpio_1p0_powergood_e/rtl/ip76gpio_1p0_powergood_e.v
+-v $GPIO_DIR/ip76gpio_1p0_powergood_n/rtl/ip76gpio_1p0_powergood_n.v
+-v $GPIO_DIR/ip76gpio_esdclamp_1p0_e/rtl/ip76gpio_esdclamp_1p0_e.v
+-v $GPIO_DIR/ip76gpio_esdclamp_1p0_n/rtl/ip76gpio_esdclamp_1p0_n.v
+-v $GPIO_DIR/ip76wireio_edma_e/rtl/ip76wireio_edma_e.v
+-v $GPIO_DIR/ip76wireio_edma_n/rtl/ip76wireio_edma_n.v
+-v $CMO_DIR/mem1024x40/rtl/mem1024x40/src/rtl/mem1024x40.sv
+-v $CMO_DIR/mem2048x40/rtl/mem2048x40/src/rtl/mem2048x40.sv
+-v $CMO_DIR/mem2048x73/rtl/mem2048x73/src/rtl/mem2048x73.sv
+-v $CMO_DIR/mem512x73/rtl/mem512x73/src/rtl/mem512x73.sv
+-y $G1MBD_DIR
++libext+.v

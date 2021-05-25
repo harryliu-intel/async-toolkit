@@ -8,9 +8,10 @@ use FindBin;
 use Cwd qw/abs_path/;
 
 my ($cast_path, $spar_dir, $gls_dir, $cell, $env, $cosim, @cast_defines);
-my ($beh, $fpga_path, @c2v_args, @vcs_args, $kdb, $sdf, $help, $nodebug);
+my ($beh, $fpga_path, @c2v_args, @vcs_args, $kdb, @sdf, $help, $nodebug);
 my $width = 300;
 my $mem = '16G';
+my $reset_duration = '10ns';
 GetOptions("cast-path=s" => \$cast_path,
            "spar-dir=s"  => \$spar_dir,
            "gls-dir=s"   => \$gls_dir,
@@ -26,7 +27,7 @@ GetOptions("cast-path=s" => \$cast_path,
            "beh!"        => \$beh,
            "kdb!"        => \$kdb,
            "no-debug!"   => \$nodebug,
-           "sdf=s"       => \$sdf,
+           "sdf=s"       => \@sdf,
            "help!"       => \$help) || pod2usage(2);
 
 pod2usage(-verbose => 1) if $help;
@@ -63,6 +64,8 @@ system($cmd) == 0 || die "Error executing cast2verilog: $!";
 
 my $instdir = $ENV{'FULCRUM_PACKAGE_ROOT'};
 
+my $runtime = "$instdir/share/cast2verilog";
+
 my $vcfg = $beh ? 'beh.vcfg' : 'fpga.vcfg';
 
 my @defines = ();
@@ -79,19 +82,43 @@ push @vcs_args, '-kdb' if $kdb;
 open my $fh, ">$runvcs" || die "Can't open $runvcs: $!";
 
 if ($gls_dir) {
-    if ($sdf) {
-        push @vcs_args, '+pulse_r/0',
-                        '+pulse_e/0',
-                        '+pathpulse',
-                        '+neg_tchk',
-                        '-negdelay',
-                        '-sdf', "\Q$sdf\E";
+    if (@sdf) {
+        my %binds = ();
+
+        my $reset_tcl = "sdf_reset.tcl";
+        open my $fh2, ">$reset_tcl" || die "Can't open $reset_tcl: $!";
+        print $fh2 <<"EOF";
+source $runtime/sdf_workarounds.tcl
+reset_tcheck $reset_duration
+EOF
+        foreach my $sdf (@sdf) {
+            my ($minmax, $block, $sdf_dir) = split /:/, $sdf;
+            my $arg = "$minmax:$block:$sdf_dir/$block.$minmax.sdf.gz";
+            print $fh2 "run_workarounds $block $sdf_dir/$block.$minmax\n";
+            push @args, '-sdf', "\Q$arg\E";
+            if (open(my $fh1, '<', "$sdf_dir/$block.$minmax.bind_notifiers.sv")) {
+                while (<$fh1>) {
+                    chomp;
+                    $binds{$_} = 1;
+                }
+                close $fh1;
+            }
+        }
+        close $fh2;
+
+        push @args, '-f', '$CAST2VERILOG_RUNTIME/sdf.vcfg';
+        if (%binds) {
+            my $nsv = 'bind_notifiers.sv';
+            open my $fh1, '>', $nsv || die "Can't open $nsv: $!";
+            print $fh1 join('', map { "$_\n" } keys %binds);
+            close $fh1;
+            push @args, $nsv;
+        }
+
     } else {
-        push @vcs_args, '+define+functional',
-                        '+define+no_unit_delay',
-                        '+nospecify';
+        push @args, '-f', '$CAST2VERILOG_RUNTIME/gls.vcfg';
     }
-    push @args, '-f', '$CAST2VERILOG_RUNTIME/gls.vcfg';
+    push @args, '-f', '$CAST2VERILOG_RUNTIME/1276.vcfg';
     print $fh <<'EOF';
 if [[ -z "$NCL_DIR" ]]; then
     if [[ "$EC_SITE" = "sc" ]]; then
@@ -115,7 +142,7 @@ push @vcs_args, '-debug_access+dmptf+all', '-debug_region=lib+cell' unless $node
 print $fh <<EOF;
 export SPAR="$spar_dir"
 export COLLATERAL=/nfs/sc/proj/ctg/mrl108/mrl/collateral
-export CAST2VERILOG_RUNTIME="$instdir/share/cast2verilog"
+export CAST2VERILOG_RUNTIME="$runtime"
 vcs @vcs_args -assert svaext -licqueue -full64 @defines -file "\$CAST2VERILOG_RUNTIME/$vcfg" testbench.v @args @netlists
 EOF
 close $fh;
@@ -145,4 +172,5 @@ gen_model.pl [options] [verilog files...]
    --no-debug      Disable default VCS debugging options
    --c2v-arg       Flags to cast2verilog; can be specified any number of times
    --vcs-arg       Flags to VCS; can be specified any number of times
+   --sdf           Specify SDF args as [min|max]:cell:proteus_sdf_dir
 =cut
