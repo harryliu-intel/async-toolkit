@@ -75,29 +75,36 @@ PROCEDURE StartsWith(READONLY buf, pfx : ARRAY OF CHAR) : BOOLEAN =
     RETURN NUMBER(buf) >= NUMBER(pfx) AND SUBARRAY(buf,0,NUMBER(pfx)) = pfx
   END StartsWith;
 
-PROCEDURE FlushData(READONLY wdWr : ARRAY OF Wr.T;
-                    lbp, lbq : CARDINAL;
-                    names : TextSeq.T;
+PROCEDURE FlushData(READONLY wdWr  : ARRAY OF Wr.T;
+                    lbp, lbq       : CARDINAL;
+                    names          : TextSeq.T;
                     READONLY lbuff : ARRAY OF ARRAY OF LONGREAL) =
+
   (* flush data into temp directory *)
   VAR
     nFiles := NUMBER(wdWr);
    
   BEGIN
+    
     IF doDebug THEN
       Debug.Out(F("FlushData lbp %s lbq %s names %s", Int(lbp), Int(lbq), Int(names.size())));
       <*ASSERT lbq = names.size()*>
-      FOR j := 0 TO lbp-1 DO
-        FOR i := 0 TO lbq-1 DO
+      FOR j := 0 TO lbp - 1 DO
+        FOR i := 0 TO lbq - 1 DO
           Debug.Out(LongReal(lbuff[i,j]) & " ")
         END;
         Debug.Out("")
       END
     END;
 
-    (* TIME file has different format *)
-    UnsafeWriter.WriteLRA(wdWr[FileIndex(nFiles, 0)],
-                          SUBARRAY(lbuff[0], 0, lbp));
+      (* TIME file has different format *)
+    TRY
+      UnsafeWriter.WriteLRA(wdWr[FileIndex(nFiles, 0)],
+                            SUBARRAY(lbuff[0], 0, lbp))
+    EXCEPT
+      Wr.Failure(x) => Debug.Error("Trouble flushing TIME data : Wr.Failure : " &
+      AL.Format(x))
+    END;
     
     FOR i := 1 TO lbq - 1 DO
       (* format of data file:
@@ -105,12 +112,18 @@ PROCEDURE FlushData(READONLY wdWr : ARRAY OF Wr.T;
          <# of samples>
          <binary sample data>
       *)
-      WITH wr = wdWr[FileIndex(nFiles, i)] DO
-        UnsafeWriter.WriteI  (wr, i);     
-        UnsafeWriter.WriteI  (wr, lbp);
-        UnsafeWriter.WriteLRA(wr, SUBARRAY(lbuff[i], 0, lbp))
+      TRY
+        WITH wr = wdWr[FileIndex(nFiles, i)] DO
+          UnsafeWriter.WriteI  (wr, i);     
+          UnsafeWriter.WriteI  (wr, lbp);
+          UnsafeWriter.WriteLRA(wr, SUBARRAY(lbuff[i], 0, lbp))
+        END
+      EXCEPT
+        Wr.Failure(x) => Debug.Error(F("Trouble flushing data for node %s (%s): Wr.Failure : %s", names.get(i), Int(i), 
+                                       AL.Format(x)))
       END
     END
+
   END FlushData;
 
 PROCEDURE WriteNames(wd, ofn    : Pathname.T;
@@ -456,10 +469,31 @@ PROCEDURE DoData(READONLY line : ARRAY OF CHAR;
           END
         END
       END;
+      
+      IF lNo MOD DebugStep = 0 THEN
+        Debug.Out(F("line %s", Int(lNo)))
+      END;
       INC(lNo)
-    END
+    END;
+    
+    Debug.Out("Tr0.Parse closing temp files.");
+    TRY
+      <*ASSERT wdWr # NIL*>
+      FOR i := FIRST(wdWr^) TO LAST(wdWr^) DO
+        <*ASSERT wdWr[i] # NIL*>
+        Wr.Close(wdWr[i])
+      END;
+    EXCEPT
+      Wr.Failure(x) => Debug.Error("Trouble closing temp files : Wr.Failure : " &
+        AL.Format(x))
+    END;
+    Debug.Out("Tr0.Parse temp files closed.");
+
   END Parse;
 
+CONST
+  DebugStep = 1000 * 1000;
+  
 VAR
   Exp : ARRAY [-300..300] OF LONGREAL;
 

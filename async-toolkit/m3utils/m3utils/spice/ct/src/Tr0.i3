@@ -25,4 +25,6 @@ EXCEPTION ShortRead;
 
 EXCEPTION SyntaxError(TEXT);
 
+PROCEDURE FileIndex(nFiles, nodeIndex : CARDINAL) : CARDINAL;
+
 END Tr0.

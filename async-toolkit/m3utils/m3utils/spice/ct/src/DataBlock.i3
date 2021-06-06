@@ -16,6 +16,8 @@ PROCEDURE ReadData(rd        : Rd.T;
   RAISES { Rd.Failure, Rd.EndOfFile };
   (* error if the block is longer than the data array 
      returns # of items read 
+     returns 0 if the tag doesn't match
+     raises Rd.EndOfFile if at EOF
   *)
 
 END DataBlock.

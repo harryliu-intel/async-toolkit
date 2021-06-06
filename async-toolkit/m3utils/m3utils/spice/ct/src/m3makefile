@@ -3,8 +3,10 @@ import ("cit_util")
 import ("parseparams")
 import ("spicelib")
 
-module("UnsafeWriter")
-module("UnsafeReader")
+module ("UnsafeWriter")
+module ("UnsafeReader")
+module ("Tr0")
+module ("DataBlock")
 implementation ("ConvertTrace")
 
 program ("ct")

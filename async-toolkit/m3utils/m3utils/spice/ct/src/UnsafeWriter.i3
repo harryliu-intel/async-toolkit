@@ -1,8 +1,11 @@
 INTERFACE UnsafeWriter;
 IMPORT Wr;
+IMPORT Thread;
 
-PROCEDURE WriteI(wr : Wr.T; q : INTEGER);
+PROCEDURE WriteI(wr : Wr.T; q : INTEGER)
+  RAISES { Wr.Failure, Thread.Alerted };
 
-PROCEDURE WriteLRA(wr : Wr.T; READONLY q : ARRAY OF LONGREAL);
+PROCEDURE WriteLRA(wr : Wr.T; READONLY q : ARRAY OF LONGREAL)
+  RAISES { Wr.Failure, Thread.Alerted };
 
 END UnsafeWriter.

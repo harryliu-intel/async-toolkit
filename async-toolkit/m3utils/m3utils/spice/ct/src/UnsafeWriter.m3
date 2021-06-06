@@ -1,7 +1,9 @@
 UNSAFE MODULE UnsafeWriter;
 IMPORT Wr;
+IMPORT Thread;
 
-PROCEDURE WriteI(wr : Wr.T; q : INTEGER) =
+PROCEDURE WriteI(wr : Wr.T; q : INTEGER)
+  RAISES { Wr.Failure, Thread.Alerted } =
   VAR
     ibuff := NEW(REF ARRAY OF CHAR, 4);
   BEGIN
@@ -9,7 +11,8 @@ PROCEDURE WriteI(wr : Wr.T; q : INTEGER) =
     Wr.PutString(wr, ibuff^)
   END WriteI;
 
-PROCEDURE WriteLRA(wr : Wr.T; READONLY q : ARRAY OF LONGREAL) =
+PROCEDURE WriteLRA(wr : Wr.T; READONLY q : ARRAY OF LONGREAL)
+  RAISES { Wr.Failure, Thread.Alerted } =
   VAR
     buff        := NEW(REF ARRAY OF CHAR, 4);
   BEGIN
