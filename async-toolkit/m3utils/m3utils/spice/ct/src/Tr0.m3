@@ -58,14 +58,15 @@ PROCEDURE RenameBack(dutName, txt : TEXT) : TEXT =
 PROCEDURE FormatFN(i : CARDINAL) : TEXT =
   BEGIN RETURN F("%08s", Int(i)) END FormatFN;
 
-PROCEDURE FileIndex(nFiles, nodeIndex : CARDINAL) : CARDINAL =
+PROCEDURE FileIndex(nFiles, nNodes, nodeIndex : CARDINAL) : CARDINAL =
   BEGIN
     IF nodeIndex = 0 THEN
       RETURN 0 (* TIME node on its own *)
     ELSE
       WITH nonTimeFiles = nFiles - 1,
-           nonTimeIndex = nodeIndex - 1 DO
-        RETURN nonTimeIndex MOD nonTimeFiles + 1
+           nonTimeIndex = nodeIndex - 1,
+           nodesPerFile = (nNodes DIV nonTimeFiles) + 1 DO
+        RETURN nonTimeIndex DIV nodesPerFile + 1
       END
     END
   END FileIndex;
@@ -99,7 +100,7 @@ PROCEDURE FlushData(READONLY wdWr  : ARRAY OF Wr.T;
 
       (* TIME file has different format *)
     TRY
-      UnsafeWriter.WriteLRA(wdWr[FileIndex(nFiles, 0)],
+      UnsafeWriter.WriteLRA(wdWr[FileIndex(nFiles, names.size(), 0)],
                             SUBARRAY(lbuff[0], 0, lbp))
     EXCEPT
       Wr.Failure(x) => Debug.Error("Trouble flushing TIME data : Wr.Failure : " &
@@ -113,7 +114,7 @@ PROCEDURE FlushData(READONLY wdWr  : ARRAY OF Wr.T;
          <binary sample data>
       *)
       TRY
-        WITH wr = wdWr[FileIndex(nFiles, i)] DO
+        WITH wr = wdWr[FileIndex(nFiles, names.size(), i)] DO
           UnsafeWriter.WriteI  (wr, i);     
           UnsafeWriter.WriteI  (wr, lbp);
           UnsafeWriter.WriteLRA(wr, SUBARRAY(lbuff[i], 0, lbp))
@@ -200,180 +201,180 @@ PROCEDURE Parse(wd, ofn : Pathname.T;
 
   VAR lNo := 1;
 
-PROCEDURE DoNames(READONLY line : ARRAY OF CHAR;
-                  <*UNUSED*>f : BOOLEAN) : CARDINAL
-  RAISES { SyntaxError } =
+  PROCEDURE DoNames(READONLY line : ARRAY OF CHAR;
+                    <*UNUSED*>f : BOOLEAN) : CARDINAL
+    RAISES { SyntaxError } =
 
-  PROCEDURE Push(s, l : CARDINAL; isCurr : BOOLEAN) =
-    VAR
-      pfx := "";
-    BEGIN
-      IF isCurr THEN pfx := "I:" END;
-      names.addhi(pfx & RenameBack(dutName,
-                                   Text.FromChars(SUBARRAY(line,s,l-s-1))));
-      INC(c)
-    END Push;
+    PROCEDURE Push(s, l : CARDINAL; isCurr : BOOLEAN) =
+      VAR
+        pfx := "";
+      BEGIN
+        IF isCurr THEN pfx := "I:" END;
+        names.addhi(pfx & RenameBack(dutName,
+                                     Text.FromChars(SUBARRAY(line,s,l-s-1))));
+        INC(c)
+      END Push;
 
-  PROCEDURE Get(s : CSet) RAISES { SyntaxError } =
-    BEGIN
-      IF NOT line[p] IN s THEN
-        RAISE SyntaxError("character " & Int(p) & " '" & Text.FromChar(line[p]) & "' unexpected")
-      END;
-      INC(p)
-    END Get;
-
-  VAR
-    p := 0;
-    c := 0;
-    n := NUMBER(line);
-    s := 0;
-    isCurr : BOOLEAN;
-  BEGIN
-    WHILE p < n DO
-      IF line[p] = '\'' THEN
-        INC(p);
-        isCurr := line[p] IN iSet; 
-        Get(CSet { 'v', 'V' } + iSet);
-        Get(CSet { '(' } );
-        s := p;
-        WHILE line[p] # '\'' DO
-          INC(p)
+    PROCEDURE Get(s : CSet) RAISES { SyntaxError } =
+      BEGIN
+        IF NOT line[p] IN s THEN
+          RAISE SyntaxError("character " & Int(p) & " '" & Text.FromChar(line[p]) & "' unexpected")
         END;
-        Push(s,p, isCurr)
-      END;
-      INC(p)
-    END;
+        INC(p)
+      END Get;
 
-    RETURN c
-  END DoNames;
-
-PROCEDURE DoData(READONLY line : ARRAY OF CHAR; 
-                 f             : BOOLEAN) : CARDINAL 
-  RAISES { ShortRead, SyntaxError } =
-
-  (* read data from trace file in hspice format
-
-     this routine handles the text format output of hspice 
-  *)
-
-  PROCEDURE Char() : CHAR RAISES { ShortRead } =
-    BEGIN
-      IF p > LAST(line) THEN 
-        RAISE ShortRead 
-      ELSE
-        RETURN line[p]
-      END
-    END Char;
-
-  PROCEDURE Get(c : CHAR)  RAISES { ShortRead, SyntaxError } =
-    BEGIN
-      WITH cc = Char() DO
-        IF cc # c THEN RAISE SyntaxError("expected '" & Text.FromChar(c) & "' got '" & Text.FromChar(cc) & "'")
-        END
-      END;
-      INC(p)
-    END Get;
-
-  PROCEDURE GetInt(VAR z : INTEGER) : CARDINAL  RAISES { ShortRead } =
     VAR
-      neg := FALSE;
-      s := p;
+      p := 0;
+      c := 0;
+      n := NUMBER(line);
+      s := 0;
+      isCurr : BOOLEAN;
     BEGIN
-      WHILE NOT Char() IN SET OF CHAR { '-', '0' .. '9' } DO INC(p) END;
-      IF Char() = '-' THEN neg := TRUE; INC(p) END;
-      s := p;
-      WHILE Char() IN SET OF CHAR { '0' .. '9' } DO 
-        z := z * 10 + ORD(Char()) - ORD('0');
+      WHILE p < n DO
+        IF line[p] = '\'' THEN
+          INC(p);
+          isCurr := line[p] IN iSet; 
+          Get(CSet { 'v', 'V' } + iSet);
+          Get(CSet { '(' } );
+          s := p;
+          WHILE line[p] # '\'' DO
+            INC(p)
+          END;
+          Push(s,p, isCurr)
+        END;
         INC(p)
       END;
-      IF neg THEN z := -z END;
-      RETURN  p-s
-    END GetInt;
 
-  PROCEDURE GetLR(VAR z : LONGREAL) : BOOLEAN
+      RETURN c
+    END DoNames;
+
+  PROCEDURE DoData(READONLY line : ARRAY OF CHAR; 
+                   f             : BOOLEAN) : CARDINAL 
     RAISES { ShortRead, SyntaxError } =
-    VAR  
-      len : CARDINAL;
-      f : INTEGER;
-      m := 0;
-      x := 0;
-      neg : BOOLEAN;
+
+    (* read data from trace file in hspice format
+
+       this routine handles the text format output of hspice 
+    *)
+
+    PROCEDURE Char() : CHAR RAISES { ShortRead } =
+      BEGIN
+        IF p > LAST(line) THEN 
+          RAISE ShortRead 
+        ELSE
+          RETURN line[p]
+        END
+      END Char;
+
+    PROCEDURE Get(c : CHAR)  RAISES { ShortRead, SyntaxError } =
+      BEGIN
+        WITH cc = Char() DO
+          IF cc # c THEN RAISE SyntaxError("expected '" & Text.FromChar(c) & "' got '" & Text.FromChar(cc) & "'")
+          END
+        END;
+        INC(p)
+      END Get;
+
+    PROCEDURE GetInt(VAR z : INTEGER) : CARDINAL  RAISES { ShortRead } =
+      VAR
+        neg := FALSE;
+        s := p;
+      BEGIN
+        WHILE NOT Char() IN SET OF CHAR { '-', '0' .. '9' } DO INC(p) END;
+        IF Char() = '-' THEN neg := TRUE; INC(p) END;
+        s := p;
+        WHILE Char() IN SET OF CHAR { '0' .. '9' } DO 
+          z := z * 10 + ORD(Char()) - ORD('0');
+          INC(p)
+        END;
+        IF neg THEN z := -z END;
+        RETURN  p-s
+      END GetInt;
+
+    PROCEDURE GetLR(VAR z : LONGREAL) : BOOLEAN
+      RAISES { ShortRead, SyntaxError } =
+      VAR  
+        len : CARDINAL;
+        f : INTEGER;
+        m := 0;
+        x := 0;
+        neg : BOOLEAN;
+      BEGIN
+        TRY
+          WHILE NOT Char() IN SET OF CHAR { '-', '0' .. '9' } DO 
+            INC(p); IF p = LAST(line)+1 THEN RETURN FALSE END
+          END;
+          m := 0;
+          EVAL GetInt(m); 
+          f := m;
+          m := ABS(m);
+          neg := m = -f;
+          Get('.');
+          len := GetInt(m);
+          Get('e');
+          EVAL GetInt(x);
+          z := FLOAT(m,LONGREAL) * Exp[x-len];
+          IF neg THEN z := -z END;
+          IF doDebug THEN 
+            Debug.Out(F("GetLR %s -> %s x (%s - %s) -> %s",
+                        Int(f), Int(m), Int(x), Int(len),
+                        LongReal(z)))
+          END;
+          RETURN TRUE
+        EXCEPT
+          SyntaxError(e) => RAISE SyntaxError("GetLR : " & e)
+        END
+      END GetLR;
+
+    VAR
+      p     := 0;
+      dummy := 0;
+      got := 0;
+      z : LONGREAL;
     BEGIN
       TRY
-      WHILE NOT Char() IN SET OF CHAR { '-', '0' .. '9' } DO 
-        INC(p); IF p = LAST(line)+1 THEN RETURN FALSE END
-      END;
-      m := 0;
-      EVAL GetInt(m); 
-      f := m;
-      m := ABS(m);
-      neg := m = -f;
-      Get('.');
-      len := GetInt(m);
-      Get('e');
-      EVAL GetInt(x);
-      z := FLOAT(m,LONGREAL) * Exp[x-len];
-      IF neg THEN z := -z END;
-      IF doDebug THEN 
-        Debug.Out(F("GetLR %s -> %s x (%s - %s) -> %s",
-                    Int(f), Int(m), Int(x), Int(len),
-                    LongReal(z)))
-      END;
-      RETURN TRUE
-    EXCEPT
-      SyntaxError(e) => RAISE SyntaxError("GetLR : " & e)
-    END
-    END GetLR;
+        IF f THEN
+          INC(lbp);
+          IF lbp = NUMBER(lbuff[0]) THEN
+            FlushData(wdWr^, lbp, lbq, names, lbuff^);
+            lbp := 0
+          END;
+          lbq := 0;
 
-  VAR
-    p     := 0;
-    dummy := 0;
-    got := 0;
-    z : LONGREAL;
-  BEGIN
-    TRY
-      IF f THEN
-        INC(lbp);
-        IF lbp = NUMBER(lbuff[0]) THEN
-          FlushData(wdWr^, lbp, lbq, names, lbuff^);
-          lbp := 0
+          (* process time timestamp *)
+          TRY
+            EVAL GetLR(lbuff[lbq,lbp]);
+          EXCEPT
+            SyntaxError(e) => RAISE SyntaxError("Getting timestamp : " & e)
+          END;
+          lbuff[lbq,lbp] := timeScaleFactor*(lbuff[lbq,lbp]+timeOffset);
+          IF doDebug THEN
+            Debug.Out(F("time %s", LongReal(lbuff[lbq,lbp])))
+          END;
+          INC(lbq);
+          
+          EVAL GetInt(dummy); (* should really assert this is = names.size() *)
         END;
-        lbq := 0;
-
-        (* process time timestamp *)
         TRY
-          EVAL GetLR(lbuff[lbq,lbp]);
+          WHILE GetLR(z) DO
+            lbuff[lbq,lbp] := z*voltageScaleFactor+voltageOffset;
+            INC(lbq); INC(got)
+          END;
         EXCEPT
-          SyntaxError(e) => RAISE SyntaxError("Getting timestamp : " & e)
+          SyntaxError(e) => RAISE SyntaxError("Getting value : " & e)
         END;
-        lbuff[lbq,lbp] := timeScaleFactor*(lbuff[lbq,lbp]+timeOffset);
-        IF doDebug THEN
-          Debug.Out(F("time %s", LongReal(lbuff[lbq,lbp])))
-        END;
-        INC(lbq);
-        
-        EVAL GetInt(dummy); (* should really assert this is = names.size() *)
-      END;
-      TRY
-      WHILE GetLR(z) DO
-        lbuff[lbq,lbp] := z*voltageScaleFactor+voltageOffset;
-        INC(lbq); INC(got)
-      END;
+        RETURN got
       EXCEPT
-        SyntaxError(e) => RAISE SyntaxError("Getting value : " & e)
-      END;
-      RETURN got
-    EXCEPT
-      ShortRead =>
-      IF lbp # 0 THEN  (* abandon current timestep *)
-        DEC(lbp);
-        lbq := NUMBER(lbuff^);
-        FlushData(wdWr^, lbp, lbq, names, lbuff^)
-      END;
-      RAISE ShortRead
-    END
-  END DoData;
-  
+        ShortRead =>
+        IF lbp # 0 THEN  (* abandon current timestep *)
+          DEC(lbp);
+          lbq := NUMBER(lbuff^);
+          FlushData(wdWr^, lbp, lbq, names, lbuff^)
+        END;
+        RAISE ShortRead
+      END
+    END DoData;
+    
   VAR
     buf  : ARRAY [0..8191] OF CHAR;
     wdWr : REF ARRAY OF Wr.T;

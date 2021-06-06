@@ -20,6 +20,21 @@ PROCEDURE ReadData(rd        : Rd.T;
      raises Rd.EndOfFile if at EOF
   *)
 
+TYPE
+  T <: Public;
+
+  Public = OBJECT METHODS
+    (* an object for reading a set of non-time data out of a file *)
+    init(rd : Rd.T; maxCount : CARDINAL) : T
+      RAISES { Rd.Failure } ;
+
+    haveTag(tag : CARDINAL) : BOOLEAN;
+
+    readData(tag : CARDINAL; VAR data : ARRAY OF LONGREAL) : CARDINAL;
+  END;
+
+CONST Brand = "DataBlock";
+    
 END DataBlock.
   
 

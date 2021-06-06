@@ -3,10 +3,18 @@ import ("cit_util")
 import ("parseparams")
 import ("spicelib")
 
+m3_optimize("T")
+
 module ("UnsafeWriter")
 module ("UnsafeReader")
 module ("Tr0")
 module ("DataBlock")
+
+c_source("transfer")
+
+interface("TransferC")
+
 implementation ("ConvertTrace")
+
 
 program ("ct")

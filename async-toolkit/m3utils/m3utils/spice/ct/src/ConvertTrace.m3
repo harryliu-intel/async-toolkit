@@ -38,10 +38,12 @@ IMPORT Params;
 IMPORT TextSet, TextSetDef;
 IMPORT Tr0; FROM Tr0 IMPORT FileIndex;
 IMPORT DataBlock;
+IMPORT Text;
 
 <*FATAL Thread.Alerted*>
 
 CONST LR = LongReal;
+      TE = Text.Equal;
       
 VAR doDebug := Debug.DebugThis("CT");
 
@@ -90,15 +92,13 @@ PROCEDURE WriteTrace() =
         TRY
           IF i = 0 THEN 
             Debug.Out("WriteTrace creating buffers...");
-            CreateBuffers(fn, time, data);
+            CreateBuffers(time, data);
             Debug.Out("WriteTrace writing TIME...");
             UnsafeWriter.WriteLRA(tWr, time^);
           ELSIF restrictNodes = NIL OR restrictNodes.member(names.get(i)) THEN
-            WITH rd = FileRd_Open(fn) DO
-              ReadEntireFile(rd, i, data^);
-              UnsafeWriter.WriteLRA(tWr, data^);
-              Rd.Close(rd)
-            END
+            ReadEntireFile(i, data^);
+            UnsafeWriter.WriteLRA(tWr, data^);
+            Rd.Close(rd)
           END
         EXCEPT
           OSError.E(x) =>
@@ -127,44 +127,68 @@ PROCEDURE FileRd_Open(fn : Pathname.T) : Rd.T RAISES { OSError.E } =
     RETURN FileRd.Open(fn)
   END FileRd_Open;
 
-PROCEDURE ReadEntireFile(rd       : Rd.T;
-                         idx      : CARDINAL;
+VAR
+  dbRd : Rd.T        := NIL;
+  dbDb : DataBlock.T := NIL;
+  dbFn : Pathname.T  := NIL;
+  
+PROCEDURE ReadEntireFile(idx      : CARDINAL;
                          VAR data : ARRAY OF LONGREAL)
-  RAISES { Rd.Failure } =
+  RAISES { Rd.Failure, OSError.E } =
   VAR
+    fn := FileName(idx);
     ptr := 0;
     aLen := NUMBER(data);
 
   BEGIN
-    TRY
-      WHILE ptr # aLen DO
-        WITH got = DataBlock.ReadData(rd,
-                                      idx,
-                                      SUBARRAY(data, ptr, aLen - ptr)) DO
-          INC(ptr, got)
+    IF idx = 0 THEN
+      TRY
+        WITH rd  = FileRd_Open(fn),
+             cnt = DataBlock.ReadData(rd, idx, data) DO
+          <*ASSERT cnt = NUMBER(data)*>
+          Rd.Close(rd)
         END
+      EXCEPT
+        Rd.EndOfFile => <*ASSERT FALSE*> (* internal program error *)
       END
-    EXCEPT
-      Rd.EndOfFile =>
-      IF ptr # NUMBER(data) THEN
-        Debug.Warning(F("short read for %s (%s) : %s # %s",
-                        names.get(idx), Int(idx), Int(ptr), Int(aLen)))
+    ELSE
+      IF dbDb = NIL OR NOT TE(fn, dbFn) THEN
+        IF dbRd # NIL THEN
+          Rd.Close(dbRd);
+        END;
+        dbFn := fn;
+        dbRd := FileRd_Open(fn);
+        dbDb := NEW(DataBlock.T).init(dbRd, aLen)
+      END;
+      
+      <*ASSERT dbDb.haveTag(idx)*>
+      WITH readRecs = dbDb.readData(idx, data) DO
+        IF readRecs # aLen THEN
+          Debug.Warning(F("short read for %s (%s) : %s # %s",
+                          names.get(idx), Int(idx), Int(ptr), Int(aLen)))
+        END
       END
     END
   END ReadEntireFile;
 
 PROCEDURE FileName(idx : CARDINAL) : TEXT =
   BEGIN
-    RETURN wd & "/" & FormatFN(FileIndex(nFiles, idx))
+    RETURN wd & "/" & FormatFN(FileIndex(nFiles, names.size(), idx))
   END FileName;
 
-PROCEDURE CreateBuffers(fn : Pathname.T; VAR time, data : REF ARRAY OF LONGREAL)
+PROCEDURE CreateBuffers(VAR time, data : REF ARRAY OF LONGREAL)
   RAISES { OSError.E, Rd.Failure } =
   (* create time and data buffers, and read time into the time buffer *)
   VAR
-    rd   := FileRd_Open(fn);
-    aLen := DataBlock.DataCount(rd, 0);
+    aLen : CARDINAL;
   BEGIN
+    WITH timeIdx = 0,
+         fn      = FileName(timeIdx),
+         rd      = FileRd_Open(fn) DO
+      aLen := DataBlock.DataCount(rd, timeIdx);
+      Rd.Close(rd)
+    END;
+    
     Debug.Out(F("Creating time/data buffers: %s timesteps",
                 Int(aLen)));
     time := NEW(REF ARRAY OF LONGREAL, aLen); (* alloc time *)
@@ -172,10 +196,9 @@ PROCEDURE CreateBuffers(fn : Pathname.T; VAR time, data : REF ARRAY OF LONGREAL)
 
     Debug.Out("Reading time data");
     
-    ReadEntireFile(rd, 0, time^);
+    ReadEntireFile(0, time^);
 
     Debug.Out(F("Time %s -> %s", LR(time[FIRST(time^)]), LR(time[LAST(time^)])));
-    Rd.Close(rd)
   END CreateBuffers;
   
 PROCEDURE WriteSources() =
@@ -202,11 +225,10 @@ PROCEDURE WriteSources() =
       WITH fn   = FileName(i) DO
         TRY
           IF i = 0 THEN
-            CreateBuffers(fn, time, data)
+            CreateBuffers(time, data)
           ELSIF restrictNodes = NIL OR restrictNodes.member(names.get(i)) THEN
-            WITH rd = FileRd_Open(fn) DO
               Wr.PutText(sWr, "* source for " & names.get(i) & "\n");
-              ReadEntireFile(rd, i, data^);
+              ReadEntireFile(i, data^);
               Wr.PutText(sWr, F("V%s src%s 0 PWL (\n", Int(i), Int(i)));
               FOR i := FIRST(data^) TO LAST(data^) DO
                 Wr.PutText(sWr, F("+   %20s       %20s\n",
@@ -214,8 +236,6 @@ PROCEDURE WriteSources() =
                                   LongReal(data[i])))
               END;
               Wr.PutText(sWr, "+)\n\n");
-              Rd.Close(rd)
-            END
           END
         EXCEPT
           OSError.E(x) =>
@@ -258,9 +278,8 @@ PROCEDURE WriteFiles() =
       WITH fn   = FileName(i) DO
         TRY
           IF i = 0 THEN
-            CreateBuffers(fn, time, data);
+            CreateBuffers(time, data);
           ELSIF restrictNodes = NIL OR restrictNodes.member(names.get(i)) THEN
-            WITH rd = FileRd_Open(fn) DO
               TRY
                 sFn := tDn & "/" & names.get(i);
                 sWr := FileWr.Open(sFn)
@@ -268,7 +287,7 @@ PROCEDURE WriteFiles() =
                 OSError.E(x) => Debug.Error("Unable to open file \"" & sFn & "\" for writing : OSError.E : " & AL.Format(x))
               END;
 
-              ReadEntireFile(rd, i, data^);
+              ReadEntireFile(i, data^);
 
               FOR i := FIRST(data^) TO LAST(data^) DO
                 Wr.PutText(sWr, F("%20s       %20s\n",
@@ -280,10 +299,8 @@ PROCEDURE WriteFiles() =
               EXCEPT
                 Wr.Failure(x) => Debug.Error("Trouble closing sources file "&sFn&" : Wr.Failure : " &
                   AL.Format(x))
-              END;
+              END
 
-              Rd.Close(rd)
-            END
           END
         EXCEPT
           OSError.E(x) =>

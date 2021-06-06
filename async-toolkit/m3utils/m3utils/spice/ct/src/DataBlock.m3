@@ -4,6 +4,7 @@ IMPORT UnsafeWriter, UnsafeReader;
 IMPORT Thread;
 IMPORT Debug;
 FROM Fmt IMPORT F, Int, Bool;
+IMPORT IntRefTbl;
 
 <*FATAL Thread.Alerted*>
 (* format assumes the readers and writers pertain to (seekable) disk files *)
@@ -89,6 +90,96 @@ PROCEDURE ReadData(rd        : Rd.T;
       END
     END
   END ReadData;
+
+REVEAL
+  T = Public BRANDED Brand OBJECT
+    rd       : Rd.T;
+    maxCount : CARDINAL;
+    values   : IntRefTbl.T;
+  OVERRIDES
+    init     := Init;
+    haveTag  := HaveTag;
+    readData := ReadDataM;
+  END;
+
+TYPE
+  Rec = REF RECORD
+    n : CARDINAL;
+    a : REF ARRAY OF LONGREAL
+  END;
+     
+PROCEDURE Init(t : T; rd : Rd.T; maxCount : CARDINAL) : T
+  RAISES { Rd.Failure } =
+  VAR
+    ref : REFANY;
+    rec : Rec;
+  BEGIN
+    t.rd := rd;
+    t.maxCount := maxCount;
+    t.values := NEW(IntRefTbl.Default).init();
+
+    TRY
+      LOOP
+        WITH readTag = UnsafeReader.ReadI(rd),
+             count   = UnsafeReader.ReadI(rd) DO
+          
+          IF doDebug THEN
+            Debug.Out(F("DataBlock.ReadData readTag=%s count=%s",
+                        Int(readTag),
+                        Int(count)))
+          END;
+          
+          
+          IF NOT t.values.get(readTag, ref) THEN
+            rec := NEW(Rec,
+                       n := 0,
+                       a := NEW(REF ARRAY OF LONGREAL, maxCount));
+            EVAL t.values.put(readTag, rec)
+          ELSE
+            rec := ref
+          END;
+          
+          IF count > NUMBER(rec.a^) - rec.n THEN
+            Debug.Error(F("DataBlock format error : count %s > buf %s",
+                          Int(count), Int(NUMBER(rec.a^) - rec.n)))
+          END;
+          
+          UnsafeReader.ReadLRA(rd, SUBARRAY(rec.a^, rec.n, count));
+          (* if we get Rd.EndOfFile here, then 
+             the temp file that we are reading is corrupted *)
+
+          INC(rec.n, count)
+        END
+      END
+    EXCEPT
+      Rd.EndOfFile => (* skip *)
+    END;
+    RETURN t
+  END Init;
+
+PROCEDURE HaveTag(t : T; tag : CARDINAL) : BOOLEAN =
+  VAR
+    ref : REFANY;
+  BEGIN
+    RETURN t.values.get(tag, ref)
+  END HaveTag;
+
+PROCEDURE ReadDataM(t        : T;
+                   tag      : CARDINAL;
+                   VAR data : ARRAY OF LONGREAL) : CARDINAL =
+  VAR
+    ref : REFANY;
+  BEGIN
+    WITH hadIt = t.values.get(tag, ref) DO
+      <*ASSERT hadIt*>
+    END;
+
+    WITH rec = NARROW(ref, Rec) DO
+      <*ASSERT NUMBER(data) = t.maxCount*>
+      data := rec.a^;
+      RETURN rec.n
+    END
+  END ReadDataM;
 
 BEGIN END DataBlock.
   

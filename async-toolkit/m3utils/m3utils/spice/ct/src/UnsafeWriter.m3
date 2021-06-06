@@ -1,6 +1,8 @@
 UNSAFE MODULE UnsafeWriter;
 IMPORT Wr;
+IMPORT UnsafeWr;
 IMPORT Thread;
+IMPORT TransferC;
 
 PROCEDURE WriteI(wr : Wr.T; q : INTEGER)
   RAISES { Wr.Failure, Thread.Alerted } =
@@ -14,11 +16,15 @@ PROCEDURE WriteI(wr : Wr.T; q : INTEGER)
 PROCEDURE WriteLRA(wr : Wr.T; READONLY q : ARRAY OF LONGREAL)
   RAISES { Wr.Failure, Thread.Alerted } =
   VAR
-    buff        := NEW(REF ARRAY OF CHAR, 4);
+    buffD : ARRAY [ 0 .. 4 - 1] OF CHAR;
   BEGIN
-    FOR i := FIRST(q) TO LAST(q) DO
-      LOOPHOLE(buff, REF ARRAY OF REAL)[0] := FLOAT(q[i],REAL);
-      Wr.PutString(wr, buff^)
+    LOCK wr DO
+      FOR i := FIRST(q) TO LAST(q) DO
+
+        TransferC.d2c(q[i], ADR(buffD[0]));
+        
+        UnsafeWr.FastPutString(wr, buffD)
+      END
     END
   END WriteLRA;
 
