@@ -1,6 +1,8 @@
 MODULE SpiceParse;
 IMPORT Text;
 FROM SpiceFileFormat IMPORT White;
+IMPORT Debug;
+FROM Fmt IMPORT Int, F;
 
 PROCEDURE HavePrefix(READONLY line : ARRAY OF CHAR;
                      VAR         p : CARDINAL;
@@ -16,7 +18,16 @@ PROCEDURE HavePrefix(READONLY line : ARRAY OF CHAR;
       END
     END;
 
-    IF NOT line[n] IN White THEN RETURN FALSE END;
+    IF n # NUMBER(line) AND n > LAST(line) THEN
+      Debug.Error(F("SpiceParse.HavePrefix(\"%s\", %s, \"%s\") : n %s > LAST(line) %s",
+                    Text.FromChars(line),
+                    Int(p),
+                    search,
+                    Int(n),
+                    Int(LAST(line))))
+    END;
+    
+    IF n # NUMBER(line) AND NOT line[n] IN White THEN RETURN FALSE END;
     
     INC(p,n);
     WHILE p < NUMBER(line) AND line[p] IN White DO
