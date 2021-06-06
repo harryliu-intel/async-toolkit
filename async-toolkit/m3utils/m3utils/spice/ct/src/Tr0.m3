@@ -150,7 +150,8 @@ PROCEDURE WriteNames(wd, ofn    : Pathname.T;
       EXCEPT
         OSError.E(x) => Debug.Error("Unable to open names file \"" & nFn & "\" : OSError.E : " & AL.Format(x))
       END;
-      
+
+      (* open temp files *)
       FOR i := 0 TO nFiles - 1 DO
         WITH fn = wd & "/" & FormatFN(i) DO
           TRY
@@ -161,7 +162,11 @@ PROCEDURE WriteNames(wd, ofn    : Pathname.T;
             OSError.E(x) =>
             Debug.Warning("Unable to temp file \"" & fn & "\" : OSError.E : " & AL.Format(x))
           END
-        END;
+        END
+      END;
+
+      (* write names file *)
+      FOR i := 0 TO names.size() - 1 DO
         WITH nm = TextUtils.ReplaceChar(names.get(i), ':', '_') DO
           (* aplot has trouble with colons in node names, so rename those,
              sorry about any clashes ... *)
@@ -170,6 +175,7 @@ PROCEDURE WriteNames(wd, ofn    : Pathname.T;
         Wr.PutChar(wr, '\n')
       END;
       Wr.Close(wr)
+      
     EXCEPT
       Wr.Failure(x) => Debug.Error("Unable to write names file \"" & nFn & "\" : Wr.Failure : " & AL.Format(x))
     END
