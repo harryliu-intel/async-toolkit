@@ -12,7 +12,7 @@
 	(denseStaples nil)	 ; APR should add staples at dense pitch
         (Background nil)         ; optionally run in the background
         (importView "layout")    ; view name to import wiring back to
-        (Mem 4000)               ; memory to use
+        (Mem (nrGetMaxHeapSize)) ; memory to use
         (doVerilog nil)          ; create .v
         (doGds t)                ; create gds for subcells (used for power hookups and maybe fill)
         (doLef t)                ; create .lef
@@ -434,7 +434,7 @@
 (defun RouteRun
   (@key (CV (geGetEditCellView)) ; specify CellView or use edit view
         (Background nil)         ; run in background
-        (Mem 4000)               ; qsub memory
+        (Mem (nrGetMaxHeapSize)) ; qsub memory
         (targetCellName nil)     ; DFII name for APR target cell
         )
   (let (TEMP WDIR gdsFile Command status)

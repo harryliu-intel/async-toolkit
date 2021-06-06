@@ -20,15 +20,15 @@ useICV = t
         (noPowerFill nil)          ; use POWER_GRID_NO_FILL instead of POWER_GRID
         (doPowerGates nil)         ; use POWER_GRID_GATED instead of POWER_GRID
         (softMacro nil)            ; when !softMacro, lock all instances
+        (Mem (nrGetMaxHeapSize))   ; memory to use
         )
-  (let (MaxHeapSize TEMP PowerGridCellName ColorGridCellName xalign yalign win pgCV cgCV)
+  (let (TEMP PowerGridCellName ColorGridCellName xalign yalign win pgCV cgCV)
 
     ; check viewName
     (when CV->viewName!="floorplan" (error "call MakeFlatten on floorplan view\n"))
 
     ; options
     (LoadWires ?CV CV)
-    MaxHeapSize = (nrGetMaxHeapSize)
 
     ; generated cell or file names
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
@@ -87,7 +87,7 @@ useICV = t
 
     ; place metal on top of dangling subcell pins for StarRC extraction
     (when ConnectDanglingPins && !softMacro
-      (nrCreateSingleNetConnector CV MetalLPPs ?MaxHeapSize MaxHeapSize)
+      (nrCreateSingleNetConnector CV MetalLPPs ?MaxHeapSize Mem)
       )
 
     ; route abutting pins
