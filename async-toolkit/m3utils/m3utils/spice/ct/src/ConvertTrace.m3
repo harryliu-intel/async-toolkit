@@ -99,7 +99,8 @@ PROCEDURE WriteTrace() =
         IF i = 0 THEN 
           Debug.Out("WriteTrace creating buffers...");
           CreateBuffers(time, data);
-          Debug.Out("WriteTrace writing TIME...");
+          Debug.Out(F("WriteTrace writing TIME (%s values)...",
+                      Int(NUMBER(time^))));
           UnsafeWriter.WriteLRA(tWr, time^);
         ELSIF restrictNodes = NIL OR restrictNodes.member(names.get(i)) THEN
           ReadEntireFile(i, data^);
@@ -185,7 +186,7 @@ PROCEDURE ReadEntireFileM(self     : FileReader;
       <*ASSERT self.dbDb.haveTag(idx)*>
       WITH readRecs = self.dbDb.readData(idx, data) DO
         IF readRecs # aLen THEN
-          Debug.Warning(F("short read for %s (%s) : %s # %s",
+          Debug.Warning(F("ConvertTrace.ReadEntireFileM: short read for %s (%s) : %s # %s",
                           names.get(idx), Int(idx), Int(ptr), Int(aLen)))
         END
       END
@@ -228,7 +229,11 @@ PROCEDURE CreateBuffers(VAR time, data : REF ARRAY OF LONGREAL)
     
     ReadEntireFile(0, time^);
 
-    Debug.Out(F("Time %s -> %s", LR(time[FIRST(time^)]), LR(time[LAST(time^)])));
+    IF NUMBER(time^) = 0 THEN
+      Debug.Out("Time is empty")
+    ELSE
+      Debug.Out(F("Time %s -> %s", LR(time[FIRST(time^)]), LR(time[LAST(time^)])))
+    END
   END CreateBuffers;
   
 PROCEDURE WriteSources() =
@@ -445,7 +450,7 @@ BEGIN
     Tr0.SyntaxError(e) => Debug.Error("Syntax error on line " & Int(lNo) & " : " &
       e)
   |
-    Tr0.ShortRead => Debug.Warning("Short read on final line, data may be corrupted")
+    Tr0.ShortRead => Debug.Warning("Tr0.ShortRead: Short read on final line, data may be corrupted")
   |
     Rd.Failure(x) => Debug.Error("Trouble reading input file : Rd.Failure : " & AL.Format(x))
   END;

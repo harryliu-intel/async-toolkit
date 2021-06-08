@@ -19,7 +19,7 @@ IMPORT Math;
 TYPE CSet = SET OF CHAR; 
 CONST iSet = CSet { 'i', 'I' };
 
-VAR doDebug := Debug.DebugThis("TR0");
+VAR doDebug := Debug.DebugThis("Tr0");
 
 PROCEDURE RenameBack(dutName, txt : TEXT) : TEXT =
   VAR
@@ -92,7 +92,7 @@ PROCEDURE FlushData(READONLY wdWr  : ARRAY OF Wr.T;
       <*ASSERT lbq = names.size()*>
       FOR j := 0 TO lbp - 1 DO
         FOR i := 0 TO lbq - 1 DO
-          Debug.Out(LongReal(lbuff[i,j]) & " ")
+          Debug.Out(LongReal(lbuff[i,j]) & " ", 10000)
         END;
         Debug.Out("")
       END
@@ -324,7 +324,7 @@ PROCEDURE Parse(wd, ofn : Pathname.T;
           IF doDebug THEN 
             Debug.Out(F("GetLR %s -> %s x (%s - %s) -> %s",
                         Int(f), Int(m), Int(x), Int(len),
-                        LongReal(z)))
+                        LongReal(z)), 1000)
           END;
           RETURN TRUE
         EXCEPT
@@ -391,20 +391,10 @@ PROCEDURE Parse(wd, ofn : Pathname.T;
     
   TYPE
     ParseControl = { Null, Data, Names };
-    
-  BEGIN
-    (* assumed file structure:
 
-       <stuff to ignore>
-       #N <node names, may be multiline>
-       #C <timestep data, may be multiline, same # of cols as nodenames>
-       #C <repeated>
-       #;
-       EOF
-
-    *)
-    
-    LOOP
+  PROCEDURE DoLine() : BOOLEAN
+    RAISES { ShortRead, SyntaxError, Rd.Failure } =
+    BEGIN
       WITH n = Rd.GetSubLine(rd, buf) DO
 
         IF n = NUMBER(buf) THEN 
@@ -417,12 +407,12 @@ PROCEDURE Parse(wd, ofn : Pathname.T;
               FlushData(wdWr^, lbp, lbq, names, lbuff^)
             END;
             Rd.Close(rd);
-            EXIT
+            RETURN FALSE
           END
         ELSE 
           WITH line = SUBARRAY(buf,0,n) DO
             IF doDebug THEN
-              Debug.Out("line " & Text.FromChars(line))
+              Debug.Out("line " & Text.FromChars(line), 1000)
             END;
             start := 0;
             first := FALSE;
@@ -434,6 +424,9 @@ PROCEDURE Parse(wd, ofn : Pathname.T;
                 (* this is a line of node names, parse it with DoNames *)
                 parser := ParseControl.Names
               ELSIF StartsWith(line,ARRAY OF CHAR { '#', 'C' }) THEN
+
+                Debug.Out("timestep");
+                
                 (* this is a timestep, parse it with DoData
 
                    BUT
@@ -480,21 +473,41 @@ PROCEDURE Parse(wd, ofn : Pathname.T;
       IF lNo MOD DebugStep = 0 THEN
         Debug.Out(F("line %s", Int(lNo)))
       END;
-      INC(lNo)
-    END;
+      INC(lNo);
+      RETURN TRUE
+    END DoLine;
     
-    Debug.Out("Tr0.Parse closing temp files.");
+  BEGIN
+    (* assumed file structure:
+
+       <stuff to ignore>
+       #N <node names, may be multiline>
+       #C <timestep data, may be multiline, same # of cols as nodenames>
+       #C <repeated>
+       #;
+       EOF
+
+    *)
     TRY
-      <*ASSERT wdWr # NIL*>
-      FOR i := FIRST(wdWr^) TO LAST(wdWr^) DO
-        <*ASSERT wdWr[i] # NIL*>
-        Wr.Close(wdWr[i])
+      WHILE DoLine() DO
       END;
-    EXCEPT
-      Wr.Failure(x) => Debug.Error("Trouble closing temp files : Wr.Failure : " &
-        AL.Format(x))
-    END;
-    Debug.Out("Tr0.Parse temp files closed.");
+
+    FINALLY
+    
+      Debug.Out("Tr0.Parse closing temp files.");
+      TRY
+        <*ASSERT wdWr # NIL*>
+        FOR i := FIRST(wdWr^) TO LAST(wdWr^) DO
+          <*ASSERT wdWr[i] # NIL*>
+          Wr.Close(wdWr[i])
+        END;
+      EXCEPT
+        Wr.Failure(x) => Debug.Error("Trouble closing temp files : Wr.Failure : " &
+          AL.Format(x))
+      END;
+      Debug.Out("Tr0.Parse temp files closed.")
+      
+    END
 
   END Parse;
 
