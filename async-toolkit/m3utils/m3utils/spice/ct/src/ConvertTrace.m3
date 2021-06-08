@@ -79,8 +79,15 @@ PROCEDURE WriteTrace() =
     Debug.Out("WriteTrace writing header...");
     TRY
       UnsafeWriter.WriteI(tWr, 1);
+      (* this tells aplot it is the reordered format *)
+      
       UnsafeWriter.WriteI(tWr, TRUNC(Time.Now()));
+      (* timestamp *)
+      
       UnsafeWriter.WriteI(tWr, names.size());
+      (* number of nodes.  
+         aplot computes the offsets based on the file length? *)
+      
     EXCEPT
       Wr.Failure(x) =>
       Debug.Error("Write error writing header of trace file : Wr.Failure : " & AL.Format(x))
@@ -88,27 +95,27 @@ PROCEDURE WriteTrace() =
     
     Debug.Out("WriteTrace walking names...");
     FOR i := 0 TO names.size() - 1 DO
-        TRY
-          IF i = 0 THEN 
-            Debug.Out("WriteTrace creating buffers...");
-            CreateBuffers(time, data);
-            Debug.Out("WriteTrace writing TIME...");
-            UnsafeWriter.WriteLRA(tWr, time^);
-          ELSIF restrictNodes = NIL OR restrictNodes.member(names.get(i)) THEN
-            ReadEntireFile(i, data^);
-            UnsafeWriter.WriteLRA(tWr, data^);
-            Rd.Close(rd)
-          END
-        EXCEPT
-          OSError.E(x) =>
-          Debug.Error("Unable to open temp file \"" & FileName(i) & "\" for reading : OSError.E : " & AL.Format(x))
-        |
-          Rd.Failure(x) =>
-          Debug.Error("Read error on temp file \"" & FileName(i) & "\" for reading : Rd.Failure : " & AL.Format(x))
-        |
-          Wr.Failure(x) =>
-          Debug.Error("Write error on trace file, lately reading \"" & FileName(i) & "\" : Wr.Failure : " & AL.Format(x))
+      TRY
+        IF i = 0 THEN 
+          Debug.Out("WriteTrace creating buffers...");
+          CreateBuffers(time, data);
+          Debug.Out("WriteTrace writing TIME...");
+          UnsafeWriter.WriteLRA(tWr, time^);
+        ELSIF restrictNodes = NIL OR restrictNodes.member(names.get(i)) THEN
+          ReadEntireFile(i, data^);
+          UnsafeWriter.WriteLRA(tWr, data^);
+          Rd.Close(rd)
         END
+      EXCEPT
+        OSError.E(x) =>
+        Debug.Error("Unable to open temp file \"" & FileName(i) & "\" for reading : OSError.E : " & AL.Format(x))
+      |
+        Rd.Failure(x) =>
+        Debug.Error("Read error on temp file \"" & FileName(i) & "\" for reading : Rd.Failure : " & AL.Format(x))
+      |
+        Wr.Failure(x) =>
+        Debug.Error("Write error on trace file, lately reading \"" & FileName(i) & "\" : Wr.Failure : " & AL.Format(x))
+      END
     END;
 
     TRY
