@@ -88,7 +88,6 @@ PROCEDURE WriteTrace() =
     
     Debug.Out("WriteTrace walking names...");
     FOR i := 0 TO names.size() - 1 DO
-      WITH fn   = FileName(i) DO
         TRY
           IF i = 0 THEN 
             Debug.Out("WriteTrace creating buffers...");
@@ -102,15 +101,14 @@ PROCEDURE WriteTrace() =
           END
         EXCEPT
           OSError.E(x) =>
-          Debug.Error("Unable to open temp file \"" & fn & "\" for reading : OSError.E : " & AL.Format(x))
+          Debug.Error("Unable to open temp file \"" & FileName(i) & "\" for reading : OSError.E : " & AL.Format(x))
         |
           Rd.Failure(x) =>
-          Debug.Error("Read error on temp file \"" & fn & "\" for reading : Rd.Failure : " & AL.Format(x))
+          Debug.Error("Read error on temp file \"" & FileName(i) & "\" for reading : Rd.Failure : " & AL.Format(x))
         |
           Wr.Failure(x) =>
-          Debug.Error("Write error on trace file, lately reading \"" & fn & "\" : Wr.Failure : " & AL.Format(x))
+          Debug.Error("Write error on trace file, lately reading \"" & FileName(i) & "\" : Wr.Failure : " & AL.Format(x))
         END
-      END
     END;
 
     TRY
@@ -127,13 +125,29 @@ PROCEDURE FileRd_Open(fn : Pathname.T) : Rd.T RAISES { OSError.E } =
     RETURN FileRd.Open(fn)
   END FileRd_Open;
 
-VAR
-  dbRd : Rd.T        := NIL;
-  dbDb : DataBlock.T := NIL;
-  dbFn : Pathname.T  := NIL;
-  
-PROCEDURE ReadEntireFile(idx      : CARDINAL;
-                         VAR data : ARRAY OF LONGREAL)
+TYPE
+  FileReader = OBJECT
+    dbRd : Rd.T       ;
+    dbDb : DataBlock.T;
+    dbFn : Pathname.T ;
+  METHODS
+    init() : FileReader := InitM;
+
+    readEntireFile(idx : CARDINAL; VAR data : ARRAY OF LONGREAL)
+      RAISES { Rd.Failure, OSError.E } := ReadEntireFileM;
+  END;
+
+PROCEDURE InitM(self : FileReader) : FileReader =
+  BEGIN
+    self.dbRd := NIL;
+    self.dbDb := NIL;
+    self.dbFn := NIL;
+    RETURN self
+  END InitM;
+
+PROCEDURE ReadEntireFileM(self     : FileReader;
+                          idx      : CARDINAL;
+                          VAR data : ARRAY OF LONGREAL)
   RAISES { Rd.Failure, OSError.E } =
   VAR
     fn := FileName(idx);
@@ -152,25 +166,34 @@ PROCEDURE ReadEntireFile(idx      : CARDINAL;
         Rd.EndOfFile => <*ASSERT FALSE*> (* internal program error *)
       END
     ELSE
-      IF dbDb = NIL OR NOT TE(fn, dbFn) THEN
-        IF dbRd # NIL THEN
-          Rd.Close(dbRd);
+      IF self.dbDb = NIL OR NOT TE(fn, self.dbFn) THEN
+        IF self.dbRd # NIL THEN
+          Rd.Close(self.dbRd);
         END;
-        dbFn := fn;
-        dbRd := FileRd_Open(fn);
-        dbDb := NEW(DataBlock.T).init(dbRd, aLen)
+        self.dbFn := fn;
+        self.dbRd := FileRd_Open(fn);
+        self.dbDb := NEW(DataBlock.T).init(self.dbRd, aLen)
       END;
       
-      <*ASSERT dbDb.haveTag(idx)*>
-      WITH readRecs = dbDb.readData(idx, data) DO
+      <*ASSERT self.dbDb.haveTag(idx)*>
+      WITH readRecs = self.dbDb.readData(idx, data) DO
         IF readRecs # aLen THEN
           Debug.Warning(F("short read for %s (%s) : %s # %s",
                           names.get(idx), Int(idx), Int(ptr), Int(aLen)))
         END
       END
     END
-  END ReadEntireFile;
+  END ReadEntireFileM;
 
+VAR
+  singleReader := NEW(FileReader).init();
+
+PROCEDURE ReadEntireFile(idx : CARDINAL; VAR data : ARRAY OF LONGREAL)
+  RAISES { Rd.Failure, OSError.E } =
+  BEGIN
+    singleReader.readEntireFile(idx, data)
+  END ReadEntireFile;
+  
 PROCEDURE FileName(idx : CARDINAL) : TEXT =
   BEGIN
     RETURN wd & "/" & FormatFN(FileIndex(nFiles, names.size(), idx))
@@ -337,6 +360,10 @@ VAR
 
   restrictNodes : TextSet.T := NIL;
   doTrace := TRUE; (* default output *)
+
+  wait := FALSE;
+
+  wrWorkers := 1;
   
 BEGIN
   TRY
@@ -372,6 +399,12 @@ BEGIN
         restrictNodes := NEW(TextSetDef.T).init()
       END;
       EVAL restrictNodes.insert(pp.getNext())
+    END;
+
+    wait := pp.keywordPresent("-w") OR pp.keywordPresent("-wait");
+
+    IF pp.keywordPresent("-wrworkers") THEN
+      wrWorkers := pp.getNextInt()
     END;
     
     ifn := pp.getNext();

@@ -8,4 +8,7 @@ PROCEDURE WriteI(wr : Wr.T; q : INTEGER)
 PROCEDURE WriteLRA(wr : Wr.T; READONLY q : ARRAY OF LONGREAL)
   RAISES { Wr.Failure, Thread.Alerted };
 
+PROCEDURE WriteLRAAt(wr : Wr.T; READONLY q : ARRAY OF LONGREAL; index : CARDINAL)
+  RAISES { Wr.Failure, Thread.Alerted };
+
 END UnsafeWriter.
