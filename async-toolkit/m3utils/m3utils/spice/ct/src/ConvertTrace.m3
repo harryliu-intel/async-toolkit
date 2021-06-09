@@ -39,6 +39,8 @@ IMPORT TextSet, TextSetDef;
 IMPORT Tr0; FROM Tr0 IMPORT FileIndex;
 IMPORT DataBlock;
 IMPORT Text;
+IMPORT RegExList;
+IMPORT RegEx;
 
 <*FATAL Thread.Alerted*>
 
@@ -104,14 +106,14 @@ PROCEDURE WriteTrace() =
           Debug.Out(F("WriteTrace writing TIME (%s values)...",
                       Int(NUMBER(time^))));
           UnsafeWriter.WriteLRA(tWr, time^);
-        ELSIF restrictNodes = NIL OR restrictNodes.member(names.get(i)) THEN
+        ELSE
           ReadEntireFile(i, data^);
           (* this won't work because there can be gaps in the node list:
           WITH pos = dataStartByte + i * 4 * NUMBER(time^) DO
             UnsafeWriter.WriteLRAAt(tWr, data^, pos)
           END;
           *)
-          UnsafeWriter.WriteLRA(tWr, data^, pos);
+          UnsafeWriter.WriteLRA(tWr, data^);
           Rd.Close(rd)
         END
       EXCEPT
@@ -268,7 +270,7 @@ PROCEDURE WriteSources() =
         TRY
           IF i = 0 THEN
             CreateBuffers(time, data)
-          ELSIF restrictNodes = NIL OR restrictNodes.member(names.get(i)) THEN
+          ELSE
               Wr.PutText(sWr, "* source for " & names.get(i) & "\n");
               ReadEntireFile(i, data^);
               Wr.PutText(sWr, F("V%s src%s 0 PWL (\n", Int(i), Int(i)));
@@ -321,7 +323,7 @@ PROCEDURE WriteFiles() =
         TRY
           IF i = 0 THEN
             CreateBuffers(time, data);
-          ELSIF restrictNodes = NIL OR restrictNodes.member(names.get(i)) THEN
+          ELSE
               TRY
                 sFn := tDn & "/" & names.get(i);
                 sWr := FileWr.Open(sFn)
@@ -364,9 +366,6 @@ VAR
 
   rd  : Rd.T;
 
-  lbuff : REF ARRAY OF ARRAY OF LONGREAL;
-  lbp : CARDINAL := 0; lbq : CARDINAL := 0;
-
   Exp : ARRAY [-300..300] OF LONGREAL;
   wd := "ct.work";
   dutName : TEXT := NIL;
@@ -383,6 +382,7 @@ VAR
   wait := FALSE;
 
   wrWorkers := 1;
+  regExList : RegExList.T := NIL;
   
 BEGIN
   TRY
@@ -420,6 +420,19 @@ BEGIN
       EVAL restrictNodes.insert(pp.getNext())
     END;
 
+    WHILE pp.keywordPresent("-r") DO
+      WITH regExStr = pp.getNext() DO
+        TRY
+          regExList := RegExList.Cons(RegEx.Compile(regExStr), regExList)
+        EXCEPT
+          RegEx.Error(x) =>
+          Debug.Error(F("Cannot compile regex /%s/ : RegEx.Error : %s",
+                        regExStr,
+                        x))
+        END
+      END
+    END;
+    
     wait := pp.keywordPresent("-w") OR pp.keywordPresent("-wait");
 
     IF pp.keywordPresent("-wrworkers") THEN
@@ -456,16 +469,15 @@ BEGIN
               maxFiles,
               nFiles,
               MaxMem,
-              lbp,
-              lbq,
-              lbuff,
               timeScaleFactor,
               timeOffset,
               voltageScaleFactor,
               voltageOffset,
               dutName,
               rd,
-              wait);
+              wait,
+              restrictNodes,
+              regExList);
     Debug.Out("ConvertTrace parsing done.")
     
   EXCEPT

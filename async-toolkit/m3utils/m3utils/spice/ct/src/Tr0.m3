@@ -13,11 +13,17 @@ IMPORT TextSeq;
 IMPORT Scan, FloatMode, Lex;
 IMPORT Pathname;
 IMPORT Math;
+IMPORT TextSet;
+IMPORT RegEx;
+IMPORT RegExList;
+IMPORT CardSeq;
 
 <*FATAL Thread.Alerted*>
 
 TYPE CSet = SET OF CHAR; 
 CONST iSet = CSet { 'i', 'I' };
+
+CONST TE = Text.Equal;
 
 VAR doDebug := Debug.DebugThis("Tr0");
 
@@ -89,7 +95,6 @@ PROCEDURE FlushData(READONLY wdWr  : ARRAY OF Wr.T;
     
     IF doDebug THEN
       Debug.Out(F("FlushData lbp %s lbq %s names %s", Int(lbp), Int(lbq), Int(names.size())));
-      <*ASSERT lbq = names.size()*>
       FOR j := 0 TO lbp - 1 DO
         FOR i := 0 TO lbq - 1 DO
           Debug.Out(LongReal(lbuff[i,j]) & " ", 10000)
@@ -98,9 +103,9 @@ PROCEDURE FlushData(READONLY wdWr  : ARRAY OF Wr.T;
       END
     END;
 
-      (* TIME file has different format *)
+    (* TIME file has different format *)
     TRY
-      UnsafeWriter.WriteLRA(wdWr[FileIndex(nFiles, names.size(), 0)],
+      UnsafeWriter.WriteLRA(wdWr[FileIndex(nFiles, lbq, 0)],
                             SUBARRAY(lbuff[0], 0, lbp))
     EXCEPT
       Wr.Failure(x) => Debug.Error("Trouble flushing TIME data : Wr.Failure : " &
@@ -114,7 +119,7 @@ PROCEDURE FlushData(READONLY wdWr  : ARRAY OF Wr.T;
          <binary sample data>
       *)
       TRY
-        WITH wr = wdWr[FileIndex(nFiles, names.size(), i)] DO
+        WITH wr = wdWr[FileIndex(nFiles, lbq, i)] DO
           UnsafeWriter.WriteI  (wr, i);     
           UnsafeWriter.WriteI  (wr, lbp);
           UnsafeWriter.WriteLRA(wr, SUBARRAY(lbuff[i], 0, lbp))
@@ -127,19 +132,45 @@ PROCEDURE FlushData(READONLY wdWr  : ARRAY OF Wr.T;
 
   END FlushData;
 
-PROCEDURE WriteNames(wd, ofn    : Pathname.T;
-                     names      : TextSeq.T;
-                     maxFiles   : CARDINAL;
-                     VAR nFiles : CARDINAL;
-                     VAR wdWr   : REF ARRAY OF Wr.T) =
+PROCEDURE CountActiveNames(seq : CardSeq.T) : CARDINAL =
+  VAR
+    res : CARDINAL := 0;
+  BEGIN
+    FOR i := 0 TO seq.size() - 1 DO
+      IF seq.get(i) # LAST(CARDINAL) THEN
+        INC(res)
+      END
+    END;
+    RETURN res
+  END CountActiveNames;
+  
+PROCEDURE WriteNames(wd, ofn       : Pathname.T;
+
+                     names         : TextSeq.T;
+
+                     idxMap        : CardSeq.T;
+                     (* map of input node to output node *)
+                     
+                     maxFiles      : CARDINAL;
+
+                     VAR nFiles    : CARDINAL;
+
+                     VAR wdWr      : REF ARRAY OF Wr.T) : CARDINAL =
   VAR
     wr : Wr.T;
     nFn := ofn & ".names";
+
     nNodes := names.size();
+    (* this is the number of names in the file, not the number of names
+       written? *)
+
+    aNodes := CountActiveNames(idxMap);
   BEGIN
-    nFiles := MIN(nNodes, maxFiles); (* note that nNodes includes TIME *)
+    nFiles := MIN(aNodes, maxFiles); (* note that nNodes includes TIME *)
     
-    Debug.Out(F("%s nodes (incl. TIME)", Int(nNodes)));
+    Debug.Out(F("%s nodes (incl. TIME), %s nodes active",
+                Int(nNodes),
+                Int(aNodes)));
     Debug.Out(F("%s files", Int(nFiles)));
     
     TRY
@@ -167,18 +198,20 @@ PROCEDURE WriteNames(wd, ofn    : Pathname.T;
 
       (* write names file *)
       FOR i := 0 TO names.size() - 1 DO
-        WITH nm = TextUtils.ReplaceChar(names.get(i), ':', '_') DO
-          (* aplot has trouble with colons in node names, so rename those,
-             sorry about any clashes ... *)
-          Wr.PutText(wr, nm)
-        END;
-        Wr.PutChar(wr, '\n')
+        IF idxMap.get(i) # LAST(CARDINAL) THEN
+          WITH nm = TextUtils.ReplaceChar(names.get(i), ':', '_') DO
+            (* aplot has trouble with colons in node names, so rename those,
+               sorry about any clashes ... *)
+            Wr.PutText(wr, nm)
+          END;
+          Wr.PutChar(wr, '\n')
+        END
       END;
       Wr.Close(wr)
-      
     EXCEPT
       Wr.Failure(x) => Debug.Error("Unable to write names file \"" & nFn & "\" : Wr.Failure : " & AL.Format(x))
-    END
+    END;
+    RETURN aNodes
   END WriteNames;
 
 PROCEDURE NullParser(<*UNUSED*>READONLY line : ARRAY OF CHAR; 
@@ -188,14 +221,54 @@ PROCEDURE NullParser(<*UNUSED*>READONLY line : ARRAY OF CHAR;
   END NullParser;
 
 (**********************************************************************)
+
+PROCEDURE MakeIdxMap(names         : TextSeq.T;
+                     restrictNodes : TextSet.T;
+                     regExList     : RegExList.T) : CardSeq.T =
+  VAR
+    res := NEW(CardSeq.T).init();
+    c := 0;
+    success : BOOLEAN;
+  BEGIN
+    FOR i := 0 TO names.size() - 1 DO
+      IF TE(names.get(i), "TIME") THEN
+        success := TRUE
+      ELSIF restrictNodes = NIL AND regExList = NIL THEN
+        success := TRUE
+      ELSIF restrictNodes # NIL AND restrictNodes.member(names.get(i)) THEN
+        success := TRUE
+      ELSE
+        success := FALSE;
+        VAR
+          p := regExList;
+        BEGIN
+          WHILE p # NIL DO
+            IF RegEx.Execute(p.head,
+                             names.get(i)) # -1 THEN
+              success := TRUE;
+              EXIT
+            END;
+            p := p.tail
+          END
+        END
+      END;
+
+      IF success THEN
+        res.addhi(c);
+        INC(c)
+      ELSE
+        res.addhi(LAST(CARDINAL))
+      END
+    END;
+
+    RETURN res
+  END MakeIdxMap;
   
 PROCEDURE Parse(wd, ofn        : Pathname.T;
                 names          : TextSeq.T;
                 maxFiles       : CARDINAL;
                 VAR nFiles     : CARDINAL;
                 MaxMem         : CARDINAL;
-                VAR lbp, lbq   : CARDINAL;
-                VAR lbuff      : REF ARRAY OF ARRAY OF LONGREAL;
 
                 timeScaleFactor,
                 timeOffset,
@@ -205,10 +278,18 @@ PROCEDURE Parse(wd, ofn        : Pathname.T;
                 dutName        : TEXT;
                  
                 rd             : Rd.T;
-                wait           : BOOLEAN)
+                wait           : BOOLEAN;
+                restrictNodes  : TextSet.T;
+                restrictRegEx  : RegExList.T)
   RAISES { Rd.Failure, ShortRead, SyntaxError } =
 
+  VAR lbp   : CARDINAL := 0;
+      lbq   : CARDINAL;
+      rbq   : CARDINAL;
+      
   VAR lNo := 1;
+      
+  VAR lbuff : REF ARRAY OF ARRAY OF LONGREAL;
 
   PROCEDURE DoNames(READONLY line : ARRAY OF CHAR;
                     <*UNUSED*>f   : BOOLEAN) : CARDINAL
@@ -310,7 +391,7 @@ PROCEDURE Parse(wd, ofn        : Pathname.T;
       RAISES { ShortRead, SyntaxError } =
       VAR  
         len : CARDINAL;
-        f : INTEGER;
+        fl : INTEGER;
         m := 0;
         x := 0;
         neg : BOOLEAN;
@@ -321,9 +402,9 @@ PROCEDURE Parse(wd, ofn        : Pathname.T;
           END;
           m := 0;
           EVAL GetInt(m); 
-          f := m;
+          fl := m;
           m := ABS(m);
-          neg := m = -f;
+          neg := m = -fl;
           Get('.');
           len := GetInt(m);
           Get('e');
@@ -332,7 +413,7 @@ PROCEDURE Parse(wd, ofn        : Pathname.T;
           IF neg THEN z := -z END;
           IF doDebug THEN 
             Debug.Out(F("GetLR %s -> %s x (%s - %s) -> %s",
-                        Int(f), Int(m), Int(x), Int(len),
+                        Int(fl), Int(m), Int(x), Int(len),
                         LongReal(z)), 1000)
           END;
           RETURN TRUE
@@ -346,34 +427,53 @@ PROCEDURE Parse(wd, ofn        : Pathname.T;
       dummy := 0;
       got := 0;
       z : LONGREAL;
+      
     BEGIN
       TRY
         IF f THEN
           INC(lbp);
           IF lbp = NUMBER(lbuff[0]) THEN
+            <*ASSERT lbq = aNodes*>
             FlushData(wdWr^, lbp, lbq, names, lbuff^);
             lbp := 0
           END;
+          rbq := 0;
           lbq := 0;
 
-          (* process time timestamp *)
+          (* process time timestamp -- never optional *)
+          <*ASSERT idxMap.get(rbq) # LAST(CARDINAL)*>
           TRY
-            EVAL GetLR(lbuff[lbq,lbp]);
+            EVAL GetLR(lbuff[lbq, lbp]);
           EXCEPT
             SyntaxError(e) => RAISE SyntaxError("Getting timestamp : " & e)
           END;
-          lbuff[lbq,lbp] := timeScaleFactor*(lbuff[lbq,lbp]+timeOffset);
+          lbuff[lbq, lbp] := timeScaleFactor * (lbuff[lbq,lbp] + timeOffset);
           IF doDebug THEN
             Debug.Out(F("time %s", LongReal(lbuff[lbq,lbp])))
           END;
-          INC(lbq);
+          INC(lbq); INC(rbq); (* move to next *)
           
           EVAL GetInt(dummy); (* should really assert this is = names.size() *)
         END;
+        
+        <*ASSERT rbq >= lbq*>
         TRY
           WHILE GetLR(z) DO
-            lbuff[lbq,lbp] := z*voltageScaleFactor+voltageOffset;
-            INC(lbq); INC(got)
+
+            <*ASSERT rbq >= lbq*>
+            
+            IF idxMap.get(rbq) # LAST(CARDINAL) THEN
+              IF idxMap.get(rbq) # lbq THEN
+                Debug.Error(F("Internal error: idxMap.get(rbq %s) %s # lbq %s",
+                              Int(rbq),
+                              Int(idxMap.get(rbq)),
+                              Int(lbq)))
+              END;
+
+              lbuff[lbq,lbp] := z * voltageScaleFactor + voltageOffset;
+              INC(lbq); INC(got)
+            END;
+            INC(rbq)
           END;
         EXCEPT
           SyntaxError(e) => RAISE SyntaxError("Getting value : " & e)
@@ -384,6 +484,7 @@ PROCEDURE Parse(wd, ofn        : Pathname.T;
         IF lbp # 0 THEN  (* abandon current timestep *)
           DEC(lbp);
           lbq := NUMBER(lbuff^);
+          <*ASSERT lbq = aNodes*>
           FlushData(wdWr^, lbp, lbq, names, lbuff^)
         END;
         RAISE ShortRead
@@ -472,11 +573,19 @@ PROCEDURE Parse(wd, ofn        : Pathname.T;
                 *)
                 IF parser = ParseControl.Names THEN
                   (* must write out names before we forget! *)
-                  WriteNames(wd, ofn, names, maxFiles, nFiles, wdWr);
+                  idxMap := MakeIdxMap(names, restrictNodes, restrictRegEx);
+                  
+                  aNodes := WriteNames(wd,
+                                       ofn,
+                                       names,
+                                       idxMap,
+                                       maxFiles,
+                                       nFiles,
+                                       wdWr);
 
                   gotNames := TRUE;
 
-                  WITH n = names.size(),
+                  WITH n = aNodes,
                        l = BYTESIZE(LONGREAL),
                        q = MaxMem DIV (n * l) DO
                     lbuff := NEW(REF ARRAY OF ARRAY OF LONGREAL, n, q)
@@ -492,7 +601,7 @@ PROCEDURE Parse(wd, ofn        : Pathname.T;
               start := 2
             END;
 
-            WITH str = SUBARRAY(line,start,n-start) DO
+            WITH str = SUBARRAY(line, start, n - start) DO
               CASE parser OF
                 ParseControl.Null =>
                 EVAL NullParser(str, first)
@@ -514,7 +623,10 @@ PROCEDURE Parse(wd, ofn        : Pathname.T;
       INC(lNo);
       RETURN TRUE
     END DoLine;
-    
+
+  VAR
+    idxMap : CardSeq.T;
+    aNodes : CARDINAL;
   BEGIN
     (* assumed file structure:
 
@@ -531,6 +643,9 @@ PROCEDURE Parse(wd, ofn        : Pathname.T;
       END;
 
     FINALLY
+
+      (* sanitize names -- remove names not used *)
+      SanitizeNames(idxMap, names);
     
       Debug.Out("Tr0.Parse closing temp files.");
 
@@ -554,6 +669,23 @@ PROCEDURE Parse(wd, ofn        : Pathname.T;
 
   END Parse;
 
+PROCEDURE SanitizeNames(idxMap : CardSeq.T;
+                        names  : TextSeq.T) =
+  VAR
+    store := NEW(TextSeq.T).init();
+  BEGIN
+    FOR i := 0 TO names.size() - 1 DO
+      IF idxMap.get(i) # LAST(CARDINAL) THEN store.addhi(names.get(i)) END
+    END;
+
+    EVAL names.init();
+
+    FOR i := 0 TO store.size() - 1 DO
+      names.addhi(store.get(i))
+    END
+  END SanitizeNames;
+
+  
 CONST
   DebugStep = 1000 * 1000;
   

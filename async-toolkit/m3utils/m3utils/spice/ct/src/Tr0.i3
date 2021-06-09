@@ -2,14 +2,14 @@ INTERFACE Tr0;
 IMPORT Rd;
 IMPORT Pathname;
 IMPORT TextSeq;
+IMPORT TextSet;
+IMPORT RegExList;
 
 PROCEDURE Parse(wd, ofn : Pathname.T;
                 names : TextSeq.T;
                 maxFiles : CARDINAL;
                 VAR nFiles : CARDINAL;
                 MaxMem : CARDINAL;
-                VAR lbp, lbq : CARDINAL;
-                VAR lbuff    : REF ARRAY OF ARRAY OF LONGREAL;
 
                 timeScaleFactor,
                 timeOffset,
@@ -19,7 +19,9 @@ PROCEDURE Parse(wd, ofn : Pathname.T;
                 dutName : TEXT;
                  
                 rd           : Rd.T;
-                wait         : BOOLEAN)
+                wait         : BOOLEAN;
+                restrictNodes : TextSet.T;
+                restrictRegEx : RegExList.T)
   RAISES { Rd.Failure, ShortRead, SyntaxError };
 
 EXCEPTION ShortRead;
