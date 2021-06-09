@@ -106,9 +106,12 @@ PROCEDURE WriteTrace() =
           UnsafeWriter.WriteLRA(tWr, time^);
         ELSIF restrictNodes = NIL OR restrictNodes.member(names.get(i)) THEN
           ReadEntireFile(i, data^);
+          (* this won't work because there can be gaps in the node list:
           WITH pos = dataStartByte + i * 4 * NUMBER(time^) DO
             UnsafeWriter.WriteLRAAt(tWr, data^, pos)
           END;
+          *)
+          UnsafeWriter.WriteLRA(tWr, data^, pos);
           Rd.Close(rd)
         END
       EXCEPT
