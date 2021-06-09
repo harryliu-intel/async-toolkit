@@ -66,8 +66,9 @@ PROCEDURE WriteTrace() =
      in reordered trace format for fast aplot access *)
   VAR
     tFn := ofn & ".trace";
-    tWr : Wr.T;
-    time, data : REF ARRAY OF LONGREAL;
+    tWr           : Wr.T;
+    time, data    : REF ARRAY OF LONGREAL;
+    dataStartByte : CARDINAL;
   BEGIN
     Debug.Out("WriteTrace");
     TRY
@@ -87,7 +88,8 @@ PROCEDURE WriteTrace() =
       UnsafeWriter.WriteI(tWr, names.size());
       (* number of nodes.  
          aplot computes the offsets based on the file length? *)
-      
+
+      dataStartByte := Wr.Index(tWr);
     EXCEPT
       Wr.Failure(x) =>
       Debug.Error("Write error writing header of trace file : Wr.Failure : " & AL.Format(x))
@@ -104,7 +106,9 @@ PROCEDURE WriteTrace() =
           UnsafeWriter.WriteLRA(tWr, time^);
         ELSIF restrictNodes = NIL OR restrictNodes.member(names.get(i)) THEN
           ReadEntireFile(i, data^);
-          UnsafeWriter.WriteLRA(tWr, data^);
+          WITH pos = dataStartByte + i * 4 * NUMBER(time^) DO
+            UnsafeWriter.WriteLRAAt(tWr, data^, pos)
+          END;
           Rd.Close(rd)
         END
       EXCEPT
