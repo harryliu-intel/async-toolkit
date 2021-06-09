@@ -18,7 +18,8 @@ PROCEDURE Parse(wd, ofn : Pathname.T;
 
                 dutName : TEXT;
                  
-                rd           : Rd.T)
+                rd           : Rd.T;
+                wait         : BOOLEAN)
   RAISES { Rd.Failure, ShortRead, SyntaxError };
 
 EXCEPTION ShortRead;

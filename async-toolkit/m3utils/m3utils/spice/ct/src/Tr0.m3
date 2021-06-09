@@ -187,28 +187,31 @@ PROCEDURE NullParser(<*UNUSED*>READONLY line : ARRAY OF CHAR;
     RETURN 1
   END NullParser;
 
-PROCEDURE Parse(wd, ofn : Pathname.T;
-                names : TextSeq.T;
-                maxFiles : CARDINAL;
-                VAR nFiles : CARDINAL;
-                MaxMem : CARDINAL;
-                VAR lbp, lbq : CARDINAL;
-                VAR lbuff    : REF ARRAY OF ARRAY OF LONGREAL;
+(**********************************************************************)
+  
+PROCEDURE Parse(wd, ofn        : Pathname.T;
+                names          : TextSeq.T;
+                maxFiles       : CARDINAL;
+                VAR nFiles     : CARDINAL;
+                MaxMem         : CARDINAL;
+                VAR lbp, lbq   : CARDINAL;
+                VAR lbuff      : REF ARRAY OF ARRAY OF LONGREAL;
 
                 timeScaleFactor,
                 timeOffset,
                 voltageScaleFactor,
-                voltageOffset : LONGREAL;
+                voltageOffset  : LONGREAL;
 
-                dutName : TEXT;
+                dutName        : TEXT;
                  
-                rd           : Rd.T)
+                rd             : Rd.T;
+                wait           : BOOLEAN)
   RAISES { Rd.Failure, ShortRead, SyntaxError } =
 
   VAR lNo := 1;
 
   PROCEDURE DoNames(READONLY line : ARRAY OF CHAR;
-                    <*UNUSED*>f : BOOLEAN) : CARDINAL
+                    <*UNUSED*>f   : BOOLEAN) : CARDINAL
     RAISES { SyntaxError } =
 
     PROCEDURE Push(s, l : CARDINAL; isCurr : BOOLEAN) =
@@ -239,14 +242,20 @@ PROCEDURE Parse(wd, ofn : Pathname.T;
       WHILE p < n DO
         IF line[p] = '\'' THEN
           INC(p);
+          IF p = n THEN
+            RAISE SyntaxError("file ends in a backslash")
+          END;
           isCurr := line[p] IN iSet; 
           Get(CSet { 'v', 'V' } + iSet);
           Get(CSet { '(' } );
           s := p;
           WHILE line[p] # '\'' DO
-            INC(p)
+            INC(p);
+            IF p = n THEN
+              RAISE SyntaxError("file ends in the middle of a quoted token")
+            END
           END;
-          Push(s,p, isCurr)
+          Push(s, p, isCurr)
         END;
         INC(p)
       END;
@@ -388,18 +397,45 @@ PROCEDURE Parse(wd, ofn : Pathname.T;
     first : BOOLEAN;
 
     parser := ParseControl.Null;
+
+    gotNames := FALSE;
     
   TYPE
     ParseControl = { Null, Data, Names };
 
+  PROCEDURE GetSubLine(rd : Rd.T; VAR buf : ARRAY OF CHAR) : CARDINAL
+    RAISES { Rd.Failure, Thread.Alerted } =
+    BEGIN
+      IF wait THEN
+        VAR
+          ptr := 0;
+        BEGIN
+          WHILE ptr = 0 OR buf[ptr - 1] # '\n' DO
+            IF ptr = NUMBER(buf) THEN
+              Debug.Error("line too long")
+            END;
+            WITH got = Rd.GetSubLine(rd,
+                                     SUBARRAY(buf, ptr, NUMBER(buf) - ptr)) DO
+              INC(ptr, got);
+              IF got = 0 THEN Thread.Pause(0.1d0) END
+            END
+          END;
+          <* ASSERT ptr # 0 *>
+          RETURN ptr
+        END
+      ELSE
+        RETURN Rd.GetSubLine(rd, buf)
+      END
+    END GetSubLine;
+    
   PROCEDURE DoLine() : BOOLEAN
     RAISES { ShortRead, SyntaxError, Rd.Failure } =
     BEGIN
-      WITH n = Rd.GetSubLine(rd, buf) DO
+      WITH n = GetSubLine(rd, buf) DO
 
         IF n = NUMBER(buf) THEN 
           Debug.Error("line too long")
-        ELSIF n = 0 THEN
+        ELSIF NOT wait AND n = 0 THEN
           IF Rd.EOF(rd) THEN
             IF lbp # 0 THEN
               DEC(lbp);
@@ -437,6 +473,8 @@ PROCEDURE Parse(wd, ofn : Pathname.T;
                 IF parser = ParseControl.Names THEN
                   (* must write out names before we forget! *)
                   WriteNames(wd, ofn, names, maxFiles, nFiles, wdWr);
+
+                  gotNames := TRUE;
 
                   WITH n = names.size(),
                        l = BYTESIZE(LONGREAL),
@@ -495,6 +533,11 @@ PROCEDURE Parse(wd, ofn : Pathname.T;
     FINALLY
     
       Debug.Out("Tr0.Parse closing temp files.");
+
+      IF NOT gotNames THEN
+        Debug.Error("Tr0.Parse: no (not enough?) data found")
+      END;
+      
       TRY
         <*ASSERT wdWr # NIL*>
         FOR i := FIRST(wdWr^) TO LAST(wdWr^) DO

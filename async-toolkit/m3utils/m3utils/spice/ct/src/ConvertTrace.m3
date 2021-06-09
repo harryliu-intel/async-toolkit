@@ -443,7 +443,22 @@ BEGIN
   TRY
 
     Debug.Out("ConvertTrace parsing...");
-    Tr0.Parse(wd, ofn, names, maxFiles, nFiles, MaxMem, lbp, lbq, lbuff, timeScaleFactor, timeOffset, voltageScaleFactor, voltageOffset, dutName, rd);
+    Tr0.Parse(wd,
+              ofn,
+              names,
+              maxFiles,
+              nFiles,
+              MaxMem,
+              lbp,
+              lbq,
+              lbuff,
+              timeScaleFactor,
+              timeOffset,
+              voltageScaleFactor,
+              voltageOffset,
+              dutName,
+              rd,
+              wait);
     Debug.Out("ConvertTrace parsing done.")
     
   EXCEPT
