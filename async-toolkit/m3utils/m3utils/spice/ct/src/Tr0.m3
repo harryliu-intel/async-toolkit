@@ -371,7 +371,9 @@ PROCEDURE Parse(wd, ofn        : Pathname.T;
         INC(p)
       END Get;
 
-    PROCEDURE GetInt(VAR z : INTEGER) : CARDINAL  RAISES { ShortRead } =
+    PROCEDURE GetInt(VAR z : INTEGER) : CARDINAL
+      RAISES { ShortRead } =
+      (* returns length of string read *)
       VAR
         neg := FALSE;
         s := p;
@@ -384,7 +386,7 @@ PROCEDURE Parse(wd, ofn        : Pathname.T;
           INC(p)
         END;
         IF neg THEN z := -z END;
-        RETURN  p-s
+        RETURN  p - s
       END GetInt;
 
     PROCEDURE GetLR(VAR z : LONGREAL) : BOOLEAN
@@ -409,7 +411,24 @@ PROCEDURE Parse(wd, ofn        : Pathname.T;
           len := GetInt(m);
           Get('e');
           EVAL GetInt(x);
-          z := FLOAT(m,LONGREAL) * Exp[x-len];
+
+          WITH tabIdx = x - len DO
+            IF tabIdx >= FIRST(Exp) AND tabIdx <= LAST(Exp) THEN
+              z := FLOAT(m,LONGREAL) * Exp[tabIdx]
+            ELSE
+              (*
+              RAISE SyntaxError(F("scientific notation out of range: tabIdx=%s first=%s last=%s intExponent=%s",
+                                  Int(tabIdx),
+                                  Int(FIRST(Exp)),
+                                  Int(LAST(Exp)),
+                                  Int(x)))
+              *)
+              z := FLOAT(m, LONGREAL) * Math.pow(10.0d0,
+                                                 FLOAT(x - len, LONGREAL))
+            END;
+
+          END;
+          
           IF neg THEN z := -z END;
           IF doDebug THEN 
             Debug.Out(F("GetLR %s -> %s x (%s - %s) -> %s",
@@ -431,7 +450,15 @@ PROCEDURE Parse(wd, ofn        : Pathname.T;
     BEGIN
       TRY
         IF f THEN
+          IF lbp # 0 AND lbq # aNodes THEN
+            Debug.Warning(F("Short read on line %s : got %s # expected %s values (ZEROING)",
+                            Int(lNo), Int(lbq), Int(aNodes)));
+            FOR i := lbq TO aNodes - 1 DO
+              lbuff[lbp, i] := 0.0d0
+            END
+          END;
           INC(lbp);
+          
           IF lbp = NUMBER(lbuff[0]) THEN
             <*ASSERT lbq = aNodes*>
             FlushData(wdWr^, lbp, lbq, names, lbuff^);
@@ -539,7 +566,14 @@ PROCEDURE Parse(wd, ofn        : Pathname.T;
         ELSIF NOT wait AND n = 0 THEN
           IF Rd.EOF(rd) THEN
             IF lbp # 0 THEN
-              DEC(lbp);
+
+              (* we do NOT throw away the last value here, unless we have a
+                 short read (can we get here with a short read?) *)
+
+              IF lbq # NUMBER(lbuff^) THEN DEC(lbp) END;
+              
+              Debug.Out(F("Hit EOF case lbp %s lbq %s", Int(lbp), Int(lbq)));
+              
               lbq := NUMBER(lbuff^);
               FlushData(wdWr^, lbp, lbq, names, lbuff^)
             END;
@@ -596,7 +630,25 @@ PROCEDURE Parse(wd, ofn        : Pathname.T;
                 parser := ParseControl.Data
               ELSIF StartsWith(line,ARRAY OF CHAR { '#', ';' }) THEN
                 (* this is the last line of the file, skip it *)
-                parser := ParseControl.Null
+                parser := ParseControl.Null;
+
+                IF wait THEN
+                  IF lbp # 0 THEN
+
+                    (* lop off the last value if for some reason we have a
+                       short read... but this should never happen! *)
+                    IF lbq # NUMBER(lbuff^) THEN
+                      Debug.Warning("values missing on FINAL timestep");
+                      DEC(lbp)
+                    END;
+
+                    lbq := NUMBER(lbuff^);
+                    FlushData(wdWr^, lbp, lbq, names, lbuff^)
+                  END;
+                  Rd.Close(rd);
+
+                  RETURN FALSE
+                END;
               END;
               start := 2
             END;
@@ -639,8 +691,7 @@ PROCEDURE Parse(wd, ofn        : Pathname.T;
 
     *)
     TRY
-      WHILE DoLine() DO
-      END;
+      WHILE DoLine() DO END;
 
     FINALLY
 
@@ -695,7 +746,7 @@ VAR
 BEGIN
 
   FOR i := FIRST(Exp) TO LAST(Exp) DO
-    Exp[i] := Math.pow(10.0d0,FLOAT(i,LONGREAL))
+    Exp[i] := Math.pow(10.0d0, FLOAT(i, LONGREAL))
   END;
 
 END Tr0.
