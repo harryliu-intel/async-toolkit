@@ -41,6 +41,7 @@ IMPORT DataBlock;
 IMPORT Text;
 IMPORT RegExList;
 IMPORT RegEx;
+IMPORT TextUtils;
 
 <*FATAL Thread.Alerted*>
 
@@ -49,7 +50,7 @@ CONST LR = LongReal;
       
 VAR doDebug := Debug.DebugThis("CT");
 
-CONST Usage = "[-rename <dutName>] [-scaletime <timeScaleFactor>] [-offsettime <timeOffset>] [-offsetvoltage <voltageOffset>] [-dosources] [-maxfiles <nfiles>] <inFileName> <outFileRoot>";
+CONST Usage = "[-rename <dutName>] [-scaletime <timeScaleFactor>] [-offsettime <timeOffset>] [-offsetvoltage <voltageOffset>] [-dosources] [-dofiles] [-maxfiles <nfiles>] [-wd <scratch dir>] ([-n <nodename>] ...) ([-r <regex>] ...) <inFileName> <outFileRoot>";
 
 CONST DefMaxFiles = 1000;
 
@@ -108,12 +109,15 @@ PROCEDURE WriteTrace() =
           UnsafeWriter.WriteLRA(tWr, time^);
         ELSE
           ReadEntireFile(i, data^);
-          (* this won't work because there can be gaps in the node list:
+
           WITH pos = dataStartByte + i * 4 * NUMBER(time^) DO
             UnsafeWriter.WriteLRAAt(tWr, data^, pos)
           END;
-          *)
+
+          (*
           UnsafeWriter.WriteLRA(tWr, data^);
+          *)
+          
           Rd.Close(rd)
         END
       EXCEPT
@@ -303,6 +307,11 @@ PROCEDURE WriteSources() =
     END
   END WriteSources;
 
+PROCEDURE Unslash(fn : Pathname.T) : Pathname.T =
+  BEGIN
+    RETURN TextUtils.Replace(fn, "/", "::")
+  END Unslash;
+
 PROCEDURE WriteFiles() =
   (* read data from each file in temp directory and output
      in simple ASCII format *)
@@ -325,7 +334,7 @@ PROCEDURE WriteFiles() =
             CreateBuffers(time, data);
           ELSE
               TRY
-                sFn := tDn & "/" & names.get(i);
+                sFn := tDn & "/" & Unslash(names.get(i));
                 sWr := FileWr.Open(sFn)
               EXCEPT
                 OSError.E(x) => Debug.Error("Unable to open file \"" & sFn & "\" for writing : OSError.E : " & AL.Format(x))
@@ -435,9 +444,15 @@ BEGIN
     
     wait := pp.keywordPresent("-w") OR pp.keywordPresent("-wait");
 
+    IF pp.keywordPresent("-wd") OR pp.keywordPresent("-workdir") THEN
+      wd := pp.getNext()
+    END;
+
     IF pp.keywordPresent("-wrworkers") THEN
       wrWorkers := pp.getNextInt()
     END;
+
+    pp.skipParsed();
     
     ifn := pp.getNext();
     ofn := pp.getNext();
