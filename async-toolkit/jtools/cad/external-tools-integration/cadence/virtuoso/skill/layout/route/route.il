@@ -856,8 +856,8 @@ DumbLayers = (list (list "SRAM" "fill")
         )
       (cond (dfII_name
              master=(dbOpenCellViewByType (GetCastLibName dfII_name) dfII_name "layout")
-             (unless master (error "unable to read %s\n" dfII_name))
-             inst->master=master
+             (unless master (warn "unable to read %s\n" dfII_name))
+             (when master inst->master=master)
              )
             (t
              (unless flatten[inst->cellName]
