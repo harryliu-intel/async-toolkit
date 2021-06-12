@@ -1,0 +1,8 @@
+#g++ -g -o read_analog -I /p/cth/rtl/cad/x86-64_linux44/synopsys/verdi3/R-2020.12/share/FsdbReader/ read_analog.cpp -L /p/cth/rtl/cad/x86-64_linux44/synopsys/verdi3/R-2020.12/share/FsdbReader/linux64/ -lnffr -lnsys -ldl -lz -Wl,-rpath=/p/cth/rtl/cad/x86-64_linux44/synopsys/verdi3/R-2020.12/share/FsdbReader/linux64/
+
+#g++ -g -o read_mix -I /p/cth/rtl/cad/x86-64_linux44/synopsys/verdi3/R-2020.12/share/FsdbReader/ read_mix.cpp -L /p/cth/rtl/cad/x86-64_linux44/synopsys/verdi3/R-2020.12/share/FsdbReader/linux64/ -lnffr -lnsys -ldl -lz -Wl,-rpath=/p/cth/rtl/cad/x86-64_linux44/synopsys/verdi3/R-2020.12/share/FsdbReader/linux64/
+
+g++ -g -o read_nanosim -I /p/cth/rtl/cad/x86-64_linux44/synopsys/verdi3/R-2020.12/share/FsdbReader/ read_nanosim.cpp -L /p/cth/rtl/cad/x86-64_linux44/synopsys/verdi3/R-2020.12/share/FsdbReader/linux64/ -lnffr -lnsys -ldl -lz -Wl,-rpath=/p/cth/rtl/cad/x86-64_linux44/synopsys/verdi3/R-2020.12/share/FsdbReader/linux64/
+
+g++ -g -o nanosimrd -I /p/cth/rtl/cad/x86-64_linux44/synopsys/verdi3/R-2020.12/share/FsdbReader/ nanosimrd.cpp -L /p/cth/rtl/cad/x86-64_linux44/synopsys/verdi3/R-2020.12/share/FsdbReader/linux64/ -lnffr -lnsys -ldl -lz -Wl,-rpath=/p/cth/rtl/cad/x86-64_linux44/synopsys/verdi3/R-2020.12/share/FsdbReader/linux64/
+
