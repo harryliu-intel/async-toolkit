@@ -913,6 +913,7 @@ $(ROOT_TARGET_DIR)/%/extracted/cell.spef :\
 
 EXTRACT_COMMON_OPTIONS=--64bit=$(BIT64) \
 	--ccp=$(CCP) \
+	--cth=$(CTH) \
 	--cdl-cell-name="$$cell" \
 	--cdl-file='$(call GET_VIEW_DIR,$(@D))/cell.cdl_gds2' \
 	--extract-corner='$(call GET_EXTRACT_CORNER,$(@D))' \

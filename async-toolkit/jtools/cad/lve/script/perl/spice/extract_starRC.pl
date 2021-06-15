@@ -90,7 +90,8 @@ sub usage() {
     $usage .= "    --nt-mode=[0|1] generate files for Nanotime\n";
     $usage .= "    --totem-mode=[0|1] for totem prep\n";
     $usage .= "    --instance-port=[CONDUCTIVE|NOT_CONDUCTIVE|SUPERCONDUCTIVE]\n";
-    $usage .= "    --ccp=[0|1] (whether to enable CCP; defaults to 0\n";
+    $usage .= "    --ccp=[0|1] (whether to enable CCP; defaults to 0)\n";
+    $usage .= "    --cth=[0|1] (whether to extract via Cheetah)\n";
     $usage .= "    NVN OPTIONS\n";
     $usage .= "    --nvn-bind-file=<name> (for renaming devices in extracted netlist)\n";
     $usage .= "    --nvn-log=<filename> (the .cls file from nvn on transistor netlist)\n";
@@ -149,6 +150,7 @@ my $totem_mode=0;
 my $instancePort='CONDUCTIVE';
 my $nodeprops;
 my $ccp=0;
+my $cth=0;
 my $grayboxFile="cell.spice_gds2";
 
 while (defined $ARGV[0] and $ARGV[0] =~ /^--(.*)/) {
@@ -234,6 +236,8 @@ while (defined $ARGV[0] and $ARGV[0] =~ /^--(.*)/) {
         $instancePort = $value;
     } elsif ($flag eq "ccp") {
         $ccp = $value;
+    } elsif ($flag eq "cth") {
+        $cth = $value;
     } elsif ($flag eq "node-props") {
         $nodeprops = $value;
     } else {
@@ -384,21 +388,20 @@ sub makegdsgraylist {
 }
 
 
+my_system("mkdir -p '$starRC_dir'");
+system("chmod 755 \"$working_dir\"");
 
 if($stage1){
 ## CREATING DIRECTORY STRUCTURE AND COPYING FILES
-    system("chmod 755 \"$working_dir\"");
 
     print "Extraction Working directory is $working_dir\n";
     ##########################################################################
     #                              ICV LVS                                   #
     ##########################################################################
     print "Running ICV LVS...\n";
-    $starRC_dir="$working_dir/starRC";
-    if( -e "$working_dir/starRC/group") {
-       my_system("rm -rf '$working_dir/starRC/group'");
+    if( -e "$starRC_dir/group") {
+       my_system("rm -rf '$starRC_dir/group'");
     }
-    my_system("mkdir -p '$starRC_dir'");
     chdir "$starRC_dir";
     my @lvs_cmd=("lvs",
     "--working-dir=$starRC_dir",
@@ -413,32 +416,32 @@ if($stage1){
     push @lvs_cmd, "--icv-options=$lvs_extra_options" if ($lvs_extra_options ne "");
     push @lvs_cmd, "--gray-cell-list=$graycell_file" if ($graycell_file ne "");
     push @lvs_cmd, "--extra-extract-equiv=$extra_extract_equiv" if (defined $extra_extract_equiv and $extra_extract_equiv ne "");
+    push @lvs_cmd, "--setup-only=1" if $cth;
     push @lvs_cmd, "$cell_name";
     system(@lvs_cmd);
 
-    if( -e "$topcell.LVS_ERRORS" ){
-      if( -e "run_details/$topcell.cmperr" and defined $nvn_log ){
-          my_system("cp 'run_details/$topcell.cmperr' '$nvn_log'");
-      }
+    if (!$cth) {
+        if( -e "$topcell.LVS_ERRORS" ){
+            if( -e "run_details/$topcell.cmperr" and defined $nvn_log ){
+                my_system("cp 'run_details/$topcell.cmperr' '$nvn_log'");
+            }
 
-      open LVS_ERRORS, "<$topcell.LVS_ERRORS";
-      my $Result=1;
-      while(<LVS_ERRORS>)  {
-        if(/^Final comparison result:PASS/){ $Result=0; }
-      }
-      if($Result == 0){
-        print "ICV/NVN SUCCESS!\n";
-      } else {
-        # note that the string 'NVN FAILED' must appear for lve
-        print "ICV/NVN FAILED: schematic and layout does not match.\n";
-        die "Error: ICV/NVN FAILED: schematic and layout does not match for $topcell\n";
-      }
-
-    } else {
-      die "Error: ICV/NVN FAILED: fail to extract layout for $topcell.\n";
+            open LVS_ERRORS, "<$topcell.LVS_ERRORS";
+            my $Result=1;
+            while(<LVS_ERRORS>)  {
+                if(/^Final comparison result:PASS/){ $Result=0; }
+            }
+            if($Result == 0){
+                print "ICV/NVN SUCCESS!\n";
+            } else {
+                # note that the string 'NVN FAILED' must appear for lve
+                print "ICV/NVN FAILED: schematic and layout does not match.\n";
+                die "Error: ICV/NVN FAILED: schematic and layout does not match for $topcell\n";
+            }
+        } else {
+            die "Error: ICV/NVN FAILED: fail to extract layout for $topcell.\n";
+        }
     }
-
-
 }
 
 if($stage2a){
@@ -611,15 +614,15 @@ if ($stage2b) {
     }
     my $spiceExt = $netlist_format eq 'SPEF' ? 'spef' : 'spf';
     my $spiceTemp = "${cell_name}.$spiceExt";
-    if (-e 'starrc.report') {
-        $cmd{"ICV_RUNSET_REPORT_FILE"} = "starrc.report";
-    } else {
-        die "Error: STAR_RC FAILED: Can't find LVS results.\n";
+    if (!$cth) {
+        if (-e 'starrc.report') {
+            $cmd{"ICV_RUNSET_REPORT_FILE"} = "starrc.report";
+        } else {
+            die "Error: STAR_RC FAILED: Can't find LVS results.\n";
+        }
     }
-    if ($threads > 1) {
-        $cmd{"NUM_CORES"} = $threads;
-        $cmd{"STARRC_DP_STRING"}= "list localhost:$threads";
-    }
+    $cmd{"NUM_CORES"} = $threads;
+    $cmd{"STARRC_DP_STRING"}= "list localhost:$threads";
 
     # override some default commands
     $cmd{"BLOCK"} = $topcell;
@@ -682,13 +685,101 @@ EOF
         $cmd{'CCP_ANNOTATION_FILE'} = 'YES';
     }
 
-    # print out star.cmd for this run
-    write_starcmd('star.cmd', \%cmd);
+    if (!$cth) {
+        # print out star.cmd for this run
+        write_starcmd('star.cmd', \%cmd);
 
-    # run starRc
-    {
-        local $ENV{'PATH'} = $ENV{'PATH'} . ":.";
-        my_system("LD_LIBRARY_PATH= $ENV{STAR_SCRIPT} StarXtract -clean star.cmd > star.log");
+        # run starRc
+        {
+            local $ENV{'PATH'} = $ENV{'PATH'} . ":.";
+            my_system("LD_LIBRARY_PATH= $ENV{STAR_SCRIPT} StarXtract -clean star.cmd > star.log");
+        }
+    } else {
+        my %cth_cmd = ();
+
+        # preferable to inherit power/ground settings from ICV in StarRC, which
+        # is the default behavior if POWER_NETS are not specified, but Cheetah
+        # default StarRC command file includes POWER_NETS, so we also need to
+        # explicitly override with the correct POWER_NETS
+        my %supplies = ();
+        open(my $fh, "lve_supplies.rs") or die "Can't open lve_supplies.rs: $!";
+        while(<$fh>) {
+            if (/lve_(ground|power)/) {
+                my $type = $1;
+                while (/"([^"]+)"/g) {
+                    push @{$supplies{$type}}, $1;
+                }
+            }
+        }
+        close($fh);
+        $supplies{"ground"} = ["VSS", "GND", "vss"]
+            unless @{$supplies{"ground"}};
+        $supplies{"power"} = ["vcc*", "Vdd", "VDD", "VDDM", "VDDIOS", "VDDION", "VDDA"]
+            unless @{$supplies{"ground"}};
+        my @power_nets = (@{$supplies{"ground"}}, @{$supplies{"power"}});
+        $cth_cmd{'POWER_NETS'} = join(' ', sort @power_nets);
+
+        # disable $x, $y, $angle for transistors
+        $cth_cmd{'NETLIST_DEVICE_LOCATION_ORIENTATION'} = 'NO';
+
+        foreach my $k ('HIERARCHICAL_SEPARATOR',
+                       'NETLIST_GROUND_NODE_NAME',
+                       'POWER_EXTRACT',
+                       'REDUCTION',
+                       'REDUCTION_MAX_DELAY_ERROR',
+                       'NETLIST_FORMAT',
+                       'NETLIST_TAIL_COMMENTS',
+                       'NETLIST_REMOVE_DANGLING_BRANCHES',
+                       'XREF_LAYOUT_INST_PREFIX',
+                       'XREF_LAYOUT_NET_PREFIX',
+                       'NUM_CORES',
+                       'STARRC_DP_STRING') {
+            $cth_cmd{$k} = $cmd{$k} if exists $cmd{$k};
+        }
+
+        # print out star.cmd for this run
+        write_starcmd('lve_override.cmd', \%cth_cmd);
+
+        # run Cheetah
+        {
+            my $spf = "xtract/netlists/polo/$topcell/${topcell}_${temperature}C_${extractCorner}.spf";
+            `mkdir -p "$starRC_dir/xtract/overrides"`;
+            opendir(my $dh, ".") or die "Can't opendir: $!";
+            foreach my $rs (grep { /\.rs$/ } readdir($dh)) {
+                symlink "../../$rs", "xtract/overrides/$rs";
+            }
+            closedir($dh);
+
+            # override CPDK to be whatever is specified by our PDK
+            open(my $ovh, '>', 'cpdk_ov') or die "Can't write cpdk_ov: $!";
+            print $ovh <<EOF;
+[ENVS]
+	INTEL_PDK = $ENV{PDK_CPDK_PATH}
+	INTEL_PDK_OVRD = $ENV{PDK_CPDK_PATH}
+	PDK_DIR = $ENV{PDK_CPDK_PATH}
+[TOOLVERSION]
+	pdk = $ENV{INTEL_PDK}
+EOF
+            close($ovh);
+
+            # cth_psetup detects the parent shell (csh or sh like) and runs the
+            # corresponding setup script, but the sh setup script doesn't work
+            # correctly, so write out a tcsh script to execute the csh setup
+            # script
+            open(my $fh, '>', 'run_cth') or die "Can't write run_cth: $!";
+            print $fh <<EOF;
+#!/usr/intel/bin/tcsh
+setenv DR_USERDEFINESUIN
+setenv PDS_PROJ_CFG '$pdk_root/share/Fulcrum/icv/lvs'
+set boxfile
+if (-f gray_list.xref) set boxfile='-boxfile gray_list.xref'
+/p/hdk/bin/cth_psetup -p ilcth -cfg IL76P31_NCL.cth -tool ipde_all -cfg_ov '$starRC_dir/cpdk_ov' -nowash -common_ward -cmd '\$SETUP_IPDE; \$VMAC/release/extractor/run_xtract.pl -cell '"'"$topcell"'"' -gdsfile cell.gds2 -cdlfile cell.cdl_gds2 -temp $temperature -corner $extractCorner -append_usercmd_file lve_override.cmd -native '"\$boxfile"
+test -f '$spf' && ln -s '$spf' '$cell_name.spf'
+EOF
+            close($fh);
+            my_system("chmod 755 run_cth");
+            my_system("./run_cth 1>star.log 2>&1");
+        }
     }
     print "StarRC Extraction ... done\n";
 

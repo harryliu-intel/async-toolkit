@@ -196,6 +196,7 @@ public class CDLRenamer  {
             "   --name-in=" + supported + "\n" + 
             "   --name-out=" + supported + "\n" + 
             "   --translated-cdl=file\n" +
+            "   [--nmap-in=file] (if specified, apply name map before name translation)\n" +
             "   [--extension-in=string] [--extension-out=string]\n" +
             "   [--rcx-cell-map=file]\n" +
             "   [--rcx-pipo-map=file]\n" +
@@ -232,6 +233,7 @@ public class CDLRenamer  {
                             "   --name-in=" + supported + "\n" + 
                             "   --name-out=" + supported + "\n" + 
                             "   --translated-cdl=file\n" +
+                            "   [--nmap-in=file] (if specified, apply name map before name translation)\n" +
                             "   [--extension-in=string] [--extension-out=string]\n" +
                             "   [--rcx-cell-map=file]\n" +
                             "   [--rcx-pipo-map=file]\n" +
@@ -273,6 +275,9 @@ public class CDLRenamer  {
 
         final String nameOut = 
             theArgs.getArgValue( "name-out", null );
+
+        final String nmapIn = 
+            theArgs.getArgValue( "nmap-in", null );
 
         final String extensionIn = 
             theArgs.getArgValue( "extension-in", null );
@@ -369,6 +374,17 @@ public class CDLRenamer  {
                         ni = new ExtractedNameInterface(ni, "/", ":");
                     }
                 }
+
+                if (nmapIn != null) {
+                    final ReloadableNameInterface rni =
+                        new ReloadableNameInterface( ni );
+                    try ( BufferedReader br =
+                            new BufferedReader( new FileReader( nmapIn ) ) ) {
+                        rni.load( br );
+                    }
+                    ni = rni;
+                }
+
                 final CDLNameInterface nameInterface = ni;             
                 final CDLNameInterface filteredInterface =
                     new NoTranslateInterface( nameInterface,

@@ -585,6 +585,7 @@ our $power_sag=0;
 our $additive_resp = 0;
 our $delete_bumpcheck_dir= 1;    # clean up after bumpcheck
 our $ccp=0; # use CCP+StarRC to extract
+our $cth=1; # use Cheetah to extract
 
 # sweep options
 my @skip = ();
@@ -1362,6 +1363,7 @@ EXTRACT_STARRC                   := $extract_starrc
 CUSTOM_SPICE                     := $customSpice
 CUSTOM_SPICE_INCLUDE             := $customSpiceInc
 CCP                              := $ccp
+CTH                              := $cth
 LIBTRANSLATE                     := $libtranslate
 FAKESIZE                         := $fakesize
 BUDGETCAPINDEX                   := $budgetcapindex
@@ -2632,6 +2634,7 @@ USAGE: $0 [options] cell[:env][:node,node,...]
     --starrc-threads=[$starrc_threads] (number of StarRC processes)
     --drclvs-threads=[$drclvs_threads] (number of lvs threads)
     --ccp=[$ccp] (whether to enable StarCCP)
+    --cth=[$cth] (whether to use Cheetah to extract)
 
   Extract Graybox Options:
     --graybox-list=[$graybox_list] ( should be <filename> containing list of cell names)
@@ -2876,6 +2879,7 @@ sub setOptions {
    $optionvalues{"custom-config"} =  $custom_config;
    $optionvalues{"extract-corner"} =  $extract_corner;
    $optionvalues{"ccp"} =  $ccp;
+   $optionvalues{"cth"} =  $cth;
    $optionvalues{"qx"} =  $qx;
    $optionvalues{"lef-file"} =  $lef_file;
    $optionvalues{"def-file"} =  $def_file;
@@ -3114,6 +3118,7 @@ sub processOption {
         elsif ($key eq "custom-config")       { $custom_config = canonicalizePath($value); check_path($value); }
         elsif ($key eq "extract-corner")      { $extract_corner = $value; }
         elsif ($key eq "ccp")                 { $ccp = $value; }
+        elsif ($key eq "cth")                 { $cth = $value; }
 
         # extract_qx options
         elsif ($key eq "qx") { $qx = $value; }

@@ -32,6 +32,7 @@ my $threads=2;
 my $icv_path="$ENV{PDK_CPDK_PATH}/runsets/icvtdr/";
 my $rc_database=0;
 my $nodeprops='';
+my $setuponly=0;
 
 sub usage {
     my ($msg) = @_;
@@ -51,6 +52,7 @@ sub usage {
     $usage .= "    --threads=[$threads] (ICV thread)\n";
     $usage .= "    --rc-database=[$rc_database] (Generate RC database)\n";
     $usage .= "    --node-props=[$nodeprops] (Node properties file to find supply nets)\n";
+    $usage .= "    --setup-only=[$setuponly] (Prepare files but don't run ICV)\n";
     $usage .= "    --fulcrum-pdk-root=[$pdk_root]\n";
 
     print STDERR "$usage\n";
@@ -107,6 +109,8 @@ while (defined $ARGV[0] and $ARGV[0] =~ /^--(.*)/) {
             }
     } elsif ($flag eq "node-props") {
         $nodeprops = $value;
+    } elsif ($flag eq "setup-only") {
+        $setuponly = $value;
     } else {
         print STDERR "Error: argument --${flag}=${value} not recognized.\n";
         &usage();
@@ -190,11 +194,17 @@ sub main{
   makegdsgraylist($graycell_file);
 
   fix_gds_long_name(); 
+  fix_cdl_long_name();
   
   my %lvs_options = ();
   my $equivlance_file=prepare_equiv_file(\%lvs_options);
-  my $schematic_file=prepare_sch_file();
+  my $schematic_file="$working_dir/cell.cdl_gds2";
   my $clf_file=prepare_clf_file($schematic_file,$equivlance_file,\%lvs_options);
+
+  if ($setuponly) {
+      print "Exiting without running ICV due to --setup-only=1\n";
+      exit 0;
+  }
 
   {
       local %ENV = %ENV;
@@ -304,7 +314,7 @@ sub prepare_clf_file {
 -D _drTSV_WAIVER=_drNO
 -i cell.gds2
 -s $sch_file
--sf ICV
+-sf SPICE
 -stc $topcell
 -c $topcell
 ET
@@ -321,46 +331,9 @@ ET
     return $lvs_clf_file;
 }
 
-sub prepare_sch_file {
-  my $sch_out_tmp= "$working_dir/${cell_name}.sch_out.tmp";
-  my $sch_out= "$working_dir/${cell_name}.sch_out";
-  symlink $cdl_file, "$working_dir/cell.cdl_gds2";
-  open (X, ">$working_dir/nettran.cdl");
-  print X "*.SCALE meter\n";
-  print X ".include '$working_dir/cell.cdl_gds2'\n";
-  close X;
-  my %map=();
-  %map=%graylist if $longcellnamegray;
-  $map{$cell_name}=$topcell if $longcellnametop;
-
-  system("LD_LIBRARY_PATH= $ENV{ICV_SCRIPT} icv_nettran -sp '$working_dir/nettran.cdl' -sp-chopXPrefix -logFile nettran.log -outName '$sch_out_tmp'");
-  if (%map) {
-        open (GIN, "<$sch_out_tmp");
-        open (GOUT, ">$sch_out");
-        while (<GIN>) {
-            chomp;
-            if (%map) {
-                if (/^(\{cell\s+|\{inst[^=]+=)(\S+)(.*)/) {
-                    $_ = "$1$map{$2}$3" if (defined($map{$2}));
-                }
-            }
-            print GOUT "$_\n";
-        }
-        close GIN;
-        close GOUT;
-        unlink $sch_out_tmp;
-    }
-    else {
-        rename $sch_out_tmp, $sch_out;
-    }
-
-
-  return $sch_out;
-}
-
 sub fix_gds_long_name {
+  unlink "cell.gds2";
   if ($longcellnametop or $longcellnamegray) {
-      unlink "cell.gds2";
       open (GIN, "rdgds '$gdsii' |");
       open (GOUT, "| wrgds > cell.gds2");
       while (<GIN>) {
@@ -377,12 +350,28 @@ sub fix_gds_long_name {
       close GOUT;
   }
   else {
-      my_system("rm -f cell.gds2; ln -sf '$gdsii' cell.gds2"); 
+      my_system("ln -sf '$gdsii' cell.gds2"); 
   }
-
 }
 
-
+sub fix_cdl_long_name {
+    unlink "cell.cdl_gds2";
+    if ($longcellnametop or $longcellnamegray) {
+        open (GOUT, '>', 'longcell.map');
+        if ($longcellnametop) {
+            print GOUT "cell $cell_name $topcell\n";
+        }
+        if ($longcellnamegray) {
+            foreach my $name (sort keys %graylist) {
+                print GOUT "cell $name $graylist{$name}\n";
+            }
+        }
+        close GOUT;
+        my_system("cdl_renamer --source-cdl-file='$cdl_file' --name-in=gds2 --name-out=gds2 --nmap-in=longcell.map --translated-cdl=cell.cdl_gds2");
+    } else {
+        my_system("ln -sf '$cdl_file' cell.cdl_gds2");
+    }
+}
 
 sub get_equiv {
     my ($graylist, $extra_extract_equiv) = @_;
