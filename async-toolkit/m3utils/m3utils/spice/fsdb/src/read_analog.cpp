@@ -25,7 +25,6 @@
 #include "ffrAPI.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #ifndef FALSE
 #define FALSE	0
@@ -56,39 +55,39 @@ __DumpScope(fsdbTreeCBDataScope *scope);
 static void 
 __DumpVar(fsdbTreeCBDataVar *var);
 
-static void 
-BuildVar(fsdbTreeCBDataVar *var);
-
 
 static void 
 __PrintTimeValChng(ffrVCTrvsHdl vc_trvs_hdl, 
 		   void *time, byte_T *vc_ptr);
 
-const int debug = 1;
-
-ffrObject      *fsdb_obj;
-fsdbXTagType    xtag_type; 
-
-int
-setup(char *fn)
+int 
+main(int argc, char *argv[])
 {
+    fsdbXTagType    xtag_type; 
+
+    if (2 != argc) {
+	fprintf(stderr, "usage: read_verilog verilog_type_fsdb\n");
+	return FSDB_RC_FAILURE;
+    }
+
     // 
     // check the file to see if it's a fsdb file or not.
     //
-    if (FALSE == ffrObject::ffrIsFSDB(fn)) {
-	fprintf(stderr, "%s is not an fsdb file.\n", fn);
+    if (FALSE == ffrObject::ffrIsFSDB(argv[1])) {
+	fprintf(stderr, "%s is not an fsdb file.\n", argv[1]);
 	return FSDB_RC_FAILURE;
     }
 
     ffrFSDBInfo fsdb_info;
 
-    ffrObject::ffrGetFSDBInfo(fn, fsdb_info);
+    ffrObject::ffrGetFSDBInfo(argv[1], fsdb_info);
 
-    if (FSDB_FT_NANOSIM != fsdb_info.file_type) {
-  	fprintf(stderr, "file type is not nanosim but %d.\n",
-                fsdb_info.file_type);
+#if 0
+    if (FSDB_FT_SPICE != fsdb_info.file_type) {
+  	fprintf(stderr, "file type is not spice but %d.\n", fsdb_info.file_type);
 	return FSDB_RC_FAILURE;
     }
+#endif
 
     //
     // Open the fsdb file.
@@ -114,20 +113,22 @@ setup(char *fn)
     // type case on the callback data so that it can read the scope 
     // defition.
     //
-    fsdb_obj =  ffrObject::ffrOpen3(fn);
+    ffrObject *fsdb_obj =
+	ffrObject::ffrOpen3(argv[1]);
     if (NULL == fsdb_obj) {
 	fprintf(stderr, "ffrObject::ffrOpen() failed.\n");
 	exit(FSDB_RC_OBJECT_CREATION_FAILED);
     }
     fsdb_obj->ffrSetTreeCBFunc(__MyTreeCB, NULL);
 
-    if (FSDB_FT_NANOSIM != fsdb_obj->ffrGetFileType()) {
+#if 0
+    if (FSDB_FT_SPICE != fsdb_obj->ffrGetFileType()) {
 	fprintf(stderr, 
-		"%s is not nanosim type fsdb, just return.\n", fn);
+		"%s is not verilog type fsdb, just return.\n", argv[1]);
 	fsdb_obj->ffrClose();
 	return FSDB_RC_SUCCESS;
     }
-
+#endif
     xtag_type = fsdb_obj->ffrGetXTagType();
 
 
@@ -138,12 +139,7 @@ setup(char *fn)
     // the type case structure view to access the wanted data.
     //
     fsdb_obj->ffrReadScopeVarTree();
-}
 
-int
-the_rest(void)
-{
-         
     //
     // Each unique var is represented by a unique idcode in fsdb 
     // file, these idcodes are positive integer and continuous from 
@@ -165,16 +161,9 @@ the_rest(void)
     // to fsdb reader, this is done by the following API:
     //
     //		ffrAddToSignalList()
-    //
-
-    const int maxSignals = 100000;
-
-#define MIN(x,y) ((x) > (y) ? (y) : (x))
-
-    int myMaxSignal = MIN(maxSignals,max_var_idcode);
-    
+    // 
     int i;
-    for (i = FSDB_MIN_VAR_IDCODE; i <= myMaxSignal; i++)
+    for (i = FSDB_MIN_VAR_IDCODE; i <= max_var_idcode; i++)
     	fsdb_obj->ffrAddToSignalList(i);
 
 
@@ -196,18 +185,13 @@ the_rest(void)
     // Use signal idcode = 1 as example to demonstrate how to load
     // and traverse analog signals.  
     //
-    ffrVCTrvsHdl vc_trvs_hdl;
-    for (int code=FSDB_MIN_VAR_IDCODE; code <= myMaxSignal; ++code) {
-
-      vc_trvs_hdl =
-	fsdb_obj->ffrCreateVCTraverseHandle(code);
-      
-      if (NULL == vc_trvs_hdl) {
-	fprintf(stderr, "Failed to create a traverse handle for var (%u)\n", 
-		code);
+    ffrVCTrvsHdl vc_trvs_hdl = 
+	fsdb_obj->ffrCreateVCTraverseHandle(1); 
+    if (NULL == vc_trvs_hdl) {
+	fprintf(stderr, "Failed to create a traverse handle(%u)\n", 
+		max_var_idcode);
 	exit(FSDB_RC_OBJECT_CREATION_FAILED);
-      }
-      
+    }
 
 
     byte_T    *time;
@@ -230,7 +214,7 @@ the_rest(void)
     if (FALSE == vc_trvs_hdl->ffrHasIncoreVC()) {
         fprintf(stderr, 
 	        "This var(%u) has no value change at all.\n", 
-		code);
+		max_var_idcode);
     }
     else {
         //
@@ -249,7 +233,7 @@ the_rest(void)
                 exit(FSDB_RC_FAILURE);
             }
             fprintf(stderr, "trvs hdl(%u): maximum time is (%10g).\n", 
-                    code, *(double*)time);
+                    max_var_idcode, *(double*)time);
         }
         else if (FSDB_XTAG_TYPE_FLOAT == xtag_type) {
             if (FSDB_RC_SUCCESS != 
@@ -258,7 +242,7 @@ the_rest(void)
                 exit(FSDB_RC_FAILURE);
             }
             fprintf(stderr, "trvs hdl(%u): maximum time is (%10g).\n",
-                    code, *(float*)time);
+                    max_var_idcode, *(float*)time);
         }
         else {
             if (FSDB_RC_SUCCESS != 
@@ -267,9 +251,8 @@ the_rest(void)
                 exit(FSDB_RC_FAILURE);
             }
             fprintf(stderr, "trvs hdl(%u): maximum time is (%u %u).\n", 
-                    code,
-                    ((fsdbTag64*)time)->H, 
-                    ((fsdbTag64*)time)->L);
+                    max_var_idcode, ((fsdbTag64*)time)->H, 
+                                    ((fsdbTag64*)time)->L);
         }
            
         //
@@ -283,7 +266,7 @@ the_rest(void)
                 exit(FSDB_RC_FAILURE);
             }
             fprintf(stderr, "trvs hdl(%u): minimum time is (%10g).\n", 
-                    code, *(double*)time);
+                    max_var_idcode, *(double*)time);
         }
         else if (FSDB_XTAG_TYPE_FLOAT == xtag_type) {
             if (FSDB_RC_SUCCESS != 
@@ -292,7 +275,7 @@ the_rest(void)
                 exit(FSDB_RC_FAILURE);
             }
             fprintf(stderr, "trvs hdl(%u): minimum time is (%10g).\n",
-                    code, *(float*)time);
+                    max_var_idcode, *(float*)time);
         }
         else {
             if (FSDB_RC_SUCCESS != 
@@ -301,16 +284,10 @@ the_rest(void)
                 exit(FSDB_RC_FAILURE);
             }
             fprintf(stderr, "trvs hdl(%u): minimum time is (%u %u).\n", 
-                    code,
-                    ((fsdbTag64*)time)->H, 
-                    ((fsdbTag64*)time)->L);
+                    max_var_idcode, ((fsdbTag64*)time)->H, 
+                                    ((fsdbTag64*)time)->L);
         }
 
-        str_T scaleunit = fsdb_obj->ffrGetScaleUnit();
-
-        fprintf(stderr, "scaleunit = %s", scaleunit ? scaleunit : "**NULL**");
-        
-        
         //
         // Jump to the specific time specified by the parameter of 
 	// ffrGotoXTag(). The specified time may have or have not 
@@ -347,9 +324,9 @@ the_rest(void)
         // where the next value change happened.
         //  
         for ( ; FSDB_RC_SUCCESS == vc_trvs_hdl->ffrGotoNextVC(); ) {
-            vc_trvs_hdl->ffrGetXTag(time);
+            vc_trvs_hdl->ffrGetXTag(&time);
       	    vc_trvs_hdl->ffrGetVC(&vc_ptr);
-      	    __PrintTimeValChng(vc_trvs_hdl, time, vc_ptr);
+      	    __PrintTimeValChng(vc_trvs_hdl, &time, vc_ptr);
         }
     }
     // 
@@ -357,15 +334,13 @@ the_rest(void)
     //
     vc_trvs_hdl->ffrFree();
 
-    }
-    
     fprintf(stderr, "Watch Out Here!\n");
     fprintf(stderr, "We are going to reset the signal list.\n");
     fprintf(stderr, "Press enter to continue running.");
     getchar();
 
     fsdb_obj->ffrResetSignalList();
-    for (i = FSDB_MIN_VAR_IDCODE; i <= myMaxSignal; i++) {
+    for (i = FSDB_MIN_VAR_IDCODE; i <= max_var_idcode; i++) {
     	if (TRUE == fsdb_obj->ffrIsInSignalList(i)) 
 	    fprintf(stderr, "var idcode %d is in signal list.\n", i);
 	else
@@ -376,365 +351,9 @@ the_rest(void)
     return 0;
 }
 
-#define CMDBUFSIZ 2048
-
-int
-get_max_idcode(void)
-{
-  return fsdb_obj->ffrGetMaxVarIdcode();
-}
-
-str_T
-get_scaleunit(void)
-{
-  return fsdb_obj->ffrGetScaleUnit();
-}
-
-int
-open_signal_range(int lo, int hi)
-{
-  fprintf(stderr, "open_signal_range(%d, %d)\n", lo, hi);
-
-  for(int i=lo; i<=hi; ++i)
-    fsdb_obj->ffrAddToSignalList(i);
-
-  fprintf(stderr, "loading signals\n");
-  fsdb_obj->ffrLoadSignals();
-
-  fprintf(stderr, "signals loaded\n");
-}
-
-static int lo=0, hi=0;
-
-
-#define TRAVERSE_TIME   1
-#define TRAVERSE_SIGNAL 2
-
 static void 
-PrintTimeValChng(ffrVCTrvsHdl   vc_trvs_hdl, 
-                 void          *time,
-                 byte_T        *vc_ptr,
-                 int            bytesPerBit,
-                 unsigned       mode)
-{ 
-    static byte_T   buffer[FSDB_MAX_BIT_SIZE+1];
-    byte_T         *ret_vc;
-    uint_T          i;
-    fsdbVarType     var_type; 
-    fsdbTag64       xtag_64;
-    FILE           *stream=stdout;
-
-    // print time
-
-    if (mode & TRAVERSE_TIME) 
-      fprintf(stream, "%u %u",
-              ((fsdbTag64*)time)->H,
-              ((fsdbTag64*)time)->L);
-
-    // print value
-    if (mode & TRAVERSE_SIGNAL)
-      switch (bytesPerBit) {
-      case FSDB_BYTES_PER_BIT_4B:
-	fprintf(stream, " %15e", *(float*)vc_ptr);	
-	break;
-        
-      case FSDB_BYTES_PER_BIT_8B:
-	fprintf(stream, " %15e", *(double*)vc_ptr);	
-        
-      default:
-	fprintf(stream, " DIGITAL");
-	break;
-      }
-
-    fprintf(stream, "\n");
-}
-
-#define TIME_MEMORIZE 1
-#define TIME_CHECK    2
-
-//////////////////////////////////////////////////////////////////////
-
-typedef struct {
-  unsigned   len;
-  unsigned   p;
-  fsdbTag64 *times;
-} time_memory_t;
-
-static time_memory_t *the_timemem=NULL;
-
-static time_memory_t *
-timemem_new(void)
-{
-  time_memory_t *mem;
-  
-  mem        = (time_memory_t *)malloc(sizeof(time_memory_t));
-  mem->len   = 0;
-  mem->p     = 1;
-  mem->times = (fsdbTag64 *)malloc(sizeof(fsdbTag64) * 1);
-  return mem;
-}
-
-static void
-timemem_free(time_memory_t *mem)
-{
-  free(mem->times);
-  free(mem);
-}
-
-static void
-timemem_addhi(time_memory_t *mem, fsdbTag64 *val)
-{
-  if(mem->p == mem->len) {
-    unsigned newlen = mem->len * 2;
-    fsdbTag64 *newtimes = (fsdbTag64 *)malloc(sizeof(fsdbTag64) * newlen);
-
-    for(int i=0; i < mem->len; ++i)
-      newtimes[i] = mem->times[i];
-
-    free(mem->times);
-    mem->times = newtimes;
-    mem->len   = newlen;
-  }
-  mem->times[mem->p] = *val;
-
-  (mem->p)++;
-}
-
-static unsigned
-timemem_compare(time_memory_t     *mem,
-                const unsigned     idx,
-                const fsdbTag64   *val)
-{
-  if(idx >= mem->p)
-    return 0;
-  
-  return mem->times[idx].H == val->H && mem->times[idx].L == val->L;
-}
-
-//////////////////////////////////////////////////////////////////////
-
-int
-traverse_one_signal(int        idcode,
-                    unsigned   mode,
-                    unsigned   time_mode)
-{
-  byte_T *vc_ptr;
-  byte_T *time = (byte_T*)calloc(8, sizeof(byte_T));
-
-  ffrVCTrvsHdl vc_trvs_hdl =
-    fsdb_obj->ffrCreateVCTraverseHandle(idcode);
-
-  int bytesPerBit = vc_trvs_hdl->ffrGetBytesPerBit();
-  
-  if (NULL == vc_trvs_hdl) {
-    fprintf(stderr, "Failed to create a traverse handle for var (%u)\n", 
-            idcode);
-    exit(FSDB_RC_OBJECT_CREATION_FAILED);
-  }
-  
-  if (FSDB_RC_SUCCESS != 
-      fsdb_obj->ffrGetMinFsdbTag64((fsdbTag64*)time)) {
-    fprintf(stderr, "should not happen.\n");
-    exit(FSDB_RC_FAILURE);
-  }
-  
-  fprintf(stderr, "trvs hdl(%u): minimum time is (%u %u).\n", 
-          idcode,
-          ((fsdbTag64*)time)->H, 
-          ((fsdbTag64*)time)->L);
-
-  
-  //
-  // Jump to the specific time specified by the parameter of 
-  // ffrGotoXTag(). The specified time may have or have not 
-  // value change; if it has value change, then the return time 
-  // is exactly the same as the specified time; if it has not 
-  // value change, then the return time will be aligned forward
-  // (toward smaller time direction). 
-  //
-  // There is an exception for the jump alignment: If the 
-  // specified time is smaller than the minimum time where has 
-  // value changes, then the return time will be aligned to the 
-  // minimum time.
-  //
-
-  if (FSDB_RC_SUCCESS != vc_trvs_hdl->ffrGotoXTag((void*)time)) {
-    fprintf(stderr, "(%u) should not happen.\n", idcode);
-    exit(FSDB_RC_FAILURE);
-  }	
-  
-  //
-  // Get the value change. 
-  //
-  if (FSDB_RC_SUCCESS == vc_trvs_hdl->ffrGetVC(&vc_ptr))
-    PrintTimeValChng(vc_trvs_hdl, time, vc_ptr, bytesPerBit, mode);
-
-  //
-  // Value change traverse handle keeps an internal index
-  // which points to the current time and value change; each
-  // traverse API may move that internal index backward or
-  // forward.
-  // 
-  // ffrGotoNextVC() moves the internal index backward so
-  // that it points to the next value change and the time
-  // where the next value change happened.
-  //  
-  for ( ; FSDB_RC_SUCCESS == vc_trvs_hdl->ffrGotoNextVC(); ) {
-    vc_trvs_hdl->ffrGetXTag(time);
-    vc_trvs_hdl->ffrGetVC(&vc_ptr);
-    PrintTimeValChng(vc_trvs_hdl, time, vc_ptr, bytesPerBit, mode);
-  }
-
-  vc_trvs_hdl->ffrFree();
-  free(time);
-}
-
-typedef struct namerec {
-  char           *name;
-  unsigned        idcode;
-  unsigned        bytes_per_bit;
-  unsigned        type;
-  struct namerec *next;
-} namerec_t;
-
-static namerec_t *names=NULL;
-
-const char *
-decode_type(unsigned int tid)
-{
-  const char *type;
-  
-  switch (tid) {
-  case FSDB_VT_NANOSIM_VOLTAGE:
-    type = (str_T) "nanosim_voltage"; 
-    break;
-    
-  case FSDB_VT_NANOSIM_INSTANTANEOUS_CURRENT:
-    type = (str_T) "nanosim_instantaneous_current";
-    break;
-    
-  case FSDB_VT_NANOSIM_AVERAGE_RMS_CURRENT:
-    type = (str_T) "nanosim_average_rms_current";
-    break;
-    
-  case FSDB_VT_NANOSIM_DI_DT:
-    type = (str_T) "nanosim_di_dt";
-    break;
-    
-  case FSDB_VT_NANOSIM_MATHEMATICS:
-    type = (str_T) "nanosim_mathematics"; 
-    break;
-    
-  case FSDB_VT_NANOSIM_POWER:
-    type = (str_T) "nanosim_power";
-    break;
-    
-  default:
-    type = (str_T) "nanosim_others";
-    break;
-  }
-  
-  return type;
-}
-
-void
-traverse_names(unsigned lo, unsigned hi)
-{
-  namerec_t *p = names;
-  int i=0;
-  
-  fprintf(stderr, "traverse_names\n");
-  
-  while(p) {
-    if (p->idcode >= lo && p->idcode <= hi)
-      fprintf(stdout,
-              "VAR %u %s %s\n",
-              p->idcode,
-              p->name,
-              decode_type(p->type));
-              
-    p = p->next;
-    ++i;
-  }
-
-  fprintf(stderr, "traverse_names : %d names\n", i);
-
-}
-
-
-
-int 
-main(int argc, char *argv[])
-{
-    if (2 != argc) {
-	fprintf(stderr, "usage: nanosimrd verilog_type_fsdb\n");
-	return FSDB_RC_FAILURE;
-    }
-
-    (void)setup(argv[1]);
-
-    char buff[CMDBUFSIZ], *tok;
-    while(fgets(buff, CMDBUFSIZ, stdin)) {
-      fprintf(stderr, "got line \"%s\"\n", buff);
-
-      tok = strtok(buff, " ");
-      
-      switch (buff[0]) {
-      case '\0':
-      case '#':
-        // skip
-        break;
-        
-      case 'S':
-        fprintf(stdout,
-                "%d %d %s\n",
-                FSDB_MIN_VAR_IDCODE,
-                get_max_idcode(),
-                get_scaleunit());
-        break;
-
-      case 'R': // load signal range
-        lo=atoi(strtok(NULL, " "));
-        hi=atoi(strtok(NULL, " ")); 
-        open_signal_range(lo, hi);
-        break;
-
-
-      case 'U': // unload signals
-        fsdb_obj->ffrUnloadSignals();
-        break;
-
-      case 'T': // traverse signals
-        for (int i=lo; i<=hi; ++i) {
-          traverse_one_signal(i, TRAVERSE_TIME | TRAVERSE_SIGNAL, 0);
-        }
-        break;
-
-      case 'N':
-        traverse_names(lo, hi);
-        break;
-
-      case 'I': // traverse signal times for a given signal & remember
-        {
-          int code=atoi(strtok(NULL, " "));
-          traverse_one_signal(code, TRAVERSE_TIME, TIME_MEMORIZE);
-        }
-        
-      default:
-        fprintf(stderr, "???line not understood\n");
-        break;
-      }
-    }
-
-    fsdb_obj->ffrClose();
-    
-    return 0;
-}
-
-static void 
-__PrintTimeValChng(ffrVCTrvsHdl   vc_trvs_hdl, 
-		   void          *time,
-                   byte_T        *vc_ptr)
+__PrintTimeValChng(ffrVCTrvsHdl vc_trvs_hdl, 
+		   void *time, byte_T *vc_ptr)
 { 
     static byte_T buffer[FSDB_MAX_BIT_SIZE+1];
     byte_T        *ret_vc;
@@ -743,10 +362,7 @@ __PrintTimeValChng(ffrVCTrvsHdl   vc_trvs_hdl,
     fsdbTag64     xtag_64;   
 
     // print time
-    
-    //fprintf(stderr, "x-val: (%15e)", *(float*)time);
-
-    fprintf(stderr, "x-val: (%u %u)", ((fsdbTag64*)time)->H, ((fsdbTag64*)time)->L);
+    fprintf(stderr, "x-val: (%15g)", *(float*)time);
 
     // print value 
     switch (vc_trvs_hdl->ffrGetBytesPerBit()) {
@@ -768,24 +384,23 @@ static bool_T __MyTreeCB(fsdbTreeCBType cb_type,
 {
     switch (cb_type) {
     case FSDB_TREE_CBT_BEGIN_TREE:
-	if (debug >= 2) fprintf(stderr, "<BeginTree>\n");
+	fprintf(stderr, "<BeginTree>\n");
 	break;
 
     case FSDB_TREE_CBT_SCOPE:
-	if (debug >= 2) __DumpScope((fsdbTreeCBDataScope*)tree_cb_data);
+	__DumpScope((fsdbTreeCBDataScope*)tree_cb_data);
 	break;
 
     case FSDB_TREE_CBT_VAR:
-      BuildVar((fsdbTreeCBDataVar*)tree_cb_data);
-      if (debug >= 2) __DumpVar((fsdbTreeCBDataVar*)tree_cb_data);
-      break;
+	__DumpVar((fsdbTreeCBDataVar*)tree_cb_data);
+	break;
 
     case FSDB_TREE_CBT_UPSCOPE:
-        if (debug >= 2) fprintf(stderr, "<Upscope>\n");
+	fprintf(stderr, "<Upscope>\n");
 	break;
 
     case FSDB_TREE_CBT_END_TREE:
-	if (debug >= 2) fprintf(stderr, "<EndTree>\n\n");
+	fprintf(stderr, "<EndTree>\n\n");
 	break;
 
     case FSDB_TREE_CBT_FILE_TYPE:
@@ -804,19 +419,19 @@ static bool_T __MyTreeCB(fsdbTreeCBType cb_type,
 	break;
 
     case FSDB_TREE_CBT_ARRAY_BEGIN:
-        if (debug >= 2) fprintf(stderr, "<BeginArray>\n");
+        fprintf(stderr, "<BeginArray>\n");
         break;
         
     case FSDB_TREE_CBT_ARRAY_END:
-        if (debug >= 2) fprintf(stderr, "<EndArray>\n\n");
+        fprintf(stderr, "<EndArray>\n\n");
         break;
 
     case FSDB_TREE_CBT_RECORD_BEGIN:
-        if (debug >= 2) fprintf(stderr, "<BeginRecord>\n");
+        fprintf(stderr, "<BeginRecord>\n");
         break;
         
     case FSDB_TREE_CBT_RECORD_END:
-        if (debug >= 2) fprintf(stderr, "<EndRecord>\n\n");
+        fprintf(stderr, "<EndRecord>\n\n");
         break;
              
     default:
@@ -853,26 +468,12 @@ __DumpScope(fsdbTreeCBDataScope* scope)
 	break;
 
     default:
-      type = (str_T) "other type of scope";
+	type = "other type of scope";
 	break;
     }
 
     fprintf(stderr, "<Scope> name:%s  type:%s\n", 
 	    scope->name, type);
-}
-
-static
-void BuildVar(fsdbTreeCBDataVar *var)
-{
-    namerec_t *rec = (namerec_t *)malloc(sizeof(namerec_t));
-
-    rec->name          = strdup(var->name);
-    rec->idcode        = var->u.idcode;
-    rec->bytes_per_bit = var->bytes_per_bit;
-    rec->type          = var->type;
-
-    rec->next          = names;
-    names              = rec;
 }
 
 static void 
@@ -904,39 +505,47 @@ __DumpVar(fsdbTreeCBDataVar *var)
     }
 
     switch (var->type) {
-    case FSDB_VT_NANOSIM_VOLTAGE:
-	type = (str_T) "nanosim_voltage"; 
+    case FSDB_VT_HSPICE_VOLTAGE:
+	type = (str_T) "hspice_voltage"; 
   	break;
 
-    case FSDB_VT_NANOSIM_INSTANTANEOUS_CURRENT:
-        type = (str_T) "nanosim_instantaneous_current";
+    case FSDB_VT_HSPICE_VOLTS_MAG:
+	type = (str_T) "hspice_volts_mag"; 
 	break;
 
-    case FSDB_VT_NANOSIM_AVERAGE_RMS_CURRENT:
-        type = (str_T) "nanosim_average_rms_current";
+    case FSDB_VT_HSPICE_VOLTS_REAL:
+	type = (str_T) "hspice_volts_real"; 
 	break;
 
-    case FSDB_VT_NANOSIM_DI_DT:
-        type = (str_T) "nanosim_di_dt";
+    case FSDB_VT_HSPICE_VOLTS_IMAG:
+	type = (str_T) "hspice_volts_imag"; 
 	break;
 
-    case FSDB_VT_NANOSIM_MATHEMATICS:
-	type = (str_T) "nanosim_mathematics"; 
+    case FSDB_VT_HSPICE_PHASE:
+	type = (str_T) "hspice_phase"; 
 	break;
 
-    case FSDB_VT_NANOSIM_POWER:
-        type = (str_T) "nanosim_power";
+    case FSDB_VT_HSPICE_VOLTS_DB:
+	type = (str_T) "hspice_volts_db"; 
+	break;
+
+    case FSDB_VT_HSPICE_VOLTS_TDLY:
+	type = (str_T) "hspice_volts_tdly"; 
+	break;
+
+    case FSDB_VT_HSPICE_CURRENT:
+	type = (str_T) "hspice_current";
 	break;
 
     default:
-	type = (str_T) "nanosim_others";
+	type = (str_T) "hspice_others";
 	break;
     }
 
     fprintf(stderr,
-            "<Var>  name:%s  l:%u  r:%u  type:%s  ",
-            var->name, var->lbitnum, var->rbitnum, type);
+	"<Var>  name:%s  l:%u  r:%u  type:%s  ",
+	var->name, var->lbitnum, var->rbitnum, type);
     fprintf(stderr,
-            "idcode:%u  dtidcode:%u  bpb:%s\n",
-            var->u.idcode, var->dtidcode, bpb);
+	"idcode:%u  dtidcode:%u  bpb:%s\n",
+	var->u.idcode, var->dtidcode, bpb);
 }
