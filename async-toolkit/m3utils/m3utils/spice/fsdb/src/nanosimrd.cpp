@@ -446,7 +446,7 @@ PrintTimeValChng(ffrVCTrvsHdl   vc_trvs_hdl,
 	break;
       }
 
-    fprintf(stream, "\n");
+    if (mode) fprintf(stream, "\n");
 }
 
 #define TIME_MEMORIZE 1
@@ -468,8 +468,8 @@ timemem_new(void)
   time_memory_t *mem;
   
   mem        = (time_memory_t *)malloc(sizeof(time_memory_t));
-  mem->len   = 0;
-  mem->p     = 1;
+  mem->len   = 1;
+  mem->p     = 0;
   mem->times = (fsdbTag64 *)malloc(sizeof(fsdbTag64) * 1);
   return mem;
 }
@@ -501,9 +501,9 @@ timemem_addhi(time_memory_t *mem, fsdbTag64 *val)
 }
 
 static unsigned
-timemem_compare(time_memory_t     *mem,
-                const unsigned     idx,
-                const fsdbTag64   *val)
+timemem_compare(const time_memory_t     *mem,
+                const unsigned           idx,
+                const fsdbTag64         *val)
 {
   if(idx >= mem->p)
     return 0;
@@ -513,19 +513,42 @@ timemem_compare(time_memory_t     *mem,
 
 //////////////////////////////////////////////////////////////////////
 
+void
+do_timecheck(unsigned *timecheck_ok,
+             const time_memory_t *mem,
+             unsigned idx,
+             fsdbTag64 *time)
+{
+  unsigned this_ok = timemem_compare(mem, idx, time);
+
+  if (*timecheck_ok && !this_ok)
+    fprintf(stderr, "time check failed idx=%u time=%u %u\n",
+            idx, time->H, time->L);
+
+  *timecheck_ok &= this_ok;
+}
+
 int
 traverse_one_signal(int        idcode,
                     unsigned   mode,
                     unsigned   time_mode)
 {
   byte_T *vc_ptr;
-  byte_T *time = (byte_T*)calloc(8, sizeof(byte_T));
+  fsdbTag64 *time = (fsdbTag64 *)calloc(8, sizeof(byte_T));
+
+  if (time_mode & TIME_MEMORIZE) {
+    if (the_timemem)
+      free(the_timemem);
+
+    the_timemem = timemem_new();
+  }
+  
 
   ffrVCTrvsHdl vc_trvs_hdl =
     fsdb_obj->ffrCreateVCTraverseHandle(idcode);
 
   int bytesPerBit = vc_trvs_hdl->ffrGetBytesPerBit();
-  
+
   if (NULL == vc_trvs_hdl) {
     fprintf(stderr, "Failed to create a traverse handle for var (%u)\n", 
             idcode);
@@ -566,6 +589,18 @@ traverse_one_signal(int        idcode,
   //
   // Get the value change. 
   //
+  if (time_mode & TIME_MEMORIZE)
+    timemem_addhi(the_timemem, time);
+
+  unsigned timecheck_ok = 1;
+
+  if ((time_mode & TIME_CHECK) && !the_timemem) {
+    the_timemem = timemem_new();
+  }
+    
+  if (time_mode & TIME_CHECK)
+    do_timecheck(&timecheck_ok, the_timemem, 0, time);
+  
   if (FSDB_RC_SUCCESS == vc_trvs_hdl->ffrGetVC(&vc_ptr))
     PrintTimeValChng(vc_trvs_hdl, time, vc_ptr, bytesPerBit, mode);
 
@@ -579,14 +614,26 @@ traverse_one_signal(int        idcode,
   // that it points to the next value change and the time
   // where the next value change happened.
   //  
-  for ( ; FSDB_RC_SUCCESS == vc_trvs_hdl->ffrGotoNextVC(); ) {
+  for ( int i = 1; FSDB_RC_SUCCESS == vc_trvs_hdl->ffrGotoNextVC(); ++i) {
     vc_trvs_hdl->ffrGetXTag(time);
     vc_trvs_hdl->ffrGetVC(&vc_ptr);
+    
+    if (time_mode & TIME_MEMORIZE)
+      timemem_addhi(the_timemem, time);
+    
+    unsigned timecheck_ok = 1;
+    
+    if (time_mode & TIME_CHECK)
+      timecheck_ok &= timemem_compare(the_timemem, i, time);
+    
     PrintTimeValChng(vc_trvs_hdl, time, vc_ptr, bytesPerBit, mode);
   }
 
   vc_trvs_hdl->ffrFree();
   free(time);
+
+  if (time_mode & TIME_CHECK)
+    fprintf(stdout, "TIMECHECK %d\n", timecheck_ok);
 }
 
 typedef struct namerec {
@@ -700,7 +747,7 @@ main(int argc, char *argv[])
         break;
 
 
-      case 'U': // unload signals
+      case 'U':                 // unload signals
         fsdb_obj->ffrUnloadSignals();
         break;
 
@@ -719,7 +766,18 @@ main(int argc, char *argv[])
           int code=atoi(strtok(NULL, " "));
           traverse_one_signal(code, TRAVERSE_TIME, TIME_MEMORIZE);
         }
-        
+        break;
+
+      case 'C': // traverse signal times for a given signal & check
+        {
+          int code=atoi(strtok(NULL, " "));
+          traverse_one_signal(code, 0, TIME_CHECK);
+        }
+        break;
+
+      case 'Q':
+        break;
+
       default:
         fprintf(stderr, "???line not understood\n");
         break;
