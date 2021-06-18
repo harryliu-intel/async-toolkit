@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #ifndef FALSE
 #define FALSE	0
@@ -409,13 +410,16 @@ static int lo=0, hi=0;
 
 #define TRAVERSE_TIME   1
 #define TRAVERSE_SIGNAL 2
+#define TRAVERSE_BINARY 4
 
 static void 
 PrintTimeValChng(ffrVCTrvsHdl   vc_trvs_hdl, 
                  void          *time,
                  byte_T        *vc_ptr,
                  int            bytesPerBit,
-                 unsigned       mode)
+                 unsigned       mode,
+                 char          *buff,
+                 unsigned       tidx)
 { 
     static byte_T   buffer[FSDB_MAX_BIT_SIZE+1];
     byte_T         *ret_vc;
@@ -426,27 +430,44 @@ PrintTimeValChng(ffrVCTrvsHdl   vc_trvs_hdl,
 
     // print time
 
-    if (mode & TRAVERSE_TIME) 
-      fprintf(stream, "%u %u",
-              ((fsdbTag64*)time)->H,
-              ((fsdbTag64*)time)->L);
+    if (mode & TRAVERSE_BINARY) {
 
-    // print value
-    if (mode & TRAVERSE_SIGNAL)
       switch (bytesPerBit) {
       case FSDB_BYTES_PER_BIT_4B:
-	fprintf(stream, " %15e", *(float*)vc_ptr);	
-	break;
+        ((float *)buff)[tidx] = *(float*)vc_ptr;	
+        break;
         
       case FSDB_BYTES_PER_BIT_8B:
-	fprintf(stream, " %15e", *(double*)vc_ptr);	
+        ((float *)buff)[tidx] = *(double*)vc_ptr;	
         
       default:
-	fprintf(stream, " DIGITAL");
-	break;
+        ((float *)buff)[tidx] = 0.0;
+        break;
       }
-
-    if (mode) fprintf(stream, "\n");
+    } else {
+      
+      if (mode & TRAVERSE_TIME) 
+        fprintf(stream, "%u %u",
+                ((fsdbTag64*)time)->H,
+                ((fsdbTag64*)time)->L);
+      
+      // print value
+      if (mode & TRAVERSE_SIGNAL)
+        switch (bytesPerBit) {
+        case FSDB_BYTES_PER_BIT_4B:
+          fprintf(stream, " %15e", *(float*)vc_ptr);	
+          break;
+          
+        case FSDB_BYTES_PER_BIT_8B:
+          fprintf(stream, " %15e", *(double*)vc_ptr);	
+          
+        default:
+          fprintf(stream, " DIGITAL");
+          break;
+        }
+      
+      if (mode) fprintf(stream, "\n");
+    }
 }
 
 #define TIME_MEMORIZE 1
@@ -535,7 +556,14 @@ traverse_one_signal(int        idcode,
 {
   byte_T *vc_ptr;
   fsdbTag64 *time = (fsdbTag64 *)calloc(8, sizeof(byte_T));
+  char *buff = NULL;
 
+  if (mode & TRAVERSE_BINARY) {
+    if (!the_timemem) the_timemem = timemem_new();
+    
+    buff = (char *)malloc(the_timemem->p * sizeof(float));
+  }
+  
   if (time_mode & TIME_MEMORIZE) {
     if (the_timemem)
       free(the_timemem);
@@ -602,7 +630,7 @@ traverse_one_signal(int        idcode,
     do_timecheck(&timecheck_ok, the_timemem, 0, time);
   
   if (FSDB_RC_SUCCESS == vc_trvs_hdl->ffrGetVC(&vc_ptr))
-    PrintTimeValChng(vc_trvs_hdl, time, vc_ptr, bytesPerBit, mode);
+    PrintTimeValChng(vc_trvs_hdl, time, vc_ptr, bytesPerBit, mode, buff, 0);
 
   //
   // Value change traverse handle keeps an internal index
@@ -626,14 +654,41 @@ traverse_one_signal(int        idcode,
     if (time_mode & TIME_CHECK)
       timecheck_ok &= timemem_compare(the_timemem, i, time);
     
-    PrintTimeValChng(vc_trvs_hdl, time, vc_ptr, bytesPerBit, mode);
+    PrintTimeValChng(vc_trvs_hdl, time, vc_ptr, bytesPerBit, mode, buff, 0);
   }
 
   vc_trvs_hdl->ffrFree();
   free(time);
 
-  if (time_mode & TIME_CHECK)
-    fprintf(stdout, "TIMECHECK %d\n", timecheck_ok);
+
+  if (mode & TRAVERSE_BINARY) {
+    if (timecheck_ok) {
+      fprintf(stdout, "N");
+      fputc((idcode      ) & 0xff, stdout);
+      fputc((idcode >>  8) & 0xff, stdout);
+      fputc((idcode >> 16) & 0xff, stdout);
+      fputc((idcode >> 24) & 0xff, stdout);
+
+      unsigned n = the_timemem->p;
+
+      fputc((n           ) & 0xff, stdout);
+      fputc((n      >>  8) & 0xff, stdout);
+      fputc((n      >> 16) & 0xff, stdout);
+      fputc((n      >> 24) & 0xff, stdout);
+
+      fflush(stdout);
+
+      write(fileno(stdout), buff, n); // just dump the buffer
+      
+    } else {
+      fprintf(stdout, "E TIMECHECK %d\n", timecheck_ok);
+    }
+  } else {
+    if (time_mode & TIME_CHECK)
+      fprintf(stdout, "TIMECHECK %d\n", timecheck_ok);
+  }
+  
+  if (buff) free(buff);
 }
 
 typedef struct namerec {
@@ -754,6 +809,12 @@ main(int argc, char *argv[])
       case 'T': // traverse signals
         for (int i=lo; i<=hi; ++i) {
           traverse_one_signal(i, TRAVERSE_TIME | TRAVERSE_SIGNAL, 0);
+        }
+        break;
+
+      case 't': // traverse signals (binary)
+        for (int i=lo; i<=hi; ++i) {
+          traverse_one_signal(i, TRAVERSE_BINARY | TRAVERSE_SIGNAL, TIME_CHECK);
         }
         break;
 
