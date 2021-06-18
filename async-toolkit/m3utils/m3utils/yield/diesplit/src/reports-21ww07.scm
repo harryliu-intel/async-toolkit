@@ -1,28 +1,5 @@
 (load "reports-code.scm")
-
-(define *n5-n* 32)
-
-(define *alpha* 0.07)
-
-(define *poisson-alpha* 10)
-
-(define (match-stapper D) (YieldModel.Stapper 500 D 32 *alpha*))
-
-(define (match-poisson D) (YieldModel.Stapper 500 D 32 *poisson-alpha*))
-
-(define stapper-d0
-  (solve (make-target match-stapper
-                      (YieldModel.BoseEinstein 500 0.055 32))
-         0.01 0.15)
-  )
-
-(define poisson-d0
-  (solve (make-target match-poisson
-                      (YieldModel.BoseEinstein 500 0.055 32))
-         0.01 0.15)
-  )
-
-(define params `((,stapper-d0 ,*alpha*) (,poisson-d0 ,*poisson-alpha*)))
+(load "defs-21ww07.scm")
 
 (define (lrhalf-25t-model)
   (make-downbin tfc-model
@@ -53,11 +30,6 @@
                   gpio)
                 )
   )
-
-(define 9/16 (/ 9 16))
-(define 6/16 (/ 6 16))
-(define 6/8 (/ 6 8))
-(define 15/16 (/ 15 16))
 
 (define (lrhalf-16t-model)
   (make-downbin tfc-model
