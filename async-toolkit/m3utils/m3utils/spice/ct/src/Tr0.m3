@@ -28,6 +28,7 @@ CONST iSet = CSet { 'i', 'I' };
 VAR doDebug := Debug.DebugThis("Tr0");
 
 PROCEDURE RenameBack(dutName, txt : TEXT) : TEXT =
+  (* what the heck does this do, exactly? *)
   VAR
     otxt := txt;
   BEGIN

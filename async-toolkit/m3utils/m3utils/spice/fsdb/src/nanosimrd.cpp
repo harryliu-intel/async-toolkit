@@ -663,6 +663,7 @@ traverse_one_signal(int        idcode,
 
   if (mode & TRAVERSE_BINARY) {
     if (timecheck_ok) {
+      fprintf(stdout, "OK\n"); // we have to tell the driver data is coming
       fprintf(stdout, "N");
       fputc((idcode      ) & 0xff, stdout);
       fputc((idcode >>  8) & 0xff, stdout);
@@ -750,7 +751,7 @@ traverse_names(unsigned lo, unsigned hi)
   while(p) {
     if (p->idcode >= lo && p->idcode <= hi)
       fprintf(stdout,
-              "VAR %u %s %s\n",
+              "%u %s %s\n",
               p->idcode,
               p->name,
               decode_type(p->type));
@@ -789,7 +790,7 @@ main(int argc, char *argv[])
         
       case 'S':
         fprintf(stdout,
-                "%d %d %s\n",
+                "SR %d %d %s\n",
                 FSDB_MIN_VAR_IDCODE,
                 get_max_idcode(),
                 get_scaleunit());
@@ -799,33 +800,43 @@ main(int argc, char *argv[])
         lo=atoi(strtok(NULL, " "));
         hi=atoi(strtok(NULL, " ")); 
         open_signal_range(lo, hi);
+        fprintf(stdout, "RR\n");
         break;
 
 
       case 'U':                 // unload signals
         fsdb_obj->ffrUnloadSignals();
+        fprintf(stdout, "UR\n");
         break;
 
       case 'T': // traverse signals
         for (int i=lo; i<=hi; ++i) {
           traverse_one_signal(i, TRAVERSE_TIME | TRAVERSE_SIGNAL, 0);
         }
+        fprintf(stdout, "UT\n");
         break;
 
       case 't': // traverse signals (binary)
         for (int i=lo; i<=hi; ++i) {
           traverse_one_signal(i, TRAVERSE_BINARY | TRAVERSE_SIGNAL, TIME_CHECK);
         }
+        fprintf(stdout, "tR\n");
         break;
 
       case 'N':
-        traverse_names(lo, hi);
-        break;
+        {
+          unsigned lo=atoi(strtok(NULL, " "));
+          unsigned hi=atoi(strtok(NULL, " ")); 
+          traverse_names(lo, hi);
+          fprintf(stdout, "NR\n");
+          break;
+        }
 
       case 'I': // traverse signal times for a given signal & remember
         {
           int code=atoi(strtok(NULL, " "));
           traverse_one_signal(code, TRAVERSE_TIME, TIME_MEMORIZE);
+          fprintf(stdout, "IR\n");
         }
         break;
 
@@ -843,6 +854,7 @@ main(int argc, char *argv[])
         fprintf(stderr, "???line not understood\n");
         break;
       }
+      fflush(stdout);
     }
 
     fsdb_obj->ffrClose();

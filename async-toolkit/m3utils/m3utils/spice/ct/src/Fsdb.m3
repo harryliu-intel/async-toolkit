@@ -16,13 +16,31 @@ IMPORT Scan;
 IMPORT LongRealSeq AS LRSeq;
 IMPORT Word;
 IMPORT Process;
-IMPORT NameControl; FROM NameControl IMPORT MakeIdxMap;
-
+IMPORT NameControl;
+IMPORT CardSeq;
+IMPORT OSError;
+IMPORT Thread;
+IMPORT AL;
 FROM Tr0 IMPORT ShortRead, SyntaxError;
+
+<*FATAL Thread.Alerted*>
 
 CONST TE = Text.Equal;
       LR = LongReal;
 
+PROCEDURE EditName(nm : TEXT) : TEXT =
+  CONST
+    RemoveVoltPrefix = TRUE;
+  BEGIN
+    IF RemoveVoltPrefix
+      AND (TextUtils.HavePrefix(nm, "v(") OR TextUtils.HavePrefix(nm, "V("))
+     THEN
+      RETURN TextUtils.RemoveSuffixes(Text.Sub(nm, 2), ARRAY OF TEXT { ")" })
+    ELSE
+      RETURN nm
+    END
+  END EditName;
+      
 PROCEDURE Parse(wd, ofn       : Pathname.T;
                 names         : TextSeq.T;
                 maxFiles      : CARDINAL;
@@ -42,126 +60,181 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
                 restrictRegEx : RegExList.T;
                 cmdPath       : Pathname.T)
   RAISES { Rd.Failure, ShortRead, SyntaxError } =
-  VAR
-    wr : Wr.T;
-    stdin := ProcUtils.GimmeWr(wr);
-
-    rd : Rd.T;
-    stdout := ProcUtils.GimmeRd(rd);
     
-    completion := ProcUtils.RunText(cmdPath & " " & fsdbPath,
-                                    stdin := stdin,
-                                    stderr := ProcUtils.Stderr(),
-                                    stdout := stdout);
   PROCEDURE PutCommand(cmd : TEXT) =
     BEGIN
-      Debug.Out(F("Fsdb.Parse.PutCommand \"%s\"", cmd));
-      Wr.PutText(wr, cmd);
-      Wr.PutChar(wr, '\n');
-      Wr.Flush(wr);
+      TRY
+        Debug.Out(F("Fsdb.Parse.PutCommand \"%s\"", cmd));
+        Wr.PutText(wr, cmd);
+        Wr.PutChar(wr, '\n');
+        Wr.Flush(wr);
+      EXCEPT
+        Wr.Failure(x) =>
+        Debug.Error("Unexpected Wr.Failure in PutCommand : " & AL.Format(x))
+      END
     END PutCommand;
 
   PROCEDURE GetResponse(matchKw : TEXT) : TextReader.T =
     VAR
       kw : TEXT;
     BEGIN
-      LOOP
-        WITH line    = Rd.GetLine(rd),
-             reader  = NEW(TextReader.T).init(line) DO
-          Debug.Out(F("Fsdb.Parse.GetResponse \"%s\"", line));
-          IF reader.next(" ", kw, TRUE) THEN
-            IF TE(kw, matchKw) THEN
-              RETURN reader
+      TRY
+        LOOP
+          WITH line    = Rd.GetLine(rd),
+               reader  = NEW(TextReader.T).init(line) DO
+            Debug.Out(F("Fsdb.Parse.GetResponse \"%s\"", line));
+            IF reader.next(" ", kw, TRUE) THEN
+              IF TE(kw, matchKw) THEN
+                RETURN reader
+              END
             END
           END
         END
+      EXCEPT
+        Rd.Failure(x) =>
+        Debug.Error("Unexpected Rd.Failure in GetResponse : " & AL.Format(x))
+      |
+        Rd.EndOfFile =>
+        Debug.Error("Unexpected Rd.EndOfFile in GetResponse")
       END
     END GetResponse;
 
   PROCEDURE GetLineUntil(term : TEXT; VAR line : TEXT) : BOOLEAN =
     BEGIN
-      WITH this    = Rd.GetLine(rd) DO
-        IF TE(this, term) THEN
-          RETURN FALSE
-        ELSE
-          line := this;
-          RETURN TRUE
+      TRY
+        WITH this    = Rd.GetLine(rd) DO
+          IF TE(this, term) THEN
+            RETURN FALSE
+          ELSE
+            line := this;
+            RETURN TRUE
+          END
         END
+      EXCEPT
+        Rd.Failure(x) =>
+        Debug.Error("Unexpected Rd.Failure in GetLineUntil : " & AL.Format(x))
+      |
+        Rd.EndOfFile =>
+        Debug.Error("Unexpected Rd.EndOfFile in GetLineUntil")
       END
     END GetLineUntil;
     
   VAR
+    stdin : ProcUtils.Reader;
+    stdout : ProcUtils.Writer;
+    completion : ProcUtils.Completion;
+    wr : Wr.T;
+    rd : Rd.T;
+    idxMap : CardSeq.T;
+
+    wdWr : REF ARRAY OF Wr.T;
+
     loId, hiId : CARDINAL;
     unit : LONGREAL;
     line : TEXT;
     timesteps := NEW(LRSeq.T).init();
+    aNodes : CARDINAL;
+    
   CONST
     TwoToThe32 = FLOAT(Word.Shift(1, 32), LONGREAL);
   BEGIN
-    PutCommand("S");
-    WITH reader    = GetResponse("SR") DO
-      loId   := reader.getInt();
-      hiId   := reader.getInt();
-      WITH unitStr = reader.get() DO
-        unit   := ParseUnitStr(unitStr);
-      
-        Debug.Out(F("Got query response lo=%s hi=%s unitStr=\"%s\"",
-                    Int(loId), Int(hiId), unitStr))
-      END
+
+    <*FATAL OSError.E*>
+    BEGIN
+      stdin  := ProcUtils.GimmeWr(wr);
+      stdout := ProcUtils.GimmeRd(rd);
     END;
-
-    (* load first node *)
-    PutCommand(F("R %s %s", Int(loId), Int(loId)));
-    EVAL GetResponse("RR");
-
-    (* get timesteps *)
-    PutCommand(F("I %s", Int(loId)));
-    WHILE GetLineUntil("IR", line) DO
-      WITH reader = NEW(TextReader.T).init(line),
-           h = reader.getInt(),
-           l = reader.getInt(),
-           s = FLOAT(h, LONGREAL) * TwoToThe32 + FLOAT(l, LONGREAL),
-           t = s * unit DO
-        IF FALSE THEN Debug.Out("timestep " & LR(t)) END;
-        timesteps.addhi(t)
-      END
-    END;
-
-    Debug.Out(F("timesteps %s min %s max %s",
-                Int(timesteps.size()),
-                LR(timesteps.get(0)),
-                LR(timesteps.get(timesteps.size()-1))));
-
-    PutCommand("U");
-    EVAL GetResponse("UR");
-
-    PutCommand(F("N %s %s", Int(loId), Int(hiId)));
-    WHILE GetLineUntil("NR", line) DO
-      TRY
-        WITH reader = NEW(TextReader.T).init(line),
-             idx    = reader.getInt(),
-             nm     = reader.get(),
-             type   = reader.get() DO
-          (*Debug.Out(F("name %s id %s", nm, Int(idx)));*)
-          names.addlo(nm)
-        END
-      EXCEPT
-        Lex.Error, FloatMode.Trap =>
-        Debug.Error(F("Cant parse N response \"%s\"", line))
-      END
-    END;
-    names.addlo("TIME"); (* implicit #0 *)
-        
-
-    Debug.Out(F("names : %s first %s last %s ",
-                Int(names.size()),
-                names.get(0),
-                names.get(names.size()-1)));
-
-    (* now we have all names loaded up *)
-
     
-    Process.Exit(0);
+    completion := ProcUtils.RunText(cmdPath & " " & fsdbPath,
+                                    stdin := stdin,
+                                    stderr := ProcUtils.Stderr(),
+                                    stdout := stdout);
+
+
+    TRY
+      PutCommand("S");
+      WITH reader    = GetResponse("SR") DO
+        loId   := reader.getInt();
+        hiId   := reader.getInt();
+        WITH unitStr = reader.get() DO
+          unit   := ParseUnitStr(unitStr);
+          
+          Debug.Out(F("Got query response lo=%s hi=%s unitStr=\"%s\"",
+                      Int(loId), Int(hiId), unitStr))
+        END
+      END;
+
+      (* load first node *)
+      PutCommand(F("R %s %s", Int(loId), Int(loId)));
+      EVAL GetResponse("RR");
+
+      (* get timesteps *)
+      PutCommand(F("I %s", Int(loId)));
+      WHILE GetLineUntil("IR", line) DO
+        WITH reader = NEW(TextReader.T).init(line),
+             h = reader.getInt(),
+             l = reader.getInt(),
+             s = FLOAT(h, LONGREAL) * TwoToThe32 + FLOAT(l, LONGREAL),
+             t = s * unit DO
+          IF FALSE THEN Debug.Out("timestep " & LR(t)) END;
+          timesteps.addhi(t)
+        END
+      END;
+
+      Debug.Out(F("timesteps %s min %s max %s",
+                  Int(timesteps.size()),
+                  LR(timesteps.get(0)),
+                  LR(timesteps.get(timesteps.size()-1))));
+
+      PutCommand("U");
+      EVAL GetResponse("UR");
+
+      PutCommand(F("N %s %s", Int(loId), Int(hiId)));
+      WHILE GetLineUntil("NR", line) DO
+        TRY
+          WITH reader = NEW(TextReader.T).init(line),
+               idx    = reader.getInt(),
+               nm     = reader.get(),
+               type   = reader.get() DO
+            (*Debug.Out(F("name %s id %s", nm, Int(idx)));*)
+            names.addlo(EditName(nm))
+          END
+        EXCEPT
+          Lex.Error, FloatMode.Trap =>
+          Debug.Error(F("Cant parse N response \"%s\"", line))
+        END
+      END;
+      names.addlo("TIME"); (* implicit #0 *)
+      
+
+      Debug.Out(F("names : %s first %s last %s ",
+                  Int(names.size()),
+                  names.get(0),
+                  names.get(names.size()-1)));
+
+      (* now we have all names loaded up *)
+
+      idxMap := NameControl.MakeIdxMap(names, restrictNodes, restrictRegEx);
+
+      Debug.Out(F("made idxMap: names.size() %s / active %s",
+                  Int(names.size()), Int(NameControl.CountActiveNames(idxMap))));
+
+      aNodes := NameControl.WriteNames(wd,
+                                       ofn,
+                                       names,
+                                       idxMap,
+                                       maxFiles,
+                                       nFiles,
+                                       wdWr);
+      
+      Process.Exit(0);
+    EXCEPT
+      FloatMode.Trap, Lex.Error =>
+      Debug.Error("Trouble parsing number during Fsdb.Parse conversation")
+    |
+      TextReader.NoMore =>
+      Debug.Error("TextReader.NoMore during Fsdb.Parse conversation")
+    END
   END Parse;
 
 PROCEDURE ParseUnitStr(unitSpec : TEXT) : LONGREAL =
