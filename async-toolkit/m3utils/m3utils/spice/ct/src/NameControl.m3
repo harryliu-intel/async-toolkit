@@ -5,6 +5,17 @@ IMPORT RegExList;
 IMPORT CardSeq;
 IMPORT RegEx;
 IMPORT Text;
+IMPORT Pathname;
+IMPORT Wr;
+IMPORT Debug;
+FROM Fmt IMPORT F, Int;
+IMPORT OSError;
+IMPORT FileWr;
+IMPORT AL;
+IMPORT TextUtils;
+IMPORT Thread;
+
+<*FATAL Thread.Alerted*>
 
 CONST TE = Text.Equal;
 
@@ -65,5 +76,90 @@ PROCEDURE SanitizeNames(idxMap : CardSeq.T;
       names.addhi(store.get(i))
     END
   END SanitizeNames;
+
+PROCEDURE CountActiveNames(seq : CardSeq.T) : CARDINAL =
+  VAR
+    res : CARDINAL := 0;
+  BEGIN
+    FOR i := 0 TO seq.size() - 1 DO
+      IF seq.get(i) # NoMapping THEN
+        INC(res)
+      END
+    END;
+    RETURN res
+  END CountActiveNames;
+  
+PROCEDURE FormatFN(i : CARDINAL) : TEXT =
+  BEGIN RETURN F("%08s", Int(i)) END FormatFN;
+
+PROCEDURE WriteNames(wd, ofn       : Pathname.T;
+
+                     names         : TextSeq.T;
+
+                     idxMap        : CardSeq.T;
+                     (* map of input node to output node *)
+                     
+                     maxFiles      : CARDINAL;
+
+                     VAR nFiles    : CARDINAL;
+
+                     VAR wdWr      : REF ARRAY OF Wr.T) : CARDINAL =
+  VAR
+    wr : Wr.T;
+    nFn := ofn & ".names";
+
+    nNodes := names.size();
+    (* this is the number of names in the file, not the number of names
+       written? *)
+
+    aNodes := CountActiveNames(idxMap);
+  BEGIN
+    nFiles := MIN(aNodes, maxFiles); (* note that nNodes includes TIME *)
+    
+    Debug.Out(F("%s nodes (incl. TIME), %s nodes active",
+                Int(nNodes),
+                Int(aNodes)));
+    Debug.Out(F("%s files", Int(nFiles)));
+    
+    TRY
+      wdWr := NEW(REF ARRAY OF Wr.T, nFiles);
+      
+      TRY
+        wr := FileWr.Open(nFn)
+      EXCEPT
+        OSError.E(x) => Debug.Error("Unable to open names file \"" & nFn & "\" : OSError.E : " & AL.Format(x))
+      END;
+
+      (* open temp files *)
+      FOR i := 0 TO nFiles - 1 DO
+        WITH fn = wd & "/" & FormatFN(i) DO
+          TRY
+            WITH wr2 = FileWr.Open(fn) DO
+              wdWr[i] := wr2
+            END
+          EXCEPT
+            OSError.E(x) =>
+            Debug.Warning("Unable to temp file \"" & fn & "\" : OSError.E : " & AL.Format(x))
+          END
+        END
+      END;
+
+      (* write names file *)
+      FOR i := 0 TO names.size() - 1 DO
+        IF idxMap.get(i) # NoMapping THEN
+          WITH nm = TextUtils.ReplaceChar(names.get(i), ':', '_') DO
+            (* aplot has trouble with colons in node names, so rename those,
+               sorry about any clashes ... *)
+            Wr.PutText(wr, nm)
+          END;
+          Wr.PutChar(wr, '\n')
+        END
+      END;
+      Wr.Close(wr)
+    EXCEPT
+      Wr.Failure(x) => Debug.Error("Unable to write names file \"" & nFn & "\" : Wr.Failure : " & AL.Format(x))
+    END;
+    RETURN aNodes
+  END WriteNames;
 
 BEGIN END NameControl.
