@@ -477,7 +477,6 @@ BEGIN
   END;
 
   
-  names.addhi("TIME");
   TRY FS.CreateDirectory(wd) EXCEPT ELSE END;
 
   FOR i := FIRST(Exp) TO LAST(Exp) DO
@@ -496,6 +495,7 @@ BEGIN
         OSError.E(x) => Debug.Error("Trouble opening input file \"" & ifn & "\": OSError.E : " & AL.Format(x))
       END;
 
+      names.addhi("TIME");
       Tr0.Parse(wd,
                 ofn,
                 names,

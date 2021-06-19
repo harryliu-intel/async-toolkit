@@ -17,6 +17,7 @@ IMPORT TextSet;
 IMPORT RegEx;
 IMPORT RegExList;
 IMPORT CardSeq;
+IMPORT NameControl; FROM NameControl IMPORT MakeIdxMap, SanitizeNames;
 
 <*FATAL Thread.Alerted*>
 
@@ -137,7 +138,7 @@ PROCEDURE CountActiveNames(seq : CardSeq.T) : CARDINAL =
     res : CARDINAL := 0;
   BEGIN
     FOR i := 0 TO seq.size() - 1 DO
-      IF seq.get(i) # LAST(CARDINAL) THEN
+      IF seq.get(i) # NameControl.NoMapping THEN
         INC(res)
       END
     END;
@@ -198,7 +199,7 @@ PROCEDURE WriteNames(wd, ofn       : Pathname.T;
 
       (* write names file *)
       FOR i := 0 TO names.size() - 1 DO
-        IF idxMap.get(i) # LAST(CARDINAL) THEN
+        IF idxMap.get(i) # NameControl.NoMapping THEN
           WITH nm = TextUtils.ReplaceChar(names.get(i), ':', '_') DO
             (* aplot has trouble with colons in node names, so rename those,
                sorry about any clashes ... *)
@@ -222,48 +223,6 @@ PROCEDURE NullParser(<*UNUSED*>READONLY line : ARRAY OF CHAR;
 
 (**********************************************************************)
 
-PROCEDURE MakeIdxMap(names         : TextSeq.T;
-                     restrictNodes : TextSet.T;
-                     regExList     : RegExList.T) : CardSeq.T =
-  VAR
-    res := NEW(CardSeq.T).init();
-    c := 0;
-    success : BOOLEAN;
-  BEGIN
-    FOR i := 0 TO names.size() - 1 DO
-      IF TE(names.get(i), "TIME") THEN
-        success := TRUE
-      ELSIF restrictNodes = NIL AND regExList = NIL THEN
-        success := TRUE
-      ELSIF restrictNodes # NIL AND restrictNodes.member(names.get(i)) THEN
-        success := TRUE
-      ELSE
-        success := FALSE;
-        VAR
-          p := regExList;
-        BEGIN
-          WHILE p # NIL DO
-            IF RegEx.Execute(p.head,
-                             names.get(i)) # -1 THEN
-              success := TRUE;
-              EXIT
-            END;
-            p := p.tail
-          END
-        END
-      END;
-
-      IF success THEN
-        res.addhi(c);
-        INC(c)
-      ELSE
-        res.addhi(LAST(CARDINAL))
-      END
-    END;
-
-    RETURN res
-  END MakeIdxMap;
-  
 PROCEDURE Parse(wd, ofn        : Pathname.T;
                 names          : TextSeq.T;
                 maxFiles       : CARDINAL;
@@ -468,7 +427,7 @@ PROCEDURE Parse(wd, ofn        : Pathname.T;
           lbq := 0;
 
           (* process time timestamp -- never optional *)
-          <*ASSERT idxMap.get(rbq) # LAST(CARDINAL)*>
+          <*ASSERT idxMap.get(rbq) # NameControl.NoMapping*>
           TRY
             EVAL GetLR(lbuff[lbq, lbp]);
           EXCEPT
@@ -489,7 +448,7 @@ PROCEDURE Parse(wd, ofn        : Pathname.T;
 
             <*ASSERT rbq >= lbq*>
             
-            IF idxMap.get(rbq) # LAST(CARDINAL) THEN
+            IF idxMap.get(rbq) # NameControl.NoMapping THEN
               IF idxMap.get(rbq) # lbq THEN
                 Debug.Error(F("Internal error: idxMap.get(rbq %s) %s # lbq %s",
                               Int(rbq),
@@ -720,23 +679,6 @@ PROCEDURE Parse(wd, ofn        : Pathname.T;
 
   END Parse;
 
-PROCEDURE SanitizeNames(idxMap : CardSeq.T;
-                        names  : TextSeq.T) =
-  VAR
-    store := NEW(TextSeq.T).init();
-  BEGIN
-    FOR i := 0 TO names.size() - 1 DO
-      IF idxMap.get(i) # LAST(CARDINAL) THEN store.addhi(names.get(i)) END
-    END;
-
-    EVAL names.init();
-
-    FOR i := 0 TO store.size() - 1 DO
-      names.addhi(store.get(i))
-    END
-  END SanitizeNames;
-
-  
 CONST
   DebugStep = 1000 * 1000;
   
