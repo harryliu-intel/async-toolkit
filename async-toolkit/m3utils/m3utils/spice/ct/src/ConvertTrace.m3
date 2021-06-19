@@ -42,6 +42,7 @@ IMPORT Text;
 IMPORT RegExList;
 IMPORT RegEx;
 IMPORT TextUtils;
+IMPORT Fsdb;
 
 <*FATAL Thread.Alerted*>
 
@@ -392,6 +393,13 @@ VAR
 
   wrWorkers := 1;
   regExList : RegExList.T := NIL;
+
+  fsdbPath, fsdbCmdPath : Pathname.T := NIL;
+
+  parseFmt := ParseFmt.Tr0;
+  
+TYPE
+  ParseFmt = { Tr0, Fsdb };
   
 BEGIN
   TRY
@@ -401,6 +409,12 @@ BEGIN
     IF pp.keywordPresent("-scaletime") THEN
       timeScaleFactor := pp.getNextLongReal()
     END;
+
+    IF pp.keywordPresent("-fsdb") THEN
+      fsdbCmdPath := pp.getNext();
+      parseFmt := ParseFmt.Fsdb;
+    END;
+    
     IF pp.keywordPresent("-scalevoltage") THEN
       voltageScaleFactor := pp.getNextLongReal()
     END;
@@ -462,11 +476,6 @@ BEGIN
     ParseParams.Error => Debug.Error("Can't parse command-line parameters\nUsage: " & Params.Get(0) & " " & Usage)
   END;
 
-  TRY
-    rd  := FileRd_Open(ifn)
-  EXCEPT
-    OSError.E(x) => Debug.Error("Trouble opening input file \"" & ifn & "\": OSError.E : " & AL.Format(x))
-  END;
   
   names.addhi("TIME");
   TRY FS.CreateDirectory(wd) EXCEPT ELSE END;
@@ -478,21 +487,49 @@ BEGIN
   TRY
 
     Debug.Out("ConvertTrace parsing...");
-    Tr0.Parse(wd,
-              ofn,
-              names,
-              maxFiles,
-              nFiles,
-              MaxMem,
-              timeScaleFactor,
-              timeOffset,
-              voltageScaleFactor,
-              voltageOffset,
-              dutName,
-              rd,
-              wait,
-              restrictNodes,
-              regExList);
+    CASE parseFmt OF
+      ParseFmt.Tr0 =>
+
+      TRY
+        rd  := FileRd_Open(ifn)
+      EXCEPT
+        OSError.E(x) => Debug.Error("Trouble opening input file \"" & ifn & "\": OSError.E : " & AL.Format(x))
+      END;
+
+      Tr0.Parse(wd,
+                ofn,
+                names,
+                maxFiles,
+                nFiles,
+                MaxMem,
+                timeScaleFactor,
+                timeOffset,
+                voltageScaleFactor,
+                voltageOffset,
+                dutName,
+                rd,
+                wait,
+                restrictNodes,
+                regExList)
+    |
+      ParseFmt.Fsdb =>
+      Fsdb.Parse(wd,
+                 ofn,
+                 names,
+                 maxFiles,
+                 nFiles,
+                 MaxMem,
+                 timeScaleFactor,
+                 timeOffset,
+                 voltageScaleFactor,
+                 voltageOffset,
+                 dutName,
+                 ifn,
+                 wait,
+                 restrictNodes,
+                 regExList,
+                 fsdbCmdPath)
+    END;
     Debug.Out("ConvertTrace parsing done.")
     
   EXCEPT

@@ -1,9 +1,12 @@
-INTERFACE Tr0;
-IMPORT Rd;
-IMPORT Pathname;
+INTERFACE Fsdb;
+
 IMPORT TextSeq;
 IMPORT TextSet;
 IMPORT RegExList;
+IMPORT Pathname;
+IMPORT Rd;
+
+FROM Tr0 IMPORT ShortRead, SyntaxError;
 
 PROCEDURE Parse(wd, ofn       : Pathname.T;
                 names         : TextSeq.T;
@@ -18,16 +21,11 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
 
                 dutName       : TEXT;
                  
-                rd            : Rd.T;
+                fsdbPath      : Pathname.T;
                 wait          : BOOLEAN;
                 restrictNodes : TextSet.T;
-                restrictRegEx : RegExList.T)
+                restrictRegEx : RegExList.T;
+                cmdPath       : Pathname.T)
   RAISES { Rd.Failure, ShortRead, SyntaxError };
 
-EXCEPTION ShortRead;
-
-EXCEPTION SyntaxError(TEXT);
-
-PROCEDURE FileIndex(nFiles, nNodes, nodeIndex : CARDINAL) : CARDINAL;
-
-END Tr0.
+END Fsdb.
