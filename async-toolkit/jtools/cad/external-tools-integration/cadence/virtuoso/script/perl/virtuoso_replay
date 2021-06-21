@@ -5,7 +5,7 @@ use warnings;
 my $local=0;
 if (@ARGV>0 && $ARGV[0] eq "--local") { $local=1; shift; }
 @ARGV>0 or die "USAGE: virtuoso_replay [--local] 1.il 2.il ...\n";
-my $MEM = 16*1024;
+my $MEM = 64*1024;
 my $count = 0;
 foreach my $file (@ARGV) {
     (-r $file) or die "cannot read file $file\n";
