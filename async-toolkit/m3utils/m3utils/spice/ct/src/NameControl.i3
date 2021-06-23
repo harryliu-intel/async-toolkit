@@ -36,5 +36,8 @@ PROCEDURE WriteNames(wd, ofn       : Pathname.T;
                      VAR nFiles    : CARDINAL;
 
                      VAR wdWr      : REF ARRAY OF Wr.T) : CARDINAL;
+
+PROCEDURE FileIndex(nFiles, nNodes, nodeIndex : CARDINAL) : CARDINAL;
+
 END NameControl.
   

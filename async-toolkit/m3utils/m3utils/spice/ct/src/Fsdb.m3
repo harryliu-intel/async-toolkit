@@ -22,6 +22,7 @@ IMPORT OSError;
 IMPORT Thread;
 IMPORT AL;
 FROM Tr0 IMPORT ShortRead, SyntaxError;
+IMPORT UnsafeReader, UnsafeWriter;
 
 <*FATAL Thread.Alerted*>
 
@@ -92,13 +93,68 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
         END
       EXCEPT
         Rd.Failure(x) =>
-        Debug.Error("Unexpected Rd.Failure in GetResponse : " & AL.Format(x))
-      |
+        Debug.Error("Unexpected Rd.Failure in GetResponse : " & AL.Format(x)); 
+        <*ASSERT FALSE*>
+                        
+     |
         Rd.EndOfFile =>
-        Debug.Error("Unexpected Rd.EndOfFile in GetResponse")
+        Debug.Error("Unexpected Rd.EndOfFile in GetResponse");
+        <*ASSERT FALSE*>
       END
     END GetResponse;
 
+  PROCEDURE ReadBinaryNodeData(VAR nodeid : CARDINAL;
+                               VAR buff : ARRAY OF LONGREAL) =
+
+    VAR
+      kw : TEXT;
+      n  : CARDINAL;
+    BEGIN
+      TRY
+        LOOP
+          WITH line    = Rd.GetLine(rd),
+               reader  = NEW(TextReader.T).init(line) DO
+            Debug.Out(F("Fsdb.Parse.ReadBinaryNodeData line \"%s\"", line));
+
+            IF reader.next(" ", kw, TRUE) THEN
+              IF    TE(kw, "E") THEN
+                Debug.Error(F("Got time mismatch: nodeid %s: line %s",
+                              Int(nodeid), line))
+              ELSIF TE(kw, "OK") THEN
+                WITH tag = Rd.GetChar(rd) DO
+                  nodeid := UnsafeReader.ReadI(rd);
+                  n      := UnsafeReader.ReadI(rd);
+
+                  Debug.Out(F("ReadBinaryNodeData tag %s nodeid %s n %s",
+                              Text.FromChar(tag),
+                              Int(nodeid),
+                              Int(n)));
+                  
+                  IF n # NUMBER(buff) THEN
+                    Debug.Error(F("Size mismatch n %s # NUMBER(buff) %s",
+                                  Int(n), Int(NUMBER(buff))))
+                  END;
+                  UnsafeReader.ReadLRA(rd, buff);
+                  RETURN
+                END
+              ELSE
+                Debug.Error(F("?syntax error : ReadBinaryNodeData: got \"%s\"",
+                              line))
+              END
+            END
+          END
+        END
+      EXCEPT
+        Rd.Failure(x) =>
+        Debug.Error("Unexpected Rd.Failure in ReadBinaryNodeData : " & AL.Format(x));
+        <*ASSERT FALSE*>
+      |
+        Rd.EndOfFile =>
+        Debug.Error("Unexpected Rd.EndOfFile in ReadBinaryNodeData");
+        <*ASSERT FALSE*>
+      END
+    END ReadBinaryNodeData;
+    
   PROCEDURE GetLineUntil(term : TEXT; VAR line : TEXT) : BOOLEAN =
     BEGIN
       TRY
@@ -112,10 +168,12 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
         END
       EXCEPT
         Rd.Failure(x) =>
-        Debug.Error("Unexpected Rd.Failure in GetLineUntil : " & AL.Format(x))
+        Debug.Error("Unexpected Rd.Failure in GetLineUntil : " & AL.Format(x));
+        <*ASSERT FALSE*>
       |
         Rd.EndOfFile =>
-        Debug.Error("Unexpected Rd.EndOfFile in GetLineUntil")
+        Debug.Error("Unexpected Rd.EndOfFile in GetLineUntil");
+        <*ASSERT FALSE*>
       END
     END GetLineUntil;
     
@@ -168,6 +226,9 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
       PutCommand(F("R %s %s", Int(loId), Int(loId)));
       EVAL GetResponse("RR");
 
+      PutCommand(F("L"));
+      EVAL GetResponse("LR");
+
       (* get timesteps *)
       PutCommand(F("I %s", Int(loId)));
       WHILE GetLineUntil("IR", line) DO
@@ -205,7 +266,6 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
         END
       END;
       names.addlo("TIME"); (* implicit #0 *)
-      
 
       Debug.Out(F("names : %s first %s last %s ",
                   Int(names.size()),
@@ -226,6 +286,74 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
                                        maxFiles,
                                        nFiles,
                                        wdWr);
+      <*ASSERT wdWr # NIL*>
+
+      (* write out timesteps *)
+      VAR
+        arr := NEW(REF ARRAY OF LONGREAL, timesteps.size());
+      BEGIN
+        FOR i := 0 TO timesteps.size() - 1 DO
+          arr[i] := timesteps.get(i)
+        END;
+        WITH fIdx = NameControl.FileIndex(nFiles, 0, 0) DO
+          <*ASSERT wdWr[fIdx] # NIL*>
+
+          UnsafeWriter.WriteLRA(wdWr[fIdx], arr^)
+        END
+      END;
+
+
+      (* let's build the map of what node goes into which file *)
+      (* note there are several indices at work here
+
+         we have the index of the node in the fsdb: this is also the
+         index of the entry in the idxMap
+
+         we have the index of the node in the output trace: this is also
+         the contents of the idxMap
+
+         --
+
+         here what we do is we collate all the indices over the files, and
+         then generate one file at a time.
+
+         If we need to and have the CPU power, we can try to parallelize the
+         file generation later. 
+      *)
+
+      WITH fileTab = NEW(REF ARRAY OF CardSeq.T, nFiles) DO
+        FOR i := FIRST(fileTab^) TO LAST(fileTab^) DO
+          fileTab[i] := NEW(CardSeq.T).init()
+        END;
+        FOR i := 0 TO idxMap.size() - 1 DO
+          WITH outIdx = idxMap.get(i) DO
+            IF i # 0 (* TIME done separately *) AND outIdx # LAST(CARDINAL) THEN
+              WITH fileIdx    = NameControl.FileIndex(nFiles,
+                                                      aNodes,
+                                                      outIdx) DO
+                (* note what we're doing here.. we are adding the
+                   INPUT INDEX of the node to the file list, indexed by the
+                   hashed OUTPUT INDEX of the node! *)
+                fileTab[fileIdx].addhi(i)
+              END
+            END
+          END
+        END;
+
+        (* now generate the files in turn *)
+        FOR i := FIRST(fileTab^) TO LAST(fileTab^) DO
+          Debug.Out(F("Fsdb.Parse : Generating partial trace file %s",
+                      Int(i)));
+          
+          GeneratePartialTraceFile(wdWr[i],
+                                   fileTab[i],
+                                   idxMap,
+                                   PutCommand,
+                                   GetResponse,
+                                   timesteps.size(),
+                                   ReadBinaryNodeData)
+        END
+      END;
       
       Process.Exit(0);
     EXCEPT
@@ -237,6 +365,64 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
     END
   END Parse;
 
+PROCEDURE GeneratePartialTraceFile(wr : Wr.T;
+                                   fileTab : CardSeq.T;
+                                   (* INPUT indices to process *)
+                                   
+                                   idxMap  : CardSeq.T;
+                                   (* mapping from input to output indices *)
+
+                                   PutCommand : PROCEDURE (t : TEXT);
+                                   GetResponse : PROCEDURE (t : TEXT) : TextReader.T;
+                                   nSteps : CARDINAL;
+                                   ReadBinaryNodeData : PROCEDURE (VAR nodeid : CARDINAL; VAR buff : ARRAY OF LONGREAL)
+                                   ) =
+  VAR
+    hadIt : BOOLEAN;
+    buff := NEW(REF ARRAY OF LONGREAL, nSteps);
+    node : CARDINAL;
+    
+  BEGIN
+    (* set up indications of interest *)
+    FOR i := 0 TO fileTab.size() - 1 DO
+      WITH id = fileTab.get(i) DO
+        PutCommand(F("r %s", Int(id)));
+        EVAL GetResponse("rR");
+      END
+    END;
+
+    PutCommand("L");
+    EVAL GetResponse("LR");
+    
+    PutCommand("t");
+
+    FOR i := 0 TO fileTab.size() - 1 DO
+      WITH inId  = fileTab.get(i),
+           outId = idxMap.get(inId) DO
+
+        Debug.Out(F("Expecting node data for inId %s outId %s",
+                    Int(inId), Int(outId)));
+        
+        ReadBinaryNodeData(node, buff^);
+        IF node # inId THEN
+          Debug.Error(F("unexpected node %s # inId %s", Int(node), Int(inId)))
+        END;
+
+        (* write data to temp file in correct format *)
+        UnsafeWriter.WriteI  (wr, outId);
+        UnsafeWriter.WriteI  (wr, nSteps);
+        UnsafeWriter.WriteLRA(wr, buff^);
+
+      END
+    END;
+
+    EVAL GetResponse("tR");
+
+    
+    PutCommand("U");
+    EVAL GetResponse("UR")
+  END GeneratePartialTraceFile;
+  
 PROCEDURE ParseUnitStr(unitSpec : TEXT) : LONGREAL =
   BEGIN
     FOR i := FIRST(Units) TO LAST(Units) DO

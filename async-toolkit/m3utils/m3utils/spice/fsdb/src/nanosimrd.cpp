@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <assert.h>
 
 #ifndef FALSE
 #define FALSE	0
@@ -64,6 +65,73 @@ BuildVar(fsdbTreeCBDataVar *var);
 static void 
 __PrintTimeValChng(ffrVCTrvsHdl vc_trvs_hdl, 
 		   void *time, byte_T *vc_ptr);
+
+//////////////////////////////////////////////////////////////////////
+//
+// integer dequeue
+//
+
+typedef struct int_dq {
+  int val;
+  struct int_dq *prev, *next;
+} int_dq;
+
+int_dq *
+new_int_dq(void)
+{
+  // allocate and set up sentinel
+  int_dq *res = (int_dq *)malloc(sizeof(int_dq)); 
+  res->val = 0xdeadbeef;
+  res->next = res;
+  res->prev = res;
+
+  return res;
+}
+
+void
+int_dq_addlo(int_dq *q, int val)
+{
+  int_dq *newd = (int_dq *)malloc(sizeof(int_dq));
+
+  newd->val = val;
+
+  q->next->prev = newd;
+  newd->next = q->next;
+
+  newd->prev = q;
+  q->next = newd;
+}
+
+void
+int_dq_addhi(int_dq *q, int val)
+{
+  int_dq *newd = (int_dq *)malloc(sizeof(int_dq));
+
+  newd->val = val;
+  
+  q->prev->next = newd;
+  newd->prev = q->prev;
+
+  newd->next = q;
+  q->prev = newd;
+}
+
+void
+int_dq_free(int_dq *q)
+{
+  int_dq *op, *p=q->next;
+
+  while (p != q) {
+    op = p;
+    p = p->next;
+    free(op);
+  }
+
+  q->next = q;
+  q->prev = q;
+}
+
+//////////////////////////////////////////////////////////////////////
 
 const int debug = 1;
 
@@ -391,26 +459,35 @@ get_scaleunit(void)
   return fsdb_obj->ffrGetScaleUnit();
 }
 
+//////////////////////////////////////////////////////////////////////
+
+static int_dq *active=new_int_dq();
+
 int
-open_signal_range(int lo, int hi)
+open_signal_range(void)
 {
-  fprintf(stderr, "open_signal_range(%d, %d)\n", lo, hi);
+  fprintf(stderr, "open_signal_range()\n");
 
-  for(int i=lo; i<=hi; ++i)
-    fsdb_obj->ffrAddToSignalList(i);
+  for(int_dq *p=active->next; p != active; p = p->next) {
+    fprintf(stderr, "signal %u\n", p->val);
+    fsdb_obj->ffrAddToSignalList(p->val);
+  }
 
+}
+
+int
+load_signals(void)
+{
   fprintf(stderr, "loading signals\n");
   fsdb_obj->ffrLoadSignals();
 
   fprintf(stderr, "signals loaded\n");
 }
 
-static int lo=0, hi=0;
-
-
 #define TRAVERSE_TIME   1
 #define TRAVERSE_SIGNAL 2
 #define TRAVERSE_BINARY 4
+
 
 static void 
 PrintTimeValChng(ffrVCTrvsHdl   vc_trvs_hdl, 
@@ -558,6 +635,8 @@ traverse_one_signal(int        idcode,
   fsdbTag64 *time = (fsdbTag64 *)calloc(8, sizeof(byte_T));
   char *buff = NULL;
 
+  assert (sizeof(float) == 4);
+
   if (mode & TRAVERSE_BINARY) {
     if (!the_timemem) the_timemem = timemem_new();
     
@@ -663,14 +742,17 @@ traverse_one_signal(int        idcode,
 
   if (mode & TRAVERSE_BINARY) {
     if (timecheck_ok) {
+      unsigned n = the_timemem->p;
+      
+      fprintf(stderr, "binary traversal tag N nodeid %u count %u\n",
+              idcode, n);
+      
       fprintf(stdout, "OK\n"); // we have to tell the driver data is coming
       fprintf(stdout, "N");
       fputc((idcode      ) & 0xff, stdout);
       fputc((idcode >>  8) & 0xff, stdout);
       fputc((idcode >> 16) & 0xff, stdout);
       fputc((idcode >> 24) & 0xff, stdout);
-
-      unsigned n = the_timemem->p;
 
       fputc((n           ) & 0xff, stdout);
       fputc((n      >>  8) & 0xff, stdout);
@@ -679,7 +761,7 @@ traverse_one_signal(int        idcode,
 
       fflush(stdout);
 
-      write(fileno(stdout), buff, n); // just dump the buffer
+      write(fileno(stdout), buff, n * sizeof(float)); // just dump the buffer
       
     } else {
       fprintf(stdout, "E TIMECHECK %d\n", timecheck_ok);
@@ -764,11 +846,10 @@ traverse_names(unsigned lo, unsigned hi)
 
 }
 
-
-
 int 
 main(int argc, char *argv[])
 {
+  
     if (2 != argc) {
 	fprintf(stderr, "usage: nanosimrd verilog_type_fsdb\n");
 	return FSDB_RC_FAILURE;
@@ -795,30 +876,50 @@ main(int argc, char *argv[])
                 get_max_idcode(),
                 get_scaleunit());
         break;
-
-      case 'R': // load signal range
-        lo=atoi(strtok(NULL, " "));
-        hi=atoi(strtok(NULL, " ")); 
-        open_signal_range(lo, hi);
+ 
+      case 'r': // interesting signal
+        {
+          unsigned code=atoi(strtok(NULL, " "));
+          int_dq_addhi(active, code);
+          fprintf(stdout, "rR\n");
+        }
+        break;
+        
+      case 'R': // interesting signal range
+        {
+          unsigned lo=atoi(strtok(NULL, " "));
+          unsigned hi=atoi(strtok(NULL, " "));
+          for (int i=lo; i<= hi; ++i)
+            int_dq_addhi(active, i);
+        }
         fprintf(stdout, "RR\n");
         break;
 
+      case 'L': // load signals
+        open_signal_range();
+        fprintf(stdout, "LR\n");
+        break;  
 
       case 'U':                 // unload signals
         fsdb_obj->ffrUnloadSignals();
         fprintf(stdout, "UR\n");
+        int_dq_free(active);
         break;
 
       case 'T': // traverse signals
-        for (int i=lo; i<=hi; ++i) {
-          traverse_one_signal(i, TRAVERSE_TIME | TRAVERSE_SIGNAL, 0);
+        for (int_dq *p=active->next; p != active; p = p->next) {
+          traverse_one_signal(p->val,
+                              TRAVERSE_TIME | TRAVERSE_SIGNAL,
+                              0);
         }
         fprintf(stdout, "UT\n");
         break;
 
       case 't': // traverse signals (binary)
-        for (int i=lo; i<=hi; ++i) {
-          traverse_one_signal(i, TRAVERSE_BINARY | TRAVERSE_SIGNAL, TIME_CHECK);
+        for (int_dq *p=active->next; p != active; p = p->next) {
+          traverse_one_signal(p->val,
+                              TRAVERSE_BINARY | TRAVERSE_SIGNAL,
+                              TIME_CHECK);
         }
         fprintf(stdout, "tR\n");
         break;
@@ -832,11 +933,19 @@ main(int argc, char *argv[])
           break;
         }
 
-      case 'I': // traverse signal times for a given signal & remember
+      case 'I': // traverse signal times for a given signal, print,  & remember
         {
           int code=atoi(strtok(NULL, " "));
           traverse_one_signal(code, TRAVERSE_TIME, TIME_MEMORIZE);
           fprintf(stdout, "IR\n");
+        }
+        break;
+
+      case 'i': // traverse signal times for a given signal & remember
+        {
+          int code=atoi(strtok(NULL, " "));
+          traverse_one_signal(code, 0, TIME_MEMORIZE);
+          fprintf(stdout, "iR\n");
         }
         break;
 
@@ -848,6 +957,8 @@ main(int argc, char *argv[])
         break;
 
       case 'Q':
+        fprintf(stdout, "QR\n");
+        goto done;
         break;
 
       default:
@@ -857,6 +968,7 @@ main(int argc, char *argv[])
       fflush(stdout);
     }
 
+ done:
     fsdb_obj->ffrClose();
     
     return 0;

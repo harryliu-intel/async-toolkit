@@ -17,7 +17,7 @@ IMPORT CardSeq;
 
 IMPORT NameControl;
 FROM NameControl IMPORT MakeIdxMap, SanitizeNames,
-                        WriteNames;
+                        WriteNames, FileIndex;
 
 <*FATAL Thread.Alerted*>
 
@@ -61,19 +61,6 @@ PROCEDURE RenameBack(dutName, txt : TEXT) : TEXT =
       <*ASSERT FALSE*>
     END
   END RenameBack;
-
-PROCEDURE FileIndex(nFiles, nNodes, nodeIndex : CARDINAL) : CARDINAL =
-  BEGIN
-    IF nodeIndex = 0 THEN
-      RETURN 0 (* TIME node on its own *)
-    ELSE
-      WITH nonTimeFiles = nFiles - 1,
-           nonTimeIndex = nodeIndex - 1,
-           nodesPerFile = (nNodes DIV nonTimeFiles) + 1 DO
-        RETURN nonTimeIndex DIV nodesPerFile + 1
-      END
-    END
-  END FileIndex;
 
 PROCEDURE StartsWith(READONLY buf, pfx : ARRAY OF CHAR) : BOOLEAN =
   BEGIN 

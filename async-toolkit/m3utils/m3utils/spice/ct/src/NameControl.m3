@@ -162,4 +162,17 @@ PROCEDURE WriteNames(wd, ofn       : Pathname.T;
     RETURN aNodes
   END WriteNames;
 
+PROCEDURE FileIndex(nFiles, nNodes, nodeIndex : CARDINAL) : CARDINAL =
+  BEGIN
+    IF nodeIndex = 0 THEN
+      RETURN 0 (* TIME node on its own *)
+    ELSE
+      WITH nonTimeFiles = nFiles - 1,
+           nonTimeIndex = nodeIndex - 1,
+           nodesPerFile = (nNodes DIV nonTimeFiles) + 1 DO
+        RETURN nonTimeIndex DIV nodesPerFile + 1
+      END
+    END
+  END FileIndex;
+
 BEGIN END NameControl.
