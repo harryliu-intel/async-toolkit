@@ -75,7 +75,9 @@ PROCEDURE WriteTrace() =
     time, data    : REF ARRAY OF LONGREAL;
     dataStartByte : CARDINAL;
   BEGIN
-    Debug.Out("WriteTrace");
+    Debug.Out(F("WriteTrace nFiles %s names.size() %s",
+                Int(nFiles), Int(names.size())));
+    
     TRY
       tWr := FileWr.Open(tFn)
     EXCEPT
@@ -119,8 +121,7 @@ PROCEDURE WriteTrace() =
           (*
           UnsafeWriter.WriteLRA(tWr, data^);
           *)
-          
-          Rd.Close(rd)
+
         END
       EXCEPT
         OSError.E(x) =>
@@ -178,6 +179,11 @@ PROCEDURE ReadEntireFileM(self     : FileReader;
     aLen := NUMBER(data);
 
   BEGIN
+    IF doDebug THEN
+      Debug.Out(F("ConvertTrace.ReadEntireFileM: idx %s fn %s aLen %s",
+                  Int(idx), fn, Int(aLen)))
+    END;
+    
     IF idx = 0 THEN
       TRY
         WITH rd  = FileRd_Open(fn),
@@ -198,7 +204,10 @@ PROCEDURE ReadEntireFileM(self     : FileReader;
         self.dbDb := NEW(DataBlock.T).init(self.dbRd, aLen)
       END;
       
-      <*ASSERT self.dbDb.haveTag(idx)*>
+      IF NOT self.dbDb.haveTag(idx) THEN
+        Debug.Error(F("ConvertTrace.ReadEntireFileM: internal error: file %s doesn't contain tag %s", fn, Int(idx)))
+      END;
+      
       WITH readRecs = self.dbDb.readData(idx, data) DO
         IF readRecs # aLen THEN
           Debug.Warning(F("ConvertTrace.ReadEntireFileM: short read for %s (%s) : %s # %s",
@@ -375,8 +384,6 @@ VAR
   names := NEW(TextSeq.T).init();
   ifn, ofn : Pathname.T;
 
-  rd  : Rd.T;
-
   Exp : ARRAY [-300..300] OF LONGREAL;
   wd := "ct.work";
   dutName : TEXT := NIL;
@@ -395,7 +402,7 @@ VAR
   wrWorkers := 1;
   regExList : RegExList.T := NIL;
 
-  fsdbPath, fsdbCmdPath : Pathname.T := NIL;
+  fsdbCmdPath : Pathname.T := NIL;
 
   parseFmt := ParseFmt.Tr0;
   
@@ -490,28 +497,34 @@ BEGIN
     CASE parseFmt OF
       ParseFmt.Tr0 =>
 
-      TRY
-        rd  := FileRd_Open(ifn)
-      EXCEPT
-        OSError.E(x) => Debug.Error("Trouble opening input file \"" & ifn & "\": OSError.E : " & AL.Format(x))
-      END;
+      VAR
+        rd : Rd.T;
+      BEGIN
+        TRY
+          rd  := FileRd_Open(ifn)
+        EXCEPT
+          OSError.E(x) => Debug.Error("Trouble opening input file \"" & ifn & "\": OSError.E : " & AL.Format(x))
+        END;
+        
+        names.addhi("TIME");
+        Tr0.Parse(wd,
+                  ofn,
+                  names,
+                  maxFiles,
+                  nFiles,
+                  MaxMem,
+                  timeScaleFactor,
+                  timeOffset,
+                  voltageScaleFactor,
+                  voltageOffset,
+                  dutName,
+                  rd,
+                  wait,
+                  restrictNodes,
+                  regExList);
 
-      names.addhi("TIME");
-      Tr0.Parse(wd,
-                ofn,
-                names,
-                maxFiles,
-                nFiles,
-                MaxMem,
-                timeScaleFactor,
-                timeOffset,
-                voltageScaleFactor,
-                voltageOffset,
-                dutName,
-                rd,
-                wait,
-                restrictNodes,
-                regExList)
+        TRY Rd.Close(rd) EXCEPT ELSE END
+      END
     |
       ParseFmt.Fsdb =>
       Fsdb.Parse(wd,

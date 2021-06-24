@@ -292,6 +292,7 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
       VAR
         arr := NEW(REF ARRAY OF LONGREAL, timesteps.size());
       BEGIN
+        Debug.Out(F("Writing timesteps, steps %s", Int(timesteps.size())));
         FOR i := 0 TO timesteps.size() - 1 DO
           arr[i] := timesteps.get(i)
         END;
@@ -321,6 +322,9 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
          file generation later. 
       *)
 
+      Debug.Out(F("Fsdb writing files: nFiles %s aNodes %s",
+                  Int(nFiles), Int(aNodes)));
+
       WITH fileTab = NEW(REF ARRAY OF CardSeq.T, nFiles) DO
         FOR i := FIRST(fileTab^) TO LAST(fileTab^) DO
           fileTab[i] := NEW(CardSeq.T).init()
@@ -334,6 +338,8 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
                 (* note what we're doing here.. we are adding the
                    INPUT INDEX of the node to the file list, indexed by the
                    hashed OUTPUT INDEX of the node! *)
+                Debug.Out(F("Adding to fileTab: input index %s to fileTab[%s]",
+                            Int(i), Int(fileIdx)));
                 fileTab[fileIdx].addhi(i)
               END
             END
@@ -354,8 +360,21 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
                                    ReadBinaryNodeData)
         END
       END;
-      
-      Process.Exit(0);
+
+      Debug.Out("Fsdb.Parse sanitizing names.");
+      NameControl.SanitizeNames(idxMap, names);
+
+      Debug.Out("Fsdb.Parse closing temp files.");
+     
+      FOR i := FIRST(wdWr^) TO LAST(wdWr^) DO
+        TRY
+          Wr.Close(wdWr[i])
+        EXCEPT
+          OSError.E(x) => Debug.Error(F("Trouble closing temp file %s", Int(i)))
+        END
+      END;
+      Debug.Out("Fsdb.Parse temp files closed.");
+
     EXCEPT
       FloatMode.Trap, Lex.Error =>
       Debug.Error("Trouble parsing number during Fsdb.Parse conversation")
@@ -409,6 +428,9 @@ PROCEDURE GeneratePartialTraceFile(wr : Wr.T;
         END;
 
         (* write data to temp file in correct format *)
+        Debug.Out(F("Writing data block outId %s nSteps %s",
+                    Int(outId), Int(nSteps)));
+        
         UnsafeWriter.WriteI  (wr, outId);
         UnsafeWriter.WriteI  (wr, nSteps);
         UnsafeWriter.WriteLRA(wr, buff^);

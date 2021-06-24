@@ -20,5 +20,8 @@ list ("RegEx", "MyRegEx")
 
 implementation ("ConvertTrace")
 
+module ("Fsdb")
+module ("NameControl")
+
 
 program ("ct")
