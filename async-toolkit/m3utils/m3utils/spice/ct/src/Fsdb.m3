@@ -135,6 +135,9 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
                                   Int(n), Int(NUMBER(buff))))
                   END;
                   UnsafeReader.ReadLRA(rd, buff);
+
+                  Debug.Out(F("ReadBinaryNodeData buff[0] %s",
+                              LR(buff[0])));
                   RETURN
                 END
               ELSE

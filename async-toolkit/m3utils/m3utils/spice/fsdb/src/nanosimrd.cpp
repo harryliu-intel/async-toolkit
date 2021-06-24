@@ -733,7 +733,7 @@ traverse_one_signal(int        idcode,
     if (time_mode & TIME_CHECK)
       timecheck_ok &= timemem_compare(the_timemem, i, time);
     
-    PrintTimeValChng(vc_trvs_hdl, time, vc_ptr, bytesPerBit, mode, buff, 0);
+    PrintTimeValChng(vc_trvs_hdl, time, vc_ptr, bytesPerBit, mode, buff, i);
   }
 
   vc_trvs_hdl->ffrFree();
@@ -760,6 +760,9 @@ traverse_one_signal(int        idcode,
       fputc((n      >> 24) & 0xff, stdout);
 
       fflush(stdout);
+
+      fprintf(stderr, "writing binary data, value[0] %f\n",
+              ((float *)buff)[0]);
 
       write(fileno(stdout), buff, n * sizeof(float)); // just dump the buffer
       

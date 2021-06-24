@@ -105,8 +105,9 @@ PROCEDURE WriteNames(wd, ofn       : Pathname.T;
 
                      VAR wdWr      : REF ARRAY OF Wr.T) : CARDINAL =
   VAR
-    wr : Wr.T;
+    anWr, wr : Wr.T;
     nFn := ofn & ".names";
+    anFn := ofn & ".allnames";
 
     nNodes := names.size();
     (* this is the number of names in the file, not the number of names
@@ -130,6 +131,12 @@ PROCEDURE WriteNames(wd, ofn       : Pathname.T;
         OSError.E(x) => Debug.Error("Unable to open names file \"" & nFn & "\" : OSError.E : " & AL.Format(x))
       END;
 
+      TRY
+        anWr := FileWr.Open(anFn)
+      EXCEPT
+        OSError.E(x) => Debug.Error("Unable to open allnames file \"" & anFn & "\" : OSError.E : " & AL.Format(x))
+      END;
+
       (* open temp files *)
       FOR i := 0 TO nFiles - 1 DO
         WITH fn = wd & "/" & FormatFN(i) DO
@@ -146,13 +153,19 @@ PROCEDURE WriteNames(wd, ofn       : Pathname.T;
 
       (* write names file *)
       FOR i := 0 TO names.size() - 1 DO
-        IF idxMap.get(i) # NoMapping THEN
-          WITH nm = TextUtils.ReplaceChar(names.get(i), ':', '_') DO
-            (* aplot has trouble with colons in node names, so rename those,
-               sorry about any clashes ... *)
-            Wr.PutText(wr, nm)
+        WITH nm = TextUtils.ReplaceChar(names.get(i), ':', '_') DO
+          (* aplot has trouble with colons in node names, so rename those,
+             sorry about any clashes ... *)
+          IF idxMap.get(i) # NoMapping THEN
+            
+            Wr.PutText(wr, nm);
+            Wr.PutChar(wr, '\n')
+
           END;
-          Wr.PutChar(wr, '\n')
+
+          Wr.PutText(anWr, nm);
+          Wr.PutChar(anWr, '\n')
+
         END
       END;
       Wr.Close(wr)
