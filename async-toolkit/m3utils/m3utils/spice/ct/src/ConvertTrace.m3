@@ -13,7 +13,7 @@ MODULE ConvertTrace EXPORTS Main;
 
    Author : Mika Nystrom <mika.nystroem@intel.com>
 
-   ct [-rename <dutName>] [-scaletime <timeScaleFactor>] [-offsettime <timeOffset>] [-offsetvoltage <voltageOffset>] [-dosources] [-dofiles] [ [-n <nodename>] ...] <inFileName> <outFileRoot>
+   ct [-rename <dutName>] [-scaletime <timeScaleFactor>] [-offsettime <timeOffset>] [-offsetvoltage <voltageOffset>] [-dosources] [-dofiles] [ [-n <nodename>] ...] [-threads <fsdb_threads>] <inFileName> <outFileRoot>
 
    will generate <outFileRoot>.trace and <outFileRoot>.names
 
@@ -405,6 +405,8 @@ VAR
   fsdbCmdPath : Pathname.T := NIL;
 
   parseFmt := ParseFmt.Tr0;
+
+  threads  : CARDINAL := 1;
   
 TYPE
   ParseFmt = { Tr0, Fsdb };
@@ -440,6 +442,9 @@ BEGIN
     END;
     IF pp.keywordPresent("-notrace") THEN
       doTrace := FALSE
+    END;
+    IF pp.keywordPresent("-threads") THEN
+      threads := pp.getNextInt()
     END;
     IF pp.keywordPresent("-maxfiles") THEN
       maxFiles := pp.getNextInt()
@@ -542,7 +547,8 @@ BEGIN
                  wait,
                  restrictNodes,
                  regExList,
-                 fsdbCmdPath)
+                 fsdbCmdPath,
+                 threads)
     END;
     Debug.Out("ConvertTrace parsing done.")
     

@@ -15,7 +15,6 @@ IMPORT TextUtils, Lex, FloatMode;
 IMPORT Scan;
 IMPORT LongRealSeq AS LRSeq;
 IMPORT Word;
-IMPORT Process;
 IMPORT NameControl;
 IMPORT CardSeq;
 IMPORT OSError;
@@ -29,6 +28,8 @@ IMPORT UnsafeReader, UnsafeWriter;
 CONST TE = Text.Equal;
       LR = LongReal;
 
+VAR doDebug := Debug.DebugThis("Fsdb");
+
 PROCEDURE EditName(nm : TEXT) : TEXT =
   CONST
     RemoveVoltPrefix = TRUE;
@@ -41,7 +42,137 @@ PROCEDURE EditName(nm : TEXT) : TEXT =
       RETURN nm
     END
   END EditName;
+
+  (**********************************************************************)
+
+  (* the following procedures communicate with a nanosimrd process *)
       
+PROCEDURE PutCommandG(wr : Wr.T; cmd : TEXT) =
+  BEGIN
+    TRY
+      Debug.Out(F("Fsdb.Parse.PutCommand \"%s\"", cmd));
+      Wr.PutText(wr, cmd);
+      Wr.PutChar(wr, '\n');
+      Wr.Flush(wr);
+    EXCEPT
+      Wr.Failure(x) =>
+      Debug.Error("Unexpected Wr.Failure in PutCommand : " & AL.Format(x))
+    END
+  END PutCommandG;
+
+PROCEDURE GetResponseG(rd : Rd.T; matchKw : TEXT) : TextReader.T =
+  VAR
+    kw : TEXT;
+  BEGIN
+    TRY
+      LOOP
+        WITH line    = Rd.GetLine(rd),
+             reader  = NEW(TextReader.T).init(line) DO
+          Debug.Out(F("Fsdb.Parse.GetResponse \"%s\"", line));
+          IF reader.next(" ", kw, TRUE) THEN
+            IF TE(kw, matchKw) THEN
+              RETURN reader
+            END
+          END
+        END
+      END
+    EXCEPT
+      Rd.Failure(x) =>
+      Debug.Error("Unexpected Rd.Failure in GetResponse : " & AL.Format(x)); 
+      <*ASSERT FALSE*>
+      
+    |
+      Rd.EndOfFile =>
+      Debug.Error("Unexpected Rd.EndOfFile in GetResponse");
+      <*ASSERT FALSE*>
+    END
+  END GetResponseG;
+
+PROCEDURE ReadBinaryNodeDataG(rd : Rd.T;
+                              VAR nodeid : CARDINAL;
+                              VAR buff : ARRAY OF LONGREAL) =
+  VAR
+    kw : TEXT;
+    n  : CARDINAL;
+  BEGIN
+    TRY
+      LOOP
+        WITH line    = Rd.GetLine(rd),
+             reader  = NEW(TextReader.T).init(line) DO
+          IF doDebug THEN
+            Debug.Out(F("Fsdb.Parse.ReadBinaryNodeData line \"%s\"", line))
+          END;
+
+          IF reader.next(" ", kw, TRUE) THEN
+            IF    TE(kw, "E") THEN
+              Debug.Error(F("Got time mismatch: nodeid %s: line %s",
+                            Int(nodeid), line))
+            ELSIF TE(kw, "OK") THEN
+              WITH tag = Rd.GetChar(rd) DO
+                nodeid := UnsafeReader.ReadI(rd);
+                n      := UnsafeReader.ReadI(rd);
+
+                IF doDebug THEN
+                  Debug.Out(F("ReadBinaryNodeData tag %s nodeid %s n %s",
+                              Text.FromChar(tag),
+                              Int(nodeid),
+                              Int(n)))
+                END;
+                
+                IF n # NUMBER(buff) THEN
+                  Debug.Error(F("Size mismatch n %s # NUMBER(buff) %s",
+                                Int(n), Int(NUMBER(buff))))
+                END;
+                UnsafeReader.ReadLRA(rd, buff);
+
+                IF doDebug THEN
+                  Debug.Out(F("ReadBinaryNodeData buff[0] %s",
+                              LR(buff[0])))
+                END;
+                RETURN
+                END
+            ELSE
+              Debug.Error(F("?syntax error : ReadBinaryNodeData: got \"%s\"",
+                            line))
+            END
+          END
+        END
+      END
+    EXCEPT
+      Rd.Failure(x) =>
+      Debug.Error("Unexpected Rd.Failure in ReadBinaryNodeData : " & AL.Format(x));
+      <*ASSERT FALSE*>
+    |
+      Rd.EndOfFile =>
+      Debug.Error("Unexpected Rd.EndOfFile in ReadBinaryNodeData");
+      <*ASSERT FALSE*>
+    END
+  END ReadBinaryNodeDataG;
+
+PROCEDURE GetLineUntilG(rd : Rd.T; term : TEXT; VAR line : TEXT) : BOOLEAN =
+  BEGIN
+    TRY
+      WITH this    = Rd.GetLine(rd) DO
+        IF TE(this, term) THEN
+          RETURN FALSE
+        ELSE
+          line := this;
+          RETURN TRUE
+        END
+      END
+    EXCEPT
+      Rd.Failure(x) =>
+      Debug.Error("Unexpected Rd.Failure in GetLineUntil : " & AL.Format(x));
+      <*ASSERT FALSE*>
+    |
+      Rd.EndOfFile =>
+      Debug.Error("Unexpected Rd.EndOfFile in GetLineUntil");
+      <*ASSERT FALSE*>
+    END
+  END GetLineUntilG;
+
+  (**********************************************************************)
+  
 PROCEDURE Parse(wd, ofn       : Pathname.T;
                 names         : TextSeq.T;
                 maxFiles      : CARDINAL;
@@ -59,130 +190,27 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
                 wait          : BOOLEAN;
                 restrictNodes : TextSet.T;
                 restrictRegEx : RegExList.T;
-                cmdPath       : Pathname.T)
+                cmdPath       : Pathname.T;
+                threads       : CARDINAL
+  )
   RAISES { Rd.Failure, ShortRead, SyntaxError } =
     
   PROCEDURE PutCommand(cmd : TEXT) =
-    BEGIN
-      TRY
-        Debug.Out(F("Fsdb.Parse.PutCommand \"%s\"", cmd));
-        Wr.PutText(wr, cmd);
-        Wr.PutChar(wr, '\n');
-        Wr.Flush(wr);
-      EXCEPT
-        Wr.Failure(x) =>
-        Debug.Error("Unexpected Wr.Failure in PutCommand : " & AL.Format(x))
-      END
-    END PutCommand;
+    BEGIN PutCommandG(wr, cmd) END PutCommand;
 
   PROCEDURE GetResponse(matchKw : TEXT) : TextReader.T =
-    VAR
-      kw : TEXT;
-    BEGIN
-      TRY
-        LOOP
-          WITH line    = Rd.GetLine(rd),
-               reader  = NEW(TextReader.T).init(line) DO
-            Debug.Out(F("Fsdb.Parse.GetResponse \"%s\"", line));
-            IF reader.next(" ", kw, TRUE) THEN
-              IF TE(kw, matchKw) THEN
-                RETURN reader
-              END
-            END
-          END
-        END
-      EXCEPT
-        Rd.Failure(x) =>
-        Debug.Error("Unexpected Rd.Failure in GetResponse : " & AL.Format(x)); 
-        <*ASSERT FALSE*>
-                        
-     |
-        Rd.EndOfFile =>
-        Debug.Error("Unexpected Rd.EndOfFile in GetResponse");
-        <*ASSERT FALSE*>
-      END
-    END GetResponse;
+    BEGIN RETURN GetResponseG(rd, matchKw) END GetResponse;
 
   PROCEDURE ReadBinaryNodeData(VAR nodeid : CARDINAL;
                                VAR buff : ARRAY OF LONGREAL) =
+    BEGIN ReadBinaryNodeDataG(rd, nodeid, buff) END ReadBinaryNodeData;
 
-    VAR
-      kw : TEXT;
-      n  : CARDINAL;
-    BEGIN
-      TRY
-        LOOP
-          WITH line    = Rd.GetLine(rd),
-               reader  = NEW(TextReader.T).init(line) DO
-            Debug.Out(F("Fsdb.Parse.ReadBinaryNodeData line \"%s\"", line));
-
-            IF reader.next(" ", kw, TRUE) THEN
-              IF    TE(kw, "E") THEN
-                Debug.Error(F("Got time mismatch: nodeid %s: line %s",
-                              Int(nodeid), line))
-              ELSIF TE(kw, "OK") THEN
-                WITH tag = Rd.GetChar(rd) DO
-                  nodeid := UnsafeReader.ReadI(rd);
-                  n      := UnsafeReader.ReadI(rd);
-
-                  Debug.Out(F("ReadBinaryNodeData tag %s nodeid %s n %s",
-                              Text.FromChar(tag),
-                              Int(nodeid),
-                              Int(n)));
-                  
-                  IF n # NUMBER(buff) THEN
-                    Debug.Error(F("Size mismatch n %s # NUMBER(buff) %s",
-                                  Int(n), Int(NUMBER(buff))))
-                  END;
-                  UnsafeReader.ReadLRA(rd, buff);
-
-                  Debug.Out(F("ReadBinaryNodeData buff[0] %s",
-                              LR(buff[0])));
-                  RETURN
-                END
-              ELSE
-                Debug.Error(F("?syntax error : ReadBinaryNodeData: got \"%s\"",
-                              line))
-              END
-            END
-          END
-        END
-      EXCEPT
-        Rd.Failure(x) =>
-        Debug.Error("Unexpected Rd.Failure in ReadBinaryNodeData : " & AL.Format(x));
-        <*ASSERT FALSE*>
-      |
-        Rd.EndOfFile =>
-        Debug.Error("Unexpected Rd.EndOfFile in ReadBinaryNodeData");
-        <*ASSERT FALSE*>
-      END
-    END ReadBinaryNodeData;
-    
   PROCEDURE GetLineUntil(term : TEXT; VAR line : TEXT) : BOOLEAN =
-    BEGIN
-      TRY
-        WITH this    = Rd.GetLine(rd) DO
-          IF TE(this, term) THEN
-            RETURN FALSE
-          ELSE
-            line := this;
-            RETURN TRUE
-          END
-        END
-      EXCEPT
-        Rd.Failure(x) =>
-        Debug.Error("Unexpected Rd.Failure in GetLineUntil : " & AL.Format(x));
-        <*ASSERT FALSE*>
-      |
-        Rd.EndOfFile =>
-        Debug.Error("Unexpected Rd.EndOfFile in GetLineUntil");
-        <*ASSERT FALSE*>
-      END
-    END GetLineUntil;
+    BEGIN RETURN GetLineUntilG(rd, term, line) END GetLineUntil;
     
   VAR
-    stdin : ProcUtils.Reader;
-    stdout : ProcUtils.Writer;
+    stdin      : ProcUtils.Reader;
+    stdout     : ProcUtils.Writer;
     completion : ProcUtils.Completion;
     wr : Wr.T;
     rd : Rd.T;
@@ -341,26 +369,89 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
                 (* note what we're doing here.. we are adding the
                    INPUT INDEX of the node to the file list, indexed by the
                    hashed OUTPUT INDEX of the node! *)
-                Debug.Out(F("Adding to fileTab: input index %s to fileTab[%s]",
-                            Int(i), Int(fileIdx)));
+                IF doDebug THEN
+                  Debug.Out(F("Adding to fileTab: input index %s to fileTab[%s]",
+                              Int(i), Int(fileIdx)))
+                END;
                 fileTab[fileIdx].addhi(i)
               END
             END
           END
         END;
 
-        (* now generate the files in turn *)
-        FOR i := FIRST(fileTab^) TO LAST(fileTab^) DO
-          Debug.Out(F("Fsdb.Parse : Generating partial trace file %s",
-                      Int(i)));
-          
-          GeneratePartialTraceFile(wdWr[i],
-                                   fileTab[i],
-                                   idxMap,
-                                   PutCommand,
-                                   GetResponse,
-                                   timesteps.size(),
-                                   ReadBinaryNodeData)
+        (* start generation threads *)
+        VAR
+          MultiThreaded := threads # 0;
+        BEGIN
+          (* now generate the files in turn *)
+          IF MultiThreaded THEN
+            
+            VAR
+              workers := NEW(REF ARRAY OF GenClosure, threads);
+              c := NEW(Thread.Condition);
+              mu := NEW(MUTEX);
+              assigned : BOOLEAN;
+            BEGIN
+              FOR i := FIRST(workers^) TO LAST(workers^) DO
+                (* start workers *)
+                workers[i] := NEW(GenClosure).init(c,
+                                                   mu,
+                                                   idxMap,
+                                                   timesteps.size(),
+                                                   cmdPath,
+                                                   fsdbPath)
+              END;
+              
+              FOR i := FIRST(fileTab^) TO LAST(fileTab^) DO
+                Debug.Out(F("Fsdb.Parse : Generating partial trace file %s",
+                            Int(i)));
+                assigned := FALSE;
+                
+                WHILE NOT assigned DO
+                  FOR w := FIRST(workers^) TO LAST(workers^) DO
+                    IF workers[w].freeP() THEN
+                      workers[w].task(wdWr[i], fileTab[i]);
+                      assigned := TRUE
+                    END
+                  END;
+                  LOCK mu DO
+                    Thread.Wait(mu, c)
+                  END
+                END
+              END;
+
+              (* wait for workers to be completely done *)
+              FOR i := FIRST(workers^) TO LAST(workers^) DO
+                (* start workers *)
+                WHILE NOT workers[i].freeP() DO
+                  LOCK mu DO
+                    Thread.Wait(mu, c)
+                  END
+                END
+              END
+
+              (* 
+                 all jobs are assigned AND all workers are done 
+                 --->
+                 we are completely done 
+              *)
+              
+            END(*VAR*)
+            
+          ELSE
+            FOR i := FIRST(fileTab^) TO LAST(fileTab^) DO
+              Debug.Out(F("Fsdb.Parse : Generating partial trace file %s",
+                          Int(i)));
+              
+              GeneratePartialTraceFile(wdWr[i],
+                                       fileTab[i],
+                                       idxMap,
+                                       PutCommand,
+                                       GetResponse,
+                                       timesteps.size(),
+                                       ReadBinaryNodeData)
+            END
+          END
         END
       END;
 
@@ -387,7 +478,162 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
     END
   END Parse;
 
-PROCEDURE GeneratePartialTraceFile(wr : Wr.T;
+  (**********************************************************************)
+
+TYPE
+  GenClosure = Thread.Closure OBJECT
+    mu      : MUTEX;             (* one per thread *)
+    c       : Thread.Condition;  (* shared between all threads *)
+    
+    tWr     : Wr.T;             
+    nodeIds : CardSeq.T;
+    idxMap  : CardSeq.T;
+    nsteps  : CARDINAL;
+
+    cmdPath, fsdbPath : Pathname.T;
+    thr     : Thread.T;
+  METHODS
+    init(c : Thread.Condition;
+         mu : MUTEX;
+         idxMap : CardSeq.T;
+         nsteps : CARDINAL;
+         cmdPath, fsdbPath : Pathname.T) : GenClosure  := GenInit;
+    task(taskWr : Wr.T; taskIds : CardSeq.T)  := GenTask;
+    freeP() : BOOLEAN := GenFreeP;
+  OVERRIDES
+    apply := GenApply;
+  END;
+
+PROCEDURE GenInit(cl : GenClosure;
+                  c : Thread.Condition;
+                  mu : MUTEX;
+                  idxMap : CardSeq.T;
+                  nsteps : CARDINAL;
+                  cmdPath, fsdbPath : Pathname.T) : GenClosure =
+  BEGIN
+    cl.mu := mu;
+    cl.c := c;
+    cl.idxMap := idxMap;
+    cl.nsteps := nsteps;
+    cl.cmdPath := cmdPath;
+    cl.fsdbPath := fsdbPath;
+    cl.thr := Thread.Fork(cl);
+    RETURN cl
+  END GenInit;
+
+PROCEDURE GenTask(cl : GenClosure; taskWr : Wr.T; taskIds : CardSeq.T) =
+  BEGIN
+    LOCK cl.mu DO
+      <*ASSERT cl.tWr = NIL*>
+      cl.tWr := taskWr;
+      cl.nodeIds := taskIds
+    END;
+    Thread.Broadcast(cl.c) (* several workers can be waiting *)
+  END GenTask;
+
+PROCEDURE GenFreeP(cl : GenClosure) : BOOLEAN =
+  BEGIN
+    LOCK cl.mu DO
+      RETURN cl.tWr = NIL
+    END
+  END GenFreeP;
+
+PROCEDURE GenApply(cl : GenClosure) : REFANY =
+  (* this apply runs a session with a nanosimrd process *)
+  (* we can run multiple in parallel *)
+
+  PROCEDURE PutCommand(cmd : TEXT) =
+    BEGIN PutCommandG(cmdWr, cmd) END PutCommand;
+
+  PROCEDURE GetResponse(matchKw : TEXT) : TextReader.T =
+    BEGIN RETURN GetResponseG(cmdRd, matchKw) END GetResponse;
+
+  PROCEDURE ReadBinaryNodeData(VAR nodeid : CARDINAL;
+                               VAR buff : ARRAY OF LONGREAL) =
+    BEGIN ReadBinaryNodeDataG(cmdRd, nodeid, buff) END ReadBinaryNodeData;
+
+  PROCEDURE GetLineUntil(term : TEXT; VAR line : TEXT) : BOOLEAN =
+    BEGIN RETURN GetLineUntilG(cmdRd, term, line) END GetLineUntil;
+    
+
+  VAR
+    cmdStdin : ProcUtils.Reader;
+    cmdStdout : ProcUtils.Writer;
+    completion : ProcUtils.Completion;
+    cmdWr : Wr.T;
+    cmdRd : Rd.T;
+    loId, hiId : CARDINAL;
+    unit : LONGREAL;
+  BEGIN
+    <*FATAL OSError.E*>
+    BEGIN
+      cmdStdin  := ProcUtils.GimmeWr(cmdWr);
+      cmdStdout := ProcUtils.GimmeRd(cmdRd);
+    END;
+    
+    completion := ProcUtils.RunText(cl.cmdPath & " " & cl.fsdbPath,
+                                    stdin := cmdStdin,
+                                    stderr := ProcUtils.Stderr(),
+                                    stdout := cmdStdout);
+    TRY
+      PutCommand("S");
+      WITH reader    = GetResponse("SR") DO
+        loId   := reader.getInt();
+        hiId   := reader.getInt();
+        WITH unitStr = reader.get() DO
+          unit   := ParseUnitStr(unitStr);
+          
+          Debug.Out(F("Got query response lo=%s hi=%s unitStr=\"%s\"",
+                      Int(loId), Int(hiId), unitStr))
+        END
+      END;
+
+      (* memorize times *)
+      PutCommand(F("i %s", Int(loId)));
+      EVAL GetResponse("iR");      
+
+      (* not yet finished *)
+      LOOP
+        LOCK cl.mu DO
+          WHILE cl.tWr = NIL DO
+            Thread.Wait(cl.mu, cl.c)
+          END;
+          <*ASSERT cl.tWr # NIL*>
+          (* now we have a request -- execute request *)
+        END;
+
+        (* note we cannot hold the lock while we run *)
+        GeneratePartialTraceFile(cl.tWr,
+                                 cl.nodeIds,
+                                 cl.idxMap,
+                                 PutCommand,
+                                 GetResponse,
+                                 cl.nsteps,
+                                 ReadBinaryNodeData);
+
+        LOCK cl.mu DO
+          (* done executing request, mark ourselves as free and signal *)
+          cl.tWr     := NIL;
+          cl.nodeIds := NIL;
+        END;
+        
+        Thread.Signal(cl.c)
+
+      END
+      
+    EXCEPT
+      FloatMode.Trap, Lex.Error =>
+      Debug.Error("Trouble parsing number during Fsdb.Parse conversation")
+    |
+      TextReader.NoMore =>
+      Debug.Error("TextReader.NoMore during Fsdb.Parse conversation")
+    END; 
+    RETURN NIL
+  END GenApply;
+
+  (**********************************************************************)
+
+PROCEDURE GeneratePartialTraceFile(wr      : Wr.T;
                                    fileTab : CardSeq.T;
                                    (* INPUT indices to process *)
                                    
@@ -405,6 +651,8 @@ PROCEDURE GeneratePartialTraceFile(wr : Wr.T;
     node : CARDINAL;
     
   BEGIN
+    Debug.Out(F("GeneratePartialTraceFile : %s indices", Int(fileTab.size())));
+    
     (* set up indications of interest *)
     FOR i := 0 TO fileTab.size() - 1 DO
       WITH id = fileTab.get(i) DO

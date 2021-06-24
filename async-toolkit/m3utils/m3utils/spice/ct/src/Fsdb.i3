@@ -25,7 +25,8 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
                 wait          : BOOLEAN;
                 restrictNodes : TextSet.T;
                 restrictRegEx : RegExList.T;
-                cmdPath       : Pathname.T)
+                cmdPath       : Pathname.T;
+                threads       : CARDINAL )
   RAISES { Rd.Failure, ShortRead, SyntaxError };
 
 END Fsdb.
