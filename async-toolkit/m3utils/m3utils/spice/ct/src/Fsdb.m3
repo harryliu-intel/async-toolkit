@@ -194,7 +194,8 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
                 threads       : CARDINAL
   )
   RAISES { Rd.Failure, ShortRead, SyntaxError } =
-    
+
+(*    
   PROCEDURE PutCommand(cmd : TEXT) =
     BEGIN PutCommandG(wr, cmd) END PutCommand;
 
@@ -207,7 +208,8 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
 
   PROCEDURE GetLineUntil(term : TEXT; VAR line : TEXT) : BOOLEAN =
     BEGIN RETURN GetLineUntilG(rd, term, line) END GetLineUntil;
-    
+*)
+
   VAR
     stdin      : ProcUtils.Reader;
     stdout     : ProcUtils.Writer;
@@ -241,8 +243,8 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
 
 
     TRY
-      PutCommand("S");
-      WITH reader    = GetResponse("SR") DO
+      PutCommandG(wr, "S");
+      WITH reader    = GetResponseG(rd, "SR") DO
         loId   := reader.getInt();
         hiId   := reader.getInt();
         WITH unitStr = reader.get() DO
@@ -254,15 +256,15 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
       END;
 
       (* load first node *)
-      PutCommand(F("R %s %s", Int(loId), Int(loId)));
-      EVAL GetResponse("RR");
+      PutCommandG(wr, F("R %s %s", Int(loId), Int(loId)));
+      EVAL GetResponseG(rd, "RR");
 
-      PutCommand(F("L"));
-      EVAL GetResponse("LR");
+      PutCommandG(wr, F("L"));
+      EVAL GetResponseG(rd, "LR");
 
       (* get timesteps *)
-      PutCommand(F("I %s", Int(loId)));
-      WHILE GetLineUntil("IR", line) DO
+      PutCommandG(wr, F("I %s", Int(loId)));
+      WHILE GetLineUntilG(rd, "IR", line) DO
         WITH reader = NEW(TextReader.T).init(line),
              h = reader.getInt(),
              l = reader.getInt(),
@@ -278,11 +280,11 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
                   LR(timesteps.get(0)),
                   LR(timesteps.get(timesteps.size()-1))));
 
-      PutCommand("U");
-      EVAL GetResponse("UR");
+      PutCommandG(wr, "U");
+      EVAL GetResponseG(rd, "UR");
 
-      PutCommand(F("N %s %s", Int(loId), Int(hiId)));
-      WHILE GetLineUntil("NR", line) DO
+      PutCommandG(wr, F("N %s %s", Int(loId), Int(hiId)));
+      WHILE GetLineUntilG(rd, "NR", line) DO
         TRY
           WITH reader = NEW(TextReader.T).init(line),
                idx    = reader.getInt(),
@@ -388,13 +390,14 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
             
             VAR
               workers := NEW(REF ARRAY OF GenClosure, threads);
-              c := NEW(Thread.Condition);
+              c, d := NEW(Thread.Condition);
               mu := NEW(MUTEX);
               assigned : BOOLEAN;
             BEGIN
               FOR i := FIRST(workers^) TO LAST(workers^) DO
                 (* start workers *)
                 workers[i] := NEW(GenClosure).init(c,
+                                                   d,
                                                    mu,
                                                    idxMap,
                                                    timesteps.size(),
@@ -414,20 +417,26 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
                       assigned := TRUE
                     END
                   END;
-                  LOCK mu DO
-                    Thread.Wait(mu, c)
+                  IF NOT assigned THEN
+                    LOCK mu DO
+                      Thread.Wait(mu, d)
+                    END
                   END
                 END
               END;
 
+              Debug.Out("Waiting for workers to finish");
+              
               (* wait for workers to be completely done *)
               FOR i := FIRST(workers^) TO LAST(workers^) DO
-                (* start workers *)
+                (* wait for workers to finish *)
                 WHILE NOT workers[i].freeP() DO
                   LOCK mu DO
-                    Thread.Wait(mu, c)
+                    Thread.Wait(mu, d)
                   END
-                END
+                END;
+                workers[i].exit();
+                EVAL Thread.Join(workers[i].thr)
               END
 
               (* 
@@ -446,10 +455,9 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
               GeneratePartialTraceFile(wdWr[i],
                                        fileTab[i],
                                        idxMap,
-                                       PutCommand,
-                                       GetResponse,
-                                       timesteps.size(),
-                                       ReadBinaryNodeData)
+                                       rd,
+                                       wr, 
+                                       timesteps.size())
             END
           END
         END
@@ -483,7 +491,8 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
 TYPE
   GenClosure = Thread.Closure OBJECT
     mu      : MUTEX;             (* one per thread *)
-    c       : Thread.Condition;  (* shared between all threads *)
+    c, d    : Thread.Condition;  (* shared between all threads *)
+    (* c signals new task; d signals new slot *)
     
     tWr     : Wr.T;             
     nodeIds : CardSeq.T;
@@ -492,20 +501,30 @@ TYPE
 
     cmdPath, fsdbPath : Pathname.T;
     thr     : Thread.T;
+    doExit := FALSE;
   METHODS
-    init(c : Thread.Condition;
+    init(c, d : Thread.Condition;
          mu : MUTEX;
          idxMap : CardSeq.T;
          nsteps : CARDINAL;
          cmdPath, fsdbPath : Pathname.T) : GenClosure  := GenInit;
     task(taskWr : Wr.T; taskIds : CardSeq.T)  := GenTask;
     freeP() : BOOLEAN := GenFreeP;
+    exit() := GenExit;
   OVERRIDES
     apply := GenApply;
   END;
 
+PROCEDURE GenExit(cl : GenClosure) =
+  BEGIN
+    LOCK cl.mu DO
+      cl.doExit := TRUE;
+      Thread.Broadcast(cl.c)
+    END
+  END GenExit;
+
 PROCEDURE GenInit(cl : GenClosure;
-                  c : Thread.Condition;
+                  c, d : Thread.Condition;
                   mu : MUTEX;
                   idxMap : CardSeq.T;
                   nsteps : CARDINAL;
@@ -513,6 +532,7 @@ PROCEDURE GenInit(cl : GenClosure;
   BEGIN
     cl.mu := mu;
     cl.c := c;
+    cl.d := d;
     cl.idxMap := idxMap;
     cl.nsteps := nsteps;
     cl.cmdPath := cmdPath;
@@ -542,6 +562,7 @@ PROCEDURE GenApply(cl : GenClosure) : REFANY =
   (* this apply runs a session with a nanosimrd process *)
   (* we can run multiple in parallel *)
 
+  (*
   PROCEDURE PutCommand(cmd : TEXT) =
     BEGIN PutCommandG(cmdWr, cmd) END PutCommand;
 
@@ -555,7 +576,8 @@ PROCEDURE GenApply(cl : GenClosure) : REFANY =
   PROCEDURE GetLineUntil(term : TEXT; VAR line : TEXT) : BOOLEAN =
     BEGIN RETURN GetLineUntilG(cmdRd, term, line) END GetLineUntil;
     
-
+  *)
+  
   VAR
     cmdStdin : ProcUtils.Reader;
     cmdStdout : ProcUtils.Writer;
@@ -576,8 +598,8 @@ PROCEDURE GenApply(cl : GenClosure) : REFANY =
                                     stderr := ProcUtils.Stderr(),
                                     stdout := cmdStdout);
     TRY
-      PutCommand("S");
-      WITH reader    = GetResponse("SR") DO
+      PutCommandG(cmdWr, "S");
+      WITH reader    = GetResponseG(cmdRd, "SR") DO
         loId   := reader.getInt();
         hiId   := reader.getInt();
         WITH unitStr = reader.get() DO
@@ -589,14 +611,20 @@ PROCEDURE GenApply(cl : GenClosure) : REFANY =
       END;
 
       (* memorize times *)
-      PutCommand(F("i %s", Int(loId)));
-      EVAL GetResponse("iR");      
+      PutCommandG(cmdWr, F("i %s", Int(loId)));
+      EVAL GetResponseG(cmdRd, "iR");      
 
       (* not yet finished *)
       LOOP
         LOCK cl.mu DO
-          WHILE cl.tWr = NIL DO
+          WHILE cl.tWr = NIL AND NOT cl.doExit DO
             Thread.Wait(cl.mu, cl.c)
+          END;
+          IF cl.doExit THEN
+            (* make sure worker exits *)
+            PutCommandG(cmdWr, "Q");
+            EVAL GetResponseG(cmdRd, "QR");
+            RETURN NIL
           END;
           <*ASSERT cl.tWr # NIL*>
           (* now we have a request -- execute request *)
@@ -606,10 +634,10 @@ PROCEDURE GenApply(cl : GenClosure) : REFANY =
         GeneratePartialTraceFile(cl.tWr,
                                  cl.nodeIds,
                                  cl.idxMap,
-                                 PutCommand,
-                                 GetResponse,
-                                 cl.nsteps,
-                                 ReadBinaryNodeData);
+                                 cmdRd,
+                                 cmdWr,
+                                 cl.nsteps
+                                 );
 
         LOCK cl.mu DO
           (* done executing request, mark ourselves as free and signal *)
@@ -617,7 +645,7 @@ PROCEDURE GenApply(cl : GenClosure) : REFANY =
           cl.nodeIds := NIL;
         END;
         
-        Thread.Signal(cl.c)
+        Thread.Signal(cl.d)
 
       END
       
@@ -640,10 +668,10 @@ PROCEDURE GeneratePartialTraceFile(wr      : Wr.T;
                                    idxMap  : CardSeq.T;
                                    (* mapping from input to output indices *)
 
-                                   PutCommand : PROCEDURE (t : TEXT);
-                                   GetResponse : PROCEDURE (t : TEXT) : TextReader.T;
-                                   nSteps : CARDINAL;
-                                   ReadBinaryNodeData : PROCEDURE (VAR nodeid : CARDINAL; VAR buff : ARRAY OF LONGREAL)
+                                   cmdRd : Rd.T;
+                                   cmdWr : Wr.T;
+
+                                   nSteps : CARDINAL
                                    ) =
   VAR
     hadIt : BOOLEAN;
@@ -656,15 +684,15 @@ PROCEDURE GeneratePartialTraceFile(wr      : Wr.T;
     (* set up indications of interest *)
     FOR i := 0 TO fileTab.size() - 1 DO
       WITH id = fileTab.get(i) DO
-        PutCommand(F("r %s", Int(id)));
-        EVAL GetResponse("rR");
+        PutCommandG(cmdWr, F("r %s", Int(id)));
+        EVAL GetResponseG(cmdRd, "rR");
       END
     END;
 
-    PutCommand("L");
-    EVAL GetResponse("LR");
+    PutCommandG(cmdWr, "L");
+    EVAL GetResponseG(cmdRd, "LR");
     
-    PutCommand("t");
+    PutCommandG(cmdWr, "t");
 
     FOR i := 0 TO fileTab.size() - 1 DO
       WITH inId  = fileTab.get(i),
@@ -673,7 +701,7 @@ PROCEDURE GeneratePartialTraceFile(wr      : Wr.T;
         Debug.Out(F("Expecting node data for inId %s outId %s",
                     Int(inId), Int(outId)));
         
-        ReadBinaryNodeData(node, buff^);
+        ReadBinaryNodeDataG(cmdRd, node, buff^);
         IF node # inId THEN
           Debug.Error(F("unexpected node %s # inId %s", Int(node), Int(inId)))
         END;
@@ -689,11 +717,10 @@ PROCEDURE GeneratePartialTraceFile(wr      : Wr.T;
       END
     END;
 
-    EVAL GetResponse("tR");
+    EVAL GetResponseG(cmdRd, "tR");
 
-    
-    PutCommand("U");
-    EVAL GetResponse("UR")
+    PutCommandG(cmdWr, "U");
+    EVAL GetResponseG(cmdRd, "UR")
   END GeneratePartialTraceFile;
   
 PROCEDURE ParseUnitStr(unitSpec : TEXT) : LONGREAL =

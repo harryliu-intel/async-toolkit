@@ -3,7 +3,7 @@ import ("cit_util")
 import ("parseparams")
 import ("spicelib")
 
-m3_optimize("T")
+%m3_optimize("T")
 
 module ("UnsafeWriter")
 module ("UnsafeReader")

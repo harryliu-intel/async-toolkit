@@ -140,8 +140,10 @@ PROCEDURE Init(t : T; rd : Rd.T; maxCount : CARDINAL) : T
           END;
           
           IF count > NUMBER(rec.a^) - rec.n THEN
-            Debug.Error(F("DataBlock format error : count %s > buf %s",
-                          Int(count), Int(NUMBER(rec.a^) - rec.n)))
+            Debug.Error(F("DataBlock format error : count %s > buf %s = NUMBER(rec.a^) %s - rec.n %s",
+                          Int(count), Int(NUMBER(rec.a^) - rec.n),
+                          Int(NUMBER(rec.a^)),
+                          Int(rec.n)))
           END;
           
           UnsafeReader.ReadLRA(rd, SUBARRAY(rec.a^, rec.n, count));
