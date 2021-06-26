@@ -34,8 +34,8 @@ See <a href=http://internal/eng/depot/sw/cad/doc/flow/ExtractionFlow.pdf>a flow 
 </dl>
 DOC
 
-use Cwd;
-use LveUtil qw /reName2 read_cdl_aliases/;
+use Cwd qw/getcwd abs_path/;
+use LveUtil qw/reName2 read_cdl_aliases/;
 use Hercules;
 
 
@@ -441,6 +441,9 @@ if($stage1){
         } else {
             die "Error: ICV/NVN FAILED: fail to extract layout for $topcell.\n";
         }
+    } else {
+        safe_symlink("cell.gds2");
+        safe_symlink("cell.cdl_gds2");
     }
 }
 
@@ -538,6 +541,23 @@ sub write_starcmd {
         }
     }
     close $fh;
+}
+
+# cell.gds2/cell.spice_gds2 may be symlinks to paths that contain shell
+# metacharacters because they are part of the cell name; copy them to the temp
+# directory to avoid run_xtract issues with shell metacharacters
+sub safe_symlink {
+    my ($file) = @_;
+    if (-l $file) {
+        my $abs = abs_path($file);
+        if ($abs =~ /[\{\(\[]/) {
+            # only check for common problematic characters to avoid unnecessary
+            # copying
+            rename($file, "$file.symlink");
+            my @cmd = ('cp', "$file.symlink", $file);
+            system(@cmd) == 0 or die "Error: can't execute @cmd: $?";
+        }
+    }
 }
 
 if ($stage2b) {
