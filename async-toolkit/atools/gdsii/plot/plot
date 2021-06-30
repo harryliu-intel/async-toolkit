@@ -8,7 +8,7 @@
 # defaults
 my $name = "";
 my $JOBS = 1;
-my $MEM  = 4096;   # memory argument to QSUB
+my $MEM  = 4;      # memory argument for netbatch (GB)
 my $GRID = 1;      # manufacturing grid in GDS units
 my $TILE = 20000;  # tile size relative to manufacturing grid
 my $MAX  = 13200;  # pixels, 22 inches @ 600 DPI, use 25200 for 42 inches @ 600 DPI
@@ -53,7 +53,7 @@ sub usage {
     die "USAGE: plot basename\n" .
         " --max=[$MAX] # maximum x or y pixel dimensions\n" .
         " --jobs=[$JOBS] # number of parallel jobs to launch with nbq\n" .
-        " --mem=[$MEM] # memory to request for jobs (MB)\n" .
+        " --mem=[$MEM] # memory to request for netbatch jobs (GB)\n" .
         " # rarely used options\n" .
         " --gds=[$gds] # GDS file name\n" .
         " --grid=[$GRID] # manufacturing grid in GDS units\n" .
@@ -72,7 +72,7 @@ sub usage {
 # settings
 $BLACK = $BLACK/255.0;
 $WHITE = $WHITE/255.0;
-my $QSUB = "nbq --class-reservation fRM=$MEM";
+my $QSUB = "nbq -C ${MEM}G";
 my $PLOT = "gds2plot " .
     "--conf $conf_file " .
     "--x $MAX --y $MAX " .
