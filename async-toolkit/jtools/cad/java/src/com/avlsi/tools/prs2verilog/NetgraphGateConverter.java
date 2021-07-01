@@ -254,7 +254,7 @@ public abstract class NetgraphGateConverter extends AbstractConverter {
      * the subcell, and is to be used, then use its content instead of
      * instantiating the subcell.
      **/
-    protected void processSubcells() {
+    protected void processSubcells(boolean byName) {
         for (Iterator i = cell.getAllSubcellConnections().iterator();
              i.hasNext(); ) {
             final ConnectionInfo ci = (ConnectionInfo) i.next();
@@ -275,7 +275,7 @@ public abstract class NetgraphGateConverter extends AbstractConverter {
             }
             final ArrayList args = new ArrayList();
             if (clk != null) addActual(args, clk, "wire");
-            actual(args, ci, new UnaryFunction() {
+            actual(args, ci, byName, new UnaryFunction() {
                       public Object execute(final Object o) {
                           return wireType((CellNet) o);
                       }

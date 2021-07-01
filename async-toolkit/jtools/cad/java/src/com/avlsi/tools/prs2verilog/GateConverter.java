@@ -178,7 +178,7 @@ class GateConverter extends NetgraphGateConverter {
         if (clk != null) addFormal(params, clk, "wire", "input");
         formal(params, ports, "wire");
 
-        processSubcells();
+        processSubcells(theArgs.argExists("by-name"));
 
         items.addAll(0, wireDecl);
         items.addAll(0, inout);
