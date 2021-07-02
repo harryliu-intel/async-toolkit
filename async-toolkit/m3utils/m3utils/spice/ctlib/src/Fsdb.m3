@@ -22,6 +22,7 @@ IMPORT Thread;
 IMPORT AL;
 FROM Tr0 IMPORT ShortRead, SyntaxError;
 IMPORT UnsafeReader, UnsafeWriter;
+IMPORT TextSetDef;
 
 <*FATAL Thread.Alerted*>
 
@@ -284,26 +285,35 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
       EVAL GetResponseG(rd, "UR");
 
       PutCommandG(wr, F("N %s %s", Int(loId), Int(hiId)));
-      WHILE GetLineUntilG(rd, "NR", line) DO
-        TRY
-          WITH reader = NEW(TextReader.T).init(line),
-               idx    = reader.getInt(),
-               nm     = reader.get(),
-               type   = reader.get() DO
-            (*Debug.Out(F("name %s id %s", nm, Int(idx)));*)
-            names.addlo(EditName(nm))
+      WITH nameSet = NEW(TextSetDef.T).init() DO
+        WHILE GetLineUntilG(rd, "NR", line) DO
+          TRY
+            WITH reader = NEW(TextReader.T).init(line),
+                 idx    = reader.getInt(),
+                 nm     = reader.get(),
+                 type   = reader.get(),
+                 editNm = EditName(nm) DO
+              (*Debug.Out(F("name %s id %s", nm, Int(idx)));*)
+              IF nameSet.insert(editNm) THEN
+                Debug.Warning(F("Duplicate name \"%s\" (idx %s) -> \"%s\"",
+                                nm, Int(idx), editNm))
+              END;
+              names.addlo(editNm)
+            END
+          EXCEPT
+            Lex.Error, FloatMode.Trap =>
+            Debug.Error(F("Cant parse N response \"%s\"", line))
           END
-        EXCEPT
-          Lex.Error, FloatMode.Trap =>
-          Debug.Error(F("Cant parse N response \"%s\"", line))
-        END
+        END;
+
+        Debug.Out(F("names : %s unique %s first %s last %s ",
+                    Int(names.size()),
+                    Int(nameSet.size()),
+                    names.get(0),
+                    names.get(names.size()-1)));
       END;
       names.addlo("TIME"); (* implicit #0 *)
 
-      Debug.Out(F("names : %s first %s last %s ",
-                  Int(names.size()),
-                  names.get(0),
-                  names.get(names.size()-1)));
 
       (* now we have all names loaded up *)
 
@@ -435,8 +445,13 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
                     Thread.Wait(mu, d)
                   END
                 END;
+                (* 6/25/2001
+                   strange bug with file descriptors getting mangled
+                   let workers linger, see if that fixes it! *)
+                (*
                 workers[i].exit();
                 EVAL Thread.Join(workers[i].thr)
+                *)
               END
 
               (* 

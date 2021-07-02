@@ -2,26 +2,8 @@ import ("libm3")
 import ("cit_util")
 import ("parseparams")
 import ("spicelib")
-
-%m3_optimize("T")
-
-module ("UnsafeWriter")
-module ("UnsafeReader")
-module ("Tr0")
-module ("DataBlock")
-
-c_source("transfer")
-
-interface("TransferC")
-
-interface ("MyRegEx")
-
-list ("RegEx", "MyRegEx")
+import ("ctlib")
 
 implementation ("ConvertTrace")
-
-module ("Fsdb")
-module ("NameControl")
-
 
 program ("ct")

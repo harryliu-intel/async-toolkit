@@ -86,9 +86,11 @@ PROCEDURE WriteTrace() =
 
     Debug.Out("WriteTrace writing header...");
     TRY
+      Debug.Out("WriteTrace at tWr byte " & Int(Wr.Index(tWr)));
       UnsafeWriter.WriteI(tWr, 1);
       (* this tells aplot it is the reordered format *)
       
+      Debug.Out("WriteTrace at tWr byte " & Int(Wr.Index(tWr)));
       UnsafeWriter.WriteI(tWr, TRUNC(Time.Now()));
       (* timestamp *)
       
@@ -115,6 +117,10 @@ PROCEDURE WriteTrace() =
           ReadEntireFile(i, data^);
 
           WITH pos = dataStartByte + i * 4 * NUMBER(time^) DO
+            Debug.Out(F("Writing %s (%s) @ %s, data[0]= %s data[LAST(data)}= %s",
+                        names.get(i), Int(i), Int(pos),
+                        LR(data[0]),
+                        LR(data[LAST(data^)])));
             UnsafeWriter.WriteLRAAt(tWr, data^, pos)
           END;
 
