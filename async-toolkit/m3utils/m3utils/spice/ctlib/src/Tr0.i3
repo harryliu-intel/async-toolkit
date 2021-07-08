@@ -31,4 +31,6 @@ EXCEPTION ShortRead;
 
 EXCEPTION SyntaxError(TEXT);
 
+PROCEDURE RenameBack(dutName, txt : TEXT) : TEXT;
+
 END Tr0.

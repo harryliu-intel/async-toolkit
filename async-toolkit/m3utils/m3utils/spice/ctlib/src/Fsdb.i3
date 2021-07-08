@@ -12,7 +12,6 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
                 names         : TextSeq.T;
                 maxFiles      : CARDINAL;
                 VAR nFiles    : CARDINAL;
-                MaxMem        : CARDINAL;
 
                 timeScaleFactor,
                 timeOffset,

@@ -23,4 +23,6 @@ list ("RegEx", "MyRegEx")
 module ("Fsdb")
 module ("NameControl")
 
+table ("TextCard", "Text", "Cardinal")
+
 library ("ctlib")

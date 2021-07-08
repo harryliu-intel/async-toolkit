@@ -543,7 +543,6 @@ BEGIN
                  names,
                  maxFiles,
                  nFiles,
-                 MaxMem,
                  timeScaleFactor,
                  timeOffset,
                  voltageScaleFactor,

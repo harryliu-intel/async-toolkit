@@ -20,10 +20,11 @@ IMPORT CardSeq;
 IMPORT OSError;
 IMPORT Thread;
 IMPORT AL;
-FROM Tr0 IMPORT ShortRead, SyntaxError;
-IMPORT UnsafeReader, UnsafeWriter;
+FROM Tr0 IMPORT RenameBack;
+IMPORT UnsafeReader;
 IMPORT TextSetDef;
 IMPORT DataBlock;
+IMPORT TextCardTbl;
 
 <*FATAL Thread.Alerted*>
 
@@ -179,7 +180,6 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
                 names         : TextSeq.T;
                 maxFiles      : CARDINAL;
                 VAR nFiles    : CARDINAL;
-                MaxMem        : CARDINAL;
 
                 timeScaleFactor,
                 timeOffset,
@@ -195,7 +195,8 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
                 cmdPath       : Pathname.T;
                 threads       : CARDINAL
   )
-  RAISES { Rd.Failure, ShortRead, SyntaxError } =
+  RAISES { } = (* lots of errors but they cause program crash, not exception *)
+  
 
 (*    
   PROCEDURE PutCommand(cmd : TEXT) =
@@ -227,6 +228,8 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
     line : TEXT;
     timesteps := NEW(LRSeq.T).init();
     aNodes : CARDINAL;
+
+    duplicates := NEW(TextCardTbl.Default).init();
     
   CONST
     TwoToThe32 = FLOAT(Word.Shift(1, 32), LONGREAL);
@@ -293,13 +296,33 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
                  idx    = reader.getInt(),
                  nm     = reader.get(),
                  type   = reader.get(),
-                 editNm = EditName(nm) DO
-              (*Debug.Out(F("name %s id %s", nm, Int(idx)));*)
-              IF nameSet.insert(editNm) THEN
-                Debug.Warning(F("Duplicate name \"%s\" (idx %s) -> \"%s\"",
-                                nm, Int(idx), editNm))
-              END;
-              names.addlo(editNm)
+                 editNm = RenameBack(dutName, EditName(nm)) DO
+
+              (* we don't use idx because we assume nodes are coming out
+                 in exactly reverse order and a complete list of them
+
+                 probably not quite right to do it this way if the fsdb
+                 reader ever starts producing a starting node # 1 *)
+
+              (* we also dont do anything with the type right now,
+                 we really should check it's something we can work with *)
+              
+              VAR
+                tryNm := editNm;
+                cnt : CARDINAL := 0;
+              BEGIN
+                IF duplicates.get(editNm, cnt) THEN
+                  tryNm := editNm & "_" & Int(cnt);
+                  WHILE nameSet.insert(tryNm) DO
+                    INC(cnt);
+                    tryNm := editNm & "_" & Int(cnt);
+                  END
+                END;
+
+                EVAL duplicates.put(editNm, cnt);
+
+                names.addlo(tryNm)
+              END
             END
           EXCEPT
             Lex.Error, FloatMode.Trap =>
@@ -312,6 +335,20 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
                     Int(nameSet.size()),
                     names.get(0),
                     names.get(names.size()-1)));
+
+        RemoveZeros(duplicates);
+
+        IF duplicates.size() # 0 THEN
+          Debug.Warning(F("%s duplicate names:", Int(duplicates.size())));
+          VAR iter := duplicates.iterate();
+              nm : TEXT;
+              c : CARDINAL;
+          BEGIN
+            WHILE iter.next(nm, c) DO
+              Debug.Warning(F("%s : %s instances", nm, Int(c)))
+            END
+          END
+        END
       END;
       names.addlo("TIME"); (* implicit #0 *)
 
@@ -338,12 +375,17 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
       BEGIN
         Debug.Out(F("Writing timesteps, steps %s", Int(timesteps.size())));
         FOR i := 0 TO timesteps.size() - 1 DO
-          arr[i] := timesteps.get(i)
+          arr[i] := timeScaleFactor * timesteps.get(i) + timeOffset
         END;
         WITH fIdx = NameControl.FileIndex(nFiles, 0, 0) DO
           <*ASSERT wdWr[fIdx] # NIL*>
 
-          DataBlock.WriteData(wdWr[fIdx], 0, arr^)
+          TRY
+            DataBlock.WriteData(wdWr[fIdx], 0, arr^)
+          EXCEPT
+            Wr.Failure(x) =>
+            Debug.Error("Wr.Failure writing time steps : " & AL.Format(x))
+          END
         END
       END;
 
@@ -413,7 +455,9 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
                                                    idxMap,
                                                    timesteps.size(),
                                                    cmdPath,
-                                                   fsdbPath)
+                                                   fsdbPath,
+                                                   voltageScaleFactor,
+                                                   voltageOffset)
               END;
               
               FOR i := FIRST(fileTab^) TO LAST(fileTab^) DO
@@ -480,7 +524,9 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
                                        idxMap,
                                        rd,
                                        wr, 
-                                       timesteps.size())
+                                       timesteps.size(),
+                                       voltageScaleFactor,
+                                       voltageOffset)
             END
           END
         END
@@ -495,7 +541,7 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
         TRY
           Wr.Close(wdWr[i])
         EXCEPT
-          OSError.E(x) => Debug.Error(F("Trouble closing temp file %s", Int(i)))
+          Wr.Failure(x) => Debug.Error(F("Trouble closing temp file %s : Wr.Failure : %s", Int(i), AL.Format(x)))
         END
       END;
       Debug.Out("Fsdb.Parse temp files closed.");
@@ -508,6 +554,28 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
       Debug.Error("TextReader.NoMore during Fsdb.Parse conversation")
     END
   END Parse;
+
+PROCEDURE RemoveZeros(tbl : TextCardTbl.T) =
+  VAR
+    toRemove := NEW(TextSetDef.T).init();
+    iter := tbl.iterate();
+    t : TEXT;
+    c : CARDINAL;
+  BEGIN
+    WHILE iter.next(t, c) DO
+      IF c = 0 THEN
+        EVAL toRemove.insert(t)
+      END
+    END;
+
+    WITH jter = toRemove.iterate() DO
+      WHILE jter.next(t) DO
+        WITH hadIt = tbl.delete(t, c) DO
+          <*ASSERT hadIt*>
+        END
+      END
+    END
+  END RemoveZeros;
 
   (**********************************************************************)
 
@@ -525,12 +593,16 @@ TYPE
     cmdPath, fsdbPath : Pathname.T;
     thr     : Thread.T;
     doExit := FALSE;
+    
+    voltageScaleFactor, voltageOffset : LONGREAL                                   ;
   METHODS
     init(c, d : Thread.Condition;
          mu : MUTEX;
          idxMap : CardSeq.T;
          nsteps : CARDINAL;
-         cmdPath, fsdbPath : Pathname.T) : GenClosure  := GenInit;
+         cmdPath, fsdbPath : Pathname.T;
+         voltageScaleFactor, voltageOffset : LONGREAL
+    ) : GenClosure  := GenInit;
     task(taskWr : Wr.T; taskIds : CardSeq.T)  := GenTask;
     freeP() : BOOLEAN := GenFreeP;
     exit() := GenExit;
@@ -551,7 +623,9 @@ PROCEDURE GenInit(cl : GenClosure;
                   mu : MUTEX;
                   idxMap : CardSeq.T;
                   nsteps : CARDINAL;
-                  cmdPath, fsdbPath : Pathname.T) : GenClosure =
+                  cmdPath, fsdbPath : Pathname.T;
+                  voltageScaleFactor, voltageOffset : LONGREAL
+  ) : GenClosure =
   BEGIN
     cl.mu := mu;
     cl.c := c;
@@ -561,6 +635,8 @@ PROCEDURE GenInit(cl : GenClosure;
     cl.cmdPath := cmdPath;
     cl.fsdbPath := fsdbPath;
     cl.thr := Thread.Fork(cl);
+    cl.voltageScaleFactor := voltageScaleFactor;
+    cl.voltageOffset := voltageOffset;
     RETURN cl
   END GenInit;
 
@@ -659,7 +735,9 @@ PROCEDURE GenApply(cl : GenClosure) : REFANY =
                                  cl.idxMap,
                                  cmdRd,
                                  cmdWr,
-                                 cl.nsteps
+                                 cl.nsteps,
+                                 cl.voltageScaleFactor,
+                                 cl.voltageOffset
                                  );
 
         LOCK cl.mu DO
@@ -694,10 +772,10 @@ PROCEDURE GeneratePartialTraceFile(wr      : Wr.T;
                                    cmdRd : Rd.T;
                                    cmdWr : Wr.T;
 
-                                   nSteps : CARDINAL
+                                   nSteps : CARDINAL;
+                                   voltageScaleFactor, voltageOffset : LONGREAL
                                    ) =
   VAR
-    hadIt : BOOLEAN;
     buff := NEW(REF ARRAY OF LONGREAL, nSteps);
     node : CARDINAL;
     
@@ -733,13 +811,26 @@ PROCEDURE GeneratePartialTraceFile(wr      : Wr.T;
         Debug.Out(F("Writing data block outId %s nSteps %s",
                     Int(outId), Int(nSteps)));
 
-        DataBlock.WriteData(wr, outId, buff^)
+        IF voltageScaleFactor # 1.0d0 OR voltageOffset # 0.0d0 THEN
+          FOR i := FIRST(buff^) TO LAST(buff^) DO
+            buff[i] := voltageScaleFactor * buff[i] + voltageOffset
+          END
+        END;
+
+        TRY
+          DataBlock.WriteData(wr, outId, buff^)
+        EXCEPT
+          Wr.Failure(x) =>
+          Debug.Error(F("Wr.Failure writing data for node %s : %s ",
+                        Int(outId),
+                        AL.Format(x)))
+        END
 
       END
     END;
 
     EVAL GetResponseG(cmdRd, "tR");
-
+    
     PutCommandG(cmdWr, "U");
     EVAL GetResponseG(cmdRd, "UR")
   END GeneratePartialTraceFile;
