@@ -193,7 +193,7 @@ PROCEDURE ReadEntireFileM(self     : FileReader;
     IF idx = 0 THEN
       TRY
         WITH rd  = FileRd_Open(fn),
-             cnt = DataBlock.ReadData(rd, idx, data) DO
+             cnt = DataBlock.ReadData(rd, idx, data, fn) DO
           <*ASSERT cnt = NUMBER(data)*>
           Rd.Close(rd)
         END
@@ -207,7 +207,7 @@ PROCEDURE ReadEntireFileM(self     : FileReader;
         END;
         self.dbFn := fn;
         self.dbRd := FileRd_Open(fn);
-        self.dbDb := NEW(DataBlock.T).init(self.dbRd, aLen)
+        self.dbDb := NEW(DataBlock.T).init(self.dbRd, aLen, fn)
       END;
       
       IF NOT self.dbDb.haveTag(idx) THEN
