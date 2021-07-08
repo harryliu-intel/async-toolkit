@@ -23,6 +23,7 @@ IMPORT AL;
 FROM Tr0 IMPORT ShortRead, SyntaxError;
 IMPORT UnsafeReader, UnsafeWriter;
 IMPORT TextSetDef;
+IMPORT DataBlock;
 
 <*FATAL Thread.Alerted*>
 
@@ -342,7 +343,7 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
         WITH fIdx = NameControl.FileIndex(nFiles, 0, 0) DO
           <*ASSERT wdWr[fIdx] # NIL*>
 
-          UnsafeWriter.WriteLRA(wdWr[fIdx], arr^)
+          DataBlock.WriteData(wdWr[fIdx], 0, arr^)
         END
       END;
 
@@ -404,9 +405,9 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
               mu := NEW(MUTEX);
               assigned : BOOLEAN;
             BEGIN
-              FOR i := FIRST(workers^) TO LAST(workers^) DO
+              FOR w := FIRST(workers^) TO LAST(workers^) DO
                 (* start workers *)
-                workers[i] := NEW(GenClosure).init(c,
+                workers[w] := NEW(GenClosure).init(c,
                                                    d,
                                                    mu,
                                                    idxMap,
@@ -423,10 +424,17 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
                 WHILE NOT assigned DO
                   FOR w := FIRST(workers^) TO LAST(workers^) DO
                     IF workers[w].freeP() THEN
+                      Debug.Out(F("Fsdb.Parse : assigning partial trace file %s to worker %s", Int(i), Int(w)));
+                      
                       workers[w].task(wdWr[i], fileTab[i]);
-                      assigned := TRUE
+                      assigned := TRUE;
+                      EXIT
                     END
                   END;
+
+                  (* if we get here, all workers were busy on this
+                     iteration, and we must wait for a signal *)
+                  
                   IF NOT assigned THEN
                     LOCK mu DO
                       Thread.Wait(mu, d)
@@ -724,10 +732,8 @@ PROCEDURE GeneratePartialTraceFile(wr      : Wr.T;
         (* write data to temp file in correct format *)
         Debug.Out(F("Writing data block outId %s nSteps %s",
                     Int(outId), Int(nSteps)));
-        
-        UnsafeWriter.WriteI  (wr, outId);
-        UnsafeWriter.WriteI  (wr, nSteps);
-        UnsafeWriter.WriteLRA(wr, buff^);
+
+        DataBlock.WriteData(wr, outId, buff^)
 
       END
     END;

@@ -1,7 +1,7 @@
 MODULE DataBlock;
 IMPORT Wr, Rd;
 IMPORT UnsafeWriter, UnsafeReader;
-IMPORT Thread;
+IMPORT Thread, ThreadF;
 IMPORT Debug;
 FROM Fmt IMPORT F, Int, Bool, FN, LongReal;
 IMPORT IntRefTbl;
@@ -10,6 +10,8 @@ IMPORT IntRefTbl;
 (* format assumes the readers and writers pertain to (seekable) disk files *)
 
 CONST LR = LongReal;
+
+TYPE TA = ARRAY OF TEXT;
       
 VAR doDebug := Debug.DebugThis("DataBlock");
 
@@ -21,7 +23,8 @@ PROCEDURE WriteData(wr                 : Wr.T;
     IF tag = 0 THEN
       UnsafeWriter.WriteLRA(wr,block)
     ELSE
-      UnsafeWriter.WriteI  (wr, tag);     
+      UnsafeWriter.WriteI  (wr, tag);
+      UnsafeWriter.WriteI  (wr, ThreadF.MyId());
       UnsafeWriter.WriteI  (wr, NUMBER(block));
       UnsafeWriter.WriteLRA(wr, block)
     END
@@ -59,17 +62,19 @@ PROCEDURE ReadData(rd        : Rd.T;
                     Int(NUMBER(data))))
       END;
       
-      WITH readTag = UnsafeReader.ReadI(rd),
-           count   = UnsafeReader.ReadI(rd) DO
+      WITH readTag  = UnsafeReader.ReadI(rd),
+           threadId = UnsafeReader.ReadI(rd),
+           count    = UnsafeReader.ReadI(rd) DO
 
         IF doDebug THEN
           WITH bytePos = Rd.Index(rd) DO
-            Debug.Out(F("DataBlock.ReadData (%s) @%sB readTag=%s match=%s count=%s",
-                        fn,
+            Debug.Out(FN("DataBlock.ReadData (%s) @%sB readTag=%s writeThread=%s match=%s count=%s",
+                        TA {fn,
                         Int(bytePos),
                         Int(readTag),
+                        Int(threadId),
                         Bool(readTag = tag),
-                        Int(count)))
+                        Int(count) } ))
           END
         END;
         
@@ -132,12 +137,14 @@ PROCEDURE Init(t : T; rd : Rd.T; maxCount : CARDINAL; fn : TEXT) : T
     TRY
       LOOP
         WITH readTag = UnsafeReader.ReadI(rd),
+             threadId = UnsafeReader.ReadI(rd),
              count   = UnsafeReader.ReadI(rd) DO
           
           IF doDebug THEN
-            Debug.Out(F("DataBlock.ReadData readTag=%s count=%s",
-                        Int(readTag),
-                        Int(count)))
+            Debug.Out(FN("DataBlock.ReadData readTag=%s writeThread=%s count=%s",
+                         TA{Int(readTag),
+                            Int(threadId),
+                            Int(count)}))
           END;
           
           
@@ -205,14 +212,16 @@ PROCEDURE DebugTraverse(rd : Rd.T; fn : TEXT) RAISES { Rd.Failure } =
     TRY
       LOOP
         WITH readTag = UnsafeReader.ReadI(rd),
+             threadId= UnsafeReader.ReadI(rd),
              count   = UnsafeReader.ReadI(rd),
              bytePos = Rd.Index(rd) DO
 
-          Debug.Out(F("DataBlock.DebugTraverse %s @ %sB readTag=%s count=%s",
-                      fn,
+          Debug.Out(FN("DataBlock.DebugTraverse %s @ %sB readTag=%s threadId=%s count=%s",
+                      TA{fn,
                       Int(bytePos),
                       Int(readTag),
-                      Int(count)));
+                      Int(threadId),
+                      Int(count)}));
           
           VAR arr := NEW(REF ARRAY OF LONGREAL, count);
           BEGIN

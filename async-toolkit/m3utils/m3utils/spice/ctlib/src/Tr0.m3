@@ -18,6 +18,7 @@ IMPORT CardSeq;
 IMPORT NameControl;
 FROM NameControl IMPORT MakeIdxMap, SanitizeNames,
                         WriteNames, FileIndex;
+IMPORT DataBlock;
 
 <*FATAL Thread.Alerted*>
 
@@ -90,8 +91,9 @@ PROCEDURE FlushData(READONLY wdWr  : ARRAY OF Wr.T;
 
     (* TIME file has different format *)
     TRY
-      UnsafeWriter.WriteLRA(wdWr[FileIndex(nFiles, lbq, 0)],
-                            SUBARRAY(lbuff[0], 0, lbp))
+      DataBlock.WriteData(wdWr[FileIndex(nFiles, lbq, 0)],
+                          0,
+                          SUBARRAY(lbuff[0], 0, lbp))
     EXCEPT
       Wr.Failure(x) => Debug.Error("Trouble flushing TIME data : Wr.Failure : " &
       AL.Format(x))
@@ -105,9 +107,7 @@ PROCEDURE FlushData(READONLY wdWr  : ARRAY OF Wr.T;
       *)
       TRY
         WITH wr = wdWr[FileIndex(nFiles, lbq, i)] DO
-          UnsafeWriter.WriteI  (wr, i);     
-          UnsafeWriter.WriteI  (wr, lbp);
-          UnsafeWriter.WriteLRA(wr, SUBARRAY(lbuff[i], 0, lbp))
+          DataBlock.WriteData(wr, i, SUBARRAY(lbuff[i], 0, lbp))
         END
       EXCEPT
         Wr.Failure(x) => Debug.Error(F("Trouble flushing data for node %s (%s): Wr.Failure : %s", names.get(i), Int(i), 
