@@ -53,7 +53,9 @@ PROCEDURE EditName(nm : TEXT) : TEXT =
 PROCEDURE PutCommandG(wr : Wr.T; cmd : TEXT) =
   BEGIN
     TRY
-      Debug.Out(F("Fsdb.Parse.PutCommand \"%s\"", cmd));
+      IF doDebug THEN
+        Debug.Out(F("Fsdb.Parse.PutCommand \"%s\"", cmd));
+      END;
       Wr.PutText(wr, cmd);
       Wr.PutChar(wr, '\n');
       Wr.Flush(wr);
@@ -71,7 +73,9 @@ PROCEDURE GetResponseG(rd : Rd.T; matchKw : TEXT) : TextReader.T =
       LOOP
         WITH line    = Rd.GetLine(rd),
              reader  = NEW(TextReader.T).init(line) DO
-          Debug.Out(F("Fsdb.Parse.GetResponse \"%s\"", line));
+          IF doDebug THEN
+            Debug.Out(F("Fsdb.Parse.GetResponse \"%s\"", line));
+          END;
           IF reader.next(" ", kw, TRUE) THEN
             IF TE(kw, matchKw) THEN
               RETURN reader
@@ -254,9 +258,11 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
         hiId   := reader.getInt();
         WITH unitStr = reader.get() DO
           unit   := ParseUnitStr(unitStr);
-          
-          Debug.Out(F("Got query response lo=%s hi=%s unitStr=\"%s\"",
-                      Int(loId), Int(hiId), unitStr))
+
+          IF doDebug THEN
+            Debug.Out(F("Got query response lo=%s hi=%s unitStr=\"%s\"",
+                        Int(loId), Int(hiId), unitStr))
+          END
         END
       END;
 
@@ -280,10 +286,12 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
         END
       END;
 
-      Debug.Out(F("timesteps %s min %s max %s",
-                  Int(timesteps.size()),
-                  LR(timesteps.get(0)),
-                  LR(timesteps.get(timesteps.size()-1))));
+      IF doDebug THEN
+        Debug.Out(F("timesteps %s min %s max %s",
+                    Int(timesteps.size()),
+                    LR(timesteps.get(0)),
+                    LR(timesteps.get(timesteps.size()-1))));
+      END;
 
       PutCommandG(wr, "U");
       EVAL GetResponseG(rd, "UR");
@@ -373,7 +381,9 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
       VAR
         arr := NEW(REF ARRAY OF LONGREAL, timesteps.size());
       BEGIN
-        Debug.Out(F("Writing timesteps, steps %s", Int(timesteps.size())));
+        IF doDebug THEN
+          Debug.Out(F("Writing timesteps, steps %s", Int(timesteps.size())));
+        END;
         FOR i := 0 TO timesteps.size() - 1 DO
           arr[i] := timeScaleFactor * timesteps.get(i) + timeOffset
         END;
@@ -408,8 +418,10 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
          file generation later. 
       *)
 
-      Debug.Out(F("Fsdb writing files: nFiles %s aNodes %s",
-                  Int(nFiles), Int(aNodes)));
+      IF doDebug THEN
+        Debug.Out(F("Fsdb writing files: nFiles %s aNodes %s",
+                    Int(nFiles), Int(aNodes)));
+      END;
 
       WITH fileTab = NEW(REF ARRAY OF CardSeq.T, nFiles) DO
         FOR i := FIRST(fileTab^) TO LAST(fileTab^) DO
@@ -461,14 +473,18 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
               END;
               
               FOR i := FIRST(fileTab^) TO LAST(fileTab^) DO
-                Debug.Out(F("Fsdb.Parse : Generating partial trace file %s",
-                            Int(i)));
+                IF doDebug THEN
+                  Debug.Out(F("Fsdb.Parse : Generating partial trace file %s",
+                              Int(i)));
+                END;
                 assigned := FALSE;
                 
                 WHILE NOT assigned DO
                   FOR w := FIRST(workers^) TO LAST(workers^) DO
                     IF workers[w].freeP() THEN
-                      Debug.Out(F("Fsdb.Parse : assigning partial trace file %s to worker %s", Int(i), Int(w)));
+                      IF doDebug THEN
+                        Debug.Out(F("Fsdb.Parse : assigning partial trace file %s to worker %s", Int(i), Int(w)));
+                      END;
                       
                       workers[w].task(wdWr[i], fileTab[i]);
                       assigned := TRUE;
@@ -516,8 +532,10 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
             
           ELSE
             FOR i := FIRST(fileTab^) TO LAST(fileTab^) DO
-              Debug.Out(F("Fsdb.Parse : Generating partial trace file %s",
-                          Int(i)));
+              IF doDebug THEN
+                Debug.Out(F("Fsdb.Parse : Generating partial trace file %s",
+                            Int(i)));
+              END;
               
               GeneratePartialTraceFile(wdWr[i],
                                        fileTab[i],
@@ -703,9 +721,11 @@ PROCEDURE GenApply(cl : GenClosure) : REFANY =
         hiId   := reader.getInt();
         WITH unitStr = reader.get() DO
           unit   := ParseUnitStr(unitStr);
-          
-          Debug.Out(F("Got query response lo=%s hi=%s unitStr=\"%s\"",
-                      Int(loId), Int(hiId), unitStr))
+
+          IF doDebug THEN
+            Debug.Out(F("Got query response lo=%s hi=%s unitStr=\"%s\"",
+                        Int(loId), Int(hiId), unitStr))
+          END
         END
       END;
 
@@ -780,7 +800,9 @@ PROCEDURE GeneratePartialTraceFile(wr      : Wr.T;
     node : CARDINAL;
     
   BEGIN
-    Debug.Out(F("GeneratePartialTraceFile : %s indices", Int(fileTab.size())));
+    IF doDebug THEN
+      Debug.Out(F("GeneratePartialTraceFile : %s indices", Int(fileTab.size())));
+    END;
     
     (* set up indications of interest *)
     FOR i := 0 TO fileTab.size() - 1 DO
@@ -799,8 +821,10 @@ PROCEDURE GeneratePartialTraceFile(wr      : Wr.T;
       WITH inId  = fileTab.get(i),
            outId = idxMap.get(inId) DO
 
-        Debug.Out(F("Expecting node data for inId %s outId %s",
-                    Int(inId), Int(outId)));
+        IF doDebug THEN
+          Debug.Out(F("Expecting node data for inId %s outId %s",
+                      Int(inId), Int(outId)));
+        END;
         
         ReadBinaryNodeDataG(cmdRd, node, buff^);
         IF node # inId THEN
@@ -808,8 +832,10 @@ PROCEDURE GeneratePartialTraceFile(wr      : Wr.T;
         END;
 
         (* write data to temp file in correct format *)
-        Debug.Out(F("Writing data block outId %s nSteps %s",
-                    Int(outId), Int(nSteps)));
+        IF doDebug THEN
+          Debug.Out(F("Writing data block outId %s nSteps %s",
+                      Int(outId), Int(nSteps)));
+        END;
 
         IF voltageScaleFactor # 1.0d0 OR voltageOffset # 0.0d0 THEN
           FOR i := FIRST(buff^) TO LAST(buff^) DO
@@ -843,11 +869,13 @@ PROCEDURE ParseUnitStr(unitSpec : TEXT) : LONGREAL =
           TRY
             WITH val = Scan.LongReal(TextUtils.RemoveSuffix(unitSpec, u.sfx)),
                  res = val * u.val DO
-              Debug.Out(F("ParseUnitStr \"%s\" : val %s u.val %s res %s",
-                          unitSpec,
-                          LR(val),
-                          LR(u.val),
-                          LR(res)));
+              IF doDebug THEN
+                Debug.Out(F("ParseUnitStr \"%s\" : val %s u.val %s res %s",
+                            unitSpec,
+                            LR(val),
+                            LR(u.val),
+                            LR(res)));
+              END;
               RETURN res
             END
           EXCEPT

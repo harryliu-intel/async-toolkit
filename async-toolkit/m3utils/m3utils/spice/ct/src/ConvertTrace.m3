@@ -84,13 +84,19 @@ PROCEDURE WriteTrace() =
       OSError.E(x) => Debug.Error("Unable to open trace file \"" & tFn & "\" for writing : OSError.E : " & AL.Format(x))
     END;
 
-    Debug.Out("WriteTrace writing header...");
+    IF doDebug THEN
+      Debug.Out("WriteTrace writing header...")
+    END;
     TRY
-      Debug.Out("WriteTrace at tWr byte " & Int(Wr.Index(tWr)));
+      IF doDebug THEN
+        Debug.Out("WriteTrace at tWr byte " & Int(Wr.Index(tWr)));
+      END;
       UnsafeWriter.WriteI(tWr, 1);
       (* this tells aplot it is the reordered format *)
-      
-      Debug.Out("WriteTrace at tWr byte " & Int(Wr.Index(tWr)));
+
+      IF doDebug THEN
+        Debug.Out("WriteTrace at tWr byte " & Int(Wr.Index(tWr)));
+      END;
       UnsafeWriter.WriteI(tWr, TRUNC(Time.Now()));
       (* timestamp *)
       
@@ -103,31 +109,33 @@ PROCEDURE WriteTrace() =
       Wr.Failure(x) =>
       Debug.Error("Write error writing header of trace file : Wr.Failure : " & AL.Format(x))
     END;
+
+    IF doDebug THEN
+      Debug.Out("WriteTrace walking names...");
+    END;
     
-    Debug.Out("WriteTrace walking names...");
     FOR i := 0 TO names.size() - 1 DO
       TRY
         IF i = 0 THEN 
-          Debug.Out("WriteTrace creating buffers...");
+          IF doDebug THEN Debug.Out("WriteTrace creating buffers...") END;
           CreateBuffers(time, data);
-          Debug.Out(F("WriteTrace writing TIME (%s values)...",
-                      Int(NUMBER(time^))));
-          UnsafeWriter.WriteLRA(tWr, time^);
+          IF doDebug THEN
+            Debug.Out(F("WriteTrace writing TIME (%s values)...",
+                        Int(NUMBER(time^))))
+          END;
+          UnsafeWriter.WriteLRAAt(tWr, time^, dataStartByte);
         ELSE
           ReadEntireFile(i, data^);
 
           WITH pos = dataStartByte + i * 4 * NUMBER(time^) DO
-            Debug.Out(F("Writing %s (%s) @ %s, data[0]= %s data[LAST(data)}= %s",
-                        names.get(i), Int(i), Int(pos),
-                        LR(data[0]),
-                        LR(data[LAST(data^)])));
+            IF doDebug THEN
+              Debug.Out(F("Writing %s (%s) @ %s, data[0]= %s data[LAST(data)}= %s",
+                          names.get(i), Int(i), Int(pos),
+                          LR(data[0]),
+                          LR(data[LAST(data^)])))
+            END;
             UnsafeWriter.WriteLRAAt(tWr, data^, pos)
-          END;
-
-          (*
-          UnsafeWriter.WriteLRA(tWr, data^);
-          *)
-
+          END
         END
       EXCEPT
         OSError.E(x) =>
@@ -149,9 +157,22 @@ PROCEDURE WriteTrace() =
     END
   END WriteTrace;
 
+TYPE
+  WriteClosure = Thread.Closure OBJECT
+    mu      : MUTEX;             (* one per thread *)
+    c, d    : Thread.Condition;  (* shared between all threads *)
+    (* c signals new task; d signals new slot *)
+    
+    wr     : Wr.T;             
+    i : CARDINAL := LAST(CARDINAL);
+    buff : REF ARRAY OF LONGREAL;
+  END;
+
 PROCEDURE FileRd_Open(fn : Pathname.T) : Rd.T RAISES { OSError.E } =
   BEGIN
-    Debug.Out(F("opening file \"%s\"", fn));
+    IF doDebug THEN
+      Debug.Out(F("opening file \"%s\"", fn));
+    END;
     RETURN FileRd.Open(fn)
   END FileRd_Open;
 
@@ -249,13 +270,13 @@ PROCEDURE CreateBuffers(VAR time, data : REF ARRAY OF LONGREAL)
       aLen := DataBlock.DataCount(rd, timeIdx);
       Rd.Close(rd)
     END;
-    
+
     Debug.Out(F("Creating time/data buffers: %s timesteps",
                 Int(aLen)));
     time := NEW(REF ARRAY OF LONGREAL, aLen); (* alloc time *)
     data := NEW(REF ARRAY OF LONGREAL, aLen); (* alloc data *)
 
-    Debug.Out("Reading time data");
+    IF doDebug THEN Debug.Out("Reading time data") END;
     
     ReadEntireFile(0, time^);
 
@@ -504,7 +525,9 @@ BEGIN
 
   TRY
 
-    Debug.Out("ConvertTrace parsing...");
+    IF doDebug THEN
+      Debug.Out("ConvertTrace parsing...");
+    END;
     CASE parseFmt OF
       ParseFmt.Tr0 =>
 
@@ -555,7 +578,9 @@ BEGIN
                  fsdbCmdPath,
                  threads)
     END;
-    Debug.Out("ConvertTrace parsing done.")
+    IF doDebug THEN
+      Debug.Out("ConvertTrace parsing done.")
+    END
     
   EXCEPT
     Tr0.SyntaxError(e) => Debug.Error("Syntax error on line " & Int(lNo) & " : " &

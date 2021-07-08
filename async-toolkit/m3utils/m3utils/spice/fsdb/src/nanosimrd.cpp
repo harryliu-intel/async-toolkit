@@ -44,6 +44,8 @@
 static bool_T __MyTreeCB(fsdbTreeCBType cb_type, 
 			 void *client_data, void *tree_cb_data);
 
+static int verbose=FALSE;
+
 
 //
 // dump scope definition
@@ -317,7 +319,7 @@ the_rest(void)
                 fprintf(stderr, "should not happen.\n");
                 exit(FSDB_RC_FAILURE);
             }
-            fprintf(stderr, "trvs hdl(%u): maximum time is (%10g).\n", 
+            if(verbose)fprintf(stderr, "trvs hdl(%u): maximum time is (%10g).\n", 
                     code, *(double*)time);
         }
         else if (FSDB_XTAG_TYPE_FLOAT == xtag_type) {
@@ -326,7 +328,7 @@ the_rest(void)
                 fprintf(stderr, "should not happen.\n");
                 exit(FSDB_RC_FAILURE);
             }
-            fprintf(stderr, "trvs hdl(%u): maximum time is (%10g).\n",
+            if(verbose)fprintf(stderr, "trvs hdl(%u): maximum time is (%10g).\n",
                     code, *(float*)time);
         }
         else {
@@ -335,7 +337,7 @@ the_rest(void)
                 fprintf(stderr, "should not happen.\n");
                 exit(FSDB_RC_FAILURE);
             }
-            fprintf(stderr, "trvs hdl(%u): maximum time is (%u %u).\n", 
+            if(verbose)fprintf(stderr, "trvs hdl(%u): maximum time is (%u %u).\n", 
                     code,
                     ((fsdbTag64*)time)->H, 
                     ((fsdbTag64*)time)->L);
@@ -351,7 +353,7 @@ the_rest(void)
                 fprintf(stderr, "should not happen.\n");
                 exit(FSDB_RC_FAILURE);
             }
-            fprintf(stderr, "trvs hdl(%u): minimum time is (%10g).\n", 
+            if(verbose)fprintf(stderr, "trvs hdl(%u): minimum time is (%10g).\n", 
                     code, *(double*)time);
         }
         else if (FSDB_XTAG_TYPE_FLOAT == xtag_type) {
@@ -360,7 +362,7 @@ the_rest(void)
                 fprintf(stderr, "should not happen.\n");
                 exit(FSDB_RC_FAILURE);
             }
-            fprintf(stderr, "trvs hdl(%u): minimum time is (%10g).\n",
+            if(verbose)fprintf(stderr, "trvs hdl(%u): minimum time is (%10g).\n",
                     code, *(float*)time);
         }
         else {
@@ -369,7 +371,7 @@ the_rest(void)
                 fprintf(stderr, "should not happen.\n");
                 exit(FSDB_RC_FAILURE);
             }
-            fprintf(stderr, "trvs hdl(%u): minimum time is (%u %u).\n", 
+            if(verbose)fprintf(stderr, "trvs hdl(%u): minimum time is (%u %u).\n", 
                     code,
                     ((fsdbTag64*)time)->H, 
                     ((fsdbTag64*)time)->L);
@@ -469,7 +471,7 @@ open_signal_range(void)
   fprintf(stderr, "open_signal_range()\n");
 
   for(int_dq *p=active->next; p != active; p = p->next) {
-    fprintf(stderr, "signal %u\n", p->val);
+    if (verbose) fprintf(stderr, "signal %u\n", p->val);
     fsdb_obj->ffrAddToSignalList(p->val);
   }
 
@@ -668,7 +670,7 @@ traverse_one_signal(int        idcode,
     exit(FSDB_RC_FAILURE);
   }
   
-  fprintf(stderr, "trvs hdl(%u): minimum time is (%u %u).\n", 
+  if(verbose)fprintf(stderr, "trvs hdl(%u): minimum time is (%u %u).\n", 
           idcode,
           ((fsdbTag64*)time)->H, 
           ((fsdbTag64*)time)->L);
@@ -744,6 +746,7 @@ traverse_one_signal(int        idcode,
     if (timecheck_ok) {
       unsigned n = the_timemem->p;
       
+      if(verbose)
       fprintf(stderr, "binary traversal tag N nodeid %u count %u\n",
               idcode, n);
       
@@ -761,8 +764,9 @@ traverse_one_signal(int        idcode,
 
       fflush(stdout);
 
-      fprintf(stderr, "writing binary data, value[0] %f\n",
-              ((float *)buff)[0]);
+      if(verbose)
+        fprintf(stderr, "writing binary data, value[0] %f\n",
+                ((float *)buff)[0]);
 
       write(fileno(stdout), buff, n * sizeof(float)); // just dump the buffer
       
@@ -862,7 +866,7 @@ main(int argc, char *argv[])
 
     char buff[CMDBUFSIZ], *tok;
     while(fgets(buff, CMDBUFSIZ, stdin)) {
-      fprintf(stderr, "got line \"%s\"\n", buff);
+      if(verbose)fprintf(stderr, "got line \"%s\"\n", buff);
 
       tok = strtok(buff, " ");
       

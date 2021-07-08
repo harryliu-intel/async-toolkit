@@ -1,0 +1,2 @@
+#!/bin/sh
+nbjob run --target sc_normal --qslot /bfn/fe --class "SLES12" --mode interactive /nfs/sc/disks/bfn_cb_05/mnystroe/m3utils/spice/fsdb/src/nanosimrd $*
