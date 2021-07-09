@@ -35,7 +35,6 @@ IMPORT Thread;
 IMPORT Params;
 IMPORT TextSet, TextSetDef;
 IMPORT Tr0;
-FROM NameControl IMPORT FileIndex;
 IMPORT DataBlock;
 IMPORT RegExList;
 IMPORT RegEx;
@@ -59,9 +58,6 @@ VAR maxFiles := DefMaxFiles;
 CONST 
   MaxMem = 16*1024*1024; (* fit at least one row *)
 
-PROCEDURE FormatFN(i : CARDINAL) : TEXT =
-  BEGIN RETURN F("%08s", Int(i)) END FormatFN;
-
 VAR nFiles : CARDINAL;
 
 PROCEDURE FileRd_Open(fn : Pathname.T) : Rd.T RAISES { OSError.E } =
@@ -81,19 +77,14 @@ PROCEDURE ReadEntireFile(idx : CARDINAL; VAR data : ARRAY OF LONGREAL)
     singleReader.readEntireFile(idx, data)
   END ReadEntireFile;
   
-PROCEDURE FileName(idx : CARDINAL) : TEXT =
-  BEGIN
-    RETURN wd & "/" & FormatFN(FileIndex(nFiles, names.size(), idx))
-  END FileName;
-
-PROCEDURE CreateBuffers(VAR time, data : REF ARRAY OF LONGREAL)
+PROCEDURE CreateBuffers(fnr : FileNamer.T; VAR time, data : REF ARRAY OF LONGREAL)
   RAISES { OSError.E, Rd.Failure } =
   (* create time and data buffers, and read time into the time buffer *)
   VAR
     aLen : CARDINAL;
   BEGIN
     WITH timeIdx = 0,
-         fn      = FileName(timeIdx),
+         fn      = fnr.name(timeIdx),
          rd      = FileRd_Open(fn) DO
       aLen := DataBlock.DataCount(rd, timeIdx);
       Rd.Close(rd)
@@ -115,7 +106,7 @@ PROCEDURE CreateBuffers(VAR time, data : REF ARRAY OF LONGREAL)
     END
   END CreateBuffers;
   
-PROCEDURE WriteSources() =
+PROCEDURE WriteSources(fnr : FileNamer.T) =
   (* read data from each file in temp directory and output
      in reordered trace format for fast aplot access *)
   VAR
@@ -136,10 +127,10 @@ PROCEDURE WriteSources() =
     END;
 
     FOR i := 0 TO names.size() - 1 DO
-      WITH fn   = FileName(i) DO
+      WITH fn   = fnr.name(i) DO
         TRY
           IF i = 0 THEN
-            CreateBuffers(time, data)
+            CreateBuffers(fnr, time, data)
           ELSE
               Wr.PutText(sWr, "* source for " & names.get(i) & "\n");
               ReadEntireFile(i, data^);
@@ -178,7 +169,7 @@ PROCEDURE Unslash(fn : Pathname.T) : Pathname.T =
     RETURN TextUtils.Replace(fn, "/", "::")
   END Unslash;
 
-PROCEDURE WriteFiles() =
+PROCEDURE WriteFiles(fnr : FileNamer.T) =
   (* read data from each file in temp directory and output
      in simple ASCII format *)
   VAR
@@ -194,10 +185,10 @@ PROCEDURE WriteFiles() =
     END;
     
     FOR i := 0 TO names.size() - 1 DO
-      WITH fn   = FileName(i) DO
+      WITH fn   = fnr.name(i) DO
         TRY
           IF i = 0 THEN
-            CreateBuffers(time, data);
+            CreateBuffers(fnr, time, data);
           ELSE
               TRY
                 sFn := tDn & "/" & Unslash(names.get(i));
@@ -424,24 +415,22 @@ BEGIN
   END;
 
 
-  IF doTrace THEN
-    WITH fnr = NEW(FileNamer.T).init(wd, nFiles, names.size()),
-         tr = NEW(TraceFile.T).init(ofn,
-                                    nFiles, names.size(), fnr) DO
-      tr.writePll(wthreads)
-    END
-  END;
-
   WITH fnr = NEW(FileNamer.T).init(wd, nFiles, names.size()) DO
-    singleReader := NEW(TempReader.T).init(fnr)
-  END;
+    IF doTrace THEN
+      WITH tr = NEW(TraceFile.T).init(ofn, nFiles, names.size(), fnr) DO
+        tr.writePll(wthreads)
+      END
+    END;
 
-  IF doSources THEN
-    WriteSources()
-  END;
-
-  IF doFiles THEN
-    WriteFiles()
+    singleReader := NEW(TempReader.T).init(fnr);
+    
+    IF doSources THEN
+      WriteSources(fnr)
+    END;
+    
+    IF doFiles THEN
+      WriteFiles(fnr)
+    END
   END
 
 END ConvertTrace.
