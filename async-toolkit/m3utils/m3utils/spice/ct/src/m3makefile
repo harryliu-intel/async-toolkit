@@ -4,6 +4,10 @@ import ("parseparams")
 import ("spicelib")
 import ("ctlib")
 
+Module ("TraceFile")
+Module ("FileNamer")
+Module ("TempReader")
+
 implementation ("ConvertTrace")
 
 program ("ct")
