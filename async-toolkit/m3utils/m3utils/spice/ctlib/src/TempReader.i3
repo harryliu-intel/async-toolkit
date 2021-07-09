@@ -2,6 +2,9 @@ INTERFACE TempReader;
 IMPORT Rd, OSError;
 IMPORT FileNamer;
 
+(* read temp files for convert trace program *)
+(* where is write version of this? *)
+
 TYPE
   T <: Public;
 

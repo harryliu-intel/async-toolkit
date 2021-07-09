@@ -386,18 +386,8 @@ PROCEDURE WCApply(cl : WriteClosure) : REFANY =
   BEGIN
     TRY
       FOR i := cl.lo TO cl.hi DO
-        idx := i; 
-        fr.readEntireFile(i, buff^);
-        
-        WITH pos = cl.dataStartByte + i * 4 * cl.samples DO
-          IF doDebug THEN
-            Debug.Out(F("Writing node(%s) @ %s, data[0]= %s data[LAST(data)]= %s",
-                        Int(i), Int(pos),
-                        LR(buff[0]),
-                        LR(buff[LAST(buff^)])))
-          END;
-          UnsafeWriter.WriteLRAAt(cl.wr, buff^, pos)
-        END;
+        idx := i;
+        BlockWrite(cl.wr, fr, i, cl.dataStartByte, buff^)
       END;
       
       LOCK cl.mu DO
@@ -422,5 +412,25 @@ PROCEDURE WCApply(cl : WriteClosure) : REFANY =
   END WCApply;
 
   (***********************************************************************)
+
+PROCEDURE BlockWrite(wr            : Wr.T;
+                     fr            : TempReader.T;
+                     i             : CARDINAL;
+                     dataStartByte : CARDINAL;
+                     VAR buff      : ARRAY OF LONGREAL)
+  RAISES { Rd.Failure, Wr.Failure, OSError.E, Thread.Alerted } =
+  BEGIN
+    fr.readEntireFile(i, buff);
+        
+    WITH pos = dataStartByte + i * 4 * NUMBER(buff) DO
+      IF doDebug THEN
+        Debug.Out(F("Writing node(%s) @ %s, data[0]= %s data[LAST(data)]= %s",
+                    Int(i), Int(pos),
+                    LR(buff[0]),
+                    LR(buff[LAST(buff)])))
+      END;
+      UnsafeWriter.WriteLRAAt(wr, buff, pos)
+    END;
+  END BlockWrite;
 
 BEGIN END TraceFile.

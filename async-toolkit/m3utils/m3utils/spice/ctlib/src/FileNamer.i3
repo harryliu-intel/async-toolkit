@@ -1,6 +1,8 @@
 INTERFACE FileNamer;
 IMPORT Pathname;
 
+(* compute name of temp files *)
+
 TYPE
   T <: Public;
 
