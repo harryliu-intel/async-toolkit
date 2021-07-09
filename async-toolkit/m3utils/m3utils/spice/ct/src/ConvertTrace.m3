@@ -44,6 +44,8 @@ IMPORT RegExList;
 IMPORT RegEx;
 IMPORT TextUtils;
 IMPORT Fsdb;
+IMPORT RegularFile;
+IMPORT File;
 
 <*FATAL Thread.Alerted*>
 
@@ -66,6 +68,8 @@ PROCEDURE FormatFN(i : CARDINAL) : TEXT =
 
 VAR nFiles : CARDINAL;
 
+(**********************************************************************)
+    
 PROCEDURE WriteTrace() =
   (* read data from each file in temp directory and output
      in reordered trace format for fast aplot access *)
@@ -157,17 +161,248 @@ PROCEDURE WriteTrace() =
     END
   END WriteTrace;
 
+(**********************************************************************)
+   
+PROCEDURE WriteTracePll(wthreads : CARDINAL) =
+  (* read data from each file in temp directory and output
+     in reordered trace format for fast aplot access *)
+  VAR
+    tFn := ofn & ".trace";
+    tWr           : Wr.T;
+    time, data    : REF ARRAY OF LONGREAL;
+    dataStartByte : CARDINAL;
+    wcs := NEW(REF ARRAY OF WriteClosure, wthreads);
+    
+  BEGIN
+    Debug.Out(F("WriteTracePll nFiles %s names.size() %s",
+                Int(nFiles), Int(names.size())));
+    
+    TRY
+      tWr := FileWr.Open(tFn)
+    EXCEPT
+      OSError.E(x) => Debug.Error("Unable to open trace file \"" & tFn & "\" for writing : OSError.E : " & AL.Format(x))
+    END;
+
+    IF doDebug THEN
+      Debug.Out("WriteTrace writing header...")
+    END;
+    TRY
+      IF doDebug THEN
+        Debug.Out("WriteTrace at tWr byte " & Int(Wr.Index(tWr)));
+      END;
+      UnsafeWriter.WriteI(tWr, 1);
+      (* this tells aplot it is the reordered format *)
+
+      IF doDebug THEN
+        Debug.Out("WriteTrace at tWr byte " & Int(Wr.Index(tWr)));
+      END;
+      UnsafeWriter.WriteI(tWr, TRUNC(Time.Now()));
+      (* timestamp *)
+      
+      UnsafeWriter.WriteI(tWr, names.size());
+      (* number of nodes.  
+         aplot computes the offsets based on the file length? *)
+
+      Wr.Flush(tWr);
+      
+      dataStartByte := Wr.Index(tWr);
+    EXCEPT
+      Wr.Failure(x) =>
+      Debug.Error("Write error writing header of trace file : Wr.Failure : " & AL.Format(x))
+    END;
+
+    IF doDebug THEN
+      Debug.Out("WriteTrace walking names...");
+    END;
+
+    WITH i = 0 DO
+      TRY
+        IF doDebug THEN Debug.Out("WriteTrace creating buffers...") END;
+        CreateBuffers(time, data);
+        IF doDebug THEN
+          Debug.Out(F("WriteTrace writing TIME (%s values)...",
+                      Int(NUMBER(time^))))
+        END;
+        UnsafeWriter.WriteLRAAt(tWr, time^, dataStartByte);
+
+        Wr.Close(tWr)
+      EXCEPT
+        OSError.E(x) =>
+        Debug.Error("Unable to open temp file \"" & FileName(i) & "\" for reading : OSError.END : " & AL.Format(x))
+      |
+        Rd.Failure(x) =>
+        Debug.Error("Read error on temp file \"" & FileName(i) & "\" for reading : Rd.Failure : " & AL.Format(x))
+      |
+        Wr.Failure(x) =>
+        Debug.Error("Write error on trace file, lately reading \"" & FileName(i) & "\" : Wr.Failure : " & AL.Format(x))
+      END
+    END;
+
+    (* zero fill file if it contains any data *)
+    IF names.size() # 0 AND NUMBER(time^) # 0 THEN
+      TRY
+        WITH file = NARROW(FS.OpenFile(tFn, truncate := FALSE), RegularFile.T) DO
+          EVAL file.seek(RegularFile.Origin.Beginning,
+                         dataStartByte + names.size() * 4 * NUMBER(time^) - 1);
+          file.write(ARRAY OF File.Byte { ORD('*') }); (* EOF sentinel *)
+          file.close();
+        END
+      EXCEPT
+        OSError.E(x) =>
+        Debug.Error("Unable to zero-fill output trace file \""& tFn & "\" for reading : OSError.END : " & AL.Format(x))
+      END
+    END;
+
+    (* the range is 
+       
+       from 1 to names.size() - 1 
+       
+    *)
+
+    WITH c = NEW(Thread.Condition),
+         mu = NEW(MUTEX),
+         nNodes = names.size() - 1,
+         per = (nNodes - 1) DIV wthreads + 1 DO
+
+      Debug.Out(F("Spawning write %s threads, %s nodes per thread",
+                  Int(wthreads), Int(per)));
+      
+      FOR i := FIRST(wcs^) TO LAST(wcs^) DO
+        WITH wr = NEW(FileWr.T).init(FS.OpenFile(tFn, truncate := FALSE)),
+             lo = 1 + per * i,
+             hi = MIN(1 + per * (i + 1), names.size() - 1) DO
+          
+          wcs[i] := NEW(WriteClosure).init(wr,
+                                           c,
+                                           mu,
+                                           lo, hi,
+                                           dataStartByte,
+                                           NUMBER(time^))
+          
+        END
+      END;
+
+      (* wait for threads to exit *)
+      
+      Debug.Out("Waiting for write threads to finish...");
+      FOR i := FIRST(wcs^) TO LAST(wcs^) DO
+        WHILE NOT wcs[i].doneP() DO
+          LOCK mu DO Thread.Wait(mu, c) END;
+        END;
+(*        EVAL Thread.Join(wcs[i].thr)*)
+        TRY
+          Wr.Close(wcs[i].wr)
+        EXCEPT
+          Wr.Failure(x) => Debug.Error(F("Trouble closing trace file for worker %s: Wr.Failure : %s", Int(i),
+            AL.Format(x)))
+        END
+      END;
+
+      Debug.Out("Write threads have finished.");
+
+    END;
+
+    
+  END WriteTracePll;
+
+  (**********************************************************************)
+
 TYPE
   WriteClosure = Thread.Closure OBJECT
-    mu      : MUTEX;             (* one per thread *)
-    c, d    : Thread.Condition;  (* shared between all threads *)
-    (* c signals new task; d signals new slot *)
-    
     wr     : Wr.T;             
-    i : CARDINAL := LAST(CARDINAL);
-    buff : REF ARRAY OF LONGREAL;
+    lo, hi : CARDINAL;
+    samples : CARDINAL;
+    mu : MUTEX;
+    c : Thread.Condition;
+    done := FALSE;
+    dataStartByte : CARDINAL;
+    thr : Thread.T;
+  METHODS
+    init(wr : Wr.T;
+         c : Thread.Condition;
+         mu : MUTEX;
+         lo, hi : CARDINAL;
+         dataStartByte : CARDINAL;
+         samples : CARDINAL) : WriteClosure := WCInit;
+
+    doneP() : BOOLEAN := WCDoneP;
+    
+  OVERRIDES
+    apply := WCApply;
   END;
 
+
+PROCEDURE WCDoneP(cl : WriteClosure) : BOOLEAN =
+  BEGIN
+    LOCK cl.mu DO
+      RETURN cl.done
+    END
+  END WCDoneP;
+
+PROCEDURE WCInit(cl : WriteClosure;
+                 wr : Wr.T;
+                 c : Thread.Condition;
+                 mu : MUTEX;
+                 lo, hi : CARDINAL;
+                 dataStartByte : CARDINAL;
+                 samples : CARDINAL) : WriteClosure =
+  BEGIN
+    cl.mu := mu;
+    cl.c := c;
+    cl.wr := wr;
+    cl.samples := samples;
+    cl.dataStartByte := dataStartByte;
+    cl.lo := lo;
+    cl.hi := hi;
+    cl.thr := Thread.Fork(cl);
+    RETURN cl
+  END WCInit;
+
+PROCEDURE WCApply(cl : WriteClosure) : REFANY =
+  VAR
+    buff := NEW(REF ARRAY OF LONGREAL, cl.samples);
+    fr := NEW(FileReader).init();
+    idx : CARDINAL; (* for error messages *)
+  BEGIN
+    TRY
+      FOR i := cl.lo TO cl.hi DO
+        idx := i; 
+        fr.readEntireFile(i, buff^);
+        
+        WITH pos = cl.dataStartByte + i * 4 * cl.samples DO
+          IF doDebug THEN
+            Debug.Out(F("Writing %s (%s) @ %s, data[0]= %s data[LAST(data)]= %s",
+                        names.get(i), Int(i), Int(pos),
+                        LR(buff[0]),
+                        LR(buff[LAST(buff^)])))
+          END;
+          UnsafeWriter.WriteLRAAt(cl.wr, buff^, pos)
+        END;
+      END;
+      
+      LOCK cl.mu DO
+        (* done executing request, mark ourselves as free and signal *)
+        cl.done := TRUE;
+      END;
+        
+      Thread.Signal(cl.c)
+        
+    EXCEPT
+      OSError.E(x) =>
+        Debug.Error("Unable to open temp file \"" & FileName(idx) & "\" for reading : OSError.E : " & AL.Format(x))
+      |
+        Rd.Failure(x) =>
+        Debug.Error("Read error on temp file \"" & FileName(idx) & "\" for reading : Rd.Failure : " & AL.Format(x))
+      |
+        Wr.Failure(x) =>
+        Debug.Error("Write error on trace file, lately reading \"" & FileName(idx) & "\" : Wr.Failure : " & AL.Format(x))
+    END;
+    
+    RETURN NIL
+  END WCApply;
+
+  (***********************************************************************)
+  
 PROCEDURE FileRd_Open(fn : Pathname.T) : Rd.T RAISES { OSError.E } =
   BEGIN
     IF doDebug THEN
@@ -434,6 +669,7 @@ VAR
   parseFmt := ParseFmt.Tr0;
 
   threads  : CARDINAL := 1;
+  wthreads : CARDINAL := 1;
   
 TYPE
   ParseFmt = { Tr0, Fsdb };
@@ -472,6 +708,9 @@ BEGIN
     END;
     IF pp.keywordPresent("-threads") THEN
       threads := pp.getNextInt()
+    END;
+    IF pp.keywordPresent("-wthreads") THEN
+      wthreads := pp.getNextInt()
     END;
     IF pp.keywordPresent("-maxfiles") THEN
       maxFiles := pp.getNextInt()
@@ -593,7 +832,7 @@ BEGIN
 
 
   IF doTrace THEN
-    WriteTrace()
+    WriteTracePll(wthreads)
   END;
 
   IF doSources THEN

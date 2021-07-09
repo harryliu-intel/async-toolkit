@@ -503,7 +503,7 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
                 END
               END;
 
-              Debug.Out("Waiting for workers to finish");
+              Debug.Out("Fsdb.Parse: Waiting for workers to finish");
               
               (* wait for workers to be completely done *)
               FOR i := FIRST(workers^) TO LAST(workers^) DO
@@ -520,13 +520,17 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
                 workers[i].exit();
                 EVAL Thread.Join(workers[i].thr)
                 *)
-              END
+
+              END;
 
               (* 
                  all jobs are assigned AND all workers are done 
                  --->
                  we are completely done 
               *)
+
+              Debug.Out("Fsdb.Parse: Workers have finished");
+
               
             END(*VAR*)
             
@@ -599,7 +603,7 @@ PROCEDURE RemoveZeros(tbl : TextCardTbl.T) =
 
 TYPE
   GenClosure = Thread.Closure OBJECT
-    mu      : MUTEX;             (* one per thread *)
+    mu      : MUTEX;             (* shared between all threads *)
     c, d    : Thread.Condition;  (* shared between all threads *)
     (* c signals new task; d signals new slot *)
     

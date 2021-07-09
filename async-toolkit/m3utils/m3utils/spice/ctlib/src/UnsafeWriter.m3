@@ -34,6 +34,7 @@ PROCEDURE WriteLRAAt(wr : Wr.T; READONLY q : ARRAY OF LONGREAL; at : CARDINAL)
     buffD : ARRAY [ 0 .. 4 - 1] OF CHAR;
   BEGIN
     Wr.Seek(wr, at);
+    <*ASSERT Wr.Index(wr) = at*>
     LOCK wr DO
       FOR i := FIRST(q) TO LAST(q) DO
 
