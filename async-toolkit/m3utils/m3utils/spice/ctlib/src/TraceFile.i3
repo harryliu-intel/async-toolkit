@@ -18,7 +18,7 @@ TYPE
 
     write();
 
-    writePll(wthreads : CARDINAL);
+    writePll(wthreads : CARDINAL; writeTraceCmdPath : Pathname.T);
     
   END;
 

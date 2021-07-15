@@ -1,7 +1,7 @@
 MODULE TraceFile;
 IMPORT Wr;
 IMPORT Debug;
-FROM Fmt IMPORT Int, F, LongReal;
+FROM Fmt IMPORT Int, F, LongReal, FN;
 IMPORT OSError;
 IMPORT AL;
 IMPORT UnsafeWriter;
@@ -17,6 +17,7 @@ IMPORT Thread;
 IMPORT FS;
 IMPORT File;
 IMPORT RegularFile;
+IMPORT ProcUtils;
 
 <*FATAL Thread.Alerted*>
 
@@ -41,8 +42,8 @@ REVEAL
     fnr    : FileNamer.T;
     reader : TempReader.T;
   OVERRIDES
-    init := Init;
-    write := Write;
+    init     := Init;
+    write    := Write;
     writePll := WritePll;
   END;
 
@@ -52,10 +53,10 @@ PROCEDURE Init(t      : T;
                nNames : CARDINAL;
                fnr    : FileNamer.T) : T =
   BEGIN
-    t.ofn := ofn;
+    t.ofn    := ofn;
     t.nFiles := nFiles;
     t.nNames := nNames;
-    t.fnr := fnr;
+    t.fnr    := fnr;
     t.reader := NEW(TempReader.T).init(fnr);
     RETURN t
   END Init;
@@ -180,7 +181,9 @@ PROCEDURE Write(t : T) =
     END
   END Write;
 
-PROCEDURE WritePll(t : T; wthreads : CARDINAL) =
+PROCEDURE WritePll(t                 : T;
+                   wthreads          : CARDINAL;
+                   writeTraceCmdPath : Pathname.T) =
   (* read data from each file in temp directory and output
      in reordered trace format for fast aplot access *)
   VAR
@@ -276,8 +279,8 @@ PROCEDURE WritePll(t : T; wthreads : CARDINAL) =
        
     *)
 
-    WITH c = NEW(Thread.Condition),
-         mu = NEW(MUTEX),
+    WITH c      = NEW(Thread.Condition),
+         mu     = NEW(MUTEX),
          nNodes = t.nNames - 1,
          per = (nNodes - 1) DIV wthreads + 1 DO
 
@@ -285,18 +288,36 @@ PROCEDURE WritePll(t : T; wthreads : CARDINAL) =
                   Int(wthreads), Int(per)));
       
       FOR i := FIRST(wcs^) TO LAST(wcs^) DO
-        WITH wr = NEW(FileWr.T).init(FS.OpenFile(tFn, truncate := FALSE)),
-             lo = 1 + per * i,
+        WITH lo = 1 + per * i,
              hi = MIN(1 + per * (i + 1), t.nNames - 1) DO
-          
-          wcs[i] := NEW(WriteClosure).init(t.fnr,
-                                           wr,
-                                           c,
-                                           mu,
-                                           lo, hi,
-                                           dataStartByte,
-                                           NUMBER(time^))
-          
+
+          IF writeTraceCmdPath = NIL THEN
+            TRY
+              WITH wr = NEW(FileWr.T).init(FS.OpenFile(tFn, truncate := FALSE)) DO             
+                wcs[i] := NEW(IntWriteClosure).init(t.fnr,
+                                                    wr,
+                                                    c,
+                                                    mu,
+                                                    lo, hi,
+                                                    dataStartByte,
+                                                    NUMBER(time^))
+              END
+            EXCEPT
+              OSError.E(x) =>
+              Debug.Error(F("Unable to re-open output trace file \"%s\" [i=%s lo=%s hi=%s] for reading : OSError.END : %s", tFn, Int(lo), Int(hi), AL.Format(x)))
+            END   
+          ELSE
+            wcs[i] := NEW(ExtWriteClosure).init(c, mu,
+                                                lo, hi,
+                                                dataStartByte,
+                                                NUMBER(time^),
+                                                writeTraceCmdPath,
+                                                t.fnr.getWd(),
+                                                t.nFiles,
+                                                t.nNames,
+                                                tFn)
+          END
+            
         END
       END;
 
@@ -308,12 +329,6 @@ PROCEDURE WritePll(t : T; wthreads : CARDINAL) =
           LOCK mu DO Thread.Wait(mu, c) END;
         END;
 (*        EVAL Thread.Join(wcs[i].thr)*)
-        TRY
-          Wr.Close(wcs[i].wr)
-        EXCEPT
-          Wr.Failure(x) => Debug.Error(F("Trouble closing trace file for worker %s: Wr.Failure : %s", Int(i),
-            AL.Format(x)))
-        END
       END;
 
       Debug.Out("Write threads have finished.");
@@ -325,30 +340,125 @@ PROCEDURE WritePll(t : T; wthreads : CARDINAL) =
 
 TYPE
   WriteClosure = Thread.Closure OBJECT
-    fnr : FileNamer.T;
-    wr     : Wr.T;             
-    lo, hi : CARDINAL;
-    samples : CARDINAL;
-    mu : MUTEX;
-    c : Thread.Condition;
-    done := FALSE;
+    lo, hi        : CARDINAL;
+    samples       : CARDINAL;
+    mu            : MUTEX;
+    c             : Thread.Condition;
     dataStartByte : CARDINAL;
-    thr : Thread.T;
+    thr           : Thread.T;
+    
+    done := FALSE;
   METHODS
-    init(fnr : FileNamer.T;
-         wr : Wr.T;
-         c : Thread.Condition;
-         mu : MUTEX;
-         lo, hi : CARDINAL;
-         dataStartByte : CARDINAL;
-         samples : CARDINAL) : WriteClosure := WCInit;
-
     doneP() : BOOLEAN := WCDoneP;
     
+  END;
+
+  IntWriteClosure = WriteClosure OBJECT (* internal write *)
+    fnr    : FileNamer.T;
+    wr     : Wr.T;             
+  METHODS
+    init(fnr           : FileNamer.T;
+         wr            : Wr.T;
+         c             : Thread.Condition;
+         mu            : MUTEX;
+         lo, hi        : CARDINAL;
+         dataStartByte : CARDINAL;
+         samples       : CARDINAL) : WriteClosure := WCInit;
   OVERRIDES
     apply := WCApply;
   END;
 
+  ExtWriteClosure = WriteClosure OBJECT (* external write *)
+    wd     : Pathname.T;
+    nFiles : CARDINAL;
+    nNames : CARDINAL;
+    tFn    : Pathname.T;
+    wPath  : Pathname.T;
+  METHODS
+    init(c : Thread.Condition;
+         mu : MUTEX;
+         lo, hi : CARDINAL;
+         dataStartByte : CARDINAL;
+         samples : CARDINAL;
+         wPath : Pathname.T;
+         wd : Pathname.T;
+         nFiles, nNames : CARDINAL;
+         tFn : Pathname.T) : WriteClosure :=
+    XWCInit;
+  OVERRIDES
+    apply := XWCApply;
+  END;
+
+PROCEDURE XWCInit(xwc : ExtWriteClosure;
+
+                  (* shared args *)
+                  c : Thread.Condition;
+                  mu : MUTEX;
+                  lo, hi : CARDINAL;
+                  dataStartByte : CARDINAL;
+                  samples : CARDINAL;
+
+                  (* special args *)
+                  wPath : Pathname.T;
+                  wd : Pathname.T;
+                  nFiles, nNames : CARDINAL;
+                  tFn : Pathname.T) : WriteClosure =
+  BEGIN
+    xwc.mu := mu;
+    xwc.c := c;
+    xwc.samples := samples;
+    xwc.dataStartByte := dataStartByte;
+    xwc.lo := lo;
+    xwc.hi := hi;
+
+    xwc.wd := wd;
+    xwc.nFiles := nFiles;
+    xwc.nNames := nNames;
+    xwc.tFn := tFn;
+    xwc.wPath := wPath;
+    xwc.thr := Thread.Fork(xwc);
+    
+    RETURN xwc
+  END XWCInit;
+
+PROCEDURE XWCApply(xwc : ExtWriteClosure) : REFANY =
+  TYPE
+    TA = ARRAY OF TEXT;
+  BEGIN
+    WITH cmd = FN("%s %s %s %s %s %s %s %s %s",
+                  TA { xwc.wPath,
+                       xwc.wd,
+                       Int(xwc.dataStartByte),
+                       Int(xwc.samples),
+                       Int(xwc.nFiles),
+                       Int(xwc.nNames),
+                       Int(xwc.lo),
+                       Int(xwc.hi),
+                       xwc.tFn }) DO
+
+      Debug.Out(F("TraceFile.XWCApply: Running command \"%s\"", cmd));
+      WITH
+        completion = ProcUtils.RunText(cmd, NIL, NIL, NIL) DO
+        TRY
+          completion.wait()
+        EXCEPT
+          ProcUtils.ErrorExit(err) =>
+          Debug.Out(F("Command \"%s\" failed : ProcUtils.ErrorExit : %s",
+                      cmd, ProcUtils.FormatError(err)))
+        END
+      END
+    END;
+    
+    LOCK xwc.mu DO
+      (* done executing request, mark ourselves as free and signal *)
+      xwc.done := TRUE;
+    END;
+    
+    Thread.Signal(xwc.c);
+
+    RETURN NIL
+    
+  END XWCApply;
 
 PROCEDURE WCDoneP(cl : WriteClosure) : BOOLEAN =
   BEGIN
@@ -357,16 +467,15 @@ PROCEDURE WCDoneP(cl : WriteClosure) : BOOLEAN =
     END
   END WCDoneP;
 
-PROCEDURE WCInit(cl : WriteClosure;
-                 fnr : FileNamer.T;
-                 wr : Wr.T;
-                 c : Thread.Condition;
-                 mu : MUTEX;
-                 lo, hi : CARDINAL;
+PROCEDURE WCInit(cl            : IntWriteClosure;
+                 fnr           : FileNamer.T;
+                 wr            : Wr.T;
+                 c             : Thread.Condition;
+                 mu            : MUTEX;
+                 lo, hi        : CARDINAL;
                  dataStartByte : CARDINAL;
-                 samples : CARDINAL) : WriteClosure =
+                 samples       : CARDINAL) : WriteClosure =
   BEGIN
-    cl.fnr := fnr;
     cl.mu := mu;
     cl.c := c;
     cl.wr := wr;
@@ -374,11 +483,13 @@ PROCEDURE WCInit(cl : WriteClosure;
     cl.dataStartByte := dataStartByte;
     cl.lo := lo;
     cl.hi := hi;
+
+    cl.fnr := fnr;
     cl.thr := Thread.Fork(cl);
     RETURN cl
   END WCInit;
 
-PROCEDURE WCApply(cl : WriteClosure) : REFANY =
+PROCEDURE WCApply(cl : IntWriteClosure) : REFANY =
   VAR
     buff := NEW(REF ARRAY OF LONGREAL, cl.samples);
     fr := NEW(TempReader.T).init(cl.fnr);
@@ -388,6 +499,13 @@ PROCEDURE WCApply(cl : WriteClosure) : REFANY =
       FOR i := cl.lo TO cl.hi DO
         idx := i;
         BlockWrite(cl.wr, fr, i, cl.dataStartByte, buff^)
+      END;
+
+      TRY
+        Wr.Close(cl.wr)
+      EXCEPT
+        Wr.Failure(x) => Debug.Error(F("Trouble closing trace file for worker %s: Wr.Failure : %s", Int(idx),
+                                       AL.Format(x)))
       END;
       
       LOCK cl.mu DO

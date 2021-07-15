@@ -11,6 +11,7 @@ REVEAL
   OVERRIDES
     init := Init;
     name := Name;
+    getWd := GetWd;
   END;
 
 PROCEDURE Init(t : T; wd : Pathname.T; nFiles : CARDINAL; nNames : CARDINAL) : T=
@@ -18,6 +19,8 @@ PROCEDURE Init(t : T; wd : Pathname.T; nFiles : CARDINAL; nNames : CARDINAL) : T
     t.wd := wd; t.nFiles := nFiles; t.nNames := nNames;
     RETURN t
   END Init;
+
+PROCEDURE GetWd(t : T) : Pathname.T = BEGIN RETURN t.wd END GetWd;
 
 PROCEDURE Name(t : T; idx : CARDINAL) : Pathname.T =
   BEGIN

@@ -248,7 +248,8 @@ VAR
   wrWorkers := 1;
   regExList : RegExList.T := NIL;
 
-  fsdbCmdPath : Pathname.T := NIL;
+  fsdbCmdPath  : Pathname.T := NIL;
+  writeTraceCmdPath : Pathname.T := NIL;
 
   parseFmt := ParseFmt.Tr0;
 
@@ -270,6 +271,10 @@ BEGIN
     IF pp.keywordPresent("-fsdb") THEN
       fsdbCmdPath := pp.getNext();
       parseFmt := ParseFmt.Fsdb;
+    END;
+
+    IF pp.keywordPresent("-wrtrace") THEN
+      writeTraceCmdPath := pp.getNext()
     END;
     
     IF pp.keywordPresent("-scalevoltage") THEN
@@ -418,7 +423,7 @@ BEGIN
   WITH fnr = NEW(FileNamer.T).init(wd, nFiles, names.size()) DO
     IF doTrace THEN
       WITH tr = NEW(TraceFile.T).init(ofn, nFiles, names.size(), fnr) DO
-        tr.writePll(wthreads)
+        tr.writePll(wthreads, writeTraceCmdPath)
       END
     END;
 

@@ -9,6 +9,7 @@ TYPE
   Public = OBJECT METHODS
     init(wd : Pathname.T; nFiles : CARDINAL; nNames : CARDINAL) : T;
     name(idx : CARDINAL) : Pathname.T;
+    getWd() : Pathname.T;
   END;
 
 CONST Brand = "FileNamer";
