@@ -20,6 +20,7 @@ include ../java/src/com/avlsi/csp/csp2java/csp2java.package ../java/src/com/avls
 include ../external-tools-integration/cadence/virtuoso/virtuoso-integration.package ../external-tools-integration/cadence/virtuoso
 include ../c/gdsii/gdsii.package ../c/gdsii
 include ../scripts/support/support.package ../scripts/support
+include ../scripts/stdcell/stdcell.inc ../scripts/stdcell
 share/java/Jama-1.0.2.jar ../java/jars/Jama-1.0.2.jar 640 p
 share/java/antlr-2.7.2.jar ../java/jars/antlr-2.7.2.jar 640 p
 share/java/bcel-5.0.jar ../java/jars/bcel-5.0.jar 640 p
