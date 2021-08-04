@@ -14,10 +14,12 @@
                               (action importPostProcessAction)
                               (setCopyExact nil) ; lamda on CV to decide when to set CopyExact property
                               )
-  (let (PDK_DIR temp_lib cmd status CV)
+  (let (TEMP PDK_DIR temp_lib cmd status CV)
     ; stream in GDS into temp_lib library
     PDK_DIR = (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT")
     temp_lib = (sprintf nil "import_gds_%s" cellName)
+    TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
+    (GDSIIHierMakeLibrary temp_lib TEMP TechLibName)
     cmd = (strcat "strmin \\\n"
                   "-attachTechFileOfLib \"" TechLibName "\" \\\n"
                   "-layerMap \"" PDK_DIR "/share/Fulcrum/stream/strmin.layermap\" \\\n"
@@ -46,7 +48,6 @@
 
     ; delete temp_lib library
     (ddDeleteObj (ddGetObj temp_lib))
-    (shell (strcat "rm -rf " temp_lib))
 
     ; FindSubcells to recursively rename stuff
     (when action (FindSubcells ?action action ?CV CV))

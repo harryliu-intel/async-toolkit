@@ -522,7 +522,7 @@
         (pinMap nil)
         (calibreOffset t)
         )
-  (let (TEMP WDIR libPath logFile Command status ImportCV layoutCV floorplanCV
+  (let (TEMP WDIR logFile Command status ImportCV layoutCV floorplanCV
              win instmap CID templib fields short_name offset file origFile oas)
 
     ; choose libName and cellName
@@ -571,9 +571,9 @@
 
     ; create temp library and import cell
     (GDSIIHierMakeLibrary libName (getShellEnvVar "DFII_DIR") TechLibName)
-    libPath = (getShellEnvVar "DFII_DIR")
     logFile = (strcat file ".log")
-    templib = (strcat "import_temp_" top_name)
+    templib = (strcat "route_import_" top_name)
+    (GDSIIHierMakeLibrary templib TEMP TechLibName)
     status = (if oas
                (ImportOAS file templib top_name "layout")
                (ImportGDS file templib top_name ?prefix "" ?suffix "")
@@ -628,7 +628,6 @@
 
     ; delete import_oas_temp library
     (ddDeleteObj (ddGetObj templib))
-    (shell (strcat "rm -rf " templib))
 
     ; execute custom function
     (FinishRouterImport ?CV ImportCV)
