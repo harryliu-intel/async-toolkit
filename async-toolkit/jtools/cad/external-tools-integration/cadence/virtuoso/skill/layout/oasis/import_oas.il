@@ -38,7 +38,7 @@
 
     ; open imported top CV
     CV = (dbOpenCellViewByType libName cellName viewName)
-    (unless CV (error "unable to open import_oas_temp %s layout\n" cellName))
+    (unless CV (error "unable to open %s %s %s\n" libName cellName viewName))
 
     ; set CopyExact property
     (when setCopyExact
