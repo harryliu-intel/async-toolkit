@@ -10,6 +10,7 @@ foreach my $file (@ARGV) {
     (-r $file) or die "cannot read file $file\n";
     my $base = $file;
     $base =~ s/\.il$//g;
+    if (-e "${base}.cdswd") { die "${base}.cdswd already exists\n"; }
     system("mkdir -p ${base}.cdswd");
     system("$ENV{FULCRUM} mkcdswd --target-dir=${base}.cdswd " .
            "--dfII-dir=$ENV{DFII_DIR} --cast-path=$ENV{CAST_PATH} " .
