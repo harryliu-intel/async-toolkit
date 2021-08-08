@@ -180,9 +180,10 @@ EXTRACT       := extract
 EXTRACT_GRAYBOX := extract_graybox
 LEFDEFWRITE   := lefdefWrite
 LEFWRITE      := lefWrite
-HSIM          := hsim --reset-time=$(RESET_TIME) --start-time=$(START_TIME) --sim=hsim $(POWER_GROUND_RESET_ARGS) --extra-includes=$(CUSTOM_SPICE_INCLUDE)
-HSPICE        := hsim --reset-time=$(RESET_TIME) --start-time=$(START_TIME) --sim=hspice $(POWER_GROUND_RESET_ARGS) --extra-includes=$(CUSTOM_SPICE_INCLUDE)
-XA            := hsim --reset-time=$(RESET_TIME) --start-time=$(START_TIME) --sim=xa $(POWER_GROUND_RESET_ARGS) --extra-includes=$(CUSTOM_SPICE_INCLUDE)
+TIMES         := --reset-time=$(RESET_TIME) --start-time=$(START_TIME) --measure-time=$(MEASURE_TIME)
+HSIM          := hsim $(TIMES) --sim=hsim $(POWER_GROUND_RESET_ARGS)   --extra-includes=$(CUSTOM_SPICE_INCLUDE)
+HSPICE        := hsim $(TIMES) --sim=hspice $(POWER_GROUND_RESET_ARGS) --extra-includes=$(CUSTOM_SPICE_INCLUDE)
+XA            := hsim $(TIMES) --sim=xa $(POWER_GROUND_RESET_ARGS)     --extra-includes=$(CUSTOM_SPICE_INCLUDE)
 RAWIFY        := lve_raw --fulcrum-pdk-root='$(FULCRUM_PDK_PACKAGE_ROOT)'
 FRC           := frc --fulcrum-pdk-root='$(FULCRUM_PDK_PACKAGE_ROOT)'
 ASPICE        := local_aspice --disk-space=$(DISK_SPACE)

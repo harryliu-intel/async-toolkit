@@ -52,7 +52,7 @@ my $time           = 20e-9;
 my $slope_time     = 1e-9; # slopes of power supplies and reset
 my $reset_time     = 2e-9; # how long to reset circuit
 my $start_time     = 2e-9; # how long to wait after reset to start circuit
-my $measure_offset = 4e-9; # how much longer to wait before measuring
+my $measure_time   = 4e-9; # how much longer to wait before measuring
 my $rc_reduce = 1;
 my $power_window = "";
 my $env_spice_file = "";
@@ -88,6 +88,7 @@ sub usage() {
     $usage .= "    --prs-min-res=$prsminres\n";
     $usage .= "    --reset-time=$reset_time\n";
     $usage .= "    --start-time=$start_time\n";
+    $usage .= "    --measure-time=$measure_time\n";
     $usage .= "    --slope-time=$slope_time\n";
     $usage .= "    --measure-nodes=(, separated list of nodes with full subckt path specified)\n";
     $usage .= "    --power-window=(t1,t2) ( window for power measurements, default is 6ns to run-time)\n";
@@ -141,6 +142,8 @@ while (defined $ARGV[0] && $ARGV[0] =~ /^--(.*)/) {
         $reset_time = $value;
     } elsif ($flag eq "start-time") {
         $start_time = $value;
+    } elsif ($flag eq "measure-time") {
+        $measure_time = $value;
     } elsif ($flag eq "slope-time") {
         $slope_time = $value;
     } elsif ($flag eq "run-time") {
@@ -341,10 +344,10 @@ if (@out_nodes and $cap_load > 0) {
 }
 
 # adjust total run time
-$time += $reset_time + $start_time;
+$time += $reset_time + $start_time + $measure_time;
 
 # handle power measurement window
-my $power_window_start = $reset_time + $start_time + $measure_offset;
+my $power_window_start = $reset_time + $start_time + $measure_time;
 my $power_window_stop = $time;
 if($power_window=~/(\d+)\,(\d+)/)  {
     $power_window_start = $1;

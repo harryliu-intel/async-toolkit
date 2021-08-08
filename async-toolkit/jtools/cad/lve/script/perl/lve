@@ -414,6 +414,7 @@ my $hsimDeleteFiles= 1;
 my $monte_carlo=0;
 my $reset_time=2;
 my $start_time=2;
+my $measure_time=4;
 my $extract_corner="tttt";
 my $custom_config = "$ENV{PWD}/custom.config"; # extra jauto options
 my $tech_asp="tech.asp";
@@ -891,6 +892,7 @@ if ( ! @cells) {
 # derived variables
 $reset_time *= 1e-9; # convert to ns
 $start_time *= 1e-9; # convert to ns
+$measure_time *= 1e-9; # convert to ns
 # round and convert taus from ps to s
 our $prsTau = int($prsTau+0.5) * 1e-12;
 for (my $i=0; $i<@delayTau; $i++) { $delayTau[$i] = int($delayTau[$i] + 0.5) * 1e-12; }
@@ -1290,6 +1292,7 @@ PROBE_PORTS                      := $probePorts
 PROBE_GATES                      := $probeGates
 RESET_TIME                       := $reset_time
 START_TIME                       := $start_time
+MEASURE_TIME                     := $measure_time
 MINR                             := $minR
 MINC                             := $minC
 MINRC                            := $minRC
@@ -2682,6 +2685,7 @@ USAGE: $0 [options] cell[:env][:node,node,...]
     --monte-carlo=[$monte_carlo] (how many monte carlo seeds to run)
     --reset-time=[$reset_time] (how long to assert reset_node)
     --start-time=[$start_time] (how long after reset to raise start_node)
+    --measure-time=[$measure_time] (how long after start to measure power and frequency)
     --default-ground=[$default_voltage{'ground'}] (specify default ground voltage)
     --default-power=[$default_voltage{'power'}] (specify default power voltage)
     --default-reset=[$default_voltage{'reset'}] (specify default reset voltage)
@@ -3169,6 +3173,7 @@ sub processOption {
         elsif ($key eq "monte-carlo")       { $monte_carlo = $value; }
         elsif ($key eq "reset-time")        { $reset_time = $value; }
         elsif ($key eq "start-time")        { $start_time = $value; }
+        elsif ($key eq "measure-time")      { $measure_time = $value; }
         elsif ($key eq "probeTopPorts")     { $probeTopPorts = $value; }
         elsif ($key eq "probePorts")        { $probePorts = $value; }
         elsif ($key eq "probeGates")        { $probeGates = $value; }
