@@ -255,6 +255,8 @@ VAR
 
   threads  : CARDINAL := 1;
   wthreads : CARDINAL := 1;
+
+  interpolate := Fsdb.NoInterpolate;
   
 TYPE
   ParseFmt = { Tr0, Fsdb };
@@ -266,6 +268,10 @@ BEGIN
     END;
     IF pp.keywordPresent("-scaletime") THEN
       timeScaleFactor := pp.getNextLongReal()
+    END;
+
+    IF pp.keywordPresent("-resample") OR pp.keywordPresent("-R") THEN
+      interpolate := pp.getNextLongReal()
     END;
 
     IF pp.keywordPresent("-fsdb") THEN
@@ -404,7 +410,8 @@ BEGIN
                  restrictNodes,
                  regExList,
                  fsdbCmdPath,
-                 threads)
+                 threads,
+                 interpolate)
     END;
     IF doDebug THEN
       Debug.Out("ConvertTrace parsing done.")

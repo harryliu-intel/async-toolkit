@@ -15,6 +15,7 @@ IMPORT TextList;
 IMPORT Pathname;
 IMPORT Gox;
 IMPORT DrawnWidth;
+FROM TextUtils IMPORT ToLower;
 
 <*FATAL Thread.Alerted*>
 
@@ -23,6 +24,8 @@ CONST TE = Text.Equal;
 VAR doDebug := Debug.GetLevel() >= 10;
 CONST debugFins = FALSE;
 
+CONST Usage = "[-w <formula> | -W <technology>] [-f <input filename|->] [-r <root cell>] [-t <transistor cell type list>] [-T <transistor report suffix>] [-l <levels>]";
+      
 PROCEDURE ReadSpecialTransistorCells(transistorCellFn : Pathname.T) =
   BEGIN
     TRY
@@ -127,12 +130,26 @@ BEGIN
       END
     END;
 
+    IF pp.keywordPresent("-W") THEN
+      WITH tech = ToLower(pp.getNext()) DO
+        IF TE(tech, "n7") OR TE(tech, "n6") THEN
+          drawnWidth := NEW(DrawnWidth.T).init("(lambda(nfin) (if (= nfin 1) 30 (- (* 30 nfin) 22)))")
+        ELSE
+          Debug.Error(F("?unknown tech \"%s\"", tech))
+        END
+      END
+    END;
+    
     pp.skipParsed();
     pp.finish()
   EXCEPT
     ParseParams.Error => Debug.Error("Can't parse command line")
   END;
 
+  IF drawnWidth = NIL THEN
+    Debug.Error("?don't know how to convert fins to widths: must specify -w <formula> or -W <technology name>")
+  END;
+  
   IF rd = NIL THEN Debug.Error("Must provide filename") END;
 
   IF transistorCellFn # NIL THEN

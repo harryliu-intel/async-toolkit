@@ -25,4 +25,8 @@ module ("NameControl")
 
 table ("TextCard", "Text", "Cardinal")
 
+Module ("TraceFile")
+Module ("FileNamer")
+Module ("TempReader")
+
 library ("ctlib")

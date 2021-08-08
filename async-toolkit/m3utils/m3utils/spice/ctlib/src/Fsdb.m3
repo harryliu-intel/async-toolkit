@@ -156,6 +156,112 @@ PROCEDURE ReadBinaryNodeDataG(rd : Rd.T;
     END
   END ReadBinaryNodeDataG;
 
+PROCEDURE ReadInterpolatedBinaryNodeDataG(rd : Rd.T;
+                                          VAR nodeid : CARDINAL;
+                                          VAR buff : ARRAY OF LONGREAL;
+                                          interpolate : LONGREAL;
+                                          unit : LONGREAL) =
+  VAR
+    kw : TEXT;
+    n  : CARDINAL;
+  BEGIN
+    <*ASSERT interpolate # 0.0d0*>
+    TRY
+      LOOP
+        WITH line    = Rd.GetLine(rd),
+             reader  = NEW(TextReader.T).init(line) DO
+          IF doDebug THEN
+            Debug.Out(F("Fsdb.Parse.ReadInterpolatedBinaryNodeData line \"%s\"", line))
+          END;
+
+          IF reader.next(" ", kw, TRUE) THEN
+            IF    TE(kw, "E") THEN
+              Debug.Error(F("Got time mismatch: nodeid %s: line %s",
+                            Int(nodeid), line))
+            ELSIF TE(kw, "OK") THEN
+              WITH tag = Rd.GetChar(rd) DO
+                nodeid := UnsafeReader.ReadI(rd);
+                n      := UnsafeReader.ReadI(rd);
+
+                IF doDebug THEN
+                  Debug.Out(F("ReadInterpolatedBinaryNodeData tag %s nodeid %s n %s",
+                              Text.FromChar(tag),
+                              Int(nodeid),
+                              Int(n)))
+                END;
+
+                WITH hi = NEW(REF ARRAY OF CARDINAL, n),
+                     lo = NEW(REF ARRAY OF CARDINAL, n),
+                     vv = NEW(REF ARRAY OF LONGREAL, n) DO
+                  UnsafeReader.ReadUA (rd, hi^);
+                  UnsafeReader.ReadUA (rd, lo^);
+                  UnsafeReader.ReadLRA(rd, vv^);
+                  
+                  IF n = 0 AND NUMBER(buff) # 0 THEN
+                    Debug.Error("?no data")
+                  END;
+                  
+                  VAR
+                    j := 0;
+                    y := vv[j];
+                    py := y;
+                    dt := 0.0d0;
+                    pt := 0.0d0; 
+                  BEGIN
+                    FOR i := FIRST(buff) TO LAST(buff) DO
+                      WITH st = FLOAT(i, LONGREAL) * interpolate DO
+                        WHILE st > dt DO
+                          INC(j);
+                          IF j > LAST(vv^) THEN
+                            pt := dt;
+                            dt := LAST(LONGREAL)
+                          ELSE
+                            pt := dt;
+                            dt := (FLOAT(hi[j],LONGREAL) * TwoToThe32 + FLOAT(lo[j], LONGREAL)) * unit;
+                            py := y;
+                            y := vv[j]
+                          END
+                        END;
+                        
+                        <*ASSERT st <= dt*>
+                        
+                        IF    dt = LAST(LONGREAL) OR dt = st THEN
+                          (* fill with the last data point *)
+                          buff[i] := y
+                        ELSE
+                          <*ASSERT dt # pt*>
+                          (* normal interpolation case *)
+                          buff[i] := (st - pt) / (dt - pt) * (y - py) + py
+                        END
+                      END
+                    END
+                  END;
+                  
+                  IF doDebug THEN
+                    Debug.Out(F("ReadInterpolatedBinaryNodeData buff[0] %s",
+                                LR(buff[0])))
+                  END;
+                  RETURN
+                END
+              END
+            ELSE
+              Debug.Error(F("?syntax error : ReadInterpolatedBinaryNodeData: got \"%s\"",
+                            line))
+            END
+          END
+        END
+      END
+    EXCEPT
+      Rd.Failure(x) =>
+      Debug.Error("Unexpected Rd.Failure in ReadInterpolatedBinaryNodeData : " & AL.Format(x));
+      <*ASSERT FALSE*>
+    |
+      Rd.EndOfFile =>
+      Debug.Error("Unexpected Rd.EndOfFile in ReadInterpolatedBinaryNodeData");
+      <*ASSERT FALSE*>
+    END
+  END ReadInterpolatedBinaryNodeDataG;
+
 PROCEDURE GetLineUntilG(rd : Rd.T; term : TEXT; VAR line : TEXT) : BOOLEAN =
   BEGIN
     TRY
@@ -180,6 +286,9 @@ PROCEDURE GetLineUntilG(rd : Rd.T; term : TEXT; VAR line : TEXT) : BOOLEAN =
 
   (**********************************************************************)
   
+CONST
+  TwoToThe32 = FLOAT(Word.Shift(1, 32), LONGREAL);
+  
 PROCEDURE Parse(wd, ofn       : Pathname.T;
                 names         : TextSeq.T;
                 maxFiles      : CARDINAL;
@@ -197,10 +306,22 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
                 restrictNodes : TextSet.T;
                 restrictRegEx : RegExList.T;
                 cmdPath       : Pathname.T;
-                threads       : CARDINAL
+                threads       : CARDINAL;
+                interpolate   : LONGREAL
   )
   RAISES { } = (* lots of errors but they cause program crash, not exception *)
-  
+
+  (* I thought there was a compiler bug here, so I commented out these lines.
+
+     But there does not seem to be a compiler bug, so they should be OK to 
+     bring back *)
+
+  (* the idea here is that we use an external program "nanosimrd", which is
+     linked with Synopsys's C++ libraries, to read the actual files.
+
+     We communicate with nanosimrd over a pipe.  We send commands and pick up
+     responses.  Most of the responses are in ASCII, but for efficiency, some
+     are in packed binary format. *)
 
 (*    
   PROCEDURE PutCommand(cmd : TEXT) =
@@ -234,9 +355,9 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
     aNodes : CARDINAL;
 
     duplicates := NEW(TextCardTbl.Default).init();
+
+    doInterpolate := interpolate # NoInterpolate;
     
-  CONST
-    TwoToThe32 = FLOAT(Word.Shift(1, 32), LONGREAL);
   BEGIN
 
     <*FATAL OSError.E*>
@@ -244,12 +365,17 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
       stdin  := ProcUtils.GimmeWr(wr);
       stdout := ProcUtils.GimmeRd(rd);
     END;
-    
-    completion := ProcUtils.RunText(cmdPath & " " & fsdbPath,
-                                    stdin := stdin,
-                                    stderr := ProcUtils.Stderr(),
-                                    stdout := stdout);
 
+    WITH cmd = cmdPath & " " & fsdbPath DO
+      IF doDebug THEN
+        Debug.Out(F("Fsdb.Parse running thread with command \"%s\"", cmd))
+      END;
+      
+      completion := ProcUtils.RunText(cmd,
+                                      stdin := stdin,
+                                      stderr := ProcUtils.Stderr(),
+                                      stdout := stdout);
+    END;
 
     TRY
       PutCommandG(wr, "S");
@@ -291,6 +417,30 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
                     Int(timesteps.size()),
                     LR(timesteps.get(0)),
                     LR(timesteps.get(timesteps.size()-1))));
+      END;
+
+      IF doInterpolate THEN
+        (* rewrite all timesteps based on interpolation *)
+        WITH lo  = timesteps.get(0),
+             hi  = timesteps.get(timesteps.size() - 1),
+             cnt = (hi - lo) / interpolate,
+             n   = TRUNC(cnt) DO
+
+          timesteps := timesteps.init();
+
+          FOR i := 0 TO n - 1 DO
+            WITH t = interpolate * FLOAT(i, LONGREAL) DO
+              timesteps.addhi(t)
+            END
+          END;
+          
+          IF doDebug THEN
+            Debug.Out(F("interpolating : hi / interpolate = %s, n = %s : min %s max %s",
+                        LR(cnt), Int(n),
+                        LR(timesteps.get(0)), LR(timesteps.get(timesteps.size()-1))))
+          END
+          
+        END
       END;
 
       PutCommandG(wr, "U");
@@ -469,7 +619,9 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
                                                    cmdPath,
                                                    fsdbPath,
                                                    voltageScaleFactor,
-                                                   voltageOffset)
+                                                   voltageOffset,
+                                                   interpolate,
+                                                   unit)
               END;
               
               FOR i := FIRST(fileTab^) TO LAST(fileTab^) DO
@@ -548,7 +700,9 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
                                        wr, 
                                        timesteps.size(),
                                        voltageScaleFactor,
-                                       voltageOffset)
+                                       voltageOffset,
+                                       interpolate,
+                                       unit)
             END
           END
         END
@@ -616,14 +770,16 @@ TYPE
     thr     : Thread.T;
     doExit := FALSE;
     
-    voltageScaleFactor, voltageOffset : LONGREAL                                   ;
+    voltageScaleFactor, voltageOffset : LONGREAL;
+    interpolate, unit : LONGREAL;
   METHODS
     init(c, d : Thread.Condition;
          mu : MUTEX;
          idxMap : CardSeq.T;
          nsteps : CARDINAL;
          cmdPath, fsdbPath : Pathname.T;
-         voltageScaleFactor, voltageOffset : LONGREAL
+         voltageScaleFactor, voltageOffset : LONGREAL;
+         interpolate, unit : LONGREAL;
     ) : GenClosure  := GenInit;
     task(taskWr : Wr.T; taskIds : CardSeq.T)  := GenTask;
     freeP() : BOOLEAN := GenFreeP;
@@ -646,7 +802,8 @@ PROCEDURE GenInit(cl : GenClosure;
                   idxMap : CardSeq.T;
                   nsteps : CARDINAL;
                   cmdPath, fsdbPath : Pathname.T;
-                  voltageScaleFactor, voltageOffset : LONGREAL
+                  voltageScaleFactor, voltageOffset : LONGREAL;
+                  interpolate, unit : LONGREAL
   ) : GenClosure =
   BEGIN
     cl.mu := mu;
@@ -659,6 +816,8 @@ PROCEDURE GenInit(cl : GenClosure;
     cl.thr := Thread.Fork(cl);
     cl.voltageScaleFactor := voltageScaleFactor;
     cl.voltageOffset := voltageOffset;
+    cl.interpolate := interpolate;
+    cl.unit := unit;
     RETURN cl
   END GenInit;
 
@@ -761,7 +920,9 @@ PROCEDURE GenApply(cl : GenClosure) : REFANY =
                                  cmdWr,
                                  cl.nsteps,
                                  cl.voltageScaleFactor,
-                                 cl.voltageOffset
+                                 cl.voltageOffset,
+                                 cl.interpolate,
+                                 cl.unit
                                  );
 
         LOCK cl.mu DO
@@ -797,7 +958,8 @@ PROCEDURE GeneratePartialTraceFile(wr      : Wr.T;
                                    cmdWr : Wr.T;
 
                                    nSteps : CARDINAL;
-                                   voltageScaleFactor, voltageOffset : LONGREAL
+                                   voltageScaleFactor, voltageOffset : LONGREAL;
+                                   interpolate, unit : LONGREAL
                                    ) =
   VAR
     buff := NEW(REF ARRAY OF LONGREAL, nSteps);
@@ -818,8 +980,12 @@ PROCEDURE GeneratePartialTraceFile(wr      : Wr.T;
 
     PutCommandG(cmdWr, "L");
     EVAL GetResponseG(cmdRd, "LR");
-    
-    PutCommandG(cmdWr, "t");
+
+    IF interpolate = NoInterpolate THEN
+      PutCommandG(cmdWr, "t")
+    ELSE
+      PutCommandG(cmdWr, "x")
+    END;
 
     FOR i := 0 TO fileTab.size() - 1 DO
       WITH inId  = fileTab.get(i),
@@ -830,7 +996,12 @@ PROCEDURE GeneratePartialTraceFile(wr      : Wr.T;
                       Int(inId), Int(outId)));
         END;
         
-        ReadBinaryNodeDataG(cmdRd, node, buff^);
+        IF interpolate = NoInterpolate THEN
+          ReadBinaryNodeDataG(cmdRd, node, buff^);
+        ELSE
+          ReadInterpolatedBinaryNodeDataG(cmdRd, node, buff^, interpolate, unit);
+        END;
+        
         IF node # inId THEN
           Debug.Error(F("unexpected node %s # inId %s", Int(node), Int(inId)))
         END;
@@ -859,19 +1030,38 @@ PROCEDURE GeneratePartialTraceFile(wr      : Wr.T;
       END
     END;
 
-    EVAL GetResponseG(cmdRd, "tR");
+    IF interpolate = NoInterpolate THEN
+      EVAL GetResponseG(cmdRd, "tR")
+    ELSE
+      EVAL GetResponseG(cmdRd, "xR")
+    END;
     
     PutCommandG(cmdWr, "U");
     EVAL GetResponseG(cmdRd, "UR")
   END GeneratePartialTraceFile;
+
+
+PROCEDURE TryRemoveSuffix(from        : TEXT;
+                          suffix      : TEXT;
+                          VAR remains : TEXT) : BOOLEAN =
+  BEGIN
+    IF TextUtils.HaveSuffix(from, suffix) THEN
+      remains := TextUtils.RemoveSuffix(from, suffix);
+      RETURN TRUE
+    ELSE
+      RETURN FALSE
+    END
+  END TryRemoveSuffix;
   
 PROCEDURE ParseUnitStr(unitSpec : TEXT) : LONGREAL =
+  VAR numStr : TEXT;
   BEGIN
     FOR i := FIRST(Units) TO LAST(Units) DO
       WITH u = Units[i] DO
-        IF TextUtils.HaveSuffix(unitSpec, u.sfx) THEN
+        IF TryRemoveSuffix(unitSpec, u.sfx, numStr) OR
+           TryRemoveSuffix(unitSpec, u.sfx & "s", numStr) THEN
           TRY
-            WITH val = Scan.LongReal(TextUtils.RemoveSuffix(unitSpec, u.sfx)),
+            WITH val = Scan.LongReal(numStr), 
                  res = val * u.val DO
               IF doDebug THEN
                 Debug.Out(F("ParseUnitStr \"%s\" : val %s u.val %s res %s",

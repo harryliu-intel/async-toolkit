@@ -25,7 +25,11 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
                 restrictNodes : TextSet.T;
                 restrictRegEx : RegExList.T;
                 cmdPath       : Pathname.T;
-                threads       : CARDINAL )
+                threads       : CARDINAL;
+                interpolate   : LONGREAL)
   RAISES { Rd.Failure, ShortRead, SyntaxError };
 
+CONST NoInterpolate = FIRST(LONGREAL); (* do not interpolate *)
+        
 END Fsdb.
+

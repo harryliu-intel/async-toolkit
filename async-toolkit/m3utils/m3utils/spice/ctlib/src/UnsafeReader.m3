@@ -39,4 +39,24 @@ PROCEDURE ReadLRA(rd : Rd.T; VAR q : ARRAY OF LONGREAL)
     END
   END ReadLRA;
 
+PROCEDURE ReadUA(rd : Rd.T; VAR q : ARRAY OF CARDINAL)
+  RAISES { Rd.EndOfFile, Rd.Failure, Thread.Alerted } =
+  VAR
+    buff        := NEW(REF ARRAY OF CHAR, 4);
+  BEGIN
+    IF doDebug THEN
+      Debug.Out("ReadUA start, NUMBER(q)=" & Fmt.Int(NUMBER(q)))
+    END;
+    FOR i := FIRST(q) TO LAST(q) DO
+      IF doDebug THEN
+        Debug.Out("ReadUA attempting read of 4 bytes")
+      END;
+      WITH n = Rd.GetSub(rd, buff^) DO
+        <*ASSERT n <= 4*>
+        IF n # 4 THEN RAISE Rd.EndOfFile END
+      END;
+      q[i] := LOOPHOLE(buff, REF ARRAY OF U)[0];
+    END
+  END ReadUA;
+
 BEGIN END UnsafeReader.

@@ -64,10 +64,6 @@ static void
 BuildVar(fsdbTreeCBDataVar *var);
 
 
-static void 
-__PrintTimeValChng(ffrVCTrvsHdl vc_trvs_hdl, 
-		   void *time, byte_T *vc_ptr);
-
 //////////////////////////////////////////////////////////////////////
 //
 // integer dequeue
@@ -122,6 +118,81 @@ void
 int_dq_free(int_dq *q)
 {
   int_dq *op, *p=q->next;
+
+  while (p != q) {
+    op = p;
+    p = p->next;
+    free(op);
+  }
+
+  q->next = q;
+  q->prev = q;
+}
+
+
+//////////////////////////////////////////////////////////////////////
+
+typedef struct {
+  fsdbTag32 htime, ltime;
+  float     sigval;
+} extended_t;
+
+//////////////////////////////////////////////////////////////////////
+//
+// extended dequeue
+//
+
+typedef struct ext_dq {
+  extended_t val;
+  struct ext_dq *prev, *next;
+} ext_dq;
+
+ext_dq *
+new_ext_dq(void)
+{
+  // allocate and set up sentinel
+  ext_dq *res = (ext_dq *)malloc(sizeof(ext_dq)); 
+  res->val.htime =  0xdeadbeef;
+  res->val.ltime =  0xbeefdead;
+  
+  res->next = res;
+  res->prev = res;
+
+  return res;
+}
+
+void
+ext_dq_addlo(ext_dq *q, const extended_t *valp)
+{
+  ext_dq *newd = (ext_dq *)malloc(sizeof(ext_dq));
+
+  newd->val = *valp;
+
+  q->next->prev = newd;
+  newd->next = q->next;
+
+  newd->prev = q;
+  q->next = newd;
+}
+
+void
+ext_dq_addhi(ext_dq *q, const extended_t *valp)
+{
+  ext_dq *newd = (ext_dq *)malloc(sizeof(ext_dq));
+
+  newd->val = *valp;
+  
+  q->prev->next = newd;
+  newd->prev = q->prev;
+
+  newd->next = q;
+  q->prev = newd;
+}
+
+void
+ext_dq_free(ext_dq *q)
+{
+  ext_dq *op, *p=q->next;
 
   while (p != q) {
     op = p;
@@ -211,241 +282,6 @@ setup(char *fn)
     fsdb_obj->ffrReadScopeVarTree();
 }
 
-int
-the_rest(void)
-{
-         
-    //
-    // Each unique var is represented by a unique idcode in fsdb 
-    // file, these idcodes are positive integer and continuous from 
-    // the smallest to the biggest one. So the maximum idcode also 
-    // means that how many unique vars are there in this fsdb file. 
-    //
-    // Application can know the maximum var idcode by the following
-    // API:
-    //
-    //		ffrGetMaxVarIdcode()
-    //
-    fsdbVarIdcode max_var_idcode = fsdb_obj->ffrGetMaxVarIdcode();
-
-
-    //
-    // In order to load value changes of vars onto memory, application
-    // has to tell fsdb reader about what vars it's interested in. 
-    // Application selects the interested vars by giving their idcodes
-    // to fsdb reader, this is done by the following API:
-    //
-    //		ffrAddToSignalList()
-    //
-
-    const int maxSignals = 100000;
-
-#define MIN(x,y) ((x) > (y) ? (y) : (x))
-
-    int myMaxSignal = MIN(maxSignals,max_var_idcode);
-    
-    int i;
-    for (i = FSDB_MIN_VAR_IDCODE; i <= myMaxSignal; i++)
-    	fsdb_obj->ffrAddToSignalList(i);
-
-
-    //
-    // Load the value changes of the selected vars onto memory. Note 
-    // that value changes of unselected vars are not loaded.
-    //
-    fsdb_obj->ffrLoadSignals();
-
-
-    //
-    // In order to traverse the value changes of a specific var,
-    // application must create a value change traverse handle for 
-    // that sepcific var. Once the value change traverse handle is 
-    // created successfully, there are lots of traverse functions 
-    // available to traverse the value changes backward and forward, 
-    // or jump to a sepcific time, etc.
-    //
-    // Use signal idcode = 1 as example to demonstrate how to load
-    // and traverse analog signals.  
-    //
-    ffrVCTrvsHdl vc_trvs_hdl;
-    for (int code=FSDB_MIN_VAR_IDCODE; code <= myMaxSignal; ++code) {
-
-      vc_trvs_hdl =
-	fsdb_obj->ffrCreateVCTraverseHandle(code);
-      
-      if (NULL == vc_trvs_hdl) {
-	fprintf(stderr, "Failed to create a traverse handle for var (%u)\n", 
-		code);
-	exit(FSDB_RC_OBJECT_CREATION_FAILED);
-      }
-      
-
-
-    byte_T    *time;
-    int	      glitch_num;
-    byte_T    *vc_ptr;
-
-    if (FSDB_XTAG_TYPE_DOUBLE == xtag_type) {
-        time = (byte_T*)calloc(8, sizeof(byte_T));
-    }
-    else if (FSDB_XTAG_TYPE_FLOAT == xtag_type) {
-        time = (byte_T*)calloc(4, sizeof(byte_T));
-    }
-    else if (FSDB_XTAG_TYPE_HL == xtag_type) {
-        time = (byte_T*)calloc(8, sizeof(byte_T));
-    }
-
-    //
-    // Check to see if this var has value changes or not.
-    //
-    if (FALSE == vc_trvs_hdl->ffrHasIncoreVC()) {
-        fprintf(stderr, 
-	        "This var(%u) has no value change at all.\n", 
-		code);
-    }
-    else {
-        //
-        // Get the maximum time(xtag) where has value change. 
-        //
-        if (FSDB_RC_SUCCESS != 
-	    vc_trvs_hdl->ffrGetMaxXTag((void*)time)) {
-	    fprintf(stderr, "should not happen.\n");
-	    exit(FSDB_RC_FAILURE);
- 	}
-
-        if (FSDB_XTAG_TYPE_DOUBLE == xtag_type) {
-            if (FSDB_RC_SUCCESS != 
-                fsdb_obj->ffrGetMaxFsdbTagDouble((fsdbTagDouble*)time)) {
-                fprintf(stderr, "should not happen.\n");
-                exit(FSDB_RC_FAILURE);
-            }
-            if(verbose)fprintf(stderr, "trvs hdl(%u): maximum time is (%10g).\n", 
-                    code, *(double*)time);
-        }
-        else if (FSDB_XTAG_TYPE_FLOAT == xtag_type) {
-            if (FSDB_RC_SUCCESS != 
-                fsdb_obj->ffrGetMaxFsdbTagFloat((fsdbTagFloat*)time)) {
-                fprintf(stderr, "should not happen.\n");
-                exit(FSDB_RC_FAILURE);
-            }
-            if(verbose)fprintf(stderr, "trvs hdl(%u): maximum time is (%10g).\n",
-                    code, *(float*)time);
-        }
-        else {
-            if (FSDB_RC_SUCCESS != 
-                fsdb_obj->ffrGetMaxFsdbTag64((fsdbTag64*)time)) {
-                fprintf(stderr, "should not happen.\n");
-                exit(FSDB_RC_FAILURE);
-            }
-            if(verbose)fprintf(stderr, "trvs hdl(%u): maximum time is (%u %u).\n", 
-                    code,
-                    ((fsdbTag64*)time)->H, 
-                    ((fsdbTag64*)time)->L);
-        }
-           
-        //
-        // Get the minimum time(xtag) where has value change. 
-        // 
-
-        if (FSDB_XTAG_TYPE_DOUBLE == xtag_type) {
-            if (FSDB_RC_SUCCESS != 
-                fsdb_obj->ffrGetMinFsdbTagDouble((fsdbTagDouble*)time)) {
-                fprintf(stderr, "should not happen.\n");
-                exit(FSDB_RC_FAILURE);
-            }
-            if(verbose)fprintf(stderr, "trvs hdl(%u): minimum time is (%10g).\n", 
-                    code, *(double*)time);
-        }
-        else if (FSDB_XTAG_TYPE_FLOAT == xtag_type) {
-            if (FSDB_RC_SUCCESS != 
-                fsdb_obj->ffrGetMinFsdbTagFloat((fsdbTagFloat*)time)) {
-                fprintf(stderr, "should not happen.\n");
-                exit(FSDB_RC_FAILURE);
-            }
-            if(verbose)fprintf(stderr, "trvs hdl(%u): minimum time is (%10g).\n",
-                    code, *(float*)time);
-        }
-        else {
-            if (FSDB_RC_SUCCESS != 
-                fsdb_obj->ffrGetMinFsdbTag64((fsdbTag64*)time)) {
-                fprintf(stderr, "should not happen.\n");
-                exit(FSDB_RC_FAILURE);
-            }
-            if(verbose)fprintf(stderr, "trvs hdl(%u): minimum time is (%u %u).\n", 
-                    code,
-                    ((fsdbTag64*)time)->H, 
-                    ((fsdbTag64*)time)->L);
-        }
-
-        str_T scaleunit = fsdb_obj->ffrGetScaleUnit();
-
-        fprintf(stderr, "scaleunit = %s", scaleunit ? scaleunit : "**NULL**");
-        
-        
-        //
-        // Jump to the specific time specified by the parameter of 
-	// ffrGotoXTag(). The specified time may have or have not 
-	// value change; if it has value change, then the return time 
-	// is exactly the same as the specified time; if it has not 
-	// value change, then the return time will be aligned forward
-	// (toward smaller time direction). 
-        //
-        // There is an exception for the jump alignment: If the 
-	// specified time is smaller than the minimum time where has 
-	// value changes, then the return time will be aligned to the 
-	// minimum time.
-        //
-        if (FSDB_RC_SUCCESS != vc_trvs_hdl->ffrGotoXTag((void*)time)) {
-	    fprintf(stderr, "should not happen.\n");
-	    exit(FSDB_RC_FAILURE);
-        }	
-    
-        //
-        // Get the value change. 
-        //
-        if (FSDB_RC_SUCCESS == vc_trvs_hdl->ffrGetVC(&vc_ptr))
-            __PrintTimeValChng(vc_trvs_hdl, time, vc_ptr);
-         
-    
-        //
-        // Value change traverse handle keeps an internal index
-        // which points to the current time and value change; each
-        // traverse API may move that internal index backward or
-        // forward.
-        // 
-        // ffrGotoNextVC() moves the internal index backward so
-        // that it points to the next value change and the time
-        // where the next value change happened.
-        //  
-        for ( ; FSDB_RC_SUCCESS == vc_trvs_hdl->ffrGotoNextVC(); ) {
-            vc_trvs_hdl->ffrGetXTag(time);
-      	    vc_trvs_hdl->ffrGetVC(&vc_ptr);
-      	    __PrintTimeValChng(vc_trvs_hdl, time, vc_ptr);
-        }
-    }
-    // 
-    // free this value change traverse handle 
-    //
-    vc_trvs_hdl->ffrFree();
-
-    }
-    
-    fprintf(stderr, "Watch Out Here!\n");
-    fprintf(stderr, "We are going to reset the signal list.\n");
-    fprintf(stderr, "Press enter to continue running.");
-    getchar();
-
-    fsdb_obj->ffrResetSignalList();
-    for (i = FSDB_MIN_VAR_IDCODE; i <= myMaxSignal; i++) {
-    	if (TRUE == fsdb_obj->ffrIsInSignalList(i)) 
-	    fprintf(stderr, "var idcode %d is in signal list.\n", i);
-	else
-	    fprintf(stderr, "var idcode %d is not in signal list.\n", i);
-    }
-    fsdb_obj->ffrUnloadSignals();
-    fsdb_obj->ffrClose();
-    return 0;
-}
 
 #define CMDBUFSIZ 2048
 
@@ -486,10 +322,10 @@ load_signals(void)
   fprintf(stderr, "signals loaded\n");
 }
 
-#define TRAVERSE_TIME   1
-#define TRAVERSE_SIGNAL 2
-#define TRAVERSE_BINARY 4
-
+#define TRAVERSE_TIME     1
+#define TRAVERSE_SIGNAL   2
+#define TRAVERSE_BINARY   4
+#define TRAVERSE_EXTENDED 8
 
 static void 
 PrintTimeValChng(ffrVCTrvsHdl   vc_trvs_hdl, 
@@ -498,19 +334,21 @@ PrintTimeValChng(ffrVCTrvsHdl   vc_trvs_hdl,
                  int            bytesPerBit,
                  unsigned       mode,
                  char          *buff,
-                 unsigned       tidx)
+                 unsigned       tidx,
+                 unsigned       lim,
+                 extended_t    *xval)
 { 
-    static byte_T   buffer[FSDB_MAX_BIT_SIZE+1];
-    byte_T         *ret_vc;
-    uint_T          i;
-    fsdbVarType     var_type; 
-    fsdbTag64       xtag_64;
     FILE           *stream=stdout;
 
     // print time
 
     if (mode & TRAVERSE_BINARY) {
 
+      if (tidx >= lim) {
+        fprintf(stderr, "Error: time array overrun @ %s\n", tidx);
+        exit(-1);
+      }
+      
       switch (bytesPerBit) {
       case FSDB_BYTES_PER_BIT_4B:
         ((float *)buff)[tidx] = *(float*)vc_ptr;	
@@ -523,6 +361,25 @@ PrintTimeValChng(ffrVCTrvsHdl   vc_trvs_hdl,
         ((float *)buff)[tidx] = 0.0;
         break;
       }
+    } else if (mode & TRAVERSE_EXTENDED) {
+      xval->htime = ((fsdbTag64*)time)->H;
+      xval->ltime = ((fsdbTag64*)time)->L;
+
+      switch (bytesPerBit) {
+      case FSDB_BYTES_PER_BIT_4B:
+        xval->sigval = *(float*)vc_ptr;	
+        break;
+          
+      case FSDB_BYTES_PER_BIT_8B:
+        xval->sigval = *(double*)vc_ptr;
+        break;
+          
+      default:
+        fprintf(stream, "ERROR DIGITAL\n");
+        exit(-1);
+        break;
+      }
+        
     } else {
       
       if (mode & TRAVERSE_TIME) 
@@ -614,6 +471,15 @@ timemem_compare(const time_memory_t     *mem,
 //////////////////////////////////////////////////////////////////////
 
 void
+fput32(unsigned u, FILE *stream)
+{
+  fputc((u           ) & 0xff, stream);
+  fputc((u      >>  8) & 0xff, stream);
+  fputc((u      >> 16) & 0xff, stream);
+  fputc((u      >> 24) & 0xff, stream);
+}
+
+void
 do_timecheck(unsigned *timecheck_ok,
              const time_memory_t *mem,
              unsigned idx,
@@ -636,6 +502,12 @@ traverse_one_signal(int        idcode,
   byte_T *vc_ptr;
   fsdbTag64 *time = (fsdbTag64 *)calloc(8, sizeof(byte_T));
   char *buff = NULL;
+  extended_t x;
+  ext_dq *extdata = NULL;
+  unsigned nx=0;
+
+  if (mode & TRAVERSE_EXTENDED)
+    extdata = new_ext_dq();
 
   assert (sizeof(float) == 4);
 
@@ -670,11 +542,12 @@ traverse_one_signal(int        idcode,
     exit(FSDB_RC_FAILURE);
   }
   
-  if(verbose)fprintf(stderr, "trvs hdl(%u): minimum time is (%u %u).\n", 
-          idcode,
-          ((fsdbTag64*)time)->H, 
-          ((fsdbTag64*)time)->L);
-
+  if(verbose)
+    fprintf(stderr, "trvs hdl(%u): minimum time is (%u %u).\n", 
+            idcode,
+            ((fsdbTag64*)time)->H, 
+            ((fsdbTag64*)time)->L);
+  
   
   //
   // Jump to the specific time specified by the parameter of 
@@ -691,14 +564,14 @@ traverse_one_signal(int        idcode,
   //
 
   if (FSDB_RC_SUCCESS != vc_trvs_hdl->ffrGotoXTag((void*)time)) {
-    fprintf(stderr, "(%u) should not happen.\n", idcode);
+    fprintf(stderr, "(%u) jump to tag H=%u L=%u failed : should not happen.\n", idcode, time->H, time->L);
     exit(FSDB_RC_FAILURE);
   }	
   
   //
   // Get the value change. 
   //
-  if (time_mode & TIME_MEMORIZE)
+  if (time_mode & TIME_MEMORIZE) 
     timemem_addhi(the_timemem, time);
 
   unsigned timecheck_ok = 1;
@@ -710,8 +583,21 @@ traverse_one_signal(int        idcode,
   if (time_mode & TIME_CHECK)
     do_timecheck(&timecheck_ok, the_timemem, 0, time);
   
-  if (FSDB_RC_SUCCESS == vc_trvs_hdl->ffrGetVC(&vc_ptr))
-    PrintTimeValChng(vc_trvs_hdl, time, vc_ptr, bytesPerBit, mode, buff, 0);
+  if (FSDB_RC_SUCCESS == vc_trvs_hdl->ffrGetVC(&vc_ptr)) {
+    PrintTimeValChng(vc_trvs_hdl,
+                     time,
+                     vc_ptr,
+                     bytesPerBit,
+                     mode,
+                     buff,
+                     0,
+                     0,
+                     &x);
+    if (mode & TRAVERSE_EXTENDED) {
+      ext_dq_addhi(extdata, &x);
+      ++nx;
+    }
+  }
 
   //
   // Value change traverse handle keeps an internal index
@@ -735,7 +621,20 @@ traverse_one_signal(int        idcode,
     if (time_mode & TIME_CHECK)
       timecheck_ok &= timemem_compare(the_timemem, i, time);
     
-    PrintTimeValChng(vc_trvs_hdl, time, vc_ptr, bytesPerBit, mode, buff, i);
+    PrintTimeValChng(vc_trvs_hdl,
+                     time,
+                     vc_ptr,
+                     bytesPerBit,
+                     mode,
+                     buff,
+                     i,
+                     the_timemem ? the_timemem->p : 0,
+                     &x);
+
+    if (mode & TRAVERSE_EXTENDED) {
+      ext_dq_addhi(extdata, &x);
+      ++nx;
+    }
   }
 
   vc_trvs_hdl->ffrFree();
@@ -752,16 +651,10 @@ traverse_one_signal(int        idcode,
       
       fprintf(stdout, "OK\n"); // we have to tell the driver data is coming
       fprintf(stdout, "N");
-      fputc((idcode      ) & 0xff, stdout);
-      fputc((idcode >>  8) & 0xff, stdout);
-      fputc((idcode >> 16) & 0xff, stdout);
-      fputc((idcode >> 24) & 0xff, stdout);
 
-      fputc((n           ) & 0xff, stdout);
-      fputc((n      >>  8) & 0xff, stdout);
-      fputc((n      >> 16) & 0xff, stdout);
-      fputc((n      >> 24) & 0xff, stdout);
-
+      fput32(idcode, stdout);
+      fput32(n, stdout);
+      
       fflush(stdout);
 
       if(verbose)
@@ -777,8 +670,48 @@ traverse_one_signal(int        idcode,
     if (time_mode & TIME_CHECK)
       fprintf(stdout, "TIMECHECK %d\n", timecheck_ok);
   }
+
+  if (mode & TRAVERSE_EXTENDED) {
+    ext_dq *p = extdata->next;
+    unsigned *ht = (unsigned *)malloc(sizeof(unsigned) * nx);
+    unsigned *lt = (unsigned *)malloc(sizeof(unsigned) * nx);
+    float    *vv = (float *)   malloc(sizeof(float)    * nx);
+    int i=0;
+
+    if(verbose)
+      fprintf(stderr, "extended binary traversal tag N nodeid %u count %u\n",
+              idcode, nx);
+    
+    fprintf(stdout, "OK\n"); // we have to tell the driver data is coming
+    fprintf(stdout, "x");
+
+    fput32(idcode, stdout);
+    fput32(nx,     stdout);
+   
+    while (p != extdata) {
+
+      ht[i] = p->val.htime;
+      lt[i] = p->val.ltime;
+      vv[i] = p->val.sigval;
+
+      ++i;
+      p = p->next;
+    }
+
+    fflush(stdout);
+    
+    write(fileno(stdout), ht, nx * sizeof(unsigned)); 
+    write(fileno(stdout), lt, nx * sizeof(unsigned)); 
+    write(fileno(stdout), vv, nx * sizeof(float)); 
+
+    free(ht);
+    free(lt);
+    free(vv);
+    
+  }
   
-  if (buff) free(buff);
+  if (buff)    free(buff);
+  if (extdata) ext_dq_free(extdata);
 }
 
 typedef struct namerec {
@@ -864,7 +797,9 @@ main(int argc, char *argv[])
 
     (void)setup(argv[1]);
 
-    char buff[CMDBUFSIZ], *tok;
+    char buff[CMDBUFSIZ];
+    char *tok;
+    
     while(fgets(buff, CMDBUFSIZ, stdin)) {
       if(verbose)fprintf(stderr, "got line \"%s\"\n", buff);
 
@@ -931,6 +866,15 @@ main(int argc, char *argv[])
         fprintf(stdout, "tR\n");
         break;
 
+      case 'x': // traverse signals (binary extended)
+        for (int_dq *p=active->next; p != active; p = p->next) {
+          traverse_one_signal(p->val,
+                              TRAVERSE_EXTENDED,
+                              0);
+        }
+        fprintf(stdout, "xR\n");
+        break;
+
       case 'N':
         {
           unsigned lo=atoi(strtok(NULL, " "));
@@ -979,38 +923,6 @@ main(int argc, char *argv[])
     fsdb_obj->ffrClose();
     
     return 0;
-}
-
-static void 
-__PrintTimeValChng(ffrVCTrvsHdl   vc_trvs_hdl, 
-		   void          *time,
-                   byte_T        *vc_ptr)
-{ 
-    static byte_T buffer[FSDB_MAX_BIT_SIZE+1];
-    byte_T        *ret_vc;
-    uint_T        i;
-    fsdbVarType   var_type; 
-    fsdbTag64     xtag_64;   
-
-    // print time
-    
-    //fprintf(stderr, "x-val: (%15e)", *(float*)time);
-
-    fprintf(stderr, "x-val: (%u %u)", ((fsdbTag64*)time)->H, ((fsdbTag64*)time)->L);
-
-    // print value 
-    switch (vc_trvs_hdl->ffrGetBytesPerBit()) {
-    case FSDB_BYTES_PER_BIT_4B:
-	fprintf(stderr, "         y-val: (%15e)\n", *(float*)vc_ptr);	
-	break;
-
-    case FSDB_BYTES_PER_BIT_8B:
-	fprintf(stderr, "         y-val: (%15e)\n", *(double*)vc_ptr);	
-        
-    default:
-	fprintf(stderr, "skip digital values.\n");
-	break;
-    }
 }
 
 static bool_T __MyTreeCB(fsdbTreeCBType cb_type, 
