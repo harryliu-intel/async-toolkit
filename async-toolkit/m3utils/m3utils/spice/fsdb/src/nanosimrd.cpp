@@ -37,6 +37,12 @@
 #define TRUE	1
 #endif
 
+#define MIN(a,b) ((a)<(b)?(a):(b))
+#define MAX(a,b) ((a)>(b)?(a):(b))
+
+static unsigned loid = (unsigned)-1;
+static unsigned hiid = 0;
+
 //
 // The tree callback function, it's used to traverse the design 
 // hierarchies. 
@@ -766,23 +772,32 @@ void
 traverse_names(unsigned lo, unsigned hi)
 {
   namerec_t *p = names;
+
+  // for some reason we can get duplicates
+  unsigned *got=(unsigned *)malloc(sizeof(unsigned) * (hi + 1));
+  
   int i=0;
+
+  memset(got, sizeof(unsigned) * (hi + 1), 0);
   
   fprintf(stderr, "traverse_names\n");
   
   while(p) {
-    if (p->idcode >= lo && p->idcode <= hi)
+    if (p->idcode >= lo && p->idcode <= hi && !got[p->idcode]) {
+      got[p->idcode] = 1;
       fprintf(stdout,
               "%u %s %s\n",
               p->idcode,
               p->name,
               decode_type(p->type));
+    }
+    ++i;
               
     p = p->next;
-    ++i;
   }
 
-  fprintf(stderr, "traverse_names : %d names\n", i);
+  fprintf(stderr, "traverse_names : %d records\n", i);
+  free(got);
 
 }
 
@@ -1035,6 +1050,9 @@ void BuildVar(fsdbTreeCBDataVar *var)
 
     rec->next          = names;
     names              = rec;
+
+    loid = MIN(loid, var->u.idcode);
+    hiid = MAX(hiid, var->u.idcode);
 }
 
 static void 
