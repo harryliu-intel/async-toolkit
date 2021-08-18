@@ -1,0 +1,6 @@
+*.trace
+*.tr0
+*.st0
+*.names
+*.ic0
+*.spice

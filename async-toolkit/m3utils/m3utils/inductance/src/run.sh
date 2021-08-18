@@ -6,6 +6,9 @@
 EXIT=exit
 
 ../../yield/diesplit/AMD64_LINUX/diesplit -scm make-tests.scm ${EXIT}
+mv dut_model.inc ../hspice/dut_model_unloaded.inc
 
-mv dut_model.inc ../hspice
+../../yield/diesplit/AMD64_LINUX/diesplit -scm make-tests-narrow.scm ${EXIT}
+mv dut_model.inc ../hspice/dut_model_unloaded_narrow.inc
+
 

@@ -14,6 +14,7 @@ IMPORT Math;
 IMPORT TextSet;
 IMPORT RegExList;
 IMPORT CardSeq;
+IMPORT TextCardTbl;
 
 IMPORT NameControl;
 FROM NameControl IMPORT MakeIdxMap, SanitizeNames,
@@ -123,6 +124,17 @@ PROCEDURE NullParser(<*UNUSED*>READONLY line : ARRAY OF CHAR;
     RETURN 1
   END NullParser;
 
+PROCEDURE MakeTbl(seq : TextSeq.T) : TextCardTbl.T =
+  VAR
+    res := NEW(TextCardTbl.Default).init();
+  BEGIN
+    FOR i := 0 TO seq.size() - 1 DO
+      EVAL res.put(seq.get(i), i)
+    END;
+    RETURN res
+  END MakeTbl;
+    
+  
 (**********************************************************************)
 
 PROCEDURE Parse(wd, ofn        : Pathname.T;
@@ -468,7 +480,7 @@ PROCEDURE Parse(wd, ofn        : Pathname.T;
                 *)
                 IF parser = ParseControl.Names THEN
                   (* must write out names before we forget! *)
-                  idxMap := MakeIdxMap(names, restrictNodes, restrictRegEx);
+                  idxMap := MakeIdxMap(MakeTbl(names), restrictNodes, restrictRegEx, names);
                   
                   aNodes := WriteNames(wd,
                                        ofn,
@@ -476,7 +488,8 @@ PROCEDURE Parse(wd, ofn        : Pathname.T;
                                        idxMap,
                                        maxFiles,
                                        nFiles,
-                                       wdWr);
+                                       wdWr,
+                                       wdPth);
 
                   gotNames := TRUE;
 
@@ -540,6 +553,7 @@ PROCEDURE Parse(wd, ofn        : Pathname.T;
   VAR
     idxMap : CardSeq.T;
     aNodes : CARDINAL;
+    wdPth  : REF ARRAY OF Pathname.T;
   BEGIN
     (* assumed file structure:
 

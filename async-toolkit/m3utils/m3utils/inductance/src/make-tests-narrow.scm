@@ -3,10 +3,10 @@
 ;; parameters
 
 (define *nstages* 10)
-(define *dist-R* 18.3)
-(define *total-C* 0.25e-12)
+(define *dist-R* 36)
+(define *total-C* 0.195e-12)
 (define *dist-C-ratio* 1.0)
-(define *dist-L* 0.6e-9) ;; what we believe from extract
+(define *dist-L* 0.5e-9) ;; what we believe from extract
 ;;(define *dist-L* 2e-9) ;; worst-case if extract is wrong
 
 ;; compute other params

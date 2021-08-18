@@ -310,7 +310,7 @@ static int_dq *active=new_int_dq();
 int
 open_signal_range(void)
 {
-  fprintf(stderr, "open_signal_range()\n");
+  if (verbose) fprintf(stderr, "open_signal_range()\n");
 
   for(int_dq *p=active->next; p != active; p = p->next) {
     if (verbose) fprintf(stderr, "signal %u\n", p->val);
@@ -778,9 +778,9 @@ traverse_names(unsigned lo, unsigned hi)
   
   int i=0;
 
-  memset(got, sizeof(unsigned) * (hi + 1), 0);
+  memset(got, 0, sizeof(unsigned) * (hi + 1));
   
-  fprintf(stderr, "traverse_names\n");
+  fprintf(stderr, "traverse_names %u %u\n", lo, hi);
   
   while(p) {
     if (p->idcode >= lo && p->idcode <= hi && !got[p->idcode]) {

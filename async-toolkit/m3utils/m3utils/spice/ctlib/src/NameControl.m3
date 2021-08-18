@@ -14,21 +14,47 @@ IMPORT FileWr;
 IMPORT AL;
 IMPORT TextUtils;
 IMPORT Thread;
+IMPORT TextCardTbl;
 
 <*FATAL Thread.Alerted*>
 
 CONST TE = Text.Equal;
 
-PROCEDURE MakeIdxMap(names         : TextSeq.T;
+PROCEDURE MakeIdxMap(fsdbNames     : TextCardTbl.T;
                      restrictNodes : TextSet.T;
-                     regExList     : RegExList.T) : CardSeq.T =
+                     regExList     : RegExList.T;
+                     names         : TextSeq.T) : CardSeq.T =
   VAR
     res := NEW(CardSeq.T).init();
     c := 0;
     success : BOOLEAN;
+    iter := fsdbNames.iterate();
+    maxId := -1;
+    arr : REF ARRAY OF TEXT;
+    n : TEXT;
+    id : CARDINAL;
+    
   BEGIN
+    WHILE iter.next(n, id) DO
+      maxId := MAX(id, maxId)
+    END;
+
+    arr := NEW(REF ARRAY OF TEXT, maxId + 1);
+
+    FOR i := FIRST(arr^) TO LAST(arr^) DO arr[i] := NIL END;
+    
+    iter := fsdbNames.iterate();
+    WHILE iter.next(n, id) DO
+      arr[id] := n
+    END;
+
+    EVAL names.init();
+    FOR i := FIRST(arr^) TO LAST(arr^) DO names.addhi(arr[i]) END;
+
     FOR i := 0 TO names.size() - 1 DO
-      IF TE(names.get(i), "TIME") THEN
+      IF names.get(i) = NIL THEN
+        success := FALSE
+      ELSIF TE(names.get(i), "TIME") THEN
         success := TRUE
       ELSIF restrictNodes = NIL AND regExList = NIL THEN
         success := TRUE
@@ -103,7 +129,11 @@ PROCEDURE WriteNames(wd, ofn       : Pathname.T;
 
                      VAR nFiles    : CARDINAL;
 
-                     VAR wdWr      : REF ARRAY OF Wr.T) : CARDINAL =
+                     VAR wdWr      : REF ARRAY OF Wr.T;
+
+                     VAR wdPth     : REF ARRAY OF Pathname.T;
+
+                     includeIdNames: BOOLEAN) : CARDINAL =
   VAR
     anWr, wr : Wr.T;
     nFn := ofn & ".names";
@@ -124,6 +154,7 @@ PROCEDURE WriteNames(wd, ofn       : Pathname.T;
     
     TRY
       wdWr := NEW(REF ARRAY OF Wr.T, nFiles);
+      wdPth := NEW(REF ARRAY OF Pathname.T, nFiles);
       
       TRY
         wr := FileWr.Open(nFn)
@@ -142,7 +173,8 @@ PROCEDURE WriteNames(wd, ofn       : Pathname.T;
         WITH fn = wd & "/" & FormatFN(i) DO
           TRY
             WITH wr2 = FileWr.Open(fn) DO
-              wdWr[i] := wr2
+              wdWr[i] := wr2;
+              wdPth[i] := fn
             END
           EXCEPT
             OSError.E(x) =>
@@ -153,12 +185,17 @@ PROCEDURE WriteNames(wd, ofn       : Pathname.T;
 
       (* write names file *)
       FOR i := 0 TO names.size() - 1 DO
-        WITH nm = TextUtils.ReplaceChar(names.get(i), ':', '_') DO
+        WITH nm = TextUtils.ReplaceChar(UnNil(names.get(i)), ':', '_') DO
           (* aplot has trouble with colons in node names, so rename those,
              sorry about any clashes ... *)
           IF idxMap.get(i) # NoMapping THEN
             
             Wr.PutText(wr, nm);
+
+            IF includeIdNames THEN
+              Wr.PutText(wr, F("=NAMES%s", Int(i)))
+            END;
+            
             Wr.PutChar(wr, '\n')
 
           END;
@@ -174,6 +211,15 @@ PROCEDURE WriteNames(wd, ofn       : Pathname.T;
     END;
     RETURN aNodes
   END WriteNames;
+
+PROCEDURE UnNil(txt : TEXT) : TEXT =
+  BEGIN
+    IF txt = NIL THEN RETURN
+      "NULLTEXT"
+    ELSE
+      RETURN txt
+    END
+  END UnNil;
 
 PROCEDURE FileIndex(nFiles, nNodes, nodeIndex : CARDINAL) : CARDINAL =
   BEGIN

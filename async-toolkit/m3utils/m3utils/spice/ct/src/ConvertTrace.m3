@@ -430,7 +430,11 @@ BEGIN
   WITH fnr = NEW(FileNamer.T).init(wd, nFiles, names.size()) DO
     IF doTrace THEN
       WITH tr = NEW(TraceFile.T).init(ofn, nFiles, names.size(), fnr) DO
-        tr.writePll(wthreads, writeTraceCmdPath)
+        IF wthreads > 1 THEN
+          tr.writePll(wthreads, writeTraceCmdPath)
+        ELSE
+          tr.write()
+        END
       END
     END;
 

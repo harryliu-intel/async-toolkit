@@ -238,8 +238,8 @@ PROCEDURE ReadInterpolatedBinaryNodeDataG(rd : Rd.T;
                   END;
                   
                   IF doDebug THEN
-                    Debug.Out(F("ReadInterpolatedBinaryNodeData buff[0] %s",
-                                LR(buff[0])))
+                    Debug.Out(F("ReadInterpolatedBinaryNodeData buff[0] %s buff[LAST(buff)] %s",
+                                LR(buff[0]), LR(buff[LAST(buff)])))
                   END;
                   RETURN
                 END
@@ -347,6 +347,7 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
     idxMap : CardSeq.T;
 
     wdWr : REF ARRAY OF Wr.T;
+    wdPth: REF ARRAY OF Pathname.T;
 
     loId, hiId : CARDINAL;
     unit : LONGREAL;
@@ -357,6 +358,8 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
     duplicates := NEW(TextCardTbl.Default).init();
 
     doInterpolate := interpolate # NoInterpolate;
+
+    fsdbNames := NEW(TextCardTbl.Default).init();
     
   BEGIN
 
@@ -456,30 +459,38 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
                  type   = reader.get(),
                  editNm = RenameBack(dutName, EditName(nm)) DO
 
-              (* we don't use idx because we assume nodes are coming out
-                 in exactly reverse order and a complete list of them
-
-                 probably not quite right to do it this way if the fsdb
-                 reader ever starts producing a starting node # 1 *)
-
               (* we also dont do anything with the type right now,
                  we really should check it's something we can work with *)
               
               VAR
-                tryNm := editNm;
-                cnt : CARDINAL := 0;
+                tryNm : TEXT;
+                cnt   : CARDINAL := 0;
               BEGIN
                 IF duplicates.get(editNm, cnt) THEN
+                  (* if we get here, we saw this name before
+                     without an extension *)
                   tryNm := editNm & "_" & Int(cnt);
-                  WHILE nameSet.insert(tryNm) DO
-                    INC(cnt);
-                    tryNm := editNm & "_" & Int(cnt);
-                  END
+                  INC(cnt)
+                ELSE
+                  tryNm := editNm
                 END;
 
+                WHILE nameSet.insert(tryNm) DO
+                  INC(cnt);
+                  tryNm := editNm & "_" & Int(cnt);
+                END;
+                (* here tryNm is unique *)
+                
+                (* if no duplicates and we get here, cnt = 0 *)
                 EVAL duplicates.put(editNm, cnt);
 
-                names.addlo(tryNm)
+                <*ASSERT tryNm # NIL*>
+                Debug.Out(F("fsdbNames.put(%s, %s)", tryNm, Int(idx)));
+                
+                WITH hadIt = fsdbNames.put(tryNm, idx) DO
+                  <*ASSERT NOT hadIt *>
+                END
+
               END
             END
           EXCEPT
@@ -488,11 +499,9 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
           END
         END;
 
-        Debug.Out(F("names : %s unique %s first %s last %s ",
-                    Int(names.size()),
-                    Int(nameSet.size()),
-                    names.get(0),
-                    names.get(names.size()-1)));
+        Debug.Out(F("fsdbNames : %s unique %s",
+                    Int(fsdbNames.size()),
+                    Int(nameSet.size())));
 
         RemoveZeros(duplicates);
 
@@ -508,12 +517,19 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
           END
         END
       END;
-      names.addlo("TIME"); (* implicit #0 *)
+      WITH hadIt = fsdbNames.put("TIME", 0)  (* implicit #0 *) DO
+        IF hadIt THEN
+          Debug.Error("? node 0 not TIME")
+        END
+      END;
 
 
       (* now we have all names loaded up *)
 
-      idxMap := NameControl.MakeIdxMap(names, restrictNodes, restrictRegEx);
+      idxMap := NameControl.MakeIdxMap(fsdbNames,
+                                       restrictNodes,
+                                       restrictRegEx,
+                                       names);
 
       Debug.Out(F("made idxMap: names.size() %s / active %s",
                   Int(names.size()), Int(NameControl.CountActiveNames(idxMap))));
@@ -524,7 +540,8 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
                                        idxMap,
                                        maxFiles,
                                        nFiles,
-                                       wdWr);
+                                       wdWr,
+                                       wdPth);
       <*ASSERT wdWr # NIL*>
 
       (* write out timesteps *)
@@ -638,7 +655,7 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
                         Debug.Out(F("Fsdb.Parse : assigning partial trace file %s to worker %s", Int(i), Int(w)));
                       END;
                       
-                      workers[w].task(wdWr[i], fileTab[i]);
+                      workers[w].task(wdWr[i], fileTab[i], wdPth[i]);
                       assigned := TRUE;
                       EXIT
                     END
@@ -702,7 +719,8 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
                                        voltageScaleFactor,
                                        voltageOffset,
                                        interpolate,
-                                       unit)
+                                       unit,
+                                       wdPth[i])
             END
           END
         END
@@ -761,7 +779,8 @@ TYPE
     c, d    : Thread.Condition;  (* shared between all threads *)
     (* c signals new task; d signals new slot *)
     
-    tWr     : Wr.T;             
+    tWr     : Wr.T;
+    tPath   : Pathname.T;
     nodeIds : CardSeq.T;
     idxMap  : CardSeq.T;
     nsteps  : CARDINAL;
@@ -781,7 +800,7 @@ TYPE
          voltageScaleFactor, voltageOffset : LONGREAL;
          interpolate, unit : LONGREAL;
     ) : GenClosure  := GenInit;
-    task(taskWr : Wr.T; taskIds : CardSeq.T)  := GenTask;
+    task(taskWr : Wr.T; taskIds : CardSeq.T; path : Pathname.T)  := GenTask;
     freeP() : BOOLEAN := GenFreeP;
     exit() := GenExit;
   OVERRIDES
@@ -821,11 +840,12 @@ PROCEDURE GenInit(cl : GenClosure;
     RETURN cl
   END GenInit;
 
-PROCEDURE GenTask(cl : GenClosure; taskWr : Wr.T; taskIds : CardSeq.T) =
+PROCEDURE GenTask(cl : GenClosure; taskWr : Wr.T; taskIds : CardSeq.T; taskPath : Pathname.T) =
   BEGIN
     LOCK cl.mu DO
       <*ASSERT cl.tWr = NIL*>
       cl.tWr := taskWr;
+      cl.tPath := taskPath;
       cl.nodeIds := taskIds
     END;
     Thread.Broadcast(cl.c) (* several workers can be waiting *)
@@ -922,12 +942,14 @@ PROCEDURE GenApply(cl : GenClosure) : REFANY =
                                  cl.voltageScaleFactor,
                                  cl.voltageOffset,
                                  cl.interpolate,
-                                 cl.unit
+                                 cl.unit,
+                                 cl.tPath
                                  );
 
         LOCK cl.mu DO
           (* done executing request, mark ourselves as free and signal *)
           cl.tWr     := NIL;
+          cl.tPath   := NIL;
           cl.nodeIds := NIL;
         END;
         
@@ -959,7 +981,8 @@ PROCEDURE GeneratePartialTraceFile(wr      : Wr.T;
 
                                    nSteps : CARDINAL;
                                    voltageScaleFactor, voltageOffset : LONGREAL;
-                                   interpolate, unit : LONGREAL
+                                   interpolate, unit : LONGREAL;
+                                   path : Pathname.T
                                    ) =
   VAR
     buff := NEW(REF ARRAY OF LONGREAL, nSteps);
@@ -1019,6 +1042,10 @@ PROCEDURE GeneratePartialTraceFile(wr      : Wr.T;
         END;
 
         TRY
+          IF doDebug THEN
+            Debug.Out(F("Writing data for outId %s to %s offset %s first %s last %s",
+                      Int(outId), path, Int(Wr.Index(wr)), LR(buff[0]), LR(buff[LAST(buff^)])))
+          END;
           DataBlock.WriteData(wr, outId, buff^)
         EXCEPT
           Wr.Failure(x) =>

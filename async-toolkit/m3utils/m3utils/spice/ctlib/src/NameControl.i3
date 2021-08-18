@@ -5,12 +5,16 @@ IMPORT RegExList;
 IMPORT CardSeq;
 IMPORT Pathname;
 IMPORT Wr;
+IMPORT TextCardTbl;
 
-PROCEDURE MakeIdxMap(names         : TextSeq.T;
+PROCEDURE MakeIdxMap(nameIdTbl     : TextCardTbl.T;
                      restrictNodes : TextSet.T;
-                     regExList     : RegExList.T) : CardSeq.T;
+                     regExList     : RegExList.T;
+                     names         : TextSeq.T) : CardSeq.T;
 
-  (* for given names, restrictNodes, regExList
+  (* for given fsdbNames table, generate:
+
+     names, restrictNodes, regExList
      generate: CardSeq that contains the mapping of each name to its output
      index.
 
@@ -35,7 +39,10 @@ PROCEDURE WriteNames(wd, ofn       : Pathname.T;
 
                      VAR nFiles    : CARDINAL;
 
-                     VAR wdWr      : REF ARRAY OF Wr.T) : CARDINAL;
+                     VAR wdWr      : REF ARRAY OF Wr.T;
+                     VAR wdPth     : REF ARRAY OF Pathname.T;
+
+                     includeIdNames := TRUE) : CARDINAL;
 
 PROCEDURE FileIndex(nFiles, nNodes, nodeIndex : CARDINAL) : CARDINAL;
 
