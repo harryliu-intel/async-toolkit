@@ -13,6 +13,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.MissingResourceException;
+import java.util.Objects;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -988,8 +989,9 @@ public class FunctionPreprocessor extends VisitorByCategory {
             final boolean diffWidthIntArray =
                 currElemType != null &&
                 formElemType != null &&
-                CspUtils.getIntegerConstant(currElemType.getDeclaredWidth()) !=
-                    CspUtils.getIntegerConstant(formElemType.getDeclaredWidth());
+                !Objects.equals(
+                    CspUtils.getIntegerConstant(currElemType.getDeclaredWidth()),
+                    CspUtils.getIntegerConstant(formElemType.getDeclaredWidth()));
 
             final Usage u = copyNeeded == null ? null : copyNeeded.get(count);
             final boolean needCopy =
