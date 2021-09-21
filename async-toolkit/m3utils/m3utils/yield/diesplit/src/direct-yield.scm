@@ -8,7 +8,6 @@
 (define (make-one-yield yf)
   (lambda (area . optional)
     (let ((ram-area          0)
-          (redundant-area    0)
           (channel-area      0)
           (serdes-area       0)
           (channel-nfactor-ratio   (/ 9 32))
@@ -21,7 +20,7 @@
       (do-overrides! optional (current-environment)) 
       
       (let* ((logic-area
-              (- area ram-area redundant-area channel-area serdes-area))
+              (- area ram-area channel-area serdes-area))
              
              (logic-yield
               (yf logic-area))

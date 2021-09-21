@@ -527,3 +527,8 @@
      ,(twodie-1.15-model-ww25))
    )
   )
+
+(define (run-reports-21ww25)
+  (report-onedie)
+  (report-twodie)
+  )

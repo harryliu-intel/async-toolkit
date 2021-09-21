@@ -33,7 +33,6 @@
 (define (n5-area-yield area . optional)
 
   (let* ((ram-area 0)
-         (redundant-area 0)
          (channel-area 0)
          (nfactor *n5-nfactor*
                   ;;(- 34.25 3.25) ;;est N6
@@ -47,7 +46,6 @@
     
     (teg-area-yield area
                     'ram-area          ram-area
-                    'redundant-area    redundant-area
                     'channel-area      channel-area
                     'nfactor           nfactor
                     'channel-nfactor   channel-nfactor
@@ -60,7 +58,6 @@
 
 (define (teg-area-yield area . optional)
   (let ((ram-area          0)
-        (redundant-area    0)
         (channel-area      0)
         (channel-nfactor   9)
         (repaired-ram-k   .6);;.6 ;;area includes ram-area
@@ -68,7 +65,7 @@
 
     (do-overrides! optional (current-environment)) ;; do CLisp style overrides
 
-    (let* ((logic-area    (- area ram-area redundant-area channel-area))
+    (let* ((logic-area    (- area ram-area channel-area))
 
            (logic-yield
             (area-yield logic-area))
