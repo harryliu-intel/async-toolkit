@@ -338,7 +338,7 @@ if (defined($sub_lve_root_dir) and -d "$sub_lve_root_dir") {
 # capacitive load on outputs
 if (@out_nodes and $cap_load > 0) {
     foreach my $node (@out_nodes) {
-        $node = $gds2NodeName{$node};
+        $node = "Xdut.$gds2NodeName{$node}";
         print RUN_FILE "C$node $node 0 $cap_load\n";
     }
 }
@@ -412,15 +412,18 @@ foreach my $type ('ground', 'power') {
     }
     foreach my $name (sort @{$special_net{$type}}) {
         my $v = get_voltage($name, $type);
-        print RUN_FILE "V${name} ${name} 0 pwl (0 0 $slope_time '$v')\n"
+        print RUN_FILE "V${name} ${name} 0 pwl (0 0 $slope_time '$v')\n";
     }
 }
+
+# reset/start/step/delay are driven through a reistor so it can be overpowered by env driver
 if (defined $special_net{'reset'}) {
     foreach my $name (sort @{$special_net{'reset'}}) {
         my $t0 = $reset_time;
         my $t1 = $t0+$slope_time;
         my $v = get_voltage($name, 'reset');
-        print RUN_FILE "V${name} ${name} 0 pwl (0 0 $t0 0 $t1 '$v')\n";
+        print RUN_FILE "V${name} ${name}:src 0 pwl (0 0 $t0 0 $t1 '$v')\n";
+        print RUN_FILE "R${name} ${name}:src ${name} PrsMinRes\n";
     }
 }
 if (defined $special_net{'start'}) {
@@ -428,7 +431,8 @@ if (defined $special_net{'start'}) {
         my $t0 = $reset_time+$start_time;
         my $t1 = $t0+$slope_time;
         my $v = get_voltage($name, 'start');
-        print RUN_FILE "V${name} ${name} 0 pwl (0 0 $t0 0 $t1 '$v')\n";
+        print RUN_FILE "V${name} ${name}:src 0 pwl (0 0 $t0 0 $t1 '$v')\n";
+        print RUN_FILE "R${name} ${name}:src ${name} PrsMinRes\n";
     }
 }
 if (defined $special_net{'step'}) {
@@ -436,13 +440,13 @@ if (defined $special_net{'step'}) {
         my $t0 = $reset_time+$start_time;
         my $t1 = $t0+$slope_time;
         my $v = get_voltage($name, 'step');
-        print RUN_FILE "V${name} ${name} 0 pwl (0 0 $t0 0 $t1 '$v')\n";
+        print RUN_FILE "V${name} ${name}:src 0 pwl (0 0 $t0 0 $t1 '$v')\n";
+        print RUN_FILE "R${name} ${name}:src ${name} PrsMinRes\n";
     }
 }
 if (defined $special_net{'delay'}) {
     foreach my $name (sort @{$special_net{'delay'}}) {
         my $v = get_voltage($name, 'delay');
-        # drive DLY through a resistor so it can be overpowered by env driver
         print RUN_FILE "V${name} ${name}:src 0 pwl (0 0 $slope_time '$v')\n";
         print RUN_FILE "R${name} ${name}:src ${name} PrsMinRes\n";
     }
@@ -471,32 +475,33 @@ print RUN_FILE ".tran 1ps $time UIC $monte_carlo\n\n";
 
 ### measure frequency and slew
 foreach $node (@measure_nodes) {
-    $node = $gds2NodeName{$node};
+    my $name = $gds2NodeName{$node};
+    $node = "Xdut.$name";
     print RUN_FILE "* Average Cycle time and Frequency over various intervals\n";
     for (my $n = 1; $n<=64; $n*=2) {
         my $end = 1+$n;
         print RUN_FILE ".probe v($node)\n";
-        print RUN_FILE ".measure tran Cycle${n}_${node}\n";
+        print RUN_FILE ".measure tran Cycle${n}_${name}\n";
         print RUN_FILE "+trig v(${node}) val='$V50' td=$power_window_start fall=1\n";
         print RUN_FILE "+targ v(${node}) val='$V50' td=$power_window_start fall=$end\n";
-        print RUN_FILE ".measure tran Freq${n}_${node}\n";
-        print RUN_FILE "+PARAM='$n/Cycle${n}_${node}'\n";
+        print RUN_FILE ".measure tran Freq${n}_${name}\n";
+        print RUN_FILE "+PARAM='$n/Cycle${n}_${name}'\n";
         print RUN_FILE "\n";
     }
     print RUN_FILE<<EOF;
 * Rise/Fall time
-.measure tran RiseTime_${node}
+.measure tran RiseTime_${name}
 +trig v(${node}) val='$V10' td=$power_window_start rise=1
 +targ v(${node}) val='$V90' td=$power_window_start rise=1
-.measure tran FallTime_${node}
+.measure tran FallTime_${name}
 +trig v(${node}) val='$V90' td=$power_window_start fall=1
 +targ v(${node}) val='$V10' td=$power_window_start fall=1
 
 * Rise/Fall slew rate
-.measure tran RiseSlew_${node}
+.measure tran RiseSlew_${name}
 +derivative v(${node})
 +when v(${node})='$V50' td=$power_window_start rise=1
-.measure tran FallSlew_${node}
+.measure tran FallSlew_${name}
 +derivative v(${node})
 +when v(${node})='$V50' td=$power_window_start fall=1
 
