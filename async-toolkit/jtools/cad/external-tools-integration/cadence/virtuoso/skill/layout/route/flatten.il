@@ -22,7 +22,7 @@ useICV = t
         (softMacro nil)            ; when !softMacro, lock all instances
         (Mem (nrGetMaxHeapSize))   ; memory to use
         )
-  (let (TEMP PowerGridCellName ColorGridCellName xalign yalign win pgCV cgCV)
+  (let (TEMP PowerGridCellName ColorGridCellName xalign yalign win pgCV cgCV oldMasters)
 
     ; check viewName
     (when CV->viewName!="floorplan" (error "call MakeFlatten on floorplan view\n"))
@@ -40,7 +40,8 @@ useICV = t
     yalign = (GetYAlignmentProp CV)
 
     ; Create flatten view from floorplan view
-    CV = (DirectFlatten ?CV CV ?RegenerateFromCast RegenerateFromCast ?softMacro softMacro)
+    (when softMacro oldMasters=(makeTable "oldMasters" nil))
+    CV = (DirectFlatten ?CV CV ?RegenerateFromCast RegenerateFromCast ?oldMasters oldMasters)
 
     ; update connectivity (TODO: eliminate one of these, but this one connects subcell pins)
     (UpdateFloorplan ?CV CV ?recurse nil ?skipInstances t)
@@ -91,9 +92,8 @@ useICV = t
       )
 
     ; route abutting pins
-    (when !softMacro
-      (RouteNearby ?CV CV ?topShapes ConnectNearbyShapes ?subShapes ConnectAbuttingPins)
-      )
+    (RouteNearby ?CV CV ?topShapes ConnectNearbyShapes ?subShapes ConnectAbuttingPins)
+    (when oldMasters (foreach inst (keys oldMasters) inst->master=oldMasters[inst]))
 
     ; fix things for DEF export
     (foreach inst CV->instances
@@ -646,7 +646,7 @@ useICV = t
 
 ; go straight from floorplan to flatten view
 (defun DirectFlatten (@key (CV (geGetEditCellView)) (RegenerateFromCast nil)
-                           (flatViewName "flatten") (softMacro nil))
+                           (flatViewName "flatten") (oldMasters nil))
   (let (not_routed progress lCV)
     ; table of flattened instance names
     flattened_instances = (makeTable "flattened_instances" nil)
@@ -680,11 +680,12 @@ useICV = t
     (foreach inst CV->instances
              (when inst->viewName=="floorplan"
                    (LegalizeShortInstance inst)
-                   (unless softMacro
-                     (when (HasLayoutVariants ?CV inst->master) (ChooseLayoutVariant inst))
-                     lCV=(ReadCV inst->libName inst->cellName "layout")
-                     (when lCV inst->master=lCV)
+                   (when (HasLayoutVariants ?CV inst->master)
+                     (when oldMasters oldMasters[inst]=inst->master)
+                     (ChooseLayoutVariant inst)
                      )
+                   lCV=(ReadCV inst->libName inst->cellName "layout")
+                   (when lCV inst->master=lCV)
                    )
              )
     )
