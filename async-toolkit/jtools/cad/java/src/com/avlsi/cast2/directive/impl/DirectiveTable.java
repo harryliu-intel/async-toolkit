@@ -109,6 +109,7 @@ public class DirectiveTable {
         registerDirective(CELL, FIXED_SIZE, BOOLEAN_TYPE, Boolean.TRUE);
         registerDirective(CELL, CDLSCALE, FLOAT_TYPE, new Float(1.0));
         registerDirective(CELL, WIRING, BOOLEAN_TYPE, Boolean.FALSE);
+        registerDirective(CELL, KEEP_PORT, NODE_TYPE, BOOLEAN_TYPE, Boolean.FALSE);
 
         /** Jauto wiring directives **/
         registerDirective(PRS, MIN_WIRELENGTH, NODE_TYPE, FLOAT_TYPE, new Float(-1.0));

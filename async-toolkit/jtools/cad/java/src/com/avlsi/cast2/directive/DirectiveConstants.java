@@ -205,6 +205,7 @@ public interface DirectiveConstants {
     String STRICT_VARS = "strict_vars";
     String DISABLE_CHANDFT_HANDLER = "disable_chandft_handler";
     String WIRING = "wiring";
+    String KEEP_PORT = "keep_port";
     String SUPPRESS_FAULTS = "suppress_faults";
     String DYNAMIC_SLACK = "dynamic_slack";
     String IMPLICIT_INIT = "implicit_init";

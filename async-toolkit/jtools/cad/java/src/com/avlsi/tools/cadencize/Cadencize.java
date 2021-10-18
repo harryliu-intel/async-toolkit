@@ -725,6 +725,14 @@ public final class Cadencize {
         final boolean isWiring = 
             ((Boolean)DirectiveUtils.getTopLevelDirective(cell, DirectiveConstants.WIRING)).booleanValue();
 
+        final Set keepPort =
+            DirectiveUtils.canonize(ci.getLocalNodes(),
+                DirectiveUtils.getExplicitTrues(
+                    DirectiveUtils.getTopLevelDirective(cell,
+                        DirectiveConstants.KEEP_PORT,
+                        DirectiveConstants.NODE_TYPE)));
+        usedLocalCanonSet.addAll(keepPort);
+
         // for all ports, check to see if they were used, mark accordingly
         // If this is a wiring cell, we can't rule out that it's used
         for (final Iterator/*<HierName>*/ iPortCanon =
