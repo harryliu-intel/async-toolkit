@@ -52,11 +52,6 @@
                                (when x>=x0+m11_w/2 && x<=x1-m11_w/2 ; HACK: m10 pins poorly aligned in PADS_V
                                      via = (dbCreateVia viaCV viaDef x:y "R0" params)
                                      via->net = new_net
-                                     (let (my0 my1) ; HACK: remove once M11 stripes are aligned better
-                                       my0=1.44*(floor   (y-w/2)/1.44) + 0.05
-                                       my1=1.44*(ceiling (y+w/2)/1.44) - 0.05
-                                       (dbCreatePath viaCV MetalDrawing[11] (list x:my0 x:my1) m11_w)
-                                       )
                                      )
                                )
                           )
