@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.NoSuchElementException;
 import java.lang.Comparable;
+import java.util.Set;
 
 import antlr.RecognitionException;
 import antlr.TokenStreamException;
@@ -44,7 +45,7 @@ import com.avlsi.util.container.Pair;
 import com.avlsi.util.container.StringContainerIterator;
 
 public class Template implements CDLFactoryInterface {
-    private Map templates;
+    private Map<String,Template> templates;
     private List statements;
     private String[] in, out;
     private String mStreamName;
@@ -576,11 +577,11 @@ public class Template implements CDLFactoryInterface {
 
     
 
-    public Template( final Map templates) {
+    public Template( final Map<String,Template> templates) {
         this( templates, null );
     }
 
-    public Template( final Map templates,
+    public Template( final Map<String,Template> templates,
                      final String streamName ) {
         this( templates,
               new ArrayList(),
@@ -590,7 +591,7 @@ public class Template implements CDLFactoryInterface {
               streamName );  
     }
 
-    private Template( final Map templates, 
+    private Template( final Map<String,Template> templates, 
                       final List statements,
                       final String[] in, 
                       final String[] out, 
@@ -879,10 +880,10 @@ public class Template implements CDLFactoryInterface {
     }
 
     public Template getTemplate(String name) {
-        return (Template)templates.get(name);
+        return templates.get(name);
     }
 
-    public Map getTemplates() {
+    public Map<String,Template> getTemplates() {
         return templates;
     }
 
@@ -890,5 +891,17 @@ public class Template implements CDLFactoryInterface {
                                     final String[] out) {
         return new Template(null, templ.statements, in, out, templ.subcktParam,
                             templ.mStreamName);
+    }
+
+    public void getInstantiated(final String subName, final Set<String> result) {
+        execute(new CDLFactoryAdaptor() {
+            public void makeCall(HierName name, String subName, HierName[] args,
+                                 Map parameters, Environment env) {
+                if (!result.contains(subName)) {
+                    getTemplate(subName).getInstantiated(subName, result);
+                }
+            }
+        });
+        result.add(subName);
     }
 }
