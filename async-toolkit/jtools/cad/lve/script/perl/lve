@@ -587,6 +587,7 @@ our $additive_resp = 0;
 our $delete_bumpcheck_dir= 1;    # clean up after bumpcheck
 our $ccp=0; # use CCP+StarRC to extract
 our $cth=1; # use Cheetah to extract
+our $connectSubstrate=0; # process connect_substrate directive
 
 # sweep options
 my @skip = ();
@@ -1416,6 +1417,7 @@ REDONODES                        := $redonodes
 ENV_CAP_LOAD                     := $env_cap_load
 POWER_GROUND_RESET_ARGS          := $power_ground_reset_args
 DO_CONVERT_TRACE                 := $do_convert_trace
+CONNECT_SUBSTRATE                := $connectSubstrate
 EOF
 }
 
@@ -2664,6 +2666,7 @@ USAGE: $0 [options] cell[:env][:node,node,...]
     --extra-extract-equiv=[$extra_extract_equiv] (special use for adding equivs to equiv file)
     --lvs-extra-options=[$lvs_extra_options] (add options to lvs command line)
     --drclvs-threads=[$drclvs_threads] (number of lvs threads)
+    --connect-substrate=[$connectSubstrate] (connect substrate based on directives)
 
   SPICE Options for hspice,hsim,xa tasks:
     --hspice-threads=[$hspice_threads] (number of hspice threads)
@@ -3397,6 +3400,7 @@ sub processOption {
         elsif ($key eq "keepMakefiles")      { $deletemakefiles = $value ? 0 : 1; }
         elsif ($key eq "extra-extract-equiv") { $extra_extract_equiv = canonicalizePath($value);}
         elsif ($key eq "lvs-extra-options") { $lvs_extra_options = canonicalizePath($value);}
+        elsif ($key eq "connect-substrate") { $connectSubstrate = $value ? 1 : 0; }
         elsif ($key eq "instance-port") {
             if (grep { $value eq $_ } @validInstancePort) {
                 $instancePort = $value;

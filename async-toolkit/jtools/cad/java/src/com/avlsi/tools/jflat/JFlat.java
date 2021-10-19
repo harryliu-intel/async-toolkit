@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.HashSet;
 import java.util.TreeMap;
@@ -56,6 +57,7 @@ import com.avlsi.cast.CastSemanticException;
 import com.avlsi.cast.impl.AlintFaninValue;
 import com.avlsi.cast.impl.CellInterfaceCollectionIterator;
 import com.avlsi.cast.impl.NodeValue;
+import com.avlsi.cast.impl.NullEnvironment;
 import com.avlsi.cast.impl.LocalEnvironment;
 import com.avlsi.cast.impl.Environment;
 import com.avlsi.cast.impl.TupleValue;
@@ -85,6 +87,7 @@ import com.avlsi.file.cdl.parser.CDLFactoryAdaptor;
 import com.avlsi.file.cdl.parser.CDLSubcktFilter;
 import com.avlsi.file.cdl.parser.LVSNodesCDLFactory;
 import com.avlsi.file.cdl.parser.LVSNodesNullHandler;
+import com.avlsi.file.cdl.parser.SubstrateConnect;
 import com.avlsi.file.cdl.util.CDLWriter;
 import com.avlsi.file.cdl.util.rename.CadenceNameInterface;
 import com.avlsi.file.cdl.util.rename.CDLRenameFactory;
@@ -528,6 +531,9 @@ public final class JFlat {
                 cdlCellStr == null ? new String[0]
                                    : StringUtil.split(cdlCellStr, ':');
 
+            final boolean connectSubstrate =
+                args.argExists("connect-substrate");
+
             return new CellFormatterFactory () {
                     public CellFormatterInterface 
                         getFormatter(String toolName,
@@ -542,6 +548,7 @@ public final class JFlat {
                             return new CDLFormatter(
                                 pw, fqcnSpec, castParser, nameInterfaceFactory,
                                 mosParams, callDelimiter, cdlCells,
+                                connectSubstrate,
                                 routed ? cadencizer : cdlCadencizer, routed);
                         } else {
                             return null;
@@ -2829,6 +2836,7 @@ public final class JFlat {
         private final String[] mosParams;
         private final String callDelimiter;
         private final String[] cdlCells;
+        private final boolean connectSubstrate;
         private final Cadencize mCadencizer;
         private final boolean routed;
 
@@ -2839,6 +2847,7 @@ public final class JFlat {
                              final String[] mosParams,
                              final String callDelimiter,
                              final String[] cdlCells,
+                             final boolean connectSubstrate,
                              final Cadencize cadencizer,
                              final boolean routed ) { 
             this.fqcnSpec = fqcnSpec;
@@ -2848,6 +2857,7 @@ public final class JFlat {
             this.mosParams = mosParams;
             this.callDelimiter = callDelimiter;
             this.cdlCells = cdlCells;
+            this.connectSubstrate = connectSubstrate;
             this.routed = routed;
             mCadencizer = cadencizer;
         }
@@ -2873,9 +2883,13 @@ public final class JFlat {
                                       nameInterfaceFactory );
 
 
+            final Map<String,HierName> substrateConnections =
+                connectSubstrate ? SubstrateConnect.getDirectives(cell)
+                                 : Collections.emptyMap();
+
             final CDLFactoryInterface templateAccumulatorFactory;
             final Map templates;
-            if ( fqcnSpec.isEmpty() ) {
+            if ( fqcnSpec.isEmpty() && substrateConnections.isEmpty() ) {
                 templateAccumulatorFactory = renamerFactory;
                 templates = null;
             }
@@ -2921,6 +2935,25 @@ public final class JFlat {
                                 mCadencizer,
                                 false,
                                 true );
+
+            if (!substrateConnections.isEmpty()) {
+                final String cellName = cell.getFullyQualifiedType();
+                Template topLevel = (Template) templates.get(cellName);
+                final SubstrateConnect sc = new SubstrateConnect(topLevel);
+                for (Map.Entry<String,HierName> conns :
+                        substrateConnections.entrySet()) {
+                    sc.makeConnections(conns.getKey(), conns.getValue());
+                }
+                topLevel = (Template) templates.get(cellName);
+                final Set<String> cells = new LinkedHashSet<>();
+                topLevel.getInstantiated(cellName, cells);
+                for (String c : cells) {
+                    final Template t = topLevel.getTemplate(c);
+                    t.execute(renamerFactory,
+                              NullEnvironment.getInstance(),
+                              c);
+                }
+            }
 
             for (String c : cdlCells) {
                 Cast2Cdl.outputCDL( cfp.getFullyQualifiedCellPretty(c),

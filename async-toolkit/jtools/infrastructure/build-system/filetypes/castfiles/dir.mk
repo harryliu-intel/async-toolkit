@@ -24,6 +24,12 @@ else # "$(strip $(CDL_NAME_MAP))" eq ""
 JFLAT_NAME_MAP := --cdl-name-map=$(CDL_NAME_MAP)
 endif # "$(strip $(CDL_NAME_MAP))" eq ""
 
+ifeq ("$(CONNECT_SUBSTRATE)","1")
+JFLAT_CONNECT_SUBSTRATE := --connect-substrate
+else
+JFLAT_CONNECT_SUBSTRATE :=
+endif
+
 # Don't delete intermediates!
 .PRECIOUS: $(CURR_CELL_DIR)/cell.localprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX)
 .PRECIOUS: $(CURR_CELL_DIR)/cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX)
@@ -135,6 +141,7 @@ $(CURR_CELL_DIR)/cast.d : $(CURR_CELL_DIR)/.nodes$(ROUTED_SUFFIX)
 	  "--internalRules=$(INTERNAL_RULES)" \
 	  '--cdl-mos-parameters=m' \
 	  '$(JFLAT_NAME_MAP)' \
+	  $(JFLAT_CONNECT_SUBSTRATE) \
 	  "--cdl-translate=cadence" "--hsim-translate=$(GDS2_NAMESPACE)" "--query-translate=none" \
 	  --hsim-rand-seed=0 --hsim-rand-length=4 \
 	  "--query-tasks=prs,transistors=gate.STATICIZER.0:gate.STATICIZER.1,routing,density,tau,external_nodes=im:di:re" \
