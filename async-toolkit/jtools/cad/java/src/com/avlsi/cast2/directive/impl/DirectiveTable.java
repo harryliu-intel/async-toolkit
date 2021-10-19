@@ -325,6 +325,7 @@ public class DirectiveTable {
         registerDirective(PRS, LEAKY, NODE_TYPE, BOOLEAN_TYPE, Boolean.FALSE);
 
         registerDirective(CELL, LVS_NODES, arrayify(STRING_TYPE), null);
+        registerDirective(CELL, CONNECT_SUBSTRATE, NODE_TYPE, null);
 
         registerDirective(CELL, EFFECTIVE_RESISTANCE, HALFOP_TYPE, FLOAT_TYPE, null);
         registerDirective(CELL, INTRINSIC_DELAY, HALFOP_TYPE, FLOAT_TYPE, null);

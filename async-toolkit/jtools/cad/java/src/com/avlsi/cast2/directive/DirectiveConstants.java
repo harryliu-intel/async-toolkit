@@ -124,6 +124,7 @@ public interface DirectiveConstants {
     String POWERGRID_VDDNET = "powergrid_vddnet";
 
     String LVS_NODES = "lvs_labels";
+    String CONNECT_SUBSTRATE = "connect_substrate";
 
     String ESTIMATED_DELAY_SIGNOFF = "estimated_delay_signoff";
     String NTPC_SCALING_SIGNOFF = "ntpc_scaling_signoff";

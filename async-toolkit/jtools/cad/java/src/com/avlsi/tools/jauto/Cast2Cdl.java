@@ -17,6 +17,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.SortedSet;
@@ -55,6 +56,7 @@ import com.avlsi.file.cdl.parser.Inline;
 import com.avlsi.file.cdl.parser.Template;
 import com.avlsi.file.cdl.parser.LVSNodesCDLFactory;
 import com.avlsi.file.cdl.parser.LVSNodesNullHandler;
+import com.avlsi.file.cdl.parser.SubstrateConnect;
 import com.avlsi.file.cdl.util.rename.CadenceNameInterface;
 import com.avlsi.file.cdl.util.rename.CadenceReverseNameInterface;
 import com.avlsi.file.cdl.util.rename.CDLNameInterface;
@@ -631,14 +633,20 @@ public final class Cast2Cdl {
             new CDLRenameFactory(cdlEmitterFactory,
                 new TrivialCDLNameInterfaceFactory(mapNamer));
 
+        final boolean connectSubstrate = theArgs.argExists("connect-substrate");
+        final Map<String,HierName> substrateConnections =
+            connectSubstrate ? SubstrateConnect.getDirectives(ci)
+                             : Collections.emptyMap();
+
         final CDLFactoryInterface templateAccumulatorFactory;
-        final Map templates;
-        if ( ( fqcnSpec.isEmpty() ) && ( ! bFlatten ) ) {
+        final Map<String,Template> templates;
+        if ( ( fqcnSpec.isEmpty() ) && ( ! bFlatten ) &&
+             substrateConnections.isEmpty() ) {
             templateAccumulatorFactory = renamerFactory;
             templates = null;
         }
         else {
-            templates = new LinkedHashMap();
+            templates = new LinkedHashMap<>();
             templateAccumulatorFactory = new Template( templates );
         }
 
@@ -702,11 +710,28 @@ public final class Cast2Cdl {
             pe.execute( flattenerFactory );
         }
         else if ( bFlatten ) {
-            final Template topLevel = ( Template ) templates.get( cellName );
+            final Template topLevel = templates.get( cellName );
             topLevel.execute( flattenerFactory, 
                               Collections.EMPTY_MAP, 
                               NullEnvironment.getInstance(),
                               cellName );
+        }
+        else if (!substrateConnections.isEmpty()) {
+            Template topLevel = templates.get(cellName);
+            final SubstrateConnect sc = new SubstrateConnect(topLevel);
+            for (Map.Entry<String,HierName> conns :
+                    substrateConnections.entrySet()) {
+                sc.makeConnections(conns.getKey(), conns.getValue());
+            }
+            topLevel = templates.get(cellName);
+            final Set<String> cells = new LinkedHashSet<>();
+            topLevel.getInstantiated(cellName, cells);
+            for (String cell : cells) {
+                final Template t = topLevel.getTemplate(cell);
+                t.execute( flattenerFactory, 
+                           NullEnvironment.getInstance(),
+                           cell );
+            }
         }
         writer.close();
     }
