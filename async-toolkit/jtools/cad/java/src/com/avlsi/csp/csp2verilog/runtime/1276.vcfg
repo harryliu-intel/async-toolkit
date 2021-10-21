@@ -13,8 +13,6 @@
 -v $GPIO_DIR/ip76gpio1p0ff_n/rtl/ip76gpio1p0ff_n.v
 -v $GPIO_DIR/ip76gpio_1p0_powergood_e/rtl/ip76gpio_1p0_powergood_e.v
 -v $GPIO_DIR/ip76gpio_1p0_powergood_n/rtl/ip76gpio_1p0_powergood_n.v
--v $GPIO_DIR/ip76gpio_esdclamp_1p0_e/rtl/ip76gpio_esdclamp_1p0_e.v
--v $GPIO_DIR/ip76gpio_esdclamp_1p0_n/rtl/ip76gpio_esdclamp_1p0_n.v
 -v $GPIO_DIR/ip76wireio_edma_e/rtl/ip76wireio_edma_e.v
 -v $GPIO_DIR/ip76wireio_edma_n/rtl/ip76wireio_edma_n.v
 -v $CMO_DIR/mem1024x40/rtl/mem1024x40/src/rtl/mem1024x40.sv
