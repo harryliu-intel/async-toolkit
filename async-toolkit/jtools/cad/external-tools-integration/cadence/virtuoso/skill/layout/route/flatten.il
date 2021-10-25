@@ -28,6 +28,7 @@ useICV = t
     (when CV->viewName!="floorplan" (error "call MakeFlatten on floorplan view\n"))
 
     ; options
+    (defun RunAfterFlatten (@key (CV (geGetEditCellView))) t)
     (LoadWires ?CV CV)
 
     ; generated cell or file names
@@ -109,6 +110,9 @@ useICV = t
         )
       )
     (CopyKeepoutToBlockage CV)
+
+    ; custom steps
+    (RunAfterFlatten ?CV CV)
 
     ; switch current window to flatten view
     win = (hiGetCurrentWindow)
