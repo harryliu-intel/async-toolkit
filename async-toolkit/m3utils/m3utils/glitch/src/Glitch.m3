@@ -76,10 +76,7 @@ PROCEDURE RunChecks() =
       ELSE
         Debug.Out(F("output %s not found", o))
       END;
-
-      
     END
-              
   END RunChecks;
 
 PROCEDURE GetInsensitivity(of, wrt : BDD.T) : BDD.T =
@@ -111,8 +108,7 @@ PROCEDURE DoOutput(o : TEXT; x : GlitchExpr.T) =
           IF isAsync THEN
             (* ok input is async, do something... *)
             WITH insens = GetInsensitivity(flatX, b) DO
-              Debug.Out(F("insensitivity expr %s",
-                          BDD.Format(insens, NIL)))
+              DoAsync(o, x, flatX, b, insens, deps)
             END
           END
           
@@ -120,6 +116,89 @@ PROCEDURE DoOutput(o : TEXT; x : GlitchExpr.T) =
       END
     END
   END DoOutput;
+
+TYPE
+  Binding = RECORD
+    b : BDD.T;
+    v : BOOLEAN;
+  END;
+   
+
+PROCEDURE DoAsync(o                : TEXT;
+                  x                : GlitchExpr.T;
+                  flatX, b, insens : BDD.T;
+                  deps             : BDDSet.T) =
+  (* do async checks on o/x w.r.t. b *)
+
+  PROCEDURE RunOne() =
+    BEGIN
+      FOR i := FIRST(bindings^) TO LAST(bindings^) DO
+        tab.put(GetName(bindings[i].b), ZeroOneX.FromBool(bindings[i].v))
+      END;
+
+      (* set up environment *)
+      WITH val = GlitchExpr.Eval(x, tab) DO
+      END
+    END RunOne;
+
+  TYPE
+    V = ZeroOneX.T;
+  VAR
+    indeps   := deps.copy();
+    bindings := NEW(REF ARRAY OF Binding, deps.size() - 1);
+    tab      := NEW(Text01XTbl.Default).init();
+  BEGIN
+    WITH hadIt = indeps.delete(b) DO <*ASSERT hadIt*> END;
+    
+    Debug.Out(F("DoAsync %s <- %s", o, BDD.Format(b, revbdds)));
+    
+    Debug.Out(F("insensitivity expr %s",
+                BDD.Format(insens, NIL)));
+
+    (* now build indeps array *)
+
+    EVAL tab.put(GetName(b), V.VX);
+    
+    WITH iter     = indeps.iterate() DO
+      FOR i := FIRST(bindings^) TO LAST(bindings^) DO
+        EVAL iter.next(bindings[i].b)
+      END;
+      MakeBindings(insens, bindings^, 0, RunOne)
+    END
+  END DoAsync;
+
+PROCEDURE MakeBindings(insens       : BDD.T;
+                       VAR bindings : ARRAY OF Binding;
+                       ptr          : CARDINAL;
+                       p            : PROCEDURE() ) =
+  BEGIN
+    IF ptr = NUMBER(bindings) THEN
+      (* base case *)
+      Debug.Out("Hit base case in MakeBindings");
+      FOR i := FIRST(bindings) TO LAST(bindings) DO
+        Debug.Out(F("%s <- %s", BDD.Format(bindings[i].b), Bool(bindings[i].v)))
+      END;
+      p()
+    ELSE
+      FOR v := FIRST(BOOLEAN) TO LAST(BOOLEAN) DO
+        WITH nxt = BDDMake(insens, bindings[ptr].b, v) DO
+          IF nxt # False THEN
+            bindings[ptr].v := v;
+            MakeBindings(nxt, bindings, ptr + 1, p)
+          END
+        END
+      END
+    END
+  END MakeBindings;
+
+PROCEDURE BDDMake(b : BDD.T; lit : BDD.T; val : BOOLEAN) : BDD.T =
+  BEGIN
+    CASE val OF
+      FALSE => RETURN BDD.MakeFalse(b, lit)
+    |
+      TRUE  => RETURN BDD.MakeTrue(b, lit)
+    END
+  END BDDMake;
 
 PROCEDURE GetName(b : BDD.T) : TEXT =
   VAR
@@ -161,5 +240,9 @@ PROCEDURE FlatExpression(b : BDD.T) : BDD.T =
 
     RETURN c
   END FlatExpression;
-  
-BEGIN END Glitch.
+
+VAR False := BDD.False();
+    True  := BDD.True();
+
+BEGIN
+END Glitch.

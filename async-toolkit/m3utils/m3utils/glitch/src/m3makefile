@@ -25,6 +25,6 @@ module ("GlitchExpr")
 table("TextGlitchExpr", "Text", "GlitchExpr")
 
 table("Text01X", "Text", "ZeroOneX")
-interface ("ZeroOneX")
+module ("ZeroOneX")
 
 program("glitch")

@@ -1,0 +1,17 @@
+# hello
+
+# this version has a glitch
+
+async a
+async b
+output mux_glitch
+output mux_noglitch
+
+gate m00 = ~a & ~b
+gate m01 =  a & ~b
+gate m10 = ~a &  b
+gate m11 =  a &  b
+
+gate mux_glitch = m11 | s & m10 | ~s & m01
+
+gate mux_noglitch = s & b | ~s & a
