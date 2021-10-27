@@ -1,0 +1,30 @@
+import("parserlib")
+import("cit_util")
+import("bdd")
+
+Token("glitch")
+Lexer("glitch", "glitch")
+Parser("glitch", "glitch")
+
+%Token("PRS")
+%Lexer("PRS", "PRS")
+%Parser("PRS", "PRS")
+Extended("glitchLexStd")
+Extended("glitchParseStd")
+
+%Token("CHP")
+%Lexer("CHP", "CHP")
+%Parser("CHP", "CHP")
+%Extended("CHPLexStd")
+
+implementation ("Main")
+
+module ("Glitch")
+module ("GlitchExpr")
+
+table("TextGlitchExpr", "Text", "GlitchExpr")
+
+table("Text01X", "Text", "ZeroOneX")
+interface ("ZeroOneX")
+
+program("glitch")
