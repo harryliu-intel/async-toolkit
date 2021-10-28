@@ -21,6 +21,7 @@ implementation ("Main")
 
 module ("Glitch")
 module ("GlitchExpr")
+interface ("GlitchExprEval")
 
 table("TextGlitchExpr", "Text", "GlitchExpr")
 

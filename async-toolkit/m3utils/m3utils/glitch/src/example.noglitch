@@ -1,12 +1,11 @@
 
-# glitchy mux example
+# non-glitchy mux example
 # Author: Mika Nystrom <mika.nystroem@intel.com>
 # 10/27/2021
 
 # this shows two different ways of building a mux
 # the mux_glitch version is glitchy
 # the mux_noglitch version is not glitchy
-output mux_glitch
 output mux_noglitch
 
 # first, declare async inputs

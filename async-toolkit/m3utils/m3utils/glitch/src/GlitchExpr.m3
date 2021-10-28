@@ -1,8 +1,10 @@
-MODULE GlitchExpr;
+MODULE GlitchExpr EXPORTS GlitchExpr, GlitchExprEval;
 IMPORT BDD;
 FROM Fmt IMPORT F;
 IMPORT ZeroOneX;
 IMPORT Text01XTbl;
+IMPORT Debug;
+IMPORT TextGlitchExprTbl;
 
 PROCEDURE And(a, b : T) : T =
   BEGIN
@@ -20,7 +22,9 @@ PROCEDURE Not(a : T) : T =
 PROCEDURE New(nm : TEXT) : T =
   BEGIN RETURN NEW(Named, nm := nm, x := BDD.New()) END New;
 
-PROCEDURE Eval(x : T; tab : Text01XTbl.T) : ZeroOneX.T =
+PROCEDURE Eval(x     : T;
+               tab   : Text01XTbl.T;
+               gates : TextGlitchExprTbl.T) : ZeroOneX.T =
   TYPE
     V = ZeroOneX.T;
   BEGIN
@@ -28,7 +32,7 @@ PROCEDURE Eval(x : T; tab : Text01XTbl.T) : ZeroOneX.T =
       Expr(x) =>
       CASE x.op OF
         Op.And =>
-        WITH av = Eval(x.a, tab), bv = Eval(x.b, tab) DO
+        WITH av = Eval(x.a, tab, gates), bv = Eval(x.b, tab, gates) DO
           IF av = V.V0 OR bv = V.V0 THEN
             RETURN V.V0
           ELSIF av = V.VX OR bv = V.VX THEN
@@ -39,7 +43,7 @@ PROCEDURE Eval(x : T; tab : Text01XTbl.T) : ZeroOneX.T =
         END
       |
         Op.Or =>
-        WITH av = Eval(x.a, tab), bv = Eval(x.b, tab) DO
+        WITH av = Eval(x.a, tab, gates), bv = Eval(x.b, tab, gates) DO
           IF av = V.V1 OR bv = V.V1 THEN
             RETURN V.V1
           ELSIF av = V.VX OR bv = V.VX THEN
@@ -50,7 +54,7 @@ PROCEDURE Eval(x : T; tab : Text01XTbl.T) : ZeroOneX.T =
         END
       |
         Op.Not =>
-        WITH av = Eval(x.a, tab) DO
+        WITH av = Eval(x.a, tab, gates) DO
           IF av = V.VX THEN RETURN V.VX ELSE RETURN VAL(1-ORD(av),V) END
         END
       END
@@ -58,8 +62,16 @@ PROCEDURE Eval(x : T; tab : Text01XTbl.T) : ZeroOneX.T =
       Named(n) =>
       VAR
         v : V;
+        g : T;
       BEGIN
-        IF tab.get(n.nm, v) THEN RETURN v ELSE <*ASSERT FALSE*> END
+        IF tab.get(n.nm, v) THEN
+          RETURN v
+        ELSIF gates.get(n.nm, g) THEN
+          RETURN Eval(g, tab, gates)
+        ELSE
+          Debug.Error(F("no value provided for %s", n.nm));
+          <*ASSERT FALSE*>
+        END
       END
     ELSE
       <*ASSERT FALSE*>

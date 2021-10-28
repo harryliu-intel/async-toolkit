@@ -21,8 +21,6 @@ PROCEDURE Or(a, b : T) : T;
 PROCEDURE Not(a : T) : T;
 PROCEDURE New(nm : TEXT) : T;
 
-PROCEDURE Eval(x : T; tab : Text01XTbl.T) : ZeroOneX.T;
-  
 CONST Brand = "GlitchExpr";
       
 END GlitchExpr.

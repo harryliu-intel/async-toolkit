@@ -11,7 +11,7 @@ PROCEDURE Literal(nm : TEXT; expr : GlitchExpr.T);
 
 PROCEDURE GetLiteral(nm : TEXT) : GlitchExpr.T;
 
-PROCEDURE RunChecks();
+PROCEDURE RunChecks() : BOOLEAN;
   
 CONST Brand = "Glitch";
       

@@ -9,7 +9,11 @@ IMPORT BDDTextTbl;
 IMPORT BDD;
 IMPORT BDDDepends;
 IMPORT BDDSet;
-
+IMPORT ZeroOneX;
+IMPORT Text01XTbl;
+IMPORT GlitchExprEval;
+IMPORT Wr;
+IMPORT Stdio;
 
 PROCEDURE Output(nm : TEXT) =
   BEGIN
@@ -59,7 +63,7 @@ VAR
   gates, literals      := NEW(TextExprTbl.Default).init();
   revbdds          := NEW(BDDTextTbl.Default).init();
   
-PROCEDURE RunChecks() =
+PROCEDURE RunChecks() : BOOLEAN =
   VAR
     oIter := outputs.iterate();
     o : TEXT;
@@ -76,7 +80,8 @@ PROCEDURE RunChecks() =
       ELSE
         Debug.Out(F("output %s not found", o))
       END;
-    END
+    END;
+    RETURN ok
   END RunChecks;
 
 PROCEDURE GetInsensitivity(of, wrt : BDD.T) : BDD.T =
@@ -122,7 +127,8 @@ TYPE
     b : BDD.T;
     v : BOOLEAN;
   END;
-   
+
+VAR ok := TRUE;
 
 PROCEDURE DoAsync(o                : TEXT;
                   x                : GlitchExpr.T;
@@ -133,11 +139,30 @@ PROCEDURE DoAsync(o                : TEXT;
   PROCEDURE RunOne() =
     BEGIN
       FOR i := FIRST(bindings^) TO LAST(bindings^) DO
-        tab.put(GetName(bindings[i].b), ZeroOneX.FromBool(bindings[i].v))
+        EVAL tab.put(GetName(bindings[i].b),
+                     ZeroOneX.FromBool(bindings[i].v))
       END;
 
       (* set up environment *)
-      WITH val = GlitchExpr.Eval(x, tab) DO
+      WITH val = GlitchExprEval.Eval(x, tab, gates) DO
+        Debug.Out(F("RunOne : result is %s", ZeroOneX.Format(val)));
+
+        IF val = V.VX THEN
+          ok := FALSE;
+          Wr.PutText(Stdio.stderr,
+                     F("FOUND GLITCH: output %s <- async input %s\n",
+                       o,
+                       GetName(b)));
+          Wr.PutText(Stdio.stderr,
+                     "BEGIN STATE DUMP >>>>>>>>>>>>>>>>>>>>>>>\n");
+          FOR i := FIRST(bindings^) TO LAST(bindings^) DO
+            Wr.PutText(Stdio.stderr, F("var %s val %s\n",
+                                       GetName(bindings[i].b),
+                                       Bool(bindings[i].v)))
+          END;
+          Wr.PutText(Stdio.stderr,
+                     "END < STATE DUMP <<<<<<<<<<<<<<<<<<<<<<<\n");
+        END
       END
     END RunOne;
 
