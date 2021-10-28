@@ -1,4 +1,31 @@
 MODULE Glitch;
+
+(* glitch checking program
+
+   Author : Mika Nystrom <mika.nystroem@intel.com>
+   October 27, 2021
+*)
+
+(* the main entry point is in this file, it's called RunChecks() 
+
+   The basic algorithm is as follows:
+
+   for every output
+     for every async_input in the logic fanin cone of such output
+       compute insensitivity states (in terms of other inputs) of this output to the async_input
+
+       traverse each insensitivity state separately, and perform a 0-1-X 
+       simulation with the async_input set to X
+
+       if the output is X, it is glitchy.
+       if the output is still insensitive to the async_input's being X, it is
+       not in fact glitchy
+
+   if ANY output is glitchy in ANY async input, we fail and print a useful
+   message.  The Main program will quit with Unix status non-zero in such
+   cases.
+*)
+
 IMPORT GlitchExpr;
 IMPORT TextSet, TextSetDef;
 IMPORT RefList;
