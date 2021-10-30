@@ -1479,7 +1479,8 @@ endif # "$(HSIM_PRS_MAX_RES)" eq ""
 
 $(SPICE_DIR)/hsim/$(ENV)/%/hsim.out: $(SPICE_DIR)/cell.hspice \
 			             $(CELL_DIR)/jflat$(ROUTED_SUFFIX)/hsim/$(ENV) \
-			             $(CELL_DIR)/jflat$(ROUTED_SUFFIX)/env-ntpc/$(ENV)
+			             $(CELL_DIR)/jflat$(ROUTED_SUFFIX)/env-ntpc/$(ENV) \
+				     $(CELL_DIR)/cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX)
 	#TASK=hsim ENV=$(call GET_ENV,$(@D)) CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	mkdir -p '$(@D)'
 	$(CASTFILES_ENQUEUE_TASK) && \
@@ -1508,6 +1509,8 @@ $(SPICE_DIR)/hsim/$(ENV)/%/hsim.out: $(SPICE_DIR)/cell.hspice \
 	  $(PRS_DELAY) \
 	  $(PRS_MIN_RES) \
 	  $(PRS_MAX_RES) \
+	  $(CAP_LOAD) \
+	  --node-props=$(CELL_DIR)/cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX) \
 	  --rc-reduction=$$reduce \
 	  --minC=$(MINC) --minR=$(MINR) \
 	  --run-time=$$time --process-corner=$$corner --vdd=$$true \
@@ -1554,7 +1557,8 @@ $(SPICE_DIR)/hsim/$(ENV)/%/hsim.raw: $(CELL_DIR)/jflat$(ROUTED_SUFFIX)/env-ntpc/
 
 $(SPICE_DIR)/xa/$(ENV)/%/xa.out: $(SPICE_DIR)/cell.hspice \
 			             $(CELL_DIR)/jflat$(ROUTED_SUFFIX)/hsim/$(ENV) \
-			             $(CELL_DIR)/jflat$(ROUTED_SUFFIX)/env-ntpc/$(ENV)
+			             $(CELL_DIR)/jflat$(ROUTED_SUFFIX)/env-ntpc/$(ENV) \
+	 			     $(CELL_DIR)/cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX)
 	#TASK=xa ENV=$(call GET_ENV,$(@D)) CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	mkdir -p '$(@D)'
 	$(CASTFILES_ENQUEUE_TASK) && \
@@ -1583,6 +1587,8 @@ $(SPICE_DIR)/xa/$(ENV)/%/xa.out: $(SPICE_DIR)/cell.hspice \
 	  $(PRS_DELAY) \
 	  $(PRS_MIN_RES) \
 	  $(PRS_MAX_RES) \
+	  $(CAP_LOAD) \
+	  --node-props=$(CELL_DIR)/cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX) \
 	  --rc-reduction=$$reduce \
 	  --minC=$(MINC) --minR=$(MINR) \
 	  --run-time=$$time --process-corner=$$corner --vdd=$$true \
@@ -1628,7 +1634,8 @@ $(SPICE_DIR)/xa/$(ENV)/%/xa.raw: $(CELL_DIR)/jflat$(ROUTED_SUFFIX)/env-ntpc/$(EN
 
 $(SPICE_DIR)/hspice/$(ENV)/%/hspice.out: $(SPICE_DIR)/cell.hspice \
 			             $(CELL_DIR)/jflat$(ROUTED_SUFFIX)/hsim/$(ENV) \
-			             $(CELL_DIR)/jflat$(ROUTED_SUFFIX)/env-ntpc/$(ENV)
+			             $(CELL_DIR)/jflat$(ROUTED_SUFFIX)/env-ntpc/$(ENV) \
+				     $(CELL_DIR)/cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX)
 	#TASK=hspice ENV=$(call GET_ENV,$(@D)) CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	mkdir -p '$(@D)'
 	$(CASTFILES_ENQUEUE_TASK) && \
@@ -1657,6 +1664,8 @@ $(SPICE_DIR)/hspice/$(ENV)/%/hspice.out: $(SPICE_DIR)/cell.hspice \
 	  $(PRS_DELAY) \
 	  $(PRS_MIN_RES) \
 	  $(PRS_MAX_RES) \
+	  $(CAP_LOAD) \
+	  --node-props=$(CELL_DIR)/cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX) \
 	  --rc-reduction=$$reduce \
 	  --minC=$(MINC) --minR=$(MINR) \
 	  --run-time=$$time --process-corner=$$corner --vdd=$$true \

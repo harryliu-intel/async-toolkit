@@ -26,7 +26,6 @@ use LveUtil;
 
 # variable declarations and defaults
 my $sim="hspice";
-my $out_nodes="";
 my @out_nodes=();
 my $totem_mode=0;
 my @extra_includes=();
@@ -172,6 +171,13 @@ while (defined $ARGV[0] && $ARGV[0] =~ /^--(.*)/) {
         $cap_load=$value;
     } elsif ($flag eq "out-nodes") {
         @out_nodes=split(/,/,$value);
+    } elsif ($flag eq "node-props") { # read node-props file to enumerate out_nodes
+        open NODE_PROPS, "<$value" or die "can't read $value\n";
+        while (my $line=<NODE_PROPS>) {
+            my @fields = split(/ /,$line);
+            if ($fields[16] eq "OUT") { push @out_nodes, $fields[0]; }
+        }
+        close NODE_PROPS;
     } elsif ($flag =~ "default-(power|ground|reset|start|step|delay)") {
         $default_voltage{$1} = $value;
     } elsif ($flag =~ /^voltage:(\S+)$/) {
