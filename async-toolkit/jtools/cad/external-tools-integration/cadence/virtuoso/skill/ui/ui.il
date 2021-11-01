@@ -176,8 +176,6 @@
       ( strcat FulcrumPDKRoot "/share/Fulcrum/pdkinfo.il" ) )
     ( load
       ( strcat FulcrumPDKRoot "/share/Fulcrum/businfo.il" ) )
-    ( load
-      ( strcat FulcrumPDKRoot "/share/Fulcrum/cableinfo.il" ) )
 
     ( UIReplaceWithEnv TheCDSConfigTable "VIRTUOSO_HOME" )
     ( UIReplaceWithEnv TheCDSConfigTable "FULCRUM_PDK_ROOT" )
