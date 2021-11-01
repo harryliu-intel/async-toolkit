@@ -790,6 +790,9 @@ EOF
             print $fh <<EOF;
 #!/usr/intel/bin/tcsh
 setenv DR_USERDEFINESUIN
+setenv DR_MSR
+setenv DR_CaseSensitive
+setenv DR_TOPCHECK mixed
 setenv PDS_PROJ_CFG '$pdk_root/share/Fulcrum/icv/lvs'
 set boxfile
 if (-f gray_list.xref) set boxfile='-boxfile gray_list.xref'
