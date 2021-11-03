@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -175,6 +176,11 @@ public class CDL2Cast {
      **/
     private Map<String,Map<String,LibertyAttr>> libertyAttributes;
 
+    /**
+     * Cached map from cell to pin to port direction.
+     **/
+    private Map<String,Map<String,Direction>> libertyPortDirections;
+
     private static final String LIBERTY_PRS_DEFINE = "USE_LIBERTY_PRS";
 
     /**
@@ -184,6 +190,28 @@ public class CDL2Cast {
     private static final int MIN_TRUTH_TABLE_LITERALS = 5;
 
     private final boolean detectGendev;
+
+    private static enum Direction {
+        INPUT("-"),
+        OUTPUT("+"),
+        INOUT("-+"),
+        INTERNAL("-+");
+        private final String castDirection;
+        Direction(String castDirection) {
+            this.castDirection = castDirection;
+        }
+        public String getCast() {
+            return castDirection;
+        }
+        public static Direction getDirection(String libDir) {
+            if (libDir.equals("input")) return INPUT;
+            else if (libDir.equals("output")) return OUTPUT;
+            else if (libDir.equals("inout")) return INOUT;
+            else if (libDir.equals("internal")) return INTERNAL;
+            else throw new IllegalArgumentException(
+                    "Invalid Liberty pin direction: " + libDir);
+        }
+    }
 
     private static void usage( String m ) {
 
@@ -1631,9 +1659,11 @@ public class CDL2Cast {
         iw.write(");\n");
     }
 
-    private void writeCellPorts(final Template template,
-                                final NetGraph netgraph,
-                                final Writer writer)
+    private void writeCellPorts(
+            final Template template,
+            final NetGraph netgraph,
+            final Optional<Function<String,Optional<Direction>>> getLibertyDir,
+            final Writer writer)
         throws IOException {
         writer.write("(");
 
@@ -1652,7 +1682,11 @@ public class CDL2Cast {
             final String stem = stemIter.next();
             final List<Pair<Integer,Integer>> dimensions = portMap.get( stem );
             String dir = "-+";
-            if (netgraph!=null) { // infer directionality of port
+            final Optional<Direction> libertyDir =
+                getLibertyDir.flatMap(f -> f.apply(stem));
+            if (libertyDir.isPresent()) {
+                dir = libertyDir.get().getCast();
+            } else if (netgraph!=null) { // infer directionality of port
                 NetGraph.NetNode node =
                     netgraph.findNetNode(HierName.makeHierName(stem));
                 if ((node!=null) && node.isGate() && !node.isOutput()) dir = "-";
@@ -1692,17 +1726,19 @@ public class CDL2Cast {
      *               node BAD)
      * from the examples above
      **/
-    private void writeCellHeader(String cell,
-                                 String[] parents,
-                                 Template template,
-                                 NetGraph netgraph,
-                                 Writer writer,
-                                 boolean elidePorts)
+    private void writeCellHeader(
+            String cell,
+            String[] parents,
+            Template template,
+            NetGraph netgraph,
+            Optional<Function<String,Optional<Direction>>> getLibertyDir,
+            Writer writer,
+            boolean elidePorts)
         throws IOException {
         writer.write("define \"" + cell + "\"()" );
 
         if (!elidePorts) {
-            writeCellPorts(template, netgraph, writer);
+            writeCellPorts(template, netgraph, getLibertyDir, writer);
         }
 
         for (int i = 0; i < parents.length; i++) {
@@ -1899,6 +1935,7 @@ public class CDL2Cast {
                         new String[] {cellModule.getCadenceString()},
                         template,
                         netgraph,
+                        Optional.empty(),
                         iw,
                         true);
         iw.write("{\n");
@@ -2044,7 +2081,8 @@ public class CDL2Cast {
     /** Fill in output pin function attribute, and cell attributes */
     private void findLibertyInfo(final LibertyParser libertyParser,
                                  final Map<String,Map<String,String>> funcs,
-                                 final Map<String,Map<String,LibertyAttr>> attrs) {
+                                 final Map<String,Map<String,LibertyAttr>> attrs,
+                                 final Map<String,Map<String,Direction>> dirs) {
         findGroup(libertyParser.getGroups(), "library")
             .flatMap(lib -> findGroup(lib.getGroups(), "cell"))
             .forEach(cell -> {
@@ -2069,6 +2107,18 @@ public class CDL2Cast {
                                     });
                         });
                 }
+                findGroup(cell.getGroups(), "pin")
+                    .forEach(pin -> {
+                        Optional.ofNullable(pin.findAttrByName("direction"))
+                                .ifPresent(func -> {
+                                    dirs.computeIfAbsent(cell.getNames().next(),
+                                                         k -> new HashMap<>())
+                                         .put(pin.getNames().next(),
+                                              Direction.getDirection(
+                                                  func.getSimpleAttr()
+                                                      .getStringValue()));
+                                });
+                    });
             });
     }
 
@@ -2077,8 +2127,10 @@ public class CDL2Cast {
         if (libertyFunctions == null) {
             libertyFunctions = new HashMap<>();
             libertyAttributes = new HashMap<>();
+            libertyPortDirections = new HashMap<>();
             for (LibertyParser lp : libertyParser) {
-                findLibertyInfo(lp, libertyFunctions, libertyAttributes);
+                findLibertyInfo(lp, libertyFunctions, libertyAttributes,
+                                libertyPortDirections);
             }
         }
     }
@@ -2095,6 +2147,13 @@ public class CDL2Cast {
                                                          String cell) {
         updateLibertyCache(libertyParser);
         return libertyAttributes.getOrDefault(cell, Collections.emptyMap());
+    }
+
+    /** Returns map from pin to dreiction for the given cell. */
+    private Map<String,Direction> getLibertyPortDirections(
+        List<LibertyParser> libertyParser, String cell) {
+        updateLibertyCache(libertyParser);
+        return libertyPortDirections.getOrDefault(cell, Collections.emptyMap());
     }
 
     private void writeTemplateToCastTree(final HierName fqcn,
@@ -2133,10 +2192,19 @@ public class CDL2Cast {
         if (desc != null) {
             iw.write("/** " + desc.getSimpleAttr().getStringValue() + " **/\n");
         }
+
+        final Map<String,String> nodeMap = reverseMap.getNodeMap(cellName);
+
+        final Map<String,Direction> libertyDirections =
+            getLibertyPortDirections(libertyParser, origName);
+
         writeCellHeader(cellModule.getSuffixString(),
                         parents,
                         template,
                         netgraph,
+                        Optional.of(
+                            p -> Optional.ofNullable(nodeMap.get(p))
+                                         .map(n -> libertyDirections.get(n))),
                         iw,
                         false);
 
@@ -2164,11 +2232,10 @@ public class CDL2Cast {
             // try to generate PRS from Liberty file if available
             if (!libertyParser.isEmpty()) {
                 final Map<HierName,HierName> forwardMap = new HashMap<>();
-                reverseMap.getNodeMap(cellName)
-                          .entrySet()
-                          .stream()
-                          .forEach(e -> forwardMap.put(toHier(e.getValue()),
-                                                       toHier(e.getKey())));
+                nodeMap.entrySet()
+                       .stream()
+                       .forEach(e -> forwardMap.put(toHier(e.getValue()),
+                                                    toHier(e.getKey())));
                 getLibertyFunction(libertyParser, origName)
                     .entrySet()
                     .stream()
