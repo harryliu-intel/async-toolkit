@@ -2149,7 +2149,7 @@ public class CDL2Cast {
         return libertyAttributes.getOrDefault(cell, Collections.emptyMap());
     }
 
-    /** Returns map from pin to dreiction for the given cell. */
+    /** Returns map from pin to direction for the given cell. */
     private Map<String,Direction> getLibertyPortDirections(
         List<LibertyParser> libertyParser, String cell) {
         updateLibertyCache(libertyParser);
