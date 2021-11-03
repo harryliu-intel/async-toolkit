@@ -924,7 +924,7 @@ int print_var_infix(FILE *fp, VAR *var, int N)
     if (tos>=STACKMAX)
       var_error(var,"print_var_infix stack overflow");
     }
-  fprintf(fp,"%s; %% %s\n",stack[tos-1],var->name);
+  if (tos>0) fprintf(fp,"%s; %% %s\n",stack[tos-1],var->name);
   for (i=0; i<tos; i++) leak_free(stack[i]);
   return N;
   }

@@ -14,7 +14,7 @@ int is_glob(char *glob)
   {
   int stars=0,questionmarks=0,len,j;
   len=strlen(glob);
-  for (j=0; j<strlen(glob); j++)
+  for (j=0; j<len; j++)
     {
     stars += (glob[j]=='*');
     questionmarks += (glob[j]=='?');
