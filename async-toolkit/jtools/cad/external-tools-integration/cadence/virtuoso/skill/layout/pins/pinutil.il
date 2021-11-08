@@ -598,3 +598,17 @@ defun( PinUtilDeleteAllSubPins (view)
   )
  )
 )
+
+
+(defun MakePin (CV name layer points)
+  (let (rect net pin)
+    rect = (dbCreateRect CV MetalDrawing[layer] points) 
+    rect = (dbCreateRect CV MetalPin[layer] points)
+    (unless net = (dbFindNetByName CV name)
+      net = (dbCreateNet CV name))
+    rect->net = net
+    (LabelPin CV rect)
+    pin = (dbCreatePin net rect)
+    )
+  )
+
