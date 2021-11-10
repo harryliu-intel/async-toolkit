@@ -150,13 +150,18 @@
  *n3-params*
  '())
 
+
 (simple-si-cost *n3-dols-per-mm2* 483 0.332 2)
+(simple-si-cost *n3-dols-per-mm2* 483 0.423 2) ;; ww46
+(tally-costs '(852))
 
 ;; N3 halfcore
 
 (report-yields-for-params (scale-to-area (n3-ftr-tiled-split-die-model) 396) *n3-params* '())
 
 (simple-si-cost *n3-dols-per-mm2* 396 0.370 2)
+(simple-si-cost *n3-dols-per-mm2* 396 0.462 2)
+(tally-cost '(639 124))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -220,6 +225,9 @@
 
 (report-yields-for-params (n3-ftr-102p4-split-model) *n3-params* '())
 
+(simple-si-cost *n3-dols-per-mm2* 680 0.357 2)
+(tally-cost '(1420))
+
 ;; just the core
 
 
@@ -243,6 +251,7 @@
 (report-yields-for-params (scale-to-area (convert-n5-to-n3 (n5-ftr-102p4-split-core-model)) 480) *n3-params* '())
 
 (simple-si-cost *n3-dols-per-mm2* 480 0.356 2)
+(simple-si-cost *n3-dols-per-mm2* 480 0.449 2)
 
 (define (tally-cost si-costs)
   (let* ((si-sum (apply + si-costs))
