@@ -195,3 +195,10 @@
       (integrate-in-pieces integrand))))
 
 ( (make-gamma 0.05 32 3) 1.6)
+
+(define (print-values f from to step)
+  (let loop ((p from))
+    (if (> p to) 'ok
+        (begin (dis "(" p " " (f p) ")" dnl)
+               (loop (+ p step))))))
+
