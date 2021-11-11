@@ -138,6 +138,31 @@
                        model
                        factor)))
 
+(define (tally-cost si-costs)
+  ;; for list of packaged die costs tally up the PCOS of packaged part
+  (let* ((si-sum (apply + si-costs))
+         ;; sum the Si costs for each die type
+         
+         (pkg    150)
+         ;; fixed package cost of $150
+         
+         (packaged (+ si-sum pkg))
+         
+         (test    20)
+         ;; fixed test cost of $20
+         
+         (tested   (+ test packaged))
+         
+         (yield 0.98)
+         ;; fixed packaging yield of 98%
+         
+         (out-the-door (/ tested yield))
+         ;; final cost out the door
+         
+         )
+    
+    out-the-door))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; cost of N5 tile
@@ -153,7 +178,7 @@
 
 (simple-si-cost *n3-dols-per-mm2* 483 0.332 2)
 (simple-si-cost *n3-dols-per-mm2* 483 0.423 2) ;; ww46
-(tally-costs '(852))
+(tally-cost '(852))
 
 ;; N3 halfcore
 
@@ -234,7 +259,7 @@
 ;;N5
 (define (n5-ftr-102p4-split-core-model)
   (scale-to-area `(ftr-split-core-102p4
-                   (io-d2d 20 serdes-area 20)
+                   (io-d2d 53 serdes-area 53) ;; from Ram
                    ,(remove-labeled-block
                      'hard-io
                      (remove-labeled-block
@@ -253,12 +278,3 @@
 (simple-si-cost *n3-dols-per-mm2* 480 0.356 2)
 (simple-si-cost *n3-dols-per-mm2* 480 0.449 2)
 
-(define (tally-cost si-costs)
-  (let* ((si-sum (apply + si-costs))
-         (pkg    150)
-         (packaged (+ si-sum pkg))
-         (test    20)
-         (tested   (+ test packaged))
-         (yield 0.98)
-         (out-the-door (/ tested yield)))
-    out-the-door))
