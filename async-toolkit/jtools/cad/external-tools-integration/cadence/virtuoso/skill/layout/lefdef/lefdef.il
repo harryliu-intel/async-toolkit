@@ -1233,7 +1233,7 @@ t
     ; translate cell names to Intel format
     ; there appears to be no name map file like with gds, so we have to copy the cells
     scratchlib = (dbCreateLib "export_lef_temp" (strcat (ConfigFileGetValue TheCDSConfigTable "TEMP") "/export_lef_temp"))
-    (techSetTechLibName scratchlib "1276")
+    (techSetTechLibName scratchlib TechLibName)
 
     (foreach c cells
       cellName = c->cellName
