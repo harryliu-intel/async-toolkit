@@ -258,7 +258,7 @@
         (begin
           (report-all-yields model
                              (apply ym (car p))
-                             (string-append "====================================================  D:" (number->string (caar p)) " alpha:" (number->string (cadar p)) "  ===================================================")
+                             (string-append "====================================================  D:" (number->string (caar p)) " alpha:" (number->string (cadar p)) " n: " (number->string (caddar p)) " ===================================================")
                              downbin-list
                              )
           (loop (cdr p))

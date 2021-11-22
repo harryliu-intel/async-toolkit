@@ -4,11 +4,6 @@
 ;;
 ;;
 ;;
-;; IMPORTANT NOTE
-;; the functions used don't really let you change "n" very easily.
-;;
-;; this is a bad defect! currently, you have to change the n between the
-;; N5 and N3 values manually.
 ;;
 
 (load "reports-21ww38.scm")
