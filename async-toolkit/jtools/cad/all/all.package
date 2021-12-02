@@ -2,6 +2,7 @@
 include ../ubersize/ubersize.package ../ubersize
 include ../proteus/proteus.package ../proteus
 include ../lad_quake/lad_quake.inc ../lad_quake
+include ../ch2/ch2.inc ../ch2
 include ../sd/sd.inc ../sd
 include ../rdt/rdt.inc ../rdt
 include ../lve/lve.package ../lve
