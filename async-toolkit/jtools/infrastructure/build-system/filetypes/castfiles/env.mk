@@ -266,7 +266,7 @@ $(SPICE_DIR)/%/lib_parallel/lib.done.$(1) $(SPICE_DIR)/%/lib_parallel/lib.raw.$(
 	    --clean-trace=$$(CLEAN_TRACE) \
 	    --task=lib \
 	    --local-props='$$<' \
-      --node-props='$$(word 3, $$(^))' \
+	    --node-props='$$(word 3, $$(^))' \
 	    '$$(dir $$(@D))/lib' -include '$$(@D)/lib.in.$(1)' \
 	    1>'$$(@D)/lib.out.$(1)' 2>'$$(@D)/lib.err.$(1)' ; \
 	    touch '$$(@D)/lib.raw.$(1)'; \
@@ -313,7 +313,7 @@ $(SPICE_DIR)/%/lib_parallel/lib.done.$(1) $(SPICE_DIR)/%/lib_parallel/lib.raw.$(
 	    --clean-trace=$$(CLEAN_TRACE) \
 	    --task=lib \
 	    --local-props='$$<' \
-      --node-props='$$(word 2, $$(^))' \
+	    --node-props='$$(word 2, $$(^))' \
 	    '$$(dir $$(@D))/lib' -include '$$(@D)/lib.in.$(1)' \
 	    1>'$$(@D)/lib.out.$(1)' 2>'$$(@D)/lib.err.$(1)' ; \
 	    touch '$$(@D)/lib.raw.$(1)'; \
@@ -917,7 +917,7 @@ $(SPICE_DIR)/%/alint_PO_parallel/alint_PO.done.$(1) $(SPICE_DIR)/%/alint_PO_para
 	    --alint-incr=$$(ALINT_INCR) \
 	    --task=alint_PO \
 	    --local-props='$$<' \
-      --node-props='$$(word 3, $$(^))' \
+	    --node-props='$$(word 3, $$(^))' \
 	    '$$(dir $$(@D))/alint_PO' -include '$$(@D)/alint_PO.in.$(1)' \
 	    1>'$$(@D)/alint_PO.out.$(1)' 2>'$$(@D)/alint_PO.err.$(1)' ; \
 	    if [[ -d "$$(@D)/../alint_PO.bin.$(1)" ]]; then \
@@ -967,7 +967,7 @@ $(SPICE_DIR)/%/alint_PO_parallel/alint_PO.done.$(1) $(SPICE_DIR)/%/alint_PO_para
 	    --alint-incr=$$(ALINT_INCR) \
 	    --task=alint_PO \
 	    --local-props='$$<' \
-      --node-props='$$(word 2, $$(^))' \
+	    --node-props='$$(word 2, $$(^))' \
 	    '$$(dir $$(@D))/alint_PO' -include '$$(@D)/alint_PO.in.$(1)' \
 	    1>'$$(@D)/alint_PO.out.$(1)' 2>'$$(@D)/alint_PO.err.$(1)' ; \
 	    if [[ -d "$$(@D)/../alint_PO.bin.$(1)" ]]; then \
@@ -1048,7 +1048,7 @@ $(SPICE_DIR)/%/alint_parallel/alint_aspice.done.$(1) $(SPICE_DIR)/%/alint_parall
 	    --alint-dynamic-only=$(ALINT_DYNAMIC_ONLY) \
 	    --alint-incr=$(ALINT_INCR) \
 	    --local-props='$$<' \
-      --node-props='$$(word 3, $$(^))' \
+	    --node-props='$$(word 3, $$(^))' \
 	    --leaky-nodes='$$(<D)/cell.leakynodes$$(ROUTED_SUFFIX)' \
 	    '$$(dir $$(@D))/alint' -include '$$(@D)/alint.in.$(1)' \
 	    1>'$$(@D)/alint_aspice.out.$(1)' 2>'$$(@D)/alint_aspice.err.$(1)' ; \
@@ -1099,7 +1099,7 @@ $(SPICE_DIR)/%/alint_parallel/alint_aspice.done.$(1) $(SPICE_DIR)/%/alint_parall
 	    --alint-dynamic-only=$(ALINT_DYNAMIC_ONLY) \
 	    --alint-incr=$(ALINT_INCR) \
 	    --local-props='$$<' \
-      --node-props='$$(word 2, $$(^))' \
+	    --node-props='$$(word 2, $$(^))' \
 	    --leaky-nodes='$$(<D)/cell.leakynodes$$(ROUTED_SUFFIX)' \
 	    '$$(dir $$(@D))/alint' -include '$$(@D)/alint.in.$(1)' \
 	    1>'$$(@D)/alint_aspice.out.$(1)' 2>'$$(@D)/alint_aspice.err.$(1)' ; \
@@ -1157,7 +1157,7 @@ $(SPICE_DIR)/%/alint_parallel/alint_aspice.done.$(REDONODES) $(SPICE_DIR)/%/alin
 	    --task=alint \
 	    --alint-dynamic-only=$(ALINT_DYNAMIC_ONLY) \
 	    --local-props='$<' \
-      --node-props='$(word 3, $^)' \
+	    --node-props='$(word 3, $^)' \
 	    --leaky-nodes='$(<D)/cell.leakynodes$(ROUTED_SUFFIX)' \
 	    '$(dir $(@D))/alint' -include '$(@D)/alint.in.$(REDONODES)' \
 	    1>'$(@D)/alint_aspice.out.$(REDONODES)' 2>'$(@D)/alint_aspice.err.$(REDONODES)' ; \
@@ -1510,7 +1510,7 @@ $(SPICE_DIR)/hsim/$(ENV)/%/hsim.out: $(SPICE_DIR)/cell.hspice \
 	  $(PRS_MIN_RES) \
 	  $(PRS_MAX_RES) \
 	  $(CAP_LOAD) \
-	  --node-props=$(CELL_DIR)/cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX) \
+	  --node-props='$(CELL_DIR)/cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX)' \
 	  --rc-reduction=$$reduce \
 	  --minC=$(MINC) --minR=$(MINR) \
 	  --run-time=$$time --process-corner=$$corner --vdd=$$true \
@@ -1588,7 +1588,7 @@ $(SPICE_DIR)/xa/$(ENV)/%/xa.out: $(SPICE_DIR)/cell.hspice \
 	  $(PRS_MIN_RES) \
 	  $(PRS_MAX_RES) \
 	  $(CAP_LOAD) \
-	  --node-props=$(CELL_DIR)/cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX) \
+	  --node-props='$(CELL_DIR)/cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX)' \
 	  --rc-reduction=$$reduce \
 	  --minC=$(MINC) --minR=$(MINR) \
 	  --run-time=$$time --process-corner=$$corner --vdd=$$true \
@@ -1665,7 +1665,7 @@ $(SPICE_DIR)/hspice/$(ENV)/%/hspice.out: $(SPICE_DIR)/cell.hspice \
 	  $(PRS_MIN_RES) \
 	  $(PRS_MAX_RES) \
 	  $(CAP_LOAD) \
-	  --node-props=$(CELL_DIR)/cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX) \
+	  --node-props='$(CELL_DIR)/cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX)' \
 	  --rc-reduction=$$reduce \
 	  --minC=$(MINC) --minR=$(MINR) \
 	  --run-time=$$time --process-corner=$$corner --vdd=$$true \
