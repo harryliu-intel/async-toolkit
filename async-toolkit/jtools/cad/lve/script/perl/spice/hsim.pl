@@ -166,15 +166,15 @@ while (defined $ARGV[0] && $ARGV[0] =~ /^--(.*)/) {
     } elsif ($flag eq "sigma-factor") {
         $sigma_factor = $value;
     } elsif ($flag eq "extra-includes") {
-        @extra_includes=split(/:/,$value);
+        @extra_includes=split(":",$value);
     } elsif ($flag eq "cap-load") {
         $cap_load=$value;
     } elsif ($flag eq "out-nodes") {
-        @out_nodes=split(/,/,$value);
+        @out_nodes=split(",",$value);
     } elsif ($flag eq "node-props") { # read node-props file to enumerate out_nodes
         open NODE_PROPS, "<$value" or die "can't read $value\n";
         while (my $line=<NODE_PROPS>) {
-            my @fields = split(/ /,$line);
+            my @fields = split(" ",$line);
             if ($fields[16] eq "OUT") { push @out_nodes, $fields[0]; }
         }
         close NODE_PROPS;
@@ -341,14 +341,6 @@ if (defined($sub_lve_root_dir) and -d "$sub_lve_root_dir") {
     print RUN_FILE ".option search='$sub_lve_root_dir'\n";
 }
 
-# capacitive load on outputs
-if (@out_nodes and $cap_load > 0) {
-    foreach my $node (@out_nodes) {
-        $node = "Xdut.$gds2NodeName{$node}";
-        print RUN_FILE "C$node $node 0 $cap_load\n";
-    }
-}
-
 # adjust total run time
 $time += $reset_time + $start_time + $measure_time;
 
@@ -470,8 +462,19 @@ if (!($env_spice_file eq "")) {
 .include '$env_spice_file'
 EOF
 }
+
 foreach my $file (@extra_includes) {
     print RUN_FILE ".include '$file'\n" if (-e $file);
+}
+print RUN_FILE "\n";
+
+# capacitive load on outputs
+if (@out_nodes and $cap_load > 0) {
+    print RUN_FILE "* Capacitance on outputs\n";
+    foreach my $node (@out_nodes) {
+        $node = "Xdut.$gds2NodeName{$node}";
+        print RUN_FILE "C$node $node 0 $cap_load\n";
+    }
 }
 print RUN_FILE "\n";
 

@@ -1510,7 +1510,7 @@ $(SPICE_DIR)/hsim/$(ENV)/%/hsim.out: $(SPICE_DIR)/cell.hspice \
 	  $(PRS_MIN_RES) \
 	  $(PRS_MAX_RES) \
 	  $(CAP_LOAD) \
-	  --node-props='$(CELL_DIR)/cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX)' \
+	  --node-props='$(word 4, $^)' \
 	  --rc-reduction=$$reduce \
 	  --minC=$(MINC) --minR=$(MINR) \
 	  --run-time=$$time --process-corner=$$corner --vdd=$$true \
@@ -1588,7 +1588,7 @@ $(SPICE_DIR)/xa/$(ENV)/%/xa.out: $(SPICE_DIR)/cell.hspice \
 	  $(PRS_MIN_RES) \
 	  $(PRS_MAX_RES) \
 	  $(CAP_LOAD) \
-	  --node-props='$(CELL_DIR)/cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX)' \
+	  --node-props='$(word 4, $^)' \
 	  --rc-reduction=$$reduce \
 	  --minC=$(MINC) --minR=$(MINR) \
 	  --run-time=$$time --process-corner=$$corner --vdd=$$true \
@@ -1665,7 +1665,7 @@ $(SPICE_DIR)/hspice/$(ENV)/%/hspice.out: $(SPICE_DIR)/cell.hspice \
 	  $(PRS_MIN_RES) \
 	  $(PRS_MAX_RES) \
 	  $(CAP_LOAD) \
-	  --node-props='$(CELL_DIR)/cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX)' \
+	  --node-props='$(word 4, $^)' \
 	  --rc-reduction=$$reduce \
 	  --minC=$(MINC) --minR=$(MINR) \
 	  --run-time=$$time --process-corner=$$corner --vdd=$$true \
