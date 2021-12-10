@@ -243,24 +243,30 @@
             (loop (cdr p)))
           )
       )
+    (dis line dnl)
+    
+    (caddr top-results) ;; return the yield
     )
-  (dis line dnl)
-  
-  'ok
-  )
+ )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (report-yields-for-params model params downbin-list)
-  (let loop ((p params))
-    (if (null? p)
-        'ok
-        (begin
-          (report-all-yields model
-                             (apply ym (car p))
-                             (string-append "====================================================  D:" (number->string (caar p)) " alpha:" (number->string (cadar p)) "  ===================================================")
-                             downbin-list
-                             )
-          (loop (cdr p))
-          ))))
+
+  (define (report1 p)
+    (report-all-yields
+     model
+     (apply ym p)
+     (string-append "====================================================  D:"
+                    (number->string (car p))
+                    " alpha:"
+                    (number->string (cadr p))
+                    " n:" (number->string (caddr p))
+                    " ===================================================")
+     downbin-list
+     )
+    )
+
+  (map report1 params)
+  )
 
