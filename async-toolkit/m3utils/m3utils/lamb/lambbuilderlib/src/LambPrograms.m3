@@ -22,7 +22,8 @@ PROCEDURE IdleProgram(prog : CommandSeq.T; C : Lamb.T) =
   BEGIN
     FOR i := 1 TO Cycles DO
       AddCmd(  Cmd { V.Nop                     })
-    END
+    END;
+    AddCmd(  Cmd { V.Read,             0     }); (* trigger a transition *)
   END IdleProgram;
 
 (**********************************************************************)
@@ -39,7 +40,8 @@ PROCEDURE ReadProgram(prog : CommandSeq.T; C : Lamb.T) =
   BEGIN
     FOR i := 1 TO Cycles DO
       AddCmd(  Cmd { V.Read,             0     });
-    END
+    END;
+    AddCmd(  Cmd { V.Read,             0     }); (* trigger a transition *)
   END ReadProgram;
 
   (**********************************************************************)
@@ -56,7 +58,8 @@ PROCEDURE WriteProgram(prog : CommandSeq.T; C : Lamb.T) =
   BEGIN
     FOR i := 1 TO Cycles DO
       AddCmd(  Cmd { V.Writ,             1, 1     });
-    END
+    END;
+    AddCmd(  Cmd { V.Read,             0     }); (* trigger a transition *)
   END WriteProgram;
 
   (**********************************************************************)
@@ -73,7 +76,8 @@ PROCEDURE ReadWriteProgram(prog : CommandSeq.T; <*UNUSED*>C : Lamb.T) =
   BEGIN
     FOR i := 1 TO Cycles DO
       AddCmd(  Cmd { V.RdWr, 1, 1, 2                    });
-    END
+    END;
+    AddCmd(  Cmd { V.Read,             0     }); (* trigger a transition *)
   END ReadWriteProgram;
 
 

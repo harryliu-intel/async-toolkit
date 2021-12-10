@@ -18,6 +18,8 @@ IMPORT Sim;
 IMPORT StandardSettings;
 FROM SimSupport IMPORT ClockSrc, IntegerSrc, SeqSrc, Reader;
 IMPORT LambPrograms;
+IMPORT LambTemplate, Bundle;
+IMPORT ProbeType;
 
 CONST SI = BitInteger.Small;
 
@@ -26,9 +28,9 @@ PROCEDURE Clog2(q : CARDINAL) : CARDINAL =
 
 VAR
   C := Lamb.T {
-    N  :=           16,
-    W  :=           30,
-    LN := LAST(CARDINAL)
+  N  := LAST(CARDINAL),
+  W  := LAST(CARDINAL),
+  LN := LAST(CARDINAL)
   };
     
   I0   := SI( 0);
@@ -53,18 +55,27 @@ PROCEDURE Build(pp : ParseParams.T; sp : SimParams.T; modelName : TEXT)
 
   VAR    
     Seq : ARRAY Verb.T OF REF ARRAY OF BitInteger.T;
-    prog := NEW(CommandSeq.T).init();
-    s := StandardSettings.New(pp, sp, NEW(Random.Default).init());
+    prog     := NEW(CommandSeq.T).init();
+    s        := StandardSettings.New(pp, sp, NEW(Random.Default).init());
     theClock := NEW(ClockSrc,
                     s   := s,
                     spd := s.spd,
                     lo  := 0.0d0,
                     hi  := Vdd);
-    pt := LambPrograms.ParseFlag(pp);
+    pt       := LambPrograms.ParseFlag(pp);
 
-  BEGIN 
+  BEGIN
+    SimDumper.SetStandardDirectives(FALSE);
     <*ASSERT s.spd > 0.0d0*>
 
+    WITH hadIt = pp.keywordPresent("-w") OR pp.keywordPresent("-width") DO
+      C.W := pp.getNextInt()
+    END;
+    
+    WITH hadIt = pp.keywordPresent("-d") OR pp.keywordPresent("-depth") DO
+      C.N := pp.getNextInt()
+    END;
+    
     C.LN := Clog2( C.N );
 
     RunTheProgram(pt);
@@ -130,7 +141,32 @@ PROCEDURE Build(pp : ParseParams.T; sp : SimParams.T; modelName : TEXT)
   theModel := NEW(LambModel.T).init(C,
                                     s.cycleTime,
                                     s.assertHoldFrac,
-                                    s.assertHoldTime)
+                                    s.assertHoldTime);
+
+  (* set up various sim stuff *)
+
+  FOR sim := FIRST(Sim.T) TO LAST(Sim.T) DO
+    WITH bundle = LambTemplate.Get(),
+         resource = Bundle.Get(bundle, "template_spice_includes") DO
+
+      SimDumper.simExtras[sim].addhi(resource)
+      (* the libs *)
+
+    END;
+    
+    SimDumper.simExtras[sim].addhi(
+                            F(".include \"dbs/cdp_lamb_1w1sr_%sw_%sb.dspf\"",
+                              Int(C.N), Int(C.W)));
+    (* include the extracted model *)
+
+    TYPE
+      P = ProbeType.T;
+    BEGIN
+      SimDumper.AddProbes(P.Voltage, "CLK");
+      SimDumper.AddProbes(P.Voltage, "VDD");
+      SimDumper.AddProbes(P.Current, "VDD");
+    END
+  END
     
 END Build;
 

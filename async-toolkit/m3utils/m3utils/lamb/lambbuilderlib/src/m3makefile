@@ -15,4 +15,7 @@ Module("LambPrograms")
 Sequence ("LambCommand", "LambCommand")
 Interface ("LambCommand")
 
+resource ("template_spice_includes")
+bundle ("LambTemplate")
+
 library ("lambuilderlib")

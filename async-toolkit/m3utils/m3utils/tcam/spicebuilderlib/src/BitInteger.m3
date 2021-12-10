@@ -5,7 +5,6 @@ IMPORT Bit;
 
 REVEAL
   SmallPromise = PubSmallPromise BRANDED OBJECT 
-    v : INTEGER ;
   OVERRIDES
     force := ForceSmallPromise;
   END;

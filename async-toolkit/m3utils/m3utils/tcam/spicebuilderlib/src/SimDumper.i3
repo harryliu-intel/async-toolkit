@@ -16,7 +16,8 @@ PROCEDURE DumpIt(wr : Wr.T;
                  modelPath : Pathname.T);
 
 PROCEDURE SetVarModels(varModels : TEXT);
-
+PROCEDURE SetStandardDirectives(to : BOOLEAN);
+  
 PROCEDURE FinishDump(wr : Wr.T; pm : ProbeMode.T; ass : AssertionList.T; READONLY sp : SimParams.T; sim : Sim.T);
 
 VAR dutName : TEXT;

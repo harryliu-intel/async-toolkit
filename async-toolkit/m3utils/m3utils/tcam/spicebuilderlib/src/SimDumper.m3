@@ -204,7 +204,9 @@ PROCEDURE AddMeasurement(m : SimMeasurement.T) =
   BEGIN
     measurements.addhi(m)
   END AddMeasurement;
-  
+
+VAR doStandardDirectives := TRUE;
+    
 PROCEDURE FinishDump(wr : Wr.T; pm : ProbeMode.T; ass : AssertionList.T; READONLY sp : SimParams.T; sim : Sim.T) =
 
   PROCEDURE P(txt : TEXT) =
@@ -232,7 +234,7 @@ PROCEDURE FinishDump(wr : Wr.T; pm : ProbeMode.T; ass : AssertionList.T; READONL
     IF pm = ProbeMode.T.Assertions THEN
       (* make synthetic NodeRecs *)
       VAR
-        s := NEW(TextSetDef.T).init();
+        s   := NEW(TextSetDef.T).init();
         seq := NEW(NodeRecSeq.T).init();
         p := ass;
       BEGIN
@@ -276,8 +278,8 @@ PROCEDURE FinishDump(wr : Wr.T; pm : ProbeMode.T; ass : AssertionList.T; READONL
       END;
       VAR
         iter := set.iterate();
+        seq  := ARRAY ProbeType OF TextSeq.T { NEW(TextSeq.T).init(), .. };
         nn : NodeMeasurement.T;
-        seq := ARRAY ProbeType OF TextSeq.T { NEW(TextSeq.T).init(), .. };
       BEGIN
         WHILE iter.next(nn) DO
           seq[nn.quantity].addhi(nn.nm)
@@ -319,8 +321,10 @@ PROCEDURE DumpSpiceHeader(wr        : Wr.T;
     P(F(".PARAM vtrue=%s",LR(Vdd)));
     
   
-    P(".OPTION CMIFLAG=1 CMIUSRFLAG=3 ");
-    P(".OPTION PDMI=1");
+    IF doStandardDirectives THEN
+      P(".OPTION CMIFLAG=1 CMIUSRFLAG=3 ");
+      P(".OPTION PDMI=1")
+    END;
 
     CASE sim OF
       Sim.T.XA =>
@@ -356,16 +360,28 @@ PROCEDURE DumpSpiceHeader(wr        : Wr.T;
       P(simExtras[sim].get(i))
     END;
 
-    P(F(".LIB \"%s\" %s", modelPath, modelName));
+    IF doStandardDirectives THEN
+      IF modelPath = NIL THEN
+        Debug.Error("?must specify model path or -mp")
+      END;
+      IF modelName = NIL THEN
+        Debug.Error("?must specify model name")
+      END;
+      P(F(".LIB \"%s\" %s", modelPath, modelName))
+    END;
+    
     IF varModels # NIL THEN
       P("");
       P(varModels)
     END;
     P("");
-    P(F(".include \"%s\"\n",dutLibFn));
+    IF doStandardDirectives THEN P(F(".include \"%s\"\n",dutLibFn)) END;
     P("")
   END DumpSpiceHeader;
 
+PROCEDURE SetStandardDirectives(to : BOOLEAN) =
+  BEGIN doStandardDirectives := to END SetStandardDirectives;
+  
 PROCEDURE DumpSpiceFooter(wr : Wr.T) =
   BEGIN
     Wr.PutText(wr, ".END\n")

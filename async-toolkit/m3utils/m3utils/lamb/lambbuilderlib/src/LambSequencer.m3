@@ -13,9 +13,9 @@ PROCEDURE Compile(prog          : CommandSeq.T;
   PROCEDURE Clear() =
     BEGIN FOR i := FIRST(buf) TO LAST(buf) DO buf[i] := SI(0) END END Clear;
 
-  PROCEDURE Push() =
+  PROCEDURE Push(dbg : TEXT) =
     VAR
-      dbgStr := F("cycle %5s", Int(tmp[FIRST(tmp)].size()));
+      dbgStr := F("cycle %5s %10s : ", Int(tmp[FIRST(tmp)].size()), dbg);
     BEGIN 
       FOR i := FIRST(buf) TO LAST(buf) DO 
         dbgStr := dbgStr & F(" %s %s", 
@@ -44,32 +44,32 @@ PROCEDURE Compile(prog          : CommandSeq.T;
         CASE ordr.v OF
           V.Nop   => (* skip *)
         |
-          V.Read  => buf[V.Read] := SI(1); 
+          V.Read  => buf[V.Read] := SI(1); <*ASSERT NARROW(buf[V.Read], BitInteger.SmallPromise).v = 1*>
                      buf[V.Radr] := SI(ordr.p0)
         |
-          V.Writ  => buf[V.Writ] := SI(1); 
+          V.Writ  => buf[V.Writ]  := SI(1); 
                      buf[V.Wdata] := SI(ordr.p0); 
-                     buf[V.Wadr] := SI(ordr.p1)
+                     buf[V.Wadr]  := SI(ordr.p1)
         |
-          V.RdWr  => buf[V.Writ] := SI(1);
-                     buf[V.Read] := SI(1);
-                     buf[V.Wdata]:= SI(ordr.p0); 
-                     buf[V.Wadr] := SI(ordr.p1);
-                     buf[V.Radr] := SI(ordr.p2)       
+          V.RdWr  => buf[V.Writ]  := SI(1);
+                     buf[V.Read]  := SI(1);
+                     buf[V.Wdata] := SI(ordr.p0); 
+                     buf[V.Wadr]  := SI(ordr.p1);
+                     buf[V.Radr]  := SI(ordr.p2)       
         ELSE
           <*ASSERT FALSE*>
         END;
-        Push();
+        Push(Verb.Names[ordr.v]);
 
         Clear();
 
-        FOR i := 1 TO Verb.Nops[ordr.v] DO Push() END (* push nops as req'd *)
+        FOR i := 1 TO Verb.Nops[ordr.v] DO Push("*end-nop*") END (* push nops as req'd *)
 
       END
     END;
 
-    Push(); (* a few more cycles for good measure *) 
-    Push();
+    Push("*coda*"); (* a few more cycles for good measure *) 
+    Push("*last*");
 
     FOR v := FIRST(seq) TO LAST(seq) DO
       seq[v] := NEW(REF ARRAY OF BitInteger.T, tmp[v].size());
