@@ -1,0 +1,18 @@
+import ("libm3")
+import ("cit_util")
+import ("parseparams")
+import ("spicelib")
+import ("varlib")
+import ("spicebuilderlib")
+
+Interface ("LambVerb")
+Module ("LambSequencer")
+Module ("LambSimulation")
+Interface("Lamb")
+Module ("LambModel")
+Module("LambPrograms")
+
+Sequence ("LambCommand", "LambCommand")
+Interface ("LambCommand")
+
+library ("lambuilderlib")

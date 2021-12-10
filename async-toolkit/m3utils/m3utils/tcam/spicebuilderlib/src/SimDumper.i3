@@ -29,7 +29,8 @@ PROCEDURE AddNodes(nm            : TEXT;
 
 PROCEDURE DeclSequence(libFile       : Pathname.T;
                        type          : TEXT;
-                       READONLY args : ARRAY OF TEXT);
+                       READONLY args : ARRAY OF TEXT;
+                       reverseArrays := FALSE);
 
 
 PROCEDURE SetDutName(nm : TEXT);

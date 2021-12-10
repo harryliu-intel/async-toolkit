@@ -87,15 +87,31 @@ PROCEDURE IntegerMakeSeq(self         : IntegerSrc;
 PROCEDURE ClockMakeSeq(self : ClockSrc; READONLY idx : Dims.T) : MemoTranSeq.T =
   VAR
     res := NEW(MemoTranSeq.T).init();
-    v := self.lo;
-    t := 0.0d0;
+    v   := self.lo;
+    t   := 0.0d0;
+  CONST
+    MaxCycles = 1.0d4;
   BEGIN
     <*ASSERT idx = Scalar*>
-    WHILE t < self.s.simParams.maxTime DO
-      res.addhi(Tran.T { t := t, v := v, rf := self.s.riseFall });
-      t := t + 1.0d0/self.spd/2.0d0; (* half cycle time *)
-      <*ASSERT v = 0.0d0 OR v = Vdd*>
-      IF v = self.lo THEN v := self.hi ELSE v := self.lo END;
+    WITH maxTime = self.s.simParams.maxTime,
+         spd     = self.spd,
+         nm      = self.nodes.nm DO
+
+      
+      IF spd <= 0.0d0 OR maxTime * spd > MaxCycles THEN
+        Debug.Error(F("clock %s : exceeding %s cycles : maxTime %s, spd %s: cycles %s",
+                      Debug.UnNil(nm),
+                      LR(MaxCycles),
+                      LR(maxTime),
+                      LR(spd),
+                      LR(maxTime * spd)))
+      END;
+      WHILE t < maxTime DO
+        res.addhi(Tran.T { t := t, v := v, rf := self.s.riseFall });
+        t := t + 1.0d0/spd/2.0d0; (* half cycle time *)
+        <*ASSERT v = 0.0d0 OR v = Vdd*>
+        IF v = self.lo THEN v := self.hi ELSE v := self.lo END
+      END
     END;
     RETURN res
   END ClockMakeSeq;
@@ -103,10 +119,10 @@ PROCEDURE ClockMakeSeq(self : ClockSrc; READONLY idx : Dims.T) : MemoTranSeq.T =
 PROCEDURE ArbMakeSeq(self                   : ArbSrc; 
                      <*UNUSED*>READONLY idx : Dims.T) : MemoTranSeq.T =
   VAR
-    res := NEW(MemoTranSeq.T).init();
-    v := LAST(LONGREAL);
-    w := 0.0d0;
-    hold := GetCtrHold(self.s, self.ctr);
+    res    := NEW(MemoTranSeq.T).init();
+    v      := LAST(LONGREAL);
+    w      := 0.0d0;
+    hold   := GetCtrHold(self.s, self.ctr);
     clkSeq := self.c.getSeq(Scalar);
   BEGIN
     res.addhi(Tran.T { 0.0d0, 0.0d0, self.s.riseFall });

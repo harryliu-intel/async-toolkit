@@ -178,9 +178,15 @@ PROCEDURE DumpIt(wr        : Wr.T;
 
     IO.Put("Setting max simulation time to " & LR(sp.maxTime) & "\n");
 
-    srcData := NEW(REF ARRAY OF ARRAY OF LONGREAL,
-                   theSrcs.size(), 
-                   FLOOR(sp.maxTime/sp.step)+1);
+    WITH srcSize = theSrcs.size(),
+         steps   = FLOOR(sp.maxTime/sp.step)+1 DO
+      Debug.Out(F("theSrcs.size() = %s ; steps = %s",
+                  Int(srcSize),
+                  Int(steps)));
+      srcData := NEW(REF ARRAY OF ARRAY OF LONGREAL,
+                     srcSize,
+                     steps)
+    END;
 
     FOR i := 0 TO theSrcs.size()-1 DO
       FillInSrc(theSrcs.get(i), srcData[i], sp)
@@ -522,8 +528,12 @@ PROCEDURE AddProbes(type : ProbeType; to : TEXT) =
   
 PROCEDURE DeclSequence(libFile       : Pathname.T;
                        type          : TEXT;
-                       READONLY args : ARRAY OF TEXT) =
+                       READONLY args : ARRAY OF TEXT;
+                       reverseArrays : BOOLEAN) =
   BEGIN
+    IF reverseArrays THEN
+      Debug.Warning("?reverseArrays not yet implemented")
+    END;
     dutLibFn := libFile;
     dutType  := type;
     dutArgs  := RefizeT(args)
