@@ -68,6 +68,9 @@ PROCEDURE Build(pp : ParseParams.T; sp : SimParams.T; modelName : TEXT)
     SimDumper.SetStandardDirectives(FALSE);
     <*ASSERT s.spd > 0.0d0*>
 
+    SimDumper.SetArrayIteration(SimDumper.Direction.Down);
+    (* probably a Meta thing *)
+    
     WITH hadIt = pp.keywordPresent("-w") OR pp.keywordPresent("-width") DO
       C.W := pp.getNextInt()
     END;
@@ -155,7 +158,7 @@ PROCEDURE Build(pp : ParseParams.T; sp : SimParams.T; modelName : TEXT)
     END;
     
     SimDumper.simExtras[sim].addhi(
-                            F(".include \"dbs/cdp_lamb_1w1sr_%sw_%sb.dspf\"",
+                            F(".include \"dbs/cdp_lamb_1w1sr_%sw_%sb_mod.dspf\"",
                               Int(C.N), Int(C.W)));
     (* include the extracted model *)
 

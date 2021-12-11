@@ -1,5 +1,6 @@
 INTERFACE BitInteger;
 IMPORT Bit;
+IMPORT BigInt;
 
 TYPE
   T    = BRANDED OBJECT END;
@@ -17,5 +18,11 @@ TYPE
 CONST Brand = "Integer";
 
 PROCEDURE Small(z : INTEGER) : T;
+
+PROCEDURE Big(z : BigInt.T; width : CARDINAL) : Concrete;
+
+PROCEDURE Format(t : T; base : CARDINAL := 10) : TEXT;
+
+PROCEDURE ToBigInt(t : T) : BigInt.T;
 
 END BitInteger.

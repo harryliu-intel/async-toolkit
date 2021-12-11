@@ -17,6 +17,12 @@ PROCEDURE DumpIt(wr : Wr.T;
 
 PROCEDURE SetVarModels(varModels : TEXT);
 PROCEDURE SetStandardDirectives(to : BOOLEAN);
+
+TYPE
+  Direction = { Up, Down };
+  
+PROCEDURE SetArrayIteration(direction : Direction);
+  (* default Direction.Up *)
   
 PROCEDURE FinishDump(wr : Wr.T; pm : ProbeMode.T; ass : AssertionList.T; READONLY sp : SimParams.T; sim : Sim.T);
 

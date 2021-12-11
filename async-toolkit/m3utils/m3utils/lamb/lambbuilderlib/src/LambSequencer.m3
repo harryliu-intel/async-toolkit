@@ -1,9 +1,8 @@
 MODULE LambSequencer;
-IMPORT LambCommand AS Command, LambCommandSeq AS CommandSeq;
+IMPORT LambCommandSeq AS CommandSeq;
 IMPORT LambVerb AS Verb, BitInteger;
 FROM Fmt IMPORT Int, F;
-IMPORT RefSeq, Debug, Text, Bit, CardSeq;
-IMPORT Word;
+IMPORT RefSeq, Debug;
 
 CONST SI = BitInteger.Small;
 
@@ -20,8 +19,7 @@ PROCEDURE Compile(prog          : CommandSeq.T;
       FOR i := FIRST(buf) TO LAST(buf) DO 
         dbgStr := dbgStr & F(" %s %s", 
                              Verb.Names[i], 
-                             Int(NARROW(buf[i],BitInteger.SmallPromise).v)
-        )
+                             BitInteger.Format(buf[i]))
       END;
 
       Debug.Out(dbgStr);
@@ -45,17 +43,17 @@ PROCEDURE Compile(prog          : CommandSeq.T;
           V.Nop   => (* skip *)
         |
           V.Read  => buf[V.Read] := SI(1); <*ASSERT NARROW(buf[V.Read], BitInteger.SmallPromise).v = 1*>
-                     buf[V.Radr] := SI(ordr.p0)
+                     buf[V.Radr] := ordr.p0
         |
           V.Writ  => buf[V.Writ]  := SI(1); 
-                     buf[V.Wdata] := SI(ordr.p0); 
-                     buf[V.Wadr]  := SI(ordr.p1)
+                     buf[V.Wdata] := ordr.p0; 
+                     buf[V.Wadr]  := ordr.p1
         |
           V.RdWr  => buf[V.Writ]  := SI(1);
                      buf[V.Read]  := SI(1);
-                     buf[V.Wdata] := SI(ordr.p0); 
-                     buf[V.Wadr]  := SI(ordr.p1);
-                     buf[V.Radr]  := SI(ordr.p2)       
+                     buf[V.Wdata] := ordr.p0; 
+                     buf[V.Wadr]  := ordr.p1;
+                     buf[V.Radr]  := ordr.p2       
         ELSE
           <*ASSERT FALSE*>
         END;

@@ -1,0 +1,22 @@
+.option redefsub=1 * do we need this??
+
+.lib '/p/tech/n7/tech-prerelease/.dr/epic/v1.1.000/models/1P15M_1X_h_1Xa_v_1Ya_h_5Y_vhvhv_2Yy2Yx2R/cln7-1d8-sp-v1d2-2p2-usage.l'  FFGNPGlobalCorner_LocalMC_MOS_MOSCAP
+.lib '/p/tech/n7/tech-prerelease/.dr/epic/v1.1.000/models/1P15M_1X_h_1Xa_v_1Ya_h_5Y_vhvhv_2Yy2Yx2R/cln7-1d8-sp-v1d2-2p2-usage.l'  FFGlobalCorner_LocalMC_BIP_DIO
+.lib '/p/tech/n7/tech-prerelease/.dr/epic/v1.1.000/models/1P15M_1X_h_1Xa_v_1Ya_h_5Y_vhvhv_2Yy2Yx2R/cln7-1d8-sp-v1d2-2p2-usage.l'  FFGlobalCorner_LocalMC_RES_DISRES
+.lib '/p/tech/n7/tech-prerelease/.dr/epic/v1.1.000/models/1P15M_1X_h_1Xa_v_1Ya_h_5Y_vhvhv_2Yy2Yx2R/cln7-1d8-sp-v1d2-2p2-usage.l'  FFGlobalCorner_LocalMC_MOM
+.lib '/p/tech/n7/tech-prerelease/.dr/epic/v1.1.000/models/1P15M_1X_h_1Xa_v_1Ya_h_5Y_vhvhv_2Yy2Yx2R/cln7-1d8-sp-v1d2-2p2-usage.l'  FF_R_METAL
+
+.include '/p/jbay/ip/library/tsmc/7nm/projects/cb/latest/views/spice/tcbn07_bwph240l11p57pd_base_lvt_130a.spi'
+.include '/p/jbay/ip/library/tsmc/7nm/projects/cb/latest/views/spice/tcbn07_bwph240l11p57pd_base_svt_130a.spi'
+.include '/p/jbay/ip/library/tsmc/7nm/projects/cb/latest/views/spice/tcbn07_bwph240l11p57pd_base_ulvt_130a.spi'
+.include '/p/jbay/ip/library/tsmc/7nm/projects/cb/latest/views/spice/tcbn07_bwph240l8p57pd_base_lvt_130a.spi'
+.include '/p/jbay/ip/library/tsmc/7nm/projects/cb/latest/views/spice/tcbn07_bwph240l8p57pd_base_svt_130a.spi'
+.include '/p/jbay/ip/library/tsmc/7nm/projects/cb/latest/views/spice/tcbn07_bwph240l8p57pd_base_ulvt_130a.spi'
+.include '/p/cloudbreak/ip/bfn_custom/scell/20200806/views/spice/tcbn07_bwph240l8p57pd_base_S_lvt_130a.spi'
+
+* latches
+.include '/p/jbay/ip/library/tsmc/7nm/projects/cb/latestltch/views/sp/LTCH_1D1CK_EE_D1BWP240H11P57PDSVT.sp'
+
+* latchblks
+.include 'dbs/latchblk.inc'
+

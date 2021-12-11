@@ -23,21 +23,23 @@ PROCEDURE Clone(READONLY a : T) : REF T =
 
 REVEAL
   Iterator = PubIterator BRANDED OBJECT
-    lim : REF T;
-    new : BOOLEAN;
+    lim      : REF T;
+    new      : BOOLEAN;
+    downward : BOOLEAN;
   OVERRIDES
     init := InitI;
     next := NextI;
   END;
 
-PROCEDURE Iterate(READONLY lim : T) : Iterator =
-  BEGIN RETURN NEW(Iterator).init(lim) END Iterate;
+PROCEDURE Iterate(READONLY lim : T; downward : BOOLEAN) : Iterator =
+  BEGIN RETURN NEW(Iterator).init(lim, downward) END Iterate;
 
-PROCEDURE InitI(i : Iterator; READONLY lim : T) : Iterator =
+PROCEDURE InitI(i : Iterator; READONLY lim : T; downward : BOOLEAN) : Iterator =
   BEGIN 
-    i.lim := Clone(lim); 
-    i.lim^ := lim; 
-    i.new := TRUE;
+    i.lim      := Clone(lim); 
+    i.lim^     := lim; 
+    i.new      := TRUE;
+    i.downward := downward;
     RETURN i 
   END InitI;
 
@@ -46,7 +48,11 @@ PROCEDURE NextI(i : Iterator; VAR nxt : T) : BOOLEAN =
     IF i.new THEN
       i.new := FALSE;
       FOR j := FIRST(nxt) TO LAST(nxt) DO
-        nxt[j] := 0
+        IF i.downward THEN
+          nxt[j] := i.lim[j] - 1
+        ELSE
+          nxt[j] := 0
+        END
       END;
       Debug.Out("Dims.NextI: new, returning " & Format(nxt));
       RETURN TRUE
@@ -55,11 +61,20 @@ PROCEDURE NextI(i : Iterator; VAR nxt : T) : BOOLEAN =
         done := TRUE;
       BEGIN
         FOR j := LAST(nxt) TO FIRST(nxt) BY -1 DO
-          IF nxt[j] = i.lim[j]-1 THEN
-            nxt[j] := 0
+          IF i.downward THEN
+            IF nxt[j] = 0 THEN
+              nxt[j] := i.lim[j] - 1 
+            ELSE
+              nxt[j] := nxt[j] - 1;
+              done := FALSE; EXIT
+            END
           ELSE
-            nxt[j] := nxt[j]+1;
-            done := FALSE; EXIT
+            IF nxt[j] = i.lim[j] - 1 THEN
+              nxt[j] := 0
+            ELSE
+              nxt[j] := nxt[j] + 1;
+              done := FALSE; EXIT
+            END
           END
         END;
         Debug.Out("Dims.NextI: not new, returning " & Format(nxt));

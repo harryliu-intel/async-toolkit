@@ -38,6 +38,14 @@ CONST LR = Fmt.LongReal;
 
 CONST TE = Text.Equal;
 
+VAR
+  iterateDownward := FALSE;
+
+PROCEDURE SetArrayIteration(direction : Direction) =
+  BEGIN
+    iterateDownward := direction = Direction.Down
+  END SetArrayIteration;  
+
 PROCEDURE Renamer(txt : TEXT) : TEXT =
   VAR
     dutPfx : TEXT;
@@ -111,7 +119,7 @@ PROCEDURE MakeDictionaries(srcs, rdrs : NodeRecSeq.T) =
 
     VAR
       q    := Dims.Clone  (z.dims^);
-      iter := Dims.Iterate(z.dims^);
+      iter := Dims.Iterate(z.dims^, iterateDownward);
     BEGIN
       WHILE iter.next(q^) DO Single(q^) END
     END DoOne;
@@ -207,7 +215,11 @@ PROCEDURE AddMeasurement(m : SimMeasurement.T) =
 
 VAR doStandardDirectives := TRUE;
     
-PROCEDURE FinishDump(wr : Wr.T; pm : ProbeMode.T; ass : AssertionList.T; READONLY sp : SimParams.T; sim : Sim.T) =
+PROCEDURE FinishDump(wr          : Wr.T;
+                     pm          : ProbeMode.T;
+                     ass         : AssertionList.T;
+                     READONLY sp : SimParams.T;
+                     sim         : Sim.T) =
 
   PROCEDURE P(txt : TEXT) =
     BEGIN Wr.PutText(wr, txt); Wr.PutChar(wr, '\n') END P;
@@ -584,7 +596,7 @@ PROCEDURE GetUnrenamedArgs(out : TextSeq.T; arg : TEXT) =
     WHILE p # NIL DO
       WITH nds = NARROW(p.head,Nodes.T) DO
         IF TE(search, nds.nm) THEN
-          WITH iter = Dims.Iterate(nds.dims^),
+          WITH iter = Dims.Iterate(nds.dims^, iterateDownward),
                q    = Dims.Clone  (nds.dims^) DO
             WHILE iter.next(q^) DO
               out.addhi(arg & Dims.Format(q^))

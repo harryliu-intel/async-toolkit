@@ -6,7 +6,7 @@ IMPORT Src;
 IMPORT Intf;
 IMPORT Nodes, Debug;
 IMPORT Tran;
-FROM Fmt IMPORT F; IMPORT Fmt;
+FROM Fmt IMPORT F, Int; IMPORT Fmt;
 IMPORT RefSeq;
 IMPORT DimsTranSeqTbl;
 IMPORT SimDumper;
@@ -173,10 +173,17 @@ PROCEDURE SeqMakeSeq(self                   : SeqSrc;
                       LR(tran.t+hold), LR(w), LR(self.s.riseFall)));
             v := w
           END;
-          
-          WITH x = NARROW(self.q[MIN(cycle,LAST(self.q^))],
-                                          BitInteger.Concrete).bits[bit] DO
-            CASE x OF 0 => w := 0.0d0 | 1 => w := Vdd END
+
+          WITH bi = NARROW(self.q[MIN(cycle,LAST(self.q^))],
+                           BitInteger.Concrete) DO
+            IF bit > LAST(bi.bits^) THEN
+              Debug.Error(F("For %s : bit %s > LAST(bits) = %s",
+                            self.nodes.nm, Int(bit), Int(LAST(bi.bits^))))
+            END;
+            
+            WITH x = bi.bits[bit] DO
+              CASE x OF 0 => w := 0.0d0 | 1 => w := Vdd END
+            END
           END;
           INC(cycle)
         END

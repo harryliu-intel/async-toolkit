@@ -18,4 +18,4 @@ Interface ("LambCommand")
 resource ("template_spice_includes")
 bundle ("LambTemplate")
 
-library ("lambuilderlib")
+library ("lambbuilderlib")
