@@ -10,6 +10,7 @@
         (pwrMetal nil)           ; top metal layer for power
         (topHalo t)              ; APR should add a top halo
 	(denseStaples nil)	 ; APR should add staples at dense pitch
+        (thresholds (list "c" "b")) ; transistor thresholds to use
         (Background nil)         ; optionally run in the background
         (importView "layout")    ; view name to import wiring back to
         (Mem (nrGetMaxHeapSize)) ; memory to use
@@ -49,7 +50,8 @@
                           ?metalFill metalFill ?softMacro softMacro
                           ?abstractCellName abstractCellName ?targetCellName targetCellName
                           ?noPowerFill noPowerFill ?timingDriven timingDriven ?colorGrid colorGrid
-                          ?tau tau ?ecoIter ecoIter ?rdtUseFlops rdtUseFlops ?rdtUserTcl rdtUserTcl)
+                          ?tau tau ?ecoIter ecoIter ?rdtUseFlops rdtUseFlops ?rdtUserTcl rdtUserTcl
+                          ?thresholds thresholds)
 
     ; copy CV to importView so in-place pins don't need to wait on router to finish
     (when Background (betterCopyCellView CV CV->libName CV->cellName importView nil nil t t))
@@ -79,6 +81,7 @@
         (pwrMetal nil)           ; top metal layer for power
         (topHalo t)              ; APR should add a top halo
 	(denseStaples nil)	 ; APR should add staples at dense pitch
+        (thresholds (list "c" "b")) ; transistor thresholds to use
 	(doVerilog nil)          ; create cellName.v
         (doGds t)                ; create gds for subcells (used for power hookups and maybe fill)
         (doLef t)                ; create cellName.lef
@@ -154,7 +157,8 @@
                    ?pwrMetal pwrMetal ?topHalo topHalo ?denseStaples denseStaples ?metalFill metalFill
                    ?timingDriven timingDriven ?softMacro softMacro
                    ?abstractCellName abstractCellName ?targetCellName targetCellName
-                   ?tau tau ?ecoIter ecoIter ?rdtUseFlops rdtUseFlops ?rdtUserTcl rdtUserTcl)
+                   ?tau tau ?ecoIter ecoIter ?rdtUseFlops rdtUseFlops ?rdtUserTcl rdtUserTcl
+                   ?thresholds thresholds)
 
     ; export Verilog
     (when doVerilog
@@ -366,6 +370,7 @@
         (pwrMetal nil)           ; top metal layer for power
         (topHalo t)              ; APR should add a top halo
 	(denseStaples nil)	 ; APR should add staples at dense pitch
+        (thresholds (list "c" "b")) ; transistor thresholds to use
         (metalFill t)
         (timingDriven t)
         (softMacro nil)          ; run APR
@@ -402,6 +407,7 @@
     (when pwrMetal (fprintf file "--pwr-layer=%d\n" pwrMetal))
     (fprintf file "--top-halo=%d\n" (if topHalo 1 0))
     (fprintf file "--dense-staples=%d\n" (if denseStaples 1 0))
+    (fprintf file "--thresholds=%s\n" (buildString thresholds ","))
     (fprintf file "--rdt-run-fill=%d\n" (if metalFill 1 0))
     (fprintf file "--timing-driven-route=%d\n" (if softMacro || timingDriven 1 0))
     (fprintf file "--soft-macro=%d\n" (if softMacro 1 0))
