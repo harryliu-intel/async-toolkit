@@ -14,7 +14,7 @@ FROM Fmt IMPORT F;
 CONST TE = Text.Equal;
 CONST SI = BitInteger.Small;
       
-CONST Cycles = 100;
+CONST Cycles = 20;
 
 TYPE
   Cmd = Command.T;

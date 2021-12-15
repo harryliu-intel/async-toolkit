@@ -30,6 +30,7 @@ IMPORT TextList;
 IMPORT SimMeasurement, SimMeasurementSeq;
 IMPORT LongRealSeq AS LRSeq;
 IMPORT NodeMeasurement, NodeMeasurementSetDef;
+IMPORT TextIntTbl;
 
 <*FATAL Thread.Alerted*>
 <*FATAL Wr.Failure*> (* sloppy! *)
@@ -40,6 +41,13 @@ CONST TE = Text.Equal;
 
 VAR
   iterateDownward := FALSE;
+  srcMap          := NEW(TextIntTbl.Default).init();
+  globalNodes     := NEW(TextSetDef.T).init();
+
+PROCEDURE AddGlobalNode(nm : TEXT) =
+  BEGIN
+    EVAL globalNodes.insert(nm)
+  END AddGlobalNode;
 
 PROCEDURE SetArrayIteration(direction : Direction) =
   BEGIN
@@ -70,25 +78,48 @@ PROCEDURE Renamer(txt : TEXT) : TEXT =
   END Renamer;
 
 PROCEDURE DumpProbes(wr : Wr.T; of : NodeRecSeq.T; type : TEXT) =
+  VAR
+    id : INTEGER;
   BEGIN
     <*ASSERT TE(type,"v") OR TE(type, "i")*>
     Wr.PutText(wr, "\n");
 
     FOR i := 0 TO of.size()-1 DO
       WITH rdr = of.get(i) DO
-        Wr.PutText(wr, F(".PROBE TRAN %s(%s)\n", type, Renamer(rdr.nm)))
+        IF TE(type, "v") THEN
+          Wr.PutText(wr, F(".PROBE TRAN %s(%s)\n", type, Renamer(rdr.nm)))
+        ELSE
+          WITH hadIt = srcMap.get(rdr.nm, id) DO
+            IF NOT hadIt THEN
+              Debug.Error(F("Unknown current probe node %s", rdr.nm))
+            END;
+            Wr.PutText(wr, F(".PROBE TRAN %s(V%s) * CURRENT-MEASUREMENT %s %s\n", type, Int(id), rdr.nm, Renamer(rdr.nm)))
+          END
+        END
       END
     END
   END DumpProbes;
 
 PROCEDURE DumpNodeProbes(wr : Wr.T; of : TextSeq.T; type : TEXT) =
+  VAR
+    id : INTEGER;
   BEGIN
     <*ASSERT TE(type,"v") OR TE(type, "i")*>
     Wr.PutText(wr, "\n");
 
     FOR i := 0 TO of.size()-1 DO
       WITH rdr = of.get(i) DO
-        Wr.PutText(wr, F(".PROBE TRAN %s(%s)\n", type, (*sigh*)Renamer(dutName & "." & rdr)))
+        IF TE(type, "v") THEN
+          Wr.PutText(wr, F(".PROBE TRAN %s(%s)\n", type, (*sigh*)Renamer(dutName & "." & rdr)))
+        ELSE
+          WITH hadIt = srcMap.get(rdr, id) DO
+            IF NOT hadIt THEN
+              Debug.Error(F("Unknown current probe node %s", rdr))
+            END;
+            Wr.PutText(wr, F(".PROBE TRAN %s(V%s) * CURRENT-MEASUREMENT %s %s\n", type, Int(id), rdr, Renamer(rdr)))
+          END
+        END
+        
       END
     END
   END DumpNodeProbes;
@@ -202,9 +233,21 @@ PROCEDURE DumpIt(wr        : Wr.T;
 
     DumpSpiceHeader(wr, sim, pm, modelName, modelPath);
 
+    DumpGlobals(wr);
+    
     DumpData(wr, theSrcs, srcData^, sim, sp);
 
   END DumpIt;
+
+PROCEDURE DumpGlobals(wr : Wr.T) =
+  VAR
+    iter := globalNodes.iterate();
+    n : TEXT;
+  BEGIN
+    WHILE iter.next(n) DO
+      Wr.PutText(wr, F(".global %s\n", Renamer(n)))
+    END
+  END DumpGlobals;
 
 VAR measurements := NEW(SimMeasurementSeq.T).init();
     
@@ -469,7 +512,13 @@ PROCEDURE DumpData(wr         : Wr.T;
       P("\n.TRAN DATA=dsrc\n");
       FOR i := 0 TO srcs.size()-1 DO
         WITH rec = srcs.get(i) DO
-          P(F("V%s %s 0 PWL(TIME, pv%s)", Int(i+1), Renamer(rec.sNm), Int(i+1)))
+          WITH srcId = i + 1 DO
+            EVAL srcMap.put(rec.sNm, srcId);
+            P(F("V%s %s 0 PWL(TIME, pv%s)",
+                Int(srcId),
+                Renamer(rec.sNm),
+                Int(srcId)))
+          END
         END
       END;
       P("\n.DATA dsrc");
@@ -556,12 +605,8 @@ PROCEDURE AddProbes(type : ProbeType; to : TEXT) =
   
 PROCEDURE DeclSequence(libFile       : Pathname.T;
                        type          : TEXT;
-                       READONLY args : ARRAY OF TEXT;
-                       reverseArrays : BOOLEAN) =
+                       READONLY args : ARRAY OF TEXT) =
   BEGIN
-    IF reverseArrays THEN
-      Debug.Warning("?reverseArrays not yet implemented")
-    END;
     dutLibFn := libFile;
     dutType  := type;
     dutArgs  := RefizeT(args)
@@ -615,10 +660,18 @@ PROCEDURE DumpArgList(lw : SpiceLineWriter.T; reorder : TextSeq.T) =
     argLst := MakeUnrenamedArgList();
     success := TRUE;
     nm : TEXT;
+
+  PROCEDURE Node(w : TEXT) =
+    BEGIN
+      IF NOT globalNodes.member(w) THEN
+        lw.word(Renamer(w))
+      END
+    END Node;
+    
   BEGIN
     IF reorder = NIL THEN
       FOR i := 0 TO argLst.size()-1 DO
-        lw.word(Renamer(argLst.get(i)))
+        Node(argLst.get(i))
       END
     ELSE
       (* check argLst *)
@@ -653,7 +706,7 @@ PROCEDURE DumpArgList(lw : SpiceLineWriter.T; reorder : TextSeq.T) =
       END;
       (* list is OK *)
       FOR i := 0 TO reorder.size()-1 DO
-        lw.word(Renamer(reorder.get(i)))
+        Node(reorder.get(i))
       END
     END(* IF reorder # NIL *)
   END DumpArgList;

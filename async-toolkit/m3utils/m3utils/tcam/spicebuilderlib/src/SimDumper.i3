@@ -8,10 +8,10 @@ IMPORT ProbeMode;
 IMPORT AssertionList;
 IMPORT SimMeasurement;
 
-PROCEDURE DumpIt(wr : Wr.T; 
-                 VAR sp : SimParams.T; 
-                 sim : Sim.T; 
-                 pm : ProbeMode.T;
+PROCEDURE DumpIt(wr        : Wr.T; 
+                 VAR sp    : SimParams.T; 
+                 sim       : Sim.T; 
+                 pm        : ProbeMode.T;
                  modelName : TEXT;
                  modelPath : Pathname.T);
 
@@ -36,9 +36,9 @@ PROCEDURE AddNodes(nm            : TEXT;
 
 PROCEDURE DeclSequence(libFile       : Pathname.T;
                        type          : TEXT;
-                       READONLY args : ARRAY OF TEXT;
-                       reverseArrays := FALSE);
+                       READONLY args : ARRAY OF TEXT);
 
+PROCEDURE AddGlobalNode(nm : TEXT);
 
 PROCEDURE SetDutName(nm : TEXT);
 

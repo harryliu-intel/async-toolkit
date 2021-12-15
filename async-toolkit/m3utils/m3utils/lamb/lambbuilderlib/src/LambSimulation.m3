@@ -53,6 +53,9 @@ PROCEDURE Build(pp : ParseParams.T; sp : SimParams.T; modelName : TEXT)
       LambPrograms.Progs[pt](prog,C)
     END RunTheProgram;
 
+  CONST
+    WiringCorner = "RCTypical_85c";
+    
   VAR    
     Seq : ARRAY Verb.T OF REF ARRAY OF BitInteger.T;
     prog     := NEW(CommandSeq.T).init();
@@ -136,8 +139,7 @@ PROCEDURE Build(pp : ParseParams.T; sp : SimParams.T; modelName : TEXT)
                                            "DFT__MEM_WR_DISABLE",
                                            "CLK",
                                            "VSS",
-                                           "VDD" },
-                           reverseArrays := TRUE (* some weird BFF thing *)
+                                           "VDD" } (* some weird BFF thing *)
     );
 
 
@@ -158,8 +160,8 @@ PROCEDURE Build(pp : ParseParams.T; sp : SimParams.T; modelName : TEXT)
     END;
     
     SimDumper.simExtras[sim].addhi(
-                            F(".include \"dbs/cdp_lamb_1w1sr_%sw_%sb_mod.dspf\"",
-                              Int(C.N), Int(C.W)));
+                            F(".include \"dbs/cdp_lamb_1w1sr_%sw_%sb.spf.%s\"",
+                              Int(C.N), Int(C.W), WiringCorner));
     (* include the extracted model *)
 
     TYPE

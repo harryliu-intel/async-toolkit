@@ -9,6 +9,7 @@ IMPORT Debug;
 IMPORT Wr, OSError;
 IMPORT Params;
 FROM Fmt IMPORT F, Int;
+IMPORT SimDumper;
 
 CONST TE = Text.Equal;
 
@@ -30,6 +31,13 @@ BEGIN
   FOR i := 0 TO Params.Count-1 DO
     Debug.Out(F("Params(%s) : %s", Int(i), Params.Get(i)))
   END;
+
+  WHILE pp.keywordPresent("-global") DO
+    WITH nn = pp.getNext() DO
+      SimDumper.AddGlobalNode(nn)
+    END
+  END;
+  
   IF pp.keywordPresent("-design") THEN
     VAR
       dn := pp.getNext();
