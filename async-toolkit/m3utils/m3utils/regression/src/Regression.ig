@@ -42,5 +42,19 @@ TYPE Recycler <: ROOT;
 
 CONST Brand = "Regression(" & M.Brand & ")";
 
+PROCEDURE RidgeRegress(READONLY x : M.M; 
+
+                       h          : M.Base;
+
+                       VAR res    : M.M (* OUT : ((xTx + h^2 I)^-1)(xT) *);
+
+                       indx       : REF ARRAY OF INTEGER;
+                       (* scratch, cols of x *)
+
+                       VAR xTx    : M.M;
+                       (* size cols of x, square *)
+                       
+                       debug := FALSE);
+  
 
 END Regression.
