@@ -1,0 +1,46 @@
+(* $Id: Regression.ig,v 1.1 2008/01/22 08:23:52 mika Exp $ *)
+
+GENERIC INTERFACE Regression(M);
+
+(* M.Base is REAL, LONGREAL, or EXTENDED *)
+
+TYPE 
+  T = OBJECT
+    mean_sq_y, s_sq_dev : M.Base;
+    b : REF M.M;
+    R_sq, F : M.Base;
+  END;
+
+PROCEDURE Run(x, y : REF M.M;
+              (* OUT *) VAR yHat : REF M.M;
+              debug : BOOLEAN;
+              data : T);
+
+
+PROCEDURE RunR(x, y : REF M.M; 
+               yHat : REF M.M;
+               debug : BOOLEAN;
+               data : T;
+               VAR r : Recycler);
+  (* if you use this one, all the data structures will be shared via
+     the recycler.  Must be careful to use it only for x and y of the
+     same dimensions as the one that was used to allocate.  On the
+     first call to RunR with a given x and y dimensions, r should be NIL.
+
+     yHat will be shared via the recycler, as will data.b (so they
+     must be copied if they are to be re-used) *)
+
+PROCEDURE RunR1(READONLY x : M.M;
+                READONLY y : M.V;
+                VAR yHat_c : M.V;
+                debug : BOOLEAN;
+                data : T;
+                VAR recycler : Recycler);
+  (* same as above, but with Vector *)
+
+TYPE Recycler <: ROOT;
+
+CONST Brand = "Regression(" & M.Brand & ")";
+
+
+END Regression.
