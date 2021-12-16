@@ -104,11 +104,16 @@ PROCEDURE Predict(prog         : TEXT;
 
       WITH totAtRef    = Mul(x, model.totP^),
            noLeakAtRef = Mul(x, model.noLeakP^),
-           leak        = totAtRef - noLeakAtRef,
+           (*leak        = totAtRef - noLeakAtRef,*)
+
+           (* hack! *)
+           leak  = x[3] * (model.totP[3, 0] - model.noLeakP[3, 0]),
+           
            noLeakAtSpd = speed / model.refFreq * noLeakAtRef,
            totAtSpd    = noLeakAtSpd + leak DO
         res.predP := totAtSpd;
         res.predLeakP := leak;
+        res.noLeakP    := noLeakAtSpd;
         FOR i := FIRST(x) TO LAST(x) DO
           res.contribs[i] := model.noLeakP[i, 0] * x[i] / noLeakAtRef
         END
@@ -129,7 +134,7 @@ PROCEDURE Mul(READONLY x : X; READONLY m : Matrix.M) : LONGREAL =
 
 TYPE
   Prediction = RECORD
-    predP, predLeakP : LONGREAL;
+    predP, predLeakP, noLeakP : LONGREAL;
     contribs         : X;
   END;
   
@@ -244,7 +249,43 @@ TYPE
   END;
 
 VAR models := NEW(TextRefTbl.Default).init();
+
+PROCEDURE DumpOut() =
+
+  PROCEDURE DumpOne(d, w : CARDINAL) =
+    BEGIN
+      Wr.PutText(wr, F("%s, %s, ", Int(d), Int(w)));
+      WITH pred = Predict(Progs[FIRST(Progs)], d, w, 1.0d0) DO
+        Wr.PutText(wr, F("%s", LR(pred.predLeakP / 1.0d-3)))
+      END;
+
+      FOR p := FIRST(Progs) TO LAST(Progs) DO
+        WITH pred = Predict(Progs[p], d, w, 1.0d0) DO
+          Wr.PutText(wr, F(", %s", LR(pred.noLeakP / 1.0d-12)))
+        END
+      END;
+      Wr.PutChar(wr, '\n')
+    END DumpOne;
     
+  VAR
+    wr := FileWr.Open("allsizes.csv");
+  BEGIN
+    Wr.PutText(wr, "depth/words, width/bits, leak/mW");
+    FOR p := FIRST(Progs) TO LAST(Progs) DO
+      Wr.PutText(wr, ", dyn " & Progs[p] & "/pJ")
+    END;
+    Wr.PutChar(wr, '\n');
+    FOR d := 1 TO 256 DO
+      FOR w := 2 TO 144 DO
+        DumpOne(d, w)
+      END
+    END;
+    Wr.Close(wr)
+  END DumpOut;
+    
+CONST
+  Progs = ARRAY OF TEXT { "idle", "read", "write", "rw" };
+   
 BEGIN
   TRY
     IF pp.keywordPresent("-d") THEN
@@ -270,9 +311,6 @@ BEGIN
     END
   END;
 
-  CONST
-    Progs = ARRAY OF TEXT { "idle", "read", "write", "rw" };
-   
   VAR
     idleOne  := DoOneEquation(Condition { "idle", 1.0d9 });
     idleHalf := DoOneEquation(Condition { "idle", 5.0d8 });
@@ -358,5 +396,7 @@ BEGIN
       p := p.tail
     END;
     Wr.Close(wr)
-  END
+  END;
+
+  DumpOut()
 END Main.
