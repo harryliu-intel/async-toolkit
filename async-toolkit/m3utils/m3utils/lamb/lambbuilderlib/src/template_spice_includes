@@ -15,7 +15,8 @@
 .include '/p/cloudbreak/ip/bfn_custom/scell/20200806/views/spice/tcbn07_bwph240l8p57pd_base_S_lvt_130a.spi'
 
 * latches
-.include '/p/jbay/ip/library/tsmc/7nm/projects/cb/latestltch/views/sp/LTCH_1D1CK_EE_D1BWP240H11P57PDSVT.sp'
+.include '/p/jbay/ip/library/tsmc/7nm/projects/cb/latestltch/views/spf/LTCH_1D1CK_EE_D1BWP240H11P57PDSVT_RCtypical_85.spf'
+
 
 * latchblks
 .include 'dbs/latchblk.inc'

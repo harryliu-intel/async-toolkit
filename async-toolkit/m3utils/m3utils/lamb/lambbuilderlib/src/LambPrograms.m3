@@ -10,6 +10,8 @@ IMPORT BitInteger;
 IMPORT BigInt;
 IMPORT BigIntOps;
 FROM Fmt IMPORT F;
+IMPORT Random;
+IMPORT Bit;
 
 CONST TE = Text.Equal;
 CONST SI = BitInteger.Small;
@@ -19,6 +21,18 @@ CONST Cycles = 20;
 TYPE
   Cmd = Command.T;
   V   = Verb.T;
+
+VAR rand := NEW(Random.Default).init();
+  
+PROCEDURE RandomBits(w : CARDINAL) : BitInteger.T =
+  VAR
+    res := NEW(BitInteger.Concrete, bits := NEW(REF ARRAY OF Bit.T, w));
+  BEGIN
+    FOR i := 0 TO w - 1 DO
+      res.bits[i] := rand.integer(0, 1)
+    END;
+    RETURN res
+  END RandomBits;
 
 PROCEDURE HalfOnesBits(w, ob : CARDINAL) : BitInteger.T =
   VAR
@@ -62,7 +76,6 @@ PROCEDURE ReadProgram(prog : CommandSeq.T; C : Lamb.T) =
       AddCmd( Cmd { V.Writ, data, at })
     END Write;
     
-    
   VAR
     HalfOnesAddr := HalfOnesBits(C.LN, C.LN DIV 2);
     HalfOnesData := HalfOnesBits(C.W,  C.W  DIV 2);
@@ -86,11 +99,21 @@ PROCEDURE WriteProgram(prog : CommandSeq.T; C : Lamb.T) =
   PROCEDURE AddCmd(c : Cmd) =
     BEGIN prog.addhi(c) END AddCmd;
 
+  VAR
+    HalfAddr := HalfOnesBits(C.LN, C.LN DIV 2);
+    ZeroAddr := SI(0);
+
+  PROCEDURE RandomData() : BitInteger.T =
+    BEGIN
+      RETURN RandomBits(C.W)
+    END RandomData;
+
   BEGIN
-    FOR i := 1 TO Cycles DO
-      AddCmd(  Cmd { V.Writ,             SI(1), SI(1)     });
+    FOR i := 1 TO Cycles BY 2 DO
+      AddCmd(  Cmd { V.Writ,             RandomData(), HalfAddr });
+      AddCmd(  Cmd { V.Writ,             RandomData(), ZeroAddr });
     END;
-    AddCmd(  Cmd { V.Read,             SI(0)     }); (* trigger a transition *)
+    SharedCoda(AddCmd)
   END WriteProgram;
 
   (**********************************************************************)
@@ -100,9 +123,19 @@ PROCEDURE ReadWriteProgram(prog : CommandSeq.T; <*UNUSED*>C : Lamb.T) =
   PROCEDURE AddCmd(c : Cmd) =
     BEGIN prog.addhi(c) END AddCmd;
 
+  VAR
+    HalfAddr := HalfOnesBits(C.LN, C.LN DIV 2);
+    ZeroAddr := SI(0);
+    
+  PROCEDURE RandomData() : BitInteger.T =
+    BEGIN
+      RETURN RandomBits(C.W)
+    END RandomData;
+
   BEGIN
-    FOR i := 1 TO Cycles DO
-      AddCmd(  Cmd { V.RdWr, SI(1), SI(1), SI(2)                    });
+    FOR i := 1 TO Cycles BY 2 DO
+      AddCmd(  Cmd { V.RdWr, RandomData(), HalfAddr, ZeroAddr } );
+      AddCmd(  Cmd { V.RdWr, RandomData(), ZeroAddr, HalfAddr } )
     END;
     SharedCoda(AddCmd)
   END ReadWriteProgram;
