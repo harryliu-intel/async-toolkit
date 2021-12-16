@@ -30,6 +30,7 @@ IMPORT TextList;
 IMPORT SimMeasurement, SimMeasurementSeq;
 IMPORT LongRealSeq AS LRSeq;
 IMPORT NodeMeasurement, NodeMeasurementSetDef;
+IMPORT TextIntTbl;
 
 <*FATAL Thread.Alerted*>
 <*FATAL Wr.Failure*> (* sloppy! *)
@@ -37,6 +38,21 @@ IMPORT NodeMeasurement, NodeMeasurementSetDef;
 CONST LR = Fmt.LongReal;
 
 CONST TE = Text.Equal;
+
+VAR
+  iterateDownward := FALSE;
+  srcMap          := NEW(TextIntTbl.Default).init();
+  globalNodes     := NEW(TextSetDef.T).init();
+
+PROCEDURE AddGlobalNode(nm : TEXT) =
+  BEGIN
+    EVAL globalNodes.insert(nm)
+  END AddGlobalNode;
+
+PROCEDURE SetArrayIteration(direction : Direction) =
+  BEGIN
+    iterateDownward := direction = Direction.Down
+  END SetArrayIteration;  
 
 PROCEDURE Renamer(txt : TEXT) : TEXT =
   VAR
@@ -62,25 +78,48 @@ PROCEDURE Renamer(txt : TEXT) : TEXT =
   END Renamer;
 
 PROCEDURE DumpProbes(wr : Wr.T; of : NodeRecSeq.T; type : TEXT) =
+  VAR
+    id : INTEGER;
   BEGIN
     <*ASSERT TE(type,"v") OR TE(type, "i")*>
     Wr.PutText(wr, "\n");
 
     FOR i := 0 TO of.size()-1 DO
       WITH rdr = of.get(i) DO
-        Wr.PutText(wr, F(".PROBE TRAN %s(%s)\n", type, Renamer(rdr.nm)))
+        IF TE(type, "v") THEN
+          Wr.PutText(wr, F(".PROBE TRAN %s(%s)\n", type, Renamer(rdr.nm)))
+        ELSE
+          WITH hadIt = srcMap.get(rdr.nm, id) DO
+            IF NOT hadIt THEN
+              Debug.Error(F("Unknown current probe node %s", rdr.nm))
+            END;
+            Wr.PutText(wr, F(".PROBE TRAN %s(V%s) * CURRENT-MEASUREMENT %s %s\n", type, Int(id), rdr.nm, Renamer(rdr.nm)))
+          END
+        END
       END
     END
   END DumpProbes;
 
 PROCEDURE DumpNodeProbes(wr : Wr.T; of : TextSeq.T; type : TEXT) =
+  VAR
+    id : INTEGER;
   BEGIN
     <*ASSERT TE(type,"v") OR TE(type, "i")*>
     Wr.PutText(wr, "\n");
 
     FOR i := 0 TO of.size()-1 DO
       WITH rdr = of.get(i) DO
-        Wr.PutText(wr, F(".PROBE TRAN %s(%s)\n", type, (*sigh*)Renamer(dutName & "." & rdr)))
+        IF TE(type, "v") THEN
+          Wr.PutText(wr, F(".PROBE TRAN %s(%s)\n", type, (*sigh*)Renamer(dutName & "." & rdr)))
+        ELSE
+          WITH hadIt = srcMap.get(rdr, id) DO
+            IF NOT hadIt THEN
+              Debug.Error(F("Unknown current probe node %s", rdr))
+            END;
+            Wr.PutText(wr, F(".PROBE TRAN %s(V%s) * CURRENT-MEASUREMENT %s %s\n", type, Int(id), rdr, Renamer(rdr)))
+          END
+        END
+        
       END
     END
   END DumpNodeProbes;
@@ -111,7 +150,7 @@ PROCEDURE MakeDictionaries(srcs, rdrs : NodeRecSeq.T) =
 
     VAR
       q    := Dims.Clone  (z.dims^);
-      iter := Dims.Iterate(z.dims^);
+      iter := Dims.Iterate(z.dims^, iterateDownward);
     BEGIN
       WHILE iter.next(q^) DO Single(q^) END
     END DoOne;
@@ -178,9 +217,15 @@ PROCEDURE DumpIt(wr        : Wr.T;
 
     IO.Put("Setting max simulation time to " & LR(sp.maxTime) & "\n");
 
-    srcData := NEW(REF ARRAY OF ARRAY OF LONGREAL,
-                   theSrcs.size(), 
-                   FLOOR(sp.maxTime/sp.step)+1);
+    WITH srcSize = theSrcs.size(),
+         steps   = FLOOR(sp.maxTime/sp.step)+1 DO
+      Debug.Out(F("theSrcs.size() = %s ; steps = %s",
+                  Int(srcSize),
+                  Int(steps)));
+      srcData := NEW(REF ARRAY OF ARRAY OF LONGREAL,
+                     srcSize,
+                     steps)
+    END;
 
     FOR i := 0 TO theSrcs.size()-1 DO
       FillInSrc(theSrcs.get(i), srcData[i], sp)
@@ -188,9 +233,21 @@ PROCEDURE DumpIt(wr        : Wr.T;
 
     DumpSpiceHeader(wr, sim, pm, modelName, modelPath);
 
+    DumpGlobals(wr);
+    
     DumpData(wr, theSrcs, srcData^, sim, sp);
 
   END DumpIt;
+
+PROCEDURE DumpGlobals(wr : Wr.T) =
+  VAR
+    iter := globalNodes.iterate();
+    n : TEXT;
+  BEGIN
+    WHILE iter.next(n) DO
+      Wr.PutText(wr, F(".global %s\n", Renamer(n)))
+    END
+  END DumpGlobals;
 
 VAR measurements := NEW(SimMeasurementSeq.T).init();
     
@@ -198,8 +255,14 @@ PROCEDURE AddMeasurement(m : SimMeasurement.T) =
   BEGIN
     measurements.addhi(m)
   END AddMeasurement;
-  
-PROCEDURE FinishDump(wr : Wr.T; pm : ProbeMode.T; ass : AssertionList.T; READONLY sp : SimParams.T; sim : Sim.T) =
+
+VAR doStandardDirectives := TRUE;
+    
+PROCEDURE FinishDump(wr          : Wr.T;
+                     pm          : ProbeMode.T;
+                     ass         : AssertionList.T;
+                     READONLY sp : SimParams.T;
+                     sim         : Sim.T) =
 
   PROCEDURE P(txt : TEXT) =
     BEGIN Wr.PutText(wr, txt); Wr.PutChar(wr, '\n') END P;
@@ -226,7 +289,7 @@ PROCEDURE FinishDump(wr : Wr.T; pm : ProbeMode.T; ass : AssertionList.T; READONL
     IF pm = ProbeMode.T.Assertions THEN
       (* make synthetic NodeRecs *)
       VAR
-        s := NEW(TextSetDef.T).init();
+        s   := NEW(TextSetDef.T).init();
         seq := NEW(NodeRecSeq.T).init();
         p := ass;
       BEGIN
@@ -270,8 +333,8 @@ PROCEDURE FinishDump(wr : Wr.T; pm : ProbeMode.T; ass : AssertionList.T; READONL
       END;
       VAR
         iter := set.iterate();
+        seq  := ARRAY ProbeType OF TextSeq.T { NEW(TextSeq.T).init(), .. };
         nn : NodeMeasurement.T;
-        seq := ARRAY ProbeType OF TextSeq.T { NEW(TextSeq.T).init(), .. };
       BEGIN
         WHILE iter.next(nn) DO
           seq[nn.quantity].addhi(nn.nm)
@@ -313,8 +376,10 @@ PROCEDURE DumpSpiceHeader(wr        : Wr.T;
     P(F(".PARAM vtrue=%s",LR(Vdd)));
     
   
-    P(".OPTION CMIFLAG=1 CMIUSRFLAG=3 ");
-    P(".OPTION PDMI=1");
+    IF doStandardDirectives THEN
+      P(".OPTION CMIFLAG=1 CMIUSRFLAG=3 ");
+      P(".OPTION PDMI=1")
+    END;
 
     CASE sim OF
       Sim.T.XA =>
@@ -350,16 +415,28 @@ PROCEDURE DumpSpiceHeader(wr        : Wr.T;
       P(simExtras[sim].get(i))
     END;
 
-    P(F(".LIB \"%s\" %s", modelPath, modelName));
+    IF doStandardDirectives THEN
+      IF modelPath = NIL THEN
+        Debug.Error("?must specify model path or -mp")
+      END;
+      IF modelName = NIL THEN
+        Debug.Error("?must specify model name")
+      END;
+      P(F(".LIB \"%s\" %s", modelPath, modelName))
+    END;
+    
     IF varModels # NIL THEN
       P("");
       P(varModels)
     END;
     P("");
-    P(F(".include \"%s\"\n",dutLibFn));
+    IF doStandardDirectives THEN P(F(".include \"%s\"\n",dutLibFn)) END;
     P("")
   END DumpSpiceHeader;
 
+PROCEDURE SetStandardDirectives(to : BOOLEAN) =
+  BEGIN doStandardDirectives := to END SetStandardDirectives;
+  
 PROCEDURE DumpSpiceFooter(wr : Wr.T) =
   BEGIN
     Wr.PutText(wr, ".END\n")
@@ -435,7 +512,13 @@ PROCEDURE DumpData(wr         : Wr.T;
       P("\n.TRAN DATA=dsrc\n");
       FOR i := 0 TO srcs.size()-1 DO
         WITH rec = srcs.get(i) DO
-          P(F("V%s %s 0 PWL(TIME, pv%s)", Int(i+1), Renamer(rec.sNm), Int(i+1)))
+          WITH srcId = i + 1 DO
+            EVAL srcMap.put(rec.sNm, srcId);
+            P(F("V%s %s 0 PWL(TIME, pv%s)",
+                Int(srcId),
+                Renamer(rec.sNm),
+                Int(srcId)))
+          END
         END
       END;
       P("\n.DATA dsrc");
@@ -558,7 +641,7 @@ PROCEDURE GetUnrenamedArgs(out : TextSeq.T; arg : TEXT) =
     WHILE p # NIL DO
       WITH nds = NARROW(p.head,Nodes.T) DO
         IF TE(search, nds.nm) THEN
-          WITH iter = Dims.Iterate(nds.dims^),
+          WITH iter = Dims.Iterate(nds.dims^, iterateDownward),
                q    = Dims.Clone  (nds.dims^) DO
             WHILE iter.next(q^) DO
               out.addhi(arg & Dims.Format(q^))
@@ -577,10 +660,18 @@ PROCEDURE DumpArgList(lw : SpiceLineWriter.T; reorder : TextSeq.T) =
     argLst := MakeUnrenamedArgList();
     success := TRUE;
     nm : TEXT;
+
+  PROCEDURE Node(w : TEXT) =
+    BEGIN
+      IF NOT globalNodes.member(w) THEN
+        lw.word(Renamer(w))
+      END
+    END Node;
+    
   BEGIN
     IF reorder = NIL THEN
       FOR i := 0 TO argLst.size()-1 DO
-        lw.word(Renamer(argLst.get(i)))
+        Node(argLst.get(i))
       END
     ELSE
       (* check argLst *)
@@ -615,7 +706,7 @@ PROCEDURE DumpArgList(lw : SpiceLineWriter.T; reorder : TextSeq.T) =
       END;
       (* list is OK *)
       FOR i := 0 TO reorder.size()-1 DO
-        lw.word(Renamer(reorder.get(i)))
+        Node(reorder.get(i))
       END
     END(* IF reorder # NIL *)
   END DumpArgList;

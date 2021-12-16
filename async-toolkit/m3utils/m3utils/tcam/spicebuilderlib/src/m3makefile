@@ -27,6 +27,7 @@ Module ("Src")
 Module ("MemoTranSeq")
 Interface ("SimParams")
 Module ("SimDumper")
+Interface ("SimDumperData")
 Interface ("Rdr")
 
 Interface("Tcam")

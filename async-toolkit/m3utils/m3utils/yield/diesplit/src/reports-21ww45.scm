@@ -4,11 +4,6 @@
 ;;
 ;;
 ;;
-;; IMPORTANT NOTE
-;; the functions used don't really let you change "n" very easily.
-;;
-;; this is a bad defect! currently, you have to change the n between the
-;; N5 and N3 values manually.
 ;;
 
 (load "reports-21ww38.scm")
@@ -182,11 +177,23 @@
 
 ;; N3 halfcore
 
-(report-yields-for-params (scale-to-area (n3-ftr-tiled-split-die-model) 396) *n3-params* '())
+(report-yields-for-params
+ (scale-to-area (n3-ftr-tiled-split-die-model) 396) *n3-params* '())
 
 (simple-si-cost *n3-dols-per-mm2* 396 0.370 2)
-(simple-si-cost *n3-dols-per-mm2* 396 0.462 2)
-(tally-cost '(639 124))
+(simple-si-cost *n3-dols-per-mm2* 396 0.462 2) ;; this is not right
+(simple-si-cost *n3-dols-per-mm2* 396 0.422 2)
+(tally-cost '(639 124)) ;; this is not right
+(tally-cost '(700 124))
+
+;; request from Ram 11/20/2021
+
+(report-yields-for-params
+ (scale-to-area (n5-ftr-tiled-split-die-model) 446) *n5-params* '())
+
+(simple-si-cost *n5-dols-per-mm2* 446 0.405 2)
+(tally-cost '(492 124))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
