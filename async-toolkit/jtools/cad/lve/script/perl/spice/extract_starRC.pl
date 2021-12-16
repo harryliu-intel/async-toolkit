@@ -91,7 +91,9 @@ sub usage() {
     $usage .= "    --totem-mode=[0|1] for totem prep\n";
     $usage .= "    --instance-port=[CONDUCTIVE|NOT_CONDUCTIVE|SUPERCONDUCTIVE]\n";
     $usage .= "    --ccp=[0|1] (whether to enable CCP; defaults to 0)\n";
+    $usage .= "    --qtf=[0|1] (whether to enable StarRC QTF flow; defaults to 0)\n";
     $usage .= "    --cth=[0|1] (whether to extract via Cheetah)\n";
+    $usage .= "    --cfg_ov=<file|path> (Cheetah config overrides)\n";
     $usage .= "    NVN OPTIONS\n";
     $usage .= "    --nvn-bind-file=<name> (for renaming devices in extracted netlist)\n";
     $usage .= "    --nvn-log=<filename> (the .cls file from nvn on transistor netlist)\n";
@@ -150,7 +152,9 @@ my $totem_mode=0;
 my $instancePort='CONDUCTIVE';
 my $nodeprops;
 my $ccp=0;
+my $qtf=0;
 my $cth=0;
+my $cfg_ov="";
 my $grayboxFile="cell.spice_gds2";
 
 while (defined $ARGV[0] and $ARGV[0] =~ /^--(.*)/) {
@@ -236,8 +240,12 @@ while (defined $ARGV[0] and $ARGV[0] =~ /^--(.*)/) {
         $instancePort = $value;
     } elsif ($flag eq "ccp") {
         $ccp = $value;
+    } elsif ($flag eq "qtf") {
+        $qtf = $value;
     } elsif ($flag eq "cth") {
         $cth = $value;
+    } elsif ($flag eq "cfg_ov") {
+        $cfg_ov = $value;
     } elsif ($flag eq "node-props") {
         $nodeprops = $value;
     } else {
@@ -782,6 +790,15 @@ EOF
 EOF
             close($ovh);
 
+            if ($cfg_ov eq '') {
+                $cfg_ov = "$starRC_dir/cpdk_ov";
+            } else {
+                $cfg_ov = "$starRC_dir/cpdk_ov,$cfg_ov";
+            }
+
+            my $flow = "-native";
+            $flow .= " -qtf" if $qtf;
+
             # cth_psetup detects the parent shell (csh or sh like) and runs the
             # corresponding setup script, but the sh setup script doesn't work
             # correctly, so write out a tcsh script to execute the csh setup
@@ -796,7 +813,7 @@ setenv DR_TOPCHECK mixed
 setenv PDS_PROJ_CFG '$pdk_root/share/Fulcrum/icv/lvs'
 set boxfile
 if (-f gray_list.xref) set boxfile='-boxfile gray_list.xref'
-/p/hdk/bin/cth_psetup -p ilcth -cfg IL76P31_NCL.cth -tool ipde_all -cfg_ov '$starRC_dir/cpdk_ov' -nowash -common_ward -cmd '\$SETUP_IPDE; \$VMAC/release/extractor/run_xtract.pl -cell '"'"$topcell"'"' -gdsfile cell.gds2 -cdlfile cell.cdl_gds2 -temp $temperature -corner $extractCorner -append_usercmd_file lve_override.cmd -native '"\$boxfile"
+/p/hdk/bin/cth_psetup -p ilcth -cfg IL76P31_NCL.cth -tool ipde_all -cfg_ov '$cfg_ov' -nowash -common_ward -cmd '\$SETUP_IPDE; \$VMAC/release/extractor/run_xtract.pl -cell '"'"$topcell"'"' -gdsfile cell.gds2 -cdlfile cell.cdl_gds2 -temp $temperature -corner $extractCorner -append_usercmd_file lve_override.cmd $flow '"\$boxfile"
 test -f '$spf' && ln -s '$spf' '$cell_name.spf'
 EOF
             close($fh);
