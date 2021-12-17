@@ -22,7 +22,7 @@
 (defun RouteNearbyNet (net @key (CV (geGetEditCellView)) (topShapes t) (subShapes t) (offGrid t) (verbose nil)
                            (protect_map nil))
   (let (layerNames tech n MasterRectList layerName pinRectList layerNum space len
-             e1 e2 inst1 inst2 net1 net2 rect1 rect2 overlap gap rect horz
+             e1 e2 inst1 inst2 net1 net2 rect1 rect2 overlap gap rect rects horz
              r1x0 r1x1 r1y0 r1y1 r2x0 r2x1 r2y0 r2y1
              x0 y0 x1 y1 x y key pitch
              viaDef via list1 list2 xy wb wt viaName viaDef via)
@@ -95,6 +95,7 @@
               rect->routeStatus="locked"
               (dbAddFigToNet rect net)
               (dbReplaceProp rect "autogen" "string" "RouteNearby")
+              rects = (cons rect rects)
               (when protect_map
                 x0=(car  (car  gap))
                 y0=(cadr (car  gap))
@@ -168,6 +169,7 @@
           )
         )
       )
+    (leMergeShapes rects) ; merge overlapping route nearby rectangles
     n
     )
   )
