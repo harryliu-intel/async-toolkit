@@ -4,6 +4,7 @@ depth=$1
 width=$2
 freq=$3
 prog=$4
+temp=$5
 
 
 ROOT=/nfs/sc/disks/bfn_pd_cb_02/mnystroe/m3utils
@@ -28,7 +29,7 @@ export hspice_model=nonexistent
 
 echo ========== RUNLAMB ${out} STARTING =========
 
-${BUILD} -vdd 0.75 -w ${width} -d ${depth} -clk ${freq} -prog ${prog} -f hspice -pm io -step 1e-11 -global VDD -global VSS -o ${out} 
+${BUILD} -temp ${temp} -vdd 0.75 -w ${width} -d ${depth} -clk ${freq} -prog ${prog} -f hspice -pm io -step 1e-11 -global VDD -global VSS -o ${out} 
 
 hspice -i ${out}.spice -o ${out} -x
 

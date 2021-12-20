@@ -1,4 +1,7 @@
 MODULE Main;
+
+(* linear regression for characterizing lambs *)
+
 IMPORT ParseParams;
 IMPORT FS;
 IMPORT Debug;
@@ -35,6 +38,7 @@ VAR
   pat := RegEx.Compile("\\.avg$");
 
   path : Pathname.T;
+  vdd := FIRST(LONGREAL);
 
 VAR
   depthPat := RegEx.Compile("_\\([0-9][0-9]*\\)d");
@@ -65,7 +69,8 @@ PROCEDURE ExtractMatch(text : TEXT;
                    Int(res), 
                    Int(start),
                    Int(stop),
-                   sub));
+                   sub),
+                 1000);
        RETURN sub
      END
     END
@@ -104,10 +109,10 @@ PROCEDURE Predict(prog         : TEXT;
 
       WITH totAtRef    = Mul(x, model.totP^),
            noLeakAtRef = Mul(x, model.noLeakP^),
-           (*leak        = totAtRef - noLeakAtRef,*)
+           leak        = totAtRef - noLeakAtRef,
 
            (* hack! *)
-           leak  = x[3] * (model.totP[3, 0] - model.noLeakP[3, 0]),
+           (*leak  = x[3] * (model.totP[3, 0] - model.noLeakP[3, 0]),*)
            
            noLeakAtSpd = speed / model.refFreq * noLeakAtRef,
            totAtSpd    = noLeakAtSpd + leak DO
@@ -149,13 +154,13 @@ PROCEDURE DoOneFile(fn : Pathname.T) =
     speed := Scan.LongReal(ExtractMatch(fn, speedPat));
     prog  := ExtractMatch(fn, progPat);
   BEGIN
-    Debug.Out(F("DoOneFile(%s) depth %s width %s speed %s prog %s",
-                fn, Int(depth), Int(width), LR(speed), prog));
-    WITH rd     = FileRd.Open(workDir & "/" & fn),
-         line   = Rd.GetLine(rd),
-         reader = NEW(TextReader.T).init(line),
-         w1     = reader.nextE(" \t", skipNulls := TRUE),
-         w2     = reader.nextE(" \t", skipNulls := TRUE) DO
+    WITH rd      = FileRd.Open(workDir & "/" & fn),
+         line    = Rd.GetLine(rd),
+         reader  = NEW(TextReader.T).init(line),
+         <*UNUSED*>w1      = reader.nextE(" \t", skipNulls := TRUE),
+         w2      = reader.nextE(" \t", skipNulls := TRUE),
+         current = -Scan.LongReal(w2),
+         power   = vdd * current DO
       (* format is that w2 is the average current *)
       results := RefList.Cons(
                      NEW(REF Result,
@@ -164,14 +169,17 @@ PROCEDURE DoOneFile(fn : Pathname.T) =
                          width := width,
                          speed := speed,
                          prog  := prog,
-                         power := -Scan.LongReal(w2)),
-                     results)
+                         power := power),
+                     results);
+      Debug.Out(F("DoOneFile(%s) depth %s width %s speed %s prog %s",
+                  fn, Int(depth), Int(width), LR(speed), prog)&
+                  F(" power %s", LR(power)));
     END
   END DoOneFile;
 
 TYPE
   Condition = RECORD
-    prog : TEXT;
+    prog  : TEXT;
     speed : LONGREAL;
   END;
 
@@ -185,7 +193,6 @@ PROCEDURE DoOneEquation(READONLY cond : Condition) : REF Matrix.M =
     r := NEW(Regression.T);
 
     responseHat : REF Array;
-    res : X;
   BEGIN
     WHILE p # NIL DO
       IF CondMatch(NARROW(p.head, REF Result)^, cond) THEN
@@ -203,7 +210,7 @@ PROCEDURE DoOneEquation(READONLY cond : Condition) : REF Matrix.M =
         m := m.tail
       END;
 
-      Regression.Run(matrix, response, responseHat, FALSE, r)
+      Regression.Run(matrix, response, responseHat, FALSE, r, h := ridgeCoeff)
 
     END;
 
@@ -217,7 +224,8 @@ PROCEDURE DoOneEquation(READONLY cond : Condition) : REF Matrix.M =
   END DoOneEquation;
 
 CONST
-  N = 5;
+    N = 5;
+  (*N = 4;*)
   
 TYPE
   X      = ARRAY [ 0 .. N - 1 ] OF LONGREAL;
@@ -235,7 +243,7 @@ PROCEDURE MakeIndeps(result : Result; VAR x : X) =
          blocks = result.depth MOD BlockSize + 1,
          b      = FLOAT(blocks,       LONGREAL) DO
       
-      x := X { 1.0d0, d, w, d*w, b*w }
+      x := X { 1.0d0, d, w, d*w , b*w  }
       
     END
   END MakeIndeps;
@@ -285,38 +293,91 @@ PROCEDURE DumpOut() =
     
 CONST
   Progs = ARRAY OF TEXT { "idle", "read", "write", "rw" };
-   
-BEGIN
-  TRY
-    IF pp.keywordPresent("-d") THEN
-      workDir := pp.getNext()
+
+
+PROCEDURE GetMatch(d, w : CARDINAL;
+                   spd : LONGREAL;
+                   prog : TEXT;
+                   VAR res : Result) : BOOLEAN =
+  VAR
+    p := results;
+  BEGIN
+    WHILE p # NIL DO
+      WITH cur = NARROW(p.head, REF Result)^ DO
+        IF cur.depth = d AND cur.width = w AND cur.speed = spd AND
+           TE(cur.prog, prog) THEN
+          res := cur;
+          RETURN TRUE
+        END
+      END;
+      p := p.tail
     END;
+    RETURN FALSE
+  END GetMatch;
+    
+PROCEDURE GenLeakageData(oneCond, halfCond : Condition) =
+  VAR
+    p := results;
+    halfResult : Result;
+    leakR : REF Result;
+  BEGIN
+    WHILE p # NIL DO
+      IF CondMatch(NARROW(p.head, REF Result)^, oneCond) THEN
+        WITH oneResult = NARROW(p.head, REF Result)^,
+             haveHalf  = GetMatch(oneResult.depth,
+                                  oneResult.width,
+                                  halfCond.speed,
+                                  halfCond.prog,
+                                  halfResult) DO
+          IF haveHalf THEN
+            leakR := NEW(REF Result);
+            WITH halfP = halfResult.power,
+                 oneP  = oneResult.power,
+                 leakP = 2.0d0 * halfP - oneP DO
+              leakR^      := oneResult;
+              (* copy oneResult and update it for leak power*)
+              
+              leakR.prog  := "leak";
+              leakR.power := leakP;
+              leakR.speed := 0.0d0;
+              
+              results     := RefList.Cons(leakR, results);
 
-    IF pp.keywordPresent("-pattern") THEN
-      pat := RegEx.Compile(pp.getNext())
+              Debug.Out(F("Building leakage for d %s w %s; halfP %s oneP %s leakP %s",
+                          Int(oneResult.depth),
+                          Int(oneResult.width),
+                          LR(halfP),
+                          LR(oneP),
+                          LR(leakP)))
+            END
+          ELSE
+            Debug.Warning(F("no match for d %s w %s speed %s prog %s",
+                            Int(oneResult.depth),
+                            Int(oneResult.width),
+                            LR(halfCond.speed),
+                            halfCond.prog));
+          END
+        END
+      END;
+      p := p.tail
     END
-  EXCEPT
-    ParseParams.Error => Debug.Error("?couldnt parse parameters")
-  END;
+  END GenLeakageData;
 
-  IF workDir = NIL THEN
-    Debug.Error("?must specify -d")
-  END;
-  
-  fsIter := FS.Iterate(workDir);
-
-  WHILE fsIter.next(path) DO
-    IF RegEx.Execute(pat, path) # -1 THEN
-      DoOneFile(path)
-    END
-  END;
-
+CONST RegressLeak = FALSE;
+      
+PROCEDURE DoRegressions() =
   VAR
     idleOne  := DoOneEquation(Condition { "idle", 1.0d9 });
     idleHalf := DoOneEquation(Condition { "idle", 5.0d8 });
+    leak     : REF Matrix.M;
 
-    zero, leakage, doubleHalf := Matrix.NewM(Matrix.GetDim(idleOne^));
+    zero, leakage, scaledLeak, eqScaledLeak, doubleHalf, processScaledTot, processScaledMinusLeak := Matrix.NewM(Matrix.GetDim(idleOne^));
   BEGIN
+
+    IF RegressLeak THEN
+      leak := DoOneEquation(Condition { "leak", 0.0d0 });
+    END;
+    
     Matrix.MulSM(2.0d0, idleHalf^, doubleHalf^);
     Matrix.SubM(doubleHalf^, idleOne^, leakage^);
 
@@ -328,8 +389,17 @@ BEGIN
     Debug.Out(Matrix.FormatM(doubleHalf^));
     Debug.Out("idleOne:");
     Debug.Out(Matrix.FormatM(idleOne^));
-    Debug.Out("leakage:");
+    Debug.Out("computed leakage:");
     Debug.Out(Matrix.FormatM(leakage^));
+    IF RegressLeak THEN
+      Debug.Out("regressed leakage:");
+      Debug.Out(Matrix.FormatM(leak^));
+    END;
+
+    (* try erasing every coefficient of leakage except the highest *)
+    FOR i := 0 TO N - 2 DO
+      leakage[i, 0] := 0.0d0
+    END;
 
 
     EVAL models.put("leak",
@@ -351,27 +421,47 @@ BEGIN
 
           Debug.Out("program " & prog & ":");
           Debug.Out(Matrix.FormatM(eq^));
+          
           Debug.Out("program " & prog & " w/o leakage:");
           Debug.Out(Matrix.FormatM(eqMinusLeak^));
 
+          Matrix.MulSM(leakScale, leakage^, scaledLeak^);
+          Matrix.AddM(scaledLeak^, eqMinusLeak^, eqScaledLeak^);
+          Debug.Out("program " & prog & " w/ scaled leakage:");
+          Debug.Out(Matrix.FormatM(eqScaledLeak^));
+          
+          Matrix.MulSM(processScale, eqScaledLeak^, processScaledTot^);
+          Matrix.MulSM(processScale, eqMinusLeak^, processScaledMinusLeak^);
+
+          Debug.Out("proc-scaled program " & prog & " w/o leakage:");
+          Debug.Out(Matrix.FormatM(processScaledMinusLeak^));
+          Debug.Out("proc-scaled program " & prog & " w/ scaled leakage:");
+          Debug.Out(Matrix.FormatM(processScaledTot^));
+
           WITH model = NEW(Model,
-                           prog := prog,
+                           prog    := prog,
                            refFreq := refFreq,
-                           totP := eq,
-                           noLeakP := eqMinusLeak) DO
+                           totP    := processScaledTot,
+                           noLeakP := processScaledMinusLeak) DO
             EVAL models.put(prog, model)
           END
         END
       END
     END
-  END;
+  END DoRegressions;
 
+PROCEDURE DumpDebugCsv() =
   VAR
     wr := FileWr.Open("lambpower.csv");
     p  := results;
   BEGIN
 
-    Wr.PutText(wr, "name, depth, width, program, speed, measP, predP, deltaP, predLeakP, predR0, predR1, predR2, predR3, predR4\n");
+    Wr.PutText(wr, "name, depth, width, program, speed, measP, predP, deltaP, predLeakP");
+    FOR i := 0 TO N - 1 DO
+      Wr.PutText(wr, ", predR" & Int(i))
+    END;
+    Wr.PutChar(wr, '\n');
+    
     WHILE p # NIL DO
       WITH res = NARROW(p.head, REF Result)^ DO
         Wr.PutText(wr, F("%s, %s, %s, %s, %s,", res.fn, Int(res.depth), Int(res.width), res.prog, LR(res.speed)));
@@ -380,15 +470,11 @@ BEGIN
              measP = res.power,
              deltaP = predP - measP,
              predLeakP = pred.predLeakP DO
-          Wr.PutText(wr, F("%s, %s, %s, %s,",
+          Wr.PutText(wr, F("%s, %s, %s, %s",
                            LR(res.power), LR(predP), LR(deltaP), LR(predLeakP)));
-          Wr.PutText(wr, F("%s, %s, %s, %s, %s",
-                           LR(pred.contribs[0]),
-                           LR(pred.contribs[1]),
-                           LR(pred.contribs[2]),
-                           LR(pred.contribs[3]),
-                           LR(pred.contribs[4])
-          ));
+          FOR i := 0 TO N - 1 DO
+            Wr.PutText(wr, F(", %s", LR(pred.contribs[i])))
+          END;
 
           Wr.PutChar(wr, '\n')
         END
@@ -396,7 +482,65 @@ BEGIN
       p := p.tail
     END;
     Wr.Close(wr)
+  END DumpDebugCsv;
+
+VAR
+  leakScale, processScale := 1.0d0;
+  ridgeCoeff := 0.0d0;
+  
+BEGIN
+  TRY
+    IF pp.keywordPresent("-d") THEN
+      workDir := pp.getNext()
+    END;
+
+    IF pp.keywordPresent("-pattern") THEN
+      pat := RegEx.Compile(pp.getNext())
+    END;
+
+    IF pp.keywordPresent("-leakscale") THEN
+      leakScale := pp.getNextLongReal()
+    END;
+
+    IF pp.keywordPresent("-processscale") THEN
+      processScale := pp.getNextLongReal()
+    END;
+
+    IF pp.keywordPresent("-ridge") THEN
+      ridgeCoeff := pp.getNextLongReal()
+    END;
+
+    WITH haveIt = pp.keywordPresent("-vdd") DO
+      IF NOT haveIt THEN
+        Debug.Error("?must specify -vdd <voltage>")
+      END;
+      vdd := Scan.LongReal(pp.getNext())
+    END
+      
+  EXCEPT
+    ParseParams.Error => Debug.Error("?couldnt parse parameters")
   END;
 
+  IF workDir = NIL THEN
+    Debug.Error("?must specify -d")
+  END;
+  
+  fsIter := FS.Iterate(workDir);
+
+  WHILE fsIter.next(path) DO
+    IF RegEx.Execute(pat, path) # -1 THEN
+      DoOneFile(path)
+    END
+  END;
+
+  IF RegressLeak THEN
+    GenLeakageData(Condition { "idle", 1.0d9 },
+                   Condition { "idle", 5.0d8 });
+  END;
+  
+  DoRegressions();
+
+  DumpDebugCsv();
+  
   DumpOut()
 END Main.

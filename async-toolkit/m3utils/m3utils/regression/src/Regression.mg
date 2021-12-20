@@ -17,7 +17,8 @@ REVEAL
 PROCEDURE Run(x, y : REF Matrix2.M; 
               (* OUT *) VAR yHat : REF Matrix2.M; 
               debug : BOOLEAN;
-              data : T) =
+              data : T;
+              h : Matrix2.Base) =
   VAR
     dim := Matrix2.GetDim(x^);
     dimT := Matrix2.Dim { dim.cols, dim.rows };
@@ -28,17 +29,17 @@ PROCEDURE Run(x, y : REF Matrix2.M;
     yHat_c := Matrix2.NewM(Matrix2.Dim { dim.rows, Matrix2.GetDim(y^).cols });
     rec := NEW(Recycler, indx := indx, q := q, b := b, temp := temp);
   BEGIN
-    RunR(x,y,yHat_c,debug,data,
-         rec);
+    RunR(x,y,yHat_c,debug,data, rec, h);
     yHat := yHat_c;
   END Run;
 
-PROCEDURE RunR(x, y : REF Matrix2.M; 
-              yHat_c : REF Matrix2.M; 
-              debug : BOOLEAN;
-              data : T;
-              VAR recycler : Recycler
-              ) =
+PROCEDURE RunR(x, y         : REF Matrix2.M; 
+               yHat_c       : REF Matrix2.M; 
+               debug        : BOOLEAN;
+               data         : T;
+               VAR recycler : Recycler;
+               h            : Matrix2.Base
+  ) =
   VAR
     n := NUMBER(x^);
     k := NUMBER(x[0]) - 1;
@@ -68,7 +69,7 @@ PROCEDURE RunR(x, y : REF Matrix2.M;
 
     (****************************************)
 
-    RidgeRegress(x^, FLOAT(0,Matrix2.Base), 
+    RidgeRegress(x^, h,
                  recycler.q^, recycler.indx, recycler.temp^, debug);
 
     (****************************************)
@@ -117,7 +118,8 @@ PROCEDURE RunR1(READONLY x : Matrix2.M;
                 VAR yHat_c : Matrix2.V; 
                 debug : BOOLEAN;
                 data : T;
-                VAR recycler : Recycler) =
+                VAR recycler : Recycler;
+                h : Matrix2.Base) =
   VAR
     n := NUMBER(x);
     k := NUMBER(x[0]) - 1;
@@ -149,7 +151,7 @@ PROCEDURE RunR1(READONLY x : Matrix2.M;
 
     (****************************************)
 
-    RidgeRegress(x, FLOAT(0,Matrix2.Base), 
+    RidgeRegress(x, h,
                  recycler.q^, recycler.indx, recycler.temp^, debug);
 
     (****************************************)
@@ -208,10 +210,10 @@ PROCEDURE RunR1(READONLY x : Matrix2.M;
   END RunR1;
 
 PROCEDURE RidgeRegress(READONLY x : Matrix2.M; 
-                       h : Matrix2.Base;
-                       VAR res : Matrix2.M (* OUT : ((xTx + h^2 I)^-1)(xT) *);
-                       indx: REF ARRAY OF INTEGER;
-                       VAR xTx : Matrix2.M; (* size cols of x, square *)
+                       h          : Matrix2.Base;
+                       VAR res    : Matrix2.M (* OUT : ((xTx + h^2 I)^-1)(xT) *);
+                       indx       : REF ARRAY OF INTEGER;
+                       VAR xTx    : Matrix2.M; (* size cols of x, square *)
                        debug := FALSE)   =
   VAR
     det_xTx : Matrix2.Base;

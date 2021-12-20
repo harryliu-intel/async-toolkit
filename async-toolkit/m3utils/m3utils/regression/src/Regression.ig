@@ -14,14 +14,16 @@ TYPE
 PROCEDURE Run(x, y : REF M.M;
               (* OUT *) VAR yHat : REF M.M;
               debug : BOOLEAN;
-              data : T);
+              data : T;
+              h := FLOAT(0, M.Base));
 
 
 PROCEDURE RunR(x, y : REF M.M; 
                yHat : REF M.M;
                debug : BOOLEAN;
                data : T;
-               VAR r : Recycler);
+               VAR r : Recycler;
+               h := FLOAT(0, M.Base));
   (* if you use this one, all the data structures will be shared via
      the recycler.  Must be careful to use it only for x and y of the
      same dimensions as the one that was used to allocate.  On the
@@ -35,7 +37,8 @@ PROCEDURE RunR1(READONLY x : M.M;
                 VAR yHat_c : M.V;
                 debug : BOOLEAN;
                 data : T;
-                VAR recycler : Recycler);
+                VAR recycler : Recycler;
+                h := FLOAT(0, M.Base));
   (* same as above, but with Vector *)
 
 TYPE Recycler <: ROOT;
