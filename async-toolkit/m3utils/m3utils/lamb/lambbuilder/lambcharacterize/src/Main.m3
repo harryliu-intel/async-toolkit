@@ -224,8 +224,8 @@ PROCEDURE DoOneEquation(READONLY cond : Condition) : REF Matrix.M =
   END DoOneEquation;
 
 CONST
-    N = 5;
-  (*N = 4;*)
+  (*  N = 2;*)
+  N = 4;
   
 TYPE
   X      = ARRAY [ 0 .. N - 1 ] OF LONGREAL;
@@ -243,7 +243,7 @@ PROCEDURE MakeIndeps(result : Result; VAR x : X) =
          blocks = result.depth MOD BlockSize + 1,
          b      = FLOAT(blocks,       LONGREAL) DO
       
-      x := X { 1.0d0, d, w, d*w , b*w  }
+      x := X { 1.0d0, d, w, d*w (* , b*w *)  }
       
     END
   END MakeIndeps;
@@ -371,7 +371,8 @@ PROCEDURE DoRegressions() =
     idleHalf := DoOneEquation(Condition { "idle", 5.0d8 });
     leak     : REF Matrix.M;
 
-    zero, leakage, scaledLeak, eqScaledLeak, doubleHalf, processScaledTot, processScaledMinusLeak := Matrix.NewM(Matrix.GetDim(idleOne^));
+    zero, leakage, scaledLeak, doubleHalf :=
+        Matrix.NewM(Matrix.GetDim(idleOne^));
   BEGIN
 
     IF RegressLeak THEN
@@ -395,6 +396,9 @@ PROCEDURE DoRegressions() =
       Debug.Out("regressed leakage:");
       Debug.Out(Matrix.FormatM(leak^));
     END;
+    Matrix.MulSM(leakScale, leakage^, scaledLeak^);
+    Debug.Out("scaled leakage:");
+    Debug.Out(Matrix.FormatM(scaledLeak^));
 
     (* try erasing every coefficient of leakage except the highest *)
     FOR i := 0 TO N - 2 DO
@@ -414,6 +418,8 @@ PROCEDURE DoRegressions() =
            refFreq = 1.0d9,
            cond = Condition { prog, refFreq } DO
         VAR
+          eqScaledLeak, processScaledTot, processScaledMinusLeak :=
+              Matrix.NewM(Matrix.GetDim(idleOne^));
           eq := DoOneEquation(cond);
           eqMinusLeak := Matrix.NewM(Matrix.GetDim(idleOne^));
         BEGIN
@@ -425,7 +431,6 @@ PROCEDURE DoRegressions() =
           Debug.Out("program " & prog & " w/o leakage:");
           Debug.Out(Matrix.FormatM(eqMinusLeak^));
 
-          Matrix.MulSM(leakScale, leakage^, scaledLeak^);
           Matrix.AddM(scaledLeak^, eqMinusLeak^, eqScaledLeak^);
           Debug.Out("program " & prog & " w/ scaled leakage:");
           Debug.Out(Matrix.FormatM(eqScaledLeak^));
