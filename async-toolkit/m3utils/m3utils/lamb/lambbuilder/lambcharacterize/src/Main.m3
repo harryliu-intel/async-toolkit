@@ -22,6 +22,7 @@ IMPORT TextRefTbl;
 IMPORT Wr, FileWr;
 IMPORT Thread;
 IMPORT FloatMode, Lex;
+IMPORT Params;
 
 CONST LR = LongReal;
       TE = Text.Equal;
@@ -223,6 +224,14 @@ PROCEDURE DoOneEquation(READONLY cond : Condition) : REF Matrix.M =
     RETURN r.b
   END DoOneEquation;
 
+PROCEDURE CondMatch(READONLY result : Result;
+                    READONLY cond   : Condition) : BOOLEAN =
+  BEGIN
+    RETURN TE(result.prog, cond.prog) AND result.speed = cond.speed
+  END CondMatch;
+
+  (**********************************************************************)
+  
 CONST
   (*  N = 2;*)
   N = 4;
@@ -230,12 +239,6 @@ CONST
 TYPE
   X      = ARRAY [ 0 .. N - 1 ] OF LONGREAL;
 
-PROCEDURE CondMatch(READONLY result : Result;
-                    READONLY cond   : Condition) : BOOLEAN =
-  BEGIN
-    RETURN TE(result.prog, cond.prog) AND result.speed = cond.speed
-  END CondMatch;
-  
 PROCEDURE MakeIndeps(result : Result; VAR x : X) =
   BEGIN
     WITH d      = FLOAT(result.depth, LONGREAL),
@@ -247,6 +250,18 @@ PROCEDURE MakeIndeps(result : Result; VAR x : X) =
       
     END
   END MakeIndeps;
+
+PROCEDURE DynModelEquation(READONLY m : Matrix.M; freq : LONGREAL) : TEXT =
+  BEGIN
+    RETURN
+      F("((%s * 1.0) + (%s * $depth) + (%s * $width) + (%s * $depth * $width))",
+        LR(m[0,0] / freq),
+        LR(m[1,0] / freq),
+        LR(m[2,0] / freq),
+        LR(m[3,0] / freq))
+  END DynModelEquation;
+
+  (**********************************************************************)
 
 TYPE
   Model = OBJECT
@@ -290,6 +305,43 @@ PROCEDURE DumpOut() =
     END;
     Wr.Close(wr)
   END DumpOut;
+
+PROCEDURE DumpTcl() =
+  CONST
+    TclFn = "lambpower.tcl";
+  VAR
+    wr := FileWr.Open(TclFn);
+  BEGIN
+    (* start with command line *)
+    Wr.PutChar(wr, '#');
+    FOR i := 0 TO Params.Count - 1 DO
+      Wr.PutChar(wr, ' ');
+      Wr.PutText(wr, Params.Get(i));
+    END;
+    Wr.PutChar(wr, '\n');
+
+    FOR i := FIRST(Progs) TO LAST(Progs) DO
+      VAR
+        prog := Progs[i];
+        ref : REFANY;
+      BEGIN
+        IF NOT models.get(prog, ref) THEN
+          Debug.Error("No model for program " & prog)
+        END;
+        WITH model = NARROW(ref, Model) DO
+          Wr.PutText(wr,
+                     F("    set %s_energy [expr %s/1e-12] # in pJ per op\n",
+                       prog,
+                       DynModelEquation(model.noLeakP^, model.refFreq)))
+        END
+      END
+    END;
+
+    Wr.PutText(wr, F("    set leak_pwr [expr %s/1e-6] # in uW\n",
+                     DynModelEquation(leakageModel.totP^, 1.0d0)));
+    
+    Wr.Close(wr);
+  END DumpTcl;
     
 CONST
   Progs = ARRAY OF TEXT { "idle", "read", "write", "rw" };
@@ -364,14 +416,16 @@ PROCEDURE GenLeakageData(oneCond, halfCond : Condition) =
   END GenLeakageData;
 
 CONST RegressLeak = FALSE;
-      
+
+VAR leakageModel : Model;
+    
 PROCEDURE DoRegressions() =
   VAR
     idleOne  := DoOneEquation(Condition { "idle", 1.0d9 });
     idleHalf := DoOneEquation(Condition { "idle", 5.0d8 });
     leak     : REF Matrix.M;
 
-    zero, leakage, scaledLeak, doubleHalf :=
+    zero, leakage, scaledLeak, scaledScaledLeak, doubleHalf :=
         Matrix.NewM(Matrix.GetDim(idleOne^));
   BEGIN
 
@@ -402,16 +456,20 @@ PROCEDURE DoRegressions() =
 
     (* try erasing every coefficient of leakage except the highest *)
     FOR i := 0 TO N - 2 DO
-      leakage[i, 0] := 0.0d0
+      leakage[i, 0]    := 0.0d0;
+      scaledLeak[i, 0] := 0.0d0
     END;
 
-
-    EVAL models.put("leak",
-                    NEW(Model,
+    Matrix.MulSM(processScale, scaledLeak^, scaledScaledLeak^);
+    
+    leakageModel := NEW(Model,
                         prog    := "leak",
                         refFreq := 0.0d0,
-                        totP    := leakage,
-                        noLeakP := zero));
+                        totP    := scaledScaledLeak,
+                        noLeakP := zero);
+    (* (* dont need this I think *)
+    EVAL models.put("leak", leakageModel);
+    *)
     
     FOR i := FIRST(Progs) TO LAST(Progs) DO
       WITH prog = Progs[i],
@@ -437,6 +495,7 @@ PROCEDURE DoRegressions() =
           
           Matrix.MulSM(processScale, eqScaledLeak^, processScaledTot^);
           Matrix.MulSM(processScale, eqMinusLeak^, processScaledMinusLeak^);
+
 
           Debug.Out("proc-scaled program " & prog & " w/o leakage:");
           Debug.Out(Matrix.FormatM(processScaledMinusLeak^));
@@ -547,5 +606,7 @@ BEGIN
 
   DumpDebugCsv();
   
-  DumpOut()
+  DumpOut();
+
+  DumpTcl()
 END Main.
