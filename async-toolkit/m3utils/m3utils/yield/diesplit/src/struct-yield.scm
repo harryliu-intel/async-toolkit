@@ -320,8 +320,8 @@
          (y      (Mpfr.GetLR (eval-yield poly ym) 'N)))
     (cons area (cons y (cons latex yr)))))
 
-(define (ym D0 alpha)
-  (lambda(A) (stapper A D0 *n5-n* alpha)))
+(define (ym D0 alpha n)
+  (lambda(A) (stapper A D0 n alpha)))
 
 
         

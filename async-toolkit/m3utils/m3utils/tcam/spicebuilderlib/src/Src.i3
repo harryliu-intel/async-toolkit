@@ -9,7 +9,7 @@ TYPE
 
   Public = Intf.T OBJECT    
     trans : DimsTranSeqTbl.T := NIL;
-    s : StandardSettings.T;
+    s     : StandardSettings.T;
   METHODS
     getV(READONLY dims : Dims.T; t : LONGREAL) : LONGREAL;
     getSeq(READONLY dims : Dims.T) : MemoTranSeq.T;

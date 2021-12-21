@@ -19,11 +19,11 @@ TYPE
   Iterator <: PubIterator;
   
   PubIterator = OBJECT METHODS
-    init(READONLY lim : T) : Iterator;
+    init(READONLY lim : T; downward := FALSE) : Iterator;
     next(VAR nxt : T) : BOOLEAN;
   END;
 
-PROCEDURE Iterate(READONLY t : T) : Iterator;
+PROCEDURE Iterate(READONLY t : T; downward := FALSE) : Iterator;
 
 PROCEDURE Format(READONLY z : T) : TEXT;
 
