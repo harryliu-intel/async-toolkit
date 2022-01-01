@@ -12,7 +12,7 @@ P:p4merge 2013.3
 P:zsh 4.3.12
 P:java 1.8.0.141
 P:fvwm2 2.5.25
-P:git latest
+P:git 2.32.0
 P:autotools 2.65
 gettext /usr/intel/pkgs/libgettext/0.17-64/bin/gettext
 wget /usr/intel/pkgs/wget/1.11.4-64/bin/wget
