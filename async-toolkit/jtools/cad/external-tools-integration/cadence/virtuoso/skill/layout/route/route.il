@@ -33,6 +33,7 @@
         (ecoIter 0)              ; number of spr ECO passes
         (rdtUseFlops nil)        ; use flops instead of latches
         (rdtUserTcl nil)         ; optional tcl file
+        (perfCorner "max")       ; primary corner for performance
         )
   (let (TEMP WDIR)
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
@@ -51,7 +52,7 @@
                           ?abstractCellName abstractCellName ?targetCellName targetCellName
                           ?noPowerFill noPowerFill ?timingDriven timingDriven ?colorGrid colorGrid
                           ?tau tau ?ecoIter ecoIter ?rdtUseFlops rdtUseFlops ?rdtUserTcl rdtUserTcl
-                          ?thresholds thresholds)
+                          ?thresholds thresholds ?perfCorner perfCorner)
 
     ; copy CV to importView so in-place pins don't need to wait on router to finish
     (when Background (betterCopyCellView CV CV->libName CV->cellName importView nil nil t t))
@@ -105,6 +106,7 @@
         (pinMap nil)             ; rename ports based on map
         (rdtUseFlops nil)        ; use flops instead of latches
         (rdtUserTcl nil)         ; optional tcl file
+        (perfCorner "max")       ; primary perfCorner for performance
         )
   (let (TEMP WDIR LEFDEF_DIR MaxHeapSize CAST_PATH DFII_DIR SPAR_DIR PDK_DIR
         abstractCV
@@ -158,7 +160,7 @@
                    ?timingDriven timingDriven ?softMacro softMacro
                    ?abstractCellName abstractCellName ?targetCellName targetCellName
                    ?tau tau ?ecoIter ecoIter ?rdtUseFlops rdtUseFlops ?rdtUserTcl rdtUserTcl
-                   ?thresholds thresholds)
+                   ?thresholds thresholds ?perfCorner perfCorner)
 
     ; export Verilog
     (when doVerilog
@@ -380,6 +382,7 @@
         (ecoIter 0)              ; number of spr ECO passes
         (rdtUseFlops nil)        ; use flops instead of latches
         (rdtUserTcl nil)         ; optional tcl file
+        (perfCorner "max")       ; primary perfCorner for performance
         )
   (let (CAST_PATH DFII_DIR TEMP WDIR file)
     ; files and options
@@ -418,6 +421,8 @@
     (fprintf file "--base=%s\n" (GetCastCellName CV->cellName))
     (fprintf file "--csp-register-width=1025\n")
     (fprintf file "--pv-generate-sdf=1\n")
+    (fprintf file "--rdt-max-corner=%s\n" perfCorner)
+    (fprintf file "--rdt-min-corner=%s\n" perfCorner)
     (cond (softMacro && abstractCellName && targetCellName
            (fprintf file "--cell=%s\n" (GetCastCellName targetCellName))
            (fprintf file "--abstract=%s\n" (GetCastCellName abstractCellName))
