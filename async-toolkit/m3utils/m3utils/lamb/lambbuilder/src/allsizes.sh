@@ -5,7 +5,7 @@ speed=$2
 
 NB="nbjob run --target ${EC_SITE}_normal --qslot /bfn/fe --class \"SLES12&&20G\""
 
-temp=105
+temp=85
 
 ${NB} ./runlamb.sh 16 30 ${speed} ${prog} ${temp}
 ${NB} ./runlamb.sh 16 38 ${speed} ${prog} ${temp}
