@@ -268,6 +268,13 @@ public class DirectiveTable {
         registerDirective(CELL, POWER_NET, NODE_TYPE, BOOLEAN_TYPE, Boolean.FALSE);
         registerDirective(CELL, GROUND_NET, NODE_TYPE, BOOLEAN_TYPE, Boolean.FALSE);
 
+        /** Power intent related directives **/
+        registerDirective(SUBCELL, POWER_DOMAIN, INSTANCE_TYPE, INT_TYPE, new Integer(0));
+        registerDirective(CELL, ALWAYS_ON, NODE_TYPE, NODE_TYPE, null);
+        registerDirective(CELL, POWER_SWITCH, arrayify(NODE_TYPE), null);
+        registerDirective(CELL, ISOLATE_EN, NODE_TYPE, null);
+        registerDirective(CELL, PRIMARY_POWER, NODE_TYPE, null);
+
         /** updatenetlist directives **/
         registerDirective(CELL, BASE_TRANSISTOR_LAYOUT_WIDTH, FLOAT_TYPE, new Float(0.0));
         registerDirective(CELL, DENSITY_FACTOR, FLOAT_TYPE, new Float(1.0));

@@ -183,6 +183,13 @@ public interface DirectiveConstants {
     String ISOCHRONIC = "isochronic";
     String PSEUDOSTATIC = "pseudostatic";
 
+    /** Power intent related directives */
+    String POWER_DOMAIN = "power_domain";
+    String ALWAYS_ON = "always_on";
+    String POWER_SWITCH = "power_switch";
+    String ISOLATE_EN = "isolate_en";
+    String PRIMARY_POWER = "primary_power";
+
     /** CSP timing directives */
     String FORWARD_LATENCY = "forward_latency";
     String BACKWARD_LATENCY = "backward_latency";

@@ -2012,7 +2012,7 @@ public final class CellUtils {
                 result =
                     new Triplet<HierName,CadenceInfo,HierName>(path, type, name.tail());
             } else {
-            result = null;
+                result = null;
             }
         } else {
             if (top && !inSubcell) {
@@ -2050,6 +2050,18 @@ public final class CellUtils {
             }
         }
         return notfound;
+    }
+
+    public static List<HierName> getInstancePath(CellInterface cell,
+                                                 HierName name) {
+        final List<HierName> result = new ArrayList<>();
+        do {
+            Pair<HierName,HierName> p = getFirstInstance(cell, name, true);
+            result.add(p.getFirst());
+            cell = cell.getSubcell(p.getFirst());
+            name = p.getSecond();
+        } while (name != null);
+        return result;
     }
 
     public static CellInterface getSubcell(final CellInterface cell,
