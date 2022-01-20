@@ -21,4 +21,7 @@ Table("TextGate", "Text", "Gate")
 Extended("gateLexStd")
 Extended("gateParseStd")
 
+Module ("Edge")
+Sequence ("Edge", "Edge")
+
 program("geneqs")

@@ -15,12 +15,16 @@ IMPORT Gate;
 IMPORT TextRd;
 IMPORT gateLexStd;
 IMPORT gateParseStd;
+IMPORT Edge;
+IMPORT EdgeSeq;
+IMPORT RefList;
+IMPORT TextReader;
+IMPORT TextList;
 
 CONST TE = Text.Equal;
 
 PROCEDURE ParseFunction(fxn : TEXT) : Gate.T =
   VAR
-    res : Gate.T;
     lexer := NEW(gateLexStd.T);
     parser := NEW(gateParseStd.T);
     rd := NEW(TextRd.T).init(fxn);
@@ -40,7 +44,8 @@ PROCEDURE ParseAliases(rd : Rd.T) RAISES { Rd.Failure, Thread.Alerted } =
     pin, net, old, fxn, nam, typ : TEXT := NIL;
     gat : Gate.T;
     
-  PROCEDURE Get(VAR t : TEXT) =
+  PROCEDURE Get(VAR t : TEXT)
+    RAISES { Rd.Failure, Thread.Alerted } =
     VAR
       s : CHAR;
     BEGIN
@@ -49,7 +54,8 @@ PROCEDURE ParseAliases(rd : Rd.T) RAISES { Rd.Failure, Thread.Alerted } =
       END
     END Get;
 
-  PROCEDURE MustGet(tokMustB : TEXT; sepMustB : CHAR) =
+  PROCEDURE MustGet(tokMustB : TEXT; sepMustB : CHAR)
+    RAISES { Rd.Failure, Thread.Alerted } =
     VAR
       t : TEXT;
       s : CHAR;
@@ -104,9 +110,85 @@ PROCEDURE ParseAliases(rd : Rd.T) RAISES { Rd.Failure, Thread.Alerted } =
     END
   END ParseAliases;
 
-PROCEDURE ParseCircuit(rd : Rd.T) =
+CONST
+  CktDelims = " \t\n\r";
+  CktDelimSet = SET OF CHAR { ' ', '\t', '\n', '\r' };
+
+PROCEDURE GetToken(txt : TEXT; idx : CARDINAL) : TEXT =
   BEGIN
+    WITH reader = NEW(TextReader.T).init(txt),
+         lst    = reader.shatter(CktDelims, "", TRUE) DO
+      RETURN TextList.Nth(lst, idx)
+    END
+  END GetToken;
+
+PROCEDURE EmptyLine(line : TEXT) : BOOLEAN =
+  BEGIN
+    FOR i := 0 TO Text.Length(line) - 1 DO
+      IF NOT Text.GetChar(line, i) IN CktDelimSet THEN
+        RETURN FALSE
+      END
+    END;
+    RETURN TRUE
+  END EmptyLine;
+
+PROCEDURE EndsIn(line, sfx : TEXT) : BOOLEAN = 
+  BEGIN
+    WITH reader = NEW(TextReader.T).init(line),
+         lst    = reader.shatter(CktDelims, "", TRUE),
+         n      = TextList.Length(lst) DO
+      RETURN n # 0 AND TE(TextList.Nth(lst, n - 1), sfx)
+    END
+  END EndsIn;
+  
+PROCEDURE ParseCircuit(rd : Rd.T) RAISES { Rd.Failure, Thread.Alerted } =
+  VAR
+    first : TEXT := NIL;
+    from, to, last : TEXT;
+    path : EdgeSeq.T;
+    paths : RefList.T;
+  BEGIN
+    TRY
+      LOOP
+        WITH line = Rd.GetLine(rd) DO
+          IF    EmptyLine(line) THEN
+            Debug.Out(F("got path from %s -> %s", first, last));
+            first := NIL;
+            last := NIL;
+            paths := RefList.Cons(path, paths);
+            path := NIL;
+          ELSIF TE(GetToken(line, 0) , "AFIFO") THEN
+            path := NEW(EdgeSeq.T).init();
+          ELSIF EndsIn(line, "->") THEN
+            from := LookupPin(GetToken(line, 0));
+            IF first = NIL THEN
+              first := from
+            END;
+            WITH line2 = Rd.GetLine(rd) DO
+              to := LookupPin(GetToken(line2, 0));
+              last := to;
+            END;
+            Debug.Out(F("edge %s -> %s", from, to));
+            WITH edge = Edge.T { from, to } DO
+              path.addhi(edge);
+            END
+          END
+        END
+      END
+    EXCEPT
+      Rd.EndOfFile => (* skip *)
+    END
   END ParseCircuit;
+
+PROCEDURE LookupPin(pin : TEXT) : TEXT =
+  VAR
+    net : TEXT;
+  BEGIN
+    WITH haveIt = pinNets.get(pin, net) DO
+      IF NOT haveIt THEN Debug.Error("No mapping for pin " & pin) END;
+      RETURN net
+    END
+  END LookupPin;
   
 VAR
   pp      := NEW(ParseParams.T).init(Stdio.stderr);
