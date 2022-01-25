@@ -1,4 +1,5 @@
 INTERFACE GateExpr;
+IMPORT TextSet;
 
 TYPE
   T = OBJECT nm : TEXT END;
@@ -20,6 +21,8 @@ PROCEDURE New(nm : TEXT) : T;
 
 CONST Brand = "GateExpr";
 
-PROCEDURE Format(a : T) : TEXT;
+PROCEDURE Format(a : T; not := "!") : TEXT;
+
+PROCEDURE Fanins(a : T) : TextSet.T;
   
 END GateExpr.

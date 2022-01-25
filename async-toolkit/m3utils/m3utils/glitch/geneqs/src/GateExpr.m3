@@ -1,5 +1,6 @@
 MODULE GateExpr;
 FROM Fmt IMPORT F;
+IMPORT TextSet, TextSetDef;
 
 PROCEDURE And(a, b : T) : T =
   BEGIN
@@ -18,16 +19,16 @@ PROCEDURE Not(a : T) : T =
 PROCEDURE New(nm : TEXT) : T =
   BEGIN RETURN NEW(Named, nm := nm) END New;
 
-PROCEDURE Format(a : T) : TEXT =
+PROCEDURE Format(a : T; not : TEXT) : TEXT =
   BEGIN
     TYPECASE a OF
       Expr(x) =>
       CASE x.op OF
-        Op.And => RETURN F("(%s & %s)", Format(x.a), Format(x.b))
+        Op.And => RETURN F("(%s & %s)", Format(x.a, not), Format(x.b, not))
       |
-        Op.Or  => RETURN F("(%s | %s)", Format(x.a), Format(x.b))
+        Op.Or  => RETURN F("(%s | %s)", Format(x.a, not), Format(x.b, not))
       |
-        Op.Not => RETURN F("!%s", Format(x.a))
+        Op.Not => RETURN F("%s%s", not, Format(x.a, not))
       END
     |
       Named(n) => RETURN n.nm
@@ -35,5 +36,30 @@ PROCEDURE Format(a : T) : TEXT =
       <*ASSERT FALSE*>
     END
   END Format;
+
+PROCEDURE Fanins(a : T) : TextSet.T =
+  VAR
+    res := NEW(TextSetDef.T).init();
+
+  PROCEDURE Recurse(t : T) =
+    BEGIN
+      TYPECASE t OF
+        Expr(x) =>
+        CASE x.op OF
+          Op.And, Op.Or => Recurse(x.a); Recurse(x.b)
+        |
+          Op.Not => Recurse(x.a)
+        END
+      |
+        Named(n) => EVAL res.insert(n.nm)
+      ELSE
+        <*ASSERT FALSE*>
+      END
+    END Recurse;
+    
+  BEGIN
+    Recurse(a);
+    RETURN res
+  END Fanins;
   
 BEGIN END GateExpr.

@@ -20,7 +20,10 @@ PROCEDURE Not(a : T) : T =
   BEGIN RETURN NEW(Expr, op := Op.Not, a := a, b := NIL, nm := F("(~ %s)", a.nm), x := BDD.Not(a.x)) END Not;
   
 PROCEDURE New(nm : TEXT) : T =
-  BEGIN RETURN NEW(Named, nm := nm, x := BDD.New()) END New;
+  BEGIN
+    Debug.Out("Creating New literal GlitchExpr " & nm);
+    RETURN NEW(Named, nm := nm, x := BDD.New())
+  END New;
 
 PROCEDURE Eval(x     : T;
                tab   : Text01XTbl.T;

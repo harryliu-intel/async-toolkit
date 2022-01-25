@@ -8,7 +8,7 @@ VAR last : T;
     
 PROCEDURE New(named : TEXT; expr : GateExpr.T) : T =
   BEGIN
-    WITH new = T { named, expr } DO
+    WITH new = T { named, expr, NIL } DO
       gates := GateList.Cons(new, gates);
       last := new;
       RETURN new
@@ -35,9 +35,9 @@ VAR
 PROCEDURE Equal(READONLY a, b : T) : BOOLEAN =
   BEGIN RETURN a = b END Equal;
 
-PROCEDURE Format(READONLY a : T) : TEXT =
+PROCEDURE Format(READONLY a : T; ass : TEXT; not : TEXT) : TEXT =
   BEGIN
-    RETURN F("%s <- %s", a.tgt, GateExpr.Format(a.expr))
+    RETURN F("%s %s%s", a.tgt, ass, GateExpr.Format(a.expr, not := not))
   END Format;
     
 BEGIN END Gate.

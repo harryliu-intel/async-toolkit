@@ -5,7 +5,7 @@ IMPORT Rd;
 IMPORT FileRd;
 IMPORT AL;
 IMPORT Debug;
-FROM Fmt IMPORT F;
+FROM Fmt IMPORT F, Int;
 IMPORT Aliases;
 IMPORT Text;
 IMPORT Thread;
@@ -20,21 +20,45 @@ IMPORT EdgeSeq;
 IMPORT RefList;
 IMPORT TextReader;
 IMPORT TextList;
+IMPORT TextSet, TextSetDef;
+IMPORT GateExpr;
+IMPORT Pathname;
+IMPORT Wr;
+IMPORT TextUtils;
+IMPORT FileWr;
+IMPORT Wx;
+IMPORT FmtTime, Time, Date;
+IMPORT Params;
 
 CONST TE = Text.Equal;
 
 PROCEDURE ParseFunction(fxn : TEXT) : Gate.T =
   VAR
-    lexer := NEW(gateLexStd.T);
+    lexer  := NEW(gateLexStd.T);
     parser := NEW(gateParseStd.T);
-    rd := NEW(TextRd.T).init(fxn);
+    rd     := NEW(TextRd.T).init(fxn);
   BEGIN
     EVAL lexer.setRd(rd);
     EVAL parser.setLex(lexer);
     EVAL parser.parse();
+
+    parser.gate.fanins := GateExpr.Fanins(parser.gate.expr);
     
     RETURN parser.gate
   END ParseFunction;
+
+PROCEDURE Unbrace(txt : TEXT) : TEXT =
+  BEGIN
+    WITH n = Text.Length(txt),
+         f = Text.GetChar(txt, 0),
+         l = Text.GetChar(txt, n - 1) DO
+      IF n # 0 AND f = '{' AND l = '}' THEN
+        RETURN Text.Sub(txt, 1, n - 2)
+      ELSE
+        RETURN txt
+      END
+    END
+  END Unbrace;
   
 PROCEDURE ParseAliases(rd : Rd.T) RAISES { Rd.Failure, Thread.Alerted } =
   VAR
@@ -73,6 +97,7 @@ PROCEDURE ParseAliases(rd : Rd.T) RAISES { Rd.Failure, Thread.Alerted } =
         Get(pin);
         MustGet("Net", ':');
         Get(net);
+        net := Unbrace(net);
         Debug.Out(F("alias pin %s net %s", pin, net));
         IF pinNets.get(pin, old) AND NOT TE(old, net) THEN
           Debug.Error(F("Ambiguous pin->net mapping.  pin %s maps to both net %s and net %s!", pin, old, net))
@@ -85,6 +110,7 @@ PROCEDURE ParseAliases(rd : Rd.T) RAISES { Rd.Failure, Thread.Alerted } =
           IF cellTypes.get(nam, old) AND NOT TE(old, typ) THEN
             Debug.Error(F("Ambiguous cell->type mapping.  cell %s maps to both type %s and type %s!", nam, old, typ))
           END;
+          EVAL cellTypes.put(nam, typ);
 
           IF NOT typeGates.get(typ, gat) THEN
             gat := ParseFunction(fxn);
@@ -140,19 +166,30 @@ PROCEDURE EndsIn(line, sfx : TEXT) : BOOLEAN =
       RETURN n # 0 AND TE(TextList.Nth(lst, n - 1), sfx)
     END
   END EndsIn;
+
+TYPE
+  Problem = RECORD
+    asyncs  : TextSet.T;
+    outputs : TextSet.T;
+    paths   : RefList.T;
+  END;
   
-PROCEDURE ParseCircuit(rd : Rd.T) RAISES { Rd.Failure, Thread.Alerted } =
+PROCEDURE ParseCircuit(rd : Rd.T) : Problem
+  RAISES { Rd.Failure, Thread.Alerted } =
   VAR
     first : TEXT := NIL;
     from, to, last : TEXT;
     path : EdgeSeq.T;
     paths : RefList.T;
+    asyncs, outputs := NEW(TextSetDef.T).init();
   BEGIN
     TRY
       LOOP
         WITH line = Rd.GetLine(rd) DO
           IF    EmptyLine(line) THEN
             Debug.Out(F("got path from %s -> %s", first, last));
+            EVAL asyncs.insert(first);
+            EVAL outputs.insert(last);
             first := NIL;
             last := NIL;
             paths := RefList.Cons(path, paths);
@@ -160,12 +197,12 @@ PROCEDURE ParseCircuit(rd : Rd.T) RAISES { Rd.Failure, Thread.Alerted } =
           ELSIF TE(GetToken(line, 0) , "AFIFO") THEN
             path := NEW(EdgeSeq.T).init();
           ELSIF EndsIn(line, "->") THEN
-            from := LookupPin(GetToken(line, 0));
+            from := LookupPinNet(GetToken(line, 0));
             IF first = NIL THEN
               first := from
             END;
             WITH line2 = Rd.GetLine(rd) DO
-              to := LookupPin(GetToken(line2, 0));
+              to := LookupPinNet(GetToken(line2, 0));
               last := to;
             END;
             Debug.Out(F("edge %s -> %s", from, to));
@@ -177,10 +214,259 @@ PROCEDURE ParseCircuit(rd : Rd.T) RAISES { Rd.Failure, Thread.Alerted } =
       END
     EXCEPT
       Rd.EndOfFile => (* skip *)
-    END
+    END;
+
+    Debug.Out(F("%s outputs", Int(outputs.size())));
+    Debug.Out(F("%s async inputs", Int(asyncs.size())));
+
+    RETURN Problem { asyncs, outputs, paths }
   END ParseCircuit;
 
-PROCEDURE LookupPin(pin : TEXT) : TEXT =
+PROCEDURE LookupTypeGate(typ : TEXT) : Gate.T =
+  VAR
+    gat : Gate.T;
+  BEGIN
+    WITH hadIt = typeGates.get(typ, gat) DO
+      IF NOT hadIt THEN Debug.Error("No definition for gate type " & typ) END;
+      RETURN gat
+    END
+  END LookupTypeGate;
+  
+PROCEDURE AnalyzeCircuit(READONLY problem : Problem) =
+  VAR
+    iter := problem.outputs.iterate();
+    op : TEXT;
+    citer := cellTypes.iterate();
+    cellOutputs := NEW(TextTextTbl.Default).init();
+    typ : TEXT;
+    net : TEXT;
+    nam : TEXT;
+  BEGIN
+    (* build lookup table for outputs -> gates *)
+    WHILE citer.next(nam, typ) DO
+      WITH gate    = LookupTypeGate(typ),
+           gateOut = nam & "/" & gate.tgt,
+           haveIt  = pinNets.get(gateOut, net) DO
+        IF NOT haveIt THEN
+          Debug.Error("No net for gate output " & gateOut)
+        END;
+        Debug.Out(F("Gate instance %s, type %s : output %s = %s",
+                    nam, typ, gateOut, net));
+        EVAL cellOutputs.put(net, nam)
+      END
+    END;
+    
+    WHILE iter.next(op) DO
+      AnalyzeOutput(op, problem.asyncs, cellOutputs)
+    END
+  END AnalyzeCircuit;
+
+PROCEDURE AnalyzeOutput(outp        : TEXT;
+                        asyncs      : TextSet.T;
+                        outputCells : TextTextTbl.T) =
+  BEGIN
+    Debug.Out("Analyzing output " & outp);
+    <*ASSERT NOT asyncs.member(outp)*>
+
+    (* find fanins of output *)
+    WITH fanins = FaninCone(outp, outputCells, asyncs) DO
+      ProduceGlitchFile(outp, fanins, asyncs)
+    END
+  END AnalyzeOutput;
+
+PROCEDURE ProduceGlitchFile(outp   : TEXT;
+                            fanins : GlitchSpec;
+                            asyncs : TextSet.T)
+  RAISES { Thread.Alerted } =
+  VAR
+    ofn := outDir & "/" & TextUtils.Replace(outp, "/", "__") & ".glitch";
+    wr : Wr.T;
+  BEGIN
+    TRY
+      wr := FileWr.Open(ofn);
+    EXCEPT
+      OSError.E(x) =>
+        Debug.Error(F("Trouble opening file \"%s\" for writing : OSError.E : %s",
+                      ofn,
+                      AL.Format(x)))
+    END;
+
+    TRY
+      Wr.PutText(wr,
+                 F("# glitch file\n" &
+                 "# %s\n" &
+                 "# %s\n" &
+                 "# %s\n\n",
+                 outp,
+                 FmtParams(),
+                 FmtDate()));
+
+      Wr.PutText(wr, F("output %s\n\n", outp));
+
+      VAR
+        iter := fanins.leafNodes.iterate();
+        n : TEXT;
+      BEGIN
+        WHILE iter.next(n) DO
+          IF asyncs.member(n) THEN
+            Wr.PutText(wr, F("async %s\n", n))
+          END
+        END;
+        Wr.PutChar(wr, '\n');
+      END;
+
+      VAR
+        iter := fanins.gateInstances.iterate();
+        nam : TEXT;
+      BEGIN
+        WHILE iter.next(nam) DO
+          WITH type = LookupCellType(nam),
+               gate = LookupTypeGate(type) DO
+            Wr.PutText(wr, F("# %s / %s\n", nam, type));
+            Wr.PutText(wr, "# " & Gate.Format(gate));
+            Wr.PutChar(wr, '\n');
+            Wr.PutText(wr,
+                       F("gate %s\n",
+                         Gate.Format(RenameTerminals(gate, nam),
+                                     ass := " = ",
+                                     not := "~")));
+            Wr.PutChar(wr, '\n');
+          END
+        END
+      END;
+
+      Wr.PutChar(wr, '\n');
+      Wr.PutText(wr, "# END GLITCH PROBLEM\n");
+      
+      Wr.Close(wr)
+
+    EXCEPT
+      Wr.Failure(x) =>
+      Debug.Error("I/O error writing output file " & ofn & " : Wr.Failure : " & AL.Format(x))
+    END
+  END ProduceGlitchFile;
+
+PROCEDURE RenameTerminals(g       : Gate.T;
+                          nam     : TEXT) : Gate.T =
+
+  PROCEDURE RenamePin(n : TEXT) : TEXT =
+    VAR
+      fqpn := nam & "/" & n;
+    BEGIN
+      RETURN LookupPinNet(fqpn)
+    END RenamePin;
+
+  PROCEDURE RenameExpr(x : GateExpr.T) : GateExpr.T =
+    BEGIN
+      TYPECASE x OF
+        GateExpr.Expr(x) =>
+        CASE x.op OF
+          GateExpr.Op.And, GateExpr.Op.Or =>
+          RETURN NEW(GateExpr.Expr,
+                     nm := x.nm,
+                     op := x.op,
+                     a := RenameExpr(x.a),
+                     b := RenameExpr(x.b))
+        |
+          GateExpr.Op.Not =>
+          RETURN NEW(GateExpr.Expr,
+                     nm := x.nm,
+                     op := x.op,
+                     a := RenameExpr(x.a),
+                     b := x.b)
+          
+        END
+      |
+        GateExpr.Named(n) => RETURN GateExpr.New(RenamePin(n.nm))
+      ELSE
+        <*ASSERT FALSE*>
+      END
+    END RenameExpr;
+    
+  VAR
+    res : Gate.T;
+  BEGIN
+    res.tgt    := RenamePin(g.tgt);
+    res.expr   := RenameExpr(g.expr);
+    res.fanins := GateExpr.Fanins(res.expr);
+    RETURN res
+  END RenameTerminals;
+
+PROCEDURE FmtParams() : TEXT =
+  VAR
+    wx := Wx.New();
+  BEGIN
+    FOR i := 0 TO Params.Count - 1 DO
+      Wx.PutChar(wx, ' ');
+      Wx.PutText(wx, Params.Get(i))
+    END;
+    RETURN Wx.ToText(wx)
+  END FmtParams;
+
+VAR
+  startTime := Time.Now();
+  
+PROCEDURE FmtDate() : TEXT =
+  BEGIN
+    RETURN FmtTime.Long(startTime, Date.Local)
+  END FmtDate;
+  
+TYPE
+  GlitchSpec = RECORD
+    gateInstances : TextSet.T;
+    leafNodes     : TextSet.T;
+  END;
+  
+PROCEDURE FaninCone(net         : TEXT;
+                    outputCells : TextTextTbl.T;
+                    asyncs      : TextSet.T) : GlitchSpec =
+  (* return set of gate-instance names in fanin cone of given net *)
+
+  VAR
+    res := GlitchSpec { NEW(TextSetDef.T).init(),
+                        NEW(TextSetDef.T).init() };
+
+  PROCEDURE Recurse(n : TEXT) =
+    VAR
+      cellNam : TEXT;
+    BEGIN
+      WITH hadIt = outputCells.get(n, cellNam) DO
+        
+        (* a given circuit node is either the output of a cell
+           OR it is an ultimate fanin *)
+        
+        IF NOT hadIt OR asyncs.member(n) THEN
+          (* it's a leaf if it is either actually a leaf,
+             or if it is an async input *)
+          EVAL res.leafNodes.insert(n)
+        ELSE
+          EVAL res.gateInstances.insert(cellNam);
+          
+          WITH type  = LookupCellType(cellNam),
+               gate  = LookupTypeGate(type) DO
+            VAR
+              iter := gate.fanins.iterate();
+              f : TEXT;
+            BEGIN
+              WHILE iter.next(f) DO
+                WITH fqp   = cellNam & "/" & f,
+                     fiNet = LookupPinNet(fqp) DO
+                  Recurse(fiNet)
+                END
+              END
+            END
+          END
+        END
+      END
+    END Recurse;
+    
+  BEGIN
+    Recurse(net);
+    RETURN res
+  END FaninCone;
+  
+PROCEDURE LookupPinNet(pin : TEXT) : TEXT =
+  (* look up pin and return net *)
   VAR
     net : TEXT;
   BEGIN
@@ -188,13 +474,26 @@ PROCEDURE LookupPin(pin : TEXT) : TEXT =
       IF NOT haveIt THEN Debug.Error("No mapping for pin " & pin) END;
       RETURN net
     END
-  END LookupPin;
+  END LookupPinNet;
+
+PROCEDURE LookupCellType(cell : TEXT) : TEXT =
+  (* look up cell and return type *)
+  VAR
+    type : TEXT;
+  BEGIN
+    WITH haveIt = cellTypes.get(cell, type) DO
+      IF NOT haveIt THEN Debug.Error("No type mapping for cell " & cell) END;
+      RETURN type
+    END
+  END LookupCellType;
   
 VAR
   pp      := NEW(ParseParams.T).init(Stdio.stderr);
   fRd, aRd : Rd.T;
   pinNets, cellTypes := NEW(TextTextTbl.Default).init();
   typeGates := NEW(TextGateTbl.Default).init();
+  outDir : Pathname.T := ".";
+  
 BEGIN
   TRY
     IF NOT pp.keywordPresent("-f") THEN
@@ -205,7 +504,7 @@ BEGIN
         fRd := FileRd.Open(fn)
       EXCEPT
         OSError.E(x) =>
-        Debug.Error(F("Trouble opening file \"%s\" : OSError.E : %s",
+        Debug.Error(F("Trouble opening file \"%s\" for reading : OSError.E : %s",
                       fn,
                       AL.Format(x)))
       END
@@ -225,12 +524,18 @@ BEGIN
       END
     END;
 
+    IF pp.keywordPresent("-d") THEN
+      outDir := pp.getNext()
+    END;
+
   EXCEPT
     ParseParams.Error => Debug.Error("Can't parse command line")
   END;
 
   ParseAliases(aRd);
 
-  ParseCircuit(fRd)
+  WITH problem = ParseCircuit(fRd) DO
+    AnalyzeCircuit(problem)
+  END
   
 END Main.

@@ -53,17 +53,44 @@ PROCEDURE Async(nm : TEXT) =
   END Async;
 
 PROCEDURE Gate(tgt : TEXT; expr : GlitchExpr.T) =
+  VAR
+    tgtBdd := BDD.New();
   BEGIN
-    gateList := RefList.Cons(NEW(GateRec, tgt := tgt, expr := expr),
+    gateList := RefList.Cons(NEW(GateRec,
+                                 tgt := tgt, 
+                                 expr := expr,
+                                 tgtBdd := tgtBdd),
                              gateList);
-    EVAL gates.put(tgt, expr);
-    EVAL revbdds.put(expr.x, tgt)
+
+    (* this doesn't really work when expr.x is an identity function, because
+       this destroys the invariant that expr.x are unique across gates *)
+    
+    WITH hadIt = gates.put(tgt, expr) DO
+      IF hadIt THEN
+        Debug.Error("duplicate gate for name " & tgt)
+      END
+    END;
+    
+    WITH hadIt = revbdds.put(tgtBdd, tgt) DO
+      IF hadIt THEN
+        Debug.Error("duplicate BDD for gate name " & tgt)
+      END
+    END
   END Gate;
 
 PROCEDURE Literal(nm : TEXT; expr : GlitchExpr.T) =
   BEGIN
-    EVAL literals.put(nm, expr);
-    EVAL revbdds.put(expr.x, nm);
+    WITH hadIt = literals.put(nm, expr) DO
+      IF hadIt THEN
+        Debug.Error("duplicate literal for name " & nm)
+      END
+    END;
+    
+    WITH hadIt = revbdds.put(expr.x, nm) DO
+      IF hadIt THEN
+        Debug.Error("duplicate BDD for literal name " & nm)
+      END
+    END
   END Literal;
 
 PROCEDURE GetLiteral(nm : TEXT) : GlitchExpr.T =
@@ -79,8 +106,9 @@ PROCEDURE GetLiteral(nm : TEXT) : GlitchExpr.T =
 
 TYPE
   GateRec = OBJECT
-    tgt  : TEXT;
-    expr : GlitchExpr.T;
+    tgt    : TEXT;
+    tgtBdd : BDD.T;
+    expr   : GlitchExpr.T;
   END;
 
 VAR
@@ -259,6 +287,19 @@ PROCEDURE GetName(b : BDD.T) : TEXT =
     IF revbdds.get(b, nm) THEN RETURN nm ELSE <*ASSERT FALSE*> END
   END GetName;
 
+PROCEDURE DbgExpr(x : BDD.T) : TEXT =
+  VAR
+    nm : TEXT;
+  BEGIN
+    WITH hadIt = revbdds.get(x, nm) DO
+      IF hadIt THEN
+        RETURN nm
+      ELSE
+        RETURN "*anon*"
+      END
+    END
+  END DbgExpr;
+
 PROCEDURE FlatExpression(b : BDD.T) : BDD.T =
   (* take a gate expression and convert it to being in the ultimate
      inputs *)
@@ -271,22 +312,37 @@ PROCEDURE FlatExpression(b : BDD.T) : BDD.T =
     (* while there are pieces of the expression that haven't been 
        replaced, replace *)
 
+    Debug.Out(F("flattening"));
+
     REPEAT
       changed := FALSE;
       WITH deps = BDDDepends.Depends(c),
            iter = deps.iterate() DO
+
+        
         WHILE iter.next(d) DO
-          IF gates.get(GetName(d), g) THEN
-            (* do the Shannon cofactor expansion w.r.t. the actual 
-               expression in g for the literal d *)
-            c := BDD.Or(
-                     BDD.And(g.x,
-                             BDD.MakeTrue(c, d)),
-                     BDD.And(BDD.Not(g.x),
-                             BDD.MakeFalse(c, d)));
-            changed := TRUE
+          WITH nam = GetName(d) DO
+            IF gates.get(nam, g) THEN
+              (* do the Shannon cofactor expansion w.r.t. the actual 
+                 expression in g for the literal d *)
+              Debug.Out(F("replacing %s with gate expression %s",
+                          nam,
+                          BDD.Format(g.x, revbdds)));
+              WITH new = BDD.Or(
+                             BDD.And(g.x,
+                                     BDD.MakeTrue(c, d)),
+                             BDD.And(BDD.Not(g.x),
+                                     BDD.MakeFalse(c, d))) DO
+                <*ASSERT new # c*>
+                c := new
+              END;
+              changed := TRUE;
+              EXIT
+            END
           END
         END
+
+        
       END
     UNTIL NOT changed;
 

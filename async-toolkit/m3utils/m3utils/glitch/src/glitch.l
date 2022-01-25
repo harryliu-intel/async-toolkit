@@ -1,7 +1,7 @@
 %macro {
 D                       [0-9]
 L                       [a-zA-Z_]
-Bare                    {L}((\[{D}*\])|[$@]|{D}|{L}|\.)*
+Bare                    {L}((\[{D}*\])|[$@]|{D}|{L}|\.|\/)*
 }
 
 OUTPUT    output
