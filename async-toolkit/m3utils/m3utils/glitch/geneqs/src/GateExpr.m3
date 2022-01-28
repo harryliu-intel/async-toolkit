@@ -12,6 +12,11 @@ PROCEDURE Or(a, b : T) : T =
     RETURN NEW(Expr, op := Op.Or, a := a, b := b, nm := F("(| %s %s)", a.nm, b.nm))
   END Or;
   
+PROCEDURE Xor(a, b : T) : T =
+  BEGIN
+    RETURN NEW(Expr, op := Op.Xor, a := a, b := b, nm := F("(^ %s %s)", a.nm, b.nm))
+  END Xor;
+  
 PROCEDURE Not(a : T) : T =
   BEGIN RETURN NEW(Expr, op := Op.Not, a := a, b := NIL, nm := F("(~ %s)", a.nm))
   END Not;
@@ -27,6 +32,8 @@ PROCEDURE Format(a : T; not : TEXT) : TEXT =
         Op.And => RETURN F("(%s & %s)", Format(x.a, not), Format(x.b, not))
       |
         Op.Or  => RETURN F("(%s | %s)", Format(x.a, not), Format(x.b, not))
+      |
+        Op.Xor  => RETURN F("(%s ^ %s)", Format(x.a, not), Format(x.b, not))
       |
         Op.Not => RETURN F("%s%s", not, Format(x.a, not))
       END
@@ -46,7 +53,7 @@ PROCEDURE Fanins(a : T) : TextSet.T =
       TYPECASE t OF
         Expr(x) =>
         CASE x.op OF
-          Op.And, Op.Or => Recurse(x.a); Recurse(x.b)
+          Op.And, Op.Or, Op.Xor => Recurse(x.a); Recurse(x.b)
         |
           Op.Not => Recurse(x.a)
         END

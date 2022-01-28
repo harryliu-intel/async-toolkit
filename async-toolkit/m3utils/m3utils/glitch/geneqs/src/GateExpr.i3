@@ -12,10 +12,11 @@ TYPE
     a, b : T;
   END;
 
-  Op = { And, Or, Not };
+  Op = { And, Or, Not, Xor };
 
 PROCEDURE And(a, b : T) : T;
 PROCEDURE Or(a, b : T) : T;
+PROCEDURE Xor(a, b : T) : T;
 PROCEDURE Not(a : T) : T;
 PROCEDURE New(nm : TEXT) : T;
 

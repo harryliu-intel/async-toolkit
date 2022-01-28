@@ -24,6 +24,7 @@ expression: { val : GateExpr.T }
   paren { $$ := $1 }
   and   { $$ := GateExpr.And($1, $2) }
   or    { $$ := GateExpr.Or($1, $2) }
+  xor    { $$ := GateExpr.Xor($1, $2) }
   not   { $$ := GateExpr.Not($1) }
   node  { WITH x = Gate.GetLiteral($1) DO
             $$ := x

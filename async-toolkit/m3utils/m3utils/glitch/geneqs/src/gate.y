@@ -1,4 +1,5 @@
 %left '|'
+%left '^'
 %left '&'
 %nonassoc '!'
 
@@ -18,6 +19,7 @@ expression:
   paren		'(' expression ')'
   and		expression '&' expression
   or		expression '|' expression
+  xor		expression '^' expression
   not		'!' expression
   node		node
   
