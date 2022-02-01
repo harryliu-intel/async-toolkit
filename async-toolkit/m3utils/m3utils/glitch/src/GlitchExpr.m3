@@ -5,6 +5,7 @@ IMPORT ZeroOneX;
 IMPORT Text01XTbl;
 IMPORT Debug;
 IMPORT TextGlitchExprTbl;
+IMPORT TextSet, TextSetDef;
 
 PROCEDURE And(a, b : T) : T =
   BEGIN
@@ -80,5 +81,27 @@ PROCEDURE Eval(x     : T;
       <*ASSERT FALSE*>
     END
   END Eval;
-  
+
+PROCEDURE Fanins(t : T) : TextSet.T =
+  VAR
+    res := NEW(TextSetDef.T).init();
+
+  PROCEDURE Recurse(q : T) =
+    BEGIN
+      TYPECASE q OF
+        Named(n) => EVAL res.insert(n.nm)
+      |
+        Expr(x) =>
+        Recurse(x.a);
+        IF x.op # Op.Not THEN Recurse(x.b) END
+      ELSE
+        <*ASSERT FALSE*>
+      END
+    END Recurse;
+    
+  BEGIN
+    Recurse(t);
+    RETURN res
+  END Fanins;
+    
 BEGIN END GlitchExpr.

@@ -24,6 +24,7 @@ expression: { val : GlitchExpr.T }
   paren { $$ := $1 }
   and   { $$ := GlitchExpr.And($1, $2) }
   or    { $$ := GlitchExpr.Or($1, $2) }
+  xor   { $$ := GlitchExpr.Or(GlitchExpr.And($1, $2),GlitchExpr.Not(GlitchExpr.Or($1,$2))) }
   not   { $$ := GlitchExpr.Not($1) }
   node  { WITH x = Glitch.GetLiteral($1) DO
             $$ := x

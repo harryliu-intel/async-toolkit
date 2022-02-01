@@ -28,9 +28,8 @@ MODULE Glitch;
 
 IMPORT GlitchExpr;
 IMPORT TextSet, TextSetDef;
-IMPORT RefList;
 IMPORT TextGlitchExprTbl AS TextExprTbl;
-FROM Fmt IMPORT F, Int, Bool;
+FROM Fmt IMPORT F, FN, Int, Bool;
 IMPORT Debug;
 IMPORT BDDTextTbl;
 IMPORT BDD;
@@ -41,7 +40,23 @@ IMPORT Text01XTbl;
 IMPORT GlitchExprEval;
 IMPORT Wr;
 IMPORT Stdio;
+IMPORT GlitchGate;
+IMPORT TextGlitchGateListTbl;
+IMPORT GlitchGateList;
+IMPORT Thread;
+IMPORT TextBDDTbl;
+IMPORT Text;
+IMPORT TextSubsets;
+IMPORT Wx;
+IMPORT SopBDD;
+IMPORT Word;
 
+CONST TE = Text.Equal;
+
+<*FATAL Thread.Alerted*>
+
+VAR doDebug := Debug.GetLevel() >= 10;
+    
 PROCEDURE Output(nm : TEXT) =
   BEGIN
     EVAL outputs.insert(nm);
@@ -54,17 +69,14 @@ PROCEDURE Async(nm : TEXT) =
 
 PROCEDURE Gate(tgt : TEXT; expr : GlitchExpr.T) =
   VAR
-    tgtBdd := BDD.New();
+    tgtBdd  := BDD.New();
+    newGate :=  NEW(GlitchGate.T,
+                    tgt    := tgt, 
+                    expr   := expr,
+                    tgtBdd := tgtBdd);
   BEGIN
-    gateList := RefList.Cons(NEW(GateRec,
-                                 tgt := tgt, 
-                                 expr := expr,
-                                 tgtBdd := tgtBdd),
-                             gateList);
+    gateList := GlitchGateList.Cons(newGate, gateList);
 
-    (* this doesn't really work when expr.x is an identity function, because
-       this destroys the invariant that expr.x are unique across gates *)
-    
     WITH hadIt = gates.put(tgt, expr) DO
       IF hadIt THEN
         Debug.Error("duplicate gate for name " & tgt)
@@ -74,6 +86,20 @@ PROCEDURE Gate(tgt : TEXT; expr : GlitchExpr.T) =
     WITH hadIt = revbdds.put(tgtBdd, tgt) DO
       IF hadIt THEN
         Debug.Error("duplicate BDD for gate name " & tgt)
+      END
+    END;
+
+    WITH set  = GlitchExpr.Fanins(expr),
+         iter = set.iterate() DO
+      VAR
+        nn : TEXT;
+        gl : GlitchGateList.T := NIL;
+      BEGIN
+        WHILE iter.next(nn) DO
+          EVAL fanouts.get(nn, gl);
+          gl := GlitchGateList.Cons(newGate, gl);
+          EVAL fanouts.put(nn, gl)
+        END
       END
     END
   END Gate;
@@ -104,19 +130,13 @@ PROCEDURE GetLiteral(nm : TEXT) : GlitchExpr.T =
     RETURN expr
   END GetLiteral;
 
-TYPE
-  GateRec = OBJECT
-    tgt    : TEXT;
-    tgtBdd : BDD.T;
-    expr   : GlitchExpr.T;
-  END;
-
 VAR
-  asyncs, outputs := NEW(TextSetDef.T).init();
+  asyncs, outputs             := NEW(TextSetDef.T).init();
 
-  gateList : RefList.T := NIL;
-  gates, literals      := NEW(TextExprTbl.Default).init();
-  revbdds          := NEW(BDDTextTbl.Default).init();
+  gateList : GlitchGateList.T := NIL;
+  gates, literals             := NEW(TextExprTbl.Default).init();
+  revbdds                     := NEW(BDDTextTbl.Default).init();
+  fanouts                     := NEW(TextGlitchGateListTbl.Default).init();
   
 PROCEDURE RunChecks() : BOOLEAN =
   VAR
@@ -136,6 +156,7 @@ PROCEDURE RunChecks() : BOOLEAN =
         Debug.Out(F("output %s not found", o))
       END;
     END;
+    Wr.PutText(Stdio.stderr, Int(runs) & " sync states examined\n");
     RETURN ok
   END RunChecks;
 
@@ -148,7 +169,7 @@ PROCEDURE GetInsensitivity(of, wrt : BDD.T) : BDD.T =
 PROCEDURE DoOutput(o : TEXT; x : GlitchExpr.T) =
   VAR
     flatX := FlatExpression(x.x);
-    deps := BDDDepends.Depends(flatX);
+    deps  := BDDDepends.Depends(flatX);
 
     asyncdeps : BDDSet.T;
     
@@ -160,7 +181,7 @@ PROCEDURE DoOutput(o : TEXT; x : GlitchExpr.T) =
       b : BDD.T;
     BEGIN
       WHILE iter.next(b) DO
-        WITH name   = GetName(b),
+        WITH name    = GetName(b),
              isAsync = asyncs.member(name) DO
           Debug.Out(F("output %s <- input %s, async %s",
                       o, name, Bool(isAsync)));
@@ -169,7 +190,9 @@ PROCEDURE DoOutput(o : TEXT; x : GlitchExpr.T) =
             (* ok input is async, do something... *)
             WITH insens = GetInsensitivity(flatX, b) DO
               DoAsync(o, x, flatX, b, insens, deps)
-            END
+            END;
+
+            DoAsync2(o, name)
           END
           
         END
@@ -177,6 +200,129 @@ PROCEDURE DoOutput(o : TEXT; x : GlitchExpr.T) =
     END
   END DoOutput;
 
+PROCEDURE DoAsync2(output, async : TEXT) =
+  BEGIN
+    Debug.Out(F("DoAsync2(%s, %s)", output, async));
+    EVAL Sensitivity(output, async);
+  END DoAsync2;
+
+PROCEDURE ComputeSensitivities(set        : TextSet.T;
+                               wrt        : TEXT;
+                               (*OUT*)map : TextBDDTbl.T) =
+  VAR
+    iter     := set.iterate();
+    n        : TEXT;
+    dummy    : BDD.T;
+  BEGIN
+    WHILE iter.next(n) DO
+      IF NOT map.get(n, dummy) THEN
+        EVAL map.put(n, Sensitivity(n, wrt))
+      END
+    END
+  END ComputeSensitivities;
+
+PROCEDURE Sensitivity(of, wrt : TEXT) : BDD.T =
+  VAR
+    x   : GlitchExpr.T;
+    res : BDD.T;
+  BEGIN
+    Debug.Out(F("Sensitivity(of = %s, wrt = %s)", of, wrt));
+    
+    IF TE(of, wrt) THEN
+      (* wrt always depends on itself *)
+      res := True
+    ELSIF NOT gates.get(of, x) THEN
+      (* other ultimate inputs do not depend on wrt *)
+      res := False
+    ELSE
+      (* x is the glitchexpr that we care about *)
+      res := False;
+      VAR
+        fanins  := GlitchExpr.Fanins(x);
+        sens    := NEW(TextBDDTbl.Default).init();
+        pset    := TextSubsets.Iterate(fanins);
+        ss      : TextSet.T;
+        wrtB    : BDD.T;
+        hadIt   := LookupBdd(wrt, wrtB);
+        flatOf  := FlatExpression(x.x);
+
+        flatOfF, flatOfT, globalSens : BDD.T;
+        
+      BEGIN
+        <*ASSERT hadIt*>
+
+        flatOfF := BDD.MakeFalse(flatOf, wrtB);
+        flatOfT := BDD.MakeTrue(flatOf, wrtB);
+
+        globalSens := BDD.Not(BDD.Equivalent(flatOfF, flatOfT));
+        
+        Debug.Out(F("Global sensitivity of %s wrt %s : %s",
+                    of, wrt, 
+                    PrettyBdd(globalSens)));
+        Debug.Out(F("Sensitivity of %s : fanins %s", of, FmtTextSet(fanins)));
+        Debug.Out(F("Sensitivity expr %s <- %s", of, PrettyBdd(x.x)));
+        ComputeSensitivities(fanins, wrt, sens);
+
+        VAR
+          iter := fanins.iterate();
+          fi : TEXT;
+          fiSens : BDD.T;
+        BEGIN
+          WHILE iter.next(fi) DO
+            WITH fiB    = MustLookupBdd(fi),
+                 fT     = BDD.MakeTrue(x.x, fiB),
+                 ffT    = FlatExpression(fT),
+                 fF     = BDD.MakeFalse(x.x, fiB),
+                 ffF    = FlatExpression(fF),
+                 localS = BDD.Not(BDD.Equivalent(ffF, ffT)),
+                 hadIt  = sens.get(fi, fiSens),
+                 chainS = BDD.And(localS, fiSens) DO
+              <*ASSERT hadIt*>
+              Debug.Out(FN("Fanin of %s|%s<-T = %s = %s, %s|%s<-F = %s = %s, localS = %s",
+                           ARRAY OF TEXT{ of, fi, PrettyBdd(fT), PrettyBdd(ffT),
+                                          of, fi, PrettyBdd(fF), PrettyBdd(ffF),
+                                          PrettyBdd(localS) }));
+              Debug.Out(F("sens of %s / %s = fiSens %s; localS & fiSens = %s ",
+                          fi,
+                          wrt,
+                          PrettyBdd(fiSens),
+                          PrettyBdd(chainS)
+              ));
+
+              res := BDD.Or(res, chainS)
+            END
+          END
+        END
+      END
+    END;
+    Debug.Out(F("Done! Chained sensitivity(of = %s, wrt = %s) = %s",
+                of,
+                wrt,
+                PrettyBdd(res)));
+    RETURN res
+  END Sensitivity;
+
+PROCEDURE FmtTextSet(s : TextSet.T) : TEXT =
+  VAR
+    wx := Wx.New();
+    t : TEXT;
+    iter := s.iterate();
+    first := TRUE;
+  BEGIN
+    Wx.PutText(wx, "{");
+    WHILE iter.next(t) DO
+      IF first THEN
+        first := FALSE;
+        Wx.PutText(wx, " ")
+      ELSE
+        Wx.PutText(wx, ", ")
+      END;
+      Wx.PutText(wx, t);
+    END;
+    Wx.PutText(wx, " }");
+    RETURN Wx.ToText(wx)
+  END FmtTextSet;
+    
 TYPE
   Binding = RECORD
     b : BDD.T;
@@ -184,6 +330,7 @@ TYPE
   END;
 
 VAR ok := TRUE;
+    runs : CARDINAL := 0;
 
 PROCEDURE DoAsync(o                : TEXT;
                   x                : GlitchExpr.T;
@@ -191,8 +338,21 @@ PROCEDURE DoAsync(o                : TEXT;
                   deps             : BDDSet.T) =
   (* do async checks on o/x w.r.t. b *)
 
+  CONST
+    PrintInterval = 100000;
+    
   PROCEDURE RunOne() =
     BEGIN
+      INC(runs);
+
+      IF runs MOD PrintInterval = 0 THEN
+        TRY
+          Wr.PutText(Stdio.stderr, Int(runs));
+          Wr.PutChar(Stdio.stderr, '\n')
+        EXCEPT ELSE
+        END
+      END;
+      
       FOR i := FIRST(bindings^) TO LAST(bindings^) DO
         EVAL tab.put(GetName(bindings[i].b),
                      ZeroOneX.FromBool(bindings[i].v))
@@ -235,6 +395,10 @@ PROCEDURE DoAsync(o                : TEXT;
     Debug.Out(F("insensitivity expr %s",
                 BDD.Format(insens, NIL)));
 
+    TRY
+      Wr.PutText(Stdio.stderr, F("%s bindings\n", Int(NUMBER(bindings^))));
+    EXCEPT ELSE END;
+
     (* now build indeps array *)
 
     EVAL tab.put(GetName(b), V.VX);
@@ -247,6 +411,12 @@ PROCEDURE DoAsync(o                : TEXT;
     END
   END DoAsync;
 
+PROCEDURE PrettyBdd(b : BDD.T) : TEXT =
+  BEGIN
+    RETURN SopBDD.ConvertBool(b).invariantSimplify(True, True, True)
+             .format(revbdds)
+  END PrettyBdd;
+  
 PROCEDURE MakeBindings(insens       : BDD.T;
                        VAR bindings : ARRAY OF Binding;
                        ptr          : CARDINAL;
@@ -254,9 +424,14 @@ PROCEDURE MakeBindings(insens       : BDD.T;
   BEGIN
     IF ptr = NUMBER(bindings) THEN
       (* base case *)
-      Debug.Out("Hit base case in MakeBindings");
-      FOR i := FIRST(bindings) TO LAST(bindings) DO
-        Debug.Out(F("%s <- %s", BDD.Format(bindings[i].b), Bool(bindings[i].v)))
+      IF doDebug THEN
+        Debug.Out("Hit base case in MakeBindings");
+        FOR i := FIRST(bindings) TO LAST(bindings) DO
+          Debug.Out(F("XXX %s (%s) <- %s",
+                      BDD.Format(bindings[i].b),
+                      PrettyBdd(bindings[i].b),
+                      Bool(bindings[i].v)))
+        END
       END;
       p()
     ELSE
@@ -318,7 +493,6 @@ PROCEDURE FlatExpression(b : BDD.T) : BDD.T =
       changed := FALSE;
       WITH deps = BDDDepends.Depends(c),
            iter = deps.iterate() DO
-
         
         WHILE iter.next(d) DO
           WITH nam = GetName(d) DO
@@ -351,6 +525,44 @@ PROCEDURE FlatExpression(b : BDD.T) : BDD.T =
 
 VAR False := BDD.False();
     True  := BDD.True();
+
+PROCEDURE MustLookupBdd(nm : TEXT) : BDD.T =
+  VAR
+    b : BDD.T;
+    hadIt := LookupBdd(nm, b);
+  BEGIN
+    <*ASSERT hadIt*>
+    RETURN b
+  END MustLookupBdd;
+  
+PROCEDURE LookupBdd(nm : TEXT; VAR res : BDD.T) : BOOLEAN =
+  VAR
+    gx : GlitchExpr.T;
+  BEGIN
+    IF literals.get(nm, gx) OR gates.get(nm, gx) THEN
+      res := gx.x;
+      RETURN TRUE
+    ELSE
+      RETURN FALSE
+    END
+  END LookupBdd;
+
+PROCEDURE TextSetToBddArr(s : TextSet.T) : REF ARRAY OF BDD.T =
+  VAR
+    res := NEW(REF ARRAY OF BDD.T, s.size());
+    iter := s.iterate();
+    j := 0;
+    nm : TEXT;
+  BEGIN
+    WHILE iter.next(nm) DO
+      WITH hadIt = LookupBdd(nm, res[j]) DO
+        <*ASSERT hadIt*>
+      END;
+      INC(j)
+    END;
+    <*ASSERT j = NUMBER(res^)*>
+    RETURN res
+  END TextSetToBddArr;
 
 BEGIN
 END Glitch.
