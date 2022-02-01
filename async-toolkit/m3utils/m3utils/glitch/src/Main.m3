@@ -31,8 +31,12 @@ VAR
   parser  := NEW(glitchParseStd.T);
   ifn : Pathname.T;
   rd : Rd.T;
+  asyncLimit := LAST(CARDINAL);
 BEGIN
   TRY
+    IF pp.keywordPresent("-limit") THEN
+      asyncLimit := pp.getNextInt()
+    END;
     IF NOT pp.keywordPresent("-f") THEN
       Debug.Error("No -f")
     END;
@@ -60,7 +64,7 @@ BEGIN
   EVAL parser.parse(); 
 
   (* then run checks *)
-  IF Glitch.RunChecks() THEN
+  IF Glitch.RunChecks(asyncLimit) THEN
     (* success -- no glitches detected anywhere *)
     Wr.PutText(Stdio.stderr, "No glitches detected\n");
     Process.Exit(0)

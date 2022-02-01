@@ -50,6 +50,7 @@ IMPORT TextSubsets;
 IMPORT Wx;
 IMPORT SopBDD;
 IMPORT Word;
+IMPORT BDDBDDTbl;
 
 CONST TE = Text.Equal;
 
@@ -138,12 +139,15 @@ VAR
   revbdds                     := NEW(BDDTextTbl.Default).init();
   fanouts                     := NEW(TextGlitchGateListTbl.Default).init();
   
-PROCEDURE RunChecks() : BOOLEAN =
+PROCEDURE RunChecks(asyncLimit : CARDINAL) : BOOLEAN =
   VAR
     oIter := outputs.iterate();
     o : TEXT;
     x : GlitchExpr.T;
   BEGIN
+    IF asyncs.size() > asyncLimit THEN
+      Debug.Error(F("More than %s async inputs, giving up!", Int(asyncLimit)))
+    END;
     (* for each output, check its dependence on each async input *)
     WHILE oIter.next(o) DO
       Debug.Out("Output " & o);
@@ -263,10 +267,12 @@ PROCEDURE GlobalSensitivity(of, wrt : TEXT) : BDD.T =
         flatOfT := BDD.MakeTrue(flatOf, wrtB);
 
         globalSens := BDD.Not(BDD.Equivalent(flatOfF, flatOfT));
-        
-        Debug.Out(F("Global sensitivity of %s wrt %s : %s",
-                    of, wrt, 
-                    PrettyBdd(globalSens)));
+
+        IF doDebug THEN
+          Debug.Out(F("Global sensitivity of %s wrt %s : %s",
+                      of, wrt, 
+                      PrettyBdd(globalSens)))
+        END;
         RETURN globalSens
       END
     END
@@ -304,12 +310,15 @@ PROCEDURE ChainedSensitivity(of, wrt : TEXT) : BDD.T =
         flatOfT := BDD.MakeTrue(flatOf, wrtB);
 
         globalSens := BDD.Not(BDD.Equivalent(flatOfF, flatOfT));
+
+        IF doDebug THEN
+          Debug.Out(F("Global sensitivity of %s wrt %s : %s",
+                      of, wrt, 
+                      PrettyBdd(globalSens)));
+          Debug.Out(F("ChainedSensitivity of %s : fanins %s", of, FmtTextSet(fanins)));
+          Debug.Out(F("ChainedSensitivity expr %s <- %s", of, PrettyBdd(x.x)))
+        END;
         
-        Debug.Out(F("Global sensitivity of %s wrt %s : %s",
-                    of, wrt, 
-                    PrettyBdd(globalSens)));
-        Debug.Out(F("ChainedSensitivity of %s : fanins %s", of, FmtTextSet(fanins)));
-        Debug.Out(F("ChainedSensitivity expr %s <- %s", of, PrettyBdd(x.x)));
         ComputeSensitivities(fanins, wrt, sens);
 
         VAR
@@ -327,16 +336,18 @@ PROCEDURE ChainedSensitivity(of, wrt : TEXT) : BDD.T =
                  hadIt  = sens.get(fi, fiSens),
                  chainS = BDD.And(localS, fiSens) DO
               <*ASSERT hadIt*>
-              Debug.Out(FN("Fanin of %s|%s<-T = %s = %s, %s|%s<-F = %s = %s, localS = %s",
-                           ARRAY OF TEXT{ of, fi, PrettyBdd(fT), PrettyBdd(ffT),
-                                          of, fi, PrettyBdd(fF), PrettyBdd(ffF),
-                                          PrettyBdd(localS) }));
-              Debug.Out(F("sens of %s / %s = fiSens %s; localS & fiSens = %s ",
-                          fi,
-                          wrt,
-                          PrettyBdd(fiSens),
-                          PrettyBdd(chainS)
-              ));
+              IF doDebug THEN
+                Debug.Out(FN("Fanin of %s|%s<-T = %s = %s, %s|%s<-F = %s = %s, localS = %s",
+                             ARRAY OF TEXT{ of, fi, PrettyBdd(fT), PrettyBdd(ffT),
+                                            of, fi, PrettyBdd(fF), PrettyBdd(ffF),
+                                            PrettyBdd(localS) }));
+                Debug.Out(F("sens of %s / %s = fiSens %s; localS & fiSens = %s ",
+                            fi,
+                            wrt,
+                            PrettyBdd(fiSens),
+                            PrettyBdd(chainS)
+                ))
+              END;
 
               res := BDD.Or(res, chainS)
             END
@@ -344,10 +355,12 @@ PROCEDURE ChainedSensitivity(of, wrt : TEXT) : BDD.T =
         END
       END
     END;
-    Debug.Out(F("Done! Chained sensitivity(of = %s, wrt = %s) = %s",
-                of,
-                wrt,
-                PrettyBdd(res)));
+    IF doDebug THEN
+      Debug.Out(F("Done! Chained sensitivity(of = %s, wrt = %s) = %s",
+                  of,
+                  wrt,
+                  PrettyBdd(res)))
+    END;
     RETURN res
   END ChainedSensitivity;
 
@@ -475,11 +488,13 @@ PROCEDURE MakeBindings(insens       : BDD.T;
       (* base case *)
       IF doDebug THEN
         Debug.Out("Hit base case in MakeBindings");
-        FOR i := FIRST(bindings) TO LAST(bindings) DO
-          Debug.Out(F("XXX %s (%s) <- %s",
-                      BDD.Format(bindings[i].b),
-                      PrettyBdd(bindings[i].b),
-                      Bool(bindings[i].v)))
+        IF doDebug THEN
+          FOR i := FIRST(bindings) TO LAST(bindings) DO
+            Debug.Out(F("XXX %s (%s) <- %s",
+                        BDD.Format(bindings[i].b),
+                        PrettyBdd(bindings[i].b),
+                        Bool(bindings[i].v)))
+          END
         END
       END;
       p()
@@ -524,52 +539,63 @@ PROCEDURE DbgExpr(x : BDD.T) : TEXT =
     END
   END DbgExpr;
 
+VAR flatTbl := NEW(BDDBDDTbl.Default).init(); (* memoization table *)
+
 PROCEDURE FlatExpression(b : BDD.T) : BDD.T =
   (* take a gate expression and convert it to being in the ultimate
      inputs *)
   VAR
     changed : BOOLEAN;
     c := b;
-    d : BDD.T;
+    d, f : BDD.T;
     g : GlitchExpr.T;
   BEGIN
     (* while there are pieces of the expression that haven't been 
        replaced, replace *)
 
-    Debug.Out(F("flattening"));
-
-    REPEAT
-      changed := FALSE;
-      WITH deps = BDDDepends.Depends(c),
-           iter = deps.iterate() DO
-        
-        WHILE iter.next(d) DO
-          WITH nam = GetName(d) DO
-            IF gates.get(nam, g) THEN
-              (* do the Shannon cofactor expansion w.r.t. the actual 
-                 expression in g for the literal d *)
-              Debug.Out(F("replacing %s with gate expression %s",
-                          nam,
-                          BDD.Format(g.x, revbdds)));
-              WITH new = BDD.Or(
-                             BDD.And(g.x,
-                                     BDD.MakeTrue(c, d)),
-                             BDD.And(BDD.Not(g.x),
-                                     BDD.MakeFalse(c, d))) DO
-                <*ASSERT new # c*>
-                c := new
-              END;
-              changed := TRUE;
-              EXIT
+    IF flatTbl.get(b, f) THEN
+      RETURN f
+    ELSE
+      Debug.Out(F("flattening"));
+      
+      REPEAT
+        changed := FALSE;
+        WITH deps = BDDDepends.Depends(c),
+             iter = deps.iterate() DO
+          
+          WHILE iter.next(d) DO
+            WITH nam = GetName(d) DO
+              IF gates.get(nam, g) THEN
+                (* do the Shannon cofactor expansion w.r.t. the actual 
+                   expression in g for the literal d *)
+                WITH flatGx = FlatExpression(g.x) DO
+                  IF doDebug THEN
+                    Debug.Out(F("replacing %s with gate expression %s (%s)",
+                                nam,
+                                PrettyBdd(g.x),
+                                PrettyBdd(flatGx)))
+                  END;
+                  WITH new = BDD.Or(
+                                 BDD.And(flatGx,
+                                         BDD.MakeTrue(c, d)),
+                                 BDD.And(BDD.Not(flatGx),
+                                         BDD.MakeFalse(c, d))) DO
+                    <*ASSERT new # c*>
+                    c := new
+                  END
+                END;
+                changed := TRUE;
+                EXIT
+              END
             END
           END
         END
+      UNTIL NOT changed;
 
-        
-      END
-    UNTIL NOT changed;
-
-    RETURN c
+      EVAL flatTbl.put(b, c);
+      
+      RETURN c
+    END
   END FlatExpression;
 
 VAR False := BDD.False();
