@@ -187,10 +187,6 @@ PROCEDURE DoOutput(o : TEXT; x : GlitchExpr.T) =
                       o, name, Bool(isAsync)));
 
           IF isAsync THEN
-            (* ok input is async, do something... *)
-            WITH insens = GetInsensitivity(flatX, b) DO
-              DoAsync(o, x, flatX, b, insens, deps)
-            END;
 
             DoAsync2(o, name)
           END
@@ -203,7 +199,26 @@ PROCEDURE DoOutput(o : TEXT; x : GlitchExpr.T) =
 PROCEDURE DoAsync2(output, async : TEXT) =
   BEGIN
     Debug.Out(F("DoAsync2(%s, %s)", output, async));
-    EVAL Sensitivity(output, async);
+    WITH chainedS = ChainedSensitivity(output, async),
+         globalS  = GlobalSensitivity(output, async),
+         delta    = BDD.Not(BDD.Equivalent(chainedS, globalS)) DO
+      IF chainedS # globalS THEN
+        ok := FALSE;
+          Wr.PutText(Stdio.stderr,
+                     F("FOUND GLITCH: output %s <- async input %s\n",
+                       output,
+                       async));
+          Wr.PutText(Stdio.stderr,
+                     "BEGIN STATE DUMP >>>>>>>>>>>>>>>>>>>>>>>\n");
+          Wr.PutText(Stdio.stderr, F("chainedS = %s, globalS = %s, delta %s\n",
+                                     PrettyBdd(chainedS),
+                                     PrettyBdd(globalS),
+                                     PrettyBdd(delta)));
+          Wr.PutText(Stdio.stderr,
+                     "END < STATE DUMP <<<<<<<<<<<<<<<<<<<<<<<\n");
+        
+      END
+    END
   END DoAsync2;
 
 PROCEDURE ComputeSensitivities(set        : TextSet.T;
@@ -216,17 +231,53 @@ PROCEDURE ComputeSensitivities(set        : TextSet.T;
   BEGIN
     WHILE iter.next(n) DO
       IF NOT map.get(n, dummy) THEN
-        EVAL map.put(n, Sensitivity(n, wrt))
+        EVAL map.put(n, ChainedSensitivity(n, wrt))
       END
     END
   END ComputeSensitivities;
 
-PROCEDURE Sensitivity(of, wrt : TEXT) : BDD.T =
+PROCEDURE GlobalSensitivity(of, wrt : TEXT) : BDD.T =
+  VAR
+    x   : GlitchExpr.T;
+  BEGIN
+    Debug.Out(F("GlobalSensitivity(of = %s, wrt = %s)", of, wrt));
+
+    IF TE(of, wrt) THEN
+      (* wrt always depends on itself *)
+      RETURN True
+    ELSIF NOT gates.get(of, x) THEN
+      (* other ultimate inputs do not depend on wrt *)
+      RETURN False
+    ELSE
+      (* x is the glitchexpr that we care about *)
+      VAR
+        wrtB    : BDD.T;
+        hadIt   := LookupBdd(wrt, wrtB);
+        flatOf  := FlatExpression(x.x);
+
+        flatOfF, flatOfT, globalSens : BDD.T;
+      BEGIN
+        <*ASSERT hadIt*>
+
+        flatOfF := BDD.MakeFalse(flatOf, wrtB);
+        flatOfT := BDD.MakeTrue(flatOf, wrtB);
+
+        globalSens := BDD.Not(BDD.Equivalent(flatOfF, flatOfT));
+        
+        Debug.Out(F("Global sensitivity of %s wrt %s : %s",
+                    of, wrt, 
+                    PrettyBdd(globalSens)));
+        RETURN globalSens
+      END
+    END
+  END GlobalSensitivity;
+
+PROCEDURE ChainedSensitivity(of, wrt : TEXT) : BDD.T =
   VAR
     x   : GlitchExpr.T;
     res : BDD.T;
   BEGIN
-    Debug.Out(F("Sensitivity(of = %s, wrt = %s)", of, wrt));
+    Debug.Out(F("ChainedSensitivity(of = %s, wrt = %s)", of, wrt));
     
     IF TE(of, wrt) THEN
       (* wrt always depends on itself *)
@@ -240,8 +291,6 @@ PROCEDURE Sensitivity(of, wrt : TEXT) : BDD.T =
       VAR
         fanins  := GlitchExpr.Fanins(x);
         sens    := NEW(TextBDDTbl.Default).init();
-        pset    := TextSubsets.Iterate(fanins);
-        ss      : TextSet.T;
         wrtB    : BDD.T;
         hadIt   := LookupBdd(wrt, wrtB);
         flatOf  := FlatExpression(x.x);
@@ -259,8 +308,8 @@ PROCEDURE Sensitivity(of, wrt : TEXT) : BDD.T =
         Debug.Out(F("Global sensitivity of %s wrt %s : %s",
                     of, wrt, 
                     PrettyBdd(globalSens)));
-        Debug.Out(F("Sensitivity of %s : fanins %s", of, FmtTextSet(fanins)));
-        Debug.Out(F("Sensitivity expr %s <- %s", of, PrettyBdd(x.x)));
+        Debug.Out(F("ChainedSensitivity of %s : fanins %s", of, FmtTextSet(fanins)));
+        Debug.Out(F("ChainedSensitivity expr %s <- %s", of, PrettyBdd(x.x)));
         ComputeSensitivities(fanins, wrt, sens);
 
         VAR
@@ -300,7 +349,7 @@ PROCEDURE Sensitivity(of, wrt : TEXT) : BDD.T =
                 wrt,
                 PrettyBdd(res)));
     RETURN res
-  END Sensitivity;
+  END ChainedSensitivity;
 
 PROCEDURE FmtTextSet(s : TextSet.T) : TEXT =
   VAR
