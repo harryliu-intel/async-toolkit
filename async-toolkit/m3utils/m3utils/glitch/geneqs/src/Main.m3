@@ -106,9 +106,22 @@ PROCEDURE ParseAliases(rd : Rd.T) RAISES { Rd.Failure, Thread.Alerted } =
       s : CHAR;
     BEGIN
       WITH got = tokenizer.token(t, s) DO
-        <*ASSERT got*>
-        <*ASSERT TE(t, tokMustB)*>
-        <*ASSERT s = sepMustB*>
+        IF NOT got THEN
+          Debug.Error(F("ParseAliases.MustGet: expecting token %s at line %s, nothing read",
+                        tokMustB, Int(tokenizer.whatLine())))
+        END;
+
+        IF NOT TE(t, tokMustB) THEN
+          Debug.Error(F("ParseAliases.MustGet: expecting token %s at line %s, got %s",
+                        tokMustB, Int(tokenizer.whatLine()), t))
+        END;
+
+        IF s # sepMustB THEN
+          Debug.Error(F("ParseAliases.MustGet: expecting separator %s at line %s, got %s",
+                        Text.FromChar(sepMustB),
+                        Int(tokenizer.whatLine()),
+                        Text.FromChar(s)))
+        END
       END
     END MustGet;
     
@@ -321,7 +334,10 @@ PROCEDURE AnalyzeOutput(outp        : TEXT;
   RAISES { Thread.Alerted } =
   BEGIN
     Debug.Out("Analyzing output " & outp);
-    <*ASSERT NOT asyncs.member(outp)*>
+    IF asyncs.member(outp) THEN
+      Debug.Error(F("output %s member of async set, not sensible!", outp))
+    END;
+
 
     (* find fanins of output *)
     WITH fanins = FaninCone(outp, outputCells, asyncs) DO
@@ -377,15 +393,19 @@ PROCEDURE ProduceGlitchFile(outp   : TEXT;
         WHILE iter.next(nam) DO
           WITH type = LookupCellType(nam),
                gate = LookupTypeGate(type) DO
-            Wr.PutText(wr, F("# %s / %s\n", nam, type));
-            Wr.PutText(wr, "# " & Gate.Format(gate));
-            Wr.PutChar(wr, '\n');
-            Wr.PutText(wr,
-                       F("gate %s\n",
-                         Gate.Format(RenameTerminals(gate, nam),
-                                     ass := " = ",
-                                     not := "~")));
-            Wr.PutChar(wr, '\n');
+            IF TE(gate.tgt, "Q") THEN
+              Wr.PutText(wr, F("# skipped flop %s / %s\n\n", nam, type))
+            ELSE
+              Wr.PutText(wr, F("# %s / %s\n", nam, type));
+              Wr.PutText(wr, "# " & Gate.Format(gate));
+              Wr.PutChar(wr, '\n');
+              Wr.PutText(wr,
+                         F("gate %s\n",
+                           Gate.Format(RenameTerminals(gate, nam),
+                                       ass := " = ",
+                                       not := "~")));
+              Wr.PutChar(wr, '\n');
+            END
           END
         END
       END;

@@ -107,6 +107,7 @@ PROCEDURE Gate(tgt : TEXT; expr : GlitchExpr.T) =
 
 PROCEDURE Literal(nm : TEXT; expr : GlitchExpr.T) =
   BEGIN
+    Debug.Out(F("Glitch.Literal(%s)", nm));
     WITH hadIt = literals.put(nm, expr) DO
       IF hadIt THEN
         Debug.Error("duplicate literal for name " & nm)
@@ -145,22 +146,23 @@ PROCEDURE RunChecks(asyncLimit : CARDINAL) : BOOLEAN =
     o : TEXT;
     x : GlitchExpr.T;
   BEGIN
-    IF asyncs.size() > asyncLimit THEN
-      Debug.Error(F("More than %s async inputs, giving up!", Int(asyncLimit)))
-    END;
     (* for each output, check its dependence on each async input *)
+    count := CountZero;
     WHILE oIter.next(o) DO
       Debug.Out("Output " & o);
-      IF literals.get(o, x) THEN
-        Debug.Out(F("output %s is literal", o))
-      ELSIF gates.get(o, x) THEN
+      IF gates.get(o, x) THEN
         Debug.Out(F("output %s is driven by gate %s", o, x.nm));
-        DoOutput(o, x)
+        DoOutput(o, x, asyncLimit)
+      ELSIF literals.get(o, x) THEN
+        Debug.Out(F("output %s is literal", o))
       ELSE
         Debug.Out(F("output %s not found", o))
       END;
     END;
-    Wr.PutText(Stdio.stderr, Int(runs) & " sync states examined\n");
+    FOR i := FIRST(count) TO LAST(count) DO
+      Wr.PutText(Stdio.stderr, F("Glitch.RunChecks method %s count %s\n",
+                                 Int(i), Int(count[i])))
+    END;
     RETURN ok
   END RunChecks;
 
@@ -169,15 +171,20 @@ PROCEDURE GetInsensitivity(of, wrt : BDD.T) : BDD.T =
     RETURN
       BDD.Equivalent(BDD.MakeTrue(of, wrt), BDD.MakeFalse(of, wrt))
   END GetInsensitivity;
-  
-PROCEDURE DoOutput(o : TEXT; x : GlitchExpr.T) =
+
+<*UNUSED*>
+PROCEDURE DoOutputOld(o : TEXT; x : GlitchExpr.T; asyncLimit : CARDINAL) =
   VAR
     flatX := FlatExpression(x.x);
     deps  := BDDDepends.Depends(flatX);
 
-    asyncdeps : BDDSet.T;
-    
   BEGIN
+    (* this is not quite right
+
+       what we should do is run the output against every async input provided,
+       instead of flattening and figuring out what it seemingly depends on.
+    *)
+    
     Debug.Out(F("output %s depends on %s literals",
                 o, Int(deps.size())));
     VAR
@@ -191,15 +198,78 @@ PROCEDURE DoOutput(o : TEXT; x : GlitchExpr.T) =
                       o, name, Bool(isAsync)));
 
           IF isAsync THEN
-
             DoAsync2(o, name)
           END
           
         END
       END
     END
+  END DoOutputOld;
+
+TYPE Method = [1 .. 2];
+VAR count : ARRAY Method OF CARDINAL;
+CONST CountZero = ARRAY Method OF CARDINAL { 0, .. };
+      
+PROCEDURE DoOutput(o : TEXT; x : GlitchExpr.T; asyncLimit : CARDINAL) =
+  VAR
+    iter := asyncs.iterate();
+    wrt : TEXT;
+  BEGIN
+    WHILE iter.next(wrt) DO
+      WITH quick = Quick(o, wrt) DO
+        IF quick <= 1 THEN
+          INC(count[1])
+        ELSE
+          IF asyncs.size() > asyncLimit THEN
+            Debug.Error(F("Glitch.DoOutput: More than %s async inputs, giving up!",
+                          Int(asyncLimit)))
+          END;
+          DoAsync2(o, wrt);
+          INC(count[2])
+        END
+      END
+    END
   END DoOutput;
 
+PROCEDURE Quick(ultimate, async : TEXT) : CARDINAL =
+
+  PROCEDURE Recurse(output : TEXT) : CARDINAL =
+    (* return # of paths from async to output *)
+    VAR
+      x : GlitchExpr.T;
+    BEGIN
+      IF    TE(output, async) THEN
+        Debug.Out(F("Quick (%s, %s) = 1", output, async));
+        RETURN 1
+      ELSIF gates.get(output, x) THEN
+        VAR
+          fSet := GlitchExpr.Fanins(x);
+          iter := fSet.iterate();
+          fi   : TEXT;
+          sum  := 0;
+        BEGIN
+          WHILE iter.next(fi) DO
+            <*ASSERT output # NIL*>
+            <*ASSERT async # NIL*>
+            <*ASSERT fi # NIL*>
+            Debug.Out(F("Quick (%s, %s), looking at fanin %s", output, async, fi));
+            sum := sum + Recurse(fi)
+          END;
+          Debug.Out(F("Quick /sum/ (%s, %s) = %s", output, async, Int(sum)));
+          RETURN sum
+        END
+      ELSIF literals.get(output, x) THEN
+        Debug.Out(F("Quick (%s, %s) = 0", output, async));
+        RETURN 0
+      ELSE
+        <*ASSERT FALSE*>
+      END
+    END Recurse;
+
+  BEGIN
+    RETURN Recurse(ultimate)
+  END Quick;
+  
 PROCEDURE DoAsync2(output, async : TEXT) =
   BEGIN
     Debug.Out(F("DoAsync2(%s, %s)", output, async));
