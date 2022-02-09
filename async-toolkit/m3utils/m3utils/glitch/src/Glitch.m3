@@ -51,6 +51,7 @@ IMPORT Wx;
 IMPORT SopBDD;
 IMPORT Word;
 IMPORT BDDBDDTbl;
+IMPORT Time;
 
 CONST TE = Text.Equal;
 
@@ -543,11 +544,64 @@ PROCEDURE DoAsync(o                : TEXT;
     END
   END DoAsync;
 
-PROCEDURE PrettyBdd(b : BDD.T) : TEXT =
+PROCEDURE PrettyBdd(b : BDD.T; timeo : Time.T := 5.0d0) : TEXT =
+  CONST
+    TimeoutMessage = "***PrettyBdd TIMEOUT***";
   BEGIN
-    RETURN SopBDD.ConvertBool(b).invariantSimplify(True, True, True)
-             .format(revbdds)
+    IF prettyTimeout THEN
+      Debug.Error(TimeoutMessage);
+      RETURN TimeoutMessage
+    END;
+    
+    WITH cl = NEW(PrettyClosure,
+                  mu := NEW(MUTEX),
+                  b  := b) DO
+      IF timeo = 0.0d0 THEN
+        EVAL cl.apply();
+        RETURN cl.res
+      ELSE
+        VAR
+          start := Time.Now();
+          thr   := Thread.Fork(cl);
+        BEGIN
+          LOOP
+            LOCK cl.mu DO
+              IF cl.res # NIL THEN
+                RETURN Thread.Join(thr)
+              END
+            END;
+            IF Time.Now() - start > timeo THEN
+              prettyTimeout := TRUE;
+              RETURN TimeoutMessage
+            END;
+            Thread.Pause(0.1d0)
+          END
+        END
+      END
+    END
   END PrettyBdd;
+
+VAR prettyTimeout := FALSE;
+    
+TYPE
+  PrettyClosure = Thread.Closure OBJECT
+    mu  : MUTEX;
+    b   : BDD.T;
+    res : TEXT := NIL;
+  OVERRIDES
+    apply := PCApply;
+  END;
+
+PROCEDURE PCApply(cl : PrettyClosure) : REFANY =
+  BEGIN
+    WITH temp = SopBDD.ConvertBool(cl.b).invariantSimplify(True, True, True)
+      .format(revbdds) DO
+      LOCK cl.mu DO
+        cl.res := temp
+      END;
+      RETURN temp
+    END
+  END PCApply;
   
 PROCEDURE MakeBindings(insens       : BDD.T;
                        VAR bindings : ARRAY OF Binding;
