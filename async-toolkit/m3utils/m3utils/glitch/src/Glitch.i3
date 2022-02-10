@@ -11,8 +11,10 @@ PROCEDURE Literal(nm : TEXT; expr : GlitchExpr.T);
 
 PROCEDURE GetLiteral(nm : TEXT) : GlitchExpr.T;
 
-PROCEDURE RunChecks(asyncLimit : CARDINAL) : BOOLEAN;
+PROCEDURE RunChecks(asyncLimit : CARDINAL) : BOOLEAN RAISES { Timeout } ;
   
 CONST Brand = "Glitch";
+
+EXCEPTION Timeout;
       
 END Glitch.

@@ -46,10 +46,8 @@ IMPORT GlitchGateList;
 IMPORT Thread;
 IMPORT TextBDDTbl;
 IMPORT Text;
-IMPORT TextSubsets;
 IMPORT Wx;
 IMPORT SopBDD;
-IMPORT Word;
 IMPORT BDDBDDTbl;
 IMPORT Time;
 
@@ -141,7 +139,8 @@ VAR
   revbdds                     := NEW(BDDTextTbl.Default).init();
   fanouts                     := NEW(TextGlitchGateListTbl.Default).init();
   
-PROCEDURE RunChecks(asyncLimit : CARDINAL) : BOOLEAN =
+PROCEDURE RunChecks(asyncLimit : CARDINAL) : BOOLEAN
+  RAISES { Timeout } =
   VAR
     oIter := outputs.iterate();
     o : TEXT;
@@ -167,6 +166,7 @@ PROCEDURE RunChecks(asyncLimit : CARDINAL) : BOOLEAN =
     RETURN ok
   END RunChecks;
 
+<*UNUSED*>
 PROCEDURE GetInsensitivity(of, wrt : BDD.T) : BDD.T =
   BEGIN
     RETURN
@@ -174,7 +174,8 @@ PROCEDURE GetInsensitivity(of, wrt : BDD.T) : BDD.T =
   END GetInsensitivity;
 
 <*UNUSED*>
-PROCEDURE DoOutputOld(o : TEXT; x : GlitchExpr.T; asyncLimit : CARDINAL) =
+PROCEDURE DoOutputOld(o : TEXT; x : GlitchExpr.T; asyncLimit : CARDINAL)
+  RAISES { Timeout } =
   VAR
     flatX := FlatExpression(x.x);
     deps  := BDDDepends.Depends(flatX);
@@ -211,7 +212,8 @@ TYPE Method = [1 .. 2];
 VAR count : ARRAY Method OF CARDINAL;
 CONST CountZero = ARRAY Method OF CARDINAL { 0, .. };
       
-PROCEDURE DoOutput(o : TEXT; x : GlitchExpr.T; asyncLimit : CARDINAL) =
+PROCEDURE DoOutput(o : TEXT; x : GlitchExpr.T; asyncLimit : CARDINAL)
+  RAISES { Timeout } =
   VAR
     iter := asyncs.iterate();
     wrt : TEXT;
@@ -271,7 +273,9 @@ PROCEDURE Quick(ultimate, async : TEXT) : CARDINAL =
     RETURN Recurse(ultimate)
   END Quick;
   
-PROCEDURE DoAsync2(output, async : TEXT) =
+PROCEDURE DoAsync2(output, async : TEXT)
+  RAISES { Timeout } =
+  <*FATAL Wr.Failure*>
   BEGIN
     Debug.Out(F("DoAsync2(%s, %s)", output, async));
     WITH chainedS = ChainedSensitivity(output, async),
@@ -298,7 +302,8 @@ PROCEDURE DoAsync2(output, async : TEXT) =
 
 PROCEDURE ComputeSensitivities(set        : TextSet.T;
                                wrt        : TEXT;
-                               (*OUT*)map : TextBDDTbl.T) =
+                               (*OUT*)map : TextBDDTbl.T)
+  RAISES { Timeout } =
   VAR
     iter     := set.iterate();
     n        : TEXT;
@@ -311,7 +316,8 @@ PROCEDURE ComputeSensitivities(set        : TextSet.T;
     END
   END ComputeSensitivities;
 
-PROCEDURE GlobalSensitivity(of, wrt : TEXT) : BDD.T =
+PROCEDURE GlobalSensitivity(of, wrt : TEXT) : BDD.T
+  RAISES { Timeout } =
   VAR
     x   : GlitchExpr.T;
   BEGIN
@@ -349,7 +355,8 @@ PROCEDURE GlobalSensitivity(of, wrt : TEXT) : BDD.T =
     END
   END GlobalSensitivity;
 
-PROCEDURE ChainedSensitivity(of, wrt : TEXT) : BDD.T =
+PROCEDURE ChainedSensitivity(of, wrt : TEXT) : BDD.T
+  RAISES { Timeout } =
   VAR
     x   : GlitchExpr.T;
     res : BDD.T;
@@ -465,10 +472,12 @@ TYPE
 VAR ok := TRUE;
     runs : CARDINAL := 0;
 
+<*UNUSED*>    
 PROCEDURE DoAsync(o                : TEXT;
                   x                : GlitchExpr.T;
                   flatX, b, insens : BDD.T;
-                  deps             : BDDSet.T) =
+                  deps             : BDDSet.T)
+  RAISES { Timeout } =
   (* do async checks on o/x w.r.t. b *)
 
   CONST
@@ -544,13 +553,11 @@ PROCEDURE DoAsync(o                : TEXT;
     END
   END DoAsync;
 
-PROCEDURE PrettyBdd(b : BDD.T; timeo : Time.T := 5.0d0) : TEXT =
-  CONST
-    TimeoutMessage = "***PrettyBdd TIMEOUT***";
+PROCEDURE PrettyBdd(b : BDD.T; timeo : Time.T := 5.0d0) : TEXT
+  RAISES { Timeout } =
   BEGIN
     IF prettyTimeout THEN
-      Debug.Error(TimeoutMessage);
-      RETURN TimeoutMessage
+      RAISE Timeout 
     END;
     
     WITH cl = NEW(PrettyClosure,
@@ -572,7 +579,7 @@ PROCEDURE PrettyBdd(b : BDD.T; timeo : Time.T := 5.0d0) : TEXT =
             END;
             IF Time.Now() - start > timeo THEN
               prettyTimeout := TRUE;
-              RETURN TimeoutMessage
+              RAISE Timeout
             END;
             Thread.Pause(0.1d0)
           END
@@ -606,7 +613,8 @@ PROCEDURE PCApply(cl : PrettyClosure) : REFANY =
 PROCEDURE MakeBindings(insens       : BDD.T;
                        VAR bindings : ARRAY OF Binding;
                        ptr          : CARDINAL;
-                       p            : PROCEDURE() ) =
+                       p            : PROCEDURE() )
+  RAISES { Timeout } =
   BEGIN
     IF ptr = NUMBER(bindings) THEN
       (* base case *)
@@ -665,7 +673,8 @@ PROCEDURE DbgExpr(x : BDD.T) : TEXT =
 
 VAR flatTbl := NEW(BDDBDDTbl.Default).init(); (* memoization table *)
 
-PROCEDURE FlatExpression(b : BDD.T) : BDD.T =
+PROCEDURE FlatExpression(b : BDD.T) : BDD.T
+  RAISES { Timeout } =
   (* take a gate expression and convert it to being in the ultimate
      inputs *)
   VAR

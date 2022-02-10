@@ -1,0 +1,11 @@
+JobsTask {
+  WorkArea /nfs/sc/disks/bfn_pd_cb_02/mnystroe/m3utils/glitch/geneqs
+  Queue sc_normal {
+    Qslot /bfn/fe
+  } 
+  Jobs {
+    nbjob run sleep 100
+    nbjob run sleep 200
+    nbjob run sleep 300
+  }
+}

@@ -20,10 +20,13 @@ IMPORT OSError;
 IMPORT Rd;
 IMPORT FileRd;
 IMPORT AL;
-FROM Fmt IMPORT F;
+FROM Fmt IMPORT F, Int;
 IMPORT Text;
+IMPORT Thread;
 
 CONST TE = Text.Equal;
+
+<*FATAL Thread.Alerted, Wr.Failure*>
       
 VAR
   pp      := NEW(ParseParams.T).init(Stdio.stderr);
@@ -32,6 +35,7 @@ VAR
   ifn : Pathname.T;
   rd : Rd.T;
   asyncLimit := LAST(CARDINAL);
+  status : CARDINAL;
 BEGIN
   TRY
     IF pp.keywordPresent("-limit") THEN
@@ -56,7 +60,9 @@ BEGIN
   EXCEPT
     ParseParams.Error => Debug.Error("Couldn't parse parameters")
   END;
- 
+
+  Wr.PutText(Stdio.stderr, "START GLITCH SEARCH " & ifn & "\n");
+
   EVAL lexer.setRd(rd);
   EVAL parser.setLex(lexer);
 
@@ -64,14 +70,25 @@ BEGIN
   EVAL parser.parse(); 
 
   (* then run checks *)
-  IF Glitch.RunChecks(asyncLimit) THEN
-    (* success -- no glitches detected anywhere *)
-    Wr.PutText(Stdio.stderr, "No glitches detected\n");
-    Process.Exit(0)
-  ELSE
-    (* failure -- at least on glitch detected somewhere *)
-    Wr.PutText(Stdio.stderr, "GLITCHES DETECTED\n");
-    Process.Exit(1)
-  END
+  TRY
+    IF Glitch.RunChecks(asyncLimit) THEN
+      (* success -- no glitches detected anywhere *)
+      Wr.PutText(Stdio.stderr, "No glitches detected\n");
+      status := 0
+    ELSE
+      (* failure -- at least on glitch detected somewhere *)
+      Wr.PutText(Stdio.stderr, "GLITCHES DETECTED\n");
+      status := 1
+    END
+  EXCEPT
+    Glitch.Timeout =>
+    Wr.PutText(Stdio.stderr, "GLITCHES TIMEOUT\n");
+    status := 2
+  END;
+  
+  Wr.PutText(Stdio.stderr, F("COMPLETED GLITCH SEARCH %s STATUS %s\n",
+                             ifn, Int(status)));
+
+  Process.Exit(status)
   
 END Main.
