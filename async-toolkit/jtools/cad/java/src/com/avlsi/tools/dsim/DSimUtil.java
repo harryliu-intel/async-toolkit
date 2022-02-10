@@ -41,6 +41,7 @@ public class DSimUtil {
     private Node START;
     private Node STEP;
     private Node DLY;
+    private Node CAPTURE;
     private Node ERROR;
 
     public static final int STANDARD_RESET = 0;
@@ -50,6 +51,7 @@ public class DSimUtil {
     public static HierName START_NAME  = HierName.makeHierName("START");
     public static HierName STEP_NAME   = HierName.makeHierName("STEP");
     public static HierName DLY_NAME    = HierName.makeHierName("DLY");
+    public static HierName CAPTURE_NAME    = HierName.makeHierName("CAPTURE");
 
     /** Get a node from top level or env (TODO BUG 28502: eliminate) **/
     private static Node getTopOrEnvNode(HierName name) {
@@ -78,6 +80,10 @@ public class DSimUtil {
         return getTopOrEnvNode(DLY_NAME);
     }
 
+    public static Node getCaptureNode() {
+        return getTopOrEnvNode(CAPTURE_NAME);
+    }
+
     /**
      * DSimUtil constructor.  Looks up nodes in preparation for
      * doing stuff.  Shouldn't be called until a cell is instantiated.
@@ -91,6 +97,7 @@ public class DSimUtil {
         START  = getStartNode();
         STEP   = getStepNode();
         DLY    = getDelayNode();
+        CAPTURE    = getCaptureNode();
     }
 
     /**
@@ -125,6 +132,7 @@ public class DSimUtil {
             if (_RESET!=null) _RESET.scheduleImmediate(Node.VALUE_0);
             if (START!=null) START.scheduleImmediate(Node.VALUE_0);
             if (STEP!=null) STEP.scheduleImmediate(Node.VALUE_0);
+            if (CAPTURE!=null) CAPTURE.setValueAndEnqueueDependents(Node.VALUE_0);
             dsim.cycle(-1);
 
             // additional step for initialize_on_reset directives

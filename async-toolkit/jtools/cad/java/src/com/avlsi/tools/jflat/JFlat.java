@@ -3485,6 +3485,7 @@ public final class JFlat {
             final Stream<String> reset =
                 Stream.of(DirectiveConstants.RESET_NET,
                           DirectiveConstants.DELAY_NET,
+                          DirectiveConstants.CAPTURE_NET,
                           DirectiveConstants.START_NET,
                           DirectiveConstants.STEP_NET)
                       .map(dir -> getNetString(dutCell, envCell, topAliases, envAliases, dir))

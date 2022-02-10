@@ -164,6 +164,7 @@ public interface DirectiveConstants {
     String DELAY_NET = "delay_net";
     String START_NET = "start_net";
     String STEP_NET = "step_net";
+    String CAPTURE_NET = "capture_net";
     String STATICIZER_RATIO = "staticizer_ratio";
     String STATICIZER_TYPE = "staticizer_type";
     String PHANTOM_PORT_SIGNOFF = "phantom_port_signoff";

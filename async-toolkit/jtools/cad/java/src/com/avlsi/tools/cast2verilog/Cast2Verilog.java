@@ -147,7 +147,8 @@ public class Cast2Verilog {
     private static final String[] tbDirectives = new String[] {
         DirectiveConstants.RESET_NET,
         DirectiveConstants.START_NET,
-        DirectiveConstants.DELAY_NET
+        DirectiveConstants.DELAY_NET,
+        DirectiveConstants.CAPTURE_NET
     };
 
     private final Map subcellNames;
