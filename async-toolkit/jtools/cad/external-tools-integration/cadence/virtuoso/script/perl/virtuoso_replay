@@ -3,8 +3,10 @@ use strict;
 use warnings;
 
 my $local=0;
+my $block=0;
 if (@ARGV>0 && $ARGV[0] eq "--local") { $local=1; shift; }
-@ARGV>0 or die "USAGE: virtuoso_replay [--local] 1.il 2.il ...\n";
+if (@ARGV>0 && $ARGV[0] eq "--block") { $block=1; shift; }
+@ARGV>0 or die "USAGE: virtuoso_replay [[--local|--block]] 1.il 2.il ...\n";
 my $count = 0;
 foreach my $file (@ARGV) {
     (-r $file) or die "cannot read file $file\n";
@@ -23,7 +25,11 @@ foreach my $file (@ARGV) {
     $ENV{CDS_XVNC_OFFSET} = $display % 10;
 
     # run locally or with netbatch
-    if ($local) {
+    if ($block) {
+        system("(cd ${base}.cdswd; " .
+               "$ENV{FULCRUM} --cadence assura_oa,$ENV{ICV_VERSION} " .
+               "virtuoso -log ${base}.log -replay $ENV{PWD}/${file} -nograph >& ${base}.out)");
+    } elsif ($local) {
         system("(cd ${base}.cdswd; " .
                "$ENV{FULCRUM} --cadence assura_oa,$ENV{ICV_VERSION} " .
                "virtuoso -log ${base}.log -replay $ENV{PWD}/${file} -nograph >& ${base}.out) &");
