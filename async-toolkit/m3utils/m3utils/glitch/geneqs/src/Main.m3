@@ -255,22 +255,27 @@ PROCEDURE ParseCircuit(rd : Rd.T; fn : Pathname.T) : Problem
           ELSIF TE(GetToken(line, 0) , "AFIFO") THEN
             path := NEW(EdgeSeq.T).init();
           ELSIF EndsIn(line, "->") THEN
-            fromNet := GetToken(line, 0);
-            from    := LookupPinNet(fromNet);
-            IF first = NIL THEN
-              firstNet := fromNet;
-              first := from;
-            END;
-            WITH line2 = Rd.GetLine(rd) DO
-              INC(lNo);
-              toNet   := GetToken(line2, 0);
-              to      := LookupPinNet(toNet);
-              lastNet := toNet;
-              last    := to;
-            END;
-            Debug.Out(F("edge %s -> %s", from, to));
-            WITH edge = Edge.T { from, to } DO
-              path.addhi(edge);
+            TRY
+              fromNet := GetToken(line, 0);
+              from    := LookupPinNet(fromNet);
+              IF first = NIL THEN
+                firstNet := fromNet;
+                first := from;
+              END;
+              WITH line2 = Rd.GetLine(rd) DO
+                INC(lNo);
+                toNet   := GetToken(line2, 0);
+                to      := LookupPinNet(toNet);
+                lastNet := toNet;
+                last    := to;
+              END;
+              Debug.Out(F("edge %s -> %s", from, to));
+              WITH edge = Edge.T { from, to } DO
+                path.addhi(edge);
+              END
+            EXCEPT
+              PinNotFound(x) =>             
+              Debug.Error("No mapping for pin " & x)
             END
           END
         END
@@ -335,13 +340,15 @@ PROCEDURE AnalyzeOutput(outp        : TEXT;
   BEGIN
     Debug.Out("Analyzing output " & outp);
     IF asyncs.member(outp) THEN
-      Debug.Error(F("output %s member of async set, not sensible!", outp))
-    END;
-
-
-    (* find fanins of output *)
-    WITH fanins = FaninCone(outp, outputCells, asyncs) DO
-      ProduceGlitchFile(outp, fanins, asyncs)
+      (* in some strange cases, the output might be connected directly from
+         the input, which isn't really sensible, but not an async violation
+         (I don't think). *)
+      Debug.Warning(F("output %s member of async set, not sensible!", outp))
+    ELSE
+      (* find fanins of output *)
+      WITH fanins = FaninCone(outp, outputCells, asyncs) DO
+        ProduceGlitchFile(outp, fanins, asyncs)
+      END
     END
   END AnalyzeOutput;
 
@@ -428,7 +435,13 @@ PROCEDURE RenameTerminals(g       : Gate.T;
     VAR
       fqpn := nam & "/" & n;
     BEGIN
-      RETURN LookupPinNet(fqpn)
+      TRY
+        RETURN LookupPinNet(fqpn)
+      EXCEPT
+        PinNotFound(x) =>
+        Debug.Error("RenameTerminals.RenamePin: couldn't find pin " & x);
+        <*ASSERT FALSE*>
+      END
     END RenamePin;
 
   PROCEDURE RenameExpr(x : GateExpr.T) : GateExpr.T =
@@ -529,28 +542,37 @@ PROCEDURE FaninCone(net         : TEXT;
              or if it is an async input *)
           EVAL res.leafNodes.insert(n)
         ELSE
-          EVAL res.gateInstances.insert(cellNam);
-          
-          WITH type  = LookupCellType(cellNam),
-               gate  = LookupTypeGate(type) DO
-            <*ASSERT gate.fanins # NIL*>
-            <*ASSERT cellNam # NIL*>
-            VAR
-              iter := gate.fanins.iterate();
-              f : TEXT;
-            BEGIN
-              WHILE iter.next(f) DO
-                <*ASSERT f # NIL*>
-                WITH fqp   = cellNam & "/" & f,
-                     fiNet = LookupPinNet(fqp),
-                     res   = Recurse(fiNet, depth + 1) DO
-                  IF NOT res THEN
-                    errorSeq.addlo(fiNet); errorSeq.addlo(fqp);
-                    RETURN FALSE
+          TRY
+            EVAL res.gateInstances.insert(cellNam);
+
+            WITH type  = LookupCellType(cellNam),
+                 gate  = LookupTypeGate(type) DO
+              <*ASSERT gate.fanins # NIL*>
+              <*ASSERT cellNam # NIL*>
+              VAR
+                iter := gate.fanins.iterate();
+                f : TEXT;
+              BEGIN
+                WHILE iter.next(f) DO
+                  <*ASSERT f # NIL*>
+                  WITH fqp   = cellNam & "/" & f,
+                       fiNet = LookupPinNet(fqp),
+                       res   = Recurse(fiNet, depth + 1) DO
+                    IF NOT res THEN
+                      errorSeq.addlo(fiNet); errorSeq.addlo(fqp);
+                      RETURN FALSE
+                    END
                   END
                 END
               END
             END
+          EXCEPT
+            PinNotFound(x) =>
+            Debug.Warning(F("Pin %s not found: marking %s as input",
+                            x,
+                            n));
+            EVAL res.gateInstances.delete(cellNam);
+            EVAL res.leafNodes.insert(n)
           END
         END
       END;
@@ -572,15 +594,18 @@ PROCEDURE FaninCone(net         : TEXT;
     END;
     RETURN res
   END FaninCone;
-  
-PROCEDURE LookupPinNet(pin : TEXT) : TEXT =
+
+EXCEPTION PinNotFound(TEXT);
+          
+PROCEDURE LookupPinNet(pin : TEXT) : TEXT
+  RAISES { PinNotFound } =
   (* look up pin and return net *)
   VAR
     net : TEXT;
   BEGIN
     <*ASSERT pin # NIL*>
     WITH haveIt = pinNets.get(pin, net) DO
-      IF NOT haveIt THEN Debug.Error("No mapping for pin " & pin) END;
+      IF NOT haveIt THEN RAISE PinNotFound(pin) END;
       RETURN net
     END
   END LookupPinNet;
