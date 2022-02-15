@@ -1,11 +1,8 @@
-INTERFACE GlitchExpr;
-IMPORT BDD;
-IMPORT Text01XTbl;
-IMPORT ZeroOneX;
+INTERFACE GateExpr;
 IMPORT TextSet;
 
 TYPE
-  T = OBJECT nm : TEXT; x : BDD.T END;
+  T = OBJECT nm : TEXT END;
 
   Named = T BRANDED OBJECT
   END;
@@ -15,15 +12,18 @@ TYPE
     a, b : T;
   END;
 
-  Op = { And, Or, Not };
+  Op = { And, Or, Not, Xor };
 
 PROCEDURE And(a, b : T) : T;
 PROCEDURE Or(a, b : T) : T;
+PROCEDURE Xor(a, b : T) : T;
 PROCEDURE Not(a : T) : T;
 PROCEDURE New(nm : TEXT) : T;
 
-CONST Brand = "GlitchExpr";
+CONST Brand = "GateExpr";
 
-PROCEDURE Fanins(t : T) : TextSet.T;
+PROCEDURE Format(a : T; not := "!") : TEXT;
+
+PROCEDURE Fanins(a : T) : TextSet.T;
   
-END GlitchExpr.
+END GateExpr.

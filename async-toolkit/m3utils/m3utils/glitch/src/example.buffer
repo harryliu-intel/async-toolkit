@@ -1,0 +1,19 @@
+
+# non-glitchy mux example
+# Author: Mika Nystrom <mika.nystroem@intel.com>
+# 10/27/2021
+
+# this shows two different ways of building a mux
+# the mux_glitch version is glitchy
+# the mux_noglitch version is not glitchy
+output mux_noglitch
+
+# first, declare async inputs
+async a
+async b
+
+# implement the _noglitch version the obvious way
+gate mux_noglitch = s & b | ~s & ai
+
+gate ai = a
+

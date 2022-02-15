@@ -20,6 +20,7 @@ FROM SimSupport IMPORT ClockSrc, IntegerSrc, SeqSrc, Reader;
 IMPORT LambPrograms;
 IMPORT LambTemplate, Bundle;
 IMPORT ProbeType;
+IMPORT TextUtils;
 
 CONST SI = BitInteger.Small;
 
@@ -35,15 +36,14 @@ VAR
     
   I0   := SI( 0);
   I1   := SI( 1);
-  I2   := SI( 2);
-  Icf9 := SI(16_cf9);
-  IN1  := SI(-1);
 
 CONST DutName = "X1";
 
 VAR theModel : SimModel.T;
 
-PROCEDURE Build(pp : ParseParams.T; sp : SimParams.T; modelName : TEXT)
+PROCEDURE Build(pp        : ParseParams.T;
+                sp        : SimParams.T;
+                modelName : TEXT)
   RAISES { ParseParams.Error }=
   TYPE
     V   = Verb.T;
@@ -53,8 +53,9 @@ PROCEDURE Build(pp : ParseParams.T; sp : SimParams.T; modelName : TEXT)
       LambPrograms.Progs[pt](prog,C)
     END RunTheProgram;
 
-  CONST
-    WiringCorner = "RCTypical_85c";
+  VAR
+    WiringCorner := "RCtypical_85";
+    MosCorner    := "TT";
     
   VAR    
     Seq : ARRAY Verb.T OF REF ARRAY OF BitInteger.T;
@@ -75,10 +76,20 @@ PROCEDURE Build(pp : ParseParams.T; sp : SimParams.T; modelName : TEXT)
     (* probably a Meta thing *)
     
     WITH hadIt = pp.keywordPresent("-w") OR pp.keywordPresent("-width") DO
+      <*ASSERT hadIt*>
       C.W := pp.getNextInt()
+    END;
+
+    IF pp.keywordPresent("-wiringcorner") THEN
+      WiringCorner := pp.getNext()
+    END;
+
+    IF pp.keywordPresent("-moscorner") THEN
+      MosCorner := TextUtils.ToUpper(pp.getNext())
     END;
     
     WITH hadIt = pp.keywordPresent("-d") OR pp.keywordPresent("-depth") DO
+      <*ASSERT hadIt*>
       C.N := pp.getNextInt()
     END;
     
@@ -151,8 +162,12 @@ PROCEDURE Build(pp : ParseParams.T; sp : SimParams.T; modelName : TEXT)
   (* set up various sim stuff *)
 
   FOR sim := FIRST(Sim.T) TO LAST(Sim.T) DO
-    WITH bundle = LambTemplate.Get(),
-         resource = Bundle.Get(bundle, "template_spice_includes") DO
+    VAR
+      bundle   := LambTemplate.Get();
+      resource := Bundle.Get(bundle, "template_spice_includes");
+    BEGIN
+      resource := TextUtils.Replace(resource, "@MOSCORNER@", MosCorner);
+      resource := TextUtils.Replace(resource, "@WIRINGCORNER@", WiringCorner);
 
       SimDumper.simExtras[sim].addhi(resource)
       (* the libs *)
@@ -160,7 +175,7 @@ PROCEDURE Build(pp : ParseParams.T; sp : SimParams.T; modelName : TEXT)
     END;
     
     SimDumper.simExtras[sim].addhi(
-                            F(".include \"dbs/cdp_lamb_1w1sr_%sw_%sb.spf.%s\"",
+                            F(".include \"dbs/cdp_lamb_1w1sr_%sw_%sb.spf.%sc\"",
                               Int(C.N), Int(C.W), WiringCorner));
     (* include the extracted model *)
 

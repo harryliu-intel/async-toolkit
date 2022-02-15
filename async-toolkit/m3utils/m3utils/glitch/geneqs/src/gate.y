@@ -1,6 +1,7 @@
 %left '|'
+%left '^'
 %left '&'
-%nonassoc '~'
+%nonassoc '!'
 
 %start cmdList
 
@@ -10,24 +11,16 @@ cmdList:
 
 stmt:
   gate               gate
-  asyncDecl          asyncDecl
-  outputDecl         outputDecl
 
 gate:
-  gate          GATE name EQ expression
-
-asyncDecl:
-  async         ASYNC         name
-
-outputDecl:
-  output        OUTPUT        name
+  gate          name EQ expression
 
 expression:
   paren		'(' expression ')'
   and		expression '&' expression
   or		expression '|' expression
   xor		expression '^' expression
-  not		'~' expression
+  not		'!' expression
   node		node
   
 node:
