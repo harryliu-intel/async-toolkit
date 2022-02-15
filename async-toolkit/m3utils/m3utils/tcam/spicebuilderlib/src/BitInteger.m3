@@ -2,10 +2,10 @@ MODULE BitInteger;
 IMPORT Word, Debug;
 FROM Fmt IMPORT Int, F;
 IMPORT Bit;
+IMPORT BigInt;
 
 REVEAL
   SmallPromise = PubSmallPromise BRANDED OBJECT 
-    v : INTEGER ;
   OVERRIDES
     force := ForceSmallPromise;
   END;
@@ -36,5 +36,47 @@ PROCEDURE ForceSmallPromise(p    : SmallPromise;
     RETURN res
   END ForceSmallPromise;
 
+PROCEDURE Big(z : BigInt.T; width : CARDINAL) : Concrete =
+  VAR
+    res := NEW(Concrete, bits := NEW(REF ARRAY OF Bit.T, width));
+  BEGIN
+    <* ASSERT BigInt.Sign(z) # -1 *> (* for now -- not sure what neg. would do *)
+    
+    FOR i := 0 TO width - 1 DO
+      res.bits[i] := BigInt.ToInteger(BigInt.Mod(z, BigInt.Two));
+      z           := BigInt.Div(z, BigInt.Two)
+    END;
+    RETURN res
+  END Big;
+
+PROCEDURE Format(t : T; base : CARDINAL) : TEXT =
+  BEGIN
+    RETURN BigInt.Format(ToBigInt(t), base)
+  END Format;
+
+PROCEDURE ToBigInt(t : T) : BigInt.T =
+  BEGIN
+    TYPECASE t OF
+      SmallPromise(sp) =>
+      RETURN BigInt.New(sp.v)
+    |
+      Concrete(c) =>
+      VAR
+        res := BigInt.Zero;
+      BEGIN
+        FOR i := NUMBER(c.bits^) - 1 TO 0 BY -1 DO
+          CASE c.bits[i] OF
+            0 => res := BigInt.Mul(res, BigInt.Two)
+          |
+            1 => res := BigInt.Add(BigInt.Mul(res, BigInt.Two),
+                                   BigInt.One)
+          END
+        END;
+        RETURN res
+      END
+    ELSE
+      <*ASSERT FALSE*>
+    END
+  END ToBigInt;
 
 BEGIN END BitInteger.

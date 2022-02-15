@@ -1,0 +1,13 @@
+import("parserlib")
+import("cit_util")
+
+Token("vnf")
+Lexer("vnf", "vnf")
+Parser("vnf", "vnf")
+
+Extended("vnfLexStd")
+Extended("vnfParseStd")
+
+implementation ("Main")
+
+program ("vnf")

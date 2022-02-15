@@ -2,6 +2,7 @@ INTERFACE GlitchExpr;
 IMPORT BDD;
 IMPORT Text01XTbl;
 IMPORT ZeroOneX;
+IMPORT TextSet;
 
 TYPE
   T = OBJECT nm : TEXT; x : BDD.T END;
@@ -22,5 +23,7 @@ PROCEDURE Not(a : T) : T;
 PROCEDURE New(nm : TEXT) : T;
 
 CONST Brand = "GlitchExpr";
-      
+
+PROCEDURE Fanins(t : T) : TextSet.T;
+  
 END GlitchExpr.

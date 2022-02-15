@@ -1,6 +1,8 @@
 import("parserlib")
 import("cit_util")
 import("bdd")
+import("parseparams")
+import("sop")
 
 Token("glitch")
 Lexer("glitch", "glitch")
@@ -16,6 +18,9 @@ Extended("glitchParseStd")
 %Lexer("CHP", "CHP")
 %Parser("CHP", "CHP")
 %Extended("CHPLexStd")
+Module("GlitchGate")
+List("GlitchGate", "GlitchGate")
+Table("TextGlitchGateList", "Text", "GlitchGateList")
 
 implementation ("Main")
 
@@ -27,5 +32,9 @@ table("TextGlitchExpr", "Text", "GlitchExpr")
 
 table("Text01X", "Text", "ZeroOneX")
 module ("ZeroOneX")
+
+table ("TextBDD", "Text", "BDD")
+
+module ("TextSubsets")
 
 program("glitch")
