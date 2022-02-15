@@ -1,4 +1,4 @@
-MODULE SimDumper;
+MODULE SimDumper EXPORTS SimDumper, SimDumperData;
 
 IMPORT NodesList;
 IMPORT Debug;

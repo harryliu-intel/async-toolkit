@@ -4,3 +4,8 @@
 *.names
 *.ic0
 *.spice
+*.pa0
+*.fsdb
+*.files
+*.sources
+ct.work

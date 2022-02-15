@@ -20,7 +20,7 @@
 .param when=tcyc*2
 
 .option resmin=1e-9 accurate delmax=10e-9
-.option CSDF probe=0
+.option CSDF probe=1 * note that probe=1 means NO auto-probing
 
 X1 in out Vdd 0 Vdd 0 INVD36BWP240H11P57PDULVT
 X2 out outp Vdd 0 Vdd 0 INVD36BWP240H11P57PDULVT
