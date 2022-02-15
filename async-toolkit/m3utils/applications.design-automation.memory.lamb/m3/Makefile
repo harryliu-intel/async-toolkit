@@ -2,10 +2,16 @@
 .NOTPARALLEL:
 .DELETE_ON_ERROR:
 
+#
+# Top-level Makefile for LAMB m3 directory
+# Based on Makefile for Madison Bay's register generation
+#
+
 ######################################################################
 #
 # config stuff -- update here
 # MBY used ToolConfig.pl
+# here we hard-code for now, because we don't have that infrastructure (yet?)
 #
 
 CM3=/nfs/site/home/mnystroe/mst_work/cm3-suse12-latest/bin/cm3
