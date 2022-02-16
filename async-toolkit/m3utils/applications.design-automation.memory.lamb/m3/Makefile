@@ -72,8 +72,9 @@ $(TOP): $(TOP_TEMPLATE) $(M3UTILS_VERSION_F)
 aplot: $(APLOTDIR)/aplot
 
 $(APLOTDIR)/aplot: $(APLOTSRC)/aplot
-	cp $(APLOTSRC)/aplot $(APLOTDIR)
-	cp $(APLOTSRC)/libreadline.so.5 $(APLOTDIR)
+	mkdir $(APLOTDIR) || true
+	cp $(APLOTSRC)/aplot $(APLOTDIR)/aplot
+	cp $(APLOTSRC)/libreadline.so.5 $(APLOTDIR)/libreadline.so.5
 
 clean:
 	rm -rf $(LAMBCHARACTERIZE_TARGDIR)
