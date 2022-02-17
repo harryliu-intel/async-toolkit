@@ -14,6 +14,7 @@
 .include '/p/jbay/ip/library/tsmc/7nm/projects/cb/latest/views/spice/tcbn07_bwph240l11p57pd_base_ulvt_130a.spi'
 
 .include '../hspice/dut_model_unloaded.inc'
+*.include '../hspice/dut_model_unloaded_noL.inc'
 
 .param tcyc=1.0/1.6e9
 .param ttran=0.1p
@@ -28,13 +29,14 @@ Rout outp outpp 34.98
 X3 outpp outl0 dut_model
 X4 outp fork Vdd 0 Vdd 0 INVD3BWP240H11P57PDULVT
 
-Rin outl0 outl 143.1
+* the /5 assumes all targets have separate vias from high metal
+Rin outl0 outl 143.1/5
 
 X5 outl outln Vdd 0 Vdd 0 INVD36BWP240H11P57PDULVT
-*X6 outl outln Vdd 0 Vdd 0 INVD36BWP240H11P57PDULVT
-*X7 outl outln Vdd 0 Vdd 0 INVD36BWP240H11P57PDULVT
-*X8 outl outln Vdd 0 Vdd 0 INVD36BWP240H11P57PDULVT
-*X9 outl outln Vdd 0 Vdd 0 INVD36BWP240H11P57PDULVT
+X6 outl outln Vdd 0 Vdd 0 INVD36BWP240H11P57PDULVT
+X7 outl outln Vdd 0 Vdd 0 INVD36BWP240H11P57PDULVT
+X8 outl outln Vdd 0 Vdd 0 INVD36BWP240H11P57PDULVT
+X9 outl outln Vdd 0 Vdd 0 INVD36BWP240H11P57PDULVT
 
 * control voltage for load
 V1 in 0 PWL (

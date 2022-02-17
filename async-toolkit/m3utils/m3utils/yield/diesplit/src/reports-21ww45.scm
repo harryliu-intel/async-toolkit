@@ -201,7 +201,14 @@
 ;;
 
 ;; falcon tile yield
-(report-yields-for-params (make-scaled-model `n3-falcon-tile (convert-n5-to-n3 (n5-io-tile-model)) (/ 82 50.04)) *n3-params* '())
+
+(define (falcon-tile-model)
+   (make-scaled-model `n3-falcon-tile
+                      (convert-n5-to-n3 (n5-io-tile-model)) (/ 82 50.04)))
+(define (report-falcon-tile-yield)
+  (report-yields-for-params
+   (falcon-tile-model)
+   *n3-params* '()))
 
 ;; cost of Falcon N3 tile
 (simple-si-cost *n3-dols-per-mm2* 81 0.8100 8)
@@ -280,7 +287,10 @@
 ;; some of these scale-to-area efforts are troublingly large,
 ;; fairly big discrepancy between Anurag's area numbers and what comes
 ;; out of the converter
-(report-yields-for-params (scale-to-area (convert-n5-to-n3 (n5-ftr-102p4-split-core-model)) 480) *n3-params* '())
+(report-yields-for-params
+ (scale-to-area (convert-n5-to-n3 (n5-ftr-102p4-split-core-model)) 480)
+ *n3-params*
+ '())
 
 (simple-si-cost *n3-dols-per-mm2* 480 0.356 2)
 (simple-si-cost *n3-dols-per-mm2* 480 0.449 2)
