@@ -1,0 +1,10 @@
+import("parserlib")
+import("cit_util")
+
+Token("liberty")
+Lexer("liberty", "liberty")
+Parser("liberty", "liberty")
+
+library ("libertyparse")
+
+
