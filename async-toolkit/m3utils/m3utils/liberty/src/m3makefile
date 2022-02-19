@@ -5,6 +5,19 @@ Token("liberty")
 Lexer("liberty", "liberty")
 Parser("liberty", "liberty")
 
-library ("libertyparse")
+Extended("libertyLexStd")
+
+implementation ("TestParse")
+
+%library ("libertyparse")
+
+Interface("LibertyComponent")
+Module ("LibertyBoolean")
+Module ("LibertyExpr")
+Module ("LibertyNumber")
+Module ("LibertySorI")
+
+program("testparse")
+
 
 

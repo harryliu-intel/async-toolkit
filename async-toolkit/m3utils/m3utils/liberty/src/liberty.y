@@ -7,8 +7,8 @@ file:
   group             group
 
 group:
-  nonempty          '{' statements '}'
-  empty             '{' '}'
+  nonempty          head LBRACK statements RBRACK
+  empty             head LBRACK RBRACK
 
 statements:
   x                 statement
@@ -65,7 +65,7 @@ attr_val_expr:
 expr:
   plus              expr '+' expr
   minus             expr '-' expr
-  mult              expr '*' expr
+  times             expr '*' expr
   div               expr '/' expr
   paren             '(' expr ')'
   uminus            '-' expr
