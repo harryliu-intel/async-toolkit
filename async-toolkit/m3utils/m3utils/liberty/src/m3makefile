@@ -6,16 +6,29 @@ Lexer("liberty", "liberty")
 Parser("liberty", "liberty")
 
 Extended("libertyLexStd")
+Extended("libertyParseStd")
 
 implementation ("TestParse")
 
 %library ("libertyparse")
 
 Interface("LibertyComponent")
+Module ("LibertyDefine")
+Module ("LibertyDefineGroup")
 Module ("LibertyBoolean")
+Module ("LibertyAttrVal")
+Sequence ("LibertyAttrVal", "LibertyAttrVal")
+Module ("LibertyAttrValExpr")
 Module ("LibertyExpr")
 Module ("LibertyNumber")
 Module ("LibertySorI")
+Module ("LibertyParamList")
+Module ("LibertyHead")
+Module ("LibertyComplexAttr")
+Module ("LibertySimpleAttr")
+Interface ("LibertyStatement")
+Sequence ("LibertyStatement", "LibertyStatement")
+Module ("LibertyGroup")
 
 program("testparse")
 
