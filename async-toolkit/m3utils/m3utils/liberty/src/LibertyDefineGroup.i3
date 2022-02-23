@@ -3,9 +3,9 @@ IMPORT LibertyComponent;
 IMPORT LibertySorI;
 
 TYPE
-  T <: LibertyComponent.T;
+  T <: Public;
 
-  X = T OBJECT
+  Public = LibertyComponent.T OBJECT
     s : ARRAY [0..1] OF LibertySorI.T;
   END;
 

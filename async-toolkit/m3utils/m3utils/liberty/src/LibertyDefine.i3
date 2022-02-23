@@ -3,12 +3,12 @@ IMPORT LibertyComponent;
 IMPORT LibertySorI;
 
 TYPE
-  T <: LibertyComponent.T;
+  T <: Public;
 
-  X = T OBJECT
+  Public = LibertyComponent.T OBJECT
     s : ARRAY [0..2] OF LibertySorI.T;
   END;
 
-CONST Brand = "LibertyDefineGroup";
+CONST Brand = "LibertyDefine";
 
 END LibertyDefine.

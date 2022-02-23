@@ -1,15 +1,25 @@
 MODULE LibertyDefine;
-IMPORT LibertyComponent;
+IMPORT Wr;
+IMPORT Thread;
 
 REVEAL
-  T = LibertyComponent.T BRANDED Brand OBJECT
+  T = Public BRANDED Brand OBJECT
   OVERRIDES
-    format := Format;
+    write := Write;
   END;
 
-PROCEDURE Format(t : T) : TEXT =
+PROCEDURE Write(t : T; wr : Wr.T; pfx : TEXT)
+  RAISES { Wr.Failure, Thread.Alerted }=
   BEGIN
-  END Format;
+    Wr.PutText(wr, pfx); 
+    Wr.PutText(wr, "define (");
+    t.s[0].write(wr, "");
+    Wr.PutText(wr, ", ");
+    t.s[1].write(wr, "");
+    Wr.PutText(wr, ", ");
+    t.s[2].write(wr, "");
+    Wr.PutText(wr, ");");
+  END Write;
 
 BEGIN END LibertyDefine.
 

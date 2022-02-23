@@ -1,14 +1,22 @@
 MODULE LibertyComplexAttr;
 IMPORT LibertyHead;
+IMPORT Wr;
+IMPORT Thread;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
   OVERRIDES
-    format := Format;
+    write := Write;
   END;
 
-PROCEDURE Format(t : T) : TEXT =
+PROCEDURE Write(t : T; wr : Wr.T; pfx : TEXT)
+  RAISES { Wr.Failure, Thread.Alerted }=
   BEGIN
-  END Format;
+    Wr.PutText(wr, pfx);
+    t.head.write(wr, "");
+    IF t.semi THEN
+      Wr.PutChar(wr, ';')
+    END
+  END Write;
 
 BEGIN END LibertyComplexAttr.

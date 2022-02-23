@@ -24,6 +24,8 @@ TYPE
     val  : REFANY;
   END;
 
+CONST OpSym = ARRAY Op OF CHAR { '+', '-', '*', '/', '-', '+' };
+
 PROCEDURE Plus(a, b : T) : T;
 PROCEDURE Minus(a, b : T) : T;
 PROCEDURE Times(a, b : T) : T;

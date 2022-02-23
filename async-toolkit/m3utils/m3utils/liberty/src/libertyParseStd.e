@@ -10,11 +10,9 @@ IMPORT LibertySorI;
 IMPORT LibertyDefine;
 IMPORT LibertyDefineGroup;
 IMPORT LibertyParamList;
-IMPORT LibertyAttrValSeq;
 IMPORT LibertyHead;
 IMPORT LibertyGroup;
 IMPORT LibertyStatementSeq;
-IMPORT LibertyStatement;
 IMPORT LibertySimpleAttr;
 IMPORT LibertyComplexAttr;
 }
@@ -36,10 +34,11 @@ IMPORT LibertyComplexAttr;
 }
 
 %public {
+  val : LibertyGroup.T
 }
 
 file: { val : LibertyGroup.T }
-  group { $$ := $1 }
+  group { $$ := $1; self.val := $1 }
 
 group: { val : LibertyGroup.T }
   nonempty { $$ := NEW(LibertyGroup.T,
@@ -52,21 +51,43 @@ group: { val : LibertyGroup.T }
 
 statements: { val : LibertyStatementSeq.T }
   x        { WITH res = NEW(LibertyStatementSeq.T).init() DO
+               <*ASSERT $1 # NIL*>
                res.addhi($1);
                $$ := res
              END
            }
-  cons     { $1.val.addhi($2); $$ := $1 }
+  cons     {
+              <*ASSERT $2 # NIL*>
+              $1.val.addhi($2);
+              $$ := $1
+           }
 
 statement: { val : LibertyStatement.T }
-  simple_attr  { $$ := $1 }
-  complex_attr { $$ := $1 }
-  define       { $$ := $1 }
-  define_group { $$ := $1 }
+  simple_attr  { <*ASSERT $1 # NIL*> $$ := $1 }
+  complex_attr { <*ASSERT $1 # NIL*> $$ := $1 }
+  define       { <*ASSERT $1 # NIL*> $$ := $1 }
+  define_group { <*ASSERT $1 # NIL*> $$ := $1 }
 
 simple_attr: { val : LibertySimpleAttr.T }
+  colonsemi { $$ := NEW(LibertySimpleAttr.T,
+                        ident := $1,
+                        attrValExpr := $2,
+                        syntax := LibertySimpleAttr.Syntax.ColonSemi)
+            }
+  colon     { $$ := NEW(LibertySimpleAttr.T,
+                        ident := $1,
+                        attrValExpr := $2,
+                        syntax := LibertySimpleAttr.Syntax.Colon)
+            }
+  eq        { $$ := NEW(LibertySimpleAttr.T,
+                        ident := $1,
+                        attrValExpr := $2,
+                        syntax := LibertySimpleAttr.Syntax.Eq)
+            }
 
 complex_attr: { val : LibertyComplexAttr.T }
+  headsemi  { $$ := NEW(LibertyComplexAttr.T, head := $1, semi := TRUE) }
+  head      { $$ := NEW(LibertyComplexAttr.T, head := $1, semi := FALSE) }
 
 head: { val : LibertyHead.T }
   x     { $$ := LibertyHead.New($1, $2) }
@@ -82,11 +103,11 @@ param_list: { val : LibertyParamList.T }
   cons      { $1.val.params.addhi($2); $1.val.sep := ""; $$ := $1 }
 
 define: { val : LibertyDefine.T }
-  x     { $$ := NEW(LibertyDefine.X,
+  x     { $$ := NEW(LibertyDefine.T,
                     s := ARRAY [0..2] OF LibertySorI.T { $1, $2, $3 }) }
 
 define_group: { val : LibertyDefineGroup.T }
-  x     { $$ := NEW(LibertyDefineGroup.X,
+  x     { $$ := NEW(LibertyDefineGroup.T,
                     s := ARRAY [0..1] OF LibertySorI.T { $1, $2 }) }
 
 s_or_i: { val : LibertySorI.T }

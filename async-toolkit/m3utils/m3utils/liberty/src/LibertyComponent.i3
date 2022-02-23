@@ -1,8 +1,9 @@
 INTERFACE LibertyComponent;
+IMPORT Wr, Thread;
 
 TYPE
   T = OBJECT METHODS
-    format() : TEXT;
+    write(wr : Wr.T; lineStart := "") RAISES { Wr.Failure, Thread.Alerted };
   END;
 
 CONST Brand = "LibertyComponent";

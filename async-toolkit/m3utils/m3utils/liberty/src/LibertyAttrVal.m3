@@ -1,15 +1,30 @@
 MODULE LibertyAttrVal;
 IMPORT LibertyComponent;
+IMPORT Wr;
+IMPORT Thread;
 
 REVEAL
   T = LibertyComponent.T BRANDED Brand OBJECT
   OVERRIDES
-    format := Format;
+    write := Write;
   END;
 
-PROCEDURE Format(t : T) : TEXT =
+PROCEDURE Write(t : T; wr : Wr.T; pfx : TEXT)
+  RAISES { Wr.Failure, Thread.Alerted }=
   BEGIN
-  END Format;
+    Wr.PutText(wr, pfx);
+    TYPECASE t OF
+      Num(n) => n.val.write(wr, "")
+    |
+      SorI(s)=> s.val.write(wr, "")
+    |
+      Colon(c) => c.x.write(wr, ""); Wr.PutText(wr, " : "); c.y.write(wr, "")
+    |
+      Boolean(b) => b.val.write(wr, "")
+    ELSE
+      <*ASSERT FALSE*>
+    END
+  END Write;
 
 BEGIN END LibertyAttrVal.
 

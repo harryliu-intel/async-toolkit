@@ -1,18 +1,27 @@
 MODULE LibertyHead;
 IMPORT LibertyComponent;
 IMPORT LibertyParamList;
+IMPORT Wr;
+IMPORT Thread;
 
 REVEAL
   T = LibertyComponent.T BRANDED Brand OBJECT
     ident  : TEXT;
     params : LibertyParamList.T;
   OVERRIDES
-    format := Format;
+    write := Write;
   END;
 
-PROCEDURE Format(t : T) : TEXT =
+PROCEDURE Write(t : T; wr : Wr.T; pfx : TEXT)
+  RAISES { Wr.Failure, Thread.Alerted }=
   BEGIN
-  END Format;
+    Wr.PutText(wr, pfx);
+    Wr.PutText(wr, t.ident);
+    Wr.PutText(wr, " (");
+    t.params.write(wr, "");
+    Wr.PutText(wr, ")");
+  END Write;
+
 
 PROCEDURE New(ident : TEXT; params : LibertyParamList.T) : T =
   BEGIN

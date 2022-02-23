@@ -1,17 +1,15 @@
 MODULE LibertyExpr;
 IMPORT LibertyComponent;
 IMPORT LibertyNumber;
+IMPORT Wr;
+IMPORT Thread;
 
 REVEAL
   T = LibertyComponent.T BRANDED Brand OBJECT
   OVERRIDES
-    format := Format;
+    write := Write;
   END;
 
-PROCEDURE Format(t : T) : TEXT =
-  BEGIN
-  END Format;
-  
 PROCEDURE Plus(a, b : T) : T =
   BEGIN
     RETURN NEW(Binary, op := Op.Plus, a := a, b := b)
@@ -51,5 +49,37 @@ PROCEDURE Ident(n : TEXT) : T =
   BEGIN
     RETURN NEW(Const, type := Type.Ident, val := n)
   END Ident;
+
+PROCEDURE Write(t : T; wr : Wr.T; pfx : TEXT)
+  RAISES { Wr.Failure, Thread.Alerted }=
+  BEGIN
+    Wr.PutText(wr, pfx);
+    TYPECASE t OF
+      Binary(b) =>
+      Wr.PutChar(wr, '(');
+      b.a.write(wr, "");
+      Wr.PutChar(wr, OpSym[b.op]);
+      b.b.write(wr, "");
+      Wr.PutChar(wr, ')');
+    |
+      Unary(u)  =>
+      Wr.PutChar(wr, OpSym[u.op]);
+      u.a.write(wr, "")
+    |
+      Const(c)  =>
+      CASE c.type OF
+        Type.Num =>
+        WITH num = NARROW(c.val, LibertyNumber.T) DO
+          num.write(wr, "")
+        END
+      |
+        Type.Ident =>
+        Wr.PutText(wr, c.val)
+      END
+    ELSE
+      <*ASSERT FALSE*>
+    END
+  END Write;
+
 
 BEGIN END LibertyExpr.
