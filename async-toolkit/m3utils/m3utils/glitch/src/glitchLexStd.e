@@ -7,3 +7,4 @@
 IDENT:	       {val: TEXT}
 
 bare_IDENT   {$R IDENT{$$ := $}}
+
