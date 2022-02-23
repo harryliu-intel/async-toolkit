@@ -148,7 +148,7 @@
             wb = (round wb/MfgGrid)
             wt = (round wt/MfgGrid)
             viaName = viaTable[(list v wb wt)]
-            (unless viaName (error "no viaTable for %d %d %d\n" v wb wt))
+            (unless viaName (error "no viaTable for %d %d %d at %f %f\n" v wb wt (car xy) (cadr xy)))
             (cond ((atom viaName)
                    viaDef = (techFindViaDefByName tech viaName)
                    params = nil
