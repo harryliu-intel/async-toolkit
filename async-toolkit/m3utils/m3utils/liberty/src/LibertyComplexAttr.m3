@@ -1,5 +1,4 @@
 MODULE LibertyComplexAttr;
-IMPORT LibertyHead;
 IMPORT Wr;
 IMPORT Thread;
 

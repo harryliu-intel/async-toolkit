@@ -1,5 +1,4 @@
 MODULE LibertySimpleAttr;
-IMPORT LibertyHead;
 IMPORT Wr;
 IMPORT Thread;
 

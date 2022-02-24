@@ -1,13 +1,10 @@
 MODULE LibertyHead;
-IMPORT LibertyComponent;
 IMPORT LibertyParamList;
 IMPORT Wr;
 IMPORT Thread;
 
 REVEAL
-  T = LibertyComponent.T BRANDED Brand OBJECT
-    ident  : TEXT;
-    params : LibertyParamList.T;
+  T = Public BRANDED Brand OBJECT
   OVERRIDES
     write := Write;
   END;
