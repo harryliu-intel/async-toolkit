@@ -2069,7 +2069,8 @@ public class CDL2Cast {
 
     /** Liberty cell level attributes of interest */
     private static Set<String> LIBERTY_CELL_ATTRS =
-        new HashSet<>(Arrays.asList("is_level_shifter", "cell_description"));
+        new HashSet<>(Arrays.asList("is_level_shifter", "cell_description",
+                                    "is_isolation_cell", "always_on"));
 
     /** Returns whether the liberty cell is combinational */
     private boolean isCombinational(final LibertyGroup cell) {
@@ -2342,10 +2343,20 @@ public class CDL2Cast {
             iw.write("verilog {\n");
             iw.nextLevel();
             Stream<String> ports = getPortsAsStream(template);
-            final LibertyAttr lsAttr =
-                getLibertyAttributes(libertyParser, origName).get("is_level_shifter");
-            if (lsAttr == null || !lsAttr.getSimpleAttr().getBooleanValue()) {
-                // if not a level shifter, exclude power/ground pins
+            boolean keepSupply = false;
+            for (String attrName : Arrays.asList("is_level_shifter",
+                                                 "is_isolation_cell",
+                                                 "always_on")) {
+                final LibertyAttr attr =
+                    getLibertyAttributes(libertyParser, origName).get(attrName);
+                if (attr != null && attr.getSimpleAttr().getBooleanValue()) {
+                    keepSupply = true;
+                    break;
+                }
+            }
+            if (!keepSupply) {
+                // if not a level shifter, isolation cell, or AON cell, exclude
+                // power/ground pins
                 ports = ports.filter(isPowerNet.or(isGroundNet).negate());
             }
             writeVerilogBlock(
