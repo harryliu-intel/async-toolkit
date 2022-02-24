@@ -19,7 +19,13 @@ NUM:       { val : LibertyNumber.T }
 
 bare_IDENT   {Debug.Out("got ident " & $); $R IDENT{$$ := $}}
 
-STRING { $R STRING { $$ := $ }}
+STRING {
+  Debug.Out("got string " & $);
+  WITH len = Text.Length($),
+       sub = Text.Sub($, 1, len - 2) DO
+    $R STRING { $$ := sub }
+  END
+}
 
 
 NUM { IF Text.FindChar($, '.') = -1 THEN

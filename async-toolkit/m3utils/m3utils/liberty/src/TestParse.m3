@@ -17,7 +17,7 @@ BEGIN
 
   WITH wr = NEW(TextWr.T).init() DO
     parser.val.write(wr);
-    Debug.Out("Parsed " & TextWr.ToText(wr))
+    Debug.Out("Parsed:\n" & TextWr.ToText(wr))
   END
   
 END TestParse.

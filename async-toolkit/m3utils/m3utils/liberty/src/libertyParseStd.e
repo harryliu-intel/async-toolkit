@@ -67,6 +67,7 @@ statement: { val : LibertyStatement.T }
   complex_attr { <*ASSERT $1 # NIL*> $$ := $1 }
   define       { <*ASSERT $1 # NIL*> $$ := $1 }
   define_group { <*ASSERT $1 # NIL*> $$ := $1 }
+  group        { <*ASSERT $1 # NIL*> $$ := $1 }
 
 simple_attr: { val : LibertySimpleAttr.T }
   colonsemi { $$ := NEW(LibertySimpleAttr.T,
