@@ -1,11 +1,14 @@
 MODULE LibertyDefineGroup;
+IMPORT LibertyComponentChildren;
 IMPORT Wr;
 IMPORT Thread;
+IMPORT LibertyComponentSeqBuilder AS SeqBuilder;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
   OVERRIDES
-    write := Write;
+    write    := Write;
+    children := Children;
   END;
 
 PROCEDURE Write(t : T; wr : Wr.T; pfx : TEXT)
@@ -18,6 +21,11 @@ PROCEDURE Write(t : T; wr : Wr.T; pfx : TEXT)
     t.s[1].write(wr, "");
     Wr.PutText(wr, ");");
   END Write;
+
+PROCEDURE Children(t : T) : SeqBuilder.T =
+  BEGIN
+    RETURN SeqBuilder.BuildSeq(t.s[0], t.s[1])
+  END Children;
 
 BEGIN END LibertyDefineGroup.
 

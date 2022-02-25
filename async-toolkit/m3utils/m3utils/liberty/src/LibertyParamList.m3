@@ -1,12 +1,15 @@
 MODULE LibertyParamList;
+IMPORT LibertyComponentChildren;
 IMPORT LibertyAttrValSeq;
 IMPORT Wr;
 IMPORT Thread;
+IMPORT LibertyComponentSeqBuilder AS SeqBuilder;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
   OVERRIDES
     write := Write;
+    children := Children;
   END;
 
 PROCEDURE New() : T =
@@ -29,5 +32,10 @@ PROCEDURE Write(t : T; wr : Wr.T; pfx : TEXT)
       END
     END
   END Write;
+
+PROCEDURE Children(t : T) : SeqBuilder.T =
+  BEGIN
+    RETURN SeqBuilder.BuildSeq(t)
+  END Children;
   
 BEGIN END LibertyParamList.

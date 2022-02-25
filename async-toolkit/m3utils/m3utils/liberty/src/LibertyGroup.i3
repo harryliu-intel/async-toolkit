@@ -7,7 +7,7 @@ TYPE
   T <: Public;
 
   Public = LibertyComponent.T OBJECT
-    head : LibertyHead.T;
+    head       : LibertyHead.T;
     statements : LibertyStatementSeq.T;
   END;
 

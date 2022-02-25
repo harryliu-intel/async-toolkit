@@ -1,13 +1,16 @@
 MODULE LibertyExpr;
+IMPORT LibertyComponentChildren;
 IMPORT LibertyComponent;
 IMPORT LibertyNumber;
 IMPORT Wr;
 IMPORT Thread;
+IMPORT LibertyComponentSeqBuilder AS SeqBuilder;
 
 REVEAL
   T = LibertyComponent.T BRANDED Brand OBJECT
   OVERRIDES
-    write := Write;
+    write    := Write;
+    children := Children;
   END;
 
 PROCEDURE Plus(a, b : T) : T =
@@ -81,5 +84,22 @@ PROCEDURE Write(t : T; wr : Wr.T; pfx : TEXT)
     END
   END Write;
 
+PROCEDURE Children(t : T) : SeqBuilder.T =
+  BEGIN
+    TYPECASE t OF
+      Binary(b) => RETURN SeqBuilder.BuildSeq(b.a, b.b)
+    |
+      Unary(u)  => RETURN SeqBuilder.BuildSeq(u.a)
+    |
+      Const(c) =>
+      CASE c.type OF
+        Type.Num => RETURN SeqBuilder.BuildSeq(c.val)
+      |
+        Type.Ident => RETURN SeqBuilder.BuildSeq()
+      END
+    ELSE
+      <*ASSERT FALSE*>
+    END
+  END Children;
 
 BEGIN END LibertyExpr.
