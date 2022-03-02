@@ -66,7 +66,7 @@ proc gtr_lamb_gen_behav_sv { args } {
     puts $of "`resetall"
     puts $of "`default_nettype none\n"
     puts $of "// synthesis translate_off\n"
-    puts $of "module cdp_lamb_1r1w1c_${depth}d_${width}b"
+    puts $of "module $arg(-block_name)"
     puts $of "    #("
     puts $of "        parameter DEPTH=$depth,"
     puts $of "        parameter DWIDTH=$width,"

@@ -43,6 +43,137 @@ proc xxgtr_copy_files { lt depth width } {
 }
 
 
+proc old_gtr_lamb_gen_views { args } {
+    set proc_name [lindex [regsub "::" [info level 0]  "" ] 0 ]
+    set date [date ]
+    parse_proc_arguments -args $args arg
+    if { [info exists arg(-verbose) ] } {
+        set verbose 1
+    } else {
+        set verbose 0
+    }
+    echo "INFO: $proc_name, date: $date"
+
+    if { [info exists arg(-tech_node) ] } {
+	set tech_node $arg(-tech_node)
+    } else {
+	set tech_node "n3b"
+    }
+    if { [info exists arg(-variant_type) ] } {
+	set variant_type $arg(-variant_type)
+    } else {
+	set variant_type "n3bhd"
+    }
+    if { [info exists arg(-data_width) ] && \
+	     ( [info exists arg(-min_data_width) ] || [info exists arg(-max_data_width) ] ) } {
+	error "You cannot specify min/max data width options when using -data_width"
+    }
+    if { [info exists arg(-data_depth) ] && \
+	     ( [info exists arg(-min_data_depth) ] || [info exists arg(-max_data_depth) ] ) } {
+	error "You cannot specify min/max data depth options when using -data_depth"
+    }
+    if { [info exists arg(-min_data_width) ] } {
+	set min_width $arg(-min_data_width)
+    } else {
+	set min_width 2
+    }
+    if { [info exists arg(-max_data_width) ] } {
+	set max_width $arg(-max_data_width)
+    } else {
+	set max_width 144
+    }
+
+    ## fixed width is a base case of the looping
+    if { [info exists arg(-data_width) ] } {
+	set min_width $arg(-data_width)
+	set max_width $arg(-data_width)
+    }
+
+    ## check data against reasonable bounds
+    if { $min_width < 2 } {
+	error "min_width must be greater than or equal to two"
+    }
+    if { $min_width > 256 } {
+	error "min_width must be less than or equal to 256"
+    }
+    if { $max_width < $min_width } {
+	error "max_width must be greater than or equal to -min_width"
+    }
+
+    #### now depth
+    if { [info exists arg(-data_depth) ] && \
+	     ( [info exists arg(-min_data_depth) ] || [info exists arg(-max_data_depth) ] ) } {
+	error "You cannot specify min/max data depth options when using -data_depth"
+    }
+    if { [info exists arg(-data_depth) ] && \
+	     ( [info exists arg(-min_data_depth) ] || [info exists arg(-max_data_depth) ] ) } {
+	error "You cannot specify min/max data depth options when using -data_depth"
+    }
+    if { [info exists arg(-min_data_depth) ] } {
+	set min_depth $arg(-min_data_depth)
+    } else {
+	set min_depth 4
+    }
+    if { [info exists arg(-max_data_depth) ] } {
+	set max_depth $arg(-max_data_depth)
+    } else {
+	set max_depth 128
+    }
+
+    ## fixed depth is a base case of the looping
+    if { [info exists arg(-data_depth) ] } {
+	set min_depth $arg(-data_depth)
+	set max_depth $arg(-data_depth)
+    }
+
+    ## check data against reasonable bounds
+    if { $min_depth < 4 } {
+	error "min_depth must be greater than or equal to four"
+    }
+    if { $min_depth > 256 } {
+	error "min_depth must be less than or equal to 256"
+    }
+    if { $max_depth < $min_depth } {
+	error "max_depth must be greater than or equal to -min_depth"
+    }
+    #set lambtypes [list "1r1w1c" "1r1w2c" ]                                                                                     
+    set lambtypes [list "1r1w1c" ]
+    foreach lt $lambtypes {
+        for { set depth $min_depth } { $depth <= $max_depth } { set depth [expr $depth + 2 ] } {
+            for { set width $min_width } { $width <= $max_width } { set width [expr $width + 2 ] } {
+                set block_name "cdp_lamb_${variant_type}_${lt}_${depth}d_${width}b"
+		gtr_lamb_gen_lib -block_name $block_name -data_depth $depth -data_width $width -tech_node $tech_node
+		gtr_lamb_gen_lef -block_name $block_name -data_depth $depth -data_width $width -tech_node $tech_node
+		gtr_lamb_gen_behav_sv -block_name $block_name -data_depth $depth -data_width $width
+                gtr_gen_ndm -block_name $block_name -lef_file $block_name.lef -lib_file $block_name.lib -tech_node $tech_node
+            }
+        }
+    }
+}
+
+
+
+define_proc_attributes old_gtr_lamb_gen_views \
+    -info "Generate set of views for Lambs" \
+    -define_args {
+	{-all "Loop through all the default Lamb sizes" "" boolean optional}
+	{-data_width "Specify a single data width for the Lamb(s)" "<data_width>" int optional}
+	{-min_data_width "Specify min data width to start building loop(default 2)" "<min_data_width>" int optional}
+	{-max_data_width "Specify max data width to stop building loop(default 144)" "<max_data_width>" int optional}
+	{-data_width_increment "Specify increment to use when looping to generate lambs(default 2)" "<data_width_increment>" int optional}
+	{-data_depth "Specify a single data depth for the Lamb(s)" "<data_depth>" int optional}
+	{-min_data_depth "Specify min data depth to start building loop(default 4)" "<min_data_depth>" int optional}
+	{-max_data_depth "Specify max data depth to stop building loop(default 128)" "<max_data_depth>" int optional}
+	{-data_depth_increment "Specify increment to use when looping to generate lambs(default 2)" "<data_depth_increment>" int optional}
+	{-tech_node "Specify tech node (default n3b)" "AnOos" one_of_string {optional {values {"n3b" "n3e" "n5"}}}}
+	{-lamb_type "Specify lamb type (default )" "AnOos" one_of_string {optional {values {"n3bhd" "n3ehd" "n5hd"}}}}
+	{-variant_type "Specify variant type (default n3bhd)" "AnOos" one_of_string {optional {values {"n3bhd" "n3ehd" "n5hd"}}}}
+	{-dual_clocks "Specify if dual async clocks are to be used(Depreciated)" "" boolean optional}
+	{-debug "Report additional logging for debug purposes" "" boolean optional}
+    }
+#        {-Oos "oos help"       AnOos   one_of_string {required value_help {values {a b}}}}                                      
+
+
 proc gtr_lamb_gen_views { args } {
     set proc_name [lindex [regsub "::" [info level 0]  "" ] 0 ]
     set date [date ]
@@ -80,7 +211,7 @@ proc gtr_lamb_gen_views { args } {
     if { [info exists arg(-max_data_width) ] } {
 	set max_width $arg(-max_data_width)
     } else {
-	set max_width 2
+	set max_width 144
     }
 
     ## fixed width is a base case of the looping
@@ -117,7 +248,7 @@ proc gtr_lamb_gen_views { args } {
     if { [info exists arg(-max_data_depth) ] } {
 	set max_depth $arg(-max_data_depth)
     } else {
-	set max_depth 4
+	set max_depth 128
     }
 
     ## fixed depth is a base case of the looping
@@ -136,19 +267,48 @@ proc gtr_lamb_gen_views { args } {
     if { $max_depth < $min_depth } {
 	error "max_depth must be greater than or equal to -min_depth"
     }
-    #set lambtypes [list "1r1w1c" "1r1w2c" ]                                                                                     
-    set lambtypes [list "1r1w1c" ]
-    foreach lt $lambtypes {
-        for { set depth $min_depth } { $depth <= $max_depth } { set depth [expr $depth + 2 ] } {
-            for { set width $min_width } { $width <= $max_width } { set width [expr $width + 2 ] } {
-                set block_name "cdp_lamb_${variant_type}_${lt}_${depth}d_${width}b"
-		gtr_lamb_gen_lib -block_name $block_name -data_depth $depth -data_width $width
-		gtr_lamb_gen_lef -block_name $block_name -data_depth $depth -data_width $width
+    #set lambtypes [list "1r1w1c" "1r1w2c" ]
+    ## for now we will stripe the netbatch runs where each worker will build a full swath of ranges for a different depth.
+    ## the runtime impact of depth is smaller since it only adds slightly to address bits vs more data.
+    ## Current thinking is that for 5k lambs run it would have a good number of max machines 
+    ## used to ~ 144/2=~72 and nb limit without feeder of ~500
+    set lambtype "1r1w1c"
+    for { set depth $min_depth } { $depth <= $max_depth } { set depth [expr $depth + 2 ] } {
+	if { [info exists arg(-netbatch) ] } {
+	    set cmd_file "gtr_nbatch_cmd_cdp_lamb_${variant_type}_${lambtype}_${depth}d_${min_width}_${max_width}b.tcl"
+	    set of [open $cmd_file "w" ]
+	    puts $of "# Batch script to load TCL utilities and build a set of Lambs."
+	    puts $of "# Generated by GTR Generators Tool Release: $proc_name : $date\n"
+	    puts $of "# Load GTR:\nsource $::env(GTR_ROOT)/tcl/gtr_main.tcl"
+	}
+	for { set width $min_width } { $width <= $max_width } { set width [expr $width + 2 ] } {
+
+	    if { "$variant_type" == "n5hd" } {
+		set block_name "cdp_lamb_${lambtype}_${depth}d_${width}b"
+	    } else {
+		set block_name "cdp_lamb_${variant_type}_${lambtype}_${depth}d_${width}b"
+	    }
+	    if { [info exists arg(-netbatch) ] } {
+		puts $of "gtr_lamb_gen_lib -block_name $block_name -data_depth $depth -data_width $width -tech_node $tech_node"
+		puts $of "gtr_lamb_gen_lef -block_name $block_name -data_depth $depth -data_width $width -tech_node $tech_node"
+		puts $of "gtr_lamb_gen_behav_sv -block_name $block_name -data_depth $depth -data_width $width"
+		puts $of "gtr_gen_ndm -block_name $block_name -lef_file $block_name.lef -lib_file $block_name.lib -tech_node $tech_node\n"
+	    } else {
+		gtr_lamb_gen_lib -block_name $block_name -data_depth $depth -data_width $width -tech_node $tech_node
+		gtr_lamb_gen_lef -block_name $block_name -data_depth $depth -data_width $width -tech_node $tech_node
 		gtr_lamb_gen_behav_sv -block_name $block_name -data_depth $depth -data_width $width
-                gtr_gen_ndm -block_name $block_name -lef_file $block_name.lef -lib_file $block_name.lib -tech_node $tech_node
+		gtr_gen_ndm -block_name $block_name -lef_file $block_name.lef -lib_file $block_name.lib -tech_node $tech_node
             }
-        }
+	}
+	if { [info exists arg(-netbatch) ] } {
+	    close $of
+	    ## do launch here
+	    set cmd "/usr/intel/bin/nbjob run --qslot /bfn/be --class \"SLES12&&2G\" $::env(GTR_FC_ROOT)/bin/icc2_lm_shell -x \"source $cmd_file\""
+	    puts "INFO: cmd:$cmd"
+	    exec {*}$cmd
+	}
     }
+
 }
 
 
@@ -157,6 +317,7 @@ define_proc_attributes gtr_lamb_gen_views \
     -info "Generate set of views for Lambs" \
     -define_args {
 	{-all "Loop through all the default Lamb sizes" "" boolean optional}
+	{-netbatch "Run jobs striped using netbatch" "" boolean optional}
 	{-data_width "Specify a single data width for the Lamb(s)" "<data_width>" int optional}
 	{-min_data_width "Specify min data width to start building loop(default 2)" "<min_data_width>" int optional}
 	{-max_data_width "Specify max data width to stop building loop(default 144)" "<max_data_width>" int optional}

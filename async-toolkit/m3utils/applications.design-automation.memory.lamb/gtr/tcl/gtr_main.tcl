@@ -27,7 +27,7 @@
 ##------------------------------------------------------------------------------
 
 if { ! [info exists ::env(GTR_ROOT) ] } {
-    error "You must set ::env(GTR_ROOT), or setenv GTR_ROOT to \"/nfs/sc/disks/tfc_be_01/pdonehue/gtr\""
+    error "You must set ::env(GTR_ROOT), or setenv GTR_ROOT"
 }
 
 source $::env(GTR_ROOT)/tcl/gtr_util.tcl

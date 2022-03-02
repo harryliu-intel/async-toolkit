@@ -94,7 +94,7 @@ proc gtr_lamb_gen_lib { args } {
     puts $of_lib "\n"
 
     puts $of_lib "    cell ($block_name) \{"
-    set area_x_y [gtr_lamb_area -data_width $data_width -data_depth $data_depth ]
+    set area_x_y [gtr_lamb_area -data_width $data_width -data_depth $data_depth -tech_node $arg(-tech_node)]
     set area [lindex $area_x_y 0 ]
     set width [lindex $area_x_y 1 ]
     set height [lindex $area_x_y 2 ]
@@ -567,11 +567,12 @@ proc gtr_lamb_gen_lib { args } {
 define_proc_attributes gtr_lamb_gen_lib \
     -info "Utility to generate Lib Memory collaterals" \
     -define_args {
-      {-block_name "Specify memory name" "<block_name>" string required}
-      {-data_depth "Specify the depth" "int" int required}
-      {-data_width "Specify the data bus width in bits" "int" int required}
-      {-dual_clocks "Specify if dual async clocks are to be used" "" boolean optional}
-      {-debug "Report additional logging for debug purposes" "" boolean optional}
+	{-block_name "Specify memory name" "<block_name>" string required}
+	{-tech_node "Specify tech node (default n3b)" "AnOos" one_of_string {required {values {"n3b" "n3e" "n5"}}}}
+	{-data_depth "Specify the depth" "int" int required}
+	{-data_width "Specify the data bus width in bits" "int" int required}
+	{-dual_clocks "Specify if dual async clocks are to be used" "" boolean optional}
+	{-debug "Report additional logging for debug purposes" "" boolean optional}
 }
 
 
@@ -756,6 +757,4 @@ proc gtr_lamb_gen_lib_hdr { of_lib lib_name } {
     #puts $of_lib "      \}"
 
 }
-
-
 

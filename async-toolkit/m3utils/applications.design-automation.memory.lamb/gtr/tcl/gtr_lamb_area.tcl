@@ -37,10 +37,19 @@ proc gtr_lamb_area { args } {
     }
     set depth $arg(-data_depth)
     set width $arg(-data_width)
-
-    set pg_nm  51 ;# value of pg in nanometers
-    set rw_nm 210 ;# value of row height in nanometers
-
+    set tech_node $arg(-tech_node)
+    if { $tech_node == "n5" } {
+	set pg_nm  51 ;# value of pg in nanometers
+	set rw_nm 210 ;# value of row height in nanometers
+    } elseif { $tech_node == "n3b" } {
+	set pg_nm  45 ;# value of pg in nanometers
+	set rw_nm 162 ;# value of row height in nanometers TBD fix this value.
+    } elseif { $tech_node == "n3e" } {
+	set pg_nm  48 ;# value of pg in nanometers
+	set rw_nm 169 ;# value of row height in nanometers
+    } else {
+	error "Unsupported tech_node: $tech_node"
+    }
     set bitx_pg 5 ;# width of a bit in PG
     set bity_rw 1 ;# height of a bit in rows
     
@@ -198,9 +207,10 @@ proc gtr_lamb_area { args } {
 define_proc_attributes gtr_lamb_area \
     -info "Utility to generate LAMB Memory collaterals" \
     -define_args {
-      {-data_depth "Depth of the memory in words/entries(layout x direction)" "int" int required}
-      {-data_width "Data bus width of the memory in bits(layout y direction)" "int" int required}
-      {-dual_clocks "Specify if memory has dual async clocks" "" boolean optional}
-      {-verbose "Verbose Reporting" "" boolean optional}
-      {-debug "Report additional logging for debug purposes" "" boolean optional}
-}
+	{-tech_node "Specify tech node (default n3b)" "AnOos" one_of_string {required {values {"n3b" "n3e" "n5"}}}}
+	{-data_depth "Depth of the memory in words/entries(layout x direction)" "int" int required}
+	{-data_width "Data bus width of the memory in bits(layout y direction)" "int" int required}
+	{-dual_clocks "Specify if memory has dual async clocks" "" boolean optional}
+	{-verbose "Verbose Reporting" "" boolean optional}
+	{-debug "Report additional logging for debug purposes" "" boolean optional}
+    }
