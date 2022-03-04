@@ -1,9 +1,16 @@
-LAtch-based Memory Blocks (LAMBs)
+# LAtch-based Memory Blocks (LAMBs)
+###   Intel XFG 2021-2022
+Implementation and various tools associated with size, power, and timing estimation.
 
-Intel XFG 2021-2022
+To produce a single LAMB, requires Cheetah environment. Execute, for example:
 
-Idea and architecture: Pat Bosshart, Barefoot/Intel
+```
+/p/hdk/bin/cth_psetup -p tfc -cfg tfc_n3.cth -tool fusioncompiler -ward BUILD/cdp_lamb_n3bhd_1r1w1c_4d_10b \
+   -cmd "icc2_lm_shell -x 'source $GTR_HOME/tcl/gtr_main.tcl ; gtr_lamb_gen_views -data_width 10 -data_depth 4'"
+```
 
-N3 and N5 implementation: Paul Donehue, Intel 
+###   Idea and architecture: Pat Bosshart, Barefoot/Intel
 
-Characterization and prediction tools: Mika Nystrom, Intel
+###   N3 and N5 implementation: Paul Donehue, Intel 
+
+###   Characterization and prediction tools: Mika Nystrom, Intel
