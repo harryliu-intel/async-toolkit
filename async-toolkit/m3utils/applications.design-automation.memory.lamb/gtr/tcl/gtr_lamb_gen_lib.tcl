@@ -26,6 +26,7 @@
 ##
 ##------------------------------------------------------------------------------
 
+
 proc gtr_lamb_gen_lib { args } {
     parse_proc_arguments -args $args arg
     set proc_name [lindex [regsub "::" [info level 0]  "" ] 0 ]
@@ -41,7 +42,28 @@ proc gtr_lamb_gen_lib { args } {
     set block_name $arg(-block_name)
     set data_depth $arg(-data_depth)
     set data_width $arg(-data_width)
-    puts "INFO: $proc_name, Generating Liberty view: $block_name.lib"
+    file mkdir timing
+    set libfname timing/${block_name}_[gtr_cornerSuffix $arg(-oc_type) $arg(-voltage)].lib
+    puts "INFO: $proc_name, Generating Liberty view: $libfname"
+    global properties
+    if { [info exists arg(-filelistVar) ] } {
+        upvar $arg(-filelistVar) fileList
+        set thisEntry [dict create]
+        dict set thisEntry path $libfname
+        dict set thisEntry nda_protection_level front_end
+        dict set thisEntry standard_name liberty
+        dict set thisEntry type lib_ccs_filelist
+        dict set thisEntry voltage $arg(-voltage)
+        dict set thisEntry rc_type all_rc_types
+        dict set thisEntry liberty_ccs_type ccs
+        dict set thisEntry reliability_condition client
+        dict set thisEntry timing_hold_margin true
+        dict set thisEntry variation_modeling pocv
+        dict set thisEntry oc_type $arg(-oc_type)
+        dict set thisEntry feol_process_corner [dict get $properties oc_type $arg(-oc_type) feol_process_corner]
+        dict set thisEntry temperature [dict get $properties oc_type $arg(-oc_type) temperature]        
+        lappend fileList $thisEntry
+    } 
     set power "VDD"
     set ground "VSS"
     set addr_width [expr int(ceil(log($data_depth)/log(2))) ]
@@ -61,7 +83,7 @@ proc gtr_lamb_gen_lib { args } {
                        [list "dout" [expr $data_width - 1 ] 0] \
                        ]
 
-    set of_lib [open "$block_name.lib" "w" ]
+    set of_lib [open $libfname "w" ]
     gtr_lamb_gen_lib_hdr $of_lib $block_name
 
     if { [info exists bus_hash ] } {
@@ -572,6 +594,9 @@ define_proc_attributes gtr_lamb_gen_lib \
 	{-data_depth "Specify the depth" "int" int required}
 	{-data_width "Specify the data bus width in bits" "int" int required}
 	{-dual_clocks "Specify if dual async clocks are to be used" "" boolean optional}
+	{-oc_type "Operating condition" "AnOos" one_of_string {required {values {"S_125" "S_M40" "S_0" "F_125" "F_M40" "F_0" "T_25" "T_85" }}}}
+	{-voltage "Voltage condition" "voltage" string required}
+   {-filelistVar "Update filelist for manifest.xml" "" string optional}
 	{-debug "Report additional logging for debug purposes" "" boolean optional}
 }
 

@@ -35,10 +35,26 @@ proc gtr_lamb_gen_behav_sv { args } {
     } else {
         set verbose 0
     }
-    echo "INFO: $proc_name, Generating SV view: $arg(-block_name).sv"
+    set dir verilog
+    file mkdir $dir
+    set fname ${dir}/$arg(-block_name).sv
+    echo "INFO: $proc_name, Generating SV view: $fname"
+
+    if { [info exists arg(-filelistVar) ] } {
+        upvar $arg(-filelistVar) fileList
+        set thisEntry [dict create]
+        dict set thisEntry path $fname
+        dict set thisEntry nda_protection_level front_end 
+        dict set thisEntry pg_included false 
+        dict set thisEntry standard_name verilog 
+        dict set thisEntry type verilog_default_filelist 
+        lappend fileList $thisEntry
+    } 
     set depth $arg(-data_depth)
     set width $arg(-data_width)
-    set of [open "$arg(-block_name).sv" "w" ]
+    
+    set of [open $fname w ]
+    
     puts $of "//------------------------------------------------------------------------------"
     puts $of "//"
     puts $of "// INTEL CONFIDENTIAL"
@@ -74,7 +90,7 @@ proc gtr_lamb_gen_behav_sv { args } {
     puts $of "        parameter X_ON_NOT_REN=1"
     puts $of "    )"
     puts $of "("
-    puts $of "    input  logic clk"
+    puts $of "    input  logic clk,"
     puts $of "    input  logic wen,"
     puts $of "    input  logic ren,"
     puts $of "    input  logic \[AWIDTH-1:0\] radr,"
@@ -119,4 +135,5 @@ define_proc_attributes gtr_lamb_gen_behav_sv \
       {-data_width "Data bus width of the memory in bits(layout y direction)" "int" int required}
       {-dual_clocks "Specify if memory has dual async clocks" "" boolean optional}
       {-verbose "Verbose Reporting" "" boolean optional}
+      {-filelistVar "Update filelist for manifest.xml" "" string optional}
 }
