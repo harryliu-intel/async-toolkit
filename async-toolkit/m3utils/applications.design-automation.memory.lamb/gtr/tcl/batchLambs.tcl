@@ -101,5 +101,5 @@ if {  [string length $params(lf)] > 0 } {
 }
 
 set wwdate [exec workweek -f %IYWW%IW.%w_%H.%M ]
-set taskname lambgen_$::env(USER)_${wwdate}
+set taskname lambgen_[exec git describe]_$::env(USER)_${wwdate}
 produceLambs $lamblist $taskname
