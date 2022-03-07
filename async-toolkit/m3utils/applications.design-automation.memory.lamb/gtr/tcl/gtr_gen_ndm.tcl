@@ -40,9 +40,25 @@ proc gtr_gen_ndm { args } {
     }
     set block_name $arg(-block_name)
     set lib_file $arg(-lib_file)
+    set process_label $arg(-process_label)
     set lef_file $arg(-lef_file)
     set tech_node_uc [string toupper $arg(-tech_node) ]
-    set out_ndm $block_name.ndm
+    set ndmdir collateral/ebb/lib
+    file mkdir $ndmdir
+    set out_ndm "${ndmdir}/${block_name}.ndm"
+
+    if { [info exists arg(-filelistVar) ] } {
+        upvar $arg(-filelistVar) fileList
+        set thisEntry [dict create]
+        dict set thisEntry path $out_ndm
+        dict set thisEntry is_dir true
+        dict set thisEntry consuming_tool icc2
+        dict set thisEntry consuming_vendor synopsys
+        dict set thisEntry layout_type both
+        dict set thisEntry timing_included true
+        dict set thisEntry type ndm_reflist
+        lappend fileList $thisEntry
+    } 
 
     echo "INFO: $proc_name, Generating NDM Model for $block_name"
     if { [info exists ::env(GTR_NDM_TECH_FILE_${tech_node_uc})] && $::env(GTR_NDM_TECH_FILE_${tech_node_uc}) != "" } {
@@ -60,7 +76,7 @@ proc gtr_gen_ndm { args } {
         create_workspace -flow normal -technology $ndm_tech_file $block_name
     }
     read_lef $lef_file
-    read_lib -process_label ssgnp $lib_file
+    read_lib -process_label $process_label $lib_file
     if { $tool == "lc_shell" } {
         report_app_options > ./${block_name}_frame_report_app_options.rep
         create_frame
@@ -79,8 +95,10 @@ define_proc_attributes gtr_gen_ndm \
     -define_args {
 	{-block_name "Specify memory name" "<block_name>" string required}
 	{-lib_file "Path to the .lib file" "./<block_name>.lib" string required}
+	{-process_label "Process label" "e.g., ssgnp" string required}
 	{-lef_file "Path to the .LEF file" "./<block_name>.LEF" string required}
 	{-tech_node "Specify tech node (default n3b)" "AnOos" one_of_string {required {values {"n3b" "n3e" "n5"}}}}
+   {-filelistVar "Update filelist for manifest.xml" "" string optional}
 	{-verbose "Verbose Reporting" "" boolean optional}
     }
 

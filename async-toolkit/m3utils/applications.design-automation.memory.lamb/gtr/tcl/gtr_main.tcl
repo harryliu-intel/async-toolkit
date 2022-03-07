@@ -27,7 +27,8 @@
 ##------------------------------------------------------------------------------
 
 if { ! [info exists ::env(GTR_ROOT) ] } {
-    error "You must set ::env(GTR_ROOT), or setenv GTR_ROOT"
+   set ::env(GTR_ROOT) [file dirname [file dirname [info script]]]
+   puts "Environment variable not set. Setting GTR_ROOT as $env(GTR_ROOT)"
 }
 
 source $::env(GTR_ROOT)/tcl/gtr_util.tcl
