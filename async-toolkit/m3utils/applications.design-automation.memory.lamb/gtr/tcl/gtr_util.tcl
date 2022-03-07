@@ -50,7 +50,7 @@ proc gtr_produce_attributes { libname filelistVar } {
    puts $af "<lay_integration_type>SRAM</lay_integration_type>"
    puts $af "</attributes>"
    close $af
-   [exec xmllint $fn]
+   exec xmllint $fn
 }
 
 ## Produce manifest.xml, from files assembled in filelist by prior steps
@@ -254,8 +254,8 @@ define_proc_attributes old_gtr_lamb_gen_views \
 	{-tech_node "Specify tech node (default n3b)" "AnOos" one_of_string {optional {values {"n3b" "n3e" "n5"}}}}
 	{-lamb_type "Specify lamb type (default )" "AnOos" one_of_string {optional {values {"n3bhd" "n3ehd" "n5hd"}}}}
 	{-variant_type "Specify variant type (default n3bhd)" "AnOos" one_of_string {optional {values {"n3bhd" "n3ehd" "n5hd"}}}}
-	{-dual_clocks "Specify if dual async clocks are to be used(Depreciated)" "" boolean optional}
-	{-debug "Report additional logging for debug purposes" "" boolean optional}
+	{-dual_clocks "Specify if dual async clocks are to be used(Deprecated)" "" boolean optional}
+   {-debug "Report additional logging for debug purposes" "" boolean optional}
     }
 #        {-Oos "oos help"       AnOos   one_of_string {required value_help {values {a b}}}}                                      
 
@@ -270,12 +270,17 @@ proc gtr_lamb_gen_views { args } {
         set verbose 0
     }
     echo "INFO: $proc_name, date: $date"
-
+    if { [info exists arg(-skipNDM) ] } {
+	   set ndmGenerate 0
+    } else {
+	   set ndmGenerate 1
+    }
     if { [info exists arg(-tech_node) ] } {
 	set tech_node $arg(-tech_node)
     } else {
 	set tech_node "n3b"
     }
+    
     if { [info exists arg(-variant_type) ] } {
 	set variant_type $arg(-variant_type)
     } else {
@@ -380,15 +385,17 @@ proc gtr_lamb_gen_views { args } {
 		puts $of "gtr_lamb_gen_lib -block_name $block_name -data_depth $depth -data_width $width -tech_node $tech_node"
 		puts $of "gtr_lamb_gen_lef -block_name $block_name -data_depth $depth -data_width $width -tech_node $tech_node"
 		puts $of "gtr_lamb_gen_behav_sv -block_name $block_name -data_depth $depth -data_width $width"
-		puts $of "gtr_gen_ndm -block_name $block_name -lef_file $block_name.lef -lib_file $block_name.lib -tech_node $tech_node\n"
-	    } else {
+		if { $ndmGenerate } { puts $of "gtr_gen_ndm -block_name $block_name -lef_file $block_name.lef -lib_file $block_name.lib -tech_node $tech_node\n" }
+	   } else {
           # count lambs actually produced (above it more of a recipe to produce in the future)
           incr lambsProduced +1          
           ## eventually, below should loop over corners
-	       gtr_lamb_gen_lib -block_name $block_name -data_depth $depth -data_width $width -tech_node $tech_node -oc_type S_M40 -voltage 0.675 -filelistVar filelist
-		    gtr_lamb_gen_lef -block_name $block_name -data_depth $depth -data_width $width -tech_node $tech_node -filelistVar filelist
+	       set ndmlib [gtr_lamb_gen_lib -block_name $block_name -data_depth $depth -data_width $width -tech_node $tech_node -oc_type S_M40 -voltage 0.675 -filelistVar filelist]
+		    set ndmlef [gtr_lamb_gen_lef -block_name $block_name -data_depth $depth -data_width $width -tech_node $tech_node -filelistVar filelist]
 		    gtr_lamb_gen_behav_sv -block_name $block_name -data_depth $depth -data_width $width -filelistVar filelist
-		    gtr_gen_ndm -block_name $block_name -lef_file $block_name.lef -lib_file $block_name.lib -tech_node $tech_node
+		    if { $ndmGenerate } {
+             gtr_gen_ndm -block_name $block_name -lef_file $ndmlef -process_label ssgnp -lib_file $ndmlib -tech_node $tech_node 
+          }
        }
 	}
    if { $lambsProduced > 1} {
@@ -429,6 +436,7 @@ define_proc_attributes gtr_lamb_gen_views \
 	{-lamb_type "Specify lamb type (default )" "AnOos" one_of_string {optional {values {"n3bhd" "n3ehd" "n5hd"}}}}
 	{-variant_type "Specify variant type (default n3bhd)" "AnOos" one_of_string {optional {values {"n3bhd" "n3ehd" "n5hd"}}}}
 	{-dual_clocks "Specify if dual async clocks are to be used(Depreciated)" "" boolean optional}
+   {-skipNDM "Skip NDM abstracts" "" boolean optional}	
 	{-debug "Report additional logging for debug purposes" "" boolean optional}
     }
 #        {-Oos "oos help"       AnOos   one_of_string {required value_help {values {a b}}}}                                      

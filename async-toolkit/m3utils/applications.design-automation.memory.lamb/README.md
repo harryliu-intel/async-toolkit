@@ -5,8 +5,8 @@ Implementation and various tools associated with size, power, and timing estimat
 To produce a single LAMB requires Cheetah environment. Execute, for example:
 
 ```
-/p/hdk/bin/cth_psetup -p tfc -cfg tfc_n3.cth -tool librarycompiler -ward BUILD/cdp_lamb_n3bhd_1r1w1c_4d_10b \
-   -cmd "icc2_lm_shell -x 'source $GTR_HOME/tcl/gtr_main.tcl ; gtr_lamb_gen_views -data_width 10 -data_depth 4'; exit 0"
+/p/cth/bin/cth_psetup -p tfc -cfg tfc_n5.cth -tool librarycompiler,fusioncompiler,cth_LR -ward BUILD/cdp_lamb_n3bhd_1r1w1c_4d_10b \
+   -cmd "icc2_lm_shell -batch -x 'source $GTR_HOME/tcl/gtr_main.tcl ; gtr_lamb_gen_views -data_width 10 -data_depth 4'"
 ```
 
 To produce a single LAMB in a WARD.
@@ -17,6 +17,8 @@ The HIP can then be released with the 'SHIP' tool. This will perform IP quality 
 $R2GSETUP
 ship.pl -block cdp_lamb_n3bhd_1r1w1c_4d_10b -tag testtag -ip_type hip -source ../applications.design-automation.memory.lamb/BUILD/cdp_lamb_n3bhd_1r1w1c_4d_10b
 ```
+
+You can also batch up creation of LAMBs with the $GTR_HOME/tcl/batchLambs.tcl
 
 ###   Idea and architecture: Pat Bosshart, Barefoot/Intel
 
