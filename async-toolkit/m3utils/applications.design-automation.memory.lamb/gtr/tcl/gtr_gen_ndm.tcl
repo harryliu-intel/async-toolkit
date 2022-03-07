@@ -43,7 +43,22 @@ proc gtr_gen_ndm { args } {
     set process_label $arg(-process_label)
     set lef_file $arg(-lef_file)
     set tech_node_uc [string toupper $arg(-tech_node) ]
-    set out_ndm $block_name.ndm
+    set ndmdir collateral/ebb/lib
+    file mkdir $ndmdir
+    set out_ndm "${ndmdir}/${block_name}.ndm"
+
+    if { [info exists arg(-filelistVar) ] } {
+        upvar $arg(-filelistVar) fileList
+        set thisEntry [dict create]
+        dict set thisEntry path $out_ndm
+        dict set thisEntry is_dir true
+        dict set thisEntry consuming_tool icc2
+        dict set thisEntry consuming_vendor synopsys
+        dict set thisEntry layout_type both
+        dict set thisEntry timing_included true
+        dict set thisEntry type ndm_reflist
+        lappend fileList $thisEntry
+    } 
 
     echo "INFO: $proc_name, Generating NDM Model for $block_name"
     if { [info exists ::env(GTR_NDM_TECH_FILE_${tech_node_uc})] && $::env(GTR_NDM_TECH_FILE_${tech_node_uc}) != "" } {
@@ -83,6 +98,7 @@ define_proc_attributes gtr_gen_ndm \
 	{-process_label "Process label" "e.g., ssgnp" string required}
 	{-lef_file "Path to the .LEF file" "./<block_name>.LEF" string required}
 	{-tech_node "Specify tech node (default n3b)" "AnOos" one_of_string {required {values {"n3b" "n3e" "n5"}}}}
+   {-filelistVar "Update filelist for manifest.xml" "" string optional}
 	{-verbose "Verbose Reporting" "" boolean optional}
     }
 

@@ -394,7 +394,7 @@ proc gtr_lamb_gen_views { args } {
 		    set ndmlef [gtr_lamb_gen_lef -block_name $block_name -data_depth $depth -data_width $width -tech_node $tech_node -filelistVar filelist]
 		    gtr_lamb_gen_behav_sv -block_name $block_name -data_depth $depth -data_width $width -filelistVar filelist
 		    if { $ndmGenerate } {
-             gtr_gen_ndm -block_name $block_name -lef_file $ndmlef -process_label ssgnp -lib_file $ndmlib -tech_node $tech_node 
+             gtr_gen_ndm -block_name $block_name -lef_file $ndmlef -process_label ssgnp -lib_file $ndmlib -tech_node $tech_node -filelistVar filelist
           }
        }
 	}
