@@ -724,10 +724,8 @@ sub parse_args {
 sub cell_list_string {
     my ($cells_lr) = @_;
     my $str = "";
-    if (defined @{$cells_lr}) {
-        foreach my $c (@{$cells_lr}) {
-            $str .= "$c\n";
-        }
+    foreach my $c (@{$cells_lr}) {
+        $str .= "$c\n";
     }
     return $str;
 }
