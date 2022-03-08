@@ -230,7 +230,7 @@ proc old_gtr_lamb_gen_views { args } {
                 set block_name "cdp_lamb_${variant_type}_${lt}_${depth}d_${width}b"
 		gtr_lamb_gen_lib -block_name $block_name -data_depth $depth -data_width $width -tech_node $tech_node
 		gtr_lamb_gen_lef -block_name $block_name -data_depth $depth -data_width $width -tech_node $tech_node
-		gtr_lamb_gen_behav_sv -block_name $block_name -data_depth $depth -data_width $width
+		gtr_lamb_gen_behav_sv -block_name $block_name -data_depth $depth -data_width $width -ftr_value $flowthrough
                 gtr_gen_ndm -block_name $block_name -lef_file $block_name.lef -lib_file $block_name.lib -tech_node $tech_node
             }
         }
@@ -274,6 +274,11 @@ proc gtr_lamb_gen_views { args } {
 	   set ndmGenerate 0
     } else {
 	   set ndmGenerate 1
+    } 
+    if { [info exists arg(-flow_through) ] } {
+        set flowthrough 1
+    } else {
+	set flowthrough 0
     }
     if { [info exists arg(-tech_node) ] } {
 	set tech_node $arg(-tech_node)
@@ -363,7 +368,11 @@ proc gtr_lamb_gen_views { args } {
     ## the runtime impact of depth is smaller since it only adds slightly to address bits vs more data.
     ## Current thinking is that for 5k lambs run it would have a good number of max machines 
     ## used to ~ 144/2=~72 and nb limit without feeder of ~500
-    set lambtype "1r1w1c"
+    if { $flowthrough == 1 } {
+        set lambtype "1ftr1w1c"
+    } else {
+        set lambtype "1r1w1c"
+    }
     for { set depth $min_depth } { $depth <= $max_depth } { set depth [expr $depth + 2 ] } {
 	if { [info exists arg(-netbatch) ] } {
 	    set cmd_file "gtr_nbatch_cmd_cdp_lamb_${variant_type}_${lambtype}_${depth}d_${min_width}_${max_width}b.tcl"
@@ -384,7 +393,7 @@ proc gtr_lamb_gen_views { args } {
 	    if { [info exists arg(-netbatch) ] } {
 		puts $of "gtr_lamb_gen_lib -block_name $block_name -data_depth $depth -data_width $width -tech_node $tech_node"
 		puts $of "gtr_lamb_gen_lef -block_name $block_name -data_depth $depth -data_width $width -tech_node $tech_node"
-		puts $of "gtr_lamb_gen_behav_sv -block_name $block_name -data_depth $depth -data_width $width"
+		puts $of "gtr_lamb_gen_behav_sv -block_name $block_name -data_depth $depth -data_width $width -ftr_value $flowthrough"
 		if { $ndmGenerate } { puts $of "gtr_gen_ndm -block_name $block_name -lef_file $block_name.lef -lib_file $block_name.lib -tech_node $tech_node\n" }
 	   } else {
           # count lambs actually produced (above it more of a recipe to produce in the future)
@@ -392,7 +401,7 @@ proc gtr_lamb_gen_views { args } {
           ## eventually, below should loop over corners
 	       set ndmlib [gtr_lamb_gen_lib -block_name $block_name -data_depth $depth -data_width $width -tech_node $tech_node -oc_type S_M40 -voltage 0.675 -filelistVar filelist]
 		    set ndmlef [gtr_lamb_gen_lef -block_name $block_name -data_depth $depth -data_width $width -tech_node $tech_node -filelistVar filelist]
-		    gtr_lamb_gen_behav_sv -block_name $block_name -data_depth $depth -data_width $width -filelistVar filelist
+		    gtr_lamb_gen_behav_sv -block_name $block_name -data_depth $depth -data_width $width -filelistVar filelist -ftr_value $flowthrough
 		    if { $ndmGenerate } {
              gtr_gen_ndm -block_name $block_name -lef_file $ndmlef -process_label ssgnp -lib_file $ndmlib -tech_node $tech_node -filelistVar filelist
           }
@@ -422,6 +431,7 @@ proc gtr_lamb_gen_views { args } {
 define_proc_attributes gtr_lamb_gen_views \
     -info "Generate set of views for Lambs" \
     -define_args {
+        {-flow_through "Make views for flow-through LAMB(s)" "" boolean optional }
 	{-all "Loop through all the default Lamb sizes" "" boolean optional}
 	{-netbatch "Run jobs striped using netbatch" "" boolean optional}
 	{-data_width "Specify a single data width for the Lamb(s)" "<data_width>" int optional}

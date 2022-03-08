@@ -35,10 +35,11 @@ proc gtr_lamb_gen_behav_sv { args } {
     } else {
         set verbose 0
     }
+    set flowthrough $arg(-ftr_value)
     set dir verilog
     file mkdir $dir
     set fname ${dir}/$arg(-block_name).sv
-    echo "INFO: $proc_name, Generating SV view: $fname"
+    echo "INFO: $proc_name, Generating SV view: $fname, Flowthrough $flowthrough"
 
     if { [info exists arg(-filelistVar) ] } {
         upvar $arg(-filelistVar) fileList
@@ -86,13 +87,17 @@ proc gtr_lamb_gen_behav_sv { args } {
     puts $of "    #("
     puts $of "        parameter DEPTH=$depth,"
     puts $of "        parameter DWIDTH=$width,"
-    puts $of "        parameter AWIDTH=\$clog2(DEPTH),"
-    puts $of "        parameter X_ON_NOT_REN=1"
+    puts $of "        parameter AWIDTH=\$clog2(DEPTH)"
+    if { $flowthrough == 0 } {
+        puts $of "        ,parameter X_ON_NOT_REN=1"
+    }
     puts $of "    )"
     puts $of "("
     puts $of "    input  logic clk,"
-    puts $of "    input  logic wen,"
-    puts $of "    input  logic ren,"
+    puts $of "    input  logic wen"
+    if { $flowthrough == 0 } {
+        puts $of "    ,input  logic ren"
+    }
     puts $of "    input  logic \[AWIDTH-1:0\] radr,"
     puts $of "    input  logic \[AWIDTH-1:0\] wadr,"
     puts $of "    input  logic \[DWIDTH-1:0\] wdata,"
@@ -105,22 +110,32 @@ proc gtr_lamb_gen_behav_sv { args } {
     puts $of "    output logic [1:0] dft__core_so"
     puts $of ");"
     puts $of "    logic \[DEPTH-1:0\]\[DWIDTH-1:0\] mem_array;"
-    puts $of "    logic                         do_x;\n"
+    if { $flowthrough == 0 } {
+        puts $of "    logic                         do_x;\n"
+    }
     puts $of "    // write"
     puts $of "    always_ff @(posedge clk) begin"
     puts $of "        if (wen)"
     puts $of "            mem_array\[wadr\] <= wdata;"
     puts $of "    end\n"
-    puts $of "	  logic \[AWIDTH-1:0\] radr_int;"
-    puts $of "    always_ff @(posedge clk) begin"
-    puts $of "        if (ren) begin"
-    puts $of "            radr_int <= radr;"
-    puts $of "            do_x <= '0;"
-    puts $of "    end"
-    puts $of "    else"
-    puts $of "        do_x <= X_ON_NOT_REN;"
-    puts $of "    end"
-    puts $of "    assign dout = do_x ? {DWIDTH{1'bx}} : mem_array\[radr_int\];\n"
+    if { $flowthrough == 0 } {
+        puts $of "	  logic \[AWIDTH-1:0\] radr_int;"
+        puts $of "    always_ff @(posedge clk) begin"
+        puts $of "        if (ren) begin"
+        puts $of "            radr_int <= radr;"
+        puts $of "            do_x <= '0;"
+        puts $of "    end"
+        puts $of "    else"
+        puts $of "        do_x <= X_ON_NOT_REN;"
+        puts $of "    end"
+        puts $of "    assign dout = do_x ? {DWIDTH{1'bx}} : mem_array\[radr_int\];\n"
+    } else {
+        puts $of "	  logic \[AWIDTH-1:0\] radr_int;"
+        puts $of "        assign radr_int = radr;"
+        puts $of ""
+        puts $of "        assign dout = mem_array\[radr_int\];"
+        
+    }
     puts $of "endmodule\n"
     puts $of "// synthesis translate_on\n"
     puts $of "`default_nettype wire"
@@ -130,6 +145,7 @@ proc gtr_lamb_gen_behav_sv { args } {
 define_proc_attributes gtr_lamb_gen_behav_sv \
     -info "Utility to generate Lamb Behavioural LAMB System Verilog Module" \
     -define_args {
+      {-ftr_value "Specify flow-through or not" "int" int required}
       {-block_name "Specify memory block name" "String" string required}
       {-data_depth "Depth of the memory in words/entries(layout x direction)" "int" int required}
       {-data_width "Data bus width of the memory in bits(layout y direction)" "int" int required}
