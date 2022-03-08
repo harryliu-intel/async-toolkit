@@ -8,6 +8,7 @@
 # the mux_noglitch version is not glitchy
 output mux_glitch
 output mux_noglitch
+output mux_noglitch2
 
 # first, declare async inputs
 async a
@@ -15,6 +16,10 @@ async b
 
 # implement the _noglitch version the obvious way
 gate mux_noglitch = s & b | ~s & a
+
+gate mux_noglitch2 = x0 | x1
+gate x0 = s & b 
+gate x1 = ~s & a
 
 # for the glitchy version, use a more cumbersome (but still correct) implementation
 gate m00 = ~a & ~b
