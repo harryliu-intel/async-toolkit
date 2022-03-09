@@ -44,6 +44,7 @@ Module ("LibertyComponentSeqBuilder")
 Interface ("LibertyComponentChildren")
 
 Module ("LibertyParse")
+Module ("LibertyCsv")
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -68,6 +69,7 @@ SchemeStubs ("LibertyGroup")
 SchemeStubs ("LibertyComponentChildren")
 SchemeStubs ("LibertyComponentSeq")
 SchemeStubs ("LibertyParse")
+SchemeStubs ("LibertyCsv")
 
 % general M3 stubs needed by us
 SchemeStubs ("RTType") % needed for type reflection ops
