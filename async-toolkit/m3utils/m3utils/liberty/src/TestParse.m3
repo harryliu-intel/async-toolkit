@@ -85,9 +85,11 @@ BEGIN
 
   EVAL parser.parse();
 
-  WITH wr = NEW(TextWr.T).init() DO
-    parser.val.write(wr);
-    Debug.Out("Parsed:\n" & TextWr.ToText(wr))
+  IF Debug.GetLevel() >= 10 THEN
+    WITH wr = NEW(TextWr.T).init() DO
+      parser.val.write(wr);
+      Debug.Out("Parsed:\n" & TextWr.ToText(wr))
+    END
   END;
 
   IF doScheme THEN

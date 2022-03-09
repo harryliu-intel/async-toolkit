@@ -96,31 +96,35 @@
 ;; a filter that fails returns #f
 ;;
 
+(define (force-string x)
+  (if (string? x) x (stringify x)))
+
 (define (type-filter-proc m3-type)
-  (let* ((target-tc (lookup-typecode (stringify m3-type)))
+  (let* ((target-tc (lookup-typecode (force-string m3-type)))
          (res (lambda(x)(if (= (rttype-typecode x) target-tc)
                             x
-                            #f))))))
+                            #f))))
+    res))
 
 (define (subtype-filter-proc m3-type)
-  (let* ((target-tc (lookup-typecode (stringify m3-type)))
-         (res (lambda(x)(if (RTType.IsSubtype (rttype-typecode x) target-tc)
-                            x
-                            #f))))))
+  (let* ((target-tc (lookup-typecode (force-string m3-type))))
+    (lambda(x)(if (RTType.IsSubtype (rttype-typecode x) target-tc)
+                  x
+                  #f))))
 
 (define (and-filters . b)
   (lambda (x)
     (let loop ((p b))
-      (cond ((null? b) x)
-            (((car b) x) (loop (cdr b)))
+      (cond ((null? p) x)
+            (((car p) x) (loop (cdr p)))
             (else #f)))))
 
 (define (or-filters . b)
   (lambda (x)
     (let loop ((p b))
-      (cond ((null? b) #f)
-            (((car b) x) x)
-            (else (loop (cdr b)))))))
+      (cond ((null? p) #f)
+            (((car p) x) x)
+            (else (loop (cdr p)))))))
 
 (define (visit-filtered-comps c filter f)
   ;; apply f to all levels of syntax structure in postorder that match filter
@@ -142,8 +146,47 @@
     (and (RTType.IsSubtype (rttype-typecode x) tc)
          (equal? (get-syntax-field x tc fn) val))))
 
+(define (concrete-field-equal?-filter-proc fn val)
+  (let ((tc (lookup-typecode "LibertyComponent.T")))
+    (lambda(x)
+      (and (RTType.IsSubtype (rttype-typecode x) tc)
+           (equal? (get-concrete-field x fn) val)))))
+
+(define (named-simple-attr-filter name)
+  (and-filters
+   (subtype-filter-proc "LibertySimpleAttr.T")
+   (concrete-field-equal?-filter-proc 'ident name)))
 
 
+(define (filter-all lib filter)
+  (let* ((list '())
+         (visitor (lambda(x)
+                    (if (filter x)
+                        (set! list (cons x list))))))
+    (visit-comps lib visitor)
+    list))
 
 
+(define (test4)
+  (define pct-fall
+    (car (filter-all *lib*
+                     (named-simple-attr-filter "input_threshold_pct_fall"))))
+       )
+
+(define (list-concrete-fields obj)
+  (let ((c-tc (rttype-typecode obj)))
+    (modula-type-op c-tc 'list-fields obj)))
+
+
+(define (test5)
+  (define wr (TextWr.New))
+  ((obj-method-wrap *lib* 'LibertyGroup.T) 'write wr "")
+  (TextWr.ToText wr))
+
+(define (deep-copy obj)
+  ;; use pickles to make a deep copy for modifications
+  ;; works for any traced object (almost all M3 objects i.o.w.)
+  (let ((wr (TextWr.New)))
+    (Pickle.Write wr obj)
+    (Pickle.Read (TextRd.New (TextWr.ToText wr)))))
 

@@ -17,11 +17,16 @@ TYPE
     a : T;
   END;
 
-  Type = { Ident, Num };
+  IntLiteral = T OBJECT
+    val : INTEGER;
+  END;
+
+  FloatLiteral = T OBJECT
+    val : LONGREAL;
+  END;
 
   Const = T OBJECT
-    type : Type;
-    val  : REFANY;
+    val : TEXT;
   END;
 
 CONST OpSym = ARRAY Op OF CHAR { '+', '-', '*', '/', '-', '+' };

@@ -17,7 +17,7 @@ PROCEDURE Write(t : T; wr : Wr.T; pfx : TEXT)
     TYPECASE t OF
       Integer(i) => Wr.PutText(wr, Fmt.Int(i.val))
     |
-      Floating(i) => Wr.PutText(wr, Fmt.LongReal(i.val)    )
+      Floating(f) => Wr.PutText(wr, Fmt.LongReal(f.val)    )
     ELSE
       <*ASSERT FALSE*>
     END

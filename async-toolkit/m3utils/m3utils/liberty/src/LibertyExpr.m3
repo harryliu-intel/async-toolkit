@@ -5,6 +5,7 @@ IMPORT LibertyNumber;
 IMPORT Wr;
 IMPORT Thread;
 IMPORT LibertyComponentSeqBuilder AS SeqBuilder;
+IMPORT Fmt;
 
 REVEAL
   T = LibertyComponent.T BRANDED Brand OBJECT
@@ -45,12 +46,18 @@ PROCEDURE Uplus(a : T) : T =
   
 PROCEDURE Num(n : LibertyNumber.T) : T =
   BEGIN
-    RETURN NEW(Const, type := Type.Num, val := n)
+    TYPECASE n OF
+      LibertyNumber.Integer(i)  => RETURN NEW(IntLiteral,   val := i.val)
+    |
+      LibertyNumber.Floating(f) => RETURN NEW(FloatLiteral, val := f.val)
+    ELSE
+      <*ASSERT FALSE*>
+    END
   END Num;
 
 PROCEDURE Ident(n : TEXT) : T =
   BEGIN
-    RETURN NEW(Const, type := Type.Ident, val := n)
+    RETURN NEW(Const, val := n)
   END Ident;
 
 PROCEDURE Write(t : T; wr : Wr.T; pfx : TEXT)
@@ -70,15 +77,13 @@ PROCEDURE Write(t : T; wr : Wr.T; pfx : TEXT)
       u.a.write(wr, "")
     |
       Const(c)  =>
-      CASE c.type OF
-        Type.Num =>
-        WITH num = NARROW(c.val, LibertyNumber.T) DO
-          num.write(wr, "")
-        END
-      |
-        Type.Ident =>
-        Wr.PutText(wr, c.val)
-      END
+      Wr.PutText(wr, c.val)
+    |
+      IntLiteral(i) =>
+      Wr.PutText(wr, Fmt.Int(i.val))
+    |
+      FloatLiteral(f) =>
+      Wr.PutText(wr, Fmt.LongReal(f.val)    )
     ELSE
       <*ASSERT FALSE*>
     END
@@ -91,12 +96,8 @@ PROCEDURE Children(t : T) : SeqBuilder.T =
     |
       Unary(u)  => RETURN SeqBuilder.BuildSeq(u.a)
     |
-      Const(c) =>
-      CASE c.type OF
-        Type.Num => RETURN SeqBuilder.BuildSeq(c.val)
-      |
-        Type.Ident => RETURN SeqBuilder.BuildSeq()
-      END
+      Const, IntLiteral, FloatLiteral =>
+      RETURN SeqBuilder.BuildSeq()
     ELSE
       <*ASSERT FALSE*>
     END
