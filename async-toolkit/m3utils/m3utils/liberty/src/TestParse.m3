@@ -64,7 +64,7 @@ BEGIN
   Debug.Out("extra.size " & Int(extra.size()));
   
   VAR
-    path := extra.remlo();
+    path := extra.remhi(); (* last arg is lib file *)
   BEGIN
     IF TE(path, "-") THEN
       rd := Stdio.stdin

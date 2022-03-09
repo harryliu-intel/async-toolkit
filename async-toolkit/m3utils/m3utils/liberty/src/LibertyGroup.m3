@@ -7,9 +7,9 @@ IMPORT LibertyComponentSeqBuilder AS SeqBuilder;
 REVEAL
   T = Public BRANDED Brand OBJECT
   OVERRIDES
-    write    := Write;
-    children := Children;
-   END;
+    write      := Write;
+    children   := Children;
+  END;
 
 PROCEDURE Write(t : T; wr : Wr.T; pfx : TEXT)
   RAISES { Wr.Failure, Thread.Alerted }=

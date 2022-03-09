@@ -4,11 +4,11 @@ IMPORT LibertyComponent;
 TYPE
   T <: LibertyComponent.T;
 
-  String = T BRANDED OBJECT
+  String = T BRANDED Brand & " String" OBJECT
     val : TEXT;
   END;
 
-  Ident = T BRANDED OBJECT
+  Ident = T BRANDED Brand & " Ident" OBJECT
     val : TEXT;
   END;
 

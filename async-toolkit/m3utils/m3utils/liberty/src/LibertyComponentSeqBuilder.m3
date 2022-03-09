@@ -10,11 +10,11 @@ PROCEDURE BuildSeq(c0, c1, c2, c3, c4, c5 : REFANY) : LibertyComponentSeq.T =
     res := NEW(LibertyComponentSeq.T).init();
   BEGIN
     IF c0 # NIL THEN Stuff(res, c0) END;
-    IF c1 # NIL THEN Stuff(res, c0) END;
-    IF c2 # NIL THEN Stuff(res, c0) END;
-    IF c3 # NIL THEN Stuff(res, c0) END;
-    IF c4 # NIL THEN Stuff(res, c0) END;
-    IF c5 # NIL THEN Stuff(res, c0) END;
+    IF c1 # NIL THEN Stuff(res, c1) END;
+    IF c2 # NIL THEN Stuff(res, c2) END;
+    IF c3 # NIL THEN Stuff(res, c3) END;
+    IF c4 # NIL THEN Stuff(res, c4) END;
+    IF c5 # NIL THEN Stuff(res, c5) END;
     RETURN res
   END BuildSeq;
 

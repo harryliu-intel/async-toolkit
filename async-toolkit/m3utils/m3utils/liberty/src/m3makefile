@@ -45,7 +45,7 @@ Interface ("LibertyComponentChildren")
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-SchemeStubs("LibertyComponent")
+SchemeStubs ("LibertyComponent")
 SchemeStubs ("LibertyDefine")
 SchemeStubs ("LibertyDefineGroup")
 SchemeStubs ("LibertyBoolean")
@@ -60,6 +60,11 @@ SchemeStubs ("LibertyComplexAttr")
 SchemeStubs ("LibertySimpleAttr")
 SchemeStubs ("LibertyStatement")
 SchemeStubs ("LibertyGroup")
+
+SchemeStubs ("LibertyComponentChildren")
+SchemeStubs ("LibertyComponentSeq")
+
+SchemeStubs ("RTType") % needed for type reflection ops
 
 ExportSchemeStubs ("liberty")
 importSchemeStubs()

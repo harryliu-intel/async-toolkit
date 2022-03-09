@@ -3,7 +3,7 @@ IMPORT LibertyComponentChildren;
 IMPORT LibertyAttrValSeq;
 IMPORT Wr;
 IMPORT Thread;
-IMPORT LibertyComponentSeqBuilder AS SeqBuilder;
+IMPORT LibertyComponentSeq;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
@@ -33,9 +33,14 @@ PROCEDURE Write(t : T; wr : Wr.T; pfx : TEXT)
     END
   END Write;
 
-PROCEDURE Children(t : T) : SeqBuilder.T =
+PROCEDURE Children(t : T) : LibertyComponentSeq.T =
+  VAR
+    res := NEW(LibertyComponentSeq.T).init();
   BEGIN
-    RETURN SeqBuilder.BuildSeq(t)
+    FOR i := 0 TO t.params.size() - 1 DO
+      res.addhi(t.params.get(i))
+    END;
+    RETURN res
   END Children;
   
 BEGIN END LibertyParamList.
