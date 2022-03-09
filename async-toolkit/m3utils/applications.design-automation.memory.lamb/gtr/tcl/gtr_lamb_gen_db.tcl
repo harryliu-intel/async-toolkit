@@ -45,7 +45,8 @@ proc gtr_lamb_gen_db { args } {
    puts "INFO: $proc_name, Generating Compiled DB Liberty view: $dbfname from $libfname"
    global properties
    
-   exec lc_shell -no_home_init -output_log_file ${dbfname}.log -batch -x "read_lib $libfname; write_lib $block_name -output $dbfname"
+   set lc_shell_exec $::env(LIBRARYCOMPILER_DIR)/bin/lc_shell
+   exec $lc_shell_exec -no_home_init -output_log_file ${dbfname}.log -batch -x "read_lib $libfname; write_lib $block_name -output $dbfname"
    if { [info exists arg(-filelist_var) ] } {
         upvar $arg(-filelist_var) fileList
         set thisEntry [dict create]
