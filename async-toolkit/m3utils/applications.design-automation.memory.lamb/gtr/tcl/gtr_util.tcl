@@ -422,9 +422,11 @@ define_proc_attributes gtr_lamb_gen_views \
    {-data_width "Specify a single data width for the Lamb(s)" "<data_width>" int optional}
    {-min_data_width "Specify min data width to start building loop(default 2)" "<min_data_width>" int optional}
    {-max_data_width "Specify max data width to stop building loop(default 144)" "<max_data_width>" int optional}
+   {-min_data_depth "Specify min data depth to start building loop(default 4)" "<min_data_depth>" int optional}
+   {-max_data_depth "Specify max data depth to stop building loop(default 128)" "<max_data_depth>" int optional}
+   {-data_depth_increment "Specify increment to use when looping to generate lambs(default 2)" "<data_depth_increment>" int optional}
    {-data_width_increment "Specify increment to use when looping to generate lambs(default 2)" "<data_width_increment>" int optional}
    {-data_depth "Specify a single data depth for the Lamb(s)" "<data_depth>" int optional}
-   {-min_data_depth "Specify min data depth to start building loop(default 4)" "<min_data_depth>" int optional}
    {-tech_node "Specify tech node (default n3b)" "AnOos" one_of_string {optional {values {"n3b" "n3e" "n5"}}}}
    {-lamb_type "Specify lamb type (default )" "AnOos" one_of_string {optional {values {"n3bhd" "n3ehd" "n5hd"}}}}
    {-variant_type "Specify variant type (default n3bhd)" "AnOos" one_of_string {optional {values {"n3bhd" "n3ehd" "n5hd"}}}}
