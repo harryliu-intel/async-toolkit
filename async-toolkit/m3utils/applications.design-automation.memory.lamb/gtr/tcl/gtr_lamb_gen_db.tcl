@@ -47,7 +47,7 @@ proc gtr_lamb_gen_db { args } {
    
    exec lc_shell -no_home_init -output_log_file ${dbfname}.log -batch -x "read_lib $libfname; write_lib $block_name -output $dbfname"
    if { [info exists arg(-filelist_var) ] } {
-        upvar $arg(-filelistVar) fileList
+        upvar $arg(-filelist_var) fileList
         set thisEntry [dict create]
         dict set thisEntry path $dbfname
         dict set thisEntry nda_protection_level front_end
