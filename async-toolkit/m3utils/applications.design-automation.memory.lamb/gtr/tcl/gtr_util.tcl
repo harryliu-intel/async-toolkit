@@ -386,7 +386,7 @@ proc gtr_lamb_gen_views { args } {
         set oc_type S_M40
         set voltage 0.675
         set ndmlib [gtr_lamb_gen_lib -block_name $block_name -data_depth $depth -data_width $width -tech_node $tech_node -oc_type $oc_type -voltage $voltage -filelistVar filelist]
-        set snpsdb [gtr_lamb_gen_db -block_name $block_name -lib_file $ndmlib -oc_type $oc_type -voltage $voltage -filelistVar filelist]		    
+        set snpsdb [gtr_lamb_gen_db -block_name $block_name -lib_file $ndmlib -oc_type $oc_type -voltage $voltage -filelist_var filelist]    
         set ndmlef [gtr_lamb_gen_lef -block_name $block_name -data_depth $depth -data_width $width -tech_node $tech_node -filelistVar filelist]
         gtr_lamb_gen_behav_sv -block_name $block_name -data_depth $depth -data_width $width -filelistVar filelist
         if { $ndmGenerate } {

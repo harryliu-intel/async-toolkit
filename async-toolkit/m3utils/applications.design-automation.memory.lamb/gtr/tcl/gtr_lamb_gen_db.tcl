@@ -32,18 +32,21 @@ proc gtr_lamb_gen_db { args } {
    set libfname $arg(-lib_file)
    set block_name $arg(-block_name)
    if { ! [file exists $libfname] } {
-      puts "FATAL: $proc_name, $libfname does not exist"
-      exit 1
+      error "$proc_name, $libfname does not exist"
    }
    
    set dbfname timing_snps/${block_name}_[gtr_cornerSuffix $arg(-oc_type) $arg(-voltage)].db
    set dbdir [file dirname $dbfname]
+   if { [file exists $dbfname] } {
+      puts "INFO: $proc_name, $dbfname already exists, deleting to create new content"
+      file delete $dbfname
+   }
    file mkdir $dbdir
    puts "INFO: $proc_name, Generating Compiled DB Liberty view: $dbfname from $libfname"
    global properties
    
    exec lc_shell -no_home_init -output_log_file ${dbfname}.log -batch -x "read_lib $libfname; write_lib $block_name -output $dbfname"
-   if { [info exists arg(-filelistVar) ] } {
+   if { [info exists arg(-filelist_var) ] } {
         upvar $arg(-filelistVar) fileList
         set thisEntry [dict create]
         dict set thisEntry path $dbfname
@@ -67,9 +70,9 @@ define_proc_attributes gtr_lamb_gen_db \
     -info "Utility to generate Synopsys .DB Memory collaterals" \
     -define_args {
    {-block_name "Specify memory name" "<block_name>" string required}	
-	{-lib_file "Specify liberty file name" "<liberty_name>" string required}
-	{-oc_type "Operating condition" "AnOos" one_of_string {required {values {"S_125" "S_M40" "S_0" "F_125" "F_M40" "F_0" "T_25" "T_85" }}}}
-	{-voltage "Voltage condition" "voltage" string required}
-   {-filelistVar "Update filelist for manifest.xml" "" string optional}
-	{-debug "Report additional logging for debug purposes" "" boolean optional}
+   {-lib_file "Specify liberty file name" "<liberty_name>" string required}
+   {-oc_type "Operating condition" "AnOos" one_of_string {required {values {"S_125" "S_M40" "S_0" "F_125" "F_M40" "F_0" "T_25" "T_85" }}}}
+   {-voltage "Voltage condition" "voltage" string required}
+   {-filelist_var "Update filelist for manifest.xml" "" string optional}
+   {-debug "Report additional logging for debug purposes" "" boolean optional}
 }
