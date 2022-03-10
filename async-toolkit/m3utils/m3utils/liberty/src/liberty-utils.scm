@@ -112,6 +112,12 @@
                   x
                   #f))))
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; ops on filters themselves
+;;
+
 (define (and-filters . b)
   (lambda (x)
     (let loop ((p b))
@@ -125,6 +131,23 @@
       (cond ((null? p) #f)
             (((car p) x) x)
             (else (loop (cdr p)))))))
+
+(define (not-filter f)
+  (lambda(x)
+    (if (f x) #f x)))
+
+(define (field-filter-proc obj-filter fn field-filter)
+  ;; pick an object that matches obj-filter and a field within that matches
+  ;; field-filter
+  ;; returns the object containing the field
+  (lambda(x)
+    (if (and (obj-filter x)
+             (let ((fv (get-concrete-field x fn)))
+               (field-filter fv)))
+        x
+        #f)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (visit-filtered-comps c filter f)
   ;; apply f to all levels of syntax structure in postorder that match filter
