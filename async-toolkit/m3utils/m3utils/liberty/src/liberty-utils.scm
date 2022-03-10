@@ -124,7 +124,6 @@
 (define (=-filter value)
   (equality-filter = value))
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; ops on filters themselves
@@ -201,7 +200,6 @@
    (subtype-filter-proc "LibertySimpleAttr.T")
    (concrete-field-equal?-filter-proc 'ident name)))
 
-
 (define (filter-all lib filter)
   (let* ((list '())
          (visitor (lambda(x)
@@ -210,22 +208,17 @@
     (visit-comps lib visitor)
     (reverse list)))
 
-
-(define (test4)
-  (define pct-fall
-    (car (filter-all *lib*
-                     (named-simple-attr-filter "input_threshold_pct_fall"))))
-       )
-
 (define (list-fields obj)
   (let ((c-tc (rttype-typecode obj)))
     (modula-type-op c-tc 'list-fields obj)))
 
+(define (list-methods obj)
+  (let ((c-tc (rttype-typecode obj)))
+    (modula-type-op c-tc 'list-methods obj)))
 
-(define (test5)
-  (define wr (TextWr.New))
-  ((obj-method-wrap *lib* 'LibertyGroup.T) 'write wr "")
-  (TextWr.ToText wr))
+(define (call-method obj mn . args)
+  (let ((c-tc (rttype-typecode obj)))
+    (modula-type-op c-tc 'call-method obj mn args)))
 
 (define (deep-copy obj)
   ;; use pickles to make a deep copy for modifications
@@ -239,3 +232,64 @@
   ((obj-method-wrap comp 'LibertyComponent.T) 'write wr "")
   (TextWr.ToText wr))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (test4)
+  (define pct-fall
+    (car (filter-all *lib*
+                     (named-simple-attr-filter "input_threshold_pct_fall"))))
+       )
+
+(define (test5)
+  (define wr (TextWr.New))
+  ((obj-method-wrap *lib* 'LibertyGroup.T) 'write wr "")
+  (TextWr.ToText wr))
+
+
+(define (test6)
+  (get-field (get-field (get-field (last complex-attrs) 'head) 'params) 'params)
+)
+
+(define (name-to-arcs nm)
+  (let ((arcs (TextUtils.Shatter nm "." "" #f)))
+    (let loop ((p arcs)
+               (res '()))
+      (if (null? p) (reverse res) (loop (get-field p 'tail)
+                                        (cons (get-field p 'head) res))))))
+
+(define (get-field-r obj fn)
+  (let loop ((arcs (name-to-arcs (force-string fn)))
+             (res obj))
+    (if (null? arcs)
+        res
+        (loop (cdr arcs) (get-field res (string->symbol (car arcs)))))))
+
+(define *e* '())
+(define *f* '())
+(define *g* '())
+
+(define (set-field-r! obj fn val)
+  (let loop ((arcs (name-to-arcs (force-string fn)))
+             (res obj))
+    (if (null? (cdr arcs))
+        (begin
+          (set! *e* res)
+          (set! *f* (car arcs))
+          (set! *g* val)
+          (set-field! res (string->symbol (car arcs)) val)
+          )
+        (loop (cdr arcs) (get-field res (string->symbol (car arcs)))))))
+
+(define (test7)
+  (define complex-attrs
+    (filter-all *lib* (subtype-filter-proc 'LibertyComplexAttr.T))))
+
+(define (test8)
+  
+  (get-field (get-field (last complex-attrs) 'head) 'params)
+
+  (get-field-r (last complex-attrs) 'head.params)
+
+  (get-field-r (last complex-attrs) 'head.params.params)
+
+  )

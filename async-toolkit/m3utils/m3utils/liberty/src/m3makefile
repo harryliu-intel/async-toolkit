@@ -65,6 +65,9 @@ SchemeStubs ("LibertySimpleAttr")
 SchemeStubs ("LibertyStatement")
 SchemeStubs ("LibertyGroup")
 
+% stubs for complex types
+SchemeStubs ("LibertyAttrValSeq")
+
 % stubs for utility code
 SchemeStubs ("LibertyComponentChildren")
 SchemeStubs ("LibertyComponentSeq")
@@ -82,6 +85,10 @@ SchemeStubs ("FileRd")
 SchemeStubs ("Rd")
 
 SchemeStubs ("Pickle")
+
+SchemeStubs ("TextUtils")
+SchemeStubs ("Text")
+SchemeStubs ("TextList")
 
 ExportSchemeStubs ("liberty")
 importSchemeStubs()
