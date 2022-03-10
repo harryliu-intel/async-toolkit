@@ -2,20 +2,15 @@ MODULE LibertyBoolean;
 IMPORT Thread;
 IMPORT Wr;
 
-REVEAL
-  T = Public BRANDED Brand OBJECT
-  OVERRIDES
-    write := Write;
-  END;
 
 PROCEDURE Write(t : T; wr : Wr.T; pfx : TEXT)
-  RAISES { Wr.Failure, Thread.Alerted }=
+  RAISES { Wr.Failure, Thread.Alerted } =
   BEGIN
     Wr.PutText(wr, pfx);
-    CASE t.val OF
-      FALSE => Wr.PutText(wr, "false")
+    CASE t OF
+      T.F => Wr.PutText(wr, "false")
     |
-      TRUE => Wr.PutText(wr, "true")
+      T.T => Wr.PutText(wr, "true")
     END
   END Write;
   

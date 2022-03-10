@@ -4,6 +4,7 @@ IMPORT LibertyComponent;
 IMPORT Wr;
 IMPORT Thread;
 IMPORT LibertyComponentSeqBuilder AS SeqBuilder;
+IMPORT LibertyBoolean;
 
 REVEAL
   T = LibertyComponent.T BRANDED Brand OBJECT
@@ -20,7 +21,7 @@ PROCEDURE Write(t : T; wr : Wr.T; pfx : TEXT)
       String(s) =>
       Wr.PutChar(wr, '"'); Wr.PutText(wr, s.val); Wr.PutChar(wr, '"')
     |
-      Boolean(b) => b.val.write(wr, "")
+      Boolean(b) => LibertyBoolean.Write(b.val, wr, "")
     |
       Expr(x) => x.val.write(wr, "")
     ELSE
@@ -31,7 +32,7 @@ PROCEDURE Write(t : T; wr : Wr.T; pfx : TEXT)
 PROCEDURE Children(t : T) : SeqBuilder.T =
   BEGIN
     TYPECASE t OF
-      Boolean(b) => RETURN SeqBuilder.BuildSeq(b.val)
+      Boolean    => RETURN SeqBuilder.BuildSeq()
     |
       Expr(x)    => RETURN SeqBuilder.BuildSeq(x.val)
     |

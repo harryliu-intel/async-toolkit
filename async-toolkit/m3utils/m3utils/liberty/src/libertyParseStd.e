@@ -120,16 +120,16 @@ attr_val: { val : LibertyAttrVal.T }
   s_or_i { $$ := NEW(LibertyAttrVal.SorI, val := $1) }
   colon { $$ := NEW(LibertyAttrVal.Colon, x := $1, y := $2) }
   true { $$ := NEW(LibertyAttrVal.Boolean,
-                   val := NEW(LibertyBoolean.T, val := TRUE)) }
+                   val := LibertyBoolean.True) }
   false { $$ := NEW(LibertyAttrVal.Boolean,
-                   val := NEW(LibertyBoolean.T, val := FALSE)) }
+                   val := LibertyBoolean.False) }
 
 attr_val_expr: {val : LibertyAttrValExpr.T }
   string { $$ := NEW(LibertyAttrValExpr.String, val := $1) }
   true { $$ := NEW(LibertyAttrValExpr.Boolean,
-                   val := NEW(LibertyBoolean.T, val := TRUE)) }
+                   val := LibertyBoolean.True) }
   false { $$ := NEW(LibertyAttrValExpr.Boolean,
-                   val := NEW(LibertyBoolean.T, val := FALSE)) }
+                   val := LibertyBoolean.False) }
   expr { $$ := NEW(LibertyAttrValExpr.Expr, val := $1) }
 
 expr: { val : LibertyExpr.T }
