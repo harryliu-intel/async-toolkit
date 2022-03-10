@@ -112,6 +112,18 @@
                   x
                   #f))))
 
+(define (equality-filter eq? value)
+  (lambda (x) (if (eq? x value) x #f)))
+
+(define (equal?-filter value)
+  (equality-filter equal? value))
+
+(define (eq?-filter value)
+  (equality-filter eq? value))
+
+(define (=-filter value)
+  (equality-filter = value))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -142,7 +154,7 @@
   ;; returns the object containing the field
   (lambda(x)
     (if (and (obj-filter x)
-             (let ((fv (get-concrete-field x fn)))
+             (let ((fv (get-field x fn)))
                (field-filter fv)))
         x
         #f)))
@@ -160,9 +172,18 @@
   ;; x is an instance of a subtype of tc
   (modula-type-op tc 'get-field x fn))
 
-(define (get-concrete-field x fn)
+(define (get-field x fn)
   ;; requires that we have stubs for the concrete type
   (modula-type-op (rttype-typecode x) 'get-field x fn))
+
+(define (set-syntax-field! x tc fn val)
+  ;; requires that we have stubs for tc and that
+  ;; x is an instance of a subtype of tc
+  (modula-type-op tc 'set-field! x fn val))
+
+(define (set-field! x fn val)
+  ;; requires that we have stubs for the concrete type
+  (modula-type-op (rttype-typecode x) 'set-field! x fn val))
 
 (define (field-equal?-filter-proc tc fn val)
   (lambda(x)
@@ -173,7 +194,7 @@
   (let ((tc (lookup-typecode "LibertyComponent.T")))
     (lambda(x)
       (and (RTType.IsSubtype (rttype-typecode x) tc)
-           (equal? (get-concrete-field x fn) val)))))
+           (equal? (get-field x fn) val)))))
 
 (define (named-simple-attr-filter name)
   (and-filters
@@ -187,7 +208,7 @@
                     (if (filter x)
                         (set! list (cons x list))))))
     (visit-comps lib visitor)
-    list))
+    (reverse list)))
 
 
 (define (test4)
@@ -196,7 +217,7 @@
                      (named-simple-attr-filter "input_threshold_pct_fall"))))
        )
 
-(define (list-concrete-fields obj)
+(define (list-fields obj)
   (let ((c-tc (rttype-typecode obj)))
     (modula-type-op c-tc 'list-fields obj)))
 
@@ -213,7 +234,7 @@
     (Pickle.Write wr obj)
     (Pickle.Read (TextRd.New (TextWr.ToText wr)))))
 
-(define (format-component comp)
+(define (format-comp comp)
   (define wr (TextWr.New))
   ((obj-method-wrap comp 'LibertyComponent.T) 'write wr "")
   (TextWr.ToText wr))
