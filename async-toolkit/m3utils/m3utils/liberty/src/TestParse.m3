@@ -39,13 +39,8 @@ PROCEDURE GetPaths(extras : TextSeq.T) : REF ARRAY OF Pathname.T =
 VAR
   pp       := NEW(ParseParams.T).init(Stdio.stderr);
   extra    := NEW(TextSeq.T).init();
-  rd       : Rd.T;
-  lexer    := NEW(libertyLexStd.T);
-  parser   := NEW(libertyParseStd.T);
-  doScheme := FALSE;
 BEGIN
   TRY
-    doScheme := pp.keywordPresent("-scm");
     pp.skipParsed();
     WITH n = NUMBER(pp.arg^) - pp.next DO
       FOR i := 0 TO n - 1 DO
@@ -63,46 +58,13 @@ BEGIN
 
   Debug.Out("extra.size " & Int(extra.size()));
   
-  VAR
-    path := extra.remhi(); (* last arg is lib file *)
-  BEGIN
-    IF TE(path, "-") THEN
-      rd := Stdio.stdin
-    ELSE
-      TRY
-        rd := FileRd.Open(path)
-      EXCEPT
-        OSError.E(x) =>
-        Debug.Error(F("?couldn't open input %s : OSError.E : %s",
-                      path,
-                      AL.Format(x)))
-      END
-    END
-  END;
-  
-  EVAL lexer.setRd(rd);
-  EVAL parser.setLex(lexer);
 
-  EVAL parser.parse();
-
-  IF Debug.GetLevel() >= 10 THEN
-    WITH wr = NEW(TextWr.T).init() DO
-      parser.val.write(wr);
-      Debug.Out("Parsed:\n" & TextWr.ToText(wr))
+  SchemeStubs.RegisterStubs();
+  TRY
+    WITH scm = NEW(SchemeM3.T).init(GetPaths(extra)^) DO
+      SchemeReadLine.MainLoop(NEW(ReadLine.Default).init(), scm)
     END
-  END;
-
-  IF doScheme THEN
-    SchemeStubs.RegisterStubs();
-    TRY
-      WITH scm = NEW(SchemeM3.T).init(GetPaths(extra)^) DO
-        scm.defineInGlobalEnv(SchemeSymbol.FromText("*lib*"), parser.val);
-        SchemeReadLine.MainLoop(NEW(ReadLine.Default).init(), scm)
-      END
-    EXCEPT
-      Scheme.E(err) => Debug.Error("Caught Scheme.E : " & err)
-    END
+  EXCEPT
+    Scheme.E(err) => Debug.Error("Caught Scheme.E : " & err)
   END
-
-  
 END TestParse.
