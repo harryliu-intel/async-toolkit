@@ -2008,6 +2008,9 @@
          (object-field-stubs 
           (env-map make-field-stubs object-types))
 
+         (object-method-stubs
+          (env-map make-method-stubs object-types))
+
          (object-registrations 
           (env-map make-object-registrations object-types))
          
@@ -2050,6 +2053,8 @@
       dnl
       object-field-stubs
       dnl
+      object-method-stubs
+      dnl
       ref-record-field-stubs
       dnl
       ref-record-ops
@@ -2091,6 +2096,34 @@
   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (make-method-stubs type env)
+   (let ((m3tn (type-formatter type env))
+        (m3ti (m3type->m3identifier (type-formatter type env)))
+        (imports (env 'get 'imports))
+        (methods (visible-methods type))
+        )
+
+     (define (make-method-lister mname)
+      (string-append "    res := SchemeUtils.Cons("(make-symbol mname env)", res);" dnl)
+      )
+
+    (imports 'insert! 'SchemeUtils)
+    (imports 'insert! 'Scheme)
+    (imports 'insert! 'SchemeObject)
+
+
+    (string-flatten
+     "PROCEDURE MethodList_" m3ti "(interp : Scheme.T; obj : SchemeObject.T; args : SchemeObject.T) : SchemeObject.T RAISES { Scheme.E } =" dnl
+     "  VAR" dnl
+     "    res : SchemePair.T := NIL;" dnl
+     "    narrow : " m3tn ";" dnl
+     "  BEGIN" dnl
+     (map make-method-lister (methods 'keys))
+     "    RETURN res" dnl
+     "  END MethodList_" m3ti ";" dnl
+     dnl
+)))
 
 (define (make-field-stubs type env)
   (let ((m3tn (type-formatter type env))
@@ -2872,12 +2905,16 @@
   (let* ((m3tn  (type-formatter obj-type env))
          (m3ti  (m3type->m3identifier m3tn))
 
+         (lister-name     (string-append "MethodList_" m3ti))
          (dispatcher-name (string-append "MethodDispatcher_" m3ti))
          )
 
     (string-flatten
      (make-an-op-registration obj-type 'call-method dispatcher-name env)
-     (make-ref-record-registrations obj-type env))))
+     (make-an-op-registration obj-type 'list-methods lister-name env)
+
+     ;; reuse everything from REF RECORD:
+     (make-ref-record-registrations obj-type env)))) 
 
 (define (make-ref-record-registrations obj-type env)
   (let* ((m3tn  (type-formatter obj-type env))
