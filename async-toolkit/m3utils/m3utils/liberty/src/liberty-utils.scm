@@ -70,9 +70,12 @@
 (define (dummy-arg-proc f)
   (lambda(x)(f)))
 
+(define (force-string x)
+  (if (string? x) x (stringify x)))
+
 (define (type-filter lib m3-type)
   (let* ((list '())
-         (target-tc (lookup-typecode (stringify m3-type)))
+         (target-tc (lookup-typecode (force-string m3-type)))
          (visitor (lambda(x)
                     (if (= (rttype-typecode x) target-tc)
                         (set! list (cons x list))))))
@@ -81,7 +84,7 @@
 
 (define (subtype-filter lib m3-type)
   (let* ((list '())
-         (target-tc (lookup-typecode (stringify m3-type)))
+         (target-tc (lookup-typecode (force-string m3-type)))
          (visitor (lambda(x)
                     (if (RTType.IsSubtype (rttype-typecode x) target-tc)
                         (set! list (cons x list))))))
@@ -95,9 +98,6 @@
 ;; a filter that succeeds returns the input object
 ;; a filter that fails returns #f
 ;;
-
-(define (force-string x)
-  (if (string? x) x (stringify x)))
 
 (define (type-filter-proc m3-type)
   (let* ((target-tc (lookup-typecode (force-string m3-type)))
@@ -189,4 +189,9 @@
   (let ((wr (TextWr.New)))
     (Pickle.Write wr obj)
     (Pickle.Read (TextRd.New (TextWr.ToText wr)))))
+
+(define (format-component comp)
+  (define wr (TextWr.New))
+  ((obj-method-wrap comp 'LibertyComponent.T) 'write wr "")
+  (TextWr.ToText wr))
 
