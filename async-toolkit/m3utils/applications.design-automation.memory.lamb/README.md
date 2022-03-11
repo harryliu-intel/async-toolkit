@@ -93,11 +93,10 @@ skip the archive step (but still perform the SHIP quality checks).
 - [Cheetah Design System](https://goto/cheetah)
 - [SHIP Tool](http://goto/ship)
 
-###   Idea and architecture: Pat Bosshart, Barefoot/Intel
-
-###   N3 and N5 implementation: Paul Donehue, Intel 
-
-###   Characterization and prediction tools: Mika Nystrom, Intel
+###  Credits
+- Idea and architecture: Pat Bosshart
+- N3 and N5 implementation: Paul Donehue @pdonehue
+- Characterization and prediction tools: Mika Nystrom @mikanystrom-intel
 
 ### Copyright
 Copyright 2021 - 2022 Intel Corporation All Rights Reserved.
