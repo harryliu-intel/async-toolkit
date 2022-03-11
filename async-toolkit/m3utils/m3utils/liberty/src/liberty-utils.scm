@@ -354,4 +354,33 @@
   (define new-values (map add-1 old-values))
 
   (set-field! x idx (LibertyCsv.ToCsv new-values))
+
+ 
   )
+
+(define (process-param-list! param-list f)
+  (let* ((seq (get-field param-list 'params))
+         (n (call-method seq 'size)))
+    (let loop ((i 0))
+      (if (= i n)
+          'ok
+          (begin
+            (let* ((m           (call-method seq 'get i))
+                   (old-values  (LibertyCsv.ToList (get-field m 'val.val)))
+                   (new-values  (map f old-values))
+                   (new-csv     (LibertyCsv.ToCsv new-values)))
+              (set-field!  m 'val.val new-csv))
+            (loop (+ i 1))
+            )
+          ))))
+
+(define (modify-named-group-value-list! lib named f)
+  (let* ((filter    (named-group-filter-proc named))
+         (groups    (filter-all lib filter))
+         (base      'statements[0].head.params)
+         (modifier  (lambda(group)
+                      (process-param-list! (get-field group base) f))))
+    (map modifier groups)
+    'ok))
+
+
