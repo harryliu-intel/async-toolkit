@@ -6,7 +6,9 @@ IMPORT Refany;
 TYPE
   T <: Public;
 
-  Public = OBJECT METHODS
+  Public = OBJECT
+    parent : T;
+  METHODS
     write(wr : Wr.T; lineStart := "") RAISES { Wr.Failure, Thread.Alerted };
     getId() : CARDINAL;
 

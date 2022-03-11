@@ -10,7 +10,6 @@ IMPORT Word;
 REVEAL
   T = LibertyComponentChildren.Private BRANDED Brand OBJECT
     id : REF CARDINAL := NIL;
-    parent : T := NIL;
   OVERRIDES
     getId           := DefaultId;
     children        := DefaultChildren;

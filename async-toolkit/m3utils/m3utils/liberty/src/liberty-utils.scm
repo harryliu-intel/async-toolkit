@@ -153,7 +153,7 @@
   ;; returns the object containing the field
   (lambda(x)
     (if (and (obj-filter x)
-             (let ((fv (get-field x fn)))
+             (let ((fv (get-field-s x fn)))
                (field-filter fv)))
         x
         #f)))
@@ -171,7 +171,7 @@
   ;; x is an instance of a subtype of tc
   (modula-type-op tc 'get-field x fn))
 
-(define (get-field x fn)
+(define (get-field-s x fn)
   ;; requires that we have stubs for the concrete type
   (modula-type-op (rttype-typecode x) 'get-field x fn))
 
@@ -180,20 +180,24 @@
   ;; x is an instance of a subtype of tc
   (modula-type-op tc 'set-field! x fn val))
 
-(define (set-field! x fn val)
+(define (set-field-s! x fn val)
   ;; requires that we have stubs for the concrete type
   (modula-type-op (rttype-typecode x) 'set-field! x fn val))
 
-(define (field-equal?-filter-proc tc fn val)
+(define (syntax-field-equal?-filter-proc tc fn val)
   (lambda(x)
-    (and (RTType.IsSubtype (rttype-typecode x) tc)
-         (equal? (get-syntax-field x tc fn) val))))
+    (if (and (RTType.IsSubtype (rttype-typecode x) tc)
+             (equal? (get-syntax-field x tc fn) val))
+        x
+        #f)))
 
-(define (concrete-field-equal?-filter-proc fn val)
+(define (field-equal?-filter-proc fn val)
   (let ((tc (lookup-typecode "LibertyComponent.T")))
     (lambda(x)
-      (and (RTType.IsSubtype (rttype-typecode x) tc)
-           (equal? (get-field x fn) val)))))
+      (if (and (RTType.IsSubtype (rttype-typecode x) tc)
+               (equal? (get-field x fn) val))
+          x
+          #f))))
 
 (define (named-simple-attr-filter name)
   (and-filters
@@ -247,38 +251,57 @@
 
 
 (define (test6)
-  (get-field (get-field (get-field (last complex-attrs) 'head) 'params) 'params)
+  (get-field-s (get-field-s (get-field-s (last complex-attrs) 'head) 'params) 'params)
 )
 
 (define (name-to-arcs nm)
   (let ((arcs (TextUtils.Shatter nm "." "" #f)))
     (let loop ((p arcs)
                (res '()))
-      (if (null? p) (reverse res) (loop (get-field p 'tail)
-                                        (cons (get-field p 'head) res))))))
+      (if (null? p) (reverse res) (loop (get-field-s p 'tail)
+                                        (cons (get-field-s p 'head) res))))))
 
-(define (get-field-r obj fn)
+(define (old-get-field obj fn)
   (let loop ((arcs (name-to-arcs (force-string fn)))
              (res obj))
     (if (null? arcs)
         res
-        (loop (cdr arcs) (get-field res (string->symbol (car arcs)))))))
+        (loop (cdr arcs) (get-field-s res (string->symbol (car arcs)))))))
+
+(define (get-field obj fn)
+  (let loop ((arcs (LibertyArcs.Parse (force-string fn)))
+             (res obj))
+    (if (null? arcs)
+        res
+        (loop (cdr arcs)
+              (cond ((eq? (caar arcs) 'field)
+                     (get-field-s res (cdar arcs)))
+                    (else
+                     (call-method res (caar arcs) (cdar arcs))))))))
 
 (define *e* '())
 (define *f* '())
 (define *g* '())
 
-(define (set-field-r! obj fn val)
-  (let loop ((arcs (name-to-arcs (force-string fn)))
+(define (set-field! obj fn val)
+  (let loop ((arcs (LibertyArcs.Parse (force-string fn)))
              (res obj))
     (if (null? (cdr arcs))
         (begin
           (set! *e* res)
           (set! *f* (car arcs))
           (set! *g* val)
-          (set-field! res (string->symbol (car arcs)) val)
-          )
-        (loop (cdr arcs) (get-field res (string->symbol (car arcs)))))))
+          (cond ((eq? (caar arcs) 'field)
+                 (set-field-s! res (cdar arcs) val))
+                ((eq? (caar arcs) 'field)
+                 (call-method res 'put (cdar arcs) val))
+                (else "Unknown search method " (caar arcs))))
+          
+        (loop (cdr arcs)
+              (cond ((eq? (caar arcs) 'field)
+                     (get-field-s res (cdar arcs)))
+                    (else
+                     (call-method res (caar arcs) (cdar arcs))))))))
 
 (define (test7)
   (define complex-attrs
@@ -286,10 +309,39 @@
 
 (define (test8)
   
-  (get-field (get-field (last complex-attrs) 'head) 'params)
+  (get-field-s (get-field-s (last complex-attrs) 'head) 'params)
 
-  (get-field-r (last complex-attrs) 'head.params)
+  (get-field (last complex-attrs) 'head.params)
 
-  (get-field-r (last complex-attrs) 'head.params.params)
+  (get-field (last complex-attrs) 'head.params.params)
 
+  )
+
+(define group-filter (subtype-filter-proc 'LibertyGroup.T))
+
+(define (named-group-filter-proc name)
+  (and-filters
+   (subtype-filter-proc 'LibertyGroup.T)
+   (field-equal?-filter-proc 'head.ident name)))
+                                 
+(define cell-fall-group-filter
+  (named-group-filter-proc "cell_fall"))
+
+(define (inspect comp)
+  (dis comp dnl)
+  (let ((fields (list-fields comp)))
+    (map (lambda(f)
+           (dis " ." f " : " (get-field comp f) dnl))
+         fields))
+  (let ((methods (list-methods comp)))
+    (map (lambda(m)
+           (dis " ." m "()" dnl))
+         methods))
+  'ok)
+
+
+(define (test9)
+  (define cell-falls (filter-all *lib* cell-fall-group-filter))
+  (define x (last cell-falls))
+  (list-methods (get-field x 'statements))
   )

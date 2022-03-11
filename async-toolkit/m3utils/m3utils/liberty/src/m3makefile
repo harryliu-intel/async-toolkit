@@ -45,6 +45,7 @@ Interface ("LibertyComponentChildren")
 
 Module ("LibertyParse")
 Module ("LibertyCsv")
+Module ("LibertyArcs")
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -71,8 +72,10 @@ SchemeStubs ("LibertyAttrValSeq")
 % stubs for utility code
 SchemeStubs ("LibertyComponentChildren")
 SchemeStubs ("LibertyComponentSeq")
+SchemeStubs ("LibertyStatementSeq")
 SchemeStubs ("LibertyParse")
 SchemeStubs ("LibertyCsv")
+SchemeStubs ("LibertyArcs")
 
 % general M3 stubs needed by us
 SchemeStubs ("RTType") % needed for type reflection ops
