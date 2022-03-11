@@ -1,8 +1,42 @@
 # LAtch-based Memory Blocks (LAMBs)
 _Intel NEX/CG/XFG_
+
+### Purpose and Intent
 This is implementation and various tools associated with size, power, and timing estimation of LAMBs. The intent of these
 circuits is to provide an area-efficient alternative for cases when the overhead of an SRAM would otherwise
 dictate flip-flop based storage.
+
+### Variants
+- 1r1w1c: Standard 1r1w, 1 clock implementation
+- 1ftr1w1c: 1r1w memory, 1 clock, with flow-through (i.e. unflopped output data). Under development.
+
+### Process Technology
+This work is being developed primarily for TSMC N3E process.
+
+### Supported Views
+The present state of the code is to generate 'placeholder' content to enable logic design and
+pipecleaning  physical design flows. This includes:
+
+- SV behavioral verilog
+- Liberty Files @ SSGNP, -40C
+- Synopsys DB files based on Liberty Files
+- LEF abstracts of rough pin positions
+- Synopsys NDM Abstracts Based on the LEF and Liberty Files
+
+### Views Under Development
+- Additional process corner, voltages and temperature combination
+- OASIS/GDSII Layout
+
+### Release Methodology
+Releases to broad silicon teams should always be referenceable back to a specific git point.
+Generally, only do releases against an annotated git tag, to ensure reproducibility. For example, to checkout the annotated tag lamb_0_0_2, you can do:
+
+```
+git clone https://github.com/intel-innersource/applications.design-automation.memory.lamb.git
+git co lamb_0_0_2
+```
+
+GitHub maintains a list of the [existing annotated tags](https://github.com/intel-innersource/applications.design-automation.memory.lamb/tags) for this project.
 
 ### Single LAMB product
 To produce a single LAMB requires Cheetah environment. Execute, for example:
@@ -24,8 +58,9 @@ ship.pl -block cdp_lamb_n3bhd_1r1w1c_4d_10b -tag testtag -ip_type hip -skip_stag
   -source ../cdp_lamb_n3bhd_1r1w1c_4d_10b
 ```
 
-Omit `-skip_stages archive` to actually perform the release to the $PROJ_ARCHIVE area. The recommended
-form is to use an arc tag based off of the Git state, for example `git describe`.
+Omit `-skip_stages archive` to actually perform the release to the $PROJ_ARCHIVE area. Use an arc tag based off
+of the Git state, for example `git describe` will provide a reference that would be a correct argument to
+`git checkout` in the future.
 
 ### Batch Production And 'SHIP'ing of LAMBs
 You can also batch up creation of LAMBs with the script provided in `$GTR_HOME/tcl/batchLambs.tcl`.
@@ -45,6 +80,7 @@ This describes a LAMB requirements of width 4, for depths 10, 12, and 14.
 To build up a task file for them, execute:
 
 ```
+git checkout <the git tag of the generator version you want>
 setenv GTR_HOME $PWD/gtr
 $GTR_HOME/tcl/batchLambs.tcl -lf lambs.txt -archive
 ```
