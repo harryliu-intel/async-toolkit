@@ -1,7 +1,9 @@
 #!/usr/intel/pkgs/tcl-tk/8.6.8/bin/tclsh
 
 # Generate Netbatch Feeder File to produce a collection of LAMBs
-proc produceLambs { lambList {taskname lambgen } } {
+# Validate these lambs with SHIP
+
+proc produceLambs { lambList {taskname lambgen } {tag testtag} { archive 0 } } {
    global cheetahProject
    global cheetahConfig
    global nbqueue
@@ -9,31 +11,45 @@ proc produceLambs { lambList {taskname lambgen } } {
    set tf [open ${taskname}.conf w]
    set toolset librarycompiler,fusioncompiler,cth_LR
    
-   puts $tf "Task ${taskname} {"
-   puts $tf " WorkArea [pwd]/BUILD"
+   puts $tf "CompositeTask ${taskname} {"
+   puts $tf " WorkArea [pwd]/BUILD/${taskname}"
    puts $tf " Queue ${nbqueue} { Qslot $qslot }"
-   puts $tf " Jobs {"
    foreach l $lambList {
       set width [dict get $l width]
       set depth [dict get $l depth]
       set type  [dict get $l type]
-      ## would be better to refactor naming convention to common place for
-      ## batching and production cases
+      
+      set cthSetup "/p/cth/bin/cth_psetup -p ${cheetahProject} -cfg ${cheetahConfig}.cth"
       set ward cdp_lamb_n3bhd_${type}_${depth}d_${width}b
       set lm_shell_cmd "icc2_lm_shell -batch -x 'source $::env(GTR_HOME)/tcl/gtr_main.tcl ; gtr_lamb_gen_views -data_width $width -data_depth $depth'" 
-      set cmd "    /p/cth/bin/cth_psetup -p ${cheetahProject} -cfg ${cheetahConfig}.cth -tool $toolset -ward $ward -cmd \"$lm_shell_cmd\""
+      set cmd "     $cthSetup -tool $toolset -ward $ward -cmd \"$lm_shell_cmd\""
+
+      puts $tf " JobsTask  build_$ward {"
+      puts $tf "   jobs { "
       puts $tf $cmd
+      puts $tf "   }"
+      puts $tf " }"
+      puts $tf " JobsTask  ship_$ward {"
+      puts $tf "   DependsOn build_${ward}\[OnSuccess\]"
+      puts $tf "   jobs { "
+      set shipcmd ship.pl -skip_prompt -block $ward -tag $tag -ip_type hip -no_viewgen -source ../$ward
+      if { !  $archive } {
+         append $shipcmd "-skip_stages archive"
+      }
+      puts $tf "      /p/cth/bin/cth_psetup -p ${cheetahProject} -cfg tfc_n3.cth -tool ship -ward ship_$ward -cmd \"$shipcmd"
+      puts $tf "   }"
+      puts $tf " }"
+
    }
-   puts $tf " }"
    puts $tf "}"
    close $tf
-   puts "Taskfile prepared. To execute it, eg: "
+   puts "Taskfile prepared. Please review it! To execute it, eg: "
    puts "  nbfeeder start --join --task ${taskname}.conf "
    puts "Once running, to see progress: https://nbflow.intel.com"
 }
 
 proc parseLambfile { lf } {
-   set if [open $lf r]
+   set if [open "|sort -u $lf" r+]
    set lamblist [list]
    while {[gets $if line]>=0} {   
       set vals [split $line]
@@ -76,6 +92,7 @@ set options {
    {maxdepth.arg  4  "use specified minimum depth"}
    {minwidth.arg  4  "use specified minimum depth"}
    {maxwidth.arg  4  "use specified minimum depth"}
+   {archive  "archive SHIP results to tag based on git configuration"}
 
 }
 set usage ": batchLambs.tcl \[options]\noptions:"
@@ -101,5 +118,5 @@ if {  [string length $params(lf)] > 0 } {
 }
 
 set wwdate [exec workweek -f %IYWW%IW.%w_%H.%M ]
-set taskname lambgen_[exec git describe]_$::env(USER)_${wwdate}
+set taskname lambgen_[exec git describe]_$::env(USER)_${wwdate} [exec git describe] $params(archive)
 produceLambs $lamblist $taskname
