@@ -9,6 +9,9 @@ TYPE
   Public = OBJECT METHODS
     write(wr : Wr.T; lineStart := "") RAISES { Wr.Failure, Thread.Alerted };
     getId() : CARDINAL;
+
+    makeParentLinks();
+    getParent() : T;
   END;
 
 CONST Brand = "LibertyComponent";

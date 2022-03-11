@@ -13,7 +13,12 @@ PROCEDURE Parse(rd : Rd.T) : LibertyComponent.T  RAISES { Rd.Failure } =
     EVAL parser.setLex(lexer);
     
     EVAL parser.parse();
-    RETURN parser.val
+
+    WITH res = parser.val DO
+      res.makeParentLinks();
+    
+      RETURN res
+    END
   END Parse;
 
 

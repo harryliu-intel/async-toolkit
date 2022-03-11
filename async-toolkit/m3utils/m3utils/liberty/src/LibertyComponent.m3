@@ -10,9 +10,12 @@ IMPORT Word;
 REVEAL
   T = LibertyComponentChildren.Private BRANDED Brand OBJECT
     id : REF CARDINAL := NIL;
+    parent : T := NIL;
   OVERRIDES
-    getId := DefaultId;
-    children := DefaultChildren;
+    getId           := DefaultId;
+    children        := DefaultChildren;
+    makeParentLinks := MakeParentLinks;
+    getParent       := GetParent;
   END;
 
 VAR rand := NEW(Random.Default).init();
@@ -36,5 +39,20 @@ PROCEDURE DefaultChildren(<*UNUSED*>t : T) : LibertyComponentSeq.T =
   BEGIN
     RETURN LibertyComponentSeqBuilder.BuildSeq()
   END DefaultChildren;
+
+PROCEDURE MakeParentLinks(t : T) =
+  BEGIN
+    WITH children = t.children() DO
+      FOR i := 0 TO children.size() - 1 DO
+        WITH ch = children.get(i) DO
+          ch.makeParentLinks();
+          ch.parent := t
+        END
+      END
+    END
+  END MakeParentLinks;
+
+PROCEDURE GetParent(t : T) : T =
+  BEGIN RETURN t.parent END GetParent;
 
 BEGIN END LibertyComponent.
