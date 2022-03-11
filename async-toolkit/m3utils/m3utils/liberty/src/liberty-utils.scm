@@ -345,3 +345,13 @@
   (define x (last cell-falls))
   (list-methods (get-field x 'statements))
   )
+
+(define (test10)
+  (define idx 'statements[0].head.params.params[1].val.val)
+  (define old-values
+    (LibertyCsv.ToList (get-field x idx)))
+  (define add-1 (lambda (x) (+ x 1)))
+  (define new-values (map add-1 old-values))
+
+  (set-field! x idx (LibertyCsv.ToCsv new-values))
+  )
