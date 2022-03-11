@@ -13,6 +13,7 @@ proc produceLambs { lambList {taskname lambgen } {tag testtag} { archive 0 } } {
    
    puts $tf "CompositeTask ${taskname} {"
    puts $tf " WorkArea [pwd]/BUILD/${taskname}"
+   puts $tf " SubmissionArgs --class SLES12"
    puts $tf " Queue ${nbqueue} { Qslot $qslot }"
    foreach l $lambList {
       set width [dict get $l width]

@@ -27,6 +27,10 @@ pipecleaning  physical design flows. This includes:
 - Additional process corner, voltages and temperature combination
 - OASIS/GDSII Layout
 
+### Requirements
+- SLES12 machine within HPC environment
+- Up-to-date Cheetah Environment, with access to relevant tool licenses
+
 ### Release Methodology
 Releases to broad silicon teams should always be referenceable back to a specific git point.
 Generally, only do releases against an annotated git tag, to ensure reproducibility. For example, to checkout the annotated tag lamb_0_0_2, you can do:
