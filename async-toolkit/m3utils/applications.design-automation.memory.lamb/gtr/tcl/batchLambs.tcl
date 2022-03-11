@@ -32,9 +32,9 @@ proc produceLambs { lambList {taskname lambgen } {tag testtag} { archive 0 } } {
       puts $tf " JobsTask  ship_$ward {"
       puts $tf "   DependsOn build_${ward}\[OnSuccess\]"
       puts $tf "   jobs { "
-      set shipcmd ship.pl -skip_prompt -block $ward -tag $tag -ip_type hip -no_viewgen -source ../$ward
-      if { !  $archive } {
-         append $shipcmd "-skip_stages archive"
+      set shipcmd "ship.pl -skip_prompt -block $ward -tag $tag -ip_type hip -no_viewgen -source ../$ward"
+      if { $archive == 0 } {
+         append shipcmd " -skip_stages archive"
       }
       puts $tf "      /p/cth/bin/cth_psetup -p ${cheetahProject} -cfg tfc_n3.cth -tool ship -ward ship_$ward -cmd \"$shipcmd"
       puts $tf "   }"
@@ -48,6 +48,11 @@ proc produceLambs { lambList {taskname lambgen } {tag testtag} { archive 0 } } {
    puts "Once running, to see progress: https://nbflow.intel.com"
 }
 
+# Parse a list of lamb files formatted as:
+# type1 width1 depth1
+# type2 width2 depth2
+# ...
+# typeN widthN depthN
 proc parseLambfile { lf } {
    set if [open "|sort -u $lf" r+]
    set lamblist [list]
@@ -92,7 +97,7 @@ set options {
    {maxdepth.arg  4  "use specified minimum depth"}
    {minwidth.arg  4  "use specified minimum depth"}
    {maxwidth.arg  4  "use specified minimum depth"}
-   {archive  "archive SHIP results to tag based on git configuration"}
+   {archive  0 "archive SHIP results to tag based on git configuration"}
 
 }
 set usage ": batchLambs.tcl \[options]\noptions:"
@@ -107,7 +112,6 @@ try {
 	puts $msg
 	exit 1
 }
-
 if {  [string length $params(lf)] > 0 } {
    set lf $params(lf)
    puts "Producing lambs specified by $lf"
@@ -118,5 +122,5 @@ if {  [string length $params(lf)] > 0 } {
 }
 
 set wwdate [exec workweek -f %IYWW%IW.%w_%H.%M ]
-set taskname lambgen_[exec git describe]_$::env(USER)_${wwdate} [exec git describe] $params(archive)
-produceLambs $lamblist $taskname
+set taskname lambgen_[exec git describe]_$::env(USER)_${wwdate} 
+produceLambs $lamblist $taskname [exec git describe] $params(archive)
