@@ -37,7 +37,7 @@ Generally, only do releases against an annotated git tag, to ensure reproducibil
 
 ```
 git clone https://github.com/intel-innersource/applications.design-automation.memory.lamb.git
-git co lamb_0_0_2
+git checkout lamb_0_0_2
 ```
 
 GitHub maintains a list of the [existing annotated tags](https://github.com/intel-innersource/applications.design-automation.memory.lamb/tags) for this project.
