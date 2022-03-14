@@ -383,7 +383,7 @@ proc gtr_lamb_gen_views { args } {
         # count lambs actually produced (above it more of a recipe to produce in the future)
         incr lambsProduced +1          
         ## eventually, below should loop over corners
-        set oc_type S_M40
+        set oc_type S_0
         set voltage 0.675
         set ndmlib [gtr_lamb_gen_lib -block_name $block_name -data_depth $depth -data_width $width -tech_node $tech_node -oc_type $oc_type -voltage $voltage -filelistVar filelist]
         set snpsdb [gtr_lamb_gen_db -block_name $block_name -lib_file $ndmlib -oc_type $oc_type -voltage $voltage -filelist_var filelist]    
