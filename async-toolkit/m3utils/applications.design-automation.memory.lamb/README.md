@@ -53,7 +53,7 @@ setenv GTR_HOME $PWD/gtr
 
 To produce a single LAMB in a WARD.
 
-The HIP can then be checked for IP quality and released with the 'SHIP' tool. This will perform IP quality check, and potentially fail.
+The HIP can then be checked for IP quality and released with the `SHIP` tool. This will perform an IP quality check, and potentially fail.
 
 For example:
 ```
