@@ -10,6 +10,9 @@ proc produceLambs { lambList {taskname lambgen } {tag testtag} { archive 0 } } {
    global qslot
    set tf [open ${taskname}.conf w]
    set toolset librarycompiler,fusioncompiler,cth_LR
+
+   puts "Producing [llength $lambList] LAMBs primitives"
+   
    
    puts $tf "CompositeTask ${taskname} {"
    puts $tf " WorkArea [pwd]/BUILD/${taskname}"
@@ -54,15 +57,24 @@ proc produceLambs { lambList {taskname lambgen } {tag testtag} { archive 0 } } {
 # type2 width2 depth2
 # ...
 # typeN widthN depthN
+#
+# Or allow a line entry to be the same of supported LAMB
+
 proc parseLambfile { lf } {
    set if [open "|sort -u $lf" r+]
    set lamblist [list]
    while {[gets $if line]>=0} {   
-      set vals [split $line]
       set l [dict create]
-      dict set l type [lindex $vals 0]
-      dict set l width [lindex $vals 1]
-      dict set l depth [lindex $vals 2]
+      if { [regexp cdp_lamb_(.*)_(.*)_(\[0-9\]+)d_(\[0-9\]+)b $line junk process type depth width]} {         
+      } else {
+         set vals [split $line]
+         set type [lindex $vals 0]
+         set width [lindex $vals 1]
+         set depth [lindex $vals 2]
+      }
+      dict set l type $type
+      dict set l width $width
+      dict set l depth $depth
       lappend lamblist $l
    }
    return $lamblist
