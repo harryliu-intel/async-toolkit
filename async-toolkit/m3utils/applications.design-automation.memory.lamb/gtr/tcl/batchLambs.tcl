@@ -12,8 +12,7 @@ proc produceLambs { lambList {taskname lambgen } {tag testtag} { archive 0 } } {
    set toolset librarycompiler,fusioncompiler,cth_LR
 
    puts "Producing [llength $lambList] LAMBs primitives"
-   
-   
+
    puts $tf "CompositeTask ${taskname} {"
    puts $tf " WorkArea [pwd]/BUILD/${taskname}"
    puts $tf " SubmissionArgs --class SLES12"
@@ -22,7 +21,7 @@ proc produceLambs { lambList {taskname lambgen } {tag testtag} { archive 0 } } {
       set width [dict get $l width]
       set depth [dict get $l depth]
       set type  [dict get $l type]
-      
+
       set cthSetup "/p/cth/bin/cth_psetup -p ${cheetahProject} -cfg ${cheetahConfig}.cth"
       set ward cdp_lamb_n3bhd_${type}_${depth}d_${width}b
       set lm_shell_cmd "icc2_lm_shell -batch -x 'source $::env(GTR_HOME)/tcl/gtr_main.tcl ; gtr_lamb_gen_views -data_width $width -data_depth $depth'" 
@@ -122,8 +121,8 @@ try {
    } trap {CMDLINE USAGE} {msg o} {
    # Trap the usage signal, print the message, and exit the application.
    # Note: Other errors are not caught and passed through to higher levels!
-	puts $msg
-	exit 1
+   puts $msg
+   exit 1
 }
 if {  [string length $params(lf)] > 0 } {
    set lf $params(lf)
