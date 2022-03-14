@@ -153,7 +153,7 @@
   ;; returns the object containing the field
   (lambda(x)
     (if (and (obj-filter x)
-             (let ((fv (get-field-s x fn)))
+             (let ((fv (get-field x fn)))
                (field-filter fv)))
         x
         #f)))
@@ -216,9 +216,15 @@
   (let ((c-tc (rttype-typecode obj)))
     (modula-type-op c-tc 'list-fields obj)))
 
+(define (have-field-s? obj fn)
+  (member? fn (list-fields obj)))
+
 (define (list-methods obj)
   (let ((c-tc (rttype-typecode obj)))
     (modula-type-op c-tc 'list-methods obj)))
+
+(define (have-method? obj mn)
+  (member? mn (list-methods obj)))
 
 (define (call-method obj mn . args)
   (let ((c-tc (rttype-typecode obj)))
@@ -279,6 +285,19 @@
                     (else
                      (call-method res (caar arcs) (cdar arcs))))))))
 
+(define (have-field? obj fn)
+  (let loop ((arcs (LibertyArcs.Parse (force-string fn)))
+             (res obj))
+    (cond((null? arcs) fn)
+         ((eq? (caar arcs) 'field)
+          (if (have-field-s? res (cdar arcs))
+              (loop (cdr arcs) (get-field-s res (cdar arcs)))
+              #f))
+         (else
+          (if (have-method? res (caar arcs))
+              (loop (cdr arcs) (call-method res (caar arcs) (cdar arcs)))
+              #f)))))
+
 (define *e* '())
 (define *f* '())
 (define *g* '())
@@ -327,17 +346,21 @@
 (define cell-fall-group-filter
   (named-group-filter-proc "cell_fall"))
 
-(define (inspect comp)
-  (dis comp dnl)
-  (let ((fields (list-fields comp)))
-    (map (lambda(f)
-           (dis " ." f " : " (get-field comp f) dnl))
-         fields))
-  (let ((methods (list-methods comp)))
-    (map (lambda(m)
-           (dis " ." m "()" dnl))
-         methods))
-  'ok)
+(define (inspect comp . field)
+  (if (not (null? field))
+      (inspect (get-field comp (car field)))
+      (begin
+        (dis comp dnl)
+        (let ((fields (list-fields comp)))
+          (map (lambda(f)
+                 (dis " ." f " : " (get-field comp f) dnl))
+               fields))
+        (let ((methods (list-methods comp)))
+          (map (lambda(m)
+                 (dis " ." m "()" dnl))
+               methods))
+        
+        'ok)))
 
 
 (define (test9)
@@ -383,4 +406,60 @@
     (map modifier groups)
     'ok))
 
+(define (parse-liberty-file fn)
+  (let* ((rd (FileRd.Open fn))
+         (res (LibertyParse.Parse rd)))
+    (Rd.Close rd)
+    res))
 
+(define (map-seq seq f)
+  (let ((n (call-method seq 'size)))
+    (let loop ((i (- n 1))
+               (res '()))
+      (if (= i -1)
+          res
+          (loop (- i 1)
+                (cons (f (call-method seq 'get i)) res))))))
+
+
+(define (get-named-groups comp group-name)
+  (let ((matches (filter-all comp (named-group-filter-proc group-name))))
+    matches))
+      
+(define (get-unique-named-group comp group-name)
+  (let ((matches (get-named-groups comp group-name)))
+    (if (not (= (length matches) 1))
+        (error "Named group " group-name " not unique, matches " (length matches))
+        (car matches))))
+
+(define (get-named-pin-group cell name)
+  (let* ((name-path 'head.params.params[0].val.val)
+         (pin-groups      (get-named-groups cell "pin"))
+         (matches (filter
+                   (lambda(g)
+                     (equal? name
+                             (get-field g name-path)))
+                   pin-groups))
+         )
+    (if (not (= (length matches) 1))
+        (error "Named group " group-name " not unique, matches " (length matches))
+        (car matches))))
+
+(define (copy-named-pin-group cell name new-name)
+  (let* ((g     (get-named-pin-group cell name))
+         (c     (deep-copy g))
+         (npath 'head.ident))
+    (set-field! c npath new-name)
+    c))
+
+
+
+
+
+
+
+;; rename cell
+;; area?
+;; block_distance?
+
+  
