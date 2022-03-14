@@ -100,6 +100,19 @@
 ;;     filename, if the Quake template has been used.
 ;;
 
+;; special constants
+
+(define *integer-type*  (assoc 'INTEGER the-basetypes))
+(define *first-integer* (cddr (assoc 'min *integer-type*)))
+(define *last-integer* (cddr (assoc 'max *integer-type*)))
+
+(define (my-number->string num)
+  ;; CM3 compiler can't read the literal for FIRST(INTEGER) number
+  ;; we do LAST(INTEGER) as well for symmetry and prettier output code
+  (cond ((= num *first-integer*)   "FIRST(INTEGER)")
+        ((= num *last-integer*)    "LAST(INTEGER)") 
+        (else (number->string num))))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;                            ;;;;;;;;;;;;;;;;;;;;
@@ -613,13 +626,22 @@
              " NIL")
          (string-append 
           " VAL(" 
-          (number->string (cdr value))", "  (type-formatter type env)
+          (my-number->string (cdr value))", "  (type-formatter type env)
           ")")))
     
     ((LongFloat)
      (string-append
       " FLOAT("
       (number->LONGREAL (cdr value))
+      ", "
+      (type-formatter type env)
+      ")"
+      ))
+
+    ((Float)
+     (string-append
+      " FLOAT("
+      (number->REAL (cdr value))
       ", "
       (type-formatter type env)
       ")"

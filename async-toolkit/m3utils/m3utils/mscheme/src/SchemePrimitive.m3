@@ -132,7 +132,7 @@ TYPE
         SetCar, SetCdr, TimeCall, MacroExpand,
         Error, ListStar,
         
-        Random, Normal, SetWarningsAreErrors, NumberToLONGREAL, StringHaveSub,
+        Random, Normal, SetWarningsAreErrors, NumberToLONGREAL, NumberToREAL, StringHaveSub,
         EnableTracebacks, DisableTracebacks, RefRecordFormat, SetRTErrorMapping,
 
         DisplayNoFlush, WriteNoFlush,
@@ -475,6 +475,7 @@ PROCEDURE InstallDefaultExtendedPrimitives(dd : Definer;
     .defPrim("enable-tracebacks!",                ORD(P.EnableTracebacks), dd,      0, 0)
     .defPrim("disable-tracebacks!",                ORD(P.DisableTracebacks), dd,      0, 0)
     .defPrim("number->LONGREAL", ORD(P.NumberToLONGREAL), dd, 1, 1)
+    .defPrim("number->REAL", ORD(P.NumberToREAL), dd, 1, 1)
     .defPrim("string-havesub?", ORD(P.StringHaveSub), dd, 2, 2)
     .defPrim("normal",                ORD(P.Normal), dd,      0, 2)
     .defPrim("refrecord-format", ORD(P.RefRecordFormat), dd, 1, 1)
@@ -1108,6 +1109,8 @@ PROCEDURE Prims(t : T;
       |
         P.NumberToLONGREAL => RETURN NumberToLONGREAL(x)
       |
+        P.NumberToREAL => RETURN NumberToREAL(x)
+      |
         P.RefRecordFormat => RETURN SchemeString.FromText(
                                         RefRecord.Format(x))
       |
@@ -1394,6 +1397,11 @@ PROCEDURE NumberToLONGREAL(x : Object) : Object RAISES { E } =
     RETURN SchemeString.FromText(Fmt_LongReal(FromO(x), literal := TRUE))
   END NumberToLONGREAL;
 
+PROCEDURE NumberToREAL(x : Object) : Object RAISES { E } =
+  BEGIN
+    RETURN SchemeString.FromText(Fmt_Real(FromO(x), literal := TRUE))
+  END NumberToREAL;
+
 PROCEDURE NumberToString(x, y : Object) : Object RAISES { E } =
   VAR
     base : INTEGER;
@@ -1413,34 +1421,83 @@ PROCEDURE NumberToString(x, y : Object) : Object RAISES { E } =
     END
   END NumberToString;
 
-PROCEDURE Fmt_LongReal(lr : LONGREAL; literal := FALSE) : TEXT =
+PROCEDURE Fmt_LongReal(lr : LONGREAL; literal := FALSE) : TEXT RAISES { E } =
   BEGIN
-    IF FLOAT(ROUND(lr),LONGREAL) = lr THEN
-      RETURN Fmt.Int(ROUND(lr))
-    ELSIF FLOAT(LAST(CARDINAL),LONGREAL) = lr THEN
-      (* tricky special case for 64-bit machines.  Possible loss
-         of precision! *)
-      RETURN Fmt.Int(LAST(CARDINAL))
-    ELSIF ABS(lr) > 1.0d10 AND FLOAT(FIRST(INTEGER),LONGREAL) = lr THEN
-      (* this is actually wrong... but compiler problems *)
-      RETURN "-" & Fmt.Int(LAST(INTEGER))
-    ELSIF ABS(lr) > 1.0d10 AND 
-      lr >= FLOAT(FIRST(INTEGER), LONGREAL) AND  
-      lr <= FLOAT(LAST(INTEGER), LONGREAL) THEN
-      WITH o  = Fmt.LongReal(ABS(lr)),
-           s  = Scan.LongReal(o),
-           o1 = Fmt.LongReal(ABS(lr)-1.0d0),
-           s1 = Scan.LongReal(o1) DO
-        IF s = s1 THEN
+    TRY
+      IF FLOAT(ROUND(lr),LONGREAL) = lr THEN
+        RETURN Fmt.Int(ROUND(lr))
+      ELSIF FLOAT(LAST(CARDINAL),LONGREAL) = lr THEN
+        (* tricky special case for 64-bit machines.  Possible loss
+           of precision! *)
+        RETURN Fmt.Int(LAST(CARDINAL))
+      ELSIF ABS(lr) > 1.0d10 AND FLOAT(FIRST(INTEGER),LONGREAL) = lr THEN
+        (* this is actually wrong... but compiler problems *)
+        RETURN "-" & Fmt.Int(LAST(INTEGER))
+      ELSIF ABS(lr) > 1.0d10 AND 
+        lr >= FLOAT(FIRST(INTEGER), LONGREAL) AND  
+        lr <= FLOAT(LAST(INTEGER), LONGREAL) THEN
+        WITH o  = Fmt.LongReal(ABS(lr)),
+             s  = Scan.LongReal(o),
+             o1 = Fmt.LongReal(ABS(lr)-1.0d0),
+             s1 = Scan.LongReal(o1) DO
+          IF s = s1 THEN
+            RETURN Fmt.Int(ROUND(lr))
+          ELSE
+            RETURN Fmt.LongReal(lr,literal := literal)
+          END
+        END
+      ELSE
+        RETURN Fmt.LongReal(lr,literal := literal)
+      END
+    EXCEPT
+      Lex.Error, FloatMode.Trap => RAISE E("Cannot format that as LONGREAL")
+    END 
+  END Fmt_LongReal;
+
+PROCEDURE Fmt_Real(lr : LONGREAL; literal := FALSE) : TEXT RAISES { E } =
+  BEGIN
+    TRY
+      IF    lr < FLOAT(FIRST(REAL), LONGREAL) THEN
+        Debug.Warning("Loss of accuracy, number too negative for REAL type.");
+      RETURN Fmt.Real(FIRST(REAL), literal := literal)
+      ELSIF lr > FLOAT(LAST(REAL), LONGREAL) THEN
+        Debug.Warning("Loss of accuracy, number too positive for REAL type.");
+        RETURN Fmt.Real(LAST(REAL), literal := literal)
+      END;
+      
+      (* number is in range *)
+
+      WITH r = FLOAT(lr, REAL) DO
+        IF FLOAT(ROUND(lr),LONGREAL) = lr THEN
           RETURN Fmt.Int(ROUND(lr))
+        ELSIF FLOAT(LAST(CARDINAL),LONGREAL) = lr THEN
+          (* tricky special case for 64-bit machines.  Possible loss
+             of precision! *)
+          RETURN Fmt.Int(LAST(CARDINAL))
+        ELSIF ABS(lr) > 1.0d10 AND FLOAT(FIRST(INTEGER),LONGREAL) = lr THEN
+          (* this is actually wrong... but compiler problems *)
+          RETURN "-" & Fmt.Int(LAST(INTEGER))
+        ELSIF ABS(lr) > 1.0d10 AND 
+          lr >= FLOAT(FIRST(INTEGER), LONGREAL) AND  
+          lr <= FLOAT(LAST(INTEGER), LONGREAL) THEN
+          WITH o  = Fmt.Real(ABS(r)),
+               s  = Scan.Real(o),
+               o1 = Fmt.Real(ABS(r)-1.0e0),
+               s1 = Scan.Real(o1) DO
+            IF s = s1 THEN
+              RETURN Fmt.Int(ROUND(lr))
+            ELSE
+              RETURN Fmt.Real(r, literal := literal)
+            END
+          END
         ELSE
-          RETURN Fmt.LongReal(lr,literal := literal)
+          RETURN Fmt.Real(r, literal := literal)
         END
       END
-    ELSE
-      RETURN Fmt.LongReal(lr,literal := literal)
+    EXCEPT
+      Lex.Error, FloatMode.Trap => RAISE E("Cannot format that as REAL")
     END
-  END Fmt_LongReal;
+  END Fmt_Real;
 
 PROCEDURE StringToNumber(x, y : Object) : Object RAISES { E } = 
   VAR base : INTEGER;
