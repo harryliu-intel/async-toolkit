@@ -69,7 +69,7 @@ of the Git state, for example `git describe` will provide a reference that would
 ### Batch Production And 'SHIP'ing of LAMBs
 You can also batch up creation of LAMBs with the script provided in `$GTR_HOME/tcl/batchLambs.tcl`.
 
-The typical usage case is to start with a space separated file described the desired configurations.
+The typical usage case is to start with a space separated file described the desired configurations, or the names of the needed instances.
 
 For example:
 
@@ -78,8 +78,9 @@ Consider `lambs.txt` as:
 1r1w1c 4 10
 1r1w1c 4 12
 1r1w1c 4 14
+cdp_lamb_n3bhd_1r1w1c_64d_66b
 ```
-This describes a LAMB requirements of width 4, for depths 10, 12, and 14.
+This describes a LAMB requirements of width 4, for depths 10, 12, and 14 and for an instance of depth 64, width 66.
 
 To build up a task file for them, execute:
 
