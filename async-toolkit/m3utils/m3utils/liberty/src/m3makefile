@@ -47,6 +47,8 @@ Module ("LibertyParse")
 Module ("LibertyCsv")
 Module ("LibertyArcs")
 
+Module ("LibertyUtils")
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % stubs for the parser types
@@ -92,6 +94,11 @@ SchemeStubs ("Pickle")
 SchemeStubs ("TextUtils")
 SchemeStubs ("Text")
 SchemeStubs ("TextList")
+
+SchemeStubs ("ParseParams")
+SchemeStubs ("Stdio")
+
+SchemeStubs ("LibertyUtils")
 
 ExportSchemeStubs ("liberty")
 importSchemeStubs()
