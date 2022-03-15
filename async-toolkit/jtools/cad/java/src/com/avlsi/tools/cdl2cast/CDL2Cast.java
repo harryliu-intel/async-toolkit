@@ -1030,6 +1030,11 @@ public class CDL2Cast {
         final Set genDevSet = new HashSet();
 
         /**
+         * Set of cells to keep even though they are empty.
+         **/
+        final Set keepEmpty = new HashSet();
+
+        /**
          * Set of cells which are instantiated somewhere.
          * If a flattened cell is not instantiated, then it should not
          * be output.
@@ -1091,6 +1096,13 @@ public class CDL2Cast {
                         break;
                     }
                 }
+            }
+            // if a cell is defined in Liberty, then keep it even if it's empty
+            if(!hasComponents &&
+               !getLibertyPortDirections(
+                   libertyParser,reverseMap.getCellName(fqcn)).isEmpty()) {
+                keepEmpty.add(template);
+                hasComponents = true;
             }
             if(hasComponents || sniffer.isGenericDevice()) {
                 leafSet.add(template);
@@ -1179,6 +1191,7 @@ public class CDL2Cast {
                                     writeVerilogRTL,
                                     isLeaf,
                                     genDevSet,
+                                    keepEmpty,
                                     digitalWriter);
         }
 
@@ -2169,6 +2182,7 @@ public class CDL2Cast {
                                          final boolean writeVerilogRTL,
                                          final boolean isLeaf,
                                          final Set genDevSet,
+                                         final Set keepEmpty,
                                          final Writer writer)
         throws IOException {
 
@@ -2324,6 +2338,9 @@ public class CDL2Cast {
                 iw.prevLevel();
                 iw.write("}\n");
                 iw.write("directives { fixed_size = false; }\n");
+                if (keepEmpty.contains(template)) {
+                    iw.write("directives { wiring = true; }\n");
+                }
             }
         }
 
