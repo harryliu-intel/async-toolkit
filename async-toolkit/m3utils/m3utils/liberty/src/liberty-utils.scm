@@ -1,5 +1,11 @@
 (require-modules "m3" "types.scm" "display")
 
+(define (only x)
+  ;; get the only element from a singleton list
+  (if (not (= 1 (length x)))
+      (error "only : " (length x) " elements : " x)
+      (car x)))
+
 (define (schemify-wrap x)
    (if (closest-opped-supertype (rttype-typecode x))
        (cons 'm3 (schemify x))
@@ -233,14 +239,32 @@
 (define (deep-copy obj)
   ;; use pickles to make a deep copy for modifications
   ;; works for any traced object (almost all M3 objects i.o.w.)
-  (let ((wr (TextWr.New)))
-    (Pickle.Write wr obj)
-    (Pickle.Read (TextRd.New (TextWr.ToText wr)))))
+  ;;
+  ;; 'parent field in copy is left null (if it exists)
+  
+  (define (do-copy)
+    (let ((wr (TextWr.New)))
+      (Pickle.Write wr obj)
+      (Pickle.Read (TextRd.New (TextWr.ToText wr)))))
+  
+  (if (have-field? obj 'parent)
+      (let* ((save (get-field obj 'parent))
+             (null (set-field! obj 'parent '()))
+             (res  (do-copy)))
+        (set-field! obj 'parent save)
+        res)
+      (do-copy)))
+      
 
-(define (format-comp comp)
-  (define wr (TextWr.New))
-  ((obj-method-wrap comp 'LibertyComponent.T) 'write wr "")
-  (TextWr.ToText wr))
+(define (format-comp comp . field)
+   (if (not (null? field))
+      (format-comp (get-field comp (car field)))
+      (let ((wr (TextWr.New)))
+        ((obj-method-wrap comp 'LibertyComponent.T) 'write wr "")
+        (TextWr.ToText wr))
+      )
+   )
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -332,7 +356,7 @@
 
   (get-field (last complex-attrs) 'head.params)
 
-  (get-field (last complex-attrs) 'head.params.params)
+  (get-field (last complex-attrs) 'head.params)
 
   )
 
@@ -370,7 +394,7 @@
   )
 
 (define (test10)
-  (define idx 'statements[0].head.params.params[1].val.val)
+  (define idx 'statements[0].head.params[1].val.val)
   (define old-values
     (LibertyCsv.ToList (get-field x idx)))
   (define add-1 (lambda (x) (+ x 1)))
@@ -432,26 +456,61 @@
         (error "Named group " group-name " not unique, matches " (length matches))
         (car matches))))
 
-(define (get-named-pin-group cell name)
-  (let* ((name-path 'head.params.params[0].val.val)
-         (pin-groups      (get-named-groups cell "pin"))
+(define (get-named-group cell type name)
+  (let* ((name-path 'head.params[0].val.val)
+         (groups      (get-named-groups cell type))
          (matches (filter
                    (lambda(g)
                      (equal? name
                              (get-field g name-path)))
-                   pin-groups))
+                   groups))
          )
-    (if (not (= (length matches) 1))
-        (error "Named group " group-name " not unique, matches " (length matches))
-        (car matches))))
+    (only matches)))
 
-(define (copy-named-pin-group cell name new-name)
+(define (get-named-bus-group cell name)
+  (get-named-group cell "bus" name))
+
+(define (get-named-pin-group cell name)
+  (get-named-group cell "pin" name))
+
+(define (get-named-type-group cell name)
+  (get-named-group cell "type" name))
+
+(define (copy-named-pin-group! cell name new-name)
   (let* ((g     (get-named-pin-group cell name))
          (c     (deep-copy g))
-         (npath 'head.ident))
+         (npath 'head.params[0].val.val))
+    (set-field! c 'parent (get-field g 'parent))
     (set-field! c npath new-name)
+    (call-method (get-field c 'parent.statements) 'addhi c)
     c))
 
+(define (get-field-or-false obj fn)
+  (if (have-field? obj fn) (get-field obj fn) #f))
+
+(define (set-named-bus-variable! bus-group name to)
+  (map-seq (get-field bus-group 'statements)
+           (lambda(s)
+             (if (equal? (get-field-or-false s 'ident) name)
+                 (set-field! s 'attrValExpr.val.val to)))))
+
+(define (un-val x)
+  ;; iterate .val until we hit something that's not an object
+  (if (have-type-ops? (rttype-typecode x))
+      (un-val (get-field x 'val))
+      x))
+
+(define *q* '())
+
+(define (get-group-variable group name)
+  (only (filter (not-filter null?)
+                (map-seq (get-field group 'statements)
+                         (lambda(s)
+                           (if (equal? (get-field-or-false s 'ident) name)
+                               (begin
+                                 (set! *q* s)
+                                 (un-val (get-field s 'attrValExpr)))))))))
+                              
 
 
 
