@@ -11,14 +11,14 @@ dictate flip-flop based storage.
 - 1ftr1w1c: 1r1w memory, 1 clock, with flow-through (i.e. unflopped output data). Under development.
 
 ### Process Technology
-This work is being developed primarily for TSMC N3E process.
+This work is being developed primarily for TSMC N3E process, but the principle is generic.
 
 ### Supported Views
 The present state of the code is to generate 'placeholder' content to enable logic design and
 pipecleaning  physical design flows. This includes:
 
 - SV behavioral verilog
-- Liberty Files @ SSGNP, -40C
+- Liberty Files @ SSGNP, 0C
 - Synopsys DB files based on Liberty Files
 - LEF abstracts of rough pin positions
 - Synopsys NDM Abstracts Based on the LEF and Liberty Files
@@ -33,7 +33,8 @@ pipecleaning  physical design flows. This includes:
 
 ### Release Methodology
 Releases to broad silicon teams should always be referenceable back to a specific git point.
-Generally, only do releases against an annotated git tag, to ensure reproducibility. For example, to checkout the annotated tag lamb_0_0_2, you can do:
+Generally, only do releases against an annotated git tag, to ensure reproducibility if additional
+HIPs are added to the released set. For example, to checkout the annotated tag lamb_0_0_2, you can do:
 
 ```
 git clone https://github.com/intel-innersource/applications.design-automation.memory.lamb.git
@@ -93,6 +94,8 @@ $GTR_HOME/tcl/batchLambs.tcl -lf lambs.txt -archive
 This will build up an task file for a Netbatch feeder that will build each LAMB, then run SHIP on each LAMB, and archive the
 results to the projects `$PROJ_ARCHIVE` area with a tag based on the current version of the generator. Omit the `-archive` to 
 skip the archive step (but still perform the SHIP quality checks).
+
+You will need to use nbfeeder to execute the task file.
 
 ### References
 - [Cheetah Design System](https://goto/cheetah)
