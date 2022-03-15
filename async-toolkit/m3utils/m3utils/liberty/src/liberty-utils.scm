@@ -21,10 +21,12 @@
 
 
          
-(define (test1) ((obj-method-wrap *lib* 'LibertyComponentChildren.Private) 'children))
+(define (test1) ((obj-method-wrap *lib* 'LibertyComponentChildren.Private)
+                 'children))
 
-(define (test2) ((obj-method-wrap ((obj-method-wrap *lib* 'LibertyComponentChildren.Private) 'children) 'LibertyComponentSeq.T) 'get 0))
-
+(define (test2) ((obj-method-wrap
+                  ((obj-method-wrap *lib* 'LibertyComponentChildren.Private)
+                   'children) 'LibertyComponentSeq.T) 'get 0))
 
 ;; example code, will this work?
 (define (not-done)
@@ -35,7 +37,8 @@
   )
 
 (define (test3)
-  (RTType.IsSubtype (rttype-typecode *lib*) (lookup-typecode "LibertyComponent.T") )
+  (RTType.IsSubtype (rttype-typecode *lib*)
+                    (lookup-typecode "LibertyComponent.T") )
   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -208,7 +211,7 @@
 (define (named-simple-attr-filter name)
   (and-filters
    (subtype-filter-proc "LibertySimpleAttr.T")
-   (concrete-field-equal?-filter-proc 'ident name)))
+   (field-equal?-filter-proc 'ident name)))
 
 (define (filter-all lib filter)
   (let* ((list '())
@@ -265,6 +268,11 @@
       )
    )
 
+(define (display-comp comp . field)
+  (let ((fmt (apply format-comp (cons comp field))))
+    (dis fmt dnl)
+    comp))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -317,10 +325,14 @@
           (if (have-field-s? res (cdar arcs))
               (loop (cdr arcs) (get-field-s res (cdar arcs)))
               #f))
-         (else
-          (if (have-method? res (caar arcs))
-              (loop (cdr arcs) (call-method res (caar arcs) (cdar arcs)))
-              #f)))))
+         ((and (eq? (caar arcs) 'get)
+               (have-method? res 'get)
+               (have-method? res 'size)
+               (< (cdar arcs) (call-method res 'size)))
+          (loop (cdr arcs)
+                (call-method res (caar arcs) (cdar arcs))))
+         (else #f))))
+              
 
 (define *e* '())
 (define *f* '())
@@ -374,7 +386,6 @@
   (if (not (null? field))
       (inspect (get-field comp (car field)))
       (begin
-        (dis comp dnl)
         (let ((fields (list-fields comp)))
           (map (lambda(f)
                  (dis " ." f " : " (get-field comp f) dnl))
@@ -384,7 +395,7 @@
                  (dis " ." m "()" dnl))
                methods))
         
-        'ok)))
+        comp)))
 
 
 (define (test9)
@@ -405,8 +416,10 @@
  
   )
 
-(define (process-param-list! param-list f)
-  (let* ((seq (get-field param-list 'params))
+(define (process-param-list! param-list f group)
+  ;; note that f is called with two arguments : (f <value> <group>)
+  ;; this allows f to act differently for different groups (eg. pins)
+  (let* ((seq param-list)
          (n (call-method seq 'size)))
     (let loop ((i 0))
       (if (= i n)
@@ -414,7 +427,7 @@
           (begin
             (let* ((m           (call-method seq 'get i))
                    (old-values  (LibertyCsv.ToList (get-field m 'val.val)))
-                   (new-values  (map f old-values))
+                   (new-values  (map (lambda(x)(f x group)) old-values))
                    (new-csv     (LibertyCsv.ToCsv new-values)))
               (set-field!  m 'val.val new-csv))
             (loop (+ i 1))
@@ -422,11 +435,16 @@
           ))))
 
 (define (modify-named-group-value-list! lib named f)
+  ;; note that f is called with two arguments : (f <value> <group>)
+  ;; this allows f to act differently for different groups (eg. pins)
   (let* ((filter    (named-group-filter-proc named))
          (groups    (filter-all lib filter))
          (base      'statements[0].head.params)
          (modifier  (lambda(group)
-                      (process-param-list! (get-field group base) f))))
+                      (process-param-list!
+                       (get-field group base)
+                       f
+                       group))))
     (map modifier groups)
     'ok))
 
@@ -467,6 +485,21 @@
          )
     (only matches)))
 
+(define *qq* '())
+
+(define (get-paramed-groups comp pname0)
+  ;; get all groups for which zeroth param matches pname0
+  (let* ((fn 'head.params[0])
+         (filter (lambda(x)
+                   (set! *qq* x)
+                   (if (have-field? x fn)
+                       (equal? pname0 (un-val (get-field x fn)))
+                       #f))))
+    (filter-all comp filter)
+    )
+  )
+
+  
 (define (get-named-bus-group cell name)
   (get-named-group cell "bus" name))
 
@@ -476,14 +509,22 @@
 (define (get-named-type-group cell name)
   (get-named-group cell "type" name))
 
-(define (copy-named-pin-group! cell name new-name)
-  (let* ((g     (get-named-pin-group cell name))
-         (c     (deep-copy g))
+(define (copy-named-pin-group! cell name new-names)
+  (dis "new-names " new-names dnl)
+  
+  (let* ((g     (get-named-pin-group cell name)) ;; this is slow
          (npath 'head.params[0].val.val))
-    (set-field! c 'parent (get-field g 'parent))
-    (set-field! c npath new-name)
-    (call-method (get-field c 'parent.statements) 'addhi c)
-    c))
+    (let loop ((p new-names))
+      (if (null? p)
+          cell
+          (loop
+           (let ((c     (deep-copy g)))
+             (dis "creating new pin " (car p) dnl)
+             (set-field! c 'parent (get-field g 'parent))
+             (set-field! c npath (car p))
+             (call-method (get-field c 'parent.statements) 'addhi c)
+             (cdr p))
+           )))))
 
 (define (get-field-or-false obj fn)
   (if (have-field? obj fn) (get-field obj fn) #f))
@@ -512,13 +553,257 @@
                                  (un-val (get-field s 'attrValExpr)))))))))
                               
 
+(define (update-group-variable! group name to)
+  (map-seq (get-field group 'statements)
+           (lambda(s)
+             (if (equal? (get-field-or-false s 'ident) name)
+                 (begin
+                   (let loop ((p (get-field s 'attrValExpr))
+                              (q (get-field s 'attrValExpr.val)))
+                     (if (have-type-ops? (rttype-typecode q))
+                         (loop q (get-field q 'val))
+                         (set-field! p 'val to))))))))
 
-
-
-
+  
+(define (update-val! obj to)
+  (let loop ((p obj)
+             (q (get-field obj 'val)))
+    (if (have-type-ops? (rttype-typecode q))
+        (loop q (get-field q 'val))
+        (set-field! p 'val to))))
 
 ;; rename cell
+
+
+(define (clog2 n)
+  (ceiling (/ (log n) (log 2))))
+
+
+(define *area-program-path* "/nfs/sc/disks/bfn_pd_cb_02/mnystroe/applications.design-automation.memory.lamb/python/pyarea/area.py")
+
+(define (compute-macro-area width depth)
+  (string->number
+   (run-command (string-append
+                 *area-program-path*
+                 " -q "
+                 " -w " (number->string width)
+                 " -d " (number->string depth)
+                 )
+                )
+   )
+  )
+
+(define (expand-bus-width! lib bus-name width)
+  (let* ((the-cell          (get-lib-cell lib))
+         (proto-pin-name    (string-append bus-name "[0]"))
+         (proto-pin         (get-named-pin-group the-cell proto-pin-name))
+         (the-bus           (get-field proto-pin 'parent))
+         (the-bus-type-nm   (get-group-variable the-bus "bus_type"))
+         (the-bus-type      (get-named-type-group the-cell the-bus-type-nm)))
+    
+    (if (not (equal? "bus" (get-field the-bus 'head.ident)))
+        (error "pin " proto-pin-name " : parent is not a bus!"))
+
+    (update-group-variable! the-bus-type "bit_width" width)
+    (update-group-variable! the-bus-type "bit_from" (- width 1))
+
+    (let ((new-names
+           (let loop ((i 1)
+                      (res '()))
+             (if (= i width)
+                 res
+                 (let ((new-name (string-append bus-name "[" (number->string i) "]")))
+                   (loop (+ i 1)
+                         (cons new-name res)))))))
+      (copy-named-pin-group! the-cell proto-pin-name (reverse new-names))
+      )
+    
+    the-bus
+    ))
+
+(define (get-named-statements group name)
+  (let ((statement-seq (get-field group 'statements)))
+     (filter (lambda(x) x)
+             (map-seq statement-seq
+                      (lambda(s)
+                        (if (and (have-field? s 'head.ident)
+                                 (equal? (get-field s 'head.ident) name))
+                            s
+                            #f))))))
+
+(define (get-named-statement group name)
+  (only (get-named-statements group name)))
+
+(define (get-lib-cell lib)
+  (get-named-statement lib "cell"))
+
+(define (get-named-simple-attrs group name)
+  (let ((statement-seq (get-field group 'statements)))
+     (filter (lambda(x) x)
+             (map-seq statement-seq
+                      (lambda(s)
+                        (if (and (have-field? s 'ident)
+                                 (equal? (get-field s 'ident) name))
+                            s
+                            #f))))))
+
 ;; area?
 ;; block_distance?
 
   
+(define (update-lib-area! lib new-area)
+  (let ((the-cell (get-lib-cell lib)))
+    (update-group-variable! the-cell "area" new-area)
+    )
+  )
+
+(define (test11)
+  (define the-cell (get-lib-cell *lib*)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; timing
+;;
+
+(define (get-lut-usages lib named)
+  ;; all usages of given LUT
+  (let* ((timing-groups (get-named-groups c0 "timing"))
+         (res (apply
+               append
+               (map (lambda(x)(get-paramed-groups x named))
+                    timing-groups))))
+    res))
+
+(define (test12) (get-lut-usages c0 "lut_timing_1"))
+
+(define (get-enclosing-group p type)
+  ;; get enclosing group of type <type> for a given other group
+  (cond ((null? p) p)
+        ((and (have-field? p 'head.ident)
+              (equal? (un-val (get-field p 'head.ident))  type))
+         p)
+        (else (get-enclosing-group (get-field p 'parent) type))))
+           
+(define (get-lut-references lib named)
+  ;; get all the pins and their modes that reference a particular LUT
+  (let ((usages (get-lut-usages lib named)))
+    (map (lambda(u)(cons (un-val
+                          (get-field
+                           (get-enclosing-group u "pin") 'head.params[0]))
+                         (un-val
+                          (get-field u 'head.ident))))
+         usages)))
+
+(define (get-lib-templates lib)
+  (get-named-statements lib "lu_table_template"))
+
+(define (find-lut-variable lut named)
+  (let loop ((i 1))
+    (let ((vars (get-named-simple-attrs
+                 lut
+                 (string-append "variable_" (number->string i)))))
+      (cond ((null? vars) #f)
+            ((equal? (un-val (get-field (only vars) 'attrValExpr))
+                     named) i)
+            (else (loop (+ i 1)))))))
+      
+
+(define (update-lut-index! lut named f)
+  ;; f takes two params: (f <old-value> <lut>)
+  (let ((idx        (find-lut-variable lut named)))
+    (if idx
+        (let* 
+            ((idx-name   (string-append "index_" (number->string idx)))
+             (attr       (get-named-statement lut idx-name))
+             (old-values (LibertyCsv.ToList
+                          (get-field attr 'head.params[0].val.val)))
+             (new-values (map (lambda(x)(f x lut)) old-values))
+             (new-csv    (LibertyCsv.ToCsv new-values)))
+          (set-field! attr 'head.params[0].val.val new-csv)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; MAIN ENTRY POINTS BELOW
+;;
+
+(define (update-lib-size! lib width depth)
+  (let ((awidth (clog2 depth))
+        (the-cell (get-lib-cell lib))
+        (the-area (compute-macro-area width depth))
+        )
+
+    (update-lib-area! lib the-area)
+    ;; update the physical area
+    
+    (expand-bus-width! lib "wdata"  width)
+    (expand-bus-width! lib "dout"   width)
+    (expand-bus-width! lib "wadr"   awidth)
+    (expand-bus-width! lib "radr"   awidth)
+    
+    )
+  )
+
+(define (update-lib-name! lib new-name)
+  (set-field! lib 'head.params[0].val.val new-name)
+  (let ((the-cell (get-lib-cell lib)))
+    (set-field! the-cell 'head.params[0].val.val new-name))
+  )
+
+(define (update-lib-date! lib)
+  (update-group-variable! the-lib "date" (Text.Sub (run-command "date") 0 28))
+  'ok
+  )
+
+(define (update-lib-pvt! lib volt temp pvt-name)
+  (update-group-variable! lib "nom_temperature" temp)
+  (update-group-variable! lib "nom_voltage" volt)
+  (update-group-variable! lib "default_operating_conditions" pvt-name)
+  (let ((the-op-conds (get-named-statement lib "operating_conditions")))
+    (update-group-variable! the-op-conds "temperature" temp)
+    (update-group-variable! the-op-conds "voltage" volt)
+    (set-field! the-op-conds 'head.params[0].val.val pvt-name))
+    
+  )
+
+(define (update-lib-simple-attr! lib pname f)
+  (let* ((filter (named-simple-attr-filter pname))
+         (attrs  (filter-all lib filter)))
+    (map (lambda(a)
+           (let ((attr (get-field a 'attrValExpr)))
+             (update-val! attr (f (un-val attr)))))
+         attrs)))
+
+(define (test13)
+  (update-lib-simple-attr! *lib* "capacitance" (lambda(x)(* x 0.3))))
+
+(define (update-lib-timings! lib named f)
+  ;; f takes two parameters (f <value> <group>)
+  ;; can e.g. do (define (f v g) ... (get-enclosing-group g "pin") ...)
+  (modify-named-group-value-list! lib named f))
+
+(define (update-lib-templates! lib named f)
+  ;; named is the name of the independent variable
+  ;; f takes two parameters (f <value> <LUT>)
+  ;; can let f depend on the nature of the LUT
+  (let ((luts (get-lib-templates lib)))
+    (map (lambda(lut)(update-lut-index! lut named f))
+         luts))
+  )
+
+(define n3-tech '())
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    
+(define (gen-lib template-path   ;; Liberty template
+                 named           ;; name of generated library
+                 width           ;; width in bits
+                 depth           ;; depth in words
+                 tech            ;;
+                 volt            ;; voltage in volts
+                 temp            ;; temperature in degrees Celsius
+                 sigma           ;; proc. sigma (-3 = SSGNP, +3 = FFGNP)
+                 metal-r-sigma   ;;
+                 metal-c-sigma   ;;
+                 pvt-name        ;; descriptive name for PVT
+                 )
+  )
