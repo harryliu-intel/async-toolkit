@@ -4118,6 +4118,17 @@ public class DSim implements NodeWatcher {
             }
         }
 
+        private void handleInit(final HierName prefix,
+                                final Map<HierName,Integer> initOnReset) {
+            for (Map.Entry<HierName,Integer> e : initOnReset.entrySet()) {
+                final Node n = lookupNode(prefixName(prefix, e.getKey()));
+                final int v = e.getValue();
+                n.setInit(v == 0 ? Node.Init.ZERO :
+                          v == 1 ? Node.Init.ONE  :
+                                   Node.Init.RANDOM);
+            }
+        }
+
         private void process(
                 final HierName prefix, 
                 final HierName abstractPrefix, CellInterface cell,
@@ -4364,6 +4375,16 @@ public class DSim implements NodeWatcher {
                     }
                 );
             }
+
+            final AliasedSet localNodes =
+                cadencizer.convert(cell).getLocalNodes();
+            final Map<HierName,Integer> initOnReset = (Map<HierName,Integer>)
+                DirectiveUtils.canonizeKey(localNodes,
+                    DirectiveUtils.getSubcellDirective(
+                        cell,
+                        DirectiveConstants.INITIALIZE_ON_RESET,
+                        DirectiveConstants.NODE_TYPE));
+            handleInit(prefix, initOnReset);
         }
 
         private ChannelDictionary createNodeChannels(
@@ -4694,13 +4715,7 @@ public class DSim implements NodeWatcher {
                         cell,
                         DirectiveConstants.INITIALIZE_ON_RESET,
                         DirectiveConstants.NODE_TYPE));
-            for (Map.Entry<HierName,Integer> e : initOnReset.entrySet()) {
-                final Node n = lookupNode(prefixName(prefix, e.getKey()));
-                final int v = e.getValue();
-                n.setInit(v == 0 ? Node.Init.ZERO :
-                          v == 1 ? Node.Init.ONE  :
-                                   Node.Init.RANDOM);
-            }
+            handleInit(prefix, initOnReset);
 
             final Node localVdd, localGND;
             try {
