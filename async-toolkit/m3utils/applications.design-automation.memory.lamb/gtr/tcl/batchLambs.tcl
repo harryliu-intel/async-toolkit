@@ -9,7 +9,9 @@ proc produceLambs { lambList {taskname lambgen } {tag testtag} { archive 0 } } {
    global nbqueue
    global qslot
    set tf [open ${taskname}.conf w]
-   set toolset librarycompiler,fusioncompiler,cth_LR
+   # https://hsdes.intel.com/appstore/article/#/14016296198
+   # Seeks to make this insensitive to FC tool version
+   set toolset librarycompiler,fusioncompiler/R-2020.09-SP5-T-20211019,cth_LR
 
    puts "Producing [llength $lambList] LAMBs primitives"
 
@@ -39,7 +41,7 @@ proc produceLambs { lambList {taskname lambgen } {tag testtag} { archive 0 } } {
       if { $archive == 0 } {
          append shipcmd " -skip_stages archive"
       }
-      puts $tf "      /p/cth/bin/cth_psetup -p ${cheetahProject} -cfg tfc_n3.cth -tool ship -ward ship_$ward -cmd \"$shipcmd"
+      puts $tf "     $cthSetup -tool ship -ward ship_$ward -cmd \"$shipcmd"
       puts $tf "   }"
       puts $tf " }"
 
@@ -84,8 +86,8 @@ proc parseLambfile { lf } {
 proc lambRange { typelist minWidth minDepth maxWidth maxDepth } {
   set lamblist [list]
   foreach t { 1r1w1c } {
-    for { set depth $minDepth } { $depth <= $maxDepth} {incr depth +1} {
-      for { set width $minWidth } { $width <= $maxWidth} {incr width +1} {
+    for { set depth [expr max($minDepth,1)] } { $depth <= $maxDepth} {incr depth +1} {
+      for { set width [expr max($minWidth,1)] } { $width <= $maxWidth} {incr width +1} {
          set l [dict create]
          dict set l width $width
          dict set l depth $depth
@@ -98,20 +100,19 @@ proc lambRange { typelist minWidth minDepth maxWidth maxDepth } {
 }
 
 set cheetahProject tfc
-set cheetahConfig tfc_n5
-set nbqueue $::env(EC_SITE)_normal
-set qslot /bfn/fe
+set cheetahConfig tfc_ipde_n3
 
 package require cmdline
-set options {
-   {lf.arg  "" "build lambs from given file list"}
-   {mindepth.arg  4  "use specified minimum depth"}
-   {maxdepth.arg  4  "use specified minimum depth"}
-   {minwidth.arg  4  "use specified minimum depth"}
-   {maxwidth.arg  4  "use specified minimum depth"}
-   {archive  0 "archive SHIP results to tag based on git configuration"}
-
-}
+set options [list \
+   {lf.arg  "" "build lambs from given file list"} \
+   {mindepth.arg  0  "use specified minimum depth"} \
+   {maxdepth.arg  0  "use specified minimum depth"} \
+   {minwidth.arg  0  "use specified minimum depth"} \
+   {maxwidth.arg  0  "use specified minimum depth"} \
+   {qslot.arg  /bfn/fe  "use specified qslot"} \
+   [list nbqueue.arg   $::env(EC_SITE)_normal  "use specified NB queue"] \
+   {archive  0 "archive SHIP results to tag based on git configuration"} \
+]
 set usage ": batchLambs.tcl \[options]\noptions:"
 
 try {
@@ -124,6 +125,11 @@ try {
    puts $msg
    exit 1
 }
+
+set nbqueue $params(nbqueue)
+set qslot  $params(qslot)
+
+
 if {  [string length $params(lf)] > 0 } {
    set lf $params(lf)
    puts "Producing lambs specified by $lf"
