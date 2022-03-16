@@ -920,3 +920,18 @@
            0
            "PVT_0P675V_0C")
   )
+
+(define (doit-2)
+
+  (gen-lib "cdp_lamb_1w1afr_template.lib"
+           "cdp_lamb_1w1afr_32w_21b__n3_tt_0p675v_0c_typical_gen"
+           21
+           32
+           n3e-tech-constants
+           0.675
+           0
+           -3
+           0
+           0
+           "PVT_0P675V_0C")
+  )
