@@ -33,6 +33,7 @@
         (ecoIter 0)              ; number of spr ECO passes
         (rdtUseFlops nil)        ; use flops instead of latches
         (rdtUserTcl nil)         ; optional tcl file
+        (scanMode nil)           ; optional scan mode string
         (perfCorner "max")       ; primary corner for performance
         )
   (let (TEMP WDIR)
@@ -52,6 +53,7 @@
                           ?abstractCellName abstractCellName ?targetCellName targetCellName
                           ?noPowerFill noPowerFill ?timingDriven timingDriven ?colorGrid colorGrid
                           ?tau tau ?ecoIter ecoIter ?rdtUseFlops rdtUseFlops ?rdtUserTcl rdtUserTcl
+                          ?scanMode scanMode
                           ?thresholds thresholds ?perfCorner perfCorner)
 
     ; copy CV to importView so in-place pins don't need to wait on router to finish
@@ -106,6 +108,7 @@
         (pinMap nil)             ; rename ports based on map
         (rdtUseFlops nil)        ; use flops instead of latches
         (rdtUserTcl nil)         ; optional tcl file
+        (scanMode nil)           ; optional scan mode string
         (perfCorner "max")       ; primary perfCorner for performance
         )
   (let (TEMP WDIR LEFDEF_DIR MaxHeapSize CAST_PATH DFII_DIR SPAR_DIR PDK_DIR
@@ -160,6 +163,7 @@
                    ?timingDriven timingDriven ?softMacro softMacro
                    ?abstractCellName abstractCellName ?targetCellName targetCellName
                    ?tau tau ?ecoIter ecoIter ?rdtUseFlops rdtUseFlops ?rdtUserTcl rdtUserTcl
+                   ?scanMode scanMode
                    ?thresholds thresholds ?perfCorner perfCorner)
 
     ; export Verilog
@@ -382,6 +386,7 @@
         (ecoIter 0)              ; number of spr ECO passes
         (rdtUseFlops nil)        ; use flops instead of latches
         (rdtUserTcl nil)         ; optional tcl file
+        (scanMode nil)           ; optional scan mode string
         (perfCorner "max")       ; primary perfCorner for performance
         )
   (let (CAST_PATH DFII_DIR TEMP WDIR file)
@@ -418,6 +423,7 @@
     (fprintf file "--rdt-eco-iter=%d\n" ecoIter)
     (when rdtUseFlops (fprintf file "--rdt-use-flops=1\n"))
     (when rdtUserTcl (fprintf file "--rdt-user-tcl=%s\n" (PathMakePathAbsolute rdtUserTcl)))
+    (when scanMode (fprintf file "--scan-mode=%s\n" scanMode))
     (fprintf file "--base=%s\n" (GetCastCellName CV->cellName))
     (fprintf file "--csp-register-width=1025\n")
     (fprintf file "--pv-generate-sdf=1\n")
