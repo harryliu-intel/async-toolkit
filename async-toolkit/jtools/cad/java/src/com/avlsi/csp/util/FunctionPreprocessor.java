@@ -1030,9 +1030,15 @@ public class FunctionPreprocessor extends VisitorByCategory {
                             .epr(arg));
                     }
                 } else if (currType != null) {
-                    final Type varType =
-                        currType instanceof IntegerType ? new TemporaryIntegerType()
-                                                        : currType;
+                    final Type varType;
+                    if (currType instanceof IntegerType) {
+                        varType = new TemporaryIntegerType();
+                    } else if (currType instanceof NodeType) {
+                        varType = ((NodeType) currType).isArrayed() ?
+                            new TemporaryIntegerType() : new BooleanType();
+                    } else {
+                        varType = currType;
+                    }
                     preamble.add(createVarStatement(actual, varType));
                 }
                 actual.epr(arg);
