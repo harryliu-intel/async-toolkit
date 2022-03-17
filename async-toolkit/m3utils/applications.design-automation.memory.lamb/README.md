@@ -6,8 +6,10 @@ To produce a complete set of collaterals requires an install of the m3utils repo
 The m3utils repo in turn requires the Modula-3 compiler (Critical Mass Modula-3, cm3) to be installed.  Modula-3 is provided
 as part of Cheetah.  At the moment, the following commands will set up and build the necessary code:
 
+```
 setenv RTA_CM3_HOME /p/cth/rtl/cad/x86-64_linux44/opensource/cm3/d5.11.0-20210425/
 make
+```
 
 To produce a single LAMB requires Cheetah environment. Execute, for example, in the top-level directory of the repo:
 
