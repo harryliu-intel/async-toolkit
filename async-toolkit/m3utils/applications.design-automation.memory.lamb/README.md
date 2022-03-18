@@ -2,8 +2,8 @@
 ###   Intel XFG 2021-2022
 Implementation and various tools associated with size, power, and timing estimation.
 
-To produce a complete set of collaterals requires an install of the m3utils repo, which is pulled in as a submodule.
-The m3utils repo in turn requires the Modula-3 compiler (Critical Mass Modula-3, cm3) to be installed.  Modula-3 is provided
+To produce a complete set of collaterals requires an install of the [m3utils repo](https://github.com/intel-sandbox/m3utils), which is pulled in as a submodule.
+The m3utils repo in turn requires the [Modula-3](https://en.wikipedia.org/wiki/Modula-3) compiler ([Critical Mass Modula-3](https://github.com/modula3/cm3), cm3) to be installed.  Modula-3 is provided
 as part of Cheetah.  At the moment, the following commands will set up and build the necessary code:
 
 ```
