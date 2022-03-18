@@ -242,6 +242,7 @@ public interface DirectiveConstants {
     String TUNABLE_DELAY_MUL = "tunable_delay_mul";
     String TUNABLE_DELAY_ADD = "tunable_delay_add";
     String TUNABLE_DELAY_CONFIG = "tunable_delay_config";
+    String CUT_SCAN_PORTS = "cut_scan_ports";
 
     /** Slacker directives */
     String SLACKER_LEAF = "slacker_leaf";

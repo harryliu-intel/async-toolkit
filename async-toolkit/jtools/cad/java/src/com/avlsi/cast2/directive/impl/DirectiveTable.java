@@ -406,6 +406,7 @@ public class DirectiveTable {
         registerDirective(CELL, TUNABLE_DELAY_ADD, BOOLEAN_TYPE, Boolean.FALSE);
         registerDirective(CELL, TUNABLE_DELAY_MUL, BOOLEAN_TYPE, Boolean.FALSE);
         registerDirective(SUBCELL, TUNABLE_DELAY_CONFIG, NODE_TYPE, INT_TYPE, null);
+        registerDirective(CELL, CUT_SCAN_PORTS, BOOLEAN_TYPE, Boolean.FALSE);
 
         /** Slacker directives */
         registerDirective(CELL, SLACKER_LEAF, BOOLEAN_TYPE, null);
