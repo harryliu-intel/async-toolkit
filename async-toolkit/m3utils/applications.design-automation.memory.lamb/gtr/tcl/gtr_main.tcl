@@ -39,6 +39,7 @@ source $::env(GTR_ROOT)/tcl/gtr_lamb_power.tcl
 source $::env(GTR_ROOT)/tcl/gtr_lamb_gen_sv.tcl
 source $::env(GTR_ROOT)/tcl/gtr_lamb_gen_lef.tcl
 source $::env(GTR_ROOT)/tcl/gtr_lamb_gen_lib.tcl
+source $::env(GTR_ROOT)/tcl/gtr_lamb_gen_db.tcl
 source $::env(GTR_ROOT)/tcl/gtr_gen_ndm.tcl
 source $::env(GTR_ROOT)/tcl/gtr_lblocks_gen_spice.tcl
 
