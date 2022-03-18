@@ -42,16 +42,18 @@ public class DSimUtil {
     private Node STEP;
     private Node DLY;
     private Node CAPTURE;
+    private Node CUTSCAN;
     private Node ERROR;
 
     public static final int STANDARD_RESET = 0;
 
     // TODO BUG 28502: use reset_net/start_net/delay_net directives instead
-    public static HierName _RESET_NAME = HierName.makeHierName("_RESET");
-    public static HierName START_NAME  = HierName.makeHierName("START");
-    public static HierName STEP_NAME   = HierName.makeHierName("STEP");
-    public static HierName DLY_NAME    = HierName.makeHierName("DLY");
-    public static HierName CAPTURE_NAME    = HierName.makeHierName("CAPTURE");
+    public static HierName _RESET_NAME  = HierName.makeHierName("_RESET");
+    public static HierName START_NAME   = HierName.makeHierName("START");
+    public static HierName STEP_NAME    = HierName.makeHierName("STEP");
+    public static HierName DLY_NAME     = HierName.makeHierName("DLY");
+    public static HierName CAPTURE_NAME = HierName.makeHierName("CAPTURE");
+    public static HierName CUTSCAN_NAME = HierName.makeHierName("CUTSCAN");
 
     /** Get a node from top level or env (TODO BUG 28502: eliminate) **/
     private static Node getTopOrEnvNode(HierName name) {
@@ -84,6 +86,10 @@ public class DSimUtil {
         return getTopOrEnvNode(CAPTURE_NAME);
     }
 
+    public static Node getCutscanNode() {
+        return getTopOrEnvNode(CUTSCAN_NAME);
+    }
+
     /**
      * DSimUtil constructor.  Looks up nodes in preparation for
      * doing stuff.  Shouldn't be called until a cell is instantiated.
@@ -97,7 +103,8 @@ public class DSimUtil {
         START  = getStartNode();
         STEP   = getStepNode();
         DLY    = getDelayNode();
-        CAPTURE    = getCaptureNode();
+        CAPTURE = getCaptureNode();
+        CUTSCAN = getCutscanNode();
     }
 
     /**
@@ -133,6 +140,7 @@ public class DSimUtil {
             if (START!=null) START.scheduleImmediate(Node.VALUE_0);
             if (STEP!=null) STEP.scheduleImmediate(Node.VALUE_0);
             if (CAPTURE!=null) CAPTURE.setValueAndEnqueueDependents(Node.VALUE_0);
+            if (CUTSCAN!=null) CUTSCAN.setValueAndEnqueueDependents(Node.VALUE_0);
             dsim.cycle(-1);
 
             // additional step for initialize_on_reset directives

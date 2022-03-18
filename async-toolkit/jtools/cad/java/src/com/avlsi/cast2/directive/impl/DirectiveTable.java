@@ -10,6 +10,7 @@ package com.avlsi.cast2.directive.impl;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import com.avlsi.file.common.HierName;
 import com.avlsi.csp.util.CspCallback;
@@ -257,15 +258,19 @@ public class DirectiveTable {
         registerDirective(CELL, LAYER_POWERGRID_WIREWIDTH, LAYER_TYPE, FLOAT_TYPE, new Float(-1.0) );
         registerDirective(CELL, LAYER_KEEPOUT_PATTERN, LAYER_TYPE, STRING_TYPE, "0" );
         registerDirective(CELL, AUTO_LAYOUT, INT_TYPE, new Integer(0));
-        registerDirective(CELL, RESET_NET, NODE_TYPE, BOOLEAN_TYPE, Boolean.FALSE);
-        registerDirective(CELL, DELAY_NET, NODE_TYPE, BOOLEAN_TYPE, Boolean.FALSE);
-        registerDirective(CELL, CAPTURE_NET, NODE_TYPE, BOOLEAN_TYPE, Boolean.FALSE);
-        registerDirective(CELL, START_NET, NODE_TYPE, BOOLEAN_TYPE, Boolean.FALSE);
-        registerDirective(CELL, STEP_NET, NODE_TYPE, BOOLEAN_TYPE, Boolean.FALSE);
-        registerDirective(SUBCELL, RESET_NET, NODE_TYPE, BOOLEAN_TYPE, Boolean.FALSE);
-        registerDirective(SUBCELL, CAPTURE_NET, NODE_TYPE, BOOLEAN_TYPE, Boolean.FALSE);
-        registerDirective(SUBCELL, START_NET, NODE_TYPE, BOOLEAN_TYPE, Boolean.FALSE);
-        registerDirective(SUBCELL, STEP_NET, NODE_TYPE, BOOLEAN_TYPE, Boolean.FALSE);
+
+        /** Net directives **/
+        Stream.of(RESET_NET,
+                  DELAY_NET,
+                  CAPTURE_NET,
+                  CUTSCAN_NET,
+                  START_NET,
+                  STEP_NET)
+            .forEachOrdered(dir -> {
+                registerDirective(CELL, dir, NODE_TYPE, BOOLEAN_TYPE, Boolean.FALSE);
+                registerDirective(SUBCELL, dir, NODE_TYPE, BOOLEAN_TYPE, Boolean.FALSE);
+            });
+
         registerDirective(SUBCELL, FLOORPLAN_ARRAY, ARRAYED_INSTANCE_TYPE, STRING_TYPE, null);
         registerDirective(CELL, POWER_NET, NODE_TYPE, BOOLEAN_TYPE, Boolean.FALSE);
         registerDirective(CELL, GROUND_NET, NODE_TYPE, BOOLEAN_TYPE, Boolean.FALSE);
