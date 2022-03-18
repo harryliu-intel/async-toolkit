@@ -172,7 +172,6 @@ override ("spiceflat", TOP & "/spice")
 override ("ctlib", TOP & "/spice")
 
 override ("spicebuilderlib", TOP & "/tcam")
-override ("lambbuilderlib", TOP & "/lamb")
 override ("hbddops", TOP & "/btc")
 override ("rdlparse", TOP & "/rdl")
 override ("varlib", TOP & "/tcam")
