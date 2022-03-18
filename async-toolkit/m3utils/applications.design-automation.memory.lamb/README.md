@@ -30,7 +30,7 @@ pipecleaning  physical design flows. This includes:
 ### Requirements
 - SLES12 machine within HPC environment
 - Up-to-date Cheetah Environment, with access to relevant tool licenses
-- Module-3 Installation (see below)
+- Modula-3 Installation (see below)
 
 ### Release Methodology
 Releases to broad silicon teams should always be referenceable back to a specific git point.
@@ -50,10 +50,14 @@ which is pulled in as a [submodule](https://git-scm.com/book/en/v2/Git-Tools-Sub
 the ``--recurse-submodules`` option, or after cloning, do a ``git submodule update --init``.
 
 
-The m3utils repo in turn requires the [Modula-3](https://en.wikipedia.org/wiki/Modula-3) compiler ([Critical Mass Modula-3](https://github.com/modula3/cm3), cm3) to be installed.  Modula-3 is provided as part of Cheetah.  At the moment, the following commands will set up and build the necessary code:
+The m3utils repo in turn requires the [Modula-3](https://en.wikipedia.org/wiki/Modula-3) compiler ([Critical Mass Modula-3](https://github.com/modula3/cm3), cm3) to be installed.  Modula-3 is provided as part of Cheetah.  A default location is provided as part of the top-level Makefile.  To override that, the following commands will set up and build the necessary code, for example:
 
 ```
 setenv RTA_CM3_HOME /p/cth/rtl/cad/x86-64_linux44/opensource/cm3/d5.11.0-20210425/
+```
+
+To build the code, simply run in the top-level directory of the repo:
+```
 make
 ```
 
