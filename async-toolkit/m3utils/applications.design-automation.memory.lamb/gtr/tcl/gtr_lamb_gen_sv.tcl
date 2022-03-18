@@ -94,9 +94,9 @@ proc gtr_lamb_gen_behav_sv { args } {
     puts $of "    )"
     puts $of "("
     puts $of "    input  logic clk,"
-    puts $of "    input  logic wen"
+    puts $of "    input  logic wen,"
     if { $flowthrough == 0 } {
-        puts $of "    ,input  logic ren"
+        puts $of "    input  logic ren,"
     }
     puts $of "    input  logic \[AWIDTH-1:0\] radr,"
     puts $of "    input  logic \[AWIDTH-1:0\] wadr,"
