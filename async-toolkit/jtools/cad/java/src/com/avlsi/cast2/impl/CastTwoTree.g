@@ -2015,11 +2015,7 @@ returns [Environment exportedEnv]
     }
     : ( moduleDeclaration[instantiatorModuleName] )
       ( importDeclaration[cell, importEnv, fileList] )*
-      ( globalBodyStatement[env, cell]
-        | typeDeclaration[env, false]
-        | channelDeclaration[env]
-        | aliasDeclaration[env]
-      )*
+      ( globalBodyStatement[env, cell] )*
     { exportedEnv = env.getExportedEnvironment(); }
     ;
 
@@ -2101,11 +2097,12 @@ importDeclaration[CellImpl cell, ImportEnvironment importEnv,
 // Otherwise it's the environment in which the metaparameters, ports,
 // and implied ports of cell are bound, but none of the body of cell.
 // It's read-only.
-bodyStatementList[Environment env, CellImpl cell, CellInterface envContainer,
+bodyStatementList[Environment env, boolean globalP,
+                  CellImpl cell, CellInterface envContainer,
                   BlockEnvironment paramEnv, Environment prsEnv,
                   Environment subcellsEnv, Environment subtypesEnv]
     : #( BODY_STATEMENT_LIST
-         ( bodyStatement[env, false, cell, envContainer, paramEnv, prsEnv,
+         ( bodyStatement[env, globalP, cell, envContainer, paramEnv, prsEnv,
                          subcellsEnv, subtypesEnv] )* )
     ;
 
@@ -2153,13 +2150,16 @@ bodyStatement[Environment env, boolean globalP, CellImpl cell,
             null, null]
     | variableDeclarationStatement[env, globalP, cell, envContainer, null,
                                    false]
-    | loopStatement[env, cell, envContainer, paramEnv, prsEnv, subcellsEnv,
-                    subtypesEnv]
-    | ifStatement[env, cell, envContainer, paramEnv, prsEnv, subcellsEnv,
-                  subtypesEnv]
+    | loopStatement[env, globalP, cell, envContainer, paramEnv, prsEnv,
+                    subcellsEnv, subtypesEnv]
+    | ifStatement[env, globalP, cell, envContainer, paramEnv, prsEnv,
+                  subcellsEnv, subtypesEnv]
     | assignmentStatement[env, cell]
     | subtypesBlock[subtypesEnv, cell]
     | verilogBlock[new FixedBlockEnvironment(env), cell]
+    | { globalP }? typeDeclaration[env, false]
+    | { globalP }? channelDeclaration[env]
+    | { globalP }? aliasDeclaration[env]
     ;
 
 // paramEnv can be null if an env block is not allowed at this level.
@@ -2183,7 +2183,7 @@ bodyStatement[Environment env, boolean globalP, CellImpl cell,
 block[Environment env, CellImpl cell, CellInterface envContainer,
       BlockEnvironment paramEnv, Environment prsEnv, Environment subcellsEnv,
       Environment subtypesEnv]
-    : #( BLOCK bodyStatementList[env, cell, envContainer, paramEnv, prsEnv,
+    : #( BLOCK bodyStatementList[env, false, cell, envContainer, paramEnv, prsEnv,
                                  subcellsEnv, subtypesEnv] )
     ;
 
@@ -3104,7 +3104,8 @@ portParam[Environment env, CellImpl cell, ArrayList portList,
     ;
 
 // refactor: remove duplication with prsLoopStatement
-loopStatement[Environment env, CellImpl cell, CellInterface envContainer,
+loopStatement[Environment env, boolean globalP,
+              CellImpl cell, CellInterface envContainer,
               BlockEnvironment paramEnv, Environment prsEnv,
               Environment subcellEnv, Environment subtypesEnv]
     { Range r; }
@@ -3116,14 +3117,15 @@ loopStatement[Environment env, CellImpl cell, CellInterface envContainer,
             final int i = ri.next();
             final Environment loopEnv
                 = new LoopEnvironment(env, sym, IntValue.valueOf(i));
-            bodyStatementList(slist, loopEnv, cell, envContainer, paramEnv,
-                              prsEnv, subcellEnv, subtypesEnv);
+            bodyStatementList(slist, loopEnv, globalP, cell, envContainer,
+                              paramEnv, prsEnv, subcellEnv, subtypesEnv);
         }
     }
     ;
 
 // refactor: remove duplication with prsIfStatement
-ifStatement[Environment env, CellImpl cell, CellInterface envContainer,
+ifStatement[Environment env, boolean globalP,
+            CellImpl cell, CellInterface envContainer,
             BlockEnvironment paramEnv, Environment prsEnv,
             Environment subcellEnv, Environment subtypesEnv]
     { Value v; }
@@ -3132,9 +3134,10 @@ ifStatement[Environment env, CellImpl cell, CellInterface envContainer,
         final BoolValue bv = ifGuard(v, expr);
 
         try {
-            if (bv.getValue())
-                bodyStatementList(slist, env, cell, envContainer, paramEnv,
-                                  prsEnv, subcellEnv, subtypesEnv);
+            if (bv.getValue()) {
+                bodyStatementList(slist, env, globalP, cell, envContainer,
+                                  paramEnv, prsEnv, subcellEnv, subtypesEnv);
+            }
         } catch (InvalidOperationException e) {
             throw semanticWrapperException("If guard uninitialized.",
                 e, expr);
