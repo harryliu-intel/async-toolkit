@@ -1,5 +1,4 @@
 #
-# Based on utility from Mika
 # Author : Mika Nystrom <mika.nystroem@intel.com>
 # Author : Paul Donehue <paul.donehue@intel.com>
 #
