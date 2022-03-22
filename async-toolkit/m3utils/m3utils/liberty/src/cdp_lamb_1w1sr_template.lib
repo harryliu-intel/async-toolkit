@@ -171,6 +171,17 @@ library (cdp_lamb_1w1sr_32w_21b__tt_0p75v_85c_typical ){
     interface_timing : true ;
     is_macro_cell : true ;
     block_distance :   25.2370;
+
+    pg_pin (VDD) {
+      voltage_name : "VDD";
+      pg_type : primary_power;
+      direction : input;
+    }
+    pg_pin (VSS) {
+      voltage_name : "VSS";
+      pg_type : primary_ground;
+      direction : input;
+    }
     
     /* Start of pin clk */ 
     pin (clk ) { 
@@ -178,7 +189,49 @@ library (cdp_lamb_1w1sr_32w_21b__tt_0p75v_85c_typical ){
       direction : input ;
       capacitance :  0.0011;
       max_transition :  0.0625;
+      related_ground_pin : "VSS";
+      related_power_pin : "VDD";
       fanout_load :  1.0000;
+      internal_power () {
+          related_pg_pin : "VDD";
+          when : "!ren&!wen";
+          rise_power (scalar) {
+              values ("0.000179208287327");
+          }
+          fall_power (scalar) {
+              values ("0.000179208287327");
+          }
+      }
+      internal_power () {
+          related_pg_pin : "VDD";
+          when : "ren&!wen";
+          rise_power (scalar) {
+              values ("0.00537982976905");
+          }
+          fall_power (scalar) {
+              values ("0.00537982976905");
+          }
+      }
+      internal_power () {
+          related_pg_pin : "VDD";
+          when : "!ren&wen";
+          rise_power (scalar) {
+              values ("0.010385439932");
+          }
+          fall_power (scalar) {
+              values ("0.010385439932");
+          }
+      }
+      internal_power () {
+          related_pg_pin : "VDD";
+          when : "ren&wen";
+          rise_power (scalar) {
+              values ("0.016144073313");
+          }
+          fall_power (scalar) {
+              values ("0.016144073313");
+          }
+      }
       min_pulse_width_low :  0.0597;
       min_pulse_width_high :  0.0935;
       
@@ -191,6 +244,18 @@ library (cdp_lamb_1w1sr_32w_21b__tt_0p75v_85c_typical ){
       max_transition :  0.1800;
       fanout_load :  1.0000;
       
+      related_ground_pin : "VSS";
+      related_power_pin : "VDD";
+      internal_power () {
+          related_pg_pin : "VDD";
+          rise_power (scalar) {
+              values ("0.0000001");
+          }
+          fall_power (scalar) {
+              values ("0.0000001");
+          }
+      }
+
       /* Start of nochange_high_high arc of pin dft__mem_wr_disable wrt pin clk */
       timing() { 
         timing_type : nochange_high_high ;
@@ -259,6 +324,17 @@ library (cdp_lamb_1w1sr_32w_21b__tt_0p75v_85c_typical ){
       capacitance :  0.0039;
       max_transition :  0.1400;
       fanout_load :  3.0000;
+      related_ground_pin : "VSS";
+      related_power_pin : "VDD";
+      internal_power () {
+          related_pg_pin : "VDD";
+          rise_power (scalar) {
+              values ("0.0000001");
+          }
+          fall_power (scalar) {
+              values ("0.0000001");
+          }
+      }
       
     } /* End of pin dft_read_bypass */
     
@@ -268,6 +344,17 @@ library (cdp_lamb_1w1sr_32w_21b__tt_0p75v_85c_typical ){
       capacitance :  0.0014;
       max_transition :  0.1800;
       fanout_load :  2.0000;
+      related_ground_pin : "VSS";
+      related_power_pin : "VDD";
+      internal_power () {
+          related_pg_pin : "VDD";
+          rise_power (scalar) {
+              values ("0.0000001");
+          }
+          fall_power (scalar) {
+              values ("0.0000001");
+          }
+      }
       
       /* Start of nochange_high_high arc of pin icg_force_on wrt pin clk */
       timing() { 
@@ -373,6 +460,17 @@ library (cdp_lamb_1w1sr_32w_21b__tt_0p75v_85c_typical ){
       capacitance :  0.0008;
       max_transition :  0.1400;
       fanout_load :  1.0000;
+      related_ground_pin : "VSS";
+      related_power_pin : "VDD";
+      internal_power () {
+          related_pg_pin : "VDD";
+          rise_power (scalar) {
+              values ("0.0000001");
+          }
+          fall_power (scalar) {
+              values ("0.0000001");
+          }
+      }
       
       /* Start of setup_rising arc of pin dft__core_si wrt pin clk */
       timing() { 
@@ -442,6 +540,17 @@ library (cdp_lamb_1w1sr_32w_21b__tt_0p75v_85c_typical ){
       capacitance :  0.0010;
       max_transition :  0.1400;
       fanout_load :  1.0000;
+      related_ground_pin : "VSS";
+      related_power_pin : "VDD";
+      internal_power () {
+          related_pg_pin : "VDD";
+          rise_power (scalar) {
+              values ("0.0000001");
+          }
+          fall_power (scalar) {
+              values ("0.0000001");
+          }
+      }
       
       /* Start of setup_rising arc of pin test__scan_en wrt pin clk */
       timing() { 
@@ -511,6 +620,17 @@ library (cdp_lamb_1w1sr_32w_21b__tt_0p75v_85c_typical ){
       capacitance :  0.0008;
       max_transition :  0.1400;
       fanout_load :  1.0000;
+      related_ground_pin : "VSS";
+      related_power_pin : "VDD";
+      internal_power () {
+          related_pg_pin : "VDD";
+          rise_power (scalar) {
+              values ("0.0000001");
+          }
+          fall_power (scalar) {
+              values ("0.0000001");
+          }
+      }
       
       /* Start of setup_rising arc of pin wen wrt pin clk */
       timing() { 
@@ -583,6 +703,8 @@ library (cdp_lamb_1w1sr_32w_21b__tt_0p75v_85c_typical ){
     }
     bus (wadr ){
       bus_type :  bus0 ;
+      related_ground_pin : "VSS";
+      related_power_pin : "VDD";
       
       /* Start of pin wadr[0] */ 
       pin (wadr[0] ) { 
@@ -590,6 +712,15 @@ library (cdp_lamb_1w1sr_32w_21b__tt_0p75v_85c_typical ){
         capacitance :  0.0007;
         max_transition :  0.065;
         fanout_load :  1.0000;
+        internal_power () {
+          related_pg_pin : "VDD";
+            rise_power (scalar) {
+                values ("0.0000001");
+            }
+            fall_power (scalar) {
+                values ("0.0000001");
+            }
+        }
         
         /* Start of setup_rising arc of pin wadr[0] wrt pin clk */
         timing() { 
@@ -664,6 +795,8 @@ library (cdp_lamb_1w1sr_32w_21b__tt_0p75v_85c_typical ){
     }
     bus (wdata ){
       bus_type :  bus1 ;
+      related_ground_pin : "VSS";
+      related_power_pin : "VDD";
       
       /* Start of pin wdata[0] */ 
       pin (wdata[0] ) { 
@@ -671,6 +804,15 @@ library (cdp_lamb_1w1sr_32w_21b__tt_0p75v_85c_typical ){
         capacitance :  0.0009;
         max_transition :  0.065;
         fanout_load :  1.0000;
+        internal_power () {
+          related_pg_pin : "VDD";
+            rise_power (scalar) {
+                values ("0.0000001");
+            }
+            fall_power (scalar) {
+                values ("0.0000001");
+            }
+        }
         
         /* Start of setup_rising arc of pin wdata[0] wrt pin clk */
         timing() { 
@@ -742,7 +884,18 @@ library (cdp_lamb_1w1sr_32w_21b__tt_0p75v_85c_typical ){
       capacitance :  0.0005;
       max_transition :  0.1400;
       fanout_load :  1.0000;
-      
+      related_ground_pin : "VSS";
+      related_power_pin : "VDD";
+      internal_power () {
+        related_pg_pin : "VDD";
+          rise_power (scalar) {
+              values ("0.0000001");
+          }
+          fall_power (scalar) {
+              values ("0.0000001");
+          }
+      }
+
       /* Start of setup_rising arc of pin ren wrt pin clk */
       timing() { 
         timing_type : setup_rising ;
@@ -814,7 +967,9 @@ library (cdp_lamb_1w1sr_32w_21b__tt_0p75v_85c_typical ){
     }
     bus (radr ){
       bus_type :  bus2 ;
-      
+      related_ground_pin : "VSS";
+      related_power_pin : "VDD";
+  
 
       /* Start of pin radr[0] */ 
       pin (radr[0] ) { 
@@ -822,7 +977,16 @@ library (cdp_lamb_1w1sr_32w_21b__tt_0p75v_85c_typical ){
         capacitance :  0.0005;
         max_transition :  0.1400;
         fanout_load :  1.0000;
-        
+        internal_power () {
+          related_pg_pin : "VDD";
+            rise_power (scalar) {
+                values ("0.0000001");
+            }
+            fall_power (scalar) {
+                values ("0.0000001");
+            }
+        }
+   
         /* Start of setup_rising arc of pin radr[0] wrt pin clk */
         timing() { 
           timing_type : setup_rising ;
@@ -894,7 +1058,18 @@ library (cdp_lamb_1w1sr_32w_21b__tt_0p75v_85c_typical ){
       max_transition :  0.1400;
       max_fanout :  20.0000;
       max_capacitance :  0.1000;
-      
+      related_ground_pin : "VSS";
+      related_power_pin : "VDD";
+      internal_power () {
+         related_pg_pin : "VDD";
+           rise_power (scalar) {
+               values ("0.0000001");
+           }
+           fall_power (scalar) {
+               values ("0.0000001");
+           }
+      }
+
       /* Start of rising_edge arc of pin dft__core_so wrt pin clk */
       timing() { 
         timing_type : rising_edge ;
@@ -1017,7 +1192,9 @@ library (cdp_lamb_1w1sr_32w_21b__tt_0p75v_85c_typical ){
     }
     bus (dout ){
       bus_type :  bus3 ;
-      
+      related_ground_pin : "VSS";
+      related_power_pin : "VDD";
+    
 
       /* Start of pin dout[0] */ 
       pin (dout[0] ) { 
@@ -1026,7 +1203,16 @@ library (cdp_lamb_1w1sr_32w_21b__tt_0p75v_85c_typical ){
         max_transition :  0.1400;
         max_fanout :  20.0000;
         max_capacitance :  0.1000;
-        
+        internal_power () {
+          related_pg_pin : "VDD";
+            rise_power (scalar) {
+                values ("0.0000001");
+            }
+            fall_power (scalar) {
+                values ("0.0000001");
+            }
+        }
+
         /* Start of rising_edge arc of pin dout[0] wrt pin clk */
         timing() { 
           timing_type : rising_edge ;
