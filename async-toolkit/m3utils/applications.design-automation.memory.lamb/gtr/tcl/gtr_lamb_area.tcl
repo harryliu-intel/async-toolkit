@@ -2,12 +2,7 @@
 # Author : Mika Nystrom <mika.nystroem@intel.com>
 # Author : Paul Donehue <paul.donehue@intel.com>
 #
-
-# BASIC GEOMETRIC DEFS
-# N.B. depth of memory runs in X, width in Y
-#
-# SO to avoid confusion.  This file consistently uses the following
-# nomenclature:
+# This file consistently uses the following nomenclature:
 #
 # depth             - # of entries in a RAM array
 # width             - # of bits in each entry of a RAM array
@@ -18,8 +13,7 @@
 #                     viewing a physical design representation on
 #                     a graphics display
 #
-# units are appended as suffixes
-# if no units are mentioned for physical quantities, they are in SI base units
+# N.B. depth of memory runs in X, width in Y !
 #
 
 proc gtr_lamb_area { args } {
