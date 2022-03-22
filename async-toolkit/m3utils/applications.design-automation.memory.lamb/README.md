@@ -60,10 +60,10 @@ For example:
 ```
 /p/hdk/bin/cth_psetup -p tfc -tool ship -cfg tfc_ipde_n3.cth -ward BUILD/ship
 ship.pl -tag testtag -ip_type hip -test -skip_stages archive \
-  -block cdp_lamb_n3bhd_1r1w1c_4d_10b -source ../cdp_lamb_n3bhd_1r1w1c_4d_10b 
+  -block cdp_lamb_n3bhd_1r1w1c_4d_10b -no_viewgen -source ../cdp_lamb_n3bhd_1r1w1c_4d_10b
 ```
 
-Omit `-skip_stages archive` and `-test` to actually perform the release to the `$PROJ_ARCHIVE` area. Use an arc tag based off
+Omit `-skip_stages archive` and `-test` to actually perform the release to the `$PROJ_ARCHIVE` area. Specify an arc tag based off
 of the Git state, for example `git describe` will provide a reference that would be a correct argument to
 `git checkout` in the future.
 
