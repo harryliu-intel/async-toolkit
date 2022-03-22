@@ -186,6 +186,7 @@ proc gtr_lamb_area { args } {
     puts "======="
     puts [format "tot area of Lambs = %e $overall_eff efficiency %5.1f%% overhead %5.1f%%" $total_lamb_area [expr $overall_eff * 100.0 ] [expr $overall_oh * 100.0 ] ]
     puts [format "tot area of Lambs = %8.2f sq. microns" [expr $total_lamb_area * 1e12 ] ]
+    
     return [list $total_lamb_area $lamb_x_nm $lamb_y_nm ]
 }
 

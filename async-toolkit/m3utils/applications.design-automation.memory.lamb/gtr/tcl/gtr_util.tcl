@@ -21,7 +21,7 @@ proc gtr_cornerSuffix { oc voltage } {
    global properties
    set corner [dict get $properties oc_type $oc feol_process_corner]
    set temp [dict get $properties oc_type $oc temperature]
-   # Use an "M" to avoid making a wierd filename
+   # Use an "M" to avoid making a weird filename
    set temp [regsub -- - $temp M]
    # a little cheesy...
    set vtxt [regsub 0. [format %.3f $voltage] ""]
@@ -394,12 +394,25 @@ proc gtr_lamb_gen_views { args } {
         ## eventually, below should loop over corners
         set oc_type S_0
         set voltage 0.675
-        set ndmlib [gtr_lamb_gen_lib -block_name $block_name -data_depth $depth -data_width $width -tech_node $tech_node -oc_type $oc_type -voltage $voltage -filelistVar filelist ]
-        set snpsdb [gtr_lamb_gen_db -block_name $block_name -lib_file $ndmlib -oc_type $oc_type -voltage $voltage -filelist_var filelist]    
-        set ndmlef [gtr_lamb_gen_lef -block_name $block_name -data_depth $depth -data_width $width -tech_node $tech_node -filelistVar filelist]
+
+        # generate Liberty file for LAMB
+        set ndmlib [gtr_lamb_gen_lib -block_name $block_name -data_depth $depth -data_width $width -tech_node $tech_node -oc_type $oc_type -voltage $voltage -filelistVar filelist -ftr_value $flowthrough]
+
+        # generate binary DB format using Liberty file as input
+        set snpsdb [gtr_lamb_gen_db -block_name $block_name -lib_file $ndmlib -oc_type $oc_type -voltage $voltage -filelist_var filelist]
+        
+        # generate the LEF for the LAMB
+        set ndmlef [gtr_lamb_gen_lef -block_name $block_name -data_depth $depth -data_width $width -tech_node $tech_node -filelistVar filelist -ftr_value $flowthrough]
+
+        # generate the behavioral SV model for the LAMB
         gtr_lamb_gen_behav_sv -block_name $block_name -data_depth $depth -data_width $width -filelistVar filelist -ftr_value $flowthrough
+        
         if { $ndmGenerate } {
-           gtr_gen_ndm -block_name $block_name -lef_file $ndmlef -process_label ssgnp -lib_file $ndmlib -tech_node $tech_node -filelistVar filelist
+            # generate NDM file for LAMB
+            # NDM contains: LEF, all the timing models for the LAMB
+            # controversial whether this step should be handled here...
+            # will need a list of tuples of process labels and lib files
+            gtr_gen_ndm -block_name $block_name -lef_file $ndmlef -process_label ssgnp -lib_file $ndmlib -tech_node $tech_node -filelistVar filelist
         }
       }
    }

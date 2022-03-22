@@ -39,6 +39,7 @@ proc gtr_lamb_gen_lib { args } {
     if { [info exists arg(-debug) ] } {
       echo "INFO: Processing Memory $mem_name"
     }
+    set flowthrough $arg(-ftr_value)
     set block_name $arg(-block_name)
     set data_depth $arg(-data_depth)
     set data_width $arg(-data_width)
@@ -591,6 +592,7 @@ proc gtr_lamb_gen_lib { args } {
 define_proc_attributes gtr_lamb_gen_lib \
     -info "Utility to generate Lib Memory collaterals" \
     -define_args {
+        {-ftr_value "Specify flow-through or not" "int" int required}
 	{-block_name "Specify memory name" "<block_name>" string required}
 	{-tech_node "Specify tech node (default n3b)" "AnOos" one_of_string {required {values {"n3b" "n3e" "n5"}}}}
 	{-data_depth "Specify the depth" "int" int required}

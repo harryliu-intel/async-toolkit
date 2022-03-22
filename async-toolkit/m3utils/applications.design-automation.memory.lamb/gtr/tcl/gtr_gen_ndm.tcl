@@ -76,7 +76,10 @@ proc gtr_gen_ndm { args } {
         create_workspace -flow normal -technology $ndm_tech_file $block_name
     }
     read_lef $lef_file
+
+    # the following line needs to loop over process labels and lib files
     read_lib -process_label $process_label $lib_file
+    
     if { $tool == "lc_shell" } {
         report_app_options > ./${block_name}_frame_report_app_options.rep
         create_frame
@@ -91,7 +94,7 @@ proc gtr_gen_ndm { args } {
 
 
 define_proc_attributes gtr_gen_ndm \
-    -info "Utility to generate LAMB System Verilog Module" \
+    -info "Utility to generate LAMB NDM" \
     -define_args {
 	{-block_name "Specify memory name" "<block_name>" string required}
 	{-lib_file "Path to the .lib file" "./<block_name>.lib" string required}
