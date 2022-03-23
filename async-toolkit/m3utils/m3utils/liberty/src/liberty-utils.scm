@@ -2,6 +2,18 @@
 ;; requires types.scm in the same directory as this file to be loaded also
 (require-modules "m3" "display")
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; debugging definitions
+;;
+
+(define *do-debug* #f) ;; override this with (set! *do-debug* #t) to debug
+
+(define (debug . x)    ;; generic debug statement
+  (if *do-debug* (apply dis "DEBUG " x) x))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (define (only x)
   ;; get the only element from a singleton list
   (if (not (= 1 (length x)))
@@ -514,7 +526,7 @@
   (get-named-group cell "type" name))
 
 (define (copy-named-pin-group! cell name new-names)
-  (dis "new-names " new-names dnl)
+  (debug "new-names " new-names dnl)
   
   (let* ((g     (get-named-pin-group cell name)) ;; this is slow
          (npath 'head.params[0].val.val))
