@@ -21,47 +21,36 @@ IMPORT SchemeSymbol;
 
 CONST TE = Text.Equal;
 
-PROCEDURE GetPaths(extras : TextSeq.T) : REF ARRAY OF Pathname.T = 
+PROCEDURE GetPaths(paths : TextSeq.T) : REF ARRAY OF Pathname.T = 
   CONST
     fixed = ARRAY OF Pathname.T { "require", "m3" };
   VAR
-    res := NEW(REF ARRAY OF Pathname.T, NUMBER(fixed) + extras.size());
+    res := NEW(REF ARRAY OF Pathname.T, NUMBER(fixed) + paths.size());
   BEGIN
     FOR i := 0 TO NUMBER(fixed) - 1 DO
       res[i] := fixed[i]
     END;
-    FOR i := NUMBER(fixed) TO extras.size() + NUMBER(fixed) - 1 DO
-      res[i] := extras.remlo()
+    FOR i := NUMBER(fixed) TO paths.size() + NUMBER(fixed) - 1 DO
+      res[i] := paths.remlo()
     END;
     RETURN res
   END GetPaths;
 
 VAR
   pp       := NEW(ParseParams.T).init(Stdio.stderr);
-  extra    := NEW(TextSeq.T).init();
+  scms     := NEW(TextSeq.T).init();
 BEGIN
   TRY
-    pp.skipParsed();
-    WITH n = NUMBER(pp.arg^) - pp.next DO
-      FOR i := 0 TO n - 1 DO
-        extra.addhi(pp.getNext())
-      END
-    END;
-    pp.finish()
+    WHILE pp.keywordPresent("-scm") DO
+      scms.addhi(pp.getNext())
+    END
   EXCEPT
     ParseParams.Error => Debug.Error("Can't parse command line")
   END;
 
-  IF extra.size() = 0 THEN
-    Debug.Error("?must provide path (or \"-\" for std. input) of input as arg 1.")
-  END;
-
-  Debug.Out("extra.size " & Int(extra.size()));
-  
-
   SchemeStubs.RegisterStubs();
   TRY
-    WITH scm = NEW(SchemeM3.T).init(GetPaths(extra)^) DO
+    WITH scm = NEW(SchemeM3.T).init(GetPaths(scms)^) DO
       SchemeReadLine.MainLoop(NEW(ReadLine.Default).init(), scm)
     END
   EXCEPT

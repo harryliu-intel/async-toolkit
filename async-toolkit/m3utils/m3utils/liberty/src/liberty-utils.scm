@@ -586,16 +586,20 @@
 (define *area-program-path* "/nfs/sc/disks/bfn_pd_cb_02/mnystroe/applications.design-automation.memory.lamb/python/pyarea/area.py")
 
 (define (compute-macro-area width depth tech)
-  (string->number
-   (run-command (string-append
-                 *area-program-path*
-                 " -T " tech
-                 " -q "
-                 " -w " (number->string width)
-                 " -d " (number->string depth)
-                 )
-                )
-   )
+
+  (let ((the-command  (string-append
+                   *area-program-path*
+                   " -T " tech
+                   " -q "
+                   " -w " (number->string width)
+                   " -d " (number->string depth)
+                   )
+                  ))
+    
+    (debug "compute-macro-area command : " the-command dnl)
+    (string->number
+     (run-command the-command))
+    )
   )
 
 (define (expand-bus-width! lib bus-name width)
@@ -737,12 +741,21 @@
         (the-area (compute-macro-area width depth tech-name))
         )
 
+    (debug "updating lib area..." dnl)
     (update-lib-area! lib the-area)
     ;; update the physical area
     
+    (debug "expanding wdata to " width "..." dnl)
     (expand-bus-width! lib "wdata"  width)
+
+    (debug "expanding dout to " width "..." dnl)
     (expand-bus-width! lib "dout"   width)
+
+    
+    (debug "expanding wadr to " awidth "..." dnl)
     (expand-bus-width! lib "wadr"   awidth)
+    
+    (debug "expanding radr to " awidth "..." dnl)
     (expand-bus-width! lib "radr"   awidth)
     
     )
@@ -756,7 +769,7 @@
 
 (define (update-lib-date! lib)
   (let ((new-date (Text.Sub (run-command "date") 0 28)))
-    (update-group-variable! the-lib "date" new-date)
+    (update-group-variable! lib "date" new-date)
     new-date
     )
   )

@@ -99,11 +99,14 @@ SchemeStubs ("ParseParams")
 SchemeStubs ("Stdio")
 
 SchemeStubs ("LibertyUtils")
+SchemeStubs ("Scan")
+SchemeStubs ("Fmt")
+SchemeStubs ("Env")
 
 ExportSchemeStubs ("liberty")
 importSchemeStubs()
 
-program("testparse")
+program("editliberty")
 
 
 
