@@ -43,5 +43,6 @@ proc gtr_lamb_scale_lib { args } {
 
     set output [ exec {*}$command ]
 
+    puts $output
 }
 
