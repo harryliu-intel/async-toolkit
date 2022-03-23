@@ -1,10 +1,17 @@
-#!/bin/sh -x
+#!/bin/sh
 
-# we need readlinefe
-PATH=../../m3utils/bin:${PATH}
+GTR_ROOT=${GTR_HOME}/..
 
-SCMLIBS="-scm ../../m3utils/liberty/src/types.scm -scm ../../m3utils/liberty/src/liberty-utils.scm"
-SCM=../scm/liberty-scaler.scm
-PROG=../../m3utils/liberty/AMD64_LINUX/editliberty
+# we need readlinefe for interactive use
+M3UTILS=${GTR_ROOT}/m3utils
 
-${PROG} ${SCMLIBS} -scm ${SCM} $*
+PATH=${M3UTILS}/bin:${PATH}
+
+SCMLIBS="-scm ${M3UTILS}/liberty/src/types.scm -scm ${M3UTILS}/liberty/src/liberty-utils.scm"
+SCM0=${GTR_ROOT}/libscaler/scm/liberty-scaler.scm
+SCM1=${GTR_ROOT}/libscaler/scm/do-scale.scm
+
+PROG=${M3UTILS}/liberty/AMD64_LINUX/editliberty
+
+echo "running " ${PROG} ${SCMLIBS} -scm ${SCM0} -scm ${SCM1} $*
+${PROG} ${SCMLIBS} -scm ${SCM0} -scm ${SCM1} $*

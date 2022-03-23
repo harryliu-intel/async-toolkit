@@ -54,9 +54,13 @@
     (error "must specify -tech <technology name>"))
 (define *tech-name* (pp 'getNext))
 
-(if (not (pp 'keywordPresent "-temp"))
-    (error "must specify -temp <temperature in degrees Celsius>"))
-(define *temp-c* (string->number (pp 'getNext)))
+(if (not (pp 'keywordPresent "-sitemp"))
+    (error "must specify -sitemp <temperature in degrees Celsius>"))
+(define *sitemp-c* (string->number (pp 'getNext)))
+
+(if (not (pp 'keywordPresent "-mttemp"))
+    (error "must specify -mttemp <temperature in degrees Celsius>"))
+(define *mttemp-c* (string->number (pp 'getNext)))
 
 (if (not (pp 'keywordPresent "-v"))
     (error "must specify -v <voltage>"))
@@ -91,7 +95,8 @@
            *depth*
            *the-tech*
            *volt*
-           *temp-c*
+           *sitemp-c*
+           ;; *mttemp-c* ;; future add.
            *sicorner*
            *rcorner*
            *ccorner*

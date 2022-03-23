@@ -72,7 +72,7 @@ define_proc_attributes gtr_lamb_gen_db \
     -define_args {
    {-block_name "Specify memory name" "<block_name>" string required}	
    {-lib_file "Specify liberty file name" "<liberty_name>" string required}
-   {-oc_type "Operating condition" "AnOos" one_of_string {required {values {"S_125" "S_M40" "S_0" "F_125" "F_M40" "F_0" "T_25" "T_85" }}}}
+   {-oc_type "Operating condition" "AnOos" string required }
    {-voltage "Voltage condition" "voltage" string required}
    {-filelist_var "Update filelist for manifest.xml" "" string optional}
    {-debug "Report additional logging for debug purposes" "" boolean optional}
