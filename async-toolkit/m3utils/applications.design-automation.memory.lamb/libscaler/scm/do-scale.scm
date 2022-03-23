@@ -1,9 +1,32 @@
-(set! *area-program-path*
-      (string-append
-       (Env.Get "GTR_HOME")
-       "/../python/pyarea/area.py"))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; do-scale.scm
+;;
+;; This is the command-line front-end for liberty-scaler.scm
+;;
+;; Parse command-line arguments and call gen-lib from liberty-scaler.scm
+;;
+;;
+;; Author : mika.nystroem@intel.com
+;;          March, 2022
+;;
+;; requires use of editliberty program from m3utils/liberty area of 
+;; m3utils repo.
+;;
+;;
 
-(define pp (obj-method-wrap (LibertyUtils.DoParseParams) 'ParseParams.T))
+(set! *do-debug* #t)
+
+(define *gtr-home* (Env.Get "GTR_HOME"))
+
+(debug "GTR_HOME is " *gtr-home* dnl)
+
+(set! *area-program-path*
+      ;; this is the path to the python program that computes the area
+      (string-append *gtr-home* "/../python/pyarea/area.py"))
+
+(define pp
+  (obj-method-wrap (LibertyUtils.DoParseParams) 'ParseParams.T))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -55,14 +78,12 @@
     (error "must specify -pvtname"))
 (define *pvt-name* (pp 'getNext))
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define *the-tech*
   (eval (string->symbol (string-append *tech-name* "-tech-constants"))))
 
 (define (do-it)
-  (set! *do-debug* #t)
   (gen-lib *template-path*
            *name*
            *path*
