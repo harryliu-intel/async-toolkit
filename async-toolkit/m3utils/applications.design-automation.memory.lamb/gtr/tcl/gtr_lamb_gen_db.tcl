@@ -65,7 +65,11 @@ proc gtr_lamb_gen_db { args } {
         dict set thisEntry feol_process_corner [dict get $properties oc_type $arg(-oc_type) feol_process_corner]
         dict set thisEntry temperature [dict get $properties oc_type $arg(-oc_type) temperature]        
         lappend fileList $thisEntry
-   } 
+   }
+   if { ![file exists $dbfname]} {
+      error "$dbfname not created by DB compilation step!"
+   }
+   return $dbfname
 }
 define_proc_attributes gtr_lamb_gen_db \
     -info "Utility to generate Synopsys .DB Memory collaterals" \
