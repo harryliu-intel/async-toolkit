@@ -786,17 +786,44 @@
     )
   )
 
+(define the-attrs
+  (filter-all lib
+              (and-filters
+               (subtype-filter-proc 'LibertyComplexAttr.T)
+               (lambda(x)(equal? "voltage_map" (get-field x 'head.ident)))
+               (lambda(x)(equal? "VDD" (un-val (get-field x 'head.params[0]))))
+               )
+              )
+  )
+
+
 (define (update-lib-pvt! lib volt temp pvt-name)
+
   (update-group-variable! lib "nom_temperature" temp)
   (update-group-variable! lib "nom_voltage" volt)
   (update-group-variable! lib "default_operating_conditions" pvt-name)
+  
   (let ((the-op-conds (get-named-statement lib "operating_conditions")))
     (update-group-variable! the-op-conds "temperature" temp)
     (update-group-variable! the-op-conds "voltage" volt)
     (set-field! the-op-conds 'head.params[0].val.val pvt-name))
-    
+
+  ;; update the voltage maps
+  (let ((the-vdd-attrs
+         (filter-all lib
+                     (and-filters
+                      (subtype-filter-proc 'LibertyComplexAttr.T)
+                      (lambda(x)(equal? "voltage_map"
+                                        (get-field x 'head.ident)))
+                      (lambda(x)(equal? "VDD"
+                                        (un-val (get-field x 'head.params[0]))))
+                      )
+                     )))
+    (map (lambda(a)(set-field! a 'head.params[1].val.val volt)) the-vdd-attrs))
+  lib
   )
 
+    
 (define (update-lib-simple-attr! lib pname f)
   (let* ((filter (named-simple-attr-filter pname))
          (attrs  (filter-all lib filter)))
