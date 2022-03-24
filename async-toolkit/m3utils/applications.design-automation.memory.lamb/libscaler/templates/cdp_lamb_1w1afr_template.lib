@@ -198,17 +198,7 @@ library (cdp_lamb_1w1afr_16w_13b__tt_0p75v_85c_typical ){
       fanout_load :  1.0000;
       internal_power () {
           related_pg_pin : "VDD";
-          when : "!ren&!wen";
-          rise_power (scalar) {
-              values ("0.000179208287327");
-          }
-          fall_power (scalar) {
-              values ("0.000179208287327");
-          }
-      }
-      internal_power () {
-          related_pg_pin : "VDD";
-          when : "ren&!wen";
+          when : "!wen";
           rise_power (scalar) {
               values ("0.00537982976905");
           }
@@ -218,17 +208,7 @@ library (cdp_lamb_1w1afr_16w_13b__tt_0p75v_85c_typical ){
       }
       internal_power () {
           related_pg_pin : "VDD";
-          when : "!ren&wen";
-          rise_power (scalar) {
-              values ("0.010385439932");
-          }
-          fall_power (scalar) {
-              values ("0.010385439932");
-          }
-      }
-      internal_power () {
-          related_pg_pin : "VDD";
-          when : "ren&wen";
+          when : "wen";
           rise_power (scalar) {
               values ("0.016144073313");
           }
@@ -265,7 +245,7 @@ library (cdp_lamb_1w1afr_16w_13b__tt_0p75v_85c_typical ){
       /* Start of nochange_high_high arc of pin dft__mem_wr_disable wrt pin clk */
       timing() { 
         timing_type : nochange_high_high ;
-        related_pin :" clk ";
+        related_pin :"clk";
       rise_constraint (lut_timing_2 ){
          values(\
           " 0.0205, 0.0205, 0.0171, 0.0129, 0.0067, -0.0020, -0.0147, -0.0333",  \
@@ -295,7 +275,7 @@ library (cdp_lamb_1w1afr_16w_13b__tt_0p75v_85c_typical ){
       /* Start of nochange_low_high arc of pin dft__mem_wr_disable wrt pin clk */
       timing() { 
         timing_type : nochange_low_high ;
-        related_pin :" clk ";
+        related_pin :"clk";
       rise_constraint (lut_timing_2 ){
          values(\
           " -0.0052, -0.0052, -0.0018, 0.0018, 0.0067, 0.0133, 0.0213, 0.0305",  \
@@ -365,7 +345,7 @@ library (cdp_lamb_1w1afr_16w_13b__tt_0p75v_85c_typical ){
       /* Start of setup_rising arc of pin icg_force_on wrt pin rclk */
       timing() { 
         timing_type : setup_rising ;
-        related_pin :" rclk ";
+        related_pin :"clk";
       fall_constraint (lut_timing_3 ){
          values(\
           " 0.0184, 0.0184, 0.0183, 0.0182, 0.0205, 0.0259, 0.0350, 0.0450",  \
@@ -383,7 +363,7 @@ library (cdp_lamb_1w1afr_16w_13b__tt_0p75v_85c_typical ){
       /* Start of setup_rising arc of pin icg_force_on wrt pin rclk */
       timing() { 
         timing_type : setup_rising ;
-        related_pin :" rclk ";
+        related_pin :"clk";
       rise_constraint (lut_timing_3 ){
          values(\
           " 0.0190, 0.0190, 0.0183, 0.0168, 0.0156, 0.0145, 0.0138, 0.0114",  \
@@ -401,7 +381,7 @@ library (cdp_lamb_1w1afr_16w_13b__tt_0p75v_85c_typical ){
       /* Start of nochange_high_high arc of pin icg_force_on wrt pin clk */
       timing() { 
         timing_type : nochange_high_high ;
-        related_pin :" clk ";
+        related_pin :"clk";
       rise_constraint (lut_timing_2 ){
          values(\
           " -0.0168, -0.0168, -0.0205, -0.0246, -0.0308, -0.0392, -0.0512, -0.0683",  \
@@ -431,7 +411,7 @@ library (cdp_lamb_1w1afr_16w_13b__tt_0p75v_85c_typical ){
       /* Start of hold_rising arc of pin icg_force_on wrt pin rclk */
       timing() { 
         timing_type : hold_rising ;
-        related_pin :" rclk ";
+        related_pin :"clk";
       fall_constraint (lut_timing_3 ){
          values(\
           " -0.0090, -0.0090, -0.0090, -0.0093, -0.0111, -0.0150, -0.0199, -0.0220",  \
@@ -449,7 +429,7 @@ library (cdp_lamb_1w1afr_16w_13b__tt_0p75v_85c_typical ){
       /* Start of nochange_low_high arc of pin icg_force_on wrt pin clk */
       timing() { 
         timing_type : nochange_low_high ;
-        related_pin :" clk ";
+        related_pin :"clk";
       rise_constraint (lut_timing_2 ){
          values(\
           " 0.0173, 0.0173, 0.0207, 0.0242, 0.0291, 0.0353, 0.0428, 0.0512",  \
@@ -479,7 +459,7 @@ library (cdp_lamb_1w1afr_16w_13b__tt_0p75v_85c_typical ){
       /* Start of hold_rising arc of pin icg_force_on wrt pin rclk */
       timing() { 
         timing_type : hold_rising ;
-        related_pin :" rclk ";
+        related_pin :"clk";
       rise_constraint (lut_timing_3 ){
          values(\
           " -0.0051, -0.0051, -0.0044, -0.0029, -0.0011, 0.0016, 0.0061, 0.0146",  \
@@ -527,7 +507,7 @@ library (cdp_lamb_1w1afr_16w_13b__tt_0p75v_85c_typical ){
         /* Start of setup_rising arc of pin dft__core_si[1] wrt pin rclk */
         timing() { 
           timing_type : setup_rising ;
-          related_pin :" rclk ";
+          related_pin :"clk";
         rise_constraint (lut_timing_3 ){
            values(\
             " -0.0003, -0.0003, -0.0015, -0.0036, -0.0073, -0.0130, -0.0215, -0.0347",  \
@@ -557,7 +537,7 @@ library (cdp_lamb_1w1afr_16w_13b__tt_0p75v_85c_typical ){
         /* Start of hold_rising arc of pin dft__core_si[1] wrt pin rclk */
         timing() { 
           timing_type : hold_rising ;
-          related_pin :" rclk ";
+          related_pin :"clk";
         rise_constraint (lut_timing_3 ){
            values(\
             " 0.0116, 0.0116, 0.0124, 0.0146, 0.0182, 0.0239, 0.0324, 0.0455",  \
@@ -607,7 +587,7 @@ library (cdp_lamb_1w1afr_16w_13b__tt_0p75v_85c_typical ){
         /* Start of setup_rising arc of pin dft__core_si[0] wrt pin clk */
         timing() { 
           timing_type : setup_rising ;
-          related_pin :" clk ";
+          related_pin :"clk";
         rise_constraint (lut_timing_2 ){
            values(\
             " -0.0271, -0.0271, -0.0308, -0.0350, -0.0412, -0.0497, -0.0622, -0.0804",  \
@@ -637,7 +617,7 @@ library (cdp_lamb_1w1afr_16w_13b__tt_0p75v_85c_typical ){
         /* Start of hold_rising arc of pin dft__core_si[0] wrt pin clk */
         timing() { 
           timing_type : hold_rising ;
-          related_pin :" clk ";
+          related_pin :"clk";
         rise_constraint (lut_timing_2 ){
            values(\
             " 0.0504, 0.0504, 0.0543, 0.0585, 0.0647, 0.0734, 0.0863, 0.1047",  \
@@ -689,7 +669,7 @@ library (cdp_lamb_1w1afr_16w_13b__tt_0p75v_85c_typical ){
       /* Start of setup_rising arc of pin test__scan_en wrt pin rclk */
       timing() { 
         timing_type : setup_rising ;
-        related_pin :" rclk ";
+        related_pin :"clk";
       rise_constraint (lut_timing_3 ){
          values(\
           " 0.0496, 0.0496, 0.0483, 0.0462, 0.0424, 0.0366, 0.0276, 0.0138",  \
@@ -719,7 +699,7 @@ library (cdp_lamb_1w1afr_16w_13b__tt_0p75v_85c_typical ){
       /* Start of setup_rising arc of pin test__scan_en wrt pin clk */
       timing() { 
         timing_type : setup_rising ;
-        related_pin :" clk ";
+        related_pin :"clk";
       rise_constraint (lut_timing_2 ){
          values(\
           " 0.0600, 0.0600, 0.0564, 0.0523, 0.0463, 0.0383, 0.0271, 0.0109",  \
@@ -749,7 +729,7 @@ library (cdp_lamb_1w1afr_16w_13b__tt_0p75v_85c_typical ){
       /* Start of hold_rising arc of pin test__scan_en wrt pin rclk */
       timing() { 
         timing_type : hold_rising ;
-        related_pin :" rclk ";
+        related_pin :"clk";
       rise_constraint (lut_timing_3 ){
          values(\
           " -0.0259, -0.0259, -0.0251, -0.0230, -0.0193, -0.0135, -0.0048, 0.0086",  \
@@ -779,7 +759,7 @@ library (cdp_lamb_1w1afr_16w_13b__tt_0p75v_85c_typical ){
       /* Start of hold_rising arc of pin test__scan_en wrt pin clk */
       timing() { 
         timing_type : hold_rising ;
-        related_pin :" clk ";
+        related_pin :"clk";
       rise_constraint (lut_timing_2 ){
          values(\
           " 0.0174, 0.0174, 0.0212, 0.0254, 0.0317, 0.0403, 0.0532, 0.0716",  \
@@ -829,7 +809,7 @@ library (cdp_lamb_1w1afr_16w_13b__tt_0p75v_85c_typical ){
       /* Start of setup_rising arc of pin wen wrt pin clk */
       timing() { 
         timing_type : setup_rising ;
-        related_pin :" clk ";
+        related_pin :"clk";
       rise_constraint (lut_timing_2 ){
          values(\
           " 0.1126, 0.1126, 0.1090, 0.1049, 0.0989, 0.0908, 0.0795, 0.0633",  \
@@ -859,7 +839,7 @@ library (cdp_lamb_1w1afr_16w_13b__tt_0p75v_85c_typical ){
       /* Start of hold_rising arc of pin wen wrt pin clk */
       timing() { 
         timing_type : hold_rising ;
-        related_pin :" clk ";
+        related_pin :"clk";
       rise_constraint (lut_timing_2 ){
          values(\
           " 0.0104, 0.0104, 0.0143, 0.0183, 0.0246, 0.0333, 0.0457, 0.0634",  \
@@ -919,7 +899,7 @@ library (cdp_lamb_1w1afr_16w_13b__tt_0p75v_85c_typical ){
         /* Start of setup_rising arc of pin wadr[0] wrt pin clk */
         timing() { 
           timing_type : setup_rising ;
-          related_pin :" clk ";
+          related_pin :"clk";
         rise_constraint (lut_timing_2 ){
            values(\
             " 0.0801, 0.0801, 0.0764, 0.0722, 0.0659, 0.0577, 0.0450, 0.0268",  \
@@ -949,7 +929,7 @@ library (cdp_lamb_1w1afr_16w_13b__tt_0p75v_85c_typical ){
         /* Start of hold_rising arc of pin wadr[0] wrt pin clk */
         timing() { 
           timing_type : hold_rising ;
-          related_pin :" clk ";
+          related_pin :"clk";
         rise_constraint (lut_timing_2 ){
            values(\
             " 0.0444, 0.0444, 0.0482, 0.0524, 0.0587, 0.0673, 0.0802, 0.0986",  \
@@ -1012,7 +992,7 @@ library (cdp_lamb_1w1afr_16w_13b__tt_0p75v_85c_typical ){
         /* Start of setup_rising arc of pin wdata[0] wrt pin clk */
         timing() { 
           timing_type : setup_rising ;
-          related_pin :" clk ";
+          related_pin :"clk";
         rise_constraint (lut_timing_2 ){
            values(\
             " 0.0603, 0.0603, 0.0566, 0.0524, 0.0462, 0.0377, 0.0252, 0.0070",  \
@@ -1042,7 +1022,7 @@ library (cdp_lamb_1w1afr_16w_13b__tt_0p75v_85c_typical ){
         /* Start of hold_rising arc of pin wdata[0] wrt pin clk */
         timing() { 
           timing_type : hold_rising ;
-          related_pin :" clk ";
+          related_pin :"clk";
         rise_constraint (lut_timing_2 ){
            values(\
             " 0.0526, 0.0526, 0.0565, 0.0607, 0.0669, 0.0756, 0.0885, 0.1069",  \
@@ -1106,7 +1086,7 @@ library (cdp_lamb_1w1afr_16w_13b__tt_0p75v_85c_typical ){
         /* Start of setup_rising arc of pin radr[0] wrt pin rclk */
         timing() { 
           timing_type : setup_rising ;
-          related_pin :" rclk ";
+          related_pin :"clk";
         rise_constraint (lut_timing_3 ){
            values(\
             " -0.0028, -0.0028, -0.0040, -0.0061, -0.0099, -0.0156, -0.0244, -0.0379",  \
@@ -1136,7 +1116,7 @@ library (cdp_lamb_1w1afr_16w_13b__tt_0p75v_85c_typical ){
         /* Start of hold_rising arc of pin radr[0] wrt pin rclk */
         timing() { 
           timing_type : hold_rising ;
-          related_pin :" rclk ";
+          related_pin :"clk";
         rise_constraint (lut_timing_3 ){
            values(\
             " 0.0132, 0.0132, 0.0141, 0.0161, 0.0199, 0.0254, 0.0340, 0.0470",  \
@@ -1190,7 +1170,7 @@ library (cdp_lamb_1w1afr_16w_13b__tt_0p75v_85c_typical ){
           timing_type : rising_edge ;
           timing_sense : non_unate ;
           min_delay_arc :   "true" ;
-          related_pin :" rclk ";
+          related_pin :"clk";
         rise_transition (lut_timing_4 ){
            values(\
             " 0.0030, 0.0052, 0.0101, 0.0202, 0.0422, 0.0851, 0.1708, 0.3426",  \
@@ -1245,7 +1225,7 @@ library (cdp_lamb_1w1afr_16w_13b__tt_0p75v_85c_typical ){
         timing() { 
           timing_type : rising_edge ;
           timing_sense : non_unate ;
-          related_pin :" rclk ";
+          related_pin :"clk";
         rise_transition (lut_timing_4 ){
            values(\
             " 0.0031, 0.0053, 0.0101, 0.0203, 0.0422, 0.0851, 0.1709, 0.3424",  \
@@ -1311,7 +1291,7 @@ library (cdp_lamb_1w1afr_16w_13b__tt_0p75v_85c_typical ){
           timing_type : rising_edge ;
           timing_sense : non_unate ;
           min_delay_arc :   "true" ;
-          related_pin :" clk ";
+          related_pin :"clk";
         rise_transition (lut_timing_5 ){
            values(\
             " 0.0036, 0.0052, 0.0105, 0.0213, 0.0432, 0.0871, 0.1751, 0.3511",  \
@@ -1366,7 +1346,7 @@ library (cdp_lamb_1w1afr_16w_13b__tt_0p75v_85c_typical ){
         timing() { 
           timing_type : rising_edge ;
           timing_sense : non_unate ;
-          related_pin :" clk ";
+          related_pin :"clk";
         rise_transition (lut_timing_5 ){
            values(\
             " 0.0037, 0.0053, 0.0106, 0.0213, 0.0432, 0.0871, 0.1751, 0.3510",  \
@@ -1444,7 +1424,7 @@ library (cdp_lamb_1w1afr_16w_13b__tt_0p75v_85c_typical ){
           timing_type : rising_edge ;
           timing_sense : non_unate ;
           min_delay_arc :   "true" ;
-          related_pin :" clk ";
+          related_pin :"clk";
         rise_transition (lut_timing_14 ){
            values(\
             " 0.0053, 0.0091, 0.0130, 0.0201, 0.0379, 0.0760, 0.1530, 0.3073",  \
@@ -1499,7 +1479,7 @@ library (cdp_lamb_1w1afr_16w_13b__tt_0p75v_85c_typical ){
         timing() { 
           timing_type : rising_edge ;
           timing_sense : non_unate ;
-          related_pin :" clk ";
+          related_pin :"clk";
         rise_transition (lut_timing_14 ){
            values(\
             " 0.0053, 0.0091, 0.0129, 0.0201, 0.0379, 0.0760, 0.1530, 0.3073",  \
@@ -1555,7 +1535,7 @@ library (cdp_lamb_1w1afr_16w_13b__tt_0p75v_85c_typical ){
           timing_type : rising_edge ;
           timing_sense : non_unate ;
           min_delay_arc :   "true" ;
-          related_pin :" rclk ";
+          related_pin :"clk";
         rise_transition (lut_timing_15 ){
            values(\
             " 0.0052, 0.0090, 0.0130, 0.0200, 0.0379, 0.0760, 0.1531, 0.3073",  \
@@ -1610,7 +1590,7 @@ library (cdp_lamb_1w1afr_16w_13b__tt_0p75v_85c_typical ){
         timing() { 
           timing_type : rising_edge ;
           timing_sense : non_unate ;
-          related_pin :" rclk ";
+          related_pin :"clk";
         rise_transition (lut_timing_15 ){
            values(\
             " 0.0053, 0.0091, 0.0130, 0.0201, 0.0379, 0.0760, 0.1530, 0.3073",  \

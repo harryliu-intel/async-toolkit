@@ -103,11 +103,11 @@ proc gtr_lamb_gen_behav_sv { args } {
     puts $of "    input  logic \[DWIDTH-1:0\] wdata,"
     puts $of "    output logic \[DWIDTH-1:0\] dout,\n"
     puts $of "    input  logic test__scan_en,"
-    puts $of "    input  logic [1:0] dft__core_si,"
+    puts $of "    input  logic dft__core_si,"
     puts $of "    input  logic icg_force_on,"
     puts $of "    input  logic dft_read_bypass,"
     puts $of "    input  logic dft__mem_wr_disable,"
-    puts $of "    output logic [1:0] dft__core_so"
+    puts $of "    output logic dft__core_so"
     puts $of ");"
     puts $of "    logic \[DEPTH-1:0\]\[DWIDTH-1:0\] mem_array;"
     if { $flowthrough == 0 } {

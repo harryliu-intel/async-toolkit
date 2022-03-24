@@ -432,6 +432,24 @@ proc gtr_lamb_gen_views { args } {
 
             lappend cornerlibs [ list $pvtname $path ]
 
+            if { 1 } {
+                set thisEntry [dict create]
+                dict set thisEntry path                  $path
+                dict set thisEntry nda_protection_level  front_end
+                dict set thisEntry standard_name         liberty
+                dict set thisEntry type                  lib_ccs_filelist
+                dict set thisEntry voltage               $v
+                dict set thisEntry rc_type               $mtcornernam
+                dict set thisEntry liberty_ccs_type      ccs
+                dict set thisEntry reliability_condition client
+                dict set thisEntry timing_hold_margin    true
+                dict set thisEntry variation_modeling    pocv
+                dict set thisEntry oc_type               $oc_type
+                dict set thisEntry feol_process_corner   $sicornernam
+                dict set thisEntry temperature           $sitemp
+                lappend filelist $thisEntry
+            }
+            
             # generate binary DB format using Liberty file as input
 
             puts "generating db..."
@@ -451,7 +469,13 @@ proc gtr_lamb_gen_views { args } {
         puts [list "cornerlibs " $cornerlibs ]
 
         # generate the LEF for the LAMB
-        set ndmlef [gtr_lamb_gen_lef -block_name $block_name -data_depth $depth -data_width $width -tech_node $tech_node -filelistVar filelist -ftr_value $flowthrough]
+        set ndmlef \
+            [gtr_lamb_gen_lef -block_name $block_name \
+                 -data_depth $depth \
+                 -data_width $width \
+                 -tech_node $tech_node \
+                 -filelistVar filelist \
+                 -ftr_value $flowthrough]
 
         if { $ndmGenerate } {
             # generate NDM file for LAMB
