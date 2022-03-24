@@ -49,10 +49,11 @@ proc gtr_lamb_gen_db { args } {
    }
     
    file mkdir $dbdir
-   puts "INFO: $proc_name, Generating Compiled DB Liberty view: $dbfpath from $libfname"
+   set libname [file rootname [file tail $libfname]]
+   puts "INFO: $proc_name, Generating Compiled DB Liberty view: $dbfpath from $libfname. Library name is $libname"
    
    set lc_shell_exec $::env(LIBRARYCOMPILER_DIR)/bin/lc_shell
-   exec $lc_shell_exec -no_home_init -output_log_file ${dbfpath}.log -batch -x "read_lib $libfname; write_lib $block_name -output $dbfpath"
+   exec $lc_shell_exec -no_home_init -output_log_file ${dbfpath}.log -batch -x "read_lib $libfname; write_lib $libname -output $dbfpath"
    if { [info exists arg(-filelist_var) ] } {
         upvar $arg(-filelist_var) fileList
         set thisEntry [dict create]
@@ -72,8 +73,8 @@ proc gtr_lamb_gen_db { args } {
         dict set thisEntry temperature $arg(-temperature)
         lappend fileList $thisEntry
    }
-   if { ![file exists $dbfname]} {
-      error "$dbfname not created by DB compilation step!"
+   if { ![file exists $dbfpath]} {
+      error "$dbfpath not created by DB compilation step!"
    }
    return $dbfname
 }
