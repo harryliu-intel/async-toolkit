@@ -126,10 +126,11 @@ proc gtr_produce_attributes { libname filelistVar } {
    set af [open $fn w]
    puts $af "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
    puts $af "<attributes>"
-   puts $af "<heml>4</heml>"
-   puts $af "<hsml>0</hsml>"
+   puts $af "<heml>5</heml>"
+   puts $af "<hpml>6</hpml>"
+   puts $af "<hsml>6</hsml>"
    puts $af "<lay_iface_type>IPN3M18CU-IP</lay_iface_type>"
-   puts $af "<lay_integration_type>SRAM</lay_integration_type>"
+   puts $af "<lay_integration_type>APRB_H169P51</lay_integration_type>"
    puts $af "</attributes>"
    close $af
    exec xmllint $fn
