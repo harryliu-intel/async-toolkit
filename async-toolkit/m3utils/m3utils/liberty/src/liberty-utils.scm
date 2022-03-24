@@ -786,17 +786,6 @@
     )
   )
 
-(define the-attrs
-  (filter-all lib
-              (and-filters
-               (subtype-filter-proc 'LibertyComplexAttr.T)
-               (lambda(x)(equal? "voltage_map" (get-field x 'head.ident)))
-               (lambda(x)(equal? "VDD" (un-val (get-field x 'head.params[0]))))
-               )
-              )
-  )
-
-
 (define (update-lib-pvt! lib volt temp pvt-name)
 
   (update-group-variable! lib "nom_temperature" temp)
