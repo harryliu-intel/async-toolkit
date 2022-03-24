@@ -82,7 +82,7 @@ proc gtr_lamb_gen_behav_sv { args } {
     puts $of "//------------------------------------------------------------------------------\n"
     puts $of "`resetall"
     puts $of "`default_nettype none\n"
-    puts $of "// synthesis translate_off\n"
+    puts $of "`ifndef INTEL_DC\n"
     puts $of "module $arg(-block_name)"
     puts $of "    #("
     puts $of "        parameter DEPTH=$depth,"
@@ -137,7 +137,7 @@ proc gtr_lamb_gen_behav_sv { args } {
         
     }
     puts $of "endmodule\n"
-    puts $of "// synthesis translate_on\n"
+    puts $of "`endif\n"
     puts $of "`default_nettype wire"
     close $of
 }
