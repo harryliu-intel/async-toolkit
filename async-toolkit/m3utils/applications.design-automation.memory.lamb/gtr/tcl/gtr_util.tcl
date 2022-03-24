@@ -2,28 +2,14 @@
 set cornerlibs [list]
 set properties [dict create]
 
-#dict set properties oc_type S_125 feol_process_corner ssgnp
-#dict set properties oc_type S_125 temperature 125
-#dict set properties oc_type S_0 feol_process_corner ssgnp
-#dict set properties oc_type S_0 temperature 0
-#dict set properties oc_type S_M40 feol_process_corner ssgnp 
-#dict set properties oc_type S_M40 temperature -40
-#dict set properties oc_type F_125 feol_process_corner ffgnp 
-#dict set properties oc_type F_125 temperature 125
-#dict set properties oc_type F_0 feol_process_corner ffgnp
-#dict set properties oc_type F_0 temperature 0
-#dict set properties oc_type F_M40 feol_process_corner ffgnp
-#dict set properties oc_type F_M40 temperature -40
-#dict set properties oc_type T_25 feol_process_corner tt
-#dict set properties oc_type T_25 temperature 25
-#dict set properties oc_type T_85 feol_process_corner tt
-#dict set properties oc_type T_85 temperature 85
+set proc_properties [dict create]
+dict set proc_properties ssgnp sigma -3
+dict set proc_properties tt    sigma  0
+dict set proc_properties ffgnp sigma +3
 
-
-set proc_sigma_tbl [dict create]
-dict set proc_sigma_tbl ssgnp sigma -3
-dict set proc_sigma_tbl tt    sigma  0
-dict set proc_sigma_tbl ffgnp sigma +3
+dict set proc_properties ssgnp oc_pfx  S
+dict set proc_properties tt    oc_pfx  T
+dict set proc_properties ffgnp oc_pfx  F
 
 set metal_rc_sigma_tbl [dict create]
 dict set metal_rc_sigma_tbl typical           rsigma  0
@@ -120,20 +106,9 @@ set debug_corners2 [list \
                     [ list ssgnp cworst_CCworst_T  0.675      125     125  ]\
                        ]
 
-set desired_corners $lib_corners0p75
+#set desired_corners $lib_corners0p75
 set desired_corners $design_corners0p75
-set desired_corners $debug_corners1
-
-proc gtr_cornerSuffix { oc voltage } {
-   global properties
-   set corner [dict get $properties oc_type $oc feol_process_corner]
-   set temp [dict get $properties oc_type $oc temperature]
-   # Use an "M" to avoid making a weird filename
-   set temp [regsub -- - $temp M]
-   # a little cheesy...
-   set vtxt [regsub 0. [format %.3f $voltage] ""]
-   return ${corner}_V${vtxt}_T${temp}
-}
+#set desired_corners $debug_corners2
 
 proc gtr_produce_attributes { libname filelistVar } {
    set fn "doc/${libname}.attribute.xml"
@@ -385,7 +360,7 @@ proc gtr_lamb_gen_views { args } {
 #        puts [list "ndmlib is " $ndmlib ]
 
         foreach {c} $desired_corners {
-            global proc_sigma_tbl
+            global proc_properties
             global metal_rc_sigma_tbl
             global properties
 
@@ -401,7 +376,7 @@ proc gtr_lamb_gen_views { args } {
             set sitemp      [ lindex $c 3 ]
             set mttemp      [ lindex $c 4 ]
 
-            set sicorner    [ dict get $proc_sigma_tbl     $sicornernam  sigma ]
+            set sicorner    [ dict get $proc_properties    $sicornernam  sigma ]
             set rcorner     [ dict get $metal_rc_sigma_tbl $mtcornernam rsigma ]
             set ccorner     [ dict get $metal_rc_sigma_tbl $mtcornernam csigma ]
             set vtxt [ regsub 0. [format %.3f $v] "0p" ]
@@ -413,6 +388,10 @@ proc gtr_lamb_gen_views { args } {
             set pvtname [ format %s_%s_%s_%s_%s \
                               $sicornernam $vtxt $sittxt $mtttxt $mtcornernam ]
 
+            set oc_pfx  [ dict get $proc_properties $sicornernam oc_pfx ]
+            set oc_temp [ regsub -- - $sitemp M ]
+            set oc_type [ format %s_%s $oc_pfx $oc_temp ]
+            
             dict set properties oc_type $pvtname feol_process_corner $sicornernam
             dict set properties oc_type $pvtname temperature $sitemp
 
@@ -428,20 +407,27 @@ proc gtr_lamb_gen_views { args } {
             }
 
             set libname [ format %s_%s $block_name $pvtname ]
+            set dbfname [ format %s_%s.db $block_name $pvtname ]
             puts [ list "libname" $libname ]
 
             set workdir "timing"
             set path [ format %s/%s.lib $workdir $libname ]
             puts [ list "path" $path ]
             
-            gtr_lamb_scale_lib -w $width -d $depth\
-                -tech $tech_node\
-                -template $template\
-                -name $libname \
-                -path $path \
-                -sitemp $sitemp -mttemp $mttemp -v $v\
-                -sicorner $sicorner -rcorner $rcorner -ccorner $ccorner\
-                -pvtname $pvtname
+            gtr_lamb_scale_lib \
+                -w          $width \
+                -d          $depth\
+                -tech       $tech_node\
+                -template   $template\
+                -name       $libname \
+                -path       $path \
+                -sitemp     $sitemp \
+                -mttemp     $mttemp \
+                -v          $v\
+                -sicorner   $sicorner \
+                -rcorner    $rcorner \
+                -ccorner    $ccorner\
+                -pvtname    $pvtname
 
             lappend cornerlibs [ list $pvtname $path ]
 
@@ -449,20 +435,19 @@ proc gtr_lamb_gen_views { args } {
 
             puts "generating db..."
             
-            gtr_lamb_gen_db -block_name $block_name \
-                -lib_file $path -oc_type $pvtname \
-                -voltage $v -filelist_var filelist
+            gtr_lamb_gen_db \
+                -block_name     $block_name \
+                -lib_file       $path       \
+                -fname          $dbfname    \
+                -voltage        $v          \
+                -oc_type        $oc_type    \
+                -feol_corner    $sicorner   \
+                -temperature    $sitemp     \
+                -filelist_var   filelist
         }
 
 
         puts [list "cornerlibs " $cornerlibs ]
-        
-
-
-        #        # generate binary DB format using Liberty file as input
-#        set snpsdb [gtr_lamb_gen_db -block_name $block_name \
-#                        -lib_file $ndmlib -oc_type $oc_type \
-#                        -voltage $voltage -filelist_var filelist]
 
         # generate the LEF for the LAMB
         set ndmlef [gtr_lamb_gen_lef -block_name $block_name -data_depth $depth -data_width $width -tech_node $tech_node -filelistVar filelist -ftr_value $flowthrough]
