@@ -15,7 +15,7 @@
 ;;
 ;;
 
-(set! *do-debug* #t)
+(set! *do-debug* #f)
 
 (define *gtr-home* (Env.Get "GTR_HOME"))
 
