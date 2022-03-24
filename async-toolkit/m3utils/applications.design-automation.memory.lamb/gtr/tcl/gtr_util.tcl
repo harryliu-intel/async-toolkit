@@ -26,57 +26,103 @@ dict set proc_sigma_tbl tt    sigma  0
 dict set proc_sigma_tbl ffgnp sigma +3
 
 set metal_rc_sigma_tbl [dict create]
-dict set metal_rc_sigma_tbl Typical           rsigma  0
-dict set metal_rc_sigma_tbl Typical           csigma  0
+dict set metal_rc_sigma_tbl typical           rsigma  0
+dict set metal_rc_sigma_tbl typical           csigma  0
 
-dict set metal_rc_sigma_tbl Cworst_CCworst_T  rsigma  0
-dict set metal_rc_sigma_tbl Cworst_CCworst_T  csigma -1.5
+dict set metal_rc_sigma_tbl cworst_CCworst_T  rsigma  0
+dict set metal_rc_sigma_tbl cworst_CCworst_T  csigma -1.5
 
-dict set metal_rc_sigma_tbl RCworst_CCworst_T rsigma -1.5
-dict set metal_rc_sigma_tbl RCworst_CCworst_T csigma -1.5
+dict set metal_rc_sigma_tbl rcworst_CCworst_T rsigma -1.5
+dict set metal_rc_sigma_tbl rcworst_CCworst_T csigma -1.5
 
-dict set metal_rc_sigma_tbl Cworst_CCworst    rsigma  0
-dict set metal_rc_sigma_tbl Cworst_CCworst    csigma -3.0
+dict set metal_rc_sigma_tbl cworst_CCworst    rsigma  0
+dict set metal_rc_sigma_tbl cworst_CCworst    csigma -3.0
 
-dict set metal_rc_sigma_tbl RCworst_CCworst   rsigma -3.0
-dict set metal_rc_sigma_tbl RCworst_CCworst   csigma -3.0
+dict set metal_rc_sigma_tbl rcworst_CCworst   rsigma -3.0
+dict set metal_rc_sigma_tbl rcworst_CCworst   csigma -3.0
 
-dict set metal_rc_sigma_tbl Cworst_CCbest_T   rsigma  0
-dict set metal_rc_sigma_tbl Cworst_CCbest_T   csigma +1.5
+dict set metal_rc_sigma_tbl cworst_CCbest_T   rsigma  0
+dict set metal_rc_sigma_tbl cworst_CCbest_T   csigma +1.5
 
-dict set metal_rc_sigma_tbl Cbest_CCbest_T    rsigma  0
-dict set metal_rc_sigma_tbl Cbest_CCbest_T    csigma +1.5
+dict set metal_rc_sigma_tbl cbest_CCbest_T    rsigma  0
+dict set metal_rc_sigma_tbl cbest_CCbest_T    csigma +1.5
 
-dict set metal_rc_sigma_tbl Cbest_CCbest      rsigma  0
-dict set metal_rc_sigma_tbl Cbest_CCbest      csigma +3.0
+dict set metal_rc_sigma_tbl cbest_CCbest      rsigma  0
+dict set metal_rc_sigma_tbl cbest_CCbest      csigma +3.0
 
-dict set metal_rc_sigma_tbl RCbest_CCbest     rsigma +3.0
-dict set metal_rc_sigma_tbl RCbest_CCbest     csigma +3.0
+dict set metal_rc_sigma_tbl rcbest_CCbest     rsigma +3.0
+dict set metal_rc_sigma_tbl rcbest_CCbest     csigma +3.0
 
 #                           proc   wiring             V        Tproc Tintcon
 # these are lib corners from Karthik's presentation
-set lib_corners     [list \
-                     [ list ssgnp Cworst_CCworst_T  0.675        0       0  ]\
-                     [ list ssgnp Cworst_CCworst_T  0.675      125     125  ]\
-                     [ list tt    Typical           0.750       85     105  ]\
-                     [ list ffgnp Typical           0.750      105     105  ]\
-                     [ list ffgnp Cbest_CCbest_T    0.825        0       0  ]\
-                     [ list ffgnp Cbest_CCbest_T    0.825      125     125  ]\
+set lib_corners0p75 [list \
+                     [ list ssgnp cworst_CCworst_T  0.675        0       0  ]\
+                     [ list ssgnp cworst_CCworst_T  0.675      125     125  ]\
+                     [ list tt    typical           0.750       85     105  ]\
+                     [ list ffgnp typical           0.770      105     105  ]\
+                     [ list ffgnp cbest_CCbest_T    0.825        0       0  ]\
+                     [ list ffgnp cbest_CCbest_T    0.825      125     125  ]\
+                    ]
+
+#                           proc   wiring             V        Tproc Tintcon
+# these are design corners from Karthik's presentation
+set design_corners0p75 [list \
+                     [ list ssgnp cworst_CCworst_T  0.675        0       0  ]\
+                     [ list ssgnp cworst_CCworst    0.675        0       0  ]\
+                     [ list ssgnp rcworst_CCworst_T 0.675        0       0  ]\
+                     [ list ssgnp rcworst_CCworst   0.675        0       0  ]\
+                     [ list ssgnp cworst_CCworst_T  0.675      125     125  ]\
+                     [ list ssgnp cworst_CCworst    0.675      125     125  ]\
+                     [ list ssgnp rcworst_CCworst_T 0.675      125     125  ]\
+                     [ list ssgnp rcworst_CCworst   0.675      125     125  ]\
+                     [ list tt    typical           0.750       85     105  ]\
+                     [ list ffgnp typical           0.770      105     105  ]\
+                     [ list ffgnp cbest_CCbest      0.825        0       0  ]\
+                     [ list ffgnp rcbest_CCbest     0.825        0       0  ]\
+                     [ list ffgnp cbest_CCbest      0.825      125     125  ]\
+                     [ list ffgnp rcbest_CCbest     0.825      125     125  ]\
+                     [ list ffgnp cworst_CCworst    0.825        0       0  ]\
+                     [ list ffgnp rcworst_CCworst   0.825        0       0  ]\
+                     [ list ffgnp cworst_CCworst    0.825      125     125  ]\
+                     [ list ffgnp rcworst_CCworst   0.825      125     125  ]\
+                    ]
+
+set design_corners0p70 [list \
+                     [ list ssgnp cworst_CCworst_T  0.630        0       0  ]\
+                     [ list ssgnp cworst_CCworst    0.630        0       0  ]\
+                     [ list ssgnp rcworst_CCworst_T 0.630        0       0  ]\
+                     [ list ssgnp rcworst_CCworst   0.630        0       0  ]\
+                     [ list ssgnp cworst_CCworst_T  0.630      125     125  ]\
+                     [ list ssgnp cworst_CCworst    0.630      125     125  ]\
+                     [ list ssgnp rcworst_CCworst_T 0.630      125     125  ]\
+                     [ list ssgnp rcworst_CCworst   0.630      125     125  ]\
+                     [ list tt    typical           0.700       85     105  ]\
+                     [ list ffgnp typical           0.770      105     105  ]\
+                     [ list ffgnp cbest_CCbest      0.825        0       0  ]\
+                     [ list ffgnp rcbest_CCbest     0.825        0       0  ]\
+                     [ list ffgnp cbest_CCbest      0.825      125     125  ]\
+                     [ list ffgnp rcbest_CCbest     0.825      125     125  ]\
+                     [ list ffgnp cworst_CCworst    0.825        0       0  ]\
+                     [ list ffgnp rcworst_CCworst   0.825        0       0  ]\
+                     [ list ffgnp cworst_CCworst    0.825      125     125  ]\
+                     [ list ffgnp rcworst_CCworst   0.825      125     125  ]\
                     ]
 
 # for testing use the below:
 #                           proc   wiring             V        Tproc Tintcon
 set debug_corners1  [list \
-                     [ list ssgnp Cworst_CCworst_T  0.675        0       0  ]\
+                     [ list ssgnp cworst_CCworst_T  0.675        0       0  ]\
                     ]
 
 #                           proc   wiring             V        Tproc Tintcon
 set debug_corners2 [list \
-                    [ list ssgnp Cworst_CCworst_T  0.675        0       0  ]\
-                    [ list ssgnp Cworst_CCworst_T  0.675      125     125  ]\
+                    [ list ssgnp cworst_CCworst_T  0.675        0       0  ]\
+                    [ list ssgnp cworst_CCworst_T  0.675      125     125  ]\
                        ]
 
-set desired_corners $lib_corners
+set desired_corners $lib_corners0p75
+set desired_corners $design_corners0p75
+set desired_corners $debug_corners1
 
 proc gtr_cornerSuffix { oc voltage } {
    global properties

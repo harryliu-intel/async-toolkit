@@ -160,6 +160,9 @@ library (cdp_lamb_1w1sr_32w_21b__tt_0p75v_85c_typical ){
   define( block_distance , cell , float ) ;
   define( min_delay_arc , timing , boolean ) ;
   
+  voltage_map(VDD, 0.7500);
+  voltage_map(VSS, 0.0000);
+
   /* end of header section */
   
   /* Start Design cdp_lamb_1w1sr_32w_21b */
