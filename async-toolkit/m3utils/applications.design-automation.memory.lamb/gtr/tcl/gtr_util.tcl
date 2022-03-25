@@ -463,6 +463,7 @@ proc gtr_lamb_gen_views { args } {
                 -oc_type        $oc_type    \
                 -feol_corner    $sicorner   \
                 -temperature    $sitemp     \
+                -rc_type        $mtcornernam\
                 -filelist_var   filelist
         }
 
