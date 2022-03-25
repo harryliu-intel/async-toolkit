@@ -41,7 +41,7 @@ proc gtr_lamb_gen_db { args } {
    
    set dbfpath timing_snps/$dbfname
     
-    set dbdir [file dirname $dbfpath]
+   set dbdir [file dirname $dbfpath]
     
    if { [file exists $dbfpath] } {
       puts "INFO: $proc_name, $dbfpath already exists, deleting to create new content"
@@ -61,7 +61,7 @@ proc gtr_lamb_gen_db { args } {
         dict set thisEntry nda_protection_level front_end
         dict set thisEntry type db_ccs_filelist
         dict set thisEntry voltage $arg(-voltage)
-        dict set thisEntry rc_type all_rc_types
+        dict set thisEntry rc_type $arg(-rc_type)
         dict set thisEntry reliability_condition client
         dict set thisEntry design_view timing
         dict set thisEntry variation_modeling pocv
@@ -73,6 +73,7 @@ proc gtr_lamb_gen_db { args } {
         dict set thisEntry temperature $arg(-temperature)
         lappend fileList $thisEntry
    }
+
    if { ![file exists $dbfpath]} {
       error "$dbfpath not created by DB compilation step!"
    }
@@ -86,6 +87,7 @@ define_proc_attributes gtr_lamb_gen_db \
    {-fname "Filename" "" string required }
    {-oc_type "Operating condition type" "" string required }
    {-feol_corner "FEOL corner" "" string required }
+   {-rc_type "RC type" "" string required }
    {-voltage "Voltage condition" "voltage" string required}
    {-temperature "Temperature condition" "temperature" string required}
    {-filelist_var "Update filelist for manifest.xml" "" string optional}

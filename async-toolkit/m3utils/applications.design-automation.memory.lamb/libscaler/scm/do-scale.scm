@@ -38,6 +38,10 @@
     (error "must specify -name <name>"))
 (define *name* (pp 'getNext))
 
+(if (not (pp 'keywordPresent "-cellname"))
+    (error "must specify -cellname <cell name>"))
+(define *cell-name* (pp 'getNext))
+
 (if (not (pp 'keywordPresent "-path"))
     (error "must specify -path <path>"))
 (define *path* (pp 'getNext))
@@ -89,6 +93,7 @@
 
 (define (do-it)
   (gen-lib *template-path*
+           *cell-name*
            *name*
            *path*
            *width*
