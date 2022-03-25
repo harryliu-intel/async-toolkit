@@ -420,6 +420,7 @@ proc gtr_lamb_gen_views { args } {
                 -d          $depth\
                 -tech       $tech_node\
                 -template   $template\
+                -cellname   $block_name \
                 -name       $libname \
                 -path       $path \
                 -sitemp     $sitemp \
