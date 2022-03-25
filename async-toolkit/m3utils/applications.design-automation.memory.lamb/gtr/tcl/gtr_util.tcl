@@ -110,7 +110,7 @@ set debug_corners2 [list \
 set desired_corners $design_corners0p75
 #set desired_corners $debug_corners2
 
-proc gtr_produce_attributes { libname filelistVar } {
+proc gtr_produce_attributes { libname process_name filelistVar } {
    set fn "doc/${libname}.attribute.xml"
    file mkdir [file dirname $fn]
    if { [info exists filelistVar ] } {
@@ -126,9 +126,11 @@ proc gtr_produce_attributes { libname filelistVar } {
    set af [open $fn w]
    puts $af "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
    puts $af "<attributes>"
-   puts $af "<heml>5</heml>"
+   puts $af "<process_name>${process_name}</process_name>"
+   puts $af "<block_name>${libname}</block_name>"
+   puts $af "<heml>4</heml>"
    puts $af "<hpml>6</hpml>"
-   puts $af "<hsml>6</hsml>"
+   puts $af "<hsml>4</hsml>"
    puts $af "<lay_iface_type>IPN3M18CU-IP</lay_iface_type>"
    puts $af "<lay_integration_type>APRB_H169P51</lay_integration_type>"
    puts $af "</attributes>"
@@ -493,11 +495,12 @@ proc gtr_lamb_gen_views { args } {
 
     }
    }
+   set process_name n3b
    if { $lambsProduced > 1} {
-      gtr_produce_attributes lamb_lib filelist
+      gtr_produce_attributes lamb_lib $process_name filelist
       gtr_generateManifest lamb_lib $filelist
    } else {
-      gtr_produce_attributes $block_name filelist
+      gtr_produce_attributes $block_name $process_name filelist
       gtr_generateManifest $block_name $filelist
    }
 
