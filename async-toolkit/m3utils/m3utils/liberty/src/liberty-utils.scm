@@ -773,10 +773,10 @@
     )
   )
 
-(define (update-lib-name! lib new-name)
-  (set-field! lib 'head.params[0].val.val new-name)
+(define (update-lib-names! lib new-lib-name new-cell-name)
+  (set-field! lib 'head.params[0].val.val new-lib-name)
   (let ((the-cell (get-lib-cell lib)))
-    (set-field! the-cell 'head.params[0].val.val new-name))
+    (set-field! the-cell 'head.params[0].val.val new-cell-name))
   )
 
 (define (update-lib-date! lib)
