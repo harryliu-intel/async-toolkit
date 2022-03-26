@@ -3484,10 +3484,11 @@ public final class JFlat {
                       .reduce(Stream.empty(), Stream::concat);
             final Stream<String> reset =
                 Stream.of(DirectiveConstants.RESET_NET,
+                          DirectiveConstants.START_NET,
+                          DirectiveConstants.STEP_NET,
                           DirectiveConstants.DELAY_NET,
                           DirectiveConstants.CAPTURE_NET,
-                          DirectiveConstants.START_NET,
-                          DirectiveConstants.STEP_NET)
+                          DirectiveConstants.CUTSCAN_NET)
                       .map(dir -> getNetString(dutCell, envCell, topAliases, envAliases, dir))
                       .reduce(Stream.empty(), Stream::concat);
             return Stream.concat(power, reset);
