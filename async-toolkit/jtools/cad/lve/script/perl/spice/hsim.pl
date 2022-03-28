@@ -57,8 +57,9 @@ my $power_window = "";
 my $env_spice_file = "";
 my $accurate = 0;
 my %default_voltage = ('ground' => 0, 'power' => 'true',
-                       'reset' => 'true', 'start' => 'true',
-                       'step' => 'true', 'delay' => 0);
+                       'reset' => 'true',
+                       'start' => 'true', 'step' => 'true', 'capture' => 'true',
+                       'cutscan' => 0, 'delay' => 0);
 my %voltage;
 my %special_net;
 
@@ -96,7 +97,7 @@ sub usage() {
     $usage .= "    --totem-mode (for running totem dynamic\n";
     $usage .= "    --sigma-factor (to vary corner limits, 0..1)\n";
     $usage .= "    --extra-includes (for files needed for running totem in hsim)\n";
-    $usage .= "    --default-(ground|power|reset|start|step|delay)=voltage (specify default voltage)\n";
+    $usage .= "    --default-(ground|power|reset|start|step|capture|cutscan|delay)=voltage (specify default voltage)\n";
     $usage .= "    --voltage:node=voltage (set voltage for specific ground/power/reset nets)\n";
     die "$usage";
 }
@@ -178,7 +179,7 @@ while (defined $ARGV[0] && $ARGV[0] =~ /^--(.*)/) {
             if ($fields[16] eq "OUT") { push @out_nodes, $fields[0]; }
         }
         close NODE_PROPS;
-    } elsif ($flag =~ "default-(power|ground|reset|start|step|delay)") {
+    } elsif ($flag =~ "default-(power|ground|reset|start|step|capture|cutscan|delay)") {
         $default_voltage{$1} = $value;
     } elsif ($flag =~ /^voltage:(\S+)$/) {
         $voltage{$1} = $value;
@@ -372,7 +373,7 @@ if ($env_spice_file ne "") {
         if (/^\*\* JFlat:begin/../^\*\* JFlat:end/) {
             last if /^\*\* JFlat:end/;
             chomp;
-            if (/^\*\* JFlat:(ground|power|reset|start|step|delay)_net:(.*)/) {
+            if (/^\*\* JFlat:(ground|power|reset|start|step|capture|cutscan|delay)_net:(.*)/) {
                 my $type = $1;
                 my @aliases;
                 foreach my $net (split("=",$2)) {
@@ -414,7 +415,7 @@ foreach my $type ('ground', 'power') {
     }
 }
 
-# reset/start/step/delay are driven through a reistor so it can be overpowered by env driver
+# reset/start/step/capture/cutscan/delay are driven through a resistor so it can be overpowered by env driver
 if (defined $special_net{'reset'}) {
     foreach my $name (sort @{$special_net{'reset'}}) {
         my $t0 = $reset_time;
@@ -424,29 +425,24 @@ if (defined $special_net{'reset'}) {
         print RUN_FILE "R${name} ${name}:src ${name} PrsMinRes\n";
     }
 }
-if (defined $special_net{'start'}) {
-    foreach my $name (sort @{$special_net{'start'}}) {
-        my $t0 = $reset_time+$start_time;
-        my $t1 = $t0+$slope_time;
-        my $v = get_voltage($name, 'start');
-        print RUN_FILE "V${name} ${name}:src 0 pwl (0 0 $t0 0 $t1 '$v')\n";
-        print RUN_FILE "R${name} ${name}:src ${name} PrsMinRes\n";
+foreach my $type ('start', 'step', 'capture') {
+    if (defined $special_net{$type}) {
+        foreach my $name (sort @{$special_net{$type}}) {
+            my $t0 = $reset_time+$start_time;
+            my $t1 = $t0+$slope_time;
+            my $v = get_voltage($name, $type);
+            print RUN_FILE "V${name} ${name}:src 0 pwl (0 0 $t0 0 $t1 '$v')\n";
+            print RUN_FILE "R${name} ${name}:src ${name} PrsMinRes\n";
+        }
     }
 }
-if (defined $special_net{'step'}) {
-    foreach my $name (sort @{$special_net{'step'}}) {
-        my $t0 = $reset_time+$start_time;
-        my $t1 = $t0+$slope_time;
-        my $v = get_voltage($name, 'step');
-        print RUN_FILE "V${name} ${name}:src 0 pwl (0 0 $t0 0 $t1 '$v')\n";
-        print RUN_FILE "R${name} ${name}:src ${name} PrsMinRes\n";
-    }
-}
-if (defined $special_net{'delay'}) {
-    foreach my $name (sort @{$special_net{'delay'}}) {
-        my $v = get_voltage($name, 'delay');
-        print RUN_FILE "V${name} ${name}:src 0 pwl (0 0 $slope_time '$v')\n";
-        print RUN_FILE "R${name} ${name}:src ${name} PrsMinRes\n";
+foreach my $type ('delay', 'cutscan') {
+    if (defined $special_net{$type}) {
+        foreach my $name (sort @{$special_net{$type}}) {
+            my $v = get_voltage($name, $type);
+            print RUN_FILE "V${name} ${name}:src 0 pwl (0 0 $slope_time '$v')\n";
+            print RUN_FILE "R${name} ${name}:src ${name} PrsMinRes\n";
+        }
     }
 }
 print RUN_FILE "\n";
