@@ -539,8 +539,8 @@
         (pinMap nil)
         (calibreOffset t)
         )
-  (let (TEMP WDIR logFile Command status ImportCV layoutCV floorplanCV
-             win instmap CID templib fields short_name offset file origFile oas)
+  (let (TEMP WDIR Command status ImportCV layoutCV floorplanCV
+             win instmap CID fields short_name offset file origFile oas rename)
 
     ; choose libName and cellName
     (unless libName  libName  = CV->libName)
@@ -583,38 +583,25 @@
                                                          (cadr offset)
                                                          origFile
                                                          file)
-      (unless (shell Command)
-        (error "%s failed" Command)))
-
-    ; create temp library and import cell
-    (GDSIIHierMakeLibrary libName (getShellEnvVar "DFII_DIR") TechLibName)
-    logFile = (strcat file ".log")
-    templib = (strcat "route_import_" top_name)
-    (GDSIIHierMakeLibrary templib TEMP TechLibName)
-    status = (if oas
-               (ImportOAS file templib top_name "layout")
-               (ImportGDS file templib top_name ?prefix "" ?suffix "")
-               )
-    (unless status (error "Unsuccessful import\n"))
-    (when origFile (shell (strcat "rm -f " file)))
-    ImportCV = (dbOpenCellViewByType templib top_name "layout" "maskLayout" "a")
-
-    ; flatten ICC cells
-    (foreach inst ImportCV->instances
-      (when (rexMatchp top_name inst->cellName)
-	(dbFlattenInst inst 32)
-	)
+      (unless (shell Command) (error "%s failed" Command))
       )
 
-    ; convert instances to dfII hierarchy
-    (RouteRemapInstances ?CV ImportCV)
+    ; import cell
+    rename = (RouteRemapCellTable)
+    rename[top_name] = cellName
+    (when oas (error "?oasFile not supported at the moment because ImportOas lacks CopyToNewLib"))
+    ImportCV = (ImportGDS file libName top_name ?prefix "" ?suffix "" ?action nil
+                          ?mapCellName (lambda (cellName) (RouteRemapCellName cellName)))
+    (unless ImportCV (error "Unsuccessful import\n"))
 
     ; HACK: copy properties from baseCV and restore cell alignment
     (when baseCV
       (CopyCellViewProps baseCV ImportCV)
       (unless calibreOffset
         offset = (GetRDTOffset ?CV baseCV)
-        (OffsetEverything offset ?CV ImportCV ?reverse t)))
+        (OffsetEverything offset ?CV ImportCV ?reverse t)
+        )
+      )
 
     ; colorize
     (when colorize (ColorizeByOverlay ?CV ImportCV))
@@ -642,9 +629,6 @@
       (geOpen ?lib libName ?cell cellName ?view viewName
               ?viewType "maskLayout" ?mode "a" ?window win)
       )
-
-    ; delete import_oas_temp library
-    (ddDeleteObj (ddGetObj templib))
 
     ; execute custom function
     (FinishRouterImport ?CV ImportCV)
@@ -856,36 +840,28 @@ DumbLayers = (list (list "SRAM" "fill")
     )
   )
 
-; Change instance masters from GDS to DFII
-(defun RouteRemapInstances (@key (CV (geGetEditCellView)))
-  (let (rename flatten dfII_name master)
-    flatten = (makeTable "flatten" nil)
-    rename = (RouteRemapCellTable)
-    (foreach inst CV->instances
-      dfII_name = rename[inst->cellName]
-      (when !dfII_name && (strncmp inst->cellName "g1m" 3)==0 ; TODO: finish PDK/v2cast/g1m.rul
-        dfII_name = (sprintf nil "vendor.intel.g1m.%s.%s"
-                             (substring inst->cellName 4 8)
-                             (substring inst->cellName 12 6))
-        (printf "WARNING: implicitly renamed %s\n" dfII_name)
-        rename[inst->cellName] = dfII_name
-        )
-      (cond (dfII_name
-             master=(dbOpenCellViewByType (GetCastLibName dfII_name) dfII_name "layout")
-             (unless master (error "unable to read %s\n" dfII_name))
-             inst->master=master
-             )
-            (t
-             (unless flatten[inst->cellName]
-               (printf "WARNING: unable to rename %s, flattening instead\n" inst->cellName)
-               flatten[inst->cellName]=t
-               )
-             (dbFlattenInst inst 32)
-             )
-            )
-      )
+; Function to rename cellName for CopyToNewLib. Unmapped cells such as
+; subcell vias and fill overlays get flattened.
+(defun RouteRemapCellName (cellName)
+  (let (dfII_name libName)
+    dfII_name = rename[cellName]
+    (cond (dfII_name
+           cellName = dfII_name
+           libName = (GetCastLibName cellName)
+           (list libName cellName)
+           )
+          ((strncmp cellName "g1m" 3)==0 ; TODO: finish PDK/v2cast/g1m.rul
+           dfII_name = (sprintf nil "vendor.intel.g1m.%s.%s"
+                                (substring cellName 4 8)
+                                (substring cellName 12 6))
+           rename[cellName] = dfII_name
+           libName = "vendor.intel.g1m"
+           cellName = dfII_name
+           (list libName cellName)
+           )
+          (t nil)
+          )
     )
-  t
   )
 
 ; Copy OA properties from one cellview to another

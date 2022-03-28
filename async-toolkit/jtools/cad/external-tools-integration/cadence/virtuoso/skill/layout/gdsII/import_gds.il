@@ -91,18 +91,20 @@ importPostProcessAction =
     )
 
 ; Recursively copy a cell hierarchy to a new library.  Recurses only
-; to instances with the same libName as the parent to avoid renaming
-; technology cells like vias.  Adds optional prefix and suffix to
-; cellNames.  Or use lambda function mapCellName to map the cellName to
-; a new libName and cellName.
+; to instances mapped to the same libName as the target to avoid
+; renaming technology cells like vias.  Adds optional prefix and
+; suffix to cellNames.  Or use lambda function mapCellName to map the
+; cellName to a new libName and cellName pair.  If mapCellname returns
+; nil for a subcell, that subcell is presumed to be a wiring cell and
+; is flattened.
 (defun CopyToNewLib (libName @key (CV (geGetEditCellView))
                              (visited (makeTable "visited" nil))
                              (prefix "")
                              (suffix "")
                              (mapCellName nil) ; lambda on cellName to return (list libName cellName)
                              )
-  (let (newCV lib_cell libN cellN)
-    newCV = visited[CV]
+  (let (newCV lib_cell libN cellN master)
+    newCV=visited[CV]
     (unless newCV
       (cond (mapCellName
              lib_cell = (apply mapCellName (list CV->cellName))
@@ -114,20 +116,31 @@ importPostProcessAction =
              cellN = (strcat prefix CV->cellName suffix)
              )
             )
-      (printf "CopyToNewLib: %s %s %s\n" libN cellN CV->viewName)
-      (UpdateFloorplanCreateLib libN) ; create destination library if necessary
-      newCV = (betterCopyCellView CV libN cellN CV->viewName nil nil t)
-      (when newCV
-        visited[CV] = newCV
-        (foreach inst (setof x newCV->instances x->libName==CV->libName)
-                 inst->master = (CopyToNewLib libName
-                                              ?CV inst->master ?visited visited
-                                              ?prefix prefix
-                                              ?suffix suffix
-                                              ?mapCellName mapCellName)
-                 )
-        (dbSave newCV)
-        )
+      (cond (libN==libName
+             (printf "CopyToNewLib: copy to %s %s %s\n" libN cellN CV->viewName)
+             (UpdateFloorplanCreateLib libN) ; create destination library if necessary
+             newCV=(betterCopyCellView CV libN cellN CV->viewName nil nil t)
+             (unless newCV (error "CopyToNewLib unable to write %s %s %s\n" libN cellN CV->viewName))
+             visited[CV]=newCV
+             (foreach inst newCV->instances
+                      master=(CopyToNewLib libName
+                                           ?CV inst->master ?visited visited
+                                           ?prefix prefix ?suffix suffix
+                                           ?mapCellName mapCellName)
+                      (if master inst->master=master (dbFlattenInst inst 32)) ; remap or flatten
+                      )
+             (dbSave newCV)
+             )
+            (libN && cellN
+             (printf "CopyToNewLib: refer to %s %s %s\n" libN cellN CV->viewName)
+             newCV=(ReadCV libN cellN CV->viewName)
+             (unless newCV (error "CopyToNewLib unable to read %s %s %s\n" libN cellN CV->viewName))
+             visited[CV]=newCV
+             )
+            (t
+             (printf "CopyToNewLib: flatten unmapped %s\n" CV->cellName)
+             )
+            )
       )
     newCV
     )
