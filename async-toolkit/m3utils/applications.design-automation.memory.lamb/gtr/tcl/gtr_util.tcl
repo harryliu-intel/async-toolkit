@@ -1,4 +1,12 @@
 ## GTR Generator Tools Release v1.0.0
+
+set supported_min_depth        4
+set supported_min_width        2
+set supported_max_depth      256
+set supported_max_width      144
+set supported_width_divisor    2
+set supported_depth_divisor    2
+
 set cornerlibs [list]
 set properties [dict create]
 
@@ -214,6 +222,13 @@ proc xxgtr_copy_files { lt depth width } {
 proc gtr_lamb_gen_views { args } {
     global desired_corners
     global cornerlistfns
+    global supported_min_depth
+    global supported_min_width
+    global supported_max_depth
+    global supported_max_width
+    global supported_depth_divisor
+    global supported_width_divisor
+
     set proc_name [lindex [regsub "::" [info level 0]  "" ] 0 ]
     set date [date ]
     parse_proc_arguments -args $args arg
@@ -270,11 +285,11 @@ proc gtr_lamb_gen_views { args } {
     }
 
     ## check data against reasonable bounds
-    if { $min_width < 2 } {
-      error "min_width must be greater than or equal to two"
+    if { $min_width < $supported_min_width } {
+        error [ format "min_width must be greater than or equal to %d" $supported_min_width ]
     }
-    if { $min_width > 256 } {
-      error "min_width must be less than or equal to 256"
+    if { $max_width > $supported_max_width } {
+        error [format "max_width must be less than or equal to %d" $supported_max_width ]
     }
     if { $max_width < $min_width } {
       error "max_width must be greater than or equal to -min_width"
@@ -307,8 +322,12 @@ proc gtr_lamb_gen_views { args } {
     }
 
     ## check data against reasonable bounds
-    if { $min_depth < 4 } { error "min_depth must be greater than or equal to four" }
-    if { $min_depth > 256 } { error "min_depth must be less than or equal to 256" }
+    if { $min_depth < $supported_min_depth } {
+        error [ format "min_depth must be greater than or equal to %d" $supported_min_depth ]
+    }
+    if { $max_depth > $supported_max_depth } {
+        error [ format "max_depth must be less than or equal to %d" $supported_max_depth ]
+    }
     if { $max_depth < $min_depth } { error "max_depth must be greater than or equal to -min_depth" }
     #set lambtypes [list "1r1w1c" "1r1w2c" ]
     ## for now we will stripe the netbatch runs where each worker will build a full swath of ranges for a different depth.
@@ -320,7 +339,29 @@ proc gtr_lamb_gen_views { args } {
     } else {
         set lambtype "1r1w1c"
     }
-    for { set depth $min_depth } { $depth <= $max_depth } { set depth [expr $depth + 2 ] } {
+
+    ############################################################
+    #
+    # check width and depth multiple of supported step size
+    # we don't really need to do this but it probably represents the
+    # principle of least surprise.
+    #
+
+    if { [ expr $min_depth % $supported_depth_divisor ] != 0 } {
+        error [ format "min depth %d not divisible by %d" $min_depth $supported_depth_divisor ]
+    }
+    if { [ expr $max_depth % $supported_depth_divisor ] != 0 } {
+        error [ format "max depth %d not divisible by %d" $max_depth $supported_depth_divisor ]
+    }
+
+    if { [ expr $min_width % $supported_width_divisor ] != 0 } {
+        error [ format "min width %d not divisible by %d" $min_width $supported_width_divisor ]
+    }
+    if { [ expr $max_width % $supported_width_divisor ] != 0 } {
+        error [ format "max width %d not divisible by %d" $max_width $supported_width_divisor ]
+    }
+    
+    for { set depth $min_depth } { $depth <= $max_depth } { set depth [expr $depth + $supported_depth_divisor ] } {
    if { [info exists arg(-netbatch) ] } {
        set cmd_file "gtr_nbatch_cmd_cdp_lamb_${variant_type}_${lambtype}_${depth}d_${min_width}_${max_width}b.tcl"
        set of [open $cmd_file "w" ]
@@ -330,7 +371,7 @@ proc gtr_lamb_gen_views { args } {
    }
    set filelist [list]
    set lambsProduced 0
-   for { set width $min_width } { $width <= $max_width } { set width [expr $width + 2 ] } {
+   for { set width $min_width } { $width <= $max_width } { set width [expr $width + $supported_width_divisor ] } {
       if { "$variant_type" == "n5hd" } {
         set block_name "cdp_lamb_${lambtype}_${depth}d_${width}b"
       } else {
