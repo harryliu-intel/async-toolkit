@@ -27,10 +27,11 @@ proc produceLambs { lambList {taskname lambgen } {tag testtag} { archive 0 } } {
 
       set cthSetup "/p/cth/bin/cth_psetup -p ${cheetahProject} -cfg ${cheetahConfig}.cth"
       set ward cdp_lamb_${variant}_${type}_${depth}d_${width}b
-      set lm_shell_cmd "icc2_lm_shell -batch -x 'source $::env(GTR_HOME)/tcl/gtr_main.tcl ; gtr_lamb_gen_views -variant_type $variant -data_width $width -data_depth $depth'"
+      set lm_operation "source $::env(GTR_HOME)/tcl/gtr_main.tcl ; gtr_lamb_gen_views -variant_type $variant -data_width $width -data_depth $depth"
       if { $type == "1ftr1w1c"} {
-         append lm_shell_cmd " -flow_through"
+         append lm_operation " -flow_through"
       }
+      set lm_shell_cmd "icc2_lm_shell -batch -x '$lm_operation'"
       set cmd "     $cthSetup -tool $toolset -ward $ward -cmd \"$lm_shell_cmd\""
 
       puts $tf " JobsTask  build_$ward {"
