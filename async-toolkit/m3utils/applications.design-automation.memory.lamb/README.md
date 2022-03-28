@@ -8,24 +8,31 @@ dictate flip-flop based storage.
 
 ### Variants
 - 1r1w1c: Standard 1r1w, 1 clock implementation
-- 1ftr1w1c: 1r1w memory, 1 clock, with flow-through (i.e. unflopped output data). Under development.
+- 1ftr1w1c: 1r1w memory, 1 clock, with flow-through (i.e. unflopped output data)
 
 ### Process Technology
 This work is being developed primarily for TSMC N3E process, but the principle is generic.
+
+### Support Configurations
+Implementation considerations lead to support for a limited set of configurations.
+- Even bitwidths are supported
+- Even depths are supported
+- Absolute min/max depth and widths vary by process technology
 
 ### Supported Views
 The present state of the code is to generate 'placeholder' content to enable logic design and
 pipecleaning  physical design flows. This includes:
 
 - SV behavioral verilog
-- Liberty Files @ SSGNP, 0C
+- Liberty Files at process points to support setup, hold, electromigation, and power corners
 - Synopsys DB files based on Liberty Files
 - LEF abstracts of rough pin positions
 - Synopsys NDM Abstracts Based on the LEF and Liberty Files
+- manifest.xml file to interoperate with ``SHIP`` tool
 
 ### Views Under Development
-- Additional process corner, voltages and temperature combinations
 - OASIS/GDSII Layout
+- UPF
 
 ### Requirements
 - SLES12 machine within HPC environment
@@ -35,12 +42,13 @@ pipecleaning  physical design flows. This includes:
 ### Release Methodology
 Releases to broad silicon teams should always be referenceable back to a specific git point.
 Generally, only do releases against an annotated git tag, to ensure reproducibility if additional
-HIPs are added to the released set. For example, to checkout the annotated tag lamb_0_0_2, you can do:
+HIPs are added to the released set. For example, to checkout the annotated tag lamb_0_0_6, do:
 
 ```
 git clone --recurse-submodules https://github.com/intel-innersource/applications.design-automation.memory.lamb.git
-git checkout lamb_0_0_2
+git checkout lamb_0_0_6
 git submodule update --init # need to update submodules, when switching to a specific tag
+git config --global submodule.recurse true # will automatically update submodules when switching tags/branches
 ```
 
 GitHub maintains a list of the [existing annotated tags](https://github.com/intel-innersource/applications.design-automation.memory.lamb/tags) for this project.
@@ -127,7 +135,7 @@ You will need to use nbfeeder to execute the task file. You can use [nbflow](htt
 ### Known Errata and Caveats
 - Timing analysis is based on a scaling model from N7, this is unlikely to be completely accurate
 
-### Preliminary flow-through support
+### Flow-through Support
 
 ```
 setenv GTR_HOME $PWD/gtr
