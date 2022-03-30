@@ -1,2 +1,5 @@
 include(".top")
 include(M3UTILS_INC)
+
+override ("lambbuilderlib", LAMBTOP)
+

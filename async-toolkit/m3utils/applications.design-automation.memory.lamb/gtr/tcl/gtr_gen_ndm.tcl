@@ -28,6 +28,7 @@
 
 
 proc gtr_gen_ndm { args } {
+    global cornerlibs
     set proc_name [lindex [regsub "::" [info level 0]  "" ] 0 ]
     set date [date ]
     parse_proc_arguments -args $args arg
@@ -38,9 +39,10 @@ proc gtr_gen_ndm { args } {
     } else {
         set verbose 0
     }
+    puts [list "gtr_gen_ndm" $args]
+    
     set block_name $arg(-block_name)
-    set lib_file $arg(-lib_file)
-    set process_label $arg(-process_label)
+    set libs $cornerlibs
     set lef_file $arg(-lef_file)
     set tech_node_uc [string toupper $arg(-tech_node) ]
     set ndmdir collateral/ebb/lib
@@ -76,7 +78,12 @@ proc gtr_gen_ndm { args } {
         create_workspace -flow normal -technology $ndm_tech_file $block_name
     }
     read_lef $lef_file
-    read_lib -process_label $process_label $lib_file
+
+    # the following line needs to loop over process labels and lib files
+    foreach {l} $libs {
+        read_lib -process_label [lindex $l 0] [lindex $l 1]
+    }
+    
     if { $tool == "lc_shell" } {
         report_app_options > ./${block_name}_frame_report_app_options.rep
         create_frame
@@ -91,11 +98,9 @@ proc gtr_gen_ndm { args } {
 
 
 define_proc_attributes gtr_gen_ndm \
-    -info "Utility to generate LAMB System Verilog Module" \
+    -info "Utility to generate LAMB NDM" \
     -define_args {
 	{-block_name "Specify memory name" "<block_name>" string required}
-	{-lib_file "Path to the .lib file" "./<block_name>.lib" string required}
-	{-process_label "Process label" "e.g., ssgnp" string required}
 	{-lef_file "Path to the .LEF file" "./<block_name>.LEF" string required}
 	{-tech_node "Specify tech node (default n3b)" "AnOos" one_of_string {required {values {"n3b" "n3e" "n5"}}}}
    {-filelistVar "Update filelist for manifest.xml" "" string optional}

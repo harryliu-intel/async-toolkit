@@ -14,8 +14,9 @@
 # here we hard-code for now, because we don't have that infrastructure (yet?)
 #
 
-CM3=/nfs/site/home/mnystroe/mst_work/cm3-suse12-latest/bin/cm3
-M3UTILSROOT=/nfs/sc/disks/bfn_pd_cb_02/mnystroe/m3utils
+CM3=$(RTA_CM3_HOME)/bin/cm3
+M3UTILSROOT=../m3utils
+LAMBROOT=../m3
 M3UTILSVERSION=$(shell ./git_get_hash.sh $(M3UTILSROOT))
 APLOTSRC=/nfs/sc/disks/bfn_pd_cb_02/mnystroe/m3utils/lamb/lambbuilder/src/aplot/
 
@@ -43,7 +44,9 @@ TOP=.top
 TOP_TEMPLATE=top_template
 
 .PHONY: all aplot
-all: mains lambbuilder/src/aplot/aplot
+# aplot is a binary from Andrew...
+#all: mains 
+#all: mains lambbuilder/src/aplot/aplot
 
 .PHONY: mains
 mains: $(LAMBBUILDER) $(LAMBCHARACTERIZE)
@@ -67,6 +70,8 @@ top: $(TOP)
 $(TOP): $(TOP_TEMPLATE) $(M3UTILS_VERSION_F)
 	cp $(TOP_TEMPLATE) $@
 	sed -i "s#M3UTILS_ROOT#$(M3UTILSROOT)#" $@
+	sed -i "s#LAMB_ROOT#$(LAMBROOT)#" $@
+	echo LAMBTOP=\"$(PWD)\" >> $@
 
 .PHONY: aplot
 aplot: $(APLOTDIR)/aplot

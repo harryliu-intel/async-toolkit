@@ -27,34 +27,41 @@
 ##------------------------------------------------------------------------------
 
 proc gtr_lamb_gen_db { args } {
+   global properties
    parse_proc_arguments -args $args arg
    set proc_name [lindex [regsub "::" [info level 0]  "" ] 0 ]
-   set libfname $arg(-lib_file)
+
+   set libfname   $arg(-lib_file)
+   set dbfname    $arg(-fname)
    set block_name $arg(-block_name)
+
    if { ! [file exists $libfname] } {
       error "$proc_name, $libfname does not exist"
    }
    
-   set dbfname timing_snps/${block_name}_[gtr_cornerSuffix $arg(-oc_type) $arg(-voltage)].db
-   set dbdir [file dirname $dbfname]
-   if { [file exists $dbfname] } {
-      puts "INFO: $proc_name, $dbfname already exists, deleting to create new content"
-      file delete $dbfname
+   set dbfpath timing_snps/$dbfname
+    
+   set dbdir [file dirname $dbfpath]
+    
+   if { [file exists $dbfpath] } {
+      puts "INFO: $proc_name, $dbfpath already exists, deleting to create new content"
+      file delete $dbfpath
    }
+    
    file mkdir $dbdir
-   puts "INFO: $proc_name, Generating Compiled DB Liberty view: $dbfname from $libfname"
-   global properties
+   set libname [file rootname [file tail $libfname]]
+   puts "INFO: $proc_name, Generating Compiled DB Liberty view: $dbfpath from $libfname. Library name is $libname"
    
    set lc_shell_exec $::env(LIBRARYCOMPILER_DIR)/bin/lc_shell
-   exec $lc_shell_exec -no_home_init -output_log_file ${dbfname}.log -batch -x "read_lib $libfname; write_lib $block_name -output $dbfname"
+   exec $lc_shell_exec -no_home_init -output_log_file ${dbfpath}.log -batch -x "read_lib $libfname; write_lib $libname -output $dbfpath"
    if { [info exists arg(-filelist_var) ] } {
         upvar $arg(-filelist_var) fileList
         set thisEntry [dict create]
-        dict set thisEntry path $dbfname
+        dict set thisEntry path $dbfpath
         dict set thisEntry nda_protection_level front_end
         dict set thisEntry type db_ccs_filelist
         dict set thisEntry voltage $arg(-voltage)
-        dict set thisEntry rc_type all_rc_types
+        dict set thisEntry rc_type $arg(-rc_type)
         dict set thisEntry reliability_condition client
         dict set thisEntry design_view timing
         dict set thisEntry variation_modeling pocv
@@ -62,18 +69,27 @@ proc gtr_lamb_gen_db { args } {
         dict set thisEntry consuming_vendor synopsys
         dict set thisEntry fusion_enablement dependent
         dict set thisEntry oc_type $arg(-oc_type)
-        dict set thisEntry feol_process_corner [dict get $properties oc_type $arg(-oc_type) feol_process_corner]
-        dict set thisEntry temperature [dict get $properties oc_type $arg(-oc_type) temperature]        
+        dict set thisEntry feol_process_corner $arg(-feol_corner)
+        dict set thisEntry temperature $arg(-temperature)
         lappend fileList $thisEntry
-   } 
+   }
+
+   if { ![file exists $dbfpath]} {
+      error "$dbfpath not created by DB compilation step!"
+   }
+   return $dbfname
 }
 define_proc_attributes gtr_lamb_gen_db \
     -info "Utility to generate Synopsys .DB Memory collaterals" \
     -define_args {
    {-block_name "Specify memory name" "<block_name>" string required}	
    {-lib_file "Specify liberty file name" "<liberty_name>" string required}
-   {-oc_type "Operating condition" "AnOos" one_of_string {required {values {"S_125" "S_M40" "S_0" "F_125" "F_M40" "F_0" "T_25" "T_85" }}}}
+   {-fname "Filename" "" string required }
+   {-oc_type "Operating condition type" "" string required }
+   {-feol_corner "FEOL corner" "" string required }
+   {-rc_type "RC type" "" string required }
    {-voltage "Voltage condition" "voltage" string required}
+   {-temperature "Temperature condition" "temperature" string required}
    {-filelist_var "Update filelist for manifest.xml" "" string optional}
    {-debug "Report additional logging for debug purposes" "" boolean optional}
 }
