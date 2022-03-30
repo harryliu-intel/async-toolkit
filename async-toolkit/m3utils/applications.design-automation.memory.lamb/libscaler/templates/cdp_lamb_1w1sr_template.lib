@@ -168,6 +168,7 @@ library (cdp_lamb_1w1sr_32w_21b__tt_0p75v_85c_typical ){
   /* Start Design cdp_lamb_1w1sr_32w_21b */
   cell (cdp_lamb_1w1sr_32w_21b ) { 
     area :  204.8717;
+    cell_leakage_power : 0.0;
     dont_touch : true ;
     dont_use : true ;
     timing_model_type : extracted ;

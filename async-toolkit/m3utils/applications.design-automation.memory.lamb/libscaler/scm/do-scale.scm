@@ -86,6 +86,18 @@
     (error "must specify -pvtname"))
 (define *pvt-name* (pp 'getNext))
 
+(define *pow-opts*
+  (let loop ((res '()))
+    (if (pp 'keywordPresent "-pow")
+        (loop (cons (list (pp 'getNext) (pp 'getNext)) res))
+        res)))
+
+(define *pinpow2-opts*
+  (let loop ((res '()))
+    (if (pp 'keywordPresent "-pinpow2")
+        (loop (cons (list (pp 'getNext) (pp 'getNext) (pp 'getNext)) res))
+        res)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define *the-tech*
@@ -105,7 +117,9 @@
            *sicorner*
            *rcorner*
            *ccorner*
-           *pvt-name*))
+           *pvt-name*
+           *pow-opts*
+           *pinpow2-opts*))
 
 (do-it)
 

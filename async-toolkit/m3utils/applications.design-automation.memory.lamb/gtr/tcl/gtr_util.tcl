@@ -457,6 +457,34 @@ proc gtr_lamb_gen_views { args } {
             set workdir "timing"
             set path [ format %s/%s.lib $workdir $libname ]
             puts [ list "path" $path ]
+
+            # the power ... we do the calcs in tcl for now
+            set pow_lk [      gtr_lamb_power -data_width $width -data_depth $depth -power_type "leak"          ]
+            set pow_id [expr [gtr_lamb_power -data_width $width -data_depth $depth -power_type "idle" ] / 2.0 ]
+            set pow_rd [expr [gtr_lamb_power -data_width $width -data_depth $depth -power_type "rd" ] / 2.0 ]
+            set pow_wr [expr [gtr_lamb_power -data_width $width -data_depth $depth -power_type "wr" ] / 2.0 ]
+            set pow_rw [expr [gtr_lamb_power -data_width $width -data_depth $depth -power_type "rw" ] / 2.0 ]
+
+            set pflags ""
+            
+            if { $flowthrough == 0 } {
+                # pinpow2 means set both rise and fall power to the
+                # indicated value
+                set pflags [ list "-pow     cell_leakage_power" $pow_lk \
+                                  "-pinpow2 clk !ren&!wen"      $pow_id \
+                                  "-pinpow2 clk ren&!wen"       $pow_rd \
+                                  "-pinpow2 clk !ren&wen"       $pow_wr \
+                                  "-pinpow2 clk ren&wen"        $pow_rw ]
+            } else {
+                # flowthrough case
+                # XXX NOTYET
+                # there is no read power here
+                # in reality it should be attached to the read address pins
+                set pflags [ list "-pow     cell_leakage_power" $pow_lk \
+                                  "-pinpow2 clk !wen"           $pow_id \
+                                  "-pinpow2 clk wen"            $pow_wr ]
+            }
+                                 
             
             gtr_lamb_scale_lib \
                 -w          $width \
@@ -472,7 +500,8 @@ proc gtr_lamb_gen_views { args } {
                 -sicorner   $sicorner \
                 -rcorner    $rcorner \
                 -ccorner    $ccorner\
-                -pvtname    $pvtname
+                -pvtname    $pvtname \
+                {*}$pflags
 
             lappend cornerlibs [ list $pvtname $path ]
 
