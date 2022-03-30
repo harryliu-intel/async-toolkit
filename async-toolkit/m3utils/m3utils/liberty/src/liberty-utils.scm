@@ -224,6 +224,15 @@
           x
           #f))))
 
+(define (have-field?-filter fn)
+  (lambda(x)(have-field? x fn)))
+
+(define (field-equal?-filter fn val)
+  (lambda(x)(equal? (get-field x fn) val)))
+
+(define (field-member?-filter fn values)
+  (lambda(x)(member? (get-field x fn) values)))
+
 (define (named-simple-attr-filter name)
   (and-filters
    (subtype-filter-proc "LibertySimpleAttr.T")
@@ -515,7 +524,32 @@
     )
   )
 
-  
+(define (update-cell-pin-power-2! cell pin-name constraint rise-fall-pow)
+  (let* ((pin (get-named-pin-group cell pin-name))
+         (matching-attrs
+          (filter-all pin
+                      (and-filters
+                       (subtype-filter-proc 'LibertySimpleAttr.T)
+                       (field-equal?-filter-proc 'ident "when")
+                       (field-equal?-filter-proc 'attrValExpr.val constraint))))
+         (power-grp
+          (get-field (only matching-attrs) 'parent))
+         (f (and-filters
+             (have-field?-filter 'head)
+             (field-member?-filter 'head.ident '("rise_power" "fall_power"))))
+         (powers (filter-all power-grp f))
+         )
+
+    ;; really painful, this...
+    ;; XXX NOTYET : check that we actually updated the values in question?
+    ;; or do we want to leave this out?
+    (map (lambda(v)(update-val! (get-field v 'statements[0].head.params[0])
+                                (force-string rise-fall-pow)))
+         powers)
+ ))   
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                                                             
 (define (get-named-bus-group cell name)
   (get-named-group cell "bus" name))
 
@@ -671,12 +705,26 @@
 ;; area?
 ;; block_distance?
 
-  
-(define (update-lib-area! lib new-area)
-  (let ((the-cell (get-lib-cell lib)))
-    (update-group-variable! the-cell "area" new-area)
+(define *ulca-l* '())
+(define *ulca-a* '())
+(define *ulca-t* '())
+
+(define (update-lib-cell-attr! lib attr to)
+  (set! *ulca-l* lib)
+  (set! *ulca-a* attr)
+  (set! *ulca-t* to)
+  (let* ((the-cell (get-lib-cell lib))
+         (updated (update-group-variable! the-cell attr to))
+         (f-up    (filter (not-filter null?) updated)))
+    (if (= 0 (length f-up))
+        (error "couldn't find attr " attr)
+        f-up)
     )
   )
+  
+  
+(define (update-lib-area! lib new-area)
+  (update-lib-cell-attr! lib "area" new-area))
 
 (define (test11)
   (define the-cell (get-lib-cell *lib*)))
