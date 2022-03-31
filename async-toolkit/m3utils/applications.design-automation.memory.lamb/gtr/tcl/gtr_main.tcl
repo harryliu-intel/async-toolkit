@@ -26,22 +26,22 @@
 ##
 ##------------------------------------------------------------------------------
 
-if { ! [info exists ::env(GTR_ROOT) ] } {
-   set ::env(GTR_ROOT) [file dirname [file dirname [info script]]]
-   puts "Environment variable not set. Setting GTR_ROOT as $env(GTR_ROOT)"
+if { ! [info exists ::env(GTR_HOME) ] } {
+   set ::env(GTR_HOME) [file dirname [file dirname [info script]]]
+   puts "Environment variable not set. Setting GTR_HOME as $env(GTR_HOME)"
 }
 
-source $::env(GTR_ROOT)/tcl/gtr_util.tcl
-source $::env(GTR_ROOT)/tcl/gtr_tech.tcl
-source $::env(GTR_ROOT)/tcl/gtr_read_lib.tcl
-source $::env(GTR_ROOT)/tcl/gtr_lamb_area.tcl
-source $::env(GTR_ROOT)/tcl/gtr_lamb_power.tcl
-source $::env(GTR_ROOT)/tcl/gtr_lamb_gen_sv.tcl
-source $::env(GTR_ROOT)/tcl/gtr_lamb_gen_lef.tcl
-source $::env(GTR_ROOT)/tcl/gtr_lamb_gen_lib.tcl
-source $::env(GTR_ROOT)/tcl/gtr_lamb_gen_db.tcl
-source $::env(GTR_ROOT)/tcl/gtr_gen_ndm.tcl
-source $::env(GTR_ROOT)/tcl/gtr_lblocks_gen_spice.tcl
+source $::env(GTR_HOME)/tcl/gtr_util.tcl
+source $::env(GTR_HOME)/tcl/gtr_tech.tcl
+source $::env(GTR_HOME)/tcl/gtr_read_lib.tcl
+source $::env(GTR_HOME)/tcl/gtr_lamb_area.tcl
+source $::env(GTR_HOME)/tcl/gtr_lamb_power.tcl
+source $::env(GTR_HOME)/tcl/gtr_lamb_gen_sv.tcl
+source $::env(GTR_HOME)/tcl/gtr_lamb_gen_lef.tcl
+source $::env(GTR_HOME)/tcl/gtr_lamb_gen_lib.tcl
+source $::env(GTR_HOME)/tcl/gtr_lamb_gen_db.tcl
+source $::env(GTR_HOME)/tcl/gtr_gen_ndm.tcl
+source $::env(GTR_HOME)/tcl/gtr_lblocks_gen_spice.tcl
 
 ### Notes on Synopsys arg handler package                                                                                        
 # define_proc_attributes argHandler \                                                                                            
