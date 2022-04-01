@@ -46,9 +46,11 @@ HIPs are added to the released set. For example, to checkout the annotated tag l
 
 ```
 git clone --recurse-submodules https://github.com/intel-innersource/applications.design-automation.memory.lamb.git
+cd applications.design-automation.memory.lamb.git
 git checkout lamb_0_0_6
 git submodule update --init # need to update submodules, when switching to a specific tag
 git config --global submodule.recurse true # will automatically update submodules when switching tags/branches
+make # build up the m3utils required collaterals
 ```
 
 GitHub maintains a list of the [existing annotated tags](https://github.com/intel-innersource/applications.design-automation.memory.lamb/tags) for this project.
