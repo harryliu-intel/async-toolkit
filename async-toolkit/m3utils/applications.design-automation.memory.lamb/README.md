@@ -75,8 +75,8 @@ To produce a single LAMB requires Cheetah environment. Execute, for example, in 
 
 ```
 setenv GTR_HOME $PWD/gtr
-/p/cth/bin/cth_psetup -p tfc -cfg tfc_ipde_n3.cth -tool librarycompiler,fusioncompiler,ship -ward BUILD/cdp_lamb_n3bhd_1r1w1c_4d_10b \
-   -cmd "icc2_lm_shell -batch -x 'source $GTR_HOME/tcl/gtr_main.tcl ; gtr_lamb_gen_views -variant n3bhd -data_width 10 -data_depth 4'"
+/p/cth/bin/cth_psetup -p tfc -cfg tfc_ipde_n3.cth -tool librarycompiler,fusioncompiler,ship -ward BUILD/cdp_lamb_n3ehd_1r1w1c_4d_10b \
+   -cmd "icc2_lm_shell -batch -x 'source $GTR_HOME/tcl/gtr_main.tcl ; gtr_lamb_gen_views -tech_node n3e -variant n3ehd -data_width 10 -data_depth 4'"
 ```
 
 To produce a single N3B LAMB in a WARD.
@@ -87,7 +87,7 @@ For example:
 ```
 /p/hdk/bin/cth_psetup -p tfc -tool ship -cfg tfc_ipde_n3.cth -ward BUILD/ship
 ship.pl -tag testtag -ip_type hip -test -skip_stages archive \
-  -block cdp_lamb_n3bhd_1r1w1c_4d_10b -no_viewgen -source ../cdp_lamb_n3bhd_1r1w1c_4d_10b
+  -block cdp_lamb_n3ehd_1r1w1c_4d_10b -no_viewgen -source ../cdp_lamb_n3ehd_1r1w1c_4d_10b
 ```
 
 Omit `-skip_stages archive` and `-test` to actually perform the release to the `$PROJ_ARCHIVE` area. Specify an arc tag based off
@@ -139,8 +139,8 @@ You will need to use nbfeeder to execute the task file. You can use [nbflow](htt
 
 ```
 setenv GTR_HOME $PWD/gtr
-/p/cth/bin/cth_psetup -p tfc -cfg tfc_n3.cth -tool librarycompiler,fusioncompiler/R-2020.09-SP5-T-20211019,cth_LR -ward BUILD/cdp_lamb_n3bhd_1ftr1w1c_4d_10b \
-   -cmd "icc2_lm_shell -batch -x 'source $GTR_HOME/tcl/gtr_main.tcl ; gtr_lamb_gen_views -data_width 10 -data_depth 4 -flow_through'"
+/p/cth/bin/cth_psetup -p tfc -cfg tfc_n3.cth -tool librarycompiler,fusioncompiler,ship -ward BUILD/cdp_lamb_n3ehd_1ftr1w1c_4d_10b \
+   -cmd "icc2_lm_shell -batch -x 'source $GTR_HOME/tcl/gtr_main.tcl ; gtr_lamb_gen_views -tech_node n3e -data_width 10 -data_depth 4 -flow_through'"
 ```
 
 ### Copyright
