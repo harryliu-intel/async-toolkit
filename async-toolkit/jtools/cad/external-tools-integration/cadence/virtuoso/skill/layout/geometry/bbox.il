@@ -55,9 +55,9 @@
   ( difference ( caadr BBox ) ( caar BBox ) ) )
 
 (defun BBoxGetCenter ( BBox )
-  ( list 
-    ( plus ( caar BBox ) ( times 0.5 ( BBoxGetWidth BBox ) ) )
-    ( plus ( cadar BBox ) ( times 0.5 ( BBoxGetHeight BBox ) ) ) ) )
+  (list ((car  (car BBox)) + (car  (cadr BBox)))/2
+        ((cadr (car BBox)) + (cadr (cadr BBox)))/2)
+  )
 
 ;round up to nearest grid spacing
 (defun BBoxSnapToHorizontalGrid ( BBox GridSpacing )
@@ -151,10 +151,10 @@
 ; Geometric And of two bboxes, or nil if no overlap
 (defun BBoxAnd (a b)
   (let (x0 y0 x1 y1)
-    x0 = (max (leftEdge   a) (leftEdge   b))
-    y0 = (max (bottomEdge a) (bottomEdge b))
-    x1 = (min (rightEdge  a) (rightEdge  b))
-    y1 = (min (topEdge    a) (topEdge    b))
+    x0 = (max (car  (car  a))  (car  (car  b)) )
+    y0 = (max (cadr (car  a))  (cadr (car  b)) )
+    x1 = (min (car  (cadr a))  (car  (cadr b)) )
+    y1 = (min (cadr (cadr a))  (cadr (cadr b)) )
     (if x1>=x0 && y1>=y0 (list x0:y0 x1:y1) nil)
     )
   )
