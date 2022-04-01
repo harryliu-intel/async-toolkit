@@ -25,9 +25,15 @@ proc produceLambs { lambList {taskname lambgen } {tag testtag} { archive 0 } } {
       set type    [dict get $l type]
       set variant [dict get $l variant]
 
+      switch $variant {
+         n3ehd { set tech n3e }
+         n3bhd { set tech n3b }
+         n5hd  { set tech n5 }
+      }
+
       set cthSetup "/p/cth/bin/cth_psetup -p ${cheetahProject} -cfg ${cheetahConfig}.cth"
       set ward cdp_lamb_${variant}_${type}_${depth}d_${width}b
-      set lm_operation "source $::env(GTR_HOME)/tcl/gtr_main.tcl ; gtr_lamb_gen_views -variant_type $variant -data_width $width -data_depth $depth"
+      set lm_operation "source $::env(GTR_HOME)/tcl/gtr_main.tcl ; gtr_lamb_gen_views -tech_node $tech -variant_type $variant -data_width $width -data_depth $depth"
       if { $type == "1ftr1w1c"} {
          append lm_operation " -flow_through"
       }
