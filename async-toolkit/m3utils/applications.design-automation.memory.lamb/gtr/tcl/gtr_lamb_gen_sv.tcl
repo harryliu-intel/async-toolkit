@@ -41,6 +41,11 @@ proc gtr_lamb_gen_behav_sv { args } {
     set fname ${dir}/$arg(-block_name).sv
     echo "INFO: $proc_name, Generating SV view: $fname, Flowthrough $flowthrough"
 
+    if { [file exists $fname] } {
+        puts "INFO: $proc_name, $fname already exists, deleting to create new content"
+        file delete $fname
+    }
+ 
     if { [info exists arg(-filelistVar) ] } {
         upvar $arg(-filelistVar) fileList
         set thisEntry [dict create]

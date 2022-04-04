@@ -405,7 +405,7 @@ proc gtr_lamb_gen_views { args } {
         gtr_lamb_gen_behav_sv -block_name $block_name -data_depth $depth -data_width $width -filelistVar filelist -ftr_value $flowthrough
 
         # generate the UPF for the LAMB
-        gtr_lamb_gen_upf -block_name $block_name
+        gtr_lamb_gen_upf -block_name $block_name -filelistVar filelist
 
         ## eventually, below should loop over corners
         set oc_type S_0

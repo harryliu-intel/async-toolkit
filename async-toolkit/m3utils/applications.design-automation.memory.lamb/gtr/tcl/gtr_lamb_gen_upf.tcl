@@ -40,6 +40,11 @@ proc gtr_lamb_gen_upf { args } {
     set block_name $arg(-block_name)
     set fname ${dir}/${block_name}.upf
 
+    if { [file exists $fname] } {
+        puts "INFO: $proc_name, $fname already exists, deleting to create new content"
+        file delete $fname
+    }
+ 
     echo "INFO: $proc_name, Generating UPF view: $block_name -> $fname"
 
     if { [info exists arg(-filelistVar) ] } {
