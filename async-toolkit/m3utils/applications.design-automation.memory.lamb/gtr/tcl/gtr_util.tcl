@@ -1,5 +1,16 @@
 ## GTR Generator Tools Release v1.0.0
+#
+# gtr_util.tcl
+#
+# Authors: Paul Donehue, Mika Nystrom
+# XFG central PD 2022
+#
 
+
+######################################################################
+#
+# overall min/max supported sizes
+#
 set supported_min_depth        4
 set supported_min_width        2
 set supported_max_depth      256
@@ -7,10 +18,19 @@ set supported_max_width      144
 set supported_width_divisor    2
 set supported_depth_divisor    2
 
+#
+# create global lists/dicts
+# TODO: move all this stuff into another file, doesnt belong here
+#
+
 set cornerlibs [list]
 set properties [dict create]
-
 set proc_properties [dict create]
+set metal_rc_sigma_tbl [dict create]
+
+#
+# load process definition properties
+#
 dict set proc_properties ssgnp sigma -3
 dict set proc_properties tt    sigma  0
 dict set proc_properties ffgnp sigma +3
@@ -19,7 +39,9 @@ dict set proc_properties ssgnp oc_pfx  S
 dict set proc_properties tt    oc_pfx  T
 dict set proc_properties ffgnp oc_pfx  F
 
-set metal_rc_sigma_tbl [dict create]
+#
+# load metal definition properties
+#
 dict set metal_rc_sigma_tbl typical           rsigma  0
 dict set metal_rc_sigma_tbl typical           csigma  0
 
@@ -46,6 +68,12 @@ dict set metal_rc_sigma_tbl cbest_CCbest      csigma +3.0
 
 dict set metal_rc_sigma_tbl rcbest_CCbest     rsigma +3.0
 dict set metal_rc_sigma_tbl rcbest_CCbest     csigma +3.0
+
+#
+# set up PVT corners needed for us
+# this really doesnt belong in this file, should be in a process-specific
+# or even project-specific file
+#
 
 #                           proc   wiring             V        Tproc Tintcon
 # these are lib corners from Karthik's presentation
@@ -102,7 +130,8 @@ set design_corners0p70 [list \
                      [ list ffgnp rcworst_CCworst   0.825      125     125  ]\
                     ]
 
-# for testing use the below:
+#
+# for testing use the below, to save on runtime:
 #                           proc   wiring             V        Tproc Tintcon
 set debug_corners1  [list \
                      [ list ssgnp cworst_CCworst_T  0.675        0       0  ]\
@@ -115,8 +144,8 @@ set debug_corners2 [list \
                        ]
 
 #set desired_corners $lib_corners0p75
-set desired_corners $design_corners0p75
 #set desired_corners $debug_corners2
+set desired_corners $design_corners0p75
 
 proc gtr_produce_attributes { libname process_name filelistVar } {
    set fn "doc/${libname}.attribute.xml"
@@ -203,22 +232,6 @@ proc gtr_get_revision { } {
     }
     set revision "[lindex $date 4].$mm.[lindex $date 2]"
     return $revision
-}
-
-proc xxgtr_copy_files { lt depth width } {
-    set lamb "cdp_lamb_${::__variant}_${lt}_${depth}d_${width}b"
-    set src_root_dir  "cdp_lamb_${lt}";
-    set dst_root_dir "/nfs/sc/disks/tfc_ip/memlister/TFC_memories/lamb/$lamb/$lamb"
-    file mkdir $dst_root_dir/rtl/verilog
-    file copy cdp_lamb_$lt.sv $dst_root_dir/rtl/verilog/$lamb.sv
-    system("sed -i 's/depth/$depth/' $dst_root_dir/rtl/verilog/$lamb.sv");
-    system("sed -i 's/width/$width/' $dst_root_dir/rtl/verilog/$lamb.sv");
-    file mkdir $dst_root_dir/timing_full
-    system("cp lib_lef/$lamb.lib $dst_root_dir/timing_full/");
-    file mkdir $dst_root_dir/layout_abstract/lef_5.8
-    file copy cp $lamb.lef $dst_root_dir/layout_abstract/lef_5.8/
-    file mkdir $dst_root_dir/ndm_2018
-    file copy $lamb.ndm $dst_root_dir/ndm_2018/
 }
 
 proc gtr_lamb_gen_views { args } {
@@ -387,6 +400,13 @@ proc gtr_lamb_gen_views { args } {
       } else {
         # count lambs actually produced (above it more of a recipe to produce in the future)
         incr lambsProduced +1          
+
+        # generate the behavioral SV model for the LAMB
+        gtr_lamb_gen_behav_sv -block_name $block_name -data_depth $depth -data_width $width -filelistVar filelist -ftr_value $flowthrough
+
+        # generate the UPF for the LAMB
+        gtr_lamb_gen_upf -block_name $block_name -filelistVar filelist
+
         ## eventually, below should loop over corners
         set oc_type S_0
         set voltage 0.675
@@ -394,15 +414,6 @@ proc gtr_lamb_gen_views { args } {
         # generate Liberty file for LAMB
         puts [list "desired corners " $desired_corners ]
         
-#        set ndmlib [gtr_lamb_gen_lib -block_name $block_name \
-#                        -data_depth $depth -data_width $width \
-#                        -tech_node $tech_node -oc_type $oc_type \
-#                        -voltage $voltage \
-#                        -filelistVar filelist \
-#                        -ftr_value $flowthrough]
-#
-#        puts [list "ndmlib is " $ndmlib ]
-
         foreach {c} $desired_corners {
             global proc_properties
             global metal_rc_sigma_tbl
@@ -561,10 +572,6 @@ proc gtr_lamb_gen_views { args } {
                 -tech_node $tech_node \
                 -filelistVar filelist
         }
-        
-        # generate the behavioral SV model for the LAMB
-        gtr_lamb_gen_behav_sv -block_name $block_name -data_depth $depth -data_width $width -filelistVar filelist -ftr_value $flowthrough
-
     }
    }
    set process_name n3b
