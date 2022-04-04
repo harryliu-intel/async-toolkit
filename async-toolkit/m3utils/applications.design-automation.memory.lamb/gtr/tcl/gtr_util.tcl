@@ -234,22 +234,6 @@ proc gtr_get_revision { } {
     return $revision
 }
 
-proc xxgtr_copy_files { lt depth width } {
-    set lamb "cdp_lamb_${::__variant}_${lt}_${depth}d_${width}b"
-    set src_root_dir  "cdp_lamb_${lt}";
-    set dst_root_dir "/nfs/sc/disks/tfc_ip/memlister/TFC_memories/lamb/$lamb/$lamb"
-    file mkdir $dst_root_dir/rtl/verilog
-    file copy cdp_lamb_$lt.sv $dst_root_dir/rtl/verilog/$lamb.sv
-    system("sed -i 's/depth/$depth/' $dst_root_dir/rtl/verilog/$lamb.sv");
-    system("sed -i 's/width/$width/' $dst_root_dir/rtl/verilog/$lamb.sv");
-    file mkdir $dst_root_dir/timing_full
-    system("cp lib_lef/$lamb.lib $dst_root_dir/timing_full/");
-    file mkdir $dst_root_dir/layout_abstract/lef_5.8
-    file copy cp $lamb.lef $dst_root_dir/layout_abstract/lef_5.8/
-    file mkdir $dst_root_dir/ndm_2018
-    file copy $lamb.ndm $dst_root_dir/ndm_2018/
-}
-
 proc gtr_lamb_gen_views { args } {
     global desired_corners
     global cornerlistfns
@@ -416,6 +400,13 @@ proc gtr_lamb_gen_views { args } {
       } else {
         # count lambs actually produced (above it more of a recipe to produce in the future)
         incr lambsProduced +1          
+
+        # generate the behavioral SV model for the LAMB
+        gtr_lamb_gen_behav_sv -block_name $block_name -data_depth $depth -data_width $width -filelistVar filelist -ftr_value $flowthrough
+
+        # generate the UPF for the LAMB
+        gtr_lamb_gen_upf -block_name $block_name
+
         ## eventually, below should loop over corners
         set oc_type S_0
         set voltage 0.675
@@ -581,10 +572,6 @@ proc gtr_lamb_gen_views { args } {
                 -tech_node $tech_node \
                 -filelistVar filelist
         }
-        
-        # generate the behavioral SV model for the LAMB
-        gtr_lamb_gen_behav_sv -block_name $block_name -data_depth $depth -data_width $width -filelistVar filelist -ftr_value $flowthrough
-
     }
    }
    set process_name n3b
