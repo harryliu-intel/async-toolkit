@@ -378,9 +378,17 @@ public final class Cast2Cdl {
                                     final Cadencize cadencizer,
                                     final Set<String> seen,
                                     final boolean sortNetlist) throws IOException {
+        final Map<String,Boolean> external = (Map<String,Boolean>)
+            DirectiveUtils.getTopLevelDirective(cell,
+                DirectiveConstants.EXTERNAL_SUBCKT,
+                DirectiveConstants.STRING_TYPE);
         final List<String> gates = getGateInstantiations(cell);
         final SortedSet<String> sorted = new TreeSet<>();
-        sorted.addAll(gates);
+        for (String gate : gates) {
+            if (!external.getOrDefault(gate, Boolean.FALSE)) {
+                sorted.add(gate);
+            }
+        }
         for (final String gateName : sorted) {
             if (!seen.add(gateName)) continue;
             try {

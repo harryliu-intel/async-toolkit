@@ -1810,13 +1810,25 @@ public final class CastQuery {
             } else {
                 final Stats result = new Stats();
                 if (cell.containsNetlist()) {
+                    final Map<String,Boolean> externalSubckts = (Map<String,Boolean>)
+                        DirectiveUtils.getTopLevelDirective(cell,
+                                DirectiveConstants.EXTERNAL_SUBCKT,
+                                DirectiveConstants.STRING_TYPE);
+                    final CDLInlineFactory.Retriever skipExternal =
+                        new CDLInlineFactory.Retriever() {
+                            public Template getTemplate(final String subName) {
+                                boolean ext = externalSubckts.getOrDefault(
+                                        subName, Boolean.FALSE);
+                                return ext ? null : retr.getTemplate(subName);
+                            }
+                        };
                     final NetlistBlock nb =
                         (NetlistBlock) cell.getBlockInterface()
                                            .iterator(BlockInterface.NETLIST)
                                            .next();
                     final Helper helper = new Helper();
                     final CDLInlineFactory inliner =
-                        new CDLInlineFactory(false, retr);
+                        new CDLInlineFactory(false, skipExternal);
                     inliner.setProxy(helper);
                     nb.getCDLTemplate().execute(inliner);
                     result.combine(helper.getStats());

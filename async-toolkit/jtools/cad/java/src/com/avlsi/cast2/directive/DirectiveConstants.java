@@ -184,6 +184,7 @@ public interface DirectiveConstants {
     String INITIALIZE_ON_RESET = "initialize_on_reset";
     String ISOCHRONIC = "isochronic";
     String PSEUDOSTATIC = "pseudostatic";
+    String EXTERNAL_SUBCKT = "external_subckt";
 
     /** Power intent related directives */
     String POWER_DOMAIN = "power_domain";

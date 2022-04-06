@@ -1964,6 +1964,7 @@ public final class NetGraph {
         private final boolean removeZero;
         private final Map passgates;
         private final boolean precharge;
+        private final Map<String,Boolean> externalSubckts;
         private final TreeMap nameMap = new TreeMap();
         private NetNode createNetNode(HierName name) {
             if (!name.isNumeric() && !name.isGenerated()) nameMap.put(name, name);
@@ -1978,13 +1979,15 @@ public final class NetGraph {
                              final Cadencize cad,
                              final boolean removeZero,
                              final Map passgates,
-                             final boolean precharge) {
+                             final boolean precharge,
+                             final Map<String,Boolean> externalSubckts) {
             this.cdlScale = cdlScale;
             this.cfp = cfp;
             this.cad = cad;
             this.removeZero = removeZero;
             this.passgates = passgates;
             this.precharge = precharge;
+            this.externalSubckts = externalSubckts;
         }
 
         public void makeTransistor(final HierName name, final String type,
@@ -2013,6 +2016,8 @@ public final class NetGraph {
         public void makeCall(final HierName name, final String subName,
                              final HierName[] args, final Map parameters,
                              final Environment env) {
+            if (externalSubckts.getOrDefault(subName, Boolean.FALSE)) return;
+
             final CellInterface ci;
             try {
                 ci = cfp.getFullyQualifiedCell(subName);
@@ -2136,9 +2141,13 @@ public final class NetGraph {
         final boolean precharge =
             ((Boolean) DirectiveUtils.getTopLevelDirective
              (ci, DirectiveConstants.PRECHARGE_PRIMITIVE)).booleanValue();
+        final Map<String,Boolean> externalSubckts =
+            (Map<String,Boolean>) DirectiveUtils.getTopLevelDirective(ci,
+                DirectiveConstants.EXTERNAL_SUBCKT,
+                DirectiveConstants.STRING_TYPE);
         final NetlistHelper helper = 
             new NetlistHelper(cdlScale, cfp, cad, removeZero, passgates,
-                              precharge);
+                              precharge, externalSubckts);
         final Template templ = nb.getCanonicalTemplate(cad);
         try {
             templ.execute(helper, params, NullEnvironment.getInstance(), null);

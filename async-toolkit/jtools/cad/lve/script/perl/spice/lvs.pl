@@ -26,6 +26,7 @@ my $pdk_root="";
 my $task;
 my $graycell_list="";
 my $extra_extract_equiv="";
+my $extra_sp='';
 my $blackbox=0;
 my $icv_options;
 my $threads=2;
@@ -45,6 +46,7 @@ sub usage {
     $usage .= "    --cdl-file=[$cdl_file]\n";
     $usage .= "    --cdl-cell-name=[$cdl_cell_name]\n";
     $usage .= "    --gray-cell-list=[$graycell_file] (gray box cell list)\n";
+    $usage .= "    --extra-sp=[$extra_sp] (extra SPICE files to include)\n";
     $usage .= "    --extra-extract-equiv=[$extra_extract_equiv] (file with list of extra equiv cast cells.
                     \t\tFormat: cast_cell_name  layout_cell_name)\n";
     $usage .= "    --blackbox=[$blackbox]\n";
@@ -99,6 +101,8 @@ while (defined $ARGV[0] and $ARGV[0] =~ /^--(.*)/) {
         $threads = $value if (defined $value);
     } elsif ($flag eq "extra-extract-equiv") {
         $extra_extract_equiv = $value  if(defined $value);
+    } elsif ($flag eq "extra-sp") {
+        $extra_sp = $value if(defined $value);
     } elsif ($flag eq "icv-options") {
         $icv_options = $value  if(defined $value);
     } elsif ($flag eq "rc-database") {
@@ -199,6 +203,16 @@ sub main{
   my %lvs_options = ();
   my $equivlance_file=prepare_equiv_file(\%lvs_options);
   my $schematic_file="$working_dir/cell.cdl_gds2";
+
+  if ($extra_sp) {
+      my @args = ('-sp', $schematic_file);
+      foreach my $sp (split(/:/, $extra_sp)) {
+          push @args, '-sp', $sp;
+      }
+      my_system($ENV{'ICV_SCRIPT'}, 'icv_nettran', @args, '-outType', 'SPICE',
+                '-outName', 'combined.sp');
+      $schematic_file="$working_dir/combined.sp";
+  }
   my $clf_file=prepare_clf_file($schematic_file,$equivlance_file,\%lvs_options);
 
   if ($setuponly) {

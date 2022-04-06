@@ -1592,6 +1592,7 @@ $(ROOT_TARGET_DIR)/%/lvs.err: \
 	  --gds2-file='$(@D)/cell.gds2' \
 	  --gray-cell-list='$(@D)/$(LVS_TARGET)' \
 	  --extra-extract-equiv='$(EXTRA_EQUIV)' \
+	  --extra-sp='$(EXTRA_SP)' \
 	  --cdl-cell-name="$$cell" \
 	  --blackbox=$(LVS_BLACKBOX) \
 	  --icv-options=$(LVS_EXTRA_OPTIONS) \

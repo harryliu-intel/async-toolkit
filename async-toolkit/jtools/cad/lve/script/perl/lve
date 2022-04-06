@@ -64,6 +64,7 @@ my $hspice_threads=1;
 my $globalJreFlags="";
 my $jreFlags="";
 my $extra_extract_equiv="";
+my $extra_sp="";
 my $lvs_extra_options="";
 my $clean_trace=1;
 my $mysqlhost="chipdev";
@@ -1312,6 +1313,7 @@ QX                               := $qx
 GRAYBOX_LIST                     := $graybox_list
 GRAYBOX_MODE                     := $graybox_mode
 EXTRA_EQUIV                      := $extra_extract_equiv
+EXTRA_SP                         := $extra_sp
 PRS_TAU                          := $prsTau
 POWER_SAG                        := $power_sag
 BUMP_SOURCE_PVT                  := @bump_source_pvt
@@ -2670,6 +2672,7 @@ USAGE: $0 [options] cell[:env][:node,node,...]
   LVS option for task lvs:
     --lvs-blackbox=[$lvsBlackbox] (run in blackbox mode)
     --extra-extract-equiv=[$extra_extract_equiv] (special use for adding equivs to equiv file)
+    --extra-sp=[$extra_sp] (additional SPICE netlists)
     --lvs-extra-options=[$lvs_extra_options] (add options to lvs command line)
     --drclvs-threads=[$drclvs_threads] (number of lvs threads)
     --connect-substrate=[$connectSubstrate] (connect substrate based on directives)
@@ -3049,6 +3052,7 @@ sub setOptions {
    $optionvalues{"noextractdeps"} =  $noextractdeps;
    $optionvalues{"keepMakefiles"} =  $deletemakefiles;
    $optionvalues{"extra-extract-equiv"} =  $extra_extract_equiv;
+   $optionvalues{"extra-sp"} =  $extra_sp;
    $optionvalues{"lvs-extra-options"} =  $lvs_extra_options;
    $optionvalues{"instance-port"} = $instancePort;
    $optionvalues{"use-db"} =  $usedb;
@@ -3409,6 +3413,7 @@ sub processOption {
         elsif ($key eq "noextractdeps")      { $noextractdeps = $value; }
         elsif ($key eq "keepMakefiles")      { $deletemakefiles = $value ? 0 : 1; }
         elsif ($key eq "extra-extract-equiv") { $extra_extract_equiv = canonicalizePath($value);}
+        elsif ($key eq "extra-sp") { $extra_sp = join(':', map { canonicalizePath($_) } split(/:/, $value));}
         elsif ($key eq "lvs-extra-options") { $lvs_extra_options = canonicalizePath($value);}
         elsif ($key eq "connect-substrate") { $connectSubstrate = $value ? 1 : 0; }
         elsif ($key eq "instance-port") {

@@ -233,6 +233,7 @@ public class DirectiveTable {
         registerDirective(CELL, PROTEUS_NODE_ROLE, NODE_TYPE, STRING_TYPE, null);
         registerDirective(CELL, PROTEUS_CELL_TYPE, STRING_TYPE, null);
         registerDirective(CELL, PROTEUS_LIBERTY_FUNCTION, NODE_TYPE, PRS_EXPR_TYPE, null);
+        registerDirective(CELL, EXTERNAL_SUBCKT, STRING_TYPE, BOOLEAN_TYPE, null);
 
         /**
          * Register Directives for Automated Layout.  Used by autopins, autobus
