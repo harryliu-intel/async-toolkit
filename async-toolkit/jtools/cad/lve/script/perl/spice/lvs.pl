@@ -225,7 +225,7 @@ sub main{
           push @args, '-sp', $sp;
       }
       my_system($ENV{'ICV_SCRIPT'}, 'icv_nettran', @args, '-outType', 'SPICE',
-                '-dupCell', $dup_cell, '-outName', 'combined.sp');
+                '-dupCell', $dup_cell, '-sp-chopXPrefix', '-outName', 'combined.sp');
       $schematic_file="$working_dir/combined.sp";
   }
   my $clf_file=prepare_clf_file($schematic_file,$equivlance_file,\%lvs_options);
