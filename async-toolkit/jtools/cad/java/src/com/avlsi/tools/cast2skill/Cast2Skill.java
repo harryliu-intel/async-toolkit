@@ -523,6 +523,7 @@ public final class Cast2Skill {
                                false,
                                true,
                                ! ignoreNetlist,
+                               true,
                                true);
             }
 

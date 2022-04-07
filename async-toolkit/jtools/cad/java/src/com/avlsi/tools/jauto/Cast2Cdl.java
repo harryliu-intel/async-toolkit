@@ -359,13 +359,32 @@ public final class Cast2Cdl {
     private static void writeLeaf(final CellInterface cell,
                                   final Cadencize cadencizer,
                                   final CDLFactoryInterface emitter, 
-                                  final boolean sortNetlist) {
+                                  final boolean sortNetlist,
+                                  final boolean ignoreExternal) {
         if(sortNetlist) {
             final NetlistBlock block = 
                 (NetlistBlock) cell.getBlockInterface().iterator(BlockInterface.NETLIST).next();
             block.getCDLTemplate().sortStatements();
         }
-        CDLOutput.writeCDL(cell, cadencizer, emitter);
+        final CDLFactoryInterface possiblyFiltered;
+        if (!ignoreExternal) {
+            possiblyFiltered = emitter;
+        } else {
+            final Map<String,Boolean> external = (Map<String,Boolean>)
+                DirectiveUtils.getTopLevelDirective(cell,
+                    DirectiveConstants.EXTERNAL_SUBCKT,
+                    DirectiveConstants.STRING_TYPE);
+            possiblyFiltered = new CDLFactoryFilter(emitter) {
+                public void makeCall(HierName name, String subName,
+                                     HierName[] args, Map parameters,
+                                     Environment env) {
+                    if (!external.getOrDefault(subName, Boolean.FALSE)) {
+                        inner.makeCall(name, subName, args, parameters, env);
+                    }
+                }
+            };
+        }
+        CDLOutput.writeCDL(cell, cadencizer, possiblyFiltered);
     }
 
     /**
@@ -393,7 +412,7 @@ public final class Cast2Cdl {
             if (!seen.add(gateName)) continue;
             try {
                 final CellInterface gate = loadCell(castParser, gateName);
-                writeLeaf(gate, cadencizer, emitter, sortNetlist);
+                writeLeaf(gate, cadencizer, emitter, sortNetlist, false);
             } catch (Exception e) {
                 System.err.println("ERROR: Cannot load gate " + gateName + "!");
                 e.printStackTrace();
@@ -447,11 +466,27 @@ public final class Cast2Cdl {
                                  final boolean exitOnError,
                                  final boolean ignoreUnimpl)
     throws IOException {
+        outputCDL(cell, castParser, emitter, cadencizer, inline_layout,
+                  sortNetlist, handleVerilog, exitOnError, false,
+                  false);
+    }
+
+    public static void outputCDL(final CellInterface cell,
+                                 final CastFileParser castParser,
+                                 final CDLFactoryInterface emitter,
+                                 final Cadencize cadencizer,
+                                 final boolean inline_layout,
+                                 final boolean sortNetlist,
+                                 final boolean handleVerilog,
+                                 final boolean exitOnError,
+                                 final boolean ignoreUnimpl,
+                                 final boolean ignoreExternal)
+    throws IOException {
         final InstanceTrace it = new InstanceTrace();
         it.enter(cell.getFullyQualifiedType(), "top level");
         outputCDL(cell, castParser, emitter, cadencizer, inline_layout,
                   new HashSet(), sortNetlist, handleVerilog, it, exitOnError,
-                  ignoreUnimpl);
+                  ignoreUnimpl, ignoreExternal);
         it.leave();
     }
 
@@ -468,7 +503,8 @@ public final class Cast2Cdl {
                                   final boolean handleVerilog,
                                   final InstanceTrace it,
                                   final boolean exitOnError,
-                                  final boolean ignoreUnimpl)
+                                  final boolean ignoreUnimpl,
+                                  final boolean ignoreExternal)
     throws IOException {
         final boolean verilogBlock =
             cell.containsVerilog() && handleVerilog && !cell.containsNetlist();
@@ -498,7 +534,7 @@ public final class Cast2Cdl {
                 it.enter(p);
                 outputCDL(subcell, castParser, emitter, cadencizer,
                           inline_layout, seen, sortNetlist, handleVerilog, it,
-                          exitOnError, ignoreUnimpl);
+                          exitOnError, ignoreUnimpl, ignoreExternal);
                 it.leave();
             } else {
                 outputGates(subcell, castParser, emitter, cadencizer, seen,
@@ -519,7 +555,7 @@ public final class Cast2Cdl {
                     return;
                 }
             }
-            writeLeaf(cell, cadencizer, emitter, sortNetlist);
+            writeLeaf(cell, cadencizer, emitter, sortNetlist, ignoreExternal);
         } else {
             writeMidlevel(cell, cadencizer, emitter, inline_layout,
                           handleVerilog, ignoreUnimpl);
