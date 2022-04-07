@@ -19,6 +19,7 @@ my $pwd=getcwd();
 
 my $working_dir = "$pwd";
 my $gdsii="";
+my $oasis=0;
 my $graycell_file="";
 my $cdl_file="";
 my $cdl_cell_name="";
@@ -34,6 +35,9 @@ my $icv_path="$ENV{PDK_CPDK_PATH}/runsets/icvtdr/";
 my $rc_database=0;
 my $nodeprops='';
 my $setuponly=0;
+my $cell_name_limit=75;
+my $subcell_name_limit=64;
+my $dup_cell="USE_MULTIPLE";
 
 sub usage {
     my ($msg) = @_;
@@ -42,11 +46,13 @@ sub usage {
     $usage .= "  Args includes:\n";
     $usage .= "    GENERAL OPTIONS\n";
     $usage .= "    --gds2-file=[$gdsii]\n";
+    $usage .= "    --oasis=[$oasis] (set to 1 if input is OASIS)\n";
     $usage .= "    --working-dir=[$working_dir]\n";
     $usage .= "    --cdl-file=[$cdl_file]\n";
     $usage .= "    --cdl-cell-name=[$cdl_cell_name]\n";
     $usage .= "    --gray-cell-list=[$graycell_file] (gray box cell list)\n";
     $usage .= "    --extra-sp=[$extra_sp] (extra SPICE files to include)\n";
+    $usage .= "    --dup-cell=[$dup_cell] (USE_MULTIPLE, USE_ONE, ABORT)\n";
     $usage .= "    --extra-extract-equiv=[$extra_extract_equiv] (file with list of extra equiv cast cells.
                     \t\tFormat: cast_cell_name  layout_cell_name)\n";
     $usage .= "    --blackbox=[$blackbox]\n";
@@ -83,6 +89,8 @@ while (defined $ARGV[0] and $ARGV[0] =~ /^--(.*)/) {
             $working_dir = $value if(defined $value);
     } elsif ($flag eq "gds2-file") {
             $gdsii = $value if(defined $value);
+    } elsif ($flag eq "oasis") {
+            $oasis = $value;
     } elsif ($flag eq "gray-cell-list") {
             $graycell_file = $value if(defined $value);
     } elsif ($flag eq "cdl-file") {
@@ -103,6 +111,8 @@ while (defined $ARGV[0] and $ARGV[0] =~ /^--(.*)/) {
         $extra_extract_equiv = $value  if(defined $value);
     } elsif ($flag eq "extra-sp") {
         $extra_sp = $value if(defined $value);
+    } elsif ($flag eq "dup-cell") {
+        $dup_cell = $value if(defined $value);
     } elsif ($flag eq "icv-options") {
         $icv_options = $value  if(defined $value);
     } elsif ($flag eq "rc-database") {
@@ -135,8 +145,13 @@ $cdl_cell_name ne "" or $cdl_cell_name=$cell_name;
 $pdk_root="$ENV{FULCRUM_PDK_ROOT}" if ( ! ( -d $pdk_root ) and -d $ENV{FULCRUM_PDK_ROOT});
 -d $pdk_root or usage("fulcrum-pdk-root improperly defined");
 
+if ($oasis) {
+    $cell_name_limit = 1023;
+    $subcell_name_limit = 1023;
+}
 
-my $longcellnametop = length($cell_name) > 75 ? 1 : 0;
+
+my $longcellnametop = length($cell_name) > $cell_name_limit ? 1 : 0;
 my $topcell=$longcellnametop ? "TOP_CELL" : $cell_name;
 my $longcellnamegray=0;
 my %graylist=();
@@ -155,7 +170,7 @@ sub makegdsgraylist {
             if (length ($_) > 1) {
                 $graylist{$_}=$_;
                 $reversegraylist{$_}=$_;
-                if (length ($_) > 64) {
+                if (length ($_) > $subcell_name_limit) {
                     $graylist{$_}=sprintf "SUBCELL_%04d", $n;
                     $reversegraylist{$graylist{$_}} = $_;
                     $longcellnamegray = 1;
@@ -210,7 +225,7 @@ sub main{
           push @args, '-sp', $sp;
       }
       my_system($ENV{'ICV_SCRIPT'}, 'icv_nettran', @args, '-outType', 'SPICE',
-                '-outName', 'combined.sp');
+                '-dupCell', $dup_cell, '-outName', 'combined.sp');
       $schematic_file="$working_dir/combined.sp";
   }
   my $clf_file=prepare_clf_file($schematic_file,$equivlance_file,\%lvs_options);
@@ -302,6 +317,7 @@ sub prepare_clf_file {
    close(CLF_CFG);
 
    my $lvs_clf_file="$working_dir/lvs.clf";
+   my $format = $oasis ? "OASIS" : "GDSII";
    open(LVS_CLF, ">$lvs_clf_file") or die "Cannot write to $lvs_clf_file\n";
    print LVS_CLF <<ET;
 -I .
@@ -331,6 +347,7 @@ sub prepare_clf_file {
 -sf SPICE
 -stc $topcell
 -c $topcell
+-f $format
 ET
     print LVS_CLF "-D _drPROCESS=$lvs_process\n" if defined($lvs_process);
     print LVS_CLF "-D _drRCextract\n"  if ($rc_database);
@@ -348,6 +365,7 @@ ET
 sub fix_gds_long_name {
   unlink "cell.gds2";
   if ($longcellnametop or $longcellnamegray) {
+      die "Unable to fix long names in OASIS input files" if $oasis;
       open (GIN, "rdgds '$gdsii' |");
       open (GOUT, "| wrgds > cell.gds2");
       while (<GIN>) {
