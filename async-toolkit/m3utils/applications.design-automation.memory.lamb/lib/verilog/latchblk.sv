@@ -22,14 +22,23 @@
 // must be express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
+//
+// Structural model of latch blocks (LATCHBLKS) used in LAMBs
+//
+// Author : mika.nystroem@intel.com
+// April, 2022
+//
 
 `resetall
-`default_nettype none
+
+`default_nettype wire  // needed for primitive?
+
 
 primitive LATCH( Q, CK, D );
-output Q;
-reg Q;
-input CK, D;
+   output     Q;
+   reg        Q;
+   input      CK;
+   input      D;
 table
 //     CK  D  :  Q  :  Q
         0  ?  :  ?  :  -;
@@ -41,37 +50,39 @@ table
 endtable
 endprimitive
 
+`default_nettype none
+
 module latchblk
   #(
     parameter DEPTH      = 4,
-    parameter DEPTHOVER2 = (DEPTH + 1)/2
+    parameter DEPTHOVER2 = (DEPTH - 1) / 2 + 1
     )
    (
-    input  logic  ck [ DEPTH - 1 : 0 ],
-    input  logic  ckb [ DEPTH - 1 : 0 ],
-    input  logic  rwl [ DEPTH - 1 : 0 ],
-    input  logic  rwlx[ DEPTH - 1 : 0 ],
-    input  logic  dx [ DEPTHOVER2 - 1 : 0],
-    input  logic  z,
-    output logic q [ DEPTH - 1 : 0 ],
-    output logic y
+    input  logic  [ DEPTH - 1 : 0 ]     ck  ,
+    input  logic  [ DEPTH - 1 : 0 ]     ckb ,
+    input  logic  [ DEPTH - 1 : 0 ]     rwl ,
+    input  logic  [ DEPTH - 1 : 0 ]     rwlb,
+    input  logic  [ DEPTHOVER2 - 1 : 0] dx,
+    input  logic                        z,
+    output logic  [ DEPTH - 1 : 0 ]     q,
+    output logic                        y
     );
 
-   logic         d     [ DEPTHOVER2 - 1 : 0 ];
-   logic         cken  [ DEPTH - 1      : 0 ];
-   logic         rwlen [ DEPTH - 1      : 0 ];
-   logic         dout  [ DEPTH - 1      : 0 ];
-   logic         y1;
+   logic    [ DEPTHOVER2 - 1 : 0 ]     d     ;
+   logic    [ DEPTH - 1      : 0 ]     cken ;
+   logic    [ DEPTH - 1      : 0 ]     rwlen ;
+   logic    [ DEPTH - 1      : 0 ]     dout  ;
+   logic                               y1;
 
-   assign d    = ~dx;
-   assign cken = ~ckbx & ck;
+   always_comb d    = ~dx;
+   assign cken = ~ckb & ck;
    
    generate
       for (genvar i=0; i < DEPTH; ++i)
-        LATCH m_latch[i] (q[i], cken[i], d[i/2]);
+        LATCH m_latch (q[i], cken[i], d[i/2]);
    endgenerate
 
-   assign rwlen = ~rwlx & rwl;
+   assign rwlen = ~rwlb & rwl;
    assign dout  = rwlen & q;
    assign y1 = |dout;
    assign y  = ~z & y1;
