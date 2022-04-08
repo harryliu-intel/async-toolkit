@@ -4,17 +4,20 @@
 `include "latchblk.sv"
 `include "lambmodel.sv"
 
+
+
 module lambmodel_tb #() ();
 
-   localparam CYCLETIME = 1000; // 1000 ps cycle
+   localparam CYCLETIME = 10; // 1000 ps cycle
    
-   localparam DEPTH=128;
-   localparam DWIDTH=144;
-   localparam AWIDTH=$clog2(DEPTH);
+   localparam DEPTH   =   32;
+   localparam DWIDTH  =   128;
+   
+   localparam AWIDTH  =  $clog2(DEPTH);
 
    localparam verbose = 0;
 //   localparam verbose = 1;
-   localparam ITERS = 10000000;
+   localparam ITERS = 10000;
 
    logic first;
    
@@ -99,14 +102,15 @@ module lambmodel_tb #() ();
                     meminit[radr], 
                     mem[radr]); // 144 bits
 
-         if (!first && !ren)
-           assert (dout === {DWIDTH{1'bx}});
+         // the "real" lamb doesnt do X output
+//         if (!first && !ren)
+//           assert (dout === {DWIDTH{1'bx}});
 
          if (!first && ren) begin
             if (meminit[radr])
               assert(dout == mem[radr]);
-            else
-              assert(dout === {DWIDTH{1'bx}});                
+//            else
+//              assert(dout === {DWIDTH{1'bx}});                
          end
 
          // the following property follows from the below code, but we

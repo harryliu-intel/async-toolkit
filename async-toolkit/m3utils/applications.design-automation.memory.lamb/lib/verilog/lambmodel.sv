@@ -129,7 +129,7 @@ module lambmodel // not flowthrough version
                 
    logic [DWIDTH-1:0] db;
 
-   assign db = ~wdata;
+   assign db = ~wdata_reg;
 
    generate
       for (genvar i = 0; i < DWIDTH; ++i)
