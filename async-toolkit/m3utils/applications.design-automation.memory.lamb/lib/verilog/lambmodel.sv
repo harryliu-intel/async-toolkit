@@ -34,12 +34,26 @@
 
 `ifndef INTEL_DC
 
-module lambmodel
+module decoder
   #(
-    parameter DEPTH=4,
-    parameter DWIDTH=10,
-    parameter AWIDTH=$clog2(DEPTH)
-    ,parameter X_ON_NOT_REN=1  // what does this mean here?
+    parameter DEPTH  = 4,
+    parameter AWIDTH = $clog2(DEPTH)
+    )
+   (
+    input  logic [ AWIDTH - 1 : 0 ]  addr,
+    output logic [ DEPTH - 1  : 0 ]  onehot
+    );
+   
+   assign onehot = (1 << addr);
+   
+endmodule
+    
+module lambmodel // not flowthrough version
+  #(
+    parameter DEPTH         =             4,
+    parameter DWIDTH        =            10,
+    parameter AWIDTH        = $clog2(DEPTH),
+    parameter X_ON_NOT_REN  =             1  // what does this mean here?
     )
    (
     input  logic clk,
@@ -69,39 +83,85 @@ module lambmodel
    logic [AWIDTH-1:0] radr_reg;
 
    always_ff @ (posedge clk) 
-     begin
-        radr_reg <= radr;
-     end
+     if (ren)
+       radr_reg <= radr;
+   
+   logic [AWIDTH-1:0] wadr_reg;
+   
+   always_ff @ (posedge clk) 
+     if (wen)
+       wadr_reg <= wadr;
+   
+   logic [ DEPTH - 1 : 0 ] rdec, wdec;
+   
+   decoder #(DEPTH) m_r_decoder (radr_reg, rdec);
+   
+   decoder #(DEPTH) m_w_decoder (wadr_reg, wdec);
+
+   logic [DWIDTH-1:0]      wdata_reg;
+   
+   always_ff @ (posedge clk) 
+     if (wen)
+       wdata_reg <= wdata;
+                             
 
    logic [ DEPTH - 1  : 0 ]                      ck, ckb, rwl, rwlb;
    logic [ DWIDTH - 1 : 0 ] [ NBLKS - 1 : 0 ]    y;
    logic                    [ NBLKS - 1 : 0 ]    z;
-   
-   
-                         
+
+   assign ck   =  wdec;
+   assign ckb  = ~wdec;
+
+   assign rwl  =  rdec;
+   assign rwlb = ~rdec;
+
    generate
-      for (genvar s = 0; s < NSIDES; ++s)
+      for (genvar bb = 0; bb < NBLKS; ++bb)
+        begin : gen_z_loop
+           localparam BASE  = bb * MAXBLKDEPTH;
+           localparam BDEPTH = (bb == NBLKS - 1) ? 
+                               LASTBLKDEPTH : MAXBLKDEPTH;
+
+           // z is true if none of the corresponding read strobes is active
+           assign z[bb] = ~(|rdec[ BASE + BDEPTH - 1 : BASE ]);
+        end
+   endgenerate
+                
+   logic [DWIDTH-1:0] db;
+
+   assign db = ~wdata;
+
+   generate
+      for (genvar i = 0; i < DWIDTH; ++i)
         begin : gen_latches_loop_0
            for (genvar b = 0; b < NBLKS; ++b)
              begin : gen_latches_loop_1
-                localparam BASE  = b * MAXBLKDEPTH;
-                localparam DEPTH = (b == NBLKS - 1)? LASTBLKDEPTH : MAXBLKDEPTH;
-                
-                                   
-                latchblk #(DEPTH)
-                  m_latchblk (.ck  (),
-                              .ckb (),
-                              .rwl (),
-                              .rwlb(),
-                              .dx  (),
+                localparam BASE        = b * MAXBLKDEPTH;
+                localparam BDEPTH      = (b == NBLKS - 1) ? 
+                                         LASTBLKDEPTH : MAXBLKDEPTH;
+                localparam BDEPTHOVER2 = (BDEPTH - 1) / 2 + 1;
+
+                latchblk #(BDEPTH)
+                  m_latchblk (.ck  (ck   [ BASE + BDEPTH - 1 : BASE ]),
+                              .ckb (ckb  [ BASE + BDEPTH - 1 : BASE ]),
+                              .rwl (rwl  [ BASE + BDEPTH - 1 : BASE ]),
+                              .rwlb(rwlb [ BASE + BDEPTH - 1 : BASE ]),
+                              .dx  ({ BDEPTHOVER2 { db[i] } }),
                               .z   (z[b]),
-                              .q   (),
-                              .y   ()
+                              .q   ( ),
+                              .y   (y[i][b])
                               );
              end
         end
    endgenerate
 
+   generate
+      for (genvar ii = 0; ii < DWIDTH; ++ii)
+        begin : gen_output_loop
+           assign dout[ii] = |(y[ii][NBLKS-1 : 0]);
+        end
+   endgenerate
+           
 endmodule // lambmodel
 
 `endif
