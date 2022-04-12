@@ -223,6 +223,9 @@ ET
    print CF "$runset\n";
     close(CF);
     `chmod +x $cmd_file`;
+   my $lve_supplies="$run_dir/lve_supplies.rs";
+   open(CF, ">$lve_supplies") or die "Cannot write to $lve_supplies\n";
+   close(CF);
     my $cmd;
     if ($jobs > 0) {
         my $slots = $jobs * $threads;
