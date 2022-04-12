@@ -190,6 +190,7 @@ $ENV{'ICV_SCRIPT'} 'icv' $all_includes \\
 -D _drCOVER_BY_BCID=_drYES \\
 -D _drICFBCIDEXCEPTION=_drYES \\
 -D _drUSENDG=_drNO \\
+-D _drUSERDEFINESUIN \\
 -D _drCaseSensitive \\
 -D _drPROCESS=_dr$dotprocess_name \\
 -D _drSELECT_$flow \\

@@ -23,6 +23,7 @@ my $oasis=0;
 my $graycell_file="";
 my $cdl_file="";
 my $cdl_cell_name="";
+my @include_before=();
 my $pdk_root="";
 my $task;
 my $graycell_list="";
@@ -50,6 +51,7 @@ sub usage {
     $usage .= "    --working-dir=[$working_dir]\n";
     $usage .= "    --cdl-file=[$cdl_file]\n";
     $usage .= "    --cdl-cell-name=[$cdl_cell_name]\n";
+    $usage .= "    --include-before=[@include_before] (Prepend directory to include search path)\n";
     $usage .= "    --gray-cell-list=[$graycell_file] (gray box cell list)\n";
     $usage .= "    --extra-sp=[$extra_sp] (extra SPICE files to include)\n";
     $usage .= "    --dup-cell=[$dup_cell] (USE_MULTIPLE, USE_ONE, ABORT)\n";
@@ -97,6 +99,8 @@ while (defined $ARGV[0] and $ARGV[0] =~ /^--(.*)/) {
             $cdl_file = $value if(defined $value);
     } elsif ($flag eq "cdl-cell-name") {
             $cdl_cell_name = $value if(defined $value);
+    } elsif ($flag eq "include-before") {
+            unshift @include_before, $value;
     } elsif ($flag eq "fulcrum-pdk-root") {
             $pdk_root = $value  if(defined $value);
     } elsif ($flag eq "blackbox") {
@@ -318,18 +322,23 @@ sub prepare_clf_file {
 
    my $lvs_clf_file="$working_dir/lvs.clf";
    my $format = $oasis ? "OASIS" : "GDSII";
+   my @all_includes = (
+       @include_before,
+       ".",
+       "$pdk_root/share/Fulcrum/icv/lvs",
+       "$icv_path/PXL_ovrd",
+       "$icv_path/PXL",
+       "$icv_path/$rs_path",
+       "$icv_path/util/dot1/HIP",
+       "$icv_path/util/Cadnav",
+       "$icv_path/util/denplot",
+       "$icv_path/../../libraries/icv/libcells",
+       "$working_dir"
+   );
+   my $all_includes = join("\n", map { "-I $_" } @all_includes);
    open(LVS_CLF, ">$lvs_clf_file") or die "Cannot write to $lvs_clf_file\n";
    print LVS_CLF <<ET;
--I .
--I $pdk_root/share/Fulcrum/icv/lvs
--I $icv_path/PXL_ovrd
--I $icv_path/PXL
--I $icv_path/$rs_path
--I $icv_path/util/dot1/HIP
--I $icv_path/util/Cadnav
--I $icv_path/util/denplot
--I $icv_path/../../libraries/icv/libcells
--I $working_dir
+$all_includes
 -D _drIncludePort
 -D NOCLD
 -vue
