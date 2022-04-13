@@ -128,7 +128,7 @@ if [[ -z "$NCL_DIR" ]]; then
     fi
 fi
 [[ -z "$STDCELL_DIR" ]] && export STDCELL_DIR=$NCL_DIR/stdcells
-[[ -z "$GPIO_DIR" ]] && export GPIO_DIR=$NCL_DIR/gpio/latest/ip7631iolib
+[[ -z "$GPIO_DIR" ]] && export GPIO_DIR=$NCL_DIR/gpio/latest/ip76iolib
 [[ -z "$CMO_DIR" ]] && export CMO_DIR=$NCL_DIR/sram/cmo/latest
 EOF
     print $fh <<EOF;

@@ -9,12 +9,10 @@
 -v $STDCELL_DIR/g1mspecial/v/bn/g1mspecial_bn.v
 -v $STDCELL_DIR/g1mspecial/v/cn/g1mspecial_cn.v
 -v $STDCELL_DIR/g1mspecial/v/dn/g1mspecial_dn.v
--v $GPIO_DIR/ip76gpio1p0ff_e/rtl/ip76gpio1p0ff_e.v
--v $GPIO_DIR/ip76gpio1p0ff_n/rtl/ip76gpio1p0ff_n.v
--v $GPIO_DIR/ip76gpio_1p0_powergood_e/rtl/ip76gpio_1p0_powergood_e.v
--v $GPIO_DIR/ip76gpio_1p0_powergood_n/rtl/ip76gpio_1p0_powergood_n.v
--v $GPIO_DIR/ip76wireio_edma_e/rtl/ip76wireio_edma_e.v
--v $GPIO_DIR/ip76wireio_edma_n/rtl/ip76wireio_edma_n.v
+-v $GPIO_DIR/ip76gpio1p0ff_e/rtl/src/rtl/ip76gpio1p0ff_e.v
+-v $GPIO_DIR/ip76gpio1p0ff_n/rtl/src/rtl/ip76gpio1p0ff_n.v
+-v $GPIO_DIR/ip76gpio_1p0_powergood_e/rtl/src/rtl/ip76gpio_1p0_powergood_e.v
+-v $GPIO_DIR/ip76gpio_1p0_powergood_n/rtl/src/rtl/ip76gpio_1p0_powergood_n.v
 -v $CMO_DIR/mem1024x40/rtl/mem1024x40/src/rtl/mem1024x40.sv
 -v $CMO_DIR/mem2048x40/rtl/mem2048x40/src/rtl/mem2048x40.sv
 -v $CMO_DIR/mem2048x73/rtl/mem2048x73/src/rtl/mem2048x73.sv
