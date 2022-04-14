@@ -1,10 +1,7 @@
 `resetall
 `default_nettype none
 
-`include "latchblk.sv"
 `include "lambmodel.sv"
-
-
 
 module lambmodel_tb #() ();
 

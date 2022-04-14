@@ -32,6 +32,11 @@
 `resetall
 `default_nettype none
 
+`ifndef _LAMBMODEL_SV
+`define _LAMBMODEL_SV
+
+`include "latchblk.sv"
+
 `ifndef INTEL_DC
 
 module decoder
@@ -109,8 +114,8 @@ module lambmodel // not flowthrough version
    logic [ DWIDTH - 1 : 0 ] [ NBLKS - 1 : 0 ]    y;
    logic                    [ NBLKS - 1 : 0 ]    z;
 
-   assign ck   =  wdec;
-   assign ckb  = ~wdec;
+   assign ck   =  wdec & { DEPTH { clk } };
+   assign ckb  = ~ck;
 
    assign rwl  =  rdec;
    assign rwlb = ~rdec;
@@ -148,7 +153,6 @@ module lambmodel // not flowthrough version
                               .rwlb(rwlb [ BASE + BDEPTH - 1 : BASE ]),
                               .dx  ({ BDEPTHOVER2 { db[i] } }),
                               .z   (z[b]),
-                              .q   ( ),
                               .y   (y[i][b])
                               );
              end
@@ -164,6 +168,7 @@ module lambmodel // not flowthrough version
            
 endmodule // lambmodel
 
-`endif
+`endif // !INTEL_DC
+`endif // !_LAMBMODEL_SV
 
 `default_nettype wire
