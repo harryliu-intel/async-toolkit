@@ -62,6 +62,19 @@ my $cmd = ("cast2verilog --cast-path=\Q$cast_path\E " .
 
 system($cmd) == 0 || die "Error executing cast2verilog: $!";
 
+# escape special characters in the filelist
+if (open(my $lh, $flist)) {
+    local $/;
+    my $content = <$lh>;
+    close $lh;
+    if ($content =~ /[()]/) {
+        $content =~ s/([()])/\\\\\\$1/g;
+        open($lh, '>', $flist);
+        print $lh $content;
+        close $lh;
+    }
+}
+
 my $instdir = $ENV{'FULCRUM_PACKAGE_ROOT'};
 
 my $runtime = "$instdir/share/cast2verilog";
