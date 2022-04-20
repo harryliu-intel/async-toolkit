@@ -69,7 +69,7 @@ ${ROOT}/spice/ct/${BINDIR}/ct
 ${ROOT}/spice/vplot/${BINDIR}/vplot
 ${ROOT}/spice/asserter/${BINDIR}/asserter
 ${ROOT}/spice/prsgen/${BINDIR}/prsgen
-${ROOT}/spice/spiceflat/${BINDIR}/spiceflat
+${ROOT}/spice/spiceflat/program/${BINDIR}/spiceflat
 ${ROOT}/tcam/schmoozer/${BINDIR}/schmoozer
 ${ROOT}/tcam/spicebuilder/${BINDIR}/spicebuilder
 ${ROOT}/nb/nbavail/${BINDIR}/nbavail
