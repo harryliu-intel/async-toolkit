@@ -74,6 +74,7 @@ ${ROOT}/tcam/schmoozer/${BINDIR}/schmoozer
 ${ROOT}/tcam/spicebuilder/${BINDIR}/spicebuilder
 ${ROOT}/nb/nbavail/${BINDIR}/nbavail
 ${ROOT}/rdl/rdlparse/${BINDIR}/parserdl
+${ROOT}/ct/${BINDIR}/ct
 "
 
 SCRIPTS="
