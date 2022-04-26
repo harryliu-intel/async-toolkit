@@ -9,7 +9,7 @@
         (topMetal nil)           ; top metal layer to use, or nil to use wires.il
         (pwrMetal nil)           ; top metal layer for power
         (topHalo t)              ; APR should add a top halo
-	(denseStaples nil)	 ; APR should add staples at dense pitch
+        (denseStaples nil)       ; APR should add staples at dense pitch
         (thresholds (list "c" "b")) ; transistor thresholds to use
         (Background nil)         ; optionally run in the background
         (importView "layout")    ; view name to import wiring back to
@@ -44,7 +44,7 @@
     ; export
     CV = (RouteExport ?CV CV
                           ?botMetal botMetal ?topMetal topMetal ?pwrMetal pwrMetal
-			  ?topHalo topHalo ?denseStaples denseStaples
+                          ?topHalo topHalo ?denseStaples denseStaples
                           ?doVerilog doVerilog ?doGds doGds ?doLef doLef ?doDef doDef
                           ?doNondefaultDef doNondefaultDef
                           ?doSkipRouting doSkipRouting
@@ -83,9 +83,9 @@
         (topMetal nil)           ; top metal layer to use, or nil to use wires.il
         (pwrMetal nil)           ; top metal layer for power
         (topHalo t)              ; APR should add a top halo
-	(denseStaples nil)	 ; APR should add staples at dense pitch
+        (denseStaples nil)       ; APR should add staples at dense pitch
         (thresholds (list "c" "b")) ; transistor thresholds to use
-	(doVerilog nil)          ; create cellName.v
+        (doVerilog nil)          ; create cellName.v
         (doGds t)                ; create gds for subcells (used for power hookups and maybe fill)
         (doLef t)                ; create cellName.lef
         (doDef t)                ; create cellName.def
@@ -375,7 +375,7 @@
         (topMetal 8)             ; top metal layer
         (pwrMetal nil)           ; top metal layer for power
         (topHalo t)              ; APR should add a top halo
-	(denseStaples nil)	 ; APR should add staples at dense pitch
+        (denseStaples nil)       ; APR should add staples at dense pitch
         (thresholds (list "c" "b")) ; transistor thresholds to use
         (metalFill t)
         (timingDriven t)
@@ -533,7 +533,7 @@
         (viewName "layout")
         (oasFile nil)
         (gdsFile nil)
-	(colorize t) ; run ColorizeByOverlay
+        (colorize t) ; run ColorizeByOverlay
         (baseCV nil)
         (top_name nil)
         (pinMap nil)
@@ -677,19 +677,19 @@
 
 ; Delete incorrect shapes that shouldn't be added by ICC or qfill
 DumbLayers = (list (list "SRAM" "fill")
-	     	   (list "POLYCHECK" "fill")
-		   (list "poly" "fill")
-		   (list "tcn" "fill")
-		   (list "optLego" "id")
-		   (list "v1a" "colorA")
-		   (list "v1b" "colorB")
-		   (list "v1c" "colorC")
-		   (list "v2a" "colorA")
-		   (list "v2b" "colorB")
-		   (list "v2c" "colorC")
-		   (list "v3a" "colorA")
-		   (list "v3b" "colorB")
-		   )
+                   (list "POLYCHECK" "fill")
+                   (list "poly" "fill")
+                   (list "tcn" "fill")
+                   (list "optLego" "id")
+                   (list "v1a" "colorA")
+                   (list "v1b" "colorB")
+                   (list "v1c" "colorC")
+                   (list "v2a" "colorA")
+                   (list "v2b" "colorB")
+                   (list "v2c" "colorC")
+                   (list "v3a" "colorA")
+                   (list "v3b" "colorB")
+                   )
 (defun DeleteDumbThings (@key (CV (geGetEditCellView)))
   (foreach fig CV->shapes
            (when (IsInList fig->lpp DumbLayers)
@@ -872,7 +872,7 @@ DumbLayers = (list (list "SRAM" "fill")
     (foreach p props
       (unless p->name=="lxInternal"
         (dbCreateProp dstCV p->name p->valueType p->value)
-	)
+        )
       )
     )
   )
