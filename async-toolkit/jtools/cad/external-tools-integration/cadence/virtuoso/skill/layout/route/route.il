@@ -18,6 +18,7 @@
         (doGds t)                ; create gds for subcells (used for power hookups and maybe fill)
         (doLef t)                ; create .lef
         (doDef t)                ; create .def
+        (doHierDef t)            ; create cellName.def with hierarchy separator
         (doNondefaultDef t)      ; create _nondefault.def
         (doSkipRouting t)        ; create SetSkipRouting.tcl
         (hookupD04 nil)          ; add power hookups around d04 cells
@@ -43,24 +44,25 @@
 
     ; export
     CV = (RouteExport ?CV CV
-                          ?botMetal botMetal ?topMetal topMetal ?pwrMetal pwrMetal
-                          ?topHalo topHalo ?denseStaples denseStaples
-                          ?doVerilog doVerilog ?doGds doGds ?doLef doLef ?doDef doDef
-                          ?doNondefaultDef doNondefaultDef
-                          ?doSkipRouting doSkipRouting
-                          ?hookupLaygen hookupLaygen ?hookupD04 hookupD04
-                          ?metalFill metalFill ?softMacro softMacro
-                          ?abstractCellName abstractCellName ?targetCellName targetCellName
-                          ?noPowerFill noPowerFill ?timingDriven timingDriven ?colorGrid colorGrid
-                          ?tau tau ?ecoIter ecoIter ?rdtUseFlops rdtUseFlops ?rdtUserTcl rdtUserTcl
-                          ?scanMode scanMode
-                          ?thresholds thresholds ?perfCorner perfCorner)
+                      ?botMetal botMetal ?topMetal topMetal ?pwrMetal pwrMetal
+                      ?topHalo topHalo ?denseStaples denseStaples
+                      ?doVerilog doVerilog ?doGds doGds ?doLef doLef ?doDef doDef
+                      ?doHierDef doHierDef ?doNondefaultDef doNondefaultDef
+                      ?doSkipRouting doSkipRouting
+                      ?hookupLaygen hookupLaygen ?hookupD04 hookupD04
+                      ?metalFill metalFill ?softMacro softMacro
+                      ?abstractCellName abstractCellName ?targetCellName targetCellName
+                      ?noPowerFill noPowerFill ?timingDriven timingDriven ?colorGrid colorGrid
+                      ?tau tau ?ecoIter ecoIter ?rdtUseFlops rdtUseFlops ?rdtUserTcl rdtUserTcl
+                      ?scanMode scanMode
+                      ?thresholds thresholds ?perfCorner perfCorner)
 
     ; copy CV to importView so in-place pins don't need to wait on router to finish
     (when Background (betterCopyCellView CV CV->libName CV->cellName importView nil nil t t))
 
     ; route
-    (RouteRun ?CV CV ?Background Background ?Mem Mem ?targetCellName targetCellName)
+    (RouteRun ?CV CV ?Background Background ?Mem Mem ?targetCellName targetCellName
+              ?Routed (not doHierDef))
 
     ; import
     (cond (Background (printf "Route running in background, finish with RouteImport\n"))
@@ -453,6 +455,7 @@
         (Background nil)         ; run in background
         (Mem (nrGetMaxHeapSize)) ; qsub memory
         (targetCellName nil)     ; DFII name for APR target cell
+        (Routed nil)             ; cast2rtl flatten to routed hierarchy
         )
   (let (TEMP WDIR gdsFile Command status)
     ; files and options
@@ -463,8 +466,10 @@
 
     ; run
     (shell (strcat "rm -rf " gdsFile))
-    Command = (sprintf nil "cd \"%s\"; proteus --include=proteus.config --mem=%dM %s"
-                       WDIR Mem (if Background "&" "--runlocal=1 --runlocal-pv=1"))
+    Command = (sprintf nil "cd \"%s\"; proteus --include=proteus.config --mem=%dM %s%s"
+                       WDIR Mem
+                       (if Routed "--cast2rtl-routed=1 " "")
+                       (if Background "&" "--runlocal=1 --runlocal-pv=1"))
     (printf "%s\n" Command)
     status = (shell Command)
     (unless status (error "Proteus failed\n"))
