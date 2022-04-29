@@ -37,6 +37,7 @@ source $::env(GTR_HOME)/tcl/gtr_read_lib.tcl
 source $::env(GTR_HOME)/tcl/gtr_lamb_area.tcl
 source $::env(GTR_HOME)/tcl/gtr_lamb_power.tcl
 source $::env(GTR_HOME)/tcl/gtr_lamb_gen_sv.tcl
+source $::env(GTR_HOME)/tcl/gtr_lamb_gen_masis.tcl
 source $::env(GTR_HOME)/tcl/gtr_lamb_gen_upf.tcl
 source $::env(GTR_HOME)/tcl/gtr_lamb_gen_lef.tcl
 source $::env(GTR_HOME)/tcl/gtr_lamb_gen_lib.tcl
