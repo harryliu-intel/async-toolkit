@@ -26,6 +26,9 @@
 ##
 ##------------------------------------------------------------------------------
 
+# Generate MASIS Specification according to
+# $PROJ_ARCHIVE/sn6xx000vpnnsmxnn000s/fe/a18/masis1.2.pdf
+
 proc gtr_lamb_gen_masis { args } {    
    
    set proc_name [lindex [regsub "::" [info level 0]  "" ] 0 ]
@@ -112,7 +115,7 @@ proc gtr_lamb_gen_masis { args } {
 
    set ports { { clk Input Clock { {PortId "w r" }} } \
                { wen Input WriteEnable { { PortId w}} } \
-               { dout Output Data {{PortId r}} } \
+               { ren Input ReadEnable { { PortId r}} } \
                { test__scan_en Input None { {TieLevel Wrapper } {SafeValue 1'b0 }} } \
                { dft__core_si Input None { {TieLevel Wrapper } {SafeValue 1'b0 }} } \
                { icg_force_on Input None { {TieLevel Wrapper } {SafeValue 1'b0 }} } \
@@ -123,7 +126,7 @@ proc gtr_lamb_gen_masis { args } {
    lappend ports [list wadr Input Address [list [list PortId w] [list Range \[[expr $addr_width - 1]:0\] ] ]]
    lappend ports [list addr Input Address [list [list PortId r] [list Range \[[expr $addr_width - 1]:0\] ] ]]
    lappend ports [list wdata Input Data   [list [list PortId w] [list Range \[[expr $width      - 1]:0\] ] ]]
-   lappend ports [list data Output Data   [list [list PortId r] [list Range \[[expr $width      - 1]:0\] ] ]]
+   lappend ports [list dout Output Data   [list [list PortId r] [list Range \[[expr $width      - 1]:0\] ] ]]
 
    puts $of "Port \{"
    foreach p $ports {
@@ -146,7 +149,19 @@ proc gtr_lamb_gen_masis { args } {
    }
    puts $of "\}"
 
+   puts $of "PowerPorts \{"
+   foreach p { { VDD MemorySupply } { VSS Ground } } {
+     set port [lindex $p 0]
+     set type [lindex $p 1] 
+     puts $of " $port \{"
+     puts $of "  Type = $type"
+     puts $of " \}"
+   }
+   puts $of "\}"
+
+
    puts $of "AddressCounter \{"
+   puts $of " RowAddressRange = \"\[0:[expr $depth-1]\]\""
    puts -nonewline $of " AddressScrambleMap = \""
    for { set i 0 } { $i < $addr_width} { incr i +1} {
       puts -nonewline $of "RowAddress[$i] "
@@ -164,7 +179,7 @@ proc gtr_lamb_gen_masis { args } {
 }
 
 define_proc_attributes gtr_lamb_gen_masis \
-    -info "Utility to generate Lamb Behavioural LAMB System Verilog Module" \
+    -info "Utility to generate LAMB MASIS 1.2 definition" \
     -define_args {
       {-ftr_value "Specify flow-through or not" "int" int required}
       {-block_name "Specify memory block name" "String" string required}
