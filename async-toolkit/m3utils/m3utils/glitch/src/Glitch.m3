@@ -50,6 +50,11 @@ IMPORT Wx;
 IMPORT SopBDD;
 IMPORT BDDBDDTbl;
 IMPORT Time;
+IMPORT TextIntTbl;
+IMPORT TextIntPair;
+IMPORT TextIntPairArraySort;
+IMPORT TextList;
+IMPORT TextRefTbl;
 
 CONST TE = Text.Equal;
 
@@ -139,7 +144,7 @@ VAR
   revbdds                     := NEW(BDDTextTbl.Default).init();
   fanouts                     := NEW(TextGlitchGateListTbl.Default).init();
   
-PROCEDURE RunChecks(asyncLimit : CARDINAL) : BOOLEAN
+PROCEDURE RunChecks(asyncLimit, alg1MaxDepth : CARDINAL) : BOOLEAN
   RAISES { Timeout } =
   VAR
     oIter := outputs.iterate();
@@ -152,7 +157,7 @@ PROCEDURE RunChecks(asyncLimit : CARDINAL) : BOOLEAN
       Debug.Out("Output " & o);
       IF gates.get(o, x) THEN
         Debug.Out(F("output %s is driven by gate %s", o, x.nm));
-        DoOutput(o, x, asyncLimit)
+        DoOutput(o, x, asyncLimit, alg1MaxDepth)
       ELSIF literals.get(o, x) THEN
         Debug.Out(F("output %s is literal", o))
       ELSE
@@ -212,19 +217,24 @@ TYPE Method = [1 .. 2];
 VAR count : ARRAY Method OF CARDINAL;
 CONST CountZero = ARRAY Method OF CARDINAL { 0, .. };
       
-PROCEDURE DoOutput(o : TEXT; x : GlitchExpr.T; asyncLimit : CARDINAL)
+PROCEDURE DoOutput(o : TEXT;
+                   x : GlitchExpr.T;
+                   asyncLimit, alg1MaxDepth : CARDINAL)
   RAISES { Timeout } =
   VAR
     iter := asyncs.iterate();
     wrt : TEXT;
   BEGIN
     WHILE iter.next(wrt) DO
-      WITH quick = Quick(o, wrt) DO
-        IF quick <= 1 THEN
+      WITH quick = Quick(o, wrt, alg1MaxDepth, FALSE) DO
+        IF quick = 0 OR quick = 1 THEN
           INC(count[1])
         ELSE
+          EVAL Quick(o, wrt, alg1MaxDepth, TRUE); (* debug output *)
           IF asyncs.size() > asyncLimit THEN
-            Debug.Error(F("Glitch.DoOutput: More than %s async inputs, giving up!",
+            Debug.Error(F("Glitch.DoOutput: Algorithm 1 failed (%s <- %s), and more than %s async inputs, giving up!",
+                          o,
+                          wrt,
                           Int(asyncLimit)))
           END;
           DoAsync2(o, wrt);
@@ -234,14 +244,41 @@ PROCEDURE DoOutput(o : TEXT; x : GlitchExpr.T; asyncLimit : CARDINAL)
     END
   END DoOutput;
 
-PROCEDURE Quick(ultimate, async : TEXT) : CARDINAL =
+TYPE
+  QuickResult = [ -1 .. LAST(CARDINAL) ];
 
-  PROCEDURE Recurse(output : TEXT) : CARDINAL =
+VAR
+  sf := NEW(TextSetDef.T).init();
+
+PROCEDURE FmtList(lst : TextList.T) : TEXT =
+  VAR
+    wx := Wx.New();
+    p := lst;
+  BEGIN
+    Wx.PutText(wx, "{ ");
+    WHILE p # NIL DO
+      Wx.PutText(wx, p.head);
+      Wx.PutChar(wx, ' ');
+      p := p.tail
+    END;
+    Wx.PutChar(wx, '}');
+    RETURN Wx.ToText(wx)
+  END FmtList;
+  
+PROCEDURE Quick(ultimate, async : TEXT;
+                MaxDepth        : CARDINAL;
+                trackFanins     : BOOLEAN) : QuickResult =
+
+  PROCEDURE Recurse(output : TEXT; depth : CARDINAL) : QuickResult =
     (* return # of paths from async to output *)
     VAR
       x : GlitchExpr.T;
     BEGIN
-      IF    TE(output, async) THEN
+      IF    depth > MaxDepth THEN
+        Debug.Warning(F("Quick.Recurse : hit max depth (>%s) for %s <- %s",
+                        Int(MaxDepth), output, async));
+        RETURN -1
+      ELSIF TE(output, async) THEN
         Debug.Out(F("Quick (%s, %s) = 1", output, async));
         RETURN 1
       ELSIF gates.get(output, x) THEN
@@ -255,8 +292,43 @@ PROCEDURE Quick(ultimate, async : TEXT) : CARDINAL =
             <*ASSERT output # NIL*>
             <*ASSERT async # NIL*>
             <*ASSERT fi # NIL*>
-            Debug.Out(F("Quick (%s, %s), looking at fanin %s", output, async, fi));
-            sum := sum + Recurse(fi)
+            Debug.Out(F("Quick (%s, %s), looking at fanin %s",
+                        output, async, fi));
+            IF TE(output, fi) THEN
+              IF NOT sf.insert(output) THEN
+                Debug.Warning("Algorithm 1 skipping self-fanin: " & output)
+              END
+            ELSE
+              IF trackFanins THEN
+                VAR
+                  fiDepth := 0;
+                  lst : REFANY;
+                BEGIN
+                  WITH hadIt = depths.get(fi, fiDepth) DO
+                    IF hadIt THEN
+                      EVAL repeats.insert(fi)
+                    ELSE
+                      fiDepth := depth
+                    END
+                  END;
+                  fiDepth := MIN(fiDepth, depth);
+                  EVAL depths.put(fi, fiDepth);
+                  EVAL fanouts.get(fi, lst);
+                  IF NOT TextList.Member(lst, output) THEN
+                    lst := TextList.Cons(output, lst);
+                    EVAL fanouts.put(fi, lst)
+                  END
+                END
+              END;
+              WITH this = Recurse(fi , depth + 1) DO
+                IF this = -1 THEN
+                  Debug.Warning("path through " & output);
+                  RETURN -1
+                ELSE
+                  sum := sum + this
+                END
+              END
+            END
           END;
           Debug.Out(F("Quick /sum/ (%s, %s) = %s", output, async, Int(sum)));
           RETURN sum
@@ -269,8 +341,52 @@ PROCEDURE Quick(ultimate, async : TEXT) : CARDINAL =
       END
     END Recurse;
 
+  VAR
+    depths  : TextIntTbl.T;
+    repeats : TextSet.T;
+    fanouts : TextRefTbl.T;
   BEGIN
-    RETURN Recurse(ultimate)
+    IF trackFanins THEN
+      depths  := NEW(TextIntTbl.Default).init();
+      repeats := NEW(TextSetDef.T).init();
+      fanouts := NEW(TextRefTbl.Default).init();
+      EVAL depths.put(ultimate, 0)
+    END;
+    
+    Debug.Out(F("Quick(%s <- %s)", ultimate, async), 1);
+    WITH res = Recurse(ultimate, 0) DO
+      Debug.Out("Quick result " & Int(res), 1);
+      IF trackFanins AND repeats.size() # 0 THEN
+        VAR
+          iter := repeats.iterate();
+          rn : TEXT;
+          dp : INTEGER;
+          arr := NEW(REF ARRAY OF TextIntPair.T, repeats.size());
+          j := 0;
+          lst : REFANY;
+        BEGIN
+          WHILE iter.next(rn) DO
+            WITH hadIt = depths.get(rn, dp) DO
+              <*ASSERT hadIt*>
+              arr[j] := TextIntPair.T { rn, dp };
+              INC(j)
+            END
+          END;
+          <*ASSERT j = NUMBER(arr^)*>
+          TextIntPairArraySort.Sort(arr^, TextIntPair.CompareK2K1);
+          FOR i := FIRST(arr^) TO LAST(arr^) DO
+            WITH s = arr[i] DO
+              EVAL fanouts.get(s.k1, lst);
+              Debug.Out(F("Repeated node %s -> %s depth %s",
+                          s.k1,
+                          FmtList(lst),
+                          Int(s.k2)), 1)
+            END
+          END
+        END
+      END;
+      RETURN res
+    END
   END Quick;
   
 PROCEDURE DoAsync2(output, async : TEXT)

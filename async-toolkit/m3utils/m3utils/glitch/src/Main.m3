@@ -36,10 +36,14 @@ VAR
   rd : Rd.T;
   asyncLimit := LAST(CARDINAL);
   status : CARDINAL;
+  alg1MaxDepth : CARDINAL := 127;
 BEGIN
   TRY
     IF pp.keywordPresent("-limit") THEN
       asyncLimit := pp.getNextInt()
+    END;
+    IF pp.keywordPresent("-maxdepth") THEN
+      alg1MaxDepth := pp.getNextInt()
     END;
     IF NOT pp.keywordPresent("-f") THEN
       Debug.Error("No -f")
@@ -71,7 +75,7 @@ BEGIN
 
   (* then run checks *)
   TRY
-    IF Glitch.RunChecks(asyncLimit) THEN
+    IF Glitch.RunChecks(asyncLimit, alg1MaxDepth) THEN
       (* success -- no glitches detected anywhere *)
       Wr.PutText(Stdio.stderr, "No glitches detected\n");
       status := 0

@@ -30,6 +30,8 @@ IMPORT Wx;
 IMPORT FmtTime, Time, Date;
 IMPORT Params;
 IMPORT TextSeq;
+IMPORT RegEx;
+IMPORT RegExList;
 
 CONST TE = Text.Equal;
 
@@ -536,6 +538,9 @@ PROCEDURE FaninCone(net         : TEXT;
         
         (* a given circuit node is either the output of a cell
            OR it is an ultimate fanin *)
+
+        (* this is not quite right.  If the circuit node is the output of 
+           a FLOP, then it is an ultimate fanin. *)
         
         IF NOT hadIt OR asyncs.member(n) THEN
           (* it's a leaf if it is either actually a leaf,
@@ -543,24 +548,28 @@ PROCEDURE FaninCone(net         : TEXT;
           EVAL res.leafNodes.insert(n)
         ELSE
           TRY
-            EVAL res.gateInstances.insert(cellNam);
 
+            <*ASSERT cellNam # NIL*>
             WITH type  = LookupCellType(cellNam),
                  gate  = LookupTypeGate(type) DO
-              <*ASSERT gate.fanins # NIL*>
-              <*ASSERT cellNam # NIL*>
-              VAR
-                iter := gate.fanins.iterate();
-                f : TEXT;
-              BEGIN
-                WHILE iter.next(f) DO
-                  <*ASSERT f # NIL*>
-                  WITH fqp   = cellNam & "/" & f,
-                       fiNet = LookupPinNet(fqp),
-                       res   = Recurse(fiNet, depth + 1) DO
-                    IF NOT res THEN
-                      errorSeq.addlo(fiNet); errorSeq.addlo(fqp);
-                      RETURN FALSE
+              IF IsFlopType(type) THEN
+                EVAL res.leafNodes.insert(n)
+              ELSE
+                <*ASSERT gate.fanins # NIL*>
+                EVAL res.gateInstances.insert(cellNam);
+                VAR
+                  iter := gate.fanins.iterate();
+                  f : TEXT;
+                BEGIN
+                  WHILE iter.next(f) DO
+                    <*ASSERT f # NIL*>
+                    WITH fqp   = cellNam & "/" & f,
+                         fiNet = LookupPinNet(fqp),
+                         res   = Recurse(fiNet, depth + 1) DO
+                      IF NOT res THEN
+                        errorSeq.addlo(fiNet); errorSeq.addlo(fqp);
+                        RETURN FALSE
+                      END
                     END
                   END
                 END
@@ -620,6 +629,19 @@ PROCEDURE LookupCellType(cell : TEXT) : TEXT =
       RETURN type
     END
   END LookupCellType;
+
+PROCEDURE IsFlopType(cellType : TEXT) : BOOLEAN =
+  VAR
+    p := flopRegexes;
+  BEGIN
+    WHILE p # NIL DO
+      IF RegEx.Execute(p.head, cellType) # -1 THEN
+        RETURN TRUE
+      END;
+      p := p.tail
+    END;
+    RETURN FALSE
+  END IsFlopType;
   
 VAR
   pp      := NEW(ParseParams.T).init(Stdio.stderr);
@@ -629,9 +651,14 @@ VAR
   outDir : Pathname.T := ".";
 
   fFn, aFn : Pathname.T;
-  
+  flopRegexes : RegExList.T := NIL;
 BEGIN
   TRY
+    WHILE pp.keywordPresent("-flopregex") DO
+      flopRegexes := RegExList.Cons(RegEx.Compile(pp.getNext()),
+                                    flopRegexes)
+    END;
+
     IF NOT pp.keywordPresent("-f") THEN
       Debug.Error("No -f")
     END;

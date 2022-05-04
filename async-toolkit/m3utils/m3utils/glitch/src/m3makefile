@@ -37,4 +37,6 @@ table ("TextBDD", "Text", "BDD")
 
 module ("TextSubsets")
 
+array_sort ("TextIntPair", "TextIntPair")
+
 program("glitch")

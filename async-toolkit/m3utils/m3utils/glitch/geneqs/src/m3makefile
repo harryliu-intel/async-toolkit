@@ -24,4 +24,7 @@ Extended("gateParseStd")
 Module ("Edge")
 Sequence ("Edge", "Edge")
 
+Interface("RegExIntf")
+List("RegEx", "RegExIntf")
+
 program("geneqs")

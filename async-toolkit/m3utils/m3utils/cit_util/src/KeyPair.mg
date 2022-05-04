@@ -27,4 +27,21 @@ PROCEDURE Compare(READONLY a, b : T) : [-1..1] =
     END
   END Compare;
 
+PROCEDURE CompareK2K1(READONLY a, b : T) : [-1..1] =
+  BEGIN
+    WITH c2 = Key2.Compare(a.k2, b.k2) DO
+      IF c2 # 0 THEN 
+        RETURN c2
+      ELSE 
+        RETURN Key1.Compare(a.k1, b.k1)
+      END
+    END
+  END CompareK2K1;
+
+PROCEDURE CompareK1(READONLY a, b : T) : [-1..1] =
+  BEGIN RETURN Key1.Compare(a.k1, b.k1) END CompareK1;
+
+PROCEDURE CompareK2(READONLY a, b : T) : [-1..1] =
+  BEGIN RETURN Key2.Compare(a.k2, b.k2) END CompareK2;
+
 BEGIN END KeyPair.

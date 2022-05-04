@@ -19,7 +19,7 @@ for pfx in ${pfxs}; do
 	aliases=${indir}/${pfx}afifo_rdata_logic_term_info_with_flops.txt
 	logic=${indir}/${pfx}afifo_to_rdata_logic.txt
 	pwd
-	${prog} -a ${aliases} -f ${logic} 
+	${prog} -a ${aliases} -f ${logic} -flopregex "^SDFQ.*"
 	cd ..
 done
 
