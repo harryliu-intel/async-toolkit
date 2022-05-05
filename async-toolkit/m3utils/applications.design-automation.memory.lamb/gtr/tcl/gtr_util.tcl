@@ -404,6 +404,9 @@ proc gtr_lamb_gen_views { args } {
         # generate the behavioral SV model for the LAMB
         gtr_lamb_gen_behav_sv -block_name $block_name -data_depth $depth -data_width $width -filelistVar filelist -ftr_value $flowthrough
 
+        # generate a MASIS model for the LAMB, to support MBIST generation
+        gtr_lamb_gen_masis -block_name $block_name -data_depth $depth -data_width $width -filelistVar filelist -ftr_value $flowthrough
+
         # generate the UPF for the LAMB
         gtr_lamb_gen_upf -block_name $block_name -filelistVar filelist
 
