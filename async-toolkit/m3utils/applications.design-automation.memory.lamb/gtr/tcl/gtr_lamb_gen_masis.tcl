@@ -124,7 +124,7 @@ proc gtr_lamb_gen_masis { args } {
                { dft__core_so Output None } \
              }
    lappend ports [list wadr Input Address [list [list PortId w] [list Range \[[expr $addr_width - 1]:0\] ] ]]
-   lappend ports [list addr Input Address [list [list PortId r] [list Range \[[expr $addr_width - 1]:0\] ] ]]
+   lappend ports [list radr Input Address [list [list PortId r] [list Range \[[expr $addr_width - 1]:0\] ] ]]
    lappend ports [list wdata Input Data   [list [list PortId w] [list Range \[[expr $width      - 1]:0\] ] ]]
    lappend ports [list dout Output Data   [list [list PortId r] [list Range \[[expr $width      - 1]:0\] ] ]]
 
@@ -163,8 +163,10 @@ proc gtr_lamb_gen_masis { args } {
    puts $of "AddressCounter \{"
    puts $of " RowAddressRange = \"\[0:[expr $depth-1]\]\""
    puts -nonewline $of " AddressScrambleMap = \""
-   for { set i 0 } { $i < $addr_width} { incr i +1} {
-      puts -nonewline $of "RowAddress[$i] "
+   set sp ""
+   for { set i [expr $addr_width - 1] } { $i >= 0 } { incr i -1} {
+      puts -nonewline $of "${sp}RowAddress[${i}]"
+      set sp " "
    }
    puts $of "\""
    puts $of "\}"
