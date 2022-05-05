@@ -113,9 +113,8 @@ proc gtr_lamb_gen_masis { args } {
    }
 	puts $of "\}"
 
-   set ports { { clk Input Clock { {PortId "w r" }} } \
+   set ports { 
                { wen Input WriteEnable { { PortId w}} } \
-               { ren Input ReadEnable { { PortId r}} } \
                { test__scan_en Input None { {TieLevel Wrapper } {SafeValue 1'b0 }} } \
                { dft__core_si Input None { {TieLevel Wrapper } {SafeValue 1'b0 }} } \
                { icg_force_on Input None { {TieLevel Wrapper } {SafeValue 1'b0 }} } \
@@ -123,6 +122,12 @@ proc gtr_lamb_gen_masis { args } {
                { dft__mem_wr_disable Input None { {TieLevel Wrapper } {SafeValue 1'b0 }} } \
                { dft__core_so Output None } \
              }
+   if {! $flowthrough } {
+     lappend ports { ren Input ReadEnable { { PortId r}} }
+     lappend ports { clk Input Clock { {PortId "w r" }} }
+   } else {
+     lappend ports { clk Input Clock { {PortId "r" }} }
+   }
    lappend ports [list wadr Input Address [list [list PortId w] [list Range \[[expr $addr_width - 1]:0\] ] ]]
    lappend ports [list radr Input Address [list [list PortId r] [list Range \[[expr $addr_width - 1]:0\] ] ]]
    lappend ports [list wdata Input Data   [list [list PortId w] [list Range \[[expr $width      - 1]:0\] ] ]]
