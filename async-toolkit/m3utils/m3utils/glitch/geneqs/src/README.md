@@ -2,7 +2,7 @@ first run geneqs to make the equations
 then run glitch checker
 
 e.g.
-
+```
 mkdir inputs nb.out rundir
 cp [source of files from Christina] inputs
 
@@ -12,6 +12,7 @@ cp [source of files from Christina] inputs
 make sure feeder is running
 
 nbtask load runglitch.task
+```
 
 monitor with
 
