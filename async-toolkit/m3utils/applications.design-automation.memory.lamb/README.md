@@ -17,7 +17,7 @@ This work is being developed primarily for TSMC N3E process, but the principle i
 Implementation considerations lead to support for a limited set of configurations.
 - Even bitwidths are supported
 - Even depths are supported
-- Absolute min/max depth and widths vary by process technology
+- Absolute min/max depth and widths (may) vary by process technology, but are at least a depth of 128 words by a width of 144 bits.
 
 ### Supported Views
 The present state of the code is to generate 'placeholder' content to enable logic design and
@@ -99,7 +99,7 @@ of the Git state, for example `git describe` will provide a reference that would
 ### Batch Production And 'SHIP'ing of LAMBs
 You can also batch up creation of LAMBs with the script provided in `$GTR_HOME/tcl/batchLambs.tcl`.
 
-The typical usage case is to start with a space separated file described the desired configurations, or the names of the needed instances.
+The typical usage case is to start with a space separated file describing the desired configurations, or the names of the needed instances (modules).
 
 For example:
 
@@ -111,7 +111,7 @@ Consider `lambs.txt` as:
 cdp_lamb_n3bhd_1r1w1c_64d_66b
 ```
 
-This describes a LAMB requirements of width 4, for depths 10, 12, and 14 and for an instance of depth 64, width 66.
+This describes a LAMB requirements of width 4, for depths 10, 12, and 14 and for an instance (module) of depth 64, width 66.
 
 To build up a task file for them, execute:
 
@@ -135,7 +135,7 @@ You will need to use nbfeeder to execute the task file. You can use [nbflow](htt
 - Characterization and prediction tools: Mika Nystrom @mikanystrom-intel
 
 ### Known Errata and Caveats
-- Timing analysis is based on a scaling model from N7, this is unlikely to be completely accurate
+- Timing analysis is based on a scaling model from N7; this is unlikely to be completely accurate
 
 ### Flow-through Support
 
@@ -146,7 +146,7 @@ setenv GTR_HOME $PWD/gtr
 ```
 
 ### Copyright
-Copyright 2021 - 2022 Intel Corporation All Rights Reserved.
+Copyright 2021 - 2022 Intel Corporation. All Rights Reserved.
 The source code contained or described herein and all documents related
 to the source code ("Material") are owned by Intel Corporation or its
 suppliers or licensors. Title to the Material remains with Intel
