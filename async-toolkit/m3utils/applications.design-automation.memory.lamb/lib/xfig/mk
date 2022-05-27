@@ -1,0 +1,2 @@
+#!/bin/sh -x
+fig2dev -L png -m 10 nlatch_pair.fig > nlatch_pair.png
