@@ -219,14 +219,14 @@
              ipitch=(round pitch/MfgGrid)
              (cond ((layerNum&1)==0 && (abs ix1-ix0)==is
                     (DrawChannel layers[layerNum] pattern[layerNum] nil (list x0:y0 x1:y1) ?CV CV)
-                    (when layerNum>=5 && protect_map[(list layerNum ix0 iy0-ipitch ix1 iy1-ipitch)]
+                    (when layerNum>=5 && layerNum<=6 && protect_map[(list layerNum ix0 iy0-ipitch ix1 iy1-ipitch)]
                           ete=(car MetalSpace[Metal[layerNum]])
                           (DrawChannel layers[layerNum] power[layerNum] nil (list x0+ete:y0 x1-ete:y1) ?CV CV)
                           )
                     )
                    ((layerNum&1)==1 && (abs iy1-iy0)==is
                     (DrawChannel layers[layerNum] pattern[layerNum] nil (list x0:y0 x1:y1) ?CV CV)
-                    (when layerNum>=5 && protect_map[(list layerNum ix0-ipitch iy0 ix1-ipitch iy1)]
+                    (when layerNum>=5 && layerNum<=6 && protect_map[(list layerNum ix0-ipitch iy0 ix1-ipitch iy1)]
                           ete=(cadr MetalSpace[Metal[layerNum]])
                           (DrawChannel layers[layerNum] power[layerNum] nil (list x0:y0+ete x1:y1-ete) ?CV CV)
                           )
