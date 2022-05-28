@@ -1,2 +1,7 @@
 #!/bin/sh -x
-fig2dev -L png -m 10 nlatch_pair.fig > nlatch_pair.png
+
+VERYSMOOTH="-S 4"
+SMOOTH="-S 2"
+
+fig2dev -L png -m 4 ${SMOOTH}      nlatch_pair.fig > nlatch_pair.png
+fig2dev -L png -m 2 ${VERYSMOOTH}  latchblk.fig    > latchblk.png
