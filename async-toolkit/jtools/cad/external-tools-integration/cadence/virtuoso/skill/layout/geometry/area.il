@@ -302,10 +302,10 @@ defun( AreaHtmlFooter ()
 )
 
 ; compute total routed cell area (recurse down to prBoundary)
-(defun CellArea (@key (CV (geGetEditCellView)) (map (makeTable "area" 0.0)) (includeTop nil))
-  (let (area instances)
+(defun CellArea (@key (CV (geGetEditCellView)) (map (makeTable "area" 0.0)) (includeTop nil) (instances nil))
+  (let (area)
     area=0
-    instances = (setof x CV->instances x->libName!=TechLibName)
+    (unless instances instances = (setof x CV->instances x->libName!=TechLibName))
     (cond (map[CV->cellName]!=0.0 area=map[CV->cellName])
           (includeTop && CV->prBoundary area=(PrbArea ?CV CV))
           (instances
