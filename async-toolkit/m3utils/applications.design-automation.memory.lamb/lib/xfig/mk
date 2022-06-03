@@ -5,3 +5,4 @@ SMOOTH="-S 2"
 
 fig2dev -L png -m 4 ${SMOOTH}      nlatch_pair.fig > nlatch_pair.png
 fig2dev -L png -m 2 ${VERYSMOOTH}  latchblk.fig    > latchblk.png
+fig2dev -L png -m 4 ${VERYSMOOTH}  rfstyle.fig    > rfstyle.fig
