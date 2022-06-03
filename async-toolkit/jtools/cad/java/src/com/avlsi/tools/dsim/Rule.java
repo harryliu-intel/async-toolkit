@@ -216,8 +216,8 @@ public final class Rule {
     public Rule(Node[] guards, int[] sense, Node target, int dir, int delay,
                 byte delay_type, boolean timed, float fastDelay,
                 float slowDelay, boolean isochronic, boolean subtimeDelay,
-				boolean absoluteDelay, boolean asserted, Pair[] measuredDelay,
-				byte coverageRequirement, HierName prefix) {
+                boolean absoluteDelay, boolean asserted, Pair[] measuredDelay,
+                byte coverageRequirement, HierName prefix) {
         Debug.assertTrue(guards.length == sense.length);
         int guardCount = guards.length;
         this.dir = dir;
