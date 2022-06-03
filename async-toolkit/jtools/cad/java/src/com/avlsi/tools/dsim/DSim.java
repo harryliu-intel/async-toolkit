@@ -4744,7 +4744,7 @@ public class DSim implements NodeWatcher {
                         instData.getBDLatency(canonTarget, false) * 100 +
                         instData.getLatency(canonTarget, 0) +
                         instData.getBDExtraDelay(updir, canonTarget);
-                    subtimeDelay = afterDelay == 0;
+                    subtimeDelay = afterDelay == 0 && !pr.isAbsolute();
                 }
                 if (afterDelay == 0) {
                     afterDelay = cellDelay.getDelay(pr.getTarget(), updir, 100) +
