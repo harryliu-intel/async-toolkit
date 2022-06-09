@@ -3,14 +3,15 @@
 
 ; route nearby nets with short paths or vias only
 (defun RouteNearby (@key (CV (geGetEditCellView)) (nets nil) (topShapes t) (subShapes t) (offGrid t) (verbose nil)
-                         (protect nil))
+                         (protect nil) (distance nil))
   (let (n c pct protect_map)
     n=0
     protect_map=(makeTable "protect_map" nil)
     (unless nets nets=(setof a CV->nets (member a->name PowerGroundNets)==nil))
     (foreach net nets
              n+=(RouteNearbyNet net ?CV CV ?topShapes topShapes ?subShapes subShapes
-                                ?offGrid offGrid ?verbose verbose ?protect_map protect_map)
+                                ?offGrid offGrid ?verbose verbose ?protect_map protect_map
+                                ?distance distance)
              )
     (when protect (RouteNearbyProtect protect_map ?CV CV))
     (printf "Note that RouteNearby only connects abutting pins between locked instances.\n")
@@ -20,7 +21,7 @@
 
 ; connect subcells pins of a net with short paths or vias
 (defun RouteNearbyNet (net @key (CV (geGetEditCellView)) (topShapes t) (subShapes t) (offGrid t) (verbose nil)
-                           (protect_map nil))
+                           (protect_map nil) (distance nil))
   (let (layerNames tech n MasterRectList layerName pinRectList layerNum space len
              e1 e2 inst1 inst2 net1 net2 rect1 rect2 overlap gap rect rects horz
              r1x0 r1x1 r1y0 r1y1 r2x0 r2x1 r2y0 r2y1
@@ -39,9 +40,12 @@
       (unless MetalHaloBoundarySpace[layerName]
         (error "No MetalHaloBoundarySpace defined for layer %s\n" layerName)
         )
-      space = 2 * MetalHaloBoundarySpace[layerName]
       horz = (layerNum&1)==0
       list1=pinRectList
+      (cond (distance &&  horz space=(car  distance))
+            (distance && !horz space=(cadr distance))
+            (t                 space=2*MetalHaloBoundarySpace[layerName])
+            )
       (while list1
         e1    = (car list1)
         list1 = (cdr list1)
@@ -90,6 +94,17 @@
                          )
                    )
                   )
+
+            ; make sure not to overlap other shapes
+            (when overlap
+              rect=(if horz (BBoxExpandHorizontal gap -MfgGrid) (BBoxExpandVertical gap -MfgGrid))
+              (when ((dbGetOverlaps CV rect (list layerName "drawing") 0:31)!=nil ||
+                     (dbGetOverlaps CV rect (list layerName "fill")    0:31)!=nil)
+                overlap=nil
+                )
+              )
+
+            ; draw shape to connect nearby pins
             (when overlap
               rect = (dbCreateRect CV (list layerName "drawing") overlap)
               rect->routeStatus="locked"

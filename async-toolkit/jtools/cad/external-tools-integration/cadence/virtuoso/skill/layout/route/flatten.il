@@ -93,7 +93,7 @@ useICV = t
       )
 
     ; route abutting pins
-    (RouteNearby ?CV CV ?topShapes ConnectNearbyShapes ?subShapes ConnectAbuttingPins)
+    (RouteNearby ?CV CV ?topShapes ConnectNearbyShapes ?subShapes ConnectAbuttingPins ?distance 0.3:0.24)
     (when oldMasters (foreach inst oldMasters inst->master=oldMasters[inst]))
 
     ; fix things for DEF export
