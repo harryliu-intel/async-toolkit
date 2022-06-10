@@ -595,7 +595,7 @@
     rename = (RouteRemapCellTable)
     rename[top_name] = cellName
     (when oas (error "?oasFile not supported at the moment because ImportOas lacks CopyToNewLib"))
-    ImportCV = (ImportGDS file libName top_name ?prefix "" ?suffix "" ?action nil
+    ImportCV = (ImportGDS file libName top_name ?prefix "" ?suffix "" ?action nil ?recurse nil
                           ?mapCellName (lambda (cellName) (RouteRemapCellName cellName)))
     (unless ImportCV (error "Unsuccessful import\n"))
 

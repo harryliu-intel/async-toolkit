@@ -12,6 +12,7 @@
                               (suffix ".0")
                               (mapCellName nil) ; lambda on cellName to choose libName/cellName
                               (action importPostProcessAction)
+                              (recurse t)
                               (setCopyExact nil) ; lamda on CV to decide when to set CopyExact property
                               )
   (let (TEMP PDK_DIR temp_lib cmd status CV)
@@ -44,7 +45,7 @@
 
     ; copy cells to destination library
     (unless prefix prefix = (strcat libName "."))
-    CV = (CopyToNewLib libName ?CV CV ?prefix prefix ?suffix suffix ?mapCellName mapCellName)
+    CV = (CopyToNewLib libName ?CV CV ?prefix prefix ?suffix suffix ?mapCellName mapCellName ?recurse recurse)
 
     ; delete temp_lib library
     (ddDeleteObj (ddGetObj temp_lib))
@@ -102,6 +103,8 @@ importPostProcessAction =
                              (prefix "")
                              (suffix "")
                              (mapCellName nil) ; lambda on cellName to return (list libName cellName)
+                             (recurse t) ; recursively import subcells as well
+                             (top t)     ; is this the top cell
                              )
   (let (newCV lib_cell libN cellN master)
     newCV=visited[CV]
@@ -116,7 +119,7 @@ importPostProcessAction =
              cellN = (strcat prefix CV->cellName suffix)
              )
             )
-      (cond (libN==libName
+      (cond (libN==libName && (recurse || top)
              (printf "CopyToNewLib: copy to %s %s %s\n" libN cellN CV->viewName)
              (UpdateFloorplanCreateLib libN) ; create destination library if necessary
              newCV=(betterCopyCellView CV libN cellN CV->viewName nil nil t)
@@ -126,7 +129,8 @@ importPostProcessAction =
                       master=(CopyToNewLib libName
                                            ?CV inst->master ?visited visited
                                            ?prefix prefix ?suffix suffix
-                                           ?mapCellName mapCellName)
+                                           ?mapCellName mapCellName
+                                           ?recurse recurse ?top nil)
                       (if master inst->master=master (dbFlattenInst inst 32)) ; remap or flatten
                       )
              (dbSave newCV)
