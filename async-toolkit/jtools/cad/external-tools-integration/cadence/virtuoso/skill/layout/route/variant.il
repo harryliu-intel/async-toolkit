@@ -28,7 +28,7 @@
           (t cellName=CV->cellName ; other cells
            )
           )
-    (dbOpenCellViewByType CV->libName cellName "layout")
+    (ReadCV CV->libName cellName "layout")
     )
   )
 
