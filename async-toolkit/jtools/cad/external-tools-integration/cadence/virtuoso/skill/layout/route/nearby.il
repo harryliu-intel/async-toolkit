@@ -106,7 +106,7 @@
 
             ; draw shape to connect nearby pins
             (when overlap
-              rect = (dbCreateRect CV (list layerName "drawing") overlap)
+              rect = (DrawPathFromRect CV layerNum overlap)
               rect->routeStatus="locked"
               (dbAddFigToNet rect net)
               (dbReplaceProp rect "autogen" "string" "RouteNearby")
@@ -194,6 +194,28 @@
   (if (m&1)==0
     (cadr (cadr bbox))-(cadr (car bbox)) ; horizontal wire
     (car  (cadr bbox))-(car  (car bbox)) ; vertical wire
+    )
+  )
+
+; draw a path instead of a rectangle
+(defun DrawPathFromRect (CV m rect)
+  (let (x0 y0 x1 y1 w)
+    x0=(car  (car  rect))
+    x1=(car  (cadr rect))
+    y0=(cadr (car  rect))
+    y1=(cadr (cadr rect))
+    (cond ((m&1)==0 ; horizontal
+           w=y1-y0
+           y0=(y0+y1)/2
+           y1=y0
+           )
+          (t ; vertical
+           w=x1-x0
+           x0=(x0+x1)/2
+           x1=x0
+           )
+          )
+    (dbCreatePath CV (list Metal[m] "drawing") (list x0:y0 x1:y1) w)
     )
   )
 
