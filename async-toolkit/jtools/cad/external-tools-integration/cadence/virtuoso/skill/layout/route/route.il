@@ -54,15 +54,14 @@
                       ?abstractCellName abstractCellName ?targetCellName targetCellName
                       ?noPowerFill noPowerFill ?timingDriven timingDriven ?colorGrid colorGrid
                       ?tau tau ?ecoIter ecoIter ?rdtUseFlops rdtUseFlops ?rdtUserTcl rdtUserTcl
-                      ?scanMode scanMode
+                      ?scanMode scanMode ?Mem Mem
                       ?thresholds thresholds ?perfCorner perfCorner)
 
     ; copy CV to importView so in-place pins don't need to wait on router to finish
     (when Background (betterCopyCellView CV CV->libName CV->cellName importView nil nil t t))
 
     ; route
-    (RouteRun ?CV CV ?Background Background ?Mem Mem ?targetCellName targetCellName
-              ?Routed (not doHierDef))
+    (RouteRun ?CV CV ?Background Background ?targetCellName targetCellName)
 
     ; import
     (cond (Background (printf "Route running in background, finish with RouteImport\n"))
@@ -91,7 +90,7 @@
         (doGds t)                ; create gds for subcells (used for power hookups and maybe fill)
         (doLef t)                ; create cellName.lef
         (doDef t)                ; create cellName.def
-        (doHierDef nil)          ; create cellName.def with hierarchy separator
+        (doHierDef t)            ; create cellName.def with hierarchy separator
         (doNondefaultDef nil)    ; create cellName_nondefault.def
         (doSkipRouting nil)      ; create cellName.SkipRouting.tcl
         (hookupD04 nil)          ; add power hookups around d04 cells
@@ -112,6 +111,7 @@
         (rdtUserTcl nil)         ; optional tcl file
         (scanMode nil)           ; optional scan mode string
         (perfCorner "max")       ; primary perfCorner for performance
+        (Mem (nrGetMaxHeapSize)) ; memory to use
         )
   (let (TEMP WDIR LEFDEF_DIR MaxHeapSize CAST_PATH DFII_DIR SPAR_DIR PDK_DIR
         abstractCV
@@ -165,7 +165,7 @@
                    ?timingDriven timingDriven ?softMacro softMacro
                    ?abstractCellName abstractCellName ?targetCellName targetCellName
                    ?tau tau ?ecoIter ecoIter ?rdtUseFlops rdtUseFlops ?rdtUserTcl rdtUserTcl
-                   ?scanMode scanMode
+                   ?scanMode scanMode ?Mem Mem ?doHierDef doHierDef
                    ?thresholds thresholds ?perfCorner perfCorner)
 
     ; export Verilog
@@ -377,6 +377,7 @@
         (topMetal 8)             ; top metal layer
         (pwrMetal nil)           ; top metal layer for power
         (topHalo t)              ; APR should add a top halo
+        (doHierDef t)            ; create cellName.def with hierarchy separator
         (denseStaples nil)       ; APR should add staples at dense pitch
         (thresholds (list "c" "b")) ; transistor thresholds to use
         (metalFill t)
@@ -390,6 +391,7 @@
         (rdtUserTcl nil)         ; optional tcl file
         (scanMode nil)           ; optional scan mode string
         (perfCorner "max")       ; primary perfCorner for performance
+        (Mem (nrGetMaxHeapSize)) ; memory to use
         )
   (let (CAST_PATH DFII_DIR TEMP WDIR file)
     ; files and options
@@ -412,6 +414,7 @@
     (fprintf file "--verilog-dir=%s\n" VERI_DIR)
     (fprintf file "--lefdef-dir=lefdef\n")
     (fprintf file "--output-dir=proteus\n")
+    (fprintf file "--mem=%dM\n" Mem)
     (fprintf file "--bottom-layer=%d\n" botMetal)
     (fprintf file "--top-layer=%d\n" topMetal)
     (when pwrMetal (fprintf file "--pwr-layer=%d\n" pwrMetal))
@@ -431,6 +434,7 @@
     (fprintf file "--pv-generate-sdf=1\n")
     (fprintf file "--rdt-max-corner=%s\n" perfCorner)
     (fprintf file "--rdt-min-corner=%s\n" perfCorner)
+    (fprintf file "--cast2rtl-routed=%d\n" (if doHierDef 0 1))
     (cond (softMacro && abstractCellName && targetCellName
            (fprintf file "--cell=%s\n" (GetCastCellName targetCellName))
            (fprintf file "--abstract=%s\n" (GetCastCellName abstractCellName))
@@ -453,9 +457,7 @@
 (defun RouteRun
   (@key (CV (geGetEditCellView)) ; specify CellView or use edit view
         (Background nil)         ; run in background
-        (Mem (nrGetMaxHeapSize)) ; qsub memory
         (targetCellName nil)     ; DFII name for APR target cell
-        (Routed nil)             ; cast2rtl flatten to routed hierarchy
         )
   (let (TEMP WDIR gdsFile Command status)
     ; files and options
@@ -466,10 +468,8 @@
 
     ; run
     (shell (strcat "rm -rf " gdsFile))
-    Command = (sprintf nil "cd \"%s\"; proteus --include=proteus.config --mem=%dM %s%s"
-                       WDIR Mem
-                       (if Routed "--cast2rtl-routed=1 " "")
-                       (if Background "&" "--runlocal=1 --runlocal-pv=1"))
+    Command = (sprintf nil "cd \"%s\"; proteus --include=proteus.config %s"
+                       WDIR (if Background "&" "--runlocal=1 --runlocal-pv=1"))
     (printf "%s\n" Command)
     status = (shell Command)
     (unless status (error "Proteus failed\n"))
