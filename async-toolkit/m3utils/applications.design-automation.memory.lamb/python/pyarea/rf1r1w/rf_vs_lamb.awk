@@ -1,4 +1,14 @@
 #!/usr/bin/awk -f 
+#
+# compute area ratio between LAMB and RF1R1W
+# RF data from Bin in Excel (converted to CSV)
+# assumption that depth in $1
+#                 width    $2
+#                 area     $6 (/[sq microns])
+#
+# Author: mika.nystroem@intel.com
+# June, 2022
+#
 
 BEGIN { FS="," }
     
