@@ -410,9 +410,20 @@ proc gtr_lamb_gen_views { args } {
         # generate the UPF for the LAMB
         gtr_lamb_gen_upf -block_name $block_name -filelistVar filelist
 
+        # generate the LEF for the LAMB
+        set ndmlef \
+            [gtr_lamb_gen_lef -block_name $block_name \
+                 -data_depth $depth \
+                 -data_width $width \
+                 -tech_node $tech_node \
+                 -filelistVar filelist \
+                 -ftr_value $flowthrough]
+
         ## eventually, below should loop over corners
         set oc_type S_0
         set voltage 0.675
+
+        puts "====================  DB generation follows  ===================="
 
         # generate Liberty file for LAMB
         puts [list "desired corners " $desired_corners ]
@@ -555,15 +566,6 @@ proc gtr_lamb_gen_views { args } {
 
 
         puts [list "cornerlibs " $cornerlibs ]
-
-        # generate the LEF for the LAMB
-        set ndmlef \
-            [gtr_lamb_gen_lef -block_name $block_name \
-                 -data_depth $depth \
-                 -data_width $width \
-                 -tech_node $tech_node \
-                 -filelistVar filelist \
-                 -ftr_value $flowthrough]
 
         if { $ndmGenerate } {
             # generate NDM file for LAMB
