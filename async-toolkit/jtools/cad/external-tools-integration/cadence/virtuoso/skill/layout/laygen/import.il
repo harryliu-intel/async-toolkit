@@ -124,29 +124,33 @@ LaygenNetMap[LaygenVccName] = VddNetName
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Utility Functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; label the pwell for LVS
-(defun LaygenLabelPwell (@key (CV (geGetEditCellView)) (netName GNDNetName))
-  (let (lpp xy)
+(defun LaygenLabelPwell (@key (CV (geGetEditCellView)) (netName VssNetName))
+  (let (lpp xy rect net)
     lpp = PWellIsoLPP
     (foreach shape CV->shapes (when shape->lpp==lpp (dbDeleteObject shape)))
     (when CV->prBoundary
       xy = (car (SortVertices CV->prBoundary->points))
-      (dbCreateLabel CV lpp xy netName "lowerLeft" "R0" "stick" 0.02)
-      (dbCreateRect CV lpp (list xy (car xy)+GridPolyPitch:(cadr xy)+GridDiffPitch))
+      rect=(dbCreateRect CV lpp (list xy (car xy)+GridPolyPitch:(cadr xy)+GridDiffPitch))
+      net=(dbMakeNet CV netName)
+      (dbCreatePin net rect)
+      (LaygenLabelPin CV rect)
       )
     )
   t
   )
 
 ; label the nwell for LVS
-(defun LaygenLabelNwell (@key (CV (geGetEditCellView)) (netName VddNetName))
-  (let (lpp xy)
+(defun LaygenLabelNwell (@key (CV (geGetEditCellView)) (netName VccNetName))
+  (let (lpp xy rect net)
     lpp = NWellLPP
     (foreach shape CV->shapes (when shape->lpp==lpp (dbDeleteObject shape)))
     (when CV->prBoundary
       xy = (car (SortVertices CV->prBoundary->points))
       xy = (car xy):(cadr xy)+GridPitch/2
-      (dbCreateLabel CV lpp xy netName "upperLeft" "R0" "stick" 0.02)
-      (dbCreateRect CV lpp (list xy (car xy)+GridPolyPitch:(cadr xy)-GridDiffPitch))
+      rect=(dbCreateRect CV lpp (list xy (car xy)+GridPolyPitch:(cadr xy)-GridDiffPitch))
+      net=(dbMakeNet CV netName)
+      (dbCreatePin net rect)
+      (LaygenLabelPin CV rect)
       )
     )
   t

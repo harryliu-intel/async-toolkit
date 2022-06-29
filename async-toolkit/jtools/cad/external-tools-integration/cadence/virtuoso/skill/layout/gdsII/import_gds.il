@@ -14,6 +14,7 @@
                               (action importPostProcessAction)
                               (recurse t)
                               (setCopyExact nil) ; lamda on CV to decide when to set CopyExact property
+                              (pinPurpose "pin")
                               )
   (let (TEMP PDK_DIR temp_lib cmd status CV)
     ; stream in GDS into temp_lib library
@@ -55,8 +56,8 @@
 
     ; more processing of top level cell
     (dbReplaceProp CV "CastCell" "boolean" t) ; top-level only
-    (LabelsToPins ?CV CV) ; create pins by finding labels on "pin" purpose rectangles
-    (DeleteLabels ?CV CV ?keepLPPs (list NWellLPP))
+    (LabelsToPins ?CV CV ?purpose pinPurpose) ; create pins from labels on pinPurpose rectangles
+    (DeleteLabels ?CV CV)
     (LabelPins ?CV CV)
     (dbSave CV)
 
@@ -150,17 +151,21 @@ importPostProcessAction =
     )
   )
 
-; Use labels to create pins
+; Use labels to create pins and attach net information
 (defun LabelsToPins (@key (CV (geGetEditCellView))
                           (purpose "pin")
                           )
-  (let (n net)
+  (let (n labels net overlaps)
     n=0
     labels = (setof x CV->shapes x->objType=="label")
     (foreach label (setof x CV->shapes x->objType=="label" && x->purpose==purpose)
-             overlaps = (dbGetOverlaps CV (list label->xy label->xy) label->lpp 0)
+             overlaps = (dbGetOverlaps CV (list label->xy label->xy) label->lpp 0) 
+             net = (dbMakeNet CV label->theLabel)
              (foreach rect (setof x overlaps x->objType=="rect")
-                      net = (dbMakeNet CV label->theLabel)
+                      rect->net=net
+                      (when rect->purpose!="pin" && rect->layerName!="nwell"
+                            rect=(dbCreateRect CV (list rect->layerName "pin") rect->bBox)
+                            )
                       (when rect->net!=net
                         (dbCreatePin net rect)
                         n++
