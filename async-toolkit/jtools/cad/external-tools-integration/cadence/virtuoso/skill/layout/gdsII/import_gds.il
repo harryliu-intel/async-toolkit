@@ -14,7 +14,6 @@
                               (action importPostProcessAction)
                               (recurse t)
                               (setCopyExact nil) ; lamda on CV to decide when to set CopyExact property
-                              (pinPurpose "pin")
                               )
   (let (TEMP PDK_DIR temp_lib cmd status CV)
     ; stream in GDS into temp_lib library
@@ -56,8 +55,8 @@
 
     ; more processing of top level cell
     (dbReplaceProp CV "CastCell" "boolean" t) ; top-level only
-    (LabelsToPins ?CV CV ?purpose pinPurpose) ; create pins from labels on pinPurpose rectangles
-    (DeleteLabels ?CV CV)
+    (LabelsToPins ?CV CV) ; create pins from labels on pinPurpose rectangles
+    (DeleteLabels ?CV CV ?keepLPPs (list PWellIsoLPP NWellLPP))
     (LabelPins ?CV CV)
     (dbSave CV)
 
@@ -152,24 +151,15 @@ importPostProcessAction =
   )
 
 ; Use labels to create pins and attach net information
-(defun LabelsToPins (@key (CV (geGetEditCellView))
-                          (purpose "pin")
-                          )
-  (let (n labels net overlaps)
+(defun LabelsToPins (@key (CV (geGetEditCellView)))
+  (let (n net overlaps)
     n=0
-    labels = (setof x CV->shapes x->objType=="label")
-    (foreach label (setof x CV->shapes x->objType=="label" && x->purpose==purpose)
+    (foreach label (setof x CV->shapes x->objType=="label")
              overlaps = (dbGetOverlaps CV (list label->xy label->xy) label->lpp 0) 
              net = (dbMakeNet CV label->theLabel)
              (foreach rect (setof x overlaps x->objType=="rect")
                       rect->net=net
-                      (when rect->purpose!="pin" && rect->layerName!="nwell"
-                            rect=(dbCreateRect CV (list rect->layerName "pin") rect->bBox)
-                            )
-                      (when rect->net!=net
-                        (dbCreatePin net rect)
-                        n++
-                        )
+                      (when label->purpose=="pin" (dbCreatePin net rect) n++)
                       )
              )
     n
