@@ -429,8 +429,6 @@ $arch/bin/importQ.pl                                  script/perl/importQ.pl    
 $arch/bin/importGDS.pl                                script/perl/importGDS.pl                        775 p
 $arch/bin/vs2calibre.pl                               script/perl/vs2calibre.pl                       775 p
 $arch/bin/vs2cast.pl                                  script/perl/vs2cast.pl                          775 p
-$arch/bin/cdl2snp.pl                                  script/perl/cdl2snp.pl                          775 p
-$arch/bin/cdl2lgf.pl                                  script/perl/cdl2lgf.pl                          775 p
 $arch/bin/cdl2sp.pl                                   script/perl/cdl2sp.pl                           775 p
 
 #misc
