@@ -3,7 +3,7 @@
   (let (suffix)
     suffix = (substring CV->cellName (strlen CV->cellName)-1)
     suffix=="v1" || suffix=="v2" || suffix=="v3" || suffix=="v4" || suffix=="v5" ||
-      CV->libName=="vendor.intel.g1m"
+      CV->libName=="vendor.intel.g1m" || CV->libName=="vendor.intel.g1i"
     )
   )
 
@@ -11,7 +11,7 @@
 (defun FindLayoutVariant (CV v)
   (let (cellName suffix components subtype baseName)
     suffix = (substring CV->cellName (strlen CV->cellName)-1)
-    (cond (CV->libName=="vendor.intel.g1m" ; G1M naming
+    (cond (CV->libName=="vendor.intel.g1m" || CV->libName=="vendor.intel.g1i" ; G1M/G1I naming convention
            components = (parseString CV->cellName ".")
            subtype = (car (last components))
            subtype = (sprintf nil "%d%s" v (substring subtype 2 5))

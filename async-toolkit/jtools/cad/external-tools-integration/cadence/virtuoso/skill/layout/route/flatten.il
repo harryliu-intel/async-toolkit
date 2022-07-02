@@ -759,7 +759,7 @@ useICV = t
   (let (x y orient std type short flip)
     type = (dbFindProp inst->master "CopyExact")->value
     (when type
-      std = (strncmp type "g0m" 3)==0 || (strncmp type "g1m" 3)==0
+      std = (strncmp type "g1i" 3)==0 || (strncmp type "g1m" 3)==0
       x = (car  inst->xy)
       y = (cadr inst->xy)
       short = (substring type 13 1)=="n"

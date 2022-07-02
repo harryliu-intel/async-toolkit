@@ -826,19 +826,24 @@ DumbLayers = (list (list "SRAM" "fill")
     PDK_DIR = (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT")
     CID = (NameStartRename "cell" "cast" "cadence")
     rename = (makeTable "rename" nil)
-    (foreach file (list "/share/Fulcrum/v2cast/g1m.rul" "/share/Fulcrum/v2cast/custom.rul" "/share/Fulcrum/v2cast/hip.rul")
+    (foreach file (list "/share/Fulcrum/v2cast/g1m.rul"
+                        "/share/Fulcrum/v2cast/g1i.rul"
+                        "/share/Fulcrum/v2cast/custom.rul"
+                        "/share/Fulcrum/v2cast/hip.rul")
              names_in = (infile (strcat PDK_DIR file))
-             (while (gets line names_in)
-               fields = (parseString line " \n")
-               (when (car fields)=="c"
-                     (when rename[(cadr fields)]
-                           (error "RouteRemapCellTable duplicate mapping %s in file %s\n"
-                                  (cadr fields) file)
-                           )
-                     rename[(cadr fields)]=(NameDoRename CID (caddr fields))
-                     )
+             (when names_in
+               (while (gets line names_in)
+                 fields = (parseString line " \n")
+                 (when (car fields)=="c"
+                       (when rename[(cadr fields)]
+                             (error "RouteRemapCellTable duplicate mapping %s in file %s\n"
+                                    (cadr fields) file)
+                             )
+                       rename[(cadr fields)]=(NameDoRename CID (caddr fields))
+                       )
+                 )
+               (close names_in)
                )
-             (close names_in)
              )
     (NameStopRename CID)
     rename
@@ -861,6 +866,15 @@ DumbLayers = (list (list "SRAM" "fill")
                                 (substring cellName 12 6))
            rename[cellName] = dfII_name
            libName = "vendor.intel.g1m"
+           cellName = dfII_name
+           (list libName cellName)
+           )
+          ((strncmp cellName "g1i" 3)==0 ; TODO: finish PDK/v2cast/g1i.rul
+           dfII_name = (sprintf nil "vendor.intel.g1i.%s.%s"
+                                (substring cellName 4 8)
+                                (substring cellName 12 6))
+           rename[cellName] = dfII_name
+           libName = "vendor.intel.g1i"
            cellName = dfII_name
            (list libName cellName)
            )

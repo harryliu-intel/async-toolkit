@@ -24,10 +24,9 @@
 
 ; get cell height and variant or nil if none
 (defun GetHeightAndVariant (@key (CV (geGetEditCellView)))
-  (let (CopyExact g1m h v)
+  (let (CopyExact h v)
     CopyExact = (dbGetPropByName CV "CopyExact")->value
-    g1m = CopyExact && ((strncmp CopyExact "g1m" 3)==0)
-    (when g1m
+    (when CopyExact && ((strncmp CopyExact "g1i" 3)==0 || (strncmp CopyExact "g1m" 3)==0)
       h = (substring CopyExact 13 1)
       v = (substring CopyExact 12 1)
       )
