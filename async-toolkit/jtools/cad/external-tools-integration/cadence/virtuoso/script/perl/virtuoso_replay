@@ -34,8 +34,12 @@ foreach my $file (@ARGV) {
                "$ENV{FULCRUM} --cadence assura_oa,$ENV{ICV_VERSION} " .
                "virtuoso -log ${base}.log -replay $ENV{PWD}/${file} -nograph >& ${base}.out) &");
     } else {
+#        system("(cd ${base}.cdswd; " .
+#               "nbq -j ${base}.out " .
+#               "$ENV{FULCRUM} --cadence assura_oa,$ENV{ICV_VERSION} " .
+#               "virtuoso -log ${base}.log -replay $ENV{PWD}/${file} -nograph)");
         system("(cd ${base}.cdswd; " .
-               "nbq -j ${base}.out " .
+               "nbjob run --log-file ${base}.out " .
                "$ENV{FULCRUM} --cadence assura_oa,$ENV{ICV_VERSION} " .
                "virtuoso -log ${base}.log -replay $ENV{PWD}/${file} -nograph)");
     }
