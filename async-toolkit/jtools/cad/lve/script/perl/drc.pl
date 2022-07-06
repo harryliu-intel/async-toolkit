@@ -135,6 +135,8 @@ sub run_drc {
    my $cmd_config="$pdk_root/share/Fulcrum/icv/drc/drc_cmd.config";
    my $process_name="";
    my $dotprocess_name="";
+   my $layerstack="";
+
    $runset="";
    open(CMD_CFG, "$cmd_config") or die "Cannot read $cmd_config\n";
    while(my $line=<CMD_CFG>) {
@@ -143,10 +145,13 @@ sub run_drc {
 	   $process_name=$data[1];
        } elsif($data[0] =~ "DOTP_NAME") {
 	   $dotprocess_name=$data[1];
+       } elsif($data[0] =~ "LAYERSTACK") {
+	   $layerstack=$data[1];
        }
    }
    chomp $process_name;
    chomp $dotprocess_name;
+   chomp $layerstack;
    close(CMD_CFG);
 
    #check if flow is valid
@@ -192,10 +197,12 @@ $ENV{'ICV_SCRIPT'} 'icv' $all_includes \\
 -D _drUSENDG=_drNO \\
 -D _drUSERDEFINESUIN \\
 -D _drCaseSensitive \\
--D _drPROCESS=_dr$dotprocess_name \\
--D _drSELECT_$flow \\
 -D _drPROJECT=_drnone \\
 -D _drPROCESSNAME=$process_name \\
+-D _drPROCESS=_dr$dotprocess_name \\
+-D _drLAYERSTACK=_dr$layerstack \\
+-D _drFRONTEND=core \\
+-D _drSELECT_$flow \\
 -f $format \\
 ET
    if ($jobs > 0) {
