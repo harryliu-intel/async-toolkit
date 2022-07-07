@@ -61,16 +61,27 @@ which is pulled in as a [submodule](https://git-scm.com/book/en/v2/Git-Tools-Sub
 the ``--recurse-submodules`` option, or after cloning, do a ``git submodule update --init``.
 
 
-The m3utils repo in turn requires the [Modula-3](https://en.wikipedia.org/wiki/Modula-3) compiler ([Critical Mass Modula-3](https://github.com/modula3/cm3), cm3) to be installed.  Modula-3 is provided as part of Cheetah.  A default location is provided as part of the top-level Makefile.  To override that, the following commands will set up and build the necessary code, for example:
-
-```
-setenv RTA_CM3_HOME /p/cth/rtl/cad/x86-64_linux44/opensource/cm3/d5.11.0-20210425/
-```
+The m3utils repo in turn requires the
+[Modula-3](https://en.wikipedia.org/wiki/Modula-3) compiler ([Critical
+Mass Modula-3](https://github.com/modula3/cm3), cm3) to be installed.
+Modula-3 is provided as part of Cheetah.  A default location is provided
+as part of the top-level Makefile.  
 
 To build the code, simply run in the top-level directory of the repo:
 ```
 make
 ```
+
+If this command terminates successfully, your repo is now ready for LAMB generation!
+
+### Overriding Modula-3 compiler path
+If you wish to override the default Cheetah Modula-3 compiler---most users probably will not---, the following
+example command will accomplish that:
+
+```
+setenv RTA_CM3_HOME /p/cth/rtl/cad/x86-64_linux44/opensource/cm3/d5.11.0-20210425/
+```
+
 
 ### Single LAMB product
 To produce a single LAMB requires Cheetah environment. Execute, for example, in the top-level directory of the repo:
