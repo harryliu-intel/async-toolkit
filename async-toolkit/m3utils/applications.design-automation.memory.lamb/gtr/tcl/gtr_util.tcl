@@ -133,6 +133,12 @@ set design_corners0p70 [list \
 set low_voltage_corners [list \
                      [ list ssgnp cworst_CCworst_T  0.630        0       0  ]\
                      [ list ssgnp cworst_CCworst_T  0.630      125     125  ]\
+                     [ list ssgnp cworst_CCworst    0.630        0       0  ]\
+                     [ list ssgnp rcworst_CCworst_T 0.630        0       0  ]\
+                     [ list ssgnp rcworst_CCworst   0.630        0       0  ]\
+                     [ list ssgnp cworst_CCworst    0.630      125     125  ]\
+                     [ list ssgnp rcworst_CCworst_T 0.630      125     125  ]\
+                     [ list ssgnp rcworst_CCworst   0.630      125     125  ]\
                      [ list tt    typical           0.700       85     105  ]\
                              ]
 #
