@@ -130,6 +130,17 @@ set design_corners0p70 [list \
                      [ list ffgnp rcworst_CCworst   0.825      125     125  ]\
                     ]
 
+set low_voltage_corners [list \
+                     [ list ssgnp cworst_CCworst_T  0.630        0       0  ]\
+                     [ list ssgnp cworst_CCworst_T  0.630      125     125  ]\
+                     [ list ssgnp cworst_CCworst    0.630        0       0  ]\
+                     [ list ssgnp rcworst_CCworst_T 0.630        0       0  ]\
+                     [ list ssgnp rcworst_CCworst   0.630        0       0  ]\
+                     [ list ssgnp cworst_CCworst    0.630      125     125  ]\
+                     [ list ssgnp rcworst_CCworst_T 0.630      125     125  ]\
+                     [ list ssgnp rcworst_CCworst   0.630      125     125  ]\
+                     [ list tt    typical           0.700       85     105  ]\
+                             ]
 #
 # for testing use the below, to save on runtime:
 #                           proc   wiring             V        Tproc Tintcon
@@ -145,7 +156,7 @@ set debug_corners2 [list \
 
 #set desired_corners $lib_corners0p75
 #set desired_corners $debug_corners2
-set desired_corners $design_corners0p75
+set desired_corners [ concat $design_corners0p75 $low_voltage_corners ]
 
 proc gtr_produce_attributes { libname process_name filelistVar } {
    set fn "doc/${libname}.attribute.xml"
