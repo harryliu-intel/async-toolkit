@@ -25,10 +25,10 @@ proc gtr_lamb_area { args } {
     } else {
         set verbose 0
     }
-    echo $args
-    if { [info exists arg(-debug) ] } {
-      echo "INFO: $proc_name, Starting" 
-    }
+
+#    if { [info exists arg(-debug) ] } {
+      echo "INFO: $proc_name, Starting, args is $args" 
+#    }
     set depth $arg(-data_depth)
     set width $arg(-data_width)
     set tech_node $arg(-tech_node)
