@@ -58,19 +58,24 @@
   )
 
 (defun ImportOASLib (oasFileName libName)
-  (let (PDK_DIR cmd status CV)
+  (let (PDK_DIR cmd status CV layerMapFile propMapFile objMapFile)
     PDK_DIR = (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT")
+    (unless layerMapFile (sprintf layerMapFile "%s/share/Fulcrum/stream/strmout.layermap" PDK_DIR))
+    (unless propMapFile (sprintf propMapFile "%s/share/Fulcrum/stream/oasis_prop.map" PDK_DIR))
+    (unless objMapFile (sprintf objMapFile "%s/share/Fulcrum/stream/objectmap" PDK_DIR))
+
     cmd = (strcat "oasisin "
-                  "-library \"" libName "\" "
+                 "-library \"" libName "\" "
                   "-oasisFile \"" oasFileName "\" "
                   "-logFile \"oasisIn.log\" "
                   "-attachTechFileOfLib \"" TechLibName "\" "
-                  "-layerMap \"" PDK_DIR "/share/Fulcrum/stream/strmin.layermap\" "
-                  "-propMap  \"" PDK_DIR "/share/Fulcrum/stream/oasis_prop.map\" " 
-                  "-objectMap \"" PDK_DIR "/share/Fulcrum/stream/objectmap\" "
+                  "-layerMap \"" layerMapFile "\" "
+                  "-propMap \"" propMapFile "\" "
+                  "-objectMap \"" objMapFile "\" "
 		  "-textHeight \"0.01\" "
 		  "-enableColoring"
 		  )
+
     status = (shell cmd)
     (unless status (error "strmin failed\n"))
     (ddUpdateLibList)
