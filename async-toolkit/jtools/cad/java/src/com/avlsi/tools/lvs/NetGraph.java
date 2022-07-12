@@ -581,15 +581,17 @@ public final class NetGraph {
         public String toString () {
             return "NetNode: name=" + name + 
                 " edges=" + edges.size() + 
-                " visited=" + visited + 
-                " output=" + output +
+                (visited ? " visited" : "") +
+                (output ? " output" : "" ) +
+                (isPower ? " power" : "" ) +
+                (isGround ? " ground" : "") +
                 (inverse!=null ? " inverse=" + inverse.name.toString() : "") +
                 (inverseOf!=null ? " inverseOf=" + inverseOf.name.toString() : "") +
                 (interferingInverseOf!=null ? " interferingInverseOf=" +
                  interferingInverseOf.name.toString() : "") +
                 (feedbackFrom!=null ? " feedbackFrom=" + feedbackFrom.name.toString() : "") +
-                (nonFeedback ? " nonFeedback=" + nonFeedback : "") +
-                (passgate ? " passgate=" + passgate : "");
+                (nonFeedback ? " nonFeedback" : "") +
+                (passgate ? " passgate" : "");
         }
 
         /** Recursively search for paths from current node to rail/output NetNodes. */
@@ -1406,6 +1408,7 @@ public final class NetGraph {
         problems = new ArrayList();       
         nodes = new MultiSet<>();
         nostaticizers = new HashSet();
+        // BUG 28432: use power_net, ground_net directives
         Vdd = createNetNode(HierName.makeHierName("Vdd")); Vdd.isPower=true;
         GND = createNetNode(HierName.makeHierName("GND")); GND.isGround=true;
         defaultWidth  = 0;
@@ -1430,7 +1433,6 @@ public final class NetGraph {
                     final double defaultWidth,
                     final double defaultLength,
                     final Set nostaticizers) {
-
         if (commonNamespace != null) namespace = commonNamespace;
         else namespace = new AliasedSet(HierName.getComparator());
         if (exclusiveSets != null)
@@ -1506,8 +1508,8 @@ public final class NetGraph {
 
     /** Add edges and nodes of another NetGraph to this NetGraph, with name mapping. */
     public void addNetGraph(NetGraph netgraph, TreeMap map, boolean library) {
-        if (map == null) map = new TreeMap(); // start with empty map
-        else map = new TreeMap(map); // copy original map
+        assert map!=null : "Map cannot be null";
+        map = new TreeMap(map); // copy original map
         Iterator t = netgraph.getEdges().iterator();
         while (t.hasNext()) {
             NetEdge edge = (NetEdge) t.next();
@@ -2046,7 +2048,9 @@ public final class NetGraph {
             // CastDesign.getGateNetGraph, because we need to pass along
             // instantiation parameters.
             final NetGraph ng = new NetGraph(null, null, null,
-                                             Vdd.name, GND.name,
+                                             // BUG 28432: use power_net, ground_net directives of gate/stack cell.
+                                             // But since we use Vdd/GND in our gate/stack cells, this works for now.
+                                             HierName.makeHierName("Vdd"),HierName.makeHierName("GND"),
                                              defaultWidth, defaultLength, Collections.EMPTY_SET);
             ng.addCellInterfaceNetlist(ci, cfp, cad, parameters, true);
             ng.gateType = subName;
@@ -2097,6 +2101,8 @@ public final class NetGraph {
                     } else {
                         if (node.gate == null) {
                             node.gate = inst;
+                            if (verbose) System.err.println("makeCall attach gate " + inst.getType() +
+                                                            " to node " + node.name);
                         } else {
                             throw new RuntimeException
                                 ("A gate of type " + node.gate.getType() + 
@@ -2826,6 +2832,8 @@ public final class NetGraph {
         }
         if (n) map.put(gate.GND.name, GND.name);
         if (p) map.put(gate.Vdd.name, Vdd.name);
+        if (verbose && n) System.err.println("initializeMatchMapping map " + gate.GND.name + " to " + GND.name);
+        if (verbose && p) System.err.println("initializeMatchMapping map " + gate.Vdd.name + " to " + Vdd.name);
     }
 
     /**
@@ -3272,8 +3280,10 @@ public final class NetGraph {
 
     /** Debugging string. */
     public String toString () {
-        String s;
-        s = "Nodes(" + nodes.size() + ")\n";
+        String s="NetGraph";
+        if (gateType!=null) s+= " gateType=" + gateType;
+        s += " Vdd=" + Vdd.name + " GND=" + GND.name + "\n";
+        s += "Nodes(" + nodes.size() + ")\n";
         for (Iterator t = nodes.iterator(); t.hasNext(); ) s += " " + t.next() + "\n";
         Collection edges = getEdges();
         s += "Edges(" + edges.size() + ")\n";
