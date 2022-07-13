@@ -3,8 +3,8 @@
 ; action.  Returns the list of cells that passed the filter.
 (defun FindSubcells (@key (CV (geGetEditCellView))
                           (visited (makeTable "visited" nil))
-                          (filter nil) ; (filter CV) function
-                          (action nil) ; (action CV) function
+                          (filter nil) ; lambda function to filter cell types
+                          (action nil) ; lambda function to apply to cell types
                           (viewName nil) ; recurse to an alternate view
                           )
   (let (result master)
@@ -22,11 +22,7 @@
                )
       (when !filter || (apply filter (list CV))
             (printf "%s\n" CV->cellName)
-            (when action
-              (dbReopen CV "a")
-              (apply action (list CV))
-              (dbSave CV)
-              )
+            (when action (apply action (list CV)))
             result = (cons CV result)
             )
       )
@@ -37,14 +33,4 @@
 ; Filter and action functions for use with FindSubcells.
 leafCellFilter = (lambda (CV) (dbGetPropByName CV "LeafCell")->value=="TRUE")
 editCellAction = (lambda (CV) (cdsp4edit ?CV CV))
-addCellAction = (lambda (CV) (cdsp4add ?CV CV))
-
-; Recursively add pwell label to all cells with ndiff.
-; Change GNDNetName for different assumptions.
-labelPwellAction =
-(lambda (CV)
-  (when (setof x CV->shapes x->layerName=="ndiff")!=nil
-        (LaygenLabelPwell ?CV CV)
-        )
-  t
-  )
+addCellAction  = (lambda (CV) (cdsp4add ?CV CV))
