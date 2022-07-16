@@ -35,6 +35,7 @@
         (rdtUseFlops nil)        ; use flops instead of latches
         (rdtUserTcl nil)         ; optional tcl file
         (scanMode nil)           ; optional scan mode string
+        (useUPFTemplate nil)     ; optional upf template
         (perfCorner "max")       ; primary corner for performance
         )
   (let (TEMP WDIR)
@@ -54,7 +55,7 @@
                       ?abstractCellName abstractCellName ?targetCellName targetCellName
                       ?noPowerFill noPowerFill ?timingDriven timingDriven ?colorGrid colorGrid
                       ?tau tau ?ecoIter ecoIter ?rdtUseFlops rdtUseFlops ?rdtUserTcl rdtUserTcl
-                      ?scanMode scanMode ?Mem Mem
+                      ?scanMode scanMode ?Mem Mem ?useUPFTemplate useUPFTemplate
                       ?thresholds thresholds ?perfCorner perfCorner)
 
     ; copy CV to importView so in-place pins don't need to wait on router to finish
@@ -110,6 +111,7 @@
         (rdtUseFlops nil)        ; use flops instead of latches
         (rdtUserTcl nil)         ; optional tcl file
         (scanMode nil)           ; optional scan mode string
+        (useUPFTemplate nil)     ; optional upf template
         (perfCorner "max")       ; primary perfCorner for performance
         (Mem (nrGetMaxHeapSize)) ; memory to use
         )
@@ -165,7 +167,7 @@
                    ?timingDriven timingDriven ?softMacro softMacro
                    ?abstractCellName abstractCellName ?targetCellName targetCellName
                    ?tau tau ?ecoIter ecoIter ?rdtUseFlops rdtUseFlops ?rdtUserTcl rdtUserTcl
-                   ?scanMode scanMode ?Mem Mem ?doHierDef doHierDef
+                   ?scanMode scanMode ?Mem Mem ?doHierDef doHierDef ?useUPFTemplate useUPFTemplate
                    ?thresholds thresholds ?perfCorner perfCorner)
 
     ; export Verilog
@@ -390,6 +392,7 @@
         (rdtUseFlops nil)        ; use flops instead of latches
         (rdtUserTcl nil)         ; optional tcl file
         (scanMode nil)           ; optional scan mode string
+        (useUPFTemplate nil)     ; optional upf template
         (perfCorner "max")       ; primary perfCorner for performance
         (Mem (nrGetMaxHeapSize)) ; memory to use
         )
@@ -429,6 +432,7 @@
     (when rdtUseFlops (fprintf file "--rdt-use-flops=1\n"))
     (when rdtUserTcl (fprintf file "--rdt-user-tcl=%s\n" (PathMakePathAbsolute rdtUserTcl)))
     (when scanMode (fprintf file "--scan-mode=%s\n" scanMode))
+    (when useUPFTemplate (fprintf file "--use-upf-template=%d\n" useUPFTemplate))
     (fprintf file "--base=%s\n" (GetCastCellName CV->cellName))
     (fprintf file "--csp-register-width=1025\n")
     (fprintf file "--pv-generate-sdf=1\n")
