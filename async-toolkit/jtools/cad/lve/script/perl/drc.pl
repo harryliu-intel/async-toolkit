@@ -192,7 +192,6 @@ $ENV{'ICV_SCRIPT'} 'icv' $all_includes \\
 -D _drPROJECT=_drnone \\
 -D _drPROCESSNAME=$process_name \\
 -D _drPROCESS=_dr$dotprocess_name \\
--D _drFRONTEND=core \\
 -D _drSELECT_$flow \\
 -f $format \\
 ET
