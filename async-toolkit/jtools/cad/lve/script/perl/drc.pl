@@ -135,7 +135,6 @@ sub run_drc {
    my $cmd_config="$pdk_root/share/Fulcrum/icv/drc/drc_cmd.config";
    my $process_name="";
    my $dotprocess_name="";
-   my $layerstack="";
 
    $runset="";
    open(CMD_CFG, "$cmd_config") or die "Cannot read $cmd_config\n";
@@ -145,13 +144,10 @@ sub run_drc {
 	   $process_name=$data[1];
        } elsif($data[0] =~ "DOTP_NAME") {
 	   $dotprocess_name=$data[1];
-       } elsif($data[0] =~ "LAYERSTACK") {
-	   $layerstack=$data[1];
        }
    }
    chomp $process_name;
    chomp $dotprocess_name;
-   chomp $layerstack;
    close(CMD_CFG);
 
    #check if flow is valid
@@ -175,12 +171,8 @@ sub run_drc {
        ".",
        "$pdk_root/share/Fulcrum/icv/drc",
        "$pdk_root/share/Fulcrum/icv/lvs",
-       "$icv_runset_path/PXL_ovrd",
        "$icv_runset_path/PXL",
        "$ENV{PDK_CPDK_PATH}/libraries/icv/libcells",
-       "$icv_runset_path/util/dot1/HIP",
-       "$icv_runset_path/util/Cadnav",
-       "$icv_runset_path/util/denplot",
        "$run_dir"
    );
    my $all_includes = join(" \\\n", map { "-I $_" } @all_includes);
@@ -200,7 +192,6 @@ $ENV{'ICV_SCRIPT'} 'icv' $all_includes \\
 -D _drPROJECT=_drnone \\
 -D _drPROCESSNAME=$process_name \\
 -D _drPROCESS=_dr$dotprocess_name \\
--D _drLAYERSTACK=_dr$layerstack \\
 -D _drFRONTEND=core \\
 -D _drSELECT_$flow \\
 -f $format \\

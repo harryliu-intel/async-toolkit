@@ -326,12 +326,8 @@ sub prepare_clf_file {
        @include_before,
        ".",
        "$pdk_root/share/Fulcrum/icv/lvs",
-       "$icv_path/PXL_ovrd",
        "$icv_path/PXL",
        "$icv_path/$rs_path",
-       "$icv_path/util/dot1/HIP",
-       "$icv_path/util/Cadnav",
-       "$icv_path/util/denplot",
        "$icv_path/../../libraries/icv/libcells",
        "$working_dir"
    );
