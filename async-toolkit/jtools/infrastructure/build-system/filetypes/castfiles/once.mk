@@ -1721,6 +1721,7 @@ $(ROOT_TARGET_DIR)/%/drc.err: $(ROOT_TARGET_DIR)/%/$(GDS2_TARGET) $$(call GET_DF
 	  --working-dir="$$drc_dir" \
 	  --threads=$(DRCLVS_THREADS) \
 	  --gds2-file='$(@D)/cell.gds2' \
+	  --oasis=0 \
 	  --flow=$(DRC_FLOW) \
 	  --icv-runset-path=$(ICV_RUNSET_PATH) \
 	  --icv-options=$(DRC_EXTRA_OPTIONS) \
