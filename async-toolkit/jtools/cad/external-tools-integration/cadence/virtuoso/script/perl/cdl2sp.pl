@@ -14,12 +14,13 @@ use Data::Dumper qw(Dumper);
 $" = " ";
 
 # options and defaults
-$lgf      = 0;        # emit LGF file format
-$grid     = 1e-10;    # convert to Laygen units for LGF
-$length   = 14e-9;    # transistor length
-$gridW    = 30e-9;    # rounding grid for width
-$maxNmosW = 3*$gridW; # maximum fold width for NMOS
-$maxPmosW = 3*$gridW; # maximum fold width for PMOS
+my $lgf      = 0;        # emit LGF file format
+my $grid     = 1e-10;    # convert to Laygen units for LGF
+my $length   = 14e-9;    # transistor length
+my $gridW    = 30e-9;    # rounding grid for width
+my $maxNmosW = 3*$gridW; # maximum fold width for NMOS
+my $maxPmosW = 3*$gridW; # maximum fold width for PMOS
+my $top;
 
 # set up node renaming to match Laygen expectations
 my $node_num=1;
@@ -30,7 +31,8 @@ $map_node{"GND"}="vssx";
 # usage banner
 sub usage() {
     die "Usage: $0\n" .
-        " [--lgf]\n" .
+        " [--lgf=$lgf]\n" .
+        " [--top=cellname]\n" .
         " [--grid=$grid]\n" .
         " [--length=$length] [--gridW=$gridW]\n" .
         " [--maxNmosW=$maxNmosW] [--maxPmosW=$maxPmosW]\n" .
@@ -42,6 +44,7 @@ while (defined $ARGV[0] && $ARGV[0] =~ /^--(.*)=(.*)/) {
     $flag = $1;
     $val = $2;
     if    ($flag eq "lgf")      { $lgf = $val; }
+    elsif ($flag eq "top")      { $top = $val; }
     elsif ($flag eq "length")   { $length = $val; }
     elsif ($flag eq "grid")     { $grid = $val; }
     elsif ($flag eq "gridW")    { $gridW = $val; }
@@ -50,10 +53,9 @@ while (defined $ARGV[0] && $ARGV[0] =~ /^--(.*)=(.*)/) {
     else { usage(); }
     shift @ARGV;
 }
-@ARGV == 3 or usage();
-my $top   = "$ARGV[0]";
-my $f_in  = "$ARGV[1]";
-my $f_out = "$ARGV[2]";
+@ARGV == 2 or usage();
+my $f_in  = "$ARGV[0]";
+my $f_out = "$ARGV[1]";
 $grid=1 unless ($lgf); # SP uses SI units
 
 # report a fatal error
@@ -88,6 +90,17 @@ while ($line) {
     my $full = $line;
     if ($line =~ s/^\.SUBCKT\s+//i || $line =~ s/^\.SUBCIRCUIT\s+//i) {
 
+        # clear everything
+        if (!defined($top)) {
+            @out=();
+            %portnodes=();
+            %localnodes=();
+            %g_nodes=();
+            %sd_nodes=();
+            %b_nodes=();
+            $num_mos=0;
+        }
+
         # Begin Subcircuit Definition
         my @parameters = ();
 
@@ -100,7 +113,7 @@ while ($line) {
             } else {
                 # Node argument
                 my $net=rename_net($arg);
-                $portnodes{$net}=1 if ($cell eq $top);
+                $portnodes{$net}=1 if (!defined($top) || $cell eq $top);
             }
         }
 
@@ -126,7 +139,7 @@ while ($line) {
         $gate   = rename_net($gate);
         $source = rename_net($source);
         $bulk   = rename_net($bulk);
-        if ($cell eq $top) {
+        if (!defined($top) || $cell eq $top) {
             $localnodes{$drain}=1;
             $localnodes{$source}=1;
             $localnodes{$gate}=1;
@@ -175,7 +188,7 @@ while ($line) {
             $l2 = $parameters{"l"}/$grid;
             $type =~ /^(.)/;
             my $tc = $1;
-            if ($cell eq $top) {
+            if (!defined($top) || $cell eq $top) {
                 if ($lgf) {
                     push @out, "Device M${num_mos} nets=[ $drain $gate $source $bulk ] " .
                         "type=$tc model=$type w=$w2 l=$l2\n";
