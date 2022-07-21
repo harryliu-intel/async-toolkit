@@ -176,7 +176,7 @@ sub run_drc {
        "$run_dir"
    );
    my $all_includes = join(" \\\n", map { "-I $_" } @all_includes);
-
+   
    print CF <<ET;
 #!/usr/intel/bin/tcsh -f
 setenv _ICV_RSH_COMMAND $ENV{'FULCRUM_PACKAGE_ROOT'}/bin/icvrsh
@@ -195,6 +195,9 @@ $ENV{'ICV_SCRIPT'} 'icv' $all_includes \\
 -D _drSELECT_$flow \\
 -f $format \\
 ET
+   if (defined  $ENV{'LAYERSTACK'}) {
+     print CF "-D _drLAYERSTACK=$ENV{'LAYERSTACK'} \\\n";
+   }
    if ($jobs > 0) {
      print CF "-dp \\\n" .
               "-dphosts \$NB_PARALLEL_JOB_HOSTS \\\n";
@@ -202,6 +205,7 @@ ET
      print CF "-dp$threads \\\n" .
               "-turbo \\\n";
    }
+    
 
    print CF "$icv_options \\\n" if (defined $icv_options ne "");
    if(-r $gdsii) {
