@@ -1,7 +1,8 @@
 #!/usr/intel/bin/perl -w
 
-# Translate CDL syntax to SP or LGF syntax for LayGen
-# Folds transistors
+# Translate CDL syntax netlist to SP or LGF syntax for LayGen.  Folds
+# wide transistors.  Detects and declares input, output, inout pins.
+#
 # Copyright 2019 Intel
 # Authors: Andrew Lines
 
@@ -18,15 +19,13 @@ my $lgf      = 0;        # emit LGF file format
 my $grid     = 1e-10;    # convert to Laygen units for LGF
 my $length   = 14e-9;    # transistor length
 my $gridW    = 30e-9;    # rounding grid for width
-my $maxNmosW = 3*$gridW; # maximum fold width for NMOS
-my $maxPmosW = 3*$gridW; # maximum fold width for PMOS
+my $maxNmosW = 2*$gridW; # maximum fold width for NMOS for G1I
+my $maxPmosW = 2*$gridW; # maximum fold width for PMOS for G1I
 my $top;
 
 # set up node renaming to match Laygen expectations
 my $node_num=1;
 my %map_node;
-$map_node{"Vdd"}="vcc";
-$map_node{"GND"}="vssx";
 
 # usage banner
 sub usage() {
@@ -68,7 +67,7 @@ my $newtop = $f_out;
 if ($lgf) { $newtop =~ s/\.lgf$//g; }
 else      { $newtop =~ s/\.sp$//g; }
 
-# Do linewise translation of CDL to SNP
+# Do linewise translation of CDL to SP/LGF
 open IN,  "<$f_in"  or die "Can't read $f_in\n";
 $line = <IN>;
 $. = 0;
