@@ -219,10 +219,10 @@ my @inout;
 my @input;
 my @output;
 foreach my $node (sort keys %portnodes) {
-    if    (defined($b_nodes{$node})) { push @inout, $node; } # TODO: power?
-    elsif (defined($g_nodes{$node}) && defined($sd_nodes{$node})) { push @inout, $node; }
-    elsif (defined($g_nodes{$node})) { push @input, $node; }
+    if (defined($b_nodes{$node})) {} # power supplies are defined in arch file
+#   elsif (defined($g_nodes{$node}) && defined($sd_nodes{$node})) { push @inout, $node; }
     elsif (defined($sd_nodes{$node})) { push @output, $node; }
+    elsif (defined($g_nodes{$node})) { push @input, $node; }
 }
 
 # output
