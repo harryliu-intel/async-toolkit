@@ -26,11 +26,18 @@
 (defun GetHeightAndVariant (@key (CV (geGetEditCellView)))
   (let (CopyExact h v)
     CopyExact = (dbGetPropByName CV "CopyExact")->value
-    (when CopyExact && ((strncmp CopyExact "g1i" 3)==0 || (strncmp CopyExact "g1m" 3)==0)
-      h = (substring CopyExact 13 1)
-      v = (substring CopyExact 12 1)
-      )
-    (list h v)
+    (cond (CopyExact && (strncmp CopyExact "g1m" 3)==0
+                     h = (substring CopyExact 13 1)
+                     v = (substring CopyExact 12 1)
+                     oy = TrackPitch ; G1M cells are offset by one row from origin
+                     )
+          (CopyExact && (strncmp CopyExact "g1i" 3)==0
+                     h = (substring CopyExact 13 1)
+                     v = (substring CopyExact 12 1)
+                     oy = 0 ; G1I cells are not offset from origin
+                     )
+          )
+    (list h v oy)
     )
   )
 
@@ -40,9 +47,9 @@
     hv = (GetHeightAndVariant ?CV CV)
     h = (car hv)
     v = (cadr hv)
+    oy = (caddr hv)
     (cond (v
            ox=1.5*GridPolyPitch
-           oy=TrackPitch ; NOTE: double height cells align Vdd stripe to origin in 7nm
            gx=GridPolyPitch
            gy=TrackPitch*(if h=="n" && CV->viewName=="floorplan" 1 2)
            (cond (v=="x" gx=GridPolyPitch gy=TrackPitch ox=0.5*GridPolyPitch oy=0) ; halo cells
