@@ -763,7 +763,7 @@ useICV = t
       x = (car  inst->xy)
       y = (cadr inst->xy)
       short = (substring type 13 1)=="n"
-      flip = (if (dbFindProp inst->cellView "YAlignOffset")->value==TrackPitch 1 0)
+      flip = (if (dbFindProp inst->master "YAlignOffset")->value==TrackPitch 1 0)
       misalign = (posmod (round y/TrackPitch) 2)!=flip
       (when std && short && misalign
             (cond (inst->orient=="R0"   inst->orient="MX"   inst->xy=x:y+TrackPitch)
