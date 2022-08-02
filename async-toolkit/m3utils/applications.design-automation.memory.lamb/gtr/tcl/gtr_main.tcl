@@ -33,7 +33,6 @@ if { ! [info exists ::env(GTR_HOME) ] } {
 
 source $::env(GTR_HOME)/tcl/gtr_util.tcl
 source $::env(GTR_HOME)/tcl/gtr_tech.tcl
-source $::env(GTR_HOME)/tcl/gtr_read_lib.tcl
 source $::env(GTR_HOME)/tcl/gtr_lamb_area.tcl
 source $::env(GTR_HOME)/tcl/gtr_lamb_power.tcl
 source $::env(GTR_HOME)/tcl/gtr_lamb_gen_sv.tcl
