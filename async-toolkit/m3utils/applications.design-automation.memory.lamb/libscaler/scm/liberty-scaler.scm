@@ -29,6 +29,12 @@
  
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+
+;; Scheme doesnt have pow
+(define (pow a b)
+  (exp (* b (log a))))
+;; would be better to use Math.pow but TBD
+
 ;;
 ;; Hartvig complains (7/31/2022) that slow corner is about twice as slow
 ;; as reasonable.  Must fix.  Marked (**) below.
@@ -219,7 +225,7 @@
 
     (let* ((base-delay-ratio   (cadr (assoc 'from-n7-delay-scaling tech)))
            (volt-delay-scaler  (cadr (assoc 'volt-delay-scaling tech)))
-           (temp-delay-scaler  (cadr (assoc 'volt-delay-scaling tech)))
+           (temp-delay-scaler  (cadr (assoc 'temp-delay-scaling tech)))
            (proc-delay-scaler  (cadr (assoc 'proc-sigma-delay-scaling tech)))
 
            (metal-r-delay-scaler
