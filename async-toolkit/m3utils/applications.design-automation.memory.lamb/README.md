@@ -100,7 +100,7 @@ For example:
 ```
 /p/hdk/bin/cth_psetup -p tfc -tool ship -cfg tfc_ipde_n3.cth -ward BUILD/ship
 ship.pl -tag testtag -ip_type hip -test -skip_stages archive \
-  -block cdp_lamb_n3ehd_1r1w1c_4d_10b -no_viewgen -source ../cdp_lamb_n3ehd_1r1w1c_4d_10b
+  -block cdp_lamb_n3ehd_1r1w1c_4d_10b -source ../cdp_lamb_n3ehd_1r1w1c_4d_10b
 ```
 
 Omit `-skip_stages archive` and `-test` to actually perform the release to the `$PROJ_ARCHIVE` area. Specify an arc tag based off
