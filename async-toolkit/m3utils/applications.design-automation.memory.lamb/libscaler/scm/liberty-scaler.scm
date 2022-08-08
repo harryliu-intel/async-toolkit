@@ -29,13 +29,27 @@
  
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (default-sigma-delay-scaling       sigma) (+ 1 (/ sigma -6)))
+
+;; Scheme doesnt have pow
+(define (pow a b)
+  (exp (* b (log a))))
+;; would be better to use Math.pow but TBD
+
+;;
+;; Hartvig complains (7/31/2022) that slow corner is about twice as slow
+;; as reasonable.  Must fix.  Marked (**) below.
+;;
+
+;;(define (default-sigma-delay-scaling       sigma) (+ 1 (/ sigma -6)))
+(define (default-sigma-delay-scaling       sigma) (+ 1 (/ sigma -12))) ;; (**)
 
 (define (default-metal-sigma-delay-scaling sigma) (+ 1 (/ sigma -24)))
 
-(define (default-volt-delay-scaling            v) (/ 1 v))
+;;(define (default-volt-delay-scaling            v) (/ 1 v))
+(define (default-volt-delay-scaling            v) (pow v -0.8)) ;; (**)
 
-(define (default-temp-delay-scaling           tk) (pow tk 0.5))
+;;(define (default-temp-delay-scaling           tk) (pow tk 0.5)) ;; (**)
+(define (default-temp-delay-scaling           tk) (pow tk 0.3))
 ;; temp in kelvin here
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -89,7 +103,8 @@
   `((tech-name                    "n3e")
     (from-n7-cap-scaling          0.5)
 
-    (from-n7-delay-scaling        0.7)
+;;    (from-n7-delay-scaling        0.7)
+    (from-n7-delay-scaling        0.60) ;; (**)
     
     (volt-delay-scaling          ,default-volt-delay-scaling)
 
@@ -109,7 +124,8 @@
   `((tech-name                    "n3b")
     (from-n7-cap-scaling          0.55)
 
-    (from-n7-delay-scaling        0.8)
+;;    (from-n7-delay-scaling        0.8)
+    (from-n7-delay-scaling        8888) ;; AKA dont-use!
     
     (volt-delay-scaling          ,default-volt-delay-scaling)
 
@@ -209,7 +225,7 @@
 
     (let* ((base-delay-ratio   (cadr (assoc 'from-n7-delay-scaling tech)))
            (volt-delay-scaler  (cadr (assoc 'volt-delay-scaling tech)))
-           (temp-delay-scaler  (cadr (assoc 'volt-delay-scaling tech)))
+           (temp-delay-scaler  (cadr (assoc 'temp-delay-scaling tech)))
            (proc-delay-scaler  (cadr (assoc 'proc-sigma-delay-scaling tech)))
 
            (metal-r-delay-scaler
