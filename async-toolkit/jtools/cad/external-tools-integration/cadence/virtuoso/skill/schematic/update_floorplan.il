@@ -93,6 +93,7 @@
     (when (fileTimeModified netFile)
       ; mark this as a cell which exists in CAST
       (dbReplaceProp CV "CastCell" "boolean" t)
+
       ; process netlist.il
       (load netFile)
       w = NetListTable["width"]
@@ -129,50 +130,49 @@
                   )
           )
         )
+      )
 
-      ; detect leaf cells
-      isLeaf=!realInstances
-      (when (dbGetPropByName CV "LeafCell")
-        isLeaf=(dbGetPropByName CV "LeafCell")->value=="TRUE"
-        )
-      isRouted = (dbGetPropByName CV "routed")->value=="TRUE"
+    ; detect leaf cells
+    isLeaf=!realInstances
+    (when (dbGetPropByName CV "LeafCell")
+      isLeaf=(dbGetPropByName CV "LeafCell")->value=="TRUE"
+      )
+    isRouted = (dbGetPropByName CV "routed")->value=="TRUE"
 
-      ; delete prBoundary of non-routed cells
-      (when CV->viewName=="floorplan" && !isRouted && CV->prBoundary
-            (dbDeleteObject CV->prBoundary)
-            )
+    ; delete prBoundary of non-routed cells
+    (when CV->viewName=="floorplan" && !isRouted && CV->prBoundary
+          (dbDeleteObject CV->prBoundary)
+          )
 
-      ; find layout view
-      lCV=nil
-      (when (ddGetObj CV->libName CV->cellName "layout")
-        lCV=(dbOpenCellViewByType CV->libName CV->cellName "layout" "maskLayout" "r"))
+    ; find layout view
+    lCV=(ReadCV CV->libName CV->cellName "layout")
 
-      ; update prBoundary of leaf routed cells from layout view if it exists
-      (when CV->viewName=="floorplan" && isRouted && (isLeaf || midPRB)
-        ; use prBoundary of layout view if it exists
-        (when lCV points=lCV->prBoundary->points)
-        ; otherwise pick prBoundary appropriately
-        (unless points
-          (unless w&&h (error "undetermined height or width in cell %s" CV->cellName))
+    ; update prBoundary of leaf routed cells from layout view if it exists
+    (when CV->viewName=="floorplan" && (isRouted && isLeaf || midPRB)
+      ; use prBoundary of layout view if it exists
+      (when lCV points=lCV->prBoundary->points)
+      ; otherwise pick prBoundary appropriately
+      (unless points
+        (when w&&h
           points=(list 0:0 w:0 w:h 0:h 0:0)
           )
-        (when CV->prBoundary (dbDeleteObject CV->prBoundary))
-        (when points (dbCreatePRBoundary CV points))
         )
+      (when CV->prBoundary (dbDeleteObject CV->prBoundary))
+      (when points (dbCreatePRBoundary CV points))
+      )
 
-      ; set alignment based on LCD alignment of subcells
-      (when CV->instances
-        gx = (dbGetPropByName CV "XAlignGrid")->value
-        gy = (dbGetPropByName CV "YAlignGrid")->value
-        ox = (dbGetPropByName CV "XAlignOffset")->value
-        oy = (dbGetPropByName CV "YAlignOffset")->value
-        (unless gx gx=0)
-        (unless gy gy=0)
-        (unless ox ox=0)
-        (unless oy oy=0)
-        align = (GetLCDAlignment ?x gx ?y gy ?instances CV->instances)
-        (SetCellAlignment align ox:oy ?CV CV)
-        )
+    ; set alignment based on LCD alignment of subcells
+    (when CV->instances
+      gx = (dbGetPropByName CV "XAlignGrid")->value
+      gy = (dbGetPropByName CV "YAlignGrid")->value
+      ox = (dbGetPropByName CV "XAlignOffset")->value
+      oy = (dbGetPropByName CV "YAlignOffset")->value
+      (unless gx gx=0)
+      (unless gy gy=0)
+      (unless ox ox=0)
+      (unless oy oy=0)
+      align = (GetLCDAlignment ?x gx ?y gy ?instances CV->instances)
+      (SetCellAlignment align ox:oy ?CV CV)
       )
 
     ; save
