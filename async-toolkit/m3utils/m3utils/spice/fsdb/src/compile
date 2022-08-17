@@ -1,8 +1,18 @@
-#g++ -g -o read_analog -I /p/cth/rtl/cad/x86-64_linux44/synopsys/verdi3/R-2020.12/share/FsdbReader/ read_analog.cpp -L /p/cth/rtl/cad/x86-64_linux44/synopsys/verdi3/R-2020.12/share/FsdbReader/linux64/ -lnffr -lnsys -ldl -lz -Wl,-rpath=/p/cth/rtl/cad/x86-64_linux44/synopsys/verdi3/R-2020.12/share/FsdbReader/linux64/
+#!/bin/sh -x
 
-#g++ -g -o read_mix -I /p/cth/rtl/cad/x86-64_linux44/synopsys/verdi3/R-2020.12/share/FsdbReader/ read_mix.cpp -L /p/cth/rtl/cad/x86-64_linux44/synopsys/verdi3/R-2020.12/share/FsdbReader/linux64/ -lnffr -lnsys -ldl -lz -Wl,-rpath=/p/cth/rtl/cad/x86-64_linux44/synopsys/verdi3/R-2020.12/share/FsdbReader/linux64/
+LIBROOT=/p/cth/rtl/cad/x86-64_linux44/synopsys/verdi3
+#VERSION=R-2020.12
+VERSION=T-2022.06
 
-g++ -g -o read_nanosim -I /p/cth/rtl/cad/x86-64_linux44/synopsys/verdi3/R-2020.12/share/FsdbReader/ read_nanosim.cpp -L /p/cth/rtl/cad/x86-64_linux44/synopsys/verdi3/R-2020.12/share/FsdbReader/linux64/ -lnffr -lnsys -ldl -lz -Wl,-rpath=/p/cth/rtl/cad/x86-64_linux44/synopsys/verdi3/R-2020.12/share/FsdbReader/linux64/
+INCLUDE_DIR=${LIBROOT}/${VERSION}/share/FsdbReader/
+LIB_DIR=${LIBROOT}/${VERSION}/share/FsdbReader/linux64/
+SO_DIR=${LIBROOT}/${VERSION}/share/FsdbReader/linux64/
 
-g++ -g -o nanosimrd -I /p/cth/rtl/cad/x86-64_linux44/synopsys/verdi3/R-2020.12/share/FsdbReader/ nanosimrd.cpp -L /p/cth/rtl/cad/x86-64_linux44/synopsys/verdi3/R-2020.12/share/FsdbReader/linux64/ -lnffr -lnsys -ldl -lz -Wl,-rpath=/p/cth/rtl/cad/x86-64_linux44/synopsys/verdi3/R-2020.12/share/FsdbReader/linux64/
+#g++ -g -o read_analog -I ${INCLUDE_DIR} read_analog.cpp -L ${LIB_DIR} -lnffr -lnsys -ldl -lz -Wl,-rpath=${SO_DIR}
+
+#g++ -g -o read_mix -I ${INCLUDE_DIR} read_mix.cpp -L ${LIB_DIR} -lnffr -lnsys -ldl -lz -Wl,-rpath=${SO_DIR}
+
+g++ -g -o read_nanosim -I ${INCLUDE_DIR} read_nanosim.cpp -L ${LIB_DIR} -lnffr -lnsys -ldl -lz -Wl,-rpath=${SO_DIR}
+
+g++ -g -o nanosimrd -I ${INCLUDE_DIR} nanosimrd.cpp -L ${LIB_DIR} -lnffr -lnsys -ldl -lz -Wl,-rpath=${SO_DIR}
 
