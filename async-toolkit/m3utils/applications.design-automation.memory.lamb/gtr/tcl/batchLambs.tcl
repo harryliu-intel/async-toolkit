@@ -112,8 +112,6 @@ proc lambRange { typelist minWidth minDepth maxWidth maxDepth } {
   return $lamblist
 }
 
-set cheetahProject tfc
-set cheetahConfig tfc_ipde_n3
 
 package require cmdline
 set options [list \
@@ -122,6 +120,8 @@ set options [list \
    {maxdepth.arg  0  "use specified minimum depth"} \
    {minwidth.arg  0  "use specified minimum depth"} \
    {maxwidth.arg  0  "use specified minimum depth"} \
+   {cheetahProject.arg  tfc  "use specified Cheetah2 project"} \
+   {cheetahConfig.arg   tfc_ipde_n3 "use specified Cheetah2 config"} \
    {qslot.arg  /bfn/fe  "use specified qslot"} \
    [list nbqueue.arg   $::env(EC_SITE)_normal  "use specified NB queue"] \
    {archive  0 "archive SHIP results to tag based on git configuration"} \
@@ -141,6 +141,8 @@ try {
 
 set nbqueue $params(nbqueue)
 set qslot  $params(qslot)
+set cheetahProject $params(cheetahProject)
+set cheetahConfig $params(cheetahConfig)
 
 
 if {  [string length $params(lf)] > 0 } {
