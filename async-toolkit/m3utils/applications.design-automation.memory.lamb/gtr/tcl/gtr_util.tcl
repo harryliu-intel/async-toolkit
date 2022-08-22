@@ -179,6 +179,7 @@ proc gtr_produce_attributes { libname process_name filelistVar } {
    puts $af "<heml>4</heml>"
    puts $af "<hpml>6</hpml>"
    puts $af "<hsml>4</hsml>"
+   puts $af "<hip_spec_dir_compliant>no</hip_spec_dir_compliant>"
    puts $af "<lay_iface_type>IPN3M18CU-IP</lay_iface_type>"
    puts $af "<lay_integration_type>APRB_H169P51</lay_integration_type>"
    puts $af "</attributes>"
