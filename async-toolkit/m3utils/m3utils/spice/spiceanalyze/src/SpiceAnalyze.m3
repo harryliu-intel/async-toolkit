@@ -27,7 +27,7 @@ IMPORT NodeProperty;
 IMPORT NodePropertySet AS NdProps;
 IMPORT ElementProperty;
 IMPORT ElementPropertySet AS EtProps;
-IMPORT TextUtils;
+IMPORT CitTextUtils AS TextUtils;
 IMPORT Text;
 IMPORT CktGraphDfs AS Dfs;
 IMPORT FetArray;

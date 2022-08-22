@@ -38,7 +38,7 @@ IMPORT Tr0;
 IMPORT DataBlock;
 IMPORT RegExList;
 IMPORT RegEx;
-IMPORT TextUtils;
+IMPORT CitTextUtils AS TextUtils;
 IMPORT Fsdb;
 IMPORT TraceFile, FileNamer;
 IMPORT TempReader;

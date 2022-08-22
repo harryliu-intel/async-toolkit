@@ -12,7 +12,7 @@ FROM Fmt IMPORT F, Int;
 IMPORT OSError;
 IMPORT FileWr;
 IMPORT AL;
-IMPORT TextUtils;
+IMPORT CitTextUtils AS TextUtils;
 IMPORT Thread;
 IMPORT TextCardTbl;
 

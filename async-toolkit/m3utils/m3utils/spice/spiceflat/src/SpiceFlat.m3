@@ -15,7 +15,7 @@ IMPORT TextSeq;
 IMPORT TextCard;
 IMPORT TextCardArraySort;
 IMPORT TextArraySort;
-IMPORT TextUtils, Integer, Text;
+IMPORT CitTextUtils AS TextUtils, Integer, Text;
 IMPORT TextSpiceInstanceSetTbl;
 IMPORT SpiceInstance, SpiceInstanceSetDef;
 IMPORT SpiceInstanceSet;

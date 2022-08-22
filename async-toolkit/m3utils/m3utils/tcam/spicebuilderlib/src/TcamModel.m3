@@ -7,7 +7,7 @@ IMPORT Word;
 IMPORT Dims;
 IMPORT Debug;
 FROM Fmt IMPORT F, Int, Bool; IMPORT Fmt;
-IMPORT TextUtils;
+IMPORT CitTextUtils AS TextUtils;
 
 CONST LR = Fmt.LongReal;
 

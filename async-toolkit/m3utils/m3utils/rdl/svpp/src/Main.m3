@@ -1,7 +1,7 @@
 MODULE Main;
 IMPORT Stdio, Rd, Wr;
 IMPORT RegEx;
-IMPORT Text, TextUtils;
+IMPORT Text, CitTextUtils AS TextUtils;
 IMPORT FileRd;
 IMPORT Thread;
 IMPORT Fmt; FROM Fmt IMPORT F;

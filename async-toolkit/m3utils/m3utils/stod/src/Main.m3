@@ -10,7 +10,7 @@ IMPORT ProcUtils;
 IMPORT Lex;
 IMPORT TextTextTbl;
 FROM Fmt IMPORT F, Int, LongReal, Pad;
-IMPORT RegEx, TextUtils;
+IMPORT RegEx, CitTextUtils AS TextUtils;
 IMPORT CardSetDef;
 IMPORT Wr, FileWr;
 

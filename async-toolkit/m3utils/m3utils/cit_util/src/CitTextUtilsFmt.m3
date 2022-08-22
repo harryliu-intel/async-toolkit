@@ -21,7 +21,7 @@
 (*                                                                           *)
 (* $Id: TextUtilsFmt.m3,v 1.1 2000/10/27 07:27:09 mika Exp $ *)
 
-MODULE TextUtilsFmt EXPORTS TextUtils;
+MODULE CitTextUtilsFmt EXPORTS CitTextUtils;
 IMPORT TextList;
 IMPORT Text;
 
@@ -56,4 +56,4 @@ PROCEDURE StripNulls(list : TextList.T) : TextList.T =
     RETURN res
   END StripNulls;
 
-BEGIN END TextUtilsFmt.
+BEGIN END CitTextUtilsFmt.

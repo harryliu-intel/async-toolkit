@@ -15,7 +15,7 @@ IMPORT TextList;
 IMPORT Pathname;
 IMPORT Gox;
 IMPORT DrawnWidth;
-FROM TextUtils IMPORT ToLower;
+FROM CitTextUtils IMPORT ToLower;
 
 <*FATAL Thread.Alerted*>
 

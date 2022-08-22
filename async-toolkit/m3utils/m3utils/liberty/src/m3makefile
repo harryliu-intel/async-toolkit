@@ -91,7 +91,7 @@ SchemeStubs ("Rd")
 
 SchemeStubs ("Pickle")
 
-SchemeStubs ("TextUtils")
+SchemeStubs ("CitTextUtils")
 SchemeStubs ("Text")
 SchemeStubs ("TextList")
 

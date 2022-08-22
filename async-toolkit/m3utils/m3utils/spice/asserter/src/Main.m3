@@ -13,7 +13,7 @@ IMPORT IO, Process;
 IMPORT OSError, AL;
 IMPORT Pathname;
 IMPORT Thread;
-IMPORT TextUtils;
+IMPORT CitTextUtils AS TextUtils;
 IMPORT RefSeq;
 IMPORT SimMeasurement;
 IMPORT FileWr, Wr;

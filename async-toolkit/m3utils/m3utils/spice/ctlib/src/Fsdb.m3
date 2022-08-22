@@ -11,7 +11,7 @@ IMPORT Debug;
 FROM Fmt IMPORT F, Int, LongReal;
 IMPORT TextReader;
 IMPORT Text;
-IMPORT TextUtils, Lex, FloatMode;
+IMPORT CitTextUtils AS TextUtils, Lex, FloatMode;
 IMPORT Scan;
 IMPORT LongRealSeq AS LRSeq;
 IMPORT Word;

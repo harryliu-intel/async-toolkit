@@ -24,7 +24,7 @@ IMPORT RefSeq;
 IMPORT Lex, FloatMode, OSError;
 IMPORT AL;
 IMPORT Wx;
-IMPORT TextUtils;
+IMPORT CitTextUtils AS TextUtils;
 IMPORT BigInt;
 IMPORT CharSeq;
 IMPORT IntList;
