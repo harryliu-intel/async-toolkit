@@ -9,12 +9,14 @@ REVEAL
 
 PROCEDURE DefComplete(nodes         : T; 
                       dutName       : TEXT;
-                      sNm            : TEXT; 
+                      sNm           : TEXT; 
                       READONLY dims : Dims.T; 
                       intf          : Intf) : T =
   VAR
     dd := NEW(REF Dims.T, NUMBER(dims));
   BEGIN
+    <*ASSERT dutName # NIL*>
+    <*ASSERT sNm # NIL*>
     dd^        := dims;
     nodes.nm   := dutName & "." & sNm; 
     nodes.sNm  := sNm;
