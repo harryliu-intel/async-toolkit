@@ -8,7 +8,7 @@ IMPORT LibertyNumber;
 %module {
 IMPORT Debug;
 IMPORT LibertyNumber;
-IMPORT Scan;
+IMPORT SpecialScan AS Scan;
 IMPORT Text;
 }
 
