@@ -72,7 +72,7 @@ endif
 
 # all targets:
 
-ifdef SHIP
+ifdef DO_M3_SHIP
   M3SHIP=$(M3SHIPPROGRAM) $(M3SHIPOPTS)
 else
   M3SHIP= echo
