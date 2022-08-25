@@ -7,7 +7,7 @@
     res))
 
 (define *cal-temps* '(0 125))
-(define *mesh-size* 5)
+(define *mesh-size* 100)
 (define *samples*   500)
 (define *k* 0)
 
