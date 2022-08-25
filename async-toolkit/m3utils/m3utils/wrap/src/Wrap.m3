@@ -3,7 +3,7 @@
 MODULE Wrap;
 IMPORT Wx;
 IMPORT Rd;
-IMPORT Text, TextUtils;
+IMPORT Text, CitTextUtils AS TextUtils;
 IMPORT TextSet, TextSetDef;
 IMPORT Thread;
 IMPORT Debug;

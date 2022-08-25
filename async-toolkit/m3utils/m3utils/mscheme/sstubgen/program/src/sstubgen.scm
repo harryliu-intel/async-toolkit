@@ -1374,7 +1374,15 @@
             (imports 'insert! 'SchemePair)
             (imports 'insert! 'SchemeUtils)
             (string-append
-             "    VAR res : "m3tn"; p := SchemePair.Pair(x); BEGIN" dnl 
+             "    VAR res : "m3tn"; p := SchemePair.Pair(x); BEGIN" dnl
+             "      (* attempt to treat as open array *)" dnl
+             "      IF p # NIL AND NOT ISTYPE(p.first, SchemePair.T) THEN" dnl
+             "        FOR i := FIRST(res) TO LAST(res) DO" dnl
+             "          res[i] := "element-pname"(p.first);" dnl
+             "          p := SchemePair.Pair(p.rest);" dnl
+             "        END;" dnl
+             "        RETURN res" dnl
+             "      END;" dnl
              "      WHILE p # NIL DO" dnl
              "        WITH desc = SchemePair.Pair(p.first) DO" dnl
              "          IF desc = NIL THEN " dnl

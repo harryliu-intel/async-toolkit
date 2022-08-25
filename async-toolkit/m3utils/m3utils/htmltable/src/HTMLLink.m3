@@ -1,6 +1,6 @@
 MODULE HTMLLink;
 IMPORT HTML;
-IMPORT TextUtils AS Utils;
+IMPORT CitTextUtils AS Utils;
 IMPORT Request;
 IMPORT Pathname, Params;
 IMPORT Debug;

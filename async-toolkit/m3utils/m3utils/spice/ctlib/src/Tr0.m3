@@ -3,7 +3,7 @@ IMPORT Rd;
 IMPORT Debug;
 IMPORT Text;
 IMPORT Wr;
-IMPORT AL, TextUtils;
+IMPORT AL, CitTextUtils AS TextUtils;
 FROM Fmt IMPORT LongReal, Int, F;
 IMPORT UnsafeWriter;
 IMPORT Thread;

@@ -4,7 +4,7 @@ IMPORT Debug;
 IMPORT Fmt; FROM Fmt IMPORT F;
 IMPORT Text;
 IMPORT Perturbation, PerturbationRep, PerturbationList;
-IMPORT TextReader, TextUtils;
+IMPORT TextReader, CitTextUtils AS TextUtils;
 IMPORT LibData, LibDataSet, LibDataSetDef;
 IMPORT TextLibDataSetTbl;
 IMPORT TextPairSeq, TextPair;

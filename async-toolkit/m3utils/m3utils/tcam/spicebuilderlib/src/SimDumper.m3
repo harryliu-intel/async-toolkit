@@ -25,7 +25,7 @@ IMPORT AssertionList;
 IMPORT ProbeMode;
 IMPORT TextSetDef;
 IMPORT Params;
-IMPORT TextUtils;
+IMPORT CitTextUtils AS TextUtils;
 IMPORT TextList;
 IMPORT SimMeasurement, SimMeasurementSeq;
 IMPORT LongRealSeq AS LRSeq;

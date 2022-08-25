@@ -1,5 +1,5 @@
 MODULE Overlaps EXPORTS Main;
-IMPORT CSVParse, ParseParams, Stdio, TextUtils, Debug, Rd, FileRd;
+IMPORT CSVParse, ParseParams, Stdio, CitTextUtils AS TextUtils, Debug, Rd, FileRd;
 IMPORT AL;
 IMPORT Pathname, OSError, Thread, Fmt, Text;
 FROM Fmt IMPORT F, Int;
