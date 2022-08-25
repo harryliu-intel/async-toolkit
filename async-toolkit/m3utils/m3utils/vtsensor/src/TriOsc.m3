@@ -1,13 +1,8 @@
 MODULE TriOsc;
-IMPORT Rd;
-IMPORT Json;
 IMPORT Debug;
 IMPORT Fmt; FROM Fmt IMPORT F, Int;
 IMPORT DataPoint;
-FROM CitTextUtils IMPORT HaveSuffix, RemoveSuffix;
-IMPORT SIsuffix;
 IMPORT Text;
-IMPORT Scan;
 IMPORT DataPointSeq;
 IMPORT Spline;
 IMPORT CubicSpline;
@@ -22,9 +17,11 @@ IMPORT LongrealPQ;
 IMPORT Math;
 IMPORT Thread;
 IMPORT MapError;
-IMPORT Lex, FloatMode;
 IMPORT OSError;
 IMPORT P3P3Tbl;
+IMPORT TriConfig;
+IMPORT TriConfigSeq;
+IMPORT Random;
 
 <*FATAL Thread.Alerted*>
 <*FATAL MapError.E*>
@@ -32,52 +29,8 @@ IMPORT P3P3Tbl;
 CONST TE = Text.Equal;
 CONST LR = Fmt.LongReal;
 
-PROCEDURE DoOne(j : Json.T;
-                depth : CARDINAL;
-                VAR recs : DataPointSeq.T;
-                VAR cur : DataPoint.T)
-  RAISES { SyntaxError } =  
-  VAR
-    iter := j.iterate();
-    nm : TEXT;
-    val : Json.T;
-  BEGIN
-    TRY
-    WHILE iter.next(nm, val) DO
-      WITH k = val.kind() DO
-        (*
-        Debug.Out(F("depth %s child %s kind %s", Int(depth), nm, Json.NK[k]));
-        *)
-        IF    depth = 1 THEN
-          cur.corner := nm
-        ELSIF HaveSuffix(nm, "V") THEN
-          WITH val = RemoveSuffix(nm, "V") DO
-            cur.V := SIsuffix.LongReal(val)
-          END
-        ELSIF HaveSuffix(nm, "C") THEN
-          WITH val = RemoveSuffix(nm, "C") DO
-            cur.temp := SIsuffix.LongReal(val)
-          END
-        ELSIF TE(nm, "frequency") THEN
-          cur.f := 1.0d06 * Scan.LongReal(val.value());
-          recs.addhi(cur)
-        ELSE
-          Debug.Error("Unhandled node case.")
-        END;
-          
-        IF k = Json.NodeKind.nkObject THEN
-          DoOne(val, depth + 1, recs, cur)
-        END
-      END
-    END
-    EXCEPT
-      FloatMode.Trap, Lex.Error, SIsuffix.UnknownSuffix =>
-      RAISE SyntaxError
-    END
-  END DoOne;
-
-PROCEDURE Calibrate(corner : TEXT;
-                    recs : DataPointSeq.T;
+PROCEDURE Calibrate(corner         : TEXT;
+                    recs           : DataPointSeq.T;
                     READONLY temps : ARRAY OF LONGREAL) : Oscillator.T =
   VAR
     res := NEW(Oscillator.T,
@@ -342,7 +295,7 @@ PROCEDURE MakeMeshes(oscs : ARRAY [0..2] OF Oscillator.T;
 PROCEDURE Estimate(at : P3.T;
                    tempMeshes : REF ARRAY OF Mesh;
                    Samples : CARDINAL;
-                   k : LONGREAL) : LONGREAL =
+                   k : LONGREAL) : TriConfig.T =
   VAR
     sumweight, sumtemp := 0.0d0;
     sumvolts := P3.Zero;
@@ -444,20 +397,38 @@ PROCEDURE Estimate(at : P3.T;
         END
       END
     END(*ROF*);
-    Debug.Out(F("ave temp %s", LR(sumtemp/sumweight)));
-    Debug.Out(F("ave volts %s", P3.Format(P3.ScalarMul(1.0d0/sumweight, sumvolts))));
-    RETURN sumtemp/sumweight
+    WITH avetemp = sumtemp/sumweight,
+         avevolts = P3.ScalarMul(1.0d0/sumweight, sumvolts) DO
+
+      Debug.Out(F("ave temp %s", LR(avetemp)));
+      Debug.Out(F("ave volts %s", P3.Format(avevolts)));
+
+      RETURN TriConfig.T { "xxxx",
+                           avetemp,
+                           avevolts,
+                           at }
+    END
   END Estimate;
 
-PROCEDURE LoadJson(rd : Rd.T) : DataPointSeq.T
-  RAISES { SyntaxError, Json.E } =
+PROCEDURE EvalEstimator(tempMeshes : REF ARRAY OF Mesh;
+                        Samples : CARDINAL;
+                        k : LONGREAL;
+                        over : TriConfigSeq.T;
+                        Tests : CARDINAL) =
   VAR
-    json := Json.ParseStream(rd);
-    recs := NEW(DataPointSeq.T).init();
-    cur : DataPoint.T;
+    rand := NEW(Random.Default).init();
+    n := over.size();
   BEGIN
-    DoOne(json, 1, recs, cur);
-    RETURN recs
-  END LoadJson;
-  
+    FOR i := 0 TO Tests - 1 DO
+      WITH p = over.get(rand.integer(0, n - 1)),
+           est = Estimate(p.f, tempMeshes, Samples, k),
+           delta = TriConfig.Minus(est, p) DO
+        Debug.Out(F("p %s, est %s, delta %s",
+                    TriConfig.Format(p),
+                    TriConfig.Format(est),
+                    TriConfig.Format(delta)))
+      END
+    END
+  END EvalEstimator;
+    
 BEGIN END TriOsc.

@@ -1,5 +1,6 @@
 MODULE TriOscExample;
-FROM TriOsc IMPORT LoadJson, Calibrate, MakeMeshes, Estimate;
+FROM TriData IMPORT LoadJson;
+FROM TriOsc IMPORT Calibrate, MakeMeshes, Estimate;
 IMPORT P3;
 IMPORT Wr;
 IMPORT Debug;

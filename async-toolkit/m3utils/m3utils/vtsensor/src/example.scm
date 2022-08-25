@@ -2,7 +2,7 @@
 
 (define recs
   (let* ((rd (FileRd.Open "RING_OSCILLATOR.json"))
-         (res (TriOsc.LoadJson rd)))
+         (res (TriData.LoadJson rd)))
     (Rd.Close rd)
     res))
 
@@ -10,8 +10,9 @@
 (define *mesh-size* 100)
 (define *samples*   500)
 (define *k* 0)
+(define *the-corner* "tttt")
 
-(define osc (TriOsc.Calibrate "tttt" recs *cal-temps*))
+(define osc (TriOsc.Calibrate *the-corner* recs *cal-temps*))
 
 (define temp-meshes (TriOsc.MakeMeshes `((0 . ,osc) (1 . ,osc) (2 . ,osc))
                                       *cal-temps*
@@ -23,5 +24,8 @@
 (TriOsc.Estimate test-point temp-meshes *samples* *k*)
   
 
-
+(define (get-points) (TriData.TraverseData recs "tttt"))
                
+(define pts (get-points))
+
+(define (eval-estimator) (TriOsc.EvalEstimator temp-meshes *samples* *k* pts 1))
