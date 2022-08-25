@@ -292,13 +292,16 @@ PROCEDURE MakeMeshes(oscs : ARRAY [0..2] OF Oscillator.T;
   END MakeMeshes;
 
 
-PROCEDURE Estimate(at : P3.T;
+PROCEDURE Estimate(at         : P3.T;
                    tempMeshes : REF ARRAY OF Mesh;
-                   Samples : CARDINAL;
-                   k : LONGREAL) : TriConfig.T =
+                   Samples    : CARDINAL;
+                   k          : LONGREAL) : TriConfig.T
+  RAISES { NoData } =
   VAR
     sumweight, sumtemp := 0.0d0;
     sumvolts := P3.Zero;
+
+    gotInterpolation := FALSE;
 
   BEGIN
 
@@ -386,6 +389,7 @@ PROCEDURE Estimate(at : P3.T;
                                             P3.ScalarMul(x.intersection.t,
                                                          y.volts)));
           BEGIN
+            gotInterpolation := TRUE;
             Debug.Out(F("interpolated temp %s volts %s weight %s",
                         LR(ztemp),
                         P3.Format(zvolts),
@@ -397,9 +401,15 @@ PROCEDURE Estimate(at : P3.T;
         END
       END
     END(*ROF*);
+
+    IF NOT gotInterpolation THEN
+      RAISE NoData
+    END;
+    
     WITH avetemp = sumtemp/sumweight,
          avevolts = P3.ScalarMul(1.0d0/sumweight, sumvolts) DO
 
+      <*ASSERT avetemp > -300.0d0*>
       Debug.Out(F("ave temp %s", LR(avetemp)));
       Debug.Out(F("ave volts %s", P3.Format(avevolts)));
 
@@ -414,21 +424,53 @@ PROCEDURE EvalEstimator(tempMeshes : REF ARRAY OF Mesh;
                         Samples : CARDINAL;
                         k : LONGREAL;
                         over : TriConfigSeq.T;
-                        Tests : CARDINAL) =
+                        Tests : CARDINAL)  : ARRAY Dim OF DevRecord =
   VAR
     rand := NEW(Random.Default).init();
     n := over.size();
+    dev : ARRAY Dim OF DevRecord;
+    failures : CARDINAL := 0;
   BEGIN
     FOR i := 0 TO Tests - 1 DO
-      WITH p = over.get(rand.integer(0, n - 1)),
-           est = Estimate(p.f, tempMeshes, Samples, k),
-           delta = TriConfig.Minus(est, p) DO
-        Debug.Out(F("p %s, est %s, delta %s",
-                    TriConfig.Format(p),
-                    TriConfig.Format(est),
-                    TriConfig.Format(delta)))
+      TRY
+        WITH p     = over.get(rand.integer(0, n - 1)),
+             est   = Estimate(p.f, tempMeshes, Samples, k),
+             delta = TriConfig.Minus(est, p) DO
+          Debug.Out(F("p %s, est %s, delta %s",
+                      TriConfig.Format(p),
+                      TriConfig.Format(est),
+                      TriConfig.Format(delta)));
+          
+          Dev(delta.temp, dev[Dim.Temperature]);
+          Dev(delta.V[0], dev[Dim.Voltage]);
+          Dev(delta.V[1], dev[Dim.Voltage]);
+          Dev(delta.V[2], dev[Dim.Voltage]);
+        END
+      EXCEPT
+        NoData => INC(failures)
       END
-    END
+    END;
+    Debug.Out(F("temp dev %s", FmtDev(dev[Dim.Temperature])));
+    Debug.Out(F("volt dev %s", FmtDev(dev[Dim.Voltage])));
+    RETURN dev
   END EvalEstimator;
-    
+
+PROCEDURE Dev(dev     : LONGREAL;
+              VAR rec : DevRecord) =
+  BEGIN
+    INC(rec.n);
+    rec.maxDev := MAX(rec.maxDev, ABS(dev));
+    rec.sumAbs := rec.sumAbs + ABS(dev);
+    rec.sumSq  := rec.sumSq  + dev * dev;
+  END Dev;
+
+PROCEDURE FmtDev(READONLY rec : DevRecord) : TEXT =
+  BEGIN
+    RETURN F("%s recs : maxDev %s, aveAbsDev %s, sDev %s",
+             Int(rec.n),
+             LR(rec.maxDev),
+             LR(rec.sumAbs / FLOAT(rec.n, LONGREAL)),
+             LR(Math.sqrt(rec.sumSq) / FLOAT(rec.n - 1, LONGREAL)))
+  END FmtDev;
+  
 BEGIN END TriOsc.

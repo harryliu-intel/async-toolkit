@@ -18,13 +18,16 @@ PROCEDURE MakeMeshes(oscs : ARRAY [0..2] OF Oscillator.T;
 PROCEDURE Estimate(at          : P3.T;
                    tempMeshes  : REF ARRAY OF Mesh;
                    Samples     : CARDINAL;
-                   k           : LONGREAL) : TriConfig.T;
+                   k           : LONGREAL) : TriConfig.T
+  RAISES { NoData };
+
+EXCEPTION NoData;
 
 TYPE
   Mesh = RECORD
-    temp : LONGREAL;
+    temp      : LONGREAL;
     triangles : Triangle3List.T;
-    volttbl : P3P3Tbl.T;
+    volttbl   : P3P3Tbl.T;
   END;
 
 
@@ -32,7 +35,17 @@ PROCEDURE EvalEstimator(tempMeshes : REF ARRAY OF Mesh;
                         Samples : CARDINAL;
                         k : LONGREAL;
                         over : TriConfigSeq.T;
-                        Tests : CARDINAL);
+                        Tests : CARDINAL) : ARRAY Dim OF DevRecord;
+
+TYPE
+  DevRecord = RECORD
+    n                     : CARDINAL := 0;
+    maxDev, sumAbs, sumSq : LONGREAL := 0.0d0;
+  END;
+
+  Dim = { Temperature, Voltage };
+
+PROCEDURE FmtDev(READONLY rec : DevRecord) : TEXT;
   
 CONST Brand = "TriOsc";
       
