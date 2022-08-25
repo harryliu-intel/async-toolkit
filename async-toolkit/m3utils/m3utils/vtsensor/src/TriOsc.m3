@@ -24,6 +24,7 @@ IMPORT Thread;
 IMPORT MapError;
 IMPORT Lex, FloatMode;
 IMPORT OSError;
+IMPORT P3P3Tbl;
 
 <*FATAL Thread.Alerted*>
 <*FATAL MapError.E*>
@@ -100,7 +101,7 @@ PROCEDURE Calibrate(corner : TEXT;
 
         VAR
           arr := NEW(REF ARRAY OF DataPoint.T, seq.size());
-          coords := NEW(REF ARRAY OF Spline.Coord, seq.size());
+          tempcoords := NEW(REF ARRAY OF Spline.Coord, seq.size());
         BEGIN
           FOR i := 0 TO seq.size() - 1 DO
             arr[i] := seq.get(i)
@@ -110,20 +111,20 @@ PROCEDURE Calibrate(corner : TEXT;
           DataPointArraySort.Sort(arr^);
           
           FOR i := FIRST(arr^) TO LAST(arr^) DO
-            coords[i].x := arr[i].V;
+            tempcoords[i].x := arr[i].V;
 
-            Debug.Out(F("coords[%s].x = %s", Int(i), LR(coords[i].x)));
+            Debug.Out(F("tempcoords[%s].x = %s", Int(i), LR(tempcoords[i].x)));
             
-            <*ASSERT i = 0 OR coords[i].x > coords[i-1].x*>
-            coords[i].y := arr[i].f;
+            <*ASSERT i = 0 OR tempcoords[i].x > tempcoords[i-1].x*>
+            tempcoords[i].y := arr[i].f;
           END;
           
-          WITH spline = NEW(CubicSpline.T).init(coords^) DO
+          WITH spline = NEW(CubicSpline.T).init(tempcoords^) DO
             res.temps[k] := NEW(OscillatorTemp.T,
-                                data  := arr,
-                                curve := spline,
-                                minV  := arr[FIRST(arr^)].V,
-                                maxV  := arr[LAST(arr^)].V)
+                                data      := arr,
+                                tempcurve := spline,
+                                minV      := arr[FIRST(arr^)].V,
+                                maxV      := arr[LAST(arr^)].V)
           END
         END
       END
@@ -132,13 +133,15 @@ PROCEDURE Calibrate(corner : TEXT;
     RETURN res
   END Calibrate;
 
-PROCEDURE MakeMesh(temp : LONGREAL;
+PROCEDURE MakeMesh(temp        : LONGREAL;
                    READONLY ot : ARRAY [0..2] OF OscillatorTemp.T;
-                   N : CARDINAL) : Triangle3List.T =
+                   N           : CARDINAL) : Mesh =
+ 
   VAR
     s0 := (ot[0].maxV - ot[0].minV) / FLOAT(N - 1, LONGREAL);
     s1 := (ot[1].maxV - ot[1].minV) / FLOAT(N - 1, LONGREAL);
-    grid := NEW(REF ARRAY OF ARRAY OF REF P3.T, N, N);
+    tempgrid := NEW(REF ARRAY OF ARRAY OF REF P3.T, N, N);
+    volttbl := NEW(P3P3Tbl.Default).init();
   BEGIN
     Debug.Out(F("MakeMesh temp=%s", LR(temp)));
     Debug.Out(F("MakeMesh maxV0=%s minV0=%s", LR(ot[0].maxV), LR(ot[0].minV)));
@@ -148,7 +151,7 @@ PROCEDURE MakeMesh(temp : LONGREAL;
 
     FOR i0 := 0 TO N - 1 DO
       FOR i1 := 0 TO N - 1 DO
-        grid[i0,i1] := NIL
+        tempgrid[i0,i1] := NIL;
       END
     END;
 
@@ -163,11 +166,11 @@ PROCEDURE MakeMesh(temp : LONGREAL;
           IF v2 >= ot[2].minV AND v2 <= ot[2].maxV THEN
             (* point is OK *)
             WITH p = NEW(REF P3.T) DO
-              p^ := P3.T { ot[0].curve.eval(v0),
-                           ot[1].curve.eval(v1),
-                           ot[2].curve.eval(v2) };
-              grid[i0, i1] := p;
-              
+              p^ := P3.T { ot[0].tempcurve.eval(v0),
+                           ot[1].tempcurve.eval(v1),
+                           ot[2].tempcurve.eval(v2) };
+              tempgrid[i0, i1] := p;
+              EVAL volttbl.put(p^, P3.T { v0, v1, v2 });
               Debug.Out(F("Mesh point %s", P3.Format(p^)))
             END
           END
@@ -185,10 +188,10 @@ PROCEDURE MakeMesh(temp : LONGREAL;
     BEGIN
       FOR i0 := 0 TO N - 2 DO
         FOR i1 := 0 TO N - 2 DO
-          WITH patch = Patch4 { grid[i0    , i1    ],
-                                grid[i0    , i1 + 1],
-                                grid[i0 + 1, i1 + 1],
-                                grid[i0 + 1, i1    ] },
+          WITH patch = Patch4 { tempgrid[i0    , i1    ],
+                                tempgrid[i0    , i1 + 1],
+                                tempgrid[i0 + 1, i1 + 1],
+                                tempgrid[i0 + 1, i1    ] },
                nils = CountNils(patch) DO
 
             Wr.PutText(wr, FmtPatch4Gnu(patch));
@@ -211,7 +214,9 @@ PROCEDURE MakeMesh(temp : LONGREAL;
           p := p.tail
         END
       END;
-      RETURN triangles
+
+      RETURN Mesh { temp, triangles, volttbl }
+
     END
     
   END MakeMesh;
@@ -307,9 +312,9 @@ PROCEDURE FmtPatch4Gnu(READONLY p : Patch4) : TEXT =
      
 PROCEDURE MakeMeshes(oscs : ARRAY [0..2] OF Oscillator.T;
                      READONLY calTemps : ARRAY OF LONGREAL;
-                     N : CARDINAL) : REF ARRAY OF Triangle3List.T =
+                     N : CARDINAL) : REF ARRAY OF Mesh =
   VAR
-    res := NEW(REF ARRAY OF Triangle3List.T, NUMBER(oscs[0].temps^));
+    res := NEW(REF ARRAY OF Mesh, NUMBER(oscs[0].temps^));
   BEGIN
     FOR i := FIRST(oscs[0].temps^) TO LAST(oscs[0].temps^) DO
       res[i] := MakeMesh(calTemps[i],
@@ -320,7 +325,7 @@ PROCEDURE MakeMeshes(oscs : ARRAY [0..2] OF Oscillator.T;
 
       <*FATAL OSError.E, Wr.Failure*>
       VAR
-        p := res[i];
+        p := res[i].triangles;
         wr := FileWr.Open(F("mesh.%s.dat", LR(calTemps[i])));
       BEGIN
         WHILE p # NIL DO
@@ -335,12 +340,12 @@ PROCEDURE MakeMeshes(oscs : ARRAY [0..2] OF Oscillator.T;
 
 
 PROCEDURE Estimate(at : P3.T;
-                   tempMeshes : REF ARRAY OF Triangle3List.T;
-                   READONLY calTemps : ARRAY OF LONGREAL;
+                   tempMeshes : REF ARRAY OF Mesh;
                    Samples : CARDINAL;
                    k : LONGREAL) : LONGREAL =
   VAR
     sumweight, sumtemp := 0.0d0;
+    sumvolts := P3.Zero;
 
   BEGIN
 
@@ -349,6 +354,7 @@ PROCEDURE Estimate(at : P3.T;
         Elt = LongrealPQ.Elt OBJECT
           intersection : IntersectionResult;
           temp : LONGREAL;
+          volts : P3.T;
         END;
       VAR
         dir := P3.RandomDirection();
@@ -359,20 +365,48 @@ PROCEDURE Estimate(at : P3.T;
                     P3.Format(dir)));
         FOR i := FIRST(tempMeshes^) TO LAST(tempMeshes^) DO
           VAR
-            p := tempMeshes[i];
+            mesh := tempMeshes[i];
+            p    := mesh.triangles;
+            temp := mesh.temp;
           BEGIN
             WHILE p # NIL DO
               WITH intersection = IntersectLine(at,
                                                 dir,
                                                 p.head) DO
                 IF intersection.intersect THEN
-                  Debug.Out(F("Intersection at temp %s at t=%s",
-                              LR(calTemps[i]),
-                              LR(intersection.t)));
-                  results.insert(NEW(Elt,
-                                     intersection := intersection,
-                                     temp := calTemps[i],
-                                     priority := ABS(intersection.t)));
+                  Debug.Out(F("Intersection at temp %s at t=%s (u=%s v=%s)",
+                              LR(temp),
+                              LR(intersection.t),
+                              LR(intersection.u),
+                              LR(intersection.v)));
+
+                  VAR
+                    vv : ARRAY [0..2] OF P3.T;
+                    iv : P3.T;
+                  BEGIN
+                    FOR i := FIRST(vv) TO LAST(vv) DO
+                      WITH hadIt = mesh.volttbl.get(p.head[i], vv[i]) DO
+                        <*ASSERT hadIt*>
+                      END;
+                      Debug.Out(F("Vertex v[%s] = %s", Int(i), P3.Format(vv[i])))
+                    END;
+
+                    (* are these barycentric coordinates right??? *)
+                    
+                    iv := P3.Plus(
+                              P3.ScalarMul(intersection.v, vv[2]),
+                              P3.Plus(P3.ScalarMul(intersection.u, vv[1]),
+                                      P3.ScalarMul(1.0d0 - intersection.u - intersection.v,
+                                                   vv[0])));
+                    
+                    Debug.Out(F("Interpolated v %s", P3.Format(iv)));
+                  
+                    results.insert(NEW(Elt,
+                                       intersection := intersection,
+                                       temp         := temp,
+                                       volts        := iv,
+                                       priority     := ABS(intersection.t)))
+                    END;
                   EXIT
                 END
               END;
@@ -387,21 +421,31 @@ PROCEDURE Estimate(at : P3.T;
           VAR
             x : Elt := results.deleteMin();
             y : Elt := results.deleteMin();
-            ztemp := (y.intersection.t * x.temp - x.intersection.t * y.temp) /
-            (y.intersection.t - x.intersection.t);
+            zfac := 1.0d0 / (y.intersection.t - x.intersection.t);
+            ztemp := zfac * (y.intersection.t * x.temp - x.intersection.t * y.temp);
+
             zweight := Math.pow(ABS(y.intersection.t), k) *
                        Math.pow(ABS(x.intersection.t), k);
+
+            zvolts := P3.ScalarMul(zfac,
+                                   P3.Minus(P3.ScalarMul(y.intersection.t,
+                                                         x.volts),
+                                            P3.ScalarMul(x.intersection.t,
+                                                         y.volts)));
           BEGIN
-            Debug.Out(F("interpolated temp %s weight %s",
+            Debug.Out(F("interpolated temp %s volts %s weight %s",
                         LR(ztemp),
+                        P3.Format(zvolts),
                         LR(zweight)));
-            sumtemp := sumtemp + ztemp * zweight;
+            sumtemp   := sumtemp + ztemp * zweight;
+            sumvolts  := P3.Plus(sumvolts, P3.ScalarMul(zweight, zvolts));
             sumweight := sumweight + zweight;
           END
         END
       END
     END(*ROF*);
     Debug.Out(F("ave temp %s", LR(sumtemp/sumweight)));
+    Debug.Out(F("ave volts %s", P3.Format(P3.ScalarMul(1.0d0/sumweight, sumvolts))));
     RETURN sumtemp/sumweight
   END Estimate;
 

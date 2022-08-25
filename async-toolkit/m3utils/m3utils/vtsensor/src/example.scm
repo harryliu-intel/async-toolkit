@@ -7,7 +7,7 @@
     res))
 
 (define *cal-temps* '(0 125))
-(define *mesh-size* 50)
+(define *mesh-size* 5)
 (define *samples*   500)
 (define *k* 0)
 
@@ -20,7 +20,7 @@
 
 (define test-point '(53.0008e6 87.8511e6 216.8556e6))
 
-(TriOsc.Estimate test-point temp-meshes *cal-temps* *samples* *k*)
+(TriOsc.Estimate test-point temp-meshes *samples* *k*)
   
 
 

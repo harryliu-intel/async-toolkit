@@ -2,6 +2,8 @@ MODULE P3;
 IMPORT Fmt; FROM Fmt IMPORT F;
 IMPORT Math;
 IMPORT Random;
+IMPORT LongrealType;
+IMPORT Word;
 
 CONST LR = Fmt.LongReal;
       
@@ -20,6 +22,16 @@ PROCEDURE Minus(READONLY a, b : T) : T =
     RETURN res
   END Minus;
 
+PROCEDURE Plus(READONLY a, b : T) : T =
+  VAR
+    res : T;
+  BEGIN
+    FOR i := FIRST(T) TO LAST(T) DO
+      res[i] := a[i] + b[i]
+    END;
+    RETURN res
+  END Plus;
+
 PROCEDURE Dot(READONLY a, b : T) : LONGREAL =
   VAR
     res := 0.0d0;
@@ -36,6 +48,11 @@ PROCEDURE Cross(READONLY a, b : T) : T =
                a[2] * b[0] - a[0] * b[2],
                a[0] * b[1] - a[1] * b[0] }
   END Cross;
+
+PROCEDURE ScalarMul(m : LONGREAL; a : T) : T =
+  BEGIN
+    RETURN T { m * a[0], m * a[1], m * a[2] }
+  END ScalarMul;
   
 PROCEDURE Norm(READONLY a : T) : LONGREAL =
   BEGIN
@@ -64,6 +81,18 @@ PROCEDURE FormatGnu(READONLY p : T) : TEXT =
   BEGIN
     RETURN F("%s %s %s", LR(p[0]), LR(p[1]), LR(p[2]))
   END FormatGnu;
+
+PROCEDURE Equal(READONLY a, b : T) : BOOLEAN =
+  BEGIN
+    RETURN a = b
+  END Equal;
+
+PROCEDURE Hash(READONLY a : T) : Word.T =
+  BEGIN
+    RETURN Word.Plus(LongrealType.Hash(a[0]),
+                     Word.Plus(LongrealType.Hash(a[1]),
+                               LongrealType.Hash(a[2])))
+  END Hash;
   
 VAR
   defRand := NEW(Random.Default).init();

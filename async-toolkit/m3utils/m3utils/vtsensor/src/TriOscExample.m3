@@ -47,7 +47,7 @@ PROCEDURE DoIt() =
         Wr.Close(wr)
       END;
       
-      EVAL Estimate(testPoint, tempMeshes, calTemps, Samples, k)
+      EVAL Estimate(testPoint, tempMeshes, Samples, k)
     END;
   END DoIt; 
 
