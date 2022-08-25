@@ -18,7 +18,7 @@
                                       *mesh-size*))
                                       
 
-(define test-point '((0 . 53.0008e6) (1 . 87.8511e6) (2 . 216.8556e6)))
+(define test-point '(53.0008e6 87.8511e6 216.8556e6))
 
 (TriOsc.Estimate test-point temp-meshes *cal-temps* *samples* *k*)
   
