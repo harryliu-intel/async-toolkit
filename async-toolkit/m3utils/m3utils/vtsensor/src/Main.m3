@@ -21,23 +21,19 @@ FROM Triangle3 IMPORT IntersectionResult, IntersectLine;
 IMPORT FileWr, Wr;
 IMPORT LongrealPQ;
 IMPORT Math;
+IMPORT Thread;
 
+<*FATAL Thread.Alerted*>
 CONST TE = Text.Equal;
 CONST LR = Fmt.LongReal;
-      
-VAR
-  rd := FileRd.Open("RING_OSCILLATOR.json");
 
-  json := Json.ParseStream(rd);
+
+
 
 CONST
   calTemps = ARRAY OF LONGREAL { 0.0d0, 125.0d0 }; 
 
-VAR
-  cur : DataPoint.T;
-  recs := NEW(DataPointSeq.T).init();
-  
-PROCEDURE DoOne(j : Json.T; depth : CARDINAL) =  
+PROCEDURE DoOne(j : Json.T; depth : CARDINAL; VAR recs : DataPointSeq.T; VAR cur : DataPoint.T) =  
   VAR
     iter := j.iterate();
     nm : TEXT;
@@ -66,7 +62,7 @@ PROCEDURE DoOne(j : Json.T; depth : CARDINAL) =
         END;
           
         IF k = Json.NodeKind.nkObject THEN
-          DoOne(val, depth + 1)
+          DoOne(val, depth + 1, recs, cur)
         END
       END
     END
@@ -327,37 +323,16 @@ PROCEDURE MakeMeshes(oscs : ARRAY [0..2] OF Oscillator.T;
     RETURN res
   END MakeMeshes;
 
-CONST
-  Samples = 500;
-  MeshSize = 50;
-BEGIN
-  Rd.Close(rd);
 
-  Debug.Out("json.kind() : " & Json.NK[json.kind()]);
-  DoOne(json, 1);
-
-  Debug.Out(F("%s points", Int(recs.size())));
-
-  CONST
-    k = 0.0d0; (* fudge factor *)
-    
+PROCEDURE Estimate(at : P3.T;
+                   tempMeshes : REF ARRAY OF Triangle3List.T;
+                   Samples : CARDINAL;
+                   k : LONGREAL) : LONGREAL =
   VAR
-    osc := Calibrate("tttt", recs, calTemps);
-
-    testPoint := P3.T { 53.0008d6, 87.8511d6, 216.8556d6 };
-    (* this point is 0.38V, 0.47V, 0.85V / all @ tttt 65C *)
-    
-    tempMeshes := MakeMeshes(ARRAY [0..2] OF Oscillator.T { osc, osc, osc },
-                             MeshSize);
     sumweight, sumtemp := 0.0d0;
+
   BEGIN
-    WITH wr = FileWr.Open("testpoint.dat") DO
-      Wr.PutText(wr, P3.FormatGnu(testPoint));
-      Wr.PutChar(wr, '\n');
-      Wr.Close(wr)
-    END;
-    
-    (* this is the integral *)
+
     FOR j := 0 TO Samples - 1 DO
       TYPE
         Elt = LongrealPQ.Elt OBJECT
@@ -369,14 +344,14 @@ BEGIN
         results := NEW(LongrealPQ.Default).init();
       BEGIN
         Debug.Out(F("working on %s, probing %s",
-                    P3.Format(testPoint),
+                    P3.Format(at),
                     P3.Format(dir)));
         FOR i := FIRST(tempMeshes^) TO LAST(tempMeshes^) DO
           VAR
             p := tempMeshes[i];
           BEGIN
             WHILE p # NIL DO
-              WITH intersection = IntersectLine(testPoint,
+              WITH intersection = IntersectLine(at,
                                                 dir,
                                                 p.head) DO
                 IF intersection.intersect THEN
@@ -414,7 +389,50 @@ BEGIN
         END
       END
     END(*ROF*);
-    Debug.Out(F("ave temp %s", LR(sumtemp/sumweight)))
+    Debug.Out(F("ave temp %s", LR(sumtemp/sumweight)));
+    RETURN sumtemp/sumweight
+  END Estimate;
+
+PROCEDURE LoadJson(rd : Rd.T) : DataPointSeq.T =
+  VAR
+    json := Json.ParseStream(rd);
+    recs := NEW(DataPointSeq.T).init();
+    cur : DataPoint.T;
+  BEGIN
+    DoOne(json, 1, recs, cur);
+    RETURN recs
+  END LoadJson;
+  
+CONST
+  k = 0.0d0; (* fudge factor *)
+  Samples = 500;
+  MeshSize = 50;
+VAR
+  recs : DataPointSeq.T;
+  rd := FileRd.Open("RING_OSCILLATOR.json");
+BEGIN
+
+  recs := LoadJson(rd);
+  Rd.Close(rd);
+
+  Debug.Out(F("%s points", Int(recs.size())));
+
+  VAR
+    osc := Calibrate("tttt", recs, calTemps);
+
+    testPoint := P3.T { 53.0008d6, 87.8511d6, 216.8556d6 };
+    (* this point is 0.38V, 0.47V, 0.85V / all @ tttt 65C *)
+    
+    tempMeshes := MakeMeshes(ARRAY [0..2] OF Oscillator.T { osc, osc, osc },
+                             MeshSize);
+  BEGIN
+    WITH wr = FileWr.Open("testpoint.dat") DO
+      Wr.PutText(wr, P3.FormatGnu(testPoint));
+      Wr.PutChar(wr, '\n');
+      Wr.Close(wr)
+    END;
+
+    EVAL Estimate(testPoint, tempMeshes, Samples, k)
   END;
 
   
