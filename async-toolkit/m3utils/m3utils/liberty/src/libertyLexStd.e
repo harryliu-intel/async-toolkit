@@ -22,8 +22,9 @@ bare_IDENT   {Debug.Out("got ident " & $); $R IDENT{$$ := $}}
 STRING {
   Debug.Out("got string " & $);
   WITH len = Text.Length($),
-       sub = Text.Sub($, 1, len - 2) DO
-    $R STRING { $$ := sub }
+       sub = Text.Sub($, 1, len - 2),
+       str = Scan.String(sub) DO
+    $R STRING { $$ := str }
   END
 }
 

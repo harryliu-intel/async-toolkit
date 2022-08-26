@@ -6,5 +6,7 @@ PROCEDURE Int(txt: TEXT; defaultBase: [2..16] := 10): INTEGER
 
 PROCEDURE LongReal(txt: TEXT): LONGREAL
   RAISES {Lex.Error, FloatMode.Trap};
+
+PROCEDURE String(txt : TEXT) : TEXT;
   
 END SpecialScan.
