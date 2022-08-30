@@ -136,6 +136,9 @@ This will build up an task file for a Netbatch feeder that will build each LAMB,
 
 You will need to use nbfeeder to execute the task file. You can use [nbflow](https://nbflow.intel.com/), to monitor the progress.
 
+Other options are available for batchLambs.tcl. In particular you can add `-cheetahProject` and `-cheetahConfig`, which can be used to influence
+the final destination of the SHIP'd contents.
+
 ### References
 - [Cheetah Design System](https://goto/cheetah)
 - [SHIP Tool](http://goto/ship)
