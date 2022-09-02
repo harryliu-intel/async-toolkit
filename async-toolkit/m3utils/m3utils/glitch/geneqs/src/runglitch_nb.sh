@@ -1,5 +1,5 @@
 #!/bin/sh
-GLITCH=`pwd`/AMD64_LINUX/glitch
+GLITCH=`pwd`/../../AMD64_LINUX/glitch
 LIMIT="-limit 64"
 WORKAREA=`pwd`/nb.out
 
@@ -21,7 +21,7 @@ for dir in *; do
     where=`pwd`
 
     for file in *.glitch; do
-        echo "    nbjob run --class \"SLES12&&1G\" ${GLITCH} ${LIMIT} -f ${where}/${file}"
+        echo "    nbjob run --class \"SLES12&&1G\" --log-file ${WORKAREA}/${file}.log ${GLITCH} ${LIMIT} -f ${where}/${file}"
     done
 
     cd ..
