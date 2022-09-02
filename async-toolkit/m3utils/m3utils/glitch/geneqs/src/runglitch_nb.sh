@@ -1,12 +1,13 @@
 #!/bin/sh
-GLITCH=/nfs/sc/disks/bfn_pd_cb_02/mnystroe/m3utils/glitch/AMD64_LINUX/glitch
+GLITCH=`pwd`/AMD64_LINUX/glitch
 LIMIT="-limit 64"
+WORKAREA=`pwd`/nb.out
 
 cd rundir
 
 cat << EOF 
 JobsTask {
-  WorkArea /nfs/sc/disks/bfn_pd_cb_02/mnystroe/m3utils/glitch/geneqs/src/nb.out
+  WorkArea ${WORKAREA}
   Queue ${EC_SITE}_normal {
     Qslot /bfn/fe
   } 
