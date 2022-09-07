@@ -717,6 +717,7 @@ PROCEDURE AddNodes(nm            : TEXT;
                    READONLY dims : Dims.T;
                    intf          : Intf.T) =
   BEGIN
+    <*ASSERT dutName # NIL*>
     WITH nds = NEW(Nodes.T).init(dutName, nm, dims, intf) DO
       intf.complete(nds);
       lst := NodesList.Cons(nds, lst);
