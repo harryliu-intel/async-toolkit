@@ -1,17 +1,29 @@
-(require-modules "hashtable" "struct")
+(require-modules "hashtable" "struct" "display")
 
-(define typecode-table (make-string-hash-table 100))
+;; must have Modula-3 interface RTType loaded
 
-(define (make-typecode-table max-tc)    
+(define lookup-typecode '())
 
-  (unwind-protect
-   (begin(typecode-table 'update-entry! (rtbrand-getname max-tc) max-tc) #t)
-   '() '())
+(define (do-setup)
 
-  (if (>= max-tc 0)
-      (make-typecode-table (- max-tc 1))))
+  (define typecode-table (make-string-hash-table 100))
 
-(define (lookup-typecode typename) (typecode-table 'retrieve typename))
+  (define (make-typecode-table max-tc)    
 
-(make-typecode-table (RTType.MaxTypecode))
+    (unwind-protect
+     (begin(typecode-table 'update-entry! (rtbrand-getname max-tc) max-tc) #t)
+     '() '())
+    
+    (if (>= max-tc 0)
+        (make-typecode-table (- max-tc 1))))
+  
+  (set! lookup-typecode (lambda(typename) (typecode-table 'retrieve typename)))
+
+  (make-typecode-table (RTType.MaxTypecode))
+
+  'ok
+  )
+
+(do-setup)
+
 
