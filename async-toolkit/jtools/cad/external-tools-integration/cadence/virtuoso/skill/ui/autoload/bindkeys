@@ -129,14 +129,10 @@ hiSetBindKey( "Layout"  "Ctrl<Key>n"       "UnAnchorSelectedInstances( )" )
 
 ; MoveAndSnap
 ; ===========
-(hiSetBindKey "Layout"  "Alt<Key>Left"  "(MoveAndSnap \"L\" )" )
-(hiSetBindKey "Layout"  "Alt<Key>Right" "(MoveAndSnap \"R\" )" )
-(hiSetBindKey "Layout"  "Alt<Key>Up"    "(MoveAndSnap \"U\" )" )
-(hiSetBindKey "Layout"  "Alt<Key>Down"  "(MoveAndSnap \"D\" )" )
-;(hiSetBindKey "Layout"  "Alt<Key>z"     "(MoveAndSnap \"L\" )" )
-;(hiSetBindKey "Layout"  "Alt<Key>c"     "(MoveAndSnap \"R\" )" )
-;(hiSetBindKey "Layout"  "Alt<Key>s"     "(MoveAndSnap \"U\" )" )
-;(hiSetBindKey "Layout"  "Alt<Key>x"     "(MoveAndSnap \"D\" )" )
+(hiSetBindKey "Layout"  "Ctrl<Key>j"  "(MoveAligned \"L\" )" )
+(hiSetBindKey "Layout"  "Ctrl<Key>l"  "(MoveAligned \"R\" )" )
+(hiSetBindKey "Layout"  "Ctrl<Key>i"  "(MoveAligned \"U\" )" )
+(hiSetBindKey "Layout"  "Ctrl<Key>k"  "(MoveAligned \"D\" )" )
 (hiSetBindKey "Layout"  "<Key>F5"       "TR_MoveAndSnap( )" )
 (hiSetBindKey "Layout"  "Ctrl Shift<Key>Left"  "(LockMoveAndSnap)" )
 (hiSetBindKey "Layout"  "Ctrl Shift<Key>Right" "(LockMoveAndSnap)" )
