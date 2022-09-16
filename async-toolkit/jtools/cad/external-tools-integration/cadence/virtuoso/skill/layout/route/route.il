@@ -660,9 +660,23 @@
   ; (Colorize ?CV CV)
   ; (ConvertFill ?CV CV)    ; HACK: ICC should distinguish fill shapes better
   ; (FixFillerCells ?CV CV) ; HACK: change threshold of spc00 to avoid NV1/PV1 DRC errors
-  ;(FixImportedPins ?CV CV)  ; HACK: add drawing rectangles under pins
+  ; (FixImportedPins ?CV CV)  ; HACK: add drawing rectangles under pins
+  (FixImportedInstanceNames ?CV CV) ; HACK: strip off ._$0 suffix of instance names
   (RunAfterImportDef ?CV CV)
   (printf "Route Import finished.\n")
+  )
+
+; Get rid of auto-generated suffix on instance names (see BUG 29319)
+(defun FixImportedInstanceNames (@key (CV (geGetEditCellView)))
+  (let (pcre)
+    pcre=(pcreCompile "\\._\\$0")
+    (foreach inst CV->instances
+      (when (pcreExecute pcre inst->name)
+        inst->name=(pcreReplace pcre inst->name "" 0)
+        )
+      )
+    )
+  CV
   )
 
 ; Convert ICC's fill rects to fill purpose
