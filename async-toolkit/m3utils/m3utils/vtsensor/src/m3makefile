@@ -45,6 +45,8 @@ SchemeStubs ("Fmt")
 SchemeStubs ("LRFunction")
 SchemeStubs ("Solve")
 SchemeStubs ("Bracket")
+SchemeStubs ("RTType")
+SchemeStubs ("Pickle")
 
 SchemeStubs("Debug")
 SchemeStubs("DataPoint")
