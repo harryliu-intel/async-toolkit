@@ -56,6 +56,9 @@
   ;; scaling := 1 + 0.2 * (depth-128) / 128
   (+ 1 (* 0.20 (/ (- depth 128) 128))))
 
+(define (default-width-delay-scaling width)
+  1)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; TECH DEFINITIONS
@@ -80,6 +83,8 @@
     (metal-c-sigma-delay-scaling ,default-metal-sigma-delay-scaling)
 
     (depth-delay-scaling         ,default-depth-delay-scaling)
+
+    (width-delay-scaling         ,default-width-delay-scaling)
     )
   )
     
@@ -102,6 +107,8 @@
     (metal-c-sigma-delay-scaling ,default-metal-sigma-delay-scaling)
 
     (depth-delay-scaling         ,default-depth-delay-scaling)
+
+    (width-delay-scaling         ,default-width-delay-scaling)
     )
   )
     
@@ -125,6 +132,8 @@
     (metal-c-sigma-delay-scaling ,default-metal-sigma-delay-scaling)
 
     (depth-delay-scaling         ,default-depth-delay-scaling)
+
+    (width-delay-scaling         ,default-width-delay-scaling)
     )
   )
     
@@ -148,6 +157,8 @@
     (metal-c-sigma-delay-scaling ,default-metal-sigma-delay-scaling)
 
     (depth-delay-scaling         ,default-depth-delay-scaling)
+
+    (width-delay-scaling         ,default-width-delay-scaling)
     )
   )
     
@@ -240,6 +251,7 @@
            (temp-delay-scaler  (cadr (assoc 'temp-delay-scaling       tech)))
            (proc-delay-scaler  (cadr (assoc 'proc-sigma-delay-scaling tech)))
            (depth-delay-scaler (cadr (assoc 'depth-delay-scaling      tech)))
+           (width-delay-scaler (cadr (assoc 'width-delay-scaling      tech)))
 
            (metal-r-delay-scaler
             (cadr (assoc 'metal-r-sigma-delay-scaling tech)))
@@ -266,13 +278,16 @@
 
            (depth-delay-ratio (depth-delay-scaler depth))
 
+           (width-delay-ratio (width-delay-scaler width))
+
            (overall-delay-ratio (* base-delay-ratio
                                    volt-delay-ratio
                                    temp-delay-ratio
                                    proc-delay-ratio
                                    metal-r-delay-ratio
                                    metal-c-delay-ratio
-                                   depth-delay-ratio)))
+                                   depth-delay-ratio
+                                   width-delay-ratio)))
            
       (debug "overall-delay-ratio " overall-delay-ratio dnl)
       (debug "updating timings " *all-timings* " ..." dnl)
