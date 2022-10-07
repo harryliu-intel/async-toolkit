@@ -1,0 +1,16 @@
+import ("libm3")
+import ("cit_util")
+import ("set")
+
+Module ("Hnn")
+Interface ("HnnSettings")
+Interface ("HnnPrivate")
+
+Module ("HnnHrep")
+Sequence ("HnnHrep", "HnnHrep")
+
+Module ("HnnHrepRef")
+Table ("HnnHrepRefRef", "HnnHrepRef", "Refany")
+MkSet("HnnHrepRef","HnnHrepRef")
+
+library ("hammingnn")
