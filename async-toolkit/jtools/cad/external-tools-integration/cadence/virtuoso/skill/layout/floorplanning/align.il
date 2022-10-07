@@ -59,7 +59,7 @@
 		 ; this alignment might be wrong, but clearly we don't use them
 		 (v=="i" gx=GridPolyPitch gy=TrackPitch ox=0 oy=0)
 		 (v=="f" gx=GridPolyPitch gy=TrackPitch ox=0 oy=0)
-                 (v=="t" gx=GridPolyPitch gy=TrackPitch ox=0 oy=0) 
+                 (v=="t" gx=GridPolyPitch gy=TrackPitch ox=0 oy=0)
                  (CV->viewName=="floorplan" && (v=="1" || v=="2" || v=="3") ox=0.5*GridPolyPitch)
                  (CV->viewName=="floorplan" && (v=="0" || v=="4" || v=="5") gx=3.0*GridPolyPitch)
                  (v=="1" gx=3*GridPolyPitch ox=0.5*GridPolyPitch)
@@ -188,13 +188,20 @@
   inst->status=="unplaced" || (MoveAligned "C" ?CV inst->cellView ?instances (list inst))
   )
 
-; Return list of misaligned instances
+; Return list of misaligned instances including when instance grids
+; are not even divisors of parent grids.
 (defun MisalignedInstances (@key (CV (geGetEditCellView)))
-  (let (misaligned)
+  (let (misaligned align gx gy gxi gyi)
     misaligned=nil
+    align=(GetCellAlignment ?CV CV)
+    gx=(round (car  (car align))/MfgGrid)
+    gy=(round (cadr (car align))/MfgGrid)
     (foreach inst CV->instances
-             (unless (CheckInstanceAlignment inst)
-               misaligned=(cons inst misaligned))
+             align=(GetCellAlignment ?CV inst->master)
+             gxi=(round (car  (car align))/MfgGrid)
+             gyi=(round (cadr (car align))/MfgGrid)
+             (unless (mod gx gxi)==0 && (mod gy gyi)==0 && (CheckInstanceAlignment inst)
+                     misaligned=(cons inst misaligned))
              )
     misaligned
     )
@@ -386,25 +393,6 @@
    align
  )
 )
-
-
-;(defun SetCellAlignment (cv @key (xalign MfgGrid) (yalign GridPitch) )
-; (let (maxalign current_xalign)
-;   (if (nrIsCellViewWritable cv) then
-;     (SetYAlignmentProp cv yalign)
-;     current_xalign = (GetXAlignmentProp cv)
-;     (when !current_xalign
-;       current_xalign = MfgGrid
-;     )
-;     maxalign = (max xalign (GetMaxSubcellXAlignment cv) current_xalign)
-;     (SetXAlignmentProp cv maxalign)
-;     (dbSave cv)
-;   else
-;    (printf "Couldn't open cell %s for edit.\n" cv->cellName)
-;  )
-; )
-;)
-
 
 (defun CheckRoutedAlignment (cv @key (dialog nil))
  (let (uniqueInstances uniqueNames cellv routed (location nil) (locations nil)
