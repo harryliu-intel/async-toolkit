@@ -25,7 +25,9 @@ TYPE
     (* iterate over all stored strings that are no more than maxHamming
        from the search string *)
     
-    iterNnOrdered(READONLY elem : Elem; n : CARDINAL) : Iterator;
+    iterNnOrdered(READONLY elem : Elem;
+                  n : CARDINAL;
+                  maxHamming : CARDINAL := 0) : Iterator;
     (* iterate over nn stored strings that are closest in Hamming distance,
        in nondecreasing order of distance *)
 

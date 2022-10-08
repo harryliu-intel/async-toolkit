@@ -5,15 +5,14 @@ FROM HnnPrivate IMPORT RepIterator;
 
 IMPORT HnnHrep;
 IMPORT HnnHrepSeq;
-IMPORT HnnHrepRefSet;
-IMPORT HnnHrepRef;
+IMPORT HnnHrepCardTbl;
 IMPORT CardSeq;
 
 REVEAL
   T = HnnPrivate.Private BRANDED Brand OBJECT
     seq : HnnHrepSeq.T;
 
-    set : HnnHrepRefSet.T;
+    set : HnnHrepCardTbl.T;
     (* store in a set to make sure we don't duplicate entries *)
 
     valid := FALSE;
@@ -40,73 +39,121 @@ REVEAL
   OVERRIDES
 
     (* Public methods *)
-    init := Init;
-    put := Put;
-    iterClose := IterClose;
-    iterNnOrdered := IterNnOrdered;
-    iter := Iter;
-    get := Get;
-    size := Size;
+    init             := Init;
+    put              := Put;
+    iterClose        := IterClose;
+    iterNnOrdered    := IterNnOrdered;
+    iter             := Iter;
+    get              := Get;
+    size             := Size;
 
     (* Settings methods *)
-    setS := SetS;
+    setS             := SetS;
 
     (* Private methods *)
-    putRep := PutRep;
-    iterCloseRep := IterCloseRep;
+    putRep           := PutRep;
+    iterCloseRep     := IterCloseRep;
     iterNnOrderedRep := IterNnOrderedRep;
   END;
 
 PROCEDURE Rehash(t : T) =
   BEGIN
+    (* we should really be able to pick s automatically... *)
+    <*ASSERT t.s # 0*>
+
+    
   END Rehash;
 
 PROCEDURE Init(t : T; len : CARDINAL) : T =
   BEGIN
+    t.seq := NEW(HnnHrepSeq.T).init();
+    t.set := NEW(HnnHrepCardTbl.Default).init();
+    t.valid := FALSE;
+    t.len := len;
+    t.s := 0;
+    t.hashTabs := NIL;
+    RETURN t
   END Init;
 
 PROCEDURE Put(t : T; READONLY elem : Elem) : CARDINAL =
-  BEGIN END Put;
+  BEGIN
+    WITH rep = HnnHrep.New(elem) DO
+      RETURN t.putRep(rep)
+    END
+  END Put;
     
 PROCEDURE IterClose(t : T;
                     READONLY elem : Elem; maxHamming : CARDINAL) : Iterator =
-  BEGIN END IterClose;
+  BEGIN
+  END IterClose;
   
-PROCEDURE IterNnOrdered(t : T;
-                        READONLY elem : Elem; n : CARDINAL) : Iterator =
-  BEGIN END IterNnOrdered;
+PROCEDURE IterNnOrdered(t             : T;
+                        READONLY elem : Elem;
+                        n             : CARDINAL;
+                        maxHamming    : CARDINAL) : Iterator =
+  BEGIN
+  END IterNnOrdered;
   
 PROCEDURE Iter(t : T;
                ) : Iterator =
-  BEGIN END Iter;
+  BEGIN
+  END Iter;
   
 PROCEDURE Get(t : T;
               i : CARDINAL) =
-  BEGIN END Get;
+  BEGIN
+  END Get;
   
 PROCEDURE Size(t : T;
                ) : CARDINAL =
-  BEGIN END Size;
+  BEGIN
+  END Size;
 
 PROCEDURE SetS(t : T;
                s : [ 1 .. HnnSettings.MaxS ]) =
-  BEGIN END SetS;
+  BEGIN
+  END SetS;
   
 PROCEDURE PutRep(t : T;
-                 READONLY elem : HnnHrep.T) =
-  BEGIN END PutRep;
+                 elem : HnnHrep.T) : CARDINAL =
+  VAR
+    idx : CARDINAL;
+  BEGIN
+    (* check if we already have it, if we do, just return the index *)
+    IF t.set.get(elem, idx) THEN
+      RETURN idx
+    ELSE
+      idx := t.set.size();
+    END;
+    
+    (* clear out hash tables if they exist *)
+    t.valid := FALSE;
+    t.hashTabs := NIL;
+
+    (* make Rep and store it *)
+    elem.id := idx;
+    EVAL t.set.put(elem, idx);
+
+    (* dont need to do more right now, just return the index *)
+    RETURN idx
+
+  END PutRep;
   
 PROCEDURE IterCloseRep(t : T;
-                       READONLY elem : HnnHrep.T; maxHamming : CARDINAL) : RepIterator =
-  BEGIN END IterCloseRep;
+                       elem : HnnHrep.T; maxHamming : CARDINAL) : RepIterator =
+  BEGIN
+  END IterCloseRep;
 
-PROCEDURE IterNnOrderedRep(t : T;
-                           READONLY elem : HnnHrep.T; n : CARDINAL) : RepIterator =
-  BEGIN END IterNnOrderedRep;
+PROCEDURE IterNnOrderedRep(t             : T;
+                           elem          : HnnHrep.T;
+                           n             : CARDINAL;
+                           maxHamming    : CARDINAL) : RepIterator =
+  BEGIN
+  END IterNnOrderedRep;
     
 
 
 
 
 
-  BEGIN END Hnn.
+BEGIN END Hnn.

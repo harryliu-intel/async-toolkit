@@ -2,7 +2,7 @@ INTERFACE HnnHrep;
 IMPORT Word;
 
 TYPE
-  T = RECORD
+  T = REF RECORD
     (* s/b REF RECORD? do we ever need the non-REF version? *)
 
     bits        : REF ARRAY OF Word.T;
@@ -22,16 +22,24 @@ TYPE
     
   END;
 
-PROCEDURE SetHash(VAR t : T);
+PROCEDURE SetHash(t : T);
 
-PROCEDURE Equal(READONLY a, b : T) : BOOLEAN;
+PROCEDURE Equal(a, b : T) : BOOLEAN;
   (* checks a.bits^ = b.bits^, and sz
      ignores id
   *)
 
-PROCEDURE Hash(VAR t : T) : Word.T;
+PROCEDURE Hash(t : T) : Word.T;
   (* hash the bits (only), caches in hashV *)
 
 CONST Brand = "HnnHrep";
-  
+
+PROCEDURE New(READONLY a : ARRAY OF BOOLEAN) : T;
+  (* allocate a new T and fill it in with contents of a,
+     with hashValid FALSE and id set to an arbitrary value *)
+
+PROCEDURE ToArray(t : T; VAR a : ARRAY OF BOOLEAN);
+
+PROCEDURE Length(t : T) : CARDINAL;
+      
 END HnnHrep.

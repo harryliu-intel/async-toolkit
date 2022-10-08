@@ -8,9 +8,19 @@ REVEAL
 
 TYPE
   Private = HnnSettings.Settings OBJECT METHODS
-    putRep(READONLY elem : HnnHrep.T);
-    iterCloseRep(READONLY elem : HnnHrep.T; maxHamming : CARDINAL) : RepIterator;
-    iterNnOrderedRep(READONLY elem : HnnHrep.T; n : CARDINAL) : RepIterator;
+
+    putRep(elem : HnnHrep.T) : CARDINAL;
+    (* note rep exposure here:
+       elem is modified and inserted into the data structure,
+       do not modify elem subsequently!
+    *)
+
+    iterCloseRep(elem : HnnHrep.T; maxHamming : CARDINAL) : RepIterator;
+    
+    iterNnOrderedRep(elem : HnnHrep.T;
+                     n : CARDINAL;
+                     maxHamming : CARDINAL := 0) : RepIterator;
+    
   END;
 
   RepIterator = OBJECT METHODS
