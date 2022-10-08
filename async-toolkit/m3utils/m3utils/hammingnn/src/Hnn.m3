@@ -46,6 +46,7 @@ REVEAL
     iter             := Iter;
     get              := Get;
     size             := Size;
+    getLen           := GetLen;
 
     (* Settings methods *)
     setS             := SetS;
@@ -100,7 +101,7 @@ PROCEDURE Iter(t : T;
   END Iter;
   
 PROCEDURE Get(t : T;
-              i : CARDINAL) =
+              i : CARDINAL; VAR elem : Elem) =
   BEGIN
   END Get;
   
@@ -108,6 +109,11 @@ PROCEDURE Size(t : T;
                ) : CARDINAL =
   BEGIN
   END Size;
+
+PROCEDURE GetLen(t : T) : CARDINAL =
+  BEGIN
+    RETURN t.len
+  END GetLen;
 
 PROCEDURE SetS(t : T;
                s : [ 1 .. HnnSettings.MaxS ]) =

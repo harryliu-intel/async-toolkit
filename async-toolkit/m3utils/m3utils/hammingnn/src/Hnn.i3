@@ -34,12 +34,14 @@ TYPE
     iter() : Iterator;
     (* iterate over all members *)
 
-    get(i : CARDINAL);
+    get(i : CARDINAL; VAR elem : Elem);
     (* get the ith member *)
 
     size() : CARDINAL;
     (* count of members *)
-    
+
+    getLen() : CARDINAL;
+    (* length of members in bits *)
   END;
 
   Iterator = OBJECT METHODS
