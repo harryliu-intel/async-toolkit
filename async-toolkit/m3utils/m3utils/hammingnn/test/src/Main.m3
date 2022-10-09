@@ -8,7 +8,7 @@ FROM Fmt IMPORT F, Int;
 CONST
   Len       = 1000;        (* length in bits of words *)
   ErrorRate = 0.1d0;       (* rate of errors in bits *)
-  Members   = 1000 * 1000; (* how big a set to use as universe *)
+  Members   = 1000 ;       (* how big a set to use as universe *)
   Nn        = 10;          (* how many nearest neighbors to seek *)
   Iters     = 20;          (* how many tests to run *)
   
@@ -38,6 +38,8 @@ PROCEDURE RandomVec(VAR v : Vec) =
 
 PROCEDURE InitSet(set : Hnn.T) =
   BEGIN
+    Debug.Out(F("Initializing set, %s members", Int(Members)));
+    
     FOR i := 0 TO Members - 1 DO
       RandomVec(a);
       EVAL set.put(a)
@@ -51,6 +53,7 @@ PROCEDURE RunTests(set : Hnn.T) =
     q, r, s  := NEW(REF ARRAY OF BOOLEAN, len);
     errs, k  : CARDINAL;
   BEGIN
+
     FOR i := 0 TO Iters - 1 DO
       (* pick entry at random *)
       WITH a = rand.integer(0, sz - 1) DO

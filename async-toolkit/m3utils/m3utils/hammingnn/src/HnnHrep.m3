@@ -73,7 +73,7 @@ PROCEDURE ToArray(t : T; VAR a : ARRAY OF BOOLEAN) =
   BEGIN
     <*ASSERT NUMBER(a) = t.sz*>
     FOR i := FIRST(a) TO LAST(a) DO
-      a[i] := Word.Extract(t.bits[i DIV t.sz], i MOD t.sz, 1) = 1
+      a[i] := Word.Extract(t.bits[i DIV Word.Size], i MOD Word.Size, 1) = 1
     END
   END ToArray;
 

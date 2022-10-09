@@ -117,7 +117,11 @@ PROCEDURE Rehash(t : T) =
     b : Word.T;
   BEGIN
     (* we should really be able to pick s automatically... *)
-    <*ASSERT t.s # 0*>
+    IF t.s = 0 THEN
+      t.s := MIN(t.len DIV 30,
+                 HnnSettings.MaxS)
+      (* optimize for about a billion entries *)
+    END;
 
     WITH ntabls = t.nTabs(),
          nbucks = t.nBucks() DO
@@ -199,9 +203,11 @@ PROCEDURE SeekMatches(w            : Word.T;
                     startBit : CARDINAL) =
     BEGIN
       MarkBuckets(w);
-      FOR b := startBit TO MIN(startBit + maxDist, n) DO
-        WITH ww = Word.Xor(w, Word.Shift(1, b)) DO
-          Recurse(ww, maxDist - 1, startBit + 1)
+      IF maxDist # 0 THEN
+        FOR b := startBit TO MIN(startBit + maxDist, n) DO
+          WITH ww = Word.Xor(w, Word.Shift(1, b)) DO
+            Recurse(ww, maxDist - 1, startBit + 1)
+          END
         END
       END
     END Recurse;
@@ -365,6 +371,8 @@ PROCEDURE IterCloseRep(t          : T;
                        elem       : HnnHrep.T;
                        maxHamming : CARDINAL) : RepIterator =
   BEGIN
+    IF NOT t.valid THEN t.rehash() END;
+
     WITH arr = GetCloseIds(t, elem, maxHamming) DO
       RETURN
         NEW(RepIterator,
@@ -462,6 +470,8 @@ PROCEDURE IterNnOrderedRep(t             : T;
                            n             : CARDINAL;
                            maxHamming    : CARDINAL) : RepIterator =
   BEGIN
+    IF NOT t.valid THEN t.rehash() END;
+    
     WITH arr = GetCloseIds(t, elem, maxHamming) DO
       RETURN
         NEW(RepIterator,
