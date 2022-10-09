@@ -27,7 +27,7 @@ TYPE
     
     iterNnOrdered(READONLY elem : Elem;
                   n : CARDINAL;
-                  maxHamming : CARDINAL := 0) : Iterator;
+                  maxHamming : CARDINAL := LAST(CARDINAL)) : Iterator;
     (* iterate over nn stored strings that are closest in Hamming distance,
        in nondecreasing order of distance *)
 

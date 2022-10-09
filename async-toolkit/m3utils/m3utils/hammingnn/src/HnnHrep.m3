@@ -100,10 +100,10 @@ PROCEDURE GetBits(t : T; from, n : CARDINAL) : Word.T =
 
 PROCEDURE Distance(a, b : T) : CARDINAL =
   VAR
-    res := 0;
+    res : CARDINAL := 0;
   BEGIN
     <*ASSERT a.sz = b.sz*>
-    FOR i := 0 TO a.sz - 1 DO
+    FOR i := FIRST(a.bits^) TO LAST(a.bits^) DO
       INC(res, PopCount(Word.Xor(a.bits[i],b.bits[i])))
     END;
     RETURN res

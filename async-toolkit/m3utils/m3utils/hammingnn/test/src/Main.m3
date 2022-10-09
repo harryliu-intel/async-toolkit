@@ -1,16 +1,17 @@
 MODULE Main;
 IMPORT Random;
 IMPORT Word;
-IMPORT Hnn;
+IMPORT Hnn, HnnSettings;
 IMPORT Debug;
 FROM Fmt IMPORT F, Int;
+IMPORT Wx;
 
 CONST
-  Len       = 1000;        (* length in bits of words *)
-  ErrorRate = 0.1d0;       (* rate of errors in bits *)
-  Members   = 1000 ;       (* how big a set to use as universe *)
-  Nn        = 10;          (* how many nearest neighbors to seek *)
-  Iters     = 20;          (* how many tests to run *)
+  Len       = 32;            (* length in bits of words *)
+  ErrorRate = 0.1d0;         (* rate of errors in bits *)
+  Members   = 1000 * 1000;   (* how big a set to use as universe *)
+  Nn        = 3;             (* how many nearest neighbors to seek *)
+  Iters     = 20;            (* how many tests to run *)
   
 TYPE
   Vec = ARRAY [ 0 .. Len - 1 ] OF BOOLEAN;
@@ -42,10 +43,23 @@ PROCEDURE InitSet(set : Hnn.T) =
     
     FOR i := 0 TO Members - 1 DO
       RandomVec(a);
+      Debug.Out(F("inserting a = %s", FmtA(a)));
       EVAL set.put(a)
-    END
+    END;
+
+    set.setS(4)
   END InitSet;
 
+PROCEDURE FmtA(READONLY a : ARRAY OF BOOLEAN) : TEXT =
+  VAR
+    wx := Wx.New();
+  BEGIN
+    FOR i := LAST(a) TO FIRST(a) BY -1 (* big endian! *) DO
+      IF a[i] THEN Wx.PutChar(wx, '1') ELSE Wx.PutChar(wx, '0') END
+    END;
+    RETURN Wx.ToText(wx)
+  END FmtA;
+  
 PROCEDURE RunTests(set : Hnn.T) =
   VAR
     sz       := set.size();
@@ -57,7 +71,8 @@ PROCEDURE RunTests(set : Hnn.T) =
     FOR i := 0 TO Iters - 1 DO
       (* pick entry at random *)
       WITH a = rand.integer(0, sz - 1) DO
-        set.get(a, q^)
+        set.get(a, q^);
+        Debug.Out(F("tgt q = %s id %s", FmtA(q^), Int(a)))
       END;
 
       (* corrupt the bits *)
@@ -74,6 +89,8 @@ PROCEDURE RunTests(set : Hnn.T) =
           END
         END
       END;
+
+      Debug.Out(F("use r = %s", FmtA(r^)));
 
       (* search for corrupted entry *)
       WITH iter = set.iterNnOrdered(r^, Nn) DO

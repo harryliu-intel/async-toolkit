@@ -22,6 +22,10 @@ IMPORT CardSet, CardSetDef;
 IMPORT CardPair;
 IMPORT CardPairSeq;
 IMPORT CardPairArraySort;
+IMPORT Debug;
+FROM Fmt IMPORT F, Int, Unsigned;
+
+CONST doVerbose = FALSE;
 
 REVEAL
   T = HnnPrivate.Private BRANDED Brand OBJECT
@@ -102,6 +106,9 @@ PROCEDURE NewHashTabs(tabls, bucks : CARDINAL) : HashTabs =
   VAR
     res : HashTabs;
   BEGIN
+    IF doVerbose THEN
+      Debug.Out(F("NewHashTabs: tabls=%s bucks=%s", Int(tabls), Int(bucks)))
+    END;
     res := NEW(HashTabs, tabls, bucks);
     FOR i := FIRST(res^) TO LAST(res^) DO
       FOR j := FIRST(res[0]) TO LAST(res[0]) DO
@@ -138,7 +145,8 @@ PROCEDURE Rehash(t : T) =
     END;
 
     (* also initialize marked *)
-    t.marked := NEW(CardSetDef.T).init()
+    t.marked := NEW(CardSetDef.T).init();
+    t.valid := TRUE
 
   END Rehash;
 
@@ -192,6 +200,9 @@ PROCEDURE SeekMatches(w            : Word.T;
     BEGIN
       WHILE p # NIL DO
         WITH id  = p.head DO
+          IF doVerbose THEN
+            Debug.Out(F("MarkBuckets %s", Int(id)))
+          END;
           EVAL mark.insert(id)
         END;
         p := p.tail
@@ -202,6 +213,9 @@ PROCEDURE SeekMatches(w            : Word.T;
                     maxDist  : CARDINAL;
                     startBit : CARDINAL) =
     BEGIN
+      IF doVerbose THEN    
+        Debug.Out(F("SeekMatches_Recurse: w=16_%s", Unsigned(w)))
+      END;
       MarkBuckets(w);
       IF maxDist # 0 THEN
         FOR b := startBit TO MIN(startBit + maxDist, n) DO
@@ -226,11 +240,14 @@ PROCEDURE SeekPotentialRepMatches(t                 : T;
     WITH ntabls = t.nTabs() DO
       FOR i := 0 TO ntabls - 1 DO
         WITH lob = i * t.s,                   (* first bit pos *)
-             nxb = MIN(t.len, (i + 1) * t.s), (* first bit pos not incl *)
-             wid = nxb - lob,
-             ww = HnnHrep.GetBits(rep, lob, nxb - wid)
+             nxb = MIN(t.len - lob, t.s),     (* width of substring *)
+             ww  = HnnHrep.GetBits(rep, lob, nxb)
          DO
-          SeekMatches(ww, wid, maxBucketDistance, t.hashTabs[i], marked)
+          IF doVerbose THEN
+            Debug.Out(F("SeekPotentialRepMatches: lob %s nxb %s ww 16_%s i %s",
+                        Int(lob), Int(nxb), Unsigned(ww), Int(i)))
+          END;
+          SeekMatches(ww, nxb, maxBucketDistance, t.hashTabs[i], marked)
         END
       END
     END
@@ -471,14 +488,21 @@ PROCEDURE IterNnOrderedRep(t             : T;
                            maxHamming    : CARDINAL) : RepIterator =
   BEGIN
     IF NOT t.valid THEN t.rehash() END;
-    
-    WITH arr = GetCloseIds(t, elem, maxHamming) DO
-      RETURN
-        NEW(RepIterator,
-            t    := t,
-            arr  := arr,
-            n    := MIN(n, NUMBER(arr^)))
-    END
+
+    WITH lim = MIN(maxHamming, t.len) DO
+      FOR m := 0 TO lim DO
+        WITH arr = GetCloseIds(t, elem, m) DO
+          IF m = lim OR NUMBER(arr^) >= n THEN
+            RETURN
+              NEW(RepIterator,
+                  t    := t,
+                  arr  := arr,
+                  n    := MIN(n, NUMBER(arr^)))
+          END
+        END
+      END
+    END;
+    <*ASSERT FALSE*>
   END IterNnOrderedRep;
 
 BEGIN END Hnn.

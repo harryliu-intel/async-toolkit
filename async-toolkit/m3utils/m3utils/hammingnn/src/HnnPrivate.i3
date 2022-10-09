@@ -19,7 +19,7 @@ TYPE
     
     iterNnOrderedRep(elem : HnnHrep.T;
                      n : CARDINAL;
-                     maxHamming : CARDINAL := 0) : RepIterator;
+                     maxHamming : CARDINAL := LAST(CARDINAL)) : RepIterator;
 
     getRep(i : CARDINAL; VAR elem : HnnHrep.T);
 
