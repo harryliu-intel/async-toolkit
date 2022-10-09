@@ -25,7 +25,7 @@ IMPORT AssertionList;
 IMPORT ProbeMode;
 IMPORT TextSetDef;
 IMPORT Params;
-IMPORT TextUtils;
+IMPORT CitTextUtils AS TextUtils;
 IMPORT TextList;
 IMPORT SimMeasurement, SimMeasurementSeq;
 IMPORT LongRealSeq AS LRSeq;
@@ -717,6 +717,7 @@ PROCEDURE AddNodes(nm            : TEXT;
                    READONLY dims : Dims.T;
                    intf          : Intf.T) =
   BEGIN
+    <*ASSERT dutName # NIL*>
     WITH nds = NEW(Nodes.T).init(dutName, nm, dims, intf) DO
       intf.complete(nds);
       lst := NodesList.Cons(nds, lst);

@@ -16,6 +16,8 @@ implementation ("TestParse")
 
 %library ("libertyparse")
 
+Module ("SpecialScan")
+
 Module ("LibertyComponent")
 Module ("LibertyDefine")
 Module ("LibertyDefineGroup")
@@ -91,7 +93,7 @@ SchemeStubs ("Rd")
 
 SchemeStubs ("Pickle")
 
-SchemeStubs ("TextUtils")
+SchemeStubs ("CitTextUtils")
 SchemeStubs ("Text")
 SchemeStubs ("TextList")
 
@@ -99,6 +101,7 @@ SchemeStubs ("ParseParams")
 SchemeStubs ("Stdio")
 
 SchemeStubs ("LibertyUtils")
+SchemeStubs ("SpecialScan")
 SchemeStubs ("Scan")
 SchemeStubs ("Fmt")
 SchemeStubs ("Env")

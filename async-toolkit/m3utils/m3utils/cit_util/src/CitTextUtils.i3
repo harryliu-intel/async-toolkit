@@ -20,7 +20,7 @@
 (*  export license.                                                          *)
 (*                                                                           *)
 (* $Id: TextUtils.i3,v 1.24 2008/12/18 00:38:12 mika Exp $ *)
-INTERFACE TextUtils;
+INTERFACE CitTextUtils;
 IMPORT TextList, TextSet, IntList;
 IMPORT TextSeq;
 
@@ -106,4 +106,4 @@ PROCEDURE FormatInfix(seq : TextSeq.T; operator : TEXT) : TEXT;
 PROCEDURE FormatInfixArr(READONLY arr : ARRAY OF TEXT; operator : TEXT) : TEXT;
   (* same, for an array *)
 
-END TextUtils.
+END CitTextUtils.

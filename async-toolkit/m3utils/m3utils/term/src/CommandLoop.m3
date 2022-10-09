@@ -1,6 +1,6 @@
 MODULE CommandLoop;
 IMPORT TextCommandQueueTbl;
-IMPORT TextUtils;
+IMPORT CitTextUtils AS TextUtils;
 IMPORT TextTextListTbl;
 IMPORT Text;
 IMPORT FileRd;

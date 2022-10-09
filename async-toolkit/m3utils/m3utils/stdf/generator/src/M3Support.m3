@@ -3,7 +3,7 @@ IMPORT Word;
 IMPORT Scan, Text;
 IMPORT Fmt;
 IMPORT FloatMode, Lex;
-IMPORT TextUtils;
+IMPORT CitTextUtils AS TextUtils;
 IMPORT Debug;
 
 PROCEDURE ReformatNumber(txt : TEXT) : TEXT
