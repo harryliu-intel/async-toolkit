@@ -27,7 +27,9 @@ TYPE
     
   END;
 
-  RepIterator = OBJECT METHODS
+  RepIterator <: PubRepIterator;
+
+  PubRepIterator = OBJECT METHODS
     next(VAR e : HnnHrep.T) : BOOLEAN;
   END;
   

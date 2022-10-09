@@ -3,7 +3,7 @@ INTERFACE Hnn;
 (* 
    K-nearest neighbors in the Hamming space
 
-   Author : Mika Nystroem <mika.nystroem@intel.com>
+   Author : Mika Nystrom <mika.nystroem@intel.com>
    October, 2022
 *)
 
