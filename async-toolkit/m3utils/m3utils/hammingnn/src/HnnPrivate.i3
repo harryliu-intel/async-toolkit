@@ -20,6 +20,10 @@ TYPE
     iterNnOrderedRep(elem : HnnHrep.T;
                      n : CARDINAL;
                      maxHamming : CARDINAL := 0) : RepIterator;
+
+    getRep(i : CARDINAL; VAR elem : HnnHrep.T);
+
+    iterRep() : RepIterator;
     
   END;
 

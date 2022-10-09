@@ -74,5 +74,26 @@ PROCEDURE ToArray(t : T; VAR a : ARRAY OF BOOLEAN) =
       a[i] := Word.Extract(t.bits[i DIV t.sz], i MOD t.sz, 1) = 1
     END
   END ToArray;
-  
+
+PROCEDURE GetBits(t : T; from, n : CARDINAL) : Word.T =
+  BEGIN
+    <*ASSERT n <= Word.Size*>
+    WITH sw = from DIV Word.Size,
+         sb = from MOD Word.Size,
+         eb = from + n,
+         ew = eb   DIV Word.Size,
+         eb = eb   MOD Word.Size DO
+      IF sw = ew THEN
+        RETURN Word.Extract(t.bits[sw], sb, n)
+      ELSE
+        <*ASSERT ew = sw + 1*>
+        WITH lowidth = Word.Size - sb,
+             lopart  = Word.Extract(t.bits[sw], sb, lowidth),
+             hipart  = Word.Extract(t.bits[ew],  0, eb) DO
+          RETURN Word.Or(lopart, Word.Shift(hipart, lowidth)) 
+        END
+      END
+    END
+  END GetBits;
+
 BEGIN END HnnHrep.
