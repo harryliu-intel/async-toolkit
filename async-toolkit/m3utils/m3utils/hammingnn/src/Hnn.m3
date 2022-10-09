@@ -18,7 +18,10 @@ IMPORT HnnHrepSeq;
 IMPORT HnnHrepCardTbl;
 IMPORT CardList;
 IMPORT Word;
-IMPORT CardSeq;
+IMPORT CardSet, CardSetDef;
+IMPORT CardPair;
+IMPORT CardPairSeq;
+IMPORT CardPairArraySort;
 
 REVEAL
   T = HnnPrivate.Private BRANDED Brand OBJECT
@@ -45,7 +48,7 @@ REVEAL
        cardseq is index into t.seq // see above
     *)
 
-    markArray : REF ARRAY OF Word.T;
+    marked : CardSet.T;
     (* scratch pad for running matching *)
     
   METHODS
@@ -130,9 +133,9 @@ PROCEDURE Rehash(t : T) =
       
     END;
 
-    (* also initialize markArray *)
-    t.markArray := NEW(REF ARRAY OF Word.T,
-                       (t.seq.size() - 1) DIV Word.Size + 1)
+    (* also initialize marked *)
+    t.marked := NEW(CardSetDef.T).init()
+
   END Rehash;
 
 PROCEDURE SeekMatches(w            : Word.T;
@@ -147,8 +150,8 @@ PROCEDURE SeekMatches(w            : Word.T;
                       READONLY tbl : ARRAY OF CardBase;
                       (* these are the hash buckets *)
                       
-                      VAR mark     : ARRAY OF Word.T;
-                      (* if we find a match, we mark this array *)
+                      mark         : CardSet.T
+                      (* if we find a match, we mark here *)
                       
                       ) =
 
@@ -184,9 +187,8 @@ PROCEDURE SeekMatches(w            : Word.T;
       p := tbl[w];
     BEGIN
       WHILE p # NIL DO
-        WITH id  = p.head,
-             wid = id DIV Word.Size DO
-          mark[wid] := Word.Or(mark[wid], Word.Shift(1, id MOD Word.Size))
+        WITH id  = p.head DO
+          EVAL mark.insert(id)
         END;
         p := p.tail
       END
@@ -211,19 +213,18 @@ PROCEDURE SeekMatches(w            : Word.T;
 PROCEDURE SeekPotentialRepMatches(t                 : T;
                                   rep               : HnnHrep.T;
                                   maxBucketDistance : CARDINAL;
-                                  VAR mark          : ARRAY OF Word.T) =
+                                  marked            : CardSet.T) =
   (* find a global set of potential matches, by marking the mark array, 
      that match at least one bucket in at least maxBucketDistance bits *)
   BEGIN
-    WITH ntabls = t.nTabs(),
-         nbucks = t.nBucks() DO
+    WITH ntabls = t.nTabs() DO
       FOR i := 0 TO ntabls - 1 DO
         WITH lob = i * t.s,                   (* first bit pos *)
              nxb = MIN(t.len, (i + 1) * t.s), (* first bit pos not incl *)
              wid = nxb - lob,
              ww = HnnHrep.GetBits(rep, lob, nxb - wid)
          DO
-          SeekMatches(ww, wid, maxBucketDistance, t.hashTabs[i], mark)
+          SeekMatches(ww, wid, maxBucketDistance, t.hashTabs[i], marked)
         END
       END
     END
@@ -237,7 +238,7 @@ PROCEDURE Init(t : T; len : CARDINAL) : T =
     t.len := len;
     t.s := 0;
     t.hashTabs := NIL;
-    t.markArray := NIL;
+    t.marked := NIL;
     RETURN t
   END Init;
 
@@ -247,10 +248,31 @@ PROCEDURE Put(t : T; READONLY elem : Elem) : CARDINAL =
       RETURN t.putRep(rep)
     END
   END Put;
-    
+
+REVEAL
+  Iterator = PubIterator BRANDED Brand & " Iterator" OBJECT
+    ri : RepIterator;
+  OVERRIDES
+    next := IterNext;
+  END;
+
+PROCEDURE IterNext(iter : Iterator; VAR e : Elem) : BOOLEAN =
+  VAR
+    rep : HnnHrep.T;
+  BEGIN
+    IF iter.ri.next(rep) THEN
+      HnnHrep.ToArray(rep, e);
+      RETURN TRUE
+    ELSE
+      RETURN FALSE
+    END
+  END IterNext;
+  
 PROCEDURE IterClose(t : T;
                     READONLY elem : Elem; maxHamming : CARDINAL) : Iterator =
   BEGIN
+    RETURN NEW(Iterator,
+               ri := t.iterCloseRep(HnnHrep.New(elem), maxHamming))
   END IterClose;
   
 PROCEDURE IterNnOrdered(t             : T;
@@ -258,21 +280,30 @@ PROCEDURE IterNnOrdered(t             : T;
                         n             : CARDINAL;
                         maxHamming    : CARDINAL) : Iterator =
   BEGIN
+    RETURN NEW(Iterator,
+               ri := t.iterNnOrderedRep(HnnHrep.New(elem), n, maxHamming))
   END IterNnOrdered;
   
 PROCEDURE Iter(t : T;
                ) : Iterator =
   BEGIN
+    RETURN NEW(Iterator,
+               ri := t.iterRep())
   END Iter;
   
 PROCEDURE Get(t : T;
-              i : CARDINAL; VAR elem : Elem) =
+              i : CARDINAL;
+              VAR elem : Elem) =
   BEGIN
+    WITH rep = t.seq.get(i) DO
+      HnnHrep.ToArray(rep, elem)
+    END
   END Get;
   
 PROCEDURE Size(t : T;
                ) : CARDINAL =
   BEGIN
+    RETURN t.seq.size()
   END Size;
 
 PROCEDURE GetLen(t : T) : CARDINAL =
@@ -283,6 +314,7 @@ PROCEDURE GetLen(t : T) : CARDINAL =
 PROCEDURE SetS(t : T;
                s : [ 1 .. HnnSettings.MaxS ]) =
   BEGIN
+    t.s := s
   END SetS;
   
 PROCEDURE PutRep(t : T;
@@ -300,7 +332,7 @@ PROCEDURE PutRep(t : T;
     (* clear out hash tables if they exist *)
     t.valid := FALSE;
     t.hashTabs := NIL;
-    t.markArray := NIL;
+    t.marked := NIL;
 
     (* make Rep and store it *)
     elem.id := idx;
@@ -321,8 +353,8 @@ PROCEDURE GetRep(t : T;
 REVEAL
   RepIterator = PubRepIterator BRANDED Brand & " RepIterator" OBJECT
     t : T;
-    seq : CardSeq.T;
-    (* if seq is NIL, simply iterate over all the reps *)
+    arr : REF ARRAY OF CardPair.T; (* k1 : dist ; k2 : id *)
+    (* if arr is NIL, simply iterate over all the reps *)
     nxt := 0;
     n : CARDINAL;
   OVERRIDES
@@ -332,6 +364,33 @@ REVEAL
 PROCEDURE IterCloseRep(t          : T;
                        elem       : HnnHrep.T;
                        maxHamming : CARDINAL) : RepIterator =
+  BEGIN
+    WITH arr = GetCloseIds(t, elem, maxHamming) DO
+      RETURN
+        NEW(RepIterator,
+            t    := t,
+            arr  := arr,
+            n    := NUMBER(arr^))
+    END
+  END IterCloseRep;
+  
+PROCEDURE MarkCloseReps(t                   : T;
+                        x                   : HnnHrep.T;
+                        maxDistPerSubstring : CARDINAL) =
+  BEGIN
+    IF NOT t.valid THEN
+      t.rehash()
+    END;
+    SeekPotentialRepMatches(t, x, maxDistPerSubstring, t.marked)
+  END MarkCloseReps;
+
+PROCEDURE GetCloseIds(t : T;
+                      x : HnnHrep.T;
+                      maxHamming : CARDINAL) : REF ARRAY OF CardPair.T =
+  (* 
+     k1: dist
+     k2: id
+  *)
   VAR
     maxDistPerSubstring := maxHamming DIV t.nTabs();
     (* the Lemma is that at least one substring has to have a distance
@@ -339,42 +398,47 @@ PROCEDURE IterCloseRep(t          : T;
 
        Proof: Dirichlet *)
   BEGIN
-    MarkCloseReps(t, elem, maxDistPerSubstring);
+    MarkCloseReps(t, x, maxDistPerSubstring);
 
     (* now walk all the marks and check every one for meeting the 
        criteria ... *)
 
-    (* XXX ok the marks need to be a Set, not a bit vector. *)
-
-    
-  END IterCloseRep;
-
-PROCEDURE MarkCloseReps(t                   : T;
-                        x                   : HnnHrep.T;
-                        maxDistPerSubstring : CARDINAL) =
-  (* leaves the candidates in t.mask *)
-  BEGIN
-    IF NOT t.valid THEN
-      t.rehash()
-    END;
-    FOR i := FIRST(t.markArray^) TO LAST(t.markArray^) DO
-      t.markArray[i] := 0
-    END;
-    SeekPotentialRepMatches(t, x, maxDistPerSubstring, t.markArray^)
-  END MarkCloseReps;
+    VAR
+      iter := t.marked.iterate();
+      id : CARDINAL;
+      matchSeq := NEW(CardPairSeq.T).init();
+      arr : REF ARRAY OF CardPair.T;
+    BEGIN
+      WHILE iter.next(id) DO
+        WITH candRep = t.seq.get(id) DO
+          WITH dist = HnnHrep.Distance(candRep, x) DO
+            IF dist <= maxHamming THEN
+              matchSeq.addhi(CardPair.T { dist, id })
+            END
+          END
+        END
+      END;
+      arr := NEW(REF ARRAY OF CardPair.T, matchSeq.size());
+      FOR i := 0 TO matchSeq.size() - 1 DO
+        arr[i] := matchSeq.get(i)
+      END;
+      CardPairArraySort.Sort(arr^);
+      RETURN arr
+    END
+  END GetCloseIds;
   
 PROCEDURE IterRep(t : T) : RepIterator =
   BEGIN
     RETURN
       NEW(RepIterator,
-          t := t,
-          seq := NIL,
-          n := t.seq.size())
+          t    := t,
+          arr  := NIL,
+          n    := t.seq.size())
   END IterRep;
 
 PROCEDURE NextRep(iter : RepIterator; VAR e : HnnHrep.T) : BOOLEAN =
   BEGIN
-    IF iter.seq = NIL THEN
+    IF iter.arr = NIL THEN
       IF iter.nxt = iter.n THEN
         RETURN FALSE
       ELSE
@@ -386,7 +450,7 @@ PROCEDURE NextRep(iter : RepIterator; VAR e : HnnHrep.T) : BOOLEAN =
       IF iter.nxt = iter.n THEN
         RETURN FALSE
       ELSE
-        e := iter.t.seq.get(iter.seq.get(iter.nxt));
+        e := iter.t.seq.get(iter.arr[iter.nxt].k2);
         INC(iter.nxt);
         RETURN TRUE
       END
@@ -398,11 +462,13 @@ PROCEDURE IterNnOrderedRep(t             : T;
                            n             : CARDINAL;
                            maxHamming    : CARDINAL) : RepIterator =
   BEGIN
+    WITH arr = GetCloseIds(t, elem, maxHamming) DO
+      RETURN
+        NEW(RepIterator,
+            t    := t,
+            arr  := arr,
+            n    := MIN(n, NUMBER(arr^)))
+    END
   END IterNnOrderedRep;
-    
-
-
-
-
 
 BEGIN END Hnn.

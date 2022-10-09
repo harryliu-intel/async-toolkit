@@ -44,7 +44,9 @@ TYPE
     (* length of members in bits *)
   END;
 
-  Iterator = OBJECT METHODS
+  Iterator <: PubIterator;
+
+  PubIterator = OBJECT METHODS
     next(VAR e : Elem) : BOOLEAN;
   END;
   

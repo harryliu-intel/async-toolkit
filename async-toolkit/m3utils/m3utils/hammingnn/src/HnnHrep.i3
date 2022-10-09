@@ -45,5 +45,8 @@ PROCEDURE Length(t : T) : CARDINAL;
 PROCEDURE GetBits(t : T; from, n : CARDINAL) : Word.T;
   (* get the bits from from to from + n - 1 inclusive;
      it is a checked runtime error for (n > Word.Size) *)
+
+PROCEDURE Distance(a, b : T) : CARDINAL;
+  (* Hamming distance *)
       
 END HnnHrep.

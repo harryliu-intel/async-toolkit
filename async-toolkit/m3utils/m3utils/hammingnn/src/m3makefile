@@ -13,4 +13,7 @@ Table ("HnnHrepRef", "HnnHrep", "Refany")
 Table ("HnnHrepCard", "HnnHrep", "Cardinal")
 MkSet("HnnHrepRef","HnnHrep")
 
+Sequence ("CardPair", "CardPair")
+Array_sort ("CardPair", "CardPair")
+
 library ("hammingnn")

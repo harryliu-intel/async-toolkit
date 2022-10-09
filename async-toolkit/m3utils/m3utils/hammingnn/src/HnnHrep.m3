@@ -64,7 +64,9 @@ PROCEDURE New(READONLY a : ARRAY OF BOOLEAN) : T =
         END
       END;
       bits[i] := w
-    END
+    END;
+
+    RETURN res
   END New;
 
 PROCEDURE ToArray(t : T; VAR a : ARRAY OF BOOLEAN) =
@@ -95,5 +97,38 @@ PROCEDURE GetBits(t : T; from, n : CARDINAL) : Word.T =
       END
     END
   END GetBits;
+
+PROCEDURE Distance(a, b : T) : CARDINAL =
+  VAR
+    res := 0;
+  BEGIN
+    <*ASSERT a.sz = b.sz*>
+    FOR i := 0 TO a.sz - 1 DO
+      INC(res, PopCount(Word.Xor(a.bits[i],b.bits[i])))
+    END;
+    RETURN res
+  END Distance;
+
+PROCEDURE PopCount(w : Word.T) : CARDINAL =
+  BEGIN
+    (*
+    w -= (w >> 1) & 0x5555555555555555ULL;
+    w = (w & 0x3333333333333333ULL) + ((w >> 2) & 0x3333333333333333ULL);
+    w = (w + (w >> 4)) & 0x0f0f0f0f0f0f0f0fULL;
+    return int((w * 0x0101010101010101ULL) >> 56);
+    *)
+    
+    w := Word.Minus(w,
+                    Word.And(Word.RightShift(w, 1),
+                             16_5555555555555555));
+    w := Word.Plus(Word.And(w, 16_3333333333333333),
+                   Word.And(Word.RightShift(w, 2),
+                            16_3333333333333333));
+
+    w := Word.And(Word.Plus(w, Word.RightShift(w, 4)),
+                            16_0f0f0f0f0f0f0f0f);
+    RETURN Word.RightShift(Word.Times(w, 16_0101010101010101), 56)
+
+  END PopCount;
 
 BEGIN END HnnHrep.
