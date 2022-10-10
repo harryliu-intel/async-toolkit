@@ -491,8 +491,13 @@ PROCEDURE IterNnOrderedRep(t             : T;
   BEGIN
     IF NOT t.valid THEN t.rehash() END;
 
-    WITH lim = MIN(maxHamming, t.len) DO
-      FOR m := 0 TO lim DO
+    VAR
+      lim := MIN(maxHamming, t.len);
+      mm := ARRAY [0..1] OF CARDINAL { lim DIV 2, lim };
+      m : CARDINAL;
+    BEGIN
+      FOR mi := FIRST(mm) TO LAST(mm) DO
+        m := mm[mi];
         WITH arr = GetCloseIds(t, elem, m) DO
           IF m = lim OR NUMBER(arr^) >= n THEN
 
