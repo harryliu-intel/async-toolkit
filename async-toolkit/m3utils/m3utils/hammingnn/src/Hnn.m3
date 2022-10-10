@@ -493,6 +493,14 @@ PROCEDURE IterNnOrderedRep(t             : T;
       FOR m := 0 TO lim DO
         WITH arr = GetCloseIds(t, elem, m) DO
           IF m = lim OR NUMBER(arr^) >= n THEN
+
+            Debug.Out(F("InterNnOrderedRep done m %s NUMBER(arr^) %s n %s",
+                        Int(m), Int(NUMBER(arr^)), Int(n)));
+
+            FOR i := FIRST(arr^) TO LAST(arr^) DO
+              Debug.Out(F("k1 %s k2 %s", Int(arr[i].k1), Int(arr[i].k2)))
+            END;
+            
             RETURN
               NEW(RepIterator,
                   t    := t,

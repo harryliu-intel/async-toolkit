@@ -7,9 +7,10 @@ FROM Fmt IMPORT F, Int;
 IMPORT Wx;
 
 CONST
-  Len       = 32;            (* length in bits of words *)
-  ErrorRate = 0.1d0;         (* rate of errors in bits *)
-  Members   = 1000 * 1000;   (* how big a set to use as universe *)
+  doVerbose = FALSE;
+  Len       = 1000;          (* length in bits of words *)
+  ErrorRate = 0.01d0;        (* rate of errors in bits *)
+  Members   = 1000*1000;   (* how big a set to use as universe *)
   Nn        = 3;             (* how many nearest neighbors to seek *)
   Iters     = 20;            (* how many tests to run *)
   
@@ -23,7 +24,7 @@ VAR
 
 PROCEDURE RandomVec(VAR v : Vec) =
   CONST
-    Step = 16;
+    Step = 50;
   BEGIN
     FOR i := 0 TO Len - 1 BY Step DO
       WITH s = rand.integer(0, Word.Shift(1, Step)) DO
@@ -43,11 +44,13 @@ PROCEDURE InitSet(set : Hnn.T) =
     
     FOR i := 0 TO Members - 1 DO
       RandomVec(a);
-      Debug.Out(F("inserting a = %s", FmtA(a)));
+      IF doVerbose THEN
+        Debug.Out(F("inserting a = %s", FmtA(a)))
+      END;
       EVAL set.put(a)
     END;
 
-    set.setS(4)
+    set.setS(20)
   END InitSet;
 
 PROCEDURE FmtA(READONLY a : ARRAY OF BOOLEAN) : TEXT =
@@ -66,6 +69,7 @@ PROCEDURE RunTests(set : Hnn.T) =
     len      := set.getLen();
     q, r, s  := NEW(REF ARRAY OF BOOLEAN, len);
     errs, k  : CARDINAL;
+    ldu      : CARDINAL;
   BEGIN
 
     FOR i := 0 TO Iters - 1 DO
@@ -93,15 +97,17 @@ PROCEDURE RunTests(set : Hnn.T) =
       Debug.Out(F("use r = %s", FmtA(r^)));
 
       (* search for corrupted entry *)
-      WITH iter = set.iterNnOrdered(r^, Nn) DO
+      WITH iter = set.iterNnOrdered(r^, Nn, maxHamming := 20) DO
         Debug.Out(F("Searching for q of weight %s, using r weight %s dist %s errs %s",
                     Int(Weight(q^)),
                     Int(Weight(r^)),
                     Int(Dist(q^,r^)),
                     Int(errs)));
         k := 0;
+        ldu := 0;
         WHILE iter.next(s^) DO
-          WITH d = Dist(q^, s^) DO
+          WITH d  = Dist(q^, s^),
+               du = Dist(r^, s^) DO
             IF k = 0 THEN
               IF d = 0 THEN
                 Debug.Out("search successful!")
@@ -109,7 +115,9 @@ PROCEDURE RunTests(set : Hnn.T) =
                 Debug.Out("SEARCH FAILURE!")
               END
             END;
-            Debug.Out(F("Found s[%s] dist %s", Int(k), Int(d)));
+            Debug.Out(F("Found s[%s] dist/tgt %s dist/use %s", Int(k), Int(d), Int(du)));
+            <* ASSERT du >= ldu *>
+            ldu := du;
             INC(k)
           END
         END
