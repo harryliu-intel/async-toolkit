@@ -16,7 +16,6 @@ FROM HnnPrivate IMPORT RepIterator, PubRepIterator;
 IMPORT HnnHrep;
 IMPORT HnnHrepSeq;
 IMPORT HnnHrepCardTbl;
-IMPORT CardList;
 IMPORT Word;
 IMPORT CardSet, CardSetDef;
 IMPORT CardPair;
@@ -43,13 +42,24 @@ REVEAL
     s : [ 0..HnnSettings.MaxS ] := 0;
     (* 0 means automatic *)
 
+    hashArr : REF ARRAY OF CARDINAL;
+    (* hashArr holds the indices in the following format
+
+           11 12 13 LC 6 7 22 LC LC
+           ^           ^
+    first bucket     second bucket  .. etc.
+
+       LC = LAST(CARDINAL)
+    *)
+    
+    
     hashTabs : HashTabs;
     (* hashTabs is in size:
        CEILING(len/s)    x    2^s    x (sequences)
        ^                      ^
        pos in word            bin val of substr
 
-       cardseq is index into t.seq // see above
+       cardseq is index into hashSeq // see above
     *)
 
     marked : CardSet.T;
@@ -83,14 +93,8 @@ REVEAL
   END;
 
 TYPE
-  CardBase = CardList.T;
+  CardBase = CARDINAL;
   HashTabs = REF ARRAY OF ARRAY OF CardBase;
-
-  (* the HashTabs are probably mostly empty?  Or maybe they aren't... 
-     If they are loaded, then perhaps CardSeq.T is a more reasonable
-     representation than CardList, since it extends more efficiently.
-     We can choose dynamically, I suppose...?
-  *)
 
 PROCEDURE NTabs(t : T) : CARDINAL =
   BEGIN
@@ -112,7 +116,7 @@ PROCEDURE NewHashTabs(tabls, bucks : CARDINAL) : HashTabs =
     res := NEW(HashTabs, tabls, bucks);
     FOR i := FIRST(res^) TO LAST(res^) DO
       FOR j := FIRST(res[0]) TO LAST(res[0]) DO
-        res[i, j] := NIL
+        res[i, j] := 0
       END
     END;
     RETURN res
@@ -122,7 +126,9 @@ PROCEDURE Rehash(t : T) =
   VAR
     r : HnnHrep.T;
     b : Word.T;
+    hashPtr : HashTabs;
   BEGIN
+    Debug.Out("Hnn.Rehash()");
     (* we should really be able to pick s automatically... *)
     IF t.s = 0 THEN
       t.s := MIN(t.len DIV 30,
@@ -132,16 +138,113 @@ PROCEDURE Rehash(t : T) =
 
     WITH ntabls = t.nTabs(),
          nbucks = t.nBucks() DO
+
       t.hashTabs := NewHashTabs(ntabls, nbucks);
-      
-      FOR i := 0 TO t.seq.size() - 1 DO
-        r := t.seq.get(i);
-        FOR w := 0 TO ntabls - 1 DO
-          b := HnnHrep.GetBits(r, w * t.s, t.s);
-          t.hashTabs[w, b] := CardList.Cons(i, t.hashTabs[w, b])
-        END
+      (* this is the index of the beginning of each list *)
+
+      hashPtr    := NewHashTabs(ntabls, nbucks);
+      (* local, the pointer we use to write each bucket *)
+
+      WITH hashArrN = t.seq.size() * ntabls + ntabls * nbucks DO
+      (* the array holding the indices
+
+         each number appears once in every table
+
+         each table and each bucket has an end marker *)
+
+        Debug.Out(F("Creating hash array: t.seq.size %s ntabls %s nbucks %s N %s",
+                    Int(t.seq.size()),
+                    Int(ntabls),
+                    Int(nbucks),
+                    Int(hashArrN)));
+        
+        t.hashArr  := NEW(REF ARRAY OF CARDINAL, hashArrN);
+                        
+
+        (* first mark each tab how big it needs to be *)
+        FOR i := 0 TO t.seq.size() - 1 DO
+          r := t.seq.get(i);
+          FOR w := 0 TO ntabls - 1 DO
+            b := HnnHrep.GetBits(r, w * t.s, t.s);
+            INC(t.hashTabs[w, b])
+          END
+        END;
+
+        Debug.Out("sizing hashTabs:");
+        PrintFirstFew(t.hashTabs);
+        
+        (* accumulate hashTabs *)
+        VAR
+          p := 0;
+        BEGIN
+          FOR i := FIRST(t.hashTabs^) TO LAST(t.hashTabs^) DO
+            FOR j := FIRST(t.hashTabs[0]) TO LAST(t.hashTabs[0]) DO
+              VAR
+                q := t.hashTabs[i,j] + 1;
+                (* +1 leaves space for the tail marker *)
+              BEGIN
+                t.hashTabs[i,j] := p;
+                p := p + q
+              END
+            END
+          END;
+
+          Debug.Out("pointerizing hashTabs:");
+          PrintFirstFew(t.hashTabs);
+        
+
+          Debug.Out(F("Accumulated hashTabs sizes p %s hashArrN %s",
+                      Int(p), Int(hashArrN)));
+          <*ASSERT p = hashArrN*>
+
+        END;
+        
+        (* at this point, hashTabs[.,.] contains the start index of each
+           bucket in the hashArr *)
+        
+        (* make the pointers *)
+        hashPtr^ := t.hashTabs^;
+        
+        (* now we store the ids in the hashArr *)
+        FOR i := 0 TO t.seq.size() - 1 DO
+          r := t.seq.get(i);
+          FOR w := 0 TO ntabls - 1 DO
+            b := HnnHrep.GetBits(r, w * t.s, t.s);
+            t.hashArr[hashPtr[w, b]] := i;
+            INC(hashPtr[w, b])
+          END
+        END;
+
+        Debug.Out("wrote hashPtr:");
+        PrintFirstFew(hashPtr);
+        
+        (* and write the tail element in each tab *)
+        VAR
+          p := 0; (* previous pointer, for validation *)
+        BEGIN
+          FOR i := FIRST(hashPtr^) TO LAST(hashPtr^) DO
+            FOR j := FIRST(hashPtr[0]) TO LAST(hashPtr[0]) DO
+
+              (* we can check that the previous pointer points to the
+                   beginning of the current array *)
+              IF t.hashTabs[i,j] # p THEN
+                Debug.Error(F("hashTabs at %s # p %s ; i %s j %s",
+                              Int(t.hashTabs[i,j]), Int(p), Int(i), Int(j)))
+              END;
+              
+              WITH ptr = hashPtr[i,j] DO
+                t.hashArr[ptr] := LAST(CARDINAL);
+                INC(ptr);
+                p := ptr
+              END
+            END
+          END
+        END(*RAV*);
+
+        Debug.Out("completed hashPtr:");
+        PrintFirstFew(hashPtr);
+
       END
-      
     END;
 
     (* also initialize marked *)
@@ -150,6 +253,16 @@ PROCEDURE Rehash(t : T) =
 
   END Rehash;
 
+PROCEDURE PrintFirstFew(READONLY z : HashTabs) =
+  BEGIN
+    FOR i := 0 TO 2 DO
+      FOR j := 0 TO 2 DO
+        Debug.Out(F("z[%s , %s] = %s",
+                    Int(i), Int(j), Int(z[i,j])))
+      END
+    END
+  END PrintFirstFew;
+  
 PROCEDURE SeekMatches(w            : Word.T;
                       (* this is the word of which we seek matches *)
 
@@ -160,7 +273,10 @@ PROCEDURE SeekMatches(w            : Word.T;
                       (* this is the maximum Hamming distance of a match *)
 
                       READONLY tbl : ARRAY OF CardBase;
-                      (* these are the hash buckets *)
+                      (* these are the hash buckets, 
+                         containing indices into arr *)
+
+                      READONLY arr : ARRAY OF CARDINAL;
                       
                       mark         : CardSet.T
                       (* if we find a match, we mark here *)
@@ -198,14 +314,14 @@ PROCEDURE SeekMatches(w            : Word.T;
     VAR
       p := tbl[w];
     BEGIN
-      WHILE p # NIL DO
-        WITH id  = p.head DO
+      WHILE arr[p] # LAST(CARDINAL) DO
+        WITH id  = arr[p] DO
           IF doVerbose THEN
             Debug.Out(F("MarkBuckets %s", Int(id)))
           END;
           EVAL mark.insert(id)
         END;
-        p := p.tail
+        INC(p)
       END
     END MarkBuckets;
 
@@ -247,7 +363,11 @@ PROCEDURE SeekPotentialRepMatches(t                 : T;
             Debug.Out(F("SeekPotentialRepMatches: lob %s nxb %s ww 16_%s i %s",
                         Int(lob), Int(nxb), Unsigned(ww), Int(i)))
           END;
-          SeekMatches(ww, nxb, maxBucketDistance, t.hashTabs[i], marked)
+          SeekMatches(ww,
+                      nxb,
+                      maxBucketDistance,
+                      t.hashTabs[i], t.hashArr^,
+                      marked)
         END
       END
     END
@@ -261,6 +381,7 @@ PROCEDURE Init(t : T; len : CARDINAL) : T =
     t.len := len;
     t.s := 0;
     t.hashTabs := NIL;
+    t.hashArr := NIL;
     t.marked := NIL;
     RETURN t
   END Init;
