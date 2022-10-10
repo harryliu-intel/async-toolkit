@@ -11,10 +11,12 @@ CONST
   doVerbose  = FALSE;
   Len        = 1000;          (* length in bits of words *)
   ErrorRate  = 0.01d0;        (* rate of errors in bits *)
-  Members    = 1000*1000;   (* how big a set to use as universe *)
+  Members    = 1000*1000;     (* how big a set to use as universe *)
   Nn         = 3;             (* how many nearest neighbors to seek *)
-  Iters      = 1000*1000;            (* how many tests to run *)
+  Iters      = 1000*1000;     (* how many tests to run *)
   printTests = FALSE;
+  MaxDist    = 30;
+  MyS        = 23;            (* 20 for small test *)
   
 TYPE
   Vec = ARRAY [ 0 .. Len - 1 ] OF BOOLEAN;
@@ -52,7 +54,7 @@ PROCEDURE InitSet(set : Hnn.T) =
       EVAL set.put(a)
     END;
 
-    set.setS(20)
+    set.setS(MyS)
   END InitSet;
 
 PROCEDURE FmtA(READONLY a : ARRAY OF BOOLEAN) : TEXT =
@@ -104,7 +106,7 @@ PROCEDURE RunTests(set : Hnn.T) =
       END;
 
       (* search for corrupted entry *)
-      WITH iter = set.iterNnOrdered(r^, Nn, maxHamming := 20) DO
+      WITH iter = set.iterNnOrdered(r^, Nn, maxHamming := MaxDist) DO
         IF printTests THEN
           Debug.Out(F("Searching for q of weight %s, using r weight %s dist %s errs %s",
                       Int(Weight(q^)),
