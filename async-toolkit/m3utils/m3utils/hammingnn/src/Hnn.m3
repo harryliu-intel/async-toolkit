@@ -423,6 +423,8 @@ PROCEDURE GetCloseIds(t : T;
 
        Proof: Dirichlet *)
   BEGIN
+    t.marked := NEW(CardSetDef.T).init(); (* clear marked set! *)
+    
     MarkCloseReps(t, x, maxDistPerSubstring);
 
     (* now walk all the marks and check every one for meeting the 

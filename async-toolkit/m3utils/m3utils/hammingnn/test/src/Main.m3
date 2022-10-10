@@ -12,7 +12,7 @@ CONST
   ErrorRate = 0.01d0;        (* rate of errors in bits *)
   Members   = 1000*1000;   (* how big a set to use as universe *)
   Nn        = 3;             (* how many nearest neighbors to seek *)
-  Iters     = 20;            (* how many tests to run *)
+  Iters     = 1000*1000;            (* how many tests to run *)
   
 TYPE
   Vec = ARRAY [ 0 .. Len - 1 ] OF BOOLEAN;

@@ -6,7 +6,7 @@ REVEAL
   Hnn.T <: Settings;
 
 CONST
-  MaxS = 20; (* hmm... *)
+  MaxS = 32; (* hmm... *)
 
 TYPE
   Settings = Hnn.Public OBJECT METHODS
