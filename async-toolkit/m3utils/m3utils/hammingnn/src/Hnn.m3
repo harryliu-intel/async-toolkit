@@ -558,11 +558,10 @@ PROCEDURE GetCloseIds(t : T;
       arr : REF ARRAY OF CardPair.T;
     BEGIN
       WHILE iter.next(id) DO
-        WITH candRep = t.seq.get(id) DO
-          WITH dist = HnnHrep.Distance(candRep, x) DO
-            IF dist <= maxHamming THEN
-              matchSeq.addhi(CardPair.T { dist, id })
-            END
+        WITH candRep = t.seq.get(id),
+             dist = HnnHrep.DistanceLessEqual(candRep, x, maxHamming) DO
+          IF dist <= maxHamming THEN
+            matchSeq.addhi(CardPair.T { dist, id })
           END
         END
       END;
@@ -622,11 +621,13 @@ PROCEDURE IterNnOrderedRep(t             : T;
         WITH arr = GetCloseIds(t, elem, m) DO
           IF m = lim OR NUMBER(arr^) >= n THEN
 
-            Debug.Out(F("InterNnOrderedRep done m %s NUMBER(arr^) %s n %s",
-                        Int(m), Int(NUMBER(arr^)), Int(n)));
+            IF doVerbose THEN
+              Debug.Out(F("InterNnOrderedRep done m %s NUMBER(arr^) %s n %s",
+                          Int(m), Int(NUMBER(arr^)), Int(n)));
 
-            FOR i := FIRST(arr^) TO LAST(arr^) DO
-              Debug.Out(F("k1 %s k2 %s", Int(arr[i].k1), Int(arr[i].k2)))
+              FOR i := FIRST(arr^) TO LAST(arr^) DO
+                Debug.Out(F("k1 %s k2 %s", Int(arr[i].k1), Int(arr[i].k2)))
+              END
             END;
             
             RETURN

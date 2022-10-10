@@ -3,16 +3,18 @@ IMPORT Random;
 IMPORT Word;
 IMPORT Hnn, HnnSettings;
 IMPORT Debug;
-FROM Fmt IMPORT F, Int;
+FROM Fmt IMPORT F, Int, LongReal;
 IMPORT Wx;
+IMPORT Time;
 
 CONST
-  doVerbose = FALSE;
-  Len       = 1000;          (* length in bits of words *)
-  ErrorRate = 0.01d0;        (* rate of errors in bits *)
-  Members   = 1000*1000;   (* how big a set to use as universe *)
-  Nn        = 3;             (* how many nearest neighbors to seek *)
-  Iters     = 1000*1000;            (* how many tests to run *)
+  doVerbose  = FALSE;
+  Len        = 1000;          (* length in bits of words *)
+  ErrorRate  = 0.01d0;        (* rate of errors in bits *)
+  Members    = 1000*1000;   (* how big a set to use as universe *)
+  Nn         = 3;             (* how many nearest neighbors to seek *)
+  Iters      = 1000*1000;            (* how many tests to run *)
+  printTests = FALSE;
   
 TYPE
   Vec = ARRAY [ 0 .. Len - 1 ] OF BOOLEAN;
@@ -70,13 +72,16 @@ PROCEDURE RunTests(set : Hnn.T) =
     q, r, s  := NEW(REF ARRAY OF BOOLEAN, len);
     errs, k  : CARDINAL;
     ldu      : CARDINAL;
+    nsuccess : CARDINAL := 0;
   BEGIN
 
     FOR i := 0 TO Iters - 1 DO
       (* pick entry at random *)
       WITH a = rand.integer(0, sz - 1) DO
         set.get(a, q^);
-        Debug.Out(F("tgt q = %s id %s", FmtA(q^), Int(a)))
+        IF printTests THEN
+          Debug.Out(F("tgt q = %s id %s", FmtA(q^), Int(a)))
+        END
       END;
 
       (* corrupt the bits *)
@@ -94,15 +99,19 @@ PROCEDURE RunTests(set : Hnn.T) =
         END
       END;
 
-      Debug.Out(F("use r = %s", FmtA(r^)));
+      IF printTests THEN
+        Debug.Out(F("use r = %s", FmtA(r^)))
+      END;
 
       (* search for corrupted entry *)
       WITH iter = set.iterNnOrdered(r^, Nn, maxHamming := 20) DO
-        Debug.Out(F("Searching for q of weight %s, using r weight %s dist %s errs %s",
-                    Int(Weight(q^)),
-                    Int(Weight(r^)),
-                    Int(Dist(q^,r^)),
-                    Int(errs)));
+        IF printTests THEN
+          Debug.Out(F("Searching for q of weight %s, using r weight %s dist %s errs %s",
+                      Int(Weight(q^)),
+                      Int(Weight(r^)),
+                      Int(Dist(q^,r^)),
+                      Int(errs)))
+        END;
         k := 0;
         ldu := 0;
         WHILE iter.next(s^) DO
@@ -110,19 +119,31 @@ PROCEDURE RunTests(set : Hnn.T) =
                du = Dist(r^, s^) DO
             IF k = 0 THEN
               IF d = 0 THEN
-                Debug.Out("search successful!")
+                IF printTests THEN Debug.Out("search successful!") END;
+                INC(nsuccess)
               ELSE
-                Debug.Out("SEARCH FAILURE!")
+                IF printTests THEN Debug.Out("SEARCH FAILURE!") END;
               END
             END;
-            Debug.Out(F("Found s[%s] dist/tgt %s dist/use %s", Int(k), Int(d), Int(du)));
+            IF printTests THEN
+              Debug.Out(F("Found s[%s] dist/tgt %s dist/use %s", Int(k), Int(d), Int(du)));
+            END;
             <* ASSERT du >= ldu *>
             ldu := du;
             INC(k)
           END
-        END
+        END;
+
+        IF i MOD 1000 = 0 THEN
+          Debug.Out(F("%s : %s iters, %s success",
+                      LongReal(Time.Now()), Int(i), Int(nsuccess)))
+        END;
+
       END
-    END
+    END;
+
+    Debug.Out(F("%s iters, %s success",
+                Int(Iters), Int(nsuccess)));
   END RunTests;
 
 PROCEDURE Weight(READONLY a : ARRAY OF BOOLEAN) : CARDINAL =

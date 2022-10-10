@@ -109,6 +109,18 @@ PROCEDURE Distance(a, b : T) : CARDINAL =
     RETURN res
   END Distance;
 
+PROCEDURE DistanceLessEqual(a, b : T; maxdist : CARDINAL) : CARDINAL =
+  VAR
+    res : CARDINAL := 0;
+  BEGIN
+    <*ASSERT a.sz = b.sz*>
+    FOR i := FIRST(a.bits^) TO LAST(a.bits^) DO
+      INC(res, PopCount(Word.Xor(a.bits[i],b.bits[i])));
+      IF res > maxdist THEN RETURN LAST(CARDINAL) END
+    END;
+    RETURN res
+  END DistanceLessEqual;
+
 PROCEDURE PopCount(w : Word.T) : CARDINAL =
   BEGIN
     (*

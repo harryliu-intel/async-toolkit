@@ -48,5 +48,8 @@ PROCEDURE GetBits(t : T; from, n : CARDINAL) : Word.T;
 
 PROCEDURE Distance(a, b : T) : CARDINAL;
   (* Hamming distance *)
+
+PROCEDURE DistanceLessEqual(a, b : T; maxDist : CARDINAL) : CARDINAL;
+  (* Distance(a,b) <= maxDist  -> returns dist  ; else returns LAST(CARDINAL) *)
       
 END HnnHrep.
