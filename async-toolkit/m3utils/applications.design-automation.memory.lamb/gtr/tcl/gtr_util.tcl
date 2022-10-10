@@ -14,7 +14,7 @@
 set supported_min_depth        4
 set supported_min_width        2
 set supported_max_depth      256
-set supported_max_width      144
+set supported_max_width      256
 set supported_width_divisor    2
 set supported_depth_divisor    2
 
@@ -302,7 +302,7 @@ proc gtr_lamb_gen_views { args } {
     if { [info exists arg(-max_data_width) ] } {
       set max_width $arg(-max_data_width)
     } else {
-      set max_width 144
+      set max_width 256
     }
 
     ## fixed width is a base case of the looping
@@ -620,11 +620,11 @@ define_proc_attributes gtr_lamb_gen_views \
    {-netbatch "Run jobs striped using netbatch" "" boolean optional}
    {-data_width "Specify a single data width for the Lamb(s)" "<data_width>" int optional}
    {-min_data_width "Specify min data width to start building loop(default 2)" "<min_data_width>" int optional}
-   {-max_data_width "Specify max data width to stop building loop(default 144)" "<max_data_width>" int optional}
+   {-max_data_width "Specify max data width to stop building loop(default 256)" "<max_data_width>" int optional}
    {-data_width_increment "Specify increment to use when looping to generate lambs(default 2)" "<data_width_increment>" int optional}
    {-data_depth "Specify a single data depth for the Lamb(s)" "<data_depth>" int optional}
    {-min_data_depth "Specify min data depth to start building loop(default 4)" "<min_data_depth>" int optional}
-   {-max_data_depth "Specify max data depth to stop building loop(default 128)" "<max_data_depth>" int optional}
+   {-max_data_depth "Specify max data depth to stop building loop(default 256)" "<max_data_depth>" int optional}
    {-data_depth_increment "Specify increment to use when looping to generate lambs(default 2)" "<data_depth_increment>" int optional}
    {-tech_node "Specify tech node (default n3b)" "AnOos" one_of_string {optional {values {"n3b" "n3e" "n5"}}}}
    {-lamb_type "Specify lamb type (default )" "AnOos" one_of_string {optional {values {"n3bhd" "n3ehd" "n5hd"}}}}
