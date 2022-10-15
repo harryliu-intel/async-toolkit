@@ -4,7 +4,7 @@ IMPORT ParseParams;
 IMPORT Text;
 IMPORT Debug;
 IMPORT Stdio;
-FROM Fmt IMPORT F; IMPORT Fmt;
+FROM Fmt IMPORT F, Int; IMPORT Fmt;
 IMPORT OSError;
 IMPORT AL;
 IMPORT Process;
@@ -17,6 +17,7 @@ IMPORT CitTextUtils;
 IMPORT Thread;
 IMPORT ProcUtils;
 IMPORT TextWr;
+IMPORT Trace;
 
 <*FATAL Thread.Alerted*>
 
@@ -245,7 +246,8 @@ PROCEDURE DoSimulate(READONLY c : Config) =
       END
     |
       Simu.Hspice => <*ASSERT FALSE*>
-    END
+    END;
+    Debug.Out("DoSimulate output :\n" & TextWr.ToText(wr))
   END DoSimulate;
 
 PROCEDURE DoConvert(READONLY c : Config) =
@@ -275,11 +277,26 @@ PROCEDURE DoConvert(READONLY c : Config) =
       END
     |
       Simu.Hspice => <*ASSERT FALSE*>
-    END
+    END;
+    Debug.Out("DoConvert output :\n" & TextWr.ToText(wr))
   END DoConvert;
 
 PROCEDURE DoMeasure(READONLY c : Config) =
+  VAR
+    trace := NEW(Trace.T).init(DefSimRoot);
+    nSteps := trace.getSteps();
+    timeData := NEW(REF ARRAY OF LONGREAL, nSteps);
+    nodeData := NEW(REF ARRAY OF LONGREAL, nSteps);
   BEGIN
+    trace.getTimeData(timeData^);
+
+    Debug.Out(F("nSteps %s", Int(nSteps)));
+    
+    Debug.Out(F("first time %s, last time %s, step %s",
+                LR(timeData[0]),
+                LR(timeData[nSteps - 1]),
+                LR(trace.getTimeStep())));
+    
   END DoMeasure;
 
 TYPE

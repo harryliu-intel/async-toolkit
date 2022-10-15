@@ -7,7 +7,7 @@ IMPORT Thread;
 
 <*FATAL Thread.Alerted*>
 
-PROCEDURE GetHeader(tRd : Rd.T; nNames : CARDINAL) : TraceHeader.T
+PROCEDURE GetHeader(tRd : Rd.T; nNodes : CARDINAL) : TraceHeader.T
   RAISES { Rd.Failure, Rd.EndOfFile } =
   VAR
     h : TraceHeader.T;
@@ -27,15 +27,15 @@ PROCEDURE GetHeader(tRd : Rd.T; nNames : CARDINAL) : TraceHeader.T
     h.start  := Rd.Index(tRd);
     Rd.Seek(tRd, LAST(CARDINAL));
     h.end    := Rd.Index(tRd);
-    h.nNames := nNames;
+    h.nNodes := nNodes;
     
     WITH len  = h.end - h.start,
          samp = len DIV 4 DO
-      h.steps := samp DIV nNames;
+      h.steps := samp DIV nNodes;
       
       Debug.Out(F("start %s end %s len %s samples %s steps %s",
                   Int(h.start), Int(h.end), Int(len), Int(samp),
-                  Int(h.steps)) & F(" rem %s", Int(samp MOD nNames)))
+                  Int(h.steps)) & F(" rem %s", Int(samp MOD nNodes)))
     END;
     RETURN h
   END GetHeader;

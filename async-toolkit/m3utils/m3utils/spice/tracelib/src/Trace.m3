@@ -12,8 +12,13 @@ IMPORT TextList;
 IMPORT TextReader;
 IMPORT Debug;
 IMPORT Thread;
+FROM Fmt IMPORT F, Int; IMPORT Fmt;
 
 <*FATAL Thread.Alerted*>
+
+VAR doDebug := TRUE;
+
+CONST LR = Fmt.LongReal;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
@@ -51,8 +56,15 @@ PROCEDURE Init(t : T; root : Pathname.T) : T
     EVAL ParseNames(nNam, t.fwdTbl, t.revTbl);
     
     t.tRd := FileRd.Open(tNam);
+    t.h := TraceUnsafe.GetHeader(t.tRd, t.revTbl.size());
 
     t.timeStep := ReadTimeStep(t);
+
+    IF doDebug THEN
+      Debug.Out(F("TraceHeader start %s, end %s, steps %s, nNodes %s",
+                  Int(t.h.start), Int(t.h.end), Int(t.h.steps), Int(t.h.nNodes)));
+      Debug.Out(F("timestep %s", LR(t.timeStep)))
+    END;
 
     RETURN t
   END Init;
@@ -92,6 +104,10 @@ PROCEDURE ParseNames(nNam   : Pathname.T;
       Rd.EndOfFile =>
     END;
     Rd.Close(rd);
+    IF doDebug THEN
+      Debug.Out(F("Trace.ParseNames : %s nodes, %s names",
+                  Int(revTbl.size()), Int(fwdTbl.size())))
+    END;
     RETURN id (* number of nodes *)
   END ParseNames;
   

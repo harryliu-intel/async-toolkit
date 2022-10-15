@@ -1,6 +1,7 @@
 import ("libm3")
 import ("parseparams")
 import ("cit_util")
+import ("tracelib")
 
 implementation ("Main")
 

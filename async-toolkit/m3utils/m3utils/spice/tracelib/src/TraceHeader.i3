@@ -5,7 +5,7 @@ TYPE
     start  : CARDINAL;
     end    : CARDINAL;
     steps  : CARDINAL;
-    nNames : CARDINAL;
+    nNodes : CARDINAL;
   END;
 
 END TraceHeader.

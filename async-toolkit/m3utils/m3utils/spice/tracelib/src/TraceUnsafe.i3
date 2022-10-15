@@ -2,7 +2,7 @@ INTERFACE TraceUnsafe;
 IMPORT TraceHeader;
 IMPORT Rd;
 
-PROCEDURE GetHeader(tRd : Rd.T; nNames : CARDINAL) : TraceHeader.T
+PROCEDURE GetHeader(tRd : Rd.T; nNodes : CARDINAL) : TraceHeader.T
   RAISES { Rd.Failure, Rd.EndOfFile };
 
 PROCEDURE GetDataArray(tRd        : Rd.T;
