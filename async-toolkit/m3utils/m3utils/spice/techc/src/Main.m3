@@ -4,7 +4,7 @@ IMPORT ParseParams;
 IMPORT Text;
 IMPORT Debug;
 IMPORT Stdio;
-FROM Fmt IMPORT F, Int; IMPORT Fmt;
+FROM Fmt IMPORT F, Int, FN; IMPORT Fmt;
 IMPORT OSError;
 IMPORT AL;
 IMPORT Process;
@@ -20,6 +20,7 @@ IMPORT TextWr;
 IMPORT Trace;
 IMPORT LongRealSeq;
 IMPORT Math;
+IMPORT FS;
 
 <*FATAL Thread.Alerted*>
 
@@ -30,16 +31,16 @@ TYPE
   Tech = { N5, P1276p4 };
   Tran = { Elvt, Ulvt, Ulvtll, Lvt, Lvtll, Svt, Svtll };
   Mode = { Dyn, Leak };
-  Phaz = { Setup, Simulate, Convert, Measure };
+  Phaz = { Setup, Simulate, Convert, Clean, Measure };
   Simu = { Xa, Hspice };
   Topo = { Intc, Tsmc }; (* circuit topo *)
   Corn = { TT, SS, FF, SF, FS };
   
 CONST
-  TechNames = ARRAY Tech OF TEXT { "n5"  ,  "1276.4" };
+  TechNames = ARRAY Tech OF TEXT { "n5"  ,  "1276p4" };
   TranNames = ARRAY Tran OF TEXT { "elvt", "ulvt", "ulvtll", "lvt", "lvtll", "svt", "svtll" };
   ModeNames = ARRAY Mode OF TEXT { "dyn" ,  "leak" };
-  PhazNames = ARRAY Phaz OF TEXT { "setup", "simulate", "convert", "measure" };
+  PhazNames = ARRAY Phaz OF TEXT { "setup", "simulate", "convert", "clean", "measure" };
   SimuNames = ARRAY Simu OF TEXT { "xa",    "hspice" };
   TopoNames = ARRAY Topo OF TEXT { "intc",  "tsmc" };
   CornNames = ARRAY Corn OF TEXT { "tt", "ss", "ff", "sf", "fs" };
@@ -136,7 +137,7 @@ TYPE
   RunPhase = PROCEDURE(READONLY c : Config);
 
 CONST
-  Phases = ARRAY Phaz OF RunPhase { DoSetup, DoSimulate, DoConvert, DoMeasure };
+  Phases = ARRAY Phaz OF RunPhase { DoSetup, DoSimulate, DoConvert, DoClean, DoMeasure };
   
 PROCEDURE Lookup(str : TEXT; READONLY a : ARRAY OF TEXT) : CARDINAL =
   BEGIN
@@ -384,9 +385,32 @@ PROCEDURE DoConvert(READONLY c : Config) =
     |
       Simu.Hspice => <*ASSERT FALSE*>
     END;
-    Debug.Out("DoConvert output :\n" & TextWr.ToText(wr))
+    Debug.Out("DoConvert output :\n" & TextWr.ToText(wr));
   END DoConvert;
 
+
+PROCEDURE DoClean(READONLY c : Config) =
+  BEGIN
+    TRY FS.DeleteFile(F("%s.fsdb", c.simRoot)) EXCEPT ELSE END;
+
+    TRY
+      CONST
+        CtWorkDir = "ct.work";
+      VAR
+        iter := FS.Iterate(CtWorkDir);
+        fn : Pathname.T;
+      BEGIN
+        WHILE iter.next(fn) DO
+          WITH ffn = CtWorkDir & "/" & fn DO
+            Debug.Out("Attempting to delete "& ffn);
+            TRY FS.DeleteFile(ffn) EXCEPT ELSE END
+          END
+        END
+      END;
+      FS.DeleteDirectory("ct.work")
+    EXCEPT ELSE END
+  END DoClean;
+  
 PROCEDURE DoMeasure(READONLY c : Config) =
   VAR
     trace : Trace.T;
@@ -454,8 +478,27 @@ PROCEDURE DoMeasure(READONLY c : Config) =
           MeanValue(timeData^, nodeData^, StartTime);
       
       Debug.Out("Measured mean current " & LR(meancurrent));
+
+      VAR
+        wr := FileWr.Open("measure.dat");
+      BEGIN
+        Wr.PutText(wr,
+                   FN("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
+                      ARRAY OF TEXT {
+                           TechNames[c.tech],
+                           CornNames[c.corn],
+                           TranNames[c.tran],
+                           TopoNames[c.topo],
+                           ModeNames[c.mode],
+                           SimuNames[c.simu],
+                           LR(c.volt),
+                           LR(c.temp),
+                           LR(cycle),
+                           LR(meancurrent)
+                           }));
+        Wr.Close(wr)
+      END
     END
-      
   END DoMeasure;
 
 PROCEDURE CycleTime(READONLY timea, nodea : ARRAY OF LONGREAL;
@@ -543,6 +586,7 @@ TYPE
     volt := 0.0d0;
     temp := 0.0d0;
     workDir : Pathname.T;
+    createWorkDir : BOOLEAN;
     templatePath : Pathname.T;
     phazz := SET OF Phaz { Phaz.Setup };
     hspiceModelRoot : Pathname.T;
@@ -559,6 +603,8 @@ VAR
   
 BEGIN
   TRY
+    c.createWorkDir := pp.keywordPresent("-C");
+    
     IF pp.keywordPresent("-tech") THEN
       c.tech := VAL(Lookup(pp.getNext(), TechNames), Tech);
       c.hspiceModel := TechHspiceModels[c.tech];
@@ -638,6 +684,9 @@ BEGIN
 
   IF c.workDir # NIL THEN
     TRY
+      IF c.createWorkDir THEN
+        TRY FS.CreateDirectory(c.workDir) EXCEPT ELSE END
+      END;
       Process.SetWorkingDirectory(c.workDir)
     EXCEPT
       OSError.E(e) =>
