@@ -19,6 +19,7 @@ IMPORT ProcUtils;
 IMPORT TextWr;
 IMPORT Trace;
 IMPORT LongRealSeq;
+IMPORT Math;
 
 <*FATAL Thread.Alerted*>
 
@@ -26,19 +27,97 @@ CONST TE = Text.Equal;
       LR = Fmt.LongReal;
 
 TYPE
-  Tech = { N3, P1276p4 };
-  Tran = { Elvt, Ulvt, Lvt, Svt, Hvt };
+  Tech = { N5, P1276p4 };
+  Tran = { Elvt, Ulvt, Ulvtll, Lvt, Lvtll, Svt, Svtll };
   Mode = { Dyn, Leak };
   Phaz = { Setup, Simulate, Convert, Measure };
   Simu = { Xa, Hspice };
+  Topo = { Intc, Tsmc }; (* circuit topo *)
+  Corn = { TT, SS, FF, SF, FS };
   
 CONST
-  TechNames = ARRAY Tech OF TEXT { "n3"  ,  "1276.4" };
-  TranNames = ARRAY Tran OF TEXT { "elvt",  "ulvt", "lvt", "svt", "hvt" };
+  TechNames = ARRAY Tech OF TEXT { "n5"  ,  "1276.4" };
+  TranNames = ARRAY Tran OF TEXT { "elvt", "ulvt", "ulvtll", "lvt", "lvtll", "svt", "svtll" };
   ModeNames = ARRAY Mode OF TEXT { "dyn" ,  "leak" };
   PhazNames = ARRAY Phaz OF TEXT { "setup", "simulate", "convert", "measure" };
   SimuNames = ARRAY Simu OF TEXT { "xa",    "hspice" };
+  TopoNames = ARRAY Topo OF TEXT { "intc",  "tsmc" };
+  CornNames = ARRAY Corn OF TEXT { "tt", "ss", "ff", "sf", "fs" };
 
+TYPE
+  TranSufxs     = ARRAY Tran OF TEXT;
+
+CONST
+  P1276p4TranSufxs =
+    TranSufxs { NIL,      (* elvt *)
+                "hpulvt", (* ulvt *)
+                NIL,      (* ulvtll *)
+                "hplvt",  (* lvt *)
+                NIL,      (* lvtll *)
+                "hpsvt",  (* svt *)
+                NIL       (* svtll *)
+  };
+
+  N5TranSufxs =
+    TranSufxs { "ch_elvt_mac",
+                "ch_ulvt_mac",
+                "ch_ulvtll_mac",
+                "ch_lvt_mac",
+                "ch_lvtll_mac",
+                "ch_svt_mac",
+                "ch_svtll_mac"
+  };
+
+  P1276p4TranSize = "L=0.014u W=0.06u";
+  
+  N5TranSize = "l=6n nfin=2 ppitch=0 fbound=9";
+                
+  TechTranSufxs = ARRAY Tech OF TranSufxs { N5TranSufxs,
+                                            P1276p4TranSufxs };
+
+  TechTranSizes = ARRAY Tech OF TEXT { N5TranSize, P1276p4TranSize };
+
+  N5HspiceModel = "cln5-1d2-sp-v0d9-2p1-usage.l";
+  P1276p4HspiceModel = "p1276_4.hsp";
+
+  N5HspiceModelRoot = "/p/tech/n5/tech-prerelease/.dr/epic/v0.9.0/models/1P15M_1X_h_1Xb_v_1Xe_h_1Ya_v_1Yb_h_5Y_vhvhv_2Yy2Z";
+  P1276p4HspiceModelRoot = "/p/hdk/cad/pdk/pdk764_r0.4HP3_22ww20.1/models/core/hspice/m17_6x_2ya_2yb_2yc_2yd_1ye_1ga_mim3x_1gb__bumpp";
+  
+  TechHspiceModels = ARRAY Tech OF TEXT { N5HspiceModel,
+                                          P1276p4HspiceModel };
+
+  TechHspiceModelRoots = ARRAY Tech OF TEXT { N5HspiceModelRoot,
+                                              P1276p4HspiceModelRoot };
+
+  N5CornNames = ARRAY Corn OF TEXT {
+  "TTGlobalCorner_LocalMC_MOS_MOSCAP",
+  "SSGlobalCorner_LocalMC_MOS_MOSCAP",
+  "FFGlobalCorner_LocalMC_MOS_MOSCAP",
+  "SFGlobalCorner_LocalMC_MOS_MOSCAP",
+  "FSGlobalCorner_LocalMC_MOS_MOSCAP"
+  };
+
+  P1276p4CornNames = ARRAY Corn OF TEXT {
+  "tttt",
+  "psss",
+  "pfff",
+  "rssf",
+  "rsfs"
+  };
+
+  TechCornNames = ARRAY Tech OF ARRAY Corn OF TEXT { N5CornNames,
+                                                     P1276p4CornNames };
+  
+  ApproxThresh = ARRAY Tran OF LONGREAL { 0.100d0,
+                                          0.200d0,
+                                          0.220d0,
+                                          0.250d0,
+                                          0.300d0,
+                                          0.450d0,
+                                          0.500d0 };
+
+  AbsZero = -273.15d0; (* absolute zero in degrees Celsius *)
+  
 CONST
   XaOptions =
     ".OPTION CMIFLAG=1 CMIUSRFLAG=3 PDMI=1\n"  &
@@ -75,9 +154,9 @@ PROCEDURE Lookup(str : TEXT; READONLY a : ARRAY OF TEXT) : CARDINAL =
     <*ASSERT FALSE*>
   END Lookup;
 
-<*NOWARN*>PROCEDURE MapTechN3(READONLY c : Config; map : TextTextTbl.T) =
+<*NOWARN*>PROCEDURE MapTechN5(READONLY c : Config; map : TextTextTbl.T) =
   BEGIN
-  END MapTechN3;
+  END MapTechN5;
 
 <*NOWARN*>PROCEDURE MapTech1276p4(READONLY c : Config; map : TextTextTbl.T) =
   BEGIN
@@ -85,7 +164,7 @@ PROCEDURE Lookup(str : TEXT; READONLY a : ARRAY OF TEXT) : CARDINAL =
 
 TYPE Mapper = PROCEDURE(READONLY c : Config; map : TextTextTbl.T);
      
-CONST MapTech = ARRAY Tech OF Mapper { MapTechN3, MapTech1276p4 };
+CONST MapTech = ARRAY Tech OF Mapper { MapTechN5, MapTech1276p4 };
 
 PROCEDURE MapCommon(READONLY c : Config;  map : TextTextTbl.T)=
   VAR
@@ -96,11 +175,29 @@ PROCEDURE MapCommon(READONLY c : Config;  map : TextTextTbl.T)=
     EVAL map.put("@HSPICE_MODEL@", c.hspiceModel);
     EVAL map.put("@TEMP@", LR(c.temp));
     EVAL map.put("@VOLT@", LR(c.volt));
-    WITH nanoseconds = 10.0d0 + 10.0d0 / (c.volt * c.volt + 0.001d0) DO
+    EVAL map.put("@TOPO@", TopoNames[c.topo]);
+    
+    WITH deltaV = c.volt - ApproxThresh[c.tran],
+         stepsV = deltaV / 0.035d0,  (* kT/q *)
+         threshDelayFactor = Math.exp(-stepsV),
+         
+         kelvinTemp      = c.temp - AbsZero,
+         baseTemp        = 120.0d0 - AbsZero,
+         tempDelayFactor = Math.pow(kelvinTemp / baseTemp, -1.5d0),
+         delayFactor     = (1.0d0 + threshDelayFactor) * tempDelayFactor,
+         nanoseconds     = 10.0d0 +
+              10.0d0 * (delayFactor + 0.5d0)
+     DO
+      Debug.Out(F("tempDelayFactor %s, thresDelayFactor %s, delayFactor %s, nanoseconds %s",
+                  LR(tempDelayFactor),
+                  LR(threshDelayFactor),
+                  LR(delayFactor),
+                  LR(nanoseconds)));
+      
       EVAL map.put("@NANOSECONDS@", LR(nanoseconds))
     END;
     EVAL map.put("@OPTIONS@", SimOptions[c.simu]);
-    EVAL map.put("@CORNER@", c.corner);
+    EVAL map.put("@CORNER@", TechCornNames[c.tech][c.corn]);
 
     CASE c.mode OF
       Mode.Dyn =>
@@ -110,6 +207,17 @@ PROCEDURE MapCommon(READONLY c : Config;  map : TextTextTbl.T)=
       Mode.Leak =>
       EVAL map.put("@RESET_SOURCE@", "Vres _RESET 0 DC=0")
     END;
+
+    WITH sufx = TechTranSufxs[c.tech][c.tran] DO
+      IF sufx = NIL THEN
+        Debug.Error(F("No mapping for %s in %s",
+                      TranNames[c.tran],
+                      TechNames[c.tech]))
+      END;
+      EVAL map.put("@TRANSUFX@", sufx)
+    END;
+
+    EVAL map.put("@TRANSIZE@", TechTranSizes[c.tech]);
 
     iter := extraMap.iterate();
     WHILE iter.next(k, v) DO
@@ -430,15 +538,15 @@ TYPE
     tran : Tran;
     mode : Mode;
     simu : Simu;
+    topo : Topo;
+    corn : Corn;
     volt := 0.0d0;
     temp := 0.0d0;
     workDir : Pathname.T;
     templatePath : Pathname.T;
     phazz := SET OF Phaz { Phaz.Setup };
-    corner := "tttt";
     hspiceModelRoot : Pathname.T;
     hspiceModel     : Pathname.T;
-    hspDir          : Pathname.T;
     hspiceLibModels : Pathname.T;
     pdmiLib         : Pathname.T;
     simRoot := DefSimRoot;
@@ -452,7 +560,9 @@ VAR
 BEGIN
   TRY
     IF pp.keywordPresent("-tech") THEN
-      c.tech := VAL(Lookup(pp.getNext(), TechNames), Tech)
+      c.tech := VAL(Lookup(pp.getNext(), TechNames), Tech);
+      c.hspiceModel := TechHspiceModels[c.tech];
+      c.hspiceModelRoot := TechHspiceModelRoots[c.tech];
     END;
 
     IF pp.keywordPresent("-tran") THEN
@@ -473,6 +583,14 @@ BEGIN
 
     IF pp.keywordPresent("-simu") THEN
       c.simu := VAL(Lookup(pp.getNext(), SimuNames), Simu)
+    END;
+
+    IF pp.keywordPresent("-topo") THEN
+      c.topo := VAL(Lookup(pp.getNext(), TopoNames), Topo)
+    END;
+
+    IF pp.keywordPresent("-corn") THEN
+      c.corn := VAL(Lookup(pp.getNext(), CornNames), Corn)
     END;
 
     IF pp.keywordPresent("-d") THEN
