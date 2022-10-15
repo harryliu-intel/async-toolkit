@@ -18,6 +18,7 @@ IMPORT Thread;
 IMPORT ProcUtils;
 IMPORT TextWr;
 IMPORT Trace;
+IMPORT LongRealSeq;
 
 <*FATAL Thread.Alerted*>
 
@@ -74,11 +75,11 @@ PROCEDURE Lookup(str : TEXT; READONLY a : ARRAY OF TEXT) : CARDINAL =
     <*ASSERT FALSE*>
   END Lookup;
 
-PROCEDURE MapTechN3(READONLY c : Config; map : TextTextTbl.T) =
+<*NOWARN*>PROCEDURE MapTechN3(READONLY c : Config; map : TextTextTbl.T) =
   BEGIN
   END MapTechN3;
 
-PROCEDURE MapTech1276p4(READONLY c : Config; map : TextTextTbl.T) =
+<*NOWARN*>PROCEDURE MapTech1276p4(READONLY c : Config; map : TextTextTbl.T) =
   BEGIN
   END MapTech1276p4;
 
@@ -188,7 +189,6 @@ PROCEDURE DoSetup(READONLY c : Config) =
   VAR
     SimFile := c.simRoot & ".sp";
     map     := NEW(TextTextTbl.Default).init();
-    rd       : Rd.T;
     template : TextSeq.T;
   BEGIN
     MapCommon(c, map);
@@ -220,9 +220,8 @@ PROCEDURE DoSetup(READONLY c : Config) =
   END DoSetup;
 
 PROCEDURE DoSimulate(READONLY c : Config) =
+  <*FATAL OSError.E*> (* this pertains to the TextWr *)
   VAR
-    wrIn : Wr.T;
-
     wr := NEW(TextWr.T).init();
     stdout, stderr := ProcUtils.WriteHere(wr);
 
@@ -251,9 +250,8 @@ PROCEDURE DoSimulate(READONLY c : Config) =
   END DoSimulate;
 
 PROCEDURE DoConvert(READONLY c : Config) =
+  <*FATAL OSError.E*> (* this pertains to the TextWr *)
   VAR
-    wrIn : Wr.T;
-
     wr := NEW(TextWr.T).init();
     stdout, stderr := ProcUtils.WriteHere(wr);
 
@@ -283,13 +281,35 @@ PROCEDURE DoConvert(READONLY c : Config) =
 
 PROCEDURE DoMeasure(READONLY c : Config) =
   VAR
-    trace := NEW(Trace.T).init(DefSimRoot);
+    trace : Trace.T;
+    nSteps : CARDINAL;
+    timeData, nodeData : REF ARRAY OF LONGREAL;
+    
+  BEGIN
+    TRY
+      trace := NEW(Trace.T).init(DefSimRoot);
+    EXCEPT
+      OSError.E(x) =>
+      Debug.Error("OSError.E reading trace/names file : " & AL.Format(x))
+    |
+      Rd.Failure(x) =>
+      Debug.Error("I/O error reading trace/names file : " & AL.Format(x))
+    |
+      Rd.EndOfFile =>
+      Debug.Error("Short read reading trace/names file")
+    END;
+
     nSteps := trace.getSteps();
+
     timeData := NEW(REF ARRAY OF LONGREAL, nSteps);
     nodeData := NEW(REF ARRAY OF LONGREAL, nSteps);
-  BEGIN
-    trace.getTimeData(timeData^);
 
+    TRY
+      trace.getTimeData(timeData^);
+    EXCEPT
+      Rd.Failure, Rd.EndOfFile => Debug.Error("Trouble reading TIME data")
+    END;
+    
     Debug.Out(F("nSteps %s", Int(nSteps)));
     
     Debug.Out(F("first time %s, last time %s, step %s",
@@ -297,7 +317,112 @@ PROCEDURE DoMeasure(READONLY c : Config) =
                 LR(timeData[nSteps - 1]),
                 LR(trace.getTimeStep())));
     
+    CONST
+      StartTime = 12.0d-9;
+      StartTran = 2;
+    VAR
+      xIdx := GetIdx(trace, "x[0]");
+      iIdx := GetIdx(trace, "vissx");
+      cycle, meancurrent : LONGREAL;
+    BEGIN
+      TRY
+        trace.getNodeData(xIdx, nodeData^);
+      EXCEPT
+        Rd.Failure, Rd.EndOfFile => Debug.Error("Trouble reading node data")
+      END;
+      
+      cycle := CycleTime(timeData^, nodeData^,
+                         c.volt / 2.0d0, StartTime, StartTran, StartTran + 1);
+      
+      Debug.Out("Measured cycle time " & LR(cycle));
+
+      TRY
+        trace.getNodeData(iIdx, nodeData^);
+      EXCEPT
+        Rd.Failure, Rd.EndOfFile => Debug.Error("Trouble reading node data")
+      END;
+
+      meancurrent := -1.0d0 / 1.0d6 *
+          MeanValue(timeData^, nodeData^, StartTime);
+      
+      Debug.Out("Measured mean current " & LR(meancurrent));
+    END
+      
   END DoMeasure;
+
+PROCEDURE CycleTime(READONLY timea, nodea : ARRAY OF LONGREAL;
+                    cross                 : LONGREAL;
+                    startTime             : LONGREAL;
+                    startTran, endTran    : CARDINAL) : LONGREAL =
+  (* looking at nodea values beyond startTime, 
+     find the startTran and endTran rising transitions
+     and return the average cycle time in that range *)
+  VAR
+    pn := nodea[FIRST(nodea)];
+    pt : LONGREAL;
+    seq := NEW(LongRealSeq.T).init();
+  BEGIN
+    FOR i := FIRST(timea) TO LAST(timea) DO
+      WITH t = timea[i],
+           n = nodea[i] DO
+        IF t >= startTime THEN
+          IF n > cross AND pn <= cross THEN
+            WITH delV  = n - pn,
+                 delT  = t - pt,
+                 delV0 = cross - pn,
+                 delT0 = delV0 / delV * delT DO
+              seq.addhi(pt + delT0)
+            END
+          END
+        END;
+        pn := n;
+        pt := t
+      END
+    END;
+
+    IF endTran < seq.size() THEN
+      WITH cnt = endTran - startTran,
+           sT  = seq.get(startTran),
+           eT  = seq.get(endTran),
+           res = (eT - sT) / FLOAT(cnt, LONGREAL) DO
+        RETURN res
+      END
+    ELSE
+      RETURN LAST(LONGREAL)
+    END
+  END CycleTime;
+
+PROCEDURE MeanValue(READONLY timea, nodea : ARRAY OF LONGREAL;
+                    startTime             : LONGREAL) : LONGREAL =
+  (* looking at nodea values beyond startTime, 
+     return the mean value in the rest of history *)
+  VAR
+    sum := 0.0d0;
+    cnt := 0;
+  BEGIN
+    FOR i := FIRST(timea) TO LAST(timea) DO
+      WITH t = timea[i],
+           n = nodea[i] DO
+        IF t >= startTime THEN
+          sum := sum + n;
+          INC(cnt)
+        END
+      END
+    END;
+
+    RETURN sum / FLOAT(cnt, LONGREAL)
+  END MeanValue;
+
+PROCEDURE GetIdx(trace : Trace.T; of : TEXT) : CARDINAL =
+  VAR
+    res : CARDINAL;
+    hadIt := trace.getNodeIdx(of, res);
+  BEGIN
+    IF NOT hadIt THEN
+      Debug.Error(F("GetIdx : \"%s\" not found", of))
+    END;
+    RETURN res
+  END GetIdx;
 
 TYPE
   Config = RECORD
@@ -365,6 +490,10 @@ BEGIN
         c.phazz := c.phazz + SET OF Phaz { VAL(Lookup(pp.getNext(), PhazNames),
                                            Phaz) }
       UNTIL NOT pp.keywordPresent("-p")
+    END;
+
+    IF pp.keywordPresent("-all") THEN
+      c.phazz := SET OF Phaz { FIRST(Phaz) .. LAST(Phaz) }
     END;
 
     WHILE pp.keywordPresent("-m") DO
