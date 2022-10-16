@@ -3,6 +3,7 @@ import ("parseparams")
 import ("cit_util")
 import ("tracelib")
 
+module ("Watchdog")
 implementation ("Main")
 
 program ("techc")

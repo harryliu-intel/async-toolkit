@@ -21,6 +21,7 @@ IMPORT Trace;
 IMPORT LongRealSeq;
 IMPORT Math;
 IMPORT FS;
+IMPORT Watchdog;
 
 <*FATAL Thread.Alerted*>
 
@@ -44,6 +45,9 @@ CONST
   SimuNames = ARRAY Simu OF TEXT { "xa",    "hspice" };
   TopoNames = ARRAY Topo OF TEXT { "intc",  "tsmc" };
   CornNames = ARRAY Corn OF TEXT { "tt", "ss", "ff", "sf", "fs" };
+
+CONST ProcDeadline = 15.0d0 * 60.0d0;
+      (* give it 15 minutes for each subprocess step *)
 
 TYPE
   TranSufxs     = ARRAY Tran OF TEXT;
@@ -376,7 +380,8 @@ PROCEDURE DoSimulate(READONLY c : Config) =
     (*Wr.Close(wrIn);*)
     CASE c.simu OF
       Simu.Xa =>
-      WITH c = ProcUtils.RunText(cmd,
+      WITH wd = NEW(Watchdog.T).init(ProcDeadline),
+           c = ProcUtils.RunText(cmd,
                                  stdout := stdout,
                                  stderr := stderr,
                                  stdin  := NIL)
@@ -387,7 +392,8 @@ PROCEDURE DoSimulate(READONLY c : Config) =
           ProcUtils.ErrorExit(err) =>
           Debug.Error(F("command \"%s\" raised ErrorExit : %s",
                         cmd, ProcUtils.FormatError(err)))
-        END
+        END;
+        wd.kill()
       END
     |
       Simu.Hspice => <*ASSERT FALSE*>
@@ -407,7 +413,8 @@ PROCEDURE DoConvert(READONLY c : Config) =
     (*Wr.Close(wrIn);*)
     CASE c.simu OF
       Simu.Xa =>
-      WITH c = ProcUtils.RunText(cmd,
+      WITH wd = NEW(Watchdog.T).init(ProcDeadline),
+           c = ProcUtils.RunText(cmd,
                                  stdout := stdout,
                                  stderr := stderr,
                                  stdin  := NIL) DO
@@ -417,7 +424,8 @@ PROCEDURE DoConvert(READONLY c : Config) =
           ProcUtils.ErrorExit(err) =>
           Debug.Error(F("command \"%s\" raised ErrorExit : %s",
                         cmd, ProcUtils.FormatError(err)))
-        END
+        END;
+        wd.kill()
       END
     |
       Simu.Hspice => <*ASSERT FALSE*>
