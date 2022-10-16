@@ -110,10 +110,10 @@ CONST
                                                      P1276p4CornNames };
   
   ApproxThresh = ARRAY Tran OF LONGREAL { 0.100d0,
-                                          0.200d0,
-                                          0.220d0,
                                           0.250d0,
                                           0.300d0,
+                                          0.350d0,
+                                          0.400d0,
                                           0.450d0,
                                           0.500d0 };
 
@@ -167,6 +167,8 @@ TYPE Mapper = PROCEDURE(READONLY c : Config; map : TextTextTbl.T);
      
 CONST MapTech = ARRAY Tech OF Mapper { MapTechN5, MapTech1276p4 };
 
+CONST CornDelay = ARRAY Corn OF LONGREAL { 1.0d0, 3.0d0, 0.8d0, 2.0d0, 2.0d0 };
+      
 PROCEDURE MapCommon(READONLY c : Config;  map : TextTextTbl.T)=
   VAR
     iter : TextTextTbl.Iterator;
@@ -185,9 +187,10 @@ PROCEDURE MapCommon(READONLY c : Config;  map : TextTextTbl.T)=
          kelvinTemp      = c.temp - AbsZero,
          baseTemp        = 120.0d0 - AbsZero,
          tempDelayFactor = Math.pow(kelvinTemp / baseTemp, -1.5d0),
-         delayFactor     = (1.0d0 + threshDelayFactor) * tempDelayFactor,
+         cornDelayFactor = CornDelay[c.corn],
+         delayFactor     = (1.0d0 + threshDelayFactor) * tempDelayFactor * cornDelayFactor,
          nanoseconds     = 10.0d0 +
-              10.0d0 * (delayFactor + 0.5d0)
+              10.0d0 * (delayFactor + 1.5d0)
      DO
       Debug.Out(F("tempDelayFactor %s, thresDelayFactor %s, delayFactor %s, nanoseconds %s",
                   LR(tempDelayFactor),
@@ -334,8 +337,9 @@ PROCEDURE DoSimulate(READONLY c : Config) =
     wr := NEW(TextWr.T).init();
     stdout, stderr := ProcUtils.WriteHere(wr);
 
-    cmd := F("xa %s.sp -o %s", c.simRoot, c.simRoot);
+    cmd := F("%s/xa %s.sp -o %s", c.xaPath, c.simRoot, c.simRoot);
   BEGIN
+    
     (*Wr.Close(wrIn);*)
     CASE c.simu OF
       Simu.Xa =>
@@ -591,9 +595,14 @@ TYPE
     phazz := SET OF Phaz { Phaz.Setup };
     hspiceModelRoot : Pathname.T;
     hspiceModel     : Pathname.T;
-    hspiceLibModels : Pathname.T;
+
+    hspiceLibModels : Pathname.T :=
+        "/p/hdk/cad/pdk/pdk764_r0.4HP3_22ww20.1/cmi/hspice/cmi/lnx86/64bit";
+    (* what is this file? *)
+
     pdmiLib         : Pathname.T;
     simRoot := DefSimRoot;
+    xaPath : Pathname.T := "/p/hdk/cad/xa/S-2021.09-SP2//bin/";
   END;
 
 VAR

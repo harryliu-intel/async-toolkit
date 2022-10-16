@@ -17,7 +17,7 @@ taskfile=full-${DATE}.task
 cat > ${taskfile} <<EOF
     
 JobsTask {
-  WorkArea ${SRCDIR}/nb.run
+  WorkArea ${RUNDIR}
 
   Queue zsc3_express {
     Qslot /XCC/LBM/SD
@@ -30,6 +30,9 @@ EOF
 
 tasknum=0
 
+for mode in "dyn" "leak"; do
+for temp in -40 -20 0 25 50 75 100 125 150; do
+for volt in 0.19 0.21 0.23 0.25 0.27 0.29 0.31 0.33 0.35 0.40 0.45 0.50 0.55 0.60 0.65 0.70 0.75 0.80 0.85 0.90 0.95 1.00; do
 for tech in "n5" "1276p4"; do
     if [ "${tech}" == "n5" ]; then
         trantypes="elvt ulvt ulvtll lvt lvtll svt svtll"
@@ -38,13 +41,14 @@ for tech in "n5" "1276p4"; do
     fi
 
     for tran in ${trantypes}; do
-        echo "nbjob run --log-file ${RUNDIR}/${tasknum}.log ${PROG} -tech ${tech} -corn tt -tran ${tran} -topo tsmc -mode dyn -all -simu xa -T ${TEMPLATE} -volt 0.35 -temp 25 -d ${RUNDIR}/${tasknum}.run -C" >> $taskfile
+        echo "nbjob run --log-file ${RUNDIR}/${tasknum}.log ${PROG} -tech ${tech} -corn tt -tran ${tran} -topo intc -mode ${mode} -all -simu xa -T ${TEMPLATE} -volt ${volt} -temp ${temp} -d ${RUNDIR}/${tasknum}.run -C" >> $taskfile
 
         tasknum=`expr $tasknum + 1`
     done
 done
-
-
+done
+done
+done
 
 
 
