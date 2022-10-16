@@ -200,6 +200,9 @@ PROCEDURE MapCommon(READONLY c : Config;  map : TextTextTbl.T)=
   VAR
     iter : TextTextTbl.Iterator;
     k, v : TEXT;
+  CONST
+    DefaultTimeStep = 1.0d-12;
+    MaxTimeSteps    = 50000.0d0;
   BEGIN
     EVAL map.put("@HSPICE_MODEL_ROOT@", c.hspiceModelRoot);
     EVAL map.put("@HSPICE_MODEL@", c.hspiceModel);
@@ -217,7 +220,9 @@ PROCEDURE MapCommon(READONLY c : Config;  map : TextTextTbl.T)=
          cornDelayFactor = CornDelay[c.corn],
          delayFactor     = (1.0d0 + threshDelayFactor) * tempDelayFactor * cornDelayFactor,
          nanoseconds     = 10.0d0 +
-              10.0d0 * (delayFactor + 1.5d0)
+                           10.0d0 * (delayFactor + 1.5d0),
+         timestep        = MAX(DefaultTimeStep,
+                               nanoseconds * 1.0d-9 / MaxTimeSteps)
      DO
       Debug.Out(F("tempDelayFactor %s, thresDelayFactor %s, delayFactor %s, nanoseconds %s",
                   LR(tempDelayFactor),
@@ -225,7 +230,8 @@ PROCEDURE MapCommon(READONLY c : Config;  map : TextTextTbl.T)=
                   LR(delayFactor),
                   LR(nanoseconds)));
       
-      EVAL map.put("@NANOSECONDS@", LR(nanoseconds))
+      EVAL map.put("@NANOSECONDS@", LR(nanoseconds));
+      EVAL map.put("@TIMESTEP@", Int(ROUND(timestep / 1.0d-12)) & "ps");
     END;
     EVAL map.put("@OPTIONS@", SimOptions[c.simu]);
     EVAL map.put("@CORNER@", TechCornNames[c.tech][c.corn]);
