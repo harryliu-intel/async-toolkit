@@ -28,7 +28,7 @@ CONST TE = Text.Equal;
       LR = Fmt.LongReal;
 
 TYPE
-  Tech = { N5, P1276p4 };
+  Tech = { N5, P1276p4, N3 };
   Tran = { Elvt, Ulvt, Ulvtll, Lvt, Lvtll, Svt, Svtll };
   Mode = { Dyn, Leak };
   Phaz = { Setup, Simulate, Convert, Clean, Measure };
@@ -37,7 +37,7 @@ TYPE
   Corn = { TT, SS, FF, SF, FS };
   
 CONST
-  TechNames = ARRAY Tech OF TEXT { "n5"  ,  "1276p4" };
+  TechNames = ARRAY Tech OF TEXT { "n5"  ,  "1276p4", "n3" };
   TranNames = ARRAY Tran OF TEXT { "elvt", "ulvt", "ulvtll", "lvt", "lvtll", "svt", "svtll" };
   ModeNames = ARRAY Mode OF TEXT { "dyn" ,  "leak" };
   PhazNames = ARRAY Phaz OF TEXT { "setup", "simulate", "convert", "clean", "measure" };
@@ -69,26 +69,46 @@ CONST
                 "ch_svtll_mac"
   };
 
+  N3TranSufxs = N5TranSufxs;
+
   P1276p4TranSize = "L=0.014u W=0.06u";
   
   N5TranSize = "l=6n nfin=2 ppitch=0 fbound=9";
+
+  N3TranSize = "l=3n nfin=2 ppitch=0";
                 
   TechTranSufxs = ARRAY Tech OF TranSufxs { N5TranSufxs,
-                                            P1276p4TranSufxs };
+                                            P1276p4TranSufxs,
+                                            N3TranSufxs };
 
-  TechTranSizes = ARRAY Tech OF TEXT { N5TranSize, P1276p4TranSize };
+  TechTranSizes = ARRAY Tech OF TEXT { N5TranSize,
+                                       P1276p4TranSize,
+                                       N3TranSize };
 
+  (*
   N5HspiceModel = "cln5-1d2-sp-v0d9-2p1-usage.l";
+  *)
+  N5HspiceModel = "cln5_1d2_sp_v1d1_2p2_usage.l";
   P1276p4HspiceModel = "p1276_4.hsp";
-
+  N3HspiceModel = "cln3_1d2_sp_v1d0_2p2_usage.l";
+  
+  (*
   N5HspiceModelRoot = "/p/tech/n5/tech-prerelease/.dr/epic/v0.9.0/models/1P15M_1X_h_1Xb_v_1Xe_h_1Ya_v_1Yb_h_5Y_vhvhv_2Yy2Z";
+  *)
+  N5HspiceModelRoot = "/p/tech/n5/tech-release/v1.1.3/models/1P15M_1X_h_1Xb_v_1Xe_h_1Ya_v_1Yb_h_5Y_vhvhv_2Yy2R/hspice";
+
+  N3HspiceModelRoot = "/p/tech1/n3/tech-release/v1.0.10/models/1P18M_1X_h_1Xb_v_1Xc_h_1Xd_v_1Ya_h_1Yb_v_5Y_hvhvh_2Yy2Yx1R1U_thin_curdl/hspice";
+  
+  
   P1276p4HspiceModelRoot = "/p/hdk/cad/pdk/pdk764_r0.4HP3_22ww20.1/models/core/hspice/m17_6x_2ya_2yb_2yc_2yd_1ye_1ga_mim3x_1gb__bumpp";
   
   TechHspiceModels = ARRAY Tech OF TEXT { N5HspiceModel,
-                                          P1276p4HspiceModel };
+                                          P1276p4HspiceModel,
+                                          N3HspiceModel};
 
   TechHspiceModelRoots = ARRAY Tech OF TEXT { N5HspiceModelRoot,
-                                              P1276p4HspiceModelRoot };
+                                              P1276p4HspiceModelRoot,
+                                              N3HspiceModelRoot};
 
   N5CornNames = ARRAY Corn OF TEXT {
   "TTGlobalCorner_LocalMC_MOS_MOSCAP",
@@ -106,8 +126,11 @@ CONST
   "rsfs"
   };
 
+  N3CornNames = N5CornNames;
+  
   TechCornNames = ARRAY Tech OF ARRAY Corn OF TEXT { N5CornNames,
-                                                     P1276p4CornNames };
+                                                     P1276p4CornNames,
+                                                     N3CornNames };
   
   ApproxThresh = ARRAY Tran OF LONGREAL { 0.100d0,
                                           0.250d0,
@@ -163,9 +186,13 @@ PROCEDURE Lookup(str : TEXT; READONLY a : ARRAY OF TEXT) : CARDINAL =
   BEGIN
   END MapTech1276p4;
 
+<*NOWARN*>PROCEDURE MapTechN3(READONLY c : Config; map : TextTextTbl.T) =
+  BEGIN
+  END MapTechN3;
+
 TYPE Mapper = PROCEDURE(READONLY c : Config; map : TextTextTbl.T);
      
-CONST MapTech = ARRAY Tech OF Mapper { MapTechN5, MapTech1276p4 };
+CONST MapTech = ARRAY Tech OF Mapper { MapTechN5, MapTech1276p4, MapTechN3 };
 
 CONST CornDelay = ARRAY Corn OF LONGREAL { 1.0d0, 3.0d0, 0.8d0, 2.0d0, 2.0d0 };
       
