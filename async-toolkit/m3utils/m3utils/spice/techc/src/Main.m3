@@ -390,8 +390,10 @@ PROCEDURE DoSimulate(READONLY c : Config) =
           c.wait()
         EXCEPT
           ProcUtils.ErrorExit(err) =>
-          Debug.Error(F("command \"%s\" raised ErrorExit : %s",
-                        cmd, ProcUtils.FormatError(err)))
+          Debug.Error(F("command \"%s\" with output\n====>\n%s\n<====\n\nraised ErrorExit : %s",
+                        cmd,
+                        TextWr.ToText(wr),
+                        ProcUtils.FormatError(err)))
         END;
         wd.kill()
       END
@@ -422,8 +424,10 @@ PROCEDURE DoConvert(READONLY c : Config) =
           c.wait()
         EXCEPT
           ProcUtils.ErrorExit(err) =>
-          Debug.Error(F("command \"%s\" raised ErrorExit : %s",
-                        cmd, ProcUtils.FormatError(err)))
+          Debug.Error(F("command \"%s\" with output\n====>\n%s\n<====\n\nraised ErrorExit : %s",
+                        cmd,
+                        TextWr.ToText(wr),
+                        ProcUtils.FormatError(err)))
         END;
         wd.kill()
       END

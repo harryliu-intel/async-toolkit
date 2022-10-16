@@ -69,7 +69,7 @@ PROCEDURE Apply(cl : Closure) : REFANY =
         END
       END
     END;
-    <*ASSERT FALSE*>
+    RETURN NIL
   END Apply;
 
 PROCEDURE Reset(t : T) =
