@@ -29,7 +29,7 @@ CONST TE = Text.Equal;
       LR = Fmt.LongReal;
 
 TYPE
-  Tech = { N5, P1276p4, N3 };
+  Tech = { N5, P1276p4, N3, N3E };
   Tran = { Elvt, Ulvt, Ulvtll, Lvt, Lvtll, Svt, Svtll };
   Mode = { Dyn, Leak };
   Phaz = { Setup, Simulate, Convert, Clean, Measure };
@@ -38,7 +38,7 @@ TYPE
   Corn = { TT, SS, FF, SF, FS };
   
 CONST
-  TechNames = ARRAY Tech OF TEXT { "n5"  ,  "1276p4", "n3" };
+  TechNames = ARRAY Tech OF TEXT { "n5"  ,  "1276p4", "n3", "n3e" };
   TranNames = ARRAY Tran OF TEXT { "elvt", "ulvt", "ulvtll", "lvt", "lvtll", "svt", "svtll" };
   ModeNames = ARRAY Mode OF TEXT { "dyn" ,  "leak" };
   PhazNames = ARRAY Phaz OF TEXT { "setup", "simulate", "convert", "clean", "measure" };
@@ -75,19 +75,33 @@ CONST
 
   N3TranSufxs = N5TranSufxs;
 
+  N3ETranSufxs =
+    TranSufxs { "ch_elvt_mac",
+                "ch_ulvt_mac",
+                "ch_ulvtll_mac",
+                "ch_lvt_mac",
+                "ch_lvtll_mac",
+                "ch_svt_mac",
+                NIL
+  };
+
   P1276p4TranSize = "L=0.014u W=0.06u";
   
   N5TranSize = "l=6n nfin=2 ppitch=0 fbound=9";
 
   N3TranSize = "l=3n nfin=2 ppitch=0";
+
+  N3ETranSize = "l=3n nfin=2 ppitch=0 fbound=262";
                 
   TechTranSufxs = ARRAY Tech OF TranSufxs { N5TranSufxs,
                                             P1276p4TranSufxs,
-                                            N3TranSufxs };
+                                            N3TranSufxs,
+                                            N3ETranSufxs };
 
   TechTranSizes = ARRAY Tech OF TEXT { N5TranSize,
                                        P1276p4TranSize,
-                                       N3TranSize };
+                                       N3TranSize,
+                                       N3ETranSize };
 
   (*
   N5HspiceModel = "cln5-1d2-sp-v0d9-2p1-usage.l";
@@ -95,6 +109,8 @@ CONST
   N5HspiceModel = "cln5_1d2_sp_v1d1_2p2_usage.l";
   P1276p4HspiceModel = "p1276_4.hsp";
   N3HspiceModel = "cln3_1d2_sp_v1d0_2p2_usage.l";
+
+  N3EHspiceModel = "cln3e_1d2_sp_v0d5_2p2_usage.l";
   
   (*
   N5HspiceModelRoot = "/p/tech/n5/tech-prerelease/.dr/epic/v0.9.0/models/1P15M_1X_h_1Xb_v_1Xe_h_1Ya_v_1Yb_h_5Y_vhvhv_2Yy2Z";
@@ -102,17 +118,22 @@ CONST
   N5HspiceModelRoot = "/p/tech/n5/tech-release/v1.1.3/models/1P15M_1X_h_1Xb_v_1Xe_h_1Ya_v_1Yb_h_5Y_vhvhv_2Yy2R/hspice";
 
   N3HspiceModelRoot = "/p/tech1/n3/tech-release/v1.0.10/models/1P18M_1X_h_1Xb_v_1Xc_h_1Xd_v_1Ya_h_1Yb_v_5Y_hvhvh_2Yy2Yx1R1U_thin_curdl/hspice";
+
+  N3EHspiceModelRoot = "/p/tech1/n3e/tech-release/v0.5.0/models/1P17M_1Xa_h_1Xb_v_1Xc_h_1Xd_v_1Ya_h_1Yb_v_6Y_hvhvhv_2Yy2R_shdmim_ut-alrdl/hspice";
+  
   
   
   P1276p4HspiceModelRoot = "/p/hdk/cad/pdk/pdk764_r0.4HP3_22ww20.1/models/core/hspice/m17_6x_2ya_2yb_2yc_2yd_1ye_1ga_mim3x_1gb__bumpp";
   
   TechHspiceModels = ARRAY Tech OF TEXT { N5HspiceModel,
                                           P1276p4HspiceModel,
-                                          N3HspiceModel};
+                                          N3HspiceModel,
+                                          N3EHspiceModel};
 
   TechHspiceModelRoots = ARRAY Tech OF TEXT { N5HspiceModelRoot,
                                               P1276p4HspiceModelRoot,
-                                              N3HspiceModelRoot};
+                                              N3HspiceModelRoot,
+                                              N3EHspiceModelRoot};
 
   N5CornNames = ARRAY Corn OF TEXT {
   "TTGlobalCorner_LocalMC_MOS_MOSCAP",
@@ -131,10 +152,13 @@ CONST
   };
 
   N3CornNames = N5CornNames;
+
+  N3ECornNames = N5CornNames;
   
   TechCornNames = ARRAY Tech OF ARRAY Corn OF TEXT { N5CornNames,
                                                      P1276p4CornNames,
-                                                     N3CornNames };
+                                                     N3CornNames,
+                                                     N3ECornNames };
   
   ApproxThresh = ARRAY Tran OF LONGREAL { 0.100d0,
                                           0.250d0,
@@ -194,9 +218,13 @@ PROCEDURE Lookup(str : TEXT; READONLY a : ARRAY OF TEXT) : CARDINAL =
   BEGIN
   END MapTechN3;
 
+<*NOWARN*>PROCEDURE MapTechN3E(READONLY c : Config; map : TextTextTbl.T) =
+  BEGIN
+  END MapTechN3E;
+
 TYPE Mapper = PROCEDURE(READONLY c : Config; map : TextTextTbl.T);
      
-CONST MapTech = ARRAY Tech OF Mapper { MapTechN5, MapTech1276p4, MapTechN3 };
+CONST MapTech = ARRAY Tech OF Mapper { MapTechN5, MapTech1276p4, MapTechN3, MapTechN3E };
 
 CONST CornDelay = ARRAY Corn OF LONGREAL { 1.0d0, 3.0d0, 0.8d0, 2.0d0, 2.0d0 };
       
@@ -204,39 +232,14 @@ PROCEDURE MapCommon(READONLY c : Config;  map : TextTextTbl.T)=
   VAR
     iter : TextTextTbl.Iterator;
     k, v : TEXT;
-  CONST
-    DefaultTimeStep = 1.0d-12;
-    MaxTimeSteps    = 50000.0d0;
   BEGIN
     EVAL map.put("@HSPICE_MODEL_ROOT@", c.hspiceModelRoot);
     EVAL map.put("@HSPICE_MODEL@", c.hspiceModel);
     EVAL map.put("@TEMP@", LR(c.temp));
     EVAL map.put("@VOLT@", LR(c.volt));
     EVAL map.put("@TOPO@", TopoNames[c.topo]);
-    
-    WITH deltaV = c.volt - ApproxThresh[c.tran],
-         stepsV = deltaV / 0.035d0,  (* kT/q *)
-         threshDelayFactor = Math.exp(-stepsV),
-         
-         kelvinTemp      = c.temp - AbsZero,
-         baseTemp        = 120.0d0 - AbsZero,
-         tempDelayFactor = Math.pow(kelvinTemp / baseTemp, -1.5d0),
-         cornDelayFactor = CornDelay[c.corn],
-         delayFactor     = (1.0d0 + threshDelayFactor) * tempDelayFactor * cornDelayFactor,
-         nanoseconds     = 10.0d0 +
-                           10.0d0 * (delayFactor + 1.5d0),
-         timestep        = MAX(DefaultTimeStep,
-                               nanoseconds * 1.0d-9 / MaxTimeSteps)
-     DO
-      Debug.Out(F("tempDelayFactor %s, thresDelayFactor %s, delayFactor %s, nanoseconds %s",
-                  LR(tempDelayFactor),
-                  LR(threshDelayFactor),
-                  LR(delayFactor),
-                  LR(nanoseconds)));
-      
-      EVAL map.put("@NANOSECONDS@", LR(nanoseconds));
-      EVAL map.put("@TIMESTEP@", Int(ROUND(timestep / 1.0d-12)) & "ps");
-    END;
+    EVAL map.put("@NANOSECONDS@", LR(c.nanoseconds));
+    EVAL map.put("@TIMESTEP@", Int(ROUND(c.timestep / 1.0d-12)) & "ps");
     EVAL map.put("@OPTIONS@", SimOptions[c.simu]);
     EVAL map.put("@CORNER@", TechCornNames[c.tech][c.corn]);
 
@@ -333,6 +336,37 @@ PROCEDURE ModifyTemplate(template : TextSeq.T; map : TextTextTbl.T) =
   END ModifyTemplate;
 
 CONST DefSimRoot = "circuit";
+
+PROCEDURE DoCommonSetup(VAR c : Config) =
+  CONST
+    DefaultTimeStep = 1.0d-12;
+    MaxTimeSteps    = 50000.0d0;
+
+  BEGIN
+    WITH deltaV = c.volt - ApproxThresh[c.tran],
+         stepsV = deltaV / 0.035d0,  (* kT/q *)
+         threshDelayFactor = Math.exp(-stepsV),
+         
+         kelvinTemp      = c.temp - AbsZero,
+         baseTemp        = 120.0d0 - AbsZero,
+         tempDelayFactor = Math.pow(kelvinTemp / baseTemp, -1.5d0),
+         cornDelayFactor = CornDelay[c.corn],
+         delayFactor     = (1.0d0 + threshDelayFactor) * tempDelayFactor * cornDelayFactor,
+         nanoseconds     = 10.0d0 +
+                           10.0d0 * (delayFactor + 1.5d0),
+         timestep        = MAX(DefaultTimeStep,
+                               nanoseconds * 1.0d-9 / MaxTimeSteps)
+     DO
+      Debug.Out(F("tempDelayFactor %s, thresDelayFactor %s, delayFactor %s, nanoseconds %s",
+                  LR(tempDelayFactor),
+                  LR(threshDelayFactor),
+                  LR(delayFactor),
+                  LR(nanoseconds)));
+      
+      c.nanoseconds := nanoseconds;
+      c.timestep := timestep
+    END;
+  END DoCommonSetup;
       
 PROCEDURE DoSetup(READONLY c : Config) =
   VAR
@@ -409,8 +443,8 @@ PROCEDURE DoConvert(READONLY c : Config) =
     wr := NEW(TextWr.T).init();
     stdout, stderr := ProcUtils.WriteHere(wr);
 
-    cmd := F("/nfs/site/disks/zsc3_fon_fe_0001/mnystroe/m3utils/spice/ct/AMD64_LINUX/ct -fsdb /nfs/site/disks/zsc3_fon_fe_0001/mnystroe/m3utils/spice/fsdb/src/nanosimrd -threads 4 -wthreads 1 -R 50e-12 %s.fsdb %s",
-             c.simRoot, c.simRoot);
+    cmd := F("/nfs/site/disks/zsc3_fon_fe_0001/mnystroe/m3utils/spice/ct/AMD64_LINUX/ct -fsdb /nfs/site/disks/zsc3_fon_fe_0001/mnystroe/m3utils/spice/fsdb/src/nanosimrd -threads 4 -wthreads 1 -R %s %s.fsdb %s",
+             LR(MAX(c.timestep, 50.0d-12)), c.simRoot, c.simRoot);
   BEGIN 
     (*Wr.Close(wrIn);*)
     CASE c.simu OF
@@ -634,6 +668,9 @@ TYPE
     corn : Corn;
     volt := 0.0d0;
     temp := 0.0d0;
+    nanoseconds : LONGREAL; (* length of sim in ns *)
+    timestep : LONGREAL; (* in seconds *)
+    
     workDir : Pathname.T;
     createWorkDir : BOOLEAN;
     templatePath : Pathname.T;
@@ -749,6 +786,8 @@ BEGIN
     END
   END;
 
+  DoCommonSetup(c);
+  
   FOR phaz := FIRST(Phaz) TO LAST(Phaz) DO
     IF phaz IN c.phazz THEN
       Debug.Out(F("*****  PHASE %s  ***** ", PhazNames[phaz]));
