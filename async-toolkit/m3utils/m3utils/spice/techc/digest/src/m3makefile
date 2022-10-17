@@ -1,0 +1,9 @@
+import ("libm3")
+import ("parseparams")
+import ("cit_util")
+import ("tracelib")
+import ("csv")
+
+implementation ("Main")
+
+program ("techdigest")
