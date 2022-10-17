@@ -103,10 +103,12 @@ CONST
   TopoNames = ARRAY Topo OF TEXT { "intc",  "tsmc" };
   CornNames = ARRAY Corn OF TEXT { "tt", "ss", "ff", "sf", "fs" };
 
-CONST ProcDeadline = 15.0d0 * 60.0d0;
+CONST DefProcDeadline = 15.0d0 * 60.0d0;
       (* give it 15 minutes for each subprocess step (circuit sim and aspice
          data conversion) *)
 
+VAR ProcDeadline := DefProcDeadline;
+  
 TYPE
   TranSufxs     = ARRAY Tran OF TEXT;
 
@@ -460,6 +462,22 @@ PROCEDURE DoSetup(READONLY c : Config) =
     END
   END DoSetup;
 
+TYPE
+  MyCb = Watchdog.Callback OBJECT
+    cmd : TEXT;
+    wr  : TextWr.T;
+  OVERRIDES
+    do := MyCbDo;
+  END;
+
+PROCEDURE MyCbDo(cb : MyCb) =
+  BEGIN
+    Debug.Out(F("\n!!! WOOF WOOF !!!\nCommand \"%s\" with output\n====>\n%s\n<====\n\nWatchdog expired!  Exiting!",
+                cb.cmd,
+                TextWr.ToText(cb.wr)));
+    Process.Exit(1)
+  END MyCbDo;
+  
 PROCEDURE DoSimulate(READONLY c : Config) =
   <*FATAL OSError.E*> (* this pertains to the TextWr *)
   VAR
@@ -473,11 +491,12 @@ PROCEDURE DoSimulate(READONLY c : Config) =
     CASE c.simu OF
       Simu.Xa =>
       WITH wd = NEW(Watchdog.T).init(ProcDeadline),
-           c = ProcUtils.RunText(cmd,
-                                 stdout := stdout,
-                                 stderr := stderr,
-                                 stdin  := NIL)
-       DO
+           c  = ProcUtils.RunText(cmd,
+                                  stdout := stdout,
+                                  stderr := stderr,
+                                  stdin  := NIL),
+           cb = NEW(MyCb, cmd := cmd, wr := wr) DO
+        wd.setExpireAction(cb);
         TRY
           c.wait()
         EXCEPT
@@ -511,7 +530,9 @@ PROCEDURE DoConvert(READONLY c : Config) =
            c = ProcUtils.RunText(cmd,
                                  stdout := stdout,
                                  stderr := stderr,
-                                 stdin  := NIL) DO
+                                 stdin  := NIL),
+           cb = NEW(MyCb, cmd := cmd, wr := wr) DO
+        wd.setExpireAction(cb);
         TRY
           c.wait()
         EXCEPT
@@ -804,6 +825,10 @@ BEGIN
 
     IF pp.keywordPresent("-T") THEN
       c.templatePath := pp.getNext()
+    END;
+
+    IF pp.keywordPresent("-deadline") THEN
+      ProcDeadline := pp.getNextLongReal()
     END;
 
     IF pp.keywordPresent("-p") THEN
