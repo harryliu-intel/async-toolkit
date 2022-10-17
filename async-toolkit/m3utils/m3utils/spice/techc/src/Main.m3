@@ -62,6 +62,9 @@ CONST TE = Text.Equal;
      ApproxThresh
 *)
 
+CONST
+  Verbose = FALSE ;
+  
 TYPE
   Tech = { N5, P1276p4, N3, N3E };
   (* supported technologies *)
@@ -379,7 +382,9 @@ PROCEDURE ModifyTemplate(template : TextSeq.T; map : TextTextTbl.T) =
     iter := map.iterate();
   BEGIN
     WHILE iter.next(k, v) DO
-      Debug.Out(F("k %s -> v %s", k, Debug.UnNil(v)))
+      IF Verbose THEN
+        Debug.Out(F("k %s -> v %s", k, Debug.UnNil(v)))
+      END
     END;
     
     FOR i := 0 TO template.size() - 1 DO
@@ -564,10 +569,15 @@ PROCEDURE DoClean(READONLY c : Config) =
       BEGIN
         WHILE iter.next(fn) DO
           WITH ffn = CtWorkDir & "/" & fn DO
-            Debug.Out("Attempting to delete "& ffn);
+            IF Verbose THEN
+              Debug.Out("Attempting to delete "& ffn)
+            END;
             TRY FS.DeleteFile(ffn) EXCEPT ELSE END
           END
         END
+      END;
+      IF Verbose THEN
+        Debug.Out("Attempting to delete "& "ct.work")
       END;
       FS.DeleteDirectory("ct.work")
     EXCEPT ELSE END
