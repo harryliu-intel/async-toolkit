@@ -1,5 +1,20 @@
 MODULE Main;
 
+(*
+  Technology comparison across
+
+  P1276P4
+  N5
+  N3 (vaporware process)
+  N3E
+
+  including all provided transistor thresholds
+
+  Author : mika.nystroem@intel.com
+  October, 2022
+
+*)
+
 IMPORT ParseParams;
 IMPORT Text;
 IMPORT Debug;
@@ -28,16 +43,58 @@ IMPORT Watchdog;
 CONST TE = Text.Equal;
       LR = Fmt.LongReal;
 
+(* to add a new Tech to the system:
+
+   Add to Tech, then update
+   TechNames
+   TranSufxs
+   TechTranSufxs
+   TechTranSizes
+   TechHspiceModels
+   TechHspiceModelRoots
+   TechCornNames
+   MapTech
+
+   *** And if needed: ***
+   Tran (if you have a new transistor type) 
+     TranNames
+     TranSufxs for existing processes with NIL in the new slot
+     ApproxThresh
+*)
+
 TYPE
   Tech = { N5, P1276p4, N3, N3E };
+  (* supported technologies *)
+  
   Tran = { Elvt, Ulvt, Ulvtll, Lvt, Lvtll, Svt, Svtll };
+  (* all known transistor thresholds (superset of all techs) *)
+  
   Mode = { Dyn, Leak };
+  (* run mode: dynamic power or leakage power *)
+  
   Phaz = { Setup, Simulate, Convert, Clean, Measure };
+  (* run phase:
+
+     Setup    - make input file
+     Simulate - run circuit simulator
+     Convert  - convert data output to aspice format
+     Clean    - remove unneeded files
+     Measure  - make performance measurements required on aspice data
+
+     Use -all on command line to get all phases
+  *)
+  
   Simu = { Xa, Hspice };
+  (* circuit simulator: xa fully supported, hspice coming later *)
+  
   Topo = { Intc, Tsmc }; (* circuit topo *)
+  (* use the Intel or TSMC circuit topology for the XOR gate *)
+  
   Corn = { TT, SS, FF, SF, FS };
+  (* short names for the five supported simulation corners *)
   
 CONST
+  (* the following are string names, to be used from command line, etc. *)
   TechNames = ARRAY Tech OF TEXT { "n5"  ,  "1276p4", "n3", "n3e" };
   TranNames = ARRAY Tran OF TEXT { "elvt", "ulvt", "ulvtll", "lvt", "lvtll", "svt", "svtll" };
   ModeNames = ARRAY Mode OF TEXT { "dyn" ,  "leak" };
@@ -47,7 +104,8 @@ CONST
   CornNames = ARRAY Corn OF TEXT { "tt", "ss", "ff", "sf", "fs" };
 
 CONST ProcDeadline = 15.0d0 * 60.0d0;
-      (* give it 15 minutes for each subprocess step *)
+      (* give it 15 minutes for each subprocess step (circuit sim and aspice
+         data conversion) *)
 
 TYPE
   TranSufxs     = ARRAY Tran OF TEXT;
@@ -562,12 +620,13 @@ PROCEDURE DoMeasure(READONLY c : Config) =
       
       Debug.Out("Measured mean current " & LR(meancurrent));
 
-      VAR
-        wr := FileWr.Open("measure.dat");
-      BEGIN
-        Wr.PutText(wr,
-                   FN("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
-                      ARRAY OF TEXT {
+      TRY
+        VAR
+          wr := FileWr.Open("measure.dat");
+        BEGIN
+          Wr.PutText(wr,
+                     FN("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
+                        ARRAY OF TEXT {
                            TechNames[c.tech],
                            CornNames[c.corn],
                            TranNames[c.tran],
@@ -579,7 +638,16 @@ PROCEDURE DoMeasure(READONLY c : Config) =
                            LR(cycle),
                            LR(meancurrent)
                            }));
-        Wr.Close(wr)
+          Wr.Close(wr)
+        END
+      EXCEPT
+        OSError.E(x) =>
+        Debug.Error(F("Couldn't open measurement output file : OSError.E : %s",
+                      AL.Format(x)))
+      |
+        Wr.Failure(x) =>
+        Debug.Error(F("Couldn't write measurement output file : Wr.Failure : %s",
+                      AL.Format(x)))
       END
     END
   END DoMeasure;
