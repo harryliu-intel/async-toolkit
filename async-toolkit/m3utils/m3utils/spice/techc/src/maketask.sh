@@ -13,7 +13,7 @@ nb_queue=zsc3_normal
 nb_qslot=/XCC/LBM/SD
 nb_qslot=/XCC/LBM/RTL
 
-step=10
+step=7
 
 corners="ss tt ff"
 
@@ -26,11 +26,25 @@ techs="n5 1276p4 n3e"
 
 modes="dyn leak"
 
+#paras="true false"
+paras="true"
+
 # short test
 
 #techs="n3e"
 #corners="tt"
 #volts="0.29"
+
+if [ "$1" == "-quick" ]; then
+    # quick simulation, just to test
+    # note all technologies are included
+    volts="0.29 0.90"
+    temps="50 125"
+    modes="dyn"
+    paras="true false"
+    corners="tt"
+    step=15
+fi
 
 ######################################################################
 
@@ -54,6 +68,7 @@ EOF
 
 tasknum=0
 
+for para in ${paras}; do
 for corn in ${corners}; do
 for mode in ${modes}; do
 for temp in ${temps}; do
@@ -75,12 +90,14 @@ for tech in ${techs}; do
               -tech ${tech} -corn ${corn} -tran ${tran} -topo intc \
               -mode ${mode} -all -simu xa -T ${TEMPLATE} \
               -volt ${volt} -temp ${temp} \
+              -para ${para} \
               -d ${RUNDIR}/${tasknum}.run -C" >> ${RUNDIR}/${tasknum}.sh
         chmod +x ${RUNDIR}/${tasknum}.sh
         
         tasknum=`expr $tasknum + 1`
     done
     
+done
 done
 done
 done

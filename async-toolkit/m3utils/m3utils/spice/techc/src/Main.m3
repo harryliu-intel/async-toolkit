@@ -37,6 +37,8 @@ IMPORT LongRealSeq;
 IMPORT Math;
 IMPORT FS;
 IMPORT Watchdog;
+IMPORT Scan;
+IMPORT Lex;
 
 <*FATAL Thread.Alerted*>
 
@@ -54,6 +56,9 @@ CONST TE = Text.Equal;
    TechHspiceModelRoots
    TechCornNames
    MapTech
+   TechParaCellName
+   TechPlugText
+   TechStdCellPaths
 
    *** And if needed: ***
    Tran (if you have a new transistor type) 
@@ -186,7 +191,7 @@ CONST
   
   
   
-  P1276p4HspiceModelRoot = "/p/hdk/cad/pdk/pdk764_r0.4HP3_22ww20.1/models/core/hspice/m17_6x_2ya_2yb_2yc_2yd_1ye_1ga_mim3x_1gb__bumpp";
+  P1276p4HspiceModelRoot = "/p/hdk/cad/pdk/pdk764_r0.5_22ww20.5/models/core/hspice/m17_6x_2ya_2yb_2yc_2yd_1ye_1ga_mim3x_1gb__bumpp";
   
   TechHspiceModels = ARRAY Tech OF TEXT { N5HspiceModel,
                                           P1276p4HspiceModel,
@@ -222,7 +227,111 @@ CONST
                                                      P1276p4CornNames,
                                                      N3CornNames,
                                                      N3ECornNames };
+
+
+
+  (************************************************************)
+
+  (* the below is for simulation with parasitics *)
   
+  P1276p4StdCellRoot = "/p/hdk/cad/stdcells/g1m/22ww37.5_p1276d4_g1m_b.0.p3.core/spf/p1276d4_tttt_v0550_t100_pdn_max/";
+
+  P1276p4StdCellPaths = ARRAY Tran OF TEXT {
+    NIL,
+    P1276p4StdCellRoot & "an/g1mbfn000aa1n02x5.spf",
+    NIL,
+    P1276p4StdCellRoot & "bn/g1mbfn000ab1n02x5.spf",
+    NIL,
+    P1276p4StdCellRoot & "cn/g1mbfn000ac1n02x5.spf",
+    NIL
+  };
+
+  P1276p4StdCellNames = ARRAY Tran OF TEXT {
+    NIL,
+    "g1mbfn000aa1n02x5",
+    NIL,
+    "g1mbfn000ab1n02x5",
+    NIL,
+    "g1mbfn000ac1n02x5",
+    NIL
+  };
+
+  P1276p4PlugText = "";
+
+  N5StdCellPaths = ARRAY Tran OF TEXT {
+  "/p/tech/n5/tech-prerelease/.dr/tcbn05_bwph210l6p51cnod_base_elvt_lib/v0.9.0_pre.1/lpe_spice/tcbn05_bwph210l6p51cnod_base_elvt_090a/tcbn05_bwph210l6p51cnod_base_elvt_090a_lpe_typical_125c.spi",
+  "/p/tech/n5/tech-prerelease/.dr/tcbn05_bwph210l6p51cnod_base_ulvt_lib/v0.9.0_pre.1/lpe_spice/tcbn05_bwph210l6p51cnod_base_ulvt_090a/tcbn05_bwph210l6p51cnod_base_ulvt_090a_lpe_typical_125c.spi",
+  "/p/tech/n5/tech-prerelease/.dr/tcbn05_bwph210l6p51cnod_base_ulvtll_lib/v0.9.0_pre.1/lpe_spice/tcbn05_bwph210l6p51cnod_base_ulvtll_090a/tcbn05_bwph210l6p51cnod_base_ulvtll_090a_lpe_typical_125c.spi",
+  "/p/tech/n5/tech-prerelease/.dr/tcbn05_bwph210l6p51cnod_base_lvt_lib/v0.9.0_pre.1/lpe_spice/tcbn05_bwph210l6p51cnod_base_lvt_090a/tcbn05_bwph210l6p51cnod_base_lvt_090a_lpe_typical_125c.spi",
+  "/p/tech/n5/tech-prerelease/.dr/tcbn05_bwph210l6p51cnod_base_lvtll_lib/v0.9.0_pre.1/lpe_spice/tcbn05_bwph210l6p51cnod_base_lvtll_090a/tcbn05_bwph210l6p51cnod_base_lvtll_090a_lpe_typical_125c.spi",
+  "/p/tech/n5/tech-prerelease/.dr/tcbn05_bwph210l6p51cnod_base_svt_lib/v0.9.0_pre.1/lpe_spice/tcbn05_bwph210l6p51cnod_base_svt_090a/tcbn05_bwph210l6p51cnod_base_svt_090a_lpe_typical_125c.spi",
+  "/p/tech/n5/tech-prerelease/.dr/tcbn05_bwph210l6p51cnod_base_svtll_lib/v0.9.0_pre.1/lpe_spice/tcbn05_bwph210l6p51cnod_base_svtll_090a/tcbn05_bwph210l6p51cnod_base_svtll_090a_lpe_typical_125c.spi" };
+
+  N5StdCellNames = ARRAY Tran OF TEXT {
+  "BUFFD1BWP210H6P51CNODELVT",
+  "BUFFD1BWP210H6P51CNODULVT",
+  "BUFFD1BWP210H6P51CNODULVTLL",
+  "BUFFD1BWP210H6P51CNODLVT",
+  "BUFFD1BWP210H6P51CNODLVTLL",
+  "BUFFD1BWP210H6P51CNODSVT",
+  "BUFFD1BWP210H6P51CNODSVTLL"
+  };
+
+  N5PlugText = "vcc vssx";
+
+  N3StdCellPaths = ARRAY Tran OF TEXT { NIL, .. };
+  N3StdCellNames = ARRAY Tran OF TEXT { NIL, .. };
+  N3PlugText = "vcc vssx";
+
+  N3EStdCellPaths = ARRAY Tran OF TEXT {
+  "/p/tech1/n3e/tech-release/v0.9.0p3/tcbn03e_bwph169l3p48cpd_base_elvt_lib/lpe_spice/tcbn03e_bwph169l3p48cpd_base_elvt_090b/tcbn03e_bwph169l3p48cpd_base_elvt_090b_lpe_typical_125c.spi",
+  "/p/tech1/n3e/tech-release/v0.9.0p3/tcbn03e_bwph169l3p48cpd_base_ulvt_lib/lpe_spice/tcbn03e_bwph169l3p48cpd_base_ulvt_090b/tcbn03e_bwph169l3p48cpd_base_ulvt_090b_lpe_typical_125c.spi",
+  "/p/tech1/n3e/tech-release/v0.9.0p3/tcbn03e_bwph169l3p48cpd_base_ulvtll_lib/lpe_spice/tcbn03e_bwph169l3p48cpd_base_ulvtll_090b/tcbn03e_bwph169l3p48cpd_base_ulvtll_090b_lpe_typical_125c.spi",
+  "/p/tech1/n3e/tech-release/v0.9.0p3/tcbn03e_bwph169l3p48cpd_base_lvt_lib/lpe_spice/tcbn03e_bwph169l3p48cpd_base_lvt_090b/tcbn03e_bwph169l3p48cpd_base_lvt_090b_lpe_typical_125c.spi",
+  "/p/tech1/n3e/tech-release/v0.9.0p3/tcbn03e_bwph169l3p48cpd_base_lvtll_lib/lpe_spice/tcbn03e_bwph169l3p48cpd_base_lvtll_090b/tcbn03e_bwph169l3p48cpd_base_lvtll_090b_lpe_typical_125c.spi",
+  "/p/tech1/n3e/tech-release/v0.9.0p3/tcbn03e_bwph169l3p48cpd_base_svt_lib/lpe_spice/tcbn03e_bwph169l3p48cpd_base_svt_090b/tcbn03e_bwph169l3p48cpd_base_svt_090b_lpe_typical_125c.spi",
+  NIL
+  };
+
+  N3EStdCellNames = ARRAY Tran OF TEXT {
+  "BUFFD1BWP169H3P48CPDELVT",
+  "BUFFD1BWP169H3P48CPDULVT",
+  "BUFFD1BWP169H3P48CPDULVTLL",
+  "BUFFD1BWP169H3P48CPDLVT",
+  "BUFFD1BWP169H3P48CPDLVTLL",
+  "BUFFD1BWP169H3P48CPDSVT",
+  NIL
+  };
+  
+  N3EPlugText = "vcc vssx";
+
+  (************************************************************)
+
+  TechStdCellPaths = ARRAY Tech OF ARRAY Tran OF TEXT {
+  N5StdCellPaths,
+  P1276p4StdCellPaths,
+  N3StdCellPaths,
+  N3EStdCellPaths
+  };
+  
+  TechParaCellName = ARRAY Tech OF ARRAY Tran OF TEXT {
+  N5StdCellNames,
+  P1276p4StdCellNames,
+  N3StdCellNames,
+  N3EStdCellNames
+  };
+
+  TechPlugText = ARRAY Tech OF TEXT {
+  N5PlugText,
+  P1276p4PlugText,
+  N3PlugText,
+  N3EPlugText
+  };
+  
+  StdPlugText = "vcc vssx";
+    
+  (************************************************************)
+
   ApproxThresh = ARRAY Tran OF LONGREAL { 0.100d0,
                                           0.250d0,
                                           0.300d0,
@@ -300,7 +409,26 @@ PROCEDURE MapCommon(READONLY c : Config;  map : TextTextTbl.T)=
     EVAL map.put("@HSPICE_MODEL@", c.hspiceModel);
     EVAL map.put("@TEMP@", LR(c.temp));
     EVAL map.put("@VOLT@", LR(c.volt));
-    EVAL map.put("@TOPO@", TopoNames[c.topo]);
+
+    (* parasitic or not *)
+    IF c.para THEN
+      WITH cellname = TechParaCellName[c.tech][c.tran] DO
+        <*ASSERT cellname # NIL*>
+        EVAL map.put("@CELLNAME@", cellname)
+      END;
+      EVAL map.put("@PLUGTEXT@", TechPlugText[c.tech]);
+      EVAL map.put("@INCLUDELIB@",
+                   F(".include \"%s\"\n",
+                     TechStdCellPaths[c.tech][c.tran]));
+      EVAL map.put("@XORVCC@", ""); (* no vcc input for buffer *)
+    ELSE
+      (* not parasitic *)
+      EVAL map.put("@CELLNAME@", "xor_cell_" & TopoNames[c.topo]);
+      EVAL map.put("@PLUGTEXT@", StdPlugText);
+      EVAL map.put("@INCLUDELIB@", "");
+      EVAL map.put("@XORVCC@", "vcc"); (*  vcc input for XOR *)
+    END;
+    
     EVAL map.put("@NANOSECONDS@", LR(c.nanoseconds));
     EVAL map.put("@TIMESTEP@", Int(ROUND(c.timestep / 1.0d-12)) & "ps");
     EVAL map.put("@OPTIONS@", SimOptions[c.simu]);
@@ -418,7 +546,7 @@ PROCEDURE DoCommonSetup(VAR c : Config) =
          cornDelayFactor = CornDelay[c.corn],
          delayFactor     = (1.0d0 + threshDelayFactor) * tempDelayFactor * cornDelayFactor,
          nanoseconds     = 10.0d0 +
-                           10.0d0 * (delayFactor + 1.5d0),
+                           ParaNanoFactor[c.para] * 10.0d0 * (delayFactor + 1.5d0),
          timestep        = MAX(DefaultTimeStep,
                                nanoseconds * 1.0d-9 / MaxTimeSteps)
      DO
@@ -432,6 +560,8 @@ PROCEDURE DoCommonSetup(VAR c : Config) =
       c.timestep := timestep
     END;
   END DoCommonSetup;
+
+CONST ParaNanoFactor = ARRAY BOOLEAN OF LONGREAL { 1.0d0, 2.0d0 };
       
 PROCEDURE DoSetup(READONLY c : Config) =
   VAR
@@ -784,6 +914,8 @@ TYPE
     pdmiLib         : Pathname.T;
     simRoot := DefSimRoot;
     xaPath : Pathname.T := "/p/hdk/cad/xa/S-2021.09-SP2//bin/";
+
+    para : BOOLEAN; (* parasitic simulation yes/no *)
   END;
 
 VAR
@@ -799,6 +931,17 @@ BEGIN
       c.tech := VAL(Lookup(pp.getNext(), TechNames), Tech);
       c.hspiceModel := TechHspiceModels[c.tech];
       c.hspiceModelRoot := TechHspiceModelRoots[c.tech];
+    END;
+
+    IF pp.keywordPresent("-para") THEN
+      WITH arg = pp.getNext() DO
+        TRY
+          c.para := Scan.Bool(arg)
+        EXCEPT
+          Lex.Error =>
+          Debug.Error(F("Lex.Error : -para arg %s not a boolean", arg))
+        END
+      END
     END;
 
     IF pp.keywordPresent("-tran") THEN
