@@ -25,7 +25,8 @@ volts="0.11 0.13 0.15 0.17 0.19 0.21 0.23 0.25 0.27 0.29 0.31 0.33 0.35 0.40 0.4
 #techs="n5 1276p4 n3 n3e"
 techs="n5 1276p4 n3e"
 
-modes="dyn leak"
+#modes="dyn leak"
+modes="dyn"
 
 #paras="true false"
 paras="true"
