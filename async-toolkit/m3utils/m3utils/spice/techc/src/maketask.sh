@@ -9,15 +9,16 @@ DATE=`date -Is`
 RUNDIR=${SRCDIR}/nb.run-${DATE}
 
 nb_queue=zsc3_express
-nb_queue=zsc3_normal
 nb_qslot=/XCC/LBM/SD
+
+nb_queue=zsc3_normal
 nb_qslot=/XCC/LBM/RTL
 
 step=7
 
 corners="ss tt ff"
 
-temps="-40 -20 0 25 50 75 100 125 150"
+temps="-40 -20 0 25 50 75 100 125"
 
 volts="0.11 0.13 0.15 0.17 0.19 0.21 0.23 0.25 0.27 0.29 0.31 0.33 0.35 0.40 0.45 0.50 0.55 0.60 0.65 0.70 0.75 0.80 0.85 0.90 0.95 1.0"
 
