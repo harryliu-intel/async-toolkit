@@ -7,7 +7,12 @@ TYPE
 
 CONST Brand = "Entry";
 
-PROCEDURE Compare(a, b : T) : [0..1];
+PROCEDURE Compare(a, b : T) : [ -1 .. 1 ];
   (* sort by Volt *)
 
+CONST
+  CsvColNames = ARRAY CsvCols OF TEXT 
+  { "Tech", "Corn", "Tran", "Topo", "Mode",
+    "Simu", "Volt", "Temp", "Cycl", "Curr" };
+  
 END Entry.

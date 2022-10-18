@@ -4,6 +4,11 @@ import ("cit_util")
 import ("tracelib")
 import ("csv")
 
+table("TextRefSeq", "Text", "RefSeq")
+
+module ("Entry")
+array_sort ("Entry", "Entry")
+
 implementation ("Main")
 
 program ("techdigest")
