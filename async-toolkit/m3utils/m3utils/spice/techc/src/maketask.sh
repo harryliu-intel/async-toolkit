@@ -90,7 +90,15 @@ for tech in ${techs}; do
         echo "#!/bin/sh -x" > ${RUNDIR}/${tasknum}.sh
         echo "${PROG} \
               -tech ${tech} -corn ${corn} -tran ${tran} -topo intc \
-              -mode ${mode} -all -simu xa -T ${TEMPLATE} \
+              -p setup -p simulate \
+              -mode ${mode} -simu xa -T ${TEMPLATE} \
+              -volt ${volt} -temp ${temp} \
+              -para ${para} \
+              -d ${RUNDIR}/${tasknum}.run -C" >> ${RUNDIR}/${tasknum}.sh
+        echo "${PROG} \
+              -tech ${tech} -corn ${corn} -tran ${tran} -topo intc \
+              -p convert -p clean -p measure \
+              -mode ${mode} -simu xa -T ${TEMPLATE} \
               -volt ${volt} -temp ${temp} \
               -para ${para} \
               -d ${RUNDIR}/${tasknum}.run -C" >> ${RUNDIR}/${tasknum}.sh
