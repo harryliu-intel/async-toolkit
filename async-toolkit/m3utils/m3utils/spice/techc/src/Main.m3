@@ -71,10 +71,17 @@ CONST
   Verbose = FALSE ;
   
 TYPE
-  Tech = { N5, P1276p4, N3, N3E };
+  Tech = { N5, P1276p4, N3, N3E, P1278p3 };
   (* supported technologies *)
   
-  Tran = { Elvt, Ulvt, Ulvtll, Lvt, Lvtll, Svt, Svtll };
+  Tran = { Elvt,
+           Ulvt,
+           Ulvtll,
+           Lvt,
+           Lvtll,
+           Svt,
+           Svtll (* use for Hvt in P1278p3 *)
+  };
   (* all known transistor thresholds (superset of all techs) *)
   
   Mode = { Dyn, Leak };
@@ -103,7 +110,7 @@ TYPE
   
 CONST
   (* the following are string names, to be used from command line, etc. *)
-  TechNames = ARRAY Tech OF TEXT { "n5"  ,  "1276p4", "n3", "n3e" };
+  TechNames = ARRAY Tech OF TEXT { "n5", "1276p4", "n3", "n3e", "1278p3" };
   TranNames = ARRAY Tran OF TEXT { "elvt", "ulvt", "ulvtll", "lvt", "lvtll", "svt", "svtll" };
   ModeNames = ARRAY Mode OF TEXT { "dyn" ,  "leak" };
   PhazNames = ARRAY Phaz OF TEXT { "setup", "simulate", "convert", "clean", "measure" };
@@ -122,16 +129,6 @@ TYPE
   TranSufxs     = ARRAY Tran OF TEXT;
 
 CONST
-  P1276p4TranSufxs =
-    TranSufxs { NIL,      (* elvt *)
-                "hpulvt", (* ulvt *)
-                NIL,      (* ulvtll *)
-                "hplvt",  (* lvt *)
-                NIL,      (* lvtll *)
-                "hpsvt",  (* svt *)
-                NIL       (* svtll *)
-  };
-
   N5TranSufxs =
     TranSufxs { "ch_elvt_mac",
                 "ch_ulvt_mac",
@@ -140,6 +137,16 @@ CONST
                 "ch_lvtll_mac",
                 "ch_svt_mac",
                 "ch_svtll_mac"
+  };
+
+  P1276p4TranSufxs =
+    TranSufxs { NIL,      (* elvt *)
+                "hpulvt", (* ulvt *)
+                NIL,      (* ulvtll *)
+                "hplvt",  (* lvt *)
+                NIL,      (* lvtll *)
+                "hpsvt",  (* svt *)
+                NIL       (* svtll *)
   };
 
   N3TranSufxs = N5TranSufxs;
@@ -154,6 +161,16 @@ CONST
                 NIL
   };
 
+  P1278p3TranSufxs =
+    TranSufxs { NIL,       (* elvt *)
+                "hpbulvt", (* ulvt *)
+                NIL,       (* ulvtll *)
+                "hpblvt",  (* lvt *)
+                NIL,       (* lvtll *)
+                "hpbsvt",  (* svt *)
+                "hpbhvt"   (* hvt = svtll *)
+  };
+
   P1276p4TranSize = "L=0.014u W=0.06u";
   
   N5TranSize = "l=6n nfin=2 ppitch=0 fbound=9";
@@ -161,48 +178,52 @@ CONST
   N3TranSize = "l=3n nfin=2 ppitch=0";
 
   N3ETranSize = "l=3n nfin=2 ppitch=0 fbound=262";
+
+  P1278p3TranSize = "w=2 l=14e-9 m=1 nf=1";
                 
   TechTranSufxs = ARRAY Tech OF TranSufxs { N5TranSufxs,
                                             P1276p4TranSufxs,
                                             N3TranSufxs,
-                                            N3ETranSufxs };
+                                            N3ETranSufxs ,
+                                            P1278p3TranSufxs };
 
   TechTranSizes = ARRAY Tech OF TEXT { N5TranSize,
                                        P1276p4TranSize,
                                        N3TranSize,
-                                       N3ETranSize };
+                                       N3ETranSize,
+                                       P1278p3TranSize };
 
-  (*
-  N5HspiceModel = "cln5-1d2-sp-v0d9-2p1-usage.l";
-  *)
   N5HspiceModel = "cln5_1d2_sp_v1d1_2p2_usage.l";
   P1276p4HspiceModel = "p1276_4.hsp";
   N3HspiceModel = "cln3_1d2_sp_v1d0_2p2_usage.l";
-
   N3EHspiceModel = "cln3e_1d2_sp_v0d5_2p2_usage.l";
-  
-  (*
-  N5HspiceModelRoot = "/p/tech/n5/tech-prerelease/.dr/epic/v0.9.0/models/1P15M_1X_h_1Xb_v_1Xe_h_1Ya_v_1Yb_h_5Y_vhvhv_2Yy2Z";
-  *)
+  P1278p3HspiceModel = "p1278_3.hsp";
+
+  (************************************************************)  
+
   N5HspiceModelRoot = "/p/tech/n5/tech-release/v1.1.3/models/1P15M_1X_h_1Xb_v_1Xe_h_1Ya_v_1Yb_h_5Y_vhvhv_2Yy2R/hspice";
 
+  P1276p4HspiceModelRoot = "/p/hdk/cad/pdk/pdk764_r0.5_22ww20.5/models/core/hspice/m17_6x_2ya_2yb_2yc_2yd_1ye_1ga_mim3x_1gb__bumpp";
+  
   N3HspiceModelRoot = "/p/tech1/n3/tech-release/v1.0.10/models/1P18M_1X_h_1Xb_v_1Xc_h_1Xd_v_1Ya_h_1Yb_v_5Y_hvhvh_2Yy2Yx1R1U_thin_curdl/hspice";
 
   N3EHspiceModelRoot = "/p/tech1/n3e/tech-release/v0.5.0/models/1P17M_1Xa_h_1Xb_v_1Xc_h_1Xd_v_1Ya_h_1Yb_v_6Y_hvhvhv_2Yy2R_shdmim_ut-alrdl/hspice";
   
+  P1278p3HspiceModelRoot = "/p/hdk/cad/pdk/pdk783_r0.3.1_22ww38.7/models/core/hspice/m16_2x_1xa_1xb_6ya_2yb_2yc_2yd__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp";
   
-  
-  P1276p4HspiceModelRoot = "/p/hdk/cad/pdk/pdk764_r0.5_22ww20.5/models/core/hspice/m17_6x_2ya_2yb_2yc_2yd_1ye_1ga_mim3x_1gb__bumpp";
+  (************************************************************)  
   
   TechHspiceModels = ARRAY Tech OF TEXT { N5HspiceModel,
                                           P1276p4HspiceModel,
                                           N3HspiceModel,
-                                          N3EHspiceModel};
+                                          N3EHspiceModel,
+                                          P1278p3HspiceModel };
 
   TechHspiceModelRoots = ARRAY Tech OF TEXT { N5HspiceModelRoot,
                                               P1276p4HspiceModelRoot,
                                               N3HspiceModelRoot,
-                                              N3EHspiceModelRoot};
+                                              N3EHspiceModelRoot,
+                                              P1278p3HspiceModelRoot };
 
   N5CornNames = ARRAY Corn OF TEXT {
   "TTGlobalCorner_LocalMC_MOS_MOSCAP",
@@ -220,14 +241,23 @@ CONST
   "rsfs"
   };
 
+  P1278p3CornNames = ARRAY Corn OF TEXT {
+  "tttt",
+  "ss",
+  "ff",
+  "sf",
+  "fs"
+  };
+
   N3CornNames = N5CornNames;
 
   N3ECornNames = N5CornNames;
-  
+
   TechCornNames = ARRAY Tech OF ARRAY Corn OF TEXT { N5CornNames,
                                                      P1276p4CornNames,
                                                      N3CornNames,
-                                                     N3ECornNames };
+                                                     N3ECornNames,
+                                                     P1278p3CornNames };
 
 
 
@@ -257,7 +287,29 @@ CONST
     NIL
   };
 
+  P1278p3StdCellPaths = ARRAY Tran OF TEXT {
+  NIL,
+  "/p/hdk/cad/stdcells/lib783_i0s_160h_50pp/pdk030_r2v0p0_uv2_pre/base_ulvt/spf/lib783_i0s_160h_50pp_base_ulvt_tttt_100c_cmax/i0sbfn000aa1n02x5.spf",
+  NIL,
+  "/p/hdk/cad/stdcells/lib783_i0s_160h_50pp/pdk030_r2v0p0_uv2_pre/base_lvt/spf/lib783_i0s_160h_50pp_base_lvt_tttt_100c_cmax/i0sbfn000ab1n02x5.spf",
+  NIL,
+  "/p/hdk/cad/stdcells/lib783_i0s_160h_50pp/pdk030_r2v0p0_uv2_pre/base_svt/spf/lib783_i0s_160h_50pp_base_svt_tttt_100c_cmax/i0sbfn000ac1n02x5.spf",
+  "/p/hdk/cad/stdcells/lib783_i0s_160h_50pp/pdk030_r2v0p0_uv2_pre/base_hvt/spf/lib783_i0s_160h_50pp_base_hvt_tttt_100c_cmax/i0sbfn000ad1n02x5.spf"
+  };
+  
+  
+  P1278p3StdCellNames = ARRAY Tran OF TEXT {
+    NIL,
+    "i0sbfn000aa1n02x5",
+    NIL,
+    "i0sbfn000ab1n02x5",
+    NIL,
+    "i0sbfn000ac1n02x5",
+    "i0sbfn000ad1n02x5"
+  };
+
   P1276p4PlugText = "";
+  P1278p3PlugText = "";
 
   N5StdCellPaths = ARRAY Tran OF TEXT {
   "/p/tech/n5/tech-prerelease/.dr/tcbn05_bwph210l6p51cnod_base_elvt_lib/v0.9.0_pre.1/lpe_spice/tcbn05_bwph210l6p51cnod_base_elvt_090a/tcbn05_bwph210l6p51cnod_base_elvt_090a_lpe_typical_125c.spi",
@@ -312,21 +364,24 @@ CONST
   N5StdCellPaths,
   P1276p4StdCellPaths,
   N3StdCellPaths,
-  N3EStdCellPaths
+  N3EStdCellPaths,
+  P1278p3StdCellPaths
   };
   
   TechParaCellName = ARRAY Tech OF ARRAY Tran OF TEXT {
   N5StdCellNames,
   P1276p4StdCellNames,
   N3StdCellNames,
-  N3EStdCellNames
+  N3EStdCellNames,
+  P1278p3StdCellNames
   };
 
   TechPlugText = ARRAY Tech OF TEXT {
   N5PlugText,
   P1276p4PlugText,
   N3PlugText,
-  N3EPlugText
+  N3EPlugText,
+  P1278p3PlugText
   };
   
   StdPlugText = "vcc vssx";
@@ -395,9 +450,13 @@ PROCEDURE Lookup(str : TEXT; READONLY a : ARRAY OF TEXT) : CARDINAL =
   BEGIN
   END MapTechN3E;
 
+<*NOWARN*>PROCEDURE MapTech1278p3(READONLY c : Config; map : TextTextTbl.T) =
+  BEGIN
+  END MapTech1278p3;
+
 TYPE Mapper = PROCEDURE(READONLY c : Config; map : TextTextTbl.T);
      
-CONST MapTech = ARRAY Tech OF Mapper { MapTechN5, MapTech1276p4, MapTechN3, MapTechN3E };
+CONST MapTech = ARRAY Tech OF Mapper { MapTechN5, MapTech1276p4, MapTechN3, MapTechN3E, MapTech1278p3 };
 
 CONST CornDelay = ARRAY Corn OF LONGREAL { 1.0d0, 3.0d0, 0.8d0, 2.0d0, 2.0d0 };
       
