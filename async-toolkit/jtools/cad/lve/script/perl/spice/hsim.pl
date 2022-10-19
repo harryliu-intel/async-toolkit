@@ -516,13 +516,25 @@ EOF
 ### measure current and power
 print RUN_FILE "* Power measurements\n";
 foreach my $node (sort @{$special_net{'power'}}) {
+    my $v = get_voltage($node, 'power');
+
+    # measure active currents over power window
     my $win = "from=$power_window_start to=$power_window_stop";
     print RUN_FILE ".probe i(V$node)\n";
     print RUN_FILE ".measure tran AvgCurrent_${node} avg i(V$node) $win\n";
     print RUN_FILE ".measure tran MaxCurrent_${node} max i(V$node) $win\n";
-    my $v = get_voltage($node, 'power');
     print RUN_FILE ".measure tran AvgPower_${node} PARAM='(-AvgCurrent_${node}*($v))'\n";
     print RUN_FILE ".measure tran MaxPower_${node} PARAM='(-MaxCurrent_${node}*($v))'\n";
+    print RUN_FILE "\n";
+
+    # measure idle currents just before reset
+    my $from=$reset_time-$slope_time;
+    $win = "from=$from to=$reset_time";
+    print RUN_FILE ".probe i(V$node)\n";
+    print RUN_FILE ".measure tran IdleAvgCurrent_${node} avg i(V$node) $win\n";
+    print RUN_FILE ".measure tran IdleMaxCurrent_${node} max i(V$node) $win\n";
+    print RUN_FILE ".measure tran IdleAvgPower_${node} PARAM='(-IdleAvgCurrent_${node}*($v))'\n";
+    print RUN_FILE ".measure tran IdleMaxPower_${node} PARAM='(-IdleMaxCurrent_${node}*($v))'\n";
     print RUN_FILE "\n";
 }
 
