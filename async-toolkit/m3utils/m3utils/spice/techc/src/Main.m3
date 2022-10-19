@@ -430,7 +430,7 @@ PROCEDURE MapCommon(READONLY c : Config;  map : TextTextTbl.T)=
       EVAL map.put("@XORVCC@", "vcc"); (*  vcc input for XOR *)
     END;
     
-    EVAL map.put("@NANOSECONDS@", LR(c.nanoseconds));
+    EVAL map.put("@NANOSECONDS@", Int(CEILING(c.nanoseconds)));
     EVAL map.put("@TIMESTEP@", Int(ROUND(c.timestep / 1.0d-12)) & "ps");
     EVAL map.put("@OPTIONS@", SimOptions[c.simu]);
     EVAL map.put("@CORNER@", TechCornNames[c.tech][c.corn]);
@@ -626,6 +626,7 @@ PROCEDURE DoSimulate(READONLY c : Config) =
     (*Wr.Close(wrIn);*)
     CASE c.simu OF
       Simu.Xa =>
+      Debug.Out("DoSimulate: " & cmd);
       WITH wd = NEW(Watchdog.T).init(ProcDeadline),
            c  = ProcUtils.RunText(cmd,
                                   stdout := stdout,
@@ -662,6 +663,7 @@ PROCEDURE DoConvert(READONLY c : Config) =
     (*Wr.Close(wrIn);*)
     CASE c.simu OF
       Simu.Xa =>
+      Debug.Out("DoConvert: " & cmd);
       WITH wd = NEW(Watchdog.T).init(ProcDeadline),
            c = ProcUtils.RunText(cmd,
                                  stdout := stdout,
@@ -754,7 +756,7 @@ PROCEDURE DoMeasure(READONLY c : Config) =
     
     CONST
       StartTime = 12.0d-9;
-      StartTran = 2;
+      StartTran = 1;
     VAR
       xIdx := GetIdx(trace, "x[0]");
       iIdx := GetIdx(trace, "vissx");
