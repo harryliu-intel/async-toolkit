@@ -114,7 +114,8 @@ CONST
 CONST DefProcDeadline = 15.0d0 * 60.0d0;
       (* give it 15 minutes for each subprocess step (circuit sim and aspice
          data conversion) *)
-
+      ParasiticDeadlineMultiplier = 6.0d0;
+        
 VAR ProcDeadline := DefProcDeadline;
   
 TYPE
@@ -942,6 +943,10 @@ BEGIN
           Debug.Error(F("Lex.Error : -para arg %s not a boolean", arg))
         END
       END
+    END;
+
+    IF c.para THEN
+      ProcDeadline := ProcDeadline * ParasiticDeadlineMultiplier
     END;
 
     IF pp.keywordPresent("-tran") THEN
