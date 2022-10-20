@@ -94,6 +94,8 @@ for tech in ${techs}; do
 
     for tran in ${trantypes}; do
         echo "#!/bin/sh -x" > ${RUNDIR}/${tasknum}.sh
+        echo "hostname" >> ${RUNDIR}/${tasknum}.sh
+        echo "pwd" >> ${RUNDIR}/${tasknum}.sh
         echo "${PROG} \
               -tech ${tech} -corn ${corn} -tran ${tran} -topo intc \
               -p setup -p simulate \

@@ -9,7 +9,8 @@ limtask=`expr ${start} + ${n}`
 
 while [ "${tasknum}" -lt "${limtask}" ]; do
     shfile=${rundir}/${tasknum}.sh
-    if [ -x "${shfile}" ]; then
+    msfile=${rundir}/${tasknum}.run/measure.dat
+    if [ -x "${shfile}" ] && [ ! -f "${msfile}" ]; then
         ${shfile} &
     fi
     tasknum=`expr ${tasknum} + 1`
