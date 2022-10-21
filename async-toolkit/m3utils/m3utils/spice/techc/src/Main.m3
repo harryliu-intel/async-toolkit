@@ -122,7 +122,7 @@ CONST
   TopoNames = ARRAY Topo OF TEXT { "intc",  "tsmc" };
   CornNames = ARRAY Corn OF TEXT { "tt", "ss", "ff", "sf", "fs" };
 
-CONST DefProcDeadline = 1.0d0 * 60.0d0;
+CONST DefProcDeadline = 15.0d0 * 60.0d0;
       (* give it 15 minutes for each subprocess step (circuit sim and aspice
          data conversion) *)
       ParasiticDeadlineMultiplier = 2.0d0;
@@ -398,13 +398,19 @@ CONST
     
   (************************************************************)
 
-  ApproxThresh = ARRAY Tran OF LONGREAL { 0.100d0,
+  ApproxThresh = ARRAY Tran OF LONGREAL { 0.150d0,
                                           0.250d0,
                                           0.300d0,
                                           0.350d0,
                                           0.400d0,
                                           0.450d0,
                                           0.500d0 };
+
+  ApproxCornThreshShift = ARRAY Corn OF LONGREAL {  0.000d0,
+                                                    0.025d0,
+                                                   -0.005d0,
+                                                    0.005d0,
+                                                    0.005d0 };
 
   AbsZero = -273.15d0; (* absolute zero in degrees Celsius *)
   
@@ -611,7 +617,7 @@ PROCEDURE DoCommonSetup(VAR c : Config) =
     MaxTimeSteps    = 50000.0d0;
 
   BEGIN
-    WITH deltaV = c.volt - ApproxThresh[c.tran],
+    WITH deltaV = c.volt - (ApproxThresh[c.tran] + ApproxCornThreshShift[c.corn]),
          stepsV = deltaV / 0.035d0,  (* kT/q *)
          threshDelayFactor = Math.exp(-stepsV),
          
