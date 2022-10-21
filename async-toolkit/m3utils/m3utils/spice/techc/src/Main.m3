@@ -39,6 +39,10 @@ IMPORT FS;
 IMPORT Watchdog;
 IMPORT Scan;
 IMPORT Lex;
+IMPORT Time;
+IMPORT RegEx;
+IMPORT Usignal;
+IMPORT FloatMode;
 
 <*FATAL Thread.Alerted*>
 
@@ -122,7 +126,12 @@ CONST DefProcDeadline = 15.0d0 * 60.0d0;
       (* give it 15 minutes for each subprocess step (circuit sim and aspice
          data conversion) *)
       ParasiticDeadlineMultiplier = 6.0d0;
-        
+
+      FirstProgressDelay = 60.0d0;
+      (* when to check for progress *)
+      ProgressDelayMultiplier = 1.2d0;
+      (* how much to back off each progress measurement *)
+      
 VAR ProcDeadline := DefProcDeadline;
   
 TYPE
@@ -416,7 +425,12 @@ TYPE
   RunPhase = PROCEDURE(READONLY c : Config);
 
 CONST
-  Phases = ARRAY Phaz OF RunPhase { DoSetup, DoSimulate, DoConvert, DoClean, DoMeasure };
+  Phases = ARRAY Phaz OF RunPhase { DoSetup,
+                                    DoSimulate,
+                                    DoConvertPhaz,
+                                    DoClean,
+                                    DoMeasurePhaz
+  };
   
 PROCEDURE Lookup(str : TEXT; READONLY a : ARRAY OF TEXT) : CARDINAL =
   BEGIN
@@ -672,7 +686,141 @@ PROCEDURE MyCbDo(cb : MyCb) =
                 TextWr.ToText(cb.wr)));
     Process.Exit(1)
   END MyCbDo;
+
+TYPE
+  SimWatcher = Thread.Closure OBJECT
+    cm      : ProcUtils.Completion;
+    simRoot : Pathname.T;
+  OVERRIDES
+    apply := SwApply;
+  END;
+
+PROCEDURE Kill(id : CARDINAL) =
+  CONST
+    DoDebug = TRUE;
+  BEGIN
+    IF DoDebug THEN
+      Debug.Out(F("Abort killing sub: HUP (%s,%s)",
+                  Int(id), Int(Usignal.SIGHUP)))
+    END;
+    EVAL Usignal.kill(id, Usignal.SIGHUP); (* HangUP *)
+
+    Thread.Pause(1.0d0);
+
+    IF DoDebug THEN
+      Debug.Out(F("Abort killing sub: INT (%s,%s)",
+                  Int(id), Int(Usignal.SIGINT)))
+    END;
+    EVAL Usignal.kill(id, Usignal.SIGINT); (* INTerrupt *)
+
+    Thread.Pause(1.0d0);
+
+    IF DoDebug THEN
+      Debug.Out(F("Abort killing sub: TERM (%s,%s)",
+                  Int(id), Int(Usignal.SIGTERM)))
+    END;
+    EVAL Usignal.kill(id, Usignal.SIGTERM); (* TERMinate *)
+    
+    Thread.Pause(1.0d0);
+
+    IF DoDebug THEN
+      Debug.Out(F("Abort killing sub: KILL (%s,%s)",
+                  Int(id), Int(Usignal.SIGKILL)))
+    END;
+    EVAL Usignal.kill(id, Usignal.SIGKILL); (* KILL *)
+  END Kill;
   
+PROCEDURE SwApply(sw : SimWatcher) : REFANY =
+  CONST
+    FirstDelay   = FirstProgressDelay;
+    ProgressRoot = "progress";
+  VAR
+    d := FirstDelay;
+    now : Time.T;
+  BEGIN
+    LOOP
+      now := Time.Now();
+      WITH deadLine = now + d DO
+        REPEAT
+          Thread.Pause(1.0d0);
+          now := Time.Now()
+        UNTIL now >= deadLine
+      END;
+      
+      Debug.Out(F("SimWatcher waking up at %s, d=%s", LR(Time.Now()), LR(d)));
+
+      (* trial conversion *)
+      IF DoConvert(ProgressRoot, exitOnError := FALSE) AND
+         DoMeasure(ProgressRoot, ProgressRoot & ".dat") THEN
+        (* succeeded, we have the output! *)
+        
+        Debug.Out("Progress measurement succeeded, will try to kill simulator!");
+
+
+        WITH logFn = sw.simRoot & ".log" DO
+
+          TRY
+            KillFromLogFile(logFn)
+
+          EXCEPT
+            OSError.E(e) => Debug.Error(F("Couldn't open log file \"%s\" : OSError.E : %s",
+                                          logFn, AL.Format(e)))
+          |
+            Rd.Failure(e) =>
+            Debug.Error(F("Couldn't read template file \"%s\" : Rd.Failure : %s",
+                          logFn, AL.Format(e)))
+          END;
+        END;
+        RETURN NIL
+      END(*IF*);
+      
+      d := d * ProgressDelayMultiplier
+    END
+  END SwApply;
+
+PROCEDURE KillFromLogFile(logFn : Pathname.T)
+  RAISES { Rd.Failure, OSError.E } =
+  
+  <*FATAL RegEx.Error*>
+  <*FATAL FloatMode.Trap, Lex.Error*>
+  VAR
+    numPat := RegEx.Compile("^[1-9][0-9]*$");
+    rd := FileRd.Open(logFn);
+  BEGIN
+    TRY
+      LOOP
+        WITH line  = Rd.GetLine(rd),
+             match = CitTextUtils.HaveSub(line, " pid ") DO
+
+          Debug.Out(F("logfileline %s match %s", line, Fmt.Bool(match)));
+          
+          IF match THEN
+            VAR
+              sh := CitTextUtils.Shatter(line,
+                                         delims := " |\t",
+                                         endDelims := "",
+                                         skipNulls := TRUE);
+              p := sh;
+            BEGIN
+              WHILE p # NIL DO
+                IF RegEx.Execute(numPat, p.head) # -1 THEN
+                  WITH pid = Scan.Int(p.head) DO
+                    Debug.Out(F("Regex match %s, attempting to kill",
+                              Int(pid)));
+                    Kill(pid)
+                  END
+                END;
+                p := p.tail
+              END
+            END
+          END
+        END
+      END
+    EXCEPT
+      Rd.EndOfFile => (* skip *)
+    END
+  END KillFromLogFile;
+
 PROCEDURE DoSimulate(READONLY c : Config) =
   <*FATAL OSError.E*> (* this pertains to the TextWr *)
   VAR
@@ -687,14 +835,16 @@ PROCEDURE DoSimulate(READONLY c : Config) =
       Simu.Xa =>
       Debug.Out("DoSimulate: " & cmd);
       WITH wd = NEW(Watchdog.T).init(ProcDeadline),
-           c  = ProcUtils.RunText(cmd,
+           cm = ProcUtils.RunText(cmd,
                                   stdout := stdout,
                                   stderr := stderr,
                                   stdin  := NIL),
            cb = NEW(MyCb, cmd := cmd, wr := wr) DO
+        
         wd.setExpireAction(cb);
+        EVAL Thread.Fork(NEW(SimWatcher, cm := cm, simRoot := c.simRoot));
         TRY
-          c.wait()
+          cm.wait()
         EXCEPT
           ProcUtils.ErrorExit(err) =>
           Debug.Error(F("command \"%s\" with output\n====>\n%s\n<====\n\nraised ErrorExit : %s",
@@ -710,43 +860,88 @@ PROCEDURE DoSimulate(READONLY c : Config) =
     Debug.Out("DoSimulate output :\n" & TextWr.ToText(wr))
   END DoSimulate;
 
-PROCEDURE DoConvert(READONLY c : Config) =
+PROCEDURE DoConvertPhaz(READONLY c : Config) =
+  BEGIN
+    EVAL DoConvert(c.simRoot, exitOnError := TRUE)
+  END DoConvertPhaz;
+
+(* semaphore for Convert phase *)
+VAR
+  convertMu := NEW(MUTEX);
+  convertC  := NEW(Thread.Condition);
+  convertS  : [0..1] := 0;
+
+(* Dijkstra's P() and V() *)
+PROCEDURE ConvertP() =
+  BEGIN
+    LOCK convertMu DO
+      WHILE convertS = 1 DO
+        Thread.Wait(convertMu, convertC)
+      END;
+      INC(convertS)
+    END
+  END ConvertP;
+
+PROCEDURE ConvertV() =
+  BEGIN
+    LOCK convertMu DO
+      DEC(convertS);
+      Thread.Signal(convertC)
+    END
+  END ConvertV;
+  
+PROCEDURE DoConvert(traceRoot : Pathname.T; exitOnError : BOOLEAN) : BOOLEAN =
   <*FATAL OSError.E*> (* this pertains to the TextWr *)
   VAR
     wr := NEW(TextWr.T).init();
     stdout, stderr := ProcUtils.WriteHere(wr);
 
     cmd := F("/nfs/site/disks/zsc3_fon_fe_0001/mnystroe/m3utils/spice/ct/AMD64_LINUX/ct -fsdb /nfs/site/disks/zsc3_fon_fe_0001/mnystroe/m3utils/spice/fsdb/src/nanosimrd -threads 4 -wthreads 1 -R %s %s.fsdb %s",
-             LR(MAX(c.timestep, 50.0d-12)), c.simRoot, c.simRoot);
+             LR(MAX(c.timestep, 50.0d-12)), c.simRoot, traceRoot);
+    res : BOOLEAN := FALSE;
   BEGIN 
     (*Wr.Close(wrIn);*)
-    CASE c.simu OF
-      Simu.Xa =>
-      Debug.Out("DoConvert: " & cmd);
-      WITH wd = NEW(Watchdog.T).init(ProcDeadline),
-           c = ProcUtils.RunText(cmd,
-                                 stdout := stdout,
-                                 stderr := stderr,
-                                 stdin  := NIL),
-           cb = NEW(MyCb, cmd := cmd, wr := wr) DO
-        wd.setExpireAction(cb);
-        TRY
-          c.wait()
-        EXCEPT
-          ProcUtils.ErrorExit(err) =>
-          Debug.Error(F("command \"%s\" with output\n====>\n%s\n<====\n\nraised ErrorExit : %s",
-                        cmd,
-                        TextWr.ToText(wr),
-                        ProcUtils.FormatError(err)))
-        END;
-        wd.kill()
-      END
-    |
-      Simu.Hspice => <*ASSERT FALSE*>
+    ConvertP();
+    
+    TRY
+      CASE c.simu OF
+        Simu.Xa =>
+        Debug.Out("DoConvert: " & cmd);
+        WITH wd = NEW(Watchdog.T).init(ProcDeadline),
+             c  = ProcUtils.RunText(cmd,
+                                    stdout := stdout,
+                                    stderr := stderr,
+                                    stdin  := NIL),
+             cb = NEW(MyCb, cmd := cmd, wr := wr) DO
+               wd.setExpireAction(cb);
+               TRY
+                 c.wait();
+                 res := TRUE
+               EXCEPT
+                 ProcUtils.ErrorExit(err) =>
+                 WITH msg = F("command \"%s\" with output\n====>\n%s\n<====\n\nraised ErrorExit : %s",
+                              cmd,
+                              TextWr.ToText(wr),
+                              ProcUtils.FormatError(err)) DO
+                   IF exitOnError THEN
+                     Debug.Error(msg)
+                   ELSE
+                     Debug.Warning(msg);
+                     res := FALSE
+                   END
+                 END
+               END;
+               wd.kill()
+             END
+      |
+        Simu.Hspice => <*ASSERT FALSE*>
+      END;
+      Debug.Out("DoConvert output :\n" & TextWr.ToText(wr));
+    FINALLY
+      ConvertV()
     END;
-    Debug.Out("DoConvert output :\n" & TextWr.ToText(wr));
+    RETURN res
   END DoConvert;
-
 
 PROCEDURE DoClean(READONLY c : Config) =
   BEGIN
@@ -774,8 +969,14 @@ PROCEDURE DoClean(READONLY c : Config) =
       FS.DeleteDirectory("ct.work")
     EXCEPT ELSE END
   END DoClean;
+
+PROCEDURE DoMeasurePhaz(READONLY c : Config) =
+  BEGIN
+    EVAL DoMeasure(c.simRoot, "measure.dat")
+  END DoMeasurePhaz;
   
-PROCEDURE DoMeasure(READONLY c : Config) =
+PROCEDURE DoMeasure(traceRoot, outName : Pathname.T) : BOOLEAN =
+  (* returns TRUE iff we measure a cycle time *)
   VAR
     trace : Trace.T;
     nSteps : CARDINAL;
@@ -783,7 +984,7 @@ PROCEDURE DoMeasure(READONLY c : Config) =
     
   BEGIN
     TRY
-      trace := NEW(Trace.T).init(DefSimRoot);
+      trace := NEW(Trace.T).init(traceRoot);
     EXCEPT
       OSError.E(x) =>
       Debug.Error("OSError.E reading trace/names file : " & AL.Format(x))
@@ -845,7 +1046,7 @@ PROCEDURE DoMeasure(READONLY c : Config) =
 
       TRY
         VAR
-          wr := FileWr.Open("measure.dat");
+          wr := FileWr.Open(outName);
         BEGIN
           Wr.PutText(wr,
                      FN("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
@@ -862,7 +1063,11 @@ PROCEDURE DoMeasure(READONLY c : Config) =
                            LR(meancurrent)
                            }));
           Wr.Close(wr)
-        END
+        END;
+
+        RETURN cycle < 1.0d10; (* cycle time is less than 10^10 seconds,
+                                  i.e., it exists *)
+        
       EXCEPT
         OSError.E(x) =>
         Debug.Error(F("Couldn't open measurement output file : OSError.E : %s",
@@ -871,7 +1076,8 @@ PROCEDURE DoMeasure(READONLY c : Config) =
         Wr.Failure(x) =>
         Debug.Error(F("Couldn't write measurement output file : Wr.Failure : %s",
                       AL.Format(x)))
-      END
+      END;
+      <*ASSERT FALSE*>
     END
   END DoMeasure;
 
