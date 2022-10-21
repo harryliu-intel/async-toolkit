@@ -37,7 +37,7 @@ while [ "${tasknum}" -lt "${limtask}" ]; do
     shfile=${rundir}/${tasknum}.sh
     msfile=${rundir}/${tasknum}.run/measure.dat
     if [ -x "${shfile}" ] && [ ! -f "${msfile}" ]; then
-        ${shfile} &
+        ${shfile} > ${shfile}.launcher.log 2>&1 &
     fi
     tasknum=`expr ${tasknum} + 1`
     sleep 1

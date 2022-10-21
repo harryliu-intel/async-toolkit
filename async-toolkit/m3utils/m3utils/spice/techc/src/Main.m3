@@ -122,14 +122,15 @@ CONST
   TopoNames = ARRAY Topo OF TEXT { "intc",  "tsmc" };
   CornNames = ARRAY Corn OF TEXT { "tt", "ss", "ff", "sf", "fs" };
 
-CONST DefProcDeadline = 15.0d0 * 60.0d0;
+CONST DefProcDeadline = 1.0d0 * 60.0d0;
       (* give it 15 minutes for each subprocess step (circuit sim and aspice
          data conversion) *)
-      ParasiticDeadlineMultiplier = 6.0d0;
+      ParasiticDeadlineMultiplier = 2.0d0;
 
-      FirstProgressDelay = 60.0d0;
-      (* when to check for progress *)
-      ProgressDelayMultiplier = 1.2d0;
+      FirstProgressDelay = 10.0d0 * 60.0d0;
+      (* when to check for progress / ten minutes *)
+      
+      ProgressDelayMultiplier = 1.414d0;
       (* how much to back off each progress measurement *)
       
 VAR ProcDeadline := DefProcDeadline;
@@ -679,6 +680,13 @@ TYPE
     do := MyCbDo;
   END;
 
+  MyKillCb = MyCb OBJECT
+    simRoot : Pathname.T;
+    myKill  : REF BOOLEAN; (* set to TRUE if killing *)
+  OVERRIDES
+    do := MyCbDoKillSim;
+  END;
+
 PROCEDURE MyCbDo(cb : MyCb) =
   BEGIN
     Debug.Out(F("\n!!! WOOF WOOF !!!\nCommand \"%s\" with output\n====>\n%s\n<====\n\nWatchdog expired!  Exiting!",
@@ -687,10 +695,41 @@ PROCEDURE MyCbDo(cb : MyCb) =
     Process.Exit(1)
   END MyCbDo;
 
+PROCEDURE MyCbDoKillSim(cb : MyKillCb) =
+  BEGIN
+    Debug.Out(F("\n!!! WOOF WOOF !!!\nCommand \"%s\" --- Watchdog expired!  Attempting to kill simulator!",
+                cb.cmd));
+
+    WITH logFn = cb.simRoot & ".log" DO
+      TRY
+        cb.myKill^ := TRUE;
+        KillFromLogFile(logFn);
+
+        Debug.Out(F("Command output was\n====>\n%s\n<====\n\nWatchdog expired!",
+                TextWr.ToText(cb.wr)));
+
+        
+      EXCEPT
+        OSError.E(e) => Debug.Warning(F("Couldn't open log file \"%s\" : OSError.E : %s",
+                                      logFn, AL.Format(e)))
+      |
+        Rd.Failure(e) =>
+        Debug.Warning(F("Couldn't read log file \"%s\" : Rd.Failure : %s",
+                      logFn, AL.Format(e)))
+      END
+    END;
+    
+    Debug.Out(F("\n!!! WOOF WOOF !!!\nCommand \"%s\" with output\n====>\n%s\n<====\n\nWatchdog expired!  Exiting!",
+                cb.cmd,
+                TextWr.ToText(cb.wr)))
+  END MyCbDoKillSim;
+  
+
 TYPE
   SimWatcher = Thread.Closure OBJECT
     cm      : ProcUtils.Completion;
     simRoot : Pathname.T;
+    myKill  : REF BOOLEAN; (* set to TRUE if killing *)
   OVERRIDES
     apply := SwApply;
   END;
@@ -699,21 +738,14 @@ PROCEDURE Kill(id : CARDINAL) =
   CONST
     DoDebug = TRUE;
   BEGIN
-    IF DoDebug THEN
-      Debug.Out(F("Abort killing sub: HUP (%s,%s)",
-                  Int(id), Int(Usignal.SIGHUP)))
-    END;
-    EVAL Usignal.kill(id, Usignal.SIGHUP); (* HangUP *)
-
-    Thread.Pause(1.0d0);
-
+    (* INT needs to be the first signal sent *)
     IF DoDebug THEN
       Debug.Out(F("Abort killing sub: INT (%s,%s)",
                   Int(id), Int(Usignal.SIGINT)))
     END;
     EVAL Usignal.kill(id, Usignal.SIGINT); (* INTerrupt *)
 
-    Thread.Pause(1.0d0);
+    Thread.Pause(5.0d0); (* give it time to write out the log file *)
 
     IF DoDebug THEN
       Debug.Out(F("Abort killing sub: TERM (%s,%s)",
@@ -751,7 +783,7 @@ PROCEDURE SwApply(sw : SimWatcher) : REFANY =
 
       (* trial conversion *)
       IF DoConvert(ProgressRoot, exitOnError := FALSE) AND
-         DoMeasure(ProgressRoot, ProgressRoot & ".dat") THEN
+         DoMeasure(ProgressRoot, ProgressRoot & ".dat", sw.simRoot) THEN
         (* succeeded, we have the output! *)
         
         Debug.Out("Progress measurement succeeded, will try to kill simulator!");
@@ -760,6 +792,7 @@ PROCEDURE SwApply(sw : SimWatcher) : REFANY =
         WITH logFn = sw.simRoot & ".log" DO
 
           TRY
+            sw.myKill^ := TRUE;
             KillFromLogFile(logFn)
 
           EXCEPT
@@ -767,7 +800,7 @@ PROCEDURE SwApply(sw : SimWatcher) : REFANY =
                                           logFn, AL.Format(e)))
           |
             Rd.Failure(e) =>
-            Debug.Error(F("Couldn't read template file \"%s\" : Rd.Failure : %s",
+            Debug.Error(F("Couldn't read log file \"%s\" : Rd.Failure : %s",
                           logFn, AL.Format(e)))
           END;
         END;
@@ -823,12 +856,17 @@ PROCEDURE KillFromLogFile(logFn : Pathname.T)
 
 PROCEDURE DoSimulate(READONLY c : Config) =
   <*FATAL OSError.E*> (* this pertains to the TextWr *)
+  CONST
+    Affirmation = "y\ny\ny\ny\ny\n";
   VAR
     wr := NEW(TextWr.T).init();
     stdout, stderr := ProcUtils.WriteHere(wr);
 
     cmd := F("%s/xa %s.sp -o %s", c.xaPath, c.simRoot, c.simRoot);
+    myKill := NEW(REF BOOLEAN);
   BEGIN
+
+    myKill^ := FALSE;
     
     (*Wr.Close(wrIn);*)
     CASE c.simu OF
@@ -838,19 +876,30 @@ PROCEDURE DoSimulate(READONLY c : Config) =
            cm = ProcUtils.RunText(cmd,
                                   stdout := stdout,
                                   stderr := stderr,
-                                  stdin  := NIL),
-           cb = NEW(MyCb, cmd := cmd, wr := wr) DO
+                                  stdin  := ProcUtils.ReadThis(Affirmation)),
+
+           (* we need to feed in the affirmation, because when we hit xa with
+              kill -INT, it stops and asks the y/n question whether it should
+              exit... *)
+           
+           cb = NEW(MyKillCb, myKill := myKill, cmd := cmd, wr := wr, simRoot := c.simRoot) DO
         
         wd.setExpireAction(cb);
-        EVAL Thread.Fork(NEW(SimWatcher, cm := cm, simRoot := c.simRoot));
+        EVAL Thread.Fork(NEW(SimWatcher, myKill := myKill, cm := cm, simRoot := c.simRoot));
         TRY
           cm.wait()
         EXCEPT
           ProcUtils.ErrorExit(err) =>
-          Debug.Error(F("command \"%s\" with output\n====>\n%s\n<====\n\nraised ErrorExit : %s",
+          WITH msg = F("command \"%s\" with output\n====>\n%s\n<====\n\nraised ErrorExit : %s",
                         cmd,
                         TextWr.ToText(wr),
-                        ProcUtils.FormatError(err)))
+                        ProcUtils.FormatError(err)) DO
+            IF myKill^ THEN
+              Debug.Warning(msg)
+            ELSE
+              Debug.Error(msg)
+            END
+          END
         END;
         wd.kill()
       END
@@ -972,10 +1021,10 @@ PROCEDURE DoClean(READONLY c : Config) =
 
 PROCEDURE DoMeasurePhaz(READONLY c : Config) =
   BEGIN
-    EVAL DoMeasure(c.simRoot, "measure.dat")
+    EVAL DoMeasure(c.simRoot, "measure.dat", c.workDir)
   END DoMeasurePhaz;
   
-PROCEDURE DoMeasure(traceRoot, outName : Pathname.T) : BOOLEAN =
+PROCEDURE DoMeasure(traceRoot, outName, workDir : Pathname.T) : BOOLEAN =
   (* returns TRUE iff we measure a cycle time *)
   VAR
     trace : Trace.T;
@@ -1020,7 +1069,8 @@ PROCEDURE DoMeasure(traceRoot, outName : Pathname.T) : BOOLEAN =
     VAR
       xIdx := GetIdx(trace, "x[0]");
       iIdx := GetIdx(trace, "vissx");
-      cycle, meancurrent : LONGREAL;
+      yIdx := GetIdx(trace, "vissy");
+      cycle, meancurrent, leakcurrent : LONGREAL;
     BEGIN
       TRY
         trace.getNodeData(xIdx, nodeData^);
@@ -1042,14 +1092,25 @@ PROCEDURE DoMeasure(traceRoot, outName : Pathname.T) : BOOLEAN =
       meancurrent := -1.0d0 / 1.0d6 *
           MeanValue(timeData^, nodeData^, StartTime);
       
-      Debug.Out("Measured mean current " & LR(meancurrent));
+      Debug.Out("Measured mean dyna current " & LR(meancurrent));
+
+      TRY
+        trace.getNodeData(yIdx, nodeData^);
+      EXCEPT
+        Rd.Failure, Rd.EndOfFile => Debug.Error("Trouble reading node data")
+      END;
+
+      leakcurrent := -1.0d0 / 1.0d6 *
+          MeanValue(timeData^, nodeData^, StartTime);
+      
+      Debug.Out("Measured mean leak current " & LR(leakcurrent));
 
       TRY
         VAR
           wr := FileWr.Open(outName);
         BEGIN
           Wr.PutText(wr,
-                     FN("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
+                     FN("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
                         ARRAY OF TEXT {
                            TechNames[c.tech],
                            CornNames[c.corn],
@@ -1060,7 +1121,9 @@ PROCEDURE DoMeasure(traceRoot, outName : Pathname.T) : BOOLEAN =
                            LR(c.volt),
                            LR(c.temp),
                            LR(cycle),
-                           LR(meancurrent)
+                           LR(meancurrent),
+                           LR(leakcurrent),
+                           workDir
                            }));
           Wr.Close(wr)
         END;

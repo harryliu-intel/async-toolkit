@@ -77,15 +77,15 @@ PROCEDURE RdToRd(source: Rd.T;
    Completion, to permit asynchronous delivery of errors, rather than
    crashing the program *)
 
-PROCEDURE Run(source: Rd.T;
-              stdout,stderr: Writer := NIL;
-              stdin: Reader := NIL;
-              wd0: Pathname.T := NIL): Completion;
+PROCEDURE Run(source        : Rd.T;
+              stdout,stderr : Writer     := NIL;
+              stdin         : Reader     := NIL;
+              wd0           : Pathname.T := NIL): Completion;
 
-PROCEDURE RunText(source: TEXT;
-              stdout,stderr: Writer := NIL;
-              stdin: Reader := NIL;
-              wd0: Pathname.T := NIL): Completion;
+PROCEDURE RunText(source        : TEXT;
+                  stdout,stderr : Writer     := NIL;
+                  stdin         : Reader     := NIL;
+                  wd0           : Pathname.T := NIL): Completion;
 
 (* the following are helpers for Reader/Writer threads *)
 TYPE
