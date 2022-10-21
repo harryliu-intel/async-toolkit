@@ -14,7 +14,7 @@ nb_qslot=/XCC/LBM/SD
 nb_queue=zsc3_normal
 nb_qslot=/XCC/LBM/RTL
 
-step=10
+step=6
 
 corners="ss tt ff"
 
