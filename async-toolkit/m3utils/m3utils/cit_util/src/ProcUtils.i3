@@ -43,7 +43,31 @@ PROCEDURE RdToRd(source: Rd.T;
                  wd0: Pathname.T := NIL;
                  VAR rd: Rd.T): Completion RAISES { OSError.E } ;
 
-TYPE Completion = OBJECT METHODS wait() RAISES { ErrorExit }; END;
+  TYPE
+    State = {
+              (* NORMAL EXECUTION SEQUENCE *)
+              New,                (* created object                 *)
+              Parsing,            (* parsing args                   *)
+              Starting,           (* starting job                   *)
+              Created,            (* job has been created           *)
+              Running,            (* subprocess is running          *)
+              CleaningUp,         (* cleaning up post-exit          *)
+              Done,               (* job is complete                *)
+
+              (* ABNORMAL EXITS *)
+              ErrorExit,          (* subprocesses exited with error *)
+              OsErrorExit,        (* OSError.E on create            *)
+              RdFailureExit       (* Rd.Failure, probably on output *)
+    };
+    
+
+  Completion = OBJECT METHODS
+    wait() RAISES { ErrorExit };
+
+    abort();
+
+    getState() : State;
+  END;
      (* starting a process returns a Completion.  When it is desired to
         join the fork, call completion.wait(), which will raise ErrorExit
         if the process in question has exited or does exit with an error *)
