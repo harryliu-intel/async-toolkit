@@ -40,6 +40,9 @@ paras="true"
 #corners="tt"
 #volts="0.29"
 
+#gates="xor buf aoi"
+gates="xor buf aoi"
+
 if [ "$1" == "-quick" ]; then
     # quick simulation, just to test
     # note all technologies are included
@@ -53,6 +56,15 @@ fi
 
 if [ "$1" == "-1278p3" ]; then
     techs="1278p3"
+fi
+
+if [ "$1" == "-gates" ]; then
+    volts="0.40"
+    temps="50"
+    modes="dyn"
+    paras="true false"
+    corners="tt"
+    step=4
 fi
 
 ######################################################################
@@ -77,6 +89,7 @@ EOF
 
 tasknum=0
 
+for gate in ${gates}; do
 for para in ${paras}; do
 for corn in ${corners}; do
 for mode in ${modes}; do
@@ -99,25 +112,27 @@ for tech in ${techs}; do
         echo "#!/bin/sh -x" > ${RUNDIR}/${tasknum}.sh
         echo "hostname" >> ${RUNDIR}/${tasknum}.sh
         echo "pwd" >> ${RUNDIR}/${tasknum}.sh
-        echo "${PROG} \
-              -tech ${tech} -corn ${corn} -tran ${tran} -topo intc \
-              -p setup -p simulate \
+
+        torun="${PROG} \
+              -tech ${tech} -corn ${corn} -tran ${tran} \
               -mode ${mode} -simu xa -T ${TEMPLATE} \
               -volt ${volt} -temp ${temp} \
               -para ${para} \
-              -d ${RUNDIR}/${tasknum}.run -C" >> ${RUNDIR}/${tasknum}.sh
-        echo "${PROG} \
-              -tech ${tech} -corn ${corn} -tran ${tran} -topo intc \
-              -p convert -p clean -p measure \
-              -mode ${mode} -simu xa -T ${TEMPLATE} \
-              -volt ${volt} -temp ${temp} \
-              -para ${para} \
-              -d ${RUNDIR}/${tasknum}.run -C" >> ${RUNDIR}/${tasknum}.sh
+              -gate ${gate} \
+              -d ${RUNDIR}/${tasknum}.run -C"
+        
+        echo "${torun} -p setup -p simulate" \
+             >> ${RUNDIR}/${tasknum}.sh
+
+        echo "${torun} -p convert -p clean -p measure" \
+             >> ${RUNDIR}/${tasknum}.sh
+        
         chmod +x ${RUNDIR}/${tasknum}.sh
         
         tasknum=`expr $tasknum + 1`
     done
     
+done
 done
 done
 done

@@ -71,12 +71,14 @@ CONST TE = Text.Equal;
      ApproxThresh
 *)
 
-CONST
-  Verbose = FALSE ;
+VAR
+  Verbose := Debug.DebugThis("techc");
   
 TYPE
   Tech = { N5, P1276p4, N3, N3E, P1278p3 };
   (* supported technologies *)
+
+  Corp = { Tsmc, Intc };
   
   Tran = { Elvt,
            Ulvt,
@@ -106,29 +108,52 @@ TYPE
   Simu = { Xa, Hspice };
   (* circuit simulator: xa fully supported, hspice coming later *)
   
-  Topo = { Intc, Tsmc }; (* circuit topo *)
-  (* use the Intel or TSMC circuit topology for the XOR gate *)
-  
   Corn = { TT, SS, FF, SF, FS };
   (* short names for the five supported simulation corners *)
+
+  Gate = { Xor, Buf, Aoi, Oai };
   
 CONST
   (* the following are string names, to be used from command line, etc. *)
-  TechNames = ARRAY Tech OF TEXT { "n5", "1276p4", "n3", "n3e", "1278p3" };
-  TranNames = ARRAY Tran OF TEXT { "elvt", "ulvt", "ulvtll", "lvt", "lvtll", "svt", "svtll" };
+  TranNames = ARRAY Tran OF TEXT
+              { "elvt", "ulvt", "ulvtll", "lvt", "lvtll", "svt", "svtll" };
+
   ModeNames = ARRAY Mode OF TEXT { "dyn" ,  "leak" };
-  PhazNames = ARRAY Phaz OF TEXT { "setup", "simulate", "convert", "clean", "measure" };
+
+  PhazNames = ARRAY Phaz OF TEXT
+              { "setup", "simulate", "convert", "clean", "measure" };
+
   SimuNames = ARRAY Simu OF TEXT { "xa",    "hspice" };
-  TopoNames = ARRAY Topo OF TEXT { "intc",  "tsmc" };
+
   CornNames = ARRAY Corn OF TEXT { "tt", "ss", "ff", "sf", "fs" };
 
-CONST DefProcDeadline = 15.0d0 * 60.0d0;
-      (* give it 15 minutes for each subprocess step (circuit sim and aspice
+  GateNames = ARRAY Gate OF TEXT { "xor", "buf", "aoi", "oai" };
+  (* should not ask for an oai, should only ask for aoi *)
+
+  TechNames = ARRAY Tech OF TEXT { "n5", "1276p4", "n3", "n3e", "1278p3" };
+
+  TechCorp  = ARRAY Tech OF Corp { Corp.Tsmc,
+                                   Corp.Intc,
+                                   Corp.Tsmc,
+                                   Corp.Tsmc,
+                                   Corp.Intc };
+
+  Gate1 = ARRAY Gate OF Gate
+            { Gate.Xor, Gate.Buf, Gate.Oai, Gate.Aoi };
+  (* second gate type for each first gate --
+     note that oai is really not supported as a first gate *)
+  
+  <*UNUSED*>
+CONST
+  CorpNames = ARRAY Corp OF TEXT { "TSMC", "INTC" };
+  
+CONST DefProcDeadline = 30.0d0 * 60.0d0;
+      (* give it 30 minutes for each subprocess step (circuit sim and aspice
          data conversion) *)
       ParasiticDeadlineMultiplier = 2.0d0;
 
-      FirstProgressDelay = 10.0d0 * 60.0d0;
-      (* when to check for progress / ten minutes *)
+      FirstProgressDelay = 2.0d0 * 60.0d0;
+      (* when to check for progress / two minutes *)
       
       ProgressDelayMultiplier = 1.414d0;
       (* how much to back off each progress measurement *)
@@ -203,10 +228,10 @@ CONST
                                        N3ETranSize,
                                        P1278p3TranSize };
 
-  N5HspiceModel = "cln5_1d2_sp_v1d1_2p2_usage.l";
+  N5HspiceModel      = "cln5_1d2_sp_v1d1_2p2_usage.l";
   P1276p4HspiceModel = "p1276_4.hsp";
-  N3HspiceModel = "cln3_1d2_sp_v1d0_2p2_usage.l";
-  N3EHspiceModel = "cln3e_1d2_sp_v0d5_2p2_usage.l";
+  N3HspiceModel      = "cln3_1d2_sp_v1d0_2p2_usage.l";
+  N3EHspiceModel     = "cln3e_1d2_sp_v0d5_2p2_usage.l";
   P1278p3HspiceModel = "p1278_3.hsp";
 
   (************************************************************)  
@@ -274,10 +299,14 @@ CONST
   (************************************************************)
 
   (* the below is for simulation with parasitics *)
+
+  UnknownCellNames = ARRAY Tran OF TEXT { NIL, .. };
+
+  UnknownCellPaths = ARRAY Tran OF TEXT { NIL, .. };
   
   P1276p4StdCellRoot = "/p/hdk/cad/stdcells/g1m/22ww37.5_p1276d4_g1m_b.0.p3.core/spf/p1276d4_tttt_v0550_t100_pdn_max/";
 
-  P1276p4StdCellPaths = ARRAY Tran OF TEXT {
+  P1276p4BufCellPaths = ARRAY Tran OF TEXT {
     NIL,
     P1276p4StdCellRoot & "an/g1mbfn000aa1n02x5.spf",
     NIL,
@@ -287,7 +316,7 @@ CONST
     NIL
   };
 
-  P1276p4StdCellNames = ARRAY Tran OF TEXT {
+  P1276p4BufCellNames = ARRAY Tran OF TEXT {
     NIL,
     "g1mbfn000aa1n02x5",
     NIL,
@@ -297,18 +326,103 @@ CONST
     NIL
   };
 
-  P1278p3StdCellPaths = ARRAY Tran OF TEXT {
-  NIL,
-  "/p/hdk/cad/stdcells/lib783_i0s_160h_50pp/pdk030_r2v0p0_uv2_pre/base_ulvt/spf/lib783_i0s_160h_50pp_base_ulvt_tttt_100c_cmax/i0sbfn000aa1n02x5.spf",
-  NIL,
-  "/p/hdk/cad/stdcells/lib783_i0s_160h_50pp/pdk030_r2v0p0_uv2_pre/base_lvt/spf/lib783_i0s_160h_50pp_base_lvt_tttt_100c_cmax/i0sbfn000ab1n02x5.spf",
-  NIL,
-  "/p/hdk/cad/stdcells/lib783_i0s_160h_50pp/pdk030_r2v0p0_uv2_pre/base_svt/spf/lib783_i0s_160h_50pp_base_svt_tttt_100c_cmax/i0sbfn000ac1n02x5.spf",
-  "/p/hdk/cad/stdcells/lib783_i0s_160h_50pp/pdk030_r2v0p0_uv2_pre/base_hvt/spf/lib783_i0s_160h_50pp_base_hvt_tttt_100c_cmax/i0sbfn000ad1n02x5.spf"
+  P1276p4XorCellPaths = ARRAY Tran OF TEXT {
+    NIL,
+    P1276p4StdCellRoot & "an/g1mxor002aa1n02x4.spf",
+    NIL,
+    P1276p4StdCellRoot & "bn/g1mxor002ab1n02x4.spf",
+    NIL,
+    P1276p4StdCellRoot & "cn/g1mxor002ac1n02x4.spf",
+    NIL
+  };
+
+  P1276p4XorCellNames = ARRAY Tran OF TEXT {
+    (* why the heck is this 02x4? *)
+    NIL,
+    "g1mxor002aa1n02x4",
+    NIL,
+    "g1mxor002ab1n02x4",
+    NIL,
+    "g1mxor002ac1n02x4",
+    NIL
+  };
+
+  P1276p4AoiCellNames = ARRAY Tran OF TEXT {
+    NIL,
+    "g1maoi012aa1n02x5",
+    NIL,
+    "g1maoi012ab1n02x5",
+    NIL,
+    "g1maoi012ac1n02x5",
+    NIL
+  };
+
+  P1276p4OaiCellNames = ARRAY Tran OF TEXT {
+    NIL,
+    "g1moai012aa1n02x5",
+    NIL,
+    "g1moai012ab1n02x5",
+    NIL,
+    "g1moai012ac1n02x5",
+    NIL
+  };
+
+  
+  P1276p4AoiCellPaths = ARRAY Tran OF TEXT {
+    NIL,
+    P1276p4StdCellRoot & "an/g1maoi012aa1n02x5.spf",
+    NIL,
+    P1276p4StdCellRoot & "bn/g1maoi012ab1n02x5.spf",
+    NIL,
+    P1276p4StdCellRoot & "cn/g1maoi012ac1n02x5.spf",
+    NIL
+  };
+
+  P1276p4OaiCellPaths = ARRAY Tran OF TEXT {
+    NIL,
+    P1276p4StdCellRoot & "an/g1moai012aa1n02x5.spf",
+    NIL,
+    P1276p4StdCellRoot & "bn/g1moai012ab1n02x5.spf",
+    NIL,
+    P1276p4StdCellRoot & "cn/g1moai012ac1n02x5.spf",
+    NIL
+  };
+
+  
+  P1276p4CellNames = ARRAY Gate OF ARRAY Tran OF TEXT {
+    P1276p4XorCellNames,
+    P1276p4BufCellNames,
+    P1276p4AoiCellNames,
+    P1276p4OaiCellNames
+  };
+
+  P1276p4CellPaths = ARRAY Gate OF ARRAY Tran OF TEXT {
+    P1276p4XorCellPaths,
+    P1276p4BufCellPaths,
+    P1276p4AoiCellPaths,
+    P1276p4OaiCellPaths
+  };
+
+  (************************************************************)
+
+  P1278p3StdCellRoot = "/p/hdk/cad/stdcells/lib783_i0s_160h_50pp/pdk030_r2v0p0_uv2_pre/";
+
+  P1278p3StdCellUlvtRoot = P1278p3StdCellRoot & "/base_ulvt/spf/lib783_i0s_160h_50pp_base_ulvt_tttt_100c_cmax/";
+  P1278p3StdCellLvtRoot = P1278p3StdCellRoot & "/base_lvt/spf/lib783_i0s_160h_50pp_base_lvt_tttt_100c_cmax/";
+  P1278p3StdCellSvtRoot = P1278p3StdCellRoot & "/base_svt/spf/lib783_i0s_160h_50pp_base_svt_tttt_100c_cmax/";
+  P1278p3StdCellHvtRoot = P1278p3StdCellRoot & "/base_hvt/spf/lib783_i0s_160h_50pp_base_hvt_tttt_100c_cmax/";
+  
+  P1278p3BufPaths = ARRAY Tran OF TEXT {
+    NIL,
+    P1278p3StdCellUlvtRoot & "i0sbfn000aa1n02x5.spf",
+    NIL,
+    P1278p3StdCellLvtRoot & "i0sbfn000ab1n02x5.spf",
+    NIL,
+    P1278p3StdCellSvtRoot & "i0sbfn000ac1n02x5.spf",
+    P1278p3StdCellHvtRoot & "i0sbfn000ad1n02x5.spf"
   };
   
-  
-  P1278p3StdCellNames = ARRAY Tran OF TEXT {
+  P1278p3BufCellNames = ARRAY Tran OF TEXT {
     NIL,
     "i0sbfn000aa1n02x5",
     NIL,
@@ -318,10 +432,84 @@ CONST
     "i0sbfn000ad1n02x5"
   };
 
+  P1278p3XorPaths = ARRAY Tran OF TEXT {
+    NIL,
+    P1278p3StdCellUlvtRoot & "i0sxor002aa1n02x5.spf",
+    NIL,
+    P1278p3StdCellLvtRoot & "i0sxor002ab1n02x5.spf",
+    NIL,
+    P1278p3StdCellSvtRoot & "i0sxor002ac1n02x5.spf",
+    P1278p3StdCellHvtRoot & "i0sxor002ad1n02x5.spf"
+  };
+  
+  P1278p3XorCellNames = ARRAY Tran OF TEXT {
+    NIL,
+    "i0sxor002aa1n02x5",
+    NIL,
+    "i0sxor002ab1n02x5",
+    NIL,
+    "i0sxor002ac1n02x5",
+    "i0sxor002ad1n02x5"
+  };
+
+  P1278p3AoiCellNames = ARRAY Tran OF TEXT {
+    NIL,
+    "i0saoi012aa1n02x5",
+    NIL,
+    "i0saoi012ab1n02x5",
+    NIL,
+    "i0saoi012ac1n02x5",
+    "i0saoi012ad1n02x5"
+  };
+
+  P1278p3OaiCellNames = ARRAY Tran OF TEXT {
+    NIL,
+    "i0soai012aa1n02x5",
+    NIL,
+    "i0soai012ab1n02x5",
+    NIL,
+    "i0soai012ac1n02x5",
+    "i0soai012ad1n02x5"
+  };
+
+  P1278p3AoiCellPaths = ARRAY Tran OF TEXT {
+    NIL,
+    P1278p3StdCellUlvtRoot & "i0saoi012aa1n02x5.spf",
+    NIL,
+    P1278p3StdCellLvtRoot & "i0saoi012ab1n02x5.spf",
+    NIL,
+    P1278p3StdCellSvtRoot & "i0saoi012ac1n02x5.spf",
+    P1278p3StdCellHvtRoot & "i0saoi012ad1n02x5.spf"
+  };
+
+  P1278p3OaiCellPaths = ARRAY Tran OF TEXT {
+    NIL,
+    P1278p3StdCellUlvtRoot & "i0soai012aa1n02x5.spf",
+    NIL,
+    P1278p3StdCellLvtRoot & "i0soai012ab1n02x5.spf",
+    NIL,
+    P1278p3StdCellSvtRoot & "i0soai012ac1n02x5.spf",
+    P1278p3StdCellHvtRoot & "i0soai012ad1n02x5.spf"
+  };
+
+  P1278p3CellNames = ARRAY Gate OF ARRAY Tran OF TEXT {
+    P1278p3XorCellNames,
+    P1278p3BufCellNames,
+    P1278p3AoiCellNames,
+    P1278p3OaiCellNames
+  };
+
+  P1278p3CellPaths = ARRAY Gate OF ARRAY Tran OF TEXT {
+    P1278p3XorPaths,
+    P1278p3BufPaths,
+    P1278p3AoiCellPaths,
+    P1278p3OaiCellPaths
+  };
+
   P1276p4PlugText = "";
   P1278p3PlugText = "";
 
-  N5StdCellPaths = ARRAY Tran OF TEXT {
+  N5BufPaths = ARRAY Tran OF TEXT {
   "/p/tech/n5/tech-prerelease/.dr/tcbn05_bwph210l6p51cnod_base_elvt_lib/v0.9.0_pre.1/lpe_spice/tcbn05_bwph210l6p51cnod_base_elvt_090a/tcbn05_bwph210l6p51cnod_base_elvt_090a_lpe_typical_125c.spi",
   "/p/tech/n5/tech-prerelease/.dr/tcbn05_bwph210l6p51cnod_base_ulvt_lib/v0.9.0_pre.1/lpe_spice/tcbn05_bwph210l6p51cnod_base_ulvt_090a/tcbn05_bwph210l6p51cnod_base_ulvt_090a_lpe_typical_125c.spi",
   "/p/tech/n5/tech-prerelease/.dr/tcbn05_bwph210l6p51cnod_base_ulvtll_lib/v0.9.0_pre.1/lpe_spice/tcbn05_bwph210l6p51cnod_base_ulvtll_090a/tcbn05_bwph210l6p51cnod_base_ulvtll_090a_lpe_typical_125c.spi",
@@ -330,7 +518,7 @@ CONST
   "/p/tech/n5/tech-prerelease/.dr/tcbn05_bwph210l6p51cnod_base_svt_lib/v0.9.0_pre.1/lpe_spice/tcbn05_bwph210l6p51cnod_base_svt_090a/tcbn05_bwph210l6p51cnod_base_svt_090a_lpe_typical_125c.spi",
   "/p/tech/n5/tech-prerelease/.dr/tcbn05_bwph210l6p51cnod_base_svtll_lib/v0.9.0_pre.1/lpe_spice/tcbn05_bwph210l6p51cnod_base_svtll_090a/tcbn05_bwph210l6p51cnod_base_svtll_090a_lpe_typical_125c.spi" };
 
-  N5StdCellNames = ARRAY Tran OF TEXT {
+  N5BufCellNames = ARRAY Tran OF TEXT {
   "BUFFD1BWP210H6P51CNODELVT",
   "BUFFD1BWP210H6P51CNODULVT",
   "BUFFD1BWP210H6P51CNODULVTLL",
@@ -340,13 +528,70 @@ CONST
   "BUFFD1BWP210H6P51CNODSVTLL"
   };
 
+  N5XorCellNames = ARRAY Tran OF TEXT {
+  "XOR2D1BWP210H6P51CNODELVT",
+  "XOR2D1BWP210H6P51CNODULVT",
+  "XOR2D1BWP210H6P51CNODULVTLL",
+  "XOR2D1BWP210H6P51CNODLVT",
+  "XOR2D1BWP210H6P51CNODLVTLL",
+  "XOR2D1BWP210H6P51CNODSVT",
+  "XOR2D1BWP210H6P51CNODSVTLL"
+  };
+  
+  N5OaiCellNames = ARRAY Tran OF TEXT {
+  "OAI21D1BWP210H6P51CNODELVT",
+  "OAI21D1BWP210H6P51CNODULVT",
+  "OAI21D1BWP210H6P51CNODULVTLL",
+  "OAI21D1BWP210H6P51CNODLVT",
+  "OAI21D1BWP210H6P51CNODLVTLL",
+  "OAI21D1BWP210H6P51CNODSVT",
+  "OAI21D1BWP210H6P51CNODSVTLL"
+  };
+
+  N5AoiCellNames = ARRAY Tran OF TEXT {
+  "AOI21D1BWP210H6P51CNODELVT",
+  "AOI21D1BWP210H6P51CNODULVT",
+  "AOI21D1BWP210H6P51CNODULVTLL",
+  "AOI21D1BWP210H6P51CNODLVT",
+  "AOI21D1BWP210H6P51CNODLVTLL",
+  "AOI21D1BWP210H6P51CNODSVT",
+  "AOI21D1BWP210H6P51CNODSVTLL"
+  };
+
+  N5CellNames = ARRAY Gate OF ARRAY Tran OF TEXT {
+    N5XorCellNames,
+    N5BufCellNames,
+    N5AoiCellNames,
+    N5OaiCellNames
+  };
+
+  N5CellPaths = ARRAY Gate OF ARRAY Tran OF TEXT {
+    N5BufPaths,
+    N5BufPaths,
+    N5BufPaths,
+    N5BufPaths
+  };
+
   N5PlugText = "vcc vssx";
 
-  N3StdCellPaths = ARRAY Tran OF TEXT { NIL, .. };
-  N3StdCellNames = ARRAY Tran OF TEXT { NIL, .. };
+  N3CellNames = ARRAY Gate OF ARRAY Tran OF TEXT {
+    UnknownCellNames,
+    UnknownCellNames,
+    UnknownCellNames,
+    UnknownCellNames
+  };
+
+  N3CellPaths = ARRAY Gate OF ARRAY Tran OF TEXT {
+    UnknownCellPaths,
+    UnknownCellPaths,
+    UnknownCellPaths,
+    UnknownCellPaths
+  };
+
+
   N3PlugText = "vcc vssx";
 
-  N3EStdCellPaths = ARRAY Tran OF TEXT {
+  N3EBufPaths = ARRAY Tran OF TEXT {
   "/p/tech1/n3e/tech-release/v0.9.0p3/tcbn03e_bwph169l3p48cpd_base_elvt_lib/lpe_spice/tcbn03e_bwph169l3p48cpd_base_elvt_090b/tcbn03e_bwph169l3p48cpd_base_elvt_090b_lpe_typical_125c.spi",
   "/p/tech1/n3e/tech-release/v0.9.0p3/tcbn03e_bwph169l3p48cpd_base_ulvt_lib/lpe_spice/tcbn03e_bwph169l3p48cpd_base_ulvt_090b/tcbn03e_bwph169l3p48cpd_base_ulvt_090b_lpe_typical_125c.spi",
   "/p/tech1/n3e/tech-release/v0.9.0p3/tcbn03e_bwph169l3p48cpd_base_ulvtll_lib/lpe_spice/tcbn03e_bwph169l3p48cpd_base_ulvtll_090b/tcbn03e_bwph169l3p48cpd_base_ulvtll_090b_lpe_typical_125c.spi",
@@ -356,7 +601,7 @@ CONST
   NIL
   };
 
-  N3EStdCellNames = ARRAY Tran OF TEXT {
+  N3EBufCellNames = ARRAY Tran OF TEXT {
   "BUFFD1BWP169H3P48CPDELVT",
   "BUFFD1BWP169H3P48CPDULVT",
   "BUFFD1BWP169H3P48CPDULVTLL",
@@ -365,25 +610,69 @@ CONST
   "BUFFD1BWP169H3P48CPDSVT",
   NIL
   };
+
+  N3EXorCellNames = ARRAY Tran OF TEXT {
+  "XOR2D1BWP169H3P48CPDELVT",
+  "XOR2D1BWP169H3P48CPDULVT",
+  "XOR2D1BWP169H3P48CPDULVTLL",
+  "XOR2D1BWP169H3P48CPDLVT",
+  "XOR2D1BWP169H3P48CPDLVTLL",
+  "XOR2D1BWP169H3P48CPDSVT",
+  NIL
+  };
   
+  N3EOaiCellNames = ARRAY Tran OF TEXT {
+  "OAI21D1BWP169H3P48CPDELVT",
+  "OAI21D1BWP169H3P48CPDULVT",
+  "OAI21D1BWP169H3P48CPDULVTLL",
+  "OAI21D1BWP169H3P48CPDLVT",
+  "OAI21D1BWP169H3P48CPDLVTLL",
+  "OAI21D1BWP169H3P48CPDSVT",
+  NIL
+  };
+
+  N3EAoiCellNames = ARRAY Tran OF TEXT {
+  "AOI21D1BWP169H3P48CPDELVT",
+  "AOI21D1BWP169H3P48CPDULVT",
+  "AOI21D1BWP169H3P48CPDULVTLL",
+  "AOI21D1BWP169H3P48CPDLVT",
+  "AOI21D1BWP169H3P48CPDLVTLL",
+  "AOI21D1BWP169H3P48CPDSVT",
+  NIL
+  };
+  
+  N3ECellNames = ARRAY Gate OF ARRAY Tran OF TEXT {
+    N3EXorCellNames,
+    N3EBufCellNames,
+    N3EAoiCellNames,
+    N3EOaiCellNames
+  };
+
+  N3ECellPaths = ARRAY Gate OF ARRAY Tran OF TEXT {
+    N3EBufPaths,
+    N3EBufPaths,
+    N3EBufPaths,
+    N3EBufPaths 
+  };
+
   N3EPlugText = "vcc vssx";
 
   (************************************************************)
 
-  TechStdCellPaths = ARRAY Tech OF ARRAY Tran OF TEXT {
-  N5StdCellPaths,
-  P1276p4StdCellPaths,
-  N3StdCellPaths,
-  N3EStdCellPaths,
-  P1278p3StdCellPaths
+  TechCellPaths = ARRAY Tech OF ARRAY Gate OF ARRAY Tran OF TEXT {
+  N5CellPaths,
+  P1276p4CellPaths,
+  N3CellPaths,
+  N3ECellPaths,
+  P1278p3CellPaths
   };
   
-  TechParaCellName = ARRAY Tech OF ARRAY Tran OF TEXT {
-  N5StdCellNames,
-  P1276p4StdCellNames,
-  N3StdCellNames,
-  N3EStdCellNames,
-  P1278p3StdCellNames
+  TechParaCellName = ARRAY Tech OF ARRAY Gate OF ARRAY Tran OF TEXT {
+  N5CellNames,
+  P1276p4CellNames,
+  N3CellNames,
+  N3ECellNames,
+  P1278p3CellNames
   };
 
   TechPlugText = ARRAY Tech OF TEXT {
@@ -491,23 +780,92 @@ PROCEDURE MapCommon(READONLY c : Config;  map : TextTextTbl.T)=
     EVAL map.put("@TEMP@", LR(c.temp));
     EVAL map.put("@VOLT@", LR(c.volt));
 
+
+    (* gate terminals *)
+    CASE c.gate OF
+      Gate.Buf =>
+      EVAL map.put("@T0A@", "in");
+      EVAL map.put("@T0B@", "");
+      EVAL map.put("@T0C@", "");
+
+      EVAL map.put("@T1A@", "xi");
+      EVAL map.put("@T1B@", "");
+      EVAL map.put("@T1C@", "");
+    |
+      Gate.Xor =>
+      EVAL map.put("@T0A@", "in");
+      EVAL map.put("@T0B@", "vcc");
+      EVAL map.put("@T0C@", "");
+
+      EVAL map.put("@T1A@", "vcc");
+      EVAL map.put("@T1B@", "xi");
+      EVAL map.put("@T1C@", "");
+    |
+      Gate.Aoi =>
+      (* Intel terminal order is a b c  where b & c are the symmetric inputs
+         TSMC terminal order is A1 A2 B *)
+      CASE TechCorp[c.tech] OF
+        Corp.Intc =>
+        EVAL map.put("@T0A@", "vssx");
+        EVAL map.put("@T0B@", "in");
+        EVAL map.put("@T0C@", "in");
+        
+        EVAL map.put("@T1A@", "vcc");
+        EVAL map.put("@T1B@", "xi");
+        EVAL map.put("@T1C@", "xi");
+      |
+        Corp.Tsmc =>
+        EVAL map.put("@T0A@", "in");
+        EVAL map.put("@T0B@", "in");
+        EVAL map.put("@T0C@", "vssx");
+        
+        EVAL map.put("@T1A@", "xi");
+        EVAL map.put("@T1B@", "xi");
+        EVAL map.put("@T1C@", "vcc");
+      END        
+    |
+      Gate.Oai =>
+      <*ASSERT FALSE*>
+    END;
+    
     (* parasitic or not *)
     IF c.para THEN
-      WITH cellname = TechParaCellName[c.tech][c.tran] DO
-        <*ASSERT cellname # NIL*>
-        EVAL map.put("@CELLNAME@", cellname)
+      WITH gate1     = Gate1[c.gate],
+           cellname0 = TechParaCellName[c.tech][c.gate][c.tran],
+           cellname1 = TechParaCellName[c.tech][gate1 ][c.tran] DO
+        <*ASSERT cellname0 # NIL*>
+        <*ASSERT cellname1 # NIL*>
+        EVAL map.put("@CELLNAME0@", cellname0);
+        EVAL map.put("@CELLNAME1@", cellname1)
       END;
       EVAL map.put("@PLUGTEXT@", TechPlugText[c.tech]);
-      EVAL map.put("@INCLUDELIB@",
-                   F(".include \"%s\"\n",
-                     TechStdCellPaths[c.tech][c.tran]));
-      EVAL map.put("@XORVCC@", ""); (* no vcc input for buffer *)
+      WITH p0 =        TechCellPaths[c.tech][c.gate][c.tran],
+           g1 = Gate1[c.gate],
+           p1 =        TechCellPaths[c.tech][g1][c.tran] DO
+        IF TE(p0, p1) THEN
+          EVAL map.put("@INCLUDELIB@", F(".include \"%s\"\n",
+                                         p0));
+        ELSE
+          EVAL map.put("@INCLUDELIB@", F(".include \"%s\"\n.include \"%s\"\n",
+                                         p0, p1));
+        END
+      END
+        
     ELSE
       (* not parasitic *)
-      EVAL map.put("@CELLNAME@", "xor_cell_" & TopoNames[c.topo]);
+      WITH gate1     = Gate1[c.gate],
+           cellname0 = GateNames[c.gate] & "_gate",
+           cellname1 = GateNames[gate1]  & "_gate" DO
+        <*ASSERT cellname0 # NIL*>
+        <*ASSERT cellname1 # NIL*>
+        EVAL map.put("@CELLNAME0@", cellname0);
+        EVAL map.put("@CELLNAME1@", cellname1)
+      END;
+      EVAL map.put("@CELLNAME0@", GateNames[c.gate] & "_gate");
+      EVAL map.put("@CELLNAME1@", GateNames[c.gate] & "_gate");
       EVAL map.put("@PLUGTEXT@", StdPlugText);
       EVAL map.put("@INCLUDELIB@", "");
-      EVAL map.put("@XORVCC@", "vcc"); (*  vcc input for XOR *)
+      EVAL map.put("@OPTVCC@", "vcc"); (*  vcc input for XOR *)
     END;
     
     EVAL map.put("@NANOSECONDS@", Int(CEILING(c.nanoseconds)));
@@ -638,7 +996,7 @@ PROCEDURE DoCommonSetup(VAR c : Config) =
                   LR(nanoseconds)));
       
       c.nanoseconds := nanoseconds;
-      c.timestep := timestep
+      c.timestep    := timestep
     END;
   END DoCommonSetup;
 
@@ -1121,7 +1479,7 @@ PROCEDURE DoMeasure(traceRoot, outName, workDir : Pathname.T) : BOOLEAN =
                            TechNames[c.tech],
                            CornNames[c.corn],
                            TranNames[c.tran],
-                           TopoNames[c.topo],
+                           GateNames[c.gate],
                            ModeNames[c.mode],
                            SimuNames[c.simu],
                            LR(c.volt),
@@ -1230,8 +1588,8 @@ TYPE
     tran : Tran;
     mode : Mode;
     simu : Simu;
-    topo : Topo;
     corn : Corn;
+    gate : Gate;
     volt := 0.0d0;
     temp := 0.0d0;
     nanoseconds : LONGREAL; (* length of sim in ns *)
@@ -1305,12 +1663,12 @@ BEGIN
       c.simu := VAL(Lookup(pp.getNext(), SimuNames), Simu)
     END;
 
-    IF pp.keywordPresent("-topo") THEN
-      c.topo := VAL(Lookup(pp.getNext(), TopoNames), Topo)
-    END;
-
     IF pp.keywordPresent("-corn") THEN
       c.corn := VAL(Lookup(pp.getNext(), CornNames), Corn)
+    END;
+
+    IF pp.keywordPresent("-gate") THEN
+      c.gate := VAL(Lookup(pp.getNext(), GateNames), Gate)
     END;
 
     IF pp.keywordPresent("-d") THEN
