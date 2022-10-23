@@ -25,25 +25,23 @@ CONST
   "FSGlobalCorner_LocalMC_MOS_MOSCAP"
   },
     cellPaths := ARRAY Gate OF ARRAY Tran OF TEXT {
-    N5BufPaths,
-    N5BufPaths,
-    N5BufPaths,
-    N5BufPaths
+    BufPaths,
+    BufPaths,
+    BufPaths,
+    BufPaths
   },
 
     cellNames := ARRAY Gate OF ARRAY Tran OF TEXT {
-    N5XorCellNames,
-    N5BufCellNames,
-    N5AoiCellNames,
-    N5OaiCellNames
+    XorCellNames,
+    BufCellNames,
+    AoiCellNames,
+    OaiCellNames
   },
     plugText := "vcc vssx"
   };
 
-CONST Brand = "N5TechProcess";
 
-
-N5BufPaths = ARRAY Tran OF TEXT {
+  BufPaths = ARRAY Tran OF TEXT {
   "/p/tech/n5/tech-prerelease/.dr/tcbn05_bwph210l6p51cnod_base_elvt_lib/v0.9.0_pre.1/lpe_spice/tcbn05_bwph210l6p51cnod_base_elvt_090a/tcbn05_bwph210l6p51cnod_base_elvt_090a_lpe_typical_125c.spi",
   "/p/tech/n5/tech-prerelease/.dr/tcbn05_bwph210l6p51cnod_base_ulvt_lib/v0.9.0_pre.1/lpe_spice/tcbn05_bwph210l6p51cnod_base_ulvt_090a/tcbn05_bwph210l6p51cnod_base_ulvt_090a_lpe_typical_125c.spi",
   "/p/tech/n5/tech-prerelease/.dr/tcbn05_bwph210l6p51cnod_base_ulvtll_lib/v0.9.0_pre.1/lpe_spice/tcbn05_bwph210l6p51cnod_base_ulvtll_090a/tcbn05_bwph210l6p51cnod_base_ulvtll_090a_lpe_typical_125c.spi",
@@ -52,7 +50,7 @@ N5BufPaths = ARRAY Tran OF TEXT {
   "/p/tech/n5/tech-prerelease/.dr/tcbn05_bwph210l6p51cnod_base_svt_lib/v0.9.0_pre.1/lpe_spice/tcbn05_bwph210l6p51cnod_base_svt_090a/tcbn05_bwph210l6p51cnod_base_svt_090a_lpe_typical_125c.spi",
   "/p/tech/n5/tech-prerelease/.dr/tcbn05_bwph210l6p51cnod_base_svtll_lib/v0.9.0_pre.1/lpe_spice/tcbn05_bwph210l6p51cnod_base_svtll_090a/tcbn05_bwph210l6p51cnod_base_svtll_090a_lpe_typical_125c.spi" };
 
-  N5BufCellNames = ARRAY Tran OF TEXT {
+  BufCellNames = ARRAY Tran OF TEXT {
   "BUFFD1BWP210H6P51CNODELVT",
   "BUFFD1BWP210H6P51CNODULVT",
   "BUFFD1BWP210H6P51CNODULVTLL",
@@ -62,7 +60,7 @@ N5BufPaths = ARRAY Tran OF TEXT {
   "BUFFD1BWP210H6P51CNODSVTLL"
   };
 
-  N5XorCellNames = ARRAY Tran OF TEXT {
+  XorCellNames = ARRAY Tran OF TEXT {
   "XOR2D1BWP210H6P51CNODELVT",
   "XOR2D1BWP210H6P51CNODULVT",
   "XOR2D1BWP210H6P51CNODULVTLL",
@@ -72,7 +70,7 @@ N5BufPaths = ARRAY Tran OF TEXT {
   "XOR2D1BWP210H6P51CNODSVTLL"
   };
   
-  N5OaiCellNames = ARRAY Tran OF TEXT {
+  OaiCellNames = ARRAY Tran OF TEXT {
   "OAI21D1BWP210H6P51CNODELVT",
   "OAI21D1BWP210H6P51CNODULVT",
   "OAI21D1BWP210H6P51CNODULVTLL",
@@ -82,7 +80,7 @@ N5BufPaths = ARRAY Tran OF TEXT {
   "OAI21D1BWP210H6P51CNODSVTLL"
   };
 
-  N5AoiCellNames = ARRAY Tran OF TEXT {
+  AoiCellNames = ARRAY Tran OF TEXT {
   "AOI21D1BWP210H6P51CNODELVT",
   "AOI21D1BWP210H6P51CNODULVT",
   "AOI21D1BWP210H6P51CNODULVTLL",
@@ -91,6 +89,7 @@ N5BufPaths = ARRAY Tran OF TEXT {
   "AOI21D1BWP210H6P51CNODSVT",
   "AOI21D1BWP210H6P51CNODSVTLL"
   };
-      
+
+CONST Brand = "N5TechProcess";
 
 END N5TechProcess.

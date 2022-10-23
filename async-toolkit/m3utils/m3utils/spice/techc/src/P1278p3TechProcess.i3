@@ -32,44 +32,41 @@ CONST
   },
 
   cellPaths :=ARRAY Gate OF ARRAY Tran OF TEXT {
-    P1278p3XorPaths,
-    P1278p3BufPaths,
-    P1278p3AoiCellPaths,
-    P1278p3OaiCellPaths
+    XorPaths,
+    BufPaths,
+    AoiCellPaths,
+    OaiCellPaths
   },
 
   cellNames :=ARRAY Gate OF ARRAY Tran OF TEXT {
-    P1278p3XorCellNames,
-    P1278p3BufCellNames,
-    P1278p3AoiCellNames,
-    P1278p3OaiCellNames
+    XorCellNames,
+    BufCellNames,
+    AoiCellNames,
+    OaiCellNames
   },
 
   plugText :=""
 
       };
 
-CONST
-  Brand = "";
+  StdCellRoot = "/p/hdk/cad/stdcells/lib783_i0s_160h_50pp/pdk030_r2v0p0_uv2_pre/";
 
-    P1278p3StdCellRoot = "/p/hdk/cad/stdcells/lib783_i0s_160h_50pp/pdk030_r2v0p0_uv2_pre/";
-
-  P1278p3StdCellUlvtRoot = P1278p3StdCellRoot & "/base_ulvt/spf/lib783_i0s_160h_50pp_base_ulvt_tttt_100c_cmax/";
-  P1278p3StdCellLvtRoot = P1278p3StdCellRoot & "/base_lvt/spf/lib783_i0s_160h_50pp_base_lvt_tttt_100c_cmax/";
-  P1278p3StdCellSvtRoot = P1278p3StdCellRoot & "/base_svt/spf/lib783_i0s_160h_50pp_base_svt_tttt_100c_cmax/";
-  P1278p3StdCellHvtRoot = P1278p3StdCellRoot & "/base_hvt/spf/lib783_i0s_160h_50pp_base_hvt_tttt_100c_cmax/";
+  StdCellUlvtRoot = StdCellRoot & "/base_ulvt/spf/lib783_i0s_160h_50pp_base_ulvt_tttt_100c_cmax/";
+  StdCellLvtRoot = StdCellRoot & "/base_lvt/spf/lib783_i0s_160h_50pp_base_lvt_tttt_100c_cmax/";
+  StdCellSvtRoot = StdCellRoot & "/base_svt/spf/lib783_i0s_160h_50pp_base_svt_tttt_100c_cmax/";
+  StdCellHvtRoot = StdCellRoot & "/base_hvt/spf/lib783_i0s_160h_50pp_base_hvt_tttt_100c_cmax/";
   
-  P1278p3BufPaths = ARRAY Tran OF TEXT {
+  BufPaths = ARRAY Tran OF TEXT {
     NIL,
-    P1278p3StdCellUlvtRoot & "i0sbfn000aa1n02x5.spf",
+    StdCellUlvtRoot & "i0sbfn000aa1n02x5.spf",
     NIL,
-    P1278p3StdCellLvtRoot & "i0sbfn000ab1n02x5.spf",
+    StdCellLvtRoot & "i0sbfn000ab1n02x5.spf",
     NIL,
-    P1278p3StdCellSvtRoot & "i0sbfn000ac1n02x5.spf",
-    P1278p3StdCellHvtRoot & "i0sbfn000ad1n02x5.spf"
+    StdCellSvtRoot & "i0sbfn000ac1n02x5.spf",
+    StdCellHvtRoot & "i0sbfn000ad1n02x5.spf"
   };
   
-  P1278p3BufCellNames = ARRAY Tran OF TEXT {
+  BufCellNames = ARRAY Tran OF TEXT {
     NIL,
     "i0sbfn000aa1n02x5",
     NIL,
@@ -79,17 +76,17 @@ CONST
     "i0sbfn000ad1n02x5"
   };
 
-  P1278p3XorPaths = ARRAY Tran OF TEXT {
+  XorPaths = ARRAY Tran OF TEXT {
     NIL,
-    P1278p3StdCellUlvtRoot & "i0sxor002aa1n02x5.spf",
+    StdCellUlvtRoot & "i0sxor002aa1n02x5.spf",
     NIL,
-    P1278p3StdCellLvtRoot & "i0sxor002ab1n02x5.spf",
+    StdCellLvtRoot & "i0sxor002ab1n02x5.spf",
     NIL,
-    P1278p3StdCellSvtRoot & "i0sxor002ac1n02x5.spf",
-    P1278p3StdCellHvtRoot & "i0sxor002ad1n02x5.spf"
+    StdCellSvtRoot & "i0sxor002ac1n02x5.spf",
+    StdCellHvtRoot & "i0sxor002ad1n02x5.spf"
   };
   
-  P1278p3XorCellNames = ARRAY Tran OF TEXT {
+  XorCellNames = ARRAY Tran OF TEXT {
     NIL,
     "i0sxor002aa1n02x5",
     NIL,
@@ -99,7 +96,7 @@ CONST
     "i0sxor002ad1n02x5"
   };
 
-  P1278p3AoiCellNames = ARRAY Tran OF TEXT {
+  AoiCellNames = ARRAY Tran OF TEXT {
     NIL,
     "i0saoi012aa1n02x5",
     NIL,
@@ -109,7 +106,7 @@ CONST
     "i0saoi012ad1n02x5"
   };
 
-  P1278p3OaiCellNames = ARRAY Tran OF TEXT {
+  OaiCellNames = ARRAY Tran OF TEXT {
     NIL,
     "i0soai012aa1n02x5",
     NIL,
@@ -119,25 +116,28 @@ CONST
     "i0soai012ad1n02x5"
   };
 
-  P1278p3AoiCellPaths = ARRAY Tran OF TEXT {
+  AoiCellPaths = ARRAY Tran OF TEXT {
     NIL,
-    P1278p3StdCellUlvtRoot & "i0saoi012aa1n02x5.spf",
+    StdCellUlvtRoot & "i0saoi012aa1n02x5.spf",
     NIL,
-    P1278p3StdCellLvtRoot & "i0saoi012ab1n02x5.spf",
+    StdCellLvtRoot & "i0saoi012ab1n02x5.spf",
     NIL,
-    P1278p3StdCellSvtRoot & "i0saoi012ac1n02x5.spf",
-    P1278p3StdCellHvtRoot & "i0saoi012ad1n02x5.spf"
+    StdCellSvtRoot & "i0saoi012ac1n02x5.spf",
+    StdCellHvtRoot & "i0saoi012ad1n02x5.spf"
   };
 
-  P1278p3OaiCellPaths = ARRAY Tran OF TEXT {
+  OaiCellPaths = ARRAY Tran OF TEXT {
     NIL,
-    P1278p3StdCellUlvtRoot & "i0soai012aa1n02x5.spf",
+    StdCellUlvtRoot & "i0soai012aa1n02x5.spf",
     NIL,
-    P1278p3StdCellLvtRoot & "i0soai012ab1n02x5.spf",
+    StdCellLvtRoot & "i0soai012ab1n02x5.spf",
     NIL,
-    P1278p3StdCellSvtRoot & "i0soai012ac1n02x5.spf",
-    P1278p3StdCellHvtRoot & "i0soai012ad1n02x5.spf"
+    StdCellSvtRoot & "i0soai012ac1n02x5.spf",
+    StdCellHvtRoot & "i0soai012ad1n02x5.spf"
   };
+
+CONST
+  Brand = "P1278p3TechProcess";
 
 END P1278p3TechProcess.
                                 

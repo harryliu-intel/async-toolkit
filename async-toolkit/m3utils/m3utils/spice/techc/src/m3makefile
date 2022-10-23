@@ -5,7 +5,13 @@ import ("tracelib")
 
 interface ("TechConfig")
 interface ("TechProcess")
+
 interface ("N5TechProcess")
+interface ("N3TechProcess")
+interface ("N3ETechProcess")
+
+interface ("P1276p4TechProcess")
+interface ("P1278p3TechProcess")
 
 module ("Watchdog")
 implementation ("Main")

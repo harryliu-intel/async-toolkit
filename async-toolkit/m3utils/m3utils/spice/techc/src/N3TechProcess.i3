@@ -16,7 +16,7 @@ CONST
 
   hspiceModelRoot :="/p/tech1/n3/tech-release/v1.0.10/models/1P18M_1X_h_1Xb_v_1Xc_h_1Xd_v_1Ya_h_1Yb_v_5Y_hvhvh_2Yy2Yx1R1U_thin_curdl/hspice",
 
-  cornNames :=N5TechProcess.P.cornNames,
+  cornNames := N5TechProcess.P.cornNames,
 
   cellPaths := TechUnknownCellPaths,
 

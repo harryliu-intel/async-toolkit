@@ -26,17 +26,17 @@ CONST
   cornNames := N5TechProcess.P.cornNames,
 
   cellPaths :=ARRAY Gate OF ARRAY Tran OF TEXT {
-    N3EBufPaths,
-    N3EBufPaths,
-    N3EBufPaths,
-    N3EBufPaths 
+    BufPaths,
+    BufPaths,
+    BufPaths,
+    BufPaths 
   },
 
   cellNames :=ARRAY Gate OF ARRAY Tran OF TEXT {
-    N3EXorCellNames,
-    N3EBufCellNames,
-    N3EAoiCellNames,
-    N3EOaiCellNames
+    XorCellNames,
+    BufCellNames,
+    AoiCellNames,
+    OaiCellNames
   },
 
   plugText :="vcc vssx"
@@ -44,9 +44,7 @@ CONST
       };
 
 CONST
-  Brand = "N3ETechProcess";
-
-  N3EBufPaths = ARRAY Tran OF TEXT {
+  BufPaths = ARRAY Tran OF TEXT {
   "/p/tech1/n3e/tech-release/v0.9.0p3/tcbn03e_bwph169l3p48cpd_base_elvt_lib/lpe_spice/tcbn03e_bwph169l3p48cpd_base_elvt_090b/tcbn03e_bwph169l3p48cpd_base_elvt_090b_lpe_typical_125c.spi",
   "/p/tech1/n3e/tech-release/v0.9.0p3/tcbn03e_bwph169l3p48cpd_base_ulvt_lib/lpe_spice/tcbn03e_bwph169l3p48cpd_base_ulvt_090b/tcbn03e_bwph169l3p48cpd_base_ulvt_090b_lpe_typical_125c.spi",
   "/p/tech1/n3e/tech-release/v0.9.0p3/tcbn03e_bwph169l3p48cpd_base_ulvtll_lib/lpe_spice/tcbn03e_bwph169l3p48cpd_base_ulvtll_090b/tcbn03e_bwph169l3p48cpd_base_ulvtll_090b_lpe_typical_125c.spi",
@@ -56,7 +54,7 @@ CONST
   NIL
   };
 
-  N3EBufCellNames = ARRAY Tran OF TEXT {
+  BufCellNames = ARRAY Tran OF TEXT {
   "BUFFD1BWP169H3P48CPDELVT",
   "BUFFD1BWP169H3P48CPDULVT",
   "BUFFD1BWP169H3P48CPDULVTLL",
@@ -66,7 +64,7 @@ CONST
   NIL
   };
 
-  N3EXorCellNames = ARRAY Tran OF TEXT {
+  XorCellNames = ARRAY Tran OF TEXT {
   "XOR2D1BWP169H3P48CPDELVT",
   "XOR2D1BWP169H3P48CPDULVT",
   "XOR2D1BWP169H3P48CPDULVTLL",
@@ -76,7 +74,7 @@ CONST
   NIL
   };
   
-  N3EOaiCellNames = ARRAY Tran OF TEXT {
+  OaiCellNames = ARRAY Tran OF TEXT {
   "OAI21D1BWP169H3P48CPDELVT",
   "OAI21D1BWP169H3P48CPDULVT",
   "OAI21D1BWP169H3P48CPDULVTLL",
@@ -86,7 +84,7 @@ CONST
   NIL
   };
 
-  N3EAoiCellNames = ARRAY Tran OF TEXT {
+  AoiCellNames = ARRAY Tran OF TEXT {
   "AOI21D1BWP169H3P48CPDELVT",
   "AOI21D1BWP169H3P48CPDULVT",
   "AOI21D1BWP169H3P48CPDULVTLL",
@@ -95,6 +93,9 @@ CONST
   "AOI21D1BWP169H3P48CPDSVT",
   NIL
   };
+
+CONST
+  Brand = "N3ETechProcess";
 
 END N3ETechProcess.
                                 
