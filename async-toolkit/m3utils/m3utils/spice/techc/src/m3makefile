@@ -3,6 +3,10 @@ import ("parseparams")
 import ("cit_util")
 import ("tracelib")
 
+interface ("TechConfig")
+interface ("TechProcess")
+interface ("N5TechProcess")
+
 module ("Watchdog")
 implementation ("Main")
 
