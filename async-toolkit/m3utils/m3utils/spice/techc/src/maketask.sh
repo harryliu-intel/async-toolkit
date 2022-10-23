@@ -148,7 +148,10 @@ for tech in ${techs}; do
         echo "${torun} -p setup -p simulate" \
              >> ${RUNDIR}/${tasknum}.sh
 
-        echo "${torun} -p convert -p clean -p measure" \
+        echo "${torun} -p convert -p clean" \
+             >> ${RUNDIR}/${tasknum}.sh
+        
+        echo "${torun} -p measure" \
              >> ${RUNDIR}/${tasknum}.sh
         
         chmod +x ${RUNDIR}/${tasknum}.sh

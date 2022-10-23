@@ -1,7 +1,18 @@
 INTERFACE Entry;
 
 TYPE
-  CsvCols = { Tech, Corn, Tran, Topo, Mode, Simu, Volt, Temp, Cycl, Curr };
+  CsvCols = {
+
+  (* independent variables : *)
+  Tech, Corn, Tran, Cell, Mode,
+  Simu, Fano, Volt, Temp,
+
+  (* dependent variables : *)
+  Cycl, Curr, Icur, Path
+
+  };
+  
+  
   Entry = ARRAY CsvCols OF TEXT;
   T = REF Entry;
 
@@ -12,7 +23,10 @@ PROCEDURE Compare(a, b : T) : [ -1 .. 1 ];
 
 CONST
   CsvColNames = ARRAY CsvCols OF TEXT 
-  { "Tech", "Corn", "Tran", "Topo", "Mode",
-    "Simu", "Volt", "Temp", "Cycl", "Curr" };
+  { "Tech", "Corn", "Tran", "Cell", "Mode",
+    "Simu", "Fano", "Volt", "Temp",
+    "Cycl", "Curr", "Icur", "Path"
+
+  };
   
 END Entry.

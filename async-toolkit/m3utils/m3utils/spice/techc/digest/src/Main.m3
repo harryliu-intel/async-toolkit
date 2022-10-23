@@ -27,7 +27,7 @@ CONST TE = Text.Equal;
       LR = Fmt.LongReal;
 
       DirPat  = "[1-9][0-9]*.run";
-      Verbose = FALSE;
+      Verbose = TRUE;
   
 VAR
   pp := NEW(ParseParams.T).init(Stdio.stderr);
@@ -222,7 +222,7 @@ PROCEDURE Lookup(str : TEXT; READONLY a : ARRAY OF TEXT) : CARDINAL =
 PROCEDURE GraphEm() =
   VAR
     iter := tbl.iterate();
-    k, fn : TEXT;
+    k, fn, eflFn : TEXT;
     seq : RefSeq.T;
   TYPE
     C = CsvCols;
@@ -231,9 +231,11 @@ PROCEDURE GraphEm() =
   BEGIN
     WHILE iter.next(k, seq) DO
       TRY
-        fn := outDir & "/" & k & ".dat";
-             
-        WITH wr = FileWr.Open(fn) DO
+        fn    := outDir & "/" & k & ".dat";
+        eflFn := outDir & "/" & k & "_eflabels.src";
+                     
+        WITH wr = FileWr.Open(fn),
+             eflWr = FileWr.Open(eflFn) DO
           FOR i := 0 TO seq.size() - 1 DO
             WITH entry = NARROW(seq.get(i), Entry.T),
                  
@@ -246,24 +248,39 @@ PROCEDURE GraphEm() =
                  f = 1.0d0 / c,
                  (* frequency *)
                  
-                 i = Scan.LongReal(entry[C.Curr]),
-                 (* current *)
+                 ai = Scan.LongReal(entry[C.Curr]),
+                 (* active current *)
                  
-                 p = v * i,
-                 (* power *)
+
+                 li = Scan.LongReal(entry[C.Icur]),
+                 (* leakage current *)
+
+                 ap = v * ai,
+                 (* active power *)
+
+                 lp = v * li,
+                 (* leakage power *)
                  
-                 e = p * c
-                 (* energy per op *) 
+                 e = ap * c * scaleE,
+                 (* energy per op *)
+
+                 lf = lp / ap
+                 (* leakage fraction of total power *)
              DO
               
               IF c < MaxCycle THEN
                 Wr.PutText(wr,
-                           F("%s %s %s\n", LR(e), LR(f), LR(v)))
+                           F("%s %s %s %s\n", LR(e), LR(f), LR(v), LR(lf)));
+
+                Wr.PutText(eflWr,
+                           F("set label \"%s\" at %s, %s\n",
+                             LR(v), LR(e), LR(f)))
               END
             END
           END;
           
-          Wr.Close(wr)
+          Wr.Close(wr);
+          Wr.Close(eflWr)
         END
         
       EXCEPT
@@ -287,6 +304,7 @@ VAR
   fix := Entry.Entry { NIL, .. };
   createOutDir : BOOLEAN;
   outDir : Pathname.T := ".";
+  scaleE := 1.0d0;
   
 BEGIN
   TRY
@@ -305,6 +323,11 @@ BEGIN
       path := pp.getNext();
       mode := Mode.File
     END;
+
+    IF pp.keywordPresent("-se") THEN
+      scaleE := pp.getNextLongReal()
+    END;
+      
 
     WHILE pp.keywordPresent("-fix") DO
       WITH colName = pp.getNext(),
