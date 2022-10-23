@@ -16,7 +16,18 @@ TYPE
     plugText           : TEXT;
   END;
 
-CONST Brand = "TechProcess";
+CONST
+  Brand = "TechProcess";
+
+  (* a process for which we don't have standard cells can use the below *)
+CONST    
+  UnknownCellNames = ARRAY Tran OF TEXT { NIL, .. };
+  TechUnknownCellNames =
+    ARRAY Gate OF ARRAY Tran OF TEXT { UnknownCellNames, .. };
+  
+  UnknownCellPaths = ARRAY Tran OF TEXT { NIL, .. };
+  TechUnknownCellPaths =
+    ARRAY Gate OF ARRAY Tran OF TEXT { UnknownCellPaths, .. };
 
 END TechProcess.
 

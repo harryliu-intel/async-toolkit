@@ -97,10 +97,8 @@ CONST DefProcDeadline = 30.0d0 * 60.0d0;
       (* how much to back off each progress measurement *)
       
 VAR ProcDeadline := DefProcDeadline;
-  
-TYPE
-  TranSufxs     = ARRAY Tran OF TEXT;
 
+    
 CONST
   N5TranSufxs =
     TranSufxs { "ch_elvt_mac",
@@ -623,6 +621,12 @@ CONST
   
   StdPlugText = "vcc vssx";
 
+
+    
+TYPE
+  TranSufxs     = ARRAY Tran OF TEXT;
+
+CONST
   Techs = ARRAY Tech OF TechProcess.T { N5TechProcess.P, .. };
     
   (************************************************************)
