@@ -142,6 +142,8 @@ CONST
             { Gate.Xor, Gate.Buf, Gate.Oai, Gate.Aoi };
   (* second gate type for each first gate --
      note that oai is really not supported as a first gate *)
+
+  SupportedFanouts = SET OF [ 0 .. 8 ] { 1, 2, 3, 4, 8 };
   
   <*UNUSED*>
 CONST
@@ -779,7 +781,7 @@ PROCEDURE MapCommon(READONLY c : Config;  map : TextTextTbl.T)=
     EVAL map.put("@HSPICE_MODEL@", c.hspiceModel);
     EVAL map.put("@TEMP@", LR(c.temp));
     EVAL map.put("@VOLT@", LR(c.volt));
-
+    EVAL map.put("@FANOUT@", Int(c.fanout));
 
     (* gate terminals *)
     CASE c.gate OF
@@ -1474,7 +1476,7 @@ PROCEDURE DoMeasure(traceRoot, outName, workDir : Pathname.T) : BOOLEAN =
           wr := FileWr.Open(outName);
         BEGIN
           Wr.PutText(wr,
-                     FN("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
+                     FN("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
                         ARRAY OF TEXT {
                            TechNames[c.tech],
                            CornNames[c.corn],
@@ -1482,6 +1484,7 @@ PROCEDURE DoMeasure(traceRoot, outName, workDir : Pathname.T) : BOOLEAN =
                            GateNames[c.gate],
                            ModeNames[c.mode],
                            SimuNames[c.simu],
+                           Int(c.fanout),
                            LR(c.volt),
                            LR(c.temp),
                            LR(cycle),
@@ -1584,12 +1587,13 @@ PROCEDURE GetIdx(trace : Trace.T; of : TEXT) : CARDINAL =
 
 TYPE
   Config = RECORD
-    tech : Tech;
-    tran : Tran;
-    mode : Mode;
-    simu : Simu;
-    corn : Corn;
-    gate : Gate;
+    tech   : Tech;
+    tran   : Tran;
+    mode   : Mode;
+    simu   : Simu;
+    corn   : Corn;
+    gate   : Gate;
+    fanout : CARDINAL := 1;
     volt := 0.0d0;
     temp := 0.0d0;
     nanoseconds : LONGREAL; (* length of sim in ns *)
@@ -1628,6 +1632,15 @@ BEGIN
       c.hspiceModelRoot := TechHspiceModelRoots[c.tech];
     END;
 
+    IF pp.keywordPresent("-fo") THEN
+      WITH arg = pp.getNextInt() DO
+        IF NOT arg IN SupportedFanouts THEN
+          Debug.Error(F("Fanout %s not supported", Int(arg)))
+        END;
+        c.fanout := arg
+      END
+    END;
+    
     IF pp.keywordPresent("-para") THEN
       WITH arg = pp.getNext() DO
         TRY

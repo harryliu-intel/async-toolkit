@@ -17,6 +17,7 @@ nb_qslot=/XCC/LBM/RTL
 step=4
 # we get about 4 CPUs per machine?  6 ought to be more than enough, 4 might be optimal?
 
+fo="1"
 corners="ss tt ff"
 xor_corners="tt"
 aoi_corners="tt"
@@ -141,7 +142,7 @@ for tech in ${techs}; do
               -mode ${mode} -simu xa -T ${TEMPLATE} \
               -volt ${volt} -temp ${temp} \
               -para ${para} \
-              -gate ${gate} \
+              -gate ${gate} -fo ${fo} \
               -d ${RUNDIR}/${tasknum}.run -C"
         
         echo "${torun} -p setup -p simulate" \
