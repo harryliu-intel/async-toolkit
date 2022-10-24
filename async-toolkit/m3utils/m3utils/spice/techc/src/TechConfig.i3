@@ -1,4 +1,5 @@
 INTERFACE TechConfig;
+IMPORT Pathname;
 
 TYPE
   Tech = { N5, P1276p4, N3, N3E, P1278p3 };
@@ -73,5 +74,39 @@ CONST
   
 CONST
   CorpNames = ARRAY Corp OF TEXT { "TSMC", "INTC" };
-  
+
+CONST DefSimRoot = "circuit";
+
+TYPE
+  T = RECORD
+    tech   : Tech;
+    tran   : Tran;
+    mode   : Mode;
+    simu   : Simu;
+    corn   : Corn;
+    gate   : Gate;
+    fanout : CARDINAL := 1;
+    volt := 0.0d0;
+    temp := 0.0d0;
+    nanoseconds : LONGREAL; (* length of sim in ns *)
+    timestep : LONGREAL; (* in seconds *)
+    
+    workDir : Pathname.T;
+    createWorkDir : BOOLEAN;
+    templatePath : Pathname.T;
+    phazz := SET OF Phaz { Phaz.Setup };
+    hspiceModelRoot : Pathname.T;
+    hspiceModel     : Pathname.T;
+
+    hspiceLibModels : Pathname.T :=
+        "/p/hdk/cad/pdk/pdk764_r0.4HP3_22ww20.1/cmi/hspice/cmi/lnx86/64bit";
+    (* what is this file? *)
+
+    pdmiLib         : Pathname.T;
+    simRoot := DefSimRoot;
+    xaPath : Pathname.T := "/p/hdk/cad/xa/S-2021.09-SP2//bin/";
+
+    para : BOOLEAN; (* parasitic simulation yes/no *)
+  END;
+
 END TechConfig.
