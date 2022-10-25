@@ -78,6 +78,29 @@ if [ "$1" == "-gates" ]; then
     step=4
 fi
 
+if [ "$1" == "-temp" ]; then
+    runmode="override"
+    volts=${buf_volts}
+    gates="buf"
+    modes="dyn"
+    paras="true"
+    corners="tt"
+    step=4
+    techs="n3e"
+    
+    mintemp=55
+    maxtemp=105
+    stptemp=5
+    t=0
+    temps=""
+    
+    while [ "${t}" -lt "${maxtemp}" ]; do
+        temps="${temps} ${t}"
+        t=`expr ${t} + ${stptemp}`
+    done
+
+fi
+
 ######################################################################
 
 taskfile=full-${DATE}.task
@@ -166,6 +189,8 @@ done
 done
 done
 done
+
+echo "${tasknum} tasks"
 
 launchnum=0
 

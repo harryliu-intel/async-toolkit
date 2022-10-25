@@ -264,13 +264,17 @@ PROCEDURE GraphEm() =
                  e = ap * c * scaleE,
                  (* energy per op *)
 
-                 lf = lp / ap
+                 lf = lp / ap,
                  (* leakage fraction of total power *)
+
+                 t = Scan.LongReal(entry[C.Temp])
+                 (* temperature *)
              DO
               
               IF c < MaxCycle THEN
                 Wr.PutText(wr,
-                           F("%s %s %s %s\n", LR(e), LR(f), LR(v), LR(lf)));
+                           F("%s %s %s %s %s\n",
+                             LR(e), LR(f), LR(v), LR(lf), LR(t)));
 
                 Wr.PutText(eflWr,
                            F("set label \"%s\" at %s, %s\n",
