@@ -15,7 +15,7 @@
 ;;
 ;;
 
-(set! *do-debug* #f)
+(set! *do-debug* #t)
 
 (define *gtr-home* (Env.Get "GTR_HOME"))
 
@@ -98,6 +98,10 @@
         (loop (cons (list (pp 'getNext) (pp 'getNext) (pp 'getNext)) res))
         res)))
 
+(define *comb-read*
+  (pp 'keywordPresent "-comb_read"))
+                 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define *the-tech*
@@ -119,7 +123,9 @@
            *ccorner*
            *pvt-name*
            *pow-opts*
-           *pinpow2-opts*))
+           *pinpow2-opts*
+           *comb-read*
+           ))
 
 (do-it)
 

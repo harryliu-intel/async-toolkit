@@ -484,7 +484,7 @@ proc gtr_lamb_gen_views { args } {
                 set template ${template_dir}/cdp_lamb_1w1sr_template.lib
             } else {
                 # flow-through (asynchronous read) template
-                set template ${template_dir}/cdp_lamb_1w1afr_template.lib
+                set template ${template_dir}/cdp_lamb_1w1ar_template.lib
             }
 
             set libname [ format %s_%s $block_name $pvtname ]
@@ -519,7 +519,8 @@ proc gtr_lamb_gen_views { args } {
                 # in reality it should be attached to the read address pins
                 set pflags [ list "-pow     cell_leakage_power" $pow_lk \
                                   "-pinpow2 clk !wen"           $pow_id \
-                                  "-pinpow2 clk wen"            $pow_wr ]
+                                  "-pinpow2 clk wen"            $pow_wr \
+                                  "-comb_read"]
             }
                                  
             
