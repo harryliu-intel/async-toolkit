@@ -821,6 +821,66 @@
     )
   )
 
+(define *last-pin* '())
+(define *matching-groups* '())
+(define *new-groups* '())
+
+(define (expand-read-timing-arcs! lib depth)
+  ;; broaden the read timing arcs radr[0] -> dout[0]
+  ;; to encompass all radr[.]
+  ;;
+  ;; (copying of dout itself is done in a later step)
+  (let ((rw (clog2 depth)))
+    
+    (debug "expanding read timing arcs to " rw "..." dnl)
+
+    (let* ((the-cell (get-lib-cell lib))
+           (the-pin-name "dout[0]")
+           (the-pin (get-named-pin-group the-cell the-pin-name))
+           (the-source-pin "radr[0]")
+           (timing-groups (get-named-groups the-pin "timing"))
+           (matching-groups
+            (filter
+             (lambda(tg)(equal? the-source-pin
+                                (TextUtils.Replace
+                                 (get-group-variable tg "related_pin") " " "")))
+             timing-groups))
+           )
+
+      (set! *last-pin* the-pin)
+      (set! *matching-groups* matching-groups)
+      
+      (let loop ((idx 1)
+                 (add-groups '()))
+        (if (>= idx rw)
+            ;; base case, add new groups to parent
+            (begin
+              (set! *new-groups* add-groups)
+              (map (lambda(g)(call-method (get-field g 'parent.statements)
+                                          'addhi
+                                          g))
+                   add-groups)
+              'ok)
+
+            ;; recursion case, add group to new groups
+            (loop (+ idx 1)
+                  (let ((new (map (lambda(x)
+                                    (let ((n (deep-copy x)))
+                                      (set-field! n
+                                                  'parent
+                                                  (get-field x 'parent))
+                                      n))
+                                  matching-groups)))
+                    (map (lambda(g)
+                           (update-group-variable! g
+                                                   "related_pin"
+                                                   (string-append "radr["
+                                                                  (stringify idx)
+                                                                  "]")))
+                         new)
+                    (append add-groups new)))
+                    )))))
+
 (define (update-lib-names! lib new-lib-name new-cell-name)
   (set-field! lib 'head.params[0].val.val new-lib-name)
   (let ((the-cell (get-lib-cell lib)))
