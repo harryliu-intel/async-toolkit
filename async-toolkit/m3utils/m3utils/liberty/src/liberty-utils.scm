@@ -842,7 +842,7 @@
            (matching-groups
             (filter
              (lambda(tg)(equal? the-source-pin
-                                (TextUtils.Replace
+                                (CitTextUtils.Replace
                                  (get-group-variable tg "related_pin") " " "")))
              timing-groups))
            )
