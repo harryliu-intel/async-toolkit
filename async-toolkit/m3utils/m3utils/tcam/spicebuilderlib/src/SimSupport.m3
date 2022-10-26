@@ -53,6 +53,8 @@ REVEAL
   
 PROCEDURE GetCtrHold(s : StandardSettings.T; x : REF Constraints) : LONGREAL =
   BEGIN
+    <*ASSERT s # NIL*>
+    
     IF x = NIL THEN RETURN s.defConstraints.hold ELSE RETURN x.hold END
   END GetCtrHold;
 
@@ -93,11 +95,13 @@ PROCEDURE ClockMakeSeq(self : ClockSrc; READONLY idx : Dims.T) : MemoTranSeq.T =
     MaxCycles = 1.0d4;
   BEGIN
     <*ASSERT idx = Scalar*>
+    <*ASSERT self.nodes # NIL*>
+    <*ASSERT self.s # NIL*>
+      
     WITH maxTime = self.s.simParams.maxTime,
          spd     = self.spd,
          nm      = self.nodes.nm DO
 
-      
       IF spd <= 0.0d0 OR maxTime * spd > MaxCycles THEN
         Debug.Error(F("clock %s : exceeding %s cycles : maxTime %s, spd %s: cycles %s",
                       Debug.UnNil(nm),

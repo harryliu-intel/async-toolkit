@@ -1,0 +1,233 @@
+MODULE TechMeasure;
+IMPORT Pathname;
+IMPORT Trace;
+IMPORT Debug;
+FROM Fmt IMPORT F, LongReal, Int, FN;
+IMPORT OSError;
+IMPORT Rd;
+IMPORT AL;
+IMPORT Wr;
+IMPORT FileWr;
+IMPORT LongRealSeq;
+IMPORT Thread;
+IMPORT TechConfig;
+
+FROM TechConfig IMPORT TranNames, ModeNames, SimuNames, CornNames, GateNames, TechNames;
+
+<*FATAL Thread.Alerted*>
+
+CONST LR = LongReal;
+
+PROCEDURE DoMeasure(READONLY c : TechConfig.T;
+                    traceRoot, outName, workDir : Pathname.T;
+                    exitOnError := TRUE) : BOOLEAN =
+  (* returns TRUE iff we measure a cycle time *)
+  VAR
+    trace : Trace.T;
+    nSteps : CARDINAL;
+    timeData, nodeData : REF ARRAY OF LONGREAL;
+    fail := FALSE;
+    
+  PROCEDURE Fail(msg : TEXT) =
+    BEGIN
+      fail := TRUE;
+      IF exitOnError THEN
+        Debug.Error(msg)
+      ELSE
+        Debug.Warning(msg)
+      END
+    END Fail;
+    
+  BEGIN
+    Debug.Out(F("DoMeasure %s %s %s", traceRoot, outName, workDir));
+    
+    TRY
+      trace := NEW(Trace.T).init(traceRoot);
+    EXCEPT
+      OSError.E(x) =>
+      Fail("OSError.E reading trace/names file : " & AL.Format(x))
+    |
+      Rd.Failure(x) =>
+      Fail("I/O error reading trace/names file : " & AL.Format(x))
+    |
+      Rd.EndOfFile =>
+      Fail("Short read reading trace/names file")
+    END;
+
+    IF fail THEN RETURN FALSE END;
+
+    nSteps := trace.getSteps();
+
+    timeData := NEW(REF ARRAY OF LONGREAL, nSteps);
+    nodeData := NEW(REF ARRAY OF LONGREAL, nSteps);
+
+    TRY
+      trace.getTimeData(timeData^);
+    EXCEPT
+      Rd.Failure, Rd.EndOfFile => Debug.Error("Trouble reading TIME data")
+    END;
+    
+    Debug.Out(F("nSteps %s", Int(nSteps)));
+    
+    Debug.Out(F("first time %s, last time %s, step %s",
+                LR(timeData[0]),
+                LR(timeData[nSteps - 1]),
+                LR(trace.getTimeStep())));
+    
+    CONST
+      StartTime = 12.0d-9;
+      StartTran = 1;
+    VAR
+      xIdx := GetIdx(trace, "x[0]");
+      iIdx := GetIdx(trace, "vissx");
+      yIdx := GetIdx(trace, "vissy");
+      cycle, meancurrent, leakcurrent : LONGREAL;
+    BEGIN
+      TRY
+        trace.getNodeData(xIdx, nodeData^);
+      EXCEPT
+        Rd.Failure, Rd.EndOfFile => Debug.Error("Trouble reading node data")
+      END;
+      
+      cycle := CycleTime(timeData^, nodeData^,
+                         c.volt / 2.0d0, StartTime, StartTran, StartTran + 1);
+      
+      Debug.Out("Measured cycle time " & LR(cycle));
+
+      TRY
+        trace.getNodeData(iIdx, nodeData^);
+      EXCEPT
+        Rd.Failure, Rd.EndOfFile => Debug.Error("Trouble reading node data")
+      END;
+
+      meancurrent := -1.0d0 / 1.0d6 *
+          MeanValue(timeData^, nodeData^, StartTime);
+      
+      Debug.Out("Measured mean dyna current " & LR(meancurrent));
+
+      TRY
+        trace.getNodeData(yIdx, nodeData^);
+      EXCEPT
+        Rd.Failure, Rd.EndOfFile => Debug.Error("Trouble reading node data")
+      END;
+
+      leakcurrent := -1.0d0 / 1.0d6 *
+          MeanValue(timeData^, nodeData^, StartTime);
+      
+      Debug.Out("Measured mean leak current " & LR(leakcurrent));
+
+      TRY
+        VAR
+          wr := FileWr.Open(outName);
+        BEGIN
+          Wr.PutText(wr,
+                     FN("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
+                        ARRAY OF TEXT {
+                           TechNames[c.tech],
+                           CornNames[c.corn],
+                           TranNames[c.tran],
+                           GateNames[c.gate],
+                           ModeNames[c.mode],
+                           SimuNames[c.simu],
+                           Int(c.fanout),
+                           LR(c.volt),
+                           LR(c.temp),
+                           LR(cycle),
+                           LR(meancurrent),
+                           LR(leakcurrent),
+                           workDir
+                           }));
+          Wr.Close(wr)
+        END;
+
+        RETURN cycle < 1.0d10; (* cycle time is less than 10^10 seconds,
+                                  i.e., it exists *)
+        
+      EXCEPT
+        OSError.E(x) =>
+        Debug.Error(F("Couldn't open measurement output file : OSError.E : %s",
+                      AL.Format(x)))
+      |
+        Wr.Failure(x) =>
+        Debug.Error(F("Couldn't write measurement output file : Wr.Failure : %s",
+                      AL.Format(x)))
+      END;
+      <*ASSERT FALSE*>
+    END
+  END DoMeasure;
+
+PROCEDURE CycleTime(READONLY timea, nodea : ARRAY OF LONGREAL;
+                    cross                 : LONGREAL;
+                    startTime             : LONGREAL;
+                    startTran, endTran    : CARDINAL) : LONGREAL =
+  (* looking at nodea values beyond startTime, 
+     find the startTran and endTran rising transitions
+     and return the average cycle time in that range *)
+  VAR
+    pn := nodea[FIRST(nodea)];
+    pt : LONGREAL;
+    seq := NEW(LongRealSeq.T).init();
+  BEGIN
+    FOR i := FIRST(timea) TO LAST(timea) DO
+      WITH t = timea[i],
+           n = nodea[i] DO
+        IF t >= startTime THEN
+          IF n > cross AND pn <= cross THEN
+            WITH delV  = n - pn,
+                 delT  = t - pt,
+                 delV0 = cross - pn,
+                 delT0 = delV0 / delV * delT DO
+              seq.addhi(pt + delT0)
+            END
+          END
+        END;
+        pn := n;
+        pt := t
+      END
+    END;
+
+    IF endTran < seq.size() THEN
+      WITH cnt = endTran - startTran,
+           sT  = seq.get(startTran),
+           eT  = seq.get(endTran),
+           res = (eT - sT) / FLOAT(cnt, LONGREAL) DO
+        RETURN res
+      END
+    ELSE
+      RETURN LAST(LONGREAL)
+    END
+  END CycleTime;
+
+PROCEDURE MeanValue(READONLY timea, nodea : ARRAY OF LONGREAL;
+                    startTime             : LONGREAL) : LONGREAL =
+  (* looking at nodea values beyond startTime, 
+     return the mean value in the rest of history *)
+  VAR
+    sum := 0.0d0;
+    cnt := 0;
+  BEGIN
+    FOR i := FIRST(timea) TO LAST(timea) DO
+      WITH t = timea[i],
+           n = nodea[i] DO
+        IF t >= startTime THEN
+          sum := sum + n;
+          INC(cnt)
+        END
+      END
+    END;
+
+    RETURN sum / FLOAT(cnt, LONGREAL)
+  END MeanValue;
+
+PROCEDURE GetIdx(trace : Trace.T; of : TEXT) : CARDINAL =
+  VAR
+    res : CARDINAL;
+    hadIt := trace.getNodeIdx(of, res);
+  BEGIN
+    IF NOT hadIt THEN
+      Debug.Error(F("GetIdx : \"%s\" not found", of))
+    END;
+    RETURN res
+  END GetIdx;
+
+BEGIN END TechMeasure.

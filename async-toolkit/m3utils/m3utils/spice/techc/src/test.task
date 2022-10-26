@@ -1,0 +1,11 @@
+JobsTask {
+  WorkArea /nfs/site/disks/zsc3_fon_fe_0001/mnystroe/m3utils/spice/techc/src/nbrun
+
+  Queue zsc3_express {
+    Qslot /XCC/LBM/SD
+  } 
+  Jobs {
+
+    nbjob run --class "SLES12&&1G" --log-file /nfs/site/disks/zsc3_fon_fe_0001/mnystroe/m3utils/spice/techc/src/nbrun/1.log ls
+  }
+}

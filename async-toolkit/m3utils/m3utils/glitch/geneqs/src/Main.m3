@@ -24,7 +24,7 @@ IMPORT TextSet, TextSetDef;
 IMPORT GateExpr;
 IMPORT Pathname;
 IMPORT Wr;
-IMPORT TextUtils;
+IMPORT CitTextUtils AS TextUtils;
 IMPORT FileWr;
 IMPORT Wx;
 IMPORT FmtTime, Time, Date;

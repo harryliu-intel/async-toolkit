@@ -1,0 +1,13 @@
+import ("libm3")
+import ("cit_common")
+import ("cit_util")
+
+Module ("Trace")
+
+module ("TraceUnsafe")
+
+interface ("TraceHeader")
+table ("TextCard", "Text", "Cardinal")
+table ("CardTextSeq", "Cardinal", "TextSeq")
+
+library ("tracelib")

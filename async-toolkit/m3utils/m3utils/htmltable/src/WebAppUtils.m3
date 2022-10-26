@@ -6,7 +6,7 @@ IMPORT Fmt;
 IMPORT URL;
 IMPORT Debug;
 IMPORT Text;
-IMPORT TextUtils;
+IMPORT CitTextUtils AS TextUtils;
 
 VAR myID : INTEGER;
 

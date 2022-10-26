@@ -2,7 +2,7 @@ MODULE FlatUI;
 IMPORT TextSpiceInstanceSetTbl, TextTextSetTbl, TextTextTbl;
 IMPORT ReadLine, Fmt, TextReader, Debug, Text;
 FROM Fmt IMPORT F;
-IMPORT TextUtils, TextSet;
+IMPORT CitTextUtils AS TextUtils, TextSet;
 IMPORT SpiceInstance, SpiceInstanceSet;
 IMPORT SpiceObject;
 

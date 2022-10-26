@@ -15,7 +15,7 @@ IMPORT Text;
 IMPORT Rd, FileRd, Scan;
 IMPORT Thread;
 IMPORT Wr, FileWr;
-IMPORT TextUtils;
+IMPORT CitTextUtils AS TextUtils;
 IMPORT OSError, AL;
 IMPORT XYList;
 IMPORT Lex, FloatMode;

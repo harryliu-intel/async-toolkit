@@ -121,7 +121,7 @@
          (i-wr (car  wrs))
          (m-wr (cadr wrs))
          (nm   (caddr wrs))
-         (unm  (TextUtils.ToUpper (symbol->string basenm)))
+         (unm  (CitTextUtils.ToUpper (symbol->string basenm)))
          )
 
     (dis "IMPORT RecursiveParser;" dnl

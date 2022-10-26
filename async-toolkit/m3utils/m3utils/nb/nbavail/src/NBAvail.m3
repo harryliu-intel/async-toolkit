@@ -10,7 +10,7 @@ IMPORT IO;
 IMPORT Thread;
 IMPORT Env;
 FROM Fmt IMPORT F, Int, Bool;
-IMPORT TextUtils;
+IMPORT CitTextUtils AS TextUtils;
 IMPORT Process;
 
 CONST TE = Text.Equal;

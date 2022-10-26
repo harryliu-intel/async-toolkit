@@ -13,7 +13,9 @@ ENDMDL    endmodule
 IDENT     Bare
 bare_IDENT {Bare}
 
-INT       [0-9]*
+INT       \-?[0-9]*
 DOT       "\."
 char      {%char}
 skip      (\#.*|[ \t\n]|("//"[^\n]*"\n")|(\/\*([^\*]|\*+[^\/])*\*\/))
+
+

@@ -1,0 +1,32 @@
+INTERFACE Entry;
+
+TYPE
+  CsvCols = {
+
+  (* independent variables : *)
+  Tech, Corn, Tran, Cell, Mode,
+  Simu, Fano, Volt, Temp,
+
+  (* dependent variables : *)
+  Cycl, Curr, Icur, Path
+
+  };
+  
+  
+  Entry = ARRAY CsvCols OF TEXT;
+  T = REF Entry;
+
+CONST Brand = "Entry";
+
+PROCEDURE Compare(a, b : T) : [ -1 .. 1 ];
+  (* sort by Volt *)
+
+CONST
+  CsvColNames = ARRAY CsvCols OF TEXT 
+  { "Tech", "Corn", "Tran", "Cell", "Mode",
+    "Simu", "Fano", "Volt", "Temp",
+    "Cycl", "Curr", "Icur", "Path"
+
+  };
+  
+END Entry.

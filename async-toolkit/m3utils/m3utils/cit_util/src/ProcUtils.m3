@@ -9,7 +9,7 @@ IMPORT FS;
 IMPORT File;
 IMPORT FileRd;
 IMPORT FileWr;
-IMPORT Fmt;
+IMPORT Fmt; FROM Fmt IMPORT Int, F;
 IMPORT Pathname;
 IMPORT Pipe;
 IMPORT Process;
@@ -33,28 +33,88 @@ VAR DoDebug := Debug.DebugThis("PROCUTILS");
 
 TYPE
   PrivateCompletion = Completion OBJECT
-    po, pe: Writer;
-    pi: Reader;
-    main: MainClosure;
-    th: Thread.T;
+    po, pe  : Writer;
+    pi      : Reader;
+    main    : MainClosure;
+    th      : Thread.T;
   OVERRIDES
     wait := Wait;
+    abort := Abort;
+    getState := GetState;
   END;
 
   MainClosure = Thread.Closure OBJECT
-    c: PrivateCompletion;
-    src: Rd.T;
-    wd0: Pathname.T;
-    created := FALSE;
-    mu : MUTEX;
-    cn : Thread.Condition;
-    sub : Process.T := NIL;
+    c       : PrivateCompletion;
+    src     : Rd.T;
+    wd0     : Pathname.T;
+    mu      : MUTEX;
+    cn      : Thread.Condition;
+
+    sub     : Process.T := NIL;
+    created             := FALSE;
+
+    state               := State.New;
+    
   OVERRIDES
     apply := Apply;
   END;
 
   SSClosure = Thread.Closure OBJECT ss: SS; OVERRIDES apply:=SSApply; END;
 
+PROCEDURE Abort(pc : PrivateCompletion) =
+  VAR
+    id : Process.ID;
+  BEGIN
+    Debug.Out("ProcUtils.Abort");
+    LOCK pc.main.mu DO
+      IF pc.main.sub # NIL THEN
+        id := Process.GetID(pc.main.sub);
+        Debug.Out("ProcUtils.Abort id=" & Int(id))
+      ELSE
+        Debug.Out("ProcUtils.Abort pc.main.sub was NIL");
+        RETURN
+      END
+    END;
+
+
+    IF DoDebug THEN
+      Debug.Out(F("Abort killing sub: HUP (%s,%s)",
+                  Int(id), Int(Usignal.SIGHUP)))
+    END;
+    EVAL Usignal.kill(id, Usignal.SIGHUP); (* HangUP *)
+
+    Thread.Pause(1.0d0);
+
+    IF DoDebug THEN
+      Debug.Out(F("Abort killing sub: INT (%s,%s)",
+                  Int(id), Int(Usignal.SIGINT)))
+    END;
+    EVAL Usignal.kill(id, Usignal.SIGINT); (* INTerrupt *)
+
+    Thread.Pause(1.0d0);
+
+    IF DoDebug THEN
+      Debug.Out(F("Abort killing sub: TERM (%s,%s)",
+                  Int(id), Int(Usignal.SIGTERM)))
+    END;
+    EVAL Usignal.kill(id, Usignal.SIGTERM); (* TERMinate *)
+    
+    Thread.Pause(1.0d0);
+
+    IF DoDebug THEN
+      Debug.Out(F("Abort killing sub: KILL (%s,%s)",
+                  Int(id), Int(Usignal.SIGKILL)))
+    END;
+    EVAL Usignal.kill(id, Usignal.SIGKILL); (* KILL *)
+  END Abort;
+
+PROCEDURE GetState(pc : PrivateCompletion) : State =
+  BEGIN
+    LOCK pc.main.mu DO
+      RETURN pc.main.state
+    END
+  END GetState;
+  
 PROCEDURE SSApply(self: SSClosure): REFANY =
   BEGIN
     TRY
@@ -109,10 +169,10 @@ PROCEDURE Run(source: Rd.T;
              pe := ForkWriter(stderr),
              pi := ForkReader(stdin),
              main := NEW(MainClosure, 
-                         src:=source, 
-                         wd0:=wd0,
-                         mu := NEW(MUTEX), 
-                         cn := NEW(Thread.Condition)));
+                         src := source, 
+                         wd0 := wd0,
+                         mu  := NEW(MUTEX), 
+                         cn  := NEW(Thread.Condition)));
   BEGIN
     c.main.c := c;
     c.th := Thread.Fork(c.main);
@@ -204,9 +264,13 @@ PROCEDURE Apply(self: MainClosure): REFANY =
               END
             END;
 
+            LOCK self.mu DO
+              self.state := State.Starting
+            END;
+            
             VAR
               code : Process.ExitCode;
-              sub : Process.T;
+              sub  : Process.T;
             BEGIN
               IF DoDebug THEN
                 Debug.Out("ProcUtils.Apply.Exec: creating subprocess")
@@ -215,6 +279,9 @@ PROCEDURE Apply(self: MainClosure): REFANY =
                 sub := Process.Create(l.head, params^,
                                       NIL, wd,
                                       stdin, stdout,stderr);
+                LOCK self.mu DO
+                  self.state := State.Created
+                END
               EXCEPT
                 OSError.E(x) =>
                   Debug.Out("Got exception OSError.E in Process.Create(" & l.head & "...) : " & AL.Format(x));
@@ -241,7 +308,15 @@ PROCEDURE Apply(self: MainClosure): REFANY =
                 Debug.Out("ProcUtils.Apply.Exec: waiting for subprocess")
               END;
 
+              LOCK self.mu DO
+                self.state := State.Running
+              END;
+              
               code := Process.Wait(sub);
+
+              LOCK self.mu DO
+                self.state := State.CleaningUp
+              END;
 
               IF DoDebug THEN
                 Debug.Out("ProcUtils.Apply.Exec: subprocess returned " & 
@@ -288,6 +363,9 @@ PROCEDURE Apply(self: MainClosure): REFANY =
   <*FATAL Timeout*>
   BEGIN
     IF wd = NIL THEN wd := "."; END;
+
+    LOCK self.mu DO self.state := State.Parsing END;
+    
     TRY
       TRY
       TRY
@@ -337,7 +415,10 @@ PROCEDURE Apply(self: MainClosure): REFANY =
             PutArg();
           UNTIL c IN Break1;
           IF DoDebug THEN Debug.Out("Calling Exec") END;
+
+          
           Exec();
+
           IF DoDebug THEN Debug.Out("Exec Returned") END;
         END
       EXCEPT Rd.EndOfFile =>
@@ -388,15 +469,29 @@ PROCEDURE Apply(self: MainClosure): REFANY =
           *)
         END
       END;
+      LOCK self.mu DO
+        self.state := State.Done
+      END;
       RETURN NIL;
     EXCEPT
-      ErrorExit(ee) => RETURN ee
+      ErrorExit(ee) =>
+      LOCK self.mu DO
+        self.state := State.ErrorExit
+      END;
+      RETURN ee
     |
       OSError.E(e) => 
-        RETURN NEW(OS, error := FormatOSError(e))
+      LOCK self.mu DO
+        self.state := State.OsErrorExit
+      END;
+      RETURN NEW(OS, error := FormatOSError(e))
     |
-      Rd.Failure(e) => 
-        RETURN NEW(Error, error := FormatOSError(e))
+      Rd.Failure(e) =>
+      LOCK self.mu DO
+        self.state := State.RdFailureExit
+      END;
+
+      RETURN NEW(Error, error := FormatOSError(e))
     END
   END Apply;
 
@@ -533,12 +628,20 @@ PROCEDURE WDApply(cl : WatchdogCl) : REFANY =
             Thread.Alert(cl.alertTh);
 
             WITH subId = Process.GetID(cl.killSub) DO
-              IF DoDebug THEN Debug.Out("Watchdog killing sub: INT") END;
+              IF DoDebug THEN
+                Debug.Out(F("Watchdog killing sub: INT (%s,%s)",
+                            Int(subId), Int(Usignal.SIGINT)))
+              END;
               EVAL Usignal.kill(subId, Usignal.SIGINT);
+              
               Thread.Pause(1.0d0);
-              IF DoDebug THEN Debug.Out("Watchdog killing sub: KILL") END;
+              
+              IF DoDebug THEN
+                Debug.Out(F("Watchdog killing sub:  (%s,%s)",
+                            Int(subId), Int(Usignal.SIGKILL)))
+              END;
               EVAL Usignal.kill(subId, Usignal.SIGKILL);
-              IF DoDebug THEN Debug.Out("Watchdog done") END
+              
             END;
 
             RETURN NIL

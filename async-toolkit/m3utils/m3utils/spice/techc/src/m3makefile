@@ -1,0 +1,30 @@
+import ("libm3")
+import ("parseparams")
+import ("cit_util")
+import ("tracelib")
+
+interface ("TechConfig")
+interface ("TechProcess")
+module ("TechSimulate")
+
+interface ("N5TechProcess")
+interface ("N3TechProcess")
+interface ("N3ETechProcess")
+
+interface ("P1276p4TechProcess")
+interface ("P1278p3TechProcess")
+
+interface ("TechTechs")
+interface ("TechProgress")
+
+module ("Watchdog")
+module ("TechKill")
+module ("TechConvert")
+module ("TechMeasure")
+
+module ("TechSetup")
+module ("SimWatcher")
+
+implementation ("Main")
+
+program ("techc")

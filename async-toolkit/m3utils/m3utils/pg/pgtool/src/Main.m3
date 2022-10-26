@@ -26,7 +26,7 @@ IMPORT SortedRangeTextTbl;
 IMPORT RefList;
 IMPORT Wr, FileWr, OSError;
 IMPORT Thread;
-IMPORT TextUtils;
+IMPORT CitTextUtils AS TextUtils;
 IMPORT TextWr;
 IMPORT AL;
 IMPORT TextTextTbl, TextSeq;

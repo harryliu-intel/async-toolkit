@@ -318,7 +318,7 @@
 )
 
 (define (name-to-arcs nm)
-  (let ((arcs (TextUtils.Shatter nm "." "" #f)))
+  (let ((arcs (CitTextUtils.Shatter nm "." "" #f)))
     (let loop ((p arcs)
                (res '()))
       (if (null? p) (reverse res) (loop (get-field-s p 'tail)
