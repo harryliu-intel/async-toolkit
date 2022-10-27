@@ -20,7 +20,7 @@ FROM SimSupport IMPORT ClockSrc, IntegerSrc, SeqSrc, Reader;
 IMPORT LambPrograms;
 IMPORT LambTemplate, Bundle;
 IMPORT ProbeType;
-IMPORT TextUtils;
+IMPORT CitTextUtils AS TextUtils;
 
 CONST SI = BitInteger.Small;
 
