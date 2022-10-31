@@ -155,7 +155,7 @@ the final destination of the SHIP'd contents.
 
 ```
 setenv GTR_HOME $PWD/gtr
-/p/cth/bin/cth_psetup -p tfc -cfg tfc_n3.cth -tool librarycompiler,fusioncompiler,ship -ward BUILD/cdp_lamb_n3ehd_1ftr1w1c_4d_10b \
+/p/cth/bin/cth_psetup -p tfc -cfg tfc_ipde_n3.cth -tool librarycompiler,fusioncompiler,ship -ward BUILD/cdp_lamb_n3ehd_1ftr1w1c_4d_10b \
    -cmd "icc2_lm_shell -batch -x 'source $GTR_HOME/tcl/gtr_main.tcl ; gtr_lamb_gen_views -tech_node n3e -data_width 10 -data_depth 4 -flow_through'"
 ```
 
