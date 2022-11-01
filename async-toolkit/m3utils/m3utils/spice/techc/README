@@ -1,0 +1,16 @@
+How to run this code, example:
+
+cd m3utils/spice/techc # this directory
+mkdir work 
+cd work
+../src/maketask.sh -quick
+nbtask load latest.task
+nbstatus tasks
+cd nb.latest
+cat *.run/measure.dat > all.dat
+../../digest/AMD64_LINUX/techdigest -f all.dat -o graphs -C -se 1e15
+cd graphs
+gnuplot
+set style data linespoints
+plot "n5_tt_ulvtll_xor_dyn_xa_50.dat"
+
