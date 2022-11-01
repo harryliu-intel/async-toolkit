@@ -440,7 +440,7 @@
     (map (lambda(fld) (dis (ass-sql fld) mp)) fields) 
     (dis dnl mp)
 
-    (dis "    WITH q1 = \"update " tbl-name " set \" & TextUtils.FormatInfix(query,\",\") & \" where " 
+    (dis "    WITH q1 = \"update " tbl-name " set \" & CitTextUtils.FormatInfix(query,\",\") & \" where " 
    tbl-name "_id=\"&Fmt.Int(record." tbl-name "_id)&\";\", " dnl mp)
     (dis "         q2 = \"delete from clean where tabl='" tbl-name "' and rowid=\"&Fmt.Int(record." tbl-name "_id)&\";\"" dnl mp)
     (dis "      DO" dnl mp)
@@ -509,9 +509,9 @@
    fields) 
 
     (dis dnl mp)
-    (dis "    db.aExec(\"insert into " tbl-name " (\" & TextUtils.FormatInfix(fields,\",\") & \")\"&"
+    (dis "    db.aExec(\"insert into " tbl-name " (\" & CitTextUtils.FormatInfix(fields,\",\") & \")\"&"
    dnl mp)
-    (dis "                 \" values (\"& TextUtils.FormatInfix(values,\",\")&\")\", ex, MakeResCallback(db))" dnl mp)
+    (dis "                 \" values (\"& CitTextUtils.FormatInfix(values,\",\")&\")\", ex, MakeResCallback(db))" dnl mp)
     (dis "  END " mp)
     #t))
 
@@ -570,7 +570,7 @@
     (dis "        IF f IN maxFields THEN fields.addhi(FieldNames[f]) END" dnl mp)
     (dis "      END;" dnl mp)
 
-    (dis "      Wx.PutText(wx, \"insert into " tbl-name " (\" & TextUtils.FormatInfix(fields,\",\") & \") SELECT \"); " dnl mp)
+    (dis "      Wx.PutText(wx, \"insert into " tbl-name " (\" & CitTextUtils.FormatInfix(fields,\",\") & \") SELECT \"); " dnl mp)
 
     (dis "      FOR i := FIRST(record) TO LAST(record) DO" dnl mp)
     (dis "        VAR values := NEW(TextSeq.T).init(); BEGIN" dnl mp)
@@ -585,7 +585,7 @@
                   "           END;" dnl mp)))
 	 fields)
 		       
-    (dis "          Wx.PutText(wx, TextUtils.FormatInfix(values, \",\"));" dnl mp)
+    (dis "          Wx.PutText(wx, CitTextUtils.FormatInfix(values, \",\"));" dnl mp)
     (dis "          IF i # LAST(record) THEN" dnl mp)
     (dis "            Wx.PutText(wx, \" UNION SELECT \")" dnl mp)
     (dis "          END" dnl mp)
@@ -606,9 +606,9 @@
    fields) 
 
     (dis dnl mp)
-    (dis "    RETURN \"(\" & TextUtils.FormatInfix(fields,\",\") & \")\"&"
+    (dis "    RETURN \"(\" & CitTextUtils.FormatInfix(fields,\",\") & \")\"&"
    dnl mp)
-    (dis "                 \" values (\"& TextUtils.FormatInfix(values,\",\")&\")\"" dnl mp)
+    (dis "                 \" values (\"& CitTextUtils.FormatInfix(values,\",\")&\")\"" dnl mp)
     (dis "  END " mp)
     #t))
 
@@ -804,7 +804,7 @@
    (append (list "DBerr" "Database" "DatabaseTable" "DesynchronizedDB"
                  "UpdateMonitor" "Thread" "Random" "Debug"
            "Scan" "Fmt" "Lex" "FloatMode" "PGSQLScan" "TextSeq" "Wx"
-           "TextUtils" "DBTable")
+           "CitTextUtils" "DBTable")
      (map type->m3-intfname 
           (filter m3-import? (map cadr fields))))))
     (dis-imports imports ip) 
