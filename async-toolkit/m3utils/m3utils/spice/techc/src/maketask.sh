@@ -312,3 +312,5 @@ cat >> ${taskfile} <<EOF
        }
 }
 EOF
+
+ln -sf ${RUNDIR} nb.latest
