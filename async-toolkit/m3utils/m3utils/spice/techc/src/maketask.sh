@@ -1,12 +1,15 @@
 #!/bin/sh
 
-ROOTDIR=/nfs/site/disks/zsc3_fon_fe_0001/mnystroe/m3utils/spice/techc
+# run this script in the "work" subdirectory
+# m3utils/spice/techc/work
+
+ROOTDIR=`pwd`/..
 SRCDIR=${ROOTDIR}/src
 BINDIR=${ROOTDIR}/AMD64_LINUX
 PROG=${BINDIR}/techc
 TEMPLATE=${SRCDIR}/ckt.sp
 DATE=`date -Is`
-RUNDIR=${SRCDIR}/nb.run-${DATE}
+RUNDIR=`pwd`/nb.run-${DATE}
 
 nb_queue=zsc3_express
 nb_qslot=/XCC/LBM/SD
@@ -49,6 +52,9 @@ paras="true"
 #gates="xor buf aoi"
 gates="xor buf aoi"
 
+#allvts="true"
+allvts="false"
+
 runmode="default"
 
 if [ "$1" == "-quick" ]; then
@@ -88,10 +94,94 @@ if [ "$1" == "-temp" ]; then
     step=4
     techs="n3e"
     
-    mintemp=55
+    mintemp=0
     maxtemp=105
     stptemp=5
-    t=0
+    t=${mintemp}
+    temps=""
+    
+    while [ "${t}" -lt "${maxtemp}" ]; do
+        temps="${temps} ${t}"
+        t=`expr ${t} + ${stptemp}`
+    done
+
+fi
+
+if [ "$1" == "-tempi3" ]; then
+    runmode="override"
+    volts=${buf_volts}
+    gates="aoi"
+    modes="dyn"
+    paras="true"
+    corners="ff tt ss"
+    step=4
+    techs="1276p4"
+    
+    mintemp=0
+    maxtemp=105
+    stptemp=5
+    t=${mintemp}
+    temps=""
+    
+    while [ "${t}" -lt "${maxtemp}" ]; do
+        temps="${temps} ${t}"
+        t=`expr ${t} + ${stptemp}`
+    done
+
+fi
+
+if [ "$1" == "-i3sensor" ]; then
+    runmode="override"
+    volts=${buf_volts}
+    gates="buf"
+    modes="dyn"
+    paras="true"
+    corners="tt ss ff"
+    step=4
+    techs="1276p4"
+    
+    mintemp=0
+    maxtemp=125
+    stptemp=2
+    t=${mintemp}
+    temps=""
+    
+    while [ "${t}" -le "${maxtemp}" ]; do
+        temps="${temps} ${t}"
+        t=`expr ${t} + ${stptemp}`
+    done
+
+    minvolts=500
+    maxvolts=1100
+    stpvolts=20
+    v=${minvolts}
+    volts=""
+
+    while [ "${v}" -le "${maxvolts}" ]; do
+        thisv=`echo "${v} * 0.001" | bc`
+        echo $thisv
+        volts="${thisv} ${volts}"
+
+        v=`expr ${v} + ${stpvolts}`
+    done
+
+fi
+
+if [ "$1" == "-tempcorners" ]; then
+    runmode="override"
+    volts=${buf_volts}
+    gates="buf"
+    modes="dyn"
+    paras="true"
+#    corners="tt ff ss"
+    corners="ff ss"
+    step=4
+    techs="n3e"
+    
+    mintemp=20
+    maxtemp=105
+    stptemp=5
+    t=${mintemp}
     temps=""
     
     while [ "${t}" -lt "${maxtemp}" ]; do
@@ -145,14 +235,31 @@ for volt in ${volts}; do
 for tech in ${techs}; do
 
     if [ "${tech}" == "n5" ]; then
-        trantypes="elvt ulvt ulvtll lvt lvtll svt" 
-        # svtll seems some weird option -- delete for now
+        if [ "${allvts}" == "true" ]; then
+            trantypes="elvt ulvt ulvtll lvt lvtll svt" 
+            # svtll seems some weird option -- delete for now
+        else
+            trantypes="elvt ulvt ulvtll"
+        fi
     elif [ "${tech}" == "n3e" ]; then
         trantypes="elvt ulvt ulvtll lvt lvtll svt"
+        if [ "${allvts}" == "true" ]; then
+            trantypes="elvt ulvt ulvtll lvt lvtll svt" 
+        else
+            trantypes="elvt ulvt ulvtll"
+        fi
     elif [ "${tech}" == "1278p3" ]; then
-        trantypes="ulvt lvt svt svtll"
+        if [ "${allvts}" == "true" ]; then
+            trantypes="ulvt lvt svt svtll"
+        else
+            trantypes="ulvt lvt"
+        fi
     else
-        trantypes="ulvt lvt svt"
+        if [ "${allvts}" == "true" ]; then
+            trantypes="ulvt lvt svt"
+        else
+            trantypes="ulvt lvt"
+        fi
     fi
 
     for tran in ${trantypes}; do
@@ -190,7 +297,7 @@ done
 done
 done
 
-echo "${tasknum} tasks"
+echo "${tasknum} jobs"
 
 launchnum=0
 
