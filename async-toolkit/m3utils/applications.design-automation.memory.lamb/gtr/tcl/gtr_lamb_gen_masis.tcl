@@ -126,7 +126,7 @@ proc gtr_lamb_gen_masis { args } {
      lappend ports { ren Input ReadEnable { { PortId r}} }
      lappend ports { clk Input Clock { {PortId "w r" }} }
    } else {
-     lappend ports { clk Input Clock { {PortId "r" }} }
+     lappend ports { clk Input Clock { {PortId "w" }} }
    }
    lappend ports [list wadr Input Address [list [list PortId w] [list Range \[[expr $addr_width - 1]:0\] ] ]]
    lappend ports [list radr Input Address [list [list PortId r] [list Range \[[expr $addr_width - 1]:0\] ] ]]
