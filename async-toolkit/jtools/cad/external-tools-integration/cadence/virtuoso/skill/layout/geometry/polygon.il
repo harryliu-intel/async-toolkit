@@ -838,3 +838,12 @@ procedure( FractureAllPolygons(lib name view)
    )
 )
 
+(defun IsRectOutsidePolygon (rect points)
+  (let ((out nil))
+    (when !(IsPointInPolygon (list (caar rect) (cadar rect)) points) &&
+          !(IsPointInPolygon (list (caadr rect) (cadadr rect)) points)
+      out = t
+      )
+    out
+    )
+  )
