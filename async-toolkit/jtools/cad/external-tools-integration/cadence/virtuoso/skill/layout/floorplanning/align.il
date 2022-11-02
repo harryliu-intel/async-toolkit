@@ -183,25 +183,53 @@
     )
   )
 
-; Check if an instance is aligned
-(defun CheckInstanceAlignment (inst)
-  inst->status=="unplaced" || (MoveAligned "C" ?CV inst->cellView ?instances (list inst))
+; Check if an instance is aligned including that parent grid is an
+; integer multiple of instance grid
+(defun CheckInstanceAlignment (inst @key (check_x t) (check_y t))
+  (let (align pgx pgy pox poy gx gy ox oy xy x y nx ny)
+    ; parent alignment
+    align=(GetCellAlignment ?CV inst->cellView)
+    pgx=(car  (car  align))
+    pgy=(cadr (car  align))
+    pox=(car  (cadr align))
+    poy=(cadr (cadr align))
+
+    ; transformed instance alignment
+    align=(GetCellAlignment ?CV inst->master)
+    gx=(car (car align))
+    gy=(cadr (car align))
+    ox=(car (cadr align))
+    oy=(cadr (cadr align))
+    xy=(dbTransformPoint ox:oy (list 0:0 inst->orient))
+    ox=(car xy)
+    oy=(cadr xy)
+    ox=ox-pox
+    oy=oy-poy
+    x=(car  inst->xy)
+    y=(cadr inst->xy)
+    nx=(round (x+ox)/gx)*gx-ox
+    ny=(round (y+oy)/gy)*gy-oy
+
+    ; check alignment
+    pgx=(round pgx/MfgGrid)
+    pgy=(round pgy/MfgGrid)
+    gx=(round gx/MfgGrid)
+    gy=(round gy/MfgGrid)
+    x=(round x/MfgGrid)
+    y=(round y/MfgGrid)
+    nx=(round nx/MfgGrid)
+    ny=(round ny/MfgGrid)
+    inst->status=="unplaced" || (!check_x || nx==x && (mod pgx gx)==0) && (!check_y || ny==y && (mod pgy gy)==0)
+    )
   )
 
-; Return list of misaligned instances including when instance grids
-; are not even divisors of parent grids.
-(defun MisalignedInstances (@key (CV (geGetEditCellView)))
+; Return list of misaligned instances
+(defun MisalignedInstances (@key (CV (geGetEditCellView)) (check_x t) (check_y t))
   (let (misaligned align gx gy gxi gyi)
     misaligned=nil
-    align=(GetCellAlignment ?CV CV)
-    gx=(round (car  (car align))/MfgGrid)
-    gy=(round (cadr (car align))/MfgGrid)
     (foreach inst CV->instances
-             align=(GetCellAlignment ?CV inst->master)
-             gxi=(round (car  (car align))/MfgGrid)
-             gyi=(round (cadr (car align))/MfgGrid)
-             (unless (mod gx gxi)==0 && (mod gy gyi)==0 && (CheckInstanceAlignment inst)
-                     misaligned=(cons inst misaligned))
+             (unless (CheckInstanceAlignment inst ?check_x check_x ?check_y check_y)
+               misaligned=(cons inst misaligned))
              )
     misaligned
     )

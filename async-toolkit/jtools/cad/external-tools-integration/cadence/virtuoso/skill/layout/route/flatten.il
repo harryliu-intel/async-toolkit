@@ -684,10 +684,10 @@ useICV = t
     (foreach inst CV->instances
              (when inst->viewName=="floorplan"
                    (when oldMasters oldMasters[inst]=inst->master)
-                   (LegalizeShortInstance inst)
-                   (when (HasLayoutVariants ?CV inst->master) (ChooseLayoutVariant inst))
                    lCV=(ReadCV inst->libName inst->cellName "layout")
                    (when lCV inst->master=lCV)
+                   (LegalizeShortInstance inst)
+                   (when (HasLayoutVariants ?CV inst->master) (ChooseLayoutVariant inst))
                    )
              )
     )
@@ -756,22 +756,18 @@ useICV = t
 
 ; Flip and offset mis-aligned single-height standard cells
 (defun LegalizeShortInstance (inst)
-  (let (x y orient std type short flip)
+  (let (x y type)
     type = (dbFindProp inst->master "CopyExact")->value
-    (when type
-      std = (strncmp type "g1i" 3)==0 || (strncmp type "g1m" 3)==0
-      x = (car  inst->xy)
-      y = (cadr inst->xy)
-      short = (substring type 13 1)=="n"
-      flip = (if (dbFindProp inst->master "YAlignOffset")->value==TrackPitch 1 0)
-      misalign = (posmod (round y/TrackPitch) 2)!=flip
-      (when std && short && misalign
-            (cond (inst->orient=="R0"   inst->orient="MX"   inst->xy=x:y+TrackPitch)
-                  (inst->orient=="MX"   inst->orient="R0"   inst->xy=x:y-TrackPitch)
-                  (inst->orient=="MY"   inst->orient="R180" inst->xy=x:y+TrackPitch)
-                  (inst->orient=="R180" inst->orient="MY"   inst->xy=x:y-TrackPitch)
-                  )
-            )
+    (when ((strncmp type "g1i" 3)==0 || (strncmp type "g1m" 3)==0) && (substring type 13 1)=="n"
+      (unless (CheckInstanceAlignment inst ?check_x nil)
+        x = (car  inst->xy)
+        y = (cadr inst->xy)
+        (cond (inst->orient=="R0"   inst->orient="MX"   inst->xy=x:y+TrackPitch)
+              (inst->orient=="MX"   inst->orient="R0"   inst->xy=x:y-TrackPitch)
+              (inst->orient=="MY"   inst->orient="R180" inst->xy=x:y+TrackPitch)
+              (inst->orient=="R180" inst->orient="MY"   inst->xy=x:y-TrackPitch)
+              )
+        )
       )
     )
   t
