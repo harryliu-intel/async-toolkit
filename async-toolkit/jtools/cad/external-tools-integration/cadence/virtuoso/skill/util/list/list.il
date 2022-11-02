@@ -671,4 +671,14 @@
     (reverse target)
     )
   )
-  
+
+(defun FilterList (shapes match)
+  (let ((newshapes nil))
+    (foreach shape shapes
+      (unless (apply match (list shape))
+        newshapes = (cons shape newshapes)
+        )
+      )
+    newshapes
+    )
+  )
