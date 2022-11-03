@@ -213,6 +213,7 @@
 
     ; export DEF
     (when doDef
+
       (printf "DEF Start %s\n" (getCurrentTime))
       statusDef = t
       ExportCV = (betterCopyCellView CV CV->libName CV->cellName "export_tmp" nil nil t)
@@ -253,9 +254,9 @@
           (when (and newName newName!=term->name)
             term->name = newName
             (dbRenameNet term->net newName))))
-
       ; offset for cell alignment and avoid negative numbers because RDT is stupid
       offset = (GetRDTOffset ?CV ExportCV)
+      (unless offset (error "Can't find RDTOffset\n"))
       (OffsetEverything offset ?CV ExportCV)
 
       ; save
@@ -547,6 +548,7 @@
         (top_name nil)
         (pinMap nil)
         (calibreOffset t)
+	(doTag t)
         )
   (let (TEMP WDIR Command status ImportCV layoutCV floorplanCV
              win instmap CID fields short_name offset file origFile oas rename)
@@ -639,9 +641,12 @@
               ?viewType "maskLayout" ?mode "a" ?window win)
       )
 
+    ; move extra halos to tag view
+    (when doTag (RemoveHalo ?CV ImportCV))
+
     ; execute custom function
     (FinishRouterImport ?CV ImportCV)
-
+    
     ; save layout
     (dbSave ImportCV)
 
@@ -918,9 +923,11 @@ DumbLayers = (list (list "SRAM" "fill")
 (defun GetRDTOffset (@key (CV (geGetEditCellView)))
   (let (bbox x y gx gy ox oy offset)
     offset = (cadr (GetCellAlignment ?CV CV))
+    (unless offset (error "Can't find RDTOffset"))
     ox=(car  offset)
     oy=(cadr offset)
     bbox=(GetPrbound CV)->bBox
+    (unless bbox (error "Can't find Prbound"))
     x=(car  (car bbox)) + ox
     y=(cadr (car bbox)) + oy
     (when x<0
@@ -934,3 +941,131 @@ DumbLayers = (list (list "SRAM" "fill")
     ox:oy
     )
   )
+
+
+(defun RemoveHalo (@key (CV (geGetEditCellView)))
+  (let (cv tagcv prb del allshapes GNDextras)
+    ; duplicate prbound from floorplan
+    prb = (GetPrbound CV)
+    (dbDeleteObject prb)
+    cv = (dbOpenCellViewByType (GetCastLibName CV->cellName) CV->cellName "floorplan")
+    prb = (GetPrbound cv)
+    (dbCreatePRBoundary CV prb->points)
+
+    tagcv = (dbOpenCellViewByType (GetCastLibName CV->cellName) CV->cellName "layout_tag" "maskLayout" "a")
+    (cdsp4edit ?CV tagcv)
+    (cdsp4add ?CV tagcv)
+    (DeleteAll tagcv)
+   
+    (printf "Removing apr halo outside prbound\n")
+    allshapes = CV->shapes
+    
+    ; labels mess up the processing
+    allshapes = (FilterList allshapes (lambda (shape) shape->objType=="label"))
+
+    ; need to keep the GND stripes that stick out
+    allshapes = (FilterList allshapes (lambda (shape) shape->lpp==Metal5LPP))
+    allshapes = (FilterList allshapes (lambda (shape) shape->lpp==Metal7LPP))
+    allshapes = (FilterList allshapes (lambda (shape) shape->lpp==Metal9LPP))
+    
+    ; delete all shapes that are entirely outside the prbound
+    (printf "  ... halo shapes\n")
+    allshapes = (FilterList allshapes (lambda (shape) !(IsRectOutsidePolygon shape->bBox prb->points)))
+    (foreach shape allshapes
+      (dbCopyFig shape tagcv)
+      (dbDeleteObject shape)
+      )
+      
+    ; need to do a few GND stripes at the edges
+    GNDExtras = (ExtraGNDShapes CV Metal5LPP prb)
+    GNDExtras = (append GNDExtras (ExtraGNDShapes CV Metal7LPP prb))
+    GNDExtras = (append GNDExtras (ExtraGNDShapes CV Metal9LPP prb))
+    (foreach shape GNDExtras
+      ;(printf "%s x=%f\n" (car shape->lpp) (caadr shape->bBox))
+      (dbCopyFig shape tagcv)
+      (dbDeleteObject shape)
+      )
+
+    ; do vias
+    (printf "  ... halo vias\n")
+    (foreach via (FilterList CV->vias (lambda (via) !(IsRectOutsidePolygon via->bBox prb->points)))
+        (dbCopyFig via tagcv)
+        (dbDeleteObject via)
+      )
+
+    ; do instances
+    (printf "  ... halo instances\n")
+    (foreach inst (FilterList CV->instances (lambda (inst) (IsPointInPolygon inst->xy prb->points)))
+      (dbCopyFig inst tagcv)
+      (dbDeleteObject inst)
+      )
+
+    ; delete the extra half-gap cell based on inst name, not coords
+    (foreach inst (FilterList CV->instances (lambda (inst) !(rexMatchp "gapfillout" inst->name)))
+      (dbCopyFig inst tagcv)
+      (dbDeleteObject inst)
+      )
+
+    ; add id layers that are the wrong shape
+    (dbCreatePolygon CV (list "lowVccSEL" "id") prb->points)
+    (dbCreatePolygon CV (list "b210h50pRegion" "id") prb->points)
+
+    ;;;;;;;;;;;;;
+    ; instantiate layout in tag view
+    (dbCreateInst tagcv CV "layout" 0:0 "R0")
+    (FixLayoutTag tagcv)
+    (dbSave tagcv)
+    (dbSave CV)
+    t
+    )
+  )
+
+(defun DeleteAll (CV)
+  (foreach inst CV->instances (dbDeleteObject inst))
+  (foreach shape CV->shapes (dbDeleteObject shape))
+  (foreach via CV->vias (dbDeleteObject via))
+  )
+
+(defun FixLayoutTag (CV)
+  (let ()
+    (Colorize ?CV CV)
+    (foreach shape CV->shapes
+      (when (car shape->lpp)=="m5" && shape->width==0.044
+        (SetShapeColor shape 2)
+        )
+      (when (car shape->lpp)=="m6" && shape->width==0.044
+        (SetShapeColor shape 2)
+        )
+      )
+    t
+    )
+  )
+
+(defun ExtraGNDShapes (CV lpp prb)
+  (let (drawing extrasW extrasE extras)
+    drawing = (FilterList CV->shapes (lambda (shape) shape->lpp!=lpp))
+    extrasW = (FilterList drawing (lambda (shape) (caadr shape->bBox)>=(caar prb->bBox)))
+    extrasE = (FilterList drawing (lambda (shape) (caar shape->bBox)<=(caadr prb->bBox)))
+    extras = (append extrasW extrasE)
+    )
+  )
+
+(defun PolygonVerticalEdges (points)
+  (let ((edges nil))
+    (foreach point points
+      edges = (cons (car point) edges)
+      )
+    edges
+    )
+  )
+
+(defun ShrinkRect (rect delta)
+  (let (x1 x2 y1 y2)
+    x1 = (caar rect) + delta
+    y1 = (cadar rect) + delta
+    x2 = (caadr rect) - delta
+    y2 = (cadadr rect) - delta
+    (list (list x1 y1) (list x2 y2))
+    )
+  )
+
