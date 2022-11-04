@@ -13,13 +13,16 @@ MODULE ConvertTrace EXPORTS Main;
 
    Author : Mika Nystrom <mika.nystroem@intel.com>
 
-   ct [-rename <dutName>] [-scaletime <timeScaleFactor>] [-offsettime <timeOffset>] [-offsetvoltage <voltageOffset>] [-dosources] [-dofiles] [ [-n <nodename>] ...] [-threads <fsdb_threads>] [-wthreads <write_threads>] [-fromworkdir] <inFileName> <outFileRoot>
+   ct [-rename <dutName>] [-scaletime <timeScaleFactor>] [-offsettime <timeOffset>] [-offsetvoltage <voltageOffset>] [-dosources] [-dofiles] [ [-n <nodename>] ...] [-threads <fsdb_threads>] [-wthreads <write_threads>] [-fromworkdir] [-nomerge] <inFileName> <outFileRoot>
 
    will generate <outFileRoot>.trace and <outFileRoot>.names
 
    -fromworkdir skips the parsing and generates the 
                 trace file from the work directory directly
                 NOT YET IMPLEMENTED!
+
+   -nomerge     Do not generate final .trace file, instead leave work
+                product in work directory
 
 *)
 
@@ -53,7 +56,7 @@ CONST LR = LongReal;
       
 VAR doDebug := Debug.DebugThis("CT");
 
-CONST Usage = "[-rename <dutName>] [-scaletime <timeScaleFactor>] [-offsettime <timeOffset>] [-offsetvoltage <voltageOffset>] [-dosources] [-dofiles] [-maxfiles <nfiles>] [-wd <scratch dir>] ([-n <nodename>] ...) ([-r <regex>] ...) [-wthreads <write_threads>] [-fromworkdir] <inFileName> <outFileRoot>";
+CONST Usage = "[-rename <dutName>] [-scaletime <timeScaleFactor>] [-offsettime <timeOffset>] [-offsetvoltage <voltageOffset>] [-dosources] [-dofiles] [-maxfiles <nfiles>] [-wd <scratch dir>] ([-n <nodename>] ...) ([-r <regex>] ...) [-wthreads <write_threads>] [-fromworkdir] [-nomerge] <inFileName> <outFileRoot>";
 
 CONST DefMaxFiles = 1000;
 
@@ -72,16 +75,17 @@ PROCEDURE FileRd_Open(fn : Pathname.T) : Rd.T RAISES { OSError.E } =
     RETURN FileRd.Open(fn)
   END FileRd_Open;
 
-VAR
-  singleReader : TempReader.T;
-
-PROCEDURE ReadEntireFile(idx : CARDINAL; VAR data : ARRAY OF LONGREAL)
+PROCEDURE ReadEntireFile(tempReader   : TempReader.T;
+                         idx          : CARDINAL;
+                         VAR data     : ARRAY OF LONGREAL)
   RAISES { Rd.Failure, OSError.E } =
   BEGIN
-    singleReader.readEntireFile(idx, data)
+    tempReader.readEntireFile(idx, data)
   END ReadEntireFile;
   
-PROCEDURE CreateBuffers(fnr : FileNamer.T; VAR time, data : REF ARRAY OF LONGREAL)
+PROCEDURE CreateBuffers(tempReader   : TempReader.T;
+                        fnr            : FileNamer.T;
+                        VAR time, data : REF ARRAY OF LONGREAL)
   RAISES { OSError.E, Rd.Failure } =
   (* create time and data buffers, and read time into the time buffer *)
   VAR
@@ -101,7 +105,7 @@ PROCEDURE CreateBuffers(fnr : FileNamer.T; VAR time, data : REF ARRAY OF LONGREA
 
     IF doDebug THEN Debug.Out("Reading time data") END;
     
-    ReadEntireFile(0, time^);
+    ReadEntireFile(tempReader, 0, time^);
 
     IF NUMBER(time^) = 0 THEN
       Debug.Out("Time is empty")
@@ -110,7 +114,8 @@ PROCEDURE CreateBuffers(fnr : FileNamer.T; VAR time, data : REF ARRAY OF LONGREA
     END
   END CreateBuffers;
   
-PROCEDURE WriteSources(fnr : FileNamer.T) =
+PROCEDURE WriteSources(tempReader : TempReader.T;
+                       fnr          : FileNamer.T) =
   (* read data from each file in temp directory and output
      in reordered trace format for fast aplot access *)
   VAR
@@ -134,10 +139,10 @@ PROCEDURE WriteSources(fnr : FileNamer.T) =
       WITH fn   = fnr.name(i) DO
         TRY
           IF i = 0 THEN
-            CreateBuffers(fnr, time, data)
+            CreateBuffers(tempReader, fnr, time, data)
           ELSE
               Wr.PutText(sWr, "* source for " & names.get(i) & "\n");
-              ReadEntireFile(i, data^);
+              ReadEntireFile(tempReader, i, data^);
               Wr.PutText(sWr, F("V%s src%s 0 PWL (\n", Int(i), Int(i)));
               FOR i := FIRST(data^) TO LAST(data^) DO
                 Wr.PutText(sWr, F("+   %20s       %20s\n",
@@ -173,7 +178,7 @@ PROCEDURE Unslash(fn : Pathname.T) : Pathname.T =
     RETURN TextUtils.Replace(fn, "/", "::")
   END Unslash;
 
-PROCEDURE WriteFiles(fnr : FileNamer.T) =
+PROCEDURE WriteFiles(tempReader : TempReader.T; fnr : FileNamer.T) =
   (* read data from each file in temp directory and output
      in simple ASCII format *)
   VAR
@@ -192,7 +197,7 @@ PROCEDURE WriteFiles(fnr : FileNamer.T) =
       WITH fn   = fnr.name(i) DO
         TRY
           IF i = 0 THEN
-            CreateBuffers(fnr, time, data);
+            CreateBuffers(tempReader, fnr, time, data);
           ELSE
               TRY
                 sFn := tDn & "/" & Unslash(names.get(i));
@@ -201,7 +206,7 @@ PROCEDURE WriteFiles(fnr : FileNamer.T) =
                 OSError.E(x) => Debug.Error("Unable to open file \"" & sFn & "\" for writing : OSError.E : " & AL.Format(x))
               END;
 
-              ReadEntireFile(i, data^);
+              ReadEntireFile(tempReader, i, data^);
 
               FOR i := FIRST(data^) TO LAST(data^) DO
                 Wr.PutText(sWr, F("%20s       %20s\n",
@@ -261,6 +266,8 @@ VAR
   wthreads : CARDINAL := 1;
 
   interpolate := Fsdb.NoInterpolate;
+
+  noMerge := FALSE;
   
 TYPE
   ParseFmt = { Tr0, Fsdb };
@@ -314,6 +321,9 @@ BEGIN
     IF pp.keywordPresent("-maxfiles") THEN
       maxFiles := pp.getNextInt()
     END;
+
+    noMerge := pp.keywordPresent("-nomerge");
+    
     WHILE pp.keywordPresent("-n") DO
       IF restrictNodes = NIL THEN
         restrictNodes := NEW(TextSetDef.T).init()
@@ -442,14 +452,17 @@ BEGIN
       END
     END;
 
-    singleReader := NEW(TempReader.T).init(fnr);
+    VAR
+      tempReader := NEW(TempReader.T).init(fnr);
+    BEGIN
     
-    IF doSources THEN
-      WriteSources(fnr)
-    END;
-    
-    IF doFiles THEN
-      WriteFiles(fnr)
+      IF doSources THEN
+        WriteSources(tempReader, fnr)
+      END;
+      
+      IF doFiles THEN
+        WriteFiles(tempReader, fnr)
+      END
     END
   END
 
