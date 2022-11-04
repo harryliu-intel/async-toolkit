@@ -73,7 +73,7 @@ PROCEDURE Init(t : T; root : Pathname.T) : T
 
 PROCEDURE GetNodes(t : T) : CARDINAL =
   BEGIN
-    RETURN t.fwdTbl.size()
+    RETURN t.revTbl.size()
   END GetNodes;
 
 PROCEDURE GetCanonicalName(t : T; idx : CARDINAL) : TEXT =

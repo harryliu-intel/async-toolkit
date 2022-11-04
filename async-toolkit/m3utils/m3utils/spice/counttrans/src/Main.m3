@@ -103,10 +103,10 @@ BEGIN
 
   Debug.Out(F("%s steps, %s nodes", Int(nSteps), Int(nNodes)));
 
-  arr := NEW(REF ARRAY OF LONGREAL, nSteps);
-  tarr := NEW(REF ARRAY OF LONGREAL, nSteps);
+  arr      := NEW(REF ARRAY OF LONGREAL, nSteps);
+  tarr     := NEW(REF ARRAY OF LONGREAL, nSteps);
   tranCnts := NEW(REF ARRAY OF IntPair.T, nNodes);
-  minReps := NEW(REF ARRAY OF IntLRPair.T, nNodes);
+  minReps  := NEW(REF ARRAY OF IntLRPair.T, nNodes);
   
   trace.getTimeData(tarr^);
 
