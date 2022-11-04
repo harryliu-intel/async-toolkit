@@ -14,6 +14,9 @@ TYPE
 
     getSteps() : CARDINAL;
 
+    getNodes() : CARDINAL;
+    (* node 0 is always TIME and is included in the count *)
+
     getTimeStep() : LONGREAL;
     
     getTimeData(VAR timea : ARRAY OF LONGREAL)
@@ -21,7 +24,9 @@ TYPE
     (* = .getNodeArray(0, timea) *)
 
     getNodeData(idx : CARDINAL; VAR arr : ARRAY OF LONGREAL)
-      RAISES { Rd.Failure, Rd.EndOfFile } ;
+    RAISES { Rd.Failure, Rd.EndOfFile } ;
+
+    getCanonicalName(idx : CARDINAL) : TEXT;
 
     close() RAISES { Rd.Failure };
   END;

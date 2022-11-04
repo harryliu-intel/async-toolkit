@@ -1,0 +1,15 @@
+import ("libm3")
+import ("cit_util")
+import ("parseparams")
+import ("spicelib")
+import ("tracelib")
+
+implementation ("Main")
+
+KeyPair("IntLR", "Integer", "LongrealType")
+
+Sequence("IntLR", "IntLRPair")
+array_sort("IntLR", "IntLRPair")
+array_sort("IntPair", "IntPair")
+
+program ("counttrans")

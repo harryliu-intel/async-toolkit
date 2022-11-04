@@ -32,9 +32,11 @@ REVEAL
     init        := Init;
     getNodeIdx  := GetNodeIdx;
     getSteps    := GetSteps;
+    getNodes    := GetNodes;
     getTimeStep := GetTimeStep;
     getTimeData := GetTimeData;
     getNodeData := GetNodeData;
+    getCanonicalName := GetCanonicalName;
     close       := Close;
   END;
 
@@ -69,6 +71,22 @@ PROCEDURE Init(t : T; root : Pathname.T) : T
     RETURN t
   END Init;
 
+PROCEDURE GetNodes(t : T) : CARDINAL =
+  BEGIN
+    RETURN t.fwdTbl.size()
+  END GetNodes;
+
+PROCEDURE GetCanonicalName(t : T; idx : CARDINAL) : TEXT =
+  VAR
+    seq : TextSeq.T;
+  BEGIN
+    WITH hadIt = t.revTbl.get(idx, seq) DO
+      <*ASSERT hadIt*>
+      
+      RETURN seq.get(0)
+    END
+  END GetCanonicalName;
+  
 PROCEDURE ParseNames(nNam   : Pathname.T;
                      fwdTbl : TextCardTbl.T;
                      revTbl : CardTextSeqTbl.T) : CARDINAL

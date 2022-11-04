@@ -13,9 +13,13 @@ MODULE ConvertTrace EXPORTS Main;
 
    Author : Mika Nystrom <mika.nystroem@intel.com>
 
-   ct [-rename <dutName>] [-scaletime <timeScaleFactor>] [-offsettime <timeOffset>] [-offsetvoltage <voltageOffset>] [-dosources] [-dofiles] [ [-n <nodename>] ...] [-threads <fsdb_threads>] <inFileName> <outFileRoot>
+   ct [-rename <dutName>] [-scaletime <timeScaleFactor>] [-offsettime <timeOffset>] [-offsetvoltage <voltageOffset>] [-dosources] [-dofiles] [ [-n <nodename>] ...] [-threads <fsdb_threads>] [-wthreads <write_threads>] [-fromworkdir] <inFileName> <outFileRoot>
 
    will generate <outFileRoot>.trace and <outFileRoot>.names
+
+   -fromworkdir skips the parsing and generates the 
+                trace file from the work directory directly
+                NOT YET IMPLEMENTED!
 
 *)
 
@@ -49,7 +53,7 @@ CONST LR = LongReal;
       
 VAR doDebug := Debug.DebugThis("CT");
 
-CONST Usage = "[-rename <dutName>] [-scaletime <timeScaleFactor>] [-offsettime <timeOffset>] [-offsetvoltage <voltageOffset>] [-dosources] [-dofiles] [-maxfiles <nfiles>] [-wd <scratch dir>] ([-n <nodename>] ...) ([-r <regex>] ...) <inFileName> <outFileRoot>";
+CONST Usage = "[-rename <dutName>] [-scaletime <timeScaleFactor>] [-offsettime <timeOffset>] [-offsetvoltage <voltageOffset>] [-dosources] [-dofiles] [-maxfiles <nfiles>] [-wd <scratch dir>] ([-n <nodename>] ...) ([-r <regex>] ...) [-wthreads <write_threads>] [-fromworkdir] <inFileName> <outFileRoot>";
 
 CONST DefMaxFiles = 1000;
 
