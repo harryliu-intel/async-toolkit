@@ -1876,7 +1876,7 @@ sub enumerate_targets {
     foreach my $view (get_views("extracted")) {
         my $path="$dfIIPath/$view/layout.oa";
         push @checkedFiles, $path;
-        if ( -s $path and (($view !~ /_tag$/) or ! $no_tag)) {
+        if ( -s $path) { # and (($view !~ /_tag$/) or ! $no_tag)) {
             $validexview=$view;
             last;
         }
@@ -3379,19 +3379,20 @@ sub processOption {
         }
         elsif ($key eq "view-mode-order")               { @view_mode_order = split(",",$value);}
         elsif ($key eq "extracted-view")     {
-                my @x = split(",",$value);
-                my $e=0;
-                foreach my $x (@x) {
-                    # it is ok for layout to be in the lve.config but NOT on the command line
-                    # config is read first
-                    if ($x eq "layout_tag" or
-                            (@view_extracted and $x eq "layout")) {
-                        push @errors, "ERROR: view $x is illegal here, reverting to ".join(",", @view_extracted);
-                        $errors++;
-                        $e++;
-                    }
-                }
-                @view_extracted=@x if ! $e;
+            @view_extracted=split(",",$value);
+#                my @x = split(",",$value);
+#                my $e=0;
+#                foreach my $x (@x) {
+#                    # it is ok for layout to be in the lve.config but NOT on the command line
+#                    # config is read first
+#                    if ($x eq "layout_tag" or
+#                            (@view_extracted and $x eq "layout")) {
+#                        push @errors, "ERROR: view $x is illegal here, reverting to ".join(",", @view_extracted);
+#                        $errors++;
+#                        $e++;
+#                    }
+#                }
+#                @view_extracted=@x if ! $e;
             }
         elsif ($key eq "estimated-view")     { @view_estimated = split(",",$value); }
         elsif ($key eq "routed")             { $routed = $value; }
