@@ -13,7 +13,7 @@ MODULE ConvertTrace EXPORTS Main;
 
    Author : Mika Nystrom <mika.nystroem@intel.com>
 
-   ct [-rename <dutName>] [-scaletime <timeScaleFactor>] [-offsettime <timeOffset>] [-offsetvoltage <voltageOffset>] [-dosources] [-dofiles] [ [-n <nodename>] ...] [-threads <fsdb_threads>] [-wthreads <write_threads>] [-fromworkdir] [-nomerge] <inFileName> <outFileRoot>
+   ct [-rename <dutName>] [-scaletime <timeScaleFactor>] [-offsettime <timeOffset>] [-offsetvoltage <voltageOffset>] [-dosources] [-dofiles] [ [-n <nodename>] ...] [-threads <fsdb_threads>] [-wthreads <write_threads>] [-fromworkdir] <inFileName> <outFileRoot>
 
    will generate <outFileRoot>.trace and <outFileRoot>.names
 
@@ -21,8 +21,8 @@ MODULE ConvertTrace EXPORTS Main;
                 trace file from the work directory directly
                 NOT YET IMPLEMENTED!
 
-   -nomerge     Do not generate final .trace file, instead leave work
-                product in work directory
+   -notrace     do not generate final .trace output
+
 
 *)
 
@@ -83,7 +83,7 @@ PROCEDURE ReadEntireFile(tempReader   : TempReader.T;
     tempReader.readEntireFile(idx, data)
   END ReadEntireFile;
   
-PROCEDURE CreateBuffers(tempReader   : TempReader.T;
+PROCEDURE CreateBuffers(tempReader     : TempReader.T;
                         fnr            : FileNamer.T;
                         VAR time, data : REF ARRAY OF LONGREAL)
   RAISES { OSError.E, Rd.Failure } =
@@ -117,7 +117,7 @@ PROCEDURE CreateBuffers(tempReader   : TempReader.T;
 PROCEDURE WriteSources(tempReader : TempReader.T;
                        fnr          : FileNamer.T) =
   (* read data from each file in temp directory and output
-     in reordered trace format for fast aplot access *)
+     as PWL voltage sources to be used as a stimulus(?) *)
   VAR
     tFn := ofn & ".sources";
     sWr : Wr.T;
@@ -180,7 +180,7 @@ PROCEDURE Unslash(fn : Pathname.T) : Pathname.T =
 
 PROCEDURE WriteFiles(tempReader : TempReader.T; fnr : FileNamer.T) =
   (* read data from each file in temp directory and output
-     in simple ASCII format *)
+     in simple ASCII format, one file per signal *)
   VAR
     tDn := ofn & ".files";
     sWr : Wr.T;
@@ -199,27 +199,26 @@ PROCEDURE WriteFiles(tempReader : TempReader.T; fnr : FileNamer.T) =
           IF i = 0 THEN
             CreateBuffers(tempReader, fnr, time, data);
           ELSE
-              TRY
-                sFn := tDn & "/" & Unslash(names.get(i));
-                sWr := FileWr.Open(sFn)
-              EXCEPT
-                OSError.E(x) => Debug.Error("Unable to open file \"" & sFn & "\" for writing : OSError.E : " & AL.Format(x))
-              END;
-
-              ReadEntireFile(tempReader, i, data^);
-
-              FOR i := FIRST(data^) TO LAST(data^) DO
-                Wr.PutText(sWr, F("%20s       %20s\n",
-                                  LongReal(time[i]),
-                                  LongReal(data[i])))
-              END;
-              TRY
-                Wr.Close(sWr);
-              EXCEPT
-                Wr.Failure(x) => Debug.Error("Trouble closing sources file "&sFn&" : Wr.Failure : " &
-                  AL.Format(x))
-              END
-
+            TRY
+              sFn := tDn & "/" & Unslash(names.get(i));
+              sWr := FileWr.Open(sFn)
+            EXCEPT
+              OSError.E(x) => Debug.Error("Unable to open file \"" & sFn & "\" for writing : OSError.E : " & AL.Format(x))
+            END;
+            
+            ReadEntireFile(tempReader, i, data^);
+            
+            FOR i := FIRST(data^) TO LAST(data^) DO
+              Wr.PutText(sWr, F("%20s       %20s\n",
+                                LongReal(time[i]),
+                                LongReal(data[i])))
+            END;
+            TRY
+              Wr.Close(sWr);
+            EXCEPT
+              Wr.Failure(x) => Debug.Error("Trouble closing sources file "&sFn&" : Wr.Failure : " &
+                AL.Format(x))
+            END
           END
         EXCEPT
           OSError.E(x) =>
@@ -364,6 +363,9 @@ BEGIN
     ParseParams.Error => Debug.Error("Can't parse command-line parameters\nUsage: " & Params.Get(0) & " " & Usage)
   END;
 
+  IF wthreads # 1 THEN
+    Debug.Warning("wthreads > 1 not recommended")
+  END;
   
   TRY FS.CreateDirectory(wd) EXCEPT ELSE END;
 
