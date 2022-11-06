@@ -31,7 +31,6 @@ IMPORT Rd;
 IMPORT Debug;
 IMPORT TextSeq;
 IMPORT FileWr, Wr;
-IMPORT Math;
 FROM Fmt IMPORT LongReal, Int, F;
 IMPORT FS;
 IMPORT ParseParams;
@@ -238,7 +237,6 @@ VAR
   names := NEW(TextSeq.T).init();
   ifn, ofn : Pathname.T;
 
-  Exp : ARRAY [-300..300] OF LONGREAL;
   wd := "ct.work";
   dutName : TEXT := NIL;
   pp := NEW(ParseParams.T).init(Stdio.stderr);
@@ -368,10 +366,6 @@ BEGIN
   END;
   
   TRY FS.CreateDirectory(wd) EXCEPT ELSE END;
-
-  FOR i := FIRST(Exp) TO LAST(Exp) DO
-    Exp[i] := Math.pow(10.0d0,FLOAT(i,LONGREAL))
-  END;
 
   TRY
 
