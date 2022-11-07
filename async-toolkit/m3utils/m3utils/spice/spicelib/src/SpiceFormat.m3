@@ -75,7 +75,7 @@ PROCEDURE GetSingleLine(rd       : Rd.T;
           IF Verbose THEN Debug.Out("GetSingleLine: strip CR") END;
           DEC(len) (* strip carriage return *)
         END;
-        RETURN p+len
+        RETURN p + len
 
       ELSE
         (*failure to finish the line*)
@@ -91,7 +91,8 @@ PROCEDURE GetSingleLine(rd       : Rd.T;
 
 PROCEDURE GetLine(rd : Rd.T;
                   VAR buff : REF ARRAY OF CHAR;
-                  VAR lNo : CARDINAL) : [-1..LAST(CARDINAL)] RAISES { Rd.Failure, Thread.Alerted } =
+                  VAR lNo : CARDINAL) : [-1..LAST(CARDINAL)]
+  RAISES { Rd.Failure, Thread.Alerted } =
   VAR 
     p : [ -1 .. LAST(CARDINAL) ] := 0;
   BEGIN
@@ -112,7 +113,19 @@ PROCEDURE GetLine(rd : Rd.T;
         TRY
           WITH c = Rd.GetChar(rd) DO
             CASE c OF
-              '+' => EXIT
+              '+' =>
+              (* careful here.  we have just read a complete line, which is
+                 fine, but now there's a continuation character.  We must 
+                 insert a space, because the + is equivalent to a space!
+
+                 There will always be space, because the GetSingleLine will
+                 have recently read a carriage return to get into this state *)
+
+              <*ASSERT p <= LAST(buff^)*>
+              buff[p] := ' ';
+              INC(p);
+              
+              EXIT (* fetch another line *)
             ELSE
               Rd.UnGetChar(rd); RETURN p
             END
@@ -124,9 +137,11 @@ PROCEDURE GetLine(rd : Rd.T;
     END
   END GetLine;
 
+<*UNUSED*>
 PROCEDURE AddToBuff(VAR buff : REF ARRAY OF CHAR;
-                    VAR p : CARDINAL;
-                    c : CHAR) =
+                    VAR p    : CARDINAL;
+                    c        : CHAR) =
+  (* this code seems to have been inlined *)
   BEGIN
     IF p = NUMBER(buff^) THEN
       WITH new = NEW(REF ARRAY OF CHAR, 2*NUMBER(buff^)) DO

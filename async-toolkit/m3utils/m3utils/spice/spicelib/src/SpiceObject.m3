@@ -14,6 +14,7 @@ IMPORT SpiceError;
 FROM Debug IMPORT UnNil;
 FROM SpiceParse IMPORT HavePrefix, CaseIns;
 IMPORT FloatMode, Lex;
+IMPORT TextTextTbl;
 
 CONST TE = Text.Equal;
       LR = LongReal;
@@ -39,6 +40,16 @@ PROCEDURE IsParamAssign(txt : TEXT) : BOOLEAN =
   BEGIN
     RETURN Text.FindChar(txt, '=') # -1
   END IsParamAssign;
+
+PROCEDURE FmtTextSeq(seq : TextSeq.T) : TEXT =
+  VAR
+    res := "";
+  BEGIN
+    FOR i := 0 TO seq.size() - 1 DO
+      res := res & " " & seq.get(i)
+    END;
+    RETURN res
+  END FmtTextSeq;
   
 PROCEDURE ParseLine(VAR circuit   : SpiceCircuitList.T; (* circuit stack *)
                     subCkts       : TextSpiceCircuitTbl.T;
@@ -69,7 +80,21 @@ PROCEDURE ParseLine(VAR circuit   : SpiceCircuitList.T; (* circuit stack *)
           <*ASSERT hadIt*>
           WHILE GetWord(line, p, str) DO
             <*ASSERT str # NIL*>
-            new.params.addhi(str)
+            WITH eqPos = Text.FindChar(str, '=') DO
+              IF eqPos = -1 THEN
+                (* it's a formal parameter name *)
+                new.params.addhi(str)
+              ELSE
+                (* it's actually a value binding *)
+                IF new.bindings = NIL THEN
+                  new.bindings := NEW(TextTextTbl.Default).init();
+                  WITH k = Text.Sub(str,         0, eqPos),
+                       v = Text.Sub(str, eqPos + 1, LAST(CARDINAL)) DO
+                    EVAL new.bindings.put(k, v)
+                  END
+                END
+              END
+            END
           END;
           EVAL subCkts.put(new.name, new);
           subCktNames.addhi(new.name);
@@ -142,10 +167,14 @@ PROCEDURE ParseLine(VAR circuit   : SpiceCircuitList.T; (* circuit stack *)
                 <*ASSERT haveIt*>  (* definition *)
 
                 IF NOT x.terminals.size() = ckt.params.size()  THEN
-                  Debug.Error(F("Wrong terminal count: subcircuit type %s terms %s params at call site %s",
-                                x.type,
-                                Int(x.terminals.size()),
-                                Int(ckt.params.size())))
+                  RAISE SpiceError.E (
+                            SpiceError.Data {
+                  msg := F("Wrong terminal count: subcircuit type %s \nparams at call site %3s : %s\nterminals %3s           : %s\n",
+                           x.type,
+                           Int(x.terminals.size()),
+                           FmtTextSeq(x.terminals),
+                           Int(ckt.params.size()),
+                           FmtTextSeq(ckt.params)) })
                 END;
 
                 <*ASSERT x.terminals.size() = ckt.params.size()*>
@@ -232,7 +261,14 @@ PROCEDURE ParseLine(VAR circuit   : SpiceCircuitList.T; (* circuit stack *)
         m.terminals.addhi(nd);
         (* add res *)
         WITH got = GetWord(line, p, nd) DO <*ASSERT got*> END;
-        m.r := ParseValue(nd);
+        TRY
+          m.r := ParseValue(nd);
+        EXCEPT
+          SpiceError.E =>
+          Debug.Warning(
+              F("Cannot parse resistance \"%s\", substituting 1 ohm.", nd));
+          m.r := 1.0d0
+        END;
         o := m
       END
     ELSE

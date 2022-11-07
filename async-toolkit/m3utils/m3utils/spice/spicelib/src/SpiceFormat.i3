@@ -13,7 +13,9 @@ TYPE
     subCktNames : TextSeq.T; (* in correct sequence *)
   END;
     
-PROCEDURE ParseSpice(rd : Rd.T; currentSearchDir, fn : Pathname.T) : T
+PROCEDURE ParseSpice(rd                 : Rd.T;
+                     currentSearchDir,
+                     fn                 : Pathname.T) : T
   RAISES { Rd.Failure, SpiceError.E };
 
 CONST Brand = "SpiceFormat";
