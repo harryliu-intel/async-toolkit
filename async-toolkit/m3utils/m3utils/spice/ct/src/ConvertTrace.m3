@@ -13,16 +13,7 @@ MODULE ConvertTrace EXPORTS Main;
 
    Author : Mika Nystrom <mika.nystroem@intel.com>
 
-   ct [-rename <dutName>] [-scaletime <timeScaleFactor>] [-offsettime <timeOffset>] [-offsetvoltage <voltageOffset>] [-dosources] [-dofiles] [ [-n <nodename>] ...] [-threads <fsdb_threads>] [-wthreads <write_threads>] [-fromworkdir] <inFileName> <outFileRoot>
-
-   will generate <outFileRoot>.trace and <outFileRoot>.names
-
-   -fromworkdir skips the parsing and generates the 
-                trace file from the work directory directly
-                NOT YET IMPLEMENTED!
-
-   -notrace     do not generate final .trace output
-
+   SCROLL DOWN FOR Usage !
 
 *)
 
@@ -55,7 +46,47 @@ CONST LR = LongReal;
       
 VAR doDebug := Debug.DebugThis("CT");
 
-CONST Usage = "[-rename <dutName>] [-scaletime <timeScaleFactor>] [-offsettime <timeOffset>] [-offsetvoltage <voltageOffset>] [-dosources] [-dofiles] [-maxfiles <nfiles>] [-wd <scratch dir>] ([-n <nodename>] ...) ([-r <regex>] ...) [-wthreads <write_threads>] [-fromworkdir] [-nomerge] <inFileName> <outFileRoot>";
+CONST Usage = "[-rename <dutName>] [-scaletime <timeScaleFactor>] [-offsettime <timeOffset>] [-offsetvoltage <voltageOffset>] [-dosources] [-dofiles] [ [-n <nodename>] ...] [-threads <fsdb_threads>] [-wthreads <write_threads>] [-fromworkdir] <inFileName> <outFileRoot>";
+
+(*
+  will generate <outFileRoot>.trace and <outFileRoot>.names 
+
+  -fsdb        read FSDB format.  Argument is absolute path
+               to FSDB reading program (can be a shell script
+               launching via Netbatch)
+
+               default format is CSDF if this is not provided
+
+  -resample    resample data at timestep given
+
+  
+
+  -fromworkdir skips the parsing and generates the 
+               trace file from the work directory directly
+               NOT YET IMPLEMENTED!   SOON!!
+
+  -notrace     do not generate final .trace output
+
+  -dosources   generate PWL sources for all observed signals
+
+  -threads     how many threads to use for reading FSDB
+  
+  -wthreads    how many threads to use for writing .trace
+               (recommendation is TO NOT USE this option)
+
+  -maxfiles    max # of files to use in temp directory
+
+  -n           restrict attention to nodes mentioned on cmd line
+
+  -r           restrict attention to nodes matching regex
+
+  -workdir     rename working directory ( default : ct.work )
+
+  <inFileName> is name of input file in FSDB or CSDF format
+
+
+*)
+
 
 CONST DefMaxFiles = 1000;
 
@@ -113,7 +144,7 @@ PROCEDURE CreateBuffers(tempReader     : TempReader.T;
     END
   END CreateBuffers;
   
-PROCEDURE WriteSources(tempReader : TempReader.T;
+PROCEDURE WriteSources(tempReader   : TempReader.T;
                        fnr          : FileNamer.T) =
   (* read data from each file in temp directory and output
      as PWL voltage sources to be used as a stimulus(?) *)
@@ -233,6 +264,17 @@ PROCEDURE WriteFiles(tempReader : TempReader.T; fnr : FileNamer.T) =
     END
   END WriteFiles;
 
+PROCEDURE WriteTrace(fnr : FileNamer.T) =
+  BEGIN
+    WITH tr = NEW(TraceFile.T).init(ofn, nFiles, names.size(), fnr) DO
+      IF wthreads > 1 THEN
+        tr.writePll(wthreads, writeTraceCmdPath)
+      ELSE
+        tr.write()
+      END
+    END
+  END WriteTrace;
+  
 VAR
   names := NEW(TextSeq.T).init();
   ifn, ofn : Pathname.T;
@@ -264,8 +306,6 @@ VAR
 
   interpolate := Fsdb.NoInterpolate;
 
-  noMerge := FALSE;
-  
 TYPE
   ParseFmt = { Tr0, Fsdb };
   
@@ -319,8 +359,6 @@ BEGIN
       maxFiles := pp.getNextInt()
     END;
 
-    noMerge := pp.keywordPresent("-nomerge");
-    
     WHILE pp.keywordPresent("-n") DO
       IF restrictNodes = NIL THEN
         restrictNodes := NEW(TextSetDef.T).init()
@@ -439,13 +477,7 @@ BEGIN
 
   WITH fnr = NEW(FileNamer.T).init(wd, nFiles, names.size()) DO
     IF doTrace THEN
-      WITH tr = NEW(TraceFile.T).init(ofn, nFiles, names.size(), fnr) DO
-        IF wthreads > 1 THEN
-          tr.writePll(wthreads, writeTraceCmdPath)
-        ELSE
-          tr.write()
-        END
-      END
+      WriteTrace(fnr)
     END;
 
     VAR
