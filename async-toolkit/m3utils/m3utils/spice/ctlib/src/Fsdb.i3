@@ -8,8 +8,15 @@ IMPORT Rd;
 
 FROM Tr0 IMPORT ShortRead, SyntaxError;
 
-PROCEDURE Parse(wd, ofn       : Pathname.T;
+PROCEDURE Parse(wd            : Pathname.T;
+                (* work directory, e.g., ct.work *)
+                
+                ofn           : Pathname.T;
+                (* output ROOT name, e.g., xa *)
+                
                 names         : TextSeq.T;
+                (* sequence of canonical names *)
+                
                 maxFiles      : CARDINAL;
                 VAR nFiles    : CARDINAL;
 

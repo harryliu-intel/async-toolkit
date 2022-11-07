@@ -1044,7 +1044,11 @@ PROCEDURE GeneratePartialTraceFile(wr      : Wr.T;
         TRY
           IF doDebug THEN
             Debug.Out(F("Writing data for outId %s to %s offset %s first %s last %s",
-                      Int(outId), path, Int(Wr.Index(wr)), LR(buff[0]), LR(buff[LAST(buff^)])))
+                        Int(outId),
+                        path,
+                        Int(Wr.Index(wr)),
+                        LR(buff[0]),
+                        LR(buff[LAST(buff^)])))
           END;
           DataBlock.WriteData(wr, outId, buff^)
         EXCEPT
@@ -1066,7 +1070,6 @@ PROCEDURE GeneratePartialTraceFile(wr      : Wr.T;
     PutCommandG(cmdWr, "U");
     EVAL GetResponseG(cmdRd, "UR")
   END GeneratePartialTraceFile;
-
 
 PROCEDURE TryRemoveSuffix(from        : TEXT;
                           suffix      : TEXT;

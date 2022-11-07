@@ -1,8 +1,40 @@
 INTERFACE DataBlock;
 IMPORT Wr, Rd;
 
-PROCEDURE WriteData(wr        : Wr.T;
-                    tag       : CARDINAL; (* written if nonzero *)
+(* 
+   this is the interface to the code that writes the temp files in ct.work
+
+   Author : mika.nystroem@intel.com
+
+   the basic format for WriteData/ReadData is:
+
+   if tag = 0 
+
+   component     bits
+   ----------------------
+   block         variable
+
+   Note that blocks tagged zero are generally written to their own separate
+   file.  Such blocks generally represent the TIME independent variable in
+   simulations.
+
+   else (tag # 0)
+
+   component     bits
+   ----------------------
+   tag           32
+   threadId      32
+   NUMBER(block) 32
+   block         variable
+
+   The idea is that numerous tagged blocks can be written to a single file.
+   The ReadData procedure will hop through the file looking for the block
+   that is tagged as requested and return that block to the caller.
+
+*)
+
+PROCEDURE WriteData(wr                 : Wr.T;
+                    tag                : CARDINAL; (* written if nonzero *)
                     READONLY block     : ARRAY OF LONGREAL)
   RAISES { Wr.Failure };
 

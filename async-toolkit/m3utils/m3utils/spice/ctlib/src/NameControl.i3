@@ -45,6 +45,9 @@ PROCEDURE WriteNames(wd, ofn       : Pathname.T;
                      includeIdNames := TRUE) : CARDINAL;
 
 PROCEDURE FileIndex(nFiles, nNodes, nodeIndex : CARDINAL) : CARDINAL;
-
+  (* get the file number of the node identified by nodeIndex.
+     need to know how many nodes and how many files are present in 
+     system *)
+  
 END NameControl.
   

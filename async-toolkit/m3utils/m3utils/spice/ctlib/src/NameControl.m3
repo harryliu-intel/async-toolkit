@@ -136,7 +136,7 @@ PROCEDURE WriteNames(wd, ofn       : Pathname.T;
                      includeIdNames: BOOLEAN) : CARDINAL =
   VAR
     anWr, wr : Wr.T;
-    nFn := ofn & ".names";
+    nFn  := ofn & ".names";
     anFn := ofn & ".allnames";
 
     nNodes := names.size();
