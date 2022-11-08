@@ -71,6 +71,7 @@
                              ?cellName targetCellName ?viewName importView
                              ?gdsFile (strcat WDIR "/" targetCellName ".gds")
                              ?baseCV CV
+			     ?topHalo topHalo
                              )
            )
           )
@@ -548,7 +549,7 @@
         (top_name nil)
         (pinMap nil)
         (calibreOffset t)
-	(doTag t)
+	(topHalo t)
         )
   (let (TEMP WDIR Command status ImportCV layoutCV floorplanCV
              win instmap CID fields short_name offset file origFile oas rename)
@@ -642,7 +643,7 @@
       )
 
     ; move extra halos to tag view
-    (when doTag (RemoveHalo ?CV ImportCV))
+    (when !topHalo (RemoveHalo ?CV ImportCV))
 
     ; execute custom function
     (FinishRouterImport ?CV ImportCV)
@@ -953,8 +954,6 @@ DumbLayers = (list (list "SRAM" "fill")
     (dbCreatePRBoundary CV prb->points)
 
     tagcv = (dbOpenCellViewByType (GetCastLibName CV->cellName) CV->cellName "layout_tag" "maskLayout" "a")
-    (cdsp4edit ?CV tagcv)
-    (cdsp4add ?CV tagcv)
     (DeleteAll tagcv)
    
     (printf "Removing apr halo outside prbound\n")
@@ -1009,6 +1008,9 @@ DumbLayers = (list (list "SRAM" "fill")
     ; add id layers that are the wrong shape
     (dbCreatePolygon CV (list "lowVccSEL" "id") prb->points)
     (dbCreatePolygon CV (list "b210h50pRegion" "id") prb->points)
+
+    ; add pins to tag for lvs
+    (CopyPinsFromSourceView ?CV tagcv ?srcCV CV)
 
     ;;;;;;;;;;;;;
     ; instantiate layout in tag view
