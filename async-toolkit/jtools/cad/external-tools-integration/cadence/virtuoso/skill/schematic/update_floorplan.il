@@ -137,7 +137,7 @@
     (when (dbGetPropByName CV "LeafCell")
       isLeaf=(dbGetPropByName CV "LeafCell")->value=="TRUE"
       )
-    isRouted = (dbGetPropByName CV "routed")->value=="TRUE"
+    isRouted = (dbGetPropByName CV "routed")->value!="FALSE" ; defaults to routed if property is missing
 
     ; delete prBoundary of non-routed cells
     (when CV->viewName=="floorplan" && !isRouted && CV->prBoundary
