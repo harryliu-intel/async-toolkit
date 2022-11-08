@@ -994,7 +994,7 @@ DumbLayers = (list (list "SRAM" "fill")
 
     ; do instances
     (printf "  ... halo instances\n")
-    (foreach inst (FilterList CV->instances (lambda (inst) !(IsRectOutsidePolygon (GetInstbBox inst) prb->points)))
+    (foreach inst (FilterList CV->instances (lambda (inst) !(IsRectOutsidePolygon (ShrinkRect (GetInstbBox inst) MfgGrid) prb->points)))
       (dbCopyFig inst tagcv)
       (dbDeleteObject inst)
       )
@@ -1072,5 +1072,5 @@ DumbLayers = (list (list "SRAM" "fill")
   )
 
 (defun GetInstbBox (inst)
-  (dbTransformPointList (GetPrbound inst->master->cellView)->points inst->transform)
+  (BBoxCanonicalize (dbTransformPointList (GetPrbound inst->master->cellView)->bBox inst->transform))
   )
