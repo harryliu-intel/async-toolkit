@@ -643,7 +643,7 @@
       )
 
     ; move extra halos to tag view
-    (when !topHalo (RemoveHalo ?CV ImportCV))
+    (when !topHalo (RemoveHalo ?CV ImportCV ?baseCV baseCV))
 
     ; execute custom function
     (FinishRouterImport ?CV ImportCV)
@@ -944,13 +944,15 @@ DumbLayers = (list (list "SRAM" "fill")
   )
 
 
-(defun RemoveHalo (@key (CV (geGetEditCellView)))
+(defun RemoveHalo (@key (CV (geGetEditCellView)) (baseCV nil))
   (let (cv tagcv prb del allshapes GNDextras)
     ; duplicate prbound from floorplan
     prb = (GetPrbound CV)
     (dbDeleteObject prb)
-    cv = (dbOpenCellViewByType (GetCastLibName CV->cellName) CV->cellName "floorplan")
-    prb = (GetPrbound cv)
+    (unless baseCV
+      baseCV = (dbOpenCellViewByType (GetCastLibName CV->cellName) CV->cellName "floorplan")
+      )
+    prb = (GetPrbound baseCV)
     (dbCreatePRBoundary CV prb->points)
 
     tagcv = (dbOpenCellViewByType (GetCastLibName CV->cellName) CV->cellName "layout_tag" "maskLayout" "a")
