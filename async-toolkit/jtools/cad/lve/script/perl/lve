@@ -3415,7 +3415,7 @@ sub processOption {
         elsif ($key eq "keepMakefiles")      { $deletemakefiles = $value ? 0 : 1; }
         elsif ($key eq "extra-extract-equiv") { $extra_extract_equiv = canonicalizePath($value);}
         elsif ($key eq "extra-sp") { $extra_sp = join(':', map { canonicalizePath($_) } split(/:/, $value));}
-        elsif ($key eq "lvs-extra-options") { $lvs_extra_options = canonicalizePath($value);}
+        elsif ($key eq "lvs-extra-options") { $lvs_extra_options = $value;}
         elsif ($key eq "connect-substrate") { $connectSubstrate = $value ? 1 : 0; }
         elsif ($key eq "instance-port") {
             if (grep { $value eq $_ } @validInstancePort) {

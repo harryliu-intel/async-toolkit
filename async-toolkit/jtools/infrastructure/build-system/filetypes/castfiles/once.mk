@@ -1595,7 +1595,7 @@ $(ROOT_TARGET_DIR)/%/lvs.err: \
 	  --extra-sp='$(EXTRA_SP)' \
 	  --cdl-cell-name="$$cell" \
 	  --blackbox=$(LVS_BLACKBOX) \
-	  --icv-options=$(LVS_EXTRA_OPTIONS) \
+	  --icv-options='$(LVS_EXTRA_OPTIONS)' \
 	  --node-props='$(call GET_CELL_DIR,$(@D))/cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX)' \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' &> '$(@)' && \
 	cd / && ( [[ $(KEEP_LVS_DIR) == 1 ]] || rm -rf "$$lvs_dir" ); \
