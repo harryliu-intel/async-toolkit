@@ -72,7 +72,7 @@
                  )
            align = (list gx:gy ox:oy)
            )
-          (t align=(list GridPolyPitch:TrackPitch 0.0:0.0)) ; unknown alignment
+          (t align=(list GridPolyPitch/2:GridDiffPitch 0.0:0.0)) ; unknown alignment
           )
     align
     )
@@ -228,7 +228,7 @@
   (let (misaligned align gx gy gxi gyi)
     misaligned=nil
     (foreach inst CV->instances
-             (unless (CheckInstanceAlignment inst ?check_x check_x ?check_y check_y)
+             (when inst->objType=="inst" && (CheckInstanceAlignment inst ?check_x check_x ?check_y check_y)==nil
                misaligned=(cons inst misaligned))
              )
     misaligned
