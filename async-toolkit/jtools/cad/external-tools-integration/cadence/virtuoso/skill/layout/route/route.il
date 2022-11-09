@@ -957,6 +957,7 @@ DumbLayers = (list (list "SRAM" "fill")
 
     tagcv = (dbOpenCellViewByType (GetCastLibName CV->cellName) CV->cellName "layout_tag" "maskLayout" "a")
     (DeleteAll tagcv)
+    (dbCreatePRBoundary tagcv prb->points)
    
     (printf "Removing apr halo outside prbound\n")
     allshapes = CV->shapes
@@ -1030,8 +1031,25 @@ DumbLayers = (list (list "SRAM" "fill")
   (foreach via CV->vias (dbDeleteObject via))
   )
 
+; the goal should be that we don't need this function at all, but for now we do.
 (defun FixLayoutTag (CV)
   (let ()
+
+    ; delete extra fill vias around the outside since they didn't get colored and are unneccessary
+    (foreach shape (FilterList CV->shapes (lambda (shape) shape->lpp!=(list "v1" "actFill")))
+      (dbDeleteObject shape)
+      )
+    (foreach shape (FilterList CV->shapes (lambda (shape) shape->lpp!=(list "v2" "actFill")))
+      (dbDeleteObject shape)
+      )
+    (foreach shape (FilterList CV->shapes (lambda (shape) shape->lpp!=(list "v3" "actFill")))
+      (dbDeleteObject shape)
+      )
+
+    ; the shapes that copy over lose their color
+    ; I hate doing this but the vias also lose color.
+    ; temporarily flattening the ones in the tag view before coloring
+    (foreach via CV->vias (dbFlattenInst via 1))
     (Colorize ?CV CV)
     (foreach shape CV->shapes
       (when (car shape->lpp)=="m5" && shape->width==0.044
@@ -1041,6 +1059,7 @@ DumbLayers = (list (list "SRAM" "fill")
         (SetShapeColor shape 2)
         )
       )
+
     t
     )
   )
