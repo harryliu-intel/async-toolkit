@@ -1,6 +1,14 @@
 import ("libm3")
 import ("cit_util")
 import ("spicelib")
+import ("tracelib")
+
+Interface ("Transition")
+Sequence ("Transition", "Transition")
+Module ("TransitionFinder")
+
+Table("TextTransitionSeq", "Text", "TransitionSeq")
+Table("CardTransitionSeq", "Cardinal", "TransitionSeq")
 
 implementation ("Main")
 

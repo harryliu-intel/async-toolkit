@@ -3,6 +3,7 @@ import ("cit_common")
 import ("cit_util")
 
 Module ("Trace")
+Interface ("TraceRep")
 
 module ("TraceUnsafe")
 

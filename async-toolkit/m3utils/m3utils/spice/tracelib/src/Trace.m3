@@ -1,5 +1,7 @@
 MODULE Trace;
 
+IMPORT TraceRep;
+
 IMPORT Pathname;
 IMPORT OSError;
 IMPORT TraceHeader;
@@ -21,12 +23,10 @@ VAR doDebug := TRUE;
 CONST LR = Fmt.LongReal;
 
 REVEAL
-  T = Public BRANDED Brand OBJECT
+  T = TraceRep.Private BRANDED Brand OBJECT
     root     : Pathname.T;
     h        : TraceHeader.T;
     tRd      : Rd.T;
-    fwdTbl   : TextCardTbl.T;
-    revTbl   : CardTextSeqTbl.T;
     timeStep : LONGREAL;
   OVERRIDES
     init        := Init;
