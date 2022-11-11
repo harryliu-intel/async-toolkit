@@ -12,6 +12,16 @@ Table("CardTransitionSeq", "Cardinal", "TransitionSeq")
 
 Module ("CheckDir")
 Interface ("CheckMode")
+Module ("MarginScenario")
+
+Module ("MarginMeasurement")
+Array_sort ("MarginMeasurement", "MarginMeasurement")
+Sequence ("MarginMeasurement", "MarginMeasurement")
+Module ("MarginDump")
+
+Table("CheckDirRef", "CheckDir", "Refany")
+MkSet("CheckDir", "CheckDir")
+MkSetDef("CheckDir", "CheckDir")
 
 implementation ("Main")
 

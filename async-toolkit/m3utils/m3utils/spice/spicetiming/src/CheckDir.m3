@@ -1,6 +1,7 @@
 MODULE CheckDir;
 IMPORT Transition;
 FROM Fmt IMPORT Int;
+IMPORT Word;
 
 PROCEDURE Fmt(c : T) : TEXT =
   VAR
@@ -15,4 +16,20 @@ PROCEDURE Fmt(c : T) : TEXT =
     RETURN res & "}"
   END Fmt;
 
+PROCEDURE Hash(t : T) : Word.T =
+  VAR
+    q := 1;
+    res : Word.T := 0;
+  BEGIN
+    FOR i := FIRST(Transition.Dir) TO LAST(Transition.Dir) DO
+      IF i IN t THEN
+        res := Word.Plus(res, q)
+      END;
+      q := Word.Shift(q, 1);
+    END;
+    RETURN res
+  END Hash;
+
+PROCEDURE Equal(a, b : T) : BOOLEAN = BEGIN RETURN a = b END Equal;
+  
 BEGIN END CheckDir.

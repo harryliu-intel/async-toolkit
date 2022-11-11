@@ -23,15 +23,18 @@ IMPORT TransitionFinder; FROM TransitionFinder IMPORT Index;
 IMPORT Transition;
 IMPORT TransitionSeq;
 IMPORT FileWr;
-IMPORT Wr;
 IMPORT CheckDir;
 IMPORT CheckMode;
+IMPORT MarginMeasurement;
+IMPORT MarginScenario;
+IMPORT MarginMeasurementSeq;
+IMPORT MarginDump;
 
 CONST
   Usage = "";
   TE = Text.Equal;
   LR = LongReal;
-
+  QuickMargins = 1000;
 
 CONST
   Up = CheckDir.T { 1 };
@@ -106,7 +109,8 @@ hold margin is:
 *)
 
   
-PROCEDURE DoOneLatchSpec(sf             : SpiceFormat.T;
+PROCEDURE DoOneLatchSpec(db             : MarginMeasurementSeq.T;
+                         sf             : SpiceFormat.T;
                          rootCkt        : SpiceCircuit.T;
                          READONLY spec  : LatchSpec) =
   (* this is for a flattened design with one level of subcircuit remaining *)
@@ -126,6 +130,8 @@ PROCEDURE DoOneLatchSpec(sf             : SpiceFormat.T;
     END;
     
     FOR i := 0 TO elems.size() - 1 DO
+      IF quick AND nMargins >= QuickMargins THEN RETURN END;
+      
       WITH elem = elems.get(i) DO
         TYPECASE elem OF
           SpiceObject.X (x) =>
@@ -146,7 +152,7 @@ PROCEDURE DoOneLatchSpec(sf             : SpiceFormat.T;
               IF NOT foundType THEN
                 Debug.Error(F("Can't find SUBCKT %s", x.type))
               END;
-              CheckLatch(x, subCkt, spec.arcs, trace) 
+              CheckLatch(db, x, subCkt, spec.arcs, trace) 
             END
           END
         ELSE
@@ -171,7 +177,8 @@ PROCEDURE FindFormalIdx(s : SpiceCircuit.T; formal : TEXT) : CARDINAL =
     <*ASSERT FALSE*>
   END FindFormalIdx;
 
-PROCEDURE CheckLatch(x               : SpiceObject.X; (* instantiation *)
+PROCEDURE CheckLatch(db              : MarginMeasurementSeq.T;
+                     x               : SpiceObject.X; (* instantiation *)
                      subCkt          : SpiceCircuit.T;(* of what *)
                      READONLY arcs   : ARRAY OF Arc;  (* ...validate against *)
                      trace           : Trace.T
@@ -212,12 +219,14 @@ PROCEDURE CheckLatch(x               : SpiceObject.X; (* instantiation *)
           ELSE
             CASE arc.mode OF
               CheckMode.T.Setu =>
-              EVAL CheckMargin(arc.dataDir, arc.clkDir,
+              EVAL CheckMargin(db,
+                               arc.dataDir, arc.clkDir,
                                frTrIdx, frNm, toTrIdx, toNm,
                                MeasureSetup, "setup")
             |
               CheckMode.T.Hold =>
-              EVAL CheckMargin(arc.dataDir, arc.clkDir,
+              EVAL CheckMargin(db,
+                               arc.dataDir, arc.clkDir,
                                frTrIdx, frNm, toTrIdx, toNm,
                                MeasureHold, "hold")
             END;
@@ -245,7 +254,8 @@ PROCEDURE CheckLatch(x               : SpiceObject.X; (* instantiation *)
 
     (* check for glitches *)
     IF gotPos THEN
-      EVAL CheckMargin(UD, +1,
+      EVAL CheckMargin(db,
+                       UD, +1,
                        posDatIdx, posDatNm, posClkIdx, posClkNm,
                        MeasureGlitchwidth, "glitchwidth")
     ELSE
@@ -254,14 +264,16 @@ PROCEDURE CheckLatch(x               : SpiceObject.X; (* instantiation *)
 
     (* check for clock pulse widths *)
     IF gotPos THEN
-      EVAL CheckMargin(UD, +1,
+      EVAL CheckMargin(db,
+                       UD, +1,
                        posDatIdx, posDatNm, (* ignored *)
                        posClkIdx, posClkNm,
                        MeasurePulsewidth, "pulsewidth-pos")
     END;
    
     IF gotNeg THEN
-      EVAL CheckMargin(UD, -1,
+      EVAL CheckMargin(db,
+                       UD, -1,
                        posDatIdx, posDatNm, (* ignored *)
                        negClkIdx, negClkNm,
                        MeasurePulsewidth, "pulsewidth-neg")
@@ -559,8 +571,11 @@ TYPE Checker = PROCEDURE(clkIdx   : CARDINAL;
                          data     : TransitionSeq.T;
                          clk      : TransitionSeq.T;
                          dataDir  : CheckDir.T) : LONGREAL;
-     
-PROCEDURE CheckMargin(datDir            : CheckDir.T;
+
+VAR nMargins := 0;
+  
+PROCEDURE CheckMargin(db                : MarginMeasurementSeq.T;
+                      datDir            : CheckDir.T;
                       clkDir            : Transition.Dir;
                       datTrIdx          : CARDINAL;
                       datNm             : TEXT;
@@ -572,6 +587,7 @@ PROCEDURE CheckMargin(datDir            : CheckDir.T;
     minMargin := LAST(LONGREAL);
     minMarginAt := FIRST(LONGREAL);
   BEGIN
+    INC(nMargins);
     Debug.Out(F("CheckMargin : clkDir %s datdir %s clkNm %s datNm %s tag %s",
                 Int(clkDir),
                 CheckDir.Fmt(datDir),
@@ -610,6 +626,13 @@ PROCEDURE CheckMargin(datDir            : CheckDir.T;
         END
       END
     END;
+
+    WITH new = MarginMeasurement.T {
+      MarginScenario.T { datDir, clkDir, datNm, clkNm, tag },
+      minMargin, minMarginAt } DO
+      db.addhi(new)
+    END;
+    
     RETURN minMargin
   END CheckMargin;
         
@@ -660,11 +683,14 @@ VAR
   vdd                         := 0.75d0;
   resetTime                   := 10.0d-9;
   warnWr                      := FileWr.Open("spicetiming.warn");
+  quick      : BOOLEAN;
   
 BEGIN
   Debug.AddWarnStream(warnWr);
   
   TRY
+    quick := pp.keywordPresent("-quick");
+    
     IF pp.keywordPresent("-i") THEN
       spiceFn := pp.getNext()
     END;
@@ -727,9 +753,15 @@ BEGIN
       END
     END
   END;
-  
-  FOR i := FIRST(LatchSpecs) TO LAST(LatchSpecs) DO
-    DoOneLatchSpec(spice, rootCkt, LatchSpecs[i])
+
+  WITH db = NEW(MarginMeasurementSeq.T).init() DO
+    FOR i := FIRST(LatchSpecs) TO LAST(LatchSpecs) DO
+      IF quick AND nMargins >= QuickMargins THEN EXIT END;
+      
+      DoOneLatchSpec(db, spice, rootCkt, LatchSpecs[i])
+    END;
+
+    MarginDump.Do(db)
   END;
 
 END Main.
