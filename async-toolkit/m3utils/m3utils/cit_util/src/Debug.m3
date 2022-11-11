@@ -261,9 +261,23 @@ PROCEDURE ToHex(t : TEXT) : TEXT =
 
 PROCEDURE S(t:TEXT;minLevel:CARDINAL;cr:=TRUE)=BEGIN Out(t,minLevel,cr);END S;
 
-PROCEDURE Warning(t: TEXT) =
+PROCEDURE Warning(txt : TEXT) =
+  VAR
+    p := warnStreams;
+    t := "WARNING: " & UnNil(txt);
   BEGIN
-    S("WARNING: " & UnNil(t), 0);
+    WHILE p # NIL DO
+      TRY
+        Wr.PutText(p.head.wr, t); 
+        
+        IF p.head.flushAlways THEN
+          Wr.Flush(p.head.wr)
+        END
+      EXCEPT ELSE END;
+      p := p.tail
+    END;
+    
+    S(t, 0);
   END Warning;
 
 PROCEDURE Error(t: TEXT; exit : BOOLEAN) =
@@ -337,6 +351,15 @@ PROCEDURE AddStream(wr : Wr.T) =
     END 
   END AddStream;
 
+PROCEDURE AddWarnStream(wr : Wr.T) = 
+  BEGIN 
+    LOCK mu DO 
+      warnStreams := DebugStreamList.Cons(DebugStream.T { wr          := wr,
+                                                          flushAlways := TRUE},
+                                          warnStreams) 
+    END 
+  END AddWarnStream;
+
 PROCEDURE RemStream(wr : Wr.T) =
   VAR new, p : DebugStreamList.T := NIL; BEGIN
     LOCK mu DO
@@ -374,7 +397,8 @@ PROCEDURE RegisterErrorHook(err: OutHook) =
 VAR
   debugFilter := GetVal("DEBUGFILTER");
   triggers: TextSet.T;
-  streams := DebugStreamList.List1(DebugStream.T { stderr }); 
+  streams     := DebugStreamList.List1(DebugStream.T { stderr }); 
+  warnStreams := DebugStreamList.List1(DebugStream.T { stderr }); 
   (* protected by mu *)
   mu := NEW(MUTEX);
   calls := 0;

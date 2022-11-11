@@ -22,6 +22,10 @@ IMPORT TextSeq;
 IMPORT TransitionFinder; FROM TransitionFinder IMPORT Index;
 IMPORT Transition;
 IMPORT TransitionSeq;
+IMPORT FileWr;
+IMPORT Wr;
+IMPORT CheckDir;
+IMPORT CheckMode;
 
 CONST
   Usage = "";
@@ -30,20 +34,16 @@ CONST
 
 
 CONST
-  Up = CheckDir { 1 };
-  Dn = CheckDir { -1 };
-  UD = CheckDir { -1, 1 };
+  Up = CheckDir.T { 1 };
+  Dn = CheckDir.T { -1 };
+  UD = CheckDir.T { -1, 1 };
 
 TYPE
-  CheckDir = SET OF Transition.Dir;
-
-  CheckMode = { Setu, Hold };
-  
   Arc = RECORD
-    from, to : TEXT;
-    mode     : CheckMode;
+    fr, to : TEXT;
+    mode     : CheckMode.T;
     clkDir   : Transition.Dir;
-    dataDir  : CheckDir;
+    dataDir  : CheckDir.T;
   END;
 
   ArcArr = ARRAY [ 0 .. MaxArcs - 1 ] OF Arc;
@@ -53,28 +53,15 @@ TYPE
     arcs            : ArcArr;
   END;
 
-PROCEDURE FmtCheckDir(c : CheckDir) : TEXT =
-  VAR
-    res := "{ ";
-  BEGIN
-    FOR i := FIRST(Transition.Dir) TO LAST(Transition.Dir) DO
-      IF i IN c THEN
-        res := res & Int(i) & " "
-      END
-    END;
-
-    RETURN res & "}"
-  END FmtCheckDir;
-  
 CONST
   MaxArcs = 4;
-  NoArc   = Arc { NIL, NIL, FIRST(CheckMode), 0, Dn };
+  NoArc   = Arc { NIL, NIL, FIRST(CheckMode.T), 0, Dn };
 
   VendorLatch = LatchSpec {
   "vendor_D_intel_D_g1i_D_l",
   ArcArr {
-    Arc { "d", "clk", CheckMode.Setu, 1, UD },
-    Arc { "d", "clk", CheckMode.Hold, 1, UD },
+    Arc { "d", "clk", CheckMode.T.Setu, 1, UD },
+    Arc { "d", "clk", CheckMode.T.Hold, 1, UD },
     NoArc,
     NoArc
   }};
@@ -82,10 +69,10 @@ CONST
   TinyLatch = LatchSpec {
   "D_TINY_U_LATCH_D_a.v.",
   ArcArr {
-    Arc { "D",    "CLK", CheckMode.Setu,  1, Up },
-    Arc { "D", "_U_CLK", CheckMode.Setu, -1, Dn },
-    Arc { "D",    "CLK", CheckMode.Hold,  1, Up },
-    Arc { "D", "_U_CLK", CheckMode.Hold, -1, Dn }
+    Arc { "D",    "CLK", CheckMode.T.Setu,  1, Up },
+    Arc { "D", "_U_CLK", CheckMode.T.Setu, -1, Dn },
+    Arc { "D",    "CLK", CheckMode.T.Hold,  1, Up },
+    Arc { "D", "_U_CLK", CheckMode.T.Hold, -1, Dn }
   }};
   
   LatchSpecs = ARRAY OF LatchSpec { VendorLatch, TinyLatch };
@@ -114,6 +101,7 @@ hold margin is:
     min time of falling CLK to rising D
     min time of rising _CLK to falling D
 
+... see below for more detailed timing diagrams ...
 
 *)
 
@@ -189,46 +177,98 @@ PROCEDURE CheckLatch(x               : SpiceObject.X; (* instantiation *)
                      trace           : Trace.T
   ) =
   VAR
-    fromTrIdx, toTrIdx : CARDINAL;
+    frTrIdx, toTrIdx     : CARDINAL;
+    
+    posClkIdx, posDatIdx : CARDINAL;
+    posClkNm , posDatNm  : TEXT;
+    gotPos := FALSE;
+
+    negClkIdx            : CARDINAL;
+    negClkNm             : TEXT;
+    gotNeg := FALSE;
   BEGIN
     Debug.Out(F("Checking latch %s of type %s", x.name, subCkt.name));
     
     FOR i := FIRST(arcs) TO LAST(arcs) DO
-      IF arcs[i].from # NIL THEN
+      IF arcs[i].fr # NIL THEN
         WITH arc     = arcs[i],
-             fromIdx = FindFormalIdx(subCkt, arc.from),
+             frIdx = FindFormalIdx(subCkt, arc.fr),
              toIdx   = FindFormalIdx(subCkt, arc.to),
-             fromNm  = x.terminals.get(fromIdx),
+             frNm  = x.terminals.get(frIdx),
              toNm    = x.terminals.get(toIdx),
-             hadFromTr = trace.getNodeIdx(fromNm, fromTrIdx),
+             hadFrTr = trace.getNodeIdx(frNm, frTrIdx),
              hadToTr   = trace.getNodeIdx(toNm, toTrIdx) DO
           Debug.Out(F("verifying path %s (%s) -> %s (%s)",
-                      fromNm, Int(fromIdx),
+                      frNm, Int(frIdx),
                       toNm, Int(toIdx)));
-          IF NOT hadFromTr AND NOT hadToTr THEN
-            Debug.Warning(F("Can't find from,to nodes %s,%s in trace",
-                            fromNm, toNm))
-          ELSIF NOT hadFromTr THEN
-            Debug.Warning(F("Can't find from node %s in trace",
-                            fromNm))
+          IF NOT hadFrTr AND NOT hadToTr THEN
+            Debug.Warning(F("Can't find fr,to nodes %s,%s in trace",
+                            frNm, toNm))
+          ELSIF NOT hadFrTr THEN
+            Debug.Warning(F("Can't find fr node %s in trace",
+                            frNm))
           ELSIF NOT hadToTr THEN
             Debug.Warning(F("Can't find to node %s in trace", toNm))
           ELSE
             CASE arc.mode OF
-              CheckMode.Setu =>
+              CheckMode.T.Setu =>
               EVAL CheckMargin(arc.dataDir, arc.clkDir,
-                               fromTrIdx, fromNm, toTrIdx, toNm,
+                               frTrIdx, frNm, toTrIdx, toNm,
                                MeasureSetup, "setup")
             |
-              CheckMode.Hold =>
+              CheckMode.T.Hold =>
               EVAL CheckMargin(arc.dataDir, arc.clkDir,
-                               fromTrIdx, fromNm, toTrIdx, toNm,
+                               frTrIdx, frNm, toTrIdx, toNm,
                                MeasureHold, "hold")
+            END;
+
+            (* remember positive clock, if any *)
+            IF arc.clkDir IN Up THEN
+              gotPos    := TRUE;
+              posClkIdx := toTrIdx;
+              posClkNm  := toNm;
+              posDatIdx := frTrIdx;
+              posDatNm  := frNm;
+            END;
+
+            (* remember negative clock, if any *)
+            IF arc.clkDir IN Dn THEN
+              gotNeg    := TRUE;
+              negClkIdx := toTrIdx;
+              negClkNm  := toNm;
             END
+
           END
         END
       END
-    END
+    END;
+
+    (* check for glitches *)
+    IF gotPos THEN
+      EVAL CheckMargin(UD, +1,
+                       posDatIdx, posDatNm, posClkIdx, posClkNm,
+                       MeasureGlitchwidth, "glitchwidth")
+    ELSE
+      Debug.Warning(F("No pos clk/data for latch %s", x.name))
+    END;
+
+    (* check for clock pulse widths *)
+    IF gotPos THEN
+      EVAL CheckMargin(UD, +1,
+                       posDatIdx, posDatNm, (* ignored *)
+                       posClkIdx, posClkNm,
+                       MeasurePulsewidth, "pulsewidth-pos")
+    END;
+   
+    IF gotNeg THEN
+      EVAL CheckMargin(UD, -1,
+                       posDatIdx, posDatNm, (* ignored *)
+                       negClkIdx, negClkNm,
+                       MeasurePulsewidth, "pulsewidth-neg")
+    END;
+   
+    
+
   END CheckLatch;
 
 
@@ -278,6 +318,27 @@ dat                .                .  |   .
 
 Now we have t_s and t_h negative, and t_p + t_s + t_h = 0.
 
+One measurement left, the "glitch width":
+
+             ------                  ------
+            |      |                |      |
+phi         |      |                |      |
+            |      |                |      |
+   ---------        ----------------        ------
+                   .                .      .
+                   .                .      .
+                   .                .      .
+                   .                .      .
+                   .     XXXXXX-------------------------
+                   .    |XXXXXX|    .      . 
+dat                .    |XXXXXX|    .      .
+                   .    |XXXXXX|    .      .
+   ----------------.---- XXXXXX     .      .
+                   <----><-----><---><----->
+                     t_h   t_g   t_s   t_p
+
+and we have t_cyc = t_h + t_s + t_p + t_g
+
 *)
 
 CONST
@@ -286,7 +347,7 @@ CONST
 PROCEDURE MeasureSetup(clkIdx   : CARDINAL;
                        data     : TransitionSeq.T;
                        clk      : TransitionSeq.T;
-                       dataDir  : CheckDir) : LONGREAL =
+                       dataDir  : CheckDir.T) : LONGREAL =
 
   (* here we are measuring the pulse timing setup for a signal relative to
      a leading (enabling) clock edge *)
@@ -342,7 +403,7 @@ PROCEDURE MeasureSetup(clkIdx   : CARDINAL;
 PROCEDURE MeasureHold(clkIdx   : CARDINAL;
                       data     : TransitionSeq.T;
                       clk      : TransitionSeq.T;
-                      dataDir  : CheckDir) : LONGREAL =
+                      dataDir  : CheckDir.T) : LONGREAL =
 
   (* here we are measuring the pulse timing setup for a signal relative to
      a leading (enabling) clock edge *)
@@ -401,12 +462,105 @@ PROCEDURE MeasureHold(clkIdx   : CARDINAL;
     END
   END MeasureHold;
 
+PROCEDURE MeasurePulsewidth(clkIdx   : CARDINAL;
+                            <*UNUSED*>data     : TransitionSeq.T;
+                            clk      : TransitionSeq.T;
+                            <*UNUSED*>dataDir  : CheckDir.T) : LONGREAL =
+
+  (* measure pulse width of clock pulse *)
+  VAR
+    clkTrans := clk.get(clkIdx);
+    disIdx   : CARDINAL;
+    disTrans : Transition.T;
+  BEGIN
+    (* find disabling edge of clock, if none, we can't measure *)
+    disIdx := clkIdx + 1;
+    IF disIdx = clk.size() THEN RETURN Fail END;
+
+    (* find disabling transition *)
+    disTrans := clk.get(disIdx);
+
+
+    (* we had a transition that we are sensitive to DURING the cycle *)
+    WITH pulseTime = disTrans.at - clkTrans.at DO
+      Debug.Out(F("Measured pulse from edge at %s, pulse %s",
+                  LR(clkTrans.at), LR(pulseTime)));
+      RETURN pulseTime
+    END
+  END MeasurePulsewidth;
+
+PROCEDURE MeasureGlitchwidth(clkIdx   : CARDINAL;
+                             data     : TransitionSeq.T;
+                             clk      : TransitionSeq.T;
+                             <*UNUSED*>dataDir  : CheckDir.T) : LONGREAL =
+
+  (* here we are measuring the 1/length of the glitchy period before an active edge of
+the clock *)
+
+  VAR
+    clkTrans := clk.get(clkIdx);
+    disIdx       : CARDINAL;
+    disTrans     : Transition.T;
+
+    prvIdx       : Index;
+    prvTrans     : Transition.T;
+    
+    data0Idx     : Index;
+    data0Trans   : Transition.T;
+
+    data1Idx     : Index;
+    data1Trans   : Transition.T;
+
+  BEGIN
+    (* find disabling edge of clock, if none, we can't measure *)
+    (* distrans is what defines the END OF THE CURRENT CYCLE *)
+    disIdx := clkIdx + 1;
+    IF disIdx = clk.size() THEN RETURN Fail END;
+
+    (* find disabling transition *)
+    disTrans := clk.get(disIdx);
+
+    (* find previous clock edge *)
+    prvIdx := clkIdx - 1;
+    IF prvIdx = -1 THEN RETURN Fail END;
+
+    prvTrans := clk.get(prvIdx);
+    
+    (* find previous transition of data -- this is the LAST transition we care about *)
+    data1Idx := TransitionFinder.FindFloorIdx(data, disTrans.at);
+
+    data0Idx := TransitionFinder.FindFloorIdx(data, prvTrans.at) + 1;
+
+    IF data1Idx = -1 OR data0Idx = 0 THEN
+      RETURN Fail
+    END;
+
+    IF data0Trans.at < prvTrans.at OR data1Trans.at < prvTrans.at THEN
+      RETURN Fail
+    END;
+    
+    VAR
+      glitchWidth := data1Trans.at - data0Trans.at;
+      ret : LONGREAL;
+    BEGIN
+      IF glitchWidth = 0.0d0 THEN
+        ret := LAST(LONGREAL)
+      ELSE
+        ret := 1.0d0/ret
+      END;
+      
+      Debug.Out(F("Measured glitchwidth from edge at %s, glitchwidth %s ret %s",
+                  LR(clkTrans.at), LR(glitchWidth), LR(ret)));
+      RETURN ret
+    END
+  END MeasureGlitchwidth;
+
 TYPE Checker = PROCEDURE(clkIdx   : CARDINAL;
                          data     : TransitionSeq.T;
                          clk      : TransitionSeq.T;
-                         dataDir  : CheckDir) : LONGREAL;
+                         dataDir  : CheckDir.T) : LONGREAL;
      
-PROCEDURE CheckMargin(datDir            : CheckDir;
+PROCEDURE CheckMargin(datDir            : CheckDir.T;
                       clkDir            : Transition.Dir;
                       datTrIdx          : CARDINAL;
                       datNm             : TEXT;
@@ -416,10 +570,11 @@ PROCEDURE CheckMargin(datDir            : CheckDir;
                       tag               : TEXT ) : LONGREAL =
   VAR
     minMargin := LAST(LONGREAL);
+    minMarginAt := FIRST(LONGREAL);
   BEGIN
     Debug.Out(F("CheckMargin : clkDir %s datdir %s clkNm %s datNm %s tag %s",
                 Int(clkDir),
-                FmtCheckDir(datDir),
+                CheckDir.Fmt(datDir),
                 clkNm,
                 datNm,
                 tag));
@@ -439,13 +594,18 @@ PROCEDURE CheckMargin(datDir            : CheckDir;
                   clkNm, Int(clkTrans.size())));
 
       FOR i := 0 TO clkTrans.size() - 1 DO
-        <*ASSERT clkTrans.get(i).dir IN UD*>
-        IF clkTrans.get(i).dir = clkDir THEN
-          WITH thisMargin = checker(i,
-                                    datTrans,
-                                    clkTrans,
-                                    datDir) DO
-            minMargin := MIN(thisMargin, minMargin)
+        WITH ct = clkTrans.get(i) DO
+          <*ASSERT ct.dir IN UD*>
+          IF ct.dir = clkDir THEN
+            WITH thisMargin = checker(i,
+                                      datTrans,
+                                      clkTrans,
+                                      datDir) DO
+              IF thisMargin < minMargin THEN
+                minMargin := thisMargin;
+                minMarginAt := ct.at
+              END
+            END
           END
         END
       END
@@ -499,8 +659,11 @@ VAR
   tranFinder : TransitionFinder.T;
   vdd                         := 0.75d0;
   resetTime                   := 10.0d-9;
+  warnWr                      := FileWr.Open("spicetiming.warn");
   
 BEGIN
+  Debug.AddWarnStream(warnWr);
+  
   TRY
     IF pp.keywordPresent("-i") THEN
       spiceFn := pp.getNext()

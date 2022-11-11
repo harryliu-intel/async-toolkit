@@ -10,6 +10,9 @@ Module ("TransitionFinder")
 Table("TextTransitionSeq", "Text", "TransitionSeq")
 Table("CardTransitionSeq", "Cardinal", "TransitionSeq")
 
+Module ("CheckDir")
+Interface ("CheckMode")
+
 implementation ("Main")
 
 program ("spicetiming")

@@ -104,6 +104,10 @@ PROCEDURE AddStream(newStream : Wr.T);
      This will change only the default output method; if you override it
      using output hook above, this will be ignored *)
   
+PROCEDURE AddWarnStream(newStream : Wr.T);
+  (* add another output stream for warnings only
+     Will be unconditional (output hook won't override) *)
+  
 PROCEDURE RemStream(deadStream : Wr.T);
   (* no-op if not in current set of streams *)
 
