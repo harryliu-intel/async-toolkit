@@ -18,8 +18,11 @@ TYPE
 PROCEDURE Find(READONLY timea, nodea : ARRAY OF LONGREAL;
                thres, hysteresis     : LONGREAL) : TransitionSeq.T;
 
+TYPE
+  Index = [ -1 .. LAST(CARDINAL) ];
+  
 PROCEDURE FindFloorIdx(seq : TransitionSeq.T;
-                       time : LONGREAL) : [ -1 .. LAST(CARDINAL) ];
+                       time : LONGREAL) : Index;
   (* find the index of last transition that occurred no later than time time in
      sequence -- -1 if the first transition occurred after the sought time *)
   

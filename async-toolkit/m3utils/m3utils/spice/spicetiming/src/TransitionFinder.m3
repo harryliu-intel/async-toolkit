@@ -68,7 +68,7 @@ PROCEDURE Find(READONLY timea, nodea : ARRAY OF LONGREAL;
                      delT0 = delV0 / delV * delT,
                      at    = pt + delT0 DO
                   state := 1 - state;
-                  res.addhi(Transition.T { at, state } );
+                  res.addhi(Transition.T { at, +1 } );
                   EXIT
                 END
               END
@@ -89,7 +89,7 @@ PROCEDURE Find(READONLY timea, nodea : ARRAY OF LONGREAL;
                      delT0 = delV0 / delV * delT,
                      at    = pt + delT0 DO
                   state := 1 - state;
-                  res.addhi(Transition.T { at, state } );
+                  res.addhi(Transition.T { at, -1 } );
                   EXIT
                 END
               END
@@ -130,16 +130,14 @@ PROCEDURE FindFloorIdx(seq  : TransitionSeq.T;
     
   VAR
     lo := 0;
-    hi := seq.size();
-    i : CARDINAL;
+    hi := seq.size(); (* limit of considered range (out of bounds) *)
   BEGIN
     <*ASSERT time >= 0.0d0*>
-    IF time < seq.get(i).at THEN RETURN -1 END;
+    IF seq.size() = 0 OR time < seq.get(0).at THEN RETURN -1 END;
     
     WHILE lo < hi DO
-      i := lo + (hi - lo) DIV 2;
-
-      WITH ai = seq.get(i).at DO
+      WITH i  = lo + (hi - lo) DIV 2,
+           ai = seq.get(i).at             DO
         IF time = ai THEN
           Check(i);
           RETURN i
@@ -150,8 +148,9 @@ PROCEDURE FindFloorIdx(seq  : TransitionSeq.T;
         END
       END
     END;
-    Check(i);
-    RETURN i
+    <*ASSERT lo = hi*>
+    Check(lo - 1);
+    RETURN lo - 1
   END FindFloorIdx;
 
 PROCEDURE FilterDir(seq : TransitionSeq.T;
