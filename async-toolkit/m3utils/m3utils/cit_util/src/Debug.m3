@@ -398,7 +398,10 @@ VAR
   debugFilter := GetVal("DEBUGFILTER");
   triggers: TextSet.T;
   streams     := DebugStreamList.List1(DebugStream.T { stderr }); 
-  warnStreams := DebugStreamList.List1(DebugStream.T { stderr }); 
+
+  warnStreams : DebugStreamList.T := NIL;
+  (* ADDITIONAL warn Streams *)
+  
   (* protected by mu *)
   mu := NEW(MUTEX);
   calls := 0;

@@ -36,6 +36,9 @@ CONST
   LR = LongReal;
   QuickMargins = 1000;
 
+VAR
+  Verbose := Debug.DebugThis("spicetiming");
+  
 CONST
   Up = CheckDir.T { 1 };
   Dn = CheckDir.T { -1 };
@@ -108,14 +111,12 @@ hold margin is:
 
 *)
 
-  
+
 PROCEDURE DoOneLatchSpec(db             : MarginMeasurementSeq.T;
                          sf             : SpiceFormat.T;
                          rootCkt        : SpiceCircuit.T;
                          READONLY spec  : LatchSpec) =
   (* this is for a flattened design with one level of subcircuit remaining *)
-  CONST
-    Verbose = FALSE;
   VAR
     regEx := RegEx.Compile(spec.typeNamePattern);
     elems := rootCkt.elements;
@@ -406,8 +407,10 @@ PROCEDURE MeasureSetup(clkIdx   : CARDINAL;
 
     (* we had a transition that we are sensitive to DURING the cycle *)
     WITH setupTime = clkTrans.at - dataTrans.at DO
-      Debug.Out(F("Measured setup from edge at %s, setup %s",
-                  LR(clkTrans.at), LR(setupTime)));
+      IF Verbose THEN
+        Debug.Out(F("Measured setup from edge at %s, setup %s",
+                    LR(clkTrans.at), LR(setupTime)))
+      END;
       RETURN setupTime
     END
   END MeasureSetup;
@@ -468,8 +471,10 @@ PROCEDURE MeasureHold(clkIdx   : CARDINAL;
 
     (* we had a transition that we are sensitive to DURING the cycle *)
     WITH holdTime = dataTrans.at - disTrans.at DO
-      Debug.Out(F("Measured hold from edge at %s, hold %s",
-                  LR(clkTrans.at), LR(holdTime)));
+      IF Verbose THEN
+        Debug.Out(F("Measured hold from edge at %s, hold %s",
+                    LR(clkTrans.at), LR(holdTime)))
+      END;
       RETURN holdTime
     END
   END MeasureHold;
@@ -495,8 +500,10 @@ PROCEDURE MeasurePulsewidth(clkIdx   : CARDINAL;
 
     (* we had a transition that we are sensitive to DURING the cycle *)
     WITH pulseTime = disTrans.at - clkTrans.at DO
-      Debug.Out(F("Measured pulse from edge at %s, pulse %s",
-                  LR(clkTrans.at), LR(pulseTime)));
+      IF Verbose THEN
+        Debug.Out(F("Measured pulse from edge at %s, pulse %s",
+                    LR(clkTrans.at), LR(pulseTime)))
+      END;
       RETURN pulseTime
     END
   END MeasurePulsewidth;
@@ -523,6 +530,8 @@ the clock *)
     data1Idx     : Index;
     data1Trans   : Transition.T;
 
+    nData := data.size();
+    
   BEGIN
     (* find disabling edge of clock, if none, we can't measure *)
     (* distrans is what defines the END OF THE CURRENT CYCLE *)
@@ -543,9 +552,16 @@ the clock *)
 
     data0Idx := TransitionFinder.FindFloorIdx(data, prvTrans.at) + 1;
 
-    IF data1Idx = -1 OR data0Idx = 0 THEN
+    IF data1Idx = -1 OR data0Idx = 0 OR data0Idx = nData THEN
       RETURN Fail
     END;
+
+    data1Trans := data.get(data1Idx);
+    data0Trans := data.get(data0Idx);
+
+    Debug.Out(F("disTrans.at=%s prvTrans.at=%s data0Trans.at=%s data1Trans.at=%s",
+                LR(disTrans.at), LR(prvTrans.at),
+                LR(data0Trans.at), LR(data1Trans.at)));
 
     IF data0Trans.at < prvTrans.at OR data1Trans.at < prvTrans.at THEN
       RETURN Fail
@@ -558,11 +574,14 @@ the clock *)
       IF glitchWidth = 0.0d0 THEN
         ret := LAST(LONGREAL)
       ELSE
-        ret := 1.0d0/ret
+        ret := 1.0d0/glitchWidth
       END;
-      
-      Debug.Out(F("Measured glitchwidth from edge at %s, glitchwidth %s ret %s",
-                  LR(clkTrans.at), LR(glitchWidth), LR(ret)));
+
+      IF TRUE THEN
+
+        Debug.Out(F("Measured glitchwidth from edge at %s, glitchwidth %s ret %s",
+                    LR(clkTrans.at), LR(glitchWidth), LR(ret)))
+      END;
       RETURN ret
     END
   END MeasureGlitchwidth;
