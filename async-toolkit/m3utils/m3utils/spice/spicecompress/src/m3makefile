@@ -1,0 +1,9 @@
+import ("libm3")
+import ("cit_util")
+import ("spicelib")
+import ("tracelib")
+
+implementation ("SpiceCompress")
+Module ("Wavelet")
+
+program ("spicez")
