@@ -13,4 +13,6 @@ PROCEDURE Compare(READONLY a, b : T) : [-1 .. 1];
 
 CONST Brand = "MarginMeasurement";
 
+PROCEDURE Format(t : T) : TEXT;
+  
 END MarginMeasurement.

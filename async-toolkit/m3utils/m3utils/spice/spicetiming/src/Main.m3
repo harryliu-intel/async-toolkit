@@ -34,6 +34,7 @@ IMPORT Wx;
 IMPORT ProcUtils;
 IMPORT TextWr;
 IMPORT Wr;
+IMPORT TextIntTbl;
 
 CONST
   Usage = "";
@@ -710,14 +711,27 @@ PROCEDURE UnmapName(nm : TEXT) : TEXT =
     EVAL mappedNames.get(nm, nm);
     RETURN nm
   END UnmapName;
+
+VAR tagCnts := NEW(TextIntTbl.Default).init();
     
+PROCEDURE GetNextCounter(tag : TEXT) : CARDINAL =
+  VAR
+    cnt := 0;
+    nxt : INTEGER;
+  BEGIN
+    EVAL tagCnts.get(tag, cnt);
+    nxt := cnt + 1;
+    EVAL tagCnts.put(tag, nxt);
+    RETURN cnt
+  END GetNextCounter;
+  
 PROCEDURE GraphMeasurement(meas : MarginMeasurement.T;
                            ns   : LONGREAL;
                            idx  : CARDINAL;
                            root : Pathname.T
                            ) =
   VAR
-    scenStr := MarginScenario.Format(meas.scenario);
+    scenStr := MarginMeasurement.Format(meas);
     fr := UnmapName(meas.scenario.datNm);
     to := UnmapName(meas.scenario.clkNm);
     wr := NEW(TextWr.T).init();
@@ -739,8 +753,8 @@ PROCEDURE GraphMeasurement(meas : MarginMeasurement.T;
     Wx.PutText(wx, F("add %s\n", to));
     Wx.PutText(wx, F("range %s:%s\n", Int(loNs), Int(hiNs)));
     Wx.PutText(wx, "\\set term png size 2000,480\n");
-    Wx.PutText(wx, F("\\set output \"worst%s.png\"\n",
-                     meas.scenario.tag));
+    Wx.PutText(wx, F("\\set output \"worst%s.%s.png\"\n",
+                     meas.scenario.tag, Int(GetNextCounter(meas.scenario.tag))));
     Wx.PutText(wx, "update\n");
     Wx.PutText(wx, "quit\n");
 
@@ -869,7 +883,7 @@ BEGIN
       DoOneLatchSpec(db, spice, rootCkt, LatchSpecs[i])
     END;
 
-    WITH worst = MarginDump.Do(db, 1) DO
+    WITH worst = MarginDump.Do(db, 10) DO
       IF graphNs > 0.0d0 THEN
         FOR i := 0 TO worst.size() - 1 DO
           GraphMeasurement(worst.get(i), graphNs, i, traceRt)
