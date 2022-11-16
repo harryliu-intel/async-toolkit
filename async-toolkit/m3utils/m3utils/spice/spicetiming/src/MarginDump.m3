@@ -17,13 +17,14 @@ IMPORT Thread;
 CONST LR = LongReal;
       TE = Text.Equal;
       
-PROCEDURE Do(seq : MarginMeasurementSeq.T) =
+PROCEDURE Do(seq : MarginMeasurementSeq.T; Nworst : CARDINAL) : MarginMeasurementSeq.T =
   VAR
     allTags := NEW(TextSetDef.T).init();
     allDatDirs := NEW(CheckDirSetDef.T).init();
     allClkDirs := CheckDir.T {};
     arr := NEW(REF ARRAY OF MarginMeasurement.T, seq.size());
-    
+
+    res := NEW(MarginMeasurementSeq.T).init();
   BEGIN
     Debug.Out(F("MarginDump.Do: %s measurements", Int(seq.size())));
 
@@ -47,11 +48,15 @@ PROCEDURE Do(seq : MarginMeasurementSeq.T) =
         WITH n = FilterByTag(seq, tag, arr^),
              sub = SUBARRAY(arr^, 0, n) DO
           MarginMeasurementArraySort.Sort(sub);
-          DumpOne(tag, sub)
+          DumpOne(tag, sub);
+          FOR i := 0 TO MIN(Nworst, NUMBER(sub)) - 1 DO
+            res.addhi(sub[i])
+          END
         END
       END
-    END
+    END;
 
+    RETURN res
   END Do;
 
 PROCEDURE FilterByTag(seq     : MarginMeasurementSeq.T;

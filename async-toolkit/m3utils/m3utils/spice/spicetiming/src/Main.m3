@@ -29,6 +29,11 @@ IMPORT MarginMeasurement;
 IMPORT MarginScenario;
 IMPORT MarginMeasurementSeq;
 IMPORT MarginDump;
+IMPORT TextTextTbl;
+IMPORT Wx;
+IMPORT ProcUtils;
+IMPORT TextWr;
+IMPORT Wr;
 
 CONST
   Usage = "";
@@ -659,6 +664,10 @@ CONST
   DoMapTraceNames = TRUE;
 
 TYPE Mapper = PROCEDURE(t : TEXT) : TEXT;
+
+VAR
+  mappedNames := NEW(TextTextTbl.Default).init();
+  (* we remember the original names here, whatever they may be *)
      
 PROCEDURE MapTraceNames(trace : Trace.T; mapper : Mapper) =
   VAR
@@ -671,7 +680,12 @@ PROCEDURE MapTraceNames(trace : Trace.T; mapper : Mapper) =
     s : TextSeq.T;
   BEGIN
     WHILE fIter.next(t, c) DO
-      EVAL newF.put(mapper(t), c)
+      WITH mapped = mapper(t) DO
+        IF NOT TE(mapped, t) THEN
+          EVAL mappedNames.put(mapped, t)
+        END;
+        EVAL newF.put(mapped, c)
+      END
     END;
     trace.fwdTbl := newF;
 
@@ -690,6 +704,77 @@ PROCEDURE RemoveX(nm : TEXT) : TEXT =
     RETURN CitTextUtils.Replace(nm, "X", "")
   END RemoveX;
 
+PROCEDURE UnmapName(nm : TEXT) : TEXT =
+  (* for mapped name find trace name *)
+  BEGIN
+    EVAL mappedNames.get(nm, nm);
+    RETURN nm
+  END UnmapName;
+    
+PROCEDURE GraphMeasurement(meas : MarginMeasurement.T;
+                           ns   : LONGREAL;
+                           idx  : CARDINAL;
+                           root : Pathname.T
+                           ) =
+  VAR
+    scenStr := MarginScenario.Format(meas.scenario);
+    fr := UnmapName(meas.scenario.datNm);
+    to := UnmapName(meas.scenario.clkNm);
+    wr := NEW(TextWr.T).init();
+    stdout, stderr := ProcUtils.WriteHere(wr);
+    wx := Wx.New();
+    cmd := F("/nfs/site/disks/zsc3_fin_data_share/rliu68/tools/bin/fulcrum aplot %s", root);
+    loNsF := meas.at * 1.0d9 - 0.5d0 * ns;
+    hiNsF := meas.at * 1.0d9 + 0.5d0 * ns;
+    loNs := ROUND(loNsF);
+    hiNs := ROUND(hiNsF);
+    input : TEXT;
+
+    iWr : Wr.T;
+    
+  BEGIN
+
+    Wx.PutText(wx, F("\\set title \"%s\"\n", scenStr));
+    Wx.PutText(wx, F("add %s\n", fr));
+    Wx.PutText(wx, F("add %s\n", to));
+    Wx.PutText(wx, F("range %s:%s\n", Int(loNs), Int(hiNs)));
+    Wx.PutText(wx, "\\set term png size 2000,480\n");
+    Wx.PutText(wx, F("\\set output \"worst%s.png\"\n",
+                     meas.scenario.tag));
+    Wx.PutText(wx, "update\n");
+    Wx.PutText(wx, "quit\n");
+
+    input := Wx.ToText(wx);
+         
+    Debug.Out("GraphMeasurement: " & cmd);
+    Debug.Out("GraphMeasurement: input:\n" & input);
+
+
+    
+    WITH     reader = ProcUtils.GimmeWr(iWr),
+             cm    = ProcUtils.RunText(cmd,
+                                   stdout := stdout,
+                                   stderr := stderr,
+                                   stdin := reader)
+     DO
+      Wr.PutText(iWr, input);
+      Wr.Close(iWr);
+      
+      TRY
+        cm.wait()
+      EXCEPT
+        ProcUtils.ErrorExit(err) =>
+        WITH msg = F("command \"%s\" with output\n====>\n%s\n<====\n\nraised ErrorExit : %s",
+                     cmd,
+                     TextWr.ToText(wr),
+                     ProcUtils.FormatError(err)) DO
+          Debug.Warning(msg)
+
+        END
+      END
+    END
+  END GraphMeasurement;
+
 VAR
   pp                          := NEW(ParseParams.T).init(Stdio.stderr);
   spiceFn    : Pathname.T     := "xa.sp";
@@ -703,6 +788,7 @@ VAR
   resetTime                   := 10.0d-9;
   warnWr                      := FileWr.Open("spicetiming.warn");
   quick      : BOOLEAN;
+  graphNs                     := FIRST(LONGREAL);
   
 BEGIN
   Debug.AddWarnStream(warnWr);
@@ -721,6 +807,9 @@ BEGIN
     END;
     IF pp.keywordPresent("-vdd") THEN
       vdd := pp.getNextLongReal()
+    END;
+    IF pp.keywordPresent("-graph") THEN
+      graphNs := pp.getNextLongReal()
     END;
 
     pp.skipParsed();
@@ -780,7 +869,13 @@ BEGIN
       DoOneLatchSpec(db, spice, rootCkt, LatchSpecs[i])
     END;
 
-    MarginDump.Do(db)
+    WITH worst = MarginDump.Do(db, 1) DO
+      IF graphNs > 0.0d0 THEN
+        FOR i := 0 TO worst.size() - 1 DO
+          GraphMeasurement(worst.get(i), graphNs, i, traceRt)
+        END
+      END
+    END
   END;
 
 END Main.
