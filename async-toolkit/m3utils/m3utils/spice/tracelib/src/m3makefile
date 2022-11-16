@@ -11,4 +11,11 @@ interface ("TraceHeader")
 table ("TextCard", "Text", "Cardinal")
 table ("CardTextSeq", "Cardinal", "TextSeq")
 
+Interface ("Transition")
+Sequence ("Transition", "Transition")
+Module ("TransitionFinder")
+
+Table("TextTransitionSeq", "Text", "TransitionSeq")
+Table("CardTransitionSeq", "Cardinal", "TransitionSeq")
+
 library ("tracelib")

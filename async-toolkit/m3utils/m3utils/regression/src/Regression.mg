@@ -56,12 +56,12 @@ PROCEDURE RunR(x, y         : REF Matrix2.M;
        Matrix2.GetDim(recycler.q^).cols # Matrix2.GetDim(x^).rows OR 
        Matrix2.GetDim(recycler.q^).rows # Matrix2.GetDim(x^).cols THEN
       VAR
-        dim := Matrix2.GetDim(x^);
-        dimT := Matrix2.Dim { dim.cols, dim.rows };
-        q := Matrix2.NewM(dimT);
-        indx := NEW(REF ARRAY OF INTEGER, dim.cols);
-        temp := Matrix2.NewM(Matrix2.Dim { dim.cols, dim.cols } );
-        b := Matrix2.NewM(Matrix2.Dim { dim.cols, Matrix2.GetDim(y^).cols });
+        dim      := Matrix2.GetDim(x^);
+        dimT     := Matrix2.Dim { dim.cols, dim.rows };
+        q        := Matrix2.NewM(dimT);
+        indx     := NEW(REF ARRAY OF INTEGER, dim.cols);
+        temp     := Matrix2.NewM(Matrix2.Dim { dim.cols, dim.cols } );
+        b        := Matrix2.NewM(Matrix2.Dim { dim.cols, Matrix2.GetDim(y^).cols });
       BEGIN
         recycler := NEW(Recycler, indx := indx, q := q, b := b, temp := temp)
       END

@@ -1,4 +1,6 @@
 MODULE Wavelet;
+IMPORT SparseLR;
+IMPORT SparseArraySort;
 
 PROCEDURE Wavelet(VAR x, y    : ARRAY OF LONGREAL;
                   forward     : BOOLEAN) =
@@ -33,5 +35,27 @@ PROCEDURE Wavelet(VAR x, y    : ARRAY OF LONGREAL;
       UNTIL m = NUMBER(x)
     END
   END Wavelet;
+
+PROCEDURE ToSparse(READONLY x : ARRAY OF LONGREAL;
+                   VAR s : ARRAY OF SparseLR.T) =
+  BEGIN
+    FOR i := FIRST(x) TO LAST(x) DO
+      s[i] := SparseLR.T { i, x[i] }
+    END;
+    SparseArraySort.Sort(s, cmp := SparseLR.NegCompareAbsWt)
+  END ToSparse;
+
+PROCEDURE FromSparse(READONLY s : ARRAY OF SparseLR.T;
+                     VAR x : ARRAY OF LONGREAL) =
+  BEGIN
+    FOR i := FIRST(x) TO LAST(x) DO
+      x[i] := 0.0d0
+    END;
+    FOR i := FIRST(s) TO LAST(s) DO
+      WITH r = s[i] DO
+        x[r.idx] := r.val
+      END
+    END
+  END FromSparse;
 
 BEGIN END Wavelet.

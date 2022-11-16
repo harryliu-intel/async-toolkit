@@ -3,13 +3,6 @@ import ("cit_util")
 import ("spicelib")
 import ("tracelib")
 
-Interface ("Transition")
-Sequence ("Transition", "Transition")
-Module ("TransitionFinder")
-
-Table("TextTransitionSeq", "Text", "TransitionSeq")
-Table("CardTransitionSeq", "Cardinal", "TransitionSeq")
-
 Module ("CheckDir")
 Interface ("CheckMode")
 Module ("MarginScenario")

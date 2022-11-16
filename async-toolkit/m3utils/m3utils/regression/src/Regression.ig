@@ -7,14 +7,14 @@ GENERIC INTERFACE Regression(M);
 TYPE 
   T = OBJECT
     mean_sq_y, s_sq_dev : M.Base;
-    b : REF M.M;
-    R_sq, F : M.Base;
+    b                   : REF M.M;
+    R_sq, F             : M.Base;
   END;
 
-PROCEDURE Run(x, y : REF M.M;
+PROCEDURE Run(x, y               : REF M.M;
               (* OUT *) VAR yHat : REF M.M;
-              debug : BOOLEAN;
-              data : T;
+              debug              : BOOLEAN;
+              data               : T;
               h := FLOAT(0, M.Base));
 
 

@@ -18,6 +18,15 @@ IMPORT Transition;
 IMPORT TransitionSeq;
 IMPORT Wavelet;
 IMPORT Word;
+IMPORT Math;
+IMPORT SparseLR;
+IMPORT LRRegression AS Regression;
+
+IMPORT Thread;
+
+<*FATAL Thread.Alerted*>
+<*FATAL Wr.Failure*>
+<*FATAL OSError.E*>
 
 CONST
   WaveCnt = 100;
@@ -33,7 +42,11 @@ PROCEDURE Wdebug(msg : TEXT) : LONGREAL =
     RETURN 0.0d0
   END Wdebug;
 
-CONST K = ARRAY OF CARDINAL { 1, 63, 64, 77, 91, 99 };
+CONST <*NOWARN*>Ks = ARRAY OF CARDINAL { 1, 63, 64, 77, 91, 99         };
+      <*NOWARN*>Km = ARRAY OF CARDINAL { 1,         77    , 99         };
+      <*NOWARN*>Kq = ARRAY OF CARDINAL {            77                 };
+      <*NOWARN*>Kg = ARRAY OF CARDINAL {            77        , 108091 };
+      K  = Kg;
 
       dirs   = ARRAY [-1..1] OF Transition.Dir { -1, 0, 1 };
 
@@ -52,11 +65,16 @@ PROCEDURE NextPow2(c : CARDINAL) : CARDINAL =
   END NextPow2;
 
 PROCEDURE BuildCartoon(allSeq         : TransitionSeq.T;
-                       medTrans     : MedTrans;
-                       VAR carr     : ARRAY OF LONGREAL) =
+                       medTrans       : MedTrans;
+                       READONLY darr  : ARRAY OF LONGREAL;
+                       VAR carr       : ARRAY OF LONGREAL;
+                       MatchFirst     : BOOLEAN) =
   VAR
-    window : ARRAY [FIRST(dirs)..LAST(dirs)] OF CARDINAL;
-    tSeq   : ARRAY [FIRST(dirs)..LAST(dirs)] OF TransitionSeq.T;
+    window  : ARRAY [FIRST(dirs)..LAST(dirs)] OF CARDINAL;
+    tSeq    : ARRAY [FIRST(dirs)..LAST(dirs)] OF TransitionSeq.T;
+    firstPt : BOOLEAN;
+    off     : LONGREAL;
+
   BEGIN
     FOR d := FIRST(dirs) TO LAST(dirs) DO
       IF medTrans[d] # NIL THEN
@@ -79,15 +97,28 @@ PROCEDURE BuildCartoon(allSeq         : TransitionSeq.T;
 
             Debug.Out(F("BuildCartoon i %s start %s LAST(carr) %s",
                         Int(i), LR(start), Int(LAST(carr))));
-            
+
+            firstPt := TRUE;
+
+            (* write the current waveform *)
             FOR j := MAX(0,CEILING(start)) TO LAST(carr) DO
+              
               WITH medx = FLOAT(j, LONGREAL) - start DO
                 IF medx < FLOAT(2 * mw, LONGREAL) THEN
-                  WITH y = Interpolate(mt^, medx) DO
-                    carr[j] := carr[j] + y
+                  WITH y    = Interpolate(mt^, medx),
+                       yhat = carr[j] + y DO
+                    IF firstPt THEN
+                      IF NOT MatchFirst THEN
+                        off := 0.0d0
+                      ELSE
+                        off := darr[j] - yhat
+                      END;
+                      firstPt := FALSE
+                    END;
+                    carr[j] := carr[j] + y + off
                   END
                 ELSE
-                  carr[j] := carr[j] + mt[LAST(mt^)]
+                  carr[j] := carr[j] + mt[LAST(mt^)] + off
                 END
               END
             END
@@ -132,15 +163,94 @@ PROCEDURE FindTransWidth(READONLY darr : ARRAY OF LONGREAL;
   END FindTransWidth;
 
 PROCEDURE Pad2(VAR      to : ARRAY OF LONGREAL;
-              READONLY fr : ARRAY OF LONGREAL) =
+               READONLY fr : ARRAY OF LONGREAL) =
   BEGIN
     SUBARRAY(to, 0, NUMBER(fr)) := fr;
     FOR i := NUMBER(fr) TO LAST(to) DO
       to[i] := fr[LAST(fr)]
     END
   END Pad2;
+
+PROCEDURE AttemptCompress(pfx        : TEXT;
+                          READONLY a : ARRAY OF LONGREAL;
+                          levels     : CARDINAL;
+                          targMaxDev : LONGREAL) =
+  VAR
+    n2       := NextPow2(NUMBER(a));
+
+    w,
+    y        := NEW(REF ARRAY OF LONGREAL, n2);
+    
+    s        := NEW(REF ARRAY OF SparseLR.T, n2);
+  BEGIN
+    Debug.Out(F("AttemptCompress %s : %s", pfx, Int(levels)));
+    Pad2(w^, a);
+    Wavelet.Wavelet(w^, y^, TRUE);
+
+    Wavelet.ToSparse(w^, s^);
+
+    FOR lev := 0 TO levels - 1 DO
+      WITH coeffs = Word.Shift(1, lev),
+           myPfx = pfx & ".z" & Int(coeffs) DO
+        IF coeffs <= NUMBER(s^) THEN
+          Wavelet.FromSparse(SUBARRAY(s^, 0, coeffs), w^);
+
+          Wavelet.Wavelet(w^, y^, FALSE);
+
+          DumpVec(myPfx, w^);
+          
+          Evaluate(myPfx & ".errs", coeffs, a, w^, targMaxDev)
+        END
+      END
+    END
+  END AttemptCompress;
+
+PROCEDURE Evaluate(fn            : TEXT;
+                   coeffs        : CARDINAL;
+                   READONLY a, b : ARRAY OF LONGREAL;
+                   targMaxDev    : LONGREAL) =
+  VAR
+    maxAbsDiff   := 0.0d0;
+    sumDiff      := 0.0d0;
+    sumDiffSq    := 0.0d0;
+    n            := NUMBER(a);
+    e            := NEW(REF ARRAY OF LONGREAL, n);
+    fails        := 0;
+  BEGIN
+    <*ASSERT NUMBER(b) >= NUMBER(a)*>
+    FOR i := FIRST(a) TO LAST(a) DO
+      e[i] := a[i] - b[i];
       
-PROCEDURE DoIt() =
+      WITH diff    = a[i] - b[i],
+           absDiff = ABS(diff),
+           diffSq  = diff * diff DO
+        sumDiff := sumDiff + diff;
+        maxAbsDiff := MAX(absDiff, maxAbsDiff);
+        IF absDiff > targMaxDev THEN INC(fails) END;
+        sumDiffSq := sumDiffSq + diffSq
+      END
+    END;
+    DumpVec(fn, e^);
+    WITH meanSq = sumDiffSq / FLOAT(n, LONGREAL),
+         rms    = Math.sqrt(meanSq) DO
+      
+      Debug.Out(F("%s coeffs maxAbsDiff %s RMS %s fails %s cost %s",
+                  Int(coeffs),
+                  LR(maxAbsDiff),
+                  LR(rms),
+                  Int(fails),
+                  Int(fails + coeffs)))
+    END
+  END Evaluate;
+
+PROCEDURE Zero(VAR a : ARRAY OF LONGREAL) =
+  BEGIN
+    FOR i := FIRST(a) TO LAST(a) DO
+      a[i] := 0.0d0
+    END
+  END Zero;
+  
+PROCEDURE DoIt(targMaxDev : LONGREAL) =
 
   PROCEDURE DoTrans(rn   : Pathname.T;
                     dir  : Transition.Dir;
@@ -212,21 +322,22 @@ PROCEDURE DoIt() =
           Wr.Close(wr)
         END;
 
-
         RETURN med
       END
     END DoTrans;
-        
   
   PROCEDURE DoOne(i : CARDINAL) =
     VAR
       medTrans := MedTrans { NIL, .. };
+      rn       := Pad(Int(i), 6, padChar := '0');
 
     BEGIN
       trace.getNodeData(i, darr^);
       norm := Normalize(darr^);
       
       (* darr^ is normalized *)
+
+      PolyCompress(rn & ".poly", darr^);
       
       sarr^ := darr^;
       LongrealArraySort.Sort(sarr^);
@@ -254,10 +365,10 @@ PROCEDURE DoIt() =
            
            nTrans = tSeq.size(),
            
-           rn     = Pad(Int(i), 5, padChar := '0'),
 
            carr0    = NEW(REF ARRAY OF LONGREAL, NUMBER(darr^)),
            carr1    = NEW(REF ARRAY OF LONGREAL, NUMBER(darr^)),
+           carr2    = NEW(REF ARRAY OF LONGREAL, NUMBER(darr^)),
            earr0    = NEW(REF ARRAY OF LONGREAL, NUMBER(darr^)),
            earr1    = NEW(REF ARRAY OF LONGREAL, NUMBER(darr^))
        
@@ -279,9 +390,13 @@ PROCEDURE DoIt() =
         END;
 
         
-        BuildCartoon(tSeq, medTrans, carr0^);
+        BuildCartoon(tSeq, medTrans, darr^, carr0^, FALSE);
 
         DumpOne(rn & ".carr0", iarr^, carr0^);
+
+        BuildCartoon(tSeq, medTrans, darr^, carr2^, TRUE);
+
+        DumpOne(rn & ".carr2", iarr^, carr2^);
 
         WITH finalErr = carr0[LAST(carr0^)] - darr[LAST(darr^)],
              nf       = FLOAT(NUMBER(darr^) - 1, LONGREAL) DO
@@ -312,8 +427,9 @@ PROCEDURE DoIt() =
           wearr1i   = NEW(REF ARRAY OF LONGREAL, n2),
           s2       = NEW(REF ARRAY OF LONGREAL, n2),
 
-          wiarr    = NEW(REF ARRAY OF LONGREAL, n2)
-          
+          wiarr    = NEW(REF ARRAY OF LONGREAL, n2),
+          q        = NEW(REF ARRAY OF LONGREAL, n2)
+
          DO
           Integers(wiarr^);
 
@@ -349,6 +465,25 @@ PROCEDURE DoIt() =
 
           (****************************************)
 
+          Zero(q^);
+          FOR i := 0 TO 20 DO
+            WITH z = Word.Shift(1, i) - 1 DO
+              IF z <= LAST(q^) THEN
+                Zero(q^);
+                q[z] := 1.0d0;
+                Wavelet.Wavelet(q^, s2^, FALSE);
+                DumpVec("q." & Int(z), q^)
+              END
+            END
+          END;
+          
+          (****************************************)
+
+          
+          
+          AttemptCompress(rn & ".earr0", earr0^, 20, targMaxDev);
+          AttemptCompress(rn & ".earr1", earr1^, 20, targMaxDev);
+          AttemptCompress(rn & ".darr", darr^ , 20, targMaxDev);
         END
       END
     END DoOne;
@@ -396,6 +531,35 @@ PROCEDURE DumpOne(nm : Pathname.T;
     END;
     Wr.Close(wr)
   END DumpOne;
+
+PROCEDURE DumpVec(nm          : Pathname.T;
+                  READONLY da : ARRAY OF LONGREAL) =
+  VAR
+    wr := FileWr.Open(nm);
+  BEGIN
+    FOR i := FIRST(da) TO LAST(da) DO
+      Wr.PutText(wr, Int(i));
+      Wr.PutChar(wr, ' ');
+      Wr.PutText(wr, LR(da[i]));
+      Wr.PutChar(wr, '\n')
+    END;
+    Wr.Close(wr)
+  END DumpVec;
+
+PROCEDURE DumpCol(nm : Pathname.T;
+                  READONLY a : Array;
+                  col : CARDINAL) =
+  VAR
+    wr := FileWr.Open(nm);
+  BEGIN
+    FOR i := FIRST(a) TO LAST(a) DO
+      Wr.PutText(wr, Int(i));
+      Wr.PutChar(wr, ' ');
+      Wr.PutText(wr, LR(a[i, col]));
+      Wr.PutChar(wr, '\n')
+    END;
+    Wr.Close(wr)
+  END DumpCol;
   
 TYPE
   Norm = RECORD
@@ -433,6 +597,42 @@ PROCEDURE Interpolate(READONLY a : ARRAY OF LONGREAL; x : LONGREAL) : LONGREAL =
   BEGIN
     RETURN fp * fa + cp * ca
   END Interpolate;
+
+TYPE
+  Array = ARRAY OF ARRAY OF LONGREAL;
+
+PROCEDURE PolyCompress(fn : TEXT; READONLY a : ARRAY OF LONGREAL) =
+  VAR
+    dims := 2;
+    n    := NUMBER(a);
+    x    := NEW(REF Array, n, dims);
+    response := NEW(REF Array, n, 1);
+    responseHat : REF Array;
+    r := NEW(Regression.T);
+  BEGIN
+    FOR i := 0 TO n - 1 DO
+      response[i, 0] := a[i]
+    END;
+    MakeIndeps(x^);
+
+    Regression.Run(x, response, responseHat, FALSE, r, h := 0.0d0);
+
+    DumpCol(fn, responseHat^, 0)
+    
+  END PolyCompress;
+
+PROCEDURE MakeIndeps(VAR a : ARRAY OF ARRAY OF LONGREAL) =
+  BEGIN
+    FOR ix := FIRST(a) TO LAST(a) DO
+      a[ix, 0] := 1.0d0;
+      WITH x  = a[ix],
+           fx = FLOAT(ix, LONGREAL) DO
+        FOR px := 1 TO LAST(x) DO
+          x[px] := fx * x[px - 1]
+        END
+      END
+    END
+  END MakeIndeps;
   
 VAR
   pp                             := NEW(ParseParams.T).init(Stdio.stderr);
@@ -457,7 +657,9 @@ BEGIN
   TRY
     trace := NEW(Trace.T).init(traceRt)
   EXCEPT
-    OSError.E(x) => Debug.Error("Trouble opening input trace : OSError.E : " & AL.Format(x))
+    OSError.E(x) =>
+    Debug.Error(F("Trouble opening input trace %s : OSError.E : %s",
+                  traceRt, AL.Format(x)))
   |
     Rd.Failure(x) => Debug.Error("Trouble opening input trace : Rd.Failure : " & AL.Format(x))
   |
@@ -478,5 +680,5 @@ BEGIN
     END
   END;
 
-  DoIt();
+  DoIt(0.005d0);
 END SpiceCompress.

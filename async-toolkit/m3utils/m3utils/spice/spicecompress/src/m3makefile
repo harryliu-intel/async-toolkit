@@ -2,8 +2,11 @@ import ("libm3")
 import ("cit_util")
 import ("spicelib")
 import ("tracelib")
+import ("regression")
 
 implementation ("SpiceCompress")
 Module ("Wavelet")
+Module ("SparseLR")
+Array_sort ("Sparse", "SparseLR")
 
 program ("spicez")

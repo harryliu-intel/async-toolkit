@@ -1,4 +1,5 @@
 INTERFACE Wavelet;
+IMPORT SparseLR;
 
 (*
 
@@ -52,4 +53,10 @@ C               BUTTERFLY
 PROCEDURE Wavelet(VAR x, buff : ARRAY OF LONGREAL;
                   forward     : BOOLEAN);
 
+PROCEDURE ToSparse(READONLY x : ARRAY OF LONGREAL;
+                   VAR s : ARRAY OF SparseLR.T);
+
+PROCEDURE FromSparse(READONLY s : ARRAY OF SparseLR.T;
+                     VAR x : ARRAY OF LONGREAL); 
+    
 END Wavelet.

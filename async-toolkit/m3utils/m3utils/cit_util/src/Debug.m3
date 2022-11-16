@@ -269,6 +269,7 @@ PROCEDURE Warning(txt : TEXT) =
     WHILE p # NIL DO
       TRY
         Wr.PutText(p.head.wr, t); 
+        Wr.PutChar(p.head.wr, '\n'); 
         
         IF p.head.flushAlways THEN
           Wr.Flush(p.head.wr)
