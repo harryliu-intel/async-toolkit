@@ -69,6 +69,8 @@ PROCEDURE BuildCartoon(allSeq         : TransitionSeq.T;
                        READONLY darr  : ARRAY OF LONGREAL;
                        VAR carr       : ARRAY OF LONGREAL;
                        MatchFirst     : BOOLEAN) =
+  CONST
+    Verbose = FALSE;
   VAR
     window  : ARRAY [FIRST(dirs)..LAST(dirs)] OF CARDINAL;
     tSeq    : ARRAY [FIRST(dirs)..LAST(dirs)] OF TransitionSeq.T;
@@ -95,8 +97,10 @@ PROCEDURE BuildCartoon(allSeq         : TransitionSeq.T;
         IF mt # NIL THEN
           WITH start = tr.at - FLOAT(mw, LONGREAL) DO
 
-            Debug.Out(F("BuildCartoon i %s start %s LAST(carr) %s",
-                        Int(i), LR(start), Int(LAST(carr))));
+            IF Verbose THEN
+              Debug.Out(F("BuildCartoon i %s start %s LAST(carr) %s",
+                          Int(i), LR(start), Int(LAST(carr))));
+            END;
 
             firstPt := TRUE;
 
@@ -130,10 +134,12 @@ PROCEDURE BuildCartoon(allSeq         : TransitionSeq.T;
   
 PROCEDURE FindTransWidth(READONLY darr : ARRAY OF LONGREAL;
                          tr            : Transition.T) : LONGREAL =
+  CONST
+    Verbose = FALSE;
   VAR
-    p := tr.at;
-    lo, hi := LAST(LONGREAL);
-    dir := FLOAT(tr.dir, LONGREAL);
+    p        := tr.at;
+    lo, hi   := LAST(LONGREAL);
+    dir      := FLOAT(tr.dir, LONGREAL);
   BEGIN
     WHILE p > 0.0d0 AND p < FLOAT(NUMBER(darr), LONGREAL) DO
       IF Interpolate(darr, p) <= 0.10d0 THEN
@@ -153,11 +159,15 @@ PROCEDURE FindTransWidth(READONLY darr : ARRAY OF LONGREAL;
     END;
 
     IF lo = LAST(LONGREAL) OR hi = LAST(LONGREAL) THEN
-      Debug.Out("Trans width not found");
+      IF Verbose THEN
+        Debug.Out("Trans width not found")
+      END;
       RETURN LAST(LONGREAL)
     ELSE
-      Debug.Out(F("Trans lo %s hi %s width %s",
-                  LR(lo), LR(hi), LR(ABS(hi - lo))));
+      IF Verbose THEN
+        Debug.Out(F("Trans lo %s hi %s width %s",
+                    LR(lo), LR(hi), LR(ABS(hi - lo))))
+      END;
       RETURN ABS(hi - lo)
     END
   END FindTransWidth;
@@ -199,16 +209,22 @@ PROCEDURE AttemptCompress(pfx        : TEXT;
 
           DumpVec(myPfx, w^);
           
-          Evaluate(myPfx & ".errs", coeffs, a, w^, targMaxDev)
+          EVAL Evaluate(myPfx & ".errs", coeffs, a, w^, targMaxDev)
         END
       END
     END
   END AttemptCompress;
 
+TYPE
+  Evaluation = RECORD
+    fails, cost : CARDINAL;
+    maxAbsDiff, rms : LONGREAL;
+  END;
+  
 PROCEDURE Evaluate(fn            : TEXT;
                    coeffs        : CARDINAL;
                    READONLY a, b : ARRAY OF LONGREAL;
-                   targMaxDev    : LONGREAL) =
+                   targMaxDev    : LONGREAL) : Evaluation =
   VAR
     maxAbsDiff   := 0.0d0;
     sumDiff      := 0.0d0;
@@ -239,8 +255,12 @@ PROCEDURE Evaluate(fn            : TEXT;
                   LR(maxAbsDiff),
                   LR(rms),
                   Int(fails),
-                  Int(fails + coeffs)))
-    END
+                  Int(fails + coeffs)));
+      
+      RETURN Evaluation { fails, fails + coeffs,
+                          maxAbsDiff, rms }
+
+    END;
   END Evaluate;
 
 PROCEDURE Zero(VAR a : ARRAY OF LONGREAL) =
@@ -257,6 +277,7 @@ PROCEDURE DoIt(targMaxDev : LONGREAL) =
                     tSeq : TransitionSeq.T) : REF ARRAY OF LONGREAL =
     CONST
       Window = 2.0d0; (* one-sided window width *)
+      Verbose = FALSE;
     VAR
       nTrans := tSeq.size();
       bTrans := 0;
@@ -280,8 +301,10 @@ PROCEDURE DoIt(targMaxDev : LONGREAL) =
            med       = NEW(REF ARRAY OF LONGREAL, window * 2)
        DO
 
-        Debug.Out(F("DoTrans(%s,%s) : nTrans %s medWidth %s window %s",
-                    rn, Int(dir), Int(nTrans), LR(medWidth), Int(window)));
+        IF Verbose THEN
+          Debug.Out(F("DoTrans(%s,%s) : nTrans %s medWidth %s window %s",
+                      rn, Int(dir), Int(nTrans), LR(medWidth), Int(window)))
+        END;
         
         FOR j := 0 TO nTrans - 1 DO
           FOR w := 0 TO 2 * window - 1 DO
@@ -337,7 +360,7 @@ PROCEDURE DoIt(targMaxDev : LONGREAL) =
       
       (* darr^ is normalized *)
 
-      PolyCompress(rn & ".poly", darr^);
+      PolyCompress(rn & ".poly", darr^, targMaxDev);
       
       sarr^ := darr^;
       LongrealArraySort.Sort(sarr^);
@@ -546,6 +569,16 @@ PROCEDURE DumpVec(nm          : Pathname.T;
     Wr.Close(wr)
   END DumpVec;
 
+PROCEDURE ExtractCol(READONLY a : Array; col : CARDINAL) : REF ARRAY OF LONGREAL =
+  VAR
+    res := NEW(REF ARRAY OF LONGREAL, NUMBER(a));
+  BEGIN
+    FOR i := FIRST(res^) TO LAST(res^) DO
+      res[i] := a[i, col]
+    END;
+    RETURN res
+  END ExtractCol;
+  
 PROCEDURE DumpCol(nm : Pathname.T;
                   READONLY a : Array;
                   col : CARDINAL) =
@@ -601,7 +634,10 @@ PROCEDURE Interpolate(READONLY a : ARRAY OF LONGREAL; x : LONGREAL) : LONGREAL =
 TYPE
   Array = ARRAY OF ARRAY OF LONGREAL;
 
-PROCEDURE PolyCompress(fn : TEXT; READONLY a : ARRAY OF LONGREAL) =
+PROCEDURE PolyCompress(fn         : TEXT;
+                       READONLY a : ARRAY OF LONGREAL;
+                       targMaxDev : LONGREAL
+  ) =
   VAR
     dims := 2;
     n    := NUMBER(a);
@@ -610,6 +646,8 @@ PROCEDURE PolyCompress(fn : TEXT; READONLY a : ARRAY OF LONGREAL) =
     responseHat : REF Array;
     r := NEW(Regression.T);
   BEGIN
+    Debug.Out("PolyCompress " & fn);
+    
     FOR i := 0 TO n - 1 DO
       response[i, 0] := a[i]
     END;
@@ -617,7 +655,9 @@ PROCEDURE PolyCompress(fn : TEXT; READONLY a : ARRAY OF LONGREAL) =
 
     Regression.Run(x, response, responseHat, FALSE, r, h := 0.0d0);
 
-    DumpCol(fn, responseHat^, 0)
+    DumpCol(fn, responseHat^, 0);
+
+    EVAL Evaluate(fn & ".errs", dims, a, ExtractCol(responseHat^, 0)^, targMaxDev);
     
   END PolyCompress;
 

@@ -51,8 +51,15 @@ CONST
   UD = CheckDir.T { -1, 1 };
 
 TYPE
+  Node = RECORD
+    nm       : TEXT;
+    internal : BOOLEAN;
+  END;
+
+  N = Node;
+  
   Arc = RECORD
-    fr, to : TEXT;
+    fr, to   : Node;
     mode     : CheckMode.T;
     clkDir   : Transition.Dir;
     dataDir  : CheckDir.T;
@@ -66,25 +73,33 @@ TYPE
   END;
 
 CONST
-  MaxArcs = 4;
-  NoArc   = Arc { NIL, NIL, FIRST(CheckMode.T), 0, Dn };
+  MaxArcs = 6;
+  NoNode = N { NIL, FALSE };
+  NoArc   = Arc { NoNode, NoNode, FIRST(CheckMode.T), 0, Dn };
 
   VendorLatch = LatchSpec {
   "vendor_D_intel_D_g1i_D_l",
   ArcArr {
-    Arc { "d", "clk", CheckMode.T.Setu, 1, UD },
-    Arc { "d", "clk", CheckMode.T.Hold, 1, UD },
+    Arc { N { "d", FALSE },   N { "clk", FALSE }, CheckMode.T.Setu,  1, UD },
+    Arc { N { "d", FALSE },   N { "clk", FALSE }, CheckMode.T.Hold,  1, UD },
+    Arc { N { "d", FALSE },   N { "clk", FALSE }, CheckMode.T.Hold,  1, UD },
+
+    (* pulse width arcs are relative to the nc1 inverted internal clock *)
+    Arc { N { "nk2", TRUE }, N { "clk", FALSE }, CheckMode.T.Puls,  1, Up },
+    Arc { N { "nk2", TRUE }, N { "nc1", TRUE  }, CheckMode.T.Puls, -1, Dn },
     NoArc,
-    NoArc
+    ..
   }};
 
   TinyLatch = LatchSpec {
   "D_TINY_U_LATCH_D_a.v.",
   ArcArr {
-    Arc { "D",    "CLK", CheckMode.T.Setu,  1, Up },
-    Arc { "D", "_U_CLK", CheckMode.T.Setu, -1, Dn },
-    Arc { "D",    "CLK", CheckMode.T.Hold,  1, Up },
-    Arc { "D", "_U_CLK", CheckMode.T.Hold, -1, Dn }
+    Arc { N { "D",  FALSE }, N { "CLK"   , FALSE }, CheckMode.T.Setu,  1, Up },
+    Arc { N { "D",  FALSE }, N { "_U_CLK", FALSE }, CheckMode.T.Setu, -1, Dn },
+    Arc { N { "D",  FALSE }, N { "CLK"   , FALSE }, CheckMode.T.Hold,  1, Up },
+    Arc { N { "D",  FALSE }, N { "_U_CLK", FALSE }, CheckMode.T.Hold, -1, Dn },
+    Arc { N { "nk", TRUE  }, N { "CLK"   , FALSE }, CheckMode.T.Puls,  1, Up },
+    Arc { N { "nk", TRUE  }, N { "_U_CLK", FALSE }, CheckMode.T.Puls, -1, Dn }
   }};
   
   LatchSpecs = ARRAY OF LatchSpec { VendorLatch, TinyLatch };
@@ -117,11 +132,32 @@ hold margin is:
 
 *)
 
+PROCEDURE FindHierName(instance : SpiceObject.T;
+                       subCkt   : SpiceCircuit.T;
+                       node     : Node;
+                       mapper   : Mapper) : TEXT =
+  BEGIN
+    IF node.internal THEN
+      WITH tent = instance.name & "_D_" & node.nm DO
+        IF mapper = NIL THEN
+          RETURN tent
+        ELSE
+          RETURN mapper(tent)
+        END
+      END
+    ELSE
+      WITH idx = FindFormalIdx(subCkt, node.nm),
+           nm  = instance.terminals.get(idx) DO
+        RETURN (nm) (* should this be put through mapper ? *)
+      END
+    END
+  END FindHierName;
 
 PROCEDURE DoOneLatchSpec(db             : MarginMeasurementSeq.T;
                          sf             : SpiceFormat.T;
                          rootCkt        : SpiceCircuit.T;
-                         READONLY spec  : LatchSpec) =
+                         READONLY spec  : LatchSpec;
+                         mapper         : Mapper) =
   (* this is for a flattened design with one level of subcircuit remaining *)
   VAR
     regEx := RegEx.Compile(spec.typeNamePattern);
@@ -159,7 +195,7 @@ PROCEDURE DoOneLatchSpec(db             : MarginMeasurementSeq.T;
               IF NOT foundType THEN
                 Debug.Error(F("Can't find SUBCKT %s", x.type))
               END;
-              CheckLatch(db, x, subCkt, spec.arcs, trace) 
+              CheckLatch(db, x, subCkt, spec.arcs, trace, mapper) 
             END
           END
         ELSE
@@ -188,7 +224,8 @@ PROCEDURE CheckLatch(db              : MarginMeasurementSeq.T;
                      x               : SpiceObject.X; (* instantiation *)
                      subCkt          : SpiceCircuit.T;(* of what *)
                      READONLY arcs   : ARRAY OF Arc;  (* ...validate against *)
-                     trace           : Trace.T
+                     trace           : Trace.T;
+                     mapper          : Mapper
   ) =
   VAR
     frTrIdx, toTrIdx     : CARDINAL;
@@ -204,17 +241,15 @@ PROCEDURE CheckLatch(db              : MarginMeasurementSeq.T;
     Debug.Out(F("Checking latch %s of type %s", x.name, subCkt.name));
     
     FOR i := FIRST(arcs) TO LAST(arcs) DO
-      IF arcs[i].fr # NIL THEN
+      IF arcs[i].fr # NoNode THEN
         WITH arc     = arcs[i],
-             frIdx = FindFormalIdx(subCkt, arc.fr),
-             toIdx   = FindFormalIdx(subCkt, arc.to),
-             frNm  = x.terminals.get(frIdx),
-             toNm    = x.terminals.get(toIdx),
+             frNm    = FindHierName(x, subCkt, arc.fr, mapper),
+             toNm    = FindHierName(x, subCkt, arc.to, mapper),
              hadFrTr = trace.getNodeIdx(frNm, frTrIdx),
-             hadToTr   = trace.getNodeIdx(toNm, toTrIdx) DO
-          Debug.Out(F("verifying path %s (%s) -> %s (%s)",
-                      frNm, Int(frIdx),
-                      toNm, Int(toIdx)));
+             hadToTr = trace.getNodeIdx(toNm, toTrIdx) DO
+          Debug.Out(F("verifying path %s -> %s",
+                      frNm,
+                      toNm));
           IF NOT hadFrTr AND NOT hadToTr THEN
             Debug.Warning(F("Can't find fr,to nodes %s,%s in trace",
                             frNm, toNm))
@@ -236,6 +271,12 @@ PROCEDURE CheckLatch(db              : MarginMeasurementSeq.T;
                                arc.dataDir, arc.clkDir,
                                frTrIdx, frNm, toTrIdx, toNm,
                                MeasureHold, "hold")
+            |
+              CheckMode.T.Puls =>
+              EVAL CheckMargin(db,
+                               arc.dataDir, arc.clkDir,
+                               frTrIdx, frNm, toTrIdx, toNm,
+                               MeasurePulsemargin, "pulsemargin")
             END;
 
             (* remember positive clock, if any *)
@@ -420,6 +461,61 @@ PROCEDURE MeasureSetup(clkIdx   : CARDINAL;
       RETURN setupTime
     END
   END MeasureSetup;
+
+PROCEDURE MeasurePulsemargin(clkIdx   : CARDINAL;
+                             data     : TransitionSeq.T;
+                             clk      : TransitionSeq.T;
+                             dataDir  : CheckDir.T) : LONGREAL =
+
+  (* here we are measuring the pulse margin from a flipping internal node
+     to a flipping clock *)
+  VAR
+    clkTrans := clk.get(clkIdx);
+    disIdx   : CARDINAL;
+    disTrans : Transition.T;
+    dataIdx : Index;
+    dataTrans : Transition.T;
+  BEGIN
+    (* find disabling edge of clock, if none, we can't measure *)
+    (* distrans is what defines the END OF THE CURRENT CYCLE *)
+    disIdx := clkIdx + 1;
+    IF disIdx = clk.size() THEN RETURN Fail END;
+
+    (* find disabling transition *)
+    disTrans := clk.get(disIdx);
+    
+    (* find previous transition of data -- this is the interesting transition of
+       the aggressor in the case of the pulse margin *)
+    dataIdx := TransitionFinder.FindFloorIdx(data, disTrans.at);
+
+    (* now look for the direction of data transition we are sensitive to *)
+    WHILE dataIdx # -1 DO
+      dataTrans := data.get(dataIdx);
+      IF dataTrans.dir IN dataDir THEN EXIT END;
+      DEC(dataIdx)
+    END;
+
+    IF dataIdx = -1 THEN
+      RETURN Fail
+    END;
+
+    (* check whether data transition
+       was after RISING edge of clock (same cycle) *)
+    
+    IF dataTrans.at <= clkTrans.at THEN
+      (* there were no interesting transitions on this cycle *)
+      RETURN Fail
+    END;
+
+    (* we had a transition that we are sensitive to DURING the cycle *)
+    WITH pulseMargin = disTrans.at - dataTrans.at DO
+      IF Verbose THEN
+        Debug.Out(F("Measured pulsemargin from edge at %s, setup %s",
+                    LR(clkTrans.at), LR(pulseMargin)))
+      END;
+      RETURN pulseMargin
+    END
+  END MeasurePulsemargin;
 
 PROCEDURE MeasureHold(clkIdx   : CARDINAL;
                       data     : TransitionSeq.T;
@@ -803,6 +899,7 @@ VAR
   warnWr                      := FileWr.Open("spicetiming.warn");
   quick      : BOOLEAN;
   graphNs                     := FIRST(LONGREAL);
+  mapper     : Mapper;
   
 BEGIN
   Debug.AddWarnStream(warnWr);
@@ -848,7 +945,10 @@ BEGIN
   (* map names *)
 
   IF DoMapTraceNames THEN
-    MapTraceNames(trace, RemoveX)
+    mapper := RemoveX;
+    MapTraceNames(trace, mapper)
+  ELSE
+    mapper := NIL
   END;
   
   TRY
@@ -880,7 +980,7 @@ BEGIN
     FOR i := FIRST(LatchSpecs) TO LAST(LatchSpecs) DO
       IF quick AND nMargins >= QuickMargins THEN EXIT END;
       
-      DoOneLatchSpec(db, spice, rootCkt, LatchSpecs[i])
+      DoOneLatchSpec(db, spice, rootCkt, LatchSpecs[i], mapper)
     END;
 
     WITH worst = MarginDump.Do(db, 10) DO
