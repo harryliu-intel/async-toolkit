@@ -23,6 +23,7 @@ IMPORT SparseLR;
 IMPORT LRRegression AS Regression;
 IMPORT IntPair;
 IMPORT IntPairSeq;
+IMPORT CardSeq;
 
 IMPORT Thread;
 
@@ -537,8 +538,8 @@ PROCEDURE DoIt(targMaxDev : LONGREAL) =
     
     trace.getTimeData(tarr^);
     
-    FOR k := FIRST(K) TO LAST(K) DO
-      WITH i = K[k] DO
+    FOR k := FIRST(KK^) TO LAST(KK^) DO
+      WITH i = KK[k] DO
         DoOne(i)
       END
     END
@@ -730,7 +731,7 @@ PROCEDURE AttemptPoly(fn         : TEXT;
                       base       : CARDINAL
   ) =
   CONST
-    dims = 2;
+    dims = 3;
     
   BEGIN
     Debug.Out(F("AttemptPoly(%s), NUMBER(a)=%s", fn, Int(NUMBER(a))));
@@ -805,6 +806,8 @@ VAR
   outDir        : Pathname.T     := "out";
   createOutDir  : BOOLEAN;
   trace         : Trace.T;
+  KK            : REF ARRAY OF CARDINAL;
+  wf                             := NEW(CardSeq.T).init();
   
 BEGIN
 
@@ -815,8 +818,23 @@ BEGIN
       traceRt := pp.getNext()
     END;
 
+    IF pp.keywordPresent("-w") THEN
+      wf.addhi(pp.getNextInt())
+    END;
+
   EXCEPT
     ParseParams.Error => Debug.Error("Can't parse command-line parameters\nUsage: " & Params.Get(0) & " " & Usage)
+  END;
+
+  IF wf.size() = 0 THEN
+    KK := NEW(REF ARRAY OF CARDINAL, NUMBER(K));
+    KK^ := K
+  ELSE
+    KK := NEW(REF ARRAY OF CARDINAL, wf.size());
+    
+    FOR i := 0 TO wf.size() - 1 DO
+      KK[i] := wf.get(i)
+    END
   END;
 
   TRY
