@@ -9,4 +9,6 @@ Module ("Wavelet")
 Module ("SparseLR")
 Array_sort ("Sparse", "SparseLR")
 
+sequence ("CardPair", "CardPair")
+
 program ("spicez")

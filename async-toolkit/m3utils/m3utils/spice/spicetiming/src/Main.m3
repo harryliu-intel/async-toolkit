@@ -661,9 +661,11 @@ the clock *)
     data1Trans := data.get(data1Idx);
     data0Trans := data.get(data0Idx);
 
-    Debug.Out(F("disTrans.at=%s prvTrans.at=%s data0Trans.at=%s data1Trans.at=%s",
-                LR(disTrans.at), LR(prvTrans.at),
-                LR(data0Trans.at), LR(data1Trans.at)));
+    IF Verbose THEN
+      Debug.Out(F("disTrans.at=%s prvTrans.at=%s data0Trans.at=%s data1Trans.at=%s",
+                  LR(disTrans.at), LR(prvTrans.at),
+                  LR(data0Trans.at), LR(data1Trans.at)))
+    END;
 
     IF data0Trans.at < prvTrans.at OR data1Trans.at < prvTrans.at THEN
       RETURN Fail
@@ -679,8 +681,7 @@ the clock *)
         ret := 1.0d0/glitchWidth
       END;
 
-      IF TRUE THEN
-
+      IF Verbose THEN
         Debug.Out(F("Measured glitchwidth from edge at %s, glitchwidth %s ret %s",
                     LR(clkTrans.at), LR(glitchWidth), LR(ret)))
       END;

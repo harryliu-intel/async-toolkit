@@ -21,6 +21,8 @@ IMPORT Word;
 IMPORT Math;
 IMPORT SparseLR;
 IMPORT LRRegression AS Regression;
+IMPORT IntPair;
+IMPORT IntPairSeq;
 
 IMPORT Thread;
 
@@ -360,8 +362,8 @@ PROCEDURE DoIt(targMaxDev : LONGREAL) =
       
       (* darr^ is normalized *)
 
-      PolyCompress(rn & ".poly", darr^, targMaxDev);
-      
+      AttemptPoly(rn & ".poly", darr^, targMaxDev, 0);
+
       sarr^ := darr^;
       LongrealArraySort.Sort(sarr^);
       
@@ -502,11 +504,20 @@ PROCEDURE DoIt(targMaxDev : LONGREAL) =
           
           (****************************************)
 
-          
-          
-          AttemptCompress(rn & ".earr0", earr0^, 20, targMaxDev);
-          AttemptCompress(rn & ".earr1", earr1^, 20, targMaxDev);
-          AttemptCompress(rn & ".darr", darr^ , 20, targMaxDev);
+
+          PROCEDURE Attempt(fn : TEXT;
+                            READONLY a : ARRAY OF LONGREAL;
+                            levs : CARDINAL;
+                            maxDev : LONGREAL) =
+            BEGIN
+              EVAL TrunCompress(fn, a, maxDev);
+              AttemptCompress(fn, a, levs, maxDev);
+            END Attempt;
+          BEGIN
+            Attempt(rn & ".earr0", earr0^, 20, targMaxDev);
+            Attempt(rn & ".earr1", earr1^, 20, targMaxDev);
+            Attempt(rn & ".darr", darr^ , 20, targMaxDev);
+          END
         END
       END
     END DoOne;
@@ -581,12 +592,13 @@ PROCEDURE ExtractCol(READONLY a : Array; col : CARDINAL) : REF ARRAY OF LONGREAL
   
 PROCEDURE DumpCol(nm : Pathname.T;
                   READONLY a : Array;
-                  col : CARDINAL) =
+                  col : CARDINAL;
+                  base : CARDINAL) =
   VAR
     wr := FileWr.Open(nm);
   BEGIN
     FOR i := FIRST(a) TO LAST(a) DO
-      Wr.PutText(wr, Int(i));
+      Wr.PutText(wr, Int(base + i));
       Wr.PutChar(wr, ' ');
       Wr.PutText(wr, LR(a[i, col]));
       Wr.PutChar(wr, '\n')
@@ -634,17 +646,127 @@ PROCEDURE Interpolate(READONLY a : ARRAY OF LONGREAL; x : LONGREAL) : LONGREAL =
 TYPE
   Array = ARRAY OF ARRAY OF LONGREAL;
 
+PROCEDURE TrunCompress(fn         : TEXT;
+                       READONLY a : ARRAY OF LONGREAL;
+                       targMaxDev : LONGREAL) : CARDINAL =
+
+  PROCEDURE Emit(idx : CARDINAL; val : LONGREAL) =
+    BEGIN
+      lastX := idx;
+      lastY := ROUND(factor * val);
+      min := lastY;
+      max := lastY;
+      seq.addhi(IntPair.T { lastX, lastY })
+    END Emit;
+
+  PROCEDURE Test(nidx : CARDINAL; nval : LONGREAL) : BOOLEAN =
+    VAR
+      res : BOOLEAN;
+    BEGIN
+      (* we need to divide by 2 in case the signal goes up and then down *)
+
+      WITH wouldBe = ROUND(factor * nval) DO
+        min := MIN(min, wouldBe);
+        max := MAX(max, wouldBe);
+        
+        IF FLOAT(ABS( wouldBe - lastY),LONGREAL) / factor <= targMaxDev / 2.0d0 THEN
+          res := TRUE
+        ELSIF FLOAT(wouldBe - min, LONGREAL) / factor <= targMaxDev AND
+              FLOAT(max - wouldBe, LONGREAL) / factor <= targMaxDev THEN
+          res := TRUE
+        ELSE
+          res := FALSE
+        END
+      END;
+      RETURN res
+    END Test;
+    
+  CONST
+    Bits = 16;
+  VAR
+    lastX  : CARDINAL;
+    lastY, min, max  : INTEGER;
+    seq := NEW(IntPairSeq.T).init();
+    factor : LONGREAL;
+  BEGIN
+    (* 
+       0 -> 0
+       1 -> 2^Bits - 1
+
+       Note: these are EXACT.
+
+       So that: ROUND(factor * 1.0d0) = 2^Bits - 1
+
+       and  FLOAT(ROUND(factor * 1.0d0), LONGREAL) / factor = 1.0d0 (exactly)
+
+       Note that we only use 1/2 ULP of the range of the top and bottom of the 
+       integer range (0 and 2^Bits - 1)
+
+    *)
+    factor := FLOAT(Word.Shift(1, Bits) - 1, LONGREAL);
+
+    Emit(0, a[0]);
+    
+    FOR i := 1 TO LAST(a) - 1 DO
+      (* if emitting next point is not OK, then emit current point *)
+      IF NOT Test(i + 1, a[i + 1]) THEN
+        Emit(i, a[i])
+      END
+    END;
+
+    Emit(LAST(a), a[LAST(a)]);
+
+    WITH cost = seq.size() DO
+
+      Debug.Out(F("TrunCompress %s : cost %s", fn, Int(cost)));
+
+      RETURN cost
+    END
+  END TrunCompress;
+
+PROCEDURE AttemptPoly(fn         : TEXT;
+                      READONLY a : ARRAY OF LONGREAL;
+                      targMaxDev : LONGREAL;
+                      base       : CARDINAL
+  ) =
+  CONST
+    dims = 2;
+    
+  BEGIN
+    Debug.Out(F("AttemptPoly(%s), NUMBER(a)=%s", fn, Int(NUMBER(a))));
+
+    (* if we have fewer than dims + 1 points, we will get a perfect fit, no need to
+       attempt here *)
+    IF NUMBER(a) < dims THEN RETURN END; 
+    
+    WITH eval = PolyCompress(fn, a, targMaxDev, dims, base) DO
+      Debug.Out(F("AttemptPoly(%s), fails = %s", fn, Int(eval.fails)));
+      
+      IF eval.fails # 0 THEN
+        WITH n      = NUMBER(a),
+             nover2 = n DIV 2,
+             a0     = SUBARRAY(a, 0, nover2),
+             a1     = SUBARRAY(a, nover2, n - nover2) DO
+          AttemptPoly(fn & "0", a0, targMaxDev, base);
+          AttemptPoly(fn & "1", a1, targMaxDev, base + nover2)
+        END
+      END
+    END
+  END AttemptPoly;
+  
 PROCEDURE PolyCompress(fn         : TEXT;
                        READONLY a : ARRAY OF LONGREAL;
-                       targMaxDev : LONGREAL
-  ) =
+                       targMaxDev : LONGREAL;
+                       dims       : CARDINAL;
+                       base       : CARDINAL
+  ) : Evaluation =
   VAR
-    dims := 2;
     n    := NUMBER(a);
     x    := NEW(REF Array, n, dims);
     response := NEW(REF Array, n, 1);
     responseHat : REF Array;
     r := NEW(Regression.T);
+    done := FALSE;
   BEGIN
     Debug.Out("PolyCompress " & fn);
     
@@ -655,10 +777,13 @@ PROCEDURE PolyCompress(fn         : TEXT;
 
     Regression.Run(x, response, responseHat, FALSE, r, h := 0.0d0);
 
-    DumpCol(fn, responseHat^, 0);
+    DumpCol(fn, responseHat^, 0, base);
 
-    EVAL Evaluate(fn & ".errs", dims, a, ExtractCol(responseHat^, 0)^, targMaxDev);
-    
+    RETURN Evaluate(fn & ".errs",
+                    dims,
+                    a,
+                    ExtractCol(responseHat^, 0)^,
+                    targMaxDev);
   END PolyCompress;
 
 PROCEDURE MakeIndeps(VAR a : ARRAY OF ARRAY OF LONGREAL) =
