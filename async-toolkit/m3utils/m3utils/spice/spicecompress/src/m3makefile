@@ -11,4 +11,7 @@ Array_sort ("Sparse", "SparseLR")
 
 sequence ("CardPair", "CardPair")
 
+Interface ("PolySegment")
+Sequence ("PolySegment", "PolySegment")
+
 program ("spicez")

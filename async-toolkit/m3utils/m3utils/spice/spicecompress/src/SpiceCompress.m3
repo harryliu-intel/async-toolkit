@@ -24,6 +24,7 @@ IMPORT LRRegression AS Regression;
 IMPORT IntPair;
 IMPORT IntPairSeq;
 IMPORT CardSeq;
+IMPORT PolySegment, PolySegmentSeq;
 
 IMPORT Thread;
 
@@ -249,7 +250,9 @@ PROCEDURE Evaluate(fn            : TEXT;
         sumDiffSq := sumDiffSq + diffSq
       END
     END;
-    DumpVec(fn, e^);
+    IF fn # NIL THEN
+      DumpVec(fn, e^)
+    END;
     WITH meanSq = sumDiffSq / FLOAT(n, LONGREAL),
          rms    = Math.sqrt(meanSq) DO
       
@@ -356,15 +359,22 @@ PROCEDURE DoIt(targMaxDev : LONGREAL) =
     VAR
       medTrans := MedTrans { NIL, .. };
       rn       := Pad(Int(i), 6, padChar := '0');
-
+      poly     := NEW(PolySegmentSeq.T).init();
+      dims := 3;
     BEGIN
       trace.getNodeData(i, darr^);
       norm := Normalize(darr^);
       
       (* darr^ is normalized *)
 
-      AttemptPoly(rn & ".poly", darr^, targMaxDev, 0);
+      AttemptPoly(rn & ".poly", darr^, targMaxDev, 0, poly, dims);
 
+      Debug.Out(F("AttemptPoly %s returned %s segments", rn, Int(poly.size())));
+
+      CleanPoly(rn & ".cleanpoly", poly, darr^, targMaxDev, dims);
+
+      Debug.Out(F("CleanPoly %s returned %s segments", rn, Int(poly.size())));
+      
       sarr^ := darr^;
       LongrealArraySort.Sort(sarr^);
       
@@ -725,13 +735,54 @@ PROCEDURE TrunCompress(fn         : TEXT;
     END
   END TrunCompress;
 
+PROCEDURE CleanPoly(fn             : TEXT;
+                    VAR poly       : PolySegmentSeq.T;
+                    READONLY a     : ARRAY OF LONGREAL;
+                    targMaxDev     : LONGREAL;
+                    dims           : CARDINAL) =
+  VAR
+    cur, prv : PolySegment.T;
+  BEGIN
+    FOR i := 1 TO poly.size() - 1 DO
+      (* attempt to merge left hand poly into current poly *)
+      cur := poly.get(i);
+      prv := poly.get(i - 1);
+      
+      WITH xlo = prv.lo,
+           xn  = prv.n + cur.n,
+           sub = SUBARRAY(a, xlo, xn),
+           r   = NEW(Regression.T),
+           eval = PolyCompress(fn & ".clean" & Int(i), sub, targMaxDev, dims, xlo, r) DO
+        IF eval.fails = 0 THEN
+          Debug.Out(F("CleanPoly successfully merged %s -> %s", Int(i-1), Int(i)));
+          cur.lo := prv.lo;
+          cur.n  := xn;
+          cur.r  := r;
+          poly.put(i, cur);
+          prv.n  := 0;
+          poly.put(i - 1, prv)
+        END
+      END
+    END;
+
+    WITH new = NEW(PolySegmentSeq.T).init() DO
+      FOR i := 0 TO poly.size() - 1 DO
+        WITH e = poly.get(i) DO
+          IF e.n # 0 THEN new.addhi(e) END
+        END
+      END;
+      poly := new
+    END
+     
+  END CleanPoly;
+  
 PROCEDURE AttemptPoly(fn         : TEXT;
                       READONLY a : ARRAY OF LONGREAL;
                       targMaxDev : LONGREAL;
-                      base       : CARDINAL
+                      base       : CARDINAL;
+                      edge       : PolySegmentSeq.T;
+                      dims       : CARDINAL
   ) =
-  CONST
-    dims = 3;
     
   BEGIN
     Debug.Out(F("AttemptPoly(%s), NUMBER(a)=%s", fn, Int(NUMBER(a))));
@@ -740,16 +791,19 @@ PROCEDURE AttemptPoly(fn         : TEXT;
        attempt here *)
     IF NUMBER(a) < dims THEN RETURN END; 
     
-    WITH eval = PolyCompress(fn, a, targMaxDev, dims, base) DO
+    WITH r    = NEW(Regression.T),
+         eval = PolyCompress(fn, a, targMaxDev, dims, base, r) DO
       Debug.Out(F("AttemptPoly(%s), fails = %s", fn, Int(eval.fails)));
       
-      IF eval.fails # 0 THEN
+      IF eval.fails = 0 THEN
+        edge.addhi(PolySegment.T { r, base, NUMBER(a) })
+      ELSE
         WITH n      = NUMBER(a),
              nover2 = n DIV 2,
              a0     = SUBARRAY(a, 0, nover2),
              a1     = SUBARRAY(a, nover2, n - nover2) DO
-          AttemptPoly(fn & "0", a0, targMaxDev, base);
-          AttemptPoly(fn & "1", a1, targMaxDev, base + nover2)
+          AttemptPoly(fn & "0", a0, targMaxDev, base         , edge, dims);
+          AttemptPoly(fn & "1", a1, targMaxDev, base + nover2, edge, dims)
         END
       END
     END
@@ -759,18 +813,17 @@ PROCEDURE PolyCompress(fn         : TEXT;
                        READONLY a : ARRAY OF LONGREAL;
                        targMaxDev : LONGREAL;
                        dims       : CARDINAL;
-                       base       : CARDINAL
+                       base       : CARDINAL;
+                       r          : Regression.T
   ) : Evaluation =
   VAR
-    n    := NUMBER(a);
-    x    := NEW(REF Array, n, dims);
+    n        := NUMBER(a);
+    x        := NEW(REF Array, n, dims);
     response := NEW(REF Array, n, 1);
     responseHat : REF Array;
-    r := NEW(Regression.T);
     done := FALSE;
+    efn : TEXT;
   BEGIN
-    Debug.Out("PolyCompress " & fn);
-    
     FOR i := 0 TO n - 1 DO
       response[i, 0] := a[i]
     END;
@@ -778,9 +831,15 @@ PROCEDURE PolyCompress(fn         : TEXT;
 
     Regression.Run(x, response, responseHat, FALSE, r, h := 0.0d0);
 
-    DumpCol(fn, responseHat^, 0, base);
+    IF fn # NIL THEN DumpCol(fn, responseHat^, 0, base) END;
 
-    RETURN Evaluate(fn & ".errs",
+    IF fn = NIL THEN
+      efn := NIL
+    ELSE
+      efn := fn & ".errs"
+    END;
+    
+    RETURN Evaluate(efn,
                     dims,
                     a,
                     ExtractCol(responseHat^, 0)^,

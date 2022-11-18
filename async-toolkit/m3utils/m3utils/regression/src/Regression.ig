@@ -18,11 +18,11 @@ PROCEDURE Run(x, y               : REF M.M;
               h := FLOAT(0, M.Base));
 
 
-PROCEDURE RunR(x, y : REF M.M; 
-               yHat : REF M.M;
-               debug : BOOLEAN;
-               data : T;
-               VAR r : Recycler;
+PROCEDURE RunR(x, y   : REF M.M; 
+               yHat   : REF M.M;
+               debug  : BOOLEAN;
+               data   : T;
+               VAR r  : Recycler;
                h := FLOAT(0, M.Base));
   (* if you use this one, all the data structures will be shared via
      the recycler.  Must be careful to use it only for x and y of the
@@ -32,11 +32,11 @@ PROCEDURE RunR(x, y : REF M.M;
      yHat will be shared via the recycler, as will data.b (so they
      must be copied if they are to be re-used) *)
 
-PROCEDURE RunR1(READONLY x : M.M;
-                READONLY y : M.V;
-                VAR yHat_c : M.V;
-                debug : BOOLEAN;
-                data : T;
+PROCEDURE RunR1(READONLY x   : M.M;
+                READONLY y   : M.V;
+                VAR yHat_c   : M.V;
+                debug        : BOOLEAN;
+                data         : T;
                 VAR recycler : Recycler;
                 h := FLOAT(0, M.Base));
   (* same as above, but with Vector *)
