@@ -1,0 +1,1897 @@
+library (ts05nxqvlogl06hdp051f_lowvol_dlvl_TYPE1_tt0p355v85c_i0p75v) {
+  date : "0/0/0 0:0:0";
+  revision : "0.0.0";
+  comment : "Copyright 00 by Synopsys, Inc., All Rights Reserved.";
+  delay_model : table_lookup;
+  voltage_unit : "0V";
+  current_unit : "0mA";
+  leakage_power_unit : "0nW";
+  time_unit : "0ns";
+  capacitive_load_unit (0, pf);
+  pulling_resistance_unit : "0kohm";
+  default_threshold_voltage_group : ULVT06;
+  library_features (report_delay_calculation, report_power_calculation, report_noise_calculation);
+  in_place_swap_mode : match_footprint;
+  default_max_transition : 0;
+  default_cell_leakage_power : 0;
+  default_leakage_power_density : 0;
+  default_max_fanout : 0;
+  default_fanout_load : 0;
+  default_inout_pin_cap : 0;
+  default_input_pin_cap : 0;
+  default_output_pin_cap : 0;
+  slew_derate_from_library : 0;
+  input_threshold_pct_rise : 0;
+  input_threshold_pct_fall : 0;
+  output_threshold_pct_rise : 0;
+  output_threshold_pct_fall : 0;
+  slew_lower_threshold_pct_rise : 0;
+  slew_upper_threshold_pct_rise : 0;
+  slew_upper_threshold_pct_fall : 0;
+  slew_lower_threshold_pct_fall : 0;
+  nom_process : 0;
+  nom_temperature : 0;
+  nom_voltage : 0;
+  operating_conditions (DLVL_TT0P355V85C_I0P75V) {
+    process : 0;
+    temperature : 0;
+    voltage : 0;
+    tree_type : best_case_tree;
+  }
+
+  default_operating_conditions : DLVL_TT0P355V85C_I0P75V;
+  k_process_cell_leakage_power : 0;
+  k_process_internal_power : 0;
+  k_temp_cell_fall : 0;
+  k_temp_cell_leakage_power : 0;
+  k_temp_cell_rise : 0;
+  k_temp_fall_propagation : 0;
+  k_temp_fall_transition : 0;
+  k_temp_hold_fall : 0;
+  k_temp_hold_rise : 0;
+  k_temp_internal_power : 0;
+  k_temp_rise_propagation : 0;
+  k_temp_rise_transition : 0;
+  k_temp_setup_fall : 0;
+  k_temp_setup_rise : 0;
+  k_volt_cell_fall : 0;
+  k_volt_cell_leakage_power : 0;
+  k_volt_cell_rise : 0;
+  k_volt_fall_propagation : 0;
+  k_volt_fall_transition : 0;
+  k_volt_hold_fall : 0;
+  k_volt_hold_rise : 0;
+  k_volt_internal_power : 0;
+  k_volt_rise_propagation : 0;
+  k_volt_rise_transition : 0;
+  k_volt_setup_fall : 0;
+  k_volt_setup_rise : 0;
+  lu_table_template (ccsn_dc_template) {
+    variable_1 : input_voltage;
+    variable_2 : output_voltage;
+  }
+
+  lu_table_template (ccsn_prop_template) {
+    variable_1 : input_noise_height;
+    variable_2 : input_noise_width;
+    variable_3 : total_output_net_capacitance;
+    variable_4 : time;
+  }
+
+  lu_table_template (ccsn_vout_template) {
+    variable_1 : input_net_transition;
+    variable_2 : total_output_net_capacitance;
+    variable_3 : time;
+  }
+
+  lu_table_template (ndw_ntin_nvolt_8x27) {
+    variable_1 : input_net_transition;
+    variable_2 : normalized_voltage;
+    index_1 ("0, 0, 0, 0, 0, 0, 0, 0");
+    index_2 ("0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0");
+  }
+
+  lu_table_template (tmg_ntin_oload_8x7) {
+    variable_1 : input_net_transition;
+    variable_2 : total_output_net_capacitance;
+    index_1 ("0, 0, 0, 0, 0, 0, 0, 0");
+    index_2 ("0, 0, 0, 0, 0, 0, 0");
+  }
+
+  power_lut_template (pwr_tin_oload_8x7) {
+    variable_1 : input_transition_time;
+    variable_2 : total_output_net_capacitance;
+    index_1 ("0, 0, 0, 0, 0, 0, 0, 0");
+    index_2 ("0, 0, 0, 0, 0, 0, 0");
+  }
+
+  output_current_template (ccs_template) {
+    variable_1 : input_net_transition;
+    variable_2 : total_output_net_capacitance;
+    variable_3 : time;
+  }
+
+  normalized_driver_waveform (ndw_ntin_nvolt_8x27) {
+    driver_waveform_name : "preDrv";
+    index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+    index_2 ("0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0");
+    values ("0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+  }
+
+  wire_load (ZeroWLM) {
+    resistance : 0;
+    capacitance : 0;
+    area : 0;
+    slope : 0;
+    fanout_length (0, 0);
+    fanout_length (0, 0);
+    fanout_length (0, 0);
+    fanout_length (0, 0);
+    fanout_length (0, 0);
+    fanout_length (0, 0);
+    fanout_length (0, 0);
+    fanout_length (0, 0);
+    fanout_length (0, 0);
+    fanout_length (0, 0);
+    fanout_length (0, 0);
+    fanout_length (0, 0);
+    fanout_length (0, 0);
+    fanout_length (0, 0);
+    fanout_length (0, 0);
+    fanout_length (0, 0);
+  }
+
+  wire_load_selection (ts05nxqvlogl06hdp051f) {
+    wire_load_from_area (0, 0, "ZeroWLM");
+  }
+
+  default_wire_load_mode : "enclosed";
+  default_wire_load_selection : ts05nxqvlogl06hdp051f;
+  define (critical, cell, string);
+  define (related_checkpin, timing, string);
+  define (emulated_driver_ratio, library, string);
+  define (is_comb_clock_gater, cell, boolean);
+  define (dont_sim, timing, string);
+  define (seq_class, cell, string);
+  define (scan_style, cell, string);
+  define (driver_model, library, string);
+  driver_model : "emulated";
+  emulated_driver_ratio : "0.0";
+  voltage_map (VDDL, 0);
+  voltage_map (VDD, 0);
+  voltage_map (VBP, 0);
+  voltage_map (VSS, 0);
+  voltage_map (VBN, 0);
+  receiver_capacitance_rise_threshold_pct ("0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0");
+  receiver_capacitance_fall_threshold_pct ("0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0");
+  cell ("HDPULT0_LVLDBUF_CAQD_0_TYPE0") {
+    area : 0;
+    cell_footprint : DST_LVLDBUF;
+    cell_leakage_power : 0;
+    is_level_shifter : true;
+    level_shifter_type : HL;
+    leakage_power () {
+      related_pg_pin : "VBP";
+      when : "!A";
+      value : "0.0";
+    }
+
+    leakage_power () {
+      related_pg_pin : "VDD";
+      when : "!A";
+      value : "0.0";
+    }
+
+    leakage_power () {
+      related_pg_pin : "VDDL";
+      when : "!A";
+      value : "0";
+    }
+
+    leakage_power () {
+      related_pg_pin : "VBP";
+      when : "A";
+      value : "0.0";
+    }
+
+    leakage_power () {
+      related_pg_pin : "VDD";
+      when : "A";
+      value : "0.0";
+    }
+
+    leakage_power () {
+      related_pg_pin : "VDDL";
+      when : "A";
+      value : "0.0";
+    }
+
+    leakage_power () {
+      related_pg_pin : "VBP";
+      value : "0.0";
+    }
+
+    leakage_power () {
+      related_pg_pin : "VDD";
+      value : "0.0";
+    }
+
+    leakage_power () {
+      related_pg_pin : "VDDL";
+      value : "0.0";
+    }
+
+    pg_pin (VBN) {
+      voltage_name : VBN;
+      pg_type : pwell;
+      direction : input;
+      physical_connection : device_layer;
+    }
+
+    pg_pin (VBP) {
+      voltage_name : VBP;
+      pg_type : nwell;
+      direction : input;
+      physical_connection : device_layer;
+    }
+
+    pg_pin (VDD) {
+      voltage_name : VDD;
+      pg_type : primary_power;
+      direction : input;
+      related_bias_pin : "VBP";
+    }
+
+    pg_pin (VDDL) {
+      voltage_name : VDDL;
+      pg_type : primary_power;
+      direction : input;
+      std_cell_main_rail : true;
+    }
+
+    pg_pin (VSS) {
+      voltage_name : VSS;
+      pg_type : primary_ground;
+      direction : input;
+      related_bias_pin : "VBN";
+    }
+
+    pin (A) {
+      capacitance : 0;
+      direction : input;
+      fall_capacitance : 0;
+      input_signal_level : VDD;
+      input_voltage_range (0, 0);
+      max_transition : 0;
+      related_ground_pin : VSS;
+      related_power_pin : VDD;
+      rise_capacitance : 0;
+      level_shifter_data_pin : true;
+      ccsn_first_stage () {
+        is_needed : true;
+        is_inverting : true;
+        miller_cap_fall : 0;
+        miller_cap_rise : 0;
+        stage_type : both;
+        output_signal_level : VDD;
+        dc_current (ccsn_dc_template) {
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0, 0.0, 0.0, 0.0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0e-05, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0e-06, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0e-06, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0e-05, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0e-06, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0e-07, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0e-06, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+        }
+
+        output_voltage_fall () {
+          vector (ccsn_vout_template) {
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccsn_vout_template) {
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+        }
+
+        output_voltage_rise () {
+          vector (ccsn_vout_template) {
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccsn_vout_template) {
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+        }
+
+        propagated_noise_high () {
+          vector (ccsn_prop_template) {
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0");
+            index_4 ("0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccsn_prop_template) {
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0");
+            index_4 ("0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccsn_prop_template) {
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0");
+            index_4 ("0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccsn_prop_template) {
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0");
+            index_4 ("0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccsn_prop_template) {
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0");
+            index_4 ("0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccsn_prop_template) {
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0");
+            index_4 ("0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccsn_prop_template) {
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0");
+            index_4 ("0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+        }
+
+        propagated_noise_low () {
+          vector (ccsn_prop_template) {
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0");
+            index_4 ("0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccsn_prop_template) {
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0");
+            index_4 ("0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccsn_prop_template) {
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0");
+            index_4 ("0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccsn_prop_template) {
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0");
+            index_4 ("0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccsn_prop_template) {
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0");
+            index_4 ("0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccsn_prop_template) {
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0");
+            index_4 ("0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccsn_prop_template) {
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0");
+            index_4 ("0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+        }
+
+      }
+
+    }
+
+    pin (X) {
+      direction : output;
+      function : "A";
+      max_capacitance : 0;
+      output_voltage_range (0, 0);
+      max_transition : 0;
+      min_capacitance : 0;
+      related_ground_pin : VSS;
+      related_power_pin : VDDL;
+      power_down_function : "!VDD+!VDDL+!VBP+VSS+VBN";
+      internal_power () {
+        related_pg_pin : "VBP";
+        related_pin : "A";
+        fall_power (pwr_tin_oload_8x7) {
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e0");
+        }
+
+        rise_power (pwr_tin_oload_8x7) {
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e0");
+        }
+
+      }
+
+      internal_power () {
+        related_pg_pin : "VDD";
+        related_pin : "A";
+        fall_power (pwr_tin_oload_8x7) {
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+        }
+
+        rise_power (pwr_tin_oload_8x7) {
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0", "0.0e-06, 0.0e-05, 0.0e-06, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+        }
+
+      }
+
+      internal_power () {
+        related_pg_pin : "VDDL";
+        related_pin : "A";
+        fall_power (pwr_tin_oload_8x7) {
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+        }
+
+        rise_power (pwr_tin_oload_8x7) {
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+        }
+
+      }
+
+      timing () {
+        related_pin : "A";
+        timing_sense : positive_unate;
+        timing_type : combinational;
+        cell_fall (tmg_ntin_oload_8x7) {
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+        }
+
+        cell_rise (tmg_ntin_oload_8x7) {
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+        }
+
+        fall_transition (tmg_ntin_oload_8x7) {
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+        }
+
+        rise_transition (tmg_ntin_oload_8x7) {
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+        }
+
+        output_current_fall () {
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0e0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0e-05, 0.0e0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0e0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0e0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0e-05, 0.0e0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0e0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0e-09, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0e0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0e0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0e0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0e0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0e-05, 0.0e0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0e0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0e0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0e-05, 0.0e0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0e0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0e-09, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0e0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0e-05, 0.0e0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0e0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0e0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0e-05, 0.0e-05, 0.0e0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0e0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0e0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0e-05, 0.0e-05, 0.0e0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0e-05, 0.0e0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+        }
+
+        output_current_rise () {
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0e0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0e0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0e0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0e0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0e0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0e0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0e0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0e0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0e0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0e-05, 0.0e0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0e0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0e-10, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0e0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0e-05, 0.0e0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0e0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0e0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0e-05, 0.0e0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0e0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0e-09, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0e0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0e-05, 0.0e0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0e0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0e-09, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0e0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0e-05, 0.0e0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0e0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0e0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccs_template) {
+            reference_time : 0;
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+        }
+
+        receiver_capacitance1_fall (tmg_ntin_oload_8x7) {
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+        }
+
+        receiver_capacitance1_rise (tmg_ntin_oload_8x7) {
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+        }
+
+        receiver_capacitance2_fall (tmg_ntin_oload_8x7) {
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+        }
+
+        receiver_capacitance2_rise (tmg_ntin_oload_8x7) {
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+        }
+
+        receiver_capacitance_fall (tmg_ntin_oload_8x7) {
+          segment : 0;
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+        }
+
+        receiver_capacitance_fall (tmg_ntin_oload_8x7) {
+          segment : 0;
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+        }
+
+        receiver_capacitance_fall (tmg_ntin_oload_8x7) {
+          segment : 0;
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+        }
+
+        receiver_capacitance_fall (tmg_ntin_oload_8x7) {
+          segment : 0;
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+        }
+
+        receiver_capacitance_fall (tmg_ntin_oload_8x7) {
+          segment : 0;
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+        }
+
+        receiver_capacitance_fall (tmg_ntin_oload_8x7) {
+          segment : 0;
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+        }
+
+        receiver_capacitance_fall (tmg_ntin_oload_8x7) {
+          segment : 0;
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+        }
+
+        receiver_capacitance_fall (tmg_ntin_oload_8x7) {
+          segment : 0;
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+        }
+
+        receiver_capacitance_rise (tmg_ntin_oload_8x7) {
+          segment : 0;
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+        }
+
+        receiver_capacitance_rise (tmg_ntin_oload_8x7) {
+          segment : 0;
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+        }
+
+        receiver_capacitance_rise (tmg_ntin_oload_8x7) {
+          segment : 0;
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+        }
+
+        receiver_capacitance_rise (tmg_ntin_oload_8x7) {
+          segment : 0;
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+        }
+
+        receiver_capacitance_rise (tmg_ntin_oload_8x7) {
+          segment : 0;
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+        }
+
+        receiver_capacitance_rise (tmg_ntin_oload_8x7) {
+          segment : 0;
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+        }
+
+        receiver_capacitance_rise (tmg_ntin_oload_8x7) {
+          segment : 0;
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+        }
+
+        receiver_capacitance_rise (tmg_ntin_oload_8x7) {
+          segment : 0;
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+        }
+
+        ocv_mean_shift_cell_fall (tmg_ntin_oload_8x7) {
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0, 0, 0, 0, 0, 0, 0", "0, 0, 0, 0, 0, 0, 0", "0, 0, 0, 0, 0, 0, 0", "0, 0, 0, 0, 0, 0, 0", "0, 0, 0, 0, 0, 0, 0", "0, 0, 0, 0, 0, 0, 0", "0, 0, 0, 0, 0, 0, 0", "0, 0, 0, 0, 0, 0, 0");
+        }
+
+        ocv_mean_shift_cell_rise (tmg_ntin_oload_8x7) {
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0, 0, 0, 0, 0, 0, 0", "0, 0, 0, 0, 0, 0, 0", "0, 0, 0, 0, 0, 0, 0", "0, 0, 0, 0, 0, 0, 0", "0, 0, 0, 0, 0, 0, 0", "0, 0, 0, 0, 0, 0, 0", "0, 0, 0, 0, 0, 0, 0", "0, 0, 0, 0, 0, 0, 0");
+        }
+
+        ocv_mean_shift_fall_transition (tmg_ntin_oload_8x7) {
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0, 0, 0, 0, 0, 0.0e-05, 0.0", "0, 0, 0, 0, 0.0e-06, 0, 0.0", "0, 0, 0, 0, 0, 0.0e0, 0", "0, 0, 0, 0, 0, 0, 0", "0, 0, 0, 0, 0, 0, 0", "0, 0, 0, 0, 0, 0, 0", "0, 0, 0, 0, 0, 0, 0", "0, 0, 0, 0, 0, 0, 0");
+        }
+
+        ocv_mean_shift_rise_transition (tmg_ntin_oload_8x7) {
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0, 0, 0, 0, 0, 0, 0", "0, 0, 0, 0, 0, 0, 0", "0, 0, 0, 0, 0, 0, 0", "0, 0, 0, 0, 0, 0, 0", "0, 0, 0, 0, 0, 0, 0", "0, 0, 0, 0, 0, 0, 0", "0, 0, 0, 0, 0, 0, 0", "0, 0, 0, 0, 0, 0, 0");
+        }
+
+        ocv_skewness_cell_fall (tmg_ntin_oload_8x7) {
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0, 0.0, 0.0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0, 0.0, 0.0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0, 0, 0, 0, 0.0, 0.0, 0.0");
+        }
+
+        ocv_skewness_cell_rise (tmg_ntin_oload_8x7) {
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0");
+        }
+
+        ocv_skewness_fall_transition (tmg_ntin_oload_8x7) {
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0e-05, 0.0e-05, 0.0e-06, 0.0e-05, 0.0e-05, 0.0, 0.0", "0.0e-05, 0.0e-06, 0.0e-05, 0.0e-05, 0.0e-05, 0.0, 0.0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0, 0.0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0, 0.0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0, 0.0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0, 0.0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0, 0.0");
+        }
+
+        ocv_skewness_rise_transition (tmg_ntin_oload_8x7) {
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0, 0.0, 0.0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0, 0.0, 0.0, 0.0", "0, 0.0e-05, 0, 0.0e-05, 0, 0.0, 0.0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0, 0.0, 0.0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0, 0.0, 0.0", "0.0e-05, 0.0e-05, 0.0e-05, 0, 0.0, 0.0, 0.0", "0.0e-05, 0.0e-05, 0.0e-05, 0, 0.0, 0.0, 0.0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0, 0.0, 0.0");
+        }
+
+        ocv_std_dev_cell_fall (tmg_ntin_oload_8x7) {
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+        }
+
+        ocv_std_dev_cell_rise (tmg_ntin_oload_8x7) {
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+        }
+
+        ocv_std_dev_fall_transition (tmg_ntin_oload_8x7) {
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0e-05, 0.0e-05, 0.0e-06, 0.0e-05, 0.0e-05, 0.0, 0.0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0, 0.0, 0.0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0, 0.0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0, 0.0, 0.0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0, 0.0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0, 0.0, 0.0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0, 0.0, 0.0");
+        }
+
+        ocv_std_dev_rise_transition (tmg_ntin_oload_8x7) {
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0e-05, 0.0e-05, 0.0e-05, 0.0, 0.0, 0.0, 0.0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0e-05, 0.0, 0.0e-05, 0.0, 0.0, 0.0, 0.0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0, 0.0, 0.0, 0.0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0, 0.0, 0.0, 0.0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0, 0.0, 0.0, 0.0", "0.0e-05, 0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0");
+        }
+
+        ocv_sigma_cell_rise (tmg_ntin_oload_8x7) {
+          sigma_type : "early";
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+        }
+
+        ocv_sigma_cell_rise (tmg_ntin_oload_8x7) {
+          sigma_type : "late";
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+        }
+
+        ocv_sigma_cell_fall (tmg_ntin_oload_8x7) {
+          sigma_type : "early";
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+        }
+
+        ocv_sigma_cell_fall (tmg_ntin_oload_8x7) {
+          sigma_type : "late";
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+        }
+
+        ocv_sigma_rise_transition (tmg_ntin_oload_8x7) {
+          sigma_type : "early";
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0e-05, 0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0e-05, 0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0e-05, 0.0, 0.0, 0.0, 0.0", "0.0e-05, 0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0e-05, 0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0e-05, 0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0");
+        }
+
+        ocv_sigma_rise_transition (tmg_ntin_oload_8x7) {
+          sigma_type : "late";
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0e-05, 0.0e-05, 0.0e-05, 0.0, 0.0, 0.0, 0.0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0e-05, 0.0, 0.0e-05, 0.0, 0.0, 0.0, 0.0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0, 0.0, 0.0, 0.0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0, 0.0, 0.0, 0.0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0, 0.0, 0.0, 0.0", "0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+        }
+
+        ocv_sigma_fall_transition (tmg_ntin_oload_8x7) {
+          sigma_type : "early";
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0e-05, 0.0e-05, 0.0e-06, 0.0e-05, 0.0e-05, 0.0, 0.0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0, 0.0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0, 0.0", "0.0e-05, 0.0e-06, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0", "0.0e-06, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0, 0.0", "0.0e-06, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0, 0.0", "0.0e-06, 0.0e-06, 0.0e-06, 0.0e-05, 0.0e-05, 0.0, 0.0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0, 0.0, 0.0");
+        }
+
+        ocv_sigma_fall_transition (tmg_ntin_oload_8x7) {
+          sigma_type : "late";
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0e-05, 0.0e-05, 0.0e-06, 0.0e-05, 0.0, 0.0, 0.0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0, 0.0, 0.0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0, 0.0, 0.0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0, 0.0, 0.0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0, 0.0", "0.0e-05, 0.0e-05, 0.0e-05, 0.0e-05, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+        }
+
+      }
+
+      ccsn_last_stage () {
+        is_needed : true;
+        is_inverting : true;
+        miller_cap_fall : 0;
+        miller_cap_rise : 0;
+        stage_type : both;
+        input_signal_level : VDD;
+        dc_current (ccsn_dc_template) {
+          index_1 ("0.0, 0.0, 0.0, 0.0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          index_2 ("0.0, 0.0, 0.0, 0.0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+          values ("0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0e-06, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0e-06, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0e-06, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0e-07, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0e-07, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0e-07, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0e-07, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0e-07, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0e-07, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0e-06, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0", "0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0");
+        }
+
+        output_voltage_fall () {
+          vector (ccsn_vout_template) {
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccsn_vout_template) {
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccsn_vout_template) {
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccsn_vout_template) {
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+        }
+
+        output_voltage_rise () {
+          vector (ccsn_vout_template) {
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccsn_vout_template) {
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccsn_vout_template) {
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccsn_vout_template) {
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+        }
+
+        propagated_noise_high () {
+          vector (ccsn_prop_template) {
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0");
+            index_4 ("0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccsn_prop_template) {
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0");
+            index_4 ("0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccsn_prop_template) {
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0");
+            index_4 ("0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccsn_prop_template) {
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0");
+            index_4 ("0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccsn_prop_template) {
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0");
+            index_4 ("0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccsn_prop_template) {
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0");
+            index_4 ("0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccsn_prop_template) {
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0");
+            index_4 ("0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+        }
+
+        propagated_noise_low () {
+          vector (ccsn_prop_template) {
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0");
+            index_4 ("0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccsn_prop_template) {
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0");
+            index_4 ("0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccsn_prop_template) {
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0");
+            index_4 ("0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccsn_prop_template) {
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0");
+            index_4 ("0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccsn_prop_template) {
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0");
+            index_4 ("0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccsn_prop_template) {
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0");
+            index_4 ("0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+          vector (ccsn_prop_template) {
+            index_1 ("0.0");
+            index_2 ("0.0");
+            index_3 ("0.0");
+            index_4 ("0.0, 0.0, 0.0, 0.0, 0.0");
+            values ("0.0, 0.0, 0.0, 0.0, 0.0");
+          }
+
+        }
+
+      }
+
+    }
+
+    driver_waveform_rise : "preDrv";
+    driver_waveform_fall : "preDrv";
+  }
+
+}
