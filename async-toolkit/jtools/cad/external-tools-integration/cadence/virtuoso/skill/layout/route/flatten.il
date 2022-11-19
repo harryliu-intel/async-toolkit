@@ -759,7 +759,7 @@ useICV = t
 (defun LegalizeShortInstance (inst)
   (let (x y type)
     type = (dbFindProp inst->master "CopyExact")->value
-    (when ((strncmp type "g1i" 3)==0 || (strncmp type "g1m" 3)==0) && (substring type 13 1)=="n"
+    (when type && ((strncmp type "g1i" 3)==0 || (strncmp type "g1m" 3)==0) && (substring type 13 1)=="n"
       (unless (CheckInstanceAlignment inst ?check_x nil)
         x = (car  inst->xy)
         y = (cadr inst->xy)
