@@ -5,8 +5,6 @@ IMPORT Debug, Fmt;
 IMPORT drdist;
 FROM Matrix IMPORT Singular;
 
-<* FATAL Singular *>
-
 REVEAL
   Recycler = BRANDED Brand & " Recycler" OBJECT
     indx: REF ARRAY OF INTEGER;
@@ -18,7 +16,7 @@ PROCEDURE Run(x, y : REF Matrix2.M;
               (* OUT *) VAR yHat : REF Matrix2.M; 
               debug : BOOLEAN;
               data : T;
-              h : Matrix2.Base) =
+              h : Matrix2.Base) RAISES { Singular } =
   VAR
     dim := Matrix2.GetDim(x^);
     dimT := Matrix2.Dim { dim.cols, dim.rows };
@@ -39,7 +37,7 @@ PROCEDURE RunR(x, y         : REF Matrix2.M;
                data         : T;
                VAR recycler : Recycler;
                h            : Matrix2.Base
-  ) =
+  ) RAISES { Singular } =
   VAR
     n := NUMBER(x^);
     k := NUMBER(x[0]) - 1;
@@ -119,7 +117,7 @@ PROCEDURE RunR1(READONLY x : Matrix2.M;
                 debug : BOOLEAN;
                 data : T;
                 VAR recycler : Recycler;
-                h : Matrix2.Base) =
+                h : Matrix2.Base) RAISES { Singular } =
   VAR
     n := NUMBER(x);
     k := NUMBER(x[0]) - 1;
@@ -214,7 +212,7 @@ PROCEDURE RidgeRegress(READONLY x : Matrix2.M;
                        VAR res    : Matrix2.M (* OUT : ((xTx + h^2 I)^-1)(xT) *);
                        indx       : REF ARRAY OF INTEGER;
                        VAR xTx    : Matrix2.M; (* size cols of x, square *)
-                       debug := FALSE)   =
+                       debug := FALSE)  RAISES { Singular }  =
   VAR
     det_xTx : Matrix2.Base;
     d : Matrix2.Base;

@@ -2,6 +2,8 @@
 
 GENERIC INTERFACE Regression(M);
 
+FROM Matrix IMPORT Singular;
+
 (* M.Base is REAL, LONGREAL, or EXTENDED *)
 
 TYPE 
@@ -17,7 +19,7 @@ PROCEDURE Run(x, y               : REF M.M;
               (* OUT *) VAR yHat : REF M.M;
               debug              : BOOLEAN;
               data               : T;
-              h := FLOAT(0, M.Base));
+              h := FLOAT(0, M.Base)) RAISES { Singular } ;
 
 
 PROCEDURE RunR(x, y   : REF M.M; 
@@ -25,7 +27,7 @@ PROCEDURE RunR(x, y   : REF M.M;
                debug  : BOOLEAN;
                data   : T;
                VAR r  : Recycler;
-               h := FLOAT(0, M.Base));
+               h := FLOAT(0, M.Base)) RAISES { Singular };
   (* if you use this one, all the data structures will be shared via
      the recycler.  Must be careful to use it only for x and y of the
      same dimensions as the one that was used to allocate.  On the
@@ -40,7 +42,7 @@ PROCEDURE RunR1(READONLY x   : M.M;
                 debug        : BOOLEAN;
                 data         : T;
                 VAR recycler : Recycler;
-                h := FLOAT(0, M.Base));
+                h := FLOAT(0, M.Base)) RAISES { Singular };
   (* same as above, but with Vector *)
 
 TYPE Recycler <: ROOT;
@@ -59,7 +61,7 @@ PROCEDURE RidgeRegress(READONLY x : M.M;
                        VAR xTx    : M.M;
                        (* size cols of x, square *)
                        
-                       debug := FALSE);
+                       debug := FALSE) RAISES { Singular };
   
 
 END Regression.
