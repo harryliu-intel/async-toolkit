@@ -11,6 +11,8 @@ TYPE
     R_sq, F             : M.Base;
   END;
 
+  (* regression coefficients are b[0,0] b[1,0] etc. *)
+
 PROCEDURE Run(x, y               : REF M.M;
               (* OUT *) VAR yHat : REF M.M;
               debug              : BOOLEAN;

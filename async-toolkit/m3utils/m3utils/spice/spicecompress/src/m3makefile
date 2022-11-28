@@ -14,4 +14,9 @@ sequence ("CardPair", "CardPair")
 Interface ("PolySegment")
 Sequence ("PolySegment", "PolySegment")
 
+Interface ("PolySegment16")
+Sequence ("PolySegment16", "PolySegment16")
+
+Module ("Rep16")
+
 program ("spicez")
