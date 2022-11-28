@@ -1,7 +1,7 @@
 ; Align cells according to cell properies for MoveAligned
 
 ; set alignment properties
-(defun SetCellAlignment (GridXY OffsetXY @key (CV (geGetEditCellView)) (overwrite t))
+(defun SetCellAlignment (GridXY OffsetXY @key (CV (geGetEditCellView)) (overwrite t) (topHalo nil))
   (when overwrite || !(dbGetPropByName CV "XAlignGrid")
         (dbReplaceProp CV "XAlignGrid"   "float" (car  GridXY)))
   (when overwrite || !(dbGetPropByName CV "YAlignGrid")
@@ -10,6 +10,8 @@
         (dbReplaceProp CV "XAlignOffset" "float" (car  OffsetXY)))
   (when overwrite || !(dbGetPropByName CV "YAlignOffset")
         (dbReplaceProp CV "YAlignOffset" "float" (cadr OffsetXY)))
+  (when overwrite || !(dbGetPropByName CV "topHalo")
+        (dbReplaceProp CV "topHalo" "boolean" (if topHalo "TRUE" "FALSE")))
   t
   )
 
@@ -188,9 +190,10 @@
 ; Check if an instance is aligned including that parent grid is an
 ; integer multiple of instance grid
 (defun CheckInstanceAlignment (inst @key (check_x t) (check_y t))
-  (let (align pgx pgy pox poy gx gy ox oy xy x y nx ny)
+  (let (topHalo align pgx pgy pox poy gx gy ox oy xy x y nx ny)
     ; parent alignment
     align=(GetCellAlignment ?CV inst->cellView)
+    topHalo=(dbGetPropByName inst->cellView "topHalo")->value=="TRUE"
     pgx=(car  (car  align))
     pgy=(cadr (car  align))
     pox=(car  (cadr align))
@@ -221,7 +224,8 @@
     y=(round y/MfgGrid)
     nx=(round nx/MfgGrid)
     ny=(round ny/MfgGrid)
-    inst->status=="unplaced" || (!check_x || nx==x && (mod pgx gx)==0) && (!check_y || ny==y && (mod pgy gy)==0)
+    inst->status=="unplaced" || (!check_x || nx==x && (topHalo || (mod pgx gx)==0)) &&
+                                (!check_y || ny==y && (topHalo || (mod pgy gy)==0))
     )
   )
 
