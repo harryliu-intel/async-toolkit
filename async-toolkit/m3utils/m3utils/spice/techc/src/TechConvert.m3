@@ -65,6 +65,17 @@ PROCEDURE DoConvert(READONLY c : TechConfig.T;
     wr := NEW(TextWr.T).init();
     stdout, stderr := ProcUtils.WriteHere(wr);
 
+    (* need to add a feature where we can request a minimum number of steps
+       in the output aspice file ... 
+
+       OR we could take a measurement and after having measured, ensure
+       that we have enough timesteps, and if not, re-sample the file at 
+       a finer timestep.
+
+       May be easiest to just have an option to converttrace that fixes
+       the # of timesteps in the file, either as a fixed count or as a 
+       minimum # of steps.
+    *)
     cmd := F("/nfs/site/disks/zsc3_fon_fe_0001/mnystroe/m3utils/spice/ct/AMD64_LINUX/ct -fsdb /nfs/site/disks/zsc3_fon_fe_0001/mnystroe/m3utils/spice/fsdb/src/nanosimrd -threads 4 -wthreads 1 -R %s %s.fsdb %s",
              LR(MAX(c.timestep, 50.0d-12)), c.simRoot, traceRoot);
     res : BOOLEAN := FALSE;

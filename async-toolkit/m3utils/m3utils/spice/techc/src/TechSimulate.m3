@@ -86,13 +86,17 @@ PROCEDURE DoSimulate(READONLY c : Config) =
               kill -INT, it stops and asks the y/n question whether it should
               exit... *)
            
-           cb = NEW(MyKillCb, myKill := myKill, cmd := cmd, wr := wr, simRoot := c.simRoot) DO
+           cb = NEW(MyKillCb,
+                    myKill := myKill,
+                    cmd := cmd,
+                    wr := wr,
+                    simRoot := c.simRoot) DO
         
         wd.setExpireAction(cb);
         EVAL Thread.Fork(NEW(SimWatcher.T,
-                             c := c,
-                             myKill := myKill,
-                             cm := cm,
+                             c       := c,
+                             myKill  := myKill,
+                             cm      := cm,
                              simRoot := c.simRoot));
         TRY
           cm.wait()
