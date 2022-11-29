@@ -130,6 +130,8 @@ PROCEDURE Evaluate(fn            : TEXT;
 PROCEDURE DoIt(targMaxDev : LONGREAL) =
 
   PROCEDURE DoOne(i : CARDINAL) =
+    CONST
+      MaxOrder = 3;
     VAR
       rn       := Pad(Int(i), 6, padChar := '0');
       segments := NEW(PolySegment16Seq.T).init();
@@ -163,7 +165,11 @@ PROCEDURE DoIt(targMaxDev : LONGREAL) =
                       attemptOrder
         );
 
-        Debug.Out(F("%s : %s segments", rn, Int(segments.size())));
+        Debug.Out(F("dirty %s : %s segments", rn, Int(segments.size())));
+
+        CleanPoly16(rn, segments, darr^, targMaxDev, MaxOrder);
+        
+        Debug.Out(F("clean %s : %s segments", rn, Int(segments.size())));
       END
     END DoOne;
 
@@ -336,6 +342,184 @@ PROCEDURE CleanPoly(fn             : TEXT;
      
   END CleanPoly;
 
+PROCEDURE CleanPoly16(fn             : TEXT;
+                      VAR poly       : PolySegment16Seq.T;
+                      READONLY a     : ARRAY OF LONGREAL;
+                      targMaxDev     : LONGREAL;
+                      dims           : CARDINAL) =
+  VAR
+    cur, prv                 : PolySegment16.T;
+    new                      : Rep16.T;
+    success0, success1       : BOOLEAN;
+    j             := 0;
+  BEGIN
+    (* repeat until fixed point *)
+    (* two phases:
+
+       first phase merges to the right
+
+       second phase pushes down power of every segment
+
+       we repeat:
+       {
+         we repeat first phase until fixed point
+
+         we repeat second phase until fixed point
+       }
+       until fixed point
+    *)
+    
+    REPEAT
+      success1 := FALSE;
+
+      (* try to merge segments *)
+      REPEAT 
+        success0 := FALSE; 
+
+        FOR i := 1 TO poly.size() - 1 DO
+          (* attempt to merge left hand poly into current poly *)
+          cur := poly.get(i);
+          prv := poly.get(i - 1);
+          
+          WITH xlo  = prv.lo,
+               xn   = cur.lo + cur.n - xlo, (* remember cur and prv may well overlap *)
+               sub  = SUBARRAY(a, xlo, xn),
+               ok   = AttemptMergeRight16(F("%s.clean_%s_%s", fn, Int(i), Int(j)),
+                                          sub,
+                                          xlo,
+                                          prv, cur, new,
+                                          targMaxDev,
+                                          dims) DO
+            
+            IF ok THEN
+              Debug.Out(F("CleanPoly16 successfully merged %s -> %s", Int(i-1), Int(i)));
+              cur.r  := new;
+              cur.lo := xlo;
+              cur.n  := xn;
+              
+              poly.put(i, cur);
+              prv.n := 0;
+              poly.put(i - 1, prv);
+              success0 := TRUE; success1 := TRUE
+            END
+          END
+        END;
+
+        IF success0 THEN
+          (* remove any zero-length segments *)
+          WITH new = NEW(PolySegment16Seq.T).init() DO
+            FOR i := 0 TO poly.size() - 1 DO
+              WITH e = poly.get(i) DO
+                IF e.n # 0 THEN new.addhi(e) END
+              END
+            END;
+            poly := new
+          END
+        END;
+
+        INC(j)
+      UNTIL NOT success0;
+
+      (* try to push down order of each segment *)
+      REPEAT
+        success0 := FALSE;
+
+        FOR i := 1 TO poly.size() - 1 DO
+          cur := poly.get(i);
+
+          WITH xlo = cur.lo,
+               sub = SUBARRAY(a, xlo, cur.n),
+               ok  = AttemptLowerOrder16(F("%s.cleanlow_%s_%s", fn, Int(i), Int(j)),
+                                         sub,
+                                         xlo,
+                                         cur,
+                                         new,
+                                         targMaxDev) DO
+            IF ok THEN
+              Debug.Out(F("CleanPoly16 successfully lowered %s -> %s", Int(i), Int(i)));
+              cur.r := new;
+              poly.put(i, cur);
+              success0 := TRUE; success1 := TRUE
+            END
+          END
+        END
+      UNTIL NOT success0;
+
+    UNTIL NOT success1;
+    
+  END CleanPoly16;
+
+PROCEDURE AttemptLowerOrder16(fn                  : TEXT;
+                              READONLY sub        : ARRAY OF LONGREAL;
+                              base                : CARDINAL;
+                              READONLY seg0       : PolySegment16.T;
+                              VAR new             : Rep16.T;
+                              targMaxDev          : LONGREAL) : BOOLEAN =
+  BEGIN
+
+    (* check that we have a live segment that we can actually lower the order of *)
+    IF seg0.n = 0 OR seg0.r.order = 0 THEN RETURN FALSE END;
+
+    WITH newOrder = seg0.r.order - 1,
+         eval     = PolyFit16(fn & "_" & Int(newOrder),
+                              sub,
+                              targMaxDev,
+                              newOrder,
+                              base,
+                              new,
+                              Rep16.ToFloat0(seg0.r.c0)) DO
+      RETURN eval.fails = 0
+    END
+      
+  END AttemptLowerOrder16;
+  
+PROCEDURE AttemptMergeRight16(fn                  : TEXT;
+                              READONLY sub        : ARRAY OF LONGREAL;
+                              base                : CARDINAL;
+                              READONLY seg0, seg1 : PolySegment16.T;
+                              VAR new             : Rep16.T;
+                              targMaxDev          : LONGREAL;
+                              maxOrder            : CARDINAL) : BOOLEAN =
+  (* 
+     attempt to merge two poly segs, if successful, put new seg in new and return TRUE 
+  *)
+
+  PROCEDURE Try(order : CARDINAL) : BOOLEAN =
+    (* note this depends on maintaining seg0.r.c0 correctly *)
+    BEGIN
+      WITH eval = PolyFit16(fn & "_" & Int(order),
+                            sub,
+                            targMaxDev,
+                            order,
+                            base,
+                            new,
+                            Rep16.ToFloat0(seg0.r.c0)) DO
+        RETURN eval.fails = 0
+      END
+    END Try;
+    
+  VAR
+    maxOrder0 := MAX(seg0.r.order, seg1.r.order);
+  BEGIN
+    <*ASSERT seg0.n # 0*>
+    <*ASSERT seg1.n # 0*>
+
+    (* if order is same, try to merge at same order *)
+
+    IF    seg0.r.order = seg1.r.order THEN
+      IF Try(seg0.r.order) THEN RETURN TRUE END
+    ELSE
+      IF Try(maxOrder0) THEN RETURN TRUE END
+    END;
+
+    (* didn't succeed at existing order(s) *)
+    IF maxOrder0 # maxOrder THEN
+      RETURN Try(maxOrder)
+    END;
+
+    RETURN FALSE
+  END AttemptMergeRight16;
+
 PROCEDURE AttemptPoly16(fn         : TEXT;
                         READONLY a : ARRAY OF LONGREAL;
                         base       : CARDINAL;
@@ -356,8 +540,8 @@ PROCEDURE AttemptPoly16(fn         : TEXT;
          we MUST fit that as a single zero-order polynomial *)
       
       segments.addhi(PolySegment16.T { Rep16.FromSingle(a[0]),
-                                   base,
-                                   1 })
+                                       base,
+                                       1 })
       
     ELSE
       <*ASSERT NUMBER(a) >= order + 1 *>
@@ -367,8 +551,10 @@ PROCEDURE AttemptPoly16(fn         : TEXT;
          do a single polynomial fit at the given order, using the
          previous last point for a reference *)
       
-      WITH eval0 = PolyFit16(fn & "_0"            , a, targMaxDev, 0    , base, poly0, firstY),
-           eval  = PolyFit16(fn & "_" & Int(order), a, targMaxDev, order, base, poly , firstY) DO
+      WITH eval0 = PolyFit16(fn & "_0"            ,
+                             a, targMaxDev, 0    , base, poly0, firstY),
+           eval  = PolyFit16(fn & "_" & Int(order),
+                             a, targMaxDev, order, base, poly , firstY) DO
         Debug.Out(F("AttemptPoly16(%s), fails = %s 0.fails = %s",
                     fn,
                     Int(eval.fails),
