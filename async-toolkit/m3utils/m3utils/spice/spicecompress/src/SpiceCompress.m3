@@ -12,12 +12,9 @@ FROM Fmt IMPORT F, Int, LongReal, Pad;
 IMPORT FS;
 IMPORT Trace;
 IMPORT Wr, FileWr;
-IMPORT Transition;
-IMPORT Word;
 IMPORT Math;
 IMPORT LRRegression AS Regression;
 IMPORT CardSeq;
-IMPORT PolySegment, PolySegmentSeq;
 IMPORT PolySegment16, PolySegment16Seq;
 IMPORT Rep16;
 IMPORT LRMatrix2 AS Matrix;
@@ -36,34 +33,11 @@ CONST
   LR       = LongReal;
   DefOrder = 2;
   
-PROCEDURE Wdebug(msg : TEXT) : LONGREAL =
-  BEGIN
-    Debug.Out(msg);
-    RETURN 0.0d0
-  END Wdebug;
-
 CONST <*NOWARN*>Ks = ARRAY OF CARDINAL { 1, 63, 64, 77, 91, 99         };
       <*NOWARN*>Km = ARRAY OF CARDINAL { 1,         77    , 99         };
       <*NOWARN*>Kq = ARRAY OF CARDINAL {            77                 };
       <*NOWARN*>Kg = ARRAY OF CARDINAL {            77        , 108091 };
       K  = Kg;
-
-      dirs   = ARRAY [-1..1] OF Transition.Dir { -1, 0, 1 };
-
-TYPE MedTrans = ARRAY [FIRST(dirs)..LAST(dirs)] OF
-                    REF ARRAY OF LONGREAL;
-
-
-PROCEDURE NextPow2(c : CARDINAL) : CARDINAL =
-  VAR
-    r : Word.T := 1;
-  BEGIN
-    WHILE r < c DO
-      r := Word.Shift(r, 1)
-    END;
-    RETURN r
-  END NextPow2;
-
 
 TYPE
   Evaluation = RECORD
@@ -97,7 +71,7 @@ PROCEDURE Evaluate(fn            : TEXT;
         sumDiffSq := sumDiffSq + diffSq
       END
     END;
-    IF fn # NIL THEN
+    IF fn # NIL AND doAllDumps THEN
       DumpVec(fn, e^, base)
     END;
     WITH meanSq = sumDiffSq / FLOAT(n, LONGREAL),
@@ -167,7 +141,13 @@ PROCEDURE DoIt(targMaxDev : LONGREAL) =
 
         Debug.Out(F("dirty %s : %s segments", rn, Int(segments.size())));
 
+        Reconstruct(segments, rarr^);
+        DumpVec(rn & ".rarr_dirty.dat", rarr^, 0);
+
         CleanPoly16(rn, segments, darr^, targMaxDev, MaxOrder);
+        Reconstruct(segments, rarr^);
+        DumpVec(rn & ".rarr_clean.dat", rarr^, 0);
+
         
         Debug.Out(F("clean %s : %s segments", rn, Int(segments.size())));
       END
@@ -178,6 +158,7 @@ PROCEDURE DoIt(targMaxDev : LONGREAL) =
     tarr   := NEW(REF ARRAY OF LONGREAL, nSteps);
     iarr   := NEW(REF ARRAY OF LONGREAL, nSteps);
     darr   := NEW(REF ARRAY OF LONGREAL, nSteps);
+    rarr   := NEW(REF ARRAY OF LONGREAL, nSteps);
     norm : Norm;
   BEGIN
 
@@ -206,8 +187,8 @@ PROCEDURE Integers(VAR a : ARRAY OF LONGREAL) =
     END
   END Integers;
 
-<*NOWARN*>PROCEDURE DumpOne(nm : Pathname.T;
-                  READONLY ta, da : ARRAY OF LONGREAL) =
+<*NOWARN*>PROCEDURE DumpOne(nm              : Pathname.T;
+                            READONLY ta, da : ARRAY OF LONGREAL) =
   VAR
     wr := FileWr.Open(nm);
   BEGIN
@@ -235,32 +216,6 @@ PROCEDURE DumpVec(nm          : Pathname.T;
     Wr.Close(wr)
   END DumpVec;
 
-PROCEDURE ExtractCol(READONLY a : Array; col : CARDINAL) : REF ARRAY OF LONGREAL =
-  VAR
-    res := NEW(REF ARRAY OF LONGREAL, NUMBER(a));
-  BEGIN
-    FOR i := FIRST(res^) TO LAST(res^) DO
-      res[i] := a[i, col]
-    END;
-    RETURN res
-  END ExtractCol;
-  
-PROCEDURE DumpCol(nm         : Pathname.T;
-                  READONLY a : Array;
-                  col        : CARDINAL;
-                  base       : CARDINAL) =
-  VAR
-    wr := FileWr.Open(nm);
-  BEGIN
-    FOR i := FIRST(a) TO LAST(a) DO
-      Wr.PutText(wr, Int(base + i));
-      Wr.PutChar(wr, ' ');
-      Wr.PutText(wr, LR(a[i, col]));
-      Wr.PutChar(wr, '\n')
-    END;
-    Wr.Close(wr)
-  END DumpCol;
-  
 TYPE
   Norm = RECORD
     min, max : LONGREAL;
@@ -286,6 +241,7 @@ PROCEDURE Normalize(VAR a : ARRAY OF LONGREAL) : Norm =
     RETURN Norm { min, max }
   END Normalize;
 
+<*UNUSED*>
 PROCEDURE Interpolate(READONLY a : ARRAY OF LONGREAL; x : LONGREAL) : LONGREAL =
   VAR
     xf := FLOOR(x);
@@ -300,47 +256,6 @@ PROCEDURE Interpolate(READONLY a : ARRAY OF LONGREAL; x : LONGREAL) : LONGREAL =
 
 TYPE
   Array = ARRAY OF ARRAY OF LONGREAL;
-
-PROCEDURE CleanPoly(fn             : TEXT;
-                    VAR poly       : PolySegmentSeq.T;
-                    READONLY a     : ARRAY OF LONGREAL;
-                    targMaxDev     : LONGREAL;
-                    dims           : CARDINAL) =
-  VAR
-    cur, prv : PolySegment.T;
-  BEGIN
-    FOR i := 1 TO poly.size() - 1 DO
-      (* attempt to merge left hand poly into current poly *)
-      cur := poly.get(i);
-      prv := poly.get(i - 1);
-      
-      WITH xlo = prv.lo,
-           xn  = prv.n + cur.n,
-           sub = SUBARRAY(a, xlo, xn),
-           r   = NEW(Regression.T),
-           eval = PolyCompress(fn & ".clean" & Int(i), sub, targMaxDev, dims, xlo, r) DO
-        IF eval.fails = 0 THEN
-          Debug.Out(F("CleanPoly successfully merged %s -> %s", Int(i-1), Int(i)));
-          cur.lo := prv.lo;
-          cur.n  := xn;
-          cur.r  := r;
-          poly.put(i, cur);
-          prv.n  := 0;
-          poly.put(i - 1, prv)
-        END
-      END
-    END;
-
-    WITH new = NEW(PolySegmentSeq.T).init() DO
-      FOR i := 0 TO poly.size() - 1 DO
-        WITH e = poly.get(i) DO
-          IF e.n # 0 THEN new.addhi(e) END
-        END
-      END;
-      poly := new
-    END
-     
-  END CleanPoly;
 
 PROCEDURE CleanPoly16(fn             : TEXT;
                       VAR poly       : PolySegment16Seq.T;
@@ -707,9 +622,10 @@ PROCEDURE PolyFit16(fn             : TEXT;
       y[i] := Rep16.EvalPoly(poly, i)
     END;
 
-    DumpVec(fn & "_y.dat", y^, base);
+    IF doAllDumps THEN
+      DumpVec(fn & "_y.dat", y^, base)
+    END;
 
-    
     RETURN Evaluate(NIL,
                     coeffs,
                     a,
@@ -717,56 +633,21 @@ PROCEDURE PolyFit16(fn             : TEXT;
                     targMaxDev);
     
   END PolyFit16;
-  
-PROCEDURE PolyCompress(fn         : TEXT;
-                       READONLY a : ARRAY OF LONGREAL;
-                       targMaxDev : LONGREAL;
-                       dims       : CARDINAL;
-                       base       : CARDINAL;
-                       r          : Regression.T
-  ) : Evaluation =
-  VAR
-    n        := NUMBER(a);
-    x        := NEW(REF Array, n, dims);
-    response := NEW(REF Array, n, 1);
-    responseHat : REF Array;
-    efn : TEXT;
+
+PROCEDURE Reconstruct(seq   : PolySegment16Seq.T;
+                      VAR a : ARRAY OF LONGREAL) =
   BEGIN
-    FOR i := 0 TO n - 1 DO
-      response[i, 0] := a[i]
-    END;
-    MakeIndeps(x^);
-
-    Regression.Run(x, response, responseHat, FALSE, r, h := 0.0d0);
-
-    IF fn # NIL THEN DumpCol(fn, responseHat^, 0, base) END;
-
-    IF fn = NIL THEN
-      efn := NIL
-    ELSE
-      efn := fn & ".errs"
-    END;
-    
-    RETURN Evaluate(efn,
-                    dims,
-                    a,
-                    ExtractCol(responseHat^, 0)^,
-                    targMaxDev);
-  END PolyCompress;
-
-PROCEDURE MakeIndeps(VAR a : ARRAY OF ARRAY OF LONGREAL) =
-  BEGIN
-    FOR ix := FIRST(a) TO LAST(a) DO
-      a[ix, 0] := 1.0d0;
-      WITH x  = a[ix],
-           fx = FLOAT(ix, LONGREAL) DO
-        FOR px := 1 TO LAST(x) DO
-          x[px] := fx * x[px - 1]
+    FOR j := 0 TO seq.size() - 1 DO
+      WITH seg = seq.get(j) DO
+        FOR i := 0 TO seg.n - 1 DO
+          WITH y = Rep16.EvalPoly(seg.r, i) DO
+            a[seg.lo + i] := y
+          END
         END
       END
     END
-  END MakeIndeps;
-
+  END Reconstruct;
+  
 PROCEDURE MakeIndeps16(VAR a : ARRAY OF ARRAY OF LONGREAL; order : CARDINAL) =
   BEGIN
     FOR ix := FIRST(a) TO LAST(a) DO
@@ -792,10 +673,14 @@ VAR
   trace         : Trace.T;
   KK            : REF ARRAY OF CARDINAL;
   wf                             := NEW(CardSeq.T).init();
+  doAllDumps    : BOOLEAN;
   
 BEGIN
 
   TRY
+
+    doAllDumps := pp.keywordPresent("-dodumpall");
+    
     createOutDir := pp.keywordPresent("-C");
 
     IF pp.keywordPresent("-t") THEN
