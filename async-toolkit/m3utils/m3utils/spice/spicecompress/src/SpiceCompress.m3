@@ -127,7 +127,6 @@ PROCEDURE Evaluate(fn            : TEXT;
   
 PROCEDURE DoIt(targMaxDev : LONGREAL) =
 
-
   PROCEDURE DoOne(i : CARDINAL) =
     VAR
       rn       := Pad(Int(i), 6, padChar := '0');
@@ -161,7 +160,6 @@ PROCEDURE DoIt(targMaxDev : LONGREAL) =
         )
       END
     END DoOne;
-  
 
   VAR
     nSteps := trace.getSteps();
@@ -189,7 +187,6 @@ PROCEDURE Integers(VAR a : ARRAY OF LONGREAL) =
       a[i] := FLOAT(i, LONGREAL)
     END
   END Integers;
-
 
 <*NOWARN*>PROCEDURE DumpOne(nm : Pathname.T;
                   READONLY ta, da : ARRAY OF LONGREAL) =
@@ -418,39 +415,6 @@ PROCEDURE AttemptPoly16(fn         : TEXT;
       END
     END
   END AttemptPoly16;
-
-PROCEDURE AttemptPoly(fn         : TEXT;
-                      READONLY a : ARRAY OF LONGREAL;
-                      targMaxDev : LONGREAL;
-                      base       : CARDINAL;
-                      edge       : PolySegmentSeq.T;
-                      dims       : CARDINAL
-  ) =
-    
-  BEGIN
-    Debug.Out(F("AttemptPoly(%s), NUMBER(a)=%s", fn, Int(NUMBER(a))));
-
-    (* if we have fewer than dims + 1 points, we will get a perfect fit, no need to
-       attempt here *)
-    IF NUMBER(a) < dims THEN RETURN END; 
-    
-    WITH r    = NEW(Regression.T),
-         eval = PolyCompress(fn, a, targMaxDev, dims, base, r) DO
-      Debug.Out(F("AttemptPoly(%s), fails = %s", fn, Int(eval.fails)));
-      
-      IF eval.fails = 0 THEN
-        edge.addhi(PolySegment.T { r, base, NUMBER(a) })
-      ELSE
-        WITH n      = NUMBER(a),
-             nover2 = n DIV 2,
-             a0     = SUBARRAY(a, 0, nover2),
-             a1     = SUBARRAY(a, nover2, n - nover2) DO
-          AttemptPoly(fn & "0", a0, targMaxDev, base         , edge, dims);
-          AttemptPoly(fn & "1", a1, targMaxDev, base + nover2, edge, dims)
-        END
-      END
-    END
-  END AttemptPoly;
   
 PROCEDURE PolyFit16(fn             : TEXT;
                     READONLY a     : ARRAY OF LONGREAL;
@@ -489,6 +453,12 @@ PROCEDURE PolyFit16(fn             : TEXT;
     END;
     MakeIndeps16(x^, order);
 
+    Debug.Out(F("PolyFit16 n=%s order=%s firstY=%s (%s)",
+                Int(n),
+                Int(order),
+                Int(firstY),
+                LR(Rep16.ToFloat0(firstY))));
+    
     Regression.Run(x, response, responseHat, FALSE, r, h := 0.0d0);
 
     IF fn # NIL THEN DumpCol(fn, responseHat^, 0, base) END;
@@ -565,7 +535,7 @@ PROCEDURE MakeIndeps16(VAR a : ARRAY OF ARRAY OF LONGREAL; order : CARDINAL) =
         WITH x  = a[ix],
              fx = FLOAT(ix, LONGREAL) DO
           x[0] := fx;
-          FOR px := 2 TO LAST(x) DO
+          FOR px := 1 TO LAST(x) DO
             x[px] := fx * x[px - 1]
           END
         END

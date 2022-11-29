@@ -96,8 +96,8 @@ TYPE
   Order = [ 0 .. Word.Shift(1, 3) - 1 ];
 
   T  = RECORD
-    count : CARDINAL;
-    order : CARDINAL;
+    count : [ 1 .. LAST(Count) ] ;
+    order : Order;
     c0    : Base;
     c     : ARRAY [ 1 .. MaxPower ] OF Signed;
   END;
