@@ -86,8 +86,9 @@ TYPE
   Base = [ 0 .. Word.Shift(1, Bits) - 1 ];
 
   Unsigned = Base;
+
   
-  Signed = [ -Word.Shift(1, Bits-1) .. Word.Shift(1, Bits-1) - 1 ];
+  Signed = [ -Word.Shift(1, Bits-1) + 1  .. Word.Shift(1, Bits-1) - 1 ];
 
   Array = ARRAY OF Base;
 
@@ -103,12 +104,16 @@ TYPE
   END;
 
 PROCEDURE ExpandFixed(READONLY a : Array; VAR b : Array);
+  (* do we need this routine??? *)
 
 PROCEDURE Expand(READONLY t : T; VAR b : Array);
   (* if t.order = 0 then we expand per t.c0, else we use b[0] to expand;
-     either way NUMBER(b) must be equal to t.count *)
+     either way NUMBER(b) must be equal to t.count 
+     
+     do we need this routine at all???
+  *)
 
-PROCEDURE EvalPoly(READONLY t : T; x0 : CARDINAL) : Unsigned;
+PROCEDURE EvalPoly(READONLY t : T; x0 : CARDINAL) : LONGREAL;
 
 PROCEDURE ToFloat(x : Signed; pow : [1..LAST(Order)]) : LONGREAL;
 
@@ -121,5 +126,7 @@ PROCEDURE FromFloat0(x : LONGREAL) : Unsigned;
 PROCEDURE FromSingle(x : LONGREAL) : T;
 
 CONST Zero = ARRAY [ 1 .. MaxPower ] OF Signed { 0 , .. };
+
+PROCEDURE Format(READONLY a : T) : TEXT;
       
 END Rep16.

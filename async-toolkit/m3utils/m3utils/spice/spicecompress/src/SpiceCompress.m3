@@ -20,6 +20,7 @@ IMPORT CardSeq;
 IMPORT PolySegment, PolySegmentSeq;
 IMPORT PolySegment16, PolySegment16Seq;
 IMPORT Rep16;
+IMPORT LRMatrix2 AS Matrix;
 
 IMPORT Thread;
 
@@ -66,14 +67,15 @@ PROCEDURE NextPow2(c : CARDINAL) : CARDINAL =
 
 TYPE
   Evaluation = RECORD
-    fails, cost : CARDINAL;
+    fails, cost     : CARDINAL;
     maxAbsDiff, rms : LONGREAL;
   END;
-  
+ 
 PROCEDURE Evaluate(fn            : TEXT;
                    coeffs        : CARDINAL;
                    READONLY a, b : ARRAY OF LONGREAL;
-                   targMaxDev    : LONGREAL) : Evaluation =
+                   targMaxDev    : LONGREAL;
+                   base          := 0) : Evaluation =
   VAR
     maxAbsDiff   := 0.0d0;
     sumDiff      := 0.0d0;
@@ -96,12 +98,12 @@ PROCEDURE Evaluate(fn            : TEXT;
       END
     END;
     IF fn # NIL THEN
-      DumpVec(fn, e^)
+      DumpVec(fn, e^, base)
     END;
     WITH meanSq = sumDiffSq / FLOAT(n, LONGREAL),
          rms    = Math.sqrt(meanSq) DO
       
-      Debug.Out(F("%s coeffs maxAbsDiff %s RMS %s fails %s cost %s",
+      Debug.Out(F("%s order maxAbsDiff %s RMS %s fails %s cost %s",
                   Int(coeffs),
                   LR(maxAbsDiff),
                   LR(rms),
@@ -136,16 +138,18 @@ PROCEDURE DoIt(targMaxDev : LONGREAL) =
       trace.getNodeData(i, darr^);
       norm := Normalize(darr^);
 
+      DumpVec(rn & ".darr.dat", darr^, 0);
+
       AttemptPoly16(rn & ".poly16_0_",
                     SUBARRAY(darr^, 0, 1),
                     0,
                     targMaxDev,
                     segments,
-                    0,
+                    0.0d0,
                     0);
            
       WITH  seg    = segments.get(0),
-            firstY = seg.r.c0 DO
+            firstY = Rep16.ToFloat0(seg.r.c0) DO
 
         <*ASSERT seg.r.order = 0*>
         <*ASSERT seg.r.count = 1*>
@@ -157,7 +161,9 @@ PROCEDURE DoIt(targMaxDev : LONGREAL) =
                       segments,
                       firstY,
                       attemptOrder
-        )
+        );
+
+        Debug.Out(F("%s : %s segments", rn, Int(segments.size())));
       END
     END DoOne;
 
@@ -168,7 +174,13 @@ PROCEDURE DoIt(targMaxDev : LONGREAL) =
     darr   := NEW(REF ARRAY OF LONGREAL, nSteps);
     norm : Norm;
   BEGIN
-      
+
+    FOR p := 1 TO 3 DO
+      FOR s := -5 TO 5 DO
+        Debug.Out(F("ToFloat(%s, %s) = %s", Int(s), Int(p), LR(Rep16.ToFloat(s, p))))
+      END
+    END;
+    
     (* iarr is integer timesteps *)
     Integers(iarr^);
     
@@ -203,12 +215,13 @@ PROCEDURE Integers(VAR a : ARRAY OF LONGREAL) =
   END DumpOne;
 
 PROCEDURE DumpVec(nm          : Pathname.T;
-                  READONLY da : ARRAY OF LONGREAL) =
+                  READONLY da : ARRAY OF LONGREAL;
+                  base        : CARDINAL) =
   VAR
     wr := FileWr.Open(nm);
   BEGIN
     FOR i := FIRST(da) TO LAST(da) DO
-      Wr.PutText(wr, Int(i));
+      Wr.PutText(wr, Int(base + i));
       Wr.PutChar(wr, ' ');
       Wr.PutText(wr, LR(da[i]));
       Wr.PutChar(wr, '\n')
@@ -226,10 +239,10 @@ PROCEDURE ExtractCol(READONLY a : Array; col : CARDINAL) : REF ARRAY OF LONGREAL
     RETURN res
   END ExtractCol;
   
-PROCEDURE DumpCol(nm : Pathname.T;
+PROCEDURE DumpCol(nm         : Pathname.T;
                   READONLY a : Array;
-                  col : CARDINAL;
-                  base : CARDINAL) =
+                  col        : CARDINAL;
+                  base       : CARDINAL) =
   VAR
     wr := FileWr.Open(nm);
   BEGIN
@@ -328,13 +341,13 @@ PROCEDURE AttemptPoly16(fn         : TEXT;
                         base       : CARDINAL;
                         targMaxDev : LONGREAL;
                         segments   : PolySegment16Seq.T;
-                        firstY     : Rep16.Unsigned;
+                        firstY     : LONGREAL;
                         order      : Rep16.Order) =
   (* this routine adds a number of segments to fit to the function,
      respecting targMaxDev and of order no more than given (targeting
      the given order, for later optimization *)
   VAR
-    poly : Rep16.T;
+    poly, poly0 : Rep16.T;
   BEGIN
     Debug.Out(F("AttemptPoly16(%s), NUMBER(a)=%s", fn, Int(NUMBER(a))));
 
@@ -354,10 +367,16 @@ PROCEDURE AttemptPoly16(fn         : TEXT;
          do a single polynomial fit at the given order, using the
          previous last point for a reference *)
       
-      WITH eval = PolyFit16(fn, a, targMaxDev, order, base, poly, firstY) DO
-        Debug.Out(F("AttemptPoly16(%s), fails = %s", fn, Int(eval.fails)));
+      WITH eval0 = PolyFit16(fn & "_0"            , a, targMaxDev, 0    , base, poly0, firstY),
+           eval  = PolyFit16(fn & "_" & Int(order), a, targMaxDev, order, base, poly , firstY) DO
+        Debug.Out(F("AttemptPoly16(%s), fails = %s 0.fails = %s",
+                    fn,
+                    Int(eval.fails),
+                    Int(eval0.fails)));
         
-        IF eval.fails = 0 THEN
+        IF    eval0.fails = 0 THEN
+          segments.addhi(PolySegment16.T { poly0, base, NUMBER(a) })
+        ELSIF eval.fails  = 0 THEN
           (* ansatz succeeded, return from here *)
           segments.addhi(PolySegment16.T { poly, base, NUMBER(a) })
         ELSE
@@ -422,20 +441,29 @@ PROCEDURE PolyFit16(fn             : TEXT;
                     order          : CARDINAL;
                     base           : CARDINAL;
                     VAR poly       : Rep16.T;
-                    firstY         : Rep16.Unsigned
+                    firstY         : LONGREAL
   ) : Evaluation =
+
+  PROCEDURE Fail() : Evaluation =
+    (* return utter & dismal failure *)
+    BEGIN
+      RETURN Evaluation { fails      := NUMBER(a),
+                          cost       := NUMBER(a),
+                          maxAbsDiff := LAST(LONGREAL),
+                          rms        := LAST(LONGREAL) }
+    END Fail;
+    
   VAR
-    n        := NUMBER(a);
-    coeffs   := MAX(1, order);
-    x        := NEW(REF Array, n, coeffs);
+    n            := NUMBER(a);
+    coeffs       := MAX(1, order);
+    x            := NEW(REF Array, n, coeffs);
     (* 0th order has 1 coefficient, 1st order also, higher orders have 
        n coefficients *)
     
-    response := NEW(REF Array, n, 1);
+    response     := NEW(REF Array, n, 1);
     responseHat : REF Array;
-    efn : TEXT;
-    r := NEW(Regression.T);
-    
+    r            := NEW(Regression.T);
+    y            := NEW(REF ARRAY OF LONGREAL, n);
   BEGIN
     (* attempt to fit a waveform of stated dimension to the data set in a *)
 
@@ -447,32 +475,59 @@ PROCEDURE PolyFit16(fn             : TEXT;
       IF order = 0 THEN
         response[i, 0] := a[i]
       ELSE
-           
-        response[i, 0] := a[i] - Rep16.ToFloat0(firstY)
+        response[i, 0] := a[i] - firstY
       END
     END;
     MakeIndeps16(x^, order);
 
-    Debug.Out(F("PolyFit16 n=%s order=%s firstY=%s (%s)",
+    Debug.Out(F("PolyFit16 base=%s n=%s order=%s firstY=%s",
+                Int(base),
                 Int(n),
                 Int(order),
-                Int(firstY),
-                LR(Rep16.ToFloat0(firstY))));
+                LR(firstY)));
+
     
     Regression.Run(x, response, responseHat, FALSE, r, h := 0.0d0);
 
-    IF fn # NIL THEN DumpCol(fn, responseHat^, 0, base) END;
+    WITH b = r.b DO
+      (* regression coefficients are b[*,0] *)
+      Debug.Out("PolyFit16 coeffs:\n" & Matrix.FormatM(r.b^));
 
-    IF fn = NIL THEN
-      efn := NIL
-    ELSE
-      efn := fn & ".errs"
+      (* build the poly attempt *)
+      poly.order := order;
+
+      IF NUMBER(a) > LAST(Rep16.Count) THEN
+        (* can't make a poly that long *)
+        RETURN Fail() 
+      END;
+      
+      poly.count := NUMBER(a);
+
+      IF order = 0 THEN
+        poly.c0 := Rep16.FromFloat0(b[0,0])
+      ELSE
+        poly.c0 := Rep16.FromFloat0(firstY)
+      END;
+
+      poly.c  := Rep16.Zero;
+      FOR i := 1 TO order DO
+        poly.c[i] := Rep16.FromFloat(b[i - 1, 0], i)
+      END;
+
+      Debug.Out("PolyFit16 poly:\n" & Rep16.Format(poly))
     END;
+
+    FOR i := 0 TO NUMBER(y^) - 1 DO
+      y[i] := Rep16.EvalPoly(poly, i)
+    END;
+
+    DumpVec(fn & "_y.dat", y^, base);
+
     
-    RETURN Evaluate(efn,
+    RETURN Evaluate(NIL,
                     coeffs,
                     a,
-                    ExtractCol(responseHat^, 0)^,
+                    y^,
                     targMaxDev);
     
   END PolyFit16;

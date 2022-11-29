@@ -1,5 +1,9 @@
 MODULE Rep16;
 IMPORT Word;
+FROM Fmt IMPORT F, Int, LongReal;
+IMPORT Wx;
+
+CONST LR = LongReal;
 
 PROCEDURE ExpandFixed(READONLY a : Array; VAR b : Array) =
 
@@ -49,7 +53,7 @@ PROCEDURE ExpandFixed(READONLY a : Array; VAR b : Array) =
       ELSE
         (* order is not zero, our first new point is at 1 *)
         FOR i := 1 TO poly.count - 1 DO
-          b[x - 1 + i] := EvalPoly(poly, i)
+          b[x - 1 + i] := FromFloat0(EvalPoly(poly, i))
         END
       END
    END WritePoly;
@@ -86,25 +90,24 @@ PROCEDURE Expand(READONLY t : T; VAR b : Array) =
      ELSE
        (* order is not zero, our first new point is at 1 *)
        FOR i := 1 TO t.count - 1 DO
-          b[i] := EvalPoly(t, i)
+         b[i] := FromFloat0(EvalPoly(t, i))
        END
      END
   END Expand;
 
-PROCEDURE EvalPoly(READONLY t : T; x0 : CARDINAL) : Base =
+PROCEDURE EvalPoly(READONLY t : T; x0 : CARDINAL) : LONGREAL =
   VAR
-    temp : INTEGER := 0;
+    xf := FLOAT(x0, LONGREAL);
+    yf := 0.0d0;
+    y0f := ToFloat0(t.c0);
   BEGIN
-    IF t.order = 0 THEN RETURN t.c0 END;
-    
     FOR p := t.order TO 1 BY -1 DO
-      temp := temp * x0 + Word.Shift(t.order - p, 1) * t.c[p];
+      yf := yf * xf + ToFloat(t.c[p], p) 
     END;
-    (* final multiplier (of x^1 term) should be 2 *)
-    temp := Word.RightShift(temp, t.order - 2); (* should round? *)
-    
-    temp := temp + t.c0;
-    RETURN MAX(FIRST(Base), MIN(temp, LAST(Base)))
+
+    yf := yf * xf + y0f;
+
+    RETURN MAX(0.0d0, MIN(yf, 1.0d0))
   END EvalPoly;
   
 PROCEDURE FromSingle(x : LONGREAL) : T =
@@ -167,5 +170,23 @@ PROCEDURE FromFloat(x : LONGREAL; pow : [1..LAST(Order)]) : Signed =
       RETURN MIN(MAX(try, FIRST(Signed)), LAST(Signed))
     END
   END FromFloat;
+
+PROCEDURE Format(READONLY a : T) : TEXT =
+  VAR
+    wx := Wx.New();
+  BEGIN
+    Wx.PutText(wx, F("{ count=%s order=%s ", Int(a.count), Int(a.order)));
+    IF a.order = 0 THEN
+      Wx.PutText(wx, F("c0=%s (%s) ", Int(a.c0), LR(ToFloat0(a.c0))))
+    ELSE
+      Wx.PutText(wx, "{ ");
+      FOR i := 1 TO a.order DO
+        Wx.PutText(wx, F("%s (%s) ", Int(a.c[i]), LR(ToFloat(a.c[i], i))))
+      END;
+      Wx.PutText(wx, "} ");
+    END;
+    Wx.PutText(wx, "} ");
+    RETURN Wx.ToText(wx)
+  END Format;
 
 BEGIN END Rep16.  
