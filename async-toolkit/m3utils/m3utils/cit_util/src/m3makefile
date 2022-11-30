@@ -390,6 +390,8 @@ Module ("FastNumParse")
 
 Module ("ExceptionInfo")
 
+Table ("TextCard", "Text", "Cardinal")
+
 Library("cit_util")
 
 

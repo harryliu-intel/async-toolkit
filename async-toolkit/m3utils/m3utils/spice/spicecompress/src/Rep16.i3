@@ -78,16 +78,20 @@ CONST
       
 TYPE
   Header = RECORD
-    nwords   : CARDINAL;
+
+    nwords   : CARDINAL; (* 16-bit words in encoded (but not compressed) form, 
+                            NOT including header itself *)
+    
     npoints  : CARDINAL; (* hmm, maybe we should have this.. *)
+    
     min, max : LONGREAL;
+    
   END;
 
   Base = [ 0 .. Word.Shift(1, Bits) - 1 ];
 
   Unsigned = Base;
 
-  
   Signed = [ -Word.Shift(1, Bits-1) + 1  .. Word.Shift(1, Bits-1) - 1 ];
 
   Array = ARRAY OF Base;

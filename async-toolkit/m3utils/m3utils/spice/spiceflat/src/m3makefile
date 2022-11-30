@@ -3,7 +3,6 @@ import ("cit_util")
 import ("spicelib")
 import ("m3readline")
 
-Table("TextCard", "Text", "Cardinal")
 Table("TextTextSet", "Text", "TextSet")
 
 Module ("TextCard")

@@ -19,8 +19,6 @@ module ("Range")
 list ("Range", "Range")
 table ("TextRangeList", "Text", "RangeList")
 
-table ("TextCard", "Text", "Cardinal")
-
 resource ("pg_template.sv")
 resource ("hlp_pg_template.sv")
 bundle ("PgToolSVTemplates")

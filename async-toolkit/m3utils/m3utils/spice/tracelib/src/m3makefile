@@ -8,7 +8,6 @@ Interface ("TraceRep")
 module ("TraceUnsafe")
 
 interface ("TraceHeader")
-table ("TextCard", "Text", "Cardinal")
 table ("CardTextSeq", "Cardinal", "TextSeq")
 
 Interface ("Transition")

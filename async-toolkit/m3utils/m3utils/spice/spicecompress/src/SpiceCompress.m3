@@ -18,6 +18,7 @@ IMPORT CardSeq;
 IMPORT PolySegment16, PolySegment16Seq;
 IMPORT Rep16;
 IMPORT LRMatrix2 AS Matrix;
+IMPORT Word;
 
 IMPORT Thread;
 
@@ -92,8 +93,6 @@ PROCEDURE Evaluate(fn            : TEXT;
     END;
   END Evaluate;
 
-
-
 <*NOWARN*>PROCEDURE Zero(VAR a : ARRAY OF LONGREAL) =
   BEGIN
     FOR i := FIRST(a) TO LAST(a) DO
@@ -105,7 +104,7 @@ PROCEDURE DoIt(targMaxDev : LONGREAL) =
 
   PROCEDURE DoOne(i : CARDINAL) =
     CONST
-      MaxOrder = 3;
+      MaxOrder = 5;
     VAR
       rn       := Pad(Int(i), 6, padChar := '0');
       segments := NEW(PolySegment16Seq.T).init();
@@ -148,7 +147,9 @@ PROCEDURE DoIt(targMaxDev : LONGREAL) =
         Reconstruct(segments, rarr^);
         DumpVec(rn & ".rarr_clean.dat", rarr^, 0);
 
-        
+        ZeroPoly16(rn, segments, darr^, targMaxDev);
+        DumpVec(rn & ".rarr_zeroed.dat", rarr^, 0);
+
         Debug.Out(F("clean %s : %s segments", rn, Int(segments.size())));
       END
     END DoOne;
@@ -257,6 +258,98 @@ PROCEDURE Interpolate(READONLY a : ARRAY OF LONGREAL; x : LONGREAL) : LONGREAL =
 TYPE
   Array = ARRAY OF ARRAY OF LONGREAL;
 
+PROCEDURE ZeroPoly16(fn             : TEXT;
+                     VAR poly       : PolySegment16Seq.T;
+                     READONLY a     : ARRAY OF LONGREAL;
+                     targMaxDev     : LONGREAL) =
+  CONST
+    Try = ARRAY OF CARDINAL { 8, 4, 2, 1 }; (* LSBs to attempt to zero *)
+
+  VAR
+    <*NOWARN*>y : ARRAY Rep16.Count OF LONGREAL; (* 64K scratch space *)
+    success : BOOLEAN;  (* did we touch the segment ? *)
+    zeroBits := 0;
+    
+  BEGIN
+    (* attempt to zero as many bits as possible *)
+    FOR i := 0 TO poly.size() - 1 DO
+      success := FALSE;
+      
+      VAR
+        cur := poly.get(i);
+        try : Rep16.T;
+      BEGIN
+        FOR o := 0 TO cur.r.order DO
+          FOR bi := FIRST(Try) TO LAST(Try) DO
+            WITH b    = Try[bi],
+                 mask = Word.Not(Word.Minus(Word.Shift(1, b), 1)) DO
+              (* 
+                 cur is the current segment
+                 o   is the current order to try to zero
+                 b   is the current number of bits to zero 
+              *)
+              try := cur.r;
+
+              IF o = 0 THEN
+                try.c0   := Word.And(try.c0  , mask)
+              ELSE
+                try.c[o] := Word.And(try.c[o], mask)
+              END;
+
+              FOR i := 0 TO try.count - 1 DO
+                y[i] := Rep16.EvalPoly(try, i)
+              END;
+
+              WITH eval = Evaluate(NIL,
+                                   try.order,
+                                   SUBARRAY(a, cur.lo, cur.n),
+                                   SUBARRAY(y,      0, cur.n),
+                                   targMaxDev,
+                                   cur.lo) DO
+                IF eval.fails = 0 THEN
+                  success := TRUE;
+                  cur.r := try;
+                  INC(zeroBits, b);
+                  EXIT (* skip following bits *)
+                END
+              END
+            END
+          END
+        END; (* FOR o ... *)
+
+        IF success THEN
+          (* we found an improvement, finalize it *)
+          poly.put(i, cur);
+          FixupNextC0(cur.r, poly, i) 
+        END
+        
+      END
+    END;
+    Debug.Out(F("ZeroPoly16 : zeroed %s bits", Int(zeroBits)))
+  END ZeroPoly16;
+
+PROCEDURE FixupNextC0(READONLY new : Rep16.T;
+                      segs         : PolySegment16Seq.T;
+                      i            : CARDINAL  (* touched this seg *)
+  ) =
+
+  (* 
+     if we modify segment i of segs, we really need to call this routine
+
+     it fixes up c0 of the next segment
+  *)
+  BEGIN
+    IF i # segs.size() - 1 THEN
+      VAR nxt := segs.get(i + 1);
+      BEGIN
+        IF nxt.r.order # 0 THEN
+          nxt.r.c0 := Rep16.FromFloat0(Rep16.EvalPoly(new, new.count - 1));
+          segs.put(i + 1, nxt)
+        END
+      END
+    END
+  END FixupNextC0;
+  
 PROCEDURE CleanPoly16(fn             : TEXT;
                       VAR poly       : PolySegment16Seq.T;
                       READONLY a     : ARRAY OF LONGREAL;
@@ -313,6 +406,10 @@ PROCEDURE CleanPoly16(fn             : TEXT;
               cur.n  := xn;
               
               poly.put(i, cur);
+
+              (* fix up c0 in next poly if need be *)
+              FixupNextC0(new, poly, i);
+              
               prv.n := 0;
               poly.put(i - 1, prv);
               success0 := TRUE; success1 := TRUE
@@ -354,6 +451,7 @@ PROCEDURE CleanPoly16(fn             : TEXT;
               Debug.Out(F("CleanPoly16 successfully lowered %s -> %s", Int(i), Int(i)));
               cur.r := new;
               poly.put(i, cur);
+              FixupNextC0(new, poly, i);
               success0 := TRUE; success1 := TRUE
             END
           END
@@ -618,6 +716,7 @@ PROCEDURE PolyFit16(fn             : TEXT;
       Debug.Out("PolyFit16 poly:\n" & Rep16.Format(poly))
     END;
 
+    <*ASSERT NUMBER(y^) = poly.count*>
     FOR i := 0 TO NUMBER(y^) - 1 DO
       y[i] := Rep16.EvalPoly(poly, i)
     END;
@@ -639,6 +738,7 @@ PROCEDURE Reconstruct(seq   : PolySegment16Seq.T;
   BEGIN
     FOR j := 0 TO seq.size() - 1 DO
       WITH seg = seq.get(j) DO
+        <*ASSERT seg.r.count = seg.n*>
         FOR i := 0 TO seg.n - 1 DO
           WITH y = Rep16.EvalPoly(seg.r, i) DO
             a[seg.lo + i] := y
@@ -674,7 +774,7 @@ VAR
   KK            : REF ARRAY OF CARDINAL;
   wf                             := NEW(CardSeq.T).init();
   doAllDumps    : BOOLEAN;
-  
+  relPrec                        := 0.005d0;
 BEGIN
 
   TRY
@@ -689,6 +789,10 @@ BEGIN
 
     IF pp.keywordPresent("-w") THEN
       wf.addhi(pp.getNextInt())
+    END;
+
+    IF pp.keywordPresent("-prec") THEN
+      relPrec := pp.getNextLongReal()
     END;
 
   EXCEPT
@@ -732,5 +836,5 @@ BEGIN
     END
   END;
 
-  DoIt(0.005d0);
+  DoIt(relPrec)
 END SpiceCompress.

@@ -3,6 +3,7 @@ import ("cit_util")
 import ("spicelib")
 import ("tracelib")
 import ("regression")
+import ("ctlib")
 
 implementation ("SpiceCompress")
 Module ("Wavelet")
@@ -18,5 +19,7 @@ Interface ("PolySegment16")
 Sequence ("PolySegment16", "PolySegment16")
 
 Module ("Rep16")
+Module ("Rep16Stream")
+Module ("PolySegment16Serial")
 
 program ("spicez")

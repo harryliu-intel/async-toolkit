@@ -1,7 +1,6 @@
 INTERFACE PolySegment16;
 IMPORT Rep16;
 
-
 TYPE
   T = RECORD
     r      : Rep16.T;
