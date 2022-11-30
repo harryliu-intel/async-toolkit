@@ -97,7 +97,8 @@ PROCEDURE CompressArray(rn            : TEXT; (* for debug *)
                         (* workspace *)
                         
                         targMaxDev : LONGREAL;
-                        doAllDumps : BOOLEAN
+                        doAllDumps : BOOLEAN;
+                        wr         : Wr.T
   )
   RAISES { MatrixE.Singular } =
   <*FATAL OSError.E, Wr.Failure*>
@@ -207,7 +208,12 @@ PROCEDURE CompressArray(rn            : TEXT; (* for debug *)
           PolySegment16Serial.Error(x) =>
           Debug.Error(F("Error handling PolySegment16 serialization : %s", x))
         END
+      END;
+
+      IF wr # NIL THEN
+        PolySegment16Serial.Write(wr, segments, norm.min, norm.max);
       END
+      
     END
   END CompressArray;
   
@@ -238,7 +244,7 @@ PROCEDURE DoDemo(targMaxDev : LONGREAL;
         trace.getNodeData(i, darr^);
         Debug.Out("Compressing trace");
         WITH now = Time.Now() DO
-          CompressArray(rn, darr^, rarr^, targMaxDev, doAllDumps);
+          CompressArray(rn, darr^, rarr^, targMaxDev, doAllDumps, wr := NIL);
           Debug.Out("Done compressing trace, time " & LR(Time.Now() - now));
         END
       END
