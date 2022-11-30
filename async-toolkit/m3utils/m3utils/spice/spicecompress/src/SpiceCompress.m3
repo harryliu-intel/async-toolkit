@@ -20,6 +20,8 @@ IMPORT Thread;
 IMPORT Text;
 IMPORT Time;
 IMPORT Env;
+IMPORT TripleRefTbl;
+IMPORT IntTriple;
 
 <*FATAL Thread.Alerted*>
 
@@ -49,12 +51,19 @@ PROCEDURE Evaluate(fn            : TEXT;
     sumDiff      := 0.0d0;
     sumDiffSq    := 0.0d0;
     n            := NUMBER(a);
-    e            := NEW(REF ARRAY OF LONGREAL, n);
+    e            : REF ARRAY OF LONGREAL;
     fails        := 0;
+    doDump       := fn # NIL AND doAllDumps;
   BEGIN
+    IF doDump THEN
+      e := NEW(REF ARRAY OF LONGREAL, n);
+    END;
+    
     <*ASSERT NUMBER(b) >= NUMBER(a)*>
     FOR i := FIRST(a) TO LAST(a) DO
-      e[i] := a[i] - b[i];
+      IF doDump THEN
+        e[i] := a[i] - b[i]
+      END;
       
       WITH diff    = a[i] - b[i],
            absDiff = ABS(diff),
@@ -65,7 +74,7 @@ PROCEDURE Evaluate(fn            : TEXT;
         sumDiffSq := sumDiffSq + diffSq
       END
     END;
-    IF fn # NIL AND doAllDumps THEN
+    IF doDump THEN
       DumpVec(fn, e^, base)
     END;
     WITH meanSq = sumDiffSq / FLOAT(n, LONGREAL),
@@ -88,17 +97,19 @@ PROCEDURE Evaluate(fn            : TEXT;
     END;
   END Evaluate;
 
-PROCEDURE CompressArray(rn            : TEXT; (* for debug *)
+PROCEDURE CompressArray(rn         : TEXT; (* for debug *)
 
-                        VAR darr : ARRAY OF LONGREAL;
+                        VAR darr   : ARRAY OF LONGREAL;
                         (* input data---will be normalized in place *)
 
-                        VAR rarr : ARRAY OF LONGREAL;
+                        VAR rarr   : ARRAY OF LONGREAL;
                         (* workspace *)
                         
                         targMaxDev : LONGREAL;
                         doAllDumps : BOOLEAN;
-                        wr         : Wr.T
+                        wr         : Wr.T;
+                        mem        : TripleRefTbl.T;
+                        doDump     : BOOLEAN
   )
   RAISES { MatrixE.Singular } =
   <*FATAL OSError.E, Wr.Failure*>
@@ -111,7 +122,9 @@ PROCEDURE CompressArray(rn            : TEXT; (* for debug *)
   BEGIN
     norm := Normalize(darr);
 
-    DumpVec(rn & ".darr.dat", darr, 0);
+    IF doDump THEN
+      DumpVec(rn & ".darr.dat", darr, 0)
+    END;
 
     AttemptPoly16(rn & ".poly16_0_",
                   SUBARRAY(darr, 0, 1),
@@ -120,7 +133,8 @@ PROCEDURE CompressArray(rn            : TEXT; (* for debug *)
                   segments,
                   0.0d0,
                   0,
-                  doAllDumps);
+                  doAllDumps,
+                  mem);
     
     WITH  seg    = segments.get(0),
           firstY = Rep16.ToFloat0(seg.r.c0) DO
@@ -137,7 +151,8 @@ PROCEDURE CompressArray(rn            : TEXT; (* for debug *)
                     segments,
                     firstY,
                     attemptOrder,
-                    doAllDumps
+                    doAllDumps,
+                    mem
       );
 
       IF DoDebug THEN
@@ -148,11 +163,14 @@ PROCEDURE CompressArray(rn            : TEXT; (* for debug *)
       END;
 
       Reconstruct(segments, rarr);
-      DumpVec(rn & ".rarr_dirty.dat", rarr, 0);
+
+      IF doDump THEN
+        DumpVec(rn & ".rarr_dirty.dat", rarr, 0)
+      END;
 
       (*********************  CLEAN POLYS  *********************)
 
-      CleanPoly16(rn, segments, darr, targMaxDev, MaxOrder, doAllDumps);
+      CleanPoly16(rn, segments, darr, targMaxDev, MaxOrder, doAllDumps, mem);
 
       IF DoDebug THEN
         Debug.Out(F("clean %s : %s segments (%s/%s points)",
@@ -162,13 +180,17 @@ PROCEDURE CompressArray(rn            : TEXT; (* for debug *)
       END;
 
       Reconstruct(segments, rarr);
-      DumpVec(rn & ".rarr_clean.dat", rarr, 0);
+      IF doDump THEN
+        DumpVec(rn & ".rarr_clean.dat", rarr, 0)
+      END;
 
       (*********************  ZERO POLYS  *********************)
 
       ZeroPoly16(segments, darr, targMaxDev, doAllDumps);
 
-      DumpVec(rn & ".rarr_zeroed.dat", rarr, 0);
+      IF doDump THEN
+        DumpVec(rn & ".rarr_zeroed.dat", rarr, 0)
+      END;
 
       IF DoDebug THEN
 
@@ -244,7 +266,8 @@ PROCEDURE DoDemo(targMaxDev : LONGREAL;
         trace.getNodeData(i, darr^);
         Debug.Out("Compressing trace");
         WITH now = Time.Now() DO
-          CompressArray(rn, darr^, rarr^, targMaxDev, doAllDumps, wr := NIL);
+          CompressArray(rn, darr^, rarr^, targMaxDev, doAllDumps,
+                        wr := NIL, mem := NIL, doDump := TRUE);
           Debug.Out("Done compressing trace, time " & LR(Time.Now() - now));
         END
       END
@@ -483,7 +506,8 @@ PROCEDURE CleanPoly16(fn             : TEXT;
                       READONLY a     : ARRAY OF LONGREAL;
                       targMaxDev     : LONGREAL;
                       dims           : CARDINAL;
-                      doAllDumps     : BOOLEAN)
+                      doAllDumps     : BOOLEAN;
+                      mem            : TripleRefTbl.T)
   RAISES { MatrixE.Singular } =
 
   PROCEDURE RemoveZeroLengthSegments() =
@@ -547,7 +571,8 @@ PROCEDURE CleanPoly16(fn             : TEXT;
                                             prv, cur, new,
                                             targMaxDev,
                                             dims,
-                                            doAllDumps) DO
+                                            doAllDumps,
+                                            mem) DO
             
             IF ok THEN
               IF DoDebug THEN
@@ -598,7 +623,8 @@ PROCEDURE CleanPoly16(fn             : TEXT;
                                              dims,
                                              targMaxDev,
                                              lastY,
-                                             doAllDumps)
+                                             doAllDumps,
+                                             mem)
              DO
               IF ok THEN
                 IF DoDebug THEN
@@ -651,7 +677,8 @@ PROCEDURE CleanPoly16(fn             : TEXT;
                                          cur,
                                          new,
                                          targMaxDev,
-                                         doAllDumps) DO
+                                         doAllDumps,
+                                         mem) DO
             IF ok THEN
               IF DoDebug THEN
                 Debug.Out(F("CleanPoly16 successfully lowered %s -> %s / order %s -> %s",
@@ -689,7 +716,8 @@ PROCEDURE AttemptLowerOrder16(fn                  : TEXT;
                               READONLY seg0       : PolySegment16.T;
                               VAR new             : Rep16.T;
                               targMaxDev          : LONGREAL;
-                              doAllDumps          : BOOLEAN) : BOOLEAN
+                              doAllDumps          : BOOLEAN;
+                              mem                 : TripleRefTbl.T) : BOOLEAN
   RAISES { MatrixE.Singular } =
   BEGIN
     (* check that we have a live segment that we can actually lower the order of *)
@@ -704,7 +732,8 @@ PROCEDURE AttemptLowerOrder16(fn                  : TEXT;
                                   base + 1,
                                   new,
                                   Rep16.ToFloat0(seg0.r.c0),
-                                  doAllDumps) DO
+                                  doAllDumps,
+                                  mem) DO
           RETURN eval.fails = 0
         END
       ELSE
@@ -715,7 +744,8 @@ PROCEDURE AttemptLowerOrder16(fn                  : TEXT;
                                   base,
                                   new,
                                   Rep16.ToFloat0(seg0.r.c0),
-                                  doAllDumps) DO
+                                  doAllDumps,
+                                  mem) DO
           RETURN eval.fails = 0
         END
       END
@@ -730,7 +760,8 @@ PROCEDURE AttemptMergeRight16(fn                  : TEXT;
                               VAR new             : Rep16.T;
                               targMaxDev          : LONGREAL;
                               maxOrder            : CARDINAL;
-                              doAllDumps          : BOOLEAN) : BOOLEAN
+                              doAllDumps          : BOOLEAN;
+                              mem                 : TripleRefTbl.T) : BOOLEAN
   RAISES { MatrixE.Singular } =
   (* 
      attempt to merge two poly segs, if successful, put new seg in new and return TRUE 
@@ -747,7 +778,8 @@ PROCEDURE AttemptMergeRight16(fn                  : TEXT;
                             base,
                             new,
                             Rep16.ToFloat0(seg0.r.c0),
-                            doAllDumps) DO
+                            doAllDumps,
+                            mem) DO
         IF eval.fails = 0 THEN
           IF DoDebug THEN
             Debug.Out(F("AttemptMergeRight16.Try success seg0.order %s seg1.order %s order %s",
@@ -797,7 +829,8 @@ PROCEDURE AttemptLift0Right16(fn                  : TEXT;
                               order               : CARDINAL;
                               targMaxDev          : LONGREAL;
                               lastY               : LONGREAL;
-                              doAllDumps          : BOOLEAN) : BOOLEAN
+                              doAllDumps          : BOOLEAN;
+                              mem                 : TripleRefTbl.T) : BOOLEAN
   RAISES { MatrixE.Singular } =
   (* 
      attempt to merge two poly segs, where seg0 has order 0, to maxOrder,
@@ -817,7 +850,8 @@ PROCEDURE AttemptLift0Right16(fn                  : TEXT;
                           base - 1,
                           new,
                           lastY,
-                          doAllDumps) DO
+                          doAllDumps,
+                          mem) DO
       IF eval.fails = 0 THEN
         IF DoDebug THEN
           Debug.Out(F("AttemptLift0Right success seg0.order %s seg1.order %s order %s",
@@ -848,7 +882,8 @@ PROCEDURE AttemptPoly16(fn         : TEXT;
                         segments   : PolySegment16Seq.T;
                         firstY     : LONGREAL;
                         order      : Rep16.Order;
-                        doAllDumps : BOOLEAN)
+                        doAllDumps : BOOLEAN;
+                        mem        : TripleRefTbl.T)
   RAISES { MatrixE.Singular } =
   (* 
      this routine adds a number of segments to fit to the function,
@@ -896,7 +931,8 @@ PROCEDURE AttemptPoly16(fn         : TEXT;
                              base + 1,
                              poly0,
                              firstY,
-                             doAllDumps),
+                             doAllDumps,
+                             mem),
            
            eval  = PolyFit16(fn & "_" & Int(order),
                              a,
@@ -905,7 +941,8 @@ PROCEDURE AttemptPoly16(fn         : TEXT;
                              base,
                              poly ,
                              firstY,
-                             doAllDumps) DO
+                             doAllDumps,
+                             mem) DO
 
         IF DoDebug THEN
           Debug.Out(F("AttemptPoly16(%s), fails = %s 0.fails = %s",
@@ -973,7 +1010,8 @@ PROCEDURE AttemptPoly16(fn         : TEXT;
                                 segments,
                                 firstY,
                                 o0,
-                                doAllDumps);
+                                doAllDumps,
+                                mem);
 
                   <*ASSERT GetLastX(segments) = base + n0 - 1*>
                   
@@ -997,7 +1035,8 @@ PROCEDURE AttemptPoly16(fn         : TEXT;
                                   segments,
                                   lastY,
                                   o1,
-                                  doAllDumps
+                                  doAllDumps,
+                                  mem
                     );
 
                     IF AssertAll THEN
@@ -1012,7 +1051,72 @@ PROCEDURE AttemptPoly16(fn         : TEXT;
       END
     END
   END AttemptPoly16;
-  
+
+TYPE Maker1 = PROCEDURE(sz : CARDINAL) : REFANY;
+TYPE Maker2 = PROCEDURE(sz0, sz1 : CARDINAL) : REFANY;
+
+     (* 
+        tag is used to ensure there are enough of the type for all possible
+        call sites that are simultaneously active,
+
+        each call site should use its own tag 
+
+        This module is single-threaded, but re-entrant as long as you use multiple
+        mems, one for each thread (or no mem at all).
+     *)
+     
+PROCEDURE GetMem1(maker       : Maker1;
+                  sz          : CARDINAL;
+                  tag         : CARDINAL;
+                  mem         : TripleRefTbl.T
+  ) : REFANY =
+  VAR
+    res : REFANY;
+  BEGIN
+    IF mem = NIL THEN
+      res := maker(sz)
+    ELSE
+      WITH ident = IntTriple.T { sz, 0, tag } DO
+        IF NOT mem.get(ident, res) THEN
+          res := maker(sz);
+          EVAL mem.put(ident, res)
+        END
+      END
+    END;
+    RETURN res
+  END GetMem1;
+                 
+PROCEDURE GetMem2(maker       : Maker2;
+                  sz0, sz1    : CARDINAL;
+                  tag         : CARDINAL;
+                  mem         : TripleRefTbl.T
+  ) : REFANY =
+  VAR
+    res : REFANY;
+  BEGIN
+    IF mem = NIL THEN
+      res := maker(sz0, sz1)
+    ELSE
+      WITH ident = IntTriple.T { sz0, sz1, tag } DO
+        IF NOT mem.get(ident, res) THEN
+          res := maker(sz0, sz1);
+          EVAL mem.put(ident, res)
+        END
+      END
+    END;
+    RETURN res
+  END GetMem2;
+
+PROCEDURE MkArray2(sz0, sz1 : CARDINAL) : REFANY =
+  BEGIN
+    RETURN NEW(REF Array, sz0, sz1)
+  END MkArray2;
+                 
+PROCEDURE MkLRArray1(sz : CARDINAL) : REFANY =
+  BEGIN
+    RETURN NEW(REF ARRAY OF LONGREAL, sz);
+  END MkLRArray1;
+
 PROCEDURE PolyFit16(fn             : TEXT;
                     READONLY a     : ARRAY OF LONGREAL;
                     targMaxDev     : LONGREAL;
@@ -1020,7 +1124,8 @@ PROCEDURE PolyFit16(fn             : TEXT;
                     base           : CARDINAL;
                     VAR poly       : Rep16.T;
                     firstY         : LONGREAL;
-                    doAllDumps     : BOOLEAN
+                    doAllDumps     : BOOLEAN;
+                    mem            : TripleRefTbl.T
   ) : Evaluation
   RAISES { MatrixE.Singular } =
 
@@ -1037,14 +1142,14 @@ PROCEDURE PolyFit16(fn             : TEXT;
   VAR
     n            := NUMBER(a);
     coeffs       := MAX(1, order);
-    x            := NEW(REF Array, n, coeffs);
+    x            : REF Array := GetMem2(MkArray2, n, coeffs, 0, mem);
     (* 0th order has 1 coefficient, 1st order also, higher orders have 
        n coefficients *)
     
-    response     := NEW(REF Array, n, 1);
+    response     : REF Array := GetMem2(MkArray2, n, 1, 1, mem);
     responseHat : REF Array;
     r            := NEW(Regression.T);
-    y            := NEW(REF ARRAY OF LONGREAL, n);
+    y            : REF ARRAY OF LONGREAL := GetMem1(MkLRArray1, n, 0, mem);
   BEGIN
     (* attempt to fit a waveform of stated dimension to the data set in a *)
 

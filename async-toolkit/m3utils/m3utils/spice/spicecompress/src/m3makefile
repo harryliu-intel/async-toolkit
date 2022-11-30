@@ -5,6 +5,8 @@ import ("tracelib")
 import ("regression")
 import ("ctlib")
 
+m3_optimize("T")
+
 Module ("SpiceCompress")
 Module ("Wavelet")
 Module ("SparseLR")
@@ -21,5 +23,7 @@ Sequence ("PolySegment16", "PolySegment16")
 Module ("Rep16")
 Module ("Rep16Stream")
 Module ("PolySegment16Serial")
+
+Table("TripleRef", "IntTriple", "Refany")
 
 library ("spicecompress")

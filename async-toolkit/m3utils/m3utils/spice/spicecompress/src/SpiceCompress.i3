@@ -2,6 +2,7 @@ INTERFACE SpiceCompress;
 IMPORT Trace;
 IMPORT Matrix;
 IMPORT Wr;
+IMPORT TripleRefTbl;
 
 PROCEDURE DoDemo(targMaxDev : LONGREAL;
                  KK         : REF ARRAY OF CARDINAL;
@@ -20,9 +21,15 @@ PROCEDURE CompressArray(rn            : TEXT;
                         targMaxDev : LONGREAL;
                         doAllDumps : BOOLEAN;
 
-                        wr : Wr.T
+                        wr : Wr.T;
                         (* can be NIL *)
-  )
+
+                        mem : TripleRefTbl.T := NIL;
+
+                        doDump := FALSE;
+                        (* dump darr and rarr *)
+                        )
+  
   RAISES { Matrix.Singular };
 
 END SpiceCompress.
