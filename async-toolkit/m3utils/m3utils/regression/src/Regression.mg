@@ -213,13 +213,18 @@ PROCEDURE RidgeRegress(READONLY x : Matrix2.M;
                        indx       : REF ARRAY OF INTEGER;
                        VAR xTx    : Matrix2.M; (* size cols of x, square *)
                        debug := FALSE)  RAISES { Singular }  =
+  CONST
+    Zero = FLOAT(0, Matrix2.Base);
   VAR
     det_xTx : Matrix2.Base;
     d : Matrix2.Base;
   BEGIN
     Matrix2.MulTransposeMM(x, x, xTx);
-    det_xTx := Matrix2.Det(xTx);
-    Matrix2.AddToDiagonal(xTx, h*h*det_xTx);
+
+    IF h # Zero THEN
+      det_xTx := Matrix2.Det(xTx);
+      Matrix2.AddToDiagonal(xTx, h*h*det_xTx);
+    END;
 
     IF debug AND Debug.GetLevel() > 999 THEN
       Debug.Out("\nxTx + h^2 I =\n" & Matrix2.FormatM(xTx));
