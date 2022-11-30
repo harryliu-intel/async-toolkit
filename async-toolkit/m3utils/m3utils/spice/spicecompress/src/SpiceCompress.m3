@@ -23,6 +23,7 @@ IMPORT TextWr;
 IMPORT TextRd;
 IMPORT PolySegment16Serial;
 IMPORT Thread;
+IMPORT Text;
 
 <*FATAL Thread.Alerted*>
 
@@ -163,8 +164,9 @@ PROCEDURE DoIt(targMaxDev : LONGREAL) =
         DumpVec(rn & ".rarr_clean.dat", rarr^, 0);
 
         (*********************  ZERO POLYS  *********************)
-        
+
         ZeroPoly16(rn, segments, darr^, targMaxDev);
+
         DumpVec(rn & ".rarr_zeroed.dat", rarr^, 0);
 
         Debug.Out(F("zeroed %s : %s segments (%s/%s points)",
@@ -185,12 +187,14 @@ PROCEDURE DoIt(targMaxDev : LONGREAL) =
             PolySegment16Serial.Write(wr, segments, norm.min, norm.max);
             
             WITH txt = TextWr.ToText(wr),
+                 ent = ComputeEntropy(txt),
                  rd  = TextRd.New(txt) DO
               PolySegment16Serial.Read(rd, newSegments, header);
               
-              Debug.Out(F("Readback of segments (wrote min=%s max=%s segments=%s) : %s",
+              Debug.Out(F("Readback of segments (wrote min=%s max=%s segments=%s) : %s, entropy %s",
                           LR(norm.min), LR(norm.max), Int(segments.size()),
-                          Rep16.FormatHeader(header)))
+                          Rep16.FormatHeader(header),
+                          LR(ent)))
             END
             
           END
@@ -235,23 +239,44 @@ PROCEDURE PolyPoints(seq : PolySegment16Seq.T) : CARDINAL =
     END;
   END PolyPoints;
 
+PROCEDURE AssertLinkage(seq : PolySegment16Seq.T; i : CARDINAL) =
+  BEGIN
+    WITH seg = seq.get(i) DO
+      IF    i         = 0 THEN
+        <*ASSERT seg.r.order = 0*>
+      ELSE
+        WITH prv = seq.get(i - 1) DO
+          Debug.Out(F("AssertLinkage prv.lo %s prv.n %s seg.r.order %s seg.lo %s",
+                      Int(prv.lo), Int(prv.n), Int(seg.r.order), Int(seg.lo)));
+          
+          IF seg.r.order = 0 THEN
+            <*ASSERT seg.lo = prv.lo + prv.n*>
+          ELSE
+            <*ASSERT seg.lo = prv.lo + prv.n - 1*>
+          END
+        END
+      END
+    END
+  END AssertLinkage;
+  
 PROCEDURE PolyPointsSerial(seq : PolySegment16Seq.T) : CARDINAL =
   VAR
     hi := -1;
   BEGIN
     FOR i := 0 TO seq.size() - 1 DO
       WITH seg = seq.get(i) DO
+        <*ASSERT seg.n = seg.r.count*>
         IF seg.r.order = 0 THEN
           IF seg.lo # hi + 1 THEN
             Debug.Error(
-                F("Segment consistency check for segment %s order 0: seg.lo (%s) # hi + 1 (%s)",
+                F("Segment consistency check (A) for segment %s order 0: seg.lo (%s) # hi + 1 (%s)",
                   Int(i), Int(seg.lo), Int(hi + 1)))
           END;
           hi := hi + seg.r.count
         ELSE
           IF seg.lo # hi THEN
             Debug.Error(
-                F("Segment consistency check for segment %s order %s: seg.lo (%s) # hi (%s)",
+                F("Segment consistency check (B) for segment %s order %s: seg.lo (%s) # hi (%s)",
                   Int(i), Int(seg.r.order), Int(seg.lo), Int(hi)))
           END;
           hi := hi + seg.r.count - 1
@@ -347,7 +372,7 @@ PROCEDURE ZeroPoly16(fn             : TEXT;
                      READONLY a     : ARRAY OF LONGREAL;
                      targMaxDev     : LONGREAL) =
   CONST
-    Try = ARRAY OF CARDINAL { 8, 4, 2, 1 }; (* LSBs to attempt to zero *)
+    Try = ARRAY OF CARDINAL { 8, 6, 4, 2, 1 }; (* LSBs to attempt to zero *)
 
   VAR
     <*NOWARN*>y : ARRAY Rep16.Count OF LONGREAL; (* 64K scratch space *)
@@ -583,6 +608,8 @@ PROCEDURE CleanPoly16(fn             : TEXT;
         FOR i := 1 TO poly.size() - 1 DO (* do not touch first segment *)
           cur := poly.get(i);
 
+          AssertLinkage(poly, i);
+          
           WITH xlo = cur.lo,
                sub = SUBARRAY(a, xlo, cur.n),
                ok  = AttemptLowerOrder16(F("%s.cleanlow_%s_%s", fn, Int(i), Int(j)),
@@ -592,12 +619,19 @@ PROCEDURE CleanPoly16(fn             : TEXT;
                                          new,
                                          targMaxDev) DO
             IF ok THEN
-              Debug.Out(F("CleanPoly16 successfully lowered %s -> %s", Int(i), Int(i)));
+              Debug.Out(F("CleanPoly16 successfully lowered %s -> %s / order %s -> %s",
+                          Int(i), Int(i), Int(cur.r.order), Int(new.order)));
               cur.r := new;
+              IF new.order = 0 THEN
+                INC(cur.lo);
+                DEC(cur.n)
+              END;
               poly.put(i, cur);
               FixupNextC0(new, poly, i);
               success0 := TRUE; success1 := TRUE
             END;
+
+            AssertLinkage(poly, i);
 
             EVAL PolyPointsSerial(poly); (* assert point sequence *)
             
@@ -620,7 +654,6 @@ PROCEDURE AttemptLowerOrder16(fn                  : TEXT;
                               VAR new             : Rep16.T;
                               targMaxDev          : LONGREAL) : BOOLEAN =
   BEGIN
-
     (* check that we have a live segment that we can actually lower the order of *)
     IF seg0.n = 0 OR seg0.r.order = 0 THEN RETURN FALSE END;
 
@@ -1043,6 +1076,31 @@ PROCEDURE MakeIndeps16(VAR a : ARRAY OF ARRAY OF LONGREAL; order : CARDINAL) =
     END
   END MakeIndeps16;
 
+PROCEDURE ComputeEntropy(txt : TEXT) : LONGREAL =
+  VAR
+    ent  := 0.0d0;
+    occ  := ARRAY CHAR OF CARDINAL { 0, .. };
+    n    := Text.Length(txt);
+    nf   := FLOAT(n, LONGREAL);
+    log2 := Math.log(2.0d0);
+  BEGIN
+    FOR i := 0 TO n - 1 DO
+      WITH c = Text.GetChar(txt, i) DO
+        INC(occ[c])
+      END
+    END;
+
+    FOR c := FIRST(occ) TO LAST(occ) DO
+      WITH p = FLOAT(occ[c],LONGREAL) / nf DO
+        IF p # 0.0d0 THEN
+          ent := ent - p * Math.log(p) / log2
+        END
+      END
+    END;
+    
+    RETURN ent / 8.0d0
+  END ComputeEntropy;
+  
 VAR
   pp                             := NEW(ParseParams.T).init(Stdio.stderr);
   traceRt       : Pathname.T     := "xa";
