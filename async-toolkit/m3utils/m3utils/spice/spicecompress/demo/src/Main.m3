@@ -9,27 +9,13 @@ IMPORT OSError;
 IMPORT Rd;
 IMPORT Process;
 IMPORT Pathname;
-FROM Fmt IMPORT F, Int, LongReal, Pad;
+FROM Fmt IMPORT F;
 IMPORT FS;
 IMPORT Trace;
-IMPORT Wr, FileWr;
-IMPORT Math;
-IMPORT LRRegression AS Regression;
 IMPORT CardSeq;
-IMPORT PolySegment16, PolySegment16Seq;
-IMPORT Rep16;
-IMPORT LRMatrix2 AS Matrix;
-IMPORT Word;
-IMPORT TextWr;
-IMPORT TextRd;
-IMPORT PolySegment16Serial;
-IMPORT Thread;
-IMPORT Text;
 
 CONST
   Usage    = "";
-  LR       = LongReal;
-  DefOrder = 2;
   
 CONST <*NOWARN*>Ks = ARRAY OF CARDINAL { 1, 63, 64, 77, 91, 99         };
       <*NOWARN*>Km = ARRAY OF CARDINAL { 1,         77    , 99         };
