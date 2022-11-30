@@ -189,4 +189,10 @@ PROCEDURE Format(READONLY a : T) : TEXT =
     RETURN Wx.ToText(wx)
   END Format;
 
+PROCEDURE FormatHeader(READONLY h : Header) : TEXT =
+  BEGIN
+    RETURN F("{ nwords %s npoints %s min %s max %s }",
+             Int(h.nwords), Int(h.npoints), LR(h.min), LR(h.max))
+  END FormatHeader;
+  
 BEGIN END Rep16.  

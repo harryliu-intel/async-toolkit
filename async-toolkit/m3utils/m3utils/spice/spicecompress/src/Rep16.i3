@@ -132,5 +132,7 @@ PROCEDURE FromSingle(x : LONGREAL) : T;
 CONST Zero = ARRAY [ 1 .. MaxPower ] OF Signed { 0 , .. };
 
 PROCEDURE Format(READONLY a : T) : TEXT;
+
+PROCEDURE FormatHeader(READONLY h : Header) : TEXT;
       
 END Rep16.

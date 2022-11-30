@@ -4,8 +4,9 @@ IMPORT Rd, Wr;
 IMPORT Rep16Stream;
 IMPORT PolySegment16;
 IMPORT Rep16;
-FROM Fmt IMPORT F;
+FROM Fmt IMPORT F, Int;
 IMPORT Thread;
+IMPORT Debug;
 
 PROCEDURE Write(wr : Wr.T; seq : Seq.T; min, max : LONGREAL)
   RAISES { Wr.Failure, Thread.Alerted } =
@@ -13,7 +14,7 @@ PROCEDURE Write(wr : Wr.T; seq : Seq.T; min, max : LONGREAL)
     bytes := 0;
     header : Rep16.Header;
   BEGIN
-    FOR i := 0 TO seq.size() DO
+    FOR i := 0 TO seq.size() - 1 DO
       bytes := bytes + Rep16Stream.Bytes(seq.get(i).r)
     END;
 
@@ -44,6 +45,9 @@ PROCEDURE Read(rd : Rd.T; seq : Seq.T; VAR header : Rep16.Header)
   BEGIN
     EVAL Rep16Stream.ReadHeader(rd, header);
 
+    Debug.Out(F("PolySegment16Serial.Read : header %s",
+                Rep16.FormatHeader(header)));
+    
     WHILE bytes DIV 2 < header.nwords DO
       bytes := bytes + Rep16Stream.ReadT(rd, seg.r);
       IF seg.r.order = 0 THEN
@@ -63,7 +67,9 @@ PROCEDURE Read(rd : Rd.T; seq : Seq.T; VAR header : Rep16.Header)
     END;
 
     IF hi # header.npoints - 1 THEN
-      RAISE Error(F("hi # header.npoints - 1"))
+      RAISE Error(F("hi (%s) # header.npoints - 1 (%s)",
+                    Int(hi),
+                    Int(header.npoints - 1)))
     END
 
   END Read;

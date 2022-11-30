@@ -9,7 +9,7 @@ EXCEPTION Error(TEXT);
 PROCEDURE Write(wr : Wr.T; seq : Seq.T; min, max : LONGREAL)
   RAISES { Wr.Failure, Thread.Alerted };
 
-PROCEDURE Read(rd : Rd.T; seq : Seq.T; VAR header : Rep16.Header)
+PROCEDURE Read(rd : Rd.T; (* OUT *)seq : Seq.T; VAR header : Rep16.Header)
   RAISES { Rd.Failure, Rd.EndOfFile, Error, Thread.Alerted };
 
 END PolySegment16Serial.

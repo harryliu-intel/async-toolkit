@@ -1,12 +1,14 @@
 MODULE Rep16Stream;
-FROM Rep16 IMPORT Header, T;
+IMPORT Rep16;
 IMPORT Rd, Wr;
 IMPORT UnsafeReader, UnsafeWriter;
 IMPORT Thread;
 IMPORT Word;
 FROM Rep16 IMPORT Signed, Unsigned, OrderBits, Zero;
+IMPORT Fmt; FROM Fmt IMPORT Int, F;
+IMPORT Debug;
 
-PROCEDURE Bytes(t : T) : CARDINAL =
+PROCEDURE Bytes(t : Rep16.T) : CARDINAL =
   BEGIN
     IF t.order = 0 THEN
       RETURN (1 + 1) * 2
@@ -72,7 +74,7 @@ PROCEDURE WriteSigned(wr : Wr.T; xx : Signed)
   
 (**********************************************************************)
 
-PROCEDURE WriteT(wr : Wr.T; READONLY t : T)
+PROCEDURE WriteT(wr : Wr.T; READONLY t : Rep16.T)
   RAISES { Wr.Failure, Thread.Alerted } =
   BEGIN
     WITH cw = Word.Or(Word.Shift(t.count, OrderBits),
@@ -88,15 +90,25 @@ PROCEDURE WriteT(wr : Wr.T; READONLY t : T)
     END
   END WriteT;
 
-PROCEDURE ReadT(rd : Rd.T; VAR t : T) : CARDINAL
+PROCEDURE ReadT(rd : Rd.T; VAR t : Rep16.T) : CARDINAL
   RAISES { Rd.Failure, Rd.EndOfFile, Thread.Alerted } =
   CONST
     oMask = Word.Shift(1, OrderBits) - 1;
   VAR
     w0 := ReadUnsigned(rd);
     bytes := 0;
+  TYPE
+    Count = Rep16.Count;
   BEGIN
-    t.count := Word.Shift(w0, OrderBits);
+    WITH cnt =  Word.RightShift(w0, OrderBits) DO
+      IF cnt < FIRST(Count) OR cnt > LAST(Count) THEN
+        Debug.Warning(F("Count wrong: w0 0x%s OrderBits %s cnt 0x%s FIRST 0x%s LAST 0x%s",
+                        Fmt.Unsigned(w0), Int(OrderBits),
+                        Fmt.Unsigned(cnt),
+                        Fmt.Unsigned(FIRST(Count)), Fmt.Unsigned(LAST(Count))))
+      END;
+      t.count := cnt
+    END;
     t.order := Word.And(w0, oMask);
 
     INC(bytes, 2);
@@ -116,7 +128,7 @@ PROCEDURE ReadT(rd : Rd.T; VAR t : T) : CARDINAL
 
 (**********************************************************************)
   
-PROCEDURE WriteHeader(wr : Wr.T; READONLY h : Header)
+PROCEDURE WriteHeader(wr : Wr.T; READONLY h : Rep16.Header)
   RAISES { Wr.Failure, Thread.Alerted } =
   VAR
     a := ARRAY [0..1] OF LONGREAL { h.min, h.max };
@@ -126,7 +138,7 @@ PROCEDURE WriteHeader(wr : Wr.T; READONLY h : Header)
     UnsafeWriter.WriteLRA(wr, a)
   END WriteHeader;
 
-PROCEDURE ReadHeader(rd : Rd.T; VAR h : Header) : CARDINAL
+PROCEDURE ReadHeader(rd : Rd.T; VAR h : Rep16.Header) : CARDINAL
   RAISES { Rd.Failure, Rd.EndOfFile, Thread.Alerted } =
   VAR
     a : ARRAY [0..1] OF LONGREAL;
