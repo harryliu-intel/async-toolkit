@@ -135,7 +135,7 @@
 
 ; Return the bbox of the overlap between top and bottom layers of a via
 (defun GetViaOverlapBBox (via)
-  (let (bbox overhang1 overhang2 bbox1 bbox2)
+  (let (bbox overhang1 overhang2 bbox1 bbox2 params)
     bbox = (GetCutBBox via)
     overhang1 = (nth 6 via->viaHeader->viaDef->params)
     overhang2 = (nth 7 via->viaHeader->viaDef->params)
@@ -143,6 +143,11 @@
     bbox1 = (BBoxExpandVertical   bbox1 (cadr overhang1))
     bbox2 = (BBoxExpandHorizontal bbox  (car  overhang2))
     bbox2 = (BBoxExpandVertical   bbox2 (cadr overhang2))
+    params = via->viaHeader->overrideParams
+    (foreach p params
+      (when (car p)=="layer1Enc"  bbox1=(BBoxExpandHorizontal (BBoxExpandVertical bbox (cadr (cadr p))) (car (cadr p))))
+      (when (car p)=="layer2Enc"  bbox2=(BBoxExpandHorizontal (BBoxExpandVertical bbox (cadr (cadr p))) (car (cadr p))))
+      )
     bbox  = (BBoxAnd bbox1 bbox2)
     )
   )
