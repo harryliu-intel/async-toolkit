@@ -43,7 +43,7 @@
     ; set CopyExact property
     (when setCopyExact
       (FindSubcells ?CV CV ?filter setCopyExact
-                    ?action (lambda (CV) (dbReplaceProp CV "CopyExact" "string" CV->cellName)))
+                    ?action (lambda (CV) (dbReplaceProp CV "CopyExact" "string" CV->cellName) (dbSave CV)))
       )
 
     ; more processing of top level cell

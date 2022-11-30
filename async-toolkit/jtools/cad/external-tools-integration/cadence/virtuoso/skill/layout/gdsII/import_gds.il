@@ -40,7 +40,7 @@
     ; set CopyExact property
     (when setCopyExact
       (FindSubcells ?CV CV ?filter setCopyExact
-                    ?action (lambda (CV) (dbReplaceProp CV "CopyExact" "string" CV->cellName)))
+                    ?action (lambda (CV) (dbReplaceProp CV "CopyExact" "string" CV->cellName) (dbSave CV)))
       )
 
     ; copy cells to destination library
@@ -87,6 +87,7 @@ importPostProcessAction =
       (when (setof x CV->shapes x->layerName=="ndiff")!=nil
             (LaygenLabelPwell ?CV CV ?netName VssNetName)
             )
+      (dbSave CV)
       )
     t
     )
