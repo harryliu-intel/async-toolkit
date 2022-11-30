@@ -12,6 +12,8 @@ Module("Tridiagonal")
 
 Module("MatrixM3")
 
+m3_optimize("T")
+
 if equal(TARGET, "FreeBSD4") or equal(TARGET, "LINUXLIBC6")
   interface("MatrixF")		
   implementation("MatrixFGlue") 
