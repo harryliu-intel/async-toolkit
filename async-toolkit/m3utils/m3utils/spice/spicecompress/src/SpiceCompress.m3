@@ -80,132 +80,131 @@ PROCEDURE Evaluate(fn            : TEXT;
     END;
   END Evaluate;
 
-<*NOWARN*>PROCEDURE Zero(VAR a : ARRAY OF LONGREAL) =
+PROCEDURE CompressArray(rn            : TEXT; (* for debug *)
+
+                        VAR darr : ARRAY OF LONGREAL;
+                        (* input data---will be normalized in place *)
+
+                        VAR rarr : ARRAY OF LONGREAL;
+                        (* workspace *)
+                        
+                        targMaxDev : LONGREAL;
+                        doAllDumps : BOOLEAN
+  )
+  RAISES { MatrixE.Singular } =
+  <*FATAL OSError.E, Wr.Failure*>
+  CONST
+    MaxOrder = 5;
+  VAR
+    segments := NEW(PolySegment16Seq.T).init();
+    attemptOrder := MIN(DefOrder, NUMBER(darr) - 1);
+    norm : Norm;
   BEGIN
-    FOR i := FIRST(a) TO LAST(a) DO
-      a[i] := 0.0d0
+    norm := Normalize(darr);
+
+    DumpVec(rn & ".darr.dat", darr, 0);
+
+    AttemptPoly16(rn & ".poly16_0_",
+                  SUBARRAY(darr, 0, 1),
+                  0,
+                  targMaxDev,
+                  segments,
+                  0.0d0,
+                  0,
+                  doAllDumps);
+    
+    WITH  seg    = segments.get(0),
+          firstY = Rep16.ToFloat0(seg.r.c0) DO
+
+      <*ASSERT seg.r.order = 0*>
+      <*ASSERT seg.r.count = 1*>
+
+      (*********************  BUILD POLYS  *********************)
+      
+      AttemptPoly16(rn & ".poly16_",
+                    darr,
+                    0,
+                    targMaxDev,
+                    segments,
+                    firstY,
+                    attemptOrder,
+                    doAllDumps
+      );
+
+      Debug.Out(F("dirty %s : %s segments (%s/%s points)",
+                  rn, Int(segments.size()), Int(PolyPoints(segments)),
+                  Int(PolyPointsSerial(segments))
+      ));
+
+      Reconstruct(segments, rarr);
+      DumpVec(rn & ".rarr_dirty.dat", rarr, 0);
+
+      (*********************  CLEAN POLYS  *********************)
+
+      CleanPoly16(rn, segments, darr, targMaxDev, MaxOrder, doAllDumps);
+
+      Debug.Out(F("clean %s : %s segments (%s/%s points)",
+                  rn, Int(segments.size()), Int(PolyPoints(segments)),
+                  Int(PolyPointsSerial(segments))
+      ));
+
+      Reconstruct(segments, rarr);
+      DumpVec(rn & ".rarr_clean.dat", rarr, 0);
+
+      (*********************  ZERO POLYS  *********************)
+
+      ZeroPoly16(segments, darr, targMaxDev, doAllDumps);
+
+      DumpVec(rn & ".rarr_zeroed.dat", rarr, 0);
+
+      Debug.Out(F("zeroed %s : %s segments (%s/%s points)",
+                  rn, Int(segments.size()), Int(PolyPoints(segments)),
+                  Int(PolyPointsSerial(segments))
+      ));
+
+      (* try encoding *)
+
+      Debug.Out(F("NUMBER(darr) %s", Int(NUMBER(darr))));
+      
+      TRY
+        <*FATAL Wr.Failure, Rd.Failure, Rd.EndOfFile*>
+        VAR
+          wr := NEW(TextWr.T).init();
+          newSegments := NEW(PolySegment16Seq.T).init();
+          header : Rep16.Header;
+        BEGIN
+          PolySegment16Serial.Write(wr, segments, norm.min, norm.max);
+          
+          WITH txt = TextWr.ToText(wr),
+               ent = ComputeEntropy(txt),
+               rd  = TextRd.New(txt) DO
+            PolySegment16Serial.Read(rd, newSegments, header);
+            
+            Debug.Out(F("Readback of segments (wrote min=%s max=%s segments=%s) : %s, entropy %s",
+                        LR(norm.min), LR(norm.max), Int(segments.size()),
+                        Rep16.FormatHeader(header),
+                        LR(ent)))
+          END
+          
+        END
+      EXCEPT
+        PolySegment16Serial.Error(x) =>
+        Debug.Error(F("Error handling PolySegment16 serialization : %s", x))
+      END
     END
-  END Zero;
+  END CompressArray;
   
 PROCEDURE DoDemo(targMaxDev : LONGREAL;
                  KK         : REF ARRAY OF CARDINAL;
                  trace      : Trace.T;
                  doAllDumps : BOOLEAN) =
 
-<*FATAL Wr.Failure*>
-<*FATAL OSError.E*>
 <*FATAL Rd.Failure, Rd.EndOfFile*> 
 <*FATAL MatrixE.Singular*>
-
-  PROCEDURE DoOne(i : CARDINAL) =
-    CONST
-      MaxOrder = 5;
-    VAR
-      rn       := Pad(Int(i), 6, padChar := '0');
-      segments := NEW(PolySegment16Seq.T).init();
-      attemptOrder := MIN(DefOrder, NUMBER(darr^) - 1);
-    BEGIN
-      trace.getNodeData(i, darr^);
-      norm := Normalize(darr^);
-
-      DumpVec(rn & ".darr.dat", darr^, 0);
-
-      AttemptPoly16(rn & ".poly16_0_",
-                    SUBARRAY(darr^, 0, 1),
-                    0,
-                    targMaxDev,
-                    segments,
-                    0.0d0,
-                    0,
-                    doAllDumps);
-           
-      WITH  seg    = segments.get(0),
-            firstY = Rep16.ToFloat0(seg.r.c0) DO
-
-        <*ASSERT seg.r.order = 0*>
-        <*ASSERT seg.r.count = 1*>
-
-        (*********************  BUILD POLYS  *********************)
-        
-        AttemptPoly16(rn & ".poly16_",
-                      darr^,
-                      0,
-                      targMaxDev,
-                      segments,
-                      firstY,
-                      attemptOrder,
-                      doAllDumps
-        );
-
-        Debug.Out(F("dirty %s : %s segments (%s/%s points)",
-                    rn, Int(segments.size()), Int(PolyPoints(segments)),
-                    Int(PolyPointsSerial(segments))
-        ));
-
-        Reconstruct(segments, rarr^);
-        DumpVec(rn & ".rarr_dirty.dat", rarr^, 0);
-
-        (*********************  CLEAN POLYS  *********************)
-
-        CleanPoly16(rn, segments, darr^, targMaxDev, MaxOrder, doAllDumps);
-
-        Debug.Out(F("clean %s : %s segments (%s/%s points)",
-                    rn, Int(segments.size()), Int(PolyPoints(segments)),
-                    Int(PolyPointsSerial(segments))
-        ));
-
-        Reconstruct(segments, rarr^);
-        DumpVec(rn & ".rarr_clean.dat", rarr^, 0);
-
-        (*********************  ZERO POLYS  *********************)
-
-        ZeroPoly16(segments, darr^, targMaxDev, doAllDumps);
-
-        DumpVec(rn & ".rarr_zeroed.dat", rarr^, 0);
-
-        Debug.Out(F("zeroed %s : %s segments (%s/%s points)",
-                    rn, Int(segments.size()), Int(PolyPoints(segments)),
-                    Int(PolyPointsSerial(segments))
-        ));
-
-        (* try encoding *)
-
-        Debug.Out(F("NUMBER(darr^) %s", Int(NUMBER(darr^))));
-        
-        TRY
-          VAR
-            wr := NEW(TextWr.T).init();
-            newSegments := NEW(PolySegment16Seq.T).init();
-            header : Rep16.Header;
-          BEGIN
-            PolySegment16Serial.Write(wr, segments, norm.min, norm.max);
-            
-            WITH txt = TextWr.ToText(wr),
-                 ent = ComputeEntropy(txt),
-                 rd  = TextRd.New(txt) DO
-              PolySegment16Serial.Read(rd, newSegments, header);
-              
-              Debug.Out(F("Readback of segments (wrote min=%s max=%s segments=%s) : %s, entropy %s",
-                          LR(norm.min), LR(norm.max), Int(segments.size()),
-                          Rep16.FormatHeader(header),
-                          LR(ent)))
-            END
-            
-          END
-        EXCEPT
-          PolySegment16Serial.Error(x) =>
-          Debug.Error(F("Error handling PolySegment16 serialization : %s", x))
-        END
-      END
-    END DoOne;
-
   VAR
     nSteps := trace.getSteps();
-    tarr   := NEW(REF ARRAY OF LONGREAL, nSteps);
-    iarr   := NEW(REF ARRAY OF LONGREAL, nSteps);
     darr   := NEW(REF ARRAY OF LONGREAL, nSteps);
     rarr   := NEW(REF ARRAY OF LONGREAL, nSteps);
-    norm : Norm;
   BEGIN
 
     FOR p := 1 TO 3 DO
@@ -214,14 +213,12 @@ PROCEDURE DoDemo(targMaxDev : LONGREAL;
       END
     END;
     
-    (* iarr is integer timesteps *)
-    Integers(iarr^);
-    
-    trace.getTimeData(tarr^);
-    
     FOR k := FIRST(KK^) TO LAST(KK^) DO
-      WITH i = KK[k] DO
-        DoOne(i)
+      WITH i  = KK[k],
+           rn = Pad(Int(i), 6, padChar := '0')
+            DO
+        trace.getNodeData(i, darr^);
+        CompressArray(rn, darr^, rarr^, targMaxDev, doAllDumps)
       END
     END
   END DoDemo;
@@ -281,13 +278,6 @@ PROCEDURE PolyPointsSerial(seq : PolySegment16Seq.T) : CARDINAL =
     END;
     RETURN hi + 1
   END PolyPointsSerial;
-
-PROCEDURE Integers(VAR a : ARRAY OF LONGREAL) =
-  BEGIN
-    FOR i := FIRST(a) TO LAST(a) DO
-      a[i] := FLOAT(i, LONGREAL)
-    END
-  END Integers;
 
 <*NOWARN*>PROCEDURE DumpOne(nm              : Pathname.T;
                             READONLY ta, da : ARRAY OF LONGREAL)
