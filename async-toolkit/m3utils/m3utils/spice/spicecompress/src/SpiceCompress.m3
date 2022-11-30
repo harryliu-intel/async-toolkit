@@ -10,6 +10,7 @@ IMPORT Math;
 IMPORT LRRegression AS Regression;
 IMPORT PolySegment16, PolySegment16Seq;
 IMPORT Rep16;
+IMPORT Matrix AS MatrixE;
 IMPORT LRMatrix2 AS Matrix;
 IMPORT Word;
 IMPORT TextWr;
@@ -19,11 +20,6 @@ IMPORT Thread;
 IMPORT Text;
 
 <*FATAL Thread.Alerted*>
-
-(* for now we turn off the other exceptions too (will fix later) *)
-<*FATAL Wr.Failure*>
-<*FATAL OSError.E*>
-<*FATAL Rd.Failure, Rd.EndOfFile*> 
 
 CONST
   LR       = LongReal;
@@ -41,6 +37,7 @@ PROCEDURE Evaluate(fn            : TEXT;
                    targMaxDev    : LONGREAL;
                    doAllDumps    : BOOLEAN;
                    base          := 0) : Evaluation =
+  <*FATAL Wr.Failure, OSError.E*>
   VAR
     maxAbsDiff   := 0.0d0;
     sumDiff      := 0.0d0;
@@ -94,6 +91,11 @@ PROCEDURE DoDemo(targMaxDev : LONGREAL;
                  KK         : REF ARRAY OF CARDINAL;
                  trace      : Trace.T;
                  doAllDumps : BOOLEAN) =
+
+<*FATAL Wr.Failure*>
+<*FATAL OSError.E*>
+<*FATAL Rd.Failure, Rd.EndOfFile*> 
+<*FATAL MatrixE.Singular*>
 
   PROCEDURE DoOne(i : CARDINAL) =
     CONST
@@ -157,7 +159,7 @@ PROCEDURE DoDemo(targMaxDev : LONGREAL;
 
         (*********************  ZERO POLYS  *********************)
 
-        ZeroPoly16(rn, segments, darr^, targMaxDev, doAllDumps);
+        ZeroPoly16(segments, darr^, targMaxDev, doAllDumps);
 
         DumpVec(rn & ".rarr_zeroed.dat", rarr^, 0);
 
@@ -288,7 +290,8 @@ PROCEDURE Integers(VAR a : ARRAY OF LONGREAL) =
   END Integers;
 
 <*NOWARN*>PROCEDURE DumpOne(nm              : Pathname.T;
-                            READONLY ta, da : ARRAY OF LONGREAL) =
+                            READONLY ta, da : ARRAY OF LONGREAL)
+  RAISES { OSError.E, Wr.Failure } =
   VAR
     wr := FileWr.Open(nm);
   BEGIN
@@ -303,7 +306,8 @@ PROCEDURE Integers(VAR a : ARRAY OF LONGREAL) =
 
 PROCEDURE DumpVec(nm          : Pathname.T;
                   READONLY da : ARRAY OF LONGREAL;
-                  base        : CARDINAL) =
+                  base        : CARDINAL) 
+  RAISES { OSError.E, Wr.Failure } =
   VAR
     wr := FileWr.Open(nm);
   BEGIN
@@ -359,8 +363,7 @@ PROCEDURE Interpolate(READONLY a : ARRAY OF LONGREAL; x : LONGREAL) : LONGREAL =
 TYPE
   Array = ARRAY OF ARRAY OF LONGREAL;
 
-PROCEDURE ZeroPoly16(fn             : TEXT;
-                     VAR poly       : PolySegment16Seq.T;
+PROCEDURE ZeroPoly16(VAR poly       : PolySegment16Seq.T;
                      READONLY a     : ARRAY OF LONGREAL;
                      targMaxDev     : LONGREAL;
                      doAllDumps     : BOOLEAN) =
@@ -458,7 +461,8 @@ PROCEDURE CleanPoly16(fn             : TEXT;
                       READONLY a     : ARRAY OF LONGREAL;
                       targMaxDev     : LONGREAL;
                       dims           : CARDINAL;
-                      doAllDumps     : BOOLEAN) =
+                      doAllDumps     : BOOLEAN)
+  RAISES { MatrixE.Singular } =
 
   PROCEDURE RemoveZeroLengthSegments() =
     BEGIN
@@ -651,7 +655,8 @@ PROCEDURE AttemptLowerOrder16(fn                  : TEXT;
                               READONLY seg0       : PolySegment16.T;
                               VAR new             : Rep16.T;
                               targMaxDev          : LONGREAL;
-                              doAllDumps          : BOOLEAN) : BOOLEAN =
+                              doAllDumps          : BOOLEAN) : BOOLEAN
+  RAISES { MatrixE.Singular } =
   BEGIN
     (* check that we have a live segment that we can actually lower the order of *)
     IF seg0.n = 0 OR seg0.r.order = 0 THEN RETURN FALSE END;
@@ -691,12 +696,14 @@ PROCEDURE AttemptMergeRight16(fn                  : TEXT;
                               VAR new             : Rep16.T;
                               targMaxDev          : LONGREAL;
                               maxOrder            : CARDINAL;
-                              doAllDumps          : BOOLEAN) : BOOLEAN =
+                              doAllDumps          : BOOLEAN) : BOOLEAN
+  RAISES { MatrixE.Singular } =
   (* 
      attempt to merge two poly segs, if successful, put new seg in new and return TRUE 
   *)
 
-  PROCEDURE Try(order : CARDINAL) : BOOLEAN =
+  PROCEDURE Try(order : CARDINAL) : BOOLEAN
+    RAISES { MatrixE.Singular } =
     (* note this depends on maintaining seg0.r.c0 correctly *)
     BEGIN
       WITH eval = PolyFit16(fn & "_" & Int(order),
@@ -754,7 +761,8 @@ PROCEDURE AttemptLift0Right16(fn                  : TEXT;
                               order               : CARDINAL;
                               targMaxDev          : LONGREAL;
                               lastY               : LONGREAL;
-                              doAllDumps          : BOOLEAN) : BOOLEAN =
+                              doAllDumps          : BOOLEAN) : BOOLEAN
+  RAISES { MatrixE.Singular } =
   (* 
      attempt to merge two poly segs, where seg0 has order 0, to maxOrder,
      if successful, put new seg in new and return TRUE 
@@ -802,7 +810,8 @@ PROCEDURE AttemptPoly16(fn         : TEXT;
                         segments   : PolySegment16Seq.T;
                         firstY     : LONGREAL;
                         order      : Rep16.Order;
-                        doAllDumps          : BOOLEAN) =
+                        doAllDumps : BOOLEAN)
+  RAISES { MatrixE.Singular } =
   (* 
      this routine adds a number of segments to fit to the function,
      respecting targMaxDev and of order no more than given (targeting
@@ -963,7 +972,8 @@ PROCEDURE PolyFit16(fn             : TEXT;
                     VAR poly       : Rep16.T;
                     firstY         : LONGREAL;
                     doAllDumps     : BOOLEAN
-  ) : Evaluation =
+  ) : Evaluation
+  RAISES { MatrixE.Singular } =
 
   PROCEDURE Fail() : Evaluation =
     (* return utter & dismal failure *)
@@ -973,7 +983,8 @@ PROCEDURE PolyFit16(fn             : TEXT;
                           maxAbsDiff := LAST(LONGREAL),
                           rms        := LAST(LONGREAL) }
     END Fail;
-    
+
+  <*FATAL Wr.Failure, OSError.E*>
   VAR
     n            := NUMBER(a);
     coeffs       := MAX(1, order);
