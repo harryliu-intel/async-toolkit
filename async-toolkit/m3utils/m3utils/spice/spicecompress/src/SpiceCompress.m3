@@ -439,10 +439,24 @@ PROCEDURE CleanPoly16(fn             : TEXT;
                       READONLY a     : ARRAY OF LONGREAL;
                       targMaxDev     : LONGREAL;
                       dims           : CARDINAL) =
+
+  PROCEDURE RemoveZeroLengthSegments() =
+    BEGIN
+      (* remove any zero-length segments *)
+      WITH new = NEW(PolySegment16Seq.T).init() DO
+        FOR i := 0 TO poly.size() - 1 DO
+          WITH e = poly.get(i) DO
+            IF e.n # 0 THEN new.addhi(e) END
+          END
+        END;
+        poly := new
+      END
+    END RemoveZeroLengthSegments;
+    
   VAR
-    cur, prv, pprv           : PolySegment16.T;
-    new                      : Rep16.T;
-    success0, success1       : BOOLEAN;
+    cur, prv                        : PolySegment16.T;
+    new                             : Rep16.T;
+    success0, success1, success2    : BOOLEAN;
     j             := 0;
   BEGIN
     (* repeat until fixed point *)
@@ -505,17 +519,56 @@ PROCEDURE CleanPoly16(fn             : TEXT;
             END
           END
         END;
-        
+
         IF success0 THEN
-          (* remove any zero-length segments *)
-          WITH new = NEW(PolySegment16Seq.T).init() DO
-            FOR i := 0 TO poly.size() - 1 DO
-              WITH e = poly.get(i) DO
-                IF e.n # 0 THEN new.addhi(e) END
+          RemoveZeroLengthSegments()
+        END;
+
+        EVAL PolyPointsSerial(poly); (* assert point sequence *)
+
+        success2 := FALSE;
+        FOR i := 2 TO poly.size() - 1 DO
+          (* attempt to merge order-0 left hand poly into current poly 
+             -- do NOT merge seg 0 *)
+          prv  := poly.get(i - 1);
+          cur  := poly.get(i);
+
+          IF prv.r.order = 0 THEN
+            WITH pprv  = poly.get(i - 2),
+                 xlo   = prv.lo - 1,  (* total length of relevant points *)
+                 xn    = cur.lo + cur.n - xlo,
+                 sub   = SUBARRAY(a, xlo, xn),
+                 lastY = Rep16.EvalPoly(pprv.r, pprv.r.count - 1),
+                 ok    = AttemptLift0Right16(F("%s.lift_%s_%s", fn, Int(i), Int(j)),
+                                             sub,
+                                             xlo + 1, (* start of prv *)
+                                             prv, cur,
+                                             new,
+                                             dims,
+                                             targMaxDev,
+                                             lastY)
+             DO
+              IF ok THEN
+                Debug.Out(F("CleanPoly16 successfully lift-merged %s -> %s", Int(i-1), Int(i)));
+                cur.r  := new;
+                cur.lo := xlo;
+                cur.n  := xn;
+                
+                poly.put(i, cur);
+                
+                (* fix up c0 in next poly if need be *)
+                FixupNextC0(new, poly, i);
+                
+                prv.n := 0;
+                poly.put(i - 1, prv);
+                success0 := TRUE; success1 := TRUE; success2 := TRUE;
               END
-            END;
-            poly := new
+            END
           END
+        END;
+        
+        IF success2 THEN
+          RemoveZeroLengthSegments()
         END;
 
         EVAL PolyPointsSerial(poly); (* assert point sequence *)
@@ -652,6 +705,46 @@ PROCEDURE AttemptMergeRight16(fn                  : TEXT;
 
     RETURN FALSE
   END AttemptMergeRight16;
+
+PROCEDURE AttemptLift0Right16(fn                  : TEXT;
+                              READONLY sub        : ARRAY OF LONGREAL;
+                              (* goes one left of seg0 *)
+                              
+                              base                : CARDINAL;
+                              (* points to one right of left edge of sub *)
+                              
+                              READONLY seg0, seg1 : PolySegment16.T;
+                              VAR new             : Rep16.T;
+                              order               : CARDINAL;
+                              targMaxDev          : LONGREAL;
+                              lastY               : LONGREAL) : BOOLEAN =
+  (* 
+     attempt to merge two poly segs, where seg0 has order 0, to maxOrder,
+     if successful, put new seg in new and return TRUE 
+  *)
+    
+  BEGIN
+    <*ASSERT seg0.r.order = 0*>
+    <*ASSERT order # 0*>
+    <*ASSERT seg0.n # 0*>
+    <*ASSERT seg1.n # 0*>
+
+    WITH eval = PolyFit16(fn & "_" & Int(order),
+                          sub,
+                          targMaxDev,
+                          order,
+                          base - 1,
+                          new,
+                          lastY) DO
+      IF eval.fails = 0 THEN
+        Debug.Out(F("AttemptLift0Right success seg0.order %s seg1.order %s order %s",
+                    Int(seg0.r.order), Int(seg1.r.order), Int(order)));
+        RETURN TRUE
+      ELSE
+        RETURN FALSE
+      END
+    END
+  END AttemptLift0Right16;
 
 PROCEDURE GetLastX(seq : PolySegment16Seq.T) : [ -1 .. LAST(CARDINAL) ] =
   BEGIN
