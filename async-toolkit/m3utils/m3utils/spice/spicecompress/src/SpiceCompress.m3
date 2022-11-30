@@ -1,20 +1,13 @@
-MODULE SpiceCompress EXPORTS Main;
-IMPORT ParseParams;
-IMPORT Stdio;
+MODULE SpiceCompress;
 IMPORT Debug;
-IMPORT Params;
-IMPORT AL;
 IMPORT OSError;
 IMPORT Rd;
-IMPORT Process;
 IMPORT Pathname;
 FROM Fmt IMPORT F, Int, LongReal, Pad;
-IMPORT FS;
 IMPORT Trace;
 IMPORT Wr, FileWr;
 IMPORT Math;
 IMPORT LRRegression AS Regression;
-IMPORT CardSeq;
 IMPORT PolySegment16, PolySegment16Seq;
 IMPORT Rep16;
 IMPORT LRMatrix2 AS Matrix;
@@ -33,16 +26,9 @@ IMPORT Text;
 <*FATAL Rd.Failure, Rd.EndOfFile*> 
 
 CONST
-  Usage    = "";
   LR       = LongReal;
   DefOrder = 2;
   
-CONST <*NOWARN*>Ks = ARRAY OF CARDINAL { 1, 63, 64, 77, 91, 99         };
-      <*NOWARN*>Km = ARRAY OF CARDINAL { 1,         77    , 99         };
-      <*NOWARN*>Kq = ARRAY OF CARDINAL {            77                 };
-      <*NOWARN*>Kg = ARRAY OF CARDINAL {            77        , 108091 };
-      K  = Kg;
-
 TYPE
   Evaluation = RECORD
     fails, cost     : CARDINAL;
@@ -53,6 +39,7 @@ PROCEDURE Evaluate(fn            : TEXT;
                    coeffs        : CARDINAL;
                    READONLY a, b : ARRAY OF LONGREAL;
                    targMaxDev    : LONGREAL;
+                   doAllDumps    : BOOLEAN;
                    base          := 0) : Evaluation =
   VAR
     maxAbsDiff   := 0.0d0;
@@ -103,7 +90,10 @@ PROCEDURE Evaluate(fn            : TEXT;
     END
   END Zero;
   
-PROCEDURE DoIt(targMaxDev : LONGREAL) =
+PROCEDURE DoDemo(targMaxDev : LONGREAL;
+                 KK         : REF ARRAY OF CARDINAL;
+                 trace      : Trace.T;
+                 doAllDumps : BOOLEAN) =
 
   PROCEDURE DoOne(i : CARDINAL) =
     CONST
@@ -124,7 +114,8 @@ PROCEDURE DoIt(targMaxDev : LONGREAL) =
                     targMaxDev,
                     segments,
                     0.0d0,
-                    0);
+                    0,
+                    doAllDumps);
            
       WITH  seg    = segments.get(0),
             firstY = Rep16.ToFloat0(seg.r.c0) DO
@@ -140,7 +131,8 @@ PROCEDURE DoIt(targMaxDev : LONGREAL) =
                       targMaxDev,
                       segments,
                       firstY,
-                      attemptOrder
+                      attemptOrder,
+                      doAllDumps
         );
 
         Debug.Out(F("dirty %s : %s segments (%s/%s points)",
@@ -153,7 +145,7 @@ PROCEDURE DoIt(targMaxDev : LONGREAL) =
 
         (*********************  CLEAN POLYS  *********************)
 
-        CleanPoly16(rn, segments, darr^, targMaxDev, MaxOrder);
+        CleanPoly16(rn, segments, darr^, targMaxDev, MaxOrder, doAllDumps);
 
         Debug.Out(F("clean %s : %s segments (%s/%s points)",
                     rn, Int(segments.size()), Int(PolyPoints(segments)),
@@ -165,7 +157,7 @@ PROCEDURE DoIt(targMaxDev : LONGREAL) =
 
         (*********************  ZERO POLYS  *********************)
 
-        ZeroPoly16(rn, segments, darr^, targMaxDev);
+        ZeroPoly16(rn, segments, darr^, targMaxDev, doAllDumps);
 
         DumpVec(rn & ".rarr_zeroed.dat", rarr^, 0);
 
@@ -230,7 +222,7 @@ PROCEDURE DoIt(targMaxDev : LONGREAL) =
         DoOne(i)
       END
     END
-  END DoIt;
+  END DoDemo;
 
 PROCEDURE PolyPoints(seq : PolySegment16Seq.T) : CARDINAL =
   BEGIN
@@ -370,7 +362,8 @@ TYPE
 PROCEDURE ZeroPoly16(fn             : TEXT;
                      VAR poly       : PolySegment16Seq.T;
                      READONLY a     : ARRAY OF LONGREAL;
-                     targMaxDev     : LONGREAL) =
+                     targMaxDev     : LONGREAL;
+                     doAllDumps     : BOOLEAN) =
   CONST
     Try = ARRAY OF CARDINAL { 8, 6, 4, 2, 1 }; (* LSBs to attempt to zero *)
 
@@ -414,6 +407,7 @@ PROCEDURE ZeroPoly16(fn             : TEXT;
                                    SUBARRAY(a, cur.lo, cur.n),
                                    SUBARRAY(y,      0, cur.n),
                                    targMaxDev,
+                                   doAllDumps,
                                    cur.lo) DO
                 IF eval.fails = 0 THEN
                   success := TRUE;
@@ -463,7 +457,8 @@ PROCEDURE CleanPoly16(fn             : TEXT;
                       VAR poly       : PolySegment16Seq.T;
                       READONLY a     : ARRAY OF LONGREAL;
                       targMaxDev     : LONGREAL;
-                      dims           : CARDINAL) =
+                      dims           : CARDINAL;
+                      doAllDumps     : BOOLEAN) =
 
   PROCEDURE RemoveZeroLengthSegments() =
     BEGIN
@@ -525,7 +520,8 @@ PROCEDURE CleanPoly16(fn             : TEXT;
                                             xlo,
                                             prv, cur, new,
                                             targMaxDev,
-                                            dims) DO
+                                            dims,
+                                            doAllDumps) DO
             
             IF ok THEN
               Debug.Out(F("CleanPoly16 successfully merged %s -> %s", Int(i-1), Int(i)));
@@ -571,7 +567,8 @@ PROCEDURE CleanPoly16(fn             : TEXT;
                                              new,
                                              dims,
                                              targMaxDev,
-                                             lastY)
+                                             lastY,
+                                             doAllDumps)
              DO
               IF ok THEN
                 Debug.Out(F("CleanPoly16 successfully lift-merged %s -> %s", Int(i-1), Int(i)));
@@ -617,7 +614,8 @@ PROCEDURE CleanPoly16(fn             : TEXT;
                                          xlo,
                                          cur,
                                          new,
-                                         targMaxDev) DO
+                                         targMaxDev,
+                                         doAllDumps) DO
             IF ok THEN
               Debug.Out(F("CleanPoly16 successfully lowered %s -> %s / order %s -> %s",
                           Int(i), Int(i), Int(cur.r.order), Int(new.order)));
@@ -652,7 +650,8 @@ PROCEDURE AttemptLowerOrder16(fn                  : TEXT;
                               base                : CARDINAL;
                               READONLY seg0       : PolySegment16.T;
                               VAR new             : Rep16.T;
-                              targMaxDev          : LONGREAL) : BOOLEAN =
+                              targMaxDev          : LONGREAL;
+                              doAllDumps          : BOOLEAN) : BOOLEAN =
   BEGIN
     (* check that we have a live segment that we can actually lower the order of *)
     IF seg0.n = 0 OR seg0.r.order = 0 THEN RETURN FALSE END;
@@ -665,7 +664,8 @@ PROCEDURE AttemptLowerOrder16(fn                  : TEXT;
                                   newOrder,
                                   base + 1,
                                   new,
-                                  Rep16.ToFloat0(seg0.r.c0)) DO
+                                  Rep16.ToFloat0(seg0.r.c0),
+                                  doAllDumps) DO
           RETURN eval.fails = 0
         END
       ELSE
@@ -675,7 +675,8 @@ PROCEDURE AttemptLowerOrder16(fn                  : TEXT;
                                   newOrder,
                                   base,
                                   new,
-                                  Rep16.ToFloat0(seg0.r.c0)) DO
+                                  Rep16.ToFloat0(seg0.r.c0),
+                                  doAllDumps) DO
           RETURN eval.fails = 0
         END
       END
@@ -689,7 +690,8 @@ PROCEDURE AttemptMergeRight16(fn                  : TEXT;
                               READONLY seg0, seg1 : PolySegment16.T;
                               VAR new             : Rep16.T;
                               targMaxDev          : LONGREAL;
-                              maxOrder            : CARDINAL) : BOOLEAN =
+                              maxOrder            : CARDINAL;
+                              doAllDumps          : BOOLEAN) : BOOLEAN =
   (* 
      attempt to merge two poly segs, if successful, put new seg in new and return TRUE 
   *)
@@ -703,7 +705,8 @@ PROCEDURE AttemptMergeRight16(fn                  : TEXT;
                             order,
                             base,
                             new,
-                            Rep16.ToFloat0(seg0.r.c0)) DO
+                            Rep16.ToFloat0(seg0.r.c0),
+                            doAllDumps) DO
         IF eval.fails = 0 THEN
           Debug.Out(F("AttemptMergeRight16.Try success seg0.order %s seg1.order %s order %s",
                       Int(seg0.r.order), Int(seg1.r.order), Int(order)));
@@ -750,7 +753,8 @@ PROCEDURE AttemptLift0Right16(fn                  : TEXT;
                               VAR new             : Rep16.T;
                               order               : CARDINAL;
                               targMaxDev          : LONGREAL;
-                              lastY               : LONGREAL) : BOOLEAN =
+                              lastY               : LONGREAL;
+                              doAllDumps          : BOOLEAN) : BOOLEAN =
   (* 
      attempt to merge two poly segs, where seg0 has order 0, to maxOrder,
      if successful, put new seg in new and return TRUE 
@@ -768,7 +772,8 @@ PROCEDURE AttemptLift0Right16(fn                  : TEXT;
                           order,
                           base - 1,
                           new,
-                          lastY) DO
+                          lastY,
+                          doAllDumps) DO
       IF eval.fails = 0 THEN
         Debug.Out(F("AttemptLift0Right success seg0.order %s seg1.order %s order %s",
                     Int(seg0.r.order), Int(seg1.r.order), Int(order)));
@@ -796,7 +801,8 @@ PROCEDURE AttemptPoly16(fn         : TEXT;
                         targMaxDev : LONGREAL;
                         segments   : PolySegment16Seq.T;
                         firstY     : LONGREAL;
-                        order      : Rep16.Order) =
+                        order      : Rep16.Order;
+                        doAllDumps          : BOOLEAN) =
   (* 
      this routine adds a number of segments to fit to the function,
      respecting targMaxDev and of order no more than given (targeting
@@ -839,7 +845,8 @@ PROCEDURE AttemptPoly16(fn         : TEXT;
                              0    ,
                              base + 1,
                              poly0,
-                             firstY),
+                             firstY,
+                             doAllDumps),
            
            eval  = PolyFit16(fn & "_" & Int(order),
                              a,
@@ -847,7 +854,8 @@ PROCEDURE AttemptPoly16(fn         : TEXT;
                              order,
                              base,
                              poly ,
-                             firstY) DO
+                             firstY,
+                             doAllDumps) DO
         
         Debug.Out(F("AttemptPoly16(%s), fails = %s 0.fails = %s",
                     fn,
@@ -908,7 +916,8 @@ PROCEDURE AttemptPoly16(fn         : TEXT;
                                 targMaxDev,
                                 segments,
                                 firstY,
-                                o0);
+                                o0,
+                                doAllDumps);
 
                   <*ASSERT GetLastX(segments) = base + n0 - 1*>
                   
@@ -931,7 +940,8 @@ PROCEDURE AttemptPoly16(fn         : TEXT;
                                   targMaxDev,
                                   segments,
                                   lastY,
-                                  o1
+                                  o1,
+                                  doAllDumps
                     );
 
                     CheckPostconditions()
@@ -951,7 +961,8 @@ PROCEDURE PolyFit16(fn             : TEXT;
                     order          : CARDINAL;
                     base           : CARDINAL;
                     VAR poly       : Rep16.T;
-                    firstY         : LONGREAL
+                    firstY         : LONGREAL;
+                    doAllDumps     : BOOLEAN
   ) : Evaluation =
 
   PROCEDURE Fail() : Evaluation =
@@ -1040,7 +1051,8 @@ PROCEDURE PolyFit16(fn             : TEXT;
                     coeffs,
                     a,
                     y^,
-                    targMaxDev);
+                    targMaxDev,
+                    doAllDumps);
     
   END PolyFit16;
 
@@ -1100,77 +1112,5 @@ PROCEDURE ComputeEntropy(txt : TEXT) : LONGREAL =
     
     RETURN ent / 8.0d0
   END ComputeEntropy;
-  
-VAR
-  pp                             := NEW(ParseParams.T).init(Stdio.stderr);
-  traceRt       : Pathname.T     := "xa";
-  outDir        : Pathname.T     := "out";
-  createOutDir  : BOOLEAN;
-  trace         : Trace.T;
-  KK            : REF ARRAY OF CARDINAL;
-  wf                             := NEW(CardSeq.T).init();
-  doAllDumps    : BOOLEAN;
-  relPrec                        := 0.005d0;
-BEGIN
 
-  TRY
-
-    doAllDumps := pp.keywordPresent("-dodumpall");
-    
-    createOutDir := pp.keywordPresent("-C");
-
-    IF pp.keywordPresent("-t") THEN
-      traceRt := pp.getNext()
-    END;
-
-    IF pp.keywordPresent("-w") THEN
-      wf.addhi(pp.getNextInt())
-    END;
-
-    IF pp.keywordPresent("-prec") THEN
-      relPrec := pp.getNextLongReal()
-    END;
-
-  EXCEPT
-    ParseParams.Error => Debug.Error("Can't parse command-line parameters\nUsage: " & Params.Get(0) & " " & Usage)
-  END;
-
-  IF wf.size() = 0 THEN
-    KK := NEW(REF ARRAY OF CARDINAL, NUMBER(K));
-    KK^ := K
-  ELSE
-    KK := NEW(REF ARRAY OF CARDINAL, wf.size());
-    
-    FOR i := 0 TO wf.size() - 1 DO
-      KK[i] := wf.get(i)
-    END
-  END;
-
-  TRY
-    trace := NEW(Trace.T).init(traceRt)
-  EXCEPT
-    OSError.E(x) =>
-    Debug.Error(F("Trouble opening input trace %s : OSError.E : %s",
-                  traceRt, AL.Format(x)))
-  |
-    Rd.Failure(x) => Debug.Error("Trouble opening input trace : Rd.Failure : " & AL.Format(x))
-  |
-    Rd.EndOfFile =>
-    Debug.Error(F("Short read opening input trace"))
-  END;
-  
-  IF outDir # NIL THEN
-    TRY
-      IF createOutDir THEN
-        TRY FS.CreateDirectory(outDir) EXCEPT ELSE END
-      END;
-      Process.SetWorkingDirectory(outDir)
-    EXCEPT
-      OSError.E(e) =>
-      Debug.Error(F("Couldn't set working directory to \"%s\" : OSError.E : %s",
-                    outDir, AL.Format(e)))
-    END
-  END;
-
-  DoIt(relPrec)
-END SpiceCompress.
+BEGIN END SpiceCompress.

@@ -171,6 +171,7 @@ override ("spicelib", TOP & "/spice")
 override ("spiceflat", TOP & "/spice")
 override ("ctlib", TOP & "/spice")
 override ("tracelib", TOP & "/spice")
+override ("spicecompress", TOP & "/spice")
 
 override ("spicebuilderlib", TOP & "/tcam")
 override ("hbddops", TOP & "/btc")
