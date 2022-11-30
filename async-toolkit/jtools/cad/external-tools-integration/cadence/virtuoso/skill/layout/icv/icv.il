@@ -118,7 +118,7 @@ write_openaccess(\n\
 (defun ICVLayerProcessorSimple (CV dstCV runSetName inLayerMap outLayerMap)
   (let (result tempCV)
     (FindSubcells ?CV CV ?filter (lambda (CV) (dbIsCellViewModified CV))
-                  ?action (lambda (CV) t)) ; must save all modified subcells before ICV
+                  ?action (lambda (CV) (dbSave CV))) ; must save all modified subcells before ICV
     result = (ICVLayerProcessor inLayerMap outLayerMap runSetName
                                 CV->libName CV->cellName CV->viewName
                                 dstCV->libName dstCV->cellName "icv_temp")
