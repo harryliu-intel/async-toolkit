@@ -1,0 +1,17 @@
+import ("libm3")
+import ("set")
+import ("parseparams")
+import ("mscheme")
+import ("cit_util")
+
+Module ("FreqTable")
+Module ("ArithCode")
+Interface ("ArithCoder")
+Interface ("ArithCallback")
+Interface ("ArithProbability")
+
+implementation ("TestMain")
+
+interface ("ArithBits")
+
+program ("arithcode")
