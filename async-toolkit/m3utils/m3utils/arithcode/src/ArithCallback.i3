@@ -17,6 +17,8 @@ TYPE
   PubWriter = T OBJECT METHODS
     init(wr : Wr.T) : Writer;
   END;
+
+  
   
 CONST Brand = "ArithCallback";
 

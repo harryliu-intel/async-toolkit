@@ -122,6 +122,9 @@ PROCEDURE GetProbability(coder : Coder.T; c : EncodeType) : Probability.T =
       RETURN res
     END
   END GetProbability;
+
+TYPE
+  Bit = [ 0..1 ];
   
   (**********************************************************************)
   (*                                                                    *)
@@ -133,11 +136,11 @@ TYPE
   Encoder = Coder.T BRANDED OBJECT
     pending_bits : CARDINAL;
 
-    pendingEncodedByte  : [0..255];
-    nextBit             : [0..7];
+    pendingEncodedByte  : [ 0..255 ];
+    nextBit             : [ 0..7 ];
   METHODS
     encode(c : EncodeType)              := Encode;
-    putBitPlusPending(bit : [0..1])     := PutBitPlusPending;
+    putBitPlusPending(bit : Bit)     := PutBitPlusPending;
     flushFinalByteAndEof()              := FlushFinalByteAndEof;
   OVERRIDES
     char := EnChar;
@@ -146,9 +149,11 @@ TYPE
 
   EncodeType = [0..ORD(LAST(CHAR)) + 1];
 
-PROCEDURE PutBitPlusPending(en : Encoder; bit : [0..1]) =
+CONST EOF = LAST(EncodeType);
 
-  PROCEDURE Put(b : [0..1]) =
+PROCEDURE PutBitPlusPending(en : Encoder; bit : Bit) =
+
+  PROCEDURE Put(b : Bit) =
     BEGIN
       en.pendingEncodedByte := Word.Or(en.pendingEncodedByte,
                                        Word.Shift(b, en.nextBit));
@@ -294,7 +299,7 @@ PROCEDURE EnChar(en : Encoder; c : CHAR) =
 
 PROCEDURE EnEof(en : Encoder) =
   BEGIN
-    en.encode(ORD(LAST(CHAR)) + 1)
+    en.encode(EOF);
   END EnEof;
 
 
@@ -305,9 +310,159 @@ PROCEDURE EnEof(en : Encoder) =
   (**********************************************************************)
 
 TYPE
-  Decoder = Coder.T BRANDED OBJECT 
+  Decoder = Coder.T BRANDED OBJECT
+    value        : CodeValue;
+    thisByte     : [ 0..255 ];
+    nextBit      : [ 0..8 ];
+    iptr         : CARDINAL;
+    disconnected : BOOLEAN;
+  METHODS
+    decode(c : CHAR)              := Decode;
   OVERRIDES
+    init := InitDecoder;
+    char := DeChar;
+    eof  := NIL;
   END;
 
+PROCEDURE DeChar(de : Decoder; c : CHAR) =
+  BEGIN
+    de.decode(c)
+  END DeChar;
+
+PROCEDURE Decode(de : Decoder; newChar : CHAR) =
+
+  PROCEDURE GetBit(VAR bit : [ 0..1 ]) : BOOLEAN =
+    BEGIN
+      IF de.nextBit = 8 THEN
+        RETURN FALSE
+      ELSE
+        bit := Bits.And(Bits.Shift(de.thisByte, de.nextBit), -1);
+        RETURN TRUE
+      END
+    END GetBit;
+
+  PROCEDURE GetChar(scaledValue : CodeValue;
+                    VAR c       : EncodeType) : Probability.T =
+    BEGIN
+      FOR i := FIRST(de.cum) TO LAST(de.cum) - 1 DO
+        IF Bits.LT(scaledValue, de.cum[i + 1]) THEN
+          c := i;
+          RETURN Probability.T { de.cum[i],
+                                 de.cum[i + 1],
+                                 de.cum[LAST(de.cum)] }
+        END
+      END;
+      <*ASSERT FALSE*>
+    END GetChar;
+    
+  VAR
+    c : EncodeType;
+    b : Bit;
+  BEGIN
+    de.thisByte := ORD(newChar);
+    de.nextBit  := 0;
+    (* reader is ready *)
+
+    IF NOT de.disconnected THEN
+      WHILE de.iptr < Bits.CodeBits DO
+        WITH gotNext = GetBit(b) DO
+          IF gotNext THEN
+            de.value := Bits.Shift(de.value, 1);
+            de.value := Bits.Plus(de.value, b);
+            INC(de.iptr)
+          ELSE
+            RETURN
+            END
+        END
+      END
+    END;
+
+    LOOP
+      IF NOT de.disconnected THEN
+        WITH range       =  Bits.Plus(Bits.Minus(de.hi, de.lo),  1),
+             scaledValue =  Bits.Divide(Bits.Minus(Bits.Times(Bits.Plus(Bits.Minus(de.value, de.lo), 1), de.cum[LAST(de.cum)]),  1), range),
+             p           =  GetChar(scaledValue, c) DO
+          IF c = EOF THEN
+            de.cb.newEof();
+            RETURN (* right?? *)
+          END;
+          
+          de.cb.newByte(VAL(c, CHAR));
+          
+          WITH newHi = Bits.Minus(Bits.Plus(de.lo,
+                                            Bits.Divide(Bits.Times(range, p.hi),
+                                                        p.count)),
+                                  1),
+               newLo = Bits.Plus(de.lo, Bits.Divide(Bits.Times(range, p.lo),
+                                                    p.count)) DO
+            de.hi := newHi;
+            de.lo := newLo
+          END;
+        END
+      END;
+      
+      LOOP
+        IF NOT de.disconnected THEN
+          IF    Bits.LT(de.hi, Bits.OneHalf) THEN
+            (* skip *)
+          ELSIF Bits.GE(de.lo, Bits.OneHalf) THEN
+            de.value := Bits.Minus(de.value, Bits.OneHalf);
+            de.lo    := Bits.Minus(de.lo   , Bits.OneHalf);
+            de.hi    := Bits.Minus(de.hi   , Bits.OneHalf)
+          ELSIF Bits.GE(de.lo, Bits.OneFourth) AND
+            Bits.LT(de.hi, Bits.ThreeFourths) THEN
+            de.value := Bits.Minus(de.value, Bits.OneFourth);
+            de.lo    := Bits.Minus(de.lo   , Bits.OneFourth);
+            de.hi    := Bits.Minus(de.hi   , Bits.OneFourth)
+          ELSE
+            EXIT
+          END;
+        
+          de.lo    := Bits.Shift(de.lo   , 1); 
+          de.hi    := Bits.Shift(de.hi   , 1);
+          de.hi    := Bits.Plus (de.hi   , 1);
+        END;
+
+        (* 
+           Here is how we code fetching new input bits
+
+           we are about to request another bit from the input buffer,
+           which is a single character.
+
+           If we fail to get a bit, we say we are "disconnected" and 
+           return in the disconnected state.
+
+           Then the next time this method is invoked, the code will jump
+           directly to this same point in the code and re-attempt the
+           GetBit.
+
+           This approach allows the code to be driven by the reader,
+           rather than the other way around.
+
+           Kind of a mess but it makes the decoder and encoder look
+           the same to the outside world.
+        *)
+
+        de.disconnected := FALSE;
+
+        IF GetBit(b) THEN
+          de.value := Bits.Shift(de.value, 1);
+          de.value := Bits.Plus (de.value, b);
+        ELSE
+          de.disconnected := TRUE;
+          RETURN (* disconnect *)
+        END
+      END
+    END
+  END Decode;
+
+PROCEDURE InitDecoder(de : Decoder; t : T) : Coder.T =
+  BEGIN
+    EVAL Coder.T.init(de, t);
+    de.nextBit      := 0;
+    de.iptr         := 0;
+    de.disconnected := FALSE;
+    RETURN de
+  END InitDecoder;
 
 BEGIN END ArithCode.

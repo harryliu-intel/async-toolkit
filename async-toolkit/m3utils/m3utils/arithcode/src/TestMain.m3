@@ -17,6 +17,9 @@ BEGIN
   FOR i := ORD(' ') TO ORD('z') DO
     INC(ft[i], 3)
   END;
+  FOR i := ORD('a') TO ORD('z') DO
+    INC(ft[i], 3)
+  END;
   INC(ft[ORD(' ')], 2);
   INC(ft[LAST(ft)], 2);
 
