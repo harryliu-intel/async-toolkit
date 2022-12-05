@@ -7,8 +7,8 @@ import ("cit_util")
 Module ("FreqTable")
 Module ("ArithCode")
 Interface ("ArithCoder")
-Interface ("ArithCallback")
-Interface ("ArithProbability")
+Module ("ArithCallback")
+Module ("ArithProbability")
 
 implementation ("TestMain")
 

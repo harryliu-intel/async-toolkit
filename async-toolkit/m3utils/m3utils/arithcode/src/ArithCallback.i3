@@ -1,4 +1,5 @@
 INTERFACE ArithCallback;
+IMPORT Wr;
 
 TYPE
   T <: Public;
@@ -11,6 +12,12 @@ TYPE
     newEof();             (* abstract *) 
   END;
 
+  Writer <: PubWriter;
+
+  PubWriter = T OBJECT METHODS
+    init(wr : Wr.T) : Writer;
+  END;
+  
 CONST Brand = "ArithCallback";
 
 END ArithCallback.

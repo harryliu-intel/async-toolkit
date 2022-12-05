@@ -8,5 +8,7 @@ TYPE
 
 CONST Brand = "ArithProbability";
 
+PROCEDURE Format(t : T) : TEXT;
+      
 END ArithProbability.
     

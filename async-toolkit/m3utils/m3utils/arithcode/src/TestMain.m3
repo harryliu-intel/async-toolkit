@@ -15,19 +15,20 @@ BEGIN
   END;
   INC(ft[0]);
   FOR i := ORD(' ') TO ORD('z') DO
-    INC(ft[i])
+    INC(ft[i], 3)
   END;
-  INC(ft[LAST(ft)]);
+  INC(ft[ORD(' ')], 2);
+  INC(ft[LAST(ft)], 2);
 
   arithCode := NEW(ArithCode.T).init(ft);
 
   WITH encoder = arithCode.newEncoder(),
        wr      = FileWr.Open("test.out"),
-       cb      = NEW(ArithCallback.T) DO
+       cb      = NEW(ArithCallback.Writer).init(wr) DO
     encoder.setCallback(cb);
 
-    WITH str = "The quick brown fox jumped over the lazy dogs!\000\200" DO
-      encoder.text(str);
+    WITH str = "The quick brown fox jumped over the lazy dogs!" DO
+      encoder.text(str & " " & str);
       encoder.eof()
     END
   END
