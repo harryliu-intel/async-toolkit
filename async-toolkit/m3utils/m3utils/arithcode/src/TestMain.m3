@@ -4,6 +4,10 @@ IMPORT FreqTable;
 IMPORT FileWr;
 IMPORT ArithCoder;
 IMPORT ArithCallback;
+IMPORT FileRd;
+IMPORT TextWr;
+IMPORT Debug;
+FROM Fmt IMPORT F;
 
 VAR
   ft := FreqTable.T { 0, .. };
@@ -34,6 +38,17 @@ BEGIN
       encoder.text(str & " " & str);
       encoder.eof()
     END
+  END;
+
+  WITH decoder = arithCode.newDecoder(),
+       rd      = FileRd.Open("test.out"),
+       txtWr   = TextWr.New(),
+       cb      = NEW(ArithCallback.Writer).init(txtWr) DO
+    decoder.setCallback(cb);
+
+    decoder.rdTillEof(rd);
+
+    Debug.Out(F("Decoded \"%s\"", TextWr.ToText(txtWr)))
   END
   
 END TestMain.

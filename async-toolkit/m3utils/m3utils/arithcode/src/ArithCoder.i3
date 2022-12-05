@@ -1,5 +1,6 @@
 INTERFACE ArithCoder;
 IMPORT ArithCallback;
+IMPORT Rd;
 
 TYPE
   T <: Public;
@@ -10,6 +11,7 @@ TYPE
     chars(READONLY a : ARRAY OF CHAR);
     text(t : TEXT);
     eof();
+    rdTillEof(rd : Rd.T);
   END;
 
 CONST Brand = "ArithCoder";

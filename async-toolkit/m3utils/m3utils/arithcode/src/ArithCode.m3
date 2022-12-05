@@ -6,10 +6,13 @@ IMPORT Text;
 IMPORT ArithBits AS Bits;
 IMPORT ArithProbability AS Probability;
 IMPORT Word;
-IMPORT Fmt; FROM Fmt IMPORT FN, Unsigned, F, Int, LongReal;
+IMPORT Fmt; FROM Fmt IMPORT FN, Unsigned, F, Int, LongReal, Bool;
 IMPORT Debug;
+IMPORT Rd;
 
 CONST LR = LongReal;
+
+CONST Verbose = TRUE;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
@@ -34,6 +37,7 @@ REVEAL
     chars       := CoderChars;
     text        := CoderText;
     setCallback := SetCallback;
+    rdTillEof   := CoderRdTillEof;
   END;
 
   Callback.T = Callback.Public BRANDED Callback.Brand OBJECT
@@ -93,6 +97,19 @@ PROCEDURE CoderChars(c : Coder.T; READONLY a : ARRAY OF CHAR) =
       c.char(a[i])
     END
   END CoderChars;
+
+PROCEDURE CoderRdTillEof(c : Coder.T; rd : Rd.T) =
+  BEGIN
+    TRY
+      LOOP
+        WITH ch = Rd.GetChar(rd) DO
+          c.char(ch)
+        END
+      END
+    EXCEPT
+      Rd.EndOfFile => (* skip *)
+    END
+  END CoderRdTillEof;
 
 PROCEDURE CoderText(c : Coder.T; txt : TEXT) =
   BEGIN
@@ -186,8 +203,6 @@ PROCEDURE FlushFinalByteAndEof(en : Encoder) =
     en.cb.newEof()
   END FlushFinalByteAndEof;
 
-CONST Verbose = TRUE;
-
 PROCEDURE FmtET(c : EncodeType) : TEXT =
   BEGIN
     IF c = LAST(EncodeType) THEN
@@ -209,8 +224,8 @@ PROCEDURE Encode(en : Encoder; c : EncodeType) =
                            Bits.Minus(Bits.Divide(Bits.Times(range, p.hi), p.count),
                                       1)),
          newLo = Bits.Plus(en.lo,
-                           Bits.Minus(Bits.Divide(Bits.Times(range, p.lo), p.count),
-                                      1)) DO
+                           Bits.Divide(Bits.Times(range, p.lo), p.count)
+                                      ) DO
       (* some assertions go here, eh? *)
       IF Verbose THEN
         Debug.Out(FN("Encoder(%s) : en.hi = %s en.lo = %s; range %s; p %s; newHi %s newLo %s ",
@@ -336,7 +351,8 @@ PROCEDURE Decode(de : Decoder; newChar : CHAR) =
       IF de.nextBit = 8 THEN
         RETURN FALSE
       ELSE
-        bit := Bits.And(Bits.Shift(de.thisByte, de.nextBit), -1);
+        bit := Bits.And(Bits.Shift(de.thisByte, -de.nextBit), 1);
+        INC(de.nextBit);
         RETURN TRUE
       END
     END GetBit;
@@ -363,16 +379,26 @@ PROCEDURE Decode(de : Decoder; newChar : CHAR) =
     de.nextBit  := 0;
     (* reader is ready *)
 
+    IF Verbose THEN
+      Debug.Out(F("Decode(%s), disconnected=%s",
+                  Unsigned(ORD(newChar)),
+                  Bool(de.disconnected)))
+    END;
+
     IF NOT de.disconnected THEN
       WHILE de.iptr < Bits.CodeBits DO
         WITH gotNext = GetBit(b) DO
           IF gotNext THEN
             de.value := Bits.Shift(de.value, 1);
             de.value := Bits.Plus(de.value, b);
-            INC(de.iptr)
-          ELSE
-            RETURN
+            INC(de.iptr);
+            IF Verbose AND de.iptr = Bits.CodeBits THEN
+              Debug.Out("Decode done priming buffer")
             END
+          ELSE
+            IF Verbose THEN Debug.Out("GetBit returned FALSE while priming") END;
+            RETURN
+          END
         END
       END
     END;
@@ -386,7 +412,10 @@ PROCEDURE Decode(de : Decoder; newChar : CHAR) =
             de.cb.newEof();
             RETURN (* right?? *)
           END;
-          
+
+          IF Verbose THEN
+            Debug.Out(F("Decoded char %s", Text.FromChar(VAL(c, CHAR))))
+          END;
           de.cb.newByte(VAL(c, CHAR));
           
           WITH newHi = Bits.Minus(Bits.Plus(de.lo,
