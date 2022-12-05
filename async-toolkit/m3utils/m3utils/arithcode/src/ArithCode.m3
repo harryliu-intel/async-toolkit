@@ -110,8 +110,9 @@ TYPE
     pendingEncodedByte  : [0..255];
     nextBit             : [0..7];
   METHODS
-    encode(c : EncodeType)                         := Encode;
-    putBitPlusPending(bit : [0..1])                := PutBitPlusPending;
+    encode(c : EncodeType)              := Encode;
+    putBitPlusPending(bit : [0..1])     := PutBitPlusPending;
+    flushFinalByteAndEof()              := FlushFinalByteAndEof;
   OVERRIDES
     char := EnChar;
     eof  := EnEof;
@@ -141,6 +142,18 @@ PROCEDURE PutBitPlusPending(en : Encoder; bit : [0..1]) =
     END;
     en.pending_bits := 0
   END PutBitPlusPending;
+
+PROCEDURE FlushFinalByteAndEof(en : Encoder) =
+  BEGIN
+    (* this dumps a few higher-order bits as zero but they won't be decoded by
+       the decoder *)
+    IF en.nextBit # 0 THEN
+      en.cb.newByte(VAL(en.pendingEncodedByte, CHAR));
+      en.nextBit := 0;
+      en.pendingEncodedByte := 0;
+    END;
+    en.cb.newEof()
+  END FlushFinalByteAndEof;
 
 PROCEDURE Encode(en : Encoder; c : EncodeType) =
   BEGIN
@@ -194,7 +207,7 @@ PROCEDURE Encode(en : Encoder; c : EncodeType) =
         en.putBitPlusPending(1)
       END;
 
-      (* call EOF callback ? *)
+      en.flushFinalByteAndEof();
       
     END
   END Encode;
