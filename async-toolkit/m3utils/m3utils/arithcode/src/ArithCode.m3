@@ -12,8 +12,9 @@ IMPORT Rd;
 
 CONST LR = LongReal;
 
-CONST Verbose = TRUE;
-
+CONST Verbose      = TRUE;
+      SuperVerbose = FALSE;
+      
 REVEAL
   T = Public BRANDED Brand OBJECT
     freqs : FreqTable.T;
@@ -107,7 +108,7 @@ PROCEDURE CoderRdTillEof(c : Coder.T; rd : Rd.T) =
         END
       END
     EXCEPT
-      Rd.EndOfFile => (* skip *)
+      Rd.EndOfFile => c.eof()
     END
   END CoderRdTillEof;
 
@@ -228,8 +229,9 @@ PROCEDURE Encode(en : Encoder; c : EncodeType) =
                                       ) DO
       (* some assertions go here, eh? *)
       IF Verbose THEN
-        Debug.Out(FN("Encoder(%s) : en.hi = %s en.lo = %s; range %s; p %s; newHi %s newLo %s ",
+        Debug.Out(FN("Encoder(%s %s) : en.hi = %s en.lo = %s; range %s; p %s; newHi %s newLo %s ",
                      AT { FmtET(c),
+                          Int(c),
                           Unsigned(en.hi), Unsigned(en.lo),
                           Unsigned(range), Probability.Format(p),
                           Unsigned(newHi), Unsigned(newLo) }))
@@ -241,13 +243,13 @@ PROCEDURE Encode(en : Encoder; c : EncodeType) =
 
     LOOP
       IF    Bits.LT(en.hi, Bits.OneHalf) THEN
-        IF Verbose THEN
+        IF SuperVerbose THEN
           Debug.Out("putBitPlusPending 0 (en.hi < 1/2)")
         END;
         en.putBitPlusPending(0);
         INC(en.bits)
       ELSIF Bits.GE(en.lo, Bits.OneHalf) THEN
-        IF Verbose THEN
+        IF SuperVerbose THEN
           Debug.Out("putBitPlusPending 1 (en.lo > 1/2)")
         END;
         en.putBitPlusPending(1);
@@ -256,7 +258,7 @@ PROCEDURE Encode(en : Encoder; c : EncodeType) =
         INC(en.pending_bits);
         INC(en.bits);
 
-        IF Verbose THEN
+        IF SuperVerbose THEN
           Debug.Out(F("INC(pendingBits->%s)    (en.lo >= 1/4 && en.hi < 3/4)",
                       Int(en.pending_bits)))
         END;
@@ -286,9 +288,15 @@ PROCEDURE Encode(en : Encoder; c : EncodeType) =
       INC(en.pending_bits);
       INC(en.bits);
       IF Bits.LT(en.lo, Bits.OneFourth) THEN
+        IF SuperVerbose THEN
+          Debug.Out("putBitPlusPending 0 (at EOF)")
+        END;
         en.putBitPlusPending(0);
         INC(en.bits)
       ELSE
+        IF SuperVerbose THEN
+          Debug.Out("putBitPlusPending 0 (at EOF)")
+        END;
         en.putBitPlusPending(1);
         INC(en.bits)
       END;
@@ -331,12 +339,13 @@ TYPE
     nextBit      : [ 0..8 ];
     iptr         : CARDINAL;
     disconnected : BOOLEAN;
+    tailBytes    : CARDINAL;
   METHODS
     decode(c : CHAR)              := Decode;
   OVERRIDES
     init := InitDecoder;
     char := DeChar;
-    eof  := NIL;
+    eof  := DeEof;
   END;
 
 PROCEDURE DeChar(de : Decoder; c : CHAR) =
@@ -344,12 +353,33 @@ PROCEDURE DeChar(de : Decoder; c : CHAR) =
     de.decode(c)
   END DeChar;
 
+PROCEDURE DeEof(de : Decoder) =
+  BEGIN
+    (* here we have gotten an EOF on the input stream to the decoder.
+
+       at this point we have to switch to reading out zero bytes *)
+    <*ASSERT de.nextBit = 8*>
+    <*ASSERT de.disconnected*>
+
+    (* pretend we read a zero byte *)
+    (* and are ready to read three more *)
+    de.tailBytes := (Bits.CodeBits - 8 - 1) DIV 8 + 1;
+    de.decode(VAL(0,CHAR))
+  END DeEof;
+
 PROCEDURE Decode(de : Decoder; newChar : CHAR) =
 
   PROCEDURE GetBit(VAR bit : [ 0..1 ]) : BOOLEAN =
     BEGIN
-      IF de.nextBit = 8 THEN
-        RETURN FALSE
+      IF    de.nextBit = 8 THEN
+        IF de.tailBytes = 0 THEN
+          RETURN FALSE
+        ELSE
+          (* repeat current byte *)
+          de.nextBit := 0;
+          DEC(de.tailBytes);
+          RETURN GetBit(bit)
+        END
       ELSE
         bit := Bits.And(Bits.Shift(de.thisByte, -de.nextBit), 1);
         INC(de.nextBit);
@@ -408,14 +438,22 @@ PROCEDURE Decode(de : Decoder; newChar : CHAR) =
         WITH range       =  Bits.Plus(Bits.Minus(de.hi, de.lo),  1),
              scaledValue =  Bits.Divide(Bits.Minus(Bits.Times(Bits.Plus(Bits.Minus(de.value, de.lo), 1), de.cum[LAST(de.cum)]),  1), range),
              p           =  GetChar(scaledValue, c) DO
+
+          IF Verbose THEN
+            Debug.Out(FN("Decoder hi %s lo %s range %s p %s decoded %s (%s)",
+                         AT { Unsigned(de.hi), Unsigned(de.lo),
+                              Unsigned(range), Probability.Format(p),
+                              FmtET(c), Int(c) }))
+          END;
+          
           IF c = EOF THEN
+            IF Verbose THEN
+              Debug.Out("Decoded EOF")
+            END;
             de.cb.newEof();
             RETURN (* right?? *)
           END;
 
-          IF Verbose THEN
-            Debug.Out(F("Decoded char %s", Text.FromChar(VAL(c, CHAR))))
-          END;
           de.cb.newByte(VAL(c, CHAR));
           
           WITH newHi = Bits.Minus(Bits.Plus(de.lo,
@@ -424,6 +462,10 @@ PROCEDURE Decode(de : Decoder; newChar : CHAR) =
                                   1),
                newLo = Bits.Plus(de.lo, Bits.Divide(Bits.Times(range, p.lo),
                                                     p.count)) DO
+            IF Verbose THEN
+              Debug.Out(F("Decoder newHi %s newLo %s",
+                          Unsigned(newHi), Unsigned(newLo)))
+            END;
             de.hi := newHi;
             de.lo := newLo
           END;
@@ -491,6 +533,7 @@ PROCEDURE InitDecoder(de : Decoder; t : T) : Coder.T =
     de.nextBit      := 0;
     de.iptr         := 0;
     de.disconnected := FALSE;
+    de.tailBytes    := 0;
     RETURN de
   END InitDecoder;
 

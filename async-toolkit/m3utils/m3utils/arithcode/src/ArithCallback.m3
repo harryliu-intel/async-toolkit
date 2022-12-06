@@ -23,7 +23,6 @@ PROCEDURE NewByte(writer : Writer; byte : CHAR) =
   
 PROCEDURE NewEof(writer : Writer) =
   BEGIN
-    Wr.Close(writer.wr);
     writer.wr := NIL
   END NewEof;
 

@@ -8,6 +8,7 @@ IMPORT FileRd;
 IMPORT TextWr;
 IMPORT Debug;
 FROM Fmt IMPORT F;
+IMPORT Wr;
 
 VAR
   ft := FreqTable.T { 0, .. };
@@ -36,7 +37,8 @@ BEGIN
 
     WITH str = "The quick brown fox jumped over the lazy dogs!" DO
       encoder.text(str & " " & str);
-      encoder.eof()
+      encoder.eof();
+      Wr.Close(wr)
     END
   END;
 
@@ -48,6 +50,8 @@ BEGIN
 
     decoder.rdTillEof(rd);
 
+    <*ASSERT txtWr # NIL*>
+    
     Debug.Out(F("Decoded \"%s\"", TextWr.ToText(txtWr)))
   END
   
