@@ -24,12 +24,18 @@ BEGIN
   END;
   INC(ft[0]);
   FOR i := ORD(' ') TO ORD('z') DO
-    INC(ft[i], 3)
+    INC(ft[i], 2)
   END;
   FOR i := ORD('a') TO ORD('z') DO
+    (* mostly lower case *)
     INC(ft[i], 3)
   END;
-  INC(ft[ORD(' ')], 2);
+  WITH arr = ARRAY OF CHAR { 'e', 't', 'a', 'o', 'i', 'n' } DO
+    FOR j := FIRST(arr) TO LAST(arr) DO
+      INC(ft[ORD(arr[j])], 3)
+    END
+  END;
+  INC(ft[ORD(' ')], 3);
   INC(ft[LAST(ft)], 2);
 
   arithCode := NEW(ArithCode.T).init(ft);
