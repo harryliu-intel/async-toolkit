@@ -228,6 +228,9 @@ PROCEDURE Encode(en : Encoder; c : EncodeType) =
                            Bits.Divide(Bits.Times(range, p.lo), p.count)
                                       ) DO
       (* some assertions go here, eh? *)
+
+      <*ASSERT p.hi # p.lo*> (* this is CRITICAL *)
+      
       IF Verbose THEN
         Debug.Out(FN("Encoder(%s %s) : en.hi = %s en.lo = %s; range %s; p %s; newHi %s newLo %s ",
                      AT { FmtET(c),

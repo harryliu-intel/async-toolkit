@@ -9,6 +9,10 @@ IMPORT TextWr;
 IMPORT Debug;
 FROM Fmt IMPORT F;
 IMPORT Wr;
+IMPORT Rd;
+
+CONST
+  TestString = "";
 
 VAR
   ft := FreqTable.T { 0, .. };
@@ -30,20 +34,57 @@ BEGIN
 
   arithCode := NEW(ArithCode.T).init(ft);
 
-  WITH encoder = arithCode.newEncoder(),
-       wr      = FileWr.Open("test.out"),
-       cb      = NEW(ArithCallback.Writer).init(wr) DO
-    encoder.setCallback(cb);
-
-    WITH str = "The quick brown fox jumped over the lazy dogs!" DO
-      encoder.text(str & " " & str);
-      encoder.eof();
-      Wr.Close(wr)
+  IF FALSE THEN
+    WITH encoder = arithCode.newEncoder(),
+         wr      = FileWr.Open("test.out"),
+         cb      = NEW(ArithCallback.Writer).init(wr) DO
+      encoder.setCallback(cb);
+      
+      WITH str = "The quick brown fox jumped over the lazy dogs!" DO
+        encoder.text(str & " " & str);
+        encoder.eof();
+        Wr.Close(wr)
+      END
+    END;
+    
+    WITH decoder = arithCode.newDecoder(),
+         rd      = FileRd.Open("test.out"),
+         txtWr   = TextWr.New(),
+         cb      = NEW(ArithCallback.Writer).init(txtWr) DO
+      decoder.setCallback(cb);
+      
+      decoder.rdTillEof(rd);
+      
+      <*ASSERT txtWr # NIL*>
+      
+      Debug.Out(F("Decoded \"%s\"", TextWr.ToText(txtWr)))
     END
   END;
 
+
+  WITH encoder = arithCode.newEncoder(),
+       rd      = FileRd.Open("mac.txt"),
+       wr      = FileWr.Open("mac.out"),
+       cb      = NEW(ArithCallback.Writer).init(wr) DO
+
+    encoder.setCallback(cb);
+
+    TRY
+      LOOP
+        WITH line = Rd.GetLine(rd) DO
+          encoder.text(line);
+          encoder.text("\n")
+        END
+      END
+    EXCEPT
+      Rd.EndOfFile =>      
+      encoder.eof();
+      Wr.Close(wr)
+    END;
+  END;
+  
   WITH decoder = arithCode.newDecoder(),
-       rd      = FileRd.Open("test.out"),
+       rd      = FileRd.Open("mac.out"),
        txtWr   = TextWr.New(),
        cb      = NEW(ArithCallback.Writer).init(txtWr) DO
     decoder.setCallback(cb);
@@ -53,6 +94,6 @@ BEGIN
     <*ASSERT txtWr # NIL*>
     
     Debug.Out(F("Decoded \"%s\"", TextWr.ToText(txtWr)))
-  END
-  
+  END;
+
 END TestMain.

@@ -11,7 +11,7 @@ PROCEDURE Accumulate(READONLY t : T; VAR cum : Cum) =
     cum := Cum { 0, .. };
 
     FOR i := FIRST(cum) + 1 TO LAST(cum) DO
-      cum[i] := cum[i - 1] + t[i - 1];
+      cum[i] := cum[i - 1] + MAX(t[i - 1], 1);
     END
 
   END Accumulate;
