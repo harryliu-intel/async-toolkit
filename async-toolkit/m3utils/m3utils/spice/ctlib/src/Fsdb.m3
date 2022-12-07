@@ -25,6 +25,7 @@ IMPORT UnsafeReader;
 IMPORT TextSetDef;
 IMPORT DataBlock;
 IMPORT TextCardTbl;
+IMPORT TextCardSeqTbl;
 
 <*FATAL Thread.Alerted*>
 
@@ -288,142 +289,32 @@ PROCEDURE GetLineUntilG(rd : Rd.T; term : TEXT; VAR line : TEXT) : BOOLEAN =
   
 CONST
   TwoToThe32 = FLOAT(Word.Shift(1, 32), LONGREAL);
-  
-PROCEDURE Parse(wd, ofn       : Pathname.T;
-                names         : TextSeq.T;
-                maxFiles      : CARDINAL;
-                VAR nFiles    : CARDINAL;
 
-                timeScaleFactor,
-                timeOffset,
-                voltageScaleFactor,
-                voltageOffset : LONGREAL;
-
-                dutName       : TEXT;
-                 
-                fsdbPath      : Pathname.T;
-                wait          : BOOLEAN;
-                restrictNodes : TextSet.T;
-                restrictRegEx : RegExList.T;
-                cmdPath       : Pathname.T;
-                threads       : CARDINAL;
-                interpolate   : LONGREAL
-  )
-  RAISES { } = (* lots of errors but they cause program crash, not exception *)
-
-  (* I thought there was a compiler bug here, so I commented out these lines.
-
-     But there does not seem to be a compiler bug, so they should be OK to 
-     bring back *)
-
-  (* the idea here is that we use an external program "nanosimrd", which is
-     linked with Synopsys's C++ libraries, to read the actual files.
-
-     We communicate with nanosimrd over a pipe.  We send commands and pick up
-     responses.  Most of the responses are in ASCII, but for efficiency, some
-     are in packed binary format. *)
-
-(*    
-  PROCEDURE PutCommand(cmd : TEXT) =
-    BEGIN PutCommandG(wr, cmd) END PutCommand;
-
-  PROCEDURE GetResponse(matchKw : TEXT) : TextReader.T =
-    BEGIN RETURN GetResponseG(rd, matchKw) END GetResponse;
-
-  PROCEDURE ReadBinaryNodeData(VAR nodeid : CARDINAL;
-                               VAR buff : ARRAY OF LONGREAL) =
-    BEGIN ReadBinaryNodeDataG(rd, nodeid, buff) END ReadBinaryNodeData;
-
-  PROCEDURE GetLineUntil(term : TEXT; VAR line : TEXT) : BOOLEAN =
-    BEGIN RETURN GetLineUntilG(rd, term, line) END GetLineUntil;
-*)
-
+PROCEDURE StoreByType(tbl : TextCardSeqTbl.T; type : TEXT; fsdbId : CARDINAL) =
   VAR
-    stdin      : ProcUtils.Reader;
-    stdout     : ProcUtils.Writer;
-    completion : ProcUtils.Completion;
-    wr : Wr.T;
-    rd : Rd.T;
-    idxMap : CardSeq.T;
-
-    wdWr : REF ARRAY OF Wr.T;
-    wdPth: REF ARRAY OF Pathname.T;
-
-    loId, hiId : CARDINAL;
-    unit : LONGREAL;
-    line : TEXT;
-    timesteps := NEW(LRSeq.T).init();
-    aNodes : CARDINAL;
-
-    duplicates := NEW(TextCardTbl.Default).init();
-
-    doInterpolate := interpolate # NoInterpolate;
-
-    fsdbNames := NEW(TextCardTbl.Default).init();
-    
+    seq : CardSeq.T;
   BEGIN
-
-    <*FATAL OSError.E*>
-    BEGIN
-      stdin  := ProcUtils.GimmeWr(wr);
-      stdout := ProcUtils.GimmeRd(rd);
+    IF NOT tbl.get(type, seq) THEN
+      seq := NEW(CardSeq.T).init();
+      EVAL tbl.put(type, seq)
     END;
+    seq.addhi(fsdbId)
+  END StoreByType;
 
-    WITH cmd = cmdPath & " " & fsdbPath DO
-      IF doDebug THEN
-        Debug.Out(F("Fsdb.Parse running thread with command \"%s\"", cmd))
-      END;
-      
-      completion := ProcUtils.RunText(cmd,
-                                      stdin := stdin,
-                                      stderr := ProcUtils.Stderr(),
-                                      stdout := stdout);
+PROCEDURE GetIdsByType(tbl : TextCardSeqTbl.T; type : TEXT) : CardSeq.T =
+  VAR
+    seq : CardSeq.T;
+  BEGIN
+    IF NOT tbl.get(type, seq) THEN
+      seq := NEW(CardSeq.T).init();
+      EVAL tbl.put(type, seq)
     END;
+    RETURN seq
+  END GetIdsByType;
 
-    TRY
-      PutCommandG(wr, "S");
-      WITH reader    = GetResponseG(rd, "SR") DO
-        loId   := reader.getInt();
-        hiId   := reader.getInt();
-        WITH unitStr = reader.get() DO
-          unit   := ParseUnitStr(unitStr);
-
-          IF doDebug THEN
-            Debug.Out(F("Got query response lo=%s hi=%s unitStr=\"%s\"",
-                        Int(loId), Int(hiId), unitStr))
-          END
-        END
-      END;
-
-      (* load first node *)
-      PutCommandG(wr, F("R %s %s", Int(loId), Int(loId)));
-      EVAL GetResponseG(rd, "RR");
-
-      PutCommandG(wr, F("L"));
-      EVAL GetResponseG(rd, "LR");
-
-      (* get timesteps *)
-      PutCommandG(wr, F("I %s", Int(loId)));
-      WHILE GetLineUntilG(rd, "IR", line) DO
-        WITH reader = NEW(TextReader.T).init(line),
-             h = reader.getInt(),
-             l = reader.getInt(),
-             s = FLOAT(h, LONGREAL) * TwoToThe32 + FLOAT(l, LONGREAL),
-             t = s * unit DO
-          IF FALSE THEN Debug.Out("timestep " & LR(t)) END;
-          timesteps.addhi(t)
-        END
-      END;
-
-      IF doDebug THEN
-        Debug.Out(F("timesteps %s min %s max %s",
-                    Int(timesteps.size()),
-                    LR(timesteps.get(0)),
-                    LR(timesteps.get(timesteps.size()-1))));
-      END;
-
-      IF doInterpolate THEN
-        (* rewrite all timesteps based on interpolation *)
+PROCEDURE InterpolateTimesteps(VAR timesteps : LRSeq.T; interpolate : LONGREAL) =
+  BEGIN
+            (* rewrite all timesteps based on interpolation *)
         WITH lo  = timesteps.get(0),
              hi  = timesteps.get(timesteps.size() - 1),
              cnt = (hi - lo) / interpolate,
@@ -444,11 +335,199 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
           END
           
         END
+  END InterpolateTimesteps;
+
+PROCEDURE WriteTimesteps(READONLY wdWr : ARRAY OF Wr.T;
+                         timesteps : LRSeq.T;
+                         timeScaleFactor, timeOffset : LONGREAL;
+                         nFiles : CARDINAL;
+                         ) =
+  VAR
+    arr := NEW(REF ARRAY OF LONGREAL, timesteps.size());
+  BEGIN
+    IF doDebug THEN
+      Debug.Out(F("Writing timesteps, steps %s", Int(timesteps.size())));
+    END;
+    FOR i := 0 TO timesteps.size() - 1 DO
+      arr[i] := timeScaleFactor * timesteps.get(i) + timeOffset
+    END;
+    WITH fIdx = NameControl.FileIndex(nFiles, 0, 0) DO
+      <*ASSERT wdWr[fIdx] # NIL*>
+      
+      TRY
+        DataBlock.WriteData(wdWr[fIdx], 0, arr^)
+      EXCEPT
+        Wr.Failure(x) =>
+        Debug.Error("Wr.Failure writing time steps : " & AL.Format(x))
+      END
+    END
+  END WriteTimesteps;
+
+PROCEDURE GenSingleThreaded(rd : Rd.T;
+                            wr : Wr.T;
+                           idxMap : CardSeq.T;
+                           timesteps : LRSeq.T;
+                           READONLY fileTab : ARRAY OF CardSeq.T;
+                           READONLY wdWr : ARRAY OF Wr.T;
+                           READONLY wdPth : ARRAY OF Pathname.T;
+                           voltageScaleFactor, voltageOffset, interpolate, unit : LONGREAL) =
+  BEGIN
+    FOR i := FIRST(fileTab) TO LAST(fileTab) DO
+      IF doDebug THEN
+        Debug.Out(F("Fsdb.Parse : Generating partial trace file %s",
+                    Int(i)));
       END;
+      
+      GeneratePartialTraceFile(wdWr[i],
+                               fileTab[i],
+                               idxMap,
+                               rd,
+                               wr, 
+                               timesteps.size(),
+                               voltageScaleFactor,
+                               voltageOffset,
+                               interpolate,
+                               unit,
+                               wdPth[i])
+    END
+  END GenSingleThreaded;
+  
+PROCEDURE GenMultiThreaded(threads : CARDINAL;
+                           idxMap : CardSeq.T;
+                           timesteps : LRSeq.T;
+                           READONLY fileTab : ARRAY OF CardSeq.T;
+                           READONLY wdWr : ARRAY OF Wr.T;
+                           READONLY wdPth : ARRAY OF Pathname.T;
+                           cmdPath, fsdbPath : Pathname.T;
+                           voltageScaleFactor, voltageOffset, interpolate, unit : LONGREAL) =
+  VAR
+    workers := NEW(REF ARRAY OF GenClosure, threads);
+    c, d := NEW(Thread.Condition);
+    mu := NEW(MUTEX);
+    assigned : BOOLEAN;
+  BEGIN
+    FOR w := FIRST(workers^) TO LAST(workers^) DO
+      (* start workers *)
+      workers[w] := NEW(GenClosure).init(c,
+                                         d,
+                                         mu,
+                                         idxMap,
+                                         timesteps.size(),
+                                         cmdPath,
+                                         fsdbPath,
+                                         voltageScaleFactor,
+                                         voltageOffset,
+                                         interpolate,
+                                         unit)
+    END;
+    
+    FOR i := FIRST(fileTab) TO LAST(fileTab) DO
+      IF doDebug THEN
+        Debug.Out(F("Fsdb.Parse : Generating partial trace file %s",
+                    Int(i)));
+      END;
+      assigned := FALSE;
+      
+      WHILE NOT assigned DO
+        FOR w := FIRST(workers^) TO LAST(workers^) DO
+          IF workers[w].freeP() THEN
+            IF doDebug THEN
+              Debug.Out(F("Fsdb.Parse : assigning partial trace file %s to worker %s", Int(i), Int(w)));
+            END;
+            
+            workers[w].task(wdWr[i], fileTab[i], wdPth[i]);
+            assigned := TRUE;
+            EXIT
+          END
+        END;
 
-      PutCommandG(wr, "U");
-      EVAL GetResponseG(rd, "UR");
+        (* if we get here, all workers were busy on this
+           iteration, and we must wait for a signal *)
+        
+        IF NOT assigned THEN
+          LOCK mu DO
+            Thread.Wait(mu, d)
+          END
+        END
+      END
+    END;
 
+    Debug.Out("Fsdb.Parse: Waiting for workers to finish");
+    
+    (* wait for workers to be completely done *)
+    FOR i := FIRST(workers^) TO LAST(workers^) DO
+      (* wait for workers to finish *)
+      WHILE NOT workers[i].freeP() DO
+        LOCK mu DO
+          Thread.Wait(mu, d)
+        END
+      END;
+      (* 6/25/2001
+         strange bug with file descriptors getting mangled
+         let workers linger, see if that fixes it! *)
+      (*
+        workers[i].exit();
+        EVAL Thread.Join(workers[i].thr)
+      *)
+
+    END;
+
+    (* 
+       all jobs are assigned AND all workers are done 
+       --->
+       we are completely done 
+    *)
+
+    Debug.Out("Fsdb.Parse: Workers have finished");
+  END GenMultiThreaded;
+
+
+PROCEDURE SetupFileTabs(VAR fileTab : ARRAY OF CardSeq.T;
+                        idxMap : CardSeq.T;
+                        aNodes : CARDINAL
+  ) =
+  VAR
+    nFiles := NUMBER(fileTab);
+  BEGIN
+    FOR i := FIRST(fileTab) TO LAST(fileTab) DO
+      fileTab[i] := NEW(CardSeq.T).init()
+    END;
+    FOR i := 0 TO idxMap.size() - 1 DO
+      WITH outIdx = idxMap.get(i) DO
+        IF i # 0 (* TIME done separately *) AND outIdx # LAST(CARDINAL) THEN
+          WITH fileIdx    = NameControl.FileIndex(nFiles,
+                                                  aNodes,
+                                                  outIdx) DO
+            (* note what we're doing here.. we are adding the
+               INPUT INDEX of the node to the file list, indexed by the
+               hashed OUTPUT INDEX of the node! *)
+            IF doDebug THEN
+              Debug.Out(F("Adding to fileTab: input index %s to fileTab[%s]",
+                          Int(i), Int(fileIdx)))
+            END;
+            fileTab[fileIdx].addhi(i)
+          END
+        END
+      END
+    END;
+  END SetupFileTabs;
+  
+PROCEDURE LoadAllNames(wr            : Wr.T;
+                       rd            : Rd.T;
+                       loId, hiId    : CARDINAL;
+                       names         : TextSeq.T;
+                       typeTab       : TextCardSeqTbl.T;
+                       dutName       : TEXT;
+                       restrictNodes : TextSet.T;
+                       restrictRegEx : RegExList.T;
+                       VAR idxMap    : CardSeq.T
+                       )
+  RAISES { TextReader.NoMore }  =
+  VAR
+        fsdbNames := NEW(TextCardTbl.Default).init();
+    duplicates := NEW(TextCardTbl.Default).init();
+    line : TEXT;
+    BEGIN
       PutCommandG(wr, F("N %s %s", Int(loId), Int(hiId)));
       WITH nameSet = NEW(TextSetDef.T).init() DO
         WHILE GetLineUntilG(rd, "NR", line) DO
@@ -459,6 +538,7 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
                  type   = reader.get(),
                  editNm = RenameBack(dutName, EditName(nm)) DO
 
+              StoreByType(typeTab, type, idx);
               (* we also dont do anything with the type right now,
                  we really should check it's something we can work with *)
               
@@ -534,6 +614,174 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
       Debug.Out(F("made idxMap: names.size() %s / active %s",
                   Int(names.size()), Int(NameControl.CountActiveNames(idxMap))));
 
+    END LoadAllNames;
+
+
+PROCEDURE Parse(wd, ofn       : Pathname.T;
+                names         : TextSeq.T;
+                maxFiles      : CARDINAL;
+                VAR nFiles    : CARDINAL;
+
+                timeScaleFactor,
+                timeOffset,
+                voltageScaleFactor,
+                voltageOffset : LONGREAL;
+
+                dutName       : TEXT;
+                 
+                fsdbPath      : Pathname.T;
+                wait          : BOOLEAN;
+                restrictNodes : TextSet.T;
+                restrictRegEx : RegExList.T;
+                cmdPath       : Pathname.T;
+                threads       : CARDINAL;
+                interpolate   : LONGREAL
+  )
+  RAISES { } = (* lots of errors but they cause program crash, not exception *)
+
+  (* I thought there was a compiler bug here, so I commented out these lines.
+
+     But there does not seem to be a compiler bug, so they should be OK to 
+     bring back *)
+
+  (* the idea here is that we use an external program "nanosimrd", which is
+     linked with Synopsys's C++ libraries, to read the actual files.
+
+     We communicate with nanosimrd over a pipe.  We send commands and pick up
+     responses.  Most of the responses are in ASCII, but for efficiency, some
+     are in packed binary format. *)
+
+(*    
+  PROCEDURE PutCommand(cmd : TEXT) =
+    BEGIN PutCommandG(wr, cmd) END PutCommand;
+
+  PROCEDURE GetResponse(matchKw : TEXT) : TextReader.T =
+    BEGIN RETURN GetResponseG(rd, matchKw) END GetResponse;
+
+  PROCEDURE ReadBinaryNodeData(VAR nodeid : CARDINAL;
+                               VAR buff : ARRAY OF LONGREAL) =
+    BEGIN ReadBinaryNodeDataG(rd, nodeid, buff) END ReadBinaryNodeData;
+
+  PROCEDURE GetLineUntil(term : TEXT; VAR line : TEXT) : BOOLEAN =
+    BEGIN RETURN GetLineUntilG(rd, term, line) END GetLineUntil;
+*)
+
+  PROCEDURE CommandUnload() =
+    BEGIN
+      PutCommandG(wr, "U");
+      EVAL GetResponseG(rd, "UR");
+    END CommandUnload;
+
+  PROCEDURE GetTimesteps(fsdbId : CARDINAL; steps : LRSeq.T)
+    RAISES { FloatMode.Trap, Lex.Error, TextReader.NoMore } =
+    BEGIN
+      PutCommandG(wr, F("I %s", Int(fsdbId)));
+      WHILE GetLineUntilG(rd, "IR", line) DO
+        WITH reader = NEW(TextReader.T).init(line),
+             h = reader.getInt(),
+             l = reader.getInt(),
+             s = FLOAT(h, LONGREAL) * TwoToThe32 + FLOAT(l, LONGREAL),
+             t = s * unit DO
+          IF FALSE THEN Debug.Out("timestep " & LR(t)) END;
+          steps.addhi(t)
+        END
+      END
+    END GetTimesteps;
+
+  PROCEDURE LoadFsdbIds()
+    RAISES { FloatMode.Trap, Lex.Error, TextReader.NoMore } =
+    BEGIN
+      PutCommandG(wr, "S");
+      WITH reader    = GetResponseG(rd, "SR") DO
+        loId   := reader.getInt();
+        hiId   := reader.getInt();
+        WITH unitStr = reader.get() DO
+          unit   := ParseUnitStr(unitStr);
+
+          IF doDebug THEN
+            Debug.Out(F("Got query response lo=%s hi=%s unitStr=\"%s\"",
+                        Int(loId), Int(hiId), unitStr))
+          END
+        END
+      END;
+    END LoadFsdbIds;
+
+  PROCEDURE LoadNode(fsdbId : CARDINAL) =
+    BEGIN
+      (* load first node *)
+      PutCommandG(wr, F("R %s %s", Int(fsdbId), Int(fsdbId)));
+      EVAL GetResponseG(rd, "RR");
+
+      (* load all corresponding signals *)
+      PutCommandG(wr, F("L"));
+      EVAL GetResponseG(rd, "LR");
+    END LoadNode;
+    
+  VAR
+    stdin      : ProcUtils.Reader;
+    stdout     : ProcUtils.Writer;
+    completion : ProcUtils.Completion;
+    wr         : Wr.T;
+    rd         : Rd.T;
+    idxMap     : CardSeq.T;
+
+    wdWr       : REF ARRAY OF Wr.T;
+    wdPth      : REF ARRAY OF Pathname.T;
+
+    loId, hiId : CARDINAL;
+    unit       : LONGREAL;
+    line       : TEXT;
+    aNodes     : CARDINAL;
+
+    timesteps     := NEW(LRSeq.T).init();
+    doInterpolate := interpolate # NoInterpolate;
+    typeTab       := NEW(TextCardSeqTbl.Default).init();
+    
+  BEGIN
+
+    <*FATAL OSError.E*>
+    BEGIN
+      stdin  := ProcUtils.GimmeWr(wr);
+      stdout := ProcUtils.GimmeRd(rd);
+    END;
+
+    WITH cmd = cmdPath & " " & fsdbPath DO
+      IF doDebug THEN
+        Debug.Out(F("Fsdb.Parse running thread with command \"%s\"", cmd))
+      END;
+      
+      completion := ProcUtils.RunText(cmd,
+                                      stdin := stdin,
+                                      stderr := ProcUtils.Stderr(),
+                                      stdout := stdout);
+    END;
+
+    TRY
+      LoadFsdbIds();
+
+      LoadNode(loId);
+
+      (* get timesteps *)
+      GetTimesteps(loId, timesteps);
+
+      CommandUnload();
+
+      IF doDebug THEN
+        Debug.Out(F("timesteps %s min %s max %s",
+                    Int(timesteps.size()),
+                    LR(timesteps.get(0)),
+                    LR(timesteps.get(timesteps.size()-1))));
+      END;
+
+      IF doInterpolate THEN
+        InterpolateTimesteps(timesteps, interpolate)
+      END;
+
+      LoadAllNames(wr, rd, loId, hiId,
+                   names, typeTab,
+                   dutName, restrictNodes, restrictRegEx, 
+                   idxMap);
+      
       aNodes := NameControl.WriteNames(wd,
                                        ofn,
                                        names,
@@ -545,28 +793,8 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
       <*ASSERT wdWr # NIL*>
 
       (* write out timesteps *)
-      VAR
-        arr := NEW(REF ARRAY OF LONGREAL, timesteps.size());
-      BEGIN
-        IF doDebug THEN
-          Debug.Out(F("Writing timesteps, steps %s", Int(timesteps.size())));
-        END;
-        FOR i := 0 TO timesteps.size() - 1 DO
-          arr[i] := timeScaleFactor * timesteps.get(i) + timeOffset
-        END;
-        WITH fIdx = NameControl.FileIndex(nFiles, 0, 0) DO
-          <*ASSERT wdWr[fIdx] # NIL*>
-
-          TRY
-            DataBlock.WriteData(wdWr[fIdx], 0, arr^)
-          EXCEPT
-            Wr.Failure(x) =>
-            Debug.Error("Wr.Failure writing time steps : " & AL.Format(x))
-          END
-        END
-      END;
-
-
+      WriteTimesteps(wdWr^, timesteps, timeScaleFactor, timeOffset, nFiles);
+      
       (* let's build the map of what node goes into which file *)
       (* note there are several indices at work here
 
@@ -591,137 +819,36 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
       END;
 
       WITH fileTab = NEW(REF ARRAY OF CardSeq.T, nFiles) DO
-        FOR i := FIRST(fileTab^) TO LAST(fileTab^) DO
-          fileTab[i] := NEW(CardSeq.T).init()
-        END;
-        FOR i := 0 TO idxMap.size() - 1 DO
-          WITH outIdx = idxMap.get(i) DO
-            IF i # 0 (* TIME done separately *) AND outIdx # LAST(CARDINAL) THEN
-              WITH fileIdx    = NameControl.FileIndex(nFiles,
-                                                      aNodes,
-                                                      outIdx) DO
-                (* note what we're doing here.. we are adding the
-                   INPUT INDEX of the node to the file list, indexed by the
-                   hashed OUTPUT INDEX of the node! *)
-                IF doDebug THEN
-                  Debug.Out(F("Adding to fileTab: input index %s to fileTab[%s]",
-                              Int(i), Int(fileIdx)))
-                END;
-                fileTab[fileIdx].addhi(i)
-              END
-            END
-          END
-        END;
 
+        SetupFileTabs(fileTab^, idxMap, aNodes);
+        
         (* start generation threads *)
         VAR
           MultiThreaded := threads # 0;
         BEGIN
           (* now generate the files in turn *)
           IF MultiThreaded THEN
-            
-            VAR
-              workers := NEW(REF ARRAY OF GenClosure, threads);
-              c, d := NEW(Thread.Condition);
-              mu := NEW(MUTEX);
-              assigned : BOOLEAN;
-            BEGIN
-              FOR w := FIRST(workers^) TO LAST(workers^) DO
-                (* start workers *)
-                workers[w] := NEW(GenClosure).init(c,
-                                                   d,
-                                                   mu,
-                                                   idxMap,
-                                                   timesteps.size(),
-                                                   cmdPath,
-                                                   fsdbPath,
-                                                   voltageScaleFactor,
-                                                   voltageOffset,
-                                                   interpolate,
-                                                   unit)
-              END;
-              
-              FOR i := FIRST(fileTab^) TO LAST(fileTab^) DO
-                IF doDebug THEN
-                  Debug.Out(F("Fsdb.Parse : Generating partial trace file %s",
-                              Int(i)));
-                END;
-                assigned := FALSE;
-                
-                WHILE NOT assigned DO
-                  FOR w := FIRST(workers^) TO LAST(workers^) DO
-                    IF workers[w].freeP() THEN
-                      IF doDebug THEN
-                        Debug.Out(F("Fsdb.Parse : assigning partial trace file %s to worker %s", Int(i), Int(w)));
-                      END;
-                      
-                      workers[w].task(wdWr[i], fileTab[i], wdPth[i]);
-                      assigned := TRUE;
-                      EXIT
-                    END
-                  END;
-
-                  (* if we get here, all workers were busy on this
-                     iteration, and we must wait for a signal *)
-                  
-                  IF NOT assigned THEN
-                    LOCK mu DO
-                      Thread.Wait(mu, d)
-                    END
-                  END
-                END
-              END;
-
-              Debug.Out("Fsdb.Parse: Waiting for workers to finish");
-              
-              (* wait for workers to be completely done *)
-              FOR i := FIRST(workers^) TO LAST(workers^) DO
-                (* wait for workers to finish *)
-                WHILE NOT workers[i].freeP() DO
-                  LOCK mu DO
-                    Thread.Wait(mu, d)
-                  END
-                END;
-                (* 6/25/2001
-                   strange bug with file descriptors getting mangled
-                   let workers linger, see if that fixes it! *)
-                (*
-                workers[i].exit();
-                EVAL Thread.Join(workers[i].thr)
-                *)
-
-              END;
-
-              (* 
-                 all jobs are assigned AND all workers are done 
-                 --->
-                 we are completely done 
-              *)
-
-              Debug.Out("Fsdb.Parse: Workers have finished");
-
-              
-            END(*VAR*)
+            GenMultiThreaded(threads,
+                             idxMap,
+                             timesteps,
+                             fileTab^,
+                             wdWr^,
+                             wdPth^,
+                             cmdPath, fsdbPath,
+                             voltageScaleFactor, voltageOffset,
+                             interpolate,
+                             unit)
             
           ELSE
-            FOR i := FIRST(fileTab^) TO LAST(fileTab^) DO
-              IF doDebug THEN
-                Debug.Out(F("Fsdb.Parse : Generating partial trace file %s",
-                            Int(i)));
-              END;
-              
-              GeneratePartialTraceFile(wdWr[i],
-                                       fileTab[i],
-                                       idxMap,
-                                       rd,
-                                       wr, 
-                                       timesteps.size(),
-                                       voltageScaleFactor,
-                                       voltageOffset,
-                                       interpolate,
-                                       unit,
-                                       wdPth[i])
-            END
+            GenSingleThreaded(rd, wr,
+                             idxMap,
+                             timesteps,
+                             fileTab^,
+                             wdWr^,
+                             wdPth^,
+                             voltageScaleFactor, voltageOffset,
+                             interpolate,
+                             unit)
           END
         END
       END;
@@ -1137,7 +1264,7 @@ CONST
  
 
 BEGIN
-  <*ASSERT ParseUnitStr("12") = 12.0d0*>
+  <*ASSERT ParseUnitStr("12")  = 12.0d0*>
   <*ASSERT ParseUnitStr("1da") = 10.0d0*>
-  <*ASSERT ParseUnitStr("1M") = 1.0d6*>
+  <*ASSERT ParseUnitStr("1M")  = 1.0d6*>
 END Fsdb.

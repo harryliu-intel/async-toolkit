@@ -27,4 +27,6 @@ Module ("TraceFile")
 Module ("FileNamer")
 Module ("TempReader")
 
+Table("TextCardSeq", "Text", "CardSeq")
+
 library ("ctlib")

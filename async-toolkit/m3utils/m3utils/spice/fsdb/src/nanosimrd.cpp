@@ -821,12 +821,12 @@ main(int argc, char *argv[])
       tok = strtok(buff, " ");
       
       switch (buff[0]) {
+        
       case '\0':
-      case '#':
-        // skip
+      case '#': // skip --- comment
         break;
         
-      case 'S':
+      case 'S': // query range of IDCODES
         fprintf(stdout,
                 "SR %d %d %s\n",
                 FSDB_MIN_VAR_IDCODE,
@@ -890,7 +890,7 @@ main(int argc, char *argv[])
         fprintf(stdout, "xR\n");
         break;
 
-      case 'N':
+      case 'N': // get names
         {
           unsigned lo=atoi(strtok(NULL, " "));
           unsigned hi=atoi(strtok(NULL, " ")); 
@@ -922,7 +922,7 @@ main(int argc, char *argv[])
         }
         break;
 
-      case 'Q':
+      case 'Q': // quit
         fprintf(stdout, "QR\n");
         goto done;
         break;
