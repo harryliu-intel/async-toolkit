@@ -314,27 +314,27 @@ PROCEDURE GetIdsByType(tbl : TextCardSeqTbl.T; type : TEXT) : CardSeq.T =
 
 PROCEDURE InterpolateTimesteps(VAR timesteps : LRSeq.T; interpolate : LONGREAL) =
   BEGIN
-            (* rewrite all timesteps based on interpolation *)
-        WITH lo  = timesteps.get(0),
-             hi  = timesteps.get(timesteps.size() - 1),
-             cnt = (hi - lo) / interpolate,
-             n   = TRUNC(cnt) DO
+    (* rewrite all timesteps based on interpolation *)
+    WITH lo  = timesteps.get(0),
+         hi  = timesteps.get(timesteps.size() - 1),
+         cnt = (hi - lo) / interpolate,
+         n   = TRUNC(cnt) DO
 
-          timesteps := timesteps.init();
+      timesteps := timesteps.init();
 
-          FOR i := 0 TO n - 1 DO
-            WITH t = interpolate * FLOAT(i, LONGREAL) DO
-              timesteps.addhi(t)
-            END
-          END;
-          
-          IF doDebug THEN
-            Debug.Out(F("interpolating : hi / interpolate = %s, n = %s : min %s max %s",
-                        LR(cnt), Int(n),
-                        LR(timesteps.get(0)), LR(timesteps.get(timesteps.size()-1))))
-          END
-          
+      FOR i := 0 TO n - 1 DO
+        WITH t = interpolate * FLOAT(i, LONGREAL) DO
+          timesteps.addhi(t)
         END
+      END;
+      
+      IF doDebug THEN
+        Debug.Out(F("interpolating : hi / interpolate = %s, n = %s : min %s max %s",
+                    LR(cnt), Int(n),
+                    LR(timesteps.get(0)), LR(timesteps.get(timesteps.size()-1))))
+      END
+      
+    END
   END InterpolateTimesteps;
 
 PROCEDURE WriteTimesteps(READONLY wdWr : ARRAY OF Wr.T;
@@ -716,6 +716,48 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
       PutCommandG(wr, F("L"));
       EVAL GetResponseG(rd, "LR");
     END LoadNode;
+
+  PROCEDURE ChopTimestepsBasedOnType(type : TEXT) 
+    RAISES { FloatMode.Trap, Lex.Error, TextReader.NoMore } =
+    BEGIN
+      WITH voltSignals = GetIdsByType(typeTab, type) DO
+        IF voltSignals.size() # 0 THEN
+          WITH firstVolt = voltSignals.get(0),
+               ts2       = NEW(LRSeq.T).init() DO
+
+            GetTimesteps(firstVolt, ts2);
+
+            IF doDebug THEN
+              Debug.Out(F("node fsdbId %s : ts2 %s min %s max %s",
+                          Int(firstVolt),
+                          Int(ts2.size()),
+                          LR(ts2.get(0)),
+                          LR(ts2.get(ts2.size()-1))));
+            END;
+
+            IF ts2.size() # 0 THEN
+              WITH lastVoltTime = ts2.get(ts2.size() - 1) DO
+                (* remove timesteps that aren't present 
+                   in the voltage waveform *)
+
+                WHILE timesteps.get(timesteps.size() - 1) > lastVoltTime DO
+                  EVAL timesteps.remhi()
+                END
+              END;
+
+              IF doDebug THEN
+                Debug.Out(F("post-edit: timesteps %s min %s max %s",
+                            Int(timesteps.size()),
+                            LR(timesteps.get(0)),
+                            LR(timesteps.get(timesteps.size()-1))));
+              END;
+        
+            END
+          
+          END
+        END
+      END;
+    END ChopTimestepsBasedOnType;
     
   VAR
     stdin      : ProcUtils.Reader;
@@ -766,6 +808,11 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
 
       CommandUnload();
 
+      LoadAllNames(wr, rd, loId, hiId,
+                   names, typeTab,
+                   dutName, restrictNodes, restrictRegEx, 
+                   idxMap);
+      
       IF doDebug THEN
         Debug.Out(F("timesteps %s min %s max %s",
                     Int(timesteps.size()),
@@ -777,11 +824,8 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
         InterpolateTimesteps(timesteps, interpolate)
       END;
 
-      LoadAllNames(wr, rd, loId, hiId,
-                   names, typeTab,
-                   dutName, restrictNodes, restrictRegEx, 
-                   idxMap);
-      
+      ChopTimestepsBasedOnType("nanosim_voltage");
+
       aNodes := NameControl.WriteNames(wd,
                                        ofn,
                                        names,
