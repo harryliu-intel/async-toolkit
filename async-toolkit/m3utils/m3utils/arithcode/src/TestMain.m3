@@ -7,13 +7,79 @@ IMPORT ArithCallback;
 IMPORT FileRd;
 IMPORT TextWr;
 IMPORT Debug;
-FROM Fmt IMPORT F;
+FROM Fmt IMPORT F, Bool;
 IMPORT Wr;
 IMPORT Rd;
+IMPORT Pathname;
+IMPORT Text;
 
 CONST
   TestString = "";
 
+PROCEDURE EnDec(code : ArithCode.T; ifn, ofn : Pathname.T; print := TRUE) =
+  VAR
+    mem : TEXT;
+  BEGIN
+    WITH encoder = code.newEncoder(),
+         rd      = FileRd.Open(ifn),
+         wr      = FileWr.Open(ofn),
+         cb      = NEW(ArithCallback.Writer).init(wr),
+         memWr   = TextWr.New() DO
+      
+      encoder.setCallback(cb);
+      
+      TRY
+        LOOP
+          WITH c = Rd.GetChar(rd) DO
+            encoder.char(c);
+            Wr.PutChar(memWr, c)
+          END
+        END
+      EXCEPT
+        Rd.EndOfFile =>      
+        encoder.eof();
+        Wr.Close(wr);
+        mem := TextWr.ToText(memWr)
+      END;
+    END;
+  
+    WITH decoder = code.newDecoder(),
+         rd      = FileRd.Open(ofn),
+         txtWr   = TextWr.New(),
+         cb      = NEW(ArithCallback.Writer).init(txtWr) DO
+      decoder.setCallback(cb);
+      
+      decoder.rdTillEof(rd);
+      
+      <*ASSERT txtWr # NIL*>
+
+      WITH ot = TextWr.ToText(txtWr) DO
+        IF print THEN
+          Debug.Out(F("Decoded \"%s\"", ot))
+        END;
+        WITH eq = Text.Equal(ot, mem) DO
+          Debug.Out(F("(input = output) = %s", Bool(eq)));
+          <*ASSERT eq*>
+        END
+      END
+    END
+    
+  END EnDec;
+
+PROCEDURE FreqEnDec(ifn, ofn : Pathname.T; print := TRUE) =
+  VAR
+    frd := FileRd.Open(ifn);
+    ft : FreqTable.T;
+    code : ArithCode.T;
+  BEGIN
+
+    ft := FreqTable.FromRd(frd);
+    Rd.Close(frd);
+
+    code := NEW(ArithCode.T).init(ft);
+    EnDec(code, ifn, ofn, print)
+  END FreqEnDec;
+  
 VAR
   ft := FreqTable.T { 0, .. };
   arithCode : ArithCode.T;
@@ -67,39 +133,9 @@ BEGIN
     END
   END;
 
-
-  WITH encoder = arithCode.newEncoder(),
-       rd      = FileRd.Open("mac.txt"),
-       wr      = FileWr.Open("mac.out"),
-       cb      = NEW(ArithCallback.Writer).init(wr) DO
-
-    encoder.setCallback(cb);
-
-    TRY
-      LOOP
-        WITH line = Rd.GetLine(rd) DO
-          encoder.text(line);
-          encoder.text("\n")
-        END
-      END
-    EXCEPT
-      Rd.EndOfFile =>      
-      encoder.eof();
-      Wr.Close(wr)
-    END;
-  END;
+  EnDec(arithCode, "mac.txt", "mac.out");
+  FreqEnDec("mac.txt", "mac.f_out");
+  FreqEnDec("108091.z", "108091.z.f_out");
+  FreqEnDec("108091_5ps.z", "108091_5ps.z.f_out", FALSE);
   
-  WITH decoder = arithCode.newDecoder(),
-       rd      = FileRd.Open("mac.out"),
-       txtWr   = TextWr.New(),
-       cb      = NEW(ArithCallback.Writer).init(txtWr) DO
-    decoder.setCallback(cb);
-
-    decoder.rdTillEof(rd);
-
-    <*ASSERT txtWr # NIL*>
-    
-    Debug.Out(F("Decoded \"%s\"", TextWr.ToText(txtWr)))
-  END;
-
 END TestMain.
