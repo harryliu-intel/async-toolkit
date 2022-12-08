@@ -10,8 +10,8 @@ Interface ("ArithCoder")
 Module ("ArithCallback")
 Module ("ArithProbability")
 
-implementation ("TestMain")
+%implementation ("TestMain")
 
 interface ("ArithBits")
 
-program ("arithcode")
+library ("arithcode")

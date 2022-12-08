@@ -69,7 +69,7 @@ PROCEDURE EnDec(code : ArithCode.T; ifn, ofn : Pathname.T; print := TRUE) =
 PROCEDURE FreqEnDec(ifn, ofn : Pathname.T; print := TRUE) =
   VAR
     frd := FileRd.Open(ifn);
-    ft : FreqTable.T;
+    ft   : FreqTable.T;
     code : ArithCode.T;
   BEGIN
 
