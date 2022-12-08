@@ -28,6 +28,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <assert.h>
+#include <sys/wait.h>
 
 #ifndef FALSE
 #define FALSE	0
@@ -52,6 +53,10 @@ static bool_T __MyTreeCB(fsdbTreeCBType cb_type,
 
 static int verbose=FALSE;
 
+#define CMDBUFSIZ 2048
+
+// do we filter or not?
+char *filterpath = NULL;
 
 //
 // dump scope definition
@@ -288,8 +293,6 @@ setup(char *fn)
     fsdb_obj->ffrReadScopeVarTree();
 }
 
-
-#define CMDBUFSIZ 2048
 
 int
 get_max_idcode(void)
@@ -683,16 +686,72 @@ traverse_one_signal(int        idcode,
     unsigned *lt = (unsigned *)malloc(sizeof(unsigned) * nx);
     float    *vv = (float *)   malloc(sizeof(float)    * nx);
     int i=0;
+    int pipefds1[2]; // pipefds2[2];
+    
+    int filterfd = fileno(stdout);
+    // by default output goes to stdout
+
+    if (filterpath) {
+      pid_t childpid;
+    
+      if (pipe(pipefds1) == -1) {
+        perror("pipe");
+        exit(1);
+      }
+      
+      //      if (pipe(pipefds2) == -1) {
+      //        perror("pipe");
+      //        exit(1);
+      //      }
+      
+      if((childpid = fork()) == -1) {
+        perror("fork");
+        exit(1);
+      }
+
+      //      dup2(pipefds2[0], 1); // make the read end stdout
+      
+      if(childpid == 0) {
+        close(pipefds1[1]);   // close write end
+        dup2(pipefds1[0], 0); // make stdin the read end
+
+        //        close(pipefds2[0]);   // close read end
+        //        dup2(pipefds2[1], 1); // make stdout the write end
+        
+        // try to run the filter
+        if ((execlp(filterpath, filterpath, NULL)) == -1) {
+          // exec failed
+          perror("execlp");
+          fprintf(stderr, "filterpath \"%s\"\n", filterpath);
+          _exit(1); // child exit, use _exit...
+        }
+        assert(0); // cant get here
+      } else {
+        // parent needs to write to pipe
+        filterfd = pipefds1[1];
+        close(pipefds1[0]);
+      }
+
+    }
+    
+    FILE *filterstr = fdopen(filterfd, "a");
+    // open the filter file descriptor in stdio
 
     if(verbose)
       fprintf(stderr, "extended binary traversal tag N nodeid %u count %u\n",
               idcode, nx);
-    
-    fprintf(stdout, "OK\n"); // we have to tell the driver data is coming
-    fprintf(stdout, "x");
 
-    fput32(idcode, stdout);
-    fput32(nx,     stdout);
+    //
+    // the following block of code matches
+    // Fsdb.ReadInterpolatedBinaryNodeDataG()
+    // 
+    // THE FILTER NEEDS TO START READING HERE ==========================
+    
+    fprintf(filterstr, "OK\n"); // we have to tell the driver data is coming
+    fprintf(filterstr, "x");    // this is the response tag
+
+    fput32(idcode, filterstr);  // write nodeid
+    fput32(nx,     filterstr);  // write # of records
    
     while (p != extdata) {
 
@@ -704,12 +763,22 @@ traverse_one_signal(int        idcode,
       p = p->next;
     }
 
-    fflush(stdout);
+    fflush(filterstr);
     
-    write(fileno(stdout), ht, nx * sizeof(unsigned)); 
-    write(fileno(stdout), lt, nx * sizeof(unsigned)); 
-    write(fileno(stdout), vv, nx * sizeof(float)); 
+    write(fileno(filterstr), ht, nx * sizeof(unsigned)); 
+    write(fileno(filterstr), lt, nx * sizeof(unsigned)); 
+    write(fileno(filterstr), vv, nx * sizeof(float)); 
 
+    // THE FILTER NEEDS TO STOP READING HERE ==========================
+
+    if(filterpath) {
+      // if we are writing to a filter, close the fd on the writing end
+      close(pipefds1[1]);
+
+      // and wait for the filter to exit
+      wait(NULL);
+    }
+    
     free(ht);
     free(lt);
     free(vv);
@@ -813,6 +882,7 @@ main(int argc, char *argv[])
     (void)setup(argv[1]);
 
     char buff[CMDBUFSIZ];
+    
     char *tok;
     
     while(fgets(buff, CMDBUFSIZ, stdin)) {
@@ -841,6 +911,17 @@ main(int argc, char *argv[])
           fprintf(stdout, "rR\n");
         }
         break;
+
+      case 'F': // stream filter
+        {
+          char *str = strtok(NULL, " \n");
+          fprintf(stderr, "got filter \"%s\"\n", str);
+
+          filterpath = strdup(str);
+          
+          fprintf(stdout, "FR\n");
+          break;
+        }
         
       case 'R': // interesting signal range
         {

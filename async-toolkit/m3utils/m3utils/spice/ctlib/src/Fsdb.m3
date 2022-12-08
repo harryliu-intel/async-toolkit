@@ -157,11 +157,11 @@ PROCEDURE ReadBinaryNodeDataG(rd : Rd.T;
     END
   END ReadBinaryNodeDataG;
 
-PROCEDURE ReadInterpolatedBinaryNodeDataG(rd : Rd.T;
-                                          VAR nodeid : CARDINAL;
-                                          VAR buff : ARRAY OF LONGREAL;
+PROCEDURE ReadInterpolatedBinaryNodeDataG(rd          : Rd.T;
+                                          VAR nodeid  : CARDINAL;
+                                          VAR buff    : ARRAY OF LONGREAL;
                                           interpolate : LONGREAL;
-                                          unit : LONGREAL) =
+                                          unit        : LONGREAL) =
   VAR
     kw : TEXT;
     n  : CARDINAL;
@@ -363,14 +363,17 @@ PROCEDURE WriteTimesteps(READONLY wdWr : ARRAY OF Wr.T;
     END
   END WriteTimesteps;
 
-PROCEDURE GenSingleThreaded(rd : Rd.T;
-                            wr : Wr.T;
-                           idxMap : CardSeq.T;
-                           timesteps : LRSeq.T;
-                           READONLY fileTab : ARRAY OF CardSeq.T;
-                           READONLY wdWr : ARRAY OF Wr.T;
-                           READONLY wdPth : ARRAY OF Pathname.T;
-                           voltageScaleFactor, voltageOffset, interpolate, unit : LONGREAL) =
+PROCEDURE GenSingleThreaded(rd                  : Rd.T;
+                            wr                  : Wr.T;
+                            idxMap              : CardSeq.T;
+                            timesteps           : LRSeq.T;
+                            READONLY fileTab    : ARRAY OF CardSeq.T;
+                            READONLY wdWr       : ARRAY OF Wr.T;
+                            READONLY wdPth      : ARRAY OF Pathname.T;
+                            voltageScaleFactor,
+                            voltageOffset,
+                            interpolate,
+                            unit                : LONGREAL) =
   BEGIN
     FOR i := FIRST(fileTab) TO LAST(fileTab) DO
       IF doDebug THEN
@@ -392,18 +395,21 @@ PROCEDURE GenSingleThreaded(rd : Rd.T;
     END
   END GenSingleThreaded;
   
-PROCEDURE GenMultiThreaded(threads : CARDINAL;
-                           idxMap : CardSeq.T;
-                           timesteps : LRSeq.T;
-                           READONLY fileTab : ARRAY OF CardSeq.T;
-                           READONLY wdWr : ARRAY OF Wr.T;
-                           READONLY wdPth : ARRAY OF Pathname.T;
-                           cmdPath, fsdbPath : Pathname.T;
-                           voltageScaleFactor, voltageOffset, interpolate, unit : LONGREAL) =
+PROCEDURE GenMultiThreaded(threads               : CARDINAL;
+                           idxMap                : CardSeq.T;
+                           timesteps             : LRSeq.T;
+                           READONLY fileTab      : ARRAY OF CardSeq.T;
+                           READONLY wdWr         : ARRAY OF Wr.T;
+                           READONLY wdPth        : ARRAY OF Pathname.T;
+                           cmdPath, fsdbPath     : Pathname.T;
+                           voltageScaleFactor,
+                           voltageOffset,
+                           interpolate,
+                           unit                  : LONGREAL) =
   VAR
-    workers := NEW(REF ARRAY OF GenClosure, threads);
-    c, d := NEW(Thread.Condition);
-    mu := NEW(MUTEX);
+    workers     := NEW(REF ARRAY OF GenClosure, threads);
+    c, d        := NEW(Thread.Condition);
+    mu          := NEW(MUTEX);
     assigned : BOOLEAN;
   BEGIN
     FOR w := FIRST(workers^) TO LAST(workers^) DO
@@ -1140,20 +1146,22 @@ PROCEDURE GenApply(cl : GenClosure) : REFANY =
 
   (**********************************************************************)
 
-PROCEDURE GeneratePartialTraceFile(wr      : Wr.T;
-                                   fileTab : CardSeq.T;
+PROCEDURE GeneratePartialTraceFile(wr                   : Wr.T;
+                                   fileTab              : CardSeq.T;
                                    (* INPUT indices to process *)
                                    
-                                   idxMap  : CardSeq.T;
+                                   idxMap               : CardSeq.T;
                                    (* mapping from input to output indices *)
 
-                                   cmdRd : Rd.T;
-                                   cmdWr : Wr.T;
+                                   cmdRd                : Rd.T;
+                                   cmdWr                : Wr.T;
 
-                                   nSteps : CARDINAL;
-                                   voltageScaleFactor, voltageOffset : LONGREAL;
-                                   interpolate, unit : LONGREAL;
-                                   path : Pathname.T
+                                   nSteps               : CARDINAL;
+                                   voltageScaleFactor,
+                                   voltageOffset,
+                                   interpolate,
+                                   unit                 : LONGREAL;
+                                   path                 : Pathname.T
                                    ) =
   VAR
     buff := NEW(REF ARRAY OF LONGREAL, nSteps);
@@ -1193,7 +1201,11 @@ PROCEDURE GeneratePartialTraceFile(wr      : Wr.T;
         IF interpolate = NoInterpolate THEN
           ReadBinaryNodeDataG(cmdRd, node, buff^);
         ELSE
-          ReadInterpolatedBinaryNodeDataG(cmdRd, node, buff^, interpolate, unit);
+          ReadInterpolatedBinaryNodeDataG(cmdRd,
+                                          node,
+                                          buff^,
+                                          interpolate,
+                                          unit);
         END;
         
         IF node # inId THEN

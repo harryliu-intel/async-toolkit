@@ -38,5 +38,18 @@ PROCEDURE Parse(wd            : Pathname.T;
 
 CONST NoInterpolate = FIRST(LONGREAL); (* do not interpolate *)
         
+PROCEDURE ReadInterpolatedBinaryNodeDataG(rd          : Rd.T;
+                                          VAR nodeid  : CARDINAL;
+                                          VAR buff    : ARRAY OF LONGREAL;
+                                          interpolate : LONGREAL;
+                                          unit        : LONGREAL);
+  (* given a byte stream from an instance of nansimrd.cpp in rd,
+     read the results of an 'x' command (EXTENDED MODE) and interpolate said
+     data into the buffer buff 
+     
+     here interpolate is the interpolation interval desired and unit is the
+     timestep of the FSDB file (found by other methods).
+  *)
+  
 END Fsdb.
 

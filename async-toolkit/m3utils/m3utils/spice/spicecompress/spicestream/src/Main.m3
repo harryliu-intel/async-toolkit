@@ -125,7 +125,7 @@ BEGIN
 
     VAR
       nSteps := trace.getSteps();
-      a := NEW(REF ARRAY OF LONGREAL, nSteps);
+      a      := NEW(REF ARRAY OF LONGREAL, nSteps);
     BEGIN
       trace.getNodeData(nodeId, a^);
       
