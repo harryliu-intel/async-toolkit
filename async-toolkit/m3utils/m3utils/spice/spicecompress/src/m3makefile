@@ -4,6 +4,7 @@ import ("spicelib")
 import ("tracelib")
 import ("regression")
 import ("ctlib")
+import ("arithcode")
 
 m3_optimize("T")
 
@@ -25,5 +26,7 @@ Module ("Rep16Stream")
 Module ("PolySegment16Serial")
 
 Table("TripleRef", "IntTriple", "Refany")
+
+Interface ("ArithConstants")
 
 library ("spicecompress")

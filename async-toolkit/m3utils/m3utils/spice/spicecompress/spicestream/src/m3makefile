@@ -5,6 +5,7 @@ import ("tracelib")
 import ("regression")
 import ("ctlib")
 import ("spicecompress")
+import ("arithcode")
 
 implementation ("Main")
 

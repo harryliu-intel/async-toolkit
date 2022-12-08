@@ -7,7 +7,7 @@ IMPORT AL;
 IMPORT OSError;
 IMPORT Rd;
 IMPORT Pathname;
-FROM Fmt IMPORT F;
+FROM Fmt IMPORT F, Int;
 IMPORT Trace;
 IMPORT Wr, FileWr;
 IMPORT TextWr;
@@ -18,6 +18,10 @@ IMPORT UnsafeReader;
 IMPORT SpiceCompress;
 IMPORT Thread;
 IMPORT TripleRefTbl;
+IMPORT Fsdb;
+IMPORT ArithConstants;
+IMPORT ArithCode;
+IMPORT ArithCallback;
 
 <*FATAL Thread.Alerted*>
 
@@ -26,10 +30,10 @@ CONST
   TE       = Text.Equal;
 
 TYPE
-  Mode = { ReadBinary, Compress };
+  Mode = { ReadBinary, Compress, Filter };
 
 CONST
-  ModeNames = ARRAY Mode OF TEXT { "ReadBinary", "Compress" };
+  ModeNames = ARRAY Mode OF TEXT { "ReadBinary", "Compress", "Filter" };
   
 PROCEDURE Lookup(str : TEXT; READONLY a : ARRAY OF TEXT) : CARDINAL =
   BEGIN
@@ -47,6 +51,73 @@ PROCEDURE Lookup(str : TEXT; READONLY a : ARRAY OF TEXT) : CARDINAL =
     <*ASSERT FALSE*>
   END Lookup;
 
+PROCEDURE DoArithCompress(of : TEXT;
+                          VAR codeIdx : ArithConstants.CodeIdx) : TEXT =
+  VAR
+    enTxt : TEXT;
+  BEGIN
+    codeIdx := 1;
+
+    WITH ft      = ArithConstants.CodeBook[codeIdx],
+         code    = NEW(ArithCode.T).init(ft),
+         encoder = code.newEncoder(),
+         enWr    = TextWr.New(),
+         enCb    = NEW(ArithCallback.Writer).init(enWr),
+
+         (* verify code *)
+         decoder = code.newDecoder(),
+         deWr    = TextWr.New(),
+         deCb    = NEW(ArithCallback.Writer).init(deWr)
+     DO
+      encoder.setCallback(enCb);
+      encoder.text(of);
+      encoder.eof();
+
+      enTxt := TextWr.ToText(enWr);
+      
+      decoder.setCallback(deCb);
+      decoder.text(enTxt);
+      decoder.eof();
+
+      WITH deTxt = TextWr.ToText(deWr) DO
+        IF NOT TE(of, deTxt) THEN
+          VAR
+            msg : TEXT;
+            ofLen := Text.Length(of);
+            deLen := Text.Length(deTxt);
+          BEGIN
+            IF ofLen # deLen THEN
+              msg := F("length mismatch of %s # de %s", Int(ofLen), Int(deLen))
+            ELSE
+              FOR i := 0 TO ofLen - 1 DO
+                WITH ofChar = Text.GetChar(of, i),
+                     deChar = Text.GetChar(deTxt, i) DO
+                  IF ofChar # deChar THEN
+                    msg := F("mismatch @ i=%s : of[i]='%s' # de[i]='%s'",
+                             Int(i),
+                             Text.FromChar(ofChar), Text.FromChar(deChar))
+                  END
+                END
+              END
+            END;
+            Debug.Error("??? DoArithCompress verify error, " & msg)
+          END
+        END
+      END
+    END;
+
+    RETURN enTxt
+  END DoArithCompress;
+
+TYPE
+  FilterData = RECORD
+    (* in filtering mode, this is information known by the driver
+       program, and that will be passed to us on our command line *)
+    npoints     : CARDINAL;
+    interpolate : LONGREAL;
+    unit        : LONGREAL;
+  END;
+  
 VAR
   pp                             := NEW(ParseParams.T).init(Stdio.stderr);
   traceRt       : Pathname.T     := "xa";
@@ -58,10 +129,14 @@ VAR
   outFn, inFn   : Pathname.T     := "-";
   wr : Wr.T;
   doDump        : BOOLEAN;
+  fd            : FilterData;
+  noArith       : BOOLEAN;
   
 BEGIN
 
   TRY
+
+    noArith := pp.keywordPresent("-noarith");
 
     doDump := pp.keywordPresent("-dump");
     
@@ -89,6 +164,13 @@ BEGIN
 
     IF pp.keywordPresent("-n") THEN
       nodeId := pp.getNextInt()
+    END;
+
+    IF pp.keywordPresent("-filter") THEN
+      mode           := Mode.Filter;
+      fd.npoints     := pp.getNextInt();
+      fd.interpolate := pp.getNextLongReal();
+      fd.unit        := pp.getNextLongReal()
     END;
     
   EXCEPT
@@ -170,6 +252,77 @@ BEGIN
           Wr.PutText(wr, txt);
 
           Wr.Close(wr)
+        END
+      END
+    END
+  |
+    Mode.Filter =>
+    (* 
+       this is the filter mode for nanosimrd.cpp
+       
+       any changes here must be synchronized with the appropriate changes
+       to nanosimrd.cpp 
+
+       The output format of the compression then needs to be synchronized
+       with the trace file format specification, used in tracelib and also
+       (eventually) in aplot.
+    *)
+    
+    VAR
+      rd     := Stdio.stdin;
+      a      := NEW(REF ARRAY OF LONGREAL, fd.npoints);
+      
+      nodeid   : CARDINAL;
+      code     : ArithConstants.CodeIdx;
+      finalTxt : TEXT;
+      finalLen : CARDINAL;
+    BEGIN
+      Fsdb.ReadInterpolatedBinaryNodeDataG(rd,
+                                           nodeid,
+                                           a^,
+                                           fd.interpolate,
+                                           fd.unit);
+      
+      WITH z      = NEW(REF ARRAY OF LONGREAL, fd.npoints),
+           textWr = NEW(TextWr.T).init() DO
+
+        (* first write to mem *)
+        
+        SpiceCompress.CompressArray("zdebug",
+                                    a^,
+                                    z^,
+                                    relPrec,
+                                    doAllDumps,
+                                    textWr,
+                                    mem    := NEW(TripleRefTbl.Default).init(),
+                                    doDump := doDump);
+
+        (* we now have the polynomially compressed in textWr *)
+        
+        WITH txt = TextWr.ToText(textWr),
+             len = Text.Length(txt) DO
+
+          (* txt is the polynomially compressed waveform *)
+
+          IF noArith THEN
+            code     := ArithConstants.ZeroCode;
+            finalTxt := txt;
+            finalLen := len
+          ELSE
+            finalTxt := DoArithCompress(txt, code);
+            finalLen := Text.Length(finalTxt)
+          END;
+
+          Debug.Out(F("%s timesteps, compressed size %s bytes, coded size %s",
+                      Int(NUMBER(a^)),
+                      Int(len),
+                      Int(finalLen)));
+
+          (* write final result to target wr *)
+          UnsafeWriter.WriteI(wr, finalLen + 1);
+          Wr.PutChar         (wr, VAL(code, CHAR));
+          Wr.PutText         (wr, finalTxt);
+          Wr.Close           (wr)
         END
       END
     END

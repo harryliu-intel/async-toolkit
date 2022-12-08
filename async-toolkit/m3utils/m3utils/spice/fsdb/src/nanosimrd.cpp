@@ -56,7 +56,8 @@ static int verbose=FALSE;
 #define CMDBUFSIZ 2048
 
 // do we filter or not?
-char *filterpath = NULL;
+char *filterpath    = NULL;
+char **filterargv;
 
 //
 // dump scope definition
@@ -719,9 +720,9 @@ traverse_one_signal(int        idcode,
         //        dup2(pipefds2[1], 1); // make stdout the write end
         
         // try to run the filter
-        if ((execlp(filterpath, filterpath, NULL)) == -1) {
+        if ((execvp(filterpath, filterargv)) == -1) {
           // exec failed
-          perror("execlp");
+          perror("execvp");
           fprintf(stderr, "filterpath \"%s\"\n", filterpath);
           _exit(1); // child exit, use _exit...
         }
@@ -870,6 +871,36 @@ traverse_names(unsigned lo, unsigned hi)
 
 }
 
+typedef struct cons_t {
+  const char    *car;
+  struct cons_t *cdr;
+} cons_t;
+
+struct cons_t *
+cons(const char *a, cons_t *tail)
+{
+  struct cons_t *ret = (cons_t *)malloc(sizeof(cons_t));
+  ret->car = a;
+  ret->cdr = tail;
+  
+  return ret;
+}
+
+struct cons_t *
+reverse(const cons_t *old)
+// careful about memory leaks!
+{
+  cons_t *res = NULL;
+  const cons_t *p = old;
+
+  while (p) {
+    res = cons(p->car, res);
+    p   = p->cdr;
+  }
+
+  return res;
+}
+
 int 
 main(int argc, char *argv[])
 {
@@ -915,9 +946,32 @@ main(int argc, char *argv[])
       case 'F': // stream filter
         {
           char *str = strtok(NULL, " \n");
+          cons_t *filterargs = NULL;
+          int nargs = 1;
+          
           fprintf(stderr, "got filter \"%s\"\n", str);
 
           filterpath = strdup(str);
+
+          while ((str = strtok(NULL, " \n"))) {
+            char *arg = strdup(str);
+            fprintf(stderr, "got arg \"%s\"\n", arg);
+            
+            filterargs = cons(arg, filterargs);
+            ++nargs;
+          }
+
+          filterargs = reverse(filterargs);
+
+          filterargv = (char **)malloc((nargs + 1) * sizeof(char *));
+
+          filterargv[0] = filterpath;
+          
+          int i = 1;
+          for (cons_t *p = filterargs; p ; ++i, p = p->cdr) {
+            filterargv[i] = strdup(p->car);
+          }
+          filterargv[i] = NULL;
           
           fprintf(stdout, "FR\n");
           break;
