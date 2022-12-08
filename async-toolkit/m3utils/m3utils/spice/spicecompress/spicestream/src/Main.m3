@@ -22,6 +22,7 @@ IMPORT Fsdb;
 IMPORT ArithConstants;
 IMPORT ArithCode;
 IMPORT ArithCallback;
+IMPORT Matrix;
 
 <*FATAL Thread.Alerted*>
 
@@ -180,11 +181,17 @@ BEGIN
   END;
 
   (* all modes produce some sort of output! *)
-  
-  IF TE(outFn, "-") THEN
-    wr := Stdio.stdout
-  ELSE
-    wr := FileWr.Open(outFn)
+
+  TRY
+    IF TE(outFn, "-") THEN
+      wr := Stdio.stdout
+    ELSE
+      wr := FileWr.Open(outFn)
+    END
+  EXCEPT
+    OSError.E(x) =>
+    Debug.Error(F("Can't open output file %s : OSError.E : %s",
+                  outFn, AL.Format(x)))
   END;
 
   (* detailed execution of modes *)
@@ -209,12 +216,28 @@ BEGIN
       nSteps := trace.getSteps();
       a      := NEW(REF ARRAY OF LONGREAL, nSteps);
     BEGIN
-      trace.getNodeData(nodeId, a^);
-      
-      UnsafeWriter.WriteI  (wr, nSteps);
-      UnsafeWriter.WriteLRA(wr, a^);
+      TRY
+        trace.getNodeData(nodeId, a^)
+      EXCEPT
+        Rd.Failure(x) =>
+        Debug.Error(F("Can't read trace for node id %s : Rd.Failure : %s",
+                      Int(nodeId), AL.Format(x)))
+      |
+        Rd.EndOfFile =>
+        Debug.Error(F("Short read reading trace for node id %s",
+                      Int(nodeId)))
+      END;
 
-      Wr.Close(wr)
+      TRY
+        UnsafeWriter.WriteI  (wr, nSteps);
+        UnsafeWriter.WriteLRA(wr, a^);
+
+        Wr.Close(wr)
+      EXCEPT
+        Wr.Failure(x) =>
+        Debug.Error(F("Can't write raw trace FOR node id %s : Wr.Failure : %s",
+                      Int(nodeId), AL.Format(x)))
+      END
     END
   |
     Mode.Compress =>
@@ -223,35 +246,59 @@ BEGIN
       nSteps : CARDINAL;
       a : REF ARRAY OF LONGREAL;
     BEGIN
-      IF TE(inFn, "-") THEN
-        rd := Stdio.stdin
-      ELSE
-        rd := FileRd.Open(inFn)
+      TRY
+        IF TE(inFn, "-") THEN
+          rd := Stdio.stdin
+        ELSE
+          rd := FileRd.Open(inFn)
+        END
+      EXCEPT
+        OSError.E(x) =>
+        Debug.Error(F("Can't open input file %s : OSError.E : %s",
+                      outFn, AL.Format(x)))
       END;
-      nSteps := UnsafeReader.ReadI(rd);
-      a := NEW(REF ARRAY OF LONGREAL, nSteps);
-      UnsafeReader.ReadLRA(rd, a^);
+
+      TRY
+        nSteps := UnsafeReader.ReadI(rd);
+        a      := NEW(REF ARRAY OF LONGREAL, nSteps);
+        UnsafeReader.ReadLRA(rd, a^);
+      EXCEPT
+        Rd.Failure(x) =>
+        Debug.Error(F("Trouble reading raw trace from %s : Rd.Failure : %s",
+                      inFn, AL.Format(x)))
+      |
+        Rd.EndOfFile =>
+        Debug.Error(F("Short read reading raw trace from %s",
+                      inFn))
+      END;
 
       WITH z      = NEW(REF ARRAY OF LONGREAL, nSteps),
            textWr = NEW(TextWr.T).init() DO
 
         (* first write to mem *)
-        
-        SpiceCompress.CompressArray("zdebug",
-                                    a^,
-                                    z^,
-                                    relPrec,
-                                    doAllDumps,
-                                    textWr,
-                                    mem := NEW(TripleRefTbl.Default).init(),
-                                    doDump := doDump);
+        TRY
+          SpiceCompress.CompressArray("zdebug",
+                                      a^,
+                                      z^,
+                                      relPrec,
+                                      doAllDumps,
+                                      textWr,
+                                      mem    := NEW(TripleRefTbl.Default).init(),
+                                      doDump := doDump)
+        EXCEPT
+          Matrix.Singular =>
+          Debug.Error("Internal error attempting waveform compression : Matrix.Singular")
+        END;
 
-        WITH txt = TextWr.ToText(textWr),
-             len = Text.Length(txt) DO
-          UnsafeWriter.WriteI(wr, len);
-          Wr.PutText(wr, txt);
-
-          Wr.Close(wr)
+        <*FATAL Wr.Failure*>
+        BEGIN
+          WITH txt = TextWr.ToText(textWr),
+               len = Text.Length(txt) DO
+            UnsafeWriter.WriteI(wr, len);
+            Wr.PutText(wr, txt);
+            
+            Wr.Close(wr)
+          END
         END
       END
     END
@@ -287,7 +334,8 @@ BEGIN
            textWr = NEW(TextWr.T).init() DO
 
         (* first write to mem *)
-        
+
+        TRY
         SpiceCompress.CompressArray("zdebug",
                                     a^,
                                     z^,
@@ -296,7 +344,10 @@ BEGIN
                                     textWr,
                                     mem    := NEW(TripleRefTbl.Default).init(),
                                     doDump := doDump);
-
+ EXCEPT
+          Matrix.Singular =>
+          Debug.Error("Internal error attempting waveform compression : Matrix.Singular")
+        END;
         (* we now have the polynomially compressed in textWr *)
         
         WITH txt = TextWr.ToText(textWr),
@@ -319,14 +370,19 @@ BEGIN
                       Int(finalLen)));
 
           (* write final result to target wr *)
-          UnsafeWriter.WriteI(wr, finalLen + 1);
-          Wr.PutChar         (wr, VAL(code, CHAR));
-          Wr.PutText         (wr, finalTxt);
-          Wr.Close           (wr)
+          TRY
+            UnsafeWriter.WriteI(wr, finalLen + 1);
+            Wr.PutChar         (wr, VAL(code, CHAR));
+            Wr.PutText         (wr, finalTxt);
+            Wr.Close           (wr)
+          EXCEPT
+            Wr.Failure(x) =>
+            Debug.Error(F("Can't write compressed trace data (%s bytes) : Wr.Failure : %s",
+                          Int(finalLen + 1), AL.Format(x)))
+
+          END
         END
       END
     END
-  END;
-  
-
+  END
 END Main.
