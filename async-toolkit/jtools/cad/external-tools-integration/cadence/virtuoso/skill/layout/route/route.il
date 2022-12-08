@@ -157,7 +157,7 @@
                         ?powerGrid powerGrid ?colorGrid colorGrid ?softMacro softMacro))
 
     ; check Alignment of locked non-standard cells
-    statusAlignment=t
+    statusAlignment=(CheckBoundaryAlignment ?CV CV)
     (foreach inst (MisalignedInstances ?CV CV)
              (when inst->status=="locked" || inst->status=="firm" statusAlignment=nil)
              )

@@ -271,6 +271,31 @@
   t
   )
 
+; Check if prBoundary points are aligned according to top-level alignment directive
+; Used by RouteExport for high-level cells
+(defun CheckBoundaryAlignment (@key (CV (geGetEditCellView)))
+  (let (aligned align gx gy x y nx ny)
+    aligned=t
+    (when CV->prBoundary
+      align=(GetCellAlignment ?CV CV)
+      gx=(car  (car  align))
+      gy=(cadr (car  align))
+      (foreach xy CV->prBoundary->points
+               x=(car  xy)
+               y=(cadr xy)
+               nx=(round x/gx)*gx
+               ny=(round y/gy)*gy
+               x=(round x/MfgGrid)
+               y=(round y/MfgGrid)
+               nx=(round nx/MfgGrid)
+               ny=(round ny/MfgGrid)
+               aligned=aligned && x==nx && y==ny
+               )
+      )
+    aligned
+    )
+  )
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Obsolete Functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun SetXAlignmentProp ( cv val )
