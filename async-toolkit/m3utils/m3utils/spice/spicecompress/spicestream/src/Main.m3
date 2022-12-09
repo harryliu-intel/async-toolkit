@@ -376,6 +376,9 @@ BEGIN
 
           (* write final result to target wr *)
           TRY
+            Wr.PutText           (wr, "ZZZ\n"); (* advertise compressed data *)
+            Wr.PutChar           (wr, 'x');     (* tag (unused) *)
+            UnsafeWriter.WriteI  (wr, nodeid);
             UnsafeWriter.WriteI  (wr, finalLen + 1 + 2 * 4);
             UnsafeWriter.WriteLRA(wr, ALR1 { norm.min } );
             UnsafeWriter.WriteLRA(wr, ALR1 { norm.max } );

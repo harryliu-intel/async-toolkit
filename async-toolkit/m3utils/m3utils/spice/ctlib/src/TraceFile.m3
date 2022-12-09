@@ -131,7 +131,8 @@ PROCEDURE Write(t : T) =
       dataStartByte := Wr.Index(tWr);
     EXCEPT
       Wr.Failure(x) =>
-      Debug.Error("Write error writing header of trace file : Wr.Failure : " & AL.Format(x))
+      Debug.Error("Write error writing header of trace file : Wr.Failure : " &
+        AL.Format(x))
     END;
 
     IF doDebug THEN
@@ -492,8 +493,8 @@ PROCEDURE WCInit(cl            : IntWriteClosure;
 PROCEDURE WCApply(cl : IntWriteClosure) : REFANY =
   VAR
     buff := NEW(REF ARRAY OF LONGREAL, cl.samples);
-    fr := NEW(TempReader.T).init(cl.fnr);
-    idx : CARDINAL; (* for error messages *)
+    fr   := NEW(TempReader.T).init(cl.fnr);
+    idx  : CARDINAL; (* for error messages *)
   BEGIN
     TRY
       FOR i := cl.lo TO cl.hi DO
@@ -538,6 +539,19 @@ PROCEDURE BlockWrite(wr            : Wr.T;
                      VAR buff      : ARRAY OF LONGREAL)
   RAISES { Rd.Failure, Wr.Failure, OSError.E, Thread.Alerted } =
   BEGIN
+    (* 
+       XXX fr (somehow) will return 
+            a Compressed format 
+                   OR 
+            a LRA buffer 
+    *)
+
+    (* 
+       if it is a compressed format, we can either 
+       (1) uncompress here and write to the target
+       (2) if allowed, pass through to a compressed trace format (TBD!)
+    *)
+           
     fr.readEntireFile(i, buff);
         
     WITH pos = dataStartByte + i * 4 * NUMBER(buff) DO

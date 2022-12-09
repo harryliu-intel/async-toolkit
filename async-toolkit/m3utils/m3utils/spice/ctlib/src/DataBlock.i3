@@ -24,7 +24,7 @@ IMPORT Wr, Rd;
    ----------------------
    tag           32
    threadId      32
-   NUMBER(block) 32
+   bytes in blk  32
    block         variable
 
    The idea is that numerous tagged blocks can be written to a single file.
@@ -36,6 +36,11 @@ IMPORT Wr, Rd;
 PROCEDURE WriteData(wr                 : Wr.T;
                     tag                : CARDINAL; (* written if nonzero *)
                     READONLY block     : ARRAY OF LONGREAL)
+  RAISES { Wr.Failure };
+
+PROCEDURE WriteCompressed(wr           : Wr.T;
+                          tag          : CARDINAL; (* m.b. # 0 *)
+                          data         : TEXT)
   RAISES { Wr.Failure };
 
 PROCEDURE DataCount(rd : Rd.T; tag : CARDINAL) : CARDINAL RAISES { Rd.Failure };
@@ -53,18 +58,34 @@ PROCEDURE ReadData(rd        : Rd.T;
      raises Rd.EndOfFile if at EOF
   *)
 
+PROCEDURE ReadCompressed(rd        : Rd.T;
+                         tag       : CARDINAL; (* must match if nonzero *)
+                         fn        : TEXT (* for debug *) ) : TEXT
+  RAISES { Rd.Failure, Rd.EndOfFile };
+  (* returns NIL if the tag doesn't match
+     raises Rd.EndOfFile if at EOF
+  *)
+
 TYPE
   T <: Public;
 
   Public = OBJECT METHODS
     (* an object for reading a set of non-time data out of a file *)
-    init(rd : Rd.T; maxCount : CARDINAL; fn : TEXT (* for debug *)) : T
+    init(rd       : Rd.T;
+         maxCount : CARDINAL;
+         fn       : TEXT (* for debug *)) : T
       RAISES { Rd.Failure } ;
 
     haveTag(tag : CARDINAL) : BOOLEAN;
 
+    blockType(tag : CARDINAL) : BlockType;
+
     readData(tag : CARDINAL; VAR data : ARRAY OF LONGREAL) : CARDINAL;
+
+    readCompressed(tag : CARDINAL) : TEXT;
   END;
+
+  BlockType = { Array, Compressed };
 
 CONST Brand = "DataBlock";
     

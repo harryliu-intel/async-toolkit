@@ -96,9 +96,13 @@ PROCEDURE GetResponseG(rd : Rd.T; matchKw : TEXT) : TextReader.T =
     END
   END GetResponseG;
 
-PROCEDURE ReadBinaryNodeDataG(rd : Rd.T;
+PROCEDURE ReadCompressedNodeDataG(rd : Rd.T; VAR nodeid : CARDINAL) : TEXT =
+  BEGIN
+  END ReadCompressedNodeDataG;
+  
+PROCEDURE ReadBinaryNodeDataG(rd         : Rd.T;
                               VAR nodeid : CARDINAL;
-                              VAR buff : ARRAY OF LONGREAL) =
+                              VAR buff   : ARRAY OF LONGREAL) =
   VAR
     kw : TEXT;
     n  : CARDINAL;
@@ -662,21 +666,6 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
      responses.  Most of the responses are in ASCII, but for efficiency, some
      are in packed binary format. *)
 
-(*    
-  PROCEDURE PutCommand(cmd : TEXT) =
-    BEGIN PutCommandG(wr, cmd) END PutCommand;
-
-  PROCEDURE GetResponse(matchKw : TEXT) : TextReader.T =
-    BEGIN RETURN GetResponseG(rd, matchKw) END GetResponse;
-
-  PROCEDURE ReadBinaryNodeData(VAR nodeid : CARDINAL;
-                               VAR buff : ARRAY OF LONGREAL) =
-    BEGIN ReadBinaryNodeDataG(rd, nodeid, buff) END ReadBinaryNodeData;
-
-  PROCEDURE GetLineUntil(term : TEXT; VAR line : TEXT) : BOOLEAN =
-    BEGIN RETURN GetLineUntilG(rd, term, line) END GetLineUntil;
-*)
-
   PROCEDURE CommandUnload() =
     BEGIN
       PutCommandG(wr, "U");
@@ -1012,28 +1001,41 @@ PROCEDURE GenInit(cl : GenClosure;
                   interpolate, unit : LONGREAL
   ) : GenClosure =
   BEGIN
-    cl.mu := mu;
-    cl.c := c;
-    cl.d := d;
-    cl.idxMap := idxMap;
-    cl.nsteps := nsteps;
-    cl.cmdPath := cmdPath;
-    cl.fsdbPath := fsdbPath;
-    cl.compressPath := compressPath;
-    cl.thr := Thread.Fork(cl);
+    cl.mu                 := mu;
+    cl.c                  := c;
+    cl.d                  := d;
+    cl.idxMap             := idxMap;
+    cl.nsteps             := nsteps;
+    cl.cmdPath            := cmdPath;
+    cl.fsdbPath           := fsdbPath;
+    cl.compressPath       := compressPath;
+    cl.thr                := Thread.Fork(cl);
     cl.voltageScaleFactor := voltageScaleFactor;
-    cl.voltageOffset := voltageOffset;
-    cl.interpolate := interpolate;
-    cl.unit := unit;
+    cl.voltageOffset      := voltageOffset;
+    cl.interpolate        := interpolate;
+    cl.unit               := unit;
     RETURN cl
   END GenInit;
 
-PROCEDURE GenTask(cl : GenClosure; taskWr : Wr.T; taskIds : CardSeq.T; taskPath : Pathname.T) =
+  (* 
+     the way the task assignment works is that we look for an idle worker
+     (one whose tWr is NIL)
+
+     then we set the tWr of that worker to the correct file, with the path
+     (for debugging?) and sequence of nodes to be dumped into that file.
+
+  *)
+  
+PROCEDURE GenTask(cl       : GenClosure;
+                  taskWr   : Wr.T;
+                  taskIds  : CardSeq.T;
+                  taskPath : Pathname.T) =
   BEGIN
+    (* assign a task to the given worker / nanosimrd instance *)
     LOCK cl.mu DO
       <*ASSERT cl.tWr = NIL*>
-      cl.tWr := taskWr;
-      cl.tPath := taskPath;
+      cl.tWr     := taskWr;
+      cl.tPath   := taskPath;
       cl.nodeIds := taskIds
     END;
     Thread.Broadcast(cl.c) (* several workers can be waiting *)
@@ -1050,30 +1052,14 @@ PROCEDURE GenApply(cl : GenClosure) : REFANY =
   (* this apply runs a session with a nanosimrd process *)
   (* we can run multiple in parallel *)
 
-  (*
-  PROCEDURE PutCommand(cmd : TEXT) =
-    BEGIN PutCommandG(cmdWr, cmd) END PutCommand;
-
-  PROCEDURE GetResponse(matchKw : TEXT) : TextReader.T =
-    BEGIN RETURN GetResponseG(cmdRd, matchKw) END GetResponse;
-
-  PROCEDURE ReadBinaryNodeData(VAR nodeid : CARDINAL;
-                               VAR buff : ARRAY OF LONGREAL) =
-    BEGIN ReadBinaryNodeDataG(cmdRd, nodeid, buff) END ReadBinaryNodeData;
-
-  PROCEDURE GetLineUntil(term : TEXT; VAR line : TEXT) : BOOLEAN =
-    BEGIN RETURN GetLineUntilG(cmdRd, term, line) END GetLineUntil;
-    
-  *)
-  
   VAR
-    cmdStdin : ProcUtils.Reader;
-    cmdStdout : ProcUtils.Writer;
+    cmdStdin   : ProcUtils.Reader;
+    cmdStdout  : ProcUtils.Writer;
     completion : ProcUtils.Completion;
-    cmdWr : Wr.T;
-    cmdRd : Rd.T;
+    cmdWr      : Wr.T;
+    cmdRd      : Rd.T;
     loId, hiId : CARDINAL;
-    unit : LONGREAL;
+    unit       : LONGREAL;
   BEGIN
     <*FATAL OSError.E*>
     BEGIN
@@ -1082,7 +1068,7 @@ PROCEDURE GenApply(cl : GenClosure) : REFANY =
     END;
     
     completion := ProcUtils.RunText(cl.cmdPath & " " & cl.fsdbPath,
-                                    stdin := cmdStdin,
+                                    stdin  := cmdStdin,
                                     stderr := ProcUtils.Stderr(),
                                     stdout := cmdStdout);
     TRY
@@ -1170,16 +1156,17 @@ PROCEDURE GeneratePartialTraceFile(wr                   : Wr.T;
 
                                    nSteps               : CARDINAL;
                                    compressPath         : Pathname.T;
+                                   (* if NIL, no compression *)
+                                   
                                    voltageScaleFactor,
                                    voltageOffset,
                                    interpolate,
                                    unit                 : LONGREAL;
-                                   path                 : Pathname.T
-                                   ) =
-  VAR
-    buff := NEW(REF ARRAY OF LONGREAL, nSteps);
-    node : CARDINAL;
-    
+                                   
+                                   path                 : Pathname.T;
+                                   (* for debugging only? *)
+  
+  ) =
   BEGIN
     IF doDebug THEN
       Debug.Out(F("GeneratePartialTraceFile : %s indices", Int(fileTab.size())));
@@ -1229,49 +1216,21 @@ PROCEDURE GeneratePartialTraceFile(wr                   : Wr.T;
           Debug.Out(F("Expecting node data for inId %s outId %s",
                       Int(inId), Int(outId)));
         END;
-        
-        IF interpolate = NoInterpolate THEN
-          ReadBinaryNodeDataG(cmdRd, node, buff^);
+
+        IF compressPath # NIL THEN
         ELSE
-          ReadInterpolatedBinaryNodeDataG(cmdRd,
-                                          node,
-                                          buff^,
-                                          interpolate,
-                                          unit);
+          DoUncompressedReceive(wr,
+                                path,
+                                cmdRd,
+                                nSteps,
+                                voltageScaleFactor,
+                                voltageOffset,
+                                interpolate,
+                                unit,
+                                inId,
+                                outId)
         END;
         
-        IF node # inId THEN
-          Debug.Error(F("unexpected node %s # inId %s", Int(node), Int(inId)))
-        END;
-
-        (* write data to temp file in correct format *)
-        IF doDebug THEN
-          Debug.Out(F("Writing data block outId %s nSteps %s",
-                      Int(outId), Int(nSteps)));
-        END;
-
-        IF voltageScaleFactor # 1.0d0 OR voltageOffset # 0.0d0 THEN
-          FOR i := FIRST(buff^) TO LAST(buff^) DO
-            buff[i] := voltageScaleFactor * buff[i] + voltageOffset
-          END
-        END;
-
-        TRY
-          IF doDebug THEN
-            Debug.Out(F("Writing data for outId %s to %s offset %s first %s last %s",
-                        Int(outId),
-                        path,
-                        Int(Wr.Index(wr)),
-                        LR(buff[0]),
-                        LR(buff[LAST(buff^)])))
-          END;
-          DataBlock.WriteData(wr, outId, buff^)
-        EXCEPT
-          Wr.Failure(x) =>
-          Debug.Error(F("Wr.Failure writing data for node %s : %s ",
-                        Int(outId),
-                        AL.Format(x)))
-        END
 
       END
     END;
@@ -1286,6 +1245,118 @@ PROCEDURE GeneratePartialTraceFile(wr                   : Wr.T;
     EVAL GetResponseG(cmdRd, "UR")
   END GeneratePartialTraceFile;
 
+
+PROCEDURE DoUncompressedReceive(wr                  : Wr.T;
+                                path                : Pathname.T;
+                                cmdRd               : Rd.T;
+                                nSteps              : CARDINAL;
+                                voltageScaleFactor,
+                                voltageOffset,
+                                interpolate,
+                                unit                : LONGREAL;
+                                inId, outId         : CARDINAL) =
+  VAR
+    buff := NEW(REF ARRAY OF LONGREAL, nSteps);
+    node : CARDINAL;
+  BEGIN
+    (* no compression *)
+    IF interpolate = NoInterpolate THEN
+      ReadBinaryNodeDataG(cmdRd, node, buff^);
+    ELSE
+      ReadInterpolatedBinaryNodeDataG(cmdRd,
+                                      node,
+                                      buff^,
+                                      interpolate,
+                                      unit);
+    END;
+    
+    IF node # inId THEN
+      Debug.Error(F("unexpected node %s # inId %s", Int(node), Int(inId)))
+    END;
+    
+    (* write data to temp file in correct format *)
+    IF doDebug THEN
+      Debug.Out(F("Writing data block outId %s nSteps %s",
+                  Int(outId), Int(nSteps)));
+    END;
+    
+    IF voltageScaleFactor # 1.0d0 OR voltageOffset # 0.0d0 THEN
+      FOR i := FIRST(buff^) TO LAST(buff^) DO
+        buff[i] := voltageScaleFactor * buff[i] + voltageOffset
+      END
+    END;
+    
+    TRY
+      IF doDebug THEN
+        Debug.Out(F("Writing data for outId %s to %s offset %s first %s last %s",
+                    Int(outId),
+                    path,
+                    Int(Wr.Index(wr)),
+                    LR(buff[0]),
+                    LR(buff[LAST(buff^)])))
+      END;
+      DataBlock.WriteData(wr, outId, buff^)
+    EXCEPT
+      Wr.Failure(x) =>
+      Debug.Error(F("Wr.Failure writing data for node %s : %s ",
+                    Int(outId),
+                    AL.Format(x)))
+    END
+  END DoUncompressedReceive;
+
+PROCEDURE DoCompressedReceive(wr                  : Wr.T;
+                              path                : Pathname.T;
+                              cmdRd               : Rd.T;
+                              nSteps              : CARDINAL;
+                              voltageScaleFactor,
+                              voltageOffset,
+                              interpolate,
+                              unit                : LONGREAL;
+                              inId, outId         : CARDINAL) =
+  VAR
+    buff := NEW(REF ARRAY OF LONGREAL, nSteps);
+    node : CARDINAL;
+    data : TEXT;
+  BEGIN
+    data := ReadCompressedNodeDataG(cmdRd,
+                                    node);
+
+    
+    IF node # inId THEN
+      Debug.Error(F("unexpected node %s # inId %s", Int(node), Int(inId)))
+    END;
+    
+    (* write data to temp file in correct format *)
+    IF doDebug THEN
+      Debug.Out(F("Writing data block outId %s nSteps %s",
+                  Int(outId), Int(nSteps)));
+    END;
+    
+    IF voltageScaleFactor # 1.0d0 OR voltageOffset # 0.0d0 THEN
+      (*
+      FOR i := FIRST(buff^) TO LAST(buff^) DO
+        buff[i] := voltageScaleFactor * buff[i] + voltageOffset
+      END
+*)
+    END;
+    
+    TRY
+      IF doDebug THEN
+        Debug.Out(F("Writing data for outId %s to %s offset %s",
+                    Int(outId),
+                    path,
+                    Int(Wr.Index(wr))))
+      END;
+      Wr.PutText(wr, data);
+      DataBlock.WriteData(wr, outId, buff^)
+    EXCEPT
+      Wr.Failure(x) =>
+      Debug.Error(F("Wr.Failure writing data for node %s : %s ",
+                    Int(outId),
+                    AL.Format(x)))
+    END
+  END DoCompressedReceive;
+  
 PROCEDURE TryRemoveSuffix(from        : TEXT;
                           suffix      : TEXT;
                           VAR remains : TEXT) : BOOLEAN =

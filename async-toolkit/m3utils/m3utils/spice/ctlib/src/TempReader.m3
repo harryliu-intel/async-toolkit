@@ -53,6 +53,14 @@ PROCEDURE ReadEntireFileM(self     : T;
     aLen := NUMBER(data);
 
   BEGIN
+
+    (* 
+       this routine is called sequentially by TraceFile.Write (or WritePll,
+       but that is not a good idea)
+
+       so it is called with idx = 0, 1, ... , nNodes - 1
+    *)
+    
     IF doDebug THEN
       Debug.Out(F("ConvertTrace.ReadEntireFileM: idx %s fn %s aLen %s",
                   Int(idx), fn, Int(aLen)))
@@ -69,7 +77,26 @@ PROCEDURE ReadEntireFileM(self     : T;
         Rd.EndOfFile => <*ASSERT FALSE*> (* internal program error *)
       END
     ELSE
+      (* 
+         at this point, self.dbFn holds the filename of the 
+         lately opened temp file.
+
+         if self.dbRd is non-NIL, then that reader is still open and can
+         be re-used.
+
+         if on the other hand self.dbDb is NIL, we don't have a lately
+         opened file open anymore and have to open it for sure.
+
+         Also we obv. have to open the file if we lately had the WRONG
+         file open! 
+
+         While it is OK to run this multi-threaded, tests have shown that
+         running it multi-threaded slows the program down (sometimes 
+         dramatically) 
+      *)
       IF self.dbDb = NIL OR NOT TE(fn, self.dbFn) THEN
+        
+        
         IF self.dbRd # NIL THEN
           Rd.Close(self.dbRd);
         END;
@@ -77,12 +104,25 @@ PROCEDURE ReadEntireFileM(self     : T;
         self.dbRd := FileRd_Open(fn);
         self.dbDb := NEW(DataBlock.T).init(self.dbRd, aLen, fn)
       END;
+
+      (* we now have the correct file open,
+         the tag we seek should definitely be present in that file,
+         if we have done everything right so far ... *)
       
       IF NOT self.dbDb.haveTag(idx) THEN
         Debug.Error(F("ConvertTrace.ReadEntireFileM: internal error: file %s doesn't contain tag %s", fn, Int(idx)))
       END;
       
       WITH readRecs = self.dbDb.readData(idx, data) DO
+        (* 
+           XXX TODO
+
+           the file might be in Compressed form,
+           in which case we need to figure out how to return the Compressed
+           data.  It is not for THIS module to uncompress---this should be
+           done in TraceFile.m3 
+        *)
+        
         IF readRecs # aLen THEN
           Debug.Warning(F("ConvertTrace.ReadEntireFileM: short read for node (%s) : %s # %s",
                           Int(idx), Int(ptr), Int(aLen)))
