@@ -46,16 +46,27 @@ CONST LR = LongReal;
       
 VAR doDebug := Debug.DebugThis("CT");
 
-CONST Usage = "[-rename <dutName>] [-scaletime <timeScaleFactor>] [-offsettime <timeOffset>] [-offsetvoltage <voltageOffset>] [-dosources] [-dofiles] [ [-n <nodename>] ...] [-threads <fsdb_threads>] [-wthreads <write_threads>] [-fromworkdir] <inFileName> <outFileRoot>";
+CONST Usage = "[-fsdb <fsdbPath>] [-compress <compressPath>] [-rename <dutName>] [-scaletime <timeScaleFactor>] [-offsettime <timeOffset>] [-offsetvoltage <voltageOffset>] [-dosources] [-dofiles] [ [-n <nodename>] ...] [-threads <fsdb_threads>] [-wthreads <write_threads>] [-fromworkdir] <inFileName> <outFileRoot>";
 
 (*
   will generate <outFileRoot>.trace and <outFileRoot>.names 
 
   -fsdb        read FSDB format.  Argument is absolute path
                to FSDB reading program (can be a shell script
-               launching via Netbatch)
+               launching via Netbatch).  Usually nanosimrd.
 
                default format is CSDF if this is not provided
+
+  -compress    Compress waveform data.  Argument is absolute path to 
+               compression program (usually spicestream).
+
+               Note that if -fsdb is used, this path needs to be correct
+               for the environment in which the FSDB reading program is run.
+ 
+               For example, if nanosimrd is run via Netbatch, the compression
+               program needs to be accessible from the Netbatch compute 
+               slaves, since it will be launched from within the fsdb
+               conversion program.
 
   -resample    resample data at timestep given
 
@@ -296,7 +307,8 @@ VAR
   wrWorkers := 1;
   regExList : RegExList.T := NIL;
 
-  fsdbCmdPath  : Pathname.T := NIL;
+  fsdbCmdPath       : Pathname.T := NIL;
+  compressCmdPath   : Pathname.T := NIL;
   writeTraceCmdPath : Pathname.T := NIL;
 
   parseFmt := ParseFmt.Tr0;
@@ -325,6 +337,10 @@ BEGIN
     IF pp.keywordPresent("-fsdb") THEN
       fsdbCmdPath := pp.getNext();
       parseFmt := ParseFmt.Fsdb;
+    END;
+
+    IF pp.keywordPresent("-compress") THEN
+      compressCmdPath := pp.getNext()
     END;
 
     IF pp.keywordPresent("-wrtrace") THEN
@@ -458,6 +474,7 @@ BEGIN
                  restrictNodes,
                  regExList,
                  fsdbCmdPath,
+                 compressCmdPath,
                  threads,
                  interpolate)
     END;

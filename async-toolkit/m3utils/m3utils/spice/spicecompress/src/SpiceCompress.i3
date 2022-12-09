@@ -9,6 +9,11 @@ PROCEDURE DoDemo(targMaxDev : LONGREAL;
                  trace      : Trace.T;
                  doAllDumps : BOOLEAN);
 
+TYPE
+  Norm = RECORD
+    min, max : LONGREAL;
+  END;
+  
 PROCEDURE CompressArray(rn            : TEXT;
                         (* for debug *)
                         
@@ -23,6 +28,8 @@ PROCEDURE CompressArray(rn            : TEXT;
 
                         wr : Wr.T;
                         (* can be NIL *)
+
+                        VAR norm   : Norm;
 
                         mem : TripleRefTbl.T := NIL;
 

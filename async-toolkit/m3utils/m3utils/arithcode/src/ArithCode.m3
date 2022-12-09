@@ -9,11 +9,12 @@ IMPORT Word;
 IMPORT Fmt; FROM Fmt IMPORT FN, Unsigned, F, Int, LongReal, Bool;
 IMPORT Debug;
 IMPORT Rd;
+IMPORT Thread;
 
 CONST LR = LongReal;
 
-CONST Verbose      = TRUE;
-      SuperVerbose = FALSE;
+VAR Verbose      := Debug.DebugThis("ArithCode");
+    SuperVerbose := FALSE;
       
 REVEAL
   T = Public BRANDED Brand OBJECT
@@ -99,7 +100,8 @@ PROCEDURE CoderChars(c : Coder.T; READONLY a : ARRAY OF CHAR) =
     END
   END CoderChars;
 
-PROCEDURE CoderRdTillEof(c : Coder.T; rd : Rd.T) =
+PROCEDURE CoderRdTillEof(c : Coder.T; rd : Rd.T)
+  RAISES { Rd.Failure, Thread.Alerted } =
   BEGIN
     TRY
       LOOP

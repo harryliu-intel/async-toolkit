@@ -108,17 +108,17 @@ PROCEDURE CompressArray(rn         : TEXT; (* for debug *)
                         targMaxDev : LONGREAL;
                         doAllDumps : BOOLEAN;
                         wr         : Wr.T;
+                        VAR norm   : Norm;
                         mem        : TripleRefTbl.T;
-                        doDump     : BOOLEAN
+                        doDump     : BOOLEAN;
   )
   RAISES { MatrixE.Singular } =
   <*FATAL OSError.E, Wr.Failure*>
   CONST
     MaxOrder = 5;
   VAR
-    segments := NEW(PolySegment16Seq.T).init();
+    segments     := NEW(PolySegment16Seq.T).init();
     attemptOrder := MIN(DefOrder, NUMBER(darr) - 1);
-    norm : Norm;
   BEGIN
     norm := Normalize(darr);
 
@@ -250,6 +250,7 @@ PROCEDURE DoDemo(targMaxDev : LONGREAL;
     nSteps := trace.getSteps();
     darr   := NEW(REF ARRAY OF LONGREAL, nSteps);
     rarr   := NEW(REF ARRAY OF LONGREAL, nSteps);
+    norm   : Norm;
   BEGIN
 
     FOR p := 1 TO 3 DO
@@ -266,7 +267,7 @@ PROCEDURE DoDemo(targMaxDev : LONGREAL;
         trace.getNodeData(i, darr^);
         Debug.Out("Compressing trace");
         WITH now = Time.Now() DO
-          CompressArray(rn, darr^, rarr^, targMaxDev, doAllDumps,
+          CompressArray(rn, darr^, rarr^, targMaxDev, doAllDumps, norm := norm,
                         wr := NIL, mem := NIL, doDump := TRUE);
           Debug.Out("Done compressing trace, time " & LR(Time.Now() - now));
         END
@@ -363,11 +364,6 @@ PROCEDURE DumpVec(nm          : Pathname.T;
     Wr.Close(wr)
   END DumpVec;
 
-TYPE
-  Norm = RECORD
-    min, max : LONGREAL;
-  END;
-  
 PROCEDURE Normalize(VAR a : ARRAY OF LONGREAL) : Norm =
   VAR
     min := LAST(LONGREAL);

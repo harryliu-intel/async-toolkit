@@ -32,6 +32,7 @@ PROCEDURE Parse(wd            : Pathname.T;
                 restrictNodes : TextSet.T;
                 restrictRegEx : RegExList.T;
                 cmdPath       : Pathname.T;
+                compressPath  : Pathname.T;
                 threads       : CARDINAL;
                 interpolate   : LONGREAL)
   RAISES { Rd.Failure, ShortRead, SyntaxError };

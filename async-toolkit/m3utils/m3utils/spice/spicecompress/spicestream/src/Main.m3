@@ -242,9 +242,10 @@ BEGIN
   |
     Mode.Compress =>
     VAR
-      rd : Rd.T;
+      rd     : Rd.T;
       nSteps : CARDINAL;
-      a : REF ARRAY OF LONGREAL;
+      a      : REF ARRAY OF LONGREAL;
+      norm   : SpiceCompress.Norm;
     BEGIN
       TRY
         IF TE(inFn, "-") THEN
@@ -283,6 +284,7 @@ BEGIN
                                       relPrec,
                                       doAllDumps,
                                       textWr,
+                                      norm,
                                       mem    := NEW(TripleRefTbl.Default).init(),
                                       doDump := doDump)
         EXCEPT
@@ -314,7 +316,8 @@ BEGIN
        with the trace file format specification, used in tracelib and also
        (eventually) in aplot.
     *)
-    
+    TYPE
+      ALR1 = ARRAY [ 0..0 ] OF LONGREAL;
     VAR
       rd     := Stdio.stdin;
       a      := NEW(REF ARRAY OF LONGREAL, fd.npoints);
@@ -323,6 +326,7 @@ BEGIN
       code     : ArithConstants.CodeIdx;
       finalTxt : TEXT;
       finalLen : CARDINAL;
+      norm     : SpiceCompress.Norm;
     BEGIN
       Fsdb.ReadInterpolatedBinaryNodeDataG(rd,
                                            nodeid,
@@ -336,15 +340,16 @@ BEGIN
         (* first write to mem *)
 
         TRY
-        SpiceCompress.CompressArray("zdebug",
-                                    a^,
-                                    z^,
-                                    relPrec,
-                                    doAllDumps,
-                                    textWr,
-                                    mem    := NEW(TripleRefTbl.Default).init(),
-                                    doDump := doDump);
- EXCEPT
+          SpiceCompress.CompressArray("zdebug",
+                                      a^,
+                                      z^,
+                                      relPrec,
+                                      doAllDumps,
+                                      textWr,
+                                      norm,
+                                      mem    := NEW(TripleRefTbl.Default).init(),
+                                      doDump := doDump);
+        EXCEPT
           Matrix.Singular =>
           Debug.Error("Internal error attempting waveform compression : Matrix.Singular")
         END;
@@ -371,10 +376,12 @@ BEGIN
 
           (* write final result to target wr *)
           TRY
-            UnsafeWriter.WriteI(wr, finalLen + 1);
-            Wr.PutChar         (wr, VAL(code, CHAR));
-            Wr.PutText         (wr, finalTxt);
-            Wr.Close           (wr)
+            UnsafeWriter.WriteI  (wr, finalLen + 1 + 2 * 4);
+            UnsafeWriter.WriteLRA(wr, ALR1 { norm.min } );
+            UnsafeWriter.WriteLRA(wr, ALR1 { norm.max } );
+            Wr.PutChar           (wr, VAL(code, CHAR));
+            Wr.PutText           (wr, finalTxt);
+            Wr.Close             (wr)
           EXCEPT
             Wr.Failure(x) =>
             Debug.Error(F("Can't write compressed trace data (%s bytes) : Wr.Failure : %s",
