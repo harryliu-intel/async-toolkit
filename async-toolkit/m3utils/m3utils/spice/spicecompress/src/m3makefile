@@ -6,27 +6,5 @@ import ("regression")
 import ("ctlib")
 import ("arithcode")
 
-m3_optimize("T")
-
-Module ("SpiceCompress")
-Module ("Wavelet")
-Module ("SparseLR")
-Array_sort ("Sparse", "SparseLR")
-
-sequence ("CardPair", "CardPair")
-
-Interface ("PolySegment")
-Sequence ("PolySegment", "PolySegment")
-
-Interface ("PolySegment16")
-Sequence ("PolySegment16", "PolySegment16")
-
-Module ("Rep16")
-Module ("Rep16Stream")
-Module ("PolySegment16Serial")
-
-Table("TripleRef", "IntTriple", "Refany")
-
-Interface ("ArithConstants")
 
 library ("spicecompress")

@@ -36,7 +36,17 @@ PROCEDURE Parse(wd            : Pathname.T;
                 threads       : CARDINAL;
                 interpolate   : LONGREAL)
   RAISES { Rd.Failure, ShortRead, SyntaxError };
+  (* 
+     when Parse returns, it has left a number of blocked files in the
+     working directory wd, which can then be strung together into a single
+     large trace file.
 
+     See DataBlock for details on the blocked encoding 
+
+     The TempReader interface consumes the blocked files in the working 
+     directory.
+  *)
+  
 CONST NoInterpolate = FIRST(LONGREAL); (* do not interpolate *)
         
 PROCEDURE ReadInterpolatedBinaryNodeDataG(rd          : Rd.T;

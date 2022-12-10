@@ -7,6 +7,7 @@ IMPORT Text;
 IMPORT FileRd;
 IMPORT Thread;
 IMPORT FileNamer;
+IMPORT TempDataRep;
 
 <*FATAL Thread.Alerted*>
 
@@ -110,20 +111,33 @@ PROCEDURE ReadEntireFileM(self     : T;
       IF NOT self.dbDb.haveTag(idx) THEN
         Debug.Error(F("ConvertTrace.ReadEntireFileM: internal error: file %s doesn't contain tag %s", fn, Int(idx)))
       END;
-      
-      WITH readRecs = self.dbDb.readData(idx, data) DO
-        (* 
-           XXX TODO
 
-           the file might be in Compressed form,
-           in which case we need to figure out how to return the Compressed
-           data.  It is not for THIS module to uncompress---this should be
-           done in TraceFile.m3 
-        *)
-        
-        IF readRecs # aLen THEN
-          Debug.Warning(F("ConvertTrace.ReadEntireFileM: short read for node (%s) : %s # %s",
-                          Int(idx), Int(ptr), Int(aLen)))
+      WITH blockType = self.dbDb.blockType(idx) DO
+        CASE blockType OF
+          DataBlock.BlockType.Array =>
+          WITH readRecs = self.dbDb.readData(idx, data) DO
+            IF readRecs # aLen THEN
+              Debug.Warning(F("ConvertTrace.ReadEntireFileM: short read for node (%s) : %s # %s",
+                              Int(idx), Int(ptr), Int(aLen)))
+            END
+          END
+        |
+          DataBlock.BlockType.Compressed =>
+          VAR
+            zdata := self.dbDb.readCompressed(idx);
+            tempRep : TempDataRep.T;
+          BEGIN
+            TempDataRep.ReadFromTemp(zdata, tempRep);
+            TempDataRep.Reconstruct(tempRep, data);
+            
+            (* expand to actual range *)
+            WITH offset = tempRep.norm.min,
+                 range  = tempRep.norm.max - tempRep.norm.min DO
+              FOR i := FIRST(data) TO LAST(data) DO
+                data[i] := data[i] * range + offset
+              END
+            END
+          END
         END
       END
     END

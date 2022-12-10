@@ -22,11 +22,13 @@ IMPORT Thread;
 IMPORT AL;
 FROM Tr0 IMPORT RenameBack;
 IMPORT UnsafeReader;
+IMPORT UnsafeWriter;
 IMPORT TextSetDef;
 IMPORT DataBlock;
 IMPORT TextCardTbl;
 IMPORT TextCardSeqTbl;
 IMPORT SpiceCompress;
+IMPORT TextWr;
 
 <*FATAL Thread.Alerted*>
 
@@ -99,47 +101,53 @@ PROCEDURE GetResponseG(rd : Rd.T; matchKw : TEXT) : TextReader.T =
 
 PROCEDURE ReadCompressedNodeDataG(rd         : Rd.T;
                                   VAR nodeid : CARDINAL;
-                                  VAR norm   : SpiceCompress.Norm;
-                                  VAR code   : CHAR) : TEXT =
+                                  VAR norm   : SpiceCompress.Norm) : TEXT =
   VAR
-    kw : TEXT;
+    kw    : TEXT;
     bytes : CARDINAL;
+    tag   : CHAR;
   BEGIN
     TRY
-      WITH line    = Rd.GetLine(rd),
-           reader  = NEW(TextReader.T).init(line) DO
-        IF doDebug THEN
-          Debug.Out(F("Fsdb.Parse.ReadCompressedNodeDataG line \"%s\"", line))
-        END;
+      LOOP
+        WITH line    = Rd.GetLine(rd),
+             reader  = NEW(TextReader.T).init(line) DO
+          IF doDebug THEN
+            Debug.Out(F("Fsdb.Parse.ReadCompressedNodeDataG line \"%s\"", line))
+          END;
 
-        IF reader.next(" ", kw, TRUE) THEN
-          IF    TE(kw, "E") THEN
-            Debug.Error(F("Got time mismatch: nodeid %s: line %s",
-                          Int(nodeid), line))
-          ELSIF TE(kw, "ZZZ") THEN
-            (* this code synchronized with Main.m3<spicestream> *)
-            nodeid := UnsafeReader.ReadI(rd);
-            bytes  := UnsafeReader.ReadI(rd);
-            norm.min := UnsafeReader.ReadLR(rd);
-            norm.max := UnsafeReader.ReadLR(rd);
-            code     := Rd.GetChar(rd);
-            
-            WITH buflen  = bytes - 9, (* 9 is len of min, max, code *)
-                 chars   = NEW(REF ARRAY OF CHAR, buflen),
-                 got     = Rd.GetSub(rd, chars^) DO
-              IF got # buflen THEN RAISE Rd.EndOfFile END;
+          IF reader.next(" ", kw, TRUE) THEN
+            IF    TE(kw, "E") THEN
+              Debug.Error(F("Got time mismatch: nodeid %s: line %s",
+                            Int(nodeid), line));
+              <*ASSERT FALSE*>
+            ELSIF TE(kw, "ZZZ") THEN
+              (* this code synchronized with Main.m3<spicestream> *)
+              tag      := Rd.GetChar(rd);
+              nodeid   := UnsafeReader.ReadI(rd);
+              bytes    := UnsafeReader.ReadI(rd);
+              norm.min := UnsafeReader.ReadLR(rd);
+              norm.max := UnsafeReader.ReadLR(rd);
 
-              IF doDebug THEN
-                Debug.Out(F("ReadCompressedNodeDataG nodeid %s bytes %s min %s max %s code %s",
-                            Int(nodeid), Int(bytes),
-                            LR(norm.min), LR(norm.max),
-                            Int(ORD(code))))
-              END;
-              RETURN Text.FromChars(chars^)
+              Debug.Out(F("Fsdb.ReadCompressedNodeDataG got nodeid %s bytes %s",
+                          Int(nodeid), Int(bytes)));
+              
+              WITH buflen  = bytes - 8, (* 9 is len of min, max, code *)
+                   chars   = NEW(REF ARRAY OF CHAR, buflen),
+                   got     = Rd.GetSub(rd, chars^) DO
+                IF got # buflen THEN RAISE Rd.EndOfFile END;
+
+                IF doDebug THEN
+                  Debug.Out(F("ReadCompressedNodeDataG nodeid %s bytes %s min %s max %s",
+                              Int(nodeid), Int(bytes),
+                              LR(norm.min), LR(norm.max)))
+                END;
+                RETURN Text.FromChars(chars^)
+              END
+            ELSE
+              Debug.Error(F("?syntax error : ReadBinaryNodeData: got \"%s\"",
+                            line));
+              <*ASSERT FALSE*>
             END
-          ELSE
-            Debug.Error(F("?syntax error : ReadBinaryNodeData: got \"%s\"",
-                          line))
           END
         END
       END
@@ -1240,9 +1248,7 @@ PROCEDURE GeneratePartialTraceFile(wr                   : Wr.T;
 
         PutCommandG(cmdWr, compressCmdString);
         EVAL GetResponseG(cmdRd, "FR");
-        
       END
-           
     END;
     
     (* set up indications of interest *)
@@ -1283,8 +1289,6 @@ PROCEDURE GeneratePartialTraceFile(wr                   : Wr.T;
                               nSteps,
                               voltageScaleFactor,
                               voltageOffset,
-                              interpolate,
-                              unit,
                               inId,
                               outId)
         ELSE
@@ -1382,16 +1386,19 @@ PROCEDURE DoCompressedReceive(wr                  : Wr.T;
                               cmdRd               : Rd.T;
                               nSteps              : CARDINAL;
                               voltageScaleFactor,
-                              voltageOffset,
-                              interpolate,
-                              unit                : LONGREAL;
+                              voltageOffset       : LONGREAL;
                               inId, outId         : CARDINAL) =
   VAR
     node : CARDINAL;
     data : TEXT;
+    
+    norm : SpiceCompress.Norm;
+    (* normalization constants *)
+    
   BEGIN
     data := ReadCompressedNodeDataG(cmdRd,
-                                    node);
+                                    node,
+                                    norm);
 
     
     IF node # inId THEN
@@ -1405,11 +1412,8 @@ PROCEDURE DoCompressedReceive(wr                  : Wr.T;
     END;
     
     IF voltageScaleFactor # 1.0d0 OR voltageOffset # 0.0d0 THEN
-      (*
-      FOR i := FIRST(buff^) TO LAST(buff^) DO
-        buff[i] := voltageScaleFactor * buff[i] + voltageOffset
-      END
-      *)
+      norm.min := voltageScaleFactor * norm.min + voltageOffset;
+      norm.max := voltageScaleFactor * norm.max + voltageOffset;
     END;
     
     TRY
@@ -1419,8 +1423,14 @@ PROCEDURE DoCompressedReceive(wr                  : Wr.T;
                     path,
                     Int(Wr.Index(wr))))
       END;
-      Wr.PutText(wr, data);
-      DataBlock.WriteCompressed(wr, outId, data)
+      WITH normWr = TextWr.New() DO
+        UnsafeWriter.WriteLRA(normWr,
+                              ARRAY [0..1] OF LONGREAL { norm.min, norm.max });
+        DataBlock.WriteCompressed(wr,
+                                  outId,
+                                  ARRAY [0..1] OF TEXT { TextWr.ToText(normWr),
+                                                         data })
+      END
     EXCEPT
       Wr.Failure(x) =>
       Debug.Error(F("Wr.Failure writing data for node %s : %s ",

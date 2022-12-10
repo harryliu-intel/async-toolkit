@@ -7,7 +7,7 @@ IMPORT AL;
 IMPORT OSError;
 IMPORT Rd;
 IMPORT Pathname;
-FROM Fmt IMPORT F, Int;
+FROM Fmt IMPORT F, Int, LongReal;
 IMPORT Trace;
 IMPORT Wr, FileWr;
 IMPORT TextWr;
@@ -29,7 +29,8 @@ IMPORT Matrix;
 CONST
   Usage    = "";
   TE       = Text.Equal;
-
+  LR       = LongReal;
+  
 TYPE
   Mode = { ReadBinary, Compress, Filter };
 
@@ -339,6 +340,11 @@ BEGIN
 
         (* first write to mem *)
 
+        Debug.Out(F("spicestream read interpolated data %s points, will compress with prec %s",
+                    Int(fd.npoints),
+                    LR(relPrec)));
+
+        
         TRY
           SpiceCompress.CompressArray("zdebug",
                                       a^,

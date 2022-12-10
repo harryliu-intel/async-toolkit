@@ -208,7 +208,7 @@ PROCEDURE CompressArray(rn         : TEXT; (* for debug *)
         TRY
           <*FATAL Wr.Failure, Rd.Failure, Rd.EndOfFile*>
           VAR
-            wr := NEW(TextWr.T).init();
+            wr          := NEW(TextWr.T).init();
             newSegments := NEW(PolySegment16Seq.T).init();
             header : Rep16.Header;
           BEGIN
@@ -238,6 +238,18 @@ PROCEDURE CompressArray(rn         : TEXT; (* for debug *)
       
     END
   END CompressArray;
+
+PROCEDURE DecompressArray(rd       : Rd.T;
+                          VAR rarr : ARRAY OF LONGREAL)
+  RAISES { Rd.Failure } =
+  VAR
+    segments := NEW(PolySegment16Seq.T).init();
+    header : Rep16.Header;
+  BEGIN
+    PolySegment16Serial.Read(rd, segments, header);
+    Reconstruct(segments, rarr)
+  END DecompressArray;
+ 
   
 PROCEDURE DoDemo(targMaxDev : LONGREAL;
                  KK         : REF ARRAY OF CARDINAL;

@@ -3,6 +3,8 @@ IMPORT Trace;
 IMPORT Matrix;
 IMPORT Wr;
 IMPORT TripleRefTbl;
+IMPORT Rd;
+IMPORT PolySegment16Serial;
 
 PROCEDURE DoDemo(targMaxDev : LONGREAL;
                  KK         : REF ARRAY OF CARDINAL;
@@ -38,5 +40,12 @@ PROCEDURE CompressArray(rn            : TEXT;
                         )
   
   RAISES { Matrix.Singular };
+
+PROCEDURE DecompressArray(rd       : Rd.T;
+                          VAR rarr : ARRAY OF LONGREAL)
+  RAISES { Rd.Failure, PolySegment16Serial.Error, Rd.EndOfFile };
+  (* returns array of normalized values, expanded to fit.
+     normalization must follow a different path. (not handled within this
+     format) *)
 
 END SpiceCompress.

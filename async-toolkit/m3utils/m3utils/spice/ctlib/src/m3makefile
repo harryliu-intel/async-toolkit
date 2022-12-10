@@ -2,7 +2,9 @@ import ("libm3")
 import ("cit_util")
 import ("parseparams")
 import ("spicelib")
-import ("spicecompress")
+import ("arithcode")
+import ("regression")
+import ("tracelib")
 
 %m3_optimize("T")
 
@@ -29,5 +31,32 @@ Module ("FileNamer")
 Module ("TempReader")
 
 Table("TextCardSeq", "Text", "CardSeq")
+
+module ("TempDataRep")
+
+% spicecompress library below here
+
+m3_optimize("T")
+
+Module ("SpiceCompress")
+Module ("Wavelet")
+Module ("SparseLR")
+Array_sort ("Sparse", "SparseLR")
+
+sequence ("CardPair", "CardPair")
+
+Interface ("PolySegment")
+Sequence ("PolySegment", "PolySegment")
+
+Interface ("PolySegment16")
+Sequence ("PolySegment16", "PolySegment16")
+
+Module ("Rep16")
+Module ("Rep16Stream")
+Module ("PolySegment16Serial")
+
+Table("TripleRef", "IntTriple", "Refany")
+
+Interface ("ArithConstants")
 
 library ("ctlib")

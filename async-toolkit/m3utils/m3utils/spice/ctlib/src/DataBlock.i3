@@ -31,6 +31,8 @@ IMPORT Wr, Rd;
    The ReadData procedure will hop through the file looking for the block
    that is tagged as requested and return that block to the caller.
 
+   if compressed, it has the same format, except that the block contents is
+   the compressed byte stream rather than a raw array of floats.
 *)
 
 PROCEDURE WriteData(wr                 : Wr.T;
@@ -38,9 +40,9 @@ PROCEDURE WriteData(wr                 : Wr.T;
                     READONLY block     : ARRAY OF LONGREAL)
   RAISES { Wr.Failure };
 
-PROCEDURE WriteCompressed(wr           : Wr.T;
-                          tag          : CARDINAL; (* m.b. # 0 *)
-                          data         : TEXT)
+PROCEDURE WriteCompressed(wr            : Wr.T;
+                          tag           : CARDINAL; (* m.b. # 0 *)
+                          READONLY data : ARRAY OF TEXT)
   RAISES { Wr.Failure };
 
 PROCEDURE DataCount(rd : Rd.T; tag : CARDINAL) : CARDINAL RAISES { Rd.Failure };

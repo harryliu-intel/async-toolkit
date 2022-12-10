@@ -37,20 +37,26 @@ PROCEDURE WriteData(wr                 : Wr.T;
     END
   END WriteData;
 
-PROCEDURE WriteCompressed(wr           : Wr.T;
+PROCEDURE WriteCompressed(wr                 : Wr.T;
                           tag                : CARDINAL; (* written if nonzero *)
-                          data               : TEXT)
+                          READONLY data      : ARRAY OF TEXT)
   RAISES { Wr.Failure } =
   VAR
-    len := Text.Length(data);
+    len := 0;
   BEGIN
     <*ASSERT tag # 0*>
+
+    FOR i := FIRST(data) TO LAST(data) DO
+      INC(len, Text.Length(data[i]))
+    END;
 
     UnsafeWriter.WriteI  (wr, CompressedFormat);
     UnsafeWriter.WriteI  (wr, tag);
     UnsafeWriter.WriteI  (wr, ThreadF.MyId());
     UnsafeWriter.WriteI  (wr, len);
-    Wr.PutText           (wr, data)
+    FOR i := FIRST(data) TO LAST(data) DO
+      Wr.PutText           (wr, data[i])
+    END
 
   END WriteCompressed;
   
