@@ -174,7 +174,8 @@ BEGIN
       fd.interpolate := pp.getNextLongReal();
       fd.unit        := pp.getNextLongReal()
     END;
-    
+
+    pp.finish()
   EXCEPT
     ParseParams.Error =>
     Debug.Error("Can't parse command-line parameters\nUsage: " &
