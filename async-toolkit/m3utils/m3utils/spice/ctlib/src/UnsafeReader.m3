@@ -39,6 +39,15 @@ PROCEDURE ReadLRA(rd : Rd.T; VAR q : ARRAY OF LONGREAL)
     END
   END ReadLRA;
 
+PROCEDURE ReadLR(rd : Rd.T) : LONGREAL
+  RAISES { Rd.EndOfFile, Rd.Failure, Thread.Alerted } =
+  VAR
+    arr : ARRAY [ 0..0 ] OF LONGREAL;
+  BEGIN
+    ReadLRA(rd, arr);
+    RETURN arr[0]
+  END ReadLR;
+  
 PROCEDURE ReadUA(rd : Rd.T; VAR q : ARRAY OF CARDINAL)
   RAISES { Rd.EndOfFile, Rd.Failure, Thread.Alerted } =
   VAR

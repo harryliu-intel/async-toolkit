@@ -336,6 +336,7 @@ load_signals(void)
 #define TRAVERSE_SIGNAL   2
 #define TRAVERSE_BINARY   4
 #define TRAVERSE_EXTENDED 8
+#define TRAVERSE_FILTER  16
 
 static void 
 PrintTimeValChng(ffrVCTrvsHdl   vc_trvs_hdl, 
@@ -692,7 +693,7 @@ traverse_one_signal(int        idcode,
     int filterfd = fileno(stdout);
     // by default output goes to stdout
 
-    if (filterpath) {
+    if (filterpath && (mode & TRAVERSE_FILTER)) {
       pid_t childpid;
     
       if (pipe(pipefds1) == -1) {
@@ -772,7 +773,7 @@ traverse_one_signal(int        idcode,
 
     // THE FILTER NEEDS TO STOP READING HERE ==========================
 
-    if(filterpath) {
+    if(filterpath && (mode & TRAVERSE_FILTER)) {
       // if we are writing to a filter, close the fd on the writing end
       close(pipefds1[1]);
 
@@ -1017,12 +1018,14 @@ main(int argc, char *argv[])
         break;
 
       case 'x': // traverse signals (binary extended)
+      case 'y':
         for (int_dq *p=active->next; p != active; p = p->next) {
           traverse_one_signal(p->val,
-                              TRAVERSE_EXTENDED,
+                              TRAVERSE_EXTENDED |
+                              (buff[0] == 'y' ? TRAVERSE_FILTER : 0),
                               0);
         }
-        fprintf(stdout, "xR\n");
+        fprintf(stdout, "%cR\n", buff[0]);
         break;
 
       case 'N': // get names

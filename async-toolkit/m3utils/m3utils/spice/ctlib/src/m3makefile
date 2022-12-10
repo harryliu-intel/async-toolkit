@@ -2,6 +2,7 @@ import ("libm3")
 import ("cit_util")
 import ("parseparams")
 import ("spicelib")
+import ("spicecompress")
 
 %m3_optimize("T")
 

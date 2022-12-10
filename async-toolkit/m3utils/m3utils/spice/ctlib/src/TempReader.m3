@@ -95,8 +95,6 @@ PROCEDURE ReadEntireFileM(self     : T;
          dramatically) 
       *)
       IF self.dbDb = NIL OR NOT TE(fn, self.dbFn) THEN
-        
-        
         IF self.dbRd # NIL THEN
           Rd.Close(self.dbRd);
         END;
