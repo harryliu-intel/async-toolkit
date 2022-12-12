@@ -83,7 +83,7 @@ PROCEDURE Evaluate(fn            : TEXT;
     WITH meanSq = sumDiffSq / FLOAT(n, LONGREAL),
          rms    = Math.sqrt(meanSq) DO
 
-      IF DoDebug THEN
+      IF FALSE AND DoDebug THEN
         Debug.Out(F("%s order maxAbsDiff %s RMS %s fails %s cost %s",
                     Int(coeffs),
                     LR(maxAbsDiff),
@@ -99,6 +99,13 @@ PROCEDURE Evaluate(fn            : TEXT;
 
     END;
   END Evaluate;
+
+PROCEDURE CheckChaining(segs : PolySegment16Seq.T) =
+  BEGIN
+    FOR i := 0 TO segs.size() - 1 DO
+      CheckChainedX(segs, i)
+    END
+  END CheckChaining;
 
 PROCEDURE CompressArray(rn         : TEXT; (* for debug *)
 
@@ -118,21 +125,18 @@ PROCEDURE CompressArray(rn         : TEXT; (* for debug *)
   RAISES { MatrixE.Singular } =
   <*FATAL OSError.E, Wr.Failure*>
   CONST
-    MaxOrder = 5;
-
-    InitialPush = 1.2d0;
-    Push = 2.0d0;
-    (* how hard to push error in effort to reduce verification errors *)
-    
+    MaxOrder = MIN(5, LAST(Rep16.Order));
   VAR
     segments     := NEW(PolySegment16Seq.T).init();
-    attemptOrder := MIN(DefOrder, NUMBER(darr) - 1);
+    attemptOrder : Rep16.Order := MIN(DefOrder, NUMBER(darr) - 1);
   BEGIN
     norm := Normalize(darr);
 
     IF doDump THEN
       DumpVec(rn & ".darr.dat", darr, 0)
     END;
+
+    IF AssertAll THEN CheckChaining(segments) END;
 
     AttemptPoly16(rn & ".poly16_0_",
                   SUBARRAY(darr, 0, 1),
@@ -144,6 +148,8 @@ PROCEDURE CompressArray(rn         : TEXT; (* for debug *)
                   doAllDumps,
                   mem);
     
+    IF AssertAll THEN CheckChaining(segments) END;
+
     WITH  seg    = segments.get(0),
           firstY = Rep16.ToFloat0(seg.r.c0) DO
 
@@ -152,6 +158,8 @@ PROCEDURE CompressArray(rn         : TEXT; (* for debug *)
 
       (*********************  BUILD POLYS  *********************)
       
+      IF AssertAll THEN CheckChaining(segments) END;
+
       AttemptPoly16(rn & ".poly16_",
                     darr,
                     0,
@@ -163,6 +171,8 @@ PROCEDURE CompressArray(rn         : TEXT; (* for debug *)
                     mem
       );
 
+      IF AssertAll THEN CheckChaining(segments) END;
+      
       IF DoDebug THEN
         Debug.Out(F("dirty %s : %s segments (%s/%s points)",
                     rn, Int(segments.size()), Int(PolyPoints(segments)),
@@ -174,6 +184,9 @@ PROCEDURE CompressArray(rn         : TEXT; (* for debug *)
       IF doDump THEN
         DumpVec(rn & ".rarr_dirty.dat", rarr, 0)
       END;
+
+      Debug.Out(F("%s segments", Int(segments.size())));
+      
       AssertDelta("rarr_dirty", darr, rarr, targMaxDev);
 
       (*********************  CLEAN POLYS  *********************)
@@ -333,7 +346,7 @@ PROCEDURE AssertDelta(named         : TEXT;
 
 PROCEDURE DecompressArray(rd       : Rd.T;
                           VAR rarr : ARRAY OF LONGREAL)
-  RAISES { Rd.Failure } =
+  RAISES { Rd.Failure, PolySegment16Serial.Error, Rd.EndOfFile } =
   VAR
     segments := NEW(PolySegment16Seq.T).init();
     header : Rep16.Header;
@@ -397,7 +410,7 @@ PROCEDURE AssertLinkage(seq : PolySegment16Seq.T; i : CARDINAL) =
                         Int(prv.lo), Int(prv.n), Int(seg.r.order), Int(seg.lo)))
           END;
           
-          IF seg.r.order = 0 THEN
+          IF seg.r.order = 0 OR seg.r.reset THEN
             <*ASSERT seg.lo = prv.lo + prv.n*>
           ELSE
             <*ASSERT seg.lo = prv.lo + prv.n - 1*>
@@ -414,7 +427,7 @@ PROCEDURE PolyPointsSerial(seq : PolySegment16Seq.T) : CARDINAL =
     FOR i := 0 TO seq.size() - 1 DO
       WITH seg = seq.get(i) DO
         <*ASSERT seg.n = seg.r.count*>
-        IF seg.r.order = 0 THEN
+        IF seg.r.order = 0 OR seg.r.reset THEN
           IF seg.lo # hi + 1 THEN
             Debug.Error(
                 F("Segment consistency check (A) for segment %s order 0: seg.lo (%s) # hi + 1 (%s)",
@@ -568,7 +581,7 @@ PROCEDURE ZeroPoly16(VAR poly       : PolySegment16Seq.T;
         IF success THEN
           (* we found an improvement, finalize it *)
           poly.put(i, cur);
-          FixupNextC0(cur.r, poly, i) 
+          FixupNextC0(poly, i, a, targMaxDev) 
         END
         
       END
@@ -578,33 +591,140 @@ PROCEDURE ZeroPoly16(VAR poly       : PolySegment16Seq.T;
     END
   END ZeroPoly16;
 
-PROCEDURE FixupNextC0(READONLY new : Rep16.T;
-                      segs         : PolySegment16Seq.T;
-                      i            : CARDINAL  (* touched this seg *)
+PROCEDURE FixupNextC0(segs         : PolySegment16Seq.T;
+                      READONLY i   : CARDINAL;  (* touched this seg *)
+                      READONLY a   : ARRAY OF LONGREAL;
+                      targMaxDev   : LONGREAL
   ) =
 
   (* 
      if we modify segment i of segs, we really need to call this routine
 
      it fixes up c0 of the next segment
+
+     This code contains a trap!
+
+     When we change c0 of the next segment, we may break its adherence
+     to the max error.
+
+     If we do this, it should be good enough to set nxt.reset to true and
+     reset nxt's c0 to its original value.  Right?
+
+     Note that this routine violates a key invariant of the code, namely 
+     that the C0s are set correctly through the sequence of poly segments.
   *)
+  VAR
+    seg := segs.get(i);
+    new := seg.r;
   BEGIN
+    <*ASSERT seg.n # 0*>
+    (* dont attempt to fix anything based on a zero-length seg *)
+    
     IF i # segs.size() - 1 THEN
-      VAR nxt := segs.get(i + 1);
+      VAR
+        nxt,
+        save : PolySegment16.T;
+        j := i + 1;
+        n := segs.size();
       BEGIN
-        IF nxt.r.order # 0 THEN
+
+        REPEAT
+          nxt := segs.get(j);
+          IF nxt.n # 0 THEN EXIT END;
+          INC(j);
+        UNTIL j = n;
+
+        IF j = n THEN RETURN END;
+
+        (* we have next valid segment in nxt, j is its location in the seq *)
+        
+        save := nxt; (* save it in case we screw up *)
+        
+        (* assert that we are within the boundaries *)
+        WITH eval = EvalSegment(nxt, a, targMaxDev) DO
+          <*ASSERT eval.fails = 0*>
+        END;
+        
+        IF nxt.r.order # 0 AND NOT nxt.r.reset THEN
+          (* 
+             if nxt.r already has order 0 or reset set,
+             it does not need to be linked to the previous segment
+
+             if neither is true, we ATTEMPT to link it to the
+             previous segment ... 
+          *)
+
           nxt.r.c0 := Rep16.FromFloat0(Rep16.EvalPoly(new, new.count - 1));
-          segs.put(i + 1, nxt)
+
+          (* check whether linking to previous is legal *)
+          
+          WITH eval = EvalSegment(nxt, a, targMaxDev) DO
+
+            IF eval.fails # 0 THEN
+              (* 
+                 nope, not legal:
+                 revert to old segment, but reset the curve here, to legalize
+                 the segment
+              *)
+              nxt         := save; 
+              nxt.r.reset := TRUE;
+            END;
+
+            (* in either case, we have modified the segment and must store it *)
+            segs.put(j, nxt);
+
+            IF eval.fails # 0 THEN
+              (* we have also reset the segment, so the previous segment must
+                 be shortened by 1 *)
+              
+              DEC(seg.n);
+              DEC(seg.r.count);
+              
+              segs.put(i, seg);
+              
+            END;
+
+            CheckChainedX(segs, j);
+            CheckChainedX(segs, i);
+          END;
+
+          (* finally double-check we are not violating *)
+          WITH eval = EvalSegment(nxt, a, targMaxDev) DO
+            <*ASSERT eval.fails = 0*>
+          END
         END
       END
     END
   END FixupNextC0;
+
+PROCEDURE CheckPoly2(nm           : TEXT;
+                     READONLY a   : ARRAY OF LONGREAL;
+                     p            : PolySegment16Seq.T;
+                     targMaxDev   : LONGREAL) =
+  VAR
+    worst := 0.0d0;
+    fails := 0;
+  BEGIN
+    FOR i := 0 TO p.size() - 1 DO
+      WITH seg  = p.get(i),
+           eval = EvalSegment(seg, a, targMaxDev) DO
+        IF eval.fails # 0 THEN
+          INC(fails, eval.fails);
+          worst := MAX(worst, eval.maxAbsDiff)
+        END
+      END
+    END;
+    IF fails # 0 THEN
+      Debug.Error(F("CheckPoly2(%s) : fails %s worst %s",
+                    nm, Int(fails), LR(worst)))
+    END
+  END CheckPoly2;
   
 PROCEDURE CleanPoly16(fn             : TEXT;
                       VAR poly       : PolySegment16Seq.T;
                       READONLY a     : ARRAY OF LONGREAL;
                       targMaxDev     : LONGREAL;
-                      dims           : CARDINAL;
+                      READONLY dims  : Rep16.Order;
                       doAllDumps     : BOOLEAN;
                       mem            : TripleRefTbl.T)
   RAISES { MatrixE.Singular } =
@@ -660,15 +780,21 @@ PROCEDURE CleanPoly16(fn             : TEXT;
     *)
     
     REPEAT
+      CheckPoly("Start", poly);
       success1 := FALSE;
 
       (* try to merge segments *)
       REPEAT 
+        CheckPoly("StartInner", poly);
         success0 := FALSE; 
 
         FOR i := 2 TO poly.size() - 1 DO
           (* attempt to merge left hand poly into current poly 
              -- do NOT merge seg 0 *)
+
+          CheckChainedX(poly, i);
+          CheckChainedX(poly, i - 1);
+          
           cur  := poly.get(i);
           prv  := poly.get(i - 1);
 
@@ -690,7 +816,18 @@ PROCEDURE CleanPoly16(fn             : TEXT;
                                             mem) DO
             
             IF ok THEN
-              IF new.order # 0 AND new.c0 # prv.r.c0 THEN
+              (* get here and the new segment is OK under the target 
+              
+                 note that c0 is NOT invariant, it can change owing to
+                 new curve fitting, but it should really only affect
+                 new segments (not ones linked to the previous)
+              *)
+              
+              IF new.order # 0 AND NOT new.reset AND new.c0 # prv.r.c0 THEN
+
+                (* this check should be enough to ensure we don't destroy
+                   the chaining invariant (see below) *)
+                
                 Debug.Error(F("CleanPoly16 new.order %s new.c0 %s (%s) # prv.r.c0 %s (%s)",
                               Int(new.order),
                               Int(new.c0), LR(Rep16.ToFloat0(new.c0)),
@@ -699,7 +836,7 @@ PROCEDURE CleanPoly16(fn             : TEXT;
               
               IF DoDebug THEN
                 Debug.Out(F("CleanPoly16 successfully merged %s -> %s",
-                            Int(i-1), Int(i)))
+                            Int(i - 1), Int(i)))
               END;
               cur.r  := new;
               cur.lo := xlo;
@@ -708,19 +845,49 @@ PROCEDURE CleanPoly16(fn             : TEXT;
               poly.put(i, cur);
 
               (* fix up c0 in next poly if need be *)
-              FixupNextC0(new, poly, i);
+
+              (* note this should be OK.
+
+                 c0 chaining invariant is maintained because:
+
+                 -- our own c0 is set OK
+                 -- the element to our left is DELETED
+                 -- we fix up the c0 to the RIGHT
+
+                 i.e., all 3 involved segments have correct c0 
+              *)
               
+              (* fix up invariant that x.n = x.r.count *)
               prv.n := 0;
+              
               poly.put(i - 1, prv);
+
+              FixupNextC0(poly, i, a, targMaxDev);
+
               success0 := TRUE; success1 := TRUE;
+            ELSIF success0 THEN
+              (* if we have modified ANY segment, that invalidates all C0s
+                 to the right, and we need to fix the C0s
+                 of the remaining segments to the right! 
+
+                 (Actually this isn't quite right, if we hit a segment of
+                 order 0 or already with reset TRUE, we can halt the fixup,
+                 since changes won't propagate further.)
+              *)
+              FixupNextC0(poly, i, a, targMaxDev);
             END
           END
-        END;
+        END(*ROF*);
+        (* if we get here and success0 is set, we have removed some 
+           segment(s) *)
+
+        CheckPoly("Clean_MergeRight_PreZero", poly);
 
         IF success0 THEN
           RemoveZeroLengthSegments()
         END;
 
+        CheckPoly2("Clean_MergeRight", a, poly, targMaxDev);
         CheckPoly("Clean_MergeRight", poly);
 
         IF AssertAll THEN
@@ -735,40 +902,58 @@ PROCEDURE CleanPoly16(fn             : TEXT;
           cur  := poly.get(i);
 
           IF prv.r.order = 0 THEN
-            WITH pprv  = poly.get(i - 2),
-                 xlo   = prv.lo - 1,  (* total length of relevant points *)
-                 xn    = cur.lo + cur.n - xlo,
-                 sub   = SUBARRAY(a, xlo, xn),
-                 lastY = Rep16.EvalPoly(pprv.r, pprv.r.count - 1),
-                 ok    = AttemptLift0Right16(F("%s.lift_%s_%s", fn, Int(i), Int(j)),
-                                             sub,
-                                             xlo + 1, (* start of prv *)
-                                             prv, cur,
-                                             new,
-                                             dims,
-                                             targMaxDev,
-                                             lastY,
-                                             doAllDumps,
-                                             mem)
-             DO
-              IF ok THEN
-                IF DoDebug THEN
-                  Debug.Out(F("CleanPoly16 successfully lift-merged %s -> %s", Int(i-1), Int(i)))
-                END;
-                cur.r  := new;
-                cur.lo := xlo;
-                cur.n  := xn;
+            VAR
+              xlo : CARDINAL;
+            BEGIN
+              (* careful about where the ansatz should start. 
+
+                 if we want the right segment to have reset FALSE, 
+                 then we need to fit starting one to the left of the 
+                 desired new start.
+              *)
+              
+              xlo := prv.lo - 1;
                 
-                poly.put(i, cur);
-                
-                (* fix up c0 in next poly if need be *)
-                FixupNextC0(new, poly, i);
-                
-                prv.n := 0;
-                poly.put(i - 1, prv);
-                success0 := TRUE; success1 := TRUE; success2 := TRUE;
+              WITH pprv  = poly.get(i - 2),
+                   xn    = cur.lo + cur.n - xlo,
+                   sub   = SUBARRAY(a, xlo, xn),
+                   lastY = Rep16.EvalPoly(pprv.r, pprv.r.count - 1),
+                   ok    = AttemptLift0Right16(F("%s.lift_%s_%s", fn, Int(i), Int(j)),
+                                               sub,
+                                               xlo + 1, (* start of prv *)
+                                               prv, cur,
+                                               new,
+                                               dims,
+                                               targMaxDev,
+                                               lastY,
+                                               doAllDumps,
+                                               mem,
+                                               FALSE)
+               DO
+                IF ok THEN
+                  IF DoDebug THEN
+                    Debug.Out(F("CleanPoly16 successfully lift-merged %s -> %s", Int(i-1), Int(i)))
+                  END;
+                  cur.r  := new;
+                  cur.lo := xlo;
+                  cur.n  := xn;
+                  
+                  poly.put(i, cur);
+                  
+                  
+                  prv.n := 0;
+                  poly.put(i - 1, prv);
+
+                  (* fix up c0 in next poly if need be *)
+                  FixupNextC0(poly, i, a, targMaxDev);
+                  
+                  success0 := TRUE; success1 := TRUE; success2 := TRUE;
+                END
               END
             END
+          ELSIF success2 THEN
+            (* see ELSIF success0 comment above for an explanation of this: *)
+            FixupNextC0(poly, i, a, targMaxDev)
           END
         END;
         
@@ -776,6 +961,11 @@ PROCEDURE CleanPoly16(fn             : TEXT;
           RemoveZeroLengthSegments()
         END;
 
+        FOR i := 1 TO poly.size() - 1 DO (* do not touch first segment *)
+          AssertLinkage(poly, i)
+        END;
+        
+        CheckChaining(poly);
         CheckPoly("Clean_AttemptLift0", poly);
 
         IF AssertAll THEN
@@ -784,6 +974,10 @@ PROCEDURE CleanPoly16(fn             : TEXT;
 
         INC(j)
       UNTIL NOT success0;
+
+      FOR i := 1 TO poly.size() - 1 DO (* do not touch first segment *)
+        AssertLinkage(poly, i)
+      END;
 
       (* try to push down order of each segment *)
       REPEAT
@@ -817,17 +1011,23 @@ PROCEDURE CleanPoly16(fn             : TEXT;
                 DEC(cur.n)
               END;
               poly.put(i, cur);
-              FixupNextC0(new, poly, i);
+              FixupNextC0(poly, i, a, targMaxDev);
               success0 := TRUE; success1 := TRUE
+            ELSIF success0 THEN
+              (* see ELSIF success0 comment above for an explanation of this: *)
+              FixupNextC0(poly, i, a, targMaxDev)
             END;
-
-            CheckPoly("Clean_AttemptLowerOrder", poly);
-
-            IF AssertAll THEN
-              AssertLinkage(poly, i);
-              EVAL PolyPointsSerial(poly) (* assert point sequence *)
-            END
+            AssertLinkage(poly, i);
+            AssertLinkage(poly, MAX(i - 1, 0));
+            AssertLinkage(poly, MIN(i + 1, poly.size() - 1));
           END
+        END;
+
+        CheckChaining(poly);
+        CheckPoly("Clean_AttemptLowerOrder", poly);
+        
+        IF AssertAll THEN
+          EVAL PolyPointsSerial(poly) (* assert point sequence *)
         END
       UNTIL NOT success0;
 
@@ -863,7 +1063,12 @@ PROCEDURE AttemptLowerOrder16(fn                  : TEXT;
                                   Rep16.ToFloat0(seg0.r.c0),
                                   doAllDumps,
                                   mem) DO
-          RETURN eval.fails = 0
+          IF eval.fails = 0 THEN
+            new.reset := seg0.r.reset;
+            RETURN TRUE
+          ELSE
+            RETURN FALSE
+          END
         END
       ELSE
         WITH eval     = PolyFit16(fn & "_" & Int(newOrder),
@@ -875,7 +1080,12 @@ PROCEDURE AttemptLowerOrder16(fn                  : TEXT;
                                   Rep16.ToFloat0(seg0.r.c0),
                                   doAllDumps,
                                   mem) DO
-          RETURN eval.fails = 0
+          IF eval.fails = 0 THEN
+            new.reset := seg0.r.reset;
+            RETURN TRUE
+          ELSE
+            RETURN FALSE
+          END
         END
       END
     END
@@ -888,7 +1098,7 @@ PROCEDURE AttemptMergeRight16(fn                  : TEXT;
                               READONLY seg0, seg1 : PolySegment16.T;
                               VAR new             : Rep16.T;
                               targMaxDev          : LONGREAL;
-                              maxOrder            : CARDINAL;
+                              maxOrder            : Rep16.Order;
                               doAllDumps          : BOOLEAN;
                               mem                 : TripleRefTbl.T) : BOOLEAN
   RAISES { MatrixE.Singular } =
@@ -898,7 +1108,7 @@ PROCEDURE AttemptMergeRight16(fn                  : TEXT;
      if successful, put new seg in new and return TRUE 
   *)
 
-  PROCEDURE Try(order : CARDINAL) : BOOLEAN
+  PROCEDURE Try(order : Rep16.Order) : BOOLEAN
     RAISES { MatrixE.Singular } =
     (* note this depends on maintaining seg0.r.c0 correctly *)
     BEGIN
@@ -934,15 +1144,24 @@ PROCEDURE AttemptMergeRight16(fn                  : TEXT;
     IF    seg0.r.order = seg1.r.order THEN
       (* in this case we are not changing the starting point since the order 
          cannot change *)
-      IF Try(seg0.r.order) THEN RETURN TRUE END
+      IF Try(seg0.r.order) THEN
+        new.reset := seg0.r.reset;
+        RETURN TRUE
+      END
     ELSE
       (* dont raise seg0 order from 0 *)
-      IF seg0.r.order # 0 AND Try(maxOrder0) THEN RETURN TRUE END
+      IF seg0.r.order # 0 AND Try(maxOrder0) THEN
+        new.reset := seg0.r.reset;
+        RETURN TRUE
+      END
     END;
 
     (* didn't succeed at existing order(s) -- again dont raise seg0 order from 0 *)
     IF seg0.r.order # 0 AND maxOrder0 # maxOrder THEN
-      RETURN Try(maxOrder)
+      IF Try(maxOrder) THEN
+        new.reset := seg0.r.reset;
+        RETURN TRUE
+      END
     END;
 
     RETURN FALSE
@@ -957,11 +1176,12 @@ PROCEDURE AttemptLift0Right16(fn                  : TEXT;
                               
                               READONLY seg0, seg1 : PolySegment16.T;
                               VAR new             : Rep16.T;
-                              order               : CARDINAL;
+                              order               : Rep16.Order;
                               targMaxDev          : LONGREAL;
                               lastY               : LONGREAL;
                               doAllDumps          : BOOLEAN;
-                              mem                 : TripleRefTbl.T) : BOOLEAN
+                              mem                 : TripleRefTbl.T;
+                              doReset             : BOOLEAN) : BOOLEAN
   RAISES { MatrixE.Singular } =
   (* 
      attempt to merge two poly segs, where seg0 has order 0, to maxOrder,
@@ -988,6 +1208,7 @@ PROCEDURE AttemptLift0Right16(fn                  : TEXT;
           Debug.Out(F("AttemptLift0Right success seg0.order %s seg1.order %s order %s",
                       Int(seg0.r.order), Int(seg1.r.order), Int(order)))
         END;
+        new.reset := doReset;
         RETURN TRUE
       ELSE
         RETURN FALSE
@@ -1044,6 +1265,7 @@ PROCEDURE AttemptPoly16(fn         : TEXT;
                                        base,
                                        1 });
       IF AssertAll THEN
+        CheckChainedX(segments, segments.size() - 1);
         CheckPostconditions()
       END
       
@@ -1086,6 +1308,7 @@ PROCEDURE AttemptPoly16(fn         : TEXT;
           <* ASSERT base + 1 = lastX + 1 *>
           segments.addhi(PolySegment16.T { poly0, base + 1, NUMBER(a) - 1 });
           IF AssertAll THEN
+            CheckChainedX(segments, segments.size() - 1);
             CheckPostconditions()
           END
 
@@ -1095,6 +1318,7 @@ PROCEDURE AttemptPoly16(fn         : TEXT;
           segments.addhi(PolySegment16.T { poly, base, NUMBER(a) });
 
           IF AssertAll THEN
+            CheckChainedX(segments, segments.size() - 1);
             CheckPostconditions()
           END
         ELSE
@@ -1113,9 +1337,11 @@ PROCEDURE AttemptPoly16(fn         : TEXT;
               segments.addhi(PolySegment16.T { Rep16.FromSingle(a[0]),
                                                base,
                                                1 });
+              CheckChainedX(segments, segments.size() - 1);
               segments.addhi(PolySegment16.T { Rep16.FromSingle(a[1]),
                                                base + 1,
                                                1 });
+              CheckChainedX(segments, segments.size() - 1);
             ELSE (* n > 2 *)
               VAR
                 nover2 := n DIV 2;
@@ -1251,7 +1477,7 @@ PROCEDURE MkLRArray1(sz : CARDINAL) : REFANY =
 PROCEDURE PolyFit16(fn             : TEXT;
                     READONLY a     : ARRAY OF LONGREAL;
                     targMaxDev     : LONGREAL;
-                    order          : CARDINAL;
+                    order          : Rep16.Order;
                     base           : CARDINAL;
                     VAR poly       : Rep16.T;
                     firstY         : LONGREAL;
@@ -1358,27 +1584,137 @@ PROCEDURE PolyFit16(fn             : TEXT;
     
   END PolyFit16;
 
-PROCEDURE Reconstruct(seq   : PolySegment16Seq.T;
-                      VAR a : ARRAY OF LONGREAL) =
+PROCEDURE EvalSegment(seg        : PolySegment16.T;
+                      READONLY a : ARRAY OF LONGREAL;
+                      targMaxDev : LONGREAL) : Evaluation =
   VAR
-    n := seq.size();
+    y := NEW(REF ARRAY OF LONGREAL, seg.n);
   BEGIN
+    FOR i := 0 TO seg.n - 1 DO
+      y[i] := Rep16.EvalPoly(seg.r, i)
+    END;
+    RETURN Evaluate(NIL, seg.r.order, SUBARRAY(a, seg.lo, seg.n), y^,
+                    targMaxDev,
+                    FALSE)
+  END EvalSegment;
+
+PROCEDURE CheckChainedX(seq : PolySegment16Seq.T;
+                        i   : CARDINAL) =
+  VAR
+    lastHi    := -1;
+    expectLastHi : [-1 .. LAST(CARDINAL) ];
+  BEGIN
+    WITH seg = seq.get(i) DO
+      IF seg.r.order = 0 OR seg.r.reset THEN
+        expectLastHi := seg.lo - 1 
+      ELSE
+        expectLastHi := seg.lo
+      END;
+      
+      FOR j := i - 1 TO 0 BY -1 DO
+        WITH prv = seq.get(j) DO
+          IF prv.n # 0 THEN
+            lastHi := prv.lo + prv.n - 1;
+            IF seg.n # 0 AND lastHi # expectLastHi THEN
+              Debug.Error(FN("CheckChainedX assumption broken: idx %s j %s prv %s seg %s; lastHi = %s # expectLastHi = %s",
+                             TA { Int(i), Int(j),
+                                  PolySegment16.Format(prv, TRUE),
+                                  PolySegment16.Format(seg, TRUE),
+                                  Int(lastHi), Int(expectLastHi) } ))
+            END;
+            RETURN
+          END
+        END
+      END
+    END
+  END CheckChainedX;
+  
+PROCEDURE Reconstruct(seq        : PolySegment16Seq.T;
+                      VAR a      : ARRAY OF LONGREAL) =
+  VAR
+    n        := seq.size();
+    lastHi   := -1;
+    expectLastHi : [-1 .. LAST(CARDINAL) ];
+  BEGIN
+    CheckChaining(seq);
     FOR j := 0 TO n - 1 DO
       WITH seg = seq.get(j) DO
-        <*ASSERT seg.r.count = seg.n*>
+        Debug.Out(F("Reconstruct seg %s : %s",
+                    Int(j), PolySegment16.Format(seg, TRUE)));
+        <*ASSERT seg.n = 0 OR seg.r.count = seg.n*>
+
+        IF seg.r.order = 0 OR seg.r.reset THEN
+          expectLastHi := seg.lo - 1 
+        ELSE
+          expectLastHi := seg.lo
+        END;
+
+        (* let's say seg.n = 0 means that the segment is dead, its contents
+           are unimportant *)
+        
+        IF seg.n # 0 AND lastHi # expectLastHi THEN
+          Debug.Error(F("X chaining assumption broken: lastHi = %s # expectLastHi = %s",
+                      Int(lastHi), Int(expectLastHi)))
+        END;
+
+        IF seg.n # 0 THEN
+          lastHi := seg.lo + seg.n - 1
+        END;
+
         FOR i := 0 TO seg.n - 1 DO
           WITH y = Rep16.EvalPoly(seg.r, i) DO
             a[seg.lo + i] := y
           END
         END;
-        IF j # n - 1 THEN
-          FixupNextC0(seg.r, seq, j)
+        IF seg.n # 0 AND j # n - 1 THEN
+          (* 
+             we should not need to fix up the reset bit here 
+             -- if we have to do this, a key property in the code has
+                been violated, namely that our rep is within the error
+                bounds! 
+
+             so it should be OK to pass LAST(LONGREAL) as targMaxDev
+          *)
+          CheckChainedX(seq, j);
+          CheckChainedX(seq, j + 1);
+          FixupNextC0(seq, j, a, LAST(LONGREAL))
         END
       END
     END
   END Reconstruct;
   
-PROCEDURE MakeIndeps16(VAR a : ARRAY OF ARRAY OF LONGREAL; order : CARDINAL) =
+PROCEDURE ReconstructCheck(seq            : PolySegment16Seq.T;
+                           VAR a          : ARRAY OF LONGREAL;
+                           READONLY check : ARRAY OF LONGREAL;
+                           targMaxDev     : LONGREAL) =
+  VAR
+    n := seq.size();
+  BEGIN
+    FOR j := 0 TO n - 1 DO
+      WITH seg = seq.get(j) DO
+        <*ASSERT seg.n = 0 OR seg.r.count = seg.n*>
+        FOR i := 0 TO seg.n - 1 DO
+          WITH y = Rep16.EvalPoly(seg.r, i) DO
+            a[seg.lo + i] := y
+          END
+        END;
+        <*ASSERT EvalSegment(seg, check, targMaxDev).fails = 0 *>
+        IF seg.n # 0 AND j # n - 1 THEN
+          (* 
+             we should not need to fix up the reset bit here 
+             -- if we have to do this, a key property in the code has
+                been violated, namely that our rep is within the error
+                bounds! 
+
+             so it should be OK to pass LAST(LONGREAL) as targMaxDev
+          *)
+          FixupNextC0(seq, j, a, LAST(LONGREAL));
+        END
+      END
+    END
+  END ReconstructCheck;
+  
+PROCEDURE MakeIndeps16(VAR a : ARRAY OF ARRAY OF LONGREAL; order : Rep16.Order) =
   BEGIN
     FOR ix := FIRST(a) TO LAST(a) DO
       IF order = 0 THEN

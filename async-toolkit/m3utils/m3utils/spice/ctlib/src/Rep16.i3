@@ -70,10 +70,11 @@ IMPORT Word;
 *)
 
 CONST
-  Bits = 16;
+  Bits      = 16;
   CountBits = 13;
-  OrderBits = Bits - CountBits;
+  OrderBits = Bits - CountBits - 1; 
 
+  MaxCount = Word.Shift(1, CountBits) - 1;
   MaxPower = Word.Shift(1, OrderBits) - 1;
       
 TYPE
@@ -96,28 +97,31 @@ TYPE
 
   Array = ARRAY OF Base;
 
-  Count = [ 0 .. Word.Shift(1, 13) - 1 ];
+  Count = [ 0 .. MaxCount ];
 
-  Order = [ 0 .. Word.Shift(1, 3) - 1 ];
+  Order = [ 0 .. MaxPower ];
 
   T  = RECORD
-    count : [ 1 .. LAST(Count) ] ;
+    count : [ 1 .. MaxCount ] ;
     order : Order;
-    c0    : Base;
+    c0    : Unsigned;
     c     : ARRAY [ 1 .. MaxPower ] OF Signed;
+    reset : BOOLEAN; 
   END;
 
-PROCEDURE ExpandFixed(READONLY a : Array; VAR b : Array);
-  (* do we need this routine??? *)
-
-PROCEDURE Expand(READONLY t : T; VAR b : Array);
-  (* if t.order = 0 then we expand per t.c0, else we use b[0] to expand;
-     either way NUMBER(b) must be equal to t.count 
-     
-     do we need this routine at all???
-  *)
-
 PROCEDURE EvalPoly(READONLY t : T; x0 : CARDINAL) : LONGREAL;
+  (* 
+     This is the key evaluation routine.
+
+     This routine requires that t.c0 is correctly set upon entry.
+
+     If t.reset is TRUE, then t.c0 can be anything, because this segment
+     has independent meaning.
+
+     If t.reset is FALSE, then t.c0 must be set to the value of evaluating
+     the previous segment at the overlap point, because c0 won't be stored,
+     instead implied by the previous segment.
+  *)
 
 PROCEDURE ToFloat(x : Signed; pow : [1..LAST(Order)]) : LONGREAL;
 

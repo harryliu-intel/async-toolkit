@@ -29,6 +29,9 @@ PROCEDURE Write(wr : Wr.T; seq : Seq.T; min, max : LONGREAL)
 
     Rep16Stream.WriteHeader(wr, header);
 
+    Debug.Out(F("PolySegment16Serial.Write : header %s",
+                Rep16.FormatHeader(header)));
+    
     FOR i := 0 TO seq.size() - 1 DO
       WITH cur = seq.get(i) DO
         Rep16Stream.WriteT(wr, cur.r)
@@ -50,20 +53,22 @@ PROCEDURE Read(rd : Rd.T; seq : Seq.T; VAR header : Rep16.Header)
     
     WHILE bytes DIV 2 < header.nwords DO
       bytes := bytes + Rep16Stream.ReadT(rd, seg.r);
-      IF seg.r.order = 0 THEN
+      IF seg.r.order = 0 OR seg.r.reset THEN
         seg.lo := hi + 1;
-        hi := hi + seg.r.count
+        hi     := hi + seg.r.count
       ELSE
         seg.lo := hi;
-        hi := hi + seg.r.count - 1 (* if order of current seg is not 0, 
-                                      there is one point overlap w/ previous *)
+        hi     := hi + seg.r.count - 1
+        (* if order of current seg is not 0, and we don't reset,
+           there is one point overlap w/ previous *)
       END;
       seg.n := seg.r.count;
       seq.addhi(seg)
     END;
 
     IF bytes DIV 2 # header.nwords THEN
-      RAISE Error(F("bytes DIV 2 # header.nwords"))
+      RAISE Error(F("bytes (%s) DIV 2 # header.nwords (%s)",
+                    Int(bytes), Int(header.nwords)))
     END;
 
     IF hi # header.npoints - 1 THEN

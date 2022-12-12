@@ -5,7 +5,7 @@ IMPORT UnsafeReader, UnsafeWriter;
 IMPORT Thread;
 IMPORT Word;
 FROM Rep16 IMPORT Signed, Unsigned, OrderBits, Zero;
-IMPORT Fmt; FROM Fmt IMPORT Int, F, Pad, FN;
+IMPORT Fmt; FROM Fmt IMPORT Int, F, Pad;
 IMPORT Debug;
 IMPORT TextWr;
 IMPORT TextRd;
@@ -15,6 +15,8 @@ PROCEDURE Bytes(t : Rep16.T) : CARDINAL =
   BEGIN
     IF t.order = 0 THEN
       RETURN (1 + 1) * 2
+    ELSIF t.reset THEN
+      RETURN (2 + t.order) * 2
     ELSE
       RETURN (1 + t.order) * 2
     END
@@ -81,16 +83,19 @@ PROCEDURE WriteSigned(wr : Wr.T; xx : Signed)
 PROCEDURE WriteT(wr : Wr.T; READONLY t : Rep16.T)
   RAISES { Wr.Failure, Thread.Alerted } =
   BEGIN
-    WITH cw = Word.Or(Word.Shift(t.count, OrderBits),
-                      t.order) DO
+    WITH resetI     = ARRAY BOOLEAN OF INTEGER { 0, 1 }[t.reset],
+         countInPos = Word.Shift(t.count, OrderBits + 1),
+         resetInPos = Word.Shift(resetI, OrderBits),
+         orderInPos = t.order,
+
+         cw = Word.Or(countInPos, Word.Or(resetInPos, orderInPos)) DO
       WriteUnsigned(wr, cw)
     END;
-    IF t.order = 0 THEN
+    IF t.order = 0 OR t.reset THEN
       WriteUnsigned(wr, t.c0)
-    ELSE
-      FOR i := 1 TO t.order DO
-        WriteSigned(wr, t.c[i])
-      END
+    END;
+    FOR i := 1 TO t.order DO
+      WriteSigned(wr, t.c[i])
     END
   END WriteT;
 
@@ -104,7 +109,11 @@ PROCEDURE ReadT(rd : Rd.T; VAR t : Rep16.T) : CARDINAL
   TYPE
     Count = Rep16.Count;
   BEGIN
-    WITH cnt =  Word.RightShift(w0, OrderBits) DO
+    WITH reset = Word.And(Word.RightShift(w0, OrderBits),1) # 0 DO
+      t.reset := reset
+    END;
+    
+    WITH cnt =  Word.RightShift(w0, OrderBits + 1) DO
       IF cnt < FIRST(Count) OR cnt > LAST(Count) THEN
         Debug.Warning(F("Count wrong: w0 0x%s OrderBits %s cnt 0x%s FIRST 0x%s LAST 0x%s",
                         Fmt.Unsigned(w0), Int(OrderBits),
@@ -118,14 +127,14 @@ PROCEDURE ReadT(rd : Rd.T; VAR t : Rep16.T) : CARDINAL
     INC(bytes, 2);
     
     t.c := Zero;
-    IF t.order = 0 THEN
+    IF t.order = 0 OR t.reset THEN
       t.c0 := ReadUnsigned(rd);
       INC(bytes, 2)
-    ELSE
-      FOR i := 1 TO t.order DO
-        t.c[i] := ReadSigned(rd);
-        INC(bytes, 2)
-      END
+    END;
+    
+    FOR i := 1 TO t.order DO
+      t.c[i] := ReadSigned(rd);
+      INC(bytes, 2)
     END;
     RETURN bytes
   END ReadT;
@@ -169,6 +178,7 @@ PROCEDURE DebugTxt(txt : TEXT) : TEXT =
   END DebugTxt;
   
 PROCEDURE DoTest() =
+  <*FATAL Thread.Alerted, Wr.Failure, Rd.Failure, Rd.EndOfFile*>
   BEGIN
     FOR i := FIRST(Unsigned) TO LAST(Unsigned) DO
       WITH wr = TextWr.New() DO
