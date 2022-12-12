@@ -11,6 +11,8 @@ IMPORT UnsafeReader;
 IMPORT Rd;
 IMPORT Thread;
 IMPORT SpiceCompress;
+IMPORT FileWr;
+IMPORT Wr;
 
 PROCEDURE ReadFromTemp(tempData    : TEXT;
                        VAR into    : T) =
@@ -36,20 +38,34 @@ PROCEDURE ReadFromTemp(tempData    : TEXT;
 
 PROCEDURE Reconstruct(READONLY t : T; VAR a : ARRAY OF LONGREAL) =
   VAR
-    ft := ArithConstants.CodeBook[t.code];
-    code := NEW(ArithCode.T).init(ft);
-    decoder := code.newDecoder();
-    deWr := TextWr.New();
-    deCb := NEW(ArithCallback.Writer).init(deWr);
-    fiLen := Text.Length(t.finalData);
+    deTxt   : TEXT;
+    fiLen   := Text.Length(t.finalData);
   BEGIN
-    (* see Main.m3<spicestream>  / Main.DoArithCompress *)
-    decoder.setCallback(deCb);
-    decoder.text(t.finalData);
-    decoder.eof();
+    Debug.Out(F("TempDataRep.Reconstruct : code %s fiLen %s",
+                Int(t.code), Int(fiLen)));
+    
+    IF t.code # ArithConstants.ZeroCode THEN
+      WITH     ft      = ArithConstants.CodeBook[t.code],
+               code    = NEW(ArithCode.T).init(ft),
+               decoder = code.newDecoder(),
+               deWr    = TextWr.New(),
+               deCb    = NEW(ArithCallback.Writer).init(deWr) DO
+        (* see Main.m3<spicestream>  / Main.DoArithCompress *)
+        decoder.setCallback(deCb);
+        decoder.text(t.finalData);
+        decoder.eof();
+        deTxt := TextWr.ToText(deWr)
+      END
+    ELSE
+      deTxt := t.finalData
+    END;
 
-    WITH deTxt = TextWr.ToText(deWr),
-         deLen = Text.Length(deTxt),
+    WITH fWr = FileWr.Open("reconstruct_raw") DO
+      Wr.PutText(fWr, deTxt);
+      Wr.Close(fWr)
+    END;
+    
+    WITH deLen = Text.Length(deTxt),
          deRd  = TextRd.New(deTxt) DO
       Debug.Out(F("Arithmetic decode complete, %s -> %s bytes",
                   Int(fiLen), Int(deLen)));

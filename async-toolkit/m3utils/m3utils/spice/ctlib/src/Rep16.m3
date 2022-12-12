@@ -5,6 +5,19 @@ IMPORT Wx;
 
 CONST LR = LongReal;
 
+PROCEDURE Equal(READONLY a, b : T) : BOOLEAN =
+  BEGIN
+    IF a.count # b.count OR a.order # b.order THEN RETURN FALSE END;
+    IF a.order = 0 THEN
+      RETURN a.c0 = b.c0
+    ELSE
+      FOR i := 1 TO a.order DO
+        IF a.c[i] # b.c[i] THEN RETURN FALSE END
+      END
+    END;
+    RETURN TRUE
+  END Equal;
+
 PROCEDURE ExpandFixed(READONLY a : Array; VAR b : Array) =
 
   PROCEDURE Control() =
@@ -97,8 +110,8 @@ PROCEDURE Expand(READONLY t : T; VAR b : Array) =
 
 PROCEDURE EvalPoly(READONLY t : T; x0 : CARDINAL) : LONGREAL =
   VAR
-    xf := FLOAT(x0, LONGREAL);
-    yf := 0.0d0;
+    xf  := FLOAT(x0, LONGREAL);
+    yf  := 0.0d0;
     y0f := ToFloat0(t.c0);
   BEGIN
     FOR p := t.order TO 1 BY -1 DO
@@ -171,19 +184,33 @@ PROCEDURE FromFloat(x : LONGREAL; pow : [1..LAST(Order)]) : Signed =
     END
   END FromFloat;
 
-PROCEDURE Format(READONLY a : T) : TEXT =
+PROCEDURE Format(READONLY a : T; full : BOOLEAN) : TEXT =
+
+  PROCEDURE P0() =
+    BEGIN
+      Wx.PutText(wx, F("c0=%s (%s) ", Int(a.c0), LR(ToFloat0(a.c0))))
+    END P0;
+
+  PROCEDURE P(order : Order) =
+    BEGIN
+      Wx.PutText(wx, "{ ");
+      FOR i := 1 TO order DO
+        Wx.PutText(wx, F("%s (%s) ", Int(a.c[i]), LR(ToFloat(a.c[i], i))))
+      END;
+      Wx.PutText(wx, "} ");
+    END P;
+    
   VAR
     wx := Wx.New();
   BEGIN
     Wx.PutText(wx, F("{ count=%s order=%s ", Int(a.count), Int(a.order)));
-    IF a.order = 0 THEN
-      Wx.PutText(wx, F("c0=%s (%s) ", Int(a.c0), LR(ToFloat0(a.c0))))
+    IF full THEN
+      P0();
+      P(LAST(Order))
+    ELSIF a.order = 0 THEN
+      P0()
     ELSE
-      Wx.PutText(wx, "{ ");
-      FOR i := 1 TO a.order DO
-        Wx.PutText(wx, F("%s (%s) ", Int(a.c[i]), LR(ToFloat(a.c[i], i))))
-      END;
-      Wx.PutText(wx, "} ");
+      P(a.order)
     END;
     Wx.PutText(wx, "} ");
     RETURN Wx.ToText(wx)

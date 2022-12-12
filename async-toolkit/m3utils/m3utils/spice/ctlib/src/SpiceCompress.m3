@@ -3,7 +3,7 @@ IMPORT Debug;
 IMPORT OSError;
 IMPORT Rd;
 IMPORT Pathname;
-FROM Fmt IMPORT F, Int, LongReal, Pad;
+FROM Fmt IMPORT F, Int, LongReal, Pad, Bool, FN;
 IMPORT Trace;
 IMPORT Wr, FileWr;
 IMPORT Math;
@@ -29,8 +29,11 @@ CONST
   LR       = LongReal;
   DefOrder = 2;
 
+TYPE
+  TA = ARRAY OF TEXT;
+
 VAR
-  DoDebug := Debug.DebugThis("SpiceCompress");
+  DoDebug   := Debug.DebugThis("SpiceCompress");
   AssertAll := Env.Get("SpiceCompressAssert") # NIL;
   
 TYPE
@@ -116,6 +119,11 @@ PROCEDURE CompressArray(rn         : TEXT; (* for debug *)
   <*FATAL OSError.E, Wr.Failure*>
   CONST
     MaxOrder = 5;
+
+    InitialPush = 1.2d0;
+    Push = 2.0d0;
+    (* how hard to push error in effort to reduce verification errors *)
+    
   VAR
     segments     := NEW(PolySegment16Seq.T).init();
     attemptOrder := MIN(DefOrder, NUMBER(darr) - 1);
@@ -129,7 +137,7 @@ PROCEDURE CompressArray(rn         : TEXT; (* for debug *)
     AttemptPoly16(rn & ".poly16_0_",
                   SUBARRAY(darr, 0, 1),
                   0,
-                  targMaxDev,
+                  targMaxDev, 
                   segments,
                   0.0d0,
                   0,
@@ -163,14 +171,15 @@ PROCEDURE CompressArray(rn         : TEXT; (* for debug *)
       END;
 
       Reconstruct(segments, rarr);
-
       IF doDump THEN
         DumpVec(rn & ".rarr_dirty.dat", rarr, 0)
       END;
+      AssertDelta("rarr_dirty", darr, rarr, targMaxDev);
 
       (*********************  CLEAN POLYS  *********************)
 
-      CleanPoly16(rn, segments, darr, targMaxDev, MaxOrder, doAllDumps, mem);
+      CleanPoly16(rn,
+                  segments, darr, targMaxDev, MaxOrder, doAllDumps, mem);
 
       IF DoDebug THEN
         Debug.Out(F("clean %s : %s segments (%s/%s points)",
@@ -183,16 +192,19 @@ PROCEDURE CompressArray(rn         : TEXT; (* for debug *)
       IF doDump THEN
         DumpVec(rn & ".rarr_clean.dat", rarr, 0)
       END;
+      AssertDelta("rarr_clean", darr, rarr, targMaxDev);
 
       (*********************  ZERO POLYS  *********************)
 
       ZeroPoly16(segments, darr, targMaxDev, doAllDumps);
 
+      Reconstruct(segments, rarr);
       IF doDump THEN
         DumpVec(rn & ".rarr_zeroed.dat", rarr, 0)
       END;
+      AssertDelta("rarr_zeroed", darr, rarr, targMaxDev);
 
-      IF DoDebug THEN
+      IF TRUE THEN
 
         (***********   produce some detailed debug info   ***********)
         
@@ -220,9 +232,48 @@ PROCEDURE CompressArray(rn         : TEXT; (* for debug *)
               PolySegment16Serial.Read(rd, newSegments, header);
               
               Debug.Out(F("Readback of segments (wrote min=%s max=%s segments=%s) : %s, entropy %s",
-                          LR(norm.min), LR(norm.max), Int(segments.size()),
+                          LR(norm.min), LR(norm.max), Int(newSegments.size()),
                           Rep16.FormatHeader(header),
-                          LR(ent)))
+                          LR(ent)));
+
+
+              <*ASSERT newSegments.size() = segments.size()*>
+
+              Reconstruct(newSegments, rarr);
+              (* must Reconstruct for c0 to be valid *)
+
+              FOR i := 0 TO segments.size() - 1 DO
+                WITH new = newSegments.get(i), old = segments.get(i) DO
+                  IF new # old THEN
+                    VAR
+                      abEq := PolySegment16.Equal(new, old);
+                      msg := F("old.lo=%s abEq=%s\nnew=%s\nold=%s",
+                               Int(old.lo),
+                               Bool(abEq),
+                               PolySegment16.Format(new, TRUE),
+                               PolySegment16.Format(old, TRUE));
+                      fmsg := F("Segment verify mismatch at segment %s :\n%s",
+                                    Int(i), msg);
+                    BEGIN
+                      IF abEq THEN
+                        Debug.Warning(fmsg)
+                      ELSE
+                        Debug.Error  (fmsg)
+                      END
+                    END
+                  END
+                END
+              END;
+
+              IF doDump THEN
+                DumpVec(rn & ".reconstruct.dat", rarr, 0)
+              END;
+              AssertDelta("reconstruct", darr, rarr, targMaxDev);
+
+              WITH fWr = FileWr.Open(rn & ".compress_raw") DO
+                Wr.PutText(fWr, txt);
+                Wr.Close(fWr)
+              END
             END
             
           END
@@ -239,6 +290,47 @@ PROCEDURE CompressArray(rn         : TEXT; (* for debug *)
     END
   END CompressArray;
 
+PROCEDURE AssertDelta(named         : TEXT;
+                      READONLY a, b : ARRAY OF LONGREAL;
+                      maxDev        : LONGREAL) =
+  VAR
+    maxDelta := 0.0d0;
+    worst : CARDINAL;
+    errs := 0;
+  BEGIN
+    IF NUMBER(a) # NUMBER(b) THEN
+      Debug.Error(F("AssertDelta %s NUMBER(a) %s # NUMBER(b) %s",
+                    named, Int(NUMBER(a)), Int(NUMBER(b))))
+    END;
+
+    FOR i := FIRST(a) TO LAST(a) DO
+      WITH delta = a[i] - b[i],
+           absDelta = ABS(delta) DO
+        IF absDelta > maxDev THEN
+          INC(errs);
+          IF absDelta > maxDelta THEN
+            worst := i;
+            maxDelta := absDelta;
+          END;
+        END
+      END
+    END;
+
+    IF errs # 0 THEN
+      Debug.Error(FN("AssertDelta %s errs=%s / worst a[%s]=%s  b[%s]=%s, delta %s > %s",
+                     TA { named,
+                          Int(errs),
+                          Int(worst),
+                          LR(a[worst]),
+                          Int(worst),
+                          LR(b[worst]),
+                          LR(maxDelta),
+                          LR(maxDev) }))
+    END
+
+    
+  END AssertDelta;
+
 PROCEDURE DecompressArray(rd       : Rd.T;
                           VAR rarr : ARRAY OF LONGREAL)
   RAISES { Rd.Failure } =
@@ -249,8 +341,7 @@ PROCEDURE DecompressArray(rd       : Rd.T;
     PolySegment16Serial.Read(rd, segments, header);
     Reconstruct(segments, rarr)
   END DecompressArray;
- 
-  
+   
 PROCEDURE DoDemo(targMaxDev : LONGREAL;
                  KK         : REF ARRAY OF CARDINAL;
                  trace      : Trace.T;
@@ -518,6 +609,14 @@ PROCEDURE CleanPoly16(fn             : TEXT;
                       mem            : TripleRefTbl.T)
   RAISES { MatrixE.Singular } =
 
+  (* this routine is problematic, BECAUSE...
+
+     it modifies a current segment by a small amount, but this segment's
+     final value is then used as the start value of the next segment.
+
+     So errors can accumulate... 
+  *)
+  
   PROCEDURE RemoveZeroLengthSegments() =
     BEGIN
       (* remove any zero-length segments *)
@@ -530,12 +629,19 @@ PROCEDURE CleanPoly16(fn             : TEXT;
         poly := new
       END
     END RemoveZeroLengthSegments;
+
+  PROCEDURE CheckPoly(nm : TEXT; p : PolySegment16Seq.T) =
+    BEGIN
+      Reconstruct(p, dbg^);
+      AssertDelta(nm, a, dbg^, targMaxDev)
+    END CheckPoly;
     
   VAR
     cur, prv                        : PolySegment16.T;
     new                             : Rep16.T;
     success0, success1, success2    : BOOLEAN;
     j             := 0;
+    dbg           := NEW(REF ARRAY OF LONGREAL, NUMBER(a));
   BEGIN
     (* repeat until fixed point *)
     (* two phases:
@@ -561,7 +667,8 @@ PROCEDURE CleanPoly16(fn             : TEXT;
         success0 := FALSE; 
 
         FOR i := 2 TO poly.size() - 1 DO
-          (* attempt to merge left hand poly into current poly -- do NOT merge seg 0 *)
+          (* attempt to merge left hand poly into current poly 
+             -- do NOT merge seg 0 *)
           cur  := poly.get(i);
           prv  := poly.get(i - 1);
 
@@ -583,8 +690,16 @@ PROCEDURE CleanPoly16(fn             : TEXT;
                                             mem) DO
             
             IF ok THEN
+              IF new.order # 0 AND new.c0 # prv.r.c0 THEN
+                Debug.Error(F("CleanPoly16 new.order %s new.c0 %s (%s) # prv.r.c0 %s (%s)",
+                              Int(new.order),
+                              Int(new.c0), LR(Rep16.ToFloat0(new.c0)),
+                              Int(prv.r.c0), LR(Rep16.ToFloat0(prv.r.c0))))
+              END;
+              
               IF DoDebug THEN
-                Debug.Out(F("CleanPoly16 successfully merged %s -> %s", Int(i-1), Int(i)))
+                Debug.Out(F("CleanPoly16 successfully merged %s -> %s",
+                            Int(i-1), Int(i)))
               END;
               cur.r  := new;
               cur.lo := xlo;
@@ -605,6 +720,8 @@ PROCEDURE CleanPoly16(fn             : TEXT;
         IF success0 THEN
           RemoveZeroLengthSegments()
         END;
+
+        CheckPoly("Clean_MergeRight", poly);
 
         IF AssertAll THEN
           EVAL PolyPointsSerial(poly) (* assert point sequence *)
@@ -659,6 +776,8 @@ PROCEDURE CleanPoly16(fn             : TEXT;
           RemoveZeroLengthSegments()
         END;
 
+        CheckPoly("Clean_AttemptLift0", poly);
+
         IF AssertAll THEN
           EVAL PolyPointsSerial(poly) (* assert point sequence *)
         END;
@@ -701,6 +820,8 @@ PROCEDURE CleanPoly16(fn             : TEXT;
               FixupNextC0(new, poly, i);
               success0 := TRUE; success1 := TRUE
             END;
+
+            CheckPoly("Clean_AttemptLowerOrder", poly);
 
             IF AssertAll THEN
               AssertLinkage(poly, i);
@@ -772,7 +893,9 @@ PROCEDURE AttemptMergeRight16(fn                  : TEXT;
                               mem                 : TripleRefTbl.T) : BOOLEAN
   RAISES { MatrixE.Singular } =
   (* 
-     attempt to merge two poly segs, if successful, put new seg in new and return TRUE 
+     attempt to merge two poly segs, left seg0 INTO right seg1
+
+     if successful, put new seg in new and return TRUE 
   *)
 
   PROCEDURE Try(order : CARDINAL) : BOOLEAN
@@ -1213,7 +1336,7 @@ PROCEDURE PolyFit16(fn             : TEXT;
       END;
 
       IF DoDebug THEN
-        Debug.Out("PolyFit16 poly:\n" & Rep16.Format(poly))
+        Debug.Out("PolyFit16 poly:\n" & Rep16.Format(poly, FALSE))
       END
     END;
 
@@ -1237,14 +1360,19 @@ PROCEDURE PolyFit16(fn             : TEXT;
 
 PROCEDURE Reconstruct(seq   : PolySegment16Seq.T;
                       VAR a : ARRAY OF LONGREAL) =
+  VAR
+    n := seq.size();
   BEGIN
-    FOR j := 0 TO seq.size() - 1 DO
+    FOR j := 0 TO n - 1 DO
       WITH seg = seq.get(j) DO
         <*ASSERT seg.r.count = seg.n*>
         FOR i := 0 TO seg.n - 1 DO
           WITH y = Rep16.EvalPoly(seg.r, i) DO
             a[seg.lo + i] := y
           END
+        END;
+        IF j # n - 1 THEN
+          FixupNextC0(seg.r, seq, j)
         END
       END
     END

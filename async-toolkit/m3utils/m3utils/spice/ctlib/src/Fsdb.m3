@@ -123,13 +123,14 @@ PROCEDURE ReadCompressedNodeDataG(rd         : Rd.T;
             ELSIF TE(kw, "ZZZ") THEN
               (* this code synchronized with Main.m3<spicestream> *)
               tag      := Rd.GetChar(rd);
+              <*ASSERT tag = 'x'*>
               nodeid   := UnsafeReader.ReadI(rd);
               bytes    := UnsafeReader.ReadI(rd);
               norm.min := UnsafeReader.ReadLR(rd);
               norm.max := UnsafeReader.ReadLR(rd);
 
-              Debug.Out(F("Fsdb.ReadCompressedNodeDataG got nodeid %s bytes %s",
-                          Int(nodeid), Int(bytes)));
+              Debug.Out(F("Fsdb.ReadCompressedNodeDataG got nodeid %s bytes %s m in %s max %s",
+                          Int(nodeid), Int(bytes), LR(norm.min), LR(norm.max) ));
               
               WITH buflen  = bytes - 8, (* 9 is len of min, max, code *)
                    chars   = NEW(REF ARRAY OF CHAR, buflen),
@@ -1236,7 +1237,7 @@ PROCEDURE GeneratePartialTraceFile(wr                   : Wr.T;
     END;
 
     IF compressPath # NIL THEN
-      WITH compressCmdString = F("F %s -filter %s %s %s",
+      WITH compressCmdString = F("F %s -dump -filter %s %s %s",
                                  compressPath,
                                  Int(nSteps),
                                  LR(interpolate),

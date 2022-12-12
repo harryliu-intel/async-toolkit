@@ -131,8 +131,11 @@ PROCEDURE FromSingle(x : LONGREAL) : T;
 
 CONST Zero = ARRAY [ 1 .. MaxPower ] OF Signed { 0 , .. };
 
-PROCEDURE Format(READONLY a : T) : TEXT;
+PROCEDURE Format(READONLY a : T; full : BOOLEAN) : TEXT;
+  (* if full is TRUE, print hidden fields *)
 
 PROCEDURE FormatHeader(READONLY h : Header) : TEXT;
-      
+
+PROCEDURE Equal(READONLY a, b : T) : BOOLEAN;
+  
 END Rep16.

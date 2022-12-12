@@ -5,8 +5,11 @@ IMPORT UnsafeReader, UnsafeWriter;
 IMPORT Thread;
 IMPORT Word;
 FROM Rep16 IMPORT Signed, Unsigned, OrderBits, Zero;
-IMPORT Fmt; FROM Fmt IMPORT Int, F;
+IMPORT Fmt; FROM Fmt IMPORT Int, F, Pad, FN;
 IMPORT Debug;
+IMPORT TextWr;
+IMPORT TextRd;
+IMPORT Text;
 
 PROCEDURE Bytes(t : Rep16.T) : CARDINAL =
   BEGIN
@@ -45,13 +48,14 @@ PROCEDURE ReadUnsigned(rd : Rd.T) : Unsigned
 
 PROCEDURE ReadSigned(rd : Rd.T) : Signed 
   RAISES { Rd.Failure, Thread.Alerted, Rd.EndOfFile } =
-  CONST
-    sa = Word.Size - 8;
   VAR
     u := ReadUnsigned(rd);
+    res : INTEGER := u;
   BEGIN
-    (* sign extend u *)
-    RETURN Word.RightShift(Word.Shift(u, sa), sa)
+    IF res >= Word.Shift(1, 15) THEN
+      DEC(res, Word.Shift(1, 16))
+    END;
+    RETURN res
   END ReadSigned;
   
 PROCEDURE WriteSigned(wr : Wr.T; xx : Signed)
@@ -73,7 +77,7 @@ PROCEDURE WriteSigned(wr : Wr.T; xx : Signed)
   END WriteSigned;
   
 (**********************************************************************)
-
+      
 PROCEDURE WriteT(wr : Wr.T; READONLY t : Rep16.T)
   RAISES { Wr.Failure, Thread.Alerted } =
   BEGIN
@@ -150,5 +154,52 @@ PROCEDURE ReadHeader(rd : Rd.T; VAR h : Rep16.Header) : CARDINAL
     h.max := a[1];
     RETURN HeaderBytes
   END ReadHeader;
+
+PROCEDURE DebugTxt(txt : TEXT) : TEXT =
+  VAR
+    res := "";
+  BEGIN
+    FOR i := 0 TO Text.Length(txt) - 1 DO
+      res := res & Pad( Fmt.Unsigned(ORD(Text.GetChar(txt, i))),
+                                     2,
+                                     padChar := '0');
+      res := res & " "
+    END;
+    RETURN res
+  END DebugTxt;
   
-BEGIN END Rep16Stream.
+PROCEDURE DoTest() =
+  BEGIN
+    FOR i := FIRST(Unsigned) TO LAST(Unsigned) DO
+      WITH wr = TextWr.New() DO
+        WriteUnsigned(wr, i);
+        WITH txt = TextWr.ToText(wr),
+             rd  = TextRd.New(txt),
+             rb  = ReadUnsigned(rd) DO
+          IF rb # i THEN
+            Debug.Error(F("Unsigned r/w verify error for %s (wrote %s), read %s",
+                          Int(i), DebugTxt(txt), Int(rb)))
+          END
+        END
+      END
+    END;
+    FOR i := FIRST(Signed) TO LAST(Signed) DO
+      WITH wr = TextWr.New() DO
+        WriteSigned(wr, i);
+        WITH txt = TextWr.ToText(wr),
+             rd  = TextRd.New(txt),
+             rb  = ReadSigned(rd) DO
+          IF rb # i THEN
+            Debug.Error(F("Signed r/w verify error for %s (wrote %s), read %s",
+                          Int(i), DebugTxt(txt), Int(rb)))
+          END
+        END
+      END
+    END
+  END DoTest;
+
+CONST Verify = TRUE;
+      
+BEGIN
+  IF Verify THEN DoTest() END
+END Rep16Stream.

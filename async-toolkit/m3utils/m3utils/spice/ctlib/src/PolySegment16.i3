@@ -10,4 +10,8 @@ TYPE
 
 CONST Brand = "PolySegment16";
 
+PROCEDURE Format(READONLY t : T; full : BOOLEAN) : TEXT;
+
+PROCEDURE Equal(READONLY a, b : T) : BOOLEAN;
+  
 END PolySegment16.
