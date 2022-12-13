@@ -219,7 +219,7 @@ PROCEDURE CompressArray(rn         : TEXT; (* for debug *)
       END;
       AssertDelta("rarr_zeroed", darr, rarr, targMaxDev);
 
-      IF TRUE THEN
+      IF DoDebug THEN
 
         (***********   produce some detailed debug info   ***********)
         
