@@ -318,6 +318,8 @@ VAR
 
   interpolate := Fsdb.NoInterpolate;
 
+  compressPrec := 0.01d0;
+  
 TYPE
   ParseFmt = { Tr0, Fsdb };
   
@@ -343,6 +345,10 @@ BEGIN
       compressCmdPath := pp.getNext()
     END;
 
+    IF pp.keywordPresent("-prec") THEN
+      compressPrec := pp.getNextLongReal()
+    END;
+    
     IF pp.keywordPresent("-wrtrace") THEN
       writeTraceCmdPath := pp.getNext()
     END;
@@ -475,6 +481,7 @@ BEGIN
                  regExList,
                  fsdbCmdPath,
                  compressCmdPath,
+                 compressPrec,
                  threads,
                  interpolate)
     END;

@@ -439,6 +439,7 @@ PROCEDURE GenSingleThreaded(rd                  : Rd.T;
                             READONLY wdWr       : ARRAY OF Wr.T;
                             READONLY wdPth      : ARRAY OF Pathname.T;
                             compressPath        : Pathname.T;
+                            compressPrec        : LONGREAL;
                             voltageScaleFactor,
                             voltageOffset,
                             interpolate,
@@ -457,6 +458,7 @@ PROCEDURE GenSingleThreaded(rd                  : Rd.T;
                                wr, 
                                timesteps.size(),
                                compressPath,
+                               compressPrec,
                                voltageScaleFactor,
                                voltageOffset,
                                interpolate,
@@ -473,6 +475,7 @@ PROCEDURE GenMultiThreaded(threads               : CARDINAL;
                            READONLY wdPth        : ARRAY OF Pathname.T;
                            cmdPath, fsdbPath     : Pathname.T;
                            compressPath          : Pathname.T;
+                           compressPrec          : LONGREAL;
                            voltageScaleFactor,
                            voltageOffset,
                            interpolate,
@@ -493,6 +496,7 @@ PROCEDURE GenMultiThreaded(threads               : CARDINAL;
                                          cmdPath,
                                          fsdbPath,
                                          compressPath,
+                                         compressPrec,
                                          voltageScaleFactor,
                                          voltageOffset,
                                          interpolate,
@@ -713,6 +717,7 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
                 restrictRegEx : RegExList.T;
                 cmdPath       : Pathname.T;
                 compressPath  : Pathname.T;
+                compressPrec  : LONGREAL;
                 threads       : CARDINAL;
                 interpolate   : LONGREAL
   )
@@ -944,6 +949,7 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
                              wdPth^,
                              cmdPath, fsdbPath,
                              compressPath,
+                             compressPrec,
                              voltageScaleFactor, voltageOffset,
                              interpolate,
                              unit)
@@ -956,6 +962,7 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
                              wdWr^,
                              wdPth^,
                              compressPath,
+                             compressPrec,
                              voltageScaleFactor, voltageOffset,
                              interpolate,
                              unit)
@@ -1012,31 +1019,35 @@ PROCEDURE RemoveZeros(tbl : TextCardTbl.T) =
 
 TYPE
   GenClosure = Thread.Closure OBJECT
-    mu      : MUTEX;             (* shared between all threads *)
-    c, d    : Thread.Condition;  (* shared between all threads *)
+    mu                : MUTEX;             (* shared between all threads *)
+    c, d              : Thread.Condition;  (* shared between all threads *)
     (* c signals new task; d signals new slot *)
     
-    tWr     : Wr.T;
-    tPath   : Pathname.T;
-    nodeIds : CardSeq.T;
-    idxMap  : CardSeq.T;
-    nsteps  : CARDINAL;
+    tWr               : Wr.T;
+    tPath             : Pathname.T;
+    nodeIds           : CardSeq.T;
+    idxMap            : CardSeq.T;
+    nsteps            : CARDINAL;
 
     cmdPath, fsdbPath : Pathname.T;
-    compressPath : Pathname.T;
-    thr     : Thread.T;
+    compressPath      : Pathname.T;
+    compressPrec      : LONGREAL;
+    thr               : Thread.T;
     doExit := FALSE;
     
-    voltageScaleFactor, voltageOffset : LONGREAL;
+    voltageScaleFactor,
+    voltageOffset,
     interpolate, unit : LONGREAL;
   METHODS
-    init(c, d : Thread.Condition;
-         mu : MUTEX;
-         idxMap : CardSeq.T;
-         nsteps : CARDINAL;
+    init(c, d              : Thread.Condition;
+         mu                : MUTEX;
+         idxMap            : CardSeq.T;
+         nsteps            : CARDINAL;
          cmdPath, fsdbPath : Pathname.T;
-         compressPath : Pathname.T;
-         voltageScaleFactor, voltageOffset : LONGREAL;
+         compressPath      : Pathname.T;
+         compressPrec      : LONGREAL;
+         voltageScaleFactor,
+         voltageOffset,
          interpolate, unit : LONGREAL;
     ) : GenClosure  := GenInit;
     task(taskWr : Wr.T; taskIds : CardSeq.T; path : Pathname.T)  := GenTask;
@@ -1061,6 +1072,7 @@ PROCEDURE GenInit(cl : GenClosure;
                   nsteps : CARDINAL;
                   cmdPath, fsdbPath : Pathname.T;
                   compressPath : Pathname.T;
+                  compressPrec : LONGREAL;
                   voltageScaleFactor, voltageOffset : LONGREAL;
                   interpolate, unit : LONGREAL
   ) : GenClosure =
@@ -1073,6 +1085,7 @@ PROCEDURE GenInit(cl : GenClosure;
     cl.cmdPath            := cmdPath;
     cl.fsdbPath           := fsdbPath;
     cl.compressPath       := compressPath;
+    cl.compressPrec       := compressPrec;
     cl.thr                := Thread.Fork(cl);
     cl.voltageScaleFactor := voltageScaleFactor;
     cl.voltageOffset      := voltageOffset;
@@ -1178,6 +1191,7 @@ PROCEDURE GenApply(cl : GenClosure) : REFANY =
                                  cmdWr,
                                  cl.nsteps,
                                  cl.compressPath,
+                                 cl.compressPrec,
                                  cl.voltageScaleFactor,
                                  cl.voltageOffset,
                                  cl.interpolate,
@@ -1221,6 +1235,7 @@ PROCEDURE GeneratePartialTraceFile(wr                   : Wr.T;
                                    nSteps               : CARDINAL;
                                    compressPath         : Pathname.T;
                                    (* if NIL, no compression *)
+                                   compressPrec         : LONGREAL;
                                    
                                    voltageScaleFactor,
                                    voltageOffset,
@@ -1237,11 +1252,12 @@ PROCEDURE GeneratePartialTraceFile(wr                   : Wr.T;
     END;
 
     IF compressPath # NIL THEN
-      WITH compressCmdString = F("F %s -dump -filter %s %s %s",
+      WITH compressCmdString = F("F %s -dump -filter %s %s %s -prec %s",
                                  compressPath,
                                  Int(nSteps),
                                  LR(interpolate),
-                                 LR(unit)) DO
+                                 LR(unit),
+                                 LR(compressPrec)) DO
         IF doDebug THEN
           Debug.Out(F("Setting up waveform compression with string \"%s\"",
                       compressCmdString))

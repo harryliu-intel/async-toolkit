@@ -180,17 +180,14 @@ PROCEDURE CompressArray(rn         : TEXT; (* for debug *)
         ))
       END;
 
-      Reconstruct(segments, rarr);
-      IF doDump THEN
-        DumpVec(rn & ".rarr_dirty.dat", rarr, 0)
-      END;
-
-      IF DoDebug THEN
-        Debug.Out(F("%s segments", Int(segments.size())))
+      IF AssertAll OR doDump THEN
+        Reconstruct(segments, rarr);
+        IF doDump THEN
+          DumpVec(rn & ".rarr_dirty.dat", rarr, 0)
+        END;
+        AssertDelta("rarr_dirty", darr, rarr, targMaxDev)
       END;
       
-      AssertDelta("rarr_dirty", darr, rarr, targMaxDev);
-
       (*********************  CLEAN POLYS  *********************)
 
       CleanPoly16(rn,
@@ -203,21 +200,25 @@ PROCEDURE CompressArray(rn         : TEXT; (* for debug *)
         ))
       END;
 
-      Reconstruct(segments, rarr);
-      IF doDump THEN
-        DumpVec(rn & ".rarr_clean.dat", rarr, 0)
+      IF AssertAll OR doDump THEN
+        Reconstruct(segments, rarr);
+        IF doDump THEN
+          DumpVec(rn & ".rarr_clean.dat", rarr, 0)
+        END;
+        AssertDelta("rarr_clean", darr, rarr, targMaxDev)
       END;
-      AssertDelta("rarr_clean", darr, rarr, targMaxDev);
 
       (*********************  ZERO POLYS  *********************)
 
       ZeroPoly16(segments, darr, targMaxDev, doAllDumps);
 
-      Reconstruct(segments, rarr);
-      IF doDump THEN
-        DumpVec(rn & ".rarr_zeroed.dat", rarr, 0)
+      IF AssertAll OR doDump THEN
+        Reconstruct(segments, rarr);
+        IF doDump THEN
+          DumpVec(rn & ".rarr_zeroed.dat", rarr, 0)
+        END;
+        AssertDelta("rarr_zeroed", darr, rarr, targMaxDev);
       END;
-      AssertDelta("rarr_zeroed", darr, rarr, targMaxDev);
 
       IF DoDebug THEN
 
@@ -709,8 +710,10 @@ PROCEDURE FixupNextC0(segs         : PolySegment16Seq.T;
               
             END;
 
-            CheckChainedX(segs, j);
-            CheckChainedX(segs, i);
+            IF AssertAll THEN
+              CheckChainedX(segs, j);
+              CheckChainedX(segs, i)
+            END;
           END;
 
           (* finally double-check we are not violating *)
@@ -805,20 +808,26 @@ PROCEDURE CleanPoly16(fn             : TEXT;
     *)
     
     REPEAT
-      CheckPoly("Start", poly);
+      IF AssertAll THEN
+        CheckPoly("Start", poly)
+      END;
       success1 := FALSE;
 
       (* try to merge segments *)
-      REPEAT 
-        CheckPoly("StartInner", poly);
+      REPEAT
+        IF AssertAll THEN
+          CheckPoly("StartInner", poly)
+        END;
         success0 := FALSE; 
 
         FOR i := 2 TO poly.size() - 1 DO
           (* attempt to merge left hand poly into current poly 
              -- do NOT merge seg 0 *)
 
-          CheckChainedX(poly, i);
-          CheckChainedX(poly, i - 1);
+          IF AssertAll THEN
+            CheckChainedX(poly, i);
+            CheckChainedX(poly, i - 1)
+          END;
           
           cur  := poly.get(i);
           prv  := poly.get(i - 1);
@@ -906,16 +915,17 @@ PROCEDURE CleanPoly16(fn             : TEXT;
         (* if we get here and success0 is set, we have removed some 
            segment(s) *)
 
-        CheckPoly("Clean_MergeRight_PreZero", poly);
+        IF AssertAll THEN
+          CheckPoly("Clean_MergeRight_PreZero", poly)
+        END;
 
         IF success0 THEN
           RemoveZeroLengthSegments(poly)
         END;
 
-        CheckPoly2("Clean_MergeRight", a, poly, targMaxDev);
-        CheckPoly("Clean_MergeRight", poly);
-
         IF AssertAll THEN
+          CheckPoly2("Clean_MergeRight", a, poly, targMaxDev);
+          CheckPoly("Clean_MergeRight", poly);
           EVAL PolyPointsSerial(poly) (* assert point sequence *)
         END;
         
@@ -986,14 +996,12 @@ PROCEDURE CleanPoly16(fn             : TEXT;
           RemoveZeroLengthSegments(poly)
         END;
 
-        FOR i := 1 TO poly.size() - 1 DO (* do not touch first segment *)
-          AssertLinkage(poly, i)
-        END;
-        
-        CheckChaining(poly);
-        CheckPoly("Clean_AttemptLift0", poly);
-
         IF AssertAll THEN
+          FOR i := 1 TO poly.size() - 1 DO (* do not touch first segment *)
+            AssertLinkage(poly, i)
+          END;
+          CheckChaining(poly);
+          CheckPoly("Clean_AttemptLift0", poly);
           EVAL PolyPointsSerial(poly) (* assert point sequence *)
         END;
 
@@ -1052,10 +1060,10 @@ PROCEDURE CleanPoly16(fn             : TEXT;
           END
         END;
 
-        CheckChaining(poly);
-        CheckPoly("Clean_AttemptLowerOrder", poly);
         
         IF AssertAll THEN
+          CheckChaining(poly);
+          CheckPoly("Clean_AttemptLowerOrder", poly);
           EVAL PolyPointsSerial(poly) (* assert point sequence *)
         END
       UNTIL NOT success0;
@@ -1366,11 +1374,16 @@ PROCEDURE AttemptPoly16(fn         : TEXT;
               segments.addhi(PolySegment16.T { Rep16.FromSingle(a[0]),
                                                base,
                                                1 });
-              CheckChainedX(segments, segments.size() - 1);
+              IF AssertAll THEN
+                CheckChainedX(segments, segments.size() - 1)
+              END;
+              
               segments.addhi(PolySegment16.T { Rep16.FromSingle(a[1]),
                                                base + 1,
                                                1 });
-              CheckChainedX(segments, segments.size() - 1);
+              IF AssertAll THEN
+                CheckChainedX(segments, segments.size() - 1)
+              END;
             ELSE (* n > 2 *)
               VAR
                 nover2 := n DIV 2;
@@ -1665,7 +1678,7 @@ PROCEDURE Reconstruct(seq        : PolySegment16Seq.T;
     lastHi   := -1;
     expectLastHi : [-1 .. LAST(CARDINAL) ];
   BEGIN
-    CheckChaining(seq);
+    IF AssertAll THEN CheckChaining(seq) END;
     FOR j := 0 TO n - 1 DO
       WITH seg = seq.get(j) DO
         IF DoDebug THEN
@@ -1706,8 +1719,10 @@ PROCEDURE Reconstruct(seq        : PolySegment16Seq.T;
 
              so it should be OK to pass LAST(LONGREAL) as targMaxDev
           *)
-          CheckChainedX(seq, j);
-          CheckChainedX(seq, j + 1);
+          IF AssertAll THEN
+            CheckChainedX(seq, j);
+            CheckChainedX(seq, j + 1);
+          END;
           FixupNextC0(seq, j, a, LAST(LONGREAL))
         END
       END

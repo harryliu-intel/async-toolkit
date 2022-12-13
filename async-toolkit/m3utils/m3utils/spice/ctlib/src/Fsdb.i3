@@ -33,6 +33,7 @@ PROCEDURE Parse(wd            : Pathname.T;
                 restrictRegEx : RegExList.T;
                 cmdPath       : Pathname.T;
                 compressPath  : Pathname.T;
+                compressPrec  : LONGREAL;
                 threads       : CARDINAL;
                 interpolate   : LONGREAL)
   RAISES { Rd.Failure, ShortRead, SyntaxError };
