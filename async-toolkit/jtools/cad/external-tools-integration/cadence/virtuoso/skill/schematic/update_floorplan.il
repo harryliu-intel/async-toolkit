@@ -63,7 +63,7 @@
 (defun UpdateFloorplanCore (CV indent @key (verbose nil))
   (let (netFile NetListTable rx ux uy w h instanceTable netTable termTable
         dirFile DirectiveTable gx gy ox oy
-        lastArrayName points realInstances isLeaf isRouted lCV align)
+        lastArrayName points realInstances isLeaf isRouted lCV align topHalo)
     (fprintf LOG "%sUpdate floorplan of %s\n" indent CV->cellName)
     mastersVisited[CV] = t
 
@@ -162,7 +162,8 @@
       )
 
     ; set alignment based on LCD alignment of subcells
-    (when CV->instances
+    topHalo=(dbGetPropByName CV "topHalo")->value=="TRUE"
+    (when CV->instances && !topHalo
       gx = (dbGetPropByName CV "XAlignGrid")->value
       gy = (dbGetPropByName CV "YAlignGrid")->value
       ox = (dbGetPropByName CV "XAlignOffset")->value

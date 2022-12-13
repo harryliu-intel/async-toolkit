@@ -22,7 +22,7 @@ useICV = t
         (softMacro nil)            ; when !softMacro, lock all instances
         (Mem (nrGetMaxHeapSize))   ; memory to use
         )
-  (let (TEMP PowerGridCellName ColorGridCellName xalign yalign win pgCV cgCV oldMasters)
+  (let (TEMP PowerGridCellName ColorGridCellName win pgCV cgCV oldMasters)
 
     ; check viewName
     (when CV->viewName!="floorplan" (error "call MakeFlatten on floorplan view\n"))
@@ -35,10 +35,6 @@ useICV = t
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
     PowerGridCellName = (strcat CV->cellName "_pg")
     ColorGridCellName = (strcat CV->cellName "_color")
-
-    ; get alignment properties
-    xalign = (GetXAlignmentProp CV)
-    yalign = (GetYAlignmentProp CV)
 
     ; Create flatten view from floorplan view
     (when softMacro oldMasters=(makeTable "oldMasters" nil))
@@ -61,8 +57,6 @@ useICV = t
 
     ; cache various information in CV properties
     (dbReplaceProp CV "topMetal" "integer" topMetal)
-    (SetXAlignmentProp CV (max (if xalign xalign 0) GridPolyPitch))
-    (SetYAlignmentProp CV (max (if yalign yalign 0) GridPitch))
     (SetLeafProp CV nil)
 
     ; Create power grid and abstract
