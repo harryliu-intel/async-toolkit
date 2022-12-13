@@ -584,7 +584,11 @@ PROCEDURE ZeroPoly16(VAR poly       : PolySegment16Seq.T;
         IF success THEN
           (* we found an improvement, finalize it *)
           poly.put(i, cur);
-          FixupNextC0(poly, i, a, targMaxDev)  (* this can actually delete segs *)
+          FixupNextC0(poly, i, a, targMaxDev)
+          (* this can actually delete segs *)
+        ELSIF success1 THEN
+          FixupNextC0(poly, i, a, targMaxDev)
+          (* this can actually delete segs *)
         END
         
       END
