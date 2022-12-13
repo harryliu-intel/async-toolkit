@@ -185,7 +185,9 @@ PROCEDURE CompressArray(rn         : TEXT; (* for debug *)
         DumpVec(rn & ".rarr_dirty.dat", rarr, 0)
       END;
 
-      Debug.Out(F("%s segments", Int(segments.size())));
+      IF DoDebug THEN
+        Debug.Out(F("%s segments", Int(segments.size())))
+      END;
       
       AssertDelta("rarr_dirty", darr, rarr, targMaxDev);
 
@@ -529,6 +531,7 @@ PROCEDURE ZeroPoly16(VAR poly       : PolySegment16Seq.T;
     <*NOWARN*>y : ARRAY Rep16.Count OF LONGREAL; (* 64K scratch space *)
     success : BOOLEAN;  (* did we touch the segment ? *)
     zeroBits := 0;
+    success1 := FALSE; (* did we touch ANYTHING *)
     
   BEGIN
     (* attempt to zero as many bits as possible *)
@@ -568,7 +571,7 @@ PROCEDURE ZeroPoly16(VAR poly       : PolySegment16Seq.T;
                                    doAllDumps,
                                    cur.lo) DO
                 IF eval.fails = 0 THEN
-                  success := TRUE;
+                  success := TRUE; success1 := TRUE;
                   cur.r := try;
                   INC(zeroBits, b);
                   EXIT (* skip following bits *)
@@ -581,11 +584,16 @@ PROCEDURE ZeroPoly16(VAR poly       : PolySegment16Seq.T;
         IF success THEN
           (* we found an improvement, finalize it *)
           poly.put(i, cur);
-          FixupNextC0(poly, i, a, targMaxDev) 
+          FixupNextC0(poly, i, a, targMaxDev)  (* this can actually delete segs *)
         END
         
       END
     END;
+
+    IF success1 THEN
+      RemoveZeroLengthSegments(poly)
+    END;
+    
     IF DoDebug THEN
       Debug.Out(F("ZeroPoly16 : zeroed %s bits", Int(zeroBits)))
     END
@@ -676,9 +684,14 @@ PROCEDURE FixupNextC0(segs         : PolySegment16Seq.T;
             IF eval.fails # 0 THEN
               (* we have also reset the segment, so the previous segment must
                  be shortened by 1 *)
+
+              (* we can wipe out the previous segment here... *)
               
               DEC(seg.n);
-              DEC(seg.r.count);
+              
+              IF seg.r.count # 1 THEN
+                DEC(seg.r.count)
+              END;
               
               segs.put(i, seg);
               
@@ -720,6 +733,19 @@ PROCEDURE CheckPoly2(nm           : TEXT;
     END
   END CheckPoly2;
   
+PROCEDURE RemoveZeroLengthSegments(VAR poly : PolySegment16Seq.T) =
+  BEGIN
+    (* remove any zero-length segments *)
+    WITH new = NEW(PolySegment16Seq.T).init() DO
+      FOR i := 0 TO poly.size() - 1 DO
+        WITH e = poly.get(i) DO
+          IF e.n # 0 THEN new.addhi(e) END
+        END
+      END;
+      poly := new
+    END
+  END RemoveZeroLengthSegments;
+
 PROCEDURE CleanPoly16(fn             : TEXT;
                       VAR poly       : PolySegment16Seq.T;
                       READONLY a     : ARRAY OF LONGREAL;
@@ -737,19 +763,6 @@ PROCEDURE CleanPoly16(fn             : TEXT;
      So errors can accumulate... 
   *)
   
-  PROCEDURE RemoveZeroLengthSegments() =
-    BEGIN
-      (* remove any zero-length segments *)
-      WITH new = NEW(PolySegment16Seq.T).init() DO
-        FOR i := 0 TO poly.size() - 1 DO
-          WITH e = poly.get(i) DO
-            IF e.n # 0 THEN new.addhi(e) END
-          END
-        END;
-        poly := new
-      END
-    END RemoveZeroLengthSegments;
-
   PROCEDURE CheckPoly(nm : TEXT; p : PolySegment16Seq.T) =
     BEGIN
       Reconstruct(p, dbg^);
@@ -884,7 +897,7 @@ PROCEDURE CleanPoly16(fn             : TEXT;
         CheckPoly("Clean_MergeRight_PreZero", poly);
 
         IF success0 THEN
-          RemoveZeroLengthSegments()
+          RemoveZeroLengthSegments(poly)
         END;
 
         CheckPoly2("Clean_MergeRight", a, poly, targMaxDev);
@@ -958,7 +971,7 @@ PROCEDURE CleanPoly16(fn             : TEXT;
         END;
         
         IF success2 THEN
-          RemoveZeroLengthSegments()
+          RemoveZeroLengthSegments(poly)
         END;
 
         FOR i := 1 TO poly.size() - 1 DO (* do not touch first segment *)
@@ -990,7 +1003,8 @@ PROCEDURE CleanPoly16(fn             : TEXT;
             AssertLinkage(poly, i)
           END;
           
-          WITH xlo = cur.lo,
+          WITH xlo  = cur.lo,
+               oldRst = cur.r.reset,
                sub = SUBARRAY(a, xlo, cur.n),
                ok  = AttemptLowerOrder16(F("%s.cleanlow_%s_%s", fn, Int(i), Int(j)),
                                          sub,
@@ -1006,9 +1020,11 @@ PROCEDURE CleanPoly16(fn             : TEXT;
                             Int(i), Int(i), Int(cur.r.order), Int(new.order)))
               END;
               cur.r := new;
-              IF new.order = 0 THEN
+              IF new.order = 0 AND NOT oldRst THEN
+                (* if we did NOT reset, and the new order is zero,
+                   we need to shorten by 1 *)
                 INC(cur.lo);
-                DEC(cur.n)
+                DEC(cur.n);
               END;
               poly.put(i, cur);
               FixupNextC0(poly, i, a, targMaxDev);
@@ -1017,6 +1033,7 @@ PROCEDURE CleanPoly16(fn             : TEXT;
               (* see ELSIF success0 comment above for an explanation of this: *)
               FixupNextC0(poly, i, a, targMaxDev)
             END;
+            
             AssertLinkage(poly, i);
             AssertLinkage(poly, MAX(i - 1, 0));
             AssertLinkage(poly, MIN(i + 1, poly.size() - 1));
@@ -1053,7 +1070,7 @@ PROCEDURE AttemptLowerOrder16(fn                  : TEXT;
     IF seg0.n = 0 OR seg0.r.order = 0 THEN RETURN FALSE END;
 
     WITH newOrder = seg0.r.order - 1 DO
-      IF newOrder = 0 THEN
+      IF newOrder = 0 AND NOT seg0.r.reset THEN
         WITH eval     = PolyFit16(fn & "_" & Int(newOrder),
                                   SUBARRAY(sub, 1, NUMBER(sub) - 1),
                                   targMaxDev,
@@ -1639,8 +1656,10 @@ PROCEDURE Reconstruct(seq        : PolySegment16Seq.T;
     CheckChaining(seq);
     FOR j := 0 TO n - 1 DO
       WITH seg = seq.get(j) DO
-        Debug.Out(F("Reconstruct seg %s : %s",
-                    Int(j), PolySegment16.Format(seg, TRUE)));
+        IF DoDebug THEN
+          Debug.Out(F("Reconstruct seg %s : %s",
+                      Int(j), PolySegment16.Format(seg, TRUE)))
+        END;
         <*ASSERT seg.n = 0 OR seg.r.count = seg.n*>
 
         IF seg.r.order = 0 OR seg.r.reset THEN

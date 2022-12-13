@@ -114,11 +114,19 @@ PROCEDURE ReadT(rd : Rd.T; VAR t : Rep16.T) : CARDINAL
     END;
     
     WITH cnt =  Word.RightShift(w0, OrderBits + 1) DO
+
+      IF FALSE THEN
+        Debug.Out(F("cnt %s", Int(cnt)));
+        Debug.Out(F("FIRST(Count) %s", Int(FIRST(Count))));
+        Debug.Out(F("LAST(Count) %s", Int(LAST(Count))));
+      END;
+      
       IF cnt < FIRST(Count) OR cnt > LAST(Count) THEN
         Debug.Warning(F("Count wrong: w0 0x%s OrderBits %s cnt 0x%s FIRST 0x%s LAST 0x%s",
                         Fmt.Unsigned(w0), Int(OrderBits),
                         Fmt.Unsigned(cnt),
-                        Fmt.Unsigned(FIRST(Count)), Fmt.Unsigned(LAST(Count))))
+                        Fmt.Unsigned(FIRST(Count)),
+                        Fmt.Unsigned(LAST(Count))))
       END;
       t.count := cnt
     END;

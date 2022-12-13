@@ -8,6 +8,8 @@ FROM Fmt IMPORT F, Int;
 IMPORT Thread;
 IMPORT Debug;
 
+VAR DoDebug := Debug.DebugThis("PolySegment16Serial");
+    
 PROCEDURE Write(wr : Wr.T; seq : Seq.T; min, max : LONGREAL)
   RAISES { Wr.Failure, Thread.Alerted } =
   VAR
@@ -29,8 +31,10 @@ PROCEDURE Write(wr : Wr.T; seq : Seq.T; min, max : LONGREAL)
 
     Rep16Stream.WriteHeader(wr, header);
 
-    Debug.Out(F("PolySegment16Serial.Write : header %s",
-                Rep16.FormatHeader(header)));
+    IF DoDebug THEN
+      Debug.Out(F("PolySegment16Serial.Write : header %s",
+                  Rep16.FormatHeader(header)))
+    END;
     
     FOR i := 0 TO seq.size() - 1 DO
       WITH cur = seq.get(i) DO
@@ -48,8 +52,10 @@ PROCEDURE Read(rd : Rd.T; seq : Seq.T; VAR header : Rep16.Header)
   BEGIN
     EVAL Rep16Stream.ReadHeader(rd, header);
 
-    Debug.Out(F("PolySegment16Serial.Read : header %s",
-                Rep16.FormatHeader(header)));
+    IF DoDebug THEN
+      Debug.Out(F("PolySegment16Serial.Read : header %s",
+                  Rep16.FormatHeader(header)))
+    END;
     
     WHILE bytes DIV 2 < header.nwords DO
       bytes := bytes + Rep16Stream.ReadT(rd, seg.r);
