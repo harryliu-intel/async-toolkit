@@ -542,6 +542,7 @@ PROCEDURE ZeroPoly16(VAR poly       : PolySegment16Seq.T;
         cur := poly.get(i);
         try : Rep16.T;
       BEGIN
+        <*ASSERT cur.r.order <= LAST(cur.r.c)*>
         FOR o := 0 TO cur.r.order DO
           FOR bi := FIRST(Try) TO LAST(Try) DO
             WITH b    = Try[bi],
@@ -556,7 +557,14 @@ PROCEDURE ZeroPoly16(VAR poly       : PolySegment16Seq.T;
               IF o = 0 THEN
                 try.c0   := Word.And(try.c0  , mask)
               ELSE
-                try.c[o] := Word.And(try.c[o], mask)
+                WITH res = Word.And(try.c[o], mask) DO
+                  (* the masking could push res outside of the legal range.
+                     how? *)
+                  IF  res >= FIRST(Rep16.Signed) AND
+                      res <= LAST(Rep16.Signed) THEN
+                    try.c[o] := res
+                  END
+                END
               END;
 
               FOR i := 0 TO try.count - 1 DO
