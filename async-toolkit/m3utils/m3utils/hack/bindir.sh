@@ -6,11 +6,11 @@ mv ${OLD} .hidden
 rm -rf *
 mv .hidden/* .
 
-cat > Main.m3 << EOF
+cat > src/Main.m3 << EOF
 MODULE Main; BEGIN END Main.
 EOF
 
-if [ "x$CM3" = "x" ]; then
+if [ "x$CM3" = "x" ] && [ ! -f ../.USECM3 ]; then
 	M3BUILD=m3build
 else
 	M3BUILD=cm3
