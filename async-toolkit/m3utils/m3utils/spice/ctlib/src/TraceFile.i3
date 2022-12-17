@@ -37,7 +37,7 @@ TYPE
 
   UInt32 = [ 0 .. Word.Shift(1, 32) - 1 ];
   
-CONST VersionVals = ARRAY Version OF UInt32 { 0, 1, 10 };
+CONST VersionVals = ARRAY Version OF UInt32 { 0, 1, 256 };
       
 PROCEDURE WriteHeader(wr : Wr.T; READONLY header : Header)
   RAISES { Wr.Failure, Thread.Alerted };

@@ -7,11 +7,16 @@ FROM TraceFile IMPORT UInt32;
 IMPORT Rd, Wr;
 IMPORT Thread;
 IMPORT ArithConstants;
+IMPORT SpiceCompress;
 
 TYPE
   T = RECORD
-    bytes    : UInt32;   (* bytes taken by data on disk *)
-    min, max : LONGREAL; (* min and max values of node *)
+    bytes    : UInt32;
+    (* bytes taken by data on disk *)
+
+    norm     : SpiceCompress.Norm;
+    (* min and max values of node -- may not be valid for dense data *)
+    
     code     : ArithConstants.Encoding;
   END;
 

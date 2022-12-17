@@ -1,14 +1,13 @@
 MODULE ZtraceNodeHeader;
 IMPORT Rd, Wr;
 IMPORT Thread;
-IMPORT ArithConstants;
 IMPORT UnsafeWriter, UnsafeReader;
 
 PROCEDURE Write(wr : Wr.T; t : T) 
   RAISES { Wr.Failure, Thread.Alerted } =
   BEGIN
     UnsafeWriter.WriteI(wr, t.bytes);
-    UnsafeWriter.WriteLRA(wr, ARRAY [0..1] OF LONGREAL { t.min, t.max });
+    UnsafeWriter.WriteLRA(wr, ARRAY [0..1] OF LONGREAL { t.norm.min, t.norm.max });
     Wr.PutChar(wr, VAL(t.code, CHAR))
   END Write;
 
@@ -18,8 +17,8 @@ PROCEDURE Read(rd : Rd.T) : T
     t : T;
   BEGIN
     t.bytes := UnsafeReader.ReadI(rd);
-    t.min   := UnsafeReader.ReadLR(rd);
-    t.max   := UnsafeReader.ReadLR(rd);
+    t.norm.min   := UnsafeReader.ReadLR(rd);
+    t.norm.max   := UnsafeReader.ReadLR(rd);
     WITH c = Rd.GetChar(rd) DO
       t.code := ORD(c)
     END;

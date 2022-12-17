@@ -34,7 +34,6 @@ PROCEDURE FileRd_Open(fn : Pathname.T) : Rd.T RAISES { OSError.E } =
     RETURN FileRd.Open(fn)
   END FileRd_Open;
 
-
 REVEAL
   T = Public BRANDED Brand OBJECT
     ofn    : Pathname.T;
