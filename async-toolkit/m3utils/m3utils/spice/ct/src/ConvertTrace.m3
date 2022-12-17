@@ -46,7 +46,7 @@ CONST LR = LongReal;
       
 VAR doDebug := Debug.DebugThis("CT");
 
-CONST Usage = "[-fsdb <fsdbPath>] [-compress <compressPath>] [-rename <dutName>] [-scaletime <timeScaleFactor>] [-offsettime <timeOffset>] [-offsetvoltage <voltageOffset>] [-dosources] [-dofiles] [ [-n <nodename>] ...] [-threads <fsdb_threads>] [-wthreads <write_threads>] [-fromworkdir] <inFileName> <outFileRoot>";
+CONST Usage = "[-fsdb <fsdbPath>] [-compress <compressPath>] [-rename <dutName>] [-scaletime <timeScaleFactor>] [-offsettime <timeOffset>] [-offsetvoltage <voltageOffset>] [-dosources] [-dofiles] [ [-n <nodename>] ...] [-threads <fsdb_threads>] [-wthreads <write_threads>] [-fromworkdir] [-maxtime <seconds>] <inFileName> <outFileRoot>";
 
 (*
   will generate <outFileRoot>.trace and <outFileRoot>.names 
@@ -92,6 +92,9 @@ CONST Usage = "[-fsdb <fsdbPath>] [-compress <compressPath>] [-rename <dutName>]
   -r           restrict attention to nodes matching regex
 
   -workdir     rename working directory ( default : ct.work )
+  
+  -maxtime     max time to output in trace (in seconds) -- only for FSDB
+               N.B. applied before scaling of time by timeScaleFactor
 
   <inFileName> is name of input file in FSDB or CSDF format
 
@@ -311,14 +314,15 @@ VAR
   compressCmdPath   : Pathname.T := NIL;
   writeTraceCmdPath : Pathname.T := NIL;
 
-  parseFmt := ParseFmt.Tr0;
+  parseFmt            := ParseFmt.Tr0;
 
   threads  : CARDINAL := 1;
   wthreads : CARDINAL := 1;
 
-  interpolate := Fsdb.NoInterpolate;
+  interpolate         := Fsdb.NoInterpolate;
 
-  compressPrec := 0.01d0;
+  compressPrec        := 0.01d0;
+  maxTime             := LAST(LONGREAL);
   
 TYPE
   ParseFmt = { Tr0, Fsdb };
@@ -330,6 +334,10 @@ BEGIN
     END;
     IF pp.keywordPresent("-scaletime") THEN
       timeScaleFactor := pp.getNextLongReal()
+    END;
+
+    IF pp.keywordPresent("-maxtime") THEN
+      maxTime := pp.getNextLongReal()
     END;
 
     IF pp.keywordPresent("-resample") OR pp.keywordPresent("-R") THEN
@@ -483,7 +491,8 @@ BEGIN
                  compressCmdPath,
                  compressPrec,
                  threads,
-                 interpolate)
+                 interpolate,
+                 maxTime)
     END;
     IF doDebug THEN
       Debug.Out("ConvertTrace parsing done.")

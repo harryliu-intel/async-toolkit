@@ -685,7 +685,6 @@ PROCEDURE LoadAllNames(wr            : Wr.T;
         END
       END;
 
-
       (* now we have all names loaded up *)
 
       idxMap := NameControl.MakeIdxMap(fsdbNames,
@@ -697,7 +696,6 @@ PROCEDURE LoadAllNames(wr            : Wr.T;
                   Int(names.size()), Int(NameControl.CountActiveNames(idxMap))));
 
     END LoadAllNames;
-
 
 PROCEDURE Parse(wd, ofn       : Pathname.T;
                 names         : TextSeq.T;
@@ -719,7 +717,8 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
                 compressPath  : Pathname.T;
                 compressPrec  : LONGREAL;
                 threads       : CARDINAL;
-                interpolate   : LONGREAL
+                interpolate   : LONGREAL;
+                maxTime       : LONGREAL
   )
   RAISES { } = (* lots of errors but they cause program crash, not exception *)
 
@@ -786,19 +785,43 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
       EVAL GetResponseG(rd, "LR");
     END LoadNode;
 
-  PROCEDURE ChopTimestepsBasedOnType(type : TEXT) 
+  PROCEDURE ChopTimestepsBasedOnMaxTime(max : LONGREAL) =
+    BEGIN
+      WHILE timesteps.get(timesteps.size() - 1) > max DO
+        EVAL timesteps.remhi()
+      END
+    END ChopTimestepsBasedOnMaxTime;
+    
+  PROCEDURE ChopTimestepsBasedOnType(type : TEXT)
     RAISES { FloatMode.Trap, Lex.Error, TextReader.NoMore } =
+
+    (* 
+       this routine addresses an issue with AUTOSTOP
+
+       if AUTOSTOP is used in xa, the time data is not truncated at the 
+       time that AUTOSTOP is triggered, only the simulation data is so 
+       truncated.
+
+       Here what we do is track down "some node" that records the 
+       stated type type (normally "nanosim_voltage") and use that to 
+       truncate the time series.
+
+       It is untested whether this routine crashes if no data is of type
+       nanosim_voltage. (But it should not -- it should just not truncate
+       the timesteps.)
+    *)
+    
     BEGIN
       WITH voltSignals = GetIdsByType(typeTab, type) DO
         IF voltSignals.size() # 0 THEN
-          WITH firstVolt = voltSignals.get(0),
+          WITH lastVolt  = voltSignals.get(voltSignals.size() - 1),
                ts2       = NEW(LRSeq.T).init() DO
 
-            GetTimesteps(firstVolt, ts2);
+            GetTimesteps(lastVolt, ts2);
 
             IF doDebug THEN
-              Debug.Out(F("node fsdbId %s : ts2 %s min %s max %s",
-                          Int(firstVolt),
+              Debug.Out(F("ChopTimestepsBasedOnType : node fsdbId %s : ts2 %s min %s max %s",
+                          Int(lastVolt),
                           Int(ts2.size()),
                           LR(ts2.get(0)),
                           LR(ts2.get(ts2.size()-1))));
@@ -877,9 +900,16 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
 
       CommandUnload();
 
-      LoadAllNames(wr, rd, loId, hiId,
-                   names, typeTab,
-                   dutName, restrictNodes, restrictRegEx, 
+      LoadAllNames(wr, rd,         (* comms pipes *)
+                   loId, hiId,     (* id range *)
+                   names,          (* target names data structure *)
+                   typeTab,        (* type mapping *)
+
+                   dutName,        (* name of DUT? *)
+                   
+                   restrictNodes,
+                   restrictRegEx,  (* node restrictions *)
+                   
                    idxMap);
       
       IF doDebug THEN
@@ -894,6 +924,11 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
       END;
 
       ChopTimestepsBasedOnType("nanosim_voltage");
+      (* address AUTOSTOP issue (see proc for details) *)
+
+      IF maxTime # LAST(LONGREAL) THEN
+        ChopTimestepsBasedOnMaxTime(maxTime)
+      END;
 
       aNodes := NameControl.WriteNames(wd,
                                        ofn,

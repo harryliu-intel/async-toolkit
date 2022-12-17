@@ -35,7 +35,8 @@ PROCEDURE Parse(wd            : Pathname.T;
                 compressPath  : Pathname.T;
                 compressPrec  : LONGREAL;
                 threads       : CARDINAL;
-                interpolate   : LONGREAL)
+                interpolate   : LONGREAL;
+                maxTime       : LONGREAL)
   RAISES { Rd.Failure, ShortRead, SyntaxError };
   (* 
      when Parse returns, it has left a number of blocked files in the

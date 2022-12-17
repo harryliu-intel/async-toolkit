@@ -453,30 +453,35 @@ static void
 timemem_addhi(time_memory_t *mem, fsdbTag64 *val)
 {
   if(mem->p == mem->len) {
-    unsigned newlen = mem->len * 2;
+    // we are at the end of the allocated space,
+    // grow the space by double, copy over and free the old
+    
+    unsigned   newlen   = mem->len * 2;
     fsdbTag64 *newtimes = (fsdbTag64 *)malloc(sizeof(fsdbTag64) * newlen);
 
-    for(int i=0; i < mem->len; ++i)
+    for(int i=0; i < mem->len; ++i) // copy over
       newtimes[i] = mem->times[i];
 
-    free(mem->times);
+    free(mem->times); // free the old data
     mem->times = newtimes;
     mem->len   = newlen;
   }
+
+  // remember the new value
   mem->times[mem->p] = *val;
 
   (mem->p)++;
 }
 
 static unsigned
-timemem_compare(const time_memory_t     *mem,
-                const unsigned           idx,
-                const fsdbTag64         *val)
+timemem_equal(const time_memory_t     *mem,
+              const unsigned           idx,
+              const fsdbTag64         *val)
 {
   if(idx >= mem->p)
     return 0;
   
-  return mem->times[idx].H == val->H && mem->times[idx].L == val->L;
+  return (mem->times[idx].H == val->H && mem->times[idx].L == val->L);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -491,12 +496,12 @@ fput32(unsigned u, FILE *stream)
 }
 
 void
-do_timecheck(unsigned *timecheck_ok,
+do_timecheck(unsigned            *timecheck_ok,
              const time_memory_t *mem,
-             unsigned idx,
-             fsdbTag64 *time)
+             unsigned             idx,
+             fsdbTag64           *time)
 {
-  unsigned this_ok = timemem_compare(mem, idx, time);
+  unsigned this_ok = timemem_equal(mem, idx, time);
 
   if (*timecheck_ok && !this_ok)
     fprintf(stderr, "time check failed idx=%u time=%u %u\n",
@@ -630,7 +635,7 @@ traverse_one_signal(int        idcode,
     unsigned timecheck_ok = 1;
     
     if (time_mode & TIME_CHECK)
-      timecheck_ok &= timemem_compare(the_timemem, i, time);
+      timecheck_ok &= timemem_equal(the_timemem, i, time);
     
     PrintTimeValChng(vc_trvs_hdl,
                      time,
