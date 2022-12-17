@@ -59,4 +59,7 @@ Table("TripleRef", "IntTriple", "Refany")
 
 Interface ("ArithConstants")
 
+Module ("ZtraceFile")
+Module ("ZtraceNodeHeader")
+
 library ("ctlib")

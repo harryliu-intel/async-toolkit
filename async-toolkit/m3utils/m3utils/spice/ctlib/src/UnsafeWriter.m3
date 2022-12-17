@@ -28,6 +28,12 @@ PROCEDURE WriteLRA(wr : Wr.T; READONLY q : ARRAY OF LONGREAL)
     END
   END WriteLRA;
 
+PROCEDURE WriteLR(wr : Wr.T; q : LONGREAL)
+  RAISES { Wr.Failure, Thread.Alerted } =
+  BEGIN
+    WriteLRA(wr, ARRAY [0..0] OF LONGREAL { q })
+  END WriteLR;
+
 PROCEDURE WriteLRAAt(wr : Wr.T; READONLY q : ARRAY OF LONGREAL; at : CARDINAL)
   RAISES { Wr.Failure, Thread.Alerted } =
   VAR

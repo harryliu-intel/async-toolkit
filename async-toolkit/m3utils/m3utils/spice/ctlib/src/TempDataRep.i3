@@ -22,7 +22,9 @@ PROCEDURE ReadFromTemp(tempData    : TEXT;
                        VAR into    : T);
 
 PROCEDURE Reconstruct(READONLY t : T; VAR a : ARRAY OF LONGREAL);
-    
+  (* given a T, reconstruct the time series data as [0,1] limited data.
+     To recover the original simulation data, apply the norm transformation. *)
+  
 CONST Brand = "TempDataRep";
 
 END TempDataRep.

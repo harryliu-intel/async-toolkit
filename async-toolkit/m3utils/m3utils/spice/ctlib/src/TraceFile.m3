@@ -18,6 +18,7 @@ IMPORT FS;
 IMPORT File;
 IMPORT RegularFile;
 IMPORT ProcUtils;
+IMPORT UnsafeReader;
 
 <*FATAL Thread.Alerted*>
 
@@ -182,6 +183,50 @@ PROCEDURE Write(t : T) =
     END
   END Write;
 
+PROCEDURE WriteHeader(wr : Wr.T; READONLY header : Header)
+  RAISES { Wr.Failure, Thread.Alerted } =
+  BEGIN
+    IF doDebug THEN
+      Debug.Out("WriteTrace writing header...")
+    END;
+    UnsafeWriter.WriteI(wr, VersionVals[header.version]);
+    (* this tells aplot it is the reordered format *)
+    
+    IF doDebug THEN
+      Debug.Out("WriteTrace at wr byte " & Int(Wr.Index(wr)));
+    END;
+    UnsafeWriter.WriteI(wr, TRUNC(header.ctime));
+    (* timestamp *)
+    
+    UnsafeWriter.WriteI(wr, header.nwaves);
+    (* number of nodes.  
+       aplot computes the offsets based on the file length? *)
+
+    Wr.Flush(wr)
+  END WriteHeader;
+  
+PROCEDURE ReadHeader(rd : Rd.T) : Header
+  RAISES { Rd.Failure, Rd.EndOfFile, Thread.Alerted, FormatError } =
+  VAR
+    header : Header;
+  BEGIN
+    VAR vval    := UnsafeReader.ReadI(rd);
+        success := FALSE;
+    BEGIN
+      FOR v := FIRST(VersionVals) TO LAST(VersionVals) DO
+        IF vval = VersionVals[v] THEN
+          header.version := v;
+          success := TRUE;
+          EXIT
+        END
+      END;
+      IF NOT success THEN RAISE FormatError END
+    END;
+    header.ctime  := FLOAT(UnsafeReader.ReadI(rd), Time.T);
+    header.nwaves := UnsafeReader.ReadI(rd);
+    RETURN header
+  END ReadHeader;
+
 PROCEDURE WritePll(t                 : T;
                    wthreads          : CARDINAL;
                    writeTraceCmdPath : Pathname.T) =
@@ -204,28 +249,9 @@ PROCEDURE WritePll(t                 : T;
       OSError.E(x) => Debug.Error("Unable to open trace file \"" & tFn & "\" for writing : OSError.E : " & AL.Format(x))
     END;
 
-    IF doDebug THEN
-      Debug.Out("WriteTrace writing header...")
-    END;
     TRY
-      IF doDebug THEN
-        Debug.Out("WriteTrace at tWr byte " & Int(Wr.Index(tWr)));
-      END;
-      UnsafeWriter.WriteI(tWr, 1);
-      (* this tells aplot it is the reordered format *)
-
-      IF doDebug THEN
-        Debug.Out("WriteTrace at tWr byte " & Int(Wr.Index(tWr)));
-      END;
-      UnsafeWriter.WriteI(tWr, TRUNC(Time.Now()));
-      (* timestamp *)
-      
-      UnsafeWriter.WriteI(tWr, t.nNames);
-      (* number of nodes.  
-         aplot computes the offsets based on the file length? *)
-
-      Wr.Flush(tWr);
-      
+      WriteHeader(tWr, Header { Version.Reordered, Time.Now(), t.nNames });
+    
       dataStartByte := Wr.Index(tWr);
     EXCEPT
       Wr.Failure(x) =>
