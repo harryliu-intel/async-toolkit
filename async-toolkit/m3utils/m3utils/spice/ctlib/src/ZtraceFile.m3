@@ -4,14 +4,12 @@ IMPORT Thread;
 IMPORT TraceFile;
 IMPORT ZtraceNodeHeader;
 
-PROCEDURE Write(wr : Wr.T; t : T) 
+PROCEDURE Write(wr : Wr.T; VAR t : T) 
   RAISES { Wr.Failure, Thread.Alerted } =
   BEGIN
     TraceFile.WriteHeader(wr, t.header);
-    FOR i := FIRST(t.directory^) TO LAST(t.directory^) DO
-      ZtraceNodeHeader.Write(wr, t.directory[i])
-    END;
-    Wr.Flush(wr)
+    t.dirStart := Wr.Index(wr);
+    RewriteDirectory(wr, t)
   END Write;
 
 PROCEDURE Read(rd : Rd.T) : T
@@ -27,4 +25,14 @@ PROCEDURE Read(rd : Rd.T) : T
     RETURN t
   END Read;
 
+PROCEDURE RewriteDirectory(wr : Wr.T; READONLY t : T) =
+  BEGIN
+    <*ASSERT t.dirStart # LAST(CARDINAL)*>
+    Wr.Seek(wr, t.dirStart);
+    FOR i := FIRST(t.directory^) TO LAST(t.directory^) DO
+      ZtraceNodeHeader.Write(wr, t.directory[i])
+    END;
+    Wr.Flush(wr)
+  END RewriteDirectory;
+  
 BEGIN END ZtraceFile.

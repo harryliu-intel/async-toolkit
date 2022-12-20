@@ -16,6 +16,7 @@ TYPE
   Metadata = RECORD
     (* the collected metadata of a ZtraceFile *)
     header    : Header;
+    dirStart  : CARDINAL := LAST(CARDINAL); (* start of directory in bytes *)
     directory : REF Directory;
   END;
 
@@ -32,10 +33,14 @@ TYPE
   
 CONST Brand = "ZtraceFile";
 
-PROCEDURE Write(wr : Wr.T; t : T) 
+PROCEDURE Write(wr : Wr.T; VAR t : T) 
   RAISES { Wr.Failure, Thread.Alerted };
+  (* updates dirStart *)
 
 PROCEDURE Read(rd : Rd.T) : T
   RAISES { TraceFile.FormatError, Rd.Failure, Rd.EndOfFile, Thread.Alerted };
+
+PROCEDURE RewriteDirectory(wr : Wr.T; READONLY t : T)
+  RAISES { Wr.Failure, Thread.Alerted };
 
 END ZtraceFile.

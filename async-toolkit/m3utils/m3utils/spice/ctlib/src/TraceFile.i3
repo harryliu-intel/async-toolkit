@@ -18,9 +18,9 @@ TYPE
          nNames : CARDINAL;
          fnr    : FileNamer.T) : T;
 
-    write();
+    write(fmt : Version);
 
-    writePll(wthreads : CARDINAL; writeTraceCmdPath : Pathname.T);
+    writePll(wthreads : CARDINAL; writeTraceCmdPath : Pathname.T; fmt : Version);
     
   END;
 
@@ -38,6 +38,12 @@ TYPE
   UInt32 = [ 0 .. Word.Shift(1, 32) - 1 ];
   
 CONST VersionVals = ARRAY Version OF UInt32 { 0, 1, 256 };
+
+      VersionNames = ARRAY Version OF TEXT { "Unreordered",
+                                             "Reordered",
+                                             "CompressedV1" };
+
+      VersionSuffixes = ARRAY Version OF TEXT { "trace", "trace", "ztrace" };
       
 PROCEDURE WriteHeader(wr : Wr.T; READONLY header : Header)
   RAISES { Wr.Failure, Thread.Alerted };

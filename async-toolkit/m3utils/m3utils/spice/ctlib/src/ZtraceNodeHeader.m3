@@ -16,7 +16,7 @@ PROCEDURE Read(rd : Rd.T) : T
   VAR
     t : T;
   BEGIN
-    t.bytes := UnsafeReader.ReadI(rd);
+    t.bytes      := UnsafeReader.ReadI(rd);
     t.norm.min   := UnsafeReader.ReadLR(rd);
     t.norm.max   := UnsafeReader.ReadLR(rd);
     WITH c = Rd.GetChar(rd) DO

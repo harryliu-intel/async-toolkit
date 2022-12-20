@@ -39,10 +39,12 @@ IMPORT CitTextUtils AS TextUtils;
 IMPORT Fsdb;
 IMPORT TraceFile, FileNamer;
 IMPORT TempReader;
+IMPORT Text;
 
 <*FATAL Thread.Alerted*>
 
 CONST LR = LongReal;
+      TE = Text.Equal;
       
 VAR doDebug := Debug.DebugThis("CT");
 
@@ -68,9 +70,11 @@ CONST Usage = "[-fsdb <fsdbPath>] [-compress <compressPath>] [-rename <dutName>]
                slaves, since it will be launched from within the fsdb
                conversion program.
 
-  -resample    resample data at timestep given
+               Note that if -compress is given without -z, then the output
+               file will be stored in the uncompressed (aspice reordered)
+               format.
 
-  
+  -resample    resample data at timestep given
 
   -fromworkdir skips the parsing and generates the 
                trace file from the work directory directly
@@ -95,6 +99,10 @@ CONST Usage = "[-fsdb <fsdbPath>] [-compress <compressPath>] [-rename <dutName>]
   
   -maxtime     max time to output in trace (in seconds) -- only for FSDB
                N.B. applied before scaling of time by timeScaleFactor
+
+  -format      Alternatives: See TraceFile.VersionNames
+
+  -z           equiv to -format CompressedV1
 
   <inFileName> is name of input file in FSDB or CSDF format
 
@@ -278,13 +286,13 @@ PROCEDURE WriteFiles(tempReader : TempReader.T; fnr : FileNamer.T) =
     END
   END WriteFiles;
 
-PROCEDURE WriteTrace(fnr : FileNamer.T) =
+PROCEDURE WriteTrace(fnr : FileNamer.T; fmt : TraceFile.Version) =
   BEGIN
     WITH tr = NEW(TraceFile.T).init(ofn, nFiles, names.size(), fnr) DO
       IF wthreads > 1 THEN
-        tr.writePll(wthreads, writeTraceCmdPath)
+        tr.writePll(wthreads, writeTraceCmdPath, fmt)
       ELSE
-        tr.write()
+        tr.write(fmt)
       END
     END
   END WriteTrace;
@@ -323,6 +331,12 @@ VAR
 
   compressPrec        := 0.01d0;
   maxTime             := LAST(LONGREAL);
+
+  formats             := SET OF TraceFile.Version {};
+
+CONST
+  DefFormats =
+    SET OF TraceFile.Version { TraceFile.Version.Reordered };
   
 TYPE
   ParseFmt = { Tr0, Fsdb };
@@ -344,6 +358,32 @@ BEGIN
       interpolate := pp.getNextLongReal()
     END;
 
+    IF pp.keywordPresent("-format") THEN
+      REPEAT
+        VAR fnm     := pp.getNext();
+            success := FALSE;
+        BEGIN
+          FOR f := FIRST(TraceFile.Version) TO LAST(TraceFile.Version) DO
+            IF TE(fnm, TraceFile.VersionNames[f]) THEN
+              formats := formats + SET OF TraceFile.Version { f };
+              success := TRUE;
+              EXIT
+            END
+          END;
+          IF NOT success THEN
+            Debug.Error(F("Unknown output format \"%s\"", fnm))
+          END
+        END
+      UNTIL NOT pp.keywordPresent("-format")
+    ELSE
+      formats := DefFormats
+    END;
+
+    IF pp.keywordPresent("-z") THEN
+      formats := formats + SET OF TraceFile.Version {
+                             TraceFile.Version.CompressedV1 };
+    END;
+    
     IF pp.keywordPresent("-fsdb") THEN
       fsdbCmdPath := pp.getNext();
       parseFmt := ParseFmt.Fsdb;
@@ -510,7 +550,11 @@ BEGIN
 
   WITH fnr = NEW(FileNamer.T).init(wd, nFiles, names.size()) DO
     IF doTrace THEN
-      WriteTrace(fnr)
+      FOR f := FIRST(TraceFile.Version) TO LAST(TraceFile.Version) DO
+        IF f IN formats THEN
+          WriteTrace(fnr, f)
+        END
+      END
     END;
 
     VAR

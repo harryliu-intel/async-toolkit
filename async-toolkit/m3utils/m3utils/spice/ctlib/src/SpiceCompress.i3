@@ -15,6 +15,9 @@ TYPE
   Norm = RECORD
     min, max : LONGREAL;
   END;
+
+CONST
+  IllegalNorm = Norm { LAST(LONGREAL), FIRST(LONGREAL) };
   
 PROCEDURE CompressArray(rn            : TEXT;
                         (* for debug *)

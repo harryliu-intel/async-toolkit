@@ -19,6 +19,8 @@ IMPORT File;
 IMPORT RegularFile;
 IMPORT ProcUtils;
 IMPORT UnsafeReader;
+IMPORT ZtraceFile;
+IMPORT SpiceCompress;
 
 <*FATAL Thread.Alerted*>
 
@@ -90,24 +92,114 @@ PROCEDURE CreateBuffers(t : T; VAR time, data : REF ARRAY OF LONGREAL)
     END
   END CreateBuffers;
 
-PROCEDURE Write(t : T) =
+PROCEDURE Write(t : T; fmt : Version) =
+  VAR
+    tFn := t.ofn & "." & VersionSuffixes[fmt];
+    tWr : Wr.T;
+  BEGIN
+    TRY
+      tWr := FileWr.Open(tFn)
+    EXCEPT
+      OSError.E(x) => Debug.Error("Unable to open trace file \"" & tFn & "\" for writing : OSError.E : " & AL.Format(x))
+    END;
+    
+    TRY
+      CASE fmt OF
+        Version.Reordered =>
+        WriteReordered(t, tWr)
+      |
+        Version.Unreordered =>
+        Debug.Error("Unreordered writing not supported")
+      |
+        Version.CompressedV1 =>
+        WriteCompressedV1(t, tWr)
+      END
+    EXCEPT
+      WriteError(x) =>
+      Debug.Error(F("Writing trace file \"%s\", format %s : error : %s",
+                    tFn, VersionNames[fmt], x))
+    END;
+
+    TRY
+      Wr.Close(tWr)
+    EXCEPT
+      Wr.Failure(x) => Debug.Error("Trouble closing trace file : Wr.Failure : " &
+        AL.Format(x))
+    END
+  END Write;
+
+EXCEPTION WriteError(TEXT);
+  
+PROCEDURE WriteCompressedV1(t : T; tWr : Wr.T)
+  RAISES { WriteError } =
+  CONST
+    fmt = Version.Reordered;
+  VAR
+    header := Header { fmt, Time.Now(), t.nNames };
+    dir    := NEW(REF ZtraceFile.Directory, t.nNames);
+    z      := ZtraceFile.Metadata { header := header, directory := dir };
+  BEGIN
+
+    TRY
+      ZtraceFile.Write(tWr, z)
+    EXCEPT
+    |
+      Wr.Failure(x) =>
+      RAISE WriteError("Write error on trace file, writing header : Wr.Failure : " & AL.Format(x))
+    END;
+
+    (* write time data *)
+    VAR
+      dataStartByte := Wr.Index(tWr);
+      opos : CARDINAL := 0;
+      pos := dataStartByte;
+      time, data    : REF ARRAY OF LONGREAL;
+    BEGIN
+      CreateBuffers(t, time, data);
+      IF doDebug THEN
+        Debug.Out(F("WriteTrace writing TIME (%s values)...",
+                    Int(NUMBER(time^))))
+      END;
+
+      (* write uncompressed time data *)
+      UnsafeWriter.WriteLRAAt(tWr, time^, pos);
+
+      (* update directory for time data *)
+      pos := Wr.Index(tWr);
+      dir[0].bytes := pos - opos;
+      dir[0].norm  := SpiceCompress.IllegalNorm;
+
+      FOR i := 1 TO t.nNames - 1 DO
+        opos := pos; (* sync pointers *)
+
+        (* write data for node [ i ] *)
+
+        pos := Wr.Index(tWr);
+
+        (* update directory *)
+        dir[i].bytes := pos - opos;
+        dir[i].norm := SpiceCompress.IllegalNorm;
+        dir[i].code := 0;
+      END
+      
+    END
+  END WriteCompressedV1;
+  
+PROCEDURE WriteReordered(t : T; tWr : Wr.T)
+  RAISES { WriteError } =
   (* read data from each file in temp directory and output
      in reordered trace format for fast aplot access *)
+  CONST
+    fmt = Version.Reordered;
   VAR
-    tFn := t.ofn & ".trace";
-    tWr           : Wr.T;
+    header := Header { fmt, Time.Now(), t.nNames };
+
     time, data    : REF ARRAY OF LONGREAL;
     dataStartByte : CARDINAL;
   BEGIN
     Debug.Out(F("WriteTrace nFiles %s names.size() %s",
                 Int(t.nFiles), Int(t.nNames)));
     
-    TRY
-      tWr := FileWr.Open(tFn)
-    EXCEPT
-      OSError.E(x) => Debug.Error("Unable to open trace file \"" & tFn & "\" for writing : OSError.E : " & AL.Format(x))
-    END;
-
     IF doDebug THEN
       Debug.Out("WriteTrace writing header...")
     END;
@@ -115,26 +207,18 @@ PROCEDURE Write(t : T) =
       IF doDebug THEN
         Debug.Out("WriteTrace at tWr byte " & Int(Wr.Index(tWr)));
       END;
-      UnsafeWriter.WriteI(tWr, 1);
-      (* this tells aplot it is the reordered format *)
-
-      IF doDebug THEN
-        Debug.Out("WriteTrace at tWr byte " & Int(Wr.Index(tWr)));
-      END;
-      UnsafeWriter.WriteI(tWr, TRUNC(Time.Now()));
-      (* timestamp *)
       
-      UnsafeWriter.WriteI(tWr, t.nNames);
-      (* number of nodes.  
-         aplot computes the offsets based on the file length? *)
+      WriteHeader(tWr, header);
 
       dataStartByte := Wr.Index(tWr);
     EXCEPT
       Wr.Failure(x) =>
-      Debug.Error("Write error writing header of trace file : Wr.Failure : " &
+      RAISE WriteError("Write error writing header of trace file : Wr.Failure : " &
         AL.Format(x))
     END;
 
+    (* at this point, the header has been written *)
+    
     IF doDebug THEN
       Debug.Out("WriteTrace walking names...");
     END;
@@ -151,7 +235,7 @@ PROCEDURE Write(t : T) =
           UnsafeWriter.WriteLRAAt(tWr, time^, dataStartByte);
         ELSE
           t.reader.readEntireFile(i, data^);
-
+          
           WITH pos = dataStartByte + i * 4 * NUMBER(time^) DO
             IF doDebug THEN
               Debug.Out(F("Writing node (%s) @ %s, data[0]= %s data[LAST(data)}= %s",
@@ -164,23 +248,17 @@ PROCEDURE Write(t : T) =
         END
       EXCEPT
         OSError.E(x) =>
-        Debug.Error("Unable to open temp file \"" & t.fnr.name(i) & "\" for reading : OSError.E : " & AL.Format(x))
+        RAISE WriteError("Unable to open temp file \"" & t.fnr.name(i) & "\" for reading : OSError.E : " & AL.Format(x))
       |
         Rd.Failure(x) =>
-        Debug.Error("Read error on temp file \"" & t.fnr.name(i) & "\" for reading : Rd.Failure : " & AL.Format(x))
+        RAISE WriteError("Read error on temp file \"" & t.fnr.name(i) & "\" for reading : Rd.Failure : " & AL.Format(x))
       |
         Wr.Failure(x) =>
-        Debug.Error("Write error on trace file, lately reading \"" & t.fnr.name(i) & "\" : Wr.Failure : " & AL.Format(x))
+        RAISE WriteError("Write error on trace file, lately reading \"" & t.fnr.name(i) & "\" : Wr.Failure : " & AL.Format(x))
       END
     END;
-
-    TRY
-      Wr.Close(tWr)
-    EXCEPT
-      Wr.Failure(x) => Debug.Error("Trouble closing trace file : Wr.Failure : " &
-        AL.Format(x))
-    END
-  END Write;
+    
+  END WriteReordered;
 
 PROCEDURE WriteHeader(wr : Wr.T; READONLY header : Header)
   RAISES { Wr.Failure, Thread.Alerted } =
@@ -228,17 +306,23 @@ PROCEDURE ReadHeader(rd : Rd.T) : Header
 
 PROCEDURE WritePll(t                 : T;
                    wthreads          : CARDINAL;
-                   writeTraceCmdPath : Pathname.T) =
+                   writeTraceCmdPath : Pathname.T;
+                   fmt               : Version) =
   (* read data from each file in temp directory and output
      in reordered trace format for fast aplot access *)
   VAR
-    tFn := t.ofn & ".trace";
+    tFn := t.ofn & "." & VersionSuffixes[fmt];
     tWr           : Wr.T;
     time, data    : REF ARRAY OF LONGREAL;
     dataStartByte : CARDINAL;
     wcs := NEW(REF ARRAY OF WriteClosure, wthreads);
     
   BEGIN
+
+    IF fmt # Version.Reordered THEN
+      Debug.Error("Parallel write only supported for -format Reordered")
+    END;
+    
     Debug.Out(F("WriteTracePll nFiles %s t.nNames %s",
                 Int(t.nFiles), Int(t.nNames)));
     

@@ -697,6 +697,14 @@ PROCEDURE LoadAllNames(wr            : Wr.T;
 
     END LoadAllNames;
 
+PROCEDURE ChopTime(VAR time : LONGREAL; seq : LRSeq.T) =
+  (* chop time to max seen in seq *)
+  BEGIN
+    IF seq.size() # 0 THEN
+      time := MIN(time, seq.get(seq.size() - 1))
+    END
+  END ChopTime;
+  
 PROCEDURE Parse(wd, ofn       : Pathname.T;
                 names         : TextSeq.T;
                 maxFiles      : CARDINAL;
@@ -814,38 +822,40 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
     BEGIN
       WITH voltSignals = GetIdsByType(typeTab, type) DO
         IF voltSignals.size() # 0 THEN
-          WITH lastVolt  = voltSignals.get(voltSignals.size() - 1),
-               ts2       = NEW(LRSeq.T).init() DO
+          VAR
+            lastVolt  := voltSignals.get(voltSignals.size() - 1);
+            midlVolt  := voltSignals.get(voltSignals.size() DIV 2);
+            frstVolt  := voltSignals.get(0);
+            tsL, tsM, tsF       := NEW(LRSeq.T).init();
+            ultTime   := timesteps.get(timesteps.size() - 1);
+          BEGIN
 
-            GetTimesteps(lastVolt, ts2);
-
+            GetTimesteps(lastVolt, tsL);
+            GetTimesteps(midlVolt, tsM);
+            GetTimesteps(frstVolt, tsF);
+            
             IF doDebug THEN
               Debug.Out(F("ChopTimestepsBasedOnType : node fsdbId %s : ts2 %s min %s max %s",
                           Int(lastVolt),
-                          Int(ts2.size()),
-                          LR(ts2.get(0)),
-                          LR(ts2.get(ts2.size()-1))));
+                          Int(tsM.size()),
+                          LR(tsM.get(0)),
+                          LR(tsM.get(tsM.size()-1))));
             END;
-
-            IF ts2.size() # 0 THEN
-              WITH lastVoltTime = ts2.get(ts2.size() - 1) DO
-                (* remove timesteps that aren't present 
-                   in the voltage waveform *)
-
-                WHILE timesteps.get(timesteps.size() - 1) > lastVoltTime DO
-                  EVAL timesteps.remhi()
-                END
-              END;
-
-              IF doDebug THEN
-                Debug.Out(F("post-edit: timesteps %s min %s max %s",
-                            Int(timesteps.size()),
-                            LR(timesteps.get(0)),
-                            LR(timesteps.get(timesteps.size()-1))));
-              END;
-        
+            
+            ChopTime(ultTime, tsL);
+            ChopTime(ultTime, tsM);
+            ChopTime(ultTime, tsF);
+            
+            WHILE timesteps.get(timesteps.size() - 1) > ultTime DO
+              EVAL timesteps.remhi()
+            END;
+            
+            IF doDebug THEN
+              Debug.Out(F("post-edit: timesteps %s min %s max %s",
+                          Int(timesteps.size()),
+                          LR(timesteps.get(0)),
+                          LR(timesteps.get(timesteps.size()-1))));
             END
-          
           END
         END
       END;
@@ -923,10 +933,10 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
         InterpolateTimesteps(timesteps, interpolate)
       END;
 
-      ChopTimestepsBasedOnType("nanosim_voltage");
-      (* address AUTOSTOP issue (see proc for details) *)
-
-      IF maxTime # LAST(LONGREAL) THEN
+      IF maxTime = LAST(LONGREAL) THEN
+        (* address AUTOSTOP issue (see proc for details) *)
+        ChopTimestepsBasedOnType("nanosim_voltage");
+      ELSE
         ChopTimestepsBasedOnMaxTime(maxTime)
       END;
 
