@@ -38,6 +38,47 @@ CONST TE = Text.Equal;
 VAR doDebug := Debug.DebugThis("Fsdb");
 
 PROCEDURE EditName(nm : TEXT) : TEXT =
+  (* really should probably edit and leave as alias? *)
+
+  (* 
+     also maybe remove construct
+
+     [v(].*[)]
+  *)
+  
+  CONST
+    RemoveVoltPrefix = TRUE;
+  VAR
+    s, e : CARDINAL;
+    res : TEXT;
+  BEGIN
+    IF RemoveVoltPrefix THEN
+      IF (TextUtils.FindSub(nm, "v(", s, 0) OR
+          TextUtils.FindSub(nm, "V(", s, 0))
+        AND
+         TextUtils.FindSub(nm, ")" , e, s + 2) THEN
+        res := Text.Sub(nm, 0, s) &
+               Text.Sub(nm, s + 2, (e - (s + 2))) &
+               Text.Sub(nm, e + 1);
+        RETURN res
+      ELSE
+        RETURN nm
+      END
+    ELSE
+      RETURN nm
+    END
+  END EditName;
+
+<*UNUSED*>    
+PROCEDURE EditNameOld(nm : TEXT) : TEXT =
+  (* really should probably edit and leave as alias? *)
+
+  (* 
+     also maybe remove construct
+
+     [v(].*[)]
+  *)
+  
   CONST
     RemoveVoltPrefix = TRUE;
   BEGIN
@@ -48,7 +89,7 @@ PROCEDURE EditName(nm : TEXT) : TEXT =
     ELSE
       RETURN nm
     END
-  END EditName;
+  END EditNameOld;
 
   (**********************************************************************)
 

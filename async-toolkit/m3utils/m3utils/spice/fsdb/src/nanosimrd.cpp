@@ -218,7 +218,7 @@ ext_dq_free(ext_dq *q)
 
 //////////////////////////////////////////////////////////////////////
 
-const int debug = 1;
+const int debug = 0;
 
 ffrObject      *fsdb_obj;
 fsdbXTagType    xtag_type; 
@@ -1083,17 +1083,85 @@ main(int argc, char *argv[])
     return 0;
 }
 
+// scoping
+
+typedef struct arc_t {
+  char *name;
+  struct arc_t *up;
+} arc_t;
+
+static arc_t *curscope  = NULL;
+static char  *curpfx    = strdup("");
+static int    curpfxlen = 0;
+
+static void update_pfx(void)
+// call this whenever updating curscope
+{
+  free(curpfx);
+  
+  if (!curscope) {
+    curpfx    = strdup("");
+    curpfxlen = 0;
+  } else {
+      int len = 0;
+      for (arc_t *p = curscope; p; p = p->up) 
+        len = len + strlen(p->name) + 1;  // add length + period
+
+      // terminating null
+      ++len; 
+
+      // alloc new string
+      curpfx    = (char *)malloc(len);
+      curpfxlen = len - 1; // string lengths do NOT contain null
+
+      char *q = curpfx + len;
+
+      // invariant : q is the limit of the next string to print
+      
+      *(--q) = '\000';
+
+      int tlen;
+      for (arc_t *p = curscope; p; p = p->up) {
+        *(--q) = '.';
+        tlen = strlen(p->name);
+
+        memcpy(q -= tlen, p->name, tlen);
+      }
+      assert(q == curpfx);
+    }
+
+}
+
+static void up_scope(void)
+{
+  arc_t *up = curscope->up;
+  free(curscope->name);
+  free(curscope);
+  curscope = up;
+  update_pfx();
+}
+
+static void down_scope(const fsdbTreeCBDataScope *tree_cb_data)
+{
+  arc_t *down = (arc_t *)malloc(sizeof(arc_t));
+  down->name = strdup(tree_cb_data->name);
+  down->up   = curscope;
+  curscope   = down;
+  update_pfx();
+}
+
 static bool_T __MyTreeCB(fsdbTreeCBType cb_type, 
 			 void *client_data, void *tree_cb_data)
 {
     switch (cb_type) {
     case FSDB_TREE_CBT_BEGIN_TREE:
-	if (debug >= 2) fprintf(stderr, "<BeginTree>\n");
-	break;
+      if (debug >= 2) fprintf(stderr, "<BeginTree>\n");
+      break;
 
     case FSDB_TREE_CBT_SCOPE:
-	if (debug >= 2) __DumpScope((fsdbTreeCBDataScope*)tree_cb_data);
-	break;
+      if (debug >= 2) __DumpScope((fsdbTreeCBDataScope*)tree_cb_data);
+      down_scope((fsdbTreeCBDataScope*)tree_cb_data);
+      break;
 
     case FSDB_TREE_CBT_VAR:
       BuildVar((fsdbTreeCBDataVar*)tree_cb_data);
@@ -1101,8 +1169,9 @@ static bool_T __MyTreeCB(fsdbTreeCBType cb_type,
       break;
 
     case FSDB_TREE_CBT_UPSCOPE:
-        if (debug >= 2) fprintf(stderr, "<Upscope>\n");
-	break;
+      if (debug >= 2) fprintf(stderr, "<Upscope>\n");
+      up_scope();
+      break;
 
     case FSDB_TREE_CBT_END_TREE:
 	if (debug >= 2) fprintf(stderr, "<EndTree>\n\n");
@@ -1186,7 +1255,17 @@ void BuildVar(fsdbTreeCBDataVar *var)
 {
     namerec_t *rec = (namerec_t *)malloc(sizeof(namerec_t));
 
-    rec->name          = strdup(var->name);
+    int varlen         = strlen(var->name);
+
+    // build fully qualified name
+    // 1. hierarchy prefix name (including trailing dot, if exists)
+    // 2. variable name
+    // 3. trailing null
+    rec->name          = (char *)malloc(curpfxlen + varlen + 1);
+    memcpy(rec->name            , curpfx   , curpfxlen);
+    memcpy(rec->name + curpfxlen, var->name, varlen);
+    *(rec->name + curpfxlen + varlen) = '\000';
+      
     rec->idcode        = var->u.idcode;
     rec->bytes_per_bit = var->bytes_per_bit;
     rec->type          = var->type;
