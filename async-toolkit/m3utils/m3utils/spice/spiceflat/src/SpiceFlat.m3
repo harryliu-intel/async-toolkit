@@ -27,6 +27,8 @@ IMPORT TextSpiceCircuitTbl;
 TYPE  OType =                      {  Null,   R,   C,   M,   X,   Unknown };
 CONST ONames = ARRAY OType OF TEXT { "NULL", "R", "C", "M", "X", "UNKNOWN" };
 
+CONST TE = Text.Equal;
+
 PROCEDURE Visit(nm    : TEXT; 
                 wr    : Wr.T; 
                 ckt   : SpiceCircuit.T;
@@ -304,10 +306,14 @@ PROCEDURE AddAlias(symTab : TextTextSetTbl.T; fm, to : TEXT) =
     a : TEXT;
   BEGIN
     IF symTab.get(fm, fSet) AND symTab.get(to, tSet) THEN
-      (* merge case, nasty *)
-      WITH new = fSet.union(tSet),
-           iter = new.iterate() DO
-        WHILE iter.next(a) DO EVAL symTab.put(a, new) END
+      IF TE(fm, to) THEN
+        (* skip -- this is just the "touch" case *)
+      ELSE
+        (* merge case, nasty *)
+        WITH new = fSet.union(tSet),
+             iter = new.iterate() DO
+          WHILE iter.next(a) DO EVAL symTab.put(a, new) END
+        END
       END
     ELSIF symTab.get(fm, fSet) OR symTab.get(to, fSet) THEN
       EVAL fSet.insert(to);
