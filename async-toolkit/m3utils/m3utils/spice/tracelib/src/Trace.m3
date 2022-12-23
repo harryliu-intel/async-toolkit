@@ -15,6 +15,7 @@ IMPORT TextReader;
 IMPORT Debug;
 IMPORT Thread;
 FROM Fmt IMPORT F, Int; IMPORT Fmt;
+IMPORT TextSet, TextSetDef;
 
 <*FATAL Thread.Alerted*>
 
@@ -37,6 +38,8 @@ REVEAL
     getTimeData := GetTimeData;
     getNodeData := GetNodeData;
     getCanonicalName := GetCanonicalName;
+    getAliases  := GetAliases;
+    allNames    := AllNames;
     close       := Close;
   END;
 
@@ -86,7 +89,38 @@ PROCEDURE GetCanonicalName(t : T; idx : CARDINAL) : TEXT =
       RETURN seq.get(0)
     END
   END GetCanonicalName;
+
+PROCEDURE GetAliases(t : T; idx : CARDINAL) : TextSet.T =
+  VAR
+    res := NEW(TextSetDef.T).init();
+  BEGIN
+    GetAliasesInt(t, idx, res);
+    RETURN res
+  END GetAliases;
   
+PROCEDURE GetAliasesInt(t : T; idx : CARDINAL; res : TextSet.T) =
+  VAR
+    seq : TextSeq.T;
+  BEGIN
+    WITH hadIt = t.revTbl.get(idx, seq) DO
+      <*ASSERT hadIt*>
+      
+      FOR i := 0 TO seq.size() - 1 DO
+        EVAL res.insert(seq.get(i))
+      END
+    END
+  END GetAliasesInt;
+
+PROCEDURE AllNames(t : T) : TextSet.T =
+  VAR
+    res := NEW(TextSetDef.T).init();
+  BEGIN
+    FOR i := 0 TO t.revTbl.size() - 1 DO
+      GetAliasesInt(t, i, res)
+    END;
+    RETURN res
+  END AllNames;
+ 
 PROCEDURE ParseNames(nNam   : Pathname.T;
                      fwdTbl : TextCardTbl.T;
                      revTbl : CardTextSeqTbl.T) : CARDINAL

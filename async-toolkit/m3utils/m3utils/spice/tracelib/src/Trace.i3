@@ -1,6 +1,7 @@
 INTERFACE Trace;
 IMPORT Pathname;
 IMPORT OSError, Rd;
+IMPORT TextSet;
 
 TYPE
   T <: Public;
@@ -27,6 +28,10 @@ TYPE
     RAISES { Rd.Failure, Rd.EndOfFile } ;
 
     getCanonicalName(idx : CARDINAL) : TEXT;
+
+    getAliases(idx : CARDINAL) : TextSet.T;
+
+    allNames() : TextSet.T;
 
     close() RAISES { Rd.Failure };
   END;

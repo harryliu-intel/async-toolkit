@@ -886,9 +886,134 @@ PROCEDURE GraphMeasurement(meas : MarginMeasurement.T;
     END
   END GraphMeasurement;
 
+PROCEDURE MeasureFromSpice(spiceFn : Pathname.T) =
+  BEGIN
+    TRY
+      WITH spiceRd = FileRd.Open(spiceFn) DO
+        spice := SpiceFormat.ParseSpice(spiceRd, ".", spiceFn);
+        Rd.Close(spiceRd)
+      END
+    EXCEPT
+      OSError.E(e) =>
+      Debug.Error(F("Can't open top level file %s : OSError.E : %s",
+                    spiceFn, AL.Format(e)))
+    |
+      SpiceError.E(e) =>
+      Debug.Error(F("Parsing input : caught SpiceError.E : %s at line %s of file %s",
+                    e.msg, Int(e.lNo), Debug.UnNil(e.fn)))
+    END;
+    
+    IF rootType = NIL THEN
+      rootCkt := spice.topCkt
+    ELSE
+      WITH hadIt = spice.subCkts.get(rootType, rootCkt) DO
+        IF NOT hadIt THEN
+          Debug.Error(F("Unknown root type %s", rootType))
+        END
+      END
+    END;
+
+
+    WITH db = NEW(MarginMeasurementSeq.T).init() DO
+      FOR i := FIRST(LatchSpecs) TO LAST(LatchSpecs) DO
+        IF quick AND nMargins >= QuickMargins THEN EXIT END;
+        
+        DoOneLatchSpec(db, spice, rootCkt, LatchSpecs[i], mapper)
+      END;
+      
+      WITH worst = MarginDump.Do(db, 10) DO
+        IF graphNs > 0.0d0 THEN
+          FOR i := 0 TO worst.size() - 1 DO
+            GraphMeasurement(worst.get(i), graphNs, i, traceRt)
+          END
+        END
+      END
+    END
+  END MeasureFromSpice;
+
+TYPE
+  LatchNodes = RECORD
+    clk, d, q : TEXT;
+  END;
+
+PROCEDURE IsClockNode(trace          : Trace.T;
+                      idx            : CARDINAL;
+                      VAR latchNodes : LatchNodes) : BOOLEAN =
+
+  PROCEDURE AliasHasSuffix(idx : CARDINAL;
+                           sfx : TEXT;
+                           VAR pfx : TEXT) : BOOLEAN=
+    VAR iter := trace.getAliases(idx).iterate();
+        a : TEXT;
+    BEGIN
+      WHILE iter.next(a) DO
+        IF FALSE THEN
+          Debug.Out(F("seeking suffix %s in %s", sfx, a))
+        END;
+        IF CitTextUtils.HaveSuffix(a, sfx) THEN
+          pfx := Text.Sub(a, 0, Text.Length(a) - Text.Length(sfx));
+          RETURN TRUE
+        END
+      END;
+      RETURN FALSE
+    END AliasHasSuffix;
+
+  PROCEDURE Exists(nn : TEXT) : BOOLEAN =
+    VAR
+      dummy : CARDINAL;
+    BEGIN
+      RETURN trace.getNodeIdx(nn, dummy)
+    END Exists;
+
+  VAR
+    pfx : TEXT;
+  BEGIN
+    IF AliasHasSuffix(idx, ".CLK", pfx) THEN
+      WITH clkNm = pfx & ".CLK",
+           dNm   = pfx & ".D",
+           qNm   = pfx & ".Q" DO
+        
+        IF Exists(pfx & ".D") AND Exists(pfx & ".Q") THEN
+          latchNodes := LatchNodes { clkNm, dNm, qNm };
+          RETURN TRUE
+        END
+      END
+    END;
+    RETURN FALSE
+  END IsClockNode;
+  
+PROCEDURE MeasureByName() =
+  VAR
+    latchNodes : LatchNodes;
+    clkTrIdx, dTrIdx : CARDINAL;
+    db := NEW(MarginMeasurementSeq.T).init();
+    nclks := 0;
+  BEGIN
+    FOR i := 0 TO trace.getNodes() - 1 DO
+      IF IsClockNode(trace, i, latchNodes) THEN
+        INC(nclks);
+        Debug.Out(F("MeasureByName : clock node %s", latchNodes.clk));
+
+        WITH hadIt = trace.getNodeIdx(latchNodes.clk, clkTrIdx) DO
+          <*ASSERT hadIt*>
+        END;
+        WITH hadIt = trace.getNodeIdx(latchNodes.d, dTrIdx) DO
+          <*ASSERT hadIt*>
+        END;
+        EVAL CheckMargin(db,
+                         CheckDir.All, +1,
+                         dTrIdx, latchNodes.d,
+                         clkTrIdx, latchNodes.clk,
+                         MeasureSetup, "setup");
+      END
+    END;
+
+    Debug.Out(F("%s clocks", Int(nclks)))
+  END MeasureByName;
+  
 VAR
   pp                          := NEW(ParseParams.T).init(Stdio.stderr);
-  spiceFn    : Pathname.T     := "xa.sp";
+  spiceFn    : Pathname.T     ; (*:= "xa.sp";*)
   spice      : SpiceFormat.T;
   traceRt    : Pathname.T     := "xa";
   trace      : Trace.T;
@@ -901,12 +1026,15 @@ VAR
   quick      : BOOLEAN;
   graphNs                     := FIRST(LONGREAL);
   mapper     : Mapper;
+  doByName   : BOOLEAN;
   
 BEGIN
   Debug.AddWarnStream(warnWr);
   
   TRY
     quick := pp.keywordPresent("-quick");
+
+    doByName := pp.keywordPresent("-byname");
     
     IF pp.keywordPresent("-i") THEN
       spiceFn := pp.getNext()
@@ -951,46 +1079,13 @@ BEGIN
   ELSE
     mapper := NIL
   END;
-  
-  TRY
-    WITH spiceRd = FileRd.Open(spiceFn) DO
-      spice := SpiceFormat.ParseSpice(spiceRd, ".", spiceFn);
-      Rd.Close(spiceRd)
-    END
-  EXCEPT
-    OSError.E(e) =>
-    Debug.Error(F("Can't open top level file %s : OSError.E : %s",
-                  spiceFn, AL.Format(e)))
-  |
-    SpiceError.E(e) =>
-    Debug.Error(F("Parsing input : caught SpiceError.E : %s at line %s of file %s",
-                  e.msg, Int(e.lNo), Debug.UnNil(e.fn)))
+
+  IF spiceFn # NIL THEN
+    MeasureFromSpice(spiceFn)
   END;
 
-  IF rootType = NIL THEN
-    rootCkt := spice.topCkt
-  ELSE
-    WITH hadIt = spice.subCkts.get(rootType, rootCkt) DO
-      IF NOT hadIt THEN
-        Debug.Error(F("Unknown root type %s", rootType))
-      END
-    END
-  END;
-
-  WITH db = NEW(MarginMeasurementSeq.T).init() DO
-    FOR i := FIRST(LatchSpecs) TO LAST(LatchSpecs) DO
-      IF quick AND nMargins >= QuickMargins THEN EXIT END;
-      
-      DoOneLatchSpec(db, spice, rootCkt, LatchSpecs[i], mapper)
-    END;
-
-    WITH worst = MarginDump.Do(db, 10) DO
-      IF graphNs > 0.0d0 THEN
-        FOR i := 0 TO worst.size() - 1 DO
-          GraphMeasurement(worst.get(i), graphNs, i, traceRt)
-        END
-      END
-    END
-  END;
+  IF doByName THEN
+    MeasureByName()
+  END
 
 END Main.

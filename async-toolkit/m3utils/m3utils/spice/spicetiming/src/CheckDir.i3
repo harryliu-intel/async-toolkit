@@ -4,6 +4,9 @@ IMPORT Word;
 
 TYPE T = SET OF Transition.Dir;
 
+CONST All  = T { FIRST(Transition.Dir) .. LAST(Transition.Dir) };
+      None = T {};
+
 CONST Brand = "CheckDir";
 
 PROCEDURE Fmt(t : T) : TEXT;
