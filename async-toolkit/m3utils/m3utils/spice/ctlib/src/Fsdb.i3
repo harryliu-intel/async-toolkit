@@ -1,6 +1,6 @@
 INTERFACE Fsdb;
 
-IMPORT TextSeq;
+IMPORT TextSeqSeq;
 IMPORT TextSet;
 IMPORT RegExList;
 IMPORT Pathname;
@@ -14,7 +14,7 @@ PROCEDURE Parse(wd            : Pathname.T;
                 ofn           : Pathname.T;
                 (* output ROOT name, e.g., xa *)
                 
-                names         : TextSeq.T;
+                names         : TextSeqSeq.T;
                 (* sequence of canonical names *)
                 
                 maxFiles      : CARDINAL;

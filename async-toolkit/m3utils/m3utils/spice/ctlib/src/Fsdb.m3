@@ -1,6 +1,6 @@
 MODULE Fsdb;
 
-IMPORT TextSeq;
+IMPORT TextSeqSeq;
 IMPORT TextSet;
 IMPORT RegExList;
 IMPORT Pathname;
@@ -673,7 +673,7 @@ PROCEDURE SetupFileTabs(VAR fileTab : ARRAY OF CardSeq.T;
 PROCEDURE LoadAllNames(wr            : Wr.T;
                        rd            : Rd.T;
                        loId, hiId    : CARDINAL;
-                       names         : TextSeq.T;
+                       names         : TextSeqSeq.T;
                        typeTab       : TextCardSetTbl.T;
                        dutName       : TEXT;
                        restrictNodes : TextSet.T;
@@ -682,7 +682,7 @@ PROCEDURE LoadAllNames(wr            : Wr.T;
                        )
   RAISES { TextReader.NoMore }  =
   VAR
-    fsdbNames  := NEW(TextCardSetTbl.Default).init();
+    fsdbNames  := NEW(CardTextSetTbl.Default).init();
     duplicates := NEW(TextCardTbl.Default).init();
     
     line : TEXT;
@@ -725,7 +725,7 @@ PROCEDURE LoadAllNames(wr            : Wr.T;
                 <*ASSERT tryNm # NIL*>
                 Debug.Out(F("fsdbNames.put(%s, %s)", tryNm, Int(idx)));
                 
-                WITH hadIt = StoreTextCard(fsdbNames, tryNm, idx) DO
+                WITH hadIt = StoreCardText(fsdbNames, tryNm, idx) DO
                   <*ASSERT NOT hadIt *>
                 END
 
@@ -755,7 +755,7 @@ PROCEDURE LoadAllNames(wr            : Wr.T;
           END
         END
       END;
-      WITH hadIt = StoreTextCard(fsdbNames, "TIME", 0)  (* implicit #0 *) DO
+      WITH hadIt = StoreCardText(fsdbNames, "TIME", 0)  (* implicit #0 *) DO
         IF hadIt THEN
           Debug.Error("? node 0 not TIME")
         END
@@ -769,7 +769,8 @@ PROCEDURE LoadAllNames(wr            : Wr.T;
                                        names);
 
       Debug.Out(F("made idxMap: names.size() %s / active %s",
-                  Int(names.size()), Int(NameControl.CountActiveNames(idxMap))));
+                  Int(names.size()),
+                  Int(NameControl.CountActiveNodes(idxMap))));
 
     END LoadAllNames;
 
@@ -782,7 +783,7 @@ PROCEDURE ChopTime(VAR time : LONGREAL; seq : LRSeq.T) =
   END ChopTime;
   
 PROCEDURE Parse(wd, ofn       : Pathname.T;
-                names         : TextSeq.T;
+                names         : TextSeqSeq.T;
                 maxFiles      : CARDINAL;
                 VAR nFiles    : CARDINAL;
 

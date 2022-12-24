@@ -5,18 +5,19 @@ IMPORT RegExList;
 IMPORT CardSeq;
 IMPORT Pathname;
 IMPORT Wr;
-IMPORT TextCardTbl;
+IMPORT CardTextSetTbl;
+IMPORT TextSeqSeq;
 
 PROCEDURE MakeIdxMap(nameIdTbl     : CardTextSetTbl.T;
                      restrictNodes : TextSet.T;
                      regExList     : RegExList.T;
-                     names         : TextSeq.T) : CardSeq.T;
+                     names         : TextSeqSeq.T) : CardSeq.T;
 
   (* for given fsdbNames table, generate:
 
      names, restrictNodes, regExList
-     generate: CardSeq that contains the mapping of each name to its output
-     index.
+     generate: CardSeq that contains the mapping of each input index to 
+     its output index.
 
      If no mapping, LAST(CARDINAL) will be placed.
   *)
@@ -24,13 +25,15 @@ PROCEDURE MakeIdxMap(nameIdTbl     : CardTextSetTbl.T;
 CONST NoMapping = LAST(CARDINAL);
 
 PROCEDURE SanitizeNames(idxMap : CardSeq.T;
-                        names  : TextSeq.T);
+                        names  : TextSeqSeq.T);
+  (* remove unmapped names so that the names file and set of nodes to 
+     generate match *)
 
-PROCEDURE CountActiveNames(seq : CardSeq.T) : CARDINAL;
+PROCEDURE CountActiveNodes(seq : CardSeq.T) : CARDINAL;
 
 PROCEDURE WriteNames(wd, ofn       : Pathname.T;
 
-                     names         : TextSeq.T;
+                     names         : TextSeqSeq.T;
 
                      idxMap        : CardSeq.T;
                      (* map of input node to output node *)

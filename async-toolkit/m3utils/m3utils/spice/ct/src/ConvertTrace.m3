@@ -20,7 +20,7 @@ MODULE ConvertTrace EXPORTS Main;
 IMPORT FileRd;
 IMPORT Rd;
 IMPORT Debug;
-IMPORT TextSeq;
+IMPORT TextSeqSeq;
 IMPORT FileWr, Wr;
 FROM Fmt IMPORT LongReal, Int, F;
 IMPORT FS;
@@ -193,7 +193,7 @@ PROCEDURE WriteSources(tempReader   : TempReader.T;
           IF i = 0 THEN
             CreateBuffers(tempReader, fnr, time, data)
           ELSE
-              Wr.PutText(sWr, "* source for " & names.get(i) & "\n");
+              Wr.PutText(sWr, "* source for " & names.get(i).get(0) & "\n");
               ReadEntireFile(tempReader, i, data^);
               Wr.PutText(sWr, F("V%s src%s 0 PWL (\n", Int(i), Int(i)));
               FOR i := FIRST(data^) TO LAST(data^) DO
@@ -252,7 +252,7 @@ PROCEDURE WriteFiles(tempReader : TempReader.T; fnr : FileNamer.T) =
             CreateBuffers(tempReader, fnr, time, data);
           ELSE
             TRY
-              sFn := tDn & "/" & Unslash(names.get(i));
+              sFn := tDn & "/" & Unslash(names.get(i).get(0));
               sWr := FileWr.Open(sFn)
             EXCEPT
               OSError.E(x) => Debug.Error("Unable to open file \"" & sFn & "\" for writing : OSError.E : " & AL.Format(x))
@@ -298,7 +298,7 @@ PROCEDURE WriteTrace(fnr : FileNamer.T; fmt : TraceFile.Version) =
   END WriteTrace;
   
 VAR
-  names := NEW(TextSeq.T).init();
+  names := NEW(TextSeqSeq.T).init();
   ifn, ofn : Pathname.T;
 
   wd := "ct.work";
@@ -492,7 +492,7 @@ BEGIN
           OSError.E(x) => Debug.Error("Trouble opening input file \"" & ifn & "\": OSError.E : " & AL.Format(x))
         END;
         
-        names.addhi("TIME");
+        names.addhi(Tr0.Seq1("TIME"));
         Tr0.Parse(wd,
                   ofn,
                   names,

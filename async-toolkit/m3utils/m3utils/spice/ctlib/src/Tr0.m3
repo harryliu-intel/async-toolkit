@@ -5,16 +5,16 @@ IMPORT Text;
 IMPORT Wr;
 IMPORT AL, CitTextUtils AS TextUtils;
 FROM Fmt IMPORT LongReal, Int, F;
-IMPORT UnsafeWriter;
 IMPORT Thread;
-IMPORT TextSeq;
+IMPORT TextSeq, TextSeqSeq;
 IMPORT Scan, FloatMode, Lex;
 IMPORT Pathname;
 IMPORT Math;
 IMPORT TextSet;
 IMPORT RegExList;
 IMPORT CardSeq;
-IMPORT TextCardTbl;
+IMPORT CardTextSetTbl;
+IMPORT TextSetDef;
 
 IMPORT NameControl;
 FROM NameControl IMPORT MakeIdxMap, SanitizeNames,
@@ -71,7 +71,7 @@ PROCEDURE StartsWith(READONLY buf, pfx : ARRAY OF CHAR) : BOOLEAN =
 
 PROCEDURE FlushData(READONLY wdWr  : ARRAY OF Wr.T;
                     lbp, lbq       : CARDINAL;
-                    names          : TextSeq.T;
+                    names          : TextSeqSeq.T;
                     READONLY lbuff : ARRAY OF ARRAY OF LONGREAL) =
 
   (* flush data into temp directory *)
@@ -111,7 +111,9 @@ PROCEDURE FlushData(READONLY wdWr  : ARRAY OF Wr.T;
           DataBlock.WriteData(wr, i, SUBARRAY(lbuff[i], 0, lbp))
         END
       EXCEPT
-        Wr.Failure(x) => Debug.Error(F("Trouble flushing data for node %s (%s): Wr.Failure : %s", names.get(i), Int(i), 
+        Wr.Failure(x) => Debug.Error(F("Trouble flushing data for node %s (%s): Wr.Failure : %s",
+                                       names.get(i).get(0),
+                                       Int(i), 
                                        AL.Format(x)))
       END
     END
@@ -124,21 +126,41 @@ PROCEDURE NullParser(<*UNUSED*>READONLY line : ARRAY OF CHAR;
     RETURN 1
   END NullParser;
 
-PROCEDURE MakeTbl(seq : TextSeq.T) : TextCardTbl.T =
+PROCEDURE MakeTbl(seq : TextSeqSeq.T) : CardTextSetTbl.T =
   VAR
-    res := NEW(TextCardTbl.Default).init();
+    res := NEW(CardTextSetTbl.Default).init();
   BEGIN
     FOR i := 0 TO seq.size() - 1 DO
-      EVAL res.put(seq.get(i), i)
+      WITH nseq = seq.get(i) DO
+        FOR j := 0 TO nseq.size() - 1 DO
+          EVAL res.put(i, Set1(nseq.get(j)))
+        END
+      END
     END;
     RETURN res
   END MakeTbl;
-    
+
+PROCEDURE Seq1(txt : TEXT) : TextSeq.T =
+  BEGIN
+    WITH res = NEW(TextSeq.T).init() DO
+      res.addhi(txt);
+      RETURN res
+    END
+  END Seq1;
+
+PROCEDURE Set1(txt : TEXT) : TextSet.T =
+  BEGIN
+    WITH res = NEW(TextSetDef.T).init() DO
+      EVAL res.insert(txt);
+      RETURN res
+    END
+  END Set1;
+      
   
 (**********************************************************************)
 
 PROCEDURE Parse(wd, ofn        : Pathname.T;
-                names          : TextSeq.T;
+                names          : TextSeqSeq.T;
                 maxFiles       : CARDINAL;
                 VAR nFiles     : CARDINAL;
                 MaxMem         : CARDINAL;
@@ -173,8 +195,8 @@ PROCEDURE Parse(wd, ofn        : Pathname.T;
         pfx := "";
       BEGIN
         IF isCurr THEN pfx := "I:" END;
-        names.addhi(pfx & RenameBack(dutName,
-                                     Text.FromChars(SUBARRAY(line,s,l-s-1))));
+        names.addhi(Seq1(pfx & RenameBack(dutName,
+                                     Text.FromChars(SUBARRAY(line,s,l-s-1)))));
         INC(c)
       END Push;
 
@@ -480,7 +502,10 @@ PROCEDURE Parse(wd, ofn        : Pathname.T;
                 *)
                 IF parser = ParseControl.Names THEN
                   (* must write out names before we forget! *)
-                  idxMap := MakeIdxMap(MakeTbl(names), restrictNodes, restrictRegEx, names);
+                  idxMap := MakeIdxMap(MakeTbl(names),
+                                       restrictNodes,
+                                       restrictRegEx,
+                                       names);
                   
                   aNodes := WriteNames(wd,
                                        ofn,

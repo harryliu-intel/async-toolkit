@@ -65,4 +65,6 @@ Module ("ZtraceNodeHeader")
 Table ("TextCardSet", "Text", "CardSet")
 Table ("CardTextSet", "Cardinal", "TextSet")
 
+Sequence ("TextSeq", "TextSeq")
+
 library ("ctlib")
