@@ -25,14 +25,15 @@ PROCEDURE MakeIdxMap(fsdbNames     : TextCardTbl.T;
                      regExList     : RegExList.T;
                      names         : TextSeq.T) : CardSeq.T =
   VAR
-    res := NEW(CardSeq.T).init();
-    c := 0;
-    success : BOOLEAN;
-    iter := fsdbNames.iterate();
+    res   := NEW(CardSeq.T).init();
+    c     := 0;
     maxId := -1;
-    arr : REF ARRAY OF TEXT;
-    n : TEXT;
-    id : CARDINAL;
+    iter  := fsdbNames.iterate();
+
+    success : BOOLEAN;
+    arr     : REF ARRAY OF TEXT;
+    n       : TEXT;
+    id      : CARDINAL;
     
   BEGIN
     WHILE iter.next(n, id) DO
@@ -153,7 +154,7 @@ PROCEDURE WriteNames(wd, ofn       : Pathname.T;
     Debug.Out(F("%s files", Int(nFiles)));
     
     TRY
-      wdWr := NEW(REF ARRAY OF Wr.T, nFiles);
+      wdWr  := NEW(REF ARRAY OF Wr.T,       nFiles);
       wdPth := NEW(REF ARRAY OF Pathname.T, nFiles);
       
       TRY

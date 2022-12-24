@@ -26,7 +26,10 @@ IMPORT UnsafeWriter;
 IMPORT TextSetDef;
 IMPORT DataBlock;
 IMPORT TextCardTbl;
-IMPORT TextCardSeqTbl;
+IMPORT CardSet;
+IMPORT CardSetDef;
+IMPORT TextCardSetTbl;
+IMPORT CardTextSetTbl;
 IMPORT SpiceCompress;
 IMPORT TextWr;
 
@@ -399,29 +402,61 @@ PROCEDURE GetLineUntilG(rd : Rd.T; term : TEXT; VAR line : TEXT) : BOOLEAN =
 CONST
   TwoToThe32 = FLOAT(Word.Shift(1, 32), LONGREAL);
 
-PROCEDURE StoreByType(tbl : TextCardSeqTbl.T; type : TEXT; fsdbId : CARDINAL) =
+PROCEDURE StoreCardText(tbl    : CardTextSetTbl.T;
+                        text   : TEXT;
+                        fsdbId : CARDINAL) : BOOLEAN =
   VAR
-    seq : CardSeq.T;
+    set : TextSet.T;
+    res := TRUE;
   BEGIN
-    IF NOT tbl.get(type, seq) THEN
-      seq := NEW(CardSeq.T).init();
-      EVAL tbl.put(type, seq)
+    IF NOT tbl.get(fsdbId, set) THEN
+      set := NEW(TextSetDef.T).init();
+      EVAL tbl.put(fsdbId, set);
+      res := FALSE
     END;
-    seq.addhi(fsdbId)
-  END StoreByType;
+    EVAL set.insert(text);
+    RETURN res
+  END StoreCardText;
 
-PROCEDURE GetIdsByType(tbl : TextCardSeqTbl.T; type : TEXT) : CardSeq.T =
+PROCEDURE StoreTextCard(tbl    : TextCardSetTbl.T;
+                        text   : TEXT;
+                        fsdbId : CARDINAL) : BOOLEAN =
   VAR
-    seq : CardSeq.T;
+    set : CardSet.T;
+    res := TRUE;
   BEGIN
-    IF NOT tbl.get(type, seq) THEN
-      seq := NEW(CardSeq.T).init();
-      EVAL tbl.put(type, seq)
+    IF NOT tbl.get(text, set) THEN
+      set := NEW(CardSetDef.T).init();
+      EVAL tbl.put(text, set);
+      res := FALSE
     END;
-    RETURN seq
-  END GetIdsByType;
+    EVAL set.insert(fsdbId);
+    RETURN res
+  END StoreTextCard;
 
-PROCEDURE InterpolateTimesteps(VAR timesteps : LRSeq.T; interpolate : LONGREAL) =
+PROCEDURE GetIdsByText(tbl : TextCardSetTbl.T; type : TEXT) : CardSet.T =
+  VAR
+    set : CardSet.T;
+  BEGIN
+    IF NOT tbl.get(type, set) THEN
+      set := NEW(CardSetDef.T).init();
+      EVAL tbl.put(type, set)
+    END;
+    RETURN set
+  END GetIdsByText;
+
+PROCEDURE SetToSeq(set : CardSet.T) : CardSeq.T =
+  VAR
+    res  := NEW(CardSeq.T).init();
+    iter := set.iterate();
+    c : CARDINAL;
+  BEGIN
+    WHILE iter.next(c) DO res.addhi(c) END;
+    RETURN res
+  END SetToSeq;
+
+PROCEDURE InterpolateTimesteps(VAR timesteps : LRSeq.T;
+                               interpolate   : LONGREAL) =
   BEGIN
     (* rewrite all timesteps based on interpolation *)
     WITH lo  = timesteps.get(0),
@@ -639,7 +674,7 @@ PROCEDURE LoadAllNames(wr            : Wr.T;
                        rd            : Rd.T;
                        loId, hiId    : CARDINAL;
                        names         : TextSeq.T;
-                       typeTab       : TextCardSeqTbl.T;
+                       typeTab       : TextCardSetTbl.T;
                        dutName       : TEXT;
                        restrictNodes : TextSet.T;
                        restrictRegEx : RegExList.T;
@@ -647,13 +682,15 @@ PROCEDURE LoadAllNames(wr            : Wr.T;
                        )
   RAISES { TextReader.NoMore }  =
   VAR
-        fsdbNames := NEW(TextCardTbl.Default).init();
+    fsdbNames  := NEW(TextCardSetTbl.Default).init();
     duplicates := NEW(TextCardTbl.Default).init();
+    
     line : TEXT;
-    BEGIN
-      PutCommandG(wr, F("N %s %s", Int(loId), Int(hiId)));
+    
+  BEGIN
+      PutCommandG(wr, F("A %s %s", Int(loId), Int(hiId)));
       WITH nameSet = NEW(TextSetDef.T).init() DO
-        WHILE GetLineUntilG(rd, "NR", line) DO
+        WHILE GetLineUntilG(rd, "AR", line) DO
           TRY
             WITH reader = NEW(TextReader.T).init(line),
                  idx    = reader.getInt(),
@@ -661,9 +698,7 @@ PROCEDURE LoadAllNames(wr            : Wr.T;
                  type   = reader.get(),
                  editNm = RenameBack(dutName, EditName(nm)) DO
 
-              StoreByType(typeTab, type, idx);
-              (* we also dont do anything with the type right now,
-                 we really should check it's something we can work with *)
+              EVAL StoreTextCard(typeTab, type, idx);
               
               VAR
                 tryNm : TEXT;
@@ -690,7 +725,7 @@ PROCEDURE LoadAllNames(wr            : Wr.T;
                 <*ASSERT tryNm # NIL*>
                 Debug.Out(F("fsdbNames.put(%s, %s)", tryNm, Int(idx)));
                 
-                WITH hadIt = fsdbNames.put(tryNm, idx) DO
+                WITH hadIt = StoreTextCard(fsdbNames, tryNm, idx) DO
                   <*ASSERT NOT hadIt *>
                 END
 
@@ -720,7 +755,7 @@ PROCEDURE LoadAllNames(wr            : Wr.T;
           END
         END
       END;
-      WITH hadIt = fsdbNames.put("TIME", 0)  (* implicit #0 *) DO
+      WITH hadIt = StoreTextCard(fsdbNames, "TIME", 0)  (* implicit #0 *) DO
         IF hadIt THEN
           Debug.Error("? node 0 not TIME")
         END
@@ -861,7 +896,7 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
     *)
     
     BEGIN
-      WITH voltSignals = GetIdsByType(typeTab, type) DO
+      WITH voltSignals = SetToSeq(GetIdsByText(typeTab, type)) DO
         IF voltSignals.size() # 0 THEN
           VAR
             lastVolt  := voltSignals.get(voltSignals.size() - 1);
@@ -920,7 +955,7 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
 
     timesteps     := NEW(LRSeq.T).init();
     doInterpolate := interpolate # NoInterpolate;
-    typeTab       := NEW(TextCardSeqTbl.Default).init();
+    typeTab       := NEW(TextCardSetTbl.Default).init();
     
   BEGIN
 

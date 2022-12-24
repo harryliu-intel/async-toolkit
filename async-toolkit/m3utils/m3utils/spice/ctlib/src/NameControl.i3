@@ -7,7 +7,7 @@ IMPORT Pathname;
 IMPORT Wr;
 IMPORT TextCardTbl;
 
-PROCEDURE MakeIdxMap(nameIdTbl     : TextCardTbl.T;
+PROCEDURE MakeIdxMap(nameIdTbl     : CardTextSetTbl.T;
                      restrictNodes : TextSet.T;
                      regExList     : RegExList.T;
                      names         : TextSeq.T) : CardSeq.T;

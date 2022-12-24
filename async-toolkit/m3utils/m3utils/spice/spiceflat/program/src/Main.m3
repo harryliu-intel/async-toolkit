@@ -50,14 +50,16 @@ BEGIN
   END;
 
   VAR 
-    wr   := FileWr.Open("hier.out");
-    iter := spice.subCkts.iterate();
-    type : TEXT;
-    ckt : SpiceCircuit.T;
+    wr         := FileWr.Open("hier.out");
+    iter       := spice.subCkts.iterate();
     typeCntTbl := NEW(TextRefTbl.Default).init();
-    parentTbl := NEW(TextTextSetTbl.Default).init();
-    gwr := FileWr.Open("gprof.out");
-    bwr := FileWr.Open("bflat.out");
+    parentTbl  := NEW(TextTextSetTbl.Default).init();
+    gwr        := FileWr.Open("gprof.out");
+    bwr        := FileWr.Open("bflat.out");
+
+    type  : TEXT;
+    ckt   : SpiceCircuit.T;
+    
   BEGIN
     WHILE iter.next(type, ckt) DO
       DumpOneType(wr, type, ckt, typeCntTbl, parentTbl)

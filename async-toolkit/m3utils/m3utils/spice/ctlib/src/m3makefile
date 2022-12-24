@@ -62,4 +62,7 @@ Interface ("ArithConstants")
 Module ("ZtraceFile")
 Module ("ZtraceNodeHeader")
 
+Table ("TextCardSet", "Text", "CardSet")
+Table ("CardTextSet", "Cardinal", "TextSet")
+
 library ("ctlib")
