@@ -218,7 +218,7 @@ ext_dq_free(ext_dq *q)
 
 //////////////////////////////////////////////////////////////////////
 
-const int debug = 0;
+const int debug = 2;
 
 ffrObject      *fsdb_obj;
 fsdbXTagType    xtag_type; 
@@ -845,7 +845,9 @@ decode_type(unsigned int tid)
 }
 
 void
-traverse_names(unsigned lo, unsigned hi)
+traverse_names(unsigned lo, unsigned hi, unsigned aliases)
+// print a single name for each id if aliases = 0
+// print all aliases for each id if aliases = 1
 {
   namerec_t *p = names;
 
@@ -860,7 +862,7 @@ traverse_names(unsigned lo, unsigned hi)
   
   while(p) {
     if (p->idcode >= lo && p->idcode <= hi && !got[p->idcode]) {
-      got[p->idcode] = 1;
+      got[p->idcode] = !aliases;
       fprintf(stdout,
               "%u %s %s\n",
               p->idcode,
@@ -1037,8 +1039,17 @@ main(int argc, char *argv[])
         {
           unsigned lo=atoi(strtok(NULL, " "));
           unsigned hi=atoi(strtok(NULL, " ")); 
-          traverse_names(lo, hi);
+          traverse_names(lo, hi, 0);
           fprintf(stdout, "NR\n");
+          break;
+        }
+
+      case 'A': // get names (all aliases)
+        {
+          unsigned lo=atoi(strtok(NULL, " "));
+          unsigned hi=atoi(strtok(NULL, " ")); 
+          traverse_names(lo, hi, 1);
+          fprintf(stdout, "AR\n");
           break;
         }
 
