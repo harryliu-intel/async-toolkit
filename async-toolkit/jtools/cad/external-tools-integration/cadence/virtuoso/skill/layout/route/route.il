@@ -254,7 +254,11 @@
           newName = pinMap[term->name]
           (when (and newName newName!=term->name)
             term->name = newName
-            (dbRenameNet term->net newName))))
+            (dbRenameNet term->net newName)
+            )
+          )
+        )
+
       ; offset for cell alignment and avoid negative numbers because RDT is stupid
       offset = (GetRDTOffset ?CV ExportCV)
       (unless offset (error "Can't find RDTOffset\n"))
@@ -647,7 +651,7 @@
 
     ; execute custom function
     (FinishRouterImport ?CV ImportCV)
-    
+
     ; save layout
     (dbSave ImportCV)
 
@@ -958,10 +962,10 @@ DumbLayers = (list (list "SRAM" "fill")
     tagcv = (dbOpenCellViewByType (GetCastLibName CV->cellName) CV->cellName "layout_tag" "maskLayout" "a")
     (DeleteAll tagcv)
     (dbCreatePRBoundary tagcv prb->points)
-   
+
     (printf "Removing apr halo outside prbound\n")
     allshapes = CV->shapes
-    
+
     ; labels mess up the processing
     allshapes = (FilterList allshapes (lambda (shape) shape->objType=="label"))
 
@@ -969,7 +973,7 @@ DumbLayers = (list (list "SRAM" "fill")
     allshapes = (FilterList allshapes (lambda (shape) shape->lpp==Metal5LPP))
     allshapes = (FilterList allshapes (lambda (shape) shape->lpp==Metal7LPP))
     allshapes = (FilterList allshapes (lambda (shape) shape->lpp==Metal9LPP))
-    
+
     ; delete all shapes that are entirely outside the prbound
     (printf "  ... halo shapes\n")
     allshapes = (FilterList allshapes (lambda (shape) !(IsRectOutsidePolygon shape->bBox prb->points)))
@@ -977,7 +981,7 @@ DumbLayers = (list (list "SRAM" "fill")
       (dbCopyFig shape tagcv)
       (dbDeleteObject shape)
       )
-      
+
     ; need to do a few GND stripes at the edges
     GNDExtras = (ExtraGNDShapes CV Metal5LPP prb)
     GNDExtras = (append GNDExtras (ExtraGNDShapes CV Metal7LPP prb))
