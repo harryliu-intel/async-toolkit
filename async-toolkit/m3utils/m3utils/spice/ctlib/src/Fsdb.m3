@@ -479,11 +479,6 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
   )
   RAISES { } = (* lots of errors but they cause program crash, not exception *)
 
-  (* I thought there was a compiler bug here, so I commented out these lines.
-
-     But there does not seem to be a compiler bug, so they should be OK to 
-     bring back *)
-
   (* the idea here is that we use an external program "nanosimrd", which is
      linked with Synopsys's C++ libraries, to read the actual files.
 
