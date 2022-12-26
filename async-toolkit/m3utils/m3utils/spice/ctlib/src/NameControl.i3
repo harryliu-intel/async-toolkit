@@ -30,6 +30,7 @@ PROCEDURE SanitizeNames(idxMap : CardSeq.T;
      generate match *)
 
 PROCEDURE CountActiveNodes(seq : CardSeq.T) : CARDINAL;
+  (* number of entries in seq that aren't NoMapping *)
 
 PROCEDURE WriteNames(wd, ofn       : Pathname.T;
 

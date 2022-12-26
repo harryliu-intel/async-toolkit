@@ -18,7 +18,8 @@ list ("RegEx", "MyRegEx")
 
 %implementation ("ConvertTrace")
 
-module ("Fsdb")
+module ("FsdbComms")
+Module ("Fsdb")
 module ("NameControl")
 
 Module ("TraceFile")

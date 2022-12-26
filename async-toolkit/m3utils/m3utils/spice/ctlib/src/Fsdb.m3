@@ -14,14 +14,12 @@ IMPORT Text;
 IMPORT CitTextUtils AS TextUtils, Lex, FloatMode;
 IMPORT Scan;
 IMPORT LongRealSeq AS LRSeq;
-IMPORT Word;
 IMPORT NameControl;
 IMPORT CardSeq;
 IMPORT OSError;
 IMPORT Thread;
 IMPORT AL;
 FROM Tr0 IMPORT RenameBack;
-IMPORT UnsafeReader;
 IMPORT UnsafeWriter;
 IMPORT TextSetDef;
 IMPORT DataBlock;
@@ -32,11 +30,13 @@ IMPORT TextCardSetTbl;
 IMPORT CardTextSetTbl;
 IMPORT SpiceCompress;
 IMPORT TextWr;
+FROM FsdbComms IMPORT PutCommandG, GetResponseG, GetLineUntilG, TwoToThe32;
+FROM FsdbComms IMPORT ReadCompressedNodeDataG, ReadBinaryNodeDataG,
+                      ReadInterpolatedBinaryNodeDataG;
 
 <*FATAL Thread.Alerted*>
 
-CONST TE = Text.Equal;
-      LR = LongReal;
+CONST LR = LongReal;
 
 VAR doDebug := Debug.DebugThis("Fsdb");
 
@@ -72,336 +72,9 @@ PROCEDURE EditName(nm : TEXT) : TEXT =
     END
   END EditName;
 
-<*UNUSED*>    
-PROCEDURE EditNameOld(nm : TEXT) : TEXT =
-  (* really should probably edit and leave as alias? *)
-
-  (* 
-     also maybe remove construct
-
-     [v(].*[)]
-  *)
-  
-  CONST
-    RemoveVoltPrefix = TRUE;
-  BEGIN
-    IF RemoveVoltPrefix
-      AND (TextUtils.HavePrefix(nm, "v(") OR TextUtils.HavePrefix(nm, "V("))
-     THEN
-      RETURN TextUtils.RemoveSuffixes(Text.Sub(nm, 2), ARRAY OF TEXT { ")" })
-    ELSE
-      RETURN nm
-    END
-  END EditNameOld;
-
-  (**********************************************************************)
-
-  (* the following procedures communicate with a nanosimrd process *)
-      
-PROCEDURE PutCommandG(wr : Wr.T; cmd : TEXT) =
-  BEGIN
-    TRY
-      IF doDebug THEN
-        Debug.Out(F("Fsdb.Parse.PutCommand \"%s\"", cmd));
-      END;
-      Wr.PutText(wr, cmd);
-      Wr.PutChar(wr, '\n');
-      Wr.Flush(wr);
-    EXCEPT
-      Wr.Failure(x) =>
-      Debug.Error("Unexpected Wr.Failure in PutCommand : " & AL.Format(x))
-    END
-  END PutCommandG;
-
-PROCEDURE GetResponseG(rd : Rd.T; matchKw : TEXT) : TextReader.T =
-  VAR
-    kw : TEXT;
-  BEGIN
-    TRY
-      LOOP
-        WITH line    = Rd.GetLine(rd),
-             reader  = NEW(TextReader.T).init(line) DO
-          IF doDebug THEN
-            Debug.Out(F("Fsdb.Parse.GetResponse \"%s\"", line));
-          END;
-          IF reader.next(" ", kw, TRUE) THEN
-            IF TE(kw, matchKw) THEN
-              RETURN reader
-            END
-          END
-        END
-      END
-    EXCEPT
-      Rd.Failure(x) =>
-      Debug.Error("Unexpected Rd.Failure in GetResponse : " & AL.Format(x)); 
-      <*ASSERT FALSE*>
-      
-    |
-      Rd.EndOfFile =>
-      Debug.Error("Unexpected Rd.EndOfFile in GetResponse");
-      <*ASSERT FALSE*>
-    END
-  END GetResponseG;
-
-PROCEDURE ReadCompressedNodeDataG(rd         : Rd.T;
-                                  VAR nodeid : CARDINAL;
-                                  VAR norm   : SpiceCompress.Norm) : TEXT =
-  VAR
-    kw    : TEXT;
-    bytes : CARDINAL;
-    tag   : CHAR;
-  BEGIN
-    TRY
-      LOOP
-        WITH line    = Rd.GetLine(rd),
-             reader  = NEW(TextReader.T).init(line) DO
-          IF doDebug THEN
-            Debug.Out(F("Fsdb.Parse.ReadCompressedNodeDataG line \"%s\"", line))
-          END;
-
-          IF reader.next(" ", kw, TRUE) THEN
-            IF    TE(kw, "E") THEN
-              Debug.Error(F("Got time mismatch: nodeid %s: line %s",
-                            Int(nodeid), line));
-              <*ASSERT FALSE*>
-            ELSIF TE(kw, "ZZZ") THEN
-              (* this code synchronized with Main.m3<spicestream> *)
-              tag      := Rd.GetChar(rd);
-              <*ASSERT tag = 'x'*>
-              nodeid   := UnsafeReader.ReadI(rd);
-              bytes    := UnsafeReader.ReadI(rd);
-              norm.min := UnsafeReader.ReadLR(rd);
-              norm.max := UnsafeReader.ReadLR(rd);
-
-              Debug.Out(F("Fsdb.ReadCompressedNodeDataG got nodeid %s bytes %s m in %s max %s",
-                          Int(nodeid), Int(bytes), LR(norm.min), LR(norm.max) ));
-              
-              WITH buflen  = bytes - 8, (* 9 is len of min, max, code *)
-                   chars   = NEW(REF ARRAY OF CHAR, buflen),
-                   got     = Rd.GetSub(rd, chars^) DO
-                IF got # buflen THEN RAISE Rd.EndOfFile END;
-
-                IF doDebug THEN
-                  Debug.Out(F("ReadCompressedNodeDataG nodeid %s bytes %s min %s max %s",
-                              Int(nodeid), Int(bytes),
-                              LR(norm.min), LR(norm.max)))
-                END;
-                RETURN Text.FromChars(chars^)
-              END
-            ELSE
-              Debug.Error(F("?syntax error : ReadBinaryNodeData: got \"%s\"",
-                            line));
-              <*ASSERT FALSE*>
-            END
-          END
-        END
-      END
-    EXCEPT
-      Rd.Failure(x) =>
-      Debug.Error("Unexpected Rd.Failure in ReadCompressedNodeData : " &
-        AL.Format(x));
-      <*ASSERT FALSE*>
-    |
-      Rd.EndOfFile =>
-      Debug.Error("Unexpected Rd.EndOfFile in ReadCompressedNodeData");
-      <*ASSERT FALSE*>
-    END
-  END ReadCompressedNodeDataG;
-  
-PROCEDURE ReadBinaryNodeDataG(rd         : Rd.T;
-                              VAR nodeid : CARDINAL;
-                              VAR buff   : ARRAY OF LONGREAL) =
-  VAR
-    kw : TEXT;
-    n  : CARDINAL;
-  BEGIN
-    TRY
-      LOOP
-        WITH line    = Rd.GetLine(rd),
-             reader  = NEW(TextReader.T).init(line) DO
-          IF doDebug THEN
-            Debug.Out(F("Fsdb.Parse.ReadBinaryNodeData line \"%s\"", line))
-          END;
-
-          IF reader.next(" ", kw, TRUE) THEN
-            IF    TE(kw, "E") THEN
-              Debug.Error(F("Got time mismatch: nodeid %s: line %s",
-                            Int(nodeid), line))
-            ELSIF TE(kw, "OK") THEN
-              WITH tag = Rd.GetChar(rd) DO
-                nodeid := UnsafeReader.ReadI(rd);
-                n      := UnsafeReader.ReadI(rd);
-
-                IF doDebug THEN
-                  Debug.Out(F("ReadBinaryNodeData tag %s nodeid %s n %s",
-                              Text.FromChar(tag),
-                              Int(nodeid),
-                              Int(n)))
-                END;
-                
-                IF n # NUMBER(buff) THEN
-                  Debug.Error(F("Size mismatch n %s # NUMBER(buff) %s",
-                                Int(n), Int(NUMBER(buff))))
-                END;
-                UnsafeReader.ReadLRA(rd, buff);
-
-                IF doDebug THEN
-                  Debug.Out(F("ReadBinaryNodeData buff[0] %s",
-                              LR(buff[0])))
-                END;
-                RETURN
-                END
-            ELSE
-              Debug.Error(F("?syntax error : ReadBinaryNodeData: got \"%s\"",
-                            line))
-            END
-          END
-        END
-      END
-    EXCEPT
-      Rd.Failure(x) =>
-      Debug.Error("Unexpected Rd.Failure in ReadBinaryNodeData : " & AL.Format(x));
-      <*ASSERT FALSE*>
-    |
-      Rd.EndOfFile =>
-      Debug.Error("Unexpected Rd.EndOfFile in ReadBinaryNodeData");
-      <*ASSERT FALSE*>
-    END
-  END ReadBinaryNodeDataG;
-
-PROCEDURE ReadInterpolatedBinaryNodeDataG(rd          : Rd.T;
-                                          VAR nodeid  : CARDINAL;
-                                          VAR buff    : ARRAY OF LONGREAL;
-                                          interpolate : LONGREAL;
-                                          unit        : LONGREAL) =
-  VAR
-    kw : TEXT;
-    n  : CARDINAL;
-  BEGIN
-    <*ASSERT interpolate # 0.0d0*>
-    TRY
-      LOOP
-        WITH line    = Rd.GetLine(rd),
-             reader  = NEW(TextReader.T).init(line) DO
-          IF doDebug THEN
-            Debug.Out(F("Fsdb.Parse.ReadInterpolatedBinaryNodeData line \"%s\"", line))
-          END;
-
-          IF reader.next(" ", kw, TRUE) THEN
-            IF    TE(kw, "E") THEN
-              Debug.Error(F("Got time mismatch: nodeid %s: line %s",
-                            Int(nodeid), line))
-            ELSIF TE(kw, "OK") THEN
-              WITH tag = Rd.GetChar(rd) DO
-                nodeid := UnsafeReader.ReadI(rd);
-                n      := UnsafeReader.ReadI(rd);
-
-                IF doDebug THEN
-                  Debug.Out(F("ReadInterpolatedBinaryNodeData tag %s nodeid %s n %s",
-                              Text.FromChar(tag),
-                              Int(nodeid),
-                              Int(n)))
-                END;
-
-                WITH hi = NEW(REF ARRAY OF CARDINAL, n),
-                     lo = NEW(REF ARRAY OF CARDINAL, n),
-                     vv = NEW(REF ARRAY OF LONGREAL, n) DO
-                  UnsafeReader.ReadUA (rd, hi^);
-                  UnsafeReader.ReadUA (rd, lo^);
-                  UnsafeReader.ReadLRA(rd, vv^);
-                  
-                  IF n = 0 AND NUMBER(buff) # 0 THEN
-                    Debug.Error("?no data")
-                  END;
-                  
-                  VAR
-                    j := 0;
-                    y := vv[j];
-                    py := y;
-                    dt := 0.0d0;
-                    pt := 0.0d0; 
-                  BEGIN
-                    FOR i := FIRST(buff) TO LAST(buff) DO
-                      WITH st = FLOAT(i, LONGREAL) * interpolate DO
-                        WHILE st > dt DO
-                          INC(j);
-                          IF j > LAST(vv^) THEN
-                            pt := dt;
-                            dt := LAST(LONGREAL)
-                          ELSE
-                            pt := dt;
-                            dt := (FLOAT(hi[j],LONGREAL) * TwoToThe32 + FLOAT(lo[j], LONGREAL)) * unit;
-                            py := y;
-                            y := vv[j]
-                          END
-                        END;
-                        
-                        <*ASSERT st <= dt*>
-                        
-                        IF    dt = LAST(LONGREAL) OR dt = st THEN
-                          (* fill with the last data point *)
-                          buff[i] := y
-                        ELSE
-                          <*ASSERT dt # pt*>
-                          (* normal interpolation case *)
-                          buff[i] := (st - pt) / (dt - pt) * (y - py) + py
-                        END
-                      END
-                    END
-                  END;
-                  
-                  IF doDebug THEN
-                    Debug.Out(F("ReadInterpolatedBinaryNodeData buff[0] %s buff[LAST(buff)] %s",
-                                LR(buff[0]), LR(buff[LAST(buff)])))
-                  END;
-                  RETURN
-                END
-              END
-            ELSE
-              Debug.Error(F("?syntax error : ReadInterpolatedBinaryNodeData: got \"%s\"",
-                            line))
-            END
-          END
-        END
-      END
-    EXCEPT
-      Rd.Failure(x) =>
-      Debug.Error("Unexpected Rd.Failure in ReadInterpolatedBinaryNodeData : " & AL.Format(x));
-      <*ASSERT FALSE*>
-    |
-      Rd.EndOfFile =>
-      Debug.Error("Unexpected Rd.EndOfFile in ReadInterpolatedBinaryNodeData");
-      <*ASSERT FALSE*>
-    END
-  END ReadInterpolatedBinaryNodeDataG;
-
-PROCEDURE GetLineUntilG(rd : Rd.T; term : TEXT; VAR line : TEXT) : BOOLEAN =
-  BEGIN
-    TRY
-      WITH this    = Rd.GetLine(rd) DO
-        IF TE(this, term) THEN
-          RETURN FALSE
-        ELSE
-          line := this;
-          RETURN TRUE
-        END
-      END
-    EXCEPT
-      Rd.Failure(x) =>
-      Debug.Error("Unexpected Rd.Failure in GetLineUntil : " & AL.Format(x));
-      <*ASSERT FALSE*>
-    |
-      Rd.EndOfFile =>
-      Debug.Error("Unexpected Rd.EndOfFile in GetLineUntil");
-      <*ASSERT FALSE*>
-    END
-  END GetLineUntilG;
 
   (**********************************************************************)
   
-CONST
-  TwoToThe32 = FLOAT(Word.Shift(1, 32), LONGREAL);
-
 PROCEDURE StoreCardText(tbl    : CardTextSetTbl.T;
                         text   : TEXT;
                         fsdbId : CARDINAL) : BOOLEAN =
@@ -638,7 +311,6 @@ PROCEDURE GenMultiThreaded(threads               : CARDINAL;
 
     Debug.Out("Fsdb.Parse: Workers have finished");
   END GenMultiThreaded;
-
 
 PROCEDURE SetupFileTabs(VAR fileTab : ARRAY OF CardSeq.T;
                         idxMap : CardSeq.T;
