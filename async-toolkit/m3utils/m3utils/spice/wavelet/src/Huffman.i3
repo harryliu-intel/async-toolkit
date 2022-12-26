@@ -1,3 +1,5 @@
+(* XXX UNFINISHED XXX *)
+
 INTERFACE Huffman;
 IMPORT Wr, Rd;
 

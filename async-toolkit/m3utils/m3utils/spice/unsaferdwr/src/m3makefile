@@ -1,0 +1,13 @@
+import ("libm3")
+import ("cit_util")
+
+m3_optimize("T")
+
+module ("UnsafeWriter")
+module ("UnsafeReader")
+
+c_source("transfer")
+
+interface("TransferC")
+
+library ("unsaferdwr")

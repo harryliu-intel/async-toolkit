@@ -5,17 +5,12 @@ import ("spicelib")
 import ("arithcode")
 import ("regression")
 import ("tracelib")
+import ("unsaferdwr")
+import ("rep16")
+import ("spicecompress")
 
-%m3_optimize("T")
-
-module ("UnsafeWriter")
-module ("UnsafeReader")
 module ("Tr0")
 module ("DataBlock")
-
-c_source("transfer")
-
-interface("TransferC")
 
 interface ("MyRegEx")
 
@@ -38,24 +33,7 @@ module ("TempDataRep")
 
 m3_optimize("T")
 
-Module ("SpiceCompress")
-Module ("Wavelet")
-Module ("SparseLR")
-Array_sort ("Sparse", "SparseLR")
-
 sequence ("CardPair", "CardPair")
-
-Interface ("PolySegment")
-Sequence ("PolySegment", "PolySegment")
-
-Module ("PolySegment16")
-Sequence ("PolySegment16", "PolySegment16")
-
-Module ("Rep16")
-Module ("Rep16Stream")
-Module ("PolySegment16Serial")
-
-Table("TripleRef", "IntTriple", "Refany")
 
 Interface ("ArithConstants")
 

@@ -3,8 +3,13 @@ import ("cit_util")
 import ("spicelib")
 import ("tracelib")
 import ("regression")
-import ("ctlib")
 import ("arithcode")
+
+import ("rep16")
+
+Module ("SpiceCompress")
+
+Table ("TripleRef", "IntTriple", "Refany")
 
 
 library ("spicecompress")

@@ -1,0 +1,16 @@
+import ("libm3")
+import ("cit_util")
+import ("unsaferdwr")
+import ("regression")
+
+Interface ("PolySegment")
+Sequence ("PolySegment", "PolySegment")
+
+Module ("PolySegment16")
+Sequence ("PolySegment16", "PolySegment16")
+
+Module ("Rep16")
+Module ("Rep16Stream")
+Module ("PolySegment16Serial")
+
+library ("rep16")

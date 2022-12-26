@@ -170,6 +170,8 @@ override("ohailog", TOP & "/ohai")
 override ("spicelib", TOP & "/spice")
 override ("spiceflat", TOP & "/spice")
 override ("ctlib", TOP & "/spice")
+override ("rep16", TOP & "/spice")
+override ("unsaferdwr", TOP & "/spice")
 override ("tracelib", TOP & "/spice")
 override ("spicecompress", TOP & "/spice")
 

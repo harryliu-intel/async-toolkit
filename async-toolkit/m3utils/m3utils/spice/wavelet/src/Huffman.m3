@@ -1,3 +1,4 @@
+(* XXX UNFINISHED XXX *)
 MODULE Huffman;
 
 REVEAL
