@@ -18,7 +18,7 @@ IMPORT UnsafeReader;
 IMPORT SpiceCompress;
 IMPORT Thread;
 IMPORT TripleRefTbl;
-IMPORT Fsdb;
+IMPORT FsdbComms;
 IMPORT ArithConstants;
 IMPORT ArithCode;
 IMPORT ArithCallback;
@@ -330,7 +330,7 @@ BEGIN
       finalLen : CARDINAL;
       norm     : SpiceCompress.Norm;
     BEGIN
-      Fsdb.ReadInterpolatedBinaryNodeDataG(rd,
+      FsdbComms.ReadInterpolatedBinaryNodeDataG(rd,
                                            nodeid,
                                            a^,
                                            fd.interpolate,
