@@ -78,6 +78,7 @@ PROCEDURE EditName(nm : TEXT) : TEXT =
 PROCEDURE StoreCardText(tbl    : CardTextSetTbl.T;
                         text   : TEXT;
                         fsdbId : CARDINAL) : BOOLEAN =
+  (* returns TRUE iff fsdbId has already been mapped *)
   VAR
     set : TextSet.T;
     res := TRUE;
@@ -94,6 +95,7 @@ PROCEDURE StoreCardText(tbl    : CardTextSetTbl.T;
 PROCEDURE StoreTextCard(tbl    : TextCardSetTbl.T;
                         text   : TEXT;
                         fsdbId : CARDINAL) : BOOLEAN =
+  (* returns TRUE if we have already seen text *)
   VAR
     set : CardSet.T;
     res := TRUE;
@@ -398,7 +400,7 @@ PROCEDURE LoadAllNames(wr            : Wr.T;
                 Debug.Out(F("fsdbNames.put(%s, %s)", tryNm, Int(idx)));
                 
                 WITH hadIt = StoreCardText(fsdbNames, tryNm, idx) DO
-                  <*ASSERT NOT hadIt *>
+
                 END
 
               END
