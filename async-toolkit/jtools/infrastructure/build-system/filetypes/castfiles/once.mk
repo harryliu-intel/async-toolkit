@@ -987,6 +987,7 @@ $(ROOT_TARGET_DIR)/%/extracted/spef.err: \
 	  --spice-target='$(@D)/cell.spef_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spef_topcell' \
 	  --totem-mode=0 \
+	  --lvs-extra-options='$(LVS_EXTRA_OPTIONS)' \
 	  --task='stage2b' \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/spef.err' \
 	&& QRSH_FLAGS="$(PACKAGE_LOW_FLAGS) $(EXTRACT_FLAGS)" \
@@ -1071,6 +1072,7 @@ $(ROOT_TARGET_DIR)/%/extracted/extract.err: \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
 	  --totem-mode=0 \
+	  --lvs-extra-options='$(LVS_EXTRA_OPTIONS)' \
 	  --task='stage2b' \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/extract.err' \
 	&& QRSH_FLAGS="$(PACKAGE_LOW_FLAGS) $(EXTRACT_FLAGS)" \
@@ -1190,6 +1192,7 @@ $(ROOT_TARGET_DIR)/%/extracted/extract.err: \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
 	  --totem-mode=0 \
+	  --lvs-extra-options='$(LVS_EXTRA_OPTIONS)' \
 	  --task='stage2b' \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/extract.err' \
 	&& QRSH_FLAGS="$(PACKAGE_LOW_FLAGS) $(EXTRACT_FLAGS)" \
@@ -1337,6 +1340,7 @@ $(ROOT_TARGET_DIR)/%/totem/extract.err $(ROOT_TARGET_DIR)/%/totem/cell.spf: \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
 	  --totem-mode=1 \
+	  --lvs-extra-options='$(LVS_EXTRA_OPTIONS)' \
 	  --task='stage2b' \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/extract.err' \
 	&& QRSH_FLAGS="$(PACKAGE_LOW_FLAGS) $(EXTRACT_FLAGS)" \
@@ -1409,6 +1413,7 @@ $(ROOT_TARGET_DIR)/%/nanotime/extract.err: \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
 	  --nt-mode=1 \
+	  --lvs-extra-options='$(LVS_EXTRA_OPTIONS)' \
 	  --task='stage2b' \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/extract.err' && \
 	cp "$$extract_dir/starRC/cell.spef" '$(@D)/cell.spef' && \

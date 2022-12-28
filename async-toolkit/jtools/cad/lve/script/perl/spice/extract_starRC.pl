@@ -799,6 +799,18 @@ EOF
             my $flow = "-native";
             $flow .= " -qtf" if $qtf;
 
+            # parse _dr* definition from extra options and convert to DR_* form
+            my @dr_defines = ();
+            while ($lvs_extra_options =~ /-D\s+_dr(\S+)/g) {
+                my $var = $1;
+                if ($var =~ /([^=]+)=(.*)/) {
+                    push @dr_defines, "setenv \QDR_$1\E \Q$2\E";
+                } else {
+                    push @dr_defines, "setenv \QDR_$1\E";
+                }
+            }
+            my $dr_defines = join("\n", @dr_defines);
+
             # cth_psetup detects the parent shell (csh or sh like) and runs the
             # corresponding setup script, but the sh setup script doesn't work
             # correctly, so write out a tcsh script to execute the csh setup
@@ -811,6 +823,7 @@ setenv DR_MSR
 setenv DR_CaseSensitive
 setenv DR_TOPCHECK mixed
 setenv PDS_PROJ_CFG '$pdk_root/share/Fulcrum/icv/lvs'
+$dr_defines
 set boxfile
 if (-f gray_list.xref) set boxfile='-boxfile gray_list.xref'
 /p/hdk/bin/cth_psetup -p ilcth -cfg IL76P31_NCL.cth -tool ipde_all -cfg_ov '$cfg_ov' -nowash -common_ward -cmd '\$SETUP_IPDE; \$VMAC/release/extractor/run_xtract.pl -cell '"'"$topcell"'"' -gdsfile cell.gds2 -cdlfile cell.cdl_gds2 -temp $temperature -corner $extractCorner -append_usercmd_file lve_override.cmd $flow '"\$boxfile"
