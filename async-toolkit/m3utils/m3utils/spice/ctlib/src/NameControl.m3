@@ -16,6 +16,9 @@ IMPORT CitTextUtils AS TextUtils;
 IMPORT Thread;
 IMPORT CardTextSetTbl;
 IMPORT TextSeqSeq;
+IMPORT TextArraySort;
+IMPORT Cardinal;
+IMPORT CitTextUtils;
 
 <*FATAL Thread.Alerted*>
 
@@ -23,13 +26,53 @@ PROCEDURE SetToSeq(set : TextSet.T) : TextSeq.T =
   VAR
     iter := set.iterate();
     txt : TEXT;
+    a := NEW(REF ARRAY OF TEXT, set.size());
     res := NEW(TextSeq.T).init();
+    j  := 0;
   BEGIN
     WHILE iter.next(txt) DO
-      res.addhi(txt)
+      a[j] := txt;
+      INC(j)
+    END;
+
+    TextArraySort.Sort(a^, cmp := CompareText);
+    
+    FOR i := 0 TO NUMBER(a^) - 1 DO
+      res.addhi(a[i])
     END;
     RETURN res
   END SetToSeq;
+
+PROCEDURE CountDots(a : TEXT) : CARDINAL =
+  VAR
+    res := 0;
+    p := 0;
+    q0, q1 : CARDINAL;
+  BEGIN
+    LOOP
+      q0 := LAST(CARDINAL);
+      q1 := LAST(CARDINAL);
+      IF CitTextUtils.FindSub(a, ".", q0, p) OR CitTextUtils.FindSub(a, "_D_", q1, p) THEN
+        p := MIN(q0, q1) + 1;
+        INC(res)
+      ELSE
+        EXIT
+      END
+    END;
+    RETURN res
+  END CountDots;
+  
+PROCEDURE CompareText(a, b : TEXT) : [-1..1] =
+  BEGIN
+    WITH adots = CountDots(a),
+         bdots = CountDots(b) DO
+      IF adots = bdots THEN
+        RETURN Text.Compare(a, b)
+      ELSE
+        RETURN Cardinal.Compare(adots, bdots)
+      END
+    END
+  END CompareText;
 
 PROCEDURE MakeIdxMap(fsdbNames     : CardTextSetTbl.T;
                      restrictNodes : TextSet.T;

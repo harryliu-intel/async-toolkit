@@ -218,7 +218,7 @@ ext_dq_free(ext_dq *q)
 
 //////////////////////////////////////////////////////////////////////
 
-const int debug = 2;
+const int debug = 0;
 
 ffrObject      *fsdb_obj;
 fsdbXTagType    xtag_type; 

@@ -706,7 +706,7 @@ PROCEDURE CheckMargin(db                : MarginMeasurementSeq.T;
                       checker           : Checker;
                       tag               : TEXT ) : LONGREAL =
   VAR
-    minMargin := LAST(LONGREAL);
+    minMargin   := LAST(LONGREAL);
     minMarginAt := FIRST(LONGREAL);
   BEGIN
     INC(nMargins);
@@ -936,7 +936,7 @@ TYPE
     clk, d, q : TEXT;
   END;
 
-PROCEDURE IsClockNode(trace          : Trace.T;
+PROCEDURE IsQNode(trace          : Trace.T;
                       idx            : CARDINAL;
                       VAR latchNodes : LatchNodes) : BOOLEAN =
 
@@ -968,19 +968,19 @@ PROCEDURE IsClockNode(trace          : Trace.T;
   VAR
     pfx : TEXT;
   BEGIN
-    IF AliasHasSuffix(idx, ".CLK", pfx) THEN
+    IF AliasHasSuffix(idx, ".Q", pfx) THEN
       WITH clkNm = pfx & ".CLK",
            dNm   = pfx & ".D",
            qNm   = pfx & ".Q" DO
         
-        IF Exists(pfx & ".D") AND Exists(pfx & ".Q") THEN
+        IF Exists(pfx & ".D") AND Exists(pfx & ".CLK") THEN
           latchNodes := LatchNodes { clkNm, dNm, qNm };
           RETURN TRUE
         END
       END
     END;
     RETURN FALSE
-  END IsClockNode;
+  END IsQNode;
   
 PROCEDURE MeasureByName() =
   VAR
@@ -990,7 +990,7 @@ PROCEDURE MeasureByName() =
     nclks := 0;
   BEGIN
     FOR i := 0 TO trace.getNodes() - 1 DO
-      IF IsClockNode(trace, i, latchNodes) THEN
+      IF IsQNode(trace, i, latchNodes) THEN
         INC(nclks);
         Debug.Out(F("MeasureByName : clock node %s", latchNodes.clk));
 
@@ -1005,10 +1005,32 @@ PROCEDURE MeasureByName() =
                          dTrIdx, latchNodes.d,
                          clkTrIdx, latchNodes.clk,
                          MeasureSetup, "setup");
+
+        EVAL CheckMargin(db,
+                         UD, +1,
+                         dTrIdx, latchNodes.d, (* ignored *)
+                         clkTrIdx, latchNodes.clk,
+                         MeasurePulsewidth, "pulsewidth-pos");
+
+        EVAL CheckMargin(db,
+                         UD, +1,
+                         dTrIdx, latchNodes.d,
+                         clkTrIdx, latchNodes.clk,
+                         MeasureHold, "hold")
+
       END
     END;
 
-    Debug.Out(F("%s clocks", Int(nclks)))
+    Debug.Out(F("%s clocks", Int(nclks)));
+
+    WITH worst = MarginDump.Do(db, 10) DO
+      IF graphNs > 0.0d0 THEN
+        FOR i := 0 TO worst.size() - 1 DO
+          GraphMeasurement(worst.get(i), graphNs, i, traceRt)
+        END
+      END
+    END
+    
   END MeasureByName;
   
 VAR
