@@ -1,9 +1,11 @@
 INTERFACE TempReader;
-IMPORT Rd, OSError;
-IMPORT FileNamer;
 
 (* read temp files for convert trace program *)
 (* where is write version of this? *)
+
+IMPORT Rd, OSError;
+IMPORT FileNamer;
+IMPORT TempDataRep;
 
 TYPE
   T <: Public;
@@ -19,6 +21,13 @@ TYPE
        If the data is stored in compressed format, it will be uncompressed
        as part of the reading process.
     *)
+
+    readEntireFileZ(idx     : CARDINAL;
+                    VAR rep : TempDataRep.T; 
+                    nsteps  : CARDINAL; (* in case we need it *)
+                    targMaxDev := 0.01d0 (* if we need to compress on the fly *)
+    )
+      RAISES { Rd.Failure, OSError.E };
   END;
 
 CONST Brand = "TempReader";

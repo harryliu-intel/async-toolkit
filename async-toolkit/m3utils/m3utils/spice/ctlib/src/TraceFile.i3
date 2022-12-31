@@ -11,6 +11,10 @@ IMPORT Time;
 TYPE
   T <: Public;
 
+  (* this type of object is used whenever a trace data set is available
+     in standard ct.work directory format.  The FileNamer is the object
+     that tracks the files in ct.work and allows us to stream the data 
+     in from disk in an efficient order *)
 
   Public = OBJECT METHODS
     init(ofn    : Pathname.T;
@@ -20,7 +24,9 @@ TYPE
 
     write(fmt : Version);
 
-    writePll(wthreads : CARDINAL; writeTraceCmdPath : Pathname.T; fmt : Version);
+    writePll(wthreads          : CARDINAL;
+             writeTraceCmdPath : Pathname.T;
+             fmt               : Version);
     
   END;
 

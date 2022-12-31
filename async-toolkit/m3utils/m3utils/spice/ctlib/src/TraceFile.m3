@@ -21,12 +21,22 @@ IMPORT ProcUtils;
 IMPORT UnsafeReader;
 IMPORT ZtraceFile;
 IMPORT SpiceCompress;
+IMPORT TempDataRep;
 
 <*FATAL Thread.Alerted*>
 
 CONST LR = LongReal;
 
 VAR doDebug := Debug.DebugThis("TraceFile");
+
+CONST
+  DefTargMaxDev = 0.01d0; (* used when compressed format requested, but only
+                             uncompressed available.  
+
+                             Not normally used since nanosimrd compresses 
+                             on the fly 
+                          *)
+       
 
 PROCEDURE FileRd_Open(fn : Pathname.T) : Rd.T RAISES { OSError.E } =
   BEGIN
@@ -133,7 +143,7 @@ EXCEPTION WriteError(TEXT);
 PROCEDURE WriteCompressedV1(t : T; tWr : Wr.T)
   RAISES { WriteError } =
   CONST
-    fmt = Version.Reordered;
+    fmt = Version.CompressedV1;
   VAR
     header := Header { fmt, Time.Now(), t.nNames };
     dir    := NEW(REF ZtraceFile.Directory, t.nNames);
@@ -155,33 +165,66 @@ PROCEDURE WriteCompressedV1(t : T; tWr : Wr.T)
       pos := dataStartByte;
       time, data    : REF ARRAY OF LONGREAL;
     BEGIN
-      CreateBuffers(t, time, data);
-      IF doDebug THEN
-        Debug.Out(F("WriteTrace writing TIME (%s values)...",
-                    Int(NUMBER(time^))))
+
+      FOR i := 0 TO t.nNames - 1 DO
+        TRY
+          IF i = 0 THEN
+            CreateBuffers(t, time, data);
+            IF doDebug THEN
+              Debug.Out(F("WriteTrace writing TIME (%s values)...",
+                          Int(NUMBER(time^))))
+            END;
+
+            (* write uncompressed time data *)
+            UnsafeWriter.WriteLRAAt(tWr, time^, pos);
+
+            (* update directory for time data *)
+            pos := Wr.Index(tWr);
+            dir[0].bytes := pos - opos;
+            dir[0].norm  := SpiceCompress.IllegalNorm;
+
+          ELSE
+            opos := pos; (* sync pointers *)
+
+            (* write data for node [ i ] *)
+            VAR
+              rep : TempDataRep.T;
+            BEGIN
+              t.reader.readEntireFileZ(i,
+                                       rep,
+                                       NUMBER(time^),
+                                       targMaxDev := DefTargMaxDev);
+              Wr.PutText(tWr, rep.finalData);
+
+              pos := Wr.Index(tWr);
+              
+              (* update directory *)
+              dir[i].bytes := pos - opos;
+              dir[i].norm  := rep.norm;
+              dir[i].code  := rep.code;
+            END
+          END
+        EXCEPT
+          OSError.E(x) =>
+          RAISE WriteError("Unable to open temp file \"" & t.fnr.name(i) & "\" for reading : OSError.E : " & AL.Format(x))
+        |
+          Rd.Failure(x) =>
+          RAISE WriteError("Read error on temp file \"" & t.fnr.name(i) & "\" for reading : Rd.Failure : " & AL.Format(x))
+        |
+          Wr.Failure(x) =>
+          RAISE WriteError("Write error on trace file, lately reading \"" & t.fnr.name(i) & "\" : Wr.Failure : " & AL.Format(x))
+        END
+
       END;
 
-      (* write uncompressed time data *)
-      UnsafeWriter.WriteLRAAt(tWr, time^, pos);
-
-      (* update directory for time data *)
-      pos := Wr.Index(tWr);
-      dir[0].bytes := pos - opos;
-      dir[0].norm  := SpiceCompress.IllegalNorm;
-
-      FOR i := 1 TO t.nNames - 1 DO
-        opos := pos; (* sync pointers *)
-
-        (* write data for node [ i ] *)
-
-        pos := Wr.Index(tWr);
-
-        (* update directory *)
-        dir[i].bytes := pos - opos;
-        dir[i].norm := SpiceCompress.IllegalNorm;
-        dir[i].code := 0;
+      (* seek back and re-write directory *)
+      Debug.Out("WriteTrace re-writing directory");
+      TRY
+        ZtraceFile.RewriteDirectory(tWr, z)
+      EXCEPT
+        Wr.Failure(x) =>
+        RAISE WriteError("Write error on trace file, rewriting directory : Wr.Failure : " & AL.Format(x))
       END
-      
     END
   END WriteCompressedV1;
   
@@ -197,10 +240,10 @@ PROCEDURE WriteReordered(t : T; tWr : Wr.T)
     time, data    : REF ARRAY OF LONGREAL;
     dataStartByte : CARDINAL;
   BEGIN
-    Debug.Out(F("WriteTrace nFiles %s names.size() %s",
-                Int(t.nFiles), Int(t.nNames)));
-    
     IF doDebug THEN
+      Debug.Out(F("WriteTrace nFiles %s names.size() %s",
+                  Int(t.nFiles), Int(t.nNames)));
+    
       Debug.Out("WriteTrace writing header...")
     END;
     TRY
