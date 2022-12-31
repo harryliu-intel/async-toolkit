@@ -48,7 +48,7 @@ CONST LR = LongReal;
       
 VAR doDebug := Debug.DebugThis("CT");
 
-CONST Usage = "[-fsdb <fsdbPath>] [-compress <compressPath>] [-rename <dutName>] [-scaletime <timeScaleFactor>] [-offsettime <timeOffset>] [-offsetvoltage <voltageOffset>] [-dosources] [-dofiles] [ [-n <nodename>] ...] [-threads <fsdb_threads>] [-wthreads <write_threads>] [-fromworkdir] [-maxtime <seconds>] [-maxnodes <nodes>] <inFileName> <outFileRoot>";
+CONST Usage = "[-fsdb <fsdbPath>] [-compress <compressPath>] [-rename <dutName>] [-scaletime <timeScaleFactor>] [-offsettime <timeOffset>] [-offsetvoltage <voltageOffset>] [-dosources] [-dofiles] [ [-n <nodename>] ...] [-threads <fsdb_threads>] [-wthreads <write_threads>] [-fromworkdir] [-maxtime <seconds>] [-maxnodes <nodes>] [-translate] <inFileName> <outFileRoot>";
 
 (*
   will generate <outFileRoot>.trace and <outFileRoot>.names 
@@ -105,6 +105,8 @@ CONST Usage = "[-fsdb <fsdbPath>] [-compress <compressPath>] [-rename <dutName>]
   -z           equiv to -format CompressedV1
 
   -maxnodes    Only pick the first N nodes for the output
+
+  -translate   Convert GDS names to CAST names
 
   <inFileName> is name of input file in FSDB or CSDF format
 
@@ -341,6 +343,8 @@ VAR
 
   maxNodes            := LAST(CARDINAL);
 
+  translate : BOOLEAN;
+  
 CONST
   DefFormats =
     SET OF TraceFile.Version { TraceFile.Version.Reordered };
@@ -350,6 +354,9 @@ TYPE
   
 BEGIN
   TRY
+
+    translate := pp.keywordPresent("-translate");
+    
     IF    pp.keywordPresent("-rename") THEN
       dutName := pp.getNext()
     END;
@@ -518,7 +525,8 @@ BEGIN
                   wait,
                   restrictNodes,
                   regExList,
-                  maxNodes);
+                  maxNodes,
+                  translate);
 
         TRY Rd.Close(rd) EXCEPT ELSE END
       END
@@ -539,6 +547,7 @@ BEGIN
                  restrictNodes,
                  regExList,
                  maxNodes,
+                 translate,
                  fsdbCmdPath,
                  compressCmdPath,
                  compressPrec,

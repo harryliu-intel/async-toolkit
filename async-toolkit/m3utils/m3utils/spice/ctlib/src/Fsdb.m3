@@ -353,6 +353,7 @@ PROCEDURE LoadAllNames(wr            : Wr.T;
                        restrictNodes : TextSet.T;
                        restrictRegEx : RegExList.T;
                        maxNodes      : CARDINAL;
+                       translate     : BOOLEAN;
                        VAR idxMap    : CardSeq.T
                        )
   RAISES { TextReader.NoMore }  =
@@ -442,7 +443,8 @@ PROCEDURE LoadAllNames(wr            : Wr.T;
                                        restrictNodes,
                                        restrictRegEx,
                                        maxNodes,
-                                       names);
+                                       names,
+                                       translate);
 
       Debug.Out(F("made idxMap: names.size() %s / active %s",
                   Int(names.size()),
@@ -475,6 +477,7 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
                 restrictNodes : TextSet.T;
                 restrictRegEx : RegExList.T;
                 maxNodes      : CARDINAL;
+                translate     : BOOLEAN;
                 cmdPath       : Pathname.T;
                 compressPath  : Pathname.T;
                 compressPrec  : LONGREAL;
@@ -669,6 +672,7 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
                    restrictNodes,
                    restrictRegEx,  (* node restrictions *)
                    maxNodes,
+                   translate,
                    
                    idxMap);
       

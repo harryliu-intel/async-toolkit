@@ -25,7 +25,8 @@ PROCEDURE Parse(wd,                            (* working directory       *)
                 wait          : BOOLEAN;
                 restrictNodes : TextSet.T;  (* nodes to process             *)
                 restrictRegEx : RegExList.T;(* regex to match nodes against *)
-                maxNodes      : CARDINAL
+                maxNodes      : CARDINAL;
+                translate     : BOOLEAN
   )
   RAISES { Rd.Failure, ShortRead, SyntaxError };
 

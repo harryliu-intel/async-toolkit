@@ -11,7 +11,8 @@ PROCEDURE MakeIdxMap(nameIdTbl     : CardTextSetTbl.T;
                      restrictNodes : TextSet.T;
                      regExList     : RegExList.T;
                      maxNodes      : CARDINAL;
-                     names         : TextSeqSeq.T) : CardSeq.T;
+                     names         : TextSeqSeq.T;
+                     translate     : BOOLEAN) : CardSeq.T;
 
   (* for given fsdbNames table, generate:
 

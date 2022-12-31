@@ -19,19 +19,103 @@ IMPORT TextSeqSeq;
 IMPORT TextArraySort;
 IMPORT Cardinal;
 IMPORT CitTextUtils;
+IMPORT Wx;
 
 <*FATAL Thread.Alerted*>
 
-PROCEDURE SetToSeq(set : TextSet.T) : TextSeq.T =
+CONST TE = Text.Equal;
+
+(*
+
+/*** translate from GDS2 name to CAST name and strip v(.) ***/
+char *gds2cast(char *name) {
+  if (translate) {
+    int strip=0;
+    char *s=name, *t=name;
+    if ( *s=='\'') { s++; strip++; }
+    if (!strncasecmp(s,"v(",2)) { s+=2; strip++; }
+    while( *s) {
+      if      (!strncmp(s,"_D_",3))   { s+=3; *(t++) = '.'; }
+      else if (!strncmp(s,"_l_",3))   { s+=3; *(t++) = '['; }
+      else if (!strncmp(s,"_r_",3))   { s+=3; *(t++) = ']'; }
+      else if (!strncmp(s,"_C_",3))   { s+=3; *(t++) = ','; }
+      else if (!strncmp(s,"_U_",3))   { s+=3; *(t++) = '_'; }
+      else if (!strncmp(s,"_3a_",4))  { s+=4; *(t++) = ':'; }
+      else                            { *(t++) = *(s++); }
+    }
+    *(t-strip)=0;
+  }
+  return name;
+}
+
+*)
+
+PROCEDURE Gds2Cast(name : TEXT) : TEXT =
+  CONST
+    SQ = '\'';
+  TYPE
+    M = RECORD t : TEXT; c : CHAR; n := LAST(CARDINAL) END;
+  VAR 
+    ToConv:= ARRAY [0..5] OF M {
+              M { "_D_" , '.' },
+              M { "_l_" , '[' },
+              M { "_r_" , ']' },
+              M { "_C_" , ',' },
+              M { "_U_" , '_' },
+              M { "_3a_", ':' }
+             };
+
+  VAR
+    wx := Wx.New();
+    n, i  : CARDINAL;
+    mapped : BOOLEAN;
+  BEGIN
+    (* v() is stripped elsewhere *)
+    FOR m := FIRST(ToConv) TO LAST(ToConv) DO
+      ToConv[m].n := Text.Length(ToConv[m].t)
+    END;
+
+    IF Text.GetChar(name, 0) = SQ THEN
+      name := Text.Sub(name, 1, Text.Length(name) - 2)
+    END;
+
+    n := Text.Length(name);
+
+    i := 0;
+    WHILE i < n DO
+      mapped := FALSE;
+      FOR m := FIRST(ToConv) TO LAST(ToConv) DO
+       WITH tr = ToConv[m] DO
+         IF TE(Text.Sub(name, i, tr.n), tr.t) THEN
+           Wx.PutChar(wx, tr.c);
+           INC(i, tr.n);
+           mapped := TRUE;
+           EXIT
+         END
+       END
+      END;
+      IF NOT mapped THEN              
+        Wx.PutChar(wx, Text.GetChar(name, i));
+        INC(i)
+      END
+    END;
+    RETURN Wx.ToText(wx)
+  END Gds2Cast;
+
+PROCEDURE SetToSeq(set : TextSet.T; translate : BOOLEAN) : TextSeq.T =
   VAR
     iter := set.iterate();
     txt : TEXT;
-    a := NEW(REF ARRAY OF TEXT, set.size());
+    a   := NEW(REF ARRAY OF TEXT, set.size());
     res := NEW(TextSeq.T).init();
     j  := 0;
   BEGIN
     WHILE iter.next(txt) DO
-      a[j] := txt;
+      IF translate THEN
+        a[j] := Gds2Cast(txt)
+      ELSE
+        a[j] := txt
+      END;
       INC(j)
     END;
 
@@ -78,7 +162,8 @@ PROCEDURE MakeIdxMap(fsdbNames     : CardTextSetTbl.T;
                      restrictNodes : TextSet.T;
                      regExList     : RegExList.T;
                      maxNodes      : CARDINAL;
-                     names         : TextSeqSeq.T) : CardSeq.T =
+                     names         : TextSeqSeq.T;
+                     translate     : BOOLEAN) : CardSeq.T =
   VAR
     res   := NEW(CardSeq.T).init();
     c     := 0;
@@ -102,7 +187,7 @@ PROCEDURE MakeIdxMap(fsdbNames     : CardTextSetTbl.T;
     
     iter := fsdbNames.iterate();
     WHILE iter.next(id, set) DO
-      arr[id] := SetToSeq(set)
+      arr[id] := SetToSeq(set, translate)
     END;
 
     EVAL names.init();
