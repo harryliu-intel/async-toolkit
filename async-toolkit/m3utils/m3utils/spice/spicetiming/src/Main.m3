@@ -35,6 +35,10 @@ IMPORT ProcUtils;
 IMPORT TextWr;
 IMPORT Wr;
 IMPORT TextIntTbl;
+IMPORT CardSeq;
+IMPORT Thread;
+
+<*FATAL Thread.Alerted*>
 
 CONST
   Usage = "";
@@ -695,7 +699,72 @@ TYPE Checker = PROCEDURE(clkIdx   : CARDINAL;
                          dataDir  : CheckDir.T) : LONGREAL;
 
 VAR nMargins := 0;
-  
+
+PROCEDURE GetValues(clkDirs           : CheckDir.T;
+                    clkTrIdx          : CARDINAL;
+                      clkNm             : TEXT;
+                    thresh            : LONGREAL;
+                    READONLY ta, da   : ARRAY OF LONGREAL) : CardSeq.T =
+  BEGIN
+    WITH res = NEW(CardSeq.T).init(),
+         clkTrans = TransitionFinder.FilterTime(
+                            tranFinder.forNode(clkTrIdx),
+                            resetTime, LAST(LONGREAL)) DO
+      Debug.Out(F("GetValues : clk  %s : %s active transitions",
+                  clkNm, Int(clkTrans.size())));
+
+      FOR i := 0 TO clkTrans.size() - 1 DO
+        WITH ct = clkTrans.get(i) DO
+          IF ct.dir IN clkDirs THEN
+            WITH t = ct.at,
+                 dtidx = FindIdxBefore(ta, t),
+                 dval = da[dtidx],
+                 dlogic = dval > thresh DO
+              IF dlogic THEN
+                res.addhi(1)
+              ELSE
+                res.addhi(0)
+              END
+            END
+          END
+        END
+      END;
+      RETURN res
+    END
+  END GetValues;
+
+PROCEDURE FindIdxBefore(READONLY a : ARRAY OF LONGREAL;
+                        tgt        : LONGREAL) : CARDINAL =
+  VAR
+    lo := 0;
+    hi := NUMBER(a);
+  BEGIN
+    WHILE lo < hi DO
+      WITH i  = lo + (hi - lo) DIV 2,
+           ai = a[i] DO
+        IF tgt = ai THEN
+          RETURN i
+        ELSIF tgt > ai THEN
+          lo := i + 1
+        ELSE
+          hi := i
+        END
+      END
+    END;
+    <*ASSERT lo = hi*>
+    WITH res = lo - 1 DO
+      <*ASSERT res <= LAST(a)*>
+
+      <*ASSERT a[res] <= tgt*>
+
+      <*ASSERT res = LAST(a) OR a[res + 1] >= tgt*>
+      (*note that a[res + 1] > tgt is more correct, but would depend
+        on making an assumption on the contents of a*)
+      
+      RETURN res
+    END
+  END FindIdxBefore;
+                    
 PROCEDURE CheckMargin(db                : MarginMeasurementSeq.T;
                       datDir            : CheckDir.T;
                       clkDir            : Transition.Dir;
@@ -981,14 +1050,34 @@ PROCEDURE IsQNode(trace          : Trace.T;
     END;
     RETURN FALSE
   END IsQNode;
+
+PROCEDURE WriteCardSeq(wr : Wr.T;
+                       seq : CardSeq.T;
+                       delim : TEXT;
+                       truncAt := LAST(CARDINAL))
+  RAISES { Wr.Failure } =
+  VAR
+    n := MIN(truncAt, seq.size());
+  BEGIN
+    FOR i := 0 TO n - 1 DO
+      Wr.PutText(wr, Int(seq.get(i)));
+      IF i # n - 1 THEN
+        Wr.PutText(wr, delim)
+      END
+    END
+  END WriteCardSeq;
   
-PROCEDURE MeasureByName() =
+PROCEDURE MeasureByName(truncValues : CARDINAL) =
   VAR
     latchNodes : LatchNodes;
     clkTrIdx, dTrIdx : CARDINAL;
     db := NEW(MarginMeasurementSeq.T).init();
     nclks := 0;
+    nsteps := trace.getSteps();
+    tima, data := NEW(REF ARRAY OF LONGREAL, nsteps);
+    vwr := FileWr.Open("values.dat");
   BEGIN
+    trace.getTimeData(tima^);
     FOR i := 0 TO trace.getNodes() - 1 DO
       IF IsQNode(trace, i, latchNodes) THEN
         INC(nclks);
@@ -1016,10 +1105,28 @@ PROCEDURE MeasureByName() =
                          UD, +1,
                          dTrIdx, latchNodes.d,
                          clkTrIdx, latchNodes.clk,
-                         MeasureHold, "hold")
+                         MeasureHold, "hold");
+
+        trace.getNodeData(dTrIdx, data^);
+        
+        WITH seq = GetValues(Dn,
+                             clkTrIdx,
+                             latchNodes.clk,
+                             vdd / 2.0d0,
+                             tima^, data^
+          ) DO
+          Wr.PutText(vwr, latchNodes.d);
+          Wr.PutChar(vwr, ' ');
+          Wr.PutText(vwr, valueTag);
+          Wr.PutText(vwr, " : ");
+          WriteCardSeq(vwr, seq, delim := "", truncAt := truncValues);
+          Wr.PutChar(vwr, '\n')
+        END
 
       END
     END;
+
+    Wr.Close(vwr);
 
     Debug.Out(F("%s clocks", Int(nclks)));
 
@@ -1047,8 +1154,10 @@ VAR
   warnWr                      := FileWr.Open("spicetiming.warn");
   quick      : BOOLEAN;
   graphNs                     := FIRST(LONGREAL);
+  truncValues                 := LAST(CARDINAL);
   mapper     : Mapper;
   doByName   : BOOLEAN;
+  valueTag                    := "";
   
 BEGIN
   Debug.AddWarnStream(warnWr);
@@ -1057,6 +1166,13 @@ BEGIN
     quick := pp.keywordPresent("-quick");
 
     doByName := pp.keywordPresent("-byname");
+
+    IF pp.keywordPresent("-truncvalues") THEN
+      truncValues := pp.getNextInt()
+    END;
+    IF pp.keywordPresent("-valuetag") THEN
+      valueTag := pp.getNext()
+    END;
     
     IF pp.keywordPresent("-i") THEN
       spiceFn := pp.getNext()
@@ -1107,7 +1223,7 @@ BEGIN
   END;
 
   IF doByName THEN
-    MeasureByName()
+    MeasureByName(truncValues)
   END
 
 END Main.

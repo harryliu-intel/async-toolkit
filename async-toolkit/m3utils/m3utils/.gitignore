@@ -1,4 +1,5 @@
 bin.*
+hack/*
 .top
 *.log
 AMD64_LINUX/

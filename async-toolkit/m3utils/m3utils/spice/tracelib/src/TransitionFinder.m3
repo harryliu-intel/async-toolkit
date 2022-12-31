@@ -4,7 +4,11 @@ IMPORT Transition;
 IMPORT CardTransitionSeqTbl;
 IMPORT Trace;
 IMPORT Rd;
+IMPORT Debug;
+FROM Fmt IMPORT F, Int, LongReal;
 
+CONST LR = LongReal;
+      
 REVEAL
   T = Public BRANDED Brand OBJECT
     trace  : Trace.T;
@@ -43,6 +47,18 @@ PROCEDURE ForNode(t : T; id : CARDINAL) : TransitionSeq.T
 
 PROCEDURE Find(READONLY timea, nodea : ARRAY OF LONGREAL;
                thres, hysteresis     : LONGREAL) : TransitionSeq.T =
+
+  PROCEDURE CheckTransitions() =
+    BEGIN
+      FOR i := 1 TO res.size() - 1 DO
+        WITH this = res.get(i),
+             prev = res.get(i - 1) DO
+          <*ASSERT this.at # prev.at*>
+          <*ASSERT this.dir = -prev.dir*>
+        END
+      END
+    END CheckTransitions;
+    
   VAR
     res := NEW(TransitionSeq.T).init();
     state : [0..1];
@@ -54,6 +70,7 @@ PROCEDURE Find(READONLY timea, nodea : ARRAY OF LONGREAL;
     IF nodea[0] < thres THEN state := 0 ELSE state := 1 END;
     
     FOR i := FIRST(timea) TO LAST(timea) DO
+      <*ASSERT i = 0 OR timea[i] > timea[i - 1]*>
       CASE state OF
         0 =>
         IF nodea[i] > thres + hysteresis THEN
@@ -98,6 +115,9 @@ PROCEDURE Find(READONLY timea, nodea : ARRAY OF LONGREAL;
         END
       END
     END;
+
+    CheckTransitions();
+    
     RETURN res
   END Find;
   
@@ -122,10 +142,26 @@ PROCEDURE FindFloorIdx(seq  : TransitionSeq.T;
      i \in [ lo, hi )
   *)
 
+  VAR error := "";
+
+  PROCEDURE Eput(msg : TEXT) =
+    BEGIN
+      error := error & msg & "\n"
+    END Eput;
+    
   PROCEDURE Check(i : [-1.. LAST(CARDINAL)]) =
     BEGIN
-      <*ASSERT seq.get(i).at <= time AND
-               (i = seq.size() - 1 OR seq.get(i + 1).at > time) *>
+      IF NOT ( seq.get(i).at <= time AND
+        (i = seq.size() - 1 OR seq.get(i + 1).at > time)) THEN
+        Eput("FindFloorIdx assertion failed :");
+        Eput(F("seq.size=%s i=%s time=%s seq[i].at=%s",
+               Int(seq.size()), Int(i), LR(time), LR(seq.get(i).at))
+        );
+        IF i # seq.size() - 1 THEN
+          Eput(F("seq[i+1].at=%s", LR(seq.get(i+1).at)))
+        END;
+        Debug.Error(error)
+      END
     END Check;
     
   VAR
