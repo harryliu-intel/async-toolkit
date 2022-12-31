@@ -1,5 +1,4 @@
 INTERFACE NameControl;
-IMPORT TextSeq;
 IMPORT TextSet;
 IMPORT RegExList;
 IMPORT CardSeq;
@@ -11,6 +10,7 @@ IMPORT TextSeqSeq;
 PROCEDURE MakeIdxMap(nameIdTbl     : CardTextSetTbl.T;
                      restrictNodes : TextSet.T;
                      regExList     : RegExList.T;
+                     maxNodes      : CARDINAL;
                      names         : TextSeqSeq.T) : CardSeq.T;
 
   (* for given fsdbNames table, generate:

@@ -77,6 +77,7 @@ PROCEDURE CompareText(a, b : TEXT) : [-1..1] =
 PROCEDURE MakeIdxMap(fsdbNames     : CardTextSetTbl.T;
                      restrictNodes : TextSet.T;
                      regExList     : RegExList.T;
+                     maxNodes      : CARDINAL;
                      names         : TextSeqSeq.T) : CardSeq.T =
   VAR
     res   := NEW(CardSeq.T).init();
@@ -151,7 +152,7 @@ PROCEDURE MakeIdxMap(fsdbNames     : CardTextSetTbl.T;
         END
       END;
 
-      IF success THEN
+      IF success AND res.size() < maxNodes THEN
         res.addhi(c);
         INC(c)
       ELSE

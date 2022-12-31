@@ -31,6 +31,7 @@ PROCEDURE Parse(wd            : Pathname.T;
                 wait          : BOOLEAN;
                 restrictNodes : TextSet.T;
                 restrictRegEx : RegExList.T;
+                maxNodes      : CARDINAL;
                 cmdPath       : Pathname.T;
                 compressPath  : Pathname.T;
                 compressPrec  : LONGREAL;

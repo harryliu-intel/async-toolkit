@@ -175,7 +175,8 @@ PROCEDURE Parse(wd, ofn        : Pathname.T;
                 rd             : Rd.T;
                 wait           : BOOLEAN;
                 restrictNodes  : TextSet.T;
-                restrictRegEx  : RegExList.T)
+                restrictRegEx  : RegExList.T;
+                maxNodes       : CARDINAL)
   RAISES { Rd.Failure, ShortRead, SyntaxError } =
 
   VAR lbp   : CARDINAL := 0;
@@ -505,6 +506,7 @@ PROCEDURE Parse(wd, ofn        : Pathname.T;
                   idxMap := MakeIdxMap(MakeTbl(names),
                                        restrictNodes,
                                        restrictRegEx,
+                                       maxNodes,
                                        names);
                   
                   aNodes := WriteNames(wd,

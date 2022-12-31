@@ -48,7 +48,7 @@ CONST LR = LongReal;
       
 VAR doDebug := Debug.DebugThis("CT");
 
-CONST Usage = "[-fsdb <fsdbPath>] [-compress <compressPath>] [-rename <dutName>] [-scaletime <timeScaleFactor>] [-offsettime <timeOffset>] [-offsetvoltage <voltageOffset>] [-dosources] [-dofiles] [ [-n <nodename>] ...] [-threads <fsdb_threads>] [-wthreads <write_threads>] [-fromworkdir] [-maxtime <seconds>] <inFileName> <outFileRoot>";
+CONST Usage = "[-fsdb <fsdbPath>] [-compress <compressPath>] [-rename <dutName>] [-scaletime <timeScaleFactor>] [-offsettime <timeOffset>] [-offsetvoltage <voltageOffset>] [-dosources] [-dofiles] [ [-n <nodename>] ...] [-threads <fsdb_threads>] [-wthreads <write_threads>] [-fromworkdir] [-maxtime <seconds>] [-maxnodes <nodes>] <inFileName> <outFileRoot>";
 
 (*
   will generate <outFileRoot>.trace and <outFileRoot>.names 
@@ -103,6 +103,8 @@ CONST Usage = "[-fsdb <fsdbPath>] [-compress <compressPath>] [-rename <dutName>]
   -format      Alternatives: See TraceFile.VersionNames
 
   -z           equiv to -format CompressedV1
+
+  -maxnodes    Only pick the first N nodes for the output
 
   <inFileName> is name of input file in FSDB or CSDF format
 
@@ -288,6 +290,9 @@ PROCEDURE WriteFiles(tempReader : TempReader.T; fnr : FileNamer.T) =
 
 PROCEDURE WriteTrace(fnr : FileNamer.T; fmt : TraceFile.Version) =
   BEGIN
+    Debug.Out(F("ConvertTrace.WriteTrace : fmt %s",
+                TraceFile.VersionNames[fmt]));
+    
     WITH tr = NEW(TraceFile.T).init(ofn, nFiles, names.size(), fnr) DO
       IF wthreads > 1 THEN
         tr.writePll(wthreads, writeTraceCmdPath, fmt)
@@ -333,6 +338,8 @@ VAR
   maxTime             := LAST(LONGREAL);
 
   formats             := SET OF TraceFile.Version {};
+
+  maxNodes            := LAST(CARDINAL);
 
 CONST
   DefFormats =
@@ -428,6 +435,9 @@ BEGIN
     IF pp.keywordPresent("-maxfiles") THEN
       maxFiles := pp.getNextInt()
     END;
+    IF pp.keywordPresent("-maxnodes") THEN
+      maxNodes := pp.getNextInt()
+    END;
 
     WHILE pp.keywordPresent("-n") DO
       IF restrictNodes = NIL THEN
@@ -507,7 +517,8 @@ BEGIN
                   rd,
                   wait,
                   restrictNodes,
-                  regExList);
+                  regExList,
+                  maxNodes);
 
         TRY Rd.Close(rd) EXCEPT ELSE END
       END
@@ -527,6 +538,7 @@ BEGIN
                  wait,
                  restrictNodes,
                  regExList,
+                 maxNodes,
                  fsdbCmdPath,
                  compressCmdPath,
                  compressPrec,
