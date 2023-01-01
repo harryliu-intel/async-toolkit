@@ -12,7 +12,7 @@ PROCEDURE MakeIdxMap(nameIdTbl     : CardTextSetTbl.T;
                      regExList     : RegExList.T;
                      maxNodes      : CARDINAL;
                      names         : TextSeqSeq.T;
-                     translate     : BOOLEAN) : CardSeq.T;
+                     translate, noX: BOOLEAN) : CardSeq.T;
 
   (* for given fsdbNames table, generate:
 

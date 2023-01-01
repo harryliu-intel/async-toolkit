@@ -108,6 +108,8 @@ CONST Usage = "[-fsdb <fsdbPath>] [-compress <compressPath>] [-rename <dutName>]
 
   -translate   Convert GDS names to CAST names
 
+  -noX         Remove all occurrences of the letter X in node names
+
   <inFileName> is name of input file in FSDB or CSDF format
 
 
@@ -343,7 +345,7 @@ VAR
 
   maxNodes            := LAST(CARDINAL);
 
-  translate : BOOLEAN;
+  translate, noX : BOOLEAN;
   
 CONST
   DefFormats =
@@ -356,6 +358,7 @@ BEGIN
   TRY
 
     translate := pp.keywordPresent("-translate");
+    noX       := pp.keywordPresent("-noX");
     
     IF    pp.keywordPresent("-rename") THEN
       dutName := pp.getNext()
@@ -526,7 +529,7 @@ BEGIN
                   restrictNodes,
                   regExList,
                   maxNodes,
-                  translate);
+                  translate, noX);
 
         TRY Rd.Close(rd) EXCEPT ELSE END
       END
@@ -547,7 +550,7 @@ BEGIN
                  restrictNodes,
                  regExList,
                  maxNodes,
-                 translate,
+                 translate, noX,
                  fsdbCmdPath,
                  compressCmdPath,
                  compressPrec,

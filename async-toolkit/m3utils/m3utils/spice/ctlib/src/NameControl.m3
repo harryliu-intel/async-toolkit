@@ -25,6 +25,8 @@ IMPORT Wx;
 
 CONST TE = Text.Equal;
 
+VAR Verbose := Debug.DebugThis("NameControl");
+    
 (*
 
 /*** translate from GDS2 name to CAST name and strip v(.) ***/
@@ -102,7 +104,7 @@ PROCEDURE Gds2Cast(name : TEXT) : TEXT =
     RETURN Wx.ToText(wx)
   END Gds2Cast;
 
-PROCEDURE SetToSeq(set : TextSet.T; translate : BOOLEAN) : TextSeq.T =
+PROCEDURE SetToSeq(set : TextSet.T; translate, noX : BOOLEAN) : TextSeq.T =
   VAR
     iter := set.iterate();
     txt : TEXT;
@@ -111,6 +113,9 @@ PROCEDURE SetToSeq(set : TextSet.T; translate : BOOLEAN) : TextSeq.T =
     j  := 0;
   BEGIN
     WHILE iter.next(txt) DO
+      IF noX THEN
+        txt := CitTextUtils.FilterOut(txt, SET OF CHAR { 'X' })
+      END;
       IF translate THEN
         a[j] := Gds2Cast(txt)
       ELSE
@@ -136,7 +141,8 @@ PROCEDURE CountDots(a : TEXT) : CARDINAL =
     LOOP
       q0 := LAST(CARDINAL);
       q1 := LAST(CARDINAL);
-      IF CitTextUtils.FindSub(a, ".", q0, p) OR CitTextUtils.FindSub(a, "_D_", q1, p) THEN
+      IF CitTextUtils.FindSub(a, ".", q0, p) OR
+         CitTextUtils.FindSub(a, "_D_", q1, p) THEN
         p := MIN(q0, q1) + 1;
         INC(res)
       ELSE
@@ -163,7 +169,7 @@ PROCEDURE MakeIdxMap(fsdbNames     : CardTextSetTbl.T;
                      regExList     : RegExList.T;
                      maxNodes      : CARDINAL;
                      names         : TextSeqSeq.T;
-                     translate     : BOOLEAN) : CardSeq.T =
+                     translate, noX: BOOLEAN) : CardSeq.T =
   VAR
     res   := NEW(CardSeq.T).init();
     c     := 0;
@@ -187,7 +193,7 @@ PROCEDURE MakeIdxMap(fsdbNames     : CardTextSetTbl.T;
     
     iter := fsdbNames.iterate();
     WHILE iter.next(id, set) DO
-      arr[id] := SetToSeq(set, translate)
+      arr[id] := SetToSeq(set, translate, noX)
     END;
 
     EVAL names.init();
@@ -216,6 +222,11 @@ PROCEDURE MakeIdxMap(fsdbNames     : CardTextSetTbl.T;
             restrictNodes.intersection(set).size() # 0 THEN
         success := TRUE
       ELSE
+        IF Verbose THEN
+          Debug.Out("NameControl : regExList length " &
+            Int(RegExList.Length(regExList)))
+        END;
+        
         success := FALSE;
         VAR
           p := regExList;
@@ -223,8 +234,11 @@ PROCEDURE MakeIdxMap(fsdbNames     : CardTextSetTbl.T;
           WHILE p # NIL DO
             FOR j := 0 TO seq.size() - 1 DO
               WITH alias = seq.get(j) DO
+                IF Verbose THEN
+                  Debug.Out("NameControl.MakeIdxMap : matching regex to " &
+                    alias)
+                END;
                 IF RegEx.Execute(p.head, alias) # -1 THEN
-                  
                   success := TRUE;
                   EXIT
                 END
