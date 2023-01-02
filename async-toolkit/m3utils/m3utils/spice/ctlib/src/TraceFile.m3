@@ -22,6 +22,7 @@ IMPORT UnsafeReader;
 IMPORT ZtraceFile;
 IMPORT SpiceCompress;
 IMPORT TempDataRep;
+IMPORT ArithConstants;
 
 <*FATAL Thread.Alerted*>
 
@@ -182,7 +183,7 @@ PROCEDURE WriteCompressedV1(t : T; tWr : Wr.T)
             pos := Wr.Index(tWr);
             dir[0].bytes := pos - opos;
             dir[0].norm  := SpiceCompress.IllegalNorm;
-
+            dir[0].code  := ArithConstants.DenseCode;
           ELSE
             opos := pos; (* sync pointers *)
 

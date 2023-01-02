@@ -346,6 +346,8 @@ VAR
   maxNodes            := LAST(CARDINAL);
 
   translate, noX : BOOLEAN;
+
+  scopesep            := ".";
   
 CONST
   DefFormats =
@@ -360,6 +362,9 @@ BEGIN
     translate := pp.keywordPresent("-translate");
     noX       := pp.keywordPresent("-noX");
     
+    IF    pp.keywordPresent("-scopesep") THEN
+      scopesep := pp.getNext()
+    END;
     IF    pp.keywordPresent("-rename") THEN
       dutName := pp.getNext()
     END;
@@ -551,6 +556,7 @@ BEGIN
                  regExList,
                  maxNodes,
                  translate, noX,
+                 scopesep,
                  fsdbCmdPath,
                  compressCmdPath,
                  compressPrec,

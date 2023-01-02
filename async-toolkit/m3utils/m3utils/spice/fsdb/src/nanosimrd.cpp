@@ -218,7 +218,7 @@ ext_dq_free(ext_dq *q)
 
 //////////////////////////////////////////////////////////////////////
 
-const int debug = 0;
+const int debug = 2;
 
 ffrObject      *fsdb_obj;
 fsdbXTagType    xtag_type; 
@@ -909,6 +909,9 @@ reverse(const cons_t *old)
   return res;
 }
 
+static char  *scopesep    = strdup(".");
+static int    scopeseplen = 1;
+
 int 
 main(int argc, char *argv[])
 {
@@ -917,8 +920,6 @@ main(int argc, char *argv[])
 	fprintf(stderr, "usage: nanosimrd verilog_type_fsdb\n");
 	return FSDB_RC_FAILURE;
     }
-
-    (void)setup(argv[1]);
 
     char buff[CMDBUFSIZ];
     
@@ -934,7 +935,12 @@ main(int argc, char *argv[])
       case '\0':
       case '#': // skip --- comment
         break;
-        
+
+      case 'B': // parse the file
+        (void)setup(argv[1]);
+        fprintf(stdout, "BR\n");
+        break;
+
       case 'S': // query range of IDCODES
         fprintf(stdout,
                 "SR %d %d %s\n",
@@ -1081,6 +1087,13 @@ main(int argc, char *argv[])
         goto done;
         break;
 
+      case 's': // set scope separator
+        free(scopesep);
+        scopesep    = strdup(strtok(NULL, " \n"));
+        scopeseplen = strlen(scopesep);
+        fprintf(stdout, "sR\n");
+        break;
+
       default:
         fprintf(stderr, "???line not understood\n");
         break;
@@ -1101,9 +1114,9 @@ typedef struct arc_t {
   struct arc_t *up;
 } arc_t;
 
-static arc_t *curscope  = NULL;
-static char  *curpfx    = strdup("");
-static int    curpfxlen = 0;
+static arc_t *curscope    = NULL;
+static char  *curpfx      = strdup("");
+static int    curpfxlen   = 0;
 
 static void update_pfx(void)
 // call this whenever updating curscope
@@ -1116,7 +1129,7 @@ static void update_pfx(void)
   } else {
       int len = 0;
       for (arc_t *p = curscope; p; p = p->up) 
-        len = len + strlen(p->name) + 1;  // add length + period
+        len = len + strlen(p->name) + scopeseplen;  // add length + period
 
       // terminating null
       ++len; 
@@ -1133,7 +1146,7 @@ static void update_pfx(void)
 
       int tlen;
       for (arc_t *p = curscope; p; p = p->up) {
-        *(--q) = '.';
+        memcpy(q -= scopeseplen, scopesep, scopeseplen);
         tlen = strlen(p->name);
 
         memcpy(q -= tlen, p->name, tlen);

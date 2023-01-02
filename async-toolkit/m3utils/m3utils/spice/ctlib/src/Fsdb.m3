@@ -477,7 +477,8 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
                 restrictNodes : TextSet.T;
                 restrictRegEx : RegExList.T;
                 maxNodes      : CARDINAL;
-                translate, noX     : BOOLEAN;
+                translate, noX: BOOLEAN;
+                scopesep      : TEXT;
                 cmdPath       : Pathname.T;
                 compressPath  : Pathname.T;
                 compressPrec  : LONGREAL;
@@ -499,6 +500,18 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
       PutCommandG(wr, "U");
       EVAL GetResponseG(rd, "UR");
     END CommandUnload;
+
+  PROCEDURE ParseRemoteFsdb() =
+    BEGIN
+      PutCommandG(wr, "B");
+      EVAL GetResponseG(rd, "BR");
+    END ParseRemoteFsdb;
+    
+  PROCEDURE SetScopesep(sep : TEXT) =
+    BEGIN
+      PutCommandG(wr, "s " & sep);
+      EVAL GetResponseG(rd, "sR");
+    END SetScopesep;
 
   PROCEDURE GetTimesteps(fsdbId : CARDINAL; steps : LRSeq.T)
     RAISES { FloatMode.Trap, Lex.Error, TextReader.NoMore } =
@@ -653,6 +666,10 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
     END;
 
     TRY
+      SetScopesep(scopesep);
+
+      ParseRemoteFsdb();
+      
       LoadFsdbIds();
 
       LoadNode(loId);
