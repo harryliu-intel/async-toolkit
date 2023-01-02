@@ -507,9 +507,11 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
       EVAL GetResponseG(rd, "BR");
     END ParseRemoteFsdb;
     
-  PROCEDURE SetScopesep(sep : TEXT) =
+  PROCEDURE SetScopesep(sep : TEXT; stripXRemotely : BOOLEAN) =
     BEGIN
-      PutCommandG(wr, "s " & sep);
+      PutCommandG(wr, F("s %s %s",
+                        sep,
+                        ARRAY BOOLEAN OF TEXT { "0", "1" } [stripXRemotely]));
       EVAL GetResponseG(rd, "sR");
     END SetScopesep;
 
@@ -666,7 +668,7 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
     END;
 
     TRY
-      SetScopesep(scopesep);
+      SetScopesep(scopesep, translate);
 
       ParseRemoteFsdb();
       
@@ -965,6 +967,9 @@ PROCEDURE GenApply(cl : GenClosure) : REFANY =
                                     stderr := ProcUtils.Stderr(),
                                     stdout := cmdStdout);
     TRY
+      PutCommandG(cmdWr, "B");
+      EVAL GetResponseG(cmdRd, "BR");
+
       PutCommandG(cmdWr, "S");
       WITH reader    = GetResponseG(cmdRd, "SR") DO
         loId   := reader.getInt();

@@ -911,6 +911,7 @@ reverse(const cons_t *old)
 
 static char  *scopesep    = strdup(".");
 static int    scopeseplen = 1;
+static int    stripX      = 0;
 
 int 
 main(int argc, char *argv[])
@@ -1089,7 +1090,8 @@ main(int argc, char *argv[])
 
       case 's': // set scope separator
         free(scopesep);
-        scopesep    = strdup(strtok(NULL, " \n"));
+        scopesep    = strdup(strtok(NULL, " "));
+        stripX      = atoi(strtok(NULL, " \n"));
         scopeseplen = strlen(scopesep);
         fprintf(stdout, "sR\n");
         break;
@@ -1110,8 +1112,8 @@ main(int argc, char *argv[])
 // scoping
 
 typedef struct arc_t {
-  char *name;
-  struct arc_t *up;
+  char          *name;
+  struct arc_t  *up;
 } arc_t;
 
 static arc_t *curscope    = NULL;
@@ -1168,7 +1170,12 @@ static void up_scope(void)
 static void down_scope(const fsdbTreeCBDataScope *tree_cb_data)
 {
   arc_t *down = (arc_t *)malloc(sizeof(arc_t));
-  down->name = strdup(tree_cb_data->name);
+
+  if (stripX && tree_cb_data->name[0] == 'X') 
+    down->name = strdup(tree_cb_data->name + 1); // strip leading X
+  else
+    down->name = strdup(tree_cb_data->name);
+  
   down->up   = curscope;
   curscope   = down;
   update_pfx();
