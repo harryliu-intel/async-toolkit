@@ -9,7 +9,7 @@ IMPORT SpiceError;
 IMPORT AL;
 IMPORT Rd, FileRd;
 IMPORT OSError;
-FROM Fmt IMPORT F, Int, LongReal;
+FROM Fmt IMPORT F, Int, LongReal, Bool;
 IMPORT Trace;
 IMPORT RegEx;
 IMPORT SpiceCircuit;
@@ -702,7 +702,7 @@ VAR nMargins := 0;
 
 PROCEDURE GetValues(clkDirs           : CheckDir.T;
                     clkTrIdx          : CARDINAL;
-                      clkNm             : TEXT;
+                    clkNm             : TEXT;
                     thresh            : LONGREAL;
                     READONLY ta, da   : ARRAY OF LONGREAL) : CardSeq.T =
   BEGIN
@@ -716,10 +716,15 @@ PROCEDURE GetValues(clkDirs           : CheckDir.T;
       FOR i := 0 TO clkTrans.size() - 1 DO
         WITH ct = clkTrans.get(i) DO
           IF ct.dir IN clkDirs THEN
-            WITH t = ct.at,
-                 dtidx = FindIdxBefore(ta, t),
-                 dval = da[dtidx],
+            WITH t      = ct.at,
+                 dtidx  = FindIdxBefore(ta, t),
+                 dval   = da[dtidx],
                  dlogic = dval > thresh DO
+              IF Verbose THEN
+                Debug.Out(F("GetValues at %s dtidx %s dval %s dlogic %5s (thresh %s)",
+                            LR(t), Int(dtidx), LR(dval), Bool(dlogic), LR(thresh)))
+              END;
+              
               IF dlogic THEN
                 res.addhi(1)
               ELSE
@@ -1066,16 +1071,30 @@ PROCEDURE WriteCardSeq(wr : Wr.T;
       END
     END
   END WriteCardSeq;
+
+PROCEDURE FileWr_Open(fn : TEXT) : Wr.T =
+  BEGIN
+    TRY
+      RETURN FileWr.Open(fn)
+    EXCEPT
+      OSError.E(x) =>
+      Debug.Error(F("Trouble opening %s for writing : OSError.E : %s",
+                    fn, AL.Format(x)));
+      <*ASSERT FALSE*>
+    END
+  END FileWr_Open;
   
 PROCEDURE MeasureByName(truncValues : CARDINAL) =
   VAR
-    latchNodes : LatchNodes;
+    latchNodes       : LatchNodes;
     clkTrIdx, dTrIdx : CARDINAL;
-    db := NEW(MarginMeasurementSeq.T).init();
-    nclks := 0;
-    nsteps := trace.getSteps();
+    
+    db         := NEW(MarginMeasurementSeq.T).init();
+    nclks      := 0;
+    nsteps     := trace.getSteps();
     tima, data := NEW(REF ARRAY OF LONGREAL, nsteps);
-    vwr := FileWr.Open("values.dat");
+    vwr        := FileWr_Open("values.dat");
+    
   BEGIN
     trace.getTimeData(tima^);
     FOR i := 0 TO trace.getNodes() - 1 DO
@@ -1108,19 +1127,25 @@ PROCEDURE MeasureByName(truncValues : CARDINAL) =
                          MeasureHold, "hold");
 
         trace.getNodeData(dTrIdx, data^);
-        
-        WITH seq = GetValues(Dn,
-                             clkTrIdx,
-                             latchNodes.clk,
-                             vdd / 2.0d0,
-                             tima^, data^
-          ) DO
-          Wr.PutText(vwr, latchNodes.d);
-          Wr.PutChar(vwr, ' ');
-          Wr.PutText(vwr, valueTag);
-          Wr.PutText(vwr, " : ");
-          WriteCardSeq(vwr, seq, delim := "", truncAt := truncValues);
-          Wr.PutChar(vwr, '\n')
+
+        TRY
+          WITH seq = GetValues(Dn,
+                               clkTrIdx,
+                               latchNodes.clk,
+                               vdd / 2.0d0,
+                               tima^, data^
+            ) DO
+            Wr.PutText(vwr, latchNodes.d);
+            Wr.PutChar(vwr, ' ');
+            Wr.PutText(vwr, valueTag);
+            Wr.PutText(vwr, " : ");
+            WriteCardSeq(vwr, seq, delim := "", truncAt := truncValues);
+            Wr.PutChar(vwr, '\n')
+          END
+        EXCEPT
+          Wr.Failure(x) =>
+          Debug.Error("Write error writing values : Wr.Failure : " &
+            AL.Format(x))
         END
 
       END
@@ -1150,8 +1175,8 @@ VAR
   rootCkt    : SpiceCircuit.T;
   tranFinder : TransitionFinder.T;
   vdd                         := 0.75d0;
-  resetTime                   := 10.0d-9;
-  warnWr                      := FileWr.Open("spicetiming.warn");
+  resetTime                   := 0.0d-9;
+  warnWr                      := FileWr_Open("spicetiming.warn");
   quick      : BOOLEAN;
   graphNs                     := FIRST(LONGREAL);
   truncValues                 := LAST(CARDINAL);
@@ -1185,6 +1210,9 @@ BEGIN
     END;
     IF pp.keywordPresent("-vdd") THEN
       vdd := pp.getNextLongReal()
+    END; 
+    IF pp.keywordPresent("-resettime") THEN
+      resetTime := pp.getNextLongReal()
     END;
     IF pp.keywordPresent("-graph") THEN
       graphNs := pp.getNextLongReal()
