@@ -1,7 +1,7 @@
 MODULE TraceFile;
 IMPORT Wr;
 IMPORT Debug;
-FROM Fmt IMPORT Int, F, LongReal, FN;
+FROM Fmt IMPORT Int, F, LongReal, FN, Bool;
 IMPORT OSError;
 IMPORT AL;
 IMPORT UnsafeWriter;
@@ -23,6 +23,7 @@ IMPORT ZtraceFile;
 IMPORT SpiceCompress;
 IMPORT TempDataRep;
 IMPORT ArithConstants;
+IMPORT ZtraceNodeHeader;
 
 <*FATAL Thread.Alerted*>
 
@@ -140,6 +141,58 @@ PROCEDURE Write(t : T; fmt : Version) =
   END Write;
 
 EXCEPTION WriteError(TEXT);
+
+PROCEDURE WriteTimeTrace(wr            : Wr.T;
+                         READONLY time : ARRAY OF LONGREAL;
+                         VAR pos       : CARDINAL;
+                         VAR dir      : ZtraceNodeHeader.T)
+  RAISES { Wr.Failure } =
+  CONST
+    MaxRelDelta = 1.0d-6; (* 1 p.p.m. max time error permitted *)
+  VAR
+    opos := Wr.Index(wr);
+    pred, maxdev, first, last, lf : LONGREAL;
+    ok := TRUE;
+  BEGIN
+    (* see if we can write time as compressed format or not *)
+
+    first := time[0];
+    last  := time[LAST(time)];
+    lf    := FLOAT(LAST(time), LONGREAL);
+
+    IF last = 0.0d0 THEN
+      ok := FALSE
+    ELSE
+      FOR i := 0 TO LAST(time) DO
+        WITH ratio    = FLOAT(i, LONGREAL) / lf,
+             pred     = (last - first) * ratio,
+             reldelta = ABS((pred - time[i])/last) DO
+          IF reldelta > MaxRelDelta THEN
+            ok := FALSE;
+            EXIT
+          END
+        END
+      END
+    END;
+
+    Debug.Out("TraceFile.WriteTimeTrace: compression ok = " & Bool(ok));
+    
+    IF ok THEN
+      dir.code  := ArithConstants.LinearCode;
+      dir.norm  := SpiceCompress.Norm { min := first, max := last };
+    ELSE
+      (* write uncompressed time data *)
+    
+      dir.code  := ArithConstants.DenseCode;
+      UnsafeWriter.WriteLRAAt(wr, time, pos);
+      dir.norm  := SpiceCompress.IllegalNorm;
+    END;
+
+    (* update directory for time data *)
+    pos := Wr.Index(wr);
+    dir.bytes := pos - opos;
+    
+  END WriteTimeTrace;
   
 PROCEDURE WriteCompressedV1(t : T; tWr : Wr.T)
   RAISES { WriteError } =
@@ -176,14 +229,7 @@ PROCEDURE WriteCompressedV1(t : T; tWr : Wr.T)
                           Int(NUMBER(time^))))
             END;
 
-            (* write uncompressed time data *)
-            UnsafeWriter.WriteLRAAt(tWr, time^, pos);
-
-            (* update directory for time data *)
-            pos := Wr.Index(tWr);
-            dir[0].bytes := pos - opos;
-            dir[0].norm  := SpiceCompress.IllegalNorm;
-            dir[0].code  := ArithConstants.DenseCode;
+            WriteTimeTrace(tWr, time^, pos, dir[0]);
           ELSE
             opos := pos; (* sync pointers *)
 
