@@ -8,7 +8,7 @@ IMPORT Rd;
 IMPORT Wr;
 IMPORT ProcUtils;
 IMPORT Debug;
-FROM Fmt IMPORT F, Int, LongReal;
+FROM Fmt IMPORT F, FN, Int, LongReal;
 IMPORT TextReader;
 IMPORT Text;
 IMPORT CitTextUtils AS TextUtils, Lex, FloatMode;
@@ -40,6 +40,9 @@ CONST LR = LongReal;
 
 VAR doDebug := Debug.DebugThis("Fsdb");
 
+CONST
+  CompressDump = "" (* "-dump" *);
+  
 PROCEDURE EditName(nm : TEXT) : TEXT =
   (* really should probably edit and leave as alias? *)
 
@@ -1073,12 +1076,13 @@ PROCEDURE GeneratePartialTraceFile(wr                   : Wr.T;
     END;
 
     IF compressPath # NIL THEN
-      WITH compressCmdString = F("F %s -dump -filter %s %s %s -prec %s",
-                                 compressPath,
+      WITH compressCmdString = FN("F %s %s -filter %s %s %s -prec %s",
+                                 ARRAY OF TEXT {compressPath,
+                                 CompressDump,
                                  Int(nSteps),
                                  LR(interpolate),
                                  LR(unit),
-                                 LR(compressPrec)) DO
+                                 LR(compressPrec)}) DO
         IF doDebug THEN
           Debug.Out(F("Setting up waveform compression with string \"%s\"",
                       compressCmdString))
