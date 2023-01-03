@@ -16,6 +16,7 @@ IMPORT Debug;
 IMPORT Thread;
 FROM Fmt IMPORT F, Int; IMPORT Fmt;
 IMPORT TextSet, TextSetDef;
+IMPORT TraceFile;
 
 <*FATAL Thread.Alerted*>
 
@@ -34,7 +35,6 @@ REVEAL
     getNodeIdx  := GetNodeIdx;
     getSteps    := GetSteps;
     getNodes    := GetNodes;
-    getTimeStep := GetTimeStep;
     getTimeData := GetTimeData;
     getNodeData := GetNodeData;
     getCanonicalName := GetCanonicalName;
@@ -51,18 +51,75 @@ PROCEDURE Close(t : T) RAISES { Rd.Failure } =
 PROCEDURE Init(t : T; root : Pathname.T) : T
   RAISES { OSError.E, Rd.Failure, Rd.EndOfFile } =
   VAR
-    tNam := root & ".trace";
+    tNam : Pathname.T;
     nNam := root & ".names";
+    ok : BOOLEAN;
   BEGIN
 
     t.fwdTbl := NEW(TextCardTbl.Default).init();
     t.revTbl := NEW(CardTextSeqTbl.Default).init();
 
     EVAL ParseNames(nNam, t.fwdTbl, t.revTbl);
+
+    FOR i := FIRST(TraceFile.Version) TO LAST(TraceFile.Version) DO
+      ok := TRUE;
+      tNam := root & "." & TraceFile.VersionSuffixes[i];
+      TRY
+        t.tRd := FileRd.Open(tNam);
+      EXCEPT
+        OSError.E => ok := FALSE
+      END;
+
+      IF ok THEN
+        ok :=  AttemptParse[i](t)
+      END;
+      IF ok THEN
+        EXIT
+      ELSE
+        (* no good -- clean up *)
+        Rd.Close(t.tRd);
+        t.tRd := NIL
+      END
+    END;
+
+    IF ok THEN
+      RETURN t
+    ELSE
+      Debug.Error("Trace.Init unable to parse for trace root " & root);
+      <*ASSERT FALSE*>
+    END
+  END Init;
+
+  (**********************************************************************)
+
+TYPE Parser = PROCEDURE(t : T) : BOOLEAN RAISES { Rd.Failure, Rd.EndOfFile };
+
+CONST  AttemptParse = ARRAY TraceFile.Version OF Parser {
+  AttemptParseUnreordered,
+  AttemptParseReordered,
+  AttemptParseCompressedV1 };
+
+PROCEDURE AttemptParseUnreordered(<*UNUSED*>t : T) : BOOLEAN =
+  BEGIN
+    RETURN FALSE
+  END AttemptParseUnreordered;
+
+PROCEDURE AttemptParseReordered(t : T) : BOOLEAN
+  RAISES { Rd.Failure, Rd.EndOfFile } =
+  BEGIN
+
+    WITH hh = TraceFile.ReadHeader(t.tRd) DO
+      IF hh.version # TraceFile.Version.Reordered THEN
+        RETURN FALSE
+      END
+    END;
+
+    Rd.Seek(t.tRd, 0);
     
-    t.tRd := FileRd.Open(tNam);
     t.h := TraceUnsafe.GetHeader(t.tRd, t.revTbl.size());
 
+    (* need to check format *)
+    
     t.timeStep := ReadTimeStep(t);
 
     IF doDebug THEN
@@ -70,10 +127,20 @@ PROCEDURE Init(t : T; root : Pathname.T) : T
                   Int(t.h.start), Int(t.h.end), Int(t.h.steps), Int(t.h.nNodes)));
       Debug.Out(F("timestep %s", LR(t.timeStep)))
     END;
+    RETURN TRUE
+  END AttemptParseReordered;
 
-    RETURN t
-  END Init;
+PROCEDURE AttemptParseCompressedV1(t : T) : BOOLEAN =
+  BEGIN
+    WITH hh = TraceFile.ReadHeader(t.tRd) DO
+      IF hh.version # TraceFile.Version.CompressedV1 THEN
+        RETURN FALSE
+      END
+    END;
+  END AttemptParseCompressedV1;
 
+  (**********************************************************************)
+  
 PROCEDURE GetNodes(t : T) : CARDINAL =
   BEGIN
     RETURN t.revTbl.size()
@@ -182,11 +249,6 @@ PROCEDURE ReadTimeStep(t : T) : LONGREAL
     RETURN a[1] - a[0]
   END ReadTimeStep;
 
-PROCEDURE GetTimeStep(t : T) : LONGREAL =
-  BEGIN
-    RETURN t.timeStep
-  END GetTimeStep;
-    
 PROCEDURE GetTimeData(t : T; VAR timea : ARRAY OF LONGREAL)
   RAISES { Rd.Failure, Rd.EndOfFile } =
   BEGIN

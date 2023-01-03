@@ -72,7 +72,7 @@ PROCEDURE DoMeasure(READONLY c : TechConfig.T;
     Debug.Out(F("first time %s, last time %s, step %s",
                 LR(timeData[0]),
                 LR(timeData[nSteps - 1]),
-                LR(trace.getTimeStep())));
+                LR(timeData[1] - timeData[0])));
     
     CONST
       StartTime = 12.0d-9;

@@ -18,7 +18,7 @@ TYPE
     getNodes() : CARDINAL;
     (* node 0 is always TIME and is included in the count *)
 
-    getTimeStep() : LONGREAL;
+    (* there is really no concept of a fixed timestep in a trace file *)
     
     getTimeData(VAR timea : ARRAY OF LONGREAL)
       RAISES { Rd.Failure, Rd.EndOfFile } ;

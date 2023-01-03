@@ -47,6 +47,14 @@ PROCEDURE Evaluate(fn            : TEXT;
                    doAllDumps    : BOOLEAN;
                    base          := 0) : Evaluation =
   <*FATAL Wr.Failure, OSError.E*>
+  (* this procedure should be updated to allow for a decimated version of b
+     to be used 
+
+     if b is decimated, then values of a are interpolated for intermediate
+     values.  The final values (to the right of LAST(b)) are special:
+     they are extrapolated from the last two extant values of b, but saturate
+     at 0 and 1
+  *)
   VAR
     maxAbsDiff   := 0.0d0;
     sumDiff      := 0.0d0;

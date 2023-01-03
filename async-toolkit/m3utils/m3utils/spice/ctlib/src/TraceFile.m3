@@ -38,7 +38,6 @@ CONST
                              Not normally used since nanosimrd compresses 
                              on the fly 
                           *)
-       
 
 PROCEDURE FileRd_Open(fn : Pathname.T) : Rd.T RAISES { OSError.E } =
   BEGIN
