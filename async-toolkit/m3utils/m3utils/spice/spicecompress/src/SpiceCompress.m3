@@ -3,8 +3,7 @@ IMPORT Debug;
 IMPORT OSError;
 IMPORT Rd;
 IMPORT Pathname;
-FROM Fmt IMPORT F, Int, LongReal, Pad, Bool, FN;
-IMPORT Trace;
+FROM Fmt IMPORT F, Int, LongReal, Bool, FN;
 IMPORT Wr, FileWr;
 IMPORT Math;
 IMPORT LRRegression AS Regression;
@@ -18,7 +17,6 @@ IMPORT TextRd;
 IMPORT PolySegment16Serial;
 IMPORT Thread;
 IMPORT Text;
-IMPORT Time;
 IMPORT Env;
 IMPORT TripleRefTbl;
 IMPORT IntTriple;
@@ -358,42 +356,6 @@ PROCEDURE DecompressArray(rd       : Rd.T;
     Reconstruct(segments, rarr)
   END DecompressArray;
    
-PROCEDURE DoDemo(targMaxDev : LONGREAL;
-                 KK         : REF ARRAY OF CARDINAL;
-                 trace      : Trace.T;
-                 doAllDumps : BOOLEAN) =
-
-<*FATAL Rd.Failure, Rd.EndOfFile*> 
-<*FATAL MatrixE.Singular*>
-  VAR
-    nSteps := trace.getSteps();
-    darr   := NEW(REF ARRAY OF LONGREAL, nSteps);
-    rarr   := NEW(REF ARRAY OF LONGREAL, nSteps);
-    norm   : Norm;
-  BEGIN
-
-    FOR p := 1 TO 3 DO
-      FOR s := -5 TO 5 DO
-        Debug.Out(F("ToFloat(%s, %s) = %s", Int(s), Int(p), LR(Rep16.ToFloat(s, p))))
-      END
-    END;
-    
-    FOR k := FIRST(KK^) TO LAST(KK^) DO
-      WITH i  = KK[k],
-           rn = Pad(Int(i), 6, padChar := '0')
-       DO
-        Debug.Out("Loading trace");
-        trace.getNodeData(i, darr^);
-        Debug.Out("Compressing trace");
-        WITH now = Time.Now() DO
-          CompressArray(rn, darr^, rarr^, targMaxDev, doAllDumps, norm := norm,
-                        wr := NIL, mem := NIL, doDump := TRUE);
-          Debug.Out("Done compressing trace, time " & LR(Time.Now() - now));
-        END
-      END
-    END
-  END DoDemo;
-
 PROCEDURE PolyPoints(seq : PolySegment16Seq.T) : CARDINAL =
   BEGIN
     WITH last = seq.get(seq.size() - 1) DO
@@ -1728,7 +1690,8 @@ PROCEDURE Reconstruct(seq        : PolySegment16Seq.T;
       END
     END
   END Reconstruct;
-  
+
+<*UNUSED*>
 PROCEDURE ReconstructCheck(seq            : PolySegment16Seq.T;
                            VAR a          : ARRAY OF LONGREAL;
                            READONLY check : ARRAY OF LONGREAL;

@@ -1,6 +1,7 @@
 import ("libm3")
 import ("cit_common")
 import ("cit_util")
+import ("ctlib")
 
 Module ("Trace")
 Interface ("TraceRep")
