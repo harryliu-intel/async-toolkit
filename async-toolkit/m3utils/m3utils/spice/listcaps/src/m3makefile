@@ -4,6 +4,10 @@ import ("spicelib")
 
 implementation ("ListCaps")
 
+module ("Comp")
+sequence ("Comp", "Comp")
+array_sort ("Comp", "Comp")
+
 program ("listcaps")
 
 

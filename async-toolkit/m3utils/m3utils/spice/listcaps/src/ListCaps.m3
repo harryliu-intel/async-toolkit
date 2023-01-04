@@ -14,17 +14,58 @@ IMPORT SpiceCircuit;
 IMPORT SpiceObject;
 IMPORT Text;
 IMPORT CitTextUtils;
+IMPORT Comp AS Cap, CompSeq AS CapSeq, CompArraySort AS CapArraySort;
+IMPORT Wr;
 
 CONST
-  Usage = "";
+  Usage   = "";
+  LR      = LongReal;
 
+VAR
+  Verbose := TRUE;
+
+PROCEDURE DoIt(ckt : SpiceCircuit.T; path : TEXT; caps : CapSeq.T) =
+  VAR
+    elems := ckt.elements;
+    type : SpiceCircuit.T;
+  BEGIN
+    FOR i := 0 TO elems.size() - 1 DO
+      
+      WITH elem = elems.get(i) DO
+        TYPECASE elem OF
+          SpiceObject.X (x) =>
+
+          IF Verbose THEN
+            Debug.Out(F("X object nm %s type %s", x.name, x.type))
+          END;
+
+          WITH hadIt = spice.subCkts.get(x.type, type) DO
+            <*ASSERT hadIt*>
+          END;
+
+          DoIt(type, path & x.name & ".", caps)
+        |
+          SpiceObject.C(c) =>
+          <*ASSERT c # NIL*>
+          <*ASSERT caps # NIL*>
+          <*ASSERT c.name # NIL*>
+          <*ASSERT path # NIL*>
+          caps.addhi(Cap.T { path & c.name, c.c })
+        ELSE
+          (* skip *)
+        END
+      END
+    END
+          
+  END DoIt;
+  
 VAR
   pp                          := NEW(ParseParams.T).init(Stdio.stderr);
   spiceFn    : Pathname.T     ;
   spice      : SpiceFormat.T;
   rootType   : TEXT := NIL;
   rootCkt    : SpiceCircuit.T;
-
+  caps       : CapSeq.T;
 BEGIN
   TRY
     IF pp.keywordPresent("-i") THEN
@@ -64,4 +105,19 @@ BEGIN
     END
   END;
 
+  Debug.Out("Done parsing.");
+
+  caps := NEW(CapSeq.T).init();
+  
+  DoIt(rootCkt, "", caps);
+
+  WITH a = NEW(REF ARRAY OF Cap.T, caps.size()) DO
+    FOR i := 0 TO caps.size() - 1 DO
+      a[i] := caps.get(i)
+    END;
+    CapArraySort.Sort(a^);
+    FOR i := FIRST(a^) TO LAST(a^) DO
+      Wr.PutText(Stdio.stdout, F("%-15s %s\n", LR(a[i].val), a[i].nm))
+    END
+  END
 END ListCaps.
