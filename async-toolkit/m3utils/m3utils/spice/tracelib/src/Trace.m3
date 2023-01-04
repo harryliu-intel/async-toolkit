@@ -367,7 +367,12 @@ PROCEDURE GetNodeDataC(t       : CompressedV1;
       WITH data = GetBytes(t.tRd, dirent.bytes),
            decoded = ArithDecode(data, dirent.code)
        DO
-        Decompress(decoded, arr)
+        Decompress(decoded, arr);
+        FOR i := FIRST(arr) TO LAST(arr) DO
+          WITH range = dirent.norm.max - dirent.norm.min DO
+            arr[i] := arr[i] * range + dirent.norm.min
+          END
+        END
       END
     END
   END GetNodeDataC;
