@@ -11,4 +11,8 @@ PROCEDURE ParseLine(VAR circuit   : SpiceCircuitList.T; (* circuit stack *)
                     VAR warning   : TEXT)
   RAISES { SpiceError.E };
 
+PROCEDURE GetWord(READONLY line : ARRAY OF CHAR;
+                  VAR      p    : CARDINAL;
+                  VAR      w    : TEXT           ) : BOOLEAN;
+
 END SpiceObjectParse.

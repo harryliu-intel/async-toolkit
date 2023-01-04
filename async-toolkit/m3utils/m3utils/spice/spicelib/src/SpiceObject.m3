@@ -107,6 +107,8 @@ PROCEDURE ParseLine(VAR circuit   : SpiceCircuitList.T; (* circuit stack *)
           Debug.Out("Closing SUBCKT " & circuit.head.name)
         END;
         circuit := circuit.tail (* pop *)
+      ELSIF HavePrefix(line, p, ".PROBE") THEN
+        (* skip for now *)
       ELSE
         RAISE SpiceError.E(SpiceError.Data {
         msg := "Unknown directive in \"" & Text.FromChars(line) & "\""

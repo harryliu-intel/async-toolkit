@@ -15,9 +15,13 @@ FROM SpiceParse IMPORT HavePrefix;
 FROM Fmt IMPORT F, Int;
 IMPORT OSError, FileRd;
 IMPORT AL;
+IMPORT TextTextTbl;
+IMPORT CitTextUtils;
 
 <*FATAL Thread.Alerted*>
 
+CONST TE = Text.Equal;
+      
 VAR Verbose := Debug.DebugThis("SpiceFormat");
 
 (* The way we do EOF is an absolute mess.
@@ -36,6 +40,14 @@ VAR Verbose := Debug.DebugThis("SpiceFormat");
 
    Maybe re-code this using the generic fast lexer instead.
 *)
+
+PROCEDURE DebugOut(READONLY a : ARRAY OF CHAR) =
+  VAR
+    txt := Text.FromChars(a);
+  BEGIN
+    Debug.Out(txt)
+  END DebugOut;
+  
 PROCEDURE GetSingleLine(rd       : Rd.T; 
                         VAR p    : [-1..LAST(CARDINAL)]; 
                         VAR buff : REF ARRAY OF CHAR;
@@ -164,8 +176,14 @@ TYPE
     rd : Rd.T;
   END;
   
-PROCEDURE ResolvePath(cwd, fn : Pathname.T) : FileLookup
+PROCEDURE ResolvePath(cwd, fn : Pathname.T; search : TextSeq.T) : FileLookup
   RAISES { SpiceError.E, OSError.E } =
+
+  PROCEDURE Dbg(path : Pathname.T) =
+    BEGIN
+      Debug.Out("ResolvePath trying " & path)
+    END Dbg;
+    
   BEGIN
     IF Text.Length(fn) = 0 THEN
       RAISE SpiceError.E(SpiceError.Data {
@@ -179,7 +197,22 @@ PROCEDURE ResolvePath(cwd, fn : Pathname.T) : FileLookup
                           newSearchDir := Pathname.Prefix(fn),
                           rd           := FileRd.Open(fn) }
     ELSE
+      FOR i := 0 TO search.size() - 1 DO
+        WITH dir = search.get(i),
+             fn = dir & "/" & fn DO
+          Dbg(fn);
+          TRY
+            RETURN FileLookup { tgtFileName  := fn,
+                                newSearchDir := dir,
+                                rd           := FileRd.Open(fn) }
+          EXCEPT
+            OSError.E => (* skip *)
+          END
+        END
+      END;
+      
       WITH primary = cwd & "/" & fn DO
+        Dbg(primary);
         TRY
           RETURN FileLookup { tgtFileName  := primary,
                               newSearchDir := Pathname.Prefix(primary),
@@ -191,6 +224,7 @@ PROCEDURE ResolvePath(cwd, fn : Pathname.T) : FileLookup
         END
       END;
       WITH secondary = "." & "/" & fn DO
+        Dbg(secondary);
         RETURN FileLookup { tgtFileName  := secondary,
                             newSearchDir := Pathname.Prefix(secondary),
                             rd           := FileRd.Open(secondary) }
@@ -198,6 +232,58 @@ PROCEDURE ResolvePath(cwd, fn : Pathname.T) : FileLookup
     END
   END ResolvePath;
 
+PROCEDURE ParseOptionLine(READONLY line : ARRAY OF CHAR; search : TextSeq.T) =
+  VAR 
+    p   : CARDINAL := 0;
+    str : TEXT;
+  BEGIN
+    WHILE SpiceObjectParse.GetWord(line, p, str) DO
+      <*ASSERT str # NIL*>
+      WITH eqPos = Text.FindChar(str, '=') DO
+        IF eqPos = -1 THEN
+          (* it's an unbound option *)
+          EVAL options.put(str, "1") (* hmm, dunno *)
+        ELSE
+          (* it's actually a value binding *)
+          WITH k = Text.Sub(str,         0, eqPos),
+               v = Text.Sub(str, eqPos + 1, LAST(CARDINAL)) DO
+            Debug.Out(F("Options binding k=\"%s\" v=\"%s\"", k, v));
+            EVAL options.put(k, v);
+
+            IF TE("search", CitTextUtils.ToLower(k)) THEN
+              search.addhi(Unquote(v))
+            END
+          END
+        END
+      END
+    END
+  END ParseOptionLine;
+
+PROCEDURE Unquote(txt : TEXT) : TEXT =
+  BEGIN
+    CASE Text.GetChar(txt, 0) OF
+      '\'' =>
+      WITH n = Text.Length(txt),
+           l = Text.GetChar(txt, n - 1),
+           s = Text.Sub(txt, 1, n - 2) DO
+        <*ASSERT l = '\''*>
+        RETURN s
+      END
+    |
+      '"' =>
+      WITH n = Text.Length(txt),
+           l = Text.GetChar(txt, n - 1),
+           s = Text.Sub(txt, 1, n - 2) DO
+        <*ASSERT l = '"'*>
+        RETURN s
+      END
+    ELSE
+      RETURN txt
+    END
+  END Unquote;
+  
+VAR options := NEW(TextTextTbl.Default).init();
+  
 PROCEDURE ParseSpice(rd : Rd.T; currentSearchDir, fn : Pathname.T) : T
   RAISES { SpiceError.E, Rd.Failure } =
 
@@ -213,6 +299,7 @@ PROCEDURE ParseSpice(rd : Rd.T; currentSearchDir, fn : Pathname.T) : T
       buff := NEW(REF ARRAY OF CHAR, 100);
       p : CARDINAL;
       lNo : CARDINAL := 0;
+      search := NEW(TextSeq.T).init();
     BEGIN
       LOOP
         WITH len = GetLine(rd, buff, lNo) DO
@@ -229,19 +316,21 @@ PROCEDURE ParseSpice(rd : Rd.T; currentSearchDir, fn : Pathname.T) : T
             INC(p)
           END;
 
-          IF HavePrefix(buff^, p, ".INCLUDE") THEN
+          IF HavePrefix(buff^, p, ".INCLUDE") THEN 
+            Debug.Out(".INCLUDE : ");
+            DebugOut(SUBARRAY(buff^, p, len - p));
             VAR
               q := LAST(CARDINAL);
               lookup : FileLookup;
             BEGIN
-              IF buff[p] # '\'' THEN
+              IF buff[p] # '\'' AND buff[p] # '"' THEN
                 RAISE SpiceError.E(SpiceError.Data {
                 msg := "Can't find filename in .INCLUDE", lNo := lNo, fn := fn
                 })
               END;
               INC(p);
               FOR i := p TO len - 1 DO
-                IF buff[i] = '\'' THEN
+                IF buff[i] = '\'' OR buff[i] = '"' THEN
                   q := i; EXIT
                 END
               END;
@@ -257,7 +346,7 @@ PROCEDURE ParseSpice(rd : Rd.T; currentSearchDir, fn : Pathname.T) : T
               WITH fn     = Text.FromChars(SUBARRAY(buff^, p, q - p)) DO
                 TRY
                   TRY
-                    lookup := ResolvePath(currentSearchDir, fn);
+                    lookup := ResolvePath(currentSearchDir, fn, search);
                   EXCEPT
                     SpiceError.E(e) =>
                     VAR f := e; BEGIN
@@ -278,6 +367,15 @@ PROCEDURE ParseSpice(rd : Rd.T; currentSearchDir, fn : Pathname.T) : T
                 END
               END
             END
+          ELSIF HavePrefix(buff^, p, ".OPTION") THEN
+            Debug.Out(".OPTION : ");
+            DebugOut(SUBARRAY(buff^, p, len - p));
+            ParseOptionLine(SUBARRAY(buff^, p, len - p), search)
+
+
+          ELSIF HavePrefix(buff^, p, ".LIB") THEN
+            Debug.Out(".LIB : ");
+            DebugOut(SUBARRAY(buff^, p, len - p))
           ELSE
             TRY
               WHILE p < len AND buff[p] IN White DO INC(p) END;
