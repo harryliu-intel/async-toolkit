@@ -66,6 +66,7 @@ VAR
   rootType   : TEXT := NIL;
   rootCkt    : SpiceCircuit.T;
   caps       : CapSeq.T;
+  sum        := 0.0d0;
 BEGIN
   TRY
     IF pp.keywordPresent("-i") THEN
@@ -117,7 +118,11 @@ BEGIN
     END;
     CapArraySort.Sort(a^);
     FOR i := FIRST(a^) TO LAST(a^) DO
+      sum := sum + a[i].val;
       Wr.PutText(Stdio.stdout, F("%-15s %s\n", LR(a[i].val), a[i].nm))
-    END
+    END;
+
+    Debug.Out(F("%s capacitors, total cap %s, smallest %s, largest %s",
+                Int(caps.size()), LR(sum), LR(a[0].val), LR(a[LAST(a^)].val)))
   END
 END ListCaps.
