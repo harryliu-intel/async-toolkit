@@ -18,6 +18,7 @@ TYPE
     header    : Header;
     dirStart  : CARDINAL := LAST(CARDINAL); (* start of directory in bytes *)
     directory : REF Directory;
+    nsteps    : CARDINAL;
   END;
 
   (* 
@@ -43,4 +44,7 @@ PROCEDURE Read(rd : Rd.T) : T
 PROCEDURE RewriteDirectory(wr : Wr.T; READONLY t : T)
   RAISES { Wr.Failure, Thread.Alerted };
 
+
+PROCEDURE Format(READONLY t : T) : TEXT;
+  
 END ZtraceFile.

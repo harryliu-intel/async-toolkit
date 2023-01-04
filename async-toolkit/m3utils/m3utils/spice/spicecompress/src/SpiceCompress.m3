@@ -1773,4 +1773,9 @@ PROCEDURE ComputeEntropy(txt : TEXT) : LONGREAL =
     RETURN ent / 8.0d0
   END ComputeEntropy;
 
+PROCEDURE FormatNorm(READONLY n : Norm) : TEXT =
+  BEGIN
+    RETURN F("{min %s max %s}", LR(n.min), LR(n.max))
+  END FormatNorm;
+  
 BEGIN END SpiceCompress.

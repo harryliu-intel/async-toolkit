@@ -69,4 +69,6 @@ PROCEDURE BlockWrite(wr            : Wr.T;
   RAISES { Rd.Failure, Wr.Failure, OSError.E, Thread.Alerted };
   (* why is this exported here? *)
 
+PROCEDURE FormatHeader(READONLY h : Header) : TEXT;
+
 END TraceFile.

@@ -17,31 +17,53 @@ IMPORT Thread;
 FROM Fmt IMPORT F, Int; IMPORT Fmt;
 IMPORT TextSet, TextSetDef;
 IMPORT TraceFile;
+IMPORT ZtraceFile;
+IMPORT ArithConstants;
+IMPORT UnsafeReader;
+IMPORT Wx;
+IMPORT ArithCode;
+IMPORT TextWr;
+IMPORT ArithCallback;
+IMPORT TextRd;
+IMPORT SpiceCompress;
 
 <*FATAL Thread.Alerted*>
 
 VAR doDebug := TRUE;
 
-CONST LR = Fmt.LongReal;
-
 REVEAL
   T = TraceRep.Private BRANDED Brand OBJECT
     root     : Pathname.T;
-    h        : TraceHeader.T;
     tRd      : Rd.T;
-    timeStep : LONGREAL;
+
   OVERRIDES
     init        := Init;
     getNodeIdx  := GetNodeIdx;
-    getSteps    := GetSteps;
     getNodes    := GetNodes;
     getTimeData := GetTimeData;
-    getNodeData := GetNodeData;
     getCanonicalName := GetCanonicalName;
     getAliases  := GetAliases;
     allNames    := AllNames;
     close       := Close;
   END;
+
+TYPE
+  Reordered = T OBJECT
+    h : TraceHeader.T;
+  OVERRIDES
+    getSteps    := GetStepsR;
+    getNodeData := GetNodeDataR;
+  END;
+
+  CompressedV1 = T OBJECT
+    z        : ZtraceFile.Metadata;
+    time     : REF ARRAY OF LONGREAL;
+    startB   : REF ARRAY OF CARDINAL;
+  OVERRIDES
+    getSteps    := GetStepsC;
+    getNodeData := GetNodeDataC;
+  END;
+  
 
 PROCEDURE Close(t : T) RAISES { Rd.Failure } =
   BEGIN
@@ -72,11 +94,12 @@ PROCEDURE Init(t : T; root : Pathname.T) : T
 
       IF ok THEN
         ok :=  AttemptParse[i](t)
+      ELSE
+        t.tRd := NIL;
       END;
       IF ok THEN
         EXIT
-      ELSE
-        (* no good -- clean up *)
+      ELSIF t.tRd # NIL THEN
         Rd.Close(t.tRd);
         t.tRd := NIL
       END
@@ -92,50 +115,99 @@ PROCEDURE Init(t : T; root : Pathname.T) : T
 
   (**********************************************************************)
 
-TYPE Parser = PROCEDURE(t : T) : BOOLEAN RAISES { Rd.Failure, Rd.EndOfFile };
+TYPE Parser = PROCEDURE(VAR t : T) : BOOLEAN
+  RAISES { Rd.Failure, Rd.EndOfFile };
 
 CONST  AttemptParse = ARRAY TraceFile.Version OF Parser {
   AttemptParseUnreordered,
   AttemptParseReordered,
   AttemptParseCompressedV1 };
 
-PROCEDURE AttemptParseUnreordered(<*UNUSED*>t : T) : BOOLEAN =
+PROCEDURE AttemptParseUnreordered(<*UNUSED*>VAR t : T) : BOOLEAN =
   BEGIN
     RETURN FALSE
   END AttemptParseUnreordered;
 
-PROCEDURE AttemptParseReordered(t : T) : BOOLEAN
+PROCEDURE AttemptParseReordered(VAR t : T) : BOOLEAN
   RAISES { Rd.Failure, Rd.EndOfFile } =
+  CONST
+    V = TraceFile.Version.Reordered;
   BEGIN
 
     WITH hh = TraceFile.ReadHeader(t.tRd) DO
-      IF hh.version # TraceFile.Version.Reordered THEN
+      IF hh.version # V THEN
         RETURN FALSE
       END
     END;
 
-    Rd.Seek(t.tRd, 0);
+    WITH new = NEW(Reordered,
+                   fwdTbl := t.fwdTbl,
+                   revTbl := t.revTbl,
+                   tRd    := t.tRd,
+                   root   := t.root) DO
+      
+    Rd.Seek(new.tRd, 0);
     
-    t.h := TraceUnsafe.GetHeader(t.tRd, t.revTbl.size());
+    new.h := TraceUnsafe.GetHeader(new.tRd, new.revTbl.size());
 
     (* need to check format *)
     
-    t.timeStep := ReadTimeStep(t);
-
     IF doDebug THEN
       Debug.Out(F("TraceHeader start %s, end %s, steps %s, nNodes %s",
-                  Int(t.h.start), Int(t.h.end), Int(t.h.steps), Int(t.h.nNodes)));
-      Debug.Out(F("timestep %s", LR(t.timeStep)))
+                  Int(new.h.start), Int(new.h.end), Int(new.h.steps), Int(new.h.nNodes)));
+    END;
+    t := new
     END;
     RETURN TRUE
   END AttemptParseReordered;
 
-PROCEDURE AttemptParseCompressedV1(t : T) : BOOLEAN =
+PROCEDURE AttemptParseCompressedV1(VAR t : T) : BOOLEAN =
+  CONST
+    V = TraceFile.Version.CompressedV1;
+  VAR
+    bp : CARDINAL;
   BEGIN
     WITH hh = TraceFile.ReadHeader(t.tRd) DO
-      IF hh.version # TraceFile.Version.CompressedV1 THEN
+      IF hh.version #  V THEN
         RETURN FALSE
-      END
+      END;
+      
+    WITH new = NEW(CompressedV1,
+                   fwdTbl := t.fwdTbl,
+                   revTbl := t.revTbl,
+                   tRd    := t.tRd,
+                   root   := t.root) DO
+      
+
+      Rd.Seek(new.tRd, 0);
+
+      new.z     := ZtraceFile.Read(new.tRd);
+
+      (* build start bytes for each series *)
+      bp := Rd.Index(t.tRd);
+      Debug.Out(F("Attempt ParseCompressedV1 start of data %s", Int(bp)));
+
+      new.startB := NEW(REF ARRAY OF CARDINAL, new.z.header.nwaves);
+
+      FOR i := FIRST(new.startB^) TO LAST(new.startB^) DO
+        new.startB[i] := bp;
+        INC(bp, new.z.directory[i].bytes)
+      END;
+
+      Debug.Out(F("Attempt ParseCompressedV1 end   of data %s", Int(bp)));
+      
+      new.time   := NEW(REF ARRAY OF LONGREAL, new.z.nsteps);
+
+      Debug.Out(F("Trace.AttemptParseCompressedV1 nwaves %s nsteps %s",
+                  Int(new.z.header.nwaves),
+                  Int(new.z.nsteps)));
+
+      Debug.Out(ZtraceFile.Format(new.z));
+      
+      new.getNodeData(0, new.time^);
+    t := new
+    END;
+      RETURN TRUE
     END;
   END AttemptParseCompressedV1;
 
@@ -235,30 +307,108 @@ PROCEDURE GetNodeIdx(t : T; node : TEXT; VAR idx : CARDINAL) : BOOLEAN =
     RETURN t.fwdTbl.get(node, idx)
   END GetNodeIdx;
   
-PROCEDURE GetSteps(t : T) : CARDINAL =
-  BEGIN
-    RETURN t.h.steps
-  END GetSteps;
-
-PROCEDURE ReadTimeStep(t : T) : LONGREAL
-  RAISES { Rd.Failure, Rd.EndOfFile } =
-  VAR
-    a : ARRAY [0..1] OF LONGREAL;
-  BEGIN
-    GetTimeData(t, a);
-    RETURN a[1] - a[0]
-  END ReadTimeStep;
-
 PROCEDURE GetTimeData(t : T; VAR timea : ARRAY OF LONGREAL)
   RAISES { Rd.Failure, Rd.EndOfFile } =
   BEGIN
-    GetNodeData(t, 0, timea)
+    t.getNodeData(0, timea)
   END GetTimeData;
 
-PROCEDURE GetNodeData(t : T; idx : CARDINAL; VAR arr : ARRAY OF LONGREAL)
+(********************  Reordered methods  ********************)
+  
+PROCEDURE GetStepsR(t : Reordered) : CARDINAL =
+  BEGIN
+    RETURN t.h.steps
+  END GetStepsR;
+
+PROCEDURE GetNodeDataR(t : Reordered; idx : CARDINAL; VAR arr : ARRAY OF LONGREAL)
   RAISES { Rd.Failure, Rd.EndOfFile } =
   BEGIN
     TraceUnsafe.GetDataArray(t.tRd, t.h, idx, arr)
-  END GetNodeData;
+  END GetNodeDataR;
+
+(********************  CompressedV1 methods  ********************)
+
+PROCEDURE GetStepsC(t : CompressedV1) : CARDINAL =
+  BEGIN
+    RETURN t.z.nsteps
+  END GetStepsC;
+
+PROCEDURE GetNodeDataC(t       : CompressedV1;
+                       idx     : CARDINAL;
+                       VAR arr : ARRAY OF LONGREAL)
+  RAISES { Rd.Failure, Rd.EndOfFile } =
+  VAR
+    dirent := t.z.directory[idx];
+  BEGIN
+    (*TraceUnsafe.GetDataArray(t.tRd, t.h, idx, arr)*)
+    (* here goes all the clever stuff *)
+
+    CASE dirent.code OF
+      ArithConstants.DenseCode =>
+      (* dense array as in Andrew's format *)
+      <* ASSERT NUMBER(arr) * 4 = dirent.bytes *>
+      Rd.Seek(t.tRd, t.startB[idx]);
+      UnsafeReader.ReadLRA(t.tRd, arr)
+    |
+      ArithConstants.LinearCode =>
+      (* a linear interpolation *)
+      FOR i := FIRST(arr) TO LAST(arr) DO
+        WITH if    = FLOAT(i, LONGREAL),
+             lf    = FLOAT(LAST(arr), LONGREAL),
+             ratio = if/lf,
+             range = (dirent.norm.max - dirent.norm.min),
+             v     = ratio * range + dirent.norm.min
+         DO
+          arr[i] := v
+        END
+      END
+    ELSE
+      Rd.Seek(t.tRd, t.startB[idx]);
+      WITH data = GetBytes(t.tRd, dirent.bytes),
+           decoded = ArithDecode(data, dirent.code)
+       DO
+        Decompress(decoded, arr)
+      END
+    END
+  END GetNodeDataC;
+
+PROCEDURE GetBytes(rd : Rd.T; bytes : CARDINAL) : TEXT
+  RAISES { Rd.Failure, Rd.EndOfFile } =
+  VAR
+    wx := Wx.New();
+  BEGIN
+    FOR i := 0 TO bytes - 1 DO
+      WITH c = Rd.GetChar(rd) DO
+        Wx.PutChar(wx, c)
+      END
+    END;
+    RETURN Wx.ToText(wx)
+  END GetBytes;
+
+PROCEDURE ArithDecode(from : TEXT; codeIdx : ArithConstants.CodeIdx) : TEXT =
+  BEGIN
+    IF codeIdx = ArithConstants.ZeroCode THEN
+      RETURN from
+    ELSE
+      WITH     ft      = ArithConstants.CodeBook[codeIdx],
+               code    = NEW(ArithCode.T).init(ft),
+               decoder = code.newDecoder(),
+               deWr    = TextWr.New(),
+               deCb    = NEW(ArithCallback.Writer).init(deWr) DO
+        (* see Main.m3<spicestream>  / Main.DoArithCompress *)
+        decoder.setCallback(deCb);
+        decoder.text(from);
+        decoder.eof();
+        RETURN TextWr.ToText(deWr)
+      END
+    END
+  END ArithDecode;
+
+PROCEDURE Decompress(txt : TEXT; VAR a : ARRAY OF LONGREAL) =
+  VAR
+    deRd := TextRd.New(txt);
+  BEGIN
+    SpiceCompress.DecompressArray(deRd, a)
+  END Decompress;
 
 BEGIN END Trace.

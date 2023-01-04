@@ -144,7 +144,7 @@ EXCEPTION WriteError(TEXT);
 PROCEDURE WriteTimeTrace(wr            : Wr.T;
                          READONLY time : ARRAY OF LONGREAL;
                          VAR pos       : CARDINAL;
-                         VAR dir      : ZtraceNodeHeader.T)
+                         VAR dir       : ZtraceNodeHeader.T)
   RAISES { Wr.Failure } =
   CONST
     MaxRelDelta = 1.0d-6; (* 1 p.p.m. max time error permitted *)
@@ -189,6 +189,9 @@ PROCEDURE WriteTimeTrace(wr            : Wr.T;
 
     (* update directory for time data *)
     pos := Wr.Index(wr);
+    Debug.Out(F("WriteTimeTrace : opos %s pos %s code %s",
+                Int(opos), Int(pos), Int(dir.code)));
+    
     dir.bytes := pos - opos;
     
   END WriteTimeTrace;
@@ -200,9 +203,14 @@ PROCEDURE WriteCompressedV1(t : T; tWr : Wr.T)
   VAR
     header := Header { fmt, Time.Now(), t.nNames };
     dir    := NEW(REF ZtraceFile.Directory, t.nNames);
-    z      := ZtraceFile.Metadata { header := header, directory := dir };
+    z      : ZtraceFile.Metadata;
+    time, data    : REF ARRAY OF LONGREAL;
   BEGIN
-
+    CreateBuffers(t, time, data);
+    z := ZtraceFile.Metadata { header    := header,
+                               directory := dir,
+                               nsteps    := NUMBER(time^) };
+    
     TRY
       ZtraceFile.Write(tWr, z)
     EXCEPT
@@ -211,18 +219,19 @@ PROCEDURE WriteCompressedV1(t : T; tWr : Wr.T)
       RAISE WriteError("Write error on trace file, writing header : Wr.Failure : " & AL.Format(x))
     END;
 
+    (* write # of timesteps *)
+
     (* write time data *)
     VAR
       dataStartByte := Wr.Index(tWr);
       opos : CARDINAL := 0;
       pos := dataStartByte;
-      time, data    : REF ARRAY OF LONGREAL;
+
     BEGIN
 
       FOR i := 0 TO t.nNames - 1 DO
         TRY
           IF i = 0 THEN
-            CreateBuffers(t, time, data);
             IF doDebug THEN
               Debug.Out(F("WriteTrace writing TIME (%s values)...",
                           Int(NUMBER(time^))))
@@ -264,13 +273,15 @@ PROCEDURE WriteCompressedV1(t : T; tWr : Wr.T)
       END;
 
       (* seek back and re-write directory *)
-      Debug.Out("WriteTrace re-writing directory");
+      Debug.Out("WriteTrace re-writing directory ...");
       TRY
         ZtraceFile.RewriteDirectory(tWr, z)
       EXCEPT
         Wr.Failure(x) =>
         RAISE WriteError("Write error on trace file, rewriting directory : Wr.Failure : " & AL.Format(x))
-      END
+      END;
+
+      Debug.Out("WriteCompressedV1 done:\n" & ZtraceFile.Format(z))
     END
   END WriteCompressedV1;
   
@@ -762,5 +773,12 @@ PROCEDURE BlockWrite(wr            : Wr.T;
       UnsafeWriter.WriteLRAAt(wr, buff, pos)
     END;
   END BlockWrite;
+
+PROCEDURE FormatHeader(READONLY h : Header) : TEXT =
+  BEGIN
+    RETURN F("{ version %s(%s) ctime %s nwaves %s }",
+             VersionNames[h.version], Int(VersionVals[h.version]),
+             LR(h.ctime), Int(h.nwaves))
+  END FormatHeader;
 
 BEGIN END TraceFile.

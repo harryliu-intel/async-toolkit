@@ -45,4 +45,6 @@ PROCEDURE DecompressArray(rd       : Rd.T;
      normalization must follow a different path. (not handled within this
      format) *)
 
+PROCEDURE FormatNorm(READONLY n : Norm) : TEXT;
+
 END SpiceCompress.

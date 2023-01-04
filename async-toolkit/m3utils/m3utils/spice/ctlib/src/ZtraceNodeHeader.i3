@@ -18,6 +18,8 @@ TYPE
     (* min and max values of node -- may not be valid for dense data *)
     
     code     : ArithConstants.Encoding;
+
+    decimate : [0..255] := 0;
   END;
 
 CONST Brand = "ZtraceNodeHeader";
@@ -28,4 +30,6 @@ PROCEDURE Write(wr : Wr.T; t : T)
 PROCEDURE Read(rd : Rd.T) : T
     RAISES { Rd.Failure, Rd.EndOfFile, Thread.Alerted };
 
+PROCEDURE Format(t : T) : TEXT;
+  
 END ZtraceNodeHeader.
