@@ -121,7 +121,8 @@ TYPE Parser = PROCEDURE(VAR t : T) : BOOLEAN
 CONST  AttemptParse = ARRAY TraceFile.Version OF Parser {
   AttemptParseUnreordered,
   AttemptParseReordered,
-  AttemptParseCompressedV1 };
+  AttemptParseCompressedV1,
+  NIL};
 
 PROCEDURE AttemptParseUnreordered(<*UNUSED*>VAR t : T) : BOOLEAN =
   BEGIN
@@ -191,7 +192,7 @@ PROCEDURE AttemptParseCompressedV1(VAR t : T) : BOOLEAN =
 
       FOR i := FIRST(new.startB^) TO LAST(new.startB^) DO
         new.startB[i] := bp;
-        INC(bp, new.z.directory[i].bytes)
+        INC(bp, new.z.directory.get(i).bytes)
       END;
 
       Debug.Out(F("Attempt ParseCompressedV1 end   of data %s", Int(bp)));
@@ -338,7 +339,7 @@ PROCEDURE GetNodeDataC(t       : CompressedV1;
                        VAR arr : ARRAY OF LONGREAL)
   RAISES { Rd.Failure, Rd.EndOfFile } =
   VAR
-    dirent := t.z.directory[idx];
+    dirent := t.z.directory.get(idx);
   BEGIN
     (*TraceUnsafe.GetDataArray(t.tRd, t.h, idx, arr)*)
     (* here goes all the clever stuff *)
