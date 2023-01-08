@@ -6,6 +6,9 @@ IMPORT Word;
 PROCEDURE ReadI(rd : Rd.T) : INTEGER
   RAISES { Rd.EndOfFile, Rd.Failure, Thread.Alerted } ;
 
+PROCEDURE ReadU64(rd : Rd.T) : Word.T
+  RAISES { Rd.EndOfFile, Rd.Failure, Thread.Alerted } ;
+
 PROCEDURE ReadLRA(rd : Rd.T; VAR q : ARRAY OF LONGREAL)
   RAISES { Rd.EndOfFile, Rd.Failure, Thread.Alerted };
   (* if we get Thread.Alerted here, the file needs to be rewound, as we will

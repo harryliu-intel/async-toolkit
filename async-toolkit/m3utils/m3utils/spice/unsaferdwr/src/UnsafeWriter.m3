@@ -3,6 +3,7 @@ IMPORT Wr;
 IMPORT UnsafeWr;
 IMPORT Thread;
 IMPORT TransferC;
+IMPORT Word;
 
 PROCEDURE WriteI(wr : Wr.T; q : INTEGER)
   RAISES { Wr.Failure, Thread.Alerted } =
@@ -12,6 +13,15 @@ PROCEDURE WriteI(wr : Wr.T; q : INTEGER)
     LOOPHOLE(ibuff, REF ARRAY OF INTEGER)[0] := q;
     Wr.PutString(wr, ibuff^)
   END WriteI;
+
+PROCEDURE WriteU64(wr : Wr.T; q : Word.T)
+  RAISES { Wr.Failure, Thread.Alerted } =
+  VAR
+    ibuff := NEW(REF ARRAY OF CHAR, 8);
+  BEGIN
+    LOOPHOLE(ibuff, REF ARRAY OF Word.T)[0] := q;
+    Wr.PutString(wr, ibuff^)
+  END WriteU64;
 
 PROCEDURE WriteLRA(wr : Wr.T; READONLY q : ARRAY OF LONGREAL)
   RAISES { Wr.Failure, Thread.Alerted } =

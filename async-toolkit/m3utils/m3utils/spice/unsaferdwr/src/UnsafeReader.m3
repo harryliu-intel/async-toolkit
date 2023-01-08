@@ -3,6 +3,7 @@ IMPORT Rd;
 IMPORT Debug;
 IMPORT Thread;
 IMPORT Fmt;
+IMPORT Word;
 
 VAR doDebug := Debug.DebugThis("UnsafeReader");
   
@@ -11,6 +12,7 @@ PROCEDURE ReadI(rd : Rd.T) : INTEGER
   RAISES { Rd.EndOfFile, Rd.Failure, Thread.Alerted } =
   VAR
     ibuff := NEW(REF ARRAY OF CHAR, 4);
+    (* hm the bit sizing is suspicious here *)
   BEGIN
     WITH n = Rd.GetSub(rd, ibuff^) DO
       <*ASSERT n <= 4*>
@@ -18,6 +20,18 @@ PROCEDURE ReadI(rd : Rd.T) : INTEGER
     END;
     RETURN LOOPHOLE(ibuff, REF ARRAY OF INTEGER)[0]
   END ReadI;
+
+PROCEDURE ReadU64(rd : Rd.T) : Word.T
+  RAISES { Rd.EndOfFile, Rd.Failure, Thread.Alerted } =
+  VAR
+    ibuff := NEW(REF ARRAY OF CHAR, 8);
+  BEGIN
+    WITH n = Rd.GetSub(rd, ibuff^) DO
+      <*ASSERT n <= 8*>
+      IF n # 8 THEN RAISE Rd.EndOfFile END
+    END;
+    RETURN LOOPHOLE(ibuff, REF ARRAY OF Word.T)[0]
+  END ReadU64;
 
 PROCEDURE ReadLRA(rd : Rd.T; VAR q : ARRAY OF LONGREAL)
   RAISES { Rd.EndOfFile, Rd.Failure, Thread.Alerted } =
