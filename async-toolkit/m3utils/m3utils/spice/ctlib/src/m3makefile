@@ -39,6 +39,7 @@ Interface ("ArithConstants")
 
 Module ("ZtraceFile")
 Module ("ZtraceNodeHeader")
+Sequence ("ZtraceNodeHeader", "ZtraceNodeHeader")
 
 Table ("TextCardSet", "Text", "CardSet")
 Table ("CardTextSet", "Cardinal", "TextSet")

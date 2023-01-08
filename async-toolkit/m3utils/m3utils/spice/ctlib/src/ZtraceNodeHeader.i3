@@ -8,11 +8,17 @@ IMPORT Rd, Wr;
 IMPORT Thread;
 IMPORT ArithConstants;
 IMPORT SpiceCompress;
+IMPORT Word;
 
 TYPE
+  UInt64 = Word.T;
+  
   T = RECORD
     bytes    : UInt32;
     (* bytes taken by data on disk *)
+
+    start    : UInt64;
+    (* start byte of object *)
 
     norm     : SpiceCompress.Norm;
     (* min and max values of node -- may not be valid for dense data *)
@@ -21,6 +27,8 @@ TYPE
 
     decimate : [0..255] := 0;
   END;
+
+CONST SerialSize = 4 + 8 + SpiceCompress.NormSerialSize + 1 + 1;
 
 CONST Brand = "ZtraceNodeHeader";
 

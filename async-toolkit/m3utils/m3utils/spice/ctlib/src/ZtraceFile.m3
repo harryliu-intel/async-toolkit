@@ -26,9 +26,9 @@ PROCEDURE Read(rd : Rd.T) : T
     (* must assume we are at start of file here *)
     t.header    := TraceFile.ReadHeader(rd);
     t.dirStart  := Rd.Index(rd);
-    t.directory := NEW(REF Directory, t.header.nwaves);
-    FOR i := FIRST(t.directory^) TO LAST(t.directory^) DO
-      t.directory[i] := ZtraceNodeHeader.Read(rd)
+    t.directory := NEW(Directory).init();
+    FOR i := 0 TO t.header.nwaves - 1 DO
+      t.directory.addhi(ZtraceNodeHeader.Read(rd))
     END;
     t.nsteps     := UnsafeReader.ReadI(rd);
     RETURN t
@@ -44,8 +44,8 @@ PROCEDURE RewriteDirectory(wr : Wr.T; READONLY t : T)
     Debug.Out(Format(t));
     
     Wr.Seek(wr, t.dirStart);
-    FOR i := FIRST(t.directory^) TO LAST(t.directory^) DO
-      ZtraceNodeHeader.Write(wr, t.directory[i])
+    FOR i := 0 TO t.directory.size() - 1 DO
+      ZtraceNodeHeader.Write(wr, t.directory.get(i))
     END;
     Wr.Flush(wr)
   END RewriteDirectory;
@@ -56,9 +56,9 @@ PROCEDURE Format(READONLY t : T) : TEXT =
   BEGIN
     Wx.PutText(wx, "<ZtraceFile " & TraceFile.FormatHeader(t.header) & "\n");
     Wx.PutText(wx, F("dirStart %s\n", Int(t.dirStart)));
-    FOR i := FIRST(t.directory^) TO LAST(t.directory^) DO
+    FOR i := 0 TO t.directory.size() - 1 DO
       Wx.PutText(wx, F("dir[%s] : ", Int(i)));
-      Wx.PutText(wx, ZtraceNodeHeader.Format(t.directory[i]));
+      Wx.PutText(wx, ZtraceNodeHeader.Format(t.directory.get(i)));
       Wx.PutChar(wx, '\n')
     END;
     Wx.PutText(wx, F("nsteps %s>\n", Int(t.nsteps)));

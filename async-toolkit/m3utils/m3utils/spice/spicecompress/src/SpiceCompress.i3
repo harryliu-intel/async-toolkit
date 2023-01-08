@@ -11,6 +11,9 @@ TYPE
   END;
 
 CONST
+  NormSerialSize = 4 + 4;
+
+CONST
   IllegalNorm = Norm { LAST(LONGREAL), FIRST(LONGREAL) };
   
 PROCEDURE CompressArray(rn            : TEXT;

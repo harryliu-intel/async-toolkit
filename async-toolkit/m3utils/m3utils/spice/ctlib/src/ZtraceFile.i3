@@ -2,14 +2,14 @@ INTERFACE ZtraceFile;
 (* structure of a .ztrace file *)
 
 IMPORT TraceFile;
-IMPORT ZtraceNodeHeader AS NodeHeader;
+IMPORT ZtraceNodeHeaderSeq AS NodeHeaderSeq;
 IMPORT Rd, Wr;
 IMPORT Thread;
 
 TYPE
   Header = TraceFile.Header;
 
-  Directory = ARRAY OF NodeHeader.T;
+  Directory = NodeHeaderSeq.T;
 
   T = Metadata;
 
@@ -17,7 +17,7 @@ TYPE
     (* the collected metadata of a ZtraceFile *)
     header    : Header;
     dirStart  : CARDINAL := LAST(CARDINAL); (* start of directory in bytes *)
-    directory : REF Directory;
+    directory : Directory;
     nsteps    : CARDINAL;
   END;
 
