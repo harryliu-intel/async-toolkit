@@ -32,7 +32,8 @@ TYPE
 
   Version = { Unreordered, (* unreordered (node-major) for aspice *)
               Reordered,   (* reordered (time-major) from convert_trace, ct *)
-              CompressedV1 (* compressed format V1 *)
+              CompressedV1,(* compressed format V1 *)
+              Modifying    (* file being modified *)
   };
   
   Header = RECORD
@@ -43,13 +44,14 @@ TYPE
 
   UInt32 = [ 0 .. Word.Shift(1, 32) - 1 ];
   
-CONST VersionVals = ARRAY Version OF UInt32 { 0, 1, 256 };
+CONST VersionVals = ARRAY Version OF UInt32 { 0, 1, 256, 255 };
 
       VersionNames = ARRAY Version OF TEXT { "Unreordered",
                                              "Reordered",
-                                             "CompressedV1" };
+                                             "CompressedV1",
+                                             "Modifying" };
 
-      VersionSuffixes = ARRAY Version OF TEXT { "trace", "trace", "ztrace" };
+      VersionSuffixes = ARRAY Version OF TEXT { "trace", "trace", "ztrace", "INUSE" };
       
 PROCEDURE WriteHeader(wr : Wr.T; READONLY header : Header)
   RAISES { Wr.Failure, Thread.Alerted };

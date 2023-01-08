@@ -126,6 +126,10 @@ PROCEDURE Write(t : T; fmt : Version) =
       |
         Version.CompressedV1 =>
         WriteCompressedV1(t, tWr)
+      |
+        Version.Modifying =>
+        (* this code doesn't support modifying, at least not like this *)
+        <*ASSERT FALSE*>
       END
     EXCEPT
       WriteError(x) =>
