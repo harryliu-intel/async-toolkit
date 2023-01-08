@@ -9,13 +9,16 @@ IMPORT SpiceError;
 IMPORT AL;
 IMPORT Rd, FileRd;
 IMPORT OSError;
-FROM Fmt IMPORT F, Int, LongReal, Bool;
+FROM Fmt IMPORT F, Int, LongReal;
 IMPORT SpiceCircuit;
 IMPORT SpiceObject;
-IMPORT Text;
-IMPORT CitTextUtils;
 IMPORT Comp AS Cap, CompSeq AS CapSeq, CompArraySort AS CapArraySort;
+IMPORT TextCompTbl AS TextCapTbl;
 IMPORT Wr;
+IMPORT FileWr;
+IMPORT Thread;
+
+<*FATAL Thread.Alerted*>
 
 CONST
   Usage   = "";
@@ -24,10 +27,14 @@ CONST
 VAR
   Verbose := TRUE;
 
-PROCEDURE DoIt(ckt : SpiceCircuit.T; path : TEXT; caps : CapSeq.T) =
+PROCEDURE DoIt(ckt : SpiceCircuit.T;
+               path : TEXT;
+               caps : CapSeq.T;
+               hier : TextCapTbl.T) =
   VAR
     elems := ckt.elements;
     type : SpiceCircuit.T;
+    cap  : Cap.T;
   BEGIN
     FOR i := 0 TO elems.size() - 1 DO
       
@@ -35,7 +42,7 @@ PROCEDURE DoIt(ckt : SpiceCircuit.T; path : TEXT; caps : CapSeq.T) =
         TYPECASE elem OF
           SpiceObject.X (x) =>
 
-          IF Verbose THEN
+          IF Verbose AND FALSE THEN
             Debug.Out(F("X object nm %s type %s", x.name, x.type))
           END;
 
@@ -43,14 +50,22 @@ PROCEDURE DoIt(ckt : SpiceCircuit.T; path : TEXT; caps : CapSeq.T) =
             <*ASSERT hadIt*>
           END;
 
-          DoIt(type, path & x.name & ".", caps)
+          DoIt(type, path & x.name & ".", caps, hier)
         |
           SpiceObject.C(c) =>
           <*ASSERT c # NIL*>
           <*ASSERT caps # NIL*>
           <*ASSERT c.name # NIL*>
           <*ASSERT path # NIL*>
-          caps.addhi(Cap.T { path & c.name, c.c })
+          caps.addhi(Cap.T { path & c.name, c.c });
+          
+          WITH hnm = ckt.name & "/" & c.name DO
+            IF NOT hier.get(hnm, cap) THEN
+              cap := Cap.T { hnm, c.c, 0 }
+            END;
+            INC(cap.m);
+            EVAL hier.put(hnm, cap)
+          END
         ELSE
           (* skip *)
         END
@@ -67,6 +82,7 @@ VAR
   rootCkt    : SpiceCircuit.T;
   caps       : CapSeq.T;
   sum        := 0.0d0;
+  hier       := NEW(TextCapTbl.Default).init();
 BEGIN
   TRY
     IF pp.keywordPresent("-i") THEN
@@ -109,20 +125,70 @@ BEGIN
   Debug.Out("Done parsing.");
 
   caps := NEW(CapSeq.T).init();
+  hier := NEW(TextCapTbl.Default).init();
   
-  DoIt(rootCkt, "", caps);
+  DoIt(rootCkt, "", caps, hier);
 
-  WITH a = NEW(REF ARRAY OF Cap.T, caps.size()) DO
+  WITH a = NEW(REF ARRAY OF Cap.T, caps.size()),
+       flatWr = FileWr.Open("cap_flat.dat"),
+       hierWr = FileWr.Open("cap_hier.dat"),
+       singWr = FileWr.Open("cap_sing.dat")
+    DO
     FOR i := 0 TO caps.size() - 1 DO
       a[i] := caps.get(i)
     END;
     CapArraySort.Sort(a^);
+    Debug.Out("writing flat");
     FOR i := FIRST(a^) TO LAST(a^) DO
       sum := sum + a[i].val;
-      Wr.PutText(Stdio.stdout, F("%-15s %s\n", LR(a[i].val), a[i].nm))
+      Wr.PutText(flatWr, F("%-15s %s\n", LR(a[i].val), a[i].nm))
     END;
 
     Debug.Out(F("%s capacitors, total cap %s, smallest %s, largest %s",
-                Int(caps.size()), LR(sum), LR(a[0].val), LR(a[LAST(a^)].val)))
+                Int(caps.size()), LR(sum), LR(a[0].val), LR(a[LAST(a^)].val)));
+
+    VAR
+      i := 0 ;
+      txt : TEXT;
+      totM := 0;
+      iter := hier.iterate();
+
+      cap : Cap.T;
+      a := NEW(REF ARRAY OF Cap.T, hier.size());
+    BEGIN
+      WHILE iter.next(txt, cap) DO
+        a[i] := cap;
+        INC(i)
+      END;
+
+      CapArraySort.Sort(a^);
+      Debug.Out("writing sing");
+      FOR i := FIRST(a^) TO LAST(a^) DO
+        Wr.PutText(singWr, F("%-15s %10s %-15s %s\n",
+                             LR(a[i].val),
+                             Int(a[i].m),
+                             LR(a[i].val * FLOAT(a[i].m, LONGREAL)),
+                             a[i].nm))
+      END;
+
+      CapArraySort.Sort(a^, cmp := Cap.CompareByMulVal);
+      Debug.Out("writing hier");
+      FOR i := FIRST(a^) TO LAST(a^) DO
+        Wr.PutText(hierWr, F("%-15s %10s %-15s %s\n",
+                             LR(a[i].val),
+                             Int(a[i].m),
+                             LR(a[i].val * FLOAT(a[i].m, LONGREAL)),
+                             a[i].nm));
+        INC(totM, a[i].m);
+      END;
+      Debug.Out(F("Tot hier %s tot m %s", Int(NUMBER(a^)), Int(totM)));
+
+    END;
+
+    
+    Wr.Close(flatWr);
+    Wr.Close(hierWr);
+
+    
   END
 END ListCaps.

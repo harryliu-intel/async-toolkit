@@ -8,6 +8,8 @@ module ("Comp")
 sequence ("Comp", "Comp")
 array_sort ("Comp", "Comp")
 
+table ("TextComp", "Text", "Comp")
+
 program ("listcaps")
 
 

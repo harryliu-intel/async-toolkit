@@ -11,5 +11,11 @@ PROCEDURE Compare(READONLY a, b : T) : [-1..1] =
   BEGIN
     RETURN LongrealType.Compare(a.val, b.val)
   END Compare;
+  
+PROCEDURE CompareByMulVal(READONLY a, b : T) : [-1..1] =
+  BEGIN
+    RETURN LongrealType.Compare(a.val * FLOAT(a.m,LONGREAL),
+                                b.val * FLOAT(b.m,LONGREAL))
+  END CompareByMulVal;
 
 BEGIN END Comp.

@@ -6,6 +6,7 @@ IMPORT ZtraceNodeHeader;
 IMPORT UnsafeWriter;
 IMPORT UnsafeReader;
 IMPORT Wx;
+IMPORT Debug;
 FROM Fmt IMPORT F, Int;
 
 PROCEDURE Write(wr : Wr.T; VAR t : T) 
@@ -37,6 +38,11 @@ PROCEDURE RewriteDirectory(wr : Wr.T; READONLY t : T)
   RAISES { Wr.Failure, Thread.Alerted } =
   BEGIN
     <*ASSERT t.dirStart # LAST(CARDINAL)*>
+    Debug.Out(F("ZtraceFile.RewriteDirectory : t.dirStart = %s",
+                Int(t.dirStart)));
+
+    Debug.Out(Format(t));
+    
     Wr.Seek(wr, t.dirStart);
     FOR i := FIRST(t.directory^) TO LAST(t.directory^) DO
       ZtraceNodeHeader.Write(wr, t.directory[i])

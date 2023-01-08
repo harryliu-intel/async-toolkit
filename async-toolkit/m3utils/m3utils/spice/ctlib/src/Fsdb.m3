@@ -288,6 +288,11 @@ PROCEDURE GenMultiThreaded(threads               : CARDINAL;
       END
     END;
 
+    Debug.Out("Fsdb.Parse: All tasks assigned -- marking workers OK to exit");
+    FOR i := FIRST(workers^) TO LAST(workers^) DO
+      workers[i].exitSoftly()
+    END;
+    
     Debug.Out("Fsdb.Parse: Waiting for workers to finish");
     
     (* wait for workers to be completely done *)
@@ -855,6 +860,7 @@ TYPE
     compressPrec      : LONGREAL;
     thr               : Thread.T;
     doExit := FALSE;
+    doSoftExit := FALSE;
     
     voltageScaleFactor,
     voltageOffset,
@@ -874,6 +880,7 @@ TYPE
     task(taskWr : Wr.T; taskIds : CardSeq.T; path : Pathname.T)  := GenTask;
     freeP() : BOOLEAN := GenFreeP;
     exit() := GenExit;
+    exitSoftly() := GenExitSoftly;
   OVERRIDES
     apply := GenApply;
   END;
@@ -885,6 +892,14 @@ PROCEDURE GenExit(cl : GenClosure) =
       Thread.Broadcast(cl.c)
     END
   END GenExit;
+
+PROCEDURE GenExitSoftly(cl : GenClosure) =
+  BEGIN
+    LOCK cl.mu DO
+      cl.doSoftExit := TRUE;
+      Thread.Broadcast(cl.c)
+    END
+  END GenExitSoftly;
 
 PROCEDURE GenInit(cl : GenClosure;
                   c, d : Thread.Condition;
@@ -994,13 +1009,52 @@ PROCEDURE GenApply(cl : GenClosure) : REFANY =
       (* not yet finished *)
       LOOP
         LOCK cl.mu DO
-          WHILE cl.tWr = NIL AND NOT cl.doExit DO
+          WHILE cl.tWr = NIL AND NOT cl.doExit AND NOT cl.doSoftExit DO
             Thread.Wait(cl.mu, cl.c)
           END;
-          IF cl.doExit THEN
+          IF cl.doExit OR cl.tWr = NIL AND cl.doSoftExit THEN
             (* make sure worker exits *)
+
+            (* here something goes wrong in the runtime.
+
+               Question is: is it the ProcUtils, the thread joining,
+               or something else altogether?
+
+            *)
+
+            TRY
+              Thread.Release(cl.mu);
+              LOOP
+                Thread.Pause(1.0d0)
+              END
+            FINALLY
+              Thread.Acquire(cl.mu)
+            END;
+
+            (* 
+               the following two statements cause the remote to exit 
+               and the netbatch command to exit (one may assume) 
+
+               is this the place we get in trouble?
+
+               1/5/2023: notes for the future
+
+               moving the TRY-FINALLY block above down below the
+               two following commands causes the misbehavior to return.
+
+               This suggests that the issue is with ProcUtils, not with
+               threading as such (because this thread won't exit if you
+               do that).
+            *)
             PutCommandG(cmdWr, "Q");
             EVAL GetResponseG(cmdRd, "QR");
+            
+            (* 
+               here we cause the thread to return
+
+               is this the place we get in trouble?
+            *)
+            
             RETURN NIL
           END;
           <*ASSERT cl.tWr # NIL*>
@@ -1023,6 +1077,8 @@ PROCEDURE GenApply(cl : GenClosure) : REFANY =
                                  cl.tPath
                                  );
 
+        Wr.Flush(cl.tWr);
+        
         LOCK cl.mu DO
           (* done executing request, mark ourselves as free and signal *)
           cl.tWr     := NIL;

@@ -108,6 +108,8 @@ PROCEDURE Write(t : T; fmt : Version) =
     tFn := t.ofn & "." & VersionSuffixes[fmt];
     tWr : Wr.T;
   BEGIN
+    Debug.Out(F("TraceFile.Write(%s) -> %s", VersionNames[fmt], tFn));
+    
     TRY
       tWr := FileWr.Open(tFn)
     EXCEPT
@@ -150,7 +152,7 @@ PROCEDURE WriteTimeTrace(wr            : Wr.T;
     MaxRelDelta = 1.0d-6; (* 1 p.p.m. max time error permitted *)
   VAR
     opos := Wr.Index(wr);
-    pred, maxdev, first, last, lf : LONGREAL;
+    first, last, lf : LONGREAL;
     ok := TRUE;
   BEGIN
     (* see if we can write time as compressed format or not *)
@@ -206,6 +208,8 @@ PROCEDURE WriteCompressedV1(t : T; tWr : Wr.T)
     z      : ZtraceFile.Metadata;
     time, data    : REF ARRAY OF LONGREAL;
   BEGIN
+    Debug.Out("TraceFile.WriteCompressedV1");
+    
     CreateBuffers(t, time, data);
     z := ZtraceFile.Metadata { header    := header,
                                directory := dir,
@@ -249,6 +253,11 @@ PROCEDURE WriteCompressedV1(t : T; tWr : Wr.T)
                                        rep,
                                        NUMBER(time^),
                                        targMaxDev := DefTargMaxDev);
+
+              Debug.Out(F("WriteCompressedV1 writing data for node %s at %s",
+                          Int(i),
+                          Int(Wr.Index(tWr))));
+              
               Wr.PutText(tWr, rep.finalData);
 
               pos := Wr.Index(tWr);
@@ -272,6 +281,8 @@ PROCEDURE WriteCompressedV1(t : T; tWr : Wr.T)
 
       END;
 
+      Wr.Flush(tWr);
+      
       (* seek back and re-write directory *)
       Debug.Out("WriteTrace re-writing directory ...");
       TRY
@@ -390,6 +401,8 @@ PROCEDURE ReadHeader(rd : Rd.T) : Header
     VAR vval    := UnsafeReader.ReadI(rd);
         success := FALSE;
     BEGIN
+      Debug.Out(F("TraceFile.ReadHeader : idx %s vval=%s",
+                  Int(Rd.Index(rd) - 4), Int(vval)));
       FOR v := FIRST(VersionVals) TO LAST(VersionVals) DO
         IF vval = VersionVals[v] THEN
           header.version := v;
@@ -450,8 +463,9 @@ PROCEDURE WritePll(t                 : T;
         IF doDebug THEN Debug.Out("WriteTrace creating buffers...") END;
         CreateBuffers(t, time, data);
         IF doDebug THEN
-          Debug.Out(F("WriteTrace writing TIME (%s values)...",
-                      Int(NUMBER(time^))))
+          Debug.Out(F("WriteTrace writing TIME (%s values) at %s...",
+                      Int(NUMBER(time^)),
+                      Int(dataStartByte)))
         END;
         UnsafeWriter.WriteLRAAt(tWr, time^, dataStartByte);
 
