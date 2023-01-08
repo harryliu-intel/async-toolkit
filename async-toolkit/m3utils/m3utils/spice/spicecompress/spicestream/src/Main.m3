@@ -7,7 +7,7 @@ IMPORT AL;
 IMPORT OSError;
 IMPORT Rd;
 IMPORT Pathname;
-FROM Fmt IMPORT F, Int, LongReal;
+FROM Fmt IMPORT F, Int;
 IMPORT Trace;
 IMPORT Wr, FileWr;
 IMPORT TextWr;
@@ -19,17 +19,14 @@ IMPORT SpiceCompress;
 IMPORT Thread;
 IMPORT TripleRefTbl;
 IMPORT FsdbComms;
-IMPORT ArithConstants;
-IMPORT ArithCode;
-IMPORT ArithCallback;
 IMPORT Matrix;
+IMPORT DistZTrace;
 
 <*FATAL Thread.Alerted*>
 
 CONST
   Usage    = "";
   TE       = Text.Equal;
-  LR       = LongReal;
   
 TYPE
   Mode = { ReadBinary, Compress, Filter };
@@ -52,64 +49,6 @@ PROCEDURE Lookup(str : TEXT; READONLY a : ARRAY OF TEXT) : CARDINAL =
     END;
     <*ASSERT FALSE*>
   END Lookup;
-
-PROCEDURE DoArithCompress(of : TEXT;
-                          VAR codeIdx : ArithConstants.CodeIdx) : TEXT =
-  VAR
-    enTxt : TEXT;
-  BEGIN
-    codeIdx := 1;
-
-    WITH ft      = ArithConstants.CodeBook[codeIdx],
-         code    = NEW(ArithCode.T).init(ft),
-         encoder = code.newEncoder(),
-         enWr    = TextWr.New(),
-         enCb    = NEW(ArithCallback.Writer).init(enWr),
-
-         (* verify code *)
-         decoder = code.newDecoder(),
-         deWr    = TextWr.New(),
-         deCb    = NEW(ArithCallback.Writer).init(deWr)
-     DO
-      encoder.setCallback(enCb);
-      encoder.text(of);
-      encoder.eof();
-
-      enTxt := TextWr.ToText(enWr);
-      
-      decoder.setCallback(deCb);
-      decoder.text(enTxt);
-      decoder.eof();
-
-      WITH deTxt = TextWr.ToText(deWr) DO
-        IF NOT TE(of, deTxt) THEN
-          VAR
-            msg : TEXT;
-            ofLen := Text.Length(of);
-            deLen := Text.Length(deTxt);
-          BEGIN
-            IF ofLen # deLen THEN
-              msg := F("length mismatch of %s # de %s", Int(ofLen), Int(deLen))
-            ELSE
-              FOR i := 0 TO ofLen - 1 DO
-                WITH ofChar = Text.GetChar(of, i),
-                     deChar = Text.GetChar(deTxt, i) DO
-                  IF ofChar # deChar THEN
-                    msg := F("mismatch @ i=%s : of[i]='%s' # de[i]='%s'",
-                             Int(i),
-                             Text.FromChar(ofChar), Text.FromChar(deChar))
-                  END
-                END
-              END
-            END;
-            Debug.Error("??? DoArithCompress verify error, " & msg)
-          END
-        END
-      END
-    END;
-
-    RETURN enTxt
-  END DoArithCompress;
 
 TYPE
   FilterData = RECORD
@@ -318,88 +257,37 @@ BEGIN
        with the trace file format specification, used in tracelib and also
        (eventually) in aplot.
     *)
-    TYPE
-      ALR1 = ARRAY [ 0..0 ] OF LONGREAL;
     VAR
       rd     := Stdio.stdin;
       a      := NEW(REF ARRAY OF LONGREAL, fd.npoints);
       
       nodeid   : CARDINAL;
-      code     : ArithConstants.CodeIdx;
-      finalTxt : TEXT;
       finalLen : CARDINAL;
-      norm     : SpiceCompress.Norm;
     BEGIN
       FsdbComms.ReadInterpolatedBinaryNodeDataG(rd,
-                                           nodeid,
-                                           a^,
-                                           fd.interpolate,
-                                           fd.unit);
-      
-      WITH z      = NEW(REF ARRAY OF LONGREAL, fd.npoints),
-           textWr = NEW(TextWr.T).init() DO
+                                                nodeid,
+                                                a^,
+                                                fd.interpolate,
+                                                fd.unit);
 
-        (* first write to mem *)
-
-        Debug.Out(F("spicestream read interpolated data %s points, will compress with prec %s",
-                    Int(fd.npoints),
-                    LR(relPrec)));
-
-        
-        TRY
-          SpiceCompress.CompressArray("zdebug",
-                                      a^,
-                                      z^,
-                                      relPrec,
-                                      doAllDumps,
-                                      textWr,
-                                      norm,
-                                      mem    := NEW(TripleRefTbl.Default).init(),
-                                      doDump := doDump);
-        EXCEPT
+      TRY
+      DistZTrace.WriteOut(wr,
+                          a^,
+                          nodeid,
+                          doDump,
+                          relPrec,
+                          doAllDumps,
+                          noArith);
+      Wr.Close(wr)
+      EXCEPT 
           Matrix.Singular =>
           Debug.Error("Internal error attempting waveform compression : Matrix.Singular")
-        END;
-        (* we now have the polynomially compressed in textWr *)
-        
-        WITH txt = TextWr.ToText(textWr),
-             len = Text.Length(txt) DO
-
-          (* txt is the polynomially compressed waveform *)
-
-          IF noArith THEN
-            code     := ArithConstants.ZeroCode;
-            finalTxt := txt;
-            finalLen := len
-          ELSE
-            finalTxt := DoArithCompress(txt, code);
-            finalLen := Text.Length(finalTxt)
-          END;
-
-          Debug.Out(F("%s timesteps, compressed size %s bytes, coded size %s",
-                      Int(NUMBER(a^)),
-                      Int(len),
-                      Int(finalLen)));
-
-          (* write final result to target wr *)
-          TRY
-            Wr.PutText           (wr, "ZZZ\n"); (* advertise compressed data *)
-            Wr.PutChar           (wr, 'x');     (* tag (unused) *)
-            UnsafeWriter.WriteI  (wr, nodeid);
-            UnsafeWriter.WriteI  (wr, finalLen + 1 + 2 * 4);
-            UnsafeWriter.WriteLRA(wr, ALR1 { norm.min } );
-            UnsafeWriter.WriteLRA(wr, ALR1 { norm.max } );
-            Wr.PutChar           (wr, VAL(code, CHAR));
-            Wr.PutText           (wr, finalTxt);
-            Wr.Close             (wr)
-          EXCEPT
-            Wr.Failure(x) =>
+        |
+          Wr.Failure(x) =>
             Debug.Error(F("Can't write compressed trace data (%s bytes) : Wr.Failure : %s",
                           Int(finalLen + 1), AL.Format(x)))
 
-          END
-        END
-      END
+      END;
     END
   END
 END Main.

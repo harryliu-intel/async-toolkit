@@ -24,7 +24,8 @@ PROCEDURE GetResponseG(rd : Rd.T; matchKw : TEXT) : TextReader.T;
 PROCEDURE ReadCompressedNodeDataG(rd         : Rd.T;
                                   VAR nodeid : CARDINAL;
                                   VAR norm   : SpiceCompress.Norm) : TEXT;
-
+  (* this is the counterpart to DistZTrace.WriteOut *)
+  
 PROCEDURE ReadBinaryNodeDataG(rd         : Rd.T;
                               VAR nodeid : CARDINAL;
                               VAR buff   : ARRAY OF LONGREAL);
