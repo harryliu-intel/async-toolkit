@@ -326,6 +326,9 @@ PROCEDURE Apply(self: MainClosure): REFANY =
               (* we need to attempt closing all three of stdin, stdout,
                  and stderr.  Only the LAST exception, if any, will be
                  reported. (right now none are reported) *)
+              (* move the close to the caller ... because we need to check
+                 *.close *)
+              (*
               IF DoDebug THEN Debug.Out("Closing descriptors") END;
 
               IF stdin  # NIL THEN TRY stdin .close() EXCEPT ELSE 
@@ -339,7 +342,7 @@ PROCEDURE Apply(self: MainClosure): REFANY =
               IF stderr # NIL THEN TRY stderr.close() EXCEPT ELSE 
                 IF DoDebug THEN Debug.Out("cant close stderr") END
               END END;
-
+              *)
 
               IF DoDebug THEN Debug.Out("Descriptors closed") END;
 
@@ -439,6 +442,10 @@ PROCEDURE Apply(self: MainClosure): REFANY =
         IF DoDebug THEN Debug.Out("ProcUtils.Apply: closing cm.po") END;
 
         IF cm.po#NIL AND cm.po.close THEN 
+          IF stdout # NIL THEN TRY stdout.close() EXCEPT ELSE 
+            IF DoDebug THEN Debug.Out("cant close stdout") END
+          END END;
+          
           TRY cm.po.f.close() EXCEPT ELSE END; 
           (*
           IF cm.po.aux # NIL THEN
@@ -450,6 +457,10 @@ PROCEDURE Apply(self: MainClosure): REFANY =
         IF DoDebug THEN Debug.Out("ProcUtils.Apply: closing cm.pe") END;
 
         IF cm.pe#NIL AND cm.pe.close AND cm.po#cm.pe THEN 
+          IF stderr # NIL THEN TRY stderr.close() EXCEPT ELSE 
+            IF DoDebug THEN Debug.Out("cant close stderr") END
+          END END;
+          
           TRY cm.pe.f.close() EXCEPT ELSE END;
           (*
           IF cm.pe.aux # NIL THEN
@@ -461,6 +472,10 @@ PROCEDURE Apply(self: MainClosure): REFANY =
         IF DoDebug THEN Debug.Out("ProcUtils.Apply: closing cm.pi") END;
 
         IF cm.pi#NIL AND cm.pi.close THEN 
+          IF stdin  # NIL THEN TRY stdin .close() EXCEPT ELSE 
+            IF DoDebug THEN Debug.Out("cant close stdin") END
+          END END;
+          
           TRY cm.pi.f.close() EXCEPT ELSE END;
           (*
           IF cm.pi.aux # NIL THEN
