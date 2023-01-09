@@ -3,8 +3,10 @@ INTERFACE TraceOp;
 (* abstract type that describes an operation on a Trace that leads to a 
    new waveform *)
 
+IMPORT Trace;
+
 TYPE
-  T = OBJECT
+  T = OBJECT METHODS
     init(trace : Trace.T) : T;
     exec(VAR result : ARRAY OF LONGREAL);
   END;

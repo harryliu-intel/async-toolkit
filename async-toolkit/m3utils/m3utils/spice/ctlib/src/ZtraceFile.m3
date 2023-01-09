@@ -15,6 +15,7 @@ PROCEDURE Write(wr : Wr.T; VAR t : T)
     TraceFile.WriteHeader(wr, t.header);
     t.dirStart := Wr.Index(wr);
     RewriteDirectory(wr, t);
+    Debug.Out("ZtraceFile.Write : about to write nsteps @ " & Int(Wr.Index(wr)));
     UnsafeWriter.WriteI(wr, t.nsteps)
   END Write;
 
@@ -30,6 +31,7 @@ PROCEDURE Read(rd : Rd.T) : T
     FOR i := 0 TO t.header.nwaves - 1 DO
       t.directory.addhi(ZtraceNodeHeader.Read(rd))
     END;
+    Debug.Out("ZtraceFile.Read : about to read nsteps @ " & Int(Rd.Index(rd)));
     t.nsteps     := UnsafeReader.ReadI(rd);
     RETURN t
   END Read;
@@ -44,8 +46,14 @@ PROCEDURE RewriteDirectory(wr : Wr.T; READONLY t : T)
     Debug.Out(Format(t));
     
     Wr.Seek(wr, t.dirStart);
-    FOR i := 0 TO t.directory.size() - 1 DO
-      ZtraceNodeHeader.Write(wr, t.directory.get(i))
+    
+    (* directory may not be filled in yet *)
+    FOR i := 0 TO t.header.nwaves - 1 DO
+      IF i < t.directory.size() THEN
+        ZtraceNodeHeader.Write(wr, t.directory.get(i))
+      ELSE
+        ZtraceNodeHeader.Write(wr, ZtraceNodeHeader.Default)
+      END
     END;
     Wr.Flush(wr)
   END RewriteDirectory;

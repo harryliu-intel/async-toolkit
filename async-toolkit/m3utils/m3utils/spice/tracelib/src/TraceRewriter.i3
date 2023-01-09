@@ -1,6 +1,7 @@
 INTERFACE TraceRewriter;
 IMPORT TextSeq;
 IMPORT Pathname;
+IMPORT TraceOp;
 
 TYPE
   T <: Public;

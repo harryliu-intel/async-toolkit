@@ -7,7 +7,7 @@ IMPORT AL;
 IMPORT OSError;
 IMPORT Rd;
 IMPORT Pathname;
-FROM Fmt IMPORT F, Int;
+FROM Fmt IMPORT F, Int, LongReal;
 IMPORT Trace;
 IMPORT Wr, FileWr;
 IMPORT TextWr;
@@ -22,17 +22,19 @@ IMPORT FsdbComms;
 IMPORT Matrix;
 IMPORT DistZTrace;
 
+
 <*FATAL Thread.Alerted*>
 
 CONST
   Usage    = "";
   TE       = Text.Equal;
-  
+  LR       = LongReal;
+
 TYPE
-  Mode = { ReadBinary, Compress, Filter };
+  Mode = { ReadBinary, Compress, Filter, ExtractOne };
 
 CONST
-  ModeNames = ARRAY Mode OF TEXT { "ReadBinary", "Compress", "Filter" };
+  ModeNames = ARRAY Mode OF TEXT { "ReadBinary", "Compress", "Filter", "ExtractOne" };
   
 PROCEDURE Lookup(str : TEXT; READONLY a : ARRAY OF TEXT) : CARDINAL =
   BEGIN
@@ -58,6 +60,44 @@ TYPE
     interpolate : LONGREAL;
     unit        : LONGREAL;
   END;
+
+PROCEDURE OpenTrace() =
+  BEGIN
+        TRY
+      trace := NEW(Trace.T).init(traceRt)
+    EXCEPT
+      OSError.E(x) =>
+      Debug.Error(F("Trouble opening input trace %s : OSError.E : %s",
+                    traceRt, AL.Format(x)))
+    |
+      Rd.Failure(x) =>
+      Debug.Error("Trouble opening input trace : Rd.Failure : " & AL.Format(x))
+    |
+      Rd.EndOfFile =>
+      Debug.Error(F("Short read opening input trace"))
+    END;
+  END OpenTrace;
+
+PROCEDURE GetNode(nodeId : CARDINAL) : REF ARRAY OF LONGREAL =
+    VAR
+      nSteps := trace.getSteps();
+      a      := NEW(REF ARRAY OF LONGREAL, nSteps);
+    BEGIN
+      TRY
+        trace.getNodeData(nodeId, a^)
+      EXCEPT
+        Rd.Failure(x) =>
+        Debug.Error(F("Can't read trace for node id %s : Rd.Failure : %s",
+                      Int(nodeId), AL.Format(x)))
+      |
+        Rd.EndOfFile =>
+        Debug.Error(F("Short read reading trace for node id %s",
+                      Int(nodeId)))
+      END;
+
+      RETURN a
+    END GetNode;
+
   
 VAR
   pp                             := NEW(ParseParams.T).init(Stdio.stderr);
@@ -139,38 +179,13 @@ BEGIN
   
   CASE mode OF
     Mode.ReadBinary =>
-    TRY
-      trace := NEW(Trace.T).init(traceRt)
-    EXCEPT
-      OSError.E(x) =>
-      Debug.Error(F("Trouble opening input trace %s : OSError.E : %s",
-                    traceRt, AL.Format(x)))
-    |
-      Rd.Failure(x) =>
-      Debug.Error("Trouble opening input trace : Rd.Failure : " & AL.Format(x))
-    |
-      Rd.EndOfFile =>
-      Debug.Error(F("Short read opening input trace"))
-    END;
-
+    OpenTrace();
+    
     VAR
-      nSteps := trace.getSteps();
-      a      := NEW(REF ARRAY OF LONGREAL, nSteps);
+      a      := GetNode(nodeId);
     BEGIN
       TRY
-        trace.getNodeData(nodeId, a^)
-      EXCEPT
-        Rd.Failure(x) =>
-        Debug.Error(F("Can't read trace for node id %s : Rd.Failure : %s",
-                      Int(nodeId), AL.Format(x)))
-      |
-        Rd.EndOfFile =>
-        Debug.Error(F("Short read reading trace for node id %s",
-                      Int(nodeId)))
-      END;
-
-      TRY
-        UnsafeWriter.WriteI  (wr, nSteps);
+        UnsafeWriter.WriteI  (wr, trace.getSteps());
         UnsafeWriter.WriteLRA(wr, a^);
 
         Wr.Close(wr)
@@ -180,8 +195,25 @@ BEGIN
                       Int(nodeId), AL.Format(x)))
       END
     END
-  |
-    Mode.Compress =>
+    |
+
+      Mode.ExtractOne =>
+      OpenTrace();
+      VAR
+        a := GetNode(nodeId);
+        t := GetNode(0);
+        wr := FileWr.Open(Int(nodeId) & ".dat");
+      BEGIN
+        FOR i := 0 TO trace.getSteps() - 1 DO
+          Wr.PutText(wr, F("%s %s\n", LR(t[i]), LR(a[i])));
+        END;
+        Wr.Close(wr)
+      END
+      
+      
+    |
+      
+      Mode.Compress =>
     VAR
       rd     : Rd.T;
       nSteps : CARDINAL;

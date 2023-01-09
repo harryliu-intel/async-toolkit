@@ -28,6 +28,8 @@ TYPE
     decimate : [0..255] := 0;
   END;
 
+CONST Default = T { 0, 0, SpiceCompress.IllegalNorm, 0, 0 };
+
 CONST SerialSize = 4 + 8 + SpiceCompress.NormSerialSize + 1 + 1;
 
 CONST Brand = "ZtraceNodeHeader";

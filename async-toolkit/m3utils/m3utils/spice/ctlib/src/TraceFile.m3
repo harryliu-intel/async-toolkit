@@ -211,7 +211,7 @@ PROCEDURE WriteCompressedV1(t : T; tWr : Wr.T)
     fmt = Version.CompressedV1;
   VAR
     header := Header { fmt, Time.Now(), t.nNames };
-    dir    := NEW(REF ZtraceFile.Directory).init(t.nNames);
+    dir    := NEW(ZtraceFile.Directory).init(t.nNames);
     z      : ZtraceFile.Metadata;
     time, data    : REF ARRAY OF LONGREAL;
   BEGIN
