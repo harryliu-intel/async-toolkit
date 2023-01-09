@@ -21,4 +21,6 @@ Table("CardTransitionSeq", "Cardinal", "TransitionSeq")
 Module ("TraceRewriter")
 Module ("DistZTrace")
 
+Interface ("TraceOp")
+
 library ("tracelib")

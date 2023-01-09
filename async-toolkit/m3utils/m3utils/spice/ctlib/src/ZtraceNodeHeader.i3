@@ -39,5 +39,9 @@ PROCEDURE Read(rd : Rd.T) : T
     RAISES { Rd.Failure, Rd.EndOfFile, Thread.Alerted };
 
 PROCEDURE Format(t : T) : TEXT;
+
+PROCEDURE CompareByStart(READONLY a, b : T) : [-1..1];
+
+CONST Compare = CompareByStart;
   
 END ZtraceNodeHeader.

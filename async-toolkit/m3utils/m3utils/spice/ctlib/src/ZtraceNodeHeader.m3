@@ -4,6 +4,7 @@ IMPORT Thread;
 IMPORT UnsafeWriter, UnsafeReader;
 FROM Fmt IMPORT F, Int, Unsigned;
 IMPORT SpiceCompress;
+IMPORT Word;
 
 PROCEDURE Write(wr : Wr.T; t : T) 
   RAISES { Wr.Failure, Thread.Alerted } =
@@ -43,4 +44,15 @@ PROCEDURE Format(t : T) : TEXT =
              Int(t.decimate))
   END Format;
 
+PROCEDURE CompareByStart(READONLY a, b : T) : [-1..1] =
+  BEGIN
+    IF    Word.LT(a.start, b.start) THEN
+      RETURN -1
+    ELSIF Word.LT(b.start, a.start) THEN
+      RETURN 1
+    ELSE
+      RETURN 0
+    END
+  END CompareByStart;
+  
 BEGIN END ZtraceNodeHeader.
