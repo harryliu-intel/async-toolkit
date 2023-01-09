@@ -1022,6 +1022,7 @@ PROCEDURE GenApply(cl : GenClosure) : REFANY =
 
             *)
 
+            (*
             TRY
               Thread.Release(cl.mu);
               LOOP
@@ -1030,6 +1031,7 @@ PROCEDURE GenApply(cl : GenClosure) : REFANY =
             FINALLY
               Thread.Acquire(cl.mu)
             END;
+            *)
 
             (* 
                the following two statements cause the remote to exit 
@@ -1059,7 +1061,7 @@ PROCEDURE GenApply(cl : GenClosure) : REFANY =
           END;
           <*ASSERT cl.tWr # NIL*>
           (* now we have a request -- execute request *)
-        END;
+        END(*LOCK cl.mu*);
 
         (* note we cannot hold the lock while we run *)
         GeneratePartialTraceFile(cl.tWr,
