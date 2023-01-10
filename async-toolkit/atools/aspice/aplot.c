@@ -644,7 +644,7 @@ void write_panel(PANEL *panel)
       curve=panel->named->p.named[i].curves->p.curve[j];
       if ((curve->t==NULL)||(curve->v==NULL)) fprintf(fifo,"0 0\n");
       else for (k=0; k<curve->Nsteps; k++)
-        fprintf(fifo,"%0.6f %0.6f\n",curve->t[k]*1e9,curve->v[k]);
+        fprintf(fifo,"%g %g\n",curve->t[k]*1e9,curve->v[k]);
       fprintf(fifo,"\n");
       }
     fclose(fifo);
@@ -706,7 +706,7 @@ void draw_panel(PANEL *panel)
       curve=panel->named->p.named[i].curves->p.curve[j];
       if ((curve->t==NULL)||(curve->v==NULL)) fprintf(fifo,"0 0\n");
       else for (k=0; k<curve->Nsteps; k++)
-        fprintf(fifo,"%0.6f %0.6f\n",curve->t[k]*1e9,curve->v[k]);
+        fprintf(fifo,"%g %g\n",curve->t[k]*1e9,curve->v[k]);
       fprintf(fifo,"\n");
       }
     fclose(fifo);
@@ -817,7 +817,7 @@ void print(PANEL *panel)
       v=curve->v[j];
       if ((t<panel->tmin)&&(panel->tmin!=NotNum)) continue;
       if ((t>panel->tmax)&&(panel->tmax!=NotNum)) continue;
-      printf("%0.6f %0.6f\n",t,v);
+      printf("%g %g\n",t,v);
       }
     }
   }
