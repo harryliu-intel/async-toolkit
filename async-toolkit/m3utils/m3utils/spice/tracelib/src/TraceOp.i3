@@ -4,28 +4,42 @@ INTERFACE TraceOp;
    new waveform *)
 
 IMPORT Trace;
+IMPORT Rd;
 
 TYPE
-  T = OBJECT METHODS
-    exec(trace : Trace.T; VAR result : ARRAY OF LONGREAL);
+  T <: Public;
+
+  Public = OBJECT METHODS
+    exec(trace : Trace.T; VAR result : ARRAY OF LONGREAL)
+      RAISES { Rd.EndOfFile, Rd.Failure } ;
   END;
 
   NodeId = Trace.NodeId;
 
-  BinOp = T OBJECT
+  Unary = T OBJECT
+    a : NodeId;
+  END;
+
+  Func <: Unary OBJECT
+    f : PROCEDURE(x : LONGREAL) : LONGREAL;
+  END;
+
+  Binary = T OBJECT
     a, b : NodeId;
   END;
 
-  Plus <: BinOp;
+  Plus <: Binary;
 
-  Times <: BinOp;
+  Times <: Binary;
 
-  ScalarOp = T OBJECT
+  Divide <: Binary;
+
+  Scalar = T OBJECT
     a      : NodeId;
     scalar : LONGREAL;
   END;
 
-  Scale <: ScalarOp;
+  Scale <: Scalar;
   
 CONST Brand = "TraceOp";
 
