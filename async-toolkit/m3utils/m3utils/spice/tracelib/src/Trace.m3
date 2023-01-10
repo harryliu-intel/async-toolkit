@@ -67,7 +67,8 @@ TYPE
 
 PROCEDURE Close(t : T) RAISES { Rd.Failure } =
   BEGIN
-    Rd.Close(t.tRd)
+    Rd.Close(t.tRd);
+    t.tRd := NIL
   END Close;
   
 PROCEDURE Init(t : T; root : Pathname.T) : T

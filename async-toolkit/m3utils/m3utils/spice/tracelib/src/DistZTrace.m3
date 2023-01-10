@@ -131,10 +131,6 @@ PROCEDURE WriteOut(wr            : Wr.T;
                       Int(len),
                       Int(finalLen)));
 
-
-
-
-
     Wr.PutText           (wr, "ZZZ\n"); (* advertise compressed data *)
     Wr.PutChar           (wr, 'x');     (* tag (unused) *)
     UnsafeWriter.WriteI  (wr, nodeid);

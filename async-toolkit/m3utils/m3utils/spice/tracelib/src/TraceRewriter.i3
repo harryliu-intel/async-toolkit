@@ -7,7 +7,8 @@ TYPE
   T <: Public;
 
   Public = OBJECT METHODS
-    init(root : Pathname.T; rewriterPath : Pathname.T) : T;
+    init(root         : Pathname.T;
+         rewriterPath : Pathname.T) : T;
 
     addhi(stream          : TEXT;
           aliases         : TextSeq.T);
@@ -23,7 +24,10 @@ TYPE
     sync();
     (* flush all edits to disk *)
 
-    addhiOp(op : TraceOp.T; aliases : TextSeq.T);
+    addhiOp(op           : TraceOp.T;
+            aliases      : TextSeq.T;
+            relPrec      : LONGREAL;
+            noArith      : BOOLEAN);
   END;
 
 CONST
