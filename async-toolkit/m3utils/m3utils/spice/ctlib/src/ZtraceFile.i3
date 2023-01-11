@@ -44,7 +44,10 @@ PROCEDURE Read(rd : Rd.T) : T
 PROCEDURE RewriteDirectory(wr : Wr.T; READONLY t : T)
   RAISES { Wr.Failure, Thread.Alerted };
 
-
 PROCEDURE Format(READONLY t : T) : TEXT;
+
+PROCEDURE GetDataBoundaries(dir : Directory; VAR firstByte, limByte : CARDINAL);
+  (* find the first byte used for waveform storage and the first byte not used
+     by waveform storage *)
   
 END ZtraceFile.

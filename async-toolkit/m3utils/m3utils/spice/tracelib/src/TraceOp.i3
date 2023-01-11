@@ -28,6 +28,8 @@ TYPE
     f : PROCEDURE(x : LONGREAL) : LONGREAL;
   END;
 
+  Integrate <: Unary;
+
   Binary <: T OBJECT
     a, b : T;
   END;

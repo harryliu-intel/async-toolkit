@@ -293,9 +293,9 @@ PROCEDURE CountActiveNodes(seq : CardSeq.T) : CARDINAL =
 PROCEDURE FormatFN(i : CARDINAL) : TEXT =
   BEGIN RETURN F("%08s", Int(i)) END FormatFN;
 
-PROCEDURE PutNames(wr : Wr.T;
-                   i : CARDINAL;
-                   seq : TextSeq.T;
+PROCEDURE PutNames(wr             : Wr.T;
+                   i              : CARDINAL;
+                   seq            : TextSeq.T;
                    includeIdNames : BOOLEAN)
   RAISES { Wr.Failure, Thread.Alerted } =
   VAR

@@ -2,6 +2,9 @@ INTERFACE TraceRep;
 IMPORT Trace;
 IMPORT TextCardTbl;
 IMPORT CardTextSeqTbl;
+IMPORT ZtraceFile;
+IMPORT Pathname;
+IMPORT TraceFile;
 
 (* 
    Reveal the internal alias dictionaries of the Trace.T representation 
@@ -18,6 +21,12 @@ TYPE
   Private = Trace.Public OBJECT
     fwdTbl   : TextCardTbl.T;
     revTbl   : CardTextSeqTbl.T;
+
+  METHODS
+    getActualFormat(VAR actualPath     : Pathname.T;
+                    VAR actualVersion  : TraceFile.Version);
+
+    getMetadata() : ZtraceFile.Metadata; (* only valid for CompressedV1 *)
   END;
 
 END TraceRep.

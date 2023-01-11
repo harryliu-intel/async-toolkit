@@ -33,18 +33,23 @@ VAR doDebug := TRUE;
 
 REVEAL
   T = TraceRep.Private BRANDED Brand OBJECT
-    root     : Pathname.T;
-    tRd      : Rd.T;
-
+    root          : Pathname.T;
+    tRd           : Rd.T;
+    timeArr       : REF ARRAY OF LONGREAL := NIL;
+    actualPath    : Pathname.T;
+    actualVersion : TraceFile.Version;
+    
   OVERRIDES
-    init        := Init;
-    getNodeIdx  := GetNodeIdx;
-    getNodes    := GetNodes;
-    getTimeData := GetTimeData;
+    init             := Init;
+    getNodeIdx       := GetNodeIdx;
+    getNodes         := GetNodes;
+    getTimeData      := GetTimeData;
     getCanonicalName := GetCanonicalName;
-    getAliases  := GetAliases;
-    allNames    := AllNames;
-    close       := Close;
+    getAliases       := GetAliases;
+    allNames         := AllNames;
+    close            := Close;
+    sharedTime       := SharedTime;
+    getActualFormat  := GetActualFormat;
   END;
 
 TYPE
@@ -62,9 +67,9 @@ TYPE
   OVERRIDES
     getSteps    := GetStepsC;
     getNodeData := GetNodeDataC;
+    getMetadata := GetMetadataC;
   END;
   
-
 PROCEDURE Close(t : T) RAISES { Rd.Failure } =
   BEGIN
     Rd.Close(t.tRd);
@@ -79,34 +84,59 @@ PROCEDURE Init(t : T; root : Pathname.T) : T
     ok : BOOLEAN;
   BEGIN
 
+    t.timeArr := NIL;
+    
     t.fwdTbl := NEW(TextCardTbl.Default).init();
     t.revTbl := NEW(CardTextSeqTbl.Default).init();
 
     EVAL ParseNames(nNam, t.fwdTbl, t.revTbl);
 
     FOR i := FIRST(TraceFile.Version) TO LAST(TraceFile.Version) DO
-      ok := TRUE;
+      ok   := TRUE;
       tNam := root & "." & TraceFile.VersionSuffixes[i];
+
+      (* look for file .. *)
       TRY
+        Debug.Out(F("Trace.Init root %s attempting %s %s",
+                    root, tNam, TraceFile.VersionNames[i]));
+        
         t.tRd := FileRd.Open(tNam);
+        Debug.Out("Trace.Init, OK : " & tNam);
+        t.actualPath    := tNam;
+        t.actualVersion := i;
+        Debug.Out(F("Trace.Init : success with actualPath %s version %s",
+                    t.actualPath,
+                    TraceFile.VersionNames[t.actualVersion]));
       EXCEPT
-        OSError.E => ok := FALSE
+        OSError.E =>
+        Debug.Out("Trace.Init, not found : " & tNam);
+        ok := FALSE
       END;
 
+      (* attempt to parse it *)
       IF ok THEN
-        ok :=  AttemptParse[i](t)
+        <*ASSERT t.actualPath # NIL*>
+        ok :=  AttemptParse[i](t);
+        <*ASSERT t.actualPath # NIL*>
       ELSE
         t.tRd := NIL;
       END;
+      
       IF ok THEN
+        <*ASSERT t.actualPath # NIL*>
         EXIT
       ELSIF t.tRd # NIL THEN
         Rd.Close(t.tRd);
         t.tRd := NIL
       END
+      
     END;
 
     IF ok THEN
+      <*ASSERT t.actualPath # NIL*>
+      Debug.Out(F("Trace.Init : success with actualPath %s version %s",
+                  t.actualPath,
+                  TraceFile.VersionNames[t.actualVersion]));
       RETURN t
     ELSE
       Debug.Error("Trace.Init unable to parse for trace root " & root);
@@ -114,6 +144,14 @@ PROCEDURE Init(t : T; root : Pathname.T) : T
     END
   END Init;
 
+PROCEDURE GetActualFormat(t                  : T;
+                          VAR actualPath     : Pathname.T;
+                          VAR actualVersion  : TraceFile.Version) =
+  BEGIN
+    actualPath := t.actualPath;
+    actualVersion := t.actualVersion
+  END GetActualFormat;
+  
   (**********************************************************************)
 
 TYPE Parser = PROCEDURE(VAR t : T) : BOOLEAN
@@ -175,10 +213,12 @@ PROCEDURE AttemptParseCompressedV1(VAR t : T) : BOOLEAN =
       END;
       
     WITH new = NEW(CompressedV1,
-                   fwdTbl := t.fwdTbl,
-                   revTbl := t.revTbl,
-                   tRd    := t.tRd,
-                   root   := t.root) DO
+                   fwdTbl        := t.fwdTbl,
+                   revTbl        := t.revTbl,
+                   tRd           := t.tRd,
+                   root          := t.root,
+                   actualPath    := t.actualPath,
+                   actualVersion := t.actualVersion) DO
       
 
       Rd.Seek(new.tRd, 0);
@@ -312,7 +352,7 @@ PROCEDURE GetNodeIdx(t : T; node : TEXT; VAR idx : CARDINAL) : BOOLEAN =
 PROCEDURE GetTimeData(t : T; VAR timea : ARRAY OF LONGREAL)
   RAISES { Rd.Failure, Rd.EndOfFile } =
   BEGIN
-    t.getNodeData(0, timea)
+    t.getNodeData(TimeId, timea)
   END GetTimeData;
 
 (********************  Reordered methods  ********************)
@@ -379,6 +419,11 @@ PROCEDURE GetNodeDataC(t       : CompressedV1;
     END
   END GetNodeDataC;
 
+PROCEDURE GetMetadataC(c : CompressedV1) : ZtraceFile.Metadata =
+  BEGIN
+    RETURN c.z
+  END GetMetadataC;
+
 PROCEDURE GetBytes(rd : Rd.T; bytes : CARDINAL) : TEXT
   RAISES { Rd.Failure, Rd.EndOfFile } =
   VAR
@@ -418,4 +463,13 @@ PROCEDURE Decompress(txt : TEXT; VAR a : ARRAY OF LONGREAL) =
     SpiceCompress.DecompressArray(deRd, a)
   END Decompress;
 
+PROCEDURE SharedTime(t : T) : REF ARRAY OF LONGREAL =
+  BEGIN
+    IF t.timeArr = NIL THEN
+      t.timeArr := NEW(REF ARRAY OF LONGREAL, t.getSteps());
+      t.getTimeData(t.timeArr^)
+    END;
+    RETURN t.timeArr
+  END SharedTime;
+  
 BEGIN END Trace.

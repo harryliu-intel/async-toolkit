@@ -6,6 +6,8 @@ IMPORT Pathname;
 IMPORT Wr;
 IMPORT CardTextSetTbl;
 IMPORT TextSeqSeq;
+IMPORT Thread;
+IMPORT TextSeq;
 
 PROCEDURE MakeIdxMap(nameIdTbl     : CardTextSetTbl.T;
                      restrictNodes : TextSet.T;
@@ -54,5 +56,12 @@ PROCEDURE FileIndex(nFiles, nNodes, nodeIndex : CARDINAL) : CARDINAL;
      need to know how many nodes and how many files are present in 
      system *)
   
+PROCEDURE PutNames(wr             : Wr.T;
+                   i              : CARDINAL;
+                   seq            : TextSeq.T;
+                   includeIdNames : BOOLEAN)
+  RAISES { Wr.Failure, Thread.Alerted };
+  (* put names for a single node *)
+
 END NameControl.
   

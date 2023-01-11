@@ -80,6 +80,12 @@ REVEAL
     eval := EvalFunc;
   END;
 
+  Integrate = (Unary OBJECT f : PROCEDURE(x : LONGREAL) : LONGREAL; END)
+            BRANDED Brand & " Integrate" OBJECT
+  OVERRIDES
+    eval := EvalIntegrate;
+  END;
+
 PROCEDURE EvalUnary(self : Unary)  
   RAISES { Rd.EndOfFile, Rd.Failure } =
   BEGIN
@@ -98,6 +104,29 @@ PROCEDURE EvalFunc(self       : Func)
       self.result[i] := self.f(self.a.result[i])
     END
   END EvalFunc;
+  
+PROCEDURE EvalIntegrate(self       : Integrate) 
+  RAISES { Rd.EndOfFile, Rd.Failure } =
+  BEGIN
+    Unary.eval(self);
+
+    self.result[0] := 0.0d0;
+    
+    WITH time = self.trace.sharedTime() DO
+      FOR i := FIRST(time^) + 1 TO LAST(time^) DO
+        WITH prev  = self.result[i - 1],
+             prevA = self.a.result[i - 1],
+             currA = self.a.result[i],
+             
+             midA  = 0.5d0 * (prevA + currA), (* midpoint rule *)
+             ts    = time[i] - time[i - 1],
+
+             dI    = midA * ts DO
+          self.result[i] := prev + dI
+        END
+      END
+    END
+  END EvalIntegrate;
   
 (**********************************************************************)
 

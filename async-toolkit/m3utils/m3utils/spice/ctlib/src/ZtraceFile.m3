@@ -72,5 +72,19 @@ PROCEDURE Format(READONLY t : T) : TEXT =
     Wx.PutText(wx, F("nsteps %s>\n", Int(t.nsteps)));
     RETURN Wx.ToText(wx)
   END Format;
-  
+
+
+PROCEDURE GetDataBoundaries(dir                    : Directory;
+                            VAR firstByte, limByte : CARDINAL) =
+  BEGIN
+    firstByte := LAST(CARDINAL);
+    limByte   := FIRST(CARDINAL);
+    FOR i := 0 TO dir.size() - 1 DO
+      WITH dirent = dir.get(i) DO
+        firstByte := MIN(firstByte, dirent.start);
+        limByte   := MAX(limByte,   dirent.start + dirent.bytes)
+      END
+    END
+  END GetDataBoundaries;
+
 BEGIN END ZtraceFile.

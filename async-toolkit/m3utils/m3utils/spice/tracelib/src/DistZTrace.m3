@@ -92,55 +92,55 @@ PROCEDURE WriteOut(wr            : Wr.T;
   TYPE
     ALR1 = ARRAY [ 0..0 ] OF LONGREAL;
   VAR
-          code     : ArithConstants.CodeIdx;
-      finalTxt : TEXT;
-      finalLen : CARDINAL;
-                   norm          : SpiceCompress.Norm;
-
+    code     : ArithConstants.CodeIdx;
+    finalTxt : TEXT;
+    finalLen : CARDINAL;
+    norm     : SpiceCompress.Norm;
+    
   BEGIN
     WITH z      = NEW(REF ARRAY OF LONGREAL, NUMBER(a)),
-           textWr = NEW(TextWr.T).init() DO
+         textWr = NEW(TextWr.T).init() DO
 
-          SpiceCompress.CompressArray("zdebug",
-                                      a,
-                                      z^,
-                                      relPrec,
-                                      doAllDumps,
-                                      textWr,
-                                      norm,
-                                      mem    := NEW(TripleRefTbl.Default).init(),
-                                      doDump := doDump);
-        (* we now have the polynomially compressed in textWr *)
+      SpiceCompress.CompressArray("zdebug",
+                                  a,
+                                  z^,
+                                  relPrec,
+                                  doAllDumps,
+                                  textWr,
+                                  norm,
+                                  mem    := NEW(TripleRefTbl.Default).init(),
+                                  doDump := doDump);
+      (* we now have the polynomially compressed in textWr *)
+      
+      WITH txt = TextWr.ToText(textWr),
+           len = Text.Length(txt) DO
         
-        WITH txt = TextWr.ToText(textWr),
-             len = Text.Length(txt) DO
-
-          (* txt is the polynomially compressed waveform *)
-
-          IF noArith THEN
-            code     := ArithConstants.ZeroCode;
-            finalTxt := txt;
-            finalLen := len
-          ELSE
-            finalTxt := DoArithCompress(txt, code);
-            finalLen := Text.Length(finalTxt)
-          END;
-
-          Debug.Out(F("%s timesteps, compressed size %s bytes, coded size %s",
-                      Int(NUMBER(a)),
-                      Int(len),
-                      Int(finalLen)));
-
-    Wr.PutText           (wr, "ZZZ\n"); (* advertise compressed data *)
-    Wr.PutChar           (wr, 'x');     (* tag (unused) *)
-    UnsafeWriter.WriteI  (wr, nodeid);
-    UnsafeWriter.WriteI  (wr, finalLen + 1 + 2 * 4);
-    UnsafeWriter.WriteLRA(wr, ALR1 { norm.min } );
-    UnsafeWriter.WriteLRA(wr, ALR1 { norm.max } );
-    Wr.PutChar           (wr, VAL(code, CHAR));
-    Wr.PutText           (wr, finalTxt);
-        END
+        (* txt is the polynomially compressed waveform *)
+        
+        IF noArith THEN
+          code     := ArithConstants.ZeroCode;
+          finalTxt := txt;
+          finalLen := len
+        ELSE
+          finalTxt := DoArithCompress(txt, code);
+          finalLen := Text.Length(finalTxt)
+        END;
+        
+        Debug.Out(F("%s timesteps, compressed size %s bytes, coded size %s",
+                    Int(NUMBER(a)),
+                    Int(len),
+                    Int(finalLen)));
+        
+        Wr.PutText           (wr, "ZZZ\n"); (* advertise compressed data *)
+        Wr.PutChar           (wr, 'x');     (* tag (unused) *)
+        UnsafeWriter.WriteI  (wr, nodeid);
+        UnsafeWriter.WriteI  (wr, finalLen + 1 + 2 * 4);
+        UnsafeWriter.WriteLRA(wr, ALR1 { norm.min } );
+        UnsafeWriter.WriteLRA(wr, ALR1 { norm.max } );
+        Wr.PutChar           (wr, VAL(code, CHAR));
+        Wr.PutText           (wr, finalTxt);
       END
+    END
   END WriteOut;
   
 BEGIN END DistZTrace.

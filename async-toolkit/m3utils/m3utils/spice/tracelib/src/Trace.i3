@@ -57,7 +57,12 @@ TYPE
 
     close() RAISES { Rd.Failure };
     (* close the internal reader *)
+
+    sharedTime() : REF ARRAY OF LONGREAL;
+    (* allocate and return a handle to a shared time (s.b. treated as R/O) *)
   END;
+
+CONST TimeId = 0;
 
 CONST Brand = "Trace";
 
