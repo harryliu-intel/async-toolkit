@@ -96,6 +96,14 @@
 (define (visible-blackbody-lpW T)
   (visible-lumens-per-watt (make-Bl T)))
 
-(plot total-blackbody-lpW 1000 10000 "total_blackbody_lpw.dat")
+;;(plot total-blackbody-lpW 1000 10000 "total_blackbody_lpw.dat")
 
-(plot visible-blackbody-lpW 1000 10000 "visible_blackbody_lpw.dat")
+;;(plot visible-blackbody-lpW 1000 10000 "visible_blackbody_lpw.dat")
+
+(define (R9 l)
+  (cdr (assoc 9 (Tcs.R l))))
+
+(define (R n)
+  (lambda (l)
+    (cdr (assoc n (Tcs.R l)))))
+
