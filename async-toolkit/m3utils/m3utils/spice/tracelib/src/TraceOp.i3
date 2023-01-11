@@ -16,16 +16,20 @@ TYPE
 
   NodeId = Trace.NodeId;
 
-  Unary = T OBJECT
-    a : NodeId;
+  GetNode <: T OBJECT
+    nodeid : NodeId;
+  END;
+
+  Unary <: T OBJECT
+    a : T;
   END;
 
   Func <: Unary OBJECT
     f : PROCEDURE(x : LONGREAL) : LONGREAL;
   END;
 
-  Binary = T OBJECT
-    a, b : NodeId;
+  Binary <: T OBJECT
+    a, b : T;
   END;
 
   Plus <: Binary;
@@ -34,8 +38,7 @@ TYPE
 
   Divide <: Binary;
 
-  Scalar = T OBJECT
-    a      : NodeId;
+  Scalar = Unary OBJECT
     scalar : LONGREAL;
   END;
 

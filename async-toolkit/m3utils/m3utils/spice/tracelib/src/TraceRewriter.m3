@@ -3,6 +3,8 @@ IMPORT Pathname;
 IMPORT Trace;
 IMPORT TraceOp;
 IMPORT TextSeq;
+IMPORT Rd;
+IMPORT OSError;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
@@ -17,10 +19,12 @@ REVEAL
     addhiOp := AddhiOp;
   END;
 
-PROCEDURE Init(t : T; root : Pathname.T; rewriterPath : Pathname.T) : T =
+PROCEDURE Init(t : T; root : Pathname.T; rewriterPath : Pathname.T) : T
+  RAISES { OSError.E, Rd.Failure, Rd.EndOfFile } =
   BEGIN
     t.root         := root;
     t.rewriterPath := rewriterPath;
+    t.tr           := NEW(Trace.T).init(root);
     RETURN t
   END Init;
 
@@ -32,7 +36,8 @@ PROCEDURE AddhiOp(t            : T;
                   op           : TraceOp.T;
                   aliases      : TextSeq.T;
                   relPrec      : LONGREAL;
-                  noArith      : BOOLEAN) =
+                  noArith      : BOOLEAN)
+  RAISES { Rd.EndOfFile, Rd.Failure } =
   BEGIN
     IF t.scratch = NIL OR NUMBER(t.scratch^) # t.tr.getSteps() THEN
       t.scratch := NEW(REF ARRAY OF LONGREAL, t.tr.getSteps())

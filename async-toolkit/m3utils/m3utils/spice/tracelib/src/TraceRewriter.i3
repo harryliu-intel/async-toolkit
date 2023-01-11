@@ -2,13 +2,16 @@ INTERFACE TraceRewriter;
 IMPORT TextSeq;
 IMPORT Pathname;
 IMPORT TraceOp;
+IMPORT Rd;
+IMPORT OSError;
 
 TYPE
   T <: Public;
 
   Public = OBJECT METHODS
     init(root         : Pathname.T;
-         rewriterPath : Pathname.T) : T;
+         rewriterPath : Pathname.T) : T
+    RAISES { OSError.E, Rd.Failure, Rd.EndOfFile };
 
     addhi(stream          : TEXT;
           aliases         : TextSeq.T);
@@ -27,7 +30,7 @@ TYPE
     addhiOp(op           : TraceOp.T;
             aliases      : TextSeq.T;
             relPrec      : LONGREAL;
-            noArith      : BOOLEAN);
+            noArith      : BOOLEAN) RAISES { Rd.EndOfFile, Rd.Failure };
   END;
 
 CONST
