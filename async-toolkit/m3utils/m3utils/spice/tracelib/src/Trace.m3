@@ -10,8 +10,6 @@ IMPORT Rd, FileRd;
 IMPORT TextCardTbl;
 IMPORT CardTextSeqTbl;
 IMPORT TextSeq;
-IMPORT TextList;
-IMPORT TextReader;
 IMPORT Debug;
 IMPORT Thread;
 FROM Fmt IMPORT F, Int; IMPORT Fmt;
@@ -26,6 +24,7 @@ IMPORT TextWr;
 IMPORT ArithCallback;
 IMPORT TextRd;
 IMPORT SpiceCompress;
+IMPORT Text;
 
 <*FATAL Thread.Alerted*>
 
@@ -306,29 +305,46 @@ PROCEDURE ParseNames(nNam   : Pathname.T;
                      fwdTbl : TextCardTbl.T;
                      revTbl : CardTextSeqTbl.T) : CARDINAL
   RAISES { OSError.E, Rd.Failure } =
+
+  PROCEDURE Add(seq : TextSeq.T; new : TEXT) =
+    BEGIN
+      seq.addhi(new);
+      WITH hadIt = fwdTbl.put(new, id) DO
+        IF hadIt THEN
+          Debug.Warning(nNam & " : duplicate mapping for node \"" &
+            new & "\"")
+        END
+      END
+    END Add;
+    
   VAR
     rd := FileRd.Open(nNam);
-    p : TextList.T;
     id := 0;
+    q  : CARDINAL;
+
   BEGIN
     TRY
       LOOP
         WITH line   = Rd.GetLine(rd),
-             nr     = NEW(TextReader.T).init(line),
-             names  = nr.shatter("=", ""),
+             len    = Text.Length(line),
              seq    = NEW(TextSeq.T).init() DO
 
-          p := names;
-          WHILE p # NIL DO
-            seq.addhi(p.head);
-            WITH hadIt = fwdTbl.put(p.head, id) DO
-              IF hadIt THEN
-                Debug.Warning(nNam & " : duplicate mapping for node \"" &
-                  p.head & "\"")
+          q := 0;
+          FOR i := 0 TO len - 1 DO
+            WITH c = Text.GetChar(line, i) DO
+              IF c = '=' THEN
+                WITH new = Text.Sub(line, q, i - q) DO
+                  Add(seq, new);
+                  q := i + 1
+                END
               END
-            END;
-            p := p.tail
+            END
           END;
+
+          WITH new = Text.Sub(line, q, len - q) DO
+            Add(seq, new)
+          END;
+          
           EVAL revTbl.put(id, seq);
           INC(id)
         END
