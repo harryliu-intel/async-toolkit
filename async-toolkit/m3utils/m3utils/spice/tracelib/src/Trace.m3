@@ -25,6 +25,7 @@ IMPORT ArithCallback;
 IMPORT TextRd;
 IMPORT SpiceCompress;
 IMPORT Text;
+IMPORT ZtraceNodeHeader;
 
 <*FATAL Thread.Alerted*>
 
@@ -306,8 +307,12 @@ PROCEDURE ParseNames(nNam   : Pathname.T;
                      revTbl : CardTextSeqTbl.T) : CARDINAL
   RAISES { OSError.E, Rd.Failure } =
 
+  CONST
+    Verbose = FALSE;
+
   PROCEDURE Add(seq : TextSeq.T; new : TEXT) =
     BEGIN
+      IF Verbose THEN Debug.Out("Adding alias " & new) END;
       seq.addhi(new);
       WITH hadIt = fwdTbl.put(new, id) DO
         IF hadIt THEN
@@ -316,24 +321,70 @@ PROCEDURE ParseNames(nNam   : Pathname.T;
         END
       END
     END Add;
+
+  PROCEDURE GetLine() : CARDINAL
+    RAISES { Rd.Failure } =
+    VAR
+      start := 0;
+    BEGIN
+
+      LOOP
+        WITH n   = Rd.GetSubLine(rd,
+                                 SUBARRAY(buff^, start, buflen - start)) DO
+          IF Verbose THEN
+            Debug.Out(F("GetLine n %s start %s buflen %s",
+                        Int(n),
+                        Int(start),
+                        Int(buflen)))
+          END;
+          
+          IF n + start = buflen THEN
+            (* extend buff and read some more *)
+            start  := buflen; 
+            
+            buflen := buflen * 2;
+            WITH new    = NEW(REF ARRAY OF CHAR, buflen) DO
+              SUBARRAY(new^, 0, NUMBER(buff^)) := buff^;
+              buff   := new;
+            END
+          ELSE
+            IF Verbose THEN
+              Debug.Out(F("GetLine return %s", Int(n + start)))
+            END;
+            
+            RETURN n + start
+          END
+        END
+      END
+    END GetLine;
     
   VAR
     rd := FileRd.Open(nNam);
     id := 0;
     q  : CARDINAL;
 
+    buflen : CARDINAL := 1;
+    buff              := NEW(REF ARRAY OF CHAR, buflen);
+
   BEGIN
     TRY
       LOOP
-        WITH line   = Rd.GetLine(rd),
-             len    = Text.Length(line),
+        
+        
+        WITH len    = GetLine(),
              seq    = NEW(TextSeq.T).init() DO
 
+          IF Verbose THEN
+            Debug.Out("len = " & Int(len))
+          END;
+
+          IF len = 0 THEN EXIT END;
+          
           q := 0;
           FOR i := 0 TO len - 1 DO
-            WITH c = Text.GetChar(line, i) DO
+            WITH c = buff[i] DO
               IF c = '=' THEN
-                WITH new = Text.Sub(line, q, i - q) DO
+                WITH new = Text.FromChars(SUBARRAY(buff^, q, i - q)) DO
                   Add(seq, new);
                   q := i + 1
                 END
@@ -341,7 +392,7 @@ PROCEDURE ParseNames(nNam   : Pathname.T;
             END
           END;
 
-          WITH new = Text.Sub(line, q, len - q) DO
+          WITH new = Text.FromChars(SUBARRAY(buff^, q, len - q)) DO
             Add(seq, new)
           END;
           
@@ -396,8 +447,12 @@ PROCEDURE GetNodeDataC(t       : CompressedV1;
                        VAR arr : ARRAY OF LONGREAL)
   RAISES { Rd.Failure, Rd.EndOfFile } =
   VAR
-    dirent := t.z.directory.get(idx);
+    dirent : ZtraceNodeHeader.T;
   BEGIN
+    Debug.Out(F("Trace.GetNodeDataC : directory.size %s idx %s",
+                Int(t.z.directory.size()), Int(idx)));
+    
+    dirent := t.z.directory.get(idx);
     (*TraceUnsafe.GetDataArray(t.tRd, t.h, idx, arr)*)
     (* here goes all the clever stuff *)
 
