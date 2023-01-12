@@ -1,6 +1,8 @@
 MODULE TraceOp;
 IMPORT Trace;
 IMPORT Rd;
+IMPORT LRFunction;
+IMPORT MapError;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
@@ -80,6 +82,12 @@ REVEAL
     eval := EvalFunc;
   END;
 
+  LrFunc = (Unary OBJECT f : LRFunction.T; END)
+            BRANDED Brand & " LrFunc" OBJECT
+  OVERRIDES
+    eval := EvalLrFunc;
+  END;
+
   Integrate = (Unary OBJECT f : PROCEDURE(x : LONGREAL) : LONGREAL; END)
             BRANDED Brand & " Integrate" OBJECT
   OVERRIDES
@@ -104,6 +112,16 @@ PROCEDURE EvalFunc(self       : Func)
       self.result[i] := self.f(self.a.result[i])
     END
   END EvalFunc;
+  
+PROCEDURE EvalLrFunc(self       : LrFunc) 
+  RAISES { Rd.EndOfFile, Rd.Failure } =
+  <*FATAL MapError.E*>
+  BEGIN
+    Unary.eval(self);
+    FOR i := FIRST(self.result^) TO LAST(self.result^) DO
+      self.result[i] := self.f.eval(self.a.result[i])
+    END
+  END EvalLrFunc;
   
 PROCEDURE EvalIntegrate(self       : Integrate) 
   RAISES { Rd.EndOfFile, Rd.Failure } =
@@ -202,5 +220,37 @@ PROCEDURE EvalScale(self       : Scale)
       self.result[i] := self.scalar * self.a.result[i]
     END
   END EvalScale;
+
+  (**********************************************************************)
+
+PROCEDURE MakeGetNode(nodeid : NodeId) : T =
+  BEGIN
+    RETURN NEW(GetNode, nodeid := nodeid)
+  END MakeGetNode;
+
+PROCEDURE MakeFunc(f : LRFunction.T) : T =
+  BEGIN
+    RETURN NEW(LrFunc, f := f)
+  END MakeFunc;
+
+PROCEDURE MakePlus(a, b : T) : T =
+  BEGIN
+    RETURN NEW(Plus, a := a, b := b)
+  END MakePlus;
+
+PROCEDURE MakeTimes(a, b : T) : T =
+  BEGIN
+    RETURN NEW(Times, a := a, b := b)
+  END MakeTimes;
+
+PROCEDURE MakeDivide(a, b : T) : T =
+  BEGIN
+    RETURN NEW(Divide, a := a, b := b)
+  END MakeDivide;
+
+PROCEDURE MakeScale(a : T; scalar : LONGREAL) : T =
+  BEGIN
+    RETURN NEW(Scale, a := a, scalar := scalar)
+  END MakeScale;
 
 BEGIN END TraceOp.

@@ -5,6 +5,7 @@ INTERFACE TraceOp;
 
 IMPORT Trace;
 IMPORT Rd;
+IMPORT LRFunction;
 
 TYPE
   T <: Public;
@@ -28,6 +29,10 @@ TYPE
     f : PROCEDURE(x : LONGREAL) : LONGREAL;
   END;
 
+  LrFunc <: Unary OBJECT
+    f : LRFunction.T;
+  END;
+
   Integrate <: Unary;
 
   Binary <: T OBJECT
@@ -47,5 +52,19 @@ TYPE
   Scale <: Scalar;
   
 CONST Brand = "TraceOp";
+
+(* utility procedures *)
+
+PROCEDURE MakeGetNode(nodeid : NodeId) : T;
+
+PROCEDURE MakeFunc(f : LRFunction.T) : T;
+
+PROCEDURE MakePlus(a, b : T) : T;
+
+PROCEDURE MakeTimes(a, b : T) : T;
+
+PROCEDURE MakeDivide(a, b : T) : T;
+
+PROCEDURE MakeScale(a : T; scalar : LONGREAL) : T;
 
 END TraceOp.
