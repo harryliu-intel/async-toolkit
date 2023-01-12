@@ -1,0 +1,11 @@
+import ("libm3")
+import ("cit_util")
+import ("spicelib")
+import ("tracelib")
+import ("regression")
+import ("ctlib")
+import ("spicecompress")
+
+implementation ("RewriterMain")
+
+program ("rewriter")
