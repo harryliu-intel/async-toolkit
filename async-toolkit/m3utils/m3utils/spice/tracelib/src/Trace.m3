@@ -63,7 +63,6 @@ TYPE
   CompressedV1 = T OBJECT
     z        : ZtraceFile.Metadata;
     time     : REF ARRAY OF LONGREAL;
-    startB   : REF ARRAY OF CARDINAL;
   OVERRIDES
     getSteps    := GetStepsC;
     getNodeData := GetNodeDataC;
@@ -212,43 +211,36 @@ PROCEDURE AttemptParseCompressedV1(VAR t : T) : BOOLEAN =
         RETURN FALSE
       END;
       
-    WITH new = NEW(CompressedV1,
-                   fwdTbl        := t.fwdTbl,
-                   revTbl        := t.revTbl,
-                   tRd           := t.tRd,
-                   root          := t.root,
-                   actualPath    := t.actualPath,
-                   actualVersion := t.actualVersion) DO
-      
+      WITH new = NEW(CompressedV1,
+                     fwdTbl        := t.fwdTbl,
+                     revTbl        := t.revTbl,
+                     tRd           := t.tRd,
+                     root          := t.root,
+                     actualPath    := t.actualPath,
+                     actualVersion := t.actualVersion) DO
+        
 
-      Rd.Seek(new.tRd, 0);
+        Rd.Seek(new.tRd, 0);
 
-      new.z     := ZtraceFile.Read(new.tRd);
+        new.z     := ZtraceFile.Read(new.tRd);
 
-      (* build start bytes for each series *)
-      bp := Rd.Index(t.tRd);
-      Debug.Out(F("Attempt ParseCompressedV1 start of data %s", Int(bp)));
+        (* build start bytes for each series *)
+        bp := Rd.Index(t.tRd);
+        Debug.Out(F("Attempt ParseCompressedV1 start of data %s", Int(bp)));
 
-      new.startB := NEW(REF ARRAY OF CARDINAL, new.z.header.nwaves);
+        Debug.Out(F("Attempt ParseCompressedV1 end   of data %s", Int(bp)));
+        
+        new.time   := NEW(REF ARRAY OF LONGREAL, new.z.nsteps);
 
-      FOR i := FIRST(new.startB^) TO LAST(new.startB^) DO
-        new.startB[i] := bp;
-        INC(bp, new.z.directory.get(i).bytes)
+        Debug.Out(F("Trace.AttemptParseCompressedV1 nwaves %s nsteps %s",
+                    Int(new.z.header.nwaves),
+                    Int(new.z.nsteps)));
+
+        Debug.Out(ZtraceFile.Format(new.z));
+        
+        new.getNodeData(0, new.time^);
+        t := new
       END;
-
-      Debug.Out(F("Attempt ParseCompressedV1 end   of data %s", Int(bp)));
-      
-      new.time   := NEW(REF ARRAY OF LONGREAL, new.z.nsteps);
-
-      Debug.Out(F("Trace.AttemptParseCompressedV1 nwaves %s nsteps %s",
-                  Int(new.z.header.nwaves),
-                  Int(new.z.nsteps)));
-
-      Debug.Out(ZtraceFile.Format(new.z));
-      
-      new.getNodeData(0, new.time^);
-    t := new
-    END;
       RETURN TRUE
     END;
   END AttemptParseCompressedV1;
@@ -449,18 +441,21 @@ PROCEDURE GetNodeDataC(t       : CompressedV1;
   VAR
     dirent : ZtraceNodeHeader.T;
   BEGIN
-    Debug.Out(F("Trace.GetNodeDataC : directory.size %s idx %s",
-                Int(t.z.directory.size()), Int(idx)));
     
     dirent := t.z.directory.get(idx);
     (*TraceUnsafe.GetDataArray(t.tRd, t.h, idx, arr)*)
     (* here goes all the clever stuff *)
 
+    Debug.Out(F("Trace.GetNodeDataC : directory.size %s idx %s startB %s",
+                Int(t.z.directory.size()),
+                Int(idx),
+                Int(dirent.start)));
+
     CASE dirent.code OF
       ArithConstants.DenseCode =>
       (* dense array as in Andrew's format *)
       <* ASSERT NUMBER(arr) * 4 = dirent.bytes *>
-      Rd.Seek(t.tRd, t.startB[idx]);
+      Rd.Seek(t.tRd, dirent.start);
       UnsafeReader.ReadLRA(t.tRd, arr)
     |
       ArithConstants.LinearCode =>
@@ -476,8 +471,8 @@ PROCEDURE GetNodeDataC(t       : CompressedV1;
         END
       END
     ELSE
-      Rd.Seek(t.tRd, t.startB[idx]);
-      WITH data = GetBytes(t.tRd, dirent.bytes),
+      Rd.Seek(t.tRd, dirent.start);
+      WITH data    = GetBytes(t.tRd, dirent.bytes),
            decoded = ArithDecode(data, dirent.code)
        DO
         Decompress(decoded, arr);

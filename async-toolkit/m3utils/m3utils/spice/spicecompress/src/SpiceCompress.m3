@@ -1605,7 +1605,14 @@ PROCEDURE EvalSegment(seg        : PolySegment16.T;
     FOR i := 0 TO seg.n - 1 DO
       y[i] := Rep16.EvalPoly(seg.r, i)
     END;
-    RETURN Evaluate(NIL, seg.r.order, SUBARRAY(a, seg.lo, seg.n), y^,
+
+    <*ASSERT seg.lo >= FIRST(a)*>
+    <*ASSERT seg.n + seg.lo <= NUMBER(a)*>
+    
+    RETURN Evaluate(NIL,
+                    seg.r.order,
+                    SUBARRAY(a, seg.lo, seg.n),
+                    y^,
                     targMaxDev,
                     FALSE)
   END EvalSegment;

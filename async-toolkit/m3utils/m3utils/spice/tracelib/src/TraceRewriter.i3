@@ -24,7 +24,7 @@ TYPE
        NAMES alias---this code will add it automatically 
     *)
 
-    sync();
+    flush();
     (* flush all edits to disk *)
 
     addhiOp(op           : TraceOp.T;

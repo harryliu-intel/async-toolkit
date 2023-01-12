@@ -13,10 +13,10 @@ PROCEDURE Write(wr : Wr.T; VAR t : T)
   RAISES { Wr.Failure, Thread.Alerted } =
   BEGIN
     TraceFile.WriteHeader(wr, t.header);
+    Debug.Out("ZtraceFile.Write : about to write nsteps @ " & Int(Wr.Index(wr)));
+    UnsafeWriter.WriteI(wr, t.nsteps);
     t.dirStart := Wr.Index(wr);
     RewriteDirectory(wr, t);
-    Debug.Out("ZtraceFile.Write : about to write nsteps @ " & Int(Wr.Index(wr)));
-    UnsafeWriter.WriteI(wr, t.nsteps)
   END Write;
 
 PROCEDURE Read(rd : Rd.T) : T
@@ -26,13 +26,13 @@ PROCEDURE Read(rd : Rd.T) : T
   BEGIN
     (* must assume we are at start of file here *)
     t.header    := TraceFile.ReadHeader(rd);
+    t.nsteps    := UnsafeReader.ReadI(rd);
     t.dirStart  := Rd.Index(rd);
     t.directory := NEW(Directory).init();
     FOR i := 0 TO t.header.nwaves - 1 DO
       t.directory.addhi(ZtraceNodeHeader.Read(rd))
     END;
     Debug.Out("ZtraceFile.Read : about to read nsteps @ " & Int(Rd.Index(rd)));
-    t.nsteps     := UnsafeReader.ReadI(rd);
     RETURN t
   END Read;
 
@@ -63,16 +63,15 @@ PROCEDURE Format(READONLY t : T) : TEXT =
     wx := Wx.New();
   BEGIN
     Wx.PutText(wx, "<ZtraceFile " & TraceFile.FormatHeader(t.header) & "\n");
+    Wx.PutText(wx, F("nsteps %s>\n", Int(t.nsteps)));
     Wx.PutText(wx, F("dirStart %s\n", Int(t.dirStart)));
     FOR i := 0 TO t.directory.size() - 1 DO
       Wx.PutText(wx, F("dir[%s] : ", Int(i)));
       Wx.PutText(wx, ZtraceNodeHeader.Format(t.directory.get(i)));
       Wx.PutChar(wx, '\n')
     END;
-    Wx.PutText(wx, F("nsteps %s>\n", Int(t.nsteps)));
     RETURN Wx.ToText(wx)
   END Format;
-
 
 PROCEDURE GetDataBoundaries(dir                    : Directory;
                             VAR firstByte, limByte : CARDINAL) =

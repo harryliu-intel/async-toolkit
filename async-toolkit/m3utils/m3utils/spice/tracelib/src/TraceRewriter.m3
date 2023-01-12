@@ -20,11 +20,14 @@ IMPORT TextWr;
 IMPORT DistZTrace;
 IMPORT NameControl;
 IMPORT ZtraceNodeHeader;
+IMPORT FileRd;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
     root         : Pathname.T;
     rewriterPath : Pathname.T;
+    tracePath    : Pathname.T;
+    
     tr           : Trace.T;
     dirty        : BOOLEAN;
     scratch      : REF ARRAY OF LONGREAL;
@@ -35,7 +38,7 @@ REVEAL
     
   OVERRIDES
     init    := Init;
-    sync    := Sync;
+    flush    := Flush;
     addhiOp := AddhiOp;
   END;
 
@@ -56,27 +59,135 @@ PROCEDURE Init(t : T; root : Pathname.T; rewriterPath : Pathname.T) : T
     RETURN t
   END Init;
 
-PROCEDURE Sync(t : T) =
-  BEGIN
-  END Sync;
+PROCEDURE Flush(t : T) =
 
+  PROCEDURE MoveTo(i : CARDINAL; tgt : CARDINAL) =
+    VAR
+      rd       := FileRd.Open(t.tracePath);
+      dirent   := t.metadata.directory.get(i);
+      buff     := NEW(REF ARRAY OF CHAR, dirent.bytes);
+      oldStart := dirent.start;
+    BEGIN
+      Rd.Seek(rd, oldStart);
+      WITH readBytes = Rd.GetSub(rd, buff^) DO
+        <*ASSERT readBytes = dirent.bytes*>
+      END;
+
+      Rd.Close(rd);
+
+      Wr.Seek(t.wr, tgt);
+      Wr.PutString(t.wr, buff^);
+      Wr.Flush(t.wr);
+
+      dirent.start := tgt;
+
+      t.metadata.directory.put(i, dirent);
+      
+      ZtraceFile.GetDataBoundaries(t.metadata.directory,
+                                   t.wfMin,
+                                   t.wfLim);
+   
+      Debug.Out(F("TraceRewriter.Flush.MoveTo : dirent @ %s -> %s. wfMin %s wfLim %s",
+                  Int(oldStart), Int(tgt), Int(t.wfMin), Int(t.wfLim)))
+    END MoveTo;
+  
+  PROCEDURE MakeSpace(limit : CARDINAL) =
+    BEGIN
+      FOR i := 0 TO t.metadata.directory.size() - 1 DO
+        VAR
+          dirent := t.metadata.directory.get(i);
+        BEGIN
+          IF dirent.start < limit THEN
+            Debug.Out(F("TraceRewriter.MakeSpace, moving i=%s", Int(i)));
+            MoveTo(i, MAX(limit, t.wfLim));
+          END
+        END
+      END
+    END MakeSpace;
+    
+  BEGIN
+    IF NOT t.dirty THEN RETURN END;
+    
+    WITH entries  = t.metadata.directory.size(),
+         dirBytes = entries * ZtraceNodeHeader.SerialSize,
+         dirLim   = dirBytes + t.metadata.dirStart DO
+      
+      Debug.Out(F("TraceRewriter.Flush : entries %s dirBytes %s dirLim %s wfMin %s",
+                  Int(entries), Int(dirBytes), Int(dirLim), Int(t.wfMin)));
+
+      IF dirLim > t.wfMin THEN
+        MakeSpace(dirLim)
+      END;
+
+      Debug.Out(F("TraceRewriter.Flush : ready to write directory @ %s",
+                  Int(t.metadata.dirStart)));
+
+      Wr.Seek(t.wr, 0);
+
+      ZtraceFile.Write(t.wr, t.metadata);
+
+      Wr.Flush(t.wr);
+      
+      Debug.Out(F("TraceRewriter.Flush : wrote directory, stopped @ %s",
+                  Int(Wr.Index(t.wr))));
+
+      (* set version back *)
+      UpdateFileVersion(t, TraceFile.Version.CompressedV1);
+      
+      (* close writers *)
+      Wr.Close(t.wr);
+      t.wr := NIL;
+      Wr.Close(t.nwr);
+      t.nwr := NIL;
+
+      (* and mark ourselves clean *)
+      t.dirty := FALSE;
+    END
+  END Flush;
+
+PROCEDURE UpdateFileVersion(t : T; to : TraceFile.Version) =
+  VAR
+    hdr  : TraceFile.Header;
+  BEGIN
+    WITH origIdx = Wr.Index(t.wr),
+         rd      = FileRd.Open(t.tracePath)
+     DO
+      hdr := TraceFile.ReadHeader(rd);
+      
+      hdr.version := to;
+      
+      (* rewind write handle and write modified header *)
+      Wr.Seek(t.wr, 0);
+      TraceFile.WriteHeader(t.wr, hdr);
+      Wr.Flush(t.wr);
+      
+      (* go back to EOF *)
+      Wr.Seek(t.wr, origIdx);
+      
+      (* and we're done with rd *)
+      Rd.Close(rd);
+    END
+  END UpdateFileVersion;
+  
 PROCEDURE OpenWr(t : T) RAISES { OSError.E } =
   BEGIN
     IF t.wr = NIL THEN
       VAR
         vers : TraceFile.Version;
-        path : Pathname.T;
       BEGIN
-        t.tr.getActualFormat(path, vers);
+        t.tr.getActualFormat(t.tracePath, vers);
         <*ASSERT vers = TraceFile.Version.CompressedV1*>
 
-        t.wr := FileWr.OpenAppend(path)
+        t.wr := FileWr.OpenAppend(t.tracePath);
+
+        (* now change version to Modifying *)
+        UpdateFileVersion(t, TraceFile.Version.Modifying)
+        
       END;
       t.nwr := FileWr.OpenAppend(t.root & ".names")
     END
   END OpenWr;
 
-  
 PROCEDURE AddhiOp(t            : T;
                   op           : TraceOp.T;
                   aliases      : TextSeq.T;
@@ -139,6 +250,9 @@ PROCEDURE AddhiOp(t            : T;
     Wr.PutText(t.wr, finalTxt);
     NameControl.PutNames(t.nwr, t.metadata.directory.size(), aliases, TRUE);
 
+    Debug.Out(F("TraceRewriter.AddhiOp : writing stopped @ %s",
+                Int(Wr.Index(t.wr))));
+    
     Wr.Flush(t.wr);
     Wr.Flush(t.nwr);
 

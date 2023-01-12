@@ -16,9 +16,9 @@ TYPE
   Metadata = RECORD
     (* the collected metadata of a ZtraceFile *)
     header    : Header;
+    nsteps    : CARDINAL;
     dirStart  : CARDINAL := LAST(CARDINAL); (* start of directory in bytes *)
     directory : Directory;
-    nsteps    : CARDINAL;
   END;
 
   (* 
