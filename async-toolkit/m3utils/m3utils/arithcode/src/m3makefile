@@ -9,6 +9,6 @@ Module ("ArithProbability")
 
 %implementation ("TestMain")
 
-interface ("ArithBits")
+Interface ("ArithBits")
 
 library ("arithcode")
