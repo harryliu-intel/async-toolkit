@@ -30,16 +30,18 @@ PROCEDURE GetPaths(extras : TextSeq.T) : REF ARRAY OF Pathname.T =
   END GetPaths;
 
 VAR
-  pp := NEW(ParseParams.T).init(Stdio.stderr);
+  pp       := NEW(ParseParams.T).init(Stdio.stderr);
   doScheme := FALSE;
-  extra := NEW(TextSeq.T).init();
+  extra    := NEW(TextSeq.T).init();
 BEGIN
   TRY
     doScheme := pp.keywordPresent("-scm");
     pp.skipParsed();
-    WITH n = NUMBER(pp.arg^) - pp.next DO
-      FOR i := 0 TO n - 1 DO
-        extra.addhi(pp.getNext())
+    IF doScheme THEN
+      WITH n = NUMBER(pp.arg^) - pp.next DO
+        FOR i := 0 TO n - 1 DO
+          extra.addhi(pp.getNext())
+        END
       END
     END;
     pp.finish()

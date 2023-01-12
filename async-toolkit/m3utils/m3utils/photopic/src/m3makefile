@@ -32,7 +32,7 @@ SchemeStubs ("CieSpectrum")
 SchemeStubs ("Blackbody")
 SchemeStubs ("Tcs")
 
-ExportSchemeStubs ("diesplit")
-importSchemeStubs()
+ExportSchemeStubs ("photopic")
+importSchemeStubs ()
 
 program ("photopic")
