@@ -29,6 +29,8 @@ TYPE
        equals signs are stripped
 
     *)
+
+    probes  : TextSeq.T;
   END;
 
 CONST Brand = "SpiceCircuit";

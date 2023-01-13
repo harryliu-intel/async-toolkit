@@ -75,7 +75,8 @@ PROCEDURE ParseLine(VAR circuit   : SpiceCircuitList.T; (* circuit stack *)
         (* start subcircuit *)
         WITH new   = NEW(SpiceCircuit.T, 
                          elements := NEW(SpiceObjectSeq.T).init(),
-                         params   := NEW(TextSeq.T).init()),
+                         params   := NEW(TextSeq.T).init(),
+                         probes   := NEW(TextSeq.T).init()),
              hadIt = GetWord(line, p, new.name) DO
           <*ASSERT hadIt*>
           WHILE GetWord(line, p, str) DO
@@ -108,7 +109,13 @@ PROCEDURE ParseLine(VAR circuit   : SpiceCircuitList.T; (* circuit stack *)
         END;
         circuit := circuit.tail (* pop *)
       ELSIF HavePrefix(line, p, ".PROBE") THEN
-        (* skip for now *)
+        IF GetWord(line, p, str) THEN
+          circuit.head.probes.addhi(str)
+        ELSE
+          RAISE SpiceError.E(SpiceError.Data {
+        msg := "Empty probe : \"" & Text.FromChars(line) & "\""
+        })
+        END
       ELSE
         RAISE SpiceError.E(SpiceError.Data {
         msg := "Unknown directive in \"" & Text.FromChars(line) & "\""
@@ -209,11 +216,13 @@ PROCEDURE ParseLine(VAR circuit   : SpiceCircuitList.T; (* circuit stack *)
 
         WITH gotType = GetWord(line, p, nd) DO <*ASSERT gotType*> END;
         m.type := nd;
+
+        StuffData(m, line, p);
         
         o := m
       END
     ELSIF CaseIns(line[0],'D') THEN
-      (* transistor *)
+      (* diode *)
       VAR nd : TEXT;
           d     := NEW(SpiceObject.D, 
                        terminals := NEW(TextSeq.T).init(),
@@ -228,14 +237,17 @@ PROCEDURE ParseLine(VAR circuit   : SpiceCircuitList.T; (* circuit stack *)
 
         WITH gotModel = GetWord(line, p, nd) DO <*ASSERT gotModel*> END;
         d.type := nd;
-        
+
+        StuffData(d, line, p);
+
         o := d
       END
     ELSIF CaseIns(line[0],'C') THEN
       (* capacitor *)
       VAR nd : TEXT;
           m     := NEW(SpiceObject.C, 
-                       terminals := NEW(TextSeq.T).init());
+                       terminals := NEW(TextSeq.T).init(),
+                       data      := NEW(TextSeq.T).init());
           gotNm := GetWord(line,p, m.name);
       BEGIN
         <*ASSERT gotNm*>
@@ -247,13 +259,37 @@ PROCEDURE ParseLine(VAR circuit   : SpiceCircuitList.T; (* circuit stack *)
         WITH got = GetWord(line, p, nd) DO <*ASSERT got*> END;
         m.c := ParseValue(nd);
 
+        StuffData(m, line, p);
+
+        o := m
+      END
+    ELSIF CaseIns(line[0],'L') THEN
+      (* inductor *)
+      VAR nd : TEXT;
+          m     := NEW(SpiceObject.L, 
+                       terminals := NEW(TextSeq.T).init(),
+                       data      := NEW(TextSeq.T).init());
+          gotNm := GetWord(line,p, m.name);
+      BEGIN
+        <*ASSERT gotNm*>
+        WITH got = GetWord(line, p, nd) DO <*ASSERT got*> END;
+        m.terminals.addhi(nd);
+        WITH got = GetWord(line, p, nd) DO <*ASSERT got*> END;
+        m.terminals.addhi(nd);
+        (* add cap *)
+        WITH got = GetWord(line, p, nd) DO <*ASSERT got*> END;
+        m.l := ParseValue(nd);
+
+        StuffData(m, line, p);
+
         o := m
       END
     ELSIF CaseIns(line[0],'R') THEN
       (* resistor *)
       VAR nd : TEXT;
           m     := NEW(SpiceObject.R, 
-                       terminals := NEW(TextSeq.T).init());
+                       terminals := NEW(TextSeq.T).init(),
+                       data      := NEW(TextSeq.T).init());
           gotNm := GetWord(line,p, m.name);
       BEGIN
         <*ASSERT gotNm*>
@@ -271,6 +307,9 @@ PROCEDURE ParseLine(VAR circuit   : SpiceCircuitList.T; (* circuit stack *)
               F("Cannot parse resistance \"%s\", substituting 1 ohm.", nd));
           m.r := 1.0d0
         END;
+
+        StuffData(m, line, p);
+
         o := m
       END
     ELSE
@@ -279,14 +318,21 @@ PROCEDURE ParseLine(VAR circuit   : SpiceCircuitList.T; (* circuit stack *)
                       Text.FromChars(line))
     END;
 
-    IF o # NIL THEN circuit.head.elements.addhi(o) END;
-    
+    IF o # NIL AND GetWord(line, p, str) THEN
+      RAISE SpiceError.E ( SpiceError.Data { msg := "unexpected " & str })
+    END;
+
     IF o # NIL THEN
-      o.data := NEW(TextSeq.T).init();
+      IF o.data = NIL THEN
+        o.data := NEW(TextSeq.T).init() (* probably cant happen *)
+      END;
       WHILE GetWord(line, p, str) DO
         o.data.addhi(str)
       END
-    END
+    END;
+
+    IF o # NIL THEN circuit.head.elements.addhi(o) END;
+    
   END ParseLine;
 
 TYPE
@@ -365,6 +411,25 @@ PROCEDURE GetWord(READONLY line : ARRAY OF CHAR;
     w := Text.FromChars(SUBARRAY(line,s,p-s));
     RETURN TRUE
   END GetWord;
+
+PROCEDURE StuffData(o             : SpiceObject.T;
+                    READONLY line : ARRAY OF CHAR;
+                    VAR      p    : CARDINAL;
+                    permissive    := TRUE)
+  RAISES { SpiceError.E } =
+  VAR
+    nd : TEXT;
+  BEGIN
+    WHILE GetWord(line, p, nd) DO
+      IF permissive OR IsParamAssign(nd) THEN
+            o.data.addhi(nd)
+      ELSE
+        RAISE SpiceError.E (
+                  SpiceError.Data { msg := "bad syntax " & nd }
+        )
+      END
+    END
+  END StuffData;
 
 PROCEDURE Hash(a : T) : Word.T = BEGIN
   RETURN Text.Hash(a.name) END Hash;
