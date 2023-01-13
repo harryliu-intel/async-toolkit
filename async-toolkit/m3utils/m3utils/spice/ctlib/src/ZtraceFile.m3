@@ -65,10 +65,13 @@ PROCEDURE Format(READONLY t : T) : TEXT =
     Wx.PutText(wx, "<ZtraceFile " & TraceFile.FormatHeader(t.header) & "\n");
     Wx.PutText(wx, F("nsteps %s>\n", Int(t.nsteps)));
     Wx.PutText(wx, F("dirStart %s\n", Int(t.dirStart)));
-    FOR i := 0 TO t.directory.size() - 1 DO
-      Wx.PutText(wx, F("dir[%s] : ", Int(i)));
-      Wx.PutText(wx, ZtraceNodeHeader.Format(t.directory.get(i)));
-      Wx.PutChar(wx, '\n')
+
+    IF Debug.GetLevel() >= 20 THEN
+      FOR i := 0 TO t.directory.size() - 1 DO
+        Wx.PutText(wx, F("dir[%s] : ", Int(i)));
+        Wx.PutText(wx, ZtraceNodeHeader.Format(t.directory.get(i)));
+        Wx.PutChar(wx, '\n')
+      END
     END;
     RETURN Wx.ToText(wx)
   END Format;

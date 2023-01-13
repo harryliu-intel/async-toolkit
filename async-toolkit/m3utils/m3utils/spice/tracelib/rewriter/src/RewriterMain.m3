@@ -97,7 +97,8 @@ PROCEDURE TheProgram() =
         AddNamedOp(p2  , "p2");
         AddNamedOp(p3  , "p3");
         AddNamedOp(pall, "pall");
-        AddNamedOp(eall, "eall")
+        AddNamedOp(eall, "eall");
+        AddNamedOp(kcl , "kcl")
       END
     END;
     
@@ -150,6 +151,10 @@ BEGIN
     master   := pp.keywordPresent("-master");
     doScheme := pp.keywordPresent("-scm");
 
+    IF master AND pp.keywordPresent("-threads") THEN
+      nthreads := pp.getNextInt()
+    END;
+    
     IF pp.keywordPresent("-root") THEN    
       root := pp.getNext()
     END;

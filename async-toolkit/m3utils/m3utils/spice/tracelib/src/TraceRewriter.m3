@@ -37,9 +37,10 @@ REVEAL
     metadata     : ZtraceFile.Metadata;
     
   OVERRIDES
-    init    := Init;
+    init     := Init;
     flush    := Flush;
-    addhiOp := AddhiOp;
+    addhiOp  := AddhiOp;
+    addhi    := Addhi;
   END;
 
 PROCEDURE Init(t : T; root : Pathname.T; rewriterPath : Pathname.T) : T
@@ -188,6 +189,48 @@ PROCEDURE OpenWr(t : T) RAISES { OSError.E } =
     END
   END OpenWr;
 
+PROCEDURE Addhi(t               : T;
+                stream          : TEXT;
+                norm            : SpiceCompress.Norm;
+                code            : ArithConstants.Encoding;
+                aliases         : TextSeq.T) =
+  VAR
+    finalLen := Text.Length(stream);
+  BEGIN
+    OpenWr(t);
+    (* t.wr is open and ready *)
+
+    Wr.Seek(t.wr, t.wfLim);
+    (* seek to EOD *)
+
+    Debug.Out("TraceRewriter.Addhi : wr @ " & Int(Wr.Index(t.wr)));
+
+    Wr.PutText(t.wr, stream);
+
+    NameControl.PutNames(t.nwr, t.metadata.directory.size(), aliases, TRUE);
+    
+    Debug.Out(F("TraceRewriter.Addhi : writing stopped @ %s",
+                Int(Wr.Index(t.wr))));
+    
+    Wr.Flush(t.wr);
+    Wr.Flush(t.nwr);
+
+    WITH dirent = ZtraceNodeHeader.T { finalLen,
+                                       t.wfLim,
+                                       norm,
+                                       code,
+                                       0 } DO
+      t.dirty := TRUE;
+
+      t.metadata.directory.addhi(dirent);
+
+      INC(t.metadata.header.nwaves);
+      INC(t.wfLim, finalLen);
+    END
+
+  END Addhi;
+
+          
 PROCEDURE AddhiOp(t            : T;
                   op           : TraceOp.T;
                   aliases      : TextSeq.T;

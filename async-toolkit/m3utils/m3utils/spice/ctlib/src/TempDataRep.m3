@@ -1,7 +1,7 @@
 MODULE TempDataRep;
 IMPORT Debug;
 IMPORT Text;
-FROM Fmt IMPORT F, Int;
+FROM Fmt IMPORT F, Int, LongReal;
 IMPORT TextRd;
 IMPORT TextWr;
 IMPORT ArithCode;
@@ -14,28 +14,49 @@ IMPORT SpiceCompress;
 IMPORT FileWr;
 IMPORT Wr;
 
+CONST LR = LongReal;
+
 PROCEDURE ReadFromTemp(tempData    : TEXT;
                        VAR into    : T) =
   <*FATAL Thread.Alerted, Rd.EndOfFile, Rd.Failure*>
   VAR
-    rd := TextRd.New(tempData);
-
-    finalLen := Text.Length(tempData) - 9;
-    finalData := NEW(REF ARRAY OF CHAR, finalLen);
+    rd        := TextRd.New(tempData);
+    finalLen  := Text.Length(tempData) - 9;
   BEGIN
     (* see Fsdb.m3 / Fsdb.DoCompressedReceive *)
     into.norm.min := UnsafeReader.ReadLR(rd); 
     into.norm.max := UnsafeReader.ReadLR(rd);
+    ReadFromTempNoNorm(rd, into, finalLen + 1)
+  END ReadFromTemp;
 
+PROCEDURE ReadFromTempNoNorm(rd       : Rd.T;
+                             VAR into : T;
+                             finalLenp1 : CARDINAL) =
+  VAR
+    finalLen  := finalLenp1 - 1;
+    finalData := NEW(REF ARRAY OF CHAR, finalLen);
+  BEGIN
     (* see Main.m3<spicestream> *)
-    into.code := ORD(Rd.GetChar(rd));
+    WITH c = ORD(Rd.GetChar(rd)) DO
+      IF c < FIRST(ArithConstants.CodeIdx) OR
+         c > LAST(ArithConstants.CodeIdx)     THEN
+        Debug.Error(F("TempDataRep.ReadFromTemp : c %s out of range [%s,%s], min %s max %s",
+                      Int(c),
+                      Int(FIRST(ArithConstants.CodeIdx)),
+                      Int(LAST(ArithConstants.CodeIdx)),
+                      LR(into.norm.min),
+                      LR(into.norm.max)))
+        
+      END;
+      into.code := c
+    END;
 
     WITH bytes = Rd.GetSub(rd, finalData^) DO
       <*ASSERT bytes = finalLen*>
       into.finalData := Text.FromChars(finalData^)
     END
-  END ReadFromTemp;
-
+  END ReadFromTempNoNorm;
+  
 PROCEDURE Reconstruct(READONLY t : T; VAR a : ARRAY OF LONGREAL) =
   VAR
     deTxt   : TEXT;

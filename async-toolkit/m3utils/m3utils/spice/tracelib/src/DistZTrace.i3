@@ -23,6 +23,6 @@ PROCEDURE WriteOut(wr            : Wr.T;
   RAISES { Thread.Alerted, Wr.Failure, Matrix.Singular };
   (* this is the counterpart to FsdbComms.ReadCompressedNodeDataG *)
 
-PROCEDURE DoArithCompress(of : TEXT;
+PROCEDURE DoArithCompress(of          : TEXT;
                           VAR codeIdx : ArithConstants.CodeIdx) : TEXT;
 END DistZTrace.

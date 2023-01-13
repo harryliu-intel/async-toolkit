@@ -20,6 +20,8 @@ IMPORT TraceRewriter;
 IMPORT TempDataRep;
 IMPORT TextSeq;
 IMPORT FsdbComms;
+IMPORT FileWr;
+IMPORT TextRd;
 
 CONST TE      = Text.Equal;
       doDebug = TRUE;
@@ -37,6 +39,7 @@ REVEAL
     resseq  : RefSeq.T;        (* protected by mu *)
     rew     : TraceRewriter.T; (* protected by mu *)
     active  : CARDINAL;        (* protected by mu *)
+    running : CARDINAL;        (* protected by mu *)
     
   OVERRIDES
     init       := Init;
@@ -76,6 +79,7 @@ PROCEDURE Init(t        : T;
     t.resseq  := NEW(RefSeq.T).init();
     t.rew     := rew;
     t.active  := 0;
+    t.running := 0;
 
     FOR i := 0 TO nthreads - 1 DO
       WITH cl = NEW(Closure, t := t).init() DO
@@ -85,6 +89,15 @@ PROCEDURE Init(t        : T;
     WITH cl = NEW(ResClosure, t := t) DO
       EVAL Thread.Fork(cl)
     END;
+
+    (* await all the threads starting *)
+    LOCK t.mu DO
+      WHILE t.running < nthreads DO
+        Thread.Wait(t.mu, t.c)
+      END
+    END;
+
+    Debug.Out("DistRewriter.Init : All threads running, ready to compute.");
     
     RETURN t
   END Init;
@@ -92,7 +105,10 @@ PROCEDURE Init(t        : T;
 PROCEDURE AddNamedOp(t : T; op : TraceOp.T; nm : TEXT; relPrec : LONGREAL) =
   BEGIN
     WITH task = NEW(Task,
-                    op := op, nodeId := 0, relPrec := relPrec, nm := nm) DO
+                    op       := op,
+                    nodeId   := 16_c0edbabe,
+                    relPrec  := relPrec,
+                    nm       := nm) DO
       LOCK t.mu DO
         t.cmdseq.addhi(task);
         INC(t.active);
@@ -130,6 +146,8 @@ PROCEDURE Seq1(txt : TEXT) : TextSeq.T =
   END Seq1;
 
 PROCEDURE ResApply(cl : ResClosure) : REFANY =
+  CONST
+    DebugAll = TRUE;
   VAR
     rep : TempDataRep.T;
   BEGIN
@@ -139,7 +157,16 @@ PROCEDURE ResApply(cl : ResClosure) : REFANY =
           Thread.Wait(cl.t.mu, cl.t.c)
         END;
         WITH res = NARROW(cl.t.resseq.remlo(), Task) DO
-          TempDataRep.ReadFromTemp(res.result, rep);
+          IF DebugAll THEN
+            WITH wr = FileWr.Open("result.dat") DO
+              Wr.PutText(wr, res.result);
+              Wr.Close(wr)
+            END
+          END;
+          TempDataRep.ReadFromTempNoNorm(TextRd.New(res.result),
+                                         rep,
+                                         Text.Length(res.result));
+          rep.norm := res.norm;
           cl.t.rew.addhi(rep.finalData, rep.norm, rep.code, Seq1(res.nm))
         END;
         DEC(cl.t.active);
@@ -169,7 +196,9 @@ TYPE
     nodeId  : CARDINAL;
     relPrec : LONGREAL;
     nm      : TEXT;
-    result  : TEXT; (* filled in by execution *)
+
+    result  : TEXT;               (* filled in by execution *)
+    norm    : SpiceCompress.Norm; (* filled in by execution *)
   END;
   
 PROCEDURE ClApply(cl : Closure) : REFANY =
@@ -190,10 +219,8 @@ PROCEDURE ClApply(cl : Closure) : REFANY =
       Wr.Flush    (cmdWr)
     END PushTask;
 
-  PROCEDURE ReceiveResult() : TEXT =
-    VAR
-      nodeId : Trace.NodeId;
-      norm   : SpiceCompress.Norm; 
+  PROCEDURE ReceiveResult(VAR nodeId : Trace.NodeId;
+                          VAR norm   : SpiceCompress.Norm) : TEXT =
     BEGIN
       RETURN FsdbComms.ReadCompressedNodeDataG(cmdRd, nodeId, norm)
     END ReceiveResult;
@@ -206,6 +233,7 @@ PROCEDURE ClApply(cl : Closure) : REFANY =
     cmdRd      : Rd.T;
 
     task       : Task;
+    resId      : CARDINAL;
   BEGIN
     <*FATAL OSError.E*>
     BEGIN
@@ -229,6 +257,11 @@ PROCEDURE ClApply(cl : Closure) : REFANY =
 
       Debug.Out("DistRewriter.ClApply : slave is ready");
 
+      LOCK cl.t.mu DO
+        INC(cl.t.running);
+        Thread.Broadcast(cl.t.c)
+      END;
+
       LOOP
         LOCK cl.t.mu DO
           WHILE cl.t.cmdseq.size() = 0 DO
@@ -239,7 +272,8 @@ PROCEDURE ClApply(cl : Closure) : REFANY =
         END;
 
         PushTask(task);
-        WITH result = ReceiveResult() DO
+        WITH result = ReceiveResult(resId, task.norm) DO
+          <*ASSERT resId = task.nodeId*>
           task.result := result;
           
           LOCK cl.t.mu DO
@@ -249,8 +283,6 @@ PROCEDURE ClApply(cl : Closure) : REFANY =
         END
       END
     EXCEPT
-      TextReader.NoMore =>
-      Debug.Error("TextReader.NoMore in master during conversation")
     END; 
     RETURN NIL
   END ClApply;
@@ -265,38 +297,43 @@ PROCEDURE RunSlave(root : Pathname.T) =
   BEGIN
     Wr.PutText(Stdio.stdout, "READY\n"); Wr.Flush(Stdio.stdout);
     TRY
-    LOOP
-      WITH line   = Rd.GetLine(rd),
-           reader = NEW(TextReader.T).init(line) DO
-        IF doDebug THEN
-          Debug.Out(F("RewriterMain.RunSlave line \"%s\"", line));
-        END;
-        IF reader.next(" ", kw, TRUE) THEN
-          IF TE(kw, "P") THEN
-            WITH id        = reader.getInt(),
-                 prec      = reader.getLR(),
-                 ref       = Pickle.Read(rd),
-                 arr       = NEW(REF ARRAY OF LONGREAL, tr.getSteps()) DO
+      LOOP
+        WITH line   = Rd.GetLine(rd),
+             reader = NEW(TextReader.T).init(line) DO
+          IF doDebug THEN
+            Debug.Out(F("RewriterMain.RunSlave line \"%s\"", line));
+          END;
+          IF reader.next(" ", kw, TRUE) THEN
+            IF TE(kw, "P") THEN
+              WITH id        = reader.getInt(),
+                   prec      = reader.getLR(),
+                   ref       = Pickle.Read(rd),
+                   arr       = NEW(REF ARRAY OF LONGREAL, tr.getSteps()) DO
+                
+                <*ASSERT ISTYPE(ref, TraceOp.T)*>
+                
+                Debug.Out("DistRewriter.RunSlave : ready to execute task");
+                
+                NARROW(ref, TraceOp.T).exec(tr, arr^);
 
-              <*ASSERT ISTYPE(ref, TraceOp.T)*>
+                Debug.Out("DistRewriter.RunSlave : task done, writing to master");
+                
+                DistZTrace.WriteOut(Stdio.stdout,
+                                    arr^,
+                                    id,
+                                    FALSE,
+                                    prec,
+                                    FALSE,
+                                    FALSE);
+                Wr.Flush(Stdio.stdout);
 
-              Debug.Out("DistRewriter.RunSlave : ready to execute task");
+                Debug.Out("DistRewriter.RunSlave : writing to master complete!");
 
-              NARROW(ref, TraceOp.T).exec(tr, arr^);
-
-              DistZTrace.WriteOut(Stdio.stdout,
-                                  arr^,
-                                  id,
-                                  FALSE,
-                                  prec,
-                                  FALSE,
-                                  FALSE);
-              Wr.Flush(Stdio.stdout)
+              END
             END
           END
         END
       END
-    END
     EXCEPT
       Rd.EndOfFile => (* skip *)
     END

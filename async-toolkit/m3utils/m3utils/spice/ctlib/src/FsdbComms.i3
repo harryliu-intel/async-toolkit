@@ -24,7 +24,13 @@ PROCEDURE GetResponseG(rd : Rd.T; matchKw : TEXT) : TextReader.T;
 PROCEDURE ReadCompressedNodeDataG(rd         : Rd.T;
                                   VAR nodeid : CARDINAL;
                                   VAR norm   : SpiceCompress.Norm) : TEXT;
-  (* this is the counterpart to DistZTrace.WriteOut *)
+  (* this is the counterpart to DistZTrace.WriteOut
+
+     The result is the compressed bytes with the code byte prepended.
+
+     This differs from the tempfile format in that the tempfile has the 
+     norm prepended.
+  *)
   
 PROCEDURE ReadBinaryNodeDataG(rd         : Rd.T;
                               VAR nodeid : CARDINAL;
