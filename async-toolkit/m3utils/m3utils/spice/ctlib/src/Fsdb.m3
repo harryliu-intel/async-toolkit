@@ -901,16 +901,18 @@ PROCEDURE GenExitSoftly(cl : GenClosure) =
     END
   END GenExitSoftly;
 
-PROCEDURE GenInit(cl : GenClosure;
-                  c, d : Thread.Condition;
-                  mu : MUTEX;
-                  idxMap : CardSeq.T;
-                  nsteps : CARDINAL;
-                  cmdPath, fsdbPath : Pathname.T;
-                  compressPath : Pathname.T;
-                  compressPrec : LONGREAL;
-                  voltageScaleFactor, voltageOffset : LONGREAL;
-                  interpolate, unit : LONGREAL
+PROCEDURE GenInit(cl                  : GenClosure;
+                  c, d                : Thread.Condition;
+                  mu                  : MUTEX;
+                  idxMap              : CardSeq.T;
+                  nsteps              : CARDINAL;
+                  cmdPath,
+                  fsdbPath            : Pathname.T;
+                  compressPath        : Pathname.T;
+                  compressPrec        : LONGREAL;
+                  voltageScaleFactor,
+                  voltageOffset       : LONGREAL;
+                  interpolate, unit   : LONGREAL
   ) : GenClosure =
   BEGIN
     cl.mu                 := mu;

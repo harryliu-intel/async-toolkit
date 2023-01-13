@@ -1,24 +1,28 @@
 MODULE RewriterMain EXPORTS Main;
 IMPORT ParseParams;
 IMPORT Stdio;
+
 IMPORT Trace;
 IMPORT TraceRewriter;
+
 IMPORT Params;
 IMPORT Debug;
 IMPORT TraceOp;
 IMPORT Pathname;
 IMPORT TextSeq;
-IMPORT TextReader;
-IMPORT Rd;
 IMPORT Text;
-IMPORT DistZTrace;
 FROM Fmt IMPORT F, Int;
-IMPORT Pickle;
+IMPORT SchemeStubs;
+IMPORT Scheme;
+IMPORT SchemeM3;
+IMPORT SchemeReadLine;
+IMPORT ReadLine;
+IMPORT DistRewriter;
+FROM TraceOp IMPORT MakeGetNode;
 
 TYPE NodeId = Trace.NodeId;
 
-CONST Usage = "";
-      TE = Text.Equal;
+CONST Usage   = "";
       doDebug = TRUE;
 
 PROCEDURE MakePower(vi, ii : NodeId) : TraceOp.T =
@@ -50,53 +54,15 @@ PROCEDURE Seq1(txt : TEXT) : TextSeq.T =
 
 PROCEDURE AddNamedOp(op : TraceOp.T; nm : TEXT) =
   BEGIN
-    rew.addhiOp(op, Seq1(nm), relPrec := relPrec, noArith := FALSE)
+    IF master THEN
+      drew.addNamedOp(op, nm, relPrec)
+    ELSE
+      rew.addhiOp(op, Seq1(nm), relPrec := relPrec, noArith := FALSE)
+    END
   END AddNamedOp;
-
-PROCEDURE RunSlave() =
-  VAR
-    rd := Stdio.stdin;
-    tr := NEW(Trace.T).init(root);
-    kw : TEXT;
-  BEGIN
-    TRY
-    LOOP
-      WITH line   = Rd.GetLine(rd),
-           reader = NEW(TextReader.T).init(line) DO
-        IF doDebug THEN
-          Debug.Out(F("RewriterMain.RunSlave line \"%s\"", line));
-        END;
-        IF reader.next(" ", kw, TRUE) THEN
-          IF TE(kw, "P") THEN
-            WITH id        = reader.getInt(),
-                 prec      = reader.getLR(),
-                 ref       = Pickle.Read(rd),
-                 arr       = NEW(REF ARRAY OF LONGREAL, tr.getSteps()) DO
-
-              <*ASSERT ISTYPE(ref, TraceOp.T)*>
-
-              NARROW(ref, TraceOp.T).exec(tr, arr^);
-
-              DistZTrace.WriteOut(Stdio.stdout,
-                                  arr^,
-                                  id,
-                                  FALSE,
-                                  relPrec,
-                                  FALSE,
-                                  FALSE)
-            END
-          END
-        END
-      END
-    END
-    EXCEPT
-      Rd.EndOfFile => (* skip *)
-    END
-  END RunSlave;
 
 PROCEDURE TheProgram() =
   BEGIN
-    rew := NEW(TraceRewriter.T).init(root, myPath);
     
     CONST
       v1n = "dut.stage[22].digest1.pipeY.latch[3].bit[15].v1(M1n.M0)";
@@ -120,7 +86,10 @@ PROCEDURE TheProgram() =
       WITH p1 = MakePower(v1i, i1i),
            p2 = MakePower(v2i, i2i),
            p3 = MakePower(v3i, i3i),
-           
+
+           kcl  = MakeSum(ARRAY OF TraceOp.T { MakeGetNode(i1i),
+                                               MakeGetNode(i2i),
+                                               MakeGetNode(i3i) }),
            pall = MakeSum(ARRAY OF TraceOp.T { p1, p2, p3 }),
            eall = NEW(TraceOp.Integrate, a := pall) DO
       
@@ -132,40 +101,106 @@ PROCEDURE TheProgram() =
       END
     END;
     
-    rew.flush()
   END TheProgram;
+  
+PROCEDURE GetPaths(extras : TextSeq.T) : REF ARRAY OF Pathname.T = 
+  CONST
+    fixed = ARRAY OF Pathname.T { "require", "m3" };
+  VAR
+    res := NEW(REF ARRAY OF Pathname.T, NUMBER(fixed) + extras.size());
+  BEGIN
+    FOR i := 0 TO NUMBER(fixed) - 1 DO
+      res[i] := fixed[i]
+    END;
+    FOR i := NUMBER(fixed) TO extras.size() + NUMBER(fixed) - 1 DO
+      res[i] := extras.remlo()
+    END;
+    RETURN res
+  END GetPaths;
+
+PROCEDURE Flush() =
+  BEGIN
+    IF master THEN
+      drew.flush()
+    ELSE
+      rew.flush()
+    END
+  END Flush;
   
 VAR
   pp            := NEW(ParseParams.T).init(Stdio.stderr);
-  myPath        := Params.Get(0);
+  rewriterPath  := Params.Get(0);
   master, slave := FALSE; (* if both FALSE, then we do all ourselves *)
   relPrec       := 0.001d0;
   
-  rew  : TraceRewriter.T;
-  root : Pathname.T;
-  
+  rew      : TraceRewriter.T;
+  drew     : DistRewriter.T;
+  root     : Pathname.T;
+  doScheme : BOOLEAN;
+
+  extra := NEW(TextSeq.T).init();
+
+  nthreads : CARDINAL := 1;
+
 BEGIN
-  Debug.Out("RewriterMain myPath " & myPath);
+  Debug.Out("RewriterMain rewriterPath " & rewriterPath);
   
   TRY
-    slave  := pp.keywordPresent("-slave");
-    master := pp.keywordPresent("-master");
+    slave    := pp.keywordPresent("-slave");
+    master   := pp.keywordPresent("-master");
+    doScheme := pp.keywordPresent("-scm");
+
+    IF pp.keywordPresent("-root") THEN    
+      root := pp.getNext()
+    END;
+
+    IF pp.keywordPresent("-rewriter") THEN
+      rewriterPath := pp.getNext()
+    END;
 
     pp.skipParsed();
 
-    root := pp.getNext();
-
+    IF doScheme THEN
+      WITH n = NUMBER(pp.arg^) - pp.next DO
+        FOR i := 0 TO n - 1 DO
+          extra.addhi(pp.getNext())
+        END
+      END
+    END;
+    
     pp.finish()
   EXCEPT
-    ParseParams.Error => Debug.Error("Can't parse command-line parameters\nUsage: " & Params.Get(0) & " " & Usage)
+    ParseParams.Error =>
+    Debug.Error("Can't parse command-line parameters\nUsage: " & Params.Get(0) & " " & Usage)
   END;
 
   <*ASSERT NOT (slave AND master)*>
 
   IF slave THEN
-    RunSlave()
+    DistRewriter.RunSlave(root)
   ELSE
-    TheProgram()
+    rew := NEW(TraceRewriter.T).init(root, rewriterPath);
+
+    IF master THEN
+      drew := NEW(DistRewriter.T).init(root,
+                                       nthreads,
+                                       rewriterPath,
+                                       rew)
+    END;
+    
+    IF doScheme THEN
+      SchemeStubs.RegisterStubs();
+    TRY
+      WITH scm = NEW(SchemeM3.T).init(GetPaths(extra)^) DO
+        SchemeReadLine.MainLoop(NEW(ReadLine.Default).init(), scm)
+      END
+    EXCEPT
+      Scheme.E(err) => Debug.Error("Caught Scheme.E : " & err)
+    END
+    ELSE
+      TheProgram();
+      Flush()
+    END
   END;
 
 END RewriterMain.

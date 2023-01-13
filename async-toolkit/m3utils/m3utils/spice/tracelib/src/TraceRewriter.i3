@@ -4,6 +4,8 @@ IMPORT Pathname;
 IMPORT TraceOp;
 IMPORT Rd;
 IMPORT OSError;
+IMPORT SpiceCompress;
+IMPORT ArithConstants;
 
 TYPE
   T <: Public;
@@ -12,8 +14,11 @@ TYPE
     init(root         : Pathname.T;
          rewriterPath : Pathname.T) : T
     RAISES { OSError.E, Rd.Failure, Rd.EndOfFile };
+    (* rewriterPath not currently used for anything *)
 
     addhi(stream          : TEXT;
+          norm            : SpiceCompress.Norm;
+          code            : ArithConstants.Encoding;
           aliases         : TextSeq.T);
     (* 
        given the data stream "data", in the same format as that produced
