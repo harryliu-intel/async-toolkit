@@ -62,6 +62,7 @@ PROCEDURE AddNamedOp(op : TraceOp.T; nm : TEXT) =
   END AddNamedOp;
 
 PROCEDURE TheProgram() =
+  (* this is the test program *)
   BEGIN
     
     CONST
