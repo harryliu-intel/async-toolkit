@@ -3740,7 +3740,7 @@ public final class JFlat {
                 args.clear();
 
                 if (targets.add(target)) {
-                    pw.C(nextDevice(), targ_src, GND, null, "PrsCap",
+                    pw.C(nextDevice(), targ_src, "ENV_PRS_FALSE", null, "PrsCap",
                          new String[] { "$MODEL=prescap" });
                     final boolean up = pr.getDirection() == ProductionRule.UP;
                     final int extraDelay = instData == null ? 0 :
@@ -3748,8 +3748,8 @@ public final class JFlat {
                     int after = (int) delay.getDelay(pr.getTarget(), up, 100) + extraDelay;
                     after = (after>0 ? after : 5); // avoid 0 delays, because they don't work
                     String afterStr = pr.isAbsolute() ? after + "ps" : "'" + after/100.0 + "*PrsDelay'";
-                    pw.E(nextDevice(), target, GND, "delay",
-                         new String[] { targ_src, GND, "TD=" + afterStr});
+                    pw.E(nextDevice(), target, "ENV_PRS_FALSE", "delay",
+                         new String[] { targ_src, "ENV_PRS_FALSE", "TD=" + afterStr});
                 }
             }
         }
