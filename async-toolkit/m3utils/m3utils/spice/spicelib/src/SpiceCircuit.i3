@@ -15,7 +15,7 @@ TYPE
     (* elements within object *)
 
     bindings : TextTextTbl.T := NIL;
-    (* this is for CDL-style postfix bindings, e.g., 
+    (* this is for CDL-style suffix bindings, e.g., 
 
        .SUBCKT vendor.intel.g1i.xor004aa.2d02x5 a b c d out0 vcc vssx LG=1.4E-8
 +WG=3.0E-8
