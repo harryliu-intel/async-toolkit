@@ -41,9 +41,27 @@ Module ("ZtraceFile")
 Module ("ZtraceNodeHeader")
 Sequence ("ZtraceNodeHeader", "ZtraceNodeHeader")
 
+% names handling:
+
+Module ("RAC")
+
+Table ("RacRef", "RAC", "Refany")
+MkSet ("Rac", "RAC")
+MkSetDef ("Rac", "RAC")
+
+Table ("RacCardSet", "RAC", "CardSet")
+Table ("CardRacSet", "Cardinal", "RacSet")
+
 Table ("TextCardSet", "Text", "CardSet")
 Table ("CardTextSet", "Cardinal", "TextSet")
 
+Sequence ("Rac", "RAC")
+
 Sequence ("TextSeq", "TextSeq")
+Sequence ("RacSeq", "RacSeq")
+
+Array_sort("Rac", "RAC")
+
+Module ("MyWx")
 
 library ("ctlib")

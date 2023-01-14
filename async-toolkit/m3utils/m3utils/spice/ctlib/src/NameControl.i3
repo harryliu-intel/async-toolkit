@@ -8,13 +8,14 @@ IMPORT CardTextSetTbl;
 IMPORT TextSeqSeq;
 IMPORT Thread;
 IMPORT TextSeq;
+IMPORT CardRacSetTbl;
 
-PROCEDURE MakeIdxMap(nameIdTbl     : CardTextSetTbl.T;
-                     restrictNodes : TextSet.T;
-                     regExList     : RegExList.T;
-                     maxNodes      : CARDINAL;
-                     names         : TextSeqSeq.T;
-                     translate, noX: BOOLEAN) : CardSeq.T;
+PROCEDURE MakeIdxMap (nameIdTbl     : CardTextSetTbl.T;
+                      restrictNodes : TextSet.T;
+                      regExList     : RegExList.T;
+                      maxNodes      : CARDINAL;
+                      names         : TextSeqSeq.T;
+                      translate, noX: BOOLEAN) : CardSeq.T;
 
   (* for given fsdbNames table, generate:
 
@@ -24,6 +25,13 @@ PROCEDURE MakeIdxMap(nameIdTbl     : CardTextSetTbl.T;
 
      If no mapping, LAST(CARDINAL) will be placed.
   *)
+
+PROCEDURE MakeIdxMap2(nameIdTbl     : CardRacSetTbl.T;
+                      restrictNodes : TextSet.T;
+                      regExList     : RegExList.T;
+                      maxNodes      : CARDINAL;
+                      names         : TextSeqSeq.T;
+                      translate, noX: BOOLEAN) : CardSeq.T;
 
 CONST NoMapping = LAST(CARDINAL);
 

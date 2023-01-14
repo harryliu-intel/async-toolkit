@@ -99,17 +99,18 @@ PROCEDURE Get(self : T) : TEXT RAISES { NoMore } =
     RETURN self.nextSE(Delims,TRUE)
   END Get;
 
-PROCEDURE NextE(self : T; 
-                delims : TEXT; skipNulls : BOOLEAN) : TEXT RAISES { NoMore } = 
+PROCEDURE NextE(self      : T; 
+                delims    : TEXT;
+                skipNulls : BOOLEAN) : TEXT RAISES { NoMore } = 
   VAR res : TEXT; BEGIN 
     IF self.next(delims,res,skipNulls) THEN RETURN res
     ELSE RAISE NoMore
     END
   END NextE;
 
-PROCEDURE NextSE(self : T; 
+PROCEDURE NextSE(self           : T; 
                 READONLY delims : SET OF CHAR; 
-                skipNulls : BOOLEAN) : TEXT RAISES { NoMore } = 
+                skipNulls       : BOOLEAN) : TEXT RAISES { NoMore } = 
   VAR res : TEXT; BEGIN 
     IF self.nextS(delims,res,skipNulls) THEN RETURN res
     ELSE RAISE NoMore
@@ -127,7 +128,7 @@ PROCEDURE NextS(self : T;
   BEGIN
     IF Text.Length(self.pushback) > 0 THEN
       VAR
-        saveLine := self.line;
+        saveLine  := self.line;
         (* savePB := self.pushback; *)
         saveStart := self.start;
         found: BOOLEAN;

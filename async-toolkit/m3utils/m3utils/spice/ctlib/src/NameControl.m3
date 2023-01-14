@@ -19,11 +19,13 @@ IMPORT TextSeqSeq;
 IMPORT TextArraySort;
 IMPORT Cardinal;
 IMPORT CitTextUtils;
-IMPORT Wx;
+IMPORT MyWx AS Wx;
+IMPORT RAC;
+IMPORT RacSet, CardRacSetTbl;
+IMPORT RacArraySort;
+IMPORT RacSetDef;
 
 <*FATAL Thread.Alerted*>
-
-CONST TE = Text.Equal;
 
 VAR Verbose := Debug.DebugThis("NameControl");
     
@@ -52,43 +54,41 @@ char *gds2cast(char *name) {
 
 *)
 
-PROCEDURE Gds2Cast(name : TEXT) : TEXT =
+PROCEDURE Gds2Cast(name : RAC.T; wx : Wx.T) =
   CONST
     SQ = '\'';
   TYPE
-    M = RECORD t : TEXT; c : CHAR; n := LAST(CARDINAL) END;
+    M = RECORD t : RAC.T; c : CHAR; n := LAST(CARDINAL) END;
+  CONST
+    R = RAC.FromText;
   VAR 
     ToConv:= ARRAY [0..5] OF M {
-              M { "_D_" , '.' },
-              M { "_l_" , '[' },
-              M { "_r_" , ']' },
-              M { "_C_" , ',' },
-              M { "_U_" , '_' },
-              M { "_3a_", ':' }
+              M { R("_D_") , '.', 3 },
+              M { R("_l_") , '[', 3 },
+              M { R("_r_") , ']', 3 },
+              M { R("_C_") , ',', 3 },
+              M { R("_U_") , '_', 3 },
+              M { R("_3a_"), ':', 4 }
              };
 
   VAR
-    wx := Wx.New();
     n, i  : CARDINAL;
     mapped : BOOLEAN;
   BEGIN
-    (* v() is stripped elsewhere *)
-    FOR m := FIRST(ToConv) TO LAST(ToConv) DO
-      ToConv[m].n := Text.Length(ToConv[m].t)
+    Wx.Reset(wx);
+    
+    IF name[0] = SQ THEN
+      name := RAC.Sub(name, 1, NUMBER(name^) - 2)
     END;
 
-    IF Text.GetChar(name, 0) = SQ THEN
-      name := Text.Sub(name, 1, Text.Length(name) - 2)
-    END;
-
-    n := Text.Length(name);
+    n := NUMBER(name^);
 
     i := 0;
     WHILE i < n DO
       mapped := FALSE;
       FOR m := FIRST(ToConv) TO LAST(ToConv) DO
        WITH tr = ToConv[m] DO
-         IF TE(Text.Sub(name, i, tr.n), tr.t) THEN
+         IF RAC.SubIs(name, tr.t, i, tr.n) THEN
            Wx.PutChar(wx, tr.c);
            INC(i, tr.n);
            mapped := TRUE;
@@ -97,14 +97,27 @@ PROCEDURE Gds2Cast(name : TEXT) : TEXT =
        END
       END;
       IF NOT mapped THEN              
-        Wx.PutChar(wx, Text.GetChar(name, i));
+        Wx.PutChar(wx, name[i]);
         INC(i)
       END
-    END;
-    RETURN Wx.ToText(wx)
+    END
   END Gds2Cast;
 
-PROCEDURE SetToSeq(set : TextSet.T; translate, noX : BOOLEAN) : TextSeq.T =
+PROCEDURE Gds2CastT(name : RAC.T; wx : Wx.T) : TEXT =
+  BEGIN
+    Gds2Cast(name, wx);
+    RETURN Wx.ToText(wx)
+  END Gds2CastT;
+
+PROCEDURE Gds2CastR(name : RAC.T; wx : Wx.T) : RAC.T =
+  BEGIN
+    Gds2Cast(name, wx);
+    RETURN Wx.ToChars(wx)
+  END Gds2CastR;
+
+PROCEDURE SetToSeq(set            : TextSet.T;
+                   translate, noX : BOOLEAN;
+                   newWx          : Wx.T) : TextSeq.T =
   VAR
     iter := set.iterate();
     txt : TEXT;
@@ -117,7 +130,7 @@ PROCEDURE SetToSeq(set : TextSet.T; translate, noX : BOOLEAN) : TextSeq.T =
         txt := CitTextUtils.FilterOut(txt, SET OF CHAR { 'X' })
       END;
       IF translate THEN
-        a[j] := Gds2Cast(txt)
+        a[j] := Gds2CastT(RAC.FromText(txt), newWx)
       ELSE
         a[j] := txt
       END;
@@ -131,6 +144,37 @@ PROCEDURE SetToSeq(set : TextSet.T; translate, noX : BOOLEAN) : TextSeq.T =
     END;
     RETURN res
   END SetToSeq;
+
+PROCEDURE SetToSeq2(set            : RacSet.T;
+                   translate, noX  : BOOLEAN;
+                   newWx           : Wx.T) : TextSeq.T =
+  VAR
+    iter := set.iterate();
+    rac : RAC.T;
+    a   := NEW(REF ARRAY OF RAC.T, set.size());
+    res := NEW(TextSeq.T).init();
+    j  := 0;
+  BEGIN
+    WHILE iter.next(rac) DO
+      IF noX THEN
+        rac := RAC.FromText(
+                   CitTextUtils.FilterOut(RAC.ToText(rac), SET OF CHAR { 'X' }))
+      END;
+      IF translate THEN
+        a[j] := Gds2CastR(rac, newWx)
+      ELSE
+        a[j] := rac
+      END;
+      INC(j)
+    END;
+
+    RacArraySort.Sort(a^, cmp := CompareRac);
+    
+    FOR i := 0 TO NUMBER(a^) - 1 DO
+      res.addhi(RAC.ToText(a[i]))
+    END;
+    RETURN res
+  END SetToSeq2;
 
 PROCEDURE CountDots(a : TEXT) : CARDINAL =
   VAR
@@ -164,6 +208,28 @@ PROCEDURE CompareText(a, b : TEXT) : [-1..1] =
     END
   END CompareText;
 
+PROCEDURE CountDotsB(READONLY a : RAC.B) : CARDINAL =
+  VAR
+    res := 0;
+  BEGIN
+    FOR i := FIRST(a) TO LAST(a) DO
+      IF a[i] = '.' THEN INC(res) END
+    END;
+    RETURN res
+  END CountDotsB;
+  
+PROCEDURE CompareRac(a, b : RAC.T) : [-1 .. 1] =
+  BEGIN
+    WITH adots = CountDotsB(a^),
+         bdots = CountDotsB(b^) DO
+      IF adots = bdots THEN
+        RETURN RAC.Compare(a, b)
+      ELSE
+        RETURN Cardinal.Compare(adots, bdots)
+      END
+    END
+  END CompareRac;
+
 PROCEDURE MakeIdxMap(fsdbNames     : CardTextSetTbl.T;
                      restrictNodes : TextSet.T;
                      regExList     : RegExList.T;
@@ -181,6 +247,8 @@ PROCEDURE MakeIdxMap(fsdbNames     : CardTextSetTbl.T;
     id      : CARDINAL;
     set     : TextSet.T;
     seq     : TextSeq.T;
+
+    workWx := Wx.New();
     
   BEGIN
     WHILE iter.next(id, set) DO
@@ -193,7 +261,7 @@ PROCEDURE MakeIdxMap(fsdbNames     : CardTextSetTbl.T;
     
     iter := fsdbNames.iterate();
     WHILE iter.next(id, set) DO
-      arr[id] := SetToSeq(set, translate, noX)
+      arr[id] := SetToSeq(set, translate, noX, workWx)
     END;
 
     EVAL names.init();
@@ -261,6 +329,122 @@ PROCEDURE MakeIdxMap(fsdbNames     : CardTextSetTbl.T;
 
     RETURN res
   END MakeIdxMap;
+
+PROCEDURE TS2RS(ts : TextSet.T) : RacSet.T =
+  VAR
+    rs := NEW(RacSetDef.T).init();
+    iter := ts.iterate();
+    t : TEXT;
+  BEGIN
+    WHILE iter.next(t) DO
+      EVAL rs.insert(RAC.FromText(t))
+    END;
+    RETURN rs
+  END TS2RS;
+  
+PROCEDURE MakeIdxMap2(fsdbNames     : CardRacSetTbl.T;
+                     restrictNodesT : TextSet.T;
+                     regExList     : RegExList.T;
+                     maxNodes      : CARDINAL;
+                     names         : TextSeqSeq.T;
+                     translate, noX: BOOLEAN) : CardSeq.T =
+  VAR
+    res   := NEW(CardSeq.T).init();
+    c     := 0;
+    maxId := -1;
+    iter  := fsdbNames.iterate();
+
+    success : BOOLEAN;
+    arr     : REF ARRAY OF TextSeq.T;
+    id      : CARDINAL;
+    set     : RacSet.T;
+    seq     : TextSeq.T;
+
+    workWx := Wx.New();
+
+    TimeRac := RAC.FromText("TIME");
+
+    restrictNodes := TS2RS(restrictNodesT);
+    
+  BEGIN
+    WHILE iter.next(id, set) DO
+      maxId := MAX(id, maxId)
+    END;
+
+    arr := NEW(REF ARRAY OF TextSeq.T, maxId + 1);
+
+    FOR i := FIRST(arr^) TO LAST(arr^) DO arr[i] := NIL END;
+    
+    iter := fsdbNames.iterate();
+    WHILE iter.next(id, set) DO
+      arr[id] := SetToSeq2(set, translate, noX, workWx)
+    END;
+
+    EVAL names.init();
+    FOR i := FIRST(arr^) TO LAST(arr^) DO names.addhi(arr[i]) END;
+
+    FOR i := 0 TO names.size() - 1 DO
+
+      (* set up useful auxiliary variables *)
+      
+      seq := names.get(i);
+
+      IF seq # NIL THEN
+        WITH hadIt = fsdbNames.get(i, set) DO
+          <*ASSERT hadIt*>
+        END
+      END;
+
+
+      IF names.get(i) = NIL THEN
+        success := FALSE
+      ELSIF set.member(TimeRac) THEN
+        success := TRUE
+      ELSIF restrictNodes = NIL AND regExList = NIL THEN
+        success := TRUE
+      ELSIF restrictNodes # NIL AND
+            restrictNodes.intersection(set).size() # 0 THEN
+        success := TRUE
+      ELSE
+        IF Verbose THEN
+          Debug.Out("NameControl : regExList length " &
+            Int(RegExList.Length(regExList)))
+        END;
+        
+        success := FALSE;
+        VAR
+          p := regExList;
+        BEGIN
+          WHILE p # NIL DO
+            FOR j := 0 TO seq.size() - 1 DO
+              WITH alias = seq.get(j) DO
+                IF Verbose THEN
+                  Debug.Out("NameControl.MakeIdxMap : matching regex to " &
+                    alias)
+                END;
+                IF RegEx.Execute(p.head, alias) # -1 THEN
+                  success := TRUE;
+                  EXIT
+                END
+              END
+            END;
+            
+            IF success THEN EXIT END;
+            p := p.tail
+          END
+        END
+      END;
+
+      IF success AND res.size() < maxNodes THEN
+        res.addhi(c);
+        INC(c)
+      ELSE
+        res.addhi(NoMapping)
+      END
+    END;
+
+    RETURN res
+  END MakeIdxMap2;
   
 PROCEDURE SanitizeNames(idxMap : CardSeq.T;
                         names  : TextSeqSeq.T) =
