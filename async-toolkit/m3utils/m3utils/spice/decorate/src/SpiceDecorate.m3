@@ -95,6 +95,7 @@ PROCEDURE EmitElem(elem : SpiceObject.T; parent : SpiceCircuit.T) =
   VAR
     char : CHAR;
     addProbes := TRUE;
+    type := "";
     
   BEGIN
     Debug.Out("EmitElem " & elem.name);
@@ -114,18 +115,23 @@ PROCEDURE EmitElem(elem : SpiceObject.T; parent : SpiceCircuit.T) =
       char := 'L'; Terminals(); R(l.l)
     |
       SpiceObject.X(x) =>
-      char := 'X'; Terminals(); T(x.type)
+      char := 'X'; Terminals(); T(x.type); type := x.type
     |
       SpiceObject.M(m) =>
-      char := 'M'; Terminals(); T(m.type)
+      char := 'M'; Terminals(); T(m.type); type := m.type
     |
       SpiceObject.D(d) =>
-      char := 'D'; Terminals(); T(d.type)
+      char := 'D'; Terminals(); T(d.type); type := d.type
     ELSE
       <*ASSERT FALSE*>
     END;
 
-    IF char IN noprobe THEN
+    IF (char IN noprobe) AND NOT trantypes.member(type) THEN
+      IF FALSE THEN
+        Debug.Out(F("char %s type %s, skipping probe",
+                    Text.FromChar(char), type));
+      END;
+      
       addProbes := FALSE
     END;
     
