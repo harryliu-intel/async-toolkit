@@ -333,3 +333,33 @@ defun( AreaHtmlFooter ()
 (defun DensityFactor (@key (CV (geGetEditCellView)))
   (CellArea ?CV CV) / (PrbArea ?CV CV)
   )
+
+; report instance count and area of selected cells; meant to be run on flatten view
+(defun CellHistogram (@key (CV (geGetEditCellView)))
+  (let (pcre1 pcre2 instances count area cell key total_area total_count)
+    pcre1 = (pcreCompile "(\\.[1|2|3].....$)")
+    pcre2 = (pcreCompile "(v[1|2|3|4|5]$)")
+    instances=(geGetSelSet)
+    (unless instances instances=CV->instances)
+    count=(makeTable "count" 0)
+    area=(makeTable "area" 0)
+    (foreach inst instances
+             cell=inst->cellName
+             (cond ((pcreExecute pcre1 cell) cell=(pcreReplace pcre1 cell "" 0))
+                   ((pcreExecute pcre2 cell) cell=(pcreReplace pcre2 cell "" 0))
+                   )
+             count[cell]++
+             area[cell]+=(PrbArea ?CV inst->master)
+             )
+    total_area=0
+    total_count=0
+    (foreach pair (sort (tableToList area) (lambda (a  b) (cadr a)>(cadr b)))
+             key=(car pair)
+             (printf "%s %d %g\n" key count[key] area[key])
+             total_count+=count[key]
+             total_area+=area[key]
+             )
+    (printf "TOTAL %d %g\n" total_count total_area)
+    t
+    )
+  )
