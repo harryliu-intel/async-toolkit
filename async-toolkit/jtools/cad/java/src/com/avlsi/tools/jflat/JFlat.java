@@ -3729,11 +3729,11 @@ public final class JFlat {
                     nn = "ENV_PRS_FALSE";
                 }
 
-                // resistance changes from PrsMaxRes to PrsMinRes as input crosses ENV_PRS_MID
+                // resistance changes from PrsMaxRes to PrsMinRes as input crosses ENV_PRS_MID by +-10mV
                 args.add(0, "AND(" + count + ")");
                 args.add("-1,PrsMaxRes");
-                args.add("0,PrsMaxRes");
-                args.add("0,PrsMinRes");
+                args.add("-0.01,PrsMaxRes");
+                args.add("0.01,PrsMinRes");
                 args.add("1,PrsMinRes");
                 pw.G(nextDevice(), np, nn, "vcr",
                      (String[]) args.toArray(new String[0]));
