@@ -137,7 +137,10 @@ PROCEDURE EmitElem(elem : SpiceObject.T; parent : SpiceCircuit.T)
       <*ASSERT FALSE*>
     END;
 
-    IF (char IN noprobe) AND NOT trantypes.member(type) THEN
+    IF (char IN noprobe) AND
+       NOT ((char = 'X' OR char = 'M') AND trantypes.member(type)) THEN
+      (* always probe transistors *)
+      
       IF FALSE THEN
         Debug.Out(F("char %s type %s, skipping probe",
                     Text.FromChar(char), type));
