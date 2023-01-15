@@ -60,8 +60,10 @@ TYPE
     getNodeData := GetNodeDataR;
   END;
 
-  CompressedV1 = T OBJECT
-    z        : ZtraceFile.Metadata;
+TYPE CompressedV1 = TraceRep.CompressedV1;
+     
+REVEAL
+  TraceRep.CompressedV1 = TraceRep.PrivateCompressedV1 BRANDED Brand & " CompressedV1" OBJECT
     time     : REF ARRAY OF LONGREAL;
   OVERRIDES
     getSteps    := GetStepsC;

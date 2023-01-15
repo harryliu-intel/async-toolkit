@@ -21,6 +21,10 @@ IMPORT DistZTrace;
 IMPORT NameControl;
 IMPORT ZtraceNodeHeader;
 IMPORT FileRd;
+IMPORT Thread;
+IMPORT Matrix;
+
+<*FATAL Thread.Alerted*>
 
 REVEAL
   T = Public BRANDED Brand OBJECT
@@ -60,9 +64,11 @@ PROCEDURE Init(t : T; root : Pathname.T; rewriterPath : Pathname.T) : T
     RETURN t
   END Init;
 
-PROCEDURE Flush(t : T) =
+PROCEDURE Flush(t : T)
+  RAISES { Wr.Failure, OSError.E, Rd.Failure, Rd.EndOfFile, TraceFile.FormatError } =
 
-  PROCEDURE MoveTo(i : CARDINAL; tgt : CARDINAL) =
+  PROCEDURE MoveTo(i : CARDINAL; tgt : CARDINAL)
+    RAISES { OSError.E, Rd.Failure, Wr.Failure } =
     VAR
       rd       := FileRd.Open(t.tracePath);
       dirent   := t.metadata.directory.get(i);
@@ -92,7 +98,8 @@ PROCEDURE Flush(t : T) =
                   Int(oldStart), Int(tgt), Int(t.wfMin), Int(t.wfLim)))
     END MoveTo;
   
-  PROCEDURE MakeSpace(limit : CARDINAL) =
+  PROCEDURE MakeSpace(limit : CARDINAL)
+    RAISES { OSError.E, Rd.Failure, Wr.Failure } =
     BEGIN
       FOR i := 0 TO t.metadata.directory.size() - 1 DO
         VAR
@@ -146,7 +153,8 @@ PROCEDURE Flush(t : T) =
     END
   END Flush;
 
-PROCEDURE UpdateFileVersion(t : T; to : TraceFile.Version) =
+PROCEDURE UpdateFileVersion(t : T; to : TraceFile.Version)
+  RAISES { OSError.E, Rd.EndOfFile, Rd.Failure, TraceFile.FormatError, Wr.Failure } =
   VAR
     hdr  : TraceFile.Header;
   BEGIN
@@ -170,7 +178,7 @@ PROCEDURE UpdateFileVersion(t : T; to : TraceFile.Version) =
     END
   END UpdateFileVersion;
   
-PROCEDURE OpenWr(t : T) RAISES { OSError.E } =
+PROCEDURE OpenWr(t : T) RAISES { Rd.EndOfFile, Rd.Failure, TraceFile.FormatError, Wr.Failure, OSError.E } =
   BEGIN
     IF t.wr = NIL THEN
       VAR
@@ -193,7 +201,8 @@ PROCEDURE Addhi(t               : T;
                 stream          : TEXT;
                 norm            : SpiceCompress.Norm;
                 code            : ArithConstants.Encoding;
-                aliases         : TextSeq.T) =
+                aliases         : TextSeq.T) : CARDINAL
+  RAISES { TraceFile.FormatError, OSError.E, Rd.EndOfFile, Rd.Failure, Wr.Failure } =
   VAR
     finalLen := Text.Length(stream);
   BEGIN
@@ -226,6 +235,10 @@ PROCEDURE Addhi(t               : T;
 
       INC(t.metadata.header.nwaves);
       INC(t.wfLim, finalLen);
+
+      NARROW(t.tr, TraceRep.CompressedV1).z := t.metadata;
+
+      RETURN t.metadata.directory.size() - 1
     END
 
   END Addhi;
@@ -235,8 +248,8 @@ PROCEDURE AddhiOp(t            : T;
                   op           : TraceOp.T;
                   aliases      : TextSeq.T;
                   relPrec      : LONGREAL;
-                  noArith      : BOOLEAN)
-  RAISES { Rd.EndOfFile, Rd.Failure } =
+                  noArith      : BOOLEAN) : CARDINAL
+  RAISES { TraceFile.FormatError, OSError.E, Rd.EndOfFile, Rd.Failure, Wr.Failure, Matrix.Singular } =
   VAR
     code     : ArithConstants.CodeIdx;
     finalTxt : TEXT;
@@ -310,6 +323,8 @@ PROCEDURE AddhiOp(t            : T;
 
       INC(t.metadata.header.nwaves);
       INC(t.wfLim, finalLen);
+      
+      RETURN t.metadata.directory.size() - 1
     END
     
 

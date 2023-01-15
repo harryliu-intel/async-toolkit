@@ -19,11 +19,19 @@ IMPORT SchemeReadLine;
 IMPORT ReadLine;
 IMPORT DistRewriter;
 FROM TraceOp IMPORT MakeGetNode;
+IMPORT RegEx;
+IMPORT DevTermTbl;
+IMPORT DevArcs;
+IMPORT DevTerms;
+IMPORT ArcSetDef;
+IMPORT CardSeq;
+IMPORT RefSeq;
 
 TYPE NodeId = Trace.NodeId;
 
 CONST Usage   = "";
       doDebug = TRUE;
+      Verbose = FALSE;
 
 PROCEDURE MakePower(vi, ii : NodeId) : TraceOp.T =
   VAR
@@ -57,11 +65,11 @@ PROCEDURE AddNamedOp(op : TraceOp.T; nm : TEXT) =
     IF master THEN
       drew.addNamedOp(op, nm, relPrec)
     ELSE
-      rew.addhiOp(op, Seq1(nm), relPrec := relPrec, noArith := FALSE)
+      EVAL rew.addhiOp(op, Seq1(nm), relPrec := relPrec, noArith := FALSE)
     END
   END AddNamedOp;
 
-PROCEDURE TheProgram() =
+PROCEDURE TheTestProgram() =
   (* this is the test program *)
   BEGIN
     
@@ -103,8 +111,205 @@ PROCEDURE TheProgram() =
       END
     END;
     
-  END TheProgram;
+  END TheTestProgram;
+
+PROCEDURE GetNumberPrefix(str : TEXT; VAR rem : TEXT) : CARDINAL =
+  VAR
+    res := 0;
+  BEGIN
+    FOR i := 0 TO Text.Length(str) DO
+      WITH c = Text.GetChar(str, i) DO
+        CASE c OF
+          '0' .. '9' => res := res * 10 + ORD(c) - ORD('0')
+        ELSE
+          rem := Text.Sub(str, i);
+          RETURN res
+        END
+      END
+    END;
+
+    rem := "";
+    RETURN res
+  END GetNumberPrefix;
   
+PROCEDURE FindMyDevices(tr : Trace.T) : DevTermTbl.T =
+  VAR
+    allNames := tr.allNames();
+    iter     := allNames.iterate();
+    regex    := RegEx.Compile("v[1-9][0-9]*([_a-zA-Z0-9]*)$");
+
+    n        : TEXT;
+    rem      : TEXT;
+
+    arcs     := NEW(DevTermTbl.Default).init();
+    vMatches := 0;
+    terms    : DevTerms.T;
+  BEGIN
+    (* 
+       this seeks out the circuit elements for which we have all 
+       terminal currents and voltages
+
+       for those, we compute the power at each terminal and the total
+       power for the element, the KCL check, and the integral
+    *)
+    Debug.Out("Seeking voltage probes...");
+    
+    WHILE iter.next(n) DO
+      WITH start = RegEx.Execute(regex, n) DO
+        IF start # -1 THEN
+          WITH suffix = Text.Sub(n, start       ),
+               prefix = Text.Sub(n,     0, start),
+               idx    = GetNumberPrefix(Text.Sub(n, start + 1), rem),
+               key    = DevArcs.T { prefix, rem } DO
+
+            IF Verbose THEN
+              Debug.Out(F("match %s : suffix %s / idx %s rem %s",
+                          n,
+                          suffix,
+                          Int(idx),
+                          rem
+              ))
+            END;
+
+            INC(vMatches);
+            
+            IF NOT arcs.get(key, terms) THEN
+              terms := DevTerms.Empty;
+            END;
+            
+            terms.terms := terms.terms + SET OF DevTerms.Index { idx };
+            terms.max   := MAX(terms.max, idx);
+            
+            EVAL arcs.put(key, terms)
+          END
+        END
+      END
+    END;
+
+    Debug.Out(F("vMatches %s : potential devices %s",
+                Int(vMatches), Int(arcs.size())));
+    
+    (* now seek out those devices as currents *)
+
+    VAR
+      iter := arcs.iterate();
+      a : DevArcs.T;
+      fails := NEW(ArcSetDef.T).init();
+    BEGIN
+      WHILE iter.next(a, terms) DO
+        FOR i := FIRST(DevTerms.Index) TO terms.max DO
+          IF i IN terms.terms THEN
+            WITH iName = FormatArcs(a, "i", i) DO
+              IF NOT allNames.member(iName) THEN
+                IF NOT fails.insert(a) THEN
+                  Debug.Warning(F("Missing %s, removing arcs for device", iName))
+                END
+              END
+            END
+          END
+        END
+      END;
+
+      (* delete devices that don't have matching currents *)
+      
+      VAR
+        iter := fails.iterate();
+        a : DevArcs.T;
+      BEGIN
+        WHILE iter.next(a) DO
+          EVAL arcs.delete(a, terms)
+        END
+      END
+    END;
+
+    Debug.Out(F("Actual devices %s", Int(arcs.size())));
+    
+    RETURN arcs
+    
+  END FindMyDevices;
+
+PROCEDURE ThePowerProgram() =
+  VAR
+    tr       := NEW(Trace.T).init(root);
+    devs     := FindMyDevices(tr);
+
+    a : DevArcs.T;
+    t : DevTerms.T;
+
+    iter   := devs.iterate();
+    ndevs := 0;
+    
+  BEGIN
+
+    WHILE ndevs < maxDevs AND iter.next(a, t) DO
+      AddPowerMeasurements(tr, a, t);
+      INC(ndevs)
+    END
+    
+  END ThePowerProgram;
+
+PROCEDURE AddPowerMeasurements(tr : Trace.T; a : DevArcs.T; t : DevTerms.T) =
+  VAR
+    iNodes := NEW(CardSeq.T).init();
+    pseq   := NEW(RefSeq.T).init();
+  BEGIN
+    FOR i := FIRST(DevTerms.Index) TO t.max DO
+      IF i IN t.terms THEN
+        (* this node exists *)
+        WITH iNode = GetNode(tr, a, "i", i),
+             vNode = GetNode(tr, a, "v", i),
+             pi    = MakePower(vNode, iNode) DO
+          iNodes.addhi(iNode);
+          pseq.addhi(pi);
+          AddNamedOp(pi, FormatArcs(a, "p", i));
+        END
+      END
+    END;
+
+    VAR
+      kclA, palA := NEW(REF ARRAY OF TraceOp.T, pseq.size());
+    BEGIN
+      FOR i := FIRST(kclA^) TO LAST(kclA^) DO
+        kclA[i] := MakeGetNode(iNodes.get(i));
+        palA[i] := pseq.get(i)
+      END;
+      WITH kcl  = MakeSum(kclA^),
+           pall = MakeSum(palA^),
+           eall = NEW(TraceOp.Integrate, a := pall) DO
+        AddNamedOp(kcl , FormatArcs(a, "kcl" , -1));
+        AddNamedOp(pall, FormatArcs(a, "pall", -1));
+        AddNamedOp(eall, FormatArcs(a, "eall", -1));
+      END
+    END
+  END AddPowerMeasurements;
+
+PROCEDURE FormatArcs(a      : DevArcs.T;
+                     ident  : TEXT;
+                     idx    : [-1 .. LAST(CARDINAL) ]) : TEXT =
+  BEGIN
+    IF idx = -1 THEN
+      RETURN F("%s%s%s", a.pfx, ident, a.sfx)
+    ELSE
+      RETURN F("%s%s%s%s", a.pfx, ident, Int(idx), a.sfx)
+    END
+  END FormatArcs;
+
+PROCEDURE GetNode(tr     : Trace.T;
+                  a      : DevArcs.T;
+                  ident  : TEXT;
+                  idx    : CARDINAL) : Trace.NodeId =
+  VAR
+    nodeIdx : Trace.NodeId;
+  BEGIN
+    WITH nm    = FormatArcs(a, ident, idx),
+         hadIt = tr.getNodeIdx(nm, nodeIdx) DO
+      IF NOT hadIt THEN
+        Debug.Error("Couldnt find node in tracefile : " & nm)
+      END;
+      RETURN nodeIdx
+    END
+  END GetNode;
+                     
 PROCEDURE GetPaths(extras : TextSeq.T) : REF ARRAY OF Pathname.T = 
   CONST
     fixed = ARRAY OF Pathname.T { "require", "m3" };
@@ -144,6 +349,10 @@ VAR
 
   nthreads : CARDINAL := 1;
 
+  doPower  : BOOLEAN;
+
+  maxDevs  : CARDINAL := LAST(CARDINAL);
+  
 BEGIN
   Debug.Out("RewriterMain rewriterPath " & rewriterPath);
   
@@ -151,6 +360,10 @@ BEGIN
     slave    := pp.keywordPresent("-slave");
     master   := pp.keywordPresent("-master");
     doScheme := pp.keywordPresent("-scm");
+
+    IF NOT doScheme THEN
+      doPower  := pp.keywordPresent("-power")
+    END;
 
     IF master AND pp.keywordPresent("-threads") THEN
       nthreads := pp.getNextInt()
@@ -162,6 +375,10 @@ BEGIN
 
     IF pp.keywordPresent("-rewriter") THEN
       rewriterPath := pp.getNext()
+    END;
+
+    IF pp.keywordPresent("-maxdevs") THEN
+      maxDevs := pp.getNextInt()
     END;
 
     pp.skipParsed();
@@ -204,7 +421,12 @@ BEGIN
       Scheme.E(err) => Debug.Error("Caught Scheme.E : " & err)
     END
     ELSE
-      TheProgram();
+      IF doPower THEN
+        ThePowerProgram()
+      ELSE
+        TheTestProgram()
+      END;
+        
       Flush()
     END
   END;

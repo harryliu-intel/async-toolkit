@@ -1,4 +1,14 @@
 MODULE Main;
+
+(* 
+
+   Capture histogram / entropy data on binary byte streams
+
+   mika.nystroem@intel.com 
+   January 2023
+
+*)
+
 IMPORT Stdio;
 IMPORT Scan;
 IMPORT Params;

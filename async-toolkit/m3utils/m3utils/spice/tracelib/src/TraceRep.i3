@@ -29,4 +29,10 @@ TYPE
     getMetadata() : ZtraceFile.Metadata; (* only valid for CompressedV1 *)
   END;
 
+  PrivateCompressedV1 = Trace.T OBJECT
+    z : ZtraceFile.Metadata;
+  END;
+
+  CompressedV1 <: PrivateCompressedV1;
+  
 END TraceRep.

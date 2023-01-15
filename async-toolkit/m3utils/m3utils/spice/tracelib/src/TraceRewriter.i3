@@ -6,6 +6,9 @@ IMPORT Rd;
 IMPORT OSError;
 IMPORT SpiceCompress;
 IMPORT ArithConstants;
+IMPORT Wr;
+IMPORT TraceFile;
+IMPORT Matrix;
 
 TYPE
   T <: Public;
@@ -19,7 +22,8 @@ TYPE
     addhi(stream          : TEXT;
           norm            : SpiceCompress.Norm;
           code            : ArithConstants.Encoding;
-          aliases         : TextSeq.T);
+          aliases         : TextSeq.T) : CARDINAL
+    RAISES { TraceFile.FormatError, OSError.E, Rd.EndOfFile, Rd.Failure, Wr.Failure };
     (* 
        given the data stream "data", in the same format as that produced
        by spicestream in Filter mode (see spicestream/src/Main.m3), add
@@ -29,13 +33,14 @@ TYPE
        NAMES alias---this code will add it automatically 
     *)
 
-    flush();
+    flush() RAISES { Wr.Failure, OSError.E, Rd.Failure, Rd.EndOfFile, TraceFile.FormatError  } ;
     (* flush all edits to disk *)
 
     addhiOp(op           : TraceOp.T;
             aliases      : TextSeq.T;
             relPrec      : LONGREAL;
-            noArith      : BOOLEAN) RAISES { Rd.EndOfFile, Rd.Failure };
+            noArith      : BOOLEAN) : CARDINAL
+    RAISES { TraceFile.FormatError, OSError.E, Rd.EndOfFile, Rd.Failure, Wr.Failure, Matrix.Singular };
   END;
 
 CONST

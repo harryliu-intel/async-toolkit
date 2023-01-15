@@ -167,7 +167,7 @@ PROCEDURE ResApply(cl : ResClosure) : REFANY =
                                          rep,
                                          Text.Length(res.result));
           rep.norm := res.norm;
-          cl.t.rew.addhi(rep.finalData, rep.norm, rep.code, Seq1(res.nm))
+          EVAL cl.t.rew.addhi(rep.finalData, rep.norm, rep.code, Seq1(res.nm))
         END;
         DEC(cl.t.active);
         Thread.Broadcast(cl.t.c)

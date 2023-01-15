@@ -20,7 +20,7 @@ TYPE
           END;
 
 REVEAL
-  T = BRANDED "Wx.T" REF RECORD
+  T = BRANDED "MyWx.T" REF RECORD
         nFull : INTEGER;
         next  : INTEGER;
         head  : Chunk;

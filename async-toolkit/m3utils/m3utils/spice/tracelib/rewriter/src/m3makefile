@@ -12,6 +12,16 @@ import ("minimize")
 import ("integrate")
 
 Module ("DistRewriter")
+
+Module ("DevArcs")
+Interface ("DevTerms")
+
+Table ("DevTerm", "DevArcs", "DevTerms")
+
+Table ("ArcRef", "DevArcs", "Refany")
+MkSet ("Arc", "DevArcs")
+MkSetDef ("Arc", "DevArcs")
+
 implementation ("RewriterMain")
 
 SchemeStubs ("Math")
