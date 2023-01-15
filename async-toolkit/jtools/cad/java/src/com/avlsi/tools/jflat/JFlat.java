@@ -3678,8 +3678,7 @@ public final class JFlat {
             // and resistive voltage divider to create a node at half voltage
             pw.E(nextDevice(), "ENV_PRS_TRUE",  "0", "VCVS", new String[]{Vdd,"0","1"});
             pw.E(nextDevice(), "ENV_PRS_FALSE", "0", "VCVS", new String[]{GND,"0","1"});
-            pw.R(nextDevice(), "ENV_PRS_TRUE",  "ENV_PRS_MID", null, "PrsMaxRes", new String[0]);
-            pw.R(nextDevice(), "ENV_PRS_FALSE", "ENV_PRS_MID", null, "PrsMaxRes", new String[0]);
+            pw.E(nextDevice(), "ENV_PRS_MID", "ENV_PRS_FALSE", "VCVS", new String[]{Vdd,GND,"0.5"});
 
             // emit the PRS
             for (final Iterator i = prs.getProductionRules(); i.hasNext(); ) {
