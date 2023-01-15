@@ -9,6 +9,7 @@ my $cast_path=$ENV{CAST_PATH};
 my $dfII_dir=$ENV{DFII_DIR};
 my $output="cell.gds2";
 my $view="layout";
+my $map="";
 my $cell;
 
 # usage banner
@@ -19,6 +20,7 @@ sub usage {
         " --dfII-dir=[$dfII_dir]\n" .
         " --output=[$output]\n" .
         " --view=[$view]\n" .
+        " --map=[$map]\n" .
         " cellName\n");
 }
 
@@ -31,6 +33,7 @@ while (@ARGV) {
     elsif ($ARGV[0] =~ /^--dfII-dir=(.*)/)  { $dfII_dir =$1; }
     elsif ($ARGV[0] =~ /^--output=(.*)/)    { $output   =$1; }
     elsif ($ARGV[0] =~ /^--view=(.*)/)      { $view    = $1; }
+    elsif ($ARGV[0] =~ /^--map=(.*)/)       { $map = $1; }
     else { $cell = $ARGV[0]; }
     shift @ARGV;
 }
@@ -64,3 +67,6 @@ $status==0 || die("virtuoso failed\n");
 
 # move output file
 system("mv 'temp/gds/$cell'/*.gds '$output'")==0 || die("unable to move to $output\n");
+if ($map ne "") {
+    system("mv 'temp/gds/$cell'/*.cellmap '$map'")==0 || die("unable to move to $map\n");
+}

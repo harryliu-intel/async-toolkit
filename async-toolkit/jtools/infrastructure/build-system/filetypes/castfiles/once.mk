@@ -716,6 +716,7 @@ $(ROOT_TARGET_DIR)/%/$(GDS2_TARGET): $$(call GET_CELL_DIR,$$(@D))/cell.cdl $$(ca
           --view='$(call GET_VIEW,$(@D))' \
           --dfII-dir='$(DFII_DIR)' \
           --output='$(@D)/$(GDS2_TARGET).tmp' \
+          --map='$(@D)/$(GDS2_TARGET).map.tmp' \
 	  '$(call GET_CADENCE_BASE_NAME,$(@D))' && \
 	QB_DIAG_FILE='$(@D)/$(GDS2_TARGET).diag3' QB_RUN_NAME='lve_RENAME_GDS' \
 	  QB_LOCAL=$(QB_LOCAL) QRSH_FLAGS="$(PACKAGE_FLAGS)" \
@@ -723,6 +724,8 @@ $(ROOT_TARGET_DIR)/%/$(GDS2_TARGET): $$(call GET_CELL_DIR,$$(@D))/cell.cdl $$(ca
 	   rdgds '$(@D)/$(GDS2_TARGET).tmp' | $(RENAME_GDS) | wrgds > '$(@D)/$(GDS2_TARGET).tmp2' && \
 	isgds '$(@D)/$(GDS2_TARGET).tmp2' && \
 	mv -f '$(@D)/$(GDS2_TARGET).tmp2' '$(@D)/$(GDS2_TARGET)' &&\
+	rm -f '$(@D)/$(GDS2_TARGET).tmp' &&\
+	mv -f '$(@D)/$(GDS2_TARGET).map.tmp' '$(@D)/$(GDS2_TARGET).map' &&\
 	sleep 1; \
 	cd / && ( [[ $(DELETE_EXTRACT_DIR) == 0 ]] || rm -rf "$$working_dir" ); \
 	task=gds2 && $(CASTFILES_DEQUEUE_TASK)
@@ -925,6 +928,7 @@ EXTRACT_COMMON_OPTIONS=--64bit=$(BIT64) \
 	--fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_EXTRACT_ROOT) \
 	--fixbulk=$(GET_TRUE_IGNORE_BULK) \
 	--gds2-file='$(call GET_VIEW_DIR,$(@D))/cell.gds2' \
+	--gds2-map='$(call GET_VIEW_DIR,$(@D))/cell.gds2.map' \
 	--gray-cell-list='$(@D)/graybox_list' \
 	--ignore-nvn=$(IGNORE_NVN) \
 	--instance-port=$(INSTANCE_PORT) \
@@ -1462,7 +1466,8 @@ $(ROOT_TARGET_DIR)/%/nogeometry/cell.spice_gds2: $(ROOT_TARGET_DIR)/%/nogeometry
 $(ROOT_TARGET_DIR)/%/cell.hspice: $(ROOT_TARGET_DIR)/%/cell.spice_gds2
 	#TASK=spice2spice CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	task=spice2spice && $(CASTFILES_ENQUEUE_TASK) && \
-	$(SPICE2SPICE) --top='$(call GET_GDS2_CDL_NAME,$(@D))' "$?" "$@.tmp" && \
+	$(SPICE2SPICE) --top='$(call GET_GDS2_CDL_NAME,$(@D))' \
+	               --extension-out=hspice "$?" "$@.tmp" && \
 	mv -f '$@.tmp' '$@'; \
 	$(CASTFILES_DEQUEUE_TASK)
 

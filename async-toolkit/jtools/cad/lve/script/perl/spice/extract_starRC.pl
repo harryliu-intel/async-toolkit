@@ -53,6 +53,7 @@ sub usage() {
     $usage .= "    --root-target-dir=<path>\n";
     $usage .= "    --current-target-dir=<path>\n";
     $usage .= "    --gds2-file=<file_name>\n";
+    $usage .= "    --gds2-map=<file_name>\n";
     $usage .= "    --working-dir=<path> (default /scratch/tmp.extract.cellName.$$)\n";
     $usage .= "    --delete=(0|1) (default 1)\n";
     $usage .= "    --64bit=(0|1) (default 0)\n";
@@ -156,6 +157,7 @@ my $qtf=0;
 my $cth=0;
 my $cfg_ov="";
 my $grayboxFile="cell.spice_gds2";
+my $gdsmap="";
 
 while (defined $ARGV[0] and $ARGV[0] =~ /^--(.*)/) {
     my ($flag, $value) = split("=",$1);
@@ -170,6 +172,8 @@ while (defined $ARGV[0] and $ARGV[0] =~ /^--(.*)/) {
             $current_target_dir = $value;
     } elsif ($flag eq "gds2-file") {
             $gdsii = $value;
+    } elsif ($flag eq "gds2-map") {
+            $gdsmap = $value;
     } elsif ($flag eq "delete") {
             $del = $value;
     } elsif ($flag eq "pin-order-file") {
@@ -360,41 +364,72 @@ my $longcellnamegray=0;
 my %graylist=();
 my %reversegraylist=();
 my %reNameContext = ();
+my $xref = "$working_dir/starRC/gray_list.xref";
+my $xreflvs = "${xref}.lvs";
 
-sub makegdsgraylist {
-    my ($graycell_file) = @_;
-    my $n=0;
-    if ( -s "$graycell_file") {
-        open (P, "rename --type=cell --from=cast --to=gds2 <'$graycell_file' |");
-        while (<P>) {
-            chomp;
-            s/\s+/ /g;
-            s/^\s//;
-            s/\s$//;
-            if (length ($_) > 1) {
-                $graylist{$_}=$_;
-                $reversegraylist{$_}=$_;
-                if (length ($_) > 64) {
-                    $graylist{$_}=sprintf "SUBCELL_%04d", $n;
-                    $reversegraylist{$graylist{$_}} = $_;
-                    $longcellnamegray = 1;
-                }
-                $n++;
-            }
-        }
-        close P;
+# given the GDS2 name of a CAST cell, return the name without the metal variant
+# component
+sub strip_variant {
+    # FIXME: this code relies on 1276 cell naming convention
+    my ($gds2name) = @_;
+    my $invariant;
+    if ($gds2name =~ /^(.*_D_[a-d]\dv)\d$/) {
+        $invariant = "$1.";
+    } elsif ($gds2name =~ /^(.*_D_)\d(.\d\d.\d)$/) {
+        $invariant = "$1.$2";
     }
-    if ($longcellnamegray==1 or 1) {
-        my $fx;
-        `mkdir -p "$working_dir/starRC"`;
-        open $fx, ">$working_dir/starRC/gray_list.xref" or warn "Cannot create $working_dir/starRC/gray_list.xref\n";
+    return $invariant;
+}
+
+sub readxref {
+    if (-f $xreflvs) {
+        my %novariant = ();
+        open(my $fh, $xreflvs) or die "ERROR: cannot open $xreflvs: $!";
+        while(<$fh>) {
+            my @words = split;
+            die "ERROR: invalid format in $xreflvs: $_"
+                unless scalar(@words) == 2;
+            $graylist{$words[0]} = $words[1];
+            $reversegraylist{$words[1]} = $words[2];
+            my $nov = strip_variant($words[1]);
+            $novariant{$nov}->{$words[1]} = $words[1] if defined($nov);
+        }
+        close $fh;
+
+        my %gdsmap = ();
+        if ($gdsmap ne "") {
+            # the map is generated during stream out, from Cadence names to copy-exact names
+            open (my $fh, $gdsmap) or die "Can't open $gdsmap: $!";
+            while (<$fh>) {
+                my ($lib, $df2cell, $view, $strmcell) = split;
+                my $gdscell = reName2(\%reNameContext, 'cell', 'cadence', 'gds2', $df2cell);
+                my $nov = strip_variant($gdscell);
+                my $master = $gdscell;
+                # map layout name to exact CAST name if possible; otherwise
+                # map to one of the CAST metal variants
+                if (defined($nov) && exists($novariant{$nov})) {
+                    $master = $novariant{$nov}->{$gdscell} // (sort keys %{$novariant{$nov}})[0];
+                }
+                push @{$gdsmap{$master}}, $strmcell;
+            }
+            close($fh);
+        }
+                
+        open my $fx, ">$xref" or die "Cannot create $xref\n";
         foreach my $name (sort keys %graylist) {
-            print $fx "$name $graylist{$name}\n";
+            my @variants;
+            if (exists($gdsmap{$name})) {
+                @variants = @{$gdsmap{$name}};
+            } else {
+                @variants = ($graylist{$name});
+            }
+            foreach my $variant (@variants) {
+                print $fx "$name $variant\n";
+            }
         }
         close $fx;
     }
 }
-
 
 my_system("mkdir -p '$starRC_dir'");
 system("chmod 755 \"$working_dir\"");
@@ -427,6 +462,8 @@ if($stage1){
     push @lvs_cmd, "--setup-only=1" if $cth;
     push @lvs_cmd, "$cell_name";
     system(@lvs_cmd);
+
+    rename("gray_list.xref", "gray_list.xref.lvs") if ( -f "gray_list.xref");
 
     if (!$cth) {
         if( -e "$topcell.LVS_ERRORS" ){
@@ -467,7 +504,7 @@ if($stage2a){
         my $skip_cell_cmd="";
         if(-e $graycell_file) {
 
-            makegdsgraylist($graycell_file);
+            readxref();
             open GRAYCELL,">$graybox_list_file";
             foreach my $name (sort keys %graylist) {
                 print GRAYCELL "SKIP_CELLS: $graylist{$name}\n";
@@ -874,7 +911,7 @@ if ($stage2c) {
     #                 Re-Format Spice File                                   #
     ##########################################################################
 
-    makegdsgraylist($graycell_file);
+    readxref();
     if ($genspef) {
         my $cast_cell = reName2(\%reNameContext, 'cell', 'gds2', 'cast', $cell_name);
 

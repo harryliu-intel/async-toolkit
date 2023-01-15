@@ -45,6 +45,10 @@ my %first_subnet;
 # used to probe nodes
 my %probes;
 
+# used to update extension of .INCLUDE lines
+my $extension_in;
+my $extension_out;
+
 # command line arguments
 while (defined $ARGV[0] && $ARGV[0] =~ /^--(.*)=(.*)/) {
     if    ($1 eq "top") { $top = $2; }
@@ -55,6 +59,8 @@ while (defined $ARGV[0] && $ARGV[0] =~ /^--(.*)=(.*)/) {
     elsif ($1 eq "probe-ports") { $probe_ports = $2; }
     elsif ($1 eq "probe-gates") { $probe_gates = $2; }
     elsif ($1 eq "skip-parms") { $skip_parms = $2; }
+    elsif ($1 eq "extension-in") { $extension_in = $2; }
+    elsif ($1 eq "extension-out") { $extension_out = $2; }
     else { usage(); }
     shift @ARGV;
 }
@@ -65,11 +71,9 @@ $f_out = "$ARGV[1]";
 open IN,  "<$f_in"  or die "Can't open '$f_in' for reading.\n";
 open OUT, ">$f_out" or die "Can't open '$f_out' for writing.\n";
 
-# auto-detect file extensiones to rename include files
-my $extension_in;
-my $extension_out;
-if ($f_in  =~ /\.([^\.]*)$/ ) { $extension_in=$1;  }
-if ($f_out =~ /\.([^\.]*)$/ ) { $extension_out=$1; }
+# auto-detect file extensiones to rename include files if not specified
+if (!defined($extension_in)  && $f_in  =~ /\.([^\.]*)$/ ) { $extension_in=$1;  }
+if (!defined($extension_out) && $f_out =~ /\.([^\.]*)$/ ) { $extension_out=$1; }
 
 # skip unsupported transistor parameters
 my %skip_parms;
