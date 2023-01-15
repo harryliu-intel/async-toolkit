@@ -390,9 +390,9 @@ sub readxref {
             die "ERROR: invalid format in $xreflvs: $_"
                 unless scalar(@words) == 2;
             $graylist{$words[0]} = $words[1];
-            $reversegraylist{$words[1]} = $words[2];
-            my $nov = strip_variant($words[1]);
-            $novariant{$nov}->{$words[1]} = $words[1] if defined($nov);
+            $reversegraylist{$words[1]} = $words[0];
+            my $nov = strip_variant($words[0]);
+            $novariant{$nov}->{$words[0]} = $words[0] if defined($nov);
         }
         close $fh;
 
@@ -424,7 +424,7 @@ sub readxref {
                 @variants = ($graylist{$name});
             }
             foreach my $variant (@variants) {
-                print $fx "$name $variant\n";
+                print $fx "$graylist{$name} $variant\n";
             }
         }
         close $fx;
