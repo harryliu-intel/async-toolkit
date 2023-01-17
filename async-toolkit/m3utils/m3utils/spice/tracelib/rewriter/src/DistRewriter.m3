@@ -23,6 +23,8 @@ IMPORT FsdbComms;
 IMPORT FileWr;
 IMPORT TextRd;
 
+<*FATAL Thread.Alerted*>
+
 CONST TE      = Text.Equal;
       doDebug = TRUE;
       LR      = LongReal;
@@ -158,9 +160,12 @@ PROCEDURE ResApply(cl : ResClosure) : REFANY =
         END;
         WITH res = NARROW(cl.t.resseq.remlo(), Task) DO
           IF DebugAll THEN
-            WITH wr = FileWr.Open("result.dat") DO
-              Wr.PutText(wr, res.result);
-              Wr.Close(wr)
+            <*FATAL Wr.Failure,OSError.E*>
+            BEGIN
+              WITH wr = FileWr.Open("result.dat") DO
+                Wr.PutText(wr, res.result);
+                Wr.Close(wr)
+              END
             END
           END;
           TempDataRep.ReadFromTempNoNorm(TextRd.New(res.result),
@@ -295,6 +300,31 @@ PROCEDURE RunSlave(root : Pathname.T) =
     tr := NEW(Trace.T).init(root);
     kw : TEXT;
   BEGIN
+
+    (* a little bit of software engineering here would make this 
+       a lot easier.
+
+       We could 
+
+       1.
+       pipeline the master side of the operation, to allow
+       multiple jobs to be stuffed down the pipe before the first has
+       returned.
+
+       2. 
+       parallelize the slave code so that the reading and writing
+       over the pipes is sequential, as well as the reading the 
+       Trace structure, but the compression (and only
+       the compression) is done in parallel.
+
+       This should allow the memory of the slave machines to be shared
+       well.  We could possibly get 10X speedups on the slave for
+       some tasks.  Unless the computation is the heavy part, in
+       which case that too can be parallelized.  (The Trace file cannot
+       be parallelized, nor can the comms with the master.)
+
+    *)
+    
     Wr.PutText(Stdio.stdout, "READY\n"); Wr.Flush(Stdio.stdout);
     TRY
       LOOP

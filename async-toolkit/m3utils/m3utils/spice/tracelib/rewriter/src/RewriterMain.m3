@@ -237,7 +237,7 @@ PROCEDURE FindMyDevices(tr : Trace.T) : DevTermTbl.T =
     
   END FindMyDevices;
 
-PROCEDURE ThePowerProgram(tr : Trace.T)
+PROCEDURE ThePowerProgram(tr : Trace.T; allNodes : BOOLEAN)
   RAISES { OSError.E, Rd.EndOfFile, Rd.Failure, Wr.Failure, Matrix.Singular, TraceFile.FormatError } =
   VAR
     devs     := FindMyDevices(tr);
@@ -251,13 +251,16 @@ PROCEDURE ThePowerProgram(tr : Trace.T)
   BEGIN
 
     WHILE ndevs < maxDevs AND iter.next(a, t) DO
-      AddPowerMeasurements(tr, a, t);
+      AddPowerMeasurements(tr, a, t, allNodes);
       INC(ndevs)
     END
     
   END ThePowerProgram;
 
-PROCEDURE AddPowerMeasurements(tr : Trace.T; a : DevArcs.T; t : DevTerms.T)
+PROCEDURE AddPowerMeasurements(tr       : Trace.T;
+                               a        : DevArcs.T;
+                               t        : DevTerms.T;
+                               allNodes : BOOLEAN)
   RAISES { Matrix.Singular, OSError.E, Rd.EndOfFile, Rd.Failure, TraceFile.FormatError, Wr.Failure }  =
   VAR
     iNodes := NEW(CardSeq.T).init();
@@ -303,10 +306,12 @@ PROCEDURE AddPowerMeasurements(tr : Trace.T; a : DevArcs.T; t : DevTerms.T)
            eall  = NEW(TraceOp.Integrate, a := pall),
            eallC = NEW(TraceOp.Integrate, a := pallC)
        DO
-        AddNamedOp(kcl , FormatArcs(a, "kcl" , -1));
-        AddNamedOp(pall, FormatArcs(a, "pall", -1));
-        AddNamedOp(pallC, FormatArcs(a, "pallc", -1));
-        AddNamedOp(eall, FormatArcs(a, "eall", -1));
+        IF allNodes THEN
+          AddNamedOp(kcl , FormatArcs(a, "kcl" , -1));
+          AddNamedOp(pall, FormatArcs(a, "pall", -1));
+          AddNamedOp(pallC, FormatArcs(a, "pallc", -1));
+          AddNamedOp(eall, FormatArcs(a, "eall", -1));
+        END;
         AddNamedOp(eallC, FormatArcs(a, "eallc", -1));
       END
     END
@@ -382,12 +387,14 @@ VAR
   doPower  : BOOLEAN;
 
   maxDevs  : CARDINAL := LAST(CARDINAL);
+  allNodes : BOOLEAN;
   
 BEGIN
   TRY
     slave    := pp.keywordPresent("-slave");
     master   := pp.keywordPresent("-master");
     doScheme := pp.keywordPresent("-scm");
+    allNodes := pp.keywordPresent("-allnodes");
 
     IF NOT doScheme THEN
       doPower  := pp.keywordPresent("-power")
@@ -466,7 +473,7 @@ BEGIN
     ELSE
       IF doPower THEN
         TRY
-          ThePowerProgram(rew.shareTrace())
+          ThePowerProgram(rew.shareTrace(), allNodes)
         EXCEPT
         ELSE
           Debug.Error("Exception in ThePowerProgram")
