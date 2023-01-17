@@ -26,6 +26,7 @@ IMPORT TextRd;
 IMPORT SpiceCompress;
 IMPORT Text;
 IMPORT ZtraceNodeHeader;
+IMPORT PolySegment16Serial;
 
 <*FATAL Thread.Alerted*>
 
@@ -78,7 +79,7 @@ PROCEDURE Close(t : T) RAISES { Rd.Failure } =
   END Close;
   
 PROCEDURE Init(t : T; root : Pathname.T) : T
-  RAISES { OSError.E, Rd.Failure, Rd.EndOfFile } =
+  RAISES { OSError.E, Rd.Failure, Rd.EndOfFile, TraceFile.FormatError } =
   VAR
     tNam : Pathname.T;
     nNam := root & ".names";
@@ -156,7 +157,7 @@ PROCEDURE GetActualFormat(t                  : T;
   (**********************************************************************)
 
 TYPE Parser = PROCEDURE(VAR t : T) : BOOLEAN
-  RAISES { Rd.Failure, Rd.EndOfFile };
+  RAISES { Rd.Failure, Rd.EndOfFile, TraceFile.FormatError };
 
 CONST  AttemptParse = ARRAY TraceFile.Version OF Parser {
   AttemptParseUnreordered,
@@ -170,7 +171,7 @@ PROCEDURE AttemptParseUnreordered(<*UNUSED*>VAR t : T) : BOOLEAN =
   END AttemptParseUnreordered;
 
 PROCEDURE AttemptParseReordered(VAR t : T) : BOOLEAN
-  RAISES { Rd.Failure, Rd.EndOfFile } =
+  RAISES { Rd.Failure, Rd.EndOfFile, TraceFile.FormatError } =
   CONST
     V = TraceFile.Version.Reordered;
   BEGIN
@@ -185,7 +186,9 @@ PROCEDURE AttemptParseReordered(VAR t : T) : BOOLEAN
                    fwdTbl := t.fwdTbl,
                    revTbl := t.revTbl,
                    tRd    := t.tRd,
-                   root   := t.root) DO
+                   root   := t.root,
+                     actualPath    := t.actualPath,
+                     actualVersion := t.actualVersion) DO
       
     Rd.Seek(new.tRd, 0);
     
@@ -202,7 +205,8 @@ PROCEDURE AttemptParseReordered(VAR t : T) : BOOLEAN
     RETURN TRUE
   END AttemptParseReordered;
 
-PROCEDURE AttemptParseCompressedV1(VAR t : T) : BOOLEAN =
+PROCEDURE AttemptParseCompressedV1(VAR t : T) : BOOLEAN
+  RAISES { Rd.EndOfFile, Rd.Failure, TraceFile.FormatError } =
   CONST
     V = TraceFile.Version.CompressedV1;
   VAR
@@ -374,8 +378,14 @@ PROCEDURE ParseNames(nNam   : Pathname.T;
 
           IF len = 0 THEN EXIT END;
           
+          IF buff[len - 1] # '\n' THEN
+            Debug.Error(F("line %s : no NL : \"%s\"!",
+                          Int(id + 1),
+                          Text.FromChars(buff^)))
+          END;
+          
           q := 0;
-          FOR i := 0 TO len - 1 DO
+          FOR i := 0 TO len - 2 DO
             WITH c = buff[i] DO
               IF c = '=' THEN
                 WITH new = Text.FromChars(SUBARRAY(buff^, q, i - q)) DO
@@ -386,7 +396,7 @@ PROCEDURE ParseNames(nNam   : Pathname.T;
             END
           END;
 
-          WITH new = Text.FromChars(SUBARRAY(buff^, q, len - q)) DO
+          WITH new = Text.FromChars(SUBARRAY(buff^, q, len - q - 1)) DO
             Add(seq, new)
           END;
           
@@ -395,7 +405,6 @@ PROCEDURE ParseNames(nNam   : Pathname.T;
         END
       END
     EXCEPT
-      Rd.EndOfFile =>
     END;
     Rd.Close(rd);
     IF doDebug THEN
@@ -477,7 +486,13 @@ PROCEDURE GetNodeDataC(t       : CompressedV1;
       WITH data    = GetBytes(t.tRd, dirent.bytes),
            decoded = ArithDecode(data, dirent.code)
        DO
-        Decompress(decoded, arr);
+        TRY
+          Decompress(decoded, arr);
+        EXCEPT
+          PolySegment16Serial.Error =>
+          Debug.Error("Bad format in GetNodeDataC");
+          <*ASSERT FALSE*>
+        END;
         FOR i := FIRST(arr) TO LAST(arr) DO
           WITH range = dirent.norm.max - dirent.norm.min DO
             arr[i] := arr[i] * range + dirent.norm.min
@@ -524,14 +539,16 @@ PROCEDURE ArithDecode(from : TEXT; codeIdx : ArithConstants.CodeIdx) : TEXT =
     END
   END ArithDecode;
 
-PROCEDURE Decompress(txt : TEXT; VAR a : ARRAY OF LONGREAL) =
+PROCEDURE Decompress(txt : TEXT; VAR a : ARRAY OF LONGREAL)
+  RAISES { PolySegment16Serial.Error, Rd.EndOfFile, Rd.Failure } =
   VAR
     deRd := TextRd.New(txt);
   BEGIN
     SpiceCompress.DecompressArray(deRd, a)
   END Decompress;
 
-PROCEDURE SharedTime(t : T) : REF ARRAY OF LONGREAL =
+PROCEDURE SharedTime(t : T) : REF ARRAY OF LONGREAL
+  RAISES { Rd.EndOfFile, Rd.Failure } =
   BEGIN
     IF t.timeArr = NIL THEN
       t.timeArr := NEW(REF ARRAY OF LONGREAL, t.getSteps());

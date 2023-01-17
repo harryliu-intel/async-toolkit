@@ -18,7 +18,7 @@ IMPORT SchemeM3;
 IMPORT SchemeReadLine;
 IMPORT ReadLine;
 IMPORT DistRewriter;
-FROM TraceOp IMPORT MakeGetNode;
+FROM TraceOp IMPORT MakeGetNode, MakeScale, MakeTimes, MakePlus;
 IMPORT RegEx;
 IMPORT DevTermTbl;
 IMPORT DevArcs;
@@ -26,6 +26,13 @@ IMPORT DevTerms;
 IMPORT ArcSetDef;
 IMPORT CardSeq;
 IMPORT RefSeq;
+IMPORT Wr;
+IMPORT TraceFile;
+IMPORT Rd;
+IMPORT OSError;
+IMPORT Matrix;
+IMPORT RTRefStats;
+IMPORT FileWr;
 
 TYPE NodeId = Trace.NodeId;
 
@@ -60,7 +67,8 @@ PROCEDURE Seq1(txt : TEXT) : TextSeq.T =
     RETURN res
   END Seq1;
 
-PROCEDURE AddNamedOp(op : TraceOp.T; nm : TEXT) =
+PROCEDURE AddNamedOp(op : TraceOp.T; nm : TEXT)
+  RAISES { Matrix.Singular, OSError.E, Rd.EndOfFile, Rd.Failure, TraceFile.FormatError, Wr.Failure } =
   BEGIN
     IF master THEN
       drew.addNamedOp(op, nm, relPrec)
@@ -69,7 +77,8 @@ PROCEDURE AddNamedOp(op : TraceOp.T; nm : TEXT) =
     END
   END AddNamedOp;
 
-PROCEDURE TheTestProgram() =
+PROCEDURE TheTestProgram(tr : Trace.T)
+  RAISES { Matrix.Singular, OSError.E, Rd.EndOfFile, Rd.Failure, TraceFile.FormatError, Wr.Failure } =
   (* this is the test program *)
   BEGIN
     
@@ -82,7 +91,6 @@ PROCEDURE TheTestProgram() =
       i3n = "dut.stage[22].digest1.pipeY.latch[3].bit[15].i3(M1n.M0)";
       
     VAR
-      tr := NEW(Trace.T).init(root);
       v1i, v2i, v3i, i1i, i2i, i3i : Trace.NodeId;
     BEGIN
       WITH hadIt = tr.getNodeIdx(v1n, v1i) DO <*ASSERT hadIt*> END;
@@ -133,10 +141,11 @@ PROCEDURE GetNumberPrefix(str : TEXT; VAR rem : TEXT) : CARDINAL =
   END GetNumberPrefix;
   
 PROCEDURE FindMyDevices(tr : Trace.T) : DevTermTbl.T =
+  <*FATAL RegEx.Error*>
   VAR
     allNames := tr.allNames();
     iter     := allNames.iterate();
-    regex    := RegEx.Compile("v[1-9][0-9]*([_a-zA-Z0-9]*)$");
+    regex    := RegEx.Compile("v[1-9][0-9]*([^()]*)$");
 
     n        : TEXT;
     rem      : TEXT;
@@ -228,9 +237,9 @@ PROCEDURE FindMyDevices(tr : Trace.T) : DevTermTbl.T =
     
   END FindMyDevices;
 
-PROCEDURE ThePowerProgram() =
+PROCEDURE ThePowerProgram(tr : Trace.T)
+  RAISES { OSError.E, Rd.EndOfFile, Rd.Failure, Wr.Failure, Matrix.Singular, TraceFile.FormatError } =
   VAR
-    tr       := NEW(Trace.T).init(root);
     devs     := FindMyDevices(tr);
 
     a : DevArcs.T;
@@ -248,9 +257,11 @@ PROCEDURE ThePowerProgram() =
     
   END ThePowerProgram;
 
-PROCEDURE AddPowerMeasurements(tr : Trace.T; a : DevArcs.T; t : DevTerms.T) =
+PROCEDURE AddPowerMeasurements(tr : Trace.T; a : DevArcs.T; t : DevTerms.T)
+  RAISES { Matrix.Singular, OSError.E, Rd.EndOfFile, Rd.Failure, TraceFile.FormatError, Wr.Failure }  =
   VAR
     iNodes := NEW(CardSeq.T).init();
+    vNodes := NEW(CardSeq.T).init();
     pseq   := NEW(RefSeq.T).init();
   BEGIN
     FOR i := FIRST(DevTerms.Index) TO t.max DO
@@ -260,6 +271,7 @@ PROCEDURE AddPowerMeasurements(tr : Trace.T; a : DevArcs.T; t : DevTerms.T) =
              vNode = GetNode(tr, a, "v", i),
              pi    = MakePower(vNode, iNode) DO
           iNodes.addhi(iNode);
+          vNodes.addhi(vNode);
           pseq.addhi(pi);
           AddNamedOp(pi, FormatArcs(a, "p", i));
         END
@@ -267,18 +279,35 @@ PROCEDURE AddPowerMeasurements(tr : Trace.T; a : DevArcs.T; t : DevTerms.T) =
     END;
 
     VAR
-      kclA, palA := NEW(REF ARRAY OF TraceOp.T, pseq.size());
+      kclA, palA, sumV := NEW(REF ARRAY OF TraceOp.T, pseq.size());
+      nf         := FLOAT(pseq.size(), LONGREAL);
     BEGIN
       FOR i := FIRST(kclA^) TO LAST(kclA^) DO
         kclA[i] := MakeGetNode(iNodes.get(i));
+        sumV[i] := MakeGetNode(vNodes.get(i));
         palA[i] := pseq.get(i)
       END;
       WITH kcl  = MakeSum(kclA^),
-           pall = MakeSum(palA^),
-           eall = NEW(TraceOp.Integrate, a := pall) DO
+
+           (* 
+              we find that KCL doesn't quite hold, at least for our level
+              of accuracy in XA,
+              and it is probably giving rise to an accumulated energy error
+           *)
+           
+           vave = MakeScale(MakeSum(sumV^), -1.0d0 / nf), (* correction term *)
+           kclP = MakeTimes(vave, kcl),
+           
+           pall  = MakeSum(palA^),
+           pallC = MakePlus(pall, kclP),
+           eall  = NEW(TraceOp.Integrate, a := pall),
+           eallC = NEW(TraceOp.Integrate, a := pallC)
+       DO
         AddNamedOp(kcl , FormatArcs(a, "kcl" , -1));
         AddNamedOp(pall, FormatArcs(a, "pall", -1));
+        AddNamedOp(pallC, FormatArcs(a, "pallc", -1));
         AddNamedOp(eall, FormatArcs(a, "eall", -1));
+        AddNamedOp(eallC, FormatArcs(a, "eallc", -1));
       END
     END
   END AddPowerMeasurements;
@@ -325,7 +354,8 @@ PROCEDURE GetPaths(extras : TextSeq.T) : REF ARRAY OF Pathname.T =
     RETURN res
   END GetPaths;
 
-PROCEDURE Flush() =
+PROCEDURE Flush()
+  RAISES { OSError.E, Rd.EndOfFile, Rd.Failure, TraceFile.FormatError, Wr.Failure } =
   BEGIN
     IF master THEN
       drew.flush()
@@ -354,8 +384,6 @@ VAR
   maxDevs  : CARDINAL := LAST(CARDINAL);
   
 BEGIN
-  Debug.Out("RewriterMain rewriterPath " & rewriterPath);
-  
   TRY
     slave    := pp.keywordPresent("-slave");
     master   := pp.keywordPresent("-master");
@@ -381,6 +409,14 @@ BEGIN
       maxDevs := pp.getNextInt()
     END;
 
+    IF pp.keywordPresent("-memreport") THEN
+      WITH interval = pp.getNextLongReal(),
+           repwr    = FileWr.Open("rewriter_memreport.out"),
+           reporter = NEW(RTRefStats.Reporter).init(interval, wr := repwr) DO
+        reporter.start()
+      END
+    END;
+    
     pp.skipParsed();
 
     IF doScheme THEN
@@ -399,10 +435,17 @@ BEGIN
 
   <*ASSERT NOT (slave AND master)*>
 
+  Debug.Out("RewriterMain rewriterPath " & rewriterPath);
+
   IF slave THEN
     DistRewriter.RunSlave(root)
   ELSE
-    rew := NEW(TraceRewriter.T).init(root, rewriterPath);
+    TRY
+      rew := NEW(TraceRewriter.T).init(root, rewriterPath);
+    EXCEPT
+    ELSE
+      Debug.Error("Exception creating TraceRewriter")
+    END;
 
     IF master THEN
       drew := NEW(DistRewriter.T).init(root,
@@ -422,12 +465,28 @@ BEGIN
     END
     ELSE
       IF doPower THEN
-        ThePowerProgram()
+        TRY
+          ThePowerProgram(rew.shareTrace())
+        EXCEPT
+        ELSE
+          Debug.Error("Exception in ThePowerProgram")
+        END
       ELSE
-        TheTestProgram()
+        TRY
+          TheTestProgram(rew.shareTrace())
+        EXCEPT
+        ELSE
+          Debug.Error("Exception in TheTestProgram")
+        END
       END;
+
+      TRY
+        Flush()
+      EXCEPT
+      ELSE
+        Debug.Error("Exception in Flush")
+      END
         
-      Flush()
     END
   END;
 

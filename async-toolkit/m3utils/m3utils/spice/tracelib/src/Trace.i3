@@ -10,6 +10,7 @@ INTERFACE Trace;
 IMPORT Pathname;
 IMPORT OSError, Rd;
 IMPORT TextSet;
+IMPORT TraceFile;
 
 TYPE
   T <: Public;
@@ -18,7 +19,7 @@ TYPE
   
   Public = OBJECT METHODS
     init(root : Pathname.T) : T
-      RAISES { OSError.E, Rd.Failure, Rd.EndOfFile };
+      RAISES { OSError.E, Rd.Failure, Rd.EndOfFile, TraceFile.FormatError };
     (* files <root>.trace or <root>.ztrace and <root>.names are those read *)
   
     getNodeIdx(node : TEXT; VAR idx : NodeId) : BOOLEAN;
@@ -58,7 +59,7 @@ TYPE
     close() RAISES { Rd.Failure };
     (* close the internal reader *)
 
-    sharedTime() : REF ARRAY OF LONGREAL;
+    sharedTime() : REF ARRAY OF LONGREAL RAISES { Rd.EndOfFile, Rd.Failure } ;
     (* allocate and return a handle to a shared time (s.b. treated as R/O) *)
   END;
 

@@ -45,10 +45,13 @@ REVEAL
     flush    := Flush;
     addhiOp  := AddhiOp;
     addhi    := Addhi;
+    shareTrace := ShareTrace;
   END;
 
+PROCEDURE ShareTrace(t : T) : Trace.T = BEGIN RETURN t.tr END ShareTrace;
+
 PROCEDURE Init(t : T; root : Pathname.T; rewriterPath : Pathname.T) : T
-  RAISES { OSError.E, Rd.Failure, Rd.EndOfFile } =
+  RAISES { OSError.E, Rd.Failure, Rd.EndOfFile, TraceFile.FormatError } =
   BEGIN
     t.root         := root;
     t.rewriterPath := rewriterPath;

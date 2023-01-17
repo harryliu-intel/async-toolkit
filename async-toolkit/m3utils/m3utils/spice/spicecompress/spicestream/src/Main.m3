@@ -21,7 +21,7 @@ IMPORT TripleRefTbl;
 IMPORT FsdbComms;
 IMPORT Matrix;
 IMPORT DistZTrace;
-
+IMPORT CardList;
 
 <*FATAL Thread.Alerted*>
 
@@ -63,7 +63,7 @@ TYPE
 
 PROCEDURE OpenTrace() =
   BEGIN
-        TRY
+    TRY
       trace := NEW(Trace.T).init(traceRt)
     EXCEPT
       OSError.E(x) =>
@@ -105,7 +105,7 @@ VAR
   doAllDumps    : BOOLEAN;
   relPrec                        := 0.005d0;
   mode          : Mode;
-  nodeId        : CARDINAL;
+  nodeIds       : CardList.T := NIL;
   trace         : Trace.T;
   outFn, inFn   : Pathname.T     := "-";
   wr : Wr.T;
@@ -127,7 +127,7 @@ BEGIN
     
     doAllDumps := pp.keywordPresent("-dodumpall");
     
-    IF pp.keywordPresent("-t") THEN
+    IF pp.keywordPresent("-t") OR pp.keywordPresent("-root") THEN
       traceRt := pp.getNext()
     END;
 
@@ -143,8 +143,8 @@ BEGIN
       relPrec := pp.getNextLongReal()
     END;
 
-    IF pp.keywordPresent("-n") THEN
-      nodeId := pp.getNextInt()
+    WHILE pp.keywordPresent("-n") DO
+      nodeIds := CardList.Cons(pp.getNextInt(), nodeIds)
     END;
 
     IF pp.keywordPresent("-filter") THEN
@@ -180,34 +180,48 @@ BEGIN
   CASE mode OF
     Mode.ReadBinary =>
     OpenTrace();
-    
     VAR
-      a      := GetNode(nodeId);
+      p := nodeIds;
+      t := GetNode(0);
     BEGIN
-      TRY
-        UnsafeWriter.WriteI  (wr, trace.getSteps());
-        UnsafeWriter.WriteLRA(wr, a^);
-
-        Wr.Close(wr)
-      EXCEPT
-        Wr.Failure(x) =>
-        Debug.Error(F("Can't write raw trace FOR node id %s : Wr.Failure : %s",
-                      Int(nodeId), AL.Format(x)))
+      WHILE p # NIL DO
+        VAR
+          a      := GetNode(p.head);
+        BEGIN
+          TRY
+            UnsafeWriter.WriteI  (wr, trace.getSteps());
+            UnsafeWriter.WriteLRA(wr, a^);
+            
+            Wr.Close(wr)
+          EXCEPT
+            Wr.Failure(x) =>
+            Debug.Error(F("Can't write raw trace FOR node id %s : Wr.Failure : %s",
+                          Int(p.head), AL.Format(x)))
+          END
+        END
       END
     END
+    
     |
 
       Mode.ExtractOne =>
       OpenTrace();
       VAR
-        a := GetNode(nodeId);
+        p := nodeIds;
         t := GetNode(0);
-        wr := FileWr.Open(Int(nodeId) & ".dat");
       BEGIN
-        FOR i := 0 TO trace.getSteps() - 1 DO
-          Wr.PutText(wr, F("%s %s\n", LR(t[i]), LR(a[i])));
-        END;
-        Wr.Close(wr)
+        WHILE p # NIL DO
+          VAR
+            a  := GetNode(p.head);
+            wr := FileWr.Open(Int(p.head) & ".dat");
+          BEGIN
+            FOR i := 0 TO trace.getSteps() - 1 DO
+              Wr.PutText(wr, F("%s %s\n", LR(t[i]), LR(a[i])));
+            END;
+            Wr.Close(wr)
+          END;
+          p := p.tail
+        END
       END
       
       

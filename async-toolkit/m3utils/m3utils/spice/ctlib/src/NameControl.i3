@@ -71,5 +71,9 @@ PROCEDURE PutNames(wr             : Wr.T;
   RAISES { Wr.Failure, Thread.Alerted };
   (* put names for a single node *)
 
+PROCEDURE CompareText(a, b : TEXT) : [-1..1];
+  (* compare node names in an order such that lesser node names are more
+     canonical *)
+
 END NameControl.
   

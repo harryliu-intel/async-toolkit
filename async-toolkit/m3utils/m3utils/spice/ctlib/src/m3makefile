@@ -27,7 +27,7 @@ Module ("TempReader")
 
 Table("TextCardSeq", "Text", "CardSeq")
 
-module ("TempDataRep")
+Module ("TempDataRep")
 
 % spicecompress library below here
 
