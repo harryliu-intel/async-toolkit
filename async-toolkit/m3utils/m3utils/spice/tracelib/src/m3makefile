@@ -3,6 +3,8 @@ import ("cit_common")
 import ("cit_util")
 import ("ctlib")
 
+m3_optimize("T")
+
 Module ("Trace")
 Interface ("TraceRep")
 

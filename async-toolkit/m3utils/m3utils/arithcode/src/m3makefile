@@ -1,6 +1,8 @@
 import ("libm3")
 import ("cit_util")
 
+m3_optimize("T")
+
 Module ("FreqTable")
 Module ("ArithCode")
 Interface ("ArithCoder")

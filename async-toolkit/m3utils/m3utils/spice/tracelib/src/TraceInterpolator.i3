@@ -5,8 +5,10 @@ IMPORT Rd;
 TYPE
   T <: Public;
 
+  Array = REF ARRAY OF LONGREAL;
+  
   Public = OBJECT METHODS
-    init(tr : Trace.T; idx : Trace.NodeId) : T
+    init(tr : Trace.T; idx : Trace.NodeId; scratch : REF Array := NIL) : T
     RAISES { Rd.EndOfFile, Rd.Failure } ;
 
     minT() : LONGREAL;

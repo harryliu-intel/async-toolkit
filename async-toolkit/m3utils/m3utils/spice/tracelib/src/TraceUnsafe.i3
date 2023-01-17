@@ -11,4 +11,7 @@ PROCEDURE GetDataArray(tRd        : Rd.T;
                        VAR arr    : ARRAY OF LONGREAL)
   RAISES { Rd.Failure, Rd.EndOfFile };
 
+PROCEDURE GetBytes(rd : Rd.T; bytes : CARDINAL) : TEXT
+  RAISES { Rd.Failure, Rd.EndOfFile };
+  
 END TraceUnsafe.

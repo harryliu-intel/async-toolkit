@@ -5,7 +5,7 @@ TYPE
   T = RECORD
     r      : Rep16.T;
     lo     : INTEGER;
-    n      : CARDINAL;
+    n      : Rep16.Count;
   END;
 
 CONST Brand = "PolySegment16";

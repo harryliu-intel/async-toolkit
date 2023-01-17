@@ -4,6 +4,8 @@ IMPORT Rd;
 IMPORT Debug;
 FROM Fmt IMPORT Int, F;
 IMPORT Thread;
+IMPORT UnsafeRd;
+IMPORT Wx;
 
 <*FATAL Thread.Alerted*>
 
@@ -74,5 +76,20 @@ PROCEDURE GetDataArray(tRd        : Rd.T;
       END
     END
   END GetDataArray;
+
+PROCEDURE GetBytes(rd : Rd.T; bytes : CARDINAL) : TEXT
+  RAISES { Rd.Failure, Rd.EndOfFile } =
+  VAR
+    wx := Wx.New();
+  BEGIN
+    LOCK rd DO
+      FOR i := 0 TO bytes - 1 DO
+        WITH c = UnsafeRd.FastGetChar(rd) DO
+          Wx.PutChar(wx, c)
+        END
+      END;
+      RETURN Wx.ToText(wx)
+    END
+  END GetBytes;
 
 BEGIN END TraceUnsafe.

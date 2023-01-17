@@ -18,15 +18,22 @@ REVEAL
     eval := Eval;
   END;
 
-PROCEDURE Init(t : T; tr : Trace.T; idx : Trace.NodeId) : T
+PROCEDURE Init(t : T; tr : Trace.T; idx : Trace.NodeId; scratch : REF Array) : T
   RAISES { Rd.EndOfFile, Rd.Failure } =
+  VAR
+    n := tr.getSteps();
   BEGIN
     t.tr := tr;
     t.time := tr.sharedTime();
-    WITH data = NEW(REF ARRAY OF LONGREAL, tr.getSteps()) DO
-      t.data := data;
-      tr.getNodeData(idx, t.data^)
+    IF scratch # NIL THEN
+      IF scratch^ = NIL OR NUMBER(scratch^^) # n THEN
+        scratch^ := NEW(REF ARRAY OF LONGREAL, n);
+      END;
+      t.data := scratch^
+    ELSE
+      t.data := NEW(REF ARRAY OF LONGREAL, n);
     END;
+    tr.getNodeData(idx, t.data^);
     RETURN t
   END Init;
 

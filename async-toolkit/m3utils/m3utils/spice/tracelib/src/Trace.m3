@@ -18,7 +18,6 @@ IMPORT TraceFile;
 IMPORT ZtraceFile;
 IMPORT ArithConstants;
 IMPORT UnsafeReader;
-IMPORT Wx;
 IMPORT ArithCode;
 IMPORT TextWr;
 IMPORT ArithCallback;
@@ -27,6 +26,7 @@ IMPORT SpiceCompress;
 IMPORT Text;
 IMPORT ZtraceNodeHeader;
 IMPORT PolySegment16Serial;
+FROM TraceUnsafe IMPORT GetBytes;
 
 <*FATAL Thread.Alerted*>
 
@@ -506,19 +506,6 @@ PROCEDURE GetMetadataC(c : CompressedV1) : ZtraceFile.Metadata =
   BEGIN
     RETURN c.z
   END GetMetadataC;
-
-PROCEDURE GetBytes(rd : Rd.T; bytes : CARDINAL) : TEXT
-  RAISES { Rd.Failure, Rd.EndOfFile } =
-  VAR
-    wx := Wx.New();
-  BEGIN
-    FOR i := 0 TO bytes - 1 DO
-      WITH c = Rd.GetChar(rd) DO
-        Wx.PutChar(wx, c)
-      END
-    END;
-    RETURN Wx.ToText(wx)
-  END GetBytes;
 
 PROCEDURE ArithDecode(from : TEXT; codeIdx : ArithConstants.CodeIdx) : TEXT =
   BEGIN

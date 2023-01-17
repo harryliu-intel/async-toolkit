@@ -3,6 +3,8 @@ import ("cit_util")
 import ("unsaferdwr")
 import ("regression")
 
+m3_optimize("T")
+
 Interface ("PolySegment")
 Sequence ("PolySegment", "PolySegment")
 

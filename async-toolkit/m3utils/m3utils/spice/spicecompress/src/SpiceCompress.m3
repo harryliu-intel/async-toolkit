@@ -357,7 +357,7 @@ PROCEDURE DecompressArray(rd       : Rd.T;
                           VAR rarr : ARRAY OF LONGREAL)
   RAISES { Rd.Failure, PolySegment16Serial.Error, Rd.EndOfFile } =
   VAR
-    segments := NEW(PolySegment16Seq.T).init();
+    segments := NEW(PolySegment16Seq.T).init(1000);
     header : Rep16.Header;
   BEGIN
     PolySegment16Serial.Read(rd, segments, header);
@@ -1600,21 +1600,24 @@ PROCEDURE EvalSegment(seg        : PolySegment16.T;
                       READONLY a : ARRAY OF LONGREAL;
                       targMaxDev : LONGREAL) : Evaluation =
   VAR
-    y := NEW(REF ARRAY OF LONGREAL, seg.n);
+    <*NOWARN*>w : ARRAY Rep16.Count OF LONGREAL;
   BEGIN
-    FOR i := 0 TO seg.n - 1 DO
-      y[i] := Rep16.EvalPoly(seg.r, i)
-    END;
+    WITH y = SUBARRAY(w, 0, seg.n) DO
 
-    <*ASSERT seg.lo >= FIRST(a)*>
-    <*ASSERT seg.n + seg.lo <= NUMBER(a)*>
-    
-    RETURN Evaluate(NIL,
-                    seg.r.order,
-                    SUBARRAY(a, seg.lo, seg.n),
-                    y^,
-                    targMaxDev,
-                    FALSE)
+      FOR i := 0 TO seg.n - 1 DO
+        y[i] := Rep16.EvalPoly(seg.r, i)
+      END;
+      
+      <*ASSERT seg.lo >= FIRST(a)*>
+      <*ASSERT seg.n + seg.lo <= NUMBER(a)*>
+      
+      RETURN Evaluate(NIL,
+                      seg.r.order,
+                      SUBARRAY(a, seg.lo, seg.n),
+                      y,
+                      targMaxDev,
+                      FALSE)
+    END
   END EvalSegment;
 
 PROCEDURE CheckChainedX(seq : PolySegment16Seq.T;
