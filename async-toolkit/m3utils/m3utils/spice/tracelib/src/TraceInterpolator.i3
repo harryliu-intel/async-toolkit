@@ -1,0 +1,25 @@
+INTERFACE TraceInterpolator;
+IMPORT Trace;
+IMPORT Rd;
+
+TYPE
+  T <: Public;
+
+  Public = OBJECT METHODS
+    init(tr : Trace.T; idx : Trace.NodeId) : T
+    RAISES { Rd.EndOfFile, Rd.Failure } ;
+
+    minT() : LONGREAL;
+    maxT() : LONGREAL;
+    
+    eval(t : LONGREAL) : LONGREAL
+      RAISES { OutOfBounds };
+  END;
+
+EXCEPTION  OutOfBounds ;
+
+CONST Brand = "TraceInterpolator";
+
+END TraceInterpolator.
+    
+    
