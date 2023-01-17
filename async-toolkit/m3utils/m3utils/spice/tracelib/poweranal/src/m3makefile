@@ -1,0 +1,17 @@
+import ("libm3")
+import ("cit_util")
+import ("spicelib")
+import ("tracelib")
+import ("regression")
+import ("ctlib")
+import ("spicecompress")
+import ("mscheme")
+import ("modula3scheme")
+import ("sstubgen")
+import ("minimize")
+import ("integrate")
+
+
+implementation ("PowerAnal")
+
+program ("poweranal")
