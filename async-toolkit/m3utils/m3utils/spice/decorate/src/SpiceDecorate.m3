@@ -57,7 +57,7 @@ PROCEDURE EmitElem(elem : SpiceObject.T; parent : SpiceCircuit.T)
   PROCEDURE Terminals() 
   RAISES { Wr.Failure } =
     BEGIN
-      Wr.PutChar(wr, char);
+      (*Wr.PutChar(wr, char);*) (* hmmm ... *)
       Wr.PutText(wr, elem.name);
       FOR i := 0 TO elem.terminals.size() - 1 DO
         Wr.PutChar(wr, ' ');
@@ -110,7 +110,7 @@ PROCEDURE EmitElem(elem : SpiceObject.T; parent : SpiceCircuit.T)
     IF Verbose THEN
       Debug.Out("EmitElem " & elem.name)
     END;
-
+    
     TYPECASE elem OF
       SpiceObject.R(r) =>
       char := 'R'; Terminals(); R(r.r);
@@ -194,11 +194,39 @@ PROCEDURE Emit(typeNm : TEXT;
         Wr.PutChar(wr, '\n')
       END
     END Probes;
-    
+
+  VAR
+    stype : SpiceCircuit.T;
   BEGIN
     <*ASSERT type # NIL*>
     <*ASSERT typeNm # NIL*>
+
+    IF Verbose THEN
+      Debug.Out(F("Emit %s", typeNm))
+    END;
     
+    FOR i := 0 TO type.elements.size() - 1 DO
+      WITH elem = type.elements.get(i) DO
+        TYPECASE elem OF
+          SpiceObject.X (x) =>
+
+          IF Verbose THEN
+            Debug.Out(F("Emit %s prereq : X object nm %s type %s", typeNm, x.name, x.type))
+          END;
+
+          WITH hadIt = spice.subCkts.get(x.type, stype) DO
+            <*ASSERT hadIt*>
+          END;
+
+          IF doTransistorCkts OR NOT trantypes.member(x.type) THEN
+            EnsureEmitted(x.type, stype)
+          END
+        ELSE
+          (* skip *)
+        END
+      END
+    END;
+
     Wr.PutText(wr, ".SUBCKT ");
     Wr.PutText(wr, typeNm);
     Params();
@@ -215,40 +243,6 @@ PROCEDURE Emit(typeNm : TEXT;
     Wr.PutText(wr, F(".ENDS %s\n\n", typeNm));
   END Emit;
 
-PROCEDURE DoIt(ckt  : SpiceCircuit.T;
-               path : TEXT) 
-  RAISES { Wr.Failure } =
-  VAR
-    elems := ckt.elements;
-    type : SpiceCircuit.T;
-  BEGIN
-    FOR i := 0 TO elems.size() - 1 DO
-      
-      WITH elem = elems.get(i) DO
-        TYPECASE elem OF
-          SpiceObject.X (x) =>
-
-          IF Verbose AND FALSE THEN
-            Debug.Out(F("X object nm %s type %s", x.name, x.type))
-          END;
-
-          WITH hadIt = spice.subCkts.get(x.type, type) DO
-            <*ASSERT hadIt*>
-          END;
-
-          IF NOT trantypes.member(x.type) THEN
-            EnsureEmitted(x.type, type)
-          END;
-          
-          DoIt(type, path & x.name & ".")
-        ELSE
-          (* skip *)
-        END
-      END
-    END
-          
-  END DoIt;
-  
 VAR
   pp                          := NEW(ParseParams.T).init(Stdio.stderr);
   spiceFn    : Pathname.T     ;
@@ -261,6 +255,7 @@ VAR
   minres     := 0.0d0;
   noprobe    := SET OF CHAR { };
   ofn        : Pathname.T := "-";
+  doTransistorCkts : BOOLEAN;
   
 BEGIN
   TRY
@@ -279,6 +274,8 @@ BEGIN
     IF pp.keywordPresent("-minres") THEN
       minres := pp.getNextLongReal()
     END;
+
+    doTransistorCkts := pp.keywordPresent("-transistorckts");
 
     WHILE pp.keywordPresent("-n") DO
       WITH arg  = pp.getNext(),
@@ -348,8 +345,6 @@ BEGIN
   END;
 
   Debug.Out("Done parsing.");
-
-  DoIt(rootCkt, "");
 
   EnsureEmitted(rootType, rootCkt);
 

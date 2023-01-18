@@ -1,9 +1,11 @@
 MODULE TraceInterpolator;
 IMPORT Trace;
-FROM Fmt IMPORT F, Int, LongReal;
+FROM Fmt IMPORT F, Int, LongReal, FN;
 IMPORT Debug;
 IMPORT Rd;
 
+VAR doDebug := Debug.DebugThis("TraceInterpolator");
+    
 CONST LR = LongReal;
 
 REVEAL
@@ -135,7 +137,22 @@ PROCEDURE  Eval(t : T; time : LONGREAL) : LONGREAL
            dx  = ux - lx,
            dx0 = dx * ft,
 
-           x   = lt + dx0 DO
+           x   = lx + dx0 DO
+        IF doDebug THEN
+          Debug.Out(FN("lb=%s lt=%s ut=%s lx=%s ux=%s dt=%s dt0=%s ft=%s dx=%s dx0=%s x=%s",
+                       ARRAY OF TEXT { Int(lb),
+                                       LR(lt),
+                                       LR(ut),
+                                       LR(lx),
+                                       LR(ux),
+                                       LR(dt),
+                                       LR(dt0),
+                                       LR(ft),
+                                       LR(dx),
+                                       LR(dx0),
+                                       LR(x)}))
+        END;
+        
         RETURN x
       END
     END

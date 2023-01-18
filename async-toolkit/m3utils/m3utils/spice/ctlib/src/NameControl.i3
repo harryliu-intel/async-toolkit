@@ -75,5 +75,7 @@ PROCEDURE CompareText(a, b : TEXT) : [-1..1];
   (* compare node names in an order such that lesser node names are more
      canonical *)
 
+PROCEDURE Gds2Cast(nm : TEXT) : TEXT;
+  
 END NameControl.
   

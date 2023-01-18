@@ -54,7 +54,7 @@ char *gds2cast(char *name) {
 
 *)
 
-PROCEDURE Gds2Cast(name : RAC.T; wx : Wx.T) =
+PROCEDURE Gds2CastInt(name : RAC.T; wx : Wx.T) =
   CONST
     SQ = '\'';
   TYPE
@@ -101,17 +101,28 @@ PROCEDURE Gds2Cast(name : RAC.T; wx : Wx.T) =
         INC(i)
       END
     END
+  END Gds2CastInt;
+
+PROCEDURE Gds2Cast(nm : TEXT) : TEXT =
+  (* for external use *)
+  VAR
+    wx := Wx.New();
+  BEGIN
+    WITH rac = RAC.FromText(nm) DO
+      Gds2CastInt(rac, wx)
+    END;
+    RETURN Wx.ToText(wx)
   END Gds2Cast;
 
 PROCEDURE Gds2CastT(name : RAC.T; wx : Wx.T) : TEXT =
   BEGIN
-    Gds2Cast(name, wx);
+    Gds2CastInt(name, wx);
     RETURN Wx.ToText(wx)
   END Gds2CastT;
 
 PROCEDURE Gds2CastR(name : RAC.T; wx : Wx.T) : RAC.T =
   BEGIN
-    Gds2Cast(name, wx);
+    Gds2CastInt(name, wx);
     RETURN Wx.ToChars(wx)
   END Gds2CastR;
 
@@ -123,7 +134,7 @@ PROCEDURE SetToSeq(set            : TextSet.T;
     txt : TEXT;
     a   := NEW(REF ARRAY OF TEXT, set.size());
     res := NEW(TextSeq.T).init();
-    j  := 0;
+    j   := 0;
   BEGIN
     WHILE iter.next(txt) DO
       IF noX THEN
