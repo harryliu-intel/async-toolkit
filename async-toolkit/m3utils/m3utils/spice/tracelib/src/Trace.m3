@@ -30,7 +30,7 @@ FROM TraceUnsafe IMPORT GetBytes;
 
 <*FATAL Thread.Alerted*>
 
-VAR doDebug := TRUE;
+VAR doDebug := Debug.DebugThis("Trace");
 
 REVEAL
   T = TraceRep.Private BRANDED Brand OBJECT
@@ -99,16 +99,22 @@ PROCEDURE Init(t : T; root : Pathname.T) : T
 
       (* look for file .. *)
       TRY
-        Debug.Out(F("Trace.Init root %s attempting %s %s",
-                    root, tNam, TraceFile.VersionNames[i]));
-        
+        IF doDebug THEN
+          Debug.Out(F("Trace.Init root %s attempting %s %s",
+                      root, tNam, TraceFile.VersionNames[i]))
+        END;
+          
         t.tRd := FileRd.Open(tNam);
-        Debug.Out("Trace.Init, OK : " & tNam);
+        IF doDebug THEN
+          Debug.Out("Trace.Init, OK : " & tNam)
+        END;
         t.actualPath    := tNam;
         t.actualVersion := i;
-        Debug.Out(F("Trace.Init : success with actualPath %s version %s",
-                    t.actualPath,
-                    TraceFile.VersionNames[t.actualVersion]));
+        IF doDebug THEN
+          Debug.Out(F("Trace.Init : success with actualPath %s version %s",
+                      t.actualPath,
+                      TraceFile.VersionNames[t.actualVersion]))
+        END;
       EXCEPT
         OSError.E =>
         Debug.Out("Trace.Init, not found : " & tNam);
@@ -136,9 +142,12 @@ PROCEDURE Init(t : T; root : Pathname.T) : T
 
     IF ok THEN
       <*ASSERT t.actualPath # NIL*>
-      Debug.Out(F("Trace.Init : success with actualPath %s version %s",
-                  t.actualPath,
-                  TraceFile.VersionNames[t.actualVersion]));
+      IF doDebug THEN
+        Debug.Out(F("Trace.Init : success with actualPath %s version %s",
+                    t.actualPath,
+                    TraceFile.VersionNames[t.actualVersion]))
+
+      END;
       RETURN t
     ELSE
       Debug.Error("Trace.Init unable to parse for trace root " & root);
@@ -232,9 +241,11 @@ PROCEDURE AttemptParseCompressedV1(VAR t : T) : BOOLEAN
 
         (* build start bytes for each series *)
         bp := Rd.Index(t.tRd);
-        Debug.Out(F("Attempt ParseCompressedV1 start of data %s", Int(bp)));
 
-        Debug.Out(F("Attempt ParseCompressedV1 end   of data %s", Int(bp)));
+        IF doDebug THEN
+          Debug.Out(F("Attempt ParseCompressedV1 start of data %s", Int(bp)));
+          
+        END;
         
         new.time   := NEW(REF ARRAY OF LONGREAL, new.z.nsteps);
 
@@ -457,10 +468,12 @@ PROCEDURE GetNodeDataC(t       : CompressedV1;
     (*TraceUnsafe.GetDataArray(t.tRd, t.h, idx, arr)*)
     (* here goes all the clever stuff *)
 
-    Debug.Out(F("Trace.GetNodeDataC : directory.size %s idx %s startB %s",
-                Int(t.z.directory.size()),
-                Int(idx),
-                Int(dirent.start)));
+    IF doDebug THEN
+      Debug.Out(F("Trace.GetNodeDataC : directory.size %s idx %s startB %s",
+                  Int(t.z.directory.size()),
+                  Int(idx),
+                  Int(dirent.start)))
+    END;
 
     CASE dirent.code OF
       ArithConstants.DenseCode =>
