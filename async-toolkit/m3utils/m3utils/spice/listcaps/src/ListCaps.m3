@@ -27,6 +27,16 @@ CONST
 VAR
   Verbose := TRUE;
 
+PROCEDURE GetVal(x : SpiceObject.RealValue) : LONGREAL =
+  BEGIN
+    (* wont work on expressions *)
+    TYPECASE x OF
+      SpiceObject.RealLiteral(rl) => RETURN rl.v
+    ELSE
+      Debug.Error("Illegal type of expression for real value")
+    END
+  END GetVal;
+  
 PROCEDURE DoIt(ckt : SpiceCircuit.T;
                path : TEXT;
                caps : CapSeq.T;
@@ -57,11 +67,11 @@ PROCEDURE DoIt(ckt : SpiceCircuit.T;
           <*ASSERT caps # NIL*>
           <*ASSERT c.name # NIL*>
           <*ASSERT path # NIL*>
-          caps.addhi(Cap.T { path & c.name, c.c });
+          caps.addhi(Cap.T { path & c.name, GetVal(c.c) });
           
           WITH hnm = ckt.name & "/" & c.name DO
             IF NOT hier.get(hnm, cap) THEN
-              cap := Cap.T { hnm, c.c, 0 }
+              cap := Cap.T { hnm, GetVal(c.c), 0 }
             END;
             INC(cap.m);
             EVAL hier.put(hnm, cap)
