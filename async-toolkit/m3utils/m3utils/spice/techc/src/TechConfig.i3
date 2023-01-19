@@ -2,7 +2,14 @@ INTERFACE TechConfig;
 IMPORT Pathname;
 
 TYPE
-  Tech = { N5, P1276p4, N3, N3E, P1278p3 };
+  Tech = { N5,
+           P1276p4,
+           P1276p4_g1m,
+           P1276p4_aml1,
+           P1276p4_aml2,
+           N3,
+           N3E,
+           P1278p3 };
   (* supported technologies *)
 
   Corp = { Tsmc, Intc };
@@ -57,9 +64,12 @@ CONST
   GateNames = ARRAY Gate OF TEXT { "xor", "buf", "aoi", "oai" };
   (* should not ask for an oai, should only ask for aoi *)
 
-  TechNames = ARRAY Tech OF TEXT { "n5", "1276p4", "n3", "n3e", "1278p3" };
+  TechNames = ARRAY Tech OF TEXT { "n5", "1276p4", "1276p4_g1m", "1276p4_aml1", "1276p4_aml2", "n3", "n3e", "1278p3" };
 
   TechCorp  = ARRAY Tech OF Corp { Corp.Tsmc,
+                                   Corp.Intc,
+                                   Corp.Intc,
+                                   Corp.Intc,
                                    Corp.Intc,
                                    Corp.Tsmc,
                                    Corp.Tsmc,

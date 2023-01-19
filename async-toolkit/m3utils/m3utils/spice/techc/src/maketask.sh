@@ -33,7 +33,7 @@ buf_volts="0.11 0.13 0.15 0.17 0.19 0.21 0.23 0.25 0.27 0.29 0.31 0.33 0.35 0.40
 volts="0.11 0.13 0.15 0.17 0.19 0.21 0.23 0.25 0.27 0.29 0.31 0.33 0.35 0.40 0.45 0.50"
 
 #techs="n5 1276p4 n3 n3e"
-techs="n5 1276p4 n3e 1278p3"
+techs="n5 1276p4 1276p4_g1m n3e 1278p3"
 
 #modes="dyn leak"
 # we no longer need "leak"
@@ -56,6 +56,31 @@ gates="xor buf aoi"
 allvts="false"
 
 runmode="default"
+
+trantypes=""
+
+if [ "$1" == "-2023-01-18" ]; then
+    runmode="override"
+    volts="0.20 0.22 0.24 0.26 0.28 0.30 0.32 0.34 0.36 0.38 0.40 0.42 0.44"
+    temps="50 75 125"
+    modes="dyn"
+    paras="true"
+    corners="tt ss ff"
+    step=4
+    techs="n5 1276p4 1276p4_g1m n3e"
+fi
+
+if [ "$1" == "-fins" ]; then
+    runmode="override"
+    volts="0.20 0.22 0.24 0.26 0.28 0.30 0.32 0.34 0.36 0.38 0.40 0.42 0.44"
+    temps="50 75 125"
+    modes="dyn"
+    paras="true"
+    corners="tt"
+    step=4
+    techs="n5 1276p4 1276p4_g1m 1276p4_aml1 1276p4_aml2 n3e"
+    trantypes="ulvt"
+fi
 
 if [ "$1" == "-quick" ]; then
     # quick simulation, just to test
@@ -234,31 +259,33 @@ for temp in ${temps}; do
 for volt in ${volts}; do
 for tech in ${techs}; do
 
-    if [ "${tech}" == "n5" ]; then
-        if [ "${allvts}" == "true" ]; then
-            trantypes="elvt ulvt ulvtll lvt lvtll svt" 
-            # svtll seems some weird option -- delete for now
+    if [ "${trantypes}" == "" ]; then
+        if [ "${tech}" == "n5" ]; then
+            if [ "${allvts}" == "true" ]; then
+                trantypes="elvt ulvt ulvtll lvt lvtll svt" 
+                # svtll seems some weird option -- delete for now
+            else
+                trantypes="elvt ulvt ulvtll"
+            fi
+        elif [ "${tech}" == "n3e" ]; then
+            trantypes="elvt ulvt ulvtll lvt lvtll svt"
+            if [ "${allvts}" == "true" ]; then
+                trantypes="elvt ulvt ulvtll lvt lvtll svt" 
+            else
+                trantypes="elvt ulvt ulvtll"
+            fi
+        elif [ "${tech}" == "1278p3" ]; then
+            if [ "${allvts}" == "true" ]; then
+                trantypes="ulvt lvt svt svtll"
+            else
+                trantypes="ulvt lvt"
+            fi
         else
-            trantypes="elvt ulvt ulvtll"
-        fi
-    elif [ "${tech}" == "n3e" ]; then
-        trantypes="elvt ulvt ulvtll lvt lvtll svt"
-        if [ "${allvts}" == "true" ]; then
-            trantypes="elvt ulvt ulvtll lvt lvtll svt" 
-        else
-            trantypes="elvt ulvt ulvtll"
-        fi
-    elif [ "${tech}" == "1278p3" ]; then
-        if [ "${allvts}" == "true" ]; then
-            trantypes="ulvt lvt svt svtll"
-        else
-            trantypes="ulvt lvt"
-        fi
-    else
-        if [ "${allvts}" == "true" ]; then
-            trantypes="ulvt lvt svt"
-        else
-            trantypes="ulvt lvt"
+            if [ "${allvts}" == "true" ]; then
+                trantypes="ulvt lvt svt"
+            else
+                trantypes="ulvt lvt"
+            fi
         fi
     fi
 
@@ -313,5 +340,6 @@ cat >> ${taskfile} <<EOF
 }
 EOF
 
+rm -f nb.latest
 ln -sf ${RUNDIR} nb.latest
 ln -sf ${taskfile} latest.task

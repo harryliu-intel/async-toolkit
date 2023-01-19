@@ -19,16 +19,22 @@ TYPE
            VAR     ctr : CARDINAL) RAISES { Wr.Failure };
   END;
 
+  RealValue = OBJECT END;
+
+  RealLiteral = RealValue OBJECT v : LONGREAL END;
+
+  RealExpression = RealValue OBJECT x : TEXT END;
+
   R = T BRANDED Brand & " Resistor" OBJECT    (* resistor *)
-    r : LONGREAL;
+    r : RealValue;
   END;
 
   C = T BRANDED Brand & " Capacitor" OBJECT   (* capacitor *)
-    c : LONGREAL;
+    c : RealValue;
   END;
 
   L = T BRANDED Brand & " Inductor" OBJECT    (* inductor *)
-    l : LONGREAL;
+    l : RealValue;
   END;
 
   X = T BRANDED Brand & " Subcell" OBJECT     (* subcell *)
@@ -50,5 +56,7 @@ CONST Equal = Refany.Equal;
 PROCEDURE Hash(a : T) : Word.T;
 
 PROCEDURE Format(a : T) : TEXT;
+
+PROCEDURE FmtReal(rv : RealValue) : TEXT;
   
 END SpiceObject.

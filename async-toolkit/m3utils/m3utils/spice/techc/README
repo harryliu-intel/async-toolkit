@@ -1,5 +1,7 @@
 How to run this code, example:
 
+nbfeeder start --work-area /netbatch/mnystroe/mnystroe_`hostname`_feeder/ --name mnystroe_`hostname`_feeder
+
 cd m3utils/spice/techc # this directory
 mkdir work 
 cd work

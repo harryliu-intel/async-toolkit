@@ -12,6 +12,9 @@ interface ("N3TechProcess")
 interface ("N3ETechProcess")
 
 interface ("P1276p4TechProcess")
+interface ("P1276p4_g1m_TechProcess") % this is the 4nm lib in the 3nm proc
+interface ("P1276p4_aml1_TechProcess") % Andrew's extracted 2-fin
+interface ("P1276p4_aml2_TechProcess") % Andrew's extracted 2-fin
 interface ("P1278p3TechProcess")
 
 interface ("TechTechs")

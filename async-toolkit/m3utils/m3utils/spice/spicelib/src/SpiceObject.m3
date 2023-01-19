@@ -305,7 +305,7 @@ PROCEDURE ParseLine(VAR circuit   : SpiceCircuitList.T; (* circuit stack *)
           SpiceError.E =>
           Debug.Warning(
               F("Cannot parse resistance \"%s\", substituting 1 ohm.", nd));
-          m.r := 1.0d0
+          m.r := NEW(RealLiteral, v := 1.0d0)
         END;
 
         StuffData(m, line, p);
@@ -375,24 +375,19 @@ PROCEDURE RemoveCaseInsSuff(VAR z : TEXT; s : TEXT) : BOOLEAN =
     END
   END RemoveCaseInsSuff;
 
-PROCEDURE ParseValue(z : TEXT) : LONGREAL
-  RAISES { SpiceError.E } =
-  VAR
-    orig := z;
+PROCEDURE ParseValue(z : TEXT) : RealValue =
   BEGIN
     TRY
       FOR i := FIRST(Suffixes) TO LAST(Suffixes) DO
         IF    RemoveCaseInsSuff(z, Suffixes[i].s) THEN
-          RETURN Suffixes[i].mult * Scan.LongReal(z)
+          RETURN NEW(RealLiteral, v := Suffixes[i].mult * Scan.LongReal(z))
         END
       END;
-      RETURN Scan.LongReal(z)
+      RETURN NEW(RealLiteral, v := Scan.LongReal(z))
+
     EXCEPT
       Lex.Error, FloatMode.Trap =>
-      RAISE SpiceError.E(SpiceError.Data {
-      msg := F("Can't parse value \"%s\"", orig),
-      lNo := 0
-      })
+      RETURN NEW(RealExpression, x := z)
     END
   END ParseValue;
 
@@ -437,9 +432,9 @@ PROCEDURE Hash(a : T) : Word.T = BEGIN
 PROCEDURE Format(a : T) : TEXT =
   BEGIN
     TYPECASE a OF
-      R(r) => RETURN F("R(%s)", LR(r.r))
+      R(r) => RETURN F("R(%s)", FmtReal(r.r))
     |
-      C(c) => RETURN F("C(%s)", LR(c.c))
+      C(c) => RETURN F("C(%s)", FmtReal(c.c))
     |
       M(m) => RETURN F("M(%s)", m.type)
     |
@@ -449,6 +444,16 @@ PROCEDURE Format(a : T) : TEXT =
     END
   END Format;
 
-  
+PROCEDURE FmtReal(rv : RealValue) : TEXT =
+  BEGIN
+    TYPECASE rv OF
+      RealLiteral(rl) => RETURN LR(rl.v)
+    |
+      RealExpression(rx) => RETURN rx.x
+    ELSE
+      <*ASSERT FALSE*>
+    END
+  END FmtReal;
+
 BEGIN END SpiceObject.
 

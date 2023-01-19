@@ -1,4 +1,6 @@
-INTERFACE P1276p4TechProcess;
+INTERFACE P1276p4_aml2_TechProcess;
+
+(* Andrew's extracted layout *)
 
 IMPORT TechProcess;
 FROM TechConfig  IMPORT Tran, Corn, Gate;
@@ -9,9 +11,9 @@ CONST
   tranSufxs := TranSufxs { NIL,      (* elvt *)
                 "hpculvt", (* ulvt *)
                 NIL,      (* ulvtll *)
-                "hplvt",  (* lvt *)
+                NIL,  (* lvt *)
                 NIL,      (* lvtll *)
-                "hpsvt",  (* svt *)
+                NIL,  (* svt *)
                 NIL       (* svtll *)
   }      ,
   tranSize :="w=480e-9 l=14e-9 m=1",
@@ -47,105 +49,94 @@ CONST
 
       };
 
-  (*
-  StdCellRoot = "/p/hdk/cad/stdcells/g1m/22ww37.5_p1276d4_g1m_b.0.p3.core/spf/p1276d4_tttt_v0550_t100_pdn_max/";
-  *)
-
-  StdCellRoot = "/p/hdk/cad/stdcells/lib764_g1i_210h_50pp/pdk090_r4v0p0_fv_ext/";
-
-  UlvtSpfDir  = StdCellRoot & "base_ulvt/spf/lib764_g1i_210h_50pp_base_ulvt_tttt_105c_tttt_ctyp/";
-
-  LvtSpfDir  = StdCellRoot & "base_lvt/spf/lib764_g1i_210h_50pp_base_lvt_tttt_105c_tttt_ctyp/";
-  
-  SvtSpfDir  = StdCellRoot & "base_svt/spf/lib764_g1i_210h_50pp_base_svt_tttt_105c_tttt_ctyp/";
-
+  AmlExtracted = "/nfs/site/disks/zsc3_fon_fe_0001/mnystroe/g1i_aml/g1i_extracted.hspice";
   
   BufCellPaths = ARRAY Tran OF TEXT {
     NIL, 
-    UlvtSpfDir & "g1ibfn000aa1n02x5.spf",
+    AmlExtracted,
     NIL,
-    LvtSpfDir  & "g1ibfn000ab1n02x5.spf",
     NIL,
-    SvtSpfDir  & "g1ibfn000ac1n02x5.spf",
+    NIL,
+    NIL,
     NIL
   };
 
   BufCellNames = ARRAY Tran OF TEXT {
     NIL,
-    "g1ibfn000aa1n02x5",
+    "g1ibfn000aa2n02x5",
     NIL,
-    "g1ibfn000ab1n02x5",
     NIL,
-    "g1ibfn000ac1n02x5",
+    NIL,
+    NIL,
     NIL
   };
 
   XorCellPaths = ARRAY Tran OF TEXT {
     NIL,
-    UlvtSpfDir & "g1ixorc02aa1n02x5.spf",
+    AmlExtracted,
     NIL,
-    LvtSpfDir  & "g1ixorc02ab1n02x5.spf",
     NIL,
-    SvtSpfDir  & "g1ixorc02ac1n02x5.spf",
+    NIL,
+    NIL,
     NIL
   };
 
   XorCellNames = ARRAY Tran OF TEXT {
     (* why the heck is this 02x4? *)
     NIL,
-    "g1ixorc02aa1n02x5",
+    "g1ixor002aa2n02x5",
     NIL,
-    "g1ixorc02ab1n02x5",
     NIL,
-    "g1ixorc02ac1n02x5",
+    NIL,
+    NIL,
     NIL
   };
 
   AoiCellNames = ARRAY Tran OF TEXT {
     NIL,
-    "g1iaoi012aa1n02x5",
+    "g1iaoi012aa2n02x5",
     NIL,
-    "g1iaoi012ab1n02x5",
     NIL,
-    "g1iaoi012ac1n02x5",
+    NIL,
+    NIL,
     NIL
   };
 
   OaiCellNames = ARRAY Tran OF TEXT {
     NIL,
-    "g1ioai012aa1n02x5",
+    "g1ioai012aa2n02x5",
     NIL,
-    "g1ioai012ab1n02x5",
     NIL,
-    "g1ioai012ac1n02x5",
+    NIL,
+    NIL,
     NIL
   };
 
   
   AoiCellPaths = ARRAY Tran OF TEXT {
     NIL,
-    UlvtSpfDir  & "g1iaoi012aa1n02x5.spf",
+    AmlExtracted,
     NIL,
-    LvtSpfDir   & "g1iaoi012ab1n02x5.spf",
     NIL,
-    SvtSpfDir   & "g1iaoi012ac1n02x5.spf",
+    NIL,
+    NIL,
     NIL
   };
 
   OaiCellPaths = ARRAY Tran OF TEXT {
     NIL,
-    UlvtSpfDir   & "g1ioai012aa1n02x5.spf",
+    AmlExtracted,
     NIL,
-    LvtSpfDir    & "g1ioai012ab1n02x5.spf",
     NIL,
-    SvtSpfDir    & "g1ioai012ac1n02x5.spf",
+    NIL,
+    NIL,
     NIL
   };
 
 CONST
-  Brand = "P1276p4TechProcess";
+  Brand = "P1276p4_aml2_TechProcess";
 
-END P1276p4TechProcess.
+END P1276p4_aml2_TechProcess.
                                 
 
 
