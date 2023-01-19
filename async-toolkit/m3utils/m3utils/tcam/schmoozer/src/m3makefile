@@ -19,7 +19,6 @@ sequence("LRSeq", "LRSeq")
 
 interface ("XY")
 list("XY","XY")
-table ("TextCard", "Text", "Cardinal")
 
 interface ("NbCommand")
 sequence ("NbCommand", "NbCommand")
