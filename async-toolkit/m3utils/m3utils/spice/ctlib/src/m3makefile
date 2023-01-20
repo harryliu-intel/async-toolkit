@@ -7,6 +7,7 @@ import ("regression")
 import ("unsaferdwr")
 import ("rep16")
 import ("spicecompress")
+import ("gds2cast")
 
 module ("Tr0")
 module ("DataBlock")
@@ -29,6 +30,9 @@ Table("TextCardSeq", "Text", "CardSeq")
 
 Module ("TempDataRep")
 
+Table ("TextCardSet", "Text", "CardSet")
+Table ("CardTextSet", "Cardinal", "TextSet")
+
 % spicecompress library below here
 
 m3_optimize("T")
@@ -43,25 +47,6 @@ Sequence ("ZtraceNodeHeader", "ZtraceNodeHeader")
 
 % names handling:
 
-Module ("RAC")
-
-Table ("RacRef", "RAC", "Refany")
-MkSet ("Rac", "RAC")
-MkSetDef ("Rac", "RAC")
-
-Table ("RacCardSet", "RAC", "CardSet")
-Table ("CardRacSet", "Cardinal", "RacSet")
-
-Table ("TextCardSet", "Text", "CardSet")
-Table ("CardTextSet", "Cardinal", "TextSet")
-
-Sequence ("Rac", "RAC")
-
 Sequence ("TextSeq", "TextSeq")
-Sequence ("RacSeq", "RacSeq")
-
-Array_sort("Rac", "RAC")
-
-Module ("MyWx")
 
 library ("ctlib")

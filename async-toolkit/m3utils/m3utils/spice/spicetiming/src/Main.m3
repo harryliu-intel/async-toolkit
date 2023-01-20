@@ -81,9 +81,8 @@ CONST
   NoNode = N { NIL, FALSE };
   NoArc   = Arc { NoNode, NoNode, FIRST(CheckMode.T), 0, Dn };
 
-  VendorLatch = LatchSpec {
-  "vendor_D_intel_D_g1i_D_l",
-  ArcArr {
+  VendorArcs = 
+    ArcArr {
     Arc { N { "d", FALSE },   N { "clk", FALSE }, CheckMode.T.Setu,  1, UD },
     Arc { N { "d", FALSE },   N { "clk", FALSE }, CheckMode.T.Hold,  1, UD },
     Arc { N { "d", FALSE },   N { "clk", FALSE }, CheckMode.T.Hold,  1, UD },
@@ -93,20 +92,30 @@ CONST
     Arc { N { "nk2", TRUE }, N { "nc1", TRUE  }, CheckMode.T.Puls, -1, Dn },
     NoArc,
     ..
-  }};
+  };
+  
+  VendorLatch = LatchSpec { "vendor_D_intel_D_g1i_D_l", VendorArcs };
+  VendorLatch2 = LatchSpec { "g1ilsn000aa2n04x5", VendorArcs };
 
-  TinyLatch = LatchSpec {
-  "D_TINY_U_LATCH_D_a.v.",
-  ArcArr {
+  TinyArcs =   ArcArr {
     Arc { N { "D",  FALSE }, N { "CLK"   , FALSE }, CheckMode.T.Setu,  1, Up },
     Arc { N { "D",  FALSE }, N { "_U_CLK", FALSE }, CheckMode.T.Setu, -1, Dn },
     Arc { N { "D",  FALSE }, N { "CLK"   , FALSE }, CheckMode.T.Hold,  1, Up },
     Arc { N { "D",  FALSE }, N { "_U_CLK", FALSE }, CheckMode.T.Hold, -1, Dn },
     Arc { N { "nk", TRUE  }, N { "CLK"   , FALSE }, CheckMode.T.Puls,  1, Up },
     Arc { N { "nk", TRUE  }, N { "_U_CLK", FALSE }, CheckMode.T.Puls, -1, Dn }
-  }};
+  };
+    
+  TinyLatch = LatchSpec { "D_TINY_U_LATCH_D_a.v.", TinyArcs };
+  TinyLatch2 = LatchSpec { "g1iltny00aa2n01x5", TinyArcs };
+  TinyLatch3 = LatchSpec { "g1iltny00aa2n02x5", TinyArcs };
   
-  LatchSpecs = ARRAY OF LatchSpec { VendorLatch, TinyLatch };
+  LatchSpecs = ARRAY OF LatchSpec { VendorLatch,
+                                    VendorLatch2,
+                                    TinyLatch,
+                                    TinyLatch2,
+                                    TinyLatch3
+                                    };
 
 (*
  
@@ -1183,6 +1192,7 @@ VAR
   mapper     : Mapper;
   doByName   : BOOLEAN;
   valueTag                    := "";
+  allNames   : TextSet.T;
   
 BEGIN
   Debug.AddWarnStream(warnWr);
@@ -1227,13 +1237,15 @@ BEGIN
   TRY
     trace := NEW(Trace.T).init(traceRt)
   EXCEPT
-    OSError.E(x) => Debug.Error("Trouble opening input trace : OSError.E : " & AL.Format(x))
+    OSError.E(x) => Debug.Error(F("Trouble opening input trace %s : OSError.E : %s", traceRt, AL.Format(x)))
   |
-    Rd.Failure(x) => Debug.Error("Trouble opening input trace : Rd.Failure : " & AL.Format(x))
+    Rd.Failure(x) => Debug.Error(F("Trouble reading input trace %s : Rd.Failure : %s", traceRt, AL.Format(x)))
   |
     Rd.EndOfFile =>
     Debug.Error(F("Short read opening input trace"))
   END;
+
+  allNames := trace.allNames();
 
   tranFinder := NEW(TransitionFinder.T).init(trace, vdd / 2.0d0, vdd / 10.0d0);
   
