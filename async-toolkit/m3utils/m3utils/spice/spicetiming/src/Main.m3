@@ -37,6 +37,8 @@ IMPORT Wr;
 IMPORT TextIntTbl;
 IMPORT CardSeq;
 IMPORT Thread;
+IMPORT TextSet;
+IMPORT SpiceTranslate;
 
 <*FATAL Thread.Alerted*>
 
@@ -985,6 +987,10 @@ PROCEDURE MeasureFromSpice(spiceFn : Pathname.T) =
       Debug.Error(F("Parsing input : caught SpiceError.E : %s at line %s of file %s",
                     e.msg, Int(e.lNo), Debug.UnNil(e.fn)))
     END;
+
+    IF translate THEN
+      SpiceTranslate.Translate(spice)
+    END;
     
     IF rootType = NIL THEN
       rootCkt := spice.topCkt
@@ -1193,12 +1199,15 @@ VAR
   doByName   : BOOLEAN;
   valueTag                    := "";
   allNames   : TextSet.T;
+  translate  : BOOLEAN;
   
 BEGIN
   Debug.AddWarnStream(warnWr);
   
   TRY
     quick := pp.keywordPresent("-quick");
+
+    translate := pp.keywordPresent("-translate");
 
     doByName := pp.keywordPresent("-byname");
 

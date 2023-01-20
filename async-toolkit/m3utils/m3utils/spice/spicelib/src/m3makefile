@@ -1,6 +1,7 @@
 import ("libm3")
 import ("cit_util")
 import ("parseparams")
+import ("gds2cast")
 
 Module ("Dims")
 Interface ("Sim")
@@ -28,5 +29,7 @@ Table("TextSpiceObject", "Text", "SpiceObject")
 Interface ("SpiceError")
 
 module ("SpiceParse")
+
+Module ("SpiceTranslate")
 
 library ("spicelib")
