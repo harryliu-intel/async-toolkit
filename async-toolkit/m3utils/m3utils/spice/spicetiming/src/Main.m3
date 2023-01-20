@@ -101,11 +101,11 @@ CONST
 
   TinyArcs =   ArcArr {
     Arc { N { "D",  FALSE }, N { "CLK"   , FALSE }, CheckMode.T.Setu,  1, Up },
-    Arc { N { "D",  FALSE }, N { "_U_CLK", FALSE }, CheckMode.T.Setu, -1, Dn },
+    Arc { N { "D",  FALSE }, N { "_CLK", FALSE }, CheckMode.T.Setu, -1, Dn },
     Arc { N { "D",  FALSE }, N { "CLK"   , FALSE }, CheckMode.T.Hold,  1, Up },
-    Arc { N { "D",  FALSE }, N { "_U_CLK", FALSE }, CheckMode.T.Hold, -1, Dn },
+    Arc { N { "D",  FALSE }, N { "_CLK", FALSE }, CheckMode.T.Hold, -1, Dn },
     Arc { N { "nk", TRUE  }, N { "CLK"   , FALSE }, CheckMode.T.Puls,  1, Up },
-    Arc { N { "nk", TRUE  }, N { "_U_CLK", FALSE }, CheckMode.T.Puls, -1, Dn }
+    Arc { N { "nk", TRUE  }, N { "_CLK", FALSE }, CheckMode.T.Puls, -1, Dn }
   };
     
   TinyLatch = LatchSpec { "D_TINY_U_LATCH_D_a.v.", TinyArcs };
@@ -147,13 +147,13 @@ hold margin is:
 
 *)
 
-PROCEDURE FindHierName(instance : SpiceObject.T;
+PROCEDURE FindHierName1(instance : SpiceObject.T;
                        subCkt   : SpiceCircuit.T;
                        node     : Node;
                        mapper   : Mapper) : TEXT =
   BEGIN
     IF node.internal THEN
-      WITH tent = instance.name & "_D_" & node.nm DO
+      WITH tent = instance.name & Dot & node.nm DO
         IF mapper = NIL THEN
           RETURN tent
         ELSE
@@ -165,6 +165,49 @@ PROCEDURE FindHierName(instance : SpiceObject.T;
            nm  = instance.terminals.get(idx) DO
         RETURN (nm) (* should this be put through mapper ? *)
       END
+    END
+  END FindHierName1;
+
+PROCEDURE UnX(txt : TEXT) : TEXT =
+  BEGIN
+    IF Text.GetChar(txt, 0) = 'X' THEN
+      RETURN Text.Sub(txt, 1)
+    ELSE
+      RETURN txt
+    END
+  END UnX;
+
+PROCEDURE Try(nm : TEXT) : BOOLEAN =
+  BEGIN
+    WITH res = allNames.member(nm) DO
+      Debug.Out(F("Trying %s, found = %s", nm, Bool(res)));
+      RETURN res
+    END
+  END Try;
+  
+PROCEDURE FindHierName(instance : SpiceObject.T;
+                       subCkt   : SpiceCircuit.T;
+                       node     : Node;
+                       mapper   : Mapper) : TEXT =
+  BEGIN
+    WITH hn = FindHierName1(instance, subCkt, node, mapper) DO
+      WITH tryName = dutPfx & hn DO
+        IF Try(tryName) THEN RETURN tryName END
+      END;
+      WITH tryName = dutPfx & UnX(hn) DO
+        IF Try(tryName) THEN RETURN tryName END
+      END
+    END;
+
+    WITH name2 = instance.name & Dot & node.nm DO
+      WITH tryName = dutPfx & name2 DO
+        IF Try(tryName) THEN RETURN tryName END
+      END;
+      WITH tryName = dutPfx & UnX(name2) DO
+        IF Try(tryName) THEN RETURN tryName END
+      END;
+
+      RETURN "UNKNOWN(" & name2 & ")"
     END
   END FindHierName;
 
@@ -843,9 +886,6 @@ PROCEDURE CheckMargin(db                : MarginMeasurementSeq.T;
     RETURN minMargin
   END CheckMargin;
         
-CONST
-  DoMapTraceNames = TRUE;
-
 TYPE Mapper = PROCEDURE(t : TEXT) : TEXT;
 
 VAR
@@ -1200,6 +1240,10 @@ VAR
   valueTag                    := "";
   allNames   : TextSet.T;
   translate  : BOOLEAN;
+  Dot        : TEXT;
+  dutPfx                      := "";
+  doMapTraceNames             := FALSE;
+
   
 BEGIN
   Debug.AddWarnStream(warnWr);
@@ -1209,6 +1253,14 @@ BEGIN
 
     translate := pp.keywordPresent("-translate");
 
+    doMapTraceNames := pp.keywordPresent("-maptracenames");
+
+    IF translate THEN
+      Dot := "."
+    ELSE
+      Dot := "_D_"
+    END;
+
     doByName := pp.keywordPresent("-byname");
 
     IF pp.keywordPresent("-truncvalues") THEN
@@ -1216,6 +1268,10 @@ BEGIN
     END;
     IF pp.keywordPresent("-valuetag") THEN
       valueTag := pp.getNext()
+    END;
+
+    IF pp.keywordPresent("-dutname") THEN
+      dutPfx := pp.getNext() & "."
     END;
     
     IF pp.keywordPresent("-i") THEN
@@ -1254,18 +1310,19 @@ BEGIN
     Debug.Error(F("Short read opening input trace"))
   END;
 
-  allNames := trace.allNames();
-
-  tranFinder := NEW(TransitionFinder.T).init(trace, vdd / 2.0d0, vdd / 10.0d0);
   
   (* map names *)
 
-  IF DoMapTraceNames THEN
+  IF doMapTraceNames THEN
     mapper := RemoveX;
     MapTraceNames(trace, mapper)
   ELSE
     mapper := NIL
   END;
+
+  allNames := trace.allNames();
+
+  tranFinder := NEW(TransitionFinder.T).init(trace, vdd / 2.0d0, vdd / 10.0d0);
 
   IF spiceFn # NIL THEN
     MeasureFromSpice(spiceFn)

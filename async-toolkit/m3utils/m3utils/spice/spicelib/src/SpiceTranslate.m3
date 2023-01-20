@@ -33,6 +33,7 @@ PROCEDURE Circuit(ckt : SpiceCircuit.T) =
     IF ckt.name # NIL THEN
       ckt.name := Gds2Cast.Gds2Cast(ckt.name)
     END;
+    Seq(ckt.params);
     FOR i := 0 TO ckt.elements.size() - 1 DO
       Object(ckt.elements.get(i))
     END;
