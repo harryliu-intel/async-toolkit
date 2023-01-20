@@ -33,11 +33,16 @@ IMPORT OSError;
 IMPORT Matrix;
 IMPORT RTRefStats;
 IMPORT FileWr;
+IMPORT AL;
+IMPORT IP, NetObj;
+IMPORT Thread;
+IMPORT ReadLineError;
+
+<*FATAL Thread.Alerted*>
 
 TYPE NodeId = Trace.NodeId;
 
 CONST Usage   = "";
-      doDebug = TRUE;
       Verbose = FALSE;
 
 PROCEDURE MakePower(vi, ii : NodeId) : TraceOp.T =
@@ -388,7 +393,7 @@ VAR
 
   maxDevs  : CARDINAL := LAST(CARDINAL);
   allNodes : BOOLEAN;
-  
+  phase    : TEXT;
 BEGIN
   TRY
     slave    := pp.keywordPresent("-slave");
@@ -417,10 +422,14 @@ BEGIN
     END;
 
     IF pp.keywordPresent("-memreport") THEN
-      WITH interval = pp.getNextLongReal(),
-           repwr    = FileWr.Open("rewriter_memreport.out"),
-           reporter = NEW(RTRefStats.Reporter).init(interval, wr := repwr) DO
-        reporter.start()
+      TRY
+        WITH interval = pp.getNextLongReal(),
+             repwr    = FileWr.Open("rewriter_memreport.out"),
+             reporter = NEW(RTRefStats.Reporter).init(interval, wr := repwr) DO
+          reporter.start()
+        END
+      EXCEPT
+        OSError.E => Debug.Error("OSError.E creating memory report file")
       END
     END;
     
@@ -450,8 +459,21 @@ BEGIN
     TRY
       rew := NEW(TraceRewriter.T).init(root, rewriterPath);
     EXCEPT
-    ELSE
-      Debug.Error("Exception creating TraceRewriter")
+      OSError.E(x) =>
+      Debug.Error(F("TraceRewriter.Init %s : OSError.E : %s",
+                    root, AL.Format(x)))
+    |
+      Rd.Failure(x) =>
+      Debug.Error(F("TraceRewriter.Init %s : Rd.Failure : %s",
+                    root, AL.Format(x)))
+    |
+      Rd.EndOfFile =>
+      Debug.Error(F("TraceRewriter.Init %s : short read",
+                    root))
+    |
+      TraceFile.FormatError =>
+      Debug.Error(F("TraceRewriter.Init %s : trace file format error",
+                    root))
     END;
 
     IF master THEN
@@ -469,32 +491,37 @@ BEGIN
       END
     EXCEPT
       Scheme.E(err) => Debug.Error("Caught Scheme.E : " & err)
+    |
+      IP.Error, NetObj.Error => Debug.Error("Network error creating scheme")
+    |
+      ReadLineError.E => Debug.Error("Readline error in scheme")
     END
     ELSE
-      IF doPower THEN
-        TRY
-          ThePowerProgram(rew.shareTrace(), allNodes)
-        EXCEPT
-        ELSE
-          Debug.Error("Exception in ThePowerProgram")
-        END
-      ELSE
-        TRY
-          TheTestProgram(rew.shareTrace())
-        EXCEPT
-        ELSE
-          Debug.Error("Exception in TheTestProgram")
-        END
-      END;
-
       TRY
-        Flush()
-      EXCEPT
-      ELSE
-        Debug.Error("Exception in Flush")
-      END
-        
-    END
-  END;
 
+        phase := "program";
+        IF doPower THEN
+          ThePowerProgram(rew.shareTrace(), allNodes)
+        ELSE
+          TheTestProgram(rew.shareTrace())
+        END;
+
+        phase := "flush";
+        Flush()
+
+      EXCEPT
+        Matrix.Singular => Debug.Error(F("Numerical error in %s",phase))
+      |
+        OSError.E(x) => Debug.Error(F("OSError.E in %s : %s", phase, AL.Format(x)))
+      |
+        Rd.EndOfFile => Debug.Error(F("Short read in %s", phase))
+      |
+        Rd.Failure(x) =>Debug.Error(F("Rd.Failure in %s : %s", phase, AL.Format(x)))
+      |
+        TraceFile.FormatError =>Debug.Error(F("Corrupted trace file in %s", phase))
+      |
+        Wr.Failure(x) =>Debug.Error(F("Wr.Failure in %s : %s", phase, AL.Format(x)))
+      END
+    END
+  END
 END RewriterMain.

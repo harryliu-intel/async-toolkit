@@ -310,22 +310,23 @@ VAR
   names := NEW(TextSeqSeq.T).init();
   ifn, ofn : Pathname.T;
 
-  wd := "ct.work";
-  dutName : TEXT := NIL;
-  pp := NEW(ParseParams.T).init(Stdio.stderr);
-  timeScaleFactor, voltageScaleFactor := 1.0d0;
+  wd      : Pathname.T      := NIL;
+  dutName : TEXT            := NIL;
+  pp                        := NEW(ParseParams.T).init(Stdio.stderr);
+  timeScaleFactor,
+  voltageScaleFactor        := 1.0d0;
   timeOffset, voltageOffset := 0.0d0;
-  lNo := 1;
-  doSources := FALSE;
-  doFiles   := FALSE;
+  lNo                       := 1;
+  doSources                 := FALSE;
+  doFiles                   := FALSE;
 
   restrictNodes : TextSet.T := NIL;
-  doTrace := TRUE; (* default output *)
+  doTrace                   := TRUE; (* default output *)
 
-  wait := FALSE;
+  wait                      := FALSE;
 
-  wrWorkers := 1;
-  regExList : RegExList.T := NIL;
+  wrWorkers                 := 1;
+  regExList : RegExList.T   := NIL;
 
   fsdbCmdPath       : Pathname.T := NIL;
   compressCmdPath   : Pathname.T := NIL;
@@ -487,7 +488,9 @@ BEGIN
     pp.skipParsed();
     
     ifn := pp.getNext();
+
     ofn := pp.getNext();
+    wd  := ofn & ".ctwork";
     
     pp.finish();
   EXCEPT
@@ -497,6 +500,8 @@ BEGIN
   IF wthreads # 1 THEN
     Debug.Warning("wthreads > 1 not recommended")
   END;
+
+  IF wd = NIL THEN wd := "ct.work" END;
   
   TRY FS.CreateDirectory(wd) EXCEPT ELSE END;
 
