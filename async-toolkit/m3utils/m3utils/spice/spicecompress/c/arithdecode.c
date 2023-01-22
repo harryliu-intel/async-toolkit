@@ -39,7 +39,8 @@ FreqTable_Accumulate(const FreqTable_t t, FreqTable_Cum_t cum)
 void
 ArithDecoder_Init(ArithDecoder_t     *de,
                   const FreqTable_t   freqs,
-                  realloc_func_t     *realloc)
+                  realloc_func_t     *realloc,
+                  free_func_t        *free)
 {
   /* ArithCode.Init */
   memcpy(de->up.freqs, freqs, sizeof(FreqTable_t));
@@ -54,6 +55,7 @@ ArithDecoder_Init(ArithDecoder_t     *de,
   de->disconnected = 0;
   de->tailBytes    = 0;
   de->realloc      = realloc;
+  de->free         = free;
   
   de->buff         = NULL;
   de->bufSz        = ARITHDECODE_INIT_BUF_SZ;
@@ -65,14 +67,14 @@ ArithDecoder_t *
 ArithDecoder_New(const FreqTable_t freqs)
 {
   ArithDecoder_t *new = malloc(sizeof(ArithDecoder_t));
-  ArithDecoder_Init(new, freqs, realloc);
+  ArithDecoder_Init(new, freqs, realloc, free);
   return new;
 }
 
 void
 ArithDecoder_Free(ArithDecoder_t *de)
 {
-  free(de->buff);
+  de->free(de->buff);
   free(de);
 }
 

@@ -53,7 +53,8 @@ typedef struct {
   Cardinal_t       bytes;
 } ArithCoder_t;
 
-typedef void *(realloc_func_t(void *, size_t));
+typedef void *(realloc_func_t(void *, size_t)); /* type of realloc() */
+typedef void  (free_func_t(void *));            /* type of free() */
 
 #define ARITHDECODE_INIT_BUF_SZ (16)
 
@@ -70,6 +71,7 @@ typedef struct {
   Cardinal_t       nextC; /* next point to be written */
   Cardinal_t       bufSz; /* size of current buffer */
   realloc_func_t  *realloc;
+  free_func_t     *free;
 } ArithDecoder_t;
 
 /**********************************************************************/
