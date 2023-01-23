@@ -12,6 +12,7 @@
 #ifndef __ARITHDECODE_H
 #define __ARITHDECODE_H
 
+#include <stdint.h>
 #include <sys/types.h>
 #include <stdlib.h>
 
@@ -81,11 +82,20 @@ void FreqTable_Accumulate(const FreqTable_t t, FreqTable_Cum_t cum);
 
 /**********************************************************************/
 
+/*
+ * initialization and freeing 
+ */
+
 ArithDecoder_t *ArithDecoder_New(const FreqTable_t freqs);
 /* new a decoder, fully initialized */
 
 void ArithDecoder_Free(ArithDecoder_t *de);
 /* free a decoder with all associated things */
+
+/*
+ * standard usage : push a character (or EOF)
+ * and read out decoded results 
+ */
 
 Boolean_t ArithDecoder_NewChar(ArithDecoder_t *de, char newChar);
 /* push a character into the decoder */
