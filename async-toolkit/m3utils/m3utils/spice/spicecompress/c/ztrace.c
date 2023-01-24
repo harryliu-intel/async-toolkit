@@ -176,7 +176,7 @@ ArithDecode(const char *data, size_t *n, ztrace_arithencoding_t code)
 */
 {
   ArithDecoder_t *decoder;
-  Ztrace_CodeBook_t ft;
+  // Ztrace_CodeBook_t ft;
   int i;
 
   decoder = ArithDecoder_New(ArithConstants_EqualCode);
@@ -201,6 +201,11 @@ ArithDecode(const char *data, size_t *n, ztrace_arithencoding_t code)
   }
 }
 
+static void
+DecompressArray(const char *buf, size_t n, float *rarr)
+{
+
+}
 
 void
 ztrace_get_node_values(FILE                  *fp,
@@ -234,7 +239,9 @@ ztrace_get_node_values(FILE                  *fp,
       arr[i] = v;
     }
   } else {
-    char *data, *decoded;
+    char *data;
+    char *decoded;
+    
     if (fseek(fp, dirent->start, SEEK_SET) < 0) { perror("fseek"); exit(1); }
     data = malloc(dirent->bytes);
 
@@ -246,6 +253,7 @@ ztrace_get_node_values(FILE                  *fp,
     {
       size_t n = dirent->bytes;
       decoded = ArithDecode(data, &n, dirent->code);
+      DecompressArray(decoded, n, arr);
     }
     
   }

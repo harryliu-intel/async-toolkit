@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include "minmax.h"
 #include "arithdecode.h"
 
 #if 0 /* unused for decoder only */

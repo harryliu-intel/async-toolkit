@@ -15,10 +15,7 @@
 #include <stdint.h>
 #include <sys/types.h>
 #include <stdlib.h>
-
-typedef unsigned int Boolean_t;
-#define True  1
-#define False 0
+#include "boolean.h"
 
 #define ArithBits_Bits          (64ULL)       /* size of Word.T */
 #define ArithBits_CodeBits      ((ArithBits_Bits / 2ULL) + 1ULL)
@@ -112,8 +109,4 @@ Boolean_t ArithDecoder_Reset(ArithDecoder_t *de, char *dest, size_t *buflen);
    return False
 */
 
-
-#define MAX(a,b) ((a) > (b) ? (a) : (b))
-#define MIN(a,b) ((a) < (b) ? (a) : (b))
-                                            
 #endif /* !__ARITHDECODE_H */

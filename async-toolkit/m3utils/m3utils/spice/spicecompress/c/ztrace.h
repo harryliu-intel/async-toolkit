@@ -15,6 +15,7 @@
 #include <sys/time.h>
 #include <stdio.h>
 #include "arithdecode.h"
+#include "rep16.h"
 
 typedef uint8_t ztrace_arithencoding_t;
 
@@ -91,5 +92,12 @@ void ztrace_get_node_values(FILE                  *fp,
                             const ztrace_header_t *header,
                             long                   idx,
                             float                 *arr);
+
+typedef struct {
+  poly_segment16_t *segs;
+  size_t            n;     /* allocated size */
+  size_t            sz;    /* valid segs */
+} poly_segment16_seq_t;
+
   
 #endif /* !__ZTRACE_H */
