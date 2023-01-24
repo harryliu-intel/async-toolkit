@@ -52,4 +52,44 @@ int ztrace_get_header(FILE *fp, ztrace_header_t *header);
 
 void ztrace_debug_header(const ztrace_header_t *header);
 
+#define ArithConstants_ZeroCode     0
+#define ArithConstants_MinCode    (ArithConstants_ZeroCode)
+#define ArithConstants_MaxCode      1
+#define ArithConstants_LinearCode 254
+#define ArithConstants_DenseCode  255
+
+typedef  FreqTable_t  Ztrace_CodeBook_t;
+
+/* C is such a stupid language */
+static const FreqTable_t ArithConstants_EqualCode = {
+
+  1, 1, 1, 1,   1, 1, 1, 1,   1, 1, 1, 1,   1, 1, 1, 1,      \
+  1, 1, 1, 1,   1, 1, 1, 1,   1, 1, 1, 1,   1, 1, 1, 1,      \
+  1, 1, 1, 1,   1, 1, 1, 1,   1, 1, 1, 1,   1, 1, 1, 1,      \
+  1, 1, 1, 1,   1, 1, 1, 1,   1, 1, 1, 1,   1, 1, 1, 1,      \
+                                                             \
+  1, 1, 1, 1,   1, 1, 1, 1,   1, 1, 1, 1,   1, 1, 1, 1,      \
+  1, 1, 1, 1,   1, 1, 1, 1,   1, 1, 1, 1,   1, 1, 1, 1,      \
+  1, 1, 1, 1,   1, 1, 1, 1,   1, 1, 1, 1,   1, 1, 1, 1,      \
+  1, 1, 1, 1,   1, 1, 1, 1,   1, 1, 1, 1,   1, 1, 1, 1,      \
+                                                             \
+  1, 1, 1, 1,   1, 1, 1, 1,   1, 1, 1, 1,   1, 1, 1, 1,      \
+  1, 1, 1, 1,   1, 1, 1, 1,   1, 1, 1, 1,   1, 1, 1, 1,      \
+  1, 1, 1, 1,   1, 1, 1, 1,   1, 1, 1, 1,   1, 1, 1, 1,      \
+  1, 1, 1, 1,   1, 1, 1, 1,   1, 1, 1, 1,   1, 1, 1, 1,      \
+                                                             \
+  1, 1, 1, 1,   1, 1, 1, 1,   1, 1, 1, 1,   1, 1, 1, 1,      \
+  1, 1, 1, 1,   1, 1, 1, 1,   1, 1, 1, 1,   1, 1, 1, 1,      \
+  1, 1, 1, 1,   1, 1, 1, 1,   1, 1, 1, 1,   1, 1, 1, 1,      \
+  1, 1, 1, 1,   1, 1, 1, 1,   1, 1, 1, 1,   1, 1, 1, 1,      \
+                                                             \
+  1                                                          \
+    };
+  
+
+void ztrace_get_node_values(FILE                  *fp,
+                            const ztrace_header_t *header,
+                            long                   idx,
+                            float                 *arr);
+  
 #endif /* !__ZTRACE_H */

@@ -30,7 +30,7 @@ FreqTable_Accumulate(const FreqTable_t t, FreqTable_Cum_t cum)
   int i;
   memset(cum, 0, sizeof(FreqTable_Cum_t));
 
-  for (i = 1; i < CumTableSize - 1; ++i)
+  for (i = 1; i < CumTableSize; ++i)
     cum[i] = cum[i - 1] + MAX(t[i - 1], 1);
 }
 
@@ -38,7 +38,7 @@ FreqTable_Accumulate(const FreqTable_t t, FreqTable_Cum_t cum)
 
 void
 ArithDecoder_Init(ArithDecoder_t     *de,
-                  const FreqTable_t   freqs,
+                  const FreqTable_t  freqs,
                   realloc_func_t     *realloc,
                   free_func_t        *free)
 {
@@ -81,12 +81,25 @@ ArithDecoder_Free(ArithDecoder_t *de)
 typedef unsigned int Encode_t;  /* actually [0..ORD(LAST(CHAR)) + 1] */
 typedef unsigned int Bit_t;     /* actually [0..1] */
 
-#define EOF ((Encode_t)256)
+#define EofMarker ((Encode_t)256)
 
 static Boolean_t
 GetBit(ArithDecoder_t *de, Bit_t *bit)
 {
-  assert(False);
+  if (de->nextBit == 8) {
+    if (de->tailBytes == 0)
+      return False;
+    else {
+      /* repeat current byte */
+      de->nextBit = 0;
+      --(de->tailBytes);
+      return GetBit(de, bit);
+    }
+  } else {
+    *bit = (de->thisByte >> de->nextBit) & 1;
+    ++(de->nextBit);
+    return True;
+  }
 }
 
 static ArithProbability_t
@@ -152,7 +165,7 @@ ArithDecoder_NewChar(ArithDecoder_t *de, char newChar)
              ((de->value - de->up.lo + 1ULL) * lastCum - 1ULL) / range;
       ArithProbability_t p           = GetChar(de, scaledValue, &c);
 
-      if (c == EOF) {
+      if (c == EofMarker) {
         return True;
       }
       NewByte(de, c);

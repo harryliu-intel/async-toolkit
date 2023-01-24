@@ -16,7 +16,14 @@
 #include "ztrace.h"
 
 static int
-read_float(FILE *stream, double *x)
+read_float(FILE *stream, float *x)
+{
+  if (!fread(x, sizeof(float), 1, stream)) return 0;
+  return 1;
+}
+
+static int
+read_double(FILE *stream, double *x)
 {
   float y;
   if (!fread(&y, sizeof(float), 1, stream)) return 0;
@@ -57,13 +64,13 @@ ztrace_node_header_read(FILE *fp, ztrace_node_header_t *dirent)
   
   {
     double min;
-    if (!read_float(fp, &min)) return 0;
+    if (!read_double(fp, &min)) return 0;
     dirent->norm.min = min;
   }
 
   {
     double max;
-    if (!read_float(fp, &max)) return 0;
+    if (!read_double(fp, &max)) return 0;
     dirent->norm.max = max;
   }
 
@@ -156,6 +163,92 @@ ztrace_debug_header(const ztrace_header_t *header)
     for (i = 0; i < header->nwaves; ++i)
       debug_node_header(i, &(header->directory[i]));
   }
+}
+
+static char *
+ArithDecode(const char *data, size_t *n, ztrace_arithencoding_t code)
+/* 
+   n holds size of encoded data on call,
+   on return it holds size of decoded data 
+
+   passed-in buffer is constant and not touched
+   returned buffer is malloced and must be freed by client
+*/
+{
+  ArithDecoder_t *decoder;
+  Ztrace_CodeBook_t ft;
+  int i;
+
+  decoder = ArithDecoder_New(ArithConstants_EqualCode);
+
+  for (i = 0; i < *n; ++i) {
+    ArithDecoder_NewChar(decoder, data[i]);
+  }
+  ArithDecoder_NewEof(decoder);
+
   
+  {
+    char *buf = malloc(*n);
+    
+    while (!ArithDecoder_Reset(decoder, buf, n)) {
+      *n *= 2;
+      buf = realloc(buf, *n);
+    }
+  
+    ArithDecoder_Free(decoder);
+
+    return buf;
+  }
+}
+
+
+void
+ztrace_get_node_values(FILE                  *fp,
+                       const ztrace_header_t *header,
+                       long                   idx,
+                       float                 *arr)
+{
+  ztrace_node_header_t *dirent;
+
+  dirent = &(header->directory[idx]);
+
+  if        (dirent->code == ArithConstants_DenseCode ) {
+    int i;
+    if (fseek(fp, dirent->start, SEEK_SET) < 0) { perror("fseek"); exit(1); }
+    for (i = 0; i < header->nsteps; ++i) {
+      if (!read_float(fp, arr + i)) {
+        perror("read_float");
+        exit(1);
+      }
+    }
+  } else if (dirent->code == ArithConstants_LinearCode) {
+    int    i;
+    double lfl   = header->nsteps - 1;
+    double range = dirent->norm.max - dirent->norm.min;
+    
+    for (i = 0; i < header->nsteps; ++i) {
+      double ifl   = i;
+      double ratio = ifl / lfl;
+      double v     = ratio * range + dirent->norm.min;
       
+      arr[i] = v;
+    }
+  } else {
+    char *data, *decoded;
+    if (fseek(fp, dirent->start, SEEK_SET) < 0) { perror("fseek"); exit(1); }
+    data = malloc(dirent->bytes);
+
+    if (fread(data, dirent->bytes, 1, fp) < 1) {
+      perror("fread");
+      exit(1);
+    }
+
+    {
+      size_t n = dirent->bytes;
+      decoded = ArithDecode(data, &n, dirent->code);
+    }
+    
+  }
+    
+  
 }
