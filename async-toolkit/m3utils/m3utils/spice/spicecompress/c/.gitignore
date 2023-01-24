@@ -1,0 +1,6 @@
+*.ztrace
+*.names
+*.o
+a.out
+core
+testmain

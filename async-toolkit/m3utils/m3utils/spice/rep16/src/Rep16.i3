@@ -94,6 +94,8 @@ TYPE
   Unsigned = Base;
 
   Signed = [ -Word.Shift(1, Bits-1) + 1  .. Word.Shift(1, Bits-1) - 1 ];
+  (* note that this is set up with 1 less value used than normal so that 
+     zero is precisely in the middle of the range *)
 
   Array = ARRAY OF Base;
 
