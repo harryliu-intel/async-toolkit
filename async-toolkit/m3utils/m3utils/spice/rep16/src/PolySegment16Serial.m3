@@ -4,7 +4,7 @@ IMPORT Rd, Wr;
 IMPORT Rep16Stream;
 IMPORT PolySegment16;
 IMPORT Rep16;
-FROM Fmt IMPORT F, Int;
+FROM Fmt IMPORT F, Int, FN, Bool;
 IMPORT Thread;
 IMPORT Debug;
 
@@ -69,7 +69,17 @@ PROCEDURE Read(rd : Rd.T; seq : Seq.T; VAR header : Rep16.Header)
            there is one point overlap w/ previous *)
       END;
       seg.n := seg.r.count;
-      seq.addhi(seg)
+      seq.addhi(seg);
+
+      IF DoDebug THEN
+        Debug.Out(FN("PolySegment16Serial.Read : seg[%s] : lo %s n %s r { count %s order %s reset %s }",
+                     ARRAY OF TEXT { Int(seq.size() - 1),
+                                     Int(seg.lo),
+                                     Int(seg.n),
+                                     Int(seg.r.count),
+                                     Int(seg.r.order),
+                                     Bool(seg.r.reset) }))
+      END
     END;
 
     IF bytes DIV 2 # header.nwords THEN

@@ -207,16 +207,23 @@ poly_segment16_serial_construct(const char *buf, size_t n)
   rep16_header_t         header;
   poly_segment16_seq_t  *seq;
   int                    hi;
+  size_t                 bytes; /* bytes of payload ONLY */
 
   hi = -1; /* last index that was read */
 
   seq = poly_segment16_seq_new();
   
-  p += Rep16Stream_ReadHeader(buf + p, n - p, &header);
+  p += Rep16Stream_ReadHeader(buf + p, n - p, &header); 
 
-  while (p / 2 < header.nwords) {
+  bytes = 0;
+  while (bytes / 2 < header.nwords) {
     poly_segment16_t seg;
-    p += Rep16Stream_ReadT(buf + p, n - p, &seg.r);
+    size_t read;
+
+    read   = Rep16Stream_ReadT(buf + p, n - p, &seg.r);
+    p     += read;
+    bytes += read;
+    
     if (seg.r.order == 0 || seg.r.reset) {
       seg.lo = hi + 1;
       hi    = hi + seg.r.count;
@@ -227,7 +234,7 @@ poly_segment16_serial_construct(const char *buf, size_t n)
     seg.n = seg.r.count;
     poly_segment16_seq_addhi(seq, &seg);
   }
-  assert (p / 2 == header.nwords);
+  assert (bytes / 2 == header.nwords);
 
   assert(hi == header.npoints - 1);
 
@@ -348,6 +355,8 @@ ztrace_get_node_values(FILE                  *fp,
 {
   ztrace_node_header_t *dirent;
 
+  assert(idx < header->nwaves);
+  
   dirent = &(header->directory[idx]);
 
   if        (dirent->code == ArithConstants_DenseCode ) {
@@ -387,12 +396,13 @@ ztrace_get_node_values(FILE                  *fp,
       size_t n = dirent->bytes;
       double *darr = (double *)malloc(header->nsteps * sizeof(double));
       int i;
+      double range = dirent->norm.max - dirent->norm.min;
       
       decoded = ArithDecode(data, &n, dirent->code);
       DecompressArray(decoded, n, darr, header->nsteps);
 
       for (i = 0; i < header->nsteps; ++i) /* convert to single prec */
-        arr[i] = darr[i];
+        arr[i] = darr[i] * range + dirent->norm.min;
 
       free(darr);
     }

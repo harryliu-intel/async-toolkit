@@ -41,7 +41,7 @@ test_trace(int argc, char **argv)
 
     
     for (int i = 0; i < header.nsteps; ++i)
-      fprintf(ofp, "%f %f\n", time[i], data[i]);
+      fprintf(ofp, "%10g %10g\n", time[i], data[i]);
 
     fclose(ofp);
   }
