@@ -11,6 +11,7 @@
 #ifndef __REP16_H
 #define __REP16_H
 
+#include <stddef.h>
 #include <stdint.h>
 #include "boolean.h"
 
@@ -37,12 +38,26 @@ typedef struct {
 } rep16_t;
 
 typedef struct {
+  size_t nwords;
+  size_t npoints;
+  double min;
+  double max;
+} rep16_header_t;
+
+typedef struct {
   rep16_t         r;
   int             lo;
   rep16_count_t   n;
 } poly_segment16_t;
 
 double Rep16_EvalPoly(const rep16_t *t, unsigned int x0);
+
+rep16_unsigned_t Rep16_FromFloat0(double x);
+
+size_t Rep16Stream_ReadHeader(const char *buf, size_t n, rep16_header_t *header);
+/* returns bytes read */
+
+size_t Rep16Stream_ReadT(const char *buf, size_t n, rep16_t *t);
 
 #endif /* !__REP16_H */
 

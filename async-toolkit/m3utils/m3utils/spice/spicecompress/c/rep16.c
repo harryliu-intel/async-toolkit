@@ -10,6 +10,8 @@
 
 #include <assert.h>
 #include <stdint.h>
+#include <string.h>
+#include <math.h>
 #include "rep16.h"
 #include "minmax.h"
 
@@ -46,6 +48,15 @@ ToFloat0(rep16_base_t x)
   return (f - Min0) / Max0;
 }
 
+rep16_unsigned_t
+Rep16_FromFloat0(double x)
+{
+  int try = lround(x * Max0 + Min0 + 0.5);
+
+  return MIN(MAX(try, Min0), Max0);
+}
+
+
 double
 Rep16_EvalPoly(const rep16_t *t, unsigned int x0)
 {
@@ -64,4 +75,93 @@ Rep16_EvalPoly(const rep16_t *t, unsigned int x0)
   yf = yf * xf + y0f;
 
   return MAX(0.0, MIN(yf, 1.0));
+}
+
+/**********************************************************************/
+
+size_t
+Rep16Stream_ReadHeader(const char *buf, size_t n, rep16_header_t *header)
+{
+  size_t p = 0;
+  
+  header->nwords  = *((int *)  (buf + p));
+  p += sizeof(int);
+
+  header->npoints = *((int *)  (buf + p));
+  p += sizeof(int);
+
+  header->min     = *((float *)(buf + p));
+  p += sizeof(float);
+
+  header->max     = *((float *)(buf + p));
+  p += sizeof(float);
+
+  return p;
+}
+
+static size_t
+read_unsigned(const char *buf, rep16_unsigned_t *x)
+{
+  size_t p = 0;
+  unsigned char b0, b1;
+
+  b0 = *(buf + p);
+  p += 1;
+
+  b1 = *(buf + p);
+  p += 1;
+
+  *x = (b1 << 8) | b0;
+
+  return p;
+}
+
+static size_t
+read_signed(const char *buf, rep16_signed_t *x)
+{
+  size_t p = 0;
+  rep16_unsigned_t u;
+
+  p += read_unsigned(buf, &u);
+
+  /* the following is some screwy Modula-3 coding of this */
+  if (u > (1 << 15))
+    *x = ((int)u - (1 << 16));
+  else
+    *x = u;
+  
+  return p;
+}
+
+size_t
+Rep16Stream_ReadT(const char *buf, size_t n, rep16_t *t)
+{
+  size_t           p      = 0;
+  const int        oMask  = (1 << REP16_ORDER_BITS) - 1;
+  rep16_unsigned_t w0;
+  Boolean_t        reset;
+  size_t           cnt;
+  int              i;
+
+  p += read_unsigned(buf + p, &w0);
+
+  reset = !!((w0 >> REP16_ORDER_BITS) & 1);
+
+  t->reset = reset;
+
+  cnt = (w0 >> (REP16_ORDER_BITS + 1));
+
+  t->count = cnt;
+
+  t->order = w0 & oMask;
+
+  memset(t->c, sizeof(t->c), 0);
+
+  if (t->order == 0 || t->reset)
+    p += read_unsigned(buf + p, &(t->c0));
+
+  for (i = 1; i <= t->order; ++i)
+    p += read_signed(buf + p, &(t->c[i]));
+
+  return p;
 }

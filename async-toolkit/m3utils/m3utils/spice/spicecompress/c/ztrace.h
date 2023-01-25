@@ -86,8 +86,7 @@ static const FreqTable_t ArithConstants_EqualCode = {
                                                              
   1                                                          
     };
-  
-
+ 
 void ztrace_get_node_values(FILE                  *fp,
                             const ztrace_header_t *header,
                             long                   idx,

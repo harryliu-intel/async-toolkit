@@ -86,7 +86,7 @@ int
 main(int argc, char **argv)
 {
 
-  if(0) test_trace (argc, argv);
+  test_trace (argc, argv);
 
-  test_arith("test.out", etaoin_freqs);
+  if(0) test_arith("test.out", etaoin_freqs);
 }

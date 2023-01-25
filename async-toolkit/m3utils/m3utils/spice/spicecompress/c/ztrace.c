@@ -1,4 +1,4 @@
-
+ 
 /*
  *  Spice trace waveform decompression
  *
@@ -8,69 +8,39 @@
  *
  */
 
+#include <assert.h>
 #include <stdint.h>
 #include <sys/time.h>
 #include <stdio.h>
 #include <errno.h>
+#include "ztrace_read.h"
 #include "arithdecode.h"
 #include "ztrace.h"
 
 static int
-read_float(FILE *stream, float *x)
-{
-  if (!fread(x, sizeof(float), 1, stream)) return 0;
-  return 1;
-}
-
-static int
-read_double(FILE *stream, double *x)
-{
-  float y;
-  if (!fread(&y, sizeof(float), 1, stream)) return 0;
-  *x = y;
-  return 1;
-}
-
-static int
-read_int(FILE *stream, int *x)
-{
-  int res;
-  res = fread(x, sizeof(int), 1, stream);
-  return res;
-}
-
-static int
-read_uint64_t(FILE *stream, uint64_t *x)
-{
-  int res;
-  res = fread(x, sizeof(uint64_t), 1, stream);
-  return res;
-}
-
-static int
-ztrace_node_header_read(FILE *fp, ztrace_node_header_t *dirent)
+read_node_header(FILE *fp, ztrace_node_header_t *dirent)
 {
   {
     int bytes;
-    if (!read_int(fp, &bytes)) return 0;
+    if (!ztrace_read_int(fp, &bytes)) return 0;
     dirent->bytes = bytes;
   }
 
   {
     uint64_t start;
-    if (!read_uint64_t(fp, &start)) return 0;
+    if (!ztrace_read_uint64_t(fp, &start)) return 0;
     dirent->start = start;
   }
   
   {
     double min;
-    if (!read_double(fp, &min)) return 0;
+    if (!ztrace_read_double(fp, &min)) return 0;
     dirent->norm.min = min;
   }
 
   {
     double max;
-    if (!read_double(fp, &max)) return 0;
+    if (!ztrace_read_double(fp, &max)) return 0;
     dirent->norm.max = max;
   }
 
@@ -93,7 +63,7 @@ int
 ztrace_get_header(FILE *fp, ztrace_header_t *header)
 {
   if (fseek(fp, 0, SEEK_SET) < 0)           return 0;
-  if (!read_int(fp, &(header->version))) return 0;
+  if (!ztrace_read_int(fp, &(header->version))) return 0;
 
   if (header->version != ZTRACE_VERSION_CompressedV1) return 0;
 
@@ -101,17 +71,17 @@ ztrace_get_header(FILE *fp, ztrace_header_t *header)
   
   {
     int timestamp;
-    if (!read_int(fp, &timestamp)) return 0;
+    if (!ztrace_read_int(fp, &timestamp)) return 0;
     header->ctime = timestamp;
   }
   {
     int Nnodes;
-    if (!read_int(fp, &Nnodes)) return 0;
+    if (!ztrace_read_int(fp, &Nnodes)) return 0;
     header->nwaves = Nnodes;
   }
   {
     int nsteps;
-    if (!read_int(fp, &nsteps)) return 0;
+    if (!ztrace_read_int(fp, &nsteps)) return 0;
     header->nsteps = nsteps;
   }
 
@@ -126,7 +96,7 @@ ztrace_get_header(FILE *fp, ztrace_header_t *header)
   {
     int i;
     for (i = 0; i < header->nwaves; ++i)
-      if (!ztrace_node_header_read(fp, &(header->directory[i]))) return 0;
+      if (!read_node_header(fp, &(header->directory[i]))) return 0;
   }
   return 1;
 }
@@ -201,10 +171,173 @@ ArithDecode(const char *data, size_t *n, ztrace_arithencoding_t code)
   }
 }
 
-static void
-DecompressArray(const char *buf, size_t n, float *rarr)
-{
+/**********************************************************************/
 
+#define POLY_SEGMENT16_DEF_SIZE 10
+
+poly_segment16_seq_t *
+poly_segment16_seq_new(void)
+{
+  poly_segment16_seq_t *res;
+
+  res = (poly_segment16_seq_t *)malloc(sizeof(poly_segment16_seq_t));
+
+  res->n    = POLY_SEGMENT16_DEF_SIZE;
+  res->segs = (poly_segment16_t *)malloc(res->n * sizeof(poly_segment16_t));
+  res->sz   = 0;
+
+  return res;
+}
+
+void
+poly_segment16_seq_addhi(poly_segment16_seq_t *seq, const poly_segment16_t *seg)
+{
+  if (seq->sz == seq->n) {
+    seq->n *= 2;
+    seq->segs = realloc(seq->segs, seq->n * sizeof(poly_segment16_t));
+  }
+
+  seq->segs[(seq->sz)++] = *seg;
+}
+
+poly_segment16_seq_t *
+poly_segment16_serial_construct(const char *buf, size_t n)
+{
+  size_t                 p    = 0;
+  rep16_header_t         header;
+  poly_segment16_seq_t  *seq;
+  int                    hi;
+
+  hi = -1; /* last index that was read */
+
+  seq = poly_segment16_seq_new();
+  
+  p += Rep16Stream_ReadHeader(buf + p, n - p, &header);
+
+  while (p / 2 < header.nwords) {
+    poly_segment16_t seg;
+    p += Rep16Stream_ReadT(buf + p, n - p, &seg.r);
+    if (seg.r.order == 0 || seg.r.reset) {
+      seg.lo = hi + 1;
+      hi    = hi + seg.r.count;
+    } else {
+      seg.lo = hi;
+      hi    = hi + seg.r.count - 1;
+    }
+    seg.n = seg.r.count;
+    poly_segment16_seq_addhi(seq, &seg);
+  }
+  assert (p / 2 == header.nwords);
+
+  assert(hi == header.npoints - 1);
+
+  return seq;
+}
+
+void
+poly_segment16_free(poly_segment16_seq_t *segments)
+{
+  free(segments->segs);
+  segments->segs = NULL; 
+  free(segments);
+}
+
+/**********************************************************************/
+
+void
+FixupNextC0NoCheck(const poly_segment16_seq_t *seq,
+                   int                         i,
+                   double                     *a)
+/* this is a reduced version of the Modula-3 code
+
+   it does not attempt to check targMaxDev */
+  
+{
+  poly_segment16_t *seg;
+  rep16_t          *new;
+
+  seg = &(seq->segs[i]);
+  new = &(seg->r);
+
+  assert(seg->n != 0);
+
+  if (i != seq->sz - 1) {
+    poly_segment16_t *nxt;
+    int               j;
+    int               n;
+
+    j = i + 1;
+    n = seq->sz;
+
+    do {
+      nxt = &(seq->segs[j]);
+      if (nxt->n != 0)
+        break;
+      ++j;
+    } while (j != n);
+
+    if (j == n)
+      return;
+
+    if (nxt->r.order != 0  && !nxt->r.reset) {
+      nxt->r.c0 = Rep16_FromFloat0(Rep16_EvalPoly(new, new->count - 1));
+    }
+
+    assert (nxt == &(seq->segs[j])); /* already updated */
+  }    
+}
+                   
+static void
+Reconstruct(const poly_segment16_seq_t *seq,
+            double                     *a,
+            size_t                      nsteps)
+{
+  size_t n;
+  int lastHi;
+  int expectLastHi;
+  int j;
+  
+  n      = seq->sz;
+  lastHi = -1;
+
+  for (j = 0; j < n; ++j) {
+    int i;
+    const poly_segment16_t *seg;
+
+    seg = &(seq->segs[j]);
+
+    assert(seg->n == 0 || seg->r.count == seg->n);
+
+    if (seg->r.order == 0 || seg->r.reset)
+      expectLastHi = seg->lo - 1;
+    else
+      expectLastHi = seg->lo;
+
+    assert(!(seg->n != 0 && lastHi != expectLastHi)); /* X chaining */
+
+    if (seg->n != 0)
+      lastHi = seg->lo + seg->n - 1;
+
+    for (i = 0; i < seg->n; ++i) {
+      double y;
+      y = Rep16_EvalPoly(&(seg->r), i);
+      a[seg->lo + i] = y;
+    }
+
+    if (seg->n != 0 && j != n - 1) {
+      FixupNextC0NoCheck(seq, j, a);
+    }
+  }
+  
+}
+
+static void
+DecompressArray(const char *buf, size_t n, double *rarr, size_t nsteps)
+{
+  poly_segment16_seq_t *segments;
+  segments = poly_segment16_serial_construct(buf, n);
+  Reconstruct(segments, rarr, nsteps);
+  poly_segment16_free(segments);
 }
 
 void
@@ -221,8 +354,8 @@ ztrace_get_node_values(FILE                  *fp,
     int i;
     if (fseek(fp, dirent->start, SEEK_SET) < 0) { perror("fseek"); exit(1); }
     for (i = 0; i < header->nsteps; ++i) {
-      if (!read_float(fp, arr + i)) {
-        perror("read_float");
+      if (!ztrace_read_float(fp, arr + i)) {
+        perror("ztrace_read_float");
         exit(1);
       }
     }
@@ -252,8 +385,16 @@ ztrace_get_node_values(FILE                  *fp,
 
     {
       size_t n = dirent->bytes;
+      double *darr = (double *)malloc(header->nsteps * sizeof(double));
+      int i;
+      
       decoded = ArithDecode(data, &n, dirent->code);
-      DecompressArray(decoded, n, arr);
+      DecompressArray(decoded, n, darr, header->nsteps);
+
+      for (i = 0; i < header->nsteps; ++i) /* convert to single prec */
+        arr[i] = darr[i];
+
+      free(darr);
     }
     
   }
