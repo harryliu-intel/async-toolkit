@@ -12,8 +12,12 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
+#include <inttypes.h>
 #include "minmax.h"
 #include "arithdecode.h"
+
+Boolean_t verbose = True;
 
 #if 0 /* unused for decoder only */
 static ArithProbability_t
@@ -146,12 +150,12 @@ ArithDecoder_NewChar(ArithDecoder_t *de, char newChar)
       int gotNext = GetBit(de, &b);
 
       if (gotNext) {
-        de->value  = de->value >> 1;
+        de->value  = de->value << 1;
         de->value += b;
         ++(de->iptr);
-        if (de->iptr == ArithBits_CodeBits) {
-          /* Decode done priming buffer */
-        }
+
+        if (verbose && ( de->iptr == ArithBits_CodeBits )) 
+          fprintf(stderr, "Decode done priming buffer\n");
       } else {
         return False;
       }
@@ -166,7 +170,12 @@ ArithDecoder_NewChar(ArithDecoder_t *de, char newChar)
              ((de->value - de->up.lo + 1ULL) * lastCum - 1ULL) / range;
       ArithProbability_t p           = GetChar(de, scaledValue, &c);
 
+      if (verbose)
+        fprintf(stderr, "Decoder hi %" PRIx64 " lo %" PRIx64 " range %" PRIx64 " p {lo=%" PRIu64 " hi=%" PRIu64 " cnt=%" PRIu64 "} decoded %c (%u)\n", de->up.hi, de->up.lo, range, p.lo, p.hi, p.count, c, c);
+      
       if (c == EofMarker) {
+        if (verbose)
+          fprintf(stderr, "Decoded EOF\n");
         return True;
       }
       NewByte(de, c);
@@ -175,11 +184,14 @@ ArithDecoder_NewChar(ArithDecoder_t *de, char newChar)
         Bits_t newHi = de->up.lo + (range * p.hi) / p.count - 1ULL;
         Bits_t newLo = de->up.lo + (range * p.lo) / p.count;
 
+        if (verbose)
+          fprintf(stderr, "Decoder newHi %" PRIx64 " newLo %" PRIx64 "\n", newHi, newLo);
+        
         de->up.hi = newHi;
         de->up.lo = newLo;
       }
       
-    }
+    }/*endif*/
     
     while(True) {
       if (!de->disconnected) {

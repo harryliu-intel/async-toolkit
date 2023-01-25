@@ -475,7 +475,7 @@ PROCEDURE Decode(de : Decoder; newChar : CHAR) =
             de.lo := newLo
           END;
         END
-      END;
+      END(*FI*);
       
       LOOP
         IF NOT de.disconnected THEN

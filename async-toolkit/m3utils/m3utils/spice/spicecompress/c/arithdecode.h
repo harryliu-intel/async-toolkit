@@ -21,9 +21,9 @@
 #define ArithBits_CodeBits      ((ArithBits_Bits / 2ULL) + 1ULL)
 #define ArithBits_FreqBits      ((ArithBits_Bits / 2ULL) - 2ULL)
 #define ArithBits_MaxCode       ((1ULL << ArithBits_CodeBits) - 1ULL)
-#define ArithBits_MaxFreq       ((1ULL << ArithBits_CodeBits) - 1ULL)
+#define ArithBits_MaxFreq       ((1ULL << ArithBits_FreqBits) - 1ULL)
 #define ArithBits_OneHalf       (1ULL << (ArithBits_CodeBits - 1ULL))
-#define ArithBits_OneFourth     (1ULL << (ArithBits_CodeBits - 1ULL))
+#define ArithBits_OneFourth     (1ULL << (ArithBits_CodeBits - 2ULL))
 #define ArithBits_ThreeFourths  (ArithBits_OneHalf + ArithBits_OneFourth)
 
 typedef uint64_t Bits_t;
