@@ -6,7 +6,7 @@
 
 #include "aplot.h"
 #include "archive.h"
-#include "../ztrace/ztrace.h"
+#include "ztrace.h"
 #undef DEBUG
 
 /*** globals and prototypes ***/

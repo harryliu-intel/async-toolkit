@@ -26,15 +26,16 @@ include $(BUILD_SYSTEM_ROOT)/filetypes/progfiles/mklinkrule.mk
 
 MAKE_LINK_RULE_TARGET_NAME := test_model
 MAKE_LINK_RULE_TARGET_DEPENDENCIES := $(call CONONICALIZE_PATH, $(CURR_TARGET_DIR)/../lib/liblib.o) \
-                                      $(CURR_TARGET_DIR)/test_model.o                                \
+                                      $(CURR_TARGET_DIR)/test_model.o                               \
                                       $(CURR_TARGET_DIR)/libaspice.o
 
 include $(BUILD_SYSTEM_ROOT)/filetypes/progfiles/mklinkrule.mk
 
 
 MAKE_LINK_RULE_TARGET_NAME := aplot
-MAKE_LINK_RULE_TARGET_DEPENDENCIES := $(call CONONICALIZE_PATH, $(CURR_TARGET_DIR)/../lib/liblib.o) \
-                                      $(CURR_TARGET_DIR)/aplot.o                                    \
+MAKE_LINK_RULE_TARGET_DEPENDENCIES := $(call CONONICALIZE_PATH, $(CURR_TARGET_DIR)/../lib/liblib.o)       \
+                                      $(call CONONICALIZE_PATH, $(CURR_TARGET_DIR)/../ztrace/libztrace.o) \
+                                      $(CURR_TARGET_DIR)/aplot.o                                          \
                                       $(CURR_TARGET_DIR)/tracelib.o
 
 include $(BUILD_SYSTEM_ROOT)/filetypes/progfiles/mklinkrule.mk

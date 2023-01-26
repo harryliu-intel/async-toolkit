@@ -20,12 +20,12 @@ OPT         = -O3 -Wall -funroll-loops -ffast-math -finline-limit=20000
 
 # architecture dependent setup
 ifeq ($(ARCH),Linux-i686)
-  CFLAGS = -I$(LIB_DIR) $(OPT) -ggdb -march=pentium3 -DPREFETCH -DSIMD # -I$(SDI2_INCLUDE) -DSST2
+  CFLAGS = -I$(LIB_DIR) -I$(ZTRACE_DIR) $(OPT) -ggdb -march=pentium3 -DPREFETCH -DSIMD # -I$(SDI2_INCLUDE) -DSST2
   LFLAGS = -lm -lreadline $(LIB_DIR)/castlib.a # $(SDI2_LIB)
 endif
 
 ifeq ($(ARCH),Linux-x86_64)
-  CFLAGS = -I$(LIB_DIR) $(OPT) -ggdb -march=opteron -m64 -DPREFETCH -DSIMD
+  CFLAGS = -I$(LIB_DIR) -I$(ZTRACE_DIR) $(OPT) -ggdb -march=opteron -m64 -DPREFETCH -DSIMD
   LFLAGS = -lm -lreadline $(LIB_DIR)/castlib.a
 endif
 
