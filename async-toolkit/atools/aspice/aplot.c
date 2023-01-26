@@ -6,6 +6,7 @@
 
 #include "aplot.h"
 #include "archive.h"
+#include "../ztrace/ztrace.h"
 #undef DEBUG
 
 /*** globals and prototypes ***/
@@ -412,7 +413,9 @@ void get_data(LIST *curves)
   FILE *tracefile=NULL;
   char filename[STRMAX];
   CURVE *curve,*lastcurve,*lasttime;
-
+  int compressed;
+  ztrace_header_t zheader;
+          
   /*** create curve cache ***/
   if (activecurves==NULL) activecurves=list_create(sizeof(CURVE *));
 
@@ -422,9 +425,19 @@ void get_data(LIST *curves)
     curve=curves->p.curve[i];
 
     /*** read header in order to check Nnodes, Nsteps ***/
-    safe_sprintf(filename,"%s.trace",curve->file);
     if (tracefile!=NULL) fclose(tracefile); // close previous tracefile
+
+    /* try standard, uncompressed format */
+    safe_sprintf(filename,"%s.trace",curve->file);
     tracefile=aplot_fopen(filename,"rb");
+    compressed=0;
+    if (tracefile==NULL)
+      {
+        /* try compressed format */
+        safe_sprintf(filename,"%s.ztrace",curve->file);
+        tracefile=aplot_fopen(filename,"rb");
+        compressed=1;
+      }
     if (tracefile==NULL)
       {
       printf("WARNING: can't read tracefile %s.\n",filename);
@@ -433,11 +446,27 @@ void get_data(LIST *curves)
     else
       {
       bigbuffer(tracefile);
-      if (!get_header(tracefile,&timestamp,&Nnodes,&Nsteps,&order))
+      if (compressed)
         {
-        printf("WARNING: bad or reordering %s.\n",filename);
-        continue;
+          if (!ztrace_get_header(tracefile, &zheader))
+            {
+              printf("WARNING: bad or reordering %s.  (compressed)\n",filename);
+              continue;
+            }
+          timestamp = zheader.ctime;
+          Nnodes    = zheader.nwaves;
+          Nsteps    = zheader.nsteps;
+          order     = zheader.version; /* we won't use this */
+        }  
+      else
+        {
+          if (!get_header(tracefile,&timestamp,&Nnodes,&Nsteps,&order))
+            {
+              printf("WARNING: bad or reordering %s.\n",filename);
+              continue;
+            }
         }
+      
 #ifdef DEBUG
       fprintf(stderr,"Timestamp of %s is %d, Nsteps is %d\n",filename,timestamp,Nsteps);
 #endif
@@ -492,7 +521,10 @@ void get_data(LIST *curves)
 #ifdef DEBUG
       fprintf(stderr,"Updating time for %s %s\n",curve->file,curve->name);
 #endif
-      get_node_values(tracefile,0,Nnodes,Nsteps,order,curve->t);
+      if (compressed)
+        ztrace_get_node_values(tracefile, &zheader, 0, curve->t);
+      else
+        get_node_values(tracefile,0,Nnodes,Nsteps,order,curve->t);
       }
 
     /*** find a cached curve by file and name ***/
@@ -514,7 +546,10 @@ void get_data(LIST *curves)
 #ifdef DEBUG
       fprintf(stderr,"Updating data for %s %s\n",curve->file,curve->name);
 #endif
-      get_node_values(tracefile,curve->node,Nnodes,Nsteps,order,curve->v);
+      if (compressed)
+        ztrace_get_node_values(tracefile, &zheader, curve->node, curve->v);
+      else
+        get_node_values(tracefile,curve->node,Nnodes,Nsteps,order,curve->v);
       }
 
     /*** add curve to activecurves ***/

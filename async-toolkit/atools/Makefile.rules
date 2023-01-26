@@ -8,13 +8,15 @@ ARCH     = $(shell echo `uname -s`-`uname -m` | sed "s/ //g")
 LIB_DIR  = $(TOP)/lib
 BIN_DIR  = $(TOP)/bin/$(ARCH)
 MAN_DIR  = $(TOP)/man/man1
+ZTRACE_DIR = $(TOP)/ztrace
 
 # tools setup
 CC          = gcc # -pg
 AR          = ar ru
 INSTALL     = install -m 775
 INSTALL_MAN = install -m 664
-OPT         = -O3 -Wall -funroll-loops -ffast-math -finline-limit=20000
+#OPT         = -O3 -Wall -funroll-loops -ffast-math -finline-limit=20000
+OPT         =
 
 # architecture dependent setup
 ifeq ($(ARCH),Linux-i686)

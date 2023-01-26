@@ -25,7 +25,7 @@ aspice: aspice.o $(ASPICE_OBJ) $(LIB_DIR)/castlib.a
 test_model: test_model.o $(ASPICE_OBJ) $(LIB_DIR)/castlib.a
 
 # trace processing programs
-aplot: aplot.o tracelib.o $(LIB_DIR)/castlib.a
+aplot: aplot.o tracelib.o $(LIB_DIR)/castlib.a $(ZTRACE_DIR)/ztracelib.a
 
 reorder_trace: reorder_trace.o tracelib.o $(LIB_DIR)/castlib.a
 
