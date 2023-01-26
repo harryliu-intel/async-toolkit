@@ -55,6 +55,7 @@ ArithDecoder_Init(ArithDecoder_t     *de,
   de->up.hi       = ArithBits_MaxCode;
 
   /* ArithCode.InitDecoder */
+  de->value        = 0;
   de->nextBit      = 0;
   de->iptr         = 0;
   de->disconnected = 0;

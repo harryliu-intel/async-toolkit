@@ -10,10 +10,9 @@ test_trace(int argc, char **argv)
   FILE *fp;
   ztrace_header_t header;
   int nodeid;
+  int i;
 
-  assert (argc == 2);
-  
-  nodeid = atoi(argv[1]);
+  assert (argc >= 2);
   
   fp = fopen("run_i3_1ps.ztrace", "rb");
 
@@ -24,11 +23,15 @@ test_trace(int argc, char **argv)
 
   /*ztrace_debug_header(&header);*/
 
+  for (i = 1; i < argc; ++i)
   {
     #define FNBUFLEN 100
     FILE *ofp;
     char fnbuff[FNBUFLEN];
     float *time, *data;
+
+    nodeid = atoi(argv[i]);
+
     time  = malloc(header.nsteps * sizeof(float));
     data  = malloc(header.nsteps * sizeof(float));
 
@@ -38,7 +41,6 @@ test_trace(int argc, char **argv)
 
     ztrace_get_node_values(fp, &header, 0, time);
     ztrace_get_node_values(fp, &header, nodeid, data);
-
     
     for (int i = 0; i < header.nsteps; ++i)
       fprintf(ofp, "%10g %10g\n", time[i], data[i]);
