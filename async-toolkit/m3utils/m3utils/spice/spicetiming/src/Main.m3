@@ -1050,7 +1050,7 @@ PROCEDURE MeasureFromSpice(spiceFn : Pathname.T) =
         DoOneLatchSpec(db, spice, rootCkt, LatchSpecs[i], mapper)
       END;
       
-      WITH worst = MarginDump.Do(db, 10) DO
+      WITH worst = MarginDump.Do(db, 10, traceRt) DO
         IF graphNs > 0.0d0 THEN
           FOR i := 0 TO worst.size() - 1 DO
             GraphMeasurement(worst.get(i), graphNs, i, traceRt)
@@ -1148,7 +1148,7 @@ PROCEDURE MeasureByName(truncValues : CARDINAL) =
     nclks      := 0;
     nsteps     := trace.getSteps();
     tima, data := NEW(REF ARRAY OF LONGREAL, nsteps);
-    vwr        := FileWr_Open("values.dat");
+    vwr        := FileWr_Open(traceRt & "_values.dat");
     
   BEGIN
     trace.getTimeData(tima^);
@@ -1210,7 +1210,7 @@ PROCEDURE MeasureByName(truncValues : CARDINAL) =
 
     Debug.Out(F("%s clocks", Int(nclks)));
 
-    WITH worst = MarginDump.Do(db, 10) DO
+    WITH worst = MarginDump.Do(db, 10, traceRt) DO
       IF graphNs > 0.0d0 THEN
         FOR i := 0 TO worst.size() - 1 DO
           GraphMeasurement(worst.get(i), graphNs, i, traceRt)
@@ -1231,7 +1231,7 @@ VAR
   tranFinder : TransitionFinder.T;
   vdd                         := 0.75d0;
   resetTime                   := 0.0d-9;
-  warnWr                      := FileWr_Open("spicetiming.warn");
+  warnWr                      := FileWr_Open(traceRt & "_spicetiming.warn");
   quick      : BOOLEAN;
   graphNs                     := FIRST(LONGREAL);
   truncValues                 := LAST(CARDINAL);

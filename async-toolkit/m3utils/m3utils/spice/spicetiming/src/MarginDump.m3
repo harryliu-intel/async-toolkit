@@ -17,7 +17,9 @@ IMPORT Thread;
 CONST LR = LongReal;
       TE = Text.Equal;
       
-PROCEDURE Do(seq : MarginMeasurementSeq.T; Nworst : CARDINAL) : MarginMeasurementSeq.T =
+PROCEDURE Do(seq     : MarginMeasurementSeq.T;
+             Nworst  : CARDINAL;
+             traceRt : TEXT) : MarginMeasurementSeq.T =
   VAR
     allTags := NEW(TextSetDef.T).init();
     allDatDirs := NEW(CheckDirSetDef.T).init();
@@ -48,7 +50,7 @@ PROCEDURE Do(seq : MarginMeasurementSeq.T; Nworst : CARDINAL) : MarginMeasuremen
         WITH n = FilterByTag(seq, tag, arr^),
              sub = SUBARRAY(arr^, 0, n) DO
           MarginMeasurementArraySort.Sort(sub);
-          DumpOne(tag, sub);
+          DumpOne(traceRt & "_" & tag, sub);
           FOR i := 0 TO MIN(Nworst, NUMBER(sub)) - 1 DO
             res.addhi(sub[i])
           END

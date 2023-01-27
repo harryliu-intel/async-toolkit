@@ -4,6 +4,7 @@
 (*                                                                     *)
 (* Last modified on Thu Dec  8 09:46:59 PST 1994 by kalsow             *)
 (* Last modified on Sun Feb 15 16:44:09 GMT 1998 by Thomas Frauenstein *)
+(* Modified by mika.nystroem@intel.com to add ToChars procedure        *)
 
 INTERFACE MyWx;
 
