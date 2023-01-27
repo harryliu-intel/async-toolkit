@@ -265,46 +265,65 @@ PROCEDURE AddhiOp(t            : T;
       t.scratch  := NEW(REF ARRAY OF LONGREAL, t.tr.getSteps());
       t.scratch1 := NEW(REF ARRAY OF LONGREAL, t.tr.getSteps())
     END;
-    op.exec(t.tr, t.scratch^);
 
-    OpenWr(t);
-    (* t.wr is open and ready *)
+    TYPECASE op OF
+      TraceOp.Array(arr) =>
+      arr.exec(t.tr, t.scratch^);
 
-    Wr.Seek(t.wr, t.wfLim);
-    (* seek to EOD *)
+      OpenWr(t);
+      (* t.wr is open and ready *)
 
-    Debug.Out("TraceRewriter.AddhiOp : wr @ " & Int(Wr.Index(t.wr)));
+      Wr.Seek(t.wr, t.wfLim);
+      (* seek to EOD *)
 
-    textWr := NEW(TextWr.T).init();
-    
-    SpiceCompress.CompressArray("zdebug",
-                                t.scratch^,
-                                t.scratch1^,
-                                relPrec,
-                                FALSE,
-                                textWr,
-                                norm,
-                                mem    := NEW(TripleRefTbl.Default).init(),
-                                doDump := FALSE);
-    WITH txt = TextWr.ToText(textWr),
-         len = Text.Length(txt) DO
+      Debug.Out("TraceRewriter.AddhiOp/Array : wr @ " & Int(Wr.Index(t.wr)));
+
+      textWr := NEW(TextWr.T).init();
       
-      (* txt is the polynomially compressed waveform *)
+      SpiceCompress.CompressArray("zdebug",
+                                  t.scratch^,
+                                  t.scratch1^,
+                                  relPrec,
+                                  FALSE,
+                                  textWr,
+                                  norm,
+                                  mem    := NEW(TripleRefTbl.Default).init(),
+                                  doDump := FALSE);
+      WITH txt = TextWr.ToText(textWr),
+           len = Text.Length(txt) DO
+        
+        (* txt is the polynomially compressed waveform *)
+        
+        IF encoding = ArithConstants.ZeroCode THEN
+          code     := ArithConstants.ZeroCode;
+          finalTxt := txt;
+          finalLen := len
+        ELSE
+          code := encoding;
+          finalTxt := DistZTrace.DoArithCompress(txt, code);
+          finalLen := Text.Length(finalTxt)
+        END;
+        
+        Debug.Out(F("AddhiOp : %s timesteps, compressed size %s bytes, coded size %s",
+                    Int(NUMBER(t.scratch^)),
+                    Int(len),
+                    Int(finalLen)))
+      END
+    |
+      TraceOp.Pickle(pkl) =>
+      OpenWr(t);
+      (* t.wr is open and ready *)
       
-      IF encoding = ArithConstants.ZeroCode THEN
-        code     := ArithConstants.ZeroCode;
-        finalTxt := txt;
-        finalLen := len
-      ELSE
-        code := encoding;
-        finalTxt := DistZTrace.DoArithCompress(txt, code);
-        finalLen := Text.Length(finalTxt)
-      END;
-      
-      Debug.Out(F("AddhiOp : %s timesteps, compressed size %s bytes, coded size %s",
-                  Int(NUMBER(t.scratch^)),
-                  Int(len),
-                  Int(finalLen)))
+      Wr.Seek(t.wr, t.wfLim);
+      (* seek to EOD *)
+
+      Debug.Out("TraceRewriter.AddhiOp/Pickle : wr start @ " & Int(Wr.Index(t.wr)));
+
+      pkl.exec(t.tr, t.wr);
+
+      Debug.Out("TraceRewriter.AddhiOp/Pickle : done, wr @ " & Int(Wr.Index(t.wr)));
+    ELSE
+      <*ASSERT FALSE*>
     END;
 
     Wr.PutText(t.wr, finalTxt);

@@ -5,11 +5,14 @@ IMPORT LRFunction;
 IMPORT MapError;
 
 REVEAL
-  T = Public BRANDED Brand OBJECT
+  T = BRANDED Brand OBJECT
     trace  : Trace.T;
+  METHODS
+  END;
+  
+  Array = PublicArray BRANDED Brand & " Array" OBJECT
     result : REF ARRAY OF LONGREAL;
   METHODS
-
     getWorkingSpace() : REF ARRAY OF LONGREAL := GetWorkingSpace;
     eval() RAISES { Rd.EndOfFile, Rd.Failure };
   OVERRIDES
@@ -39,12 +42,15 @@ REVEAL
     eval := EvalScale;
   END;
 
-PROCEDURE GetWorkingSpace(t : T) : REF ARRAY OF LONGREAL =
+  Pickle = PublicPickle BRANDED Brand & " Pickle" OBJECT
+  END;
+
+PROCEDURE GetWorkingSpace(t : Array) : REF ARRAY OF LONGREAL =
   BEGIN
     RETURN NEW(REF ARRAY OF LONGREAL, t.trace.getSteps())
   END GetWorkingSpace;
 
-PROCEDURE Exec(t : T; trace : Trace.T; VAR result : ARRAY OF LONGREAL)
+PROCEDURE Exec(t : Array; trace : Trace.T; VAR result : ARRAY OF LONGREAL)
   RAISES { Rd.EndOfFile, Rd.Failure } =
   BEGIN
     t.trace := trace;
@@ -55,7 +61,7 @@ PROCEDURE Exec(t : T; trace : Trace.T; VAR result : ARRAY OF LONGREAL)
 (**********************************************************************)
   
 REVEAL
-  GetNode = (T OBJECT nodeid : NodeId; END)
+  GetNode = (Array OBJECT nodeid : NodeId; END)
                 BRANDED Brand & " GetNode" OBJECT
   OVERRIDES
     eval := EvalGetNode;
@@ -71,7 +77,7 @@ PROCEDURE EvalGetNode(self : GetNode)
 (**********************************************************************)
 
 REVEAL
-  Unary = (T OBJECT a : T; END) BRANDED Brand & " Unary" OBJECT
+  Unary = (Array OBJECT a : Array; END) BRANDED Brand & " Unary" OBJECT
   OVERRIDES
     eval := EvalUnary;
   END;
@@ -149,7 +155,7 @@ PROCEDURE EvalIntegrate(self       : Integrate)
 (**********************************************************************)
 
 REVEAL
-  Binary = (T OBJECT a, b : T; END) BRANDED Brand & " Binary" OBJECT
+  Binary = (Array OBJECT a, b : Array; END) BRANDED Brand & " Binary" OBJECT
   OVERRIDES
     eval := EvalBinary;
   END;
@@ -223,32 +229,32 @@ PROCEDURE EvalScale(self       : Scale)
 
   (**********************************************************************)
 
-PROCEDURE MakeGetNode(nodeid : NodeId) : T =
+PROCEDURE MakeGetNode(nodeid : NodeId) : GetNode =
   BEGIN
     RETURN NEW(GetNode, nodeid := nodeid)
   END MakeGetNode;
 
-PROCEDURE MakeFunc(f : LRFunction.T) : T =
+PROCEDURE MakeFunc(f : LRFunction.T) : LrFunc =
   BEGIN
     RETURN NEW(LrFunc, f := f)
   END MakeFunc;
 
-PROCEDURE MakePlus(a, b : T) : T =
+PROCEDURE MakePlus(a, b : Array) : Plus =
   BEGIN
     RETURN NEW(Plus, a := a, b := b)
   END MakePlus;
 
-PROCEDURE MakeTimes(a, b : T) : T =
+PROCEDURE MakeTimes(a, b : Array) : Times =
   BEGIN
     RETURN NEW(Times, a := a, b := b)
   END MakeTimes;
 
-PROCEDURE MakeDivide(a, b : T) : T =
+PROCEDURE MakeDivide(a, b : Array) : Divide =
   BEGIN
     RETURN NEW(Divide, a := a, b := b)
   END MakeDivide;
 
-PROCEDURE MakeScale(a : T; scalar : LONGREAL) : T =
+PROCEDURE MakeScale(a : Array; scalar : LONGREAL) : Scale =
   BEGIN
     RETURN NEW(Scale, a := a, scalar := scalar)
   END MakeScale;

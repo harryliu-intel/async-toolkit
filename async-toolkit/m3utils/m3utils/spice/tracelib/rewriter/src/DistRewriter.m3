@@ -23,6 +23,7 @@ IMPORT FsdbComms;
 IMPORT FileWr;
 IMPORT TextRd;
 IMPORT ArithConstants;
+IMPORT TextWr;
 
 <*FATAL Thread.Alerted*>
 
@@ -287,8 +288,30 @@ PROCEDURE ClApply(cl : Closure) : REFANY =
         END;
 
         PushTask(task);
-        WITH result = ReceiveResult(resId, task.norm) DO
-          <*ASSERT resId = task.nodeId*>
+        VAR
+          line   := Rd.GetLine(cmdRd);
+          reader := NEW(TextReader.T).init(line);
+          result : TEXT;
+          kw     : TEXT;
+        BEGIN
+          IF reader.next(" ", kw, TRUE) THEN
+            IF TE(kw, "AAA") THEN
+              result := ReceiveResult(resId, task.norm);
+              <*ASSERT resId = task.nodeId*>
+            ELSIF TE(kw, "PPP") THEN
+              VAR
+                len := reader.getInt();
+                buff := NEW(REF ARRAY OF CHAR, len);
+              BEGIN
+                WITH got = Rd.GetSub(cmdRd, buff^) DO
+                  <*ASSERT got = len*>
+                END;
+                result := Text.FromChars(buff^);
+                task.code := ArithConstants.Pickle;
+              END
+            END
+          END;
+          
           task.result := result;
           
           LOCK cl.t.mu DO
@@ -354,19 +377,39 @@ PROCEDURE RunSlave(root : Pathname.T) =
                 <*ASSERT ISTYPE(ref, TraceOp.T)*>
                 
                 Debug.Out("DistRewriter.RunSlave : ready to execute task");
-                
-                NARROW(ref, TraceOp.T).exec(tr, arr^);
 
-                Debug.Out("DistRewriter.RunSlave : task done, writing to master");
-                
-                DistZTrace.WriteOut(Stdio.stdout,
-                                    arr^,
-                                    id,
-                                    FALSE,
-                                    prec,
-                                    FALSE,
-                                    code);
-                Wr.Flush(Stdio.stdout);
+                TYPECASE ref OF
+                  TraceOp.Array(arrOp) =>
+                  
+                  arrOp.exec(tr, arr^);
+
+                  Wr.PutText(Stdio.stdout, "AAA\n");
+                  Debug.Out("DistRewriter.RunSlave : TraceOp.Array task done, writing to master");
+                  
+                  DistZTrace.WriteOut(Stdio.stdout,
+                                      arr^,
+                                      id,
+                                      FALSE,
+                                      prec,
+                                      FALSE,
+                                      code);
+                  Wr.Flush(Stdio.stdout);
+
+                |
+                  TraceOp.Pickle(pklOp) =>
+                  Debug.Out("DistRewriter.RunSlave : TraceOp.Pickle, will execute");
+
+                  (* we need to use a text writer to get the length *)
+                  WITH textWr = TextWr.New() DO
+                    pklOp.exec(tr, textWr);
+                    WITH pTxt = TextWr.ToText(textWr) DO
+                      Wr.PutText(Stdio.stdout, F("PPP %s\n",
+                                                 Int(Text.Length(pTxt))));
+                      Wr.PutText(Stdio.stdout, pTxt)
+                    END
+                  END;
+                  Wr.Flush(Stdio.stdout)
+                END;
 
                 Debug.Out("DistRewriter.RunSlave : writing to master complete!");
 

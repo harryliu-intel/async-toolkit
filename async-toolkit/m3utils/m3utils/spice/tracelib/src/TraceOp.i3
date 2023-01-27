@@ -6,23 +6,33 @@ INTERFACE TraceOp;
 IMPORT Trace;
 IMPORT Rd;
 IMPORT LRFunction;
+IMPORT Wr;
 
 TYPE
-  T <: Public;
+  T <: ROOT;
 
-  Public = OBJECT METHODS
+  Array <: PublicArray;
+
+  Pickle <: PublicPickle;
+  
+  PublicArray = T OBJECT METHODS
     exec(trace : Trace.T; VAR result : ARRAY OF LONGREAL)
       RAISES { Rd.EndOfFile, Rd.Failure } ;
   END;
 
+  PublicPickle = T OBJECT METHODS
+    exec(trace : Trace.T; target : Wr.T)
+      RAISES { Rd.EndOfFile, Rd.Failure, Wr.Failure };
+  END;
+
   NodeId = Trace.NodeId;
 
-  GetNode <: T OBJECT
+  GetNode <: Array OBJECT
     nodeid : NodeId;
   END;
 
-  Unary <: T OBJECT
-    a : T;
+  Unary <: Array OBJECT
+    a : Array;
   END;
 
   Func <: Unary OBJECT
@@ -35,8 +45,8 @@ TYPE
 
   Integrate <: Unary;
 
-  Binary <: T OBJECT
-    a, b : T;
+  Binary <: Array OBJECT
+    a, b : Array;
   END;
 
   Plus <: Binary;
@@ -55,16 +65,16 @@ CONST Brand = "TraceOp";
 
 (* utility procedures *)
 
-PROCEDURE MakeGetNode(nodeid : NodeId) : T;
+PROCEDURE MakeGetNode(nodeid : NodeId) : GetNode;
 
-PROCEDURE MakeFunc(f : LRFunction.T) : T;
+PROCEDURE MakeFunc(f : LRFunction.T) : LrFunc;
 
-PROCEDURE MakePlus(a, b : T) : T;
+PROCEDURE MakePlus(a, b : Array) : Plus;
 
-PROCEDURE MakeTimes(a, b : T) : T;
+PROCEDURE MakeTimes(a, b : Array) : Times;
 
-PROCEDURE MakeDivide(a, b : T) : T;
+PROCEDURE MakeDivide(a, b : Array) : Divide;
 
-PROCEDURE MakeScale(a : T; scalar : LONGREAL) : T;
+PROCEDURE MakeScale(a : Array; scalar : LONGREAL) : Scale;
 
 END TraceOp.
