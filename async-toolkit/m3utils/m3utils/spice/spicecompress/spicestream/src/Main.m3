@@ -22,6 +22,7 @@ IMPORT FsdbComms;
 IMPORT Matrix;
 IMPORT DistZTrace;
 IMPORT CardList;
+IMPORT ArithConstants;
 
 <*FATAL Thread.Alerted*>
 
@@ -317,14 +318,25 @@ BEGIN
                                                 fd.unit);
 
       TRY
-      DistZTrace.WriteOut(wr,
-                          a^,
-                          nodeid,
-                          doDump,
-                          relPrec,
-                          doAllDumps,
-                          noArith);
-      Wr.Close(wr)
+        VAR
+          code : ArithConstants.Encoding;
+        BEGIN
+          
+          IF noArith THEN
+            code := ArithConstants.ZeroCode
+          ELSE
+            code := ArithConstants.FirstArith
+          END;
+          
+          DistZTrace.WriteOut(wr,
+                              a^,
+                              nodeid,
+                              doDump,
+                              relPrec,
+                              doAllDumps,
+                              code)
+        END;
+        Wr.Close(wr)
       EXCEPT 
           Matrix.Singular =>
           Debug.Error("Internal error attempting waveform compression : Matrix.Singular")

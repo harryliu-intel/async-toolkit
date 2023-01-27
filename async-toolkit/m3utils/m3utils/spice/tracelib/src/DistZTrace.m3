@@ -15,7 +15,7 @@ IMPORT ArithCallback;
 
 CONST TE = Text.Equal;
 
-PROCEDURE DoArithCompress(of : TEXT;
+PROCEDURE DoArithCompress(of          : TEXT;
                           VAR codeIdx : ArithConstants.CodeIdx) : TEXT =
   VAR
     enTxt : TEXT;
@@ -112,7 +112,8 @@ PROCEDURE WriteOut(wr            : Wr.T;
 
       CASE code OF
         
-        ArithCodes.ZeroCode, ArithCodes.FirstArith .. ArithCodes.LastArith =>
+        ArithConstants.ZeroCode,
+        ArithConstants.FirstArith .. ArithConstants.LastArith =>
         SpiceCompress.CompressArray("zdebug",
                                     a,
                                     z^,
@@ -123,12 +124,13 @@ PROCEDURE WriteOut(wr            : Wr.T;
                                     mem    := NEW(TripleRefTbl.Default).init(),
                                     doDump := doDump)
       |
-        ArithCodes.DenseCode =>
+        ArithConstants.DenseCode =>
         UnsafeWriter.WriteLRA(textWr, a);
         norm := SpiceCompress.IllegalNorm
       ELSE
-        Debug.Error("DistZTrace.WriteOut : unknown encoding requested : " & (Int code))
-      END;
+        Debug.Error("DistZTrace.WriteOut : unknown encoding requested : " &
+          Int(code))
+     END;
       (* we now have the polynomially compressed, or uncompressed, in textWr *)
       
       WITH txt = TextWr.ToText(textWr),
@@ -140,8 +142,12 @@ PROCEDURE WriteOut(wr            : Wr.T;
           finalTxt := txt;
           finalLen := len
         ELSE
-          finalTxt := DoArithCompress(txt, code);
-          finalLen := Text.Length(finalTxt)
+          VAR
+            c : ArithConstants.CodeIdx := code;
+          BEGIN
+            finalTxt := DoArithCompress(txt, c);
+            finalLen := Text.Length(finalTxt)
+          END
         END;
         
         Debug.Out(F("%s timesteps, compressed size %s bytes, coded size %s",

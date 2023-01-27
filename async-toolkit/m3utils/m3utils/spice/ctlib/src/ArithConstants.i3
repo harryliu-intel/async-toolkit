@@ -15,14 +15,24 @@ CONST ZeroCode : Encoding = 0;
       
       FirstArith  : Encoding = 1;
       MaxCode   = FirstArith;
-      
+
+      Pickle    : Encoding = 252;
+                        (* 
+                           this is a special code, not used for arithmetic coding
+
+                           It signifies that the data is a Modula-3 Pickle
+                        *)
+                         
       Automatic : Encoding = 253;
-                          (* this is a special code, not used in the files,
+                       (* 
+                          this is a special code, not used in the files,
                           only between modules, to denote that the selection
-                          of encoding scheme shall be automatic *)
+                          of encoding scheme shall be automatic 
+                       *)
 
       LinearCode : Encoding = 254;
-                       (* this is a special code, not used for arithmetic coding
+                       (* 
+                          this is a special code, not used for arithmetic coding
       
                           It means that the data is presented in the format
                           <first value>
@@ -33,7 +43,8 @@ CONST ZeroCode : Encoding = 0;
                        *)
       
       DenseCode : Encoding = 255;
-                       (* this is a special code, not used for arithmetic coding
+                       (* 
+                          this is a special code, not used for arithmetic coding
                           It means that the following data is dense floats,
                           as in the original aspice format.
                           
@@ -48,7 +59,7 @@ CONST ZeroCode : Encoding = 0;
       
 TYPE CodeIdx  = [ MinCode .. MaxCode ];
 
-     Encoding = [ ZeroCode .. DenseCode ]; (* one byte *)
+     Encoding = [ 0 .. 255 ]; (* one byte *)
 
 CONST LastArith = MaxCode; (* do we need two names for this? *)
 CONST ArithCodes = SET OF Encoding { FirstArith .. MaxCode };

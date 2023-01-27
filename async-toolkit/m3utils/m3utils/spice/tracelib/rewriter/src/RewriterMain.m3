@@ -37,6 +37,7 @@ IMPORT AL;
 IMPORT IP, NetObj;
 IMPORT Thread;
 IMPORT ReadLineError;
+IMPORT ArithConstants;
 
 <*FATAL Thread.Alerted*>
 

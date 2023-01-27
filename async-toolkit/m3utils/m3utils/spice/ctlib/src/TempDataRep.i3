@@ -6,6 +6,8 @@ INTERFACE TempDataRep;
 IMPORT SpiceCompress;
 IMPORT ArithConstants;
 IMPORT Rd;
+IMPORT Thread;
+IMPORT PolySegment16Serial;
 
 TYPE
   T = RECORD
@@ -30,7 +32,8 @@ PROCEDURE ReadFromTemp(tempData    : TEXT; VAR into    : T);
    data       <variable>
 *)
 
-PROCEDURE ReadFromTempNoNorm(rd : Rd.T; VAR into : T; bytes : CARDINAL);
+PROCEDURE ReadFromTempNoNorm(rd : Rd.T; VAR into : T; bytes : CARDINAL)
+  RAISES { Thread.Alerted, Rd.EndOfFile, Rd.Failure };
   (* read a stream as above but without the norm 
      
      thus contains the code (1 byte) and the compressed data 
@@ -43,7 +46,8 @@ PROCEDURE ReadFromTempNoNorm(rd : Rd.T; VAR into : T; bytes : CARDINAL);
   *)
 
 
-PROCEDURE Reconstruct(READONLY t : T; VAR a : ARRAY OF LONGREAL);
+PROCEDURE Reconstruct(READONLY t : T; VAR a : ARRAY OF LONGREAL)
+  RAISES { Rd.EndOfFile, PolySegment16Serial.Error };
   (* given a T, reconstruct the time series data as [0,1] limited data.
      To recover the original simulation data, apply the norm transformation. *)
   

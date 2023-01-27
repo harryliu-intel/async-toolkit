@@ -10,6 +10,8 @@ IMPORT FileNamer;
 IMPORT TempDataRep;
 IMPORT TextWr;
 IMPORT SpiceCompress;
+IMPORT PolySegment16Serial;
+IMPORT Matrix;
 
 <*FATAL Thread.Alerted*>
 
@@ -50,7 +52,7 @@ PROCEDURE InitM(self : T; fnr : FileNamer.T) : T =
 PROCEDURE ReadEntireFileM(self     : T;
                           idx      : CARDINAL;
                           VAR data : ARRAY OF LONGREAL)
-  RAISES { Rd.Failure, OSError.E } =
+  RAISES { Rd.Failure, OSError.E, PolySegment16Serial.Error, Rd.EndOfFile } =
   VAR
     fn := self.fnr.name(idx);
     ptr := 0;
@@ -152,7 +154,7 @@ PROCEDURE ReadEntireFileZ(self       : T;
                           nsteps     : CARDINAL;
                           targMaxDev : LONGREAL
   )
-  RAISES { Rd.Failure, OSError.E } =
+  RAISES { Rd.Failure, OSError.E, Matrix.Singular } =
   VAR
     fn := self.fnr.name(idx);
     ptr := 0;
@@ -173,7 +175,7 @@ PROCEDURE ReadEntireFileZ(self       : T;
     IF idx = 0 THEN
       (* this really does nothing useful at this point *)
       <*ASSERT FALSE*>
-      TRY
+      <*NOWARN*>TRY
         data := NEW(REF ARRAY OF LONGREAL, nsteps);
         WITH rd  = FileRd_Open(fn),
              cnt = DataBlock.ReadData(rd, idx, data^, fn) DO

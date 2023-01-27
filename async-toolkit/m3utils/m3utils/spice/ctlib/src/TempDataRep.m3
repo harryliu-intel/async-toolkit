@@ -13,6 +13,7 @@ IMPORT Thread;
 IMPORT SpiceCompress;
 IMPORT FileWr;
 IMPORT Wr;
+IMPORT PolySegment16Serial;
 
 CONST LR = LongReal;
 
@@ -31,7 +32,8 @@ PROCEDURE ReadFromTemp(tempData    : TEXT;
 
 PROCEDURE ReadFromTempNoNorm(rd       : Rd.T;
                              VAR into : T;
-                             finalLenp1 : CARDINAL) =
+                             finalLenp1 : CARDINAL)
+  RAISES { Thread.Alerted, Rd.EndOfFile, Rd.Failure } =
   VAR
     finalLen  := finalLenp1 - 1;
     finalData := NEW(REF ARRAY OF CHAR, finalLen);
@@ -57,7 +59,8 @@ PROCEDURE ReadFromTempNoNorm(rd       : Rd.T;
     END
   END ReadFromTempNoNorm;
   
-PROCEDURE Reconstruct(READONLY t : T; VAR a : ARRAY OF LONGREAL) =
+PROCEDURE Reconstruct(READONLY t : T; VAR a : ARRAY OF LONGREAL)
+  RAISES { Rd.EndOfFile, PolySegment16Serial.Error } =
   VAR
     deTxt   : TEXT;
     fiLen   := Text.Length(t.finalData);
@@ -81,16 +84,27 @@ PROCEDURE Reconstruct(READONLY t : T; VAR a : ARRAY OF LONGREAL) =
       deTxt := t.finalData
     END;
 
-    WITH fWr = FileWr.Open("reconstruct_raw") DO
-      Wr.PutText(fWr, deTxt);
-      Wr.Close(fWr)
+    IF FALSE THEN
+      TRY
+      BEGIN
+        WITH fWr = FileWr.Open("reconstruct_raw") DO
+          Wr.PutText(fWr, deTxt);
+          Wr.Close(fWr)
+        END
+      END
+      EXCEPT
+      ELSE
+      END
     END;
-    
-    WITH deLen = Text.Length(deTxt),
-         deRd  = TextRd.New(deTxt) DO
-      Debug.Out(F("Arithmetic decode complete, %s -> %s bytes",
-                  Int(fiLen), Int(deLen)));
-      SpiceCompress.DecompressArray(deRd, a)
+
+    <*FATAL Rd.Failure*>
+    BEGIN
+      WITH deLen = Text.Length(deTxt),
+           deRd  = TextRd.New(deTxt) DO
+        Debug.Out(F("Arithmetic decode complete, %s -> %s bytes",
+                    Int(fiLen), Int(deLen)));
+        SpiceCompress.DecompressArray(deRd, a)
+      END
     END
   END Reconstruct;
 

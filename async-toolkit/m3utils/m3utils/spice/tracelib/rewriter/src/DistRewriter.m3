@@ -22,6 +22,7 @@ IMPORT TextSeq;
 IMPORT FsdbComms;
 IMPORT FileWr;
 IMPORT TextRd;
+IMPORT ArithConstants;
 
 <*FATAL Thread.Alerted*>
 
