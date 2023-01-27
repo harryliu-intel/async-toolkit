@@ -72,13 +72,13 @@ PROCEDURE Seq1(txt : TEXT) : TextSeq.T =
     RETURN res
   END Seq1;
 
-PROCEDURE AddNamedOp(op : TraceOp.T; nm : TEXT)
+PROCEDURE AddNamedOp(op : TraceOp.T; nm : TEXT; encoding : ArithConstants.Encoding := ArithConstants.Automatic)
   RAISES { Matrix.Singular, OSError.E, Rd.EndOfFile, Rd.Failure, TraceFile.FormatError, Wr.Failure } =
   BEGIN
     IF master THEN
       drew.addNamedOp(op, nm, relPrec)
     ELSE
-      EVAL rew.addhiOp(op, Seq1(nm), relPrec := relPrec, noArith := FALSE)
+      EVAL rew.addhiOp(op, Seq1(nm), relPrec := relPrec, encoding := encoding)
     END
   END AddNamedOp;
 

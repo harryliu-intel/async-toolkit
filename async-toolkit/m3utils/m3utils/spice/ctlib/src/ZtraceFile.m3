@@ -30,6 +30,10 @@ PROCEDURE Read(rd : Rd.T) : T
     t.dirStart  := Rd.Index(rd);
     t.directory := NEW(Directory).init();
     FOR i := 0 TO t.header.nwaves - 1 DO
+      IF Debug.GetLevel() >= 30 THEN
+        Debug.Out(F("ZtraceFile.Read node header i %s @ %s",
+                    Int(i), Int(Rd.Index(rd))))
+      END;
       t.directory.addhi(ZtraceNodeHeader.Read(rd))
     END;
     Debug.Out("ZtraceFile.Read : about to read nsteps @ " & Int(Rd.Index(rd)));

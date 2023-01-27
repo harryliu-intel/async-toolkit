@@ -251,7 +251,7 @@ PROCEDURE AddhiOp(t            : T;
                   op           : TraceOp.T;
                   aliases      : TextSeq.T;
                   relPrec      : LONGREAL;
-                  noArith      : BOOLEAN) : CARDINAL
+                  encoding     : ArithConstants.Encoding) : CARDINAL
   RAISES { TraceFile.FormatError, OSError.E, Rd.EndOfFile, Rd.Failure, Wr.Failure, Matrix.Singular } =
   VAR
     code     : ArithConstants.CodeIdx;
@@ -291,11 +291,12 @@ PROCEDURE AddhiOp(t            : T;
       
       (* txt is the polynomially compressed waveform *)
       
-      IF noArith THEN
+      IF encoding = ArithConstants.ZeroCode THEN
         code     := ArithConstants.ZeroCode;
         finalTxt := txt;
         finalLen := len
       ELSE
+        code := encoding;
         finalTxt := DistZTrace.DoArithCompress(txt, code);
         finalLen := Text.Length(finalTxt)
       END;

@@ -40,6 +40,7 @@ IMPORT Fsdb;
 IMPORT TraceFile, FileNamer;
 IMPORT TempReader;
 IMPORT Text;
+IMPORT Env;
 
 <*FATAL Thread.Alerted*>
 
@@ -57,7 +58,10 @@ CONST Usage = "[-fsdb <fsdbPath>] [-compress <compressPath>] [-rename <dutName>]
                to FSDB reading program (can be a shell script
                launching via Netbatch).  Usually nanosimrd.
 
-               default format is CSDF if this is not provided
+               default format is CSDF if this is not provided.
+
+               If CT_NANOSIMRD_PATH is set in the environment,
+               that value is used as if we had typed "-fsdb <value>"
 
   -compress    Compress waveform data.  Argument is absolute path to 
                compression program (usually spicestream).
@@ -73,6 +77,9 @@ CONST Usage = "[-fsdb <fsdbPath>] [-compress <compressPath>] [-rename <dutName>]
                Note that if -compress is given without -z, then the output
                file will be stored in the uncompressed (aspice reordered)
                format.
+
+               If CT_COMPRESS_PATH is set in the environment, that
+               value is used as if we had typed "-compress <value>"
 
   -resample    resample data at timestep given
 
@@ -406,12 +413,19 @@ BEGIN
       formats := formats + SET OF TraceFile.Version {
                              TraceFile.Version.CompressedV1 };
     END;
-    
+
+    fsdbCmdPath := Env.Get("CT_NANOSIMRD_PATH");
+    IF fsdbCmdPath # NIL THEN
+      parseFmt := ParseFmt.Fsdb
+    END;
+
     IF pp.keywordPresent("-fsdb") THEN
       fsdbCmdPath := pp.getNext();
       parseFmt := ParseFmt.Fsdb;
     END;
 
+    compressCmdPath := Env.Get("CT_COMPRESS_PATH");
+    
     IF pp.keywordPresent("-compress") THEN
       compressCmdPath := pp.getNext()
     END;

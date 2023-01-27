@@ -2,6 +2,7 @@ INTERFACE DistRewriter;
 IMPORT Pathname;
 IMPORT TraceOp;
 IMPORT TraceRewriter;
+IMPORT ArithConstants;
 
 TYPE
   T = Master;
@@ -15,7 +16,10 @@ TYPE
          cmdPath  : Pathname.T;
          rew      : TraceRewriter.T) : T;
     
-    addNamedOp(op : TraceOp.T; nm : TEXT; relPrec : LONGREAL);
+    addNamedOp(op      : TraceOp.T;
+               nm      : TEXT;
+               relPrec : LONGREAL;
+               code    : ArithConstants.Encoding := ArithConstants.Automatic);
     
     flush();
     

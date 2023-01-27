@@ -40,7 +40,7 @@ TYPE
     addhiOp(op           : TraceOp.T;
             aliases      : TextSeq.T;
             relPrec      : LONGREAL;
-            noArith      : BOOLEAN) : CARDINAL
+            encoding     : ArithConstants.Encoding) : CARDINAL
     RAISES { TraceFile.FormatError, OSError.E, Rd.EndOfFile, Rd.Failure, Wr.Failure, Matrix.Singular };
 
     shareTrace() : Trace.T;

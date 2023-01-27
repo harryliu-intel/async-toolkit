@@ -1703,6 +1703,18 @@ PROCEDURE Reconstruct(seq        : PolySegment16Seq.T;
             CheckChainedX(seq, j);
             CheckChainedX(seq, j + 1);
           END;
+
+          (* do we really want to call FixupNextC0 here?
+
+             the issue with it is that it can proceed all the way to the
+             end of the waveform, and it looks like we call it from every
+             segment!  So it's O(N^2)... for no good reason.  Should be enough
+             to call it just for the next segment.
+
+             Ah, because targMaxDev is LAST(LONGREAL) it probably won't 
+             iterate?
+
+          *)
           FixupNextC0(seq, j, a, LAST(LONGREAL))
         END
       END

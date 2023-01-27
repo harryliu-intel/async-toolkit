@@ -104,13 +104,18 @@ PROCEDURE Init(t        : T;
     RETURN t
   END Init;
 
-PROCEDURE AddNamedOp(t : T; op : TraceOp.T; nm : TEXT; relPrec : LONGREAL) =
+PROCEDURE AddNamedOp(t       : T;
+                     op      : TraceOp.T;
+                     nm      : TEXT;
+                     relPrec : LONGREAL;
+                     code    : ArithConstants.Encoding) =
   BEGIN
     WITH task = NEW(Task,
                     op       := op,
                     nodeId   := 16_c0edbabe,
                     relPrec  := relPrec,
-                    nm       := nm) DO
+                    nm       := nm,
+                    code     := code) DO
       LOCK t.mu DO
         t.cmdseq.addhi(task);
         INC(t.active);
@@ -201,6 +206,7 @@ TYPE
     nodeId  : CARDINAL;
     relPrec : LONGREAL;
     nm      : TEXT;
+    code    : ArithConstants.Encoding;
 
     result  : TEXT;               (* filled in by execution *)
     norm    : SpiceCompress.Norm; (* filled in by execution *)
@@ -219,7 +225,10 @@ PROCEDURE ClApply(cl : Closure) : REFANY =
 
   PROCEDURE PushTask(task : Task) =
     BEGIN
-      Wr.PutText  (cmdWr, F("P %s %s\n", Int(task.nodeId), LR(task.relPrec)));
+      Wr.PutText  (cmdWr, F("P %s %s %s\n",
+                            Int(task.nodeId),
+                            LR(task.relPrec),
+                            Int(task.code)));
       Pickle.Write(cmdWr, task.op);
       Wr.Flush    (cmdWr)
     END PushTask;
@@ -337,6 +346,7 @@ PROCEDURE RunSlave(root : Pathname.T) =
             IF TE(kw, "P") THEN
               WITH id        = reader.getInt(),
                    prec      = reader.getLR(),
+                   code      = reader.getInt(),
                    ref       = Pickle.Read(rd),
                    arr       = NEW(REF ARRAY OF LONGREAL, tr.getSteps()) DO
                 
@@ -354,7 +364,7 @@ PROCEDURE RunSlave(root : Pathname.T) =
                                     FALSE,
                                     prec,
                                     FALSE,
-                                    FALSE);
+                                    code);
                 Wr.Flush(Stdio.stdout);
 
                 Debug.Out("DistRewriter.RunSlave : writing to master complete!");

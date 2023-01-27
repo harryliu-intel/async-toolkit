@@ -475,7 +475,7 @@ PROCEDURE Decode(de : Decoder; newChar : CHAR) =
             de.lo := newLo
           END;
         END
-      END;
+      END(*FI*);
       
       LOOP
         IF NOT de.disconnected THEN
@@ -519,7 +519,7 @@ PROCEDURE Decode(de : Decoder; newChar : CHAR) =
            the same to the outside world.
         *)
 
-        de.disconnected := FALSE;
+        de.disconnected := FALSE; (* this line doesn't actually do anything? *)
 
         IF GetBit(b) THEN
           de.value := Bits.Shift(de.value, 1);
