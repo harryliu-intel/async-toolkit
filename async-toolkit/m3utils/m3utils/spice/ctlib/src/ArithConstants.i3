@@ -4,17 +4,25 @@ INTERFACE ArithConstants;
 
 IMPORT FreqTable;
 
-TYPE
-  T = FreqTable.T;
+TYPE T = FreqTable.T;
 
 CONST Brand = "ArithConstants";
 
 (* codebook 0 is always "no arithmetic coding" *)
 
-CONST ZeroCode  = 0;
+CONST ZeroCode : Encoding = 0;
       MinCode   = ZeroCode;
-      MaxCode   = 1;
-      LinearCode= 254; (* this is a special code, not used for arithmetic coding
+      
+      FirstArith  : Encoding = 1;
+      MaxCode   = FirstArith;
+      
+      Automatic : Encoding = 253;
+                          (* this is a special code, not used in the files,
+                          only between modules, to denote that the selection
+                          of encoding scheme shall be automatic *)
+
+      LinearCode : Encoding = 254;
+                       (* this is a special code, not used for arithmetic coding
       
                           It means that the data is presented in the format
                           <first value>
@@ -23,7 +31,9 @@ CONST ZeroCode  = 0;
                           where both are raw floats
                           and the other data points are interpolated linearly
                        *)
-      DenseCode = 255; (* this is a special code, not used for arithmetic coding.
+      
+      DenseCode : Encoding = 255;
+                       (* this is a special code, not used for arithmetic coding
                           It means that the following data is dense floats,
                           as in the original aspice format.
                           
@@ -39,6 +49,9 @@ CONST ZeroCode  = 0;
 TYPE CodeIdx  = [ MinCode .. MaxCode ];
 
      Encoding = [ ZeroCode .. DenseCode ]; (* one byte *)
+
+CONST LastArith = MaxCode; (* do we need two names for this? *)
+CONST ArithCodes = SET OF Encoding { FirstArith .. MaxCode };
 
 CONST EqualCode = T { 1, .. }; (* very basic arith code *)
      

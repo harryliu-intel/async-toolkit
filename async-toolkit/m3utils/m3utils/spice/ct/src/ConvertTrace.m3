@@ -40,6 +40,7 @@ IMPORT Fsdb;
 IMPORT TraceFile, FileNamer;
 IMPORT TempReader;
 IMPORT Text;
+IMPORT Env;
 
 <*FATAL Thread.Alerted*>
 

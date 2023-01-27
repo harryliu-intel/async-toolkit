@@ -20,8 +20,18 @@ PROCEDURE DoArithCompress(of : TEXT;
   VAR
     enTxt : TEXT;
   BEGIN
-    codeIdx := 1;
+    <*ASSERT codeIdx  = ArithConstants.Automatic OR
+               (codeIdx >= ArithConstants.MinCode AND
+                codeIdx <= ArithConstants.MaxCode)   *>
 
+    IF codeIdx = ArithConstants.Automatic THEN
+      codeIdx := 1
+    END;
+
+    IF codeIdx = ArithConstants.ZeroCode THEN
+      RETURN of
+    END;
+    
     WITH ft      = ArithConstants.CodeBook[codeIdx],
          code    = NEW(ArithCode.T).init(ft),
          encoder = code.newEncoder(),
@@ -87,12 +97,11 @@ PROCEDURE WriteOut(wr            : Wr.T;
                    
                    doAllDumps    : BOOLEAN;
 
-                   noArith       : BOOLEAN)
+                   code          : ArithConstants.Encoding)
   RAISES { Thread.Alerted, Wr.Failure, Matrix.Singular } =
   TYPE
     ALR1 = ARRAY [ 0..0 ] OF LONGREAL;
   VAR
-    code     : ArithConstants.CodeIdx;
     finalTxt : TEXT;
     finalLen : CARDINAL;
     norm     : SpiceCompress.Norm;
@@ -101,24 +110,33 @@ PROCEDURE WriteOut(wr            : Wr.T;
     WITH z      = NEW(REF ARRAY OF LONGREAL, NUMBER(a)),
          textWr = NEW(TextWr.T).init() DO
 
-      SpiceCompress.CompressArray("zdebug",
-                                  a,
-                                  z^,
-                                  relPrec,
-                                  doAllDumps,
-                                  textWr,
-                                  norm,
-                                  mem    := NEW(TripleRefTbl.Default).init(),
-                                  doDump := doDump);
-      (* we now have the polynomially compressed in textWr *)
+      CASE code OF
+        
+        ArithCodes.ZeroCode, ArithCodes.FirstArith .. ArithCodes.LastArith =>
+        SpiceCompress.CompressArray("zdebug",
+                                    a,
+                                    z^,
+                                    relPrec,
+                                    doAllDumps,
+                                    textWr,
+                                    norm,
+                                    mem    := NEW(TripleRefTbl.Default).init(),
+                                    doDump := doDump)
+      |
+        ArithCodes.DenseCode =>
+        UnsafeWriter.WriteLRA(textWr, a);
+        norm := SpiceCompress.IllegalNorm
+      ELSE
+        Debug.Error("DistZTrace.WriteOut : unknown encoding requested : " & (Int code))
+      END;
+      (* we now have the polynomially compressed, or uncompressed, in textWr *)
       
       WITH txt = TextWr.ToText(textWr),
            len = Text.Length(txt) DO
         
         (* txt is the polynomially compressed waveform *)
         
-        IF noArith THEN
-          code     := ArithConstants.ZeroCode;
+        IF code = ArithConstants.ZeroCode THEN
           finalTxt := txt;
           finalLen := len
         ELSE
