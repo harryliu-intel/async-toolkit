@@ -1,7 +1,28 @@
 INTERFACE TraceOp;
 
-(* abstract type that describes an operation on a Trace that leads to a 
-   new waveform *)
+(* 
+   Abstract type that describes an operation on a Trace that leads to a 
+   new waveform 
+
+   added also a "Pickle" format that allows an operation on traces to have
+   an arbitrary data type.
+
+   The point of this interface, broadly, is to capture a deferred operation
+   (a.k.a. promise) on a trace file, and represent this in a way suitable
+   for serialization over a network, also representing the results of said
+   operation in a way suitable for serialization.  Raw binary is used for
+   arrays of timestep data, and the Pickle interface is used for everything
+   else.
+
+   Note that since much of this interface talks about operations on waveforms,
+   that is mostly separate from the Pickles.
+
+   Waveform ops are presented here so that multiple ops can be performed 
+   without storing the intermediate results in the trace file.
+
+   mika.nystroem@intel.com
+   January, 2023
+*)
 
 IMPORT Trace;
 IMPORT Rd;
