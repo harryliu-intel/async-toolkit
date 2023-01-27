@@ -52,7 +52,7 @@ if (!(-e $gds)) { usage(); }
 sub usage {
     die "USAGE: plot basename\n" .
         " --max=[$MAX] # maximum x or y pixel dimensions\n" .
-        " --jobs=[$JOBS] # number of parallel jobs to launch with nbq\n" .
+        " --jobs=[$JOBS] # number of parallel jobs to launch with netbatch\n" .
         " --mem=[$MEM] # memory to request for netbatch jobs (GB)\n" .
         " # rarely used options\n" .
         " --gds=[$gds] # GDS file name\n" .
@@ -72,7 +72,7 @@ sub usage {
 # settings
 $BLACK = $BLACK/255.0;
 $WHITE = $WHITE/255.0;
-my $QSUB = "nbq -C ${MEM}G";
+my $QSUB = "nbjob run --class ${MEM}G";
 my $PLOT = "gds2plot " .
     "--conf $conf_file " .
     "--x $MAX --y $MAX " .
@@ -99,7 +99,7 @@ for (my $i=0; $i<$JOBS; $i++) {
         system("touch $name.do.$i");
         system("rm -f \"$name.out.$i\" \"$name.ppm.$i\"");
         my $CMD  = "${PLOT} --gds \"$gds\" --ppm \"$name.ppm\" ";
-        if ($JOBS>1) { $CMD = "$QSUB -j \"$name.out.$i\" ${CMD} --job $i &"; $launched++; }
+        if ($JOBS>1) { $CMD = "$QSUB --log-file \"$name.out.$i\" ${CMD} --job $i &"; $launched++; }
         system($CMD);
     }
 }
