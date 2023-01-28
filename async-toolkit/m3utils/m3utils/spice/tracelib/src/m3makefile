@@ -13,7 +13,7 @@ module ("TraceUnsafe")
 interface ("TraceHeader")
 table ("CardTextSeq", "Cardinal", "TextSeq")
 
-Interface ("Transition")
+Module ("Transition")
 Sequence ("Transition", "Transition")
 Module ("TransitionFinder")
 

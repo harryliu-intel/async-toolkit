@@ -385,7 +385,8 @@ PROCEDURE Flush()
 
 TYPE
   TransitionPickler = TraceOp.Pickle OBJECT
-    of : TraceOp.Array;
+    time, of           : TraceOp.Array;
+    thresh, hysteresis : LONGREAL;
   OVERRIDES
     eval := TPEval;
   END;
@@ -393,13 +394,20 @@ TYPE
 PROCEDURE TPEval(tp : TransitionPickler)
   RAISES { Rd.EndOfFile, Rd.Failure } =
   BEGIN
+    tp.time.eval();
     tp.of.eval();
     (* tp.of.result should be valid here *)
+    <*ASSERT tp.time.result # NIL*>
     <*ASSERT tp.of.result # NIL*>
 
-
     (* build transition sequence and assign to tp.result *)
-    
+
+    WITH seq = TransitionFinder.Find(tp.time.result^,
+                                     tp.of.result^,
+                                     tp.thresh,
+                                     tp.hysteresis) DO
+      tp.result := seq
+    END
   END TPEval;
 
 

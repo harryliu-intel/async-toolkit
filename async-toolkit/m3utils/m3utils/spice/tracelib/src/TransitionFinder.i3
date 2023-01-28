@@ -10,13 +10,14 @@ TYPE
   Public = OBJECT METHODS (* memoizer object on id *)
     init(trace : Trace.T; thres, hysteresis : LONGREAL) : T;
 
-    forNode(id : CARDINAL) : TransitionSeq.T
+    forNode(id : CARDINAL; doSlew := FALSE) : TransitionSeq.T
       RAISES { Rd.EndOfFile, Rd.Failure } ;
   END;
 
 
 PROCEDURE Find(READONLY timea, nodea : ARRAY OF LONGREAL;
-               thres, hysteresis     : LONGREAL) : TransitionSeq.T;
+               thres, hysteresis     : LONGREAL;
+               doSlew                := FALSE) : TransitionSeq.T;
 
 TYPE
   Index = [ -1 .. LAST(CARDINAL) ];

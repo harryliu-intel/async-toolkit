@@ -31,7 +31,7 @@ PROCEDURE Init(t : T; trace : Trace.T; thres, hysteresis : LONGREAL) : T =
     RETURN t
   END Init;
 
-PROCEDURE ForNode(t : T; id : CARDINAL) : TransitionSeq.T
+PROCEDURE ForNode(t : T; id : CARDINAL; doSlew : BOOLEAN) : TransitionSeq.T
   RAISES { Rd.EndOfFile, Rd.Failure } =
   VAR
     res : TransitionSeq.T;
@@ -39,14 +39,15 @@ PROCEDURE ForNode(t : T; id : CARDINAL) : TransitionSeq.T
     IF NOT t.tbl.get(id, res) THEN
       t.trace.getTimeData(t.ta^);
       t.trace.getNodeData(id, t.na^);
-      res := Find(t.ta^, t.na^, t.thres, t.hysteresis);
+      res := Find(t.ta^, t.na^, t.thres, t.hysteresis, doSlew);
       EVAL t.tbl.put(id, res)
     END;
     RETURN res
   END ForNode;
 
 PROCEDURE Find(READONLY timea, nodea : ARRAY OF LONGREAL;
-               thres, hysteresis     : LONGREAL) : TransitionSeq.T =
+               thres, hysteresis     : LONGREAL;
+               doSlew                : BOOLEAN) : TransitionSeq.T =
 
   PROCEDURE CheckTransitions() =
     BEGIN
@@ -58,10 +59,41 @@ PROCEDURE Find(READONLY timea, nodea : ARRAY OF LONGREAL;
         END
       END
     END CheckTransitions;
+
+  PROCEDURE SearchBackwardForCrossing(i     : CARDINAL;
+                                      trig  : LONGREAL;
+                                      dirF  : LONGREAL) : LONGREAL =
+    (* return the (interpolated) time at which the node crossed trig in
+       the indicated direction, starting from i and working backwards in
+       time *)
+    BEGIN
+      <* ASSERT dirF = -1.0d0 OR dirF = +1.0d0 *>
+      FOR j := i TO 1 BY -1 DO
+        WITH n = nodea[j], pn = nodea[j-1],
+             t = timea[j], pt = timea[j-1] DO
+          IF dirF * nodea[   j   ] >  dirF * trig AND
+             dirF * nodea[ j - 1 ] <= dirF * trig      THEN
+            WITH delV  = n - pn,
+                 delT  = t - pt,
+                 delV0 = trig - pn,
+                 delT0 = delV0 / delV * delT,
+                 at    = pt + delT0 DO
+              state := 1 - state;
+              RETURN at;
+            END
+          END
+        END
+      END;
+      RETURN FIRST(LONGREAL) (* not found *)
+    END SearchBackwardForCrossing;
     
   VAR
     res := NEW(TransitionSeq.T).init();
     state : [0..1];
+    dir : [ -1 .. +1 ];
+    dirF : LONGREAL;
+    slew : LONGREAL;
+    trans : Transition.T;
   BEGIN
     <*ASSERT NUMBER(timea) = NUMBER(nodea)*>
     <*ASSERT hysteresis >= 0.0d0 *>
@@ -72,50 +104,47 @@ PROCEDURE Find(READONLY timea, nodea : ARRAY OF LONGREAL;
     FOR i := FIRST(timea) TO LAST(timea) DO
       <*ASSERT i = 0 OR timea[i] > timea[i - 1]*>
       CASE state OF
-        0 =>
-        IF nodea[i] > thres + hysteresis THEN
-          (* search backward for the actual crossing point, it must exist *)
-          FOR j := i TO 1 BY -1 DO
-            WITH n = nodea[j], pn = nodea[j-1],
-                 t = timea[j], pt = timea[j-1] DO
-              IF nodea[j] > thres AND nodea[j-1] <= thres THEN
-                WITH delV  = n - pn,
-                     delT  = t - pt,
-                     delV0 = thres - pn,
-                     delT0 = delV0 / delV * delT,
-                     at    = pt + delT0 DO
-                  state := 1 - state;
-                  res.addhi(Transition.T { at, +1 } );
-                  EXIT
-                END
-              END
-            END
-          END
-        END
+        0 => dir := +1
       |
-        1 =>
-        IF nodea[i] < thres - hysteresis THEN
-          (* search backward for the actual crossing point, it must exist *)
-          FOR j := i TO 1 BY -1 DO
-            WITH n = nodea[j], pn = nodea[j-1],
-                 t = timea[j], pt = timea[j-1]  DO
-              IF nodea[j] < thres AND nodea[j-1] >= thres THEN
-                WITH delV  = n - pn,
-                     delT  = t - pt,
-                     delV0 = thres - pn,
-                     delT0 = delV0 / delV * delT,
-                     at    = pt + delT0 DO
-                  state := 1 - state;
-                  res.addhi(Transition.T { at, -1 } );
-                  EXIT
-                END
-              END
+        1 => dir := -1
+      END;
+
+      dirF := FLOAT(dir, LONGREAL);
+      
+      IF dirF * nodea[i] > dirF * (thres + dirF * hysteresis) THEN
+        (* search backward for the actual crossing point, it must exist *)
+        WITH crossTime = SearchBackwardForCrossing(i, thres, dirF) DO
+          <*ASSERT crossTime # FIRST(LONGREAL) *>
+          trans := Transition.T { at := crossTime, dir := dir };
+ 
+          IF doSlew THEN
+            WITH upp = SearchBackwardForCrossing(i, thres + dirF * hysteresis, dirF),
+                 low = SearchBackwardForCrossing(i, thres - dirF * hysteresis, dirF) DO
+              (* upper must exist since that was the original guard of this IF
+                 block 
+                 
+                 I am guessing lower must exist also.
+              *)
+
+              <*ASSERT upp # FIRST(LONGREAL)*>
+              IF low = FIRST(LONGREAL) THEN
+                (* do the half slew instead *)
+                slew := hysteresis / (upp - crossTime)
+              ELSE
+                (* do the full slew *)
+                slew := (2.0d0 * hysteresis) / (upp - low)
+              END;
+
+              <*ASSERT slew >= 0.0d0*>
+              trans.slew := slew
             END
-          END
+          END;
+
+          res.addhi(trans)
         END
       END
     END;
-
+      
     CheckTransitions();
     
     RETURN res
