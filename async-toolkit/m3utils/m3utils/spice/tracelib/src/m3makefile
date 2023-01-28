@@ -24,6 +24,7 @@ Module ("TraceRewriter")
 Module ("DistZTrace")
 
 Module ("TraceOp")
+Interface ("TraceOpClass")
 Module ("TraceInterpolator")
 
 library ("tracelib")

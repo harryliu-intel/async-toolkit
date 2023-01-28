@@ -1,22 +1,20 @@
 MODULE TraceOp;
+IMPORT TraceOpClass AS Class;
 IMPORT Trace;
 IMPORT Rd;
 IMPORT LRFunction;
 IMPORT MapError;
 
 REVEAL
-  T = BRANDED Brand OBJECT
+  T = Class.Private BRANDED Brand OBJECT
     trace  : Trace.T;
-  METHODS
   END;
   
-  Array = PublicArray BRANDED Brand & " Array" OBJECT
-    result : REF ARRAY OF LONGREAL;
+  Array = Class.PrivateArray BRANDED Brand & " Array" OBJECT
   METHODS
     getWorkingSpace() : REF ARRAY OF LONGREAL := GetWorkingSpace;
-    eval() RAISES { Rd.EndOfFile, Rd.Failure };
   OVERRIDES
-    exec := Exec;
+    exec := ArrayExec;
   END;
 
   (* the way we structure the code is that exec() is the external interface
@@ -42,7 +40,9 @@ REVEAL
     eval := EvalScale;
   END;
 
-  Pickle = PublicPickle BRANDED Brand & " Pickle" OBJECT
+  Pickle = Class.PrivatePickle BRANDED Brand & " Pickle" OBJECT
+  OVERRIDES
+    exec := PickleExec;
   END;
 
 PROCEDURE GetWorkingSpace(t : Array) : REF ARRAY OF LONGREAL =
@@ -50,13 +50,21 @@ PROCEDURE GetWorkingSpace(t : Array) : REF ARRAY OF LONGREAL =
     RETURN NEW(REF ARRAY OF LONGREAL, t.trace.getSteps())
   END GetWorkingSpace;
 
-PROCEDURE Exec(t : Array; trace : Trace.T; VAR result : ARRAY OF LONGREAL)
+PROCEDURE ArrayExec(t : Array; trace : Trace.T; VAR result : ARRAY OF LONGREAL)
   RAISES { Rd.EndOfFile, Rd.Failure } =
   BEGIN
     t.trace := trace;
     t.eval();
     result := t.result^
-  END Exec;
+  END ArrayExec;
+
+PROCEDURE PickleExec(t : Pickle; trace : Trace.T; VAR result : REFANY)
+  RAISES { Rd.EndOfFile, Rd.Failure } =
+  BEGIN
+    t.trace := trace;
+    t.eval();
+    result := t.result
+  END PickleExec;
 
 (**********************************************************************)
   

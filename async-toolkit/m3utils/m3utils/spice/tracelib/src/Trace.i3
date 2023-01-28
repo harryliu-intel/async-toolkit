@@ -11,11 +11,14 @@ IMPORT Pathname;
 IMPORT OSError, Rd;
 IMPORT TextSet;
 IMPORT TraceFile;
+IMPORT Pickle;
 
 TYPE
   T <: Public;
 
   NodeId = CARDINAL;
+
+  DataType = { Array, Pickle };
   
   Public = OBJECT METHODS
     init(root : Pathname.T) : T
@@ -45,8 +48,18 @@ TYPE
       RAISES { Rd.Failure, Rd.EndOfFile } ;
     (* = .getNodeArray(0, timea) *)
 
+    getNodeDataType(idx : NodeId) : DataType;
+    (* returns DataType.Array if the data contained here is a waveform
+       returns DataType.Pickle of the data contained here is a pickle
+    *)
+    
     getNodeData(idx : NodeId; VAR arr : ARRAY OF LONGREAL)
       RAISES { Rd.Failure, Rd.EndOfFile } ;
+    (* get the waveform, only valid if getNodeDataType returns DataType.Array *)
+
+    getNodePickle(idx : NodeId) : REFANY
+      RAISES { Rd.Failure, Rd.EndOfFile, Pickle.Error };
+    (* get the pickle, only valid if getNodeDataType returns DataType.Pickle *)
 
     getCanonicalName(idx : NodeId) : TEXT;
     (* this is just the first name in the line in the .names file *)

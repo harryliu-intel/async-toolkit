@@ -7,7 +7,7 @@ IMPORT TraceRewriter;
 
 IMPORT Params;
 IMPORT Debug;
-IMPORT TraceOp;
+IMPORT TraceOp, TraceOpClass;
 IMPORT Pathname;
 IMPORT TextSeq;
 IMPORT Text;
@@ -38,6 +38,7 @@ IMPORT IP, NetObj;
 IMPORT Thread;
 IMPORT ReadLineError;
 IMPORT ArithConstants;
+IMPORT Pickle;
 
 <*FATAL Thread.Alerted*>
 
@@ -73,8 +74,11 @@ PROCEDURE Seq1(txt : TEXT) : TextSeq.T =
     RETURN res
   END Seq1;
 
-PROCEDURE AddNamedOp(op : TraceOp.T; nm : TEXT; encoding : ArithConstants.Encoding := ArithConstants.Automatic)
-  RAISES { Matrix.Singular, OSError.E, Rd.EndOfFile, Rd.Failure, TraceFile.FormatError, Wr.Failure } =
+PROCEDURE AddNamedOp(op       : TraceOp.T;
+                     nm       : TEXT;
+                     encoding : ArithConstants.Encoding := ArithConstants.Automatic)
+  RAISES { Matrix.Singular, OSError.E, Rd.EndOfFile, Rd.Failure,
+           TraceFile.FormatError, Wr.Failure, Pickle.Error } =
   BEGIN
     IF master THEN
       drew.addNamedOp(op, nm, relPrec)
@@ -84,7 +88,8 @@ PROCEDURE AddNamedOp(op : TraceOp.T; nm : TEXT; encoding : ArithConstants.Encodi
   END AddNamedOp;
 
 PROCEDURE TheTestProgram(tr : Trace.T)
-  RAISES { Matrix.Singular, OSError.E, Rd.EndOfFile, Rd.Failure, TraceFile.FormatError, Wr.Failure } =
+  RAISES { Matrix.Singular, OSError.E, Rd.EndOfFile, Rd.Failure,
+           TraceFile.FormatError, Wr.Failure } =
   (* this is the test program *)
   BEGIN
     
@@ -366,7 +371,8 @@ PROCEDURE GetPaths(extras : TextSeq.T) : REF ARRAY OF Pathname.T =
   END GetPaths;
 
 PROCEDURE Flush()
-  RAISES { OSError.E, Rd.EndOfFile, Rd.Failure, TraceFile.FormatError, Wr.Failure } =
+  RAISES { OSError.E, Rd.EndOfFile, Rd.Failure, TraceFile.FormatError,
+           Wr.Failure } =
   BEGIN
     IF master THEN
       drew.flush()
@@ -374,6 +380,31 @@ PROCEDURE Flush()
       rew.flush()
     END
   END Flush;
+
+(**********************************************************************)
+
+TYPE
+  TransitionPickler = TraceOp.Pickle OBJECT
+    of : TraceOp.Array;
+  OVERRIDES
+    eval := TPEval;
+  END;
+
+PROCEDURE TPEval(tp : TransitionPickler)
+  RAISES { Rd.EndOfFile, Rd.Failure } =
+  BEGIN
+    tp.of.eval();
+    (* tp.of.result should be valid here *)
+    <*ASSERT tp.of.result # NIL*>
+
+
+    (* build transition sequence and assign to tp.result *)
+    
+  END TPEval;
+
+
+(**********************************************************************)
+
   
 VAR
   pp            := NEW(ParseParams.T).init(Stdio.stderr);

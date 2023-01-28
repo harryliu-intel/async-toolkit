@@ -27,7 +27,16 @@ INTERFACE TraceOp;
 IMPORT Trace;
 IMPORT Rd;
 IMPORT LRFunction;
-IMPORT Wr;
+
+(*
+  Note to implementers of subtypes of this interface:
+
+  What you want to implement is the method eval() that's declared in
+  the TraceOpClass interface.
+
+  exec() below is provided by the default implementation and normally
+  does not need to be overridden.
+*)
 
 TYPE
   T <: ROOT;
@@ -42,8 +51,8 @@ TYPE
   END;
 
   PublicPickle = T OBJECT METHODS
-    exec(trace : Trace.T; target : Wr.T)
-      RAISES { Rd.EndOfFile, Rd.Failure, Wr.Failure };
+    exec(trace : Trace.T; VAR result : REFANY)
+      RAISES { Rd.EndOfFile, Rd.Failure };
   END;
 
   NodeId = Trace.NodeId;

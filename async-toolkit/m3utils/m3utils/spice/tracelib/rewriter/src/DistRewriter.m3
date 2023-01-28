@@ -400,8 +400,12 @@ PROCEDURE RunSlave(root : Pathname.T) =
                   Debug.Out("DistRewriter.RunSlave : TraceOp.Pickle, will execute");
 
                   (* we need to use a text writer to get the length *)
-                  WITH textWr = TextWr.New() DO
-                    pklOp.exec(tr, textWr);
+                  VAR
+                    refany : REFANY;
+                    textWr := TextWr.New();
+                  BEGIN
+                    pklOp.exec(tr, refany);
+                    Pickle.Write(textWr, refany);
                     WITH pTxt = TextWr.ToText(textWr) DO
                       Wr.PutText(Stdio.stdout, F("PPP %s\n",
                                                  Int(Text.Length(pTxt))));
@@ -409,10 +413,12 @@ PROCEDURE RunSlave(root : Pathname.T) =
                     END
                   END;
                   Wr.Flush(Stdio.stdout)
+                ELSE
+                  Debug.Error("Unknown type TraceOp in DistRewriter.RunSlave")
                 END;
 
                 Debug.Out("DistRewriter.RunSlave : writing to master complete!");
-
+                
               END
             END
           END

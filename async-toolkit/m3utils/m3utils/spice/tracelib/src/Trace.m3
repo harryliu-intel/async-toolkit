@@ -27,6 +27,7 @@ IMPORT Text;
 IMPORT ZtraceNodeHeader;
 IMPORT PolySegment16Serial;
 FROM TraceUnsafe IMPORT GetBytes;
+IMPORT Pickle;
 
 <*FATAL Thread.Alerted*>
 
@@ -57,8 +58,9 @@ TYPE
   Reordered = T OBJECT
     h : TraceHeader.T;
   OVERRIDES
-    getSteps    := GetStepsR;
-    getNodeData := GetNodeDataR;
+    getSteps        := GetStepsR;
+    getNodeData     := GetNodeDataR;
+    getNodeDataType := GetNodeDataTypeR;
   END;
 
 TYPE CompressedV1 = TraceRep.CompressedV1;
@@ -67,9 +69,11 @@ REVEAL
   TraceRep.CompressedV1 = TraceRep.PrivateCompressedV1 BRANDED Brand & " CompressedV1" OBJECT
     time     : REF ARRAY OF LONGREAL;
   OVERRIDES
-    getSteps    := GetStepsC;
-    getNodeData := GetNodeDataC;
-    getMetadata := GetMetadataC;
+    getSteps        := GetStepsC;
+    getNodeData     := GetNodeDataC;
+    getNodeDataType := GetNodeDataTypeC;
+    getNodePickle   := GetNodePickleC;
+    getMetadata     := GetMetadataC;
   END;
   
 PROCEDURE Close(t : T) RAISES { Rd.Failure } =
@@ -449,6 +453,12 @@ PROCEDURE GetNodeDataR(t : Reordered; idx : CARDINAL; VAR arr : ARRAY OF LONGREA
     TraceUnsafe.GetDataArray(t.tRd, t.h, idx, arr)
   END GetNodeDataR;
 
+PROCEDURE GetNodeDataTypeR(<*UNUSED*>t : Reordered;
+                           <*UNUSED*>idx : NodeId) : DataType =
+  BEGIN
+    RETURN DataType.Array
+  END GetNodeDataTypeR;
+
 (********************  CompressedV1 methods  ********************)
 
 PROCEDURE GetStepsC(t : CompressedV1) : CARDINAL =
@@ -456,6 +466,20 @@ PROCEDURE GetStepsC(t : CompressedV1) : CARDINAL =
     RETURN t.z.nsteps
   END GetStepsC;
 
+PROCEDURE GetNodeDataTypeC(t   : CompressedV1;
+                           idx : NodeId) : DataType =
+  VAR
+    dirent : ZtraceNodeHeader.T;
+  BEGIN
+    dirent := t.z.directory.get(idx);
+
+    CASE dirent.code OF
+      ArithConstants.Pickle => RETURN DataType.Pickle
+    ELSE
+      RETURN DataType.Array
+    END
+  END GetNodeDataTypeC;
+  
 PROCEDURE GetNodeDataC(t       : CompressedV1;
                        idx     : CARDINAL;
                        VAR arr : ARRAY OF LONGREAL)
@@ -465,8 +489,6 @@ PROCEDURE GetNodeDataC(t       : CompressedV1;
   BEGIN
     
     dirent := t.z.directory.get(idx);
-    (*TraceUnsafe.GetDataArray(t.tRd, t.h, idx, arr)*)
-    (* here goes all the clever stuff *)
 
     IF doDebug THEN
       Debug.Out(F("Trace.GetNodeDataC : directory.size %s idx %s startB %s",
@@ -494,6 +516,10 @@ PROCEDURE GetNodeDataC(t       : CompressedV1;
           arr[i] := v
         END
       END
+    |
+      ArithConstants.Pickle =>
+      (* wrong place to be reading *)
+      Debug.Error("Trace.GetNodeDataC : Attempt to get waveform from a Pickle object")
     ELSE
       Rd.Seek(t.tRd, dirent.start);
       WITH data    = GetBytes(t.tRd, dirent.bytes),
@@ -514,6 +540,32 @@ PROCEDURE GetNodeDataC(t       : CompressedV1;
       END
     END
   END GetNodeDataC;
+
+PROCEDURE GetNodePickleC(t       : CompressedV1;
+                         idx     : CARDINAL) : REFANY
+  RAISES { Rd.Failure, Rd.EndOfFile, Pickle.Error } =
+  VAR
+    dirent : ZtraceNodeHeader.T;
+  BEGIN
+    dirent := t.z.directory.get(idx);
+
+    IF doDebug THEN
+      Debug.Out(F("Trace.GetNodePickleC : directory.size %s idx %s startB %s",
+                  Int(t.z.directory.size()),
+                  Int(idx),
+                  Int(dirent.start)))
+    END;
+    CASE dirent.code OF
+      ArithConstants.Pickle =>
+      Rd.Seek(t.tRd, dirent.start);
+      RETURN Pickle.Read(t.tRd)
+    ELSE
+      (* actually what we could do is allocate a new array and call
+         GetNodeDataC and return that as a sort of generic response... *)
+      Debug.Error("Trace.GetPickleC : Attempt to get pickle from a waveform Array object");
+      <*ASSERT FALSE*>
+    END
+  END GetNodePickleC;
 
 PROCEDURE GetMetadataC(c : CompressedV1) : ZtraceFile.Metadata =
   BEGIN

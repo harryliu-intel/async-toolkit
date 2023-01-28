@@ -23,6 +23,7 @@ IMPORT ZtraceNodeHeader;
 IMPORT FileRd;
 IMPORT Thread;
 IMPORT Matrix;
+IMPORT Pickle;
 
 <*FATAL Thread.Alerted*>
 
@@ -41,10 +42,10 @@ REVEAL
     metadata     : ZtraceFile.Metadata;
     
   OVERRIDES
-    init     := Init;
-    flush    := Flush;
-    addhiOp  := AddhiOp;
-    addhi    := Addhi;
+    init       := Init;
+    flush      := Flush;
+    addhiOp    := AddhiOp;
+    addhi      := Addhi;
     shareTrace := ShareTrace;
   END;
 
@@ -252,7 +253,7 @@ PROCEDURE AddhiOp(t            : T;
                   aliases      : TextSeq.T;
                   relPrec      : LONGREAL;
                   encoding     : ArithConstants.Encoding) : CARDINAL
-  RAISES { TraceFile.FormatError, OSError.E, Rd.EndOfFile, Rd.Failure, Wr.Failure, Matrix.Singular } =
+  RAISES { TraceFile.FormatError, OSError.E, Rd.EndOfFile, Rd.Failure, Wr.Failure, Matrix.Singular, Pickle.Error } =
   VAR
     code     : ArithConstants.CodeIdx;
     finalTxt : TEXT;
@@ -319,8 +320,13 @@ PROCEDURE AddhiOp(t            : T;
 
       Debug.Out("TraceRewriter.AddhiOp/Pickle : wr start @ " & Int(Wr.Index(t.wr)));
 
-      pkl.exec(t.tr, t.wr);
-
+      VAR
+        refany : REFANY;
+      BEGIN
+        pkl.exec(t.tr, refany);
+        Pickle.Write(t.wr, refany)
+      END;
+      
       Debug.Out("TraceRewriter.AddhiOp/Pickle : done, wr @ " & Int(Wr.Index(t.wr)));
     ELSE
       <*ASSERT FALSE*>

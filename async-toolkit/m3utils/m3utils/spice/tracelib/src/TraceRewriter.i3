@@ -10,6 +10,7 @@ IMPORT Wr;
 IMPORT TraceFile;
 IMPORT Matrix;
 IMPORT Trace;
+IMPORT Pickle;
 
 TYPE
   T <: Public;
@@ -41,7 +42,7 @@ TYPE
             aliases      : TextSeq.T;
             relPrec      : LONGREAL;
             encoding     : ArithConstants.Encoding) : CARDINAL
-    RAISES { TraceFile.FormatError, OSError.E, Rd.EndOfFile, Rd.Failure, Wr.Failure, Matrix.Singular };
+    RAISES { TraceFile.FormatError, OSError.E, Rd.EndOfFile, Rd.Failure, Wr.Failure, Matrix.Singular, Pickle.Error };
 
     shareTrace() : Trace.T;
     (* pull out the internal Trace.T so we can share it (read-only please)
