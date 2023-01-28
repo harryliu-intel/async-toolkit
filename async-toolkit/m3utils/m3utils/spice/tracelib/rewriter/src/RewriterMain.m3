@@ -39,6 +39,8 @@ IMPORT Thread;
 IMPORT ReadLineError;
 IMPORT ArithConstants;
 IMPORT Pickle;
+IMPORT TransitionFinder;
+IMPORT TransitionSeq;
 
 <*FATAL Thread.Alerted*>
 
@@ -91,6 +93,7 @@ PROCEDURE TheTestProgram(tr : Trace.T)
   RAISES { Matrix.Singular, OSError.E, Rd.EndOfFile, Rd.Failure,
            TraceFile.FormatError, Wr.Failure } =
   (* this is the test program *)
+  <*FATAL Pickle.Error*> (* can't happen *)
   BEGIN
     
     CONST
@@ -249,15 +252,15 @@ PROCEDURE FindMyDevices(tr : Trace.T) : DevTermTbl.T =
   END FindMyDevices;
 
 PROCEDURE ThePowerProgram(tr : Trace.T; allNodes : BOOLEAN)
-  RAISES { OSError.E, Rd.EndOfFile, Rd.Failure, Wr.Failure, Matrix.Singular, TraceFile.FormatError } =
+  RAISES { OSError.E, Rd.EndOfFile, Rd.Failure, Wr.Failure,
+           Matrix.Singular, TraceFile.FormatError } =
   VAR
     devs     := FindMyDevices(tr);
+    ndevs    := 0;
+    iter     := devs.iterate();
 
     a : DevArcs.T;
     t : DevTerms.T;
-
-    iter   := devs.iterate();
-    ndevs := 0;
     
   BEGIN
 
@@ -268,11 +271,18 @@ PROCEDURE ThePowerProgram(tr : Trace.T; allNodes : BOOLEAN)
     
   END ThePowerProgram;
 
+PROCEDURE TheSlewProgram(tr : Trace.T) =
+  VAR
+  BEGIN
+  END TheSlewProgram;
+
 PROCEDURE AddPowerMeasurements(tr       : Trace.T;
                                a        : DevArcs.T;
                                t        : DevTerms.T;
                                allNodes : BOOLEAN)
-  RAISES { Matrix.Singular, OSError.E, Rd.EndOfFile, Rd.Failure, TraceFile.FormatError, Wr.Failure }  =
+  RAISES { Matrix.Singular, OSError.E, Rd.EndOfFile, Rd.Failure,
+           TraceFile.FormatError, Wr.Failure }  =
+  <*FATAL Pickle.Error*> (* can't happen *)
   VAR
     iNodes := NEW(CardSeq.T).init();
     vNodes := NEW(CardSeq.T).init();
@@ -405,14 +415,31 @@ PROCEDURE TPEval(tp : TransitionPickler)
     WITH seq = TransitionFinder.Find(tp.time.result^,
                                      tp.of.result^,
                                      tp.thresh,
-                                     tp.hysteresis) DO
+                                     tp.hysteresis,
+                                     doSlew := TRUE) DO
       tp.result := seq
     END
   END TPEval;
 
+TYPE
+  TransitionLeaderBoard = TraceOp.Pickle OBJECT
+    transitions : TransitionPickler;
+  OVERRIDES
+    eval := TLBEval;
+  END;
 
+PROCEDURE TLBEval(tlb : TransitionLeaderBoard)
+  RAISES { Rd.EndOfFile, Rd.Failure } =
+  BEGIN
+    tlb.transitions.eval();
+    <*ASSERT tlb.transitions.result # NIL*>
+    WITH seq = NARROW(tlb.transitions.result, TransitionSeq.T) DO
+    END
+  END TLBEval;
+    
 (**********************************************************************)
 
+TYPE Mode = { Test, Power, Slew };
   
 VAR
   pp            := NEW(ParseParams.T).init(Stdio.stderr);
@@ -429,7 +456,7 @@ VAR
 
   nthreads : CARDINAL := 1;
 
-  doPower  : BOOLEAN;
+  mode := Mode.Test;
 
   maxDevs  : CARDINAL := LAST(CARDINAL);
   allNodes : BOOLEAN;
@@ -442,7 +469,11 @@ BEGIN
     allNodes := pp.keywordPresent("-allnodes");
 
     IF NOT doScheme THEN
-      doPower  := pp.keywordPresent("-power")
+      IF pp.keywordPresent("-power") THEN
+        mode := Mode.Power
+      ELSIF pp.keywordPresent("-slew") THEN
+        mode := Mode.Slew
+      END
     END;
 
     IF master AND pp.keywordPresent("-threads") THEN
@@ -540,10 +571,15 @@ BEGIN
       TRY
 
         phase := "program";
-        IF doPower THEN
+        CASE mode OF
+          Mode.Power =>
           ThePowerProgram(rew.shareTrace(), allNodes)
-        ELSE
+        |
+          Mode.Test =>
           TheTestProgram(rew.shareTrace())
+        |
+          Mode.Slew =>
+          TheSlewProgram(rew.shareTrace())
         END;
 
         phase := "flush";

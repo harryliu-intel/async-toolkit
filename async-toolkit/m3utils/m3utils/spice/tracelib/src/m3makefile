@@ -17,6 +17,8 @@ Module ("Transition")
 Sequence ("Transition", "Transition")
 Module ("TransitionFinder")
 
+Array_sort("Transition", "Transition")
+
 Table("TextTransitionSeq", "Text", "TransitionSeq")
 Table("CardTransitionSeq", "Cardinal", "TransitionSeq")
 
