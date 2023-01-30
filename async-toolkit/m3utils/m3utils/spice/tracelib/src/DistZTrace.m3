@@ -16,7 +16,7 @@ IMPORT ArithCallback;
 CONST TE = Text.Equal;
 
 PROCEDURE DoArithCompress(of          : TEXT;
-                          VAR codeIdx : ArithConstants.CodeIdx) : TEXT =
+                          VAR codeIdx : ArithConstants.XCodeIdx) : TEXT =
   VAR
     enTxt : TEXT;
   BEGIN
@@ -143,7 +143,7 @@ PROCEDURE WriteOut(wr            : Wr.T;
           finalLen := len
         ELSE
           VAR
-            c : ArithConstants.CodeIdx := code;
+            c : ArithConstants.XCodeIdx := code;
           BEGIN
             finalTxt := DoArithCompress(txt, c);
             finalLen := Text.Length(finalTxt)

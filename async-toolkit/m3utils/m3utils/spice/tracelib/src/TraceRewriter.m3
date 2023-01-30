@@ -255,7 +255,7 @@ PROCEDURE AddhiOp(t            : T;
                   encoding     : ArithConstants.Encoding) : CARDINAL
   RAISES { TraceFile.FormatError, OSError.E, Rd.EndOfFile, Rd.Failure, Wr.Failure, Matrix.Singular, Pickle.Error } =
   VAR
-    code     : ArithConstants.CodeIdx;
+    code     : ArithConstants.XCodeIdx;
     finalTxt : TEXT;
     finalLen : CARDINAL;
     norm     : SpiceCompress.Norm;
@@ -277,7 +277,10 @@ PROCEDURE AddhiOp(t            : T;
       Wr.Seek(t.wr, t.wfLim);
       (* seek to EOD *)
 
-      Debug.Out("TraceRewriter.AddhiOp/Array : wr @ " & Int(Wr.Index(t.wr)));
+      Debug.Out(F("TraceRewriter.AddhiOp/Array : wr @ %s encoding=%s",
+                  Int(Wr.Index(t.wr)),
+                  Int(encoding))
+      );
 
       textWr := NEW(TextWr.T).init();
       
@@ -308,10 +311,17 @@ PROCEDURE AddhiOp(t            : T;
         Debug.Out(F("AddhiOp : %s timesteps, compressed size %s bytes, coded size %s",
                     Int(NUMBER(t.scratch^)),
                     Int(len),
-                    Int(finalLen)))
+                    Int(finalLen)));
+
+        Wr.PutText(t.wr, finalTxt);
+
+        encoding := code;
       END
     |
       TraceOp.Pickle(pkl) =>
+
+      <*ASSERT encoding = ArithConstants.Pickle*>
+      
       OpenWr(t);
       (* t.wr is open and ready *)
       
@@ -328,11 +338,13 @@ PROCEDURE AddhiOp(t            : T;
       END;
       
       Debug.Out("TraceRewriter.AddhiOp/Pickle : done, wr @ " & Int(Wr.Index(t.wr)));
+      finalLen := Wr.Index(t.wr) - t.wfLim
+      
     ELSE
       <*ASSERT FALSE*>
     END;
 
-    Wr.PutText(t.wr, finalTxt);
+    (* update names file *)
     NameControl.PutNames(t.nwr, t.metadata.directory.size(), aliases, TRUE);
 
     Debug.Out(F("TraceRewriter.AddhiOp : writing stopped @ %s",
@@ -341,17 +353,22 @@ PROCEDURE AddhiOp(t            : T;
     Wr.Flush(t.wr);
     Wr.Flush(t.nwr);
 
+    (* update in-memory directory entry
+       note that finalLen is the length on disk of the data area used by
+       the new node, whether Pickle or Array *)
+    
     WITH dirent = ZtraceNodeHeader.T { finalLen,
                                        t.wfLim,
                                        norm,
-                                       code,
+                                       encoding,
                                        0 } DO
-      t.dirty := TRUE;
+
+      t.dirty := TRUE; (* directory is dirty till flushed to disk *)
 
       t.metadata.directory.addhi(dirent);
 
       INC(t.metadata.header.nwaves);
-      INC(t.wfLim, finalLen);
+      INC(t.wfLim, finalLen);  (* update pointer to point beyond wf data *)
       
       RETURN t.metadata.directory.size() - 1
     END

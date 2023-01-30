@@ -24,7 +24,7 @@ PROCEDURE WriteOut(wr            : Wr.T;
   (* this is the counterpart to FsdbComms.ReadCompressedNodeDataG *)
 
 PROCEDURE DoArithCompress(of          : TEXT;
-                          VAR codeIdx : ArithConstants.CodeIdx) : TEXT;
+                          VAR codeIdx : ArithConstants.XCodeIdx) : TEXT;
   (* select a codebook and compress the text <of>
      return value is the compressed text
      codeIdx is the ID of the chosen encoding scheme

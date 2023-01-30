@@ -41,6 +41,8 @@ IMPORT ArithConstants;
 IMPORT Pickle;
 IMPORT TransitionFinder;
 IMPORT TransitionSeq;
+IMPORT Transition;
+IMPORT TransitionArraySort;
 
 <*FATAL Thread.Alerted*>
 
@@ -153,13 +155,16 @@ PROCEDURE GetNumberPrefix(str : TEXT; VAR rem : TEXT) : CARDINAL =
     rem := "";
     RETURN res
   END GetNumberPrefix;
-  
+
+CONST VoltProbeString = "v[1-9][0-9]*([^()]*)$";
+      AmpsProbeString = "i[1-9][0-9]*([^()]*)$";
+      
 PROCEDURE FindMyDevices(tr : Trace.T) : DevTermTbl.T =
   <*FATAL RegEx.Error*>
   VAR
     allNames := tr.allNames();
     iter     := allNames.iterate();
-    regex    := RegEx.Compile("v[1-9][0-9]*([^()]*)$");
+    regex    := RegEx.Compile(VoltProbeString);
 
     n        : TEXT;
     rem      : TEXT;
@@ -271,9 +276,61 @@ PROCEDURE ThePowerProgram(tr : Trace.T; allNodes : BOOLEAN)
     
   END ThePowerProgram;
 
-PROCEDURE TheSlewProgram(tr : Trace.T) =
-  VAR
+(**********************************************************************)
+
+PROCEDURE AddSlewMeasurement(idx : CARDINAL; thresh, hysteresis : LONGREAL) =
   BEGIN
+    WITH time    = MakeGetNode(0),
+         node    = MakeGetNode(idx),
+         trans   = NEW(TransitionPickler,
+                       time := time,
+                       of := node,
+                       thresh := thresh,
+                       hysteresis := hysteresis),
+         seq     = NEW(TransitionLeaderBoard,
+                       maxCount := 10,
+                       transitions := trans) DO
+      AddNamedOp(trans,
+                 F("transitions(%s)", Int(idx)),
+                 encoding := ArithConstants.Pickle
+                 );
+      AddNamedOp(seq,
+                 F("slowtransitions(%s)", Int(idx)),
+                 encoding := ArithConstants.Pickle
+      )
+    END
+  END AddSlewMeasurement;
+  
+PROCEDURE TheSlewProgram(tr : Trace.T; thresh, hysteresis : LONGREAL) =
+  VAR
+    ampsRegex := RegEx.Compile(AmpsProbeString);
+    nSlew     := 0;
+    
+    ok    : BOOLEAN;
+    alias : TEXT;
+  BEGIN
+    Debug.Out(F("RewriterMain.TheSlewProgram : %s total nodes", Int(tr.getNodes() - 1)));
+    
+    FOR i := 1 TO tr.getNodes() - 1 DO
+      (* iterate through the non-TIME nodes *)
+      ok := TRUE;
+      WITH aIter = tr.getAliases(i).iterate() DO
+        WHILE aIter.next(alias) DO
+          IF RegEx.Execute(ampsRegex, alias) # -1 THEN
+            (* this is a current probe, do not seek transitions *)
+            ok := FALSE;
+            EXIT
+          END
+        END;
+        IF ok THEN
+          AddSlewMeasurement(i, thresh, hysteresis);
+          INC(nSlew)
+        END
+      END
+    END;
+
+    Debug.Out(F("RewriterMain.TheSlewProgram : %s measurements", Int(nSlew)))
+    
   END TheSlewProgram;
 
 PROCEDURE AddPowerMeasurements(tr       : Trace.T;
@@ -404,8 +461,15 @@ TYPE
 PROCEDURE TPEval(tp : TransitionPickler)
   RAISES { Rd.EndOfFile, Rd.Failure } =
   BEGIN
-    tp.time.eval();
-    tp.of.eval();
+    IF tp.time.result = NIL THEN
+      tp.time.trace := tp.trace;
+      tp.time.eval()
+    END;
+    IF tp.of.result = NIL THEN
+      tp.of.trace := tp.trace;
+      tp.of.eval();
+    END;
+    
     (* tp.of.result should be valid here *)
     <*ASSERT tp.time.result # NIL*>
     <*ASSERT tp.of.result # NIL*>
@@ -423,6 +487,7 @@ PROCEDURE TPEval(tp : TransitionPickler)
 
 TYPE
   TransitionLeaderBoard = TraceOp.Pickle OBJECT
+    maxCount    : CARDINAL := LAST(CARDINAL);
     transitions : TransitionPickler;
   OVERRIDES
     eval := TLBEval;
@@ -431,9 +496,19 @@ TYPE
 PROCEDURE TLBEval(tlb : TransitionLeaderBoard)
   RAISES { Rd.EndOfFile, Rd.Failure } =
   BEGIN
-    tlb.transitions.eval();
+    IF tlb.transitions.result = NIL THEN
+      tlb.transitions.trace := tlb.trace;
+      tlb.transitions.eval()
+    END;
     <*ASSERT tlb.transitions.result # NIL*>
-    WITH seq = NARROW(tlb.transitions.result, TransitionSeq.T) DO
+    WITH seq = NARROW(tlb.transitions.result, TransitionSeq.T),
+         arr = NEW(REF ARRAY OF Transition.T, MIN(seq.size(), tlb.maxCount)) DO
+      FOR i := FIRST(arr^) TO LAST(arr^) DO
+        arr[i] := seq.get(i)
+      END;
+
+      TransitionArraySort.Sort(arr^, cmp := Transition.CompareBySlew);
+      tlb.result := arr
     END
   END TLBEval;
     
@@ -447,20 +522,24 @@ VAR
   master, slave := FALSE; (* if both FALSE, then we do all ourselves *)
   relPrec       := 0.001d0;
   
-  rew      : TraceRewriter.T;
-  drew     : DistRewriter.T;
-  root     : Pathname.T;
-  doScheme : BOOLEAN;
+  rew            : TraceRewriter.T;
+  drew           : DistRewriter.T;
+  root           : Pathname.T;
+  doScheme       : BOOLEAN;
 
-  extra := NEW(TextSeq.T).init();
+  extra         := NEW(TextSeq.T).init();
 
-  nthreads : CARDINAL := 1;
+  nthreads       : CARDINAL := 1;
 
-  mode := Mode.Test;
+  mode          := Mode.Test;
 
-  maxDevs  : CARDINAL := LAST(CARDINAL);
-  allNodes : BOOLEAN;
-  phase    : TEXT;
+  maxDevs        : CARDINAL := LAST(CARDINAL);
+  allNodes       : BOOLEAN;
+  phase          : TEXT;
+
+  slewThresh,                     
+  slewHysteresis : LONGREAL;  (* specifically for TheSlewProgram *)
+  
 BEGIN
   TRY
     slave    := pp.keywordPresent("-slave");
@@ -472,7 +551,9 @@ BEGIN
       IF pp.keywordPresent("-power") THEN
         mode := Mode.Power
       ELSIF pp.keywordPresent("-slew") THEN
-        mode := Mode.Slew
+        mode := Mode.Slew;
+        slewThresh     := pp.getNextLongReal();
+        slewHysteresis := pp.getNextLongReal();
       END
     END;
 
@@ -556,17 +637,17 @@ BEGIN
     
     IF doScheme THEN
       SchemeStubs.RegisterStubs();
-    TRY
-      WITH scm = NEW(SchemeM3.T).init(GetPaths(extra)^) DO
-        SchemeReadLine.MainLoop(NEW(ReadLine.Default).init(), scm)
+      TRY
+        WITH scm = NEW(SchemeM3.T).init(GetPaths(extra)^) DO
+          SchemeReadLine.MainLoop(NEW(ReadLine.Default).init(), scm)
+        END
+      EXCEPT
+        Scheme.E(err) => Debug.Error("Caught Scheme.E : " & err)
+      |
+        IP.Error, NetObj.Error => Debug.Error("Network error creating scheme")
+      |
+        ReadLineError.E => Debug.Error("Readline error in scheme")
       END
-    EXCEPT
-      Scheme.E(err) => Debug.Error("Caught Scheme.E : " & err)
-    |
-      IP.Error, NetObj.Error => Debug.Error("Network error creating scheme")
-    |
-      ReadLineError.E => Debug.Error("Readline error in scheme")
-    END
     ELSE
       TRY
 
@@ -579,7 +660,9 @@ BEGIN
           TheTestProgram(rew.shareTrace())
         |
           Mode.Slew =>
-          TheSlewProgram(rew.shareTrace())
+          TheSlewProgram(rew.shareTrace(),
+                         slewThresh,
+                         slewHysteresis)
         END;
 
         phase := "flush";

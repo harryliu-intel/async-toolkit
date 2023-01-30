@@ -7,7 +7,6 @@ IMPORT MapError;
 
 REVEAL
   T = Class.Private BRANDED Brand OBJECT
-    trace  : Trace.T;
   END;
   
   Array = Class.PrivateArray BRANDED Brand & " Array" OBJECT

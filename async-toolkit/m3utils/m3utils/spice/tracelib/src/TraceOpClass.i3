@@ -1,6 +1,7 @@
 INTERFACE TraceOpClass;
 IMPORT TraceOp;
 IMPORT Rd;
+IMPORT Trace;
 
 REVEAL
   TraceOp.T <: Private;
@@ -10,10 +11,14 @@ REVEAL
   (* 
      implementers of concrete subtypes of TraceOp.T should
      provide an eval() method as declared below
+
+     eval() should write its result to the result field of the
+     object.
   *)
   
 TYPE
   Private = OBJECT
+    trace  : Trace.T;
   METHODS
     eval() RAISES { Rd.EndOfFile, Rd.Failure };
   END;
