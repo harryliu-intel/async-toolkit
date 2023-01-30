@@ -175,11 +175,15 @@ PROCEDURE ResApply(cl : ResClosure) : REFANY =
               END
             END
           END;
-          TempDataRep.ReadFromTempNoNorm(TextRd.New(res.result),
-                                         rep,
-                                         Text.Length(res.result));
-          rep.norm := res.norm;
-          EVAL cl.t.rew.addhi(rep.finalData, rep.norm, rep.code, Seq1(res.nm))
+          IF res.code = ArithConstants.Pickle THEN
+            EVAL cl.t.rew.addhi(res.result, res.norm, res.code, Seq1(res.nm))
+          ELSE
+            TempDataRep.ReadFromTempNoNorm(TextRd.New(res.result),
+                                           rep,
+                                           Text.Length(res.result));
+            rep.norm := res.norm;
+            EVAL cl.t.rew.addhi(rep.finalData, rep.norm, rep.code, Seq1(res.nm))
+          END
         END;
         DEC(cl.t.active);
         Thread.Broadcast(cl.t.c)
