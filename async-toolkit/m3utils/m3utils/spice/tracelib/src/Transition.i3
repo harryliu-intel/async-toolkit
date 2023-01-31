@@ -25,4 +25,6 @@ PROCEDURE Equal(READONLY a, b : T) : BOOLEAN;
 
 PROCEDURE Hash(READONLY a : T) : Word.T;
 
+PROCEDURE Format(READONLY a : T) : TEXT;
+
 END Transition.

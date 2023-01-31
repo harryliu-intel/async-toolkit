@@ -24,6 +24,7 @@ MkSetDef ("Arc", "DevArcs")
 
 KeyPair ("CardTransition", "Cardinal", "Transition")
 Array_sort ("IdxTransition", "CardTransitionPair")
+Sequence("IdxTransition", "CardTransitionPair")
 
 implementation ("RewriterMain")
 
