@@ -11,7 +11,7 @@ IMPORT TraceOp, TraceOpClass;
 IMPORT Pathname;
 IMPORT TextSeq;
 IMPORT Text;
-FROM Fmt IMPORT F, Int;
+FROM Fmt IMPORT F, Int, LongReal, Style;
 IMPORT SchemeStubs;
 IMPORT Scheme;
 IMPORT SchemeM3;
@@ -43,6 +43,8 @@ IMPORT TransitionFinder;
 IMPORT TransitionSeq;
 IMPORT Transition;
 IMPORT TransitionArraySort;
+IMPORT CardTransitionPair AS IdxTransition;
+IMPORT IdxTransitionArraySort;
 
 <*FATAL Thread.Alerted*>
 
@@ -50,6 +52,7 @@ TYPE NodeId = Trace.NodeId;
 
 CONST Usage   = "";
       Verbose = FALSE;
+      LR      = LongReal;
 
 PROCEDURE MakePower(vi, ii : NodeId) : TraceOp.T =
   VAR
@@ -514,7 +517,62 @@ PROCEDURE TLBEval(tlb : TransitionLeaderBoard)
     
 (**********************************************************************)
 
-TYPE Mode = { Test, Power, Slew };
+PROCEDURE HaveMatchingAlias(tr : Trace.T; idx : CARDINAL; regex : RegEx.Pattern) : BOOLEAN =
+  VAR
+    alias : TEXT;
+  BEGIN
+    WITH aIter = tr.getAliases(idx).iterate() DO
+      WHILE aIter.next(alias) DO
+        IF RegEx.Execute(regex, alias) # -1 THEN
+          RETURN TRUE
+        END
+      END
+    END;
+    RETURN FALSE
+  END HaveMatchingAlias;
+
+PROCEDURE RunSlewPrint(root : TEXT) =
+  VAR
+    tr := NEW(Trace.T).init(root);
+    slowRegex := RegEx.Compile("slowtransitions");
+    slowSeq := NEW(TransitionSeq.T).init();
+  BEGIN
+    FOR i := 1 TO tr.getNodes() - 1 DO
+      IF HaveMatchingAlias(tr, i, slowRegex) AND
+         tr.getNodeDataType(i) = Trace.DataType.Pickle THEN
+        WITH ref = NARROW(tr.getNodePickle(i), REF ARRAY OF Transition.T) DO
+          IF NUMBER(ref^) # 0 THEN
+            slowSeq.addhi(ref[0])
+          END
+        END
+      END
+    END;
+    WITH arr = NEW(REF ARRAY OF IdxTransition.T, slowSeq.size()),
+         wr  = FileWr.Open("slowtrans.dat") DO
+      FOR i := FIRST(arr^) TO LAST(arr^) DO
+        arr[i] := IdxTransition.T { i, slowSeq.get(i) }
+      END;
+      IdxTransitionArraySort.Sort(arr^, cmp := IdxTransition.CompareK2K1);
+      
+      FOR i := FIRST(arr^) TO LAST(arr^) DO
+        WITH a = arr[i] DO
+          Wr.PutText(wr,
+                     F("%s %s %s %s\n",
+                       LR(a.k2.slew, style := Style.Sci, prec := 4),
+                       tr.getCanonicalName(a.k1),
+                       Int(a.k1),
+                       LR(a.k2.at, style := Style.Sci, prec := 4)));
+        END
+      END;
+
+      Wr.Close(wr)
+    END
+
+  END RunSlewPrint;
+  
+(**********************************************************************)
+
+TYPE Mode = { Test, Power, Slew, SlewPrint };
   
 VAR
   pp            := NEW(ParseParams.T).init(Stdio.stderr);
@@ -554,6 +612,8 @@ BEGIN
         mode := Mode.Slew;
         slewThresh     := pp.getNextLongReal();
         slewHysteresis := pp.getNextLongReal();
+      ELSIF pp.keywordPresent("-slewprint") THEN
+        mode := Mode.SlewPrint
       END
     END;
 
@@ -607,6 +667,8 @@ BEGIN
 
   IF slave THEN
     DistRewriter.RunSlave(root)
+  ELSIF mode = Mode.SlewPrint THEN
+    RunSlewPrint(root)
   ELSE
     TRY
       rew := NEW(TraceRewriter.T).init(root, rewriterPath);

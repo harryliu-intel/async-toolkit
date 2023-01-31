@@ -22,6 +22,9 @@ Table ("ArcRef", "DevArcs", "Refany")
 MkSet ("Arc", "DevArcs")
 MkSetDef ("Arc", "DevArcs")
 
+KeyPair ("CardTransition", "Cardinal", "Transition")
+Array_sort ("IdxTransition", "CardTransitionPair")
+
 implementation ("RewriterMain")
 
 SchemeStubs ("Math")
