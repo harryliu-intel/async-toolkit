@@ -148,7 +148,7 @@
     lCV=(ReadCV CV->libName CV->cellName "layout")
 
     ; update prBoundary of leaf routed cells from layout view if it exists
-    (when CV->viewName=="floorplan" && (isRouted && isLeaf || midPRB)
+    (when CV->viewName=="floorplan" && isRouted && (isLeaf || midPRB)
       ; use prBoundary of layout view if it exists
       (when lCV points=lCV->prBoundary->points)
       ; otherwise pick prBoundary appropriately
