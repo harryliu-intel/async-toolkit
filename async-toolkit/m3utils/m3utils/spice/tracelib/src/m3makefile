@@ -29,4 +29,7 @@ Module ("TraceOp")
 Interface ("TraceOpClass")
 Module ("TraceInterpolator")
 
+Module ("TransitionPickler")
+Module ("TransitionLeaderBoard")
+
 library ("tracelib")

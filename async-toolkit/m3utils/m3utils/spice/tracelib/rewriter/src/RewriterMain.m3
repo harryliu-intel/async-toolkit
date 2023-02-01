@@ -39,13 +39,11 @@ IMPORT Thread;
 IMPORT ReadLineError;
 IMPORT ArithConstants;
 IMPORT Pickle;
-IMPORT TransitionFinder;
-IMPORT TransitionSeq;
-IMPORT Transition;
-IMPORT TransitionArraySort;
 IMPORT CardTransitionPair AS IdxTransition;
 IMPORT IdxTransitionArraySort;
 IMPORT IdxTransitionSeq;
+IMPORT TransitionPickler;
+IMPORT TransitionLeaderBoard;
 
 <*FATAL Thread.Alerted*>
 
@@ -287,13 +285,13 @@ PROCEDURE AddSlewMeasurement(idx : CARDINAL;
   BEGIN
     WITH time    = MakeGetNode(0),
          node    = MakeGetNode(idx),
-         trans   = NEW(TransitionPickler,
+         trans   = NEW(TransitionPickler.T,
                        idx := idx,
                        time := time,
                        of := node,
                        thresh := thresh,
                        hysteresis := hysteresis),
-         seq     = NEW(TransitionLeaderBoard,
+         seq     = NEW(TransitionLeaderBoard.T,
                        maxCount := 10,
                        transitions := trans,
                        resetTime := resetTime) DO
@@ -456,126 +454,6 @@ PROCEDURE Flush()
     END
   END Flush;
 
-(**********************************************************************)
-
-TYPE
-  TransitionPickler = TraceOp.Pickle OBJECT
-    idx                : CARDINAL;
-    time, of           : TraceOp.Array;
-    thresh, hysteresis : LONGREAL;
-  OVERRIDES
-    eval := TPEval;
-  END;
-
-PROCEDURE TPEval(tp : TransitionPickler)
-  RAISES { Rd.EndOfFile, Rd.Failure } =
-  CONST
-    doDebug = TRUE;
-  BEGIN
-    IF tp.time.result = NIL THEN
-      tp.time.trace := tp.trace;
-      tp.time.eval()
-    END;
-    IF tp.of.result = NIL THEN
-      tp.of.trace := tp.trace;
-      tp.of.eval();
-    END;
-    
-    (* tp.of.result should be valid here *)
-    <*ASSERT tp.time.result # NIL*>
-    <*ASSERT tp.of.result # NIL*>
-
-    (* build transition sequence and assign to tp.result *)
-
-    WITH seq = TransitionFinder.Find(tp.time.result^,
-                                     tp.of.result^,
-                                     tp.thresh,
-                                     tp.hysteresis,
-                                     doSlew := TRUE) DO
-      IF doDebug THEN
-        VAR
-          tstr := "";
-        BEGIN
-          IF seq.size() = 0 THEN
-            tstr := "not found"
-          ELSE
-            tstr := Transition.Format(seq.get(0))
-          END;
-          Debug.Out(F("TPEval, idx %s : %s transitions, first %s",
-                      Int(tp.idx),
-                      Int(seq.size()),
-                      tstr))
-        END
-      END;
-      
-      tp.result := seq
-    END
-  END TPEval;
-
-TYPE
-  TransitionLeaderBoard = TraceOp.Pickle OBJECT
-    maxCount    : CARDINAL := LAST(CARDINAL);
-    transitions : TransitionPickler;
-    resetTime   : LONGREAL;
-  OVERRIDES
-    eval := TLBEval;
-  END;
-
-PROCEDURE SeqToArr(seq       : TransitionSeq.T;
-                   resetTime : LONGREAL;
-                   maxCount  : CARDINAL) : REF ARRAY OF Transition.T =
-  VAR
-    res : REF ARRAY OF Transition.T;
-    startIdx := 0;
-  BEGIN
-    FOR i := 0 TO seq.size() - 1 DO
-      WITH tr = seq.get(i) DO
-        IF tr.at < resetTime THEN
-          startIdx := i + 1
-        ELSE
-          EXIT
-        END
-      END
-    END;
-
-    WITH nTrans = seq.size() - startIdx,
-         nKeep  = MIN(nTrans, maxCount),
-         arr    = NEW(REF ARRAY OF Transition.T, nKeep) DO
-      FOR i := FIRST(arr^) TO LAST(arr^) DO
-        arr[i] := seq.get(i + startIdx)
-      END;
-      RETURN arr
-    END
-  END SeqToArr;
-
-TYPE
-  TLB = OBJECT
-    idx : CARDINAL;
-    arr : REF ARRAY OF Transition.T;
-  END;
-
-PROCEDURE TLBEval(tlb : TransitionLeaderBoard)
-  RAISES { Rd.EndOfFile, Rd.Failure } =
-  CONST
-    doDebug = TRUE;
-  BEGIN
-    IF tlb.transitions.result = NIL THEN
-      tlb.transitions.trace := tlb.trace;
-      tlb.transitions.eval()
-    END;
-    <*ASSERT tlb.transitions.result # NIL*>
-    WITH seq = NARROW(tlb.transitions.result, TransitionSeq.T),
-         arr = SeqToArr(seq, tlb.resetTime, tlb.maxCount) DO
-      IF doDebug THEN
-        Debug.Out(F("TLBEval, %s transitions", Int(NUMBER(arr^))))
-      END;
-      TransitionArraySort.Sort(arr^, cmp := Transition.CompareBySlew);
-      tlb.result := NEW(TLB, idx := tlb.transitions.idx, arr := arr)
-    END
-  END TLBEval;
-    
-(**********************************************************************)
-
 PROCEDURE HaveMatchingAlias(tr : Trace.T; idx : CARDINAL; regex : RegEx.Pattern) : BOOLEAN =
   VAR
     alias : TEXT;
@@ -599,7 +477,7 @@ PROCEDURE RunSlewPrint(root : TEXT) =
     FOR i := 1 TO tr.getNodes() - 1 DO
       IF HaveMatchingAlias(tr, i, slowRegex) AND
          tr.getNodeDataType(i) = Trace.DataType.Pickle THEN
-        WITH tlb = NARROW(tr.getNodePickle(i), TLB) DO
+        WITH tlb = NARROW(tr.getNodePickle(i), TransitionLeaderBoard.TLB) DO
           Debug.Out(F("RunSlewPrint : idx %s NUMBER(tlb.arr^) = %s",
                       Int(tlb.idx),
                       Int(NUMBER(tlb.arr^))));
