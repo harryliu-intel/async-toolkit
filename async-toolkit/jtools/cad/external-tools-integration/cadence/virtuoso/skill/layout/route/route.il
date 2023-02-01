@@ -1014,7 +1014,6 @@ DumbLayers = (list (list "SRAM" "fill")
 
     ; add id layers that are the wrong shape
     (dbCreatePolygon CV (list "lowVccSEL" "id") prb->points)
-    (dbCreatePolygon CV (list "b210h50pRegion" "id") prb->points)
 
     ; add pins to tag for lvs
     (CopyPinsFromSourceView ?CV tagcv ?srcCV CV)
