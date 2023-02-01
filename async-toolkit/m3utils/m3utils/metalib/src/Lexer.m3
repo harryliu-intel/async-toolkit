@@ -7,7 +7,7 @@ PROCEDURE GetToken(VAR buff : ARRAY OF CHAR;
                    VAR state : State;
                    VAR res : String) : BOOLEAN =
   
-  CONST WhiteSpace = SET OF CHAR { ' ', '\n', '\r', '\t' };
+  CONST WhiteSpace = SET OF CHAR { ' ', '\n', '\r', '\t', ';' };
   CONST Special    = SET OF CHAR { '(', ')', '{', '}', '-', '+', ',', '~', '>' };
         
   PROCEDURE Fill() =
