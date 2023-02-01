@@ -9,6 +9,7 @@ TYPE
     s    := 0;     (* next token to parse starts here *)
     e    := 0;     (* end of currently valid chars in buffer *)
     eof  := FALSE; (* done parsing *)
+    lNo  := 1;
   END;
 
 TYPE String = RECORD start, n : [0..BufSize-1] END;

@@ -2,6 +2,7 @@ import ("libm3")
 import ("cit_util")
 import ("spicelib")
 import ("tracelib")
+import ("metalib")
 
 Module ("CheckDir")
 Interface ("CheckMode")

@@ -2,6 +2,7 @@ MODULE Dsim;
 IMPORT Rd;
 IMPORT (*IO, *)Text;
 (*IMPORT Fmt;*)
+FROM Fmt IMPORT F, Int;
 IMPORT Name, NameSeq, NameList;
 IMPORT Debug;
 IMPORT RefList;
@@ -11,6 +12,8 @@ IMPORT NameNameTbl, NameNameListTbl;
 FROM Lexer IMPORT GetToken, String, State, BufSize;
 
 CONST DQ='"';
+
+VAR doDebug := Debug.DebugThis("Dsim");
 
 PROCEDURE MergeDsimBodies(a, b : DsimBody) : DsimBody =
   (* merge rules of b into a *)
@@ -38,9 +41,12 @@ PROCEDURE Parse(rd : Rd.T;
       D("Card"); RETURN TRUE
     END GetCard;
 
-  PROCEDURE Error() =
+  PROCEDURE Error(msg := "") =
     BEGIN
-      Debug.Error("PARSE ERROR, lately reading: " & Text.FromChars(SUBARRAY(buff,token.start,token.n)))
+      Debug.Error(F("PARSE ERROR %s, lately reading %s on line %s ",
+                    msg,
+                    Text.FromChars(SUBARRAY(buff,token.start,token.n)),
+                    Int(state.lNo)))
     END Error;
 
   PROCEDURE Next() =
@@ -112,11 +118,11 @@ PROCEDURE Parse(rd : Rd.T;
           IF GetSpecial(')') THEN 
             D("ParenList"); RETURN TRUE 
           ELSIF NOT GetSpecial(',') THEN
-            Error(); <*ASSERT FALSE*>
+            Error("GetParentList->GetSpecial"); <*ASSERT FALSE*>
           END
         END
       END;
-      Error(); <*ASSERT FALSE*>
+      Error("GetParenList"); <*ASSERT FALSE*>
     END GetParenList;
 
   PROCEDURE GetDecl(VAR decl : Decl) : BOOLEAN =
@@ -129,7 +135,7 @@ PROCEDURE Parse(rd : Rd.T;
         IF GetIdentifier(decl.id) AND GetParenList(decl.args) THEN
           D("Decl"); RETURN TRUE
         ELSE
-          Error(); <*ASSERT FALSE*>
+          Error("GetDecl"); <*ASSERT FALSE*>
         END
       END
     END GetDecl;
@@ -165,7 +171,7 @@ PROCEDURE Parse(rd : Rd.T;
           IF GetIdentifier(id) THEN
             conjunct.input := id
           ELSE
-            Error()
+            Error("GetRule->~")
           END;
           rule.conjuncts := RefList.Cons(conjunct,rule.conjuncts);
         ELSIF GetIdentifier(id) THEN
@@ -177,16 +183,16 @@ PROCEDURE Parse(rd : Rd.T;
         END;
         IF GetSpecial('-') THEN EXIT END;
         IF NOT GetSpecial('&') THEN 
-          Error()
+          Error("GetRule->&")
         END
       END;
 
       IF NOT started THEN (* nothing parsed *) RETURN FALSE END;
 
-      IF NOT GetSpecial('>') THEN Error() END;
+      IF NOT GetSpecial('>') THEN Error("GetRule->>") END;
       
       IF NOT GetIdentifier(rule.target) THEN
-        Error();
+        Error("GetRule->GetIdentifier");
       END;
 
       IF GetSpecial('+') THEN
@@ -194,7 +200,7 @@ PROCEDURE Parse(rd : Rd.T;
       ELSIF GetSpecial('-') THEN
         rule.sense := Sense.Down
       ELSE
-        Error()
+        Error("GetRule")
       END;
       D("Rule");
       RETURN TRUE
@@ -212,13 +218,13 @@ PROCEDURE Parse(rd : Rd.T;
             IF GetRule(pr) THEN
               body.rules := RefList.Cons(pr,body.rules)
             ELSE
-              Error()
+              Error("GetDsimBody->{")
             END
           END;
           D("DsimBody");
           RETURN TRUE
         ELSE
-          Error(); <*ASSERT FALSE*>
+          Error("GetDsimBody"); <*ASSERT FALSE*>
         END
       END
     END GetDsimBody;
@@ -241,7 +247,7 @@ PROCEDURE Parse(rd : Rd.T;
         ELSIF GetDecl(decl) THEN
           define.decls := RefList.Cons(decl,define.decls)
         ELSE
-          Error()
+          Error("GetDefineBody")
         END
       END;
       RETURN TRUE
@@ -275,7 +281,7 @@ PROCEDURE Parse(rd : Rd.T;
           D("Define");
           RETURN TRUE
         ELSE
-          Error(); <*ASSERT FALSE*>
+          Error("GetDefine"); <*ASSERT FALSE*>
         END
       END
     END GetDefine;
@@ -291,7 +297,7 @@ PROCEDURE Parse(rd : Rd.T;
           D("Wire");
           RETURN TRUE
         ELSE
-          Error(); <*ASSERT FALSE*>
+          Error("GetWire"); <*ASSERT FALSE*>
         END
       END
     END GetWire;
@@ -305,15 +311,16 @@ PROCEDURE Parse(rd : Rd.T;
         IF GetParenList(seq) THEN
           D("SkipStuff"); RETURN TRUE 
         ELSE 
-          Error() ; <*ASSERT FALSE*>
+          Error("GetSkipStuff") ; <*ASSERT FALSE*>
         END
       ELSE 
         RETURN FALSE
       END
     END GetSkipStuff;
 
-  <*NOWARN*>PROCEDURE D(what : TEXT) = BEGIN (*IO.Put(what & "\n")*) END D;
-
+  PROCEDURE D(what : TEXT) =
+    BEGIN IF doDebug THEN Debug.Out(what & "\n") END END D;
+    
   VAR
     (* parsing *)
     buff : ARRAY [0..BufSize-1] OF CHAR;
@@ -415,9 +422,7 @@ PROCEDURE Flatten(define          : Define;
     END
   END Flatten;
 
-
 VAR KeywordChars : ARRAY Keyword OF REF ARRAY OF CHAR;
-
 
 BEGIN 
   FOR i := FIRST(Keyword) TO LAST(Keyword) DO
@@ -430,5 +435,4 @@ BEGIN
       END
     END
   END
-
 END Dsim.

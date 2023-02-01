@@ -2,14 +2,14 @@ MODULE Lexer;
 IMPORT Rd;
 
 CONST DQ='"';
-
-  PROCEDURE GetToken(VAR buff : ARRAY OF CHAR; 
-                     VAR state : State;
-                     VAR res : String) : BOOLEAN =
-
-    CONST WhiteSpace = SET OF CHAR { ' ', '\n', '\r', '\t' };
-    CONST Special    = SET OF CHAR { '(', ')', '{', '}', '-', '+', ',', '~', '>' };
-
+      
+PROCEDURE GetToken(VAR buff : ARRAY OF CHAR; 
+                   VAR state : State;
+                   VAR res : String) : BOOLEAN =
+  
+  CONST WhiteSpace = SET OF CHAR { ' ', '\n', '\r', '\t' };
+  CONST Special    = SET OF CHAR { '(', ')', '{', '}', '-', '+', ',', '~', '>' };
+        
   PROCEDURE Fill() =
     (* refill buffer *)
     BEGIN
@@ -18,7 +18,11 @@ CONST DQ='"';
         state.e := state.e + chars;
 
         (* add known whitespace at end, makes finding tokens easier *)
-        IF chars < space THEN buff[state.e] := '\n'; INC(state.e); state.eof := TRUE END
+        IF chars < space THEN
+          buff[state.e] := '\n';
+          INC(state.e);
+          state.eof := TRUE
+        END
       END
     END Fill;
 
@@ -29,7 +33,6 @@ CONST DQ='"';
       state.e := state.e-state.s; state.s := state.s-state.s;
       RETURN old
     END Shift;
-
 
     PROCEDURE Char() =
 
@@ -49,6 +52,9 @@ CONST DQ='"';
         ELSIF state.s = state.e         THEN
           EVAL Shift(); Fill()
         ELSIF buff[state.s] IN WhiteSpace THEN
+          IF buff[state.s] = '\n' THEN
+            INC(state.lNo)
+          END;
           INC(state.s)
         END
       END;

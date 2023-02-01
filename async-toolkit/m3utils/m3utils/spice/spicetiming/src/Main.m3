@@ -39,6 +39,10 @@ IMPORT CardSeq;
 IMPORT Thread;
 IMPORT TextSet;
 IMPORT SpiceTranslate;
+IMPORT Dsim;
+IMPORT NameRefTbl;
+IMPORT NameNameTbl;
+IMPORT NameNameListTbl;
 
 <*FATAL Thread.Alerted*>
 
@@ -1243,6 +1247,7 @@ VAR
   Dot        : TEXT;
   dutPfx                      := "";
   doMapTraceNames             := FALSE;
+  dsimFn     : Pathname.T     := NIL;
 
   
 BEGIN
@@ -1292,6 +1297,9 @@ BEGIN
     IF pp.keywordPresent("-graph") THEN
       graphNs := pp.getNextLongReal()
     END;
+    IF pp.keywordPresent("-dsim") THEN
+      dsimFn := pp.getNext()
+    END;
 
     pp.skipParsed();
     pp.finish()
@@ -1299,6 +1307,24 @@ BEGIN
     ParseParams.Error => Debug.Error("Can't parse command-line parameters\nUsage: " & Params.Get(0) & " " & Usage)
   END;
 
+  IF dsimFn # NIL THEN
+    VAR
+      types, decls, topLevelWires : NameRefTbl.T := NEW(NameRefTbl.Default).init();
+      rd := FileRd.Open(dsimFn);
+      define : Dsim.Define;
+      instanceTypes := NEW(NameNameTbl.Default).init();
+      typeInstances := NEW(NameNameListTbl.Default).init();
+    BEGIN
+      define := Dsim.Parse(rd, types, decls, topLevelWires);
+      Rd.Close(rd);
+
+      Dsim.Flatten(define,
+                   types,
+                   instanceTypes,
+                   typeInstances);
+    END
+  END;
+  
   TRY
     trace := NEW(Trace.T).init(traceRt)
   EXCEPT
