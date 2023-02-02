@@ -101,7 +101,7 @@ VAR
   tranFinder : TransitionFinder.T;
   vdd                         := 0.75d0;
   resetTime                   := 0.0d-9;
-  warnWr                      := FileWr_Open(traceRt & "_spicetiming.warn");
+  warnWr                      : Wr.T;
   quick      : BOOLEAN;
   graphNs                     := FIRST(LONGREAL);
   truncValues                 := LAST(CARDINAL);
@@ -172,6 +172,8 @@ BEGIN
   EXCEPT
     ParseParams.Error => Debug.Error("Can't parse command-line parameters\nUsage: " & Params.Get(0) & " " & Usage)
   END;
+
+  warnWr                      := FileWr_Open(traceRt & "_spicetiming.warn");
 
   IF dsimFn # NIL THEN
     VAR
