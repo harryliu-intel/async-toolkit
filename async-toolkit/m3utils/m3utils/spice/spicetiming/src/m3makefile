@@ -17,6 +17,12 @@ Table("CheckDirRef", "CheckDir", "Refany")
 MkSet("CheckDir", "CheckDir")
 MkSetDef("CheckDir", "CheckDir")
 
+Module ("TimingCheckers")
+Module ("SpiceTiming")
+Module ("SpiceValues")
+Module ("Latches")
+Interface ("LatchSpecs")
+
 implementation ("Main")
 
 program ("spicetiming")
