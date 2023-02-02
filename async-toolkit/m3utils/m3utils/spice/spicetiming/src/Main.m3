@@ -1,4 +1,12 @@
 MODULE Main;
+
+(* 
+   extract timing data from spice simulations 
+
+   mika.nystroem@intel.com 
+   November, 2022
+*)
+
 IMPORT ParseParams;
 IMPORT Stdio;
 IMPORT Debug;
