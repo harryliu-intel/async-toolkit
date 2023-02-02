@@ -1776,7 +1776,7 @@ public final class JFlat {
                         final String snode = node.getAspiceString();
                         pw.print("wire(");
                         OldLVSFormatter.printName(null, snode, pw);
-                        pw.println(");");
+                        pw.println(")");
                     }
                 }
                 //Get staticizer inverter node from netgraph
@@ -1786,7 +1786,7 @@ public final class JFlat {
                     final String snode = CellUtils.getCastNodeName(node.getName()).getAspiceString();
                     pw.print("wire(");
                     OldLVSFormatter.printName(null, snode, pw);
-                    pw.println(");");
+                    pw.println(")");
                     
                 }
             }
@@ -1866,7 +1866,7 @@ public final class JFlat {
                     OldLVSFormatter.printName(null, snode, pw);
                     pw.print(",");
                     OldLVSFormatter.printName(null, snode + appendColon, pw);
-                    pw.println(");");
+                    pw.println(")");
                 }
             }
             for (Iterator i = staticizerNodes.iterator(); i.hasNext(); ) {
@@ -1877,7 +1877,7 @@ public final class JFlat {
                 OldLVSFormatter.printName(null, snode_digital, pw);
                 pw.print(",");
                 OldLVSFormatter.printName(null, snode + appendColon, pw);
-                pw.println(");");
+                pw.println(")");
             }
         }
 
