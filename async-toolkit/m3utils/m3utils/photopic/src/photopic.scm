@@ -160,7 +160,10 @@
          (integrand (lambda(l) (* (c l) (spectrum l)))))
     (integrate integrand l0 l1)))
 
+;; all the various coordinate systems used...
+
 (define (xyz->Yxy xyz)
+  ;; (x,y,z) and (Y, x, y)
   (let* ((xint (car xyz))
          (yint (cadr xyz))
          (zint (caddr xyz))
@@ -168,12 +171,14 @@
     (list sum (/ xint sum) (/ yint sum))))
 
 (define (calc-Yxy spectrum)
+  ;; compute Yxy on a given spectrum function
   (let* ((xint (get-channel-integral spectrum 'x))
          (yint (get-channel-integral spectrum 'y))
          (zint (get-channel-integral spectrum 'z)))
     (xyz->Yxy (list xint yint zint))))
 
 (define (Yxy->uv Yxy)
+  ;; convert to 1960 CIE MacAdam uv 
   (let* ((x         (cadr  Yxy))
          (y         (caddr Yxy))
          (uv-denom  (+ (* -2 x) (* 12 y) 3))
@@ -182,6 +187,7 @@
     (list u v)))
 
 (define (Yxy->Yuv Yxy)
+  ;; same as above with Y also in the result
   (let* ((Y         (car Yxy))
          (x         (cadr  Yxy))
          (y         (caddr Yxy))
@@ -213,17 +219,22 @@
             (loop (+ step T)))))))
 
 (define (make-T-uv-interface)
+  ;; build the M3 interface
   (let ((wr (FileWr.Open "temp_uv.m3")))
     (make-T-uv-tbl 50 wr)
     (Wr.Close wr)))
 
 (define (temp-uv T)
+  ;; extract the uv coordinates for a T K blackbody from the table
+  ;; prepared above
   (let* ((tuv (TempUv.Interpolate T))
          (u   (cdr (assoc 'u (assoc 'uv tuv))))
          (v   (cdr (assoc 'v (assoc 'uv tuv)))))
     (list u v)))
 
 (define (uv-norm uv T)
+  ;; compute the Duv given that T is the CCT of the spectrum whose
+  ;; uv is given in uv
   (let* ((tuv (temp-uv T))
          (du  (- (car  uv) (car  tuv)))
          (dv  (- (cadr uv) (cadr tuv)))
@@ -231,6 +242,7 @@
     (sqrt dsq)))
         
 (define (search-T uv)
+  ;; compute the CCT for a source given its MacAdam uv coordinates
   (let* ((f  (lambda(T)(uv-norm uv T)))
          (mf (make-lrfunc-obj f))
          (T (Bracket.SchemeBrent '((a . 10) (b . 1000) (c . 20000))
@@ -241,6 +253,7 @@
   )
 
 (define (Yuv->UVW Yuv uv0)
+  ;; convert to UVW coordinates under a given white point
   ;; uv0 is the white point
   (let* ((Y (car Yuv))
          (u (cadr Yuv))
@@ -254,17 +267,34 @@
          (V* (* 13 W* (- v v0))))
     (list U* V* W*)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; simple operations on spectra
+;;
+
 (define (scale-spectrum a fact)
   (lambda(l)(* fact (a l))))
 
-(define (multiply-spectra a b)
-  (lambda(l)(* (a l)(b l))))
+(define (combine-spectra a b op)
+  (lambda(l)(op (a l)(b l))))
 
+(define (multiply-spectra a b)
+  (combine-spectra a b *))
+
+(define (add-spectra a b)
+  (combine-spectra a b +))
+
+(define (weight-spectra a aw b bw)
+  (add-spectra
+   (scale-spectrum a aw)
+   (scale-spectrum b bw)))
+
+;; reflection rule for spectrum, it's the inner product
 (define (reflected-tcs-spectrum i illuminant-spectrum)
   
   (multiply-spectra illuminant-spectrum (R i)))
 
-
+;; normalize a spectrum so it has Y = 100 (needed for CRI calc)
 (define (normalize-spectrum spectrum)
   (let* ((Yxy0 (calc-Yxy spectrum))
          (Y    (car Yxy0)))
@@ -275,6 +305,7 @@
    (Yxy->Yuv (calc-Yxy (multiply-spectra sample normalized-spectrum)))
    uv0))
 
+;; convert to cd coordinates for color adaptation
 (define (uv->cd uv)
   (let* ((u (car  uv))
          (v (cadr uv))
@@ -282,6 +313,7 @@
          (d (/ (+ (* 1.708 v)(* -1.481 u) 0.404) v)))
     (list c d)))
 
+;; perform von Kries color adaptation calculation
 (define (adapted-uv ref-uv test-uv reflected-uv)
   (let* ((cd-r (uv->cd ref-uv))
          (cr   (car cd-r))
@@ -306,6 +338,7 @@
 
     (list uci vci)))
 
+;; euclidean distance between two 3-vectors
 (define (euclidean-3 a b)
   (let* ((dx (- (car a) (car b)))
          (dy (- (cadr a) (cadr b)))
@@ -315,6 +348,9 @@
 (define debug #f)
 
 (define (calc-cri spectrum)
+  ;; put it all together. compute the CRI of a given
+  ;; continuous spectrum
+  
   (let* ((norm-spectrum     (normalize-spectrum spectrum))
          (test-Yxy          (calc-Yxy norm-spectrum))
          (test-uv           (Yxy->uv test-Yxy))
@@ -368,15 +404,22 @@
   )
 
 (define (calc-specs spectrum)
+  ;; produce the specs of a spectrum:
+  ;; CRI(Ra)
+  ;; worst Ri (i \in 1..8)
+  ;; theoretical efficacy in lm/W
+  ;; vector of CRi for i \in 1 .. 14
   (let* ((full-cri (calc-cri spectrum))
          (ref-temp (caar full-cri))
          (Duv      (cadar full-cri))
          (ri-8     (head 8 (cadr full-cri)))
          (worst-ri (apply min ri-8))
+         (efficacy (total-lumens-per-watt spectrum))
          (cri-ra   (/ (apply + ri-8) 8)))
-    (append (list cri-ra worst-ri) full-cri)))
+    (append (list cri-ra worst-ri efficacy) full-cri)))
 
 (define (trunc-spectrum spectrum lo hi)
+  ;; truncate a given spectrum to the wavelengths given
   (lambda(l)
     (cond ((< l lo) 0)
           ((> l hi) 0)
