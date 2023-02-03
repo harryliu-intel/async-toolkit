@@ -20,6 +20,7 @@ useICV = t
         (noPowerFill nil)          ; use POWER_GRID_NO_FILL instead of POWER_GRID
         (doPowerGates nil)         ; use POWER_GRID_GATED instead of POWER_GRID
         (softMacro nil)            ; when !softMacro, lock all instances
+        (changeWindow t)           ; change window to flatten view
         (Mem (nrGetMaxHeapSize))   ; memory to use
         )
   (let (TEMP PowerGridCellName ColorGridCellName win pgCV cgCV oldMasters)
@@ -111,12 +112,13 @@ useICV = t
 
     ; switch current window to flatten view
     win = (hiGetCurrentWindow)
-    (when win (geOpen ?window win
-                      ?lib  CV->libName
-                      ?cell CV->cellName
-                      ?view CV->viewName
-                      ?viewType "maskLayout"
-                      ?mode "a")
+    (when changeWindow && win
+          (geOpen ?window win
+                  ?lib  CV->libName
+                  ?cell CV->cellName
+                  ?view CV->viewName
+                  ?viewType "maskLayout"
+                  ?mode "a")
           )
 
     ; return flatten view
