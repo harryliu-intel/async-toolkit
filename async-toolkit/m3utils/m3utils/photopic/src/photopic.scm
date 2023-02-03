@@ -363,16 +363,18 @@
              "test-uv      " test-uv dnl
              "ref-temp-res " ref-temp-res dnl
              "ref-uv       " ref-uv dnl))
-    (map calc-one '(1 2 3 4 5 6 7 8 9 10 11 12 13 14))
+    (list ref-temp-res (map calc-one '(1 2 3 4 5 6 7 8 9 10 11 12 13 14)))
     )
   )
 
 (define (calc-specs spectrum)
   (let* ((full-cri (calc-cri spectrum))
-         (ri-8     (head 8 full-cri))
+         (ref-temp (caar full-cri))
+         (Duv      (cadar full-cri))
+         (ri-8     (head 8 (cadr full-cri)))
          (worst-ri (apply min ri-8))
          (cri-ra   (/ (apply + ri-8) 8)))
-    (list cri-ra worst-ri full-cri)))
+    (append (list cri-ra worst-ri) full-cri)))
 
 (define (trunc-spectrum spectrum lo hi)
   (lambda(l)
