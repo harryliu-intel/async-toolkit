@@ -10,6 +10,7 @@
         (pwrMetal nil)           ; top metal layer for power
         (topHalo t)              ; APR should add a top halo
         (denseStaples nil)       ; APR should add staples at dense pitch
+	(midLevel nil)           ; APR custom mid-level flow
         (thresholds (list "c" "b")) ; transistor thresholds to use
         (Background nil)         ; optionally run in the background
         (importView "layout")    ; view name to import wiring back to
@@ -46,7 +47,7 @@
     ; export
     CV = (RouteExport ?CV CV
                       ?botMetal botMetal ?topMetal topMetal ?pwrMetal pwrMetal
-                      ?topHalo topHalo ?denseStaples denseStaples
+                      ?topHalo topHalo ?denseStaples denseStaples ?midLevel midLevel
                       ?doVerilog doVerilog ?doGds doGds ?doLef doLef ?doDef doDef
                       ?doHierDef doHierDef ?doNondefaultDef doNondefaultDef
                       ?doSkipRouting doSkipRouting
@@ -87,6 +88,7 @@
         (pwrMetal nil)           ; top metal layer for power
         (topHalo t)              ; APR should add a top halo
         (denseStaples nil)       ; APR should add staples at dense pitch
+	(midLevel nil)           ; APR custom mid-level flow
         (thresholds (list "c" "b")) ; transistor thresholds to use
         (doVerilog nil)          ; create cellName.v
         (doGds t)                ; create gds for subcells (used for power hookups and maybe fill)
@@ -165,7 +167,7 @@
     ; write proteus.config
     (ProteusConfig ?CV CV ?botMetal botMetal ?topMetal topMetal
                    ?pwrMetal pwrMetal ?topHalo topHalo ?denseStaples denseStaples ?metalFill metalFill
-                   ?timingDriven timingDriven ?softMacro softMacro
+                   ?timingDriven timingDriven ?softMacro softMacro ?midLevel midLevel
                    ?abstractCellName abstractCellName ?targetCellName targetCellName
                    ?tau tau ?ecoIter ecoIter ?rdtUseFlops rdtUseFlops ?rdtUserTcl rdtUserTcl
                    ?scanMode scanMode ?Mem Mem ?doHierDef doHierDef ?useUPFTemplate useUPFTemplate
@@ -263,6 +265,10 @@
       offset = (GetRDTOffset ?CV ExportCV)
       (unless offset (error "Can't find RDTOffset\n"))
       (OffsetEverything offset ?CV ExportCV)
+
+      ; add top halo
+      ; counter-intuitively, when topHalo=t we actually don't want it to do the halo
+      ;(unless topHalo (AddTopHalo ?CV ExportCV))
 
       ; save
       (dbSave ExportCV)
@@ -387,6 +393,7 @@
         (topHalo t)              ; APR should add a top halo
         (doHierDef t)            ; create cellName.def with hierarchy separator
         (denseStaples nil)       ; APR should add staples at dense pitch
+	(midLevel nil)           ; APR custom mid-level flow
         (thresholds (list "c" "b")) ; transistor thresholds to use
         (metalFill t)
         (timingDriven t)
@@ -429,6 +436,7 @@
     (when pwrMetal (fprintf file "--pwr-layer=%d\n" pwrMetal))
     (fprintf file "--top-halo=%d\n" (if topHalo 1 0))
     (fprintf file "--dense-staples=%d\n" (if denseStaples 1 0))
+    (fprintf file "--mid-level=%d\n" (if midLevel 1 0))
     (fprintf file "--thresholds=%s\n" (buildString thresholds ","))
     (fprintf file "--rdt-run-fill=%d\n" (if metalFill 1 0))
     (fprintf file "--timing-driven-route=%d\n" (if softMacro || timingDriven 1 0))
