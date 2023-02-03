@@ -1,4 +1,4 @@
-MODULE Tcs;
+MODULE FlIlluminant;
 
 PROCEDURE Interpolate(lambda : LONGREAL) : T =
   VAR
@@ -8,7 +8,7 @@ PROCEDURE Interpolate(lambda : LONGREAL) : T =
   BEGIN
     IF nm < Data[lo].lambdaNm OR
        nm > Data[hi - 1].lambdaNm THEN
-      RETURN T { nm, RData { 0.0d0, .. } }
+      RETURN T { nm, FL { 0.0d0, .. } }
     ELSE
       WHILE lo < hi DO
         WITH i  = lo + (hi - lo) DIV 2,
@@ -42,10 +42,10 @@ PROCEDURE Interpolate(lambda : LONGREAL) : T =
              hr  = dx0 / dx,
              lr  = 1.0d0 - hr DO
           VAR
-            res : RData;
+            res : FL;
           BEGIN
-            FOR i := FIRST(RData) TO LAST(RData) DO
-              res[i] := lr * l.r[i] + hr * h.r[i]
+            FOR i := FIRST(res) TO LAST(res) DO
+              res[i] := lr * l.fl[i] + hr * h.fl[i]
             END;
             
             RETURN T { nm, res }
@@ -55,9 +55,9 @@ PROCEDURE Interpolate(lambda : LONGREAL) : T =
     END
   END Interpolate;
 
-PROCEDURE R(lambda : LONGREAL) : RData =
+PROCEDURE F(lambda : LONGREAL) : FL =
   BEGIN
-    RETURN Interpolate(lambda).r
-  END R;
+    RETURN Interpolate(lambda).fl
+  END F;
   
-BEGIN END Tcs.
+BEGIN END FlIlluminant.

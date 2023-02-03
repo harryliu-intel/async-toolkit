@@ -23,12 +23,14 @@
 (define nu0 (/ c l0))        ;; frequency of blue
 (define nu1 (/ c l1))        ;; frequency of red
 
+(define (reload) (load "photopic.scm"))
+
 ;; the following from tfc-yield.scm
 ;; glue function to make it possible to pass Scheme functions into
 ;; Modula-3 code
 (define (make-lrfunc-obj f)
   (let* ((func (lambda(*unused* x)(f x)))
-         (min-obj (new-modula-object 'LRFunction.T `(eval . ,func))))
+         (min-obj (new-modula-object 'LRFunction.T `(eval . ,func) `(evalHint . ,func))))
     min-obj))
 
 
@@ -134,9 +136,261 @@
   (lambda (l)
     (cdr (assoc n (Tcs.R l)))))
 
+(define (FL n)
+  (lambda (l)
+    (cdr (assoc n (FlIlluminant.F l)))))
+
 (define (make-plots)
   ;; run this to make some graphs
   (plot total-blackbody-lpW 1000 10000 "total_blackbody_lpw.dat")
 
   (plot visible-blackbody-lpW 1000 10000 "visible_blackbody_lpw.dat")
-)
+  )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; CIE XYZ
+;;
+
+;; a "spectrum" is a procedure of one argument that returns
+;; an energy density in W/nm (units?)
+
+(define (get-channel-integral spectrum channel)
+  (let* ((c         (lambda(l) (cdr (assoc channel (CieXyz.Interpolate l) ))))
+         (integrand (lambda(l) (* (c l) (spectrum l)))))
+    (integrate integrand l0 l1)))
+
+(define (xyz->Yxy xyz)
+  (let* ((xint (car xyz))
+         (yint (cadr xyz))
+         (zint (caddr xyz))
+         (sum (+ xint yint zint)))
+    (list sum (/ xint sum) (/ yint sum))))
+
+(define (calc-Yxy spectrum)
+  (let* ((xint (get-channel-integral spectrum 'x))
+         (yint (get-channel-integral spectrum 'y))
+         (zint (get-channel-integral spectrum 'z)))
+    (xyz->Yxy (list xint yint zint))))
+
+(define (Yxy->uv Yxy)
+  (let* ((x         (cadr  Yxy))
+         (y         (caddr Yxy))
+         (uv-denom  (+ (* -2 x) (* 12 y) 3))
+         (u         (/ (* 4 x) uv-denom))
+         (v         (/ (* 6 y) uv-denom)))
+    (list u v)))
+
+(define (Yxy->Yuv Yxy)
+  (let* ((Y         (car Yxy))
+         (x         (cadr  Yxy))
+         (y         (caddr Yxy))
+         (uv-denom  (+ (* -2 x) (* 12 y) 3))
+         (u         (/ (* 4 x) uv-denom))
+         (v         (/ (* 6 y) uv-denom)))
+    (list Y u v)))
+
+(define (calc-uv spectrum)
+  ;; MacAdam 1960 UCS coordinates
+  ;; note, NOT the same as 1976 CIE Luv
+  ;; used for CCT calcs
+  (let* ((Yxy       (calc-Yxy spectrum)))
+    (Yxy->uv Yxy)))
+         
+(define (make-T-uv-tbl step wr)
+  ;; print the UV values for different temperatures
+  ;; in Modula-3 syntax, ready to be made into an Interface
+  (let ((lo 0)
+        (hi 20000)
+        (fmt (lambda(x) (Fmt.LongReal x 'Auto 6))))
+    
+    (let loop ((T lo))
+      (if (> T hi)
+          'ok
+          (begin
+            (let ((uv (calc-uv (make-Bl T))))
+              (dis " T { " (fmt T) ", UV { " (fmt (car uv)) ", " (fmt (cadr uv)) " } }, " dnl wr))
+            (loop (+ step T)))))))
+
+(define (make-T-uv-interface)
+  (let ((wr (FileWr.Open "temp_uv.m3")))
+    (make-T-uv-tbl 50 wr)
+    (Wr.Close wr)))
+
+(define (temp-uv T)
+  (let* ((tuv (TempUv.Interpolate T))
+         (u   (cdr (assoc 'u (assoc 'uv tuv))))
+         (v   (cdr (assoc 'v (assoc 'uv tuv)))))
+    (list u v)))
+
+(define (uv-norm uv T)
+  (let* ((tuv (temp-uv T))
+         (du  (- (car  uv) (car  tuv)))
+         (dv  (- (cadr uv) (cadr tuv)))
+         (dsq (+ (* du du) (* dv dv))))
+    (sqrt dsq)))
+        
+(define (search-T uv)
+  (let* ((f  (lambda(T)(uv-norm uv T)))
+         (mf (make-lrfunc-obj f))
+         (T (Bracket.SchemeBrent '((a . 10) (b . 1000) (c . 20000))
+                                 mf
+                                 1e-6)))
+    (list (cdr (assoc 'x T)) (cdr (assoc 'y T)))
+    )
+  )
+
+(define (Yuv->UVW Yuv uv0)
+  ;; uv0 is the white point
+  (let* ((Y (car Yuv))
+         (u (cadr Yuv))
+         (v (caddr Yuv))
+
+         (u0 (car uv0))
+         (v0 (cadr uv0))
+
+         (W* (- (* 25 (Math.pow Y (/ 1 3))) 17))
+         (U* (* 13 W* (- u u0)))
+         (V* (* 13 W* (- v v0))))
+    (list U* V* W*)))
+
+(define (scale-spectrum a fact)
+  (lambda(l)(* fact (a l))))
+
+(define (multiply-spectra a b)
+  (lambda(l)(* (a l)(b l))))
+
+(define (reflected-tcs-spectrum i illuminant-spectrum)
+  
+  (multiply-spectra illuminant-spectrum (R i)))
+
+
+(define (normalize-spectrum spectrum)
+  (let* ((Yxy0 (calc-Yxy spectrum))
+         (Y    (car Yxy0)))
+    (lambda(l)(* (/ 100 Y)(spectrum l)))))
+
+(define (calc-reflected-UVW sample normalized-spectrum uv0)
+  (Yuv->UVW
+   (Yxy->Yuv (calc-Yxy (multiply-spectra sample normalized-spectrum)))
+   uv0))
+
+(define (uv->cd uv)
+  (let* ((u (car  uv))
+         (v (cadr uv))
+         (c (/ (+ 4 (- u) (* -10 v)) v))
+         (d (/ (+ (* 1.708 v)(* -1.481 u) 0.404) v)))
+    (list c d)))
+
+(define (adapted-uv ref-uv test-uv reflected-uv)
+  (let* ((cd-r (uv->cd ref-uv))
+         (cr   (car cd-r))
+         (dr   (cadr cd-r))
+         
+         (cd-t (uv->cd test-uv))
+         (ct   (car cd-t))
+         (dt   (cadr cd-t))
+
+         (cd-ti (uv->cd reflected-uv))
+         (cti   (car cd-ti))
+         (dti   (cadr cd-ti))
+
+         (denom (+ 16.518 (* 1.481 (/ cr ct) cti) (* -1 (/ dr dt) dti)))
+         
+         (uci   (/ (+ 10.872 (* 0.404 (/ cr ct) cti) (* -4 (/ dr dt) dti))
+                   denom))
+                 
+
+         (vci   (/ 5.520
+                   denom)))
+
+    (list uci vci)))
+
+(define (euclidean-3 a b)
+  (let* ((dx (- (car a) (car b)))
+         (dy (- (cadr a) (cadr b)))
+         (dz (- (caddr a) (caddr b))))
+    (Math.sqrt (+ (* dx dx) (* dy dy) (* dz dz)))))
+
+(define debug #f)
+
+(define (calc-cri spectrum)
+  (let* ((norm-spectrum     (normalize-spectrum spectrum))
+         (test-Yxy          (calc-Yxy norm-spectrum))
+         (test-uv           (Yxy->uv test-Yxy))
+         (ref-temp-res      (search-T test-uv))
+         (ref-temp          (car ref-temp-res))
+         (ref-uv            (temp-uv ref-temp))
+         (norm-ref-spectrum (normalize-spectrum (make-Bl ref-temp)))
+         )
+
+    (define (calc-one tcsi)
+      (let* ((sample (R tcsi))
+
+             (ref-reflected     (multiply-spectra sample norm-ref-spectrum))
+             (ref-reflected-Yxy (calc-Yxy ref-reflected))
+             (ref-UVW           (Yuv->UVW (Yxy->Yuv ref-reflected-Yxy) ref-uv))
+             
+             (reflected-spectrum (multiply-spectra sample norm-spectrum))
+             (reflected-Yxy      (calc-Yxy reflected-spectrum))
+             (reflected-Yuv      (Yxy->Yuv reflected-Yxy))
+             (Y                  (car reflected-Yuv))
+             
+             (reflected-uv       (cdr reflected-Yuv))
+             (reflected-UVW      (Yuv->UVW (cons Y reflected-uv) ref-uv))
+             
+             (cat-uv             (adapted-uv ref-uv test-uv reflected-uv))
+             (cat-UVW            (Yuv->UVW (cons Y cat-uv) ref-uv))
+             (delta-EUVW         (euclidean-3 cat-UVW ref-UVW))
+             (Ri                 (+ 100 (* -4.6 delta-EUVW)))
+             )
+        (if debug
+            (dis "TCS " tcsi " reflected-Yxy " reflected-Yxy dnl
+                 "TCS " tcsi " reflected-Yuv " reflected-Yuv dnl
+                 "TCS " tcsi " cat-uv        " cat-uv dnl
+                 "TCS " tcsi " reference-UVW " ref-UVW dnl
+                 "TCS " tcsi " reflected-UVW " reflected-UVW dnl
+                 "TCS " tcsi " cat-UVW       " cat-UVW dnl
+                 "TCS " tcsi " delta-EUVW    " delta-EUVW dnl
+                 "R" tcsi " = " Ri dnl
+                 
+                 ))
+        Ri)
+      )
+      
+    (if debug
+        (dis "test-Yxy     " test-Yxy dnl
+             "test-uv      " test-uv dnl
+             "ref-temp-res " ref-temp-res dnl
+             "ref-uv       " ref-uv dnl))
+    (map calc-one '(1 2 3 4 5 6 7 8 9 10 11 12 13 14))
+    )
+  )
+
+(define (calc-specs spectrum)
+  (let* ((full-cri (calc-cri spectrum))
+         (ri-8     (head 8 full-cri))
+         (worst-ri (apply min ri-8))
+         (cri-ra   (/ (apply + ri-8) 8)))
+    (list cri-ra worst-ri full-cri)))
+
+(define (trunc-spectrum spectrum lo hi)
+  (lambda(l)
+    (cond ((< l lo) 0)
+          ((> l hi) 0)
+          (else (spectrum l)))))
+
+
+         
+
+    
+         
+         
+    
+            
+
+    
+
+      
+
+

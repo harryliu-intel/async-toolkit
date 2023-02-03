@@ -1,4 +1,4 @@
-MODULE Tcs;
+MODULE CieXyz;
 
 PROCEDURE Interpolate(lambda : LONGREAL) : T =
   VAR
@@ -8,7 +8,7 @@ PROCEDURE Interpolate(lambda : LONGREAL) : T =
   BEGIN
     IF nm < Data[lo].lambdaNm OR
        nm > Data[hi - 1].lambdaNm THEN
-      RETURN T { nm, RData { 0.0d0, .. } }
+      RETURN T { nm, 0.0d0, 0.0d0, 0.0d0 }
     ELSE
       WHILE lo < hi DO
         WITH i  = lo + (hi - lo) DIV 2,
@@ -41,23 +41,13 @@ PROCEDURE Interpolate(lambda : LONGREAL) : T =
              dx0 = nm         - l.lambdaNm,
              hr  = dx0 / dx,
              lr  = 1.0d0 - hr DO
-          VAR
-            res : RData;
-          BEGIN
-            FOR i := FIRST(RData) TO LAST(RData) DO
-              res[i] := lr * l.r[i] + hr * h.r[i]
-            END;
-            
-            RETURN T { nm, res }
-          END
+          RETURN T { nm,
+                     lr * l.x + hr * h.x,
+                     lr * l.y + hr * h.y,
+                     lr * l.z + hr * h.z }
         END
       END
     END
   END Interpolate;
 
-PROCEDURE R(lambda : LONGREAL) : RData =
-  BEGIN
-    RETURN Interpolate(lambda).r
-  END R;
-  
-BEGIN END Tcs.
+BEGIN END CieXyz.

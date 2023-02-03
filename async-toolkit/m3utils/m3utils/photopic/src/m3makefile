@@ -10,9 +10,13 @@ import ("minimize")
 import ("integrate")
 
 implementation ("Main")
-module ("CieSpectrum")
-module ("Blackbody")
-module ("Tcs")
+
+Module ("CieSpectrum")
+Module ("CieXyz")
+Module ("Blackbody")
+Module ("Tcs")
+Module ("TempUv")
+Module ("FlIlluminant") % for testing purposes
 
 SchemeStubs ("Math")
 SchemeStubs ("TextWr")
@@ -29,8 +33,11 @@ SchemeStubs ("IntegrateTrap")
 SchemeStubs ("PolInt")
 SchemeStubs ("NR4p4")
 SchemeStubs ("CieSpectrum")
+SchemeStubs ("CieXyz")
 SchemeStubs ("Blackbody")
 SchemeStubs ("Tcs")
+SchemeStubs ("TempUv")
+SchemeStubs ("FlIlluminant")
 
 ExportSchemeStubs ("photopic")
 importSchemeStubs ()

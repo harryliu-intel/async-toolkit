@@ -7,9 +7,18 @@ IMPORT LRFunction AS Function;
 
 TYPE Trio = RECORD a, b, c : LONGREAL END;
 
-(* Starting with Trio { a, b, x }, Initial searches until a bracket is
+(* 
+   Starting with Trio { a, b, x }, Initial searches until a bracket is
    found s.t. { a, b, x } bracket the minimum.  Initial returns the
-   values of the function at { a, b, x } *)
+   values of the function at { a, b, x } 
+
+   we should have Trio.a < Trio.b < Trio.c
+
+   with minimum known to be in [ Trio.a , Trio.c ]
+
+   See method dbrent, Numerical Recipes in Fortran Section 10.2
+*)
+
 PROCEDURE Initial(VAR bracket : Trio; func : Function.T) : Trio;
 
 

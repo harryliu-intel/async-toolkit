@@ -39,13 +39,13 @@ PROCEDURE Interpolate(lambda : LONGREAL) : T =
              h   = Data[lo + 1],
              dx  = h.lambdaNm - l.lambdaNm,
              dx0 = nm         - l.lambdaNm,
-             r   = dx0 / dx,
-             mr  = 1.0d0 - r DO
+             hr  = dx0 / dx,
+             lr  = 1.0d0 - hr DO
           RETURN T { nm,
-                     r * l.photopicEff + mr * h.photopicEff,
-                     r * l.photopicConv + mr * h.photopicConv,
-                     r * l.scotopicEff + mr * h.scotopicEff,
-                     r * l.scotopicConv + mr * h.scotopicConv }
+                     lr * l.photopicEff  + hr * h.photopicEff,
+                     lr * l.photopicConv + hr * h.photopicConv,
+                     lr * l.scotopicEff  + hr * h.scotopicEff,
+                     lr * l.scotopicConv + hr * h.scotopicConv }
         END
       END
     END
