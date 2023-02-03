@@ -42,7 +42,7 @@
            lCV=(FindLayoutVariant inst->master v)
            (when lCV
              inst->master=lCV
-             aligned=(CheckInstanceAlignment inst)
+             aligned=(CheckInstanceAlignment inst ?check_y nil ?check_parent_grid nil)
              )
            v=v+1
            )

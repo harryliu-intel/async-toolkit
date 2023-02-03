@@ -189,7 +189,7 @@
 
 ; Check if an instance is aligned including that parent grid is an
 ; integer multiple of instance grid
-(defun CheckInstanceAlignment (inst @key (check_x t) (check_y t))
+(defun CheckInstanceAlignment (inst @key (check_x t) (check_y t) (check_parent_grid t))
   (let (topHalo align pgx pgy pox poy gx gy ox oy xy x y nx ny)
     ; parent alignment
     align=(GetCellAlignment ?CV inst->cellView)
@@ -224,8 +224,8 @@
     y=(round y/MfgGrid)
     nx=(round nx/MfgGrid)
     ny=(round ny/MfgGrid)
-    inst->status=="unplaced" || (!check_x || nx==x && (topHalo || (mod pgx gx)==0)) &&
-                                (!check_y || ny==y && (topHalo || (mod pgy gy)==0))
+    inst->status=="unplaced" || (!check_x || nx==x && (!check_parent_grid || topHalo || (mod pgx gx)==0)) &&
+                                (!check_y || ny==y && (!check_parent_grid || topHalo || (mod pgy gy)==0))
     )
   )
 
