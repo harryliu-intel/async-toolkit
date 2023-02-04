@@ -3,18 +3,17 @@ import ("cit_util")
 import ("matrix")
 import ("minimize")
 
-
-c_source ("calcfc")
+%c_source ("calcfc")
 c_source ("cobyla")
 c_source ("cobylb")
-c_source ("main")
+%c_source ("main")
 c_source ("trstlp")
 
 interface ("COBYLA")
 
-%Module ("NewUOA_M3")
-%Module ("NewUOAs")
+Module ("COBYLA_M3")
 
 %implementation("Main")
 %program ("testcobyla")
+
 library ("cobyla")

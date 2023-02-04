@@ -21,7 +21,7 @@ static integer c__1 = 1;
 	maxfun, doublereal *con, doublereal *sim, doublereal *simi, 
 	doublereal *datmat, doublereal *a, doublereal *vsig, doublereal *veta,
 	 doublereal *sigbar, doublereal *dx, doublereal *w, integer *iact, 
-	D_fp calcfc)
+	D_fp calcfc, integer *itag)
 {
     /* Format strings */
     static char fmt_10[] = "(/3x,\002The initial value of RHO is\002,1pe13.6"
@@ -116,6 +116,7 @@ static integer c__1 = 1;
     --dx;
     --w;
     --iact;
+    --itag;
 
     /* Function Body */
     iptem = min(*n,5);
@@ -164,7 +165,7 @@ L40:
 	goto L600;
     }
     ++nfvals;
-    f = (*calcfc)(n, m, &x[1], &con[1]);
+    f = (*calcfc)(n, m, &x[1], &con[1], &itag[1]);
     resmax = 0.f;
     if (*m > 0) {
 	i__1 = *m;

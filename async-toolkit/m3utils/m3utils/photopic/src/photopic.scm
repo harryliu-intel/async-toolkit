@@ -1,4 +1,4 @@
-(require-modules "display")
+(require-modules "display" "m3")
 
 ;;
 ;; code to compute energy content of a few types of visible light
@@ -33,7 +33,15 @@
          (min-obj (new-modula-object 'LRFunction.T `(eval . ,func) `(evalHint . ,func))))
     min-obj))
 
+(define (make-lrvectorfield-obj f)
+  (let* ((func (lambda(*unused* x)(f x)))
+         (min-obj (new-modula-object 'LRVectorField.T `(eval . ,func) `(evalHint . ,func))))
+    min-obj))
 
+(define (unwrap-lrfunc lrf)
+  (let ((w (obj-method-wrap lrf 'LRFunction.T)))
+    (lambda(x) (w 'eval x))))
+   
 ;; helper function to integrate a function
 (define (integrate f a b)
   ;; integrate f from a to be in 2^lsteps
@@ -52,10 +60,10 @@
     (let ((nu (/ c l)))
       (/ (Blackbody.PlanckRadiance T nu) (/  c (* nu nu))))))
 
-(define (plot f a b fn)
+(define (plot f a b fn . steps)
   ;; produce a file in gnuplot data format 
   ;; plot function f from a to b into file called fn
-  (let* ((n 100)
+  (let* ((n (if (null? steps) 100 (car steps)))
          (step (/ (- b a) n))
          (wr (FileWr.Open fn))
          )
@@ -431,11 +439,78 @@
     
          
          
-    
-            
+(define pspec
+  (ParametricSpectrum.New
+   l0 l1 ;; optimization range
+   50   ;; how many dimensions
+   (make-lrfunc-obj
+    (trunc-spectrum (make-Bl 2700) l0 l1) ;; start func
+    )
+   )
+  )
 
-    
+(define zp (ParametricSpectrum.ZeroP pspec))
 
+(define w (unwrap-lrfunc (ParametricSpectrum.GetFunc pspec zp)))
+
+(define (specs-func p)
+  (ParametricSpectrum.SetVec zp p)
+  (calc-specs w)
+  )
+
+(define (specs->target specs)
+  (let ((lpm    (caddr specs))
+        (cri    (car specs))
+        (crmin  (cadr specs))
+        (cct    (caar (cdddr specs)))
+        (Duv    (cadar (cdddr specs)))
+        )
+    (dis specs dnl)
+    (list (- (caddr specs))      ;; target var : efficacy
+          (- cri   82)           ;; cri constraint
+          (- crmin 72)           ;; worst-component constraint
+          (- cct 2650)           ;; cct >= 2650
+          (- 2750 cct)           ;; cct <= 2750
+          (* 1000 (- 0.008 Duv)) ;; Duv <= 0.008 (weight 1000)
+          )
+        )
+  )
       
+(define (scheme-opt-func p)
+  (specs->target (specs-func p)))
+
+(define (m3-opt-func p)
+  (ParametricSpectrum.Scheme2Vec (scheme-opt-func p)))
 
 
+(define (run)
+  (COBYLA_M3.Minimize zp 5 (make-lrvectorfield-obj m3-opt-func) 0.1 0.00001 10000 2)
+  )
+
+(define (specs->target-r9 specs)
+  (let ((lpm    (caddr specs))
+        (r9     (nth (car (cddddr specs)) 8))
+        (cri    (car specs))
+        (crmin  (cadr specs))
+        (cct    (caar (cdddr specs)))
+        (Duv    (cadar (cdddr specs)))
+        )
+    (dis specs dnl)
+    (list r9                     ;; target var : low R9
+          (- cri   82)           ;; cri constraint
+          (- crmin 72)           ;; worst-component constraint
+          (- cct 2650)           ;; cct >= 2650
+          (- 2750 cct)           ;; cct <= 2750
+          (* 1000 (- 0.008 Duv)) ;; Duv <= 0.008 (weight 1000)
+          (- lpm 90)             ;; lpm >= 45 * 2
+          )
+        )
+  )
+
+(define (m3-opt-r9 p)
+  (ParametricSpectrum.Scheme2Vec
+   (specs->target-r9 (specs-func p))))
+
+(define (run-r9)
+  (COBYLA_M3.Minimize zp 6 (make-lrvectorfield-obj m3-opt-r9) 0.1 0.00001 10000 2)
+  )

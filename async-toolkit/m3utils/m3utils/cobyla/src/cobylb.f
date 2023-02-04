@@ -1,9 +1,10 @@
       SUBROUTINE COBYLB (N,M,MPP,X,RHOBEG,RHOEND,IPRINT,MAXFUN,
-     1  CON,SIM,SIMI,DATMAT,A,VSIG,VETA,SIGBAR,DX,W,IACT,CALCFC)
+     1  CON,SIM,SIMI,DATMAT,A,VSIG,VETA,SIGBAR,DX,W,IACT,CALCFC,ITAG)
       IMPLICIT REAL*8 (A-H,O-Z)
       REAL*8 CALCFC
       DIMENSION X(*),CON(*),SIM(N,*),SIMI(N,*),DATMAT(MPP,*),
-     1  A(N,*),VSIG(*),VETA(*),SIGBAR(*),DX(*),W(*),IACT(*)
+     1     A(N,*),VSIG(*),VETA(*),SIGBAR(*),DX(*),W(*),IACT(*)
+      DIMENSION ITAG(*)
 C
 C     Set the initial values of some parameters. The last column of SIM holds
 C     the optimal vertex of the current simplex, and the preceding N columns
@@ -47,7 +48,7 @@ C
           GOTO 600
       END IF
       NFVALS=NFVALS+1
-      F=CALCFC (N,M,X,CON)
+      F=CALCFC (N,M,X,CON,ITAG)
       RESMAX=0.0
       IF (M .GT. 0) THEN
           DO 60 K=1,M

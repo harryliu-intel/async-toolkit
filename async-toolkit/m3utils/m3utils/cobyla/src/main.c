@@ -68,13 +68,14 @@ static integer c__1 = 1;
     /* Local variables */
     static integer i__, m, n;
     static doublereal w[3000], x[10];
-    static integer maincalcfc, iact[51];
+    extern /* Subroutine */ int maincalcfc_();
+    static integer iact[51];
     static doublereal temp, xopt[10];
     static integer icase;
     static doublereal tempa, tempb, tempc, tempd, rhobeg;
     extern /* Subroutine */ int cobyla_(integer *, integer *, doublereal *, 
 	    doublereal *, doublereal *, integer *, integer *, doublereal *, 
-	    integer *, integer *);
+	    integer *, U_fp);
     static doublereal rhoend;
     static integer maxfun, iprint;
 
@@ -89,8 +90,8 @@ static integer c__1 = 1;
     static cilist io___11 = { 0, 6, 0, fmt_80, 0 };
     static cilist io___12 = { 0, 6, 0, fmt_90, 0 };
     static cilist io___13 = { 0, 6, 0, fmt_100, 0 };
-    static cilist io___29 = { 0, 6, 0, fmt_150, 0 };
-    static cilist io___30 = { 0, 6, 0, fmt_170, 0 };
+    static cilist io___28 = { 0, 6, 0, fmt_150, 0 };
+    static cilist io___29 = { 0, 6, 0, fmt_170, 0 };
 
 
     for (_BLNK__1.nprob = 1; _BLNK__1.nprob <= 10; ++_BLNK__1.nprob) {
@@ -223,8 +224,8 @@ static integer c__1 = 1;
 	    }
 	    iprint = 1;
 	    maxfun = 2000;
-	    cobyla_(&n, &m, x, &rhobeg, &rhoend, &iprint, &maxfun, w, iact, &
-		    maincalcfc);
+	    cobyla_(&n, &m, x, &rhobeg, &rhoend, &iprint, &maxfun, w, iact, (
+		    U_fp)maincalcfc_);
 	    if (_BLNK__1.nprob == 10) {
 		tempa = x[0] + x[2] + x[4] + x[6];
 		tempb = x[1] + x[3] + x[5] + x[7];
@@ -247,13 +248,13 @@ static integer c__1 = 1;
 		d__1 = x[i__ - 1] - xopt[i__ - 1];
 		temp += d__1 * d__1;
 	    }
-	    s_wsfe(&io___29);
+	    s_wsfe(&io___28);
 	    d__1 = sqrt(temp);
 	    do_fio(&c__1, (char *)&d__1, (ftnlen)sizeof(doublereal));
 	    e_wsfe();
 /* L160: */
 	}
-	s_wsfe(&io___30);
+	s_wsfe(&io___29);
 	e_wsfe();
 /* L180: */
     }

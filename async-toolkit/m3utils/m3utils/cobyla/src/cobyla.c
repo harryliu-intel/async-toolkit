@@ -14,7 +14,8 @@
 
 /* Subroutine */ int cobyla_(integer *n, integer *m, doublereal *x, 
 	doublereal *rhobeg, doublereal *rhoend, integer *iprint, integer *
-	maxfun, doublereal *w, integer *iact, doublereal *calcfc)
+	maxfun, doublereal *w, integer *iact, doublereal *calcfc, integer *
+	itag)
 {
     static integer ia, idx, mpp, icon, isim, isigb, idatm, iveta, isimi, 
 	    ivsig, iwork;
@@ -22,7 +23,7 @@
 	    doublereal *, doublereal *, doublereal *, integer *, integer *, 
 	    doublereal *, doublereal *, doublereal *, doublereal *, 
 	    doublereal *, doublereal *, doublereal *, doublereal *, 
-	    doublereal *, doublereal *, integer *, doublereal *);
+	    doublereal *, doublereal *, integer *, doublereal *, integer *);
 
 
 /*     This subroutine minimizes an objective function F(X) subject to M */
@@ -81,6 +82,7 @@
 /*     for the main calculation. */
 
     /* Parameter adjustments */
+    --itag;
     --iact;
     --w;
     --x;
@@ -99,7 +101,7 @@
     iwork = idx + *n;
     cobylb_(n, m, &mpp, &x[1], rhobeg, rhoend, iprint, maxfun, &w[icon], &w[
 	    isim], &w[isimi], &w[idatm], &w[ia], &w[ivsig], &w[iveta], &w[
-	    isigb], &w[idx], &w[iwork], &iact[1], calcfc);
+	    isigb], &w[idx], &w[iwork], &iact[1], calcfc, &itag[1]);
     return 0;
 } /* cobyla_ */
 

@@ -1,8 +1,9 @@
       SUBROUTINE COBYLA (N,M,X,RHOBEG,RHOEND,IPRINT,MAXFUN,W,IACT,
-     1   CALCFC)
+     1   CALCFC, ITAG)
       IMPLICIT REAL*8 (A-H,O-Z)
       REAL*8 CALCFC
       DIMENSION X(*),W(*),IACT(*)
+      DIMENSION ITAG(*)
 C
 C     This subroutine minimizes an objective function F(X) subject to M
 C     inequality constraints on X, where X is a vector of variables that has
@@ -72,6 +73,6 @@ C
       IWORK=IDX+N
       CALL COBYLB (N,M,MPP,X,RHOBEG,RHOEND,IPRINT,MAXFUN,W(ICON),
      1  W(ISIM),W(ISIMI),W(IDATM),W(IA),W(IVSIG),W(IVETA),W(ISIGB),
-     2  W(IDX),W(IWORK),IACT, CALCFC)
+     2  W(IDX),W(IWORK),IACT, CALCFC, ITAG)
       RETURN
       END
