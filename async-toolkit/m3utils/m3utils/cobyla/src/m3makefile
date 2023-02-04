@@ -8,6 +8,7 @@ c_source ("cobyla")
 c_source ("cobylb")
 %c_source ("main")
 c_source ("trstlp")
+c_source ("dummy") % not needed if you have the real f2c installed
 
 interface ("COBYLA")
 

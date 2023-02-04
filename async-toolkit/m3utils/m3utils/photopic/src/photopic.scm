@@ -433,16 +433,15 @@
           ((> l hi) 0)
           (else (spectrum l)))))
 
-
-         
-
-    
-         
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Optimization code for use with COBYLA
+;;
          
 (define pspec
   (ParametricSpectrum.New
    l0 l1 ;; optimization range
-   50   ;; how many dimensions
+   20   ;; how many dimensions
    (make-lrfunc-obj
     (trunc-spectrum (make-Bl 2700) l0 l1) ;; start func
     )
