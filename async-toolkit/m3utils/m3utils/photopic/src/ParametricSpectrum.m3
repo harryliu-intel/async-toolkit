@@ -85,11 +85,11 @@ PROCEDURE EvalFunction(f : Function; l : LONGREAL) : LONGREAL =
            hr  = dx0 / f.t.step,
            lr  = 1.0d0 - hr,
 
-           lop = Math.exp(f.p[lo]),
-           hip = Math.exp(f.p[hi]),
+           lop = f.p[lo],
+           hip = f.p[hi],
 
            interp = lr * lop + hr * hip DO
-        RETURN interp * f.t.baseSpectrum.eval(l)
+        RETURN Math.exp(interp) * f.t.baseSpectrum.eval(l)
       END
     END
   END EvalFunction;
@@ -121,9 +121,36 @@ PROCEDURE Scheme2Vec(lst : SchemePair.T) : LRVector.T =
     END
   END Scheme2Vec;
 
+PROCEDURE Vec2Scheme(vec : LRVector.T) : SchemePair.T =
+  VAR
+    res : SchemePair.T := NIL;
+  BEGIN
+    FOR i := LAST(vec^) TO FIRST(vec^) BY -1 DO
+      res := NEW(SchemePair.T,
+                 first := SchemeLongReal.FromLR(vec[i]),
+                 rest  := res)
+    END;
+    RETURN res
+  END Vec2Scheme;
+  
 PROCEDURE SetVec(to, from : LRVector.T) =
   BEGIN
     to^ := from^
   END SetVec;
+
+PROCEDURE Subdivide(a : LRVector.T) : LRVector.T =
+  VAR
+    res : LRVector.T;
+  BEGIN
+    res := NEW(LRVector.T, NUMBER(a^) * 2 - 1);
+
+    FOR i := FIRST(a^) TO LAST(a^) DO
+      res[2 * i] := a[i]
+    END;
+    FOR j := 1 TO LAST(res^) - 1 BY 2 DO
+      res[j] := 0.5d0 * (res[j - 1] + res[j + 1])
+    END;
+    RETURN res
+  END Subdivide;
 
 BEGIN END ParametricSpectrum.

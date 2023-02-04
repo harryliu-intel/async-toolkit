@@ -437,25 +437,67 @@
 ;;
 ;; Optimization code for use with COBYLA
 ;;
-         
-(define pspec
-  (ParametricSpectrum.New
-   l0 l1 ;; optimization range
-   20   ;; how many dimensions
-   (make-lrfunc-obj
-    (trunc-spectrum (make-Bl 2700) l0 l1) ;; start func
-    )
-   )
+
+(define pspec '())
+(define cur-dims '())
+(define cur-base-spectrum '())
+
+(define  (setup-pspec! dims base-spectrum)
+  (set! cur-dims dims)
+  (set! cur-base-spectrum base-spectrum)
+  (set! pspec (ParametricSpectrum.New
+               l0 l1 ;; optimization range
+               dims   ;; how many dimensions
+               (make-lrfunc-obj
+                base-spectrum ;; start func
+                )
+               )
+        )
   )
 
-(define zp (ParametricSpectrum.ZeroP pspec))
+(define *p* '())
 
-(define w (unwrap-lrfunc (ParametricSpectrum.GetFunc pspec zp)))
+(define (set-zero!)
+  (set! *p* (ParametricSpectrum.ZeroP pspec)))
 
-(define (specs-func p)
-  (ParametricSpectrum.SetVec zp p)
+;;;;;;;;;;;;;;;;;;;;
+
+(define *test-spectrum* (trunc-spectrum (make-Bl 2700) l0 l1))
+
+;;(setup-pspec! 20 test-spectrum)
+;;(set-zero!)
+
+;;;;;;;;;;;;;;;;;;;;
+
+(define w '())
+
+(define (setup-w!)
+  (set! w (unwrap-lrfunc (ParametricSpectrum.GetFunc pspec *p*))))
+
+(setup-w!)
+
+(define (setup-problem! spectrum dims)
+  (setup-pspec! dims spectrum)
+  (set-zero!)
+  (setup-w!)
+  'ok
+  )
+
+(define (subdivide-problem!)
+  (let ((new-dims (- (* cur-dims 2) 1))
+        (new-p    (ParametricSpectrum.Subdivide *p*)))
+    (setup-pspec! new-dims cur-base-spectrum)
+    (set! *p* (ParametricSpectrum.Subdivide *p*))
+    (setup-w!) 
+    'ok
+    ))
+                  
+(define (specs-func new-p)
+  (ParametricSpectrum.SetVec *p* new-p)
   (calc-specs w)
   )
+
+(define *target-cct* 2700)
 
 (define (specs->target specs)
   (let ((lpm    (caddr specs))
@@ -468,9 +510,9 @@
     (list (- (caddr specs))      ;; target var : efficacy
           (- cri   82)           ;; cri constraint
           (- crmin 72)           ;; worst-component constraint
-          (- cct 2650)           ;; cct >= 2650
-          (- 2750 cct)           ;; cct <= 2750
-          (* 1000 (- 0.008 Duv)) ;; Duv <= 0.008 (weight 1000)
+          (- cct (- *target-cct* 50)) ;; cct >= 2650
+          (- (+ *target-cct* 50) cct) ;; cct <= 2750
+          (* 1000 (- 0.012 Duv)) ;; Duv <= 0.012 (weight 1000)
           )
         )
   )
@@ -482,9 +524,10 @@
   (ParametricSpectrum.Scheme2Vec (scheme-opt-func p)))
 
 
-(define (run)
-  (COBYLA_M3.Minimize zp 5 (make-lrvectorfield-obj m3-opt-func) 1 0.00001 10000 2)
+(define (run rhobeg)
+  (COBYLA_M3.Minimize *p* 5 (make-lrvectorfield-obj m3-opt-func) rhobeg 0.0001 1000 2)
   )
+
 
 (define (specs->target-r9 specs)
   (let ((lpm    (caddr specs))
@@ -495,13 +538,13 @@
         (Duv    (cadar (cdddr specs)))
         )
     (dis specs dnl)
-    (list r9                     ;; target var : low R9
-          (- cri   82)           ;; cri constraint
-          (- crmin 72)           ;; worst-component constraint
-          (- cct 2650)           ;; cct >= 2650
-          (- 2750 cct)           ;; cct <= 2750
-          (* 1000 (- 0.008 Duv)) ;; Duv <= 0.008 (weight 1000)
-          (- lpm 90)             ;; lpm >= 45 * 2
+    (list r9                          ;; target var : low R9
+          (- cri   82)                ;; cri constraint
+          (- crmin 72)                ;; worst-component constraint
+          (- cct (- *target-cct* 50)) ;; cct >= 2650
+          (- (+ *target-cct* 50) cct) ;; cct <= 2750
+          (* 1000 (- 0.012 Duv))      ;; Duv <= 0.012 (weight 1000)
+          (- lpm 90)                  ;; lpm >= 45 * 2
           )
         )
   )
@@ -511,5 +554,66 @@
    (specs->target-r9 (specs-func p))))
 
 (define (run-r9)
-  (COBYLA_M3.Minimize zp 6 (make-lrvectorfield-obj m3-opt-r9) 1 0.00001 10000 2)
+  (COBYLA_M3.Minimize *p* 6 (make-lrvectorfield-obj m3-opt-r9) 1 0.00001 10000 2)
+  )
+
+(define (plot-current-state)
+  (let* ((nm (string-append 
+             (stringify *target-cct*)
+             "_"
+             (stringify cur-dims)
+             ))
+         (wr (FileWr.Open (string-append nm ".res"))))
+
+    (dis (stringify (calc-specs w)) dnl dnl wr)
+
+    (dis (stringify (ParametricSpectrum.Vec2Scheme *p*)) dnl wr)
+    
+    (plot (normalize-spectrum w)
+          l0 l1
+          (string-append "w_" nm ".dat")
+          200)))
+
+
+
+(define (run-example! cct)
+  (define *start-dims*   2)
+  (define *start-rhobeg* 4)
+  (define rhobeg *start-rhobeg*)
+
+  (set! *test-spectrum* (trunc-spectrum (make-Bl cct) l0 l1))
+  (set! *target-cct* cct)
+  
+  (define (repeat)
+
+    (set! rhobeg (/ rhobeg 2))
+    
+    (subdivide-problem!)
+    (dis "subdividing cur-dims = " cur-dims dnl)
+    (run rhobeg)
+    (plot-current-state)
+    
+    (dis "done at dims " cur-dims dnl)
+
+    )
+  
+  (plot (normalize-spectrum *test-spectrum*)
+        l0 l1
+        (string-append "base_" (stringify cct) ".dat")
+        200)
+    
+  (dis "setting up dims = " *start-dims* dnl)
+  (setup-problem! *test-spectrum* *start-dims*)
+  (run rhobeg) ;; big step
+  (plot-current-state)
+  (dis "done at dims " cur-dims dnl)
+
+  (repeat)
+  (repeat)
+  (repeat)
+  (repeat)
+  (repeat)
+  (repeat)
+  (repeat)
+  
   )

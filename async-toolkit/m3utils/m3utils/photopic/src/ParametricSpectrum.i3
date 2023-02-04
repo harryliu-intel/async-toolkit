@@ -26,9 +26,14 @@ PROCEDURE GetFunc(t : T;
 
 PROCEDURE Scheme2Vec(lst : SchemePair.T) : LRVector.T;
 
+PROCEDURE Vec2Scheme(vec : LRVector.T) : SchemePair.T;
+
 PROCEDURE SetVec(to, from : LRVector.T);
   
+PROCEDURE Subdivide(a : LRVector.T) : LRVector.T;
+
 END ParametricSpectrum.
+
                
   
               

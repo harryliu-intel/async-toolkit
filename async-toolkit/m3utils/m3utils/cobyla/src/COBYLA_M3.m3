@@ -33,6 +33,8 @@ PROCEDURE Minimize((*INOUT*)p       : LRVector.T;
     CALCFC            : COBYLA.Func;
     ITAG              : ADDRESS;  t       : T;
   BEGIN
+    <*ASSERT p # NIL*>
+    <*ASSERT func # NIL*>
     n      := NUMBER(p^);
     w      := NEW(REF ARRAY OF LONGREAL, n * (3 * n + 2 * m + 11) + 4 * m + 6);
     iact   := NEW(REF ARRAY OF INTEGER , m + 1);
