@@ -484,7 +484,7 @@
 
 
 (define (run)
-  (COBYLA_M3.Minimize zp 5 (make-lrvectorfield-obj m3-opt-func) 0.1 0.00001 10000 2)
+  (COBYLA_M3.Minimize zp 5 (make-lrvectorfield-obj m3-opt-func) 1 0.00001 10000 2)
   )
 
 (define (specs->target-r9 specs)
@@ -512,5 +512,5 @@
    (specs->target-r9 (specs-func p))))
 
 (define (run-r9)
-  (COBYLA_M3.Minimize zp 6 (make-lrvectorfield-obj m3-opt-r9) 0.1 0.00001 10000 2)
+  (COBYLA_M3.Minimize zp 6 (make-lrvectorfield-obj m3-opt-r9) 1 0.00001 10000 2)
   )
