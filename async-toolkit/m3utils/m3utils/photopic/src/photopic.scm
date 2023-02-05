@@ -498,10 +498,12 @@
   )
 
 (define *target-cct* 2700)
-(define *min-cri-ra* 82)
+(define *min-cri-ra*   82)
+(define *min-r9*     -100)
 
 (define (specs->target specs)
   (let ((lpm    (caddr specs))
+        (r9     (nth (car (cddddr specs)) 8))
         (cri    (car specs))
         (crmin  (cadr specs))
         (cct    (caar (cdddr specs)))
@@ -510,6 +512,7 @@
     (dis specs dnl)
     (list (- (caddr specs))            ;; target var : efficacy
           (- cri   *min-cri-ra*)       ;; cri constraint
+          (- r9    *min-r9*)       ;; cri constraint
           (- crmin (- *min-cri-ra* 10));; worst-component constraint
           (- cct (- *target-cct* 50))  ;; cct >= 2650
           (- (+ *target-cct* 50) cct)  ;; cct <= 2750
@@ -526,7 +529,14 @@
 
 
 (define (run rhobeg)
-  (COBYLA_M3.Minimize *p* 5 (make-lrvectorfield-obj m3-opt-func) rhobeg 0.0001 1000 2)
+  (COBYLA_M3.Minimize *p*    ;; state vector
+                      6      ;; # of constraints
+                      (make-lrvectorfield-obj m3-opt-func)
+                      rhobeg
+                      0.0002 ;; rhoend
+                      1000   ;; max steps
+                      2      ;; iprint
+                      )
   )
 
 
@@ -563,6 +573,8 @@
              (stringify *target-cct*)
              "_CRI"
              (stringify *min-cri-ra*)
+             "_R9"
+             (stringify *min-r9*)
              "_"
              (stringify cur-dims)
              ))
@@ -579,8 +591,8 @@
 
 
 
-(define (run-example! cct min-cri)
-  (dis "*****  START RUN cct=" cct " CRI(ra)>=" min-cri "  *****" dnl)
+(define (run-example! cct min-cri min-r9)
+  (dis "*****  START RUN cct=" cct " CRI(ra)>=" min-cri " R9>=" min-r9 "  *****" dnl)
   (define *start-dims*   2)
   (define *start-rhobeg* 4)
   (define rhobeg *start-rhobeg*)
@@ -588,6 +600,7 @@
   (set! *test-spectrum* (trunc-spectrum (make-Bl cct) l0 l1))
   (set! *target-cct* cct)
   (set! *min-cri-ra* min-cri)
+  (set! *min-r9* min-r9)
   
   (define (repeat)
 
@@ -628,9 +641,10 @@
 
 (if (pp 'keywordPresent "-run")
     (begin
-      (define run-cct (pp 'getNextLongReal 0 1e6))
-      (define run-cri (pp 'getNextLongReal 0 100))
-      (run-example! run-cct run-cri)
+      (define run-cct (pp 'getNextLongReal    0 1e6))
+      (define run-cri (pp 'getNextLongReal -100 100))
+      (define run-r9  (pp 'getNextLongReal -100 100))
+      (run-example! run-cct run-cri run-r9)
       (exit)
       )
     )

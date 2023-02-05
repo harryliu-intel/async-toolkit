@@ -12,6 +12,7 @@ nb_qslot=/XCC/LBM/RTL
 
 ccts="2100 2200 2400 2700 3000 3500 4000 4400 5000 5500 5800 6000 6500 7000 10000"
 cris="60 70 80 82 85 90 92 93 94 95 96 97 98 99"
+r9s="-100 0 40 50 60 70 80 90 95 99"
 
 taskfile=full-${DATE}.task
 
@@ -35,13 +36,14 @@ step=1
 
 tasknum=0
 
+for r9 in ${r9s}; do
 for cct in ${ccts}; do
     for cri in ${cris}; do
         echo "#!/bin/sh -x" > ${RUNDIR}/${tasknum}.sh
         echo "hostname" >> ${RUNDIR}/${tasknum}.sh
         echo "pwd" >> ${RUNDIR}/${tasknum}.sh
 
-        torun="${PROG} -run ${cct} ${cri} -scm -scmfile ${SRCDIR}/photopic.scm"
+        torun="${PROG} -run ${cct} ${cri} ${r9} -scm -scmfile ${SRCDIR}/photopic.scm"
 
         echo "${torun}"               >> ${RUNDIR}/${tasknum}.sh
 
@@ -49,6 +51,7 @@ for cct in ${ccts}; do
         
         tasknum=`expr $tasknum + 1`
     done
+done
 done
 
 echo "${tasknum} jobs"
