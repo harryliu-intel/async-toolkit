@@ -36,15 +36,12 @@ VAR
 BEGIN
   TRY
     doScheme := pp.keywordPresent("-scm");
-    pp.skipParsed();
     IF doScheme THEN
-      WITH n = NUMBER(pp.arg^) - pp.next DO
-        FOR i := 0 TO n - 1 DO
-          extra.addhi(pp.getNext())
-        END
+      WHILE pp.keywordPresent("-scmfile") DO
+        extra.addhi(pp.getNext())
       END
     END;
-    pp.finish()
+    (* we dont check args for extraneous here *)
   EXCEPT
     ParseParams.Error => Debug.Error("Can't parse command line")
   END;

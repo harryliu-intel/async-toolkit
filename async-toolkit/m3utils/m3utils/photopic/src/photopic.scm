@@ -498,6 +498,7 @@
   )
 
 (define *target-cct* 2700)
+(define *min-cri-ra* 82)
 
 (define (specs->target specs)
   (let ((lpm    (caddr specs))
@@ -507,12 +508,12 @@
         (Duv    (cadar (cdddr specs)))
         )
     (dis specs dnl)
-    (list (- (caddr specs))      ;; target var : efficacy
-          (- cri   82)           ;; cri constraint
-          (- crmin 72)           ;; worst-component constraint
-          (- cct (- *target-cct* 50)) ;; cct >= 2650
-          (- (+ *target-cct* 50) cct) ;; cct <= 2750
-          (* 1000 (- 0.012 Duv)) ;; Duv <= 0.012 (weight 1000)
+    (list (- (caddr specs))            ;; target var : efficacy
+          (- cri   *min-cri-ra*)       ;; cri constraint
+          (- crmin (- *min-cri-ra* 10));; worst-component constraint
+          (- cct (- *target-cct* 50))  ;; cct >= 2650
+          (- (+ *target-cct* 50) cct)  ;; cct <= 2750
+          (* 1000 (- 0.012 Duv))       ;; Duv <= 0.012 (weight 1000)
           )
         )
   )
@@ -560,6 +561,8 @@
 (define (plot-current-state)
   (let* ((nm (string-append 
              (stringify *target-cct*)
+             "_CRI"
+             (stringify *min-cri-ra*)
              "_"
              (stringify cur-dims)
              ))
@@ -576,13 +579,15 @@
 
 
 
-(define (run-example! cct)
+(define (run-example! cct min-cri)
+  (dis "*****  START RUN cct=" cct " CRI(ra)>=" min-cri "  *****" dnl)
   (define *start-dims*   2)
   (define *start-rhobeg* 4)
   (define rhobeg *start-rhobeg*)
 
   (set! *test-spectrum* (trunc-spectrum (make-Bl cct) l0 l1))
   (set! *target-cct* cct)
+  (set! *min-cri-ra* min-cri)
   
   (define (repeat)
 
@@ -617,3 +622,16 @@
   (repeat)
   
   )
+
+(define pp
+  (obj-method-wrap (LibertyUtils.DoParseParams) 'ParseParams.T))
+
+(if (pp 'keywordPresent "-run")
+    (begin
+      (define run-cct (pp 'getNextLongReal 0 1e6))
+      (define run-cri (pp 'getNextLongReal 0 100))
+      (run-example! run-cct run-cri)
+      (exit)
+      )
+    )
+      

@@ -20,6 +20,7 @@ Module ("TempUv")
 Module ("FlIlluminant") % for testing purposes
 
 Module ("ParametricSpectrum")
+Module ("LibertyUtils")
 
 SchemeStubs ("Math")
 SchemeStubs ("TextWr")
@@ -45,6 +46,8 @@ SchemeStubs ("FlIlluminant")
 SchemeStubs ("COBYLA_M3")
 SchemeStubs ("ParametricSpectrum")
 SchemeStubs ("LRVectorField")
+SchemeStubs ("LibertyUtils")
+SchemeStubs ("ParseParams")
 
 ExportSchemeStubs ("photopic")
 importSchemeStubs ()
