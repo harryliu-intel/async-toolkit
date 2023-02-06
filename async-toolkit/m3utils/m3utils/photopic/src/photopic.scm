@@ -713,7 +713,7 @@
 (define (run-multi! cct cri)
   (set! *the-selection* *start-selection*)
   (let loop ((pfx "DROP"))
-    (run-example-iters! cct cri -100 5 specs->cri-sel-target pfx)
+    (run-example-iters! cct cri -100 5 specs->cri-sel-target (string-append pfx "_X"))
 
     (if (not (= 0 (length (filter (lambda(x)x) *the-selection*))))
         (let ((worst-axis (nth (calc-specs w) 9)))
