@@ -32,6 +32,16 @@ PROCEDURE SetVec(to, from : LRVector.T);
   
 PROCEDURE Subdivide(a : LRVector.T) : LRVector.T;
 
+PROCEDURE MakeBlackbodyInWavelength(temp, lambda0, lambda1 : LONGREAL) : LRFunction.T;
+  (* 
+     this is an optimization so we don't have to go through Scheme for
+     evaluations ... 
+
+     make a truncated blackbody spectrum in the wavelength space,
+     for a given temperature, truncated to [ lambda0 , lambda1 ] 
+  *)
+  
+
 END ParametricSpectrum.
 
                

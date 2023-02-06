@@ -411,6 +411,34 @@
     )
   )
 
+(define *start-selection*  '(1 2 3 4 5 6 7 8 9 10 11 12 13 14))
+(define *the-selection*  *start-selection*)
+;; careful of off-by one errors
+
+(define (filter-out elem selection)
+  (map (lambda(x)(if (equal? x elem) #f x)) selection))
+
+
+(define (compute-on-selection full-cri)
+  (let loop ((p    *the-selection*)
+             (q    full-cri)
+             (sum         0)
+             (n           0)
+             (worst     100)
+             (the-worst  -1))
+    (cond ((null? p)
+           (list (/ sum n) worst the-worst))
+          ((not (car p))
+           (loop (cdr p) (cdr q) sum n worst the-worst))
+          (else
+           (let ((elem (car q)))
+             (loop (cdr p)
+                   (cdr q)
+                   (+ elem sum)
+                   (+ n 1) 
+                   (min elem worst)
+                   (if (< elem worst) (car p) the-worst)))))))
+
 (define (calc-specs spectrum)
   ;; produce the specs of a spectrum:
   ;; CRI(Ra)
@@ -423,8 +451,17 @@
          (ri-8     (head 8 (cadr full-cri)))
          (worst-ri (apply min ri-8))
          (efficacy (total-lumens-per-watt spectrum))
-         (cri-ra   (/ (apply + ri-8) 8)))
-    (append (list cri-ra worst-ri efficacy) full-cri)))
+         (cri-ra   (/ (apply + ri-8) 8))
+
+         (cri-14   (/ (apply + (cadr full-cri)) 14))
+         (worst-14 (apply min (cadr full-cri)))
+
+         (sel-data (compute-on-selection (cadr full-cri)))
+          
+         )
+    (append (list cri-ra worst-ri efficacy)
+            full-cri
+            (append (list cri-14 worst-14) sel-data))))
 
 (define (trunc-spectrum spectrum lo hi)
   ;; truncate a given spectrum to the wavelengths given
@@ -448,9 +485,7 @@
   (set! pspec (ParametricSpectrum.New
                l0 l1 ;; optimization range
                dims   ;; how many dimensions
-               (make-lrfunc-obj
-                base-spectrum ;; start func
-                )
+               base-spectrum ;; start func
                )
         )
   )
@@ -497,9 +532,10 @@
   (calc-specs w)
   )
 
-(define *target-cct* 2700)
-(define *min-cri-ra*   82)
-(define *min-r9*     -100)
+(define *target-cct*      2700)
+(define *min-cri-ra*        82)
+(define *min-r9*          -100)
+(define *num-constraints*    6)
 
 (define (specs->target specs)
   (let ((lpm    (caddr specs))
@@ -512,7 +548,7 @@
     (dis specs dnl)
     (list (- (caddr specs))            ;; target var : efficacy
           (- cri   *min-cri-ra*)       ;; cri constraint
-          (- r9    *min-r9*)       ;; cri constraint
+          (- r9    *min-r9*)           ;; cri constraint
           (- crmin (- *min-cri-ra* 10));; worst-component constraint
           (- cct (- *target-cct* 50))  ;; cct >= 2650
           (- (+ *target-cct* 50) cct)  ;; cct <= 2750
@@ -521,22 +557,20 @@
         )
   )
       
-(define (scheme-opt-func p)
-  (specs->target (specs-func p)))
+(define (run rhobeg spec-evaluator)
+  (let ((opt-func (lambda(p) (ParametricSpectrum.Scheme2Vec
+                              (spec-evaluator (specs-func p))))))
 
-(define (m3-opt-func p)
-  (ParametricSpectrum.Scheme2Vec (scheme-opt-func p)))
-
-
-(define (run rhobeg)
-  (COBYLA_M3.Minimize *p*    ;; state vector
-                      6      ;; # of constraints
-                      (make-lrvectorfield-obj m3-opt-func)
-                      rhobeg
-                      0.0002 ;; rhoend
-                      1000   ;; max steps
-                      2      ;; iprint
-                      )
+                                   
+    (COBYLA_M3.Minimize *p*                ;; state vector
+                        *num-constraints*  
+                        (make-lrvectorfield-obj opt-func)
+                        rhobeg
+                        0.0002 ;; rhoend
+                        1000   ;; max steps
+                        2      ;; iprint
+                        )
+    )
   )
 
 
@@ -568,13 +602,12 @@
   (COBYLA_M3.Minimize *p* 6 (make-lrvectorfield-obj m3-opt-r9) 1 0.00001 10000 2)
   )
 
-(define (plot-current-state)
+(define (plot-current-state pfx)
   (let* ((nm (string-append 
              (stringify *target-cct*)
              "_CRI"
              (stringify *min-cri-ra*)
-             "_R9"
-             (stringify *min-r9*)
+             pfx
              "_"
              (stringify cur-dims)
              ))
@@ -591,13 +624,14 @@
 
 
 
-(define (run-example! cct min-cri min-r9)
-  (dis "*****  START RUN cct=" cct " CRI(ra)>=" min-cri " R9>=" min-r9 "  *****" dnl)
+(define (run-example-iters! cct min-cri min-r9 repcnt spec-eval pfx)
+  (dis "*****  START RUN cct=" cct " CRI(ra)>=" min-cri " " pfx "  *****" dnl)
   (define *start-dims*   2)
   (define *start-rhobeg* 4)
   (define rhobeg *start-rhobeg*)
 
-  (set! *test-spectrum* (trunc-spectrum (make-Bl cct) l0 l1))
+  ;;(set! *test-spectrum* (make-lrfunc-obj (trunc-spectrum (make-Bl cct) l0 l1)))
+  (set! *test-spectrum* (ParametricSpectrum.MakeBlackbodyInWavelength cct l0 l1))
   (set! *target-cct* cct)
   (set! *min-cri-ra* min-cri)
   (set! *min-r9* min-r9)
@@ -608,33 +642,34 @@
     
     (subdivide-problem!)
     (dis "subdividing cur-dims = " cur-dims dnl)
-    (run rhobeg)
-    (plot-current-state)
+    (run rhobeg spec-eval)
+    (plot-current-state pfx)
     
     (dis "done at dims " cur-dims dnl)
 
     )
   
-  (plot (normalize-spectrum *test-spectrum*)
+  (plot (normalize-spectrum (unwrap-lrfunc *test-spectrum*))
         l0 l1
         (string-append "base_" (stringify cct) ".dat")
         200)
     
   (dis "setting up dims = " *start-dims* dnl)
   (setup-problem! *test-spectrum* *start-dims*)
-  (run rhobeg) ;; big step
-  (plot-current-state)
+  (run rhobeg spec-eval) ;; big step
+  (plot-current-state pfx)
   (dis "done at dims " cur-dims dnl)
 
-  (repeat)
-  (repeat)
-  (repeat)
-  (repeat)
-  (repeat)
-  (repeat)
-  (repeat)
-  
+  (let loop ((k repcnt))
+    (if (<= k 0) 'ok
+        (begin (repeat) (loop (- k 1)))))
   )
+
+
+(define (run-example! cct min-cri min-r9)
+  (run-example-iters! cct min-cri min-r9 7 specs->target
+                      (string-append              "_R9"
+                                                  (stringify *min-r9*))))
 
 (define pp
   (obj-method-wrap (LibertyUtils.DoParseParams) 'ParseParams.T))
@@ -649,3 +684,53 @@
       )
     )
       
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
+(define (specs->cri-sel-target specs)
+  (let ((lpm    (caddr specs))
+        (r9     (nth (car (cddddr specs)) 8))
+        (cri    (car specs))
+        (crmin  (cadr specs))
+        (cct    (caar (cdddr specs)))
+        (Duv    (cadar (cdddr specs)))
+        (sel-cri      (nth specs 7)) ;; cri over selected TCS
+        (sel-wrst-cri (nth specs 8)) ;; worst cri over selected TCS
+        )
+    (dis specs dnl)
+    (list (- (caddr specs))                    ;; target var : efficacy
+          (- sel-cri   *min-cri-ra*)           ;; cri constraint
+          (- sel-wrst-cri (- *min-cri-ra* 10)) ;; worst cri
+          1
+          (- cct (- *target-cct* 50))          ;; cct >= 2650
+          (- (+ *target-cct* 50) cct)          ;; cct <= 2750
+          (* 1000 (- 0.012 Duv))               ;; Duv <= 0.012 (weight 1000)
+          )
+        )
+  )
+
+(define (run-multi! cct cri)
+  (set! *the-selection* *start-selection*)
+  (let loop ((pfx "DROP"))
+    (run-example-iters! cct cri -100 5 specs->cri-sel-target pfx)
+
+    (if (not (= 0 (length (filter (lambda(x)x) *the-selection*))))
+        (let ((worst-axis (nth (calc-specs w) 9)))
+          (set! *the-selection* (filter-out worst-axis *the-selection*))
+          (loop (string-append pfx "_" (stringify worst-axis)))
+          )
+        'ok
+        )
+    )
+  )
+
+(if (pp 'keywordPresent "-run-drop")
+    (begin
+      (define run-cct (pp 'getNextLongReal    0 1e6))
+      (define run-cri (pp 'getNextLongReal -100 100))
+      (run-multi! run-cct run-cri)
+      (exit)
+      )
+    )
+  
