@@ -72,6 +72,7 @@
                  (v=="0" gx=3*GridPolyPitch)
                  (v=="4" gx=6*GridPolyPitch)
                  (v=="5" gx=6*GridPolyPitch ox=4.5*GridPolyPitch)
+                 (v=="h" gx=3*GridPolyPitch) ; custom halo cells
                  (t (error "Illegal standard cell metal variant %s\n" v))
                  )
            align = (list gx:gy ox:oy)
