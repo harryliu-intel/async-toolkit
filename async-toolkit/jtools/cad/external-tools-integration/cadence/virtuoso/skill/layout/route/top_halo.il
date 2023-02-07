@@ -42,7 +42,7 @@
   (let (points num idx point last next c name x y xa ya w h)
     ; setup
     xa = (car gridAlignment["lego"])
-    ya = (cadr gridAlignment["lego"])
+    ya = (RectGetHeight (GetPrbound vCV)->points)
     points = CV->prBoundary->points
     points = (if (IsPolygonClockwise points) points (reverse points))
     points = (if outside (reverse points) points)
@@ -78,20 +78,23 @@
                )
 
          ; instantiate an edge
-         name = (sprintf nil "halo_%d" idx++)
+         name = (sprintf nil "top_halo_%d" idx++)
          h = (abs (round ((cadr next)-(cadr point))/ya))
          w = (abs (round ((car next)-(car point))/xa))
          x = (car point)
          y = (cadr point)
-         (cond
+
+         (cond  
                (c=="nw" (dbCreateSimpleMosaic CV nCV name x+xa*(1-w):y "R0" 1 w-2 ya xa))
                (c=="sw" (dbCreateSimpleMosaic CV nCV name x+xa*(1-w):y "R0" 1 w-2 ya xa))
                (c=="ne" (dbCreateSimpleMosaic CV sCV name x+xa:y       "R0" 1 w-2 ya xa))
                (c=="se" (dbCreateSimpleMosaic CV sCV name x+xa:y       "R0" 1 w-2 ya xa))
-               (c=="wn" (dbCreateSimpleMosaic CV vCV name x:y+ya       "MY" h-1 1 ya xa))
+               ;(c=="wn" (dbCreateSimpleMosaic CV vCV name x:y+ya       "MY" h-1 1 ya xa))
+	       (c=="wn" (dbCreateSimpleMosaic CV vCV name x:y       "MY" h 1 ya xa))
                (c=="ws" (dbCreateSimpleMosaic CV vCV name x:y+ya*(1-h) "R0" h-1 1 ya xa))
                (c=="en" (dbCreateSimpleMosaic CV vCV name x:y+ya       "MY" h-1 1 ya xa))
-               (c=="es" (dbCreateSimpleMosaic CV vCV name x:y+ya*(1-h) "R0" h-1 1 ya xa))
+               ;(c=="es" (dbCreateSimpleMosaic CV vCV name x:y+ya*(1-h) "R0" h-1 1 ya xa))
+	       (c=="es" (dbCreateSimpleMosaic CV vCV name x:y-ya*h "R0" h 1 ya xa))
                )
          )
     CV
@@ -99,8 +102,8 @@
   )
 
 ; Add TOP_HALO given a prBoundary.
-(defun AddTopHalo (@key (CV (geGetEditCellView)) (fill_metal nil))
-  (let (vCV nCV ncCV scCV niCV siCV)
+(defun AddTopHalo (@key (CV (geGetEditCellView)) (fill_metal nil) (flatten t))
+  (let (vCV nCV ncCV scCV niCV siCV cnt)
     ; delete old halo
     (DeleteTopHalo ?CV CV)
 
@@ -115,20 +118,44 @@
            siCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.si_tap_m2345678" "layout")
            )
           (t
-           vCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.v_tap"  "layout")
-           nCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.n"      "layout")
-           sCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.s"      "layout")
-           ncCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.nc"     "layout")
-           scCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.sc"     "layout")
-           niCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.ni_tap" "layout")
-           siCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.si_tap" "layout")
+           vCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.v_m0_10"  "layout")
+           nCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.n_m0_10"  "layout")
+           sCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.s_m0_10"  "layout")
+           ncCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.ni_m0_10"  "layout")
+           scCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.si_m0_10"  "layout")
+           niCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.nc_m0_10"  "layout")
+           siCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.sc_m0_10"  "layout")
            )
           )
 
     ; add the halo
-    (AddHalo vCV nCV sCV ncCV scCV niCV siCV ?CV CV)
+    (AddHalo vCV nCV sCV ncCV scCV niCV siCV ?CV CV ?outside t)
+
+    ; flatten, flip, and rename for DEF
+    (when flatten (foreach i CV->mosaics (dbFlattenInst i 1)))
+    cnt = 0
+    (foreach inst CV->instances
+      (when inst->libName=="globals"
+        ; check m6 flip
+        (unless (CheckInstanceAlignment inst ?check_x nil ?check_parent_grid nil)
+          x = (car  inst->xy)
+          y = (cadr inst->xy)
+          (cond (inst->orient=="R0"   inst->orient="MX"   inst->xy=x:y+2*TrackPitch)
+                (inst->orient=="MX"   inst->orient="R0"   inst->xy=x:y-2*TrackPitch)
+                (inst->orient=="MY"   inst->orient="R180" inst->xy=x:y+2*TrackPitch)
+                (inst->orient=="R180" inst->orient="MY"   inst->xy=x:y-2*TrackPitch)
+                )
+          )
+        inst->status = "locked"
+	inst->name = (sprintf nil "boundarycell%d" cnt)
+	cnt++
+        )
+      )
+    (dbSave CV)
+    t
     )
   )
+
 
 ; Add CHIP_HALO given a prBoundary.
 (defun AddChipHalo (@key (CV (geGetEditCellView)))
