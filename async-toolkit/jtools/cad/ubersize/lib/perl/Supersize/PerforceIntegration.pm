@@ -688,7 +688,7 @@ sub p4_wrap {
     while (<P4>) {
         if (/^([^:]+): (.*)$/) {
             print "$2\n" unless ($1 eq "exit");
-            $err = 1 if ($1 eq "error");
+            $err = 1 if ($1 eq "error" || $1 eq "warning");
         }
         else {
             print;
