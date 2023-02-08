@@ -125,8 +125,6 @@ VAR
 
   
 BEGIN
-  Debug.AddWarnStream(warnWr);
-  
   TRY
     quick := pp.keywordPresent("-quick");
 
@@ -182,7 +180,8 @@ BEGIN
   END;
 
   warnWr                      := FileWr_Open(traceRt & "_spicetiming.warn");
-
+  Debug.AddWarnStream(warnWr);
+  
   IF dsimFn # NIL THEN
     VAR
       types, decls, topLevelWires : NameRefTbl.T := NEW(NameRefTbl.Default).init();

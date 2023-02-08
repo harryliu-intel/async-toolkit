@@ -667,18 +667,19 @@
 
 
 (define (run-example! cct min-cri min-r9)
+  (dis "run-example " min-cri " " min-r9 dnl)
   (run-example-iters! cct min-cri min-r9 7 specs->target
-                      (string-append              "_R9"
-                                                  (stringify *min-r9*))))
+                      (string-append              "_R9="
+                                                  (stringify min-r9))))
 
 (define pp
   (obj-method-wrap (LibertyUtils.DoParseParams) 'ParseParams.T))
 
 (if (pp 'keywordPresent "-run")
     (begin
-      (define run-cct (pp 'getNextLongReal    0 1e6))
-      (define run-cri (pp 'getNextLongReal -100 100))
-      (define run-r9  (pp 'getNextLongReal -100 100))
+      (define run-cct (pp 'getNextLongReal      0 1e6))
+      (define run-cri (pp 'getNextLongReal -10000 100))
+      (define run-r9  (pp 'getNextLongReal -10000 100))
       (run-example! run-cct run-cri run-r9)
       (exit)
       )
@@ -703,8 +704,8 @@
           (- sel-cri   *min-cri-ra*)           ;; cri constraint
           (- sel-wrst-cri (- *min-cri-ra* 10)) ;; worst cri
           1
-          (- cct (- *target-cct* 50))          ;; cct >= 2650
-          (- (+ *target-cct* 50) cct)          ;; cct <= 2750
+          (- cct (- *target-cct* 50))          ;; cct >= *target-cct* - 50
+          (- (+ *target-cct* 50) cct)          ;; cct <= *target-cct* + 50
           (* 1000 (- 0.012 Duv))               ;; Duv <= 0.012 (weight 1000)
           )
         )
@@ -713,7 +714,7 @@
 (define (run-multi! cct cri)
   (set! *the-selection* *start-selection*)
   (let loop ((pfx "DROP"))
-    (run-example-iters! cct cri -100 5 specs->cri-sel-target (string-append pfx "_X"))
+    (run-example-iters! cct cri -100 6 specs->cri-sel-target (string-append pfx "_X"))
 
     (if (not (= 0 (length (filter (lambda(x)x) *the-selection*))))
         (let ((worst-axis (nth (calc-specs w) 9)))
