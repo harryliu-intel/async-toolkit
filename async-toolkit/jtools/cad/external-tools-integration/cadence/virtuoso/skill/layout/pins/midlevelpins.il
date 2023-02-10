@@ -45,7 +45,8 @@
 
     (foreach Term CellTerms
       (foreach InstTerm Term->net->instTerms
-        (unless (member Term->name BusPinList) || !InstTerm->inst->transform
+        (unless (member Term->name BusPinList) || !InstTerm->inst->transform ||
+                InstTerm->inst->status!="locked" && InstTerm->inst->status!="firm"
           InPlacePinFig = (MidPinsInheritPin CV InstTerm->inst InstTerm->name Term->name
                                              ?topMetal (if (member Term->name PowerGroundNets)==nil -1 supply_topMetal)
                                              ?all_supply all_supply ?all_signal all_signal ?all_layers all_layers)
