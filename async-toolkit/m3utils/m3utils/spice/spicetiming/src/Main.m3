@@ -35,6 +35,12 @@ IMPORT NameRefTbl;
 IMPORT NameNameTbl;
 IMPORT NameNameListTbl;
 FROM SpiceTiming IMPORT MeasureByName, MeasureFromSpice;
+IMPORT Process;
+IMPORT TraceFile;
+IMPORT Name;
+IMPORT FlatRule;
+IMPORT PrsImpl;
+IMPORT NameSeq;
 
 <*FATAL Thread.Alerted*>
 
@@ -96,9 +102,123 @@ PROCEDURE FileWr_Open(fn : TEXT) : Wr.T =
       <*ASSERT FALSE*>
     END
   END FileWr_Open;
+
+TYPE
+  DsimData = OBJECT
+    define        : Dsim.Define;
+    types, decls, topLevelWires : NameRefTbl.T;
+  END;
+
+PROCEDURE RecordFanin(inst, node : Name.T; rule : FlatRule.T) =
+  BEGIN
+  END RecordFanin;
   
+PROCEDURE RecordFanout(inst, node : Name.T; rule : FlatRule.T) =
+  BEGIN
+  END RecordFanout;
+
+VAR flatId : CARDINAL := 0;
+  
+PROCEDURE DoRules(def : Dsim.Define; inst : Name.T) =
+  VAR
+    p := def.dsimBody.rules;
+  BEGIN
+    WHILE p # NIL DO
+      WITH rule = NARROW(p.head, Dsim.Rule),
+           flat = NEW(FlatRule.T,
+                      id       := flatId,
+                      foNm     := rule.target,
+                      rule     := rule,
+                      inType   := def,
+                      parent := inst) DO
+        INC(flatId);
+        RecordFanout(inst, rule.target, flat);
+        VAR
+          q := rule.conjuncts;
+        BEGIN
+          WHILE q # NIL DO
+            WITH conj = NARROW(q.head, Dsim.Conjunct) DO
+              RecordFanin(inst, conj.input, flat)
+            END;
+            q := q.tail
+          END
+        END
+          
+      END;
+      p := p.tail
+    END
+  END DoRules;
+
+PROCEDURE RecordAlias(pi, pn, ci, cn : Name.T) =
+  VAR
+    pnm := Name.Format(Name.Append(pi, pn));
+    cnm := Name.Format(Name.Append(ci, cn)); 
+  BEGIN
+    
+    Debug.Out(F("RecordAlias(%s , %s)", pnm, cnm))
+  END RecordAlias;
+
+PROCEDURE CreateNode(nm : Name.T) =
+  BEGIN
+  END CreateNode;
+  
+PROCEDURE CreateNodes(root : Name.T; nodes : NameSeq.T) =
+  BEGIN
+    FOR i := 0 TO nodes.size() - 1 DO
+      CreateNode(Name.Append(root, nodes.get(i)))
+    END
+  END CreateNodes;
+  
+PROCEDURE Flatten(define          : Dsim.Define; 
+                  types           : NameRefTbl.T;
+                  argsInParent    : NameSeq.T;
+                  root            : Name.T := NIL ) =
+  VAR
+    p           := define.decls;
+    txtInstNm   := Name.Format(root);
+    parentNm : Name.T := NIL;
+  BEGIN
+    IF root # NIL THEN
+      (* NIL has no parent, and no args! *)
+      parentNm := Name.Parent(root)
+    END;
+    
+    Debug.Out("Working on " & txtInstNm);
+
+    IF define.args # NIL THEN
+      FOR i := 0 TO define.args.size() - 1 DO
+        RecordAlias(parentNm, argsInParent.get(i),
+                    root    , define.args.get(i))
+      END
+    END;
+
+    IF define.dsimBody # NIL THEN
+      DoRules(define, root);
+    END;
+    
+    WHILE p # NIL DO
+      WITH decl = NARROW(p.head, Dsim.Decl),
+           id   = Name.Append(root, decl.id),
+           tn   = decl.type                   DO
+
+        CreateNodes(root, decl.args);
+        
+        VAR
+          r : REFANY;
+        BEGIN
+          WITH hadIt = types.get(tn,r) DO
+            <*ASSERT hadIt*>
+            Flatten(r, types, decl.args, id)
+          END
+        END;
+        p := p.tail
+      END
+    END
+  END Flatten;
+
   
 VAR
+  dsim       : DsimData       := NIL;
   pp                          := NEW(ParseParams.T).init(Stdio.stderr);
   spiceFn    : Pathname.T     ; (*:= "xa.sp";*)
   spice      : SpiceFormat.T;
@@ -183,20 +303,32 @@ BEGIN
   Debug.AddWarnStream(warnWr);
   
   IF dsimFn # NIL THEN
-    VAR
-      types, decls, topLevelWires : NameRefTbl.T := NEW(NameRefTbl.Default).init();
-      rd := FileRd.Open(dsimFn);
-      define : Dsim.Define;
-      instanceTypes := NEW(NameNameTbl.Default).init();
-      typeInstances := NEW(NameNameListTbl.Default).init();
-    BEGIN
-      define := Dsim.Parse(rd, types, decls, topLevelWires);
-      Rd.Close(rd);
+    dsim := NEW(DsimData,
+                types := NEW(NameRefTbl.Default).init(),
+                decls := NEW(NameRefTbl.Default).init(),
+                topLevelWires := NEW(NameRefTbl.Default).init());
 
-      Dsim.Flatten(define,
-                   types,
-                   instanceTypes,
-                   typeInstances);
+    TRY
+      VAR
+        rd := FileRd.Open(dsimFn);
+      BEGIN
+        dsim.define := Dsim.Parse(rd, dsim.types, dsim.decls, dsim.topLevelWires);
+        Rd.Close(rd);
+
+        Flatten(dsim.define, dsim.types, NEW(NameSeq.T).init())
+        
+      
+      
+      END
+    EXCEPT
+      OSError.E(x) =>
+      Debug.Error(F("Trouble opening %s for dsim parsing : OSError.E : %s",
+                    dsimFn, AL.Format(x)))
+    |
+      Rd.Failure(x) =>
+      Debug.Error(F("I/O error parsing dsim %s : OSError.E : %s",
+                    dsimFn, AL.Format(x)))
+
     END
   END;
   
@@ -209,8 +341,15 @@ BEGIN
   |
     Rd.EndOfFile =>
     Debug.Error(F("Short read opening input trace"))
+  |
+    TraceFile.FormatError =>
+    Debug.Error(F("Trace file format error"))
   END;
 
+  IF dsim # NIL THEN
+    Process.Exit(0)
+  END;
+  
   
   (* map names *)
 

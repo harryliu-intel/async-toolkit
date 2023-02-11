@@ -24,4 +24,10 @@ Sorted_table ("TextSortedTextLR", "Text", "SortedTextLongRealTbl")
 Table        ("TextTextSeq", "Text", "TextSeq")
 Sorted_table ("TextTextSeq", "Text", "TextSeq")
 
+Interface ("Measurement")
+Sequence ("Measurement", "Measurement")
+
+Interface ("HierData")
+Table ("TextHier", "Text", "HierData")
+
 program ("poweranal")

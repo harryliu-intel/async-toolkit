@@ -33,12 +33,14 @@ CONST
 
   cellPaths :=ARRAY Gate OF ARRAY Tran OF TEXT {
     XorPaths,
+    XorPaths,
     BufPaths,
     AoiCellPaths,
     OaiCellPaths
   },
 
   cellNames :=ARRAY Gate OF ARRAY Tran OF TEXT {
+    XorCellNames,
     XorCellNames,
     BufCellNames,
     AoiCellNames,

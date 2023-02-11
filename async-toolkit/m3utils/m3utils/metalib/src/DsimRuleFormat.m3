@@ -1,5 +1,7 @@
 MODULE DsimRuleFormat EXPORTS Dsim;
 IMPORT Wx, Name;
+IMPORT NameSeq;
+FROM Fmt IMPORT F;
 
 PROCEDURE FormatRule(rule : Rule) : TEXT =
 
@@ -44,4 +46,22 @@ PROCEDURE FormatRule(rule : Rule) : TEXT =
     RETURN Wx.ToText(wx)
   END FormatRule;
 
+PROCEDURE FormatDefine(d : Define) : TEXT =
+  VAR
+    wx := Wx.New();
+  BEGIN
+    Wx.PutText(wx, F("typeName %s\n", Name.Format(d.typeName)));
+    WxNameSeq(wx, d.args);
+    Wx.PutText(wx, "\n...\n");
+    RETURN Wx.ToText(wx)
+  END FormatDefine;
+
+PROCEDURE WxNameSeq(wx : Wx.T; seq : NameSeq.T) =
+  BEGIN
+    FOR i := 0 TO seq.size() - 1 DO
+      WITH nm = seq.get(i) DO
+        Wx.PutText(wx, F("%s ", Name.Format(nm)))
+      END
+    END
+  END WxNameSeq;
 BEGIN END DsimRuleFormat.

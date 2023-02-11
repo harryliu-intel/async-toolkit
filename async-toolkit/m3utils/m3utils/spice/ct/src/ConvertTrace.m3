@@ -511,6 +511,10 @@ BEGIN
     ParseParams.Error => Debug.Error("Can't parse command-line parameters\nUsage: " & Params.Get(0) & " " & Usage)
   END;
 
+  IF TraceFile.Version.CompressedV1 IN formats AND compressCmdPath = NIL THEN
+    Debug.Error("If format is CompressedV1, must also specify compress (command path)")
+  END;
+  
   IF wthreads # 1 THEN
     Debug.Warning("wthreads > 1 not recommended")
   END;

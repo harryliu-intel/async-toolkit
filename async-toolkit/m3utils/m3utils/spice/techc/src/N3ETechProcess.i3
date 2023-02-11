@@ -27,12 +27,14 @@ CONST
 
   cellPaths :=ARRAY Gate OF ARRAY Tran OF TEXT {
     BufPaths,
+    XorAltPaths,
     BufPaths,
     BufPaths,
     BufPaths 
   },
 
   cellNames :=ARRAY Gate OF ARRAY Tran OF TEXT {
+    XorCellNames,
     XorCellNames,
     BufCellNames,
     AoiCellNames,
@@ -44,6 +46,16 @@ CONST
       };
 
 CONST
+  XorAltPaths = ARRAY Tran OF TEXT {
+  NIL,
+  "/nfs/site/disks/zsc3_fon_fe_0001/mnystroe/XOR2D1BWP169H3P48CPDULVT.spf",
+  NIL,
+  NIL,
+  NIL,
+  NIL,
+  NIL
+  };
+  
   BufPaths = ARRAY Tran OF TEXT {
   "/p/tech1/n3e/tech-release/v0.9.0p3/tcbn03e_bwph169l3p48cpd_base_elvt_lib/lpe_spice/tcbn03e_bwph169l3p48cpd_base_elvt_090b/tcbn03e_bwph169l3p48cpd_base_elvt_090b_lpe_typical_125c.spi",
   "/p/tech1/n3e/tech-release/v0.9.0p3/tcbn03e_bwph169l3p48cpd_base_ulvt_lib/lpe_spice/tcbn03e_bwph169l3p48cpd_base_ulvt_090b/tcbn03e_bwph169l3p48cpd_base_ulvt_090b_lpe_typical_125c.spi",

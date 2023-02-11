@@ -76,7 +76,7 @@ PROCEDURE DoConvert(READONLY c : TechConfig.T;
        the # of timesteps in the file, either as a fixed count or as a 
        minimum # of steps.
     *)
-    cmd := F("/nfs/site/disks/zsc3_fon_fe_0001/mnystroe/m3utils/spice/ct/AMD64_LINUX/ct -fsdb /nfs/site/disks/zsc3_fon_fe_0001/mnystroe/m3utils/spice/fsdb/src/nanosimrd -threads 4 -wthreads 1 -R %s %s.fsdb %s",
+    cmd := F("/nfs/site/disks/zsc3_fon_fe_0001/mnystroe/m3utils/spice/ct/AMD64_LINUX/ct -fsdb /nfs/site/disks/zsc3_fon_fe_0001/mnystroe/m3utils/spice/fsdb/src/nanosimrd -compress /nfs/site/disks/zsc3_fon_fe_0001/mnystroe/m3utils/spice/spicecompress/spicestream/AMD64_LINUX/spicestream -threads 4 -wthreads 1 -format CompressedV1 -R %s %s.fsdb %s",
              LR(MAX(c.timestep, 50.0d-12)), c.simRoot, traceRoot);
     res : BOOLEAN := FALSE;
   BEGIN 

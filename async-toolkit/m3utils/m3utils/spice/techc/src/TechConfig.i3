@@ -45,7 +45,12 @@ TYPE
   Corn = { TT, SS, FF, SF, FS };
   (* short names for the five supported simulation corners *)
 
-  Gate = { Xor, Buf, Aoi, Oai };
+  Gate = { Xor,    (* regular XOR2 *)
+           XorAlt, (* alternative XOR2 *)
+           Buf,    (* buffer *)
+           Aoi,    (* AOI gate *)
+           Oai     (* don't use this -- alternates with Aoi *)
+  };
   
 CONST
   (* the following are string names, to be used from command line, etc. *)
@@ -61,7 +66,7 @@ CONST
 
   CornNames = ARRAY Corn OF TEXT { "tt", "ss", "ff", "sf", "fs" };
 
-  GateNames = ARRAY Gate OF TEXT { "xor", "buf", "aoi", "oai" };
+  GateNames = ARRAY Gate OF TEXT { "xor", "xoralt", "buf", "aoi", "oai" };
   (* should not ask for an oai, should only ask for aoi *)
 
   TechNames = ARRAY Tech OF TEXT { "n5", "1276p4", "1276p4_g1m", "1276p4_aml1", "1276p4_aml2", "n3", "n3e", "1278p3" };
@@ -76,7 +81,7 @@ CONST
                                    Corp.Intc };
 
   Gate1 = ARRAY Gate OF Gate
-            { Gate.Xor, Gate.Buf, Gate.Oai, Gate.Aoi };
+            { Gate.Xor, Gate.XorAlt, Gate.Buf, Gate.Oai, Gate.Aoi };
   (* second gate type for each first gate --
      note that oai is really not supported as a first gate *)
 

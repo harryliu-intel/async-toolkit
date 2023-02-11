@@ -22,6 +22,7 @@ cat > ${taskfile} <<EOF
     
 JobsTask {
   WorkArea ${RUNDIR}
+  SubmissionArgs --class SLES12SP5
 
   Queue ${nb_queue} {
     Qslot ${nb_qslot}

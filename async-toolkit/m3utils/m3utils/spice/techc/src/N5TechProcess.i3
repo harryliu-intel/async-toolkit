@@ -28,10 +28,12 @@ CONST
     BufPaths,
     BufPaths,
     BufPaths,
+    BufPaths,
     BufPaths
   },
 
     cellNames := ARRAY Gate OF ARRAY Tran OF TEXT {
+    XorCellNames,
     XorCellNames,
     BufCellNames,
     AoiCellNames,

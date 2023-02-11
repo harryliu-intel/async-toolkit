@@ -97,6 +97,15 @@ PROCEDURE MapCommon(READONLY c : Config;  map : TextTextTbl.T)=
       EVAL map.put("@T1B@", "xi");
       EVAL map.put("@T1C@", "");
     |
+      Gate.XorAlt =>
+      EVAL map.put("@T0A@", "in");
+      EVAL map.put("@T0B@", "vcc");
+      EVAL map.put("@T0C@", "");
+
+      EVAL map.put("@T1A@", "vcc");
+      EVAL map.put("@T1B@", "xi");
+      EVAL map.put("@T1C@", "");
+    |
       Gate.Aoi =>
       (* Intel terminal order is a b c  where b & c are the symmetric inputs
          TSMC terminal order is A1 A2 B *)
