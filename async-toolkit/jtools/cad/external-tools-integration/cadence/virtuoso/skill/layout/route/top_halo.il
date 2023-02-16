@@ -102,7 +102,7 @@
   )
 
 ; Add TOP_HALO given a prBoundary.
-(defun AddTopHalo (@key (CV (geGetEditCellView)) (fill_metal nil) (flatten t))
+(defun AddTopHalo (@key (CV (geGetEditCellView)) (fill_metal nil) (flatten t) (outside t))
   (let (vCV nCV ncCV scCV niCV siCV cnt)
     ; delete old halo
     (DeleteTopHalo ?CV CV)
@@ -118,21 +118,28 @@
            siCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.si_tap_m2345678" "layout")
            )
           (t
-           vCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.v_m0_10"  "layout")
-           nCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.n_m0_10"  "layout")
-           sCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.s_m0_10"  "layout")
-           ncCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.ni_m0_10"  "layout")
-           scCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.si_m0_10"  "layout")
-           niCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.nc_m0_10"  "layout")
-           siCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.sc_m0_10"  "layout")
+           vCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.v_m0_10x2"  "layout")
+           nCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.n_m0_10x2"  "layout")
+           sCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.s_m0_10x2"  "layout")
+           ncCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.ni_m0_10x2"  "layout")
+           scCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.si_m0_10x2"  "layout")
+           niCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.nc_m0_10x2"  "layout")
+           siCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.sc_m0_10x2"  "layout")
            )
           )
 
     ; add the halo
-    (AddHalo vCV nCV sCV ncCV scCV niCV siCV ?CV CV ?outside t)
+    (AddHalo vCV nCV sCV ncCV scCV niCV siCV ?CV CV ?outside outside)
 
     ; flatten, flip, and rename for DEF
-    (when flatten (foreach i CV->mosaics (dbFlattenInst i 1)))
+    (when flatten
+      (foreach i CV->mosaics
+        (when (rexMatchp "TOP_HALO" i->cellName)
+          (dbFlattenInst i 1)
+	  )
+	)
+      )
+      
     cnt = 0
     (foreach inst CV->instances
       (when inst->libName=="globals"
