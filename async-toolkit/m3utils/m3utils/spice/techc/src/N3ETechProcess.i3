@@ -48,7 +48,7 @@ CONST
 CONST
   XorAltPaths = ARRAY Tran OF TEXT {
   NIL,
-  "/nfs/site/disks/zsc3_fon_fe_0001/mnystroe/XOR2D1BWP169H3P48CPDULVT.spf",
+  "/nfs/site/disks/zsc3_fon_fe_0001/mnystroe/XOR2D1BWP169H3P48CPDULVTfix.spf",
   NIL,
   NIL,
   NIL,

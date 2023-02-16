@@ -354,8 +354,10 @@ VAR
   maxNodes            := LAST(CARDINAL);
 
   translate, noX : BOOLEAN;
+  compressQuick       : BOOLEAN;
 
   scopesep            := ".";
+
   
 CONST
   DefFormats =
@@ -427,7 +429,8 @@ BEGIN
     compressCmdPath := Env.Get("CT_COMPRESS_PATH");
     
     IF pp.keywordPresent("-compress") THEN
-      compressCmdPath := pp.getNext()
+      compressCmdPath := pp.getNext();
+      compressQuick := pp.keywordPresent("-quick");
     END;
 
     IF pp.keywordPresent("-prec") THEN
@@ -581,8 +584,11 @@ BEGIN
                  translate, noX,
                  scopesep,
                  fsdbCmdPath,
-                 compressCmdPath,
-                 compressPrec,
+                 Fsdb.Compress {
+                                 compressCmdPath,
+                                 compressPrec,
+                                 compressQuick
+                               },
                  threads,
                  interpolate,
                  maxTime)

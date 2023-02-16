@@ -97,7 +97,9 @@ PROCEDURE WriteOut(wr            : Wr.T;
                    
                    doAllDumps    : BOOLEAN;
 
-                   code          : ArithConstants.Encoding)
+                   code          : ArithConstants.Encoding;
+                   
+                   quick         : BOOLEAN)
   RAISES { Thread.Alerted, Wr.Failure, Matrix.Singular } =
   TYPE
     ALR1 = ARRAY [ 0..0 ] OF LONGREAL;
@@ -122,7 +124,8 @@ PROCEDURE WriteOut(wr            : Wr.T;
                                     textWr,
                                     norm,
                                     mem    := NEW(TripleRefTbl.Default).init(),
-                                    doDump := doDump)
+                                    doDump := doDump,
+                                    quick  := quick)
       |
         ArithConstants.DenseCode =>
         UnsafeWriter.WriteLRA(textWr, a);

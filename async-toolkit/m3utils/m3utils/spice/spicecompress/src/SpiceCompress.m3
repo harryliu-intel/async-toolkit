@@ -127,6 +127,7 @@ PROCEDURE CompressArray(rn         : TEXT; (* for debug *)
                         VAR norm   : Norm;
                         mem        : TripleRefTbl.T;
                         doDump     : BOOLEAN;
+                        quick      : BOOLEAN
   )
   RAISES { MatrixE.Singular } =
   <*FATAL OSError.E, Wr.Failure*>
@@ -180,9 +181,9 @@ PROCEDURE CompressArray(rn         : TEXT; (* for debug *)
       IF AssertAll THEN CheckChaining(segments) END;
       
       IF DoDebug THEN
-        Debug.Out(F("dirty %s : %s segments (%s/%s points)",
+        Debug.Out(F("dirty %s : %s segments (%s/%s points) quick %s",
                     rn, Int(segments.size()), Int(PolyPoints(segments)),
-                    Int(PolyPointsSerial(segments))
+                    Int(PolyPointsSerial(segments)), Bool(quick)
         ))
       END;
 
@@ -193,39 +194,41 @@ PROCEDURE CompressArray(rn         : TEXT; (* for debug *)
         END;
         AssertDelta("rarr_dirty", darr, rarr, targMaxDev)
       END;
+
+      IF NOT quick THEN
+        (*********************  CLEAN POLYS  *********************)
+
+        CleanPoly16(rn,
+                    segments, darr, targMaxDev, MaxOrder, doAllDumps, mem);
+
+        IF DoDebug THEN
+          Debug.Out(F("clean %s : %s segments (%s/%s points)",
+                      rn, Int(segments.size()), Int(PolyPoints(segments)),
+                      Int(PolyPointsSerial(segments))
+          ))
+        END;
+
+        IF AssertAll OR doDump THEN
+          Reconstruct(segments, rarr);
+          IF doDump THEN
+            DumpVec(rn & ".rarr_clean.dat", rarr, 0)
+          END;
+          AssertDelta("rarr_clean", darr, rarr, targMaxDev)
+        END;
+
+        (*********************  ZERO POLYS  *********************)
+
+        ZeroPoly16(segments, darr, targMaxDev, doAllDumps);
+
+        IF AssertAll OR doDump THEN
+          Reconstruct(segments, rarr);
+          IF doDump THEN
+            DumpVec(rn & ".rarr_zeroed.dat", rarr, 0)
+          END;
+          AssertDelta("rarr_zeroed", darr, rarr, targMaxDev);
+        END
+      END; (* IF NOT quick *)
       
-      (*********************  CLEAN POLYS  *********************)
-
-      CleanPoly16(rn,
-                  segments, darr, targMaxDev, MaxOrder, doAllDumps, mem);
-
-      IF DoDebug THEN
-        Debug.Out(F("clean %s : %s segments (%s/%s points)",
-                    rn, Int(segments.size()), Int(PolyPoints(segments)),
-                    Int(PolyPointsSerial(segments))
-        ))
-      END;
-
-      IF AssertAll OR doDump THEN
-        Reconstruct(segments, rarr);
-        IF doDump THEN
-          DumpVec(rn & ".rarr_clean.dat", rarr, 0)
-        END;
-        AssertDelta("rarr_clean", darr, rarr, targMaxDev)
-      END;
-
-      (*********************  ZERO POLYS  *********************)
-
-      ZeroPoly16(segments, darr, targMaxDev, doAllDumps);
-
-      IF AssertAll OR doDump THEN
-        Reconstruct(segments, rarr);
-        IF doDump THEN
-          DumpVec(rn & ".rarr_zeroed.dat", rarr, 0)
-        END;
-        AssertDelta("rarr_zeroed", darr, rarr, targMaxDev);
-      END;
-
       IF DoDebug THEN
 
         (***********   produce some detailed debug info   ***********)

@@ -41,7 +41,8 @@ modes="dyn"
 # parasitics or not?
 paras="true"
 
-gates="xor xoralt"
+#gates="xor xoralt"
+gates="xoralt"
 
 runmode="default"
 
