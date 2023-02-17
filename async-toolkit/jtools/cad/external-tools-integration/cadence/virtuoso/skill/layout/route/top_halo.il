@@ -101,7 +101,7 @@
 
 ; Add TOP_HALO given a prBoundary or around instances with topHalo=nil directive
 (defun AddTopHalo (@key (CV (geGetEditCellView)) (fill_metal nil) (flatten t) (outside t) (around_instances nil))
-  (let (vCV nCV ncCV scCV niCV siCV cnt idx)
+  (let (vCV nCV ncCV scCV niCV siCV cnt idx prop)
     ; delete old halo
     (DeleteTopHalo ?CV CV)
 
@@ -125,10 +125,11 @@
            siCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.sc_m0_10x2"  CV->viewName)
            )
           )
-
+    
     ; add the halo
     idx=0
-    (cond (around_instances
+    prop=(dbGetPropByName CV "topHalo")
+    (cond (around_instances && prop && prop->value=="TRUE"
            (foreach polygon (NoHaloSubcellBoundaries ?CV CV)
                     idx=(AddHalo polygon vCV nCV sCV ncCV scCV niCV siCV ?CV CV ?outside outside ?idx idx)
                     )
@@ -166,10 +167,9 @@
         )
       )
     (dbSave CV)
-    t
+    idx
     )
   )
-
 
 ; Add CHIP_HALO given a prBoundary.
 (defun AddChipHalo (@key (CV (geGetEditCellView)))
