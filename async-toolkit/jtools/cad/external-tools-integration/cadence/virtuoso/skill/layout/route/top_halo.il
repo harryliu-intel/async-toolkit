@@ -37,17 +37,15 @@
     )
   )
 
-; Add halo cells inside or outside prBoundary
-(defun AddHalo (vCV nCV sCV ncCV scCV niCV siCV @key (CV (geGetEditCellView)) (outside nil))
-  (let (points num idx point last next c name x y xa ya w h)
+; Add halo cells inside or outside a polygon
+(defun AddHalo (points vCV nCV sCV ncCV scCV niCV siCV @key (CV (geGetEditCellView)) (outside nil) (idx 0))
+  (let (num point last next c name x y xa ya w h)
     ; setup
     xa = (car gridAlignment["lego"])
     ya = (RectGetHeight (GetPrbound vCV)->points)
-    points = CV->prBoundary->points
     points = (if (IsPolygonClockwise points) points (reverse points))
     points = (if outside (reverse points) points)
     num = (length points)
-    idx = 0
 
     ; walk all points of prBoundary
     (for i 0 num-1
@@ -84,7 +82,7 @@
          x = (car point)
          y = (cadr point)
 
-         (cond  
+         (cond
                (c=="nw" (dbCreateSimpleMosaic CV nCV name x+xa*(1-w):y "R0" 1 w-2 ya xa))
                (c=="sw" (dbCreateSimpleMosaic CV nCV name x+xa*(1-w):y "R0" 1 w-2 ya xa))
                (c=="ne" (dbCreateSimpleMosaic CV sCV name x+xa:y       "R0" 1 w-2 ya xa))
@@ -97,13 +95,13 @@
 	       (c=="es" (dbCreateSimpleMosaic CV vCV name x:y-ya*h "R0" h 1 ya xa))
                )
          )
-    CV
+    idx
     )
   )
 
 ; Add TOP_HALO given a prBoundary.
-(defun AddTopHalo (@key (CV (geGetEditCellView)) (fill_metal nil) (flatten t) (outside t))
-  (let (vCV nCV ncCV scCV niCV siCV cnt)
+(defun AddTopHalo (@key (CV (geGetEditCellView)) (fill_metal nil) (flatten t) (outside t) (around_instances nil))
+  (let (vCV nCV ncCV scCV niCV siCV cnt idx)
     ; delete old halo
     (DeleteTopHalo ?CV CV)
 
@@ -129,7 +127,16 @@
           )
 
     ; add the halo
-    (AddHalo vCV nCV sCV ncCV scCV niCV siCV ?CV CV ?outside outside)
+    idx=0
+    (cond (around_instances
+           (foreach polygon (NoHaloSubcellBoundaries ?CV CV)
+                    idx=(AddHalo polygon vCV nCV sCV ncCV scCV niCV siCV ?CV CV ?outside outside ?idx idx)
+                    )
+           )
+          (t
+           (AddHalo CV->prBoundary->points vCV nCV sCV ncCV scCV niCV siCV ?CV CV ?outside outside)
+           )
+          )
 
     ; flatten, flip, and rename for DEF
     (when flatten
@@ -139,7 +146,7 @@
 	  )
 	)
       )
-      
+
     cnt = 0
     (foreach inst CV->instances
       (when inst->libName=="globals"
@@ -175,7 +182,7 @@
     scCV = (dbOpenCellViewByType "globals" "globals.CHIP_HALO.ni" "layout")
     niCV = (dbOpenCellViewByType "globals" "globals.CHIP_HALO.sc" "layout")
     siCV = (dbOpenCellViewByType "globals" "globals.CHIP_HALO.nc" "layout")
-    (AddHalo vCV nCV sCV ncCV scCV niCV siCV ?CV CV ?outside t)
+    (AddHalo CV->prBoundary->points vCV nCV sCV ncCV scCV niCV siCV ?CV CV ?outside t)
     )
   )
 
@@ -222,4 +229,23 @@
              )
     )
   t
+  )
+
+; return a list of polygons for all prBoundary of no-halo subcells
+(defun NoHaloSubcellBoundaries (@key (CV (geGetEditCellView)))
+  (let (polygons prop lpp shapes)
+    lpp=(list "y1" "drawing")
+    (foreach inst CV->instances
+             prop=(dbGetPropByName inst->master "topHalo")
+             (when prop && prop->value=="FALSE"
+                   (dbCreatePolygon CV lpp (dbTransformPointList inst->master->prBoundary->points inst->transform))
+                   )
+             )
+    shapes=(leMergeShapes (setof s CV->shapes s->lpp==lpp))
+    (foreach s shapes
+             polygons = (cons s->points polygons)
+             (dbDeleteObject s)
+             )
+    polygons
+    )
   )
