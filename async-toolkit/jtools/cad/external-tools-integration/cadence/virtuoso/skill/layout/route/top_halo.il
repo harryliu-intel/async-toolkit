@@ -99,7 +99,7 @@
     )
   )
 
-; Add TOP_HALO given a prBoundary.
+; Add TOP_HALO given a prBoundary or around instances with topHalo=nil directive
 (defun AddTopHalo (@key (CV (geGetEditCellView)) (fill_metal nil) (flatten t) (outside t) (around_instances nil))
   (let (vCV nCV ncCV scCV niCV siCV cnt idx)
     ; delete old halo
@@ -107,22 +107,22 @@
 
     ; choose halo cells
     (cond (fill_metal
-           vCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.v_tap_m2345678"  "layout")
-           nCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.n_m2345678"      "layout")
-           sCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.s_m2345678"      "layout")
-           ncCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.nc_m2345678"     "layout")
-           scCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.sc_m2345678"     "layout")
-           niCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.ni_tap_m2345678" "layout")
-           siCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.si_tap_m2345678" "layout")
+           vCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.v_tap_m2345678"  CV->viewName)
+           nCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.n_m2345678"      CV->viewName)
+           sCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.s_m2345678"      CV->viewName)
+           ncCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.nc_m2345678"     CV->viewName)
+           scCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.sc_m2345678"     CV->viewName)
+           niCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.ni_tap_m2345678" CV->viewName)
+           siCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.si_tap_m2345678" CV->viewName)
            )
           (t
-           vCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.v_m0_10x2"  "layout")
-           nCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.n_m0_10x2"  "layout")
-           sCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.s_m0_10x2"  "layout")
-           ncCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.ni_m0_10x2"  "layout")
-           scCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.si_m0_10x2"  "layout")
-           niCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.nc_m0_10x2"  "layout")
-           siCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.sc_m0_10x2"  "layout")
+           vCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.v_m0_10x2"  CV->viewName)
+           nCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.n_m0_10x2"  CV->viewName)
+           sCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.s_m0_10x2"  CV->viewName)
+           ncCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.ni_m0_10x2"  CV->viewName)
+           scCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.si_m0_10x2"  CV->viewName)
+           niCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.nc_m0_10x2"  CV->viewName)
+           siCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.sc_m0_10x2"  CV->viewName)
            )
           )
 
