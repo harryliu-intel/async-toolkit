@@ -161,7 +161,7 @@
 
     cnt = 0
     (foreach inst CV->instances
-      (when inst->libName=="globals"
+      (when (strncmp inst->cellName "globals.TOP_HALO." (strlen "globals.TOP_HALO."))==0
         ; check m6 flip
         (unless (CheckInstanceAlignment inst ?check_x nil ?check_parent_grid nil)
           x = (car  inst->xy)
