@@ -39,10 +39,12 @@
 
 ; Add halo cells inside or outside a polygon
 (defun AddHalo (points vCV nCV sCV ncCV scCV niCV siCV @key (CV (geGetEditCellView)) (outside nil) (idx 0))
-  (let (num point last next c name x y xa ya w h)
+  (let (num point last next next2 c c1 name x y xa ya cw ch w h cw0 cw1 ch0 ch1)
     ; setup
     xa = (car gridAlignment["lego"])
     ya = (RectGetHeight (GetPrbound vCV)->points)
+    cw = (round (RectGetWidth  (GetPrbound ncCV)->bBox)/xa) ; corner width
+    ch = (round (RectGetHeight (GetPrbound ncCV)->bBox)/ya) ; corner height
     points = (if (IsPolygonClockwise points) points (reverse points))
     points = (if outside (reverse points) points)
     num = (length points)
@@ -52,48 +54,57 @@
          point = (nth i points)
          last = (nth (mod i+num-1 num) points)
          next = (nth (mod i+1 num) points)
-         c = (ClassifyPolygonCorner last point next)
+         next2 = (nth (mod i+2 num) points)
+         c  = (ClassifyPolygonCorner last point next)
+         c1 = (ClassifyPolygonCorner point next next2)
 
          ; instantiate a corner
-         name = (sprintf nil "halo_%d" idx++)
-	 (cond
+         name = (sprintf nil "halo_%s_%d" c idx++)
+ 	 (cond
                (c=="se" (dbCreateSimpleMosaic CV scCV name point "R0" 1 1 ya xa))
                (c=="en" (dbCreateSimpleMosaic CV scCV name point "MY" 1 1 ya xa))
                (c=="nw" (dbCreateSimpleMosaic CV ncCV name point "MY" 1 1 ya xa))
                (c=="ws" (dbCreateSimpleMosaic CV ncCV name point "R0" 1 1 ya xa))
-               (c=="wn" (dbCreateSimpleMosaic CV niCV name point "MY" 1 1 ya xa)
-                        (dbCreateSimpleMosaic CV nCV  (sprintf nil "halo_%d" idx++) point "R0" 1 1 ya xa)
-                        )
-               (c=="sw" (dbCreateSimpleMosaic CV niCV name point "R0" 1 1 ya xa)
-                        (dbCreateSimpleMosaic CV nCV  (sprintf nil "halo_%d" idx++) point "MY" 1 1 ya xa)
-                        )
-               (c=="es" (dbCreateSimpleMosaic CV siCV name point "R0" 1 1 ya xa)
-                        (dbCreateSimpleMosaic CV sCV  (sprintf nil "halo_%d" idx++) point "MY" 1 1 ya xa)
-                        )
-               (c=="ne" (dbCreateSimpleMosaic CV siCV name point "MY" 1 1 ya xa)
-                        (dbCreateSimpleMosaic CV sCV  (sprintf nil "halo_%d" idx++) point "R0" 1 1 ya xa)
-                        )
+               (c=="wn" (dbCreateSimpleMosaic CV niCV name point "MY" 1 1 ya xa))
+               (c=="sw" (dbCreateSimpleMosaic CV niCV name point "R0" 1 1 ya xa))
+               (c=="es" (dbCreateSimpleMosaic CV siCV name point "R0" 1 1 ya xa))
+               (c=="ne" (dbCreateSimpleMosaic CV siCV name point "MY" 1 1 ya xa))
                )
 
          ; instantiate an edge
-         name = (sprintf nil "top_halo_%d" idx++)
+         name = (sprintf nil "halo_%d" idx++)
          h = (abs (round ((cadr next)-(cadr point))/ya))
          w = (abs (round ((car next)-(car point))/xa))
          x = (car point)
          y = (cadr point)
 
-         (cond
-               (c=="nw" (dbCreateSimpleMosaic CV nCV name x+xa*(1-w):y "R0" 1 w-2 ya xa))
-               (c=="sw" (dbCreateSimpleMosaic CV nCV name x+xa*(1-w):y "R0" 1 w-2 ya xa))
-               (c=="ne" (dbCreateSimpleMosaic CV sCV name x+xa:y       "R0" 1 w-2 ya xa))
-               (c=="se" (dbCreateSimpleMosaic CV sCV name x+xa:y       "R0" 1 w-2 ya xa))
-               ;(c=="wn" (dbCreateSimpleMosaic CV vCV name x:y+ya       "MY" h-1 1 ya xa))
-	       (c=="wn" (dbCreateSimpleMosaic CV vCV name x:y       "MY" h 1 ya xa))
-               (c=="ws" (dbCreateSimpleMosaic CV vCV name x:y+ya*(1-h) "R0" h-1 1 ya xa))
-               (c=="en" (dbCreateSimpleMosaic CV vCV name x:y+ya       "MY" h-1 1 ya xa))
-               ;(c=="es" (dbCreateSimpleMosaic CV vCV name x:y+ya*(1-h) "R0" h-1 1 ya xa))
-	       (c=="es" (dbCreateSimpleMosaic CV vCV name x:y-ya*h "R0" h 1 ya xa))
+         ; correct for interior corners
+         ch0=0
+         ch1=0
+         cw0=0
+         cw1=0
+         (cond (c=="nw" cw0=cw)
+               (c=="se" cw0=cw)
+               (c=="ws" ch0=ch)
+               (c=="en" ch0=ch)
                )
+         (cond (c1=="nw" ch1=ch)
+               (c1=="se" ch1=ch)
+               (c1=="ws" cw1=cw)
+               (c1=="en" cw1=cw)
+               )
+
+         ; draw edges
+         (cond
+          (c=="nw" && w>=cw0+cw1 (dbCreateSimpleMosaic CV nCV name x-xa*(w-cw1):y "R0" 1 w-cw0-cw1 ya xa))
+          (c=="sw" && w>=cw0+cw1 (dbCreateSimpleMosaic CV nCV name x-xa*(w-cw1):y "R0" 1 w-cw0-cw1 ya xa))
+          (c=="ne" && w>=cw0+cw1 (dbCreateSimpleMosaic CV sCV name x+xa*cw0:y     "R0" 1 w-cw0-cw1 ya xa))
+          (c=="se" && w>=cw0+cw1 (dbCreateSimpleMosaic CV sCV name x+xa*cw0:y     "R0" 1 w-cw0-cw1 ya xa))
+          (c=="wn" && h>=ch0+ch1 (dbCreateSimpleMosaic CV vCV name x:y+ya*ch0     "MY" h-ch0-ch1 1 ya xa))
+          (c=="ws" && h>=ch0+ch1 (dbCreateSimpleMosaic CV vCV name x:y-ya*(h-ch1) "R0" h-ch0-ch1 1 ya xa))
+          (c=="en" && h>=ch0+ch1 (dbCreateSimpleMosaic CV vCV name x:y+ya*ch0     "MY" h-ch0-ch1 1 ya xa))
+          (c=="es" && h>=ch0+ch1 (dbCreateSimpleMosaic CV vCV name x:y-ya*(h-ch1) "R0" h-ch0-ch1 1 ya xa))
+          )
          )
     idx
     )
@@ -125,7 +136,7 @@
            siCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.sc_m0_10x2"  CV->viewName)
            )
           )
-    
+
     ; add the halo
     idx=0
     prop=(dbGetPropByName CV "topHalo")
@@ -162,12 +173,12 @@
                 )
           )
         inst->status = "locked"
-	inst->name = (sprintf nil "boundarycell%d" cnt)
+	inst->name = (sprintf nil "halo_%d" cnt)
 	cnt++
         )
       )
     (dbSave CV)
-    idx
+    cnt
     )
   )
 
