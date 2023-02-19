@@ -116,6 +116,8 @@ PROCEDURE ParseLine(VAR circuit   : SpiceCircuitList.T; (* circuit stack *)
         msg := "Empty probe : \"" & Text.FromChars(line) & "\""
         })
         END
+      ELSIF HavePrefix(line, p, ".MODEL") THEN
+        (* skip for now *)
       ELSE
         RAISE SpiceError.E(SpiceError.Data {
         msg := "Unknown directive in \"" & Text.FromChars(line) & "\""
