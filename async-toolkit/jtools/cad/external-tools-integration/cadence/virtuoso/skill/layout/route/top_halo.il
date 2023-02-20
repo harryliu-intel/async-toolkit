@@ -41,8 +41,8 @@
 (defun AddHalo (points vCV nCV sCV ncCV scCV niCV siCV @key (CV (geGetEditCellView)) (outside nil) (idx 0))
   (let (num point last next next2 c c1 name x y xa ya cw ch w h cw0 cw1 ch0 ch1)
     ; setup
-    xa = (car gridAlignment["lego"])
-    ya = (RectGetHeight (GetPrbound vCV)->points)
+    xa = (RectGetWidth  (GetPrbound nCV)->bBox)
+    ya = (RectGetHeight (GetPrbound vCV)->bBox)
     cw = (round (RectGetWidth  (GetPrbound ncCV)->bBox)/xa) ; corner width
     ch = (round (RectGetHeight (GetPrbound ncCV)->bBox)/ya) ; corner height
     points = (if (IsPolygonClockwise points) points (reverse points))
