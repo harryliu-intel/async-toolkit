@@ -42,9 +42,9 @@
         )
       horz = (layerNum&1)==0
       list1=pinRectList
-      (cond (distance &&  horz space=(car  distance))
-            (distance && !horz space=(cadr distance))
-            (t                 space=2*MetalHaloBoundarySpace[layerName])
+      space=2*MetalHaloBoundarySpace[layerName]
+      (cond (distance &&  horz space+=(car  distance))
+            (distance && !horz space+=(cadr distance))
             )
       (while list1
         e1    = (car list1)
