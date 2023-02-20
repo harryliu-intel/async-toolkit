@@ -111,13 +111,22 @@
   )
 
 ; Add TOP_HALO given a prBoundary or around instances with topHalo=nil directive
-(defun AddTopHalo (@key (CV (geGetEditCellView)) (fill_metal nil) (flatten t) (outside t) (around_instances nil))
+(defun AddTopHalo (@key (CV (geGetEditCellView)) (fill_metal nil) (small_halo nil) (flatten t) (outside t) (around_instances nil))
   (let (vCV nCV ncCV scCV niCV siCV cnt idx prop)
     ; delete old halo
     (DeleteTopHalo ?CV CV)
 
     ; choose halo cells
-    (cond (fill_metal
+    (cond (small_halo
+           vCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.v_m0_10"  CV->viewName)
+           nCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.n_m0_10"  CV->viewName)
+           sCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.s_m0_10"  CV->viewName)
+           ncCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.ni_m0_10" CV->viewName)
+           scCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.si_m0_10" CV->viewName)
+           niCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.nc_m0_10" CV->viewName)
+           siCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.sc_m0_10" CV->viewName)
+           )
+          (fill_metal
            vCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.v_tap_m2345678"  CV->viewName)
            nCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.n_m2345678"      CV->viewName)
            sCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.s_m2345678"      CV->viewName)
@@ -127,9 +136,9 @@
            siCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.si_tap_m2345678" CV->viewName)
            )
           (t
-           vCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.v_m0_10x2"  CV->viewName)
-           nCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.n_m0_10x2"  CV->viewName)
-           sCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.s_m0_10x2"  CV->viewName)
+           vCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.v_m0_10x2"   CV->viewName)
+           nCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.n_m0_10x2"   CV->viewName)
+           sCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.s_m0_10x2"   CV->viewName)
            ncCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.ni_m0_10x2"  CV->viewName)
            scCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.si_m0_10x2"  CV->viewName)
            niCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.nc_m0_10x2"  CV->viewName)
@@ -139,11 +148,13 @@
 
     ; add the halo
     idx=0
-    prop=(dbGetPropByName CV "topHalo")
-    (cond (around_instances && prop && prop->value=="TRUE"
-           (foreach polygon (NoHaloSubcellBoundaries ?CV CV)
-                    idx=(AddHalo polygon vCV nCV sCV ncCV scCV niCV siCV ?CV CV ?outside outside ?idx idx)
-                    )
+    (cond (around_instances
+           prop=(dbGetPropByName CV "topHalo")
+           (when prop && prop->value=="TRUE"
+                 (foreach polygon (NoHaloSubcellBoundaries ?CV CV)
+                          idx=(AddHalo polygon vCV nCV sCV ncCV scCV niCV siCV ?CV CV ?outside outside ?idx idx)
+                          )
+                 )
            )
           (t
            (AddHalo CV->prBoundary->points vCV nCV sCV ncCV scCV niCV siCV ?CV CV ?outside outside)
