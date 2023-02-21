@@ -38,13 +38,13 @@
   )
 
 ; Add halo cells inside or outside a polygon
-(defun AddHalo (points vCV nCV sCV ncCV scCV niCV siCV @key (CV (geGetEditCellView)) (outside nil) (idx 0))
+(defun AddHalo (points vCV hCV cCV icCV @key (CV (geGetEditCellView)) (outside nil) (idx 0))
   (let (num point last next next2 c c1 name x y xa ya cw ch w h cw0 cw1 ch0 ch1)
     ; setup
-    xa = (RectGetWidth  (GetPrbound nCV)->bBox)
+    xa = (RectGetWidth  (GetPrbound hCV)->bBox)
     ya = (RectGetHeight (GetPrbound vCV)->bBox)
-    cw = (round (RectGetWidth  (GetPrbound ncCV)->bBox)/xa) ; corner width
-    ch = (round (RectGetHeight (GetPrbound ncCV)->bBox)/ya) ; corner height
+    cw = (round (RectGetWidth  (GetPrbound icCV)->bBox)/xa) ; interior corner width
+    ch = (round (RectGetHeight (GetPrbound icCV)->bBox)/ya) ; interior corner height
     points = (if (IsPolygonClockwise points) points (reverse points))
     points = (if outside (reverse points) points)
     num = (length points)
@@ -61,14 +61,14 @@
          ; instantiate a corner
          name = (sprintf nil "halo_%s_%d" c idx++)
  	 (cond
-               (c=="se" (dbCreateSimpleMosaic CV scCV name point "R0" 1 1 ya xa))
-               (c=="en" (dbCreateSimpleMosaic CV scCV name point "MY" 1 1 ya xa))
-               (c=="nw" (dbCreateSimpleMosaic CV ncCV name point "MY" 1 1 ya xa))
-               (c=="ws" (dbCreateSimpleMosaic CV ncCV name point "R0" 1 1 ya xa))
-               (c=="wn" (dbCreateSimpleMosaic CV niCV name point "MY" 1 1 ya xa))
-               (c=="sw" (dbCreateSimpleMosaic CV niCV name point "R0" 1 1 ya xa))
-               (c=="es" (dbCreateSimpleMosaic CV siCV name point "R0" 1 1 ya xa))
-               (c=="ne" (dbCreateSimpleMosaic CV siCV name point "MY" 1 1 ya xa))
+               (c=="se" (dbCreateInst CV icCV name point "MX"))
+               (c=="en" (dbCreateInst CV icCV name point "R180"))
+               (c=="nw" (dbCreateInst CV icCV name point "MY"))
+               (c=="ws" (dbCreateInst CV icCV name point "R0"))
+               (c=="wn" (dbCreateInst CV cCV  name point "MY"))
+               (c=="sw" (dbCreateInst CV cCV  name point "R0"))
+               (c=="es" (dbCreateInst CV cCV  name point "MX"))
+               (c=="ne" (dbCreateInst CV cCV  name point "R180"))
                )
 
          ; instantiate an edge
@@ -96,10 +96,10 @@
 
          ; draw edges
          (cond
-          (c=="nw" && w>=cw0+cw1 (dbCreateSimpleMosaic CV nCV name x-xa*(w-cw1):y "R0" 1 w-cw0-cw1 ya xa))
-          (c=="sw" && w>=cw0+cw1 (dbCreateSimpleMosaic CV nCV name x-xa*(w-cw1):y "R0" 1 w-cw0-cw1 ya xa))
-          (c=="ne" && w>=cw0+cw1 (dbCreateSimpleMosaic CV sCV name x+xa*cw0:y     "R0" 1 w-cw0-cw1 ya xa))
-          (c=="se" && w>=cw0+cw1 (dbCreateSimpleMosaic CV sCV name x+xa*cw0:y     "R0" 1 w-cw0-cw1 ya xa))
+          (c=="nw" && w>=cw0+cw1 (dbCreateSimpleMosaic CV hCV name x-xa*(w-cw1):y "R0" 1 w-cw0-cw1 ya xa))
+          (c=="sw" && w>=cw0+cw1 (dbCreateSimpleMosaic CV hCV name x-xa*(w-cw1):y "R0" 1 w-cw0-cw1 ya xa))
+          (c=="ne" && w>=cw0+cw1 (dbCreateSimpleMosaic CV hCV name x+xa*cw0:y     "MX" 1 w-cw0-cw1 ya xa))
+          (c=="se" && w>=cw0+cw1 (dbCreateSimpleMosaic CV hCV name x+xa*cw0:y     "MX" 1 w-cw0-cw1 ya xa))
           (c=="wn" && h>=ch0+ch1 (dbCreateSimpleMosaic CV vCV name x:y+ya*ch0     "MY" h-ch0-ch1 1 ya xa))
           (c=="ws" && h>=ch0+ch1 (dbCreateSimpleMosaic CV vCV name x:y-ya*(h-ch1) "R0" h-ch0-ch1 1 ya xa))
           (c=="en" && h>=ch0+ch1 (dbCreateSimpleMosaic CV vCV name x:y+ya*ch0     "MY" h-ch0-ch1 1 ya xa))
@@ -111,38 +111,23 @@
   )
 
 ; Add TOP_HALO given a prBoundary or around instances with topHalo=nil directive
-(defun AddTopHalo (@key (CV (geGetEditCellView)) (fill_metal nil) (small_halo nil) (flatten t) (outside t) (around_instances nil))
-  (let (vCV nCV ncCV scCV niCV siCV cnt idx prop)
+(defun AddTopHalo (@key (CV (geGetEditCellView)) (small nil) (outside t) (around_instances nil))
+  (let (vCV hCV cCV icCV cnt idx prop)
     ; delete old halo
     (DeleteTopHalo ?CV CV)
 
     ; choose halo cells
-    (cond (small_halo
-           vCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.v_m0_10"  CV->viewName)
-           nCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.n_m0_10"  CV->viewName)
-           sCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.s_m0_10"  CV->viewName)
-           ncCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.ni_m0_10" CV->viewName)
-           scCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.si_m0_10" CV->viewName)
-           niCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.nc_m0_10" CV->viewName)
-           siCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.sc_m0_10" CV->viewName)
-           )
-          (fill_metal
-           vCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.v_tap_m2345678"  CV->viewName)
-           nCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.n_m2345678"      CV->viewName)
-           sCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.s_m2345678"      CV->viewName)
-           ncCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.nc_m2345678"     CV->viewName)
-           scCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.sc_m2345678"     CV->viewName)
-           niCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.ni_tap_m2345678" CV->viewName)
-           siCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.si_tap_m2345678" CV->viewName)
+    (cond (small
+           vCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.v_small"  CV->viewName)
+           hCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.h_small"  CV->viewName)
+           cCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.c_small"  CV->viewName)
+           icCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.ic_small" CV->viewName)
            )
           (t
-           vCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.v_m0_10x2"   CV->viewName)
-           nCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.n_m0_10x2"   CV->viewName)
-           sCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.s_m0_10x2"   CV->viewName)
-           ncCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.ni_m0_10x2"  CV->viewName)
-           scCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.si_m0_10x2"  CV->viewName)
-           niCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.nc_m0_10x2"  CV->viewName)
-           siCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.sc_m0_10x2"  CV->viewName)
+           vCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.v"  CV->viewName)
+           hCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.h"  CV->viewName)
+           cCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.c"  CV->viewName)
+           icCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.ic" CV->viewName)
            )
           )
 
@@ -152,63 +137,51 @@
            prop=(dbGetPropByName CV "topHalo")
            (when prop && prop->value=="TRUE"
                  (foreach polygon (NoHaloSubcellBoundaries ?CV CV)
-                          idx=(AddHalo polygon vCV nCV sCV ncCV scCV niCV siCV ?CV CV ?outside outside ?idx idx)
+                          idx=(AddHalo polygon vCV hCV cCV icCV ?CV CV ?outside outside ?idx idx)
                           )
                  )
            )
           (t
-           (AddHalo CV->prBoundary->points vCV nCV sCV ncCV scCV niCV siCV ?CV CV ?outside outside)
+           (AddHalo CV->prBoundary->points vCV hCV cCV icCV ?CV CV ?outside outside)
            )
           )
 
-    ; flatten, flip, and rename for DEF
-    (when flatten
-      (foreach i CV->mosaics
-        (when (rexMatchp "TOP_HALO" i->cellName)
-          (dbFlattenInst i 1)
-	  )
-	)
-      )
+    ; flatten mosaics and legalize halo variants
+    cnt=(LegalizeTopHalo ?CV CV)
+    (dbSave CV)
+    )
+  )
 
-    cnt = 0
+; flatten mosaics and legalize variants
+(defun LegalizeTopHalo (@key (CV (geGetEditCellView)))
+  (let (cnt x y suffix newCV)
+    ; flatten TOP_HALO mosaics
+    (foreach inst CV->mosaics
+             (when (rexMatchp "TOP_HALO" inst->cellName)
+               (dbFlattenInst inst 1)
+               )
+             )
+
+    cnt=0
     (foreach inst CV->instances
       (when (strncmp inst->cellName "globals.TOP_HALO." (strlen "globals.TOP_HALO."))==0
-        ; check m6 flip
-        (unless (CheckInstanceAlignment inst ?check_x nil ?check_parent_grid nil)
-          x = (car  inst->xy)
-          y = (cadr inst->xy)
-          (cond (inst->orient=="R0"   inst->orient="MX"   inst->xy=x:y+2*TrackPitch)
-                (inst->orient=="MX"   inst->orient="R0"   inst->xy=x:y-2*TrackPitch)
-                (inst->orient=="MY"   inst->orient="R180" inst->xy=x:y+2*TrackPitch)
-                (inst->orient=="R180" inst->orient="MY"   inst->xy=x:y-2*TrackPitch)
-                )
-          )
-        inst->status = "locked"
-	inst->name = (sprintf nil "halo_%d" cnt)
-	cnt++
-        )
+            inst->status = "locked"
+            (unless (strncmp inst->name "halo" 4)==0
+                    inst->name = (sprintf nil "halo_%d" cnt)
+                    cnt++
+                    )
+            (unless (CheckInstanceAlignment inst ?check_x nil ?check_parent_grid nil)
+              newCV=(ReadCV "globals" (strcat inst->cellName "_oddrow") inst->viewName)
+              (unless newCV (error "unable to read oddrow version of %s\n" inst->name))
+              inst->master=newCV
+              )
+            )
       )
-    (dbSave CV)
     cnt
     )
   )
 
-; Add CHIP_HALO given a prBoundary.
-(defun AddChipHalo (@key (CV (geGetEditCellView)))
-  (let (vCV nCV ncCV scCV niCV siCV)
-    ; n/s and i/c confusingly swapped because this goes OUTSIDE the prBoundary
-    vCV  = (dbOpenCellViewByType "globals" "globals.CHIP_HALO.v"  "layout")
-    nCV  = (dbOpenCellViewByType "globals" "globals.CHIP_HALO.s"  "layout")
-    sCV  = (dbOpenCellViewByType "globals" "globals.CHIP_HALO.n"  "layout")
-    ncCV = (dbOpenCellViewByType "globals" "globals.CHIP_HALO.si" "layout")
-    scCV = (dbOpenCellViewByType "globals" "globals.CHIP_HALO.ni" "layout")
-    niCV = (dbOpenCellViewByType "globals" "globals.CHIP_HALO.sc" "layout")
-    siCV = (dbOpenCellViewByType "globals" "globals.CHIP_HALO.nc" "layout")
-    (AddHalo CV->prBoundary->points vCV nCV sCV ncCV scCV niCV siCV ?CV CV ?outside t)
-    )
-  )
-
-; Figure out which way a polygon is turning given 3 consecutive points
+; Figure out which way a clockwise polygon is turning given 3 consecutive points
 (defun ClassifyPolygonCorner (last point next)
   (cond ((car point) <(car last)  (if (cadr next)<(cadr point) "ws" "wn"))
         ((car point) >(car last)  (if (cadr next)<(cadr point) "es" "en"))
