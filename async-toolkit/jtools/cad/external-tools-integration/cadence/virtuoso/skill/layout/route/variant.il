@@ -50,3 +50,10 @@
     aligned
     )
   )
+
+; pick the right variant for instances in CV (useful for fill cells)
+(defun ChooseLayoutVariants (@key (CV (geGetEditCellView)))
+  (foreach inst CV->instances
+           (when (HasLayoutVariants ?CV inst->master) (ChooseLayoutVariant inst))
+           )
+  )
