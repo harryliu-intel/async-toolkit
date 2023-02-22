@@ -1020,9 +1020,6 @@ DumbLayers = (list (list "SRAM" "fill")
       (dbDeleteObject inst)
       )
 
-    ; add id layers that are the wrong shape (BUG: this covers macros and conflicts with GPIO)
-    ; (dbCreatePolygon CV (list "lowVccSEL" "id") prb->points)
-
     ; add pins to tag for lvs
     (CopyPinsFromSourceView ?CV tagcv ?srcCV CV)
 
