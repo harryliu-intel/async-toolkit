@@ -110,8 +110,49 @@
     )
   )
 
+; Add reminder cells above/below TOP_HALO cells
+(defun AddHaloRemainder (@key (CV (geGetEditCellView)) (small nil))
+  (let (hCV cCV remCV cellName xy rem bbox n y)
+    ; find CV of remainder cells
+    hCV=(makeTable "hCV" nil)
+    cCV=(makeTable "cCV" nil)
+    (foreach rem (list 60 120 180)
+             cellName=(sprintf nil "globals.TOP_HALO.h_%srem%d" (if small "_small" "") rem)
+             hCV[rem]=(ReadCV "globals" cellName CV->viewName)
+             cellName=(sprintf nil "globals.TOP_HALO.c_%srem%d" (if small "_small" "") rem)
+             cCV[rem]=(ReadCV "globals" cellName CV->viewName)
+             )
+
+    ; instantiate remainder cells
+    n=0
+    (foreach inst CV->instances
+      (when inst->libName=="globals"
+            remCV=nil
+            (cond ((strncmp inst->cellName "globals.TOP_HALO.h" (length "globals.TOP_HALO.h"))==0 remCV=hCV)
+                  ((strncmp inst->cellName "globals.TOP_HALO.c" (length "globals.TOP_HALO.c"))==0 remCV=cCV)
+                  )
+            (when remCV
+              bbox=inst->master->prBoundary->bBox
+              xy=(car (car bbox)):(cadr (car bbox))
+              xy=(dbTransformPoint xy inst->transform)
+              y=(cadr xy)
+              y=(round y/0.06)
+              y=(if inst->orient=="R180" || inst->orient=="MX" -y y)
+              rem=(posmod y 4)*60
+              (when rem!=0 && remCV[rem]
+                remCV=remCV[rem]
+                (dbCreateInst CV remCV (sprintf nil "halo_rem_%d" n inst->orient) xy inst->orient)
+                n++
+                )
+              )
+            )
+      )
+    n
+    )
+  )
+
 ; Add TOP_HALO given a prBoundary or around instances with topHalo=nil directive
-(defun AddTopHalo (@key (CV (geGetEditCellView)) (small nil) (outside t) (around_instances nil))
+(defun AddTopHalo (@key (CV (geGetEditCellView)) (small nil) (outside t) (around_instances nil) (remainder t))
   (let (vCV hCV cCV icCV cnt idx prop)
     ; delete old halo
     (DeleteTopHalo ?CV CV)
@@ -148,7 +189,11 @@
 
     ; flatten mosaics and legalize halo variants
     cnt=(LegalizeTopHalo ?CV CV)
+
+    ; add remainder cells next to halo cells where necessary
+    (when remainder cnt+=(AddHaloRemainder ?CV CV ?small small))
     (dbSave CV)
+    cnt
     )
   )
 
