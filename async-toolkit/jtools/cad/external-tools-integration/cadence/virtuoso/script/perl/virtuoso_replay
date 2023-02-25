@@ -12,7 +12,7 @@ foreach my $file (@ARGV) {
     (-r $file) or die "cannot read file $file\n";
     my $base = $file;
     $base =~ s/\.il$//g;
-    if (-e "${base}.cdswd") { die "${base}.cdswd already exists\n"; }
+    if (-e "${base}.cdswd") { print STDERR "WARNING: ${base}.cdswd already exists, skipping\n"; next; }
     system("mkdir -p ${base}.cdswd");
     system("$ENV{FULCRUM} mkcdswd --target-dir=${base}.cdswd " .
            "--dfII-dir=$ENV{DFII_DIR} --cast-path=$ENV{CAST_PATH} " .
@@ -25,6 +25,7 @@ foreach my $file (@ARGV) {
     $ENV{CDS_XVNC_OFFSET} = $display % 10;
 
     # run locally or with netbatch
+    print "Running $file\n";
     if ($block) {
         system("(cd ${base}.cdswd; " .
                "$ENV{FULCRUM} --cadence assura_oa,$ENV{ICV_VERSION} " .
@@ -34,10 +35,6 @@ foreach my $file (@ARGV) {
                "$ENV{FULCRUM} --cadence assura_oa,$ENV{ICV_VERSION} " .
                "virtuoso -log ${base}.log -replay $ENV{PWD}/${file} -nograph >& ${base}.out) &");
     } else {
-#        system("(cd ${base}.cdswd; " .
-#               "nbq -j ${base}.out " .
-#               "$ENV{FULCRUM} --cadence assura_oa,$ENV{ICV_VERSION} " .
-#               "virtuoso -log ${base}.log -replay $ENV{PWD}/${file} -nograph)");
         system("(cd ${base}.cdswd; " .
                "nbjob run --log-file ${base}.out " .
                "$ENV{FULCRUM} --cadence assura_oa,$ENV{ICV_VERSION} " .
