@@ -409,7 +409,7 @@
         (perfCorner "max")       ; primary perfCorner for performance
         (Mem (nrGetMaxHeapSize)) ; memory to use
         )
-  (let (CAST_PATH DFII_DIR TEMP WDIR file)
+  (let (CAST_PATH DFII_DIR TEMP WDIR file tcl)
     ; files and options
     CAST_PATH = (ConfigFileGetValue TheCDSConfigTable "CAST_PATH")
     CAST_DIR  = (ConfigFileGetValue TheCDSConfigTable "CAST_DIR")
@@ -444,7 +444,12 @@
     (when tau (fprintf file "--tau=%g\n" tau))
     (fprintf file "--rdt-eco-iter=%d\n" ecoIter)
     (when rdtUseFlops (fprintf file "--rdt-use-flops=1\n"))
-    (when rdtUserTcl (fprintf file "--rdt-user-tcl=%s\n" (PathMakePathAbsolute rdtUserTcl)))
+    (when rdtUserTcl
+      (foreach path (parseString rdtUserTcl ":")
+               tcl = (cons (PathMakePathAbsolute path) tcl)
+               )
+      (fprintf file "--rdt-user-tcl=%s\n" (buildString tcl ":"))
+      )
     (when scanMode (fprintf file "--scan-mode=%s\n" scanMode))
     (when useUPFTemplate (fprintf file "--use-upf-template=%d\n" useUPFTemplate))
     (fprintf file "--base=%s\n" (GetCastCellName CV->cellName))
