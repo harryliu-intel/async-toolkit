@@ -407,12 +407,12 @@ PROCEDURE MeasureFromSpice(spiceFn        : Pathname.T;
                            mapper         : Mapper;
                            traceRt        : Pathname.T;
                            graphNs        : LONGREAL;
-                       Dot      : TEXT;
-                       allNames : TextSet.T;
-                       dutPfx   : TEXT;
-                      tranFinder        : TransitionFinder.T;
-                      resetTime         : LONGREAL;
-                    mappedNames : TextTextTbl.T) =
+                           Dot            : TEXT;
+                           allNames       : TextSet.T;
+                           dutPfx         : TEXT;
+                           tranFinder     : TransitionFinder.T;
+                           resetTime      : LONGREAL;
+                           mappedNames    : TextTextTbl.T) =
   BEGIN
     TRY
       WITH spiceRd = FileRd.Open(spiceFn) DO
