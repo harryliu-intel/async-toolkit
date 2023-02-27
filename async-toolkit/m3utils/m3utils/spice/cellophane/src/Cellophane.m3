@@ -17,6 +17,7 @@ IMPORT SpiceCircuit;
 IMPORT Wr;
 IMPORT FileWr;
 IMPORT Thread;
+IMPORT TextSetDef;
 
 <*FATAL Thread.Alerted*>
 
@@ -48,7 +49,9 @@ PROCEDURE WrapOne(wr : Wr.T; tn : TEXT; ckt : SpiceCircuit.T) =
       
       FOR i := 0 TO ckt.params.size() - 1 DO
         WITH p = ckt.params.get(i) DO
-          Wr.PutText(wr, F(".PROBE v(%s)\n", p))
+          IF NOT excludeNames.member(p) THEN
+            Wr.PutText(wr, F(".PROBE v(%s)\n", p))
+          END
         END
       END;
       Wr.PutText(wr, ".ENDS\n\n");
@@ -65,6 +68,8 @@ VAR
   pfx   := "WRAP_";
   thisPat : TEXT;
   wr : Wr.T;
+  excludeNames := NEW(TextSetDef.T).init();
+  
 BEGIN
 
   ofn := "-";
@@ -78,6 +83,9 @@ BEGIN
     END;
     IF pp.keywordPresent("-pfx") THEN
       pfx := pp.getNext()
+    END;
+    WHILE pp.keywordPresent("-x") DO
+      EVAL excludeNames.insert(pp.getNext())
     END;
     WHILE pp.keywordPresent("-p") DO
       thisPat := pp.getNext();

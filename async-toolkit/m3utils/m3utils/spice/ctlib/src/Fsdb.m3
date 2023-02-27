@@ -590,6 +590,10 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
     *)
     
     BEGIN
+      IF timesteps.size() = 0 THEN
+        Debug.Error("ChopTimestepsBasedOnType : no timesteps (yet?)")
+      END;
+      
       WITH voltSignals = SetToSeq(GetIdsByText(typeTab, type)) DO
         IF voltSignals.size() # 0 THEN
           VAR
