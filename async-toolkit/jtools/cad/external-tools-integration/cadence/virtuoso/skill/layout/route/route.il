@@ -960,7 +960,20 @@ DumbLayers = (list (list "SRAM" "fill")
     )
   )
 
+; create a layout_tag view with AddTopHalo
+(defun MakeHaloTag (@key (CV (geGetEditCellView)))
+  (let (tagCV)
+    tagCV=(dbOpenCellViewByType CV->libName CV->cellName "layout_tag" "maskLayout" "w")
+    (dbCreateInst tagCV CV "cell" 0:0 "R0")
+    (SetCellAlignment 0.3:0.24 0:0 ?topHalo t ?CV tagCV)
+    (AddTopHalo ?CV tagCV ?around_instances t ?viewName "layout")
+    (dbCreatePRBoundary tagCV CV->prBoundary->points)
+    (dbSave tagCV)
+    tagCV
+    )
+  )
 
+; TODO: Delete TOP_HALO cells then MakeHaloTag instead
 (defun RemoveHalo (@key (CV (geGetEditCellView)) (baseCV nil))
   (let (cv tagcv prb del allshapes GNDextras)
     ; duplicate prbound from floorplan
@@ -1010,7 +1023,11 @@ DumbLayers = (list (list "SRAM" "fill")
     (foreach via (FilterList CV->vias (lambda (via) !(IsRectOutsidePolygon via->bBox prb->points)))
         (dbCopyFig via tagcv)
         (dbDeleteObject via)
-      )
+        )
+
+    ; delete fill V0 that can cause shorts
+    (printf "  ... remove some v0:actFill\n")
+    (RemoveHaloFillV0 ?CV V)
 
     ; do instances
     (printf "  ... halo instances\n")
@@ -1035,6 +1052,25 @@ DumbLayers = (list (list "SRAM" "fill")
     (dbSave tagcv)
     (dbSave CV)
     t
+    )
+  )
+
+; HACK: remove v0:actFill along left/right no-halo edges
+(defun RemoveHaloFillV0 (@key (CV (geGetEditCellView)))
+  (let (xy0 xy1 n rect)
+    n=0
+    (for i 0 (length CV->prBoundary->points)
+         xy0=(nth i CV->prBoundary->points)
+         xy1=(nth (mod i+1 (length CV->prBoundary->points)) CV->prBoundary->points)
+         (when (car xy0)==(car xy1)
+               rect=(list (car xy0)-0.075:(cadr xy0) (car xy0)+0.075:(cadr xy1))
+               (foreach overlap (dbGetOverlaps CV rect (list "v0" "actFill") 0)
+                        (dbDeleteObject overlap)
+                        n++
+                        )
+               )
+         )
+    n
     )
   )
 
