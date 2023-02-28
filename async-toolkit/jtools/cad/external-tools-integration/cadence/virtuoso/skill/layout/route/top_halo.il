@@ -111,16 +111,17 @@
   )
 
 ; Add reminder cells above/below TOP_HALO cells
-(defun AddHaloRemainder (@key (CV (geGetEditCellView)) (small nil))
+(defun AddHaloRemainder (@key (CV (geGetEditCellView)) (small nil) (viewName nil))
   (let (hCV cCV remCV cellName xy rem bbox n y)
     ; find CV of remainder cells
     hCV=(makeTable "hCV" nil)
     cCV=(makeTable "cCV" nil)
+    (unless viewName viewName=CV->viewName)
     (foreach rem (list 60 120 180)
              cellName=(sprintf nil "globals.TOP_HALO.h_%srem%d" (if small "_small" "") rem)
-             hCV[rem]=(ReadCV "globals" cellName CV->viewName)
+             hCV[rem]=(ReadCV "globals" cellName viewName)
              cellName=(sprintf nil "globals.TOP_HALO.c_%srem%d" (if small "_small" "") rem)
-             cCV[rem]=(ReadCV "globals" cellName CV->viewName)
+             cCV[rem]=(ReadCV "globals" cellName viewName)
              )
 
     ; instantiate remainder cells
@@ -152,23 +153,25 @@
   )
 
 ; Add TOP_HALO given a prBoundary or around instances with topHalo=nil directive
-(defun AddTopHalo (@key (CV (geGetEditCellView)) (small nil) (outside t) (around_instances nil) (remainder t))
+(defun AddTopHalo (@key (CV (geGetEditCellView)) (small nil) (outside t)
+                        (around_instances nil) (remainder t) (viewName nil))
   (let (vCV hCV cCV icCV cnt idx prop)
     ; delete old halo
     (DeleteTopHalo ?CV CV)
 
     ; choose halo cells
+    (unless viewName viewName=CV->viewName)
     (cond (small
-           vCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.v_small"  CV->viewName)
-           hCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.h_small"  CV->viewName)
-           cCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.c_small"  CV->viewName)
-           icCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.ic_small" CV->viewName)
+           vCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.v_small"  viewName)
+           hCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.h_small"  viewName)
+           cCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.c_small"  viewName)
+           icCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.ic_small" viewName)
            )
           (t
-           vCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.v"  CV->viewName)
-           hCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.h"  CV->viewName)
-           cCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.c"  CV->viewName)
-           icCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.ic" CV->viewName)
+           vCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.v"  viewName)
+           hCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.h"  viewName)
+           cCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.c"  viewName)
+           icCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.ic" viewName)
            )
           )
 
@@ -191,7 +194,7 @@
     cnt=(LegalizeTopHalo ?CV CV)
 
     ; add remainder cells next to halo cells where necessary
-    (when remainder cnt+=(AddHaloRemainder ?CV CV ?small small))
+    (when remainder cnt+=(AddHaloRemainder ?CV CV ?small small ?viewName viewName))
     (dbSave CV)
     cnt
     )
