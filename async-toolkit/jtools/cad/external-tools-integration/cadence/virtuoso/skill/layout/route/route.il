@@ -1027,7 +1027,7 @@ DumbLayers = (list (list "SRAM" "fill")
 
     ; delete fill V0 that can cause shorts
     (printf "  ... remove some v0:actFill\n")
-    (RemoveHaloFillV0 ?CV V)
+    (RemoveHaloFillV0 ?CV CV)
 
     ; do instances
     (printf "  ... halo instances\n")
