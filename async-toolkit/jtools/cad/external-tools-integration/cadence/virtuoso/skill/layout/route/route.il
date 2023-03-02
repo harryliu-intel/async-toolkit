@@ -8,7 +8,7 @@
         (botMetal nil)           ; bottom metal layer to use, or nil to use wires.il
         (topMetal nil)           ; top metal layer to use, or nil to use wires.il
         (pwrMetal nil)           ; top metal layer for power
-        (topHalo (GetTopHalo))  ; APR should add a top halo
+        (topHalo (GetTopHalo))   ; APR should add a top halo
         (denseStaples nil)       ; APR should add staples at dense pitch
 	(midLevel nil)           ; APR custom mid-level flow
         (thresholds (list "c" "b")) ; transistor thresholds to use
@@ -86,7 +86,7 @@
         (botMetal nil)           ; bottom metal layer to use, or nil to use wires.il
         (topMetal nil)           ; top metal layer to use, or nil to use wires.il
         (pwrMetal nil)           ; top metal layer for power
-        (topHalo (GetTopHalo))  ; APR should add a top halo
+        (topHalo (GetTopHalo))   ; APR should add a top halo
         (denseStaples nil)       ; APR should add staples at dense pitch
 	(midLevel nil)           ; APR custom mid-level flow
         (thresholds (list "c" "b")) ; transistor thresholds to use
@@ -266,8 +266,7 @@
       (unless offset (error "Can't find RDTOffset\n"))
       (OffsetEverything offset ?CV ExportCV)
 
-      ; add top halo
-      ; counter-intuitively, when topHalo=t we actually don't want it to do the halo
+      ; add top halo for context in a topHalo=nil cell
       (unless topHalo (AddTopHalo ?CV ExportCV))
 
       ; save
@@ -659,8 +658,11 @@
               ?viewType "maskLayout" ?mode "a" ?window win)
       )
 
-    ; move extra halos to tag view
-    (when !topHalo (RemoveHalo ?CV ImportCV ?baseCV baseCV))
+    ; create layout_tag view with a halo for topHalo=nil cells
+    (unless topHalo
+      (DeleteTopHalo ?CV CV) ; (RemoveHalo ?CV ImportCV ?baseCV baseCV)
+      (MakeHaloTag ?CV CV)
+      )
 
     ; execute custom function
     (FinishRouterImport ?CV ImportCV)
@@ -962,12 +964,21 @@ DumbLayers = (list (list "SRAM" "fill")
 
 ; create a layout_tag view with AddTopHalo
 (defun MakeHaloTag (@key (CV (geGetEditCellView)))
-  (let (tagCV)
+  (let (tagCV fig net inst term)
     tagCV=(dbOpenCellViewByType CV->libName CV->cellName "layout_tag" "maskLayout" "w")
-    (dbCreateInst tagCV CV "cell" 0:0 "R0")
+    inst=(dbCreateInst tagCV CV "cell" 0:0 "R0")
     (SetCellAlignment 0.3:0.24 0:0 ?topHalo t ?CV tagCV)
     (AddTopHalo ?CV tagCV ?around_instances t ?viewName "layout")
     (dbCreatePRBoundary tagCV CV->prBoundary->points)
+    (foreach pin CV->shapes
+             (when pin->pin
+               fig=(dbCopyFig pin tagCV)
+               net=(dbMakeNet tagCV pin->net->name)
+               (dbCreatePin net fig)
+               term=(dbFindTermByName CV pin->net->name)
+               (dbCreateInstTerm net inst term)
+               )
+             )
     (dbSave tagCV)
     tagCV
     )
