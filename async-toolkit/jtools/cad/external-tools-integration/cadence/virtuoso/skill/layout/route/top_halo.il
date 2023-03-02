@@ -292,3 +292,12 @@
     polygons
     )
   )
+
+; quick utility to query the prop
+(defun GetTopHalo (@key (CV (geGetEditCellView)))
+  (let (halo prop)
+    (when prop=(dbGetPropByName CV->master "topHalo")
+      halo = prop->value
+      )
+    )
+  )
