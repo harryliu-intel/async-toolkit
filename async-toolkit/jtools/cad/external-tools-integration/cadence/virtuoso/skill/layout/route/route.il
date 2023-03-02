@@ -261,13 +261,13 @@
           )
         )
 
+      ; add top halo for context in a topHalo=nil cell
+      (unless topHalo (AddTopHalo ?CV ExportCV ?viewName "abstract"))
+
       ; offset for cell alignment and avoid negative numbers because RDT is stupid
       offset = (GetRDTOffset ?CV ExportCV)
       (unless offset (error "Can't find RDTOffset\n"))
       (OffsetEverything offset ?CV ExportCV)
-
-      ; add top halo for context in a topHalo=nil cell
-      (unless topHalo (AddTopHalo ?CV ExportCV))
 
       ; save
       (dbSave ExportCV)
