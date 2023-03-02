@@ -112,7 +112,7 @@
 
 ; Add reminder cells above/below TOP_HALO cells
 (defun AddHaloRemainder (@key (CV (geGetEditCellView)) (small nil) (viewName nil))
-  (let (hCV cCV remCV cellName xy rem bbox n y)
+  (let (hCV cCV remCV cellName xy rem bbox n y inst)
     ; find CV of remainder cells
     hCV=(makeTable "hCV" nil)
     cCV=(makeTable "cCV" nil)
@@ -142,7 +142,8 @@
               rem=(posmod y 4)*60
               (when rem!=0 && remCV[rem]
                 remCV=remCV[rem]
-                (dbCreateInst CV remCV (sprintf nil "halo_rem_%d" n inst->orient) xy inst->orient)
+                inst=(dbCreateInst CV remCV (sprintf nil "halo_rem_%d" n inst->orient) xy inst->orient)
+                inst->status="locked"
                 n++
                 )
               )
