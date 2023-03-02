@@ -268,7 +268,7 @@
 
       ; add top halo
       ; counter-intuitively, when topHalo=t we actually don't want it to do the halo
-      ;(unless topHalo (AddTopHalo ?CV ExportCV))
+      (unless topHalo (AddTopHalo ?CV ExportCV))
 
       ; save
       (dbSave ExportCV)
