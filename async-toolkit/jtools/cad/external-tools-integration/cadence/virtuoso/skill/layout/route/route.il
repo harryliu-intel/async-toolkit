@@ -1036,9 +1036,9 @@ DumbLayers = (list (list "SRAM" "fill")
         (dbDeleteObject via)
         )
 
-    ; delete fill V0 that can cause shorts
-    (printf "  ... remove some v0:actFill\n")
-    (RemoveHaloFillV0 ?CV CV)
+    ; delete fill that can cause shorts
+    (printf "  ... remove v0 and m0 fill near left/right edges\n")
+    (RemoveFillNearHalo ?CV CV)
 
     ; do instances
     (printf "  ... halo instances\n")
@@ -1066,20 +1066,25 @@ DumbLayers = (list (list "SRAM" "fill")
     )
   )
 
-; HACK: remove v0:actFill along left/right no-halo edges
-(defun RemoveHaloFillV0 (@key (CV (geGetEditCellView)))
-  (let (xy0 xy1 n rect)
+; HACK: remove m0 and v0 fill near left/right no-halo edges
+(defun RemoveFillNearHalo (@key (CV (geGetEditCellView)))
+  (let (xy0 xy1 n rect lpps)
+    lpps=(list (list "v0" "actFill") (list "v0" "fill")
+               (list "m0" "fill") (list "m0" "actFill")
+               (list "m1" "fill") (list "m1" "actFill"))
     n=0
     (for i 0 (length CV->prBoundary->points)
          xy0=(nth i CV->prBoundary->points)
          xy1=(nth (mod i+1 (length CV->prBoundary->points)) CV->prBoundary->points)
          (when (car xy0)==(car xy1)
                rect=(list (car xy0)-0.075:(cadr xy0) (car xy0)+0.075:(cadr xy1))
-               (foreach overlap (dbGetOverlaps CV rect (list "v0" "actFill") 0)
-                        (dbDeleteObject overlap)
-                        n++
+               (foreach lpp lpps
+                        (foreach overlap (dbGetOverlaps CV rect lpp 0)
+                                 (dbDeleteObject overlap)
+                                 n++
+                                 )
                         )
-               )
+              )
          )
     n
     )
