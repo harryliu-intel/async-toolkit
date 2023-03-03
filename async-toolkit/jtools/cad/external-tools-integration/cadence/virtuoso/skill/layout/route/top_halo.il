@@ -203,7 +203,7 @@
 
 ; flatten mosaics and legalize variants
 (defun LegalizeTopHalo (@key (CV (geGetEditCellView)))
-  (let (cnt x y suffix newCV)
+  (let (cnt x y suffix newCV net term)
     ; flatten TOP_HALO mosaics
     (foreach inst CV->mosaics
              (when (rexMatchp "TOP_HALO" inst->cellName)
@@ -214,7 +214,6 @@
     cnt=0
     (foreach inst CV->instances
       (when (strncmp inst->cellName "globals.TOP_HALO." (strlen "globals.TOP_HALO."))==0
-            inst->status = "locked"
             (unless (strncmp inst->name "halo" 4)==0
                     inst->name = (sprintf nil "halo_%d" cnt)
                     cnt++
@@ -224,6 +223,10 @@
               (unless newCV (error "unable to read oddrow version of %s\n" inst->name))
               inst->master=newCV
               )
+            inst->status = "locked"
+            net  = (dbFindNetByName CV "GND")
+            term = (dbFindTermByName inst->master "GND")
+            (when net && term (dbCreateInstTerm net inst term))
             )
       )
     cnt
