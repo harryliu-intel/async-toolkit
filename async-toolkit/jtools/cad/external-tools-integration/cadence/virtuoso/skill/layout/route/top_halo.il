@@ -59,7 +59,7 @@
          c1 = (ClassifyPolygonCorner point next next2)
 
          ; instantiate a corner
-         name = (sprintf nil "halo_%s_%d" c idx++)
+         name = (sprintf nil "boundarycell_%s_%d" c idx++)
  	 (cond
                (c=="se" (dbCreateInst CV icCV name point "MX"))
                (c=="en" (dbCreateInst CV icCV name point "R180"))
@@ -72,7 +72,7 @@
                )
 
          ; instantiate an edge
-         name = (sprintf nil "halo_%d" idx++)
+         name = (sprintf nil "boundarycell_%d" idx++)
          h = (abs (round ((cadr next)-(cadr point))/ya))
          w = (abs (round ((car next)-(car point))/xa))
          x = (car point)
@@ -142,7 +142,7 @@
               rem=(posmod y 4)*60
               (when rem!=0 && remCV[rem]
                 remCV=remCV[rem]
-                inst=(dbCreateInst CV remCV (sprintf nil "halo_rem_%d" n inst->orient) xy inst->orient)
+                inst=(dbCreateInst CV remCV (sprintf nil "boundarycell_rem_%d" n inst->orient) xy inst->orient)
                 inst->status="locked"
                 n++
                 )
@@ -215,7 +215,7 @@
     (foreach inst CV->instances
       (when (strncmp inst->cellName "globals.TOP_HALO." (strlen "globals.TOP_HALO."))==0
             (unless (strncmp inst->name "halo" 4)==0
-                    inst->name = (sprintf nil "halo_%d" cnt)
+                    inst->name = (sprintf nil "boundarycell_%d" cnt)
                     cnt++
                     )
             (unless (CheckInstanceAlignment inst ?check_x nil ?check_parent_grid nil)
