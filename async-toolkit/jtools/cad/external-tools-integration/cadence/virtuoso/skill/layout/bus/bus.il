@@ -278,7 +278,7 @@ wires_modtime = makeTable("wires" 0)
     (cond (isPin && net
            fig->net = net
            (dbReplaceProp fig "underPin" "boolean" t)
-           (IndentPathFromPrBound fig CV->prBoundary)
+           (IndentPathFromPrBound fig ?CV CV)
            rect = (dbCreateRect CV (list (car layer) "pin") fig->bBox) ; add pin rectangle
            pin = (dbCreatePin net rect) ; create a pin
            (SetBusProp fig)
@@ -290,7 +290,7 @@ wires_modtime = makeTable("wires" 0)
            )
           )
     (cond (isHopOver
-    	   (IndentPathFromPrBound fig CV->prBoundary)
+    	   (IndentPathFromPrBound fig ?CV CV)
 	   fig->lpp = (list (car fig->lpp) "fill")
 	   rect = (dbCreateRect CV fig->lpp (car (nrConvertPathToRectList fig)))
 	   (SetBusProp rect)
@@ -2047,9 +2047,15 @@ wires_modtime = makeTable("wires" 0)
 )
 
 ; shrink paths that end on prBoundary
-(defun IndentPathFromPrBound (path prb)
-  (let (s pt0 pt1 xy0 xy1)
-    s=(round MetalHaloBoundarySpace[(car path->lpp)]/MfgGrid)
+(defun IndentPathFromPrBound (path @key (CV (geGetEditCellView)))
+  (let (prop prb s pt0 pt1 xy0 xy1)
+    prop=(dbGetPropByName CV "topHalo")
+    s=(if prop && prop->value=="FALSE"
+          MetalEteSpace[(car path->lpp)]/2        ; half min ETE spacing to boundary
+          MetalHaloBoundarySpace[(car path->lpp)] ; half big ETE spacing to boundary
+          )
+    s=(round s/MfgGrid)
+    prb=CV->prBoundary
     xy0=(XYtoIntegers (car  path->points))
     xy1=(XYtoIntegers (cadr path->points))
     (for i 0 (length prb->points)-1
