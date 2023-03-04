@@ -658,10 +658,11 @@
               ?viewType "maskLayout" ?mode "a" ?window win)
       )
 
-    ; create layout_tag view with a halo for topHalo=nil cells
+    ; for topHalo=nil cells, move context halo into layout_tag view
     (unless topHalo
-      (DeleteTopHalo ?CV CV) ; (RemoveHalo ?CV ImportCV ?baseCV baseCV)
-      (MakeHaloTag ?CV CV)
+      (DeleteTopHalo ?CV ImportCV) ; (RemoveHalo ?CV ImportCV ?baseCV baseCV)
+      (CopyPrBoundary baseCV ?CV ImportCV)
+      (MakeHaloTag ?CV ImportCV)
       )
 
     ; execute custom function
@@ -984,17 +985,20 @@ DumbLayers = (list (list "SRAM" "fill")
     )
   )
 
+; Copy prBoundary from baseCV to CV
+(defun CopyPrBoundary (baseCV @key (CV (geGetEditCellView)))
+  (unless baseCV baseCV=(ReadCV CV->libName CV->cellName "floorplan"))
+  (when baseCV && baseCV->prBoundary
+        (dbDeleteObject CV->prBoundary)
+        (dbCreatePRBoundary CV baseCV->prBoundary->points)
+        )
+  CV->prBoundary
+  )
+
 ; TODO: Delete TOP_HALO cells then MakeHaloTag instead
 (defun RemoveHalo (@key (CV (geGetEditCellView)) (baseCV nil))
   (let (cv tagcv prb del allshapes GNDextras)
-    ; duplicate prbound from floorplan
-    prb = (GetPrbound CV)
-    (dbDeleteObject prb)
-    (unless baseCV
-      baseCV = (dbOpenCellViewByType (GetCastLibName CV->cellName) CV->cellName "floorplan")
-      )
-    prb = (GetPrbound baseCV)
-    (dbCreatePRBoundary CV prb->points)
+    prb=(CopyPrBoundary baseCV ?CV CV)
 
     tagcv = (dbOpenCellViewByType (GetCastLibName CV->cellName) CV->cellName "layout_tag" "maskLayout" "a")
     (DeleteAll tagcv)
