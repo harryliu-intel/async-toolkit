@@ -942,23 +942,18 @@ DumbLayers = (list (list "SRAM" "fill")
 
 ; HACK to figure out how to offset prBoundary into upper right quadrant
 (defun GetRDTOffset (@key (CV (geGetEditCellView)))
-  (let (bbox x y gx gy ox oy offset)
-    offset = (cadr (GetCellAlignment ?CV CV))
-    (unless offset (error "Can't find RDTOffset"))
-    ox=(car  offset)
-    oy=(cadr offset)
+  (let (align gx gy ox oy bbox x y)
+    align=(GetCellAlignment ?CV CV)
+    gx=(car  (car  align))
+    gy=(cadr (car  align))
+    ox=(car  (cadr align))
+    oy=(cadr (cadr align))
     bbox=(GetPrbound CV)->bBox
     (unless bbox (error "Can't find Prbound"))
     x=(car  (car bbox)) + ox
     y=(cadr (car bbox)) + oy
-    (when x<0
-      gx=(car  gridAlignment["lego"])
-      ox=ox - (floor x/gx)*gx
-      )
-    (when y<0
-      gy=(cadr gridAlignment["lego"])
-      oy=oy - (floor y/gy)*gy
-      )
+    (when x<0 ox-=(floor x/gx)*gx)
+    (when y<0 oy-=(floor y/gy)*gy)
     ox:oy
     )
   )
