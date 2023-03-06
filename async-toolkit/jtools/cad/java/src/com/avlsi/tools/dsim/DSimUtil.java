@@ -166,10 +166,9 @@ public class DSimUtil {
                 if (START!=null || STEP!=null) dsim.cycle(-1);
             }
 
-            // second phase reset if START/STEP/CAPTURE nodes exist
+            // second phase reset if START/STEP nodes exist
             if (START!=null) START.scheduleImmediate(Node.VALUE_1);
             if (STEP!=null) STEP.scheduleImmediate(Node.VALUE_1);
-            if (CAPTURE!=null) CAPTURE.scheduleImmediate(Node.VALUE_1);
         }
         else {
             throw new IllegalArgumentException(
