@@ -660,6 +660,7 @@
 
     ; for topHalo=nil cells, move context halo into layout_tag view
     (unless topHalo
+      (RemoveViaFillOverHalo ?CV ImportCV) ; HACK: remove excess via fill
       (DeleteTopHalo ?CV ImportCV) ; (RemoveHalo ?CV ImportCV ?baseCV baseCV)
       (CopyPrBoundary baseCV ?CV ImportCV)
       (MakeHaloTag ?CV ImportCV)
@@ -988,6 +989,25 @@ DumbLayers = (list (list "SRAM" "fill")
         (dbCreatePRBoundary CV baseCV->prBoundary->points)
         )
   CV->prBoundary
+  )
+
+; hack to delete via fill shapes overlapping TOP_HALO
+(defun RemoveViaFillOverHalo (@key (CV (geGetEditCellView)))
+  (let (bbox)
+    (foreach inst CV->instances
+             (when (strncmp inst->cellName "globals.TOP_HALO." (strlen "globals.TOP_HALO."))==0
+                   bbox=(dbTransformBBox inst->master->prBoundary->bBox inst->transform)
+                   (for v 0 9
+                        (foreach purpose (list "fill" "actFill")
+                                 (foreach overlap (dbGetOverlaps CV bbox (list Via[v] purpose) 0)
+                                          (dbDeleteObject overlap)
+                                          )
+                                 )
+                        )
+                   )
+             )
+    )
+  t
   )
 
 ; TODO: Delete TOP_HALO cells then MakeHaloTag instead
