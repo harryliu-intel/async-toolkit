@@ -11,14 +11,6 @@
   t
   )
 
-; Does this cell or its subcells have TOP_HALO?
-(defun HasTopHalo (@key (CV (geGetEditCellView)))
-  (let (pcre)
-    pcre = (pcreCompile "^globals\\.TOP_HALO")
-    (FindSubcells ?CV CV ?filter (lambda (CV) (pcreExecute pcre CV->cellName)))!=nil
-    )
-  )
-
 ; Detect if a polygon is clockwise.  Works by adding up the sign of all cross products at the corners.
 (defun IsPolygonClockwise (points)
   (let (l n tot)
@@ -57,6 +49,12 @@
          next2 = (nth (mod i+2 num) points)
          c  = (ClassifyPolygonCorner last point next)
          c1 = (ClassifyPolygonCorner point next next2)
+
+         ; check alignment of prBoundary
+         (when (mod (round (car  point)/MfgGrid) (round xa/MfgGrid))!=0 ||
+               (mod (round (cadr point)/MfgGrid) (round ya/MfgGrid))!=0
+               (error "halo boundary must be aligned to xa=%g ya=%g\n" xa ya)
+               )
 
          ; instantiate a corner
          name = (sprintf nil "boundarycell_%s_%d" c idx++)
@@ -110,71 +108,19 @@
     )
   )
 
-; Add reminder cells above/below TOP_HALO cells
-(defun AddHaloRemainder (@key (CV (geGetEditCellView)) (small nil) (viewName nil))
-  (let (hCV cCV remCV cellName xy rem bbox n y inst)
-    ; find CV of remainder cells
-    hCV=(makeTable "hCV" nil)
-    cCV=(makeTable "cCV" nil)
-    (unless viewName viewName=CV->viewName)
-    (foreach rem (list 60 120 180)
-             cellName=(sprintf nil "globals.TOP_HALO.h_%srem%d" (if small "_small" "") rem)
-             hCV[rem]=(ReadCV "globals" cellName viewName)
-             cellName=(sprintf nil "globals.TOP_HALO.c_%srem%d" (if small "_small" "") rem)
-             cCV[rem]=(ReadCV "globals" cellName viewName)
-             )
-
-    ; instantiate remainder cells
-    n=0
-    (foreach inst CV->instances
-      (when inst->libName=="globals"
-            remCV=nil
-            (cond ((strncmp inst->cellName "globals.TOP_HALO.h" (length "globals.TOP_HALO.h"))==0 remCV=hCV)
-                  ((strncmp inst->cellName "globals.TOP_HALO.c" (length "globals.TOP_HALO.c"))==0 remCV=cCV)
-                  )
-            (when remCV
-              bbox=inst->master->prBoundary->bBox
-              xy=(car (car bbox)):(cadr (car bbox))
-              xy=(dbTransformPoint xy inst->transform)
-              y=(cadr xy)
-              y=(round y/0.06)
-              y=(if inst->orient=="R180" || inst->orient=="MX" -y y)
-              rem=(posmod y 4)*60
-              (when rem!=0 && remCV[rem]
-                remCV=remCV[rem]
-                inst=(dbCreateInst CV remCV (sprintf nil "boundarycell_rem_%d" n inst->orient) xy inst->orient)
-                inst->status="locked"
-                n++
-                )
-              )
-            )
-      )
-    n
-    )
-  )
-
 ; Add TOP_HALO given a prBoundary or around instances with topHalo=nil directive
-(defun AddTopHalo (@key (CV (geGetEditCellView)) (small nil) (outside t)
-                        (around_instances nil) (remainder t) (viewName nil))
+(defun AddTopHalo (@key (CV (geGetEditCellView)) (outside t)
+                        (around_instances nil) (viewName nil))
   (let (vCV hCV cCV icCV cnt idx prop)
     ; delete old halo
     (DeleteTopHalo ?CV CV)
 
     ; choose halo cells
     (unless viewName viewName=CV->viewName)
-    (cond (small
-           vCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.v_small"  viewName)
-           hCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.h_small"  viewName)
-           cCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.c_small"  viewName)
-           icCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.ic_small" viewName)
-           )
-          (t
-           vCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.v"  viewName)
-           hCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.h"  viewName)
-           cCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.c"  viewName)
-           icCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.ic" viewName)
-           )
-          )
+    vCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.v"  viewName)
+    hCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.h"  viewName)
+    cCV  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.c"  viewName)
+    icCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.ic" viewName)
 
     ; add the halo
     idx=0
@@ -194,16 +140,14 @@
     ; flatten mosaics and legalize halo variants
     cnt=(LegalizeTopHalo ?CV CV)
 
-    ; add remainder cells next to halo cells where necessary
-    (when remainder cnt+=(AddHaloRemainder ?CV CV ?small small ?viewName viewName))
-    (dbSave CV)
+    ; save
     cnt
     )
   )
 
 ; flatten mosaics and legalize variants
 (defun LegalizeTopHalo (@key (CV (geGetEditCellView)))
-  (let (cnt x y suffix newCV net term)
+  (let (cnt net term)
     ; flatten TOP_HALO mosaics
     (foreach inst CV->mosaics
              (when (rexMatchp "TOP_HALO" inst->cellName)
@@ -211,6 +155,7 @@
                )
              )
 
+    ; rename, connect terminals, lock
     cnt=0
     (foreach inst CV->instances
       (when (strncmp inst->cellName "globals.TOP_HALO." (strlen "globals.TOP_HALO."))==0
@@ -218,11 +163,6 @@
                     inst->name = (sprintf nil "boundarycell_%d" cnt)
                     cnt++
                     )
-            (unless (CheckInstanceAlignment inst ?check_x nil ?check_parent_grid nil)
-              newCV=(ReadCV "globals" (strcat inst->cellName "_oddrow") inst->viewName)
-              (unless newCV (error "unable to read oddrow version of %s\n" inst->name))
-              inst->master=newCV
-              )
             inst->status = "locked"
             net  = (dbFindNetByName CV "GND")
             term = (dbFindTermByName inst->master "GND")
@@ -297,11 +237,10 @@
     )
   )
 
-; quick utility to query the prop
+; check the topHalo property, default to nil
 (defun GetTopHalo (@key (CV (geGetEditCellView)))
-  (let (halo prop)
-    (when prop=(dbGetPropByName CV->master "topHalo")
-      halo = prop->value
-      )
+  (let (prop)
+    prop=(dbGetPropByName CV "topHalo")
+    !prop || prop->value=="TRUE"
     )
   )
