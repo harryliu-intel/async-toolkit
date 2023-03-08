@@ -968,8 +968,9 @@ public class FunctionPreprocessor extends VisitorByCategory {
             final Type currType = analysisResults.getType(arg);
             final IntegerType currElemType = getIntArrayBaseType(currType);
 
+            final boolean zw = CspUtils.isZeroWidth(currType);
             final Declarator d;
-            final int dir;
+            int dir;
             final IntegerType formElemType;
             if (types == null) {
                 d = null;
@@ -985,6 +986,7 @@ public class FunctionPreprocessor extends VisitorByCategory {
                         " than expected (expecting " + count + ")",
                         arg);
             }
+            if (zw) dir = Declarator.IN;
 
             final boolean diffWidthIntArray =
                 currElemType != null &&
@@ -994,7 +996,7 @@ public class FunctionPreprocessor extends VisitorByCategory {
                     CspUtils.getIntegerConstant(formElemType.getDeclaredWidth()));
 
             final Usage u = copyNeeded == null ? null : copyNeeded.get(count);
-            final boolean needCopy =
+            final boolean needCopy = zw ||
                 (u == null ? true : (dir == Declarator.IN && u.isAssigned()));
             if (needCopy && u != null) {
                 for (AbstractASTNode node : u.getWrites()) {

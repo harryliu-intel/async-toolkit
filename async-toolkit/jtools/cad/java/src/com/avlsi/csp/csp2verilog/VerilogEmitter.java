@@ -1506,10 +1506,14 @@ public class VerilogEmitter extends CommonEmitter {
                                 final int indices) throws VisitorException {
         if (t instanceof IntegerType || t instanceof BooleanType ||
             t instanceof StringType) {
+            final boolean zw = CspUtils.isZeroWidth(t);
+            if (zw) out.print("/* ");
             lhs.write();
             out.ws(); out.print('='); out.ws();
             rhs.write();
-            out.println(";");
+            out.print(";");
+            if (zw) out.print(" */");
+            out.println();
         } else if (t instanceof ArrayType) {
             final ArrayType at = (ArrayType) t;
             out.println("begin : " + genBlock());
@@ -1543,48 +1547,52 @@ public class VerilogEmitter extends CommonEmitter {
         }
     }
 
-    private void emitPack(final ComplexAccess expr, final Type t)
+    private boolean emitPack(final ComplexAccess expr, final Type t)
         throws VisitorException {
+        final boolean[] wrote = new boolean[] { true };
         if (t instanceof BooleanType) {
             expr.write();
         } else if (t instanceof IntegerType) {
             final IntegerType it = (IntegerType) t;
             final int width = getIntegerConstant(it.getDeclaredWidth()) - 1;
-            expr.write();
-            out.print("[" + width + ":0]");
+            if (width >= 0) {
+                expr.write();
+                out.print("[" + width + ":0]");
+            } else {
+                wrote[0] = false;
+            }
         } else if (t instanceof ArrayType) {
             final ArrayType at = (ArrayType) t;
             final Range r = at.getRange();
             final int min = getIntegerConstant(r.getMinExpression());
             final int max = getIntegerConstant(r.getMaxExpression());
-            boolean first = true;
+            wrote[0] = false;
             for (int i = max; i >= min; --i) {
-                if (first) first = false;
-                else { out.print(','); out.ws(); }
+                if (wrote[0]) { out.print(','); out.ws(); }
                 final ComplexAccess nexpr = new ComplexAccess(expr);
                 nexpr.accessArray(Integer.toString(i));
-                emitPack(nexpr, at.getElementType());
+                wrote[0] |= emitPack(nexpr, at.getElementType());
             }
         } else if (t instanceof StructureType) {
             final Pair p = (Pair) resolver.getResolvedStructures().get(t);
             final StructureDeclaration sdecl =
                 (StructureDeclaration) p.getSecond();
-            final boolean[] first = new boolean[] { true };
+            wrote[0] = false;
             final DeclarationProcessor proc = new DeclarationProcessor() {
                 public void process(final Declarator d)
                     throws VisitorException {
                     final ComplexAccess nexpr = new ComplexAccess(expr);
                     final String id = d.getIdentifier().getIdentifier();
                     nexpr.accessStructure(id);
-                    if (first[0]) first[0] = false;
-                    else { out.print(','); out.ws(); }
-                    emitPack(nexpr, d.getTypeFragment());
+                    if (wrote[0]) { out.print(','); out.ws(); }
+                    wrote[0] |= emitPack(nexpr, d.getTypeFragment());
                 }
             };
             proc.process(sdecl.getDeclarations());
         } else {
             throw new AssertionError("Cannot pack: " + t);
         }
+        return wrote[0];
     }
 
     private ComplexAccess getComplexAccess(final ExpressionInterface expr)
@@ -1709,8 +1717,11 @@ public class VerilogEmitter extends CommonEmitter {
                 (lty instanceof StringType);
             final boolean rstr =
                 lstr && !(analysisResults.getType(rhs) instanceof StringType);
-            final boolean skip = lhs instanceof BitRangeExpression &&
-                                 isBitRangeInvalid((BitRangeExpression) lhs);
+            final boolean skip =
+                CspUtils.isZeroWidth(lty) ||
+                (lhs instanceof BitRangeExpression &&
+                 isBitRangeInvalid((BitRangeExpression) lhs));
+                                 
 
             if (skip) out.print("/* ");
             if (op) out.print("util.assign_" +
@@ -2765,7 +2776,7 @@ public class VerilogEmitter extends CommonEmitter {
         if (t instanceof IntegerType || t instanceof BooleanType) {
             ident.write();
             out.print(" = ");
-            if (init == null) out.print('0');
+            if (init == null || CspUtils.isZeroWidth(t)) out.print('0');
             else init.accept(this);
             out.println(";");
         } else if (t instanceof StringType) {

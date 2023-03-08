@@ -66,13 +66,16 @@ public class IntegerType extends Type {
         if (bw == null) {
             this.interval = null;
         } else {
-            if (bw.signum() != 1 || bw.bitLength() > 31) {
+            if (bw.signum() == -1 || bw.bitLength() > 31) {
                 final String loc = declaredWidth.getParseRange() == null ?
                     "" : " at " + declaredWidth.getParseRange().fullString();
                 throw new IllegalArgumentException(
-                        "Integer bit width invalid or too big: " + bw + loc);
+                        "Integer bit width negative or too big: " + bw + loc);
             } else {
-                this.interval = new Interval(is_signed, bw.intValue());
+                if (bw.signum() == 0) {
+                    this.is_signed = false;
+                }
+                this.interval = new Interval(this.is_signed, bw.intValue());
             }
         }
     }

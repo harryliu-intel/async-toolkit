@@ -2,6 +2,7 @@ package com.avlsi.csp.util;
 
 import java.math.BigInteger;
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.Iterator;
@@ -22,6 +23,16 @@ public class CspUtils {
             return new BigInteger(ie.getValue(), ie.getRadix());
         } else {
             return null;
+        }
+    }
+
+    public static boolean isZeroWidth(final Type t) {
+        if (t instanceof IntegerType) {
+            final IntegerType it = (IntegerType) t;
+            return Objects.equals(BigInteger.ZERO,
+                                  getIntegerConstant(it.getDeclaredWidth()));
+        } else {
+            return false;
         }
     }
 

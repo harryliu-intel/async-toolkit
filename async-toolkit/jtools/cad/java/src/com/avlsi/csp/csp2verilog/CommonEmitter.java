@@ -67,7 +67,7 @@ abstract class CommonEmitter implements VisitorInterface {
     protected String getRegisterType(final IntegerType t)
         throws VisitorException {
         final boolean signed = isRegisterSigned(t);
-        final int width = getRegisterWidth(t);
+        final int width = Math.max(1, getRegisterWidth(t));
         return "bit " + (signed ? "signed " : "") + "[" + (width - 1) + ":0]";
     }
 
