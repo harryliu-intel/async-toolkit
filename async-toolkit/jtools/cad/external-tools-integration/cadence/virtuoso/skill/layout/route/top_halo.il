@@ -94,14 +94,14 @@
 
          ; draw edges
          (cond
-          (c=="nw" && w>=cw0+cw1 (dbCreateSimpleMosaic CV hCV name x-xa*(w-cw1):y "R0" 1 w-cw0-cw1 ya xa))
-          (c=="sw" && w>=cw0+cw1 (dbCreateSimpleMosaic CV hCV name x-xa*(w-cw1):y "R0" 1 w-cw0-cw1 ya xa))
-          (c=="ne" && w>=cw0+cw1 (dbCreateSimpleMosaic CV hCV name x+xa*cw0:y     "MX" 1 w-cw0-cw1 ya xa))
-          (c=="se" && w>=cw0+cw1 (dbCreateSimpleMosaic CV hCV name x+xa*cw0:y     "MX" 1 w-cw0-cw1 ya xa))
-          (c=="wn" && h>=ch0+ch1 (dbCreateSimpleMosaic CV vCV name x:y+ya*ch0     "MY" h-ch0-ch1 1 ya xa))
-          (c=="ws" && h>=ch0+ch1 (dbCreateSimpleMosaic CV vCV name x:y-ya*(h-ch1) "R0" h-ch0-ch1 1 ya xa))
-          (c=="en" && h>=ch0+ch1 (dbCreateSimpleMosaic CV vCV name x:y+ya*ch0     "MY" h-ch0-ch1 1 ya xa))
-          (c=="es" && h>=ch0+ch1 (dbCreateSimpleMosaic CV vCV name x:y-ya*(h-ch1) "R0" h-ch0-ch1 1 ya xa))
+          (c=="nw" && w>cw0+cw1 (dbCreateSimpleMosaic CV hCV name x-xa*(w-cw1):y "R0" 1 w-cw0-cw1 ya xa))
+          (c=="sw" && w>cw0+cw1 (dbCreateSimpleMosaic CV hCV name x-xa*(w-cw1):y "R0" 1 w-cw0-cw1 ya xa))
+          (c=="ne" && w>cw0+cw1 (dbCreateSimpleMosaic CV hCV name x+xa*cw0:y     "MX" 1 w-cw0-cw1 ya xa))
+          (c=="se" && w>cw0+cw1 (dbCreateSimpleMosaic CV hCV name x+xa*cw0:y     "MX" 1 w-cw0-cw1 ya xa))
+          (c=="wn" && h>ch0+ch1 (dbCreateSimpleMosaic CV vCV name x:y+ya*ch0     "MY" h-ch0-ch1 1 ya xa))
+          (c=="ws" && h>ch0+ch1 (dbCreateSimpleMosaic CV vCV name x:y-ya*(h-ch1) "R0" h-ch0-ch1 1 ya xa))
+          (c=="en" && h>ch0+ch1 (dbCreateSimpleMosaic CV vCV name x:y+ya*ch0     "MY" h-ch0-ch1 1 ya xa))
+          (c=="es" && h>ch0+ch1 (dbCreateSimpleMosaic CV vCV name x:y-ya*(h-ch1) "R0" h-ch0-ch1 1 ya xa))
           )
          )
     idx
