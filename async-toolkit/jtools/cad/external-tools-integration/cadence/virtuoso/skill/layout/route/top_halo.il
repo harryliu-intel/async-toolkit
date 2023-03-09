@@ -244,3 +244,78 @@
     !prop || prop->value=="TRUE"
     )
   )
+
+; create a haloed filler cell
+; does not currently handle topHalo=nil cells
+(defun MakeDummyCell (@key (CV (geGetEditCellView))
+                           (viewName "dummy")
+			   (cellName (geGetEditCellView)->cellName)
+			   (libName (geGetEditCellView)->libName)
+			   )
+  (let (cv prb halow haloh fillcv fillw fillh a b shape shape2 point rows cols array)
+    cv = (ReadCV libName cellName viewName)
+    (if cv then
+           (cdsp4edit ?CV cv)
+           else
+	   cv = (betterCopyCellView CV libName cellName viewName)
+    )
+
+    ; clear unwanted stuff
+    (foreach inst cv->instances
+      (dbDeleteObject inst)
+      )
+    (foreach shape cv->clusters
+      (dbDeleteObject shape)
+      )
+    (foreach shape cv->shapes
+      (when shape->lpp==Scratch1LPP || shape->lpp==Scratch2LPP
+        (dbDeleteObject shape)
+	)
+      )
+
+    ; shrink boundary
+    prb = (GetPrbound cv)
+    prb = (dbCreatePolygon cv Scratch1LPP prb->points)
+    halow = (RectGetWidth  (GetPrbound (ReadCV "globals" "globals.TOP_HALO.h" "layout"))->bBox)
+    haloh = (RectGetHeight (GetPrbound (ReadCV "globals" "globals.TOP_HALO.h" "layout"))->bBox)
+
+    (abeInit cv)
+    a = (abeLayerFromShapes (list prb))
+    b = (abeNewLayer)
+    (abeLayerShrink a b ?north haloh ?south haloh ?east halow ?west halow)
+    (abeLayerToCellView b (car Scratch2LPP))
+    (abeDone)
+
+    ; those previous functions seem to shrink and fragment it in an imperfect way
+    ; need to shrink some shapes that didn't and then merge
+    (foreach shape cv->shapes
+      (when shape->lpp==Scratch2LPP
+        (when (ArePolygonsCoincident shape prb)
+	  shape2 = (dbCreateRect cv Scratch2LPP (RectShrinkInY shape->bBox haloh))
+	  (dbDeleteObject shape)
+	  )
+        )	
+      )
+      
+    ; make mosaics
+    fillcv = (ReadCV "globals" "globals.FILL.inner" "layout")
+    fillh = (RectGetHeight (GetPrbound fillcv)->bBox)
+    fillw = (RectGetWidth  (GetPrbound fillcv)->bBox)
+    (foreach shape cv->shapes
+      (when shape->lpp==Scratch2LPP
+        point = (car shape->bBox)
+	rows = (round ((cadadr shape->bBox)-(cadar shape->bBox))/fillh)
+	cols = (round ((caadr shape->bBox)-(caar shape->bBox))/fillw)
+        array = (dbCreateSimpleMosaic cv fillcv nil point "R0" rows cols fillh fillw)
+	)
+      )
+
+    ; flatten fillers and add halo
+    (foreach mosaic cv->mosaics (dbFlattenInst mosaic 1 t t t))
+    (AddTopHalo ?CV cv ?around_instances t ?viewName "layout")
+
+    (dbSave cv)
+    t
+    )
+  )
+
