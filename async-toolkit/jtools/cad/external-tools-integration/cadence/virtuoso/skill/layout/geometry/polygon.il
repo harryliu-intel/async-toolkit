@@ -779,28 +779,28 @@
   )
 
 
-procedure(FracturePolygon(p)
-   let( (bb xll xur xy xx yll yur yy pieces pp pnts)
+(defun FracturePolygon (p)
+  (let (bb xll xur xy xx yll yur yy pieces pp pnts)
       (if (p~>objType == "polygon") then        ; only fracture polygons
          (if (p~>nPoints > 3) then                ; not a triangle
             bb=p~>bBox
-            ; printf("bBox=%L\n" bb)
-            xll=xCoord(lowerLeft(bb))
-            yll=yCoord(lowerLeft(bb))
-            xur=xCoord(upperRight(bb))
-            yur=yCoord(upperRight(bb))
+            ; (printf "bBox=%L\n" bb)
+            xll=(xCoord (lowerLeft bb))
+            yll=(yCoord (lowerLeft bb))
+            xur=(xCoord (upperRight bb))
+            yur=(yCoord (upperRight bb))
             pieces=nil
             ; first look for places to cut vertically
             pnts=p~>points
             (while pnts
-               xy=car(pnts)
-               ; printf("xy=%L\n" xy)
-               pnts=cdr(pnts)
-               xx=xCoord(xy)
+               xy=(car pnts)
+               ; (printf "xy=%L\n" xy)
+               pnts=(cdr pnts)
+               xx=(xCoord xy)
                (if (xx > xll && xx < xur) then
-                  ; printf("vchop %L\n" list(xx:yll xx:yur) )
+                  ; (printf "vchop %L\n" list(xx:yll xx:yur) )
                   pieces=leChopShape(p
-                     list(xx:yll xx:yur xll:yur xll:yll) t nil)
+                     (list xx:yll xx:yur xll:yur xll:yll) t nil)
                   pnts=nil
                )
             )
@@ -808,19 +808,19 @@ procedure(FracturePolygon(p)
                ; didn't find vertical cut, look for horizontal cut
                pnts=p~>points
                (while pnts
-                  xy=car(pnts)
-                  pnts=cdr(pnts)
-                  yy=yCoord(xy)
+                  xy=(car pnts)
+                  pnts=(cdr pnts)
+                  yy=(yCoord xy)
                   (if (yy > yll && yy < yur) then
-                     ; printf("hchop %L\n" list(xll:yy xur:yy) )
+                     ; (printf "hchop %L\n" (list xll:yy xur:yy) )
                      pieces=leChopShape(p
-                        list(xll:yy xur:yy xur:yll xll:yll) t nil)
+                        (list xll:yy xur:yy xur:yll xll:yll) t nil)
                      pnts=nil
                   )
                )
             )
             (foreach pp pieces
-               fracture(pp)
+               (FracturePolygon pp)
             )
          )
       )
@@ -845,5 +845,24 @@ procedure( FractureAllPolygons(lib name view)
       out = t
       )
     out
+    )
+  )
+
+(defun ArePolygonsCoincident (p1 p2)
+  (let ((coin nil))
+    (foreach point1 (PolygonPoints p1)
+      (foreach point2 (PolygonPoints p2)
+        (when point1==point2 coin = t)
+	)
+      )
+    coin
+    )
+  )
+
+(defun PolygonPoints (p)
+  (let ((points nil))
+    (when p->objType=="polygon" points=p->points)
+    (when p->objType=="rect"    points=p->bBox)
+    points
     )
   )
