@@ -248,7 +248,7 @@
 ; create a haloed filler cell
 ; does not currently handle topHalo=nil cells
 (defun MakeDummyCell (@key (CV (geGetEditCellView))
-                           (viewName "dummy")
+                           (viewName "layout")
 			   (cellName (geGetEditCellView)->cellName)
 			   (libName (geGetEditCellView)->libName)
 			   )
