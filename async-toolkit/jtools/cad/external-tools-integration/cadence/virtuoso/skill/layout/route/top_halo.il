@@ -259,6 +259,7 @@
            else
 	   cv = (betterCopyCellView CV libName cellName viewName)
     )
+    (printf "Making dummy cell %s - view %s\n" cv->cellName cv->viewName)
 
     ; clear unwanted stuff
     (foreach inst cv->instances
@@ -315,7 +316,7 @@
     (AddTopHalo ?CV cv ?around_instances t ?viewName "layout")
 
     (dbSave cv)
-    t
+    cv
     )
   )
 
