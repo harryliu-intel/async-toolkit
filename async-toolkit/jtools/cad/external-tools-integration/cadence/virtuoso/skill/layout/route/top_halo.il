@@ -179,6 +179,7 @@
         ((car point) >(car last)  (if (cadr next)<(cadr point) "es" "en"))
         ((cadr point)<(cadr last) (if (car next) <(car point)  "sw" "se"))
         ((cadr point)>(cadr last) (if (car next) <(car point)  "nw" "ne"))
+        (t (error "Degenerate polygon"))
         )
   )
 
@@ -230,7 +231,9 @@
              )
     shapes=(leMergeShapes (setof s CV->shapes s->lpp==lpp))
     (foreach s shapes
-             polygons = (cons s->points polygons)
+             (cond (s->objType=="rect"    polygons = (cons (BBoxToPolygon s->bBox) polygons))
+                   (s->objType=="polygon" polygons = (cons s->points               polygons))
+                   )
              (dbDeleteObject s)
              )
     polygons

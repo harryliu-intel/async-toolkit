@@ -663,6 +663,7 @@
       (RemoveViaFillOverHalo ?CV ImportCV) ; HACK: remove excess via fill
       (DeleteTopHalo ?CV ImportCV) ; (RemoveHalo ?CV ImportCV ?baseCV baseCV)
       (CopyPrBoundary baseCV ?CV ImportCV)
+      (dbReplaceProp ImportCV "topHalo" "boolean" "FALSE")
       (MakeHaloTag ?CV ImportCV)
       )
 
