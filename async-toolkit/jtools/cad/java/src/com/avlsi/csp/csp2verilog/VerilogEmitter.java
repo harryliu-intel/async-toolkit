@@ -150,6 +150,9 @@ public class VerilogEmitter extends CommonEmitter {
     /** Whether to emit line coverage probes */
     private final boolean emitCoverageProbes;
 
+    /** Whether to emit state covergroup */
+    private final boolean emitStateCovergroup;
+
     /** List of all line coverage probes */
     private List<ProbeInfo> probeTable = null;
 
@@ -853,6 +856,7 @@ public class VerilogEmitter extends CommonEmitter {
                           final boolean strictVars,
                           final boolean implicitInit,
                           final boolean emitCoverageProbes,
+                          final boolean emitStateCovergroup,
                           final ProblemFilter problems) { 
         super(out, registerBitWidth, true);
         this.cellInfo = cellInfo;
@@ -872,6 +876,7 @@ public class VerilogEmitter extends CommonEmitter {
             this.probeTable = new ArrayList<>();
             this.hitTableOffsets = new HashMap<>();
         }
+        this.emitStateCovergroup = emitStateCovergroup;
         this.problems = problems;
     }
 
@@ -947,35 +952,37 @@ public class VerilogEmitter extends CommonEmitter {
             final String coverGroup = cellInfo.getAbbreviatedType() + "$state_cg";
 
             out.println("event " + INFINITE_LOOP_ITERATION_EVENT + ";");
-            final Map<IdentifierExpression,Declarator> topVars =
-                new LinkedHashMap<>();
-            getTopLevelVariables(e.getStatement(), resolver, analysisResults,
-                null, topVars, new HashSet<>());
-            final int stateCGlimit = 1024;
-            final String decl = "covergroup " + escape(coverGroup) +
-                                " @(" + INFINITE_LOOP_ITERATION_EVENT + ");";
-            for (Map.Entry<IdentifierExpression,Declarator> topVar :
-                    topVars.entrySet()) {
-                final Type t = topVar.getValue().getTypeFragment();
-                if (!t.getFlag(DISABLE_COVERAGE)) {
-                    final int packSize =
-                        CspUtils.getPackSize(
-                            st -> resolver.getResolvedStructures()
-                                          .get(st)
-                                          .getSecond(),
-                            t);
-                    if (packSize > 0 && packSize < stateCGlimit) {
-                        declareCoverpoint(() -> decl,
-                                          topVar.getKey().getIdentifier(),
-                                          topVar.getValue().getTypeFragment(),
-                                          hasCovergroup);
+            if (emitStateCovergroup) {
+                final Map<IdentifierExpression,Declarator> topVars =
+                    new LinkedHashMap<>();
+                getTopLevelVariables(e.getStatement(), resolver, analysisResults,
+                    null, topVars, new HashSet<>());
+                final int stateCGlimit = 1024;
+                final String decl = "covergroup " + escape(coverGroup) +
+                                    " @(" + INFINITE_LOOP_ITERATION_EVENT + ");";
+                for (Map.Entry<IdentifierExpression,Declarator> topVar :
+                        topVars.entrySet()) {
+                    final Type t = topVar.getValue().getTypeFragment();
+                    if (!t.getFlag(DISABLE_COVERAGE)) {
+                        final int packSize =
+                            CspUtils.getPackSize(
+                                st -> resolver.getResolvedStructures()
+                                              .get(st)
+                                              .getSecond(),
+                                t);
+                        if (packSize > 0 && packSize < stateCGlimit) {
+                            declareCoverpoint(() -> decl,
+                                              topVar.getKey().getIdentifier(),
+                                              topVar.getValue().getTypeFragment(),
+                                              hasCovergroup);
+                        }
                     }
                 }
-            }
-            if (hasCovergroup[0]) {
-                out.println("endgroup");
-                out.println(escape(coverGroup) + " " + STATE_COVERGROUP_INST +
-                            " = new;");
+                if (hasCovergroup[0]) {
+                    out.println("endgroup");
+                    out.println(escape(coverGroup) + " " + STATE_COVERGROUP_INST +
+                                " = new;");
+                }
             }
         }
 

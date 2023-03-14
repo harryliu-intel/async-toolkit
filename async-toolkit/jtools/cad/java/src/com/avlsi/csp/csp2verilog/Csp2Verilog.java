@@ -64,6 +64,7 @@ public class Csp2Verilog {
     private final ProblemFilter probFilter;
     private final boolean debugTransformation;
     private final boolean emitCoverageProbes;
+    private final boolean emitStateCovergroup;
     private final boolean enableSystemVerilog;
     private List<StructureDeclaration> structDecls = Collections.emptyList();
 
@@ -74,10 +75,11 @@ public class Csp2Verilog {
                        int registerBitWidth,
                        ProblemFilter probFilter,
                        boolean enableSystemVerilog,
-                       boolean emitCoverageProbes) {
+                       boolean emitCoverageProbes,
+                       boolean emitStateCovergroup) {
         this(warningWriter, errorWriter, debugWriter, resetNodeName,
              registerBitWidth, probFilter, enableSystemVerilog,
-             emitCoverageProbes, false);
+             emitCoverageProbes, emitStateCovergroup, false);
     }
 
     public Csp2Verilog(PrintWriter warningWriter,
@@ -88,6 +90,7 @@ public class Csp2Verilog {
                        ProblemFilter probFilter,
                        boolean enableSystemVerilog,
                        boolean emitCoverageProbes,
+                       boolean emitStateCovergroup,
                        boolean debugTransformation) {
         this.warningWriter = warningWriter;
         this.errorWriter = errorWriter;
@@ -97,6 +100,7 @@ public class Csp2Verilog {
         this.probFilter = probFilter;
         this.enableSystemVerilog = enableSystemVerilog;
         this.emitCoverageProbes = emitCoverageProbes;
+        this.emitStateCovergroup = emitStateCovergroup;
         this.debugTransformation = debugTransformation;
     }
 
@@ -130,7 +134,8 @@ public class Csp2Verilog {
                     pw, warningWriter, errorWriter, debugWriter,
                     moduleName,
                     resetNodeName, registerBitWidth, strictVars,
-                    implicitInit, emitCoverageProbes, probFilter);
+                    implicitInit, emitCoverageProbes, emitStateCovergroup,
+                    probFilter);
                 visitor = emitter;
             }
             p.accept(visitor);
@@ -263,6 +268,9 @@ public class Csp2Verilog {
         final boolean emitCoverageProbes =
             theArgs.argExists("emit-coverage-probes");
 
+        final boolean emitStateCovergroup =
+            theArgs.argExists("emit-state-covergroup");
+
         final String resetNodeName = "\\$Reset"; 
 
         final int registerBitWidth = 128; 
@@ -270,7 +278,7 @@ public class Csp2Verilog {
         new Csp2Verilog(systemErrWriter, systemErrWriter, systemErrWriter, 
               resetNodeName, registerBitWidth,
               getProblemFilter(systemErrWriter), enableSystemVerilog,
-              emitCoverageProbes, debugTransformation)
+              emitCoverageProbes, emitStateCovergroup, debugTransformation)
         .convert(cell, "TOP", Collections.EMPTY_LIST, out);
         out.close();
     }
