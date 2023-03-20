@@ -351,6 +351,8 @@
              (foreach shape shapes
                       (dbCreateLayerBlockage cv shape->layerName "routing"
                                              (RectGetPolygonPoints shape->bBox))
+                      (dbCreateLayerBlockage cv shape->layerName "fill"
+                                             (RectGetPolygonPoints shape->bBox))
                       (dbDeleteObject shape)
                       )
              )
