@@ -735,7 +735,7 @@ useICV = t
                              (ConfigFileGetValue TheCDSConfigTable "CAST_PATH")
                              CV->cellName filter file MaxHeapSize
                              )
-          (shell Command)
+          (unless (shell Command) (error "cast_query failed\n"))
           )
 
     ; read the file and return table of cellNames
