@@ -22,6 +22,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import java.util.TreeMap;
 
 import com.avlsi.csp.grammar.MemParser;
@@ -146,6 +147,11 @@ public abstract class CspRuntimeAbstractDevice extends AbstractDevice {
      * Used to detect if send happens before receive in one loop.
      **/
     private Pair<Statusable,String> lastSend = null;
+
+    /**
+     * Used to detect if a channel was peeked.
+     **/
+    private Set<Statusable> peekedChannels = null;
 
     /**
      * Class constructor.
@@ -477,7 +483,7 @@ public abstract class CspRuntimeAbstractDevice extends AbstractDevice {
             setChanOp(status, "?");
             if (usedChannels != null) {
                 usedChannels.put(status, whereAmI);
-                if (lastSend != null) {
+                if (lastSend != null && !peekedChannels.contains(status)) {
                     outerr("warning (synthesis): " +
                            lastSend.getFirst().getName() + "! " +
                            "(" + lastSend.getSecond() + ") before " +
@@ -496,6 +502,18 @@ public abstract class CspRuntimeAbstractDevice extends AbstractDevice {
 
     protected BigInteger peek(final ChannelInput in)
         throws InterruptedException {
+        final boolean isStatusable = in instanceof Statusable;
+        if (isStatusable) {
+            final Statusable status = (Statusable) in;
+            if (peekedChannels != null && peekedChannels.add(status) &&
+                lastSend != null) {
+                outerr("warning (synthesis): " +
+                       lastSend.getFirst().getName() + "! " +
+                       "(" + lastSend.getSecond() + ") before " +
+                       status.getName() + "#? " +
+                       "(" + whereAmI + ")");
+            }
+        }
         if (in instanceof Statusable) setChanOp((Statusable) in, "#?");
         in.waitForMessage();
         if (in instanceof Statusable) resetChanOp();
@@ -851,6 +869,7 @@ public abstract class CspRuntimeAbstractDevice extends AbstractDevice {
                         }
                     }),
                 MultiMap.<String>arrayListFactory());
+            peekedChannels = new HashSet<>();
         }
 
         public void onOutermostLoopStart() {
@@ -870,8 +889,9 @@ public abstract class CspRuntimeAbstractDevice extends AbstractDevice {
                     }
                 }
                 usedChannels.clear();
-                lastSend = null;
             }
+            lastSend = null;
+            peekedChannels.clear();
             firstLoop = false;
         }
 
