@@ -4,7 +4,8 @@
                        (oasFile nil)
                        (layerMapFile nil)
                        (enableColoring t)
-                       (flattenVias nil))
+                       (flattenVias nil)
+                       (dbuPerUU (round 1/MfgGrid)))
   (let (TEMP PDK_DIR Command status cellMapFile fmap oasName name used CID)
     (unless CV->objType=="cellView" (error "CV not valid"))
     CID = (NameStartRename "cell" "cadence" "gds2")
@@ -50,6 +51,7 @@
                                " -propMap '%s/stream/prop.map'"
                                " -objectMap '%s/stream/objectmap'"
                                (if enableColoring " -enableColoring" "")
+                               (if dbuPerUU (sprintf nil " -dbuPerUU %d" dbuPerUU) "")
                                " -cellMap '%s'"
                                " -logFile '%s/%s.log'"
                                " -oasisFile '%s'")
