@@ -1,9 +1,8 @@
 ; Run QFILL to add fill and color shapes to a cell
 (defun DoFill (@key (CV (geGetEditCellView)) (botLayer "m0") (topLayer "m10")
-                    (layers nil) (delete t))
+                    (layers nil) (delete t) (recipe "asic_g1i"))
   (let (TEMP WDIR ExportCV offset all_layers dir cmd CID oasName oasFile qCV fill_layers
              done offset)
-
     ; pick list of layers to fill
     all_layers = (list "cell"
                        "end_check_grid"
@@ -62,14 +61,14 @@
     (ExportOAS ?CV ExportCV)
 
     ; run qfill
-    cmd = (sprintf nil "cd %s; qfill run_fill --process 1276.31 --layers %s --input_layout %s.oas"
-                   WDIR (buildString layers " ") oasName)
+    cmd = (sprintf nil "cd %s; qfill run_fill --process %s --recipe qfill_recipe_%s_%s.yaml --layers %s --input_layout %s.oas"
+                   WDIR TechLibName TechLibName recipe (buildString layers " ") oasName)
     (printf "%s\n" cmd)
     (shell cmd)
 
     ; import metal_via_fill
-    (when fill_layers        
-        oasFile = (sprintf nil "%s/qfill_work/qfill_%s_1276.31_s_asic_g1m_240H_50p_run_metal_via_fill/qfill_run_metal_via_fill_output/%s_metal_via_fill.oas" WDIR oasName oasName)
+    (when fill_layers
+        oasFile = (sprintf nil "%s/qfill_work/qfill_%s_%s_s_%s_run_metal_via_fill/qfill_run_metal_via_fill_output/%s_metal_via_fill.oas" WDIR oasName TechLibName recipe oasName)
         qCV = (ImportOAS oasFile CV->libName (strcat oasName "_metal_via_fill") "qfill")
         (CopyQfillShapes CV qCV offset)
         )
@@ -78,7 +77,7 @@
     (when (member "via1_signal_color" layers )!=nil ||
           (member "via2_signal_color" layers )!=nil ||
           (member "via3_signal_color" layers )!=nil
-          oasFile = (sprintf nil "%s/qfill_work/qfill_%s_1276.31_s_asic_g1m_240H_50p_run_via_coloring/qfill_run_via_coloring_output/%s_signal_via_color.oas" WDIR oasName oasName)
+          oasFile = (sprintf nil "%s/qfill_work/qfill_%s_%s_s_%s_run_via_coloring/qfill_run_via_coloring_output/%s_signal_via_color.oas" WDIR oasName TechLibName recipe oasName)
           qCV = (ImportOAS oasFile CV->libName (strcat oasName "_signal_via_color") "qfill")
           (CopyQfillShapes CV qCV offset)
           )
