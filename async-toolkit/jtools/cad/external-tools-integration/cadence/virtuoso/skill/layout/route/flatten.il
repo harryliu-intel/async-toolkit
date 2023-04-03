@@ -89,7 +89,6 @@ useICV = t
 
     ; route abutting pins
     (RouteNearby ?CV CV ?topShapes ConnectNearbyShapes ?subShapes ConnectAbuttingPins ?distance GridPolyPitch:0)
-    (foreach x CV->vias (dbDeleteObject x)) ; delete prerouted vias until BUG 29315
     (when oldMasters (foreach inst oldMasters inst->master=oldMasters[inst]))
 
     ; fix things for DEF export
