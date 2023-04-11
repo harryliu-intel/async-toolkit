@@ -15,6 +15,7 @@ import java.util.Map;
 
 import com.avlsi.file.common.HierName;
 import com.avlsi.util.cmdlineargs.CommandLineArgs;
+import com.avlsi.util.cmdlineargs.CommandLineArgsUtil;
 import com.avlsi.util.cmdlineargs.defimpl.CommandLineArgsDefImpl;
 import com.avlsi.util.cmdlineargs.defimpl.CachingCommandLineArgs;
 import com.avlsi.util.cmdlineargs.defimpl.CommandLineArgsWithConfigFiles;
@@ -26,7 +27,8 @@ public class Inliner {
 "Usage: java com.avlsi.file.cdl.parser.Inliner\n" +
 "   --cdl=<file> (File to be inlined)\n" +
 "   --library=<file> (Cells to inline)\n" +
-"   [ --cells=<cell:cell:...> ] (Only inline listed cells)\n"
+"   [ --cells=<cell:cell:...> ] (Only inline listed cells)\n" +
+"   [ --max-line=<line> ] (Maximum output line length)\n"
         );
         System.exit(1);
     }
@@ -56,10 +58,12 @@ public class Inliner {
             iline.addTarget(libraryReader, targets);
         }
 
+        int maxLine = CommandLineArgsUtil.getIntegerArgValue(theArgs, "max-line", 79);
+
         final PrintWriter w =
             new PrintWriter(new OutputStreamWriter(System.out));
         final CDLFactoryInterface emitter =
-            new CDLFactoryEmitter(w, true, 79, true, true);
+            new CDLFactoryEmitter(w, true, maxLine, true, true);
 
         iline.process(new FileReader(cdlFile), emitter);
         w.close();
