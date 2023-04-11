@@ -317,7 +317,11 @@ public class CDLInlineFactory implements CDLFactoryInterface {
                          Map parameters, Environment env) {
         final Template t = getTemplate(subName);
         if (t == null) {
-            callProxy.makeCall(name, subName, args, parameters, env);
+            if (bFlatten) {
+                proxy.makeCall(name, subName, args, parameters, env);
+            } else {
+                callProxy.makeCall(name, subName, args, parameters, env);
+            }
         } else {
             final Pair p = t.getArguments();
             final String[] in = (String []) p.getFirst();
