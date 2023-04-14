@@ -133,3 +133,34 @@
     n
     )
   )
+
+; flip instance upside down
+(defun FlipInstY (inst)
+  (let (orient xy height)
+    height = (RectGetHeight (GetPrbound inst->master)->bBox)
+    (cond
+          (inst->orient=="R0"
+      	    inst->orient = "MX"
+      	    inst->xy = (list (car inst->xy) (cadr inst->xy)+height)
+	    )
+          (inst->orient=="MX"
+      	    inst->orient = "R0"
+      	    inst->xy = (list (car inst->xy) (cadr inst->xy)-height)
+	    )
+          (inst->orient=="MY"
+      	    inst->orient = "R180"
+      	    inst->xy = (list (car inst->xy) (cadr inst->xy)+height)
+	    )
+          (inst->orient=="R180"
+      	    inst->orient = "MY"
+      	    inst->xy = (list (car inst->xy) (cadr inst->xy)-height)
+	    )
+      )
+    )
+  )
+
+(defun FlipYSelectedInstances ()
+  (foreach inst (ss)
+    (FlipInstY inst)
+    )
+  )
