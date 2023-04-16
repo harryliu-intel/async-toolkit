@@ -15,6 +15,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import com.avlsi.cast2.directive.DirectiveConstants;
+import com.avlsi.cast2.util.DirectiveUtils;
 import com.avlsi.fast.CellType;
 import com.avlsi.fast.CellNet;
 import com.avlsi.fast.ConnectionInfo;
@@ -54,6 +56,8 @@ public abstract class NetgraphGateConverter extends AbstractConverter {
     protected boolean outputDelay = false;
     protected boolean timescale = false;
     protected final static PrintfFormat fmt = new PrintfFormat("%.6g");
+    private Set<HierName> powerNets = new HashSet<>();
+    private Set<HierName> childPowerNets = new HashSet<>();
 
     public NetgraphGateConverter(final CellType cell,
                                  final VerilogFactoryInterface factory,
@@ -68,6 +72,18 @@ public abstract class NetgraphGateConverter extends AbstractConverter {
         this.GND = GND;
         this.chooser = chooser;
         this.cad = cad;
+        updatePowerNets(powerNets, cell);
+    }
+
+    private void updatePowerNets(final Set<HierName> powerNets, final CellType cell) {
+        DirectiveUtils.getNetDirectives(cell.cast_cell, null,
+                cad.convert(cell.cast_cell).getLocalNodes(), null,
+                DirectiveConstants.POWER_NET, 
+                powerNets, powerNets, new HashSet<>());
+        DirectiveUtils.getNetDirectives(cell.cast_cell, null,
+                cad.convert(cell.cast_cell).getLocalNodes(), null,
+                DirectiveConstants.GROUND_NET, 
+                powerNets, powerNets, new HashSet<>());
     }
 
     protected VerilogObject newWire() {
@@ -78,16 +94,31 @@ public abstract class NetgraphGateConverter extends AbstractConverter {
         return wireType(cell.getNet(net));
     }
 
+    private boolean isPowerRail(final Set<HierName> powerNets, final HierName net) {
+        return powerNets.contains(net);
+    }
+
+    private boolean isPowerRail(final Set<HierName> powerNets, final String net) {
+        return isPowerRail(powerNets, HierName.makeHierNameUnchecked(net, '.'));
+    }
+
+    protected void actual(final List params, final ConnectionInfo ci,
+                          final boolean byName, final UnaryFunction uf) {
+        childPowerNets.clear();
+        updatePowerNets(childPowerNets, ci.child);
+        super.actual(params, ci, byName, uf);
+    }
+
     protected void addFormal(final List params, final String name,
                              final String type, final String dir) {
-        if (!skip || (!name.equals("Vdd") && !name.equals("GND")))
+        if (!skip || !isPowerRail(powerNets, name))
             super.addFormal(params, name, type, dir);
     }   
 
     protected void addActual(final boolean byName, final List params,
                              final HierName child, final HierName parent,
                              final String type) {
-        if (!skip || (!child.isVdd() && !child.isGND()))
+        if (!skip || !isPowerRail(childPowerNets, child))
             super.addActual(byName, params, child, parent, type);
     }
 
