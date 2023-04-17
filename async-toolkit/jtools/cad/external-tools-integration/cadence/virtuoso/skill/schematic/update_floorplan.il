@@ -16,6 +16,7 @@
         (midPRB nil) ; update prBoundary of routed mid-level cells
         (update t) ; actually modify the cells, otherwise just writes log files
         (Mem (nrGetMaxHeapSize)) ; how much memory to use, in MB
+        (logFile nil) ; log file name
         )
   (let (mastersVisited cmd temp dir routed LOG pcre)
 
@@ -51,7 +52,7 @@
     pcre = (pcreCompile "\\[[0-9]+\\][^\\[]*$")
 
     ; update floorplan
-    LOG = (outfile (strcat temp "/UpdateFloorplan.log"))
+    LOG = (outfile (or logFile (strcat temp "/UpdateFloorplan.log")))
     mastersVisited = (makeTable "mastersVisited" nil)
     (UpdateFloorplanCore CV "" ?verbose verbose)
     (close LOG)
