@@ -31,8 +31,8 @@
                net=shape->pin->net
                new_net=(dbMakeNet viaCV net->name)
                bbox=(dbTransformBBox shape->bBox inst->transform)
-               x0=(car  (car  bbox))
-               x1=(car  (cadr bbox))
+               x0=(car  (car  bbox))+0.119
+               x1=(car  (cadr bbox))-0.119
                y0=(cadr (car  bbox))
                y1=(cadr (cadr bbox))
                y=(y0+y1)/2
