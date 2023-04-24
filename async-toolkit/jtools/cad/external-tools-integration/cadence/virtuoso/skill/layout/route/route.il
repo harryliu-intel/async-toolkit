@@ -690,8 +690,19 @@
   ; (FixFillerCells ?CV CV) ; HACK: change threshold of spc00 to avoid NV1/PV1 DRC errors
   ; (FixImportedPins ?CV CV)  ; HACK: add drawing rectangles under pins
   (FixImportedInstanceNames ?CV CV) ; HACK: strip off ._$0 suffix of instance names
+  (FixUpsidedownHalo ?CV CV); HACK: fix upsidedown left/right halo instances
   (RunAfterImportDef ?CV CV)
   (printf "Route Import finished.\n")
+  )
+
+; Fix upsidedown halo cells
+(defun FixUpsidedownHalo (@key (CV (geGetEditCellView)))
+  (foreach inst CV->instances
+           (when inst->cellName=="vendor.intel.g1i.zh7dbase.yls04x"
+                 (LegalizeShortInstance inst)
+                 )
+           )
+  t
   )
 
 ; Get rid of auto-generated suffix on instance names (see BUG 29319)
