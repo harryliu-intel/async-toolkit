@@ -121,6 +121,7 @@
   (let (TEMP WDIR LEFDEF_DIR MaxHeapSize CAST_PATH DFII_DIR SPAR_DIR PDK_DIR
         abstractCV
         Command (statusVerilog t) statusAlignment
+        statusPins
         lef_subcells GdsMapFile gds_name
         pout (statusGds t) (statusLef t)
         pinmap dirmap (statusDef t)
@@ -272,8 +273,8 @@
       ; save
       (dbSave ExportCV)
 
-      ; check
-      (CheckPinsForExport ?CV ExportCV)
+      ; check for bad pins
+      statusPins=(CountOverlappingPins ?CV ExportCV)==0 && (CheckPinsForExport ?CV ExportCV)
 
       ; export DEF
       (when statusDef
@@ -342,6 +343,7 @@
     (unless statusLef errorStr = (strcat errorStr " LEF "))
     (unless statusDef errorStr = (strcat errorStr " DEF "))
     (unless statusNonDefault errorStr = (strcat errorStr "NonDefaultDEF "))
+    (unless statusPins errorStr = (strcat errorStr "Pins "))
     (when errorStr!="" (error errorStr))
 
     (printf "Export Finish %s\n" (getCurrentTime))
@@ -856,20 +858,26 @@ DumbLayers = (list (list "SRAM" "fill")
   )
 )
 
+; Check for overlapping pins
+(defun CountOverlappingPins (@key (CV (geGetEditCellView)))
+  (let (n overlaps)
+    n=0
+    (foreach pin (setof x CV->shapes x->pin)
+             overlaps=(dbGetOverlaps CV pin->bBox (list (car pin->lpp) "drawing") 0)
+             (when (length overlaps)>1
+                   (foreach o overlaps (geSelectObject o) n++)
+                   )
+             )
+    n
+    )
+  )
 
 ; function to validate pins while exporting to proteus
 ; for now, just checks that we don't have any on complement purpose since ICC crashes
 ; it would certainly be reasonable to enhance this function to check other things like pin direction
 (defun CheckPinsForExport (@key (CV (geGetEditCellView)) )
-  (let (fig ok)
-    ok = t
-    (when (setof fig CV->shapes fig->layerName=="mc0")
-      (error "Shape found on mc0 drawing. ICC doesn't like this.\n")
-    ok = nil
-    )
-  ok
+  (setof fig CV->shapes fig->layerName=="mc0")==nil
   )
-)
 
 ; Shift contents of a cell
 (defun OffsetEverything (offset @key (CV (geGetEditCellView)) (reverse nil))
