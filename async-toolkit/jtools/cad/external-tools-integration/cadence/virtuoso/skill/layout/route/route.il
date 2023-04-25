@@ -274,7 +274,7 @@
       (dbSave ExportCV)
 
       ; check for bad pins
-      statusPins=(CountOverlappingPins ?CV ExportCV)==0 && (CheckPinsForExport ?CV ExportCV)
+      statusPins=(CountOverlappingPins ?CV ExportCV ?select nil)==0 && (CheckPinsForExport ?CV ExportCV)
 
       ; export DEF
       (when statusDef
@@ -859,13 +859,16 @@ DumbLayers = (list (list "SRAM" "fill")
 )
 
 ; Check for overlapping pins
-(defun CountOverlappingPins (@key (CV (geGetEditCellView)))
+(defun CountOverlappingPins (@key (CV (geGetEditCellView)) (select t))
   (let (n overlaps)
     n=0
     (foreach pin (setof x CV->shapes x->pin)
              overlaps=(dbGetOverlaps CV pin->bBox (list (car pin->lpp) "drawing") 0)
              (when (length overlaps)>1
-                   (foreach o overlaps (geSelectObject o) n++)
+                   (foreach o overlaps
+                            (cond ((atom o) && o->net==pin->net t)
+                                  (t (when select (geSelectObject o)) n++))
+                            )
                    )
              )
     n
