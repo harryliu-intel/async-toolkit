@@ -107,7 +107,7 @@
             ; draw shape to connect nearby pins
             (when overlap
               rect = (DrawPathFromRect CV layerNum overlap)
-              ; rect->routeStatus="locked"
+              rect->routeStatus="locked"
               (dbAddFigToNet rect net)
               (dbReplaceProp rect "autogen" "string" "RouteNearby")
               rects = (cons rect rects)
@@ -175,7 +175,7 @@
                    )
                   )
             via = (dbCreateVia CV viaDef xy "R0" params)
-            ; via->routeStatus="locked"
+            via->routeStatus="locked"
             via->net = net
             (dbReplaceProp via "autogen" "string" "RouteNearby")
             (when verbose (printf "%s on %s\n" Via[v] net->name))
