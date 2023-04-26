@@ -10,8 +10,9 @@
                                      (list "VDDM" 0.166 1.02)
                                      )
                                )
+                      (m10_line_end_enclosure 0.036)
                       )
-  (let (inst viaCV net new_net bbox x0 x1 y0 y1 x y w
+  (let (inst viaCV net new_net bbox x0 x1 y0 y1 x y w ix ix0 ix1
         col0 col1 m11_name m11_w m11_x def_params viaDef params via)
 
     ; create empty via overlay instance
@@ -31,8 +32,8 @@
                net=shape->pin->net
                new_net=(dbMakeNet viaCV net->name)
                bbox=(dbTransformBBox shape->bBox inst->transform)
-               x0=(car  (car  bbox))+0.119
-               x1=(car  (cadr bbox))-0.119
+               x0=(car  (car  bbox))
+               x1=(car  (cadr bbox))
                y0=(cadr (car  bbox))
                y1=(cadr (cadr bbox))
                y=(y0+y1)/2
@@ -44,12 +45,15 @@
                         (when net->name==m11_name
                           m11_w=(cadr m11)
                           m11_x=(caddr m11)
+                          ix0=(round (x0+m10_line_end_enclosure+m11_w/2)/MfgGrid)
+                          ix1=(round (x1-m10_line_end_enclosure-m11_w/2)/MfgGrid)
                           def_params=(GetViaDefParams 10 w m11_w ?CV viaCV)
                           viaDef=(car  def_params)
                           params=(cadr def_params)
                           (for col col0 col1-1
                                x=col*xp+m11_x
-                               (when x>=x0+m11_w/2 && x<=x1-m11_w/2 ; HACK: m10 pins poorly aligned in PADS_V
+                               ix=(round x/MfgGrid)
+                               (when ix0<=ix && ix<=ix1 ; enough M10 line end enclosure
                                      via = (dbCreateVia viaCV viaDef x:y "R0" params)
                                      via->net = new_net
                                      )
