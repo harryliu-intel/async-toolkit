@@ -6,37 +6,22 @@
                        (enableColoring t)
                        (flattenVias nil)
                        (dbuPerUU (round 1/MfgGrid)))
-  (let (TEMP PDK_DIR Command status cellMapFile fmap oasName name used CID)
+  (let (TEMP PDK_DIR Command status cellMapFile oasName CID)
     (unless CV->objType=="cellView" (error "CV not valid"))
-    CID = (NameStartRename "cell" "cadence" "gds2")
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
     (unless directory directory = (strcat TEMP "/oas/" CV->cellName))
     PDK_DIR = (strcat (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT") "/share/Fulcrum")
+    CID = (NameStartRename "cell" "cadence" "gds2")
     oasName = (if (dbGetPropByName CV "CopyExact")
                   (dbGetPropByName CV "CopyExact")->value
                   (NameDoRename CID CV->cellName)
                   )
+    (NameStopRename CID)
     (unless oasFile (sprintf oasFile "%s/%s.oas" directory oasName))
     (unless layerMapFile (sprintf layerMapFile "%s/stream/strmout.layermap" PDK_DIR))
     (shell (strcat "mkdir -p " directory))
-
-    ; Write cellmap to rename cells.  CopyExact cells get renamed to
-    ; their original name as saved in the CopyExact property.  Other
-    ; cells get GDS names.
     cellMapFile = (sprintf nil "%s/%s.cellmap" directory oasName)
-    fmap = (outfile cellMapFile)
-    used = (makeTable "used" nil)
-    (foreach subCV (FindSubcells ?CV CV)
-             name = (if (dbGetPropByName subCV "CopyExact")
-                        (dbGetPropByName subCV "CopyExact")->value
-                        (NameDoRename CID subCV->cellName)
-                        )
-             (when used[name] name = (strcat name "_" subCV->viewName)) ; disambiguate
-             (fprintf fmap "%s %s %s %s\n" subCV->libName subCV->cellName subCV->viewName name)
-             used[name]=t
-             )
-    (close fmap)
-    (NameStopRename CID)
+    (WriteCellmap cellMapFile ?CV CV) ; write cellmap with CopyExact or GDS2 names
 
     ; strmout command line arguments
     Command = (sprintf nil

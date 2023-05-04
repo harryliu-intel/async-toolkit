@@ -232,6 +232,7 @@ share/skill/layout/gdsII/import_gds.il                                     skill
 share/skill/layout/gdsII/export_gds.il                                     skill/layout/gdsII/export_gds.il                                          664 p
 share/skill/layout/oasis/import_oas.il                                     skill/layout/oasis/import_oas.il                                          664 p
 share/skill/layout/oasis/export_oas.il                                     skill/layout/oasis/export_oas.il                                          664 p
+share/skill/layout/oasis/cellmap.il                                        skill/layout/oasis/cellmap.il                                            664 p
 share/skill/layout/import/import.il                                        skill/layout/import/import.il                                            664 p
 share/skill/layout/import/fp.il                                            skill/layout/import/fp.il                                                664 p
 share/skill/layout/leaf/well/regionwell.il                                 skill/layout/leaf/well/regionwell.il                                     664 p
