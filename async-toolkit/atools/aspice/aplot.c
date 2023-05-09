@@ -100,7 +100,7 @@ char *parse_nodename(LEX *lex)
   while (1)
     {
     c=lex_char(lex);
-    if ((c==' ') || (c=='\t') || (c=='\n') || (c=='=') || (c==';') || 
+    if ((c==' ') || (c=='\t') || (c=='\n') || (c=='=') || (c==';') ||
         (c=='<') || (c=='>') || (c==EOF)) break;
     lex_eat_char(lex);
     }
@@ -118,7 +118,7 @@ void parse_range(LEX *lex, float *min, float *max)
   lex_eatif_sym(lex,"]");
   if ((*min!=NotNum) && (*max!=NotNum) && (*min>*max))
     {double t = *min; *min=*max; *max=t; } // sort min/max
-  } 
+  }
 
 /****************************** CURVE OPERATIONS ******************************/
 
@@ -177,7 +177,7 @@ void add_curve(PANEL *panel, char *name)
   named.curve=curve;
   named.curves=list_create(sizeof(CURVE *));
   add_curve_unique(panel,named.curves,curve);
-  
+
   /*** add more curves for resistively connected nodes ***/
   if (resistive_nodes)
     {
@@ -220,7 +220,7 @@ void delete_glob_curve(PANEL *panel, char *name)
   int j;
   char fullname[STRMAX];
   CURVE *curve;
-  
+
   // delete matching named curves only
   safe_sprintf(fullname,"%s%s",panel->prefix,name);
   for (j=0; j<panel->named->max; j++)
@@ -233,7 +233,7 @@ void delete_glob_curve(PANEL *panel, char *name)
       j--;
       }
     }
-  
+
   // rebuild complete list of curves
   list_realloc(panel->curves,0);
   for (j=0; j<panel->named->max; j++)
@@ -415,7 +415,7 @@ void get_data(LIST *curves)
   CURVE *curve,*lastcurve,*lasttime;
   int compressed;
   ztrace_header_t zheader;
-          
+
   /*** create curve cache ***/
   if (activecurves==NULL) activecurves=list_create(sizeof(CURVE *));
 
@@ -457,7 +457,7 @@ void get_data(LIST *curves)
           Nnodes    = zheader.nwaves;
           Nsteps    = zheader.nsteps;
           order     = zheader.version; /* we won't use this */
-        }  
+        }
       else
         {
           if (!get_header(tracefile,&timestamp,&Nnodes,&Nsteps,&order))
@@ -466,7 +466,7 @@ void get_data(LIST *curves)
               continue;
             }
         }
-      
+
 #ifdef DEBUG
       fprintf(stderr,"Timestamp of %s is %d, Nsteps is %d\n",filename,timestamp,Nsteps);
 #endif
@@ -727,7 +727,7 @@ void draw_panel(PANEL *panel)
   for (i=0; i<panel->named->max; i++)
     fprintf(panel->gnuplot,"%s\"%s\" title \"%s\"",(i>0 ? "," : ""),
           fifoname[i],panel->named->p.named[i].curve->name);
-  
+
   fprintf(panel->gnuplot,"\n");
   fflush(panel->gnuplot);
 
@@ -764,6 +764,7 @@ void get_v_fancy(PANEL *panel, int step, float *nom_v, float *min_v, float *max_
   {
   int j;
   float v,minv,maxv;
+  if (panel->curves->max==0) { *nom_v=*min_v=*max_v=0; return; }
   minv=maxv=panel->curves->p.curve[0]->v[step];
   *min_j=*max_j=0;
   for (j=1; j<panel->curves->max; j++)
@@ -820,7 +821,7 @@ void trigger(LIST *panels, int dir, float value,
       else                    v = nomv;
 
       // look for trigger
-      if (((dir>=0)&&(v>=value)&&(ov<value)) || 
+      if (((dir>=0)&&(v>=value)&&(ov<value)) ||
           ((dir<=0)&&(v<=value)&&(ov>value)))
         {
         count++;
@@ -835,6 +836,58 @@ void trigger(LIST *panels, int dir, float value,
     printf("%g\n",(occurance2-occurance1)/(trig2-trig1));
   else if (got1&&(occurance2<0)) printf("%g\n",trig1);
   else printf("WARNING: no trigger\n");
+  }
+
+void sample_node(LIST *panels, int dir, float value, PANEL *sample_panel)
+  {
+  int i,step,count=0,done;
+  float t,v,ot,ov,mid_t,mid_v;
+  float nomv,minv,maxv;
+  int min_nom_max=-1;
+  PANEL *panel;
+  CURVE *curve;
+
+  /*** scan for trigger points ***/
+  for (step=1, done=0; !done; step++)
+    {
+    for (i=0; i<panels->max; i++)
+      {
+      // get next panel and curve
+      panel = panels->p.panel[i];
+      if (panel->curves->max==0) {done=1; break;}
+      curve = panel->curves->p.curve[0];
+      if (step>=curve->Nsteps) {done=1; break;}
+
+      // get last time and voltage
+      ot=curve->t[step-1]*1e9;
+      if ((ot<panel->tmin) && (panel->tmin!=NotNum)) continue;
+      get_v(panel,step-1,&nomv,&minv,&maxv);
+      if      (min_nom_max<0) ov = minv;
+      else if (min_nom_max>0) ov = maxv;
+      else                    ov = nomv;
+
+      // get current time and voltage
+      t=curve->t[step]*1e9;
+      if ((t>panel->tmax) && (panel->tmax!=NotNum)) continue;
+      get_v(panel,step,&nomv,&minv,&maxv);
+      if      (min_nom_max<0) v = minv;
+      else if (min_nom_max>0) v = maxv;
+      else                    v = nomv;
+
+      // look for trigger
+      if (((dir>=0)&&(v>=value)&&(ov<value)) ||
+          ((dir<=0)&&(v<=value)&&(ov>value)))
+        {
+        count++;
+        mid_t=(value-ov)*(t-ot)/(v-ov)+ot;
+        get_v(sample_panel, step-1, &ov, &minv, &maxv);
+        get_v(sample_panel, step,   &v,  &minv, &maxv);
+        mid_v=(mid_t-ot)*(v-ov)/(t-ot)+ov;
+        printf("%g %g\n",mid_t,mid_v);
+        }
+      }
+    }
+  if (count==0) printf("WARNING: no trigger\n");
   }
 
 void print(PANEL *panel)
@@ -977,7 +1030,7 @@ void skew(PANEL *panel, float value)
     if (o_valid)
       {
       // minv falling sets trigger
-      if ((min_v<=value)&&(o_min_v>value)) 
+      if ((min_v<=value)&&(o_min_v>value))
         {
         mid_t=(value-o_min_v)*(t-ot)/(min_v-o_min_v)+ot;
         min_trig_t=mid_t;
@@ -997,7 +1050,7 @@ void skew(PANEL *panel, float value)
         {
         mid_t=(value-o_min_v)*(t-ot)/(min_v-o_min_v)+ot;
         skew=mid_t-max_trig_t;
-        if (!skew_valid || (skew>worst_skew)) 
+        if (!skew_valid || (skew>worst_skew))
           {skew_valid=1; worst_skew=skew; worst_t=mid_t;}
         max_trig_valid=0;
         }
@@ -1163,7 +1216,7 @@ void minmaxdelay(LIST *trig_panels, LIST *targ_panels,
     {
     if (max_valid) printf("%g %g\n",max_t,max_delay);
     else printf("WARNING: no trigger\n");
-    }               
+    }
   }
 
 /**************************** MAIN COMMAND LINE INTERFACE ****************************/
@@ -1171,9 +1224,9 @@ void minmaxdelay(LIST *trig_panels, LIST *targ_panels,
 void free_caches()
   {
   int i;
-  if (activefiles!=NULL) 
+  if (activefiles!=NULL)
     {
-    for (i=0; i<activefiles->max; i++) 
+    for (i=0; i<activefiles->max; i++)
       {
       NAMESFILE n;
       n=activefiles->p.namesfile[i];
@@ -1321,6 +1374,8 @@ char *command[][3]=
      "Same as trigger but uses the minimum voltage for resistive envelopes."},
     {"trigger_maxv","node ... [>|<|=] thresh [occurance1 [occurance2]]",
      "Same as trigger but uses the maximum voltage for resistive envelopes."},
+    {"sample","trig_node ... [>|<|=] thresh sample_node",
+     "Print time/voltage pairs for a specified node when trigger condition applies.  Globbing unsupported."},
     {"mindelay","node1 ... [>|<|=] thresh1 node2 ... [>|<|=] thresh2",
      "Measures the minimum delay between any rise, fall, or crossing event\n"
      "on node1 at voltage thresh1 and the next rise, fall, or crossing\n"
@@ -1615,6 +1670,7 @@ int main(int argc, char *argv[])
           print(measure);
           close_panel(measure);
           }
+        else {printf("WARNING: bad syntax.\n"); lex_eat_until(lex,";\n");}
         }
       else if (lex_eatif_keyword(lex,"skew"))
         {
@@ -1693,14 +1749,16 @@ int main(int argc, char *argv[])
         }
       else if (lex_is_keyword(lex,"trigger")||
                lex_is_keyword(lex,"trigger_minv")||
-               lex_is_keyword(lex,"trigger_maxv"))
+               lex_is_keyword(lex,"trigger_maxv")||
+               lex_is_keyword(lex,"sample"))
         {
         LIST *panels;
-        int dir,occurance1=-1,occurance2=-1,error=0,min_nom_max=0;
+        int dir,occurance1=-1,occurance2=-1,error=0,min_nom_max=0,sample=0;
         float value=0;
         if      (lex_eatif_keyword(lex,"trigger_minv")) min_nom_max=-1;
         else if (lex_eatif_keyword(lex,"trigger_maxv")) min_nom_max= 1;
         else if (lex_eatif_keyword(lex,"trigger"))      min_nom_max= 0;
+        else if (lex_eatif_keyword(lex,"sample"))     { min_nom_max= 0; sample=1; }
 
         // create measure panels
         panels=create_measure_panels(panel,lex);
@@ -1713,16 +1771,30 @@ int main(int argc, char *argv[])
         if (lex_is_real(lex)) value=lex_eat_real(lex);
         else error=1;
 
-        // get occurance counts
-        if (lex_is_integer(lex)) occurance1=lex_eat_integer(lex);
-        if (lex_is_integer(lex)) occurance2=lex_eat_integer(lex);
+        if (panels->max==0 || error) { printf("WARNING: bad syntax.\n"); lex_eat_until(lex,";\n"); }
+        else if (sample) // sample
+          {
+          name=parse_nodename(lex);
+          if (name[0]!=0)
+            {
+            measure=measure_panel(name,panel);
+            if (measure->curves->max>0) sample_node(panels,dir,value,measure);
+            else {printf("WARNING: bad syntax.\n"); lex_eat_until(lex,";\n");}
+            close_panel(measure);
+            }
+          else {printf("WARNING: bad syntax.\n"); lex_eat_until(lex,";\n");}
+          }
+        else // trigger
+          {
+          // get occurance counts
+          if (lex_is_integer(lex)) occurance1=lex_eat_integer(lex);
+          if (lex_is_integer(lex)) occurance2=lex_eat_integer(lex);
 
-        // do trigger measurement
-        if (!error && (panels->max>0))
+          // do trigger measurement
           trigger(panels,dir,value,occurance1,occurance2,min_nom_max);
-        else {printf("WARNING: bad syntax.\n"); lex_eat_until(lex,";\n");}
+          }
         free_measure_panels(panels);
-	}
+        }
       else if (lex_eatif_keyword(lex,"free"))
         free_caches();
       else if (lex_eatif_keyword(lex,"subnets"))
@@ -1739,7 +1811,7 @@ int main(int argc, char *argv[])
             {
             a = names->p.curve[j];
             b = a;
-            do 
+            do
               {
               printf("%s\n",b->name);
               b=b->subnet;
@@ -1762,7 +1834,7 @@ int main(int argc, char *argv[])
             {
             a = names->p.curve[j];
             b = a;
-            do 
+            do
               {
               printf("%s\n",b->name);
               b=b->alias;
