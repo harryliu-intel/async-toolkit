@@ -3,6 +3,7 @@ TOP = ..
 SUBDIRS = bsim4
 BIN_TARGETS = aspice aplot reorder_trace convert_trace debug_trace test_model rc_simplify
 MAN_TARGETS = aspice.1 aplot.1
+ZTRACE_DIR = $TOP/ztrace
 INSTALL_TARGETS = $(BIN_TARGETS)
 include $(TOP)/Makefile.rules
 
