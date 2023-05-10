@@ -5,22 +5,17 @@
                        (layerMapFile nil)
                        (renameTop t) ; CopyExact applies to top cell too
                        (flattenVias nil))
-  (let (TEMP PDK_DIR Command status cellMapFile gdsName CID)
+  
+  (let (TEMP PDK_DIR Command status cellMapFile gdsName)
     (unless CV->objType=="cellView" (error "CV not valid"))
-    CID = (NameStartRename "cell" "cadence" "gds2")
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
     (unless directory directory = (strcat TEMP "/gds/" CV->cellName))
     PDK_DIR = (strcat (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT") "/share/Fulcrum")
-    gdsName = (if renameTop && (dbGetPropByName CV "CopyExact")
-                  (dbGetPropByName CV "CopyExact")->value
-                  (NameDoRename CID CV->cellName)
-                  )
-    (unless gdsFile (sprintf gdsFile "%s/%s.gds" directory gdsName))
     (unless layerMapFile (sprintf layerMapFile "%s/stream/strmout.layermap" PDK_DIR))
-    (shell (sprintf nil "mkdir -p '%s'" directory))
-    (NameStopRename CID)
-    cellMapFile = (sprintf nil "%s/%s.cellmap" directory gdsName)
-    (WriteCellmap cellMapFile ?CV CV) ; write cellmap with CopyExact or GDS2 names
+    (shell (strcat "mkdir -p " directory))
+    cellMapFile = (sprintf nil "%s/cellmap" directory)
+    gdsName = (WriteCellmap cellMapFile ?CV CV ?renameTop renameTop) ; cellmap with CopyExact or GDS2 names
+    (unless gdsFile (sprintf gdsFile "%s/%s.gds" directory gdsName))
 
     ; strmout command line arguments
     Command = (sprintf nil

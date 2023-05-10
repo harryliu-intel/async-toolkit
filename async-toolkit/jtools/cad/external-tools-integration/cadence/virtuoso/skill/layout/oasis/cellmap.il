@@ -1,26 +1,28 @@
 ; Write cellmap to rename cells.  CopyExact cells get renamed to their
 ; original name as saved in the CopyExact property.  Other cells get
 ; GDS names.
-(defun WriteCellmap (cellMapFile @key (CV (geGetEditCellView)))
-  (let (CID fmap)
+(defun WriteCellmap (cellMapFile @key (CV (geGetEditCellView)) (renameTop t))
+  (let (CID fmap topName)
     (unless CV->objType=="cellView" (error "CV not valid"))
     CID = (NameStartRename "cell" "cadence" "gds2")
     fmap = (outfile cellMapFile)
     (unless fmap (error "can't write %s\n" cellMapFile))
-    (RecurseWriteCellmap fmap ?CV CV)
+    gdsName=(RecurseWriteCellmap fmap ?CV CV ?renameTop renameTop)
     (close fmap)
     (NameStopRename CID)
+    gdsName
     )
-  t
   )
 
 ; recursively process all cellView used in this design
 (defun RecurseWriteCellmap (fmap @key     (CV (geGetEditCellView))
+                                 (renameTop t)
                                  (visited (makeTable "visited" nil))
                                  (used    (makeTable "used" nil)))
   (let (name)
     visited[CV]=t
-    name = (if (dbGetPropByName CV "CopyExact") (dbGetPropByName CV "CopyExact")->value
+    name = (if renameTop && (dbGetPropByName CV "CopyExact")
+               (dbGetPropByName CV "CopyExact")->value
                (NameDoRename CID CV->cellName)
                )
     (when used[name] name=(strcat name "_" CV->viewName)) ; disambiguate
@@ -31,6 +33,6 @@
     (foreach inst CV->instHeaders
              (unless visited[inst->master] (RecurseWriteCellmap fmap ?visited visited ?used used ?CV inst->master))
              )
+    name
     )
-  t
   )

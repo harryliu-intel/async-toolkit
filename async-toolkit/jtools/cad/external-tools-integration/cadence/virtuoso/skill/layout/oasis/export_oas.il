@@ -3,25 +3,19 @@
                        (directory nil)
                        (oasFile nil)
                        (layerMapFile nil)
-                       (enableColoring t)
+                       (renameTop t) ; CopyExact applies to top cell too
                        (flattenVias nil)
                        (dbuPerUU (round 1/MfgGrid)))
-  (let (TEMP PDK_DIR Command status cellMapFile oasName CID)
+  (let (TEMP PDK_DIR Command status cellMapFile gdsName)
     (unless CV->objType=="cellView" (error "CV not valid"))
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
     (unless directory directory = (strcat TEMP "/oas/" CV->cellName))
     PDK_DIR = (strcat (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT") "/share/Fulcrum")
-    CID = (NameStartRename "cell" "cadence" "gds2")
-    oasName = (if (dbGetPropByName CV "CopyExact")
-                  (dbGetPropByName CV "CopyExact")->value
-                  (NameDoRename CID CV->cellName)
-                  )
-    (NameStopRename CID)
-    (unless oasFile (sprintf oasFile "%s/%s.oas" directory oasName))
     (unless layerMapFile (sprintf layerMapFile "%s/stream/strmout.layermap" PDK_DIR))
     (shell (strcat "mkdir -p " directory))
-    cellMapFile = (sprintf nil "%s/%s.cellmap" directory oasName)
-    (WriteCellmap cellMapFile ?CV CV) ; write cellmap with CopyExact or GDS2 names
+    cellMapFile = (sprintf nil "%s/cellmap" directory)
+    gdsName = (WriteCellmap cellMapFile ?CV CV ?renameTop renameTop) ; cellmap with CopyExact or GDS2 names
+    (unless oasFile (sprintf oasFile "%s/%s.oas" directory gdsName))
 
     ; strmout command line arguments
     Command = (sprintf nil
@@ -35,7 +29,7 @@
                                " -layerMap '%s'"
                                " -propMap '%s/stream/prop.map'"
                                " -objectMap '%s/stream/objectmap'"
-                               (if enableColoring " -enableColoring" "")
+                               " -enableColoring"
                                (if dbuPerUU (sprintf nil " -dbuPerUU %d" dbuPerUU) "")
                                " -cellMap '%s'"
                                " -logFile '%s/%s.log'"
@@ -43,7 +37,7 @@
                        CV->libName CV->cellName CV->viewName
                        directory directory layerMapFile
                        PDK_DIR PDK_DIR cellMapFile
-                       directory oasName
+                       directory gdsName
                        oasFile)
     status = (shell Command)
     (printf "%s : %s\n" (if status "SUCCESS" "FAIL") oasFile)
