@@ -1277,7 +1277,7 @@ t
               nil
               (sprintf nil "%s.lef.log" filename)
               t
-              "5.7"
+              LEFVersion
               )
     (ddDeleteLocal (ddGetObjLib scratchlib))
     status
