@@ -51,6 +51,9 @@ PROCEDURE WrapOne(wr : Wr.T; tn : TEXT; ckt : SpiceCircuit.T) =
         WITH p = ckt.params.get(i) DO
           IF NOT excludeNames.member(p) THEN
             Wr.PutText(wr, F(".PROBE v(%s)\n", p))
+          END;
+          IF NOT currentNames.member(p) THEN
+            Wr.PutText(wr, F(".PROBE i(%s)\n", p))
           END
         END
       END;
@@ -69,6 +72,7 @@ VAR
   thisPat : TEXT;
   wr : Wr.T;
   excludeNames := NEW(TextSetDef.T).init();
+  currentNames := NEW(TextSetDef.T).init();
   
 BEGIN
 
@@ -86,6 +90,9 @@ BEGIN
     END;
     WHILE pp.keywordPresent("-x") DO
       EVAL excludeNames.insert(pp.getNext())
+    END;
+    WHILE pp.keywordPresent("-c") DO
+      EVAL currentNames.insert(pp.getNext())
     END;
     WHILE pp.keywordPresent("-p") DO
       thisPat := pp.getNext();

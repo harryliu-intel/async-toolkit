@@ -41,6 +41,9 @@ IMPORT TraceFile, FileNamer;
 IMPORT TempReader;
 IMPORT Text;
 IMPORT Env;
+IMPORT CtDocBundle;
+IMPORT Process;
+IMPORT BundleRep;
 
 <*FATAL Thread.Alerted*>
 
@@ -49,79 +52,7 @@ CONST LR = LongReal;
       
 VAR doDebug := Debug.DebugThis("CT");
 
-CONST Usage = "[-fsdb <fsdbPath>] [-compress <compressPath>] [-rename <dutName>] [-scaletime <timeScaleFactor>] [-offsettime <timeOffset>] [-offsetvoltage <voltageOffset>] [-dosources] [-dofiles] [ [-n <nodename>] ...] [-threads <fsdb_threads>] [-wthreads <write_threads>] [-fromworkdir] [-maxtime <seconds>] [-maxnodes <nodes>] [-translate] <inFileName> <outFileRoot>";
-
-(*
-  will generate <outFileRoot>.trace and <outFileRoot>.names 
-
-  -fsdb        read FSDB format.  Argument is absolute path
-               to FSDB reading program (can be a shell script
-               launching via Netbatch).  Usually nanosimrd.
-
-               default format is CSDF if this is not provided.
-
-               If CT_NANOSIMRD_PATH is set in the environment,
-               that value is used as if we had typed "-fsdb <value>"
-
-  -compress    Compress waveform data.  Argument is absolute path to 
-               compression program (usually spicestream).
-
-               Note that if -fsdb is used, this path needs to be correct
-               for the environment in which the FSDB reading program is run.
- 
-               For example, if nanosimrd is run via Netbatch, the compression
-               program needs to be accessible from the Netbatch compute 
-               slaves, since it will be launched from within the fsdb
-               conversion program.
-
-               Note that if -compress is given without -z, then the output
-               file will be stored in the uncompressed (aspice reordered)
-               format.
-
-               If CT_COMPRESS_PATH is set in the environment, that
-               value is used as if we had typed "-compress <value>"
-
-  -resample    resample data at timestep given
-
-  -fromworkdir skips the parsing and generates the 
-               trace file from the work directory directly
-               NOT YET IMPLEMENTED!   SOON!!
-
-  -notrace     do not generate final .trace output
-
-  -dosources   generate PWL sources for all observed signals
-
-  -threads     how many threads to use for reading FSDB
-  
-  -wthreads    how many threads to use for writing .trace
-               (recommendation is TO NOT USE this option)
-
-  -maxfiles    max # of files to use in temp directory
-
-  -n           restrict attention to nodes mentioned on cmd line
-
-  -r           restrict attention to nodes matching regex
-
-  -workdir     rename working directory ( default : ct.work )
-  
-  -maxtime     max time to output in trace (in seconds) -- only for FSDB
-               N.B. applied before scaling of time by timeScaleFactor
-
-  -format      Alternatives: See TraceFile.VersionNames
-
-  -z           equiv to -format CompressedV1
-
-  -maxnodes    Only pick the first N nodes for the output
-
-  -translate   Convert GDS names to CAST names
-
-  -noX         Remove all occurrences of the letter X in node names
-
-  <inFileName> is name of input file in FSDB or CSDF format
-
-
-*)
-
+    (* see doc/ct.txt for documentation *)
 
 CONST DefMaxFiles = 1000;
 
@@ -371,6 +302,14 @@ BEGIN
 
     translate := pp.keywordPresent("-translate");
     noX       := pp.keywordPresent("-noX");
+
+    IF pp.keywordPresent("-help") THEN
+      <*FATAL Wr.Failure*>
+      BEGIN
+        Wr.PutText(Stdio.stderr, CtDocBundle.Get().get("../doc/ct.txt"));
+        Process.Exit(0)
+      END
+    END;
     
     IF    pp.keywordPresent("-scopesep") THEN
       scopesep := pp.getNext()
@@ -511,7 +450,7 @@ BEGIN
     
     pp.finish();
   EXCEPT
-    ParseParams.Error => Debug.Error("Can't parse command-line parameters\nUsage: " & Params.Get(0) & " " & Usage)
+    ParseParams.Error => Debug.Error("Can't parse command-line parameters\nUsage: " & Params.Get(0) & "\n" & CtDocBundle.Get().get("../doc/ct.txt"))
   END;
 
   IF TraceFile.Version.CompressedV1 IN formats AND compressCmdPath = NIL THEN

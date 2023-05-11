@@ -33,7 +33,7 @@ Extended("cmdParseExt")
 
 Module ("HspVariation")
 
-%implementation ("TestVar")
-%program ("testvarlib")
+implementation ("TestVar")
+program ("testvarlib")
 library ("varlib")
 

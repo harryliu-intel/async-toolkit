@@ -6,4 +6,7 @@ import ("ctlib")
 
 implementation ("ConvertTrace")
 
+resource ("../doc/ct.txt")
+bundle ("CtDocBundle")
+
 program ("ct")

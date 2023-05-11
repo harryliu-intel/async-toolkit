@@ -27,6 +27,10 @@ Command-line usage
 
 The basic command-line usage of ct is as follows:
 
+ct [-help]
+
+-- or --
+
 ct [-fsdb <fsdbPath>]
    [-compress <compressPath>]
    [-rename <dutName>]
@@ -56,6 +60,8 @@ Detailed command-line option documentation
 ==========================================
 
 Command-line option meaning is as follows
+
+  -help        be helpful
 
   -fsdb        read FSDB format.  Argument is absolute path
                to FSDB reading program (can be a shell script
