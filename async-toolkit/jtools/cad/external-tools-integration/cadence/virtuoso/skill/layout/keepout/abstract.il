@@ -282,6 +282,7 @@
     ; create final boundary shapes and blockage objects
     ; (leMergeShapes abstractCV->shapes)
     (CopyKeepoutToBlockage abstractCV)
+    (Colorize ?CV abstractCV ?doBlockages t)
 
   ; for pins, convert the via- or via+ into a pin with the same net
   ; try to filter out the big floodfilled blockage
