@@ -111,5 +111,6 @@ PROCEDURE TheDynamicTest() =
   END TheDynamicTest;
     
 BEGIN
-  TheDynamicTest()
+  TheBasicTest()
+  (*TheDynamicTest()*)
 END TestVar.

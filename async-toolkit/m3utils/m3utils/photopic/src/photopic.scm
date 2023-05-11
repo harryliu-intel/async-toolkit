@@ -163,6 +163,9 @@
 ;; a "spectrum" is a procedure of one argument that returns
 ;; an energy density in W/nm (units?)
 
+(define (get-channel channel)
+  (lambda(l) (cdr (assoc channel (CieXyz.Interpolate l) ))))
+
 (define (get-channel-integral spectrum channel)
   (let* ((c         (lambda(l) (cdr (assoc channel (CieXyz.Interpolate l) ))))
          (integrand (lambda(l) (* (c l) (spectrum l)))))
@@ -289,6 +292,9 @@
 (define (multiply-spectra a b)
   (combine-spectra a b *))
 
+(define (divide-spectra a b)
+  (combine-spectra a b /))
+
 (define (add-spectra a b)
   (combine-spectra a b +))
 
@@ -410,6 +416,46 @@
     (list ref-temp-res (map calc-one '(1 2 3 4 5 6 7 8 9 10 11 12 13 14)))
     )
   )
+
+(define (calc-Yri spectrum)
+  ;; put it all together. compute the Y-ratio-i of a given
+  ;; continuous spectrum
+  
+  (let* ((norm-spectrum     (normalize-spectrum spectrum))
+         (test-Yxy          (calc-Yxy norm-spectrum))
+         (test-uv           (Yxy->uv test-Yxy))
+         (ref-temp-res      (search-T test-uv))
+         (ref-temp          (car ref-temp-res))
+         (ref-uv            (temp-uv ref-temp))
+         (norm-ref-spectrum (normalize-spectrum (make-Bl ref-temp)))
+         )
+
+    (define (calc-one tcsi)
+      (let* ((sample (R tcsi))
+
+             (ref-reflected      (multiply-spectra sample norm-ref-spectrum))
+             (ref-reflected-Yxy  (calc-Yxy ref-reflected))
+             
+             (reflected-spectrum (multiply-spectra sample norm-spectrum))
+             (reflected-Yxy      (calc-Yxy reflected-spectrum))
+             (Yri (/ (car reflected-Yxy) (car ref-reflected-Yxy)))               
+             )
+        Yri)
+      )
+      
+    (if debug
+        (dis "test-Yxy     " test-Yxy dnl
+             "test-uv      " test-uv dnl
+             "ref-temp-res " ref-temp-res dnl
+             "ref-uv       " ref-uv dnl))
+    (list ref-temp-res (map calc-one '(1 2 3 4 5 6 7 8 9 10 11 12 13 14)))
+    )
+  )
+
+(define (calc-reflected-Yxy spectrum sample)
+  (let* ((norm-spectrum      (normalize-spectrum spectrum))
+         (reflected-spectrum (multiply-spectra sample norm-spectrum)))
+    (calc-Yxy reflected-spectrum)))
 
 (define *start-selection*  '(1 2 3 4 5 6 7 8 9 10 11 12 13 14))
 (define *the-selection*  *start-selection*)
