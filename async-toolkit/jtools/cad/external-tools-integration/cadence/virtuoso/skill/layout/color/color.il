@@ -1,7 +1,7 @@
 ; always color metals based on track position since this is invariable
 ; in a fixed track pattern via colors are assigned by ICC during
 ; routing, so don't want to change those unless they are uncolored
-(defun Colorize (@key (CV (geGetEditCellView)) (doVias t) (override nil) (offset nil))
+(defun Colorize (@key (CV (geGetEditCellView)) (doVias t) (doBlockages nil) (override nil) (offset nil))
   (let (bbox color shapes track oldcolor track1 track2 color1 color2 colorc viaNum)
     (unless offset offset=(cadr (GetCellAlignment ?CV CV)))
     offset = -(car offset):-(cadr offset) ; reverse offset
@@ -25,6 +25,20 @@
 	        )
              )
 	  )
+       (when doBlockages
+         blockages = (setof b CV->blockages b->layer==metal)
+         (foreach blockage blockages
+            bbox = (dbTransformBBox blockage->bBox (list offset "R0"))
+	    track = (GetTrack (MetalNumber metal) bbox)
+	    (if !track then
+              (printf "ERROR: Can't color off-track %s at %f:%f\n"
+                      b->layer (caar bbox) (cadar bbox))
+   	    else
+               color = (GetTrackColor (MetalNumber blockage->layer) track)
+	       (when color (SetBlockageColor blockage color))
+	       )
+            )
+         )
        )
     (when doVias
       (foreach via ColorableVias
@@ -45,6 +59,20 @@
                                     )
                               )
                         )
+               (when doBlockages
+                 blockages = (setof b CV->blockages b->layer==via)
+                 (foreach blockage blockages
+                          bbox = (dbTransformBBox blockage->bBox (list offset "R0"))
+                          track1 = (GetTrack viaNum   bbox ?exact nil)
+                          track2 = (GetTrack viaNum+1 bbox ?exact nil)
+                          track = (if (mod viaNum 2)==0 track1 track2)
+                          color = (GetViaTrackColor viaNum track)
+                          oldcolor = (GetBlockageColor blockage)
+                          (when color && (override || oldcolor==0)
+                                (SetBlockageColor blockage color)
+                                )
+                          )
+                 )
                )
       )
     (foreach via CV->vias
@@ -169,6 +197,25 @@
 ; set color number of a shape
 (defun SetShapeColor (shape color)
   (dbSetShapeColor shape metal_color_name[color])
+  )
+
+; get the color number of a blockage
+(defun GetBlockageColor (blockage)
+  (let (color)
+    color=(dbGetBlockageColor blockage)
+    (cond (color==metal_color_name[0] color=0)
+          (color==metal_color_name[1] color=1)
+          (color==metal_color_name[2] color=2)
+          (color==metal_color_name[3] color=3)
+          (t color=nil)
+          )
+    color
+    )
+  )
+
+; set color number of a blockage
+(defun SetBlockageColor (blockage color)
+  (dbSetBlockageColor blockage metal_color_name[color])
   )
 
 ; get the color number of the via cut
