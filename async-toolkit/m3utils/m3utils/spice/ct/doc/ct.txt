@@ -42,6 +42,7 @@ ct [-fsdb <fsdbPath>]
    [-maxtime <seconds>]
    [-maxnodes <nodes>]
    [-wait]
+   [-prec <precision>]
    [-translate] <inFileName> <outFileRoot>
 
 Output files
@@ -123,6 +124,9 @@ Command-line option meaning is as follows
   -translate   Convert GDS names to CAST names
 
   -noX         Remove all occurrences of the letter X in node names
+
+  -prec        Set precision of CompressedV1 format as a fraction of the full
+               range of each signal.  [default: 0.01]
 
   -wait        ???
 

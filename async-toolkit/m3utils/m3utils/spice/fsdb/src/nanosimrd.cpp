@@ -964,13 +964,13 @@ main(int argc, char *argv[])
           cons_t *filterargs = NULL;
           int nargs = 1;
           
-          fprintf(stderr, "got filter \"%s\"\n", str);
+          if(verbose)fprintf(stderr, "got filter \"%s\"\n", str);
 
           filterpath = strdup(str);
 
           while ((str = strtok(NULL, " \n"))) {
             char *arg = strdup(str);
-            fprintf(stderr, "got arg \"%s\"\n", arg);
+            if(verbose)fprintf(stderr, "got arg \"%s\"\n", arg);
             
             filterargs = cons(arg, filterargs);
             ++nargs;
