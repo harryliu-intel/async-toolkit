@@ -68,5 +68,5 @@ $status==0 || die("virtuoso failed\n");
 # move output file
 system("mv 'temp/gds/$cell'/*.gds '$output'")==0 || die("unable to move to $output\n");
 if ($map ne "") {
-    system("mv 'temp/gds/$cell'/*.cellmap '$map'")==0 || die("unable to move to $map\n");
+    system("mv 'temp/gds/$cell'/cellmap '$map'")==0 || die("unable to move to $map\n");
 }
