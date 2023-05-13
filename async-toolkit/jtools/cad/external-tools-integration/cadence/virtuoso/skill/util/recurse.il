@@ -6,19 +6,19 @@
                           (filter nil) ; lambda function to filter cell types
                           (action nil) ; lambda function to apply to cell types
                           (viewName nil) ; recurse to an alternate view
+                          (result nil) ; list of cells found so far
                           )
-  (let (result master)
+  (let (master)
     (when !visited[CV]
       visited[CV]=t
-      (foreach inst CV->instances
+      (foreach inst CV->instHeaders
                master = inst->master
                (when viewName
                  master = (dbOpenCellViewByType master->libName master->cellName viewName)
                  )
-               (when master result =
-                     (append result (FindSubcells ?filter filter ?action action
-                                                  ?CV master ?visited visited ?viewName viewName))
-                     )
+               (when master
+                 result = (FindSubcells ?filter filter ?action action ?result result
+                                        ?CV master ?visited visited ?viewName viewName))
                )
       (when !filter || (apply filter (list CV))
             (printf "%s\n" CV->cellName)
