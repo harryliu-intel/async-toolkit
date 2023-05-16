@@ -2,6 +2,7 @@
 
 MODULE LRVector;
 IMPORT Math;
+IMPORT Word, LongrealType;
 
 PROCEDURE Norm(v : T) : LONGREAL =
   VAR
@@ -16,4 +17,25 @@ PROCEDURE Norm(v : T) : LONGREAL =
 PROCEDURE Copy(a : T) : T =
   VAR res := NEW(T, NUMBER(a^)); BEGIN res^ := a^; RETURN res END Copy;
 
+PROCEDURE Equal(a, b : T) : BOOLEAN =
+  BEGIN
+    IF a = b THEN
+      RETURN TRUE
+    ELSIF NUMBER(a^) # NUMBER(b^) THEN
+      RETURN FALSE
+    ELSE
+      RETURN a^ = b^
+    END
+  END Equal;
+
+PROCEDURE Hash(a : T) : Word.T =
+  VAR
+    res : Word.T := 0;
+  BEGIN
+    FOR i := FIRST(a^) TO LAST(a^) DO
+      res := Word.Times(Word.Plus(res, LongrealType.Hash(a[i])), 16_c0edbabe)
+    END;
+    RETURN res
+  END Hash;
+  
 BEGIN END LRVector.
