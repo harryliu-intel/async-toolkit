@@ -177,6 +177,8 @@ override ("tracelib", TOP & "/spice")
 override ("spicecompress", TOP & "/spice")
 override ("gds2cast", TOP & "/spice")
 
+override ("varosc", TOP & "/spice/variation")
+
 override ("spicebuilderlib", TOP & "/tcam")
 override ("hbddops", TOP & "/btc")
 override ("rdlparse", TOP & "/rdl")
