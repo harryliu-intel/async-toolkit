@@ -108,7 +108,7 @@ PROCEDURE CopyTemplate(templatePath, rundirPath : Pathname.T) =
     END
   END CopyTemplate;
 
-PROCEDURE RunSimulation() =
+PROCEDURE RunSimulation() RAISES { ProcUtils.ErrorExit } =
   <*FATAL OSError.E*>
   VAR
     simPath        := "/p/hdk/cad/xa/U-2023.03-1-T/bin";
@@ -130,7 +130,8 @@ PROCEDURE RunSimulation() =
                    cmd,
                    TextWr.ToText(wr),
                    ProcUtils.FormatError(err)) DO
-        Debug.Error(msg)
+        Debug.Warning(msg);
+        RAISE ProcUtils.ErrorExit(err)
       END
     END
   END RunSimulation;
@@ -262,7 +263,25 @@ BEGIN
   END;
 
   IF Phase.RunSim IN phases THEN
-    RunSimulation()
+    VAR
+      success := FALSE;
+    CONST
+      MaxAttempts = 5;
+    BEGIN
+      FOR i := 1 TO MaxAttempts DO
+        TRY
+          RunSimulation();
+          success := TRUE;
+          EXIT
+        EXCEPT
+          ProcUtils.ErrorExit => (* loop *)
+        END
+      END;
+      IF NOT success THEN
+        Debug.Error("Too many attempts running simulation");
+        <*ASSERT FALSE*>
+      END;
+    END
   END;
 
   IF Phase.DoMeasure IN phases THEN
