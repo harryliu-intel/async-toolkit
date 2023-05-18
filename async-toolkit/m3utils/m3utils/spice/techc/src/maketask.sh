@@ -3,7 +3,8 @@
 # run this script in the "work" subdirectory
 # m3utils/spice/techc/work
 
-ROOTDIR=`pwd`/..
+M3UTILS=/nfs/site/disks/zsc3_fon_fe_0001/mnystroe/m3utils
+ROOTDIR=${M3UTILS}/spice/techc
 SRCDIR=${ROOTDIR}/src
 BINDIR=${ROOTDIR}/AMD64_LINUX
 PROG=${BINDIR}/techc
@@ -58,6 +59,20 @@ allvts="false"
 runmode="default"
 
 trantypes=""
+
+if [ "$1" == "-variation" ]; then
+    runmode="override"
+    volts="0.80 0.20 0.22 0.24 0.26 0.28 0.30 0.32 0.34 0.36 0.38 0.40 0.42 0.44"
+    temps="25 50 75 85 105 125"
+    modes="dyn"
+    paras="true"
+    corners="tt"
+    step=4
+    techs="1278p3"
+    gates="xor_0p0sigma xor_5p3sigma"
+    fo="4"
+    TEMPLATE=${SRCDIR}/ckt_varxor.sp
+fi
 
 if [ "$1" == "-2023-01-18" ]; then
     runmode="override"

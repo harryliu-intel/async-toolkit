@@ -19,7 +19,7 @@ IMPORT Process;
 IMPORT TextReader;
 IMPORT Text;
 IMPORT Lex, FloatMode;
-FROM RingOsc IMPORT XaVar, XaTran, N;
+FROM RingOsc IMPORT XaVar, XaTranUlvt, XaTranLvt, N;
 
 <*FATAL Thread.Alerted*>
 
@@ -31,7 +31,7 @@ TYPE
 
 VAR
   Var  := XaVar;
-  Tran := XaTran;
+  Tran := XaTranUlvt;
 
 PROCEDURE WriteVar(wr : Wr.T) RAISES { Wr.Failure } =
   BEGIN
@@ -205,6 +205,14 @@ BEGIN
 
     IF pp.keywordPresent("-r") THEN
       rundirPath := pp.getNext()
+    END;
+
+    IF pp.keywordPresent("-lvt") THEN
+      Tran := XaTranLvt
+    END;
+    
+    IF pp.keywordPresent("-ulvt") THEN
+      Tran := XaTranUlvt
     END;
     
     pp.skipParsed();

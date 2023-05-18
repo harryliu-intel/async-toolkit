@@ -131,7 +131,32 @@ PROCEDURE MapCommon(READONLY c : Config;  map : TextTextTbl.T)=
     |
       Gate.Oai =>
       <*ASSERT FALSE*>
+    |
+      Gate.Xor_0p0sigma =>
+      EVAL map.put("@T0A@", "in");
+      EVAL map.put("@T0B@", "vcc");
+      EVAL map.put("@T0C@", "");
+
+      EVAL map.put("@T1A@", "vcc");
+      EVAL map.put("@T1B@", "xi");
+      EVAL map.put("@T1C@", "");
+
+      EVAL map.put("@MCIDX@", "1");
+
+    |
+      Gate.Xor_5p3sigma =>
+      EVAL map.put("@T0A@", "in");
+      EVAL map.put("@T0B@", "vcc");
+      EVAL map.put("@T0C@", "");
+
+      EVAL map.put("@T1A@", "vcc");
+      EVAL map.put("@T1B@", "xi");
+      EVAL map.put("@T1C@", "");
+
+      EVAL map.put("@MCIDX@", "2");
     END;
+
+    EVAL map.put("@THRESH@", TranNames[c.tran]);
     
     (* parasitic or not *)
     IF c.para THEN

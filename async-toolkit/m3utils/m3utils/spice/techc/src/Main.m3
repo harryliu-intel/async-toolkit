@@ -157,8 +157,6 @@ PROCEDURE DoCommonSetup(VAR c : Config) =
   END DoCommonSetup;
 
 CONST ParaNanoFactor = ARRAY BOOLEAN OF LONGREAL { 1.0d0, 2.0d0 };
-      
-
 
 PROCEDURE DoConvertPhaz(READONLY c : Config) =
   BEGIN
@@ -167,7 +165,14 @@ PROCEDURE DoConvertPhaz(READONLY c : Config) =
 
 PROCEDURE DoClean(READONLY c : Config) =
   BEGIN
-    TRY FS.DeleteFile(F("%s.fsdb", c.simRoot)) EXCEPT ELSE END;
+    TRY
+      WITH fsdbPath = TechConvert.FindFsdbInDir(c.workDir) DO
+        IF fsdbPath # NIL THEN
+          FS.DeleteFile(fsdbPath) 
+        END
+      END
+    EXCEPT ELSE END;
+    
     TRY
       CONST
         CtWorkDir = "ct.work";

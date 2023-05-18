@@ -49,7 +49,9 @@ TYPE
            XorAlt, (* alternative XOR2 *)
            Buf,    (* buffer *)
            Aoi,    (* AOI gate *)
-           Oai     (* don't use this -- alternates with Aoi *)
+           Oai,     (* don't use this -- alternates with Aoi *)
+           Xor_0p0sigma,  (* special variation sim w/o variation *)
+           Xor_5p3sigma   (* special variation sim w/ 5.3 sigma variation *)
   };
   
 CONST
@@ -66,7 +68,7 @@ CONST
 
   CornNames = ARRAY Corn OF TEXT { "tt", "ss", "ff", "sf", "fs" };
 
-  GateNames = ARRAY Gate OF TEXT { "xor", "xoralt", "buf", "aoi", "oai" };
+  GateNames = ARRAY Gate OF TEXT { "xor", "xoralt", "buf", "aoi", "oai", "xor_0p0sigma", "xor_5p3sigma" };
   (* should not ask for an oai, should only ask for aoi *)
 
   TechNames = ARRAY Tech OF TEXT { "n5", "1276p4", "1276p4_g1m", "1276p4_aml1", "1276p4_aml2", "n3", "n3e", "1278p3" };
@@ -81,7 +83,8 @@ CONST
                                    Corp.Intc };
 
   Gate1 = ARRAY Gate OF Gate
-            { Gate.Xor, Gate.XorAlt, Gate.Buf, Gate.Oai, Gate.Aoi };
+  { Gate.Xor, Gate.XorAlt, Gate.Buf, Gate.Oai, Gate.Aoi,
+    Gate.Xor_0p0sigma, Gate.Xor_5p3sigma };
   (* second gate type for each first gate --
      note that oai is really not supported as a first gate *)
 
@@ -119,7 +122,7 @@ TYPE
 
     pdmiLib         : Pathname.T;
     simRoot := DefSimRoot;
-    xaPath : Pathname.T := "/p/hdk/cad/xa/S-2021.09-SP2//bin/";
+    xaPath : Pathname.T := "/p/hdk/cad/xa/U-2023.03-1-T/bin/";
 
     para : BOOLEAN; (* parasitic simulation yes/no *)
   END;
