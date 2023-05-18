@@ -8,7 +8,7 @@
         (botMetal nil)           ; bottom metal layer to use, or nil to use wires.il
         (topMetal nil)           ; top metal layer to use, or nil to use wires.il
         (pwrMetal nil)           ; top metal layer for power
-        (topHalo (GetTopHalo))   ; APR should add a top halo
+        (topHalo t)              ; APR should add a top halo
         (denseStaples nil)       ; APR should add staples at dense pitch
 	(midLevel nil)           ; APR custom mid-level flow
         (thresholds (list "c" "b")) ; transistor thresholds to use
@@ -86,7 +86,7 @@
         (botMetal nil)           ; bottom metal layer to use, or nil to use wires.il
         (topMetal nil)           ; top metal layer to use, or nil to use wires.il
         (pwrMetal nil)           ; top metal layer for power
-        (topHalo (GetTopHalo))   ; APR should add a top halo
+        (topHalo t)              ; APR should add a top halo
         (denseStaples nil)       ; APR should add staples at dense pitch
 	(midLevel nil)           ; APR custom mid-level flow
         (thresholds (list "c" "b")) ; transistor thresholds to use
@@ -391,7 +391,7 @@
         (botMetal 0)             ; bottom metal layer
         (topMetal 8)             ; top metal layer
         (pwrMetal nil)           ; top metal layer for power
-        (topHalo (GetTopHalo))  ; APR should add a top halo
+        (topHalo t)              ; APR should add a top halo
         (doHierDef t)            ; create cellName.def with hierarchy separator
         (denseStaples nil)       ; APR should add staples at dense pitch
 	(midLevel nil)           ; APR custom mid-level flow
@@ -567,7 +567,7 @@
         (top_name nil)
         (pinMap nil)
         (calibreOffset t)
-	(topHalo (GetTopHalo))
+	(topHalo t)
         )
   (let (TEMP WDIR Command status ImportCV layoutCV floorplanCV
              win instmap CID fields short_name offset file origFile oas rename)
