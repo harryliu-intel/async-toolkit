@@ -62,7 +62,11 @@ PROCEDURE WriteVar(wr : Wr.T) RAISES { Wr.Failure } =
     FOR sub := 0 TO 1 DO
       FOR tran := FIRST(Tran) TO LAST(Tran) DO
         FOR var := FIRST(Var) TO LAST(Var) DO
-          Wr.PutText(wr, LongReal(p[pidx]));
+          IF single AND stage # 4 THEN
+            Wr.PutText(wr, LongReal(0.0d0))
+          ELSE
+            Wr.PutText(wr, LongReal(p[pidx]))
+          END;
           Wr.PutText(wr, " ");
           INC(pidx)
         END
@@ -185,6 +189,7 @@ VAR
   rundirPath   : Pathname.T;
   phases := SET OF Phase {};
   gotPhase := FALSE;
+  single : BOOLEAN;
   
 BEGIN
   TRY
@@ -198,6 +203,9 @@ BEGIN
     IF NOT gotPhase THEN phases := AllPhases END;
     
     exact := pp.keywordPresent("-exact");
+
+    single := pp.keywordPresent("-single");
+    (* just make a single stage slow *)
 
     IF pp.keywordPresent("-T") OR pp.keywordPresent("-template") THEN
       templatePath := pp.getNext()

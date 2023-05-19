@@ -2,7 +2,7 @@ MODULE Main;
 FROM RingOsc IMPORT N;
 IMPORT LRScalarField;
 IMPORT Wx;
-FROM Fmt IMPORT Int, LongReal, F, Pad;
+FROM Fmt IMPORT Int, LongReal, F, FN, Pad;
 IMPORT LRVector;
 IMPORT ProcUtils;
 IMPORT Debug;
@@ -29,12 +29,12 @@ TYPE
 
 CONST
   DefMult     = -1.0d0; (* we want to maximize the cycle time *)
+  Sqrt10      =  3.1623d0;
   DefMaxSumSq =  5.3d0; (* \approx sqrt(2) * erf^-1 ( 1 - 1/(10 * 1e6) ) *)
   
 TYPE
   BaseEvaluator = LRScalarField.T OBJECT
     mult     := DefMult;
-    maxSumSq := DefMaxSumSq;
   METHODS
     init() : LRScalarField.T := InitDummy;
     mapP(inPlaceP : LRVector.T) : LRVector.T := BaseMapP;
@@ -48,7 +48,7 @@ TYPE
     init() : LRScalarField.T := InitPll;
   END;
 
-PROCEDURE BaseMapP(base : BaseEvaluator;
+PROCEDURE BaseMapP(<*UNUSED*>base : BaseEvaluator;
                    pa   : LRVector.T) : LRVector.T =
   VAR
     sumSq := 0.0d0;
@@ -60,8 +60,8 @@ PROCEDURE BaseMapP(base : BaseEvaluator;
       sumSq := sumSq + p[i] * p[i]
     END;
 
-    IF sumSq > base.maxSumSq THEN
-      WITH ratio = sqrt(base.maxSumSq / sumSq) DO
+    IF sumSq > maxSumSq THEN
+      WITH ratio = sqrt(maxSumSq / sumSq) DO
         FOR i := FIRST(p^) TO LAST(p^) DO
           p[i] := p[i] * ratio
         END
@@ -133,10 +133,10 @@ PROCEDURE AttemptEval(base : BaseEvaluator; q : LRVector.T) : LONGREAL
     sumSqQ         := SumSq(q);
     rmsQ           := sqrt(sumSqQ);
 
-    (* this is a function that peaks at around DefMaxSumSq and falls off
+    (* this is a function that peaks at around maxSumSq and falls off
        slowly to the left and quickly to the right *)
-    corr           := exp((rmsQ - DefMaxSumSq) / DefMaxSumSq) *
-                      (tanh(10.0d0 * (DefMaxSumSq + Fudge - rmsQ)) + 1.0d0) /
+    corr           := exp((rmsQ - maxSumSq) / maxSumSq) *
+                      (tanh(10.0d0 * (maxSumSq + Fudge - rmsQ)) + 1.0d0) /
                       2.0d0;
         
         
@@ -153,8 +153,10 @@ PROCEDURE AttemptEval(base : BaseEvaluator; q : LRVector.T) : LONGREAL
                         Pad(Int(sdIdx), 6, padChar := '0'));
 
     tranStr        := "-" & TranNames[tran];
+
+    opt            := ARRAY BOOLEAN OF TEXT { "", "-single" } [ single ];
                         
-    cmd            := F("nbjob run --target zsc3_normal --class 4C --mode interactive %s %s -T %s -r %s %s", bin, tranStr, templatePath, subdirPath, pos);
+    cmd            := FN("nbjob run --target zsc3_normal --class 4C --mode interactive %s %s %s -T %s -r %s %s", ARRAY OF TEXT { bin, opt, tranStr, templatePath, subdirPath, pos } );
     cm             := ProcUtils.RunText(cmd,
                                         stdout := stdout,
                                         stderr := stderr,
@@ -303,6 +305,8 @@ VAR
   firstOnly    : BOOLEAN;
 
   tran         := Tran.Ulvt;
+  single       : BOOLEAN; (* just a single slow stage *)
+  maxSumSq     : LONGREAL;
 BEGIN
   TRY
     IF pp.keywordPresent("-T") OR pp.keywordPresent("-template") THEN
@@ -321,6 +325,8 @@ BEGIN
       tran := Tran.Ulvt
     END;
 
+    single := pp.keywordPresent("-single");
+
     doSkip := pp.keywordPresent("-skip");
 
     firstOnly := pp.keywordPresent("-firstonly");
@@ -330,7 +336,13 @@ BEGIN
     ParseParams.Error => Debug.Error("Can't parse command line")
   END;
 
-  IF doSkip THEN RhoBeg := 1.0d0 ELSE RhoBeg := 4.0d0 END;
+  IF single THEN
+    maxSumSq := DefMaxSumSq
+  ELSE
+    maxSumSq := DefMaxSumSq / Sqrt10
+  END;
+
+  IF doSkip OR NOT single THEN RhoBeg := 1.0d0 ELSE RhoBeg := 4.0d0 END;
   
   IF templatePath = NIL OR rundirPath = NIL THEN
     Debug.Error("Must specify template [-T] and rundir [-r]")
