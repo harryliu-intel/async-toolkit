@@ -16,7 +16,7 @@ IMPORT Pathname;
 IMPORT OSError;
 IMPORT FS;
 IMPORT AL;
-IMPORT Math;
+FROM Math IMPORT sqrt, exp, tanh;
 IMPORT Wr;
 IMPORT NewUOAs;
 IMPORT Rd;
@@ -61,7 +61,7 @@ PROCEDURE BaseMapP(base : BaseEvaluator;
     END;
 
     IF sumSq > base.maxSumSq THEN
-      WITH ratio = Math.sqrt(base.maxSumSq / sumSq) DO
+      WITH ratio = sqrt(base.maxSumSq / sumSq) DO
         FOR i := FIRST(p^) TO LAST(p^) DO
           p[i] := p[i] * ratio
         END
@@ -70,6 +70,16 @@ PROCEDURE BaseMapP(base : BaseEvaluator;
 
     RETURN p
   END BaseMapP;
+
+PROCEDURE SumSq(p : LRVector.T) : LONGREAL =
+  VAR
+    sumSq := 0.0d0;
+  BEGIN
+    FOR i := FIRST(p^) TO LAST(p^) DO
+      sumSq := sumSq + p[i] * p[i]
+    END;
+    RETURN sumSq
+  END SumSq;
 
 PROCEDURE InitDummy(base : BaseEvaluator) : LRScalarField.T =
   BEGIN
@@ -114,12 +124,22 @@ PROCEDURE BaseEval(base : BaseEvaluator; p : LRVector.T) : LONGREAL =
     <*ASSERT FALSE*>
   END BaseEval;
   
-PROCEDURE AttemptEval(base : BaseEvaluator; p : LRVector.T) : LONGREAL
+PROCEDURE AttemptEval(base : BaseEvaluator; q : LRVector.T) : LONGREAL
   RAISES { Rd.EndOfFile, ProcUtils.ErrorExit } =
+  CONST
+    Fudge = 0.2d0; (* don't ask... *)
   VAR
-    q              := base.mapP(p);
     pos            := FmtP(q);
-    
+    sumSqQ         := SumSq(q);
+    rmsQ           := sqrt(sumSqQ);
+
+    (* this is a function that peaks at around DefMaxSumSq and falls off
+       slowly to the left and quickly to the right *)
+    corr           := exp((rmsQ - DefMaxSumSq) / DefMaxSumSq) *
+                      (tanh(10.0d0 * (DefMaxSumSq + Fudge - rmsQ)) + 1.0d0) /
+                      2.0d0;
+        
+        
     bin            := VarSpiceBin;
 
     Owr            := NEW(TextWr.T).init();
@@ -134,7 +154,7 @@ PROCEDURE AttemptEval(base : BaseEvaluator; p : LRVector.T) : LONGREAL
 
     tranStr        := "-" & TranNames[tran];
                         
-    cmd            := F("nbjob run --class 4C --mode interactive %s %s -T %s -r %s %s", bin, tranStr, templatePath, subdirPath, pos);
+    cmd            := F("nbjob run --target zsc3_normal --class 4C --mode interactive %s %s -T %s -r %s %s", bin, tranStr, templatePath, subdirPath, pos);
     cm             := ProcUtils.RunText(cmd,
                                         stdout := stdout,
                                         stderr := stderr,
@@ -142,7 +162,7 @@ PROCEDURE AttemptEval(base : BaseEvaluator; p : LRVector.T) : LONGREAL
   BEGIN
     TRY
 
-      Debug.Out(F("BaseEval : p = %s\nrunning : %s", FmtP(p), cmd));
+      Debug.Out(F("BaseEval : q = %s\nrunning : %s", FmtP(q), cmd));
       
       cm.wait();
 
@@ -153,8 +173,14 @@ PROCEDURE AttemptEval(base : BaseEvaluator; p : LRVector.T) : LONGREAL
         LOOP
           TRY
             WITH line = Rd.GetLine(rd) DO
-              WITH res = base.mult * Scan.LongReal(line) DO
-                Debug.Out(F("BaseEval: f(%s) = %s", FmtP(q), LongReal(res)));
+              WITH progVal = Scan.LongReal(line),
+                   res     = corr * progVal * base.mult DO
+                Debug.Out(F("BaseEval: progVal=%s corr=%s base.mult=%s -> f(%s) = %s",
+                            LongReal(progVal),
+                            LongReal(corr),
+                            LongReal(base.mult),
+                            FmtP(q),
+                            LongReal(res)));
                 RETURN res
               END
             END

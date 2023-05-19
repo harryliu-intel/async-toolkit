@@ -1,0 +1,7 @@
+WARNING: DefSubspace returns an empty basis
+Minimize : 0 iters, 3681 funcc; f = -2.7098644e-8; NEWUOAs terminates because the first-order optimality is approximately achieved.
+0 0 0 0 0 0 0 0.0625 0 0 0 0 0 0 0 0.25 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1.46875 0 0 0 0 0 0 0 0.140625 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 4 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+
+WARNING: DefSubspace returns an empty basis
+Minimize : 0 iters, 3361 funcc; f = -2.7538523e-8; NEWUOAs terminates because the first-order optimality is approximately achieved.
+0 0 0.000244140625 0 0 0 0 0.3125 7.62939453125e-6 0 0 0 0 0 0 1.25 -0.0625 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1.46875 0 0 0 -0.03125 0 0 0 0.640625 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.125 1 0 4 0 -0.000030517578125 0 0 0 0 0 0 0 0 0 0 0 0 0 0
