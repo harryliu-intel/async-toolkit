@@ -157,7 +157,7 @@ Rsensey vissy 0 1
 * Measure
 .measure tran Cycle
 + trig V(x[0]) val='vtrue*0.5' td=8ns rise=1
-+ targ V(x[0]) val='vtrue*0.5' td=8ns fall=2
++ targ V(x[0]) val='vtrue*0.5' td=8ns rise=2
 .measure tran Freq          PARAM='(10/(Cycle))'
 .measure tran IdleCurrent   avg i(Vvcc) from 2ns to 10ns
 .measure tran IdlePower     PARAM='(-IdleCurrent*vtrue)'
