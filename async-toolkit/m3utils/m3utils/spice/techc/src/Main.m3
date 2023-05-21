@@ -277,7 +277,7 @@ BEGIN
     END;
 
     IF pp.keywordPresent("-T") THEN
-      c.templatePath := pp.getNext()
+      c.templateDir := pp.getNext()
     END;
 
     IF pp.keywordPresent("-deadline") THEN

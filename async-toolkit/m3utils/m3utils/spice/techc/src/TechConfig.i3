@@ -50,8 +50,8 @@ TYPE
            Buf,    (* buffer *)
            Aoi,    (* AOI gate *)
            Oai,     (* don't use this -- alternates with Aoi *)
-           Xor_0p0sigma,  (* special variation sim w/o variation *)
-           Xor_5p3sigma   (* special variation sim w/ 5.3 sigma variation *)
+           Xor_Z1_0p0sigma,  (* special variation sim w/o variation *)
+           Xor_Z1_5p3sigma   (* special variation sim w/ 5.3 sigma variation *)
   };
   
 CONST
@@ -68,10 +68,28 @@ CONST
 
   CornNames = ARRAY Corn OF TEXT { "tt", "ss", "ff", "sf", "fs" };
 
-  GateNames = ARRAY Gate OF TEXT { "xor", "xoralt", "buf", "aoi", "oai", "xor_0p0sigma", "xor_5p3sigma" };
+  GateNames = ARRAY Gate OF TEXT { "xor", "xoralt", "buf", "aoi", "oai",
+                                   "xor_z1_0p0sigma", "xor_z2_5p3sigma" };
   (* should not ask for an oai, should only ask for aoi *)
 
-  TechNames = ARRAY Tech OF TEXT { "n5", "1276p4", "1276p4_g1m", "1276p4_aml1", "1276p4_aml2", "n3", "n3e", "1278p3" };
+  TechNames = ARRAY Tech OF TEXT { "n5",
+                                   "1276p4",
+                                   "1276p4_g1m",
+                                   "1276p4_aml1",
+                                   "1276p4_aml2",
+                                   "n3",
+                                   "n3e",
+                                   "1278p3" };
+
+  TemplateNames = ARRAY Gate OF Pathname.T {
+  "ckt.sp",
+  "ckt.sp",
+  "ckt.sp",
+  "ckt.sp",
+  "ckt.sp",
+  "ckt_varxor.sp",
+  "ckt.varxor.sp"
+  };
 
   TechCorp  = ARRAY Tech OF Corp { Corp.Tsmc,
                                    Corp.Intc,
@@ -84,7 +102,7 @@ CONST
 
   Gate1 = ARRAY Gate OF Gate
   { Gate.Xor, Gate.XorAlt, Gate.Buf, Gate.Oai, Gate.Aoi,
-    Gate.Xor_0p0sigma, Gate.Xor_5p3sigma };
+    Gate.Xor_Z1_0p0sigma, Gate.Xor_Z1_5p3sigma };
   (* second gate type for each first gate --
      note that oai is really not supported as a first gate *)
 
@@ -109,10 +127,12 @@ TYPE
     nanoseconds : LONGREAL; (* length of sim in ns *)
     timestep : LONGREAL; (* in seconds *)
     
-    workDir : Pathname.T;
-    createWorkDir : BOOLEAN;
-    templatePath : Pathname.T;
+    workDir         : Pathname.T;
+    createWorkDir   : BOOLEAN;
+    templateDir     : Pathname.T;
+    
     phazz := SET OF Phaz { Phaz.Setup };
+    
     hspiceModelRoot : Pathname.T;
     hspiceModel     : Pathname.T;
 

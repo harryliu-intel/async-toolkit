@@ -15,7 +15,7 @@ IMPORT CitTextUtils;
 IMPORT FileWr;
 
 FROM TechConfig IMPORT Corp, Mode, Gate;
-FROM TechConfig IMPORT TranNames, GateNames, TechNames, TechCorp;
+FROM TechConfig IMPORT TranNames, GateNames, TechNames, TechCorp, TemplateNames;
 
 FROM TechTechs IMPORT Techs;
 FROM TechConfig IMPORT Gate1;
@@ -37,18 +37,19 @@ PROCEDURE DoSetup(READONLY c : Config) =
     SimFile := c.simRoot & ".sp";
     map     := NEW(TextTextTbl.Default).init();
     template : TextSeq.T;
+    templatePath := c.templateDir & "/" & TemplateNames[c.gate];
   BEGIN
     MapCommon(c, map);
 
     TRY
-      template := LoadTemplate(c.templatePath);
+      template := LoadTemplate(templatePath);
     EXCEPT
       OSError.E(e) => Debug.Error(F("Couldn't open template file \"%s\" : OSError.E : %s",
-                                    c.templatePath, AL.Format(e)))
+                                    templatePath, AL.Format(e)))
     |
       Rd.Failure(e) =>
       Debug.Error(F("Couldn't read template file \"%s\" : Rd.Failure : %s",
-                                    c.templatePath, AL.Format(e)))
+                                    templatePath, AL.Format(e)))
     END;
 
     ModifyTemplate(template, map);
@@ -65,7 +66,7 @@ PROCEDURE DoSetup(READONLY c : Config) =
     END
   END DoSetup;
 
-PROCEDURE MapCommon(READONLY c : Config;  map : TextTextTbl.T)=
+PROCEDURE MapCommon(READONLY c : Config; map : TextTextTbl.T)=
   VAR
     iter : TextTextTbl.Iterator;
     k, v : TEXT;
@@ -132,7 +133,7 @@ PROCEDURE MapCommon(READONLY c : Config;  map : TextTextTbl.T)=
       Gate.Oai =>
       <*ASSERT FALSE*>
     |
-      Gate.Xor_0p0sigma =>
+      Gate.Xor_Z1_0p0sigma =>
       EVAL map.put("@T0A@", "in");
       EVAL map.put("@T0B@", "vcc");
       EVAL map.put("@T0C@", "");
@@ -144,7 +145,7 @@ PROCEDURE MapCommon(READONLY c : Config;  map : TextTextTbl.T)=
       EVAL map.put("@MCIDX@", "1");
 
     |
-      Gate.Xor_5p3sigma =>
+      Gate.Xor_Z1_5p3sigma =>
       EVAL map.put("@T0A@", "in");
       EVAL map.put("@T0B@", "vcc");
       EVAL map.put("@T0C@", "");
@@ -298,7 +299,7 @@ PROCEDURE ModifyTemplate(template : TextSeq.T; map : TextTextTbl.T) =
   END ModifyTemplate;
 
 BEGIN
-  extraMap := NEW(TextTextTbl.Default).init();
+  extraMap    := NEW(TextTextTbl.Default).init();
   overrideMap := NEW(TextTextTbl.Default).init();
 
 

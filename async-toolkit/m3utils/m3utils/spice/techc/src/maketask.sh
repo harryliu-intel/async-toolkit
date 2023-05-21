@@ -8,7 +8,7 @@ ROOTDIR=${M3UTILS}/spice/techc
 SRCDIR=${ROOTDIR}/src
 BINDIR=${ROOTDIR}/AMD64_LINUX
 PROG=${BINDIR}/techc
-TEMPLATE=${SRCDIR}/ckt.sp
+TEMPLATEDIR=${SRCDIR}
 DATE=`date -Is`
 RUNDIR=`pwd`/nb.run-${DATE}
 
@@ -69,7 +69,7 @@ if [ "$1" == "-variation" ]; then
     corners="tt"
     step=4
     techs="1278p3"
-    gates="xor_0p0sigma xor_5p3sigma"
+    gates="xor_z1_0p0sigma xor_z1_5p3sigma"
     fo="4"
     TEMPLATE=${SRCDIR}/ckt_varxor.sp
 fi
@@ -312,7 +312,7 @@ for tech in ${techs}; do
 
         torun="${PROG} \
               -tech ${tech} -corn ${corn} -tran ${tran} \
-              -mode ${mode} -simu xa -T ${TEMPLATE} \
+              -mode ${mode} -simu xa -T ${TEMPLATEDIR} \
               -volt ${volt} -temp ${temp} \
               -para ${para} \
               -gate ${gate} -fo ${fo} \
