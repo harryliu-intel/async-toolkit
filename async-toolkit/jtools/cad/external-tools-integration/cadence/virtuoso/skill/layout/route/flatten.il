@@ -12,6 +12,7 @@ useICV = t
         (Verbose nil)              ; verbose
         (ConnectDanglingPins nil)  ; paint metal on top of one-terminal subcell pins
         (ConnectAbuttingPins t)    ; paint metal between nearby pins on the same net
+	(inPlacePins t)            ; allow drawing of InPlace pins
         (ConnectNearbyShapes t)    ; connect toplevel shapes with RouteNearby
         (powerGrid nil)            ; add a power grid
         (colorGrid nil)            ; add a color grid
@@ -49,7 +50,7 @@ useICV = t
 
     ; draw pins
     (AddBusWires ?CV CV)
-    (RedrawAllPins ?CV CV ?include_supply t ?supply_topMetal topMetal)
+    (RedrawAllPins ?CV CV ?include_supply t ?supply_topMetal topMetal ?inplace_pins inPlacePins)
     (CanonicalizeNets ?CV CV)
     (DeleteRedundantPins ?CV CV ?warnOnly !delete_redundant_pins)
 

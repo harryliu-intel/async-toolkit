@@ -25,7 +25,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun DrawMidLevelPins ( @key (CV (UIGetCellView)) (include_supply nil) (supply_topMetal -1)
-                               (all_supply nil) (all_signal nil) (all_layers nil))
+                               (all_supply nil) (all_signal nil) (all_layers nil) (inplace_pins t) )
   (let (TEMP
         WarningFile
         ErrorFile
@@ -33,7 +33,8 @@
         Errport
         CellTerms
         BusPinList
-        InPlacePinFig)
+        InPlacePinFig
+	(status nil))
 
     TEMP        = (ConfigFileGetValue TheCDSConfigTable "TEMP")
     WarningFile = (strcat TEMP "/" CV->cellName ".pins.warn")
@@ -53,16 +54,19 @@
           (when InPlacePinFig->LeafInPlacePin
             (printf "*WARNING* Top Level pin \"%s\" is drawn inplace from leaf cell instance \"%s\" \n" Term->name InstTerm->inst->name)
             (fprintf Warnport "*WARNING* Top Level pin \"%s\" is drawn inplace from leaf cell instance \"%s\" \n" Term->name InstTerm->inst->name)
+	    (unless inplace_pins status = t)
             )
           (when !InPlacePinFig && (member Term->name PowerGroundNets)==nil
             (printf "*ERROR* Failed to make top pin \"%s\" due to missing pin \"%s\" inside instance \"%s\" \n" Term->name InstTerm->name InstTerm->inst->name)
-            (fprintf Errport "*ERROR* Failed to make top pin \"%s\" due to missing pin \"%s\" inside instance \"%s\" \n" Term->name InstTerm->name InstTerm->inst->name) 
+            (fprintf Errport "*ERROR* Failed to make top pin \"%s\" due to missing pin \"%s\" inside instance \"%s\" \n" Term->name InstTerm->name InstTerm->inst->name)
+	    status = t
             )
           )
-        )
+        )	
       )
     (close Warnport)
     (close Errport)
+    (when status (error "Fatal InPlace Pin Error")
     )
   t
   )
