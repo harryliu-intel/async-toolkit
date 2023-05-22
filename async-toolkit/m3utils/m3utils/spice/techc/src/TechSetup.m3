@@ -1,4 +1,4 @@
-MODULE TechSetup;
+MODULE TechSetup EXPORTS TechSetup, TechTemplate;
 IMPORT TechConfig;
 IMPORT TextTextTbl;
 IMPORT TextSeq;

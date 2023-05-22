@@ -69,7 +69,7 @@ CONST
   CornNames = ARRAY Corn OF TEXT { "tt", "ss", "ff", "sf", "fs" };
 
   GateNames = ARRAY Gate OF TEXT { "xor", "xoralt", "buf", "aoi", "oai",
-                                   "xor_z1_0p0sigma", "xor_z2_5p3sigma" };
+                                   "xor_z1_0p0sigma", "xor_z1_5p3sigma" };
   (* should not ask for an oai, should only ask for aoi *)
 
   TechNames = ARRAY Tech OF TEXT { "n5",
@@ -88,7 +88,7 @@ CONST
   "ckt.sp",
   "ckt.sp",
   "ckt_varxor.sp",
-  "ckt.varxor.sp"
+  "ckt_varxor.sp"
   };
 
   TechCorp  = ARRAY Tech OF Corp { Corp.Tsmc,

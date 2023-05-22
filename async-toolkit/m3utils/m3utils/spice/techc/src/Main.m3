@@ -17,7 +17,7 @@ MODULE Main;
 
 IMPORT ParseParams;
 IMPORT Text;
-IMPORT Debug;
+IMPORT Debug; FROM Debug IMPORT UnNil;
 IMPORT Stdio;
 FROM Fmt IMPORT F, Int; IMPORT Fmt;
 IMPORT OSError;
@@ -113,12 +113,13 @@ PROCEDURE Lookup(str : TEXT; READONLY a : ARRAY OF TEXT) : CARDINAL =
       IF TE(str, a[i]) THEN RETURN i END
     END;
     VAR
-      str := F("could not find %s among alternatives :");
+      msg := F("could not find %s among alternatives : ",
+               UnNil(str));
     BEGIN
       FOR i := FIRST(a) TO LAST(a) DO
-        str := str & F( " \"%s\"" , a[i])
+        msg := msg & F( " \"%s\"" , UnNil(a[i]))
       END;
-      Debug.Error(str)
+      Debug.Error(msg)
     END;
     <*ASSERT FALSE*>
   END Lookup;

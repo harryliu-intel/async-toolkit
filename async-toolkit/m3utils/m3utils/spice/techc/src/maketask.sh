@@ -60,6 +60,19 @@ runmode="default"
 
 trantypes=""
 
+if [ "$1" == "-variationlow" ]; then
+    runmode="override"
+    volts="0.08 0.09 0.10 0.11 0.12 0.13 0.14 0.15 0.16"
+    temps="25 50 75 85 105 125"
+    modes="dyn"
+    paras="true"
+    corners="tt"
+    step=4
+    techs="1278p3"
+    gates="xor_z1_0p0sigma xor_z1_5p3sigma"
+    fo="4"
+    TEMPLATE=${SRCDIR}/ckt_varxor.sp
+fi
 if [ "$1" == "-variation" ]; then
     runmode="override"
     volts="0.16 0.17 0.18 0.19 0.20 0.22 0.24 0.26 0.28 0.30 0.32 0.34 0.36 0.38 0.40 0.42 0.44 0.45 0.46 0.48 0.50"

@@ -26,6 +26,8 @@ module ("TechConvert")
 module ("TechMeasure")
 
 module ("TechSetup")
+interface ("TechTemplate")
+
 module ("SimWatcher")
 
 implementation ("Main")
