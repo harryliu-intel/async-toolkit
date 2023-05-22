@@ -1,5 +1,5 @@
 MODULE Main;
-FROM RingOsc IMPORT N;
+FROM XorRingOsc IMPORT NV;
 IMPORT LRScalarField;
 IMPORT Wx;
 FROM Fmt IMPORT Int, LongReal, F, FN, Pad;
@@ -23,6 +23,8 @@ IMPORT Rd;
 IMPORT TextRd;
 IMPORT TextReader;
 IMPORT Thread;
+FROM TechConfig IMPORT Tran, TranNames;
+FROM TechLookup IMPORT Lookup;
 
 TYPE
   T = LRVector.T;
@@ -31,6 +33,7 @@ CONST
   DefMult     = -1.0d0; (* we want to maximize the cycle time *)
   Sqrt10      =  3.1623d0;
   DefMaxSumSq =  5.3d0; (* \approx sqrt(2) * erf^-1 ( 1 - 1/(10 * 1e6) ) *)
+  N           =  NV * 2; (* variations per gate times 2 gates *)
   
 TYPE
   BaseEvaluator = LRScalarField.T OBJECT
@@ -152,11 +155,12 @@ PROCEDURE AttemptEval(base : BaseEvaluator; q : LRVector.T) : LONGREAL
                         rundirPath,
                         Pad(Int(sdIdx), 6, padChar := '0'));
 
-    tranStr        := "-" & TranNames[tran];
+    tranStr        := "-thresh " & TranNames[tran];
+    zStr           := "-z " & Int(z);
 
     opt            := ARRAY BOOLEAN OF TEXT { "", "-single" } [ single ];
                         
-    cmd            := FN("nbjob run --target zsc3_normal --class 4C --mode interactive %s %s %s -T %s -r %s %s", ARRAY OF TEXT { bin, opt, tranStr, templatePath, subdirPath, pos } );
+    cmd            := FN("nbjob run --target zsc3_normal --class 4C --mode interactive %s %s %s %s -T %s -r %s %s", ARRAY OF TEXT { bin, opt, tranStr, zStr, templatePath, subdirPath, pos } );
     cm             := ProcUtils.RunText(cmd,
                                         stdout := stdout,
                                         stderr := stderr,
@@ -308,12 +312,6 @@ CONST (* shortcut values *)
 
   ResultLvtSingle = "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -0.000518798828125 0 0 0 0 0 0 0 0 0 0.015625 0.0625 0 0 0 0 0 0 0 0 0 0 0 0 -0.0009765625 0 0 0 0 0 0.00390625 0 0 0 0.015625 0 0 0 0 0.1875 1.625 0 5.0625 0 0.0000152587890625 0 0 0 0 0 0 0 0 0 0 0.00091552734375 0 0 0";
 
-TYPE
-  Tran = { Ulvt, Lvt };
-
-CONST
-  TranNames = ARRAY Tran OF TEXT { "ulvt", "lvt" };
-  
 VAR
   templatePath : Pathname.T;
   rundirPath   : Pathname.T;
@@ -324,6 +322,7 @@ VAR
   tran         := Tran.Ulvt;
   single       : BOOLEAN; (* just a single slow stage *)
   maxSumSq     : LONGREAL;
+  z            : CARDINAL;
 BEGIN
   TRY
     IF pp.keywordPresent("-T") OR pp.keywordPresent("-template") THEN
@@ -334,19 +333,24 @@ BEGIN
       rundirPath := pp.getNext()
     END;
     
-    IF pp.keywordPresent("-lvt") THEN
-      tran := Tran.Lvt
+    IF pp.keywordPresent("-thresh") THEN
+      tran := VAL(Lookup(pp.getNext(), TranNames), Tran)
+    ELSE
+      Debug.Error("Must provide -thresh")
     END;
-    
-    IF pp.keywordPresent("-ulvt") THEN
-      tran := Tran.Ulvt
-    END;
+
 
     single := pp.keywordPresent("-single");
 
     doSkip := pp.keywordPresent("-skip");
 
     firstOnly := pp.keywordPresent("-firstonly");
+
+    IF pp.keywordPresent("-z") THEN
+      z := pp.getNextInt()
+    ELSE
+      Debug.Error("Must provide -z")
+    END;
 
     pp.skipParsed();
   EXCEPT

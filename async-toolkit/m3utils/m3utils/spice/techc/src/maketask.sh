@@ -6,7 +6,7 @@
 M3UTILS=/nfs/site/disks/zsc3_fon_fe_0001/mnystroe/m3utils
 ROOTDIR=${M3UTILS}/spice/techc
 SRCDIR=${ROOTDIR}/src
-BINDIR=${ROOTDIR}/AMD64_LINUX
+BINDIR=${ROOTDIR}/program/AMD64_LINUX
 PROG=${BINDIR}/techc
 TEMPLATEDIR=${SRCDIR}
 DATE=`date -Is`

@@ -1,5 +1,6 @@
 import ("libm3")
+import ("techc")
 
-interface ("RingOsc")
+interface ("XorRingOsc")
 
 library ("varosc")

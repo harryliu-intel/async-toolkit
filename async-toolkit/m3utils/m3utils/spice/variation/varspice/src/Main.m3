@@ -19,34 +19,53 @@ IMPORT Process;
 IMPORT TextReader;
 IMPORT Text;
 IMPORT Lex, FloatMode;
-FROM RingOsc IMPORT XaVar, XaTranUlvt, XaTranLvt, N;
+FROM XorRingOsc IMPORT XaVar, XaTranSpec, NV, LibDir, CellName;
+IMPORT TextTextTbl;
+IMPORT CitTextUtils;
+FROM TechConfig IMPORT Tran, TranNames;
+FROM TechLookup IMPORT Lookup;
 
 <*FATAL Thread.Alerted*>
 
 CONST
   TE = Text.Equal;
+  N  = NV * 2; (* there's an up-gate and a down-gate in the ckt *)
   
 TYPE
   P = ARRAY [ 0 .. N-1 ] OF LONGREAL;
 
 VAR
   Var  := XaVar;
-  Tran := XaTranUlvt;
+  TranSpec := XaTranSpec;
 
-PROCEDURE WriteVar(wr : Wr.T) RAISES { Wr.Failure } =
+PROCEDURE MapText(txt : TEXT; map : TextTextTbl.T) : TEXT =
+  VAR
+    iter := map.iterate();
+    k, v : TEXT;
+  BEGIN
+    WHILE iter.next(k, v) DO
+      IF v = NIL THEN
+        Debug.Error("NIL mapping for " & k)
+      END;
+      txt := CitTextUtils.Replace(txt, k, v)
+    END;
+    RETURN txt
+  END MapText;
+  
+PROCEDURE WriteVar(wr : Wr.T; map : TextTextTbl.T) RAISES { Wr.Failure } =
   BEGIN
   Wr.PutText(wr, ".data extern_data\n");
   Wr.PutText(wr, "index ");
   FOR stage := 1 TO 10 DO
     pidx := 0;
     FOR sub := 0 TO 1 DO
-      FOR tran := FIRST(Tran) TO LAST(Tran) DO
+      FOR tran := FIRST(TranSpec) TO LAST(TranSpec) DO
         FOR var := FIRST(Var) TO LAST(Var) DO
-          Wr.PutText(wr, F("X%s.xstage.X%s.%s:@:%s:@:ILN",
+          Wr.PutText(wr, MapText(F("X%s.xstage.X%s.%s:@:%s:@:ILN",
                                      Int(stage),
                                      Int(sub),
-                                     Tran[tran],
-                                     Var[var]));
+                                     TranSpec[tran],
+                                     Var[var]), map));
           Wr.PutText(wr, " ");
           INC(pidx)
         END
@@ -60,7 +79,7 @@ PROCEDURE WriteVar(wr : Wr.T) RAISES { Wr.Failure } =
   FOR stage := 1 TO 10 DO
     pidx := 0;
     FOR sub := 0 TO 1 DO
-      FOR tran := FIRST(Tran) TO LAST(Tran) DO
+      FOR tran := FIRST(TranSpec) TO LAST(TranSpec) DO
         FOR var := FIRST(Var) TO LAST(Var) DO
           IF single AND stage # 4 THEN
             Wr.PutText(wr, LongReal(0.0d0))
@@ -172,10 +191,21 @@ PROCEDURE DoMeasure() : LONGREAL
       Rd.Close(rd)
     END
   END DoMeasure;
-  
+
 TYPE
   Phase = { Mkdir, Copy, CreateVar, RunSim, DoMeasure };
 
+PROCEDURE MakeMap() : TextTextTbl.T =
+  VAR
+    map := NEW(TextTextTbl.Default).init();
+  BEGIN
+    EVAL map.put("%THRESH%", TranNames[thresh]);
+    EVAL map.put("%Z%", Int(z));
+    EVAL map.put("@LIBDIR@", LibDir[z][thresh]);
+    EVAL map.put("@CELL@", CellName[z][thresh]);
+    RETURN map
+  END MakeMap;
+  
 CONST
   AllPhases = SET OF Phase { FIRST(Phase) .. LAST(Phase) };
   PhaseNames = ARRAY Phase OF TEXT { "mkdir", "copy", "createvar", "runsim", "measure" };
@@ -190,7 +220,8 @@ VAR
   phases := SET OF Phase {};
   gotPhase := FALSE;
   single : BOOLEAN;
-  
+  z      := LAST(CARDINAL);
+  thresh : Tran;
 BEGIN
   TRY
     FOR ph := FIRST(Phase) TO LAST(Phase) DO
@@ -198,6 +229,12 @@ BEGIN
         phases := phases + SET OF Phase { ph };
         gotPhase := TRUE;
       END
+    END;
+
+    IF pp.keywordPresent("-thresh") THEN
+      thresh := VAL(Lookup(pp.getNext(), TranNames), Tran)
+    ELSE
+      Debug.Error("Must provide -thresh")
     END;
 
     IF NOT gotPhase THEN phases := AllPhases END;
@@ -215,13 +252,13 @@ BEGIN
       rundirPath := pp.getNext()
     END;
 
-    IF pp.keywordPresent("-lvt") THEN
-      Tran := XaTranLvt
+    IF pp.keywordPresent("-z") THEN
+      z := pp.getNextInt()
+    ELSE
+      Debug.Error("Must provide -z")
     END;
-    
-    IF pp.keywordPresent("-ulvt") THEN
-      Tran := XaTranUlvt
-    END;
+
+    TranSpec := XaTranSpec;
     
     pp.skipParsed();
 
@@ -243,6 +280,10 @@ BEGIN
     ParseParams.Error => Debug.Error("Can't parse command line")
   END;
 
+  IF z = LAST(CARDINAL) THEN
+    Debug.Error("Must specify -z")
+  END;
+  
   IF templatePath = NIL OR rundirPath = NIL THEN
     Debug.Error("Must specify template [-T] and rundir [-r]")
   END;
@@ -261,8 +302,9 @@ BEGIN
 
   IF Phase.CreateVar IN phases THEN
     TRY
-      WITH wr = FileWr.Open(rundirPath & "/var.sp") DO
-        WriteVar(wr);
+      WITH map = MakeMap(),
+           wr  = FileWr.Open(rundirPath & "/var.sp") DO
+        WriteVar(wr, map);
         Wr.Close(wr)
       END
     EXCEPT
