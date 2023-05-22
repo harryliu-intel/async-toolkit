@@ -25,11 +25,14 @@ module ("TechKill")
 module ("TechConvert")
 module ("TechMeasure")
 
-module ("TechSetup")
-interface ("TechTemplate")
+Module ("TechSetup")
+Interface ("TechTemplate")
+
+Module ("TechLookup")
 
 module ("SimWatcher")
 
 implementation ("Main")
 
 program ("techc")
+library ("techc")

@@ -16,8 +16,7 @@ MODULE Main;
 *)
 
 IMPORT ParseParams;
-IMPORT Text;
-IMPORT Debug; FROM Debug IMPORT UnNil;
+IMPORT Debug;
 IMPORT Stdio;
 FROM Fmt IMPORT F, Int; IMPORT Fmt;
 IMPORT OSError;
@@ -35,12 +34,11 @@ IMPORT TechSimulate;
 IMPORT TechProgress;
 IMPORT TechMeasure;
 
+FROM TechLookup IMPORT Lookup;
 FROM TechConfig IMPORT Tech, Tran, Mode, Phaz, Simu, Corn, Gate;
-
-FROM TechConfig IMPORT TranNames, ModeNames, PhazNames, SimuNames, CornNames, GateNames, TechNames;
-
+FROM TechConfig IMPORT TranNames, ModeNames, PhazNames, SimuNames, CornNames,
+                       GateNames, TechNames;
 FROM TechConfig IMPORT SupportedFanouts;
-
 FROM TechTechs IMPORT Techs;
 
 IMPORT TechConfig;
@@ -50,8 +48,7 @@ TYPE Config = TechConfig.T;
 CONST ParasiticDeadlineMultiplier = 2.0d0;
 
 
-CONST TE = Text.Equal;
-      LR = Fmt.LongReal;
+CONST LR = Fmt.LongReal;
 
 (* to add a new Tech to the system:
 
@@ -107,23 +104,6 @@ CONST
                                     DoMeasurePhaz
   };
   
-PROCEDURE Lookup(str : TEXT; READONLY a : ARRAY OF TEXT) : CARDINAL =
-  BEGIN
-    FOR i := FIRST(a) TO LAST(a) DO
-      IF TE(str, a[i]) THEN RETURN i END
-    END;
-    VAR
-      msg := F("could not find %s among alternatives : ",
-               UnNil(str));
-    BEGIN
-      FOR i := FIRST(a) TO LAST(a) DO
-        msg := msg & F( " \"%s\"" , UnNil(a[i]))
-      END;
-      Debug.Error(msg)
-    END;
-    <*ASSERT FALSE*>
-  END Lookup;
-
 CONST CornDelay = ARRAY Corn OF LONGREAL { 1.0d0, 3.0d0, 0.8d0, 2.0d0, 2.0d0 };
 
 PROCEDURE DoCommonSetup(VAR c : Config) =
