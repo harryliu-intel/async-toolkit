@@ -80,6 +80,10 @@
     )
   )
 
+(load "/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/srmccoy1/sw/cad/external-tools-integration/cadence/virtuoso/skill/layout/pins/midlevelpins.il")
+(load "/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/srmccoy1/sw/cad/external-tools-integration/cadence/virtuoso/skill/layout/bus/bus.il")
+(load "/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/srmccoy1/sw/cad/external-tools-integration/cadence/virtuoso/skill/layout/route/flatten.il")
+
 ; Export files to the router
 (defun RouteExport
   (@key (CV (geGetEditCellView)) ; specify CellView or nil to use edit view
@@ -102,6 +106,7 @@
         (metalFill t)            ; add metal fill
         (noPowerFill nil)
         (doPowerGates nil)       ; optionally skip export of placed pillars
+	(inPlacePins nil)        ; allow drawing of InPlace pins
         (powerGrid nil)          ; add a powergrid to flatten view
         (colorGrid nil)          ; add a color grid to flatten view
         (timingDriven t)         ; timing driven custom routing
@@ -156,7 +161,7 @@
     (printf "Flatten Start %s\n" (getCurrentTime))
     (when (or CV->viewName=="floorplan" CV->viewName=="prelayout")
       CV = (MakeFlatten ?CV CV ?topMetal topMetal ?hookupLaygen hookupLaygen ?hookupD04 hookupD04
-                        ?noPowerFill noPowerFill ?doPowerGates doPowerGates
+                        ?noPowerFill noPowerFill ?doPowerGates doPowerGates ?inPlacePins inPlacePins
                         ?powerGrid powerGrid ?colorGrid colorGrid ?softMacro softMacro))
 
     ; check Alignment of locked non-standard cells
@@ -877,9 +882,22 @@ DumbLayers = (list (list "SRAM" "fill")
 
 ; function to validate pins while exporting to proteus
 ; for now, just checks that we don't have any on complement purpose since ICC crashes
+; now checks that a pin is drawn for every terminal.
 ; it would certainly be reasonable to enhance this function to check other things like pin direction
-(defun CheckPinsForExport (@key (CV (geGetEditCellView)) )
-  (setof fig CV->shapes fig->layerName=="mc0")==nil
+(defun CheckPinsForExport (@key (CV (geGetEditCellView)) (include_supply nil) )
+  (let ((status t) CellTerms)
+    status = (setof fig CV->shapes fig->layerName=="mc0")==nil
+    
+    CellTerms = (setof x CV->terminals include_supply || (member x->name PowerGroundNets)==nil)
+    (foreach Term CellTerms
+      ;(printf "checking pin for %s\n" Term->name)
+      (unless Term->pins
+        (printf "Pin not drawn for %s.\n" Term->name)
+        status = nil
+	)
+      )
+    status
+    )
   )
 
 ; Shift contents of a cell
