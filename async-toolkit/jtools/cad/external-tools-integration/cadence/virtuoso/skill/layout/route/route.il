@@ -80,10 +80,6 @@
     )
   )
 
-(load "/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/srmccoy1/sw/cad/external-tools-integration/cadence/virtuoso/skill/layout/pins/midlevelpins.il")
-(load "/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/srmccoy1/sw/cad/external-tools-integration/cadence/virtuoso/skill/layout/bus/bus.il")
-(load "/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/srmccoy1/sw/cad/external-tools-integration/cadence/virtuoso/skill/layout/route/flatten.il")
-
 ; Export files to the router
 (defun RouteExport
   (@key (CV (geGetEditCellView)) ; specify CellView or nil to use edit view
