@@ -219,20 +219,16 @@ VAR RhoBeg := FIRST(LONGREAL); (* set in the main body *)
 PROCEDURE DoIt() =
   VAR
     pr : LRVector.T := NEW(T, N);
-    evaluator := NEW(PllEvaluator).init();
+    evaluator       := NEW(PllEvaluator).init();
   CONST
     RhoEnd = 1.0d-6;
   BEGIN
     IF FALSE THEN
       (* *)
-    ELSIF single AND doSkip AND tran = Tran.Lvt THEN
-      ParseResult(pr^, ResultLvtSingle) 
-    ELSIF single AND doSkip AND tran = Tran.Ulvt THEN
-      ParseResult(pr^, ResultUlvtSingle)
-    ELSIF doSkip AND tran = Tran.Lvt THEN
-      ParseResult(pr^, ResultLvt) 
-    ELSIF doSkip AND tran = Tran.Ulvt THEN
-      ParseResult(pr^, ResultUlvt)
+    ELSIF single AND doSkip THEN
+      ParseResult(pr^, ResultSingle[z][tran]) 
+    ELSIF doSkip THEN
+      <*ASSERT FALSE*>
     ELSE
       pr^ := ARRAY [ 0 .. N-1 ] OF LONGREAL { 0.0d0, .. };
     END;
@@ -254,19 +250,15 @@ PROCEDURE DoIt() =
 PROCEDURE DoFirstOnly() =
   VAR
     pr : LRVector.T := NEW(T, N);
-    evaluator := NEW(BaseEvaluator).init();
+    evaluator       := NEW(BaseEvaluator).init();
   BEGIN
 
     IF FALSE THEN
       (* *)
-    ELSIF single AND doSkip AND tran = Tran.Lvt THEN
-      ParseResult(pr^, ResultLvtSingle) 
-    ELSIF single AND doSkip AND tran = Tran.Ulvt THEN
-      ParseResult(pr^, ResultUlvtSingle)
-    ELSIF doSkip AND tran = Tran.Lvt THEN
-      ParseResult(pr^, ResultLvt) 
-    ELSIF doSkip AND tran = Tran.Ulvt THEN
-      ParseResult(pr^, ResultUlvt)
+    ELSIF single AND doSkip THEN
+      ParseResult(pr^, ResultSingle[z][tran]) 
+    ELSIF doSkip THEN
+      <*ASSERT FALSE*>
     ELSE
       pr^ := ARRAY [ 0 .. N-1 ] OF LONGREAL { 0.0d0, .. };
     END;
@@ -304,13 +296,33 @@ PROCEDURE ParseResult(VAR tgt : ARRAY OF LONGREAL; str : TEXT) =
   END ParseResult;
   
 CONST (* shortcut values *)
-  ResultUlvt = "-3.388583488155353e-14 -6.865901067393858e-14 0 -1.3833178080301372e-14 1.0120781901267004e-14 -2.1334215236620252e-14 0 -1.0388289652191492e-13 0.001933585122473632 0.003867170245053995 0 0.03093736196221466 1.1208148855280724e-13 -1.7480788315586293e-14 0 0.2010928527542289 -2.442198221684334e-13 -9.369285217803131e-14 0 -1.1047683915347033e-13 1.003416204379963e-13 4.847448469443447e-14 0 -4.349041543877273e-14 1.831156605346575e-13 -9.21053707805858e-14 0 -1.351661350555897e-14 -4.7123773539441876e-14 3.629109645928372e-14 0 1.305768182843192e-15 2.3286871891017447e-13 -4.7846776807222406e-14 0 0.9899955827896085 -5.547986423110827e-14 -3.167219306160521e-13 0 -6.653777942415295e-14 -3.5459358549164147e-14 -9.506720675995244e-14 0 0.2474988956974257 5.003910510863805e-14 1.2858167365786465e-13 0 -2.1598458848462872e-13 -1.153179491200635e-13 1.0342177103626273e-13 0 7.140589494267514e-14 -1.4177568174391415e-13 -1.3094508127884382e-15 0 -0.00003021226766526162 2.6931077640618436e-14 -1.783535089815597e-14 0 1.0111800247965439e-13 0.22757689457257885 0.49499779139478184 0 1.9799911655787394 1.389785036557078e-13 -1.5552825118558536e-13 0 1.3843093922218177e-14 -8.687236704106671e-16 -9.153961876803676e-14 0 0.0077343404906152205 -5.2564061946123633e-14 1.4115839291619902e-13 0 5.3789118671221604e-14 -8.793575270734838e-14 -5.795059797796883e-14 0 1.457266981458238e-13";  (* ulvt *)
+  ResultSingle = ARRAY [ 1 .. 2 ] OF ARRAY Tran OF TEXT {
+  ResultZ1Single,
+  ResultZ2Single
+  };
 
-  ResultUlvtSingle = "0 0 0 0 0 0 0 0 0.0625 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -0.00048828125 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -0.0625 -0.03125 0 0 0 0 0 0 -0.125 0.375 1.75 0 5 0 -0.015625 0 0 0 0 0 0 0 0 0 0 0 0 0 0";
+  ResultZ1Single = ARRAY Tran OF TEXT {
+  NIL,
+  "0 0 0 0 0 0 0 0 0.0625 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -0.00048828125 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -0.0625 -0.03125 0 0 0 0 0 0 -0.125 0.375 1.75 0 5 0 -0.015625 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
+  NIL,
+  "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -0.000518798828125 0 0 0 0 0 0 0 0 0 0.015625 0.0625 0 0 0 0 0 0 0 0 0 0 0 0 -0.0009765625 0 0 0 0 0 0.00390625 0 0 0 0.015625 0 0 0 0 0.1875 1.625 0 5.0625 0 0.0000152587890625 0 0 0 0 0 0 0 0 0 0 0.00091552734375 0 0 0",
+  NIL,
+  NIL,
+  NIL
+  };
 
-  ResultLvt = "0 0 0.000244140625 0 0 0 0 0.3125 7.62939453125e-6 0 0 0 0 0 0 1.25 -0.0625 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1.46875 0 0 0 -0.03125 0 0 0 0.640625 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.125 1 0 4 0 -0.000030517578125 0 0 0 0 0 0 0 0 0 0 0 0 0 0";
+  ResultZ2Single = ARRAY Tran OF TEXT {
+  NIL,
+  "0 0 0 0 0 0 0 0 0 0 0 0.125 0 0 0 0 -0.015625 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1.75 0 5.0001220703125 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
+  NIL,
+  "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -0.00006103515625 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -0.0001220703125 0 0 0 0 0 0 0 -0.000030517578125 0 0 0 0 0 0 0 0.0078125 0 0 0 0 0 0 0 0 0 0 0.125 1.75 0 5 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
+  NIL,
+  NIL,
+  NIL
+  };
 
-  ResultLvtSingle = "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -0.000518798828125 0 0 0 0 0 0 0 0 0 0.015625 0.0625 0 0 0 0 0 0 0 0 0 0 0 0 -0.0009765625 0 0 0 0 0 0.00390625 0 0 0 0.015625 0 0 0 0 0.1875 1.625 0 5.0625 0 0.0000152587890625 0 0 0 0 0 0 0 0 0 0 0.00091552734375 0 0 0";
+CONST
+  single = TRUE;
 
 VAR
   templatePath : Pathname.T;
@@ -320,9 +332,9 @@ VAR
   firstOnly    : BOOLEAN;
 
   tran         := Tran.Ulvt;
-  single       : BOOLEAN; (* just a single slow stage *)
   maxSumSq     : LONGREAL;
   z            : CARDINAL;
+
 BEGIN
   TRY
     IF pp.keywordPresent("-T") OR pp.keywordPresent("-template") THEN
@@ -338,9 +350,6 @@ BEGIN
     ELSE
       Debug.Error("Must provide -thresh")
     END;
-
-
-    single := pp.keywordPresent("-single");
 
     doSkip := pp.keywordPresent("-skip");
 

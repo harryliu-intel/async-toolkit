@@ -131,7 +131,11 @@ PROCEDURE DoMeasure(READONLY c : TechConfig.T;
         BEGIN
           CASE c.gate OF
             Gate.Xor_Z1_0p0sigma,  
-            Gate.Xor_Z1_5p3sigma   => timeResult := latency
+            Gate.Xor_Z1_5p3sigma,
+            Gate.Xor_Z2_0p0sigma,  
+            Gate.Xor_Z2_5p3sigma
+            =>
+            timeResult := latency
           ELSE
             timeResult := cycle
           END;

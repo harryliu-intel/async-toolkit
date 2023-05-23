@@ -133,30 +133,42 @@ PROCEDURE MapCommon(READONLY c : Config; map : TextTextTbl.T)=
       Gate.Oai =>
       <*ASSERT FALSE*>
     |
-      Gate.Xor_Z1_0p0sigma =>
+      Gate.Xor_Z1_0p0sigma, Gate.Xor_Z1_5p3sigma,
+      Gate.Xor_Z2_0p0sigma, Gate.Xor_Z2_5p3sigma
+      =>
       EVAL map.put("@T0A@", "in");
       EVAL map.put("@T0B@", "vcc");
       EVAL map.put("@T0C@", "");
 
       EVAL map.put("@T1A@", "vcc");
       EVAL map.put("@T1B@", "xi");
-      EVAL map.put("@T1C@", "");
-
-      EVAL map.put("@MCIDX@", "1");
-
-    |
-      Gate.Xor_Z1_5p3sigma =>
-      EVAL map.put("@T0A@", "in");
-      EVAL map.put("@T0B@", "vcc");
-      EVAL map.put("@T0C@", "");
-
-      EVAL map.put("@T1A@", "vcc");
-      EVAL map.put("@T1B@", "xi");
-      EVAL map.put("@T1C@", "");
-
-      EVAL map.put("@MCIDX@", "2");
+      EVAL map.put("@T1C@", "")
     END;
 
+    CASE c.gate OF
+      Gate.Xor_Z1_0p0sigma,
+      Gate.Xor_Z2_0p0sigma =>
+      EVAL map.put("@MCIDX@", "1");
+    |
+      Gate.Xor_Z1_5p3sigma,
+      Gate.Xor_Z2_5p3sigma =>
+      EVAL map.put("@MCIDX@", "2");
+    ELSE
+      (* skip *)
+    END;
+
+    CASE c.gate OF
+      Gate.Xor_Z1_0p0sigma,
+      Gate.Xor_Z1_5p3sigma =>
+      EVAL map.put("@Z@", "1");
+    |
+      Gate.Xor_Z2_0p0sigma,
+      Gate.Xor_Z2_5p3sigma =>
+      EVAL map.put("@Z@", "2");
+    ELSE
+      (* skip *)
+    END;
+      
     EVAL map.put("@THRESH@", TranNames[c.tran]);
     
     (* parasitic or not *)

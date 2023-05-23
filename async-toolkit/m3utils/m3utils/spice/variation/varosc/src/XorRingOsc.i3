@@ -12,16 +12,16 @@ CONST
   NT = 10;
 
   XaTranSpec = ARRAY [ 0..NT-1] OF TEXT {
-  "MMg1.qna.mn%Z%:@:nhpb%THRESH%.1",
-  "MMg1.qpa.mp%Z%:@:phpb%THRESH%.1",
-  "MMg2.qns.mn%Z%:@:nhpb%THRESH%.1",
-  "MMg2.qpsb.mp%Z%:@:phpb%THRESH%.1",
-  "MMg3.qna.mn%Z%:@:nhpb%THRESH%.1",
-  "MMg3.qpa.mp%Z%:@:phpb%THRESH%.1",
-  "MMg4.qns.mn%Z%:@:nhpb%THRESH%.1",
-  "MMg4.qpsb.mp%Z%:@:phpb%THRESH%.1",
-  "MMg5.qna.mn%Z%:@:nhpb%THRESH%.1",
-  "MMg5.qpa.mp%Z%:@:phpb%THRESH%.1"
+  "MMg1.qna.mn%Z%:@:nhpb%THRESH%.%Z%",
+  "MMg1.qpa.mp%Z%:@:phpb%THRESH%.%Z%",
+  "MMg2.qns.mn%Z%:@:nhpb%THRESH%.%Z%",
+  "MMg2.qpsb.mp%Z%:@:phpb%THRESH%.%Z%",
+  "MMg3.qna.mn%Z%:@:nhpb%THRESH%.%Z%",
+  "MMg3.qpa.mp%Z%:@:phpb%THRESH%.%Z%",
+  "MMg4.qns.mn%Z%:@:nhpb%THRESH%.%Z%",
+  "MMg4.qpsb.mp%Z%:@:phpb%THRESH%.%Z%",
+  "MMg5.qna.mn%Z%:@:nhpb%THRESH%.%Z%",
+  "MMg5.qpa.mp%Z%:@:phpb%THRESH%.%Z%"
 };
 
   HspiceTranSpec = ARRAY [ 0..NT-1] OF TEXT {

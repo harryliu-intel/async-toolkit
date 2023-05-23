@@ -32,6 +32,8 @@ CONST
     BufPaths,
     BufPaths,
     BufPaths,
+    BufPaths,
+    BufPaths,
     BufPaths 
   },
 
@@ -41,6 +43,8 @@ CONST
     BufCellNames,
     AoiCellNames,
     OaiCellNames,
+    NilCellNames,
+    NilCellNames,
     NilCellNames,
     NilCellNames
   },

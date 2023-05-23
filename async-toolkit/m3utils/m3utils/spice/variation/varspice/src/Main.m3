@@ -24,6 +24,7 @@ IMPORT TextTextTbl;
 IMPORT CitTextUtils;
 FROM TechConfig IMPORT Tran, TranNames;
 FROM TechLookup IMPORT Lookup;
+IMPORT TechTemplate;
 
 <*FATAL Thread.Alerted*>
 
@@ -35,7 +36,7 @@ TYPE
   P = ARRAY [ 0 .. N-1 ] OF LONGREAL;
 
 VAR
-  Var  := XaVar;
+  Var      := XaVar;
   TranSpec := XaTranSpec;
 
 PROCEDURE MapText(txt : TEXT; map : TextTextTbl.T) : TEXT =
@@ -98,36 +99,27 @@ PROCEDURE WriteVar(wr : Wr.T; map : TextTextTbl.T) RAISES { Wr.Failure } =
 
 END WriteVar;
 
-PROCEDURE CopyTemplate(templatePath, rundirPath : Pathname.T) =
+PROCEDURE CopyTemplate(templatePath, rundirPath : Pathname.T;
+                       map                      : TextTextTbl.T;) =
   VAR
-    tpRd : Rd.T;
-    spWr : Wr.T;
-    buff : ARRAY [0..8191] OF CHAR;
-    cnt : CARDINAL;
+    tmpl : TechTemplate.T;
   BEGIN
     TRY
-      tpRd := FileRd.Open(templatePath);
+      tmpl := TechTemplate.LoadTemplate(templatePath);
     EXCEPT
-      OSError.E(x) => Debug.Error("Opening template " & templatePath & " : caught error : OSError.E : " & AL.Format(x))
-    END;
-
-    TRY
-      spWr := FileWr.Open(rundirPath & "/ckt.sp");
-    EXCEPT
-      OSError.E(x) => Debug.Error("Opening target " & rundirPath & "/ckt.sp" & " : caught error : OSError.E : " & AL.Format(x))
-    END;
-    TRY
-      LOOP
-        cnt := Rd.GetSub(tpRd, buff);
-        IF cnt = 0 THEN EXIT END;
-        Wr.PutString(spWr, SUBARRAY(buff, 0, cnt))
-      END;
-      Rd.Close(tpRd);
-      Wr.Close(spWr)
-    EXCEPT
-      Wr.Failure(x) => Debug.Error("I/O error (Wr.Failure) while copying template : " & AL.Format(x))
+      OSError.E(x) => Debug.Error("Opening template " & templatePath & " : caught error : OSError.E : " & AL.Format(x));
     |
       Rd.Failure(x) => Debug.Error("I/O error (Rd.Failure) while copying template : " & AL.Format(x))
+    END;
+
+    TechTemplate.ModifyTemplate(tmpl, map);
+    
+    TRY
+      TechTemplate.WriteTemplate(tmpl, rundirPath & "/ckt.sp");
+    EXCEPT
+      OSError.E(x) => Debug.Error("Opening target " & rundirPath & "/ckt.sp" & " : caught error : OSError.E : " & AL.Format(x))
+    |
+      Wr.Failure(x) => Debug.Error("I/O error (Wr.Failure) while copying template : " & AL.Format(x))
     END
   END CopyTemplate;
 
@@ -297,7 +289,9 @@ BEGIN
   END;
 
   IF Phase.Copy IN phases THEN
-    CopyTemplate(templatePath, rundirPath)
+    WITH map = MakeMap() DO
+      CopyTemplate(templatePath, rundirPath, map)
+    END
   END;
 
   IF Phase.CreateVar IN phases THEN

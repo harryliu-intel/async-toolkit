@@ -45,3 +45,9 @@ BaseEval: progVal=8.4403557e-9 corr=0.9792006274554986 base.mult=-1 -> f(0 0 0 0
 WARNING: DefSubspace returns an empty basis
 Minimize : 0 iters, 3361 funcc; f = -8.283107753118071e-9; NEWUOAs terminates because the first-order optimality is approximately achieved.
 0 0 0 0 0 0 0 0 0.0625 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -0.00048828125 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -0.0625 -0.03125 0 0 0 0 0 0 -0.125 0.375 1.75 0 5 0 -0.015625 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+
+new:
+
+WARNING: DefSubspace returns an empty basis
+Minimize : 0 iters, 3681 funcc; f = -8.262385666350501e-9; NEWUOAs terminates because the first-order optimality is approximately achieved.
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -0.0625 0 0 0 0 0 0 0 0 0.125 1.75 0 5 0 -0.015625 0 0 0 0 0 0 0 0 0 0 0 0 0 0

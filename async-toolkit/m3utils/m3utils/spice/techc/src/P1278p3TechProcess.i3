@@ -38,7 +38,9 @@ CONST
     AoiCellPaths,
     OaiCellPaths,
     Xor1Paths,
-    Xor1Paths
+    Xor1Paths,
+    Xor2Paths,
+    Xor2Paths
   },
 
   cellNames :=ARRAY Gate OF ARRAY Tran OF TEXT {
@@ -48,7 +50,9 @@ CONST
     AoiCellNames,
     OaiCellNames,
     Xor1CellNames,
-    Xor1CellNames
+    Xor1CellNames,
+    Xor2CellNames,
+    Xor2CellNames
   },
 
   plugText :=""
@@ -64,6 +68,9 @@ CONST
 
   StdCellUlvt1Root = StdCellRoot & "/ldrdsibase_ulvt/spf/lib783_i0s_160h_50pp_ldrdsibase_ulvt_100c_tttt_ctyp/";
   StdCellLvt1Root = StdCellRoot & "/ldrdsibase_lvt/spf/lib783_i0s_160h_50pp_ldrdsibase_lvt_100c_tttt_ctyp/";
+    
+  StdCellUlvt2Root = StdCellRoot & "/dsibase_ulvt/spf/lib783_i0s_160h_50pp_dsibase_ulvt_100c_tttt_ctyp/";
+  StdCellLvt2Root = StdCellRoot & "/dsibase_lvt/spf/lib783_i0s_160h_50pp_dsibase_lvt_100c_tttt_ctyp/";
     
   BufPaths = ARRAY Tran OF TEXT {
     NIL,
@@ -105,6 +112,16 @@ CONST
     NIL
   };
   
+  Xor2Paths = ARRAY Tran OF TEXT {
+    NIL,
+    StdCellUlvt2Root & "i0sxor002aa1n02x5.spf",
+    NIL,
+    StdCellLvt2Root & "i0sxor002ab1n02x5.spf",
+    NIL,
+    NIL,
+    NIL
+  };
+  
   XorCellNames = ARRAY Tran OF TEXT {
     NIL,
     "i0sxor002aa1n02x5",
@@ -124,6 +141,8 @@ CONST
     NIL,
     NIL
   };
+
+  Xor2CellNames = XorCellNames;
 
   AoiCellNames = ARRAY Tran OF TEXT {
     NIL,
