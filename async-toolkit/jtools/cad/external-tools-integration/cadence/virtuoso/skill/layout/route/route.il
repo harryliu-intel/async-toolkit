@@ -22,6 +22,7 @@
         (doHierDef t)            ; create cellName.def with hierarchy separator
         (doNondefaultDef t)      ; create _nondefault.def
         (doSkipRouting t)        ; create SetSkipRouting.tcl
+	(inPlacePins nil)        ; allow drawing of InPlace pins
         (hookupD04 nil)          ; add power hookups around d04 cells
         (hookupLaygen nil)       ; add power hookups around Laygen cells
         (metalFill t)            ; add metal fill
@@ -51,6 +52,7 @@
                       ?doVerilog doVerilog ?doGds doGds ?doLef doLef ?doDef doDef
                       ?doHierDef doHierDef ?doNondefaultDef doNondefaultDef
                       ?doSkipRouting doSkipRouting
+                      ?inPlacePins inPlacePins
                       ?hookupLaygen hookupLaygen ?hookupD04 hookupD04
                       ?metalFill metalFill ?softMacro softMacro
                       ?abstractCellName abstractCellName ?targetCellName targetCellName
