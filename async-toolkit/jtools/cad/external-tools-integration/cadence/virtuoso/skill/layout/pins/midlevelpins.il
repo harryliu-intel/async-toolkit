@@ -66,7 +66,7 @@
       )
     (close Warnport)
     (close Errport)
-    (when status (error "Fatal InPlace Pin Error")
+    (when status (error "Fatal InPlace Pin Error"))
     )
   t
   )
