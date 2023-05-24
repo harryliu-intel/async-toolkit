@@ -4,4 +4,4 @@ Example command lines: look in *.sh files in this directory
 
 preliminary results are in the RESULTS* files
 
-The general approach is to run this program to pessimize the circuit under study.  THEN, do whatever is necessary to add the pessimized circuit to the techc technology comparison program.  For an example, see commit  28b08ebdc61b26c48d935e1e5aacf14d983bb99d in this repo.
+The general approach is to run this program to pessimize the circuit under study.  THEN, do whatever is necessary to add the pessimized circuit to the techc technology comparison program.  For an example, see commit 28b08ebdc61b26c48d935e1e5aacf14d983bb99d in this repo.
