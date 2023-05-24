@@ -6,4 +6,7 @@ import ("techc")
 
 implementation ("Main")
 
+KeyPair ("TextLR", "Text", "LongrealType")
+Array_sort("TextLRPair", "TextLRPair")
+
 program ("vary")

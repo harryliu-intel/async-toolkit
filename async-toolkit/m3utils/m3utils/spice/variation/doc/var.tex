@@ -1,0 +1,567 @@
+\documentclass{article}
+\usepackage{graphicx}
+\usepackage{epsf}
+
+\usepackage{floatflt}
+\usepackage{fancyhdr}
+\usepackage{array}
+
+\usepackage{sectsty}
+%\allsectionsfont{\mdseries\sffamily}
+\allsectionsfont{\mdseries\sc}
+
+\usepackage{caption}
+\captionsetup{margin=2pc,font=small,labelfont=bf}
+
+%%%%%%%%%%%%%%Mika's figure macro%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\def\listcaption_ins_epsfig#1#2#3#4{
+  \begin{figure}[!tbph!]
+  \bigskip
+  \begin{center}
+  \includegraphics[width=#1]{#2}
+  \end{center}
+  \caption[#4]{#3}\label{fig:#2}
+  \bigskip
+  \end{figure}
+}
+
+\def\ins_epsfig#1#2#3{
+  \begin{figure}[!tbph!]
+  \bigskip
+  \begin{center}
+  \includegraphics[width=#1]{#2}
+  \end{center}
+  \caption{#3}\label{fig:#2}
+  \bigskip
+  \end{figure}
+}
+
+\def\rotins_epsfig_listcaption#1#2#3#4#5{
+  \begin{figure}[!tbph!]
+  \bigskip
+  \begin{center}
+  \includegraphics[angle=#4,width=#1]{#2}
+  \end{center}
+  \caption[#5]{#3}\label{fig:#2}
+  \bigskip
+  \end{figure}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\oddsidemargin=0.15in
+\evensidemargin=0.15in
+\topmargin=0.2in
+\textwidth=6.2truein
+
+
+\pagestyle{fancy}
+\lhead{\scriptsize\bfseries\sffamily DRAFT---INTEL CONFIDENTIAL---DRAFT}
+\chead{}\rhead{\thepage}
+\lfoot{}\cfoot{}\rfoot{}
+\renewcommand{\headrulewidth}{0pt}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\title{Local Variation at Ultra-Low Supply Voltages}
+\author{Mika Nystr\"om \\ {\tt mika.nystroem@intel.com} }
+
+%\date{January 22, 2018}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\parindent=0pt
+\parskip=1.5ex
+
+\arraycolsep=1.4pt\def\arraystretch{1.5}
+
+\begin{abstract}
+Abstract.
+\end{abstract}
+
+\tableofcontents
+\listoffigures
+\listoftables
+
+\section{Introduction}
+
+We study local parameter variation in Intel P1278.3 (18A) process.
+
+\section{Local vs.\ Global Variation}
+
+In any manufacturing process, tolerances and manufacturing variations
+are a fact of life.  In silicon fabrication, parameters of interest
+that vary are mainly the electrical behavior of the various components
+(transistors and wires for the most part) that have been designed.
+Since design is done against a {\em model\/} of the manufacturing
+process, we tend to discuss manufacturing variations in terms of
+variation in the parameters of the process model.  This variation is
+generally described in the form of a functional dependence on a
+statistical distribution.  For example, consider the variation in
+resistance $R$ of a circuit element; the variation model would denote
+this in terms of a function $R=R(N)$ where $N$ is a normal distribution
+with $\mu = 0$, $\sigma = 1$.  Each manufactured circuit element then
+has a resistance $R$ that is not itself not necessarily normally
+distributed, but based on a (non-obervable) normally distributed
+variable.
+
+Current practice is to separate the modeling of {\em global\/} and
+{\em local\/} variations.  Global variations are component variations
+between different silicon dice (e.g., parameter variations between the
+same component on two different dice of the same semiconductor part);
+local variations are manufacturing variations from the model across a
+single die.  There are several reasons for considering the global and
+local variations using different frameworks.  First of all, they
+generally result from different processes: global variations result
+from wafer-to-wafer variations in the manufacturing process itself (in
+the machinery, calibration, or other large-scale events); in contrast,
+local variations result from inevitable micro-scale fluctuations
+within the components, including extreme micro-level variations such
+as quantum-level granularity.  But the main reason for distinguishing
+global and local variations is that our response to the variations as
+designers of necessity differs.  Global variation is addressed by
+sorting and binning as well as static voltage and clock-speed scaling,
+and as a result mainly challenges us as at the level of system design.
+Local variation, in contrast, forms a challenge at the level of circuit
+and logic design.
+
+Current practice at Intel is to concentrate design effort on local
+variation and mostly ignore global variation.  In practice, this means
+that design is performed at the TTTT process corner with an allowance
+of $K \sigma$ for timing constraints where e.g., $K=4.6$ for setup and
+hold timing in the timing flow.  With this approach, a reasonable
+performance yield under local variations can be assured.  Global variations
+are not addressed by this flow, but as alluded to earlier, by binning,
+static voltage scaling, and similar methods.
+
+In this document we shall discuss only local variation and drop the
+adjectives.
+
+\section{Representative Circuit}\label{sec:representative}
+
+The products we are interested in are extremely energy sensitive
+arithmetic circuits with a roughly known logic depth.  We will choose
+a specific circuit as being representative of this design, see
+figure~\ref{fig:ringosc}: a 20-stage XOR oscillator with fanout-of-4
+at every stage.  A NAND gate is used to provide a means of tidy
+initialization.  The XOR gates themselves are parameterized according to
+which fabrication technology is to be studied.
+
+\ins_epsfig{5in}{ringosc}{The representative circuit used in this document.}
+
+While the circuit we use as representative is a ring oscillator and
+oscillates on its own, our interest is in a forward path in the
+circuit, which effectively is a half cycle in the simulation, e.g.,
+from node {\tt x0} rising until the same node {\tt x0} falling.
+
+Note that our choice of representative circuit and representative timing
+arc lead us to concentrate on a single path through the 20 cascaded XOR
+gates, with alternating rising and falling transitions.  This is similar to,
+and intended to model, the critical paths we expect to see in production
+hardware: any given chip's performance is under specific conditions
+constrained by a single critical path of this kind.  The cascaded XORs
+thus model this single critical path.
+
+\section{Using a Representative Circuit for Process Modeling}\label{sec:rep}
+
+Using a representative circuit to do process modeling, first-pass
+operating-condition selection, etc., is a standard procedure at Intel
+and at other companies.  In this approach, we think of our
+representative circuit as a vastly simplified model of our product
+circuit and study how different implementations and operating
+conditions affect the representative circuit.  In this document, we
+shall use exactly this approach graphically, with graphs as in
+figure~\ref{fig:femexample}.\footnote{2Z means two active areas/fins.}  We use the energy per operation on the
+axis of abscissas and the frequency of operation on the ordinates.
+Moving up and to the left in such a graph corresponds to lower energy
+and higher speed, both desirable traits.  A graph that is convex
+upward is a Pareto frontier in speed-energy space.
+\ins_epsfig{7in}{femexample}{Technology example: 1278.3 2Z ULVT ring
+  oscillator implied frequency under nominal TTTT conditions at
+  85$^{\circ}$C.  The numerical labels correspond to operating
+  voltages.  It is clear that given this circuit in isolation, the
+  operating range from 0.22V to 0.5V is Pareto optimal.}
+
+The Pareto frontier can be used to select a desired operating point
+for a product, when the chip has already been designed.  Things get
+more interesting if we use the same idea to compare two separate
+circuits, as in figure~\ref{fig:femexample2}.
+\ins_epsfig{7in}{femexample2}{Comparing 2Z ULVT and 2Z LVT implementations
+  of the same circuit.  Nominal TTTT model at 85$^{\circ}$C. }  Again, we focus on the Pareto frontier.  If
+we wish to operate at above about 400~MHz, we need to use the red
+(ULVT) circuit at a supply voltage above about 280~mV; whereas if we wish to
+operate at below about 28~fJ/cycle, we need to use the green (LVT) circuit
+at a supply voltage below about 345~mV.
+
+The problem with the argument presented in this section is well known to
+those that have tried to put it into practice.  It is all well and good to
+say that, for example, we would be well served by designing a circuit with
+ULVT transistors and operate it at 300~mV.  The nominal performance is as
+we can see from figure~\ref{fig:femexample2}.  However, because of
+local variation, there will be large variations in the performance that
+will cut into the circuit performance.  In practice, we will observe
+that static timing with on-chip variation calculations enabled will fail
+at our desired operating point.
+
+The most extreme deviation from actual circuit performance comes if we
+attempt to lower our operating voltage so that we achieve the true
+minimum energy operating point.  In figure~\ref{fig:femexample2}, we
+see an apparent payoff in going as low as 220~mV, for both ULVT and LVT
+structures.  Madness!
+
+
+
+\section{Die Model}
+
+Our model for a product die builds on the circuit model in
+section~\ref{sec:representative}.  We assume that a die
+is a synchronized assemblage of critical paths, and more specifically,
+that the speed of the die is constrained by the slowest path among
+all the paths available.
+
+Whether the design is clocked or designed using asynchronous design
+methods, the vast majority of logic designs have large regions whose
+behavior is synchronized, either by a clock, or at least
+algorithmically.  That is, there generally does exist a set of
+circuits for which it is true that if any one circuit is faster than
+the others, that extra timing margin cannot be used for any
+significant purpose: that circuit simply has to wait for the slowest
+of its cohort.  The way this is accomplished---whether by timing
+assumption/testing and backoff as in ordinary clocked systems, or
+through delay-insensitive handhakes as in quasi delay-insensitive
+systems\cite{qdi}, or through dynamic speed adjustment as in stochastic
+computing or adaptive-speed computing\cite{razor}---does not matter.
+What matters to us is that there is a region of logic whose maximum
+speed is determined by its slowest part, and for the methods here to
+be helpful, that this region is larger than what can be handled by
+straightforward Monte Carlo simulation methods across all
+PVTs\footnote{PVT : process, voltage, temperature.} of interest.
+
+\subsection{A concrete model : a million ring oscillators}
+
+As an example, assume that we can accurately model a synchronized
+portion of our design as a collection of a million XOR ring
+oscillators, and that the speed of our entire design will be
+determined by the slowest ring oscillator in the group.  It is clear
+that this resultant speed will be slower than the nominal or average
+speed of the collection.  In order to model the distribution of
+the synchronized portion, we will want to know the expected speed of
+the slowest oscillator in a collection of one million.  We will call
+this the {\em pessimal\/} circuit.
+
+\section{Picking the Worst Oscillator in a Million}
+
+A straightforward approach to finding the worst expected oscillator in
+a set of a million is to draw a million oscillators from the known
+distribution of oscillators (using for example the \hbox{``{\tt sweep monte=1e6}''} option in Hspice or XA.  Running this simulation a
+few times would give us a good idea of what to expect.
+
+However, our computers are too slow to run a few million simulations.
+What can we do instead?  Well, if we knew (or could estimate) the
+probability density function (p.d.f.) $\phi(t_c)$ of the cycle time of
+our oscillator in the random distribution, we could simply pick the
+coordinate $t_{c,m}$ satisfying
+\begin{equation}
+\int_{-\infty}^{t_c,m} \phi(t) \, dt = 
+\int_{0}^{t_c,m} \phi(t) \, dt = 0.999999 \quad .
+\end{equation}
+To estimate the shape of the distribution we can run the circuit
+simulator using the same \hbox{``{\tt sweep monte}''} approach, with a
+smaller number of iterations, and extrapolate as needed.
+
+The problem with extrapolating the observed speed distribution is that
+the circuit speed is a nonlinear function of the random variables, and
+it is difficult to know how accurate such an extrapolation is.  It could
+easily miss dangerous regions in the parameter space.
+
+\subsection{Parameters of the pessimal circuit}
+
+Instead of estimating the distribution, we proceed using an
+optimization (or ``pessimization'') approach.
+
+In our concrete example, we have one million oscillators, each of 20
+stages, where each stage is a single XOR gate, which has 10 transistors
+in contemporary Intel technology, and the variation of each transistor
+is modeled as four i.i.d.~normal random variables that affect the
+transistor parameters in a known functional, nonlinear way.  This gives our
+model a total of 800 random parameters per oscillator.
+
+If we neglect the influence of the NAND gate in the circuit in
+figure~\ref{fig:ringosc}, we can see that there is a significant
+amount of topological symmetry in our design.  Every stage of the
+oscillator looks the same: each XOR gate fans out to a load four times
+its own input capacitance, but we keep in mind that every other stage is
+driving its output upwards and every other stage downwards.
+
+The symmetry of the circuit has us concentrate our search on one of
+two possibilities: either all the upward-switching and all the
+downward-switching stages have the same parameters, or all the
+variation is concentrated to a single upward-and-downward switching
+stage.  Which symmetry mode leads to the slowest overall oscillator
+depends on the details of the functional dependence of the oscillator
+performance on the random variables.  In our investigation, we simply
+do the calculations both ways and choose the worse as our candidate
+for the millionth-slowest oscillator.  In our examples, we find that
+without exception, the nonlinear dependence on circuit performance is
+so strong that the case of a single deviating XOR stage dominates a
+random variation through the entire oscillator: in other words, if we
+examine a fabricated chip so that we can find the slowest oscillator
+on it, we expected that oscillator to have its performance dominated
+by a single slow XOR gate, not by a ``random walk'' of the performance
+that happens to lead in an unhappy direction.  One interesting
+consequence of this is that the majority of the circuit is modeled as
+being nominal, which means that we can expect the circuit to burn a
+close to nominal amount of energy per operation as well as have close
+to nominal leakage power.
+
+\ins_epsfig{5in}{invring}{Inverter ring illustrating symmetric variation mode.  All + blocks show same variation; all - blocks show same variation.}
+
+\ins_epsfig{5in}{invring1}{Inverter ring illustrating variation in single stage: + and - stages are independent so can vary independently; rest of circuit is assumed to be nominal.}
+
+By concentrating on the two modes of variation, we bring down the
+parameter space from 800 free variables to 80 free variables.
+
+\subsection{Pessimization approach}\label{sec:pess}
+
+We consider that with 80 degrees of freedom per oscillator and 1 million
+oscillators, we have 80,000,000 degrees of freedom in our system
+under consideration.  We wish to know $K_t$ solving
+\begin{equation}
+{\mathrm{ erf}} \left( { K_t \over \sqrt{2} } \right) = 1 - 2 \left({1 \over 8 \cdot 10^7}\right)\quad ,
+\end{equation}
+where the extra factor of 2 indicates that we only care about one of the
+tails of the distribution (to wit, the slow tail).  We find that
+\begin{equation}
+K_t \approx 5.3 \quad .
+\end{equation}
+This $K_t$ distributes across the random variables in an RMS way so that for the 80 random variables $X_i$ we have the constraint
+\begin{equation}\label{eq:constraint}
+\sum_{0\le i \le 79} X_i^2 \le K_t^2 \quad .
+\end{equation}
+Given this constraint, we pessimize the $X_i$ to find the worst (slowest)
+oscillator.
+
+The pessimization is performed using Zhang's NewUOAs algorithm, details of which
+are described in appendix~\ref{appendix:newuoas}.
+
+\subsection{Technology comparison curves using pessimal circuit}
+
+After having achieved the pessimal circuit, we use {\em this\/}
+circuit to repeat the technology comparison curves as described in
+section~\ref{sec:rep}.  An extreme case of the circuit comparison is
+seen in figure~\ref{fig:extreme}.  This is a comparison of the nominal
+versus 5.3-$\sigma$ slow 1Z LVT circuit at 85$^{\circ}$C.
+\ins_epsfig{7in}{extreme}{Comparison of the nominal versus
+  5.3-$\sigma$ slow 1Z LVT circuit at 85$^{\circ}$C.}
+In this graph
+we can see that to achieve, for example, the performance promised at
+the ``minimum energy point'' for the nominal circuit at 220~mV VDD,
+the 5.3-$\sigma$ circuit needs VDD raised to at least 255~mV, with a
+concomitant 50\% increase in energy per operation.  In fact, the
+linear scale of the graph makes it hard to see just how bad the
+5.3-$\sigma$ circuit is at really low voltages.  See
+figure~\ref{fig:extremelog}.  
+\ins_epsfig{7in}{extremelog}{Comparison of
+  the nominal versus 5.3-$\sigma$ slow 1Z LVT circuit at
+  85$^{\circ}$C.  Speed is log scale.}  In general we see that there
+appears to be little point in operating this circuit at below about
+320--330~mV VDD in this case.
+
+One could argue that the pessimal circuit could (and probably does)
+vary somewhat, depending on operating conditions.  However, we find
+that the minimization algorithm puts all the variation in a single
+transistor, namely, the pullup pFET of the inverter on the {\tt a}
+input of the XOR gate.  Most of the variation is in the {\tt vtsingle}
+parameter, with some in {\tt lermat}.  This result suggests that the
+same circuit (including variation) will be close to pessimal under
+all conditions.  We did repeat the search for each specific circuit
+under consideration.  Results for Z2 LVT are given below.
+\begin{verbatim}
+X4.xstage.X1.MMg3.qpa.mp2:@:phpblvt.2:@:fms:vtsingle:@:ILN 5
+X4.xstage.X1.MMg3.qpa.mp2:@:phpblvt.2:@:gh:lermat:@:ILN 1.75
+X4.xstage.X1.MMg3.qpa.mp2:@:phpblvt.2:@:gh:ghmat:@:ILN 0.125
+X4.xstage.X1.MMg2.qns.mn2:@:nhpblvt.2:@:gh:lermat:@:ILN 0.0078125
+X4.xstage.X0.MMg5.qna.mn2:@:nhpblvt.2:@:gh:lermat:@:ILN 0.0001220703125
+X4.xstage.X0.MMg3.qna.mn2:@:nhpblvt.2:@:gh:lermat:@:ILN 0.00006103515625
+X4.xstage.X1.MMg1.qna.mn2:@:nhpblvt.2:@:gh:lermat:@:ILN 0.000030517578125
+\end{verbatim}
+
+
+\section{Technology Comparisons Under Variation}
+
+\subsection{Effect of Z and threshold voltage}\label{sec:85c}
+
+In figure~\ref{fig:z_vt_comparison} we see that the Z2 LVT oscillator dominates the Z1 ULVT oscillator, but at very high speeds Z2 ULVT takes over from LVT.  
+
+\ins_epsfig{7in}{z_vt_comparison}{Z1 ULVT vs Z2 ULVT vs Z2 LVT oscillators at 5.3~$\sigma$.}
+
+In particular, the crossover point from LVT to ULVT is around 425~MHz and 30~fJ for our test circuit, with LVT VDD around 365~mV and ULVT VDD around 287~mV.
+
+\subsection{Effect of temperature}
+
+The effect of operating temperature is dramatic in our range of
+performance interest.  If we were able to lower the operating
+temperature from 85$^{\circ}$C to 50$^{\circ}$C, that would have
+serious implications for the design approach: we would want to switch
+entirely to ULVT transistors.  See figure~\ref{fig:50c}.  Here we see
+the same 425~MHz as at the crossover point from section~\ref{sec:85c}
+is achieved with ULVT transistors at about 313~mV VDD but only 24.5~fJ
+per operation, a roughly 20\% savings over the energy expended
+at~85$^{\circ}$C.  \ins_epsfig{7in}{50c}{Z2 ULVT vs LVT oscillators at
+  50$^{\circ}$C, 5.3~$\sigma$.}  The conclusion here is also that if
+we had even lower-threshold transistors, we would need to be able to
+operate at lower temperatures to take advantage of their energy
+savings without losing our energy to leakage.
+
+\section{Conclusion}
+
+Use Z2 LVT transistors at low speeds or high temperatures.  Use Z2 ULVT transistors at high speeds or low temperatures.
+
+At 85$^{\circ}$C, the lowest reasonable VDD for LVT transistors appears to be around 300~mV, and for ULVT transistors, also around 290~mV (because the latter aren't Pareto optimal at lower voltages).
+
+Necessary operating voltages at 50$^{\circ}$C are still a little
+higher to make up for ``inverse'' temperature effects, to wit
+about~320~mV to achieve a desired 450~MHz with ULVT transistors.
+Although it bears mentioning that at 50$^{\circ}$C, ULVT transistors
+are Pareto optimal and improve energy-wise down to about 220~mV, with
+about 22\% energy savings from the 450~MHz operating point.  At this
+temperature, LVT operation on the Pareto frontier is so slow as to
+likely be of little commercial interest.
+
+
+\section{Acknowledgements}
+
+
+\begin{thebibliography}{99}
+
+\bibitem{qdi}{Alain~J.~Martin and Mika Nystr\"om.  Asynchronous techniques for system-on-chip design.  {\it Proc. IEEE}, 94(6). 2006.}
+
+\bibitem{razor}{Dan Ernst, et al.  Razor: A Low-Power Pipeline Based on Circuit-Level Timing Speculation.  36th International Symposium on Microarchitecture (MICRO-36).  September 2003.}
+
+\bibitem{newuoas}{Zaikun Zhang.  On derivative-free optimization methods (in Chinese).  Ph.D. thesis, Chinese Academy of Sciences. Beijing, China: 2012.}
+
+\bibitem{newuoas-http}{{\tt https://www.zhangzk.net/docs/talks/20160806-icnaao-newuoas.pdf}}
+
+\bibitem{newuoa}{M.~J.~D.~Powell.  The NEWUOA software for unconstrained optimization without derivatives.  In {\it Nonconvex Optimization and Its Applications\/} (book series), NOIA {\bf 83}.  Springer-Verlag, 2006.}
+
+\bibitem{brent}{R.~P.~Brent.  {\it Algorithms for Minimization Without Derivatives.} Prentice-Hall, 1972.}
+
+\bibitem{bubblerazor}{G.~Zhang and P.~A.~Beerel.  Stochastic analysis of Bubble Razor.  DATE 2014.}
+  
+\end{thebibliography}
+
+\appendix
+
+
+\newpage
+\section{The NewUOAs Algorithm and its Implementation}\label{appendix:newuoas}
+
+
+Zhang's NewUOAs\cite{newuoas,newuoas-http} is an extension of Powell's
+well-known NEWUOA algorithm\cite{newuoa}.  These algorithms are in the
+general category of {\em minimization without derivatives}\cite{brent} and
+accomplish minimization through the use of polynomial approximations and
+trust regions.
+
+The approach described in this document, in section~\ref{sec:pess}, is
+an example of constrained minimization: the frequency of the
+representative circuit described in section~\ref{sec:rep} is minimized
+while varying the transistor parameters $X_i$ under the constraint
+(\ref{eq:constraint}); however, the NewUOAs algorithm is an
+unconstrained minimization algorithm.
+
+The reason we use NewUOAs instead of a constrained minimization
+algorithm such as COBYLA is that NewUOAs is easily and trivially
+parallelizable.  In our implementation, the algorithm is parallelized
+using an object-oriented technique together with evaluation hints:
+the main evaluation loop of NewUOAs constructs a $N$-dimensional subspace
+through $2N$ evaluations around a point of interest.  These evaluations are
+posted as hints to a parallelization layer in the code, which starts
+all the evaulations in parallel ($2N=160$ in our case) and when it reaches
+the point in the code where the evaluated values are used, the program
+blocks and waits for the evaluations to complete.  The Modula-3 code
+for this part of the implementation is shown below.
+\begin{verbatim}
+  (* launch hints *)
+  FOR i := 0 TO n-1 DO
+     VAR xtmp := CopyV(x); BEGIN
+       xtmp[i] := x[i] + h;
+       f.evalHint(xtmp);
+       xtmp[i] := x[i] - h;
+       f.evalHint(xtmp);
+     END
+   END;
+   
+   (* use results to construct subspace *)
+   FOR i := 0 TO n-1 DO
+     VAR xtmp := CopyV(x); BEGIN
+       xtmp[i] := x[i] + h;
+       fp[i] := f.eval(xtmp);
+       xtmp[i] := x[i] - h;
+       fn[i] := f.eval(xtmp);
+     END
+   END
+\end{verbatim}
+In this code, {\tt f} is implemented using memoization, so that the
+calls to {\tt f.eval} simply return the already computed values in the
+hint loop.  In contrast, {\tt f.evalHint} kicks off a Netbatch job
+performing the requested evaluation.  Each evaluation is itself
+performed using a separate instance of Synopsys PrimeSim XA, in
+multithreaded mode with {\tt -mt~4}.
+
+\subsection{Computational performance}
+The full process of finding the
+pessimal variations for a given circuit takes about one hour of
+wallclock time and with a parallel efficiency over 50\%, so a total
+CPU time of around 100~hours.  The NewUOAs subspace generation is
+performed about twenty times, with 160 function evaluations per
+generation step.  We then repeated this for the four combinations of
+Z1, Z2 and ULVT, LVT discussed in the preceding.
+
+\subsection{Note on constrained minimization}
+The fact that we are using an unconstrained minimization algorithm to
+do constrained minimization is naturally a challenge to us.  What we
+do is observe that in the direction of the space that we are
+interested in (the global pessimum over a sphere of radius $K$), the
+gradient of the function points generally outwards.  In other words,
+if we imagine the $N$-space optimization of the frequency function
+\begin{equation}
+f({\bf p})
+\end{equation}
+and now consider the pessimal point ${\bf p^*}$, we have that in the
+neighborhood of $k=1$,
+\begin{equation}
+  {df(k{\bf p^*}) \over dk} < 0 \quad .
+\end{equation}
+Therefore we can use a simple scaling function to implement the constraint.
+We use a multiplicative constraining function $\kappa(x)$ of the approximate form
+\begin{equation}
+   \kappa(x) = { {\mathrm{tanh}}(10 (K + \theta - x)) + 1 \over 2 }{ e^{(x - K) / K} }
+\end{equation}
+which has the shape shown in figure~\ref{fig:helperfunc}; $\theta$ is a fudge factor around 0.2.  The shape of the
+function guarantees that the minimization effort will be performed
+in the region where
+\begin{equation}
+  K \approx x
+\end{equation}
+so we use this where we let $x = \sqrt{\sum_{0\le i \le 79} X_i^2} $ from equation~\ref{eq:constraint} and the function that we minimize, {\tt f} in the code above, is
+\begin{equation}
+  f_\mu({\bf X}) = -\kappa({\bf X})D({\bf X})
+\end{equation}
+where $D({\bf X})=1/f({\bf X})$ is the delay between rising and falling edges of the oscillator as a function of the vector ${\bf X}$ of random variables $X_i$, now minimized with ${\bf X}$ unconstrained over ${\bf R}^N$.  (Note that $D$ is by definition constrained below by 0, as is $x$.)
+
+\ins_epsfig{5in}{helperfunc}{Constraining helper function for $K=5.3$.}
+  
+
+\section{Code Availability}
+
+The code described in this document is available on Intel's internal GitHub starting at\par
+\begin{verbatim}
+https://github.com/intel-sandbox/m3utils
+\end{verbatim}
+with the main driver program in
+\begin{verbatim}
+spice/variation/varopt
+\end{verbatim}
+
+\end{document}

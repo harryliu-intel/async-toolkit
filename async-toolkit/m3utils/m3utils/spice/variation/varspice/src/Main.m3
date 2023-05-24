@@ -25,6 +25,8 @@ IMPORT CitTextUtils;
 FROM TechConfig IMPORT Tran, TranNames;
 FROM TechLookup IMPORT Lookup;
 IMPORT TechTemplate;
+IMPORT TextLRPair;
+IMPORT TextLRPairArraySort;
 
 <*FATAL Thread.Alerted*>
 
@@ -54,50 +56,81 @@ PROCEDURE MapText(txt : TEXT; map : TextTextTbl.T) : TEXT =
   END MapText;
   
 PROCEDURE WriteVar(wr : Wr.T; map : TextTextTbl.T) RAISES { Wr.Failure } =
+  CONST
+    Nstages = 10;
+    Nsubs   =  2;
+    Ntrans  = NUMBER(TranSpec);
+    Nvar    = NUMBER(Var);
+
+    N       = Nstages * Nsubs * Ntrans * Nvar;
+
+  VAR
+    data    : ARRAY [ 0 .. N - 1 ] OF TextLRPair.T;
+    pidx    : CARDINAL;
+    qidx    : CARDINAL;
   BEGIN
-  Wr.PutText(wr, ".data extern_data\n");
-  Wr.PutText(wr, "index ");
-  FOR stage := 1 TO 10 DO
-    pidx := 0;
-    FOR sub := 0 TO 1 DO
-      FOR tran := FIRST(TranSpec) TO LAST(TranSpec) DO
-        FOR var := FIRST(Var) TO LAST(Var) DO
-          Wr.PutText(wr, MapText(F("X%s.xstage.X%s.%s:@:%s:@:ILN",
-                                     Int(stage),
-                                     Int(sub),
-                                     TranSpec[tran],
-                                     Var[var]), map));
-          Wr.PutText(wr, " ");
-          INC(pidx)
+    Wr.PutText(wr, ".data extern_data\n");
+    Wr.PutText(wr, "index ");
+    qidx := 0;
+    FOR stage := 1 TO Nstages DO
+      pidx := 0;
+      FOR sub := 0 TO Nsubs - 1 DO
+        FOR tran := FIRST(TranSpec) TO LAST(TranSpec) DO
+          FOR var := FIRST(Var) TO LAST(Var) DO
+            WITH nam =
+                 MapText(F("X%s.xstage.X%s.%s:@:%s:@:ILN",
+                           Int(stage),
+                           Int(sub),
+                           TranSpec[tran],
+                           Var[var]), map) DO
+              Wr.PutText(wr, nam);
+              Wr.PutText(wr, " ");
+              data[qidx].k1 := nam
+            END;
+            INC(pidx); INC(qidx)
+          END
         END
       END
-    END
-  END;
-
-  Wr.PutText(wr, "\n");
-  
-  Wr.PutText(wr, "2 ");
-  FOR stage := 1 TO 10 DO
-    pidx := 0;
-    FOR sub := 0 TO 1 DO
-      FOR tran := FIRST(TranSpec) TO LAST(TranSpec) DO
-        FOR var := FIRST(Var) TO LAST(Var) DO
-          IF single AND stage # 4 THEN
-            Wr.PutText(wr, LongReal(0.0d0))
-          ELSE
-            Wr.PutText(wr, LongReal(p[pidx]))
-          END;
-          Wr.PutText(wr, " ");
-          INC(pidx)
+    END;
+    <*ASSERT qidx = N*>
+    
+    Wr.PutText(wr, "\n");
+    
+    Wr.PutText(wr, "2 ");
+    qidx := 0;
+    FOR stage := 1 TO 10 DO
+      pidx := 0;
+      FOR sub := 0 TO 1 DO
+        FOR tran := FIRST(TranSpec) TO LAST(TranSpec) DO
+          FOR var := FIRST(Var) TO LAST(Var) DO
+            VAR
+              val : LONGREAL;
+            BEGIN
+              IF single AND stage # 4 THEN
+                val := 0.0d0;
+              ELSE
+                val := p[pidx];
+              END;
+              Wr.PutText(wr, LongReal(val));
+              data[qidx].k2 := ABS(val)
+            END;
+            Wr.PutText(wr, " ");
+            INC(pidx); INC(qidx)
+          END
         END
       END
+    END;
+    
+    Wr.PutText(wr, "\n");
+    Wr.PutText(wr, ".enddata\n");
+
+    TextLRPairArraySort.Sort(data, cmp := TextLRPair.CompareK2K1);
+
+    FOR i := LAST(data) TO FIRST(data) BY -1 DO
+      IF data[i].k2 = 0.0d0 THEN EXIT END;
+      Debug.Out(F("%50s %s", data[i].k1, LongReal(data[i].k2)))
     END
-  END;
-
-  Wr.PutText(wr, "\n");
-  Wr.PutText(wr, ".enddata\n")
-
-END WriteVar;
+  END WriteVar;
 
 PROCEDURE CopyTemplate(templatePath, rundirPath : Pathname.T;
                        map                      : TextTextTbl.T;) =
@@ -204,7 +237,6 @@ CONST
   
 VAR
   p := P { 0.1d0, .. };
-  pidx : CARDINAL;
   exact : BOOLEAN;
   pp       := NEW(ParseParams.T).init(Stdio.stderr);
   templatePath : Pathname.T;
