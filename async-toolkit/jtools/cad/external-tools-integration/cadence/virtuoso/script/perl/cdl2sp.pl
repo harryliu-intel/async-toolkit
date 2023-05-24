@@ -18,9 +18,13 @@ $" = " ";
 my $lgf      = 0;        # emit LGF file format
 my $grid     = 1e-10;    # convert to Laygen units for LGF
 my $length   = 14e-9;    # transistor length
-my $gridW    = 30e-9;    # rounding grid for width
-my $maxNmosW = 2*$gridW; # maximum fold width for NMOS for G1I
-my $maxPmosW = 2*$gridW; # maximum fold width for PMOS for G1I
+my $finW     = 30e-9;    # rounding grid for width
+my $inFinW   = 0;        # used to scale transistor width
+my $maxNmosFins = 2;     # maximum fins for NMOS for G1I
+my $maxPmosFins = 2;     # maximum fins for PMOS for G1I
+my $libPrefix = "";      # overwrite start of cell name for process porting
+my $nmos = "";           # override nmos model name
+my $pmos = "";           # override pmos model name
 my $top;
 
 # set up node renaming to match Laygen expectations
@@ -33,9 +37,10 @@ sub usage() {
         " [--lgf=$lgf]\n" .
         " [--top=cellname]\n" .
         " [--grid=$grid]\n" .
-        " [--length=$length] [--gridW=$gridW]\n" .
-        " [--maxNmosW=$maxNmosW] [--maxPmosW=$maxPmosW]\n" .
-        " <top_cell> <in.cdl> <out.lgf|out.sp>\n";
+        " [--length=$length] [--finW=$finW] [--inFinW=$inFinW]\n" .
+        " [--maxNmosFins=$maxNmosFins] [--maxPmosFins=$maxPmosFins]\n" .
+        " [--libPrefix=$libPrefix] [--nmos=$nmos] [--pmos=$pmos]\n" .
+        " <in.cdl> <out.lgf|out.sp>\n";
 }
 
 # parse arguments
@@ -46,9 +51,13 @@ while (defined $ARGV[0] && $ARGV[0] =~ /^--(.*)=(.*)/) {
     elsif ($flag eq "top")      { $top = $val; }
     elsif ($flag eq "length")   { $length = $val; }
     elsif ($flag eq "grid")     { $grid = $val; }
-    elsif ($flag eq "gridW")    { $gridW = $val; }
-    elsif ($flag eq "maxNmosW") { $maxNmosW = $val; }
-    elsif ($flag eq "maxPmosW") { $maxPmosW = $val; }
+    elsif ($flag eq "finW")     { $finW = $val; }
+    elsif ($flag eq "inFinW")   { $inFinW = $val; }
+    elsif ($flag eq "maxNmosFins") { $maxNmosFins = $val; }
+    elsif ($flag eq "maxPmosFins") { $maxPmosFins = $val; }
+    elsif ($flag eq "libPrefix")   { $libPrefix = $val; }
+    elsif ($flag eq "nmos")        { $nmos = $val; }
+    elsif ($flag eq "pmos")        { $pmos = $val; }
     else { usage(); }
     shift @ARGV;
 }
@@ -56,6 +65,7 @@ while (defined $ARGV[0] && $ARGV[0] =~ /^--(.*)=(.*)/) {
 my $f_in  = "$ARGV[0]";
 my $f_out = "$ARGV[1]";
 $grid=1 unless ($lgf); # SP uses SI units
+if ($inFinW==0) { $inFinW = $finW; }
 
 # report a fatal error
 sub error_msg {
@@ -66,6 +76,7 @@ sub error_msg {
 my $newtop = $f_out;
 if ($lgf) { $newtop =~ s/\.lgf$//g; }
 else      { $newtop =~ s/\.sp$//g; }
+$newtop = $libPrefix . substr($newtop,length($libPrefix));
 
 # Do linewise translation of CDL to SP/LGF
 open IN,  "<$f_in"  or die "Can't read $f_in\n";
@@ -105,6 +116,7 @@ while ($line) {
 
         $line =~ s/(\S+)\s+//;
         $cell = $1;
+            
         while ($line =~ s/(\S+)\s*//) {
             $arg = $1;
             if ($arg =~ /(\S+)=(\S+)/) {
@@ -162,7 +174,7 @@ while ($line) {
         }
 
         # subsitute some constants
-        $parameters{"w"} =~ s/DIFF_PITCH/$gridW/g;
+        $parameters{"w"} =~ s/DIFF_PITCH/$inFinW/g;
         $parameters{"w"} = eval($parameters{"w"});
         $parameters{"l"} =~ s/TRANSISTOR_LENGTH/$length/g;
         $parameters{"l"} = eval($parameters{"l"});
@@ -171,29 +183,31 @@ while ($line) {
         $x *= $parameters{"m"} if (defined($parameters{"m"}));
 
         # compute folds
-        my $w = POSIX::floor($parameters{"w"}/$gridW+0.5);
-        my $maxW = $maxPmosW;
-        $maxW = $maxNmosW if ($type =~ /^n/);
-        $maxW = POSIX::floor($maxW/$gridW+0.5);
-        my $folds = POSIX::ceil($w/$maxW);
+        my $fins = POSIX::floor($parameters{"w"}/$inFinW+0.5);
+        my $maxFins = $maxPmosFins;
+        $maxFins = $maxNmosFins if ($type =~ /^n/);
+        my $folds = POSIX::ceil($fins/$maxFins);
         my $small = 0;
-        my $mod = $w%$maxW;
-        if ($mod!=0) { $small = $maxW - $mod; } # number of small folds
+        my $mod = $fins%$maxFins;
+        if ($mod!=0) { $small = $maxFins - $mod; } # number of small folds
 
         # emit
         for ($f=0; $f<$folds; $f++) {
-            if ($folds>1) { $parameters{"w"} = ($maxW-($f<$small)) * $gridW; }
-            $w2 = $parameters{"w"}/$grid;
-            $l2 = $parameters{"l"}/$grid;
+            my $w2 = $fins * $finW;
+            if ($folds>1) { $w2 = ($maxFins-($f<$small)) * $finW; }
+            $w2 /= $grid;
+            my $l2 = $parameters{"l"}/$grid;
             $type =~ /^(.)/;
             my $tc = $1;
+            if    (!($nmos eq "") && $type =~ /^n/) { $type = $nmos; }
+            elsif (!($pmos eq "") && $type =~ /^p/) { $type = $pmos; }
             if (!defined($top) || $cell eq $top) {
                 if ($lgf) {
                     push @out, "Device M${num_mos} nets=[ $drain $gate $source $bulk ] " .
                         "type=$tc model=$type w=$w2 l=$l2\n";
                 } else {
                     push @out, "M${num_mos} $drain $gate $source $bulk " .
-                        "$type w=${w2} l=${l2} m=1\n";
+                        "$type w=${w2} l=${l2} m=1 nf=1\n";
                 }
                 $num_mos++;
             }
