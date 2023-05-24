@@ -35,7 +35,7 @@ $(DOC).dvi: $(GENFIGURES)
 	fig2dev -L png $*.fig $*.png
 
 clean::
-	rm -f $(DOC).ps $(DOC).pdf $(TARGETS) *.log *.aux *~ *.dvi *.toc $(GENFIGURES) $(DOC2).ps $(DOC2).pdf
+	rm -f $(DOC).ps $(DOC).pdf $(TARGETS) *.log *.aux *~ *.dvi *.toc $(GENFIGURES) $(DOC2).ps $(DOC2).pdf *.lof *.lot
 	echo *.fig | xargs -n1 | sed 's/fig$$/png/' | xargs rm -f 
 
 
