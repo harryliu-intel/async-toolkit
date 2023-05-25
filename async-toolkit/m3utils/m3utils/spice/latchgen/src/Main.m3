@@ -22,7 +22,7 @@ TYPE
 CONST
   PolNames = ARRAY Pol OF TEXT { "n", "p" };
   PolPlug  = ARRAY Pol OF TEXT { "vss", "vcc" };
-  TranStr  = "hpb";
+  TranStr  = "hp";
   Vss      = "vssx";
   Vdd      = "vcc";
   
@@ -121,8 +121,8 @@ PROCEDURE GetInt() : TEXT =
   
 VAR
   wr := Stdio.stdout;
-  vt := Params.Get(2);
+  vt := "svt";
 
 BEGIN
-  EmitVectorLatch(Params.Get(1), Scan.Int(Params.Get(3)))
+  EmitVectorLatch(Params.Get(1), Scan.Int(Params.Get(2)))
 END Main.
