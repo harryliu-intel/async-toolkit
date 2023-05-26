@@ -27,7 +27,7 @@ TYPE
   
 CONST
   PolNames = ARRAY Pol OF TEXT { "n", "p" };
-  PolPlug  = ARRAY Pol OF TEXT { "vss", "vcc" };
+  PolPlug  = ARRAY Pol OF TEXT { "vssx", "vcc" };
   TranStr  = "hp";
   Vss      = "vssx";
   Vdd      = "vcc";
