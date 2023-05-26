@@ -459,8 +459,7 @@
     (fprintf file "--base=%s\n" (GetCastCellName CV->cellName))
     (fprintf file "--csp-register-width=1025\n")
     (fprintf file "--pv-generate-sdf=1\n")
-    (fprintf file "--rdt-max-corner=%s\n" perfCorner)
-    (fprintf file "--rdt-min-corner=%s\n" perfCorner)
+    (fprintf file "--rdt-perf-corner=%s\n" perfCorner)
     (fprintf file "--cast2rtl-routed=%d\n" (if doHierDef 0 1))
     (cond (softMacro && abstractCellName && targetCellName
            (fprintf file "--cell=%s\n" (GetCastCellName targetCellName))
