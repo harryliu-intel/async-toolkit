@@ -130,11 +130,15 @@ PROCEDURE MapCommon(READONLY c : Config; map : TextTextTbl.T)=
         EVAL map.put("@T1C@", "vcc");
       END        
     |
-      Gate.Oai =>
+      Gate.Oai,
+      Gate.Oai_Z1_0p0sigma, Gate.Oai_Z1_5p3sigma,
+      Gate.Oai_Z2_0p0sigma, Gate.Oai_Z2_5p3sigma =>
       <*ASSERT FALSE*>
     |
       Gate.Xor_Z1_0p0sigma, Gate.Xor_Z1_5p3sigma,
-      Gate.Xor_Z2_0p0sigma, Gate.Xor_Z2_5p3sigma
+      Gate.Xor_Z2_0p0sigma, Gate.Xor_Z2_5p3sigma,
+      Gate.Aoi_Z1_0p0sigma, Gate.Aoi_Z1_5p3sigma,
+      Gate.Aoi_Z2_0p0sigma, Gate.Aoi_Z2_5p3sigma
       =>
       EVAL map.put("@T0A@", "in");
       EVAL map.put("@T0B@", "vcc");
@@ -146,24 +150,24 @@ PROCEDURE MapCommon(READONLY c : Config; map : TextTextTbl.T)=
     END;
 
     CASE c.gate OF
-      Gate.Xor_Z1_0p0sigma,
-      Gate.Xor_Z2_0p0sigma =>
+      Gate.Xor_Z1_0p0sigma, Gate.Xor_Z2_0p0sigma,
+      Gate.Aoi_Z1_0p0sigma, Gate.Aoi_Z2_0p0sigma =>
       EVAL map.put("@MCIDX@", "1");
     |
-      Gate.Xor_Z1_5p3sigma,
-      Gate.Xor_Z2_5p3sigma =>
+      Gate.Xor_Z1_5p3sigma, Gate.Xor_Z2_5p3sigma,
+      Gate.Aoi_Z1_5p3sigma, Gate.Aoi_Z2_5p3sigma =>
       EVAL map.put("@MCIDX@", "2");
     ELSE
       (* skip *)
     END;
 
     CASE c.gate OF
-      Gate.Xor_Z1_0p0sigma,
-      Gate.Xor_Z1_5p3sigma =>
+      Gate.Xor_Z1_0p0sigma, Gate.Xor_Z1_5p3sigma,
+      Gate.Aoi_Z1_0p0sigma, Gate.Aoi_Z1_5p3sigma =>
       EVAL map.put("@Z@", "1");
     |
-      Gate.Xor_Z2_0p0sigma,
-      Gate.Xor_Z2_5p3sigma =>
+      Gate.Xor_Z2_0p0sigma, Gate.Xor_Z2_5p3sigma,
+      Gate.Aoi_Z2_0p0sigma, Gate.Aoi_Z2_5p3sigma =>
       EVAL map.put("@Z@", "2");
     ELSE
       (* skip *)

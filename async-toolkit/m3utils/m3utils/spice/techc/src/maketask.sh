@@ -60,6 +60,19 @@ runmode="default"
 
 trantypes=""
 
+if [ "$1" == "-aoitech" ]; then
+    runmode="override"
+    volts="0.30"
+    temps="75"
+    modes="dyn"
+    paras="true"
+    corners="tt"
+    step=4
+    techs="1278p3 1276p4 n3e n5"
+    gates="aoi"
+    fo="4"
+fi
+
 if [ "$1" == "-variationlow" ]; then
     runmode="override"
     volts="0.08 0.09 0.10 0.11 0.12 0.13 0.14 0.15 0.16"
@@ -71,7 +84,6 @@ if [ "$1" == "-variationlow" ]; then
     techs="1278p3"
     gates="xor_z1_0p0sigma xor_z1_5p3sigma"
     fo="4"
-    TEMPLATE=${SRCDIR}/ckt_varxor.sp
 fi
 if [ "$1" == "-variation" ]; then
     runmode="override"
@@ -84,7 +96,6 @@ if [ "$1" == "-variation" ]; then
     techs="1278p3"
     gates="xor_z1_0p0sigma xor_z1_5p3sigma xor_z2_0p0sigma xor_z2_5p3sigma"
     fo="4"
-    TEMPLATE=${SRCDIR}/ckt_varxor.sp
 fi
 
 if [ "$1" == "-2023-01-18" ]; then

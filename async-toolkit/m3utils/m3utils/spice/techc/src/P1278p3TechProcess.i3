@@ -40,7 +40,17 @@ CONST
     Xor1Paths,
     Xor1Paths,
     Xor2Paths,
-    Xor2Paths
+    Xor2Paths,
+
+    Aoi1Paths,
+    Aoi1Paths,
+    Aoi2Paths,
+    Aoi2Paths,
+
+    Oai1Paths,
+    Oai1Paths,
+    Oai2Paths,
+    Oai2Paths
   },
 
   cellNames :=ARRAY Gate OF ARRAY Tran OF TEXT {
@@ -52,8 +62,18 @@ CONST
     Xor1CellNames,
     Xor1CellNames,
     Xor2CellNames,
-    Xor2CellNames
-  },
+    Xor2CellNames,
+
+    Aoi1CellNames,
+    Aoi1CellNames,
+    Aoi2CellNames,
+    Aoi2CellNames,
+
+    Oai1CellNames,
+    Oai1CellNames,
+    Oai2CellNames,
+    Oai2CellNames
+},
 
   plugText :=""
 
@@ -154,6 +174,18 @@ CONST
     "i0saoi012ad1n02x5"
   };
 
+  Aoi1CellNames = ARRAY Tran OF TEXT {
+    NIL,
+    "i0saoi012aa1n01x1",
+    NIL,
+    "i0saoi012ab1n01x1",
+    NIL,
+    "i0saoi012ac1n01x1",
+    "i0saoi012ad1n01x1"
+  };
+
+  Aoi2CellNames = AoiCellNames;
+
   OaiCellNames = ARRAY Tran OF TEXT {
     NIL,
     "i0soai012aa1n02x5",
@@ -163,6 +195,18 @@ CONST
     "i0soai012ac1n02x5",
     "i0soai012ad1n02x5"
   };
+
+  Oai1CellNames = ARRAY Tran OF TEXT {
+    NIL,
+    "i0soai012aa1n01x1",
+    NIL,
+    "i0soai012ab1n01x1",
+    NIL,
+    "i0soai012ac1n01x1",
+    "i0soai012ad1n01x1"
+  };
+
+  Oai2CellNames = OaiCellNames;
 
   AoiCellPaths = ARRAY Tran OF TEXT {
     NIL,
@@ -174,6 +218,18 @@ CONST
     StdCellHvtRoot & "i0saoi012ad1n02x5.spf"
   };
 
+  Aoi1Paths = ARRAY Tran OF TEXT {
+    NIL,
+    StdCellUlvtRoot & "i0saoi012aa1n01x1.spf",
+    NIL,
+    StdCellLvtRoot & "i0saoi012ab1n01x1.spf",
+    NIL,
+    StdCellSvtRoot & "i0saoi012ac1n01x1.spf",
+    StdCellHvtRoot & "i0saoi012ad1n01x1.spf"
+  };
+
+  Aoi2Paths = AoiCellPaths;
+
   OaiCellPaths = ARRAY Tran OF TEXT {
     NIL,
     StdCellUlvtRoot & "i0soai012aa1n02x5.spf",
@@ -184,6 +240,18 @@ CONST
     StdCellHvtRoot & "i0soai012ad1n02x5.spf"
   };
 
+  Oai1Paths = ARRAY Tran OF TEXT {
+    NIL,
+    StdCellUlvtRoot & "i0soai012aa1n01x1.spf",
+    NIL,
+    StdCellLvtRoot & "i0soai012ab1n01x1.spf",
+    NIL,
+    StdCellSvtRoot & "i0soai012ac1n01x1.spf",
+    StdCellHvtRoot & "i0soai012ad1n01x1.spf"
+  };
+
+  Oai2Paths = OaiCellPaths;
+  
 CONST
   Brand = "P1278p3TechProcess";
 
