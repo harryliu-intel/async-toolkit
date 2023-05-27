@@ -78,28 +78,54 @@ PROCEDURE EmitPassgate(name : TEXT; i, clk, clkb, o : TEXT; w, m : CARDINAL) =
     Emit(Pol.P, name & "p",    o, clkb, i, w, m);
   END EmitPassgate;
 
-PROCEDURE EmitTri(name : TEXT; i, clk, clkb, o : TEXT; w, m : CARDINAL) =
+PROCEDURE EmitTri(name            : TEXT;
+                  i, clk, clkb, o : TEXT;
+                  clockOutside    : BOOLEAN;
+                  w, m            : CARDINAL) =
   VAR
     nInt := GetInt();
     pInt := GetInt();
   BEGIN
-    Emit(Pol.N, name & "n0", nInt,    i,  Vss, w, m);
-    Emit(Pol.N, name & "n1",    o,  clk, nInt, w, m);
-    
-    Emit(Pol.P, name & "p0", pInt,    i,  Vdd, w, m);
-    Emit(Pol.P, name & "p1",    o, clkb, pInt, w, m);
+    IF clockOutside THEN
+      Emit(Pol.N, name & "n0", nInt,  clk,  Vss, w, m);
+      Emit(Pol.N, name & "n1",    o,    i, nInt, w, m);
+      
+      Emit(Pol.P, name & "p0", pInt, clkb,  Vdd, w, m);
+      Emit(Pol.P, name & "p1",    o,    i, pInt, w, m)
+    ELSE
+      Emit(Pol.N, name & "n0", nInt,    i,  Vss, w, m);
+      Emit(Pol.N, name & "n1",    o,  clk, nInt, w, m);
+      
+      Emit(Pol.P, name & "p0", pInt,    i,  Vdd, w, m);
+      Emit(Pol.P, name & "p1",    o, clkb, pInt, w, m)
+    END
   END EmitTri;
 
-PROCEDURE EmitTinyLatch(name : TEXT; d, clk, clkb, q : TEXT; w, m : CARDINAL) =
+PROCEDURE EmitTinyLatchTsmc(name            : TEXT;
+                            d, clk, clkb, q : TEXT;
+                            w, m            : CARDINAL) =
   VAR
     pd := name & "_" & GetInt() & "pd";
     qq := name & "_" & GetInt() & "qq";
   BEGIN
-    EmitPassgate(name & "_pg"  ,  d,  clk, clkb, pd, w, m);
-    EmitInverter(name & "_inv0", pd,   qq,           w, m);
-    EmitInverter(name & "_invq", qq,    q,           w, m);
-    EmitTri     (name & "_tri" , qq, clkb,  clk, pd, w, m);
-  END EmitTinyLatch;
+    EmitPassgate(name & "_pg"  ,  d,  clk, clkb, pd,        w, m);
+    EmitInverter(name & "_inv0", pd,   qq,                  w, m);
+    EmitInverter(name & "_invq", qq,    q,                  w, m);
+    EmitTri     (name & "_tri" , qq, clkb,  clk, pd, FALSE, w, m)
+  END EmitTinyLatchTsmc;
+
+PROCEDURE EmitTinyLatchLtn(name            : TEXT;
+                           d, clk, clkb, q : TEXT;
+                           w, m            : CARDINAL) =
+  VAR
+    nk1 := name & "_" & GetInt() & "nk1";
+    nk2 := name & "_" & GetInt() & "nk2";
+  BEGIN
+    EmitTri     (name & "_tri0" ,   d,  clk, clkb,  nk1,  TRUE, w, m);
+    EmitInverter(name & "_o"    , nk1,    q,                    w, m);
+    EmitInverter(name & "_o"    , nk1,  nk2,                    w, m);
+    EmitTri     (name & "_tri1" , nk2, clkb,  clk,  nk1,  TRUE, w, m)
+  END EmitTinyLatchLtn;
 
 PROCEDURE EmitVectorLatch(typeName : TypeName; N : CARDINAL) =
   VAR
@@ -125,7 +151,7 @@ PROCEDURE EmitVectorLatch(typeName : TypeName; N : CARDINAL) =
 
     FOR i := 1 TO N DO
       WITH sfx = Int(i) DO
-        EmitTinyLatch("tny" & sfx, "d" & sfx, "clk", "clkb", "q" & sfx, 2, 1)
+        EmitTinyLatchLtn("tny" & sfx, "d" & sfx, "clk", "clkb", "q" & sfx, 2, 1)
       END
     END;
 
