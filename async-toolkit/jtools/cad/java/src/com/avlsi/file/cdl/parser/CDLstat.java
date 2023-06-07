@@ -196,18 +196,21 @@ public class CDLstat implements CDLSimpleInterface {
     private final Map cellStatMap;
     private final Map cellTemplateMap;
     private final Stack stack;
+    private final double transistorWidthMaxLeg;
     private final double transistorWidthOverhead;
     private final double transistorLengthOverhead;
     
     private CDLstat( final Map instStatMap, 
                      final Map cellStatMap,
                      final Map cellTemplateMap,
+                     final double transistorWidthMaxLeg,
                      final double transistorWidthOverhead,
                      final double transistorLengthOverhead
                      ) {
         this.instStatMap = instStatMap;
         this.cellStatMap = cellStatMap;
         this.cellTemplateMap = cellTemplateMap;
+        this.transistorWidthMaxLeg = transistorWidthMaxLeg;
         this.transistorWidthOverhead = transistorWidthOverhead;
         this.transistorLengthOverhead = transistorLengthOverhead;
         this.stack = new Stack();
@@ -271,8 +274,13 @@ public class CDLstat implements CDLSimpleInterface {
             stat.netCounter.add(nb);
             stat.transistors++;
             stat.area += w * l;
-            stat.areaWithOverhead += (w + transistorWidthOverhead) *
-                                     (l + transistorLengthOverhead);
+            if (transistorWidthMaxLeg!=0.0) {
+                stat.areaWithOverhead += Math.ceil(w/transistorWidthMaxLeg) * transistorWidthOverhead *
+                                         (l + transistorLengthOverhead);
+            } else {
+                stat.areaWithOverhead += (w + transistorWidthOverhead) *
+                                         (l + transistorLengthOverhead);
+            }
             stat.width += w;
             stat.length += l;
         }
@@ -429,7 +437,7 @@ public class CDLstat implements CDLSimpleInterface {
                                         final Map templateMap,
                                         final Map instStatMap ) {
         return getCellStat( cellName, templateMap, new HashMap(), instStatMap,
-                            0, 0 );
+                            0, 0, 0 );
     }
 
     public static CellStat getCellStat( final String cellName,
@@ -438,6 +446,7 @@ public class CDLstat implements CDLSimpleInterface {
                                         final Map instStatMap,
                                         final TechnologyData techData ) {
         return getCellStat( cellName, templateMap, cellStatMap, instStatMap,
+                            techData.transistorWidthMaxLeg,
                             techData.transistorWidthOverhead,
                             techData.transistorLengthOverhead );
     }
@@ -446,6 +455,7 @@ public class CDLstat implements CDLSimpleInterface {
                                         final Map templateMap,
                                         final Map cellStatMap,
                                         final Map instStatMap,
+                                        final double transistorWidthMaxLeg,
                                         final double transistorWidthOverhead,
                                         final double transistorLengthOverhead ) {
         final Template cellTemplate = ( Template ) templateMap.get( cellName );
@@ -453,6 +463,7 @@ public class CDLstat implements CDLSimpleInterface {
         final CDLstat factory = new CDLstat( instStatMap,
                                              cellStatMap,
                                              templateMap,
+                                             transistorWidthMaxLeg,
                                              transistorWidthOverhead,
                                              transistorLengthOverhead );
 
@@ -582,7 +593,7 @@ public class CDLstat implements CDLSimpleInterface {
         if (verbose) {
             final Map cellStatMap = new HashMap();
             final Map instStatMap = new HashMap();
-            result = getCellStat( cell, cellTemplates, cellStatMap, instStatMap, 0, 0 ); 
+            result = getCellStat( cell, cellTemplates, cellStatMap, instStatMap, 0, 0, 0 ); 
 
             System.out.print(leftJustify("Type", 28));
             System.out.print(centerJustify("Uses", 7));

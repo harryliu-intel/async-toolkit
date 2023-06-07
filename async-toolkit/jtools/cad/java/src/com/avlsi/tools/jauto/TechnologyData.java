@@ -737,6 +737,8 @@ public final class TechnologyData {
     /**
      * Various overhead associated with layout, in m.
      **/
+    //@ invariant transistorWidthMaxLeg >= 0.0;
+    public final double transistorWidthMaxLeg;
     //@ invariant transistorWidthOverhead >= 0.0;
     public final double transistorWidthOverhead;
     //@ invariant transistorLengthOverhead >= 0.0;
@@ -903,6 +905,7 @@ public final class TechnologyData {
      *     ensures prechargeRatio > 0.0;
      *     ensures maximumPrechargeTransistorLength > 0.0;
      *     ensures prechargeTransistorLoad >= 0.0;
+     *     ensures transistorWidthMaxLeg >= 0.0;
      *     ensures transistorWidthOverhead >= 0.0;
      *     ensures transistorLengthOverhead >= 0.0;
      * </jml></pre>
@@ -1149,6 +1152,9 @@ public final class TechnologyData {
             CommandLineArgsUtil.getNonNegativeDoubleArgValue(args,
                     "prechargeTransistorLoad", 1.118e-15);
 
+        transistorWidthMaxLeg =
+            CommandLineArgsUtil.getNonNegativeDoubleArgValue(args,
+                    "transistorWidthMaxLeg", 0);
         transistorWidthOverhead =
             CommandLineArgsUtil.getNonNegativeDoubleArgValue(args,
                     "transistorWidthOverhead", 0);
