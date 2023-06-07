@@ -25,38 +25,50 @@
   )
 
 ; get cell height and variant or nil if none
-(defun GetHeightAndVariant (@key (CV (geGetEditCellView)))
-  (let (CopyExact h v)
+(defun GetLibHeightVariant (@key (CV (geGetEditCellView)))
+  (let (CopyExact lib h v)
     CopyExact = (dbGetPropByName CV "CopyExact")->value
-    (cond (CopyExact && (strncmp CopyExact "g1m" 3)==0
+    h="n"
+    v="1"
+    oy=0
+    
+    (when CopyExact lib=(substring CopyExact 1 3))
+    (cond (CopyExact && lib=="g1m"
                      h = (substring CopyExact 13 1)
                      v = (substring CopyExact 12 1)
                      oy = TrackPitch ; G1M cells are offset by one row from origin
-                     (list h v oy)
                      )
-          (CopyExact && (strncmp CopyExact "g1i" 3)==0
+          (CopyExact && lib=="g1i"
                      h = (substring CopyExact 13 1)
                      v = (substring CopyExact 12 1)
                      oy = 0 ; G1I cells are not offset from origin
-                     (list h v oy)
                      )
-          (t nil)
+          (CopyExact && lib=="i0s"
+                     h = (substring CopyExact 13 1)
+                     v = (substring CopyExact 12 1)
+                     oy = 0 ; I0S cells are not offset from origin
+                     )
           )
+    (list lib h v oy)
     )
   )
 
 ; choose default alignment by CellView (TODO: move to PDK)
 (defun DefaultCellAlignment (@key (CV (geGetEditCellView)))
-  (let (hv h v offset align gx gy ox oy)
-    hv = (GetHeightAndVariant ?CV CV)
-    h = (car hv)
-    v = (cadr hv)
-    oy = (caddr hv)
+  (let (lhv l h v offset align gx gy ox oy CopyExact)
+    lhv = (GetLibHeightVariant ?CV CV)
+    l   = (car lhv)
+    h   = (cadr lhv)
+    v   = (caddr lhv)
+    oy  = (cadddr lhv)
+    CopyExact = (dbGetPropByName CV "CopyExact")->value
     (cond (v
            ox=1.5*GridPolyPitch
            gx=GridPolyPitch
            gy=TrackPitch*(if h=="n" && CV->viewName=="floorplan" 1 2)
-           (cond (v=="x" gx=GridPolyPitch gy=TrackPitch ox=0.5*GridPolyPitch oy=0) ; halo cells
+           (cond (CopyExact && (substring CopyExact 1 5)=="i0szh" gx=GridPolyPitch ox=0) ; halo cells
+                 (l=="i0s" && v=="1" gx=GridPolyPitch ox=0.5*GridPolyPitch)
+                 (v=="x" gx=GridPolyPitch gy=TrackPitch ox=0.5*GridPolyPitch oy=0) ; halo cells
                  (v=="c" gx=GridPolyPitch gy=TrackPitch ox=0 oy=0) ; halo cells
                  (v=="y" gx=6*GridPolyPitch gy=TrackPitch ox=0 oy=0) ; halo cells
 		 ; new 'i' 't' and 'f' halo types in 0.5.1HP2_20ww43.1-
