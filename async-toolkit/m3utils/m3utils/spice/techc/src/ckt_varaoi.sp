@@ -4,6 +4,8 @@
 
 @OPTIONS@
 
+@MC_OPTIONS@
+
 .option search='@HSPICE_MODEL_ROOT@'
 
 .OPTION AUTOSTOP
@@ -28,7 +30,6 @@
 *.PININFO o1:O 
 *.PININFO vcc:B vssx:B 
 
-
 ************************
 Mqn1 o1 a n1   vssx n@TRANSUFX@ @TRANSIZE@ 
 Mqn2 n1 b vssx vssx n@TRANSUFX@ @TRANSIZE@ 
@@ -41,14 +42,14 @@ Mqp2 o1 b vcc  vcc  p@TRANSUFX@ @TRANSIZE@
 * Generic ring stage (make appropriate in/out/power connections to dut_cell)
 .subckt ring_stage in out vcc vssx
 
-*      A     B     OUT    <--PWR-->
-X0     in    vssx  xi     vcc  vssx   @CELLNAME0@
-X1     vssx  xi    out    vcc  vssx   @CELLNAME1@
+*      A     B C      OUT    <--PWR-->
+X0 @T0A@ @T0B@ @T0C@   xi   vcc  vssx  @PLUGTEXT@ @CELLNAME0@
+X1 @T1A@ @T1B@ @T1C@   out  vcc  vssx  @PLUGTEXT@ @CELLNAME1@
 
 * dummy loads on xi
-xload0 xi    vssx  unc[0] vcc  vssx   @CELLNAME0@
-xload1 xi    vssx  unc[1] vcc  vssx   @CELLNAME0@
-xload2 xi    vssx  unc[2] vcc  vssx   @CELLNAME0@
+Xload0 @T0A@ @T0B@ @T0C@   xi   vcc  vssx  @PLUGTEXT@ @CELLNAME0@
+Xload1 @T0A@ @T0B@ @T0C@   xi   vcc  vssx  @PLUGTEXT@ @CELLNAME0@
+Xload2 @T0A@ @T0B@ @T0C@   xi   vcc  vssx  @PLUGTEXT@ @CELLNAME0@
 
 .ends
 
@@ -144,14 +145,14 @@ Rsensey vissy 0 1
 * 1-ohm resistor from vissx to ground
 
 * Simulate
-.TRAN @TIMESTEP@ @NANOSECONDS@ns * sweep monte=list(@MCIDX@:@MCIDX@)
+.TRAN @TIMESTEP@ @NANOSECONDS@ns @MC_SPEC@
 
-*.variation
+.variation
 *        option block_name=extern_data_@THRESH@_z@Z@
-*        option ignore_global_variation=yes
+        option ignore_global_variation=yes
 *        option sampling_method=external
-*        option set_missing_values=zero
-*.end_variation
+        option set_missing_values=zero
+.end_variation
 
 
 * Measure

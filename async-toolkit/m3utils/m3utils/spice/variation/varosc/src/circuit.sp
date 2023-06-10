@@ -46,42 +46,34 @@ Mqp2 o1 b vcc  vcc  phpbulvt w=2 l=14e-9 m=1 nf=1
 * Generic ring stage (make appropriate in/out/power connections to dut_cell)
 .subckt ring_stage in out vcc vssx
 
+* FO3 per Andrew
+
 *      A     B     OUT    <--PWR-->
-X0     in    vssx  xi     vcc  vssx   @CELL@
-X1     vssx  xi    out    vcc  vssx   @CELL@
+X0     in    vcc  xi     vcc  vssx   @CELL@
+X1     vcc  xi    out    vcc  vssx   @CELL@
 
 * dummy loads on xi
-xload0 xi    vssx  unc[0] vcc  vssx   @CELL@
-xload1 xi    vssx  unc[1] vcc  vssx   @CELL@
-xload2 xi    vssx  unc[2] vcc  vssx   @CELL@
+xload0 xi    vcc  unc[0] vcc  vssx   @CELL@
+xload1 xi    vcc  unc[1] vcc  vssx   @CELL@
+*xload2 xi    vcc  unc[2] vcc  vssx   @CELL@
 
-.ends
-
-* Ring stage with fanout=N
-*   => N-1 extra copies of dut_cell as load driven by in, with separate supply
-
-.subckt ring_stage_fo4 in out vcc vload vssx
-
-xstage in out    vload vssx ring_stage
-
-* dummy loads on input
-xload0 in unc[0] vload vssx ring_stage
-xload1 in unc[1] vload vssx ring_stage
-xload2 in unc[2] vload vssx ring_stage
+xload3 out    vcc  unc[3] vcc  vssx   @CELL@
+xload4 out    vcc  unc[4] vcc  vssx   @CELL@
+*xload5 out    vcc  unc[5] vcc  vssx   @CELL@
 
 .ends
 
 * Ring oscillator with 20 DUT stages and 1 NAND2 enable
-X1  x[0]              x[1]       vcc  vload vssx ring_stage_fo4
-X2  x[1]              x[2]       vcc  vload vssx ring_stage_fo4
-X3  x[2]              x[3]       vcc  vload vssx ring_stage_fo4
-X4  x[3]              x[4]       vcc  vload vssx ring_stage_fo4
-X5  x[4]              x[5]       vcc  vload vssx ring_stage_fo4
-X6  x[5]              x[6]       vcc  vload vssx ring_stage_fo4
-X7  x[6]              x[7]       vcc  vload vssx ring_stage_fo4
-X8  x[7]              x[8]       vcc  vload vssx ring_stage_fo4
-X9  x[8]              x[9]       vcc  vload vssx ring_stage_fo4
-X10 x[9]              x[10]      vcc  vload vssx ring_stage_fo4
+X1  x[0]              x[1]       vcc  vload vssx ring_stage
+X2  x[1]              x[2]       vcc  vload vssx ring_stage
+X3  x[2]              x[3]       vcc  vload vssx ring_stage
+X4  x[3]              x[4]       vcc  vload vssx ring_stage
+X5  x[4]              x[5]       vcc  vload vssx ring_stage
+X6  x[5]              x[6]       vcc  vload vssx ring_stage
+X7  x[6]              x[7]       vcc  vload vssx ring_stage
+X8  x[7]              x[8]       vcc  vload vssx ring_stage
+X9  x[8]              x[9]       vcc  vload vssx ring_stage
+X10 x[9]              x[10]      vcc  vload vssx ring_stage
 X21 _RESET x[10]      x[0]       vcc   vssx nand_cell
 
 * Probes (for debugging)

@@ -25,6 +25,7 @@ IMPORT TextReader;
 IMPORT Thread;
 FROM TechConfig IMPORT Tran, TranNames;
 FROM TechLookup IMPORT Lookup;
+IMPORT Env;
 
 TYPE
   T = LRVector.T;
@@ -34,6 +35,10 @@ CONST
   Sqrt10      =  3.1623d0;
   DefMaxSumSq =  5.3d0; (* \approx sqrt(2) * erf^-1 ( 1 - 1/(10 * 1e6) ) *)
   N           =  NV * 2; (* variations per gate times 2 gates *)
+
+VAR
+  NbPool  := Env.Get("NBPOOL");
+  NbQslot := Env.Get("NBQSLOT");
   
 TYPE
   BaseEvaluator = LRScalarField.T OBJECT
@@ -160,7 +165,7 @@ PROCEDURE AttemptEval(base : BaseEvaluator; q : LRVector.T) : LONGREAL
 
     opt            := ARRAY BOOLEAN OF TEXT { "", "-single" } [ single ];
                         
-    cmd            := FN("nbjob run --target zsc3_normal --class 4C --mode interactive %s %s %s %s -T %s -r %s %s", ARRAY OF TEXT { bin, opt, tranStr, zStr, templatePath, subdirPath, pos } );
+    cmd            := FN("nbjob run --target %s --class 4C --mode interactive %s %s %s %s -T %s -r %s %s", ARRAY OF TEXT { NbPool, bin, opt, tranStr, zStr, templatePath, subdirPath, pos } );
     cm             := ProcUtils.RunText(cmd,
                                         stdout := stdout,
                                         stderr := stderr,
@@ -336,6 +341,13 @@ VAR
   z            : CARDINAL;
 
 BEGIN
+  IF NbPool = NIL THEN
+    Debug.Error("Must set NBPOOL env var.")
+  END;
+  IF NbQslot = NIL THEN
+    Debug.Error("Must set NBQSLOT env var.")
+  END;
+  
   TRY
     IF pp.keywordPresent("-T") OR pp.keywordPresent("-template") THEN
       templatePath := pp.getNext()

@@ -81,16 +81,24 @@ CONST
 
   StdCellRoot = "/p/hdk/cad/stdcells/lib783_i0s_160h_50pp/pdk050_r3v2p0_efv";
 
-  StdCellUlvtRoot = StdCellRoot & "/base_ulvt/spf/lib783_i0s_160h_50pp_base_ulvt_100c_tttt_cmax/";
-  StdCellLvtRoot = StdCellRoot & "/base_lvt/spf/lib783_i0s_160h_50pp_base_lvt_100c_tttt_cmax/";
-  StdCellSvtRoot = StdCellRoot & "/base_svt/spf/lib783_i0s_160h_50pp_base_svt_100c_tttt_cmax/";
-  StdCellHvtRoot = StdCellRoot & "/base_hvt/spf/lib783_i0s_160h_50pp_base_hvt_100c_tttt_cmax/";
+  StdCellUlvtRoot = StdCellRoot & "/base_ulvt/spf/lib783_i0s_160h_50pp_base_ulvt_100c_tttt_ctyp/";
+  StdCellLvtRoot = StdCellRoot & "/base_lvt/spf/lib783_i0s_160h_50pp_base_lvt_100c_tttt_ctyp/";
+  StdCellSvtRoot = StdCellRoot & "/base_svt/spf/lib783_i0s_160h_50pp_base_svt_100c_tttt_ctyp/";
+  StdCellHvtRoot = StdCellRoot & "/base_hvt/spf/lib783_i0s_160h_50pp_base_hvt_100c_tttt_ctyp/";
 
-  StdCellUlvt1Root = StdCellRoot & "/ldrdsibase_ulvt/spf/lib783_i0s_160h_50pp_ldrdsibase_ulvt_100c_tttt_ctyp/";
-  StdCellLvt1Root = StdCellRoot & "/ldrdsibase_lvt/spf/lib783_i0s_160h_50pp_ldrdsibase_lvt_100c_tttt_ctyp/";
+  (* Z1 paths *)
+  
+  StdCellUlvt1Root = StdCellRoot & "/ldrbase_ulvt/spf/lib783_i0s_160h_50pp_ldrbase_ulvt_100c_tttt_ctyp/";
+  StdCellLvt1Root = StdCellRoot & "/ldrbase_lvt/spf/lib783_i0s_160h_50pp_ldrbase_lvt_100c_tttt_ctyp/";
+  StdCellSvt1Root = StdCellRoot & "/ldrbase_svt/spf/lib783_i0s_160h_50pp_ldrbase_svt_100c_tttt_ctyp/";
+  StdCellHvt1Root = StdCellRoot & "/ldrbase_hvt/spf/lib783_i0s_160h_50pp_ldrbase_hvt_100c_tttt_ctyp/";
+
+  (* xor (only) paths *)
+  XorStdCellUlvt1Root = StdCellRoot & "/ldrdsibase_ulvt/spf/lib783_i0s_160h_50pp_ldrdsibase_ulvt_100c_tttt_ctyp/";
+  XorStdCellLvt1Root = StdCellRoot & "/ldrdsibase_lvt/spf/lib783_i0s_160h_50pp_ldrdsibase_lvt_100c_tttt_ctyp/";
     
-  StdCellUlvt2Root = StdCellRoot & "/dsibase_ulvt/spf/lib783_i0s_160h_50pp_dsibase_ulvt_100c_tttt_ctyp/";
-  StdCellLvt2Root = StdCellRoot & "/dsibase_lvt/spf/lib783_i0s_160h_50pp_dsibase_lvt_100c_tttt_ctyp/";
+  XorStdCellUlvt2Root = StdCellRoot & "/dsibase_ulvt/spf/lib783_i0s_160h_50pp_dsibase_ulvt_100c_tttt_ctyp/";
+  XorStdCellLvt2Root = StdCellRoot & "/dsibase_lvt/spf/lib783_i0s_160h_50pp_dsibase_lvt_100c_tttt_ctyp/";
     
   BufPaths = ARRAY Tran OF TEXT {
     NIL,
@@ -124,9 +132,9 @@ CONST
 
   Xor1Paths = ARRAY Tran OF TEXT {
     NIL,
-    StdCellUlvt1Root & "i0sxor002aa1n01x1.spf",
+    XorStdCellUlvt1Root & "i0sxor002aa1n01x1.spf",
     NIL,
-    StdCellLvt1Root & "i0sxor002ab1n01x1.spf",
+    XorStdCellLvt1Root & "i0sxor002ab1n01x1.spf",
     NIL,
     NIL,
     NIL
@@ -134,9 +142,9 @@ CONST
   
   Xor2Paths = ARRAY Tran OF TEXT {
     NIL,
-    StdCellUlvt2Root & "i0sxor002aa1n02x5.spf",
+    XorStdCellUlvt2Root & "i0sxor002aa1n02x5.spf",
     NIL,
-    StdCellLvt2Root & "i0sxor002ab1n02x5.spf",
+    XorStdCellLvt2Root & "i0sxor002ab1n02x5.spf",
     NIL,
     NIL,
     NIL
@@ -220,12 +228,12 @@ CONST
 
   Aoi1Paths = ARRAY Tran OF TEXT {
     NIL,
-    StdCellUlvtRoot & "i0saoi012aa1n01x1.spf",
+    StdCellUlvt1Root & "i0saoi012aa1n01x1.spf",
     NIL,
-    StdCellLvtRoot & "i0saoi012ab1n01x1.spf",
+    StdCellLvt1Root & "i0saoi012ab1n01x1.spf",
     NIL,
-    StdCellSvtRoot & "i0saoi012ac1n01x1.spf",
-    StdCellHvtRoot & "i0saoi012ad1n01x1.spf"
+    StdCellSvt1Root & "i0saoi012ac1n01x1.spf",
+    StdCellHvt1Root & "i0saoi012ad1n01x1.spf"
   };
 
   Aoi2Paths = AoiCellPaths;
@@ -242,12 +250,12 @@ CONST
 
   Oai1Paths = ARRAY Tran OF TEXT {
     NIL,
-    StdCellUlvtRoot & "i0soai012aa1n01x1.spf",
+    StdCellUlvt1Root & "i0soai012aa1n01x1.spf",
     NIL,
-    StdCellLvtRoot & "i0soai012ab1n01x1.spf",
+    StdCellLvt1Root & "i0soai012ab1n01x1.spf",
     NIL,
-    StdCellSvtRoot & "i0soai012ac1n01x1.spf",
-    StdCellHvtRoot & "i0soai012ad1n01x1.spf"
+    StdCellSvt1Root & "i0soai012ac1n01x1.spf",
+    StdCellHvt1Root & "i0soai012ad1n01x1.spf"
   };
 
   Oai2Paths = OaiCellPaths;

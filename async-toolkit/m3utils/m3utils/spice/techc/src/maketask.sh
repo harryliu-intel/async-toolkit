@@ -60,6 +60,8 @@ runmode="default"
 
 trantypes=""
 
+SETUP_ARGS=""
+
 if [ "$1" == "-aoitech" ]; then
     runmode="override"
     volts="0.30"
@@ -68,9 +70,10 @@ if [ "$1" == "-aoitech" ]; then
     paras="true"
     corners="tt"
     step=4
-    techs="1278p3 1276p4 n3e n5"
-    gates="aoi"
+    techs="1278p3 n3e n5"
+    gates="aoi_z1_0p0sigma aoi_z2_0p0sigma"
     fo="4"
+    SETUP_ARGS="export SETUP_MC_FILE_ONLY=''"
 fi
 
 if [ "$1" == "-variationlow" ]; then
@@ -330,9 +333,12 @@ for tech in ${techs}; do
     fi
 
     for tran in ${trantypes}; do
-        echo "#!/bin/sh -x" > ${RUNDIR}/${tasknum}.sh
-        echo "hostname" >> ${RUNDIR}/${tasknum}.sh
-        echo "pwd" >> ${RUNDIR}/${tasknum}.sh
+        runfile=${RUNDIR}/${tasknum}.sh
+        echo "#!/bin/sh -x" > ${runfile}
+        echo "hostname" >> ${runfile}
+        echo "pwd" >> ${runfile}
+
+	echo ${SETUP_ARGS} >> ${runfile}
 
         torun="${PROG} \
               -tech ${tech} -corn ${corn} -tran ${tran} \
@@ -343,15 +349,15 @@ for tech in ${techs}; do
               -d ${RUNDIR}/${tasknum}.run -C"
         
         echo "${torun} -p setup -p simulate" \
-             >> ${RUNDIR}/${tasknum}.sh
+             >> ${runfile}
 
         echo "${torun} -p convert -p clean" \
-             >> ${RUNDIR}/${tasknum}.sh
+             >> ${runfile}
         
         echo "${torun} -p measure" \
-             >> ${RUNDIR}/${tasknum}.sh
+             >> ${runfile}
         
-        chmod +x ${RUNDIR}/${tasknum}.sh
+        chmod +x ${runfile}
         
         tasknum=`expr $tasknum + 1`
     done
