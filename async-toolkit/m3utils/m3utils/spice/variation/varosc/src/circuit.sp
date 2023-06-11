@@ -64,16 +64,16 @@ xload4 out    vcc  unc[4] vcc  vssx   @CELL@
 .ends
 
 * Ring oscillator with 20 DUT stages and 1 NAND2 enable
-X1  x[0]              x[1]       vcc  vload vssx ring_stage
-X2  x[1]              x[2]       vcc  vload vssx ring_stage
-X3  x[2]              x[3]       vcc  vload vssx ring_stage
-X4  x[3]              x[4]       vcc  vload vssx ring_stage
-X5  x[4]              x[5]       vcc  vload vssx ring_stage
-X6  x[5]              x[6]       vcc  vload vssx ring_stage
-X7  x[6]              x[7]       vcc  vload vssx ring_stage
-X8  x[7]              x[8]       vcc  vload vssx ring_stage
-X9  x[8]              x[9]       vcc  vload vssx ring_stage
-X10 x[9]              x[10]      vcc  vload vssx ring_stage
+X1  x[0]              x[1]        vload vssx ring_stage
+X2  x[1]              x[2]        vload vssx ring_stage
+X3  x[2]              x[3]        vload vssx ring_stage
+X4  x[3]              x[4]        vload vssx ring_stage
+X5  x[4]              x[5]        vload vssx ring_stage
+X6  x[5]              x[6]        vload vssx ring_stage
+X7  x[6]              x[7]        vload vssx ring_stage
+X8  x[7]              x[8]        vload vssx ring_stage
+X9  x[8]              x[9]        vload vssx ring_stage
+X10 x[9]              x[10]       vload vssx ring_stage
 X21 _RESET x[10]      x[0]       vcc   vssx nand_cell
 
 * Probes (for debugging)
