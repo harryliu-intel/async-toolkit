@@ -92,6 +92,7 @@ public class CDLEmitter extends NetlistFormatter implements Visitor {
     }
 
     private String lengthSuffix(double length) {
+        if (Math.abs(length)>=1.0) { return Double.toString(length); } // NOTE: avoid converting integer widths
         return d2s(length * deviceScale) + suffix;
     }
 
