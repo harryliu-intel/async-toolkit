@@ -56,6 +56,11 @@
   (when (ddGetObj libName cellName viewName) (dbOpenCellViewByType libName cellName viewName))
   )
 
+; Open for append but silently return nil if CV doesn't exist
+(defun EditCV (libName cellName viewName)
+  (when (ddGetObj libName cellName viewName) (dbOpenCellViewByType libName cellName viewName "maskLayout" "a"))
+  )
+
 ; cycle between available view in the given window
 (defun CycleViews ()
   (when (mod CycleView 6)==0
