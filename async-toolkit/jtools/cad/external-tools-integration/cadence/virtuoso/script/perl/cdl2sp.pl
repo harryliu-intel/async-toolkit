@@ -178,12 +178,12 @@ while ($line) {
         $parameters{"w"} = eval($parameters{"w"});
         $parameters{"l"} =~ s/TRANSISTOR_LENGTH/$length/g;
         $parameters{"l"} = eval($parameters{"l"});
-        my $x = $parameters{"w"};
-        my $y = $parameters{"l"};
-        $x *= $parameters{"m"} if (defined($parameters{"m"}));
+        my $w = $parameters{"w"};
+        my $l = $parameters{"l"};
+        $w *= $parameters{"m"} if (defined($parameters{"m"}));
 
         # compute folds
-        my $fins = POSIX::floor($parameters{"w"}/$inFinW+0.5);
+        my $fins = POSIX::floor($w/$inFinW+0.5);
         my $maxFins = $maxPmosFins;
         $maxFins = $maxNmosFins if ($type =~ /^n/);
         my $folds = POSIX::ceil($fins/$maxFins);
@@ -196,7 +196,7 @@ while ($line) {
             my $w2 = $fins * $finW;
             if ($folds>1) { $w2 = ($maxFins-($f<$small)) * $finW; }
             $w2 /= $grid;
-            my $l2 = $parameters{"l"}/$grid;
+            my $l2 = $l/$grid;
             $type =~ /^(.)/;
             my $tc = $1;
             if    (!($nmos eq "") && $type =~ /^n/) { $type = $nmos; }
