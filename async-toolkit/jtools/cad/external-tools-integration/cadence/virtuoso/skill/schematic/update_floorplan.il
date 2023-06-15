@@ -13,6 +13,7 @@
         (verbose nil)  ; spam net and parameter changes too
         (instancePrimitives nil) ; instantiate TechLibName instances
         (skipInstances nil) ; don't add/delete instances
+        (skipNets nil) ; don't add/delete nets
         (midPRB nil) ; update prBoundary of routed mid-level cells
         (update t) ; actually modify the cells, otherwise just writes log files
         (Mem (nrGetMaxHeapSize)) ; how much memory to use, in MB
@@ -101,11 +102,13 @@
       h = NetListTable["height"]
 
       ; delete incorrect nets
-      (foreach net CV->nets
-        (unless netTable[net]
-          (when verbose (fprintf LOG "%sDelete net %s\n" indent net->name))
-          (dbDeleteObject net)
-          )
+      (unless skipNets
+        (foreach net CV->nets
+                 (unless netTable[net]
+                   (when verbose (fprintf LOG "%sDelete net %s\n" indent net->name))
+                   (dbDeleteObject net)
+                   )
+                 )
         )
 
       ; delete pins without figures
