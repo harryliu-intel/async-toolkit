@@ -2,8 +2,9 @@
 (defun HasLayoutVariants (@key (CV (geGetEditCellView)))
   (let (suffix)
     suffix = (substring CV->cellName (strlen CV->cellName)-1)
-    suffix=="v1" || suffix=="v2" || suffix=="v3" || suffix=="v4" || suffix=="v5" ||
-      CV->libName=="vendor.intel.g1m" || CV->libName=="vendor.intel.g1i"
+    (TechLibName=="1276.3" || TechLibName=="1276.4") &&
+      (suffix=="v1" || suffix=="v2" || suffix=="v3" || suffix=="v4" || suffix=="v5" ||
+               CV->libName=="vendor.intel.g1m" || CV->libName=="vendor.intel.g1i")
     )
   )
 
