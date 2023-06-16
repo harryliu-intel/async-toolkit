@@ -39,6 +39,7 @@ CONST
 VAR
   NbPool  := Env.Get("NBPOOL");
   NbQslot := Env.Get("NBQSLOT");
+  M3Utils := Env.Get("M3UTILS");
   
 TYPE
   BaseEvaluator = LRScalarField.T OBJECT
@@ -148,7 +149,7 @@ PROCEDURE AttemptEval(base : BaseEvaluator; q : LRVector.T) : LONGREAL
                       2.0d0;
         
         
-    bin            := VarSpiceBin;
+    bin            := M3Utils & "/" & VarSpiceBin;
 
     Owr            := NEW(TextWr.T).init();
     Ewr            := NEW(TextWr.T).init();
@@ -165,7 +166,7 @@ PROCEDURE AttemptEval(base : BaseEvaluator; q : LRVector.T) : LONGREAL
 
     opt            := ARRAY BOOLEAN OF TEXT { "", "-single" } [ single ];
                         
-    cmd            := FN("nbjob run --target %s --class 4C --mode interactive %s %s %s %s -T %s -r %s %s", ARRAY OF TEXT { NbPool, bin, opt, tranStr, zStr, templatePath, subdirPath, pos } );
+    cmd            := FN("nbjob run --target %s --class 4C --class SLES12 --mode interactive %s %s %s %s -T %s -r %s %s", ARRAY OF TEXT { NbPool, bin, opt, tranStr, zStr, templatePath, subdirPath, pos } );
     cm             := ProcUtils.RunText(cmd,
                                         stdout := stdout,
                                         stderr := stderr,
@@ -217,7 +218,7 @@ PROCEDURE AttemptEval(base : BaseEvaluator; q : LRVector.T) : LONGREAL
   END AttemptEval;
 
 CONST
-  VarSpiceBin = "/nfs/site/disks/zsc3_fon_fe_0001/mnystroe/m3utils/spice/variation/varspice/AMD64_LINUX/vary";
+  VarSpiceBin = "spice/variation/varspice/AMD64_LINUX/vary";
 
 VAR RhoBeg := FIRST(LONGREAL); (* set in the main body *)
     
@@ -346,6 +347,9 @@ BEGIN
   END;
   IF NbQslot = NIL THEN
     Debug.Error("Must set NBQSLOT env var.")
+  END;
+  IF M3Utils = NIL THEN
+    Debug.Error("Must set M3UTILS env var.")
   END;
   
   TRY

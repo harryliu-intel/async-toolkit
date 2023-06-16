@@ -27,6 +27,8 @@ FROM TechLookup IMPORT Lookup;
 IMPORT TechTemplate;
 IMPORT TextLRPair;
 IMPORT TextLRPairArraySort;
+IMPORT NormalDeviate;
+IMPORT Random;
 
 <*FATAL Thread.Alerted*>
 
@@ -78,7 +80,7 @@ PROCEDURE WriteVar(wr : Wr.T; map : TextTextTbl.T) RAISES { Wr.Failure } =
         FOR tran := FIRST(TranSpec) TO LAST(TranSpec) DO
           FOR var := FIRST(Var) TO LAST(Var) DO
             WITH nam =
-                 MapText(F("X%s.xstage.X%s.%s:@:%s:@:ILN",
+                 MapText(F("X%s.X%s.%s:@:%s:@:ILN",
                            Int(stage),
                            Int(sub),
                            TranSpec[tran],
@@ -236,18 +238,24 @@ CONST
   PhaseNames = ARRAY Phase OF TEXT { "mkdir", "copy", "createvar", "runsim", "measure" };
   
 VAR
-  p := P { 0.1d0, .. };
-  exact : BOOLEAN;
-  pp       := NEW(ParseParams.T).init(Stdio.stderr);
+  p                 := P { 0.1d0, .. };
+  pp                := NEW(ParseParams.T).init(Stdio.stderr);
+  phases            := SET OF Phase {};
+  gotPhase          := FALSE;
+  z                 := LAST(CARDINAL);
+
+  exact        : BOOLEAN;
   templatePath : Pathname.T;
   rundirPath   : Pathname.T;
-  phases := SET OF Phase {};
-  gotPhase := FALSE;
-  single : BOOLEAN;
-  z      := LAST(CARDINAL);
-  thresh : Tran;
+  single       : BOOLEAN;
+  thresh       : Tran;
+  doNormal     : BOOLEAN;
+  
 BEGIN
   TRY
+
+    doNormal := pp.keywordPresent("-N");
+    
     FOR ph := FIRST(Phase) TO LAST(Phase) DO
       IF pp.keywordPresent("-" & PhaseNames[ph]) THEN
         phases := phases + SET OF Phase { ph };
@@ -286,20 +294,32 @@ BEGIN
     
     pp.skipParsed();
 
-    WITH argdims = NUMBER(pp.arg^) - pp.next DO
-      IF exact AND argdims # N THEN
-        Debug.Error("Wrong dims count : " & Int(argdims) & " # " & Int(N))
-      END;
-      FOR i := 0 TO argdims - 1 DO
-        WITH arg = pp.getNext() DO
-          TRY
-            p[i] := Scan.LongReal(arg)
-          EXCEPT
-            FloatMode.Trap, Lex.Error => Debug.Error("Trouble parsing command-line argument as number : " & arg)
+    IF doNormal THEN
+      VAR
+        rand         : Random.T := NEW(Random.Default).init();
+      BEGIN
+        FOR i := FIRST(p) TO LAST(p) DO
+          p[i] := NormalDeviate.Get(rand, 0.0d0, 1.0d0)
+        END
+      END
+    ELSE
+      WITH argdims = NUMBER(pp.arg^) - pp.next DO
+        IF exact AND argdims # N THEN
+          Debug.Error("Wrong dims count : " & Int(argdims) & " # " & Int(N))
+        END;
+        FOR i := 0 TO argdims - 1 DO
+          WITH arg = pp.getNext() DO
+            TRY
+              p[i] := Scan.LongReal(arg)
+            EXCEPT
+              FloatMode.Trap, Lex.Error => Debug.Error("Trouble parsing command-line argument as number : " & arg)
+            END
           END
         END
       END
-    END
+    END;
+
+    pp.finish()
   EXCEPT
     ParseParams.Error => Debug.Error("Can't parse command line")
   END;
@@ -371,7 +391,17 @@ BEGIN
   IF Phase.DoMeasure IN phases THEN
     WITH meas = DoMeasure() DO
       Wr.PutText(Stdio.stdout, LongReal(meas));
-      Wr.PutChar(Stdio.stdout, '\n')
+      Wr.PutChar(Stdio.stdout, '\n');
+
+      WITH rwr = FileWr.Open("result.csv") DO
+        Wr.PutText(rwr, LongReal(meas));
+        FOR i := FIRST(p) TO LAST(p) DO
+          Wr.PutChar(rwr, ',');
+          Wr.PutText(rwr, LongReal(p[i]));
+        END;
+        Wr.PutChar(rwr, '\n');
+        Wr.Close(rwr)
+      END
     END
   END
 END Main.

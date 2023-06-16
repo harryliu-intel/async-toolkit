@@ -58,7 +58,7 @@ CONST
   NIL,
   Tech.XorStdCellUlvt2Root,
   NIL,
-  Tech.XorStdCellUlvt2Root,
+  Tech.XorStdCellLvt2Root,
   NIL,
   NIL,
   NIL

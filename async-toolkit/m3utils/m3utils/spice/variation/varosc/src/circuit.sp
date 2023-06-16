@@ -3,6 +3,8 @@
 .PARAM vtrue=0.25
 
 .OPTION CMIFLAG=1 CMIUSRFLAG=3 PDMI=1
+.option cmipath='/p/hdk/cad/pdk/pdk783_r0.5_22ww52.5/cmi/hspice/cmi/lnx86/64bit/'
+.option cmi02opt=1
 .OPTION POST=fsdb PROBE=1
 .OPTION XA_CMD="set_sim_level -level 6"
 .OPTION XA_CMD="set_wildcard_rule -match* one"
@@ -23,6 +25,10 @@
 
 .option search='/p/hdk/cad/pdk/pdk783_r0.5_22ww52.5/models/core/hspice/m15_2x_1xa_1xb_4ya_2yb_2yc_3yd__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp'
 .lib 'p1278_3.hsp' tttt
+
+.option PDMI=1
+.option PDMI_LIB='/p/hdk/cad/pdk/pdk783_r0.5_22ww52.5//cmi/hspice/pdmi/lnx86/64bit/pdmi.so'
+
 
 * std cell library with parasitics (optional):
 .include "@LIBDIR@/@CELL@.spf"
