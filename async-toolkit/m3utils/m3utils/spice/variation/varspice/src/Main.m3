@@ -220,7 +220,7 @@ PROCEDURE DoMeasure() : LONGREAL
   END DoMeasure;
 
 TYPE
-  Phase = { Mkdir, Copy, CreateVar, RunSim, DoMeasure };
+  Phase = { Mkdir, Copy, CreateVar, RunSim, DoMeasure, Clean };
 
 PROCEDURE MakeMap() : TextTextTbl.T =
   VAR
@@ -235,7 +235,7 @@ PROCEDURE MakeMap() : TextTextTbl.T =
   
 CONST
   AllPhases = SET OF Phase { FIRST(Phase) .. LAST(Phase) };
-  PhaseNames = ARRAY Phase OF TEXT { "mkdir", "copy", "createvar", "runsim", "measure" };
+  PhaseNames = ARRAY Phase OF TEXT { "mkdir", "copy", "createvar", "runsim", "measure", "clean" };
   
 VAR
   p                 := P { 0.1d0, .. };
@@ -401,6 +401,19 @@ BEGIN
         END;
         Wr.PutChar(rwr, '\n');
         Wr.Close(rwr)
+      END
+    END
+  END;
+
+  CONST
+    CleanFiles = ARRAY OF Pathname.T {
+                    "ckt.mc", "ckt.mc.csv", "ckt.log", "var.sp" };
+  BEGIN
+    IF Phase.Clean IN phases THEN
+      FOR i := FIRST(CleanFiles) TO LAST(CleanFiles) DO
+        TRY
+          FS.DeleteFile(CleanFiles[i])
+        EXCEPT ELSE END
       END
     END
   END

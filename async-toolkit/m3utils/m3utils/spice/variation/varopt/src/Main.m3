@@ -340,7 +340,8 @@ VAR
   tran         := Tran.Ulvt;
   maxSumSq     : LONGREAL;
   z            : CARDINAL;
-
+  MaxSumSq     := DefMaxSumSq;
+  
 BEGIN
   IF NbPool = NIL THEN
     Debug.Error("Must set NBPOOL env var.")
@@ -377,15 +378,19 @@ BEGIN
       Debug.Error("Must provide -z")
     END;
 
+    IF pp.keywordPresent("-sumsq") THEN
+      MaxSumSq := pp.getNextLongReal()
+    END;
+
     pp.skipParsed();
   EXCEPT
     ParseParams.Error => Debug.Error("Can't parse command line")
   END;
 
   IF single THEN
-    maxSumSq := DefMaxSumSq
+    maxSumSq := MaxSumSq
   ELSE
-    maxSumSq := DefMaxSumSq / Sqrt10
+    maxSumSq := MaxSumSq / Sqrt10
   END;
 
   IF doSkip OR NOT single THEN RhoBeg := 1.0d0 ELSE RhoBeg := 4.0d0 END;
