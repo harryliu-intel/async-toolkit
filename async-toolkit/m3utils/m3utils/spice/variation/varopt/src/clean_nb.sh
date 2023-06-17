@@ -1,5 +1,7 @@
 #!/bin/sh -x
 
+rm ##* & 
+
 for cycle in A B; do
 
 for i in 0 1 2 0; do
@@ -14,3 +16,4 @@ nbstatus --target $NBPOOL jobs | grep Run | awk '{print $2}' | xargs -n1 nbjob -
 
 done
 
+wait
