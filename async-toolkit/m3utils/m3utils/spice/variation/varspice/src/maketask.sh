@@ -55,7 +55,7 @@ tasknum=0
 echo "${samples} jobs"
 
 while [ "${tasknum}" -lt "${samples}" ]; do
-    echo "nbjob run --log-file ${RUNDIR}/${tasknum}.log ${PROG} -single -thresh ${thresh} -z ${z} -T ${TEMPLATE} -r ${RUNDIR}/${tasknum} -N"    >> $taskfile
+    echo "nbjob run --log-file ${RUNDIR}/${tasknum}.log ${PROG} -single -thresh ${thresh} -z ${z} -T ${TEMPLATE} -r ${RUNDIR}/${tasknum} -fullnormal"    >> $taskfile
 
     tasknum=`expr $tasknum + 1`
 done

@@ -1,6 +1,6 @@
 #!/bin/sh -x
 
-rm ##* & 
+rm \##* & 
 
 for cycle in A B; do
 

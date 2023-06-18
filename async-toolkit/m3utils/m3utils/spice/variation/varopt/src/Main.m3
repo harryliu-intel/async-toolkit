@@ -34,6 +34,7 @@ CONST
   DefMult     = -1.0d0; (* we want to maximize the cycle time *)
   Sqrt10      =  3.1623d0;
   DefMaxSumSq =  5.3d0; (* \approx sqrt(2) * erf^-1 ( 1 - 1/(10 * 1e6) ) *)
+  DefRhoBeg   =  4.0d0;
   N           =  NV * 2; (* variations per gate times 2 gates *)
 
 VAR
@@ -393,7 +394,9 @@ BEGIN
     maxSumSq := MaxSumSq / Sqrt10
   END;
 
-  IF doSkip OR NOT single THEN RhoBeg := 1.0d0 ELSE RhoBeg := 4.0d0 END;
+  RhoBeg := DefRhoBeg * maxSumSq / DefMaxSumSq;
+
+  Debug.Out("RhoBeg=" & LongReal(RhoBeg));
   
   IF templatePath = NIL OR rundirPath = NIL THEN
     Debug.Error("Must specify template [-T] and rundir [-r]")

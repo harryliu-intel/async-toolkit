@@ -29,6 +29,7 @@ IMPORT TextLRPair;
 IMPORT TextLRPairArraySort;
 IMPORT NormalDeviate;
 IMPORT Random;
+IMPORT LongRealSeq;
 
 <*FATAL Thread.Alerted*>
 
@@ -70,7 +71,14 @@ PROCEDURE WriteVar(wr : Wr.T; map : TextTextTbl.T) RAISES { Wr.Failure } =
     data    : ARRAY [ 0 .. N - 1 ] OF TextLRPair.T;
     pidx    : CARDINAL;
     qidx    : CARDINAL;
+    rand    : Random.T;
+    
   BEGIN
+    IF doFullNormal THEN
+      rand        := NEW(Random.Default).init();
+      fullNormals := NEW(LongRealSeq.T).init();
+    END;
+    
     Wr.PutText(wr, ".data extern_data\n");
     Wr.PutText(wr, "index ");
     qidx := 0;
@@ -108,7 +116,12 @@ PROCEDURE WriteVar(wr : Wr.T; map : TextTextTbl.T) RAISES { Wr.Failure } =
             VAR
               val : LONGREAL;
             BEGIN
-              IF single AND stage # 4 THEN
+              IF doFullNormal THEN
+                WITH nd = NormalDeviate.Get(rand, 0.0d0, 1.0d0) DO
+                  val := nd;
+                  fullNormals.addhi(nd)
+                END
+              ELSIF single AND stage # 4 THEN
                 val := 0.0d0;
               ELSE
                 val := p[pidx];
@@ -250,11 +263,17 @@ VAR
   single       : BOOLEAN;
   thresh       : Tran;
   doNormal     : BOOLEAN;
+  doFullNormal : BOOLEAN;
+  fullNormals  : LongRealSeq.T;
   
 BEGIN
   TRY
 
     doNormal := pp.keywordPresent("-N");
+
+    IF NOT doNormal THEN
+      doFullNormal := pp.keywordPresent("-fullnormal")
+    END;
     
     FOR ph := FIRST(Phase) TO LAST(Phase) DO
       IF pp.keywordPresent("-" & PhaseNames[ph]) THEN
@@ -395,9 +414,16 @@ BEGIN
 
       WITH rwr = FileWr.Open("result.csv") DO
         Wr.PutText(rwr, LongReal(meas));
-        FOR i := FIRST(p) TO LAST(p) DO
-          Wr.PutChar(rwr, ',');
-          Wr.PutText(rwr, LongReal(p[i]));
+        IF doFullNormal THEN
+          FOR i := 0 TO fullNormals.size() - 1 DO
+            Wr.PutChar(rwr, ',');
+            Wr.PutText(rwr, LongReal(fullNormals.get(i)));
+          END
+        ELSE
+          FOR i := FIRST(p) TO LAST(p) DO
+            Wr.PutChar(rwr, ',');
+            Wr.PutText(rwr, LongReal(p[i]));
+          END
         END;
         Wr.PutChar(rwr, '\n');
         Wr.Close(rwr)

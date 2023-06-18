@@ -13,7 +13,7 @@ for sigma in $@; do
     sx=`echo $sigma | tr . p`
     WORKDIR=${WORKROOT}/${sx}
 
-    ../AMD64_LINUX/varopt -T ../../varosc/src/circuit.sp -thresh $THRESH -z $Z -r $WORKDIR |& tee ${WORKROOT}/run_opt_${sx}.0 &
+    ../AMD64_LINUX/varopt -T ../../varosc/src/circuit.sp -thresh $THRESH -z $Z -r $WORKDIR -sumsq $sigma |& tee ${WORKROOT}/run_opt_${sx}.0 &
 done
 
 wait
