@@ -28,28 +28,27 @@
 (defun GetLibHeightVariant (@key (CV (geGetEditCellView)))
   (let (CopyExact lib h v)
     CopyExact = (dbGetPropByName CV "CopyExact")->value
-    h="n"
-    v="1"
-    oy=0
-    
     (when CopyExact lib=(substring CopyExact 1 3))
     (cond (CopyExact && lib=="g1m"
                      h = (substring CopyExact 13 1)
                      v = (substring CopyExact 12 1)
                      oy = TrackPitch ; G1M cells are offset by one row from origin
+                     (list lib h v oy)
                      )
           (CopyExact && lib=="g1i"
                      h = (substring CopyExact 13 1)
                      v = (substring CopyExact 12 1)
                      oy = 0 ; G1I cells are not offset from origin
+                     (list lib h v oy)
                      )
           (CopyExact && lib=="i0s"
                      h = (substring CopyExact 13 1)
                      v = (substring CopyExact 12 1)
-                     oy = 0 ; I0S cells are not offset from origin
+                     oy = TrackPitch ; I0S cells are offset by one row from origin
+                     (list lib h v oy)
                      )
+          (t nil)
           )
-    (list lib h v oy)
     )
   )
 
@@ -62,7 +61,7 @@
     v   = (caddr lhv)
     oy  = (cadddr lhv)
     CopyExact = (dbGetPropByName CV "CopyExact")->value
-    (cond (v
+    (cond (lhv
            ox=1.5*GridPolyPitch
            gx=GridPolyPitch
            gy=TrackPitch*(if h=="n" && CV->viewName=="floorplan" 1 2)
