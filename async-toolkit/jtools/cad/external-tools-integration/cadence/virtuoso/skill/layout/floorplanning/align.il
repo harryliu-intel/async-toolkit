@@ -67,8 +67,8 @@
            gy=TrackPitch*(if h=="n" && CV->viewName=="floorplan" 1 2)
            (cond (CopyExact && (substring CopyExact 1 5)=="i0szh" gx=GridPolyPitch ox=0) ; halo cells
                  (l=="i0s" && v=="1" gx=  GridPolyPitch ox=0.5*GridPolyPitch)
-                 (l=="i0s" && v=="4" gx=4*GridPolyPitch ox=-0.5*GridPolyPitch)
-                 (l=="i0s" && v=="8" gx=8*GridPolyPitch ox=-0.5*GridPolyPitch)
+                 (l=="i0s" && v=="4" gx=4*GridPolyPitch ox=0.5*GridPolyPitch)
+                 (l=="i0s" && v=="8" gx=8*GridPolyPitch ox=0.5*GridPolyPitch)
                  (v=="x" gx=GridPolyPitch gy=TrackPitch ox=0.5*GridPolyPitch oy=0) ; halo cells
                  (v=="c" gx=GridPolyPitch gy=TrackPitch ox=0 oy=0) ; halo cells
                  (v=="y" gx=6*GridPolyPitch gy=TrackPitch ox=0 oy=0) ; halo cells
@@ -90,6 +90,7 @@
                  )
            align = (list gx:gy ox:oy)
            )
+          (TechLibName=="1278.3" align=(list GridPolyPitch:TrackPitch GridPolyPitch/2:TrackPitch)) ; I0S
           (t align=(list GridPolyPitch/2:GridDiffPitch 0.0:0.0)) ; unknown alignment
           )
     align
@@ -121,6 +122,11 @@
     (SetCellAlignment (car align) (cadr align) ?CV CV ?overwrite overwrite)
     align
     )
+  )
+
+; Set alignment for a routed topHalo cell
+(defun SetTopHaloAlignment (@key (CV (geGetEditCellView)) (overwrite t))
+  (SetCellAlignment gridAlignment["lego"] 0:0 ?topHalo t ?overwrite overwrite)
   )
 
 ; compute GCD of two integers Euclid's Algorithm
