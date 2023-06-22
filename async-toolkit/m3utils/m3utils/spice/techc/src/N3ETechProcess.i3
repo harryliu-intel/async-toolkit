@@ -27,16 +27,42 @@ CONST
 
   cellPaths :=ARRAY Gate OF ARRAY Tran OF TEXT {
     BufPaths,
+    XorAltPaths,
     BufPaths,
     BufPaths,
-    BufPaths 
+    BufPaths,
+    BufPaths,
+    BufPaths,
+    BufPaths,
+    BufPaths,
+    Paths117,
+    Paths117,
+    Paths117,
+    Paths117,
+    Paths117,
+    Paths117,
+    Paths117,
+    Paths117
   },
 
   cellNames :=ARRAY Gate OF ARRAY Tran OF TEXT {
     XorCellNames,
+    XorCellNames,
     BufCellNames,
     AoiCellNames,
-    OaiCellNames
+    OaiCellNames,
+    NilCellNames,
+    NilCellNames,
+    NilCellNames,
+    NilCellNames,
+    AoiZ1Names,
+    AoiZ1Names,
+    AoiZ2Names,
+    AoiZ2Names,
+    OaiZ1Names,
+    OaiZ1Names,
+    OaiZ2Names,
+    OaiZ2Names
   },
 
   plugText :="vcc vssx"
@@ -44,6 +70,16 @@ CONST
       };
 
 CONST
+  XorAltPaths = ARRAY Tran OF TEXT {
+  NIL,
+  "/nfs/site/disks/zsc3_fon_fe_0001/mnystroe/XOR2D1BWP169H3P48CPDULVTfix.spf",
+  NIL,
+  NIL,
+  NIL,
+  NIL,
+  NIL
+  };
+  
   BufPaths = ARRAY Tran OF TEXT {
   "/p/tech1/n3e/tech-release/v0.9.0p3/tcbn03e_bwph169l3p48cpd_base_elvt_lib/lpe_spice/tcbn03e_bwph169l3p48cpd_base_elvt_090b/tcbn03e_bwph169l3p48cpd_base_elvt_090b_lpe_typical_125c.spi",
   "/p/tech1/n3e/tech-release/v0.9.0p3/tcbn03e_bwph169l3p48cpd_base_ulvt_lib/lpe_spice/tcbn03e_bwph169l3p48cpd_base_ulvt_090b/tcbn03e_bwph169l3p48cpd_base_ulvt_090b_lpe_typical_125c.spi",
@@ -51,6 +87,27 @@ CONST
   "/p/tech1/n3e/tech-release/v0.9.0p3/tcbn03e_bwph169l3p48cpd_base_lvt_lib/lpe_spice/tcbn03e_bwph169l3p48cpd_base_lvt_090b/tcbn03e_bwph169l3p48cpd_base_lvt_090b_lpe_typical_125c.spi",
   "/p/tech1/n3e/tech-release/v0.9.0p3/tcbn03e_bwph169l3p48cpd_base_lvtll_lib/lpe_spice/tcbn03e_bwph169l3p48cpd_base_lvtll_090b/tcbn03e_bwph169l3p48cpd_base_lvtll_090b_lpe_typical_125c.spi",
   "/p/tech1/n3e/tech-release/v0.9.0p3/tcbn03e_bwph169l3p48cpd_base_svt_lib/lpe_spice/tcbn03e_bwph169l3p48cpd_base_svt_090b/tcbn03e_bwph169l3p48cpd_base_svt_090b_lpe_typical_125c.spi",
+  NIL
+  };
+
+  Paths117 = ARRAY Tran OF TEXT {
+  (* 117 high alternating cells *)
+  "/p/tech1/n3e/tech-release/v1.0.2/tcbn03e_bwp143mh117l3p48cpd_base_elvt_lib/lpe_spice/tcbn03e_bwp143mh117l3p48cpd_base_elvt_100a/tcbn03e_bwp143mh117l3p48cpd_base_elvt_100a_lpe_typical_125c.spi",
+  "/p/tech1/n3e/tech-release/v1.0.2/tcbn03e_bwp143mh117l3p48cpd_base_ulvt_lib/lpe_spice/tcbn03e_bwp143mh117l3p48cpd_base_ulvt_100a/tcbn03e_bwp143mh117l3p48cpd_base_ulvt_100a_lpe_typical_125c.spi",
+  "/p/tech1/n3e/tech-release/v1.0.2/tcbn03e_bwp143mh117l3p48cpd_base_ulvtll_lib/lpe_spice/tcbn03e_bwp143mh117l3p48cpd_base_ulvtll_100a/tcbn03e_bwp143mh117l3p48cpd_base_ulvtll_100a_lpe_typical_125c.spi",
+  "/p/tech1/n3e/tech-release/v1.0.2/tcbn03e_bwp143mh117l3p48cpd_base_lvt_lib/lpe_spice/tcbn03e_bwp143mh117l3p48cpd_base_lvt_100a/tcbn03e_bwp143mh117l3p48cpd_base_lvt_100a_lpe_typical_125c.spi",
+  "/p/tech1/n3e/tech-release/v1.0.2/tcbn03e_bwp143mh117l3p48cpd_base_lvtl_lib/lpe_spice/tcbn03e_bwp143mh117l3p48cpd_base_lvtl_100a/tcbn03e_bwp143mh117l3p48cpd_base_lvtl_100a_lpe_typical_125c.spi",
+  "/p/tech1/n3e/tech-release/v1.0.2/tcbn03e_bwp143mh117l3p48cpd_base_svt_lib/lpe_spice/tcbn03e_bwp143mh117l3p48cpd_base_svt_100a/tcbn03e_bwp143mh117l3p48cpd_base_svt_100a_lpe_typical_125c.spi",
+  NIL
+  };
+  
+  NilCellNames = ARRAY Tran OF TEXT {
+  NIL,
+  NIL,
+  NIL,
+  NIL,
+  NIL,
+  NIL,
   NIL
   };
 
@@ -94,6 +151,46 @@ CONST
   NIL
   };
 
+  AoiZ1Names = ARRAY Tran OF TEXT {
+  "AOI21D0P5BWP143M117H3P48CPDELVT",
+  "AOI21D0P5BWP143M117H3P48CPDULVT",
+  "AOI21D0P5BWP143M117H3P48CPDULVTLL",
+  "AOI21D0P5BWP143M117H3P48CPDLVT",
+  "AOI21D0P5BWP143M117H3P48CPDLVTLL",
+  "AOI21D0P5BWP143M117H3P48CPDSVT",
+  NIL
+  };
+  
+  AoiZ2Names = ARRAY Tran OF TEXT {
+  "AOI21D1BWP143M117H3P48CPDELVT",
+  "AOI21D1BWP143M117H3P48CPDULVT",
+  "AOI21D1BWP143M117H3P48CPDULVTLL",
+  "AOI21D1BWP143M117H3P48CPDLVT",
+  "AOI21D1BWP143M117H3P48CPDLVTLL",
+  "AOI21D1BWP143M117H3P48CPDSVT",
+  NIL
+  };
+  
+  OaiZ1Names = ARRAY Tran OF TEXT {
+  "OAI21D0P5BWP143M117H3P48CPDELVT",
+  "OAI21D0P5BWP143M117H3P48CPDULVT",
+  "OAI21D0P5BWP143M117H3P48CPDULVTLL",
+  "OAI21D0P5BWP143M117H3P48CPDLVT",
+  "OAI21D0P5BWP143M117H3P48CPDLVTLL",
+  "OAI21D0P5BWP143M117H3P48CPDSVT",
+  NIL
+  };
+  
+  OaiZ2Names = ARRAY Tran OF TEXT {
+  "OAI21D1BWP143M117H3P48CPDELVT",
+  "OAI21D1BWP143M117H3P48CPDULVT",
+  "OAI21D1BWP143M117H3P48CPDULVTLL",
+  "OAI21D1BWP143M117H3P48CPDLVT",
+  "OAI21D1BWP143M117H3P48CPDLVTLL",
+  "OAI21D1BWP143M117H3P48CPDSVT",
+  NIL
+  };
+  
 CONST
   Brand = "N3ETechProcess";
 

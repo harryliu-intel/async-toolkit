@@ -33,16 +33,44 @@ CONST
 
   cellPaths :=ARRAY Gate OF ARRAY Tran OF TEXT {
     XorCellPaths,
+    XorCellPaths,
     BufCellPaths,
     AoiCellPaths,
-    OaiCellPaths
+    OaiCellPaths,
+    NilCellPaths,
+    NilCellPaths,
+    NilCellPaths,
+    NilCellPaths,
+
+    NilCellPaths,
+    NilCellPaths,
+    NilCellPaths,
+    NilCellPaths,
+    NilCellPaths,
+    NilCellPaths,
+    NilCellPaths,
+    NilCellPaths
   },
 
   cellNames :=ARRAY Gate OF ARRAY Tran OF TEXT {
     XorCellNames,
+    XorCellNames,
     BufCellNames,
     AoiCellNames,
-    OaiCellNames
+    OaiCellNames,
+    NilCellNames,
+    NilCellNames,
+    NilCellNames,
+    NilCellNames,
+
+    NilCellNames,
+    NilCellNames,
+    NilCellNames,
+    NilCellNames,
+    NilCellNames,
+    NilCellNames,
+    NilCellNames,
+    NilCellNames
   },
 
   plugText := ""
@@ -51,6 +79,25 @@ CONST
 
   AmlExtracted = "/nfs/site/disks/zsc3_fon_fe_0001/mnystroe/g1i_aml/g1i_extracted.hspice";
   
+  NilCellPaths = ARRAY Tran OF TEXT {
+  NIL,
+  NIL,
+  NIL,
+  NIL,
+  NIL,
+  NIL,
+  NIL
+  };
+  NilCellNames = ARRAY Tran OF TEXT {
+  NIL,
+  NIL,
+  NIL,
+  NIL,
+  NIL,
+  NIL,
+  NIL
+  };
+
   BufCellPaths = ARRAY Tran OF TEXT {
     NIL, 
     AmlExtracted,

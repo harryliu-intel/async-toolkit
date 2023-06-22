@@ -37,6 +37,7 @@ PROCEDURE CompressArray(rn            : TEXT;
 
                         doDump := FALSE;
                         (* dump darr and rarr *)
+                        quick  := FALSE;
                         )
   
   RAISES { Matrix.Singular };

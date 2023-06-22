@@ -16,7 +16,6 @@ MODULE Main;
 *)
 
 IMPORT ParseParams;
-IMPORT Text;
 IMPORT Debug;
 IMPORT Stdio;
 FROM Fmt IMPORT F, Int; IMPORT Fmt;
@@ -35,12 +34,11 @@ IMPORT TechSimulate;
 IMPORT TechProgress;
 IMPORT TechMeasure;
 
+FROM TechLookup IMPORT Lookup;
 FROM TechConfig IMPORT Tech, Tran, Mode, Phaz, Simu, Corn, Gate;
-
-FROM TechConfig IMPORT TranNames, ModeNames, PhazNames, SimuNames, CornNames, GateNames, TechNames;
-
+FROM TechConfig IMPORT TranNames, ModeNames, PhazNames, SimuNames, CornNames,
+                       GateNames, TechNames;
 FROM TechConfig IMPORT SupportedFanouts;
-
 FROM TechTechs IMPORT Techs;
 
 IMPORT TechConfig;
@@ -50,8 +48,7 @@ TYPE Config = TechConfig.T;
 CONST ParasiticDeadlineMultiplier = 2.0d0;
 
 
-CONST TE = Text.Equal;
-      LR = Fmt.LongReal;
+CONST LR = Fmt.LongReal;
 
 (* to add a new Tech to the system:
 
@@ -107,22 +104,6 @@ CONST
                                     DoMeasurePhaz
   };
   
-PROCEDURE Lookup(str : TEXT; READONLY a : ARRAY OF TEXT) : CARDINAL =
-  BEGIN
-    FOR i := FIRST(a) TO LAST(a) DO
-      IF TE(str, a[i]) THEN RETURN i END
-    END;
-    VAR
-      str := F("could not find %s among alternatives :");
-    BEGIN
-      FOR i := FIRST(a) TO LAST(a) DO
-        str := str & F( " \"%s\"" , a[i])
-      END;
-      Debug.Error(str)
-    END;
-    <*ASSERT FALSE*>
-  END Lookup;
-
 CONST CornDelay = ARRAY Corn OF LONGREAL { 1.0d0, 3.0d0, 0.8d0, 2.0d0, 2.0d0 };
 
 PROCEDURE DoCommonSetup(VAR c : Config) =
@@ -157,8 +138,6 @@ PROCEDURE DoCommonSetup(VAR c : Config) =
   END DoCommonSetup;
 
 CONST ParaNanoFactor = ARRAY BOOLEAN OF LONGREAL { 1.0d0, 2.0d0 };
-      
-
 
 PROCEDURE DoConvertPhaz(READONLY c : Config) =
   BEGIN
@@ -167,7 +146,14 @@ PROCEDURE DoConvertPhaz(READONLY c : Config) =
 
 PROCEDURE DoClean(READONLY c : Config) =
   BEGIN
-    TRY FS.DeleteFile(F("%s.fsdb", c.simRoot)) EXCEPT ELSE END;
+    TRY
+      WITH fsdbPath = TechConvert.FindFsdbInDir(c.workDir) DO
+        IF fsdbPath # NIL THEN
+          FS.DeleteFile(fsdbPath) 
+        END
+      END
+    EXCEPT ELSE END;
+    
     TRY
       CONST
         CtWorkDir = "ct.work";
@@ -272,7 +258,7 @@ BEGIN
     END;
 
     IF pp.keywordPresent("-T") THEN
-      c.templatePath := pp.getNext()
+      c.templateDir := pp.getNext()
     END;
 
     IF pp.keywordPresent("-deadline") THEN

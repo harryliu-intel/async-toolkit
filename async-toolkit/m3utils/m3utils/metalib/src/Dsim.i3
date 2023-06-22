@@ -57,10 +57,12 @@ PROCEDURE Flatten(define          : Define;
      really we shouldn't do either but just traverse the data structure
      on demand (would require a pointer from type up to parent type)  
 
-     Flatten IS NO LONGER USED.  We now search only the part of the
-     data structure we're interested in.
+     Flatten IS NO LONGER USED by the Alta Scheme code.  We now search 
+     only the part of the data structure we're interested in.
   *)
 
 PROCEDURE FormatRule(rule : Rule) : TEXT;
 
+PROCEDURE FormatDefine(d : Define) : TEXT;
+  
 END Dsim.

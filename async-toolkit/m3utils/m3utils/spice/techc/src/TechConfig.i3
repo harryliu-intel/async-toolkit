@@ -45,7 +45,28 @@ TYPE
   Corn = { TT, SS, FF, SF, FS };
   (* short names for the five supported simulation corners *)
 
-  Gate = { Xor, Buf, Aoi, Oai };
+  Gate = { Xor,    (* regular XOR2 *)
+           XorAlt, (* alternative XOR2 *)
+           Buf,    (* buffer *)
+           Aoi,    (* AOI gate *)
+           Oai,     (* don't use this -- alternates with Aoi *)
+
+           Xor_Z1_0p0sigma,  (* special variation sim w/o variation *)
+           Xor_Z1_5p3sigma,  (* special variation sim w/ 5.3 sigma variation *)
+           Xor_Z2_0p0sigma,  (* special variation sim w/o variation *)
+           Xor_Z2_5p3sigma,  (* special variation sim w/ 5.3 sigma variation *)
+
+           Aoi_Z1_0p0sigma,  (* special variation sim w/o variation *)
+           Aoi_Z1_5p3sigma,  (* special variation sim w/ 5.3 sigma variation *)
+           Aoi_Z2_0p0sigma,  (* special variation sim w/o variation *)
+           Aoi_Z2_5p3sigma,  (* special variation sim w/ 5.3 sigma variation *)
+
+           Oai_Z1_0p0sigma,  (* special variation sim w/o variation *)
+           Oai_Z1_5p3sigma,  (* special variation sim w/ 5.3 sigma variation *)
+           Oai_Z2_0p0sigma,  (* special variation sim w/o variation *)
+           Oai_Z2_5p3sigma   (* special variation sim w/ 5.3 sigma variation *)
+  
+  };
   
 CONST
   (* the following are string names, to be used from command line, etc. *)
@@ -61,10 +82,50 @@ CONST
 
   CornNames = ARRAY Corn OF TEXT { "tt", "ss", "ff", "sf", "fs" };
 
-  GateNames = ARRAY Gate OF TEXT { "xor", "buf", "aoi", "oai" };
+  GateNames = ARRAY Gate OF TEXT { "xor", "xoralt", "buf", "aoi", "oai",
+                                   "xor_z1_0p0sigma", "xor_z1_5p3sigma",
+                                   "xor_z2_0p0sigma", "xor_z2_5p3sigma",
+                                   "aoi_z1_0p0sigma", "aoi_z1_5p3sigma",
+                                   "aoi_z2_0p0sigma", "aoi_z2_5p3sigma",
+                                   "oai_z1_0p0sigma", "oai_z1_5p3sigma",
+                                   "oai_z2_0p0sigma", "oai_z2_5p3sigma"
+                                   };
   (* should not ask for an oai, should only ask for aoi *)
 
-  TechNames = ARRAY Tech OF TEXT { "n5", "1276p4", "1276p4_g1m", "1276p4_aml1", "1276p4_aml2", "n3", "n3e", "1278p3" };
+  TechNames = ARRAY Tech OF TEXT { "n5",
+                                   "1276p4",
+                                   "1276p4_g1m",
+                                   "1276p4_aml1",
+                                   "1276p4_aml2",
+                                   "n3",
+                                   "n3e",
+                                   "1278p3" };
+
+  TemplateNames = ARRAY Gate OF Pathname.T {
+
+  (* basic tech comparisons *)
+  "ckt.sp",
+  "ckt.sp",
+  "ckt.sp",
+  "ckt.sp",
+  "ckt.sp",
+  
+  (* tech comparisons under variation with XOR *)
+  "ckt_varxor.sp",
+  "ckt_varxor.sp",
+  "ckt_varxor.sp",
+  "ckt_varxor.sp",
+
+  (* tech comparisons under variation with AOI/OAI *)
+  "ckt_varaoi.sp",
+  "ckt_varaoi.sp",
+  "ckt_varaoi.sp",
+  "ckt_varaoi.sp",
+  "ckt_varaoi.sp",
+  "ckt_varaoi.sp",
+  "ckt_varaoi.sp",
+  "ckt_varaoi.sp"
+  };
 
   TechCorp  = ARRAY Tech OF Corp { Corp.Tsmc,
                                    Corp.Intc,
@@ -76,7 +137,18 @@ CONST
                                    Corp.Intc };
 
   Gate1 = ARRAY Gate OF Gate
-            { Gate.Xor, Gate.Buf, Gate.Oai, Gate.Aoi };
+  { Gate.Xor, Gate.XorAlt, Gate.Buf, Gate.Oai, Gate.Aoi,
+
+    Gate.Xor_Z1_0p0sigma, Gate.Xor_Z1_5p3sigma,
+    Gate.Xor_Z2_0p0sigma, Gate.Xor_Z2_5p3sigma,
+
+    Gate.Oai_Z1_0p0sigma, Gate.Oai_Z1_5p3sigma,
+    Gate.Oai_Z2_0p0sigma, Gate.Oai_Z2_5p3sigma,
+
+    Gate.Aoi_Z1_0p0sigma, Gate.Aoi_Z1_5p3sigma,
+    Gate.Aoi_Z2_0p0sigma, Gate.Aoi_Z2_5p3sigma
+
+    };
   (* second gate type for each first gate --
      note that oai is really not supported as a first gate *)
 
@@ -96,15 +168,19 @@ TYPE
     corn   : Corn;
     gate   : Gate;
     fanout : CARDINAL := 1;
+
     volt := 0.0d0;
     temp := 0.0d0;
-    nanoseconds : LONGREAL; (* length of sim in ns *)
-    timestep : LONGREAL; (* in seconds *)
     
-    workDir : Pathname.T;
-    createWorkDir : BOOLEAN;
-    templatePath : Pathname.T;
+    nanoseconds     : LONGREAL; (* length of sim in ns *)
+    timestep        : LONGREAL; (* in seconds *)
+    
+    workDir         : Pathname.T;
+    createWorkDir   : BOOLEAN;
+    templateDir     : Pathname.T;
+    
     phazz := SET OF Phaz { Phaz.Setup };
+    
     hspiceModelRoot : Pathname.T;
     hspiceModel     : Pathname.T;
 
@@ -114,7 +190,7 @@ TYPE
 
     pdmiLib         : Pathname.T;
     simRoot := DefSimRoot;
-    xaPath : Pathname.T := "/p/hdk/cad/xa/S-2021.09-SP2//bin/";
+    xaPath : Pathname.T := "/p/hdk/cad/xa/U-2023.03-1-T/bin/";
 
     para : BOOLEAN; (* parasitic simulation yes/no *)
   END;

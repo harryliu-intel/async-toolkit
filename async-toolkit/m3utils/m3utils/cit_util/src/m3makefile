@@ -392,6 +392,8 @@ Module ("ExceptionInfo")
 
 Table ("TextCard", "Text", "Cardinal")
 
+Table ("LRVectorLR", "LRVector", "LongrealType")
+
 Library("cit_util")
 
 

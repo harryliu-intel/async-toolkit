@@ -31,16 +31,44 @@ CONST
 
   cellPaths :=ARRAY Gate OF ARRAY Tran OF TEXT {
     XorCellPaths,
+    XorCellPaths,
     BufCellPaths,
     AoiCellPaths,
-    OaiCellPaths
+    OaiCellPaths,
+    NilCellPaths,
+    NilCellPaths,
+    NilCellPaths,
+    NilCellPaths,
+
+    NilCellPaths,
+    NilCellPaths,
+    NilCellPaths,
+    NilCellPaths,
+    NilCellPaths,
+    NilCellPaths,
+    NilCellPaths,
+    NilCellPaths
   },
 
   cellNames :=ARRAY Gate OF ARRAY Tran OF TEXT {
     XorCellNames,
+    XorCellNames,
     BufCellNames,
     AoiCellNames,
-    OaiCellNames
+    OaiCellNames,
+    NilCellNames,
+    NilCellNames,
+    NilCellNames,
+    NilCellNames,
+
+    NilCellNames,
+    NilCellNames,
+    NilCellNames,
+    NilCellNames,
+    NilCellNames,
+    NilCellNames,
+    NilCellNames,
+    NilCellNames
   },
 
   plugText := ""
@@ -60,6 +88,16 @@ CONST
   SvtSpfDir  = StdCellRoot & "base_svt/spf/lib764_g1i_210h_50pp_base_svt_tttt_105c_tttt_ctyp/";
 
   
+  NilCellPaths = ARRAY Tran OF TEXT {
+  NIL,
+  NIL,
+  NIL,
+  NIL,
+  NIL,
+  NIL,
+  NIL
+  };
+
   BufCellPaths = ARRAY Tran OF TEXT {
     NIL, 
     UlvtSpfDir & "g1ibfn000aa1n02x5.spf",
@@ -70,6 +108,16 @@ CONST
     NIL
   };
 
+  NilCellNames = ARRAY Tran OF TEXT {
+  NIL,
+  NIL,
+  NIL,
+  NIL,
+  NIL,
+  NIL,
+  NIL
+  };
+  
   BufCellNames = ARRAY Tran OF TEXT {
     NIL,
     "g1ibfn000aa1n02x5",

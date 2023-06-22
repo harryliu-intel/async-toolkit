@@ -354,7 +354,8 @@ PROCEDURE AddStream(wr : Wr.T) =
 
 PROCEDURE AddWarnStream(wr : Wr.T) = 
   BEGIN 
-    LOCK mu DO 
+    LOCK mu DO
+      <*ASSERT wr # NIL*>
       warnStreams := DebugStreamList.Cons(DebugStream.T { wr          := wr,
                                                           flushAlways := TRUE},
                                           warnStreams) 

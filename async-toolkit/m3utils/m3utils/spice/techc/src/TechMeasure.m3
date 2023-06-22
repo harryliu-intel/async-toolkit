@@ -11,8 +11,10 @@ IMPORT FileWr;
 IMPORT LongRealSeq;
 IMPORT Thread;
 IMPORT TechConfig;
+IMPORT TransitionFinder;
 
-FROM TechConfig IMPORT TranNames, ModeNames, SimuNames, CornNames, GateNames, TechNames;
+FROM TechConfig IMPORT TranNames, ModeNames, SimuNames, CornNames,
+                       GateNames, TechNames, Gate;
 
 <*FATAL Thread.Alerted*>
 
@@ -75,13 +77,14 @@ PROCEDURE DoMeasure(READONLY c : TechConfig.T;
                 LR(timeData[1] - timeData[0])));
     
     CONST
-      StartTime = 12.0d-9;
+      StartTime      = 12.0d-9;
+      EarlyStartTime =  1.0d-9;
       StartTran = 1;
     VAR
       xIdx := GetIdx(trace, "x[0]");
       iIdx := GetIdx(trace, "vissx");
       yIdx := GetIdx(trace, "vissy");
-      cycle, meancurrent, leakcurrent : LONGREAL;
+      cycle, meancurrent, leakcurrent, latency : LONGREAL;
     BEGIN
       TRY
         trace.getNodeData(xIdx, nodeData^);
@@ -91,8 +94,13 @@ PROCEDURE DoMeasure(READONLY c : TechConfig.T;
       
       cycle := CycleTime(timeData^, nodeData^,
                          c.volt / 2.0d0, StartTime, StartTran, StartTran + 1);
+
+      latency := HighTime(timeData^, nodeData^,
+                          c.volt / 2.0d0, c.volt / 10.0d0,
+                          EarlyStartTime, 0);
       
-      Debug.Out("Measured cycle time " & LR(cycle));
+      Debug.Out("Measured cycle   time " & LR(cycle));
+      Debug.Out("Measured latency time " & LR(latency));
 
       TRY
         trace.getNodeData(iIdx, nodeData^);
@@ -119,7 +127,24 @@ PROCEDURE DoMeasure(READONLY c : TechConfig.T;
       TRY
         VAR
           wr := FileWr.Open(outName);
+          timeResult : LONGREAL;
         BEGIN
+          CASE c.gate OF
+            Gate.Xor_Z1_0p0sigma,  
+            Gate.Xor_Z1_5p3sigma,
+            Gate.Xor_Z2_0p0sigma,  
+            Gate.Xor_Z2_5p3sigma,
+
+            Gate.Aoi_Z1_0p0sigma,  
+            Gate.Aoi_Z1_5p3sigma,
+            Gate.Aoi_Z2_0p0sigma,  
+            Gate.Aoi_Z2_5p3sigma
+            =>
+            timeResult := latency
+          ELSE
+            timeResult := cycle
+          END;
+            
           Wr.PutText(wr,
                      FN("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
                         ARRAY OF TEXT {
@@ -132,16 +157,17 @@ PROCEDURE DoMeasure(READONLY c : TechConfig.T;
                            Int(c.fanout),
                            LR(c.volt),
                            LR(c.temp),
-                           LR(cycle),
+                           LR(timeResult),
                            LR(meancurrent),
                            LR(leakcurrent),
                            workDir
                            }));
-          Wr.Close(wr)
+          Wr.Close(wr);
+          RETURN timeResult < 1.0d10  (* measure time is less than 
+                                         10^10 seconds,
+                                         i.e., it exists *)
         END;
 
-        RETURN cycle < 1.0d10; (* cycle time is less than 10^10 seconds,
-                                  i.e., it exists *)
         
       EXCEPT
         OSError.E(x) =>
@@ -155,6 +181,36 @@ PROCEDURE DoMeasure(READONLY c : TechConfig.T;
       <*ASSERT FALSE*>
     END
   END DoMeasure;
+
+PROCEDURE HighTime(READONLY timea, nodea : ARRAY OF LONGREAL;
+                   cross                 : LONGREAL;
+                   hyst                  : LONGREAL;
+                   startTime             : LONGREAL;
+                   startTran             : CARDINAL) : LONGREAL =
+  VAR
+    tseq := TransitionFinder.Find(timea, nodea, cross, hyst);
+    idx := 0;
+    res := LAST(LONGREAL);
+  BEGIN
+    FOR i := 0 TO tseq.size() - 1 DO
+      WITH tran = tseq.get(i) DO
+        IF tran.at >= startTime THEN
+          IF tran.dir = 1 THEN
+            IF idx # startTran THEN
+              INC(idx)
+            ELSE
+              (* this is the transition we care about *)
+              IF i + 1 < tseq.size() THEN
+                res := tseq.get(i + 1).at - tran.at
+              END;
+              EXIT
+            END
+          END
+        END
+      END
+    END;
+    RETURN res
+  END HighTime;
 
 PROCEDURE CycleTime(READONLY timea, nodea : ARRAY OF LONGREAL;
                     cross                 : LONGREAL;

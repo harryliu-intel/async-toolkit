@@ -113,6 +113,7 @@ VAR
   doDump        : BOOLEAN;
   fd            : FilterData;
   noArith       : BOOLEAN;
+  quick         : BOOLEAN;
   
 BEGIN
 
@@ -154,6 +155,8 @@ BEGIN
       fd.interpolate := pp.getNextLongReal();
       fd.unit        := pp.getNextLongReal()
     END;
+
+    quick := pp.keywordPresent("-quick");
 
     pp.finish()
   EXCEPT
@@ -274,7 +277,8 @@ BEGIN
                                       textWr,
                                       norm,
                                       mem    := NEW(TripleRefTbl.Default).init(),
-                                      doDump := doDump)
+                                      doDump := doDump,
+                                      quick  := quick)
         EXCEPT
           Matrix.Singular =>
           Debug.Error("Internal error attempting waveform compression : Matrix.Singular")
@@ -334,7 +338,8 @@ BEGIN
                               doDump,
                               relPrec,
                               doAllDumps,
-                              code)
+                              code,
+                              quick)
         END;
         Wr.Close(wr)
       EXCEPT 

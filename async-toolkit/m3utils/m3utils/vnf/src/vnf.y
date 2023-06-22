@@ -42,6 +42,7 @@ decl:
   wire              WIRE opt_arrayspec IDENT
   input             INPUT opt_arrayspec IDENT
   output            OUTPUT opt_arrayspec IDENT
+  assign            ASSIGN IDENT '=' IDENT
 
 opt_arrayspec:
   empty

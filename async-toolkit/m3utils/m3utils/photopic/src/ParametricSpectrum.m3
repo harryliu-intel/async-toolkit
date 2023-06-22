@@ -4,6 +4,7 @@ IMPORT LRVector;
 IMPORT Math;
 IMPORT SchemePair;
 IMPORT SchemeLongReal;
+IMPORT Blackbody;
 
 REVEAL
   T = BRANDED OBJECT
@@ -68,8 +69,15 @@ PROCEDURE GetFunc(t : T; p : LRVector.T) : LRFunction.T =
 
 PROCEDURE EvalFunction(f : Function; l : LONGREAL) : LONGREAL =
   VAR
-    lo := FLOOR((l - f.t.l0) / f.t.step);
+    lo : INTEGER;
   BEGIN
+    <*ASSERT f # NIL*>
+    <*ASSERT f.t # NIL*>
+    <*ASSERT f.p # NIL*>
+    <*ASSERT f.t.baseSpectrum # NIL*>
+
+    lo := FLOOR((l - f.t.l0) / f.t.step);
+    
     IF    lo <  0 THEN
       (* single-sided, step 0 *)
       RETURN Math.exp(f.p[0]) * f.t.baseSpectrum.eval(l)
@@ -152,5 +160,36 @@ PROCEDURE Subdivide(a : LRVector.T) : LRVector.T =
     END;
     RETURN res
   END Subdivide;
+
+  
+
+TYPE
+  TruncBlackbody = LRFunction.T OBJECT
+    temp, lambda0, lambda1 : LONGREAL;
+  OVERRIDES
+    eval := EvalTB;
+  END;
+
+PROCEDURE EvalTB(tb : TruncBlackbody; lambda : LONGREAL) : LONGREAL =
+  CONST
+    c = 299792458.0d0;
+  BEGIN
+    WITH nu = c / lambda DO
+      IF    lambda < tb.lambda0 THEN
+        RETURN 0.0d0
+      ELSIF lambda > tb.lambda1 THEN
+        RETURN 0.0d0
+      ELSE                           
+        RETURN Blackbody.PlanckRadiance(tb.temp, nu) / c / nu / nu
+      END
+    END
+  END EvalTB;
+        
+PROCEDURE MakeBlackbodyInWavelength(temp, lambda0, lambda1 : LONGREAL) : LRFunction.T =
+  BEGIN
+    RETURN NEW(TruncBlackbody,
+               temp := temp, lambda0 := lambda0, lambda1 := lambda1)
+  END MakeBlackbodyInWavelength;
+  
 
 BEGIN END ParametricSpectrum.

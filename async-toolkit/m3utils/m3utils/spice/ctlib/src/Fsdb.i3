@@ -8,6 +8,13 @@ IMPORT Rd;
 
 FROM Tr0 IMPORT ShortRead, SyntaxError;
 
+TYPE
+  Compress = RECORD (* compression control *)
+    path  : Pathname.T; (* path to spicestream : if NIL, no compression *)
+    prec  : LONGREAL;
+    quick : BOOLEAN;
+  END;
+
 PROCEDURE Parse(wd            : Pathname.T;
                 (* work directory, e.g., ct.work *)
                 
@@ -35,8 +42,7 @@ PROCEDURE Parse(wd            : Pathname.T;
                 translate, noX: BOOLEAN;
                 scopesep      : TEXT;
                 cmdPath       : Pathname.T;
-                compressPath  : Pathname.T;
-                compressPrec  : LONGREAL;
+                READONLY compress : Compress;
                 threads       : CARDINAL;
                 interpolate   : LONGREAL;
                 maxTime       : LONGREAL)

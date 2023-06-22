@@ -18,6 +18,7 @@ REVEAL
     minT := MinT;
     maxT := MaxT;
     eval := Eval;
+    integrate := Integrate;
   END;
 
 PROCEDURE Init(t : T; tr : Trace.T; idx : Trace.NodeId; scratch : REF Array) : T
@@ -48,9 +49,8 @@ PROCEDURE  MaxT(t : T) : LONGREAL =
   BEGIN
     RETURN t.time[LAST(t.time^)]
   END MaxT;
-  
-PROCEDURE  Eval(t : T; time : LONGREAL) : LONGREAL
-  RAISES { OutOfBounds } =
+
+PROCEDURE FindLb(READONLY time : ARRAY OF LONGREAL; t : LONGREAL) : CARDINAL =
 
   (*
   def binarySearch(A, X):
@@ -70,6 +70,30 @@ PROCEDURE  Eval(t : T; time : LONGREAL) : LONGREAL
      i \in [ lo, hi )
   *)
 
+  VAR
+    lo := 0;
+    hi := LAST(time);
+  BEGIN
+    WHILE lo < hi DO
+      WITH i  = lo + (hi - lo) DIV 2,
+           ai = time[i]             DO
+        IF    t = ai THEN
+          RETURN i
+        ELSIF t > ai THEN
+          lo := i + 1
+        ELSE
+          hi := i
+        END
+      END
+    END;
+    <*ASSERT lo = hi*>
+    Check(lo - 1, time, t);
+    RETURN lo - 1
+  END FindLb;
+  
+PROCEDURE Check(i : [-1.. LAST(CARDINAL)];
+                READONLY time : ARRAY OF LONGREAL;
+                t : LONGREAL) =
   VAR error := "";
 
   PROCEDURE Eput(msg : TEXT) =
@@ -77,52 +101,37 @@ PROCEDURE  Eval(t : T; time : LONGREAL) : LONGREAL
       error := error & msg & "\n"
     END Eput;
 
-  PROCEDURE Check(i : [-1.. LAST(CARDINAL)]) =
-    BEGIN
-      IF NOT ( t.time[i] <= time AND
-        (i = NUMBER(t.time^) - 1 OR t.time[i + 1]> time)) THEN
-        Eput("FindFloorIdx assertion failed :");
-        Eput(F("seq.size=%s i=%s time=%s seq[i].at=%s",
-               Int(NUMBER(t.time^)), Int(i), LR(time), LR(t.time[i]))
-        );
-        IF i # LAST(t.time^) THEN
-          Eput(F("t.time[i + 1]=%s", LR(t.time[i + 1])))
-        END;
-        Debug.Error(error)
-      END
-    END Check;
-
-  PROCEDURE FindLb() : CARDINAL =
-    VAR
-      lo := 0;
-      hi := LAST(t.data^);
-    BEGIN
-      WHILE lo < hi DO
-        WITH i  = lo + (hi - lo) DIV 2,
-             ai = t.time[i]             DO
-          IF time = ai THEN
-            RETURN i
-          ELSIF time > ai THEN
-            lo := i + 1
-          ELSE
-            hi := i
-          END
-        END
-      END;
-      <*ASSERT lo = hi*>
-      Check(lo - 1);
-      RETURN lo - 1
-    END FindLb;
-
   BEGIN
-    IF time < t.time[0] OR time >  t.time[LAST(t.time^)] THEN
+    IF NOT ( time[i] <= t AND
+      (i = NUMBER(time) - 1 OR time[i + 1] > t)) THEN
+      Eput("FindFloorIdx assertion failed :");
+      Eput(F("seq.size=%s i=%s time=%s seq[i].at=%s",
+             Int(NUMBER(time)), Int(i), LR(t), LR(time[i]))
+      );
+      IF i # LAST(time) THEN
+        Eput(F("time[i + 1]=%s", LR(time[i + 1])))
+      END;
+      Debug.Error(error)
+    END
+  END Check;
+
+PROCEDURE BoundsCheck(READONLY time : ARRAY OF LONGREAL; t : LONGREAL)
+  RAISES { OutOfBounds } =
+  BEGIN
+    IF t < time[0] OR t > time[LAST(time)] THEN
       RAISE OutOfBounds
     END;
-
+  END BoundsCheck;
+  
+PROCEDURE  Eval(t : T; time : LONGREAL) : LONGREAL
+  RAISES { OutOfBounds } =
+  BEGIN
+    BoundsCheck(t.time^, time);
+    
     IF time = t.time[LAST(t.time^)] THEN
       RETURN t.data[LAST(t.time^)]
     ELSE
-      WITH lb = FindLb(),
+      WITH lb = FindLb(t.time^, time),
 
            lt = t.time[lb],
            ut = t.time[lb + 1],
@@ -157,5 +166,44 @@ PROCEDURE  Eval(t : T; time : LONGREAL) : LONGREAL
       END
     END
   END Eval;
+
+PROCEDURE Integrate(t : T; a, b : LONGREAL) : LONGREAL
+  RAISES { OutOfBounds } =
+  VAR
+    ay  := Eval(t, a);
+    alb := FindLb(t.time^, a);
+    by  := Eval(t, b);
+    blb := FindLb(t.time^, b);
+  BEGIN
+    IF    b < a THEN
+      RETURN 0.0d0
+    ELSIF alb = blb THEN
+      RETURN 0.5d0 * (ay + by) * (b - a)
+    ELSE
+      VAR
+        sum := 0.0d0;
+
+      PROCEDURE Seg(x0, y0, x1, y1 : LONGREAL) =
+        BEGIN
+          sum := sum + 0.5d0 * (y0 + y1) * (x1 - x0)
+        END Seg;
+        
+      BEGIN
+        (* first interval *)
+        Seg(a, ay, t.time[alb + 1], t.data[alb + 1]);
+
+        FOR i := alb + 1 TO blb - 1 DO
+          (* i runs over the low index of each interval that's not the
+             last nor the first *)
+          Seg(t.time[i], t.data[i], t.time[i + 1], t.data[i + 1])
+        END;
+
+        (* last interval *)
+        Seg(t.time[blb], t.data[blb], b, by);
+
+        RETURN sum
+      END
+    END
+  END Integrate;
 
 BEGIN END TraceInterpolator.

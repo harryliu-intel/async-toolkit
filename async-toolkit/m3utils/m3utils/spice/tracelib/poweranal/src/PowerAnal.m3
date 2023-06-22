@@ -8,7 +8,7 @@ IMPORT Pathname;
 IMPORT RegEx;
 IMPORT Text;
 FROM Fmt IMPORT F, Int, LongReal, Style;
-IMPORT RefSeq;
+IMPORT MeasurementSeq;
 IMPORT TraceInterpolator;
 IMPORT OSError;
 IMPORT Rd;
@@ -19,54 +19,54 @@ IMPORT FileRd;
 IMPORT Wr;
 IMPORT SpiceCircuit;
 IMPORT SpiceObject;
-IMPORT TextTextTbl;
-IMPORT NameControl;
 IMPORT SortedTextLongRealTbl AS TextLRTbl;
 IMPORT SortedTextSortedTextLRTbl AS TextTextLRTbl;
-FROM CitTextUtils IMPORT RemovePrefix, RemoveSuffix;
+FROM CitTextUtils IMPORT RemovePrefix, RemoveSuffix, HavePrefix;
 IMPORT FileWr;
 IMPORT SortedTextRefTbl AS TextRefTbl;
 IMPORT Thread;
 IMPORT SortedTextTextSeqTbl AS TextTextSeqTbl;
 IMPORT TextSeq;
+IMPORT Gds2Cast;
+IMPORT Measurement;
+IMPORT TextHierTbl;
+IMPORT HierData;
 
 <*FATAL Thread.Alerted*>
 
 CONST Usage   = "";
-      Verbose = FALSE;
       LR      = LongReal;
       TE      = Text.Equal;
-      
-TYPE
-  Measurement = OBJECT
-    nm, pfx, sfx : TEXT;
-    E            : LONGREAL;
-  END;
 
-PROCEDURE Strip(nm : TEXT) : TEXT =
-  BEGIN
-    RETURN RemoveSuffix(RemovePrefix(nm, ".eallc("), ")")
-  END Strip;
-      
-PROCEDURE DoReports(tr : Trace.T) =
+VAR Verbose := Debug.DebugThis("PowerAnal");
+
+TYPE
+  Stripper = PROCEDURE(a : TEXT) : TEXT;
+  
+PROCEDURE DoDeviceReports(tr : Trace.T) =
   <*FATAL RegEx.Error*>
+  CONST
+    measureName = "eallc";
   VAR
     allNames := tr.allNames();
     iter     := allNames.iterate();
 
-    regex    := RegEx.Compile("\\.eallc([^()]*)$");
+    regex    := RegEx.Compile("\\." & measureName & "([^()]*)$");
     (* the coding of the regex strips the point from the matched names *)
 
     n        : TEXT;
 
-    matches  := NEW(RefSeq.T).init();
+    matches  := NEW(MeasurementSeq.T).init();
     idx      : Trace.NodeId;
     scratch  := NEW(REF REF ARRAY OF LONGREAL);
 
     totE := 0.0d0;
 
-    typeNm : TEXT;
-    
+  PROCEDURE Strip(nm : TEXT) : TEXT =
+    BEGIN
+      RETURN RemoveSuffix(RemovePrefix(nm, "." & measureName & "("), ")")
+    END Strip;
+      
   BEGIN
     WHILE iter.next(n) DO
       WITH start = RegEx.Execute(regex, n) DO
@@ -77,9 +77,9 @@ PROCEDURE DoReports(tr : Trace.T) =
               Debug.Out(F("Found match %s , %s", prefix, suffix))
             END;
 
-            matches.addhi(NEW(Measurement,
+            matches.addhi(NEW(Measurement.T,
                               nm := n, pfx := prefix, sfx := suffix));
-            IF matches.size() = maxDevs THEN EXIT END;
+            IF matches.size() = maxmeas THEN EXIT END;
           END
         END
       END
@@ -88,7 +88,7 @@ PROCEDURE DoReports(tr : Trace.T) =
     Debug.Out(F("%s matches", Int(matches.size())));
 
     FOR i := 0 TO matches.size() - 1 DO
-      WITH m     = NARROW(matches.get(i), Measurement),
+      WITH m     = matches.get(i),
            found = tr.getNodeIdx(m.nm, idx),
            int   = NEW(TraceInterpolator.T).init(tr, idx, scratch),
            loE   = int.eval(frTime),
@@ -105,40 +105,120 @@ PROCEDURE DoReports(tr : Trace.T) =
 
     Debug.Out(F("Timeseries analysis complete, total energy %s", LR(totE)));
 
+    CategorizeMeasurements(matches);
+
+    DumpReports(Strip)
+
+  END DoDeviceReports;
+
+PROCEDURE DumpReports(stripper : Stripper) =
+  BEGIN
+    
+    (* the path report totalizes, so we need to do it first, before the 
+       types report *)
+    WITH wr = FileWr.Open(traceRoot & "_paths.prpt") DO
+      DoPathReport(wr);
+      Wr.Close(wr)
+    END;
+
+    WITH wr = FileWr.Open(traceRoot & "_types0.prpt") DO
+      DoTypeReportOld(wr, stripper);
+      Wr.Close(wr)
+    END      ;
+    WITH wr = FileWr.Open(traceRoot & "_types.prpt") DO
+      DoTypeReport(wr);
+      Wr.Close(wr)
+    END      ;
+    
+  END DumpReports;
+
+PROCEDURE CategorizeMeasurements(matches : MeasurementSeq.T) =
+  VAR
+    hd : HierData.T;
+  BEGIN
     FOR i := 0 TO matches.size() - 1 DO
-      WITH m         = NARROW(matches.get(i), Measurement),
-           foundCell = hierCells.get(m.pfx, typeNm)
+      WITH m         = matches.get(i),
+           foundCell = hierCells.get(m.pfx, hd)
        DO
         RecordPathE(m);
         
         IF NOT foundCell THEN
           Debug.Warning("Couldn't find cell named " & m.pfx)
         ELSE
-          RecordCellE(typeNm, m)
+          RecordCellE(hd.typeName, m)
+        END
+      END
+    END;
+  END CategorizeMeasurements;
+
+PROCEDURE DoCellReports(tr : Trace.T) =
+  VAR
+    allNames := tr.allNames();
+    iter     := allNames.iterate();
+
+    regex    := RegEx.Compile("\\.i(vcc)$");
+    (* the coding of the regex strips the point from the matched names *)
+
+    n        : TEXT;
+
+    matches  := NEW(MeasurementSeq.T).init();
+    idx      : Trace.NodeId;
+    scratch  := NEW(REF REF ARRAY OF LONGREAL);
+
+    totE := 0.0d0;
+
+  PROCEDURE Strip(nn : TEXT) : TEXT =
+    BEGIN
+      RETURN RemoveSuffix(nn, ".i(vcc)")
+    END Strip;
+      
+  BEGIN
+    Debug.Out("DoCellReports");
+    
+    WHILE iter.next(n) DO
+      WITH start = RegEx.Execute(regex, n) DO
+        IF start # -1 THEN
+          WITH suffix = Text.Sub(n, start       ),
+               prefix = Text.Sub(n,     0, start) DO
+            IF Verbose THEN
+              Debug.Out(F("Found match %s , %s", prefix, suffix))
+            END;
+
+            matches.addhi(NEW(Measurement.T,
+                              nm := n, pfx := prefix, sfx := suffix));
+            IF matches.size() = maxmeas THEN EXIT END;
+          END
         END
       END
     END;
 
-    (* the path report totalizes, so we need to do it first, before the 
-       types report *)
-    WITH wr = FileWr.Open("paths.prpt") DO
-      DoPathReport(wr);
-      Wr.Close(wr)
+    Debug.Out(F("%s matches", Int(matches.size())));
+
+    FOR i := 0 TO matches.size() - 1 DO
+      WITH m     = matches.get(i),
+           found = tr.getNodeIdx(m.nm, idx),
+           int   = NEW(TraceInterpolator.T).init(tr, idx, scratch),
+           E   = vdd * int.integrate(frTime, toTime) DO
+        <*ASSERT found*>
+        m.E  := E;
+        totE := totE + m.E;
+
+        IF FALSE AND Verbose THEN
+          Debug.Out(F("%s , %s : %s",
+                      m.pfx, m.sfx, LR(m.E)))
+        END
+
+      END
     END;
 
-    WITH wr = FileWr.Open("types0.prpt") DO
-      DoTypeReportOld(wr);
-      Wr.Close(wr)
-    END      ;
-    WITH wr = FileWr.Open("types.prpt") DO
-      DoTypeReport(wr);
-      Wr.Close(wr)
-    END      ;
-    
+    Debug.Out(F("Timeseries analysis complete, total energy %s", LR(totE)));
 
-  END DoReports;
+    CategorizeMeasurements(matches);
 
-PROCEDURE DoTypeReportOld(wr : Wr.T) =
+    DumpReports(Strip)
+  END DoCellReports;
+
+PROCEDURE DoTypeReportOld(wr : Wr.T; stripper : Stripper) =
   VAR
     iter := cellData.iterateOrdered();
     tn : TEXT;
@@ -147,6 +227,7 @@ PROCEDURE DoTypeReportOld(wr : Wr.T) =
     e, te  : LONGREAL;
     
     dt := toTime - frTime;
+
   CONST
     Sci = Style.Sci;
     Fix = Style.Fix;
@@ -163,13 +244,15 @@ PROCEDURE DoTypeReportOld(wr : Wr.T) =
                        LR(te/dt/freq, prec := 4, style := Sci),
                        LR(te, prec := 4, style := Sci)
       ));
-      WITH jter = tab.iterateOrdered() DO
-        WHILE jter.next(mn, e) DO
-          Wr.PutText(wr, F("    DEV  %-49s %13s %13s %-25s\n",
-                           Strip(mn),
-                           LR(e/dt/freq, prec := 4, style := Sci),
-                           LR(e,    prec := 4, style := Sci),
-                           LR(e/te/freq, prec := 3, style := Fix)))
+      IF mode = Mode.Device THEN
+        WITH jter = tab.iterateOrdered() DO
+          WHILE jter.next(mn, e) DO
+            Wr.PutText(wr, F("    DEV  %-49s %13s %13s %-25s\n",
+                             stripper(mn),
+                             LR(e/dt/freq, prec := 4, style := Sci),
+                             LR(e,    prec := 4, style := Sci),
+                             LR(e/te/freq, prec := 3, style := Fix)))
+          END
         END
       END
     END
@@ -182,9 +265,9 @@ PROCEDURE DoTypeReport(wr : Wr.T) =
     seq : TextSeq.T;
     sum : LONGREAL;
     dt := toTime - frTime;
+    hd : HierData.T;
   CONST
     Sci = Style.Sci;
-    Fix = Style.Fix;
   BEGIN
     WHILE iter.next(tn, seq) DO
       Debug.Out(F("Reporting on type %s : %s instances", tn, Int(seq.size())));
@@ -193,8 +276,11 @@ PROCEDURE DoTypeReport(wr : Wr.T) =
       sum := 0.0d0;
       FOR i := 0 TO seq.size() - 1 DO
         WITH fqn = seq.get(i),
-             pn  = MakePaths(fqn, FALSE) DO
-          IF pn # NIL THEN
+             pn  = MakePaths(fqn, FALSE),
+             ok  = hierCells.get(fqn, hd) DO
+          <*ASSERT ok*>
+          
+          IF hd.totalize AND pn # NIL THEN
             sum := sum + pn.e
           END
         END
@@ -218,7 +304,7 @@ PROCEDURE DoPathReport(wr : Wr.T) =
       nm : TEXT;
     BEGIN
       WHILE iter.next(nm, r) DO
-        p.e := p.e + Totalize(r)
+        p.e := p.e + Totalize(r);
       END;
       RETURN p.e
     END Totalize;
@@ -278,7 +364,7 @@ PROCEDURE RecordTypeInstance(type : TEXT; fqn : TEXT) =
   END RecordTypeInstance;
     
 PROCEDURE RecordCellE(typeNm : TEXT;
-                      m      : Measurement) =
+                      m      : Measurement.T) =
   VAR
     e   : LONGREAL := 0.0d0;
     tbl : TextLRTbl.T;
@@ -367,7 +453,7 @@ PROCEDURE MakePaths(nm : TEXT; new := TRUE) : PathNode =
     RETURN q
   END MakePaths;
 
-PROCEDURE RecordPathE(m : Measurement) =
+PROCEDURE RecordPathE(m : Measurement.T) =
   VAR
     p := MakePaths(m.pfx);
   BEGIN
@@ -388,30 +474,45 @@ PROCEDURE MapName(nm : TEXT) : TEXT =
   BEGIN
     WHILE Text.GetChar(nm, i) = 'X' DO INC(i) END;
     IF i # 0 THEN nm := Text.Sub(nm, i) END;
-    RETURN NameControl.Gds2Cast(nm)
+    RETURN Gds2Cast.Gds2Cast(nm)
   END MapName;
-  
-PROCEDURE VisitSpice(ckt  : SpiceCircuit.T;
-                     path : TEXT)
+
+PROCEDURE VisitSpice(ckt               : SpiceCircuit.T;
+                     tn                : TEXT;
+                     path              : TEXT;
+                     Xopt              : TEXT;
+                     totalize          : BOOLEAN;
+  )
   (* path contains path so far, including trailing dot *)
   RAISES { Wr.Failure } =
   VAR
     elems := ckt.elements;
     type : SpiceCircuit.T;
   BEGIN
+    IF topPrefix # NIL AND tn # NIL AND HavePrefix(tn, topPrefix) THEN
+      (* 
+         if the typename matches the topPrefix, we do NOT want to count the
+         energy within the subcells, we ONLY want the energy here in the top
+         cell 
+      *)
+      Debug.Out(F("Setting totalize FALSE in %s of type %s", path, tn));
+      
+      totalize := FALSE
+    END;
+    
     FOR i := 0 TO elems.size() - 1 DO
       
       WITH elem = elems.get(i) DO
         TYPECASE elem OF
           SpiceObject.X (x) =>
           WITH castName = MapName(x.name),
-               fqn      = path & "X" & castName DO
+               fqn      = path & Xopt & castName DO
 
             IF TRUE THEN
               Debug.Out(F("X object nm %s type %s", fqn, x.type))
             END;
-            
-            EVAL hierCells.put(fqn, x.type);
+
+            EVAL hierCells.put(fqn, HierData.T { fqn, x.type, totalize });
 
             RecordTypeInstance(x.type, fqn);
 
@@ -419,7 +520,7 @@ PROCEDURE VisitSpice(ckt  : SpiceCircuit.T;
               <*ASSERT hadIt*>
             END;
 
-            VisitSpice(type, fqn & ".")
+            VisitSpice(type, x.type, fqn & ".", Xopt, totalize)
           END
         ELSE
           (* skip *)
@@ -429,39 +530,59 @@ PROCEDURE VisitSpice(ckt  : SpiceCircuit.T;
           
   END VisitSpice;
 
+TYPE
+  Mode = { Device, Cell };
+
 VAR
-  pp            := NEW(ParseParams.T).init(Stdio.stderr);
-  traceFn        : Pathname.T;
+  pp                             := NEW(ParseParams.T).init(Stdio.stderr);
+  maxmeas                        := LAST(CARDINAL);
+  spiceFn        : Pathname.T    := NIL;
+  spice          : SpiceFormat.T := NIL;
+  rootType       : TEXT          := NIL;
+  dutName                        := "";
+  hierCells                      := NEW(TextHierTbl.Default).init();
+  mode                           := Mode.Device;
+  traceRoot      : Pathname.T;
   frTime, toTime : LONGREAL;
   freq           : LONGREAL;
-  maxDevs        := LAST(CARDINAL);
-  spiceFn        : Pathname.T := NIL;
-  spice          : SpiceFormat.T := NIL;
-  rootType       : TEXT := NIL;
-  dutName               := "";
-  hierCells      := NEW(TextTextTbl.Default).init();
-  
+
+  vdd            : LONGREAL;     (* only used for Mode.Cell *)
+  Xopt                           := "";
+
+  topPrefix      : TEXT          := "";
 BEGIN
   TRY
     IF pp.keywordPresent("-trace") THEN    
-      traceFn := pp.getNext()
+      traceRoot := pp.getNext()
     END;
 
-    IF pp.keywordPresent("-spice") THEN    
+    IF pp.keywordPresent("-spice") THEN
+
       spiceFn := pp.getNext();
 
-      IF pp.keywordPresent("-root") THEN    
-        rootType := pp.getNext()
-      END;
+      rootType := pp.getNext();
+        
+      dutName := pp.getNext();
 
-      IF pp.keywordPresent("-dut") THEN
-        dutName := pp.getNext()
-      END
+      IF pp.keywordPresent("-xopt") THEN
+        Xopt := pp.getNext()
+      END;
       
+      Debug.Out(F("Loading spice deck %s, root type \"%s\", dut name \"%s\"",
+                  spiceFn, rootType, dutName))
     END;
 
-    IF pp.keywordPresent("-maxdevs") THEN
-      maxDevs := pp.getNextInt()
+    IF pp.keywordPresent("-maxmeas") THEN
+      maxmeas := pp.getNextInt()
+    END;
+
+    IF pp.keywordPresent("-topprefix") THEN
+      topPrefix := pp.getNext()
+    END;
+
+    IF pp.keywordPresent("-cell") THEN
+      mode := Mode.Cell;
+      vdd  := pp.getNextLongReal();
     END;
 
     frTime := ppLR("-from");
@@ -475,6 +596,10 @@ BEGIN
     Debug.Error("Can't parse command-line parameters\nUsage: " & Params.Get(0) & " " & Usage)
   END;
 
+  IF traceRoot = NIL THEN
+    Debug.Error("Must specify -trace")
+  END;
+  
   IF spiceFn # NIL THEN
     TRY
       Debug.Out("Parsing spice deck...");
@@ -514,24 +639,28 @@ BEGIN
           Debug.Out(F("X object nm %s type %s", xname, xtype))
         END;
 
-        EVAL hierCells.put(xname, xtype);
+        EVAL hierCells.put(xname, HierData.T { xname, xtype, TRUE });
 
         RecordTypeInstance(xtype, xname);
 
       END;
 
       IF TE(dutName, "") THEN
-        VisitSpice(rootCkt, "")
+        VisitSpice(rootCkt, NIL, "", Xopt, TRUE)
       ELSE
-        VisitSpice(rootCkt, dutName & ".")
+        VisitSpice(rootCkt, NIL, dutName & ".", Xopt, TRUE)
       END
     END
   END;
 
   Debug.Out("Loading trace...");
   VAR
-    trace := NEW(Trace.T).init(traceFn);
+    trace := NEW(Trace.T).init(traceRoot);
   BEGIN
-    DoReports(trace)
+    CASE mode OF
+      Mode.Device  => DoDeviceReports(trace)
+    |
+      Mode.Cell    => DoCellReports(trace)
+    END
   END
 END PowerAnal.

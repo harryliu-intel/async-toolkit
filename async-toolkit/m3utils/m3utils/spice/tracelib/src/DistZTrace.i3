@@ -19,7 +19,9 @@ PROCEDURE WriteOut(wr            : Wr.T;
                    
                    doAllDumps    : BOOLEAN;
 
-                   code          : ArithConstants.Encoding)
+                   code          : ArithConstants.Encoding;
+
+                   quick         := FALSE)
   RAISES { Thread.Alerted, Wr.Failure, Matrix.Singular };
   (* this is the counterpart to FsdbComms.ReadCompressedNodeDataG *)
 

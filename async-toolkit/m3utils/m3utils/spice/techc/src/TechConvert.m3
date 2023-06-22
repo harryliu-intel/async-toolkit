@@ -5,11 +5,13 @@ IMPORT TextWr;
 IMPORT ProcUtils;
 IMPORT Debug;
 IMPORT Watchdog;
-FROM Fmt IMPORT F, LongReal;
+FROM Fmt IMPORT F, LongReal, FN;
 IMPORT Pathname;
 IMPORT Process;
 IMPORT TechConfig;
 FROM TechConfig IMPORT Simu;
+IMPORT FS;
+IMPORT CitTextUtils;
 
 CONST LR = LongReal;
 
@@ -57,6 +59,19 @@ PROCEDURE ConvertV() =
       Thread.Signal(convertC)
     END
   END ConvertV;
+
+PROCEDURE FindFsdbInDir(dir : Pathname.T) : Pathname.T RAISES { OSError.E } =
+  VAR
+    iter := FS.Iterate(dir);
+    bn : Pathname.T;
+  BEGIN
+    WHILE iter.next(bn) DO
+      IF CitTextUtils.HaveSuffix(bn, ".fsdb") THEN
+        RETURN dir & "/" & bn
+      END
+    END;
+    RETURN NIL
+  END FindFsdbInDir;
   
 PROCEDURE DoConvert(READONLY c : TechConfig.T;
                     traceRoot : Pathname.T; exitOnError : BOOLEAN) : BOOLEAN =
@@ -76,8 +91,16 @@ PROCEDURE DoConvert(READONLY c : TechConfig.T;
        the # of timesteps in the file, either as a fixed count or as a 
        minimum # of steps.
     *)
-    cmd := F("/nfs/site/disks/zsc3_fon_fe_0001/mnystroe/m3utils/spice/ct/AMD64_LINUX/ct -fsdb /nfs/site/disks/zsc3_fon_fe_0001/mnystroe/m3utils/spice/fsdb/src/nanosimrd -threads 4 -wthreads 1 -R %s %s.fsdb %s",
-             LR(MAX(c.timestep, 50.0d-12)), c.simRoot, traceRoot);
+    fsdbPath := Debug.UnNil(FindFsdbInDir(c.workDir));
+    
+    cmd := FN("%s -fsdb %s -compress %s -threads 4 -wthreads 1 -format CompressedV1 -R %s %s %s",
+             ARRAY OF TEXT {
+    CtPath,
+    NanosimrdPath,
+    SpicestreamPath,
+    
+    LR(MAX(c.timestep, 50.0d-12)), fsdbPath, traceRoot
+    });
     res : BOOLEAN := FALSE;
   BEGIN 
     (*Wr.Close(wrIn);*)

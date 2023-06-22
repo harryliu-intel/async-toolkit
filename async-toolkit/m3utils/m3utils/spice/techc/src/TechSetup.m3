@@ -1,4 +1,4 @@
-MODULE TechSetup;
+MODULE TechSetup EXPORTS TechSetup, TechTemplate;
 IMPORT TechConfig;
 IMPORT TextTextTbl;
 IMPORT TextSeq;
@@ -15,10 +15,11 @@ IMPORT CitTextUtils;
 IMPORT FileWr;
 
 FROM TechConfig IMPORT Corp, Mode, Gate;
-FROM TechConfig IMPORT TranNames, GateNames, TechNames, TechCorp;
+FROM TechConfig IMPORT TranNames, GateNames, TechNames, TechCorp, TemplateNames;
 
 FROM TechTechs IMPORT Techs;
 FROM TechConfig IMPORT Gate1;
+IMPORT Env;
 IMPORT Thread;
 
 <*FATAL Thread.Alerted*>
@@ -29,6 +30,11 @@ CONST TE = Text.Equal;
 
       Verbose = TRUE;
 
+VAR
+  DoMcFileOnly := Env.Get("SETUP_MC_FILE_ONLY") # NIL;
+  (* set this env. var to generate the .mc0 file to get the names of the
+     varying parameters *)
+  
 CONST    
   StdPlugText = "vcc vssx";
 
@@ -37,18 +43,19 @@ PROCEDURE DoSetup(READONLY c : Config) =
     SimFile := c.simRoot & ".sp";
     map     := NEW(TextTextTbl.Default).init();
     template : TextSeq.T;
+    templatePath := c.templateDir & "/" & TemplateNames[c.gate];
   BEGIN
     MapCommon(c, map);
 
     TRY
-      template := LoadTemplate(c.templatePath);
+      template := LoadTemplate(templatePath);
     EXCEPT
       OSError.E(e) => Debug.Error(F("Couldn't open template file \"%s\" : OSError.E : %s",
-                                    c.templatePath, AL.Format(e)))
+                                    templatePath, AL.Format(e)))
     |
       Rd.Failure(e) =>
       Debug.Error(F("Couldn't read template file \"%s\" : Rd.Failure : %s",
-                                    c.templatePath, AL.Format(e)))
+                                    templatePath, AL.Format(e)))
     END;
 
     ModifyTemplate(template, map);
@@ -65,7 +72,7 @@ PROCEDURE DoSetup(READONLY c : Config) =
     END
   END DoSetup;
 
-PROCEDURE MapCommon(READONLY c : Config;  map : TextTextTbl.T)=
+PROCEDURE MapCommon(READONLY c : Config; map : TextTextTbl.T)=
   VAR
     iter : TextTextTbl.Iterator;
     k, v : TEXT;
@@ -97,7 +104,19 @@ PROCEDURE MapCommon(READONLY c : Config;  map : TextTextTbl.T)=
       EVAL map.put("@T1B@", "xi");
       EVAL map.put("@T1C@", "");
     |
-      Gate.Aoi =>
+      Gate.XorAlt =>
+      EVAL map.put("@T0A@", "in");
+      EVAL map.put("@T0B@", "vcc");
+      EVAL map.put("@T0C@", "");
+
+      EVAL map.put("@T1A@", "vcc");
+      EVAL map.put("@T1B@", "xi");
+      EVAL map.put("@T1C@", "");
+    |
+      Gate.Aoi,
+      Gate.Aoi_Z1_0p0sigma, Gate.Aoi_Z1_5p3sigma,
+      Gate.Aoi_Z2_0p0sigma, Gate.Aoi_Z2_5p3sigma
+      =>
       (* Intel terminal order is a b c  where b & c are the symmetric inputs
          TSMC terminal order is A1 A2 B *)
       CASE TechCorp[c.tech] OF
@@ -120,9 +139,55 @@ PROCEDURE MapCommon(READONLY c : Config;  map : TextTextTbl.T)=
         EVAL map.put("@T1C@", "vcc");
       END        
     |
-      Gate.Oai =>
+      Gate.Oai,
+      Gate.Oai_Z1_0p0sigma, Gate.Oai_Z1_5p3sigma,
+      Gate.Oai_Z2_0p0sigma, Gate.Oai_Z2_5p3sigma =>
       <*ASSERT FALSE*>
+    |
+      Gate.Xor_Z1_0p0sigma, Gate.Xor_Z1_5p3sigma,
+      Gate.Xor_Z2_0p0sigma, Gate.Xor_Z2_5p3sigma
+      =>
+      EVAL map.put("@T0A@", "in");
+      EVAL map.put("@T0B@", "vcc");
+      EVAL map.put("@T0C@", "");
+
+      EVAL map.put("@T1A@", "vcc");
+      EVAL map.put("@T1B@", "xi");
+      EVAL map.put("@T1C@", "")
     END;
+
+    IF DoMcFileOnly THEN
+      EVAL map.put("@MC_OPTIONS@", ".option mc_file_only=yes");
+      EVAL map.put("@MC_SPEC@", "sweep monte=2");
+    ELSE
+      EVAL map.put("@MC_OPTIONS@", "");
+
+      CASE c.gate OF
+        Gate.Xor_Z1_0p0sigma, Gate.Xor_Z2_0p0sigma,
+        Gate.Aoi_Z1_0p0sigma, Gate.Aoi_Z2_0p0sigma =>
+        EVAL map.put("@MC_SPEC@", "sweep monte=list(1:1)");
+      |
+        Gate.Xor_Z1_5p3sigma, Gate.Xor_Z2_5p3sigma,
+        Gate.Aoi_Z1_5p3sigma, Gate.Aoi_Z2_5p3sigma =>
+        EVAL map.put("@MC_SPEC@", "sweep monte=list(2:2)");
+      ELSE
+        (* skip *)
+      END
+    END;
+
+    CASE c.gate OF
+      Gate.Xor_Z1_0p0sigma, Gate.Xor_Z1_5p3sigma,
+      Gate.Aoi_Z1_0p0sigma, Gate.Aoi_Z1_5p3sigma =>
+      EVAL map.put("@Z@", "1");
+    |
+      Gate.Xor_Z2_0p0sigma, Gate.Xor_Z2_5p3sigma,
+      Gate.Aoi_Z2_0p0sigma, Gate.Aoi_Z2_5p3sigma =>
+      EVAL map.put("@Z@", "2");
+    ELSE
+      (* skip *)
+    END;
+      
+    EVAL map.put("@THRESH@", TranNames[c.tran]);
     
     (* parasitic or not *)
     IF c.para THEN
@@ -264,7 +329,7 @@ PROCEDURE ModifyTemplate(template : TextSeq.T; map : TextTextTbl.T) =
   END ModifyTemplate;
 
 BEGIN
-  extraMap := NEW(TextTextTbl.Default).init();
+  extraMap    := NEW(TextTextTbl.Default).init();
   overrideMap := NEW(TextTextTbl.Default).init();
 
 

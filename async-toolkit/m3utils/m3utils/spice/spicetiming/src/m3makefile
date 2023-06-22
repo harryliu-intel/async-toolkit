@@ -23,6 +23,15 @@ Module ("SpiceValues")
 Module ("Latches")
 Interface ("LatchSpecs")
 
+Module ("FlatRule")
+Table ("FlatRuleRef", "FlatRule", "Refany")
+MkSet    ("FlatRule", "FlatRule")
+MkSetDef ("FlatRule", "FlatRule")
+
+Module ("PrsNode")
+
+Interface ("PrsImpl")
+
 implementation ("Main")
 
 program ("spicetiming")

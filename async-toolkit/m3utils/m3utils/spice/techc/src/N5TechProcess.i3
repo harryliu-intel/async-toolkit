@@ -28,14 +28,40 @@ CONST
     BufPaths,
     BufPaths,
     BufPaths,
+    BufPaths,
+    BufPaths,
+    BufPaths,
+    BufPaths,
+    BufPaths,
+    BufPaths,
+    BufPaths,
+    BufPaths,
+    BufPaths,
+    BufPaths,
+    BufPaths,
+    BufPaths,
+    BufPaths,
     BufPaths
   },
 
     cellNames := ARRAY Gate OF ARRAY Tran OF TEXT {
     XorCellNames,
+    XorCellNames,
     BufCellNames,
     AoiCellNames,
-    OaiCellNames
+    OaiCellNames,
+    NilCellNames,
+    NilCellNames,
+    NilCellNames,
+    NilCellNames,
+    AoiCellNames,  (* should be Z1 *)
+    AoiCellNames,  (* should be Z1 *)
+    AoiCellNames,  (* should be Z2 *)
+    AoiCellNames,  (* should be Z2 *)
+    OaiCellNames,  (* should be Z1 *)
+    OaiCellNames,  (* should be Z1 *)
+    OaiCellNames,  (* should be Z2 *)
+    OaiCellNames   (* should be Z2 *)
   },
     plugText := "vcc vssx"
   };
@@ -49,6 +75,16 @@ CONST
   "/p/tech/n5/tech-prerelease/.dr/tcbn05_bwph210l6p51cnod_base_lvtll_lib/v0.9.0_pre.1/lpe_spice/tcbn05_bwph210l6p51cnod_base_lvtll_090a/tcbn05_bwph210l6p51cnod_base_lvtll_090a_lpe_typical_125c.spi",
   "/p/tech/n5/tech-prerelease/.dr/tcbn05_bwph210l6p51cnod_base_svt_lib/v0.9.0_pre.1/lpe_spice/tcbn05_bwph210l6p51cnod_base_svt_090a/tcbn05_bwph210l6p51cnod_base_svt_090a_lpe_typical_125c.spi",
   "/p/tech/n5/tech-prerelease/.dr/tcbn05_bwph210l6p51cnod_base_svtll_lib/v0.9.0_pre.1/lpe_spice/tcbn05_bwph210l6p51cnod_base_svtll_090a/tcbn05_bwph210l6p51cnod_base_svtll_090a_lpe_typical_125c.spi" };
+
+  NilCellNames = ARRAY Tran OF TEXT {
+  NIL,
+  NIL,
+  NIL,
+  NIL,
+  NIL,
+  NIL,
+  NIL
+  };
 
   BufCellNames = ARRAY Tran OF TEXT {
   "BUFFD1BWP210H6P51CNODELVT",

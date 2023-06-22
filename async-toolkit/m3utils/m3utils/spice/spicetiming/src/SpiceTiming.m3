@@ -407,12 +407,12 @@ PROCEDURE MeasureFromSpice(spiceFn        : Pathname.T;
                            mapper         : Mapper;
                            traceRt        : Pathname.T;
                            graphNs        : LONGREAL;
-                       Dot      : TEXT;
-                       allNames : TextSet.T;
-                       dutPfx   : TEXT;
-                      tranFinder        : TransitionFinder.T;
-                      resetTime         : LONGREAL;
-                    mappedNames : TextTextTbl.T) =
+                           Dot            : TEXT;
+                           allNames       : TextSet.T;
+                           dutPfx         : TEXT;
+                           tranFinder     : TransitionFinder.T;
+                           resetTime      : LONGREAL;
+                           mappedNames    : TextTextTbl.T) =
   BEGIN
     TRY
       WITH spiceRd = FileRd.Open(spiceFn) DO
@@ -467,12 +467,12 @@ PROCEDURE CheckLatch(db              : MarginMeasurementSeq.T;
                      READONLY arcs   : ARRAY OF Arc;  (* ...validate against *)
                      trace           : Trace.T;
                      mapper          : Mapper;
-                       Dot      : TEXT;
-                       allNames : TextSet.T;
-                       dutPfx   : TEXT;
-                      nMargins          : CARDINAL;
-                      tranFinder        : TransitionFinder.T;
-                      resetTime         : LONGREAL
+                     Dot      : TEXT;
+                     allNames : TextSet.T;
+                     dutPfx   : TEXT;
+                     nMargins          : CARDINAL;
+                     tranFinder        : TransitionFinder.T;
+                     resetTime         : LONGREAL
   ) =
   VAR
     frTrIdx, toTrIdx     : CARDINAL;
@@ -484,6 +484,8 @@ PROCEDURE CheckLatch(db              : MarginMeasurementSeq.T;
     negClkIdx            : CARDINAL;
     negClkNm             : TEXT;
     gotNeg := FALSE;
+  CONST
+    UnNil = Debug.UnNil;
   BEGIN
     Debug.Out(F("Checking latch %s of type %s", x.name, subCkt.name));
     

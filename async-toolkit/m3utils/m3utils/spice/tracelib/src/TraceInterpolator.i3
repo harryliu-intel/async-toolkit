@@ -16,6 +16,9 @@ TYPE
     
     eval(t : LONGREAL) : LONGREAL
       RAISES { OutOfBounds };
+
+    integrate(a, b : LONGREAL) : LONGREAL
+      RAISES { OutOfBounds };
   END;
 
 EXCEPTION  OutOfBounds ;

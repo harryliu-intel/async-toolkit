@@ -31,16 +31,44 @@ CONST
 
   cellPaths :=ARRAY Gate OF ARRAY Tran OF TEXT {
     XorCellPaths,
+    XorCellPaths,
     BufCellPaths,
     AoiCellPaths,
-    OaiCellPaths
+    OaiCellPaths,
+    NilCellPaths,
+    NilCellPaths,
+    NilCellPaths,
+    NilCellPaths,
+
+    NilCellPaths,
+    NilCellPaths,
+    NilCellPaths,
+    NilCellPaths,
+    NilCellPaths,
+    NilCellPaths,
+    NilCellPaths,
+    NilCellPaths
   },
 
   cellNames :=ARRAY Gate OF ARRAY Tran OF TEXT {
     XorCellNames,
+    XorCellNames,
     BufCellNames,
     AoiCellNames,
-    OaiCellNames
+    OaiCellNames,
+    NilCellNames,
+    NilCellNames,
+    NilCellNames,
+    NilCellNames,
+
+    NilCellNames,
+    NilCellNames,
+    NilCellNames,
+    NilCellNames,
+    NilCellNames,
+    NilCellNames,
+    NilCellNames,
+    NilCellNames
   },
 
   plugText := ""
@@ -48,6 +76,25 @@ CONST
       };
 
   StdCellRoot = "/p/hdk/cad/stdcells/g1m/22ww37.5_p1276d4_g1m_b.0.p3.core/spf/p1276d4_tttt_v0550_t100_pdn_max/";
+
+  NilCellPaths = ARRAY Tran OF TEXT {
+  NIL,
+  NIL,
+  NIL,
+  NIL,
+  NIL,
+  NIL,
+  NIL
+  };
+  NilCellNames = ARRAY Tran OF TEXT {
+  NIL,
+  NIL,
+  NIL,
+  NIL,
+  NIL,
+  NIL,
+  NIL
+  };
 
   BufCellPaths = ARRAY Tran OF TEXT {
     NIL,

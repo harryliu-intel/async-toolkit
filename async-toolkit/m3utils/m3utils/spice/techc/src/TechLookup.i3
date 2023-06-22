@@ -1,0 +1,5 @@
+INTERFACE TechLookup;
+
+PROCEDURE Lookup(str : TEXT; READONLY a : ARRAY OF TEXT) : CARDINAL;
+
+END TechLookup.

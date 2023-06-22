@@ -17,7 +17,7 @@
 #include "minmax.h"
 #include "arithdecode.h"
 
-Boolean_t verbose = False;
+static Boolean_t verbose = False;
 
 #if 0 /* unused for decoder only */
 static ArithProbability_t
