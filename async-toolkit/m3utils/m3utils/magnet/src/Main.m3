@@ -22,12 +22,15 @@ CONST LR = LongReal;
 
 VAR Pi := Math.atan(1.0d0) * 4.0d0;
 
+PROCEDURE Func(theta, n : LONGREAL) : LONGREAL =
+  BEGIN
+    RETURN Math.pow(Math.sin(theta / 180.0d0 * Pi), n)
+  END Func;
 
 PROCEDURE Pihat(fi, thetai, A0, A1, B, n : LONGREAL) : LONGREAL =
   (* the model *)
   BEGIN
-    RETURN A0 + A1 * fi * (1.0d0 + B * Math.pow(Math.sin(thetai / 180.0d0 * Pi),
-                                                n))
+    RETURN A0 + A1 * fi * (1.0d0 + B * Func(thetai, n))
   END Pihat;
 
 PROCEDURE DeltaPi(Pi, fi, thetai, A0, A1, B, n : LONGREAL) : LONGREAL =
@@ -54,7 +57,7 @@ PROCEDURE dEdA1i(Pi, fi, thetai, A0, A1, B, n : LONGREAL) : LONGREAL =
   (* second coordinate of the gradient *)
   BEGIN
     RETURN 2.0d0 * DeltaPi(Pi, fi, thetai, A0, A1, B, n) *
-            fi * (1.0d0 + B * Math.pow(Math.sin(thetai / 180.0d0 * Pi), n))
+            fi * (1.0d0 + B * Func(thetai, n))
   END dEdA1i;
 
 PROCEDURE dEdBi(Pi, fi, thetai, A0, A1, B, n : LONGREAL) : LONGREAL =
@@ -62,7 +65,7 @@ PROCEDURE dEdBi(Pi, fi, thetai, A0, A1, B, n : LONGREAL) : LONGREAL =
   BEGIN
     IF n = 0.0d0 THEN RETURN 0.0d0 END;
     RETURN 2.0d0 * DeltaPi(Pi, fi, thetai, A0, A1, B, n) *
-            fi * A1 * Math.pow(Math.sin(thetai / 180.0d0 * Pi), n)
+            fi * A1 * Func(thetai, n)
   END dEdBi;
 
   (**********************************************************************)
@@ -130,7 +133,7 @@ TYPE
   SampleIdx = [ 1 .. 9 ];
   AT        = ARRAY OF TEXT;
 
-CONST Ftol = 1.0d-9;
+CONST Ftol = 1.0d-4;
 
 PROCEDURE LR4(x : LONGREAL) : TEXT =
   BEGIN
@@ -197,31 +200,32 @@ BEGIN
   
   (* data have been loaded *)
 
-  FOR ni := 0 TO 2 DO
-    WITH n   = FLOAT(ni, LONGREAL),
-         fmt = "%8s %3s %10s %10s %10s %10s\n" DO
-      IO.Put(FN(fmt, AT { "sample", "n", "A0", "A1", "B", "error"}));
-      FOR si := FIRST(SampleIdx) TO LAST(SampleIdx) DO
+  WITH fmt = "%8s %3s %10s %10s %10s %10s\n" DO
+    IO.Put(FN(fmt, AT { "sample", "n", "A0", "A1", "B", "error"}));
+    FOR si := FIRST(SampleIdx) TO LAST(SampleIdx) DO
+      FOR i := FIRST(p^) TO LAST(p^) DO
+        p[i] := 0.0d0
+      END;
+      FOR ni := 0 TO 2 DO
+        WITH n   = FLOAT(ni, LONGREAL) DO
 
-        (* iterate over all the samples *)
-        
-        FOR i := FIRST(p^) TO LAST(p^) DO
-          p[i] := 1.0d0
-        END;
-        IF ni = 0 THEN p[2] := 0.0d0 END; (* ugly, B is to be held 0 for n=0 *)
-        
-        WITH f     = NEW(MinimizeFunc,
-                         n := n,
-                         measurements := sample[si]),
-             grad  = NEW(MinimizeGradient,
-                         n := n,
-                         measurements := sample[si]),
-             sumSq = ConjGradient.Minimize(p, Ftol, f, grad) DO
-          IO.Put(FN(fmt, AT { Int(si), Int(ni), LR4(p[0]), LR4(p[1]), LR4(p[2]), LR4(sumSq) }));
+          (* iterate over all the samples *)
+          
+          IF ni = 0 THEN p[2] := 0.0d0 END;
+          (* ugly, B is to be held 0 for n=0 *)
+          
+          WITH f     = NEW(MinimizeFunc,
+                           n := n,
+                           measurements := sample[si]),
+               grad  = NEW(MinimizeGradient,
+                           n := n,
+                           measurements := sample[si]),
+               sumSq = ConjGradient.Minimize(p, Ftol, f, grad) DO
+            IO.Put(FN(fmt, AT { Int(si), Int(ni), LR4(p[0]), LR4(p[1]), LR4(p[2]), LR4(sumSq) }));
 
+          END
         END
       END
     END
   END
-  
 END Main.
