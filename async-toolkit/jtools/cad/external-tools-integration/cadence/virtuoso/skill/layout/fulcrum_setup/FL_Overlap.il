@@ -17,7 +17,7 @@
     (dbOpenHier CV 32)
 
     ; create shapes from PRBoundary boundary objects
-    (RecurseInlineBoundary CV ovCV (list 0:0 "R0"))
+    (RecurseInlineBoundary CV ovCV (list 0:0 "R0") t)
 
     ; make a list of prBoundaries shapes
     pr_list = (setof scell ovCV->shapes scell->lpp=BoundaryLPP )
@@ -49,15 +49,15 @@
   )
 
 ; Recursively search for prBoundary then draw it in ovCV
-(defun RecurseInlineBoundary (CV ovCV transform)
-  (cond (CV->prBoundary
+(defun RecurseInlineBoundary (CV ovCV transform top)
+  (cond (CV->prBoundary && !top
          (dbCreateRect ovCV BoundaryLPP (dbTransformBBox CV->prBoundary->bBox transform))
          )
         (t
          (foreach inst CV->instances
                   (when inst->transform && inst->status!="unplaced"
                         (RecurseInlineBoundary inst->master ovCV
-                                               (dbConcatTransform inst->transform transform))
+                                               (dbConcatTransform inst->transform transform) nil)
                         )
                   )
          )
