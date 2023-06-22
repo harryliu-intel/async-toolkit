@@ -50,16 +50,15 @@
 
 ; Recursively search for prBoundary then draw it in ovCV
 (defun RecurseInlineBoundary (CV ovCV transform)
-  (cond (CV->prBoundary && CV->instances==nil &&
-                        (substring inst->cellName (strlen inst->cellName)-5)!="_wires"
+  (cond (CV->prBoundary
          (dbCreateRect ovCV BoundaryLPP (dbTransformBBox CV->prBoundary->bBox transform))
          )
         (t
          (foreach inst CV->instances
-                  (when inst->transform
-                    (RecurseInlineBoundary inst->master ovCV
-                                           (dbConcatTransform inst->transform transform))
-                    )
+                  (when inst->transform && inst->status!="unplaced"
+                        (RecurseInlineBoundary inst->master ovCV
+                                               (dbConcatTransform inst->transform transform))
+                        )
                   )
          )
         )
