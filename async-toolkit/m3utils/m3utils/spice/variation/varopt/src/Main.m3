@@ -394,7 +394,7 @@ BEGIN
     maxSumSq := MaxSumSq / Sqrt10
   END;
 
-  RhoBeg := DefRhoBeg * maxSumSq / DefMaxSumSq;
+  RhoBeg := DefRhoBeg * maxSumSq / DefMaxSumSq + 0.01d0;
 
   Debug.Out("RhoBeg=" & LongReal(RhoBeg));
   

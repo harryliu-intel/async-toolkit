@@ -1,11 +1,13 @@
 #!/bin/sh -x
 
 # usage :
-# $0 [1|2] [ulvt|lvt]
+# $0
 
-Z=$1
-THRESH=$2
+Z=1
+THRESH=lvt
 WORKROOT=run_${Z}_${THRESH}_sigma
+
+export DEBUGLEVEL=10
 
 /bin/rm -rf  $WORKROOT
 mkdir $WORKROOT
@@ -22,11 +24,8 @@ done
 wait
 }
 
-do_batch 0.5 1.0 1.5 2.0 
-do_batch 2.5 3.0 3.5 0.0 
-do_batch 4.0 4.2 4.4 4.6
-do_batch 4.8 5.0 5.2 5.4
-do_batch 5.6 5.8 6.0 6.2
+do_batch 6.5 7.0 7.5 8.0
+do_batch 8.5 9.0 9.5 9.9
 
 
 
