@@ -139,7 +139,7 @@ $(CURR_CELL_DIR)/cast.d : $(CURR_CELL_DIR)/.nodes$(ROUTED_SUFFIX)
 	  "--nodes=$$(cat '$<')" \
 	  "--internalWires=$(INTERNAL_WIRES)" \
 	  "--internalRules=$(INTERNAL_RULES)" \
-	  '--cdl-mos-parameters=m' \
+	  '--cdl-mos-parameters=m,lvsExactMatch' \
 	  '$(JFLAT_NAME_MAP)' \
 	  $(JFLAT_CONNECT_SUBSTRATE) \
 	  "--cdl-translate=cadence" "--hsim-translate=$(GDS2_NAMESPACE)" "--query-translate=none" \
@@ -185,7 +185,7 @@ $(CURR_CELL_DIR)/jflat$(ROUTED_SUFFIX)/%.latest: $(CURR_CELL_DIR)/.nodes$(ROUTED
 	  "--nodes=$$(cat '$<')" \
 	  "--internalWires=$(INTERNAL_WIRES)" \
 	  "--internalRules=$(INTERNAL_RULES)" \
-	  '--cdl-mos-parameters=m' \
+	  '--cdl-mos-parameters=m,lvsExactMatch' \
 	  '$(JFLAT_NAME_MAP)' \
 	  "--cdl-translate=cadence" "--hsim-translate=$(GDS2_NAMESPACE)" "--query-translate=none" \
 	  --hsim-rand-seed=0 --hsim-rand-length=4 \
