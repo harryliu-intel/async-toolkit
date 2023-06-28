@@ -85,11 +85,12 @@ class NodeInfo:
         self.num_ps = 0
 
 class TranInfo:
-    def __init__(self, gatelabel, type, width):
+    def __init__(self, gatelabel, type, width, m):
         self.gatelabel = gatelabel
         self.type = type
         self.ambiguous = 0
-        self.width = int(0.5 + float(width) / 1E-9)
+        self.width = int(0.5 + float(width) / widthgrid)
+        self.m = m
 
 class CellBindings:
     def __init__(self, layoutName, schematicName):
@@ -138,6 +139,7 @@ targets = []
 infinity = 100
 thegraph = None
 targetsdistkey = ()
+widthgrid = 1e-9
 
 def canonize_node_name(bindings,name):
     if bindings:
@@ -154,7 +156,7 @@ def new_graph():
     graph.nodes[GND] = Node(graph, GND, NodeInfo())
     return graph
 
-def handle_trans(bindings, source, gate, drain, substrate, type, width):
+def handle_trans(bindings, source, gate, drain, substrate, type, width, kw):
     type = type[0].upper()
     substrate = canonize_node_name(bindings, substrate)
     source = canonize_node_name(bindings, source)
@@ -167,7 +169,8 @@ def handle_trans(bindings, source, gate, drain, substrate, type, width):
         Node(thegraph, source, NodeInfo())
     if not thegraph.has_node_named(drain):
         Node(thegraph, drain, NodeInfo())
-    t = Edge(thegraph.nodes[source], thegraph.nodes[drain], TranInfo(gate, type, width))
+    m = int(float(kw.get('m') or kw.get('M') or '1'))
+    t = Edge(thegraph.nodes[source], thegraph.nodes[drain], TranInfo(gate, type, width, m))
 
 def handle_line(bindFile,line):
     global name
@@ -192,7 +195,8 @@ def handle_line(bindFile,line):
             0 # nothing yet
         elif ("M" == line[0]):
             splitwidth = splitline[6].split('=')
-            return handle_trans(bindings, splitline[1], splitline[2], splitline[3], splitline[4], splitline[5], splitwidth[1])
+            kw = dict([ l.split('=') for l in splitline if '=' in l ])
+            return handle_trans(bindings, splitline[1], splitline[2], splitline[3], splitline[4], splitline[5], splitwidth[1], kw)
 
     return 0
 
@@ -324,6 +328,8 @@ def print_edge(file, edge):
         color = "red"
         gate = "~" + edge.info.gatelabel
 
+    size = f'{edge.info.width}' if edge.info.m == 1 else f'{edge.info.width}*{edge.info.m}'
+
     if is_supply(edge.parent):
         op = p
         p = gensym(p)
@@ -337,10 +343,10 @@ def print_edge(file, edge):
     if edge.info.ambiguous:
         file.write(('"%s" -> "%s"' + \
                 '[label="%s\\n%s", color="%s", weight=0, dir=both]\n') % \
-                (p, c, gate, edge.info.width, color));
+                (p, c, gate, size, color));
     else:
         file.write( '"%s" -> "%s" [label="%s\\n%s", color="%s"]\n' %
-            (p, c, gate, edge.info.width, color));
+            (p, c, gate, size, color));
 
 def dump_graph(thegraph, file):
     file.write('digraph "%s" {\n' % name);
@@ -357,12 +363,12 @@ def dump_graph(thegraph, file):
     file.write( '}\n');
 
 def parse_options():
-    global Vdd, GND, substrates, rank
+    global Vdd, GND, substrates, rank, widthgrid
     has_one_percent_i = re.compile("%i");
     file = sys.stdin
     nametemplate = None
     bindFileName = None
-    (opts, args) = getopt.getopt(sys.argv[1:], "o:t:h:v:g:", ['help', 'usage'])
+    (opts, args) = getopt.getopt(sys.argv[1:], "o:t:h:v:g:w:", ['help', 'usage'])
     if debug:
         print(opts)
         print(args)
@@ -382,6 +388,8 @@ def parse_options():
             Vdd = a;
         elif o == "-g":
             GND = a;
+        elif o == "-w":
+            widthgrid = float(a);
         else:
             usage(1);
     if len(args) == 1:
