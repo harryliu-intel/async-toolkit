@@ -126,7 +126,7 @@
 
 ; Set alignment for a routed topHalo cell
 (defun SetTopHaloAlignment (@key (CV (geGetEditCellView)) (overwrite t))
-  (SetCellAlignment gridAlignment["lego"] 0:0 ?topHalo t ?overwrite overwrite)
+  (SetCellAlignment gridAlignment["lego"] 0:0 ?topHalo t ?overwrite overwrite ?CV CV)
   )
 
 ; compute GCD of two integers Euclid's Algorithm
