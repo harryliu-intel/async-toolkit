@@ -693,17 +693,39 @@ useICV = t
 
 ; inline one level with correct instance names but no extra work
 (defun TrivialInline (inst @key (CV (geGetEditCellView)))
-  (foreach sub1 inst->master->instances
-           sub2 = (dbCopyFig sub1 CV inst->transform)
-           sub2->name = (strcat inst->name "." sub1->name)
-           sub2->hierName = (cons sub1->name (or inst->hierName (list inst->name)))
-           (cond (inst->status=="unplaced" || sub2->status=="unplaced" sub2->status="unplaced")
-                 (inst->status=="locked"   || sub2->status=="locked"   sub2->status="locked")
-                 (inst->status=="firm"     || sub2->status=="firm"     sub2->status="firm")
-                 (inst->status=="place"    || sub2->status=="placed"   sub2->status="placed")
-                 )
-           )
-  (dbDeleteObject inst)
+  (let (sub2 path prefixes newprefixes orient flipX flipY)
+    ; flatten instances
+    (foreach sub1 inst->master->instances
+             sub2 = (dbCopyFig sub1 CV inst->transform)
+             sub2->name = (strcat inst->name "." sub1->name)
+             sub2->hierName = (cons sub1->name (or inst->hierName (list inst->name)))
+             (cond (inst->status=="unplaced" || sub2->status=="unplaced" sub2->status="unplaced")
+                   (inst->status=="locked"   || sub2->status=="locked"   sub2->status="locked")
+                   (inst->status=="firm"     || sub2->status=="firm"     sub2->status="firm")
+                   (inst->status=="place"    || sub2->status=="placed"   sub2->status="placed")
+                   )
+             )
+    ; flatten bus wires too
+    (foreach s inst->master->shapes
+             (when s->objType=="path" && s->purpose=="bus"
+                   path=(dbCopyFig s CV inst->transform)
+                   prefixes=(parseString (GetProp path "BusPrefix" nil) " ")
+                   newprefixes=nil
+                   (foreach prefix prefixes
+                            newprefixes = (append newprefixes (list (strcat inst->name "." prefix)))
+                            )
+                   (dbReplaceProp path "BusPrefix" "string" (buildString newprefixes " "))
+                   orient=(cadr inst->transform)
+                   flipX=(dbGetPropByName path "BusFlipX")->value=="TRUE"
+                   flipY=(dbGetPropByName path "BusFlipY")->value=="TRUE"
+                   (when orient=="MX" || orient=="R180" flipY=(not flipY))
+                   (when orient=="MY" || orient=="R180" flipX=(not flipX))
+                   (dbReplaceProp path "BusFlipX" "boolean" flipX)
+                   (dbReplaceProp path "BusFlipY" "boolean" flipY)
+                   )
+             )
+    (dbDeleteObject inst)
+    )
   t
   )
 
