@@ -109,6 +109,7 @@ useICV = t
 
     ; custom steps
     (RunAfterFlatten ?CV CV)
+    (dbSave CV)
 
     ; switch current window to flatten view
     win = (hiGetCurrentWindow)
@@ -122,7 +123,6 @@ useICV = t
           )
 
     ; return flatten view
-    (dbSave CV)
     CV
     )
   )
@@ -705,7 +705,7 @@ useICV = t
                    (inst->status=="place"    || sub2->status=="placed"   sub2->status="placed")
                    )
              )
-    ; flatten bus wires too
+    ; flatten bus wires
     (foreach s inst->master->shapes
              (when s->objType=="path" && s->purpose=="bus"
                    path=(dbCopyFig s CV inst->transform)
@@ -722,6 +722,14 @@ useICV = t
                    (when orient=="MY" || orient=="R180" flipX=(not flipX))
                    (dbReplaceProp path "BusFlipX" "boolean" flipX)
                    (dbReplaceProp path "BusFlipY" "boolean" flipY)
+                   )
+             )
+    ; flatten paths
+    (foreach s inst->master->shapes
+             (when s->objType=="path" && s->purpose=="drawing" && s->net
+                   path=(dbCopyFig s CV inst->transform)
+                   path->net=(dbMakeNet CV (strcat inst->name "." s->net->name))
+                   path->routeStatus="locked"
                    )
              )
     (dbDeleteObject inst)
