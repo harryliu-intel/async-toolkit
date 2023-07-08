@@ -42,20 +42,16 @@ useICV = t
     (when softMacro oldMasters=(makeTable "oldMasters" nil))
     CV = (DirectFlatten ?CV CV ?RegenerateFromCast RegenerateFromCast ?oldMasters oldMasters)
 
-    ; update connectivity (TODO: eliminate one of these, but this one connects subcell pins)
-    (UpdateFloorplan ?CV CV ?recurse nil ?skipInstances t)
-
     ; lock all instances unless softMacro
     (unless softMacro (foreach x CV->instances x->status="locked"))
 
-    ; draw pins
+    ; draw pins and canonicalize preroutes
     (AddBusWires ?CV CV)
+    (UpdateFloorplan ?CV CV ?recurse nil ?skipInstances t ?skipNets t) ; connect subcell pins for in-place pins
     (RedrawAllPins ?CV CV ?include_supply t ?supply_topMetal topMetal ?inplace_pins inPlacePins)
     (CanonicalizeNets ?CV CV)
     (DeleteRedundantPins ?CV CV ?warnOnly !delete_redundant_pins)
-
-    ; update connectivity (TODO: eliminate one of these, but this one sets top-level pin directions)
-    (UpdateFloorplan ?CV CV ?recurse nil ?skipInstances t)
+    (UpdateFloorplan ?CV CV ?recurse nil ?skipInstances t) ; set pin directions
 
     ; cache various information in CV properties
     (dbReplaceProp CV "topMetal" "integer" topMetal)
