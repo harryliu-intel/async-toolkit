@@ -3,6 +3,7 @@
                        (directory nil)
                        (oasFile nil)
                        (layerMapFile nil)
+                       (targetNamespace "gds2")
                        (renameTop t) ; CopyExact applies to top cell too
                        (flattenVias nil)
                        (dbuPerUU (round 1/MfgGrid)))
@@ -14,7 +15,7 @@
     (unless layerMapFile (sprintf layerMapFile "%s/stream/strmout.layermap" PDK_DIR))
     (shell (strcat "mkdir -p " directory))
     cellMapFile = (sprintf nil "%s/cellmap" directory)
-    gdsName = (WriteCellmap cellMapFile ?CV CV ?renameTop renameTop) ; cellmap with CopyExact or GDS2 names
+    gdsName = (WriteCellmap cellMapFile ?CV CV ?renameTop renameTop ?targetNamespace targetNamespace)
     (unless oasFile (sprintf oasFile "%s/%s.oas" directory gdsName))
 
     ; strmout command line arguments

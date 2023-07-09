@@ -1,10 +1,10 @@
 ; Write cellmap to rename cells.  CopyExact cells get renamed to their
 ; original name as saved in the CopyExact property.  Other cells get
 ; GDS names.
-(defun WriteCellmap (cellMapFile @key (CV (geGetEditCellView)) (renameTop t))
+(defun WriteCellmap (cellMapFile @key (CV (geGetEditCellView)) (renameTop t) (targetNamespace "gds2"))
   (let (CID fmap topName)
     (unless CV->objType=="cellView" (error "CV not valid"))
-    CID = (NameStartRename "cell" "cadence" "gds2")
+    CID = (NameStartRename "cell" "cadence" targetNamespace)
     fmap = (outfile cellMapFile)
     (unless fmap (error "can't write %s\n" cellMapFile))
     gdsName=(RecurseWriteCellmap fmap ?CV CV ?renameTop renameTop)
