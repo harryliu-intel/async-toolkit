@@ -1,0 +1,366 @@
+\documentclass{article}
+\usepackage{graphicx}
+\usepackage{epsf}
+
+\usepackage{floatflt}
+\usepackage{fancyhdr}
+\usepackage{array}
+
+\usepackage{sectsty}
+%\allsectionsfont{\mdseries\sffamily}
+\allsectionsfont{\mdseries\sc}
+
+\usepackage{caption}
+\captionsetup{margin=2pc,font=small,labelfont=bf}
+
+%%%%%%%%%%%%%%Mika's figure macro%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\def\listcaption_ins_epsfig#1#2#3#4{
+  \begin{figure}[!tbph!]
+  \bigskip
+  \begin{center}
+  \includegraphics[width=#1]{#2}
+  \end{center}
+  \caption[#4]{#3}\label{fig:#2}
+  \bigskip
+  \end{figure}
+}
+
+\def\ins_epsfig#1#2#3{
+  \begin{figure}[!tbph!]
+  \bigskip
+  \begin{center}
+  \includegraphics[width=#1]{#2}
+  \end{center}
+  \caption{#3}\label{fig:#2}
+  \bigskip
+  \end{figure}
+}
+
+\def\rotins_epsfig_listcaption#1#2#3#4#5{
+  \begin{figure}[!tbph!]
+  \bigskip
+  \begin{center}
+  \includegraphics[angle=#4,width=#1]{#2}
+  \end{center}
+  \caption[#5]{#3}\label{fig:#2}
+  \bigskip
+  \end{figure}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\oddsidemargin=0.15in
+\evensidemargin=0.15in
+\topmargin=0.2in
+\textwidth=6.2truein
+
+
+\pagestyle{fancy}
+\lhead{\scriptsize\bfseries\sffamily DRAFT---INTEL CONFIDENTIAL---DRAFT}
+\chead{}\rhead{\thepage}
+\lfoot{}\cfoot{}\rfoot{}
+\renewcommand{\headrulewidth}{0pt}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\title{How Fast is This Circuit?}
+\author{Mika Nystr\"om \\ {\tt mika.nystroem@intel.com} }
+
+%\date{January 22, 2018}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\parindent=0pt
+\parskip=1.5ex
+
+\arraycolsep=1.4pt\def\arraystretch{1.5}
+
+\begin{abstract}
+Abstract.
+\end{abstract}
+
+\tableofcontents
+\listoffigures
+\listoftables
+
+\section{A Stochastic Parable}
+
+Once upon a time, in the distant land of Stochastia, there lived the
+eccentric but benevolent King Chance and his (exactly) one million
+subjects.  One day, the King noticed that his subjects were getting
+bored and spending too much time on wasteful pursuits (in particular
+they were watching television wrestling), so he decided to give them
+some excitement in life.  The Stochastians were commanded to enter a
+weekly lottery, where each of them would bet \$1 and receive a payout
+according to a normal distribution with mean 1 and variance~1 (if the payout was less than 0, that would be a debit on the
+player's account till the next lottery).  Because the King was
+benevolent and wealthy, there was no ``house take'': the expected
+payout of the lottery was \$1 for every \$1 bet.  The lottery ran
+every Sunday until the unfortunate passing of King Chance.
+
+When the King died, his son Chance~II took over, and decided to make
+a change to the lottery, to make it more of a life-changing event for
+the winners and also remove the possiblity that a player could go
+negative.  Chance~II's new lottery was designed so that every week
+there was only one winner, who would get the full \$1,000,000 pot, and
+all others would get nothing (that week).  In an early example of code
+reuse, the Stochastian Lottery Commission re-used the code from the
+first-generation lottery: each Sunday, every subject was assigned a
+normal deviate from the 1,1-normal distribution that had been used in
+the first-generation lottery and that one subject with the highest
+payout according to the first-generation rules was given the whole
+pot, and the other players were given nothing (and were also not
+charged anything further even if their deviates happened to be below
+zero).
+
+During the reigns of the two Stochastian kings, a team of scientists
+visited from a famous university in California (unfortunately the
+records are not dependable enough to tell exactly which university
+they were from).  These academics were concerned that perhaps the
+kings were not as benevolent and honest as they seemed to be, and that
+there was something amiss with the lottery.  They decided to sample
+the lottery by buying one thousand lottery tickets, at the cost of
+\$1,000, and did so once during the reign of Chance~I and once again
+during the reign of Chance~II.  The tickets for the first-generation
+lottery showed a payout that was almost exactly as expected, \$1 mean
+with a standard deviation of \$1, and the academics announced that
+Chance~I was indeed an honest and benevolent king.  But the
+second-generation lottery sampling had quite a different result: none
+of the 1,000 tickets that the academics sponsored won the lottery, so
+their payout was zero, with zero standard deviation.  Accordingly,
+they announced that King Chance~II was a fraud, to much consternation
+at the State Department in Washington, D.C., which spent much
+diplomatic effort salvaging relations with the Kingdom of Stochastia.
+
+\section{Probability Review}
+
+\def\erf\mathrm{erf}
+\def\erfc\mathrm{erfc}
+
+\subsection{Probability density function}
+A brief review of concepts related to a continuous random variable.  A
+continuous random variable $X$ is described by its {\em probability
+  density function (p.d.f.)\/} $phi_X$ with the property that
+\begin{equation}
+  Pr(a \le x \lt b) = \int_a^b \phi_X(x) \, dx \quad .
+\end{equation}
+The p.d.f.\ has many interesting elementary properties, for example:
+\begin{equation}\label{eq:pdfprops}
+  \begin{array}{rl}
+    \int_{-\infty}^{+\infty} \phi(x) ,\ dx &= 1 \\
+    \forall x : \phi(x)               &= \ge 0
+  \end{array}
+\end{equation}
+
+The maximum of the p.d.f.\ we call the {\em mode\/} of the distribution; the
+mean $\mu$ of the distribution, if it exists, we can compute as
+\begin{equation}
+  \mu = \int{-\infty}^{+\infty} x \phi(x) ,\ dx \quad ,
+\end{equation}
+and similarly, the variance
+\begin{equation}
+  \begin{array}{rl}
+    \sigma^2_X &= \int{-\infty}^{+\infty} (x-\mu)^2 \phi(x) ,\ dx \\
+               &= \int{-\infty}^{+\infty} x^2 \phi(x) ,\ dx - \mu^2 
+  \end{array}
+\end{equation}
+
+
+The integrability of p.d.f.s is a big and advanced field of
+mathematics and mostly out of the scope of our discussion.
+
+\def\normal{\mathcal{N}}
+
+\subsection{The normal distribution}
+An example of a p.d.f.\ is the normal distribution $\normal$
+\begin{equation}
+  \phi_{\normal(\mu,\sigma^2)}(x)=
+  \normal(\mu,\sigma^2)(x)   =
+  {1 \over \sigma \sqrt{2 \pi} } e ^ { -{1 \over 2} \left( { x - \mu \over \sigma } \right) ^2 } \quad .
+\end{equation}
+Much of what will interest us will specifically not be normally distributed,
+but we shall still use the properties of the normal distribution as a guide.
+
+\subsection{Cumulative density function}
+If we consider the one-sided integral of the p.d.f.\ of $X$, we call
+this the {\em cumulative density function (c.d.f.)\/} $\Phi_X$:
+\begin{equation}
+  \Phi_X(x) = \int_{-\infty}^x \phi_X(x') \, dx'
+\end{equation}
+where we use $x'$ for the dummy integration variable for clarity.
+
+The complement of $\Phi$ we call the {\em survival function\/} $S_X$:
+\begin{equation}
+  S_X(x) = 1 - \Phi_X(x) = \int_{x}^{+\infty} \phi_X(x') \, dx'
+\end{equation}
+
+The half-way point of $\Phi_X(x)$, i.e., the point at which it equals $1/2$, we
+call the median and denote $\tilde{X}$:
+\begin{equation}
+{1 \over 2} = \Phi_X(\tilde{X}) = S_X(\tilde{X})
+\end{equation}
+
+By equation~\ref{eq:pdfprops}, the c.d.f.\ $\Phi$ integrates to 1 over
+the number line and is non-decreasing everywhere.
+
+\subsubsection{For the normal distribution}
+
+The c.d.f.\ of the normal distribution can be written in terms of the
+non-elementary {\em error function\/}, so that
+\begin{equation}
+  \Phi_{\normal(\mu,\sigma^2)}(x) = {1 \over 2} + { 1 \over 2 } \erf \left { x - \mu \over \sigma \sqrt{2} } \right 
+\end{equation}
+and also the complement of the error function
+\begin{equation}
+  \erfc(x) = 1 - \erf(x) 
+\end{equation}
+can be used to write the survival function of the normal distribution
+in a compact and computationally convenient way:
+\begin{equation}
+  S_{\normal( \mu,\sigma^2)}(x) = { 1 \over 2 } \erfc \left { x - \mu \over \sigma \sqrt{2} } \right \quad .
+\end{equation}
+
+
+\subsection{P.d.f.\ of a sum of two random variables}
+Given two independent random variables $X ~ \phi_X(x)$ and $Y ~ \phi_Y(y)$, the sum $Z = X + Y$ is distributed as the convolution of the two
+\begin{equation}
+  \phi_Z(z) = \int_{-\infty}^{\infty}  \phi_X(x)\phi_Y(z - x) \, dx = \phi_X(z) * \phi_Y(z) \quad .
+\end{equation}
+Computationally this means that the Fourier transform of $\phi$ is interesting,
+because the convolution becomes a multiplication in Fourier space.
+
+\subsubsection{For the normal distribution}
+As a special case if $X$ and $Y$ are normally distributed so that
+\begin{equation}
+  \begin{array}{rl}
+    X ~ \normal(\mu_X,\sigma_X^2) \\
+    Y ~ \normal(\mu_Y,\sigma_Y^2)
+  \end{array}
+\end{equation}
+and $Z = X + Y$ then
+\begin{equation}
+  Y ~ \normal(\mu_X + \mu_Y, \sigma_X^2 + \sigma_Y^2) \quad .
+\end{equation}
+This formula follows from the fact that the Gaussian is its own
+Fourier transform.
+
+\subsubsection{Integer multiple of a random variable}
+If we are given $X ~ \phi_X(x)$ and we wish to know the distribution of a
+sum of $M$ i.i.d.\ instances of $X$, let's say $Z = X_0 + X_1 + \cdots + X_{M-1}$
+then we can write this as the $M$-th convolutional power of $\phi_X$
+\begin{equation}
+  \phi_Z(x) = \phi_X^{*M}(x) \quad .
+\end{equation}
+
+\subsection{The maximum of a set of random variables}
+Given $X ~ \phi_X$ and $Y ~ \phi_Y$, and $Z = \max(X, Y)$, we have that
+\begin{equation}
+  \Phi_Z(z) = \Phi_X(z) \Phi_Y(z) \quad .
+\end{equation}
+
+For the special case $X_0, X_1, \ldots , X_{N-1} ~ \phi_X$ and $Z = \max(X_0, X_1, \ldots , X_{N-1})$, 
+\begin{equation}
+  \Phi_Z(z) = \Phi_X^N(z) \quad .
+\end{equation}
+A convenient measure of the maximum of distributions is their median $\tilde{z}$ because
+\begin{equation}
+  \Phi_Z(\tilde{z}) = {1 \over 2}
+\end{equation}
+so that
+\begin{equation}
+\tilde{z} = \Phi^{-1}(2^-N) \quad .
+\end{equation}
+
+If $X = \normal (0,1)$ then
+\begin{equation}
+\tilde{z} = \Phi^{-1}(2^-N) \quad ;
+\end{equation}
+since for large $N$
+\begin{equation}
+  2^{-N} \approx 1 + {\ln 2 \over N}
+\end{equation}
+we have that ({\bf fill this in})
+\begin{equation}
+\tilde{z} = \erfc^{-1} \ldots 
+\end{equation}
+
+\subsection{The $n$-ball}
+The volume $V_n$ and surface area $S_{n-1}$ of the $n$-ball of radius $R$ in $n$-dimensional space are:
+\begin{equation}
+  V_n(R) = { \pi^{n/2} \over \Gamma \left( {n \over 2} + 1 \right) } 
+\end{equation}
+and
+\begin{equation}
+  S_{n-1}(R) = { 2 \pi^{n/2} \over \Gamma \left( n \over 2 \right) } R^{n - 1} \quad . 
+\end{equation}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{The Speed of a Digital Circuit}
+
+A digital circuit consists of a number of parallel {\em speed
+paths\/}, each of which consists of a number of sequential {\em
+gates.}  The minimum time allowed between clock pulses, that is, the maximum
+speed of computation, is determined by the maximum time across the parallel
+speed paths; the time taken for one speed path to compute is determined
+by the sum of the {\em gate delays\/} along that path.
+
+We introduce a simplified model as follows: the circuit $\mathcal{C}$
+consists of $N$ identical speed paths, each of which is comprised of
+an identical sequence of $M$ gates of type $\mathcal{G}$.
+
+Each gate $G$ has a delay $\Delta$ that is stochastic and is a function over
+$n$ dimensions, each of which is assumed to be a 0,1-normal random variable:
+\begin{equation}
+  \Delta : {\bf R}_n \rightarrow {\bf R} : \Delta(X_0, X_1, \ldots , X_{n-1})
+\end{equation}
+\begin{equation}
+  X_0, X_1, \ldots , X_{n-1} ~ \normal (0,1)
+\end{equation}
+$\Delta$ here is a nonlinear function that is expensive to evaluate
+and does not provide derivatives (in practice, we evaluate $\Delta$ by
+running a circuit simulator on a test circuit description and
+performing a physical measurement on the circuit).  We can, however,
+assume that the extrema (of interest) of $\Delta$ {\em over\/} a ball
+in $n$ dimensions, if they exist, will be found {\em on\/} the ball.  
+Furthermore, we know that there exists a maximum radius $R_\mathrm{max}$ for
+which $\Delta$ is defined at all points within the $n$-ball of radius
+$R_\mathrm{max}$, but $\Delta$ is not necessarily defined outside of this ball
+and may have asymptotes to $+\infty$ near the surface of the ball.  Because
+$\Delta$ represents the physical delay of a circuit, it is also bounded
+below by $\Delta_\mathrm{min} \ge 0$.
+
+\subsection{Orders of magnitude}
+We may expect the following rough ranges for the parameters above,
+for problems of interest:
+\begin{equation}
+  \begin{array}{rl}
+    M &= 10--20 \\
+    N &= 10^4--10^9 \\
+    n &\approx 100
+  \end{array}
+\end{equation}
+  
+
+\section{Acknowledgements}
+
+
+\begin{thebibliography}{99}
+
+\bibitem{qdi}{Alain~J.~Martin and Mika Nystr\"om.  Asynchronous techniques for system-on-chip design.  {\it Proc. IEEE}, 94(6). 2006.}
+
+\bibitem{razor}{Dan Ernst, et al.  Razor: A Low-Power Pipeline Based on Circuit-Level Timing Speculation.  36th International Symposium on Microarchitecture (MICRO-36).  September 2003.}
+
+\bibitem{newuoas}{Zaikun Zhang.  On derivative-free optimization methods (in Chinese).  Ph.D. thesis, Chinese Academy of Sciences. Beijing, China: 2012.}
+
+\bibitem{newuoas-http}{{\tt https://www.zhangzk.net/docs/talks/20160806-icnaao-newuoas.pdf}}
+
+\bibitem{newuoa}{M.~J.~D.~Powell.  The NEWUOA software for unconstrained optimization without derivatives.  In {\it Nonconvex Optimization and Its Applications\/} (book series), NOIA {\bf 83}.  Springer-Verlag, 2006.}
+
+\bibitem{brent}{R.~P.~Brent.  {\it Algorithms for Minimization Without Derivatives.} Prentice-Hall, 1972.}
+
+\bibitem{bubblerazor}{G.~Zhang and P.~A.~Beerel.  Stochastic analysis of Bubble Razor.  DATE 2014.}
+  
+\end{thebibliography}
+
+\end{document}
