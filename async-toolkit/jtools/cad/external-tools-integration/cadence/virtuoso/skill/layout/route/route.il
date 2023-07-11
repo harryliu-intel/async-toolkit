@@ -894,15 +894,13 @@ DumbLayers = (list (list "SRAM" "fill")
 
 ; Return name mapping table for APR cell names back to DFII cell names
 (defun RouteRemapCellTable ()
-  (let (PDK_DIR CID rename name_in fields)
+  (let (PDK_DIR CID rename name_in fields pcre)
     PDK_DIR = (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT")
     CID = (NameStartRename "cell" "cast" "cadence")
     rename = (makeTable "rename" nil)
-    (foreach file (list "/share/Fulcrum/v2cast/g1m.rul"
-                        "/share/Fulcrum/v2cast/g1i.rul"
-                        "/share/Fulcrum/v2cast/custom.rul"
-                        "/share/Fulcrum/v2cast/hip.rul")
-             names_in = (infile (strcat PDK_DIR file))
+    pcre=(pcreCompile ".*\\.rul$")
+    (foreach file (setof f (ls (strcat PDK_DIR "/share/Fulcrum/v2cast")) (pcreExecute pcre f))
+             names_in = (infile (strcat PDK_DIR "/share/Fulcrum/v2cast/" file))
              (when names_in
                (while (gets line names_in)
                  fields = (parseString line " \n")
@@ -947,6 +945,15 @@ DumbLayers = (list (list "SRAM" "fill")
                                 (substring cellName 12 6))
            rename[cellName] = dfII_name
            libName = "vendor.intel.g1i"
+           cellName = dfII_name
+           (list libName cellName)
+           )
+          ((strncmp cellName "i0s" 3)==0 ; TODO: finish PDK/v2cast/i0s.rul
+           dfII_name = (sprintf nil "vendor.intel.i0s.%s.%s"
+                                (substring cellName 4 8)
+                                (substring cellName 12 6))
+           rename[cellName] = dfII_name
+           libName = "vendor.intel.i0s"
            cellName = dfII_name
            (list libName cellName)
            )
