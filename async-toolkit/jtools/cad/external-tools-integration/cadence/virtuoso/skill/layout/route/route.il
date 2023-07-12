@@ -984,12 +984,15 @@ DumbLayers = (list (list "SRAM" "fill")
     ox=(car  (cadr align))
     oy=(cadr (cadr align))
     bbox=(GetPrbound CV)->bBox
-    (unless bbox (error "Can't find Prbound"))
-    x=(car  (car bbox)) + ox
-    y=(cadr (car bbox)) + oy
-    (when x<0 ox-=(floor x/gx)*gx)
-    (when y<0 oy-=(floor y/gy)*gy)
-    ox:oy
+    (cond (bbox
+           x=(car  (car bbox)) + ox
+           y=(cadr (car bbox)) + oy
+           (when x<0 ox-=(floor x/gx)*gx)
+           (when y<0 oy-=(floor y/gy)*gy)
+           ox:oy
+           )
+          (t 0:0)
+          )
     )
   )
 
