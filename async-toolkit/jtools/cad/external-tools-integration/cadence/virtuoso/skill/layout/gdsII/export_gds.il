@@ -4,8 +4,8 @@
                        (gdsFile nil)
                        (layerMapFile nil)
                        (renameTop t) ; CopyExact applies to top cell too
-                       (flattenVias nil))
-  
+                       (flattenVias nil)
+                       (dbuPerUU (round 1/MfgGrid)))
   (let (TEMP PDK_DIR Command status cellMapFile gdsName)
     (unless CV->objType=="cellView" (error "CV not valid"))
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
@@ -32,6 +32,7 @@
                                " -cellMap '%s'"
                                " -logFile '%s/%s.log'"
                                " -enableColoring"
+                               (if dbuPerUU (sprintf nil " -dbuPerUU %d" dbuPerUU) "")
                                " -strmFile '%s'")
                        CV->libName CV->cellName CV->viewName
                        directory directory layerMapFile
