@@ -136,16 +136,12 @@
              allblockages = (FindBlockageOverlaps abstractCV pin->bBox Via[m-1])
              (foreach via allblockages
                viashape = (car via)
-               (when (GetFigArea viashape) < DefaultWiringPitch
-                 (AttachViaToPin pin via)
-                 )
+               (AttachViaToPin pin via)
                )
              allblockages = (FindBlockageOverlaps abstractCV pin->bBox Via[m])
              (foreach via allblockages
                viashape = (car via)
-               (when (GetFigArea viashape) < DefaultWiringPitch
-                 (AttachViaToPin pin via)
-                 )
+               (AttachViaToPin pin via)
                )
              )
            )
@@ -168,7 +164,7 @@
   (BlockEdgeM1 ?CV abstractCV)
 
   ; save and exit
-  (CopyKeepoutToBlockage abstractCV)
+  (ConvertKeepoutToBlockage abstractCV)
   (SetLefProperties abstractCV CV)
   (dbSave abstractCV)
   abstractCV
@@ -279,58 +275,37 @@
     ; add M1:keepout on edges if M2:fill is used in cell
     (when TechLibName=="731" && hasM2fill (BlockEdgeM1 ?CV abstractCV))
 
-    ; create final boundary shapes and blockage objects
-    ; (leMergeShapes abstractCV->shapes)
-    (CopyKeepoutToBlockage abstractCV)
-    (Colorize ?CV abstractCV ?doBlockages t)
-
-  ; for pins, convert the via- or via+ into a pin with the same net
-  ; try to filter out the big floodfilled blockage
-  (when convertpinvias
-    m = 0
+    ; for pins, convert the via- or via+ into a pin with the same net
+    (when convertpinvias
+      m = 0
+      pinsonlayer = (setof pin allpinfigs (car pin->lpp)==Metal[m])
+      (foreach pin pinsonlayer
+               allblockages = (FindBlockageOverlaps abstractCV pin->bBox Via[m])
+               (foreach via allblockages
+                        viashape = (car via)
+                        (AttachViaToPin pin via)
+                        )
+               )
+      (for m 1 2
            pinsonlayer = (setof pin allpinfigs (car pin->lpp)==Metal[m])
            (foreach pin pinsonlayer
-             allblockages = (FindBlockageOverlaps abstractCV pin->bBox Via[m])
-             (foreach via allblockages
-               viashape = (car via)
-               (when (GetFigArea viashape) < DefaultWiringPitch
-                 (AttachViaToPin pin via)
-                 )
-               )
-             )
-    (for m 1 2
-           pinsonlayer = (setof pin allpinfigs (car pin->lpp)==Metal[m])
-           (foreach pin pinsonlayer
-             allblockages = (FindBlockageOverlaps abstractCV pin->bBox Via[m-1])
-             (foreach via allblockages
-               viashape = (car via)
-               (when (GetFigArea viashape) < DefaultWiringPitch
-                 (AttachViaToPin pin via)
-                 )
-               )
-             allblockages = (FindBlockageOverlaps abstractCV pin->bBox Via[m])
-             (foreach via allblockages
-               viashape = (car via)
-               (when (GetFigArea viashape) < DefaultWiringPitch
-                 (AttachViaToPin pin via)
-                 )
-               )
-             )
+                    allblockages = (FindBlockageOverlaps abstractCV pin->bBox Via[m-1])
+                    (foreach via allblockages
+                             viashape = (car via)
+                             (AttachViaToPin pin via)
+                             )
+                    allblockages = (FindBlockageOverlaps abstractCV pin->bBox Via[m])
+                    (foreach via allblockages
+                             viashape = (car via)
+                             (AttachViaToPin pin via)
+                             )
+                    )
            )
-    )
-
-    ; make all remaining vias a member of NULL net, per Georgois's request
-    nullnet = (dbFindNetByName abstractCV "NULL")
-    (unless nullnet nullnet = (dbCreateNet abstractCV "NULL"))
-    (for m 0 3
-      (foreach viashape abstractCV->shapes
-        (when (car viashape->lpp)==Via[m]
-          (when !viashape->net
-            (dbCreatePin nullnet viashape)
-            )
-          )
-        )
       )
+
+    ; create final boundary shapes and blockage objects
+    (ConvertKeepoutToBlockage abstractCV)
+    (Colorize ?CV abstractCV ?doBlockages t)
 
     ; save and exit
     (SetLefProperties abstractCV CV ?leaf t)
@@ -343,8 +318,8 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Utilities ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; copy MetalKeepout and ViaKeepout to blockage objects
-(defun CopyKeepoutToBlockage (cv)
+; convert MetalKeepout and ViaKeepout to blockage objects
+(defun ConvertKeepoutToBlockage (cv)
   (let (shapes)
     (foreach shape cv->shapes
        (when shape->purpose=="keepout"
@@ -354,10 +329,12 @@
                                              (RectGetPolygonPoints shape->bBox))
                       (dbCreateLayerBlockage cv shape->layerName "fill"
                                              (RectGetPolygonPoints shape->bBox))
-                      (dbDeleteObject shape)
                       )
              )
        )
+    (foreach shape cv->shapes
+             (when shape->purpose=="keepout" (dbDeleteObject shape))
+             )
     )
   t
   )

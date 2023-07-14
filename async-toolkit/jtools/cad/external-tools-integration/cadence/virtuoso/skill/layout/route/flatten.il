@@ -101,7 +101,7 @@ useICV = t
           )
         )
       )
-    (CopyKeepoutToBlockage CV)
+    (ConvertKeepoutToBlockage CV)
 
     ; custom steps
     (RunAfterFlatten ?CV CV)
@@ -495,7 +495,7 @@ useICV = t
     (foreach shape (setof shape pgaCV->shapes shape->pin==nil)
              shape->purpose=KeepoutPurpose
              )
-    (CopyKeepoutToBlockage pgaCV)
+    (ConvertKeepoutToBlockage pgaCV)
 
     ; set fields for LEF export
     (SetLefProperties pgaCV ?powergrid t)
