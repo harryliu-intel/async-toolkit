@@ -85,7 +85,7 @@ PROCEDURE Tag(e : Entry.T) : TEXT =
     S = SET OF CsvCols;
     
   CONST
-    C = S { CsvCols.Tech .. CsvCols.Simu } + S { CsvCols.Temp };
+    C = S { CsvCols.Tech .. CsvCols.Simu } + S { CsvCols.Temp } + S { CsvCols.MoNm };
 
   VAR
     res := "";

@@ -265,6 +265,11 @@ BEGIN
       TechSimulate.ProcDeadline := pp.getNextLongReal()
     END;
 
+    IF pp.keywordPresent("-hspicemodelroot") THEN
+      c.hspiceModelRoot := pp.getNext();
+      c.hspiceModelName := pp.getNext()
+    END;
+    
     IF pp.keywordPresent("-p") THEN
       c.phazz := SET OF Phaz {};
       

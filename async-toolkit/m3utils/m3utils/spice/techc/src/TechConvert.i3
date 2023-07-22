@@ -5,12 +5,12 @@ IMPORT TextWr;
 IMPORT TechConfig;
 IMPORT OSError;
 
-CONST
-  CtPath = "/nfs/site/disks/zsc3_fon_fe_0001/mnystroe/m3utils/spice/ct/AMD64_LINUX/ct";
+CONST (* paths relative to $M3UTILS *)
+  CtPath = "spice/ct/AMD64_LINUX/ct";
 
-  NanosimrdPath = "/nfs/site/disks/zsc3_fon_fe_0001/mnystroe/m3utils/spice/fsdb/src/nanosimrd";
+  NanosimrdPath = "spice/fsdb/src/nanosimrd";
 
-  SpicestreamPath = "/nfs/site/disks/zsc3_fon_fe_0001/mnystroe/m3utils/spice/spicecompress/spicestream/AMD64_LINUX/spicestream";
+  SpicestreamPath = "spice/spicecompress/spicestream/AMD64_LINUX/spicestream";
 
 PROCEDURE DoConvert(READONLY c : TechConfig.T;
                     traceRoot  : Pathname.T; exitOnError : BOOLEAN) : BOOLEAN;

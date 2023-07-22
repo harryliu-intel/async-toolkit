@@ -183,14 +183,15 @@ TYPE
     
     hspiceModelRoot : Pathname.T;
     hspiceModel     : Pathname.T;
+    hspiceModelName := "default";
 
     hspiceLibModels : Pathname.T :=
-        "/p/hdk/cad/pdk/pdk764_r0.4HP3_22ww20.1/cmi/hspice/cmi/lnx86/64bit";
+        "/p/hdk/cad/pdk/pdk783_r0.9_23ww26.5_alpha/cmi/hspice/cmi/lnx86/64bit";
     (* what is this file? *)
 
     pdmiLib         : Pathname.T;
     simRoot := DefSimRoot;
-    xaPath : Pathname.T := "/p/hdk/cad/xa/U-2023.03-1-T/bin/";
+    xaPath : Pathname.T := "/p/hdk/cad/xa/U-2023.03-2/bin/";
 
     para : BOOLEAN; (* parasitic simulation yes/no *)
   END;

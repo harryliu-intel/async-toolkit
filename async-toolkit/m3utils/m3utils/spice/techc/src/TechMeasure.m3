@@ -146,7 +146,7 @@ PROCEDURE DoMeasure(READONLY c : TechConfig.T;
           END;
             
           Wr.PutText(wr,
-                     FN("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
+                     FN("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
                         ARRAY OF TEXT {
                            TechNames[c.tech],
                            CornNames[c.corn],
@@ -160,7 +160,8 @@ PROCEDURE DoMeasure(READONLY c : TechConfig.T;
                            LR(timeResult),
                            LR(meancurrent),
                            LR(leakcurrent),
-                           workDir
+                           workDir,
+                           c.hspiceModelName
                            }));
           Wr.Close(wr);
           RETURN timeResult < 1.0d10  (* measure time is less than 

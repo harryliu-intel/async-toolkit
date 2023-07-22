@@ -8,7 +8,10 @@ TYPE
   Simu, Fano, Volt, Temp,
 
   (* dependent variables : *)
-  Cycl, Curr, Icur, Path
+  Cycl, Curr, Icur, Path,
+
+  (* independent variables : *)
+  MoNm
 
   };
   
@@ -25,7 +28,8 @@ CONST
   CsvColNames = ARRAY CsvCols OF TEXT 
   { "Tech", "Corn", "Tran", "Cell", "Mode",
     "Simu", "Fano", "Volt", "Temp",
-    "Cycl", "Curr", "Icur", "Path"
+    "Cycl", "Curr", "Icur", "Path",
+    "MoNm"
 
   };
   
