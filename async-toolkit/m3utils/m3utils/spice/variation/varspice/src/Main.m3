@@ -232,9 +232,6 @@ PROCEDURE DoMeasure() : LONGREAL
     END
   END DoMeasure;
 
-TYPE
-  Phase = { Mkdir, Copy, CreateVar, RunSim, DoMeasure, Clean };
-
 PROCEDURE MakeMap() : TextTextTbl.T =
   VAR
     map := NEW(TextTextTbl.Default).init();
@@ -243,9 +240,13 @@ PROCEDURE MakeMap() : TextTextTbl.T =
     EVAL map.put("%Z%", Int(z));
     EVAL map.put("@LIBDIR@", LibDir[z][thresh]);
     EVAL map.put("@CELL@", CellName[z][thresh]);
+    EVAL map.put("@HSPICE_MODEL_ROOT@", hspiceModelRoot);
     RETURN map
   END MakeMap;
   
+TYPE
+  Phase = { Mkdir, Copy, CreateVar, RunSim, DoMeasure, Clean };
+
 CONST
   AllPhases = SET OF Phase { FIRST(Phase) .. LAST(Phase) };
   PhaseNames = ARRAY Phase OF TEXT { "mkdir", "copy", "createvar", "runsim", "measure", "clean" };
@@ -265,7 +266,10 @@ VAR
   doNormal     : BOOLEAN;
   doFullNormal : BOOLEAN;
   fullNormals  : LongRealSeq.T;
-  
+
+  hspiceModelRoot : TEXT := "/p/hdk/cad/pdk/pdk783_r0.5_22ww52.5/models/core/hspice/m15_2x_1xa_1xb_4ya_2yb_2yc_3yd__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp";
+  hspiceModelName : TEXT := "0p5";
+
 BEGIN
   TRY
 
@@ -295,6 +299,11 @@ BEGIN
     single := pp.keywordPresent("-single");
     (* just make a single stage slow *)
 
+    IF pp.keywordPresent("-hspicemodelroot") THEN
+      hspiceModelRoot := pp.getNext();
+      hspiceModelName := pp.getNext()
+    END;
+    
     IF pp.keywordPresent("-T") OR pp.keywordPresent("-template") THEN
       templatePath := pp.getNext()
     END;

@@ -3,7 +3,7 @@
 .PARAM vtrue=0.25
 
 .OPTION CMIFLAG=1 CMIUSRFLAG=3 PDMI=1
-.option cmipath='/p/hdk/cad/pdk/pdk783_r0.5_22ww52.5/cmi/hspice/cmi/lnx86/64bit/'
+.option cmipath='/p/hdk/cad/pdk/pdk783_r0.9_23ww26.5_alpha/cmi/hspice/cmi/lnx86/64bit'
 .option cmi02opt=1
 .OPTION POST=fsdb PROBE=1
 .OPTION XA_CMD="set_sim_level -level 6"
@@ -23,7 +23,7 @@
 *.OPTION XA_CMD="set_monte_carlo_option -mc0_header 1"
 *.OPTION XA_CMD="set_monte_carlo_option -dump_waveform 1"
 
-.option search='/p/hdk/cad/pdk/pdk783_r0.5_22ww52.5/models/core/hspice/m15_2x_1xa_1xb_4ya_2yb_2yc_3yd__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp'
+.option search='@HSPICE_MODEL_ROOT@'
 .lib 'p1278_3.hsp' tttt
 
 .option PDMI=1

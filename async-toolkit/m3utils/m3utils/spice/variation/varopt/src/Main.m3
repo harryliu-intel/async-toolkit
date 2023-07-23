@@ -166,8 +166,9 @@ PROCEDURE AttemptEval(base : BaseEvaluator; q : LRVector.T) : LONGREAL
     zStr           := "-z " & Int(z);
 
     opt            := ARRAY BOOLEAN OF TEXT { "", "-single" } [ single ];
-                        
-    cmd            := FN("nbjob run --target %s --class 4C --class SLES12 --mode interactive %s %s %s %s -T %s -r %s %s", ARRAY OF TEXT { NbPool, bin, opt, tranStr, zStr, templatePath, subdirPath, pos } );
+    modelSpec      := F("-hspicemodelroot %s %s", hspiceModelRoot, hspiceModelName);
+    
+    cmd            := FN("nbjob run --target %s --class 4C --class SLES12 --mode interactive %s %s %s %s -T %s -r %s %s %s", ARRAY OF TEXT { NbPool, bin, opt, tranStr, zStr, templatePath, subdirPath, modelSpec, pos } );
     cm             := ProcUtils.RunText(cmd,
                                         stdout := stdout,
                                         stderr := stderr,
@@ -342,6 +343,8 @@ VAR
   maxSumSq     : LONGREAL;
   z            : CARDINAL;
   MaxSumSq     := DefMaxSumSq;
+  hspiceModelRoot : TEXT := "/p/hdk/cad/pdk/pdk783_r0.5_22ww52.5/models/core/hspice/m15_2x_1xa_1xb_4ya_2yb_2yc_3yd__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp";
+  hspiceModelName : TEXT := "0p5";
   
 BEGIN
   IF NbPool = NIL THEN
@@ -367,6 +370,11 @@ BEGIN
       tran := VAL(Lookup(pp.getNext(), TranNames), Tran)
     ELSE
       Debug.Error("Must provide -thresh")
+    END;
+
+    IF pp.keywordPresent("-hspicemodelroot") THEN
+      hspiceModelRoot := pp.getNext();
+      hspiceModelName := pp.getNext()
     END;
 
     doSkip := pp.keywordPresent("-skip");
