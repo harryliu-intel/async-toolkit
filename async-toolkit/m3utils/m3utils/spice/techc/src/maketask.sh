@@ -3,7 +3,7 @@
 # run this script in the "work" subdirectory
 # m3utils/spice/techc/work
 
-M3UTILS=/nfs/site/disks/zsc3_fon_fe_0001/mnystroe/m3utils
+#M3UTILS=/nfs/site/disks/zsc3_fon_fe_0001/mnystroe/m3utils
 ROOTDIR=${M3UTILS}/spice/techc
 SRCDIR=${ROOTDIR}/src
 BINDIR=${ROOTDIR}/program/AMD64_LINUX
@@ -17,6 +17,9 @@ nb_qslot=/XCC/LBM/SD
 
 nb_queue=zsc3_normal
 nb_qslot=/XCC/LBM/RTL
+
+nb_queue=${NBPOOL}
+nb_qslot=${NBQSLOT}
 
 step=4
 # we get about 4 CPUs per machine?  6 ought to be more than enough, 4 might be optimal?
@@ -60,6 +63,26 @@ runmode="default"
 
 trantypes=""
 
+SETUP_ARGS=""
+
+roots="default:default"
+
+1278p3roots="0p5:/p/hdk/cad/pdk/pdk783_r0.5_22ww52.5/models/core/hspice/m15_2x_1xa_1xb_4ya_2yb_2yc_3yd__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp 0p9e:/p/hdk/cad/pdk/pdk783_r0.9e_23ww29.2_beta/models/core/hspice/m15_2x_1xa_1xb_4ya_2yb_2yc_3yd__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp asfit2023ww29:/nfs/site/disks/zsc9_fwr_sd_001/mnystroe/1278_lowvoltage/2023ww29d2/models_core_hspice/1/m14_2x_1xa_1xb_6ya_2yb_2yc__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp"
+
+if [ "$1" == "-aoitech" ]; then
+    runmode="override"
+    volts="0.30"
+    temps="75"
+    modes="dyn"
+    paras="true"
+    corners="tt"
+    step=4
+    techs="1278p3 n3e n5"
+    gates="aoi_z1_0p0sigma aoi_z2_0p0sigma"
+    fo="4"
+    SETUP_ARGS="export SETUP_MC_FILE_ONLY=''"
+fi
+
 if [ "$1" == "-variationlow" ]; then
     runmode="override"
     volts="0.08 0.09 0.10 0.11 0.12 0.13 0.14 0.15 0.16"
@@ -71,8 +94,8 @@ if [ "$1" == "-variationlow" ]; then
     techs="1278p3"
     gates="xor_z1_0p0sigma xor_z1_5p3sigma"
     fo="4"
-    TEMPLATE=${SRCDIR}/ckt_varxor.sp
 fi
+
 if [ "$1" == "-variation" ]; then
     runmode="override"
     volts="0.08 0.09 0.10 0.11 0.12 0.13 0.14 0.15 0.16 0.17 0.18 0.19 0.20 0.22 0.24 0.26 0.28 0.30 0.32 0.34 0.36 0.38 0.40 0.42 0.44 0.45 0.46 0.48 0.50"
@@ -84,7 +107,20 @@ if [ "$1" == "-variation" ]; then
     techs="1278p3"
     gates="xor_z1_0p0sigma xor_z1_5p3sigma xor_z2_0p0sigma xor_z2_5p3sigma"
     fo="4"
-    TEMPLATE=${SRCDIR}/ckt_varxor.sp
+fi
+
+if [ "$1" == "-variationpdk" ]; then
+    runmode="override"
+    volts="0.16 0.18 0.20 0.22 0.24 0.26 0.28 0.30 0.32 0.34 0.36 0.38 0.40 0.45 0.50"
+    temps="-40 0 25 50 65 75 85 95 105 125"
+    modes="dyn"
+    paras="true"
+    corners="tt"
+    step=4
+    techs="1278p3"
+    gates="xor_z1_0p0sigma xor_z1_5p3sigma xor_z2_0p0sigma xor_z2_5p3sigma"
+    fo="4"
+    roots=${1278p3roots}
 fi
 
 if [ "$1" == "-2023-01-18" ]; then
@@ -287,6 +323,7 @@ for mode in ${modes}; do
 for temp in ${temps}; do
 for volt in ${volts}; do
 for tech in ${techs}; do
+for root in ${roots}; do
 
     if [ "${trantypes}" == "" ]; then
         if [ "${tech}" == "n5" ]; then
@@ -319,9 +356,12 @@ for tech in ${techs}; do
     fi
 
     for tran in ${trantypes}; do
-        echo "#!/bin/sh -x" > ${RUNDIR}/${tasknum}.sh
-        echo "hostname" >> ${RUNDIR}/${tasknum}.sh
-        echo "pwd" >> ${RUNDIR}/${tasknum}.sh
+        runfile=${RUNDIR}/${tasknum}.sh
+        echo "#!/bin/sh -x" > ${runfile}
+        echo "hostname" >> ${runfile}
+        echo "pwd" >> ${runfile}
+
+	echo ${SETUP_ARGS} >> ${runfile}
 
         torun="${PROG} \
               -tech ${tech} -corn ${corn} -tran ${tran} \
@@ -330,21 +370,29 @@ for tech in ${techs}; do
               -para ${para} \
               -gate ${gate} -fo ${fo} \
               -d ${RUNDIR}/${tasknum}.run -C"
+
+        if [ "${root}" != "default:default" ]; then
+            shortroot=`echo ${root} | awk -F: '{print $1}'`
+            rootpath=`echo ${root} | awk -F: '{print $2}'`
+
+            torun="${torun} -hspicemodelroot ${rootpath} ${shortroot}"
+        fi
         
         echo "${torun} -p setup -p simulate" \
-             >> ${RUNDIR}/${tasknum}.sh
+             >> ${runfile}
 
         echo "${torun} -p convert -p clean" \
-             >> ${RUNDIR}/${tasknum}.sh
+             >> ${runfile}
         
         echo "${torun} -p measure" \
-             >> ${RUNDIR}/${tasknum}.sh
+             >> ${runfile}
         
-        chmod +x ${RUNDIR}/${tasknum}.sh
+        chmod +x ${runfile}
         
         tasknum=`expr $tasknum + 1`
     done
     
+done
 done
 done
 done

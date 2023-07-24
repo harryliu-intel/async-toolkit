@@ -12,6 +12,7 @@ IMPORT TechConfig;
 FROM TechConfig IMPORT Simu;
 IMPORT FS;
 IMPORT CitTextUtils;
+IMPORT Env;
 
 CONST LR = LongReal;
 
@@ -95,9 +96,9 @@ PROCEDURE DoConvert(READONLY c : TechConfig.T;
     
     cmd := FN("%s -fsdb %s -compress %s -threads 4 -wthreads 1 -format CompressedV1 -R %s %s %s",
              ARRAY OF TEXT {
-    CtPath,
-    NanosimrdPath,
-    SpicestreamPath,
+    M3Utils & "/" & CtPath,
+    M3Utils & "/" & NanosimrdPath,
+    M3Utils & "/" & SpicestreamPath,
     
     LR(MAX(c.timestep, 50.0d-12)), fsdbPath, traceRoot
     });
@@ -146,4 +147,8 @@ PROCEDURE DoConvert(READONLY c : TechConfig.T;
     RETURN res
   END DoConvert;
 
-BEGIN END TechConvert.
+VAR
+  M3Utils := Env.Get("M3UTILS");
+BEGIN
+  <*ASSERT M3Utils # NIL*>
+END TechConvert.

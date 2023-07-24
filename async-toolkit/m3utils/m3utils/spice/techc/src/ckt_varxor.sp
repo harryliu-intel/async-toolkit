@@ -4,6 +4,8 @@
 
 @OPTIONS@
 
+@MC_OPTIONS@
+
 .option search='@HSPICE_MODEL_ROOT@'
 
 .OPTION AUTOSTOP
@@ -144,7 +146,7 @@ Rsensey vissy 0 1
 * 1-ohm resistor from vissx to ground
 
 * Simulate
-.TRAN @TIMESTEP@ @NANOSECONDS@ns sweep monte=list(@MCIDX@:@MCIDX@)
+.TRAN @TIMESTEP@ @NANOSECONDS@ns  @MC_SPEC@
 
 .variation
         option block_name=extern_data_@THRESH@_z@Z@

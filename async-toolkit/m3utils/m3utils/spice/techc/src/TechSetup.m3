@@ -19,6 +19,7 @@ FROM TechConfig IMPORT TranNames, GateNames, TechNames, TechCorp, TemplateNames;
 
 FROM TechTechs IMPORT Techs;
 FROM TechConfig IMPORT Gate1;
+IMPORT Env;
 IMPORT Thread;
 
 <*FATAL Thread.Alerted*>
@@ -29,6 +30,11 @@ CONST TE = Text.Equal;
 
       Verbose = TRUE;
 
+VAR
+  DoMcFileOnly := Env.Get("SETUP_MC_FILE_ONLY") # NIL;
+  (* set this env. var to generate the .mc0 file to get the names of the
+     varying parameters *)
+  
 CONST    
   StdPlugText = "vcc vssx";
 
@@ -107,7 +113,10 @@ PROCEDURE MapCommon(READONLY c : Config; map : TextTextTbl.T)=
       EVAL map.put("@T1B@", "xi");
       EVAL map.put("@T1C@", "");
     |
-      Gate.Aoi =>
+      Gate.Aoi,
+      Gate.Aoi_Z1_0p0sigma, Gate.Aoi_Z1_5p3sigma,
+      Gate.Aoi_Z2_0p0sigma, Gate.Aoi_Z2_5p3sigma
+      =>
       (* Intel terminal order is a b c  where b & c are the symmetric inputs
          TSMC terminal order is A1 A2 B *)
       CASE TechCorp[c.tech] OF
@@ -130,7 +139,9 @@ PROCEDURE MapCommon(READONLY c : Config; map : TextTextTbl.T)=
         EVAL map.put("@T1C@", "vcc");
       END        
     |
-      Gate.Oai =>
+      Gate.Oai,
+      Gate.Oai_Z1_0p0sigma, Gate.Oai_Z1_5p3sigma,
+      Gate.Oai_Z2_0p0sigma, Gate.Oai_Z2_5p3sigma =>
       <*ASSERT FALSE*>
     |
       Gate.Xor_Z1_0p0sigma, Gate.Xor_Z1_5p3sigma,
@@ -145,25 +156,32 @@ PROCEDURE MapCommon(READONLY c : Config; map : TextTextTbl.T)=
       EVAL map.put("@T1C@", "")
     END;
 
-    CASE c.gate OF
-      Gate.Xor_Z1_0p0sigma,
-      Gate.Xor_Z2_0p0sigma =>
-      EVAL map.put("@MCIDX@", "1");
-    |
-      Gate.Xor_Z1_5p3sigma,
-      Gate.Xor_Z2_5p3sigma =>
-      EVAL map.put("@MCIDX@", "2");
+    IF DoMcFileOnly THEN
+      EVAL map.put("@MC_OPTIONS@", ".option mc_file_only=yes");
+      EVAL map.put("@MC_SPEC@", "sweep monte=2");
     ELSE
-      (* skip *)
+      EVAL map.put("@MC_OPTIONS@", "");
+
+      CASE c.gate OF
+        Gate.Xor_Z1_0p0sigma, Gate.Xor_Z2_0p0sigma,
+        Gate.Aoi_Z1_0p0sigma, Gate.Aoi_Z2_0p0sigma =>
+        EVAL map.put("@MC_SPEC@", "sweep monte=list(1:1)");
+      |
+        Gate.Xor_Z1_5p3sigma, Gate.Xor_Z2_5p3sigma,
+        Gate.Aoi_Z1_5p3sigma, Gate.Aoi_Z2_5p3sigma =>
+        EVAL map.put("@MC_SPEC@", "sweep monte=list(2:2)");
+      ELSE
+        (* skip *)
+      END
     END;
 
     CASE c.gate OF
-      Gate.Xor_Z1_0p0sigma,
-      Gate.Xor_Z1_5p3sigma =>
+      Gate.Xor_Z1_0p0sigma, Gate.Xor_Z1_5p3sigma,
+      Gate.Aoi_Z1_0p0sigma, Gate.Aoi_Z1_5p3sigma =>
       EVAL map.put("@Z@", "1");
     |
-      Gate.Xor_Z2_0p0sigma,
-      Gate.Xor_Z2_5p3sigma =>
+      Gate.Xor_Z2_0p0sigma, Gate.Xor_Z2_5p3sigma,
+      Gate.Aoi_Z2_0p0sigma, Gate.Aoi_Z2_5p3sigma =>
       EVAL map.put("@Z@", "2");
     ELSE
       (* skip *)

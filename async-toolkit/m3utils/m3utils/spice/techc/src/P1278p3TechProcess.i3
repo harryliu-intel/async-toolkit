@@ -3,6 +3,19 @@ INTERFACE P1278p3TechProcess;
 IMPORT TechProcess;
 FROM TechConfig  IMPORT Tran, Corn, Gate;
 FROM TechProcess IMPORT TranSufxs;
+IMPORT Pathname;
+
+TYPE
+  HSpiceModels     = { R0p5, R0p8, R0p9e_beta, AsFit2023WW29 };
+  
+CONST
+  HSpiceModelNames = ARRAY HSpiceModels OF TEXT { "0p5", "0p8", "0p9e_beta", "asfit2023ww29" };
+
+  HSpiceModelRoots = ARRAY HSpiceModels OF Pathname.T {
+  "/p/hdk/cad/pdk/pdk783_r0.5_22ww52.5/models/core/hspice/m15_2x_1xa_1xb_4ya_2yb_2yc_3yd__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp",
+  "/p/hdk/cad/pdk/pdk783_r0.8_23ww24.2/models/core/hspice/m14_2x_1xa_1xb_6ya_2yb_2yc__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp",
+  "/p/hdk/cad/pdk/pdk783_r0.9e_23ww29.2_beta/models/core/hspice/m15_2x_1xa_1xb_4ya_2yb_2yc_3yd__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp",
+  "/nfs/site/disks/zsc9_fwr_sd_001/mnystroe/1278_lowvoltage/2023ww29d2/models_core_hspice/1/m14_2x_1xa_1xb_6ya_2yb_2yc__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp" };
 
 CONST
   P = TechProcess.T {
@@ -20,8 +33,7 @@ CONST
 
   hspiceModel := "p1278_3.hsp",
 
-
-  hspiceModelRoot :="/p/hdk/cad/pdk/pdk783_r0.5_22ww52.5/models/core/hspice/m15_2x_1xa_1xb_4ya_2yb_2yc_3yd__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp",
+  hspiceModelRoot := HSpiceModelRoots[HSpiceModels.R0p5],
 
   cornNames :=ARRAY Corn OF TEXT {
   "tttt",
@@ -40,7 +52,17 @@ CONST
     Xor1Paths,
     Xor1Paths,
     Xor2Paths,
-    Xor2Paths
+    Xor2Paths,
+
+    Aoi1Paths,
+    Aoi1Paths,
+    Aoi2Paths,
+    Aoi2Paths,
+
+    Oai1Paths,
+    Oai1Paths,
+    Oai2Paths,
+    Oai2Paths
   },
 
   cellNames :=ARRAY Gate OF ARRAY Tran OF TEXT {
@@ -52,8 +74,18 @@ CONST
     Xor1CellNames,
     Xor1CellNames,
     Xor2CellNames,
-    Xor2CellNames
-  },
+    Xor2CellNames,
+
+    Aoi1CellNames,
+    Aoi1CellNames,
+    Aoi2CellNames,
+    Aoi2CellNames,
+
+    Oai1CellNames,
+    Oai1CellNames,
+    Oai2CellNames,
+    Oai2CellNames
+},
 
   plugText :=""
 
@@ -61,16 +93,24 @@ CONST
 
   StdCellRoot = "/p/hdk/cad/stdcells/lib783_i0s_160h_50pp/pdk050_r3v2p0_efv";
 
-  StdCellUlvtRoot = StdCellRoot & "/base_ulvt/spf/lib783_i0s_160h_50pp_base_ulvt_100c_tttt_cmax/";
-  StdCellLvtRoot = StdCellRoot & "/base_lvt/spf/lib783_i0s_160h_50pp_base_lvt_100c_tttt_cmax/";
-  StdCellSvtRoot = StdCellRoot & "/base_svt/spf/lib783_i0s_160h_50pp_base_svt_100c_tttt_cmax/";
-  StdCellHvtRoot = StdCellRoot & "/base_hvt/spf/lib783_i0s_160h_50pp_base_hvt_100c_tttt_cmax/";
+  StdCellUlvtRoot = StdCellRoot & "/base_ulvt/spf/lib783_i0s_160h_50pp_base_ulvt_100c_tttt_ctyp/";
+  StdCellLvtRoot = StdCellRoot & "/base_lvt/spf/lib783_i0s_160h_50pp_base_lvt_100c_tttt_ctyp/";
+  StdCellSvtRoot = StdCellRoot & "/base_svt/spf/lib783_i0s_160h_50pp_base_svt_100c_tttt_ctyp/";
+  StdCellHvtRoot = StdCellRoot & "/base_hvt/spf/lib783_i0s_160h_50pp_base_hvt_100c_tttt_ctyp/";
 
-  StdCellUlvt1Root = StdCellRoot & "/ldrdsibase_ulvt/spf/lib783_i0s_160h_50pp_ldrdsibase_ulvt_100c_tttt_ctyp/";
-  StdCellLvt1Root = StdCellRoot & "/ldrdsibase_lvt/spf/lib783_i0s_160h_50pp_ldrdsibase_lvt_100c_tttt_ctyp/";
+  (* Z1 paths *)
+  
+  StdCellUlvt1Root = StdCellRoot & "/ldrbase_ulvt/spf/lib783_i0s_160h_50pp_ldrbase_ulvt_100c_tttt_ctyp/";
+  StdCellLvt1Root = StdCellRoot & "/ldrbase_lvt/spf/lib783_i0s_160h_50pp_ldrbase_lvt_100c_tttt_ctyp/";
+  StdCellSvt1Root = StdCellRoot & "/ldrbase_svt/spf/lib783_i0s_160h_50pp_ldrbase_svt_100c_tttt_ctyp/";
+  StdCellHvt1Root = StdCellRoot & "/ldrbase_hvt/spf/lib783_i0s_160h_50pp_ldrbase_hvt_100c_tttt_ctyp/";
+
+  (* xor (only) paths *)
+  XorStdCellUlvt1Root = StdCellRoot & "/ldrdsibase_ulvt/spf/lib783_i0s_160h_50pp_ldrdsibase_ulvt_100c_tttt_ctyp/";
+  XorStdCellLvt1Root = StdCellRoot & "/ldrdsibase_lvt/spf/lib783_i0s_160h_50pp_ldrdsibase_lvt_100c_tttt_ctyp/";
     
-  StdCellUlvt2Root = StdCellRoot & "/dsibase_ulvt/spf/lib783_i0s_160h_50pp_dsibase_ulvt_100c_tttt_ctyp/";
-  StdCellLvt2Root = StdCellRoot & "/dsibase_lvt/spf/lib783_i0s_160h_50pp_dsibase_lvt_100c_tttt_ctyp/";
+  XorStdCellUlvt2Root = StdCellRoot & "/dsibase_ulvt/spf/lib783_i0s_160h_50pp_dsibase_ulvt_100c_tttt_ctyp/";
+  XorStdCellLvt2Root = StdCellRoot & "/dsibase_lvt/spf/lib783_i0s_160h_50pp_dsibase_lvt_100c_tttt_ctyp/";
     
   BufPaths = ARRAY Tran OF TEXT {
     NIL,
@@ -104,9 +144,9 @@ CONST
 
   Xor1Paths = ARRAY Tran OF TEXT {
     NIL,
-    StdCellUlvt1Root & "i0sxor002aa1n01x1.spf",
+    XorStdCellUlvt1Root & "i0sxor002aa1n01x1.spf",
     NIL,
-    StdCellLvt1Root & "i0sxor002ab1n01x1.spf",
+    XorStdCellLvt1Root & "i0sxor002ab1n01x1.spf",
     NIL,
     NIL,
     NIL
@@ -114,9 +154,9 @@ CONST
   
   Xor2Paths = ARRAY Tran OF TEXT {
     NIL,
-    StdCellUlvt2Root & "i0sxor002aa1n02x5.spf",
+    XorStdCellUlvt2Root & "i0sxor002aa1n02x5.spf",
     NIL,
-    StdCellLvt2Root & "i0sxor002ab1n02x5.spf",
+    XorStdCellLvt2Root & "i0sxor002ab1n02x5.spf",
     NIL,
     NIL,
     NIL
@@ -154,6 +194,18 @@ CONST
     "i0saoi012ad1n02x5"
   };
 
+  Aoi1CellNames = ARRAY Tran OF TEXT {
+    NIL,
+    "i0saoi012aa1n01x1",
+    NIL,
+    "i0saoi012ab1n01x1",
+    NIL,
+    "i0saoi012ac1n01x1",
+    "i0saoi012ad1n01x1"
+  };
+
+  Aoi2CellNames = AoiCellNames;
+
   OaiCellNames = ARRAY Tran OF TEXT {
     NIL,
     "i0soai012aa1n02x5",
@@ -163,6 +215,18 @@ CONST
     "i0soai012ac1n02x5",
     "i0soai012ad1n02x5"
   };
+
+  Oai1CellNames = ARRAY Tran OF TEXT {
+    NIL,
+    "i0soai012aa1n01x1",
+    NIL,
+    "i0soai012ab1n01x1",
+    NIL,
+    "i0soai012ac1n01x1",
+    "i0soai012ad1n01x1"
+  };
+
+  Oai2CellNames = OaiCellNames;
 
   AoiCellPaths = ARRAY Tran OF TEXT {
     NIL,
@@ -174,6 +238,18 @@ CONST
     StdCellHvtRoot & "i0saoi012ad1n02x5.spf"
   };
 
+  Aoi1Paths = ARRAY Tran OF TEXT {
+    NIL,
+    StdCellUlvt1Root & "i0saoi012aa1n01x1.spf",
+    NIL,
+    StdCellLvt1Root & "i0saoi012ab1n01x1.spf",
+    NIL,
+    StdCellSvt1Root & "i0saoi012ac1n01x1.spf",
+    StdCellHvt1Root & "i0saoi012ad1n01x1.spf"
+  };
+
+  Aoi2Paths = AoiCellPaths;
+
   OaiCellPaths = ARRAY Tran OF TEXT {
     NIL,
     StdCellUlvtRoot & "i0soai012aa1n02x5.spf",
@@ -184,6 +260,18 @@ CONST
     StdCellHvtRoot & "i0soai012ad1n02x5.spf"
   };
 
+  Oai1Paths = ARRAY Tran OF TEXT {
+    NIL,
+    StdCellUlvt1Root & "i0soai012aa1n01x1.spf",
+    NIL,
+    StdCellLvt1Root & "i0soai012ab1n01x1.spf",
+    NIL,
+    StdCellSvt1Root & "i0soai012ac1n01x1.spf",
+    StdCellHvt1Root & "i0soai012ad1n01x1.spf"
+  };
+
+  Oai2Paths = OaiCellPaths;
+  
 CONST
   Brand = "P1278p3TechProcess";
 

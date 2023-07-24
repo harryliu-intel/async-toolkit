@@ -25,6 +25,7 @@ IMPORT TextReader;
 IMPORT Thread;
 FROM TechConfig IMPORT Tran, TranNames;
 FROM TechLookup IMPORT Lookup;
+IMPORT Env;
 
 TYPE
   T = LRVector.T;
@@ -33,7 +34,13 @@ CONST
   DefMult     = -1.0d0; (* we want to maximize the cycle time *)
   Sqrt10      =  3.1623d0;
   DefMaxSumSq =  5.3d0; (* \approx sqrt(2) * erf^-1 ( 1 - 1/(10 * 1e6) ) *)
+  DefRhoBeg   =  4.0d0;
   N           =  NV * 2; (* variations per gate times 2 gates *)
+
+VAR
+  NbPool  := Env.Get("NBPOOL");
+  NbQslot := Env.Get("NBQSLOT");
+  M3Utils := Env.Get("M3UTILS");
   
 TYPE
   BaseEvaluator = LRScalarField.T OBJECT
@@ -143,7 +150,7 @@ PROCEDURE AttemptEval(base : BaseEvaluator; q : LRVector.T) : LONGREAL
                       2.0d0;
         
         
-    bin            := VarSpiceBin;
+    bin            := M3Utils & "/" & VarSpiceBin;
 
     Owr            := NEW(TextWr.T).init();
     Ewr            := NEW(TextWr.T).init();
@@ -159,8 +166,9 @@ PROCEDURE AttemptEval(base : BaseEvaluator; q : LRVector.T) : LONGREAL
     zStr           := "-z " & Int(z);
 
     opt            := ARRAY BOOLEAN OF TEXT { "", "-single" } [ single ];
-                        
-    cmd            := FN("nbjob run --target zsc3_normal --class 4C --mode interactive %s %s %s %s -T %s -r %s %s", ARRAY OF TEXT { bin, opt, tranStr, zStr, templatePath, subdirPath, pos } );
+    modelSpec      := F("-hspicemodelroot %s %s", hspiceModelRoot, hspiceModelName);
+    
+    cmd            := FN("nbjob run --target %s --class 4C --class SLES12 --mode interactive %s %s %s %s -T %s -r %s %s %s", ARRAY OF TEXT { NbPool, bin, opt, tranStr, zStr, templatePath, subdirPath, modelSpec, pos } );
     cm             := ProcUtils.RunText(cmd,
                                         stdout := stdout,
                                         stderr := stderr,
@@ -212,7 +220,7 @@ PROCEDURE AttemptEval(base : BaseEvaluator; q : LRVector.T) : LONGREAL
   END AttemptEval;
 
 CONST
-  VarSpiceBin = "/nfs/site/disks/zsc3_fon_fe_0001/mnystroe/m3utils/spice/variation/varspice/AMD64_LINUX/vary";
+  VarSpiceBin = "spice/variation/varspice/AMD64_LINUX/vary";
 
 VAR RhoBeg := FIRST(LONGREAL); (* set in the main body *)
     
@@ -334,8 +342,21 @@ VAR
   tran         := Tran.Ulvt;
   maxSumSq     : LONGREAL;
   z            : CARDINAL;
-
+  MaxSumSq     := DefMaxSumSq;
+  hspiceModelRoot : TEXT := "/p/hdk/cad/pdk/pdk783_r0.5_22ww52.5/models/core/hspice/m15_2x_1xa_1xb_4ya_2yb_2yc_3yd__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp";
+  hspiceModelName : TEXT := "0p5";
+  
 BEGIN
+  IF NbPool = NIL THEN
+    Debug.Error("Must set NBPOOL env var.")
+  END;
+  IF NbQslot = NIL THEN
+    Debug.Error("Must set NBQSLOT env var.")
+  END;
+  IF M3Utils = NIL THEN
+    Debug.Error("Must set M3UTILS env var.")
+  END;
+  
   TRY
     IF pp.keywordPresent("-T") OR pp.keywordPresent("-template") THEN
       templatePath := pp.getNext()
@@ -351,6 +372,11 @@ BEGIN
       Debug.Error("Must provide -thresh")
     END;
 
+    IF pp.keywordPresent("-hspicemodelroot") THEN
+      hspiceModelRoot := pp.getNext();
+      hspiceModelName := pp.getNext()
+    END;
+
     doSkip := pp.keywordPresent("-skip");
 
     firstOnly := pp.keywordPresent("-firstonly");
@@ -361,18 +387,24 @@ BEGIN
       Debug.Error("Must provide -z")
     END;
 
+    IF pp.keywordPresent("-sumsq") THEN
+      MaxSumSq := pp.getNextLongReal()
+    END;
+
     pp.skipParsed();
   EXCEPT
     ParseParams.Error => Debug.Error("Can't parse command line")
   END;
 
   IF single THEN
-    maxSumSq := DefMaxSumSq
+    maxSumSq := MaxSumSq
   ELSE
-    maxSumSq := DefMaxSumSq / Sqrt10
+    maxSumSq := MaxSumSq / Sqrt10
   END;
 
-  IF doSkip OR NOT single THEN RhoBeg := 1.0d0 ELSE RhoBeg := 4.0d0 END;
+  RhoBeg := DefRhoBeg * maxSumSq / DefMaxSumSq + 0.01d0;
+
+  Debug.Out("RhoBeg=" & LongReal(RhoBeg));
   
   IF templatePath = NIL OR rundirPath = NIL THEN
     Debug.Error("Must specify template [-T] and rundir [-r]")

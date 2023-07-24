@@ -133,7 +133,12 @@ PROCEDURE DoMeasure(READONLY c : TechConfig.T;
             Gate.Xor_Z1_0p0sigma,  
             Gate.Xor_Z1_5p3sigma,
             Gate.Xor_Z2_0p0sigma,  
-            Gate.Xor_Z2_5p3sigma
+            Gate.Xor_Z2_5p3sigma,
+
+            Gate.Aoi_Z1_0p0sigma,  
+            Gate.Aoi_Z1_5p3sigma,
+            Gate.Aoi_Z2_0p0sigma,  
+            Gate.Aoi_Z2_5p3sigma
             =>
             timeResult := latency
           ELSE
@@ -141,7 +146,7 @@ PROCEDURE DoMeasure(READONLY c : TechConfig.T;
           END;
             
           Wr.PutText(wr,
-                     FN("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
+                     FN("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
                         ARRAY OF TEXT {
                            TechNames[c.tech],
                            CornNames[c.corn],
@@ -155,7 +160,8 @@ PROCEDURE DoMeasure(READONLY c : TechConfig.T;
                            LR(timeResult),
                            LR(meancurrent),
                            LR(leakcurrent),
-                           workDir
+                           workDir,
+                           c.hspiceModelName
                            }));
           Wr.Close(wr);
           RETURN timeResult < 1.0d10  (* measure time is less than 

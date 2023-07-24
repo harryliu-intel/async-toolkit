@@ -202,6 +202,14 @@ PROCEDURE Emit(typeNm : TEXT;
         Wr.PutText(wr, ".probe ");
         Wr.PutText(wr, type.probes.get(i));
         Wr.PutChar(wr, '\n')
+      END;
+
+      IF probeSubckts THEN
+        FOR i := 0 TO type.params.size() - 1 DO
+          Wr.PutText(wr, ".probe v(");
+          Wr.PutText(wr, type.params.get(i));
+          Wr.PutText(wr, ")\n")
+        END
       END
     END Probes;
 
@@ -266,9 +274,13 @@ VAR
   noprobe    := SET OF CHAR { };
   ofn        : Pathname.T := "-";
   doTransistorCkts : BOOLEAN;
+  probeSubckts : BOOLEAN;
   
 BEGIN
   TRY
+
+    probeSubckts := pp.keywordPresent("-probesubckts");
+    
     IF pp.keywordPresent("-i") THEN
       spiceFn := pp.getNext()
     END;

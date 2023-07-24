@@ -33,6 +33,14 @@ CONST
     BufPaths,
     BufPaths,
     BufPaths,
+    BufPaths,
+    BufPaths,
+    BufPaths,
+    BufPaths,
+    BufPaths,
+    BufPaths,
+    BufPaths,
+    BufPaths,
     BufPaths
   },
 
@@ -45,7 +53,15 @@ CONST
     NilCellNames,
     NilCellNames,
     NilCellNames,
-    NilCellNames
+    NilCellNames,
+    AoiCellNames,  (* should be Z1 *)
+    AoiCellNames,  (* should be Z1 *)
+    AoiCellNames,  (* should be Z2 *)
+    AoiCellNames,  (* should be Z2 *)
+    OaiCellNames,  (* should be Z1 *)
+    OaiCellNames,  (* should be Z1 *)
+    OaiCellNames,  (* should be Z2 *)
+    OaiCellNames   (* should be Z2 *)
   },
     plugText := "vcc vssx"
   };

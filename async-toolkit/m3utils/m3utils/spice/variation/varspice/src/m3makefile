@@ -3,6 +3,7 @@ import ("cit_util")
 import ("parseparams")
 import ("varosc")
 import ("techc")
+import ("normaldev")
 
 implementation ("Main")
 

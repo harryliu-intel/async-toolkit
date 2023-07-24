@@ -711,6 +711,19 @@
         (begin (repeat) (loop (- k 1)))))
   )
 
+(define (plot-the-samples)
+  (define *min-sample*  1)
+  (define *max-sample* 14)
+  (let loop ((i *min-sample*))
+    (if (> i *max-sample*)
+        'ok
+        (begin
+          (plot (R i) l0 l1 (string-append "R" (stringify i) ".dat") 200)
+          (loop (+ i 1))
+          )
+        )
+    )
+  )
 
 (define (run-example! cct min-cri min-r9)
   (dis "run-example " min-cri " " min-r9 dnl)

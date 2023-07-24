@@ -3,6 +3,8 @@
 .PARAM vtrue=0.25
 
 .OPTION CMIFLAG=1 CMIUSRFLAG=3 PDMI=1
+.option cmipath='/p/hdk/cad/pdk/pdk783_r0.9_23ww26.5_alpha/cmi/hspice/cmi/lnx86/64bit'
+.option cmi02opt=1
 .OPTION POST=fsdb PROBE=1
 .OPTION XA_CMD="set_sim_level -level 6"
 .OPTION XA_CMD="set_wildcard_rule -match* one"
@@ -21,8 +23,12 @@
 *.OPTION XA_CMD="set_monte_carlo_option -mc0_header 1"
 *.OPTION XA_CMD="set_monte_carlo_option -dump_waveform 1"
 
-.option search='/p/hdk/cad/pdk/pdk783_r0.5_22ww52.5/models/core/hspice/m15_2x_1xa_1xb_4ya_2yb_2yc_3yd__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp'
+.option search='@HSPICE_MODEL_ROOT@'
 .lib 'p1278_3.hsp' tttt
+
+.option PDMI=1
+.option PDMI_LIB='/p/hdk/cad/pdk/pdk783_r0.5_22ww52.5//cmi/hspice/pdmi/lnx86/64bit/pdmi.so'
+
 
 * std cell library with parasitics (optional):
 .include "@LIBDIR@/@CELL@.spf"
@@ -46,42 +52,34 @@ Mqp2 o1 b vcc  vcc  phpbulvt w=2 l=14e-9 m=1 nf=1
 * Generic ring stage (make appropriate in/out/power connections to dut_cell)
 .subckt ring_stage in out vcc vssx
 
+* FO3 per Andrew
+
 *      A     B     OUT    <--PWR-->
-X0     in    vssx  xi     vcc  vssx   @CELL@
-X1     vssx  xi    out    vcc  vssx   @CELL@
+X0     in    vcc  xi     vcc  vssx   @CELL@
+X1     vcc  xi    out    vcc  vssx   @CELL@
 
 * dummy loads on xi
-xload0 xi    vssx  unc[0] vcc  vssx   @CELL@
-xload1 xi    vssx  unc[1] vcc  vssx   @CELL@
-xload2 xi    vssx  unc[2] vcc  vssx   @CELL@
+xload0 xi    vcc  unc[0] vcc  vssx   @CELL@
+xload1 xi    vcc  unc[1] vcc  vssx   @CELL@
+*xload2 xi    vcc  unc[2] vcc  vssx   @CELL@
 
-.ends
-
-* Ring stage with fanout=N
-*   => N-1 extra copies of dut_cell as load driven by in, with separate supply
-
-.subckt ring_stage_fo4 in out vcc vload vssx
-
-xstage in out    vload vssx ring_stage
-
-* dummy loads on input
-xload0 in unc[0] vload vssx ring_stage
-xload1 in unc[1] vload vssx ring_stage
-xload2 in unc[2] vload vssx ring_stage
+xload3 out    vcc  unc[3] vcc  vssx   @CELL@
+xload4 out    vcc  unc[4] vcc  vssx   @CELL@
+*xload5 out    vcc  unc[5] vcc  vssx   @CELL@
 
 .ends
 
 * Ring oscillator with 20 DUT stages and 1 NAND2 enable
-X1  x[0]              x[1]       vcc  vload vssx ring_stage_fo4
-X2  x[1]              x[2]       vcc  vload vssx ring_stage_fo4
-X3  x[2]              x[3]       vcc  vload vssx ring_stage_fo4
-X4  x[3]              x[4]       vcc  vload vssx ring_stage_fo4
-X5  x[4]              x[5]       vcc  vload vssx ring_stage_fo4
-X6  x[5]              x[6]       vcc  vload vssx ring_stage_fo4
-X7  x[6]              x[7]       vcc  vload vssx ring_stage_fo4
-X8  x[7]              x[8]       vcc  vload vssx ring_stage_fo4
-X9  x[8]              x[9]       vcc  vload vssx ring_stage_fo4
-X10 x[9]              x[10]      vcc  vload vssx ring_stage_fo4
+X1  x[0]              x[1]        vload vssx ring_stage
+X2  x[1]              x[2]        vload vssx ring_stage
+X3  x[2]              x[3]        vload vssx ring_stage
+X4  x[3]              x[4]        vload vssx ring_stage
+X5  x[4]              x[5]        vload vssx ring_stage
+X6  x[5]              x[6]        vload vssx ring_stage
+X7  x[6]              x[7]        vload vssx ring_stage
+X8  x[7]              x[8]        vload vssx ring_stage
+X9  x[8]              x[9]        vload vssx ring_stage
+X10 x[9]              x[10]       vload vssx ring_stage
 X21 _RESET x[10]      x[0]       vcc   vssx nand_cell
 
 * Probes (for debugging)

@@ -27,6 +27,9 @@ FROM TechLookup IMPORT Lookup;
 IMPORT TechTemplate;
 IMPORT TextLRPair;
 IMPORT TextLRPairArraySort;
+IMPORT NormalDeviate;
+IMPORT Random;
+IMPORT LongRealSeq;
 
 <*FATAL Thread.Alerted*>
 
@@ -68,7 +71,14 @@ PROCEDURE WriteVar(wr : Wr.T; map : TextTextTbl.T) RAISES { Wr.Failure } =
     data    : ARRAY [ 0 .. N - 1 ] OF TextLRPair.T;
     pidx    : CARDINAL;
     qidx    : CARDINAL;
+    rand    : Random.T;
+    
   BEGIN
+    IF doFullNormal THEN
+      rand        := NEW(Random.Default).init();
+      fullNormals := NEW(LongRealSeq.T).init();
+    END;
+    
     Wr.PutText(wr, ".data extern_data\n");
     Wr.PutText(wr, "index ");
     qidx := 0;
@@ -78,7 +88,7 @@ PROCEDURE WriteVar(wr : Wr.T; map : TextTextTbl.T) RAISES { Wr.Failure } =
         FOR tran := FIRST(TranSpec) TO LAST(TranSpec) DO
           FOR var := FIRST(Var) TO LAST(Var) DO
             WITH nam =
-                 MapText(F("X%s.xstage.X%s.%s:@:%s:@:ILN",
+                 MapText(F("X%s.X%s.%s:@:%s:@:ILN",
                            Int(stage),
                            Int(sub),
                            TranSpec[tran],
@@ -106,7 +116,12 @@ PROCEDURE WriteVar(wr : Wr.T; map : TextTextTbl.T) RAISES { Wr.Failure } =
             VAR
               val : LONGREAL;
             BEGIN
-              IF single AND stage # 4 THEN
+              IF doFullNormal THEN
+                WITH nd = NormalDeviate.Get(rand, 0.0d0, 1.0d0) DO
+                  val := nd;
+                  fullNormals.addhi(nd)
+                END
+              ELSIF single AND stage # 4 THEN
                 val := 0.0d0;
               ELSE
                 val := p[pidx];
@@ -217,9 +232,6 @@ PROCEDURE DoMeasure() : LONGREAL
     END
   END DoMeasure;
 
-TYPE
-  Phase = { Mkdir, Copy, CreateVar, RunSim, DoMeasure };
-
 PROCEDURE MakeMap() : TextTextTbl.T =
   VAR
     map := NEW(TextTextTbl.Default).init();
@@ -228,26 +240,45 @@ PROCEDURE MakeMap() : TextTextTbl.T =
     EVAL map.put("%Z%", Int(z));
     EVAL map.put("@LIBDIR@", LibDir[z][thresh]);
     EVAL map.put("@CELL@", CellName[z][thresh]);
+    EVAL map.put("@HSPICE_MODEL_ROOT@", hspiceModelRoot);
     RETURN map
   END MakeMap;
   
+TYPE
+  Phase = { Mkdir, Copy, CreateVar, RunSim, DoMeasure, Clean };
+
 CONST
   AllPhases = SET OF Phase { FIRST(Phase) .. LAST(Phase) };
-  PhaseNames = ARRAY Phase OF TEXT { "mkdir", "copy", "createvar", "runsim", "measure" };
+  PhaseNames = ARRAY Phase OF TEXT { "mkdir", "copy", "createvar", "runsim", "measure", "clean" };
   
 VAR
-  p := P { 0.1d0, .. };
-  exact : BOOLEAN;
-  pp       := NEW(ParseParams.T).init(Stdio.stderr);
+  p                 := P { 0.1d0, .. };
+  pp                := NEW(ParseParams.T).init(Stdio.stderr);
+  phases            := SET OF Phase {};
+  gotPhase          := FALSE;
+  z                 := LAST(CARDINAL);
+
+  exact        : BOOLEAN;
   templatePath : Pathname.T;
   rundirPath   : Pathname.T;
-  phases := SET OF Phase {};
-  gotPhase := FALSE;
-  single : BOOLEAN;
-  z      := LAST(CARDINAL);
-  thresh : Tran;
+  single       : BOOLEAN;
+  thresh       : Tran;
+  doNormal     : BOOLEAN;
+  doFullNormal : BOOLEAN;
+  fullNormals  : LongRealSeq.T;
+
+  hspiceModelRoot : TEXT := "/p/hdk/cad/pdk/pdk783_r0.5_22ww52.5/models/core/hspice/m15_2x_1xa_1xb_4ya_2yb_2yc_3yd__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp";
+  hspiceModelName : TEXT := "0p5";
+
 BEGIN
   TRY
+
+    doNormal := pp.keywordPresent("-N");
+
+    IF NOT doNormal THEN
+      doFullNormal := pp.keywordPresent("-fullnormal")
+    END;
+    
     FOR ph := FIRST(Phase) TO LAST(Phase) DO
       IF pp.keywordPresent("-" & PhaseNames[ph]) THEN
         phases := phases + SET OF Phase { ph };
@@ -268,6 +299,11 @@ BEGIN
     single := pp.keywordPresent("-single");
     (* just make a single stage slow *)
 
+    IF pp.keywordPresent("-hspicemodelroot") THEN
+      hspiceModelRoot := pp.getNext();
+      hspiceModelName := pp.getNext()
+    END;
+    
     IF pp.keywordPresent("-T") OR pp.keywordPresent("-template") THEN
       templatePath := pp.getNext()
     END;
@@ -286,20 +322,32 @@ BEGIN
     
     pp.skipParsed();
 
-    WITH argdims = NUMBER(pp.arg^) - pp.next DO
-      IF exact AND argdims # N THEN
-        Debug.Error("Wrong dims count : " & Int(argdims) & " # " & Int(N))
-      END;
-      FOR i := 0 TO argdims - 1 DO
-        WITH arg = pp.getNext() DO
-          TRY
-            p[i] := Scan.LongReal(arg)
-          EXCEPT
-            FloatMode.Trap, Lex.Error => Debug.Error("Trouble parsing command-line argument as number : " & arg)
+    IF doNormal THEN
+      VAR
+        rand         : Random.T := NEW(Random.Default).init();
+      BEGIN
+        FOR i := FIRST(p) TO LAST(p) DO
+          p[i] := NormalDeviate.Get(rand, 0.0d0, 1.0d0)
+        END
+      END
+    ELSE
+      WITH argdims = NUMBER(pp.arg^) - pp.next DO
+        IF exact AND argdims # N THEN
+          Debug.Error("Wrong dims count : " & Int(argdims) & " # " & Int(N))
+        END;
+        FOR i := 0 TO argdims - 1 DO
+          WITH arg = pp.getNext() DO
+            TRY
+              p[i] := Scan.LongReal(arg)
+            EXCEPT
+              FloatMode.Trap, Lex.Error => Debug.Error("Trouble parsing command-line argument as number : " & arg)
+            END
           END
         END
       END
-    END
+    END;
+
+    pp.finish()
   EXCEPT
     ParseParams.Error => Debug.Error("Can't parse command line")
   END;
@@ -371,7 +419,37 @@ BEGIN
   IF Phase.DoMeasure IN phases THEN
     WITH meas = DoMeasure() DO
       Wr.PutText(Stdio.stdout, LongReal(meas));
-      Wr.PutChar(Stdio.stdout, '\n')
+      Wr.PutChar(Stdio.stdout, '\n');
+
+      WITH rwr = FileWr.Open("result.csv") DO
+        Wr.PutText(rwr, LongReal(meas));
+        IF doFullNormal THEN
+          FOR i := 0 TO fullNormals.size() - 1 DO
+            Wr.PutChar(rwr, ',');
+            Wr.PutText(rwr, LongReal(fullNormals.get(i)));
+          END
+        ELSE
+          FOR i := FIRST(p) TO LAST(p) DO
+            Wr.PutChar(rwr, ',');
+            Wr.PutText(rwr, LongReal(p[i]));
+          END
+        END;
+        Wr.PutChar(rwr, '\n');
+        Wr.Close(rwr)
+      END
+    END
+  END;
+
+  CONST
+    CleanFiles = ARRAY OF Pathname.T {
+                    "ckt.mc", "ckt.mc.csv", "ckt.log", "var.sp" };
+  BEGIN
+    IF Phase.Clean IN phases THEN
+      FOR i := FIRST(CleanFiles) TO LAST(CleanFiles) DO
+        TRY
+          FS.DeleteFile(CleanFiles[i])
+        EXCEPT ELSE END
+      END
     END
   END
 END Main.

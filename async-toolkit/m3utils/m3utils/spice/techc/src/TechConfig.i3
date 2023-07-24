@@ -50,10 +50,22 @@ TYPE
            Buf,    (* buffer *)
            Aoi,    (* AOI gate *)
            Oai,     (* don't use this -- alternates with Aoi *)
+
            Xor_Z1_0p0sigma,  (* special variation sim w/o variation *)
-           Xor_Z1_5p3sigma,   (* special variation sim w/ 5.3 sigma variation *)
+           Xor_Z1_5p3sigma,  (* special variation sim w/ 5.3 sigma variation *)
            Xor_Z2_0p0sigma,  (* special variation sim w/o variation *)
-           Xor_Z2_5p3sigma   (* special variation sim w/ 5.3 sigma variation *)
+           Xor_Z2_5p3sigma,  (* special variation sim w/ 5.3 sigma variation *)
+
+           Aoi_Z1_0p0sigma,  (* special variation sim w/o variation *)
+           Aoi_Z1_5p3sigma,  (* special variation sim w/ 5.3 sigma variation *)
+           Aoi_Z2_0p0sigma,  (* special variation sim w/o variation *)
+           Aoi_Z2_5p3sigma,  (* special variation sim w/ 5.3 sigma variation *)
+
+           Oai_Z1_0p0sigma,  (* special variation sim w/o variation *)
+           Oai_Z1_5p3sigma,  (* special variation sim w/ 5.3 sigma variation *)
+           Oai_Z2_0p0sigma,  (* special variation sim w/o variation *)
+           Oai_Z2_5p3sigma   (* special variation sim w/ 5.3 sigma variation *)
+  
   };
   
 CONST
@@ -72,7 +84,12 @@ CONST
 
   GateNames = ARRAY Gate OF TEXT { "xor", "xoralt", "buf", "aoi", "oai",
                                    "xor_z1_0p0sigma", "xor_z1_5p3sigma",
-                                   "xor_z2_0p0sigma", "xor_z2_5p3sigma" };
+                                   "xor_z2_0p0sigma", "xor_z2_5p3sigma",
+                                   "aoi_z1_0p0sigma", "aoi_z1_5p3sigma",
+                                   "aoi_z2_0p0sigma", "aoi_z2_5p3sigma",
+                                   "oai_z1_0p0sigma", "oai_z1_5p3sigma",
+                                   "oai_z2_0p0sigma", "oai_z2_5p3sigma"
+                                   };
   (* should not ask for an oai, should only ask for aoi *)
 
   TechNames = ARRAY Tech OF TEXT { "n5",
@@ -85,15 +102,29 @@ CONST
                                    "1278p3" };
 
   TemplateNames = ARRAY Gate OF Pathname.T {
+
+  (* basic tech comparisons *)
   "ckt.sp",
   "ckt.sp",
   "ckt.sp",
   "ckt.sp",
   "ckt.sp",
+  
+  (* tech comparisons under variation with XOR *)
   "ckt_varxor.sp",
   "ckt_varxor.sp",
   "ckt_varxor.sp",
-  "ckt_varxor.sp"
+  "ckt_varxor.sp",
+
+  (* tech comparisons under variation with AOI/OAI *)
+  "ckt_varaoi.sp",
+  "ckt_varaoi.sp",
+  "ckt_varaoi.sp",
+  "ckt_varaoi.sp",
+  "ckt_varaoi.sp",
+  "ckt_varaoi.sp",
+  "ckt_varaoi.sp",
+  "ckt_varaoi.sp"
   };
 
   TechCorp  = ARRAY Tech OF Corp { Corp.Tsmc,
@@ -107,8 +138,17 @@ CONST
 
   Gate1 = ARRAY Gate OF Gate
   { Gate.Xor, Gate.XorAlt, Gate.Buf, Gate.Oai, Gate.Aoi,
+
     Gate.Xor_Z1_0p0sigma, Gate.Xor_Z1_5p3sigma,
-    Gate.Xor_Z2_0p0sigma, Gate.Xor_Z2_5p3sigma };
+    Gate.Xor_Z2_0p0sigma, Gate.Xor_Z2_5p3sigma,
+
+    Gate.Oai_Z1_0p0sigma, Gate.Oai_Z1_5p3sigma,
+    Gate.Oai_Z2_0p0sigma, Gate.Oai_Z2_5p3sigma,
+
+    Gate.Aoi_Z1_0p0sigma, Gate.Aoi_Z1_5p3sigma,
+    Gate.Aoi_Z2_0p0sigma, Gate.Aoi_Z2_5p3sigma
+
+    };
   (* second gate type for each first gate --
      note that oai is really not supported as a first gate *)
 
@@ -143,14 +183,15 @@ TYPE
     
     hspiceModelRoot : Pathname.T;
     hspiceModel     : Pathname.T;
+    hspiceModelName := "default";
 
     hspiceLibModels : Pathname.T :=
-        "/p/hdk/cad/pdk/pdk764_r0.4HP3_22ww20.1/cmi/hspice/cmi/lnx86/64bit";
+        "/p/hdk/cad/pdk/pdk783_r0.9_23ww26.5_alpha/cmi/hspice/cmi/lnx86/64bit";
     (* what is this file? *)
 
     pdmiLib         : Pathname.T;
     simRoot := DefSimRoot;
-    xaPath : Pathname.T := "/p/hdk/cad/xa/U-2023.03-1-T/bin/";
+    xaPath : Pathname.T := "/p/hdk/cad/xa/U-2023.03-2/bin/";
 
     para : BOOLEAN; (* parasitic simulation yes/no *)
   END;

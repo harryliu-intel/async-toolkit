@@ -51,3 +51,15 @@ new:
 WARNING: DefSubspace returns an empty basis
 Minimize : 0 iters, 3681 funcc; f = -8.262385666350501e-9; NEWUOAs terminates because the first-order optimality is approximately achieved.
 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -0.0625 0 0 0 0 0 0 0 0 0.125 1.75 0 5 0 -0.015625 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+
+
+======================
+
+new circuit, fewer stages, FO3
+
+Ran command output was Your job has been queued (JobID 6360155649727740, Class SLES12, Queue zsc9_normal, Slot /de/blk/fe)
+5.55761e-9
+
+
+Minimize : 0 iters, 3681 funcc; f = -8.267235336910785e-9; NEWUOAs terminates because the first-order optimality is approximately achieved.
+0.00390625 0 0 0 0 0 0 -0.015625 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.0625 0 0 0 0 0.125 1.75 0 5 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 

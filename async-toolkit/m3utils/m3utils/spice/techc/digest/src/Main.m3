@@ -72,7 +72,26 @@ VAR
 TYPE
   Mode = { Directory, File };
 
+TYPE
+  S = SET OF CsvCols;
+
 PROCEDURE Tag(e : Entry.T) : TEXT =
+  CONST
+    C = S { CsvCols.Tech .. CsvCols.Simu } + S { CsvCols.Temp } + S { CsvCols.MoNm };
+
+  BEGIN
+    RETURN TagAny(e, C)
+  END Tag;
+
+PROCEDURE TagLeak(e : Entry.T) : TEXT =
+  CONST
+    C = S { CsvCols.Tech .. CsvCols.Simu } + S { CsvCols.Volt } + S { CsvCols.MoNm };
+
+  BEGIN
+    RETURN TagAny(e, C)
+  END TagLeak;
+  
+PROCEDURE TagAny(e : Entry.T; C : SET OF CsvCols) : TEXT =
 
   PROCEDURE Edit(txt : TEXT) : TEXT =
     CONST
@@ -81,12 +100,6 @@ PROCEDURE Tag(e : Entry.T) : TEXT =
       RETURN R(R(txt, '-', 'm'), '.', 'p')
     END Edit;
     
-  TYPE
-    S = SET OF CsvCols;
-    
-  CONST
-    C = S { CsvCols.Tech .. CsvCols.Simu } + S { CsvCols.Temp };
-
   VAR
     res := "";
     first := TRUE;
@@ -103,7 +116,8 @@ PROCEDURE Tag(e : Entry.T) : TEXT =
       END
     END;
     RETURN res
-  END Tag;
+  END TagAny;
+  
   
 PROCEDURE DoDirectory(workDir : Pathname.T) =
   <*FATAL RegEx.Error*>
@@ -162,9 +176,7 @@ PROCEDURE DoFile(fn : Pathname.T) =
     END
   END DoFile;
 
-VAR tbl := NEW(TextRefSeqTbl.Default).init();
-    
-PROCEDURE Remember(tag : TEXT; rv : Entry.T) =
+PROCEDURE Remember(tbl : TextRefSeqTbl.T; tag : TEXT; rv : Entry.T) =
   VAR
     rs : RefSeq.T;
   BEGIN
@@ -176,7 +188,13 @@ PROCEDURE Remember(tag : TEXT; rv : Entry.T) =
     rs.addhi(rv)
   END Remember;
 
-PROCEDURE SortEm() =
+PROCEDURE SortEm(tbl : TextRefSeqTbl.T; by : Entry.CsvCols) =
+
+  PROCEDURE Compare(a, b : Entry.T) : [-1 .. 1] =
+    BEGIN
+      RETURN(Entry.CompareLR(a, b, by))
+    END Compare;
+    
   TYPE
     Array = REF ARRAY OF Entry.T;
   VAR
@@ -194,10 +212,10 @@ PROCEDURE SortEm() =
         a[i] := v.get(i)
       END;
 
-      EntryArraySort.Sort(a^);
+      EntryArraySort.Sort(a^, Compare);
 
       FOR i := 0 TO v.size() - 1 DO
-         v.put(i, a[i])
+        v.put(i, a[i])
       END
       
     END
@@ -219,7 +237,15 @@ PROCEDURE Lookup(str : TEXT; READONLY a : ARRAY OF TEXT) : CARDINAL =
     <*ASSERT FALSE*>
   END Lookup;
 
-PROCEDURE GraphEm() =
+TYPE
+  PrintCol = { v, c, f, ai, li, lp, e, lf, t };
+  PC        = PrintCol;
+  PA        = ARRAY PrintCol OF LONGREAL;
+  
+PROCEDURE GraphEm(tbl           : TextRefSeqTbl.T;
+                  READONLY cols : ARRAY OF PrintCol;
+                  labcol        : PrintCol;
+                  sfx := "") =
   VAR
     iter := tbl.iterate();
     k, fn, eflFn : TEXT;
@@ -231,10 +257,10 @@ PROCEDURE GraphEm() =
   BEGIN
     WHILE iter.next(k, seq) DO
       TRY
-        fn    := outDir & "/" & k & ".dat";
-        eflFn := outDir & "/" & k & "_eflabels.src";
+        fn    := outDir & "/" & k & sfx & ".dat";
+        eflFn := outDir & "/" & k & sfx & "_eflabels.src";
                      
-        WITH wr = FileWr.Open(fn),
+        WITH wr    = FileWr.Open(fn),
              eflWr = FileWr.Open(eflFn) DO
           FOR i := 0 TO seq.size() - 1 DO
             WITH entry = NARROW(seq.get(i), Entry.T),
@@ -251,7 +277,6 @@ PROCEDURE GraphEm() =
                  ai = Scan.LongReal(entry[C.Curr]),
                  (* active current *)
                  
-
                  li = Scan.LongReal(entry[C.Icur]),
                  (* leakage current *)
 
@@ -267,18 +292,27 @@ PROCEDURE GraphEm() =
                  lf = lp / ap,
                  (* leakage fraction of total power *)
 
-                 t = Scan.LongReal(entry[C.Temp])
+                 t = Scan.LongReal(entry[C.Temp]),
                  (* temperature *)
+
+                 data = PA { v, c, f, ai, li, lp, e, lf, t }
+                 (* all data *)
              DO
               
               IF c < MaxCycle THEN
-                Wr.PutText(wr,
-                           F("%s %s %s %s %s\n",
-                             LR(e), LR(f), LR(v), LR(lf), LR(t)));
+                FOR i := FIRST(cols) TO LAST(cols) DO
+                                    
+                  Wr.PutText(wr, LR(data[cols[i]]));
+                  IF i = LAST(cols) THEN
+                    Wr.PutChar(wr, '\n')
+                  ELSE
+                    Wr.PutChar(wr, ' ')
+                  END
+                END;
 
                 Wr.PutText(eflWr,
                            F("set label \"%s\" at %s, %s\n",
-                             LR(v), LR(e), LR(f)))
+                             LR(data[labcol]), LR(data[cols[0]]), LR(data[cols[1]])))
               END
             END
           END;
@@ -309,6 +343,7 @@ VAR
   createOutDir : BOOLEAN;
   outDir : Pathname.T := ".";
   scaleE := 1.0d0;
+  allTbl, leakTbl := NEW(TextRefSeqTbl.Default).init();
   
 BEGIN
   TRY
@@ -369,11 +404,10 @@ BEGIN
         END
       END;
       IF NOT skip THEN
-        WITH tag = Tag(re) DO
-          (* split by tag, sort by voltage *)
-          Remember(tag, re);
-          INC(kept)
-        END
+        (* split by tag, sort by voltage *)
+        Remember(allTbl , Tag    (re), re);
+        Remember(leakTbl, TagLeak(re), re);
+        INC(kept)
       END
     END;
 
@@ -382,12 +416,14 @@ BEGIN
 
   END;
 
-  SortEm();
-
   IF createOutDir THEN
     TRY FS.CreateDirectory(outDir) EXCEPT ELSE END
   END;
       
-  GraphEm()
-  
+
+  SortEm(allTbl, Entry.CsvCols.Volt);
+  GraphEm(allTbl, ARRAY OF PC { PC.e, PC.f, PC.v, PC.lf, PC.t }, PC.v, "");
+
+  SortEm(leakTbl, Entry.CsvCols.Temp);
+  GraphEm(leakTbl, ARRAY OF PC { PC.t, PC.lp, PC.f }, PC.lf, "_leak")
 END Main.
