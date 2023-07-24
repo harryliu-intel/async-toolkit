@@ -42,7 +42,7 @@ for r in ${roots}; do
     do_batch 4.8 5.0 5.2 5.4
     do_batch 5.6 5.8 6.0 6.2
     do_batch 6.5 7.0 7.5 8.0
-    do_batch 8.5 9.0 9.5 9.9
+#   do_batch 8.5 9.0 9.5 9.9
     
 done
 
