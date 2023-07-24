@@ -134,34 +134,38 @@ diplomatic effort salvaging relations with the Kingdom of Stochastia.
 
 \section{Probability Review}
 
-\def\erf\mathrm{erf}
-\def\erfc\mathrm{erfc}
+\def\erf{\mathrm{erf}}
+\def\erfc{\mathrm{erfc}}
+\def\lt{<}
+\def\pdf{f}
+\def\cdf{F}
+\def\bigint{\displaystyle\int}
 
 \subsection{Probability density function}
 A brief review of concepts related to a continuous random variable.  A
 continuous random variable $X$ is described by its {\em probability
   density function (p.d.f.)\/} $phi_X$ with the property that
 \begin{equation}
-  Pr(a \le x \lt b) = \int_a^b \phi_X(x) \, dx \quad .
+  Pr(a \le x \lt b) = \int_a^b \pdf_X(x) \, dx \quad .
 \end{equation}
-The p.d.f.\ has many interesting elementary properties, for example:
+The p.d.f.\ a few elementary properties, for example:
 \begin{equation}\label{eq:pdfprops}
   \begin{array}{rl}
-    \int_{-\infty}^{+\infty} \phi(x) ,\ dx &= 1 \\
-    \forall x : \phi(x)               &= \ge 0
+    \bigint_{-\infty}^{+\infty} \pdf(x) \, dx &= 1 \\
+    \forall x : \pdf(x)               & \ge 0
   \end{array}
 \end{equation}
 
 The maximum of the p.d.f.\ we call the {\em mode\/} of the distribution; the
 mean $\mu$ of the distribution, if it exists, we can compute as
 \begin{equation}
-  \mu = \int{-\infty}^{+\infty} x \phi(x) ,\ dx \quad ,
+  \mu = \int_{-\infty}^{+\infty} x \pdf(x) ,\ dx \quad ,
 \end{equation}
 and similarly, the variance
 \begin{equation}
   \begin{array}{rl}
-    \sigma^2_X &= \int{-\infty}^{+\infty} (x-\mu)^2 \phi(x) ,\ dx \\
-               &= \int{-\infty}^{+\infty} x^2 \phi(x) ,\ dx - \mu^2 
+    \sigma^2_X &= \bigint_{-\infty}^{+\infty} (x-\mu)^2 \pdf(x) ,\ dx \\
+               &= \bigint_{-\infty}^{+\infty} x^2 \pdf(x) ,\ dx - \mu^2 
   \end{array}
 \end{equation}
 
@@ -172,35 +176,41 @@ mathematics and mostly out of the scope of our discussion.
 \def\normal{\mathcal{N}}
 
 \subsection{The normal distribution}
-An example of a p.d.f.\ is the normal distribution $\normal$
+An example of a p.d.f.\ is the normal, or Gaussian, distribution $\normal$
 \begin{equation}
-  \phi_{\normal(\mu,\sigma^2)}(x)=
+  \pdf_{\normal(\mu,\sigma^2)}(x)=
   \normal(\mu,\sigma^2)(x)   =
   {1 \over \sigma \sqrt{2 \pi} } e ^ { -{1 \over 2} \left( { x - \mu \over \sigma } \right) ^2 } \quad .
 \end{equation}
+We also write $\phi$ for the 0,1-normal distribution:
+\begin{equation}
+  \phi(x) =
+  \pdf_{\normal(0,1)}(x) =
+  \normal(0,1)(x)   \quad .
+ \end{equation}
 Much of what will interest us will specifically not be normally distributed,
 but we shall still use the properties of the normal distribution as a guide.
 
 \subsection{Cumulative density function}
 If we consider the one-sided integral of the p.d.f.\ of $X$, we call
-this the {\em cumulative density function (c.d.f.)\/} $\Phi_X$:
+this the {\em cumulative density function (c.d.f.)\/} $\cdf_X$:
 \begin{equation}
-  \Phi_X(x) = \int_{-\infty}^x \phi_X(x') \, dx'
+  \cdf_X(x) = \int_{-\infty}^x \pdf_X(x') \, dx'
 \end{equation}
 where we use $x'$ for the dummy integration variable for clarity.
 
-The complement of $\Phi$ we call the {\em survival function\/} $S_X$:
+The complement of $\cdf$ we call the {\em survival function\/} $S_X$:
 \begin{equation}
-  S_X(x) = 1 - \Phi_X(x) = \int_{x}^{+\infty} \phi_X(x') \, dx'
+  S_X(x) = 1 - \cdf_X(x) = \int_{x}^{+\infty} \pdf_X(x') \, dx'
 \end{equation}
 
-The half-way point of $\Phi_X(x)$, i.e., the point at which it equals $1/2$, we
+The half-way point of $\cdf_X(x)$, i.e., the point at which it equals $1/2$, we
 call the median and denote $\tilde{X}$:
 \begin{equation}
-{1 \over 2} = \Phi_X(\tilde{X}) = S_X(\tilde{X})
+{1 \over 2} = \cdf_X(\tilde{X}) = S_X(\tilde{X})
 \end{equation}
 
-By equation~\ref{eq:pdfprops}, the c.d.f.\ $\Phi$ integrates to 1 over
+By equation~\ref{eq:pdfprops}, the c.d.f.\ $\cdf$ integrates to 1 over
 the number line and is non-decreasing everywhere.
 
 \subsubsection{For the normal distribution}
@@ -208,7 +218,7 @@ the number line and is non-decreasing everywhere.
 The c.d.f.\ of the normal distribution can be written in terms of the
 non-elementary {\em error function\/}, so that
 \begin{equation}
-  \Phi_{\normal(\mu,\sigma^2)}(x) = {1 \over 2} + { 1 \over 2 } \erf \left { x - \mu \over \sigma \sqrt{2} } \right 
+  \cdf_{\normal(\mu,\sigma^2)}(x) = {1 \over 2} + { 1 \over 2 } \erf \left( { x - \mu \over \sigma \sqrt{2} } \right) 
 \end{equation}
 and also the complement of the error function
 \begin{equation}
@@ -217,63 +227,67 @@ and also the complement of the error function
 can be used to write the survival function of the normal distribution
 in a compact and computationally convenient way:
 \begin{equation}
-  S_{\normal( \mu,\sigma^2)}(x) = { 1 \over 2 } \erfc \left { x - \mu \over \sigma \sqrt{2} } \right \quad .
+  S_{\normal( \mu,\sigma^2)}(x) = { 1 \over 2 } \erfc \left( { x - \mu \over \sigma \sqrt{2} } \right) \quad .
+\end{equation}
+The c.d.f.\ of the 0,1-normal distribution is often denoted by
+\begin{equation}
+  \Phi(x) = {1 \over 2} + { 1 \over 2 } \erf \left( { x \over \sqrt{2} } \right) 
 \end{equation}
 
 
 \subsection{P.d.f.\ of a sum of two random variables}
-Given two independent random variables $X ~ \phi_X(x)$ and $Y ~ \phi_Y(y)$, the sum $Z = X + Y$ is distributed as the convolution of the two
+Given two independent random variables $X \sim \pdf_X(x)$ and $Y \sim \pdf_Y(y)$, the sum $Z = X + Y$ is distributed as the convolution $*$ of the two
 \begin{equation}
-  \phi_Z(z) = \int_{-\infty}^{\infty}  \phi_X(x)\phi_Y(z - x) \, dx = \phi_X(z) * \phi_Y(z) \quad .
+  \pdf_Z(z) = \int_{-\infty}^{\infty}  \pdf_X(x)\pdf_Y(z - x) \, dx = \pdf_X(z) * \pdf_Y(z) \quad .
 \end{equation}
-Computationally this means that the Fourier transform of $\phi$ is interesting,
+Computationally this means that the Fourier transform of $\pdf$ is interesting,
 because the convolution becomes a multiplication in Fourier space.
 
 \subsubsection{For the normal distribution}
 As a special case if $X$ and $Y$ are normally distributed so that
 \begin{equation}
   \begin{array}{rl}
-    X ~ \normal(\mu_X,\sigma_X^2) \\
-    Y ~ \normal(\mu_Y,\sigma_Y^2)
+    X \sim \normal(\mu_X,\sigma_X^2) \\
+    Y \sim \normal(\mu_Y,\sigma_Y^2)
   \end{array}
 \end{equation}
 and $Z = X + Y$ then
 \begin{equation}
-  Y ~ \normal(\mu_X + \mu_Y, \sigma_X^2 + \sigma_Y^2) \quad .
+  Y \sim \normal(\mu_X + \mu_Y, \sigma_X^2 + \sigma_Y^2) \quad .
 \end{equation}
 This formula follows from the fact that the Gaussian is its own
 Fourier transform.
 
 \subsubsection{Integer multiple of a random variable}
-If we are given $X ~ \phi_X(x)$ and we wish to know the distribution of a
+If we are given $X \sim \pdf_X(x)$ and we wish to know the distribution of a
 sum of $M$ i.i.d.\ instances of $X$, let's say $Z = X_0 + X_1 + \cdots + X_{M-1}$
-then we can write this as the $M$-th convolutional power of $\phi_X$
+then we can write this as the $M$-th convolutional power of $\pdf_X$
 \begin{equation}
-  \phi_Z(x) = \phi_X^{*M}(x) \quad .
+  \pdf_Z(x) = \pdf_X^{*M}(x) \quad .
 \end{equation}
 
 \subsection{The maximum of a set of random variables}
-Given $X ~ \phi_X$ and $Y ~ \phi_Y$, and $Z = \max(X, Y)$, we have that
+Given $X \sim \pdf_X$ and $Y \sim \pdf_Y$, and $Z = \max(X, Y)$, we have that
 \begin{equation}
-  \Phi_Z(z) = \Phi_X(z) \Phi_Y(z) \quad .
+  \cdf_Z(z) = \cdf_X(z) \cdf_Y(z) \quad .
 \end{equation}
 
-For the special case $X_0, X_1, \ldots , X_{N-1} ~ \phi_X$ and $Z = \max(X_0, X_1, \ldots , X_{N-1})$, 
+For the special case $X_0, X_1, \ldots , X_{N-1} \sim \pdf_X$ and $Z = \max(X_0, X_1, \ldots , X_{N-1})$, 
 \begin{equation}
-  \Phi_Z(z) = \Phi_X^N(z) \quad .
+  \cdf_Z(z) = \cdf_X^N(z) \quad .
 \end{equation}
 A convenient measure of the maximum of distributions is their median $\tilde{z}$ because
 \begin{equation}
-  \Phi_Z(\tilde{z}) = {1 \over 2}
+  \cdf_Z(\tilde{z}) = {1 \over 2}
 \end{equation}
 so that
 \begin{equation}
-\tilde{z} = \Phi^{-1}(2^-N) \quad .
+\tilde{z} = \cdf^{-1}(2^-N) \quad .
 \end{equation}
 
 If $X = \normal (0,1)$ then
 \begin{equation}
-\tilde{z} = \Phi^{-1}(2^-N) \quad ;
+\tilde{z} = \cdf^{-1}(2^-N) \quad ;
 \end{equation}
 since for large $N$
 \begin{equation}
@@ -306,7 +320,7 @@ speed paths; the time taken for one speed path to compute is determined
 by the sum of the {\em gate delays\/} along that path.
 
 We introduce a simplified model as follows: the circuit $\mathcal{C}$
-consists of $N$ identical speed paths, each of which is comprised of
+consists of $N$ identical speed paths $\mathcal{P}$, each of which is comprised of
 an identical sequence of $M$ gates of type $\mathcal{G}$.
 
 Each gate $G$ has a delay $\Delta$ that is stochastic and is a function over
@@ -315,19 +329,19 @@ $n$ dimensions, each of which is assumed to be a 0,1-normal random variable:
   \Delta : {\bf R}_n \rightarrow {\bf R} : \Delta(X_0, X_1, \ldots , X_{n-1})
 \end{equation}
 \begin{equation}
-  X_0, X_1, \ldots , X_{n-1} ~ \normal (0,1)
+  X_0, X_1, \ldots , X_{n-1} \sim \normal (0,1)
 \end{equation}
 $\Delta$ here is a nonlinear function that is expensive to evaluate
 and does not provide derivatives (in practice, we evaluate $\Delta$ by
 running a circuit simulator on a test circuit description and
-performing a physical measurement on the circuit).  We can, however,
+performing a simulated physical measurement on the simulated circuit).  We can, however,
 assume that the extrema (of interest) of $\Delta$ {\em over\/} a ball
 in $n$ dimensions, if they exist, will be found {\em on\/} the ball.  
 Furthermore, we know that there exists a maximum radius $R_\mathrm{max}$ for
 which $\Delta$ is defined at all points within the $n$-ball of radius
 $R_\mathrm{max}$, but $\Delta$ is not necessarily defined outside of this ball
-and may have asymptotes to $+\infty$ near the surface of the ball.  Because
-$\Delta$ represents the physical delay of a circuit, it is also bounded
+and may have asymptotes to $+\infty$ near the surface of the ball of radius $R_\mathrm{max}$.  Because
+$\Delta$ represents the physical delay of a circuit, it is also everywhere bounded
 below by $\Delta_\mathrm{min} \ge 0$.
 
 \subsection{Orders of magnitude}
@@ -335,12 +349,48 @@ We may expect the following rough ranges for the parameters above,
 for problems of interest:
 \begin{equation}
   \begin{array}{rl}
-    M &= 10--20 \\
-    N &= 10^4--10^9 \\
+    M &= 10\mbox{--}20 \\
+    N &= 10^4\mbox{--}10^9 \\
     n &\approx 100
   \end{array}
 \end{equation}
-  
+
+\subsection{Explicit formulation}
+
+We have that the circuit delay
+\begin{equation}
+  \Delta_\mathcal{C} = \max(\Delta_{\mathcal{P}0},\Delta_{\mathcal{P}1}, \ldots , \Delta_{\mathcal{P}N-1})
+\end{equation}
+where
+\begin{equation}
+  \Delta_\mathcal{P} = \sum_0^{M-1} \Delta_{\mathcal{G}i} \quad .
+\end{equation}
+
+So if we know the p.d.f.\ of the delay of a single gate, $f_\mathcal{G}(\delta)$ as a function of the delay $\delta$, we can write the p.d.f.\ of the path delay as 
+\begin{equation}
+  f_\mathcal{P}(\delta) = f_\mathcal{G}(\delta)^{*M}
+\end{equation}
+so that the c.d.f.\ of the path delay is
+\begin{equation}
+  F_\mathcal{P}(\delta) = \int_0^\delta f_\mathcal{G}(x)^{*M} \, dx
+\end{equation}
+and the c.d.f.\ of the circuit delay becomes
+\begin{equation}
+  F_\mathcal{C}(\delta) = F_\mathcal{P}(\delta)^N
+\end{equation}
+\def\median{\tilde{\delta_\mathcal{C}}}
+so that it if we for example wanted to compute the median delay $\median$ of $\mathcal{C}$,
+\begin{equation}
+  F_\mathcal{C}(\median) = {1 \over 2}
+\end{equation}
+and
+\begin{equation}
+F_\mathcal{P}(\median) = \int_0^{\median} f_\mathcal{G}(x)^{*M} \, dx = {2^{-{1 \over N}}} \quad ,
+\end{equation}
+which equation we are to solve for $\median$.
+
+
+      
 
 \section{Acknowledgements}
 
