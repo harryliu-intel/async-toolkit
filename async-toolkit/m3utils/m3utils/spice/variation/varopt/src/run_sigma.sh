@@ -11,7 +11,7 @@ defaultroots="0p5:/p/hdk/cad/pdk/pdk783_r0.5_22ww52.5/models/core/hspice/m15_2x_
 
 roots=${defaultroots}
 
-1278p3roots="0p5:/p/hdk/cad/pdk/pdk783_r0.5_22ww52.5/models/core/hspice/m15_2x_1xa_1xb_4ya_2yb_2yc_3yd__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp 0p9e:/p/hdk/cad/pdk/pdk783_r0.9e_23ww29.2_beta/models/core/hspice/m15_2x_1xa_1xb_4ya_2yb_2yc_3yd__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp asfit2023ww29:/nfs/site/disks/zsc9_fwr_sd_001/mnystroe/1278_lowvoltage/2023ww29d2/models_core_hspice/1/m14_2x_1xa_1xb_6ya_2yb_2yc__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp"
+1278p3roots="0p5:/p/hdk/cad/pdk/pdk783_r0.5_22ww52.5/models/core/hspice/m15_2x_1xa_1xb_4ya_2yb_2yc_3yd__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp 0p9e:/p/hdk/cad/pdk/pdk783_r0.9e_23ww29.2_beta/models/core/hspice/m15_2x_1xa_1xb_4ya_2yb_2yc_3yd__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp asfit2023ww29:${HOME}/1278_lowvoltage/2023ww29d2/models_core_hspice/1/m14_2x_1xa_1xb_6ya_2yb_2yc__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp"
 
 /bin/rm -rf  $WORKROOT
 mkdir $WORKROOT
