@@ -119,7 +119,7 @@ PROCEDURE BaseEvalHint(base : BaseEvaluator; p : LRVector.T) =
   
 PROCEDURE BaseEval(base : BaseEvaluator; p : LRVector.T) : LONGREAL =
   CONST
-    MaxAttempts = 500;
+    MaxAttempts = 3;
   BEGIN
     FOR i := 1 TO MaxAttempts DO
       TRY
@@ -131,7 +131,7 @@ PROCEDURE BaseEval(base : BaseEvaluator; p : LRVector.T) : LONGREAL =
       END
     END;
     Debug.Error("BaseEval : Too many attempts p=" & FmtP(p));
-    <*ASSERT FALSE*>
+    RETURN 0.0d0
   END BaseEval;
   
 PROCEDURE AttemptEval(base : BaseEvaluator; q : LRVector.T) : LONGREAL
