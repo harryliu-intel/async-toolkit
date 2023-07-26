@@ -991,7 +991,7 @@ DumbLayers = (list (list "SRAM" "fill")
            (when y<0 oy-=(floor y/gy)*gy)
            ox:oy
            )
-          (t 0:0)
+          (t 0.0:0.0)
           )
     )
   )
