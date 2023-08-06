@@ -11,7 +11,7 @@ defaultroots="0p5:/p/hdk/cad/pdk/pdk783_r0.5_22ww52.5/models/core/hspice/m15_2x_
 
 roots=${defaultroots}
 
-1278p3roots="0p5:/p/hdk/cad/pdk/pdk783_r0.5_22ww52.5/models/core/hspice/m15_2x_1xa_1xb_4ya_2yb_2yc_3yd__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp 0p9e:/p/hdk/cad/pdk/pdk783_r0.9e_23ww29.2_beta/models/core/hspice/m15_2x_1xa_1xb_4ya_2yb_2yc_3yd__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp asfit2023ww29:/nfs/site/disks/zsc9_fwr_sd_001/mnystroe/1278_lowvoltage/2023ww29d2/models_core_hspice/1/m14_2x_1xa_1xb_6ya_2yb_2yc__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp"
+1278p3roots="0p5:/p/hdk/cad/pdk/pdk783_r0.5_22ww52.5/models/core/hspice/m15_2x_1xa_1xb_4ya_2yb_2yc_3yd__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp 0p9e:/p/hdk/cad/pdk/pdk783_r0.9e_23ww29.2_beta/models/core/hspice/m15_2x_1xa_1xb_4ya_2yb_2yc_3yd__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp asfit2023ww29:${HOME}/1278_lowvoltage/2023ww29d2/models_core_hspice/1/m14_2x_1xa_1xb_6ya_2yb_2yc__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp"
 
 /bin/rm -rf  $WORKROOT
 mkdir $WORKROOT
@@ -36,12 +36,9 @@ wait
 for r in ${roots}; do
     
     root=${r}
-    do_batch 0.5 1.0 1.5 2.0 
-    do_batch 2.5 3.0 3.5 0.0 
-    do_batch 4.0 4.2 4.4 4.6
-    do_batch 4.8 5.0 5.2 5.4
-    do_batch 5.6 5.8 6.0 6.2
-    do_batch 6.5 7.0 7.5 8.0
+    do_batch 0.5 1.5 2.5 3.5 
+    do_batch 4.0 4.3 4.6 5.0
+    do_batch 5.4 6.0 7.0 7.5
 #   do_batch 8.5 9.0 9.5 9.9
     
 done
