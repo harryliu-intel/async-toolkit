@@ -1,10 +1,14 @@
 \documentclass{article}
 \usepackage{graphicx}
 \usepackage{epsf}
+\usepackage{epstopdf}
 
 \usepackage{floatflt}
 \usepackage{fancyhdr}
 \usepackage{array}
+
+\usepackage{xeCJK}
+%\setCJKmainfont{SimSun}
 
 \usepackage{sectsty}
 %\allsectionsfont{\mdseries\sffamily}
@@ -144,11 +148,11 @@ diplomatic effort salvaging relations with the Kingdom of Stochastia.
 \subsection{Probability density function}
 A brief review of concepts related to a continuous random variable.  A
 continuous random variable $X$ is described by its {\em probability
-  density function (p.d.f.)\/} $phi_X$ with the property that
+  density function (p.d.f.)\/} $f_X$ with the property that
 \begin{equation}
   Pr(a \le x \lt b) = \int_a^b \pdf_X(x) \, dx \quad .
 \end{equation}
-The p.d.f.\ a few elementary properties, for example:
+The p.d.f.\ has a few elementary properties, for example:
 \begin{equation}\label{eq:pdfprops}
   \begin{array}{rl}
     \bigint_{-\infty}^{+\infty} \pdf(x) \, dx &= 1 \\
@@ -164,14 +168,15 @@ mean $\mu$ of the distribution, if it exists, we can compute as
 and similarly, the variance
 \begin{equation}
   \begin{array}{rl}
-    \sigma^2_X &= \bigint_{-\infty}^{+\infty} (x-\mu)^2 \pdf(x) ,\ dx \\
-               &= \bigint_{-\infty}^{+\infty} x^2 \pdf(x) ,\ dx - \mu^2 
+    \sigma^2_X &= \bigint_{-\infty}^{+\infty} (x-\mu)^2 \pdf(x) \, dx \\
+               &= \bigint_{-\infty}^{+\infty} x^2 \pdf(x) \, dx - \mu^2 
   \end{array}
 \end{equation}
 
 
-The integrability of p.d.f.s is a big and advanced field of
-mathematics and mostly out of the scope of our discussion.
+Questions surrounding the integrability of p.d.f.s form a big and
+advanced field of mathematics and are mostly out of the scope of our
+discussion.
 
 \def\normal{\mathcal{N}}
 
@@ -188,8 +193,8 @@ We also write $\phi$ for the 0,1-normal distribution:
   \pdf_{\normal(0,1)}(x) =
   \normal(0,1)(x)   \quad .
  \end{equation}
-Much of what will interest us will specifically not be normally distributed,
-but we shall still use the properties of the normal distribution as a guide.
+Much of what will interest us will specifically {\em not\/} be normally distributed,
+but we shall still have occasion to use the properties of the normal distribution as a guide.
 
 \subsection{Cumulative density function}
 If we consider the one-sided integral of the p.d.f.\ of $X$, we call
@@ -199,16 +204,30 @@ this the {\em cumulative density function (c.d.f.)\/} $\cdf_X$:
 \end{equation}
 where we use $x'$ for the dummy integration variable for clarity.
 
+\subsubsection{Survival function}
 The complement of $\cdf$ we call the {\em survival function\/} $S_X$:
 \begin{equation}
   S_X(x) = 1 - \cdf_X(x) = \int_{x}^{+\infty} \pdf_X(x') \, dx'
 \end{equation}
 
+\subsubsection{Median}
 The half-way point of $\cdf_X(x)$, i.e., the point at which it equals $1/2$, we
 call the median and denote $\tilde{X}$:
 \begin{equation}
 {1 \over 2} = \cdf_X(\tilde{X}) = S_X(\tilde{X})
 \end{equation}
+
+\subsubsection{Defects per million (d.p.m.)}\label{sec:dpm}
+In manufacturing scenarios, we are often interested in evaluating a particular
+design over a required {\em defect rate\/} usually specified in terms of {\em defects per million,} abbreviated {\em d.p.m.}  For example, a d.p.m.~rate of 1000, corresponding to a shipped defect rate of 0.1\%, maybe used to define a point $\tilde{X}_{1000}$ such that
+\begin{equation}
+  \cdf_X(\tilde{X}_{1000}) = 0.999
+\end{equation}
+or equivalently and in general let $\tilde{X}_{\rho}$ be defined by
+\begin{equation}
+  S_X(\tilde{X}_{\rho}) = {\rho \over 10^6} \quad .
+\end{equation}
+
 
 By equation~\ref{eq:pdfprops}, the c.d.f.\ $\cdf$ integrates to 1 over
 the number line and is non-decreasing everywhere.
@@ -220,7 +239,7 @@ non-elementary {\em error function\/}, so that
 \begin{equation}
   \cdf_{\normal(\mu,\sigma^2)}(x) = {1 \over 2} + { 1 \over 2 } \erf \left( { x - \mu \over \sigma \sqrt{2} } \right) 
 \end{equation}
-and also the complement of the error function
+and also the complement of the error function {\bf is this right???}
 \begin{equation}
   \erfc(x) = 1 - \erf(x) 
 \end{equation}
@@ -258,7 +277,7 @@ and $Z = X + Y$ then
 This formula follows from the fact that the Gaussian is its own
 Fourier transform.
 
-\subsubsection{Integer multiple of a random variable}
+\subsubsection{Integer ``multiple'' of a random variable}
 If we are given $X \sim \pdf_X(x)$ and we wish to know the distribution of a
 sum of $M$ i.i.d.\ instances of $X$, let's say $Z = X_0 + X_1 + \cdots + X_{M-1}$
 then we can write this as the $M$-th convolutional power of $\pdf_X$
@@ -276,26 +295,26 @@ For the special case $X_0, X_1, \ldots , X_{N-1} \sim \pdf_X$ and $Z = \max(X_0,
 \begin{equation}
   \cdf_Z(z) = \cdf_X^N(z) \quad .
 \end{equation}
-A convenient measure of the maximum of distributions is their median $\tilde{z}$ because
+A convenient measure of the maximum of distributions is the median of the distribution of the maximum $\tilde{z}$ because
 \begin{equation}
   \cdf_Z(\tilde{z}) = {1 \over 2}
 \end{equation}
 so that
 \begin{equation}
-\tilde{z} = \cdf^{-1}(2^-N) \quad .
+\tilde{z} = \cdf^{-1}\left( \sqrt[N]{1 \over 2} \right) \quad .
 \end{equation}
 
-If $X = \normal (0,1)$ then
+If in particular $X \sim \normal (0,1)$ then
 \begin{equation}
-\tilde{z} = \cdf^{-1}(2^-N) \quad ;
+\tilde{z} = \Phi^{-1}\left( \sqrt[N]{1 \over 2} \right)\quad ;
 \end{equation}
 since for large $N$
 \begin{equation}
-  2^{-N} \approx 1 + {\ln 2 \over N}
+ \sqrt[N]{1 \over 2}  \approx 1 - {\ln 2 \over N}
 \end{equation}
-we have that ({\bf fill this in})
+we have that {\bf is this right??? def'n of erfc is suspect}
 \begin{equation}
-\tilde{z} = \erfc^{-1} \ldots 
+\tilde{z} \approx \sqrt{2}  \, \erfc^{-1} \left( 2 \ln 2 \over N \right) \quad .
 \end{equation}
 
 \subsection{The $n$-ball}
@@ -333,7 +352,7 @@ $n$ dimensions, each of which is assumed to be a 0,1-normal random variable:
 \end{equation}
 $\Delta$ here is a nonlinear function that is expensive to evaluate
 and does not provide derivatives (in practice, we evaluate $\Delta$ by
-running a circuit simulator on a test circuit description and
+running a circuit simulator, such as SPICE, on a test circuit description and
 performing a simulated physical measurement on the simulated circuit).  We can, however,
 assume that the extrema (of interest) of $\Delta$ {\em over\/} a ball
 in $n$ dimensions, if they exist, will be found {\em on\/} the ball.  
@@ -387,7 +406,7 @@ and
 \begin{equation}
 F_\mathcal{P}(\median) = \int_0^{\median} f_\mathcal{G}(x)^{*M} \, dx = {2^{-{1 \over N}}} \quad ,
 \end{equation}
-which equation we are to solve for $\median$.
+which equation we are to solve for $\median$.  (Of course, we can use any other percentile, if we are interested in a d.p.m.\ rate as in section~\ref{sec:dpm}.)
 
 
       
@@ -401,7 +420,7 @@ which equation we are to solve for $\median$.
 
 \bibitem{razor}{Dan Ernst, et al.  Razor: A Low-Power Pipeline Based on Circuit-Level Timing Speculation.  36th International Symposium on Microarchitecture (MICRO-36).  September 2003.}
 
-\bibitem{newuoas}{Zaikun Zhang.  On derivative-free optimization methods (in Chinese).  Ph.D. thesis, Chinese Academy of Sciences. Beijing, China: 2012.}
+\bibitem{newuoas}{Zaikun Zhang.  无导数优化方法的研究.  On derivative-free optimization methods (in Chinese).  Ph.D.\ thesis, Chinese Academy of Sciences. Beijing: 2012.}
 
 \bibitem{newuoas-http}{{\tt https://www.zhangzk.net/docs/talks/20160806-icnaao-newuoas.pdf}}
 
@@ -410,7 +429,17 @@ which equation we are to solve for $\median$.
 \bibitem{brent}{R.~P.~Brent.  {\it Algorithms for Minimization Without Derivatives.} Prentice-Hall, 1972.}
 
 \bibitem{bubblerazor}{G.~Zhang and P.~A.~Beerel.  Stochastic analysis of Bubble Razor.  DATE 2014.}
-  
+
+\bibitem{gaussian}{C.~F.~Gauss.  {\it Theoria Motus Corporum Coelestium.}  Hamburg: 1803.}
+
+\bibitem{methusalem}{E.~J.~Gumbel.  Das alter des Methusalem.  {\it Zeitschrift f\"ur schweizerische Statistik und Volkswirtschschaft\/}, {\bf 69}, 516--530. Zurich: 1933. }
+
+\bibitem{gumbel}{E.~J.~Gumbel.  Les valeurs extr\^emes des distributions statistiques.  {\it Annales de l'Institut Henri Poincar\'e\/}, {\bf 5 }(2). Paris: 1935. }
+
+  \bibitem{max}{M.~R.~P.~Grossmann.  {\tt https://max.pm/posts/max\_dist/}.  Checked August 5, 2023.}
+
+  \bibitem{spice}{L.~W.~Nagel and D.~O.~Pederson.  {\it SPICE (Simulation Program with Integrated Circuit Emphasis.}  University of California Memorandum ERL-M382.  Berkeley: 1973.}
+    
 \end{thebibliography}
 
 \end{document}

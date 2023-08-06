@@ -3,11 +3,12 @@ DOC=intro
 
 MAXGRAPHICS=500000
 DVIPS=dvips
+LATEX=xelatex
 
 #GENFIGURES=ringosc.eps invring.eps invring1.eps
 GENFIGURES=
 
-all: $(DOC).ps $(DOC).pdf 
+all: $(DOC).pdf 
 
 $(DOC).dvi: $(GENFIGURES)
 
@@ -17,10 +18,10 @@ $(DOC).dvi: $(GENFIGURES)
 .jpg.eps:
 	jpegtopnm $*.jpg | pamscale -pixels $(MAXGRAPHICS) |  pnmtops > $*.eps
 
-.tex.dvi:
-	latex $*.tex || true
-	latex $*.tex || true
-	latex $*.tex
+.tex.pdf:
+	$(LATEX) $*.tex || true
+	$(LATEX) $*.tex || true
+	$(LATEX) $*.tex
 
 .ps.pdf:
 	ps2pdf $*.ps
