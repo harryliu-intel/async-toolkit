@@ -1066,7 +1066,8 @@ public class CellImpl implements CellInterface {
                 prsDir = new PrsDirective(type);
                 prsIt.add(prsDir);
             }
-            prsDir.addInstance(subcellName, (DirectiveBlock) origIt.next());
+            prsDir.addInstance(subcellName, (DirectiveBlock) origIt.next(),
+                               CellUtils.isWiring(cell));
         }
     }
 

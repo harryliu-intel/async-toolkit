@@ -12,6 +12,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -19,6 +20,7 @@ import com.avlsi.cast.impl.AlintFaninValue;
 import com.avlsi.cast.impl.TupleValue;
 import com.avlsi.cast.impl.LocalEnvironment;
 import com.avlsi.cast.impl.Value;
+import com.avlsi.cast2.directive.DirectiveConstants;
 import static com.avlsi.cast2.directive.DirectiveConstants.ALINT_SCENARIO_TYPE;
 import static com.avlsi.cast2.directive.DirectiveConstants.CHANNEL_TYPE;
 import static com.avlsi.cast2.directive.DirectiveConstants.INSTANCE_TYPE;
@@ -35,6 +37,7 @@ import com.avlsi.cell.CellInterface;
 import com.avlsi.fast.BlockInterface;
 import com.avlsi.file.common.HierName;
 import com.avlsi.file.common.InvalidHierNameException;
+import com.avlsi.util.container.CollectionUtils;
 import com.avlsi.util.container.Pair;
 import com.avlsi.util.container.Triplet;
 import com.avlsi.util.debug.Debug;
@@ -47,6 +50,15 @@ import com.avlsi.util.debug.Debug;
  **/
 
 public class PrsDirective extends DirectiveBlock {
+    private static final HashSet<String> NO_INLINE = (HashSet<String>)
+        CollectionUtils.addAll(new HashSet<>(),
+                               DirectiveConstants.RESET_NET,
+                               DirectiveConstants.START_NET,
+                               DirectiveConstants.STEP_NET,
+                               DirectiveConstants.DELAY_NET,
+                               DirectiveConstants.CAPTURE_NET,
+                               DirectiveConstants.CUTSCAN_NET);
+
     /**
      * Constructs a PrsDirective based on an empty DirectiveInterface.
      **/
@@ -67,8 +79,9 @@ public class PrsDirective extends DirectiveBlock {
      * Add the directives of an inlined cell.
      **/
     public void addInstance(final HierName instance,
-                            final DirectiveInterface directives) {
-        ((PrefixDirective) this.directives).addInstance(instance, directives);
+                            final DirectiveInterface directives,
+                            final boolean isWiring) {
+        ((PrefixDirective) this.directives).addInstance(instance, directives, isWiring);
     }
 
     private static class PrefixDirective implements DirectiveInterface {
@@ -77,6 +90,12 @@ public class PrsDirective extends DirectiveBlock {
          * blocks of inlined cells.
          **/
         private final Map<HierName,DirectiveInterface> blocks;
+
+        /**
+         * Set of wiring cells.  NO_INLINE directives in non-wiring cells are
+         * not inlined.  This accomodates usage of GLOBALS_ChanDfxC.
+         **/
+        private final Set<HierName> wiringCells;
 
         /**
          * The block type
@@ -95,14 +114,17 @@ public class PrsDirective extends DirectiveBlock {
             this.type = type;
             this.base = base;
             this.blocks = new HashMap<HierName,DirectiveInterface>();
+            this.wiringCells = new HashSet<>();
         }
 
         /**
          * The block type
          **/
         public void addInstance(final HierName instance,
-                                final DirectiveInterface directives) {
+                                final DirectiveInterface directives,
+                                final boolean isWiring) {
             blocks.put(instance, directives);
+            if (isWiring) wiringCells.add(instance);
         }
 
         public Object getDefaultValue(String key, String memberType)
@@ -312,6 +334,10 @@ public class PrsDirective extends DirectiveBlock {
             }
         }
 
+        private boolean noinline(final String key, final HierName instance) {
+            return NO_INLINE.contains(key) && !wiringCells.contains(instance);
+        }
+
         public Map getValues(String key, String memberType) throws UnknownDirectiveException {
             Map result = null;
             if (valuesCache == null) {
@@ -333,6 +359,7 @@ public class PrsDirective extends DirectiveBlock {
             for (Map.Entry<HierName,DirectiveInterface> entry :
                     blocks.entrySet()) {
                 final HierName instance = entry.getKey();
+                if (noinline(key, instance)) continue;
                 final DirectiveInterface dir = entry.getValue();
                 if (member != null) member.setPrefix(instance);
                 if (value != null) value.setPrefix(instance);
@@ -363,12 +390,15 @@ public class PrsDirective extends DirectiveBlock {
                 final Pair parts = extract.getParts(parameter, blocks.keySet());
                 if (parts != null) {
                     prefix = (HierName) parts.getFirst();
-                    final DirectiveInterface dir = blocks.get(prefix);
-                    o = dir.lookup(key, memberType, parts.getSecond());
+                    if (!noinline(key, prefix)) {
+                        final DirectiveInterface dir = blocks.get(prefix);
+                        o = dir.lookup(key, memberType, parts.getSecond());
+                    }
                 }
             } else {
                 for (Map.Entry<HierName,DirectiveInterface> entry :
                         blocks.entrySet()) {
+                    if (noinline(key, entry.getKey())) continue;
                     final DirectiveInterface dir = entry.getValue();
                     o = dir.lookup(key, memberType, parameter);
                     if (o != dir.getDefaultValue(key, memberType)) {
@@ -408,12 +438,14 @@ public class PrsDirective extends DirectiveBlock {
                 final DirectiveInterface dir = entry.getValue();
                 for (Iterator j = dir.paramEntryIterator(); j.hasNext(); ) {
                     final Map.Entry sentry = (Map.Entry) j.next();
-                    final Pair keytype = (Pair) sentry.getKey();
+                    final Pair<String,String> keytype =
+                        (Pair<String,String>) sentry.getKey();
+
+                    if (noinline(keytype.getFirst(), instance)) continue;
 
                     final Triplet t;
                     try {
-                        t = how((String) keytype.getFirst(),
-                                (String) keytype.getSecond());
+                        t = how(keytype.getFirst(), keytype.getSecond());
                     } catch (UnknownDirectiveException e) {
                         throw new RuntimeException(e);
                     }
