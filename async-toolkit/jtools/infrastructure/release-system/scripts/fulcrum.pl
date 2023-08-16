@@ -8,13 +8,15 @@ use FindBin;
 
 my %nb_cfg_path=(
   'sc' => '/nfs/sc/proj/ctg/mrl108/mrl/tools/local/fulcrum_nb.config',
-  'pdx' =>  '/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/ncl/local/fulcrum_nb.config'
+  'pdx' =>  '/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/ncl/local/fulcrum_nb.config',
+  'zsc16' => '/nfs/site/disks/neuro/ww31/ncl/local/fulcrum_nb.config'
 );
 
 BEGIN {
     my %site_tool_path=(
       'sc' => '/nfs/sc/proj/ctg/mrl108/mrl/tools',
-      'pdx' =>  '/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/ncl/tools'
+      'pdx' =>  '/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/ncl/tools',
+      'zsc16' => '/nfs/site/disks/neuro/ww31/ncl/tools'
     );
     $ENV{EC_TOP_PATH} = $site_tool_path{$ENV{EC_SITE}} unless defined $ENV{EC_TOP_PATH};
     my $correctitools="$FindBin::Bin/.itools";
