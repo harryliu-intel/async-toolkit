@@ -64,6 +64,7 @@ final class NetgraphConverter extends NetgraphGateConverter {
     private boolean noResetFault = false;
     private boolean extraPortInfo = false;
     private boolean warnGateFallback = true;
+    private boolean propagateSupplyX = false;
     private VerilogObject parameterPrefix = null;
     private int faultParamNum = 0;
 
@@ -357,6 +358,7 @@ final class NetgraphConverter extends NetgraphGateConverter {
         this.extraPortInfo = theArgs.argExists("extra-port-info");
         final String fallbackArg =
             theArgs.getArgValue("warn-gate-fallback", null);
+        this.propagateSupplyX = theArgs.argExists("propagate-supply-x");
         if (fallbackArg != null) {
             this.warnGateFallback = Boolean.valueOf(fallbackArg);
         }
@@ -584,6 +586,10 @@ final class NetgraphConverter extends NetgraphGateConverter {
 
         items.addAll(0, wireDecl);
         items.addAll(0, inout);
+
+        if (propagateSupplyX) {
+            items.add(factory.expr(forceOutputX()));
+        }
 
         addParameters();
         if (timescale) items.add(0, getTimeScaleMacro());

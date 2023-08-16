@@ -170,7 +170,7 @@ public abstract class AbstractConverter implements ConverterInterface {
         }
         return (VerilogObject) not.get(node);
     }
-    private Collection ports(final ConnectionInfo ci) {
+    protected Collection ports(final ConnectionInfo ci) {
         final Map map = new TreeMap();
         for (ConnectionInfo.NameIterator it = ci.childIterator();
              it.hasNext(); ) {
@@ -191,8 +191,22 @@ public abstract class AbstractConverter implements ConverterInterface {
                              final String type) {
         addFormal(params, name, type, "inout");
     }
+
+    public interface FormalProcessor {
+        void addFormal(String port, String type, String dir);
+    }
+
     protected void formal(final List params, final ConnectionInfo ci,
                           final String type) {
+        formal(ci, type, new FormalProcessor() {
+            public void addFormal(String port, String type, String dir) {
+                AbstractConverter.this.addFormal(params, port, type, dir);
+            }
+        });
+    }
+
+    protected void formal(final ConnectionInfo ci, final String type,
+                          final FormalProcessor proc) {
         final Map<String,Integer> ports =
             CellUtils.markPorts(ci.child.cast_cell);
         final Map<HierName,Integer> canonPorts =
@@ -226,7 +240,7 @@ public abstract class AbstractConverter implements ConverterInterface {
               default:
                    throw new AssertionError("Unknown port direction: " + dir);
             }
-            addFormal(params, h.getCadenceString(), type, dirString);
+            proc.addFormal(h.getCadenceString(), type, dirString);
         }
     }
     protected void addActual(final List params, final String name,

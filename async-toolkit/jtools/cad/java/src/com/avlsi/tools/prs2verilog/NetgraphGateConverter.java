@@ -14,7 +14,11 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import com.avlsi.cast.impl.NodeValue;
 import com.avlsi.cast2.directive.DirectiveConstants;
 import com.avlsi.cast2.util.DirectiveUtils;
 import com.avlsi.fast.CellType;
@@ -29,6 +33,7 @@ import com.avlsi.tools.prs2verilog.verilog.Delay;
 import com.avlsi.tools.prs2verilog.verilog.TrivialVisitor;
 import com.avlsi.tools.prs2verilog.verilog.VerilogObject;
 import com.avlsi.tools.prs2verilog.verilog.VerilogFactoryInterface;
+import com.avlsi.tools.prs2verilog.verilog.VerilogUtil;
 import com.avlsi.util.cmdlineargs.CommandLineArgs;
 import com.avlsi.util.container.AliasedSet;
 import com.avlsi.util.container.MultiMap;
@@ -38,6 +43,14 @@ import com.avlsi.util.functions.UnaryFunction;
 import com.avlsi.util.text.PrintfFormat;
 
 public abstract class NetgraphGateConverter extends AbstractConverter {
+    public static enum PowerPortHandling {
+        /** use standard CAST rules */
+        CAST,
+        /** don't emit power rail connections */
+        SKIP,
+        /** add power rails connections for verilog block instances */
+        VERILOG_ADD
+    }
     public static final String CLK = "PRS2VERILOG_clk";
     protected final CellType cell;
     protected final ConnectionInfo ports;
@@ -52,12 +65,16 @@ public abstract class NetgraphGateConverter extends AbstractConverter {
     protected boolean zoix = false;
     protected boolean zeroify = false;
     protected boolean oneify = false;
-    protected boolean skip = false;
+    protected PowerPortHandling skip = PowerPortHandling.CAST;
+    protected int powerRailOption = 0;
     protected boolean outputDelay = false;
     protected boolean timescale = false;
     protected final static PrintfFormat fmt = new PrintfFormat("%.6g");
     private Set<HierName> powerNets = new HashSet<>();
+    private Set<HierName> groundNets = new HashSet<>();
     private Set<HierName> childPowerNets = new HashSet<>();
+    private Set<HierName> childGroundNets = new HashSet<>();
+    private Set<HierName> childPorts = new HashSet<>();
 
     public NetgraphGateConverter(final CellType cell,
                                  final VerilogFactoryInterface factory,
@@ -72,10 +89,12 @@ public abstract class NetgraphGateConverter extends AbstractConverter {
         this.GND = GND;
         this.chooser = chooser;
         this.cad = cad;
-        updatePowerNets(powerNets, cell);
+        updatePowerNets(powerNets, groundNets, cell);
     }
 
-    private void updatePowerNets(final Set<HierName> powerNets, final CellType cell) {
+    private void updatePowerNets(final Set<HierName> powerNets,
+                                 final Set<HierName> groundNets,
+                                 final CellType cell) {
         DirectiveUtils.getNetDirectives(cell.cast_cell, null,
                 cad.convert(cell.cast_cell).getLocalNodes(), null,
                 DirectiveConstants.POWER_NET, 
@@ -83,7 +102,7 @@ public abstract class NetgraphGateConverter extends AbstractConverter {
         DirectiveUtils.getNetDirectives(cell.cast_cell, null,
                 cad.convert(cell.cast_cell).getLocalNodes(), null,
                 DirectiveConstants.GROUND_NET, 
-                powerNets, powerNets, new HashSet<>());
+                groundNets, groundNets, new HashSet<>());
     }
 
     protected VerilogObject newWire() {
@@ -94,31 +113,33 @@ public abstract class NetgraphGateConverter extends AbstractConverter {
         return wireType(cell.getNet(net));
     }
 
-    private boolean isPowerRail(final Set<HierName> powerNets, final HierName net) {
-        return powerNets.contains(net);
+    private boolean isRail(final Set<HierName> powerNets,
+                           final Set<HierName> groundNets,
+                           final HierName net) {
+        return powerNets.contains(net) || groundNets.contains(net);
     }
 
-    private boolean isPowerRail(final Set<HierName> powerNets, final String net) {
-        return isPowerRail(powerNets, HierName.makeHierNameUnchecked(net, '.'));
+    private boolean isRail(final Set<HierName> powerNets,
+                           final Set<HierName> groundNets,
+                           final String net) {
+        return isRail(powerNets, groundNets, HierName.makeHierNameUnchecked(net, '.'));
     }
 
     protected void actual(final List params, final ConnectionInfo ci,
                           final boolean byName, final UnaryFunction uf) {
-        childPowerNets.clear();
-        updatePowerNets(childPowerNets, ci.child);
         super.actual(params, ci, byName, uf);
     }
 
     protected void addFormal(final List params, final String name,
                              final String type, final String dir) {
-        if (!skip || !isPowerRail(powerNets, name))
+        if (skip != PowerPortHandling.SKIP || !isRail(powerNets, groundNets, name))
             super.addFormal(params, name, type, dir);
     }   
 
     protected void addActual(final boolean byName, final List params,
                              final HierName child, final HierName parent,
                              final String type) {
-        if (!skip || !isPowerRail(childPowerNets, child))
+        if (skip != PowerPortHandling.SKIP || !isRail(childPowerNets, childGroundNets, child))
             super.addActual(byName, params, child, parent, type);
     }
 
@@ -245,13 +266,47 @@ public abstract class NetgraphGateConverter extends AbstractConverter {
         final Pair result =
             super.verilogInstance(inst, instance, ns, factory,
                                   new VddGndBlockValue(bv));
-        if (clk == null) return result;
-        final VerilogObject clock = lookupNode(clk, "wire");
-        final List ports = new ArrayList();
-        ports.add(inst.getPortsByOrder() == null ?
-                factory.namedPort(factory.ident(clk, false), clock) : clock);
-        ports.addAll((List) result.getSecond());
-        return new Pair(result.getFirst(), ports);
+
+        List ports = null;
+        if (skip == PowerPortHandling.VERILOG_ADD && inst.getPortsByOrder() == null) {
+            final Set<String> left =
+                Stream.concat(childPowerNets.stream(),
+                              childGroundNets.stream())
+                      .map(HierName::toString)
+                      .collect(Collectors.toCollection(HashSet::new));
+            final Iterator name = inst.getPortsByName();
+            while (name.hasNext()) {
+                final Map.Entry entry = (Map.Entry) name.next();
+                final String key = (String) entry.getKey();
+                left.remove(key);
+            }
+            for (String port : left) {
+                if (ports == null) ports = new ArrayList();
+                final HierName hport = HierName.makeHierNameUnchecked(port, '.');
+                if (childPorts.contains(hport)) {
+                    final VerilogObject formal = factory.ident(port, false);
+                    try {
+                        final List<VerilogObject> actual =
+                            verilogValue(instance, ns, new NodeValue(hport), bv);
+                        ports.add(factory.namedPort(formal, actual.get(0)));
+                    } catch (Exception e) {}
+                }
+            }
+        }
+
+        if (clk != null) {
+            if (ports == null) ports = new ArrayList();
+            final VerilogObject clock = lookupNode(clk, "wire");
+            ports.add(inst.getPortsByOrder() == null ?
+                    factory.namedPort(factory.ident(clk, false), clock) : clock);
+        }
+
+        if (ports == null) {
+            return result;
+        } else {
+            ports.addAll((List) result.getSecond());
+            return new Pair(result.getFirst(), ports);
+        }
     }
 
     protected void init(final CommandLineArgs theArgs) {
@@ -273,7 +328,9 @@ public abstract class NetgraphGateConverter extends AbstractConverter {
             clk = theArgs.getArgValue("clk", CLK);
         }
         zoix = theArgs.argExists("zoix");
-        skip = theArgs.argExists("skip-power-rail");
+        if (theArgs.argExists("skip-power-rail")) {
+            skip = PowerPortHandling.valueOf(theArgs.getArgValue("skip-power-rail", "SKIP"));
+        }
         outputDelay = theArgs.argExists("output-delay");
         zeroify = theArgs.argExists("make-gnd-0");
         oneify = theArgs.argExists("make-vdd-1");
@@ -289,6 +346,11 @@ public abstract class NetgraphGateConverter extends AbstractConverter {
         for (Iterator i = cell.getAllSubcellConnections().iterator();
              i.hasNext(); ) {
             final ConnectionInfo ci = (ConnectionInfo) i.next();
+            childPowerNets.clear();
+            childGroundNets.clear();
+            updatePowerNets(childPowerNets, childGroundNets, ci.child);
+            childPorts.clear();
+            childPorts.addAll(ports(ci));
             final List block = verilogBlock(
                 ci.nameInParent,
                 cell.namespace,
@@ -401,6 +463,46 @@ public abstract class NetgraphGateConverter extends AbstractConverter {
             result[i] = constify(o[i]);
         }
         return result;
+    }
+
+    protected String forceOutputX() {
+        final Set<String> outPorts = new TreeSet<>();
+        final Set<String> pwrPorts = new TreeSet<>();
+        final Set<String> gndPorts = new TreeSet<>();
+        formal(ports, "wire", new FormalProcessor() {
+            public void addFormal(String port, String type, String dir) {
+                final HierName hport = HierName.makeHierNameUnchecked(port, '.');
+                if (powerNets.contains(hport)) {
+                    pwrPorts.add(port);
+                } else if (groundNets.contains(hport)) {
+                    gndPorts.add(port);
+                } else if (dir.equals("output")) {
+                    outPorts.add(port);
+                }
+            }
+        });
+        if (outPorts.isEmpty() || (pwrPorts.isEmpty() && gndPorts.isEmpty())) {
+            return null;
+        }
+
+        final String always =
+            Stream.concat(pwrPorts.stream(), gndPorts.stream())
+                  .map(x -> VerilogUtil.escapeIfNeeded(x))
+                  .collect(Collectors.joining(" or ", "always @(", ")"));
+        final String cond =
+            Stream.concat(
+                pwrPorts.stream().map(x -> VerilogUtil.escapeIfNeeded(x) + " === 1'b1"),
+                gndPorts.stream().map(x -> VerilogUtil.escapeIfNeeded(x) + " === 1'b0"))
+                  .collect(Collectors.joining(" && ", "if (", ")"));
+        final String force =
+            outPorts.stream()
+                    .map(x -> "force " + VerilogUtil.escapeIfNeeded(x) + " = 1'bx;")
+                    .collect(Collectors.joining("\n"));
+        final String release =
+            outPorts.stream()
+                    .map(x -> "release " + VerilogUtil.escapeIfNeeded(x) + ";")
+                    .collect(Collectors.joining("\n"));
+        return always + " " + cond + " begin\n" + release + "\nend else begin\n" + force + "\nend\n";
     }
 
     public abstract VerilogObject convert(final CommandLineArgs theArgs,
