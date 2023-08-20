@@ -143,7 +143,7 @@ public class CSP2Java {
         boolean synthesizable =
             ((Boolean)DirectiveUtils.getCspDirective
              (cell, DirectiveConstants.SYNTHESIZABLE)).booleanValue();
-        genCode(p, null, className, cell.getCSPInfo(), out, strictVars,
+        genCode(p, null, className, cell.getCSPInfo(), out, strictVars || synthesizable,
                 disableDftHandler, synthesizable);
         out.close();
     }
