@@ -1,4 +1,5 @@
 #!/usr/intel/bin/zsh
+
 cell_list=$1
 shift
 if [[ $# -eq 0 ]]; then

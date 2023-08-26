@@ -52,6 +52,7 @@ spcl_lvt i0sddtil0ab1d02x5
 etc (this "trick" fixes up various power rails)
 
 8. check runme / pvts.zsh for correct temp and voltage(s)
+  8a.  Make sure corners exist in the run_postprocess script!
 
 9. LAUNCH:
 

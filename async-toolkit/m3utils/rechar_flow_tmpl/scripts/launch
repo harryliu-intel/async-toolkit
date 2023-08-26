@@ -4,6 +4,12 @@ millivolts=0p$1
 shift
 celsius=$1
 shift
+trancorner=$1
+shift
+capcorner=$1
+shift
+metaltemp=$1
+shift
 
 workers=1200
 
@@ -29,14 +35,14 @@ launch_corner() {
     else
         dir=${p}_${v}_${vccio}_${t}
     fi
-    export corner=${v}-${vccio}-${wordy}-${m}.${p}_${t}.tttt
+    export corner=${v}-${vccio}-${wordy}-${m}.${p}_${t}.${trancorner}
     export extract_pvt
     mkdir -p $dir
     [[ -n $import_only ]] && libsuffix='.lvf' || libsuffix=''
     for bs in $todo; do
         unset spfdir io_supplies io_grounds
         export bundle=${bs} run_list_maxsize=${workers}
-        export instance_dir=$WARD/siliconsmart/import/tttt_${millivolts}_${celsius}/$bundle/control.updated
+        export instance_dir=$WARD/siliconsmart/import/${trancorner}_${millivolts}_${celsius}/$bundle/control.updated
         if [[ -z $skip_import ]]; then
             lib=($WARD/siliconsmart/extracted/*_${bundle}_*.lib)
             export lib_file=${lib[1]}$libsuffix
@@ -77,8 +83,7 @@ launch_corner() {
 #todo+=(dsseq_lvt/200)
 #todo+=(seq_lvt/200)
 
-#launch_corner tttt ${millivolts}  ${celsius} max tttt_100c_tttt_cmax
-launch_corner tttt ${millivolts}  ${celsius} max 100c_tttt_cmax
+launch_corner tttt ${millivolts} ${celsius} max ${metaltemp}c_${trancorner}_${capcorner}
 [[ -n $import_only ]] && exit
 #launch_corner tttt 0p355  85 max tttt_100c_tttt_cmax
 #launch_corner tttt 0p325  85 max tttt_100c_tttt_cmax

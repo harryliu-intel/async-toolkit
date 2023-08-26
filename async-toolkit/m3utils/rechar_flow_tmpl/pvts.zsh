@@ -5,6 +5,10 @@
 
 # can change in future!
 
-#millivolts=350
-volts_list=(300)
-celsius=100
+# corners are given in temp/millivolts/trancorner/capcorner/metaltemp format
+# metaltemp given as "m40" or "100" or whatnot
+# note that corners given must also be mapped in run_postprocess
+
+export corners_list=(100/300/tttt/cmax/100)
+
+export cell_list_fn="cell_list"
