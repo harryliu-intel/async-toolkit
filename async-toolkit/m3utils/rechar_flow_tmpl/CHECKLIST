@@ -1,0 +1,113 @@
+1. make sure you're in cth2 and the WARD is correct
+
+2. make sure that you started cth2 with the correct PDK settings.
+
+two examples:
+
+1278p3 0p5 PDK:
+
+# /p/hdk/bin/cth_psetup -p ipde/2023.16.04 -cfg 78p3_opt9_r05.cth -nowash -tool ipde_all -x '$SETUP_IPDE'
+
+1278p3 0p8 PDK:
+
+# /p/hdk/bin/cth_psetup -p ipde/2023.31.02.p2 -cfg 78p3_opt12_r08.cth -nowash -tool ipde_all -x '$SETUP_IPDE'
+
+as of 8/23 we are using the latter for FWR.
+
+cth2 must be started in the top-level dir.
+
+2b. make sure SP variables are set correctly if doing asfit (4 vars)
+    -- check them for matching PDK in any case, even if not doing asfit!
+
+2c. if doing asfit, worry about the extraction quality between the cell data
+from the standard cell library and the UPF being used for simulation.
+
+3. make sure siliconsmart dir exists and is empty (check symlink):
+
+create appropriately named work directory, e.g.,
+
+rm siliconsmart # assuming siliconsmart is a symlink
+rm -rf siliconsmart.mine
+mkdir siliconsmart.mine
+ln -sf siliconsmart.mine siliconsmart
+
+"siliconsmart" MUST point to an empty directory (or BE an empty directory)
+
+4. check env.zsh for stdcell_dir -- should match desired starting lib
+
+5. check env.zsh for SILICONSMART_ROOT_DIR -- should match WARD!
+
+6. check cell_list for being correct---cell_list can be a symlink (rec'm'd)
+
+7. if doing spcl cells, make sure the required special cell is included:
+
+(in 1278.3)
+
+spcl_ulvt i0sddtih0aa1d02x5
+spcl_ulvt i0sddtil0aa1d02x5
+
+spcl_lvt i0sddtih0ab1d02x5
+spcl_lvt i0sddtil0ab1d02x5
+
+etc (this "trick" fixes up various power rails)
+
+8. check runme / pvts.zsh for correct temp and voltage(s)
+
+9. LAUNCH:
+
+./runme cell_list |& tee runme.mine.log
+
+---- WAIT A LONG TIME ----
+
+10. while you are waiting:
+
+cd siliconsmart
+ls -ltra
+cd <most recent PVT dir>
+ls -ltra
+cd <most recent bundle dir>
+tail -f siliconsmart.log
+
+if a job gets STUCK (sits several hours with a single worker), use
+
+nbstatus jobs
+
+figure out where it is running; log in to that machine; kill the siliconsmart process there
+
+the master siliconsmart process will figure out to relaunch the job.
+
+11. If anything goes wrong, fix it.  It is allowable to, e.g., cut back PVTs
+or bundles.
+
+12. In case of fixes, can rebundle the final bundles using
+
+./runme_final cell_list
+
+Note that ./runme_final is called from a specific point in the runme script.
+Please read the scripts to understand what is happening so that runme_final
+is starting in an appropriate environment.
+
+13. In case of splitting the flow (doing runme in one place and
+runme_final separately), which is OK to do, ensure that the files are
+set up right!  Pay special attention to PVTs and env.zsh contents!  Plus
+make sure that the CTH2 setup matches in the two runs.
+
+----  BASIC QC  ----
+
+pushd siliconsmart/bundles
+
+zgrep i0s */lib/lib783_i0s_160h_50pp_*_*${PVT}*.lib.gz | grep "cell.i0s" | sed -e 's/.*cell.//' -e 's/).*//' > ../../cells_done
+
+popd
+
+awk '{print $2}' cell_list > cells_reqd
+cat cells_reqd cells_reqd cells_done | sort | uniq -c | sort -g | less
+
+2 means : requested but not done
+1 means : done but not requested
+3 means : requested and done
+
+
+
+
+

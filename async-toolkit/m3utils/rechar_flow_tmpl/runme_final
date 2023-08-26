@@ -1,0 +1,34 @@
+#!/usr/intel/bin/zsh -x
+
+# runme_final : final steps of Harry's runme script
+
+# ALLOW 64GB 
+
+TOP=$(realpath ${0:h})
+cell_list=$TOP/$1
+
+source $TOP/env.zsh
+
+cd $WARD/siliconsmart
+
+###################################################################
+
+# Post-process libs to create all the metal variants, and also to update
+# operating condition and comments.
+$TOP/scripts/run_postprocess */*/models/liberty/liberty*.lib
+
+# Compile .lib to .ldb
+$TOP/scripts/compile_ldb */*/models/liberty/${techlib}*.lib
+
+# Create NDMs
+mkdir -p $WARD/siliconsmart/ndms
+cd $WARD/siliconsmart/ndms
+cp $WARD/siliconsmart/*/*/models/liberty/${techlib}*.{lib,ldb} .
+$TOP/scripts/gen_ndms $bundles
+
+# Bundle new collateral
+mkdir -p $WARD/siliconsmart/bundles
+cd $WARD/siliconsmart/bundles
+$TOP/scripts/rebundle $WARD/siliconsmart/ndms $bundles
+
+echo "**********  $0 done at `date`"

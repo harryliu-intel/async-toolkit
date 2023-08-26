@@ -1,0 +1,11 @@
+#!/usr/intel/bin/zsh -x
+lm_shell=/p/hdk/cad/iccompilerII/Q-2019.12-SP3/bin/icc2_lm_shell
+
+ldb=$1
+lib=$(echo ${ldb:t} | cut -f1-6 -d_)
+bundle=$(echo ${ldb:t} | cut -f5-6 -d_)
+ndm=$stdcell_dir/$bundle/ndm/$lib.ndm
+
+echo "working directory is " `pwd`
+
+NDM=$ndm LDB="${(j: :)@}" $lm_shell -f ${0:h}/add_db.tcl |& tee $bundle.ndm.log

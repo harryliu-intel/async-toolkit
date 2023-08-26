@@ -1,0 +1,114 @@
+#!/usr/intel/bin/zsh -x
+
+# ALLOW 64GB 
+
+# The Siliconsmart recharacterization flow reads an existing Liberty file, runs
+# SPICE simulations at different operating conditions, then writes out a new
+# Liberty file with new data but preserving the same structure.  For FON, I
+# wrote some scripts to recharacterize selected cells from the 1276.4
+# pdk050_r3v0p0_efv library at low voltages, and to rebundle the result.  FON
+# also included new custom cells from both Andrew and Anupama, but I have
+# cleaned up the scripts to focus only on recharacterization.  This script
+# exercises the flow on some inverters as a demo.  I also point out some
+# caveats.
+
+# Start Cheetah 2 environment then run this script.  A sample command to start
+# Cheetah 2 is:
+# /p/hdk/bin/cth_psetup -p ipde/2023.16.04 -cfg 78p3_opt9_r05.cth -nowash -tool ipde_all -x '$SETUP_IPDE'
+# /p/hdk/bin/cth_psetup -p ipde/2023.31.02.p2 -cfg 78p3_opt12_r08.cth -nowash -tool ipde_all -x '$SETUP_IPDE'
+#
+# Then set license (SNPSLMD_LICENSE_FILE/LM_PROJECT) and NetBatch (NBQSLOT)
+# environment variables, or use your own Cheetah project which may already have
+# configured them.
+#
+# Careful that all Cheetah files are needed---do not delete!
+#
+# Run this script from $TOP.  (Its own home.)  Cheetah settings will cause
+# data to go to $WARD.
+#
+# spcl_ulvt must include the zaonssaa cell for the flow to work
+#
+#
+# disk layout:
+#
+# char directory:    tttt_0p350_50  # e.g.
+# ndm staging dir:   ndms           # build area for ndms
+# output dir:        bundles        # all outputs here, not used during char
+#
+# bundles and ndms are NOT referenced while running flow
+
+
+TOP=$(realpath ${0:h})
+cell_list_fn=$1
+cell_list=$TOP/$cell_list_fn
+
+echo "**********  $0 start at `date`"
+
+source pvts.zsh
+
+source $TOP/env.zsh
+
+source env.zsh
+
+# Extract the cells of interest specified in cell_list from the source library
+# into:
+# .lib.lvf has complete content of each cell
+# .lib is the same as .lib.lvf but without OCV and receiver capacitance
+#
+# This was a workaround to deal with the unintended direct copying of OCV and
+# receiver_capacitance tables from the source library, for example, because the
+# LVF tables are of different dimensions between the source and the
+# recharacterization.  First import from .lib.lvf to generate the .inst files
+# that control characterization, then switch to import from .lib files to
+# actually run the characterization.  This should be done in a better way.
+mkdir -p $WARD/siliconsmart/extracted
+cd $WARD/siliconsmart/extracted
+$TOP/scripts/extract.zsh $cell_list
+
+bundles=($(awk '{print $1}' $cell_list |sort -u))
+echo "bundles are " $bundles
+
+# Import library to create Siliconsmart .inst files
+mkdir -p $WARD/siliconsmart/import
+cd $WARD/siliconsmart/import
+for millivolts in $volts_list; do
+    echo "importing millivolts=" $millivolts
+    import_only=1 $TOP/scripts/launch $millivolts $celsius $bundles
+done
+
+# Reduce the capacitance indicies because of lower voltages.  The 0.5 factor is
+# arbitrary, based on the initial 0.355V lib delievered by CorpLib.  It would
+# be better to use Siliconsmart's autorange feature to figure out the
+# capacitance indices based on slew limits at an anchor operating condition.
+for control in */*/control; do
+    mkdir -p $control.updated
+    for inst in $control/*.inst; do
+        # try 0.3 for 0p300 (0.4 worked for 0p350)
+        $TOP/scripts/half_load.pl 0.3 < $inst > $control.updated/${inst:t}
+    done
+done
+
+seq_bundles=(seq_ulvt seq_lvt seq_svt seq_hvt)
+for bundle in $seq_bundles; do
+    for dir in *; do
+        if [ -d $dir/$bundle ]; then
+            for inst in $dir/$bundle/control.updated/*.inst; do
+                clockname=`grep "add_pin.*-clock" ${inst} | awk '{print $2}'`
+                echo "set_config_opt -type mpw -from ${clockname} smc_degrade 0.05" >> $inst
+            done
+        fi
+    done
+done
+
+# Run new characterization.  The bundles and corners to run can be controlled
+# by editing the end of "launch"; current settings are arbitrary for this demo.
+cd $WARD/siliconsmart
+for millivolts in $volts_list; do
+    echo "launching millivolts=" $millivolts
+    $TOP/scripts/launch $millivolts $celsius $bundles
+done
+
+$TOP/runme_final $cell_list_fn
+
+echo "**********  $0 done at `date`"
+

@@ -1,0 +1,91 @@
+#!/usr/intel/bin/zsh -x
+
+millivolts=0p$1
+shift
+celsius=$1
+shift
+
+workers=1200
+
+[[ -n $NBQSLOT ]] || { echo "NBQSLOT not set"; exit 1 }
+[[ -n $NBCLASS ]] || NBCLASS='SLES12&&6G'
+use_corners_xml=$WARD/collateral/cfg/corners.xml
+job_scheduler=nb
+lvf_mode=ml
+repo=${0:h}/..
+export NBQSLOT NBCLASS use_corners_xml job_scheduler lvf_mode
+serial=1
+bundles=("$@")
+#todo=()
+todo=($bundles)
+
+launch_corner() {
+	date
+	echo "launch_corner $*" 
+    p=$1 v=$2 t=$3 m=$4 extract_pvt=$5 vccio=$6
+    if [[ -z $vccio ]]; then
+        dir=${p}_${v}_${t}
+        vccio=$v
+    else
+        dir=${p}_${v}_${vccio}_${t}
+    fi
+    export corner=${v}-${vccio}-${wordy}-${m}.${p}_${t}.tttt
+    export extract_pvt
+    mkdir -p $dir
+    [[ -n $import_only ]] && libsuffix='.lvf' || libsuffix=''
+    for bs in $todo; do
+        unset spfdir io_supplies io_grounds
+        export bundle=${bs} run_list_maxsize=${workers}
+        export instance_dir=$WARD/siliconsmart/import/tttt_${millivolts}_${celsius}/$bundle/control.updated
+        if [[ -z $skip_import ]]; then
+            lib=($WARD/siliconsmart/extracted/*_${bundle}_*.lib)
+            export lib_file=${lib[1]}$libsuffix
+        fi
+        if [[ ! -d $dir/$bundle ]]; then
+            cp -a $repo/sis_setup $dir/$bundle
+        fi
+        if [[ $bundle == spcl* ]]; then
+            export io_supplies="vcc vcc_in vcc_out"
+        fi
+        echo "Running in $dir/$bundle"
+        if [[ -z $serial ]]; then
+            (cd $dir/$bundle && siliconsmart char.tcl >& launch.log) &
+        else
+            export run_list_maxsize=${workers}
+            (cd $dir/$bundle && siliconsmart char.tcl >& launch.log)
+        fi
+    done
+}
+
+# this stuff is ignored now...
+
+# ULVT bundles
+#todo+=(base_ulvt/200)
+#todo+=(dsbase_ulvt/600)
+#todo+=(dsibase_ulvt/600)
+#todo+=(dsi1_ulvt/200)
+#todo+=(dsimain_ulvt/200)
+#todo+=(dsseq_ulvt/300)
+#todo+=(seq_ulvt/100)
+#todo+=(spcl_ulvt/200)
+#todo+=(clk_ulvt/200)
+
+# LVT bundles
+#todo+=(base_lvt/100)
+#todo+=(dsbase_lvt/100)
+#todo+=(dsimain_lvt/200)
+#todo+=(dsseq_lvt/200)
+#todo+=(seq_lvt/200)
+
+#launch_corner tttt ${millivolts}  ${celsius} max tttt_100c_tttt_cmax
+launch_corner tttt ${millivolts}  ${celsius} max 100c_tttt_cmax
+[[ -n $import_only ]] && exit
+#launch_corner tttt 0p355  85 max tttt_100c_tttt_cmax
+#launch_corner tttt 0p325  85 max tttt_100c_tttt_cmax
+#launch_corner pfff 0p38  125 min tmin_125c_tttt_cmin
+#launch_corner psss 0p355   0 min tttt_m40c_tttt_cmax
+#launch_corner psss 0p355  85 min tmin_100c_tttt_cmin
+#launch_corner pfff 0p38    0 min tmin_m40c_tttt_cmin
+#launch_corner psss 0p355 125 min tmin_125c_tttt_cmin
+#launch_corner pfff 0p38   85 min tmin_100c_tttt_cmin
+#launch_corner tttt 0p34   85 max tttt_100c_tttt_cmax

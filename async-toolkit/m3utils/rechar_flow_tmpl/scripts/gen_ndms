@@ -1,0 +1,15 @@
+#!/usr/intel/bin/zsh -x
+
+if [[ $# -eq 0 ]]; then
+#    bundles=(base_ulvt dsbase_ulvt dsimain_ulvt dsseq_ulvt seq_ulvt base_lvt dsbase_lvt)
+    bundles=(base_ulvt)
+else
+    bundles=("$@")
+fi
+for bundle in $bundles; do
+    rm -rf $bundle
+#    mkdir $bundle && (cd $bundle && ${0:h}/gen_ndm ../*_${bundle}_*.ldb) &
+    mkdir $bundle && (cd $bundle && nbjob run --target ${NBPOOL} --qslot ${NBQSLOT} --mode interactive --class 'SLES12&&64G' ${0:h}/gen_ndm ../*_${bundle}_*.ldb) &
+done
+
+wait

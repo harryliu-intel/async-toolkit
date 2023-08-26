@@ -1,0 +1,19 @@
+#!/usr/intel/bin/zsh -x
+
+# runme_final : final steps of Harry's runme script
+
+# ALLOW 64GB 
+
+TOP=$(realpath ${0:h})
+cell_list=$TOP/$1
+
+source $TOP/env.zsh
+
+cd $WARD/siliconsmart || { echo "No $WARD/siliconsmart !"; exit 1 }
+
+# Bundle new collateral
+mkdir -p $WARD/siliconsmart/bundles
+cd $WARD/siliconsmart/bundles
+$TOP/scripts/rebundle $WARD/siliconsmart/ndms $bundles
+
+echo "**********  $0 done at `date`"
