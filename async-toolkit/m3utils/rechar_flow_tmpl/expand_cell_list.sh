@@ -12,7 +12,7 @@ spcl_lvt i0sddtih0ab1d02x5
 spcl_lvt i0sddtil0ab1d02x5
 EOF
 
-cat cell_list.fwr cell_list.fwr_plus > cell_list.fwr_x0
+cat cell_list.andrews cell_list.fwr cell_list.fwr_plus > cell_list.fwr_x0
 
 grep '_ulvt.*aa' cell_list.fwr_x0 | sed -e 's/_ulvt/_lvt/' -e 's/\([0-9]\)aa\([0-9][a-z][0-9][0-9]x[0-9]\)/\1ab\2/' > cell_list.fwr_x1
 grep '_lvt.*ab' cell_list.fwr_x0 | sed -e 's/_lvt/_ulvt/' -e 's/\([0-9]\)ab\([0-9][a-z][0-9][0-9]x[0-9]\)/\1aa\2/'  > cell_list.fwr_x2
