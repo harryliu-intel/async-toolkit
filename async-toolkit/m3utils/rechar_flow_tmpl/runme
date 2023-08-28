@@ -45,8 +45,6 @@ source pvts.zsh
 
 cell_list=$TOP/$cell_list_fn
 
-source $TOP/env.zsh
-
 source env.zsh
 
 # Extract the cells of interest specified in cell_list from the source library

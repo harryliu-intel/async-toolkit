@@ -9,6 +9,7 @@
 # metaltemp given as "m40" or "100" or whatnot
 # note that corners given must also be mapped in run_postprocess
 
-export corners_list=(100/300/tttt/cmax/100)
+corners_list=("100/300/tttt/cmax/100" "100/300/tttt/cmin/100")
 
-export cell_list_fn="cell_list"
+cell_list_fn="cell_list"
+
