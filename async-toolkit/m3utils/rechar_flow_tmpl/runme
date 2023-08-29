@@ -69,13 +69,14 @@ echo "bundles are " $bundles
 mkdir -p $WARD/siliconsmart/import
 cd $WARD/siliconsmart/import
 for corner in $corners_list; do
-    celsius=${corner:h:h:h:h}
-    millivolts=${corner:h:h:h:t}
-    trancorner=${corner:h:h:t}
+    celsius=${corner:h:h:h:h:h}
+    millivolts=${corner:h:h:h:h:t}
+    trancorner=${corner:h:h:h:t}
+    metalcorner=${corner:h:h:t}
     capcorner=${corner:h:t}
     metaltemp=${corner:t}
     echo "importing millivolts=" $millivolts " celsius=" $celsius
-    import_only=1 $TOP/scripts/launch $millivolts $celsius $trancorner $capcorner $metaltemp $bundles 
+    import_only=1 $TOP/scripts/launch $millivolts $celsius $trancorner $capcorner $metaltemp $metalcorner $bundles 
 done
 
 # Reduce the capacitance indicies because of lower voltages.  The 0.5 factor is
@@ -106,13 +107,14 @@ done
 # by editing the end of "launch"; current settings are arbitrary for this demo.
 cd $WARD/siliconsmart
 for corner in $corners_list; do
-    celsius=${corner:h:h:h:h}
-    millivolts=${corner:h:h:h:t}
-    trancorner=${corner:h:h:t}
+    celsius=${corner:h:h:h:h:h}
+    millivolts=${corner:h:h:h:h:t}
+    trancorner=${corner:h:h:h:t}
+    metalcorner=${corner:h:h:t}
     capcorner=${corner:h:t}
     metaltemp=${corner:t}
     echo "launching millivolts=" $millivolts
-    $TOP/scripts/launch $millivolts $celsius $trancorner $capcorner $metaltemp $bundles 
+    $TOP/scripts/launch $millivolts $celsius $trancorner $capcorner $metaltemp $metalcorner $bundles 
 done
 
 $TOP/runme_final $cell_list_fn

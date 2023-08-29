@@ -52,8 +52,9 @@ for lib; do
         psss_0p85_0p425_125 psss_0p850v_0p425v_125c_tttt_cmin \
         pfff_0p65_0p325_85  pfff_0p650v_0p325v_85c_tttt_cmin  \
         pfff_0p85_0p425_85  pfff_0p850v_0p425v_85c_tttt_cmin  \
-    )
-    libname=${fulllib}_${bundle}_${libnames[$pvt]}_ccslnt
+        )
+    mappedpvt=`echo $pvt | awk -F_ '{printf "%s_%sv_%sc_%s_%s\n", $1, $2, $3, $4, $5}'`
+    libname=${fulllib}_${bundle}_${mappedpvt}_ccslnt
     [[ -z $libname ]] && echo "Can't find libname for: $1" && exit 1
     (cd ${lib:h} && siliconsmart ${0:h}/postprocess.tcl $lib $libname) 
 done

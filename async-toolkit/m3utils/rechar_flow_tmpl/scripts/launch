@@ -10,8 +10,10 @@ capcorner=$1
 shift
 metaltemp=$1
 shift
+metalcorner=$1
+shift
 
-workers=1200
+workers=2000
 
 [[ -n $NBQSLOT ]] || { echo "NBQSLOT not set"; exit 1 }
 [[ -n $NBCLASS ]] || NBCLASS='SLES12&&6G'
@@ -25,24 +27,33 @@ bundles=("$@")
 #todo=()
 todo=($bundles)
 
+# the directory structure that's implied here must be followed in a few places
+# below, we have dir=${p}... etc.
+# below, we have export instance_dir=.../$trancorner... etc.
+# these must match!
+# also, the code in run_postprocess has to be able to parse this structure into an "official" PVT name.
+
 launch_corner() {
     date
     echo "launch_corner $*" 
     p=$1 v=$2 t=$3 m=$4 extract_pvt=$5 vccio=$6
     if [[ -z $vccio ]]; then
-        dir=${p}_${v}_${t}
+        dir=${p}_${v}_${t}_${metalcorner}_${capcorner}_${metaltemp}
         vccio=$v
     else
-        dir=${p}_${v}_${vccio}_${t}
+        dir=${p}_${v}_${vccio}_${t}_${metalcorner}_${capcorner}_${metaltemp}
     fi
+
+    # corner gets parsed out by tcl code
     export corner=${v}-${vccio}-${wordy}-${m}.${p}_${t}.${trancorner}
+    
     export extract_pvt
     mkdir -p $dir
     [[ -n $import_only ]] && libsuffix='.lvf' || libsuffix=''
     for bs in $todo; do
         unset spfdir io_supplies io_grounds
         export bundle=${bs} run_list_maxsize=${workers}
-        export instance_dir=$WARD/siliconsmart/import/${trancorner}_${millivolts}_${celsius}_${capcorner}_${metaltemp}/$bundle/control.updated
+        export instance_dir=$WARD/siliconsmart/import/${trancorner}_${millivolts}_${celsius}_${metalcorner}_${capcorner}_${metaltemp}/$bundle/control.updated
         if [[ -z $skip_import ]]; then
             lib=($WARD/siliconsmart/extracted/*_${bundle}_*.lib)
             export lib_file=${lib[1]}$libsuffix
@@ -83,8 +94,29 @@ launch_corner() {
 #todo+=(dsseq_lvt/200)
 #todo+=(seq_lvt/200)
 
-launch_corner ${trancorner} ${millivolts} ${celsius} max ${metaltemp}c_${trancorner}_${capcorner}
+# last arg here is extract_pvt
+# matches names in PDK release spf directory
+
+extract_pvt=${metaltemp}c_${metalcorner}_${capcorner}
+
+if   [[ "${capcorner}" == "cmin" ]]; then
+    m="min"
+elif [[ "${capcorner}" == "cmax" ]]; then
+    m="max"
+else
+    echo "Unknown capcorner ${capcorner}"
+    exit 1
+fi
+    
+launch_corner ${trancorner} ${millivolts} ${celsius} ${m} ${extract_pvt}
+
+# final trancorner s/b metal extract corner instead (pcss, tttt, pcff, pcss3 ...)
+
 [[ -n $import_only ]] && exit
+
+# below are some 1276 examples
+# note that extract_pvt format has changed, initial transistor corner no longer used in 1278
+
 #launch_corner tttt 0p355  85 max tttt_100c_tttt_cmax
 #launch_corner tttt 0p325  85 max tttt_100c_tttt_cmax
 #launch_corner pfff 0p38  125 min tmin_125c_tttt_cmin
