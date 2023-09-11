@@ -14,8 +14,8 @@ EOF
 
 cat cell_list.andrews cell_list.fwr cell_list.fwr_plus > cell_list.fwr_x0
 
-grep '_ulvt.*aa' cell_list.fwr_x0 | sed -e 's/_ulvt/_lvt/' -e 's/\([0-9]\)aa\([0-9][a-z][0-9][0-9]x[0-9]\)/\1ab\2/' > cell_list.fwr_x1
-grep '_lvt.*ab' cell_list.fwr_x0 | sed -e 's/_lvt/_ulvt/' -e 's/\([0-9]\)ab\([0-9][a-z][0-9][0-9]x[0-9]\)/\1aa\2/'  > cell_list.fwr_x2
+grep '_ulvt.*.a....x. *$' cell_list.fwr_x0 | sed -e 's/_ulvt/_lvt/' -e 's/\([0-9][a-z]\)a\([0-9][a-z][0-9][0-9]x[0-9]\)/\1b\2/' > cell_list.fwr_x1
+grep '_lvt.*.b....x. *$' cell_list.fwr_x0 | sed -e 's/_lvt/_ulvt/' -e 's/\([0-9][a-z]\)b\([0-9][a-z][0-9][0-9]x[0-9]\)/\1a\2/'  > cell_list.fwr_x2
 
 cat cell_list.fwr_x0 cell_list.fwr_x1 cell_list.fwr_x2 | awk '{printf("%s %s\n", $1, $2)}' | sort | uniq > cell_list.fwr_extended
 
