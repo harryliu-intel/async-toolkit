@@ -35,6 +35,7 @@ todo=($bundles)
 
 launch_corner() {
     date
+    pwd
     echo "launch_corner $*" 
     p=$1 v=$2 t=$3 m=$4 extract_pvt=$5 vccio=$6
     if [[ -z $vccio ]]; then
