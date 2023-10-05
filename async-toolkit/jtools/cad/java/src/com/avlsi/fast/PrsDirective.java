@@ -57,7 +57,9 @@ public class PrsDirective extends DirectiveBlock {
                                DirectiveConstants.STEP_NET,
                                DirectiveConstants.DELAY_NET,
                                DirectiveConstants.CAPTURE_NET,
-                               DirectiveConstants.CUTSCAN_NET);
+                               DirectiveConstants.CUTSCAN_NET,
+			       DirectiveConstants.PASSTHRU_NET,
+			       DirectiveConstants.INJECT_NET);
 
     /**
      * Constructs a PrsDirective based on an empty DirectiveInterface.

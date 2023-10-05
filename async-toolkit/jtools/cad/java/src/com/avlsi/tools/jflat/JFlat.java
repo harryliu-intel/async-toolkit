@@ -3488,7 +3488,9 @@ public final class JFlat {
                           DirectiveConstants.STEP_NET,
                           DirectiveConstants.DELAY_NET,
                           DirectiveConstants.CAPTURE_NET,
-                          DirectiveConstants.CUTSCAN_NET)
+                          DirectiveConstants.CUTSCAN_NET,
+                          DirectiveConstants.PASSTHRU_NET,
+                          DirectiveConstants.INJECT_NET)
                       .map(dir -> getNetString(dutCell, envCell, topAliases, envAliases, dir))
                       .reduce(Stream.empty(), Stream::concat);
             return Stream.concat(power, reset);

@@ -265,6 +265,8 @@ public class DirectiveTable {
                   DELAY_NET,
                   CAPTURE_NET,
                   CUTSCAN_NET,
+                  PASSTHRU_NET,
+                  INJECT_NET,
                   START_NET,
                   STEP_NET)
             .forEachOrdered(dir -> {

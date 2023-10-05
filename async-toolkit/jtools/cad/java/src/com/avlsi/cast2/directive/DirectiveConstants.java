@@ -166,6 +166,8 @@ public interface DirectiveConstants {
     String STEP_NET = "step_net";
     String CAPTURE_NET = "capture_net";
     String CUTSCAN_NET = "cutscan_net";
+    String PASSTHRU_NET = "passthru_net";
+    String INJECT_NET = "inject_net";
     String STATICIZER_RATIO = "staticizer_ratio";
     String STATICIZER_TYPE = "staticizer_type";
     String PHANTOM_PORT_SIGNOFF = "phantom_port_signoff";

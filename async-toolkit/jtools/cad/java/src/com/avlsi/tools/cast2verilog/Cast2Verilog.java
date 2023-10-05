@@ -151,6 +151,8 @@ public class Cast2Verilog {
         DirectiveConstants.DELAY_NET,
         DirectiveConstants.CAPTURE_NET,
         DirectiveConstants.CUTSCAN_NET,
+        DirectiveConstants.PASSTHRU_NET,
+        DirectiveConstants.INJECT_NET,
     };
 
     private final Map subcellNames;
