@@ -2551,8 +2551,11 @@ public class DSimModule extends CmdLine {
                     if (args[0].equals("0")) {
                         protocol = DSimUtil.STANDARD_RESET;
                     }
+                    else if (args[0].equals("1")) {
+                        protocol = DSimUtil.SCAN_CONT_RESET;
+                    }
                     else {
-                        System.out.println("Valid protocols: 0.");
+                        System.out.println("Valid protocols: {0,1}.");
                         return;
                     }
                 }

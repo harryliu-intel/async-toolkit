@@ -43,9 +43,12 @@ public class DSimUtil {
     private Node DLY;
     private Node CAPTURE;
     private Node CUTSCAN;
+    private Node PASSTHRU;
+    private Node INJECT;
     private Node ERROR;
 
     public static final int STANDARD_RESET = 0;
+    public static final int SCAN_CONT_RESET = 1;
 
     // TODO BUG 28502: use reset_net/start_net/delay_net directives instead
     public static HierName _RESET_NAME  = HierName.makeHierName("_RESET");
@@ -54,6 +57,8 @@ public class DSimUtil {
     public static HierName DLY_NAME     = HierName.makeHierName("DLY");
     public static HierName CAPTURE_NAME = HierName.makeHierName("CAPTURE");
     public static HierName CUTSCAN_NAME = HierName.makeHierName("CUTSCAN");
+    public static HierName PASSTHRU_NAME = HierName.makeHierName("PASSTHRU");
+    public static HierName INJECT_NAME  = HierName.makeHierName("INJECT");
 
     /** Get a node from top level or env (TODO BUG 28502: eliminate) **/
     private static Node getTopOrEnvNode(HierName name) {
@@ -90,6 +95,14 @@ public class DSimUtil {
         return getTopOrEnvNode(CUTSCAN_NAME);
     }
 
+    public static Node getPassthruNode() {
+        return getTopOrEnvNode(PASSTHRU_NAME);
+    }
+
+    public static Node getInjectNode() {
+        return getTopOrEnvNode(INJECT_NAME);
+    }
+
     /**
      * DSimUtil constructor.  Looks up nodes in preparation for
      * doing stuff.  Shouldn't be called until a cell is instantiated.
@@ -105,6 +118,8 @@ public class DSimUtil {
         DLY    = getDelayNode();
         CAPTURE = getCaptureNode();
         CUTSCAN = getCutscanNode();
+        PASSTHRU = getPassthruNode();
+        INJECT  = getInjectNode();
     }
 
     /**
@@ -133,6 +148,7 @@ public class DSimUtil {
         if (GND!=null) GND.setValueAndEnqueueDependents(Node.VALUE_0);
         if (Vdd!=null) Vdd.setValueAndEnqueueDependents(Node.VALUE_1);
 
+        //Standard (functional) Reset
         if (protocol == STANDARD_RESET) {
             // Reset and cycle
             if (DLY!=null) DLY.setValueAndEnqueueDependents(Node.VALUE_0); // can override in env
@@ -141,6 +157,8 @@ public class DSimUtil {
             if (STEP!=null) STEP.scheduleImmediate(Node.VALUE_0);
             if (CAPTURE!=null) CAPTURE.setValueAndEnqueueDependents(Node.VALUE_0);
             if (CUTSCAN!=null) CUTSCAN.setValueAndEnqueueDependents(Node.VALUE_0);
+            if (PASSTHRU!=null) PASSTHRU.setValueAndEnqueueDependents(Node.VALUE_1);
+            if (INJECT!=null) INJECT.setValueAndEnqueueDependents(Node.VALUE_0);
             dsim.cycle(-1);
 
             // additional step for initialize_on_reset directives
@@ -163,12 +181,65 @@ public class DSimUtil {
             // de-assert _RESET
             if (_RESET!=null) {
                 _RESET.scheduleImmediate(Node.VALUE_1);
+                if (CAPTURE!=null || START!=null || STEP!=null) dsim.cycle(-1);
+            }
+
+            // assert CAPTURE (for diverters)
+            if (CAPTURE!=null) {
+                CAPTURE.scheduleImmediate(Node.VALUE_1);
                 if (START!=null || STEP!=null) dsim.cycle(-1);
             }
 
             // second phase reset if START/STEP nodes exist
             if (START!=null) START.scheduleImmediate(Node.VALUE_1);
             if (STEP!=null) STEP.scheduleImmediate(Node.VALUE_1);
+        }
+        //Reset protocol specifically for Scan Continuity
+        else if (protocol == SCAN_CONT_RESET) {
+            // Reset and cycle
+            if (DLY!=null) DLY.setValueAndEnqueueDependents(Node.VALUE_0); // can override in env
+            if (_RESET!=null) _RESET.scheduleImmediate(Node.VALUE_0);
+            if (START!=null) START.scheduleImmediate(Node.VALUE_0);
+            if (STEP!=null) STEP.scheduleImmediate(Node.VALUE_0);
+            if (CAPTURE!=null) CAPTURE.setValueAndEnqueueDependents(Node.VALUE_0);
+            if (CUTSCAN!=null) CUTSCAN.setValueAndEnqueueDependents(Node.VALUE_0);
+            if (PASSTHRU!=null) PASSTHRU.setValueAndEnqueueDependents(Node.VALUE_1);
+            if (INJECT!=null) INJECT.setValueAndEnqueueDependents(Node.VALUE_0);
+            dsim.cycle(-1);
+
+            // additional step for initialize_on_reset directives
+            initResetNodes(init);
+            dsim.cycle(-1);
+
+            // Restore DSim state
+            dsim.setWarn(warn_state);
+            dsim.setError(error_state);
+            dsim.setRandom(random_state);
+
+            // Turn on error checking & reporting, then exit reset
+            Set unstabSet = dsim.getNodesWithValue(Node.VALUE_U);
+            if (!unstabSet.isEmpty()) {
+                System.out.println(
+                    "Nodes unstable during reset:");
+                printNodeSet(unstabSet);
+            }
+
+            // de-assert _RESET
+            if (_RESET!=null) {
+                _RESET.scheduleImmediate(Node.VALUE_1);
+                if (PASSTHRU!=null || START!=null || STEP!=null) dsim.cycle(-1);
+            }
+
+            // de-assert PASSTHRU (disable control path for scan injectors)
+            if (PASSTHRU!=null) {
+                PASSTHRU.scheduleImmediate(Node.VALUE_0);
+                if (START!=null || STEP!=null) dsim.cycle(-1);
+            }
+
+            // second phase reset if START/STEP nodes exist
+            if (START!=null) START.scheduleImmediate(Node.VALUE_1);
+            if (STEP!=null) STEP.scheduleImmediate(Node.VALUE_1);
+
         }
         else {
             throw new IllegalArgumentException(
