@@ -13,16 +13,15 @@ shift
 metalcorner=$1
 shift
 
-workers=2000
-
 [[ -n $NBQSLOT ]] || { echo "NBQSLOT not set"; exit 1 }
 [[ -n $NBCLASS ]] || NBCLASS='SLES12&&6G'
 use_corners_xml=$WARD/collateral/cfg/corners.xml
 job_scheduler=nb
 lvf_mode=ml
+
 repo=${0:h}/..
 export NBQSLOT NBCLASS use_corners_xml job_scheduler lvf_mode
-serial=1
+
 bundles=("$@")
 #todo=()
 todo=($bundles)
@@ -50,6 +49,12 @@ launch_corner() {
     export extract_pvt
     mkdir -p $dir
     [[ -n $import_only ]] && libsuffix='.lvf' || libsuffix=''
+
+    if [[ -z $internal ]]; then
+        rm -f $sislaunchfile
+        echo "STDCELLDIR:"${stdcell_dir} > $sislaunchfile
+    fi
+    
     for bs in $todo; do
         unset spfdir io_supplies io_grounds
         export bundle=${bs} run_list_maxsize=${workers}
@@ -65,7 +70,13 @@ launch_corner() {
             export io_supplies="vcc vcc_in vcc_out"
         fi
         echo "Running in $dir/$bundle"
-        if [[ -z $serial ]]; then
+        if    [[ -z $internal ]]; then
+            [[ -n $M3UTILS ]] || { echo "M3UTILS not set"; exit 1 }
+            echo "CLEARENV" >> $sislaunchfile
+            env | sed 's/^/ENV:/' >> $sislaunchfile
+            echo "LAUNCH:"$bundle":"`pwd`":../cell_list:"$dir/$bundle >> $sislaunchfile
+            # this is name of bundle, path to CWD, path to place to run
+        elif [[ -z $serial ]]; then
             (cd $dir/$bundle && siliconsmart char.tcl >& launch.log) &
         else
             export run_list_maxsize=${workers}
@@ -109,6 +120,12 @@ else
 fi
     
 launch_corner ${trancorner} ${millivolts} ${celsius} ${m} ${extract_pvt}
+
+if [[ -z $internal ]]; then
+    date
+    pwd
+    $sislaunch -clearenv -sisworkers $workers -sispath $sispath $sislaunchfile
+fi
 
 # final trancorner s/b metal extract corner instead (pcss, tttt, pcff, pcss3 ...)
 

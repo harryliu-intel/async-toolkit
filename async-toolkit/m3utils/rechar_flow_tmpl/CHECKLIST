@@ -35,7 +35,7 @@ ln -sf siliconsmart.mine siliconsmart
 
 4. check env.zsh for stdcell_dir -- should match desired starting lib
 
-5. check env.zsh for SILICONSMART_ROOT_DIR -- should match WARD!
+5. check env.zsh for SILICONSMART_ROOT_DIR -- should match WARD!  (This is automatic now.)
 
 6. check cell_list for being correct---cell_list can be a symlink (rec'm'd)
 

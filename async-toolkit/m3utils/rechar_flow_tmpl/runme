@@ -60,7 +60,7 @@ source env.zsh
 # actually run the characterization.  This should be done in a better way.
 mkdir -p $WARD/siliconsmart/extracted
 cd $WARD/siliconsmart/extracted
-$TOP/scripts/extract.zsh $cell_list
+$TOP/scripts/extract.zsh $cell_list || exit 1
 
 bundles=($(awk '{print $1}' $cell_list |sort -u))
 echo "bundles are " $bundles
