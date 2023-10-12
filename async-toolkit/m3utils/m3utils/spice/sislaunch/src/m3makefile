@@ -1,0 +1,11 @@
+import ("libm3")
+import ("cit_util")
+import ("parseparams")
+import ("spicelib")
+import ("ctlib")
+
+implementation ("SisLaunch")
+interface ("SisTask")
+
+sequence ("SisTask", "SisTask")
+program ("sislaunch")

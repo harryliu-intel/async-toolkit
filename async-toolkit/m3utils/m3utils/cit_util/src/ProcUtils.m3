@@ -50,6 +50,7 @@ TYPE
     mu      : MUTEX;
     cn      : Thread.Condition;
 
+    env     : Env       := NIL;
     sub     : Process.T := NIL;
     created             := FALSE;
 
@@ -153,16 +154,18 @@ PROCEDURE ForkReader(r: Reader): Reader =
     RETURN r;
   END ForkReader;
 
-PROCEDURE RunText(source: TEXT;
-                  stdout,stderr: Writer;
-                  stdin: Reader;
-                  wd0: Pathname.T): Completion =
-  BEGIN RETURN Run(TextRd.New(source),stdout,stderr,stdin,wd0) END RunText;
+PROCEDURE RunText(source        : TEXT;
+                  stdout,stderr : Writer;
+                  stdin         : Reader;
+                  wd0           : Pathname.T;
+                  env           : Env): Completion =
+  BEGIN RETURN Run(TextRd.New(source),stdout,stderr,stdin,wd0,env) END RunText;
 
-PROCEDURE Run(source: Rd.T;
-              stdout,stderr: Writer := NIL;
-              stdin: Reader := NIL;
-              wd0: Pathname.T := NIL): Completion =
+PROCEDURE Run(source        : Rd.T;
+              stdout,stderr : Writer     := NIL;
+              stdin         : Reader     := NIL;
+              wd0           : Pathname.T := NIL;
+              env           : Env        := NIL): Completion =
   VAR
     c := NEW(PrivateCompletion,
              po := ForkWriter(stdout),
@@ -171,6 +174,7 @@ PROCEDURE Run(source: Rd.T;
              main := NEW(MainClosure, 
                          src := source, 
                          wd0 := wd0,
+                         env := env,
                          mu  := NEW(MUTEX), 
                          cn  := NEW(Thread.Condition)));
   BEGIN
@@ -206,6 +210,7 @@ PROCEDURE Apply(self: MainClosure): REFANY =
     wd := self.wd0;
     cm := self.c;
     rd := self.src;
+    env:= self.env;
     c: CHAR;
     p: TEXT;
     i2, stdout,stderr,stdin: File.T := NIL;
@@ -277,7 +282,7 @@ PROCEDURE Apply(self: MainClosure): REFANY =
               END;
               TRY 
                 sub := Process.Create(l.head, params^,
-                                      NIL, wd,
+                                      env, wd,
                                       stdin, stdout,stderr);
                 LOCK self.mu DO
                   self.state := State.Created

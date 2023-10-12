@@ -72,6 +72,8 @@ PROCEDURE RdToRd(source: Rd.T;
         join the fork, call completion.wait(), which will raise ErrorExit
         if the process in question has exited or does exit with an error *)
 
+  Env = REF ARRAY OF TEXT;
+
 (* for more control over i/o: *)
 (* these procedures used to raise ErrorExit, but this was folded into
    Completion, to permit asynchronous delivery of errors, rather than
@@ -80,12 +82,14 @@ PROCEDURE RdToRd(source: Rd.T;
 PROCEDURE Run(source        : Rd.T;
               stdout,stderr : Writer     := NIL;
               stdin         : Reader     := NIL;
-              wd0           : Pathname.T := NIL): Completion;
+              wd0           : Pathname.T := NIL;
+              env           : Env        := NIL): Completion;
 
 PROCEDURE RunText(source        : TEXT;
                   stdout,stderr : Writer     := NIL;
                   stdin         : Reader     := NIL;
-                  wd0           : Pathname.T := NIL): Completion;
+                  wd0           : Pathname.T := NIL;
+                  env           : Env        := NIL): Completion;
 
 (* the following are helpers for Reader/Writer threads *)
 TYPE
