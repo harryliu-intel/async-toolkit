@@ -1,0 +1,2 @@
+#!/bin/sh
+sed 's/^add_latch IQ\(.*\) IQN\(.*\) clk d\(.*\)$/add_latch IQ\1 IQN\2 clk {!d\3}/'

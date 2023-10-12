@@ -88,6 +88,10 @@ for control in */*/control; do
     for inst in $control/*.inst; do
         # try 0.3 for 0p300 (0.4 worked for 0p350)
         $TOP/scripts/half_load.pl 0.3 < $inst > $control.updated/${inst:t}
+        if [[ ${inst:t} =~ "i0sl[a-z][a-z][0-9]10[^/]*$" ]]; then
+            echo "Inverting latch : $inst"
+            $TOP/scripts/invert_d < $inst > $control.updated/${inst:t}
+        fi
     done
 done
 
