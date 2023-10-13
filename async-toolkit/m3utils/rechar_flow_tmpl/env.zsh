@@ -41,7 +41,7 @@ serial=1
 sislaunchfile="jobs.dat"
 sislaunch=${M3UTILS}/spice/sislaunch/AMD64_LINUX/sislaunch
 workers=2000 # workers to launch via SIS
-pllcmds=15   # parallel commands to run through sislaunch (mainly for extract.zsh)
+pllcmds=40   # parallel commands to run through sislaunch (mainly for extract.zsh)
 sispath=`which siliconsmart`
 
 if [[ -z $internal ]]; then

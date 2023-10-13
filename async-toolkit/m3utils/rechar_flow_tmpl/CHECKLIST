@@ -54,13 +54,22 @@ etc (this "trick" fixes up various power rails)
 8. check runme / pvts.zsh for correct temp and voltage(s)
   8a.  Make sure corners exist in the run_postprocess script!
 
-9. LAUNCH:
+9. For parallel runs, you must have M3UTILS set, e.g.,
+
+setenv M3UTILS /nfs/site/disks/zsc9_fwr_sd_001/mnystroe/m3utils
+
+The dependency is on the sislaunch program for parallel runs.  Parallel runs
+can also be disabled in env.zsh (that will not completely disable parallelism,
+but will reduce performance especially for runs consisting of a small number
+of cells in a large number of bundles).
+
+10. LAUNCH:
 
 ./runme cell_list |& tee runme.mine.log
 
 ---- WAIT A LONG TIME ----
 
-10. while you are waiting:
+11. while you are waiting:
 
 cd siliconsmart
 ls -ltra
@@ -77,10 +86,10 @@ figure out where it is running; log in to that machine; kill the siliconsmart pr
 
 the master siliconsmart process will figure out to relaunch the job.
 
-11. If anything goes wrong, fix it.  It is allowable to, e.g., cut back PVTs
+12. If anything goes wrong, fix it.  It is allowable to, e.g., cut back PVTs
 or bundles.
 
-12. In case of fixes, can rebundle the final bundles using
+13. In case of fixes, can rebundle the final bundles using
 
 ./runme_final cell_list
 
@@ -88,7 +97,7 @@ Note that ./runme_final is called from a specific point in the runme script.
 Please read the scripts to understand what is happening so that runme_final
 is starting in an appropriate environment.
 
-13. In case of splitting the flow (doing runme in one place and
+14. In case of splitting the flow (doing runme in one place and
 runme_final separately), which is OK to do, ensure that the files are
 set up right!  Pay special attention to PVTs and env.zsh contents!  Plus
 make sure that the CTH2 setup matches in the two runs.
@@ -107,6 +116,8 @@ cat cells_reqd cells_reqd cells_done | sort | uniq -c | sort -g | less
 2 means : requested but not done
 1 means : done but not requested
 3 means : requested and done
+
+Also run ./checkmissing.sh
 
 
 

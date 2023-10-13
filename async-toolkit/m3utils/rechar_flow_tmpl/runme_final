@@ -15,18 +15,32 @@ cd $WARD/siliconsmart
 
 # Post-process libs to create all the metal variants, and also to update
 # operating condition and comments.
+
+echo "===========================     POSTPROCESS `date`    ==========================="
+pwd
+
+
 $TOP/scripts/run_postprocess */*/models/liberty/liberty*.lib
 
 # Compile .lib to .ldb
+echo "===========================     COMPILE-LDBS `date`     ==========================="
+pwd
 $TOP/scripts/compile_ldb */*/models/liberty/${techlib}*.lib
 
 # Create NDMs
+echo "===========================     CREATE-NDMS `date`    ==========================="
+pwd
+
 mkdir -p $WARD/siliconsmart/ndms
 cd $WARD/siliconsmart/ndms
 cp $WARD/siliconsmart/*/*/models/liberty/${techlib}*.{lib,ldb} .
 $TOP/scripts/gen_ndms $bundles
 
 # Bundle new collateral
+
+echo "===========================     REBUNDLE `date`    ==========================="
+pwd
+
 mkdir -p $WARD/siliconsmart/bundles
 cd $WARD/siliconsmart/bundles
 $TOP/scripts/rebundle $WARD/siliconsmart/ndms $bundles

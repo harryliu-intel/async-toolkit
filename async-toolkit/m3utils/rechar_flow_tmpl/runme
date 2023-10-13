@@ -68,6 +68,10 @@ bundles=($(awk '{print $1}' $cell_list |sort -u))
 echo "bundles are " $bundles
 
 # Import library to create Siliconsmart .inst files
+
+echo "===========================     IMPORT `date`    ==========================="
+pwd
+
 mkdir -p $WARD/siliconsmart/import
 cd $WARD/siliconsmart/import
 
@@ -87,14 +91,14 @@ for corner in $corners_list; do
     import_only=1 $TOP/scripts/launch $cell_list $millivolts $celsius $trancorner $capcorner $metaltemp $metalcorner $bundles 
 done
 
-exit
-
 if [[ -z $internal ]]; then
     date
     pwd
-    $sislaunch -clearenv -sisworkers $workers -sispath $sispath -cl ${cell_list} $sislaunchfile
+    $sislaunch -clearenv -pllcmds $pllcmds -sisworkers $workers -sispath $sispath -cl ${cell_list} $sislaunchfile
 fi
 
+echo "===========================     SCALE `date`    ==========================="
+pwd
 
 load_factor=0.5
 slew_factor=2.0
@@ -134,6 +138,10 @@ done
 # It would be better if we could do all the corners at once, and parallelize across them all.
 cd $WARD/siliconsmart
 
+echo "===========================     CHARACTERIZE `date`     ==========================="
+pwd
+
+
 if [[ -z $internal ]]; then
     rm -f $sislaunchfile
     echo "STDCELLDIR:"${stdcell_dir} > $sislaunchfile
@@ -153,8 +161,11 @@ done
 if [[ -z $internal ]]; then
     date
     pwd
-    $sislaunch -clearenv -sisworkers $workers -sispath $sispath -cl ${cell_list} $sislaunchfile
+    $sislaunch -clearenv -pllcmds $pllcmds -sisworkers $workers -sispath $sispath -cl ${cell_list} $sislaunchfile
 fi
+
+echo "===========================     CHARACTERIZE-DONE `date`     ==========================="
+pwd
 
 $TOP/runme_final $cell_list_fn
 
