@@ -17,6 +17,8 @@
 # /p/hdk/bin/cth_psetup -p ipde/2023.16.04 -cfg 78p3_opt9_r05.cth -nowash -tool ipde_all -x '$SETUP_IPDE'
 # /p/hdk/bin/cth_psetup -p ipde/2023.31.02.p2 -cfg 78p3_opt12_r08.cth -nowash -tool ipde_all -x '$SETUP_IPDE'
 #
+# To investigate other available releases, examine the area /p/hdk/etc/Projects/ipde
+#
 # Then set license (SNPSLMD_LICENSE_FILE/LM_PROJECT) and NetBatch (NBQSLOT)
 # environment variables, or use your own Cheetah project which may already have
 # configured them.
@@ -79,8 +81,8 @@ for corner in $corners_list; do
     import_only=1 $TOP/scripts/launch $cell_list $millivolts $celsius $trancorner $capcorner $metaltemp $metalcorner $bundles 
 done
 
-load_factor=0.3
-slew_factor=2.5
+load_factor=0.5
+slew_factor=2.0
 
 # Reduce the capacitance indicies because of lower voltages.  The 0.5 factor is
 # arbitrary, based on the initial 0.355V lib delievered by CorpLib.  It would
