@@ -70,6 +70,12 @@ echo "bundles are " $bundles
 # Import library to create Siliconsmart .inst files
 mkdir -p $WARD/siliconsmart/import
 cd $WARD/siliconsmart/import
+
+if [[ -z $internal ]]; then
+    rm -f $sislaunchfile
+    echo "STDCELLDIR:"${stdcell_dir} > $sislaunchfile
+fi
+
 for corner in $corners_list; do
     celsius=${corner:h:h:h:h:h}
     millivolts=${corner:h:h:h:h:t}
@@ -80,6 +86,15 @@ for corner in $corners_list; do
     echo "importing millivolts=" $millivolts " celsius=" $celsius
     import_only=1 $TOP/scripts/launch $cell_list $millivolts $celsius $trancorner $capcorner $metaltemp $metalcorner $bundles 
 done
+
+exit
+
+if [[ -z $internal ]]; then
+    date
+    pwd
+    $sislaunch -clearenv -sisworkers $workers -sispath $sispath -cl ${cell_list} $sislaunchfile
+fi
+
 
 load_factor=0.5
 slew_factor=2.0
@@ -115,9 +130,15 @@ for bundle in $seq_bundles; do
     done
 done
 
-# Run new characterization.  The bundles and corners to run can be controlled
-# by editing the end of "launch"; current settings are arbitrary for this demo.
+# Run new characterization.  
+# It would be better if we could do all the corners at once, and parallelize across them all.
 cd $WARD/siliconsmart
+
+if [[ -z $internal ]]; then
+    rm -f $sislaunchfile
+    echo "STDCELLDIR:"${stdcell_dir} > $sislaunchfile
+fi
+
 for corner in $corners_list; do
     celsius=${corner:h:h:h:h:h}
     millivolts=${corner:h:h:h:h:t}
@@ -128,6 +149,12 @@ for corner in $corners_list; do
     echo "launching millivolts=" $millivolts
     $TOP/scripts/launch $cell_list $millivolts $celsius $trancorner $capcorner $metaltemp $metalcorner $bundles 
 done
+
+if [[ -z $internal ]]; then
+    date
+    pwd
+    $sislaunch -clearenv -sisworkers $workers -sispath $sispath -cl ${cell_list} $sislaunchfile
+fi
 
 $TOP/runme_final $cell_list_fn
 

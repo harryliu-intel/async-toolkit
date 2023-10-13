@@ -53,11 +53,6 @@ launch_corner() {
     mkdir -p $dir
     [[ -n $import_only ]] && libsuffix='.lvf' || libsuffix=''
 
-    if [[ -z $internal ]]; then
-        rm -f $sislaunchfile
-        echo "STDCELLDIR:"${stdcell_dir} > $sislaunchfile
-    fi
-    
     for bs in $todo; do
         unset spfdir io_supplies io_grounds
         export bundle=${bs} run_list_maxsize=${workers}
@@ -124,11 +119,6 @@ fi
     
 launch_corner ${trancorner} ${millivolts} ${celsius} ${m} ${extract_pvt}
 
-if [[ -z $internal ]]; then
-    date
-    pwd
-    $sislaunch -clearenv -sisworkers $workers -sispath $sispath -cl ${cell_list_fn} $sislaunchfile
-fi
 
 # final trancorner s/b metal extract corner instead (pcss, tttt, pcff, pcss3 ...)
 

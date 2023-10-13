@@ -18,7 +18,7 @@
 # code currently doesn't work for >= 1000 millivolts (I don't think)
 #
 
-corners_list=("100/300/tttt/tttt/cmax/100" "100/300/tttt/tttt/cmin/100")
+corners_list=("100/300/tttt/tttt/cmax/100" "100/300/tttt/tttt/cmin/100" "100/275/tttt/tttt/cmax/100" "100/450/tttt/tttt/cmax/100")
 #corners_list=("100/300/tttt/tttt/cmax/100")
 
 cell_list_fn="cell_list"
