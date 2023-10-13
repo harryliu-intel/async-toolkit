@@ -19,6 +19,7 @@
 #
 
 corners_list=("100/300/tttt/tttt/cmax/100" "100/300/tttt/tttt/cmin/100")
+#corners_list=("100/300/tttt/tttt/cmax/100")
 
 cell_list_fn="cell_list"
 
