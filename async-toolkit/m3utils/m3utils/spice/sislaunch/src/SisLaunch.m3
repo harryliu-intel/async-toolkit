@@ -111,7 +111,9 @@ PROCEDURE Parse(cmdPath : Pathname.T; curEnv : ProcUtils.Env) : SisTaskSeq.T =
                  nm      = Text.Sub(setting, 0, eqPos),
                  val     = Text.Sub(setting, eqPos + 1, LAST(CARDINAL)) DO
               <*ASSERT eqPos > 0*>
-              Debug.Out(F("Setting env var %s := %s", nm, val));
+              IF Debug.GetLevel() > 10 THEN
+                Debug.Out(F("Setting env var %s := %s", nm, val))
+              END;
               curEnv := SetEnvVar(curEnv, nm, val)
             END
           ELSIF TE(first, "CLEARENV") THEN
@@ -169,8 +171,8 @@ VAR
 TYPE
   (* a Worker is the data structure for a worker thread *)
   Worker = Thread.Closure OBJECT
-    task     : SisTask.T := NIL;
-    quit                 := FALSE;
+    task     : AllocatedTask := NIL;
+    quit                     := FALSE;
     me       : Thread.T;
     privateC : Thread.Condition; (* wait on this while idle *)
     id       : CARDINAL;
@@ -374,6 +376,7 @@ PROCEDURE WorkersReady(VAR worker : Worker) : CARDINAL =
   *)
   VAR
     res := 0;
+    hostsActive := 0;
     first : Worker;
   BEGIN
     FOR i := 0 TO workers.size() - 1 DO
@@ -383,10 +386,17 @@ PROCEDURE WorkersReady(VAR worker : Worker) : CARDINAL =
           IF first = NIL THEN
             first := w
           END
+        ELSE
+          hostsActive := hostsActive + w.task.nhosts
         END
       END
     END;
 
+    IF hostsActive > sisWorkers THEN
+      Debug.Out(F("WorkersReady : Oversubscribed! : hostsActive = %s > sisWorkers %s", Int(hostsActive), Int(sisWorkers)));
+      res := 0
+    END;
+    
     IF res # 0 THEN
       worker := first
     END;
@@ -465,35 +475,35 @@ PROCEDURE Run(tasks : SisTaskSeq.T) =
                 <*ASSERT hadIt*>
               END;
               
-              WITH nbundles     = FLOAT(bundleCnts.size(),LRT),
+              WITH ntasks       = FLOAT(launchs.size(),LRT),
                    nparallel    = FLOAT(pllCmds,LRT),
-                   nsequential  = MAX(nbundles / nparallel, 1.0d0),
+                   nsequential  = MAX(ntasks / nparallel, 1.0d0),
                    nassignments = nsequential * FLOAT(sisWorkers,LRT),
                    
-                   nEqualPerBundle    = nassignments / nbundles,
-                   nWeightedForBundle =
+                   nEqualPerTask    = nassignments / ntasks,
+                   nWeightedForTask =
                      MIN(FLOAT(bundleCells,LRT) / FLOAT(ncells,LRT) * nassignments, FLOAT(sisWorkers,LRT)),
                    
-                   nForBundle =
-                         Math.pow(nEqualPerBundle   , 1.0d0 - alpha) *
-                         Math.pow(nWeightedForBundle,         alpha) DO
+                   nForTask =
+                         Math.pow(nEqualPerTask   , 1.0d0 - alpha) *
+                         Math.pow(nWeightedForTask,         alpha) DO
 
                 <*ASSERT launch.bundle # NIL*>
-                Debug.Out(FN("Bundle %s : nbundles=%s nparallel=%s nsequential=%s nassignments=%s -> nEqualPerBundle=%s, nWeightedForBundle=%s ; alpha=%s; nForBundle=%s ; ROUND=%s",
+                Debug.Out(FN("Bundle %s : ntasks=%s nparallel=%s nsequential=%s nassignments=%s -> nEqualPerTask=%s, nWeightedForTask=%s ; alpha=%s; nForTask=%s ; ROUND=%s",
                              TA{launch.bundle,
-                                LR(nbundles),
+                                LR(ntasks),
                                 LR(nparallel),
                                 LR(nsequential),
                                 LR(nassignments),
-                                LR(nEqualPerBundle),
-                                LR(nWeightedForBundle),
+                                LR(nEqualPerTask),
+                                LR(nWeightedForTask),
                                 LR(alpha),
-                                LR(nForBundle),
-                                Int(ROUND(nForBundle))})
+                                LR(nForTask),
+                                Int(ROUND(nForTask))})
                 );
                 
                 
-                task.nhosts := ROUND(nForBundle)
+                task.nhosts := ROUND(nForTask)
               END
             END
           ELSE
