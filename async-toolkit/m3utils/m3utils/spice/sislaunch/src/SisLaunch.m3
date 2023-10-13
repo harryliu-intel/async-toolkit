@@ -22,7 +22,7 @@ IMPORT Text;
 IMPORT Wr, FileWr;
 <*NOWARN*>IMPORT Process; 
 IMPORT SisTask, SisTaskSeq;
-FROM Fmt IMPORT Int, F, FN; IMPORT Fmt;
+FROM Fmt IMPORT Int, F, FN, Bool; IMPORT Fmt;
 IMPORT Thread;
 IMPORT RefSeq;
 IMPORT TextCardTbl;
@@ -33,6 +33,7 @@ IMPORT Math;
 IMPORT AL;
 IMPORT TextWr;
 IMPORT OSError;
+IMPORT Word;
 
 <*FATAL Thread.Alerted*>
 
@@ -42,7 +43,8 @@ CONST
   LR    = Fmt.LongReal;
 
   CharScript = "char.tcl"; (* name of characterization script *)
-
+  MaxFailures = 10; (* max failures allowed for a task *)
+  
 VAR
   NbPool  := Env.Get("NBPOOL"); (* current Netbatch pool *)
 
@@ -55,10 +57,12 @@ TYPE
   END;
 
   AllocatedTask = SisTask.T OBJECT
-    label   : TEXT;
-    nhosts  : CARDINAL;
-    id      : CARDINAL;
-    env     : ProcUtils.Env;
+    label    : TEXT;
+    nhosts   : CARDINAL;
+    id       : CARDINAL;
+    env      : ProcUtils.Env;
+    failures : CARDINAL := 0;
+    running             := FALSE;
   END;
 
   Launch = AllocatedTask OBJECT
@@ -67,6 +71,25 @@ TYPE
     clistPath : Pathname.T; (* path to cell_list file *)
     bunDir    : Pathname.T; (* second part of working directory *)
   END;
+
+PROCEDURE DebugTask(task : AllocatedTask) : TEXT =
+  VAR
+    res := F("label %s, nhosts %s, failures %s, running %s",
+             Debug.UnNil(task.label),
+             Int(task.nhosts),
+             Int(task.failures),
+             Bool(task.running));
+  BEGIN
+    TYPECASE task OF
+      Cmd(cmd) => res := F("Cmd %s cwd %s cmd %s", res, cmd.cwd, cmd.cmd)
+    |
+      Launch(launch) => res := F("Launch %s sisDir %s bunDir %s",
+                                 res, launch.sisDir, launch.bunDir)
+    ELSE
+      res := "UNKNOWN " & res
+    END;
+    RETURN res
+  END DebugTask;
 
 PROCEDURE Parse(cmdPath : Pathname.T; curEnv : ProcUtils.Env) : SisTaskSeq.T =
   VAR
@@ -312,10 +335,18 @@ PROCEDURE WApply(w : Worker) : REFANY =
           END
         ELSE
           <*ASSERT FALSE*>
-        END
+        END;
+        w.task.failures := 0;
+        
         EXCEPT
           ProcUtils.ErrorExit =>
-          Debug.Warning("Caught ProcUtils.ErrorExit attempting command execution")
+          LOCK mu DO
+            INC(w.task.failures);
+            Debug.Warning("Caught ProcUtils.ErrorExit attempting command execution : task : " & DebugTask(w.task));
+            Thread.Pause(FLOAT(Word.Shift(1, w.task.failures), LONGREAL));
+            
+            w.task.running := FALSE
+          END
         |
           OSError.E(x) =>
           Debug.Warning("Caught OSError.E attempting command execution : " & AL.Format(x))
@@ -324,6 +355,7 @@ PROCEDURE WApply(w : Worker) : REFANY =
         Debug.Out(F("Worker %s done with task", Int(w.id)));
 
         LOCK mu DO
+          w.task.running := FALSE;
           w.task := NIL;
           Thread.Signal(c)
         END
@@ -489,8 +521,9 @@ PROCEDURE Run(tasks : SisTaskSeq.T) =
                          Math.pow(nWeightedForTask,         alpha) DO
 
                 <*ASSERT launch.bundle # NIL*>
-                Debug.Out(FN("Bundle %s : ntasks=%s nparallel=%s nsequential=%s nassignments=%s -> nEqualPerTask=%s, nWeightedForTask=%s ; alpha=%s; nForTask=%s ; ROUND=%s",
+                Debug.Out(FN("Bundle %s ; %s : ntasks=%s nparallel=%s nsequential=%s nassignments=%s -> nEqualPerTask=%s, nWeightedForTask=%s ; alpha=%s; nForTask=%s ; ROUND=%s",
                              TA{launch.bundle,
+                                launch.bunDir,
                                 LR(ntasks),
                                 LR(nparallel),
                                 LR(nsequential),
@@ -509,13 +542,63 @@ PROCEDURE Run(tasks : SisTaskSeq.T) =
           ELSE
             <* ASSERT FALSE *>
           END;
-          
+
+          <*ASSERT worker.task = NIL*>
+
+          task.running := TRUE;
           worker.task := task;
           Thread.Signal(worker.privateC)
         END
       END(*LOCK*)
     END DispatchTask;
 
+  PROCEDURE RepeatFailedTasks() =
+    VAR
+      worker : Worker := NIL;
+      nready : CARDINAL;
+      task   : AllocatedTask;
+      haveFailed : BOOLEAN;
+    BEGIN
+      LOCK mu DO
+        LOOP
+          nready     := WorkersReady(worker);
+          haveFailed := FailedTasks(task);
+          
+          IF nready = 0 THEN
+            (* all workers busy *)
+            Thread.Wait(mu, c)
+          ELSIF nready = workers.size() AND NOT haveFailed THEN
+            (* all workers idle, no failed tasks -- we are done *)
+            EXIT
+          ELSIF NOT haveFailed THEN
+            (* some worker available, but no failed tasks *)
+            Thread.Wait(mu, c)
+          ELSIF task.failures > MaxFailures THEN
+            Debug.Error("Task failed too many times: " & DebugTask(task))
+          ELSE
+            (* some worker available, some failed task available *)
+            Debug.Out("Repeating failed task : " & DebugTask(task));
+            task.running := TRUE;
+            worker.task := task;
+            Thread.Signal(worker.privateC)
+          END
+        END
+      END
+    END RepeatFailedTasks;
+
+  PROCEDURE FailedTasks(VAR task : AllocatedTask) : BOOLEAN =
+    BEGIN
+      FOR i := 0 TO tasks.size() - 1 DO
+        WITH this = NARROW(tasks.get(i),AllocatedTask) DO
+          IF NOT this.running AND this.failures # 0 THEN
+            task := this;
+            RETURN TRUE
+          END
+        END
+      END;
+      RETURN FALSE
+    END FailedTasks;
+    
   VAR
     cmds    := NEW(SisTaskSeq.T).init();
     launchs := NEW(SisTaskSeq.T).init();
@@ -558,12 +641,14 @@ PROCEDURE Run(tasks : SisTaskSeq.T) =
       END
     END;
 
+    (* launch all the tasks once *)
     FOR i := 0 TO tasks.size() - 1 DO
-      
       WITH task = tasks.get(i) DO
         DispatchTask(task)
       END
-    END
+    END;
+
+    RepeatFailedTasks()
     
   END Run;
 
