@@ -12,4 +12,4 @@ done
 
 find_cells.sh all_cells.txt
 
-copy_thresholds.sh resultcells.dat
+copy_thresholds.sh resultcells.dat > cell_list.all_releases
