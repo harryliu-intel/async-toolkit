@@ -23,7 +23,7 @@ for bundle in $bundles; do
     cmd="siliconsmart ${0:h}/extract_cell.tcl $dir/${fulllib}_${bundle}_tttt_0p550v_100c_tttt_cmax_ccslnt.lib.gz ${fulllib}_${bundle}_tttt_0p550v_100c_tttt_cmax_ccslnt.lib ${bundle}.cells"
 
     if    [[ -z $internal ]]; then
-        echo "CMD:$cmd" >> $sislaunchfile
+        echo "CMD:`pwd`:$cmd" >> $sislaunchfile
     else
         eval $cmd
     fi

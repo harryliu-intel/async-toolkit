@@ -21,8 +21,18 @@ for bundle in $bundles; do
         ln -sf $lib $bundle/lib
     done
     cp -a $release_dir/${fulllib}_${bundle}_*.{lib,ldb} $bundle/lib
-    gzip -f $bundle/lib/*.lib
-    cp -a $release_dir/$bundle/${fulllib}_${bundle}.ndm $bundle/ndm
+    nbjob run --target ${NBPOOL} --qslot ${NBQSLOT} --mode interactive --class 'SLES12&&4G' gzip -f $bundle/lib/*.lib &
+done
+
+wait
+
+for bundle in $bundles; do
+    nbjob run --target ${NBPOOL} --qslot ${NBQSLOT} --mode interactive --class 'SLES12&&4G' cp -a $release_dir/$bundle/${fulllib}_${bundle}.ndm $bundle/ndm &
+done
+
+wait
+
+for bundle in $bundles; do
     for f in $stdcell_dir/$bundle/ndm/*; do
         [[ -e $bundle/ndm/${f:t} ]] || ln -s $f $bundle/ndm
     done
