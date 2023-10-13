@@ -3,10 +3,11 @@ MODULE SisLaunch EXPORTS Main;
 (* 
    siliconsmart-characterization batch-job controller.
 
-   Allows for detailed control over parallel job issuing using the rechar_flow from Intel Labs.
+   Allows for detailed control over parallel job issuing using 
+   the rechar_flow from Intel Labs.
 
    Author: mika.nystroem@intel.com
-   September, 2023
+   September-October, 2023
 *)
 
 
@@ -36,19 +37,20 @@ IMPORT OSError;
 <*FATAL Thread.Alerted*>
 
 CONST
-  Usage = "[-sisworkers <n>][-pllcmds <n>][-celllist|-cl <cell_list path>] <command-file>";
+  Usage = "[-clearenv|-ce][-sispath|-sp <path to SiliconSmart>][-sisworkers <n>][-pllcmds <n>][-celllist|-cl <cell_list path>] <command-file>";
   TE    = Text.Equal;
   LR    = Fmt.LongReal;
 
   CharScript = "char.tcl"; (* name of characterization script *)
 
 VAR
-  NbPool  := Env.Get("NBPOOL");
+  NbPool  := Env.Get("NBPOOL"); (* current Netbatch pool *)
 
 TYPE
   TA = ARRAY OF TEXT;
   
   Cmd = AllocatedTask OBJECT
+    cwd : Pathname.T;
     cmd : TEXT;
   END;
 
@@ -88,9 +90,11 @@ PROCEDURE Parse(cmdPath : Pathname.T; curEnv : ProcUtils.Env) : SisTaskSeq.T =
              first  = reader.nextE(":") DO
           IF    TE(first, "CMD") THEN
             (* just a generic command *)
-            WITH cmd  = reader.nextE(""),
+            WITH cwd = reader.nextE(":"),
+                 cmd  = reader.nextE(""),
                  task = NEW(Cmd,
                             cmd := cmd,
+                            cwd := cwd,
                             dbg := line,
                             label := "cmd",
                             id := nextId,
@@ -157,10 +161,13 @@ VAR
      master waits on global c,
      worker waits on worker.privateC 
 
-     all protected by same mu
+     all protected by same global mu
+
+     Not a high-bandwidth program, should be OK.
   *)
 
 TYPE
+  (* a Worker is the data structure for a worker thread *)
   Worker = Thread.Closure OBJECT
     task     : SisTask.T := NIL;
     quit                 := FALSE;
@@ -266,6 +273,7 @@ PROCEDURE RunCommand(cmdtext : TEXT;
    END RunCommand;
   
 PROCEDURE WApply(w : Worker) : REFANY =
+  (* the worker thread *)
   BEGIN
     TRY
       LOOP
@@ -287,7 +295,7 @@ PROCEDURE WApply(w : Worker) : REFANY =
         TRY
         TYPECASE w.task OF
           Cmd(cmd) =>
-          RunCommand(cmd.cmd, cmd.id, cmd.env, NIL)
+          RunCommand(cmd.cmd, cmd.id, cmd.env, cmd.cwd)
         |
           Launch(launch) =>
           IF sisPath = NIL THEN
@@ -324,6 +332,7 @@ PROCEDURE WApply(w : Worker) : REFANY =
   END WApply;
 
 PROCEDURE GetWholeEnv() : ProcUtils.Env =
+  (* get the entire environment of this process *)
   VAR
     n   := Env.Count;
     res := NEW(ProcUtils.Env, n);
@@ -340,6 +349,7 @@ PROCEDURE GetWholeEnv() : ProcUtils.Env =
   END GetWholeEnv;
 
 PROCEDURE SetEnvVar(env : ProcUtils.Env; nm, val : TEXT) : ProcUtils.Env =
+  (* set a single env var to given value *)
   VAR
     pfx := nm & "=";
   BEGIN
@@ -357,11 +367,15 @@ PROCEDURE SetEnvVar(env : ProcUtils.Env; nm, val : TEXT) : ProcUtils.Env =
   END SetEnvVar;
 
 PROCEDURE WorkersReady(VAR worker : Worker) : CARDINAL =
+  (* 
+     return # of workers ready to run --
+
+     REQUIRES mu to be locked on entry
+  *)
   VAR
     res := 0;
     first : Worker;
   BEGIN
-    (* called with mu locked *)
     FOR i := 0 TO workers.size() - 1 DO
       WITH w = NARROW(workers.get(i),Worker) DO
         IF w.task = NIL THEN
@@ -443,7 +457,7 @@ PROCEDURE Run(tasks : SisTaskSeq.T) =
             CONST
               alpha = 0.7d0;
             TYPE
-                  LRT = LONGREAL;
+              LRT = LONGREAL;
             VAR
               bundleCells : CARDINAL;
             BEGIN
@@ -458,7 +472,7 @@ PROCEDURE Run(tasks : SisTaskSeq.T) =
                    
                    nEqualPerBundle    = nassignments / nbundles,
                    nWeightedForBundle =
-                   FLOAT(bundleCells,LRT) / FLOAT(ncells,LRT) * nassignments,
+                     MIN(FLOAT(bundleCells,LRT) / FLOAT(ncells,LRT) * nassignments, FLOAT(sisWorkers,LRT)),
                    
                    nForBundle =
                          Math.pow(nEqualPerBundle   , 1.0d0 - alpha) *
@@ -506,6 +520,9 @@ PROCEDURE Run(tasks : SisTaskSeq.T) =
         |
           Launch(l) => launchs.addhi(t);
 
+          <*ASSERT bundleCnts # NIL*>
+          <*ASSERT l # NIL*>
+          
           VAR
             bcn : CARDINAL;
             hadIt := bundleCnts.get(l.bundle, bcn);
