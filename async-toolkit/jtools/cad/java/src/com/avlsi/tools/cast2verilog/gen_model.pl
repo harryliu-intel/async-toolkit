@@ -46,7 +46,8 @@ if (!defined($cast_path)) {
                            abs_path(catdir($hw_dir, 'spec')));
 }
 
-my $runvcs = "run-vcs";
+my $runvcs   = "run-vcs";
+my $runverdi = "run-verdi";
 
 my $flist = "testbench.f";
 
@@ -76,7 +77,6 @@ if (open(my $lh, $flist)) {
 }
 
 my $instdir = $ENV{'FULCRUM_PACKAGE_ROOT'};
-
 my $runtime = "$instdir/share/cast2verilog";
 
 my $vcfg = $beh ? 'beh.vcfg' : 'fpga.vcfg';
@@ -92,22 +92,34 @@ if (-s $flist) {
 
 push @vcs_args, '-kdb' if $kdb;
 
-open my $fh, ">$runvcs" || die "Can't open $runvcs: $!";
+open my $fh_vcs, ">$runvcs" || die "Can't open $runvcs: $!";
+open my $fh_verdi, ">$runverdi" || die "Can't open $runverdi: $!";
 
 if ($gls_dir) {
+    print $fh_vcs <<'EOF';
+[[ -z "$STDCELL_DIR" ]] && export STDCELL_DIR=$NCL_DIR/stdcells
+[[ -z "$GPIO_DIR" ]] && export GPIO_DIR=$NCL_DIR/gpio/latest
+[[ -z "$CMO_DIR" ]] && export CMO_DIR=$NCL_DIR/sram/cmo/latest
+EOF
+    print $fh_verdi <<'EOF';
+[[ -z "$STDCELL_DIR" ]] && export STDCELL_DIR=$NCL_DIR/stdcells
+[[ -z "$GPIO_DIR" ]] && export GPIO_DIR=$NCL_DIR/gpio/latest
+[[ -z "$CMO_DIR" ]] && export CMO_DIR=$NCL_DIR/sram/cmo/latest
+EOF
+
     if (@sdf) {
         my %binds = ();
 
         my $reset_tcl = "sdf_reset.tcl";
-        open my $fh2, ">$reset_tcl" || die "Can't open $reset_tcl: $!";
-        print $fh2 <<"EOF";
+        open my $fh_tcl, ">$reset_tcl" || die "Can't open $reset_tcl: $!";
+        print $fh_tcl <<"EOF";
 source $runtime/sdf_workarounds.tcl
 reset_tcheck $reset_duration
 EOF
         foreach my $sdf (@sdf) {
             my ($minmax, $block, $sdf_dir) = split /:/, $sdf;
-            my $arg = "$minmax:$block:$sdf_dir/$block.$minmax.sdf.gz";
-            print $fh2 "run_workarounds $block $sdf_dir/$block.$minmax\n";
+            my $arg = "$minmax:$block:$sdf_dir/${block}_${minmax}.sdf.gz";
+            print $fh_tcl "run_workarounds $block $sdf_dir/${block}_${minmax}\n";
             push @args, '-sdf', "\Q$arg\E";
             if (open(my $fh1, '<', "$sdf_dir/$block.$minmax.bind_notifiers.sv")) {
                 while (<$fh1>) {
@@ -117,49 +129,41 @@ EOF
                 close $fh1;
             }
         }
-        close $fh2;
+        close $fh_tcl;
 
         push @args, '-f', '$CAST2VERILOG_RUNTIME/sdf.vcfg';
         if (%binds) {
             my $nsv = 'bind_notifiers.sv';
-            open my $fh1, '>', $nsv || die "Can't open $nsv: $!";
-            print $fh1 join('', map { "$_\n" } keys %binds);
-            close $fh1;
+            open my $fh_nsv, '>', $nsv || die "Can't open $nsv: $!";
+            print $fh_nsv join('', map { "$_\n" } keys %binds);
+            close $fh_nsv;
             push @args, $nsv;
         }
 
     } else {
         push @args, '-f', '$CAST2VERILOG_RUNTIME/gls.vcfg';
     }
-    push @args, '-f', '$CAST2VERILOG_RUNTIME/1276.vcfg';
-    print $fh <<'EOF';
-if [[ -z "$NCL_DIR" ]]; then
-    if [[ "$EC_SITE" = "sc" ]]; then
-        export NCL_DIR=/nfs/sc/proj/ctg/mrl108/mrl/1276
-    else
-        export NCL_DIR=/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/ncl/1276
-    fi
-fi
-[[ -z "$STDCELL_DIR" ]] && export STDCELL_DIR=$NCL_DIR/stdcells
-[[ -z "$GPIO_DIR" ]] && export GPIO_DIR=$NCL_DIR/gpio/latest/ip76iolib
-[[ -z "$CMO_DIR" ]] && export CMO_DIR=$NCL_DIR/sram/cmo/latest
-EOF
-    print $fh <<EOF;
-[[ -z "\$G1MBD_DIR" ]] && export G1MBD_DIR="$gls_dir/g1m"
-[[ -z "\$GLS_DIR" ]] && export GLS_DIR="$gls_dir"
-EOF
+    push @args, '-f', '$GLS_DIR/gls.vcfg';
 }
 
 push @vcs_args, '-debug_access+dmptf+all', '-debug_region=lib+cell' unless $nodebug;
 
-print $fh <<EOF;
+print $fh_vcs <<EOF;
 export SPAR="$spar_dir"
-export COLLATERAL=/nfs/sc/proj/ctg/mrl108/mrl/collateral
 export CAST2VERILOG_RUNTIME="$runtime"
-vcs @vcs_args -assert svaext -licqueue -full64 @defines -file "\$CAST2VERILOG_RUNTIME/$vcfg" testbench.v @args @netlists
+export GLS_DIR="$gls_dir"
+verdi3 vcs vcs @vcs_args -assert svaext -licqueue -full64 -lrt @defines -file "\$CAST2VERILOG_RUNTIME/$vcfg" @args testbench.v "\$CAST2VERILOG_RUNTIME/readhexint.c" @netlists
 EOF
-close $fh;
+print $fh_verdi <<EOF;
+export SPAR="$spar_dir"
+export CAST2VERILOG_RUNTIME="$runtime"
+export GLS_DIR="$gls_dir"
+verdi3 verdi -nologo -sv -top TESTBENCH -ssf trace.fsdb @defines -file "\$CAST2VERILOG_RUNTIME/$vcfg" @args testbench.v  @netlists &
+EOF
+close $fh_vcs;
+close $fh_verdi;
 chmod 0755, $runvcs;
+chmod 0755, $runverdi;
 
 __END__
 =head1 NAME

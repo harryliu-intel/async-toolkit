@@ -1,4 +1,5 @@
 -sdfretain
++sdfverbose
 +transport_path_delays
 +pulse_r/0
 +pulse_e/0
