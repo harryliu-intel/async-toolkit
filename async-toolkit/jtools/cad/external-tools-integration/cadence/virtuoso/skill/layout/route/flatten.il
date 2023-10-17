@@ -728,6 +728,10 @@ useICV = t
                    path->routeStatus="locked"
                    )
              )
+    ; flatten blockages
+    (foreach s inst->master->blockages
+             (dbCopyFig s CV inst->transform)
+             )
     (dbDeleteObject inst)
     )
   t
