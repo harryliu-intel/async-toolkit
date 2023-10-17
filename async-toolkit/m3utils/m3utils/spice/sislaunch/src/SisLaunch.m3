@@ -42,8 +42,16 @@ CONST
   TE    = Text.Equal;
   LR    = Fmt.LongReal;
 
-  CharScript = "char.tcl"; (* name of characterization script *)
-  MaxFailures = 10; (* max failures allowed for a task *)
+  CharScript  = "char.tcl";
+  (* name of characterization script *)
+  
+  MaxFailures = 10;
+  (* max failures allowed for a task *)
+
+  SisNetbatch = FALSE;
+  (* use netbatch for "siliconsmart char.tcl" driver process.
+     Note that enabling this can lead to jobs being killed for being idle *)
+  
   
 VAR
   NbPool  := Env.Get("NBPOOL"); (* current Netbatch pool *)
@@ -214,10 +222,11 @@ PROCEDURE RunText(cmd            : TEXT;
     RETURN ProcUtils.RunText(cmd, stdout, stderr, stdin, wd0, env)
   END RunText;
   
-PROCEDURE RunCommand(cmdtext : TEXT;
-                     cmdid   : CARDINAL;
-                     env     : ProcUtils.Env;
-                     wd      : Pathname.T)
+PROCEDURE RunCommand(cmdtext  : TEXT;
+                     cmdid    : CARDINAL;
+                     env      : ProcUtils.Env;
+                     wd       : Pathname.T;
+                     netbatch : BOOLEAN)
   RAISES { OSError.E, ProcUtils.ErrorExit } =
   VAR
     Owr            := NEW(TextWr.T).init();
@@ -225,12 +234,17 @@ PROCEDURE RunCommand(cmdtext : TEXT;
     stdout         := ProcUtils.WriteHere(Owr);
     stderr         := ProcUtils.WriteHere(Ewr);
 
-    runcmd         :=
-        FN("nbjob run --target %s --class 4C --class SLES12 --mode interactive %s",
-           TA { NbPool, cmdtext });
+    runcmd         : TEXT;
     cm             : ProcUtils.Completion;
   BEGIN
-    
+
+    IF netbatch THEN
+      runcmd := FN("nbjob run --target %s --class 4C --class SLES12 --mode interactive %s",
+                   TA { NbPool, cmdtext });
+    ELSE
+      runcmd := cmdtext
+    END;
+
     TRY
       WITH cmdWr  = FileWr.Open(Int(cmdid) & ".cmd"),
            cwdWr  = FileWr.Open(Int(cmdid) & ".cwd"),
@@ -320,7 +334,7 @@ PROCEDURE WApply(w : Worker) : REFANY =
         TRY
         TYPECASE w.task OF
           Cmd(cmd) =>
-          RunCommand(cmd.cmd, cmd.id, cmd.env, cmd.cwd)
+          RunCommand(cmd.cmd, cmd.id, cmd.env, cmd.cwd, TRUE)
         |
           Launch(launch) =>
           IF sisPath = NIL THEN
@@ -331,7 +345,7 @@ PROCEDURE WApply(w : Worker) : REFANY =
                                   "run_list_maxsize",
                                   Int(launch.nhosts)),
                runDir = launch.sisDir & "/" & launch.bunDir DO
-            RunCommand(sisCmd, launch.id, runEnv, runDir)
+            RunCommand(sisCmd, launch.id, runEnv, runDir, SisNetbatch)
           END
         ELSE
           <*ASSERT FALSE*>
