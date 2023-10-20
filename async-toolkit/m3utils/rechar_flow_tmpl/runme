@@ -122,13 +122,18 @@ for control in */*/control; do
     done
 done
 
-seq_bundles=(seq_ulvt seq_lvt seq_svt seq_hvt)
+seq_char_pushout=0.05  # allowable pushout for seq* cells
+
+seq_bundles=`(pushd $stdcell_dir ; echo *_*vt)`
+
+#seq_bundles=(seq_ulvt seq_lvt seq_svt seq_hvt)
+#seq_bundles=(dsedrseq_hvt dsedrseq_svt dsiseq_hvt dsiseq_lvt dsiseq_svt dsiseq_ulvt dsldrseq_hvt dsldrseq_svt dsldrsupseq_hvt dsldrsupseq_svt dsseq_hvt dsseq_svt dssupseq_hvt dssupseq_svt edrseq_hvt edrseq_lvt edrseq_svt edrseq_ulvt ldrdsiseq_hvt ldrdsiseq_lvt ldrdsiseq_svt ldrdsiseq_ulvt ldrseq_hvt ldrseq_lvt ldrseq_svt ldrseq_ulvt ldrsupseq_hvt ldrsupseq_lvt ldrsupseq_svt ldrsupseq_ulvt seq_hvt seq_lvt seq_svt seq_ulvt supseq_hvt supseq_lvt supseq_svt supseq_ulvt)
 for bundle in $seq_bundles; do
     for dir in *; do
         if [ -d $dir/$bundle ]; then
             for inst in $dir/$bundle/control.updated/*.inst; do
                 clockname=`grep "add_pin.*-clock" ${inst} | awk '{print $2}'`
-                echo "set_config_opt -type mpw -from ${clockname} smc_degrade 0.05" >> $inst
+                echo "set_config_opt -type mpw -from ${clockname} smc_degrade ${seq_char_pushout}" >> $inst
             done
         fi
     done
