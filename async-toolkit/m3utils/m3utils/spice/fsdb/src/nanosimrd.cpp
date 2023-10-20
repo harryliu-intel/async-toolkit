@@ -55,9 +55,8 @@ static int verbose=FALSE;
 
 #define CMDBUFSIZ 2048
 
-// do we filter or not?
-char *filterpath    = NULL;
-char **filterargv;
+//////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////
 
 //
 // dump scope definition
@@ -75,6 +74,23 @@ __DumpVar(fsdbTreeCBDataVar *var);
 static void 
 BuildVar(fsdbTreeCBDataVar *var);
 
+
+void
+myfree(void *p)
+{
+  if(verbose)fprintf(stderr, "free(0x%x)\n", p);
+  free(p);
+}
+
+void
+free_argv(char **argv)
+{
+  int j = 0;
+  while(argv[j])
+    myfree(argv[j++]);
+
+  myfree(argv);
+}
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -134,7 +150,7 @@ int_dq_free(int_dq *q)
   while (p != q) {
     op = p;
     p = p->next;
-    free(op);
+    myfree(op);
   }
 
   q->next = q;
@@ -209,7 +225,7 @@ ext_dq_free(ext_dq *q)
   while (p != q) {
     op = p;
     p = p->next;
-    free(op);
+    myfree(op);
   }
 
   q->next = q;
@@ -445,8 +461,8 @@ timemem_new(void)
 static void
 timemem_free(time_memory_t *mem)
 {
-  free(mem->times);
-  free(mem);
+  myfree(mem->times);
+  myfree(mem);
 }
 
 static void
@@ -462,7 +478,7 @@ timemem_addhi(time_memory_t *mem, fsdbTag64 *val)
     for(int i=0; i < mem->len; ++i) // copy over
       newtimes[i] = mem->times[i];
 
-    free(mem->times); // free the old data
+    myfree(mem->times); // free the old data
     mem->times = newtimes;
     mem->len   = newlen;
   }
@@ -510,6 +526,76 @@ do_timecheck(unsigned            *timecheck_ok,
   *timecheck_ok &= this_ok;
 }
 
+//////////////////////////////////////////////////////////////////////
+
+FILE *filterstr;
+
+int pipefds1[2] = { -1, -1 };               // pipefds2[2];
+
+int filterfd = fileno(stdout); // by default filter output goes to stdout
+
+pid_t childpid;
+
+//
+// do we filter or not?
+char  *filterpath    = NULL;
+char **filterargv;
+
+void
+start_filter(void)
+{
+  if (verbose)
+    fprintf(stderr, "starting filter\n");
+  if (pipe(pipefds1) == -1) {
+    perror("pipe");
+    exit(1);
+  }
+  
+  if((childpid = fork()) == -1) {
+    perror("fork");
+    exit(1);
+  }
+  
+  if(childpid == 0) {
+    close(pipefds1[1]);   // close write end
+    dup2(pipefds1[0], 0); // make stdin the read end
+    
+    //        close(pipefds2[0]);   // close read end
+    //        dup2(pipefds2[1], 1); // make stdout the write end
+    
+    // try to run the filter
+    if ((execvp(filterpath, filterargv)) == -1) {
+      // exec failed
+      perror("execvp");
+      fprintf(stderr, "filterpath \"%s\"\n", filterpath);
+      _exit(1); // child exit, use _exit...
+    }
+    assert(0); // cant get here
+  } else {
+    // parent needs to write to pipe
+    filterfd = pipefds1[1];
+    close(pipefds1[0]);
+  }
+  filterstr = fdopen(filterfd, "a");
+  // open the filter file descriptor in stdio
+}
+
+void
+stop_filter(void)
+{
+  if (verbose)
+    fprintf(stderr, "stopping filter\n");
+  close(pipefds1[1]);
+  pipefds1[1] = -1;
+  wait(NULL);
+}
+
+int
+filter_running(void)
+{
+  return (pipefds1[1] != -1);
+}
+
 int
 traverse_one_signal(int        idcode,
                     unsigned   mode,
@@ -521,6 +607,8 @@ traverse_one_signal(int        idcode,
   extended_t x;
   ext_dq *extdata = NULL;
   unsigned nx=0;
+
+  if(verbose)fprintf(stderr, "traverse_one_signal(%d,0x%x,0x%x)\n", idcode, mode, time_mode);
 
   if (mode & TRAVERSE_EXTENDED)
     extdata = new_ext_dq();
@@ -535,7 +623,7 @@ traverse_one_signal(int        idcode,
   
   if (time_mode & TIME_MEMORIZE) {
     if (the_timemem)
-      free(the_timemem);
+      myfree(the_timemem);
 
     the_timemem = timemem_new();
   }
@@ -654,7 +742,7 @@ traverse_one_signal(int        idcode,
   }
 
   vc_trvs_hdl->ffrFree();
-  free(time);
+  myfree(time);
 
 
   if (mode & TRAVERSE_BINARY) {
@@ -693,56 +781,6 @@ traverse_one_signal(int        idcode,
     unsigned *lt = (unsigned *)malloc(sizeof(unsigned) * nx);
     float    *vv = (float *)   malloc(sizeof(float)    * nx);
     int i=0;
-    int pipefds1[2]; // pipefds2[2];
-    
-    int filterfd = fileno(stdout);
-    // by default output goes to stdout
-
-    if (filterpath && (mode & TRAVERSE_FILTER)) {
-      pid_t childpid;
-    
-      if (pipe(pipefds1) == -1) {
-        perror("pipe");
-        exit(1);
-      }
-      
-      //      if (pipe(pipefds2) == -1) {
-      //        perror("pipe");
-      //        exit(1);
-      //      }
-      
-      if((childpid = fork()) == -1) {
-        perror("fork");
-        exit(1);
-      }
-
-      //      dup2(pipefds2[0], 1); // make the read end stdout
-      
-      if(childpid == 0) {
-        close(pipefds1[1]);   // close write end
-        dup2(pipefds1[0], 0); // make stdin the read end
-
-        //        close(pipefds2[0]);   // close read end
-        //        dup2(pipefds2[1], 1); // make stdout the write end
-        
-        // try to run the filter
-        if ((execvp(filterpath, filterargv)) == -1) {
-          // exec failed
-          perror("execvp");
-          fprintf(stderr, "filterpath \"%s\"\n", filterpath);
-          _exit(1); // child exit, use _exit...
-        }
-        assert(0); // cant get here
-      } else {
-        // parent needs to write to pipe
-        filterfd = pipefds1[1];
-        close(pipefds1[0]);
-      }
-
-    }
-    
-    FILE *filterstr = fdopen(filterfd, "a");
-    // open the filter file descriptor in stdio
 
     if(verbose)
       fprintf(stderr, "extended binary traversal tag N nodeid %u count %u\n",
@@ -778,21 +816,13 @@ traverse_one_signal(int        idcode,
 
     // THE FILTER NEEDS TO STOP READING HERE ==========================
 
-    if(filterpath && (mode & TRAVERSE_FILTER)) {
-      // if we are writing to a filter, close the fd on the writing end
-      close(pipefds1[1]);
-
-      // and wait for the filter to exit
-      wait(NULL);
-    }
-    
-    free(ht);
-    free(lt);
-    free(vv);
+    myfree(ht);
+    myfree(lt);
+    myfree(vv);
     
   }
   
-  if (buff)    free(buff);
+  if (buff)    myfree(buff);
   if (extdata) ext_dq_free(extdata);
 }
 
@@ -875,7 +905,7 @@ traverse_names(unsigned lo, unsigned hi, unsigned aliases)
   }
 
   fprintf(stderr, "traverse_names : %d records\n", i);
-  free(got);
+  myfree(got);
 
 }
 
@@ -962,11 +992,14 @@ main(int argc, char *argv[])
         {
           char *str = strtok(NULL, " \n");
           cons_t *filterargs = NULL;
+          char *new_filterpath;
+          char **new_filterargv;
+          
           int nargs = 1;
           
           if(verbose)fprintf(stderr, "got filter \"%s\"\n", str);
 
-          filterpath = strdup(str);
+          new_filterpath = strdup(str);
 
           while ((str = strtok(NULL, " \n"))) {
             char *arg = strdup(str);
@@ -978,15 +1011,23 @@ main(int argc, char *argv[])
 
           filterargs = reverse(filterargs);
 
-          filterargv = (char **)malloc((nargs + 1) * sizeof(char *));
+          new_filterargv = (char **)malloc((nargs + 1) * sizeof(char *));
 
-          filterargv[0] = filterpath;
+          new_filterargv[0] = new_filterpath;
           
           int i = 1;
           for (cons_t *p = filterargs; p ; ++i, p = p->cdr) {
-            filterargv[i] = strdup(p->car);
+            new_filterargv[i] = strdup(p->car);
           }
-          filterargv[i] = NULL;
+          new_filterargv[i] = NULL;
+
+          /****************************************/
+
+          if (filterpath != NULL) 
+            free_argv(filterargv);
+
+          filterpath=new_filterpath;
+          filterargv=new_filterargv;
           
           fprintf(stdout, "FR\n");
           break;
@@ -1032,13 +1073,24 @@ main(int argc, char *argv[])
         break;
 
       case 'x': // traverse signals (binary extended)
-      case 'y':
+        for (int_dq *p=active->next; p != active; p = p->next) {
+          traverse_one_signal(p->val,
+                              TRAVERSE_EXTENDED |
+                              0,
+                              0);
+        }
+        fprintf(stdout, "%cR\n", buff[0]);
+        break;
+
+      case 'y': // traverse signals (binary extended, filtered)
+        start_filter();
         for (int_dq *p=active->next; p != active; p = p->next) {
           traverse_one_signal(p->val,
                               TRAVERSE_EXTENDED |
                               (buff[0] == 'y' ? TRAVERSE_FILTER : 0),
                               0);
         }
+        stop_filter();
         fprintf(stdout, "%cR\n", buff[0]);
         break;
 
@@ -1089,7 +1141,7 @@ main(int argc, char *argv[])
         break;
 
       case 's': // set scope separator
-        free(scopesep);
+        myfree(scopesep);
         scopesep    = strdup(strtok(NULL, " "));
         stripX      = atoi(strtok(NULL, " \n"));
         scopeseplen = strlen(scopesep);
@@ -1123,7 +1175,7 @@ static int    curpfxlen   = 0;
 static void update_pfx(void)
 // call this whenever updating curscope
 {
-  free(curpfx);
+  myfree(curpfx);
   
   if (!curscope) {
     curpfx    = strdup("");
@@ -1161,8 +1213,8 @@ static void update_pfx(void)
 static void up_scope(void)
 {
   arc_t *up = curscope->up;
-  free(curscope->name);
-  free(curscope);
+  myfree(curscope->name);
+  myfree(curscope);
   curscope = up;
   update_pfx();
 }

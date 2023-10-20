@@ -56,7 +56,7 @@ VAR doDebug := Debug.DebugThis("CT");
 
 CONST DefMaxFiles = 1000;
 
-VAR maxFiles := DefMaxFiles;
+VAR maxFiles := LAST(CARDINAL);
     
 CONST 
   MaxMem = 16*1024*1024; (* fit at least one row *)
@@ -455,6 +455,10 @@ BEGIN
 
   IF TraceFile.Version.CompressedV1 IN formats AND compressCmdPath = NIL THEN
     Debug.Error("If format is CompressedV1, must also specify compress (command path)")
+  END;
+
+  IF maxFiles = LAST(CARDINAL) THEN
+    maxFiles := MIN(10 * threads, DefMaxFiles)
   END;
   
   IF wthreads # 1 THEN

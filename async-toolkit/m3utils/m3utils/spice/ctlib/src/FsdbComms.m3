@@ -72,12 +72,15 @@ PROCEDURE ReadCompressedNodeDataG(rd         : Rd.T;
     bytes : CARDINAL;
     tag   : CHAR;
   BEGIN
+    IF doDebug THEN
+      Debug.Out(F("FsdbComms.ReadCompressedNodeDataG start"))
+    END;
     TRY
       LOOP
         WITH line    = Rd.GetLine(rd),
              reader  = NEW(TextReader.T).init(line) DO
           IF doDebug THEN
-            Debug.Out(F("Fsdb.Parse.ReadCompressedNodeDataG line \"%s\"", line))
+            Debug.Out(F("FsdbComms.ReadCompressedNodeDataG line \"%s\"", line))
           END;
 
           IF reader.next(" ", kw, TRUE) THEN
@@ -94,7 +97,7 @@ PROCEDURE ReadCompressedNodeDataG(rd         : Rd.T;
               norm.min := UnsafeReader.ReadLR(rd);
               norm.max := UnsafeReader.ReadLR(rd);
 
-              Debug.Out(F("Fsdb.ReadCompressedNodeDataG got nodeid %s bytes %s m in %s max %s",
+              Debug.Out(F("FsdbComms.ReadCompressedNodeDataG got nodeid %s bytes %s m in %s max %s",
                           Int(nodeid), Int(bytes), LR(norm.min), LR(norm.max) ));
               
               WITH buflen  = bytes - 8, (* 9 is len of min, max, code *)
@@ -103,7 +106,7 @@ PROCEDURE ReadCompressedNodeDataG(rd         : Rd.T;
                 IF got # buflen THEN RAISE Rd.EndOfFile END;
 
                 IF doDebug THEN
-                  Debug.Out(F("ReadCompressedNodeDataG nodeid %s bytes %s min %s max %s",
+                  Debug.Out(F("FsdbComms.ReadCompressedNodeDataG nodeid %s bytes %s min %s max %s",
                               Int(nodeid), Int(bytes),
                               LR(norm.min), LR(norm.max)))
                 END;
@@ -141,7 +144,7 @@ PROCEDURE ReadBinaryNodeDataG(rd         : Rd.T;
         WITH line    = Rd.GetLine(rd),
              reader  = NEW(TextReader.T).init(line) DO
           IF doDebug THEN
-            Debug.Out(F("Fsdb.Parse.ReadBinaryNodeData line \"%s\"", line))
+            Debug.Out(F("FsdbComms.ReadBinaryNodeData line \"%s\"", line))
           END;
 
           IF reader.next(" ", kw, TRUE) THEN
@@ -154,7 +157,7 @@ PROCEDURE ReadBinaryNodeDataG(rd         : Rd.T;
                 n      := UnsafeReader.ReadI(rd);
 
                 IF doDebug THEN
-                  Debug.Out(F("ReadBinaryNodeData tag %s nodeid %s n %s",
+                  Debug.Out(F("FsdbComms.ReadBinaryNodeData tag %s nodeid %s n %s",
                               Text.FromChar(tag),
                               Int(nodeid),
                               Int(n)))

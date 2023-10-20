@@ -137,6 +137,7 @@ PROCEDURE CompressArray(rn         : TEXT; (* for debug *)
     segments     := NEW(PolySegment16Seq.T).init();
     attemptOrder : Rep16.Order := MIN(DefOrder, NUMBER(darr) - 1);
   BEGIN
+    IF DoDebug THEN Debug.Out("SpiceCompress.CompressArray start.") END;
     norm := Normalize(darr);
 
     IF doDump THEN
@@ -312,7 +313,8 @@ PROCEDURE CompressArray(rn         : TEXT; (* for debug *)
         PolySegment16Serial.Write(wr, segments, norm.min, norm.max);
       END
       
-    END
+    END;
+    IF DoDebug THEN Debug.Out("SpiceCompress.CompressArray done.") END;
   END CompressArray;
 
 PROCEDURE AssertDelta(named         : TEXT;

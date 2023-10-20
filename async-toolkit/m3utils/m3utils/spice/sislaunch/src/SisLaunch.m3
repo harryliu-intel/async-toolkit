@@ -34,6 +34,7 @@ IMPORT AL;
 IMPORT TextWr;
 IMPORT OSError;
 IMPORT Word;
+IMPORT Time;
 
 <*FATAL Thread.Alerted*>
 
@@ -71,6 +72,7 @@ TYPE
     env      : ProcUtils.Env;
     failures : CARDINAL := 0;
     running             := FALSE;
+    started  : Time.T;
   END;
 
   Launch = AllocatedTask OBJECT
@@ -82,17 +84,21 @@ TYPE
 
 PROCEDURE DebugTask(task : AllocatedTask) : TEXT =
   VAR
-    res := F("label %s, nhosts %s, failures %s, running %s",
+    res := FN("taskid %s, label %s, nhosts %s, failures %s, running %s, since started %s", TA{
+             Int        (task.id),
              Debug.UnNil(task.label),
-             Int(task.nhosts),
-             Int(task.failures),
-             Bool(task.running));
+             Int        (task.nhosts),
+             Int        (task.failures),
+             Bool       (task.running),
+             LR         (Time.Now() - task.started)});
   BEGIN
     TYPECASE task OF
-      Cmd(cmd) => res := F("Cmd %s cwd %s cmd %s", res, cmd.cwd, cmd.cmd)
+      Cmd(cmd) =>
+      res := F("Cmd \"%s\" cwd \"%s\" cmd \"%s\"", res, cmd.cwd, cmd.cmd)
     |
-      Launch(launch) => res := F("Launch %s sisDir %s bunDir %s",
-                                 res, launch.sisDir, launch.bunDir)
+      Launch(launch) =>
+      res := F("Launch %s sisDir %s bunDir %s",
+               res, launch.sisDir, launch.bunDir)
     ELSE
       res := "UNKNOWN " & res
     END;
@@ -121,15 +127,15 @@ PROCEDURE Parse(cmdPath : Pathname.T; curEnv : ProcUtils.Env) : SisTaskSeq.T =
              first  = reader.nextE(":") DO
           IF    TE(first, "CMD") THEN
             (* just a generic command *)
-            WITH cwd = reader.nextE(":"),
+            WITH cwd  = reader.nextE(":"),
                  cmd  = reader.nextE(""),
                  task = NEW(Cmd,
-                            cmd := cmd,
-                            cwd := cwd,
-                            dbg := line,
+                            cmd   := cmd,
+                            cwd   := cwd,
+                            dbg   := line,
                             label := "cmd",
-                            id := nextId,
-                            env := curEnv) DO
+                            id    := nextId,
+                            env   := curEnv) DO
               Debug.Out("Got CMD : " & cmd);
               tasks.addhi(task);
               INC(nextId)
@@ -156,29 +162,35 @@ PROCEDURE Parse(cmdPath : Pathname.T; curEnv : ProcUtils.Env) : SisTaskSeq.T =
                  clistPath  = reader.nextE(":"),
                  bunDir     = reader.nextE(""),
                  task       = NEW(Launch,
-                                  dbg := line,
-                                  bundle := bundle,
-                                  sisDir := sisDir,
+                                  dbg       := line,
+                                  bundle    := bundle,
+                                  sisDir    := sisDir,
                                   clistPath := clistPath,
-                                  bunDir := bunDir,
-                                  label := "launch",
-                                  id := nextId,
-                                  env := curEnv) DO
+                                  bunDir    := bunDir,
+                                  label     := "launch",
+                                  id        := nextId,
+                                  env       := curEnv) DO
               Debug.Out("Got LAUNCH : " & bundle);
               tasks.addhi(task);
               INC(nextId)
 
             END
           ELSE
+            Debug.Warning(F("Unknown command %s on line %s of %s",
+                            first, Int(lNo), cmdPath))
           END
         END
       END
     EXCEPT
-      Rd.EndOfFile => TRY Rd.Close(rd) EXCEPT ELSE END
+      Rd.EndOfFile =>
+      TRY Rd.Close(rd) EXCEPT ELSE END
     |
-      TextReader.NoMore => Debug.Error(F("?Syntax error on line %s of %s", Int(lNo), cmdPath))
+      TextReader.NoMore =>
+      Debug.Error(F("?Syntax error on line %s of %s", Int(lNo), cmdPath))
     |
-      Rd.Failure(x) => Debug.Error(F("Parse : cant read command file \"%s\" : Rd.Failure : %s", cmdPath, AL.Format(x)))
+      Rd.Failure(x) =>
+      Debug.Error(F("Parse : cant read command file \"%s\" : Rd.Failure : %s",
+                    cmdPath, AL.Format(x)))
     END;
 
     RETURN tasks
@@ -215,9 +227,18 @@ PROCEDURE RunText(cmd            : TEXT;
                   stdout, stderr : ProcUtils.Writer;
                   stdin          : ProcUtils.Reader;
                   wd0            : Pathname.T        := NIL;
-                  env            : ProcUtils.Env     := NIL) : ProcUtils.Completion =
+                  env            : ProcUtils.Env     := NIL;
+                  dbg            : TEXT              := NIL) : ProcUtils.Completion =
+  VAR
+    dbgStr : TEXT;
   BEGIN
-    Debug.Out(F("RunText(%s)", cmd));
+    IF dbg = NIL THEN
+      dbgStr := ""
+    ELSE
+      dbgStr := dbg
+    END;
+    
+    Debug.Out(F("RunText(%s <- %s)", dbg, cmd));
     
     RETURN ProcUtils.RunText(cmd, stdout, stderr, stdin, wd0, env)
   END RunText;
@@ -226,7 +247,8 @@ PROCEDURE RunCommand(cmdtext  : TEXT;
                      cmdid    : CARDINAL;
                      env      : ProcUtils.Env;
                      wd       : Pathname.T;
-                     netbatch : BOOLEAN)
+                     netbatch : BOOLEAN;
+                     dbg      : TEXT)
   RAISES { OSError.E, ProcUtils.ErrorExit } =
   VAR
     Owr            := NEW(TextWr.T).init();
@@ -273,7 +295,8 @@ PROCEDURE RunCommand(cmdtext  : TEXT;
                       stderr := stderr,
                       stdin  := NIL,
                       env    := env,
-                      wd0    := wd);
+                      wd0    := wd,
+                      dbg    := dbg);
         
         cm.wait()
       FINALLY
@@ -296,7 +319,7 @@ PROCEDURE RunCommand(cmdtext  : TEXT;
       RETURN
     EXCEPT
       ProcUtils.ErrorExit(err) =>
-      WITH msg = F("command \"%s\" with output\n====>\n%s\n<====\n\nraised ErrorExit : %s",
+      WITH msg = F(dbg & " command \"%s\" with output\n====>\n%s\n<====\n\nraised ErrorExit : %s",
                    runcmd,
                    TextWr.ToText(Ewr),
                    ProcUtils.FormatError(err)) DO
@@ -317,6 +340,9 @@ PROCEDURE WApply(w : Worker) : REFANY =
     TRY
       LOOP
         LOCK mu DO
+
+          Debug.Out(F("Worker %s ready", Int(w.id)));
+          
           WHILE w.task = NIL AND NOT w.quit DO
             Thread.Wait(mu, w.privateC)
           END;
@@ -334,7 +360,8 @@ PROCEDURE WApply(w : Worker) : REFANY =
         TRY
         TYPECASE w.task OF
           Cmd(cmd) =>
-          RunCommand(cmd.cmd, cmd.id, cmd.env, cmd.cwd, TRUE)
+          RunCommand(cmd.cmd, cmd.id, cmd.env, cmd.cwd, TRUE,
+                     F("Cmd worker %s (cwd %s)", Int(w.id), cmd.cwd))
         |
           Launch(launch) =>
           IF sisPath = NIL THEN
@@ -345,7 +372,8 @@ PROCEDURE WApply(w : Worker) : REFANY =
                                   "run_list_maxsize",
                                   Int(launch.nhosts)),
                runDir = launch.sisDir & "/" & launch.bunDir DO
-            RunCommand(sisCmd, launch.id, runEnv, runDir, SisNetbatch)
+            RunCommand(sisCmd, launch.id, runEnv, runDir, SisNetbatch,
+                       F("Launch worker %s (cwd %s)", Int(w.id), runDir))
           END
         ELSE
           <*ASSERT FALSE*>
@@ -366,7 +394,11 @@ PROCEDURE WApply(w : Worker) : REFANY =
           Debug.Warning("Caught OSError.E attempting command execution : " & AL.Format(x))
         END;
         
-        Debug.Out(F("Worker %s done with task", Int(w.id)));
+        Debug.Out(F("Worker %s done with task %s, since started %s, nhosts %s",
+                    Int(w.id),
+                    Int(w.task.id),
+                    LR(Time.Now() - w.task.started),
+                    Int(w.task.nhosts)));
 
         LOCK mu DO
           w.task.running := FALSE;
@@ -531,12 +563,14 @@ PROCEDURE Run(tasks : SisTaskSeq.T) =
                      MIN(FLOAT(bundleCells,LRT) / FLOAT(ncells,LRT) * nassignments, FLOAT(sisWorkers,LRT)),
                    
                    nForTask =
+                       MAX(2.0d0,  
                          Math.pow(nEqualPerTask   , 1.0d0 - alpha) *
-                         Math.pow(nWeightedForTask,         alpha) DO
+                         Math.pow(nWeightedForTask,         alpha)) DO
 
                 <*ASSERT launch.bundle # NIL*>
-                Debug.Out(FN("Bundle %s ; %s : ntasks=%s nparallel=%s nsequential=%s nassignments=%s -> nEqualPerTask=%s, nWeightedForTask=%s ; alpha=%s; nForTask=%s ; ROUND=%s",
-                             TA{launch.bundle,
+                Debug.Out(FN("Worker %s Bundle %s ; %s : ntasks=%s nparallel=%s nsequential=%s nassignments=%s -> nEqualPerTask=%s, nWeightedForTask=%s ; alpha=%s; nForTask=%s ; ROUND=%s",
+                             TA{Int(worker.id),
+                                launch.bundle,
                                 launch.bunDir,
                                 LR(ntasks),
                                 LR(nparallel),
@@ -560,6 +594,7 @@ PROCEDURE Run(tasks : SisTaskSeq.T) =
           <*ASSERT worker.task = NIL*>
 
           task.running := TRUE;
+          task.started := Time.Now();
           worker.task := task;
           Thread.Signal(worker.privateC)
         END
@@ -593,6 +628,7 @@ PROCEDURE Run(tasks : SisTaskSeq.T) =
             (* some worker available, some failed task available *)
             Debug.Out("Repeating failed task : " & DebugTask(task));
             task.running := TRUE;
+            task.started := Time.Now();
             worker.task := task;
             Thread.Signal(worker.privateC)
           END

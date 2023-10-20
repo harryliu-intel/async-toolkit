@@ -151,7 +151,7 @@ PROCEDURE InterpolateTimesteps(VAR timesteps : LRSeq.T;
       END;
       
       IF doDebug THEN
-        Debug.Out(F("interpolating : hi / interpolate = %s, n = %s : min %s max %s",
+        Debug.Out(F("Fsdb.InterpolateTimesteps : hi / interpolate = %s, n = %s : min %s max %s",
                     LR(cnt), Int(n),
                     LR(timesteps.get(0)), LR(timesteps.get(timesteps.size()-1))))
       END
@@ -168,7 +168,7 @@ PROCEDURE WriteTimesteps(READONLY wdWr : ARRAY OF Wr.T;
     arr := NEW(REF ARRAY OF LONGREAL, timesteps.size());
   BEGIN
     IF doDebug THEN
-      Debug.Out(F("Writing timesteps, steps %s", Int(timesteps.size())));
+      Debug.Out(F("Fsdb.WriteTimesteps :  steps %s", Int(timesteps.size())));
     END;
     FOR i := 0 TO timesteps.size() - 1 DO
       arr[i] := timeScaleFactor * timesteps.get(i) + timeOffset
@@ -200,7 +200,7 @@ PROCEDURE GenSingleThreaded(rd                  : Rd.T;
   BEGIN
     FOR i := FIRST(fileTab) TO LAST(fileTab) DO
       IF doDebug THEN
-        Debug.Out(F("Fsdb.Parse : Generating partial trace file %s",
+        Debug.Out(F("Fsdb.GenSingleThreaded : Generating partial trace file %s",
                     Int(i)));
       END;
       
@@ -255,7 +255,7 @@ PROCEDURE GenMultiThreaded(threads               : CARDINAL;
     
     FOR i := FIRST(fileTab) TO LAST(fileTab) DO
       IF doDebug THEN
-        Debug.Out(F("Fsdb.Parse : Generating partial trace file %s",
+        Debug.Out(F("Fsdb.GenMultiThreaded : Generating partial trace file %s",
                     Int(i)));
       END;
       assigned := FALSE;
@@ -403,7 +403,9 @@ PROCEDURE LoadAllNames(wr            : Wr.T;
                 EVAL duplicates.put(editNm, cnt);
 
                 <*ASSERT tryNm # NIL*>
-                Debug.Out(F("fsdbNames.put(%s, %s)", tryNm, Int(idx)));
+                IF doDebug THEN
+                  Debug.Out(F("Fsdb.LoadAllNames: fsdbNames.put(%s, %s)", tryNm, Int(idx)))
+                END;
                 
                 WITH hadIt = StoreCardText(fsdbNames, tryNm, idx) DO
 
@@ -417,9 +419,11 @@ PROCEDURE LoadAllNames(wr            : Wr.T;
           END
         END;
 
-        Debug.Out(F("fsdbNames : %s unique %s",
-                    Int(fsdbNames.size()),
-                    Int(nameSet.size())));
+        IF doDebug THEN
+          Debug.Out(F("fsdbNames : %s unique %s",
+                      Int(fsdbNames.size()),
+                      Int(nameSet.size())))
+        END;
 
         RemoveZeros(duplicates);
 
@@ -450,9 +454,11 @@ PROCEDURE LoadAllNames(wr            : Wr.T;
                                        names,
                                        translate, noX);
 
-      Debug.Out(F("made idxMap: names.size() %s / active %s",
-                  Int(names.size()),
-                  Int(NameControl.CountActiveNodes(idxMap))));
+      IF doDebug THEN
+        Debug.Out(F("Fsdb.LoadAllNames : made idxMap: names.size() %s / active %s",
+                    Int(names.size()),
+                    Int(NameControl.CountActiveNodes(idxMap))))
+      END
 
     END LoadAllNames;
 
@@ -545,7 +551,7 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
           unit   := ParseUnitStr(unitStr);
 
           IF doDebug THEN
-            Debug.Out(F("Got query response lo=%s hi=%s unitStr=\"%s\"",
+            Debug.Out(F("Fsdb.LoadFsdbIds : Got query response lo=%s hi=%s unitStr=\"%s\"",
                         Int(loId), Int(hiId), unitStr))
           END
         END
@@ -609,7 +615,7 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
             GetTimesteps(frstVolt, tsF);
             
             IF doDebug THEN
-              Debug.Out(F("ChopTimestepsBasedOnType : node fsdbId %s : ts2 %s min %s max %s",
+              Debug.Out(F("Fsdb...ChopTimestepsBasedOnType : node fsdbId %s : ts2 %s min %s max %s",
                           Int(lastVolt),
                           Int(tsM.size()),
                           LR(tsM.get(0)),
@@ -625,7 +631,7 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
             END;
             
             IF doDebug THEN
-              Debug.Out(F("post-edit: timesteps %s min %s max %s",
+              Debug.Out(F("Fsdb...ChopTimestepsBasedOnType post-edit: timesteps %s min %s max %s",
                           Int(timesteps.size()),
                           LR(timesteps.get(0)),
                           LR(timesteps.get(timesteps.size()-1))));
@@ -657,6 +663,9 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
     
   BEGIN
 
+    IF doDebug THEN
+      Debug.Out("Fsdb.Parse start")
+    END;
     <*FATAL OSError.E*>
     BEGIN
       stdin  := ProcUtils.GimmeWr(wr);
@@ -669,7 +678,7 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
       END;
       
       completion := ProcUtils.RunText(cmd,
-                                      stdin := stdin,
+                                      stdin  := stdin,
                                       stderr := ProcUtils.Stderr(),
                                       stdout := stdout);
     END;
@@ -677,6 +686,9 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
     TRY
       SetScopesep(scopesep, translate);
 
+      IF doDebug THEN
+        Debug.Out("Fsdb.Parse calling ParseRemoteFsdb")
+      END;
       ParseRemoteFsdb();
       
       LoadFsdbIds();
@@ -688,6 +700,9 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
 
       CommandUnload();
 
+      IF doDebug THEN
+        Debug.Out("Fsdb.Parse calling LoadAllNames")
+      END;
       LoadAllNames(wr, rd,         (* comms pipes *)
                    loId, hiId,     (* id range *)
                    names,          (* target names data structure *)
@@ -710,6 +725,9 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
       END;
 
       IF doInterpolate THEN
+        IF doDebug THEN
+          Debug.Out("Fsdb.Parse calling InterpolateTimesteps")
+        END;
         InterpolateTimesteps(timesteps, interpolate)
       END;
 
@@ -718,6 +736,10 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
         ChopTimestepsBasedOnType("nanosim_voltage");
       ELSE
         ChopTimestepsBasedOnMaxTime(maxTime)
+      END;
+
+      IF doDebug THEN
+        Debug.Out("Fsdb.Parse calling NameControl.WriteNames")
       END;
 
       aNodes := NameControl.WriteNames(wd,
@@ -731,6 +753,9 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
       <*ASSERT wdWr # NIL*>
 
       (* write out timesteps *)
+      IF doDebug THEN
+        Debug.Out("Fsdb.Parse calling WriteTimeSteps")
+      END;
       WriteTimesteps(wdWr^, timesteps, timeScaleFactor, timeOffset, nFiles);
       
       (* let's build the map of what node goes into which file *)
@@ -1059,6 +1084,9 @@ PROCEDURE GenApply(cl : GenClosure) : REFANY =
         END(*LOCK cl.mu*);
 
         (* note we cannot hold the lock while we run *)
+        IF doDebug THEN
+          Debug.Out("Fsdb.GenApply : calling GeneratePartialTraceFile")
+        END;
         GeneratePartialTraceFile(cl.tWr,
                                  cl.nodeIds,
                                  cl.idxMap,
@@ -1075,6 +1103,9 @@ PROCEDURE GenApply(cl : GenClosure) : REFANY =
 
         Wr.Flush(cl.tWr);
         
+        IF doDebug THEN
+          Debug.Out("Fsdb.GenApply : request done")
+        END;
         LOCK cl.mu DO
           (* done executing request, mark ourselves as free and signal *)
           cl.tWr     := NIL;
@@ -1122,7 +1153,7 @@ PROCEDURE GeneratePartialTraceFile(wr                   : Wr.T;
   ) =
   BEGIN
     IF doDebug THEN
-      Debug.Out(F("GeneratePartialTraceFile : %s indices", Int(fileTab.size())));
+      Debug.Out(F("Fsdb.GeneratePartialTraceFile : %s indices", Int(fileTab.size())));
     END;
 
     IF compress.path # NIL THEN
@@ -1141,7 +1172,7 @@ PROCEDURE GeneratePartialTraceFile(wr                   : Wr.T;
                                                    quick}) DO
           
           IF doDebug THEN
-            Debug.Out(F("Setting up waveform compression with string \"%s\"",
+            Debug.Out(F("Fsdb.GeneratePartialTraceFile : Setting up waveform compression with string \"%s\"",
                         compressCmdString))
           END;
           
@@ -1173,12 +1204,16 @@ PROCEDURE GeneratePartialTraceFile(wr                   : Wr.T;
       END
     END;
 
+    IF doDebug THEN
+      Debug.Out(F("Fsdb.GeneratePartialTraceFile : ready to receive data for %s nodes", Int(fileTab.size())))
+    END;
+
     FOR i := 0 TO fileTab.size() - 1 DO
       WITH inId  = fileTab.get(i),
            outId = idxMap.get(inId) DO
 
         IF doDebug THEN
-          Debug.Out(F("Expecting node data for inId %s outId %s",
+          Debug.Out(F("Fsdb.GeneratePartialTraceFile : Expecting node data for inId %s outId %s",
                       Int(inId), Int(outId)));
         END;
 
@@ -1190,7 +1225,10 @@ PROCEDURE GeneratePartialTraceFile(wr                   : Wr.T;
                               voltageScaleFactor,
                               voltageOffset,
                               inId,
-                              outId)
+                              outId);
+          IF doDebug THEN
+            Debug.Out("Fsdb.GeneratePartialTraceFile : DoCompressedReceive returned.")
+          END
         ELSE
           DoUncompressedReceive(wr,
                                 path,
@@ -1201,10 +1239,11 @@ PROCEDURE GeneratePartialTraceFile(wr                   : Wr.T;
                                 interpolate,
                                 unit,
                                 inId,
-                                outId)
-        END;
-        
-
+                                outId);
+          IF doDebug THEN
+            Debug.Out("Fsdb.GeneratePartialTraceFile : DoUncompressedReceive returned.")
+          END
+        END
       END
     END;
 
@@ -1218,9 +1257,18 @@ PROCEDURE GeneratePartialTraceFile(wr                   : Wr.T;
         EVAL GetResponseG(cmdRd, "yR")
       END
     END;
+
+    IF doDebug THEN
+      Debug.Out("Fsdb.GeneratePartialTraceFile : handshake complete.")
+    END;
     
     PutCommandG(cmdWr, "U");
-    EVAL GetResponseG(cmdRd, "UR")
+    EVAL GetResponseG(cmdRd, "UR");
+
+    IF doDebug THEN
+      Debug.Out(F("Fsdb.GeneratePartialTraceFile done."))
+    END;
+
   END GeneratePartialTraceFile;
 
 PROCEDURE DoUncompressedReceive(wr                  : Wr.T;
@@ -1296,10 +1344,18 @@ PROCEDURE DoCompressedReceive(wr                  : Wr.T;
     (* normalization constants *)
     
   BEGIN
+    IF doDebug THEN
+      Debug.Out("Fsdb.DoCompressedReceive waiting for data")
+    END;
+    
     data := ReadCompressedNodeDataG(cmdRd,
                                     node,
                                     norm);
 
+    
+    IF doDebug THEN
+      Debug.Out("Fsdb.DoCompressedReceive read data")
+    END;
     
     IF node # inId THEN
       Debug.Error(F("unexpected node %s # inId %s", Int(node), Int(inId)))
@@ -1307,7 +1363,7 @@ PROCEDURE DoCompressedReceive(wr                  : Wr.T;
     
     (* write data to temp file in correct format *)
     IF doDebug THEN
-      Debug.Out(F("Writing data block outId %s nSteps %s",
+      Debug.Out(F("Fsdb.DoCompressedReceive writing data block outId %s nSteps %s",
                   Int(outId), Int(nSteps)));
     END;
     
@@ -1336,7 +1392,11 @@ PROCEDURE DoCompressedReceive(wr                  : Wr.T;
       Debug.Error(F("Wr.Failure writing data for node %s : %s ",
                     Int(outId),
                     AL.Format(x)))
-    END
+    END;
+    IF doDebug THEN
+      Debug.Out("Fsdb.DoCompressedReceive done")
+    END;
+    
   END DoCompressedReceive;
   
 PROCEDURE TryRemoveSuffix(from        : TEXT;
