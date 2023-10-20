@@ -460,6 +460,9 @@ BEGIN
   IF maxFiles = LAST(CARDINAL) THEN
     maxFiles := MIN(10 * threads, DefMaxFiles)
   END;
+
+  maxFiles := MAX(2, maxFiles);
+  (* must have at least one TIME file and one data file *)
   
   IF wthreads # 1 THEN
     Debug.Warning("wthreads > 1 not recommended")

@@ -7,7 +7,7 @@ IMPORT AL;
 IMPORT OSError;
 IMPORT Rd;
 IMPORT Pathname;
-FROM Fmt IMPORT F, Int, LongReal;
+FROM Fmt IMPORT F, Int, LongReal, FN;
 IMPORT Trace;
 IMPORT Wr, FileWr;
 IMPORT TextWr;
@@ -36,6 +36,7 @@ VAR
 
 TYPE
   Mode = { ReadBinary, Compress, Filter, ExtractOne };
+  TA   = ARRAY OF TEXT;
 
 CONST
   ModeNames = ARRAY Mode OF TEXT { "ReadBinary", "Compress", "Filter", "ExtractOne" };
@@ -82,6 +83,26 @@ PROCEDURE OpenTrace() =
     END;
   END OpenTrace;
 
+PROCEDURE MaxVal(READONLY a : ARRAY OF LONGREAL) : LONGREAL =
+  VAR
+    res := FIRST(LONGREAL);
+  BEGIN
+    FOR i := FIRST(a) TO LAST(a) DO
+      res := MAX(res, a[i])
+    END;
+    RETURN res
+  END MaxVal;
+  
+PROCEDURE MinVal(READONLY a : ARRAY OF LONGREAL) : LONGREAL =
+  VAR
+    res := LAST(LONGREAL);
+  BEGIN
+    FOR i := FIRST(a) TO LAST(a) DO
+      res := MIN(res, a[i])
+    END;
+    RETURN res
+  END MinVal;
+  
 PROCEDURE GetNode(nodeId : CARDINAL) : REF ARRAY OF LONGREAL =
     VAR
       nSteps := trace.getSteps();
@@ -329,6 +350,20 @@ BEGIN
         
         nodeid   : CARDINAL;
       BEGIN
+
+        (* check that we have data *)
+
+        TRY
+          WITH c = Rd.GetChar(rd) DO
+            Rd.UnGetChar(rd)
+          END
+        EXCEPT
+          Rd.EndOfFile => (* we're done *)
+          IF DoDebug THEN
+            Debug.Out("spicestream has EOF on input, exiting")
+          END;
+          EXIT
+        END;
         
         IF DoDebug THEN
           Debug.Out("spicestream calling FsdbComms.ReadInterpolatedBinaryNodeDataG")
@@ -338,6 +373,18 @@ BEGIN
                                                   a^,
                                                   fd.interpolate,
                                                   fd.unit);
+
+        IF DoDebug THEN
+          Debug.Out(FN("spicestream nodeid %s, points %s, first %s, last %s, max %s, min %s",
+                       TA {
+          Int(nodeid),
+          Int(NUMBER(a^)),
+          LR(a[FIRST(a^)]),
+          LR(a[LAST(a^)]),
+          LR(MaxVal(a^)),
+          LR(MinVal(a^)) }
+          ))
+        END;
         
         VAR
           code : ArithConstants.Encoding;

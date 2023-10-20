@@ -9,6 +9,7 @@ IMPORT Text;
 FROM Fmt IMPORT F, Int, LongReal;
 IMPORT UnsafeReader;
 IMPORT Thread;
+IMPORT Params;
 
 (* the following procedures communicate with a nanosimrd process *)
 
@@ -290,11 +291,11 @@ PROCEDURE ReadInterpolatedBinaryNodeDataG(rd          : Rd.T;
       END
     EXCEPT
       Rd.Failure(x) =>
-      Debug.Error("Unexpected Rd.Failure in ReadInterpolatedBinaryNodeData : " & AL.Format(x));
+      Debug.Error(Params.Get(0) & " : unexpected Rd.Failure in ReadInterpolatedBinaryNodeData : " & AL.Format(x));
       <*ASSERT FALSE*>
     |
       Rd.EndOfFile =>
-      Debug.Error("Unexpected Rd.EndOfFile in ReadInterpolatedBinaryNodeData");
+      Debug.Error(Params.Get(0) & " : unexpected Rd.EndOfFile in ReadInterpolatedBinaryNodeData");
       <*ASSERT FALSE*>
     END
   END ReadInterpolatedBinaryNodeDataG;
