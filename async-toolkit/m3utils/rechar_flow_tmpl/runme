@@ -100,8 +100,8 @@ fi
 echo "===========================     SCALE `date`    ==========================="
 pwd
 
-load_factor=0.3
-slew_factor=1.0
+load_factor=0.5
+slew_factor=2.0
 
 # Reduce the capacitance indicies because of lower voltages.  The 0.5 factor is
 # arbitrary, based on the initial 0.355V lib delievered by CorpLib.  It would
