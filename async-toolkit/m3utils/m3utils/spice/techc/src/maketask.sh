@@ -179,6 +179,17 @@ if [ "$1" == "-1278p3" ]; then
     techs="1278p3"
 fi
 
+if [ "$1" == "-i0m_i0s" ]; then
+    runmode="override"
+    volts="0.20 0.22 0.24 0.26 0.28 0.30 0.32 0.34 0.36 0.38 0.40 0.45 0.50 0.55"
+    temps="0 25 50 75 85 105 125"
+    modes="dyn"
+    paras="true"
+    corners="tt"
+    step=10
+    techs="1278p3 1278p3_i0m"
+fi
+
 if [ "$1" == "-gates" ]; then
     runmode="override"
     volts="0.40"

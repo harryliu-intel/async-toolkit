@@ -9,7 +9,8 @@ TYPE
            P1276p4_aml2,
            N3,
            N3E,
-           P1278p3 };
+           P1278p3,
+           P1278p3_i0m };
   (* supported technologies *)
 
   Corp = { Tsmc, Intc };
@@ -99,7 +100,8 @@ CONST
                                    "1276p4_aml2",
                                    "n3",
                                    "n3e",
-                                   "1278p3" };
+                                   "1278p3",
+                                   "1278p3_i0m" };
 
   TemplateNames = ARRAY Gate OF Pathname.T {
 
@@ -134,6 +136,7 @@ CONST
                                    Corp.Intc,
                                    Corp.Tsmc,
                                    Corp.Tsmc,
+                                   Corp.Intc,
                                    Corp.Intc };
 
   Gate1 = ARRAY Gate OF Gate

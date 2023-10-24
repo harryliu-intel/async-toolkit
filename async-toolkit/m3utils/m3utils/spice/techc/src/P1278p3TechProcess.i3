@@ -91,7 +91,7 @@ CONST
 
       };
 
-  StdCellRoot = "/p/hdk/cad/stdcells/lib783_i0s_160h_50pp/pdk050_r3v2p0_efv";
+  StdCellRoot = "/p/hdk/cad/stdcells/lib783_i0s_160h_50pp/pdk080_r4v2p0_efv";
 
   StdCellUlvtRoot = StdCellRoot & "/base_ulvt/spf/lib783_i0s_160h_50pp_base_ulvt_100c_tttt_ctyp/";
   StdCellLvtRoot = StdCellRoot & "/base_lvt/spf/lib783_i0s_160h_50pp_base_lvt_100c_tttt_ctyp/";
