@@ -4,6 +4,9 @@
 `ifndef CAST2VERILOG_START_DURATION
 `define CAST2VERILOG_START_DURATION 10
 `endif
+`ifndef CAST2VERILOG_CAPTURE_DURATION
+`define CAST2VERILOG_CAPTURE_DURATION 10
+`endif
 module beh_reset #(parameter RESETS = 1,
                              STARTS = 0,
                              STEPS = 0,
@@ -36,7 +39,7 @@ initial begin
   #`CAST2VERILOG_RESET_DURATION;
   `SET_NODES(RESET, 1'b1);
   if (STARTS+STEPS+CAPTURES > 0) begin
-    #`CAST2VERILOG_START_DURATION;
+    #`CAST2VERILOG_CAPTURE_DURATION;
   end
   if (CAPTURES > 0) begin
     `SET_NODES(CAPTURE, 1'b1);
