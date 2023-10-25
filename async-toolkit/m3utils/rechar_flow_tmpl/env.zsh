@@ -27,6 +27,9 @@ export stdlibname=i0s_160h_50pp
 export fulllib=${techlib}_${stdlibname}
 export wordy=78dot3
 
+# set up prototype corner, from which we rechar
+export protocorner=tttt_0p550v_100c_tttt_cmax_ccslnt
+
 bundles=($(awk '{print $1}' $cell_list | sort -u))
 echo "bundles are $bundles"
 
