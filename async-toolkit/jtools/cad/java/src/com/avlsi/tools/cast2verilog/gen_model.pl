@@ -8,7 +8,7 @@ use FindBin;
 use Cwd qw/abs_path/;
 
 my ($cast_path, $spar_dir, $gls_dir, $cell, $env, $cosim, @cast_defines);
-my ($beh, $fpga_path, @c2v_args, @vcs_args, $kdb, @sdf, $help, $nodebug);
+my ($beh, $fpga_path, @c2v_args, @vcs_args, $kdb, @sdf, $perf, $help, $nodebug);
 my $width = 300;
 my $mem = '16G';
 my $reset_duration = '10ns';
@@ -28,6 +28,7 @@ GetOptions("cast-path=s" => \$cast_path,
            "kdb!"        => \$kdb,
            "no-debug!"   => \$nodebug,
            "sdf=s"       => \@sdf,
+           "perf!"       => \$perf,
            "help!"       => \$help) || pod2usage(2);
 
 pod2usage(-verbose => 1) if $help;
@@ -89,6 +90,7 @@ my @args = ();
 if (-s $flist) {
     push @args, '-file', $flist;
 }
+my @sdf_args = ();
 
 push @vcs_args, '-kdb' if $kdb;
 
@@ -117,10 +119,18 @@ source $runtime/sdf_workarounds.tcl
 reset_tcheck $reset_duration
 EOF
         foreach my $sdf (@sdf) {
-            my ($minmax, $block, $sdf_dir) = split /:/, $sdf;
-            my $arg = "$minmax:$block:$sdf_dir/${block}_${minmax}.sdf.gz";
+            #Get design name directly from SDF file
+            my $block = `zgrep '(DESIGN ' $sdf`;
+            $block = substr((split(/ /, substr($block, 1, -2)))[1], 1, -1);
+            my @sdf_split = split(/\//, $sdf);
+            my $basename = pop @sdf_split;
+            my $sdf_dir = join('/', @sdf_split);
+            my $subtype = (split(/\./, $basename))[0];
+            my $minmax = (split(/\./, $basename))[1];
+
+            my $arg = "$minmax:$block:$sdf";
             print $fh_tcl "run_workarounds $block $sdf_dir/${block}_${minmax}\n";
-            push @args, '-sdf', "\Q$arg\E";
+            push @sdf_args, '-sdf', "\Q$arg\E";
             if (open(my $fh1, '<', "$sdf_dir/$block.$minmax.bind_notifiers.sv")) {
                 while (<$fh1>) {
                     chomp;
@@ -152,7 +162,7 @@ print $fh_vcs <<EOF;
 export SPAR="$spar_dir"
 export CAST2VERILOG_RUNTIME="$runtime"
 export GLS_DIR="$gls_dir"
-verdi3 vcs vcs @vcs_args -assert svaext -licqueue -full64 -lrt @defines -file "\$CAST2VERILOG_RUNTIME/$vcfg" @args testbench.v "\$CAST2VERILOG_RUNTIME/readhexint.c" @netlists
+verdi3 vcs vcs @vcs_args -assert svaext -licqueue -full64 -lrt @defines -file "\$CAST2VERILOG_RUNTIME/$vcfg" @args @sdf_args testbench.v "\$CAST2VERILOG_RUNTIME/readhexint.c" @netlists
 EOF
 print $fh_verdi <<EOF;
 export SPAR="$spar_dir"
@@ -189,5 +199,6 @@ gen_model.pl [options] [verilog files...]
    --no-debug      Disable default VCS debugging options
    --c2v-arg       Flags to cast2verilog; can be specified any number of times
    --vcs-arg       Flags to VCS; can be specified any number of times
-   --sdf           Specify SDF args as [min|max]:cell:proteus_sdf_dir
+   --sdf           Specify SDF args as <path_to_file.sdf>
+   --perf          Enables performance monitoring of BD controllers
 =cut
