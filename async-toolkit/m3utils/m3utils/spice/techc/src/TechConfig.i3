@@ -65,7 +65,11 @@ TYPE
            Oai_Z1_0p0sigma,  (* special variation sim w/o variation *)
            Oai_Z1_5p3sigma,  (* special variation sim w/ 5.3 sigma variation *)
            Oai_Z2_0p0sigma,  (* special variation sim w/o variation *)
-           Oai_Z2_5p3sigma   (* special variation sim w/ 5.3 sigma variation *)
+           Oai_Z2_5p3sigma,  (* special variation sim w/ 5.3 sigma variation *)
+
+           Xor_Z1,           (* Z1 XOR, no variation *)
+           Xor_Z2,           (* Z2 XOR, no variation *)
+           Xor_Z3            (* Z3 XOR, no variation *)
   
   };
   
@@ -89,7 +93,9 @@ CONST
                                    "aoi_z1_0p0sigma", "aoi_z1_5p3sigma",
                                    "aoi_z2_0p0sigma", "aoi_z2_5p3sigma",
                                    "oai_z1_0p0sigma", "oai_z1_5p3sigma",
-                                   "oai_z2_0p0sigma", "oai_z2_5p3sigma"
+                                   "oai_z2_0p0sigma", "oai_z2_5p3sigma",
+
+                                   "xor_z1", "xor_z2", "xor_z3"
                                    };
   (* should not ask for an oai, should only ask for aoi *)
 
@@ -126,7 +132,11 @@ CONST
   "ckt_varaoi.sp",
   "ckt_varaoi.sp",
   "ckt_varaoi.sp",
-  "ckt_varaoi.sp"
+  "ckt_varaoi.sp",
+
+  "ckt.sp",
+  "ckt.sp",
+  "ckt.sp"
   };
 
   TechCorp  = ARRAY Tech OF Corp { Corp.Tsmc,
@@ -149,7 +159,9 @@ CONST
     Gate.Oai_Z2_0p0sigma, Gate.Oai_Z2_5p3sigma,
 
     Gate.Aoi_Z1_0p0sigma, Gate.Aoi_Z1_5p3sigma,
-    Gate.Aoi_Z2_0p0sigma, Gate.Aoi_Z2_5p3sigma
+    Gate.Aoi_Z2_0p0sigma, Gate.Aoi_Z2_5p3sigma,
+
+    Gate.Xor_Z1, Gate.Xor_Z2, Gate.Xor_Z3
 
     };
   (* second gate type for each first gate --

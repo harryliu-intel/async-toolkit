@@ -188,6 +188,7 @@ if [ "$1" == "-i0m_i0s" ]; then
     corners="tt"
     step=10
     techs="1278p3 1278p3_i0m"
+    gates="xor_z1 xor_z2 xor_z3"
 fi
 
 if [ "$1" == "-gates" ]; then
@@ -382,6 +383,14 @@ for root in ${roots}; do
         fi
     fi
 
+    forbidden=0
+
+    if [ "$gate" == "xor_z1" ] && [ "$tech" == "1278p3_i0m" ]; then
+        echo "skipping forbidden combo $gate $para $corn $mode $temp $volt $tech $root"
+        forbidden=1
+    fi
+
+    if [ "$forbidden" != "1" ]; then
     for tran in ${trantypes}; do
         runfile=${RUNDIR}/${tasknum}.sh
         echo "#!/bin/sh -x" > ${runfile}
@@ -418,6 +427,7 @@ for root in ${roots}; do
         
         tasknum=`expr $tasknum + 1`
     done
+    fi
     
 done
 done

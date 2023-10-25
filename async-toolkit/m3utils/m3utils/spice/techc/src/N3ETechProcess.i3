@@ -42,7 +42,10 @@ CONST
     Paths117,
     Paths117,
     Paths117,
-    Paths117
+    Paths117,
+    NilPaths,
+    NilPaths,
+    NilPaths
   },
 
   cellNames :=ARRAY Gate OF ARRAY Tran OF TEXT {
@@ -62,7 +65,10 @@ CONST
     OaiZ1Names,
     OaiZ1Names,
     OaiZ2Names,
-    OaiZ2Names
+    OaiZ2Names,
+    NilCellNames,
+    NilCellNames,
+    NilCellNames
   },
 
   plugText :="vcc vssx"
@@ -100,7 +106,9 @@ CONST
   "/p/tech1/n3e/tech-release/v1.0.2/tcbn03e_bwp143mh117l3p48cpd_base_svt_lib/lpe_spice/tcbn03e_bwp143mh117l3p48cpd_base_svt_100a/tcbn03e_bwp143mh117l3p48cpd_base_svt_100a_lpe_typical_125c.spi",
   NIL
   };
-  
+
+  NilPaths  = ARRAY Tran OF TEXT { NIL, NIL, NIL, NIL, NIL, NIL, NIL };
+
   NilCellNames = ARRAY Tran OF TEXT {
   NIL,
   NIL,

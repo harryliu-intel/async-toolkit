@@ -95,7 +95,7 @@ PROCEDURE MapCommon(READONLY c : Config; map : TextTextTbl.T)=
       EVAL map.put("@T1B@", "");
       EVAL map.put("@T1C@", "");
     |
-      Gate.Xor =>
+      Gate.Xor, Gate.Xor_Z1, Gate.Xor_Z2, Gate.Xor_Z3 =>
       EVAL map.put("@T0A@", "in");
       EVAL map.put("@T0B@", "vcc");
       EVAL map.put("@T0C@", "");

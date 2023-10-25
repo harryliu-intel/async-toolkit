@@ -62,7 +62,11 @@ CONST
     Oai1Paths,
     Oai1Paths,
     Oai2Paths,
-    Oai2Paths
+    Oai2Paths,
+
+    Xor1Paths,
+    Xor2Paths,
+    Xor3Paths
   },
 
   cellNames :=ARRAY Gate OF ARRAY Tran OF TEXT {
@@ -84,7 +88,11 @@ CONST
     Oai1CellNames,
     Oai1CellNames,
     Oai2CellNames,
-    Oai2CellNames
+    Oai2CellNames,
+
+    Xor1CellNames,
+    Xor2CellNames,
+    Xor3CellNames
 },
 
   plugText :=""
@@ -167,6 +175,17 @@ CONST
     
   };
   
+  Xor3Paths = ARRAY Tran OF TEXT {
+    NIL,
+    XorStdCellUlvt2Root & "i0sxor002aa1n03x5.spf",
+    NIL,
+    XorStdCellLvt2Root & "i0sxor002ab1n03x5.spf",
+    NIL,
+    XorStdCellSvt2Root & "i0sxor002ac1n03x5.spf",
+    XorStdCellHvt2Root & "i0sxor002ad1n03x5.spf"
+    
+  };
+  
   XorCellNames = ARRAY Tran OF TEXT {
     NIL,
     "i0sxor002aa1n02x5",
@@ -177,14 +196,24 @@ CONST
     "i0sxor002ad1n02x5"
   };
 
+  Xor3CellNames = ARRAY Tran OF TEXT {
+    NIL,
+    "i0sxor002aa1n03x5",
+    NIL,
+    "i0sxor002ab1n03x5",
+    NIL,
+    "i0sxor002ac1n03x5",
+    "i0sxor002ad1n03x5"
+  };
+
   Xor1CellNames = ARRAY Tran OF TEXT {
     NIL,
     "i0sxor002aa1n01x1",
     NIL,
     "i0sxor002ab1n01x1",
     NIL,
-    NIL,
-    NIL
+    "i0sxor002ac1n01x1",
+    "i0sxor002ad1n01x1"
   };
 
   Xor2CellNames = XorCellNames;
