@@ -108,9 +108,13 @@ CONST
   (* xor (only) paths *)
   XorStdCellUlvt1Root = StdCellRoot & "/ldrdsibase_ulvt/spf/lib783_i0s_160h_50pp_ldrdsibase_ulvt_100c_tttt_ctyp/";
   XorStdCellLvt1Root = StdCellRoot & "/ldrdsibase_lvt/spf/lib783_i0s_160h_50pp_ldrdsibase_lvt_100c_tttt_ctyp/";
+  XorStdCellSvt1Root = StdCellRoot & "/ldrdsibase_svt/spf/lib783_i0s_160h_50pp_ldrdsibase_svt_100c_tttt_ctyp/";
+  XorStdCellHvt1Root = StdCellRoot & "/ldrdsibase_hvt/spf/lib783_i0s_160h_50pp_ldrdsibase_hvt_100c_tttt_ctyp/";
     
   XorStdCellUlvt2Root = StdCellRoot & "/dsibase_ulvt/spf/lib783_i0s_160h_50pp_dsibase_ulvt_100c_tttt_ctyp/";
   XorStdCellLvt2Root = StdCellRoot & "/dsibase_lvt/spf/lib783_i0s_160h_50pp_dsibase_lvt_100c_tttt_ctyp/";
+  XorStdCellSvt2Root = StdCellRoot & "/dsibase_svt/spf/lib783_i0s_160h_50pp_dsibase_svt_100c_tttt_ctyp/";
+  XorStdCellHvt2Root = StdCellRoot & "/dsibase_hvt/spf/lib783_i0s_160h_50pp_dsibase_hvt_100c_tttt_ctyp/";
     
   BufPaths = ARRAY Tran OF TEXT {
     NIL,
@@ -134,12 +138,12 @@ CONST
 
   XorPaths = ARRAY Tran OF TEXT {
     NIL,
-    StdCellUlvtRoot & "i0sxor002aa1n02x5.spf",
+    XorStdCellUlvt2Root & "i0sxor002aa1n02x5.spf",
     NIL,
-    StdCellLvtRoot & "i0sxor002ab1n02x5.spf",
+    XorStdCellLvt2Root & "i0sxor002ab1n02x5.spf",
     NIL,
-    StdCellSvtRoot & "i0sxor002ac1n02x5.spf",
-    StdCellHvtRoot & "i0sxor002ad1n02x5.spf"
+    XorStdCellSvt2Root & "i0sxor002ac1n02x5.spf",
+    XorStdCellHvt2Root & "i0sxor002ad1n02x5.spf"
   };
 
   Xor1Paths = ARRAY Tran OF TEXT {
@@ -148,8 +152,8 @@ CONST
     NIL,
     XorStdCellLvt1Root & "i0sxor002ab1n01x1.spf",
     NIL,
-    NIL,
-    NIL
+    XorStdCellSvt1Root & "i0sxor002ac1n01x1.spf",
+    XorStdCellHvt1Root & "i0sxor002ad1n01x1.spf"
   };
   
   Xor2Paths = ARRAY Tran OF TEXT {
@@ -158,8 +162,9 @@ CONST
     NIL,
     XorStdCellLvt2Root & "i0sxor002ab1n02x5.spf",
     NIL,
-    NIL,
-    NIL
+    XorStdCellSvt2Root & "i0sxor002ac1n02x5.spf",
+    XorStdCellHvt2Root & "i0sxor002ad1n02x5.spf"
+    
   };
   
   XorCellNames = ARRAY Tran OF TEXT {
