@@ -186,7 +186,19 @@ if [ "$1" == "-i0m_i0s" ]; then
     modes="dyn"
     paras="true"
     corners="tt"
-    step=10
+    step=4
+    techs="1278p3 1278p3_i0m"
+    gates="xor_z1 xor_z2 xor_z3"
+fi
+
+if [ "$1" == "-i0m_i0s_hv" ]; then
+    runmode="override"
+    volts="0.60 0.65 0.70 0.75 0.80 0.85 0.90 0.95 1.00 1.05 1.10 1.15 1.20"
+    temps="0 25 50 75 85 105 125"
+    modes="dyn"
+    paras="true"
+    corners="tt"
+    step=4
     techs="1278p3 1278p3_i0m"
     gates="xor_z1 xor_z2 xor_z3"
 fi
