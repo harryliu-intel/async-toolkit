@@ -11,6 +11,7 @@ step=10
 
 PDMI_LIB="/p/hdk/cad/pdk/pdk783_r0.8_23ww24.2/cmi/hspice/pdmi/lnx86/64bit/pdmi.so"
 XA="/p/hdk/cad/xa/U-2023.03-1/bin/xa"
+HSPICE="/p/hdk/cad/hspice/U-2023.03-2/hspice/bin/hspice"
 
 cells="aoi bfn inv mdn nan nor"
 
@@ -111,10 +112,11 @@ for strn in ${strengths}; do
             echo "pwd" >> ${runfile}
             echo "export PDMI_LIB="${PDMI_LIB} >> ${runfile}
             echo "cd ${runsubdir}" >> ${runfile}
-                
-            echo "${XA} circuit.sp" >> ${runfile}
 
-            echo "./do_measure.sh ${tech}_${heig},${corn},${tran},${cell}_z${strn},dyn,xa,1,${volt},${temp}, > measure.dat" >> ${runfile}
+            echo "#${XA} circuit.sp" >> ${runfile}
+            echo "${HSPICE} circuit.sp" >> ${runfile}
+
+            echo "./do_measure.sh hspice ${tech}_${heig},${corn},${tran},${cell}_z${strn},dyn,xa,1,${volt},${temp}, > measure.dat" >> ${runfile}
 
             
 
@@ -125,7 +127,7 @@ for strn in ${strengths}; do
 .option cmiusrflag=3
 .option scale=1.0
 .option pdmi=1
-.width output=132
+.option measform=2
 .option mixed_num_format=1
 .global vss
 
