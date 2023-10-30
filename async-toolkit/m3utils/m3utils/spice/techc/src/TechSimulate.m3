@@ -66,7 +66,7 @@ PROCEDURE DoSimulate(READONLY c : Config) =
     wr := NEW(TextWr.T).init();
     stdout, stderr := ProcUtils.WriteHere(wr);
 
-    cmd := F("%s/xa %s.sp -o %s", c.xaPath, c.simRoot, c.simRoot);
+    cmd : TEXT;
     myKill := NEW(REF BOOLEAN);
   BEGIN
 
@@ -75,49 +75,55 @@ PROCEDURE DoSimulate(READONLY c : Config) =
     (*Wr.Close(wrIn);*)
     CASE c.simu OF
       Simu.Xa =>
-      Debug.Out("DoSimulate: " & cmd);
-      WITH wd = NEW(Watchdog.T).init(ProcDeadline),
-           cm = ProcUtils.RunText(cmd,
-                                  stdout := stdout,
-                                  stderr := stderr,
-                                  stdin  := ProcUtils.ReadThis(Affirmation)),
 
-           (* we need to feed in the affirmation, because when we hit xa with
-              kill -INT, it stops and asks the y/n question whether it should
-              exit... *)
-           
-           cb = NEW(MyKillCb,
-                    myKill := myKill,
-                    cmd := cmd,
-                    wr := wr,
-                    simRoot := c.simRoot) DO
-        
-        wd.setExpireAction(cb);
-        EVAL Thread.Fork(NEW(SimWatcher.T,
-                             c       := c,
-                             myKill  := myKill,
-                             cm      := cm,
-                             simRoot := c.simRoot));
-        TRY
-          cm.wait()
-        EXCEPT
-          ProcUtils.ErrorExit(err) =>
-          WITH msg = F("command \"%s\" with output\n====>\n%s\n<====\n\nraised ErrorExit : %s",
-                        cmd,
-                        TextWr.ToText(wr),
-                        ProcUtils.FormatError(err)) DO
-            IF myKill^ THEN
-              Debug.Warning(msg)
-            ELSE
-              Debug.Error(msg)
-            END
-          END
-        END;
-        wd.kill()
-      END
+      cmd := F("%s/xa %s.sp -o %s", c.xaPath, c.simRoot, c.simRoot)
     |
-      Simu.Hspice => <*ASSERT FALSE*>
+      Simu.Hspice =>
+
+      cmd := F("%s/hspice -case 1 -i %s.sp -o %s", c.hspicePath, c.simRoot, c.simRoot);
     END;
+
+    Debug.Out("DoSimulate: " & cmd);
+    WITH wd = NEW(Watchdog.T).init(ProcDeadline),
+         cm = ProcUtils.RunText(cmd,
+                                stdout := stdout,
+                                stderr := stderr,
+                                stdin  := ProcUtils.ReadThis(Affirmation)),
+
+         (* we need to feed in the affirmation, because when we hit xa with
+            kill -INT, it stops and asks the y/n question whether it should
+            exit... *)
+         
+         cb = NEW(MyKillCb,
+                  myKill  := myKill,
+                  cmd     := cmd,
+                  wr      := wr,
+                  simRoot := c.simRoot) DO
+      
+      wd.setExpireAction(cb);
+      EVAL Thread.Fork(NEW(SimWatcher.T,
+                           c       := c,
+                           myKill  := myKill,
+                           cm      := cm,
+                           simRoot := c.simRoot));
+      TRY
+        cm.wait()
+      EXCEPT
+        ProcUtils.ErrorExit(err) =>
+        WITH msg = F("command \"%s\" with output\n====>\n%s\n<====\n\nraised ErrorExit : %s",
+                     cmd,
+                     TextWr.ToText(wr),
+                     ProcUtils.FormatError(err)) DO
+          IF myKill^ THEN
+            Debug.Warning(msg)
+          ELSE
+            Debug.Error(msg)
+          END
+        END
+      END;
+      wd.kill()
+    END;
+    
     Debug.Out("DoSimulate output :\n" & TextWr.ToText(wr))
   END DoSimulate;
 

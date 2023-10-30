@@ -27,6 +27,11 @@ heights="s m"
 
 strengths="1 2 3"
 
+
+if [ "$1" == "-lv" ]; then
+    volts="0.10 0.11 0.12 0.13 0.14 0.15 0.16 0.17 0.18 0.19"
+fi
+
 # for testing:
 
 testing=0

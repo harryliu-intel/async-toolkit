@@ -206,7 +206,8 @@ TYPE
 
     pdmiLib         : Pathname.T;
     simRoot := DefSimRoot;
-    xaPath : Pathname.T := "/p/hdk/cad/xa/U-2023.03-2/bin/";
+    xaPath     : Pathname.T := "/p/hdk/cad/xa/U-2023.03-2/bin/";
+    hspicePath : Pathname.T := "/p/hdk/cad/hspice/U-2023.03-2/hspice/bin/";
 
     para : BOOLEAN; (* parasitic simulation yes/no *)
   END;

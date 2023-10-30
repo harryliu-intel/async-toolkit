@@ -21,6 +21,9 @@ nb_qslot=/XCC/LBM/RTL
 nb_queue=${NBPOOL}
 nb_qslot=${NBQSLOT}
 
+#SIM=xa
+SIM=hspice
+
 step=4
 # we get about 4 CPUs per machine?  6 ought to be more than enough, 4 might be optimal?
 
@@ -70,6 +73,8 @@ roots="default:default"
 p1278p3roots="0p5:/p/hdk/cad/pdk/pdk783_r0.5_22ww52.5/models/core/hspice/m15_2x_1xa_1xb_4ya_2yb_2yc_3yd__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp 0p9e:/p/hdk/cad/pdk/pdk783_r0.9e_23ww29.2_beta/models/core/hspice/m15_2x_1xa_1xb_4ya_2yb_2yc_3yd__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp asfit2023ww29:/nfs/site/disks/zsc9_fwr_sd_001/mnystroe/1278_lowvoltage/2023ww29d2/models_core_hspice/1/m14_2x_1xa_1xb_6ya_2yb_2yc__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp 0p8:/p/hdk/cad/pdk/pdk783_r0.8_23ww24.2/models/core/hspice/m14_2x_1xa_1xb_6ya_2yb_2yc__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp"
 
 p1278p3_0p8roots='0p8:/p/hdk/cad/pdk/pdk783_r0.8_23ww24.2/models/core/hspice/m14_2x_1xa_1xb_6ya_2yb_2yc__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp'
+
+p1278p3_0p9eroots='0p9e:/p/hdk/cad/pdk/pdk783_r0.9e_23ww29.2_beta/models/core/hspice/m15_2x_1xa_1xb_4ya_2yb_2yc_3yd__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp'
 
 if [ "$1" == "-aoitech" ]; then
     runmode="override"
@@ -189,6 +194,7 @@ if [ "$1" == "-i0m_i0s" ]; then
     step=4
     techs="1278p3 1278p3_i0m"
     gates="xor_z1 xor_z2 xor_z3"
+    roots=${p1278p3_0p9eroots}
 fi
 
 if [ "$1" == "-i0m_i0s_hv" ]; then
@@ -201,6 +207,20 @@ if [ "$1" == "-i0m_i0s_hv" ]; then
     step=4
     techs="1278p3 1278p3_i0m"
     gates="xor_z1 xor_z2 xor_z3"
+    roots=${p1278p3_0p9eroots}
+fi
+
+if [ "$1" == "-i0m_i0s_hv_all" ]; then
+    runmode="override"
+    volts="0.20 0.22 0.24 0.26 0.28 0.30 0.32 0.34 0.36 0.38 0.40 0.45 0.50 0.55 0.60 0.65 0.70 0.75 0.80 0.85 0.90 0.95 1.00 1.05 1.10 1.15 1.20"
+    temps="0 25 50 75 85 105 125"
+    modes="dyn"
+    paras="true"
+    corners="tt"
+    step=4
+    techs="1278p3 1278p3_i0m"
+    gates="xor_z1 xor_z2 xor_z3"
+    roots=${p1278p3_0p9eroots}
 fi
 
 if [ "$1" == "-gates" ]; then
@@ -413,7 +433,7 @@ for root in ${roots}; do
 
         torun="${PROG} \
               -tech ${tech} -corn ${corn} -tran ${tran} \
-              -mode ${mode} -simu xa -T ${TEMPLATEDIR} \
+              -mode ${mode} -simu ${SIM} -T ${TEMPLATEDIR} \
               -volt ${volt} -temp ${temp} \
               -para ${para} \
               -gate ${gate} -fo ${fo} \

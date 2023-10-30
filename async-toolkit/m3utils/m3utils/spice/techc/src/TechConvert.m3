@@ -109,7 +109,7 @@ PROCEDURE DoConvert(READONLY c : TechConfig.T;
     
     TRY
       CASE c.simu OF
-        Simu.Xa =>
+        Simu.Xa, Simu.Hspice =>
         Debug.Out("DoConvert: " & cmd);
         WITH wd = NEW(Watchdog.T).init(ProcDeadline),
              c  = ProcUtils.RunText(cmd,
@@ -137,8 +137,6 @@ PROCEDURE DoConvert(READONLY c : TechConfig.T;
                END;
                wd.kill()
              END
-      |
-        Simu.Hspice => <*ASSERT FALSE*>
       END;
       Debug.Out("DoConvert output :\n" & TextWr.ToText(wr));
     FINALLY
