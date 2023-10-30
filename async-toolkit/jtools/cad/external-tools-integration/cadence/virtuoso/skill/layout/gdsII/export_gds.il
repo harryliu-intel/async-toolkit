@@ -54,3 +54,14 @@
                ?layerMapFile (sprintf nil "%s/plot/gds2plot_layer_map.rules" PDK_DIR))
     )
   )
+
+; Write GDS for a list of cell-views
+(defun ExportCellsGDS (directory cells)
+  (let (status (statusGds t))
+    (foreach cell cells
+             status = (ExportGDS ?CV cell ?directory directory)
+             statusGds = statusGds && status
+             )
+    statusGds
+    )
+  )

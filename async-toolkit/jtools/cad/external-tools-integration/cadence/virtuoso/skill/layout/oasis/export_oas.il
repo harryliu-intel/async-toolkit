@@ -46,3 +46,13 @@
     )
   )
 
+; Write OAS for a list of cell-views
+(defun ExportCellsOAS (directory cells)
+  (let (status (statusOas t))
+    (foreach cell cells
+             status = (ExportOAS ?CV cell ?directory directory)
+             statusOas = statusOas && status
+             )
+    statusOas
+    )
+  )

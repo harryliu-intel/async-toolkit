@@ -754,17 +754,6 @@ DumbLayers = (list (list "SRAM" "fill")
   t
   )
 
-; Write GDS for a list of cell-views
-(defun ExportCellsGDS (directory cells)
-  (let (status (statusGds t))
-    (foreach cell cells
-             status = (ExportGDS ?CV cell ?directory directory)
-             statusGds = statusGds && status
-             )
-    statusGds
-    )
-  )
-
 ; convert a cell name from DFII to CAST
 (defun GetCastCellName (cellname
                         @key (tempdir ConfigFileGetValue(TheCDSConfigTable "TEMP"))
