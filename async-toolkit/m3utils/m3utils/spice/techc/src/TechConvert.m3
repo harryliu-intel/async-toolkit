@@ -120,6 +120,11 @@ PROCEDURE DoConvert(READONLY c : TechConfig.T;
                wd.setExpireAction(cb);
                TRY
                  c.wait();
+                 TRY
+                   FS.DeleteFile(fsdbPath)
+                 EXCEPT ELSE
+                   Debug.Warning(F("Caught exception deleting \"%s\"", fsdbPath))
+                 END;
                  res := TRUE
                EXCEPT
                  ProcUtils.ErrorExit(err) =>

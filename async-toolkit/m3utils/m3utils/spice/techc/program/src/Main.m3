@@ -122,7 +122,7 @@ PROCEDURE DoCommonSetup(VAR c : Config) =
          cornDelayFactor = CornDelay[c.corn],
          delayFactor     = (1.0d0 + threshDelayFactor) * tempDelayFactor * cornDelayFactor,
          nanoseconds     = 10.0d0 +
-                           ParaNanoFactor[c.para] * 10.0d0 * (delayFactor + 1.5d0),
+                           ParaNanoFactor[c.para] * 20.0d0 * (delayFactor + 1.5d0),
          timestep        = MAX(DefaultTimeStep,
                                nanoseconds * 1.0d-9 / MaxTimeSteps)
      DO

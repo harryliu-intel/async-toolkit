@@ -82,8 +82,8 @@ PROCEDURE DoMeasure(READONLY c : TechConfig.T;
       StartTran = 1;
     VAR
       xIdx := GetIdx(trace, "x[0]");
-      iIdx := GetIdx(trace, "vissx");
-      yIdx := GetIdx(trace, "vissy");
+      iIdx := GetIdx(trace, "i1(Vvssx)");
+      yIdx := GetIdx(trace, "i1(Vvssy)");
       cycle, meancurrent, leakcurrent, latency : LONGREAL;
     BEGIN
       TRY
@@ -93,7 +93,7 @@ PROCEDURE DoMeasure(READONLY c : TechConfig.T;
       END;
       
       cycle := CycleTime(timeData^, nodeData^,
-                         c.volt / 2.0d0, StartTime, StartTran, StartTran + 1);
+                         c.volt / 2.0d0, StartTime, StartTran, StartTran + 3);
 
       latency := HighTime(timeData^, nodeData^,
                           c.volt / 2.0d0, c.volt / 10.0d0,
@@ -108,7 +108,7 @@ PROCEDURE DoMeasure(READONLY c : TechConfig.T;
         Rd.Failure, Rd.EndOfFile => Debug.Error("Trouble reading node data")
       END;
 
-      meancurrent := -1.0d0 / 1.0d6 *
+      meancurrent := 1.0d0 *
           MeanValue(timeData^, nodeData^, StartTime);
       
       Debug.Out("Measured mean dyna current " & LR(meancurrent));
@@ -119,7 +119,7 @@ PROCEDURE DoMeasure(READONLY c : TechConfig.T;
         Rd.Failure, Rd.EndOfFile => Debug.Error("Trouble reading node data")
       END;
 
-      leakcurrent := -1.0d0 / 1.0d6 *
+      leakcurrent := 1.0d0 *
           MeanValue(timeData^, nodeData^, StartTime);
       
       Debug.Out("Measured mean leak current " & LR(leakcurrent));
