@@ -18,7 +18,7 @@ wires_modtime = makeTable("wires" 0)
   busUseDefaultPatterns = t ; draw the standard patterns from the PDK
   bundled_channels = nil ; for bundled channel routing in fat.il
   bundled_bottom_layer = 1  ; bottom layer for bundled channel routing
-  bundled_top_layer    = TopMetal ; top layer for bundled channel routing
+  bundled_top_layer    = TopAprMetal ; top layer for bundled channel routing
   delete_redundant_pins = nil ; DeleteRedundantPins or just warn about them
   t
   )

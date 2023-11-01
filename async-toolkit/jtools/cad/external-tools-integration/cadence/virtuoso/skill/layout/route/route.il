@@ -392,7 +392,7 @@
 (defun ProteusConfig
   (@key (CV (geGetEditCellView)) ; specify CellView or use edit view
         (botMetal 0)             ; bottom metal layer
-        (topMetal 8)             ; top metal layer
+        (topMetal TopAprMetal)   ; top metal layer
         (pwrMetal nil)           ; top metal layer for power
         (topHalo t)              ; APR should add a top halo
         (doHierDef t)            ; create cellName.def with hierarchy separator
