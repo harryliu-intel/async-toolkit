@@ -42,6 +42,9 @@ FROM TechConfig IMPORT SupportedFanouts;
 FROM TechTechs IMPORT Techs;
 
 IMPORT TechConfig;
+IMPORT CitTextUtils;
+IMPORT TextWr;
+IMPORT ProcUtils;
 
 TYPE Config = TechConfig.T;
 
@@ -146,37 +149,91 @@ PROCEDURE DoConvertPhaz(READONLY c : Config) =
 
 PROCEDURE DoClean(READONLY c : Config) =
   BEGIN
+    IF Verbose THEN
+      Debug.Out("DoClean()")
+    END;
     TRY
       WITH fsdbPath = TechConvert.FindFsdbInDir(c.workDir) DO
         IF fsdbPath # NIL THEN
+          IF Verbose THEN
+            Debug.Out("DoClean deleting " & fsdbPath)
+          END;
           FS.DeleteFile(fsdbPath) 
         END
       END
     EXCEPT ELSE END;
     
+    DeleteRecursively(c.workDir, c.simRoot & ".ctwork");
+    DeleteRecursively(c.workDir, "progress.ctwork");
+    DeleteRecursively(c.workDir, "ct.work");
+    
+    CompressFilesWithExtension(c.workDir, ".lis");
+    CompressFilesWithExtension(c.workDir, ".ic0");
+  END DoClean;
+
+PROCEDURE DeleteRecursively(workdir, subdir : Pathname.T) =
+  BEGIN
     TRY
-      CONST
-        CtWorkDir = "ct.work";
       VAR
-        iter := FS.Iterate(CtWorkDir);
-        fn : Pathname.T;
+        dir  := workdir & "/" & subdir;
+        iter := FS.Iterate(dir);
+        fn   : Pathname.T;
       BEGIN
         WHILE iter.next(fn) DO
-          WITH ffn = CtWorkDir & "/" & fn DO
+          WITH ffn = dir & "/" & fn DO
             IF Verbose THEN
               Debug.Out("Attempting to delete "& ffn)
             END;
             TRY FS.DeleteFile(ffn) EXCEPT ELSE END
           END
-        END
-      END;
-      IF Verbose THEN
-        Debug.Out("Attempting to delete "& "ct.work")
-      END;
-      FS.DeleteDirectory("ct.work")
-    EXCEPT ELSE END
-  END DoClean;
+        END;
+        IF Verbose THEN
+          Debug.Out("Attempting to delete \""& dir & "\"");
+        END;
+        FS.DeleteDirectory(dir)
+      END
+    EXCEPT
+      OSError.E => Debug.Out("Caught OSError.E (OK)")
+    END
+  END DeleteRecursively;
 
+PROCEDURE CompressFilesWithExtension(dir : Pathname.T; ext : TEXT) =
+  VAR
+    iter := FS.Iterate(dir);
+    bn : Pathname.T;
+  BEGIN
+    WHILE iter.next(bn) DO
+      IF CitTextUtils.HaveSuffix(bn, ext) THEN
+        VAR
+          wr             := NEW(TextWr.T).init();
+          stdout, stderr := ProcUtils.WriteHere(wr);
+          fn             := dir & "/" & bn;
+          cmd            := "gzip -9 " & fn;
+        BEGIN
+          WITH cm = ProcUtils.RunText(cmd,
+                                      stdout := stdout,
+                                      stderr := stderr,
+                                      stdin := NIL) DO
+            TRY
+              IF Verbose THEN
+                Debug.Out("Compressing file \"" & fn & "\"")
+              END;
+              cm.wait()
+            EXCEPT
+              ProcUtils.ErrorExit(err) =>
+              WITH msg = F("command \"%s\" with output\n====>\n%s\n<====\n\nraised ErrorExit : %s",
+                           cmd,
+                           TextWr.ToText(wr),
+                           ProcUtils.FormatError(err)) DO
+                Debug.Warning(msg)
+              END
+            END
+          END
+        END
+      END
+    END    
+  END CompressFilesWithExtension;
+  
 PROCEDURE DoMeasurePhaz(READONLY c : Config) =
   BEGIN
     IF NOT (TechMeasure.DoMeasure(c, c.simRoot, "measure.dat", c.workDir, FALSE) OR
