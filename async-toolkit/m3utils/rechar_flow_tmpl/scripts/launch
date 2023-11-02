@@ -112,6 +112,8 @@ if   [[ "${capcorner}" == "cmin" ]]; then
     m="min"
 elif [[ "${capcorner}" == "cmax" ]]; then
     m="max"
+elif [[ "${capcorner}" == "ctyp" ]]; then
+    m="typ"
 else
     echo "Unknown capcorner ${capcorner}"
     exit 1
