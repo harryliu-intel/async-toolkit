@@ -47,7 +47,8 @@ ct [-fsdb <fsdbPath>]
    [-maxnodes <nodes>]
    [-wait]
    [-prec <precision>]
-   [-translate] <inFileName> <outFileRoot>
+   [-translate] 
+   <inFileName> [-copyrootname | <outFileRoot>]
 
 Output files
 ============
@@ -137,6 +138,8 @@ Command-line option meaning is as follows
   -wait        ???
 
   <inFileName> is name of input file in FSDB or CSDF format
+
+  -copyrootname Use prefix of inFileName before first period as outfileRoot
 
   <outfileRoot> is the root of the output files
 

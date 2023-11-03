@@ -288,7 +288,7 @@ VAR
   compressQuick       : BOOLEAN;
 
   scopesep            := ".";
-
+  copyRootName        := FALSE;
   
 CONST
   DefFormats =
@@ -302,6 +302,8 @@ BEGIN
 
     translate := pp.keywordPresent("-translate");
     noX       := pp.keywordPresent("-noX");
+
+    copyRootName := pp.keywordPresent("-copyrootname");
 
     IF pp.keywordPresent("-help") THEN
       <*FATAL Wr.Failure*>
@@ -445,7 +447,17 @@ BEGIN
     
     ifn := pp.getNext();
 
-    ofn := pp.getNext();
+    IF copyRootName THEN
+      WITH pos = Text.FindChar(ifn, '.') DO
+        IF pos = -1 THEN
+          Debug.Error("-copyrootname and no . in input name")
+        ELSE
+          ofn := Text.Sub(ifn, 0, pos)
+        END
+      END
+    ELSE
+      ofn := pp.getNext()
+    END;
     wd  := ofn & ".ctwork";
     
     pp.finish();
