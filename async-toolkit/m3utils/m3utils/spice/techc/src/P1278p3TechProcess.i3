@@ -7,6 +7,16 @@ IMPORT Pathname;
 
 TYPE
   HSpiceModels     = { R0p5, R0p8, R0p9e_beta, AsFit2023WW29 };
+
+  Stdcells         = { i0s, i0m };
+
+  (* note that this file below refers only to the i0s library, i0m is 
+     maintained elsewhere *)
+
+CONST
+  StdcellNames     = ARRAY Stdcells OF TEXT { "i0s", "i0m" };
+
+  TranFlavor       = ARRAY Stdcells OF TEXT { "b", "a" }; (* transistor flavor *)
   
 CONST
   HSpiceModelNames = ARRAY HSpiceModels OF TEXT { "0p5", "0p8", "0p9e_beta", "asfit2023ww29" };
@@ -124,6 +134,12 @@ CONST
   XorStdCellSvt2Root = StdCellRoot & "/dsibase_svt/spf/lib783_i0s_160h_50pp_dsibase_svt_100c_tttt_ctyp/";
   XorStdCellHvt2Root = StdCellRoot & "/dsibase_hvt/spf/lib783_i0s_160h_50pp_dsibase_hvt_100c_tttt_ctyp/";
     
+  XorStdCellUlvt3Root = XorStdCellUlvt2Root;
+  XorStdCellLvt3Root  = XorStdCellLvt2Root;
+  XorStdCellSvt3Root  = XorStdCellSvt2Root;
+  XorStdCellHvt3Root = XorStdCellHvt2Root;
+  
+
   BufPaths = ARRAY Tran OF TEXT {
     NIL,
     StdCellUlvtRoot & "i0sbfn000aa1n02x5.spf",
@@ -177,12 +193,12 @@ CONST
   
   Xor3Paths = ARRAY Tran OF TEXT {
     NIL,
-    XorStdCellUlvt2Root & "i0sxor002aa1n03x5.spf",
+    XorStdCellUlvt3Root & "i0sxor002aa1n03x5.spf",
     NIL,
-    XorStdCellLvt2Root & "i0sxor002ab1n03x5.spf",
+    XorStdCellLvt3Root & "i0sxor002ab1n03x5.spf",
     NIL,
-    XorStdCellSvt2Root & "i0sxor002ac1n03x5.spf",
-    XorStdCellHvt2Root & "i0sxor002ad1n03x5.spf"
+    XorStdCellSvt3Root & "i0sxor002ac1n03x5.spf",
+    XorStdCellHvt3Root & "i0sxor002ad1n03x5.spf"
     
   };
   

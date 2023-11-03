@@ -19,7 +19,7 @@ IMPORT Process;
 IMPORT TextReader;
 IMPORT Text;
 IMPORT Lex, FloatMode;
-FROM XorRingOsc IMPORT XaVar, XaTranSpec, NV, LibDir, CellName;
+FROM XorRingOsc IMPORT XaVar, XaTranSpec, NV, LibDir, CellName, Z;
 IMPORT TextTextTbl;
 IMPORT CitTextUtils;
 FROM TechConfig IMPORT Tran, TranNames;
@@ -30,6 +30,7 @@ IMPORT TextLRPairArraySort;
 IMPORT NormalDeviate;
 IMPORT Random;
 IMPORT LongRealSeq;
+FROM P1278p3TechProcess IMPORT Stdcells, StdcellNames, TranFlavor;
 
 <*FATAL Thread.Alerted*>
 
@@ -68,7 +69,7 @@ PROCEDURE WriteVar(wr : Wr.T; map : TextTextTbl.T) RAISES { Wr.Failure } =
     N       = Nstages * Nsubs * Ntrans * Nvar;
 
   VAR
-    data    : ARRAY [ 0 .. N - 1 ] OF TextLRPair.T;
+    <*NOWARN*>data    : ARRAY [ 0 .. N - 1 ] OF TextLRPair.T;
     pidx    : CARDINAL;
     qidx    : CARDINAL;
     rand    : Random.T;
@@ -237,9 +238,10 @@ PROCEDURE MakeMap() : TextTextTbl.T =
     map := NEW(TextTextTbl.Default).init();
   BEGIN
     EVAL map.put("%THRESH%", TranNames[thresh]);
+    EVAL map.put("%TRANFLAVOR%", TranFlavor[lib]);
     EVAL map.put("%Z%", Int(z));
-    EVAL map.put("@LIBDIR@", LibDir[z][thresh]);
-    EVAL map.put("@CELL@", CellName[z][thresh]);
+    EVAL map.put("@LIBDIR@", LibDir[lib][z][thresh]);
+    EVAL map.put("@CELL@", CellName[lib][z][thresh]);
     EVAL map.put("@HSPICE_MODEL_ROOT@", hspiceModelRoot);
     RETURN map
   END MakeMap;
@@ -256,7 +258,8 @@ VAR
   pp                := NEW(ParseParams.T).init(Stdio.stderr);
   phases            := SET OF Phase {};
   gotPhase          := FALSE;
-  z                 := LAST(CARDINAL);
+  z                 : Z;
+  lib               : Stdcells;
 
   exact        : BOOLEAN;
   templatePath : Pathname.T;
@@ -267,7 +270,12 @@ VAR
   doFullNormal : BOOLEAN;
   fullNormals  : LongRealSeq.T;
 
-  hspiceModelRoot : TEXT := "/p/hdk/cad/pdk/pdk783_r0.5_22ww52.5/models/core/hspice/m15_2x_1xa_1xb_4ya_2yb_2yc_3yd__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp";
+  hspiceModelRoot : TEXT := "/nfs/site/disks/zsc9_fwr_sd_001/mnystroe/p1278_3x0p9eu1/2023ww43d5/models_core_hspice/m14_2x_1xa_1xb_6ya_2yb_2yc__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp";
+
+(*
+"/p/hdk/cad/pdk/pdk783_r0.5_22ww52.5/models/core/hspice/m15_2x_1xa_1xb_4ya_2yb_2yc_3yd__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp"
+
+*)
   hspiceModelName : TEXT := "0p5";
 
 BEGIN
@@ -316,6 +324,12 @@ BEGIN
       z := pp.getNextInt()
     ELSE
       Debug.Error("Must provide -z")
+    END;
+
+    IF pp.keywordPresent("-lib") THEN
+      lib := VAL(Lookup(pp.getNext(), StdcellNames), Stdcells)
+    ELSE
+      Debug.Error("Must provide -lib")
     END;
 
     TranSpec := XaTranSpec;

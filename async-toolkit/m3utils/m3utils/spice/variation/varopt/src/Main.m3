@@ -26,6 +26,7 @@ IMPORT Thread;
 FROM TechConfig IMPORT Tran, TranNames;
 FROM TechLookup IMPORT Lookup;
 IMPORT Env;
+FROM P1278p3TechProcess IMPORT Stdcells, StdcellNames;
 
 TYPE
   T = LRVector.T;
@@ -164,11 +165,12 @@ PROCEDURE AttemptEval(base : BaseEvaluator; q : LRVector.T) : LONGREAL
 
     tranStr        := "-thresh " & TranNames[tran];
     zStr           := "-z " & Int(z);
+    libStr         := "-lib " & StdcellNames[lib];
 
     opt            := ARRAY BOOLEAN OF TEXT { "", "-single" } [ single ];
     modelSpec      := F("-hspicemodelroot %s %s", hspiceModelRoot, hspiceModelName);
     
-    cmd            := FN("nbjob run --target %s --class 4C --class SLES12 --mode interactive %s %s %s %s -T %s -r %s %s %s", ARRAY OF TEXT { NbPool, bin, opt, tranStr, zStr, templatePath, subdirPath, modelSpec, pos } );
+    cmd            := FN("nbjob run --target %s --class 4C --class SLES12 --mode interactive %s %s %s %s %s -T %s -r %s %s %s", ARRAY OF TEXT { NbPool, bin, opt, tranStr, zStr, libStr, templatePath, subdirPath, modelSpec, pos } );
     cm             := ProcUtils.RunText(cmd,
                                         stdout := stdout,
                                         stderr := stderr,
@@ -345,7 +347,8 @@ VAR
   MaxSumSq     := DefMaxSumSq;
   hspiceModelRoot : TEXT := "/p/hdk/cad/pdk/pdk783_r0.5_22ww52.5/models/core/hspice/m15_2x_1xa_1xb_4ya_2yb_2yc_3yd__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp";
   hspiceModelName : TEXT := "0p5";
-  
+  lib               : Stdcells;
+
 BEGIN
   IF NbPool = NIL THEN
     Debug.Error("Must set NBPOOL env var.")
@@ -385,6 +388,12 @@ BEGIN
       z := pp.getNextInt()
     ELSE
       Debug.Error("Must provide -z")
+    END;
+
+    IF pp.keywordPresent("-lib") THEN
+      lib := VAL(Lookup(pp.getNext(), StdcellNames), Stdcells)
+    ELSE
+      Debug.Error("Must provide -lib")
     END;
 
     IF pp.keywordPresent("-sumsq") THEN
