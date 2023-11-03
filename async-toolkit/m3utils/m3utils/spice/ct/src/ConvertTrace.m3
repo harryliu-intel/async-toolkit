@@ -448,7 +448,7 @@ BEGIN
     ifn := pp.getNext();
 
     IF copyRootName THEN
-      WITH pos = Text.FindChar(ifn, '.') DO
+      WITH pos = Text.FindCharR(ifn, '.') DO
         IF pos = -1 THEN
           Debug.Error("-copyrootname and no . in input name")
         ELSE

@@ -139,7 +139,7 @@ Command-line option meaning is as follows
 
   <inFileName> is name of input file in FSDB or CSDF format
 
-  -copyrootname Use prefix of inFileName before first period as outfileRoot
+  -copyrootname Use prefix of inFileName before last period as outfileRoot
 
   <outfileRoot> is the root of the output files
 
