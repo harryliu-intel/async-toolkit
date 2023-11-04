@@ -456,13 +456,46 @@ BEGIN
 
   CONST
     CleanFiles = ARRAY OF Pathname.T {
-                    "ckt.mc", "ckt.mc.csv", "ckt.log", "var.sp" };
+      "ckt.mc", "ckt.mc.csv", "ckt.log" };
+
+    CompressFiles = ARRAY OF Pathname.T {
+      "var.sp"
+    };
+    
   BEGIN
     IF Phase.Clean IN phases THEN
       FOR i := FIRST(CleanFiles) TO LAST(CleanFiles) DO
         TRY
           FS.DeleteFile(CleanFiles[i])
         EXCEPT ELSE END
+      END;
+
+      FOR i := FIRST(CompressFiles) TO LAST(CompressFiles) DO
+        VAR
+          fn             := CompressFiles[i];
+          wr             := NEW(TextWr.T).init();
+          stdout, stderr := ProcUtils.WriteHere(wr);
+          cmd            := "gzip -9 " & fn;
+        BEGIN
+          WITH cm = ProcUtils.RunText(cmd,
+                                      stdout := stdout,
+                                      stderr := stderr,
+                                      stdin := NIL) DO
+            TRY
+              Debug.Out("Compressing file \"" & fn & "\"");
+
+              cm.wait()
+            EXCEPT
+              ProcUtils.ErrorExit(err) =>
+              WITH msg = F("command \"%s\" with output\n====>\n%s\n<====\n\nraised ErrorExit : %s",
+                           cmd,
+                           TextWr.ToText(wr),
+                           ProcUtils.FormatError(err)) DO
+                Debug.Warning(msg)
+              END
+            END
+          END
+        END
       END
     END
   END

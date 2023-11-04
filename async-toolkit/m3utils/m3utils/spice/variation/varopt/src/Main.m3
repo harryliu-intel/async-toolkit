@@ -27,6 +27,7 @@ FROM TechConfig IMPORT Tran, TranNames;
 FROM TechLookup IMPORT Lookup;
 IMPORT Env;
 FROM P1278p3TechProcess IMPORT Stdcells, StdcellNames;
+IMPORT FileWr;
 
 TYPE
   T = LRVector.T;
@@ -47,8 +48,8 @@ TYPE
   BaseEvaluator = LRScalarField.T OBJECT
     mult     := DefMult;
   METHODS
-    init() : LRScalarField.T := InitDummy;
-    mapP(inPlaceP : LRVector.T) : LRVector.T := BaseMapP;
+    init()                      : LRScalarField.T := InitDummy;
+    mapP(inPlaceP : LRVector.T) : LRVector.T      := BaseMapP;
   OVERRIDES
     eval     := BaseEval;
     evalHint := BaseEvalHint;
@@ -60,7 +61,7 @@ TYPE
   END;
 
 PROCEDURE BaseMapP(<*UNUSED*>base : BaseEvaluator;
-                   pa   : LRVector.T) : LRVector.T =
+                   pa             : LRVector.T) : LRVector.T =
   VAR
     sumSq := 0.0d0;
     p := NEW(LRVector.T, NUMBER(pa^));
@@ -197,6 +198,12 @@ PROCEDURE AttemptEval(base : BaseEvaluator; q : LRVector.T) : LONGREAL
                             LongReal(base.mult),
                             FmtP(q),
                             LongReal(res)));
+
+                WITH wr = FileWr.Open(subdirPath & "/compres.dat") DO
+                  Wr.PutText(wr, F("%s %s %s\n", LongReal(res), LongReal(progVal), subdirPath));
+                  Wr.Close(wr)
+                END;
+                
                 RETURN res
               END
             END
@@ -295,9 +302,9 @@ PROCEDURE NextIdx() : CARDINAL =
 
 PROCEDURE ParseResult(VAR tgt : ARRAY OF LONGREAL; str : TEXT) =
   VAR
-    reader := NEW(TextReader.T).init(str);
+    reader  := NEW(TextReader.T).init(str);
     shatter := reader.shatter(" ", "", skipNulls := TRUE);
-    p := shatter;
+    p       := shatter;
   BEGIN
     FOR i := FIRST(tgt) TO LAST(tgt) DO
       tgt[i] := Scan.LongReal(p.head);
