@@ -239,7 +239,7 @@ PROCEDURE MapCommon(READONLY c : Config; map : TextTextTbl.T)=
         EVAL map.put("@VARBLOCK@", "0p0sigma")
       ELSE
         EVAL map.put("@VARBLOCK@",
-                     F("%s_%s_%s_%s",
+                     F("%s_%s_%s_sigma_%s",
                        c.stdcells, Int(z), TranNames[c.tran], sigp))
       END
     END;

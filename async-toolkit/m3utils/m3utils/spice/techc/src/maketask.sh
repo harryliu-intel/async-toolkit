@@ -21,6 +21,8 @@ nb_qslot=/XCC/LBM/RTL
 nb_queue=${NBPOOL}
 nb_qslot=${NBQSLOT}
 
+nb_maxjobs=2000
+
 #SIM=xa
 SIM=hspice
 
@@ -120,7 +122,7 @@ if [ "$1" == "-variation1273" ]; then
     techs="1278p3"
     gates="xor_z1 xor_z2 xor_z3"
     stdcells="i0m i0s"
-    sigmas="0.0 0.5 5.3"
+    sigmas="0.0 0.5 1.0 4.0 4.5 5.3 6.0"
     fo="3"
     SIM="xa"
 fi
@@ -389,6 +391,7 @@ JobsTask {
 
   Queue ${nb_queue} {
     Qslot ${nb_qslot}
+    MaxJobs ${nb_maxjobs}
   } 
   Jobs {
 
