@@ -46,10 +46,13 @@ IMPORT CitTextUtils;
 IMPORT TextWr;
 IMPORT ProcUtils;
 IMPORT P1278p3TechProcess;
+IMPORT Text;
 
 TYPE Config = TechConfig.T;
 
 CONST ParasiticDeadlineMultiplier = 2.0d0;
+
+      TE = Text.Equal;
 
 
 CONST LR = Fmt.LongReal;
@@ -252,8 +255,28 @@ BEGIN
   TRY
     c.createWorkDir := pp.keywordPresent("-C");
     
+    IF pp.keywordPresent("-gate") THEN
+      c.gate := VAL(Lookup(pp.getNext(), GateNames), Gate)
+    END;
+
+    CASE c.gate OF
+      Gate.Xor_Z1, Gate.Xor_Z2, Gate.Xor_Z3 =>
+      IF pp.keywordPresent("-stdcells") THEN
+        WITH sc = VAL(Lookup(pp.getNext(), P1278p3TechProcess.StdcellNames),
+                      P1278p3TechProcess.Stdcells) DO
+          c.stdcells := P1278p3TechProcess.StdcellNames[sc]
+        END
+      END
+    ELSE
+    END;
+
     IF pp.keywordPresent("-tech") THEN
       c.tech := VAL(Lookup(pp.getNext(), TechNames), Tech);
+
+      IF c.tech = Tech.P1278p3 AND TE(c.stdcells, "i0m") THEN
+        c.tech := Tech.P1278p3_i0m
+      END;
+
       c.hspiceModel := Techs[c.tech].hspiceModel;
       c.hspiceModelRoot := Techs[c.tech].hspiceModelRoot;
     END;
@@ -311,20 +334,6 @@ BEGIN
       c.corn := VAL(Lookup(pp.getNext(), CornNames), Corn)
     END;
 
-    IF pp.keywordPresent("-gate") THEN
-      c.gate := VAL(Lookup(pp.getNext(), GateNames), Gate)
-    END;
-
-    CASE c.gate OF
-      Gate.Xor_Z1, Gate.Xor_Z2, Gate.Xor_Z3 =>
-      IF pp.keywordPresent("-stdcells") THEN
-        WITH sc = VAL(Lookup(pp.getNext(), P1278p3TechProcess.StdcellNames),
-                      P1278p3TechProcess.Stdcells) DO
-          c.stdcells := P1278p3TechProcess.StdcellNames[sc]
-        END
-      END
-    ELSE
-    END;
 
     IF pp.keywordPresent("-d") THEN
       c.workDir := pp.getNext()

@@ -16,14 +16,15 @@
 
 * Monte Carlo stuff
 
-.OPTION XA_CMD="set_monte_carlo_option -enable 1"                    * not needed
+.OPTION XA_CMD="set_monte_carlo_option -enable 1"     
 .OPTION XA_CMD="set_monte_carlo_option -sample_output all"
 .OPTION XA_CMD="set_monte_carlo_option -mc0_file 1"
 .OPTION XA_CMD="set_monte_carlo_option -parameter_file 1"
 .OPTION XA_CMD="set_monte_carlo_option -mc0_header 1"
 .OPTION XA_CMD="set_monte_carlo_option -dump_waveform 1"
 
-.option search='@HSPICE_MODEL_ROOT@'
+* for now, not configurable
+.option search='/nfs/site/disks/zsc9_fwr_sd_001/mnystroe/p1278_3x0p9eu1/2023ww43d5/models_core_hspice/m14_2x_1xa_1xb_6ya_2yb_2yc__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp'
 .lib '@HSPICE_MODEL@' @CORNER@
 
 .option PDMI=1
