@@ -45,6 +45,7 @@ IMPORT TechConfig;
 IMPORT CitTextUtils;
 IMPORT TextWr;
 IMPORT ProcUtils;
+IMPORT P1278p3TechProcess;
 
 TYPE Config = TechConfig.T;
 
@@ -265,6 +266,10 @@ BEGIN
         c.fanout := arg
       END
     END;
+
+    IF pp.keywordPresent("-sigma") THEN
+      c.sigma := pp.getNextLongReal()
+    END;
     
     IF pp.keywordPresent("-para") THEN
       WITH arg = pp.getNext() DO
@@ -308,6 +313,17 @@ BEGIN
 
     IF pp.keywordPresent("-gate") THEN
       c.gate := VAL(Lookup(pp.getNext(), GateNames), Gate)
+    END;
+
+    CASE c.gate OF
+      Gate.Xor_Z1, Gate.Xor_Z2, Gate.Xor_Z3 =>
+      IF pp.keywordPresent("-stdcells") THEN
+        WITH sc = VAL(Lookup(pp.getNext(), P1278p3TechProcess.StdcellNames),
+                      P1278p3TechProcess.Stdcells) DO
+          c.stdcells := P1278p3TechProcess.StdcellNames[sc]
+        END
+      END
+    ELSE
     END;
 
     IF pp.keywordPresent("-d") THEN

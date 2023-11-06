@@ -13,6 +13,8 @@ IMPORT Wr;
 IMPORT FileRd;
 IMPORT CitTextUtils;
 IMPORT FileWr;
+IMPORT TextWr;
+IMPORT ProcUtils;
 
 FROM TechConfig IMPORT Corp, Mode, Gate;
 FROM TechConfig IMPORT TranNames, GateNames, TechNames, TechCorp, TemplateNames;
@@ -69,14 +71,45 @@ PROCEDURE DoSetup(READONLY c : Config) =
       Wr.Failure(e) =>
       Debug.Error(F("Couldn't write simulation file \"%s\" : Wr.Failure : %s",
                     SimFile, AL.Format(e)))
+    END;
+
+    CASE c.gate OF
+      Gate.Xor_Z1, Gate.Xor_Z2, Gate.Xor_Z3 =>
+
+      CONST
+        VardataFile = "ckt_varosc_data1273.sp";
+      VAR
+        cmd := F("ln -sf %s/%s %s", c.templateDir, VardataFile, VardataFile);
+
+        wr             := TextWr.New();
+        stdout, stderr := ProcUtils.WriteHere(wr); <*NOWARN*>
+        cm             := ProcUtils.RunText(cmd,
+                                            stdout := stdout,
+                                            stderr := stderr,
+                                            stdin  := NIL);
+      BEGIN
+        TRY
+          cm.wait()
+        EXCEPT
+          ProcUtils.ErrorExit(err) =>
+          Debug.Error("Couldn't create link : " & ProcUtils.FormatError(err))
+        END
+      END
+    ELSE
+      (* skip *)
     END
   END DoSetup;
 
 PROCEDURE MapCommon(READONLY c : Config; map : TextTextTbl.T)=
+  TYPE
+    LRT = LONGREAL;
   VAR
     iter : TextTextTbl.Iterator;
     k, v : TEXT;
     tech := Techs[c.tech];
+
+    z : [ 0..3 ] := 0;
+    
   BEGIN
     EVAL map.put("@HSPICE_MODEL_ROOT@", c.hspiceModelRoot);
     EVAL map.put("@HSPICE_MODEL@", c.hspiceModel);
@@ -178,15 +211,39 @@ PROCEDURE MapCommon(READONLY c : Config; map : TextTextTbl.T)=
     CASE c.gate OF
       Gate.Xor_Z1_0p0sigma, Gate.Xor_Z1_5p3sigma,
       Gate.Aoi_Z1_0p0sigma, Gate.Aoi_Z1_5p3sigma =>
-      EVAL map.put("@Z@", "1");
+      z := 1
     |
       Gate.Xor_Z2_0p0sigma, Gate.Xor_Z2_5p3sigma,
       Gate.Aoi_Z2_0p0sigma, Gate.Aoi_Z2_5p3sigma =>
-      EVAL map.put("@Z@", "2");
+      z := 2
+    |
+      Gate.Xor_Z1 => z := 1
+    |
+      Gate.Xor_Z2 => z := 2
+    |
+      Gate.Xor_Z3 => z := 3
     ELSE
       (* skip *)
     END;
-      
+
+    IF z # 0 THEN
+      EVAL map.put("@Z@", Int(z))
+    END;
+    
+    WITH sigUnits  = TRUNC(c.sigma),
+         sigTenths = ROUND((ABS(c.sigma) - FLOAT(ABS(sigUnits), LRT))*10.0d0),
+         sigp      = F("%sp%s", Int(sigUnits), Int(sigTenths))
+     DO
+      EVAL map.put("@SIGMA@", sigp);
+      IF c.sigma = 0.0d0 THEN
+        EVAL map.put("@VARBLOCK@", "0p0sigma")
+      ELSE
+        EVAL map.put("@VARBLOCK@",
+                     F("%s_%s_%s_%s",
+                       c.stdcells, Int(z), TranNames[c.tran], sigp))
+      END
+    END;
+    
     EVAL map.put("@THRESH@", TranNames[c.tran]);
     
     (* parasitic or not *)

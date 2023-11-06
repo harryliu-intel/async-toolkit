@@ -6,7 +6,7 @@ FROM TechProcess IMPORT TranSufxs;
 IMPORT Pathname;
 
 TYPE
-  HSpiceModels     = { R0p5, R0p8, R0p9e_beta, AsFit2023WW29 };
+  HSpiceModels     = { R0p5, R0p8, R0p9e_beta, AsFit2023WW29, R0p9eu1 };
 
   Stdcells         = { i0s, i0m };
 
@@ -19,13 +19,15 @@ CONST
   TranFlavor       = ARRAY Stdcells OF TEXT { "b", "a" }; (* transistor flavor *)
   
 CONST
-  HSpiceModelNames = ARRAY HSpiceModels OF TEXT { "0p5", "0p8", "0p9e_beta", "asfit2023ww29" };
+  HSpiceModelNames = ARRAY HSpiceModels OF TEXT { "0p5", "0p8", "0p9e_beta", "asfit2023ww29", "0p9eu1" };
 
   HSpiceModelRoots = ARRAY HSpiceModels OF Pathname.T {
   "/p/hdk/cad/pdk/pdk783_r0.5_22ww52.5/models/core/hspice/m15_2x_1xa_1xb_4ya_2yb_2yc_3yd__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp",
   "/p/hdk/cad/pdk/pdk783_r0.8_23ww24.2/models/core/hspice/m14_2x_1xa_1xb_6ya_2yb_2yc__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp",
   "/p/hdk/cad/pdk/pdk783_r0.9e_23ww29.2_beta/models/core/hspice/m15_2x_1xa_1xb_4ya_2yb_2yc_3yd__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp",
-  "/nfs/site/disks/zsc9_fwr_sd_001/mnystroe/1278_lowvoltage/2023ww29d2/models_core_hspice/1/m14_2x_1xa_1xb_6ya_2yb_2yc__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp" };
+  "/nfs/site/disks/zsc9_fwr_sd_001/mnystroe/1278_lowvoltage/2023ww29d2/models_core_hspice/1/m14_2x_1xa_1xb_6ya_2yb_2yc__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp",
+  "/nfs/site/disks/zsc9_fwr_sd_001/mnystroe/p1278_3x0p9eu1/2023ww43d5/models_core_hspice/m14_2x_1xa_1xb_6ya_2yb_2yc__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp"
+  };
 
 CONST
   P = TechProcess.T {

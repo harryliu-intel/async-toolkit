@@ -76,6 +76,9 @@ p1278p3_0p8roots='0p8:/p/hdk/cad/pdk/pdk783_r0.8_23ww24.2/models/core/hspice/m14
 
 p1278p3_0p9eroots='0p9e:/p/hdk/cad/pdk/pdk783_r0.9e_23ww29.2_beta/models/core/hspice/m15_2x_1xa_1xb_4ya_2yb_2yc_3yd__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp'
 
+stdcells="skip"
+sigmas="skip"
+
 if [ "$1" == "-aoitech" ]; then
     runmode="override"
     volts="0.30"
@@ -88,6 +91,22 @@ if [ "$1" == "-aoitech" ]; then
     gates="aoi_z1_0p0sigma aoi_z2_0p0sigma"
     fo="4"
     SETUP_ARGS="export SETUP_MC_FILE_ONLY=''"
+fi
+
+if [ "$1" == "-variation1273test" ]; then
+    runmode="override"
+    volts="0.30"
+    temps="25"
+    modes="dyn"
+    paras="true"
+    corners="tt"
+    step=1
+    techs="1278p3"
+    gates="xor_z1 xor_z2 xor_z3"
+    stdcells="i0m i0s"
+    sigmas="0.0 0.5 5.3"
+    fo="3"
+    SIM="xa"
 fi
 
 if [ "$1" == "-variationlow" ]; then
@@ -376,7 +395,9 @@ for gate in ${gates}; do
             volts=${buf_volts}
         fi
     fi
-    
+
+for sigm in ${sigmas}; do
+for stdc in ${stdcells}; do
 for para in ${paras}; do
 for corn in ${corners}; do
 for mode in ${modes}; do
@@ -422,6 +443,21 @@ for root in ${roots}; do
         forbidden=1
     fi
 
+    if [ "$gate" == "xor_z1" ] && [ "$stdc" == "i0m" ]; then
+        echo "skipping forbidden combo $gate $para $corn $mode $temp $volt $tech $root $stdc"
+        forbidden=1
+    fi
+
+    sigarg=""
+    
+    if [ "$sigm" != "skip" ]; then
+        sigarg="-sigma $sigm"
+    fi
+
+    if [ "$stdc" != "skip" ]; then
+        stdcarg="-stdcells $stdc"
+    fi
+
     if [ "$forbidden" != "1" ]; then
     for tran in ${trantypes}; do
         runfile=${RUNDIR}/${tasknum}.sh
@@ -437,6 +473,7 @@ for root in ${roots}; do
               -volt ${volt} -temp ${temp} \
               -para ${para} \
               -gate ${gate} -fo ${fo} \
+              ${sigarg} ${stdcarg} \
               -d ${RUNDIR}/${tasknum}.run -C"
 
         if [ "${root}" != "default:default" ]; then
@@ -460,7 +497,9 @@ for root in ${roots}; do
         tasknum=`expr $tasknum + 1`
     done
     fi
-    
+
+done
+done
 done
 done
 done

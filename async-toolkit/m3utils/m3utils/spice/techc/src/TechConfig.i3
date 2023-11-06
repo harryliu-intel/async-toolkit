@@ -134,9 +134,9 @@ CONST
   "ckt_varaoi.sp",
   "ckt_varaoi.sp",
 
-  "ckt.sp",
-  "ckt.sp",
-  "ckt.sp"
+  "ckt_varosc.sp",
+  "ckt_varosc.sp",
+  "ckt_varosc.sp"
   };
 
   TechCorp  = ARRAY Tech OF Corp { Corp.Tsmc,
@@ -184,8 +184,10 @@ TYPE
     gate   : Gate;
     fanout : CARDINAL := 1;
 
-    volt := 0.0d0;
-    temp := 0.0d0;
+    volt     := 0.0d0;
+    temp     := 0.0d0;
+    sigma    := 0.0d0; (* not always used *)
+    stdcells := "std";
     
     nanoseconds     : LONGREAL; (* length of sim in ns *)
     timestep        : LONGREAL; (* in seconds *)
