@@ -109,7 +109,7 @@ if [ "$1" == "-variation1273test" ]; then
     SIM="xa"
 fi
 
-if [ "$1" == "-variation1273test" ]; then
+if [ "$1" == "-variation1273" ]; then
     runmode="override"
     volts="0.10 0.12 0.14 0.16 0.18 0.20 0.22 0.24 0.26 0.28 0.30 0.32 0.34 0.36 0.38 0.40 0.45 0.50 0.55 0.60 0.65 0.75 0.80 0.90 1.00"
     temps="0 25 50 65 70 75 85 100 125"
