@@ -43,6 +43,7 @@ VAR
   NbPool  := Env.Get("NBPOOL");
   NbQslot := Env.Get("NBQSLOT");
   M3Utils := Env.Get("M3UTILS");
+  NbOpts  := Env.Get("NBRUNOPTIONS");
   
 TYPE
   BaseEvaluator = LRScalarField.T OBJECT
@@ -170,13 +171,25 @@ PROCEDURE AttemptEval(base : BaseEvaluator; q : LRVector.T) : LONGREAL
 
     opt            := ARRAY BOOLEAN OF TEXT { "", "-single" } [ single ];
     modelSpec      := F("-hspicemodelroot %s %s", hspiceModelRoot, hspiceModelName);
+
+    nbopts     : TEXT;
+    cmd        : TEXT;
+    cm         : ProcUtils.Completion;
+  BEGIN
+
+    IF NbOpts # NIL THEN
+      nbopts := NbOpts
+    ELSE
+      nbopts := F("--target %s --class 4C --class SLES12", NbPool);
+    END;
     
-    cmd            := FN("nbjob run --target %s --class 4C --class SLES12 --mode interactive %s %s %s %s %s -T %s -r %s %s %s", ARRAY OF TEXT { NbPool, bin, opt, tranStr, zStr, libStr, templatePath, subdirPath, modelSpec, pos } );
+    cmd            := FN("nbjob run %s --mode interactive %s %s %s %s %s -T %s -r %s %s %s", ARRAY OF TEXT { nbopts, bin, opt, tranStr, zStr, libStr, templatePath, subdirPath, modelSpec, pos } );
+
     cm             := ProcUtils.RunText(cmd,
                                         stdout := stdout,
                                         stderr := stderr,
                                         stdin  := NIL);
-  BEGIN
+
     TRY
 
       Debug.Out(F("BaseEval : q = %s\nrunning : %s", FmtP(q), cmd));

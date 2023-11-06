@@ -134,7 +134,7 @@ Rsensey vissy 0 1
 * 1-ohm resistor from vissx to ground
 
 * Simulate
-.TRAN 1ps 1000ns sweep monte=list(2:2)
+.TRAN 1ps 5000ns sweep monte=list(2:2)
 
 .variation
         option block_name=extern_data
