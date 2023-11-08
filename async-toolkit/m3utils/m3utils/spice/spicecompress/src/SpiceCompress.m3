@@ -137,7 +137,10 @@ PROCEDURE CompressArray(rn         : TEXT; (* for debug *)
     segments     := NEW(PolySegment16Seq.T).init();
     attemptOrder : Rep16.Order := MIN(DefOrder, NUMBER(darr) - 1);
   BEGIN
-    IF DoDebug THEN Debug.Out("SpiceCompress.CompressArray start.") END;
+    IF DoDebug THEN
+      Debug.Out(F("SpiceCompress.CompressArray start rn=%s NUMBER(darr)=%s",
+                  rn, Int(NUMBER(darr))))
+    END;
     norm := Normalize(darr);
 
     IF doDump THEN
@@ -180,7 +183,7 @@ PROCEDURE CompressArray(rn         : TEXT; (* for debug *)
       );
 
       IF AssertAll THEN CheckChaining(segments) END;
-      
+
       IF DoDebug THEN
         Debug.Out(F("dirty %s : %s segments (%s/%s points) quick %s",
                     rn, Int(segments.size()), Int(PolyPoints(segments)),
@@ -313,7 +316,7 @@ PROCEDURE CompressArray(rn         : TEXT; (* for debug *)
         PolySegment16Serial.Write(wr, segments, norm.min, norm.max);
       END
       
-    END;
+    END(*WITH*);
     IF DoDebug THEN Debug.Out("SpiceCompress.CompressArray done.") END;
   END CompressArray;
 
@@ -1264,7 +1267,12 @@ PROCEDURE AttemptPoly16(fn         : TEXT;
     lastX := GetLastX(segments);
   BEGIN
     IF DoDebug THEN
-      Debug.Out(F("AttemptPoly16(%s), NUMBER(a)=%s", fn, Int(NUMBER(a))))
+      Debug.Out(F("AttemptPoly16(%s), NUMBER(a)=%s, base=%s, segments.size()=%s, lastX=%s",
+                  fn,
+                  Int(NUMBER(a)),
+                  Int(base),
+                  Int(segments.size()),
+                  Int(lastX)))
     END;
 
     IF NUMBER(a) = 1 THEN

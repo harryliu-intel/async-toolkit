@@ -20,6 +20,7 @@ IMPORT Wr, FileWr;
 IMPORT Thread;
 IMPORT Scan;
 IMPORT Lex, FloatMode;
+IMPORT AreaSpec, AreaSpecSeq;
 
 <*FATAL Thread.Alerted*>
 
@@ -77,7 +78,7 @@ TYPE
 
 PROCEDURE Tag(e : Entry.T) : TEXT =
   CONST
-    C = S { CsvCols.Tech .. CsvCols.Simu } + S { CsvCols.Temp } + S { CsvCols.MoNm };
+    C = S { CsvCols.Tech .. CsvCols.Simu } + S { CsvCols.Temp .. CsvCols.Sigm } + S { CsvCols.MoNm } + S { CsvCols.Cels };
 
   BEGIN
     RETURN TagAny(e, C)
@@ -238,7 +239,7 @@ PROCEDURE Lookup(str : TEXT; READONLY a : ARRAY OF TEXT) : CARDINAL =
   END Lookup;
 
 TYPE
-  PrintCol = { v, c, f, ai, li, lp, e, lf, t };
+  PrintCol = { v, c, f, ai, li, lp, e, lf, t, fd };
   PC        = PrintCol;
   PA        = ARRAY PrintCol OF LONGREAL;
   
@@ -250,6 +251,7 @@ PROCEDURE GraphEm(tbl           : TextRefSeqTbl.T;
     iter := tbl.iterate();
     k, fn, eflFn : TEXT;
     seq : RefSeq.T;
+    data : PA;
   TYPE
     C = CsvCols;
   CONST
@@ -292,12 +294,37 @@ PROCEDURE GraphEm(tbl           : TextRefSeqTbl.T;
                  lf = lp / ap,
                  (* leakage fraction of total power *)
 
-                 t = Scan.LongReal(entry[C.Temp]),
+                 t = Scan.LongReal(entry[C.Temp])
                  (* temperature *)
 
-                 data = PA { v, c, f, ai, li, lp, e, lf, t }
-                 (* all data *)
              DO
+
+              data := PA { v, c, f, ai, li, lp, e, lf, t, 0.0d0 };
+              (* all data *)
+              
+              IF    c            = MaxCycle THEN
+                data[PC.fd] := MaxCycle
+              ELSIF areas.size() # 0 THEN
+                VAR
+                  success := FALSE;
+                BEGIN
+                  FOR j := 0 TO areas.size() - 1 DO
+                    WITH as = areas.get(j) DO
+                      IF TE(entry[as.col], as.colVal) THEN
+                        data[PC.fd] := data[PC.f] / as.area;
+                        success := TRUE;
+                        EXIT
+                      END
+                    END
+                  END;
+                  
+                  IF NOT success THEN
+                    Debug.Error(F("No area match for entry %s : %s",
+                                  Int(i),
+                                  Entry.Format(entry)))
+                  END
+                END
+              END;
               
               IF c < MaxCycle THEN
                 FOR i := FIRST(cols) TO LAST(cols) DO
@@ -344,6 +371,7 @@ VAR
   outDir : Pathname.T := ".";
   scaleE := 1.0d0;
   allTbl, leakTbl := NEW(TextRefSeqTbl.Default).init();
+  areas := NEW(AreaSpecSeq.T).init();
   
 BEGIN
   TRY
@@ -366,7 +394,17 @@ BEGIN
     IF pp.keywordPresent("-se") THEN
       scaleE := pp.getNextLongReal()
     END;
-      
+
+    WHILE pp.keywordPresent("-A") DO
+      WITH colName  = pp.getNext(),
+           col      = VAL(Lookup(colName, Entry.CsvColNames), CsvCols),
+           colValu  = pp.getNext(),
+           area     = pp.getNextLongReal(),
+
+           areaSpec = AreaSpec.T { col, colValu, area } DO
+        areas.addhi(areaSpec)
+      END
+    END;
 
     WHILE pp.keywordPresent("-fix") DO
       WITH colName = pp.getNext(),
@@ -424,6 +462,11 @@ BEGIN
   SortEm(allTbl, Entry.CsvCols.Volt);
   GraphEm(allTbl, ARRAY OF PC { PC.e, PC.f, PC.v, PC.lf, PC.t }, PC.v, "");
 
+  IF areas.size() # 0 THEN
+    SortEm(allTbl, Entry.CsvCols.Volt);
+    GraphEm(allTbl, ARRAY OF PC { PC.e, PC.fd, PC.v, PC.lf, PC.t }, PC.v, "_fd");
+  END;
+  
   SortEm(leakTbl, Entry.CsvCols.Temp);
   GraphEm(leakTbl, ARRAY OF PC { PC.t, PC.lp, PC.f }, PC.lf, "_leak")
 END Main.

@@ -11,4 +11,7 @@ array_sort ("Entry", "Entry")
 
 implementation ("Main")
 
+interface ("AreaSpec")
+sequence ("AreaSpec", "AreaSpec")
+
 program ("techdigest")

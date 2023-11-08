@@ -21,19 +21,20 @@ p1278_3x0p9eu1roots="0p9eu1:/nfs/site/disks/zsc9_fwr_sd_001/mnystroe/p1278_3x0p9
 
 roots=${p1278_3x0p9eu1roots}
 
+NB="nbjob run --target ${NBPOOL} --class 4C --class 16G --class SLES12 --mode interactive"
 do_batch()
 {
     shortroot=`echo ${root} | awk -F: '{print $1}'`
     rootpath=`echo ${root} | awk -F: '{print $2}'`
     
     for sigma in $@; do
-    sx=`echo $sigma | tr . p`
-    WORKDIR=${WORKROOT}/${sx}_${shortroot}
+        sx=`echo $sigma | tr . p`
+        WORKDIR=${WORKROOT}/${sx}_${shortroot}
 
-    ../AMD64_LINUX/varopt -T ../../varosc/src/circuit.sp -thresh $THRESH -lib ${LIB} -z $Z -r $WORKDIR -sumsq $sigma -hspicemodelroot ${rootpath} ${shortroot} |& tee ${WORKROOT}/run_opt_${sx}_${shortroot}.0 &
-done
+        ${NB} ../AMD64_LINUX/varopt -T ../../varosc/src/circuit.sp -thresh $THRESH -lib ${LIB} -z $Z -r $WORKDIR -sumsq $sigma -hspicemodelroot ${rootpath} ${shortroot} |& tee ${WORKROOT}/run_opt_${sx}_${shortroot}.0 &
+    done
 
-wait
+    wait
 }
 
 for r in ${roots}; do

@@ -94,7 +94,7 @@ PROCEDURE DoConvert(READONLY c : TechConfig.T;
     *)
     fsdbPath := Debug.UnNil(FindFsdbInDir(c.workDir));
     
-    cmd := FN("%s -fsdb %s -compress %s -threads 4 -wthreads 1 -format CompressedV1 -R %s %s %s",
+    cmd := FN("%s -nochop -fsdb %s -compress %s -threads 4 -wthreads 1 -format CompressedV1 -R %s %s %s",
              ARRAY OF TEXT {
     M3Utils & "/" & CtPath,
     M3Utils & "/" & NanosimrdPath,

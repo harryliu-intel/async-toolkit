@@ -327,6 +327,10 @@ BEGIN
       maxTime := pp.getNextLongReal()
     END;
 
+    IF pp.keywordPresent("-nochop") THEN
+      maxTime := FIRST(LONGREAL)
+    END;
+
     IF pp.keywordPresent("-resample") OR pp.keywordPresent("-R") THEN
       interpolate := pp.getNextLongReal()
     END;

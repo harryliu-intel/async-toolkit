@@ -23,7 +23,7 @@ for dir in $dirs; do
 
         echo in `pwd`
 
-        compres=`cat */compres.dat | sort -nr | tail -1`
+        compres=`cat */compres.dat | sort -gr | tail -1`
         echo $compres
 
         worst=`echo $compres | awk '{print $3}'`

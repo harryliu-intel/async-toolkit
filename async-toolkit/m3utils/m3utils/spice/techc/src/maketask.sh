@@ -501,6 +501,11 @@ for root in ${roots}; do
 
             torun="${torun} -hspicemodelroot ${rootpath} ${shortroot}"
         fi
+
+        echo "if [ -f ${RUNDIR}/measure.dat ]; then" >> ${runfile}
+        echo "    exit 0"                            >> ${runfile}
+        echo "fi"                                    >> ${runfile}
+        echo ""                                      >> ${runfile}
         
         echo "${torun} -p setup -p simulate" \
              >> ${runfile}

@@ -366,7 +366,7 @@ BEGIN
         END;
         
         IF DoDebug THEN
-          Debug.Out("spicestream calling FsdbComms.ReadInterpolatedBinaryNodeDataG")
+          Debug.Out("spicestream calling FsdbComms.ReadInterpolatedBinaryNodeDataG, fd.npoints=" & Int(fd.npoints))
         END;
         FsdbComms.ReadInterpolatedBinaryNodeDataG(rd,
                                                   nodeid,

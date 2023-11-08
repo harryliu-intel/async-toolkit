@@ -51,7 +51,8 @@ static unsigned hiid = 0;
 static bool_T __MyTreeCB(fsdbTreeCBType cb_type, 
 			 void *client_data, void *tree_cb_data);
 
-static int verbose=FALSE;
+static char *verbosestr=(getenv("DEBUGnanosimrd"));
+static int verbose=(verbosestr ? atoi(verbosestr) : 0);
 
 #define CMDBUFSIZ 2048
 
@@ -78,7 +79,7 @@ BuildVar(fsdbTreeCBDataVar *var);
 void
 myfree(void *p)
 {
-  if(verbose)fprintf(stderr, "free(0x%x)\n", p);
+  if(verbose>=100)fprintf(stderr, "free(0x%x)\n", p);
   free(p);
 }
 
@@ -333,7 +334,7 @@ open_signal_range(void)
   if (verbose) fprintf(stderr, "open_signal_range()\n");
 
   for(int_dq *p=active->next; p != active; p = p->next) {
-    if (verbose) fprintf(stderr, "signal %u\n", p->val);
+    if (verbose>=10) fprintf(stderr, "signal %u\n", p->val);
     fsdb_obj->ffrAddToSignalList(p->val);
   }
 

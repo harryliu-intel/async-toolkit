@@ -227,7 +227,7 @@ PROCEDURE DoMeasure() : LONGREAL
         END
       EXCEPT
         FloatMode.Trap, Lex.Error =>  Debug.Warning("DoMeasure : error parsing number in output file");
-        RETURN LAST(LONGREAL)
+        RETURN 1.0d-5 (* don't make it too crazy *)
       END
     FINALLY
       Rd.Close(rd)

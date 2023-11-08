@@ -613,13 +613,22 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
             GetTimesteps(lastVolt, tsL);
             GetTimesteps(midlVolt, tsM);
             GetTimesteps(frstVolt, tsF);
-            
-            IF doDebug THEN
-              Debug.Out(F("Fsdb...ChopTimestepsBasedOnType : node fsdbId %s : ts2 %s min %s max %s",
-                          Int(lastVolt),
-                          Int(tsM.size()),
-                          LR(tsM.get(0)),
-                          LR(tsM.get(tsM.size()-1))));
+
+            PROCEDURE D(id : CARDINAL; seq : LRSeq.T) =
+              BEGIN
+              Debug.Out(F("Fsdb...ChopTimestepsBasedOnType : node fsdbId %s : seq %s min %s max %s",
+                          Int(id),
+                          Int(seq.size()),
+                          LR(seq.get(0)),
+                          LR(seq.get(seq.size()-1))));
+              END D;
+
+            BEGIN
+              IF doDebug THEN
+                D(lastVolt, tsL);
+                D(midlVolt, tsM);
+                D(frstVolt, tsF)
+              END
             END;
             
             ChopTime(ultTime, tsL);
@@ -718,7 +727,7 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
                    idxMap);
       
       IF doDebug THEN
-        Debug.Out(F("timesteps %s min %s max %s",
+        Debug.Out(F("Fsdb.Parse : timesteps %s min %s max %s",
                     Int(timesteps.size()),
                     LR(timesteps.get(0)),
                     LR(timesteps.get(timesteps.size()-1))));
@@ -731,7 +740,9 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
         InterpolateTimesteps(timesteps, interpolate)
       END;
 
-      IF maxTime = LAST(LONGREAL) THEN
+      IF maxTime = FIRST(LONGREAL) THEN
+        (* skip -- no chop *)
+      ELSIF maxTime = LAST(LONGREAL) THEN
         (* address AUTOSTOP issue (see proc for details) *)
         ChopTimestepsBasedOnType("nanosim_voltage");
       ELSE

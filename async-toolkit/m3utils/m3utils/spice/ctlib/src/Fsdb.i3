@@ -45,7 +45,13 @@ PROCEDURE Parse(wd            : Pathname.T;
                 READONLY compress : Compress;
                 threads       : CARDINAL;
                 interpolate   : LONGREAL;
-                maxTime       : LONGREAL)
+                
+                maxTime       : LONGREAL;
+                (* LAST(LONGREAL) to chop automatically (e.g. AUTOSTOP)
+                   FIRST(LONGREAL) to not chop at all *)
+  
+
+  )
   RAISES { Rd.Failure, ShortRead, SyntaxError };
   (* 
      when Parse returns, it has left a number of blocked files in the

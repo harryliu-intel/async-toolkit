@@ -98,8 +98,10 @@ PROCEDURE ReadCompressedNodeDataG(rd         : Rd.T;
               norm.min := UnsafeReader.ReadLR(rd);
               norm.max := UnsafeReader.ReadLR(rd);
 
-              Debug.Out(F("FsdbComms.ReadCompressedNodeDataG got nodeid %s bytes %s m in %s max %s",
-                          Int(nodeid), Int(bytes), LR(norm.min), LR(norm.max) ));
+              IF doDebug THEN
+                Debug.Out(F("FsdbComms.ReadCompressedNodeDataG got nodeid %s bytes %s m in %s max %s",
+                            Int(nodeid), Int(bytes), LR(norm.min), LR(norm.max) ));
+              END;
               
               WITH buflen  = bytes - 8, (* 9 is len of min, max, code *)
                    chars   = NEW(REF ARRAY OF CHAR, buflen),
@@ -204,6 +206,10 @@ PROCEDURE ReadInterpolatedBinaryNodeDataG(rd          : Rd.T;
     n  : CARDINAL;
   BEGIN
     <*ASSERT interpolate # 0.0d0*>
+    IF doDebug THEN
+      Debug.Out(F("ReadInterpolatedBinaryNodeDataG, NUMBER(buff)=%s",
+                Int(NUMBER(buff))))
+    END;
     TRY
       LOOP
         WITH line    = Rd.GetLine(rd),
@@ -234,7 +240,11 @@ PROCEDURE ReadInterpolatedBinaryNodeDataG(rd          : Rd.T;
                   UnsafeReader.ReadUA (rd, hi^);
                   UnsafeReader.ReadUA (rd, lo^);
                   UnsafeReader.ReadLRA(rd, vv^);
-                  
+
+                  IF doDebug THEN
+                    Debug.Out(F("ReadInterpolatedBinaryNodeData read %s records", Int(n)))
+                  END;
+
                   IF n = 0 AND NUMBER(buff) # 0 THEN
                     Debug.Error("?no data")
                   END;
@@ -276,8 +286,8 @@ PROCEDURE ReadInterpolatedBinaryNodeDataG(rd          : Rd.T;
                   END;
                   
                   IF doDebug THEN
-                    Debug.Out(F("ReadInterpolatedBinaryNodeData buff[0] %s buff[LAST(buff)] %s",
-                                LR(buff[0]), LR(buff[LAST(buff)])))
+                    Debug.Out(F("ReadInterpolatedBinaryNodeData buff[0] %s buff[LAST(buff)=%s] %s",
+                                LR(buff[0]), Int(LAST(buff)), LR(buff[LAST(buff)]) ))
                   END;
                   RETURN
                 END

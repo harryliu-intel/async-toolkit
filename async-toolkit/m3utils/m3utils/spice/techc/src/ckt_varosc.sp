@@ -161,9 +161,13 @@ Rsensey vissy 0 1
 .include "ckt_varosc_data1273.sp"
 
 * Measure
+.param measure_cycles=8
+.param start_cycle=4
+.param measure_start=12ns
+
 .measure tran FourCycle
-+ trig V(x[0]) val='vtrue*0.5' td=8ns rise=2
-+ targ V(x[0]) val='vtrue*0.5' td=8ns rise=6
++ trig V(x[0]) val='vtrue*0.5' td=measure_start rise='start_cycle'
++ targ V(x[0]) val='vtrue*0.5' td=measure_start rise='start_cycle+measure_cycles'
 .measure tran Cycle         PARAM='FourCycle/4'
 .measure tran Freq          PARAM='(1/(Cycle))'
 .measure tran IdleCurrent   avg i(Vvcc) from 2.0ns to 10ns

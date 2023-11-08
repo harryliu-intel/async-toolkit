@@ -91,9 +91,15 @@ PROCEDURE DoMeasure(READONLY c                  : TechConfig.T;
       EXCEPT
         Rd.Failure, Rd.EndOfFile => Debug.Error("Trouble reading node data")
       END;
+
+      WITH nt      = 3,
+           EndTran = StartTran + nt DO
+        Debug.Out(F("StartTime %s StartTran %s EndTran %s",
+                    LR(StartTime), Int(StartTran), Int(EndTran)));
       
-      cycle   := CycleTime(timeData^, nodeData^,
-                           c.volt / 2.0d0, StartTime, StartTran, StartTran + 3);
+        cycle   := CycleTime(timeData^, nodeData^,
+                             c.volt / 2.0d0, StartTime, StartTran, EndTran)
+      END;
 
       latency := HighTime(timeData^, nodeData^,
                           c.volt / 2.0d0, c.volt / 10.0d0,
