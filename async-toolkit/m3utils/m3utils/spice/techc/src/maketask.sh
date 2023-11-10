@@ -76,10 +76,16 @@ p1278p3roots="0p5:/p/hdk/cad/pdk/pdk783_r0.5_22ww52.5/models/core/hspice/m15_2x_
 
 p1278p3_0p8roots='0p8:/p/hdk/cad/pdk/pdk783_r0.8_23ww24.2/models/core/hspice/m14_2x_1xa_1xb_6ya_2yb_2yc__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp'
 
-p1278p3_0p9eroots='0p9e:/p/hdk/cad/pdk/pdk783_r0.9e_23ww29.2_beta/models/core/hspice/m15_2x_1xa_1xb_4ya_2yb_2yc_3yd__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp'
+p1278p3_0p9eroot='/p/hdk/cad/pdk/pdk783_r0.9e_23ww29.2_beta/models/core/hspice/m15_2x_1xa_1xb_4ya_2yb_2yc_3yd__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp'
+
+p1278p3_0p9eroots="0p9e:${p1278p3_0p9eroot}"
+
+p1278p3_0p9eu1root='/nfs/site/disks/zsc9_fwr_sd_001/mnystroe/p1278_3x0p9eu1/2023ww43d5/models_core_hspice/m14_2x_1xa_1xb_6ya_2yb_2yc__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp'
+
 
 stdcells="skip"
 sigmas="skip"
+hspicemodelroot=""
 
 if [ "$1" == "-aoitech" ]; then
     runmode="override"
@@ -95,7 +101,7 @@ if [ "$1" == "-aoitech" ]; then
     SETUP_ARGS="export SETUP_MC_FILE_ONLY=''"
 fi
 
-if [ "$1" == "-variation1273test" ]; then
+if [ "$1" == "-variation1278test" ]; then
     runmode="override"
     volts="0.30"
     temps="25"
@@ -109,9 +115,10 @@ if [ "$1" == "-variation1273test" ]; then
     sigmas="0.0 0.5 5.3"
     fo="3"
     SIM="xa"
+    hspicemodelroot=${p1278p3_0p9eu1root}
 fi
 
-if [ "$1" == "-variation1273" ]; then
+if [ "$1" == "-variation1278" ]; then
     runmode="override"
     volts="0.10 0.12 0.14 0.16 0.18 0.20 0.22 0.24 0.26 0.28 0.30 0.32 0.34 0.36 0.38 0.40 0.45 0.50 0.55 0.60 0.65 0.75 0.80 0.90 1.00"
     temps="0 25 50 65 70 75 85 100 125"
@@ -125,6 +132,24 @@ if [ "$1" == "-variation1273" ]; then
     sigmas="0.0 0.5 1.0 4.0 4.5 5.3 6.0"
     fo="3"
     SIM="xa"
+    hspicemodelroot=${p1278p3_0p9eu1root}
+fi
+
+if [ "$1" == "-variation1278_0p9e" ]; then
+    runmode="override"
+    volts="0.10 0.12 0.14 0.16 0.18 0.20 0.22 0.24 0.26 0.28 0.30 0.32 0.34 0.36 0.38 0.40 0.45 0.50 0.55 0.60 0.65 0.75 0.80 0.90 1.00"
+    temps="0 25 50 65 70 75 85 100 125"
+    modes="dyn"
+    paras="true"
+    corners="tt"
+    step=4
+    techs="1278p3"
+    gates="xor_z1 xor_z2 xor_z3"
+    stdcells="i0m i0s"
+    sigmas="0.0 0.5 1.0 4.0 4.5 5.3 6.0"
+    fo="3"
+    SIM="xa"
+    hspicemodelroot=${p1278p3_0p9eroot}
 fi
 
 if [ "$1" == "-variationlow" ]; then
@@ -486,7 +511,13 @@ for root in ${roots}; do
 
 	echo ${SETUP_ARGS} >> ${runfile}
 
+        if [ "${hspicemodelroot}" != "" ] ; then
+            hsmrarg="-hspicemodelroot ${hspicemodelroot}"
+        else
+            hsmrarg=""
+        fi
         torun="${PROG} \
+              ${hsmrarg} \
               -tech ${tech} -corn ${corn} -tran ${tran} \
               -mode ${mode} -simu ${SIM} -T ${TEMPLATEDIR} \
               -volt ${volt} -temp ${temp} \

@@ -23,8 +23,7 @@
 .OPTION XA_CMD="set_monte_carlo_option -mc0_header 1"
 .OPTION XA_CMD="set_monte_carlo_option -dump_waveform 1"
 
-* for now, not configurable
-.option search='/nfs/site/disks/zsc9_fwr_sd_001/mnystroe/p1278_3x0p9eu1/2023ww43d5/models_core_hspice/m14_2x_1xa_1xb_6ya_2yb_2yc__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp'
+.option search='@HSPICE_MODEL_ROOT@'
 .lib '@HSPICE_MODEL@' @CORNER@
 
 .option PDMI=1

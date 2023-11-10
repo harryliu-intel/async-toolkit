@@ -47,6 +47,7 @@ IMPORT TextWr;
 IMPORT ProcUtils;
 IMPORT P1278p3TechProcess;
 IMPORT Text;
+IMPORT RegEx;
 
 TYPE Config = TechConfig.T;
 
@@ -170,10 +171,35 @@ PROCEDURE DoClean(READONLY c : Config) =
     DeleteRecursively(c.workDir, c.simRoot & ".ctwork");
     DeleteRecursively(c.workDir, "progress.ctwork");
     DeleteRecursively(c.workDir, "ct.work");
+    DeleteMatching   (c.workDir, c.simRoot & ".mc");
     
     CompressFilesWithExtension(c.workDir, ".lis");
     CompressFilesWithExtension(c.workDir, ".ic0");
   END DoClean;
+
+PROCEDURE DeleteMatching(dir     : Pathname.T;
+                         pattern : TEXT) =
+  VAR
+    regEx := RegEx.Compile(pattern);
+  BEGIN
+    TRY
+      VAR
+        iter := FS.Iterate(dir);
+        fn   : Pathname.T;
+      BEGIN
+        WHILE iter.next(fn) DO
+          IF RegEx.Execute(regEx, fn) # -1 THEN
+            TRY
+              FS.DeleteFile(dir & "/" & fn)
+            EXCEPT ELSE END
+          END
+        END
+      END
+    EXCEPT
+    ELSE
+    END
+  END DeleteMatching;
+                         
 
 PROCEDURE DeleteRecursively(workdir, subdir : Pathname.T) =
   BEGIN
@@ -279,6 +305,10 @@ BEGIN
 
       c.hspiceModel := Techs[c.tech].hspiceModel;
       c.hspiceModelRoot := Techs[c.tech].hspiceModelRoot;
+    END;
+
+    IF pp.keywordPresent("-hspicemodelroot") THEN
+      c.hspiceModelRoot := pp.getNext()
     END;
 
     IF pp.keywordPresent("-fo") THEN
