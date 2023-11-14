@@ -44,6 +44,20 @@ export pdk_version=pdk080_r4v1p0_efv
 export protocorner=tttt_0p550v_100c_tttt_cmax_ccslnt
 
 #
+# set up rescaling of loads and slews
+#
+# Harry's notes:
+# Reduce the capacitance indicies because of lower voltages.  The 0.5 factor is
+# arbitrary, based on the initial 0.355V lib delievered by CorpLib.  It would
+# be better to use Siliconsmart's autorange feature to figure out the
+# capacitance indices based on slew limits at an anchor operating condition.
+#
+load_factor=0.3        # multiplicative change to load from prototype
+slew_factor=1.0        # multiplicative change to slew from prototype
+seq_char_pushout=0.05  # allowable pushout for seq* cells; default=0.01
+
+
+#
 # configure parallelism in run:
 #
 workers=2000 # workers to launch via SIS

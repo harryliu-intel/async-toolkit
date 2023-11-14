@@ -83,26 +83,6 @@ launch_corner() {
     done
 }
 
-# this stuff is ignored now...
-
-# ULVT bundles
-#todo+=(base_ulvt/200)
-#todo+=(dsbase_ulvt/600)
-#todo+=(dsibase_ulvt/600)
-#todo+=(dsi1_ulvt/200)
-#todo+=(dsimain_ulvt/200)
-#todo+=(dsseq_ulvt/300)
-#todo+=(seq_ulvt/100)
-#todo+=(spcl_ulvt/200)
-#todo+=(clk_ulvt/200)
-
-# LVT bundles
-#todo+=(base_lvt/100)
-#todo+=(dsbase_lvt/100)
-#todo+=(dsimain_lvt/200)
-#todo+=(dsseq_lvt/200)
-#todo+=(seq_lvt/200)
-
 # last arg here is extract_pvt
 # matches names in PDK release spf directory
 
@@ -120,7 +100,6 @@ else
 fi
     
 launch_corner ${trancorner} ${millivolts} ${celsius} ${m} ${extract_pvt}
-
 
 # final trancorner s/b metal extract corner instead (pcss, tttt, pcff, pcss3 ...)
 
