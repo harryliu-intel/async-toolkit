@@ -152,7 +152,7 @@ PROCEDURE DoMeasure(READONLY c                  : TechConfig.T;
           END;
             
           Wr.PutText(wr,
-                     FN("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
+                     FN("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
                         ARRAY OF TEXT {
                            TechNames[c.tech],
                            CornNames[c.corn],
@@ -165,6 +165,7 @@ PROCEDURE DoMeasure(READONLY c                  : TechConfig.T;
                            LR(c.volt),
                            LR(c.temp),
                            LR(c.sigma),
+                           LR(c.loadCap),
                            LR(timeResult),
                            LR(meancurrent),
                            LR(leakcurrent),

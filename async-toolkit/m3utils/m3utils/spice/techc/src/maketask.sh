@@ -87,6 +87,8 @@ stdcells="skip"
 sigmas="skip"
 hspicemodelroot=""
 
+caps="0"
+
 if [ "$1" == "-aoitech" ]; then
     runmode="override"
     volts="0.30"
@@ -133,6 +135,24 @@ if [ "$1" == "-variation1278" ]; then
     fo="3"
     SIM="xa"
     hspicemodelroot=${p1278p3_0p9eu1root}
+fi
+
+if [ "$1" == "-variation1278cap" ]; then
+    runmode="override"
+    volts="0.20 0.22 0.24 0.26 0.28 0.30 0.32 0.34 0.36 0.38 0.40 0.45 0.50 0.60 0.70 0.80 0.90 1.00"
+    temps="0 25 50 65 70 75 85 100 125"
+    modes="dyn"
+    paras="true"
+    corners="tt"
+    step=4
+    techs="1278p3"
+    gates="xor_z1 xor_z2 xor_z3"
+    stdcells="i0m i0s"
+    sigmas="0.0 5.3"
+    fo="3"
+    SIM="xa"
+    hspicemodelroot=${p1278p3_0p9eu1root}
+    caps="0 0.5e-15 1e-15 1.5e-15"
 fi
 
 if [ "$1" == "-variation1278_0p9e" ]; then
@@ -449,6 +469,7 @@ for temp in ${temps}; do
 for volt in ${volts}; do
 for tech in ${techs}; do
 for root in ${roots}; do
+for cap  in ${caps}; do
 
     if [ "${trantypes}" == "" ]; then
         if [ "${tech}" == "n5" ]; then
@@ -502,6 +523,12 @@ for root in ${roots}; do
         stdcarg="-stdcells $stdc"
     fi
 
+    caparg=""
+    
+    if [ "$cap" != "0" ]; then
+        caparg="-loadcap $cap"
+    fi
+
     if [ "$forbidden" != "1" ]; then
     for tran in ${trantypes}; do
         runfile=${RUNDIR}/${tasknum}.sh
@@ -523,7 +550,7 @@ for root in ${roots}; do
               -volt ${volt} -temp ${temp} \
               -para ${para} \
               -gate ${gate} -fo ${fo} \
-              ${sigarg} ${stdcarg} \
+              ${sigarg} ${stdcarg} ${caparg}\
               -d ${RUNDIR}/${tasknum}.run -C"
 
         if [ "${root}" != "default:default" ]; then
@@ -552,7 +579,7 @@ for root in ${roots}; do
         tasknum=`expr $tasknum + 1`
     done
     fi
-
+done
 done
 done
 done

@@ -6,7 +6,7 @@ TYPE
   (* independent variables : *)
   Tech, Corn, Tran, Cell, Mode,
   Simu, Cels, Fano, Volt, Temp,
-  Sigm,
+  Sigm, Lcap,
   
   (* dependent variables : *)
   Cycl, Curr, Icur, Path,
@@ -31,7 +31,7 @@ CONST
   CsvColNames = ARRAY CsvCols OF TEXT 
   { "Tech", "Corn", "Tran", "Cell", "Mode",
     "Simu", "Cels", "Fano", "Volt", "Temp",
-    "Sigm",
+    "Sigm", "Lcap",
     "Cycl", "Curr", "Icur", "Path",
     "MoNm"
 

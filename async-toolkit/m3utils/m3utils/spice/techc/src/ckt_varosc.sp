@@ -56,14 +56,20 @@ Mqp2 o1 b vcc  vcc  p@TRANSUFX@ @TRANSIZE@
 
 *      A     B     OUT    <--PWR-->
 X0     in    vcc  xi     vcc  vssx   @CELLNAME0@
-X1     vcc  xi    out    vcc  vssx   @CELLNAME1@
+X1     vcc   xi   out    vcc  vssx   @CELLNAME1@
+C0     xi    0   @LOADCAP@
 
 * dummy loads on xi
 xload0 xi    vcc  unc[0] vcc  vssx   @CELLNAME0@
 xload1 xi    vcc  unc[1] vcc  vssx   @CELLNAME0@
+CX0    unc[0]    0   @LOADCAP@
+CX1    unc[1]    0   @LOADCAP@
 
 xload3 out    vcc  unc[3] vcc  vssx   @CELLNAME0@
 xload4 out    vcc  unc[4] vcc  vssx   @CELLNAME0@
+CX3    unc[3]    0   @LOADCAP@
+CX4    unc[4]    0   @LOADCAP@
+
 
 .ends
 

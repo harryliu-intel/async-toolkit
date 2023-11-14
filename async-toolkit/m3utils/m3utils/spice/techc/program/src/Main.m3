@@ -352,6 +352,12 @@ BEGIN
       c.temp := pp.getNextLongReal()
     END;
 
+    IF pp.keywordPresent("-loadcap") THEN
+      c.loadCap := pp.getNextLongReal()
+    ELSE
+      c.loadCap := 0.0d0
+    END;
+
     IF pp.keywordPresent("-mode") THEN
       c.mode := VAL(Lookup(pp.getNext(), ModeNames), Mode)
     END;

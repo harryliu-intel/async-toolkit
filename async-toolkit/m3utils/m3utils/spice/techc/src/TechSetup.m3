@@ -116,6 +116,7 @@ PROCEDURE MapCommon(READONLY c : Config; map : TextTextTbl.T)=
     EVAL map.put("@TEMP@", LR(c.temp));
     EVAL map.put("@VOLT@", LR(c.volt));
     EVAL map.put("@FANOUT@", Int(c.fanout));
+    EVAL map.put("@LOADCAP@", LR(c.loadCap));
 
     (* gate terminals *)
     CASE c.gate OF

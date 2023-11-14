@@ -78,7 +78,7 @@ TYPE
 
 PROCEDURE Tag(e : Entry.T) : TEXT =
   CONST
-    C = S { CsvCols.Tech .. CsvCols.Simu } + S { CsvCols.Temp .. CsvCols.Sigm } + S { CsvCols.MoNm } + S { CsvCols.Cels };
+    C = S { CsvCols.Tech .. CsvCols.Simu } + S { CsvCols.Temp .. CsvCols.Lcap } + S { CsvCols.MoNm } + S { CsvCols.Cels };
 
   BEGIN
     RETURN TagAny(e, C)

@@ -188,6 +188,8 @@ TYPE
     temp     := 0.0d0;
     sigma    := 0.0d0; (* not always used *)
     stdcells := "std";
+
+    loadCap  := 0.0d0;
     
     nanoseconds     : LONGREAL; (* length of sim in ns *)
     timestep        : LONGREAL; (* in seconds *)
