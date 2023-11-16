@@ -52,8 +52,8 @@ export protocorner=tttt_0p550v_100c_tttt_cmax_ccslnt
 # be better to use Siliconsmart's autorange feature to figure out the
 # capacitance indices based on slew limits at an anchor operating condition.
 #
-load_factor=0.3        # multiplicative change to load from prototype
-slew_factor=1.0        # multiplicative change to slew from prototype
+load_factor=0.5        # multiplicative change to load from prototype
+slew_factor=2.0        # multiplicative change to slew from prototype
 seq_char_pushout=0.05  # allowable pushout for seq* cells; default=0.01
 
 
