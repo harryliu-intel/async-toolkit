@@ -43,6 +43,37 @@ export pdk_version=pdk080_r4v1p0_efv
 #
 export protocorner=tttt_0p550v_100c_tttt_cmax_ccslnt
 
+
+#
+# if using special UPF (e.g., asfit, side release, ...),
+# uncomment the following 
+#
+do_special_upf=1
+do_special_upf=0
+
+if [[ "${do_special_upf}" == "1" ]]; then
+
+    upfdir=/nfs/site/disks/zsc9_fwr_sd_001/mnystroe/1278_lowvoltage/2023ww29d1/models_core_hspice/m14_2x_1xa_1xb_6ya_2yb_2yc__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp/
+
+    upfdir=/nfs/site/disks/zsc9_fwr_sd_001/mnystroe/1278_lowvoltage/2023ww29d2/models_core_hspice/1/m14_2x_1xa_1xb_6ya_2yb_2yc__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp/
+
+    upfdir=/nfs/site/disks/zsc9_fwr_sd_001/mnystroe/p1278_3x0p9eu1/2023ww43d5/models_core_hspice/m14_2x_1xa_1xb_6ya_2yb_2yc__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp
+    
+    upfcorner=tttt
+
+    hspfile=${dir}/p1278_3.hsp
+    cornerfile=${hspfile}:${corner}
+    
+    export PROJECT_HSP_FILE=${hspfile}
+    export DP_HSPICE_MODEL=${hspfile}
+    export COMMANDER_SIM_SP_INC=${cornerfile}
+    export PROJECT_SIM_SP_INC=${cornerfile}
+    
+    export hspice_lib_models=/p/hdk/cad/pdk/pdk783_r0.9_23ww26.5_alpha/cmi/hspice/cmi/lnx86/64bit
+
+fi
+
+
 #
 # set up rescaling of loads and slews
 #
