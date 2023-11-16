@@ -121,8 +121,6 @@ for control in */*/control; do
     done
 done
 
-#eq_char_pushout=0.05  # allowable pushout for seq* cells
-
 seq_bundles=(`(pushd $stdcell_dir ; echo *seq_*vt)`)
 
 #seq_bundles=(seq_ulvt seq_lvt seq_svt seq_hvt)
