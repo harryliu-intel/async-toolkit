@@ -69,7 +69,12 @@ TYPE
 
            Xor_Z1,           (* Z1 XOR, no variation *)
            Xor_Z2,           (* Z2 XOR, no variation *)
-           Xor_Z3            (* Z3 XOR, no variation *)
+           Xor_Z3,           (* Z3 XOR, no variation *)
+
+           Xor_Z6,
+           Xor_Z9,
+           Xor_Z12,
+           Xor_Z18
   
   };
   
@@ -95,7 +100,9 @@ CONST
                                    "oai_z1_0p0sigma", "oai_z1_5p3sigma",
                                    "oai_z2_0p0sigma", "oai_z2_5p3sigma",
 
-                                   "xor_z1", "xor_z2", "xor_z3"
+                                   "xor_z1", "xor_z2", "xor_z3",
+                                   "xor_z6", "xor_z9", "xor_z12", "xor_z18"
+
                                    };
   (* should not ask for an oai, should only ask for aoi *)
 
@@ -136,6 +143,11 @@ CONST
 
   "ckt_varosc.sp",
   "ckt_varosc.sp",
+  "ckt_varosc.sp",
+
+  "ckt_varosc.sp",
+  "ckt_varosc.sp",
+  "ckt_varosc.sp",
   "ckt_varosc.sp"
   };
 
@@ -161,7 +173,8 @@ CONST
     Gate.Aoi_Z1_0p0sigma, Gate.Aoi_Z1_5p3sigma,
     Gate.Aoi_Z2_0p0sigma, Gate.Aoi_Z2_5p3sigma,
 
-    Gate.Xor_Z1, Gate.Xor_Z2, Gate.Xor_Z3
+    Gate.Xor_Z1, Gate.Xor_Z2, Gate.Xor_Z3,
+    Gate.Xor_Z6, Gate.Xor_Z9, Gate.Xor_Z12, Gate.Xor_Z18
 
     };
   (* second gate type for each first gate --

@@ -78,7 +78,12 @@ CONST
 
     Xor1Paths,
     Xor2Paths,
-    Xor3Paths
+    Xor3Paths,
+    
+    Xor6Paths,
+    Xor9Paths,
+    Xor12Paths,
+    Xor18Paths
   },
 
   cellNames :=ARRAY Gate OF ARRAY Tran OF TEXT {
@@ -104,7 +109,12 @@ CONST
 
     Xor1CellNames,
     Xor2CellNames,
-    Xor3CellNames
+    Xor3CellNames,
+
+    Xor6CellNames,
+    Xor9CellNames,
+    Xor12CellNames,
+    Xor18CellNames
 },
 
   plugText :=""
@@ -204,6 +214,43 @@ CONST
     
   };
   
+  Xor6Paths = ARRAY Tran OF TEXT {
+    NIL,
+    XorStdCellUlvt3Root & "i0sxor002aa1n06x5.spf",
+    NIL,
+    XorStdCellLvt3Root & "i0sxor002ab1n06x5.spf",
+    NIL,
+    NIL,
+    NIL
+  };
+  Xor9Paths = ARRAY Tran OF TEXT {
+    NIL,
+    XorStdCellUlvt3Root & "i0sxor002aa1d09x5.spf",
+    NIL,
+    XorStdCellLvt3Root & "i0sxor002ab1d09x5.spf",
+    NIL,
+    NIL,
+    NIL
+  };
+  Xor12Paths = ARRAY Tran OF TEXT {
+    NIL,
+    XorStdCellUlvt3Root & "i0sxor002aa1d12x5.spf",
+    NIL,
+    XorStdCellLvt3Root & "i0sxor002ab1d12x5.spf",
+    NIL,
+    NIL,
+    NIL
+  };
+  Xor18Paths = ARRAY Tran OF TEXT {
+    NIL,
+    XorStdCellUlvt3Root & "i0sxor002aa1d18x5.spf",
+    NIL,
+    XorStdCellLvt3Root & "i0sxor002ab1d18x5.spf",
+    NIL,
+    NIL,
+    NIL
+  };
+
   XorCellNames = ARRAY Tran OF TEXT {
     NIL,
     "i0sxor002aa1n02x5",
@@ -224,6 +271,47 @@ CONST
     "i0sxor002ad1n03x5"
   };
 
+  
+  Xor6CellNames = ARRAY Tran OF TEXT {
+    NIL,
+    "i0sxor002aa1n06x5",
+    NIL,
+    "i0sxor002ab1n06x5",
+    NIL,
+    "i0sxor002ac1n06x5",
+    "i0sxor002ad1n06x5"
+  };
+
+  Xor9CellNames = ARRAY Tran OF TEXT {
+    NIL,
+    "i0sxor002aa1d09x5",
+    NIL,
+    "i0sxor002ab1d09x5",
+    NIL,
+    "i0sxor002ac1d09x5",
+    "i0sxor002ad1d09x5"
+  };
+
+  Xor12CellNames = ARRAY Tran OF TEXT {
+    NIL,
+    "i0sxor002aa1d12x5",
+    NIL,
+    "i0sxor002ab1d12x5",
+    NIL,
+    "i0sxor002ac1d12x5",
+    "i0sxor002ad1d12x5"
+  };
+
+  Xor18CellNames = ARRAY Tran OF TEXT {
+    NIL,
+    "i0sxor002aa1d18x5",
+    NIL,
+    "i0sxor002ab1d18x5",
+    NIL,
+    "i0sxor002ac1d18x5",
+    "i0sxor002ad1d18x5"
+  };
+  
   Xor1CellNames = ARRAY Tran OF TEXT {
     NIL,
     "i0sxor002aa1n01x1",

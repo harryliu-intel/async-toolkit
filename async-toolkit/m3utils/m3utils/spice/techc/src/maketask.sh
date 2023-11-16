@@ -86,8 +86,7 @@ p1278p3_0p9eu1root='/nfs/site/disks/zsc9_fwr_sd_001/mnystroe/p1278_3x0p9eu1/2023
 stdcells="skip"
 sigmas="skip"
 hspicemodelroot=""
-
-caps="0"
+caps="skip"
 
 if [ "$1" == "-aoitech" ]; then
     runmode="override"
@@ -154,6 +153,44 @@ if [ "$1" == "-variation1278cap" ]; then
     hspicemodelroot=${p1278p3_0p9eu1root}
     caps="0 0.5e-15 1e-15 1.5e-15"
 fi
+
+if [ "$1" == "-variation1278hicap" ]; then
+    runmode="override"
+    volts="0.20 0.22 0.24 0.26 0.28 0.30 0.32 0.34 0.36 0.38 0.40 0.45 0.50 0.60 0.70 0.80 0.90 1.00"
+    temps="0 25 50 65 70 75 85 100 125"
+    modes="dyn"
+    paras="true"
+    corners="tt"
+    step=4
+    techs="1278p3"
+    gates="xor_z1 xor_z2 xor_z3"
+    stdcells="i0m i0s"
+    sigmas="0.0 5.3"
+    fo="3"
+    SIM="xa"
+    hspicemodelroot=${p1278p3_0p9eu1root}
+    caps="3e-15 6e-15 1.2e-14 2.4e-14 4.8e-14"
+fi
+
+if [ "$1" == "-variation1278hidrive" ]; then
+    runmode="override"
+    volts="0.20 0.22 0.24 0.26 0.28 0.30 0.32 0.34 0.36 0.38 0.40 0.45 0.50 0.60 0.70 0.80 0.90 1.00"
+    temps="0 25 50 65 70 75 85 100 125"
+    modes="dyn"
+    paras="true"
+    corners="tt"
+    step=4
+    techs="1278p3"
+    gates="xor_z6 xor_z9 xor_z12 xor_z18"
+    stdcells="i0m i0s"
+    sigmas="0.0 5.3"
+    fo="3"
+    SIM="xa"
+    hspicemodelroot=${p1278p3_0p9eu1root}
+    caps="0 1.5e-15 3e-15 6e-15 1.2e-14 2.4e-14 4.8e-14"
+fi
+
+######################################################################
 
 if [ "$1" == "-variation1278_0p9e" ]; then
     runmode="override"
@@ -525,7 +562,7 @@ for cap  in ${caps}; do
 
     caparg=""
     
-    if [ "$cap" != "0" ]; then
+    if [ "$cap" != "skip" ]; then
         caparg="-loadcap $cap"
     fi
 

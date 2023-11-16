@@ -44,6 +44,10 @@ CONST
     BufPaths,
     NilPaths,
     NilPaths,
+    NilPaths,
+    NilPaths,
+    NilPaths,
+    NilPaths,
     NilPaths
   },
 
@@ -65,6 +69,10 @@ CONST
     OaiCellNames,  (* should be Z1 *)
     OaiCellNames,  (* should be Z2 *)
     OaiCellNames,  (* should be Z2 *)
+    NilCellNames,
+    NilCellNames,
+    NilCellNames,
+    NilCellNames,
     NilCellNames,
     NilCellNames,
     NilCellNames

@@ -74,7 +74,8 @@ PROCEDURE DoSetup(READONLY c : Config) =
     END;
 
     CASE c.gate OF
-      Gate.Xor_Z1, Gate.Xor_Z2, Gate.Xor_Z3 =>
+      Gate.Xor_Z1, Gate.Xor_Z2, Gate.Xor_Z3, 
+      Gate.Xor_Z6, Gate.Xor_Z9, Gate.Xor_Z12,Gate.Xor_Z18 =>
 
       CONST
         VardataFile = "ckt_varosc_data1273.sp";
@@ -108,7 +109,7 @@ PROCEDURE MapCommon(READONLY c : Config; map : TextTextTbl.T)=
     k, v : TEXT;
     tech := Techs[c.tech];
 
-    z : [ 0..3 ] := 0;
+    z : [ 0..18 ] := 0;
     
   BEGIN
     EVAL map.put("@HSPICE_MODEL_ROOT@", c.hspiceModelRoot);
@@ -129,7 +130,8 @@ PROCEDURE MapCommon(READONLY c : Config; map : TextTextTbl.T)=
       EVAL map.put("@T1B@", "");
       EVAL map.put("@T1C@", "");
     |
-      Gate.Xor, Gate.Xor_Z1, Gate.Xor_Z2, Gate.Xor_Z3 =>
+      Gate.Xor, Gate.Xor_Z1, Gate.Xor_Z2, Gate.Xor_Z3,
+      Gate.Xor_Z6, Gate.Xor_Z9, Gate.Xor_Z12, Gate.Xor_Z18 =>
       EVAL map.put("@T0A@", "in");
       EVAL map.put("@T0B@", "vcc");
       EVAL map.put("@T0C@", "");
@@ -223,6 +225,14 @@ PROCEDURE MapCommon(READONLY c : Config; map : TextTextTbl.T)=
       Gate.Xor_Z2 => z := 2
     |
       Gate.Xor_Z3 => z := 3
+    |
+      Gate.Xor_Z6 => z := 6
+    |
+      Gate.Xor_Z9 => z := 9
+    |
+      Gate.Xor_Z12 => z := 12
+    |
+      Gate.Xor_Z18 => z := 18
     ELSE
       (* skip *)
     END;

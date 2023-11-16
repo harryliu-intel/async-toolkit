@@ -286,7 +286,8 @@ BEGIN
     END;
 
     CASE c.gate OF
-      Gate.Xor_Z1, Gate.Xor_Z2, Gate.Xor_Z3 =>
+      Gate.Xor_Z1, Gate.Xor_Z2, Gate.Xor_Z3,
+      Gate.Xor_Z6, Gate.Xor_Z9, Gate.Xor_Z12, Gate.Xor_Z18 =>
       IF pp.keywordPresent("-stdcells") THEN
         WITH sc = VAL(Lookup(pp.getNext(), P1278p3TechProcess.StdcellNames),
                       P1278p3TechProcess.Stdcells) DO
