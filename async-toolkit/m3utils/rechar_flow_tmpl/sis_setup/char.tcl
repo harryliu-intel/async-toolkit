@@ -54,7 +54,12 @@ set_config_opt -type {lvf} netlist_max_sweeps 128
 if {![info exists ::env(skip_import)]} {
     set_config_opt model_bundle_bit_level 1
 #    set lib lib764_g1i_210h_50pp
-    set lib lib783_i0s_160h_50pp
+
+    if {![info exists ::env(fulllib)]} {
+        error "fulllib not defined"
+    }
+    set lib $::env(fulllib)
+
     if {![info exists ::env(extract_pvt)]} {
         error "extract_pvt not defined"
     }
@@ -62,6 +67,7 @@ if {![info exists ::env(skip_import)]} {
     set lib_pvt tttt_0p550v_100c_tttt_cmax_ccslnt
     if {[info exists ::env(lib_pvt)]} {
         set lib_pvt $::env(lib_pvt)
+	# is this right??
         error "lib_pvt not defined"
     }
     set stdcells $::env(stdcell_dir)

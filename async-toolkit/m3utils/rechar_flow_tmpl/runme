@@ -100,13 +100,10 @@ fi
 echo "===========================     SCALE `date`    ==========================="
 pwd
 
-load_factor=0.5
-slew_factor=2.0
-
-# Reduce the capacitance indicies because of lower voltages.  The 0.5 factor is
-# arbitrary, based on the initial 0.355V lib delievered by CorpLib.  It would
-# be better to use Siliconsmart's autorange feature to figure out the
-# capacitance indices based on slew limits at an anchor operating condition.
+# ######################################################################ctor is
+# ######################################################################would
+# ######################################################################
+# Perform the rescaling.  See env.zsh for the settings.            #####ion.
 for control in */*/control; do
     mkdir -p $control.updated
     for inst in $control/*.inst; do
@@ -115,16 +112,16 @@ for control in */*/control; do
                                   |\
         $TOP/scripts/adjust_slews.pl ${slew_factor} > $control.updated/${inst:t}
         
-        if [[ ${inst:t} =~ "i0sl[a-z][a-z][0-9]10[^/]*$" ]]; then
+        if [[ ${inst:t} =~ "i0[ms]l[a-z][a-z][0-9]10[^/]*$" ]]; then
             echo "Inverting latch : $inst"
             $TOP/scripts/invert_d < $inst > $control.updated/${inst:t}
         fi
     done
 done
 
-seq_char_pushout=0.05  # allowable pushout for seq* cells
+#eq_char_pushout=0.05  # allowable pushout for seq* cells
 
-seq_bundles=(`(pushd $stdcell_dir ; echo *_*vt)`)
+seq_bundles=(`(pushd $stdcell_dir ; echo *seq_*vt)`)
 
 #seq_bundles=(seq_ulvt seq_lvt seq_svt seq_hvt)
 #seq_bundles=(dsedrseq_hvt dsedrseq_svt dsiseq_hvt dsiseq_lvt dsiseq_svt dsiseq_ulvt dsldrseq_hvt dsldrseq_svt dsldrsupseq_hvt dsldrsupseq_svt dsseq_hvt dsseq_svt dssupseq_hvt dssupseq_svt edrseq_hvt edrseq_lvt edrseq_svt edrseq_ulvt ldrdsiseq_hvt ldrdsiseq_lvt ldrdsiseq_svt ldrdsiseq_ulvt ldrseq_hvt ldrseq_lvt ldrseq_svt ldrseq_ulvt ldrsupseq_hvt ldrsupseq_lvt ldrsupseq_svt ldrsupseq_ulvt seq_hvt seq_lvt seq_svt seq_ulvt supseq_hvt supseq_lvt supseq_svt supseq_ulvt)
