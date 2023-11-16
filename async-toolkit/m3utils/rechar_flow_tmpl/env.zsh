@@ -22,8 +22,8 @@ export wordy=78dot3                 # used by numerous Intel libs
 #
 # the specific std cell library we are recharacterizing:
 #
-#export stdlibname=i0s_160h_50pp    # i0s is the short library
-export stdlibname=i0m_180h_50pp     # i0m the tall library
+export stdlibname=i0s_160h_50pp    # i0s is the short library
+#export stdlibname=i0m_180h_50pp     # i0m the tall library
 
 #
 # the specific PDK version:
@@ -35,7 +35,10 @@ export stdlibname=i0m_180h_50pp     # i0m the tall library
 #export pdk_version=pdk080_r4v0p0_efv
 # 
 # PDK 0p8 2nd release:
-export pdk_version=pdk080_r4v1p0_efv
+#export pdk_version=pdk080_r4v1p0_efv
+#
+# PDK 0p8 3rd release:
+export pdk_version=pdk080_r4v2p0_efv
 
 
 # 
@@ -49,7 +52,7 @@ export protocorner=tttt_0p550v_100c_tttt_cmax_ccslnt
 # uncomment the following 
 #
 do_special_upf=1
-do_special_upf=0
+#do_special_upf=0
 
 if [[ "${do_special_upf}" == "1" ]]; then
 
