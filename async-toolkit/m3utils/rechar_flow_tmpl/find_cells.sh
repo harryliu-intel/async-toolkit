@@ -1,6 +1,6 @@
 #!/usr/intel/bin/zsh
 
-cell_list="cell_list"
+cell_list="find_cells.sh" # stupid hack.. fix this later"
 source env.zsh
 
 # usage : find_cells <cell_file>
