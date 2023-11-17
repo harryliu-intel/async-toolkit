@@ -16,7 +16,7 @@ metalcorner=$1
 shift
 
 [[ -n $NBQSLOT ]] || { echo "NBQSLOT not set"; exit 1 }
-[[ -n $NBCLASS ]] || NBCLASS='SLES12&&16G'
+[[ -n $NBCLASS ]] || NBCLASS='SLES12&&16G&&1C'
 use_corners_xml=$WARD/collateral/cfg/corners.xml
 job_scheduler=nb
 lvf_mode=ml

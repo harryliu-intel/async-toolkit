@@ -2,6 +2,7 @@
 
 # ALLOW 64GB 
 
+# The following is an old comment---take with grain of salt:
 # The Siliconsmart recharacterization flow reads an existing Liberty file, runs
 # SPICE simulations at different operating conditions, then writes out a new
 # Liberty file with new data but preserving the same structure.  For FON, I
@@ -16,6 +17,7 @@
 # Cheetah 2 is:
 # /p/hdk/bin/cth_psetup -p ipde/2023.16.04 -cfg 78p3_opt9_r05.cth -nowash -tool ipde_all -x '$SETUP_IPDE'
 # /p/hdk/bin/cth_psetup -p ipde/2023.31.02.p2 -cfg 78p3_opt12_r08.cth -nowash -tool ipde_all -x '$SETUP_IPDE'
+# /p/hdk/bin/cth_psetup -p ipde/2023.46.04 -cfg 78p3_opt12_r08hp2.cth -nowash -tool ipde_all -x '$SETUP_IPDE'
 #
 # To investigate other available releases, examine the area /p/hdk/etc/Projects/ipde
 #
