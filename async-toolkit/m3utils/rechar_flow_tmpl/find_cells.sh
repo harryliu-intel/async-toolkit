@@ -1,9 +1,12 @@
-#!/bin/sh
+#!/usr/intel/bin/zsh
+
+cell_list="cell_list"
+source env.zsh
 
 # usage : find_cells <cell_file>
 
-libroot=/p/hdk/cad/stdcells/lib783_i0s_160h_50pp/pdk080_r4v1p0_efv
-libpvt0=lib783_i0s_160h_50pp_
+libroot=${stdcell_dir}
+libpvt0=${techlib}_${stdlibname}_
 libpvt1=_100c_tttt_cmax
 
 here=`pwd`
