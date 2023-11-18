@@ -96,7 +96,7 @@
       ; restrict candidates to M0 and above
       pinList=nil
       (foreach fig InPlacePinList
-               (for m 0 TopMetal
+               (for m 0 TopAprMetal
                     (when fig->layerName==Metal[m]
                       topMetal=(max topMetal m)
                       pinList=(cons fig pinList)
