@@ -65,7 +65,7 @@ if [[ "${do_special_upf}" == "1" ]]; then
     upfcorner=tttt
 
     hspfile=${upfdir}/p1278_3.hsp
-    cornerfile=${hspfile}:${corner}
+    cornerfile=${hspfile}:${upfcorner}
     
     export PROJECT_HSP_FILE=${hspfile}
     export DP_HSPICE_MODEL=${hspfile}
