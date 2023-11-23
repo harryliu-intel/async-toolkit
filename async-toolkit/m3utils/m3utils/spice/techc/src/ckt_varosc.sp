@@ -49,10 +49,36 @@ Mqp2 o1 b vcc  vcc  p@TRANSUFX@ @TRANSIZE@
 
 **********************************************************************
 
-* Generic ring stage (make appropriate in/out/power connections to dut_cell)
-.subckt ring_stage in out vcc vssx
-
 * FO3 per Andrew
+
+* Generic ring stage (make appropriate in/out/power connections to dut_cell)
+
+
+.subckt ring_stage1 in out vcc vssx
+
+*      A     B     OUT    <--PWR-->
+X0     in    vcc  xi     vcc  vssx   @CELLNAME0@
+X1     vcc   xi   out    vcc  vssx   @CELLNAME1@
+C0     xi    0   @LOADCAP@
+
+.ends
+
+.subckt ring_stage2 in out vcc vssx
+
+*      A     B     OUT    <--PWR-->
+X0     in    vcc  xi     vcc  vssx   @CELLNAME0@
+X1     vcc   xi   out    vcc  vssx   @CELLNAME1@
+C0     xi    0   @LOADCAP@
+
+* dummy loads on xi
+xload0 xi    vcc  unc[0] vcc  vssx   @CELLNAME0@
+CX0    unc[0]    0   @LOADCAP@
+
+xload3 out    vcc  unc[3] vcc  vssx   @CELLNAME0@
+CX3    unc[3]    0   @LOADCAP@
+.ends
+
+.subckt ring_stage3 in out vcc vssx
 
 *      A     B     OUT    <--PWR-->
 X0     in    vcc  xi     vcc  vssx   @CELLNAME0@
@@ -69,34 +95,116 @@ xload3 out    vcc  unc[3] vcc  vssx   @CELLNAME0@
 xload4 out    vcc  unc[4] vcc  vssx   @CELLNAME0@
 CX3    unc[3]    0   @LOADCAP@
 CX4    unc[4]    0   @LOADCAP@
-
-
 .ends
 
+.subckt ring_stage4 in out vcc vssx
+
+*      A     B     OUT    <--PWR-->
+X0     in    vcc  xi     vcc  vssx   @CELLNAME0@
+X1     vcc   xi   out    vcc  vssx   @CELLNAME1@
+C0     xi    0   @LOADCAP@
+
+* dummy loads on xi
+xload0 xi    vcc  unc[0] vcc  vssx   @CELLNAME0@
+xload1 xi    vcc  unc[1] vcc  vssx   @CELLNAME0@
+xload2 xi    vcc  unc[2] vcc  vssx   @CELLNAME0@
+CX0    unc[0]    0   @LOADCAP@
+CX1    unc[1]    0   @LOADCAP@
+CX2    unc[2]    0   @LOADCAP@
+
+xload100 out    vcc  unc[100] vcc  vssx   @CELLNAME0@
+xload101 out    vcc  unc[101] vcc  vssx   @CELLNAME0@
+xload102 out    vcc  unc[102] vcc  vssx   @CELLNAME0@
+CX100    unc[100]    0   @LOADCAP@
+CX101    unc[101]    0   @LOADCAP@
+CX102    unc[102]    0   @LOADCAP@
+.ends
+
+.subckt ring_stage5 in out vcc vssx
+
+*      A     B     OUT    <--PWR-->
+X0     in    vcc  xi     vcc  vssx   @CELLNAME0@
+X1     vcc   xi   out    vcc  vssx   @CELLNAME1@
+C0     xi    0   @LOADCAP@
+
+* dummy loads on xi
+xload0 xi    vcc  unc[0] vcc  vssx   @CELLNAME0@
+xload1 xi    vcc  unc[1] vcc  vssx   @CELLNAME0@
+xload2 xi    vcc  unc[2] vcc  vssx   @CELLNAME0@
+xload3 xi    vcc  unc[3] vcc  vssx   @CELLNAME0@
+CX0    unc[0]    0   @LOADCAP@
+CX1    unc[1]    0   @LOADCAP@
+CX2    unc[2]    0   @LOADCAP@
+CX3    unc[3]    0   @LOADCAP@
+
+xload100 out    vcc  unc[100] vcc  vssx   @CELLNAME0@
+xload101 out    vcc  unc[101] vcc  vssx   @CELLNAME0@
+xload102 out    vcc  unc[102] vcc  vssx   @CELLNAME0@
+xload103 out    vcc  unc[103] vcc  vssx   @CELLNAME0@
+CX100    unc[100]    0   @LOADCAP@
+CX101    unc[101]    0   @LOADCAP@
+CX102    unc[102]    0   @LOADCAP@
+CX103    unc[103]    0   @LOADCAP@
+.ends
+
+.subckt ring_stage6 in out vcc vssx
+
+*      A     B     OUT    <--PWR-->
+X0     in    vcc  xi     vcc  vssx   @CELLNAME0@
+X1     vcc   xi   out    vcc  vssx   @CELLNAME1@
+C0     xi    0   @LOADCAP@
+
+* dummy loads on xi
+xload0 xi    vcc  unc[0] vcc  vssx   @CELLNAME0@
+xload1 xi    vcc  unc[1] vcc  vssx   @CELLNAME0@
+xload2 xi    vcc  unc[2] vcc  vssx   @CELLNAME0@
+xload3 xi    vcc  unc[3] vcc  vssx   @CELLNAME0@
+xload4 xi    vcc  unc[3] vcc  vssx   @CELLNAME0@
+CX0    unc[0]    0   @LOADCAP@
+CX1    unc[1]    0   @LOADCAP@
+CX2    unc[2]    0   @LOADCAP@
+CX3    unc[3]    0   @LOADCAP@
+CX4    unc[4]    0   @LOADCAP@
+
+xload100 out    vcc  unc[100] vcc  vssx   @CELLNAME0@
+xload101 out    vcc  unc[101] vcc  vssx   @CELLNAME0@
+xload102 out    vcc  unc[102] vcc  vssx   @CELLNAME0@
+xload103 out    vcc  unc[103] vcc  vssx   @CELLNAME0@
+xload104 out    vcc  unc[104] vcc  vssx   @CELLNAME0@
+CX100    unc[100]    0   @LOADCAP@
+CX101    unc[101]    0   @LOADCAP@
+CX102    unc[102]    0   @LOADCAP@
+CX103    unc[103]    0   @LOADCAP@
+CX104    unc[104]    0   @LOADCAP@
+.ends
+
+
+
+
 * Ring oscillator with 20 DUT stages and 1 NAND2 enable
-X1  x[0]              x[1]        vload vssx ring_stage
-X2  x[1]              x[2]        vload vssx ring_stage
-X3  x[2]              x[3]        vload vssx ring_stage
-X4  x[3]              x[4]        vload vssx ring_stage
-X5  x[4]              x[5]        vload vssx ring_stage
-X6  x[5]              x[6]        vload vssx ring_stage
-X7  x[6]              x[7]        vload vssx ring_stage
-X8  x[7]              x[8]        vload vssx ring_stage
-X9  x[8]              x[9]        vload vssx ring_stage
-X10 x[9]              x[10]       vload vssx ring_stage
+X1  x[0]              x[1]        vload vssx ring_stage@FANOUT@
+X2  x[1]              x[2]        vload vssx ring_stage@FANOUT@
+X3  x[2]              x[3]        vload vssx ring_stage@FANOUT@
+X4  x[3]              x[4]        vload vssx ring_stage@FANOUT@
+X5  x[4]              x[5]        vload vssx ring_stage@FANOUT@
+X6  x[5]              x[6]        vload vssx ring_stage@FANOUT@
+X7  x[6]              x[7]        vload vssx ring_stage@FANOUT@
+X8  x[7]              x[8]        vload vssx ring_stage@FANOUT@
+X9  x[8]              x[9]        vload vssx ring_stage@FANOUT@
+X10 x[9]              x[10]       vload vssx ring_stage@FANOUT@
 X21 _RESET x[10]      x[0]        vcc   vssx nand_cell
 
 * Ring oscillator with 20 DUT stages and 1 NAND2 enable
-X101  x[100]              x[101]        vload vssy ring_stage
-X102  x[101]              x[102]        vload vssy ring_stage
-X103  x[102]              x[103]        vload vssy ring_stage
-X104  x[103]              x[104]        vload vssy ring_stage
-X105  x[104]              x[105]        vload vssy ring_stage
-X106  x[105]              x[106]        vload vssy ring_stage
-X107  x[106]              x[107]        vload vssy ring_stage
-X108  x[107]              x[108]        vload vssy ring_stage
-X109  x[108]              x[109]        vload vssy ring_stage
-X110  x[109]              x[110]        vload vssy ring_stage
+X101  x[100]              x[101]        vload vssy ring_stage@FANOUT@
+X102  x[101]              x[102]        vload vssy ring_stage@FANOUT@
+X103  x[102]              x[103]        vload vssy ring_stage@FANOUT@
+X104  x[103]              x[104]        vload vssy ring_stage@FANOUT@
+X105  x[104]              x[105]        vload vssy ring_stage@FANOUT@
+X106  x[105]              x[106]        vload vssy ring_stage@FANOUT@
+X107  x[106]              x[107]        vload vssy ring_stage@FANOUT@
+X108  x[107]              x[108]        vload vssy ring_stage@FANOUT@
+X109  x[108]              x[109]        vload vssy ring_stage@FANOUT@
+X110  x[109]              x[110]        vload vssy ring_stage@FANOUT@
 X121  GND     x[110]      x[100]        vcc   vssy nand_cell
 
 * Probes (for debugging)

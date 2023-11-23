@@ -154,6 +154,24 @@ if [ "$1" == "-variation1278cap" ]; then
     caps="0 0.5e-15 1e-15 1.5e-15"
 fi
 
+if [ "$1" == "-variation1278focap" ]; then
+    runmode="override"
+    volts="0.20 0.22 0.24 0.26 0.28 0.29 0.30 0.32 0.34 0.36 0.38 0.40 0.45 0.50"
+    temps="50 85"
+    modes="dyn"
+    paras="true"
+    corners="tt"
+    step=4
+    techs="1278p3"
+    gates="xor_z1 xor_z2 xor_z3"
+    stdcells="i0m i0s"
+    sigmas="0.0 5.3"
+    fo="1 2 3 4 5 6"
+    SIM="xa"
+    hspicemodelroot=${p1278p3_0p9eu1root}
+    caps="0 0.25e-15 0.5e-15 0.75e-15 1e-15 1.5e-15"
+fi
+
 if [ "$1" == "-variation1278hicap" ]; then
     runmode="override"
     volts="0.20 0.22 0.24 0.26 0.28 0.30 0.32 0.34 0.36 0.38 0.40 0.45 0.50 0.60 0.70 0.80 0.90 1.00"
