@@ -35,11 +35,12 @@ IMPORT TextWr;
 IMPORT OSError;
 IMPORT Word;
 IMPORT Time;
+IMPORT FileMonitor;
 
 <*FATAL Thread.Alerted*>
 
 CONST
-  Usage = "[-clearenv|-ce][-sispath|-sp <path to SiliconSmart>][-sisworkers <n>][-pllcmds <n>][-celllist|-cl <cell_list path>] <command-file>";
+  Usage = "[-clearenv|-ce][-sispath|-sp <path to SiliconSmart>][-sisworkers <n>][-pllcmds <n>][-celllist|-cl <cell_list path>][-nhostsfile|-nhf <nhosts path>][ <command-file>";
   TE    = Text.Equal;
   LR    = Fmt.LongReal;
 
@@ -80,6 +81,7 @@ TYPE
     sisDir    : Pathname.T; (* first part of working directory *)
     clistPath : Pathname.T; (* path to cell_list file *)
     bunDir    : Pathname.T; (* second part of working directory *)
+    changPath : Pathname.T := "config/change.tcl";
   END;
 
 PROCEDURE DebugTask(task : AllocatedTask) : TEXT =
@@ -411,6 +413,61 @@ PROCEDURE WApply(w : Worker) : REFANY =
     END
   END WApply;
 
+TYPE
+  NtApplyClosure = Thread.Closure OBJECT
+    enabled  : BOOLEAN := FALSE;
+    interval : Time.T  := DefNtInterval;
+  OVERRIDES
+    apply := NtApply
+  END;
+
+CONST DefNtInterval = 30.0d0;
+      
+PROCEDURE NtApply(cl : NtApplyClosure) : REFANY =
+  VAR
+    en      : BOOLEAN;
+    theTask : AllocatedTask;
+  BEGIN
+    LOOP
+      LOCK mu DO
+        en := cl.enabled
+      END;
+      IF en THEN
+        FOR i := 0 TO workers.size() - 1 DO
+          WITH w = workers.get(i) DO
+            LOCK mu DO
+              theTask := NARROW(w, Worker).task
+            END;
+            IF theTask # NIL AND ISTYPE(theTask, Launch) THEN
+              TRY
+                WITH launch = NARROW(theTask, Launch) DO
+                  Debug.Out(F("Writing run_list_maxsize for launch task %s for bundle %s : nhosts %s",
+                              launch.label, launch.bundle, Int(launch.nhosts)));
+                  WITH
+                    npath  = launch.sisDir & "/" &
+                      launch.bunDir & "/" &
+                      launch.changPath     ,
+                      wr     = FileWr.Open(npath) DO
+                    
+                    TRY
+                      Wr.PutText(wr, F("change_parameter run_list_maxsize %s\n",
+                                       Int(launch.nhosts)))
+                    FINALLY
+                      Wr.Close(wr)
+                    END
+                  END
+                END;
+              EXCEPT
+                OSError.E, Wr.Failure => (* skip *)
+              END
+            END
+          END
+        END
+      END(*IF en*);
+      Thread.Pause(cl.interval)
+    END
+  END NtApply;
+  
 PROCEDURE GetWholeEnv() : ProcUtils.Env =
   (* get the entire environment of this process *)
   VAR
@@ -768,16 +825,29 @@ PROCEDURE ReadCellList(cellListFn : Pathname.T) : TextCardTbl.T =
     RETURN res
   END ReadCellList;
   
+PROCEDURE NhostsChanged(<*UNUSED*>cb     : FileMonitor.Callback;
+                        newVal : FileMonitor.ReturnType) =
+  BEGIN
+    LOCK mu DO
+      sisWorkers := newVal;
+      swChange   := TRUE;
+      Thread.Signal(c)
+    END
+  END NhostsChanged;
+
 VAR
   ifn        : Pathname.T;
   pp                         := NEW(ParseParams.T).init(Stdio.stderr);
   sisWorkers : CARDINAL      := 100;
+  swChange   : BOOLEAN       := FALSE;
   pllCmds    : CARDINAL      :=   5;
   cellListFn : Pathname.T    := NIL;
   bundleCnts : TextCardTbl.T := NIL;
   sisPath    : Pathname.T    := NIL;
   clearEnv                   := FALSE;
   baseEnv    : ProcUtils.Env;
+  nhostsPath : Pathname.T    := NIL;
+  fileMon    : FileMonitor.T := NIL;
   
 BEGIN
   TRY
@@ -796,6 +866,10 @@ BEGIN
 
     IF pp.keywordPresent("-pllcmds") THEN
       pllCmds := pp.getNextInt()
+    END;
+
+    IF pp.keywordPresent("-nhostsfile") OR pp.keywordPresent("-nhf") THEN
+      nhostsPath := pp.getNext()
     END;
 
     IF pp.keywordPresent("-celllist") OR pp.keywordPresent("-cl") THEN
@@ -824,6 +898,14 @@ BEGIN
     Run(tasks)
   END;
 
+  IF nhostsPath # NIL THEN
+    BEGIN
+      WITH cb = NEW(FileMonitor.Callback, changed := NhostsChanged) DO
+        fileMon := NEW(FileMonitor.T).init(nhostsPath, cb)
+      END
+    END
+  END;
+
   ShutdownWorkers();
 
   (*
@@ -832,56 +914,3 @@ BEGIN
   *)
 
 END SisLaunch.
-
-  (* earlier stab:
-
-              VAR
-                myCells, readyCells, nxtCells : CARDINAL;
-                allocatedHosts := 0;
-                remainingHosts : INTEGER;
-              BEGIN
-                WITH hadIt = bundleCnts.get(launch, myCells) DO
-                  <*ASSERT hadIt*>
-                END;
-
-                FOR i := 0 TO workers.size() - 1 DO
-                  IF worker.task # NIL THEN
-                    allocatedHosts := allocatedHosts + worker.nhosts
-                  END
-                END;
-
-                remainingHosts := sisWorkers - allocatedHosts;
-
-                readyCells := myCells;
-                
-                FOR np := i + 1 TO MIN(tasks.size() - 1, i + nready) DO
-                  (* these are the tasks ready to run *)
-                  TYPECASE tasks.get(np) OF
-                    Cmd => INC(readyCmds)
-                  |
-                    Launch(nxtLaunch) =>
-                    WITH hadIt = bundleCnts.get(nxtLaunch.bundle, nxtCells) DO
-                      <*ASSERT hadIt*>
-                    END;
-                    readyCells := readyCells + nxtCells
-                  END
-                END;
-
-                (* inputs ready:
-
-                   I have myCells to run.
-                   There are readyCmds ready CMDs.
-                   There are readyCells total cells ready to run.
-                   There are remainingHosts to allocate.
-                *)
-
-                WITH cellHosts  = remainingHosts - readyCmds,
-                     myCellFrac = FLOAT(myCells,LR) / FLOAT(readyCells,LR),
-                     myHosts    = FLOOR(FLOAT(cellHosts, LR) * myCellFrac) DO
-                  launch.nhosts := myHosts
-                END
-                
-              END
- 
-  *)
-
