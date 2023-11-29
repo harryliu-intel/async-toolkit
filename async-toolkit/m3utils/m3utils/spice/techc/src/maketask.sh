@@ -29,7 +29,7 @@ SIM=hspice
 step=4
 # we get about 4 CPUs per machine?  6 ought to be more than enough, 4 might be optimal?
 
-fo="1"
+fos="1"
 corners="ss tt ff"
 xor_corners="tt"
 aoi_corners="tt"
@@ -98,7 +98,7 @@ if [ "$1" == "-aoitech" ]; then
     step=4
     techs="1278p3 n3e n5"
     gates="aoi_z1_0p0sigma aoi_z2_0p0sigma"
-    fo="4"
+    fos="4"
     SETUP_ARGS="export SETUP_MC_FILE_ONLY=''"
 fi
 
@@ -114,7 +114,7 @@ if [ "$1" == "-variation1278test" ]; then
     gates="xor_z1 xor_z2 xor_z3"
     stdcells="i0m i0s"
     sigmas="0.0 0.5 5.3"
-    fo="3"
+    fos="3"
     SIM="xa"
     hspicemodelroot=${p1278p3_0p9eu1root}
 fi
@@ -131,7 +131,7 @@ if [ "$1" == "-variation1278" ]; then
     gates="xor_z1 xor_z2 xor_z3"
     stdcells="i0m i0s"
     sigmas="0.0 0.5 1.0 4.0 4.5 5.3 6.0"
-    fo="3"
+    fos="3"
     SIM="xa"
     hspicemodelroot=${p1278p3_0p9eu1root}
 fi
@@ -148,7 +148,7 @@ if [ "$1" == "-variation1278cap" ]; then
     gates="xor_z1 xor_z2 xor_z3"
     stdcells="i0m i0s"
     sigmas="0.0 5.3"
-    fo="3"
+    fos="3"
     SIM="xa"
     hspicemodelroot=${p1278p3_0p9eu1root}
     caps="0 0.5e-15 1e-15 1.5e-15"
@@ -166,7 +166,7 @@ if [ "$1" == "-variation1278focap" ]; then
     gates="xor_z1 xor_z2 xor_z3"
     stdcells="i0m i0s"
     sigmas="0.0 5.3"
-    fo="1 2 3 4 5 6"
+    fos="1 2 3 4 5 6"
     SIM="xa"
     hspicemodelroot=${p1278p3_0p9eu1root}
     caps="0 0.25e-15 0.5e-15 0.75e-15 1e-15 1.5e-15"
@@ -184,7 +184,7 @@ if [ "$1" == "-variation1278hicap" ]; then
     gates="xor_z1 xor_z2 xor_z3"
     stdcells="i0m i0s"
     sigmas="0.0 5.3"
-    fo="3"
+    fos="3"
     SIM="xa"
     hspicemodelroot=${p1278p3_0p9eu1root}
     caps="3e-15 6e-15 1.2e-14 2.4e-14 4.8e-14"
@@ -202,7 +202,7 @@ if [ "$1" == "-variation1278hidrive" ]; then
     gates="xor_z6 xor_z9 xor_z12 xor_z18"
     stdcells="i0m i0s"
     sigmas="0.0 5.3"
-    fo="3"
+    fos="3"
     SIM="xa"
     hspicemodelroot=${p1278p3_0p9eu1root}
     caps="0 1.5e-15 3e-15 6e-15 1.2e-14 2.4e-14 4.8e-14"
@@ -222,7 +222,7 @@ if [ "$1" == "-variation1278_0p9e" ]; then
     gates="xor_z1 xor_z2 xor_z3"
     stdcells="i0m i0s"
     sigmas="0.0 0.5 1.0 4.0 4.5 5.3 6.0"
-    fo="3"
+    fos="3"
     SIM="xa"
     hspicemodelroot=${p1278p3_0p9eroot}
 fi
@@ -237,7 +237,7 @@ if [ "$1" == "-variationlow" ]; then
     step=4
     techs="1278p3"
     gates="xor_z1_0p0sigma xor_z1_5p3sigma"
-    fo="4"
+    fos="4"
 fi
 
 if [ "$1" == "-variation" ]; then
@@ -250,7 +250,7 @@ if [ "$1" == "-variation" ]; then
     step=4
     techs="1278p3"
     gates="xor_z1_0p0sigma xor_z1_5p3sigma xor_z2_0p0sigma xor_z2_5p3sigma"
-    fo="4"
+    fos="4"
 fi
 
 if [ "$1" == "-variationpdk" ]; then
@@ -263,7 +263,7 @@ if [ "$1" == "-variationpdk" ]; then
     step=4
     techs="1278p3"
     gates="xor_z1_0p0sigma xor_z1_5p3sigma xor_z2_0p0sigma xor_z2_5p3sigma"
-    fo="4"
+    fos="4"
     roots=${p1278p3roots}
 fi
 
@@ -277,7 +277,7 @@ if [ "$1" == "-variationpdk0p8" ]; then
     step=4
     techs="1278p3"
     gates="xor_z1_0p0sigma xor_z1_5p3sigma xor_z2_0p0sigma xor_z2_5p3sigma"
-    fo="4"
+    fos="4"
     roots=${p1278p3_0p8roots}
 fi
 
@@ -514,17 +514,17 @@ for gate in ${gates}; do
             volts=${buf_volts}
         fi
     fi
-
-for sigm in ${sigmas}; do
+for fo   in ${fos};      do
+for sigm in ${sigmas};   do
 for stdc in ${stdcells}; do
-for para in ${paras}; do
-for corn in ${corners}; do
-for mode in ${modes}; do
-for temp in ${temps}; do
-for volt in ${volts}; do
-for tech in ${techs}; do
-for root in ${roots}; do
-for cap  in ${caps}; do
+for para in ${paras};    do
+for corn in ${corners};  do
+for mode in ${modes};    do
+for temp in ${temps};    do
+for volt in ${volts};    do
+for tech in ${techs};    do
+for root in ${roots};    do
+for cap  in ${caps};     do
 
     if [ "${trantypes}" == "" ]; then
         if [ "${tech}" == "n5" ]; then
@@ -634,6 +634,7 @@ for cap  in ${caps}; do
         tasknum=`expr $tasknum + 1`
     done
     fi
+done
 done
 done
 done
