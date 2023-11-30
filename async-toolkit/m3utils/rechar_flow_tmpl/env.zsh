@@ -60,7 +60,10 @@ if [[ "${do_special_upf}" == "1" ]]; then
 
 #    upfdir=/nfs/site/disks/zsc9_fwr_sd_001/mnystroe/1278_lowvoltage/2023ww29d2/models_core_hspice/1/m14_2x_1xa_1xb_6ya_2yb_2yc__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp/
 
+#    upfdir=/p/hdk/cad/pdk/pdk783_r0.9e_23ww30.5/models/core/hspice/m14_2x_1xa_1xb_6ya_2yb_2yc__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp/
+
     upfdir=/nfs/site/disks/zsc9_fwr_sd_001/mnystroe/p1278_3x0p9eu1/2023ww43d5/models_core_hspice/m14_2x_1xa_1xb_6ya_2yb_2yc__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp
+
     
     upfcorner=tttt
 
@@ -72,7 +75,9 @@ if [[ "${do_special_upf}" == "1" ]]; then
     export COMMANDER_SIM_SP_INC=${cornerfile}
     export PROJECT_SIM_SP_INC=${cornerfile}
     
-    export hspice_lib_models=/p/hdk/cad/pdk/pdk783_r0.9_23ww26.5_alpha/cmi/hspice/cmi/lnx86/64bit
+#    export hspice_lib_models=/p/hdk/cad/pdk/pdk783_r0.9_23ww26.5_alpha/cmi/hspice/cmi/lnx86/64bit
+
+    export hspice_lib_models=/p/hdk/cad/pdk/pdk783_r0.9e_23ww30.5/cmi/hspice/cmi/lnx86/64bit/
 
 fi
 
