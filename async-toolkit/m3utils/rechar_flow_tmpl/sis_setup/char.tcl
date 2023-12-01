@@ -22,7 +22,7 @@ set required_views {-timing -ccs -lvf -ccs_noise -power}		;# Characterization Mo
 
 # set env(finesim_mode) spiecad			;# FineSim Mode [spicead:p|spicead|spicead:s|spicehd] (default:spicead)
 
-# set env(use_simulator) finesim_embedded	;# Simulator Mode [finesim_embedded|finesim|mt2|mt4] (default:finesim_embedded)
+set env(use_simulator) finesim 			;# Simulator Mode [finesim_embedded|finesim|mt2|mt4] (default:finesim_embedded)
 
 # set env(node_cap_only) 1			;# node_cap_only [0|1|2] (default:0)
  
