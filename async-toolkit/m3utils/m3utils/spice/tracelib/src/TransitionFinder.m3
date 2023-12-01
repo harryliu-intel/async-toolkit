@@ -6,6 +6,7 @@ IMPORT Trace;
 IMPORT Rd;
 IMPORT Debug;
 FROM Fmt IMPORT F, Int, LongReal;
+IMPORT V01X;
 
 CONST LR = LongReal;
       
@@ -40,6 +41,17 @@ PROCEDURE ForNode(t : T; id : CARDINAL; doSlew : BOOLEAN) : TransitionSeq.T
       t.trace.getTimeData(t.ta^);
       t.trace.getNodeData(id, t.na^);
       res := Find(t.ta^, t.na^, t.thres, t.hysteresis, doSlew);
+
+      IF NUMBER(t.ta^) = 0 THEN
+        res.initVal := V01X.T.VX
+      ELSIF t.na[0] < t.thres - t.hysteresis THEN
+        res.initVal := V01X.T.V0
+      ELSIF t.na[0] > t.thres + t.hysteresis THEN
+        res.initVal := V01X.T.V1
+      ELSE
+        res.initVal := V01X.T.VX
+      END;
+        
       EVAL t.tbl.put(id, res)
     END;
     RETURN res
@@ -149,6 +161,25 @@ PROCEDURE Find(READONLY timea, nodea : ARRAY OF LONGREAL;
     
     RETURN res
   END Find;
+
+PROCEDURE FindValueAt(seq : TransitionSeq.T; time : LONGREAL) : V01X.T =
+  BEGIN
+    WITH flIdx = FindFloorIdx(seq, time) DO
+      IF flIdx = -1 THEN
+        RETURN seq.initVal
+      ELSE
+        WITH tr = seq.get(flIdx) DO
+          CASE tr.dir OF
+            -1 => RETURN V01X.T.V0
+          |
+            +1 => RETURN V01X.T.V1
+          |
+             0 => Debug.Warning("Transition dir = 0"); RETURN V01X.T.VX
+          END
+        END
+      END
+    END
+  END FindValueAt;
   
 PROCEDURE FindFloorIdx(seq  : TransitionSeq.T;
                        time : LONGREAL) : [-1..LAST(CARDINAL) ] =
