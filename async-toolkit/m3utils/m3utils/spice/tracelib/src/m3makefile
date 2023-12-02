@@ -7,6 +7,7 @@ m3_optimize("T")
 
 Module ("Trace")
 Interface ("TraceRep")
+implementation("TraceMeanValue")
 
 module ("TraceUnsafe")
 

@@ -79,5 +79,9 @@ TYPE
 CONST TimeId = 0;
 
 CONST Brand = "Trace";
+      
+PROCEDURE MeanValue(READONLY timea, nodea : ARRAY OF LONGREAL;
+                    startTime := FIRST(LONGREAL);
+                    endTime   := LAST (LONGREAL)) : LONGREAL;
 
 END Trace.

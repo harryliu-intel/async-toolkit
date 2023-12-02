@@ -15,6 +15,7 @@ IMPORT Transition;
 IMPORT Word;
 IMPORT V01X;
 IMPORT TransitionSeq;
+FROM TechLookup IMPORT Lookup;
 
 <*FATAL Thread.Alerted*>
 
@@ -100,12 +101,19 @@ PROCEDURE GetFinalTransition(tFinder          : TransitionFinder.T;
     RETURN maxTran
   END GetFinalTransition;
   
+TYPE
+  Phase = { Pre, Post };
+
+CONST
+  PhaseNames = ARRAY Phase OF TEXT { "pre", "post" };
+  
 VAR
   pp                          := NEW(ParseParams.T).init(Stdio.stderr);
   trace      : Trace.T;
   vdd                         := FIRST(LONGREAL);
   traceRt    : TEXT;
   step       : LONGREAL;
+  phases                      := SET OF Phase { Phase.Post };
   
 BEGIN
   TRY
@@ -118,6 +126,14 @@ BEGIN
     IF pp.keywordPresent("-step") THEN
       step := pp.getNextLongReal()
     END; 
+    IF pp.keywordPresent("-p") THEN
+      phases := SET OF Phase {};
+      
+      REPEAT
+        phases := phases + SET OF Phase { VAL(Lookup(pp.getNext(), PhaseNames),
+                                           Phase) }
+      UNTIL NOT pp.keywordPresent("-p")
+    END;
     pp.skipParsed();
     pp.finish()
   EXCEPT
@@ -183,7 +199,16 @@ BEGIN
          latency     = final.at - prevClkTran.at DO
       Debug.Out("Final y_d transition is " & Transition.Format(final));
       Debug.Out("Prev  clk transition is " & Transition.Format(prevClkTran));
-      Debug.Out("Latency " & LR(latency))
+      Debug.Out("Latency " & LR(latency));
+
+      WITH clkBeg    = prevClkTran.at - vdd / prevClkTran.slew (* some margin *),
+           switchEnd = final.at + latency (* some margin, again *),
+           idleEnd   = 6.0d0 * step DO
+        Debug.Out(F("clkBeg    = %s",  LR(clkBeg)));        
+        Debug.Out(F("switchEnd = %s",  LR(switchEnd)));        
+        Debug.Out(F("idleEnd   = %s",  LR(idleEnd)));
+        
+      END
     END
   END;
 
