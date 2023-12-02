@@ -144,6 +144,15 @@ PROCEDURE RemoveSuffix(in, suffix: TEXT): TEXT =
     RETURN Text.Sub(in, 0, pos);
   END RemoveSuffix;
 
+PROCEDURE CheckSuffix(in, suffix : TEXT) : TEXT =
+  BEGIN
+    IF HaveSuffix(in, suffix) THEN
+      RETURN RemoveSuffix(in, suffix)
+    ELSE
+      RETURN NIL
+    END
+  END CheckSuffix;
+
 PROCEDURE RemoveSuffixes(fn : TEXT; READONLY exts : ARRAY OF TEXT) : TEXT =
   (* remove extension, if any from list *)
   BEGIN

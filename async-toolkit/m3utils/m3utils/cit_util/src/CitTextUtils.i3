@@ -53,6 +53,9 @@ PROCEDURE RemovePrefix(in, prefix: TEXT): TEXT;
 PROCEDURE RemoveSuffix(in, suffix: TEXT): TEXT;
   (* checked runtime error for suffix not to be as stated *)
 
+PROCEDURE CheckSuffix(in, suffix : TEXT) : TEXT;
+  (* remove suffix and return prefix, if suffix is there; else return NIL *)
+
 PROCEDURE RemoveSuffixes(in : TEXT; READONLY suffixes : ARRAY OF TEXT):TEXT;
   (* removes any matching suffix; do nothing if no match *)
 
