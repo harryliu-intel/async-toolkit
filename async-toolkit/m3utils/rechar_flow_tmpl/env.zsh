@@ -102,8 +102,9 @@ seq_char_pushout=0.05  # allowable pushout for seq* cells; default=0.01
 #
 # configure parallelism in run:
 #
-workers=15000 # workers to launch via SIS
-pllcmds=40   # parallel commands to run through sislaunch (mainly for extract.zsh)
+workers=15000          # workers to launch via SIS
+pllcmds=40             # parallel commands to run through sislaunch (mainly for extract.zsh)
+sislaunch_alpha=0.4    # close to 0: even loading of hosts; close to 1: per cell allocation
 
 ############################################################################
 ##############   SHOULDN'T HAVE TO CHANGE ANYTHING BELOW HERE ##############   
@@ -159,4 +160,4 @@ if [[ -z $internal ]]; then
     fi
 fi
 
-export internal serial sislaunchfile sislaunch workers pllcmds sispath
+export internal serial sislaunchfile sislaunch workers pllcmds sispath sislaunch_alpha

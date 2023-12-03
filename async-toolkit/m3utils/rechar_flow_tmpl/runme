@@ -98,7 +98,7 @@ done
 if [[ -z $internal ]]; then
     date
     pwd
-    $sislaunch -clearenv -pllcmds $pllcmds -sisworkers $workers -sispath $sispath -cl ${cell_list} $sislaunchfile
+    $sislaunch -alpha $sislaunch_alpha -clearenv -pllcmds $pllcmds -sisworkers $workers -sispath $sispath -cl ${cell_list} $sislaunchfile
 fi
 
 echo "===========================     SCALE `date`    ==========================="
@@ -165,7 +165,7 @@ done
 if [[ -z $internal ]]; then
     date
     pwd
-    $sislaunch -clearenv -pllcmds $pllcmds -sisworkers $workers -sispath $sispath -cl ${cell_list} $sislaunchfile
+    $sislaunch -alpha $sislaunch_alpha -clearenv -pllcmds $pllcmds -sisworkers $workers -sispath $sispath -cl ${cell_list} $sislaunchfile
 fi
 
 echo "===========================     CHARACTERIZE-DONE `date`     ==========================="
