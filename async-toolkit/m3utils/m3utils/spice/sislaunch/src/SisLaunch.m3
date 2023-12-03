@@ -599,8 +599,6 @@ PROCEDURE Run(tasks : SisTaskSeq.T) =
                    
                 *)
             
-            CONST
-              alpha = 0.7d0;
             TYPE
               LRT = LONGREAL;
             VAR
@@ -835,6 +833,9 @@ PROCEDURE NhostsChanged(<*UNUSED*>cb     : FileMonitor.Callback;
     END
   END NhostsChanged;
 
+CONST
+  DefAlpha = 0.7d0;
+
 VAR
   ifn        : Pathname.T;
   pp                         := NEW(ParseParams.T).init(Stdio.stderr);
@@ -848,6 +849,7 @@ VAR
   baseEnv    : ProcUtils.Env;
   nhostsPath : Pathname.T    := NIL;
   fileMon    : FileMonitor.T := NIL;
+  alpha                      := DefAlpha;
   
 BEGIN
   TRY
@@ -868,6 +870,10 @@ BEGIN
       pllCmds := pp.getNextInt()
     END;
 
+    IF pp.keywordPresent("-alpha") THEN
+      alpha := pp.getNextLongReal()
+    END;
+    
     IF pp.keywordPresent("-nhostsfile") OR pp.keywordPresent("-nhf") THEN
       nhostsPath := pp.getNext()
     END;
