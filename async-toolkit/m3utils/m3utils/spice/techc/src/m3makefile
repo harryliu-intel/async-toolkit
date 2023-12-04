@@ -28,6 +28,7 @@ Module ("TechSetup")
 Interface ("TechTemplate")
 
 Module ("TechLookup")
+Module ("TechCleanup")
 
 /* actual program follows */
 
