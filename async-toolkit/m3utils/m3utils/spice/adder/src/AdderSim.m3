@@ -25,6 +25,10 @@ IMPORT Wx;
 IMPORT Scan;
 IMPORT Math;
 IMPORT TextTextTbl;
+IMPORT Env;
+IMPORT TechTemplate;
+IMPORT ProcUtils;
+FROM TechCleanup IMPORT DeleteMatching, DeleteRecursively, CompressFilesWithExtension,  CompressFile;
 
 <*FATAL Thread.Alerted*>
 
@@ -56,8 +60,17 @@ CONST
 
   Strengths = ARRAY OF TEXT { "02x5", "02x6", "02x7", "03x4", "03x5", "03x6" };
 
-  Pdk = "pdk080_r4v2p0_efv";
+  Pdk         = "pdk080_r4v2p0_efv";
   MetalCorner = "100c_tttt_cmax";
+
+  SrcPath     = "spice/adder/src"; (* path to src dir of this program *)
+ 
+  Files       = ARRAY OF Pathname.T {
+  "circuit.sp",
+  "include.sp",
+  "adder_tb_Width32_MaxCarryChain31_AdderType2_85C_tttt.spf"
+  };
+
   
 TYPE
   Array = ARRAY [ 0 .. Width - 1 ] OF Trace.NodeId;
@@ -107,7 +120,6 @@ PROCEDURE GetArrayValue(tFinder        : TransitionFinder.T;
     END;
     RETURN res
   END GetArrayValue;
-
 
 PROCEDURE GetFinalTransition(tFinder          : TransitionFinder.T;
                              trace            : Trace.T;
@@ -283,6 +295,7 @@ PROCEDURE DoTrace(traceRt : Pathname.T; mWr : Wr.T) : Result =
                        Concat(",",TA{
             tag,
             traceRt,
+            LibNames[lib],
             Unsigned(aVal),
             Unsigned(bVal),
             Unsigned(aVal + bVal),
@@ -372,6 +385,7 @@ PROCEDURE DoPost() =
       mWr := FileWr.Open(measureFn & ".stat");
       Wr.PutText(mWr, Concat(",",
                              FmtLRA(LRA { vdd, temp })^,
+                             TA { LibNames[lib] },
                              FmtLRA(DoStats(n, sum, sumSq)^)^));
       Wr.PutChar(mWr, '\n');
       Wr.Close(mWr)
@@ -444,7 +458,17 @@ PROCEDURE DoPre() =
     EVAL map.put("@PDK@", Pdk);
     EVAL map.put("@METALCORNER@", MetalCorner);
     EVAL map.put("@STDCELLDIR@", LibPaths[lib]);
+    EVAL map.put("@SWEEPS@", Int(sweeps));
 
+    (* done setting up map *)
+
+    FOR i := FIRST(Files) TO LAST(Files) DO
+      WITH path = m3utils & "/" & SrcPath & "/" & Files[i] & ".tmpl",
+           tmpl = TechTemplate.LoadTemplate(path) DO
+        TechTemplate.ModifyTemplate(tmpl, map);
+        TechTemplate.WriteTemplate (tmpl, Files[i])
+      END
+    END
   END DoPre;
 
 PROCEDURE MapCells(map : TextTextTbl.T) =
@@ -460,36 +484,116 @@ PROCEDURE MapCells(map : TextTextTbl.T) =
   END MapCells;
 
 PROCEDURE DoSim() =
+  CONST
+    SimPath = "/p/hdk/cad/hspice/U-2023.03-SP2/hspice/bin/hspice";
+  VAR
+    cmd            := F("%s -mt 4 -i %s", SimPath, "circuit.sp");
+    stdout, stderr := ProcUtils.WriteHere(Stdio.stderr);
+    cm             := ProcUtils.RunText(cmd,
+                                        stdout := stdout,
+                                        stderr := stderr,
+                                        stdin  := NIL);
   BEGIN
+    TRY
+      cm.wait()
+    EXCEPT
+      ProcUtils.ErrorExit(err) =>
+      Debug.Error(F("Couldn't run simulator (%s) : %s", cmd, ProcUtils.FormatError(err)))
+    END
   END DoSim;
+
+PROCEDURE Convert1(fsdbRoot : Pathname.T) =
+  CONST
+    CtPath  = "spice/ct/AMD64_LINUX/ct";
+    SzPath  = "spice/spicecompress/spicestream/AMD64_LINUX/spicestream";
+    NrPath  = "spice/fsdb/src/nanosimrd";
+  VAR
+    Ct     := m3utils & "/" & CtPath;
+    Sz     := m3utils & "/" & SzPath;
+    Nr     := m3utils & "/" & NrPath;
+    cmd    := FN("%s -fsdb %s -threads 4 -R 5e-12 -compress %s -format CompressedV1 -translate -wd %s.ctwork %s.fsdb %s",
+                TA { Ct, Nr, Sz, fsdbRoot, fsdbRoot, fsdbRoot });
+    
+    stdout, stderr := ProcUtils.WriteHere(Stdio.stderr);
+    cm             := ProcUtils.RunText(cmd,
+                                        stdout := stdout,
+                                        stderr := stderr,
+                                        stdin  := NIL);
+  BEGIN
+    TRY
+      cm.wait()
+    EXCEPT
+      ProcUtils.ErrorExit(err) =>
+      Debug.Error(F("Couldn't run convert1 (%s) : %s", cmd, ProcUtils.FormatError(err)))
+    END
+  END Convert1;
+  
+PROCEDURE DoConv() =
+  VAR
+    iter := FS.Iterate(".");
+    fn   : Pathname.T;
+  BEGIN
+    WHILE iter.next(fn) DO
+      fn := CitTextUtils.CheckSuffix(fn, ".fsdb");
+      IF fn # NIL THEN
+        Convert1(fn)
+      END
+    END
+  END DoConv;
+
+PROCEDURE DoClean() =
+  VAR
+    iter := FS.Iterate(".");
+    fn   : Pathname.T;
+  BEGIN
+    DeleteMatching(".", "\\.ic0$");
+    DeleteMatching(".", "\\.mc0$");
+    WHILE iter.next(fn) DO
+      IF CitTextUtils.HaveSuffix(fn, ".ctwork") THEN
+        DeleteRecursively(".", fn)
+      END
+    END;
+    FOR f := FIRST(Files) TO LAST(Files) DO
+      CompressFile(Files[f])
+    END
+  END DoClean;
   
 TYPE
-  Phase = { Pre, Sim, Post };
+  Phase = { Pre, Sim, Conv, Clean, Post };
   Proc = PROCEDURE();
   Lib   = { I0s, I0m };
 
 CONST
-  PhaseNames = ARRAY Phase OF TEXT       { "pre", "sim", "post" };
-  PhaseProc  = ARRAY Phase OF Proc       { DoPre, DoSim, DoPost };
+  PhaseNames = ARRAY Phase OF TEXT       { "pre", "sim", "conv", "clean", "post" };
+  PhaseProc  = ARRAY Phase OF Proc       { DoPre, DoSim, DoConv, DoClean, DoPost };
   LibNames   = ARRAY Lib   OF TEXT       { "i0s", "i0m"  };
   LibPaths   = ARRAY Lib   OF Pathname.T { "lib783_i0s_160h_50pp", "lib783_i0m_180h_50pp" };
 
   DefStep    = 10.0d-9;
   DefSweeps  = 4;
-  
+  DefA       = 16_5befa033;
+  DefB       = 16_44110510;
+   
 VAR
   pp                          := NEW(ParseParams.T).init(Stdio.stderr);
   vdd, temp                   := FIRST(LONGREAL);
   traceRt    : TEXT;
   step       : LONGREAL       := DefStep;
-  phases                      := SET OF Phase { };
-  measureFn  : Pathname.T     := NIL;
+  phases                      := SET OF Phase { FIRST(Phase) .. LAST(Phase) };
+  measureFn  : Pathname.T     := "measure.dat";
   tag        : TEXT           := "";
-  aInput, bInput : Word.T;
+  aInput     : Word.T         := DefA;
+  bInput     : Word.T         := DefB;
   lib        : Lib;
   sweeps     : CARDINAL       := DefSweeps;
+  m3utils                     := Env.Get("M3UTILS");
+    
   
 BEGIN
+  IF m3utils = NIL THEN
+    Debug.Error("?must set M3UTILS")
+  END;
+  
   TRY
     IF pp.keywordPresent("-t") THEN
       traceRt := pp.getNext()
@@ -537,7 +641,10 @@ BEGIN
   END;
 
   FOR phase := FIRST(Phase) TO LAST(Phase) DO
-    IF phase IN phases THEN PhaseProc[phase]() END
+    IF phase IN phases THEN
+      Debug.Out("================   PHASE " & PhaseNames[phase]);
+      PhaseProc[phase]()
+    END
   END
 
 

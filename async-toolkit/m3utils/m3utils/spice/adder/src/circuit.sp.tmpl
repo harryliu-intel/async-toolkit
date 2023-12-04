@@ -11,6 +11,7 @@
 .OPTION XA_CMD="set_message_option -limit 100"
 .OPTION XA_CMD="enable_print_statement 1"
 .OPTION XA_CMD="set_sim_case -case sensitive"
+.option redefsub
 
 *.OPTION AUTOSTOP
 
@@ -29,6 +30,15 @@
 .option PDMI=1
 .option PDMI_LIB='/p/hdk/cad/pdk/pdk783_r0.5_22ww52.5//cmi/hspice/pdmi/lnx86/64bit/pdmi.so'
 
+
+
+**********************************************************************
+*
+* random data generator
+*
+* The following circuit, under variation, will generate random, static outputs.
+*
+*
 
 .include "/p/hdk/cad/stdcells/lib783_i0m_180h_50pp/@PDK@/base_ulvt/spf/lib783_i0m_180h_50pp_base_ulvt_@METALCORNER@/i0mnand02aa1n02x5.spf"
 .include "/p/hdk/cad/stdcells/lib783_i0m_180h_50pp/@PDK@/base_ulvt/spf/lib783_i0m_180h_50pp_base_ulvt_@METALCORNER@/i0minv000aa1n03x5.spf"
@@ -53,13 +63,17 @@ Xonand x12 go on vcc vssx i0mnand02aa1n02x5
 Xoand  on o vcc vssx i0minv000aa1n03x5 
 
 .ENDS
+**********************************************************************
 
 
 * Probes (for debugging)
 .probe tran v(a_i[*])
-.probe tran v(Xrand*.x0)
-.probe tran v(Xrand*.x1)
-.probe tran v(Xrand*.on)
+
+* these are for random sims
+*.probe tran v(Xrand*.x0)
+*.probe tran v(Xrand*.x1)
+*.probe tran v(Xrand*.on)
+
 .probe tran v(b_i[*])
 .probe tran v(y_o[*])
 .probe tran v(y_d[*])
