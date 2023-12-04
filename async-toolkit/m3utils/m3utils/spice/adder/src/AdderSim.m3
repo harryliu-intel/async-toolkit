@@ -299,6 +299,7 @@ PROCEDURE DoTrace(traceRt : Pathname.T; mWr : Wr.T) : Result =
             tag,
             traceRt,
             LibNames[lib],
+            TranNames[tran],
             Unsigned(aVal),
             Unsigned(bVal),
             Unsigned(aVal + bVal),
@@ -388,7 +389,7 @@ PROCEDURE DoPost() =
       mWr := FileWr.Open(measureFn & ".stat");
       Wr.PutText(mWr, Concat(",",
                              FmtLRA(LRA { vdd, temp })^,
-                             TA { LibNames[lib] },
+                             TA { LibNames[lib], TranNames[tran] },
                              FmtLRA(DoStats(n, sum, sumSq)^)^));
       Wr.PutChar(mWr, '\n');
       Wr.Close(mWr)
@@ -584,7 +585,7 @@ CONST
   LibNames   = ARRAY Lib   OF TEXT       { "i0s", "i0m"  };
   LibPaths   = ARRAY Lib   OF Pathname.T { "lib783_i0s_160h_50pp", "lib783_i0m_180h_50pp" };
 
-  DefStep    = 10.0d-9;
+  DefStep    = 20.0d-9;
   DefSweeps  = 4;
   DefA       = 16_5befa033;
   DefB       = 16_44110510;
