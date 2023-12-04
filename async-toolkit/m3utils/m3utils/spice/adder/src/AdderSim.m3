@@ -28,7 +28,9 @@ IMPORT TextTextTbl;
 IMPORT Env;
 IMPORT TechTemplate;
 IMPORT ProcUtils;
-FROM TechCleanup IMPORT DeleteMatching, DeleteRecursively, CompressFilesWithExtension,  CompressFile;
+FROM TechCleanup IMPORT DeleteMatching, DeleteRecursively,
+                        CompressFilesWithExtension,  CompressFile;
+FROM TechConfig IMPORT Tran, TranNames;
 
 <*FATAL Thread.Alerted*>
 
@@ -71,6 +73,7 @@ CONST
   "adder_tb_Width32_MaxCarryChain31_AdderType2_85C_tttt.spf"
   };
 
+  TranMagic = ARRAY Tran OF TEXT { NIL, "aa", NIL, "ab", NIL, "mc", "md" };
   
 TYPE
   Array = ARRAY [ 0 .. Width - 1 ] OF Trace.NodeId;
@@ -448,6 +451,7 @@ PROCEDURE DoPre() =
 
     EVAL map.put("@STEP@", LR(step));
     EVAL map.put("@RISE@", LR(rise));
+    EVAL map.put("@TRAN@", TranNames[tran]);
 
     EVAL map.put("@HSP_DIR@","/nfs/site/disks/zsc9_fwr_sd_001/mnystroe/p1278_3x0p9eu1/2023ww43d5/models_core_hspice/m14_2x_1xa_1xb_6ya_2yb_2yc__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp");
     EVAL map.put("@VDD@", LR(vdd));
@@ -472,13 +476,24 @@ PROCEDURE DoPre() =
   END DoPre;
 
 PROCEDURE MapCells(map : TextTextTbl.T) =
+
+  PROCEDURE DoTran(cn : TEXT) : TEXT =
+    CONST
+      Sc = 9;
+      Lc = 2;
+    BEGIN
+      <*ASSERT TE(Text.Sub(cn, Sc, Lc), "aa")*>
+      RETURN
+        Text.Sub(cn, 0, Sc) & TranMagic[tran] & Text.Sub(cn, Sc + Lc)
+    END DoTran;
+    
   CONST
     Def = "i0m";
   BEGIN
     FOR i := FIRST(Cells) TO LAST(Cells) DO
       WITH cn = Cells[i],
            cp = "@" & cn & "@" DO
-        EVAL map.put(cp, CitTextUtils.ReplacePrefix(cn, Def, LibNames[lib]))
+        EVAL map.put(cp, DoTran(CitTextUtils.ReplacePrefix(cn, Def, LibNames[lib])))
       END
     END
   END MapCells;
@@ -587,7 +602,7 @@ VAR
   lib        : Lib;
   sweeps     : CARDINAL       := DefSweeps;
   m3utils                     := Env.Get("M3UTILS");
-    
+  tran       : Tran           := Tran.Ulvt;
   
 BEGIN
   IF m3utils = NIL THEN
@@ -625,6 +640,10 @@ BEGIN
     IF pp.keywordPresent("-lib") THEN
       lib := VAL(Lookup(pp.getNext(), LibNames),
                                            Lib)
+    END;
+    IF pp.keywordPresent("-thresh") THEN
+      tran := VAL(Lookup(pp.getNext(), TranNames),
+                                           Tran)
     END;
     IF pp.keywordPresent("-p") THEN
       phases := SET OF Phase {};
