@@ -50,7 +50,13 @@ PROCEDURE HaveSuffix(in, suffix: TEXT): BOOLEAN;
 PROCEDURE RemovePrefix(in, prefix: TEXT): TEXT;
   (* checked runtime error for prefix not to be as stated *)
 
+PROCEDURE ReplacePrefix(in, oprefix, nprefix: TEXT): TEXT;
+  (* checked runtime error for prefix not to be as stated *)
+
 PROCEDURE RemoveSuffix(in, suffix: TEXT): TEXT;
+  (* checked runtime error for suffix not to be as stated *)
+
+PROCEDURE ReplaceSuffix(in, osuffix, nsuffix: TEXT): TEXT;
   (* checked runtime error for suffix not to be as stated *)
 
 PROCEDURE CheckSuffix(in, suffix : TEXT) : TEXT;

@@ -168,6 +168,16 @@ PROCEDURE RemoveSuffixes(fn : TEXT; READONLY exts : ARRAY OF TEXT) : TEXT =
     RETURN fn
   END RemoveSuffixes;
 
+PROCEDURE ReplacePrefix(in, oprefix, nprefix: TEXT): TEXT =
+  BEGIN
+    RETURN nprefix & RemovePrefix(in, oprefix)
+  END ReplacePrefix;
+
+PROCEDURE ReplaceSuffix(in, osuffix, nsuffix: TEXT): TEXT =
+  BEGIN
+    RETURN RemoveSuffix(in, osuffix) & nsuffix
+  END ReplaceSuffix;
+
 PROCEDURE Pluralize(noun : TEXT; n : INTEGER; 
                     ending : TEXT; printNum : BOOLEAN) : TEXT =
   VAR
