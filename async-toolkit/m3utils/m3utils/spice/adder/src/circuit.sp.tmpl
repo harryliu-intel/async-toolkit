@@ -1,0 +1,118 @@
+* tech comparison
+.TEMP @TEMP@
+.PARAM vtrue=@VDD@
+
+.OPTION CMIFLAG=1 CMIUSRFLAG=3 PDMI=1
+.option cmipath='/p/hdk/cad/pdk/pdk783_r0.9_23ww26.5_alpha/cmi/hspice/cmi/lnx86/64bit'
+.option cmi02opt=1
+.OPTION POST=fsdb PROBE=1
+.OPTION XA_CMD="set_sim_level -level 6"
+.OPTION XA_CMD="set_wildcard_rule -match* one"
+.OPTION XA_CMD="set_message_option -limit 100"
+.OPTION XA_CMD="enable_print_statement 1"
+.OPTION XA_CMD="set_sim_case -case sensitive"
+
+*.OPTION AUTOSTOP
+
+* Monte Carlo stuff
+
+.OPTION XA_CMD="set_monte_carlo_option -enable 1"     
+.OPTION XA_CMD="set_monte_carlo_option -sample_output all"
+.OPTION XA_CMD="set_monte_carlo_option -mc0_file 1"
+.OPTION XA_CMD="set_monte_carlo_option -parameter_file 1"
+.OPTION XA_CMD="set_monte_carlo_option -mc0_header 1"
+.OPTION XA_CMD="set_monte_carlo_option -dump_waveform 1"
+
+.option search='@HSP_DIR@'
+.lib 'p1278_3.hsp' tttt
+
+.option PDMI=1
+.option PDMI_LIB='/p/hdk/cad/pdk/pdk783_r0.5_22ww52.5//cmi/hspice/pdmi/lnx86/64bit/pdmi.so'
+
+
+.include "/p/hdk/cad/stdcells/lib783_i0m_180h_50pp/@PDK@/base_ulvt/spf/lib783_i0m_180h_50pp_base_ulvt_@METALCORNER@/i0mnand02aa1n02x5.spf"
+.include "/p/hdk/cad/stdcells/lib783_i0m_180h_50pp/@PDK@/base_ulvt/spf/lib783_i0m_180h_50pp_base_ulvt_@METALCORNER@/i0minv000aa1n03x5.spf"
+
+.SUBCKT rand resetn go o vcc vssx
+
+* SRAM cell with reset
+X0 resetn x1 x0 vcc vssx i0mnand02aa1n02x5
+X1 resetn x0 x1 vcc vssx i0mnand02aa1n02x5
+
+* isolation inverters, equalize load / one output dangling
+Xinv00 x0  x00 vcc vssx i0minv000aa1n03x5 
+Xinv01 x00 x01 vcc vssx i0minv000aa1n03x5 
+Xinv02 x01 x02 vcc vssx i0minv000aa1n03x5 
+
+Xinv10 x1  x10 vcc vssx i0minv000aa1n03x5 
+Xinv11 x10 x11 vcc vssx i0minv000aa1n03x5 
+Xinv12 x11 x12 vcc vssx i0minv000aa1n03x5 
+
+* output AND gate
+Xonand x12 go on vcc vssx i0mnand02aa1n02x5
+Xoand  on o vcc vssx i0minv000aa1n03x5 
+
+.ENDS
+
+
+* Probes (for debugging)
+.probe tran v(a_i[*])
+.probe tran v(Xrand*.x0)
+.probe tran v(Xrand*.x1)
+.probe tran v(Xrand*.on)
+.probe tran v(b_i[*])
+.probe tran v(y_o[*])
+.probe tran v(y_d[*])
+.PROBE TRAN v(clk)
+.PROBE TRAN i(Vvcc)
+.PROBE TRAN v(_RESET)
+.PROBE TRAN v(GO)
+.PROBE TRAN v(vcc)
+.PROBE TRAN v(vload)
+.PROBE TRAN v(vssx)
+.PROBE TRAN v(vissx)
+.PROBE TRAN v(vissy)
+.PROBE TRAN i1(Vvssx)
+
+* Sources
+.PARAM step=@STEP@
+.PARAM rise=@RISE@
+
+
+Vclk clk      0 DC=0 PWL 0 0
++'2*step-0.5*rise'     0 '2*step+0.5*rise' vtrue
++'3*step-0.5*rise' vtrue '3*step+0.5*rise'     0
++'4*step-0.5*rise'     0 '4*step+0.5*rise' vtrue
+
+Vres _RESET   0 DC=0 PWL 0 0 '1*step-0.5*rise' 0 '1*step+0.5*rise' vtrue
+Vgo  GO       0 DC=0 PWL 0 0 '3*step-0.5*rise' 0 '3*step+0.5*rise' vtrue
+
+Vvcc    vcc   0 DC=vtrue
+Vvcc1   vcc1  0 DC=vtrue * not counted for power
+Vvload  vload 0 DC=vtrue
+Vvssx   vssx  0 DC=0
+
+
+.include "include.sp"
+.include "adder_tb_Width32_MaxCarryChain31_AdderType2_85C_tttt.spf"
+
+* Simulate
+.TRAN 1ps '6*step' sweep monte=@SWEEPS@
+
+
+* Measure
+
+Xdut clk
++a_i[31] a_i[30] a_i[29] a_i[28] a_i[27] a_i[26] a_i[25] a_i[24] a_i[23] a_i[22] a_i[21] a_i[20] a_i[19] a_i[18] a_i[17] a_i[16] a_i[15] a_i[14] a_i[13] a_i[12] a_i[11] a_i[10] a_i[9] a_i[8] a_i[7] a_i[6] a_i[5] a_i[4] a_i[3] a_i[2] a_i[1] a_i[0]
++b_i[31] b_i[30] b_i[29] b_i[28] b_i[27] b_i[26] b_i[25] b_i[24] b_i[23] b_i[22] b_i[21] b_i[20] b_i[19] b_i[18] b_i[17] b_i[16] b_i[15] b_i[14] b_i[13] b_i[12] b_i[11] b_i[10] b_i[9] b_i[8] b_i[7] b_i[6] b_i[5] b_i[4] b_i[3] b_i[2] b_i[1] b_i[0]
++y_o[31] y_o[30] y_o[29] y_o[28] y_o[27] y_o[26] y_o[25] y_o[24] y_o[23] y_o[22] y_o[21] y_o[20] y_o[19] y_o[18] y_o[17] y_o[16] y_o[15] y_o[14] y_o[13] y_o[12] y_o[11] y_o[10] y_o[9] y_o[8] y_o[7] y_o[6] y_o[5] y_o[4] y_o[3] y_o[2] y_o[1] y_o[0]
++y_d[31] y_d[30] y_d[29] y_d[28] y_d[27] y_d[26] y_d[25] y_d[24] y_d[23] y_d[22] y_d[21] y_d[20] y_d[19] y_d[18] y_d[17] y_d[16] y_d[15] y_d[14] y_d[13] y_d[12] y_d[11] y_d[10] y_d[9] y_d[8] y_d[7] y_d[6] y_d[5] y_d[4] y_d[3] y_d[2] y_d[1] y_d[0]
++vcc vcc1 vssx adder_tb_Width32_MaxCarryChain31_AdderType2
+
+.measure tran IdleCurrent   avg i(Vvcc) from '0.5*step' to 'step-0.5*rise'
+.measure tran IdlePower     PARAM='(-IdleCurrent*vtrue)'
+.measure tran GoCurrent     avg i(Vvcc) from '4*step-0.5*rise' to '6*step'
+.measure tran GoCharge      PARAM='(-GoCurrent+IdleCurrent)*(2*step + 0.5*rise)'
+.measure tran GoEnergy      PARAM='GoCharge * vtrue'
+
+.END

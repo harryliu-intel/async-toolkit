@@ -22,6 +22,9 @@ IMPORT CitTextUtils;
 IMPORT FileWr;
 IMPORT Wr;
 IMPORT Wx;
+IMPORT Scan;
+IMPORT Math;
+IMPORT TextTextTbl;
 
 <*FATAL Thread.Alerted*>
 
@@ -32,9 +35,34 @@ CONST
   Width = 32;
   LR = LongReal;
 
+  Cells = ARRAY OF TEXT {
+  "i0maboi22aa1n02x7", "i0mand002aa1n03x5", "i0maoai13aa1n02x5",
+  "i0maoai13aa1n02x7", "i0maoai13aa1n03x5", "i0maob012aa1n02x5",
+  "i0maob012aa1n03x5", "i0maoi012aa1n02x7", "i0maoi012aa1n03x5",
+  "i0maoi013aa1n03x5", "i0maoi112aa1n02x7", "i0maoi112aa1n03x4",
+  "i0maoi122aa1n02x7", "i0maoib12aa1n03x5", "i0mfun400aa1q02x6",
+  "i0mfun400aa1q03x6", "i0minv000aa1n03x5", "i0mmtn022aa1n03x5",
+  "i0mnanb02aa1n02x5", "i0mnanb02aa1n03x5", "i0mnand02aa1n02x5",
+  "i0mnano22aa1n02x5", "i0mnanp02aa1n03x5", "i0mnona22aa1n03x5",
+  "i0mnona23aa1n03x5", "i0mnona32aa1n03x5", "i0mnor002aa1n02x5",
+  "i0mnorb02aa1n02x5", "i0mnorb02aa1n02x7", "i0mnorb02aa1n03x4",
+  "i0mnorp02aa1n03x5", "i0moa0012aa1n03x5", "i0moab012aa1n02x5",
+  "i0moab012aa1n03x5", "i0moabi12aa1n02x7", "i0moai012aa1n02x5",
+  "i0moai012aa1n02x7", "i0moai012aa1n03x5", "i0moai112aa1n02x7",
+  "i0moai112aa1n03x5", "i0moai122aa1n03x5", "i0moaib12aa1n02x7",
+  "i0moaih12aa1n02x5", "i0morn002aa1n02x7", "i0morn002aa1n03x5",
+  "i0mxnrc02aa1n03x5", "i0mxobna2aa1n03x5", "i0mxorc02aa1n03x5"
+  };
+
+  Strengths = ARRAY OF TEXT { "02x5", "02x6", "02x7", "03x4", "03x5", "03x6" };
+
+  Pdk = "pdk080_r4v2p0_efv";
+  MetalCorner = "100c_tttt_cmax";
+  
 TYPE
   Array = ARRAY [ 0 .. Width - 1 ] OF Trace.NodeId;
   TA    = ARRAY OF TEXT;
+  LRA   = ARRAY OF LONGREAL;
 
 PROCEDURE GetNode(trace : Trace.T; nm : TEXT) : Trace.NodeId =
   VAR
@@ -112,8 +140,52 @@ PROCEDURE GetFinalTransition(tFinder          : TransitionFinder.T;
                
     RETURN maxTran
   END GetFinalTransition;
+
+TYPE
+  ResultCol = { latency, swiE, leaP };
   
-PROCEDURE DoTrace(traceRt : Pathname.T; mWr : Wr.T;) =
+  Result = ARRAY ResultCol OF LONGREAL;
+
+PROCEDURE FmtLRA(READONLY a : ARRAY OF LONGREAL) : REF ARRAY OF TEXT =
+  VAR
+    res := NEW(REF ARRAY OF TEXT, NUMBER(a));
+  BEGIN
+    FOR i := FIRST(a) TO LAST(a) DO
+      res[i] := LR(a[i])
+    END;
+    RETURN res
+  END FmtLRA;
+
+PROCEDURE DoStats(READONLY n          : LONGREAL;
+                  READONLY sum, sumSq : ARRAY OF LONGREAL)
+  : REF ARRAY OF LONGREAL =
+  VAR
+    res := NEW(REF ARRAY OF LONGREAL, 2 * NUMBER(sum) + 1);
+  BEGIN
+    <* ASSERT NUMBER(sum) = NUMBER(sumSq) *>
+    res[0] := n;
+    FOR i := FIRST(sum) TO LAST(sum) DO
+      WITH s  = sum[i],
+           ss = sumSq[i],
+
+           mean = s/n,
+           var  = ss / n - mean*mean,
+           sdev = Math.sqrt(n / (n - 1.0d0) * var) DO
+
+        Debug.Out("s      = " & LR(s));
+        Debug.Out("ss     = " & LR(ss));
+        Debug.Out("mean   = " & LR(mean));
+        Debug.Out("var    = " & LR(var));
+        Debug.Out("sdev   = " & LR(sdev));
+        
+        res[2 * i + 1]     := mean;
+        res[2 * i + 2] := sdev
+      END
+    END;
+    RETURN res
+  END DoStats;
+  
+PROCEDURE DoTrace(traceRt : Pathname.T; mWr : Wr.T) : Result =
   VAR
     trace      : Trace.T;
   BEGIN
@@ -222,36 +294,59 @@ PROCEDURE DoTrace(traceRt : Pathname.T; mWr : Wr.T;) =
             LR(leaP),
             slowName
             }));
-            Wr.PutChar(mWr, '\n')
-          END
+            Wr.PutChar(mWr, '\n');
+
+          END;
+          RETURN Result { latency, swiE, leaP }
+
         END
       END
     END
   END
 END DoTrace;
 
-PROCEDURE Concat(sep : TEXT; READONLY lst : TA) : TEXT =
-  VAR
-    wx := Wx.New();
-  BEGIN
-    FOR i := FIRST(lst) TO LAST(lst) DO
-      Wx.PutText(wx, lst[i]);
-      IF i # LAST(lst) THEN
-        Wx.PutText(wx, sep)
+PROCEDURE Concat(sep : TEXT; READONLY lst0, lst1, lst2, lst3, lst4 := TA {}) : TEXT =
+
+  PROCEDURE DoOne(READONLY lst : TA) =
+    BEGIN
+      FOR i := FIRST(lst) TO LAST(lst) DO
+        IF NOT first THEN
+          Wx.PutText(wx, sep)
+        ELSE
+          first := FALSE
+        END;
+
+        Wx.PutText(wx, lst[i]);
       END
-    END;
+    END DoOne;
+    
+  VAR
+    wx    := Wx.New();
+    first := TRUE;
+  BEGIN
+    DoOne(lst0);
+    DoOne(lst1);
+    DoOne(lst2);
+    DoOne(lst3);
+    DoOne(lst4);
     RETURN Wx.ToText(wx)
   END Concat;
 
 PROCEDURE DoPost() =
   VAR
     mWr : Wr.T;
+    n     := 0.0d0;
+    sum   := Result { 0.0d0, .. };
+    sumSq := sum;
+    
   BEGIN
     IF measureFn # NIL THEN
       mWr := FileWr.Open(measureFn)
     END;
     IF traceRt # NIL THEN
-      DoTrace(traceRt, mWr)
+      WITH this = DoTrace(traceRt, mWr) DO
+        Accumulate(this, n, sum, sumSq)
+      END
     ELSE
       CONST
         extension = ".names";
@@ -262,36 +357,137 @@ PROCEDURE DoPost() =
         WHILE iter.next(fn) DO
           fn := CitTextUtils.CheckSuffix(fn, extension);
           IF fn # NIL THEN
-            DoTrace(fn, mWr)
+            WITH this = DoTrace(fn, mWr) DO
+              Accumulate(this, n, sum, sumSq)
+            END
           END
         END
       END
     END;
     IF measureFn # NIL THEN
       Wr.Close(mWr)
-    END
+    END;
+    
+    IF measureFn # NIL THEN
+      mWr := FileWr.Open(measureFn & ".stat");
+      Wr.PutText(mWr, Concat(",",
+                             FmtLRA(LRA { vdd, temp })^,
+                             FmtLRA(DoStats(n, sum, sumSq)^)^));
+      Wr.PutChar(mWr, '\n');
+      Wr.Close(mWr)
+    END;
   END DoPost;
 
-PROCEDURE DoPre() =
+PROCEDURE Accumulate(READONLY x : Result;
+                     VAR n : LONGREAL;
+                     VAR sum, sumSq : Result) =
   BEGIN
+    n        := n        + 1.0d0;
+    FOR c := FIRST(Result) TO LAST(Result) DO
+      sum  [c] := sum  [c] + x[c];
+      sumSq[c] := sumSq[c] + x[c] * x[c]
+    END
+  END Accumulate;
+
+PROCEDURE WriteSource(wr         : Wr.T;
+                      nm         : TEXT;
+                      val        : Word.T;
+                      bits       : CARDINAL;
+                      src0, src1 : TEXT) =
+  VAR
+    src : TEXT;
+  BEGIN
+    FOR i := 0 TO bits - 1 DO
+      WITH is  = Int(i),
+           bit = Word.Extract(val, i, 1) DO
+        (* compiler bug? : *)
+        (*      src = ARRAY [0..1] OF TEXT { src0, src1 }[bit] *)
+
+        CASE bit OF
+          0 => src := src0
+        |
+          1 => src := src1
+        ELSE
+          <*ASSERT FALSE*>
+        END;
+        <*ASSERT nm  # NIL*>
+        <*ASSERT is  # NIL*>
+        <*ASSERT src # NIL*>
+        Wr.PutText(wr, F("Vsrc__%s__%s %s %s[%s] 0\n", nm, is, src, nm, is))
+      END
+    END
+  END WriteSource;
+  
+PROCEDURE DoPre() =
+  CONST
+    rise = 10.0d-12;
+  VAR
+    map := NEW(TextTextTbl.Default).init();
+  BEGIN
+    Debug.Out("DoPre()");
+    
+    WITH wr = FileWr.Open("sources.sp") DO
+      WriteSource(wr, "a_i", aInput, Width, "vssx", "vcc1");
+      WriteSource(wr, "b_i", bInput, Width, "vssx", "vcc1");
+      Wr.Close(wr)
+    END;
+
+    EVAL map.put("@STEP@", LR(step));
+    EVAL map.put("@RISE@", LR(rise));
+
+    EVAL map.put("@HSP_DIR@","/nfs/site/disks/zsc9_fwr_sd_001/mnystroe/p1278_3x0p9eu1/2023ww43d5/models_core_hspice/m14_2x_1xa_1xb_6ya_2yb_2yc__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp");
+    EVAL map.put("@VDD@", LR(vdd));
+    EVAL map.put("@TEMP@", LR(temp));
+
+    MapCells(map);
+
+    EVAL map.put("@PDK@", Pdk);
+    EVAL map.put("@METALCORNER@", MetalCorner);
+    EVAL map.put("@STDCELLDIR@", LibPaths[lib]);
+
   END DoPre;
+
+PROCEDURE MapCells(map : TextTextTbl.T) =
+  CONST
+    Def = "i0m";
+  BEGIN
+    FOR i := FIRST(Cells) TO LAST(Cells) DO
+      WITH cn = Cells[i],
+           cp = "@" & cn & "@" DO
+        EVAL map.put(cp, CitTextUtils.ReplacePrefix(cn, Def, LibNames[lib]))
+      END
+    END
+  END MapCells;
+
+PROCEDURE DoSim() =
+  BEGIN
+  END DoSim;
   
 TYPE
-  Phase = { Pre, Post };
+  Phase = { Pre, Sim, Post };
   Proc = PROCEDURE();
-  
-CONST
-  PhaseNames = ARRAY Phase OF TEXT { "pre", "post" };
-  PhaseProc  = ARRAY Phase OF Proc { DoPre, DoPost };
+  Lib   = { I0s, I0m };
 
+CONST
+  PhaseNames = ARRAY Phase OF TEXT       { "pre", "sim", "post" };
+  PhaseProc  = ARRAY Phase OF Proc       { DoPre, DoSim, DoPost };
+  LibNames   = ARRAY Lib   OF TEXT       { "i0s", "i0m"  };
+  LibPaths   = ARRAY Lib   OF Pathname.T { "lib783_i0s_160h_50pp", "lib783_i0m_180h_50pp" };
+
+  DefStep    = 10.0d-9;
+  DefSweeps  = 4;
+  
 VAR
   pp                          := NEW(ParseParams.T).init(Stdio.stderr);
   vdd, temp                   := FIRST(LONGREAL);
   traceRt    : TEXT;
-  step       : LONGREAL;
+  step       : LONGREAL       := DefStep;
   phases                      := SET OF Phase { };
   measureFn  : Pathname.T     := NIL;
   tag        : TEXT           := "";
+  aInput, bInput : Word.T;
+  lib        : Lib;
+  sweeps     : CARDINAL       := DefSweeps;
   
 BEGIN
   TRY
@@ -307,11 +503,24 @@ BEGIN
     IF pp.keywordPresent("-tag") THEN
       tag := pp.getNext()
     END; 
+    IF pp.keywordPresent("-sweeps") THEN
+      sweeps := pp.getNextInt()
+    END; 
     IF pp.keywordPresent("-step") THEN
       step := pp.getNextLongReal()
     END;
     IF pp.keywordPresent("-measurefn") OR pp.keywordPresent("-m") THEN
       measureFn := pp.getNext()
+    END;
+    IF pp.keywordPresent("-a") THEN
+      aInput := Scan.Unsigned(pp.getNext())
+    END;
+    IF pp.keywordPresent("-b") THEN
+      bInput := Scan.Unsigned(pp.getNext())
+    END;
+    IF pp.keywordPresent("-lib") THEN
+      lib := VAL(Lookup(pp.getNext(), LibNames),
+                                           Lib)
     END;
     IF pp.keywordPresent("-p") THEN
       phases := SET OF Phase {};
