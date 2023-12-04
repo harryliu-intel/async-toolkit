@@ -71,7 +71,11 @@ for lib in ${libs}; do
             echo "pwd" >> ${runfile}
             echo "cd ${runsubdir}" >> ${runfile}
 
-            echo "${ADDERSIM} -vdd ${volt} -temp ${temp} -lib ${lib} -thresh ${tran} -sweeps ${sweep}" >> ${runfile}
+            echo "${ADDERSIM} -vdd ${volt} -temp ${temp} -lib ${lib} -thresh ${tran} -sweeps ${sweep} -p pre" >> ${runfile}
+            echo "${ADDERSIM} -vdd ${volt} -temp ${temp} -lib ${lib} -thresh ${tran} -sweeps ${sweep} -p sim" >> ${runfile}
+            echo "${ADDERSIM} -vdd ${volt} -temp ${temp} -lib ${lib} -thresh ${tran} -sweeps ${sweep} -p conv" >> ${runfile}
+            echo "${ADDERSIM} -vdd ${volt} -temp ${temp} -lib ${lib} -thresh ${tran} -sweeps ${sweep} -p clean" >> ${runfile}
+            echo "${ADDERSIM} -vdd ${volt} -temp ${temp} -lib ${lib} -thresh ${tran} -sweeps ${sweep} -p post" >> ${runfile}
             chmod +x ${runfile}
         
             tasknum=`expr $tasknum + 1`
