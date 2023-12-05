@@ -2607,7 +2607,7 @@ sub read_bump_scenarios {
 sub add_scenario {
     my ($scenarios,$aggressorref,$start,$stop,$optimize) = @_;
     foreach my $aggressor (@$aggressorref){
-        if (defined @{$$scenarios{$aggressor}} && $optimize &&
+        if (@{$$scenarios{$aggressor}} && $optimize &&
             ${${$$scenarios{$aggressor}}[0]}[1] == $start) {
             ${${$$scenarios{$aggressor}}[0]}[1] = $stop;
             my $x = ${${$$scenarios{$aggressor}}[0]}[0];
