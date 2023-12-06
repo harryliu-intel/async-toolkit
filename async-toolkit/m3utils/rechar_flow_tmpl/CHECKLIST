@@ -16,8 +16,33 @@ as of 8/23 we are using the latter for FWR.
 
 cth2 must be started in the top-level dir.
 
+
+NEW FLOW 12/6/2023:
+
+create a setup.* file with a memorable name.  The setup file should
+define four variables and then call (source) do_setup.sh, for example:
+
+#!/bin/sh
+
+cells=cell_list.tc2
+workdir=siliconsmart.tc2
+env=env.zsh.0p9eu1
+pvts=pvts.zsh.300_85_cmin
+
+. ./do_setup.sh
+
+
+each of the lines points at a file in the CWD, which should exist and
+should be in the git repository.  If it does not already exist, create it and
+add it to git.  
+
+Then add this the setup file itself to git.
+
+Then run the setup file.  This will create the proper symlinks. 
+
 2b. make sure SP variables are set correctly if doing asfit (4 vars)
     -- check them for matching PDK in any case, even if not doing asfit!
+   (check for them in env.zsh)
 
 2c. if doing asfit, worry about the extraction quality between the cell data
 from the standard cell library and the UPF being used for simulation.
