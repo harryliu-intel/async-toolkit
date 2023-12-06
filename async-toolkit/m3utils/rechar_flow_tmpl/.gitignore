@@ -3,7 +3,6 @@
 /siliconsmart
 /runme.out*
 /cell_list
-/cell_list.*
 /.cadence
 /.cth_setup_files
 /.pds.env
@@ -30,3 +29,8 @@
 /tieCell.config
 /vmac.cds.lib
 /xa_default_options.sp
+/pvts.zsh
+/env.zsh
+/project
+/vmac
+/design_class
