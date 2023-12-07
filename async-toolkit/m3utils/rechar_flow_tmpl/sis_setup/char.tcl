@@ -127,6 +127,9 @@ set cells [get_cells]
 set_config_opt update_cache_last 0
 set_config_opt model_failed_cells_in_lib 1
 
+# the following suggested by Synopsys support re: finesim crashes
+set_config_opt enable_netlist_pruning 0
+
 
 #--------------------------------------------------------------------------------------------------------#
 # Flow Preset| Over-rides (Do Not Touch)
