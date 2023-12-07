@@ -97,7 +97,7 @@ push @vcs_args, '-kdb' if $kdb;
 open my $fh_vcs, ">$runvcs" || die "Can't open $runvcs: $!";
 open my $fh_verdi, ">$runverdi" || die "Can't open $runverdi: $!";
 
-if ($gls_dir) {
+if (defined($gls_dir)) {
     print $fh_vcs <<'EOF';
 [[ -z "$STDCELL_DIR" ]] && export STDCELL_DIR=$NCL_DIR/stdcells
 [[ -z "$GPIO_DIR" ]] && export GPIO_DIR=$NCL_DIR/gpio/latest
@@ -155,6 +155,7 @@ EOF
     }
     push @args, '-f', '$GLS_DIR/gls.vcfg';
 }
+else { $gls_dir=""; }
 
 push @vcs_args, '-debug_access+dmptf+all', '-debug_region=lib+cell' unless $nodebug;
 
