@@ -7,7 +7,7 @@ rm -f cell_list
 ln -s ${cells} cell_list
 
 mkdir -p ${workdir}
-rm siliconsmart
+rm -f siliconsmart
 ln -s ${workdir} siliconsmart
 
 rm -f env.zsh
