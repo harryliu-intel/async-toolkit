@@ -102,11 +102,13 @@ if (defined($gls_dir)) {
 [[ -z "$STDCELL_DIR" ]] && export STDCELL_DIR=$NCL_DIR/stdcells
 [[ -z "$GPIO_DIR" ]] && export GPIO_DIR=$NCL_DIR/gpio/latest
 [[ -z "$CMO_DIR" ]] && export CMO_DIR=$NCL_DIR/sram/cmo/latest
+[[ -z "$PUF_DIR" ]] && export PUF_DIR=$NCL_DIR/puf/latest
 EOF
     print $fh_verdi <<'EOF';
 [[ -z "$STDCELL_DIR" ]] && export STDCELL_DIR=$NCL_DIR/stdcells
 [[ -z "$GPIO_DIR" ]] && export GPIO_DIR=$NCL_DIR/gpio/latest
 [[ -z "$CMO_DIR" ]] && export CMO_DIR=$NCL_DIR/sram/cmo/latest
+[[ -z "$PUF_DIR" ]] && export PUF_DIR=$NCL_DIR/puf/latest
 EOF
 
     if (@sdf) {
