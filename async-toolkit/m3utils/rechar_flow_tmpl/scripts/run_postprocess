@@ -72,5 +72,5 @@ done
 if [[ -z $internal ]]; then
     date
     pwd
-    $sislaunch -sispath $sispath $sislaunchfile 
+    $sislaunch -pllcmds $pllcmds -sisworkers $workers -sispath $sispath $sislaunchfile 
 fi
