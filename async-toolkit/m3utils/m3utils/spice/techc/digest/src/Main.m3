@@ -396,6 +396,7 @@ BEGIN
     END;
 
     WHILE pp.keywordPresent("-A") DO
+      (* compute area for a matching tag in a column *)
       WITH colName  = pp.getNext(),
            col      = VAL(Lookup(colName, Entry.CsvColNames), CsvCols),
            colValu  = pp.getNext(),
@@ -407,6 +408,7 @@ BEGIN
     END;
 
     WHILE pp.keywordPresent("-fix") DO
+      (* compute results *only* when the stated column has the stated value *)
       WITH colName = pp.getNext(),
            colIdx  = VAL(Lookup(colName, Entry.CsvColNames), CsvCols),
            colValu = pp.getNext() DO
