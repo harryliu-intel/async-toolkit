@@ -6,92 +6,110 @@ IMPORT Debug;
 IMPORT Thread, OSError;
 
 CONST LR      = LongReal;
-CONST doDebug = FALSE;
 
-PROCEDURE Do(ofn          : TEXT;
-             READONLY res : ARRAY OF LONGREAL; (* sorted *)
-             low          : BOOLEAN;
-             H, G         : CARDINAL)
+VAR doDebug := Debug.DebugThis("Histogram");
+
+PROCEDURE Do(ofn                : TEXT;
+             READONLY res       : ARRAY OF LONGREAL; (* sorted *)
+             low                : BOOLEAN;
+             H, G               : CARDINAL;
+             forceMin, forceMax : LONGREAL)
   RAISES { OSError.E, Wr.Failure, Thread.Alerted } =
   VAR
-    min := res[FIRST(res)];
-    max := res[LAST (res)];
-    hw  := (max - min) / FLOAT(H, LONGREAL);
-    hcnt := NEW(REF ARRAY OF CARDINAL, H);
-    hmax := 0.0d0;
-    sum, sumsq := 0.0d0;
-    n := FLOAT(NUMBER(res),LONGREAL);
+    min, max : LONGREAL;
   BEGIN
-    FOR i := FIRST(hcnt^) TO LAST(hcnt^) DO
-      hcnt[i] := 0
-    END;
-    FOR i := FIRST(res) TO LAST(res) DO
-      sum := sum + res[i];
-      sumsq := sumsq + res[i] * res[i];
-      WITH h  = (res[i] - min) / hw,
-           ht = TRUNC(h) DO
-        hmax := MAX(h,hmax);
 
-        IF doDebug THEN
-          Debug.Out(F("h=%s ht=%s LAST(hcnt^)=%s",
-                      LR(h),
-                      Int(ht),
-                      Int(LAST(hcnt^))))
-        END;
-            
-        INC(hcnt[MIN(ht, LAST(hcnt^))])
-        (* the MAX is FOR a round-off possibility pushing us up... *)
-      END
+    IF forceMin = LAST(LONGREAL) THEN
+      min  := res[FIRST(res)]
+    ELSE
+      min  := forceMin
     END;
-    
-    Debug.Out(F("hmax = %s, H = %s", LR(hmax), Int(H)));
-    
-    (* dump the histogram *)
-    WITH wr  = FileWr.Open(ofn & "_hist.dat") DO
+    IF forceMax = FIRST(LONGREAL) THEN
+      max  := res[LAST (res)]
+    ELSE
+      max  := forceMax
+    END;
+
+    VAR
+      hw   := (max - min) / FLOAT(H, LONGREAL);
+      hcnt := NEW(REF ARRAY OF CARDINAL, H);
+      hmax := 0.0d0;
+      sum, sumsq := 0.0d0;
+      n := FLOAT(NUMBER(res),LONGREAL);
+    BEGIN
       FOR i := FIRST(hcnt^) TO LAST(hcnt^) DO
-        WITH lo = min + hw * FLOAT(i    , LONGREAL),
-             hi = min + hw * FLOAT(i + 1, LONGREAL),
-             c  = hcnt[i] DO
-          IF doDebug THEN
-            Debug.Out(F("hist bin %s from %s to %s cnt %s",
-                        Int(i),
-                        LR(lo),
-                        LR(hi),
-                        Int(c)))
-          END;
-          
-          Wr.PutText(wr, F("%s %s\n", LR(lo), "0.0"));
-          Wr.PutText(wr, F("%s %s\n", LR(hi), "0.0"));
-          Wr.PutText(wr, F("%s %s\n", LR(hi), Int(c)));
-          Wr.PutText(wr, F("%s %s\n", LR(lo), Int(c)));
-          Wr.PutText(wr, F("%s %s\n", LR(lo), "0.0"));
-          Wr.PutText(wr, "\n");
+        hcnt[i] := 0
+      END;
+      FOR i := FIRST(res) TO LAST(res) DO
+        sum := sum + res[i];
+        sumsq := sumsq + res[i] * res[i];
+        IF res[i] >= min AND res[i] <= max THEN
+          WITH h  = (res[i] - min) / hw,
+               ht = TRUNC(h) DO
+            hmax := MAX(h,hmax);
+            
+            IF doDebug THEN
+              Debug.Out(F("h=%s ht=%s LAST(hcnt^)=%s",
+                          LR(h),
+                          Int(ht),
+                          Int(LAST(hcnt^))))
+            END;
+            
+            INC(hcnt[MIN(ht, LAST(hcnt^))])
+            (* the MAX is FOR a round-off possibility pushing us up... *)
+          END
         END
       END;
-      Wr.Close(wr)
-    END;
-    
-    WITH lwr  = FileWr.Open(ofn & "_loss.dat"),
-         Step = MAX(NUMBER(res) DIV G, 1) DO
+      
+      Debug.Out(F("hmax = %s, H = %s", LR(hmax), Int(H)));
+      
+      (* dump the histogram *)
+      WITH wr  = FileWr.Open(ofn & "_hist.dat") DO
+        FOR i := FIRST(hcnt^) TO LAST(hcnt^) DO
+          WITH lo = min + hw * FLOAT(i    , LONGREAL),
+               hi = min + hw * FLOAT(i + 1, LONGREAL),
+               c  = hcnt[i] DO
+            IF doDebug THEN
+              Debug.Out(F("hist bin %s from %s to %s cnt %s",
+                          Int(i),
+                          LR(lo),
+                          LR(hi),
+                          Int(c)))
+            END;
+            
+            Wr.PutText(wr, F("%s %s\n", LR(lo), "0.0"));
+            Wr.PutText(wr, F("%s %s\n", LR(hi), "0.0"));
+            Wr.PutText(wr, F("%s %s\n", LR(hi), Int(c)));
+            Wr.PutText(wr, F("%s %s\n", LR(lo), Int(c)));
+            Wr.PutText(wr, F("%s %s\n", LR(lo), "0.0"));
+            Wr.PutText(wr, "\n");
+          END
+        END;
+        Wr.Close(wr)
+      END;
+      
+      WITH lwr  = FileWr.Open(ofn & "_loss.dat"),
+           Step = MAX(NUMBER(res) DIV G, 1) DO
 
-      FOR i := FIRST(res) TO LAST(res) BY Step DO
-        VAR rem : LONGREAL; BEGIN
-          IF low THEN
-            rem := 1.0d0 - FLOAT(i+1,LONGREAL)/ n
-          ELSE
-            rem := FLOAT(i+1,LONGREAL)/ n
-          END;
-          Wr.PutText(lwr, F("%s %s\n", LR(res[i]), LR(rem)))
-        END
+        FOR i := FIRST(res) TO LAST(res) BY Step DO
+          VAR rem : LONGREAL; BEGIN
+            IF low THEN
+              rem := 1.0d0 - FLOAT(i+1,LONGREAL)/ n
+            ELSE
+              rem := FLOAT(i+1,LONGREAL)/ n
+            END;
+            Wr.PutText(lwr, F("%s %s\n", LR(res[i]), LR(rem)))
+          END
+        END;
+        Wr.Close(lwr)
       END;
-      Wr.Close(lwr)
-    END;
-    
-    WITH mean   = sum   / n,
-         meansq = sumsq / n,
-         var    = n / (n - 1.0d0) * (meansq - mean * mean),
-         sdev   = Math.sqrt(var) DO
-      Debug.Out(F("mean %s sdev %s", LR(mean), LR(sdev)))
+      
+      WITH mean   = sum   / n,
+           meansq = sumsq / n,
+           var    = n / (n - 1.0d0) * (meansq - mean * mean),
+           sdev   = Math.sqrt(var) DO
+        Debug.Out(F("mean %s sdev %s", LR(mean), LR(sdev)))
+      END
     END
   END Do;
 
