@@ -69,6 +69,7 @@ cd $WARD/siliconsmart/extracted
 $TOP/scripts/extract.zsh $cell_list || exit 1
 
 bundles=($(awk '{print $1}' $cell_list |sort -u))
+export bundles
 echo "bundles are " $bundles
 
 # Import library to create Siliconsmart .inst files
