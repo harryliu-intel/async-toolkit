@@ -111,7 +111,6 @@ pwd
 for control in */*/control; do
     mkdir -p $control.updated
     for inst in $control/*.inst; do
-        # try 0.3 for 0p300 (0.4 worked for 0p350)
         $TOP/scripts/half_load.pl ${load_factor}  < $inst  \
                                   |\
         $TOP/scripts/adjust_slews.pl ${slew_factor} > $control.updated/${inst:t}
