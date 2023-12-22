@@ -5,7 +5,7 @@ LB                      \[
 RB                      \]
 ArrayRange              \[{D}{D}*\:{D}{D}*\]
 ArrayIndex              \[{D}{D}*\]
-Bare                    {L}(((\[{D}*\])|{D}|{L}|\.|\/)*(({ArrayRange}|{ArrayIndex})*))
+Bare                    ((\[{D}*\])|{D}|{L}|\.|\/)*{L}(((\[{D}*\])|{D}|{L}|\.|\/)*(({ArrayRange}|{ArrayIndex})*))
 SC                      \/\*
 EC                      \*+\/
 Comment                 {SC}(([^\*]|("*"+[^/\*]))*){EC}

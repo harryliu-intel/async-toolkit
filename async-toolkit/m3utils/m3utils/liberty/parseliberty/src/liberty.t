@@ -1,4 +1,4 @@
-%char [(),+-;:,{}*/=]
+%char [(),+-;:,{}*/=!~]
 %const DEFINE DEFINE_GROUP TTRUE TFALSE LBRACK RBRACK
 %token NUM IDENT STRING
 %const ERROR

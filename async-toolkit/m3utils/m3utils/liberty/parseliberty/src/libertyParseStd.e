@@ -140,5 +140,7 @@ expr: { val : LibertyExpr.T }
   paren   { $$ := $1 }
   uminus  { $$ := LibertyExpr.Uminus($1) }
   uplus   { $$ := LibertyExpr.Uplus($1) }
+  uinv    { $$ := LibertyExpr.Uinverse($1) }
+  ucompl  { $$ := LibertyExpr.Ucompl($1) }
   num     { $$ := LibertyExpr.Num($1) }
   ident   { $$ := LibertyExpr.Ident($1) }

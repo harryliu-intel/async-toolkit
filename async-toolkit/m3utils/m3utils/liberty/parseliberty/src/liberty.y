@@ -70,6 +70,8 @@ expr:
   paren             '(' expr ')'
   uminus            '-' expr
   uplus             '+' expr
+  uinv              '!' expr
+  ucompl            '~' expr
   num               NUM
   ident             IDENT
   

@@ -44,6 +44,16 @@ PROCEDURE Uplus(a : T) : T =
     RETURN NEW(Unary, op := Op.Uplus, a := a)
   END Uplus;
   
+PROCEDURE Uinverse(a : T) : T =
+  BEGIN
+    RETURN NEW(Unary, op := Op.Uinverse, a := a)
+  END Uinverse;
+
+PROCEDURE Ucompl(a : T) : T =
+  BEGIN
+    RETURN NEW(Unary, op := Op.Ucompl, a := a)
+  END Ucompl;
+
 PROCEDURE Num(n : LibertyNumber.T) : T =
   BEGIN
     TYPECASE n OF
