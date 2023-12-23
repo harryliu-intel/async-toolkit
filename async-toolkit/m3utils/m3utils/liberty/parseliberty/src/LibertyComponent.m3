@@ -10,11 +10,13 @@ IMPORT Word;
 REVEAL
   T = LibertyComponentChildren.Private BRANDED Brand OBJECT
     id : REF CARDINAL := NIL;
+    fertile := TRUE; (*cleared by DefaultChildren*)
   OVERRIDES
     getId           := DefaultId;
     children        := DefaultChildren;
     makeParentLinks := MakeParentLinks;
     getParent       := GetParent;
+    canHaveChildren := CanHaveChildren;
   END;
 
 VAR rand := NEW(Random.Default).init();
@@ -34,10 +36,17 @@ PROCEDURE DefaultId(t : T) : CARDINAL =
 PROCEDURE Hash(t : T) : Word.T =
   BEGIN RETURN t.getId() END Hash;
 
-PROCEDURE DefaultChildren(<*UNUSED*>t : T) : LibertyComponentSeq.T =
+PROCEDURE DefaultChildren(t : T) : LibertyComponentSeq.T =
   BEGIN
+    t.fertile := FALSE;
     RETURN LibertyComponentSeqBuilder.BuildSeq()
   END DefaultChildren;
+
+PROCEDURE CanHaveChildren(t : T) : BOOLEAN =
+  BEGIN
+    EVAL t.children();
+    RETURN t.fertile
+  END CanHaveChildren;
 
 PROCEDURE MakeParentLinks(t : T) =
   BEGIN

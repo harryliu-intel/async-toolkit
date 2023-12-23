@@ -6,6 +6,7 @@ REVEAL
 
 TYPE
   Private = LibertyComponent.Public OBJECT METHODS
+    canHaveChildren() : BOOLEAN;
     children() : LibertyComponentSeq.T;
   END;
 
