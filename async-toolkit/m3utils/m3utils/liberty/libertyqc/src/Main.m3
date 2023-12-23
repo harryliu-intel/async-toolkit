@@ -163,10 +163,23 @@ PROCEDURE CheckNumber(val : LONGREAL; maxval : LONGREAL; p : LibertyComponent.T)
     IF TagMatch(p, tagexlst) THEN
       IF val > maxval THEN
         exitVal := 1;
-        IF CheckMaxprint(p, maxErrs) THEN
+
+        PROCEDURE Msg() : TEXT =
+          BEGIN
+            RETURN
+              F("checkmaxval %s > %s at %s\n", LR(val), LR(maxval), FormatComp(p))
+          END Msg;
+        BEGIN
+          IF doWorst AND val > worstVal THEN
+            worstTxt := Msg();
+            worstVal := val
+          END;
+        
+          IF CheckMaxprint(p, maxErrs) THEN
           
-          Wr.PutText(Stdio.stdout, F("checkmaxval %s > %s at %s\n", LR(val), LR(maxval), FormatComp(p)));
-          Wr.Flush(Stdio.stdout)
+            Wr.PutText(Stdio.stdout, Msg());
+            Wr.Flush(Stdio.stdout)
+          END
         END
       END
     END
@@ -312,9 +325,15 @@ VAR
   maxErrs  := NEW(RefSeq.T).init();
   tagexlst : RegExList.T := NIL;
   exitVal  := 0;
+
+  doWorst : BOOLEAN;
+  worstTxt : TEXT := NIL;
+  worstVal := FIRST(LONGREAL);
   
 BEGIN
   TRY
+    doWorst := pp.keywordPresent("-worst");
+    
     IF pp.keywordPresent("-help") THEN
       Wr.PutText(Stdio.stderr, HelpText)
     END;
@@ -372,6 +391,11 @@ BEGIN
     IF mode IN modes THEN
       RunMode[mode]()
     END
+  END;
+
+  IF worstTxt # NIL THEN
+    Wr.PutText(Stdio.stdout, "WORST : " & worstTxt);
+    Wr.Flush(Stdio.stdout)
   END;
 
   Process.Exit(exitVal)
