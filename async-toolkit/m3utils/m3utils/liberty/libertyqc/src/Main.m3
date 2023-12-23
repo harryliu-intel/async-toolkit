@@ -60,6 +60,10 @@ CONST HelpText =
 "   \n" &
 "     Path to lib file.  Use - for standard input.\n" &
 "\n" &
+"   -worst\n" &
+"\n" &
+"      print data concerning the worst (largest) value matching\n";
+"\n" &
 "   -help\n" &
 "\n" &
 "      print this help\n";
