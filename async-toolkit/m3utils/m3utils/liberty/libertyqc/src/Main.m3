@@ -28,6 +28,7 @@ IMPORT RefSeq;
 IMPORT RegEx, RegExList;
 IMPORT Process;
 IMPORT Wr;
+IMPORT SeekRd;
 
 CONST TE = Text.Equal;
       LR = LongReal;
@@ -62,7 +63,7 @@ CONST HelpText =
 "\n" &
 "   -worst\n" &
 "\n" &
-"      print data concerning the worst (largest) value matching\n";
+"      print data concerning the worst (largest) value matching\n" &
 "\n" &
 "   -help\n" &
 "\n" &
@@ -366,7 +367,7 @@ BEGIN
     
     WITH fn = pp.getNext() DO
       IF TE(fn, "-") THEN
-        rd := Stdio.stdin
+        rd := SeekRd.Stdin()
       ELSE
         TRY
           rd := FileRd.Open(fn)
@@ -384,7 +385,8 @@ BEGIN
   END;
 
   TRY
-    lib := LibertyParse.Parse(rd)
+    lib := LibertyParse.Parse(rd);
+    Rd.Close(rd)
   EXCEPT
     Rd.Failure(e) =>
     Debug.Error(F("I/O error while parsing liberty : Rd.Failure : %s\n%s",
