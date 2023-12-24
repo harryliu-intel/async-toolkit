@@ -1,5 +1,21 @@
 MODULE Main;
 
+(* 
+
+   libertyqc : Simple quality control of Liberty timing files
+
+   Current function is just to look for large (positive or negative) numbers in
+   .lib files.  Other functions to be added later.
+
+   Uses the Liberty parser from the Barefoot LAMB project to
+   understand the Liberty files.
+
+   Author : mika.nystroem@intel.com
+
+   December, 2023
+
+*)
+
 IMPORT LibertyParse;
 IMPORT ParseParams;
 IMPORT Stdio;
@@ -29,6 +45,11 @@ IMPORT RegEx, RegExList;
 IMPORT Process;
 IMPORT Wr;
 IMPORT SeekRd;
+IMPORT Thread;
+
+
+<*FATAL Thread.Alerted*>
+
 
 CONST TE = Text.Equal;
       LR = LongReal;
@@ -67,10 +88,12 @@ CONST HelpText =
 "\n" &
 "   -help\n" &
 "\n" &
-"      print this help\n";
-
-
-
+"      print this help\n"&
+"\n" &
+"    EXAMPLE\n" &
+"\n" &
+"    zcat file.lib.gz | libertyqc -maxprint cell 2 -checkmaxval 1000 -tag cell -tag timing -tag values -worst -\n"
+;
       
 VAR Verbose := Debug.DebugThis("libertyqc");
 
@@ -163,17 +186,25 @@ PROCEDURE TagMatch(p : LibertyComponent.T; lst : RegExList.T) : BOOLEAN =
     RETURN TRUE
   END TagMatch;
   
-PROCEDURE CheckNumber(val : LONGREAL; maxval : LONGREAL; p : LibertyComponent.T) =
+PROCEDURE CheckNumber(valarg : LONGREAL; maxval : LONGREAL; p : LibertyComponent.T) =
+  VAR
+    val : LONGREAL;
   BEGIN
+    IF abs THEN val := ABS(valarg) ELSE val := valarg END;
+    
     IF TagMatch(p, tagexlst) THEN
       IF val > maxval THEN
         exitVal := 1;
 
         PROCEDURE Msg() : TEXT =
           BEGIN
-            RETURN
-              F("checkmaxval %s > %s at %s\n", LR(val), LR(maxval), FormatComp(p))
+            IF valarg > 0.0d0 THEN
+              RETURN F("checkmaxval %s > %s at %s\n", LR(valarg), LR(maxval), FormatComp(p))
+            ELSE
+              RETURN F("checkmaxval ABS(%s) > %s at %s\n", LR(valarg), LR(maxval), FormatComp(p))
+            END
           END Msg;
+          
         BEGIN
           IF doWorst AND val > worstVal THEN
             worstTxt := Msg();
@@ -250,7 +281,7 @@ PROCEDURE CheckMaxprint(p : LibertyComponent.T; seq : RefSeq.T) : BOOLEAN =
 
 PROCEDURE FormatComp(p : LibertyComponent.T) : TEXT =
   VAR
-    idStr := Int(p.getId());
+    <*NOWARN*>idStr := Int(p.getId());
     q := p;
     str := "";
     iStr := "";
@@ -320,6 +351,11 @@ TYPE
     curObj : LibertyComponent.T;
     curCnt : CARDINAL;
   END;
+  (* MaxErrors is used to limit output printing.
+
+     For each output tag, print no more than maxCnt of a given message
+     for each instance of that tag.
+  *)
 
 VAR
   modes    := SET OF Mode { };
@@ -334,13 +370,18 @@ VAR
   doWorst : BOOLEAN;
   worstTxt : TEXT := NIL;
   worstVal := FIRST(LONGREAL);
+
+  abs      := TRUE;
   
 BEGIN
   TRY
+    abs     := NOT pp.keywordPresent("-noabs");
+    
     doWorst := pp.keywordPresent("-worst");
     
-    IF pp.keywordPresent("-help") THEN
-      Wr.PutText(Stdio.stderr, HelpText)
+    IF pp.keywordPresent("-help") OR pp.keywordPresent("--help") THEN
+      Wr.PutText(Stdio.stderr, HelpText);
+      Process.Exit(0)
     END;
     
     IF pp.keywordPresent("-checkmaxval") THEN
@@ -368,6 +409,8 @@ BEGIN
     WITH fn = pp.getNext() DO
       IF TE(fn, "-") THEN
         rd := SeekRd.Stdin()
+        (* we can't just use Stdio.stdin here : 
+           parser uses Rd.Seek() on its input stream *)
       ELSE
         TRY
           rd := FileRd.Open(fn)
