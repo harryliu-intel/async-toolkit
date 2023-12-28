@@ -1,0 +1,11 @@
+import("cit_util")
+import("mscheme")
+import("sstubgen")
+import("modula3scheme")
+import("parseparams")
+import("parseliberty")
+import("ctlib")
+
+implementation ("Main")
+
+program ("libertyscale")
