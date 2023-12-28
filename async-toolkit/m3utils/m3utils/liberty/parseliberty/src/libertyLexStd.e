@@ -10,6 +10,8 @@ IMPORT Debug;
 IMPORT LibertyNumber;
 IMPORT SpecialScan AS Scan;
 IMPORT Text;
+
+VAR Verbose := Debug.DebugThis("libertyLexStd");
 }
 
 IDENT:	   { val : TEXT }
@@ -17,10 +19,10 @@ STRING:    { val : TEXT }
 NUM:       { val : LibertyNumber.T }
 
 
-bare_IDENT   {Debug.Out("got ident " & $); $R IDENT{$$ := $}}
+bare_IDENT   {IF Verbose THEN Debug.Out("got ident " & $) END; $R IDENT{$$ := $}}
 
 STRING {
-  Debug.Out("got string " & $);
+  IF Verbose THEN Debug.Out("got string " & $) END;
   WITH len = Text.Length($),
        sub = Text.Sub($, 1, len - 2),
        str = Scan.String(sub) DO

@@ -6,6 +6,9 @@ IMPORT LibertyComponentSeq;
 IMPORT LibertyComponentSeqBuilder;
 IMPORT Random;
 IMPORT Word;
+IMPORT TextWr;
+IMPORT Wr;
+IMPORT RTName;
 
 REVEAL
   T = LibertyComponentChildren.Private BRANDED Brand OBJECT
@@ -17,11 +20,21 @@ REVEAL
     makeParentLinks := MakeParentLinks;
     getParent       := GetParent;
     canHaveChildren := CanHaveChildren;
+    format          := Format;
+    debugDump       := DebugDump;
   END;
 
 VAR rand := NEW(Random.Default).init();
 VAR mu := NEW(MUTEX);
-    
+
+PROCEDURE Format(t : T) : TEXT =
+  VAR
+    wr := TextWr.New();
+  BEGIN
+    t.write(wr);
+    RETURN TextWr.ToText(wr)
+  END Format;
+  
 PROCEDURE DefaultId(t : T) : CARDINAL =
   BEGIN
     IF t.id = NIL THEN
@@ -63,4 +76,28 @@ PROCEDURE MakeParentLinks(t : T) =
 PROCEDURE GetParent(t : T) : T =
   BEGIN RETURN t.parent END GetParent;
 
+PROCEDURE DebugDump(t : T) : TEXT =
+  VAR
+    wr := TextWr.New();
+  BEGIN
+    DebugDumpPrint(wr, t, 0);
+    RETURN TextWr.ToText(wr)
+  END DebugDump;
+
+PROCEDURE DebugDumpPrint(wr : Wr.T; t : T; indent : CARDINAL) =
+  BEGIN
+    FOR i := 0 TO indent - 1 DO
+      Wr.PutChar(wr, ' ')
+    END;
+    Wr.PutText(wr, RTName.GetByTC(TYPECODE(t)));
+    Wr.PutText(wr, " : ");
+    t.write(wr);
+    Wr.PutChar(wr, '\n');
+    WITH children = t.children() DO
+      FOR i := 0 TO children.size() - 1 DO
+        DebugDumpPrint(wr, children.get(i), indent + 4)
+      END
+    END
+  END DebugDumpPrint;
+  
 BEGIN END LibertyComponent.

@@ -8,6 +8,7 @@ TYPE
   Private = LibertyComponent.Public OBJECT METHODS
     canHaveChildren() : BOOLEAN;
     children() : LibertyComponentSeq.T;
+    debugDump() : TEXT;
   END;
 
 CONST Brand = "LibertyComponentChildren";
