@@ -64,6 +64,10 @@ CONST HelpText =
 "\n" &
 "     Look for values exceeding maximum.\n" &
 "\n" &
+"   -filtermax <value>\n" &
+"\n" &
+"     Skip values exceeding <value>.\n" &
+"\n" &
 "   -tag <tag regex>\n" &
 "\n" &
 "     Look only for values in contexts matching <tag regex>.  Repeated use of\n" &
@@ -193,7 +197,7 @@ PROCEDURE CheckNumber(valarg : LONGREAL; maxval : LONGREAL; p : LibertyComponent
     IF abs THEN val := ABS(valarg) ELSE val := valarg END;
     
     IF TagMatch(p, tagexlst) THEN
-      IF val > maxval THEN
+      IF val > maxval AND val <= filterMax THEN
         exitVal := 1;
 
         PROCEDURE Msg() : TEXT =
@@ -370,6 +374,7 @@ VAR
   doWorst : BOOLEAN;
   worstTxt : TEXT := NIL;
   worstVal := FIRST(LONGREAL);
+  filterMax:= LAST(LONGREAL);
 
   abs      := TRUE;
   
@@ -387,6 +392,10 @@ BEGIN
     IF pp.keywordPresent("-checkmaxval") THEN
       modes := modes + SET OF Mode { Mode.Maxval };
       maxval := pp.getNextLongReal()
+    END;
+    
+    IF pp.keywordPresent("-filtermax") THEN
+      filterMax := pp.getNextLongReal()
     END;
 
     WHILE pp.keywordPresent("-maxprint") DO
