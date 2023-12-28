@@ -384,8 +384,8 @@ BEGIN
 
       timingTagVisitor := NEW(TaggedVisitor,
                               tag         := "timing",
-                              needAttr    := timingType,
-                              needAttrVal := "min_pulse_width",
+                              needAttr    := "timing_type",
+                              needAttrVal := timingType,
                               next        := ocvRiseOrFallVisitor);
       cellTagVisitor   := NEW(TaggedVisitor,
                               tag  := "cell"  ,

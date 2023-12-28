@@ -18,7 +18,7 @@ PROCEDURE Write(t : T; wr : Wr.T; pfx : TEXT)
   BEGIN
     Wr.PutText(wr, pfx);
     Wr.PutText(wr, t.ident);
-    Wr.PutText(wr, " (");
+    Wr.PutText(wr, "(");
 
     FOR i := 0 TO t.params.size() - 1 DO
       t.params.get(i).write(wr, "");

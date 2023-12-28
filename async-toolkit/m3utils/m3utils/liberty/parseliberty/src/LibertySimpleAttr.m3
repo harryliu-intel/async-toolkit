@@ -23,7 +23,7 @@ PROCEDURE Write(t : T; wr : Wr.T; pfx : TEXT)
     END;
     t.attrValExpr.write(wr, "");
     CASE t.syntax OF
-      Syntax.ColonSemi, Syntax.Eq    => Wr.PutText(wr, ";")
+      Syntax.ColonSemi, Syntax.Eq    => Wr.PutText(wr, " ; ")
     |
       Syntax.Colon                   => (* skip *)
     END

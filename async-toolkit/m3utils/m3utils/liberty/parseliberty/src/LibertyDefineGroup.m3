@@ -15,7 +15,7 @@ PROCEDURE Write(t : T; wr : Wr.T; pfx : TEXT)
   RAISES { Wr.Failure, Thread.Alerted }=
   BEGIN
     Wr.PutText(wr, pfx); 
-    Wr.PutText(wr, "define_group (");
+    Wr.PutText(wr, "define_group(");
     t.s[0].write(wr, "");
     Wr.PutText(wr, ", ");
     t.s[1].write(wr, "");

@@ -18,10 +18,11 @@ PROCEDURE Write(t : T; wr : Wr.T; pfx : TEXT)
     <*ASSERT t.statements # NIL*>
     <*ASSERT wr # NIL*>
     <*ASSERT pfx # NIL*>
-    
+
+    Wr.PutChar(wr, '\n');
     Wr.PutText(wr, pfx);
     t.head.write(wr, "");
-    Wr.PutText(wr, " {\n");
+    Wr.PutText(wr, " { \n");
     FOR i := 0 TO t.statements.size() - 1 DO
       WITH s = t.statements.get(i) DO
         <*ASSERT s # NIL*>
@@ -30,7 +31,7 @@ PROCEDURE Write(t : T; wr : Wr.T; pfx : TEXT)
       END
     END;
     Wr.PutText(wr, pfx);
-    Wr.PutText(wr, "}\n")
+    Wr.PutText(wr, "}")
   END Write;
 
 PROCEDURE Children(t : T) : SeqBuilder.T =
