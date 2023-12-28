@@ -58,7 +58,7 @@ IMPORT TextList;
 CONST TE = Text.Equal;
       LR = LongReal;
 
-CONST HelpText = "";
+CONST HelpText = "Usage : libertyscale -i <input lib> -o <output lib> -factor <scale factor> -timing_type <timing_type> -values <edit values> [-values <edit values> ...] -factor <scale factor>";
       
 VAR
   pp       := NEW(ParseParams.T).init(Stdio.stderr);
