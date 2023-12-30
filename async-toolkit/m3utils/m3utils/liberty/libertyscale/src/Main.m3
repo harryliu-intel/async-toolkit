@@ -61,11 +61,11 @@ CONST TE = Text.Equal;
 CONST HelpText = "Usage : libertyscale -i <input lib> -o <output lib> -factor <scale factor> -timing_type <timing_type> -values <edit values> [-values <edit values> ...] -factor <scale factor>";
       
 VAR
-  pp       := NEW(ParseParams.T).init(Stdio.stderr);
+  pp              := NEW(ParseParams.T).init(Stdio.stderr);
   rd       : Rd.T;
   wr       : Wr.T := Stdio.stdout;
   lib      : LibertyComponent.T;
-  Verbose  := Debug.DebugThis("libertyscale");
+  Verbose         := Debug.DebugThis("libertyscale");
 
 TYPE
   Visitor = OBJECT METHODS

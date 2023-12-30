@@ -9,6 +9,7 @@ IMPORT Word;
 IMPORT TextWr;
 IMPORT Wr;
 IMPORT RTName;
+IMPORT Text;
 
 REVEAL
   T = LibertyComponentChildren.Private BRANDED Brand OBJECT
@@ -76,26 +77,44 @@ PROCEDURE MakeParentLinks(t : T) =
 PROCEDURE GetParent(t : T) : T =
   BEGIN RETURN t.parent END GetParent;
 
-PROCEDURE DebugDump(t : T) : TEXT =
+PROCEDURE DebugDump(t : T; truncate : CARDINAL) : TEXT =
   VAR
     wr := TextWr.New();
   BEGIN
-    DebugDumpPrint(wr, t, 0);
+    DebugDumpPrint(wr, t, 0, truncate);
     RETURN TextWr.ToText(wr)
   END DebugDump;
 
-PROCEDURE DebugDumpPrint(wr : Wr.T; t : T; indent : CARDINAL) =
+PROCEDURE DebugDumpPrint(wr : Wr.T; t : T; indent, truncate : CARDINAL) =
   BEGIN
     FOR i := 0 TO indent - 1 DO
       Wr.PutChar(wr, ' ')
     END;
     Wr.PutText(wr, RTName.GetByTC(TYPECODE(t)));
     Wr.PutText(wr, " : ");
-    t.write(wr);
+
+    IF truncate = LAST(CARDINAL) THEN
+      t.write(wr)
+    ELSE
+      WITH tempWr = TextWr.New() DO
+        t.write(tempWr);
+        WITH str = TextWr.ToText(tempWr),
+             len = Text.Length(str) DO
+          IF len > truncate THEN
+            Wr.PutText(wr, Text.Sub(str, 0, truncate - 13));
+            Wr.PutText(wr, "...");
+            Wr.PutText(wr, Text.Sub(str, len - 10, 10))
+          ELSE
+            Wr.PutText(wr, str)
+          END
+        END
+      END
+    END;
+
     Wr.PutChar(wr, '\n');
     WITH children = t.children() DO
       FOR i := 0 TO children.size() - 1 DO
-        DebugDumpPrint(wr, children.get(i), indent + 4)
+        DebugDumpPrint(wr, children.get(i), indent + 4, truncate)
       END
     END
   END DebugDumpPrint;
