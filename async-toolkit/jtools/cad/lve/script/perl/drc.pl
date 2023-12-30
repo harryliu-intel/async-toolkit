@@ -12,8 +12,6 @@ use File::Spec;
 
 my $pwd=getcwd();
 my $working_dir = "$pwd";
-my $gdsii="";
-my $gdsii_list="";
 my $icv_options="";
 my @include_before=();
 my $threads=2;
@@ -22,8 +20,6 @@ my $jobs=0;
 my $flow="drcd";
 my $pdk_root="";
 my $icv_runset_path="$ENV{PDK_CPDK_PATH}/runsets/icvtdr";
-my $oasis = 1;
-my $format = "GDSII";
 
 # map flows to runsets
 my %default_runset;
@@ -36,18 +32,15 @@ $default_runset{"cmden"}="denall";
 sub usage {
     my ($msg) = @_;
     print STDERR "$msg\n" if defined $msg;
-    my $usage  = "Usage: drc [args] cell\n";
+    my $usage  = "Usage: drc [args] [path/]cell.[oas|gds]\n";
     $usage .= "    --working-dir=[$working_dir]\n";
     $usage .= "    --icv-runset-path=[$icv_runset_path] (DRC runset path)\n";
-    $usage .= "    --gds2-file=[$gdsii] (Provide source layout by gdsii file.)\n";
-    $usage .= "    --gds2-list=[$gdsii_list] (Provide source layout by a file list contains gdsii file)\n";
     $usage .= "    --icv-options=[$icv_options] (Extra ICV command options)\n";
     $usage .= "    --include-before=[@include_before] (Prepend directory to include search path)\n";
     $usage .= "    --threads=[$threads] (ICV thread)\n";
     $usage .= "    --jobs=[$jobs] (Netbatch jobs; if specified, --threads is per job)\n";
     $usage .= "    --mem=[$mem] (Memory in GB, if Netbatch enabled)\n";
     $usage .= "    --flow=[$flow] (DRC runset selection. Default will run $flow)\n";
-    $usage .= "    --oasis=[$oasis] (output oasis format)\n";
     $usage .= "    --fulcrum-pdk-root=[$pdk_root]\n";
     $usage .= "    --help (Shows this menu)\n";
     die "$usage\n";
@@ -59,10 +52,6 @@ while (defined $ARGV[0] and $ARGV[0] =~ /^--(.*)/) {
     $value=1 if ! defined $value;
     if ($flag eq "working-dir") {
             $working_dir = $value;
-    } elsif ($flag eq "gds2-file") {
-            $gdsii = $value;
-    } elsif ($flag eq "gds2-list") {
-            $gdsii_list = $value;
     } elsif ($flag eq "threads") {
         $threads = $value;
     } elsif ($flag eq "jobs") {
@@ -71,8 +60,6 @@ while (defined $ARGV[0] and $ARGV[0] =~ /^--(.*)/) {
         $mem = $value;
     } elsif ($flag eq "flow") {
         $flow = $value;
-    } elsif ($flag eq "oasis") {
-        $oasis = $value;
     } elsif ($flag eq "icv-runset-path") {
         $icv_runset_path = $value;
     } elsif ($flag eq "icv-options") {
@@ -94,17 +81,19 @@ my %drc_runsets;
 my @flows=split(',',$flow);
 
 @ARGV == 1 or usage("No Cell");
-my $cell_name = shift;
+my $file = shift;
 -d $working_dir ne "" or $working_dir = $pwd;
 chomp $working_dir;
 $pdk_root="$ENV{FULCRUM_PDK_ROOT}" if ( ! ( -d $pdk_root ) and -d $ENV{FULCRUM_PDK_ROOT});
 -d $pdk_root or usage("fulcrum-pdk-root improperly defined");
-$gdsii = $cell_name . ".gds" if (!$oasis && $gdsii eq "" && $gdsii_list eq "");
-$gdsii = $cell_name . ".oas" if ( $oasis && $gdsii eq "" && $gdsii_list eq "");
-if (! -e $gdsii) {
-    die "Layout file " . $gdsii . " not found.\n";
-}
-$format = "OASIS" if ($oasis);
+unless (-r $file) { die "Layout file " . $file . " not readable.\n"; }
+
+# infer cell name and format from file name
+my $format;
+my $cell_name;
+if    ($file =~ /([^\/]+)\.oas$/) { $cell_name=$1; $format="OASIS"; }
+elsif ($file =~ /([^\/]+)\.gds$/) { $cell_name=$1; $format="GDSII"; }
+else                              { die "Expect .oas or .gds extension\n"; }
 
 ##########################################################################
 #                               DRC                                      #
@@ -119,7 +108,7 @@ main();
 sub main{
   foreach my $f (@flows) {
     my $drc_run_dir="$working_dir/$f";
-    system('mkdir', '-p', "$drc_run_dir"); 
+    system('mkdir', '-p', "$drc_run_dir");
     run_drc($f,$drc_run_dir, $icv_runset_path, $drc_runsets{$f});
   }
 }
@@ -176,7 +165,7 @@ sub run_drc {
        "$run_dir"
    );
    my $all_includes = join(" \\\n", map { "-I $_" } @all_includes);
-   
+
    print CF <<ET;
 #!/usr/intel/bin/tcsh -f
 setenv _ICV_RSH_COMMAND $ENV{'FULCRUM_PACKAGE_ROOT'}/bin/icvrsh
@@ -205,21 +194,8 @@ ET
      print CF "-dp$threads \\\n" .
               "-turbo \\\n";
    }
-    
-
    print CF "$icv_options \\\n" if (defined $icv_options ne "");
-   if(-r $gdsii) {
-      print CF "-i \'".abs_path($gdsii)."\' \\\n";
-   }elsif(-r $gdsii_list) {
-      open(FL,"<$gdsii_list");
-      while(<FL>){
-        chomp;
-        s/\s+//g;
-        next if ($_ eq "");
-        print CF "-i \'".abs_path($_)."\' \\\n";
-      }
-      close(FL);
-   }
+   print CF "-i \'".abs_path($file)."\' \\\n";
    print CF "-c $cell_name \\\n";
    print CF "$runset\n";
     close(CF);
