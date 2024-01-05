@@ -32,7 +32,7 @@ $default_runset{"cmden"}="denall";
 sub usage {
     my ($msg) = @_;
     print STDERR "$msg\n" if defined $msg;
-    my $usage  = "Usage: drc [args] [path/]cell.[oas|gds]\n";
+    my $usage  = "Usage: drc [args] [path/]cell.[oas|gds] [topcell]\n";
     $usage .= "    --working-dir=[$working_dir]\n";
     $usage .= "    --icv-runset-path=[$icv_runset_path] (DRC runset path)\n";
     $usage .= "    --icv-options=[$icv_options] (Extra ICV command options)\n";
@@ -80,7 +80,7 @@ while (defined $ARGV[0] and $ARGV[0] =~ /^--(.*)/) {
 my %drc_runsets;
 my @flows=split(',',$flow);
 
-@ARGV == 1 or usage("No Cell");
+@ARGV or usage("No File Specified");
 my $file = shift;
 -d $working_dir ne "" or $working_dir = $pwd;
 chomp $working_dir;
@@ -94,6 +94,7 @@ my $cell_name;
 if    ($file =~ /([^\/]+)\.oas$/) { $cell_name=$1; $format="OASIS"; }
 elsif ($file =~ /([^\/]+)\.gds$/) { $cell_name=$1; $format="GDSII"; }
 else                              { die "Expect .oas or .gds extension\n"; }
+$cell_name=shift if @ARGV; # optionally override top cell name
 
 ##########################################################################
 #                               DRC                                      #
