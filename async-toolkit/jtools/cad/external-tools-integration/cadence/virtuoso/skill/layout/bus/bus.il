@@ -217,7 +217,8 @@ wires_modtime = makeTable("wires" 0)
 )
 
 ; redraw all pins in conjunction with inplace pins
-(defun RedrawAllPins (@key (CV (geGetEditCellView)) (inplace_pins t) (include_supply nil) (supply_topMetal -1))
+(defun RedrawAllPins (@key (CV (geGetEditCellView)) (inplace_pins t)
+                           (include_supply nil) (supply_topMetal TopSupplyMetal))
   (DeletePinsExcludeType "Power" ?CV CV)
   (DeletePinsByPurpose "pin" ?CV CV)
   (DeletePinsByType "InPlace" ?CV CV)

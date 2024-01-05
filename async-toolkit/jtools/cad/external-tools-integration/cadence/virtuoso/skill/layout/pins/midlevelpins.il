@@ -24,7 +24,7 @@
 */
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun DrawMidLevelPins ( @key (CV (UIGetCellView)) (include_supply nil) (supply_topMetal -1)
+(defun DrawMidLevelPins ( @key (CV (UIGetCellView)) (include_supply nil) (supply_topMetal TopSupplyMetal)
                                (all_supply nil) (all_signal nil) (all_layers nil) (inplace_pins t) )
   (let (TEMP
         WarningFile
@@ -93,10 +93,10 @@
              )
 
     (unless all_layers
-      ; restrict candidates to M0 and above
+      ; restrict candidates to metal layers and compute topMetal
       pinList=nil
       (foreach fig InPlacePinList
-               (for m 0 TopAprMetal
+               (for m 0 TopMetal
                     (when fig->layerName==Metal[m]
                       topMetal=(max topMetal m)
                       pinList=(cons fig pinList)

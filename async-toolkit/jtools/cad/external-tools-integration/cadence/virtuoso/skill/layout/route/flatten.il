@@ -7,7 +7,7 @@ useICV = t
 ; Top-level function to make a flatten view and switch to it
 (defun MakeFlatten
   (@key (CV (geGetEditCellView))   ; specify CellView or nil to use edit view
-        (topMetal 8)               ; top metal for power grid
+        (topMetal TopAprMetal)     ; top metal for power grid
         (RegenerateFromCast nil)   ; force CAST query
         (Verbose nil)              ; verbose
         (ConnectDanglingPins nil)  ; paint metal on top of one-terminal subcell pins
@@ -48,7 +48,7 @@ useICV = t
     ; draw pins and canonicalize preroutes
     (AddBusWires ?CV CV)
     (UpdateFloorplan ?CV CV ?recurse nil ?skipInstances t ?skipNets t) ; connect subcell pins for in-place pins
-    (RedrawAllPins ?CV CV ?include_supply t ?supply_topMetal topMetal ?inplace_pins inPlacePins)
+    (RedrawAllPins ?CV CV ?include_supply t ?inplace_pins inPlacePins)
     (CanonicalizeNets ?CV CV)
     (DeleteRedundantPins ?CV CV ?warnOnly !delete_redundant_pins)
     (UpdateFloorplan ?CV CV ?recurse nil ?skipInstances t) ; set pin directions
