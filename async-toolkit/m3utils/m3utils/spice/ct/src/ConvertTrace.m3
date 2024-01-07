@@ -298,6 +298,8 @@ TYPE
   ParseFmt = { Tr0, Fsdb };
   
 BEGIN
+  Debug.SetOptions(SET OF Debug.Options {Debug.Options.PrintThreadID, Debug.Options.PrintPID });
+  
   TRY
 
     translate := pp.keywordPresent("-translate");

@@ -23,6 +23,7 @@
 #endif
 
 #include "ffrAPI.h"
+#include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -56,6 +57,9 @@ static int verbose=(verbosestr ? atoi(verbosestr) : 0);
 
 #define CMDBUFSIZ 2048
 
+static pid_t       mypid     = getpid();
+static const char *myname    = "nanosimrd";
+
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
 
@@ -79,7 +83,7 @@ BuildVar(fsdbTreeCBDataVar *var);
 void
 myfree(void *p)
 {
-  if(verbose>=100)fprintf(stderr, "free(0x%x)\n", p);
+  if(verbose>=100)fprintf(stderr, "%s %d : free(0x%x)\n", myname, mypid, p);
   free(p);
 }
 
@@ -247,7 +251,7 @@ setup(char *fn)
     // check the file to see if it's a fsdb file or not.
     //
     if (FALSE == ffrObject::ffrIsFSDB(fn)) {
-	fprintf(stderr, "%s is not an fsdb file.\n", fn);
+        fprintf(stderr, "%s %d : %s is not an fsdb file.\n", myname, mypid, fn);
 	return FSDB_RC_FAILURE;
     }
 
@@ -256,8 +260,8 @@ setup(char *fn)
     ffrObject::ffrGetFSDBInfo(fn, fsdb_info);
 
     if (FSDB_FT_NANOSIM != fsdb_info.file_type) {
-  	fprintf(stderr, "file type is not nanosim but %d.\n",
-                fsdb_info.file_type);
+  	fprintf(stderr, "%s %d : file type is not nanosim but %d.\n",
+                myname, mypid, fsdb_info.file_type);
 	return FSDB_RC_FAILURE;
     }
 
@@ -287,14 +291,15 @@ setup(char *fn)
     //
     fsdb_obj =  ffrObject::ffrOpen3(fn);
     if (NULL == fsdb_obj) {
-	fprintf(stderr, "ffrObject::ffrOpen() failed.\n");
+        fprintf(stderr, "%s %d ffrObject::ffrOpen() failed.\n", myname, mypid);
 	exit(FSDB_RC_OBJECT_CREATION_FAILED);
     }
     fsdb_obj->ffrSetTreeCBFunc(__MyTreeCB, NULL);
 
     if (FSDB_FT_NANOSIM != fsdb_obj->ffrGetFileType()) {
 	fprintf(stderr, 
-		"%s is not nanosim type fsdb, just return.\n", fn);
+		"%s %d : %s is not nanosim type fsdb, just return.\n",
+                myname, mypid, fn);
 	fsdb_obj->ffrClose();
 	return FSDB_RC_SUCCESS;
     }
@@ -331,10 +336,10 @@ static int_dq *active=new_int_dq();
 int
 open_signal_range(void)
 {
-  if (verbose) fprintf(stderr, "open_signal_range()\n");
+  if (verbose) fprintf(stderr, "%s %d : open_signal_range()\n", myname, mypid);
 
   for(int_dq *p=active->next; p != active; p = p->next) {
-    if (verbose>=10) fprintf(stderr, "signal %u\n", p->val);
+    if (verbose>=10) fprintf(stderr, "%s %d : signal %u\n", myname, mypid, p->val);
     fsdb_obj->ffrAddToSignalList(p->val);
   }
 
@@ -343,10 +348,10 @@ open_signal_range(void)
 int
 load_signals(void)
 {
-  fprintf(stderr, "loading signals\n");
+  fprintf(stderr, "%s %d : loading signals\n", myname, mypid);
   fsdb_obj->ffrLoadSignals();
 
-  fprintf(stderr, "signals loaded\n");
+  fprintf(stderr, "%s %d : signals loaded\n", myname, mypid);
 }
 
 #define TRAVERSE_TIME     1
@@ -373,7 +378,7 @@ PrintTimeValChng(ffrVCTrvsHdl   vc_trvs_hdl,
     if (mode & TRAVERSE_BINARY) {
 
       if (tidx >= lim) {
-        fprintf(stderr, "Error: time array overrun @ %s\n", tidx);
+        fprintf(stderr, "%s %d : error: time array overrun @ %s\n", myname, mypid, tidx);
         exit(-1);
       }
       
@@ -521,8 +526,8 @@ do_timecheck(unsigned            *timecheck_ok,
   unsigned this_ok = timemem_equal(mem, idx, time);
 
   if (*timecheck_ok && !this_ok)
-    fprintf(stderr, "time check failed idx=%u time=%u %u\n",
-            idx, time->H, time->L);
+    fprintf(stderr, "%s %d : time check failed idx=%u time=%u %u\n",
+            myname, mypid, idx, time->H, time->L);
 
   *timecheck_ok &= this_ok;
 }
@@ -546,7 +551,7 @@ void
 start_filter(void)
 {
   if (verbose)
-    fprintf(stderr, "starting filter\n");
+    fprintf(stderr, "%s %d : starting filter\n", myname, mypid);
   if (pipe(pipefds1) == -1) {
     perror("pipe");
     exit(1);
@@ -568,7 +573,7 @@ start_filter(void)
     if ((execvp(filterpath, filterargv)) == -1) {
       // exec failed
       perror("execvp");
-      fprintf(stderr, "filterpath \"%s\"\n", filterpath);
+      fprintf(stderr, "%s %d : filterpath \"%s\"\n", myname, mypid, filterpath);
       _exit(1); // child exit, use _exit...
     }
     assert(0); // cant get here
@@ -585,7 +590,7 @@ void
 stop_filter(void)
 {
   if (verbose)
-    fprintf(stderr, "stopping filter\n");
+    fprintf(stderr, "%s %d : stopping filter\n", myname, mypid);
   close(pipefds1[1]);
   pipefds1[1] = -1;
   wait(NULL);
@@ -609,7 +614,7 @@ traverse_one_signal(int        idcode,
   ext_dq *extdata = NULL;
   unsigned nx=0;
 
-  if(verbose)fprintf(stderr, "traverse_one_signal(%d,0x%x,0x%x)\n", idcode, mode, time_mode);
+  if(verbose)fprintf(stderr, "%s %d : traverse_one_signal(%d,0x%x,0x%x)\n", myname, mypid, idcode, mode, time_mode);
 
   if (mode & TRAVERSE_EXTENDED)
     extdata = new_ext_dq();
@@ -636,19 +641,19 @@ traverse_one_signal(int        idcode,
   int bytesPerBit = vc_trvs_hdl->ffrGetBytesPerBit();
 
   if (NULL == vc_trvs_hdl) {
-    fprintf(stderr, "Failed to create a traverse handle for var (%u)\n", 
+    fprintf(stderr, "%s %d : Failed to create a traverse handle for var (%u)\n", myname, mypid, 
             idcode);
     exit(FSDB_RC_OBJECT_CREATION_FAILED);
   }
   
   if (FSDB_RC_SUCCESS != 
       fsdb_obj->ffrGetMinFsdbTag64((fsdbTag64*)time)) {
-    fprintf(stderr, "should not happen.\n");
+    fprintf(stderr, "%s %d : should not happen.\n", myname, mypid);
     exit(FSDB_RC_FAILURE);
   }
   
   if(verbose)
-    fprintf(stderr, "trvs hdl(%u): minimum time is (%u %u).\n", 
+    fprintf(stderr, "%s %d : trvs hdl(%u): minimum time is (%u %u).\n", myname, mypid, 
             idcode,
             ((fsdbTag64*)time)->H, 
             ((fsdbTag64*)time)->L);
@@ -669,7 +674,7 @@ traverse_one_signal(int        idcode,
   //
 
   if (FSDB_RC_SUCCESS != vc_trvs_hdl->ffrGotoXTag((void*)time)) {
-    fprintf(stderr, "(%u) jump to tag H=%u L=%u failed : should not happen.\n", idcode, time->H, time->L);
+    fprintf(stderr, "%s %d : (%u) jump to tag H=%u L=%u failed : should not happen.\n", myname, mypid, idcode, time->H, time->L);
     exit(FSDB_RC_FAILURE);
   }	
   
@@ -751,7 +756,7 @@ traverse_one_signal(int        idcode,
       unsigned n = the_timemem->p;
       
       if(verbose)
-      fprintf(stderr, "binary traversal tag N nodeid %u count %u\n",
+      fprintf(stderr, "%s %d : binary traversal tag N nodeid %u count %u\n", myname, mypid,
               idcode, n);
       
       fprintf(stdout, "OK\n"); // we have to tell the driver data is coming
@@ -763,7 +768,7 @@ traverse_one_signal(int        idcode,
       fflush(stdout);
 
       if(verbose)
-        fprintf(stderr, "writing binary data, value[0] %f\n",
+        fprintf(stderr, "%s %d : writing binary data, value[0] %f\n", myname, mypid,
                 ((float *)buff)[0]);
 
       write(fileno(stdout), buff, n * sizeof(float)); // just dump the buffer
@@ -784,7 +789,7 @@ traverse_one_signal(int        idcode,
     int i=0;
 
     if(verbose)
-      fprintf(stderr, "extended binary traversal tag N nodeid %u count %u\n",
+      fprintf(stderr, "%s %d : extended binary traversal tag N nodeid %u count %u\n", myname, mypid,
               idcode, nx);
 
     //
@@ -889,7 +894,7 @@ traverse_names(unsigned lo, unsigned hi, unsigned aliases)
 
   memset(got, 0, sizeof(unsigned) * (hi + 1));
   
-  fprintf(stderr, "traverse_names %u %u\n", lo, hi);
+  fprintf(stderr, "%s %d : traverse_names %u %u\n", myname, mypid, lo, hi);
   
   while(p) {
     if (p->idcode >= lo && p->idcode <= hi && !got[p->idcode]) {
@@ -905,7 +910,7 @@ traverse_names(unsigned lo, unsigned hi, unsigned aliases)
     p = p->next;
   }
 
-  fprintf(stderr, "traverse_names : %d records\n", i);
+  fprintf(stderr, "%s %d : traverse_names : %d records\n", myname, mypid, i);
   myfree(got);
 
 }
@@ -958,7 +963,7 @@ main(int argc, char *argv[])
     char *tok;
     
     while(fgets(buff, CMDBUFSIZ, stdin)) {
-      if(verbose)fprintf(stderr, "got line \"%s\"\n", buff);
+      if(verbose)fprintf(stderr, "%s %d : got line \"%s\"\n", myname, mypid, buff);
 
       tok = strtok(buff, " ");
       
@@ -998,13 +1003,13 @@ main(int argc, char *argv[])
           
           int nargs = 1;
           
-          if(verbose)fprintf(stderr, "got filter \"%s\"\n", str);
+          if(verbose)fprintf(stderr, "%s %d : got filter \"%s\"\n", myname, mypid, str);
 
           new_filterpath = strdup(str);
 
           while ((str = strtok(NULL, " \n"))) {
             char *arg = strdup(str);
-            if(verbose)fprintf(stderr, "got arg \"%s\"\n", arg);
+            if(verbose)fprintf(stderr, "%s %d : got arg \"%s\"\n", myname, mypid, arg);
             
             filterargs = cons(arg, filterargs);
             ++nargs;
@@ -1239,7 +1244,7 @@ static bool_T __MyTreeCB(fsdbTreeCBType cb_type,
 {
     switch (cb_type) {
     case FSDB_TREE_CBT_BEGIN_TREE:
-      if (debug >= 2) fprintf(stderr, "<BeginTree>\n");
+      if (debug >= 2) fprintf(stderr, "%s %d : <BeginTree>\n", myname, mypid);
       break;
 
     case FSDB_TREE_CBT_SCOPE:
@@ -1253,12 +1258,12 @@ static bool_T __MyTreeCB(fsdbTreeCBType cb_type,
       break;
 
     case FSDB_TREE_CBT_UPSCOPE:
-      if (debug >= 2) fprintf(stderr, "<Upscope>\n");
+      if (debug >= 2) fprintf(stderr, "%s %d : <Upscope>\n", myname, mypid);
       up_scope();
       break;
 
     case FSDB_TREE_CBT_END_TREE:
-	if (debug >= 2) fprintf(stderr, "<EndTree>\n\n");
+	if (debug >= 2) fprintf(stderr, "%s %d : <EndTree>\n\n", myname, mypid);
 	break;
 
     case FSDB_TREE_CBT_FILE_TYPE:
@@ -1277,19 +1282,19 @@ static bool_T __MyTreeCB(fsdbTreeCBType cb_type,
 	break;
 
     case FSDB_TREE_CBT_ARRAY_BEGIN:
-        if (debug >= 2) fprintf(stderr, "<BeginArray>\n");
+        if (debug >= 2) fprintf(stderr, "%s %d : <BeginArray>\n", myname, mypid);
         break;
         
     case FSDB_TREE_CBT_ARRAY_END:
-        if (debug >= 2) fprintf(stderr, "<EndArray>\n\n");
+        if (debug >= 2) fprintf(stderr, "%s %d : <EndArray>\n\n", myname, mypid);
         break;
 
     case FSDB_TREE_CBT_RECORD_BEGIN:
-        if (debug >= 2) fprintf(stderr, "<BeginRecord>\n");
+        if (debug >= 2) fprintf(stderr, "%s %d : <BeginRecord>\n", myname, mypid);
         break;
         
     case FSDB_TREE_CBT_RECORD_END:
-        if (debug >= 2) fprintf(stderr, "<EndRecord>\n\n");
+        if (debug >= 2) fprintf(stderr, "%s %d : <EndRecord>\n\n", myname, mypid);
         break;
              
     default:
@@ -1330,7 +1335,7 @@ __DumpScope(fsdbTreeCBDataScope* scope)
 	break;
     }
 
-    fprintf(stderr, "<Scope> name:%s  type:%s\n", 
+    fprintf(stderr, "%s %d : <Scope> name:%s  type:%s\n", myname, mypid, 
 	    scope->name, type);
 }
 
@@ -1420,9 +1425,9 @@ __DumpVar(fsdbTreeCBDataVar *var)
     }
 
     fprintf(stderr,
-            "<Var>  name:%s  l:%u  r:%u  type:%s  ",
+            "%s %d : <Var>  name:%s  l:%u  r:%u  type:%s  ", myname, mypid,
             var->name, var->lbitnum, var->rbitnum, type);
     fprintf(stderr,
-            "idcode:%u  dtidcode:%u  bpb:%s\n",
+            "%s %d : idcode:%u  dtidcode:%u  bpb:%s\n", myname, mypid,
             var->u.idcode, var->dtidcode, bpb);
 }
