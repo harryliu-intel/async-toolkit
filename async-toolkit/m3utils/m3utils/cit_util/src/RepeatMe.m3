@@ -4,6 +4,10 @@ IMPORT Params;
 IMPORT File;
 IMPORT Thread;
 IMPORT Time;
+IMPORT Debug;
+FROM Fmt IMPORT F, Int;
+IMPORT OSError;
+IMPORT AL;
 
 PROCEDURE Do(execFlag : TEXT) : BOOLEAN =
   VAR
@@ -19,25 +23,32 @@ PROCEDURE Do(execFlag : TEXT) : BOOLEAN =
     
     Process.GetStandardFileHandles(stdin, stdout, stderr);
 
-    WITH proc     = Process.Create(cmd,
-                                   params^,
-                                   stdin := stdin,
-                                   stdout := stdout,
-                                   stderr := stderr),
-         exitCode = Process.Wait(proc) DO
-      RETURN exitCode = 0
+    TRY
+      WITH proc     = Process.Create(cmd,
+                                     params^,
+                                     stdin := stdin,
+                                     stdout := stdout,
+                                     stderr := stderr),
+           exitCode = Process.Wait(proc) DO
+        RETURN exitCode = 0
+      END
+    EXCEPT
+      OSError.E(x) => Debug.Warning("Process.Create failed : OSError.E : " & AL.Format(x));
+      RETURN FALSE
     END
   END Do;
   
-PROCEDURE Repeat(execFlag : TEXT; maxTimes : CARDINAL; delay : Time.T) : BOOLEAN =
+PROCEDURE Repeat(execFlag : TEXT; maxTimes : CARDINAL; delay : Time.T) =
   BEGIN
     FOR i := 1 TO maxTimes DO
       IF Do(execFlag) THEN
         Process.Exit(0)
       ELSE
+        Debug.Warning("Process failed.  Re-executing!");
         Thread.Pause(delay)
       END
-    END
+    END;
+    Debug.Error(F("Process failed maxTimes(%s), quitting with error", Int(maxTimes)))
   END Repeat;
 
 BEGIN END RepeatMe.

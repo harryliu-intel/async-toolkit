@@ -7,6 +7,6 @@ IMPORT Time;
 PROCEDURE Do(execFlag : TEXT) : BOOLEAN;
   (* returns TRUE if exitcode is 0, FALSE otherwise *)
 
-PROCEDURE Repeat(execFlag : TEXT; maxTimes : CARDINAL; delay : Time.T) : BOOLEAN;
+PROCEDURE Repeat(execFlag : TEXT; maxTimes : CARDINAL; delay : Time.T);
   
 END RepeatMe.

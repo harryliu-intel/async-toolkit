@@ -241,6 +241,11 @@ PROCEDURE GenMultiThreaded(threads               : CARDINAL;
     mu          := NEW(MUTEX);
     assigned : BOOLEAN;
   BEGIN
+    (* ensure mu is initialized *)
+    LOCK mu DO
+      assigned := FALSE
+    END;
+    
     FOR w := FIRST(workers^) TO LAST(workers^) DO
       (* start workers *)
       workers[w] := NEW(GenClosure).init(c,
@@ -929,6 +934,11 @@ TYPE
     (* time to allow for response to a command *)
 
     myId              : CARDINAL;
+
+    (* stuff for the subprocess *)
+    cmdWr             : Wr.T;
+    cmdRd             : Rd.T;
+    completion        : ProcUtils.Completion;
     
   METHODS
     init(c, d              : Thread.Condition;
@@ -995,15 +1005,35 @@ PROCEDURE GenInit(cl                  : GenClosure;
     cl.cmdPath            := cmdPath;
     cl.fsdbPath           := fsdbPath;
     cl.compress           := compress;
-    cl.thr                := Thread.Fork(cl);
     cl.voltageScaleFactor := voltageScaleFactor;
     cl.voltageOffset      := voltageOffset;
     cl.interpolate        := interpolate;
     cl.unit               := unit;
     cl.myId               := myId;
+
+    <*FATAL OSError.E*>
+    VAR
+      cmdStdin   : ProcUtils.Reader;
+      cmdStdout  : ProcUtils.Writer;
+    BEGIN
+      cmdStdin  := ProcUtils.GimmeWr(cl.cmdWr);
+      cmdStdout := ProcUtils.GimmeRd(cl.cmdRd);
+
+      <*ASSERT cl.cmdWr # NIL*>
+      <*ASSERT cl.cmdRd # NIL*>
+      
+      cl.completion := ProcUtils.RunText(cl.cmdPath & " " & cl.fsdbPath,
+                                         stdin  := cmdStdin,
+                                         stderr := ProcUtils.Stderr(),
+                                         stdout := cmdStdout);
+    END;
+    
+    cl.thr                := Thread.Fork(cl);
+
     LOCK allThreadsMu DO
       allThreads := RefList.Cons(cl, allThreads);
     END;
+    
     RETURN cl
   END GenInit;
 
@@ -1084,35 +1114,20 @@ PROCEDURE GenApply(cl : GenClosure) : REFANY =
     END GetResponse;
   
   VAR
-    cmdStdin   : ProcUtils.Reader;
-    cmdStdout  : ProcUtils.Writer;
-    completion : ProcUtils.Completion;
-    cmdWr      : Wr.T;
-    cmdRd      : Rd.T;
     loId, hiId : CARDINAL;
     unit       : LONGREAL;
   BEGIN
 
     cl.thrId := ThreadF.MyId();
     
-    <*FATAL OSError.E*>
-    BEGIN
-      cmdStdin  := ProcUtils.GimmeWr(cmdWr);
-      cmdStdout := ProcUtils.GimmeRd(cmdRd);
-    END;
-    
-    completion := ProcUtils.RunText(cl.cmdPath & " " & cl.fsdbPath,
-                                    stdin  := cmdStdin,
-                                    stderr := ProcUtils.Stderr(),
-                                    stdout := cmdStdout);
     TRY
-      PutCommand(cmdWr, F("d %s", Int(cl.myId)));
+      PutCommand(cl.cmdWr, F("d %s", Int(cl.myId)));
       
-      PutCommand(cmdWr, "B");
-      EVAL GetResponse(cmdRd, "BR");
+      PutCommand(cl.cmdWr, "B");
+      EVAL GetResponse(cl.cmdRd, "BR");
 
-      PutCommand(cmdWr, "S");
-      WITH reader    = GetResponse(cmdRd, "SR") DO
+      PutCommand(cl.cmdWr, "S");
+      WITH reader    = GetResponse(cl.cmdRd, "SR") DO
         loId   := reader.getInt();
         hiId   := reader.getInt();
         WITH unitStr = reader.get() DO
@@ -1126,8 +1141,8 @@ PROCEDURE GenApply(cl : GenClosure) : REFANY =
       END;
 
       (* memorize times *)
-      PutCommand(cmdWr, F("i %s", Int(loId)));
-      EVAL GetResponse(cmdRd, "iR");      
+      PutCommand(cl.cmdWr, F("i %s", Int(loId)));
+      EVAL GetResponse(cl.cmdRd, "iR");      
 
       (* not yet finished *)
       LOOP
@@ -1171,8 +1186,8 @@ PROCEDURE GenApply(cl : GenClosure) : REFANY =
                threading as such (because this thread won't exit if you
                do that).
             *)
-            PutCommand(cmdWr, "Q");
-            EVAL GetResponse(cmdRd, "QR");
+            PutCommand(cl.cmdWr, "Q");
+            EVAL GetResponse(cl.cmdRd, "QR");
             
             (* 
                here we cause the thread to return
@@ -1197,8 +1212,8 @@ PROCEDURE GenApply(cl : GenClosure) : REFANY =
         GeneratePartialTraceFile(cl.tWr,
                                  cl.nodeIds,
                                  cl.idxMap,
-                                 cmdRd,
-                                 cmdWr,
+                                 cl.cmdRd,
+                                 cl.cmdWr,
                                  cl.nsteps,
                                  cl.compress,
                                  cl.voltageScaleFactor,

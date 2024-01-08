@@ -44,6 +44,7 @@ IMPORT Env;
 IMPORT CtDocBundle;
 IMPORT Process;
 IMPORT BundleRep;
+IMPORT RepeatMe;
 
 <*FATAL Thread.Alerted*>
 
@@ -301,6 +302,10 @@ BEGIN
   Debug.SetOptions(SET OF Debug.Options {Debug.Options.PrintThreadID, Debug.Options.PrintPID });
   
   TRY
+
+    IF NOT pp.keywordPresent("-execute") THEN
+      RepeatMe.Repeat("-execute", 10, 1.0d0)
+    END;
 
     translate := pp.keywordPresent("-translate");
     noX       := pp.keywordPresent("-noX");
