@@ -16,11 +16,10 @@ IMPORT Params;
 CONST TE = Text.Equal;
       LR = LongReal;
 
-<*FATAL Thread.Alerted*>
-
 VAR doDebug := Debug.DebugThis("FsdbComms");
       
-PROCEDURE PutCommandG(wr : Wr.T; cmd : TEXT) =
+PROCEDURE PutCommandG(wr : Wr.T; cmd : TEXT)
+  RAISES { Thread.Alerted } =
   BEGIN
     TRY
       IF doDebug THEN
@@ -35,16 +34,21 @@ PROCEDURE PutCommandG(wr : Wr.T; cmd : TEXT) =
     END
   END PutCommandG;
 
-PROCEDURE GetResponseG(rd : Rd.T; matchKw : TEXT) : TextReader.T =
+PROCEDURE GetResponseG(rd : Rd.T; matchKw : TEXT) : TextReader.T
+  RAISES { Thread.Alerted } =
   VAR
     kw : TEXT;
   BEGIN
+    IF doDebug THEN
+      Debug.Out(F("Fsdb.Parse.GetResponse \"%s\"", matchKw));
+    END;
+
     TRY
       LOOP
         WITH line    = Rd.GetLine(rd),
              reader  = NEW(TextReader.T).init(line) DO
           IF doDebug THEN
-            Debug.Out(F("Fsdb.Parse.GetResponse \"%s\"", line));
+            Debug.Out(F("Fsdb.Parse.GotResponse \"%s\"", line));
           END;
           IF reader.next(" ", kw, TRUE) THEN
             IF TE(kw, matchKw) THEN
@@ -67,7 +71,8 @@ PROCEDURE GetResponseG(rd : Rd.T; matchKw : TEXT) : TextReader.T =
 
 PROCEDURE ReadCompressedNodeDataG(rd         : Rd.T;
                                   VAR nodeid : CARDINAL;
-                                  VAR norm   : SpiceCompress.Norm) : TEXT =
+                                  VAR norm   : SpiceCompress.Norm) : TEXT
+  RAISES { Thread.Alerted } =
   VAR
     kw    : TEXT;
     bytes : CARDINAL;
@@ -137,7 +142,7 @@ PROCEDURE ReadCompressedNodeDataG(rd         : Rd.T;
   
 PROCEDURE ReadBinaryNodeDataG(rd         : Rd.T;
                               VAR nodeid : CARDINAL;
-                              VAR buff   : ARRAY OF LONGREAL) =
+                              VAR buff   : ARRAY OF LONGREAL) RAISES { Thread.Alerted } =
   VAR
     kw : TEXT;
     n  : CARDINAL;
@@ -200,7 +205,8 @@ PROCEDURE ReadInterpolatedBinaryNodeDataG(rd          : Rd.T;
                                           VAR nodeid  : CARDINAL;
                                           VAR buff    : ARRAY OF LONGREAL;
                                           interpolate : LONGREAL;
-                                          unit        : LONGREAL) =
+                                          unit        : LONGREAL)
+  RAISES { Thread.Alerted } =
   VAR
     kw : TEXT;
     n  : CARDINAL;
@@ -310,7 +316,8 @@ PROCEDURE ReadInterpolatedBinaryNodeDataG(rd          : Rd.T;
     END
   END ReadInterpolatedBinaryNodeDataG;
 
-PROCEDURE GetLineUntilG(rd : Rd.T; term : TEXT; VAR line : TEXT) : BOOLEAN =
+PROCEDURE GetLineUntilG(rd : Rd.T; term : TEXT; VAR line : TEXT) : BOOLEAN
+  RAISES { Thread.Alerted } =
   BEGIN
     TRY
       WITH this    = Rd.GetLine(rd) DO

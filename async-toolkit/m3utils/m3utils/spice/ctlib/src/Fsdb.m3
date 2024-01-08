@@ -32,7 +32,10 @@ IMPORT SpiceCompress;
 IMPORT TextWr;
 FROM FsdbComms IMPORT PutCommandG, GetResponseG, GetLineUntilG, TwoToThe32;
 FROM FsdbComms IMPORT ReadCompressedNodeDataG, ReadBinaryNodeDataG,
-                      ReadInterpolatedBinaryNodeDataG;
+ReadInterpolatedBinaryNodeDataG;
+IMPORT Time;
+IMPORT RefList;
+IMPORT ThreadF;
 
 <*FATAL Thread.Alerted*>
 
@@ -215,7 +218,8 @@ PROCEDURE GenSingleThreaded(rd                  : Rd.T;
                                voltageOffset,
                                interpolate,
                                unit,
-                               wdPth[i])
+                               wdPth[i],
+                               NIL)
     END
   END GenSingleThreaded;
   
@@ -250,7 +254,8 @@ PROCEDURE GenMultiThreaded(threads               : CARDINAL;
                                          voltageScaleFactor,
                                          voltageOffset,
                                          interpolate,
-                                         unit)
+                                         unit,
+                                         w)
     END;
     
     FOR i := FIRST(fileTab) TO LAST(fileTab) DO
@@ -260,27 +265,33 @@ PROCEDURE GenMultiThreaded(threads               : CARDINAL;
       END;
       assigned := FALSE;
       
-      WHILE NOT assigned DO
-        FOR w := FIRST(workers^) TO LAST(workers^) DO
-          IF workers[w].freeP() THEN
-            IF doDebug THEN
-              Debug.Out(F("Fsdb.Parse : assigning partial trace file %s to worker %s", Int(i), Int(w)));
+      VAR
+        freeWorker : GenClosure := NIL;
+      BEGIN
+        LOOP
+          LOCK mu DO
+            FOR w := FIRST(workers^) TO LAST(workers^) DO
+              IF workers[w].freeP() THEN
+                IF doDebug THEN
+                  Debug.Out(F("Fsdb.Parse : partial trace file %s -> assign to to worker %s", Int(i), Int(w)));
+                END;
+                freeWorker := workers[w];
+                EXIT
+              END
             END;
-            
-            workers[w].task(wdWr[i], fileTab[i], wdPth[i]);
-            assigned := TRUE;
-            EXIT
+
+            IF freeWorker = NIL THEN
+              (* couldn't find a free worker, sleep on it for a while ... *)
+              Thread.Wait(mu, d)
+            ELSE
+              EXIT 
+            END
           END
         END;
 
-        (* if we get here, all workers were busy on this
-           iteration, and we must wait for a signal *)
+        <*ASSERT freeWorker # NIL*>
         
-        IF NOT assigned THEN
-          LOCK mu DO
-            Thread.Wait(mu, d)
-          END
-        END
+        freeWorker.task(wdWr[i], fileTab[i], wdPth[i])
       END
     END;
 
@@ -294,10 +305,20 @@ PROCEDURE GenMultiThreaded(threads               : CARDINAL;
     (* wait for workers to be completely done *)
     FOR i := FIRST(workers^) TO LAST(workers^) DO
       (* wait for workers to finish *)
-      WHILE NOT workers[i].freeP() DO
-        LOCK mu DO
+      IF doDebug THEN
+        Debug.Out(F("GenMultiThreaded waiting for worker %s / thrId %s to exit",
+                    Int(i), Int(workers[i].thrId)))
+      END;
+
+      LOCK mu DO
+        WHILE NOT workers[i].freeP() DO
           Thread.Wait(mu, d)
         END
+      END;
+      
+      IF doDebug THEN
+        Debug.Out(F("GenMultiThreaded worker %s / thrId %s has exited",
+                    Int(i), Int(workers[i].thrId)))
       END;
       (* 6/25/2001
          strange bug with file descriptors getting mangled
@@ -483,7 +504,7 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
                 dutName       : TEXT;
                  
                 fsdbPath      : Pathname.T;
-                wait          : BOOLEAN;
+                <*UNUSED*>wait          : BOOLEAN;
                 restrictNodes : TextSet.T;
                 restrictRegEx : RegExList.T;
                 maxNodes      : CARDINAL;
@@ -876,6 +897,8 @@ PROCEDURE RemoveZeros(tbl : TextCardTbl.T) =
 
   (**********************************************************************)
 
+CONST DefTimeout = 0.0d0; (* disabled *)
+
 TYPE
   GenClosure = Thread.Closure OBJECT
     mu                : MUTEX;             (* shared between all threads *)
@@ -891,12 +914,22 @@ TYPE
     cmdPath, fsdbPath : Pathname.T;
     compress          : Compress;
     thr               : Thread.T;
+    thrId             : ThreadF.Id;
     doExit := FALSE;
     doSoftExit := FALSE;
     
     voltageScaleFactor,
     voltageOffset,
     interpolate, unit : LONGREAL;
+
+    sendT, recvT      := FIRST(Time.T);
+    lastSent          : TEXT := "*NIL*";
+
+    timeout           := DefTimeout;
+    (* time to allow for response to a command *)
+
+    myId              : CARDINAL;
+    
   METHODS
     init(c, d              : Thread.Condition;
          mu                : MUTEX;
@@ -907,11 +940,19 @@ TYPE
          voltageScaleFactor,
          voltageOffset,
          interpolate, unit : LONGREAL;
+         myId              : CARDINAL
     ) : GenClosure  := GenInit;
+    (* constructor *)
+    
     task(taskWr : Wr.T; taskIds : CardSeq.T; path : Pathname.T)  := GenTask;
+    
     freeP() : BOOLEAN := GenFreeP;
-    exit() := GenExit;
-    exitSoftly() := GenExitSoftly;
+    (* does NOT lock mu *)
+    
+    exit()            := GenExit;
+    
+    exitSoftly()      := GenExitSoftly;
+    
   OVERRIDES
     apply := GenApply;
   END;
@@ -942,7 +983,8 @@ PROCEDURE GenInit(cl                  : GenClosure;
                   READONLY compress   : Compress;
                   voltageScaleFactor,
                   voltageOffset       : LONGREAL;
-                  interpolate, unit   : LONGREAL
+                  interpolate, unit   : LONGREAL;
+                  myId                : CARDINAL
   ) : GenClosure =
   BEGIN
     cl.mu                 := mu;
@@ -958,6 +1000,10 @@ PROCEDURE GenInit(cl                  : GenClosure;
     cl.voltageOffset      := voltageOffset;
     cl.interpolate        := interpolate;
     cl.unit               := unit;
+    cl.myId               := myId;
+    LOCK allThreadsMu DO
+      allThreads := RefList.Cons(cl, allThreads);
+    END;
     RETURN cl
   END GenInit;
 
@@ -969,6 +1015,10 @@ PROCEDURE GenInit(cl                  : GenClosure;
      (for debugging?) and sequence of nodes to be dumped into that file.
 
   *)
+
+VAR
+  allThreadsMu             := NEW(MUTEX);
+  allThreads   : RefList.T := NIL;
   
 PROCEDURE GenTask(cl       : GenClosure;
                   taskWr   : Wr.T;
@@ -987,15 +1037,52 @@ PROCEDURE GenTask(cl       : GenClosure;
 
 PROCEDURE GenFreeP(cl : GenClosure) : BOOLEAN =
   BEGIN
-    LOCK cl.mu DO
-      RETURN cl.tWr = NIL
-    END
+    RETURN cl.tWr = NIL
   END GenFreeP;
 
+PROCEDURE PutCommandThr(wr : Wr.T; cmd : TEXT; cl : GenClosure) =
+  BEGIN
+    TRY
+      PutCommandG(wr, cmd);
+    FINALLY
+      IF cl # NIL THEN
+        LOCK timeMu DO
+          cl.sendT := theTime;
+          cl.recvT := 0.0d0;
+          cl.lastSent := cmd;
+        END
+      END
+    END
+  END PutCommandThr;
+
+PROCEDURE GetResponseThr(rd : Rd.T; matchKw : TEXT; cl : GenClosure) : TextReader.T =
+  BEGIN
+    TRY
+      RETURN GetResponseG(rd, matchKw)
+    FINALLY
+      IF cl # NIL THEN
+        LOCK timeMu DO
+          cl.recvT := theTime;
+          cl.sendT := 0.0d0
+        END
+      END
+    END
+  END GetResponseThr;
+  
 PROCEDURE GenApply(cl : GenClosure) : REFANY =
   (* this apply runs a session with a nanosimrd process *)
   (* we can run multiple in parallel *)
 
+  PROCEDURE PutCommand(wr : Wr.T; cmd : TEXT) =
+    BEGIN
+      PutCommandThr(wr, cmd, cl)
+    END PutCommand;
+
+  PROCEDURE GetResponse(rd : Rd.T; matchKw : TEXT) : TextReader.T =
+    BEGIN
+      RETURN GetResponseThr(rd, matchKw, cl)
+    END GetResponse;
+  
   VAR
     cmdStdin   : ProcUtils.Reader;
     cmdStdout  : ProcUtils.Writer;
@@ -1005,6 +1092,9 @@ PROCEDURE GenApply(cl : GenClosure) : REFANY =
     loId, hiId : CARDINAL;
     unit       : LONGREAL;
   BEGIN
+
+    cl.thrId := ThreadF.MyId();
+    
     <*FATAL OSError.E*>
     BEGIN
       cmdStdin  := ProcUtils.GimmeWr(cmdWr);
@@ -1016,11 +1106,13 @@ PROCEDURE GenApply(cl : GenClosure) : REFANY =
                                     stderr := ProcUtils.Stderr(),
                                     stdout := cmdStdout);
     TRY
-      PutCommandG(cmdWr, "B");
-      EVAL GetResponseG(cmdRd, "BR");
+      PutCommand(cmdWr, F("d %s", Int(cl.myId)));
+      
+      PutCommand(cmdWr, "B");
+      EVAL GetResponse(cmdRd, "BR");
 
-      PutCommandG(cmdWr, "S");
-      WITH reader    = GetResponseG(cmdRd, "SR") DO
+      PutCommand(cmdWr, "S");
+      WITH reader    = GetResponse(cmdRd, "SR") DO
         loId   := reader.getInt();
         hiId   := reader.getInt();
         WITH unitStr = reader.get() DO
@@ -1034,8 +1126,8 @@ PROCEDURE GenApply(cl : GenClosure) : REFANY =
       END;
 
       (* memorize times *)
-      PutCommandG(cmdWr, F("i %s", Int(loId)));
-      EVAL GetResponseG(cmdRd, "iR");      
+      PutCommand(cmdWr, F("i %s", Int(loId)));
+      EVAL GetResponse(cmdRd, "iR");      
 
       (* not yet finished *)
       LOOP
@@ -1079,14 +1171,18 @@ PROCEDURE GenApply(cl : GenClosure) : REFANY =
                threading as such (because this thread won't exit if you
                do that).
             *)
-            PutCommandG(cmdWr, "Q");
-            EVAL GetResponseG(cmdRd, "QR");
+            PutCommand(cmdWr, "Q");
+            EVAL GetResponse(cmdRd, "QR");
             
             (* 
                here we cause the thread to return
 
                is this the place we get in trouble?
             *)
+
+            IF doDebug THEN
+              Debug.Out("GenApply thread exiting after receiving QR")
+            END;
             
             RETURN NIL
           END;
@@ -1109,10 +1205,16 @@ PROCEDURE GenApply(cl : GenClosure) : REFANY =
                                  cl.voltageOffset,
                                  cl.interpolate,
                                  cl.unit,
-                                 cl.tPath
+                                 cl.tPath,
+                                 cl
                                  );
 
-        Wr.Flush(cl.tWr);
+        TRY
+          Wr.Flush(cl.tWr)
+        EXCEPT
+          Wr.Failure(x) =>
+          Debug.Error("Wr.Failure flushing command stream : " & AL.Format(x))
+        END;
         
         IF doDebug THEN
           Debug.Out("Fsdb.GenApply : request done")
@@ -1130,12 +1232,13 @@ PROCEDURE GenApply(cl : GenClosure) : REFANY =
       
     EXCEPT
       FloatMode.Trap, Lex.Error =>
-      Debug.Error("Trouble parsing number during Fsdb.Parse conversation")
+      Debug.Error("Trouble parsing number during Fsdb.Parse conversation");
+      <*ASSERT FALSE*>
     |
       TextReader.NoMore =>
-      Debug.Error("TextReader.NoMore during Fsdb.Parse conversation")
-    END; 
-    RETURN NIL
+      Debug.Error("TextReader.NoMore during Fsdb.Parse conversation");
+      <*ASSERT FALSE*>
+    END
   END GenApply;
 
   (**********************************************************************)
@@ -1160,8 +1263,20 @@ PROCEDURE GeneratePartialTraceFile(wr                   : Wr.T;
                                    
                                    path                 : Pathname.T;
                                    (* for debugging only? *)
+
+                                   cl                   : GenClosure
   
   ) =
+  PROCEDURE PutCommand(wr : Wr.T; cmd : TEXT) =
+    BEGIN
+      PutCommandThr(wr, cmd, cl)
+    END PutCommand;
+
+  PROCEDURE GetResponse(rd : Rd.T; matchKw : TEXT) : TextReader.T =
+    BEGIN
+      RETURN GetResponseThr(rd, matchKw, cl)
+    END GetResponse;
+
   BEGIN
     IF doDebug THEN
       Debug.Out(F("Fsdb.GeneratePartialTraceFile : %s indices", Int(fileTab.size())));
@@ -1187,8 +1302,8 @@ PROCEDURE GeneratePartialTraceFile(wr                   : Wr.T;
                         compressCmdString))
           END;
           
-          PutCommandG(cmdWr, compressCmdString);
-          EVAL GetResponseG(cmdRd, "FR");
+          PutCommand(cmdWr, compressCmdString);
+          EVAL GetResponse(cmdRd, "FR");
         END
       END
     END;
@@ -1196,22 +1311,22 @@ PROCEDURE GeneratePartialTraceFile(wr                   : Wr.T;
     (* set up indications of interest *)
     FOR i := 0 TO fileTab.size() - 1 DO
       WITH id = fileTab.get(i) DO
-        PutCommandG(cmdWr, F("r %s", Int(id)));
-        EVAL GetResponseG(cmdRd, "rR");
+        PutCommand(cmdWr, F("r %s", Int(id)));
+        EVAL GetResponse(cmdRd, "rR");
       END
     END;
 
-    PutCommandG(cmdWr, "L");
-    EVAL GetResponseG(cmdRd, "LR");
+    PutCommand(cmdWr, "L");
+    EVAL GetResponse(cmdRd, "LR");
 
     IF interpolate = NoInterpolate THEN
       (* does compression work here? *)
-      PutCommandG(cmdWr, "t")
+      PutCommand(cmdWr, "t")
     ELSE
       IF compress.path = NIL THEN
-        PutCommandG(cmdWr, "x")
+        PutCommand(cmdWr, "x")
       ELSE
-        PutCommandG(cmdWr, "y")
+        PutCommand(cmdWr, "y")
       END
     END;
 
@@ -1259,13 +1374,13 @@ PROCEDURE GeneratePartialTraceFile(wr                   : Wr.T;
     END;
 
     IF interpolate = NoInterpolate THEN
-      EVAL GetResponseG(cmdRd, "tR")
+      EVAL GetResponse(cmdRd, "tR")
     ELSE
       IF compress.path = NIL THEN
 
-        EVAL GetResponseG(cmdRd, "xR")
+        EVAL GetResponse(cmdRd, "xR")
       ELSE
-        EVAL GetResponseG(cmdRd, "yR")
+        EVAL GetResponse(cmdRd, "yR")
       END
     END;
 
@@ -1273,8 +1388,8 @@ PROCEDURE GeneratePartialTraceFile(wr                   : Wr.T;
       Debug.Out("Fsdb.GeneratePartialTraceFile : handshake complete.")
     END;
     
-    PutCommandG(cmdWr, "U");
-    EVAL GetResponseG(cmdRd, "UR");
+    PutCommand(cmdWr, "U");
+    EVAL GetResponse(cmdRd, "UR");
 
     IF doDebug THEN
       Debug.Out(F("Fsdb.GeneratePartialTraceFile done."))
@@ -1473,10 +1588,56 @@ CONST
   UnitSuffix { "p" , 1.0d-12 },
   UnitSuffix { "f" , 1.0d-15 },
   UnitSuffix { "a" , 1.0d-19 } };
- 
 
+VAR
+  timeMu  := NEW(MUTEX);
+  theTime : Time.T; (* coarse time of day *)
+
+TYPE
+  TickClosure = Thread.Closure OBJECT
+  OVERRIDES
+    apply := TickApply;
+  END;
+
+PROCEDURE TickApply(<*UNUSED*>cl : TickClosure) : REFANY =
+  BEGIN
+    LOOP
+      Thread.Pause(0.9d0);
+      LOCK timeMu DO
+        theTime := Time.Now()
+      END;
+
+      LOCK allThreadsMu DO
+        VAR
+          p := allThreads;
+        BEGIN
+          WHILE p # NIL DO
+            WITH cl = NARROW(p.head, GenClosure) DO
+              IF doDebug THEN
+                Debug.Out(F("Fsdb tick check thrId %s theTime %s cl.sendT %s, cl.recvT %s, delta %s",
+                            Int(cl.thrId), LR(theTime), LR(cl.sendT), LR(cl.recvT), LR(cl.sendT - cl.recvT)))
+              END;
+
+              IF cl.timeout # 0.0d0 AND
+                 cl.sendT > cl.recvT AND
+                 theTime > cl.sendT + cl.timeout THEN
+                (* timed out... *)
+                Debug.Error(F("Fsdb.Parse timed out waiting for response to \"%s\", sent at approximately %s", cl.lastSent, LR(cl.sendT)))
+              END
+            END;
+            p := p.tail
+          END
+        END
+      END
+    END
+  END TickApply;
+  
 BEGIN
   <*ASSERT ParseUnitStr("12")  = 12.0d0*>
   <*ASSERT ParseUnitStr("1da") = 10.0d0*>
   <*ASSERT ParseUnitStr("1M")  = 1.0d6*>
+
+  theTime := Time.Now();
+  EVAL Thread.Fork(NEW(TickClosure))
+  
 END Fsdb.

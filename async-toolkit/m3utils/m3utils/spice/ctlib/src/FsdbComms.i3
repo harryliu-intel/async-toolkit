@@ -12,18 +12,19 @@ IMPORT Wr;
 IMPORT TextReader;
 IMPORT SpiceCompress; (* just for the Norm *)
 IMPORT Word;
+IMPORT Thread;
 
 CONST
   TwoToThe32 = FLOAT(Word.Shift(1, 32), LONGREAL);
 
 (* the following two are the basic I/O commands *)
-PROCEDURE PutCommandG(wr : Wr.T; cmd : TEXT);
+PROCEDURE PutCommandG(wr : Wr.T; cmd : TEXT)  RAISES { Thread.Alerted } ;
 
-PROCEDURE GetResponseG(rd : Rd.T; matchKw : TEXT) : TextReader.T;
+PROCEDURE GetResponseG(rd : Rd.T; matchKw : TEXT) : TextReader.T  RAISES { Thread.Alerted } ;
 
 PROCEDURE ReadCompressedNodeDataG(rd         : Rd.T;
                                   VAR nodeid : CARDINAL;
-                                  VAR norm   : SpiceCompress.Norm) : TEXT;
+                                  VAR norm   : SpiceCompress.Norm) : TEXT  RAISES { Thread.Alerted } ;
   (* this is the counterpart to DistZTrace.WriteOut
 
      The result is the compressed bytes with the code byte prepended.
@@ -34,13 +35,13 @@ PROCEDURE ReadCompressedNodeDataG(rd         : Rd.T;
   
 PROCEDURE ReadBinaryNodeDataG(rd         : Rd.T;
                               VAR nodeid : CARDINAL;
-                              VAR buff   : ARRAY OF LONGREAL);
+                              VAR buff   : ARRAY OF LONGREAL)  RAISES { Thread.Alerted } ;
 
 PROCEDURE ReadInterpolatedBinaryNodeDataG(rd          : Rd.T;
                                           VAR nodeid  : CARDINAL;
                                           VAR buff    : ARRAY OF LONGREAL;
                                           interpolate : LONGREAL;
-                                          unit        : LONGREAL);
+                                          unit        : LONGREAL)  RAISES { Thread.Alerted } ;
 
   (* given a byte stream from an instance of nansimrd.cpp in rd,
      read the results of an 'x' command (EXTENDED MODE) and interpolate said
@@ -51,6 +52,6 @@ PROCEDURE ReadInterpolatedBinaryNodeDataG(rd          : Rd.T;
   *)
   
 
-PROCEDURE GetLineUntilG(rd : Rd.T; term : TEXT; VAR line : TEXT) : BOOLEAN;
+PROCEDURE GetLineUntilG(rd : Rd.T; term : TEXT; VAR line : TEXT) : BOOLEAN  RAISES { Thread.Alerted } ;
 
 END FsdbComms.
