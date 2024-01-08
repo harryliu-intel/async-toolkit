@@ -1114,7 +1114,7 @@ wires_modtime = makeTable("wires" 0)
                                     (sprintf nil "%s%s" prefix (car rail)))
                       newrail = (list newname (cadr rail)
                                       (caddr rail)+offset layer_override)
-                      newchan = (append newchan (list newrail))
+                      newchan = (cons newrail newchan)
                       )
              )
     newchan
