@@ -394,6 +394,8 @@ Table ("TextCard", "Text", "Cardinal")
 
 Table ("LRVectorLR", "LRVector", "LongrealType")
 
+Module ("RepeatMe")
+
 Library("cit_util")
 
 
