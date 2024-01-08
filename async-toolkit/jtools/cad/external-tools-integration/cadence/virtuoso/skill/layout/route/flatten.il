@@ -47,10 +47,12 @@ useICV = t
 
     ; draw pins and canonicalize preroutes
     (AddBusWires ?CV CV)
+    (DeletePinsByType "InPlace" ?CV CV)
+    (CanonicalizePins ?CV CV) ; for flattened pins
     (UpdateFloorplan ?CV CV ?recurse nil ?skipInstances t ?skipNets t) ; connect subcell pins for in-place pins
-    (RedrawAllPins ?CV CV ?include_supply t ?inplace_pins inPlacePins)
+    (RefreshAllBuswires ?CV CV)
+    (DrawMidLevelPins ?CV CV ?include_supply t ?inplace_pins inPlacePins)
     (CanonicalizeNets ?CV CV)
-    (DeleteRedundantPins ?CV CV ?warnOnly !delete_redundant_pins)
     (UpdateFloorplan ?CV CV ?recurse nil ?skipInstances t) ; set pin directions
 
     ; cache various information in CV properties
@@ -728,6 +730,14 @@ useICV = t
                    path->routeStatus="locked"
                    )
              )
+    ; flatten pins
+    (foreach s inst->master->shapes
+             (when s->purpose=="pin" && s->pin
+                   path=(dbCopyFig s CV inst->transform)
+                   (dbCreatePin (dbMakeNet CV (strcat inst->name "." s->net->name)) path)
+                   path->routeStatus="locked"
+                   )
+             ) 
     ; flatten blockages
     (foreach s inst->master->blockages
              (dbCopyFig s CV inst->transform)
