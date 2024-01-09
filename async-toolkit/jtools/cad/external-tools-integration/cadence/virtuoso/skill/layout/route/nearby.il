@@ -23,7 +23,7 @@
 (defun RouteNearbyNet (net @key (CV (geGetEditCellView)) (topShapes t) (subShapes t) (offGrid t) (verbose nil)
                            (protect_map nil) (distance nil))
   (let (layerNames tech n MasterRectList layerName pinRectList layerNum space len
-             e1 e2 inst1 inst2 net1 net2 rect1 rect2 overlap gap rect rects horz
+             e1 e2 inst1 inst2 net1 net2 rect1 rect2 overlap gap rect rects horz hrect vrect
              r1x0 r1x1 r1y0 r1y1 r2x0 r2x1 r2y0 r2y1
              x0 y0 x1 y1 x y key pitch
              viaDef via list1 list2 xy wb wt viaName viaDef via)
@@ -140,6 +140,7 @@
 
     ; add vias between subcell pins or top-level shapes that overlap
     (for v 0 TopMetal-1
+      horz = (v&1)==0
       list1 = (setof a MasterRectList (car a)==Metal[v])
       list2 = (setof a MasterRectList (car a)==Metal[v+1])
       list1 = (cadr (car list1))
@@ -155,7 +156,10 @@
           overlap = (BBoxAnd rect1 rect2)
           (when overlap && (inst1==nil || inst2==nil || net1!=net2 || inst1!=inst2) &&
                 (dbGetOverlaps CV overlap (list Via[v] "drawing") 0:31)==nil
-            xy = (BBoxGetCenter overlap)
+            vrect=(if horz rect2 rect1)
+            hrect=(if horz rect1 rect2)
+            xy = ((car (car vrect))+(car (cadr vrect)))/2 : ((cadr (car hrect))+(cadr (cadr hrect)))/2
+            (printf "%g:%g\n" (car xy) (cadr xy))
             wb = (if offGrid (GetWireWidth v rect1) (GetTrackWidth v xy))
             (unless wb (error "no track width for %d %g:%g\n" v (car xy) (cadr xy)))
             wt = (if offGrid (GetWireWidth v+1 rect2) (GetTrackWidth v+1 xy))
