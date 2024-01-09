@@ -281,17 +281,18 @@ PROCEDURE Warning(txt : TEXT) =
     S(t, 0);
   END Warning;
 
-PROCEDURE Error(t: TEXT; exit : BOOLEAN) =
+PROCEDURE Error(t: TEXT; exit : BOOLEAN; exitCode : Process.ExitCode) =
   BEGIN
     IF exit THEN
+      errCode := exitCode;
       errHook(t)
     ELSE
       S("ERROR: " & UnNil(t), 0)
     END
   END Error;
 
-PROCEDURE Check(b : BOOLEAN; msg : TEXT; exit : BOOLEAN) =
-  BEGIN IF NOT b THEN Error(msg,exit) END END Check;
+PROCEDURE Check(b : BOOLEAN; msg : TEXT; exit : BOOLEAN; exitCode : Process.ExitCode) =
+  BEGIN IF NOT b THEN Error(msg,exit,exitCode) END END Check;
 
 PROCEDURE UnNil(text : TEXT) : TEXT =
   BEGIN IF text = NIL THEN RETURN "(NIL)" ELSE RETURN text END END UnNil;
@@ -313,6 +314,7 @@ PROCEDURE GetLevel() : CARDINAL = BEGIN RETURN level END GetLevel;
 (* outHook *)
 VAR
   errHook := DefaultError;
+  errCode : Process.ExitCode := DefaultErrorExitCode;
   outHook := DefaultOut;
   outHookLevel:=-1;
 
@@ -377,7 +379,7 @@ PROCEDURE RemStream(wr : Wr.T) =
 PROCEDURE DefaultError(t: TEXT) =
   BEGIN
     S("ERROR: " & UnNil(t), 0);
-    Process.Exit(2);
+    Process.Exit(errCode);
   END DefaultError; 
 
 PROCEDURE RegisterHook(out: OutHook; level:=0) =
@@ -556,7 +558,7 @@ PROCEDURE Reevaluate() =
         IF debugStr # NIL THEN level := Scan.Int(debugStr) END
       EXCEPT
         Lex.Error, FloatMode.Trap => 
-        Error("DEBUGLEVEL set to nonsense! \"" & debugStr & "\"",TRUE)
+        Error("DEBUGLEVEL set to nonsense! \"" & debugStr & "\"",TRUE,DefaultErrorExitCode)
       END
     END;
 
@@ -613,7 +615,7 @@ BEGIN
             AddStream(FileWr.Open(p.head))
           EXCEPT
             OSError.E(x) =>
-            Error("Couldn't add file \"" & p.head & "\" to debug streams: OSError.E: " & AL.Format(x), exit := FALSE)
+            Error("Couldn't add file \"" & p.head & "\" to debug streams: OSError.E: " & AL.Format(x), exit := FALSE, exitCode := DefaultErrorExitCode)
           END;
           p := p.tail
         END
@@ -638,7 +640,7 @@ BEGIN
         END;
       EXCEPT
       | Rd.EndOfFile =>
-      | OSError.E => Error("Can't find file \"" & debugFilter & "\".",TRUE);
+      | OSError.E => Error("Can't find file \"" & debugFilter & "\".",TRUE,DefaultErrorExitCode);
       END
     END
   END

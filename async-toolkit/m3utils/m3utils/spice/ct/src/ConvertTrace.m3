@@ -297,6 +297,9 @@ CONST
   
 TYPE
   ParseFmt = { Tr0, Fsdb };
+
+CONST
+  ImmediateQuit = 117;
   
 BEGIN
   Debug.SetOptions(SET OF Debug.Options {Debug.Options.PrintThreadID, Debug.Options.PrintPID });
@@ -304,7 +307,7 @@ BEGIN
   TRY
 
     IF NOT pp.keywordPresent("-execute") THEN
-      RepeatMe.Repeat("-execute", 10, 1.0d0)
+      RepeatMe.Repeat("-execute", 10, 1.0d0, immediateQuit := ImmediateQuit)
     END;
 
     translate := pp.keywordPresent("-translate");
@@ -473,7 +476,8 @@ BEGIN
     
     pp.finish();
   EXCEPT
-    ParseParams.Error => Debug.Error("Can't parse command-line parameters\nUsage: " & Params.Get(0) & "\n" & CtDocBundle.Get().get("../doc/ct.txt"))
+    ParseParams.Error => Debug.Error("Can't parse command-line parameters\nUsage: " & Params.Get(0) & "\n" & CtDocBundle.Get().get("../doc/ct.txt"),
+                                     exitCode := ImmediateQuit)
   END;
 
   IF TraceFile.Version.CompressedV1 IN formats AND compressCmdPath = NIL THEN

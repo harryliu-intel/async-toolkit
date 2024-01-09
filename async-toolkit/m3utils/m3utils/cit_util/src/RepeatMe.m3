@@ -9,7 +9,7 @@ FROM Fmt IMPORT F, Int;
 IMPORT OSError;
 IMPORT AL;
 
-PROCEDURE Do(execFlag : TEXT) : BOOLEAN =
+PROCEDURE Do(execFlag : TEXT; immediateQuit : Process.ExitCode) : BOOLEAN =
   VAR
     stdin, stdout, stderr : File.T;
     params := NEW(REF ARRAY OF TEXT, Params.Count - 1 + 1);
@@ -30,6 +30,15 @@ PROCEDURE Do(execFlag : TEXT) : BOOLEAN =
                                      stdout := stdout,
                                      stderr := stderr),
            exitCode = Process.Wait(proc) DO
+
+        IF exitCode # 0 THEN
+          Debug.Warning("RepeatMe.Do : subprocess exit code " & Int(exitCode))
+        END;
+        
+        IF exitCode = immediateQuit AND exitCode # 0 THEN
+          Debug.Error("Aborting with exitCode " & Int(exitCode), exitCode := exitCode)
+        END;
+        
         RETURN exitCode = 0
       END
     EXCEPT
@@ -38,10 +47,10 @@ PROCEDURE Do(execFlag : TEXT) : BOOLEAN =
     END
   END Do;
   
-PROCEDURE Repeat(execFlag : TEXT; maxTimes : CARDINAL; delay : Time.T) =
+PROCEDURE Repeat(execFlag : TEXT; maxTimes : CARDINAL; delay : Time.T; immediateQuit : Process.ExitCode) =
   BEGIN
     FOR i := 1 TO maxTimes DO
-      IF Do(execFlag) THEN
+      IF Do(execFlag, immediateQuit) THEN
         Process.Exit(0)
       ELSE
         Debug.Warning("Process failed.  Re-executing!");

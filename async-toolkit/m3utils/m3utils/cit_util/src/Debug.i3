@@ -54,6 +54,7 @@ INTERFACE Debug;
 
 IMPORT Fmt, Wr, Pathname;
 IMPORT OSError;
+IMPORT Process;
 
 CONST DefaultLevel = 10;
 
@@ -75,9 +76,12 @@ PROCEDURE HexOut(t : TEXT; minLevel : CARDINAL := 10; cr:=TRUE; toHex:=ToHex);
 
 PROCEDURE S(t: TEXT; minLevel : CARDINAL := 5; cr:=TRUE);
 PROCEDURE Warning(t : TEXT);
-PROCEDURE Error(t : TEXT; exit := TRUE);
 
-PROCEDURE Check(b : BOOLEAN; msg : TEXT; exit := TRUE);
+CONST DefaultErrorExitCode : Process.ExitCode = 2;
+      
+PROCEDURE Error(t : TEXT; exit := TRUE; exitCode : Process.ExitCode := DefaultErrorExitCode);
+
+PROCEDURE Check(b : BOOLEAN; msg : TEXT; exit := TRUE; exitCode := DefaultErrorExitCode);
   (* if b is TRUE, do nothing
      if b is FALSE, same as Error(msg,exit) *)
 
