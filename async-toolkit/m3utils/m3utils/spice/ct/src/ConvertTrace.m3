@@ -300,6 +300,9 @@ TYPE
 
 CONST
   ImmediateQuit = 117;
+
+VAR
+  M3Utils := Env.Get("M3UTILS");
   
 BEGIN
   Debug.SetOptions(SET OF Debug.Options {Debug.Options.PrintThreadID, Debug.Options.PrintPID });
@@ -313,7 +316,7 @@ BEGIN
     translate := pp.keywordPresent("-translate");
     noX       := pp.keywordPresent("-noX");
 
-    copyRootName := pp.keywordPresent("-copyrootname");
+    copyRootName := pp.keywordPresent("-copyrootname") OR pp.keywordPresent("-C");
 
     IF pp.keywordPresent("-help") THEN
       <*FATAL Wr.Failure*>
@@ -371,21 +374,39 @@ BEGIN
                              TraceFile.Version.CompressedV1 };
     END;
 
+    compressQuick := pp.keywordPresent("-quick");
+
+    compressCmdPath := Env.Get("CT_COMPRESS_PATH");
+
+    IF TraceFile.Version.CompressedV1 IN formats AND M3Utils # NIL THEN
+      (* default compress setting *)
+      compressCmdPath := M3Utils & "/spice/spicecompress/spicestream/AMD64_LINUX/spicestream"
+    END;
+    
     fsdbCmdPath := Env.Get("CT_NANOSIMRD_PATH");
     IF fsdbCmdPath # NIL THEN
       parseFmt := ParseFmt.Fsdb
     END;
 
+    IF pp.keywordPresent("-F") THEN
+      IF M3Utils = NIL THEN Debug.Error("Must set M3UTILS") END;
+      fsdbCmdPath := M3Utils & "/spice/fsdb/src/nanosimrd";
+      parseFmt := ParseFmt.Fsdb;
+    END;
+
+    IF pp.keywordPresent("-Fnetbatch") THEN
+      IF M3Utils = NIL THEN Debug.Error("Must set M3UTILS") END;
+      fsdbCmdPath := M3Utils & "/spice/fsdb/src/nanosimrd.nb";
+      parseFmt := ParseFmt.Fsdb;
+    END;
+    
     IF pp.keywordPresent("-fsdb") THEN
       fsdbCmdPath := pp.getNext();
       parseFmt := ParseFmt.Fsdb;
     END;
 
-    compressCmdPath := Env.Get("CT_COMPRESS_PATH");
-    
     IF pp.keywordPresent("-compress") THEN
       compressCmdPath := pp.getNext();
-      compressQuick := pp.keywordPresent("-quick");
     END;
 
     IF pp.keywordPresent("-prec") THEN
@@ -481,7 +502,7 @@ BEGIN
   END;
 
   IF TraceFile.Version.CompressedV1 IN formats AND compressCmdPath = NIL THEN
-    Debug.Error("If format is CompressedV1, must also specify compress (command path)")
+    Debug.Error("If format is CompressedV1, must also specify compress (command path)", exitCode := ImmediateQuit)
   END;
 
   IF maxFiles = LAST(CARDINAL) THEN
