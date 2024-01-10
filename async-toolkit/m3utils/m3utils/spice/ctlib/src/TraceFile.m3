@@ -103,7 +103,7 @@ PROCEDURE CreateBuffers(t : T; VAR time, data : REF ARRAY OF LONGREAL)
     END
   END CreateBuffers;
 
-PROCEDURE Write(t : T; fmt : Version) =
+PROCEDURE Write(t : T; fmt : Version) : Pathname.T =
   VAR
     tFn := t.ofn & "." & VersionSuffixes[fmt];
     tWr : Wr.T;
@@ -142,7 +142,9 @@ PROCEDURE Write(t : T; fmt : Version) =
     EXCEPT
       Wr.Failure(x) => Debug.Error("Trouble closing trace file : Wr.Failure : " &
         AL.Format(x))
-    END
+    END;
+
+    RETURN tFn
   END Write;
 
 EXCEPTION WriteError(TEXT);
@@ -442,7 +444,7 @@ PROCEDURE ReadHeader(rd : Rd.T) : Header
 PROCEDURE WritePll(t                 : T;
                    wthreads          : CARDINAL;
                    writeTraceCmdPath : Pathname.T;
-                   fmt               : Version) =
+                   fmt               : Version) : Pathname.T =
   (* read data from each file in temp directory and output
      in reordered trace format for fast aplot access *)
   VAR
@@ -580,6 +582,7 @@ PROCEDURE WritePll(t                 : T;
       Debug.Out("Write threads have finished.");
 
     END;
+    RETURN tFn
   END WritePll;
 
   (**********************************************************************)

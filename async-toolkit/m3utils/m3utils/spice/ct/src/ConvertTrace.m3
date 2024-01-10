@@ -238,16 +238,16 @@ PROCEDURE WriteFiles(ofn        : Pathname.T;
 
 PROCEDURE WriteTrace(ofn : Pathname.T;
                      fnr : FileNamer.T;
-                     fmt : TraceFile.Version) =
+                     fmt : TraceFile.Version) : Pathname.T =
   BEGIN
     Debug.Out(F("ConvertTrace.WriteTrace : fmt %s",
                 TraceFile.VersionNames[fmt]));
     
     WITH tr = NEW(TraceFile.T).init(ofn, nFiles, names.size(), fnr) DO
       IF wthreads > 1 THEN
-        tr.writePll(wthreads, writeTraceCmdPath, fmt)
+        RETURN tr.writePll(wthreads, writeTraceCmdPath, fmt)
       ELSE
-        tr.write(fmt)
+        RETURN tr.write(fmt)
       END
     END
   END WriteTrace;
@@ -336,12 +336,27 @@ PROCEDURE DoConversion(conv : Conversion.T) =
       Rd.Failure(x) => Debug.Error("Trouble reading input file : Rd.Failure : " & AL.Format(x))
     END;
 
-
     WITH fnr = NEW(FileNamer.T).init(wd, nFiles, names.size()) DO
       IF doTrace THEN
         FOR f := FIRST(TraceFile.Version) TO LAST(TraceFile.Version) DO
           IF f IN formats THEN
-            WriteTrace(ofn, fnr, f)
+            Debug.Out("Writing TraceFile version " & TraceFile.VersionNames[f]);
+            WITH temproot = wd & "/inprogress",
+                 tempfile = WriteTrace(temproot, fnr, f),
+                 sfx      = TraceFile.VersionSuffixes[f],
+                 ufn      = ofn & "." & sfx DO
+              TRY
+                Debug.Out(F("Done writing TraceFile version %s : moving %s -> %s",
+                            TraceFile.VersionNames[f],
+                            tempfile,
+                            ufn));
+                FS.Rename(tempfile, ufn)
+              EXCEPT
+                OSError.E(x) =>
+                Debug.Error(F("Couldnt rename %s -> %s : OSError.E : %s",
+                              tempfile, ufn, AL.Format(x)))
+              END
+            END
           END
         END
       END;
@@ -486,8 +501,7 @@ BEGIN
     END;
 
     IF pp.keywordPresent("-z") THEN
-      formats := formats + SET OF TraceFile.Version {
-                             TraceFile.Version.CompressedV1 };
+      formats :=  SET OF TraceFile.Version { TraceFile.Version.CompressedV1 };
     END;
 
     compressQuick := pp.keywordPresent("-quick");
