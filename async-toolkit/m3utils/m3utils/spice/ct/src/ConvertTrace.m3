@@ -45,6 +45,8 @@ IMPORT CtDocBundle;
 IMPORT Process;
 IMPORT BundleRep;
 IMPORT RepeatMe;
+IMPORT Conversion;
+IMPORT ConversionList;
 
 <*FATAL Thread.Alerted*>
 
@@ -111,7 +113,8 @@ PROCEDURE CreateBuffers(tempReader     : TempReader.T;
     END
   END CreateBuffers;
   
-PROCEDURE WriteSources(tempReader   : TempReader.T;
+PROCEDURE WriteSources(ofn          : Pathname.T;
+                       tempReader   : TempReader.T;
                        fnr          : FileNamer.T) =
   (* read data from each file in temp directory and output
      as PWL voltage sources to be used as a stimulus(?) *)
@@ -175,7 +178,9 @@ PROCEDURE Unslash(fn : Pathname.T) : Pathname.T =
     RETURN TextUtils.Replace(fn, "/", "::")
   END Unslash;
 
-PROCEDURE WriteFiles(tempReader : TempReader.T; fnr : FileNamer.T) =
+PROCEDURE WriteFiles(ofn        : Pathname.T;
+                     tempReader : TempReader.T;
+                     fnr        : FileNamer.T) =
   (* read data from each file in temp directory and output
      in simple ASCII format, one file per signal *)
   VAR
@@ -231,7 +236,9 @@ PROCEDURE WriteFiles(tempReader : TempReader.T; fnr : FileNamer.T) =
     END
   END WriteFiles;
 
-PROCEDURE WriteTrace(fnr : FileNamer.T; fmt : TraceFile.Version) =
+PROCEDURE WriteTrace(ofn : Pathname.T;
+                     fnr : FileNamer.T;
+                     fmt : TraceFile.Version) =
   BEGIN
     Debug.Out(F("ConvertTrace.WriteTrace : fmt %s",
                 TraceFile.VersionNames[fmt]));
@@ -244,12 +251,121 @@ PROCEDURE WriteTrace(fnr : FileNamer.T; fmt : TraceFile.Version) =
       END
     END
   END WriteTrace;
+
+PROCEDURE DoConversion(conv : Conversion.T) =
+  VAR
+    ifn := conv.ifn;
+    ofn := conv.ofn;
+  BEGIN
+    TRY
+      IF doDebug THEN
+        Debug.Out(F("ConvertTrace parsing... ifn=%s ofn=%s", ifn, ofn));
+      END;
+      CASE parseFmt OF
+        ParseFmt.Tr0 =>
+
+        VAR
+          rd : Rd.T;
+        BEGIN
+          TRY
+            rd  := FileRd_Open(ifn)
+          EXCEPT
+            OSError.E(x) => Debug.Error("Trouble opening input file \"" & ifn & "\": OSError.E : " & AL.Format(x))
+          END;
+          
+          names.addhi(Tr0.Seq1("TIME"));
+          Tr0.Parse(wd,
+                    ofn,
+                    names,
+                    maxFiles,
+                    nFiles,
+                    MaxMem,
+                    timeScaleFactor,
+                    timeOffset,
+                    voltageScaleFactor,
+                    voltageOffset,
+                    dutName,
+                    rd,
+                    wait,
+                    restrictNodes,
+                    regExList,
+                    maxNodes,
+                    translate, noX);
+
+          TRY Rd.Close(rd) EXCEPT ELSE END
+        END
+      |
+        ParseFmt.Fsdb =>
+        Fsdb.Parse(wd,
+                   ofn,
+                   names,
+                   maxFiles,
+                   nFiles,
+                   timeScaleFactor,
+                   timeOffset,
+                   voltageScaleFactor,
+                   voltageOffset,
+                   dutName,
+                   ifn,
+                   wait,
+                   restrictNodes,
+                   regExList,
+                   maxNodes,
+                   translate, noX,
+                   scopesep,
+                   fsdbCmdPath,
+                   Fsdb.Compress {
+        compressCmdPath,
+        compressPrec,
+        compressQuick
+        },
+                   threads,
+                   interpolate,
+                   maxTime)
+      END;
+      IF doDebug THEN
+        Debug.Out("ConvertTrace parsing done.")
+      END
+      
+    EXCEPT
+      Tr0.SyntaxError(e) => Debug.Error("Syntax error on line " & Int(lNo) & " : " &
+        e)
+    |
+      Tr0.ShortRead => Debug.Warning("Tr0.ShortRead: Short read on final line, data may be corrupted")
+    |
+      Rd.Failure(x) => Debug.Error("Trouble reading input file : Rd.Failure : " & AL.Format(x))
+    END;
+
+
+    WITH fnr = NEW(FileNamer.T).init(wd, nFiles, names.size()) DO
+      IF doTrace THEN
+        FOR f := FIRST(TraceFile.Version) TO LAST(TraceFile.Version) DO
+          IF f IN formats THEN
+            WriteTrace(ofn, fnr, f)
+          END
+        END
+      END;
+
+      VAR
+        tempReader := NEW(TempReader.T).init(fnr);
+      BEGIN
+        
+        IF doSources THEN
+          WriteSources(ofn, tempReader, fnr)
+        END;
+        
+        IF doFiles THEN
+          WriteFiles(ofn, tempReader, fnr)
+        END
+      END
+    END
+  END DoConversion;
   
 VAR
   names := NEW(TextSeqSeq.T).init();
-  ifn, ofn : Pathname.T;
+  convList : ConversionList.T := NIL;
 
-  wd      : Pathname.T      := NIL;
+  wd      : Pathname.T      := "ct.ctwork";
   dutName : TEXT            := NIL;
   pp                        := NEW(ParseParams.T).init(Stdio.stderr);
   timeScaleFactor,
@@ -479,21 +595,29 @@ BEGIN
     END;
 
     pp.skipParsed();
-    
-    ifn := pp.getNext();
 
-    IF copyRootName THEN
-      WITH pos = Text.FindCharR(ifn, '.') DO
-        IF pos = -1 THEN
-          Debug.Error("-copyrootname and no . in input name")
+    VAR
+      ifn, ofn : Pathname.T;
+    BEGIN
+      WHILE pp.next < NUMBER(pp.arg^) DO
+
+        ifn := pp.getNext();
+
+        IF copyRootName THEN
+          WITH pos = Text.FindCharR(ifn, '.') DO
+            IF pos = -1 THEN
+              Debug.Error("-copyrootname and no . in input name")
+            ELSE
+              ofn := Text.Sub(ifn, 0, pos)
+            END
+          END
         ELSE
-          ofn := Text.Sub(ifn, 0, pos)
-        END
+          ofn := pp.getNext()
+        END;
+
+        convList := ConversionList.Cons(Conversion.T { ifn, ofn }, convList)
       END
-    ELSE
-      ofn := pp.getNext()
     END;
-    wd  := ofn & ".ctwork";
     
     pp.finish();
   EXCEPT
@@ -520,107 +644,12 @@ BEGIN
   
   TRY FS.CreateDirectory(wd) EXCEPT ELSE END;
 
-  TRY
-
-    IF doDebug THEN
-      Debug.Out("ConvertTrace parsing...");
-    END;
-    CASE parseFmt OF
-      ParseFmt.Tr0 =>
-
-      VAR
-        rd : Rd.T;
-      BEGIN
-        TRY
-          rd  := FileRd_Open(ifn)
-        EXCEPT
-          OSError.E(x) => Debug.Error("Trouble opening input file \"" & ifn & "\": OSError.E : " & AL.Format(x))
-        END;
-        
-        names.addhi(Tr0.Seq1("TIME"));
-        Tr0.Parse(wd,
-                  ofn,
-                  names,
-                  maxFiles,
-                  nFiles,
-                  MaxMem,
-                  timeScaleFactor,
-                  timeOffset,
-                  voltageScaleFactor,
-                  voltageOffset,
-                  dutName,
-                  rd,
-                  wait,
-                  restrictNodes,
-                  regExList,
-                  maxNodes,
-                  translate, noX);
-
-        TRY Rd.Close(rd) EXCEPT ELSE END
-      END
-    |
-      ParseFmt.Fsdb =>
-      Fsdb.Parse(wd,
-                 ofn,
-                 names,
-                 maxFiles,
-                 nFiles,
-                 timeScaleFactor,
-                 timeOffset,
-                 voltageScaleFactor,
-                 voltageOffset,
-                 dutName,
-                 ifn,
-                 wait,
-                 restrictNodes,
-                 regExList,
-                 maxNodes,
-                 translate, noX,
-                 scopesep,
-                 fsdbCmdPath,
-                 Fsdb.Compress {
-                                 compressCmdPath,
-                                 compressPrec,
-                                 compressQuick
-                               },
-                 threads,
-                 interpolate,
-                 maxTime)
-    END;
-    IF doDebug THEN
-      Debug.Out("ConvertTrace parsing done.")
-    END
-    
-  EXCEPT
-    Tr0.SyntaxError(e) => Debug.Error("Syntax error on line " & Int(lNo) & " : " &
-      e)
-  |
-    Tr0.ShortRead => Debug.Warning("Tr0.ShortRead: Short read on final line, data may be corrupted")
-  |
-    Rd.Failure(x) => Debug.Error("Trouble reading input file : Rd.Failure : " & AL.Format(x))
-  END;
-
-
-  WITH fnr = NEW(FileNamer.T).init(wd, nFiles, names.size()) DO
-    IF doTrace THEN
-      FOR f := FIRST(TraceFile.Version) TO LAST(TraceFile.Version) DO
-        IF f IN formats THEN
-          WriteTrace(fnr, f)
-        END
-      END
-    END;
-
-    VAR
-      tempReader := NEW(TempReader.T).init(fnr);
-    BEGIN
-    
-      IF doSources THEN
-        WriteSources(tempReader, fnr)
-      END;
-      
-      IF doFiles THEN
-        WriteFiles(tempReader, fnr)
-      END
+  VAR
+    p := convList;
+  BEGIN
+    WHILE p # NIL DO
+      DoConversion(Conversion.T { p.head.ifn, p.head.ofn });
+      p := p.tail
     END
   END
 
