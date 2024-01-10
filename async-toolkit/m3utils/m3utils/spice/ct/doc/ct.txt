@@ -65,7 +65,7 @@ Detailed command-line option documentation
 
 Command-line option meaning is as follows
 
-  -help        be helpful
+  -help|--help be helpful
 
   -fsdb        read FSDB format.  Argument is absolute path
                to FSDB reading program (can be a shell script

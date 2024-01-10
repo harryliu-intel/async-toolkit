@@ -434,7 +434,7 @@ BEGIN
 
     copyRootName := pp.keywordPresent("-copyrootname") OR pp.keywordPresent("-C");
 
-    IF pp.keywordPresent("-help") THEN
+    IF pp.keywordPresent("-help") OR pp.keywordPresent("--help") THEN
       <*FATAL Wr.Failure*>
       BEGIN
         Wr.PutText(Stdio.stderr, CtDocBundle.Get().get("../doc/ct.txt"));
