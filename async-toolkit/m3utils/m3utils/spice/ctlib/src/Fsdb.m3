@@ -595,6 +595,12 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
       EVAL GetResponseG(rd, "LR");
     END LoadNode;
 
+  PROCEDURE QuitHandshake() =
+    BEGIN
+      PutCommandG(wr, "Q");
+      EVAL GetResponseG(rd, "QR")
+    END QuitHandshake;
+    
   PROCEDURE ChopTimestepsBasedOnMaxTime(max : LONGREAL) =
     BEGIN
       WHILE timesteps.get(timesteps.size() - 1) > max DO
@@ -828,6 +834,7 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
         BEGIN
           (* now generate the files in turn *)
           IF MultiThreaded THEN
+            QuitHandshake();
             GenMultiThreaded(threads,
                              idxMap,
                              timesteps,
@@ -850,7 +857,8 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
                              compress,
                              voltageScaleFactor, voltageOffset,
                              interpolate,
-                             unit)
+                             unit);
+            QuitHandshake()
           END
         END
       END;
