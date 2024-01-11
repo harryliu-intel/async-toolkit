@@ -47,6 +47,7 @@ IMPORT BundleRep;
 IMPORT RepeatMe;
 IMPORT Conversion;
 IMPORT ConversionList;
+IMPORT Time;
 
 <*FATAL Thread.Alerted*>
 
@@ -256,7 +257,52 @@ PROCEDURE DoConversion(conv : Conversion.T) =
   VAR
     ifn := conv.ifn;
     ofn := conv.ofn;
+    doBuild := TRUE;
   BEGIN
+
+    (* check if all required traces are already built first *)
+    IF doTrace THEN
+      doBuild := FALSE;
+      FOR f := FIRST(TraceFile.Version) TO LAST(TraceFile.Version) DO
+        IF f IN formats THEN
+          WITH sfx      = TraceFile.VersionSuffixes[f],
+               ufn      = ofn & "." & sfx DO
+
+            Debug.Out(F("DoConversion checking existence of TraceFile version %s : %s",
+                        TraceFile.VersionNames[f],
+                        ufn));
+
+            TRY
+              WITH status = FS.Status(ufn) DO
+                Debug.Out(F("DoConversion checking modification time of %s : status.modificationTime = %s, ignoreTime = %s",
+                            ufn, LR(status.modificationTime), LR(ignoreTime)));
+                
+                IF status.modificationTime <= ignoreTime THEN
+                  (* file is old, rebuild it *)
+                  doBuild := TRUE;
+                  EXIT
+                END
+              END
+            EXCEPT
+              OSError.E(x) =>
+              Debug.Out(F("DoConversion caught OSError.E (%s) while looking for %s, continuing", AL.Format(x), ufn));
+              doBuild := TRUE;
+              EXIT
+            END            
+          END
+        END
+      END
+    END;
+
+    IF doBuild = FALSE THEN
+      Debug.Out(F("DoConversion : not building %s because we found a new version of every trace file", ofn));
+      RETURN
+    ELSE
+      Debug.Out(F("DoConversion : continuing .. building %s", ofn))
+    END;
+
+    (* at least one trace does not exist, continue ... *)
+              
     TRY
       IF doDebug THEN
         Debug.Out(F("ConvertTrace parsing... ifn=%s ofn=%s", ifn, ofn));
@@ -337,6 +383,20 @@ PROCEDURE DoConversion(conv : Conversion.T) =
     END;
 
     WITH fnr = NEW(FileNamer.T).init(wd, nFiles, names.size()) DO
+
+      VAR
+        tempReader := NEW(TempReader.T).init(fnr);
+      BEGIN
+        
+        IF doSources THEN
+          WriteSources(ofn, tempReader, fnr)
+        END;
+        
+        IF doFiles THEN
+          WriteFiles(ofn, tempReader, fnr)
+        END
+      END;
+
       IF doTrace THEN
         FOR f := FIRST(TraceFile.Version) TO LAST(TraceFile.Version) DO
           IF f IN formats THEN
@@ -361,18 +421,6 @@ PROCEDURE DoConversion(conv : Conversion.T) =
         END
       END;
 
-      VAR
-        tempReader := NEW(TempReader.T).init(fnr);
-      BEGIN
-        
-        IF doSources THEN
-          WriteSources(ofn, tempReader, fnr)
-        END;
-        
-        IF doFiles THEN
-          WriteFiles(ofn, tempReader, fnr)
-        END
-      END
     END
   END DoConversion;
   
@@ -421,6 +469,9 @@ VAR
 
   scopesep            := ".";
   copyRootName        := FALSE;
+
+  ignoreTime          : Time.T := LAST(Time.T);
+  (* dont rebuild files newer than this *)
   
 CONST
   DefFormats =
@@ -441,7 +492,21 @@ BEGIN
   TRY
 
     IF NOT pp.keywordPresent("-execute") THEN
-      RepeatMe.Repeat("-execute", 10, 1.0d0, immediateQuit := ImmediateQuit)
+      RepeatMe.Repeat("-execute",
+                      10,
+                      1.0d0,
+                      immediateQuit := ImmediateQuit,
+                      addArgs := ARRAY [0..1] OF TEXT { "-starttime",
+                                                        LR(Time.Now()) } )
+    END;
+
+    IF pp.keywordPresent("-starttime") THEN
+      ignoreTime := pp.getNextLongReal()
+    END;
+
+    IF pp.keywordPresent("-force") THEN
+      ignoreTime := LAST(Time.T)
+      (* set ignoreTime to the end of eternity, so all files are rebuilt *)
     END;
 
     translate := pp.keywordPresent("-translate");

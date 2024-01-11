@@ -8,17 +8,23 @@ IMPORT Debug;
 FROM Fmt IMPORT F, Int;
 IMPORT OSError;
 IMPORT AL;
+IMPORT Wx;
 
-PROCEDURE Do(execFlag : TEXT; immediateQuit : Process.ExitCode) : BOOLEAN =
+PROCEDURE Do(execFlag               : TEXT;
+             immediateQuit          : Process.ExitCode;
+             READONLY addArgs       : ARRAY OF TEXT) : BOOLEAN =
   VAR
     stdin, stdout, stderr : File.T;
-    params := NEW(REF ARRAY OF TEXT, Params.Count - 1 + 1);
+    params := NEW(REF ARRAY OF TEXT, Params.Count - 1 + NUMBER(addArgs) + 1);
     cmd := Params.Get(0);
   BEGIN
     (* copy the parameters over, but make params[0] the execFlag *)
     params[0] := execFlag;
+    FOR i := FIRST(addArgs) TO LAST(addArgs) DO
+      params[i + 1] := addArgs[i]
+    END;
     FOR i := 1 TO Params.Count - 1 DO
-      params[i] := Params.Get(i)
+      params[i + NUMBER(addArgs)] := Params.Get(i)
     END;
     
     Process.GetStandardFileHandles(stdin, stdout, stderr);
@@ -32,7 +38,17 @@ PROCEDURE Do(execFlag : TEXT; immediateQuit : Process.ExitCode) : BOOLEAN =
            exitCode = Process.Wait(proc) DO
 
         IF exitCode # 0 THEN
-          Debug.Warning("RepeatMe.Do : subprocess exit code " & Int(exitCode))
+          VAR
+            wx := Wx.New();
+          BEGIN
+            Wx.PutText(wx, cmd);
+            FOR i := FIRST(params^) TO LAST(params^) DO
+              Wx.PutChar(wx, ' ');
+              Wx.PutText(wx, params[i])
+            END;
+            Debug.Warning(F("RepeatMe.Do : subprocess exit code %s, failed:\n %s",
+                            Int(exitCode), Wx.ToText(wx)))
+          END
         END;
         
         IF exitCode = immediateQuit AND exitCode # 0 THEN
@@ -47,10 +63,14 @@ PROCEDURE Do(execFlag : TEXT; immediateQuit : Process.ExitCode) : BOOLEAN =
     END
   END Do;
   
-PROCEDURE Repeat(execFlag : TEXT; maxTimes : CARDINAL; delay : Time.T; immediateQuit : Process.ExitCode) =
+PROCEDURE Repeat(execFlag            : TEXT;
+                 maxTimes            : CARDINAL;
+                 delay               : Time.T;
+                 immediateQuit       : Process.ExitCode;
+                 READONLY addArgs    : ARRAY OF TEXT) =
   BEGIN
     FOR i := 1 TO maxTimes DO
-      IF Do(execFlag, immediateQuit) THEN
+      IF Do(execFlag, immediateQuit, addArgs) THEN
         Process.Exit(0)
       ELSE
         Debug.Warning("Process failed.  Re-executing!");
