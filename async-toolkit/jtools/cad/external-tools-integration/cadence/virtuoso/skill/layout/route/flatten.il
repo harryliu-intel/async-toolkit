@@ -89,11 +89,13 @@ useICV = t
     ; route abutting pins
     (RouteNearby ?CV CV ?topShapes ConnectNearbyShapes ?subShapes ConnectAbuttingPins ?distance GridPolyPitch:0)
 
-    ; swap instances back to floorplan views for soft macros
-    (foreach inst CV->instances
-             old=oldMasters[inst->name]
-             (when old inst->master=old)
-             )
+    ; swap instances back to floorplan views for soft macros so DEF matches Verilog
+    (when softMacro
+      (foreach inst CV->instances
+               old=oldMasters[inst->name]
+               (when old inst->master=old)
+               )
+      )
 
     ; fix things for DEF export
     (foreach inst CV->instances
@@ -742,7 +744,7 @@ useICV = t
                    (dbCreatePin (dbMakeNet CV (strcat inst->name "." s->net->name)) path)
                    path->routeStatus="locked"
                    )
-             ) 
+             )
     ; flatten blockages
     (foreach s inst->master->blockages
              (dbCopyFig s CV inst->transform)
