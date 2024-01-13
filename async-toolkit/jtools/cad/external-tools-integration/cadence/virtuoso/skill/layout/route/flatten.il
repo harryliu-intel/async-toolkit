@@ -24,7 +24,7 @@ useICV = t
         (changeWindow t)           ; change window to flatten view
         (Mem (nrGetMaxHeapSize))   ; memory to use
         )
-  (let (TEMP PowerGridCellName ColorGridCellName win pgCV cgCV oldMasters)
+  (let (TEMP PowerGridCellName ColorGridCellName win pgCV cgCV oldMasters old)
 
     ; check viewName
     (when CV->viewName!="floorplan" (error "call MakeFlatten on floorplan view\n"))
@@ -88,7 +88,12 @@ useICV = t
 
     ; route abutting pins
     (RouteNearby ?CV CV ?topShapes ConnectNearbyShapes ?subShapes ConnectAbuttingPins ?distance GridPolyPitch:0)
-    (when oldMasters (foreach inst oldMasters inst->master=oldMasters[inst->name]))
+
+    ; swap instances back to floorplan views for soft macros
+    (foreach inst CV->instances
+             old=oldMasters[inst->name]
+             (when old inst->master=old)
+             )
 
     ; fix things for DEF export
     (foreach inst CV->instances
