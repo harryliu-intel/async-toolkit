@@ -88,7 +88,7 @@ useICV = t
 
     ; route abutting pins
     (RouteNearby ?CV CV ?topShapes ConnectNearbyShapes ?subShapes ConnectAbuttingPins ?distance GridPolyPitch:0)
-    (when oldMasters (foreach inst oldMasters inst->master=oldMasters[inst]))
+    (when oldMasters (foreach inst oldMasters inst->master=oldMasters[inst->name]))
 
     ; fix things for DEF export
     (foreach inst CV->instances
@@ -678,7 +678,7 @@ useICV = t
     ; choose variants, legalize instances, convert to layout views
     (foreach inst CV->instances
              (when inst->viewName=="floorplan"
-                   (when oldMasters oldMasters[inst]=inst->master)
+                   (when oldMasters oldMasters[inst->name]=inst->master)
                    lCV=(ReadCV inst->libName inst->cellName "layout")
                    (when lCV inst->master=lCV)
                    (LegalizeShortInstance inst)
