@@ -9,7 +9,7 @@ IMPORT Text;
 FROM Fmt IMPORT F, Int, LongReal;
 IMPORT UnsafeReader;
 IMPORT Thread;
-IMPORT Params;
+IMPORT Atom;
 
 (* the following procedures communicate with a nanosimrd process *)
 
@@ -17,9 +17,27 @@ CONST TE = Text.Equal;
       LR = LongReal;
 
 VAR doDebug := Debug.DebugThis("FsdbComms");
-      
+
+(* Convert Rd.EndOfFile to Rd.Failure *)
+
+PROCEDURE RaiseRdEndOfFile(str : TEXT) RAISES { Rd.Failure } =
+  BEGIN
+    RAISE Rd.Failure(AL.List2(Atom.FromText("FsdbComms." & str),
+                              Atom.FromText("Rd.EndOfFile")))
+  END RaiseRdEndOfFile;
+
+PROCEDURE RaiseRdFailure(str : TEXT; x : AL.T) RAISES { Rd.Failure } =
+  BEGIN
+    RAISE Rd.Failure(AL.Cons(Atom.FromText("FsdbComms." & str), x))
+  END RaiseRdFailure;
+    
+PROCEDURE RaiseWrFailure(str : TEXT; x : AL.T) RAISES { Wr.Failure } =
+  BEGIN
+    RAISE Wr.Failure(AL.Cons(Atom.FromText("FsdbComms." & str), x))
+  END RaiseWrFailure;
+
 PROCEDURE PutCommandG(wr : Wr.T; cmd : TEXT)
-  RAISES { Thread.Alerted } =
+  RAISES { Thread.Alerted, Wr.Failure } =
   BEGIN
     TRY
       IF doDebug THEN
@@ -30,12 +48,12 @@ PROCEDURE PutCommandG(wr : Wr.T; cmd : TEXT)
       Wr.Flush(wr);
     EXCEPT
       Wr.Failure(x) =>
-      Debug.Error("Unexpected Wr.Failure in PutCommand : " & AL.Format(x))
+      RaiseWrFailure("PutCommandG", x)
     END
   END PutCommandG;
 
 PROCEDURE GetResponseG(rd : Rd.T; matchKw : TEXT) : TextReader.T
-  RAISES { Thread.Alerted } =
+  RAISES { Thread.Alerted, Rd.Failure } =
   VAR
     kw : TEXT;
   BEGIN
@@ -59,12 +77,11 @@ PROCEDURE GetResponseG(rd : Rd.T; matchKw : TEXT) : TextReader.T
       END
     EXCEPT
       Rd.Failure(x) =>
-      Debug.Error("Unexpected Rd.Failure in GetResponse : " & AL.Format(x)); 
+      RaiseRdFailure("GetResponseG", x);
       <*ASSERT FALSE*>
-      
     |
       Rd.EndOfFile =>
-      Debug.Error("Unexpected Rd.EndOfFile in GetResponse");
+      RaiseRdEndOfFile("GetResponseG");
       <*ASSERT FALSE*>
     END
   END GetResponseG;
@@ -72,7 +89,7 @@ PROCEDURE GetResponseG(rd : Rd.T; matchKw : TEXT) : TextReader.T
 PROCEDURE ReadCompressedNodeDataG(rd         : Rd.T;
                                   VAR nodeid : CARDINAL;
                                   VAR norm   : SpiceCompress.Norm) : TEXT
-  RAISES { Thread.Alerted } =
+  RAISES { Thread.Alerted, Rd.Failure } =
   VAR
     kw    : TEXT;
     bytes : CARDINAL;
@@ -130,19 +147,19 @@ PROCEDURE ReadCompressedNodeDataG(rd         : Rd.T;
       END
     EXCEPT
       Rd.Failure(x) =>
-      Debug.Error("Unexpected Rd.Failure in ReadCompressedNodeData : " &
-        AL.Format(x));
+      RaiseRdFailure("ReadCompressedNodeDataG", x);
       <*ASSERT FALSE*>
     |
       Rd.EndOfFile =>
-      Debug.Error("Unexpected Rd.EndOfFile in ReadCompressedNodeData");
+      RaiseRdEndOfFile("ReadCompressedNodeDataG");
       <*ASSERT FALSE*>
     END
   END ReadCompressedNodeDataG;
   
 PROCEDURE ReadBinaryNodeDataG(rd         : Rd.T;
                               VAR nodeid : CARDINAL;
-                              VAR buff   : ARRAY OF LONGREAL) RAISES { Thread.Alerted } =
+                              VAR buff   : ARRAY OF LONGREAL)
+  RAISES { Thread.Alerted, Rd.Failure } =
   VAR
     kw : TEXT;
     n  : CARDINAL;
@@ -192,12 +209,10 @@ PROCEDURE ReadBinaryNodeDataG(rd         : Rd.T;
       END
     EXCEPT
       Rd.Failure(x) =>
-      Debug.Error("Unexpected Rd.Failure in ReadBinaryNodeData : " & AL.Format(x));
-      <*ASSERT FALSE*>
+      RaiseRdFailure("ReadBinaryNodeDataG", x)
     |
       Rd.EndOfFile =>
-      Debug.Error("Unexpected Rd.EndOfFile in ReadBinaryNodeData");
-      <*ASSERT FALSE*>
+      RaiseRdEndOfFile("ReadBinaryNodeDataG")
     END
   END ReadBinaryNodeDataG;
 
@@ -206,7 +221,7 @@ PROCEDURE ReadInterpolatedBinaryNodeDataG(rd          : Rd.T;
                                           VAR buff    : ARRAY OF LONGREAL;
                                           interpolate : LONGREAL;
                                           unit        : LONGREAL)
-  RAISES { Thread.Alerted } =
+  RAISES { Thread.Alerted, Rd.Failure } =
   VAR
     kw : TEXT;
     n  : CARDINAL;
@@ -307,17 +322,15 @@ PROCEDURE ReadInterpolatedBinaryNodeDataG(rd          : Rd.T;
       END
     EXCEPT
       Rd.Failure(x) =>
-      Debug.Error(Params.Get(0) & " : unexpected Rd.Failure in ReadInterpolatedBinaryNodeData : " & AL.Format(x));
-      <*ASSERT FALSE*>
+      RaiseRdFailure("ReadInterpolatedBinaryNodeDataG", x)
     |
       Rd.EndOfFile =>
-      Debug.Error(Params.Get(0) & " : unexpected Rd.EndOfFile in ReadInterpolatedBinaryNodeData");
-      <*ASSERT FALSE*>
+      RaiseRdEndOfFile("ReadInterpolatedBinaryNodeDataG")
     END
   END ReadInterpolatedBinaryNodeDataG;
 
 PROCEDURE GetLineUntilG(rd : Rd.T; term : TEXT; VAR line : TEXT) : BOOLEAN
-  RAISES { Thread.Alerted } =
+  RAISES { Thread.Alerted, Rd.Failure } =
   BEGIN
     TRY
       WITH this    = Rd.GetLine(rd) DO
@@ -330,11 +343,11 @@ PROCEDURE GetLineUntilG(rd : Rd.T; term : TEXT; VAR line : TEXT) : BOOLEAN
       END
     EXCEPT
       Rd.Failure(x) =>
-      Debug.Error("Unexpected Rd.Failure in GetLineUntil : " & AL.Format(x));
+      RaiseRdFailure("GetLineUntilG", x);
       <*ASSERT FALSE*>
     |
       Rd.EndOfFile =>
-      Debug.Error("Unexpected Rd.EndOfFile in GetLineUntil");
+      RaiseRdEndOfFile("GetLineUntilG");
       <*ASSERT FALSE*>
     END
   END GetLineUntilG;

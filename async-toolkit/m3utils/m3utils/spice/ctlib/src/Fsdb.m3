@@ -199,14 +199,15 @@ PROCEDURE GenSingleThreaded(rd                  : Rd.T;
                             voltageScaleFactor,
                             voltageOffset,
                             interpolate,
-                            unit                : LONGREAL) =
+                            unit                : LONGREAL)
+  RAISES { Rd.Failure, Wr.Failure } =
   BEGIN
     FOR i := FIRST(fileTab) TO LAST(fileTab) DO
       IF doDebug THEN
         Debug.Out(F("Fsdb.GenSingleThreaded : Generating partial trace file %s",
                     Int(i)));
       END;
-      
+
       GeneratePartialTraceFile(wdWr[i],
                                fileTab[i],
                                idxMap,
@@ -386,7 +387,7 @@ PROCEDURE LoadAllNames(wr            : Wr.T;
                        translate, noX     : BOOLEAN;
                        VAR idxMap    : CardSeq.T
                        )
-  RAISES { TextReader.NoMore }  =
+  RAISES { TextReader.NoMore, Rd.Failure, Wr.Failure }  =
   VAR
     fsdbNames  := NEW(CardTextSetTbl.Default).init();
     duplicates := NEW(TextCardTbl.Default).init();
@@ -530,19 +531,19 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
      responses.  Most of the responses are in ASCII, but for efficiency, some
      are in packed binary format. *)
 
-  PROCEDURE CommandUnload() =
+  PROCEDURE CommandUnload() RAISES { Rd.Failure, Wr.Failure } =
     BEGIN
       PutCommandG(wr, "U");
       EVAL GetResponseG(rd, "UR");
     END CommandUnload;
 
-  PROCEDURE ParseRemoteFsdb() =
+  PROCEDURE ParseRemoteFsdb() RAISES { Rd.Failure, Wr.Failure } =
     BEGIN
       PutCommandG(wr, "B");
       EVAL GetResponseG(rd, "BR");
     END ParseRemoteFsdb;
     
-  PROCEDURE SetScopesep(sep : TEXT; stripXRemotely : BOOLEAN) =
+  PROCEDURE SetScopesep(sep : TEXT; stripXRemotely : BOOLEAN) RAISES { Rd.Failure, Wr.Failure } =
     BEGIN
       PutCommandG(wr, F("s %s %s",
                         sep,
@@ -551,7 +552,7 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
     END SetScopesep;
 
   PROCEDURE GetTimesteps(fsdbId : CARDINAL; steps : LRSeq.T)
-    RAISES { FloatMode.Trap, Lex.Error, TextReader.NoMore } =
+    RAISES { FloatMode.Trap, Lex.Error, TextReader.NoMore, Rd.Failure, Wr.Failure } =
     BEGIN
       PutCommandG(wr, F("I %s", Int(fsdbId)));
       WHILE GetLineUntilG(rd, "IR", line) DO
@@ -567,7 +568,7 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
     END GetTimesteps;
 
   PROCEDURE LoadFsdbIds()
-    RAISES { FloatMode.Trap, Lex.Error, TextReader.NoMore } =
+    RAISES { FloatMode.Trap, Lex.Error, TextReader.NoMore, Rd.Failure, Wr.Failure } =
     BEGIN
       PutCommandG(wr, "S");
       WITH reader    = GetResponseG(rd, "SR") DO
@@ -584,7 +585,7 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
       END;
     END LoadFsdbIds;
 
-  PROCEDURE LoadNode(fsdbId : CARDINAL) =
+  PROCEDURE LoadNode(fsdbId : CARDINAL) RAISES { Rd.Failure, Wr.Failure } =
     BEGIN
       (* load first node *)
       PutCommandG(wr, F("R %s %s", Int(fsdbId), Int(fsdbId)));
@@ -595,7 +596,7 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
       EVAL GetResponseG(rd, "LR");
     END LoadNode;
 
-  PROCEDURE QuitHandshake() =
+  PROCEDURE QuitHandshake()  RAISES { Rd.Failure, Wr.Failure } =
     BEGIN
       PutCommandG(wr, "Q");
       EVAL GetResponseG(rd, "QR")
@@ -609,7 +610,7 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
     END ChopTimestepsBasedOnMaxTime;
     
   PROCEDURE ChopTimestepsBasedOnType(type : TEXT)
-    RAISES { FloatMode.Trap, Lex.Error, TextReader.NoMore } =
+    RAISES { FloatMode.Trap, Lex.Error, TextReader.NoMore, Rd.Failure, Wr.Failure } =
 
     (* 
        this routine addresses an issue with AUTOSTOP
@@ -883,6 +884,17 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
     |
       TextReader.NoMore =>
       Debug.Error("TextReader.NoMore during Fsdb.Parse conversation")
+    |
+      Rd.Failure(x) =>
+      Debug.Error(F("Parse : caught Rd.Failure communicating with PID %s : %s",
+                    PIDStr(completion), AL.Format(x)));
+      <*ASSERT FALSE*>
+      
+    |
+      Wr.Failure(x) =>
+      Debug.Error(F("Parse : caught Rd.Failure communicating with PID %s : %s",
+                    PIDStr(completion), AL.Format(x)));
+      <*ASSERT FALSE*>
     END
   END Parse;
 
@@ -1078,7 +1090,7 @@ PROCEDURE GenFreeP(cl : GenClosure) : BOOLEAN =
     RETURN cl.tWr = NIL
   END GenFreeP;
 
-PROCEDURE PutCommandThr(wr : Wr.T; cmd : TEXT; cl : GenClosure) =
+PROCEDURE PutCommandThr(wr : Wr.T; cmd : TEXT; cl : GenClosure) RAISES { Wr.Failure } =
   BEGIN
     TRY
       PutCommandG(wr, cmd);
@@ -1093,7 +1105,7 @@ PROCEDURE PutCommandThr(wr : Wr.T; cmd : TEXT; cl : GenClosure) =
     END
   END PutCommandThr;
 
-PROCEDURE GetResponseThr(rd : Rd.T; matchKw : TEXT; cl : GenClosure) : TextReader.T =
+PROCEDURE GetResponseThr(rd : Rd.T; matchKw : TEXT; cl : GenClosure) : TextReader.T RAISES { Rd.Failure } =
   BEGIN
     TRY
       RETURN GetResponseG(rd, matchKw)
@@ -1111,12 +1123,12 @@ PROCEDURE GenApply(cl : GenClosure) : REFANY =
   (* this apply runs a session with a nanosimrd process *)
   (* we can run multiple in parallel *)
 
-  PROCEDURE PutCommand(wr : Wr.T; cmd : TEXT) =
+  PROCEDURE PutCommand(wr : Wr.T; cmd : TEXT) RAISES { Wr.Failure } =
     BEGIN
       PutCommandThr(wr, cmd, cl)
     END PutCommand;
 
-  PROCEDURE GetResponse(rd : Rd.T; matchKw : TEXT) : TextReader.T =
+  PROCEDURE GetResponse(rd : Rd.T; matchKw : TEXT) : TextReader.T RAISES { Rd.Failure } =
     BEGIN
       RETURN GetResponseThr(rd, matchKw, cl)
     END GetResponse;
@@ -1206,6 +1218,22 @@ PROCEDURE GenApply(cl : GenClosure) : REFANY =
             IF doDebug THEN
               Debug.Out("GenApply thread exiting after receiving QR")
             END;
+
+            TRY
+              Wr.Close(cl.cmdWr)
+            EXCEPT
+              Wr.Failure(x) =>
+              Debug.Error("Wr.Failure closing command stream : " & AL.Format(x))
+            END;
+            cl.cmdWr := NIL;
+            
+            TRY
+              Rd.Close(cl.cmdRd);
+            EXCEPT
+              Rd.Failure(x) =>
+              Debug.Error("Rd.Failure closing command stream : " & AL.Format(x))
+            END;
+            cl.cmdRd := NIL;
             
             RETURN NIL
           END;
@@ -1261,8 +1289,28 @@ PROCEDURE GenApply(cl : GenClosure) : REFANY =
       TextReader.NoMore =>
       Debug.Error("TextReader.NoMore during Fsdb.Parse conversation");
       <*ASSERT FALSE*>
+    |
+      Rd.Failure(x) =>
+      Debug.Error(F("GenApply : caught Rd.Failure communicating with PID %s : %s",
+                    PIDStr(cl.completion), AL.Format(x)));
+      <*ASSERT FALSE*>
+      
+    |
+      Wr.Failure(x) =>
+      Debug.Error(F("GenApply : caught Rd.Failure communicating with PID %s : %s",
+                    PIDStr(cl.completion), AL.Format(x)));
+      <*ASSERT FALSE*>
     END
   END GenApply;
+
+PROCEDURE PIDStr(completion : ProcUtils.Completion) : TEXT =
+  BEGIN
+    IF completion = NIL THEN
+      RETURN "**NIL**"
+    ELSE
+      RETURN Int(completion.getPID())
+    END
+  END PIDStr;
 
   (**********************************************************************)
 
@@ -1289,13 +1337,13 @@ PROCEDURE GeneratePartialTraceFile(wr                   : Wr.T;
 
                                    cl                   : GenClosure
   
-  ) =
-  PROCEDURE PutCommand(wr : Wr.T; cmd : TEXT) =
+  ) RAISES { Wr.Failure, Rd.Failure } =
+  PROCEDURE PutCommand(wr : Wr.T; cmd : TEXT) RAISES { Wr.Failure }=
     BEGIN
       PutCommandThr(wr, cmd, cl)
     END PutCommand;
 
-  PROCEDURE GetResponse(rd : Rd.T; matchKw : TEXT) : TextReader.T =
+  PROCEDURE GetResponse(rd : Rd.T; matchKw : TEXT) : TextReader.T RAISES { Rd.Failure } =
     BEGIN
       RETURN GetResponseThr(rd, matchKw, cl)
     END GetResponse;
@@ -1428,7 +1476,7 @@ PROCEDURE DoUncompressedReceive(wr                  : Wr.T;
                                 voltageOffset,
                                 interpolate,
                                 unit                : LONGREAL;
-                                inId, outId         : CARDINAL) =
+                                inId, outId         : CARDINAL) RAISES { Rd.Failure } =
   VAR
     buff := NEW(REF ARRAY OF LONGREAL, nSteps);
     node : CARDINAL;
@@ -1484,7 +1532,7 @@ PROCEDURE DoCompressedReceive(wr                  : Wr.T;
                               nSteps              : CARDINAL;
                               voltageScaleFactor,
                               voltageOffset       : LONGREAL;
-                              inId, outId         : CARDINAL) =
+                              inId, outId         : CARDINAL) RAISES { Rd.Failure } =
   VAR
     node : CARDINAL;
     data : TEXT;

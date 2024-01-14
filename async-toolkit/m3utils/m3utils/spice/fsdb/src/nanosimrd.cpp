@@ -248,6 +248,7 @@ fsdbXTagType    xtag_type;
 int
 setup(char *fn)
 {
+    if(verbose)fprintf(stderr, "%s mypid=%d myid=%d : setup(%s)\n", myname, mypid, myid, fn);
     // 
     // check the file to see if it's a fsdb file or not.
     //
@@ -615,7 +616,7 @@ traverse_one_signal(int        idcode,
   ext_dq *extdata = NULL;
   unsigned nx=0;
 
-  if(verbose)fprintf(stderr, "%s mypid=%d myid=%d : traverse_one_signal(%d,0x%x,0x%x)\n", myname, mypid, myid, idcode, mode, time_mode);
+  if(verbose>=2)fprintf(stderr, "%s mypid=%d myid=%d : traverse_one_signal(%d,0x%x,0x%x)\n", myname, mypid, myid, idcode, mode, time_mode);
 
   if (mode & TRAVERSE_EXTENDED)
     extdata = new_ext_dq();
@@ -953,6 +954,8 @@ static int    stripX      = 0;
 int 
 main(int argc, char *argv[])
 {
+    if(verbose)fprintf(stderr, "%s mypid=%d myid=%d : main(...)\n", myname, mypid, myid);
+
   
     if (2 != argc) {
 	fprintf(stderr, "usage: nanosimrd verilog_type_fsdb\n");

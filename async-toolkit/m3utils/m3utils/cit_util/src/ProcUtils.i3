@@ -5,6 +5,7 @@ IMPORT Rd, Wr, Pathname;
 IMPORT AtomList;
 IMPORT OSError;
 IMPORT Time;
+IMPORT Process;
 
 TYPE
   T = TEXT;
@@ -67,6 +68,8 @@ PROCEDURE RdToRd(source: Rd.T;
     abort();
 
     getState() : State;
+
+    getPID() : Process.ID;
   END;
      (* starting a process returns a Completion.  When it is desired to
         join the fork, call completion.wait(), which will raise ErrorExit
