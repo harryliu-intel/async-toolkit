@@ -89,7 +89,7 @@ PROCEDURE GetResponseG(rd : Rd.T; matchKw : TEXT) : TextReader.T
 PROCEDURE ReadCompressedNodeDataG(rd         : Rd.T;
                                   VAR nodeid : CARDINAL;
                                   VAR norm   : SpiceCompress.Norm) : TEXT
-  RAISES { Thread.Alerted, Rd.Failure } =
+  RAISES { Thread.Alerted, Rd.Failure, Error } =
   VAR
     kw    : TEXT;
     bytes : CARDINAL;
@@ -108,9 +108,8 @@ PROCEDURE ReadCompressedNodeDataG(rd         : Rd.T;
 
           IF reader.next(" ", kw, TRUE) THEN
             IF    TE(kw, "E") THEN
-              Debug.Error(F("Got time mismatch: nodeid %s: line %s",
+              RAISE Error(F("Got time mismatch: nodeid %s: line %s",
                             Int(nodeid), line));
-              <*ASSERT FALSE*>
             ELSIF TE(kw, "ZZZ") THEN
               (* this code synchronized with Main.m3<spicestream> *)
               tag      := Rd.GetChar(rd);
@@ -138,9 +137,8 @@ PROCEDURE ReadCompressedNodeDataG(rd         : Rd.T;
                 RETURN Text.FromChars(chars^)
               END
             ELSE
-              Debug.Error(F("?syntax error : ReadBinaryNodeData: got \"%s\"",
+              RAISE Error(F("?syntax error : ReadBinaryNodeData: got \"%s\"",
                             line));
-              <*ASSERT FALSE*>
             END
           END
         END
@@ -159,7 +157,7 @@ PROCEDURE ReadCompressedNodeDataG(rd         : Rd.T;
 PROCEDURE ReadBinaryNodeDataG(rd         : Rd.T;
                               VAR nodeid : CARDINAL;
                               VAR buff   : ARRAY OF LONGREAL)
-  RAISES { Thread.Alerted, Rd.Failure } =
+  RAISES { Thread.Alerted, Rd.Failure, Error } =
   VAR
     kw : TEXT;
     n  : CARDINAL;
@@ -174,7 +172,7 @@ PROCEDURE ReadBinaryNodeDataG(rd         : Rd.T;
 
           IF reader.next(" ", kw, TRUE) THEN
             IF    TE(kw, "E") THEN
-              Debug.Error(F("Got time mismatch: nodeid %s: line %s",
+              RAISE Error(F("Got time mismatch: nodeid %s: line %s",
                             Int(nodeid), line))
             ELSIF TE(kw, "OK") THEN
               WITH tag = Rd.GetChar(rd) DO
@@ -189,7 +187,7 @@ PROCEDURE ReadBinaryNodeDataG(rd         : Rd.T;
                 END;
                 
                 IF n # NUMBER(buff) THEN
-                  Debug.Error(F("Size mismatch n %s # NUMBER(buff) %s",
+                  RAISE Error(F("Size mismatch n %s # NUMBER(buff) %s",
                                 Int(n), Int(NUMBER(buff))))
                 END;
                 UnsafeReader.ReadLRA(rd, buff);
@@ -201,7 +199,7 @@ PROCEDURE ReadBinaryNodeDataG(rd         : Rd.T;
                 RETURN
                 END
             ELSE
-              Debug.Error(F("?syntax error : ReadBinaryNodeData: got \"%s\"",
+              RAISE Error(F("?syntax error : ReadBinaryNodeData: got \"%s\"",
                             line))
             END
           END
@@ -221,7 +219,7 @@ PROCEDURE ReadInterpolatedBinaryNodeDataG(rd          : Rd.T;
                                           VAR buff    : ARRAY OF LONGREAL;
                                           interpolate : LONGREAL;
                                           unit        : LONGREAL)
-  RAISES { Thread.Alerted, Rd.Failure } =
+  RAISES { Thread.Alerted, Rd.Failure, Error } =
   VAR
     kw : TEXT;
     n  : CARDINAL;
@@ -241,7 +239,7 @@ PROCEDURE ReadInterpolatedBinaryNodeDataG(rd          : Rd.T;
 
           IF reader.next(" ", kw, TRUE) THEN
             IF    TE(kw, "E") THEN
-              Debug.Error(F("Got time mismatch: nodeid %s: line %s",
+              RAISE Error(F("Got time mismatch: nodeid %s: line %s",
                             Int(nodeid), line))
             ELSIF TE(kw, "OK") THEN
               WITH tag = Rd.GetChar(rd) DO
@@ -267,7 +265,7 @@ PROCEDURE ReadInterpolatedBinaryNodeDataG(rd          : Rd.T;
                   END;
 
                   IF n = 0 AND NUMBER(buff) # 0 THEN
-                    Debug.Error("?no data")
+                    RAISE Error("?no data")
                   END;
                   
                   VAR
@@ -314,7 +312,7 @@ PROCEDURE ReadInterpolatedBinaryNodeDataG(rd          : Rd.T;
                 END
               END
             ELSE
-              Debug.Error(F("?syntax error : ReadInterpolatedBinaryNodeData: got \"%s\"",
+              RAISE Error(F("?syntax error : ReadInterpolatedBinaryNodeData: got \"%s\"",
                             line))
             END
           END

@@ -17,6 +17,9 @@ IMPORT Thread;
 CONST
   TwoToThe32 = FLOAT(Word.Shift(1, 32), LONGREAL);
 
+EXCEPTION
+  Error (TEXT);
+
 (* the following two are the basic I/O commands *)
 PROCEDURE PutCommandG(wr : Wr.T; cmd : TEXT)
   RAISES { Thread.Alerted, Wr.Failure } ;
@@ -25,7 +28,7 @@ PROCEDURE GetResponseG(rd : Rd.T; matchKw : TEXT) : TextReader.T  RAISES { Threa
 
 PROCEDURE ReadCompressedNodeDataG(rd         : Rd.T;
                                   VAR nodeid : CARDINAL;
-                                  VAR norm   : SpiceCompress.Norm) : TEXT  RAISES { Thread.Alerted, Rd.Failure } ;
+                                  VAR norm   : SpiceCompress.Norm) : TEXT  RAISES { Thread.Alerted, Rd.Failure, Error } ;
   (* this is the counterpart to DistZTrace.WriteOut
 
      The result is the compressed bytes with the code byte prepended.
@@ -36,13 +39,13 @@ PROCEDURE ReadCompressedNodeDataG(rd         : Rd.T;
   
 PROCEDURE ReadBinaryNodeDataG(rd         : Rd.T;
                               VAR nodeid : CARDINAL;
-                              VAR buff   : ARRAY OF LONGREAL)  RAISES { Thread.Alerted, Rd.Failure } ;
+                              VAR buff   : ARRAY OF LONGREAL)  RAISES { Thread.Alerted, Rd.Failure, Error } ;
 
 PROCEDURE ReadInterpolatedBinaryNodeDataG(rd          : Rd.T;
                                           VAR nodeid  : CARDINAL;
                                           VAR buff    : ARRAY OF LONGREAL;
                                           interpolate : LONGREAL;
-                                          unit        : LONGREAL)  RAISES { Thread.Alerted, Rd.Failure } ;
+                                          unit        : LONGREAL)  RAISES { Thread.Alerted, Rd.Failure, Error } ;
 
   (* given a byte stream from an instance of nansimrd.cpp in rd,
      read the results of an 'x' command (EXTENDED MODE) and interpolate said

@@ -32,7 +32,8 @@ IMPORT SpiceCompress;
 IMPORT TextWr;
 FROM FsdbComms IMPORT PutCommandG, GetResponseG, GetLineUntilG, TwoToThe32;
 FROM FsdbComms IMPORT ReadCompressedNodeDataG, ReadBinaryNodeDataG,
-ReadInterpolatedBinaryNodeDataG;
+                      ReadInterpolatedBinaryNodeDataG;
+IMPORT FsdbComms;
 IMPORT Time;
 IMPORT RefList;
 IMPORT ThreadF;
@@ -183,7 +184,7 @@ PROCEDURE WriteTimesteps(READONLY wdWr : ARRAY OF Wr.T;
         DataBlock.WriteData(wdWr[fIdx], 0, arr^)
       EXCEPT
         Wr.Failure(x) =>
-        Debug.Error("Wr.Failure writing time steps : " & AL.Format(x))
+        ErrorOut("Wr.Failure writing time steps : " & AL.Format(x))
       END
     END
   END WriteTimesteps;
@@ -442,7 +443,7 @@ PROCEDURE LoadAllNames(wr            : Wr.T;
             END
           EXCEPT
             Lex.Error, FloatMode.Trap =>
-            Debug.Error(F("Cant parse N response \"%s\"", line))
+            ErrorOut(F("Cant parse N response \"%s\"", line))
           END
         END;
 
@@ -468,7 +469,7 @@ PROCEDURE LoadAllNames(wr            : Wr.T;
       END;
       WITH hadIt = StoreCardText(fsdbNames, "TIME", 0)  (* implicit #0 *) DO
         IF hadIt THEN
-          Debug.Error("? node 0 not TIME")
+          ErrorOut("? node 0 not TIME")
         END
       END;
 
@@ -496,7 +497,30 @@ PROCEDURE ChopTime(VAR time : LONGREAL; seq : LRSeq.T) =
       time := MIN(time, seq.get(seq.size() - 1))
     END
   END ChopTime;
-  
+
+VAR pipes : RefList.T := NIL;
+    
+PROCEDURE AddPipe(rd : Rd.T) =
+  BEGIN
+    pipes := RefList.Cons(rd, pipes)
+  END AddPipe;
+
+PROCEDURE ErrorOut(msg : TEXT) =
+  BEGIN
+    Debug.Out("Closing all pipes -- error : msg : " & msg);
+    VAR
+      p := pipes;
+    BEGIN
+      WHILE p # NIL DO
+        TRY
+          IF p.head # NIL THEN Rd.Close(p.head) END
+        EXCEPT ELSE END;
+        p := p.tail
+      END;
+      Debug.Error(msg)
+    END
+  END ErrorOut;
+    
 PROCEDURE Parse(wd, ofn       : Pathname.T;
                 names         : TextSeqSeq.T;
                 maxFiles      : CARDINAL;
@@ -630,7 +654,7 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
     
     BEGIN
       IF timesteps.size() = 0 THEN
-        Debug.Error("ChopTimestepsBasedOnType : no timesteps (yet?)")
+        ErrorOut("ChopTimestepsBasedOnType : no timesteps (yet?)")
       END;
       
       WITH voltSignals = SetToSeq(GetIdsByText(typeTab, type)) DO
@@ -712,6 +736,7 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
     BEGIN
       stdin  := ProcUtils.GimmeWr(wr);
       stdout := ProcUtils.GimmeRd(rd);
+      AddPipe(rd);
     END;
 
     WITH cmd = cmdPath & " " & fsdbPath DO
@@ -873,26 +898,26 @@ PROCEDURE Parse(wd, ofn       : Pathname.T;
         TRY
           Wr.Close(wdWr[i])
         EXCEPT
-          Wr.Failure(x) => Debug.Error(F("Trouble closing temp file %s : Wr.Failure : %s", Int(i), AL.Format(x)))
+          Wr.Failure(x) => ErrorOut(F("Trouble closing temp file %s : Wr.Failure : %s", Int(i), AL.Format(x)))
         END
       END;
       Debug.Out("Fsdb.Parse temp files closed.");
 
     EXCEPT
       FloatMode.Trap, Lex.Error =>
-      Debug.Error("Trouble parsing number during Fsdb.Parse conversation")
+      ErrorOut("Trouble parsing number during Fsdb.Parse conversation")
     |
       TextReader.NoMore =>
-      Debug.Error("TextReader.NoMore during Fsdb.Parse conversation")
+      ErrorOut("TextReader.NoMore during Fsdb.Parse conversation")
     |
       Rd.Failure(x) =>
-      Debug.Error(F("Parse : caught Rd.Failure communicating with PID %s : %s",
+      ErrorOut(F("Parse : caught Rd.Failure communicating with PID %s : %s",
                     PIDStr(completion), AL.Format(x)));
       <*ASSERT FALSE*>
       
     |
       Wr.Failure(x) =>
-      Debug.Error(F("Parse : caught Rd.Failure communicating with PID %s : %s",
+      ErrorOut(F("Parse : caught Rd.Failure communicating with PID %s : %s",
                     PIDStr(completion), AL.Format(x)));
       <*ASSERT FALSE*>
     END
@@ -1038,6 +1063,7 @@ PROCEDURE GenInit(cl                  : GenClosure;
     BEGIN
       cmdStdin  := ProcUtils.GimmeWr(cl.cmdWr);
       cmdStdout := ProcUtils.GimmeRd(cl.cmdRd);
+      AddPipe(cl.cmdRd);
 
       <*ASSERT cl.cmdWr # NIL*>
       <*ASSERT cl.cmdRd # NIL*>
@@ -1223,7 +1249,7 @@ PROCEDURE GenApply(cl : GenClosure) : REFANY =
               Wr.Close(cl.cmdWr)
             EXCEPT
               Wr.Failure(x) =>
-              Debug.Error("Wr.Failure closing command stream : " & AL.Format(x))
+              ErrorOut("Wr.Failure closing command stream : " & AL.Format(x))
             END;
             cl.cmdWr := NIL;
             
@@ -1231,7 +1257,7 @@ PROCEDURE GenApply(cl : GenClosure) : REFANY =
               Rd.Close(cl.cmdRd);
             EXCEPT
               Rd.Failure(x) =>
-              Debug.Error("Rd.Failure closing command stream : " & AL.Format(x))
+              ErrorOut("Rd.Failure closing command stream : " & AL.Format(x))
             END;
             cl.cmdRd := NIL;
             
@@ -1264,7 +1290,7 @@ PROCEDURE GenApply(cl : GenClosure) : REFANY =
           Wr.Flush(cl.tWr)
         EXCEPT
           Wr.Failure(x) =>
-          Debug.Error("Wr.Failure flushing command stream : " & AL.Format(x))
+          ErrorOut("Wr.Failure flushing command stream : " & AL.Format(x))
         END;
         
         IF doDebug THEN
@@ -1283,21 +1309,21 @@ PROCEDURE GenApply(cl : GenClosure) : REFANY =
       
     EXCEPT
       FloatMode.Trap, Lex.Error =>
-      Debug.Error("Trouble parsing number during Fsdb.Parse conversation");
+      ErrorOut("Trouble parsing number during Fsdb.Parse conversation");
       <*ASSERT FALSE*>
     |
       TextReader.NoMore =>
-      Debug.Error("TextReader.NoMore during Fsdb.Parse conversation");
+      ErrorOut("TextReader.NoMore during Fsdb.Parse conversation");
       <*ASSERT FALSE*>
     |
       Rd.Failure(x) =>
-      Debug.Error(F("GenApply : caught Rd.Failure communicating with PID %s : %s",
+      ErrorOut(F("GenApply : caught Rd.Failure communicating with PID %s : %s",
                     PIDStr(cl.completion), AL.Format(x)));
       <*ASSERT FALSE*>
       
     |
       Wr.Failure(x) =>
-      Debug.Error(F("GenApply : caught Rd.Failure communicating with PID %s : %s",
+      ErrorOut(F("GenApply : caught Rd.Failure communicating with PID %s : %s",
                     PIDStr(cl.completion), AL.Format(x)));
       <*ASSERT FALSE*>
     END
@@ -1482,6 +1508,7 @@ PROCEDURE DoUncompressedReceive(wr                  : Wr.T;
     node : CARDINAL;
   BEGIN
     (* no compression *)
+    TRY
     IF interpolate = NoInterpolate THEN
       ReadBinaryNodeDataG(cmdRd, node, buff^);
     ELSE
@@ -1490,10 +1517,13 @@ PROCEDURE DoUncompressedReceive(wr                  : Wr.T;
                                       buff^,
                                       interpolate,
                                       unit);
+    END
+    EXCEPT
+      FsdbComms.Error(x) => ErrorOut("FsdbComms.Error : " & x)
     END;
     
     IF node # inId THEN
-      Debug.Error(F("unexpected node %s # inId %s", Int(node), Int(inId)))
+      ErrorOut(F("unexpected node %s # inId %s", Int(node), Int(inId)))
     END;
     
     (* write data to temp file in correct format *)
@@ -1520,7 +1550,7 @@ PROCEDURE DoUncompressedReceive(wr                  : Wr.T;
       DataBlock.WriteData(wr, outId, buff^)
     EXCEPT
       Wr.Failure(x) =>
-      Debug.Error(F("Wr.Failure writing data for node %s : %s ",
+      ErrorOut(F("Wr.Failure writing data for node %s : %s ",
                     Int(outId),
                     AL.Format(x)))
     END
@@ -1544,10 +1574,14 @@ PROCEDURE DoCompressedReceive(wr                  : Wr.T;
     IF doDebug THEN
       Debug.Out("Fsdb.DoCompressedReceive waiting for data")
     END;
-    
+
+    TRY
     data := ReadCompressedNodeDataG(cmdRd,
                                     node,
                                     norm);
+    EXCEPT
+      FsdbComms.Error(x) => ErrorOut("FsdbComms.Error : " & x)
+    END;
 
     
     IF doDebug THEN
@@ -1555,7 +1589,7 @@ PROCEDURE DoCompressedReceive(wr                  : Wr.T;
     END;
     
     IF node # inId THEN
-      Debug.Error(F("unexpected node %s # inId %s", Int(node), Int(inId)))
+      ErrorOut(F("unexpected node %s # inId %s", Int(node), Int(inId)))
     END;
     
     (* write data to temp file in correct format *)
@@ -1586,7 +1620,7 @@ PROCEDURE DoCompressedReceive(wr                  : Wr.T;
       END
     EXCEPT
       Wr.Failure(x) =>
-      Debug.Error(F("Wr.Failure writing data for node %s : %s ",
+      ErrorOut(F("Wr.Failure writing data for node %s : %s ",
                     Int(outId),
                     AL.Format(x)))
     END;
@@ -1633,7 +1667,7 @@ PROCEDURE ParseUnitStr(unitSpec : TEXT) : LONGREAL =
         END
       END
     END;
-    Debug.Error("UnitSpec not understood : " & unitSpec);
+    ErrorOut("UnitSpec not understood : " & unitSpec);
     <*ASSERT FALSE*>
   END ParseUnitStr;
 
@@ -1693,7 +1727,7 @@ PROCEDURE TickApply(<*UNUSED*>cl : TickClosure) : REFANY =
                  cl.sendT > cl.recvT AND
                  theTime > cl.sendT + cl.timeout THEN
                 (* timed out... *)
-                Debug.Error(F("Fsdb.Parse timed out waiting for response to \"%s\", sent at approximately %s", cl.lastSent, LR(cl.sendT)))
+                ErrorOut(F("Fsdb.Parse timed out waiting for response to \"%s\", sent at approximately %s", cl.lastSent, LR(cl.sendT)))
               END
             END;
             p := p.tail
