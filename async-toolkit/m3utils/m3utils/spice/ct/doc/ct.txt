@@ -153,6 +153,20 @@ Command-line option meaning is as follows
 
   <inFileName> is name of input file in FSDB or CSDF format
 
+  -quick       Run faster, but compress less
+
+  -execute     Run the program as requested.  Default is to run a wrapper,
+               which in turn uses -execute, and attempts to re-run the program
+               repeatedly if it crashes
+
+  -starttime   Use together with -execute to denote the time the job was
+               started.  Output files that are newer than -starttime are
+               assumed to have been created by this program and are not
+               re-created
+
+  -force       Equal to setting -starttime to the end of time (LAST(Time.T))
+               so all output files are re-generated
+
   -copyrootname Use prefix of inFileName before last period as outfileRoot
 
   -C           Same as -copyrootname
