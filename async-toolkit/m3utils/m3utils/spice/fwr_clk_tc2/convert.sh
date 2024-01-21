@@ -5,7 +5,7 @@
 
 dirs=$*
 
-echo $dirs
+#echo $dirs
 
 cat <<EOF
 JobsTask {

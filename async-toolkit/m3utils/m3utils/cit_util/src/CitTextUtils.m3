@@ -63,6 +63,30 @@ PROCEDURE ReplaceChar(in : TEXT; old, new : CHAR) : TEXT =
     RETURN Text.FromChars(res^)
   END ReplaceChar;
 
+PROCEDURE Tr(in : TEXT; READONLY old, new : ARRAY OF CHAR) : TEXT =
+  VAR
+    s   := SET OF CHAR {};
+    res := NEW(REF ARRAY OF CHAR, TL(in));
+  BEGIN
+    <*ASSERT NUMBER(old) = NUMBER(new)*>
+    FOR j := FIRST(old) TO LAST(old) DO
+      s := s + SET OF CHAR { old[j] }
+    END;
+    
+    FOR i := 0 TO TL(in) - 1 DO
+      WITH char = Text.GetChar(in,i) DO
+        IF char IN s THEN
+          FOR j := FIRST(old) TO LAST(old) DO
+            IF char = old[j] THEN res[i] := new[j] END
+          END
+        ELSE
+          res[i] := char
+        END
+      END
+    END;
+    RETURN Text.FromChars(res^)
+  END Tr;
+
 PROCEDURE Replace(in, old, new : TEXT) : TEXT =
   VAR
     s, p : CARDINAL := 0;

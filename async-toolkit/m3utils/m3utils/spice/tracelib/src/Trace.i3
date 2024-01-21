@@ -74,6 +74,10 @@ TYPE
 
     sharedTime() : REF ARRAY OF LONGREAL RAISES { Rd.EndOfFile, Rd.Failure } ;
     (* allocate and return a handle to a shared time (s.b. treated as R/O) *)
+
+    getMaxVal(idx : NodeId) : LONGREAL RAISES { Rd.Failure, Rd.EndOfFile };
+    getMinVal(idx : NodeId) : LONGREAL RAISES { Rd.Failure, Rd.EndOfFile };
+    getMeanVal(idx : NodeId) : LONGREAL RAISES { Rd.Failure, Rd.EndOfFile };
   END;
 
 CONST TimeId = 0;
