@@ -25,7 +25,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun DrawMidLevelPins ( @key (CV (UIGetCellView)) (include_supply nil) (supply_topMetal TopSupplyMetal)
-                               (all_supply nil) (all_signal nil) (all_layers nil) (inplace_pins t) )
+                               (all_supply nil) (all_signal nil) (inplace_pins t) )
   (let (TEMP
         WarningFile
         ErrorFile
@@ -33,7 +33,7 @@
         Errport
         CellTerms
         BusPinList
-        InPlacePinFig
+        InPlacePins
 	(status nil))
 
     TEMP        = (ConfigFileGetValue TheCDSConfigTable "TEMP")
@@ -48,18 +48,22 @@
       (foreach InstTerm Term->net->instTerms
         (unless (member Term->name BusPinList) || !InstTerm->inst->transform ||
                 InstTerm->inst->status!="locked" && InstTerm->inst->status!="firm"
-          InPlacePinFig = (MidPinsInheritPin CV InstTerm->inst InstTerm->name Term->name
-                                             ?topMetal (if (member Term->name PowerGroundNets)==nil -1 supply_topMetal)
-                                             ?all_supply all_supply ?all_signal all_signal ?all_layers all_layers)
-          (when InPlacePinFig->LeafInPlacePin
-            (printf "*WARNING* Top Level pin \"%s\" is drawn inplace from leaf cell instance \"%s\" \n" Term->name InstTerm->inst->name)
-            (fprintf Warnport "*WARNING* Top Level pin \"%s\" is drawn inplace from leaf cell instance \"%s\" \n" Term->name InstTerm->inst->name)
+          InPlacePins = (MidPinsInheritPin CV InstTerm->inst InstTerm->name Term->name
+                                           ?topMetal (if (member Term->name PowerGroundNets)==nil -1 supply_topMetal)
+                                           ?all_supply all_supply ?all_signal all_signal)
+          (when InPlacePins>0
+            (printf "*WARNING* Top Level pin \"%s\" is drawn inplace from leaf cell instance \"%s\" \n"
+                    Term->name InstTerm->inst->name)
+            (fprintf Warnport "*WARNING* Top Level pin \"%s\" is drawn inplace from leaf cell instance \"%s\" \n"
+                     Term->name InstTerm->inst->name)
 	    (unless inplace_pins status = t)
             )
-          (when !InPlacePinFig && (member Term->name PowerGroundNets)==nil
-            (printf "*ERROR* Failed to make top pin \"%s\" due to missing pin \"%s\" inside instance \"%s\" \n" Term->name InstTerm->name InstTerm->inst->name)
-            (fprintf Errport "*ERROR* Failed to make top pin \"%s\" due to missing pin \"%s\" inside instance \"%s\" \n" Term->name InstTerm->name InstTerm->inst->name)
-	    status = t
+          (when InPlacePins==0 && (member Term->name PowerGroundNets)==nil
+            (printf "*ERROR* Failed to make top pin \"%s\" due to missing pin \"%s\" inside instance \"%s\" \n"
+                    Term->name InstTerm->name InstTerm->inst->name)
+            (fprintf Errport "*ERROR* Failed to make top pin \"%s\" due to missing pin \"%s\" inside instance \"%s\" \n"
+                     Term->name InstTerm->name InstTerm->inst->name)
+            status = t
             )
           )
         )	
@@ -76,63 +80,59 @@
 ; All pins on the top metal layer used by them get promoted.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun MidPinsInheritPin (CV Inst TermName PinName @key (topMetal -1)
-                             (all_supply nil) (all_signal nil) (all_layers nil))
+                             (all_supply nil)  ; include supply pins below top metal layer
+                             (all_signal nil)) ; include signal pins below top metal layer
   (let (InPlacePinList
         transform
         fig
         TopPinFig
         TopPinNet
         TopPin
+        m
+        (InPlacePins 0)
         PinLabel PinShape
-        pinList
         )
 
-    ; candidate pin figures
+    ; find suitable pin figures
     (foreach pin (dbFindTermByName Inst->master TermName)->pins
-             InPlacePinList = (append InPlacePinList pin->figs)
-             )
 
-    (unless all_layers
-      ; restrict candidates to metal layers and compute topMetal
-      pinList=nil
-      (foreach fig InPlacePinList
-               (for m 0 TopMetal
-                    (when fig->layerName==Metal[m]
-                      topMetal=(max topMetal m)
-                      pinList=(cons fig pinList)
+             ; find topMetal
+             (foreach fig pin->figs
+                      m=MetalNum[fig->layerName]
+                      (when m topMetal=(max topMetal m))
                       )
-                    )
-               )
-      InPlacePinList=pinList
 
-      ; limit the candidates to those on the top metal layer
-      (when (if (member PinName PowerGroundNets)!=nil !all_supply !all_signal)
-        InPlacePinList = (setof x InPlacePinList x->layerName==Metal[topMetal])
-        )
-      )
+             ; limit candidates to those on the top metal layer
+             (foreach fig pin->figs
+                      m=MetalNum[fig->layerName]
+                      (when m &&
+                            ((if (member PinName PowerGroundNets)!=nil all_supply all_signal) ||
+                             fig->layerName==Metal[topMetal])
 
-    ; draw inplace pins
-    (foreach fig InPlacePinList
-      transform = (dbTransformBBox fig->bBox Inst->transform)
-      TopPinFig = (dbCreateRect CV (list (car fig->lpp) "pin") transform)
-      (SetShapeColor TopPinFig (GetShapeColor fig))
-      TopPinNet = (dbMakeNet CV PinName)
-      TopPin    = (dbCreatePin TopPinNet TopPinFig)
-      TopPin->accessDir = (list "top" "bottom" "left" "right" )
-      PinLabel = (MidPinsCreateLabel CV TopPinFig)
-      PinLabel->parent = TopPinFig
-      (if fig->PinType=="BusScript" || fig->BusPin=="TRUE"
-          (MidPinsSetPinType TopPinFig "bus")
-          (MidPinsSetPinType TopPinFig "leaf")
-          )
-      )
-    TopPinFig
+                            ; draw inplace pin
+                            transform = (dbTransformBBox fig->bBox Inst->transform)
+                            TopPinFig = (dbCreateRect CV (list (car fig->lpp) "pin") transform)
+                            (SetShapeColor TopPinFig (GetShapeColor fig))
+                            TopPinNet = (dbMakeNet CV PinName)
+                            TopPin    = (dbCreatePin TopPinNet TopPinFig)
+                            TopPin->accessDir = (list "top" "bottom" "left" "right" )
+                            PinLabel = (MidPinsCreateLabel CV TopPinFig)
+                            PinLabel->parent = TopPinFig
+                            (if fig->PinType=="BusScript" || fig->BusPin=="TRUE"
+                                (MidPinsSetPinType TopPinFig "bus")
+                                (MidPinsSetPinType TopPinFig "leaf")
+                                )
+                            InPlacePins++
+                            )
+                      )
+             )
+    InPlacePins
     )
   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 defun( MidPinsSetPinType (PinShape InPlacePinType)
-    
+
     when( InPlacePinType == "leaf"
 
        dbSet(PinShape "InPlace" "PinType")
@@ -225,7 +225,7 @@ defun( MidPinsCreateLabel (CV PinShape)
 
  )
 
-  cmd = sprintf( nil "fulcrum --before 283418 generate_port_mapping --cast-path=%s --verilog-block=rtl --cell=%s > %s.portmap" 
+  cmd = sprintf( nil "fulcrum --before 283418 generate_port_mapping --cast-path=%s --verilog-block=rtl --cell=%s > %s.portmap"
                  ConfigFileGetValue( TheCDSConfigTable "CAST_PATH" ) CV~>cellName CV~>cellName )
   (sh cmd)
 
@@ -234,22 +234,22 @@ defun( MidPinsCreateLabel (CV PinShape)
 
   foreach( s CV~>shapes when( s~>SyncInPlacePin == "TRUE" dbDeleteObject(s) ) )
 
-  while( gets( pinmap mapfile ) 
+  while( gets( pinmap mapfile )
    maplist  = parseString( pinmap " \n" )
     rtlname = nth(0 maplist)
    castname = nth(1 maplist)
    (rexCompile ",")
    castname = (rexReplace castname "][" 0 )
 
-   pin = MidPinsInheritPin(CV apr rtlname castname) 
+   pin = MidPinsInheritPin(CV apr rtlname castname)
    pin~>SyncInPlacePin = "TRUE"
 
    rtlparts = parseString( rtlname "[<>]" )
 
-   when( length( rtlparts ) > 1 
-     when( !pin 
+   when( length( rtlparts ) > 1
+     when( !pin
        sprintf( name "%s<%s>" nth(0 rtlparts) nth(1 rtlparts) )
-       pin2 = MidPinsInheritPin(CV apr name castname) 
+       pin2 = MidPinsInheritPin(CV apr name castname)
        pin2~>SyncInPlacePin = "TRUE"
      )
     )
