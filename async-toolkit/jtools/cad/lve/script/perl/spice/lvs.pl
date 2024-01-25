@@ -350,7 +350,7 @@ $all_includes
 -i cell.gds2
 -s $sch_file
 -sf SPICE
--stc $topcell
+-stc $cdl_cell_name
 -c $topcell
 -f $format
 ET
