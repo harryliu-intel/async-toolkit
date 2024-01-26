@@ -213,7 +213,7 @@ JTIMER        := jtimer $(GLOBAL_JAVA_FLAGS) $(GLOBAL_JRE_FLAGS)
 JLVS          := jlvs $(GLOBAL_JAVA_FLAGS) $(GLOBAL_JRE_FLAGS)
 CAST_QUERY    := cast_query $(GLOBAL_JAVA_FLAGS) $(GLOBAL_JRE_FLAGS)
 CAST2CDL      := cast2cdl $(GLOBAL_JAVA_FLAGS) $(GLOBAL_JRE_FLAGS)
-CDL_RENAMER   := cdl_renamer $(GLOBAL_JAVA_LOW_FLAGS) $(GLOBAL_JRE_FLAGS) --layout-net-prefix='ln\#' --layout-inst-prefix='ld\#'
+CDL_RENAMER   := cdl_renamer $(GLOBAL_JAVA_LOW_FLAGS) $(GLOBAL_JRE_FLAGS) --layout-net-prefix='ln\#' --layout-inst-prefix='ld\#' --nmap-in='$(FULCRUM_PDK_PACKAGE_ROOT)/share/Fulcrum/lve/transistor.map'
 CAST2SKILL    := cast2skill $(GLOBAL_JAVA_FLAGS) $(GLOBAL_JRE_FLAGS)
 GENERATEPLTSUBTYPES := generate_plt_subtypes $(GLOBAL_JAVA_FLAGS) $(GLOBAL_JRE_FLAGS)
 EXPORT_GDS     := ExportGDS
