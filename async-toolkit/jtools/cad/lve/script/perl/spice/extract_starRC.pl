@@ -854,7 +854,7 @@ EOF
             # script
             open(my $fh, '>', 'run_cth') or die "Can't write run_cth: $!";
             print $fh <<EOF;
-#!/usr/intel/bin/tcsh
+#!/usr/intel/bin/tcsh -f
 setenv DR_USERDEFINESUIN
 setenv DR_MSR
 setenv DR_CaseSensitive
