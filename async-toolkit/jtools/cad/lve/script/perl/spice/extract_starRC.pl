@@ -868,7 +868,10 @@ test -f '$spf' && ln -s '$spf' '$cell_name.spf'
 EOF
             close($fh);
             my_system("chmod 755 run_cth");
-            my_system("./run_cth 1>star.log 2>&1");
+            {
+                local $ENV{'PATH'} = '/usr/intel/bin:/usr/ucb:/bin:/usr/bin';
+                my_system("./run_cth 1>star.log 2>&1");
+            }
         }
     }
     print "StarRC Extraction ... done\n";
