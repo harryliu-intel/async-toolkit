@@ -26,7 +26,6 @@ my $cdl_cell_name="";
 my @include_before=();
 my $pdk_root="";
 my $task;
-my $graycell_list="";
 my $extra_extract_equiv="";
 my $extra_sp='';
 my $blackbox=0;
@@ -145,7 +144,6 @@ if ($threads < 1) {
 }
 -d $working_dir or $working_dir = `mktemp -d /scratch/lvs.XXXXXX`;
 chomp $working_dir;
-$cdl_cell_name ne "" or $cdl_cell_name=$cell_name;
 $pdk_root="$ENV{FULCRUM_PDK_ROOT}" if ( ! ( -d $pdk_root ) and -d $ENV{FULCRUM_PDK_ROOT});
 -d $pdk_root or usage("fulcrum-pdk-root improperly defined");
 
@@ -157,6 +155,7 @@ if ($oasis) {
 
 my $longcellnametop = length($cell_name) > $cell_name_limit ? 1 : 0;
 my $topcell=$longcellnametop ? "TOP_CELL" : $cell_name;
+$cdl_cell_name ne "" or $cdl_cell_name=$topcell;
 my $longcellnamegray=0;
 my %graylist=();
 my %reversegraylist=();
@@ -461,14 +460,11 @@ sub get_equiv {
 sub prepare_equiv_file{
   my ($lvs_options) = @_;
   my %equiv=();
-  my %requiv=();
   my $equivalence="equiv"; 
   
   if(-s $graycell_file) {
       open EQUIV_FILE, ">$working_dir/equiv" or die "CAN'T OPEN $working_dir/equiv for write\n";
-      my $cdlname=$topcell;
-      $cdlname=$requiv{$topcell} if defined $requiv{$topcell};
-      print EQUIV_FILE "equiv_options(equiv_cells={{\"$cdlname\",\"$topcell\"}});\n";
+      print EQUIV_FILE "equiv_options(equiv_cells={{\"$cdl_cell_name\",\"$topcell\"}});\n";
       my $equiv = get_equiv(\%graylist, $extra_extract_equiv);
       
       my %preserved_cells = ();
