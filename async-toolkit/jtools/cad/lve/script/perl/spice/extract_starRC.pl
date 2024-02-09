@@ -860,6 +860,7 @@ setenv DR_MSR
 setenv DR_CaseSensitive
 setenv DR_TOPCHECK mixed
 setenv PDS_PROJ_CFG '$pdk_root/share/Fulcrum/icv/lvs'
+setenv DISABLE_ICV_CLF_EXTRACTION
 $dr_defines
 set boxfile
 if (-f gray_list.xref) set boxfile='-boxfile gray_list.xref'
