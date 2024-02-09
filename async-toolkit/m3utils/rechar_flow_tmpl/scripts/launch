@@ -19,7 +19,8 @@ shift
 [[ -n $NBCLASS ]] || NBCLASS='SLES12&&64G&&1C'
 use_corners_xml=$WARD/collateral/cfg/corners.xml
 job_scheduler=nb
-lvf_mode=ml
+#lvf_mode=ml
+lvf_mode=sba
 
 repo=${0:h}/..
 export NBQSLOT NBCLASS use_corners_xml job_scheduler lvf_mode
