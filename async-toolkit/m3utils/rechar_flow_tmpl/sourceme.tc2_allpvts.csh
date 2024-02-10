@@ -1,5 +1,5 @@
-setenv RECHAR_CELL_LIST_FN cell_list.i0slsn000aa1d02x5
-setenv RECHAR_SIS_WORKDIR  siliconsmart.i0slsn000aa1d02x5_sba
+setenv RECHAR_CELL_LIST_FN cell_list.tc2
+setenv RECHAR_SIS_WORKDIR  siliconsmart.tc2_allpvts
 setenv RECHAR_ENV_ZSH      env.zsh.0p9eu1_big
 setenv RECHAR_PVTS_ZSH     pvts.zsh.250__450.cmincmax
 setenv RECHAR_LVF_MODE     sba
