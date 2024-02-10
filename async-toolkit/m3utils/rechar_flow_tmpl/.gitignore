@@ -1,4 +1,6 @@
 *~
+*.swp
+/runme.*
 /siliconsmart.*
 /siliconsmart
 /runme.out*

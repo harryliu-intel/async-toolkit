@@ -4,12 +4,13 @@
 
 # ALLOW 64GB 
 
-TOP=$(realpath ${0:h})
-cell_list=$TOP/$1
+TOP=$WARD
 
-source $TOP/env.zsh
+cell_list=$TOP/$RECHAR_CELL_LIST_FN
 
-cd $WARD/siliconsmart
+source $TOP/$RECHAR_ENV_ZSH 
+
+cd $WARD/$RECHAR_SIS_WORKDIR 
 
 ###################################################################
 
@@ -31,9 +32,9 @@ $TOP/scripts/compile_ldb */*/models/liberty/${techlib}*.lib
 echo "===========================     CREATE-NDMS `date`    ==========================="
 pwd
 
-mkdir -p $WARD/siliconsmart/ndms
-cd $WARD/siliconsmart/ndms
-cp $WARD/siliconsmart/*/*/models/liberty/${techlib}*.{lib,ldb} .
+mkdir -p $WARD/${RECHAR_SIS_WORKDIR}/ndms
+cd $WARD/${RECHAR_SIS_WORKDIR}/ndms
+cp $WARD/${RECHAR_SIS_WORKDIR}/*/*/models/liberty/${techlib}*.{lib,ldb} .
 $TOP/scripts/gen_ndms $bundles
 
 # Bundle new collateral
@@ -41,8 +42,8 @@ $TOP/scripts/gen_ndms $bundles
 echo "===========================     REBUNDLE `date`    ==========================="
 pwd
 
-mkdir -p $WARD/siliconsmart/bundles
-cd $WARD/siliconsmart/bundles
-$TOP/scripts/rebundle $WARD/siliconsmart/ndms $bundles
+mkdir -p $WARD/${RECHAR_SIS_WORKDIR}/bundles
+cd $WARD/${RECHAR_SIS_WORKDIR}/bundles
+$TOP/scripts/rebundle $WARD/${RECHAR_SIS_WORKDIR}/ndms $bundles
 
 echo "**********  $0 done at `date`"

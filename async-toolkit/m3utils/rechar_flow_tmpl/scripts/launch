@@ -1,7 +1,5 @@
 #!/usr/intel/bin/zsh -x
 
-cell_list_fn=$1
-shift
 millivolts=0p$1
 shift
 celsius=$1
@@ -20,7 +18,7 @@ shift
 use_corners_xml=$WARD/collateral/cfg/corners.xml
 job_scheduler=nb
 #lvf_mode=ml
-lvf_mode=sba
+lvf_mode=${RECHAR_LVF_MODE}
 
 repo=${0:h}/..
 export NBQSLOT NBCLASS use_corners_xml job_scheduler lvf_mode
@@ -57,9 +55,9 @@ launch_corner() {
     for bs in $todo; do
         unset spfdir io_supplies io_grounds
         export bundle=${bs} run_list_maxsize=${workers}
-        export instance_dir=$WARD/siliconsmart/import/${trancorner}_${millivolts}_${celsius}_${metalcorner}_${capcorner}_${metaltemp}/$bundle/control.updated
+        export instance_dir=$WARD/${RECHAR_SIS_WORKDIR}/import/${trancorner}_${millivolts}_${celsius}_${metalcorner}_${capcorner}_${metaltemp}/$bundle/control.updated
         if [[ -z $skip_import ]]; then
-            lib=($WARD/siliconsmart/extracted/*_${bundle}_*.lib)
+            lib=($WARD/${RECHAR_SIS_WORKDIR}/extracted/*_${bundle}_*.lib)
             export lib_file=${lib[1]}$libsuffix
         fi
         if [[ ! -d $dir/$bundle ]]; then
@@ -76,10 +74,10 @@ launch_corner() {
             echo "LAUNCH:"$bundle":"`pwd`":../cell_list:"$dir/$bundle >> $sislaunchfile
             # this is name of bundle, path to CWD, path to place to run
         elif [[ -z $serial ]]; then
-            (cd $dir/$bundle && siliconsmart char.tcl >& launch.log) &
+            (cd $dir/$bundle && ${RECHAR_SIS_WORKDIR} char.tcl >& launch.log) &
         else
             export run_list_maxsize=${workers}
-            (cd $dir/$bundle && siliconsmart char.tcl >& launch.log)
+            (cd $dir/$bundle && ${RECHAR_SIS_WORKDIR} char.tcl >& launch.log)
         fi
     done
 }

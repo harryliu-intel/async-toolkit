@@ -1,8 +1,8 @@
 #!/usr/intel/bin/zsh -x
 
 if [[ $# -eq 0 ]]; then
-#    bundles=(base_ulvt dsbase_ulvt dsimain_ulvt dsseq_ulvt seq_ulvt base_lvt dsbase_lvt)
-    bundles=(base_ulvt)
+    echo "Error : no bundles!"
+    exit 1
 else
     bundles=("$@")
 fi

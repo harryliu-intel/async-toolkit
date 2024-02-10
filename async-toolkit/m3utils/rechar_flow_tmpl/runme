@@ -42,14 +42,18 @@
 # bundles and ndms are NOT referenced while running flow
 
 
-TOP=$(realpath ${0:h})
+# so in theory $TOP (location of scripts) and $WARD (location of run area)
+# could be different, but do we need that?
+
+TOP=$WARD
+
 echo "**********  $0 start at `date`"
 
-source pvts.zsh
+source ${RECHAR_PVTS_ZSH}
 
-cell_list=$TOP/$cell_list_fn
+cell_list=$TOP/$RECHAR_CELL_LIST_FN
 
-source env.zsh
+source ${RECHAR_ENV_ZSH}
 
 echo "===========================     EXTRACT `date`    ==========================="
 pwd
@@ -64,8 +68,8 @@ pwd
 # recharacterization.  First import from .lib.lvf to generate the .inst files
 # that control characterization, then switch to import from .lib files to
 # actually run the characterization.  This should be done in a better way.
-mkdir -p $WARD/siliconsmart/extracted
-cd $WARD/siliconsmart/extracted
+mkdir -p $WARD/${RECHAR_SIS_WORKDIR}/extracted
+cd $WARD/${RECHAR_SIS_WORKDIR}/extracted
 $TOP/scripts/extract.zsh $cell_list || exit 1
 
 bundles=($(awk '{print $1}' $cell_list |sort -u))
@@ -77,8 +81,8 @@ echo "bundles are " $bundles
 echo "===========================     IMPORT `date`    ==========================="
 pwd
 
-mkdir -p $WARD/siliconsmart/import
-cd $WARD/siliconsmart/import
+mkdir -p $WARD/${RECHAR_SIS_WORKDIR}/import
+cd $WARD/${RECHAR_SIS_WORKDIR}/import
 
 if [[ -z $internal ]]; then
     rm -f $sislaunchfile
@@ -93,7 +97,7 @@ for corner in $corners_list; do
     capcorner=${corner:h:t}
     metaltemp=${corner:t}
     echo "importing millivolts=" $millivolts " celsius=" $celsius
-    import_only=1 $TOP/scripts/launch $cell_list $millivolts $celsius $trancorner $capcorner $metaltemp $metalcorner $bundles 
+    import_only=1 $TOP/scripts/launch $millivolts $celsius $trancorner $capcorner $metaltemp $metalcorner $bundles 
 done
 
 if [[ -z $internal ]]; then
@@ -140,7 +144,7 @@ done
 
 # Run new characterization.  
 # It would be better if we could do all the corners at once, and parallelize across them all.
-cd $WARD/siliconsmart
+cd $WARD/${RECHAR_SIS_WORKDIR}
 
 echo "===========================     CHARACTERIZE `date`     ==========================="
 pwd
@@ -159,7 +163,7 @@ for corner in $corners_list; do
     capcorner=${corner:h:t}
     metaltemp=${corner:t}
     echo "launching millivolts=" $millivolts
-    $TOP/scripts/launch $cell_list $millivolts $celsius $trancorner $capcorner $metaltemp $metalcorner $bundles 
+    $TOP/scripts/launch $millivolts $celsius $trancorner $capcorner $metaltemp $metalcorner $bundles 
 done
 
 if [[ -z $internal ]]; then
@@ -168,10 +172,14 @@ if [[ -z $internal ]]; then
     $sislaunch -alpha $sislaunch_alpha -clearenv -pllcmds $pllcmds -sisworkers $workers -sispath $sispath -cl ${cell_list} $sislaunchfile
 fi
 
+if [[ "${RECHAR_STOP}" == "characterize" ]]; then
+    exit 0
+fi
+
 echo "===========================     CHARACTERIZE-DONE `date`     ==========================="
 pwd
 
-$TOP/runme_final $cell_list_fn
+$TOP/runme_final
 
 echo "**********  $0 done at `date`"
 
