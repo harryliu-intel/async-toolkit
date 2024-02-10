@@ -10,55 +10,6 @@ for lib; do
     lib=$(realpath $lib)
     bundle=${lib:h:h:h:t}
     pvt=${lib:h:h:h:h:t}
-    declare -A libnames
-    libnames=( \
-        tttt_0p150_50       tttt_0p150v_50c_tttt_cmax         \
-        tttt_0p175_50       tttt_0p175v_50c_tttt_cmax         \
-        tttt_0p200_50       tttt_0p200v_50c_tttt_cmax         \
-        tttt_0p225_50       tttt_0p225v_50c_tttt_cmax         \
-        tttt_0p250_50       tttt_0p250v_50c_tttt_cmax         \
-        tttt_0p275_50       tttt_0p275v_50c_tttt_cmax         \
-        tttt_0p300_50       tttt_0p300v_50c_tttt_cmax         \
-        tttt_0p325_50       tttt_0p325v_50c_tttt_cmax         \
-        tttt_0p350_50       tttt_0p350v_50c_tttt_cmax         \
-        tttt_0p375_50       tttt_0p375v_50c_tttt_cmax         \
-        tttt_0p400_50       tttt_0p400v_50c_tttt_cmax         \
-        tttt_0p425_50       tttt_0p425v_50c_tttt_cmax         \
-        tttt_0p450_50       tttt_0p450v_50c_tttt_cmax         \
-        tttt_0p150_100       tttt_0p150v_100c_tttt_cmax         \
-        tttt_0p175_100       tttt_0p175v_100c_tttt_cmax         \
-        tttt_0p200_100       tttt_0p200v_100c_tttt_cmax         \
-        tttt_0p225_100       tttt_0p225v_100c_tttt_cmax         \
-        tttt_0p250_100       tttt_0p250v_100c_tttt_cmax         \
-        tttt_0p275_100       tttt_0p275v_100c_tttt_cmax         \
-        tttt_0p300_100       tttt_0p300v_100c_tttt_cmax         \
-        tttt_0p325_100       tttt_0p325v_100c_tttt_cmax         \
-        tttt_0p350_100       tttt_0p350v_100c_tttt_cmax         \
-        tttt_0p375_100       tttt_0p375v_100c_tttt_cmax         \
-        tttt_0p400_100       tttt_0p400v_100c_tttt_cmax         \
-        tttt_0p425_100       tttt_0p425v_100c_tttt_cmax         \
-        tttt_0p450_100       tttt_0p450v_100c_tttt_cmax         \
-        tttt_0p355_85       tttt_0p355v_85c_tttt_cmax         \
-        tttt_0p325_85       tttt_0p325v_85c_tttt_cmax         \
-        pfff_0p38_125       pfff_0p380v_125c_tttt_cmin        \
-        psss_0p355_0        psss_0p355v_0c_tttt_cmax          \
-        pfff_0p38_0         pfff_0p380v_0c_tttt_cmin          \
-        psss_0p355_125      psss_0p355v_125c_tttt_cmax        \
-        pfff_0p38_85        pfff_0p380v_85c_tttt_cmin         \
-        tttt_0p34_85        tttt_0p340v_85c_tttt_cmax         \
-        tttt_0p65_0p325_85  tttt_0p650v_0p325v_85c_tttt_cmax  \
-        tttt_0p85_0p425_85  tttt_0p850v_0p425v_85c_tttt_cmax  \
-        pfff_0p65_0p325_125 pfff_0p650v_0p325v_125c_tttt_cmin \
-        pfff_0p85_0p425_125 pfff_0p850v_0p425v_125c_tttt_cmin \
-        psss_0p65_0p325_0   psss_0p650v_0p325v_0c_tttt_cmax   \
-        psss_0p85_0p425_0   psss_0p850v_0p425v_0c_tttt_cmax   \
-        pfff_0p65_0p325_0   pfff_0p650v_0p325v_0c_tttt_cmin   \
-        pfff_0p85_0p425_0   pfff_0p850v_0p425v_0c_tttt_cmin   \
-        psss_0p65_0p325_125 psss_0p650v_0p325v_125c_tttt_cmin \
-        psss_0p85_0p425_125 psss_0p850v_0p425v_125c_tttt_cmin \
-        pfff_0p65_0p325_85  pfff_0p650v_0p325v_85c_tttt_cmin  \
-        pfff_0p85_0p425_85  pfff_0p850v_0p425v_85c_tttt_cmin  \
-        )
     mappedpvt=`echo $pvt | awk -F_ '{printf "%s_%sv_%sc_%s_%s\n", $1, $2, $3, $4, $5}'`
     libname=${fulllib}_${bundle}_${mappedpvt}_ccslnt
     [[ -z $libname ]] && echo "Can't find libname for: $1" && exit 1
