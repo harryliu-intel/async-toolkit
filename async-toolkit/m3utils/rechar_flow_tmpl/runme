@@ -1,7 +1,7 @@
 #!/usr/intel/bin/zsh -x
-
+#
 # ALLOW 64GB 
-
+#
 # The following is an old comment---take with grain of salt:
 # The Siliconsmart recharacterization flow reads an existing Liberty file, runs
 # SPICE simulations at different operating conditions, then writes out a new
@@ -12,7 +12,7 @@
 # cleaned up the scripts to focus only on recharacterization.  This script
 # exercises the flow on some inverters as a demo.  I also point out some
 # caveats.
-
+#
 # Start Cheetah 2 environment then run this script.  A sample command to start
 # Cheetah 2 is:
 # /p/hdk/bin/cth_psetup -p ipde/2023.16.04 -cfg 78p3_opt9_r05.cth -nowash -tool ipde_all -x '$SETUP_IPDE'
@@ -40,146 +40,42 @@
 # output dir:        bundles        # all outputs here, not used during char
 #
 # bundles and ndms are NOT referenced while running flow
-
-
+#
+#
 # so in theory $TOP (location of scripts) and $WARD (location of run area)
 # could be different, but do we need that?
 
-TOP=$WARD
 
 echo "**********  $0 start at `date`"
 
-source ${RECHAR_PVTS_ZSH}
+source rechar_setup_env.zsh
 
-cell_list=$TOP/$RECHAR_CELL_LIST_FN
-
-source ${RECHAR_ENV_ZSH}
-
-echo "===========================     EXTRACT `date`    ==========================="
-pwd
-# Extract the cells of interest specified in cell_list from the source library
-# into:
-# .lib.lvf has complete content of each cell
-# .lib is the same as .lib.lvf but without OCV and receiver capacitance
-#
-# This was a workaround to deal with the unintended direct copying of OCV and
-# receiver_capacitance tables from the source library, for example, because the
-# LVF tables are of different dimensions between the source and the
-# recharacterization.  First import from .lib.lvf to generate the .inst files
-# that control characterization, then switch to import from .lib files to
-# actually run the characterization.  This should be done in a better way.
-mkdir -p $WARD/${RECHAR_SIS_WORKDIR}/extracted
-cd $WARD/${RECHAR_SIS_WORKDIR}/extracted
-$TOP/scripts/extract.zsh $cell_list || exit 1
-
-bundles=($(awk '{print $1}' $cell_list |sort -u))
-export bundles
-echo "bundles are " $bundles
-
-# Import library to create Siliconsmart .inst files
-
-echo "===========================     IMPORT `date`    ==========================="
-pwd
-
-mkdir -p $WARD/${RECHAR_SIS_WORKDIR}/import
-cd $WARD/${RECHAR_SIS_WORKDIR}/import
-
-if [[ -z $internal ]]; then
-    rm -f $sislaunchfile
-    echo "STDCELLDIR:"${stdcell_dir} > $sislaunchfile
+if [[ "${RECHAR_START}" == "" ]]; then
+    flow_running=1
+else
+    flow_running=0
 fi
 
-for corner in $corners_list; do
-    celsius=${corner:h:h:h:h:h}
-    millivolts=${corner:h:h:h:h:t}
-    trancorner=${corner:h:h:h:t}
-    metalcorner=${corner:h:h:t}
-    capcorner=${corner:h:t}
-    metaltemp=${corner:t}
-    echo "importing millivolts=" $millivolts " celsius=" $celsius
-    import_only=1 $TOP/scripts/launch $millivolts $celsius $trancorner $capcorner $metaltemp $metalcorner $bundles 
+
+for step in extract import scale characterize; do
+    if [[ "${RECHAR_START}" == ${step} ]]; then
+        echo "RECHAR_START at ${step}"
+        flow_running=1
+    fi
+    
+    if [[ "${flow_running}" == "1" ]]; then
+        ${TOP}/rechar_${step}.zsh
+    else
+        echo "skipping ${step} owing to RECHAR_START/RECHAR_STOP"
+    fi
+
+    if [[ "${RECHAR_STOP}" == "${step}" ]]; then
+        echo "RECHAR_STOP at ${step} !"
+        exit 0
+    fi
 done
 
-if [[ -z $internal ]]; then
-    date
-    pwd
-    $sislaunch -alpha $sislaunch_alpha -clearenv -pllcmds $pllcmds -sisworkers $workers -sispath $sispath -cl ${cell_list} $sislaunchfile
-fi
-
-echo "===========================     SCALE `date`    ==========================="
-pwd
-
-# ######################################################################ctor is
-# ######################################################################would
-# ######################################################################
-# Perform the rescaling.  See env.zsh for the settings.            #####ion.
-for control in */*/control; do
-    mkdir -p $control.updated
-    for inst in $control/*.inst; do
-        $TOP/scripts/half_load.pl ${load_factor}  < $inst  \
-                                  |\
-        $TOP/scripts/adjust_slews.pl ${slew_factor} > $control.updated/${inst:t}
-        
-        if [[ ${inst:t} =~ "i0[ms]l[a-z][a-z][0-9]10[^/]*$" ]]; then
-            echo "Inverting latch : $inst"
-            $TOP/scripts/invert_d < $inst > $control.updated/${inst:t}
-        fi
-    done
-done
-
-seq_bundles=(`(pushd $stdcell_dir ; echo *seq_*vt)`)
-
-#seq_bundles=(seq_ulvt seq_lvt seq_svt seq_hvt)
-#seq_bundles=(dsedrseq_hvt dsedrseq_svt dsiseq_hvt dsiseq_lvt dsiseq_svt dsiseq_ulvt dsldrseq_hvt dsldrseq_svt dsldrsupseq_hvt dsldrsupseq_svt dsseq_hvt dsseq_svt dssupseq_hvt dssupseq_svt edrseq_hvt edrseq_lvt edrseq_svt edrseq_ulvt ldrdsiseq_hvt ldrdsiseq_lvt ldrdsiseq_svt ldrdsiseq_ulvt ldrseq_hvt ldrseq_lvt ldrseq_svt ldrseq_ulvt ldrsupseq_hvt ldrsupseq_lvt ldrsupseq_svt ldrsupseq_ulvt seq_hvt seq_lvt seq_svt seq_ulvt supseq_hvt supseq_lvt supseq_svt supseq_ulvt)
-for bundle in $seq_bundles; do
-    for dir in *; do
-        if [ -d $dir/$bundle ]; then
-            for inst in $dir/$bundle/control.updated/*.inst; do
-                clockname=`grep "add_pin.*-clock" ${inst} | awk '{print $2}'`
-                echo "set_config_opt -type mpw -from ${clockname} smc_degrade ${seq_char_pushout}" >> $inst
-            done
-        fi
-    done
-done
-
-# Run new characterization.  
-# It would be better if we could do all the corners at once, and parallelize across them all.
-cd $WARD/${RECHAR_SIS_WORKDIR}
-
-echo "===========================     CHARACTERIZE `date`     ==========================="
-pwd
-
-
-if [[ -z $internal ]]; then
-    rm -f $sislaunchfile
-    echo "STDCELLDIR:"${stdcell_dir} > $sislaunchfile
-fi
-
-for corner in $corners_list; do
-    celsius=${corner:h:h:h:h:h}
-    millivolts=${corner:h:h:h:h:t}
-    trancorner=${corner:h:h:h:t}
-    metalcorner=${corner:h:h:t}
-    capcorner=${corner:h:t}
-    metaltemp=${corner:t}
-    echo "launching millivolts=" $millivolts
-    $TOP/scripts/launch $millivolts $celsius $trancorner $capcorner $metaltemp $metalcorner $bundles 
-done
-
-if [[ -z $internal ]]; then
-    date
-    pwd
-    $sislaunch -alpha $sislaunch_alpha -clearenv -pllcmds $pllcmds -sisworkers $workers -sispath $sispath -cl ${cell_list} $sislaunchfile
-fi
-
-if [[ "${RECHAR_STOP}" == "characterize" ]]; then
-    exit 0
-fi
-
-echo "===========================     CHARACTERIZE-DONE `date`     ==========================="
-pwd
-
-$TOP/runme_final
+${TOP}/runme_postchar
 
 echo "**********  $0 done at `date`"
 

@@ -116,16 +116,22 @@ or bundles.
 
 13. In case of fixes, can rebundle the final bundles using
 
-./runme_final cell_list
+./runme_postchar cell_list
 
-Note that ./runme_final is called from a specific point in the runme script.
-Please read the scripts to understand what is happening so that runme_final
+Note that ./runme_postchar is called from a specific point in the runme script.
+Please read the scripts to understand what is happening so that runme_postchar
 is starting in an appropriate environment.
 
 14. In case of splitting the flow (doing runme in one place and
-runme_final separately), which is OK to do, ensure that the files are
+runme_postchar separately), which is OK to do, ensure that the files are
 set up right!  Pay special attention to PVTs and env.zsh contents!  Plus
 make sure that the CTH2 setup matches in the two runs.
+
+15. Set the RECHAR_START environment variable to have the flow start with a
+particular step.
+
+16. Set the RECHAR_STOP environment variable to have the flow stop after a
+particular step.
 
 ----  BASIC QC  ----
 

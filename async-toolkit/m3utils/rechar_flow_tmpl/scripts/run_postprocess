@@ -1,5 +1,9 @@
 #!/usr/intel/bin/zsh -x
 
+# postprocess lib files
+# calls out to postprocess.tcl
+# if $internal isn't set, uses sislaunch
+
 if [[ -z $internal ]]; then
     rm -f $sislaunchfile
     echo "CLEARENV" > $sislaunchfile
