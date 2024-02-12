@@ -24,8 +24,11 @@ corners_list=(\
 "85/275/tttt/tttt/cmax/100" "85/275/tttt/tttt/cmin/100" \
 "85/250/tttt/tttt/cmax/100" "85/250/tttt/tttt/cmin/100" \
 "85/450/tttt/tttt/cmax/100" "85/450/tttt/tttt/cmin/100" \
-"50/300/tttt/tttt/cmax/100" "50/300/tttt/tttt/cmin/100" \
 )
+
+
+# dropped this:
+# "50/300/tttt/tttt/cmax/100" "50/300/tttt/tttt/cmin/100" 
 
 echo corners_list : $corners_list
 
