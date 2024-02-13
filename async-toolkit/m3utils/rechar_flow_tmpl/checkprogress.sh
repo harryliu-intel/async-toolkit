@@ -17,7 +17,7 @@ for file in ${files}; do
 done
 
 filecount=`wc -l < lastlog$$`
-donecount=`grep -c '^Maximum virtual' lastlog$$`
+donecount=`grep -c 'Maximum virtual memory size' lastlog$$`
 progcount=`grep -c '%.*Failed.*Elapsed' lastlog$$`
 
 echo "done       $donecount"
@@ -25,7 +25,7 @@ echo "inprogress $progcount"
 echo "total      `expr $donecount + $progcount`"
 echo "files      $filecount"
 
-busyworkers=`grep Failed lastlog$$ | sed 's/.*Active Workers: \([0-9]*\),.*/\1/' | awk '{x += $1} END { print x }'`
+busyworkers=`grep Failed lastlog$$ | sed 's/.*Active Workers: \([0-9]*\),.*/\1/' | awk 'BEGIN { x = 0 }{x += $1} END { print x }'`
 
 echo "busy workers   $busyworkers"
 echo "target workers $workers"
