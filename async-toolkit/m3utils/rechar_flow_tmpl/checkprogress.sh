@@ -40,8 +40,12 @@ echo "#!/bin/sh -x" > rebalance.sh
 awk -v sumcost=${sumcost} -v workers=${workers} '{printf("echo \"change_parameter run_list_maxsize %d\" > %s/config/change.tcl\n", $6 / sumcost * (workers - 1) + 1, $1)}' cost$$ >> rebalance.sh
 chmod +x rebalance.sh
 
+cat rebalance.sh
+
 echo "Run ./rebalance.sh , if you dare!"
 
+rm -f cost$$
+rm -f lastlog$$
 
 
 
