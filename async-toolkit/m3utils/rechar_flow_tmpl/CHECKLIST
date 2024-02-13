@@ -133,6 +133,21 @@ particular step.
 16. Set the RECHAR_STOP environment variable to have the flow stop after a
 particular step.
 
+17. If you are running a long characterization job, and the siliconsmart invocations
+start to exit and you're left with just a few hosts running the remaining jobs, run
+the script
+
+./checkprogress.sh
+
+from ${TOP}
+
+After having done that, load the rebalanced host counts by running
+
+./rebalance.sh 
+
+which was created by checkprogress.sh .  Note that Siliconsmart only updates its 
+host counts about once per half hour (by default).
+
 ----  BASIC QC  ----
 
 pushd siliconsmart/bundles
