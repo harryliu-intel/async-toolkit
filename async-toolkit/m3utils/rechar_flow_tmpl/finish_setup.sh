@@ -14,3 +14,19 @@ else
 	echo ""
 fi
 
+shortname=`echo $RECHAR_SIS_WORKDIR | sed 's/siliconsmart\.//'`
+
+echo "shortname is $shortname"
+
+cat > go << EOF
+#!/bin/sh -x
+
+./runme |& tee runme.${shortname}
+
+EOF
+
+chmod +x go
+
+echo "run ./go to run the full flow"
+
+
