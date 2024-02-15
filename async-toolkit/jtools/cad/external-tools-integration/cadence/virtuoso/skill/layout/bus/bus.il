@@ -290,7 +290,6 @@ wires_modtime = makeTable("wires" 0)
           )
     (cond (isHopOver
     	   (IndentPathFromPrBound fig ?CV CV)
-	   fig->lpp = (list (car fig->lpp) "fill")
 	   rect = (dbCreateRect CV fig->lpp (car (nrConvertPathToRectList fig)))
 	   (SetBusProp rect)
 	   rect = (dbCreateRect CV (list (car fig->lpp) "keepout") (car (nrConvertPathToRectList fig)))

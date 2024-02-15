@@ -132,7 +132,7 @@
         excludeCellsFile
         (hierSep "!") ; a character that is legal, but not otherwise used
         (statusNonDefault t) (errorStr "") placed offset x y gx gy
-        flattened_instances)
+        flattened_instances net)
 
     (printf "Export Start %s\n" (getCurrentTime))
 
@@ -272,6 +272,10 @@
       offset = (GetRDTOffset ?CV ExportCV)
       (unless offset (error "Can't find RDTOffset\n"))
       (OffsetEverything offset ?CV ExportCV)
+
+      ; change nil net so it shows up in the DEF
+      net=(MakeNet ExportCV "floating_drawing")
+      (foreach s ExportCV->shapes (when s->purpose=="drawing" && s->net==nil s->net=net))
 
       ; save
       (dbSave ExportCV)
