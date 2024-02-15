@@ -1,13 +1,21 @@
 #!/usr/intel/bin/zsh
 
-cell_list="find_cells.sh" # stupid hack.. fix this later"
-source env.zsh
+# usage : find_cells.sh <cell_file>
 
-# usage : find_cells <cell_file>
+source rechar_setup_env.zsh
+
+for corner in $corners_list; do
+    celsius=${corner:h:h:h:h:h}
+    millivolts=${corner:h:h:h:h:t}
+    trancorner=${corner:h:h:h:t}
+    metalcorner=${corner:h:h:t}
+    capcorner=${corner:h:t}
+    metaltemp=${corner:t}
+done
 
 libroot=${stdcell_dir}
 libpvt0=${techlib}_${stdlibname}_
-libpvt1=_100c_tttt_cmax
+libpvt1=_${metaltemp}c_${metalcorner}_${capcorner}
 
 here=`pwd`
 af=${here}/allcells.dat
@@ -16,12 +24,15 @@ rf=${here}/resultcells.dat
 mf=${here}/missingcells.dat
 cf=$1
 
-rm -f $af
+rm -f $af || true
 
 pushd ${libroot} 2>&1 > /dev/null
 
 for bundle in *_*vt; do
     spfdir=${bundle}/spf/${libpvt0}${bundle}${libpvt1}
+
+    echo "spfdir : $spfdir"
+    
     if [ -d $spfdir ]; then
         pushd ${spfdir} 2>&1 > /dev/null
         ls *.spf | sed -e 's/.spf$//' -e "s/^/${bundle} /"  >> $af

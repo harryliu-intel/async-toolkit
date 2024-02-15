@@ -39,3 +39,7 @@
 /lv_icv
 /rebalance.sh
 /go
+/allcells.dat
+/missingcells.dat
+/soughtcells.dat
+/cc.lib.defs.bkp
