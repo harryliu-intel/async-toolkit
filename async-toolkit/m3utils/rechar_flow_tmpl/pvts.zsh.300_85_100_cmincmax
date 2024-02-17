@@ -19,7 +19,7 @@
 #
 
 #corners_list=("100/300/tttt/tttt/cmax/100" "100/300/tttt/tttt/cmin/100" "100/275/tttt/tttt/cmax/100" "100/450/tttt/tttt/cmax/100")
-corners_list=("85/300/tttt/pcff/cmin/125" "85/300/tttt/pcss/cmax/125")
+corners_list=("85/300/tttt/tttt/cmin/100" "85/300/tttt/tttt/cmax/100")
 
 cell_list_fn="cell_list"
 
