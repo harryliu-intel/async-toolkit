@@ -1,14 +1,14 @@
 `ifndef CAST2VERILOG_RESET_DURATION
-`define CAST2VERILOG_RESET_DURATION 10
+`define CAST2VERILOG_RESET_DURATION 20000ns
 `endif
 `ifndef CAST2VERILOG_START_DURATION
-`define CAST2VERILOG_START_DURATION 10
+`define CAST2VERILOG_START_DURATION 100ns
 `endif
 `ifndef CAST2VERILOG_CAPTURE_DURATION
-`define CAST2VERILOG_CAPTURE_DURATION 10
+`define CAST2VERILOG_CAPTURE_DURATION 1000ns
 `endif
 module beh_reset #(parameter RESETS = 1,
-                             STARTS = 0,
+                             STARTS = 1,
                              STEPS = 0,
                              DELAYS = 0,
                              CAPTURES = 0,

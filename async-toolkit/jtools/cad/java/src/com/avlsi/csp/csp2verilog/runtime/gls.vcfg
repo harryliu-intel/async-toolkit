@@ -2,4 +2,6 @@
 +define+no_unit_delay
 +nospecify
 +define+INTC_MEM_GLS
++define+RINIT_GLS_SEED_PATH="TESTBENCH.rinit_gls"
++define+random_init_enable
 +define+BD_EXTRA_DELAY=#1ps

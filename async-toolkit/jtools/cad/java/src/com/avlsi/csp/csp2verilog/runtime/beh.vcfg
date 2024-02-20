@@ -2,11 +2,11 @@
 +define+ENABLE_CSP_PRINT
 +define+CAST2VERILOG_RESET=beh_reset
 +define+CAST2VERILOG_GLOBAL_RESET=TESTBENCH.cast2verilog\\\$reset.reset_n
-+define+PRS2VERILOG_TIMEUNIT=1ns
-+define+PRS2VERILOG_TAU=0.001
++define+PRS2VERILOG_TIMEUNIT=1ps
++define+PRS2VERILOG_TAU=1
 +define+USE_CAST2VERILOG_EXTRADELAY
 +define+USE_CAST2VERILOG_DELAYBIAS
 -sverilog
--timescale=1ns/1fs
--file $CAST2VERILOG_RUNTIME/runtime.vcfg
+-timescale=1ps/1fs
+-f $CAST2VERILOG_RUNTIME/runtime.vcfg
 -v $CAST2VERILOG_RUNTIME/beh_reset.v

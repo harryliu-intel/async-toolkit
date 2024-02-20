@@ -56,6 +56,7 @@ my $cmd = ("cast2verilog --cast-path=\Q$cast_path\E " .
            "--register-width=$width " .
            "--max-heap-size=$mem --generate-testbench --enable-orphan-bdc --ifdef " .
            "--structure-declarations=structs.txt " .
+           "--behavior-report=beh.rpt " .
            "--cell=\Q$cosim\E " .
            "--file-list=$flist " .
            join('', map { "--define=\Q$_\E " } @cast_defines) .
@@ -65,17 +66,64 @@ my $cmd = ("cast2verilog --cast-path=\Q$cast_path\E " .
 system($cmd) == 0 || die "Error executing cast2verilog: $!";
 
 # escape special characters in the filelist
+my $content;
 if (open(my $lh, $flist)) {
     local $/;
-    my $content = <$lh>;
+    $content = <$lh>;
     close $lh;
     if ($content =~ /[()]/) {
-        $content =~ s/([()])/\\\\\\$1/g;
-        open($lh, '>', $flist);
-        print $lh $content;
-        close $lh;
+        #print "Experiment-Not Escaping: \n$content\n";
+        #escape special characters in the filelist
+        $content =~ s/([()])/\\$1/g;
+        #print "Experiment-Escaped: \n$content\n";
+        #$content =~ s/([()])/\\\\\\$1/g;
+        #open($lh, '>', $flist);
+        #print $lh $content;
+        #close $lh;
     }
 }
+
+# Collect list of cells to bind performance monitor
+my @bd_ctrls;
+my $search_ctrl = "^...bd";
+my @bd_divs;
+my $search_div = "^...divert";
+if ($perf) {
+    push @vcs_args, "-f \"\$CAST2VERILOG_RUNTIME/perf.vcfg\"";
+    if (open(my $lh, $flist)) {
+        local $/;
+        my @content2 = split(/\n/, $content);
+        foreach my $line (@content2) {
+            chomp($line);
+            $line = (split(/ /, $line))[-1];
+            $line =~ s/\$GLS_DIR/$gls_dir/g;
+            $line =~ s/[\r\n]+$//;
+            #print "VLOG: $line\n";
+            my @ctrl_match = split(/\n/, `grep -oh '$search_ctrl\\w*' $line \| sort \| uniq`);
+            my @div_match = split(/\n/, `grep -oh '$search_div\\w*' $line \| sort \| uniq`);
+            chomp(@ctrl_match);
+            chomp(@div_match);
+            foreach my $match (@ctrl_match) {
+                push(@bd_ctrls, $match) unless grep{$_ =~ $match} @bd_ctrls;
+            }
+            foreach my $match (@div_match) {
+                push(@bd_divs, $match) unless grep{$_ =~ $match} @bd_divs;
+            }
+        }
+        close $lh;
+        # Generate verilog file to bind performance monitors to controllers
+        open my $fh_bind, ">bind_perf_mon.v" || die "Can't open bind_perf_mon.v: $!";
+        foreach my $ctrl (@bd_ctrls) {
+            print $fh_bind "bind $ctrl bd_ctrl_perf_mon ctrl_mon(.*);\n";
+        }
+        foreach my $div (@bd_divs) {
+            print $fh_bind "bind $div bd_div_perf_mon div_mon(.*);\n";
+        }
+        close $fh_bind;
+        push @vcs_args, "bind_perf_mon.v";
+    }
+}
+
 
 my $instdir = $ENV{'FULCRUM_PACKAGE_ROOT'};
 my $runtime = "$instdir/share/cast2verilog";
@@ -88,7 +136,7 @@ push @defines, "+define+FPGA_HIER_PATH=.\Q$fpga_path\E." if $fpga_path;
 
 my @args = ();
 if (-s $flist) {
-    push @args, '-file', $flist;
+    push @args, '-f', $flist;
 }
 my @sdf_args = ();
 
@@ -104,12 +152,13 @@ if (defined($gls_dir)) {
 [[ -z "$CMO_DIR" ]] && export CMO_DIR=$NCL_DIR/sram/cmo/latest
 [[ -z "$PUF_DIR" ]] && export PUF_DIR=$NCL_DIR/puf/latest
 EOF
-    print $fh_verdi <<'EOF';
+print $fh_verdi <<'EOF';
 [[ -z "$STDCELL_DIR" ]] && export STDCELL_DIR=$NCL_DIR/stdcells
 [[ -z "$GPIO_DIR" ]] && export GPIO_DIR=$NCL_DIR/gpio/latest
 [[ -z "$CMO_DIR" ]] && export CMO_DIR=$NCL_DIR/sram/cmo/latest
 [[ -z "$PUF_DIR" ]] && export PUF_DIR=$NCL_DIR/puf/latest
 EOF
+if ($gls_dir) {
 
     if (@sdf) {
         my %binds = ();
@@ -131,8 +180,8 @@ EOF
             my $minmax = (split(/\./, $basename))[1];
 
             my $arg = "$minmax:$block:$sdf";
+            push(@sdf_args, ("-sdf $arg"));
             print $fh_tcl "run_workarounds $block $sdf_dir/${block}_${minmax}\n";
-            push @sdf_args, '-sdf', "\Q$arg\E";
             if (open(my $fh1, '<', "$sdf_dir/$block.$minmax.bind_notifiers.sv")) {
                 while (<$fh1>) {
                     chomp;
@@ -159,19 +208,20 @@ EOF
 }
 else { $gls_dir=""; }
 
-push @vcs_args, '-debug_access+dmptf+all', '-debug_region=lib+cell' unless $nodebug;
+push @vcs_args, '-debug_access+all', '-debug_region+cell', '+vcs+initreg+random' unless $nodebug;
 
 print $fh_vcs <<EOF;
 export SPAR="$spar_dir"
 export CAST2VERILOG_RUNTIME="$runtime"
 export GLS_DIR="$gls_dir"
-verdi3 vcs vcs @vcs_args -assert svaext -licqueue -full64 -lrt @defines -file "\$CAST2VERILOG_RUNTIME/$vcfg" @args @sdf_args testbench.v "\$CAST2VERILOG_RUNTIME/readhexint.c" @netlists
+export VCS_PRINT_INITREG_INITIALIZATION="1"
+verdi3 vcs @vcs_args -assert svaext -licqueue -full64 -lrt @defines -f "\$CAST2VERILOG_RUNTIME/$vcfg" @args testbench.v "\$CAST2VERILOG_RUNTIME/readhexint.c" @sdf_args @netlists
 EOF
 print $fh_verdi <<EOF;
 export SPAR="$spar_dir"
 export CAST2VERILOG_RUNTIME="$runtime"
 export GLS_DIR="$gls_dir"
-verdi3 verdi -nologo -sv -top TESTBENCH -ssf trace.fsdb @defines -file "\$CAST2VERILOG_RUNTIME/$vcfg" @args testbench.v  @netlists &
+verdi3 verdi -nologo -sv -top TESTBENCH -ssf trace.fsdb @defines -f "\$CAST2VERILOG_RUNTIME/$vcfg" @args testbench.v  @netlists &
 EOF
 close $fh_vcs;
 close $fh_verdi;

@@ -1,6 +1,7 @@
 1 0
 
 share/cast2verilog/GATE_Z_MIKE.v       GATE_Z_MIKE.v       644  p
+share/cast2verilog/bd_perf_mon.sv      bd_perf_mon.sv      644  p
 share/cast2verilog/bdnn.sv             bdnn.sv             644  p
 share/cast2verilog/bdtb.sv             bdtb.sv             644  p
 share/cast2verilog/beh.vcfg            beh.vcfg            644  p
@@ -18,6 +19,7 @@ share/cast2verilog/fpga_reset.v        fpga_reset.v        644  p
 share/cast2verilog/1276.vcfg           1276.vcfg           644  p
 share/cast2verilog/gls.vcfg            gls.vcfg            644  p
 share/cast2verilog/sdf.vcfg            sdf.vcfg            644  p
+share/cast2verilog/perf.vcfg           perf.vcfg           644  p
 share/cast2verilog/new-timingbuffer.v  new-timingbuffer.v  644  p
 share/cast2verilog/nodeconverter.v     nodeconverter.v     644  p
 share/cast2verilog/nwwn.sv             nwwn.sv             644  p
