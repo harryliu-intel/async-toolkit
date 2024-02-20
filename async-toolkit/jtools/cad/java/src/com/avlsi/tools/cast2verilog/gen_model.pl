@@ -158,8 +158,9 @@ print $fh_verdi <<'EOF';
 [[ -z "$CMO_DIR" ]] && export CMO_DIR=$NCL_DIR/sram/cmo/latest
 [[ -z "$PUF_DIR" ]] && export PUF_DIR=$NCL_DIR/puf/latest
 EOF
-if ($gls_dir) {
+}
 
+if (defined($gls_dir)) {
     if (@sdf) {
         my %binds = ();
 
