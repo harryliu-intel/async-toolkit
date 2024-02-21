@@ -14,8 +14,18 @@ fi
 
 TOP=${WARD}
 
+if [[ ! -f ${RECHAR_PVTS_ZSH} ]]; then
+	echo "ERROR: RECHAR_PVTS_ZSH = ${RECHAR_PVTS_ZSH} not found!"
+	exit 1
+fi
+
 source ${RECHAR_PVTS_ZSH}
 
 cell_list=$TOP/$RECHAR_CELL_LIST_FN
+
+if [[ ! -f ${RECHAR_PVTS_ZSH} ]]; then
+	echo "ERROR: RECHAR_ENV_ZSH = ${RECHAR_ENV_ZSH} not found!"
+	exit 1
+fi
 
 source ${RECHAR_ENV_ZSH}
