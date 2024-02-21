@@ -1,11 +1,12 @@
-Release procedure for cells for FWR and other Blockscale programs
+
+RELEASE PROCEDURE FOR CELLS FOR FWR AND OTHER BLOCKSCALE PROGRAMS
 =================================================================
 
 February 20, 2024
 
 The release procedure has to satisify the requirements of many bosses.
-You must do exactly as written here unless it's been discussed in an
-appropriate characterization forum.
+You must do exactly as written here unless it's been discussed in and
+approved by an appropriate characterization forum.
 
 Goals
 =====
@@ -22,7 +23,7 @@ Goals
 
 6. All releases to have a RELEASE_NOTES file in their top directory
 
-This procedure is defined as of 2/20/2024 and to be used until further notice.
+This procedure is defined as of 2/20/2024 and is to be used until further notice.
 
 The following principles are to be adhered to.
 
@@ -67,6 +68,10 @@ releases.
 How to make a characterization release
 ======================================
 
+0. Make sure you have an existing and successful characterization run
+available, with all the resulting collaterals resident in the appropriate
+RECHAR_SIS_WORKDIR (siliconsmart.*).
+
 1. Choose a new name in the CHAR_RELEASE_DIR following the rules laid out
 above.  For example, if the last release was 032.<something>, the new release
 will be called 033.<something>, e.g.,
@@ -74,18 +79,24 @@ will be called 033.<something>, e.g.,
 033.fwr_tc2_0p9u2_2024ww07.6
 
 2. Create a directory in the release area ON THE DISK WHERE THE
-CHARACTERIZATION WAS PERFORMED with this name:
+CHARACTERIZATION WAS PERFORMED with this name.
+
+For example:
 
 mkdir /nfs/site/disks/zsc9_fwr_lib_char_008/release/033.fwr_tc2_0p9u2_2024ww07.6
 
 3. Move the "bundles" from the characterization flow into this directory,
 using mv.  DO NOT USE "cp"!
 
+For example:
+
 mv /nfs/site/disks/zsc9_fwr_lib_char_008/mnystroe/rechar.8/siliconsmart.tc2/bundles /nfs/site/disks/zsc9_fwr_lib_char_008/release/033.fwr_tc2_0p9u2_2024ww07.6
 
 4. Create the RELEASE_NOTES in the release directory on the char disk:
 
 vi /nfs/site/disks/zsc9_fwr_lib_char_008/release/033.fwr_tc2_0p9u2_2024ww07.6/RELEASE_NOTES
+
+Include notes on PDK, UPF, and source of standard cells used.
 
 5. Link the release into the main release directory:
 
@@ -113,17 +124,23 @@ and you wish to add characterization results for custom cells to this, then
 
 1. FIRST create a new release for the custom cells
 
-For example
+For example:
 
 034.tc2_custom_cells_0p9u2_2024ww08.2
 
 2. SECONDLY create a new release for the merged release
 
-For example
+For example:
 
 035.fwr_tc2_all_cells_0p9u2_2024ww07.6
 
-3. LASTLY link the appropriate files into the new merged area
+3. THIRDLY create the RELEASE_NOTES file
+
+Explain which characterization releases are being linked together in
+this file.
+
+4. LASTLY link the appropriate files into the new merged area.  Use "ln -s"
+or "ln -sf" to make the links.
 
 The directory structure might then look like this:
 
