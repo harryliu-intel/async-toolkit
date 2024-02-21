@@ -8,7 +8,7 @@ realcwd=`realpath $mycwd`
 realward=`realpath $WARD`
 
 if [[ "$realward" != "$realcwd" ]]; then
-	echo "WARD $realward != CWD $realcwd"
+	echo "?error : WARD $realward != CWD $realcwd"
 	exit 1
 fi
 
