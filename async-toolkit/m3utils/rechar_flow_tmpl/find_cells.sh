@@ -44,7 +44,7 @@ popd 2>&1 > /dev/null
 sort -k 2 ${af} > ${af}$$
 mv ${af}$$ ${af}
 
-sort $cf | uniq > $sf
+sort $cf | sed -e 's/ //g' -e 's/\t//g' | uniq > $sf
 
 join -1 2 -2 1 ${af} ${sf} | awk '{print $2 " " $1}' > ${rf}
 
