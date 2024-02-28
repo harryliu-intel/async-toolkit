@@ -11,4 +11,5 @@ pwd
 
 mkdir -p $WARD/${RECHAR_SIS_WORKDIR}/bundles
 cd $WARD/${RECHAR_SIS_WORKDIR}/bundles
+pwd
 $TOP/scripts/rebundle $WARD/${RECHAR_SIS_WORKDIR}/ndms $bundles

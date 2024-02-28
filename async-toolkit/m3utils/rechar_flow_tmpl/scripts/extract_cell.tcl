@@ -21,7 +21,26 @@ set filters {{receiver_capacitance}
              {timing ocv_sigma_fall_constraint}
              {timing ocv_sigma_fall_transition}
              {timing ocv_sigma_rise_constraint}
-             {timing ocv_sigma_rise_transition}}
+             {timing ocv_sigma_rise_transition}
+    {timing ocv_mean_shift_cell_fall}
+    {timing ocv_mean_shift_cell_rise}
+    {timing ocv_mean_shift_fall_constraint}
+    {timing ocv_mean_shift_fall_transition}
+    {timing ocv_mean_shift_rise_constraint}
+    {timing ocv_mean_shift_rise_transition}
+    {timing ocv_skewness_cell_fall}
+    {timing ocv_skewness_cell_rise}
+    {timing ocv_skewness_fall_constraint}
+    {timing ocv_skewness_fall_transition}
+    {timing ocv_skewness_rise_constraint}
+    {timing ocv_skewness_rise_transition}
+    {timing ocv_std_dev_cell_fall}
+    {timing ocv_std_dev_cell_rise}
+    {timing ocv_std_dev_fall_constraint}
+    {timing ocv_std_dev_fall_transition}
+    {timing ocv_std_dev_rise_constraint}
+    {timing ocv_std_dev_rise_transition}
+}
 
 if {[catch {open [lindex $argv 2]} fh]} {
     error "Can't open filelist"
