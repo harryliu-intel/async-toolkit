@@ -678,6 +678,12 @@ useICV = t
                       (TrivialInline inst ?CV CV)
                       progress=t
                       )
+                     ((dbGetPropByName inst->master "CastCell")->value!="TRUE" &&
+                      (dbGetPropByName inst->master "routed")->value=="FALSE"
+                      flattened_instances[inst->name]=t
+                      (TrivialInline inst ?CV CV)
+                      progress=t
+                      )
                      )
                )
       )
