@@ -30,6 +30,8 @@ busyworkers=`grep Failed lastlog$$ | sed 's/.*Active Workers: \([0-9]*\),.*/\1/'
 echo "busy workers   $busyworkers"
 echo "target workers $workers"
 
+grep Failed lastlog$$ | sed 's/\([^ ]*\)\/siliconsmart\.log .*(\([0-9\.]*\)%,.*Active Workers: \([0-9]*\),.*/\1 \2 \3/' | awk '{print $1 " " $2 " " $3}' | sort -k2 -g | awk '{printf("%-70s %4.1f%% %9d\n", $1, $2, $3)}'
+
 grep Failed lastlog$$ | sed 's/\([^ ]*\)\/siliconsmart\.log .*(\([0-9\.]*\)%,.*Active Workers: \([0-9]*\),.*/\1 \2 \3/' | awk '{cost = $2 * $3; rem = 100 - $2; remcost = rem * cost; printf("%s %f %f %f %f %f\n", $1, $2, $3, cost, rem, remcost)}' > cost$$
 
 sumcost=`awk '{sum += $NF} END {print sum}' cost$$`
