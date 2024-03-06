@@ -18,6 +18,7 @@
     ; write destination tagCV
     tagCV = (dbOpenCellViewByType CV->libName CV->cellName targetViewName "maskLayout" "w")
     (unless tagCV (error "Unable to write %s %s %s\n" libName cellName targetViewName))
+    (dbReplaceProp tagCV "CopyExact" "string" CopyExact)
 
     ; instantiate layout cell
     (dbCreateInst tagCV CV "dut" 0:0 "R0")
