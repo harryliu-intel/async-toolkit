@@ -1,7 +1,11 @@
 ; Version of MakeLayoutTag for custom leaf cell extraction for 1278.3
 (defun MakeLeafTag (@key (CV (geGetEditCellView))
                          (targetViewName "layout_tag"))
-  (let (tagCV CopyExact prb lpp z th pcre fillCV bbox rows cols x0 y0 x1 y1 fill x y fig rect points)
+  (let (tagCV CopyExact prb lpp z th pcre fillCV abstractCV bbox rows cols x0 y0 x1 y1 fill x y fig rect points)
+    ; find abstract view
+    abstractCV=(ReadCV CV->libName CV->cellName "abstract")
+    (unless abstractCV (error "abstract view not found"))
+    
     ; get CopyExact, threshold, and strength
     CopyExact = (dbGetPropByName CV "CopyExact")->value
     (unless CopyExact (error "no CopyExact"))
@@ -64,9 +68,8 @@
              (when s2->layerName=="m0" (leChopShape s2 points t t))
              )
 
-    ; chop fill by subcell wires
-    flatCV=(MakeFlatBlockageView ?botMetal 0 ?topMetal 2 ?CV CV)
-    (foreach s1 flatCV->shapes
+    ; chop fill by abstract shapes
+    (foreach s1 abstractCV->shapes
              (cond (s1->layerName=="m0" rect=(BBoxExpandHorizontal s1->bBox MetalEteSpace[Metal[0]]))
                    (s1->layerName=="m1" rect=(BBoxExpandVertical   s1->bBox MetalEteSpace[Metal[1]]))
                    (s1->layerName=="m2" rect=(BBoxExpandHorizontal s1->bBox MetalEteSpace[Metal[2]]))
@@ -76,6 +79,21 @@
                points=(BBoxToPoints rect)
                (foreach s2 tagCV->shapes
                         (when s2->layerName==s1->layerName (leChopShape s2 points t t))
+                        )
+               )
+             )
+
+    ; chop fill by abstract shapes
+    (foreach s1 abstractCV->blockages
+             (cond (s1->layer=="m0" rect=(BBoxExpandHorizontal s1->bBox MetalEteSpace[Metal[0]]))
+                   (s1->layer=="m1" rect=(BBoxExpandVertical   s1->bBox MetalEteSpace[Metal[1]]))
+                   (s1->layer=="m2" rect=(BBoxExpandHorizontal s1->bBox MetalEteSpace[Metal[2]]))
+                   (t rect=nil)
+                   )
+             (when rect
+               points=(BBoxToPoints rect)
+               (foreach s2 tagCV->shapes
+                        (when s2->layerName==s1->layer (leChopShape s2 points t t))
                         )
                )
              )
