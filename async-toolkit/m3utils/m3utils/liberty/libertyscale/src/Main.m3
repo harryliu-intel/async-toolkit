@@ -64,7 +64,7 @@ IMPORT Wx;
 CONST TE = Text.Equal;
       LR = LongReal;
 
-CONST HelpText = "Usage : libertyscale -i <input lib> -o <output lib> -factor <scale factor> -timing_type <timing_type> -values <edit values> [-values <edit values> ...] -factor <scale factor>";
+CONST HelpText = "Usage : libertyscale [-help|--help] -i <input lib> -o <output lib> [-factor <scale factor> -timing_type <timing_type> -values <edit values> [-values <edit values> ...] -factor <scale factor>] [-temp <temp in Celsius>] [-volt <vcc>] [-alltiming <scale factor>] [-proc fast|typical}slow] [-libname <lib name>]";
       
 VAR
   pp              := NEW(ParseParams.T).init(Stdio.stderr);
@@ -98,6 +98,7 @@ TYPE
   END;
 
   VoltageUpdater = Executor OBJECT
+    (* not just used to update voltage but that's what it was invented for *)
     ignoreValue := 0.0d0;
     voltage : LONGREAL;
   OVERRIDES
@@ -595,7 +596,7 @@ PROCEDURE DoTempUpdate(temp : LONGREAL) =
   BEGIN
     valuesChanger := NEW(SimpleAttrVisitor,
                          tag := MakeArrP(TempNames),
-                         executor := NEW(VoltageUpdater,
+                         executor := NEW(VoltageUpdater (* not really! *),
                                          ignoreValue := FIRST(LONGREAL),
                                          voltage := temp));
     VisitAll(lib, valuesChanger)
