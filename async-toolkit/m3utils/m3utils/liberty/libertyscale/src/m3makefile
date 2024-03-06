@@ -5,6 +5,7 @@ import("modula3scheme")
 import("parseparams")
 import("parseliberty")
 import("ctlib")
+import("techc")
 
 implementation ("Main")
 

@@ -31,7 +31,7 @@ IMPORT OSError;
 IMPORT Rd;
 IMPORT FileRd;
 IMPORT AL;
-FROM Fmt IMPORT F, LongReal, Bool;
+FROM Fmt IMPORT F, LongReal, Bool, Int;
 IMPORT Text;
 IMPORT LibertyComponent;
 IMPORT LibertyComponentChildren;
@@ -53,6 +53,12 @@ IMPORT FileWr;
 IMPORT Params;
 IMPORT ProcUtils;
 IMPORT TextList;
+FROM TechLookup IMPORT Lookup;
+IMPORT LibertyAttrVal;
+IMPORT LibertyAttrValExpr;
+IMPORT LibertyExpr;
+IMPORT LibertyNumber;
+IMPORT Wx;
 <*FATAL Thread.Alerted*>
 
 CONST TE = Text.Equal;
@@ -84,6 +90,141 @@ TYPE
     execute(x : LibertyComponent.T);
     (* do *something* to a component *)
   END;
+
+  LibNameUpdater = Executor OBJECT
+    libName : TEXT;
+  OVERRIDES
+    execute := LNUExecute;
+  END;
+
+  VoltageUpdater = Executor OBJECT
+    ignoreValue := 0.0d0;
+    voltage : LONGREAL;
+  OVERRIDES
+    execute := VUExecute;
+  END;
+
+  VoltageMapUpdater = Executor OBJECT
+    voltage : LONGREAL;
+  OVERRIDES
+    execute := VMUExecute;
+  END;
+
+  OpcUpdater = Executor OBJECT
+    opc : TEXT;
+  OVERRIDES
+    execute := OUExecute;
+  END;
+
+PROCEDURE OUExecute(self : OpcUpdater; x : LibertyComponent.T) =
+  BEGIN
+    IF Verbose THEN
+      Debug.Out(F("Got opc : \n" & x.debugDump()))
+    END;
+    WITH sa   = NARROW(x, LibertySimpleAttr.T),
+         expr = sa.attrValExpr DO
+      TYPECASE expr OF
+        LibertyAttrValExpr.Expr(lax) =>
+        TYPECASE lax.val OF
+          LibertyExpr.Const(const) =>
+          IF Verbose THEN
+            Debug.Out(F("val : %s -> %s", const.val, self.opc))
+          END;
+          const.val := self.opc
+        ELSE
+          (* skip *)
+        END
+      ELSE
+        (* skip *)
+      END
+    END
+  END OUExecute;
+  
+PROCEDURE VUExecute(self : VoltageUpdater; x : LibertyComponent.T) =
+  BEGIN
+    IF Verbose THEN
+      Debug.Out(F("Got volt : \n" & x.debugDump()))
+    END;
+
+    WITH sa   = NARROW(x, LibertySimpleAttr.T),
+         expr = sa.attrValExpr DO
+      TYPECASE expr OF
+        LibertyAttrValExpr.Expr(lax) =>
+        TYPECASE lax.val OF
+          LibertyExpr.FloatLiteral(fl) =>
+          IF fl.val # self.ignoreValue THEN
+            IF Verbose THEN
+              Debug.Out(F("val : %s -> %s", LR(fl.val), LR(self.voltage)))
+            END;
+            fl.val := self.voltage
+          END
+        |
+          LibertyExpr.IntLiteral(il) =>
+          IF FLOAT(il.val,LONGREAL) # self.ignoreValue THEN
+            IF Verbose THEN
+              Debug.Out(F("val : %s -> %s", Int(il.val), LR(self.voltage)))
+            END;
+            WITH intVal = ROUND(self.voltage) DO
+              IF FLOAT(intVal, LONGREAL) = self.voltage THEN
+                il.val := intVal
+              ELSE
+                lax.val := NEW(LibertyExpr.FloatLiteral, val := self.voltage)
+              END
+            END
+          END
+        ELSE
+          (* skip *)
+        END
+      ELSE
+        (* skip *)
+      END
+    END
+  END VUExecute;
+
+PROCEDURE VMUExecute(self : VoltageMapUpdater; x : LibertyComponent.T) =
+  BEGIN
+    IF Verbose THEN
+      Debug.Out(F("Got voltage_map : \n" & x.debugDump()))
+    END;
+
+    WITH head = NARROW(x, LibertyHead.T) DO
+      IF head.params.size() = 2 THEN
+        WITH val = head.params.get(1) DO
+          TYPECASE val OF
+            LibertyAttrVal.Num(num) =>
+            TYPECASE num.val OF
+              LibertyNumber.Floating(fl) =>
+              IF fl.val # 0.0d0 THEN
+                IF Verbose THEN
+                  Debug.Out(F("val : %s -> %s", LR(fl.val), LR(self.voltage)))
+                END;
+                fl.val := self.voltage
+              END
+            ELSE
+              (* skip *)
+            END
+          ELSE
+            (* skip *)
+          END
+        END
+      END
+    END
+  END VMUExecute;
+
+PROCEDURE LNUExecute(self : LibNameUpdater; x : LibertyComponent.T) =
+  
+  BEGIN
+    IF Verbose THEN
+      Debug.Out(F("Got lib : \n" & x.debugDump()))
+    END;
+
+    WITH head = NARROW(x, LibertyHead.T),
+         sori = NARROW(head.params.get(0), LibertyAttrVal.SorI).val,
+         ident = NARROW(sori, LibertySorI.Ident) DO
+      IF Verbose THEN Debug.Out(F("Got ident : \n" & ident.debugDump())) END;
+      ident.val := self.libName
+    END
+  END LNUExecute;
   
 PROCEDURE VisitAll(x : LibertyComponent.T; v : Visitor) =
   BEGIN
@@ -142,6 +283,12 @@ TYPE
     visit := HeadVisit;
   END;
   (* seek a specific tagged Head (for example values() ) *)
+
+  SimpleAttrVisitor = ChainedVisitor OBJECT
+    tag         : REF ARRAY OF TEXT;
+  OVERRIDES
+    visit := SimpleAttrVisit;
+  END;
 
   OrVisitor = Visitor OBJECT
     disjuncts : REF ARRAY OF Visitor;
@@ -233,6 +380,58 @@ PROCEDURE HeadVisit(hv : HeadVisitor; c : LibertyComponent.T) : Visitor =
     END;
     RETURN hv
   END HeadVisit;
+
+PROCEDURE FmtArr(READONLY a : ARRAY OF TEXT) : TEXT =
+  VAR
+    wx := Wx.New();
+  BEGIN
+    Wx.PutChar(wx, '[');
+    FOR i := FIRST(a) TO LAST(a) DO
+      Wx.PutChar(wx, ' ');
+      Wx.PutText(wx, a[i])
+    END;
+    Wx.PutText(wx, " }");
+    RETURN Wx.ToText(wx)
+  END FmtArr;
+
+PROCEDURE MakeArrP(READONLY a : ARRAY OF TEXT) : REF ARRAY OF TEXT =
+  VAR
+    res := NEW(REF ARRAY OF TEXT, NUMBER(a));
+  BEGIN
+    res^ := a;
+    RETURN res
+  END MakeArrP;
+  
+PROCEDURE SimpleAttrVisit(hv : SimpleAttrVisitor; c : LibertyComponent.T) : Visitor =
+  VAR
+    success := FALSE;
+  BEGIN
+    TYPECASE c OF
+      LibertySimpleAttr.T(x) =>
+      FOR i := FIRST(hv.tag^) TO LAST(hv.tag^) DO
+        success := success OR TE(x.ident, hv.tag[i])
+      END;
+      WITH sstr    = ARRAY BOOLEAN OF TEXT { "", " SUCCESS" }[success] DO
+        IF Verbose THEN
+          Debug.Out(F("Seeking tag %s in LibertySimpleAttr object with tag %s %s : %s",
+                      FmtArr(hv.tag^), x.ident, sstr, x.format()));
+          IF success THEN
+            Debug.Out("Success with simpleattr: obj:\n" & x.debugDump())
+          END
+        END;
+        
+        IF success THEN
+          IF hv.executor # NIL THEN
+            hv.executor.execute(c)
+          END;
+          RETURN hv.next
+        END
+      END
+    ELSE
+      (* skip *)
+    END;
+    RETURN hv
+  END SimpleAttrVisit;
   
 PROCEDURE TaggedVisit(tv : TaggedVisitor; c : LibertyComponent.T) : Visitor =
   VAR
@@ -292,6 +491,139 @@ PROCEDURE TaggedVisit(tv : TaggedVisitor; c : LibertyComponent.T) : Visitor =
     END
   END TaggedVisit;
 
+PROCEDURE DoTimingUpdate(timingType   : TEXT;
+                         timingValues : TextList.T) =
+  VAR
+      valuesChanger    : HeadVisitor;
+      valuesVisitors   := NEW(REF ARRAY OF Visitor, TextList.Length(timingValues));
+    BEGIN
+      valuesChanger := NEW(HeadVisitor,
+                            tag  := "values",
+                            next := NEW(StringVisitor,
+                                        editor := NEW(StringScaler,
+                                                      mult := scaleFac)));
+
+      FOR i := FIRST(valuesVisitors^) TO LAST(valuesVisitors^) DO
+        valuesVisitors[i] := NEW(TaggedVisitor,
+                                 tag  := TextList.Nth(timingValues,i),
+                                 next := valuesChanger)
+      END;
+    
+
+      VAR
+        ocvRiseOrFallVisitor := NEW(OrVisitor, disjuncts := valuesVisitors);
+
+        timingTagVisitor := NEW(TaggedVisitor,
+                                tag         := "timing",
+                                needAttr    := "timing_type",
+                                needAttrVal := timingType,
+                                next        := ocvRiseOrFallVisitor);
+        cellTagVisitor   := NEW(TaggedVisitor,
+                                tag  := "cell"  ,
+                                next := timingTagVisitor);
+        
+      BEGIN
+        VisitAll(lib, cellTagVisitor)
+      END
+    END DoTimingUpdate;
+
+PROCEDURE DoAllTimingUpdate(allTimingFac : LONGREAL) =
+  VAR
+    valuesChanger : HeadVisitor;
+  BEGIN
+    valuesChanger := NEW(HeadVisitor,
+                         tag  := "values",
+                         next := NEW(StringVisitor,
+                                     editor := NEW(StringScaler,
+                                                   mult := allTimingFac)));
+    VAR
+      timingTagVisitor := NEW(TaggedVisitor,
+                              tag         := "timing",
+                              next        := valuesChanger);
+    BEGIN
+      VisitAll(lib, timingTagVisitor)
+    END
+
+  END DoAllTimingUpdate;
+
+PROCEDURE DoLibNameUpdate(libName : TEXT) =
+  VAR
+    valuesChanger : HeadVisitor;
+  BEGIN
+    valuesChanger := NEW(HeadVisitor,
+                         tag := "library",
+                         executor := NEW(LibNameUpdater,
+                                         libName := libName));
+    
+    VisitAll(lib, valuesChanger)
+  END DoLibNameUpdate;
+
+PROCEDURE DoOpcHeadNameUpdate(opc : TEXT) =
+  VAR
+    valuesChanger : HeadVisitor;
+  BEGIN
+    valuesChanger := NEW(HeadVisitor,
+                         tag := "operating_conditions",
+                         executor := NEW(LibNameUpdater,
+                                         libName := opc));
+    
+    VisitAll(lib, valuesChanger)
+  END DoOpcHeadNameUpdate;
+  
+PROCEDURE DoVoltUpdate(volt : LONGREAL) =
+  VAR
+    valuesChanger : SimpleAttrVisitor;
+    headChanger : HeadVisitor;
+  BEGIN
+    valuesChanger := NEW(SimpleAttrVisitor,
+                         tag := MakeArrP(VoltNames),
+                         executor := NEW(VoltageUpdater,
+                                         voltage := volt));
+    VisitAll(lib, valuesChanger);
+
+    headChanger := NEW(HeadVisitor,
+                       tag := "voltage_map",
+                       executor := NEW(VoltageMapUpdater,
+                                       voltage := volt));
+
+    VisitAll(lib, headChanger)
+  END DoVoltUpdate;
+  
+PROCEDURE DoTempUpdate(temp : LONGREAL) =
+  VAR
+    valuesChanger : SimpleAttrVisitor;
+  BEGIN
+    valuesChanger := NEW(SimpleAttrVisitor,
+                         tag := MakeArrP(TempNames),
+                         executor := NEW(VoltageUpdater,
+                                         ignoreValue := FIRST(LONGREAL),
+                                         voltage := temp));
+    VisitAll(lib, valuesChanger)
+  END DoTempUpdate;
+
+PROCEDURE DoProcUpdate(proc : Proc) =
+  VAR
+    valuesChanger : SimpleAttrVisitor;
+    opcName := ProcOpcLabels[proc];
+  BEGIN
+
+    valuesChanger := NEW(SimpleAttrVisitor,
+                         tag := MakeArrP(OpcNames),
+                         executor := NEW(OpcUpdater,
+                                         opc := opcName));
+    VisitAll(lib, valuesChanger);
+
+    DoOpcHeadNameUpdate(opcName)
+  END DoProcUpdate;
+
+CONST
+  VoltNames =
+    ARRAY OF TEXT { "voltage", "vih", "voh", "vimax", "vomax", "nom_voltage" };
+  OpcNames =
+    ARRAY OF TEXT { "operating_conditions", "default_operating_conditions" };
+  TempNames =
+    ARRAY OF TEXT { "temperature", "nom_temperature" };
+
 TYPE
   StringScaler = StringEditor OBJECT
     mult : LONGREAL;
@@ -299,6 +631,23 @@ TYPE
     edit := StringScalerEdit;
   END;
 
+PROCEDURE CleanStr(str : TEXT) : TEXT =
+  VAR
+    s := 0;
+    len := Text.Length(str);
+  CONST
+    Legal = SET OF CHAR { '0'..'9', 'e', 'E', '+', '-', '.' };
+  BEGIN
+    WHILE s < len AND NOT Text.GetChar(str, s) IN Legal DO
+      INC(s)
+    END;
+    IF s = 0 THEN
+      RETURN str
+    ELSE
+      RETURN Text.Sub(str, s)
+    END
+  END CleanStr;
+  
 PROCEDURE StringScalerEdit(ss : StringScaler; in : TEXT) : TEXT =
   <*FATAL Wr.Failure*>
   VAR
@@ -312,13 +661,13 @@ PROCEDURE StringScalerEdit(ss : StringScaler; in : TEXT) : TEXT =
     END;
     WHILE p # NIL DO
       TRY
-        WITH val       = Scan.LongReal(p.head),
+        WITH val       = Scan.LongReal(CleanStr(p.head)),
              scaledVal = val * ss.mult DO
           Wr.PutText(wr, LR(scaledVal))
         END
       EXCEPT
         Lex.Error, FloatMode.Trap =>
-        Debug.Error("Couldn't parse values number \"" & lst.head & "\"")
+        Debug.Error("Couldn't parse values number \"" & p.head & "\"")
       END;
       
       IF p.tail # NIL THEN
@@ -335,10 +684,25 @@ PROCEDURE StringScalerEdit(ss : StringScaler; in : TEXT) : TEXT =
     END
   END StringScalerEdit;
 
+TYPE
+  Proc = { Slow, Typical, Fast };
+CONST
+  ProcNames      = ARRAY Proc OF TEXT { "slow", "typical", "fast" };
+  ProcOpcLabels  = ARRAY Proc OF TEXT { "slow_1.00", "typical_1.00", "fast_1.00" };
+  
 VAR (* variables to control the matching *)
   timingType    : TEXT       := NIL;
   timingValues  : TextList.T := NIL;
   scaleFac                   := 1.0d0;
+  temp          : LONGREAL;
+  forceTemp                  := FALSE;
+  proc          : Proc;
+  forceProc                  := FALSE;
+  libName       : TEXT       := NIL;
+  volt          : LONGREAL;
+  forceVolt                  := FALSE;
+
+  allTimingFac               := 1.0d0;
   
 BEGIN
   TRY
@@ -355,11 +719,35 @@ BEGIN
       timingType := pp.getNext()
     END;
 
-    IF timingType = NIL THEN
-      Debug.Error("?must specify -timing_type")
+    IF pp.keywordPresent("-temp") THEN
+      temp := pp.getNextLongReal();
+      forceTemp := TRUE;
+    END;
+
+    IF pp.keywordPresent("-volt") THEN
+      volt := pp.getNextLongReal();
+      forceVolt := TRUE;
+    END;
+
+    IF pp.keywordPresent("-alltiming") THEN
+      allTimingFac := pp.getNextLongReal()
+    END;
+
+    IF pp.keywordPresent("-proc") THEN
+      WITH ptxt = pp.getNext() DO
+        proc := VAL(Lookup(ptxt, ProcNames), Proc);
+        forceProc := TRUE;
+      END
+    END;
+
+    IF pp.keywordPresent("-libname") THEN
+      libName := pp.getNext()
     END;
 
     WHILE pp.keywordPresent("-values") DO
+      IF timingType = NIL THEN
+        Debug.Error("?must specify -timing_type")
+      END;
       timingValues := TextList.Cons(pp.getNext(), timingValues)
     END;
     
@@ -414,38 +802,28 @@ BEGIN
                   AL.Format(e), HelpText))
   END;
 
-  VAR
-    valuesChanger    : HeadVisitor;
-    valuesVisitors   := NEW(REF ARRAY OF Visitor, TextList.Length(timingValues));
-  BEGIN
-    valuesChanger := NEW(HeadVisitor,
-                            tag  := "values",
-                            next := NEW(StringVisitor,
-                                        editor := NEW(StringScaler,
-                                                      mult := scaleFac)));
+  IF libName # NIL THEN
+    DoLibNameUpdate(libName)
+  END;
+  
+  IF timingType # NIL THEN
+    DoTimingUpdate(timingType, timingValues)
+  END;
 
-    FOR i := FIRST(valuesVisitors^) TO LAST(valuesVisitors^) DO
-      valuesVisitors[i] := NEW(TaggedVisitor,
-                               tag := TextList.Nth(timingValues,i),
-                               next := valuesChanger)
-    END;
-    
+  IF forceTemp THEN
+    DoTempUpdate(temp)
+  END;
 
-    VAR
-      ocvRiseOrFallVisitor := NEW(OrVisitor, disjuncts := valuesVisitors);
+  IF forceVolt THEN
+    DoVoltUpdate(volt)
+  END;
 
-      timingTagVisitor := NEW(TaggedVisitor,
-                              tag         := "timing",
-                              needAttr    := "timing_type",
-                              needAttrVal := timingType,
-                              next        := ocvRiseOrFallVisitor);
-      cellTagVisitor   := NEW(TaggedVisitor,
-                              tag  := "cell"  ,
-                              next := timingTagVisitor);
-      
-    BEGIN
-      VisitAll(lib, cellTagVisitor)
-    END
+  IF forceProc THEN
+    DoProcUpdate(proc)
+  END;
+
+  IF allTimingFac # 1.0d0 THEN
+    DoAllTimingUpdate(allTimingFac)
   END;
 
   TRY
