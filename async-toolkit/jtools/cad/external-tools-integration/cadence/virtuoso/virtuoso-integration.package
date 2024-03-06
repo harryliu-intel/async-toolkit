@@ -147,6 +147,7 @@ share/skill/util/expression/expression.il                                  skill
 share/skill/util/lib.il                                                    skill/util/lib.il                                                        664 p
 share/skill/util/TagStruts.il                                              skill/util/TagStruts.il                                           664 p
 share/skill/util/makelayouttag.il                                          skill/util/makelayouttag.il                                              664 p
+share/skill/util/make_leaf_tag.il                                          skill/util/make_leaf_tag.il                                              664 p
 share/skill/util/name.il                                                   skill/util/name.il                                                       664 p
 share/skill/util/version.il                                                skill/util/version.il                                                    664 p
 share/skill/util/cache/cache.il                                            skill/util/cache/cache.il                                                664 p
