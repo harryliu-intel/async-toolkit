@@ -2,7 +2,7 @@
 (defun MakeLeafTag (@key (CV (geGetEditCellView))
                          (targetViewName "layout_tag"))
   (let (tagCV CopyExact lpp z th pcre fillCV abstractCV bbox rows cols
-              ete0 ete1 ete2 w h x0 y0 x1 y1 fill x y fig rect points l0 l1 l2)
+              ete0 ete1 ete2 w h x0 y0 x1 y1 fill x y fig rect points l0 l1 l2 pins)
     (printf "MakeLeafTag %s\n" CV->cellName)
 
     ; find abstract view
@@ -132,11 +132,16 @@
                    )
              )
 
-    ; tiny in-place pins and labels on non-BM0
-    (foreach label (setof l CV->shapes l->objType=="label" && l->layerName!="bm0" &&
-                          l->theLabel!=VddNetName && l->theLabel!=VssNetName)
-             lpp = (list (car label->lpp) "pin")
-             (MakeLayoutTagLabel tagCV lpp label->xy label->theLabel)
+    ; tiny in-place pins and labels M2, M1, M0 removing duplicate pins
+    pins=(makeTable "pins" nil)
+    (foreach layerName (list "m2" "m1" "m0")
+             (foreach label (setof l CV->shapes l->objType=="label" && l->layerName==layerName &&
+                                   l->theLabel!=VddNetName && l->theLabel!=VssNetName &&
+                                   pins[l->theLabel]==nil)
+                      pins[label->theLabel]=t
+                      lpp = (list (car label->lpp) "pin")
+                      (MakeLayoutTagLabel tagCV lpp label->xy label->theLabel)
+                      )
              )
 
     ; copy entire pins on BM0
@@ -145,7 +150,6 @@
                    fig=(dbCopyFig s tagCV)
                    fig->net=(dbMakeNet tagCV s->net->name)
                    (dbCreatePin fig->net fig)
-                   (LabelPin tagCV fig)
                    )
              )
 
