@@ -49,10 +49,10 @@ CONST
 
   cornNames :=ARRAY Corn OF TEXT {
   "tttt",
-  "ss",
-  "ff",
-  "sf",
-  "fs"
+  "rcss",
+  "rcff",
+  "rxsf",
+  "rxfs"
   },
 
   cellPaths :=ARRAY Gate OF ARRAY Tran OF TEXT {

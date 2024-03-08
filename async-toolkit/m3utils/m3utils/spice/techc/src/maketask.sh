@@ -253,6 +253,19 @@ if [ "$1" == "-variation" ]; then
     fos="4"
 fi
 
+if [ "$1" == "-2024ww10" ]; then
+    runmode="override"
+    volts="0.14 0.16 0.18 0.20 0.22 0.24 0.26 0.28 0.30 0.34 0.38 0.42 0.45 0.50"
+    temps="0 25 50 75 85 105 125"
+    modes="dyn"
+    paras="true"
+    corners="tt sf fs ss ff"
+    step=4
+    techs="1278p3"
+    gates="xor_z2_0p0sigma xor_z2_5p3sigma"
+    fos="4"
+fi
+
 if [ "$1" == "-variationpdk" ]; then
     runmode="override"
     volts="0.16 0.18 0.20 0.22 0.24 0.26 0.28 0.30 0.32 0.34 0.36 0.38 0.40 0.45 0.50"
