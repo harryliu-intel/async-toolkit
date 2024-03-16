@@ -69,10 +69,13 @@ CONST
  
   Files       = ARRAY OF Pathname.T {
   "circuit.sp",
+  "the_dut.sp",
   "include.sp",
   "adder_tb_Width32_MaxCarryChain31_AdderType2_85C_tttt.spf"
   };
 
+  TheRoot = "adder_tb_Width32_MaxCarryChain31_AdderType2";
+  
   TranMagic = ARRAY Tran OF TEXT { NIL, "aa", NIL, "ab", NIL, "mc", "md" };
   
 TYPE
@@ -388,7 +391,7 @@ PROCEDURE DoPost() =
     IF measureFn # NIL THEN
       mWr := FileWr.Open(measureFn & ".stat");
       Wr.PutText(mWr, Concat(",",
-                             FmtLRA(LRA { vdd, temp })^,
+                             FmtLRA(LRA { vdd, temp, cscale, rscale })^,
                              TA { LibNames[lib], TranNames[tran] },
                              FmtLRA(DoStats(n, sum, sumSq)^)^));
       Wr.PutChar(mWr, '\n');
@@ -435,6 +438,27 @@ PROCEDURE WriteSource(wr         : Wr.T;
       END
     END
   END WriteSource;
+
+PROCEDURE Scale1(ifn, ofn : Pathname.T) =
+  CONST
+    DecPath = "spice/decorate/AMD64_LINUX/spicedecorate";
+  VAR
+    Decorate := m3utils & "/" & DecPath;
+    cmd := FN("%s -i %s -o %s -root %s -noprobe -capmul %s -resmul %s",
+              TA{Decorate, ifn, ofn, TheRoot, LR(cscale), LR(rscale)});
+    stdout, stderr := ProcUtils.WriteHere(Stdio.stderr);
+    cm             := ProcUtils.RunText(cmd,
+                                        stdout := stdout,
+                                        stderr := stderr,
+                                        stdin  := NIL);
+  BEGIN
+    TRY
+      cm.wait()
+    EXCEPT
+      ProcUtils.ErrorExit(err) =>
+      Debug.Error(F("Couldn't run scale1 (%s) : %s", cmd, ProcUtils.FormatError(err)))
+    END
+  END Scale1;
   
 PROCEDURE DoPre() =
   CONST
@@ -473,7 +497,9 @@ PROCEDURE DoPre() =
         TechTemplate.ModifyTemplate(tmpl, map);
         TechTemplate.WriteTemplate (tmpl, Files[i])
       END
-    END
+    END;
+
+    Scale1("the_dut.sp", "the_scaled_dut.sp")
   END DoPre;
 
 PROCEDURE MapCells(map : TextTextTbl.T) =
@@ -604,6 +630,7 @@ VAR
   sweeps     : CARDINAL       := DefSweeps;
   m3utils                     := Env.Get("M3UTILS");
   tran       : Tran           := Tran.Ulvt;
+  cscale, rscale              := 1.0d0;
   
 BEGIN
   IF m3utils = NIL THEN
@@ -646,6 +673,12 @@ BEGIN
       tran := VAL(Lookup(pp.getNext(), TranNames),
                                            Tran)
     END;
+
+    IF pp.keywordPresent("-cscale") THEN
+      cscale := pp.getNextLongReal();
+      rscale := Math.pow(cscale, 1.8d0);
+    END;
+    
     IF pp.keywordPresent("-p") THEN
       phases := SET OF Phase {};
       

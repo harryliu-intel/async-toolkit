@@ -13,20 +13,26 @@ temps="0 25 50 60 75 85 100 125"
 sweeps="100"
 #sweeps=10
 
-volts="0.20 0.22 0.24 0.26 0.28 0.30 0.32 0.34 0.36 0.38 0.40 0.45 0.50 0.55 0.60 0.65 0.70 0.80 0.90"
+#volts="0.20 0.22 0.24 0.26 0.28 0.30 0.32 0.34 0.36 0.38 0.40 0.45 0.50 0.55 0.60 0.65 0.70 0.80 0.90"
+volts="0.20 0.22 0.24 0.26 0.28 0.30 0.32 0.34 0.36 0.38 0.40 0.45"
 
-trantypes="lvt ulvt" # svt doesnt work yet
-libs="i0s i0m"
+#trantypes="lvt ulvt" # svt doesnt work yet
+trantypes="ulvt" # svt doesnt work yet
+#libs="i0s i0m"
+libs="i0s"
+
+cscales="5.0 2.0 1.4 1.0 0.7 0.5 0.4 0.3 0.2"
 
 # for testing:
 
-testing=0
+testing=1
 
 if [ "${testing}" == "1" ]; then
     temps="0"
     volts="0.34"
     trantypes="ulvt"
     sweeps="4"
+    cscales="2"
 fi
 
 ######################################################################
@@ -55,6 +61,7 @@ EOF
 
 tasknum=0
 
+for cscl in ${cscales}; do
 for sweep in ${sweeps}; do
 for lib in ${libs}; do
         for volt in ${volts}; do
@@ -67,16 +74,18 @@ for lib in ${libs}; do
 
             mkdir ${runsubdir}
 
-            echo "#!/bin/sh -x" > ${runfile}
-            echo "hostname" >> ${runfile}
-            echo "pwd" >> ${runfile}
-            echo "cd ${runsubdir}" >> ${runfile}
+            echo "#!/bin/sh -x"        >  ${runfile}
+            echo "hostname"            >> ${runfile}
+            echo "pwd"                 >> ${runfile}
+            echo "cd ${runsubdir}"     >> ${runfile}
 
-            echo "${ADDERSIM} -vdd ${volt} -temp ${temp} -lib ${lib} -thresh ${tran} -sweeps ${sweep} -p pre" >> ${runfile}
-            echo "${ADDERSIM} -vdd ${volt} -temp ${temp} -lib ${lib} -thresh ${tran} -sweeps ${sweep} -p sim" >> ${runfile}
-            echo "${ADDERSIM} -vdd ${volt} -temp ${temp} -lib ${lib} -thresh ${tran} -sweeps ${sweep} -p conv" >> ${runfile}
-            echo "${ADDERSIM} -vdd ${volt} -temp ${temp} -lib ${lib} -thresh ${tran} -sweeps ${sweep} -p clean" >> ${runfile}
-            echo "${ADDERSIM} -vdd ${volt} -temp ${temp} -lib ${lib} -thresh ${tran} -sweeps ${sweep} -p post" >> ${runfile}
+	    cmdargs="${ADDERSIM} -vdd ${volt} -temp ${temp} -lib ${lib} -thresh ${tran} -sweeps ${sweep} -cscale ${cscl}"
+
+            echo "${cmdargs} -p pre"   >> ${runfile}
+            echo "${cmdargs} -p sim"   >> ${runfile}
+            echo "${cmdargs} -p conv"  >> ${runfile}
+            echo "${cmdargs} -p clean" >> ${runfile}
+            echo "${cmdargs} -p post"  >> ${runfile}
             chmod +x ${runfile}
         
             tasknum=`expr $tasknum + 1`
@@ -84,6 +93,7 @@ for lib in ${libs}; do
         done
         done
         done
+done
 done
 done
 

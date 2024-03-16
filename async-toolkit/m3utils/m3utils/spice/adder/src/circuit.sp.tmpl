@@ -108,8 +108,10 @@ Vvload  vload 0 DC=vtrue
 Vvssx   vssx  0 DC=0
 
 
-.include "include.sp"
-.include "adder_tb_Width32_MaxCarryChain31_AdderType2_85C_tttt.spf"
+*.include "include.sp"
+*.include "adder_tb_Width32_MaxCarryChain31_AdderType2_85C_tttt.spf"
+
+.include "the_scaled_dut.sp"
 
 * Simulate
 .TRAN 1ps '6*step' sweep monte=@SWEEPS@
