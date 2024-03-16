@@ -95,8 +95,10 @@ X110  x[109]              x[110]       vcc  vload vssy ring_stage_fo4
 X121 vssy x[110]      x[100]       vcc   vssy nand_cell
 
 * Probes (for debugging)
-.probe tran v(*)
-.probe tran v(*.*)
+*.probe tran v(*)
+*.probe tran v(*.*)
+.probe tran i1(Vvssx)
+.probe tran i1(Vvssy)
 .PROBE TRAN v(x[0])
 .PROBE TRAN i(Vvcc)
 .PROBE TRAN v(_RESET)

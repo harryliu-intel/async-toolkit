@@ -78,6 +78,8 @@ p1278p3_0p8roots='0p8:/p/hdk/cad/pdk/pdk783_r0.8_23ww24.2/models/core/hspice/m14
 
 p1278p3_0p9eroot='/p/hdk/cad/pdk/pdk783_r0.9e_23ww29.2_beta/models/core/hspice/m15_2x_1xa_1xb_4ya_2yb_2yc_3yd__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp'
 
+p1278p3_0p9u2root='/nfs/site/disks/zsc9_fwr_sd_001/mnystroe/p1278_3x0p9u2/models_core_hspice/m14_2x_1xa_1xb_6ya_2yb_2yc__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp'
+
 p1278p3_0p9eroots="0p9e:${p1278p3_0p9eroot}"
 
 p1278p3_0p9eu1root='/nfs/site/disks/zsc9_fwr_sd_001/mnystroe/p1278_3x0p9eu1/2023ww43d5/models_core_hspice/m14_2x_1xa_1xb_6ya_2yb_2yc__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp'
@@ -264,6 +266,9 @@ if [ "$1" == "-2024ww10" ]; then
     techs="1278p3"
     gates="xor_z2_0p0sigma xor_z2_5p3sigma"
     fos="4"
+    step="1"
+    SIM="xa"
+    hspicemodelroot=${p1278p3_0p9u2root}
 fi
 
 if [ "$1" == "-variationpdk" ]; then
