@@ -101,6 +101,8 @@ PROCEDURE ModifyElem(elem : SpiceObject.T; parent : SpiceCircuit.T) : SpiceObjec
                       err));
         <*ASSERT FALSE*>
       END
+    ELSE
+      RETURN elem
     END
   END ModifyElem;
   
