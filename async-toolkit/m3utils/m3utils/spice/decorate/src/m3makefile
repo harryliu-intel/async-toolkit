@@ -1,6 +1,9 @@
 import ("libm3")
 import ("cit_util")
 import ("spicelib")
+import ("mscheme")
+
+table ("CharText", "Char", "Text")
 
 implementation ("SpiceDecorate")
 

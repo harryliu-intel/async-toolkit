@@ -9,11 +9,11 @@ IMPORT SpiceInstance;
 IMPORT TextSpiceInstanceSetTbl;
 IMPORT TextSpiceCircuitTbl;
 
-PROCEDURE Visit(nm    : TEXT; 
-                wr    : Wr.T; 
-                ckt   : SpiceCircuit.T;
+PROCEDURE Visit(nm      : TEXT; 
+                wr      : Wr.T; 
+                ckt     : SpiceCircuit.T;
                 subCkts : TextSpiceCircuitTbl.T;
-                level : CARDINAL := 0)
+                level   : CARDINAL := 0)
   RAISES { Wr.Failure } ;
   (* print a flattened representation of ckt *)
 
@@ -24,9 +24,9 @@ PROCEDURE DumpOneType(wr   : Wr.T;
                       pTbl : TextTextSetTbl.T)
   RAISES { Wr.Failure };
   
-PROCEDURE DumpGprofFormat(wr : Wr.T;
+PROCEDURE DumpGprofFormat(wr         : Wr.T;
                           typeCntTbl : TextRefTbl.T;
-                          parentTbl : TextTextSetTbl.T)
+                          parentTbl  : TextTextSetTbl.T)
   RAISES { Wr.Failure };
 
 PROCEDURE DumpBriefFlat(wr         : Wr.T; 
@@ -53,9 +53,9 @@ PROCEDURE DumpSymtab(wr : Wr.T;
 PROCEDURE CleanAssocs(tbl      : TextSpiceInstanceSetTbl.T;
                       canonTbl : TextTextTbl.T) : TextSpiceInstanceSetTbl.T;
 
-PROCEDURE Canonicalize(nm : TEXT;
+PROCEDURE Canonicalize(nm        : TEXT;
                        VAR canon : TEXT;
-                       canonTbl : TextTextTbl.T) : BOOLEAN;
+                       canonTbl  : TextTextTbl.T) : BOOLEAN;
 
 PROCEDURE BuildCanonTbl(aliasTbl : TextTextSetTbl.T;
                         canonTbl : TextTextTbl.T);

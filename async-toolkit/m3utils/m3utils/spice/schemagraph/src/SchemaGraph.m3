@@ -1,4 +1,9 @@
 MODULE SchemaGraph EXPORTS Main;
+
+(* 
+   Flexible graphing program 
+*)
+
 IMPORT ParseParams;
 IMPORT Debug; FROM Debug IMPORT UnNil;
 IMPORT Text;

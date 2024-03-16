@@ -29,11 +29,11 @@ CONST ONames = ARRAY OType OF TEXT { "NULL", "R", "C", "M", "X", "UNKNOWN" };
 
 CONST TE = Text.Equal;
 
-PROCEDURE Visit(nm    : TEXT; 
-                wr    : Wr.T; 
-                ckt   : SpiceCircuit.T;
+PROCEDURE Visit(nm      : TEXT; 
+                wr      : Wr.T; 
+                ckt     : SpiceCircuit.T;
                 subCkts : TextSpiceCircuitTbl.T;
-                level : CARDINAL := 0)
+                level   : CARDINAL := 0)
   RAISES { Wr.Failure } =
   VAR 
     cnt := ARRAY OType OF CARDINAL { 0, .. };

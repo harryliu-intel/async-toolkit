@@ -25,7 +25,7 @@ CONST TE = Text.Equal;
       
 VAR doDebug := Debug.DebugThis("Cellophane");
 
-CONST Usage = "";
+CONST Usage = "-i <input filename> [-o (<output filename>|-)] [-pfx <wrap prefix>] [[-x <voltage exclude name>]...] [[-c <current exclude name>]...] [[-p <cell type regex>]...] ";
 
 
 PROCEDURE WrapOne(wr : Wr.T; tn : TEXT; ckt : SpiceCircuit.T) =
@@ -64,15 +64,15 @@ PROCEDURE WrapOne(wr : Wr.T; tn : TEXT; ckt : SpiceCircuit.T) =
   END WrapOne;
   
 VAR
-  pp                        := NEW(ParseParams.T).init(Stdio.stderr);
-  ifn, ofn : Pathname.T;
-  pats : RegExPatList.T := NIL;
-  spice : SpiceFormat.T;
-  pfx   := "WRAP_";
-  thisPat : TEXT;
-  wr : Wr.T;
-  excludeNames := NEW(TextSetDef.T).init();
-  currentNames := NEW(TextSetDef.T).init();
+  pp                             := NEW(ParseParams.T).init(Stdio.stderr);
+  ifn, ofn   : Pathname.T;
+  pats       : RegExPatList.T    := NIL;
+  spice      : SpiceFormat.T;
+  pfx                            := "WRAP_";
+  thisPat    : TEXT;
+  wr         : Wr.T;
+  excludeNames                   := NEW(TextSetDef.T).init();
+  currentNames                   := NEW(TextSetDef.T).init();
   
 BEGIN
 

@@ -1,4 +1,11 @@
 MODULE SpiceDecorate EXPORTS Main;
+
+(*
+
+  this program manipulates spice decks in various ways...
+
+*)
+
 IMPORT ParseParams;
 IMPORT Stdio;
 IMPORT Debug;
@@ -18,11 +25,15 @@ IMPORT Thread;
 IMPORT TextSetDef;
 IMPORT Time;
 IMPORT Text;
+IMPORT CharTextTbl;
+IMPORT TextSeq;
+IMPORT Scheme;
+IMPORT SchemeSymbol;
 
 <*FATAL Thread.Alerted*>
 
 CONST
-  Usage   = "";
+  Usage   = "-i <input filename> -root <root type> [-o (<output filename>|-)] [-mincap <min cap>] [-minres <min res>] [-transistorckts] [[-n <type-not-to-probe>]...] [-t <transistor type file name>]";
   LR      = LongReal;
   TE      = Text.Equal;
 
@@ -51,6 +62,49 @@ PROCEDURE EnsureEmitted(typeNm : TEXT;
     END
   END EnsureEmitted;
 
+PROCEDURE ModifyElem(elem : SpiceObject.T; parent : SpiceCircuit.T) : SpiceObject.T =
+  VAR
+    char   : CHAR;
+    modScm : TEXT;
+  BEGIN
+    TYPECASE elem OF
+      SpiceObject.R =>
+      char := 'R'
+    |
+      SpiceObject.C =>
+      char := 'C'
+    |
+      SpiceObject.L =>
+      char := 'L'
+    |
+      SpiceObject.X =>
+      char := 'X'
+    |
+      SpiceObject.M =>
+      char := 'M'
+    |
+      SpiceObject.D =>
+      char := 'D'
+    ELSE
+      <*ASSERT FALSE*>
+    END;
+
+    IF modifiers.get(char, modScm) THEN
+      scm.defineInGlobalEnv(SchemeSymbol.FromText("the-spice-object"), elem);
+      scm.defineInGlobalEnv(SchemeSymbol.FromText("the-spice-parent"), parent);
+      TRY
+        RETURN scm.loadText(modScm)
+      EXCEPT
+        Scheme.E(err) =>
+        Debug.Error(F("?error modifying element \"%s\" : Scheme.E : %s",
+                      SpiceObject.Format(elem),
+                      err));
+        <*ASSERT FALSE*>
+      END
+    END
+  END ModifyElem;
+  
+  
 PROCEDURE EmitElem(elem : SpiceObject.T; parent : SpiceCircuit.T)
   RAISES { Wr.Failure } =
 
@@ -92,10 +146,10 @@ PROCEDURE EmitElem(elem : SpiceObject.T; parent : SpiceCircuit.T)
       Wr.PutText(wr, LR(x))
     END R;
 
-  PROCEDURE V(v : SpiceObject.RealValue)
+  PROCEDURE V(v : SpiceObject.RealValue; mul : LONGREAL)
   RAISES { Wr.Failure } =
     BEGIN
-      Wr.PutText(wr, SpiceObject.FmtReal(v))
+      Wr.PutText(wr, SpiceObject.FmtReal(v, mul))
     END V;
 
 
@@ -110,7 +164,7 @@ PROCEDURE EmitElem(elem : SpiceObject.T; parent : SpiceCircuit.T)
     
   VAR
     char : CHAR;
-    addProbes := TRUE;
+    addProbes := NOT noProbes;
     type := "";
 
   TYPE
@@ -120,20 +174,20 @@ PROCEDURE EmitElem(elem : SpiceObject.T; parent : SpiceCircuit.T)
     IF Verbose THEN
       Debug.Out("EmitElem " & elem.name)
     END;
-    
+
     TYPECASE elem OF
       SpiceObject.R(r) =>
-      char := 'R'; Terminals(); V(r.r);
+      char := 'R'; Terminals(); V(r.r, resmul);
       
-      addProbes := NOT ISTYPE(r.r, Literal) OR NARROW(r.r, Literal).v > minres
+      addProbes := addProbes AND (NOT ISTYPE(r.r, Literal) OR NARROW(r.r, Literal).v > minres)
     |
       SpiceObject.C(c) =>
-      char := 'C'; Terminals(); V(c.c);
+      char := 'C'; Terminals(); V(c.c, capmul);
 
-      addProbes := NOT ISTYPE(c.c, Literal) OR NARROW(c.c, Literal).v > mincap
+      addProbes := addProbes AND (NOT ISTYPE(c.c, Literal) OR NARROW(c.c, Literal).v > mincap)
     |
       SpiceObject.L(l) =>
-      char := 'L'; Terminals(); V(l.l)
+      char := 'L'; Terminals(); V(l.l, indmul)
     |
       SpiceObject.X(x) =>
       char := 'X'; Terminals(); T(x.type); type := x.type
@@ -254,7 +308,9 @@ PROCEDURE Emit(typeNm : TEXT;
     <*ASSERT type.elements # NIL*>
     FOR i := 0 TO type.elements.size() - 1 DO
       WITH elem = type.elements.get(i) DO
-        EmitElem(elem, type)
+        WITH modElem = ModifyElem(elem, type) DO
+          EmitElem(modElem, type)
+        END
       END
     END;
     Probes();
@@ -275,7 +331,11 @@ VAR
   ofn        : Pathname.T := "-";
   doTransistorCkts : BOOLEAN;
   probeSubckts : BOOLEAN;
-  
+  noProbes   := FALSE;
+  capmul, resmul, indmul := 1.0d0;
+  scmFiles := NEW(TextSeq.T).init();
+  scm      : Scheme.T;
+  modifiers := NEW(CharTextTbl.Default).init();
 BEGIN
   TRY
 
@@ -283,9 +343,16 @@ BEGIN
     
     IF pp.keywordPresent("-i") THEN
       spiceFn := pp.getNext()
+    ELSE
+      Debug.Error("?error : must provide -i <input file name>")
     END;
     IF pp.keywordPresent("-root") THEN
       rootType := pp.getNext()
+    ELSE
+      Debug.Error("?error : must provide -root <root type>")
+    END;
+    IF pp.keywordPresent("-noprobe") THEN
+      noProbes := TRUE
     END;
     IF pp.keywordPresent("-o") THEN
       ofn := pp.getNext()
@@ -295,6 +362,25 @@ BEGIN
     END;
     IF pp.keywordPresent("-minres") THEN
       minres := pp.getNextLongReal()
+    END;
+    IF pp.keywordPresent("-capmul") THEN
+      capmul := pp.getNextLongReal()
+    END;
+    IF pp.keywordPresent("-resmul") THEN
+      resmul := pp.getNextLongReal()
+    END;
+    IF pp.keywordPresent("-indmul") THEN
+      indmul := pp.getNextLongReal()
+    END;
+
+    IF pp.keywordPresent("-modify") THEN
+      WITH char = pp.getNext(),
+           cmd  = pp.getNext() DO
+        IF Text.Length(char) # 1 THEN
+          Debug.Error("?not a character : " & char)
+        END;
+        EVAL modifiers.put(Text.GetChar(char, 0), cmd)
+      END
     END;
 
     doTransistorCkts := pp.keywordPresent("-transistorckts");
@@ -331,10 +417,29 @@ BEGIN
         END
       END        
     END;
+
+    WHILE pp.keywordPresent("-scminit") OR pp.keywordPresent("-S") DO
+      scmFiles.addhi(pp.getNext())
+    END;
+    
     pp.skipParsed();
     pp.finish()
   EXCEPT
     ParseParams.Error => Debug.Error("Can't parse command-line parameters\nUsage: " & Params.Get(0) & " " & Usage)
+  END;
+
+  IF modifiers.size() # 0 THEN
+    WITH scmarr = NEW(REF ARRAY OF Pathname.T, scmFiles.size()) DO
+      FOR i := FIRST(scmarr^) TO LAST(scmarr^) DO
+        scmarr[i] := scmFiles.get(i)
+      END;
+      TRY
+        scm := NEW(Scheme.T).init(scmarr^)
+      EXCEPT
+        Scheme.E(x) =>
+        Debug.Error(F("EXCEPTION! Scheme.E \"%s\" when initializing interpreter", x))
+      END
+    END
   END;
 
   IF TE(ofn, "-") THEN

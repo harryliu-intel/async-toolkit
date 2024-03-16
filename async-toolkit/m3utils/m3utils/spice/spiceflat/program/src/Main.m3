@@ -20,15 +20,15 @@ FROM SpiceFlat IMPORT Visit, DumpOneType, DumpGprofFormat, DumpBriefFlat,
                       VisitCktNodes, DumpSymtab, CleanAssocs;
 
 VAR
-  fn := Params.Get(1);
-  rd : Rd.T;
-  top := Params.Get(2);
+  fn                       := Params.Get(1);
+  rd     : Rd.T;
+  top                      := Params.Get(2);
 
   topCkt : SpiceCircuit.T;
-  spice : SpiceFormat.T;
+  spice  : SpiceFormat.T;
 BEGIN
   TRY
-    rd := FileRd.Open(fn);
+    rd    := FileRd.Open(fn);
     spice := SpiceFormat.ParseSpice(rd, ".", fn);
   EXCEPT
     OSError.E(e) =>

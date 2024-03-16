@@ -446,12 +446,19 @@ PROCEDURE Format(a : T) : TEXT =
     END
   END Format;
 
-PROCEDURE FmtReal(rv : RealValue) : TEXT =
+PROCEDURE FmtReal(rv : RealValue; mul := 1.0d0) : TEXT =
   BEGIN
     TYPECASE rv OF
-      RealLiteral(rl) => RETURN LR(rl.v)
+      RealLiteral(rl) => RETURN LR(rl.v * mul)
     |
-      RealExpression(rx) => RETURN rx.x
+      RealExpression(rx) =>
+      IF    mul = 0.0d0 THEN
+        RETURN "0"
+      ELSIF mul = 1.0d0 THEN
+        RETURN rx.x
+      ELSE
+        RETURN F("( %s * ( %s ) )", LR(mul), rx.x) (* dubious, what about quoting? *)
+      END
     ELSE
       <*ASSERT FALSE*>
     END
