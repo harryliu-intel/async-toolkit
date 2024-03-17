@@ -19,7 +19,7 @@ TYPE
            VAR     ctr : CARDINAL) RAISES { Wr.Failure };
   END;
 
-  RealValue = OBJECT END;
+  RealValue = ROOT OBJECT END;
 
   RealLiteral = RealValue OBJECT v : LONGREAL END;
 

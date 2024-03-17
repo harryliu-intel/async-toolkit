@@ -28,7 +28,10 @@ IMPORT Text;
 IMPORT CharTextTbl;
 IMPORT TextSeq;
 IMPORT Scheme;
+IMPORT SchemeM3;
 IMPORT SchemeSymbol;
+IMPORT SchemeStubs;
+IMPORT RTBrand;
 
 <*FATAL Thread.Alerted*>
 
@@ -93,7 +96,14 @@ PROCEDURE ModifyElem(elem : SpiceObject.T; parent : SpiceCircuit.T) : SpiceObjec
       scm.defineInGlobalEnv(SchemeSymbol.FromText("the-spice-object"), elem);
       scm.defineInGlobalEnv(SchemeSymbol.FromText("the-spice-parent"), parent);
       TRY
-        RETURN scm.loadText(modScm)
+        WITH res = scm.loadEvalText(modScm) DO
+          IF ISTYPE(res, SpiceObject.T) THEN
+            RETURN res
+          ELSE
+            Debug.Error(F("?error : %s returns wrong type : %s",
+                          modScm, RTBrand.GetName(TYPECODE(res))))
+          END
+        END
       EXCEPT
         Scheme.E(err) =>
         Debug.Error(F("?error modifying element \"%s\" : Scheme.E : %s",
@@ -436,7 +446,13 @@ BEGIN
         scmarr[i] := scmFiles.get(i)
       END;
       TRY
-        scm := NEW(Scheme.T).init(scmarr^)
+        SchemeStubs.RegisterStubs();
+        scm := NEW(SchemeM3.T).init(ARRAY OF Pathname.T{ "require", "m3" });
+        FOR i := FIRST(scmarr^) TO LAST(scmarr^) DO
+          WITH rd = FileRd.Open(scmarr[i]) DO
+            EVAL scm.loadRd(rd, scmarr[i])
+          END
+        END
       EXCEPT
         Scheme.E(x) =>
         Debug.Error(F("EXCEPTION! Scheme.E \"%s\" when initializing interpreter", x))
