@@ -391,7 +391,7 @@ PROCEDURE DoPost() =
     IF measureFn # NIL THEN
       mWr := FileWr.Open(measureFn & ".stat");
       Wr.PutText(mWr, Concat(",",
-                             FmtLRA(LRA { vdd, temp, cscale, rscale })^,
+                             FmtLRA(LRA { vdd, temp, cscale, rscale, deln, delp })^,
                              TA { LibNames[lib], TranNames[tran] },
                              FmtLRA(DoStats(n, sum, sumSq)^)^));
       Wr.PutChar(mWr, '\n');
@@ -442,10 +442,13 @@ PROCEDURE WriteSource(wr         : Wr.T;
 PROCEDURE Scale1(ifn, ofn : Pathname.T) =
   CONST
     DecPath = "spice/decorate/AMD64_LINUX/spicedecorate";
+    VthPath = "spice/decorate/src/vth.scm";
   VAR
     Decorate := m3utils & "/" & DecPath;
-    cmd := FN("%s -i %s -o %s -root %s -noprobe -capmul %s -resmul %s",
-              TA{Decorate, ifn, ofn, TheRoot, LR(cscale), LR(rscale)});
+    cmd := FN("%s -i %s -o %s -root %s -noprobe -capmul %s -resmul %s -S %s -modify M '(modify-mos-vth %s %s)'",
+              TA{Decorate, ifn, ofn, TheRoot, LR(cscale), LR(rscale),
+                 m3utils & "/" & VthPath,
+                 LR(deln), LR(delp)});
     stdout, stderr := ProcUtils.WriteHere(Stdio.stderr);
     cm             := ProcUtils.RunText(cmd,
                                         stdout := stdout,
@@ -631,6 +634,7 @@ VAR
   m3utils                     := Env.Get("M3UTILS");
   tran       : Tran           := Tran.Ulvt;
   cscale, rscale              := 1.0d0;
+  deln, delp                  := 0.0d0;
   
 BEGIN
   IF m3utils = NIL THEN
@@ -677,6 +681,14 @@ BEGIN
     IF pp.keywordPresent("-cscale") THEN
       cscale := pp.getNextLongReal();
       rscale := Math.pow(cscale, -1.8d0);
+    END;
+
+    IF pp.keywordPresent("-deln") THEN
+      deln := pp.getNextLongReal()
+    END;
+
+    IF pp.keywordPresent("-delp") THEN
+      delp := pp.getNextLongReal()
     END;
     
     IF pp.keywordPresent("-p") THEN

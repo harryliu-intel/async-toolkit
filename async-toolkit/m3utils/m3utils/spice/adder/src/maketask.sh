@@ -21,11 +21,20 @@ trantypes="ulvt" # svt doesnt work yet
 #libs="i0s i0m"
 libs="i0s"
 
+delns="0"
+delps="0"
+
 cscales="5.0 2.0 1.4 1.0 0.7 0.5 0.4 0.3 0.2"
+
+if [ "$1" == "-delvth" ]; then
+    cscales="1.0"
+    delns="-0.30 -0.25 -0.20 -0.15 -0.10 -0.05 0.00 0.05 0.10 0.15 0.20 0.25 0.30"
+    delps="-0.30 -0.25 -0.20 -0.15 -0.10 -0.05 0.00 0.05 0.10 0.15 0.20 0.25 0.30"
+fi
 
 # for testing:
 
-testing=0
+testing=1
 
 if [ "${testing}" == "1" ]; then
     temps="0"
@@ -33,7 +42,10 @@ if [ "${testing}" == "1" ]; then
     trantypes="ulvt"
     sweeps="4"
     cscales="2"
+    delns="0.20"
+    delps="0.20"
 fi
+
 
 ######################################################################
 
@@ -61,6 +73,8 @@ EOF
 
 tasknum=0
 
+for deln in ${delns}; do
+for delp in ${delps}; do
 for cscl in ${cscales}; do
 for sweep in ${sweeps}; do
 for lib in ${libs}; do
@@ -79,7 +93,7 @@ for lib in ${libs}; do
             echo "pwd"                 >> ${runfile}
             echo "cd ${runsubdir}"     >> ${runfile}
 
-	    cmdargs="${ADDERSIM} -vdd ${volt} -temp ${temp} -lib ${lib} -thresh ${tran} -sweeps ${sweep} -cscale ${cscl}"
+	    cmdargs="${ADDERSIM} -vdd ${volt} -temp ${temp} -lib ${lib} -thresh ${tran} -sweeps ${sweep} -cscale ${cscl} -delp ${delp} -deln ${deln}"
 
             echo "${cmdargs} -p pre"   >> ${runfile}
             echo "${cmdargs} -p sim"   >> ${runfile}
@@ -93,6 +107,8 @@ for lib in ${libs}; do
         done
         done
         done
+done
+done
 done
 done
 done
