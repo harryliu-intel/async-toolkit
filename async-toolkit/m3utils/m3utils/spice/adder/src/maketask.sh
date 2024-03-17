@@ -34,7 +34,7 @@ fi
 
 # for testing:
 
-testing=1
+testing=0
 
 if [ "${testing}" == "1" ]; then
     temps="0"
