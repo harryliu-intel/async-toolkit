@@ -85,8 +85,16 @@ For example:
 
 mkdir /nfs/site/disks/zsc9_fwr_lib_char_008/release/033.fwr_tc2_0p9u2_2024ww07.6
 
+(If running characterization on another disk, e.g., char_006, make the appropriate
+change to the path so that you are moving the bundles within the same physical
+disk.)
+
 3. Move the "bundles" from the characterization flow into this directory,
 using mv.  DO NOT USE "cp"!
+
+The end result of this is that THE ACTUAL DATA resides in a char_00*/release area, 
+NOT in a personal directory.  The procedure also enables this to be achieved without
+copying the data across disks, instead simply using a "mv" command.
 
 For example:
 
