@@ -676,7 +676,7 @@ BEGIN
 
     IF pp.keywordPresent("-cscale") THEN
       cscale := pp.getNextLongReal();
-      rscale := Math.pow(cscale, 1.8d0);
+      rscale := Math.pow(cscale, -1.8d0);
     END;
     
     IF pp.keywordPresent("-p") THEN
