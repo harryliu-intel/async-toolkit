@@ -1,6 +1,13 @@
 INTERFACE Entry;
 IMPORT TextSeq;
 
+(* this is a point in a Sweep 
+
+   x is the independent value (parameter)
+
+   report is all the other values, in text format
+*)
+
 TYPE
   T = RECORD
     x      : LONGREAL;

@@ -334,11 +334,31 @@ PROCEDURE DoOneSweep(schema : Schema; data : RefSeq.T; idx : CARDINAL) =
     
   VAR
     allData := NEW(TextEntrySeqTbl.Default).init();
+    cols    := NEW(TextSeq.T).init();
   BEGIN
+    
     WITH fd = schema.fdata.get(idx) DO
       Debug.Out(F("Sweeping field %s", FData.Format(fd)));
 
-      (* work through the data entries *)
+      cols.addhi(FData.Format(fd));
+      
+      FOR j := 0 TO schema.fdata.size() - 1 DO
+        IF j # idx THEN
+          WITH fd = schema.fdata.get(j) DO
+            CASE fd.type OF
+              Field.T.Ignore,
+              Field.T.Collate,
+              Field.T.Sweep =>(* skip *)
+            |
+              Field.T.Report,
+              Field.T.Formula =>
+              cols.addhi(FData.Format(fd))
+            END
+          END
+        END(*FI*)
+      END(*ROF*);
+
+          (* work through the data entries *)
       FOR i := 0 TO data.size() - 1 DO
 
         PROCEDURE Report(field : TEXT) =
@@ -357,7 +377,7 @@ PROCEDURE DoOneSweep(schema : Schema; data : RefSeq.T; idx : CARDINAL) =
         TYPE
           CA = ARRAY OF CHAR;
         VAR
-          row := NARROW(data.get(i), TextSeq.T);
+          row   := NARROW(data.get(i), TextSeq.T);
           entry := Entry.T { x      := LAST(LONGREAL),
                              report := NEW(TextSeq.T).init() };
           label := "";
@@ -413,6 +433,16 @@ PROCEDURE DoOneSweep(schema : Schema; data : RefSeq.T; idx : CARDINAL) =
           (* write main .dat file for this combo *)
           WITH root = CitTextUtils.RemoveSuffix(label, "_") DO
 
+            (* record the columns *)
+            WITH fn   = root & ".cols",
+                 wr   = FileWr.Open(targDir & "/" & fn) DO
+              FOR i := 0 TO cols.size() - 1 DO
+                Wr.PutText(wr, F("$%s=%s ", Int(i + 1), cols.get(i)))
+              END;
+              Wr.PutChar(wr, '\n');
+              Wr.Close(wr)
+            END;
+            
             (* the main dat file *)
             WITH fn   = root & ".dat",
                  wr   = FileWr.Open(targDir & "/" & fn) DO
