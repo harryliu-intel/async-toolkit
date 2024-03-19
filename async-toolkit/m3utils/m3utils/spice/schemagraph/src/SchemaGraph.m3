@@ -400,7 +400,7 @@ PROCEDURE DoOneSweep(schema : Schema; data : RefSeq.T; idx : CARDINAL) =
     VAR
       iter := allData.iterate();
       label : TEXT;
-      seq : EntrySeq.T;
+      seq   : EntrySeq.T;
     BEGIN
       WHILE iter.next(label, seq) DO
         Debug.Out("Sweep label is \"" & label & "\"");
@@ -409,23 +409,59 @@ PROCEDURE DoOneSweep(schema : Schema; data : RefSeq.T; idx : CARDINAL) =
             arr[i] := seq.get(i)
           END;
           EntryArraySort.Sort(arr^);
-          WITH fn = CitTextUtils.RemoveSuffix(label, "_") & ".dat",
-               wr = FileWr.Open(targDir & "/" & fn) DO
-            FOR i := FIRST(arr^) TO LAST(arr^) DO
-              WITH e = arr[i] DO
-                Wr.PutText(wr, LR(e.x));
-                FOR j := 0 TO e.report.size() - 1 DO
-                  Wr.PutChar(wr, ' ');
-                  Wr.PutText(wr, e.report.get(j))
+
+          (* write main .dat file for this combo *)
+          WITH root = CitTextUtils.RemoveSuffix(label, "_") DO
+
+            (* the main dat file *)
+            WITH fn   = root & ".dat",
+                 wr   = FileWr.Open(targDir & "/" & fn) DO
+              FOR i := FIRST(arr^) TO LAST(arr^) DO
+                WITH e = arr[i] DO
+                  Wr.PutText(wr, LR(e.x));
+                  FOR j := 0 TO e.report.size() - 1 DO
+                    Wr.PutChar(wr, ' ');
+                    Wr.PutText(wr, e.report.get(j))
+                  END
+                END;
+                Wr.PutChar(wr, '\n')
+              END(*ROF*);
+              Wr.Close(wr)
+            END;
+
+            (* now write labels *)
+            IF doLabels AND NUMBER(arr^) # 0 THEN
+              WITH nCol = arr[0].report.size() DO
+                FOR i := 1 TO nCol - 1 DO
+                  FOR j := 1 TO nCol - 1 DO
+                    IF i # j THEN
+                      WITH fn = F("%s_labels_%s_%s.src",
+                                  root,
+                                  Int(i + 2),
+                                  Int(j + 2)),
+                           wr = FileWr.Open(targDir & "/" & fn) DO
+                        FOR k := FIRST(arr^) TO LAST(arr^) DO
+                          WITH e = arr[k] DO
+                            Wr.PutText(wr,
+                                       F("set label \"%s\" at %s, %s\n",
+                                         LR(e.x),
+                                         e.report.get(i),
+                                         e.report.get(j)))
+                          END
+                        END(*ROF*);
+                        Wr.Close(wr)
+                      END
+                    END
+                  END
                 END
-              END;
-              Wr.PutChar(wr, '\n')
-            END(*ROF*);
-            Wr.Close(wr)
+              END
+            END(*FI*)
           END
         END    
       END
-    END
+    END;
+
+
   END DoOneSweep;
   
 PROCEDURE DoSweeps(schema : Schema; data : RefSeq.T) =
@@ -442,16 +478,21 @@ PROCEDURE DoSweeps(schema : Schema; data : RefSeq.T) =
 VAR
   pp                        := NEW(ParseParams.T).init(Stdio.stderr);
   schemaFn : Pathname.T     := NIL;
-  dataFiles := NEW(TextSeq.T).init();
-  scmFiles := NEW(TextSeq.T).init();
+  dataFiles                 := NEW(TextSeq.T).init();
+  scmFiles                  := NEW(TextSeq.T).init();
   scm      : Scheme.T;
-  targDir := ".";
+  targDir                   := ".";
+  doLabels                  := TRUE;
 BEGIN
   TRY
     IF pp.keywordPresent("-schema") OR pp.keywordPresent("-s") THEN
       schemaFn := pp.getNext()
     ELSE
       RAISE ParseParams.Error
+    END;
+
+    IF pp.keywordPresent("-nolabel") THEN
+      doLabels := FALSE
     END;
 
     IF pp.keywordPresent("-dir") THEN

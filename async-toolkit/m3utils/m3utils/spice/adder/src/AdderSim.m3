@@ -197,7 +197,7 @@ PROCEDURE DoStats(READONLY n          : LONGREAL;
         Debug.Out("sdev   = " & LR(sdev));
         
         res[2 * i + 1]     := mean;
-        res[2 * i + 2] := sdev
+        res[2 * i + 2]     := sdev
       END
     END;
     RETURN res
