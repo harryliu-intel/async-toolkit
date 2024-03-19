@@ -1,0 +1,23 @@
+
+#0.2,0,1,1,-0.3,-0.3,i0s,ulvt,100,1.9921879953895817e10,1311.925102567778,494.6474790113215,12.48245695096482,0,0
+
+sweep vdd,collate temp,collate csc, ignore rsc, collate delnvth, collate delpvth, collate lib, collate tran, ignore, report mean_latency, report sdev_latency, report mean_swE, report sdev_swE, report mean_leaP, report sdev_leaP, formula max_latency  (+ mean_latency (* Klatency sdev_latency)), formula min_freq (/ 1 max_latency)
+
+
+# ignore: ignore col
+#
+# collate: collate col (in filenames)
+#
+# sweep: this is an independent variable.  Sweep it, but when sweeping another,
+# this variable is collated.
+#
+# report: this is a dependent variable.  Produce it as output.
+#
+# formula: this is a dependent formula.  It can depend on any column.
+#
+# formula fields must come after all the fields from the input schema
+#
+# note that any column can be named.
+#
+# references can only be backward.
+#
