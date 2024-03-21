@@ -64,7 +64,7 @@ IMPORT Wx;
 CONST TE = Text.Equal;
       LR = LongReal;
 
-CONST HelpText = "Usage : libertyscale [-help|--help] -i <input lib> -o <output lib> [-factor <scale factor> -timing_type <timing_type> -values <edit values> [-values <edit values> ...] -factor <scale factor>] [-temp <temp in Celsius>] [-volt <vcc>] [-alltiming <scale factor>] [-proc fast|typical}slow] [-libname <lib name>]";
+CONST HelpText = "Usage : libertyscale [-help|--help] -i <input lib> -o <output lib> [-factor <scale factor> -timing_type <timing_type> -values <edit values> [-values <edit values> ...] -factor <scale factor>] [-temp <temp in Celsius>] [-volt <vcc>] [-alltiming <scale factor>] [-proc fast|typical|slow] [-libname <lib name>]";
       
 VAR
   pp              := NEW(ParseParams.T).init(Stdio.stderr);
