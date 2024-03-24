@@ -76,6 +76,24 @@ spcl_lvt i0sddtil0ab1d02x5
 
 etc (this "trick" fixes up various power rails)
 
+From Harry:
+
+>>>>>>>
+I don’t have a clear grasp on the actual requirement, but the heuristic I made up in my head is that all libs in an NDM should have identical set of “voltage_name” references:
+
+plxcqy259% gzip -dc lib783_i0s_160h_50pp_spcl_ulvt_tttt_0p650v_100c_tttt_cmax_ccslnt.lib.gz | grep voltage_name | sort -u
+      voltage_name : vcc ;
+      voltage_name : vcc_in ;
+      voltage_name : vssx ;
+
+plxcqy259% gzip -dc lib783_i0s_160h_50pp_spcl_ulvt_tttt_0p300v_85c_tttt_cmax_ccslnt.lib.gz | grep voltage_name | sort -u
+      voltage_name : vcc ;
+      voltage_name : vssx ;
+
+Then I looked for a simple cell we can add to make this true for the 0p300v lib.
+<<<<<<<
+
+
 8. check runme / pvts.zsh for correct temp and voltage(s)
   8a.  Make sure corners exist in the run_postprocess script!
 
