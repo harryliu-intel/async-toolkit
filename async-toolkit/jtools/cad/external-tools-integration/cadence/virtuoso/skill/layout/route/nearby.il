@@ -111,7 +111,7 @@
               (dbAddFigToNet rect net)
               (dbReplaceProp rect "autogen" "string" "RouteNearby")
               rects = (cons rect rects)
-              (when protect_map
+              (when protect_map && pitch_m[layerNum]
                 x0=(car  (car  gap))
                 y0=(cadr (car  gap))
                 x1=(car  (cadr gap))
