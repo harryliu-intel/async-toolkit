@@ -56,7 +56,6 @@ typedef struct _list
 #define OP_MIN 17
 #define OP_IF 18
 #define OP_MINUS 19
-#define OP_INT 20
 #define OP_POW 21
 #define OP_EXP 22
 #define OP_LOG 23
@@ -64,6 +63,9 @@ typedef struct _list
 #define OP_COS 25
 #define OP_ASIN 26
 #define OP_ACOS 27
+#define OP_ROUND 28
+#define OP_FLOOR 29
+#define OP_CEIL 30
 
 /*** prototype ***/
 void parse_expression_main(LEX *lex, LEX2DP *lex2dp, void *data,
@@ -132,12 +134,26 @@ void parse_expression_item(LEX *lex, LEX2DP *lex2dp, void *data,
     lex_eatif_sym(lex,")");
     add_operator(expression,OP_ABS);
     }
-  else if (lex_eatif_sym(lex,"INT"))
+  else if (lex_eatif_sym(lex,"ROUND"))
     {
     lex_eatif_sym(lex,"(");
     parse_expression_main(lex,lex2dp,data,expression,0);
     lex_eatif_sym(lex,")");
-    add_operator(expression,OP_INT);
+    add_operator(expression,OP_ROUND);
+    }
+  else if (lex_eatif_sym(lex,"FLOOR"))
+    {
+    lex_eatif_sym(lex,"(");
+    parse_expression_main(lex,lex2dp,data,expression,0);
+    lex_eatif_sym(lex,")");
+    add_operator(expression,OP_FLOOR);
+    }
+  else if (lex_eatif_sym(lex,"CEIL"))
+    {
+    lex_eatif_sym(lex,"(");
+    parse_expression_main(lex,lex2dp,data,expression,0);
+    lex_eatif_sym(lex,")");
+    add_operator(expression,OP_CEIL);
     }
   else if (lex_eatif_sym(lex,"LOG"))
     {
@@ -191,6 +207,15 @@ void parse_expression_item(LEX *lex, LEX2DP *lex2dp, void *data,
     add_operator(expression,OP_MIN);
     }
   else if (lex_eatif_sym(lex,"MAX"))
+    {
+    lex_eatif_sym(lex,"(");
+    parse_expression_main(lex,lex2dp,data,expression,0);
+    lex_eatif_sym(lex,",");
+    parse_expression_main(lex,lex2dp,data,expression,0);
+    lex_eatif_sym(lex,")");
+    add_operator(expression,OP_MAX);
+    }
+  else if (lex_eatif_sym(lex,"ROUND"))
     {
     lex_eatif_sym(lex,"(");
     parse_expression_main(lex,lex2dp,data,expression,0);
@@ -325,7 +350,9 @@ void print_expression(FILE *fout, LIST *expression)
     case OP_MUL:   fprintf(fout,"* "); break;
     case OP_DIV:   fprintf(fout,"/ "); break;
     case OP_ABS:   fprintf(fout,"ABS "); break;
-    case OP_INT:   fprintf(fout,"INT"); break;
+    case OP_ROUND: fprintf(fout,"ROUND"); break;
+    case OP_FLOOR: fprintf(fout,"FLOOR"); break;
+    case OP_CEIL:  fprintf(fout,"CEIL"); break;
     case OP_EXP:   fprintf(fout,"EXP"); break;
     case OP_LOG:   fprintf(fout,"LOG"); break;
     case OP_SIN:   fprintf(fout,"SIN"); break;
@@ -375,7 +402,9 @@ double evaluate_expression(LIST *expression)
     case OP_MAX:   s[tos-2]=max(s[tos-2],s[tos-1]); tos--; break;
     case OP_IF:    s[tos-3]=(s[tos-3]!=0)?s[tos-2]:s[tos-1]; tos-=2; break;
     case OP_MINUS: s[tos-1]=-s[tos-1]; break;
-    case OP_INT:   s[tos-1]=(int)s[tos-1]; break;
+    case OP_ROUND: s[tos-1]=round(s[tos-1]); break;
+    case OP_FLOOR: s[tos-1]=floor(s[tos-1]); break;
+    case OP_CEIL:  s[tos-1]=ceil(s[tos-1]); break;
     case OP_EXP:   s[tos-1]=exp(s[tos-1]); break;
     case OP_LOG:   s[tos-1]=log(s[tos-1]); break;
     case OP_SIN:   s[tos-1]=sin(s[tos-1]); break;
