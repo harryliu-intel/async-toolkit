@@ -142,8 +142,10 @@ defun( flFloorplanTemplating ( dstCellView srcCellName
 
 ; template from another cell or view
 (defun TemplateFrom (@key (CV (geGetEditCellView))
-                          (libName nil) (cellName nil) (viewName "floorplan"))
-  (let (fCV finst)
+                          (libName nil) (cellName nil) (viewName "floorplan")
+                          (mapFrom nil) ; optional mapping to instance name in source view
+                          )
+  (let (fCV finst name)
     (unless libName libName=CV->libName)
     (unless cellName cellName=CV->cellName)
     fCV = (ReadCV libName cellName viewName)
@@ -152,7 +154,9 @@ defun( flFloorplanTemplating ( dstCellView srcCellName
             (dbCreatePRBoundary CV fCV->prBoundary->points)
             )
       (foreach inst CV->instances
-               finst = (dbFindAnyInstByName fCV inst->name)
+               name=inst->name
+               (when mapFrom && mapFrom[name] name=mapFrom[name])
+               finst = (dbFindAnyInstByName fCV name)
                (when finst
                  inst->xy = finst->xy
                  inst->orient = finst->orient
