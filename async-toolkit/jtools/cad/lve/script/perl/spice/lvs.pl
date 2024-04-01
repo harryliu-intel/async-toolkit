@@ -337,8 +337,7 @@ $all_includes
 -D _drIncludePort
 -D NOCLD
 -vue
--dp$threads
--turbo
+-host_init $threads
 -D _drMaxError=100000000
 -D _drUSENDG=_drNO
 -D _drUSERDEFINESUIN

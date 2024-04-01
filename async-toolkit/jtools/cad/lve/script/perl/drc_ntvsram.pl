@@ -200,8 +200,7 @@ ET
      print CF "-dp \\\n" .
               "-dphosts \$NB_PARALLEL_JOB_HOSTS \\\n";
    } else {
-     print CF "-dp$threads \\\n" .
-              "-turbo \\\n";
+     print CF "-host_init $threads \\\n";
    }
 
    print CF "$icv_options \\\n" if (defined $icv_options ne "");
