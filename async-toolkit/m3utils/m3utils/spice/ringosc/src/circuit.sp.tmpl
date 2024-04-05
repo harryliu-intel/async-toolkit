@@ -1,0 +1,222 @@
+* Ring oscillator
+
+.TEMP @TEMP@
+.PARAM vtrue=@VDD@
+
+.OPTION CMIFLAG=1 CMIUSRFLAG=3 PDMI=1
+.option cmipath='/p/hdk/cad/pdk/pdk783_r0.9_23ww26.5_alpha/cmi/hspice/cmi/lnx86/64bit'
+.option cmi02opt=1
+.OPTION POST=fsdb PROBE=1
+.OPTION XA_CMD="set_sim_level -level 6"
+.OPTION XA_CMD="set_wildcard_rule -match* one"
+.OPTION XA_CMD="set_message_option -limit 100"
+.OPTION XA_CMD="enable_print_statement 1"
+.OPTION XA_CMD="set_sim_case -case sensitive"
+.option redefsub
+
+*.OPTION AUTOSTOP
+
+* Monte Carlo stuff
+
+.OPTION XA_CMD="set_monte_carlo_option -enable 1"     
+.OPTION XA_CMD="set_monte_carlo_option -sample_output all"
+.OPTION XA_CMD="set_monte_carlo_option -mc0_file 1"
+.OPTION XA_CMD="set_monte_carlo_option -parameter_file 1"
+.OPTION XA_CMD="set_monte_carlo_option -mc0_header 1"
+.OPTION XA_CMD="set_monte_carlo_option -dump_waveform 1"
+
+.option search='/nfs/site/disks/zsc9_fwr_sd_001/mnystroe/p1278_3x0p9eu1/2023ww43d5/models_core_hspice/m14_2x_1xa_1xb_6ya_2yb_2yc__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp'
+.lib 'p1278_3.hsp' tttt
+
+.option PDMI=1
+.option PDMI_LIB='/p/hdk/cad/pdk/pdk783_r0.5_22ww52.5//cmi/hspice/pdmi/lnx86/64bit/pdmi.so'
+
+.include 'include.sp'
+
+**********************************************************************
+
+.subckt dlycell d db q qb vcc vssx
+
+Xinv0 d  qb vcc vssx i0sinv000aa1d48x5
+Xinv1 db q  vcc vssx i0sinv000aa1d48x5
+
+Xinvc0 q  qb vcc vssx i0sinv000aa1n04x5
+Xinvc1 qb q  vcc vssx i0sinv000aa1n04x5
+
+.ends
+
+**********************************************************************
+
+.subckt interp e  eb  o  ob f0 f1 f2 f3 ck ckb  vcc vssx
+
+* this thing needs to invert, unlike the paper's design
+
+Xinv0 f0 f0b vcc vssx i0sinv000aa1n02x5
+Xinv1 f1 f1b vcc vssx i0sinv000aa1n02x5
+Xinv2 f2 f2b vcc vssx i0sinv000aa1n02x5
+Xinv3 f3 f3b vcc vssx i0sinv000aa1n02x5
+
+
+MMou0 vcc  f0b  oui ln_FAKE_PMOS_BULK phpbulvt w=3 l=1.4e-08 nf=1 m=4
+MMou1 oui  o    ck ln_FAKE_PMOS_BULK phpbulvt w=3 l=1.4e-08 nf=1 m=4
+
+MMeu0 vcc  f0   eui ln_FAKE_PMOS_BULK phpbulvt w=3 l=1.4e-08 nf=1 m=4
+MMeu1 eui  e    ck ln_FAKE_PMOS_BULK phpbulvt w=3 l=1.4e-08 nf=1 m=4
+
+MMod0 vssx f1   odi ln_FAKE_MMOS_BULK nhpbulvt w=3 l=1.4e-08 nf=1 m=4
+MMod1 odi  o    ck ln_FAKE_MMOS_BULK nhpbulvt w=3 l=1.4e-08 nf=1 m=4
+
+MMed0 vssx f1b  edi ln_FAKE_MMOS_BULK nhpbulvt w=3 l=1.4e-08 nf=1 m=4
+MMed1 edi  e    ck ln_FAKE_MMOS_BULK nhpbulvt w=3 l=1.4e-08 nf=1 m=4
+
+
+MMobu0 vcc  f2b  obui ln_FAKE_PMOS_BULK phpbulvt w=3 l=1.4e-08 nf=1 m=4
+MMobu1 obui  ob    ckb ln_FAKE_PMOS_BULK phpbulvt w=3 l=1.4e-08 nf=1 m=4
+
+MMebu0 vcc  f2   ebui ln_FAKE_PMOS_BULK phpbulvt w=3 l=1.4e-08 nf=1 m=4
+MMebu1 ebui  eb    ckb ln_FAKE_PMOS_BULK phpbulvt w=3 l=1.4e-08 nf=1 m=4
+
+MMobd0 vssx f3   obdi ln_FAKE_MMOS_BULK nhpbulvt w=3 l=1.4e-08 nf=1 m=4
+MMobd1 obdi  ob    ckb ln_FAKE_MMOS_BULK nhpbulvt w=3 l=1.4e-08 nf=1 m=4
+
+MMebd0 vssx f3b  ebdi ln_FAKE_MMOS_BULK nhpbulvt w=3 l=1.4e-08 nf=1 m=4
+MMebd1 ebdi  eb    ckb ln_FAKE_MMOS_BULK nhpbulvt w=3 l=1.4e-08 nf=1 m=4
+
+
+Xinvc0 ck  ckb vcc vssx i0sinv000aa1n04x5
+Xinvc1 ckb ck  vcc vssx i0sinv000aa1n04x5
+
+.ends
+
+**********************************************************************
+
+.subckt passbuf en i ib o ob vcc vssx
+
+Xinve en enb vcc vssx i0sinv000aa1n02x5
+
+M0u0 vcc enb u0i  ln_FAKE_PMOS_BULK phpbulvt w=3 l=1.4e-08 nf=1 m=8
+M0u1 u0i i  ob  ln_FAKE_PMOS_BULK phpbulvt w=3 l=1.4e-08 nf=1 m=8
+
+M0d0 vssx en d0i ln_FAKE_NMOS_BULK nhpbulvt w=3 l=1.4e-08 nf=1 m=8
+M0d1 d0i  i  ob   ln_FAKE_NMOS_BULK nhpbulvt w=3 l=1.4e-08 nf=1 m=8
+
+M1u0 vcc enb u1i  ln_FAKE_PMOS_BULK phpbulvt w=3 l=1.4e-08 nf=1 m=8
+M1u1 u1i ib  o   ln_FAKE_PMOS_BULK phpbulvt w=3 l=1.4e-08 nf=1 m=8
+
+M1d0 vssx en d1i ln_FAKE_NMOS_BULK nhpbulvt w=3 l=1.4e-08 nf=1 m=8
+M1d1 d1i  ib  o    ln_FAKE_NMOS_BULK nhpbulvt w=3 l=1.4e-08 nf=1 m=8
+
+.ends
+
+**********************************************************************
+
+.subckt resetbox o ob e eb rstb vcc vssx
+
+Xinv rstb reset vcc vssx i0sinv000aa1n02x5
+
+M0 vcc rstb eb ln_FAKE_PMOS_BULK phpbulvt w=3 l=1.4e-08 nf=1 m=1
+M1 vcc rstb ob ln_FAKE_PMOS_BULK phpbulvt w=3 l=1.4e-08 nf=1 m=1
+M2 vssx reset e ln_FAKE_NMOS_BULK nhpbulvt w=3 l=1.4e-08 nf=1 m=1
+M3 vssx reset o ln_FAKE_NMOS_BULK nhpbulvt w=3 l=1.4e-08 nf=1 m=1
+
+.ends
+
+**********************************************************************
+
+.subckt oscillator @ALLFINE@ ev0 od0 ev1 od1 ev2 od2 ck ckb rstb vcc vssx
+
+@INTERPOLATOR@
+
+Vck0 ck ck0 0
+vckb0 ckb ckb0 0
+
+Xscd0  ck0 ckb0 ck1 ckb1 vcc vssx dlycell
+Xscd1  ck1 ckb1 ck2 ckb2 vcc vssx dlycell
+Xscd2  ck2 ckb2 ck3 ckb3 vcc vssx dlycell
+Xscd3  ck3 ckb3 ck4 ckb4 vcc vssx dlycell
+Xscd4  ck4 ckb4 ck5 ckb5 vcc vssx dlycell
+Xscd5  ck5 ckb5 ck6 ckb6 vcc vssx dlycell
+Xscd6  ck6 ckb6 ck7 ckb7 vcc vssx dlycell
+
+Xpassev0 ev0 ck1 ckb1 e eb vcc vssx passbuf
+Xpassod0 od0 ck2 ckb2 o ob vcc vssx passbuf
+Xpassev1 ev1 ck3 ckb3 e eb vcc vssx passbuf
+Xpassod1 od1 ck4 ckb4 o ob vcc vssx passbuf
+Xpassev2 ev2 ck5 ckb5 e eb vcc vssx passbuf
+Xpassod2 od2 ck6 ckb6 o ob vcc vssx passbuf
+
+Xreset o ob e eb rstb vcc vssx resetbox
+
+.ends
+
+**********************************************************************
+Xdut @ALLFINE@ ev0 od0 ev1 od1 ev2 od2 ck ckb rstb vcc vssx oscillator
+
+Vres rstb 0 DC=0 PWL 0 0 9.99ns 0 10.01ns vtrue
+
+**********************************************************************
+
+@COARSEMAXSPEED@
+
+@FINEMAXSPEED@
+
+* set max speed -- coarse tuning
+*Vev0 ev0 rstb 0
+*Vod0 od0 rstb 0
+*Vev1 ev1 0 0
+*Vod1 od1 0 0
+*Vev2 ev2 0 0
+*Vod2 od2 0 0
+*
+** fine tuning
+*Vf0  f0 0 0
+*Vf1  f1 0 0
+*Vf2  f2 0 0
+*Vf3  f3 0 0
+
+**********************************************************************
+
+.PROBE TRAN v(ev*)
+.PROBE TRAN v(od*)
+
+.PROBE TRAN v(xdut.xreset.rstb)
+.PROBE TRAN v(xdut.xreset.reset)
+
+.PROBE TRAN v(rstb)
+
+.PROBE TRAN v(f*)
+.PROBE TRAN v(xdut.e)
+.PROBE TRAN v(xdut.eb)
+.PROBE TRAN v(xdut.o)
+.PROBE TRAN v(xdut.ob)
+.PROBE TRAN v(ck*)
+.PROBE TRAN v(xdut.ck*)
+.PROBE TRAN v(xdut.xscd0.d)
+.PROBE TRAN v(xdut.xscd0.db)
+.PROBE TRAN v(xdut.xscd0.q)
+.PROBE TRAN v(xdut.xscd0.qb)
+.PROBE TRAN v(xdut.xscd1.d)
+.PROBE TRAN v(xdut.xscd1.db)
+.PROBE TRAN v(xdut.xscd1.q)
+.PROBE TRAN v(xdut.xscd1.qb)
+.PROBE TRAN v(xdut.xpassev0.i*)
+.PROBE TRAN v(xdut.xpassev0.u*)
+.PROBE TRAN v(xdut.xpassev0.e*)
+.PROBE TRAN v(xdut.xpassod0.i*)
+.PROBE TRAN v(xdut.xpassod0.u*)
+.PROBE TRAN v(xdut.xpassod0.e*)
+.PROBE TRAN i(vvcc)
+
+
+
+Vvcc    vcc   0 DC=vtrue
+Vvssx   vssx  0 DC=0
+
+.PARAM runtime=@SIMTIME@
+
+
+* Simulate
+.TRAN 1p '10n + runtime'
+
+
+.END
