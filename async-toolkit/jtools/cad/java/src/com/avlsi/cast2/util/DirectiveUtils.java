@@ -1103,19 +1103,16 @@ public final class DirectiveUtils {
                     result, HierName.append(prefix, p.getFirst()));
         }
 
-        Map<HierName,Boolean> dirs;
-        if (isEnv) {
-            if (cell.containsSubcells()) {
-                dirs = (Map<HierName,Boolean>)
-                    DirectiveUtils.getSubcellDirective(cell, directive,
-                            DirectiveConstants.NODE_TYPE);
-            } else {
-                dirs = Collections.emptyMap();
-            }
-        } else {
-            dirs = (Map<HierName,Boolean>) DirectiveUtils.getTopLevelDirective(cell,
-                    directive, DirectiveConstants.NODE_TYPE);
+        Map<HierName,Boolean> dirs = new LinkedHashMap<>();
+        if (cell.containsSubcells() &&
+            DirectiveUtils.containsDirective(cell, BlockInterface.SUBCELL,
+                directive, DirectiveConstants.NODE_TYPE)) {
+            dirs.putAll((Map<HierName,Boolean>)
+                DirectiveUtils.getSubcellDirective(cell, directive,
+                        DirectiveConstants.NODE_TYPE));
         }
+        dirs.putAll((Map<HierName,Boolean>) DirectiveUtils.getTopLevelDirective(cell,
+                    directive, DirectiveConstants.NODE_TYPE));
 
         for (Map.Entry<HierName,Boolean> entry : dirs.entrySet()) {
             final HierName full = HierName.append(prefix, entry.getKey());
