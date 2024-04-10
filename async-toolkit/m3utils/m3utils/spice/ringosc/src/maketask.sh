@@ -18,8 +18,6 @@ volts="0.18 0.20 0.22 0.24 0.26 0.28 0.30 0.32 0.34 0.36 0.38 0.40 0.45"
 
 # for testing:
 
-speeds="0 1 2 3 4 10 20 30 50 159 160"
-
 testing=1
 
 if [ "${testing}" == "1" ]; then
@@ -27,7 +25,6 @@ if [ "${testing}" == "1" ]; then
     volts="0.30"
     trantypes="ulvt"
     sweeps="4"
-    speeds="0"
 fi
 
 
@@ -57,7 +54,6 @@ EOF
 
 tasknum=0
 
-for speed in ${speeds}; do
 for sweep in ${sweeps}; do
         for volt in ${volts}; do
         for temp in ${temps}; do
@@ -73,20 +69,28 @@ for sweep in ${sweeps}; do
             echo "pwd"                 >> ${runfile}
             echo "cd ${runsubdir}"     >> ${runfile}
 
-	    cmdargs="${RINGOSCSIM} -vdd ${volt} -temp ${temp} -sweeps ${sweep} -speed ${speed}"
 
-            echo "${cmdargs} -p pre"   >> ${runfile}
-            echo "${cmdargs} -p sim"   >> ${runfile}
-            echo "${cmdargs} -p conv"  >> ${runfile}
-            echo "${cmdargs} -p clean" >> ${runfile}
-            echo "${cmdargs} -p post"  >> ${runfile}
+            basecmd="${RINGOSCSIM} -vdd ${volt} -temp ${temp}"
+
+            calibcmd="${basecmd} -calibrate -speed 0"
+
+            echo "${calibcmd} -p pre -p sim -p conv -p clean -p post" >> ${runfile}
+
+            echo >> ${runfile}
+            
+	    realcmd="${basecmd} -calibfile calibrate.dat -sweeps ${sweep} -sweepspeeds -maxspeed 6"
+
+            echo "${realcmd} -p pre"   >> ${runfile}
+            echo "${realcmd} -p sim"   >> ${runfile}
+            echo "${realcmd} -p conv"  >> ${runfile}
+            echo "${realcmd} -p clean" >> ${runfile}
+            echo "${realcmd} -p post"  >> ${runfile}
             chmod +x ${runfile}
         
             tasknum=`expr $tasknum + 1`
             
         done
         done
-done
 done
 
 echo "${tasknum} jobs"

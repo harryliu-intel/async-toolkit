@@ -28,6 +28,8 @@ IMPORT TechTemplate;
 IMPORT ProcUtils;
 FROM TechCleanup IMPORT DeleteMatching, DeleteRecursively,
                         CompressFilesWithExtension,  CompressFile;
+IMPORT FileRd;
+IMPORT RefSeq;
 
 <*FATAL Thread.Alerted*>
 <*FATAL OSError.E, Rd.Failure, Wr.Failure, Rd.EndOfFile*>
@@ -109,6 +111,15 @@ PROCEDURE DoStats(READONLY n          : LONGREAL;
     END;
     RETURN res
   END DoStats;
+
+TYPE
+  SpeedSample = REF RECORD
+    speed      : CARDINAL;
+    beg, end   : Transition.T;
+    begT, endT : LONGREAL;
+    cyc, freq  : LONGREAL;
+    delcyc     : LONGREAL;
+  END;
   
 PROCEDURE DoTrace(traceRt : Pathname.T; mWr : Wr.T) : Result =
   VAR
@@ -148,6 +159,53 @@ PROCEDURE DoTrace(traceRt : Pathname.T; mWr : Wr.T) : Result =
       Debug.Out("Clock transition " & Transition.Format(clkSeq.get(i)))
     END;
 
+    IF doSweep THEN
+      (* find relevant clock transitions *)
+      VAR
+        samples := NEW(RefSeq.T).init();
+      BEGIN
+      FOR i := 0 TO maxSpeed DO
+        Debug.Out("Working on speed " & Int(i));
+
+        WITH speedSeq = TransitionFinder.FilterTime(clkSeq,
+                                                    SpeedStart(i),
+                                                    SpeedStart(i + 1)),
+             riseSeq  = TransitionFinder.FilterDir(speedSeq, +1)
+         DO
+
+          IF riseSeq.size() < 5 THEN
+            Debug.Error("?not enough transitions at speed " & Int(i))
+          END;
+
+          WITH start   = riseSeq.get(2),
+               mid     = riseSeq.get(3),
+               stop    = riseSeq.get(4),
+               cyctime = 0.5d0 * (stop.at - start.at) ,
+
+               cyc0    = mid.at  - start.at,
+               cyc1    = stop.at - mid.at,
+               delcyctime = cyc1 - cyc0,
+               
+               freq    = 1.0d0 / cyctime,
+               sample  = NEW(SpeedSample,
+                             speed := i,
+                             beg := start, end := stop,
+                             begT := start.at, endT := stop.at,
+                             cyc := cyctime,
+                             freq := freq,
+                             delcyc := delcyctime)  DO
+            Debug.Out(F("speed %s start %s stop %s cycle %s speed %s",
+                        Int(i),
+                        LR(start.at), LR(stop.at), LR(cyctime), LR(freq)));
+            samples.addhi (sample)
+          END
+        END
+        END
+
+        
+      END
+    END;
+
     WITH clk4 = clkSeq.get(4),
          clkBeg = clk4.at,
          clk6 = clkSeq.get(6),
@@ -163,6 +221,14 @@ PROCEDURE DoTrace(traceRt : Pathname.T; mWr : Wr.T) : Result =
       Debug.Out("clk4 transition is " & Transition.Format(clk4));
       Debug.Out("clk6 transition is " & Transition.Format(clk6));
       Debug.Out("cycletime " & LR(cycletime));
+
+      IF doCalibrate THEN
+        WITH wr = FileWr.Open("calibrate.dat") DO
+          Wr.PutText(wr, LR(cycletime));
+          Wr.PutChar(wr, '\n');
+          Wr.Close(wr)
+        END
+      END;
 
       Debug.Out(F("clkBeg    = %s",  LR(clkBeg)));        
       Debug.Out(F("clkEnd    = %s",  LR(clkEnd)));        
@@ -369,10 +435,46 @@ PROCEDURE ToSettings(speed : CARDINAL) : Settings =
 PROCEDURE DumpSequentialSources(to            : Pathname.T;
                                 READONLY sarr : ARRAY OF Settings)
   RAISES { OSError.E, Wr.Failure } =
+
+  VAR
+    lastVal : BOOLEAN;
+    
+  PROCEDURE Init(startVal : BOOLEAN) =
+    BEGIN
+      lastVal := startVal;
+    END Init;
+    
+  PROCEDURE Emit(wx : Wx.T; at : LONGREAL; value : BOOLEAN) =
+    BEGIN
+      IF value # lastVal THEN
+        VAR
+          onm, nnm : TEXT;
+        BEGIN
+          IF value THEN
+            onm := "0";
+            nnm := "vtrue"
+          ELSE
+            onm := "vtrue";
+            nnm := "0"
+          END;
+
+          Wx.PutText(wx, F("%s %s %s %s ",
+                           LR(at - 0.5d0 * Rise),
+                           onm,
+                           LR(at + 0.5d0 * Rise),
+                           nnm))
+        END;
+        lastVal := value
+      END
+    END Emit;
+    
+  CONST
+    Rise      = 2.0d-12;
   VAR
     wr       := FileWr.Open(to);
     fineWx   := Wx.New();
     coarseWx := Wx.New();
+
   BEGIN
     (* fine settings *)
     FOR i := 0 TO ninterp - 1 DO
@@ -382,6 +484,21 @@ PROCEDURE DumpSequentialSources(to            : Pathname.T;
           Wx.PutText(fineWx, F("Vf%s_%s f%s_%s 0 DC=0 PWL 0 0 ", t, s, t, s));
 
           (* put data *)
+
+          Init(FALSE);
+
+          FOR k := FIRST(sarr) TO LAST(sarr) DO
+            WITH startTime = SpeedStart(k),
+                 val       = sarr[k].interpCode[i] DO
+              IF val > j THEN
+                Emit(fineWx, startTime, TRUE)
+              ELSE
+                Emit(fineWx, startTime, FALSE)
+              END
+            END
+          END;
+
+          Wx.PutChar(fineWx, '\n')
 
 
         END
@@ -399,10 +516,25 @@ PROCEDURE DumpSequentialSources(to            : Pathname.T;
         |
           1 => nam := F("od%s", Int(i DIV 2))
         END;
-        Wx.PutText(coarseWx, F("V%s %s 0 DC=0 PWL 0 0  ", nam, nam, pow));
+        Wx.PutText(coarseWx, F("V%s %s 0 DC=0 PWL 0 0 ", nam, nam, pow));
         
         (* put data *)
+
+        Init(FALSE);
         
+        FOR k := FIRST(sarr) TO LAST(sarr) DO
+          WITH startTime = SpeedStart(k),
+               val       = sarr[k].coarseCode[i] DO
+            IF val = 0 THEN
+              Emit(coarseWx, startTime, FALSE)
+            ELSE
+              Emit(coarseWx, startTime, TRUE)
+            END
+          END
+        END;
+
+        Wx.PutChar(coarseWx, '\n')
+            
       END
     END;
 
@@ -420,8 +552,14 @@ PROCEDURE DoPre() =
     settingsPerRange        := ninterp * settings;
     ranges                  := stages - 1;
     totalSpeeds             := ranges * settingsPerRange + 1;
+    fullSimEnd : LONGREAL;
 
   BEGIN
+    
+    maxSpeed := MIN(maxSpeed, totalSpeeds - 1);
+
+    fullSimEnd := SpeedStart(maxSpeed + 3); (* some overrun *)
+    
     Debug.Out("DoPre()");
 
     Debug.Out(FN("ninterp %s, settings %s, settingsPerRange %s, ranges %s, totalSpeeds %s, speed %s",
@@ -434,6 +572,14 @@ PROCEDURE DoPre() =
     WITH sarr = NEW(REF ARRAY OF Settings, totalSpeeds) DO
       FOR i := 0 TO totalSpeeds - 1 DO
         sarr[i] := ToSettings(i)
+      END;
+
+      IF doSweep THEN
+        DumpSequentialSources("settings.sp", sarr^)
+      ELSE
+        WITH wr = FileWr.Open("settings.sp") DO
+          Wr.Close(wr)
+        END
       END
     END;
     
@@ -507,6 +653,12 @@ PROCEDURE DoPre() =
         EVAL map.put("@ALLFINE@"     , Wx.ToText(allfineWx))
       END;
 
+      IF doCalibrate THEN
+        EVAL map.put("@AUTOSTOP@", ".OPTION AUTOSTOP");
+      ELSE
+        EVAL map.put("@AUTOSTOP@", "");
+      END;
+      
       VAR
         coarseWx := Wx.New();
         pow : TEXT;
@@ -527,6 +679,11 @@ PROCEDURE DoPre() =
         END;
         EVAL map.put("@COARSEMAXSPEED@", Wx.ToText(coarseWx))
       END;
+
+      IF doSweep THEN
+        EVAL map.put("@COARSEMAXSPEED@", "");
+        EVAL map.put("@FINEMAXSPEED@"  , "")
+      END;
       
       EVAL map.put("@RISE@", LR(rise));
       
@@ -537,7 +694,11 @@ PROCEDURE DoPre() =
       EVAL map.put("@PDK@", Pdk);
       EVAL map.put("@METALCORNER@", MetalCorner);
       EVAL map.put("@SWEEPS@", Int(sweeps));
-      EVAL map.put("@SIMTIME@", "20n");
+      IF doCalibrate THEN
+        EVAL map.put("@SIMTIME@", "1")
+      ELSE
+        EVAL map.put("@SIMTIME@", LR(fullSimEnd))
+      END;
       
       (* done setting up map *)
       
@@ -672,6 +833,10 @@ VAR
   multTimeAtSpeed             := DefMultTimeAtSpeed;
 
   resetTime                   := DefResetTime;
+  doSweep    : BOOLEAN;
+  maxSpeed   : CARDINAL       := LAST(CARDINAL);
+  doCalibrate                 := FALSE;
+  calibFn    : Pathname.T     := NIL;
   
 BEGIN
   IF m3utils = NIL THEN
@@ -691,6 +856,9 @@ BEGIN
     IF pp.keywordPresent("-multtimeatspeed") THEN
       multTimeAtSpeed := pp.getNextLongReal()
     END; 
+    IF pp.keywordPresent("-calibfile") THEN
+      calibFn := pp.getNext()
+    END;
     IF pp.keywordPresent("-temp") THEN
       temp := pp.getNextLongReal()
     END; 
@@ -703,11 +871,29 @@ BEGIN
     IF pp.keywordPresent("-ninterp") THEN
       ninterp := pp.getNextInt()
     END; 
-    IF pp.keywordPresent("-speed") THEN
-      speed := pp.getNextInt()
-    END; 
     IF pp.keywordPresent("-measurefn") OR pp.keywordPresent("-m") THEN
       measureFn := pp.getNext()
+    END;
+
+    IF pp.keywordPresent("-sweepspeeds") THEN
+      doSweep := TRUE;
+      IF pp.keywordPresent("-maxspeed") THEN
+        maxSpeed := pp.getNextInt()
+      END
+    ELSIF pp.keywordPresent("-speed") THEN
+      speed := pp.getNextInt();
+      IF pp.keywordPresent("-calibrate") THEN
+        doCalibrate := TRUE
+      END
+    END;
+
+    IF calibFn # NIL THEN
+      WITH rd      = FileRd.Open(calibFn),
+           line    = Rd.GetLine(rd),
+           calcyc  = Scan.LongReal(line) DO
+        baseTimeAtSpeed := 20.0d0 * calcyc;
+        multTimeAtSpeed := calcyc * 0.1d0;
+      END
     END;
 
     IF pp.keywordPresent("-p") THEN

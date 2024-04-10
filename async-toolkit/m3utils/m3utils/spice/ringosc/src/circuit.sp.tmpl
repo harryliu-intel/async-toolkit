@@ -14,7 +14,7 @@
 .OPTION XA_CMD="set_sim_case -case sensitive"
 .option redefsub
 
-*.OPTION AUTOSTOP
+@AUTOSTOP@
 
 * Monte Carlo stuff
 
@@ -156,9 +156,11 @@ Vres rstb 0 DC=0 PWL 0 0 9.99ns 0 10.01ns vtrue
 
 **********************************************************************
 
-@COARSEMAXSPEED@
+.include 'settings.sp'
 
 @FINEMAXSPEED@
+
+@COARSEMAXSPEED@
 
 * set max speed -- coarse tuning
 *Vev0 ev0 rstb 0
@@ -217,6 +219,11 @@ Vvssx   vssx  0 DC=0
 
 * Simulate
 .TRAN 1p '10n + runtime'
+
+
+.measure tran Cycle
++ trig V(ck) val='vtrue*0.5' td=10n rise=4
++ targ V(ck) val='vtrue*0.5' td=10n rise=5
 
 
 .END
