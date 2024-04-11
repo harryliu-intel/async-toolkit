@@ -30,6 +30,9 @@ FROM TechCleanup IMPORT DeleteMatching, DeleteRecursively,
                         CompressFilesWithExtension,  CompressFile;
 IMPORT FileRd;
 IMPORT RefSeq;
+IMPORT SpeedSample;
+IMPORT SpeedSampleSeq;
+IMPORT SpeedSampleArraySort;
 
 <*FATAL Thread.Alerted*>
 <*FATAL OSError.E, Rd.Failure, Wr.Failure, Rd.EndOfFile*>
@@ -69,7 +72,7 @@ PROCEDURE GetNode(trace : Trace.T; nm : TEXT) : Trace.NodeId =
   END GetNode;
   
 TYPE
-  ResultCol = { cycletime, swiE, leaP };
+  ResultCol = { cycletime, swiE, leaP, minCyc, maxCyc, maxStep };
   
   Result = ARRAY ResultCol OF LONGREAL;
 
@@ -112,15 +115,6 @@ PROCEDURE DoStats(READONLY n          : LONGREAL;
     RETURN res
   END DoStats;
 
-TYPE
-  SpeedSample = REF RECORD
-    speed      : CARDINAL;
-    beg, end   : Transition.T;
-    begT, endT : LONGREAL;
-    cyc, freq  : LONGREAL;
-    delcyc     : LONGREAL;
-  END;
-  
 PROCEDURE DoTrace(traceRt : Pathname.T; mWr : Wr.T) : Result =
   VAR
     trace      : Trace.T;
@@ -151,6 +145,7 @@ PROCEDURE DoTrace(traceRt : Pathname.T; mWr : Wr.T) : Result =
     tranFinder := NEW(TransitionFinder.T).init(trace, vdd / 2.0d0, vdd / 10.0d0);
     clkSeq : TransitionSeq.T;
     slowName : TEXT;
+    minCyc, maxCyc, maxStep := LAST(LONGREAL);
   BEGIN
     Debug.Out("Found node ids");
 
@@ -162,49 +157,93 @@ PROCEDURE DoTrace(traceRt : Pathname.T; mWr : Wr.T) : Result =
     IF doSweep THEN
       (* find relevant clock transitions *)
       VAR
-        samples := NEW(RefSeq.T).init();
+        samples := NEW(SpeedSampleSeq.T).init();
       BEGIN
-      FOR i := 0 TO maxSpeed DO
-        Debug.Out("Working on speed " & Int(i));
+        FOR i := 0 TO maxSpeed DO
+          Debug.Out("Working on speed " & Int(i));
+          
+          WITH speedSeq = TransitionFinder.FilterTime(clkSeq,
+                                                      SpeedStart(i),
+                                                      SpeedStart(i + 1)),
+               riseSeq  = TransitionFinder.FilterDir(speedSeq, +1)
+           DO
+            
+            IF riseSeq.size() < 5 THEN
+              Debug.Error("?not enough transitions at speed " & Int(i))
+            END;
+            
+            WITH start   = riseSeq.get(2),
+                 mid     = riseSeq.get(3),
+                 stop    = riseSeq.get(4),
+                 cyctime = 0.5d0 * (stop.at - start.at) ,
+                 
+                 cyc0    = mid.at  - start.at,
+                 cyc1    = stop.at - mid.at,
+                 delcyctime = cyc1 - cyc0,
+                 
+                 freq    = 1.0d0 / cyctime,
+                 sample  = SpeedSample.T {
+                                          speed := i,
+                                          beg := start, end := stop,
+                                          begT := start.at, endT := stop.at,
+                                          cyc := cyctime,
+                                          freq := freq,
+                                          delcyc := delcyctime,
+                                          pctFromPrev := FIRST(LONGREAL)}  DO
+              Debug.Out(F("speed %s start %s stop %s cycle %s speed %s",
+                          Int(i),
+                          LR(start.at), LR(stop.at), LR(cyctime), LR(freq)));
+              samples.addhi (sample)
+            END
+          END
+        END(*ROF*);
 
-        WITH speedSeq = TransitionFinder.FilterTime(clkSeq,
-                                                    SpeedStart(i),
-                                                    SpeedStart(i + 1)),
-             riseSeq  = TransitionFinder.FilterDir(speedSeq, +1)
-         DO
+        WITH fast = samples.get(0),
+             slow = samples.get(samples.size() - 1),
+             fastMult = slow.cyc / fast.cyc DO
+          Debug.Out("Fast speed " & SpeedSample.Format(fast));
+          Debug.Out("Slow speed " & SpeedSample.Format(slow));
+          Debug.Out("Range " & LR (fastMult));
 
-          IF riseSeq.size() < 5 THEN
-            Debug.Error("?not enough transitions at speed " & Int(i))
+          minCyc := fast.cyc;
+          maxCyc := slow.cyc
+         
+        END;
+
+        WITH a = NEW(REF ARRAY OF SpeedSample.T, samples.size()) DO
+          FOR i := FIRST(a^) TO LAST(a^) DO
+            a[i] := samples.get(i)
+          END;
+          
+          FOR i := 1 TO LAST(a^) DO
+            WITH cur = a[i],
+                 prv = a[i-1] DO
+              cur.pctFromPrev := (cur.cyc - prv.cyc) / prv.cyc
+            END
           END;
 
-          WITH start   = riseSeq.get(2),
-               mid     = riseSeq.get(3),
-               stop    = riseSeq.get(4),
-               cyctime = 0.5d0 * (stop.at - start.at) ,
+          WITH wr = FileWr.Open(traceRt & ".speeds") DO
+            FOR i := FIRST(a^) TO LAST(a^) DO
+              WITH s = a[i] DO
+                Wr.PutText(wr, F("%s,%s,%s\n", Int(s.speed), LR(s.cyc), LR(s.pctFromPrev)))
+              END
+            END(*ROF*);
+            Wr.Close(wr)
+          END;
 
-               cyc0    = mid.at  - start.at,
-               cyc1    = stop.at - mid.at,
-               delcyctime = cyc1 - cyc0,
-               
-               freq    = 1.0d0 / cyctime,
-               sample  = NEW(SpeedSample,
-                             speed := i,
-                             beg := start, end := stop,
-                             begT := start.at, endT := stop.at,
-                             cyc := cyctime,
-                             freq := freq,
-                             delcyc := delcyctime)  DO
-            Debug.Out(F("speed %s start %s stop %s cycle %s speed %s",
-                        Int(i),
-                        LR(start.at), LR(stop.at), LR(cyctime), LR(freq)));
-            samples.addhi (sample)
+          SpeedSampleArraySort.Sort(a^);
+          WITH smallStep = a[1].pctFromPrev,
+               bigStep   = a[LAST(a^)].pctFromPrev,
+               relRange  = bigStep / smallStep DO
+            Debug.Out("big   step " & LR(bigStep));
+            Debug.Out("small step " & LR(smallStep));
+            Debug.Out("ratio      " & LR(relRange));
+
+            maxStep := bigStep
           END
         END
-        END
-
-        
       END
-    END;
+    END(*doSweep FI*);
 
     WITH clk4 = clkSeq.get(4),
          clkBeg = clk4.at,
@@ -265,7 +304,7 @@ PROCEDURE DoTrace(traceRt : Pathname.T; mWr : Wr.T) : Result =
           Wr.PutChar(mWr, '\n');
           
         END;
-        RETURN Result { cycletime, swiE, leaP }
+        RETURN Result { cycletime, swiE, leaP, minCyc, maxCyc, maxStep }
         
       END
     END
@@ -699,6 +738,8 @@ PROCEDURE DoPre() =
       ELSE
         EVAL map.put("@SIMTIME@", LR(fullSimEnd))
       END;
+
+      EVAL map.put("@PROCESS@", process);
       
       (* done setting up map *)
       
@@ -837,6 +878,7 @@ VAR
   maxSpeed   : CARDINAL       := LAST(CARDINAL);
   doCalibrate                 := FALSE;
   calibFn    : Pathname.T     := NIL;
+  process                     := "tttt";
   
 BEGIN
   IF m3utils = NIL THEN
@@ -885,6 +927,10 @@ BEGIN
       IF pp.keywordPresent("-calibrate") THEN
         doCalibrate := TRUE
       END
+    END;
+
+    IF pp.keywordPresent("-process") THEN
+      process := pp.getNext()
     END;
 
     IF calibFn # NIL THEN
