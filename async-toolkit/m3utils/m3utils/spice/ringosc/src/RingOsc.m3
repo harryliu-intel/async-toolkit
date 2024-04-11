@@ -76,6 +76,10 @@ TYPE
   
   Result = ARRAY ResultCol OF LONGREAL;
 
+CONST
+  FirstResult = Result { FIRST(LONGREAL), .. };
+  LastResult  = Result { LAST(LONGREAL) , .. };
+
 PROCEDURE FmtLRA(READONLY a : ARRAY OF LONGREAL) : REF ARRAY OF TEXT =
   VAR
     res := NEW(REF ARRAY OF TEXT, NUMBER(a));
@@ -347,14 +351,15 @@ PROCEDURE DoPost() =
     n     := 0.0d0;
     sum   := Result { 0.0d0, .. };
     sumSq := sum;
-    
+    min   := LastResult;
+    max   := FirstResult;
   BEGIN
     IF measureFn # NIL THEN
       mWr := FileWr.Open(measureFn)
     END;
     IF traceRt # NIL THEN
       WITH this = DoTrace(traceRt, mWr) DO
-        Accumulate(this, n, sum, sumSq)
+        Accumulate(this, n, sum, sumSq, min, max)
       END
     ELSE
       CONST
@@ -367,7 +372,7 @@ PROCEDURE DoPost() =
           fn := CitTextUtils.CheckSuffix(fn, extension);
           IF fn # NIL THEN
             WITH this = DoTrace(fn, mWr) DO
-              Accumulate(this, n, sum, sumSq)
+              Accumulate(this, n, sum, sumSq, min, max)
             END
           END
         END
@@ -382,20 +387,26 @@ PROCEDURE DoPost() =
       Wr.PutText(mWr, Concat(",",
                              FmtLRA(LRA { vdd, temp })^,
                              TA { },
-                             FmtLRA(DoStats(n, sum, sumSq)^)^));
+                             FmtLRA(DoStats(n, sum, sumSq)^)^,
+                             FmtLRA(min)^,
+                             FmtLRA(max)^));
       Wr.PutChar(mWr, '\n');
       Wr.Close(mWr)
     END;
   END DoPost;
 
-PROCEDURE Accumulate(READONLY x : Result;
-                     VAR n : LONGREAL;
-                     VAR sum, sumSq : Result) =
+PROCEDURE Accumulate(READONLY x       : Result;
+                     VAR            n : LONGREAL;
+                     VAR sum, sumSq   : Result;
+                     VAR min, max     : Result) =
   BEGIN
     n        := n        + 1.0d0;
     FOR c := FIRST(Result) TO LAST(Result) DO
       sum  [c] := sum  [c] + x[c];
-      sumSq[c] := sumSq[c] + x[c] * x[c]
+      sumSq[c] := sumSq[c] + x[c] * x[c];
+
+      min[c]   := MIN(min[c], x[c]);
+      max[c]   := MAX(max[c], x[c]);
     END
   END Accumulate;
 
