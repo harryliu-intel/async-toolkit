@@ -9,12 +9,16 @@ nb_queue=${NBPOOL}
 nb_qslot=${NBQSLOT}
 step=1
 
-temps="0 25 50 60 75 85 100 125"
-sweeps="100"
+temps="-40 0 25 50 60 75 85 100 125"
+sweeps="10"
+procs="tttt rcff rcss rxsf rxfs"
+
 #sweeps=10
 
 #volts="0.20 0.22 0.24 0.26 0.28 0.30 0.32 0.34 0.36 0.38 0.40 0.45 0.50 0.55 0.60 0.65 0.70 0.80 0.90"
-volts="0.18 0.20 0.22 0.24 0.26 0.28 0.30 0.32 0.34 0.36 0.38 0.40 0.45"
+volts="0.200 0.225 0.250 0.275 0.300 0.325 0.350 0.400 0.450 0.500 0.600 0.750 0.900"
+
+maxspeedstr=""
 
 # for testing:
 
@@ -23,8 +27,10 @@ testing=1
 if [ "${testing}" == "1" ]; then
     temps="85"
     volts="0.30"
-    trantypes="ulvt"
+#    trantypes="ulvt"
     sweeps="4"
+    procs="tttt"
+    maxspeedstr="-maxspeed 6"
 fi
 
 
@@ -54,6 +60,7 @@ EOF
 
 tasknum=0
 
+for proc in ${procs}; do
 for sweep in ${sweeps}; do
         for volt in ${volts}; do
         for temp in ${temps}; do
@@ -70,15 +77,15 @@ for sweep in ${sweeps}; do
             echo "cd ${runsubdir}"     >> ${runfile}
 
 
-            basecmd="${RINGOSCSIM} -vdd ${volt} -temp ${temp}"
+            basecmd="${RINGOSCSIM} -vdd ${volt} -temp ${temp} -process ${proc}"
 
             calibcmd="${basecmd} -calibrate -speed 0"
 
-            echo "${calibcmd} -p pre -p sim -p conv -p clean -p post" >> ${runfile}
+            echo "${calibcmd} -sweeps 1 -p pre -p sim -p conv -p clean -p post" >> ${runfile}
 
             echo >> ${runfile}
             
-	    realcmd="${basecmd} -calibfile calibrate.dat -sweeps ${sweep} -sweepspeeds -maxspeed 6"
+	    realcmd="${basecmd} -calibfile calibrate.dat -sweeps ${sweep} -sweepspeeds ${maxspeedstr}"
 
             echo "${realcmd} -p pre"   >> ${runfile}
             echo "${realcmd} -p sim"   >> ${runfile}
@@ -91,6 +98,7 @@ for sweep in ${sweeps}; do
             
         done
         done
+done
 done
 
 echo "${tasknum} jobs"

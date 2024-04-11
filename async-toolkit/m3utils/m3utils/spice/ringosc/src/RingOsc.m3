@@ -299,6 +299,9 @@ PROCEDURE DoTrace(traceRt : Pathname.T; mWr : Wr.T) : Result =
           LR(cycletime),
           LR(swiE),
           LR(leaP),
+          LR(minCyc),
+          LR(maxCyc),
+          LR(maxStep),
           slowName
           }));
           Wr.PutChar(mWr, '\n');

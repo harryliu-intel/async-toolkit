@@ -218,10 +218,12 @@ Vvssx   vssx  0 DC=0
 
 
 * Simulate
-.TRAN 1p '10n + runtime'
+*.TRAN 1p '10n + runtime'
+.TRAN 1p '10n + runtime' sweep monte=@SWEEPS@
 
 
-.measure tran Cycle
+* the purpose of the following .measure is to trigger AUTOSTOP during calibration
+.measure tran Cycle  
 + trig V(ck) val='vtrue*0.5' td=10n rise=4
 + targ V(ck) val='vtrue*0.5' td=10n rise=5
 
