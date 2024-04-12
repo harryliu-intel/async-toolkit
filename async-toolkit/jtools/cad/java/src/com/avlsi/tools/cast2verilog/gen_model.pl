@@ -180,7 +180,7 @@ EOF
             my $subtype = (split(/\./, $basename))[0];
             my $minmax = (split(/\./, $basename))[1];
 
-            my $arg = "$minmax:$block:$sdf";
+            my $arg = "max:$block:$sdf";
             push(@sdf_args, ("-sdf $arg"));
             print $fh_tcl "run_workarounds $block $sdf_dir/${block}_${minmax}\n";
             if (open(my $fh1, '<', "$sdf_dir/$block.$minmax.bind_notifiers.sv")) {
