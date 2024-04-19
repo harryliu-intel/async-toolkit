@@ -1,0 +1,6 @@
+.include '/p/hdk/cad/stdcells/lib783_i0s_160h_50pp/pdk080_r4v2p0_efv/base_ulvt/spf/lib783_i0s_160h_50pp_base_ulvt_100c_tttt_ctyp/i0sinv000aa1n02x5.spf'
+.include '/p/hdk/cad/stdcells/lib783_i0s_160h_50pp/pdk080_r4v2p0_efv/base_ulvt/spf/lib783_i0s_160h_50pp_base_ulvt_100c_tttt_ctyp/i0sinv000aa1n04x5.spf'
+.include '/p/hdk/cad/stdcells/lib783_i0s_160h_50pp/pdk080_r4v2p0_efv/base_ulvt/spf/lib783_i0s_160h_50pp_base_ulvt_100c_tttt_ctyp/i0sinv000aa1n12x5.spf'
+.include '/p/hdk/cad/stdcells/lib783_i0s_160h_50pp/pdk080_r4v2p0_efv/base_ulvt/spf/lib783_i0s_160h_50pp_base_ulvt_100c_tttt_ctyp/i0sinv000aa1d48x5.spf'
+.include '/p/hdk/cad/stdcells/lib783_i0s_160h_50pp/pdk080_r4v2p0_efv/base_ulvt/spf/lib783_i0s_160h_50pp_base_ulvt_100c_tttt_ctyp/i0snand02aa1d16x5.spf'
+.include '/p/hdk/cad/stdcells/lib783_i0s_160h_50pp/pdk080_r4v2p0_efv/base_ulvt/spf/lib783_i0s_160h_50pp_base_ulvt_100c_tttt_ctyp/i0snor022aa1n16x5.spf'

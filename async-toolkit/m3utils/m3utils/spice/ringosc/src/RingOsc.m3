@@ -354,6 +354,12 @@ PROCEDURE DoPost() =
     min   := LastResult;
     max   := FirstResult;
   BEGIN
+    WITH settingsPerRange        = ninterp * settings,
+         ranges                  = stages - 1,
+         totalSpeeds             = ranges * settingsPerRange + 1 DO
+      maxSpeed := MIN(maxSpeed, totalSpeeds - 1);
+    END;
+      
     IF measureFn # NIL THEN
       mWr := FileWr.Open(measureFn)
     END;
