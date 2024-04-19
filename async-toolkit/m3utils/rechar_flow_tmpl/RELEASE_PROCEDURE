@@ -160,7 +160,17 @@ The directory structure might then look like this:
       [etc.]
       fwr_custom -> ${CHAR_RELEASE_DIR}/034.tc2_custom_cells_0p9u2_2024ww08.2/bundles/fwr_custom
 
+5. Even more LASTLY, check permissions on the released area.  A "sane" set of permissions is (octal) 2770:
 
+scef393112> ls -ld .
+drwxrws--- 51 mnystroe i1278 20480 Mar 24 16:34 .
+scef393112> 
+
+One way of accomplishing this is by running
+
+find . -type d -exec chmod 2711 {} \; 
+
+from the top-level of the release.
 
 How to make changes to the release procedure
 ============================================
