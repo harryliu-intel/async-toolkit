@@ -168,7 +168,7 @@ scef393112>
 
 One way of accomplishing this is by running
 
-find . -type d -exec chmod 2711 {} \; 
+find . -type d -exec chmod 2770 {} \; 
 
 from the top-level of the release.
 
