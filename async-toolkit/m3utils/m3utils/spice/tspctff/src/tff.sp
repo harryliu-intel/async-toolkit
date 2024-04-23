@@ -43,13 +43,14 @@ Mcr    vcc   rstb    c    ln_FAKE_PMOS_BULK phpbulvt w=2 l=1.4e-08 nf=1 m=1
 **********************************************************************
 * staticizers
 
-.subckt statc clk a b c vcc vssx
+.subckt statc clk rstb a b c vcc vssx
 
 MMac0  vcc   a    cui    ln_FAKE_PMOS_BULK phpbulvt w=2 l=1.4e-08 nf=1 m=1
 MMac1  cui   clk  c      ln_FAKE_PMOS_BULK phpbulvt w=2 l=1.4e-08 nf=1 m=1
 
 MMdc0  c     a    cdi    ln_FAKE_NMOS_BULK nhpbulvt w=2 l=1.4e-08 nf=1 m=1
 MMdc1  cdi   b    vssx   ln_FAKE_NMOS_BULK nhpbulvt w=2 l=1.4e-08 nf=1 m=1
+*MMdc2  cdj   rstb vssx   ln_FAKE_NMOS_BULK nhpbulvt w=2 l=1.4e-08 nf=1 m=1
 
 .ends
 
@@ -76,10 +77,10 @@ Xainv a ab vcc vssx i0sinv000aa1n02x5
 
 * semi-static TFF, reset low
 
-.subckt sstff_rst0 clk rst c vcc vssx
+.subckt sstff_rst0 clk rst rstb c vcc vssx
 
-Xtff     clk a b c vcc vssx tffcore
-Xstatc   clk a b c vcc vssx statc
+Xtff     clk      a b c vcc vssx tffcore
+Xstatc   clk rstb a b c vcc vssx statc
 
 Mcr    vssx   rst    c    ln_FAKE_NMOS_BULK nhpbulvt w=3 l=1.4e-08 nf=1 m=1
 
@@ -93,7 +94,7 @@ Mcr    vssx   rst    c    ln_FAKE_NMOS_BULK nhpbulvt w=3 l=1.4e-08 nf=1 m=1
 .subckt sstff_rst1 clk rstb c vcc vssx
 
 Xtff     clk a b c vcc vssx tffcore
-Xstatc   clk a b c vcc vssx statc
+Xstatc   clk rstb a b c vcc vssx statc
 
 Mcr    vcc   rstb    c    ln_FAKE_PMOS_BULK phpbulvt w=2 l=1.4e-08 nf=1 m=1
 
@@ -103,12 +104,12 @@ Mcr    vcc   rstb    c    ln_FAKE_PMOS_BULK phpbulvt w=2 l=1.4e-08 nf=1 m=1
 
 * static TFF, reset low
 
-.subckt stff_rst0 clk rst c vcc vssx
+.subckt stff_rst0 clk rst rstb c vcc vssx
 
 Xtff     clk a b c vcc vssx tffcore
 Xstata   clk b c a vcc vssx stata
 Xstatb   clk a c b vcc vssx statb
-Xstatc   clk a b c vcc vssx statc
+Xstatc   clk rstb a b c vcc vssx statc
 
 Mcr    vssx   rst    c    ln_FAKE_NMOS_BULK nhpbulvt w=3 l=1.4e-08 nf=1 m=1
 
@@ -123,7 +124,7 @@ Mcr    vssx   rst    c    ln_FAKE_NMOS_BULK nhpbulvt w=3 l=1.4e-08 nf=1 m=1
 Xtff     clk a b c vcc vssx tffcore
 Xstata   clk b c a vcc vssx stata
 Xstatb   clk a c b vcc vssx statb
-Xstatc   clk a b c vcc vssx statc
+Xstatc   clk rstb a b c vcc vssx statc
 
 
 Mcr    vcc   rstb    c    ln_FAKE_PMOS_BULK phpbulvt w=2 l=1.4e-08 nf=1 m=1

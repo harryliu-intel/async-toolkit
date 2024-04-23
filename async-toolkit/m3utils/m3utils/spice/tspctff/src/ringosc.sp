@@ -33,16 +33,17 @@
 
 .include 'include.sp'
 .include 'tff.sp'
+.include 'dff.sp'
 
 **********************************************************************
 
 .subckt dlycell d db q qb vcc vssx
 
-Xinv0 d  qb vcc vssx i0sinv000aa1d48x5
-Xinv1 db q  vcc vssx i0sinv000aa1d48x5
+Xinv0 d  qb vcc vssx i0sinv000aa1n30x5
+Xinv1 db q  vcc vssx i0sinv000aa1n30x5
 
-Xinvc0 q  qb vcc vssx i0sinv000aa1n04x5
-Xinvc1 qb q  vcc vssx i0sinv000aa1n04x5
+Xinvc0 q  qb vcc vssx i0sinv000aa1n02x5
+Xinvc1 qb q  vcc vssx i0sinv000aa1n02x5
 
 .ends
 
@@ -51,7 +52,7 @@ Xinvc1 qb q  vcc vssx i0sinv000aa1n04x5
 .subckt dlycell_en d db en enb q qb vcc vssx
 
 Xinv0 d  en  qb vcc vssx i0snand02aa1d16x5
-Xinv1 db enb q  vcc vssx i0snor022aa1n16x5
+Xinv1 db enb q  vcc vssx i0snor002aa1n16x5
 
 Xinvc0 q  qb vcc vssx i0sinv000aa1n02x5
 Xinvc1 qb q  vcc vssx i0sinv000aa1n02x5
@@ -136,7 +137,7 @@ M3 vssx reset o ln_FAKE_NMOS_BULK nhpbulvt w=3 l=1.4e-08 nf=1 m=1
 
 **********************************************************************
 
-.subckt oscillator f0_0 f1_0 f2_0 f3_0 f0_1 f1_1 f2_1 f3_1 f0_2 f1_2 f2_2 f3_2 f0_3 f1_3 f2_3 f3_3 f0_4 f1_4 f2_4 f3_4 f0_5 f1_5 f2_5 f3_5 f0_6 f1_6 f2_6 f3_6 f0_7 f1_7 f2_7 f3_7  ev0 od0 ev1 od1 ev2 od2 ck ckb rstb vcc vssx
+.subckt oscillator f0_0 f1_0 f2_0 f3_0 f0_1 f1_1 f2_1 f3_1 f0_2 f1_2 f2_2 f3_2 f0_3 f1_3 f2_3 f3_3 f0_4 f1_4 f2_4 f3_4 f0_5 f1_5 f2_5 f3_5 f0_6 f1_6 f2_6 f3_6 f0_7 f1_7 f2_7 f3_7  ev0 od0 ev1 od1 ev2 od2 en enb ck ckb rstb vcc vssx
 
 Xinterp0 e eb o ob f0_0 f1_0 f2_0 f3_0 ck ckb vcc vssx interp
 Xinterp1 e eb o ob f0_1 f1_1 f2_1 f3_1 ck ckb vcc vssx interp
@@ -151,7 +152,8 @@ Xinterp7 e eb o ob f0_7 f1_7 f2_7 f3_7 ck ckb vcc vssx interp
 Vck0 ck ck0 0
 vckb0 ckb ckb0 0
 
-Xscd0  ck0 ckb0 ck1 ckb1 vcc vssx dlycell
+Xscd0  ck0 ckb0 en enb ck1 ckb1 vcc vssx dlycell_en
+
 Xscd1  ck1 ckb1 ck2 ckb2 vcc vssx dlycell
 Xscd2  ck2 ckb2 ck3 ckb3 vcc vssx dlycell
 Xscd3  ck3 ckb3 ck4 ckb4 vcc vssx dlycell
@@ -182,18 +184,37 @@ Xdut
 +f3_3 f0_4 f1_4 f2_4 f3_4
 +f0_5 f1_5 f2_5 f3_5 f0_6
 +f1_6 f2_6 f3_6 f0_7 f1_7 f2_7 f3_7
-+ev0 od0 ev1 od1 ev2 od2 ckb ck rstb vcc vssx oscillator
++ev0 od0 ev1 od1 ev2 od2 en enb
++ckb ck rstb vcc vssx oscillator
 
 Vres rstb 0 DC=0 PWL 0 0 0.99ns 0 1.01ns vtrue
+
+* enables
+Ven en vcc 0 
+Venb enb vssx 0 
+
+* state machine
+
+Xstat0 ckdiv2 rst  rstb  s0 s1 s1b vcc vssx ssdff_rst1
+Xstat1 ckdiv2 rstb s1 s2 s2b vcc vssx ssdff_rst0
+Xstat2 ckdiv2 rstb s2 s3 s3b vcc vssx ssdff_rst0
+Xstat3 ckdiv2 rstb s3 s4 s4b vcc vssx ssdff_rst0
+
+Vs0 s0 s4 0
+
+Xres0 rstb s0b stop vcc vssx i0snand02aa1n06x5
+
+Xsr eclk stop sren srenb vcc vssx lsr000   
+
 
 **********************************************************************
 
 .include 'settings.sp'
 
 
-Xdiv0 ck     rst  ckdiv2 vcc vssx sstff_rst0
-Xdiv1 ckdiv2 rst  ckdiv4 vcc vssx stff_rst0
-Xdiv2 ckdiv4 rst  ckdiv8 vcc vssx stff_rst0
+Xdiv0 ck     rst  rstb ckdiv2 vcc vssx sstff_rst0
+Xdiv1 ckdiv2 rst  rstb ckdiv4 vcc vssx stff_rst0
+Xdiv2 ckdiv4 rst  rstb ckdiv8 vcc vssx stff_rst0
 
 
 * set max speed -- coarse tuning
@@ -210,6 +231,11 @@ Vod2 od2 0 0
 *Vf2  f2 0 0
 *Vf3  f3 0 0
 
+Vxclk eclk 0 DC=0 PWL 0 0
++ 1.59ns     0 1.61ns vtrue
++ 1.99ns vtrue 2.01ns     0 
+
+
 **********************************************************************
 
 .PROBE TRAN v(ev*)
@@ -218,7 +244,7 @@ Vod2 od2 0 0
 .PROBE TRAN v(xdut.xreset.rstb)
 .PROBE TRAN v(xdut.xreset.reset)
 
-.PROBE TRAN v(rstb)
+.PROBE TRAN v(rst*)
 
 .PROBE TRAN v(xdiv0.a)
 .PROBE TRAN v(xdiv0.b)
@@ -231,6 +257,25 @@ Vod2 od2 0 0
 .PROBE TRAN v(xdiv2.a)
 .PROBE TRAN v(xdiv2.b)
 .PROBE TRAN v(xdiv2.c)
+
+.PROBE TRAN v(xstat0.a)
+.PROBE TRAN v(xstat0.b)
+.PROBE TRAN v(xstat0.c)
+
+.PROBE TRAN v(xstat1.a)
+.PROBE TRAN v(xstat1.b)
+.PROBE TRAN v(xstat1.c)
+
+.PROBE TRAN v(xstat2.a)
+.PROBE TRAN v(xstat2.b)
+.PROBE TRAN v(xstat2.c)
+
+.PROBE TRAN v(xstat3.a)
+.PROBE TRAN v(xstat3.b)
+.PROBE TRAN v(xstat3.c)
+
+.PROBE TRAN v(s*)
+.PROBE TRAN v(eclk)
 
 
 
@@ -262,7 +307,7 @@ Vod2 od2 0 0
 Vvcc    vcc   0 DC=vtrue
 Vvssx   vssx  0 DC=0
 
-.PARAM runtime=3n
+.PARAM runtime=2n
 
 
 * Simulate
