@@ -89,7 +89,7 @@ my $search_ctrl = "^...bd";
 my @bd_divs;
 my $search_div = "^...divert";
 if ($perf) {
-    push @vcs_args, "-f \"\$CAST2VERILOG_RUNTIME/perf.vcfg\"";
+    unshift @vcs_args, "-f \"\$CAST2VERILOG_RUNTIME/perf.vcfg\"";
     if (open(my $lh, $flist)) {
         local $/;
         my @content2 = split(/\n/, $content);
@@ -216,7 +216,7 @@ export SPAR="$spar_dir"
 export CAST2VERILOG_RUNTIME="$runtime"
 export GLS_DIR="$gls_dir"
 export VCS_PRINT_INITREG_INITIALIZATION="1"
-verdi3 vcs @vcs_args -assert svaext -licqueue -full64 -lrt @defines -f "\$CAST2VERILOG_RUNTIME/$vcfg" @args testbench.v "\$CAST2VERILOG_RUNTIME/readhexint.c" @sdf_args @netlists
+verdi3 vcs  -assert svaext -licqueue -full64 -j4 -fgp -lrt @defines -f "\$CAST2VERILOG_RUNTIME/$vcfg" @args @vcs_args testbench.v "\$CAST2VERILOG_RUNTIME/readhexint.c" @sdf_args @netlists
 EOF
 print $fh_verdi <<EOF;
 export SPAR="$spar_dir"
