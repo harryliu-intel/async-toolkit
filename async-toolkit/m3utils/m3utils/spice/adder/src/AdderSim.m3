@@ -439,16 +439,17 @@ PROCEDURE WriteSource(wr         : Wr.T;
     END
   END WriteSource;
 
-PROCEDURE Scale1(ifn, ofn : Pathname.T) =
+PROCEDURE Scale1(ifn, ofn : Pathname.T; modRegEx : TEXT) =
   CONST
     DecPath = "spice/decorate/AMD64_LINUX/spicedecorate";
     VthPath = "spice/decorate/src/vth.scm";
   VAR
     Decorate := m3utils & "/" & DecPath;
-    cmd := FN("%s -i %s -o %s -root %s -noprobe -capmul %s -resmul %s -S %s -modify M '(modify-mos-vth %s %s)'",
+    cmd := FN("%s -i %s -o %s -root %s -noprobe -capmul %s -resmul %s -S %s -modify M '(modify-mos-vth %s %s)' %s",
               TA{Decorate, ifn, ofn, TheRoot, LR(cscale), LR(rscale),
                  m3utils & "/" & VthPath,
-                 LR(deln), LR(delp)});
+                 LR(deln), LR(delp),
+                 modRegEx });
     stdout, stderr := ProcUtils.WriteHere(Stdio.stderr);
     cm             := ProcUtils.RunText(cmd,
                                         stdout := stdout,
@@ -502,7 +503,16 @@ PROCEDURE DoPre() =
       END
     END;
 
-    Scale1("the_dut.sp", "the_scaled_dut.sp")
+    VAR
+      modRegEx : TEXT;
+    BEGIN
+      IF modLeaves = TRUE THEN
+        modRegEx := ""
+      ELSE
+        modRegEx := "-modregex adder_tb_Width32"
+      END;
+      Scale1("the_dut.sp", "the_scaled_dut.sp", modRegEx)
+    END
   END DoPre;
 
 PROCEDURE MapCells(map : TextTextTbl.T) =
@@ -635,6 +645,7 @@ VAR
   tran       : Tran           := Tran.Ulvt;
   cscale, rscale              := 1.0d0;
   deln, delp                  := 0.0d0;
+  modLeaves                   := TRUE;
   
 BEGIN
   IF m3utils = NIL THEN
@@ -676,6 +687,10 @@ BEGIN
     IF pp.keywordPresent("-thresh") THEN
       tran := VAL(Lookup(pp.getNext(), TranNames),
                                            Tran)
+    END;
+
+    IF pp.keywordPresent("-modleaves") THEN
+      modLeaves := Scan.Bool(pp.getNext())
     END;
 
     IF pp.keywordPresent("-cscale") THEN

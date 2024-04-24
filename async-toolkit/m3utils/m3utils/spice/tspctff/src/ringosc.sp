@@ -34,6 +34,7 @@
 .include 'include.sp'
 .include 'tff.sp'
 .include 'dff.sp'
+.include 'pulse_gen_logic_ff.cdl'
 
 **********************************************************************
 
@@ -195,12 +196,18 @@ Venb enb vssx 0
 
 * state machine
 
-Xstat0 ckdiv2 rst  rstb  s0 s1 s1b vcc vssx ssdff_rst1
-Xstat1 ckdiv2 rstb s1 s2 s2b vcc vssx ssdff_rst0
-Xstat2 ckdiv2 rstb s2 s3 s3b vcc vssx ssdff_rst0
-Xstat3 ckdiv2 rstb s3 s4 s4b vcc vssx ssdff_rst0
+*Xstat0 ckdiv2 rst  rstb  s0 s1 s1b vcc vssx ssdff_rst1
+*Xstat1 ckdiv2 rstb s1 s2 s2b vcc vssx ssdff_rst0
+*Xstat2 ckdiv2 rstb s2 s3 s3b vcc vssx ssdff_rst0
+*Xstat3 ckdiv2 rstb s3 s4 s4b vcc vssx ssdff_rst0
 
-Vs0 s0 s4 0
+Xstat0 ckdiv2 s0b s1b s1  rstb vcc vssx pulse_gen_logic_ff
+Xstat1 ckdiv2 s1  s2  s2b rstb vcc vssx pulse_gen_logic_ff
+Xstat2 ckdiv2 s2  s3  s3b rstb vcc vssx pulse_gen_logic_ff
+Xstat3 ckdiv2 s3  s4  s4b rstb vcc vssx pulse_gen_logic_ff
+
+Vs0  s0  s4  0
+Vs0b s0b s4b 0
 
 Xres0 rstb s0b stop vcc vssx i0snand02aa1n06x5
 
@@ -273,6 +280,8 @@ Vxclk eclk 0 DC=0 PWL 0 0
 .PROBE TRAN v(xstat3.a)
 .PROBE TRAN v(xstat3.b)
 .PROBE TRAN v(xstat3.c)
+
+.PROBE TRAN v(xstat*)
 
 .PROBE TRAN v(s*)
 .PROBE TRAN v(eclk)

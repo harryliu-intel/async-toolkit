@@ -26,6 +26,8 @@ delps="0"
 
 cscales="5.0 2.0 1.4 1.0 0.7 0.5 0.4 0.3 0.2"
 
+modleaves="true"
+
 if [ "$1" == "-delvth" ]; then
     cscales="1.0"
     delns="-0.030 -0.025 -0.020 -0.015 -0.010 -0.005 0.000 0.005 0.010 0.015 0.020 0.025 0.030"
@@ -44,6 +46,10 @@ if [ "$1" == "-ln2" ]; then
     delns="0.000 0.050 0.100 0.125 0.150 0.200 0.250 0.300 0.400 0.500 0.700 1.000"
     delps="0.000 0.050 0.100 0.125 0.150 0.200 0.250 0.300 0.400 0.500 0.700 1.000"
     temps="-200 -196 -180 -150 -120 -100 -80 25 85"
+fi
+
+if [ "$1" == "-globalwiring" ]; then
+    modleaves="true false"
 fi
 
 # for testing:
@@ -87,6 +93,7 @@ EOF
 
 tasknum=0
 
+for modl in ${modleaves}; do
 for deln in ${delns}; do
 for delp in ${delps}; do
 for cscl in ${cscales}; do
@@ -107,7 +114,7 @@ for lib in ${libs}; do
             echo "pwd"                 >> ${runfile}
             echo "cd ${runsubdir}"     >> ${runfile}
 
-	    cmdargs="${ADDERSIM} -vdd ${volt} -temp ${temp} -lib ${lib} -thresh ${tran} -sweeps ${sweep} -cscale ${cscl} -delp ${delp} -deln ${deln}"
+	    cmdargs="${ADDERSIM} -vdd ${volt} -temp ${temp} -lib ${lib} -thresh ${tran} -sweeps ${sweep} -cscale ${cscl} -delp ${delp} -deln ${deln} -modleaves ${modl}"
 
             echo "${cmdargs} -p pre"   >> ${runfile}
             echo "${cmdargs} -p sim"   >> ${runfile}
@@ -121,6 +128,7 @@ for lib in ${libs}; do
         done
         done
         done
+done
 done
 done
 done
