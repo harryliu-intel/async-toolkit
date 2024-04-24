@@ -21,6 +21,6 @@
 corners_list=( \
 "85/300/tttt/tttt/cmin/100" "85/300/tttt/tttt/cmax/100" \
 "85/275/tttt/tttt/cmin/100" "85/275/tttt/tttt/cmax/100" \
-"100/375/rcff/tttt/cmin/100" "100/375/rcff/tttt/cmax/100" \
+"100/375/rcff/tttt/cmin/100" "100/375/tttt/tttt/cmax/100" \
 "100/450/tttt/tttt/cmin/100" "100/450/tttt/tttt/cmax/100" \
 )
