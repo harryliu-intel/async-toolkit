@@ -7,7 +7,7 @@ IMPORT TransitionFinder;
 IMPORT Trace;
 IMPORT TraceFile;
 IMPORT Debug;
-FROM Fmt IMPORT F, Int, Unsigned, LongReal, FN;
+FROM Fmt IMPORT F, Int, Unsigned, LongReal, FN, Bool;
 IMPORT AL;
 IMPORT Thread;
 IMPORT Text;
@@ -392,6 +392,7 @@ PROCEDURE DoPost() =
       mWr := FileWr.Open(measureFn & ".stat");
       Wr.PutText(mWr, Concat(",",
                              FmtLRA(LRA { vdd, temp, cscale, rscale, deln, delp })^,
+                             TA { Bool(modLeaves) },
                              TA { LibNames[lib], TranNames[tran] },
                              FmtLRA(DoStats(n, sum, sumSq)^)^));
       Wr.PutChar(mWr, '\n');
