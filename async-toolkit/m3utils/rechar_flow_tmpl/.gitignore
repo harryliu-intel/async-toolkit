@@ -48,3 +48,5 @@
 /monitorspace.out
 /resultcells.dat
 /*.cells
+/lm_command.log
+/lm_output.txt
