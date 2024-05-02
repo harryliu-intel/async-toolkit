@@ -7,9 +7,10 @@ setenv RECHAR_PVTS_ZSH     pvts.zsh.375_125_125_cmin
 setenv RECHAR_LVF_MODE     ml
 
 #setenv RECHAR_START        compile_ldbs
-#setenv RECHAR_STOP         compile_ldbs
-setenv RECHAR_START        create_ndms
-unsetenv RECHAR_STOP
+#setenv RECHAR_START        create_ndms
+unsetenv RECHAR_START
+#unsetenv RECHAR_STOP
+setenv RECHAR_STOP         compile_ldbs
 
 ./finish_setup.sh
 
