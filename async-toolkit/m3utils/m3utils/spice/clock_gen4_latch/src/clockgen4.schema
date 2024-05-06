@@ -1,0 +1,41 @@
+
+#0.225,-40,3e-11,tttt,40,1.3200646103466372e-9,3.4506817320581994e-10,2.1561077478711866e-9,4.3543817029875496e-10,1.369178244378324e-9,3.4444321188087035e-10,2.3288792837593585e-9,9.65609588417056e-10,1.3138405109480872e-9,2.911256984993357e-10,2.4092589985015103e-9,4.941965475469468e-10,1.4497487145984427e-9,5.623099306137491e-10,2.2783207860211732e-9,6.168907613173174e-10,7.698960462399682e-10,1.5071852179363372e-9,8.11012238593925e-10,1.1441609727004112e-9,9.019183313925523e-10,1.6010540601942703e-9,8.119409399738706e-10,1.297269593443404e-9,2.4711437657118935e-9,3.3934174070886633e-9,2.2430354828807945e-9,7.2514848375252525e-9,2.1036268491013257e-9,3.86688893147369e-9,4.246072238400977e-9,3.73623114365764e-9
+
+
+
+
+
+
+sweep vdd,collate temp,collate rise,collate corner,ignore samples,
+report dl0_mean, report dl0_sdev, report pw0_mean, report pw0_sdev,
+report dl1_mean, report dl1_sdev, report pw1_mean, report pw1_sdev,
+report dl2_mean, report dl2_sdev, report pw2_mean, report pw2_sdev,
+report dl3_mean, report dl3_sdev, report pw3_mean, report pw3_sdev,
+ignore dl0_min, ignore pw0_min,
+ignore dl1_min, ignore pw1_min, 
+ignore dl2_min, ignore pw2_min, 
+ignore dl3_min, ignore pw3_min, 
+ignore dl0_max, ignore pw0_max,
+ignore dl1_max, ignore pw1_max, 
+ignore dl2_max, ignore pw2_max, 
+ignore dl3_max, ignore pw3_max, 
+formula pw0_smin (- pw0_mean (* Klatency pw0_sdev)),
+formula pw0_smax (+ pw0_mean (* Klatency pw0_sdev))
+
+# ignore: ignore col
+#
+# collate: collate col (in filenames)
+#
+# sweep: this is an independent variable.  Sweep it, but when sweeping another,
+# this variable is collated.
+#
+# report: this is a dependent variable.  Produce it as output.
+#
+# formula: this is a dependent formula.  It can depend on any column.
+#
+# formula fields must come after all the fields from the input schema
+#
+# note that any column can be named.
+#
+# references can only be backward.
+#
