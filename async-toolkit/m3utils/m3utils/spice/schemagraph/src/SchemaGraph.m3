@@ -89,108 +89,111 @@ TYPE
 
 PROCEDURE ReadSchema(spn : Pathname.T) : Schema =
   VAR
-    rd  := FileRd.Open(spn);
+    rd           := FileRd.Open(spn);
+    text         := "";
     res : Schema;
   BEGIN
     TRY
-    LOOP
-      WITH line   = Rd.GetLine(rd),
-           reader = NEW(TextReader.T).init(line),
-           flds   = reader.shatter(",", "", skipNulls := FALSE) DO
-        IF Text.Length(line) # 0 AND Text.GetChar(line, 0) # '#' THEN
-          (* active line *)
-          VAR
-            p := flds;
-            count := ARRAY Field.T OF CARDINAL { 0, .. };
-            types := NEW(CardSeq.T).init();
-            i := 0;
-          BEGIN
-            res := Schema { nfields := 0,
-                            dfields := 0,
-                            fdata   := NEW(FDataSeq.T).init() };
-                
-            WHILE p # NIL DO
-              (* p.head points to a field *)
-              VAR
-                field := p.head;
-                type : Field.T;
-                name : TEXT;
-                formula : TEXT;
-              BEGIN
-                RemoveLeadingSpaces(field);
-
-                Debug.Out(F("Parsing field \"%s\"", field));
-                
-                IF Text.Length(field) = 0 THEN
-                  type := Field.T.Ignore
-                ELSE
-                  VAR
-                    found := FALSE;
-                  BEGIN
-                  FOR i := FIRST(Field.T) TO LAST(Field.T) DO
-                    IF CitTextUtils.HavePrefix(field, Field.Names[i]) THEN
-                      found := TRUE;
-                      type := i;
-                      field := CitTextUtils.RemovePrefix(field, Field.Names[i]);
-                      RemoveLeadingSpaces(field);
-                      EXIT
-                    END
-                  END;
-                  IF NOT found THEN
-                    Debug.Error(F("Incomprehensible schema field \"%s\"", field))
-                  END
-                  END
-                END;
-
-                (* type is set *)
-                Debug.Out(F("Got field type %s", Field.Names[type]));
-                INC(count[type]);
-                types.addhi(ORD(type));
-
-                IF Text.Length(field) = 0 THEN
-                  Debug.Out(F("Field is now empty"));
-                  name := NIL;
-                  formula := NIL
-                ELSIF Text.GetChar(field, 0) # '(' THEN
-                  Debug.Out(F("Field not starting with paren, so this is a name: \"%s\"", field));
-                  (* what we have is either empty or a name *)
-                  name := NextToken(field)
-                END;
-
-                IF Text.Length(field) # 0 AND Text.GetChar(field, 0) = '(' THEN
-                  Debug.Out(F("Remainder must be formula: \"%s\"", field));
-                  formula := field
-                END;
-
-                (* got a field *)
-                Debug.Out(F("Field %s name %s type %s (count %s) formula %s",
-                            Int(i),
-                            UnNil(name),
-                            Field.Names[type],
-                            Int(count[type]),
-                            UnNil(formula)));
-
-                res.fdata.addhi( FData.T { type, name, formula });
-                
-                INC(res.nfields);
-                IF type # Field.T.Formula THEN
-                  INC(res.dfields);
-                END;
-                
-              END;
-              p := p.tail;
-              INC(i)
-            END
+      LOOP
+        WITH line   = Rd.GetLine(rd) DO
+          IF Text.Length(line) # 0 AND Text.GetChar(line, 0) # '#' THEN
+            (* active line *)
+            
+            text := text & line & " ";
           END
         END
       END
-    END
     EXCEPT
       Rd.EndOfFile => Rd.Close(rd)
     END;
+
+    VAR
+      reader := NEW(TextReader.T).init(text);
+      flds   := reader.shatter(",", "", skipNulls := FALSE);
+      p      := flds;
+      count  := ARRAY Field.T OF CARDINAL { 0, .. };
+      types  := NEW(CardSeq.T).init();
+      i      := 0;
+    BEGIN
+      res := Schema { nfields := 0,
+                      dfields := 0,
+                      fdata   := NEW(FDataSeq.T).init() };
+      
+      WHILE p # NIL DO
+        (* p.head points to a field *)
+        VAR
+          field := p.head;
+          type : Field.T;
+          name : TEXT;
+          formula : TEXT;
+        BEGIN
+          RemoveLeadingSpaces(field);
+          
+          Debug.Out(F("Parsing field \"%s\"", field));
+          
+          IF Text.Length(field) = 0 THEN
+            type := Field.T.Ignore
+          ELSE
+            VAR
+              found := FALSE;
+            BEGIN
+              FOR i := FIRST(Field.T) TO LAST(Field.T) DO
+                IF CitTextUtils.HavePrefix(field, Field.Names[i]) THEN
+                  found := TRUE;
+                  type := i;
+                  field := CitTextUtils.RemovePrefix(field, Field.Names[i]);
+                  RemoveLeadingSpaces(field);
+                  EXIT
+                END
+              END;
+              IF NOT found THEN
+                Debug.Error(F("Incomprehensible schema field \"%s\"", field))
+              END
+            END
+          END;
+          
+          (* type is set *)
+          Debug.Out(F("Got field type %s", Field.Names[type]));
+          INC(count[type]);
+          types.addhi(ORD(type));
+          
+          IF Text.Length(field) = 0 THEN
+            Debug.Out(F("Field is now empty"));
+            name := NIL;
+            formula := NIL
+          ELSIF Text.GetChar(field, 0) # '(' THEN
+            Debug.Out(F("Field not starting with paren, so this is a name: \"%s\"", field));
+            (* what we have is either empty or a name *)
+            name := NextToken(field)
+          END;
+          
+          IF Text.Length(field) # 0 AND Text.GetChar(field, 0) = '(' THEN
+            Debug.Out(F("Remainder must be formula: \"%s\"", field));
+            formula := field
+          END;
+          
+          (* got a field *)
+          Debug.Out(F("Field %s name %s type %s (count %s) formula %s",
+                      Int(i),
+                      UnNil(name),
+                      Field.Names[type],
+                      Int(count[type]),
+                      UnNil(formula)));
+          
+          res.fdata.addhi( FData.T { type, name, formula });
+          
+          INC(res.nfields);
+          IF type # Field.T.Formula THEN
+            INC(res.dfields);
+          END;
+          
+        END;
+        p := p.tail;
+        INC(i)
+      END
+    END;
     RETURN res
   END ReadSchema;
-
 
 PROCEDURE ReadData(schema : Schema; files : TextSeq.T) : RefSeq.T =
   VAR
