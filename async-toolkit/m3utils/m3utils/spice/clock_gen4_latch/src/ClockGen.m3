@@ -355,7 +355,8 @@ PROCEDURE Convert1(fsdbRoot : Pathname.T) =
                                         stdin  := NIL);
   BEGIN
     TRY
-      cm.wait()
+      cm.wait();
+      FS.DeleteFile(fsdbRoot & ".fsdb")
     EXCEPT
       ProcUtils.ErrorExit(err) =>
       Debug.Error(F("Couldn't run convert1 (%s) : %s", cmd, ProcUtils.FormatError(err)))

@@ -9,20 +9,16 @@ nb_queue=${NBPOOL}
 nb_qslot=${NBQSLOT}
 step=1
 
-temps="-40 0 25 50 60 75 85 100 125"
-sweeps="100"
+sweeps="40"
+temps="-40 0 25 50 75 85 100 125"
 procs="tttt rcff rcss rxsf rxfs"
-
-#sweeps=10
-
-volts="0.200 0.225 0.250 0.275 0.300 0.325 0.350 0.375 0.400 0.425 0.450"
-
+volts="0.225 0.250 0.275 0.300 0.325 0.350 0.375 0.450"
 speeds="0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15"
-rises="10e-12 30e-12 50e-12 70e-12 90e-12"
+rises="30e-12 50e-12 70e-12 90e-12"
 
 # for testing:
 
-testing=1
+testing=0
 
 if [ "${testing}" == "1" ]; then
     temps="85"
