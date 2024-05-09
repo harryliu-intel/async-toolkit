@@ -32,13 +32,14 @@
 .option PDMI=1
 .option PDMI_LIB='/p/hdk/cad/pdk/pdk783_r0.9HP2_24ww08.5/cmi/hspice/pdmi/lnx86/64bit/pdmi.so'
 
-.include 'CLOCK_GEN4_LATCH_ROUTED_100C.hspice'
+.include '@HSPICE_FILE@'
 
 Vvcc    vcc   0 DC=vtrue
 Vvssx   vssx  0 DC=0
 
 Xu_clkgen CLKOUT[0] CLKOUT[1] CLKOUT[2] CLKOUT[3]
-+vssx PW_DLY[0] PW_DLY[1] PW_DLY[2] PW_DLY[3] REFCLK vcc RSTB
++vssx @PW_SPEC@
++REFCLK vcc RSTB
 +core_D_crypto_D_bitcoin_D_clock_D_TEST_U_CLOCK_U_GEN4_U_LATCH_D_1000
 
 

@@ -6,7 +6,8 @@
 
 
 
-sweep vdd,collate temp,collate rise,collate corner,ignore samples,
+sweep vdd,sweep temp,collate rise,collate corner, collate speed,
+ignore samples,
 report dl0_mean, report dl0_sdev, report pw0_mean, report pw0_sdev,
 report dl1_mean, report dl1_sdev, report pw1_mean, report pw1_sdev,
 report dl2_mean, report dl2_sdev, report pw2_mean, report pw2_sdev,

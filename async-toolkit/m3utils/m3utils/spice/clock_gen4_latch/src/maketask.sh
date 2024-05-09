@@ -15,10 +15,12 @@ procs="tttt rcff rcss rxsf rxfs"
 volts="0.225 0.250 0.275 0.300 0.325 0.350 0.375 0.450"
 speeds="0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15"
 rises="30e-12 50e-12 70e-12 90e-12"
+#cells="latch latch_therm"
+cells="latch_therm"
 
 # for testing:
 
-testing=0
+testing=1
 
 if [ "${testing}" == "1" ]; then
     temps="85"
@@ -56,44 +58,46 @@ EOF
 
 tasknum=0
 
+for cell in ${cells}; do
 for rise in ${rises}; do
 for sped in ${speeds}; do
 for proc in ${procs}; do
 for sweep in ${sweeps}; do
-        for volt in ${volts}; do
-        for temp in ${temps}; do
+for volt in ${volts}; do
+for temp in ${temps}; do
             
-            runfile=${RUNDIR}/${tasknum}.sh
-
-            runsubdir=${RUNDIR}/${tasknum}.run
-
-            mkdir ${runsubdir}
-
-            ln -s ${SRCDIR}/CLOCK_GEN4_LATCH_ROUTED_100C.hspice ${runsubdir}
-
-            echo "#!/bin/sh -x"        >  ${runfile}
-            echo "hostname"            >> ${runfile}
-            echo "pwd"                 >> ${runfile}
-            echo "cd ${runsubdir}"     >> ${runfile}
-
-
-            basecmd="${CLOCKGENSIM} -vdd ${volt} -temp ${temp} -process ${proc} -rise ${rise}"
-
-            echo >> ${runfile}
+    runfile=${RUNDIR}/${tasknum}.sh
+    
+    runsubdir=${RUNDIR}/${tasknum}.run
+    
+    mkdir ${runsubdir}
+    
+    ln -s ${SRCDIR}/CLOCK_GEN4*.hspice ${runsubdir}
+    
+    echo "#!/bin/sh -x"        >  ${runfile}
+    echo "hostname"            >> ${runfile}
+    echo "pwd"                 >> ${runfile}
+    echo "cd ${runsubdir}"     >> ${runfile}
+    
+    
+    basecmd="${CLOCKGENSIM} -vdd ${volt} -temp ${temp} -process ${proc} -rise ${rise} -cell ${cell}"
+    
+    echo >> ${runfile}
+    
+    realcmd="${basecmd} -speed ${sped} -sweeps ${sweep}"
+    
+    echo "${realcmd} -p pre"   >> ${runfile}
+    echo "${realcmd} -p sim"   >> ${runfile}
+    echo "${realcmd} -p conv"  >> ${runfile}
+    echo "${realcmd} -p clean" >> ${runfile}
+    echo "${realcmd} -p post"  >> ${runfile}
+    chmod +x ${runfile}
+    
+    tasknum=`expr $tasknum + 1`
             
-	    realcmd="${basecmd} -speed ${sped} -sweeps ${sweep}"
-
-            echo "${realcmd} -p pre"   >> ${runfile}
-            echo "${realcmd} -p sim"   >> ${runfile}
-            echo "${realcmd} -p conv"  >> ${runfile}
-            echo "${realcmd} -p clean" >> ${runfile}
-            echo "${realcmd} -p post"  >> ${runfile}
-            chmod +x ${runfile}
-        
-            tasknum=`expr $tasknum + 1`
-            
-        done
-        done
+done
+done
+done
 done
 done
 done

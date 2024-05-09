@@ -169,7 +169,8 @@ PROCEDURE DoTrace(traceRt : Pathname.T; mWr : Wr.T) : Result =
       LR(vdd),
       LR(temp),
       LR(rise),
-      process},
+      process,
+      Int(speed)},
       FmtLRA(result)^));
 
       Wr.PutChar(mWr, '\n');
@@ -246,7 +247,7 @@ PROCEDURE DoPost() =
       mWr := FileWr.Open(measureFn & ".stat");
       Wr.PutText(mWr, Concat(",",
                              FmtLRA(LRA { vdd, temp, rise })^,
-                             TA { process },
+                             TA { process, Int(speed) },
                              FmtLRA(DoStats(n, sum, sumSq)^)^,
                              FmtLRA(min)^,
                              FmtLRA(max)^));
@@ -278,23 +279,6 @@ PROCEDURE DoPre() =
     
     Debug.Out("DoPre()");
 
-    VAR
-      speedStr := "";
-      val : TEXT;
-    BEGIN
-      FOR i := 0 TO 3 DO
-        IF Word.And(Word.Shift(speed, i), 1) = 1 THEN
-          val := "vtrue"
-        ELSE
-          val := "0"
-        END;
-
-        speedStr := speedStr & F("Vpwdly%s PW_DLY%s 0 DC=%s\n",
-                                 Int(i), Int(i), val)
-      END;
-      EVAL map.put("@SPEED@", speedStr)
-    END;
-
     EVAL map.put("@RISE@", LR(rise));
     
     EVAL map.put("@HSP_DIR@","/nfs/site/disks/zsc9_fwr_sd_001/mnystroe/p1278_3x0p9eu1/2023ww43d5/models_core_hspice/m14_2x_1xa_1xb_6ya_2yb_2yc__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp");
@@ -305,8 +289,57 @@ PROCEDURE DoPre() =
     
     EVAL map.put("@PROCESS@", process);
     EVAL map.put("@RISE@", LR(rise));
+
+    VAR
+      hspiceFile : TEXT;
+      pwCount    := PwCount[cell];
+      pwSpec     := "";
+      speedStr := "";
+      val : TEXT;
+    BEGIN
+      CASE cell OF
+        Cell.Latch =>
+        hspiceFile := "CLOCK_GEN4_LATCH_ROUTED_100C.hspice";
+
+        FOR i := 0 TO pwCount - 1 DO
+          IF Word.And(Word.Shift(speed, i), 1) = 1 THEN
+            val := "vtrue"
+          ELSE
+            val := "0"
+          END;
+          
+          speedStr := speedStr & F("Vpwdly%s PW_DLY%s 0 DC=%s\n",
+                                   Int(i), Int(i), val)
+        END
+
+      |
+        Cell.LatchTherm =>
+        hspiceFile := "CLOCK_GEN4_LATCH_THERMOMETER_ROUTED_100C.hspice";
+
+        FOR i := 0 TO pwCount - 1 DO
+          IF i < speed THEN
+            val := "vtrue"
+          ELSE
+            val := "0"
+          END;
+          
+          speedStr := speedStr & F("Vpwdly%s PW_DLY%s 0 DC=%s\n",
+                                   Int(i), Int(i), val)
+        END
+
+      END;
+
+      EVAL map.put("@HSPICE_FILE@", hspiceFile);
+      EVAL map.put("@SPEED@", speedStr);
+
+      FOR i := 0 TO pwCount - 1 DO
+        pwSpec := pwSpec & F("PW_DLY[%s] ", Int(i))
+      END;
+
+      EVAL map.put("@PW_SPEC@", pwSpec)
+    END;
     
-    (* done setting up map *)
+    (********************* done setting up map *********************)
     
     FOR i := FIRST(Files) TO LAST(Files) DO
       WITH path = m3utils & "/" & SrcPath & "/" & Files[i] & ".tmpl",
@@ -395,14 +428,18 @@ PROCEDURE DoClean() =
   
 TYPE
   Phase = { Pre, Sim, Conv, Clean, Post };
-  Proc = PROCEDURE();
-
+  Proc  = PROCEDURE();
+  Cell  = { Latch, LatchTherm };
+  
 CONST
   PhaseNames = ARRAY Phase OF TEXT       { "pre", "sim", "conv", "clean", "post" };
   PhaseProc  = ARRAY Phase OF Proc       { DoPre, DoSim, DoConv, DoClean, DoPost };
   DefSweeps  = 4;
   DefSpeed   = 0;
   DefRise    = 30.0d-12;
+
+  CellNames = ARRAY Cell OF TEXT     { "latch", "latch_therm" };
+  PwCount   = ARRAY Cell OF CARDINAL { 4, 16 };
   
 VAR
   pp                          := NEW(ParseParams.T).init(Stdio.stderr);
@@ -420,6 +457,8 @@ VAR
   process                     := "tttt";
 
   rise                        := DefRise;
+
+  cell                        := Cell.Latch;
   
 BEGIN
   IF m3utils = NIL THEN
@@ -430,20 +469,29 @@ BEGIN
     IF pp.keywordPresent("-t") THEN
       traceRt := pp.getNext()
     END;
+
     IF pp.keywordPresent("-vdd") THEN
       vdd := pp.getNextLongReal()
     END; 
+
     IF pp.keywordPresent("-temp") THEN
       temp := pp.getNextLongReal()
     END; 
+
     IF pp.keywordPresent("-rise") THEN
       rise := pp.getNextLongReal()
     END; 
+
     IF pp.keywordPresent("-sweeps") THEN
       sweeps := pp.getNextInt()
     END; 
+
     IF pp.keywordPresent("-measurefn") OR pp.keywordPresent("-m") THEN
       measureFn := pp.getNext()
+    END;
+
+    IF pp.keywordPresent("-cell") THEN
+      cell := VAL(Lookup(pp.getNext(), CellNames), Cell)
     END;
 
     IF pp.keywordPresent("-speed") THEN
