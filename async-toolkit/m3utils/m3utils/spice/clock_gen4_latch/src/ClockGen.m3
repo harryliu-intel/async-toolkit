@@ -308,7 +308,7 @@ PROCEDURE DoPre() =
             val := "0"
           END;
           
-          speedStr := speedStr & F("Vpwdly%s PW_DLY%s 0 DC=%s\n",
+          speedStr := speedStr & F("Vpwdly%s PW_DLY[%s] 0 DC=%s\n",
                                    Int(i), Int(i), val)
         END
 
