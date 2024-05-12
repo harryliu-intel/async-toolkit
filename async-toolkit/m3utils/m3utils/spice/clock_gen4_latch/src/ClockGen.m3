@@ -309,7 +309,8 @@ PROCEDURE DoPre() =
           END;
           
           speedStr := speedStr & F("Vpwdly%s PW_DLY[%s] 0 DC=%s\n",
-                                   Int(i), Int(i), val)
+                                   Int(i), Int(i), val);
+          pwSpec := "PW_DLY[0] PW_DLY[1] PW_DLY[2] PW_DLY[3]"
         END
 
       |
@@ -323,19 +324,16 @@ PROCEDURE DoPre() =
             val := "0"
           END;
           
-          speedStr := speedStr & F("Vpwdly%s PW_DLY%s 0 DC=%s\n",
-                                   Int(i), Int(i), val)
+          speedStr := speedStr & F("Vpwdly%s PW_DLY[%s] 0 DC=%s\n",
+                                   Int(i), Int(i), val);
+
+          pwSpec := "PW_DLY[0] PW_DLY[10] PW_DLY[11] PW_DLY[12] PW_DLY[13] PW_DLY[14] PW_DLY[15] PW_DLY[1] PW_DLY[2] PW_DLY[3] PW_DLY[4] PW_DLY[5] PW_DLY[6] PW_DLY[7] PW_DLY[8] PW_DLY[9]"
         END
 
       END;
 
       EVAL map.put("@HSPICE_FILE@", hspiceFile);
       EVAL map.put("@SPEED@", speedStr);
-
-      FOR i := 0 TO pwCount - 1 DO
-        pwSpec := pwSpec & F("PW_DLY[%s] ", Int(i))
-      END;
-
       EVAL map.put("@PW_SPEC@", pwSpec)
     END;
     
