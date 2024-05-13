@@ -318,7 +318,7 @@ PROCEDURE DoPre() =
         hspiceFile := "CLOCK_GEN4_LATCH_THERMOMETER_ROUTED_100C.hspice";
 
         FOR i := 0 TO pwCount - 1 DO
-          IF i < speed THEN
+          IF speed > i THEN
             val := "vtrue"
           ELSE
             val := "0"
@@ -352,7 +352,7 @@ PROCEDURE DoSim() =
   CONST
     SimPath = "/p/hdk/cad/hspice/U-2023.03-SP2/hspice/bin/hspice";
   VAR
-    cmd            := F("%s -mt 4 -i %s", SimPath, "circuit.sp");
+    cmd            := F("%s -case 1 -mt 4 -i %s", SimPath, "circuit.sp");
     stdout, stderr := ProcUtils.WriteHere(Stdio.stderr);
     cm             := ProcUtils.RunText(cmd,
                                         stdout := stdout,
