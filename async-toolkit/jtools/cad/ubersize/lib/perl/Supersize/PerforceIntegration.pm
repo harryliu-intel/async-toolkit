@@ -231,7 +231,8 @@ sub p4_add {
             my $src_file  = fqcn_to_file("$SS_r->{GS}{WORK_DIR}/cast", $cell);
             my $dest_file = fqcn_to_file($p4_spec_dir, $cell);
             if (!-e $src_file) {
-                command_die($SS_r, "Subtype $cell doesn't exist.");
+                print "Warning: Skipping non-existent SPEC for $cell.\n";
+                next;
             }
             my $dest_dir = fqcn_to_directory($p4_spec_dir, $cell);
             if (!-e $dest_dir) {
