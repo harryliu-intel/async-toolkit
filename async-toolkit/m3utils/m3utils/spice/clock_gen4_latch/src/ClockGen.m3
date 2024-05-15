@@ -128,7 +128,7 @@ PROCEDURE DoTrace(traceRt : Pathname.T; mWr : Wr.T) : Result =
   Debug.Out("Loaded trace");
 
   CONST
-    ClkNm  = "refclk";
+    ClkNm  = "REFCLK";
     
   VAR
     clkId := GetNode     (trace, ClkNm);
@@ -145,7 +145,7 @@ PROCEDURE DoTrace(traceRt : Pathname.T; mWr : Wr.T) : Result =
 
 
     FOR i := 0 TO nphases - 1 DO
-      WITH nm  = F("clkout[%s]", Int(i)),
+      WITH nm  = F("CLKOUT[%s]", Int(i)),
            id  = GetNode (trace, nm),
            seq = tranFinder.forNode(id, TRUE),
            clkcnt = 2 * i + 1 (* # of falling edge *),
