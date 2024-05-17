@@ -2009,8 +2009,12 @@ public final class NetGraph {
 
             final Integer ttype = CellUtils.extractTransistorNumber(type);
 
+            CDLLexer.InfoToken mt = (CDLLexer.InfoToken) parameters.get("M");
+            if (mt == null) mt = (CDLLexer.InfoToken) parameters.get("m");
+            final double m = mt == null ? 1 : CDLInterfaceSimplifier.getValue(mt, env);
+
             new NetEdge(createNetNode(ns), createNetNode(ng), createNetNode(nd),
-                        np, 0, w * cdlScale, l * cdlScale, false,
+                        np, 0, w * cdlScale * m, l * cdlScale, false,
                         ttype == null ? 0 : Math.abs(ttype.intValue()),
                         precharge);
         }
