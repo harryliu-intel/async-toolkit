@@ -32,7 +32,7 @@
 	    track = (GetTrack (MetalNumber metal) bbox)
 	    (if !track then
               (printf "ERROR: Can't color off-track %s at %f:%f\n"
-                      b->layer (caar bbox) (cadar bbox))
+                      metal (caar bbox) (cadar bbox))
    	    else
                color = (GetTrackColor (MetalNumber blockage->layer) track)
 	       (when color (SetBlockageColor blockage color))
